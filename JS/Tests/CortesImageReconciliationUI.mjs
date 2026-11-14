@@ -86,6 +86,17 @@ testCase("el reporte usa texto seguro y no modifica datos productivos",()=>{
  assert.match(admin,/plan\.writePerformed = false/);
  assert.match(api,/'previewCortesImageReconciliation': 'ADMIN'/);
 });
+testCase("la aplicación requiere aprobación visible, confirmación y endpoint ADMIN dedicado",()=>{
+ assert.ok(html.includes('id="btn-audit-drive-apply-reconciliation"'));
+ assert.ok(ui.includes('data-reconciliation-approve'));
+ assert.ok(ui.includes('window.confirm('));
+ assert.ok(ui.includes('routeActionWithRetry("applyCortesImageReconciliation"'));
+ assert.ok(api.includes("'applyCortesImageReconciliation': 'ADMIN'"));
+ assert.ok(admin.includes("function handleApplyCortesImageReconciliation_"));
+ assert.ok(admin.includes("function buildCortesImageReconciliationApprovalManifest_"));
+ assert.ok(admin.includes("rollbackConfirmed"));
+ assert.ok(admin.includes("entry.cell.getValue()"));
+});
 testCase("el reporte es responsive y accesible",()=>{
  assert.match(html,/aria-live="polite"/);
  assert.match(css,/\.audit-drive-reconciliation-panel\[hidden\]/);

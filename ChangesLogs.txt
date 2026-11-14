@@ -1802,3 +1802,11 @@ Rama: GPSpedia2.2.5_work
 - Precondiciones de celda/vehículo, bloqueo, escritura individual con read-back, registro por asignación y rollback condicionado a la URL actual.
 - Conteos antes/después y resultados de rollback incluidos. No se ejecutó contra datos productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-14 — GP-IMG-DATA-01 UI DE APROBACION EXPLICITA
+- Casillas por coincidencia exacta, límite de 10 propuestas y confirmación previa a la escritura.
+- Nuevo botón invoca el endpoint ADMIN de aplicación controlada; después de éxito se borra el estado previo y se vuelve a generar el preview.
+- Timeout/resultado incierto no genera reintentos automáticos. No se ejecutó la operación productiva.
+================================================================================

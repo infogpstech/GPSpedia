@@ -856,3 +856,11 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - El handler ADMIN exige confirmación explícita, sesión Desarrollador, lease de mutación y bloqueo de script; vuelve a generar el preview, precondiciona todas las celdas antes de escribir, verifica cada URL por read-back y registra cada asignación.
 - Ante fallo, el rollback solo limpia una celda si todavía contiene exactamente la URL escrita y no tiene fórmula; cualquier cambio externo se conserva y se reporta para revisión manual. Incluye conteos antes/después y resumen en auditoría ADMIN.
 - Pruebas puras del manifiesto añadidas. UI y CI pendientes; no se ejecutó la acción contra Spreadsheet/Drive.
+
+
+## GP-IMG-DATA-01 — Aprobación individual en UI y conexión al handler (2026-11-14)
+
+- El reporte final ofrece casillas únicamente para coincidencias exactas `matched`; cada casilla identifica archivo, vehículo, fila y campo. La acción limita la selección a diez propuestas y exige confirmación explícita antes de llamar a ADMIN.
+- Tras una aplicación confirmada, se elimina el preview local y se ejecuta una simulación nueva para leer de vuelta el estado resultante. Si la respuesta es parcial o incierta, no se intenta repetir automáticamente la escritura y se solicita actualizar el preview.
+- La llamada de mutación usa un único intento para evitar reintentos ciegos ante timeout. No se ha ejecutado el botón ni se han escrito datos productivos.
+- Pruebas UI añadidas; CI pendiente.

@@ -7031,6 +7031,8 @@ export async function openAuditDriveModal() {
     const reconciliationStatus = document.getElementById('audit-drive-reconciliation-status');
     const reconciliationCounts = document.getElementById('audit-drive-reconciliation-counts');
     const reconciliationResults = document.getElementById('audit-drive-reconciliation-results');
+    const applyReconciliationButton = document.getElementById('btn-audit-drive-apply-reconciliation');
+    let currentReconciliationReport = null;
     if (!summaryEl || !container) return;
     if (closeBtn) closeBtn.onclick = () => {
         const historyManager = window.overlayHistory;
@@ -7436,6 +7438,7 @@ export async function openAuditDriveModal() {
             reconcileButton.hidden = !complete;
             reconcileButton.disabled = isRunning || isDriveAuditRunning || isReconciling || !complete;
         }
+        updateReconciliationApprovalControls_();
     };
 
     const restoreState = (state) => {
@@ -7692,7 +7695,20 @@ export async function openAuditDriveModal() {
     if (startButton) startButton.onclick = () => runAudit(false);
     if (resumeButton) resumeButton.onclick = () => runAudit(true);
 
+    const updateReconciliationApprovalControls_ = () => {
+        if (!applyReconciliationButton || !reconciliationResults) return;
+        const checked = reconciliationResults.querySelectorAll('input[data-reconciliation-approve="true"]:checked');
+        const count = checked.length;
+        const available = currentReconciliationReport && currentReconciliationReport.status === "complete";
+        applyReconciliationButton.hidden = !available || !currentReconciliationReport.results.some(item => item.status === "matched");
+        applyReconciliationButton.disabled = !available || count < 1 || count > 10 || isRunning || isDriveAuditRunning || isReconciling;
+        applyReconciliationButton.textContent = count
+            ? "Aplicar " + count + " propuestas seleccionadas"
+            : "Aplicar propuestas seleccionadas";
+    };
+
     const renderCortesReconciliationReport_ = report => {
+        currentReconciliationReport = report;
         if (!reconciliationPanel || !reconciliationCounts || !reconciliationResults) return;
         reconciliationPanel.hidden = false;
         reconciliationCounts.replaceChildren();
@@ -7728,6 +7744,21 @@ export async function openAuditDriveModal() {
             status.className = "audit-reconciliation-status-label";
             status.textContent = labels[item.status] || String(item.status || "Sin estado");
             row.append(title, status);
+            if (report.status === "complete" && item.status === "matched" && item.target && item.proposedUrl) {
+                const approvalLabel = document.createElement("label");
+                approvalLabel.className = "audit-reconciliation-approval";
+                const approval = document.createElement("input");
+                approval.type = "checkbox";
+                approval.dataset.reconciliationApprove = "true";
+                approval.dataset.fileId = String(item.fileId || "");
+                approval.setAttribute("aria-label", "Aprobar " + String(item.fileName || item.fileId || "imagen") +
+                    " para vehículo " + String(item.target.vehicleId || "") + ", fila " + item.target.row + ", campo " + item.target.field);
+                approval.addEventListener("change", updateReconciliationApprovalControls_);
+                const approvalText = document.createElement("span");
+                approvalText.textContent = "Aprobar esta asignación";
+                approvalLabel.append(approval, approvalText);
+                row.appendChild(approvalLabel);
+            }
             if (detail.textContent) row.appendChild(detail);
             if (item.reason) {
                 const reason = document.createElement("span");
@@ -7746,6 +7777,7 @@ export async function openAuditDriveModal() {
             note.textContent = "Se muestran " + visibleRows.length + " de " + rows.length + " resultados. El reporte completo permanece en memoria durante esta sesión.";
             reconciliationResults.appendChild(note);
         }
+        updateReconciliationApprovalControls_();
         if (report.rowIssues && report.rowIssues.length) {
             const issues = document.createElement("p");
             issues.textContent = "Filas que requieren revisión: " + report.rowIssues.length + ". No se generaron destinos para esas filas.";
@@ -7784,7 +7816,7 @@ export async function openAuditDriveModal() {
             }
             const report = {
                 results: saved.results, invalidFiles: saved.invalidFiles, rowIssues: saved.rowIssues,
-                counts: saved.counts, manifestDigest: saved.sourceDigest,
+                counts: saved.counts, manifestDigest: saved.sourceDigest, status: saved.status,
                 referenceCheckStatus: saved.referenceCheckStatus
             };
             renderCortesReconciliationReport_(report);
@@ -7930,6 +7962,7 @@ export async function openAuditDriveModal() {
             });
             aggregate.counts.invalid = aggregate.invalidFiles.length;
             aggregate.manifestDigest = sourceDigest;
+            aggregate.status = "complete";
             aggregate.referenceCheckStatus = referenceCheckStatus;
             await saveProgress("complete");
             if (!isCurrentRequest()) return;
@@ -7964,6 +7997,77 @@ export async function openAuditDriveModal() {
     if (saveInventoryButton) saveInventoryButton.onclick = () => saveUnusedInventory();
     if (organizeButton) organizeButton.onclick = () => organizeUnusedImages();
     if (reconcileButton) reconcileButton.onclick = () => runCortesReconciliation();
+    if (applyReconciliationButton) applyReconciliationButton.onclick = async () => {
+        if (!isCurrentRequest() || !currentReconciliationReport || currentReconciliationReport.status !== "complete") return;
+        const checked = Array.from(reconciliationResults.querySelectorAll('input[data-reconciliation-approve="true"]:checked'));
+        if (!checked.length || checked.length > 10) {
+            if (reconciliationStatus) reconciliationStatus.textContent = "Selecciona entre 1 y 10 coincidencias exactas.";
+            return;
+        }
+        const byId = new Map((currentReconciliationReport.results || []).map(item => [String(item.fileId || ""), item]));
+        const approved = checked.map(input => {
+            const item = byId.get(String(input.dataset.fileId || ""));
+            if (!item || item.status !== "matched" || !item.target) return null;
+            return {
+                fileId: String(item.fileId), row: Number(item.target.row), column: Number(item.target.column),
+                vehicleId: String(item.target.vehicleId), field: String(item.target.field), proposedUrl: String(item.proposedUrl)
+            };
+        });
+        if (approved.some(item => !item)) {
+            if (reconciliationStatus) reconciliationStatus.textContent = "La selección ya no coincide con el reporte. Actualiza la simulación antes de aplicar.";
+            return;
+        }
+        const confirmed = window.confirm(
+            "Se escribirán " + approved.length + " URL(s) en celdas vacías de la hoja Cortes. " +
+            "Se volverán a validar los destinos y se comprobará cada escritura. No se cambiarán permisos ni se moverán archivos. ¿Deseas continuar?"
+        );
+        if (!confirmed) return;
+        isRunning = true;
+        isDriveAuditRunning = true;
+        updateControls();
+        updateReconciliationApprovalControls_();
+        let applied = false;
+        try {
+            const response = await routeActionWithRetry("applyCortesImageReconciliation", {
+                ...getDeveloperSessionPayload(), confirmed: true,
+                manifestDigest: String(currentReconciliationReport.manifestDigest || ""), approved
+            }, {
+                timeoutMs: 90000, maxAttempts: 1, retryDelayMs: 0,
+                shouldContinue: isCurrentRequest
+            });
+            if (!isCurrentRequest()) return;
+            if (response && response.status === "success" && response.appliedCount === approved.length &&
+                response.rollbackConfirmed === true) {
+                applied = true;
+                if (reconciliationStatus) reconciliationStatus.textContent =
+                    "Aplicación verificada: " + response.appliedCount + " asignaciones. Celdas con imagen antes: " +
+                    response.beforeCount + "; después: " + response.afterCount + ". Actualizando el preview…";
+            } else {
+                if (response && response.status === "partial") currentReconciliationReport.status = "stale";
+                if (reconciliationStatus) reconciliationStatus.textContent =
+                    (response && response.message ? response.message : "ADMIN no confirmó todas las asignaciones.") +
+                    " Aplicadas: " + Number(response && response.appliedCount || 0) +
+                    "; rollback confirmado: " + (response && response.rollbackConfirmed === true ? "sí" : "no") + ".";
+            }
+        } catch (error) {
+            if (!isCurrentRequest()) return;
+            if (reconciliationStatus) reconciliationStatus.textContent =
+                "No se pudo confirmar el resultado de la aplicación. No repitas la selección sin actualizar primero la simulación: " +
+                String(error && error.message || error);
+        } finally {
+            isRunning = false;
+            isDriveAuditRunning = false;
+            if (isCurrentRequest()) {
+                updateControls();
+                updateReconciliationApprovalControls_();
+            }
+        }
+        if (applied && isCurrentRequest()) {
+            await offline.clearCortesImageReconciliationState(requestContext.userId, auditId);
+            if (isCurrentRequest()) await runCortesReconciliation();
+        }
+    };
+
 
     try {
         savedState = await offline.getDriveAuditState(requestContext.userId);

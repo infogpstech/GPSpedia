@@ -4066,3 +4066,15 @@ img.gp-image-loaded {
     #dev-tools-modal .dev-action-row button,
     #dev-tools-modal .dev-action-full { width: 100%; }
 }
+
+
+.audit-reconciliation-approval {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 8px;
+    font-size: .8rem;
+    cursor: pointer;
+}
+.audit-reconciliation-approval input { width: 16px; height: 16px; accent-color: var(--accent-color); }
+#btn-audit-drive-apply-reconciliation { margin-top: 12px; }
