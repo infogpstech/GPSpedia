@@ -39,7 +39,7 @@ testCase("el escaneo y dry-run no escriben inventario automáticamente",()=>{
  assert.ok(ui.includes("saveInventoryButton.onclick = () => saveUnusedInventory()"));
  assert.ok(ui.includes("window.confirm("));
  assert.ok(html.includes('id="btn-audit-drive-save-inventory"'));
- assert.ok(ui.includes("No se ha escrito en Spreadsheet"));
+ assert.ok(ui.includes("No se escribió en Spreadsheet"));
 });
 testCase("el reporte usa texto seguro y no modifica datos productivos",()=>{
  assert.match(ui,/title\.textContent = String\(item\.fileName/);
