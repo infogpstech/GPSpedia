@@ -84,7 +84,7 @@ La plataforma utiliza una arquitectura desacoplada:
 
 ### Política de seguridad del cliente y anti-debugging
 
-GPSpedia aplica una fricción visual limitada: bloquea menú contextual y eventos de copia/corte/selección/arrastre en contenido no editable. Los campos de entrada conservan su menú para pegar y editar. No se bloquean F12, Ctrl+Shift+I/J/C/U ni el zoom. El código y los recursos entregados al navegador siguen siendo inspeccionables y recuperables; estas restricciones no son seguridad real.
+GPSpedia aplica una fricción visual limitada sobre medios: bloquea menú contextual, copia/corte, selección y arrastre en imágenes, vídeos y canvas. El texto normal sigue pudiéndose seleccionar/copiar y los campos editables conservan sus controles. No se bloquean F12, Ctrl+Shift+I/J/C/U ni el zoom. El código y los recursos entregados al navegador siguen siendo inspeccionables y recuperables; estas restricciones no son seguridad real.
 
 La confidencialidad y la integridad no dependen de ocultar el frontend: los servicios deben validar en cada operación protegida la sesión vigente, la identidad vinculada al token, el rol autorizado y los datos recibidos antes de leer o modificar recursos. Las restricciones visuales solo añaden fricción y nunca sustituyen la autorización del servidor. Los endpoints y recursos públicos deben tratarse como públicos.
 
@@ -179,3 +179,12 @@ Drive conserva la URL fuente original (`https://lh3.googleusercontent.com/d/{fil
 
 ### QR de vídeos en fichas imprimibles
 Los códigos QR de los vídeos guía se generan localmente en el navegador con el módulo `JS/Frontend/qrcode-generator.mjs`; el enlace no se envía a servicios de terceros. Solo se admiten URLs HTTPS de hosts oficiales de YouTube con ID de vídeo válido. El QR no expone la URL como texto en la ficha.
+
+
+### Capturas de pantalla en navegador y PWA: límites reales
+
+- Una página web/PWA no dispone de un evento interoperable y fiable que notifique cada captura de pantalla realizada por el sistema operativo. `visibilitychange`, `blur` y `pagehide` describen cambios de visibilidad/foco o ciclo de vida; no identifican de forma fiable una captura y no deben tratarse como tal.
+- `getDisplayMedia()` solicita al usuario compartir una pantalla, ventana o pestaña. Es una API de captura/compartición iniciada por el usuario, no un detector ni un bloqueo de capturas nativas.
+- Una PWA ejecutada en el navegador no puede aplicar el mecanismo nativo Android `FLAG_SECURE`. No se bloquean capturas del sistema ni se promete protección absoluta.
+- No se implementa una marca de agua dinámica por defecto: superponer identidad/fecha sobre diagramas y fotografías de cableado puede reducir legibilidad, y la marca no impide la captura. Se puede reevaluar si existe un caso de fuga trazable que justifique ese coste visual.
+- Si un recurso requiere confidencialidad real, debe dejar de servirse como URL pública y pasar a permisos privados y entrega autenticada/temporal desde backend. Ocultar botones o interceptar eventos del navegador no sustituye este control.
