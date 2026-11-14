@@ -2904,9 +2904,9 @@ function buildCortesImageReconciliationPlan_(targets, driveFiles, activeReferenc
                 return;
             }
             if (candidates.length === 0) {
-                const status = locations.length ? "referenced_elsewhere" : referenceScanVerified === false ? "unverifiable" : "orphaned";
+                const status = historicalIds.has(fileId) ? "historical" : locations.length ? "referenced_elsewhere" : referenceScanVerified === false ? "unverifiable" : "orphaned";
                 results.push({ status, fileId, fileName: file.fileName,
-                    locations, reason: locations.length ? "El archivo tiene referencias, pero no coincide con un destino canónico de Cortes." : referenceScanVerified === false ? "No se puede declarar huérfano mientras existan referencias no verificables." : "No existe referencia ni destino canónico exacto en Cortes." });
+                    locations, reason: historicalIds.has(fileId) ? "El archivo ya figura en el historial de imágenes." : locations.length ? "El archivo tiene referencias, pero no coincide con un destino canónico de Cortes." : referenceScanVerified === false ? "No se puede declarar huérfano mientras existan referencias no verificables." : "No existe referencia ni destino canónico exacto en Cortes." });
                 return;
             }
             const target = candidates[0], targetKey = target.row + ":" + target.column;
@@ -2933,16 +2933,6 @@ function buildCortesImageReconciliationPlan_(targets, driveFiles, activeReferenc
             if (target.currentValue || target.hasFormula) {
                 results.push({ status: "occupied", fileId, fileName: file.fileName, target,
                     reason: target.hasFormula ? "El destino contiene una fórmula; no se sobrescribirá." : "El destino contiene una referencia o un valor no vacío que no se sobrescribirá." });
-                return;
-            }
-            if (referenceScanVerified === false) {
-                results.push({ status: "unverifiable", fileId, fileName: file.fileName, target, locations,
-                    reason: "La búsqueda de referencias del Spreadsheet no pudo verificarse por completo." });
-                return;
-            }
-            if (file.accessPublic !== true) {
-                results.push({ status: "access_restricted", fileId, fileName: file.fileName, target,
-                    reason: "El archivo no tiene acceso público verificado; no se modificaron sus permisos." });
                 return;
             }
             if (referenceScanVerified === false) {
@@ -3034,6 +3024,8 @@ function handlePreviewCortesImageReconciliation_(payload, logMessage, developerC
         targets: targetSnapshot.targets.map(target => [target.row, target.vehicleId, target.field, target.currentValue, target.hasFormula, target.baseName]),
         references: Array.from(referenceSnapshot.references.entries()).map(([id, locations]) => [id, locations]).sort((a,b)=>a[0].localeCompare(b[0])),
         unverifiableReferenceCount: Number(referenceSnapshot.unverifiableReferenceCount || 0),
+        sourceLastRow: targetSnapshot.sourceLastRow,
+        rowIssues: targetSnapshot.rowIssues,
         historicalDriveIds: Array.from(historicalDriveIds).sort()
     });
     const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, sourceDigestPayload)

@@ -22,6 +22,10 @@ testCase("bloquea destinos con fórmula aunque el valor calculado esté vacío",
  const p=planner([target("same",{hasFormula:true})],[file(1,"same.png")],new Map());
  assert.equal(p.results[0].status,"occupied");
 });
+testCase("clasifica como histórico un archivo sin destino canónico",()=>{
+ const p=planner([], [file(1,"old-image.png")],new Map(),true,new Set([id(1)]));
+ assert.equal(p.results[0].status,"historical");
+});
 testCase("no declara huérfanos cuando el escaneo de referencias es incompleto",()=>{
  const p=planner([], [file(1,"orphan.png")],new Map(),false);
  assert.equal(p.results[0].status,"unverifiable");
