@@ -147,8 +147,8 @@ run("Técnico y Técnico exterior pueden iniciar mensajes solo a Supervisor", ()
         assert.ok(result.conversationId);
     }
     const rows = spreadsheet.getSheetByName("InboxConversations").rows;
+    assert.equal(rows[2][5],"direct");
     assert.equal(rows[3][5],"direct");
-    assert.equal(rows[4][5],"direct");
 });
 run("Supervisor solo puede iniciar mensajes a Jefe y Jefe a rangos inferiores", () => {
     const supervisor = api.handleCreateInboxConversation({
