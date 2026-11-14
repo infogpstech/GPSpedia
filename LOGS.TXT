@@ -9,3 +9,26 @@ Registro previo: `Olds/Documentacion_Legacy/LOGS_legacy_parte_001.TXT`. Consulta
 REGISTRO INICIAL
 No se agregaron incidencias nuevas en DOC-MIG-2026-001.
 ================================================================================
+
+
+================================================================================
+2026-11-14 — INCIDENCIAS REPORTADAS: ACCESO DEVELOPER Y HERRAMIENTAS DE INVENTARIO ADMIN
+Estado general: PENDIENTE DE DIAGNÓSTICO Y CORRECCIÓN. Los síntomas se registran tal como fueron observados; la causa técnica aún no está confirmada.
+
+1. ACCESO INICIAL AL PANEL DE DESARROLLADOR
+- Síntoma: al iniciar sesión con el rol Desarrollador, el usuario no consigue acceder al panel de Desarrollador.
+- Resultado esperado: el rol autorizado puede abrir el panel al iniciar la aplicación.
+- Pendiente: reproducir desde un inicio de sesión nuevo, revisar autorización de apertura, restauración de sesión, navegación y respuesta del backend. No asumir todavía si el fallo está en UI, AUTH o coordinación de sesión.
+
+2. ESCÁNER DE IMÁGENES SIN USO — CARGA DE INVENTARIO E HISTORIAL
+- Síntoma: al ejecutar el escáner para detectar imágenes sin uso, aparece: «Error al cargar el inventario e historial: el recurso está ocupado por operaciones activas ADMIN/sessionActivity».
+- Resultado esperado: el escáner puede cargar inventario e historial o informar una condición transitoria recuperable sin quedar inutilizable.
+- Pendiente: identificar qué operación mantiene ocupado el recurso compartido, revisar adquisición/liberación de locks o leases, duración, reintentos y coordinación entre ADMIN y sessionActivity. Comprobar que las lecturas del escáner no compitan innecesariamente con operaciones de sesión y que no se debiliten las protecciones de concurrencia.
+
+3. INICIALIZAR HISTORIAL — ACCIÓN RECHAZADA POR POLÍTICA DEL COORDINADOR
+- Síntoma: al pulsar «Inicializar historial», la acción no se ejecuta y se informa que no está habilitada en la política del coordinador.
+- Resultado esperado: la inicialización autorizada del historial está disponible para el rol y el flujo previstos, o se presenta una explicación clara de la restricción.
+- Pendiente: revisar el registro de acciones permitidas del coordinador, el nombre/contrato de la acción enviado por el cliente, el mapeo de permisos ADMIN y la configuración del deployment. No habilitar acciones de forma general ni ampliar privilegios sin verificar el contrato y el alcance requerido.
+
+Relación posible: las incidencias 2 y 3 afectan el flujo de inventario/historial de ADMIN y podrían compartir una dependencia de coordinación, pero no se declara una causa común hasta reproducirlas y revisar evidencia. La incidencia 1 se mantiene separada hasta determinar si comparte el mismo problema de sesión/coordinación.
+================================================================================
