@@ -161,7 +161,7 @@ test("La migración procesa lotes reanudables e idempotentes",()=>{
     assert.equal(second.migrated,1);assert.equal(second.remainingPlaintext,0);assert.equal(second.complete,true);
     const third=h.run({userId:"U1",sessionToken:"token-1",dryRun:false,confirm:true,batchSize:1});
     assert.equal(third.migrated,0);assert.equal(third.complete,true);assert.equal(h.stats().hashCounter,2);
-    assert.match(h.users[2][2],/^pbkdf2-sha256\\$/);assert.match(h.users[5][2],/^pbkdf2-sha256\\$/);
+    assert.match(h.users[2][2],/^pbkdf2-sha256\$/);assert.match(h.users[5][2],/^pbkdf2-sha256\$/);
     assert.equal(typeof h.sessions[1][5],"string");
     assert.equal(h.stats().waits,h.stats().releases);
 });
