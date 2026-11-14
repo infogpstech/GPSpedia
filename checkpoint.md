@@ -536,3 +536,12 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - Se corrigieron referencias históricas que seguían describiendo `Gefe` como conversor temporal pendiente. El usuario ya confirmó la actualización de `Users.Privilegios` y su lista desplegable; el código operativo ya no admite `Gefe`.
 - Se actualizó la sección `Continuidad inmediata` de `Tareas_Activas.md` para reflejar P1–P6 y las validaciones Beta/externas pendientes, evitando que la próxima sesión retome P3 como si siguiera sin implementar.
 - No hubo cambios de código ni datos productivos en esta sincronización.
+
+## P2 — Generador de IDs de usuarios: duplicados sin distinción de mayúsculas (2026-11-14)
+
+- `generateNextUserId_` ahora normaliza a mayúsculas la clave usada para detectar duplicados; evita que `USR-0001` y `usr-0001` se consideren identificadores diferentes.
+- Se conservan el formato secuencial `USR-####`, el cálculo por máximo existente y el rechazo de filas con datos de cuenta sin ID. El generador se ejecuta dentro de `withUsersMutationLock_` en la creación de usuarios.
+- Se sincronizó `JS/Tests/users.js` con `Services/users.js` para mantener el fixture espejo.
+- Se añadió `UserIdGenerator.mjs`: secuencia, duplicados case-insensitive, filas sin ID y filas plantilla vacías.
+- GitHub Actions `service-tests` sobre HEAD `217ad05818255cf4692bfd28e335a5b44130da3e`: **PASS**, 81 suites, 1,215 pruebas aprobadas, 0 fallos; `UserIdGenerator: 4/4 PASS`.
+- No se generaron IDs ni se modificó la Spreadsheet. La migración de registros existentes sigue condicionada a auditoría/dry-run Beta.
