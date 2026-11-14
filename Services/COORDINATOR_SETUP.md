@@ -6,7 +6,7 @@
 - `Services/SharedMutationClient.js`: cliente servidor-a-servidor que debe incluirse en cada proyecto AUTH, USERS, WRITE, ADMIN, FEEDBACK y UTILITIES.
 - Los routers de esos servicios delegan las acciones mutadoras al coordinador antes de ejecutar sus handlers. Los locks locales existentes se conservan.
 - ADMIN declara `ACTIVE_SESSIONS` como `sharedWriteResources` para permitir consultas ADMIN concurrentes que únicamente actualizan `LastActivityAt`. Esta compatibilidad es cooperativa entre leases ADMIN; las escrituras normales de AUTH/USERS/WRITE/FEEDBACK/UTILITIES siguen bloqueándolas. No se debe usar esta modalidad para mutaciones adicionales de la hoja de sesiones.
-- En FEEDBACK, `createInboxConversation`, `sendInboxMessage`, `markInboxRead` y `archiveInboxConversation` reservan lectura de `USERS/ACTIVE_SESSIONS` y escritura de `FEEDBACK`; las lecturas de Inbox no adquieren lease mutadora.
+- En FEEDBACK, las lecturas autenticadas `getInboxRecipients`, `getInboxConversations` y `getInboxMessages` adquieren `FEEDBACK/sessionActivity`, que reserva `ACTIVE_SESSIONS` y actualiza `LastActivityAt`. Las mutaciones `createInboxConversation`, `sendInboxMessage`, `markInboxRead` y `archiveInboxConversation` reservan `ACTIVE_SESSIONS` y `FEEDBACK` durante la validación y escritura. `recordLike` reserva `ACTIVE_SESSIONS`, `CORTES`, `FEEDBACK` y `ACTIVITY`, porque su validación autenticada también actualiza la actividad de sesión.
 
 ## Configuración de cada entorno
 
@@ -40,8 +40,12 @@ La acción FEEDBACK `initYouTubeUpload` no adquiere lease: inicia una sesión de
 
 - El endpoint de diagnóstico `GET ?debug=true` devuelve `coordinatorConfigured` como booleano. No expone URL, secretos ni tokens. La tarjeta AUTH del panel Developer muestra si el coordinador está configurado.
 - Si el estado es `false`, revisar en ScriptProperties del proyecto AUTH `GPSpedia_COORDINATOR_URL` y `GPSpedia_COORDINATOR_SECRET`, además de la inclusión de `Services/SharedMutationClient.js`. Login, `touchSession`, `acceptTerms` y otras mutaciones siguen fallando de forma segura si falta esta configuración.
-- `ActiveSessions` utiliza la columna G (`SessionTermsAcceptance`) para guardar la aceptación vinculada a cada token de sesión. Al crear una sesión nueva se inicia en estado pendiente; `acceptTerms` registra la aceptación para esa sesión. La columna I de `Users` se conserva como registro histórico de la última aceptación, pero ya no determina si una sesión nueva debe mostrar el aviso.
+- La columna G de `ActiveSessions` (`SessionTermsAcceptance`) se conserva por compatibilidad con el esquema de sesión, pero no decide actualmente si debe mostrarse el aviso obligatorio. El flujo vigente identifica el perfil/dispositivo mediante un ID aleatorio persistido en `localStorage` y guarda la aceptación por usuario, dispositivo y versión en `Users.TermsAcceptance` (columna I). `acceptTerms` valida la sesión en modo de solo lectura y escribe el mapa de aceptación en `Users`; no actualiza `ActiveSessions`. Por eso, cerrar sesión y volver a entrar en el mismo perfil no vuelve a mostrar el aviso, mientras que otro navegador/perfil genera una identidad local independiente.
 - `validateSession` usa una lectura local con espera de lock limitada y no actualiza `LastActivityAt`; la actividad se actualiza mediante `touchSession` cuando se ejecutan operaciones protegidas.
+
+## Diagnóstico de autorización del coordinador FEEDBACK
+
+El error `Servicio no autorizado para el coordinador compartido` se produce en la autenticación del servicio, antes de evaluar el rol del usuario. Para FEEDBACK, comprobar en el proyecto Apps Script del servicio que `GPSpedia_COORDINATOR_URL` apunta al coordinador del mismo entorno y que `GPSpedia_COORDINATOR_SECRET` coincide exactamente con `GPSpedia_COORDINATOR_SECRET_FEEDBACK` del coordinador. Confirmar también que FEEDBACK incluye la versión vigente de `Services/SharedMutationClient.js` y que el coordinador desplegado contiene la política de `FEEDBACK/sessionActivity` y las acciones utilizadas. No corregir este error ampliando roles ni relajando las listas RBAC: una credencial de servicio inválida debe seguir fallando cerrada.
 
 ## Política y recuperación
 
