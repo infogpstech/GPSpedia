@@ -7,6 +7,7 @@ const usersSource = readFileSync(new URL('../../Services/users.js', import.meta.
 const usersTestSource = readFileSync(new URL('./users.js', import.meta.url), 'utf8');
 const apiConfigSource = readFileSync(new URL('../Frontend/api-config.js', import.meta.url), 'utf8');
 const uiSource = readFileSync(new URL('../Frontend/ui.js', import.meta.url), 'utf8');
+const frontendAuthSource = readFileSync(new URL('../Frontend/auth.js', import.meta.url), 'utf8');
 const htmlSource = readFileSync(new URL('../../index.html', import.meta.url), 'utf8');
 const coordinatorSource = readFileSync(new URL('../../Services/Coordinator.js', import.meta.url), 'utf8');
 const termsDeviceSource = readFileSync(new URL('../Frontend/termsDeviceAcceptance.js', import.meta.url), 'utf8');
@@ -116,9 +117,9 @@ test('API dirige acceptTerms a AUTH sin enviar una llamada touchSession adiciona
 test('el catálogo espera la aceptación y se carga al confirmar el aviso', () => {
     assert.match(uiSource, /if \(!renderTermsGate_\(user\)\) return;/);
     assert.match(uiSource, /window\.auth\?\.loadInitialData/);
-    assert.match(authSource, /const appReady = showApp\(user\) === true/);
-    assert.match(authSource, /if \(appReady\) loadInitialData\(\)/);
-    assert.match(authSource, /export async function loadInitialData\(\)/);
+    assert.match(frontendAuthSource, /const appReady = handleLoginSuccess\(result\.user\)/);
+    assert.match(frontendAuthSource, /if \(appReady\) loadInitialData\(\)/);
+    assert.match(frontendAuthSource, /export async function loadInitialData\(\)/);
 });
 test('UI no usa el indicador local antiguo y valida la versión del markup', () => {
     assert.doesNotMatch(uiSource, /gpsepedia_terms_accepted/);
