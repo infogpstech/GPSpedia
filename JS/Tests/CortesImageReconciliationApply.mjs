@@ -89,4 +89,9 @@ testCase("rechaza nombres canónicos duplicados en el inventario Drive completo"
  assert.throws(()=>h.handler(h.payload,()=>{},{userId:"DEV-1"}),/nombres canónicos duplicados/);
  assert.equal(h.values[1][8],"");assert.equal(h.previewCalls,0);assert.equal(h.released,true);
 });
-console.log("CortesImageReconciliationApply: "+passed+"/7 PASS");
+testCase("rechaza archivos renombrados después de la auditoría completa",()=>{
+ const h=createHarness({metadata:[{fileId,fileName:"renamed.png",mimeType:"image/png"}]});
+ assert.throws(()=>h.handler(h.payload,()=>{},{userId:"DEV-1"}),/cambió desde la auditoría/);
+ assert.equal(h.values[1][8],"");assert.equal(h.previewCalls,1);assert.equal(h.released,true);
+});
+console.log("CortesImageReconciliationApply: "+passed+"/8 PASS");

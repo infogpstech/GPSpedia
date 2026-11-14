@@ -3159,6 +3159,13 @@ function handleApplyCortesImageReconciliation_(payload, logMessage, developerCon
             files: approvals.map(item => ({ fileId: String(item && item.fileId || "") }))
         }, logMessage, developerContext);
         const manifest = buildCortesImageReconciliationApprovalManifest_(preview, approvals, payload.manifestDigest);
+        const auditMetadataById = new Map(metadata.map(item => [item.fileId, item]));
+        manifest.forEach(item => {
+            const audited = auditMetadataById.get(item.fileId);
+            if (!audited || audited.fileName !== item.fileName || !String(audited.mimeType || "").startsWith("image/")) {
+                throw new Error("El archivo cambió desde la auditoría Drive. Ejecuta una auditoría nueva antes de aplicar.");
+            }
+        });
         const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
         if (!sheet) throw new Error("No se encontró la hoja Cortes.");
         const beforeCount = countCortesImageCells_(sheet);
