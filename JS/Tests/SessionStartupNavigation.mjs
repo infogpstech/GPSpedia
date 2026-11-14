@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 const read=p=>fs.readFileSync(new URL(p,import.meta.url),"utf8");
 const main=read("../Frontend/main.js"),auth=read("../Frontend/auth.js"),ui=read("../Frontend/ui.js"),offline=read("../Frontend/offline.js");
-const policy=read("../Frontend/clientInteractionPolicy.js"),users=read("../../HTML/users.html"),addCuts=read("../../HTML/add_cortes.html");
+const policy=read("../Frontend/clientInteractionPolicy.js"),apiConfig=read("../Frontend/api-config.js"),users=read("../../HTML/users.html"),addCuts=read("../../HTML/add_cortes.html");
 const tests=[];function test(n,fn){fn();tests.push(n);}
 test("no existe revalidación redundante al recuperar conexión; el arranque conserva la validación inicial",()=>{assert.doesNotMatch(main,/revalidateSessionOnResume_|installSessionRevalidation_/);assert.doesNotMatch(main,/auth\.validateActiveSession\(/);assert.match(main,/await auth\.checkSession\(\)/);assert.match(auth,/export async function checkSession\(\)/);assert.match(auth,/validateSessionCoordinated\(user, false\)/);});
 test("el aviso superior no anuncia loading del catálogo",()=>assert.match(main,/banner\.hidden = !view\.visible \|\| currentState\.catalogLoadStatus === 'loading'/));
@@ -16,4 +16,19 @@ test("menú tiene fallback si popstate no llega",()=>{assert.match(ui,/fallbackT
 test("la imagen remota empieza antes de esperar IndexedDB y evita una sonda duplicada",()=>{const a=ui.indexOf("export async function setOptimizedImage"),b=ui.indexOf("export function getImageUrl",a);assert.ok(a>=0&&b>a);const fn=ui.slice(a,b);assert.ok(fn.indexOf("setSource(remoteUrl)")<fn.indexOf("offline.getThumbnail(cleanId"));assert.doesNotMatch(fn,/new Image\(|startRemoteProbe/);});
 test("compresión de miniaturas es opcional y aplica backoff",()=>{assert.match(offline,/THUMBNAIL_FAILURE_BACKOFF_MS = 5 \* 60 \* 1000/);assert.match(offline,/thumbnailCompressionFailures_\.set\(cacheKey/);assert.match(offline,/Se omitió la compresión opcional de miniatura/);assert.doesNotMatch(offline,/Thumbnail compression failed for/);});
 test("política de contexto protege medios sin bloquear texto ni campos editables",()=>{assert.match(policy,/isEditableTarget_/);assert.match(policy,/isProtectedMediaTarget_/);assert.match(policy,/!isEditableTarget_\(event\.target\)&&isProtectedMediaTarget_\(event\.target\)/);assert.match(policy,/input, textarea, select/);assert.match(policy,/img, picture, video, canvas/);assert.match(users,/clientInteractionPolicy\.js/);assert.match(addCuts,/clientInteractionPolicy\.js/);});
+test("login reutiliza el mismo requestId tras un fallo transitorio y solo limpia la solicitud completada",async()=>{
+ const source=apiConfig.replace(/\\bexport\\s+(?=(?:async\\s+)?function\\b)/g,"");
+ const extractFunction=name=>{const re=new RegExp("(?:async\\\\s+)?function\\\\s+"+name+"\\\\s*\\\\(");const match=re.exec(source);assert.ok(match,"Falta función "+name);const start=match.index;const next=source.slice(match.index+match[0].length).search(/\\n(?:export\\s+)?(?:async\\s+)?function\\s+/);return source.slice(start,next<0?undefined:match.index+match[0].length+next).trim();};
+ const functions=["createLoginRequestId_","loginRequestStorageKey_","login","completeLoginRequest"].map(extractFunction).join("\\n");
+ const values=new Map();const storage={getItem:k=>values.has(k)?values.get(k):null,setItem:(k,v)=>values.set(k,String(v)),removeItem:k=>values.delete(k)};
+ let generated=0,calls=0,firstRequestId="";
+ const cryptoMock={randomUUID:()=>"request-"+(++generated)};
+ const routeAction=async(action,payload)=>{assert.equal(action,"login");calls++;if(calls===1){firstRequestId=payload.requestId;throw new Error("network unavailable");}assert.equal(payload.requestId,firstRequestId,"El reintento debe conservar el ID idempotente");return{user:{ID:"U1"}};};
+ const api=new Function("sessionStorage","crypto","routeAction",functions+"\\nreturn {login,completeLoginRequest,loginRequestStorageKey_};")(storage,cryptoMock,routeAction);
+ await assert.rejects(api.login(" Tech ","secret"),/network unavailable/);
+ const key=api.loginRequestStorageKey_("TECH");assert.equal(values.get(key),firstRequestId);
+ const result=await api.login("tech","secret");assert.equal(result.loginRequestId,firstRequestId);assert.equal(result.user.ID,"U1");assert.equal(calls,2);assert.equal(generated,1);
+ values.set(key,"newer-request");api.completeLoginRequest("Tech",firstRequestId);assert.equal(values.get(key),"newer-request","Una respuesta antigua no debe borrar una solicitud posterior");
+ api.completeLoginRequest("Tech","newer-request");assert.equal(values.has(key),false);
+});
 tests.forEach(n=>console.log("PASS "+n));console.log("SessionStartupNavigation: "+tests.length+"/"+tests.length+" PASS");
