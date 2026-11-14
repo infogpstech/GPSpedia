@@ -1130,6 +1130,7 @@ function finalizeAdminAuditEvent_(auditEvent, details) {
 
 function doPostInternal_(e) {
     let response;
+    let catalogAction = "";
     const logs = [];
     let auditEvent = null;
     let auditFinalizeAttempted = false;
@@ -1156,6 +1157,7 @@ function doPostInternal_(e) {
     try {
         const request = JSON.parse(e.postData.contents);
         const { action, payload } = request;
+        catalogAction = String(action || "");
         auditPayload = payload;
 
         const developerContext = action === 'ping' ? null : (ADMIN_MODAL_EDIT_ACTIONS.has(action) ? assertModalEditSession(payload) : assertDeveloperSession(payload));
@@ -1363,6 +1365,23 @@ function doPostInternal_(e) {
             logs: logs
         };
         if (auditEventId) response.auditEventId = auditEventId;
+    }
+
+    // ADMIN puede cambiar varias filas o colecciones; se publica reset tras cerrar la auditoría.
+    // El cliente hará bootstrap/reconciliación completa solo cuando reciba este evento.
+    const catalogWriters = ["addLogo", "updateVehicleField", "uploadAdminImage", "normalizeImages",
+        "organizePrimaryVehicleImages", "recoverReplacedImage", "deleteReplacedImage",
+        "restoreReplacedImageFromTrash", "moveReplacedImage", "applyCortesImageReconciliation",
+        "restoreDatabase", "reorganizeDatabase", "migrateIdentifiers", "rollbackIdentifiers",
+        "reconcilePendingImageUploads"];
+    if (catalogAction && catalogWriters.includes(catalogAction) && response &&
+        (response.status === "success" || response.status === "warning")) {
+        try {
+            publishSharedCatalogChange_("ADMIN", catalogAction, { operation: "reset" });
+        } catch (catalogPublishError) {
+            Logger.log("La operación ADMIN se confirmó, pero no se pudo publicar el reset del catálogo: " +
+                (catalogPublishError && catalogPublishError.message ? catalogPublishError.message : "CatalogFeedError"));
+        }
     }
 
     return ContentService.createTextOutput(JSON.stringify(response))
