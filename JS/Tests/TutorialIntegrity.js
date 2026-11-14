@@ -382,7 +382,7 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
     return { status: failed ? "FAIL" : "PASS", passed, failed, results };
 }
 
-if (process.argv[1] && /(?:^|[\\/])TutorialIntegrity\\.js$/.test(process.argv[1])) {
+if (process.argv[1] && process.argv[1].endsWith("TutorialIntegrity.js")) {
     const result = runTutorialIntegrityTests({
         feedback: fs.readFileSync("Services/feedback.js", "utf8"),
         ui: fs.readFileSync("JS/Frontend/ui.js", "utf8"),
