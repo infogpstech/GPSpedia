@@ -12,7 +12,8 @@ function extract(name) {
         authSource.indexOf('\nfunction ', start + 12),
         authSource.indexOf('\nasync function ', start + 12),
         authSource.indexOf('\nexport function ', start + 12),
-        authSource.indexOf('\nexport async function ', start + 12)
+        authSource.indexOf('\nexport async function ', start + 12),
+        authSource.indexOf('\nconst SESSION_KEY =', start + 12)
     ].filter(index => index >= 0);
     const end = candidates.length ? Math.min(...candidates) : authSource.length;
     return authSource.slice(start, end);
@@ -73,6 +74,8 @@ function createHarness(options = {}) {
     const fetchCatalogData = async requestOptions => { fetchCalls++; return fetchCatalogDataImpl(requestOptions); };
     const factorySource = `
         let catalogLoadController_ = null;
+        function hasFreshCatalogSync_() { return false; }
+        function markCatalogSync_() {}
         ${extract('cancelCatalogLoad_')}
         ${extract('getCatalogFeedHead_')}
         ${extract('fetchCatalogDelta_')}
