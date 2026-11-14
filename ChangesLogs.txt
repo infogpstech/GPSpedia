@@ -1871,3 +1871,11 @@ Rama: GPSpedia2.2.5_work
 - Evidencia CI del HEAD previo al registro documental (`a43491bc...`), run `43620155376`: Node.js 22.23.4; InboxConversations 29/29 PASS; InboxUi 16/16 PASS; regresión integral 93 suites / 1,364 pruebas / 0 fallos; pasos de sintaxis PASS.
 - Las pruebas manuales de tema claro/oscuro, teclado, lector de pantalla, navegación Atrás y dispositivos/navegadores reales permanecen pendientes de Beta. No se declaran ejecutadas.
 ================================================================================
+
+
+================================================================================
+2026-11-14 — P4 IMÁGENES Y RBAC: CIERRE LOCAL CON VALIDACIÓN BETA DIFERIDA
+- Se consolidó P4 como COMPLETADA CON VALIDACIÓN DIFERIDA A BETA en `Tareas_Activas.md`; la matriz de capacidades, política de interacción con medios, permisos de modal y endpoints privilegiados cuentan con pruebas locales.
+- Evidencia CI del run `43620155376`: VehicleModalRolePolicy 12/12 PASS; ClientInteractionPolicy 5/5 PASS; ADMIN edición modal/RBAC 9/9 PASS; regresión integral 93 suites / 1,364 pruebas / 0 fallos; sintaxis PASS.
+- Permanecen pendientes de Beta la inspección de ACL reales en Drive y las solicitudes HTTP negativas contra deployments. El conector Google Drive disponible figura deshabilitado por administración; no se realizaron cambios de ACL ni operaciones productivas.
+================================================================================
