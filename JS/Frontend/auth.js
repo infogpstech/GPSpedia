@@ -63,6 +63,10 @@ function persistSessionValidation(user,result){
   if(profile)['ID','Nombre_Usuario','Nombre_Completo','Privilegios','Telefono','Correo_Electronico'].forEach(key=>{
    if(Object.prototype.hasOwnProperty.call(profile,key))updated[key]=profile[key];
   });
+  if(profile&&Object.prototype.hasOwnProperty.call(profile,'Privilegios')){
+   const role=String(profile.Privilegios||'').trim().toLowerCase();
+   if(role==='gefe'||role==='jefe')updated.Privilegios='Jefe';
+  }
   updated.SessionCreatedAt=result.createdAt||updated.SessionCreatedAt;
   updated.SessionLastActivityAt=result.lastActivityAt||updated.SessionLastActivityAt;
   if(Object.prototype.hasOwnProperty.call(result,'termsAcceptance'))updated.TermsAcceptance=result.termsAcceptance||null;
