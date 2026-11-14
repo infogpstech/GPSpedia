@@ -146,7 +146,7 @@ export async function routeAction(action, payload = {}, serviceOverride = null, 
     let outcome = "network_error", httpStatus = null;
     try {
         const token=payload&&typeof payload==='object'&&typeof payload.sessionToken==='string'?payload.sessionToken:'';
-        if(token&&!['login','validateSession','touchSession','logout'].includes(action)) {
+        if(token&&!['login','validateSession','touchSession','acceptTerms','logout'].includes(action)) {
             try {
                 await ensureSessionTouched_(token);
             } catch (sessionError) {
