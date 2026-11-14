@@ -124,7 +124,7 @@ async function test(name, callback) {
 await test('procesa respuesta de red válida y confirma ready después de actualizar estado', async () => {
     const h = createHarness({ networkData: snapshot() });
     await h.load();
-    assert.equal(h.state.catalogLoadStatus, 'ready');
+    assert.equal(h.state.catalogLoadStatus, 'ready', JSON.stringify({ warnings: h.warnings, errors: h.errors, patches: h.patches }));
     assert.equal(h.state.catalogData.cortes[0].marca, 'Toyota');
     assert.deepEqual(h.state.catalogData.sortedCategories, ['pickup']);
     assert.equal(h.saveCalls, 1);
