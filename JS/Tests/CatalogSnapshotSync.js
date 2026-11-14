@@ -224,7 +224,7 @@ async function runCatalogSnapshotSyncTests() {
     });
     await testAsync('guardar snapshot sin revisión invalida un cursor anterior', async () => {
         await saveCatalogWithCursor(snapshot(), 21);
-        await saveCatalog(snapshot([{ id: 'C-9', marca: 'Nissan' }]));
+        await saveCatalog(snapshot({ cortes: [{ id: 'C-9', marca: 'Nissan' }] }));
         const saved = await getCatalogSyncState();
         assert.equal(saved.snapshot.cortes[0].id, 'C-9');
         assert.equal(saved.cursor, null);
