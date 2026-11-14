@@ -39,7 +39,8 @@ function getSafeSheet(name) {
 function normalizeFeedbackRole(role) {
     const normalized = Array.from(String(role || "").normalize("NFD"))
         .filter(character => { const code = character.charCodeAt(0); return code < 768 || code > 879; }).join("");
-    return normalized.trim().toLowerCase();
+    const roleName = normalized.trim().toLowerCase();
+    return roleName === 'gefe' ? 'jefe' : roleName;
 }
 
 function getSessionExpirationStatus_(row,now=new Date()){
@@ -59,7 +60,7 @@ function assertFeedbackSession(payload,allowedRoles){
  if(tokenMatches.length!==1||String(tokenMatches[0][0]||"").trim()!==id||getSessionExpirationStatus_(tokenMatches[0],new Date()).expired)throw new Error("Acceso denegado: sesión inválida, duplicada, cruzada o expirada.");
  const userMatches=uh.getDataRange().getValues().slice(1).filter(r=>String(r[0]||"").trim()===id);if(userMatches.length!==1)throw new Error("Acceso denegado: perfil de usuario ausente o ambiguo.");
  const u=userMatches[0];if(String(u[7]||'').startsWith(ROLE_REVOCATION_SHARED_PREFIX))throw new Error("Acceso no autorizado: existe una revocación de rol pendiente. Inicia sesión nuevamente cuando finalice.");
- const role=String(u[3]||"").trim(),username=String(u[1]||"").trim(),normalized=normalizeFeedbackRole(role),active=['desarrollador','gefe','jefe','supervisor','tecnico','tecnico_exterior'];
+ const role=String(u[3]||"").trim(),username=String(u[1]||"").trim(),normalized=normalizeFeedbackRole(role),active=['desarrollador','jefe','supervisor','tecnico','tecnico_exterior'];
  if(!username||username.toLowerCase().startsWith('__deleted__:')||!active.includes(normalized))throw new Error("Acceso denegado: sesión no autorizada.");
  if(Array.isArray(allowedRoles)&&!allowedRoles.some(x=>normalizeFeedbackRole(x)===normalized))throw new Error("Acceso denegado: sesión no autorizada.");
  return{userId:id,role,userName:String(u[6]||u[1]||"Usuario")};
