@@ -77,6 +77,18 @@ function runSessionUiRoleInvalidationTests(sources) {
   assert(modal.includes("getUiSessionContext_()?.role !== \"desarrollador\""));
   assert(modal.includes("La sesión ya no tiene permisos para registrar tutoriales."));
  });
+ run("El acceso Developer usa el mismo contexto autenticado para mostrar y abrir el panel",()=>{
+  const render=slice(ui,"export function showApp(user)","// Variable local");
+  assert(render.includes("const appContext = getUiSessionContext_(user)"));
+  assert(render.includes("const userRole = appContext ? appContext.role : ''"));
+  assert(render.includes("userRole === 'desarrollador' ? 'flex' : 'none'"));
+  const open=slice(ui,"export async function openDevTools(...args)","function initAdminPanelListeners");
+  assert(open.includes("ensureUiSessionRole_(['desarrollador'])"));
+  assert(open.includes("openDevToolsModal_(...args)"));
+  assert(open.includes("showGlobalError"),"Si el contexto no es válido, debe explicar por qué no abre.");
+  const menu=slice(main,"// Dev Tools button listener","// 3. PWA installation prompt handler");
+  assert(menu.includes("ui.closeSideMenuAndRun(() => ui.openDevTools"));
+ });
  run("Inbox usa Privilegios normalizado y entrega el mismo rol a approve/reject",()=>{
   const f=slice(ui,"export function renderInboxDetail(","\nexport function ");
   assert(f.includes("const userRole = context.role"));
