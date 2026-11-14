@@ -155,6 +155,29 @@ function benchmarkPasswordKdf_() {
     });
 }
 
+// Diagnóstico de coste PBKDF2: solo lectura, exclusivo de Desarrollador y sin credenciales reales.
+function handleBenchmarkPasswordKdf_(payload) {
+    const userId = normalizeUserId(payload && payload.userId);
+    const sessionToken = payload && payload.sessionToken;
+    if (!userId || typeof sessionToken !== 'string' || !sessionToken.trim()) {
+        throw new Error('Se requiere una sesión válida de Desarrollador para ejecutar el benchmark.');
+    }
+    const session = validateSessionReadOnly_(sessionToken, userId);
+    if (!session || session.valid !== true) {
+        throw new Error('No se pudo validar la sesión para ejecutar el benchmark.');
+    }
+    if (normalizeRoleName(session.profile && session.profile.Privilegios) !== 'desarrollador') {
+        throw new Error('Acceso denegado: el benchmark PBKDF2 está reservado a Desarrollador.');
+    }
+    return {
+        status: 'success',
+        benchmarkOnly: true,
+        readOnly: true,
+        note: 'Usa únicamente una cadena de prueba fija; no lee, registra ni modifica contraseñas de usuarios.',
+        results: benchmarkPasswordKdf_()
+    };
+}
+
 function getLoginAttemptCacheKey(username) {
     const normalizedUsername = String(username || '').trim().toLowerCase();
     const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, normalizedUsername, Utilities.Charset.UTF_8);
@@ -584,6 +607,9 @@ function doPostInternal_(e) {
                 break;
             case 'migrateLegacyPasswords':
                 response = handleMigrateLegacyPasswords(request.payload);
+                break;
+            case 'benchmarkPasswordKdf':
+                response = handleBenchmarkPasswordKdf_(request.payload);
                 break;
             default:
                 throw new Error(`Acción desconocida: ${request.action}`);
