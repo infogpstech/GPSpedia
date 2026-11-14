@@ -46,12 +46,12 @@ function runSessionProfileRefreshTests(sources) {
  run('Valida que el perfil pertenezca al ID de la sesión',()=>{const f=extract(client,'isSessionProfileForUser_');const check=new Function(f+'\nreturn isSessionProfileForUser_;')();equal(check(user,{ID:'U1',Privilegios:'Tecnico'}),true);equal(check(user,{ID:'U2',Privilegios:'Desarrollador'}),false);equal(check(user,null),false);});
  run('AUTH actualiza LastActivityAt dentro de la misma operación protegida',()=>{
   const helper=extract(services[0][1],'touchProtectedAuthRequestSession_');
-  const fn=new Function('isSharedMutationAction_','validateAndTouchSession_',helper+'\\nreturn touchProtectedAuthRequestSession_;')(
+  const fn=new Function('isSharedMutationAction_','validateAndTouchSession_',helper+'\nreturn touchProtectedAuthRequestSession_;')(
    action=>['acceptTerms','changePassword','resetUserPassword','resetUserSessions','clearSensitiveLogs','deleteUser','updateUser','logout'].includes(action),
    token=>({valid:true,lastActivityAt:'2026-11-14T12:00:00.000Z'})
   );
   let calls=0;
-  const touch=new Function('isSharedMutationAction_','validateAndTouchSession_',helper+'\\nreturn touchProtectedAuthRequestSession_;')(
+  const touch=new Function('isSharedMutationAction_','validateAndTouchSession_',helper+'\nreturn touchProtectedAuthRequestSession_;')(
    action=>['acceptTerms','changePassword','resetUserPassword','resetUserSessions','clearSensitiveLogs','deleteUser','updateUser','logout'].includes(action),
    token=>{calls++;return{valid:true};}
   );
@@ -61,7 +61,7 @@ function runSessionProfileRefreshTests(sources) {
   touch('touchSession',{sessionToken:'valid-token'});
   equal(calls,1,'login y touchSession no deben duplicar la actualización.');
   let rejected=false;
-  const invalid=new Function('isSharedMutationAction_','validateAndTouchSession_',helper+'\\nreturn touchProtectedAuthRequestSession_;')(
+  const invalid=new Function('isSharedMutationAction_','validateAndTouchSession_',helper+'\nreturn touchProtectedAuthRequestSession_;')(
    ()=>true,()=>({valid:false,reason:'missing_session'})
   );
   try{invalid('updateUser',{sessionToken:'bad-token'});}catch(e){rejected=true;}
