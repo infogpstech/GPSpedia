@@ -60,7 +60,7 @@ export const ACTION_TO_SERVICE_MAP = {
     'initYouTubeUpload': 'FEEDBACK', 'getVideoApprovalByOperation': 'FEEDBACK', 'submitVideoForApproval': 'FEEDBACK', 'approveVideo': 'FEEDBACK', 'rejectVideo': 'FEEDBACK',
     'removeVehicleFromProblem': 'FEEDBACK', 'updatePysItem': 'FEEDBACK', 'updateTutorialItem': 'FEEDBACK',
     'migrateTimestamps': 'UTILITIES',
-    'ping': 'ADMIN', 'migrateCortesOperationIds': 'ADMIN', 'reconcilePendingImageUploads': 'ADMIN',
+    'ping': 'ADMIN', 'migrateCortesOperationIds': 'ADMIN', 'migrateIdentifiers': 'ADMIN', 'rollbackIdentifiers': 'ADMIN', 'reconcilePendingImageUploads': 'ADMIN',
     'backupDatabase': 'ADMIN', 'backupDrive': 'ADMIN', 'restoreDatabase': 'ADMIN', 'restoreDrive': 'ADMIN',
     'reorganizeDatabase': 'ADMIN', 'normalizeImages': 'ADMIN', 'organizePrimaryVehicleImages': 'ADMIN', 'restoreAllTrashedImages': 'ADMIN', 'addLogo': 'ADMIN', 'auditIdentifiers': 'ADMIN', 'createSheet': 'ADMIN', 'addColumn': 'ADMIN', 'driveCommand': 'ADMIN',
     'updateVehicleField': 'ADMIN', 'uploadAdminImage': 'ADMIN', 'getAdminImageUploadStatus': 'ADMIN',

@@ -819,7 +819,7 @@ function doGet(e) {
 
 
 function isSharedMutationAction_(action) {
-    return ["backupDatabase","backupDrive","restoreDatabase","restoreDrive","reorganizeDatabase","normalizeImages","organizePrimaryVehicleImages","restoreAllTrashedImages","addLogo","updateVehicleField","uploadAdminImage","migrateCortesOperationIds","reconcilePendingImageUploads","addOrUpdateCut","addSupplementaryInfo","createSheet","addColumn","driveCommand","recoverReplacedImage","deleteReplacedImage","restoreReplacedImageFromTrash","permanentlyDeleteReplacedImage","markReplacedImageInUse","saveUnusedImagesInventory","createCortesImageFolder","moveReplacedImage","getReplacedImageDownloadUrl","migrateReplacedImagesSchema"].includes(action);
+    return ["backupDatabase","backupDrive","restoreDatabase","restoreDrive","reorganizeDatabase","normalizeImages","organizePrimaryVehicleImages","restoreAllTrashedImages","addLogo","updateVehicleField","uploadAdminImage","migrateCortesOperationIds","migrateIdentifiers","rollbackIdentifiers","reconcilePendingImageUploads","addOrUpdateCut","addSupplementaryInfo","createSheet","addColumn","driveCommand","recoverReplacedImage","deleteReplacedImage","restoreReplacedImageFromTrash","permanentlyDeleteReplacedImage","markReplacedImageInUse","saveUnusedImagesInventory","createCortesImageFolder","moveReplacedImage","getReplacedImageDownloadUrl","migrateReplacedImagesSchema"].includes(action);
 }
 
 function doPost(e) {
@@ -1201,6 +1201,12 @@ function doPostInternal_(e) {
                 break;
             case 'auditIdentifiers':
                 response = handleAuditIdentifiers();
+                break;
+            case 'migrateIdentifiers':
+                response = handleMigrateIdentifiers_(payload, logMessage);
+                break;
+            case 'rollbackIdentifiers':
+                response = handleRollbackIdentifiers_(payload);
                 break;
             // Compatibilidad directa histórica; el mapa canónico dirige esta acción a WRITE.
             case 'checkOperation':
@@ -3456,6 +3462,371 @@ function handleAuditIdentifiers() {
         sheets
     };
 }
+
+
+const IDENTIFIER_MIGRATION_MANIFEST_SHEET_ = "__IdentifierMigrationManifest__";
+const IDENTIFIER_MIGRATION_MANIFEST_HEADERS_ = ["migrationId","manifestDigest","entryIndex","entryJson","status","batch","createdAt","updatedAt","lastError"];
+const IDENTIFIER_MIGRATION_ENTITIES_ = Object.freeze({
+    users: { sheet: "Users", idColumn: 1, headers: ["id"], kind: "user", numeric: false },
+    vehicle: { sheet: "Cortes", idColumn: 1, headers: ["id"], kind: "vehicle", numeric: true },
+    tutorial: { sheet: "Tutorial", idColumn: 1, headers: ["id"], kind: "tutorial", numeric: false },
+    problem: { sheet: "pys", idColumn: 1, headers: ["id_problem"], kind: "problem", numeric: false },
+    logo: { sheet: "LogosMarca", idColumn: 1, headers: ["id"], kind: "logo", numeric: true }
+});
+
+function identifierMigrationCanonical_(value) {
+    if (value instanceof Date) return { type: "date", value: value.toISOString() };
+    if (value === null || value === undefined) return null;
+    if (Array.isArray(value)) return value.map(identifierMigrationCanonical_);
+    if (typeof value === "object") {
+        const output = {};
+        Object.keys(value).sort().forEach(key => { output[key] = identifierMigrationCanonical_(value[key]); });
+        return output;
+    }
+    if (typeof value === "number" && !Number.isFinite(value)) return String(value);
+    return value;
+}
+
+function identifierMigrationDigest_(value) {
+    const bytes = Utilities.computeDigest(
+        Utilities.DigestAlgorithm.SHA_256,
+        JSON.stringify(identifierMigrationCanonical_(value)),
+        Utilities.Charset.UTF_8
+    );
+    return bytes.map(byte => ("0" + (byte & 255).toString(16)).slice(-2)).join("");
+}
+
+function identifierMigrationNormalizeId_(kind, value) {
+    const raw = String(value === null || value === undefined ? "" : value).trim();
+    if (!raw) return "";
+    if (kind === "vehicle" || kind === "logo") {
+        const number = Number(raw);
+        return Number.isSafeInteger(number) && number > 0 ? String(number) : "!invalid:" + raw;
+    }
+    return raw.toLowerCase();
+}
+
+function identifierMigrationValidId_(kind, value) {
+    const raw = String(value === null || value === undefined ? "" : value).trim();
+    if (kind === "user") return /^USR-[0-9]{4,}$/i.test(raw);
+    if (kind === "vehicle" || kind === "logo") return /^[1-9][0-9]*$/.test(raw) && Number.isSafeInteger(Number(raw));
+    if (kind === "tutorial") return /^tut-[a-z0-9][a-z0-9_-]*$/i.test(raw);
+    if (kind === "problem") return /^isue-[0-9]+$/i.test(raw) && Number(raw.slice(5)) > 0;
+    return false;
+}
+
+function identifierMigrationReadRow_(sheet, row) {
+    const width = Math.max(1, sheet.getLastColumn());
+    return {
+        values: sheet.getRange(row, 1, 1, width).getValues()[0],
+        formulas: sheet.getRange(row, 1, 1, width).getFormulas()[0]
+    };
+}
+
+function identifierMigrationRowDigest_(sheet, row) {
+    return identifierMigrationDigest_(identifierMigrationReadRow_(sheet, row));
+}
+
+function identifierMigrationSheetDigest_(sheet) {
+    const lastRow = Math.max(1, sheet.getLastRow());
+    const lastColumn = Math.max(1, sheet.getLastColumn());
+    const range = sheet.getRange(1, 1, lastRow, lastColumn);
+    return identifierMigrationDigest_({ values: range.getValues(), formulas: range.getFormulas() });
+}
+
+function identifierMigrationUniqueKey_(sheet, keyColumn, keyValue) {
+    const lastRow = sheet.getLastRow();
+    if (keyColumn < 2 || keyColumn > sheet.getLastColumn() || lastRow < 2) return false;
+    const wanted = String(keyValue).trim();
+    if (!wanted) return false;
+    const values = sheet.getRange(2, keyColumn, lastRow - 1, 1).getValues();
+    let matches = 0;
+    values.forEach(row => { if (String(row[0] === null || row[0] === undefined ? "" : row[0]).trim() === wanted) matches++; });
+    return matches === 1;
+}
+
+function identifierMigrationIdCount_(sheet, kind, normalizedId) {
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) return 0;
+    const values = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+    return values.filter(row => identifierMigrationNormalizeId_(kind, row[0]) === normalizedId).length;
+}
+
+function identifierMigrationBuildPlan_(payload, ss) {
+    const migrationId = String(payload && payload.migrationId || "").trim();
+    if (!/^[A-Za-z0-9_-]{8,64}$/.test(migrationId)) throw new Error("migrationId debe tener entre 8 y 64 caracteres seguros.");
+    const changes = payload && payload.changes;
+    if (!Array.isArray(changes) || !changes.length || changes.length > 100) throw new Error("El plan debe incluir entre 1 y 100 cambios explícitos.");
+    const seenRows = new Set(), seenNewIds = new Set(), entries = [], sheetDigests = {};
+    changes.forEach((change, index) => {
+        if (!change || typeof change !== "object" || Array.isArray(change)) throw new Error("Cambio inválido en la posición " + index + ".");
+        if (Array.isArray(change.references) && change.references.length) throw new Error("No se aceptan referencias manuales incompletas. Las referencias cruzadas deben resolverse en una tarea específica antes de migrar IDs existentes.");
+        const entity = String(change.entity || "").trim().toLowerCase();
+        if (entity === "relay") throw new Error("Relay permanece en diagnóstico: no se conoce su escritor ni su formato de ID.");
+        const spec = IDENTIFIER_MIGRATION_ENTITIES_[entity];
+        if (!spec) throw new Error("Entidad no admitida: " + entity + ".");
+        const sheet = ss.getSheetByName(spec.sheet);
+        if (!sheet || sheet.getLastRow() < 2) throw new Error("No se encontró la hoja de datos para " + entity + ".");
+        const header = String(sheet.getRange(1, spec.idColumn).getValue() || "").trim().toLowerCase();
+        if (!spec.headers.includes(header)) throw new Error("Encabezado ID incompatible en " + spec.sheet + ".");
+        const row = Number(change.row), keyColumn = Number(change.keyColumn);
+        if (!Number.isSafeInteger(row) || row < 2 || row > sheet.getLastRow()) throw new Error("Fila de origen inválida para " + entity + ".");
+        if (!Number.isSafeInteger(keyColumn) || keyColumn < 2 || keyColumn > sheet.getLastColumn() || keyColumn === spec.idColumn) throw new Error("Se requiere una columna de identidad estable distinta del ID en " + spec.sheet + ".");
+        const keyValue = String(change.keyValue === null || change.keyValue === undefined ? "" : change.keyValue).trim();
+        if (!keyValue || !identifierMigrationUniqueKey_(sheet, keyColumn, keyValue)) throw new Error("La clave estable no identifica exactamente una fila en " + spec.sheet + " (fila " + row + ").");
+        const rowData = identifierMigrationReadRow_(sheet, row);
+        if (String(rowData.values[keyColumn - 1] === null || rowData.values[keyColumn - 1] === undefined ? "" : rowData.values[keyColumn - 1]).trim() !== keyValue) throw new Error("La clave estable no coincide con la fila declarada en " + spec.sheet + " (fila " + row + ").");
+        if (!rowData.values.some((value, column) => column !== spec.idColumn - 1 && value !== "" && value !== null && value !== undefined)) throw new Error("La fila no contiene datos suficientes para identificar un registro.");
+        const mode = String(change.mode || "").trim();
+        const currentId = rowData.values[spec.idColumn - 1];
+        const currentText = String(currentId === null || currentId === undefined ? "" : currentId).trim();
+        const currentFormula = String(rowData.formulas[spec.idColumn - 1] || "");
+        const proposedText = String(change.newId === null || change.newId === undefined ? "" : change.newId).trim();
+        if (!identifierMigrationValidId_(spec.kind, proposedText)) throw new Error("El ID propuesto no cumple el formato vigente para " + entity + ".");
+        if (mode === "fill_missing") {
+            if (currentText || currentFormula) throw new Error("fill_missing solo puede completar una celda ID realmente vacía y sin fórmula.");
+            if (String(change.oldId === null || change.oldId === undefined ? "" : change.oldId).trim()) throw new Error("oldId debe estar vacío para fill_missing.");
+        } else if (mode === "freeze_formula") {
+            if (!currentFormula || !identifierMigrationValidId_(spec.kind, currentText) || proposedText !== currentText) throw new Error("freeze_formula solo conserva un ID válido calculado por fórmula; el valor no puede cambiar.");
+            if (String(change.oldId === null || change.oldId === undefined ? currentText : change.oldId).trim() !== currentText) throw new Error("oldId no coincide con el valor calculado actual.");
+            if (identifierMigrationIdCount_(sheet, spec.kind, identifierMigrationNormalizeId_(spec.kind, currentText)) !== 1) throw new Error("No se congela un ID duplicado; requiere reconciliación manual.");
+        } else {
+            throw new Error("Modo no admitido: use fill_missing o freeze_formula.");
+        }
+        const normalizedNew = identifierMigrationNormalizeId_(spec.kind, proposedText);
+        const rowKey = spec.sheet + ":" + row;
+        if (seenRows.has(rowKey)) throw new Error("El plan contiene dos cambios para la misma fila.");
+        seenRows.add(rowKey);
+        const newKey = entity + ":" + normalizedNew;
+        if (seenNewIds.has(newKey)) throw new Error("El plan propone IDs duplicados.");
+        seenNewIds.add(newKey);
+        const existingCount = identifierMigrationIdCount_(sheet, spec.kind, normalizedNew);
+        if (mode === "fill_missing" && existingCount !== 0) throw new Error("El ID propuesto ya existe en " + spec.sheet + ".");
+        if (mode === "freeze_formula" && existingCount !== 1) throw new Error("El ID de fórmula no es único en " + spec.sheet + ".");
+        if (!sheetDigests[spec.sheet]) sheetDigests[spec.sheet] = identifierMigrationSheetDigest_(sheet);
+        const simulated = { values: rowData.values.slice(), formulas: rowData.formulas.slice() };
+        simulated.values[spec.idColumn - 1] = spec.numeric ? Number(proposedText) : proposedText;
+        simulated.formulas[spec.idColumn - 1] = "";
+        const sourceFingerprint = identifierMigrationDigest_(rowData);
+        const afterFingerprint = identifierMigrationDigest_(simulated);
+        entries.push({
+            migrationId, entryIndex: index + 1, entity, sheet: spec.sheet, row, idColumn: spec.idColumn,
+            mode, oldValue: currentId === null || currentId === undefined ? "" : currentId,
+            oldFormula: currentFormula, newValue: spec.numeric ? Number(proposedText) : proposedText,
+            newId: proposedText, keyColumn, keyValue, sourceFingerprint, afterFingerprint,
+            sourceSheetFingerprint: sheetDigests[spec.sheet],
+            snapshotName: "__IDM_" + migrationId.slice(0, 12) + "_" + entity,
+            status: "PLANNED"
+        });
+    });
+    entries.sort((a, b) => a.sheet.localeCompare(b.sheet) || a.row - b.row);
+    entries.forEach((entry, index) => { entry.entryIndex = index + 1; });
+    const digestPayload = entries.map(entry => ({
+        entity: entry.entity, sheet: entry.sheet, row: entry.row, idColumn: entry.idColumn,
+        mode: entry.mode, oldValue: entry.oldValue, oldFormula: entry.oldFormula,
+        newValue: entry.newValue, keyColumn: entry.keyColumn, keyValue: entry.keyValue,
+        sourceFingerprint: entry.sourceFingerprint, afterFingerprint: entry.afterFingerprint,
+        sourceSheetFingerprint: entry.sourceSheetFingerprint
+    }));
+    return { migrationId, entries, manifestDigest: identifierMigrationDigest_(digestPayload), sheetDigests };
+}
+
+function identifierMigrationEnsureSnapshot_(ss, entry) {
+    const source = ss.getSheetByName(entry.sheet);
+    if (!source) throw new Error("No existe la hoja fuente " + entry.sheet + ".");
+    let snapshot = ss.getSheetByName(entry.snapshotName);
+    if (!snapshot) {
+        if (identifierMigrationSheetDigest_(source) !== entry.sourceSheetFingerprint) throw new Error("La hoja " + entry.sheet + " cambió después del dry-run; no se creó el snapshot.");
+        snapshot = source.copyTo(ss);
+        snapshot.setName(entry.snapshotName);
+        snapshot.hideSheet();
+    }
+    if (identifierMigrationSheetDigest_(snapshot) !== entry.sourceSheetFingerprint) throw new Error("El snapshot " + entry.snapshotName + " no coincide con la huella previa.");
+    return entry.snapshotName;
+}
+
+function identifierMigrationEnsureManifestSheet_(ss) {
+    let sheet = ss.getSheetByName(IDENTIFIER_MIGRATION_MANIFEST_SHEET_);
+    if (!sheet) {
+        sheet = ss.insertSheet(IDENTIFIER_MIGRATION_MANIFEST_SHEET_);
+        sheet.getRange(1, 1, 1, IDENTIFIER_MIGRATION_MANIFEST_HEADERS_.length).setValues([IDENTIFIER_MIGRATION_MANIFEST_HEADERS_]);
+        sheet.hideSheet();
+    }
+    const headers = sheet.getRange(1, 1, 1, IDENTIFIER_MIGRATION_MANIFEST_HEADERS_.length).getValues()[0].map(value => String(value || "").trim());
+    if (JSON.stringify(headers) !== JSON.stringify(IDENTIFIER_MIGRATION_MANIFEST_HEADERS_)) throw new Error("La hoja de manifiesto existe con un esquema incompatible; no se modificó.");
+    return sheet;
+}
+
+function identifierMigrationFindManifest_(sheet, migrationId) {
+    if (sheet.getLastRow() < 2) return [];
+    const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, IDENTIFIER_MIGRATION_MANIFEST_HEADERS_.length).getValues();
+    return rows.map((row, index) => ({
+        rowIndex: index + 2, migrationId: String(row[0] || ""), manifestDigest: String(row[1] || ""),
+        entryIndex: Number(row[2]), entryJson: String(row[3] || ""), status: String(row[4] || ""),
+        batch: Number(row[5]) || 0
+    })).filter(item => item.migrationId === migrationId);
+}
+
+function identifierMigrationWriteManifestStatus_(sheet, item, status, batch, errorMessage) {
+    sheet.getRange(item.rowIndex, 5, 1, 4).setValues([[
+        status, batch || item.batch || 0, new Date().toISOString(), String(errorMessage || "").slice(0, 300)
+    ]]);
+    item.status = status;
+    item.batch = batch || item.batch || 0;
+}
+
+function identifierMigrationReadEntry_(item) {
+    let entry;
+    try { entry = JSON.parse(item.entryJson); } catch (error) { throw new Error("El manifiesto contiene una entrada ilegible."); }
+    if (!entry || entry.migrationId !== item.migrationId || entry.entryIndex !== item.entryIndex) throw new Error("La identidad de la entrada del manifiesto no coincide.");
+    return entry;
+}
+
+function handleMigrateIdentifiers_(payload, logMessage) {
+    const options = payload || {};
+    const ss = getSpreadsheet();
+    const migrationId = String(options.migrationId || "").trim();
+    if (options.dryRun !== false || options.confirm !== true) {
+        const plan = identifierMigrationBuildPlan_(options, ss);
+        return {
+            status: "success", dryRun: true, migrationId: plan.migrationId,
+            manifestDigest: plan.manifestDigest, changes: plan.entries.length,
+            entities: Array.from(new Set(plan.entries.map(entry => entry.entity))),
+            snapshots: Array.from(new Set(plan.entries.map(entry => entry.sheet))),
+            batchSize: Math.min(10, Math.max(1, Number(options.batchSize) || 5)),
+            message: "Dry-run validado. No se escribieron hojas, propiedades ni archivos."
+        };
+    }
+    if (!migrationId || !/^[A-Za-z0-9_-]{8,64}$/.test(migrationId)) throw new Error("migrationId inválido.");
+    const digest = String(options.manifestDigest || "").trim().toLowerCase();
+    if (!/^[a-f0-9]{64}$/.test(digest)) throw new Error("Se requiere el manifestDigest SHA-256 del dry-run aprobado.");
+    const batchSize = Math.min(10, Math.max(1, Number(options.batchSize) || 5));
+    const manifestSheet = identifierMigrationEnsureManifestSheet_(ss);
+    let manifestItems = identifierMigrationFindManifest_(manifestSheet, migrationId);
+    let entries;
+    if (!manifestItems.length) {
+        const plan = identifierMigrationBuildPlan_(options, ss);
+        if (plan.manifestDigest !== digest) throw new Error("El plan cambió desde el dry-run; genera una nueva simulación.");
+        plan.entries.forEach(entry => identifierMigrationEnsureSnapshot_(ss, entry));
+        const now = new Date().toISOString();
+        const rows = plan.entries.map(entry => [
+            migrationId, digest, entry.entryIndex, JSON.stringify(entry), "PLANNED", 0, now, now, ""
+        ]);
+        const firstRow = manifestSheet.getLastRow() + 1;
+        manifestSheet.getRange(firstRow, 1, rows.length, IDENTIFIER_MIGRATION_MANIFEST_HEADERS_.length).setValues(rows);
+        SpreadsheetApp.flush();
+        manifestItems = identifierMigrationFindManifest_(manifestSheet, migrationId);
+        if (manifestItems.length !== plan.entries.length || manifestItems.some(item => item.manifestDigest !== digest)) throw new Error("No se pudo verificar el manifiesto persistido.");
+        entries = plan.entries;
+    } else {
+        if (manifestItems.some(item => item.manifestDigest !== digest) || manifestItems.length > 100) throw new Error("El manifiesto existente no coincide con el digest confirmado.");
+        entries = manifestItems.map(identifierMigrationReadEntry_);
+        if (options.changes && options.changes.length) {
+            const fresh = identifierMigrationBuildPlan_(options, ss);
+            if (fresh.manifestDigest !== digest) throw new Error("El plan reenviado no coincide con el manifiesto original.");
+        }
+    }
+    manifestItems.sort((a, b) => a.entryIndex - b.entryIndex);
+    const pending = manifestItems.filter(item => item.status !== "VERIFIED" && item.status !== "ROLLED_BACK");
+    const selected = pending.slice(0, batchSize);
+    let processed = 0;
+    for (const item of selected) {
+        const entry = entries.find(candidate => candidate.entryIndex === item.entryIndex);
+        if (!entry) throw new Error("Falta una entrada del manifiesto.");
+        const sheet = ss.getSheetByName(entry.sheet);
+        if (!sheet || !identifierMigrationUniqueKey_(sheet, entry.keyColumn, entry.keyValue)) {
+            identifierMigrationWriteManifestStatus_(manifestSheet, item, "CONFLICT", item.batch + 1, "La hoja o clave estable dejó de ser única.");
+            SpreadsheetApp.flush();
+            break;
+        }
+        const currentDigest = identifierMigrationRowDigest_(sheet, entry.row);
+        if (currentDigest === entry.afterFingerprint) {
+            identifierMigrationWriteManifestStatus_(manifestSheet, item, "VERIFIED", item.batch + 1, "");
+            processed++;
+            continue;
+        }
+        if (currentDigest !== entry.sourceFingerprint) {
+            identifierMigrationWriteManifestStatus_(manifestSheet, item, "CONFLICT", item.batch + 1, "La huella de la fila cambió; no se sobrescribió.");
+            SpreadsheetApp.flush();
+            break;
+        }
+        try {
+            sheet.getRange(entry.row, entry.idColumn).setValue(entry.newValue);
+            SpreadsheetApp.flush();
+            if (identifierMigrationRowDigest_(sheet, entry.row) !== entry.afterFingerprint) throw new Error("La lectura posterior no coincide con la huella esperada.");
+            identifierMigrationWriteManifestStatus_(manifestSheet, item, "VERIFIED", item.batch + 1, "");
+            SpreadsheetApp.flush();
+            processed++;
+            if (logMessage) logMessage("Migración IDs", entry.entity + " fila " + entry.row + " verificada.", processed, selected.length);
+        } catch (error) {
+            let rolledBack = false;
+            try {
+                const cell = sheet.getRange(entry.row, entry.idColumn);
+                if (String(cell.getValue() === null || cell.getValue() === undefined ? "" : cell.getValue()) === String(entry.newValue)) {
+                    if (entry.oldFormula) cell.setFormula(entry.oldFormula);
+                    else if (entry.oldValue === "" || entry.oldValue === null || entry.oldValue === undefined) cell.clearContent();
+                    else cell.setValue(entry.oldValue);
+                    SpreadsheetApp.flush();
+                    rolledBack = identifierMigrationRowDigest_(sheet, entry.row) === entry.sourceFingerprint;
+                }
+            } catch (rollbackError) { rolledBack = false; }
+            identifierMigrationWriteManifestStatus_(manifestSheet, item, rolledBack ? "ROLLED_BACK" : "CONFLICT", item.batch + 1, String(error && error.message || error));
+            SpreadsheetApp.flush();
+            break;
+        }
+    }
+    manifestItems = identifierMigrationFindManifest_(manifestSheet, migrationId).sort((a, b) => a.entryIndex - b.entryIndex);
+    const verified = manifestItems.filter(item => item.status === "VERIFIED").length;
+    const conflicts = manifestItems.filter(item => item.status === "CONFLICT").length;
+    const rolledBack = manifestItems.filter(item => item.status === "ROLLED_BACK").length;
+    const complete = verified === manifestItems.length;
+    return {
+        status: conflicts || rolledBack ? "partial" : "success",
+        dryRun: false, migrationId, manifestDigest: digest,
+        total: manifestItems.length, processed, verified, conflicts, rolledBack,
+        remaining: manifestItems.length - verified - conflicts - rolledBack,
+        nextBatchSize: batchSize,
+        message: complete ? "Migración completada; todas las filas fueron verificadas." : "Lote procesado. Reanuda con el mismo migrationId y manifestDigest."
+    };
+}
+
+function handleRollbackIdentifiers_(payload) {
+    const options = payload || {};
+    if (options.dryRun !== false || options.confirm !== true) throw new Error("La reversión requiere dryRun:false y confirm:true.");
+    const migrationId = String(options.migrationId || "").trim();
+    const digest = String(options.manifestDigest || "").trim().toLowerCase();
+    if (!/^[A-Za-z0-9_-]{8,64}$/.test(migrationId) || !/^[a-f0-9]{64}$/.test(digest)) throw new Error("Se requiere migrationId y manifestDigest válidos.");
+    const ss = getSpreadsheet(), manifestSheet = ss.getSheetByName(IDENTIFIER_MIGRATION_MANIFEST_SHEET_);
+    if (!manifestSheet) throw new Error("No existe un manifiesto para revertir.");
+    const items = identifierMigrationFindManifest_(manifestSheet, migrationId).sort((a, b) => b.entryIndex - a.entryIndex);
+    if (!items.length || items.some(item => item.manifestDigest !== digest)) throw new Error("El manifiesto no existe o el digest no coincide.");
+    let rolledBack = 0;
+    for (const item of items) {
+        if (item.status === "ROLLED_BACK") continue;
+        if (item.status !== "VERIFIED") throw new Error("La reversión se detuvo: todas las entradas deben estar VERIFIED o ROLLED_BACK.");
+        const entry = identifierMigrationReadEntry_(item), sheet = ss.getSheetByName(entry.sheet);
+        if (!sheet || !identifierMigrationUniqueKey_(sheet, entry.keyColumn, entry.keyValue) || identifierMigrationRowDigest_(sheet, entry.row) !== entry.afterFingerprint) {
+            identifierMigrationWriteManifestStatus_(manifestSheet, item, "CONFLICT", item.batch, "La huella posterior cambió; rollback detenido.");
+            SpreadsheetApp.flush();
+            throw new Error("La fila " + entry.row + " de " + entry.sheet + " cambió después de la migración; no se revirtió.");
+        }
+        const cell = sheet.getRange(entry.row, entry.idColumn);
+        if (entry.oldFormula) cell.setFormula(entry.oldFormula);
+        else if (entry.oldValue === "" || entry.oldValue === null || entry.oldValue === undefined) cell.clearContent();
+        else cell.setValue(entry.oldValue);
+        SpreadsheetApp.flush();
+        if (identifierMigrationRowDigest_(sheet, entry.row) !== entry.sourceFingerprint) {
+            identifierMigrationWriteManifestStatus_(manifestSheet, item, "CONFLICT", item.batch, "No se pudo verificar la huella original tras rollback.");
+            SpreadsheetApp.flush();
+            throw new Error("No se pudo verificar la reversión de " + entry.sheet + " fila " + entry.row + ".");
+        }
+        identifierMigrationWriteManifestStatus_(manifestSheet, item, "ROLLED_BACK", item.batch, "");
+        SpreadsheetApp.flush();
+        rolledBack++;
+    }
+    return { status: "success", dryRun: false, migrationId, rolledBack, total: items.length, message: "Reversión verificada. Los snapshots y el manifiesto se conservaron." };
+}
+
 
 function getNextLogoIdLocked_(sheet) {
     if (!sheet) throw new Error("No se encontró la hoja LogosMarca.");
