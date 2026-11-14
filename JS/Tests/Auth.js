@@ -38,8 +38,7 @@ const COLS_ACTIVE_SESSIONS = {
 
 const SESSION_LIMITS = {
     'desarrollador': Infinity,
-    'gefe': 10,
-    'jefe': 3, // Alias de compatibilidad con USERS
+    'jefe': 3,
     'supervisor': 3,
     'tecnico': 2,
     'tecnico_exterior': 1
@@ -986,7 +985,7 @@ function isActiveAuthUserRecord(row) {
     const username = String(row[COLS_USERS.Nombre_Usuario - 1] || '').trim();
     const role = normalizeRoleName(row[COLS_USERS.Privilegios - 1]);
     return Boolean(username) && !username.startsWith('__deleted__:') &&
-        ['desarrollador', 'gefe', 'jefe', 'supervisor', 'tecnico', 'tecnico_exterior'].includes(role);
+        ['desarrollador', 'jefe', 'supervisor', 'tecnico', 'tecnico_exterior'].includes(role);
 }
 
 // Cuenta únicamente cuentas activas con identidad de rol Desarrollador.
@@ -1000,7 +999,8 @@ function countActiveDevelopers_(records) {
     }).length;
 }
 function normalizeRoleName(value) {
-    return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+    const normalized = String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+    return normalized === 'gefe' ? 'jefe' : normalized; // Compatibilidad temporal con registros heredados.
 }
 function normalizeUserId(value) {
     return String(value === null || value === undefined ? '' : value).trim();
@@ -1067,7 +1067,7 @@ function roleRevocationPropertyKey_(userId) {
 function isRoleRevocationPendingValue_(value) { return String(value || '').startsWith(ROLE_REVOCATION_SHARED_PREFIX); }
 function parseRoleRevocationMarker_(raw) {
  if(typeof raw!=='string'||!raw)return null;let marker;try{marker=JSON.parse(raw);}catch(error){return{invalid:true};}
- if(!marker||typeof marker!=='object'||Array.isArray(marker)||!normalizeUserId(marker.userId)||typeof marker.oldRole!=='string'||!marker.oldRole.trim()||typeof marker.newRole!=='string'||!marker.newRole.trim()||!Number.isFinite(Number(marker.markedAt))||!['desarrollador','gefe','jefe','supervisor','tecnico','tecnico_exterior'].includes(normalizeRoleName(marker.oldRole))||!['desarrollador','gefe','supervisor','tecnico','tecnico_exterior'].includes(normalizeRoleName(marker.newRole)))return{invalid:true};
+ if(!marker||typeof marker!=='object'||Array.isArray(marker)||!normalizeUserId(marker.userId)||typeof marker.oldRole!=='string'||!marker.oldRole.trim()||typeof marker.newRole!=='string'||!marker.newRole.trim()||!Number.isFinite(Number(marker.markedAt))||!['desarrollador','jefe','supervisor','tecnico','tecnico_exterior'].includes(normalizeRoleName(marker.oldRole))||!['desarrollador','jefe','supervisor','tecnico','tecnico_exterior'].includes(normalizeRoleName(marker.newRole)))return{invalid:true};
  if(Object.prototype.hasOwnProperty.call(marker,'newFullName')&&(typeof marker.newFullName!=='string'||marker.newFullName.length>120))return{invalid:true};
  return marker;
 }
@@ -1322,7 +1322,6 @@ function handleUpdateUser(payload) {
         const normalizedTargetRole = normalizeRoleName(currentTargetRole);
         const canUpdate = {
             desarrollador: () => true,
-            gefe: role => ['supervisor', 'tecnico'].includes(role),
             jefe: role => ['supervisor', 'tecnico'].includes(role),
             supervisor: role => role === 'tecnico'
         };
@@ -1331,8 +1330,7 @@ function handleUpdateUser(payload) {
         }
 
         const allowedRoles = {
-            desarrollador: ['desarrollador', 'gefe', 'supervisor', 'tecnico', 'tecnico_exterior'],
-            gefe: ['supervisor', 'tecnico'],
+            desarrollador: ['desarrollador', 'jefe', 'supervisor', 'tecnico', 'tecnico_exterior'],
             jefe: ['supervisor', 'tecnico'],
             supervisor: ['tecnico']
         };
@@ -1342,7 +1340,7 @@ function handleUpdateUser(payload) {
             if (!allowedRoles[requesterRole] || !allowedRoles[requesterRole].includes(normalizeRoleName(nextRole))) {
                 throw new Error(`El rol no tiene permisos para asignar el privilegio '${nextRole}'.`);
             }
-            if (!['Desarrollador', 'Gefe', 'Supervisor', 'Tecnico', 'Tecnico_exterior'].includes(nextRole)) {
+            if (!['Desarrollador', 'Jefe', 'Supervisor', 'Tecnico', 'Tecnico_exterior'].includes(nextRole)) {
                 throw new Error('El privilegio solicitado no es válido.');
             }
         }
@@ -1669,7 +1667,6 @@ function handleDeleteUser(payload) {
         const targetRole = normalizeRoleName(target.row[COLS_USERS.Privilegios - 1]);
         const canDelete = {
             desarrollador: () => true,
-            gefe: role => ['supervisor', 'tecnico'].includes(role),
             jefe: role => ['supervisor', 'tecnico'].includes(role),
             supervisor: role => role === 'tecnico'
         };
