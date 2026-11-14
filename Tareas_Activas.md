@@ -507,3 +507,25 @@ Si cualquier comprobación falla, no continuar ni descartar cambios locales. Con
 - Prueba `PysModalNavigation`: 9/9 PASS.
 - GitHub Actions run `43630661037`: 95 suites / 1,401 pruebas / 0 fallos.
 - Falta comprobar visualmente en el modal real, en viewport móvil y escritorio, que ambas tarjetas tengan la misma altura y que el ancho/espaciado del carrusel no se desplace.
+
+## Adenda — compatibilidad de sesión y tarjeta Agregar Tutorial (2026-11-14)
+
+### GP-UX-02 — Tarjeta «Agregar Tutorial»
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
+
+- Causa identificada: AUTH acepta sesiones restauradas con `ID` o `id`, pero `getUiSessionContext_()` solo reconocía `ID`. Una sesión heredada con `id` en minúscula era válida para AUTH, pero no generaba contexto de rol en UI; la condición de la tarjeta quedaba falsa.
+- Corrección: `getUiSessionContext_()` usa `user.ID || user.id`. Se conserva la exigencia de `SessionToken` y la normalización de `Privilegios`.
+- Seguridad: la tarjeta continúa visible únicamente para Desarrollador; `openAddTutorialModal()` y el backend mantienen sus comprobaciones de rol. No se ampliaron permisos.
+- Pruebas AUG-042: `SessionUiRoleInvalidation` 14/14 PASS.
+- GitHub Actions run `43630870843`: **SUCCESS**, 95 suites / 1,404 pruebas / 0 fallos.
+- Pendiente Beta: abrir Tutoriales con una sesión Desarrollador restaurada y comprobar la tarjeta; verificar que Técnico y demás roles no privilegiados no la ven y que el backend rechaza `addTutorial` para ellos.
+
+### GP-UX-02 — Tarjeta «Agregar Problema»
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
+
+- La estructura de tarjeta relacionada y tarjeta de alta fue normalizada con wrapper/dimensiones compartidos.
+- `PysModalNavigation`: 9/9 PASS; CI run `43630661037`: 95 suites / 1,401 pruebas / 0 fallos.
+- Pendiente Beta: comprobar dimensiones reales y espaciado en el modal en móvil y escritorio.
+
+### GP-UX-03 / GP-PWA-01
+- Se conserva la implementación móvil de Inbox y recarga PWA registrada en la adenda anterior. La validación visual/dispositivos reales y la actualización de la PWA instalada siguen reservadas a Beta.
