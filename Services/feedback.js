@@ -2512,7 +2512,7 @@ function normalizeTutorialField_(value, label, maxLength, required) {
 function normalizeTutorialCatalogImageId_(value) {
     const raw = String(value || "").trim();
     if (!raw) return null;
-    const match = raw.match(/file\\/d\\/([A-Za-z0-9_-]+)|id=([A-Za-z0-9_-]+)|\\/d\\/([A-Za-z0-9_-]+)/i);
+    const match = raw.match(/file\/d\/([A-Za-z0-9_-]+)|id=([A-Za-z0-9_-]+)|\/d\/([A-Za-z0-9_-]+)/i);
     if (match) {
         const id = match[1] || match[2] || match[3];
         return id && id.length > 20 ? id : null;
