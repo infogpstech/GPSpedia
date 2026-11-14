@@ -165,7 +165,7 @@ function getAuthenticatedCollaborator(payload, allowedRoles){
   const u=userMatches[0];if(String(u[COLS_USERS.SessionToken-1]||'').startsWith(ROLE_REVOCATION_SHARED_PREFIX))throw new Error("Acceso no autorizado: existe una revocación de rol pendiente. Inicia sesión nuevamente cuando finalice.");
   const username=String(u[COLS_USERS.Nombre_Usuario-1]||'').trim();
   const role=String(u[COLS_USERS.Privilegios-1]||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
-  if(!username||username.startsWith('__deleted__:')||!['desarrollador','gefe','jefe','supervisor','tecnico','tecnico_exterior'].includes(role))throw new Error("Acceso no autorizado: la cuenta no está activa o no tiene un rol válido.");
+  if(!username||username.startsWith('__deleted__:')||!['desarrollador','jefe','supervisor','tecnico','tecnico_exterior'].includes(role))throw new Error("Acceso no autorizado: la cuenta no está activa o no tiene un rol válido.");
   if(Array.isArray(allowedRoles)&&!allowedRoles.includes(role))throw new Error("Acceso no autorizado: tu rol no puede agregar información suplementaria.");
   const name=String(u[COLS_USERS.Nombre_Completo-1]||'').trim();if(!name)throw new Error("El perfil del usuario no tiene un nombre completo registrado.");return name;
 }
