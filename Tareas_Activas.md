@@ -376,3 +376,11 @@ Si cualquier comprobación falla, no continuar ni descartar cambios locales. Con
 - [ ] Confirmar que sesión inválida, expirada o con revocación pendiente continúa sin poder aceptar ni acceder al catálogo.
 
 **Nota de alcance:** el identificador se conserva en el almacenamiento local del origen y perfil de navegador. Borrar los datos del sitio o utilizar otro navegador/perfil genera una identidad local nueva; no se realiza identificación física ni fingerprinting del dispositivo.
+
+
+### Refinamiento adicional — validación de sesión al aceptar el aviso
+
+- [x] Confirmar que el preflight de acceptTerms usa validación de solo lectura y no renueva LastActivityAt.
+- [x] Conservar validateAndTouchSession_ para las demás mutaciones autenticadas.
+- [x] Probar que acceptTerms usa el preflight read-only y logout mantiene la ruta normal; PASS.
+- [x] Repetir SharedMutationCoordinator 41/41 y TermsModalAccessibility 12/12; PASS.
