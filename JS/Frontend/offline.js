@@ -1069,8 +1069,14 @@ export async function getCatalogSyncState() {
         const cursorRequest = store.get(CATALOG_SYNC_CURSOR_KEY);
         snapshotRequest.onsuccess = () => { snapshot = snapshotRequest.result; finish(); };
         cursorRequest.onsuccess = () => { cursor = cursorRequest.result; finish(); };
-        snapshotRequest.onerror = () => { throw snapshotRequest.error || new Error('No se pudo leer el snapshot local.'); };
-        cursorRequest.onerror = () => { throw cursorRequest.error || new Error('No se pudo leer el cursor local.'); };
+        snapshotRequest.onerror = () => {
+            failure = snapshotRequest.error || new Error('No se pudo leer el snapshot local.');
+            try { transaction.abort(); } catch (abortError) {}
+        };
+        cursorRequest.onerror = () => {
+            failure = cursorRequest.error || new Error('No se pudo leer el cursor local.');
+            try { transaction.abort(); } catch (abortError) {}
+        };
         return result;
     }).then(result => result || { snapshot: null, cursor: null });
 }
