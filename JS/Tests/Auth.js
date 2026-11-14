@@ -2148,7 +2148,20 @@ function handleMigrateLegacyPasswords(payload) {
         const readCandidates = () => {
             const rows = usersSheet.getDataRange().getValues();
             const candidates = [];
+            const activeIds = [];
             let alreadyCurrent = 0, legacyHashedPendingLogin = 0, inactiveSkipped = 0, emptySkipped = 0, unsupportedSkipped = 0;
+            for (let i = 1; i < rows.length; i++) {
+                const account = rows[i];
+                if (isActiveAuthUserRecord(account)) {
+                    activeIds.push(normalizeUserId(account[COLS_USERS.ID - 1]).toUpperCase());
+                }
+            }
+            const activeIdCounts = activeIds.reduce((counts, id) => {
+                const key = id || '__MISSING_ID__';
+                counts[key] = (counts[key] || 0) + 1;
+                return counts;
+            }, {});
+            const ambiguousActiveAccounts = activeIds.filter(id => !id || activeIdCounts[id] > 1).length;
             for (let i = 1; i < rows.length; i++) {
                 const row = rows[i];
                 if (!isActiveAuthUserRecord(row)) { inactiveSkipped++; continue; }
@@ -2168,7 +2181,7 @@ function handleMigrateLegacyPasswords(payload) {
                 if (/^(?:pbkdf2-|\$2[aby]\$|\$argon2|scrypt\$)/i.test(stored)) { unsupportedSkipped++; continue; }
                 candidates.push({ rowIndex: i + 1, password: stored });
             }
-            return { rows, candidates, alreadyCurrent, legacyHashedPendingLogin, inactiveSkipped, emptySkipped, unsupportedSkipped };
+            return { rows, candidates, alreadyCurrent, legacyHashedPendingLogin, inactiveSkipped, emptySkipped, unsupportedSkipped, ambiguousActiveAccounts };
         };
 
         const snapshot = readCandidates();
@@ -2179,6 +2192,7 @@ function handleMigrateLegacyPasswords(payload) {
                 wouldMigrate: Math.min(snapshot.candidates.length, batchSize),
                 alreadyCurrent: snapshot.alreadyCurrent,
                 legacyHashedPendingLogin: snapshot.legacyHashedPendingLogin,
+                ambiguousActiveAccounts: snapshot.ambiguousActiveAccounts,
                 inactiveSkipped: snapshot.inactiveSkipped,
                 emptySkipped: snapshot.emptySkipped,
                 unsupportedSkipped: snapshot.unsupportedSkipped,
@@ -2187,6 +2201,9 @@ function handleMigrateLegacyPasswords(payload) {
             };
         }
 
+        if (snapshot.ambiguousActiveAccounts > 0) {
+            throw new Error('Migración detenida: hay cuentas activas con ID vacío o duplicado. Resuelve esas ambigüedades y repite el dry-run antes de escribir.');
+        }
         const batch = snapshot.candidates.slice(0, batchSize);
         let migrated = 0;
         for (const item of batch) {
