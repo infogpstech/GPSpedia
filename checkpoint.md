@@ -296,3 +296,29 @@ VALIDACIÓN Y LÍMITES
 - La inspección de fórmulas y valores reales de Spreadsheet/Drive requiere dry-run de solo lectura en Beta; no se efectuaron operaciones productivas.
 - Últimos commits de documentación: cierre P0 en Tareas_Activas.md y registro en ChangesLogs.txt. Este checkpoint deja constancia del estado previo a su propio commit.
 ================================================================================
+
+
+================================================================================
+CONTINUIDAD — 2026-11-14 — NORMALIZACIÓN DEL ROL JEFE
+Rama de trabajo: GPSpedia2.2.5_work
+
+DECISIÓN CANÓNICA
+- El único nombre válido y visible del rol es **Jefe** (código normalizado: jefe). No se deben volver a ofrecer, crear ni asignar valores Gefe/gefe.
+- Para evitar bloquear usuarios mientras se actualiza la fuente de datos, los servicios y el frontend convierten temporalmente cualquier registro heredado Gefe/gefe a Jefe/jefe al leerlo. Esta conversión no constituye un segundo rol permitido.
+
+CAMBIOS EN CÓDIGO
+- AUTH: un único límite de sesión para jefe; reglas de actualización y validación de marcadores usan el rol canónico.
+- USERS: creación y selección de roles ofrece únicamente Jefe; las comprobaciones de usuarios existentes normalizan el valor heredado.
+- ADMIN: autorización de edición y rol devuelto por contexto usan jefe/Jefe.
+- FEEDBACK y WRITE: matrices de roles permitidos usan únicamente jefe.
+- Frontend JS/Frontend/ui.js: las condiciones de visibilidad/autorización de interfaz usan únicamente jefe; el normalizador transforma registros heredados antes de evaluar permisos.
+- Se actualizaron Tareas_Activas.md y ChangesLogs.txt.
+
+PENDIENTE DE SPREADSHEET (REQUIERE ACTUALIZACIÓN EXTERNA)
+1. En la hoja Users, columna Privilegios, reemplazar el valor de cada fila Gefe por Jefe.
+2. Editar la validación de datos/lista desplegable de esa columna: eliminar Gefe e incluir Jefe como única opción para ese nivel.
+3. Revisar otras listas desplegables o rangos auxiliares que ofrezcan Gefe y sustituirlo por Jefe.
+4. Tras verificar que no quedan filas ni listas con el valor antiguo, se podrá retirar la conversión temporal de compatibilidad del código.
+
+No se consultó ni modificó la Spreadsheet, ni se desplegaron Apps Script. No se ejecutaron pruebas Node/CLI o integración; la revisión de esta tarea fue estática. La siguiente validación debe comprobar sintaxis, suites de servicios y datos reales de Beta antes de publicar.
+================================================================================
