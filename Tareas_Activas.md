@@ -610,7 +610,7 @@ Si cualquier comprobación falla, no continuar ni descartar cambios locales. Con
 
 ## Adenda — requisitos corregidos de actualización PWA e Inbox (2026-11-14)
 
-**Estado: REQUISITOS REGISTRADOS; IMPLEMENTACIÓN PENDIENTE.** Esta adenda precisa y reemplaza cualquier interpretación anterior que propusiera una recarga manual como solución al gesto nativo.
+**Estado: IMPLEMENTACIÓN LOCAL COMPLETADA; VALIDACIÓN BETA PENDIENTE.** Esta adenda precisa que no se añade recarga manual: el navegador y el Service Worker comprueban actualizaciones en segundo plano, mientras la recarga y el gesto nativos permanecen disponibles.
 
 ### GP-PWA-02 — Restaurar actualización nativa del navegador/PWA
 **Prioridad: alta.**
