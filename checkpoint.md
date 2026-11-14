@@ -981,3 +981,12 @@ La anotación previa que declaraba inaccesibles los runs de push queda superada 
 - P1 se registra como **COMPLETADA CON VALIDACIÓN DIFERIDA A BETA**. Las pruebas con múltiples pestañas, offline/reconexión y dispositivos/navegadores reales permanecen pendientes de Beta; no bloquean el cierre local según las normas.
 - Commits de esta continuación: prueba inicial `3d6b1a4c17a5c04522eec0cbcdb6c332c05758cd`; corrección del harness `881ebac152faee2a57c95bcd0a9794249ed81810`; backlog P1 `8ce0b1620897bcc7d8104b09d8b468614f4b97a2`; changelog `389166ef91df7073b2b60d1b892378272ce27d0d`.
 - Siguiente paquete del backlog: P2 — migración de contraseñas e identificadores. El código/motor y pruebas locales están implementados; las acciones pendientes dependen de benchmark en runtime Apps Script Beta, auditoría real de IDs/Relay y dry-run/rollback sobre copia Beta. Se revisarán dependencias para determinar si hay una prueba local adicional que pueda cerrarse sin acceso externo.
+
+
+## Continuidad P3 — rediseño Inbox (2026-11-14)
+
+- Se revisó el paquete P3 tras cerrar P1. La implementación local de Inbox está completa: bandeja, carpetas/categorías, búsqueda, lista/detalle, adaptación móvil, paginación, caché aislada por sesión, respuestas, archivado, lectura, auditoría y permisos.
+- Evidencia verificada en GitHub Actions run `43620155376` sobre HEAD `a43491bc4268249a54c6146e611e56e7063abce3`: job de regresión `success`, Node.js 22.23.4, `InboxConversations` 29/29 PASS, `InboxUi` 16/16 PASS, 93 suites / 1,364 pruebas / 0 fallos y comprobaciones de sintaxis PASS.
+- P3 se registra como **COMPLETADA CON VALIDACIÓN DIFERIDA A BETA**. La prueba manual de tema claro/oscuro, teclado, lector de pantalla, navegación Atrás y dispositivos/navegadores reales queda pendiente; no se simuló.
+- Commit de actualización del backlog: `e9b556c96e2b2bc9ec38b8f3bdaf68f30c726665`; changelog: `22aad0d7d4dd62e4e3c56b70700ee42c41e27c4f`.
+- Siguiente paquete: P4 — política de imágenes y permisos. La revisión estática y las pruebas locales de roles/contratos figuran completadas; falta verificar ACL reales de Drive y solicitudes HTTP negativas contra deployments Beta. La integración Google Drive aparece deshabilitada por administración en el catálogo de conectores disponible, por lo que no se puede inspeccionar Drive desde esta sesión; no se intentarán cambios de ACL.
