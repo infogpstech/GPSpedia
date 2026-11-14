@@ -426,3 +426,43 @@ Si cualquier comprobación falla, no continuar ni descartar cambios locales. Con
 - [ ] Validar en dispositivos móviles reales durante Beta; no afirmar protección efectiva basándose únicamente en inspección estática.
 
 **Criterio de trabajo:** registrar primero reproducción, archivos/contratos implicados, rol afectado y evidencia. Resolver por paquetes pequeños con pruebas de regresión; preservar las funciones existentes y la autorización backend. Estas incidencias nuevas no se consideran corregidas ni probadas por el mero hecho de registrarlas.
+
+
+## Adenda de diagnóstico e implementación — incidencias del 2026-11-14
+
+### GP-AUTH-03 — Aceptación del aviso obligatorio bloqueada
+**Estado: PENDIENTE DE VALIDACIÓN BETA.**
+
+- Síntoma reportado: al aceptar el aviso, la aplicación no continúa y muestra que el recurso está ocupado por operaciones activas `ADMIN/sessionActivity`.
+- Revisión de la rama: `Services/Coordinator.js` versión 1.1.3 declara `AUTH/acceptTerms` con lectura de `ACTIVE_SESSIONS`, escritura de `USERS` y escritura cooperativa de `ACTIVE_SESSIONS`; `Services/Auth.js` usa preflight de solo lectura para aceptar términos y vuelve a validar token/identidad antes de persistir.
+- El frontend mantiene aceptación por usuario, perfil/dispositivo y versión. Cerrar sesión y volver a entrar en el mismo perfil conserva la aceptación; un navegador/perfil distinto genera un identificador independiente. Borrar los datos del sitio equivale a crear una identidad local nueva.
+- No se pudo consultar el deployment Apps Script desde esta sesión. El mensaje de recurso ocupado no se reprodujo en las pruebas aisladas; debe verificarse que el coordinador desplegado y AUTH contienen la política y el cliente de la rama actual. No se da por corregido el deployment.
+- Validación Beta requerida: mismo perfil acepta/cierra sesión/vuelve a entrar sin repetir aviso; perfil nuevo ve el aviso una vez; probar aceptación concurrente con `ADMIN/sessionActivity`; comprobar sesión inválida/revocada.
+
+### GP-UX-02 — Adenda de saludo y reacción útil
+- **Saludo — corrección local:** se confirmó que `showApp()` terminaba antes de renderizar saludo y controles de rol cuando el aviso estaba pendiente. El handler de aceptación cerraba el modal y cargaba el catálogo, pero no reanudaba el renderizado completo. Ahora vuelve a ejecutar `showApp(user)` después de persistir la aceptación y antes de cargar el catálogo. Validación CI: 94 suites / 1,388 pruebas / 0 fallos (run 43629775820).
+- **Reacción útil — corrección local:** `assertFeedbackSession()` actualiza `ActiveSessions.LastActivityAt`, pero la política `FEEDBACK/recordLike` no reservaba `ACTIVE_SESSIONS`. La política ahora reserva `ACTIVE_SESSIONS`, `CORTES`, `FEEDBACK` y `ACTIVITY`; la prueba confirma el conflicto controlado con `ADMIN/sessionActivity`. Validación CI: 94 suites / 1,388 pruebas / 0 fallos (run 43629775820).
+- **Tarjeta Agregar Tutorial:** la interfaz la muestra únicamente al rol Desarrollador y el backend también reserva `addTutorial` a ese rol. No se ampliarán permisos para hacerla visible a técnicos. Si sigue ausente en una sesión Desarrollador, reproducir y revisar contexto de sesión/renderizado.
+- **Tarjeta Agregar Problema:** el código asigna 120 px a la tarjeta de alta y el CSS fija 120 px a `.card-create-pys-assoc`; falta comparar el tamaño renderizado frente a las tarjetas reales en navegador móvil/escritorio. No se marca corregido solo por la igualdad de valores declarados.
+
+### GP-RBAC-02 — Inbox para usuarios técnicos
+**Estado: PENDIENTE DE VALIDACIÓN DE CONFIGURACIÓN BETA.**
+
+- El contrato backend incluye `tecnico` y `tecnico_exterior` entre los roles activos de Inbox; las acciones de conversaciones no exigen un rol privilegiado adicional.
+- El texto «Servicio no autorizado para el coordinador compartido» se genera al autenticar el servicio FEEDBACK cuando el servicio no está permitido o su secreto está ausente/no coincide. No es el mensaje de rechazo de RBAC del usuario.
+- Revisar en FEEDBACK `GPSpedia_COORDINATOR_URL` y `GPSpedia_COORDINATOR_SECRET`; el secreto debe coincidir con `GPSpedia_COORDINATOR_SECRET_FEEDBACK` del coordinador del mismo entorno. Confirmar también que el deployment contiene `SharedMutationClient.js` y las políticas vigentes. No ampliar roles ni debilitar autorización para ocultar un error de configuración.
+- Prueba Beta requerida: lectura y conversación directa con Técnico/Técnico_exterior, y rechazo de acciones privilegiadas para roles no autorizados.
+
+### GP-PWA-01 — Recarga y actualización
+**Estado: EN PROGRESO — diagnóstico estático parcial.**
+
+- El Service Worker versionado actual es `gpsepedia-cache-v26`; su instalación usa `skipWaiting()`, activación usa `clients.claim()` y navegación intenta red antes de fallback de caché.
+- No se encontró un listener global que cancele F5/Ctrl+R ni una intercepción de `beforeunload`. El gesto pull-to-refresh de `main.js` actualiza el catálogo sin recargar el documento; por ello no constituye una recarga completa de la PWA.
+- Falta implementar y probar un mecanismo explícito y seguro de recarga/actualización para usuarios de PWA, preservando borradores y operaciones locales pendientes. Probar múltiples pestañas, actualización de Service Worker, offline/reconexión y recarga manual.
+
+### GP-SEC-03 — Capturas de pantalla en móviles
+**Estado: EVALUACIÓN TÉCNICA LOCAL PARCIAL; PRUEBAS BETA PENDIENTES.**
+
+- `clientInteractionPolicy.js` aplica restricciones disuasorias sobre menú contextual, copia/selección y arrastre de medios protegidos.
+- La documentación del proyecto ya establece que navegador/PWA no dispone de una API web interoperable para bloquear capturas nativas ni aplicar Android `FLAG_SECURE`; no se prometerá bloqueo absoluto.
+- Evaluar únicamente mitigaciones que aporten protección real y no oculten contenido durante la lectura normal. Validar comportamiento en Android/iOS reales y registrar expresamente qué medidas son disuasorias y cuáles no están disponibles.
