@@ -134,6 +134,7 @@ runGroup('34','CATALOG',()=>{
  runCli('CATALOG feed incremental autenticado, cursor y recuperación','JS/Tests/CatalogChangeFeed.mjs');
  runCli('CATALOG readiness','JS/Tests/CatalogReadiness.js');
  runCli('CATALOG snapshots/IndexedDB aislado','JS/Tests/CatalogSnapshotSync.js');
+ runCli('CATALOG arranque cache-first y fallback incremental','JS/Tests/CatalogStartupIntegrity.mjs');
  runCli('CATALOG estados de presentación','JS/Tests/CatalogStatus.js');
 });
 runGroup('35','UTILITIES',()=>{
