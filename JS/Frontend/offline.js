@@ -1055,7 +1055,7 @@ function performCatalogSyncTransaction(mode, callback) {
 
 /** Lee snapshot y cursor desde la misma transacción para evitar pares incoherentes. */
 export async function getCatalogSyncState() {
-    return performCatalogSyncTransaction('readonly', store => {
+    return performCatalogSyncTransaction('readonly', (store, transaction) => {
         let snapshot, cursor, completed = 0;
         const result = { snapshot: null, cursor: null };
         const finish = () => {
