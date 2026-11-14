@@ -1563,3 +1563,13 @@ Rama: GPSpedia2.2.5_work
 - Fixtures AUTH sincronizados y PasswordKdfBenchmark 6/6 PASS.
 - CI PASS: 83 suites; 1,250 pruebas aprobadas; 0 fallos.
 ================================================================================
+
+================================================================================
+2026-11-14 — P2 CALIBRACIÓN PBKDF2
+- AUTH: endpoint benchmarkPasswordKdf protegido por sesión Desarrollador y de solo lectura.
+- API: acción benchmarkPasswordKdf dirigida a AUTH.
+- Pruebas: PasswordKdfBenchmark 6/6 PASS; TutorialIntegrity 27/27 PASS.
+- CI: 83 suites; 1,250 pruebas aprobadas; 0 fallos.
+- Tareas_Activas: procedimiento de validación Beta con sincronización segura al inicio.
+- Pendiente: medición en deployment Apps Script real y decisión del coste PBKDF2; no se cambió el valor provisional ni se migraron datos.
+================================================================================
