@@ -1879,3 +1879,14 @@ Rama: GPSpedia2.2.5_work
 - Evidencia CI del run `43620155376`: VehicleModalRolePolicy 12/12 PASS; ClientInteractionPolicy 5/5 PASS; ADMIN edición modal/RBAC 9/9 PASS; regresión integral 93 suites / 1,364 pruebas / 0 fallos; sintaxis PASS.
 - Permanecen pendientes de Beta la inspección de ACL reales en Drive y las solicitudes HTTP negativas contra deployments. El conector Google Drive disponible figura deshabilitado por administración; no se realizaron cambios de ACL ni operaciones productivas.
 ================================================================================
+
+================================================================================
+2026-11-14 — ADMIN: POLÍTICA DE HISTORIAL Y ACTIVIDAD COOPERATIVA
+- Services/Coordinator.js: se agregó política explícita y mínima para migrateReplacedImagesSchema sobre IMAGE_INVENTORY.
+- ADMIN/sessionActivity declara ACTIVE_SESSIONS como sharedWriteResources: consultas ADMIN protegidas pueden coexistir mientras actualizan LastActivityAt; las escrituras exclusivas de AUTH/otros servicios mantienen sus conflictos.
+- Se amplió hasConflict_ para distinguir escrituras cooperativas de escrituras exclusivas; mantenimiento global y recursos incompatibles siguen bloqueando.
+- JS/Tests/SharedMutationCoordinator.js: regresiones para coexistencia de leases ADMIN, bloqueo de logout, liberación posterior y política de migración mínima. SessionActivityCoordination.mjs y COORDINATOR_SETUP.md actualizados.
+- JS/Tests/InboxConversations.mjs: contrato actualizado para sharedWriteResources.
+- CI HEAD ca6bf55564308d13b68d5554f6b62d098a963855: Node.js 22.23.4; sintaxis PASS; 93 suites / 1,366 pruebas / 0 fallos (run 43624818215). GitHub Pages build/deployment PASS (run 43624817783).
+- AUD-2026-11-14-01 y 02 corregidos a nivel local. Prueba real de ADMIN/Coordinator/Spreadsheet/Drive Beta pendiente; no se ejecutaron cambios productivos. AUD-2026-11-14-03 sigue pendiente de reproducción en navegador.
+================================================================================

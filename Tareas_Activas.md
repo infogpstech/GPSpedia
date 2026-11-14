@@ -349,3 +349,13 @@ Si cualquier comprobación falla, no continuar ni descartar cambios locales. Con
 - Registrar dispositivo, sistema operativo, navegador, versión de deployment, fecha, pasos, resultado y evidencia reproducible.
 
 **Criterio de registro:** documentar cada prueba como PASS, FAIL o NO EJECUTADA; adjuntar evidencia mínima y separar fallos locales de limitaciones de entorno. Ninguna validación Beta autoriza por sí sola operaciones productivas.
+
+## Incidencias ADMIN/Developer — estado tras corrección local (2026-11-14)
+
+- [x] AUD-2026-11-14-01: registrar política explícita de migrateReplacedImagesSchema limitada a IMAGE_INVENTORY; mantener autenticación Desarrollador, ScriptLock y deny-by-default.
+- [x] AUD-2026-11-14-02: permitir leases ADMIN concurrentes con actualización cooperativa de ACTIVE_SESSIONS; conservar conflicto con escrituras de identidad/sesión y mutaciones AUTH.
+- [x] Añadir regresiones de política mínima, coexistencia de consultas ADMIN, bloqueo de logout mientras ADMIN mantiene lease y liberación posterior.
+- [x] Actualizar el contrato de InboxConversations.mjs por el nuevo campo sharedWriteResources.
+- Evidencia CI del HEAD ca6bf55564308d13b68d5554f6b62d098a963855: run 43624818215 SUCCESS, 93 suites / 1,366 pruebas / 0 fallos; sintaxis PASS. Pages run 43624817783 build/deployment SUCCESS.
+- [ ] AUD-2026-11-14-03: reproducir apertura del panel Developer en navegador con sesión nueva y restaurada; capturar estados sin registrar token.
+- [ ] Validar escáner e inicialización de historial en deployment ADMIN Beta conectado a copia aislada de Spreadsheet/Drive; no ejecutar sobre datos productivos.

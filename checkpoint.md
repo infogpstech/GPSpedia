@@ -1047,3 +1047,14 @@ HEAD de inicio de revisión confirmado: `edac7202791223de890ed6d912cc93f7e1fbfa6
 4. Ejecutar sintaxis, pruebas de lógica, concurrencia y regresión; registrar por separado cualquier validación Beta pendiente.
 
 La rama base `GPSpedia2.2.5` permanece fuera del alcance.
+
+## Corrección ADMIN — política de historial y actividad cooperativa (2026-11-14)
+
+- Se corrigió AUD-2026-11-14-01: migrateReplacedImagesSchema cuenta con política explícita de mínimo privilegio sobre IMAGE_INVENTORY. Mantiene autenticación Desarrollador, ScriptLock y rechazo deny-by-default para acciones no declaradas.
+- Se corrigió el mecanismo de contención de AUD-2026-11-14-02: ADMIN/sessionActivity declara ACTIVE_SESSIONS como escritura cooperativa. Las consultas ADMIN protegidas pueden coexistir mientras actualizan actividad; las escrituras normales de AUTH/USERS/WRITE/FEEDBACK/UTILITIES y las mutaciones AUTH sobre sesiones siguen generando conflicto. No se desactivó la validación ni la actualización de LastActivityAt.
+- Se incorporaron pruebas de política mínima, coexistencia de dos leases ADMIN, bloqueo de logout concurrente y liberación posterior. Se actualizó el contrato de Inbox para el nuevo campo sharedWriteResources.
+- Commit funcional: 0bfb340583062891f3438dc12b8ab814520b7629. Commit posterior de sincronización de contrato Inbox: ca6bf55564308d13b68d5554f6b62d098a963855.
+- GitHub Actions sobre ca6bf55564308d13b68d5554f6b62d098a963855: service regression run 43624818215 SUCCESS; Node.js 22.23.4; 93 suites, 1,366 pruebas aprobadas, 0 fallos; sintaxis PASS. GitHub Pages run 43624817783 build y deployment SUCCESS.
+- AUD-2026-11-14-01 y AUD-2026-11-14-02 quedan corregidos a nivel de código y CI. La reproducción real del escáner y de la migración en Apps Script/Spreadsheet Beta sigue pendiente.
+- AUD-2026-11-14-03 (apertura del panel Developer) permanece sin causa confirmada; requiere navegador real con sesión Desarrollador. No se altera el flujo de autorización a partir de inspección estática solamente.
+- HEAD funcional/documental antes de esta actualización: ca6bf55564308d13b68d5554f6b62d098a963855. Rama base GPSpedia2.2.5 sin cambios (d9acc68d889985c2e2f42fe3a02e502efc86ead1).

@@ -81,3 +81,26 @@ Reproducir con una sesión Desarrollador recién iniciada y registrar, sin expon
 2. Diseñar y probar la coordinación de AUD-2026-11-14-02 sin quitar la validación ni la actualización protegida de sesión.
 3. Reproducir AUD-2026-11-14-03 y corregir únicamente el punto que falle.
 4. Ejecutar pruebas de sintaxis, contratos, concurrencia y regresión antes de marcar cualquier corrección como completada.
+
+## Adenda de resolución — 2026-11-14
+
+### AUD-2026-11-14-01 — RESUELTO A NIVEL DE CÓDIGO Y CI
+- Services/Coordinator.js declara migrateReplacedImagesSchema con lectura de identidad y escritura exclusiva limitada a IMAGE_INVENTORY. No se habilitó mantenimiento global ni se amplió el allowlist genérico.
+- Se conserva la validación Desarrollador del router ADMIN y el ScriptLock del handler.
+- Regresión de política mínima y rechazo deny-by-default incluida en SharedMutationCoordinator.js.
+- CI completo PASS en HEAD ca6bf55564308d13b68d5554f6b62d098a963855: 93 suites / 1,366 pruebas / 0 fallos.
+- Pendiente: ejecutar inicialización en deployment ADMIN Beta y verificar encabezados/read-back en copia aislada. No ejecutar en producción sin autorización independiente.
+
+### AUD-2026-11-14-02 — RESUELTO A NIVEL DE CÓDIGO Y CI
+- ADMIN/sessionActivity ahora separa la actualización cooperativa de ACTIVE_SESSIONS de las escrituras exclusivas. Consultas ADMIN simultáneas que comparten únicamente esa actualización pueden coexistir.
+- La política sigue bloqueando consultas frente a escrituras normales incompatibles y frente a mantenimiento global. Logout y revocaciones AUTH mantienen escritura exclusiva de ACTIVE_SESSIONS y no pueden solaparse con leases ADMIN.
+- Se añadieron pruebas que adquieren dos leases ADMIN, comprueban que AUTH/logout recibe busy, liberan ambas leases y verifican que logout puede continuar después.
+- CI completo PASS en HEAD ca6bf55564308d13b68d5554f6b62d098a963855: 93 suites / 1,366 pruebas / 0 fallos.
+- Pendiente: medir concurrencia real y duración en deployment ADMIN Beta; las pruebas locales no sustituyen Apps Script/Coordinator/Spreadsheet/Drive reales.
+
+### AUD-2026-11-14-03 — PENDIENTE DE REPRODUCCIÓN
+- La revisión estática no demuestra un defecto en la apertura del panel Developer.
+- Se mantiene el plan de instrumentación manual sin exponer SessionToken: identidad presente, rol normalizado, resultado de ensureUiSessionRole_, callback de menú y estado final del modal.
+- No se modificó el control de acceso ni se relajó el requisito de sesión Desarrollador.
+
+Evidencia: commits 0bfb340583062891f3438dc12b8ab814520b7629 y ca6bf55564308d13b68d5554f6b62d098a963855; service-tests run 43624818215 SUCCESS (93 suites / 1,366 pruebas); Pages run 43624817783 SUCCESS. Rama base sin cambios.
