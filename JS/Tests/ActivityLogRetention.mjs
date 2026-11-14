@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 
-const source = readFileSync(new URL("../Services/feedback.js", import.meta.url), "utf8");
+const source = readFileSync(new URL("../../Services/feedback.js", import.meta.url), "utf8");
 const start = source.indexOf("function handleClearActivityLogs(payload) {");
 const end = source.indexOf("\n}", start);
 assert.ok(start >= 0 && end > start, "No se encontró handleClearActivityLogs.");

@@ -2,9 +2,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 
-const admin = readFileSync(new URL("../Services/admin.js", import.meta.url), "utf8");
+const admin = readFileSync(new URL("../../Services/admin.js", import.meta.url), "utf8");
 const ui = readFileSync(new URL("../Frontend/ui.js", import.meta.url), "utf8");
-const coordinator = readFileSync(new URL("../Services/Coordinator.js", import.meta.url), "utf8");
+const coordinator = readFileSync(new URL("../../Services/Coordinator.js", import.meta.url), "utf8");
 const html = readFileSync(new URL("../../index.html", import.meta.url), "utf8");
 const offline = readFileSync(new URL("../Frontend/offline.js", import.meta.url), "utf8");
 let passed = 0;
