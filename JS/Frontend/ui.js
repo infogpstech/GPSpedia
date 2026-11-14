@@ -4869,7 +4869,13 @@ const openDevToolsModal_ = setupModal('dev-tools-modal', (options = {}) => {
 
 export async function openDevTools(...args) {
     const sessionContext = ensureUiSessionRole_(['desarrollador']);
-    if (!sessionContext) return;
+    if (!sessionContext) {
+        const currentRole = normalizeUiRole_(getState().currentUser && getState().currentUser.Privilegios);
+        showGlobalError(currentRole === 'desarrollador'
+            ? 'No se pudo abrir el panel porque la sesión local no contiene un identificador y token válidos. Inicia sesión nuevamente.'
+            : 'El panel está disponible únicamente para usuarios Desarrollador.');
+        return;
+    }
     return openDevToolsModal_(...args);
 }
 
@@ -9292,7 +9298,9 @@ export function showApp(user) {
     if (welcomeMsg) { welcomeMsg.textContent = `Hola, ${displayName || 'Usuario'}`; welcomeMsg.style.display = 'block'; }
 
     const devToolsBtn = document.getElementById('dev-tools-btn');
-    const userRole = normalizeUiRole_(user && user.Privilegios);
+    // La visibilidad del acceso privilegiado usa el mismo contexto autenticado
+    // (ID, token y rol) que valida openDevTools; evita mostrar un botón inoperable.
+    const userRole = appContext ? appContext.role : '';
     if (devToolsBtn) {
         devToolsBtn.style.display = userRole === 'desarrollador' ? 'flex' : 'none';
     }
