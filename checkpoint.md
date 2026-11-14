@@ -504,3 +504,17 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - GitHub Actions `service-tests` sobre HEAD `e96cc8bb3bbaac6e7f9644c160b898fb81a8cc4c`: **PASS**, 80 suites, 1,210 pruebas aprobadas, 0 fallos. `ClientInteractionPolicy: 5/5 PASS`; `VehicleModalRolePolicy: 5/5 PASS`.
 - Límite de seguridad: los guardas son fricción contra acciones casuales, no protección criptográfica. Si una imagen usa una URL pública, puede extraerse desde red, DOM, caché o herramientas del navegador; no se afirma que la web pueda impedirlo.
 - No se desplegaron cambios ni se alteraron permisos de Drive. La verificación de acceso real a recursos estáticos requiere revisión del hosting/Drive y entorno Beta.
+
+## P5 — Capturas de pantalla: evaluación de capacidades web/PWA (2026-11-14)
+
+**Estado: EVALUACIÓN TÉCNICA COMPLETADA; NO SE AÑADIÓ UNA FALSA PROMESA DE BLOQUEO.**
+
+- Los navegadores no exponen una API web interoperable y fiable para detectar capturas nativas del sistema operativo.
+- `visibilitychange`, `blur` y `pagehide` indican cambios de visibilidad, foco o ciclo de vida; no son eventos de captura y no justifican ocultar o invalidar contenido como si una captura hubiera ocurrido.
+- `getDisplayMedia()` es una API para iniciar, con selección/permiso del usuario, la compartición de pantalla/ventana/pestaña; no detecta ni bloquea capturas de pantalla del sistema.
+- Una PWA en navegador no puede aplicar Android `FLAG_SECURE`, que pertenece al entorno nativo Android.
+- Se evaluó una marca de agua contextual. No se implementa por defecto: puede tapar información crítica en diagramas de cableado/fotografías y no impide la captura; solo podría aportar trazabilidad si se define una política explícita de uso.
+- Se actualizó README con estos límites y la recomendación de no servir como públicas las imágenes que realmente requieran confidencialidad; deben usarse permisos privados y entrega autenticada/temporal desde backend.
+- No se cambió código de captura, no se bloquearon atajos/zoom ni se añadió una falsa detección de screenshots.
+- La evaluación no sustituye una revisión de permisos de hosting/Drive y no certifica que los recursos actuales sean privados.
+- Siguiente: P6 — integración/regresión global y pruebas negativas por rol; quedan pendientes validaciones Beta reales de P1/P2/P3/P4 y auditoría de URLs.
