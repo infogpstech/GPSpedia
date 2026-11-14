@@ -36,6 +36,15 @@ function runInboxRoleContractTests(sources) {
  run('Lecturas FEEDBACK protegidas adquieren lease de actividad; acciones públicas no',()=>{const d=feedback.slice(feedback.indexOf('function doPost(e)'),feedback.indexOf('const FEEDBACK_ACTION_PERMISSIONS'));assert(d.includes('withSharedMutationLease_("FEEDBACK", "sessionActivity"'));assert(d.includes('FEEDBACK_PUBLIC_ACTIONS.has(action)'));});
 
  run('Backend ignora rol falsificado y usa actor autenticado',()=>{const s=feedback.indexOf('const FEEDBACK_ACTION_PERMISSIONS = Object.freeze('),e=feedback.indexOf(');',s)+2;const api=new Function('assertFeedbackSession',feedback.slice(s,e)+'\n'+extract(feedback,'authorizeFeedbackAction_')+'\nreturn authorizeFeedbackAction_;')(()=>({userId:'U1',userName:'Verificado',role:'Supervisor'}));const out=api('approveVideo',{userRole:'Desarrollador'});assert(out.userRole==='Supervisor');});
+ run('Técnico y Técnico exterior pueden abrir Inbox y consultar al Desarrollador sin ver solicitudes privilegiadas',()=>{
+  const open=sliceUi_('export async function openInbox()','');
+  assert(open.includes("'tecnico'")&&open.includes("'tecnico_exterior'"));
+  const modal=ui.slice(ui.indexOf("const openInboxModal_ = setupModal('inbox-modal'"),ui.indexOf("export async function openInbox()",ui.indexOf("const openInboxModal_")));
+  assert(modal.includes("requestsTab.hidden = !inboxCanSeeRequests_(context.role)"));
+  assert(modal.includes("newMessageButton.hidden = context.role !== 'desarrollador'"));
+  assert(modal.includes("consultButton.hidden = context.role === 'desarrollador'"));
+  function sliceUi_(start,end){const i=ui.indexOf(start);assert(i>=0);const j=end?ui.indexOf(end,i+start.length):-1;return ui.slice(i,j>i?j:ui.length);}
+ });
  run('InboxConversations mantiene una sola entrada Jefe en su lista de roles',()=>{assert(inbox.includes('new Set(["desarrollador","jefe","supervisor","tecnico","tecnico_exterior"])'));assert(!/INBOX_ACTIVE_ROLES_[^\\n]*gefe/.test(inbox));});
  run('Gestión de usuarios ofrece y muestra únicamente Jefe',()=>{assert(usersHtml.includes("availableRoles = ['Desarrollador', 'Jefe', 'Supervisor', 'Tecnico', 'Tecnico_exterior']"));assert(usersHtml.includes("return normalized === 'jefe' ? 'Jefe' : role"));assert(!usersHtml.toLowerCase().includes('gefe'));});
  run('Perfil frontend normaliza únicamente el rol canónico Jefe',()=>{assert(authClient.includes("if(role==='jefe')updated.Privilegios='Jefe'"));assert(!authClient.toLowerCase().includes('gefe'));});
