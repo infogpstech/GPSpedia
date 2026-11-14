@@ -25,6 +25,12 @@ function makeSheet(rows,formulas=[]){
         get writes(){return writes;}
     };
 }
+
+function makeRowsSheet(rows) {
+ let writes=0;
+ return {getLastRow:()=>rows.length,getLastColumn:()=>Math.max(0,...rows.map(r=>r.length)),getRange:(row,col,n=1,w=1)=>({getValues:()=>Array.from({length:n},(_,i)=>Array.from({length:w},(_,j)=>rows[row-1+i]?.[col-1+j]??"")),setValue:()=>{writes++;throw Error("read-only");},setValues:()=>{writes++;throw Error("read-only");}}),get writes(){return writes;}};
+}
+
 let passed=0;
 function test(name,fn){fn();passed++;console.log("PASS "+name);}
 const auditColumn=new Function(extract("auditIdentifierColumn_")+"\nreturn auditIdentifierColumn_;")();
@@ -66,7 +72,7 @@ test("La acción agregada es de solo lectura y devuelve un resumen de todas las 
         LogosMarca:makeSheet([["id"],[1]],[["id"],["=ROW()-1"]])
     };
     const getSpreadsheet=()=>({getSheetByName:name=>sheets[name]||null});
-    const run=new Function("getSpreadsheet",extract("auditIdentifierColumn_")+"\n"+extract("auditTutorialApprovalReferences_")+"\n"+extract("auditUserIdReferences_")+"\n"+extract("handleAuditIdentifiers")+"\nreturn handleAuditIdentifiers;")(getSpreadsheet);
+    const run=new Function("getSpreadsheet",extract("auditIdentifierColumn_")+"\n"+extract("auditTutorialApprovalReferences_")+"\n"+extract("auditUserIdReferences_")+"\n"+extract("auditReferenceValue_")+"\n"+extract("auditVehicleIdReferences_")+"\n"+extract("auditProblemIdReferences_")+"\n"+extract("auditLogoBrandReferences_")+"\n"+extract("handleAuditIdentifiers")+"\nreturn handleAuditIdentifiers;")(getSpreadsheet);
     const result=run();
     assert.equal(result.status,"success");assert.equal(result.readOnly,true);assert.equal(result.sheets.length,6);assert.equal(result.summary.sheetsFound,6);
     assert.equal(Object.values(sheets).reduce((n,s)=>n+s.writes,0),0);
@@ -76,4 +82,24 @@ test("La ruta ADMIN despacha auditIdentifiers",()=>{
     const api=fs.readFileSync(resolve(root,"JS/Frontend/api-config.js"),"utf8");
     assert.match(api,/'auditIdentifiers': 'ADMIN'/);
 });
+
+test("Audita referencias de Cortes desde Feedbacks, likes, ledgers, PyS, actividad e imágenes",()=>{
+ const sheets={Cortes:makeRowsSheet([["id","cat","marca"],[1,"","Toyota"],[2,"","Honda"]]),Feedbacks:makeRowsSheet([["ID","Usuario","ID_vehiculo","Problema"],["f1","A",1,JSON.stringify({subType:"suggestion_cut",vehicleId:"1"})],["f2","B",999,JSON.stringify({subType:"suggestion_cut",vehicleId:"999"})]]),FeedbackLikes:makeRowsSheet([["actorKey","vehicleId"],["user:u",2]]),Idempotencia:makeRowsSheet([["opId","vehicleId"],["op-1",999]]),pys:makeRowsSheet([["id_problem","","","","","","","","","modelos_asociados"],["isue-001","","","","","","","","","[1,999]"]]),ActividadUsuario:makeRowsSheet([["id","timestamp","idUsuario","nombreUsuario","tipoActividad","idElementoAsociado"],["a","t","u","U","like",999]]),Imagenes_Reemplazadas:makeRowsSheet([["id","fecha","tipo_contenido","registro_id"],["r","t","vehiculo",999]])};
+ const audit=new Function(extract("auditReferenceValue_")+extract("auditVehicleIdReferences_")+"return auditVehicleIdReferences_;")();
+ const result=audit({getSheetByName:n=>sheets[n]||null});
+ assert.equal(result.status,"success");assert.ok(result.orphanReferenceCount>=4);assert.ok(result.sourcesScanned.includes("pys.modelos_asociados"));assert.ok(result.sourcesScanned.includes("Imagenes_Reemplazadas.registro_id"));assert.equal(Object.values(sheets).reduce((n,s)=>n+s.writes,0),0);
+});
+test("Audita referencias PyS desde PysOperations, aprobaciones de vídeo y actividad",()=>{
+ const sheets={pys:makeRowsSheet([["id_problem"],["isue-001"],["isue-002"]]),PysOperations:makeRowsSheet([["opId","payloadHash","problemId"],["op-1","hash","isue-001"],["op-2","hash","isue-999"]]),Feedbacks:makeRowsSheet([["ID","Usuario","ID_vehiculo","Problema"],["v1","A",1,JSON.stringify({subType:"video_approval",contentType:"pys",referenceId:"isue-002"})],["v2","A",1,JSON.stringify({subType:"video_approval",contentType:"pys",referenceId:"isue-999"})]]),ActividadUsuario:makeRowsSheet([["id","timestamp","idUsuario","nombreUsuario","tipoActividad","idElementoAsociado"],["a","t","u","U","add_problem","isue-001"]])};
+ const audit=new Function(extract("auditReferenceValue_")+extract("auditProblemIdReferences_")+"return auditProblemIdReferences_;")();
+ const result=audit({getSheetByName:n=>sheets[n]||null});
+ assert.equal(result.matchedReferenceCount,3);assert.equal(result.orphanReferenceCount,2);assert.ok(result.sourcesScanned.includes("PysOperations.problemId"));assert.equal(Object.values(sheets).reduce((n,s)=>n+s.writes,0),0);
+});
+test("Documenta el vínculo de logos por nombre y detecta coincidencias exactas ambiguas",()=>{
+ const sheets={Cortes:makeRowsSheet([["id","cat","marca"],[1,"","Toyota"],[2,"","Honda"]]),LogosMarca:makeRowsSheet([["id","nombreMarca","urlLogo"],[1,"Toyota","u1"],[2,"TOYOTA","u2"]])};
+ const audit=new Function(extract("auditLogoBrandReferences_")+"return auditLogoBrandReferences_;")();
+ const result=audit({getSheetByName:n=>sheets[n]||null});
+ assert.equal(result.catalogJoin,"Cortes.marca ↔ LogosMarca.nombreMarca");assert.equal(result.logoIdUsedAsForeignKey,false);assert.equal(result.ambiguousExactMatches,1);assert.equal(result.missingExactMatches,1);assert.equal(Object.values(sheets).reduce((n,s)=>n+s.writes,0),0);
+});
+
 console.log("IdentifierAudit: "+passed+"/"+passed+" PASS");

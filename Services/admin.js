@@ -3382,6 +3382,49 @@ function auditUserIdReferences_(ss) {
     return result;
 }
 
+function auditReferenceValue_(result, counts, rawValue, source, rowNumber, fieldName, normalizeKey) {
+ const raw=String(rawValue==null?"":rawValue).trim();if(!raw)return;result.referencesScanned++;
+ const key=normalizeKey(raw);
+ if(!key){result.malformedReferenceCount++;if(result.details.length<100)result.details.push({source,row:rowNumber,field:fieldName,issue:"malformed_reference",value:raw});else result.detailsTruncated=true;return;}
+ const count=counts.get(key)||0;
+ if(count===1)result.matchedReferenceCount++;
+ else if(count===0){result.orphanReferenceCount++;if(result.details.length<100)result.details.push({source,row:rowNumber,field:fieldName,issue:"orphan_reference",value:raw});else result.detailsTruncated=true;}
+ else{result.ambiguousReferenceCount++;if(result.details.length<100)result.details.push({source,row:rowNumber,field:fieldName,issue:"ambiguous_reference",value:raw,matches:count});else result.detailsTruncated=true;}
+}
+function auditVehicleIdReferences_(ss) {
+ const base=ss&&ss.getSheetByName("Cortes");if(!base)return{status:"incomplete",reason:"missing_cortes_sheet"};
+ const counts=new Map(),last=base.getLastRow();
+ if(last>1)base.getRange(2,1,last-1,1).getValues().forEach(r=>{const n=Number(String(r[0]==null?"":r[0]).trim());if(Number.isSafeInteger(n)&&n>0){const k=String(n);counts.set(k,(counts.get(k)||0)+1);}});
+ const out={status:"success",readOnly:true,vehicleRecords:Math.max(0,last-1),referencesScanned:0,matchedReferenceCount:0,orphanReferenceCount:0,ambiguousReferenceCount:0,malformedReferenceCount:0,malformedMetadataRecords:0,feedbackVehicleMismatches:0,sourcesScanned:[],schemaWarnings:[],details:[],detailsTruncated:false};
+ const norm=v=>{const n=Number(v);return Number.isSafeInteger(n)&&n>0?String(n):null;};
+ const scan=(name,col,field)=>{const s=ss.getSheetByName(name);if(!s||s.getLastRow()<2)return;out.sourcesScanned.push(name+"."+field);s.getRange(2,col,s.getLastRow()-1,1).getValues().forEach((r,i)=>auditReferenceValue_(out,counts,r[0],name,i+2,field,norm));};
+ scan("Feedbacks",3,"ID_vehiculo");scan("FeedbackLikes",2,"vehicleId");
+ ["Idempotencia","Idempotencia_Cortes"].forEach(name=>{const s=ss.getSheetByName(name);if(!s||s.getLastRow()<2)return;const h=s.getRange(1,1,1,Math.max(2,s.getLastColumn())).getValues()[0].map(v=>String(v||"").trim());if(h[0]!=="opId"||h[1]!=="vehicleId"){out.schemaWarnings.push(name+": encabezados incompatibles");return;}scan(name,2,"vehicleId");});
+ const pys=ss.getSheetByName("pys");if(pys&&pys.getLastRow()>1){out.sourcesScanned.push("pys.modelos_asociados");pys.getRange(2,10,pys.getLastRow()-1,1).getValues().forEach((r,i)=>{const raw=String(r[0]==null?"":r[0]).trim();if(!raw)return;let ids;if(raw.startsWith("[")||raw.endsWith("]")){try{ids=JSON.parse(raw);if(!Array.isArray(ids))throw Error("not_array");}catch(e){out.malformedMetadataRecords++;if(out.details.length<100)out.details.push({source:"pys",row:i+2,field:"modelos_asociados",issue:"malformed_association_list"});else out.detailsTruncated=true;return;}}else ids=raw.split(/[,/\\;]+/);ids.forEach(id=>auditReferenceValue_(out,counts,id,"pys",i+2,"modelos_asociados",norm));});}
+ const act=ss.getSheetByName("ActividadUsuario");if(act&&act.getLastRow()>1){out.sourcesScanned.push("ActividadUsuario.idElementoAsociado");const types=new Set(["report_problem","suggest_year","suggest_year_range_review","suggest_year_collision","apply_year_suggestion","like"]);act.getRange(2,5,act.getLastRow()-1,2).getValues().forEach((r,i)=>{if(types.has(String(r[0]||"").trim()))auditReferenceValue_(out,counts,r[1],"ActividadUsuario",i+2,"idElementoAsociado",norm);});}
+ const history=ss.getSheetByName("Imagenes_Reemplazadas");if(history&&history.getLastRow()>1){out.sourcesScanned.push("Imagenes_Reemplazadas.registro_id");history.getRange(2,3,history.getLastRow()-1,2).getValues().forEach((r,i)=>{if(String(r[0]||"").trim()==="vehiculo")auditReferenceValue_(out,counts,r[1],"Imagenes_Reemplazadas",i+2,"registro_id",norm);});}
+ const fb=ss.getSheetByName("Feedbacks");if(fb&&fb.getLastRow()>1)fb.getRange(2,3,fb.getLastRow()-1,2).getValues().forEach((r,i)=>{const rowId=String(r[0]||"").trim(),raw=String(r[1]||"").trim();if(!raw.startsWith("{"))return;let obj;try{obj=JSON.parse(raw);}catch(e){if(/suggestion_cut/i.test(raw))out.malformedMetadataRecords++;return;}if(!obj||obj.subType!=="suggestion_cut"||!obj.vehicleId)return;const id=String(obj.vehicleId).trim();if(rowId&&norm(rowId)!==norm(id)){out.feedbackVehicleMismatches++;if(out.details.length<100)out.details.push({source:"Feedbacks",row:i+2,field:"Problema.vehicleId",issue:"row_metadata_mismatch",rowVehicleId:rowId,metadataVehicleId:id});else out.detailsTruncated=true;}auditReferenceValue_(out,counts,id,"Feedbacks",i+2,"Problema.vehicleId",norm);});
+ return out;
+}
+function auditProblemIdReferences_(ss) {
+ const base=ss&&ss.getSheetByName("pys");if(!base)return{status:"incomplete",reason:"missing_pys_sheet"};
+ const counts=new Map(),last=base.getLastRow();if(last>1)base.getRange(2,1,last-1,1).getValues().forEach(r=>{const id=String(r[0]||"").trim().toLowerCase();if(id)counts.set(id,(counts.get(id)||0)+1);});
+ const out={status:"success",readOnly:true,problemRecords:Math.max(0,last-1),referencesScanned:0,matchedReferenceCount:0,orphanReferenceCount:0,ambiguousReferenceCount:0,malformedReferenceCount:0,malformedMetadataRecords:0,sourcesScanned:[],details:[],detailsTruncated:false};
+ const norm=v=>/^isue-[0-9]+$/i.test(v)?v.toLowerCase():null;
+ const ops=ss.getSheetByName("PysOperations");if(ops&&ops.getLastRow()>1){const h=ops.getRange(1,1,1,Math.max(3,ops.getLastColumn())).getValues()[0].map(v=>String(v||"").trim());if(h[2]!=="problemId")out.malformedMetadataRecords++;else{out.sourcesScanned.push("PysOperations.problemId");ops.getRange(2,3,ops.getLastRow()-1,1).getValues().forEach((r,i)=>auditReferenceValue_(out,counts,r[0],"PysOperations",i+2,"problemId",norm));}}
+ const fb=ss.getSheetByName("Feedbacks");if(fb&&fb.getLastRow()>1){out.sourcesScanned.push("Feedbacks.video_approval");fb.getRange(2,1,fb.getLastRow()-1,Math.max(4,fb.getLastColumn())).getValues().forEach((r,i)=>{const raw=String(r[3]==null?"":r[3]).trim();if(!raw)return;let obj;try{obj=JSON.parse(raw);}catch(e){if(/video_approval/i.test(raw)&&/"pys"/i.test(raw))out.malformedMetadataRecords++;return;}if(obj&&obj.subType==="video_approval"&&String(obj.contentType||"")==="pys")auditReferenceValue_(out,counts,obj.referenceId,"Feedbacks",i+2,"Problema.referenceId",norm);});}
+ const act=ss.getSheetByName("ActividadUsuario");if(act&&act.getLastRow()>1){out.sourcesScanned.push("ActividadUsuario.idElementoAsociado");act.getRange(2,5,act.getLastRow()-1,2).getValues().forEach((r,i)=>{if(String(r[0]||"").trim()==="add_problem")auditReferenceValue_(out,counts,r[1],"ActividadUsuario",i+2,"idElementoAsociado",norm);});}
+ return out;
+}
+function auditLogoBrandReferences_(ss) {
+ const cuts=ss&&ss.getSheetByName("Cortes"),logos=ss&&ss.getSheetByName("LogosMarca");if(!cuts||!logos)return{status:"incomplete",reason:!cuts?"missing_cortes_sheet":"missing_logos_sheet"};
+ const norm=v=>Array.from(String(v||"").normalize("NFD").toLowerCase().trim()).filter(c=>{const n=c.charCodeAt(0);return n<768||n>879;}).join("").replace(/ +/g," ");
+ const counts=new Map();if(logos.getLastRow()>1)logos.getRange(2,2,logos.getLastRow()-1,1).getValues().forEach(r=>{const k=norm(r[0]);if(k)counts.set(k,(counts.get(k)||0)+1);});
+ const brands=new Map();if(cuts.getLastRow()>1)cuts.getRange(2,3,cuts.getLastRow()-1,1).getValues().forEach(r=>{const name=String(r[0]||"").trim(),k=norm(name);if(k&&!brands.has(k))brands.set(k,name);});
+ const out={status:"success",readOnly:true,catalogJoin:"Cortes.marca ↔ LogosMarca.nombreMarca",logoIdUsedAsForeignKey:false,brandsScanned:brands.size,exactMatches:0,missingExactMatches:0,ambiguousExactMatches:0,details:[],detailsTruncated:false,note:"La interfaz también admite coincidencias por prefijo/sinónimos; las diferencias exactas son diagnósticas y no autorizan cambios automáticos."};
+ brands.forEach((name,k)=>{const n=counts.get(k)||0;if(n===1)out.exactMatches++;else{if(n===0)out.missingExactMatches++;else out.ambiguousExactMatches++;if(out.details.length<100)out.details.push({brand:name,issue:n===0?"missing_exact_logo_name":"ambiguous_exact_logo_name",matches:n});else out.detailsTruncated=true;}});return out;
+}
+
 function handleAuditIdentifiers() {
     const ss = getSpreadsheet();
     const specs = [
@@ -3397,9 +3440,12 @@ function handleAuditIdentifiers() {
         ss.getSheetByName("Tutorial"), ss.getSheetByName("Feedbacks")
     );
     const userReferences = auditUserIdReferences_(ss);
+    const vehicleReferences = auditVehicleIdReferences_(ss);
+    const problemReferences = auditProblemIdReferences_(ss);
+    const logoReferences = auditLogoBrandReferences_(ss);
     return {
         status: "success", readOnly: true, generatedAt: new Date().toISOString(),
-        tutorialReferences, userReferences,
+        tutorialReferences, userReferences, vehicleReferences, problemReferences, logoReferences,
         summary: {
             sheetsFound: sheets.filter(item => item.exists).length,
             duplicateIdCount: sheets.reduce((sum, item) => sum + item.duplicateIdCount, 0),

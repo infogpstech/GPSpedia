@@ -22,6 +22,33 @@ La migración no debe comenzar en producción. La primera ejecución será un dr
 | Relay | Formato y escritor de filas no confirmados en el repositorio | Solo auditoría. No crear generador ni migrar hasta identificar esquema, origen de datos, consumidores y referencias reales. |
 | LogosMarca | Entero positivo, asignador backend con contador y bloqueo | Conservar valores numéricos válidos. No recalcular IDs existentes; detener ante duplicados, fórmulas sin resultado o filas con datos sin ID. |
 
+## 2.1 Inventario estático de referencias consumidoras (2026-11-14)
+
+La revisión de `Services/feedback.js`, `Services/write.js`, `Services/admin.js`, `Services/catalog.js` y `JS/Frontend/ui.js` identifica estas relaciones. ADMIN `auditIdentifiers` las contrasta en modo de solo lectura; los datos reales siguen reservados a Beta.
+
+### Cortes / vehículos
+- `Feedbacks.ID_vehiculo` y `Feedbacks.Problema.vehicleId` en solicitudes `suggestion_cut`; se comprueba la concordancia entre ambos valores.
+- `FeedbackLikes.vehicleId` y `Idempotencia.vehicleId` / `Idempotencia_Cortes.vehicleId`.
+- `pys.modelos_asociados` (columna J), almacenado como lista JSON o texto delimitado; sus elementos apuntan a IDs de `Cortes`.
+- `ActividadUsuario.idElementoAsociado` para `report_problem`, `suggest_year`, `suggest_year_range_review`, `suggest_year_collision`, `apply_year_suggestion` y `like`.
+- `Imagenes_Reemplazadas.registro_id` cuando `tipo_contenido=vehiculo`; el escritor `recordReplacedImage` usa ese tipo y el ID del vehículo.
+- Los IDs se comparan como enteros positivos canónicos; `1` y `001` colisionan.
+
+### PyS
+- `PysOperations.problemId` (columna C) apunta a `pys.id_problem`; `opId` es la clave de idempotencia, no el ID de entidad.
+- `Feedbacks.Problema.referenceId` apunta a PyS para `video_approval` con `contentType=pys`.
+- `ActividadUsuario.idElementoAsociado` apunta a PyS para `tipoActividad=add_problem`.
+- `pys.modelos_asociados` contiene IDs de vehículos, no IDs PyS.
+
+### LogosMarca
+- El catálogo consume `LogosMarca.nombreMarca` y `urlLogo`; la interfaz relaciona `Cortes.marca` con el nombre mediante coincidencias exactas, prefijos y sinónimos.
+- No se encontró un consumidor activo de `LogosMarca.ID` como clave foránea. El ID se asigna en ADMIN y se añade a la descripción del archivo Drive para recuperación; la unión funcional es por nombre.
+- Coincidencias exactas ausentes/ambiguas se reportan como diagnóstico; no autorizan renombrar marcas ni reasignar IDs automáticamente.
+
+### Relay
+- `catalog.js` consume `Relay.ID` como dato de catálogo y `Relay.configuracion` para poblar `Cortes.configRelay1-3`; no se localizó un escritor de filas Relay.
+- El formato y ciclo de vida de `Relay.ID` siguen sin confirmarse. No se implementa generador ni migración.
+
 ## 3. Fase A — Inventario de solo lectura
 
 1. Ejecutar `auditIdentifiers` en una copia Beta.

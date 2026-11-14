@@ -631,3 +631,18 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - Implementaciones adicionales de esta iteración: IDs USERS case-insensitive, IDs Tutorial canónicos/idempotentes, compensación de altas LogosMarca, filtro de categorías Inbox conectado, primera fase RBAC de ficha, protección selectiva de medios y documentación de límites de captura.
 - Pendientes que requieren entorno externo: deployment AUTH/ADMIN actualizado en Beta, benchmark PBKDF2 en Apps Script, dry-run de migración de contraseñas/IDs sobre copia Beta, ACL reales de Drive, pruebas manuales de Inbox/roles y rendimiento/offline en dispositivos.
 - No se desplegó Apps Script, no se modificó Spreadsheet/Drive productivo y no se publicaron cambios en la rama base.
+
+
+## P2 — Auditoría ampliada de referencias consumidoras (2026-11-14)
+
+**Estado: IMPLEMENTADA EN CÓDIGO; VALIDACIÓN DE DATOS REALES DIFERIDA A BETA.**
+
+- ADMIN `auditIdentifiers` incorpora `vehicleReferences`, `problemReferences` y `logoReferences`, además de las auditorías existentes de Users y Tutorial.
+- Cortes: referencias de Feedbacks, FeedbackLikes, ledgers Idempotencia, asociaciones PyS, actividad e historial de imágenes de vehículos.
+- PyS: referencias desde PysOperations, aprobaciones de vídeo `video_approval/pys` y actividad `add_problem`.
+- LogosMarca: la unión funcional es `Cortes.marca` ↔ `LogosMarca.nombreMarca`; no se encontró un consumidor activo del ID numérico como clave foránea.
+- Relay permanece en diagnóstico por ausencia de escritor/formato verificable.
+- Las auditorías son de solo lectura, limitan detalles a 100 y detectan referencias huérfanas, ambiguas, malformadas y discrepancias relevantes.
+- `IdentifierAudit.mjs` amplía las pruebas aisladas de Cortes, PyS y LogosMarca. No se consultaron ni modificaron hojas reales.
+- Siguiente subfase P2: implementar y probar localmente el motor de migración reanudable con snapshot/manifiesto, dry-run, huellas, verificación por lote y rollback condicionado. La ejecución real requiere copia Beta; no se autoriza escritura productiva.
+

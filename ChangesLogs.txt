@@ -1623,3 +1623,11 @@ Rama: GPSpedia2.2.5_work
 - GitHub Actions PASS: 85 suites; 1,267 pruebas aprobadas; 0 fallos.
 - Pendiente validación externa Beta/Drive/dispositivos; no hubo deployment ni cambios productivos.
 ================================================================================
+
+================================================================================
+2026-11-14 — P2 AUDITORÍA AMPLIADA DE REFERENCIAS CONSUMIDORAS
+- ADMIN auditIdentifiers: referencias de Cortes, PyS y vínculo de LogosMarca por nombre.
+- Se inspeccionan Feedbacks, FeedbackLikes, Idempotencia, PysOperations, asociaciones PyS, actividad e historial de imágenes de vehículos.
+- Relay sigue en diagnóstico por ausencia de escritor/formato verificable.
+- Auditoría de solo lectura; no se consultaron ni modificaron datos reales.
+================================================================================

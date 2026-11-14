@@ -73,7 +73,7 @@ Simplificar la autenticación sin debilitar autorización; modernizar Inbox; end
 **Validación final de implementación (2026-11-14):** GitHub Actions PASS — 75 suites, 1,170 pruebas aprobadas, 0 fallos; comprobaciones de sintaxis Node.js PASS. No se desplegaron Apps Script ni se modificaron datos productivos.
 
 ### P2 — Migración de contraseñas e identificadores
-**Estado: EN PROGRESO — CÓDIGO DE CONTRASEÑAS Y AUDITORÍA DE IDs IMPLEMENTADOS; EJECUCIÓN BETA Y MIGRACIÓN DE DATOS PENDIENTES.**
+**Estado: EN PROGRESO — CÓDIGO DE CONTRASEÑAS, AUDITORÍA DE IDs Y MAPA ESTÁTICO DE REFERENCIAS IMPLEMENTADOS; EJECUCIÓN BETA Y MOTOR DE MIGRACIÓN PENDIENTES.**
 - [x] Diseñar hash versionado PBKDF2-HMAC-SHA256 con salt aleatorio único, verificación en tiempo constante y compatibilidad con SHA-256/plaintext legacy; incluir benchmark para calibrar Apps Script.
 - [x] Exponer `benchmarkPasswordKdf` en AUTH, solo lectura y exclusivo de Desarrollador; valida la sesión sin actualizar actividad ni leer/escribir credenciales. La prueba automatizada cubre autorización, sesiones inválidas y ausencia de acceso a datos de usuarios.
 - [x] Implementar migración por lotes reanudable e idempotente de contraseñas plaintext legacy, con dry-run predeterminado, confirmación explícita y lotes de hasta 10 (predeterminado 5); no registrar ni exportar contraseñas.
@@ -123,7 +123,7 @@ Registrar duración por iteración, fecha, deployment/versión y runtime. Repeti
 - [ ] Migrar usuarios, vehículos, tutoriales y relays sin romper enlaces, aprobaciones, logs ni referencias cruzadas, después de revisar el reporte real de auditoría.
 - [x] Implementar reporte de duplicados/ambigüedades por hoja sin modificar datos.
 - [x] Ampliar `auditIdentifiers` con auditoría de referencias entre `Tutorial` y solicitudes de aprobación de vídeo en `Feedbacks`: coincidencias, referencias huérfanas/ambiguas, IDs ausentes, discrepancias entre la columna de referencia y el JSON, y JSON de aprobación malformado. Solo lectura; detalle limitado a 100 casos.
-- [ ] Completar el inventario de referencias consumidoras para Users, Cortes, PyS y LogosMarca; Relay permanece en diagnóstico hasta confirmar su esquema y escritor.\n- [ ] Resolver los conflictos encontrados en el reporte Beta y detener solo los registros afectados.
+- [x] Completar el inventario estático de referencias consumidoras de Users, Cortes, PyS y LogosMarca; ADMIN `auditIdentifiers` comprueba las relaciones conocidas sin escribir. Relay permanece en diagnóstico hasta confirmar su esquema y escritor.\n- [ ] Resolver los conflictos encontrados en el reporte Beta y detener solo los registros afectados.
 - [x] Definir plan por entidad con snapshot, manifiesto inmutable, dry-run, lotes reanudables, verificación de referencias y reversión condicionada a huellas.
 - [ ] Implementar el motor de migración y probar rollback en copia Beta antes de cualquier escritura real.
 
