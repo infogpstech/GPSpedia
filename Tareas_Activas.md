@@ -62,15 +62,15 @@ Simplificar la autenticación sin debilitar autorización; modernizar Inbox; end
 
 **Diseño derivado de P0:** cada servicio protegido actualiza `LastActivityAt` dentro de su propia operación, tras validar token, identidad, cuenta activa, expiración y rol vigente. La coordinación compartida evita carreras con logout, revocación o eliminación de filas. Se conserva la validación de restauración al iniciar la app; los fallos de red/AUTH no se convierten en logout y el estado local no autoriza operaciones.
 - [x] Eliminar la revalidación redundante al recuperar conexión; conservar la validación de restauración al iniciar la aplicación.
-- [ ] Una sola autenticación interactiva por sesión (validación Beta pendiente).
-- [ ] Conservar token/sesión al navegar entre páginas, actualizar y abrir modales (validación Beta pendiente).
+- [x] Una sola autenticación interactiva por sesión: login idempotente por `requestId`, con reintento estable tras fallo transitorio y limpieza condicionada al request completado. Validación de campo diferida a Beta.
+- [x] Conservar token/sesión entre navegación, recarga y apertura de modales mediante persistencia local; restaurar y validar al iniciar sin solicitar credenciales nuevamente mientras la sesión siga vigente. Validación de campo diferida a Beta.
 - [x] Retirar el preflight `ensureSessionTouched_` y las llamadas redundantes antes de operaciones protegidas.
 - [x] Validar identidad, vigencia y rol dentro de la petición protegida del backend, sin un viaje de red adicional.
 - [x] Mantener revocación, expiración, desactivación y cambios de privilegios efectivos en el servidor.
 - [x] Probar exclusión de concurrencia, sesión revocada y autorización backend en CI.
 - [ ] Validación Beta externa: múltiples pestañas, offline, reconexión y navegación/dispositivo real.
 
-**Validación final de implementación (2026-11-14):** GitHub Actions PASS — 75 suites, 1,170 pruebas aprobadas, 0 fallos; comprobaciones de sintaxis Node.js PASS. No se desplegaron Apps Script ni se modificaron datos productivos.
+**Validación final de implementación (2026-11-14):** GitHub Actions PASS — Node.js 22.23.4; 93 suites, 1,364 pruebas aprobadas, 0 fallos; `node --check` PASS para los módulos configurados. `SessionStartupNavigation` 13/13 PASS, incluida prueba de reintento idempotente de login. La validación Beta externa de pestañas, offline, reconexión y dispositivos reales sigue pendiente; no se desplegaron Apps Script ni se modificaron datos productivos.
 
 ### P2 — Migración de contraseñas e identificadores
 **Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
