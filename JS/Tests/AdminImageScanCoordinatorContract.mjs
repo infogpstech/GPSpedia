@@ -10,10 +10,10 @@ function extractFunction(source, name) {
     return match[0];
 }
 const mutation = new Function(extractFunction(admin, "isSharedMutationAction_") +
-    "\\nreturn isSharedMutationAction_;")();
+    "\nreturn isSharedMutationAction_;")();
 const read = new Function(extractFunction(admin, "isSharedReadAction_") +
-    "\\nreturn isSharedReadAction_;")();
-const policy = new Function(coordinator + "\\nreturn coordinatorPolicy_;")();
+    "\nreturn isSharedReadAction_;")();
+const policy = new Function(coordinator + "\nreturn coordinatorPolicy_;")();
 
 for (const action of ["getReplacedImages", "getDriveStorage", "getCortesImageFolders"]) {
     assert.equal(read(action), true, action + " debe usar una lease de lectura específica.");
