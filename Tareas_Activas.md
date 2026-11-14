@@ -710,7 +710,7 @@ No marcar como completadas estas tareas hasta ejecutar las pruebas locales perti
 - `Services/feedback.js`: endpoint `getCatalogChanges` autenticado contra ActiveSessions/Users; sin nueva interfaz.
 - `JS/Frontend/api-config.js`: acción `getCatalogChanges` integrada en el arranque cache-first y el sondeo autenticado; admite cancelación mediante `AbortSignal`.
 - `JS/Tests/CatalogChangeFeed.mjs`: 14/14 PASS; `CatalogSnapshotSync`: 25/25 PASS; `CatalogStartupIntegrity`: 18/18 PASS; `SessionStartupNavigation`: 16/16 PASS; `PWAStartupScenarios`: 15/15 PASS.
-- CI Node.js 22 del HEAD documental `a6fdeec6d16752fcf352a11642056588976b5a45`: run `43645734358` SUCCESS; sintaxis PASS; 98 suites / 1,463 pruebas / 0 fallos. Pages run `43645733920` en ejecución al registrar esta adenda.
+- CI Node.js 22 del HEAD `6af6d78e2c68d0175566626177ca41fe2496d2d5`: run `43645790740` SUCCESS; sintaxis PASS; 98 suites / 1,463 pruebas / 0 fallos. GitHub Pages run `43645790429` SUCCESS.
 - **Limitación vigente:** los upserts por registro están habilitados actualmente para `cortes`; las operaciones que pueden afectar varias filas/colecciones publican `reset`, por lo que todavía pueden requerir snapshot completo. El sondeo en vivo ya está implementado; la comprobación Beta multiusuario y el rendimiento en dispositivos reales siguen pendientes.
 - No se añadió botón, panel, indicador ni sección visible.
 
