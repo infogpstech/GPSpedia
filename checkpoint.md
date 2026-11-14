@@ -1573,3 +1573,14 @@ No se desplegaron servicios Apps Script, no se modificaron ScriptProperties, Spr
 - Relay: no se identificó un escritor backend para la hoja Relay; los IDs históricos pueden estar ausentes. No se inventó un productor ni se generaron IDs. PyS sigue separado de la instantánea getCatalogData.
 - Siguiente: estudiar la consistencia de deltas PyS con un cursor/almacén independiente; luego revisar si Relay tiene alguna ruta real de edición backend antes de habilitar eventos por registro.
 - No se desplegaron Apps Script ni se modificaron Spreadsheet, Drive, ACL, ScriptProperties o datos productivos.
+
+
+## Continuidad — endurecimiento de concurrencia del feed de Tutoriales (2026-11-14)
+
+**Commit de código validado:** `6c3b72e9574067b6fd4202e187da518221498193`.
+
+- La construcción del snapshot final y su publicación de Tutoriales ahora se serializan bajo ScriptLock. Así se evita que un evento atrasado de una edición anterior publique después de una edición concurrente más reciente y deje el cliente con contenido obsoleto.
+- El fallback reset también se intenta dentro de la misma sección serializada.
+- Prueba contractual ampliada: adquisición y liberación de lock, lectura de fila y publicación protegidas.
+- GitHub Actions run `43653060997`: SUCCESS; 98 suites / 1,467 pruebas / 0 fallos; CatalogChangeFeed 16/16 PASS.
+- Siguiente: mantener reset para PyS/Relay hasta disponer de persistencia/cursor y escritores backend identificados; no inventar rutas de escritura ni IDs históricos.
