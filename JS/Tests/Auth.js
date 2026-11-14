@@ -935,6 +935,9 @@ function validateSessionReadOnly_(sessionToken, expectedUserId) {
             return { valid: false, reason: 'inactive_or_ambiguous_user' };
         }
         const sessionTermsHeader = String(sessionsSheet.getRange(1, COLS_ACTIVE_SESSIONS.SessionTermsAcceptance).getValue() || '').trim();
+        if (sessionTermsHeader && sessionTermsHeader !== 'SessionTermsAcceptance') {
+            return { valid: null, unavailable: true, reason: 'terms_schema_conflict' };
+        }
         const termsAcceptance = sessionTermsHeader === 'SessionTermsAcceptance'
             ? parseTermsAcceptance_(session.row[COLS_ACTIVE_SESSIONS.SessionTermsAcceptance - 1])
             : { version: '', acceptedAt: '', status: 'pending' };
