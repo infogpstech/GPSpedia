@@ -608,6 +608,9 @@ function doPostInternal_(e) {
             case 'migrateLegacyPasswords':
                 response = handleMigrateLegacyPasswords(request.payload);
                 break;
+            case 'benchmarkPasswordKdf':
+                response = handleBenchmarkPasswordKdf_(request.payload);
+                break;
             default:
                 throw new Error(`Acción desconocida: ${request.action}`);
         }
