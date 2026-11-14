@@ -322,3 +322,33 @@ PENDIENTE DE SPREADSHEET (REQUIERE ACTUALIZACIÓN EXTERNA)
 
 No se consultó ni modificó la Spreadsheet, ni se desplegaron Apps Script. No se ejecutaron pruebas Node/CLI o integración; la revisión de esta tarea fue estática. La siguiente validación debe comprobar sintaxis, suites de servicios y datos reales de Beta antes de publicar.
 ================================================================================
+
+
+================================================================================
+CONTINUIDAD — 2026-11-14 — JEFE CANÓNICO VALIDADO
+HEAD verificado antes de este registro: 449e15187090bf34dd7b75d355ab6a774e2e072d
+
+ESTADO DEL CAMBIO
+- Jefe es el único rol canónico. Se unificaron AUTH, USERS, ADMIN, FEEDBACK, WRITE, InboxConversations, JS/Frontend/ui.js, JS/Frontend/auth.js y HTML/users.html.
+- Las opciones de creación/edición de usuarios solo ofrecen Jefe. La etiqueta del perfil y los datos recibidos por el frontend convierten valores heredados Gefe a Jefe.
+- Las matrices backend/UI usan jefe; la lista de roles de Inbox y el actor de auditoría ADMIN también quedaron normalizados.
+- La compatibilidad con registros heredados Gefe se conserva solo como conversión de lectura. No se crean ni asignan valores nuevos Gefe.
+- Fixtures de prueba AUTH/USERS sincronizados con los servicios y con el ID de Spreadsheet aislada. Pruebas de contrato de roles ampliadas para frontend, Inbox, ADMIN y perfil.
+
+VALIDACIÓN
+- GitHub Actions service-tests.yml: run 43594248150, commit bc028a83577f0ba966f0f81f496eb25567bcd6b7, SUCCESS.
+- Sintaxis JavaScript: PASS.
+- Regresión de servicios: 75 suites, 1,152 pruebas aprobadas, 0 fallos de suite.
+- Las ejecuciones anteriores con fallos fueron corregidas; la última ejecución completa indicada arriba es exitosa.
+
+PENDIENTE EXTERNO — SPREADSHEET
+- Actualizar Users.Privilegios (columna D): cambiar los valores existentes Gefe a Jefe.
+- Sustituir Gefe por Jefe en la validación de datos/lista desplegable de esa columna y revisar rangos auxiliares equivalentes.
+- No se pudo hacer desde esta sesión: Google Drive/Sheets está deshabilitado para la conexión disponible. No se modificó la hoja ni se desplegaron servicios.
+- Tras confirmar que no quedan valores antiguos en la Spreadsheet, retirar los conversores temporales de compatibilidad del código.
+
+SIGUIENTE TRABAJO
+- La tarea de normalización de rol en código está completada. P4 permanece abierto por la matriz de capacidades de imprimir/editar/compartir y restricciones de imágenes.
+- Continuidad general: P1 autenticación simplificada, luego P2 migración de contraseñas/identificadores según dependencias del backlog.
+- La rama base GPSpedia2.2.5 no se modificó.
+================================================================================
