@@ -12,7 +12,7 @@ const SHEET_NAMES={CORTES:"Cortes"};
 const planner=new Function("extractDriveFileIds","SHEET_NAMES",admin.slice(start,end)+";return buildCortesImageReconciliationPlan_;")(extractDriveFileIds,SHEET_NAMES);
 const id=n=>"drive-file-id-000000000000000"+n;
 const target=(baseName,extra={})=>({row:2,vehicleId:"V-001",field:"imagenVehiculo",column:9,baseName,currentValue:"",...extra});
-const file=(n,name,mimeType="image/jpeg")=>({fileId:id(n),fileName:name,mimeType});
+const file=(n,name,mimeType="image/jpeg")=>({fileId:id(n),fileName:name,mimeType,accessPublic:true});
 let passed=0;function testCase(name,fn){fn();passed++;console.log("PASS "+name);}
 testCase("bloquea destinos con fórmula aunque el valor calculado esté vacío",()=>{
  const p=planner([target("same",{hasFormula:true})],[file(1,"same.png")],new Map());
