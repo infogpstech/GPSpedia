@@ -2803,6 +2803,147 @@ function getCanonicalImageExtension(file) {
         "image/x-icon":".ico", "image/vnd.microsoft.icon":".ico" };
     return extensions[mime] || "";
 }
+
+/**
+ * Construye destinos esperados para conciliación de imágenes. No realiza escrituras.
+ * El nombre canónico se usa como clave exacta; no se infiere por similitud.
+ */
+function buildCortesImageReconciliationTargets_() {
+    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+    if (!sheet) throw new Error("No se encontró la hoja «Cortes».");
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) return { targets: [], rowIssues: [], sourceLastRow: lastRow };
+    const lastColumn = Math.max(sheet.getLastColumn(), COLS_CORTES.imgCableAlimen3);
+    const rows = sheet.getRange(1, 1, lastRow, lastColumn).getValues();
+    const fields = ["imagenVehiculo", "imgCorte1", "imgCorte2", "imgCorte3", "imgApertura",
+        "imgCableAlimen", "imgCableAlimen2", "imgCableAlimen3"];
+    const idCounts = new Map();
+    for (let r = 1; r < rows.length; r++) {
+        const id = String(rows[r][COLS_CORTES.id - 1] || "").trim();
+        if (id) idCounts.set(id, (idCounts.get(id) || 0) + 1);
+    }
+    const targets = [], rowIssues = [];
+    for (let r = 1; r < rows.length; r++) {
+        const row = rows[r], vehicleId = String(row[COLS_CORTES.id - 1] || "").trim();
+        const hasVehicleData = row.some((value, column) => column !== COLS_CORTES.id - 1 && String(value == null ? "" : value).trim() !== "");
+        if (!vehicleId) {
+            if (hasVehicleData) rowIssues.push({ row: r + 1, reason: "La fila contiene datos pero no tiene ID de vehículo." });
+            continue;
+        }
+        if (idCounts.get(vehicleId) !== 1) {
+            rowIssues.push({ row: r + 1, vehicleId, reason: "El ID de vehículo está duplicado; no se proponen destinos para esta fila." });
+            continue;
+        }
+        const vehicleInfo = {
+            modelo: row[COLS_CORTES.modelo - 1],
+            versionesAplicables: row[COLS_CORTES.versionesAplicables - 1],
+            tipoEncendido: row[COLS_CORTES.tipoEncendido - 1],
+            anoDesde: row[COLS_CORTES.anoDesde - 1]
+        };
+        fields.forEach(field => {
+            try {
+                const baseName = buildCanonicalImageBaseName(vehicleInfo, field);
+                const column = COLS_CORTES[field];
+                targets.push({
+                    row: r + 1, vehicleId, field, column, baseName,
+                    currentValue: String(row[column - 1] == null ? "" : row[column - 1]).trim()
+                });
+            } catch (error) {
+                rowIssues.push({ row: r + 1, vehicleId, field, reason: String(error && error.message || error) });
+            }
+        });
+    }
+    return { targets, rowIssues, sourceLastRow: lastRow };
+}
+
+/**
+ * Clasifica archivos de Drive contra destinos de Cortes por nombre canónico exacto.
+ * Un resultado "matched" solo es una propuesta; nunca modifica Spreadsheet ni Drive.
+ */
+function buildCortesImageReconciliationPlan_(targets, driveFiles, activeReferences) {
+    if (!Array.isArray(targets) || !Array.isArray(driveFiles)) throw new Error("El plan requiere destinos y archivos en formato de lista.");
+    const references = activeReferences instanceof Map ? activeReferences : new Map();
+    const targetIndex = new Map();
+    targets.forEach(target => {
+        const key = String(target && target.baseName || "").trim().toLowerCase();
+        if (!key) return;
+        if (!targetIndex.has(key)) targetIndex.set(key, []);
+        targetIndex.get(key).push(target);
+    });
+    const filesByName = new Map(), seenFileIds = new Set(), invalidFiles = [];
+    driveFiles.forEach(file => {
+        const fileId = String(file && file.fileId || "").trim();
+        const fileName = String(file && file.fileName || "").trim();
+        const mimeType = String(file && file.mimeType || "").trim().toLowerCase();
+        if (!/^[a-zA-Z0-9_-]{20,}$/.test(fileId) || !fileName || !mimeType.startsWith("image/")) {
+            invalidFiles.push({ fileId, fileName, reason: "Archivo sin ID verificable, nombre o tipo MIME de imagen." });
+            return;
+        }
+        if (seenFileIds.has(fileId)) return;
+        seenFileIds.add(fileId);
+        const baseName = fileName.replace(/\.[^.]+$/, "").trim().toLowerCase();
+        if (!filesByName.has(baseName)) filesByName.set(baseName, []);
+        filesByName.get(baseName).push(file);
+    });
+    const results = [], usedTargetKeys = new Set();
+    filesByName.forEach((files, baseName) => {
+        const candidates = targetIndex.get(baseName) || [];
+        files.forEach(file => {
+            const fileId = String(file.fileId), refs = references.get(fileId);
+            const locations = Array.isArray(refs) ? refs : refs ? [{ sheet: "desconocida" }] : [];
+            if (candidates.length > 1 || files.length > 1) {
+                results.push({ status: "ambiguous", fileId, fileName: file.fileName,
+                    candidateCount: candidates.length, duplicateFileCount: files.length,
+                    reason: candidates.length > 1 ? "El nombre coincide con más de un destino de Cortes." : "Hay varios archivos con el mismo nombre canónico." });
+                return;
+            }
+            if (candidates.length === 0) {
+                results.push({ status: locations.length ? "referenced_elsewhere" : "orphaned", fileId, fileName: file.fileName,
+                    locations, reason: locations.length ? "El archivo tiene referencias, pero no coincide con un destino canónico de Cortes." : "No existe referencia ni destino canónico exacto en Cortes." });
+                return;
+            }
+            const target = candidates[0], targetKey = target.row + ":" + target.column;
+            const currentIds = extractDriveFileIds(target.currentValue);
+            if (currentIds.includes(fileId)) {
+                results.push({ status: "already_linked", fileId, fileName: file.fileName, target });
+                usedTargetKeys.add(targetKey);
+                return;
+            }
+            const exactTargetReference = locations.some(location =>
+                location && location.sheet === SHEET_NAMES.CORTES &&
+                Number(location.row) === Number(target.row) && Number(location.column) === Number(target.column)
+            );
+            if (locations.length && !exactTargetReference) {
+                results.push({ status: "referenced_elsewhere", fileId, fileName: file.fileName, target, locations,
+                    reason: "El archivo ya está referenciado; no se propone reutilizarlo en otra celda." });
+                return;
+            }
+            if (target.currentValue) {
+                results.push({ status: "occupied", fileId, fileName: file.fileName, target,
+                    reason: "El destino contiene una referencia o un valor no vacío que no se sobrescribirá." });
+                return;
+            }
+            if (locations.length) {
+                results.push({ status: "ambiguous", fileId, fileName: file.fileName, target, locations,
+                    reason: "La referencia del archivo no coincide de forma inequívoca con el destino vacío." });
+                return;
+            }
+            if (usedTargetKeys.has(targetKey)) {
+                results.push({ status: "ambiguous", fileId, fileName: file.fileName, target,
+                    reason: "Más de un archivo propone el mismo destino." });
+                return;
+            }
+            results.push({ status: "matched", fileId, fileName: file.fileName, target,
+                proposedUrl: "https://drive.google.com/uc?export=view&id=" + encodeURIComponent(fileId),
+                note: "Propuesta por nombre canónico exacto; requiere validar acceso al archivo y aprobar antes de escribir." });
+            usedTargetKeys.add(targetKey);
+        });
+    });
+    const counts = { matched: 0, already_linked: 0, orphaned: 0, ambiguous: 0, occupied: 0, referenced_elsewhere: 0, invalid: invalidFiles.length };
+    results.forEach(item => { counts[item.status] = (counts[item.status] || 0) + 1; });
+    return { results, invalidFiles, counts, writePerformed: false };
+}
+
 function buildCanonicalImageFilename(vehicleInfo, fieldName, file, extraSuffix) {
     const extension = getCanonicalImageExtension(file);
     if (!extension) throw new Error("No se pudo determinar una extensión compatible sin alterar el archivo original.");

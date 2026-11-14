@@ -80,6 +80,7 @@ runGroup('32','ADMIN',()=>{
  runCli('UX ayudas contextuales del formulario de cortes','JS/Tests/ContextualHelpForms.mjs');
  runCli('P1 coordinación de actividad y sesiones protegidas por servicio','JS/Tests/SessionActivityCoordination.mjs');
  runCli('GP-IMG-UX-01 biblioteca de imágenes: selección, menús y vistas','JS/Tests/ReplacedImagesLibraryUX.mjs');
+ runCli('GP-IMG-DATA-01 planner exacto de conciliación Drive ↔ Cortes','JS/Tests/CortesImageReconciliation.mjs');
  runCli('P2 asignador backend de IDs LogosMarca','JS/Tests/LogoIdIntegrity.mjs');
 });
 runGroup('33','FEEDBACK',()=>{
