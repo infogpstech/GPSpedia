@@ -917,3 +917,10 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 2. Desplegar `Services/admin.js` en el proyecto ADMIN de Beta y completar una auditoría Drive real para verificar persistencia de metadatos y handshake de capacidad.
 3. En una copia Beta autorizada, ejecutar preview y probar una aplicación aprobada, read-back, auditoría y rollback. No se ejecutó ninguna escritura en Drive/Spreadsheet ni se modificaron permisos durante esta revisión.
 4. La aplicación sobre datos productivos continúa requiriendo autorización expresa.
+
+
+### Publicación documental de continuidad — 2026-11-14
+
+- Tras la revisión del código `e8bd98343197be6ff1fd63e87a57a74b6ccf169c`, se publicaron tres commits documentales, sin cambios funcionales: checkpoint `7d039d0274ad051c133609bd1bd0e0bbfd93d514`, ChangesLogs `347818c8030ff778e2b2707cb910e5bf914be15d` y Tareas_Activas `592572e5f410afeb350c4a96225934c421736989`.
+- HEAD remoto verificado antes de esta sincronización final del checkpoint: `592572e5f410afeb350c4a96225934c421736989`. El código funcional no cambió después de `e8bd983`.
+- Las tres actualizaciones documentales se realizaron únicamente en `GPSpedia2.2.5_work`; la rama base sigue en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
