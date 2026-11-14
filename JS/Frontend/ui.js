@@ -4392,6 +4392,7 @@ async function setInboxView_(view, options = {}) {
     const context = getUiSessionContext_();
     const nextView = view === "requests" && inboxCanSeeRequests_(context && context.role) ? "requests" : "conversations";
     inboxConversationCurrentView_ = nextView;
+    document.getElementById("inbox-modal-content")?.classList.remove("is-request-detail-open");
     const conversations = document.getElementById("inbox-conversations-view");
     const requests = document.getElementById("inbox-requests-view");
     const tabs = document.getElementById("inbox-view-tabs");
@@ -8164,6 +8165,7 @@ export function renderInboxList(items) {
     }
 
     listContainer.replaceChildren();
+    document.getElementById('inbox-modal-content')?.classList.remove('is-request-detail-open');
     if (!items.length) {
         const emptyMessage = document.createElement('p');
         emptyMessage.textContent = 'No hay mensajes.';
