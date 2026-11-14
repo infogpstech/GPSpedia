@@ -3708,38 +3708,13 @@ function isCurrentUiSessionContext_(expected) {
         current.role === expected.role);
 }
 
-let uiRoleValidationInFlight_ = null;
-
-async function ensureUiSessionRole_(allowedRoles) {
-    const expected = getUiSessionContext_();
-    if (!expected || !Array.isArray(allowedRoles) || !allowedRoles.includes(expected.role)) return null;
-    const authApi = typeof window !== 'undefined' ? window.auth : null;
-    if (!authApi || typeof authApi.validateActiveSession !== 'function') {
-        logDeveloperDiagnostic_('El cliente AUTH no está disponible; la interfaz usa el rol local y el servidor mantiene la autorización de cada operación.', 'warning');
-        return expected;
-    }
-    // La apertura visual no espera la red. AUTH valida en segundo plano y cada acción protegida
-    // continúa requiriendo autorización del servicio correspondiente.
-    const validationKey = expected.userId + '\u0000' + expected.sessionToken;
-    let pending = uiRoleValidationInFlight_;
-    if (!pending || pending.key !== validationKey) {
-        const promise = Promise.resolve().then(() => authApi.validateActiveSession(false));
-        pending = { key: validationKey, promise };
-        uiRoleValidationInFlight_ = pending;
-        promise.then(
-            valid => {
-                if (valid === null) logDeveloperDiagnostic_('AUTH está temporalmente indisponible; las operaciones protegidas seguirán validándose en el servidor.', 'warning');
-                if (uiRoleValidationInFlight_ === pending) uiRoleValidationInFlight_ = null;
-            },
-            error => {
-                console.debug('No se pudo completar la validación de AUTH en segundo plano:', error && error.message ? error.message : error);
-                logDeveloperDiagnostic_('La validación de AUTH se pospuso por una incidencia de conexión.', 'warning');
-                if (uiRoleValidationInFlight_ === pending) uiRoleValidationInFlight_ = null;
-            }
-        );
-    }
-    const current = getUiSessionContext_();
-    return current && isCurrentUiSessionContext_(expected) && allowedRoles.includes(current.role) ? current : null;
+// La sesión ya fue autenticada y su rol quedó establecido al iniciar/restaurar sesión.
+// La apertura de paneles solo consulta ese contexto local; no inicia otra validación AUTH.
+// Cada operación protegida conserva su autorización integrada en el backend.
+function ensureUiSessionRole_(allowedRoles) {
+    const context = getUiSessionContext_();
+    if (!context || !Array.isArray(allowedRoles) || !allowedRoles.includes(context.role)) return null;
+    return context;
 }
 
 function getSessionPayload_() {
@@ -4178,7 +4153,7 @@ const openDashboardModal_ = setupModal('dashboard-modal', async () => {
 });
 
 export async function openDashboard() {
-    const context = await ensureUiSessionRole_(['desarrollador', 'jefe', 'supervisor']);
+    const context = ensureUiSessionRole_(['desarrollador', 'jefe', 'supervisor']);
     if (!context) return;
     return openDashboardModal_();
 }
@@ -4212,7 +4187,7 @@ const openInboxModal_ = setupModal('inbox-modal', async (options = {}) => {
 
 export async function openInbox() {
     const returnFocus = document.activeElement;
-    const context = await ensureUiSessionRole_(['desarrollador', 'jefe', 'supervisor', 'tecnico', 'tecnico_exterior']);
+    const context = ensureUiSessionRole_(['desarrollador', 'jefe', 'supervisor', 'tecnico', 'tecnico_exterior']);
     if (!context) return;
     return openInboxModal_({ returnFocus });
 }
@@ -4886,7 +4861,7 @@ const openDevToolsModal_ = setupModal('dev-tools-modal', (options = {}) => {
 });
 
 export async function openDevTools(...args) {
-    const sessionContext = await ensureUiSessionRole_(['desarrollador']);
+    const sessionContext = ensureUiSessionRole_(['desarrollador']);
     if (!sessionContext) return;
     return openDevToolsModal_(...args);
 }
@@ -6580,7 +6555,7 @@ function getReplacedImageCapabilities_(rep, schemaReady, referenceCheckStatus, r
 }
 
 export async function openReplacedImagesModal() {
-    const requestContext = await ensureUiSessionRole_(['desarrollador']);
+    const requestContext = ensureUiSessionRole_(['desarrollador']);
     if (!requestContext) return;
     const generation = ++replacedImagesModalGeneration_;
     const isCurrentRequest = () => generation === replacedImagesModalGeneration_ && isCurrentUiSessionContext_(requestContext);
@@ -6993,7 +6968,7 @@ export async function openReplacedImagesModal() {
  * TAREA 2: Modal de Auditoría de Imágenes en Google Drive (Árbol 'Cortes')
  */
 export async function openAuditDriveModal() {
-    const requestContext = await ensureUiSessionRole_(['desarrollador']);
+    const requestContext = ensureUiSessionRole_(['desarrollador']);
     if (!requestContext) return;
     const cleared = await processPendingDriveAuditClears_(requestContext.userId);
     if (cleared !== true) {
@@ -13588,7 +13563,7 @@ export function exportVehiclePrintSheet(item) {
 
 export async function loadAndRenderInbox(options = {}) {
     const suppliedContext = options && options.context;
-    const requestContext = suppliedContext || await ensureUiSessionRole_(['desarrollador', 'jefe', 'supervisor']);
+    const requestContext = suppliedContext || ensureUiSessionRole_(['desarrollador', 'jefe', 'supervisor']);
     if (!requestContext || !isCurrentUiSessionContext_(requestContext)) return;
     if (options.reset === true) {
         inboxPageCursorStack_ = [null];

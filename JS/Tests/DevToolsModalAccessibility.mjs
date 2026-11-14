@@ -58,8 +58,13 @@ test('el disparador del menú devuelve el foco a un control visible', () => {
     assert.match(main, /const focusReturnTarget = document\.getElementById\('hamburger-btn'\) \|\| devToolsBtn/);
     assert.match(main, /ui\.openDevTools\(\{ returnFocus: focusReturnTarget \}\)/);
 });
-test('la apertura continúa restringida al rol Desarrollador', () => {
+test('la apertura continúa restringida al rol Desarrollador sin revalidar AUTH al abrir el panel', () => {
     assert.match(ui, /ensureUiSessionRole_\(\['desarrollador'\]\)/);
+    const start = ui.indexOf('function ensureUiSessionRole_(');
+    const end = ui.indexOf('function getSessionPayload_()', start);
+    const guard = ui.slice(start, end);
+    assert.doesNotMatch(guard, /validateActiveSession|routeAction\(/);
+    assert.match(guard, /getUiSessionContext_\(\)/);
 });
 test('los avisos extensos se guardan en la terminal y la interfaz muestra texto breve', () => {
     assert.match(ui, /const developerDiagnosticQueue_ = \[\]/);

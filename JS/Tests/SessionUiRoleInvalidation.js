@@ -32,15 +32,12 @@ function runSessionUiRoleInvalidationTests(sources) {
   assert(f.includes("if (lastShownAppContextKey !== appContextKey)"));
   assert(f.includes("resetSessionUi_()"));
  });
- run("vistas privilegiadas abren sin esperar AUTH y validan en segundo plano",()=>{
-  const f=slice(ui,"async function ensureUiSessionRole_(","function getSessionPayload_");
-  assert(f.includes("validateActiveSession(false)"));
-  assert(f.includes("isCurrentUiSessionContext_(expected)"));
-  assert(f.includes("const current = getUiSessionContext_()"));
-  assert(f.includes("allowedRoles.includes(current.role)"));
-  assert(f.includes("promise.then("));
-  assert(!f.includes("await pending.promise"),"La interfaz no debe esperar la red para abrir.");
-  assert(f.includes("return null"));
+ run("abrir paneles usa la sesión y el rol ya establecidos sin solicitar otra validación AUTH",()=>{
+  const f=slice(ui,"function ensureUiSessionRole_(","function getSessionPayload_");
+  assert(f.includes("getUiSessionContext_()"));
+  assert(f.includes("allowedRoles.includes(context.role)"));
+  assert(!f.includes("validateActiveSession"),"Abrir un panel no debe revalidar la sesión.");
+  assert(!f.includes("routeAction("),"Abrir un panel no debe generar una petición de autenticación.");
   for(const name of ["openDevToolsModal_","openInboxModal_","openDashboardModal_"]){
    const k=ui.indexOf("const "+name);assert(k>=0,"No se encontró "+name);
    const body=ui.slice(k,ui.indexOf("\n",k+1)+3000);
@@ -86,14 +83,14 @@ function runSessionUiRoleInvalidationTests(sources) {
   assert(f.includes("window.state.setState({ currentUser: null })"));
   assert(f.includes("window.location.replace('../index.html')"));
  });
- run("AUTH revocado fuerza logout; las vistas no bloquean su apertura por red lenta",()=>{
+ run("AUTH conserva la validación de inicio/restauración y el backend protege las operaciones; los paneles no revalidan",()=>{
   const f=slice(auth,"export async function validateActiveSession(","export async function checkSession");
   assert(f.includes("result.valid === false")&&f.includes("logout('Tu sesión ya no está vigente. Inicia sesión nuevamente.', user)"));
-  const guard=slice(ui,"async function ensureUiSessionRole_(","function getSessionPayload_");
-  assert(guard.includes("validateActiveSession(false)")&&guard.includes("promise.then("));
-  assert(guard.includes("if (valid === null)"));
-  assert(guard.includes("return current && isCurrentUiSessionContext_(expected)"));
-  assert(!guard.includes("await pending.promise"));
+  const startup=slice(auth,"export async function checkSession()","export async function ");
+  assert(startup.includes("validateSessionCoordinated(user, false)"));
+  const guard=slice(ui,"function ensureUiSessionRole_(","function getSessionPayload_");
+  assert(!guard.includes("validateActiveSession"));
+  assert.match(authService,/validateAndTouchSession_/);
  });
  return {status:failed===0?"PASS":"FAIL",passed,failed,results};
 }

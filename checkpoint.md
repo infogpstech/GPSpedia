@@ -1058,3 +1058,16 @@ La rama base `GPSpedia2.2.5` permanece fuera del alcance.
 - AUD-2026-11-14-01 y AUD-2026-11-14-02 quedan corregidos a nivel de código y CI. La reproducción real del escáner y de la migración en Apps Script/Spreadsheet Beta sigue pendiente.
 - AUD-2026-11-14-03 (apertura del panel Developer) permanece sin causa confirmada; requiere navegador real con sesión Desarrollador. No se altera el flujo de autorización a partir de inspección estática solamente.
 - HEAD funcional/documental antes de esta actualización: ca6bf55564308d13b68d5554f6b62d098a963855. Rama base GPSpedia2.2.5 sin cambios (d9acc68d889985c2e2f42fe3a02e502efc86ead1).
+
+
+## Corrección de apertura de paneles Developer — 2026-11-14
+
+**Estado: IMPLEMENTADA EN RAMA DE TRABAJO; CI Y BETA PENDIENTES**
+
+- Causa identificada en `JS/Frontend/ui.js`: `ensureUiSessionRole_` lanzaba `validateActiveSession(false)` en segundo plano cada vez que se abría una vista privilegiada. Aunque no esperaba la respuesta para mostrar el panel, generaba una petición AUTH redundante.
+- Corrección: el helper consulta ahora el contexto local de sesión y el rol ya establecidos al iniciar sesión; no solicita otra validación ni ejecuta una petición de red para abrir paneles. Se eliminaron los `await` asociados.
+- Se conserva la validación de sesión al iniciar/restaurar la aplicación y la autorización backend integrada en cada operación protegida (token, identidad, vigencia, estado y rol). No se debilitan permisos de escritura ni se confía en el cliente para autorizar acciones.
+- Pruebas actualizadas: `SessionUiRoleInvalidation.js` y `DevToolsModalAccessibility.mjs` verifican que el helper no invoque `validateActiveSession` ni `routeAction`.
+- Pendiente: ejecutar CI sobre el nuevo HEAD y validar en navegador/Beta que la apertura no produce una llamada AUTH adicional y que una sesión revocada/rol retirado no puede ejecutar operaciones protegidas.
+- Rama base `GPSpedia2.2.5` sin modificaciones.
+
