@@ -462,7 +462,7 @@ export async function loadInitialData(forceRefresh = false, options = {}) {
     } finally {
         if (catalogLoadController_ === loadController) {
             catalogLoadController_ = null;
-            if (settings.fromPoll !== true) scheduleCatalogPoll_();
+            if (settings.fromPoll !== true && typeof scheduleCatalogPoll_ === "function") scheduleCatalogPoll_();
         }
     }
 }
