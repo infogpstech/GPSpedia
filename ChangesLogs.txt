@@ -1254,3 +1254,9 @@ Commits: dacc854, 8be5281, f0645b5, 0e02d90, 5c58ed8, 024d604, 6bf5732, 9b2e781.
 - JS/Frontend/main.js: se define localmente isLightboxVisible() antes de su uso en handleViewportChange(), comprobando de forma segura la existencia del elemento y su clase visible.
 - Validación aislada V8: parsing de main.js aprobado y 3/3 escenarios de visibilidad PASS (elemento inexistente, oculto y visible). Navegador real pendiente de Beta.
 ================================================================================
+
+================================================================================
+2026-11-13 — CORRECCIÓN — INVALIDACIÓN DE CACHÉ PWA PARA EL LIGHTBOX
+- service-worker.js: se incrementa gpsepedia-cache-v22 a gpsepedia-cache-v23 para que los clientes reciban la versión corregida de main.js.
+- JS/Tests/PWAStartupScenarios.js: se actualizan las expectativas de caché y se añade una comprobación de regresión que verifica la definición previa de isLightboxVisible().
+================================================================================
