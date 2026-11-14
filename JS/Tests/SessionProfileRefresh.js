@@ -47,7 +47,7 @@ function runSessionProfileRefreshTests(sources) {
  run('AUTH valida acceptTerms en solo lectura y conserva touch para otras mutaciones',()=>{
   const helper=extract(services[0][1],'touchProtectedAuthRequestSession_');
   const calls={read:0,touch:0};
-  const fn=new Function('isSharedMutationAction_','normalizeUserId','validateSessionReadOnly_','validateAndTouchSession_',helper+'\\nreturn touchProtectedAuthRequestSession_;')(
+  const fn=new Function('isSharedMutationAction_','normalizeUserId','validateSessionReadOnly_','validateAndTouchSession_',helper+'\nreturn touchProtectedAuthRequestSession_;')(
    action=>['acceptTerms','changePassword','resetUserPassword','resetUserSessions','clearSensitiveLogs','deleteUser','updateUser','logout','migrateLegacyPasswords'].includes(action),
    value=>String(value||'').trim(),
    (token,userId)=>{calls.read++;return{valid:true,userId};},
@@ -62,7 +62,7 @@ function runSessionProfileRefreshTests(sources) {
   fn('touchSession',{sessionToken:'valid-token'});
   fn('migrateLegacyPasswords',{sessionToken:'valid-token'});
   equal(calls.touch,1,'login, touchSession y migración batch no deben duplicar la actualización.');
-  const invalid=new Function('isSharedMutationAction_','normalizeUserId','validateSessionReadOnly_','validateAndTouchSession_',helper+'\\nreturn touchProtectedAuthRequestSession_;')(
+  const invalid=new Function('isSharedMutationAction_','normalizeUserId','validateSessionReadOnly_','validateAndTouchSession_',helper+'\nreturn touchProtectedAuthRequestSession_;')(
    ()=>true,value=>String(value||'').trim(),()=>({valid:false,reason:'missing_session'}),()=>({valid:false})
   );
   let rejected=false;
