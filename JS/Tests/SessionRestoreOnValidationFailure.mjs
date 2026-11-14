@@ -61,13 +61,13 @@ function buildCheckSession(validation, options = {}) {
 }
 
 let passed = 0;
-function test(name, fn) {
-    fn();
+async function test(name, fn) {
+    await fn();
     passed++;
     console.log('PASS ' + name);
 }
 
-test('un timeout de AUTH conserva y restaura la sesión local', async () => {
+await test('un timeout de AUTH conserva y restaura la sesión local', async () => {
     const t = buildCheckSession({ timeout: true });
     await t.run();
     assert.equal(t.calls.restored.length, 1);
@@ -77,7 +77,7 @@ test('un timeout de AUTH conserva y restaura la sesión local', async () => {
     assert.match(t.calls.warnings[0], /se conservó la sesión local/i);
 });
 
-test('un resultado de verificación no disponible no se interpreta como revocación', async () => {
+await test('un resultado de verificación no disponible no se interpreta como revocación', async () => {
     const t = buildCheckSession({ valid: null, unavailable: true });
     await t.run();
     assert.equal(t.calls.restored.length, 1);
@@ -85,7 +85,7 @@ test('un resultado de verificación no disponible no se interpreta como revocaci
     assert.ok(t.getStored());
 });
 
-test('un fallo de red conserva la sesión y permite reintentar después', async () => {
+await test('un fallo de red conserva la sesión y permite reintentar después', async () => {
     const t = buildCheckSession(new Error('NETWORK_ERROR'));
     await t.run();
     assert.equal(t.calls.restored.length, 1);
@@ -93,7 +93,7 @@ test('un fallo de red conserva la sesión y permite reintentar después', async 
     assert.equal(t.calls.removed, 0);
 });
 
-test('sin conexión restaura la sesión local sin llamar a AUTH', async () => {
+await test('sin conexión restaura la sesión local sin llamar a AUTH', async () => {
     const t = buildCheckSession(new Error('No debe consultar AUTH'), { offline: true });
     await t.run();
     assert.equal(t.calls.validations, 0);
@@ -101,21 +101,21 @@ test('sin conexión restaura la sesión local sin llamar a AUTH', async () => {
     assert.equal(t.calls.loggedOut.length, 0);
 });
 
-test('una revocación confirmada por AUTH sí cierra la sesión', async () => {
+await test('una revocación confirmada por AUTH sí cierra la sesión', async () => {
     const t = buildCheckSession({ valid: false, reason: 'missing_session' });
     await t.run();
     assert.equal(t.calls.loggedOut.length, 1);
     assert.equal(t.calls.restored.length, 0);
 });
 
-test('una expiración local confirmada conserva el cierre de sesión', async () => {
+await test('una expiración local confirmada conserva el cierre de sesión', async () => {
     const t = buildCheckSession({ valid: true }, { expired: true });
     await t.run();
     assert.equal(t.calls.loggedOut.length, 1);
     assert.equal(t.calls.restored.length, 0);
 });
 
-test('AUTH devuelve no disponible ante excepción interna, no sesión revocada', () => {
+await test('AUTH devuelve no disponible ante excepción interna, no sesión revocada', () => {
     const handler = extract(service, 'function handleValidateSession(payload)', '\nfunction handleTouchSession(payload)');
     const fn = new Function('validateAndTouchSession_', 'logToSheet', handler + '\nreturn handleValidateSession;')(
         () => { throw new Error('Spreadsheet temporalmente no disponible'); },
@@ -127,7 +127,7 @@ test('AUTH devuelve no disponible ante excepción interna, no sesión revocada',
     assert.equal(fn({ userId: 'U-TEST', sessionToken: 'token-test' }).valid, null);
 });
 
-test('AUTH mantiene false únicamente para identidad o token ausentes/revocados', () => {
+await test('AUTH mantiene false únicamente para identidad o token ausentes/revocados', () => {
     const handler = extract(service, 'function handleValidateSession(payload)', '\nfunction handleTouchSession(payload)');
     const fn = new Function('validateAndTouchSession_', 'logToSheet', handler + '\nreturn handleValidateSession;')(
         () => ({ valid: false, reason: 'missing_session' }), () => {}
@@ -136,17 +136,17 @@ test('AUTH mantiene false únicamente para identidad o token ausentes/revocados'
     assert.equal(fn({ userId: 'U-TEST' }).valid, false);
 });
 
-test('AUTH trata hojas faltantes y revocación pendiente como indisponibilidad temporal', () => {
+await test('AUTH trata hojas faltantes y revocación pendiente como indisponibilidad temporal', () => {
     assert.match(service, /valid: null, unavailable: true, reason: 'missing_sheet'/);
     assert.match(service, /valid: null, unavailable: true, reason: 'role_revocation_pending'/);
 });
 
-test('las operaciones protegidas distinguen indisponibilidad de sesión inválida', () => {
+await test('las operaciones protegidas distinguen indisponibilidad de sesión inválida', () => {
     assert.match(api, /result&&result\.valid===false&&!result\.error&&!result\.unavailable/);
     assert.match(api, /SESSION_VALIDATION_UNAVAILABLE/);
 });
 
-test('la validación reciente puede reutilizarse al restaurar una actualización rápida', () => {
+await test('la validación reciente puede reutilizarse al restaurar una actualización rápida', () => {
     const check = extract(client, 'export async function checkSession()', '\nexport async function login(');
     assert.match(check, /validateSessionCoordinated\(user, false\)/);
 });
