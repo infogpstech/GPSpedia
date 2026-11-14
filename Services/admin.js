@@ -14,7 +14,7 @@ const DRIVE_FOLDER_ID = '1-8QqhS-wtEFFwyBG8CmnEOp5i8rxSM-2';
 let spreadsheet = null;
 
 
-const WRITE_SERVICE_URL = "https://script.google.com/macros/s/AKfycbwsRkcK8-q8hiOpaUNrU1e79WD2SH87MsZkfaFU3S19ayAC9ZMhxDuZUv0cx9iaW7cPlw/exec";
+const WRITE_SERVICE_URL = "https://script.google.com/macros/s/AKfycbxMj8WFCMZVLXuk3N6_WCeEwNwhGAb589PJY4gc5ZjA8mrYsBN7-femz_FCH4eFj5vBDQ/exec";
 
 /** WRITE es la autoridad única para asignar y estabilizar IDs de Cortes. */
 function callWriteServiceAction(action, payload, sharedMutationToken) {
