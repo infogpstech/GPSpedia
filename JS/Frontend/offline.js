@@ -1111,38 +1111,67 @@ export async function saveCatalogCursor(cursor) {
 }
 
 /**
- * Aplica únicamente deltas de Cortes con IDs estables. Cualquier reset o
- * colección no soportada obliga a reconciliar con un snapshot completo.
+ * Indexa una colección catalogal solo cuando todos sus registros tienen un ID
+ * persistente único. No inventa claves para filas heredadas: en esos casos el
+ * consumidor solicita el reset seguro y conserva el snapshot anterior.
+ */
+function indexCatalogCollectionById_(items, collection) {
+    if (!Array.isArray(items)) throw new TypeError('La colección ' + collection + ' debe ser un arreglo.');
+    const idField = collection === 'cortes' || collection === 'logos' ? 'id' : 'ID';
+    const indexed = new Map();
+    items.forEach((item, position) => {
+        if (!item || typeof item !== 'object' || Array.isArray(item)) {
+            throw new TypeError('Registro inválido en ' + collection + ', posición ' + position + '.');
+        }
+        const id = String(item[idField] === null || item[idField] === undefined ? '' : item[idField]).trim();
+        if (!id) throw new Error('Registro sin ID estable en ' + collection + ', posición ' + position + '.');
+        if (indexed.has(id)) throw new Error('ID duplicado en ' + collection + ': ' + id + '.');
+        indexed.set(id, item);
+    });
+    return indexed;
+}
+
+/**
+ * Aplica deltas por ID estable a las colecciones que forman getCatalogData.
+ * Las colecciones heredadas sin IDs completos, los resets y los tipos ajenos
+ * al snapshot requieren reconciliación completa; nunca se adivinan claves.
  */
 export function applyCatalogChangesToSnapshot(previous, changes) {
     if (!isCompleteCatalogSnapshot(previous) || !Array.isArray(changes)) {
         throw new Error('No se puede aplicar un delta sobre una instantánea inválida.');
     }
-    const cortes = indexCatalogItemsById(previous.cortes);
+    const supported = ['cortes', 'tutoriales', 'relay', 'logos'];
+    const indexes = new Map();
     for (const change of changes) {
         if (!change || !Number.isSafeInteger(change.revision) || change.revision < 1) {
             throw new Error('El feed contiene una revisión inválida.');
         }
         if (change.operation === 'reset' || change.resetRequired === true) return { resetRequired: true, snapshot: null };
-        if (change.collection !== 'cortes') return { resetRequired: true, snapshot: null };
+        const collection = String(change.collection || '');
+        if (!supported.includes(collection)) return { resetRequired: true, snapshot: null };
+        if (!indexes.has(collection)) {
+            try {
+                indexes.set(collection, indexCatalogCollectionById_(previous[collection], collection));
+            } catch (error) {
+                return { resetRequired: true, snapshot: null };
+            }
+        }
+        const index = indexes.get(collection);
         const recordId = String(change.recordId || '').trim();
-        if (!recordId) throw new Error('El feed contiene un ID de Corte vacío.');
+        if (!recordId) throw new Error('El feed contiene un ID vacío en ' + collection + '.');
         if (change.operation === 'delete') {
-            cortes.delete(recordId);
+            index.delete(recordId);
             continue;
         }
+        const idField = collection === 'cortes' || collection === 'logos' ? 'id' : 'ID';
         if (change.operation !== 'upsert' || !change.snapshot || typeof change.snapshot !== 'object' ||
-            Array.isArray(change.snapshot) || String(change.snapshot.id || '').trim() !== recordId) {
-            throw new Error('El feed contiene un upsert de Corte inválido.');
+            Array.isArray(change.snapshot) || String(change.snapshot[idField] || '').trim() !== recordId) {
+            throw new Error('El feed contiene un upsert inválido en ' + collection + '.');
         }
-        cortes.set(recordId, change.snapshot);
+        index.set(recordId, change.snapshot);
     }
-    const snapshot = {
-        cortes: Array.from(cortes.values()),
-        tutoriales: previous.tutoriales,
-        relay: previous.relay,
-        logos: previous.logos
-    };
+    const snapshot = { ...previous };
+    indexes.forEach((index, collection) => { snapshot[collection] = Array.from(index.values()); });
     if (!isCompleteCatalogSnapshot(snapshot)) throw new Error('El delta produjo un catálogo inválido.');
     return { resetRequired: false, snapshot };
 }
