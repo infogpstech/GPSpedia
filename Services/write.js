@@ -277,6 +277,25 @@ function doPostInternal_(e) {
         Logger.log(`Error en Write-Service doPost: ${error.stack}`);
         response = { status: "error", code: error && error.code || "SERVICE_ERROR", message: "Ocurrió un error en el servicio.", details: { errorMessage: error.message } };
     }
+
+    // El feed solo se actualiza después de confirmar una mutación del catálogo.
+    // El reset obliga al cliente a reconciliar el snapshot; nunca anuncia datos parciales.
+    try {
+        const request = JSON.parse(e && e.postData && e.postData.contents || "{}");
+        const catalogWriters = ["addOrUpdateCut", "addSupplementaryInfo", "addVinToVehicle", "freezeCortesIds"];
+        if (response && response.status === "success" && catalogWriters.includes(String(request.action || ""))) {
+            try {
+                publishSharedCatalogChange_("WRITE", String(request.action), { operation: "reset" });
+            } catch (catalogPublishError) {
+                Logger.log("La mutación WRITE se confirmó, pero no se pudo publicar el reset del catálogo: " +
+                    (catalogPublishError && catalogPublishError.message ? catalogPublishError.message : "CatalogFeedError"));
+            }
+        }
+    } catch (catalogRequestError) {
+        Logger.log("No se pudo identificar la acción WRITE para publicar el catálogo: " +
+            (catalogRequestError && catalogRequestError.message ? catalogRequestError.message : "RequestError"));
+    }
+
     return ContentService.createTextOutput(JSON.stringify(response))
         .setMimeType(ContentService.MimeType.TEXT);
 }
