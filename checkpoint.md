@@ -1493,3 +1493,33 @@ Este mecanismo de datos en vivo es independiente de la actualización de recurso
 - Pendiente despliegue/ejecución de incidencias ADMIN/Developer en una copia Beta aislada; no ejecutar contra producción.
 - Las tareas Inbox que requieren controles visibles adicionales (selección múltiple, nuevas acciones o paneles) permanecen diferidas por la instrucción expresa del usuario.
 - No se desplegaron Apps Script ni se modificaron datos productivos, ACL, Spreadsheet, Drive o ScriptProperties.
+
+
+## Estado consolidado — sincronización incremental, PWA y cierre de iteración (2026-11-14)
+
+**HEAD verificado antes de esta adenda:** `33860041b0d9c95f567cbaea9b1d4313dd0ed474` en `GPSpedia2.2.5_work`.  
+**Rama base protegida:** `GPSpedia2.2.5`, HEAD `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; no se modificó.
+
+### Implementación local de esta iteración
+- GP-CAT-01A..01E: journal y productores WRITE/FEEDBACK/ADMIN; consumidor cache-first con cursor IndexedDB; deltas por ID estable para Cortes; reset seguro para cambios multi-entidad/colecciones no soportadas; sondeo autenticado visible/online cada 45 s con backoff; coordinación entre pestañas por lease y BroadcastChannel/storage; reconciliación silenciosa de tarjetas, modal y vistas.
+- Seguridad de cursor: `saveCatalogWithCursor` confirma snapshot+cursor juntos; `saveCatalog` invalida cursor anterior cuando persiste snapshot sin revisión. El feed fallido no puede dejar un cursor viejo asociado a un snapshot nuevo.
+- Accesibilidad: las animaciones de entrada de nuevas tarjetas respetan `prefers-reduced-motion`.
+- GP-PWA-02: comprobación del Service Worker en segundo plano (inicio, foco, online, visibilidad y cada 5 min), `updateViaCache: none`, caché `gpsepedia-cache-v28`; no se fuerza reload ni se agregan controles visibles.
+- GP-UX-02/03, GP-RBAC-02, GP-DEV-01 y GP-ADMIN-01/02: correcciones locales y contratos registrados; validación Beta real pendiente. Inbox no recibe nuevos botones/paneles; operaciones masivas que requerirían esos controles siguen diferidas por instrucción expresa del usuario.
+
+### Validación automatizada confirmada
+- Código validado en commit `6af6d78e2c68d0175566626177ca41fe2496d2d5`.
+- GitHub Actions service regression run `43645790740`: **SUCCESS**; Node.js 22; sintaxis PASS; **98 suites / 1,463 pruebas / 0 fallos**.
+- GitHub Pages run `43645790429`: **SUCCESS**.
+- Pruebas focalizadas: CatalogChangeFeed 14/14; CatalogSnapshotSync 25/25; CatalogStartupIntegrity 18/18; SessionStartupNavigation 16/16; PWAStartupScenarios 15/15.
+- Los commits posteriores a `6af6d78` actualizan únicamente Tareas_Activas, ChangesLogs, Auditoría y checkpoint; no alteran código de ejecución.
+
+### Pendientes reales y límites
+1. **Beta/entorno externo:** validar multiusuario y varias pestañas, latencia, offline/reconexión, Android/iOS/PWA, recarga nativa, actualización interrumpida y permisos/ACL reales de Drive.
+2. **Apps Script:** benchmark definitivo de PBKDF2 y despliegues Coordinator/FEEDBACK/ADMIN/Auth solo en entorno Beta aislado; no desplegar ni migrar producción sin autorización.
+3. **Migraciones de IDs:** dry-run, reporte real, resolución de conflictos y rollback en copia Beta; no ejecutar escrituras productivas.
+4. **Catálogo:** los deltas por registro se aplican actualmente a Cortes; acciones multi-entidad y colecciones auxiliares publican reset y pueden requerir snapshot completo. La optimización de esos productores a upserts exactos queda pendiente.
+5. **Seguridad de capturas:** la evaluación concluyó que Web/PWA no puede bloquear de forma fiable capturas del sistema operativo; no se promete esa protección.
+6. **Inbox:** selección múltiple, nuevas acciones o paneles visibles quedan diferidos hasta que el usuario autorice expresamente esos controles.
+
+No se desplegaron servicios Apps Script, no se modificaron ScriptProperties, Spreadsheet, Drive, ACL ni datos productivos. No se tocó la rama base.
