@@ -1008,7 +1008,8 @@ function beginAdminAuditEvent_(action, payload, actor, startedAt) {
 
         const actorSource = actor && typeof actor === "object" ? actor : {};
         const actorId = safeAdminAuditId_(actorSource.userId, null);
-        const role = String(actorSource.role || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+        const rawRole = String(actorSource.role || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+        const role = rawRole === "gefe" ? "jefe" : rawRole;
         if (!actorId || !["desarrollador", "jefe"].includes(role)) {
             throw createAdminAuditError_("No se pudo acreditar el actor autenticado para el registro ADMIN.", "ADMIN_AUDIT_ACTOR_INVALID");
         }
