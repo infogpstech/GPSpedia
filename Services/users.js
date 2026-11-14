@@ -441,7 +441,6 @@ function handleCreateUser(payload) {
         const { role: creatorRole } = getVerifiedSession(sessionToken);
         const allowedRoles = {
             'Desarrollador': ['Desarrollador', 'Jefe', 'Supervisor', 'Tecnico', 'Tecnico_exterior'],
-            'Gefe': ['Supervisor', 'Tecnico'],
             'Jefe': ['Supervisor', 'Tecnico'],
             'Supervisor': ['Tecnico']
         };
