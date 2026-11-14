@@ -41,15 +41,18 @@ class FakeSpreadsheet {
 let uuid = 0, lockAcquired = 0, lockReleased = 0;
 const spreadsheet = new FakeSpreadsheet();
 const users = spreadsheet.insertSheet("Users");
-users.getRange(1, 1, 6, 9).setValues([
+users.getRange(1, 1, 9, 9).setValues([
     ["ID","Nombre_Usuario","Password","Privilegios","Telefono","Correo","Nombre_Completo","SessionToken","TermsAcceptance"],
     ["U1","developer","","Desarrollador","","","Ana Desarrolladora","",""],
     ["U2","tecnico","","Técnico","","","Bruno Técnico","",""],
     ["U3","dev2","","Desarrollador","","","Carla Desarrolladora","",""],
     ["U4","__deleted__:old","","Técnico","","","Cuenta eliminada","",""],
-    ["U5","tecnico2","","Técnico","","","Diego Técnico","",""]
+    ["U5","tecnico2","","Técnico","","","Diego Técnico","",""],
+    ["U6","supervisor","","Supervisor","","","Elena Supervisora","",""],
+    ["U7","jefe","","Jefe","","","Fabio Jefe","",""],
+    ["U8","tecnico_ext","","Técnico exterior","","","Gabriela Técnica exterior","",""]
 ]);
-const tokens = new Map([["token-a","U1"],["token-b","U2"],["token-c","U3"]]);
+const tokens = new Map([["token-a","U1"],["token-b","U2"],["token-c","U3"],["token-d","U6"],["token-e","U7"],["token-f","U8"]]);
 function normalizeRole(value) {
     return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
 }
@@ -75,7 +78,7 @@ const LockService = {
 const SpreadsheetApp = { flush() {} };
 const api = new Function(
     "getSpreadsheet","LockService","SpreadsheetApp","Utilities","assertFeedbackSession","normalizeFeedbackRole",
-    source + "\nreturn { handleGetInboxRecipients, handleCreateInboxConversation, handleSendInboxMessage, handleGetInboxConversations, handleGetInboxMessages, handleMarkInboxRead, handleArchiveInboxConversation };"
+    source + "\nreturn { handleGetInboxRecipients, handleCreateInboxConversation, handleSendInboxMessage, handleGetInboxConversations, handleGetInboxMessages, handleMarkInboxRead, handleArchiveInboxConversation, inboxCanStartConversationWith_ };"
 )(() => spreadsheet, LockService, SpreadsheetApp, Utilities, assertSession, normalizeRole);
 
 const actor = (id, token) => ({ userId: id, sessionToken: token });
@@ -95,12 +98,14 @@ run("Crea conversación directa individual desde Desarrollador", () => {
 });
 run("Destinatarios de Desarrollador provienen de USERS y excluyen cuentas inactivas", () => {
     const result = api.handleGetInboxRecipients(actor("U1","token-a"));
-    assert.deepEqual(result.recipients.map(user => user.id),["U2","U3","U5"]);
+    assert.deepEqual(result.recipients.map(user => user.id),["U2","U3","U5","U6","U7","U8"]);
     assert.equal(result.recipients.some(user => user.id === "U4"),false);
 });
-run("La consulta de usuario solo ofrece destinatarios Desarrollador", () => {
-    const result = api.handleGetInboxRecipients(actor("U2","token-b"));
-    assert.deepEqual(result.recipients.map(user => user.id),["U1","U3"]);
+run("La jerarquía limita destinatarios disponibles por rol", () => {
+    assert.deepEqual(api.handleGetInboxRecipients(actor("U2","token-b")).recipients.map(user => user.id),["U6"]);
+    assert.deepEqual(api.handleGetInboxRecipients(actor("U8","token-f")).recipients.map(user => user.id),["U6"]);
+    assert.deepEqual(api.handleGetInboxRecipients(actor("U6","token-d")).recipients.map(user => user.id),["U7"]);
+    assert.deepEqual(api.handleGetInboxRecipients(actor("U7","token-e")).recipients.map(user => user.id),["U2","U5","U6","U8"]);
 });
 run("La creación idempotente devuelve el mismo hilo sin duplicar mensaje", () => {
     const replay = api.handleCreateInboxConversation({
@@ -133,20 +138,41 @@ run("Una clave de creación no se puede reutilizar con otro contenido", () => {
         body:"Contenido distinto.",idempotencyKey:"create-key-0001"
     }),/otro contenido/);
 });
-run("Un usuario puede iniciar una consulta dirigida solo a Desarrollador", () => {
-    const result = api.handleCreateInboxConversation({
-        ...actor("U2","token-b"),recipientId:"U1",subject:"Consulta técnica",category:"soporte",
-        body:"¿Cómo identifico la línea IGN?",idempotencyKey:"consult-key-001"
-    });
-    assert.ok(result.conversationId);
+run("Técnico y Técnico exterior pueden iniciar mensajes solo a Supervisor", () => {
+    for (const [id,token,key] of [["U2","token-b","tech-supervisor-01"],["U8","token-f","ext-supervisor-01"]]) {
+        const result = api.handleCreateInboxConversation({
+            ...actor(id,token),recipientId:"U6",subject:"Consulta técnica",category:"soporte",
+            body:"¿Cómo identifico la línea IGN?",idempotencyKey:key
+        });
+        assert.ok(result.conversationId);
+    }
     const rows = spreadsheet.getSheetByName("InboxConversations").rows;
-    assert.equal(rows[2][5],"developer_consult");
+    assert.equal(rows[3][5],"direct");
+    assert.equal(rows[4][5],"direct");
 });
-run("Rechaza destinatarios no Desarrollador para consultas de usuarios", () => {
-    assert.throws(() => api.handleCreateInboxConversation({
-        ...actor("U2","token-b"),recipientId:"U5",subject:"Consulta",category:"general",
-        body:"No corresponde.",idempotencyKey:"consult-key-002"
-    }),/solo pueden dirigirse/);
+run("Supervisor solo puede iniciar mensajes a Jefe y Jefe a rangos inferiores", () => {
+    const supervisor = api.handleCreateInboxConversation({
+        ...actor("U6","token-d"),recipientId:"U7",subject:"Seguimiento",category:"general",
+        body:"Revisemos el avance.",idempotencyKey:"supervisor-jefe-01"
+    });
+    const jefe = api.handleCreateInboxConversation({
+        ...actor("U7","token-e"),recipientId:"U5",subject:"Asignación",category:"general",
+        body:"Por favor revisa el registro.",idempotencyKey:"jefe-tecnico-01"
+    });
+    assert.ok(supervisor.conversationId && jefe.conversationId);
+});
+run("Rechaza escalamiento o destinatarios fuera de la jerarquía", () => {
+    for (const [id,token,recipientId,key] of [
+        ["U2","token-b","U1","tech-dev-01"],
+        ["U2","token-b","U5","tech-peer-01"],
+        ["U6","token-d","U2","supervisor-tech-01"],
+        ["U7","token-e","U1","jefe-dev-01"]
+    ]) {
+        assert.throws(() => api.handleCreateInboxConversation({
+            ...actor(id,token),recipientId,subject:"No autorizado",category:"general",
+            body:"No debe crearse.",idempotencyKey:key
+        }),/jerarquía de comunicación/);
+    }
 });
 run("Rechaza destinatario inactivo o inexistente", () => {
     assert.throws(() => api.handleCreateInboxConversation({

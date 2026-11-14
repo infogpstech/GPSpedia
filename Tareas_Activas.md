@@ -598,7 +598,8 @@ Si cualquier comprobación falla, no continuar ni descartar cambios locales. Con
 **Evidencia inicial:** JS/Frontend/main.js mantiene un listener touchstart/touchend sobre .container que, al superar 150 px, llama auth.loadInitialData(true) en lugar de dejar actuar al navegador. style.css define .container como contenedor independiente con overflow-y:auto (línea aproximada 89), por lo que el contenido no usa necesariamente el scroll raíz que activa el pull-to-refresh nativo. index.html contiene #side-menu-refresh-link («Recargar aplicación») y main.js ejecuta registration.update() seguido de window.location.reload(). El Service Worker usa networkResponse para navegaciones, pero la interacción entre el contenedor desplazable, el gesto personalizado y la actualización instalada debe validarse antes de atribuir toda la causa a un único factor.
 
 ### GP-INBOX-04 — Bandeja de entrada con barra de herramientas y jerarquía de comunicación
-**Prioridad: alta.** Rediseñar la bandeja como una bandeja de mensajes recibidos, no como un conjunto de botones dispersos. La primera vista será la lista de mensajes recibidos; el detalle se abrirá al seleccionar un mensaje/conversación.
+**Prioridad: alta.**
+**Estado actual: EN PROGRESO.** La política de destinatarios se está aplicando en backend tanto al consultar la lista como al crear conversaciones. Se reutiliza el control existente «Nuevo mensaje» para los rangos autorizados y se retira la acción separada de consulta directa al Desarrollador. Pendiente ejecutar pruebas aisladas y completar las operaciones restantes de la bandeja. Rediseñar la bandeja como una bandeja de mensajes recibidos, no como un conjunto de botones dispersos. La primera vista será la lista de mensajes recibidos; el detalle se abrirá al seleccionar un mensaje/conversación.
 
 **Barra superior de herramientas:**
 - Seleccionar mensajes (selección individual y seleccionar todos los visibles).

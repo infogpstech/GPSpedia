@@ -36,14 +36,30 @@ function runInboxRoleContractTests(sources) {
  run('Lecturas FEEDBACK protegidas adquieren lease de actividad; acciones públicas no',()=>{const d=feedback.slice(feedback.indexOf('function doPost(e)'),feedback.indexOf('const FEEDBACK_ACTION_PERMISSIONS'));assert(d.includes('withSharedMutationLease_("FEEDBACK", "sessionActivity"'));assert(d.includes('FEEDBACK_PUBLIC_ACTIONS.has(action)'));});
 
  run('Backend ignora rol falsificado y usa actor autenticado',()=>{const s=feedback.indexOf('const FEEDBACK_ACTION_PERMISSIONS = Object.freeze('),e=feedback.indexOf(');',s)+2;const api=new Function('assertFeedbackSession',feedback.slice(s,e)+'\n'+extract(feedback,'authorizeFeedbackAction_')+'\nreturn authorizeFeedbackAction_;')(()=>({userId:'U1',userName:'Verificado',role:'Supervisor'}));const out=api('approveVideo',{userRole:'Desarrollador'});assert(out.userRole==='Supervisor');});
- run('Técnico y Técnico exterior pueden abrir Inbox y consultar al Desarrollador sin ver solicitudes privilegiadas',()=>{
+ run('Todos los rangos autorizados pueden iniciar mensajes desde el control existente',()=>{
   const open=sliceUi_('export async function openInbox()','');
   assert(open.includes("'tecnico'")&&open.includes("'tecnico_exterior'"));
   const modal=ui.slice(ui.indexOf("const openInboxModal_ = setupModal('inbox-modal'"),ui.indexOf("export async function openInbox()",ui.indexOf("const openInboxModal_")));
   assert(modal.includes("requestsTab.hidden = !inboxCanSeeRequests_(context.role)"));
-  assert(modal.includes("newMessageButton.hidden = context.role !== 'desarrollador'"));
-  assert(modal.includes("consultButton.hidden = context.role === 'desarrollador'"));
+  assert(modal.includes("if (newMessageButton) newMessageButton.hidden = false"));
+  assert(!ui.includes("inbox-consult-developer"));
+  const formStart=ui.indexOf("async function openInboxNewConversationForm_()");
+  const formEnd=ui.indexOf("\nasync function toggleInboxConversationArchive_",formStart);
+  const form=ui.slice(formStart,formEnd);
+  assert(form.includes('const draftKind = "new:direct"'));
+  assert(form.includes('"Nuevo mensaje"'));
+  assert(form.includes("getInboxRecipients(context)"));
+  assert(!form.includes("Consultar al desarrollador"));
   function sliceUi_(start,end){const i=ui.indexOf(start);assert(i>=0);const j=end?ui.indexOf(end,i+start.length):-1;return ui.slice(i,j>i?j:ui.length);}
+ });
+ run('Backend impone la jerarquía de destinatarios en lectura y creación',()=>{
+  assert(inbox.includes('desarrollador: new Set(["desarrollador","jefe","supervisor","tecnico","tecnico_exterior"])'));
+  assert(inbox.includes('jefe: new Set(["supervisor","tecnico","tecnico_exterior"])'));
+  assert(inbox.includes('supervisor: new Set(["jefe"])'));
+  assert(inbox.includes('tecnico: new Set(["supervisor"])'));
+  assert(inbox.includes('tecnico_exterior: new Set(["supervisor"])'));
+  assert(inbox.includes('inboxAssertRecipientAllowed_(actor, recipient)'));
+  assert(inbox.includes('const type = "direct"'));
  });
  run('InboxConversations mantiene una sola entrada Jefe en su lista de roles',()=>{assert(inbox.includes('new Set(["desarrollador","jefe","supervisor","tecnico","tecnico_exterior"])'));assert(!/INBOX_ACTIVE_ROLES_[^\\n]*gefe/.test(inbox));});
  run('Gestión de usuarios ofrece y muestra únicamente Jefe',()=>{assert(usersHtml.includes("availableRoles = ['Desarrollador', 'Jefe', 'Supervisor', 'Tecnico', 'Tecnico_exterior']"));assert(usersHtml.includes("return normalized === 'jefe' ? 'Jefe' : role"));assert(!usersHtml.toLowerCase().includes('gefe'));});

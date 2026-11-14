@@ -56,8 +56,12 @@ La autorización backend prevalece sobre la visibilidad de controles. Los nombre
 
 ### Inbox
 - Los cinco roles activos pueden consultar y usar Inbox.
-- Desarrollador puede iniciar conversación directa con cualquier usuario activo.
-- Los demás roles solo pueden iniciar consultas dirigidas a un Desarrollador; el backend vuelve a validar al destinatario.
+- Desarrollador puede iniciar conversaciones directas con cualquier otro usuario activo.
+- Técnico y Técnico exterior solo pueden iniciar mensajes ordinarios a un Supervisor.
+- Supervisor solo puede iniciar mensajes ordinarios a un Jefe.
+- Jefe puede iniciar mensajes ordinarios a Supervisor, Técnico y Técnico exterior.
+- Ningún rol no Desarrollador puede iniciar una conversación ordinaria con Desarrollador; los reportes/tickets de problema son el canal para contactarlo.
+- El backend aplica la misma matriz al listar destinatarios y al crear conversaciones; la visibilidad de la interfaz no sustituye esta validación.
 - Las conversaciones son de texto; no se habilitan adjuntos no soportados por el servicio.
 
 ### Interfaz y límites

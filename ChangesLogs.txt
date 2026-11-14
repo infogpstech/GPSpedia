@@ -146,3 +146,10 @@
 - index.html: retirado del menú el enlace visible «Recargar aplicación».
 - style.css: habilitado el scroll raíz del documento y eliminado el scroll independiente de .container para permitir el overscroll nativo del navegador.
 - JS/Tests/PWAStartupScenarios.js: añadidas comprobaciones para evitar la reintroducción del botón/listener de recarga y del interceptor táctil; añadido contrato de scroll raíz.
+
+
+[2026-11-14] GP-INBOX-04A — Jerarquía de destinatarios (implementación en preparación)
+- Services/InboxConversations.js: matriz backend de destinatarios para Desarrollador, Jefe, Supervisor, Técnico y Técnico exterior; la misma política filtra el listado y valida la creación de conversaciones.
+- JS/Frontend/ui.js e index.html: se reutiliza «Nuevo mensaje» para todos los rangos autorizados y se elimina «Consultar al desarrollador» como canal de conversación directa.
+- JS/Tests/InboxConversations.mjs y InboxRoleContract.js: fixture ampliado y escenarios para jerarquía, destinatarios permitidos y prevención de escalamiento.
+- MATRIZ_CAPACIDADES_ROLES.md: política de Inbox actualizada.

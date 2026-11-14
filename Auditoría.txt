@@ -414,3 +414,11 @@ No confundir sincronización de datos con actualización de los recursos PWA/Ser
 - Evidencia CSS: style.css fijaba html/body con overflow:hidden y delegaba el desplazamiento a .container mediante overflow-y:auto, evitando que el documento raíz gestionara el overscroll.
 - Impacto: el navegador no podía aplicar consistentemente su comportamiento nativo de pull-to-refresh; la solución manual añadía una acción visible que el usuario no desea.
 - Corrección preparada: retirar interceptor, enlace y listener; restaurar desplazamiento del documento raíz. La prueba automatizada cubre el contrato estático. Validación real del gesto queda pendiente de Beta.
+
+
+[2026-11-14] GP-INBOX-04A — Restricción de destinatarios por jerarquía
+- Evidencia previa: Services/InboxConversations.js devolvía Desarrolladores como únicos destinatarios para todos los roles no Desarrollador y permitía crear conversaciones ordinarias dirigidas a Desarrollador.
+- Impacto: el modelo anterior no representaba la jerarquía solicitada y convertía Inbox en un canal directo de consulta al Desarrollador.
+- Corrección en preparación: matriz backend compartida para filtrar destinatarios y validar la creación; Técnico/Técnico exterior → Supervisor; Supervisor → Jefe; Jefe → Supervisor/Técnico/Técnico exterior; Desarrollador → cualquier cuenta activa distinta del actor.
+- UI: se retira la acción «Consultar al desarrollador» y se reutiliza el control existente «Nuevo mensaje». Los reportes/tickets de problema quedan como canal separado para contactar al Desarrollador.
+- Pruebas ampliadas; ejecución pendiente. No se afirma aún que la tarea esté validada o publicada.

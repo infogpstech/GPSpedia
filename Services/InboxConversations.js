@@ -132,6 +132,22 @@ function inboxFindUser_(userId) {
     return { id: String(matches[0][0]).trim(), username: String(matches[0][1] || "").trim(),
         role: normalizeFeedbackRole(matches[0][3]), name: String(matches[0][6] || matches[0][1] || "Usuario").trim() };
 }
+const INBOX_RECIPIENT_ROLE_POLICY_ = Object.freeze({
+    desarrollador: new Set(["desarrollador","jefe","supervisor","tecnico","tecnico_exterior"]),
+    jefe: new Set(["supervisor","tecnico","tecnico_exterior"]),
+    supervisor: new Set(["jefe"]),
+    tecnico: new Set(["supervisor"]),
+    tecnico_exterior: new Set(["supervisor"])
+});
+function inboxCanStartConversationWith_(actorRole, recipientRole) {
+    const allowedRoles = INBOX_RECIPIENT_ROLE_POLICY_[normalizeFeedbackRole(actorRole)];
+    return Boolean(allowedRoles && allowedRoles.has(normalizeFeedbackRole(recipientRole)));
+}
+function inboxAssertRecipientAllowed_(actor, recipient) {
+    if (!inboxCanStartConversationWith_(actor.role, recipient.role)) {
+        throw new Error("El destinatario no está permitido por la jerarquía de comunicación.");
+    }
+}
 function handleGetInboxRecipients(payload) {
     const actor = inboxConversationActor_(payload), sheet = getSpreadsheet().getSheetByName("Users");
     if (!sheet) throw new Error("No se encontró la hoja USERS.");
@@ -139,7 +155,7 @@ function handleGetInboxRecipients(payload) {
     const recipients = rows.filter(inboxActiveUserRow_).map(row => ({
         id: String(row[0]).trim(), username: String(row[1] || "").trim(),
         role: normalizeFeedbackRole(row[3]), name: String(row[6] || row[1] || "Usuario").trim()
-    })).filter(user => user.id !== actor.id && (actor.role === "desarrollador" || user.role === "desarrollador"));
+    })).filter(user => user.id !== actor.id && inboxCanStartConversationWith_(actor.role, user.role));
     return { status: "success", recipients };
 }
 function inboxFindConversation_(rows, conversationId) {
@@ -269,12 +285,12 @@ function handleCreateInboxConversation(payload) {
     const createKey = inboxConversationKey_(payload.idempotencyKey,"La clave de creación");
     const recipientId = String(payload.recipientId || "").trim();
     if (!recipientId || recipientId === actor.id) throw new Error("Selecciona un destinatario individual válido.");
-    const type = actor.role === "desarrollador" ? "direct" : "developer_consult";
+    const type = "direct";
     const createHash = inboxConversationHash_({subject,body,category,type,recipientId});
     return withInboxConversationLock_(() => {
         const sheets = ensureInboxConversationSheets_();
         const recipient = inboxFindUser_(recipientId);
-        if (actor.role !== "desarrollador" && recipient.role !== "desarrollador") throw new Error("Las consultas de usuarios solo pueden dirigirse a un Desarrollador.");
+        inboxAssertRecipientAllowed_(actor, recipient);
         const conversationRows = inboxConversationRows_(sheets.conversations,INBOX_CONVERSATION_HEADERS_.length);
         const messageRows = inboxConversationRows_(sheets.messages,INBOX_MESSAGE_HEADERS_.length);
         const now = new Date().toISOString();

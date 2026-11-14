@@ -1362,3 +1362,12 @@ Este mecanismo de datos en vivo es independiente de la actualización de recurso
 - `JS/Tests/PWAStartupScenarios.js` ahora comprueba la ausencia de controles/interceptores manuales y el contrato de scroll raíz.
 - No se modificó el Service Worker: su navegación y peticiones de recursos ya son network-first con fallback de caché; la actualización del script SW permanece bajo el ciclo automático del navegador.
 - Estado: implementación y publicación preparadas; pruebas y publicación pendientes. No se afirma aún que el gesto nativo haya sido validado en dispositivos reales. Mantener pendiente Beta Android/iOS/escritorio.
+
+
+## Continuidad — GP-PWA-02 publicado y GP-INBOX-04A en implementación (2026-11-14)
+
+- GP-PWA-02: commit publicado `a1575c742600d5c9f6a67e86ff15a692de28c89e` en `GPSpedia2.2.5_work`. Se verificó el HEAD remoto y que la rama base permaneció en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`. Las comprobaciones estáticas posteriores aprobaron; CI/Node y prueba real del gesto no se han confirmado desde esta sesión.
+- GP-INBOX-04A: política en preparación para Desarrollador → cualquier usuario activo; Jefe → Supervisor/Técnico/Técnico exterior; Supervisor → Jefe; Técnico/Técnico exterior → Supervisor. Los roles no Desarrollador no podrán abrir conversaciones ordinarias con Desarrollador.
+- La interfaz reutiliza el botón existente «Nuevo mensaje» para todos los roles autorizados y elimina «Consultar al desarrollador»; se conserva la lectura de borradores heredados `new:consult` al migrar a `new:direct`.
+- Se amplió el fixture de Inbox para incluir Jefe, Supervisor y Técnico exterior, y se agregaron escenarios de permisos y escalamiento. Pendiente ejecutar pruebas y revisar contratos/efectos colaterales antes de publicar.
+- Restricción vigente: no incorporar controles, botones, paneles o secciones visibles nuevos sin autorización expresa. Las capacidades automáticas deben permanecer internas.

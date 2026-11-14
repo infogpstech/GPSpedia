@@ -4176,9 +4176,7 @@ const openInboxModal_ = setupModal('inbox-modal', async (options = {}) => {
     const requestsTab = document.getElementById('inbox-requests-tab');
     if (requestsTab) requestsTab.hidden = !inboxCanSeeRequests_(context.role);
     const newMessageButton = document.getElementById('inbox-new-message');
-    const consultButton = document.getElementById('inbox-consult-developer');
-    if (newMessageButton) newMessageButton.hidden = context.role !== 'desarrollador';
-    if (consultButton) consultButton.hidden = context.role === 'desarrollador';
+    if (newMessageButton) newMessageButton.hidden = false;
     if (modal.dataset.inboxBackdropBound !== 'true') {
         modal.addEventListener('click', event => { if (event.target === modal) closeInboxModal_(); });
         modal.dataset.inboxBackdropBound = 'true';
@@ -4357,11 +4355,6 @@ function bindInboxControls_() {
     if (newMessage && newMessage.dataset.bound !== "true") {
         newMessage.addEventListener("click", openInboxNewConversationForm_);
         newMessage.dataset.bound = "true";
-    }
-    const consult = document.getElementById("inbox-consult-developer");
-    if (consult && consult.dataset.bound !== "true") {
-        consult.addEventListener("click", openInboxNewConversationForm_);
-        consult.dataset.bound = "true";
     }
     const previous = document.getElementById("inbox-conversation-previous");
     if (previous && previous.dataset.bound !== "true") {
@@ -4638,15 +4631,16 @@ function renderInboxReplyForm_(detail, item) {
 async function openInboxNewConversationForm_() {
     const context = getUiSessionContext_();
     if (!context) return;
-    const isDeveloper = context.role === "desarrollador", mode = isDeveloper ? "direct" : "consult";
-    const draftKind = "new:" + mode, detail = document.getElementById("inbox-conversation-detail");
+    const isDeveloper = context.role === "desarrollador";
+    const draftKind = "new:direct", legacyDraftKind = isDeveloper ? "" : "new:consult";
+    const detail = document.getElementById("inbox-conversation-detail");
     if (!detail) return;
     inboxConversationSelectedId_ = ""; inboxConversationSelected_ = null; inboxConversationMessages_ = [];
     document.getElementById("inbox-modal-content")?.classList.add("is-detail-open");
     detail.replaceChildren();
     const status = inboxCreateNode_("p", "inbox-form-status", "Cargando destinatarios…");
     status.setAttribute("role", "status"); status.setAttribute("aria-live", "polite");
-    detail.appendChild(inboxCreateNode_("h3", "inbox-new-title", isDeveloper ? "Nuevo mensaje" : "Consultar al desarrollador"));
+    detail.appendChild(inboxCreateNode_("h3", "inbox-new-title", "Nuevo mensaje"));
     detail.appendChild(status);
     let recipients = [];
     try {
@@ -4658,11 +4652,11 @@ async function openInboxNewConversationForm_() {
         inboxSetStatus_(status.textContent, true); return;
     }
     if (!recipients.length) {
-        status.textContent = isDeveloper ? "No hay usuarios activos disponibles." : "No hay una cuenta Desarrollador disponible.";
+        status.textContent = "No hay destinatarios autorizados disponibles para tu rango.";
         inboxSetStatus_(status.textContent, true); return;
     }
     detail.replaceChildren();
-    const heading = inboxCreateNode_("h3", "inbox-new-title", isDeveloper ? "Nuevo mensaje" : "Consultar al desarrollador");
+    const heading = inboxCreateNode_("h3", "inbox-new-title", "Nuevo mensaje");
     const form = inboxCreateNode_("form", "inbox-new-conversation-form");
     const addField = (labelText, id, control) => {
         const label = inboxCreateNode_("label", "", labelText); label.htmlFor = id;
@@ -4675,7 +4669,9 @@ async function openInboxNewConversationForm_() {
         const option = inboxCreateNode_("option", "", user.name + " · " + user.role);
         option.value = user.id; recipient.appendChild(option);
     });
-    const draft = inboxReadDraft_(draftKind);
+    const currentDraft = inboxReadDraft_(draftKind);
+    const legacyDraft = legacyDraftKind ? inboxReadDraft_(legacyDraftKind) : {};
+    const draft = Object.keys(currentDraft).length ? currentDraft : legacyDraft;
     if (draft.recipientId && recipients.some(user => user.id === draft.recipientId)) recipient.value = draft.recipientId;
     const templateLabel = inboxCreateNode_("label", "", "Plantilla editable");
     templateLabel.htmlFor = "inbox-welcome-template";
@@ -4689,7 +4685,7 @@ async function openInboxNewConversationForm_() {
     if (!isDeveloper) { templateLabel.hidden = true; template.hidden = true; }
     const subject = addField("Asunto", "inbox-new-subject", document.createElement("input"));
     subject.type = "text"; subject.maxLength = 150; subject.required = true;
-    subject.value = String(draft.subject || (isDeveloper ? "" : "Consulta al desarrollador"));
+    subject.value = String(draft.subject || "");
     const category = addField("Categoría", "inbox-new-category", document.createElement("select"));
     ["general","soporte","acceso","contenido","instalacion","otro"].forEach(value => {
         const option = inboxCreateNode_("option", "", value.charAt(0).toUpperCase() + value.slice(1)); option.value = value; category.appendChild(option);
@@ -4708,7 +4704,7 @@ async function openInboxNewConversationForm_() {
     }
     const formStatus = inboxCreateNode_("p", "inbox-form-status");
     formStatus.setAttribute("role", "status"); formStatus.setAttribute("aria-live", "polite");
-    const send = inboxCreateNode_("button", "inbox-primary-button", isDeveloper ? "Enviar mensaje" : "Enviar consulta");
+    const send = inboxCreateNode_("button", "inbox-primary-button", "Enviar mensaje");
     send.type = "submit"; form.append(formStatus, send); detail.append(heading, form);
     const persist = () => {
         const current = inboxReadDraft_(draftKind), fingerprint = [recipient.value,subject.value,category.value,body.value].join("|");
@@ -4733,7 +4729,7 @@ async function openInboxNewConversationForm_() {
         try {
             const result = await createInboxConversation({ ...(context || {}), recipientId, subject: subjectValue, category: category.value, body: bodyValue, idempotencyKey });
             if (!result || result.status !== "success" || !result.conversationId) throw new Error(result && result.message || "No se pudo crear la conversación.");
-            inboxClearDraft_(draftKind); inboxConversationFolder_ = "sent"; inboxConversationPageStack_ = [0]; inboxConversationPageIndex_ = 0;
+            inboxClearDraft_(draftKind); if (legacyDraftKind) inboxClearDraft_(legacyDraftKind); inboxConversationFolder_ = "sent"; inboxConversationPageStack_ = [0]; inboxConversationPageIndex_ = 0;
             document.getElementById("inbox-folder-nav")?.querySelectorAll("[data-inbox-folder]").forEach(button =>
                 button.setAttribute("aria-pressed", String(button.dataset.inboxFolder === "sent")));
             await loadInboxConversations_({ reset: true });
