@@ -1009,3 +1009,16 @@ La anotación previa que declaraba inaccesibles los runs de push queda superada 
 - Comparación de ramas: `GPSpedia2.2.5_work` ahead 2,661 / behind 0 respecto de `GPSpedia2.2.5`; merge base `d9acc68d889985c2e2f42fe3a02e502efc86ead1`. La rama base no fue modificada.
 - El conector Google Drive encontrado en el catálogo figura `DISABLED_BY_ADMIN` y no disponible para instalación; tampoco hay una herramienta conectada de Apps Script ni navegador/dispositivo de campo en esta sesión. Por tanto, no es posible ejecutar honestamente las 14 validaciones restantes aquí. No se simularon datos, no se tocaron ACL y no hubo escrituras productivas.
 - Próximo paso ejecutable: disponer de un deployment/entorno Apps Script Beta y una copia aislada de Drive/Spreadsheet, más acceso autorizado para revisar ACL y probar navegador/dispositivo. Hasta entonces, no hay otra tarea local independiente que pueda avanzarse sin inventar trabajo o riesgo de producción.
+
+
+## Incidencias nuevas reportadas — Developer y ADMIN (2026-11-14)
+
+**Estado: PENDIENTE DE DIAGNÓSTICO Y CORRECCIÓN.** Registro detallado añadido a `LOGS.TXT` (commit `5522ce4f3797aa15cc65e9aa0ef06fa025234f06`).
+
+1. **Acceso al panel Developer:** al iniciar sesión como Desarrollador, no se consigue acceder al panel. Reproducir desde sesión nueva y revisar autorización de apertura, restauración de sesión, navegación y respuesta AUTH/backend.
+2. **Escáner de imágenes sin uso:** falla la carga de inventario e historial con el mensaje «el recurso está ocupado por operaciones activas ADMIN/sessionActivity». Revisar locks/leases, liberación, duración, reintentos y coordinación de operaciones ADMIN con sessionActivity.
+3. **Inicializar historial:** el botón informa que la acción no está habilitada en la política del coordinador. Revisar contrato/nombre de acción, allowlist del coordinador, permisos ADMIN y configuración del deployment antes de cambiar políticas.
+
+Las incidencias 2 y 3 podrían compartir una dependencia de coordinación del flujo de inventario/historial, pero la causa común no está confirmada. La incidencia 1 se mantiene separada hasta contar con reproducción y evidencia.
+
+**Siguiente acción:** reproducir los tres síntomas en entorno autorizado, correlacionar los mensajes con los contratos cliente/backend y revisar el coordinador compartido. Priorizar la recuperación del acceso Developer y del escáner sin relajar controles de sesión, permisos ni concurrencia. No se han realizado cambios de código ni deployments para estas incidencias.
