@@ -73,6 +73,7 @@ runGroup('32','ADMIN',()=>{
  runCli('ADMIN reanudación de respaldo Drive y sintaxis Node.js','JS/Tests/AdminBackupResumeUI.mjs');
  runCli('AUG-019 alcance de terminal Drive y protección de árbol Cortes','JS/Tests/DriveTerminalScope.mjs');
  runCli('AUG-021 auditoría persistente de operaciones ADMIN','JS/Tests/AdminAuditTrail.mjs');
+ runCli('P2 auditoría de identificadores sin escritura','JS/Tests/IdentifierAudit.mjs');
 });
 runGroup('33','FEEDBACK',()=>{
  const feedback=read('Services/feedback.js');
