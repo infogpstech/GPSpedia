@@ -160,3 +160,10 @@
 - InboxRoleContract.js: 17/17 PASS.
 - La política bloquea mensajes ordinarios fuera de jerarquía y evita el contacto directo al Desarrollador desde roles inferiores.
 - Se reutiliza el control existente «Nuevo mensaje»; no se añaden controles nuevos.
+
+
+[2026-11-14] GP-CAT-01A — Auditoría de fuentes de escritura y diseño de feed
+- Se mapearon las colecciones de getCatalogData (Cortes/modelos, Logos, Tutoriales, Relay) y la colección separada getPysData.
+- Se identificaron rutas de escritura relevantes en WRITE, FEEDBACK y ADMIN; detalle y clasificación en Tareas_Activas.md.
+- Hallazgo cliente: cache-first existente, pero fetchCatalogData y saveCatalog siguen siendo snapshot completo; PyS usa localStorage TTL 5 min; no hay polling/feed en sesiones abiertas.
+- Diseño propuesto: hoja interna CatalogChanges, revisiones monotónicas, snapshots por registro, paginación por cursor, autenticación y reset en mantenimiento masivo. Sin elementos visibles nuevos.

@@ -1382,3 +1382,14 @@ Este mecanismo de datos en vivo es independiente de la actualización de recurso
 - Restricción de interfaz posterior: no crear botones, paneles, secciones, pestañas ni acciones manuales nuevas sin autorización expresa. GP-INBOX-04B queda pendiente en lo que requiera nuevos controles visibles; no construirlos por iniciativa propia.
 - GP-CAT-01 se mantiene como sincronización totalmente silenciosa: sin botón, panel, sección de novedades ni indicador visible de actualización.
 - HEAD de trabajo al registrar esta adenda: pendiente de confirmar después de publicar los registros; rama base protegida.
+
+
+## Continuidad — GP-CAT-01A auditoría de escrituras (2026-11-14)
+
+- Confirmado: `getCatalogData` construye snapshot completo de Cortes/modelos, logos, tutoriales y Relay; CacheService no guarda el snapshot por el límite de tamaño. `getPysData` entrega PyS por separado y completo.
+- Cliente: `auth.js` hace cache-first, pero el refresh sigue siendo snapshot completo; `offline.saveCatalog` reemplaza snapshot; `pys-data.js` usa localStorage con TTL de 5 minutos. No hay polling activo, listeners de visibilidad/conexión, BroadcastChannel ni feed incremental.
+- Fuentes de escritura auditadas: WRITE (Cortes/modelos), FEEDBACK (likes, años, PyS, tutoriales y publicación de vídeo) y ADMIN (logos, campos/imágenes de Cortes y mantenimiento masivo). La matriz detallada y el diseño propuesto están en Tareas_Activas.md.
+- Diseño propuesto: hoja interna oculta `CatalogChanges`, eventos con revisión monotónica, colección/ID/operación/snapshot, leases coordinadas por el recurso compartido `CATALOG_CHANGES`, endpoint FEEDBACK autenticado y paginado, reset ante mantenimiento masivo y cursor vencido.
+- Riesgo a resolver antes de implementar: restauración de base de datos no debe rebobinar ni borrar el registro de cambios; preservar la hoja interna y emitir un reset posterior. Confirmar los casos de publicación/retiro de vídeo y reemplazo de imágenes.
+- Estado GP-CAT-01A: auditoría de rutas completada; contrato/feed propuesto, no implementado. GP-CAT-01B..01F pendientes.
+- Restricción de interfaz: sincronización invisible, sin botón, panel, indicador ni sección de novedades.

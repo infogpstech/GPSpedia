@@ -274,6 +274,34 @@ La acción del **botón integrado de compartir** en el modal es pública para to
 - [x] Mantener accesibilidad: nombres accesibles, foco visible, apertura por pulsación, cierre fuera/Escape, `aria-describedby` y texto legible en móvil.
 
 - Validación CI: `ContextualHelpForms` 12/12 PASS; `DeveloperPanelUX` 3/3 PASS; 93 suites / 1,361 pruebas / 0 fallos. GitHub Pages build/deployment PASS (2026-11-14).
+### Auditoría de escrituras y arquitectura detectada (2026-11-14)
+
+**Lecturas actuales**
+- `Services/catalog.js:getCatalogData` entrega un snapshot completo de Cortes/modelos, categorías, logos, tutoriales y Relay. La escritura a CacheService está deshabilitada por el límite de tamaño; el endpoint vuelve a recorrer las hojas y construir el snapshot.
+- `Services/feedback.js:getPysData` entrega PyS por separado como colección completa.
+- Los modelos no son una colección/hoja independiente: se representan mediante registros de Cortes y sus relaciones.
+- En cliente, `auth.js` renderiza IndexedDB primero, pero la sincronización de red sigue siendo `fetchCatalogData()` completo; `offline.saveCatalog()` reemplaza el snapshot.
+- `pys-data.js` usa localStorage con TTL de cinco minutos y descarga la colección completa. No se encontraron temporizadores, listeners de visibilidad/conexión, BroadcastChannel ni endpoint de delta para sesiones abiertas.
+
+**Escrituras que afectan colecciones visibles**
+- **WRITE / Cortes-modelos:** `addOrUpdateCut`, `addSupplementaryInfo`, `addVinToVehicle` y `freezeCortesIds` (este último puede cambiar IDs estables). `allocateVehicleId` reserva un ID, pero por sí solo no publica un registro.
+- **FEEDBACK / Cortes-modelos:** `recordLike` actualiza contadores de utilidad; `suggestYear` puede cambiar el rango de años de Cortes cuando la sugerencia se aplica.
+- **FEEDBACK / PyS:** `addProblem`, `addSolution`, `addPrevention`, `addVehicleToProblem`, `removeVehicleFromProblem` y `updatePysItem`.
+- **FEEDBACK / Tutoriales:** `addTutorial`, `updateTutorialItem` y las acciones de aprobación/rechazo de vídeo cuando el destino es un tutorial.
+- **FEEDBACK / Cortes, PyS o Tutoriales:** la publicación/retiro de vídeo aprobado o rechazado puede modificar la fila de destino según el tipo de contenido.
+- **ADMIN / Logos:** `addLogo`.
+- **ADMIN / Cortes-imágenes y metadatos:** `updateVehicleField`, `uploadAdminImage`, `normalizeImages`, `organizePrimaryVehicleImages`, `applyCortesImageReconciliation`, `recoverReplacedImage`, y operaciones de reemplazo/movimiento que cambian referencias o metadatos vinculados a Cortes.
+- **ADMIN / mantenimiento masivo:** restauración de base de datos, migración/reversión de identificadores, reconciliación de cargas pendientes y reorganización pueden afectar muchas filas; deben publicar un evento de reinicio/reconciliación de colección, no miles de eventos individuales.
+- Relay no tiene una ruta de escritura de catálogo identificada en los servicios actuales; Logos sí tiene una ruta explícita. Las operaciones de reportes, sugerencias no aplicadas, mensajes de contacto y borrado de reportes modifican Feedback, no el catálogo. No se encontró una ruta normal para borrar un registro PyS/tutorial/Corte; el feed debe admitir tombstones para futuras bajas y restauraciones.
+
+**Diseño de feed propuesto**
+- Hoja interna oculta `CatalogChanges` en el Spreadsheet compartido, con eventos versionados: revisión monotónica, colección, ID estable, operación (`upsert`, `delete`, `reset`), snapshot JSON validado y fecha.
+- Añadir el recurso compartido `CATALOG_CHANGES` a las leases de Coordinador de todos los escritores que afecten el catálogo; así las revisiones se asignan sin colisiones entre WRITE, FEEDBACK y ADMIN.
+- Publicar el evento solo después de verificar la persistencia del registro. Para operaciones masivas/restauraciones se emite `reset` y el cliente solicita un snapshot completo controlado.
+- Endpoint incremental autenticado mediante sesión FEEDBACK, paginado por cursor y con detección de cursor vencido/futuro; retención acotada. PyS y catálogo compartirían la revisión, aunque el cliente los aplique a sus almacenes respectivos.
+- Bootstrap sin pérdida: obtener cursor base antes de leer snapshots completos y después aplicar el delta desde ese cursor; las duplicaciones son idempotentes y las escrituras concurrentes no se pierden.
+- Todo el proceso permanece interno y silencioso; no se añade interfaz de novedades, botón, panel ni indicador visible.
+
 ### Criterios de aceptación
 - Developer presenta Respaldo y Base de datos en la misma pestaña; controles de migración y limpieza tienen tamaños proporcionados y consistentes.
 - [x] La biblioteca de imágenes ofrece cuadrícula/lista, miniaturas dimensionadas según la vista, selección múltiple y menú contextual de tres puntos con acciones coherentes y autorizadas.
@@ -647,7 +675,7 @@ No marcar como completadas estas tareas hasta ejecutar las pruebas locales perti
 
 
 ## GP-CAT-01 — Catálogo cache-first con actualización incremental y animada en vivo
-**Prioridad: alta. Estado: REQUISITO REGISTRADO; diseño/implementación y pruebas pendientes.**
+**Prioridad: alta. Estado: AUDITORÍA DE ESCRITURAS COMPLETADA; contrato/feed y cliente pendientes.**
 
 ### Objetivo de experiencia
 - Al abrir la plataforma, mostrar primero y sin demora la última instantánea válida del catálogo guardada localmente (IndexedDB), tanto con conexión como sin ella. La interfaz no debe esperar a descargar todo el catálogo para empezar a ser utilizable.

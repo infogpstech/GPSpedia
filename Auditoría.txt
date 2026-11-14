@@ -429,3 +429,12 @@ No confundir sincronización de datos con actualización de los recursos PWA/Ser
 - InboxRoleContract.js ejecutado sobre las fuentes actuales: 17/17 PASS.
 - Escenarios cubiertos: destinatarios por rango, Técnico/Técnico exterior → Supervisor, Supervisor → Jefe, Jefe → rangos inferiores, bloqueo de acceso directo a Desarrollador, rechazo de pares/escalamiento, cuentas inactivas, idempotencia, lectura, archivo, auditoría, paginación y coordinación de mutaciones.
 - Limitación: no se ejecutó el proceso Node CLI completo ni se verificó UI en navegador Beta; no se declara CI PASS.
+
+
+[2026-11-14] GP-CAT-01A — Hallazgos de auditoría
+- Catalog Service: getCatalogData construye el snapshot completo desde Sheets. El intento de CacheService está comentado/deshabilitado; cada solicitud recorre Cortes, LogosMarca, Tutorial y Relay.
+- Feedback Service: getPysData lee y transforma la hoja PyS completa. El cliente pys-data.js mantiene caché localStorage de cinco minutos y no implementa polling.
+- Cliente de catálogo: auth.js lee IndexedDB primero, pero la actualización de red sigue usando snapshot completo; offline.js guarda mediante reemplazo completo. No se encontraron señales de sondeo activo ni coordinación multi-pestaña.
+- Writers identificados en WRITE/FEEDBACK/ADMIN; la lista detallada, incluida la clasificación de operaciones de mantenimiento, queda registrada en Tareas_Activas.md.
+- Riesgo de integridad: restoreDatabase intercambia hojas completas; una hoja de feed dentro del Spreadsheet debe preservarse durante la restauración para no retroceder el cursor. Se requiere evento reset posterior.
+- No se modificó código funcional ni se creó la hoja CatalogChanges en este hito; el diseño/feed permanece pendiente de implementación y pruebas.
