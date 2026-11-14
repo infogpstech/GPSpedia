@@ -909,56 +909,99 @@ export function mapVersionsWithVins(versionesStr, vinRaw) {
  * @param {string} fileId - El ID o URL de la imagen.
  * @param {number} size - El tamaño solicitado para la imagen.
  */
+const IMAGE_FALLBACK_DATA_URL = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="400" height="300" fill="#eef0f2"/><path d="M150 170l35-38 28 29 22-23 40 48H125z" fill="#c2c8ce"/><circle cx="175" cy="100" r="17" fill="#c2c8ce"/><text x="200" y="225" text-anchor="middle" font-family="Arial,sans-serif" font-size="16" fill="#68717a">Imagen no disponible</text></svg>'
+);
+
 export async function setOptimizedImage(imgElement, fileId, size = IMG_SIZE_SMALL) {
     const requestToken = thumbnailObjectUrls.begin(imgElement);
+    const previousHandlers = imgElement.__gpImageHandlers;
+    if (previousHandlers) {
+        imgElement.removeEventListener('load', previousHandlers.load);
+        imgElement.removeEventListener('error', previousHandlers.error);
+    }
+    imgElement.classList.add('gp-image-loading');
+    imgElement.classList.remove('gp-image-loaded', 'gp-image-unavailable', 'gp-image-fallback');
+    imgElement.dataset.gpImageState = 'loading';
+    imgElement.setAttribute('aria-busy', 'true');
+    imgElement.removeAttribute('src');
+
+    const isCurrent = () => thumbnailObjectUrls.isCurrent(imgElement, requestToken);
+    const setSource = (source, fallback = false) => {
+        if (!isCurrent()) return false;
+        if (fallback) imgElement.classList.add('gp-image-fallback');
+        imgElement.src = source;
+        return true;
+    };
+    const markLoaded = () => {
+        if (!isCurrent()) return;
+        imgElement.classList.remove('gp-image-loading', 'gp-image-unavailable');
+        imgElement.classList.add('gp-image-loaded');
+        imgElement.dataset.gpImageState = imgElement.classList.contains('gp-image-fallback') ? 'fallback' : 'loaded';
+        imgElement.setAttribute('aria-busy', 'false');
+    };
+    const markFailed = event => {
+        if (!isCurrent()) return;
+        const restoreBtn = document.getElementById('btn-admin-restore-trash');
+        if (restoreBtn) restoreBtn.style.display = 'block';
+        imgElement.classList.remove('gp-image-loading', 'gp-image-loaded');
+        imgElement.classList.add('gp-image-unavailable');
+        imgElement.dataset.gpImageState = 'unavailable';
+        imgElement.setAttribute('aria-busy', 'false');
+        console.warn('No se pudo cargar una imagen del catálogo.');
+        if (typeof imgElement.onerror === 'function') {
+            try { imgElement.onerror.call(imgElement, event); } catch (error) {}
+        }
+        setSource(IMAGE_FALLBACK_DATA_URL, true);
+    };
+    imgElement.addEventListener('load', markLoaded);
+    imgElement.addEventListener('error', markFailed);
+    imgElement.__gpImageHandlers = { load: markLoaded, error: markFailed };
+
     if (!fileId) {
-        imgElement.src = getImageUrl(null);
+        setSource(IMAGE_FALLBACK_DATA_URL, true);
         return;
     }
-
-    // Si la imagen falla al cargar, podría estar en la papelera o eliminada de Drive.
-    // Detectamos la falla y habilitamos/mostramos automáticamente el botón de restauración de papelera.
-    const originalOnError = imgElement.onerror;
-    imgElement.onerror = (e) => {
-        const restoreBtn = document.getElementById('btn-admin-restore-trash');
-        if (restoreBtn) {
-            restoreBtn.style.display = 'block';
-        }
-        if (typeof originalOnError === 'function') {
-            originalOnError(e);
-        }
-    };
 
     const cleanId = typeof fileId === 'string' ? fileId.trim() : fileId;
     const normalizedSize = Math.max(100, Math.min(1600, Math.round(Number(size) || IMG_SIZE_SMALL)));
     const cacheKey = offline.getThumbnailCacheKey(cleanId, normalizedSize);
-    if (typeof cleanId === "string" && /^(?:blob:|data:)/i.test(cleanId)) {
-        if (thumbnailObjectUrls.isCurrent(imgElement, requestToken)) imgElement.src = cleanId;
+    if (typeof cleanId === 'string' && /^(?:blob:|data:)/i.test(cleanId)) {
+        setSource(cleanId);
         return;
     }
 
     try {
         const cachedBlob = await Promise.race([
             offline.getThumbnail(cleanId, normalizedSize),
-            new Promise((_, reject) => setTimeout(() => reject(new Error("DB Timeout")), 800))
+            new Promise((_, reject) => setTimeout(() => reject(new Error('DB Timeout')), 800))
         ]).catch(() => null);
-
-        if (!thumbnailObjectUrls.isCurrent(imgElement, requestToken)) return;
+        if (!isCurrent()) return;
         if (cachedBlob && thumbnailObjectUrls.attach(cacheKey, cachedBlob, imgElement, requestToken)) return;
-    } catch (e) {
-        /* Continuar a red si falla la lectura local. */
+    } catch (error) {
+        console.warn('No se pudo leer la miniatura local; se intentará cargar desde la red.');
     }
 
-    if (!thumbnailObjectUrls.isCurrent(imgElement, requestToken)) return;
+    if (!isCurrent()) return;
     const remoteUrl = getImageUrl(cleanId, normalizedSize);
-    imgElement.src = remoteUrl;
+    let localThumbnailAttached = false;
+    const probe = new Image();
+    probe.decoding = 'async';
+    probe.onload = () => {
+        if (!isCurrent() || localThumbnailAttached) return;
+        setSource(remoteUrl);
+    };
+    probe.onerror = () => {
+        if (!isCurrent() || localThumbnailAttached) return;
+        markFailed(new Event('error'));
+    };
+    probe.src = remoteUrl;
 
-    if (cleanId && typeof cleanId === "string" && !cleanId.startsWith("blob:") &&
-        !cleanId.startsWith("data:") && !cleanId.includes("placehold.co")) {
-        // La variante PNG solo reemplaza la fuente remota si la solicitud sigue vigente.
+    if (cleanId && typeof cleanId === 'string' && !cleanId.startsWith('blob:') &&
+        !cleanId.startsWith('data:') && !cleanId.includes('placehold.co')) {
         offline.compressAndStoreThumbnail(remoteUrl, cleanId, normalizedSize).then(blob => {
-            if (blob && thumbnailObjectUrls.isCurrent(imgElement, requestToken)) {
-                thumbnailObjectUrls.attach(cacheKey, blob, imgElement, requestToken);
+            if (blob && isCurrent() && thumbnailObjectUrls.attach(cacheKey, blob, imgElement, requestToken)) {
+                localThumbnailAttached = true;
             }
         }).catch(() => {});
     }
