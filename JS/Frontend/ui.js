@@ -3117,6 +3117,7 @@ async function insertNewVehicleFluently(item) {
 /* TAREA 3.1 & TAREA 9.3: VERIFICACIÓN Y CORRECCIÓN DEL CARRUSEL «POSIBLES PROBLEMAS» CON ORIGEN CONTEXTUAL */
 function createPysCard(item, originModal = null, vehicleToUnlink = null, onUnlinkSuccess = null, navigationOptions = {}) {
     const cardWrapper = document.createElement("div");
+    cardWrapper.className = "pys-card-wrapper";
     cardWrapper.style.cssText = "position: relative; display: inline-block;";
 
     const resolvedOrigin = originModal || (vehicleToUnlink ? 'vehicle' : 'pys');
@@ -3195,6 +3196,19 @@ function createPysCard(item, originModal = null, vehicleToUnlink = null, onUnlin
     return cardWrapper;
 }
 
+function createPysAssociationAddCard(activeItem, navOptions = {}) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "pys-card-wrapper";
+    wrapper.style.cssText = "position: relative; display: inline-block;";
+    const card = document.createElement("div");
+    card.className = "card card-create-pys-assoc";
+    card.style.cssText = "width: 140px; height: 120px; padding: 10px; margin: 0;";
+    card.innerHTML = `<i class="fa-solid fa-plus" style="font-size: 2rem; margin-bottom: 8px;"></i> <span style="font-size: 0.85rem; font-weight: 600; text-align: center;">Agregar Problema</span>`;
+    card.onclick = () => openAssociateExistingProblemModal(activeItem, navOptions);
+    wrapper.appendChild(card);
+    return wrapper;
+}
+
 export function renderPosiblesProblemasAccordion(container, activeItem, navOptions = {}) {
     if (!container || !activeItem || !activeItem.id) return;
     // Tarea 9.3: Prevención de ciclos - si el modal de vehículo se abrió desde PyS, no mostrar acordeón de problemas
@@ -3265,13 +3279,8 @@ export function renderPosiblesProblemasAccordion(container, activeItem, navOptio
             }, navOptions);
             singleCardContainer.appendChild(singleCard);
 
-            // Tarjeta para agregar o vincular problema sin borde discontinuo
-            const addPysCard = document.createElement("div");
-            addPysCard.className = "card card-create-pys-assoc";
-            addPysCard.style.cssText = "width: 140px; height: 120px; padding: 10px; margin: 0;";
-            addPysCard.innerHTML = `<i class="fa-solid fa-plus" style="font-size: 2rem; margin-bottom: 8px;"></i> <span style="font-size: 0.85rem; font-weight: 600; text-align: center;">Agregar Problema</span>`;
-            addPysCard.onclick = () => openAssociateExistingProblemModal(activeItem, navOptions);
-            singleCardContainer.appendChild(addPysCard);
+            // Utiliza el mismo wrapper y dimensiones que una tarjeta de problema.
+            singleCardContainer.appendChild(createPysAssociationAddCard(activeItem, navOptions));
 
             contentWrapper.appendChild(singleCardContainer);
         } else {
@@ -3288,13 +3297,8 @@ export function renderPosiblesProblemasAccordion(container, activeItem, navOptio
                 carouselTrack.appendChild(card);
             });
 
-            // Tarjeta al final del carrusel para agregar o vincular problema
-            const addPysCard = document.createElement("div");
-            addPysCard.className = "card card-create-pys-assoc";
-            addPysCard.style.cssText = "flex: 0 0 140px; height: 120px; padding: 10px; margin-right: 20px;";
-            addPysCard.innerHTML = `<i class="fa-solid fa-plus" style="font-size: 2rem; margin-bottom: 8px;"></i> <span style="font-size: 0.85rem; font-weight: 600; text-align: center;">Agregar Problema</span>`;
-            addPysCard.onclick = () => openAssociateExistingProblemModal(activeItem, navOptions);
-            carouselTrack.appendChild(addPysCard);
+            // El wrapper recibe el mismo ancho de carrusel que las tarjetas de problema.
+            carouselTrack.appendChild(createPysAssociationAddCard(activeItem, navOptions));
 
             carouselContainer.appendChild(carouselTrack);
 
