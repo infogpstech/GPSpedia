@@ -555,3 +555,17 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - Se sincronizó el fixture AUTH después de incorporar el endpoint de benchmark PBKDF2 y se ajustó su prueba para verificar duplicados activos sin invalidar al solicitante.
 - GitHub Actions `service-tests` sobre HEAD `2f85ef76d148487413904a71959acf36ddc74c22`: **PASS**, 83 suites, 1,250 pruebas aprobadas, 0 fallos. `TutorialIntegrity: 27/27 PASS`; `PasswordKdfBenchmark: 6/6 PASS`.
 - No se ejecutaron altas ni migraciones sobre Tutorial/Spreadsheet productiva.
+
+## P2 — Endpoint seguro de calibración PBKDF2 (2026-11-14)
+
+**Estado: COMPLETADO CON VALIDACIÓN DIFERIDA A BETA.**
+
+- Se añadió `benchmarkPasswordKdf` al router AUTH y al mapa `ACTION_TO_SERVICE_MAP`.
+- El endpoint exige `userId` y `sessionToken`, valida la sesión mediante `validateSessionReadOnly_` y permite únicamente el rol Desarrollador. La comprobación de sesión no actualiza actividad.
+- El benchmark usa una cadena fija de prueba y un salt fijo, mide 1,000 / 2,500 / 5,000 / 10,000 / 12,000 iteraciones y no lee ni escribe contraseñas, Users ni ActiveSessions. La respuesta identifica expresamente la operación como `readOnly` y `benchmarkOnly`.
+- Se añadió `PasswordKdfBenchmark.mjs` y se integró en CI: 6/6 PASS para autorización, rechazo de sesiones/roles inválidos, contrato de ruta y aislamiento de datos.
+- Se corrigieron dos aserciones de `TutorialIntegrity.js` que comparaban objetos/arrays entre contextos VM por identidad en lugar de comparar su estructura serializada; TutorialIntegrity quedó en 27/27 PASS.
+- GitHub Actions `service-tests` sobre HEAD `163a589865e5cfda85e1a09bad2674e500aa5d19`: **PASS**, 83 suites, 1,250 pruebas aprobadas, 0 fallos.
+- Se documentó en `Tareas_Activas.md` el procedimiento Beta, precedido por los comandos obligatorios de comprobación de árbol limpio, fetch y fast-forward.
+- Pendiente de Beta: invocar el endpoint desde el deployment actualizado al menos tres veces, registrar las medianas por coste y revisar el margen de ejecución antes de fijar `PASSWORD_KDF_ITERATIONS`. El valor 12,000 sigue provisional. No se modificó el deployment ni se migraron contraseñas.
+- Siguiente subfase P2: definir el plan de migración de IDs por entidad, con snapshot/manifiesto verificable, checkpoint reanudable y reversión probada antes de cualquier escritura; mantener Relay en diagnóstico hasta conocer su formato y referencias reales.
