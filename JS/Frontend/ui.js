@@ -3673,17 +3673,34 @@ function isCurrentUiSessionContext_(expected) {
         current.role === expected.role);
 }
 
+let uiRoleValidationInFlight_ = null;
+
 async function ensureUiSessionRole_(allowedRoles) {
     const expected = getUiSessionContext_();
     if (!expected || !Array.isArray(allowedRoles) || !allowedRoles.includes(expected.role)) return null;
     const authApi = typeof window !== 'undefined' ? window.auth : null;
     if (!authApi || typeof authApi.validateActiveSession !== 'function') {
-        showGlobalError('No se pudo verificar la sesión actual. Inicia sesión nuevamente.');
+        showGlobalError('No se pudo verificar la sesión actual. La vista protegida permanecerá cerrada.');
         return null;
     }
+
+    // Reutilizar una validación reciente y compartir la solicitud concurrente de esta sesión.
+    // La caché solo evita consultas redundantes: cada operación privilegiada sigue validándose en el servidor.
+    const validationKey = expected.userId + '\u0000' + expected.sessionToken;
+    let pending = uiRoleValidationInFlight_;
+    if (!pending || pending.key !== validationKey) {
+        const promise = Promise.resolve().then(() => authApi.validateActiveSession(false));
+        pending = { key: validationKey, promise };
+        uiRoleValidationInFlight_ = pending;
+        promise.then(
+            () => { if (uiRoleValidationInFlight_ === pending) uiRoleValidationInFlight_ = null; },
+            () => { if (uiRoleValidationInFlight_ === pending) uiRoleValidationInFlight_ = null; }
+        );
+    }
+
     let valid = false;
     try {
-        valid = await authApi.validateActiveSession(true);
+        valid = await pending.promise;
     } catch (error) {
         console.warn('No se pudo revalidar la sesión antes de abrir una vista privilegiada:', error);
         showGlobalError('No se pudo verificar la sesión con el servidor. La vista protegida permanecerá cerrada.');
@@ -4138,6 +4155,7 @@ const openInboxModal_ = setupModal('inbox-modal', async (options = {}) => {
     const context = getUiSessionContext_();
     if (!context) return;
     const modal = document.getElementById('inbox-modal');
+    modal.__gpOverlayClose = closeInboxModal_;
     modal.style.display = 'flex';
     modal.setAttribute('aria-hidden', 'false');
     document.body.classList.add('inbox-open');
@@ -4793,6 +4811,12 @@ function initializeRichTextModeControl_() {
 /* TAREA 1.2: RECUPERACIÓN DE LAS FUNCIONES DEL PANEL DE DESARROLLADOR */
 const openDevToolsModal_ = setupModal('dev-tools-modal', (options = {}) => {
     const modal = document.getElementById('dev-tools-modal');
+    modal.__gpOverlayClose = () => {
+        modal.style.display = 'none';
+        modal.setAttribute('aria-hidden', 'true');
+        deactivateLegalModalFocus_(modal, true);
+    };
+    modal.setAttribute('aria-hidden', 'false');
     modal.style.display = 'flex';
     activateLegalModalFocus_(modal, {
         initialFocus: modal.querySelector('#dev-tools-title'),
