@@ -20,6 +20,8 @@ function coordinatorPolicy_(service, operation) {
     const policies = {
         AUTH: {
             login: { write: identityWrite },
+            // AUTH actualiza LastActivityAt de forma cooperativa y guarda la aceptación en Users.
+            // Puede coexistir con ADMIN/sessionActivity, pero no con escrituras exclusivas de sesión.
             acceptTerms: { read: ["ACTIVE_SESSIONS"], write: ["USERS"], sharedWrite: ["ACTIVE_SESSIONS"] },
             touchSession: { write: identityWrite },
             changePassword: { write: identityWrite },
