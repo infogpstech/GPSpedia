@@ -543,15 +543,19 @@ function runSharedMutationCoordinatorTests() {
         release_(r, "AUTH", "logout", retry.token);
     });
 
-    test_("AUTH acceptTerms serializa la aceptación con las mutaciones de identidad", function() {
+    test_("AUTH acceptTerms valida ActiveSessions en modo cooperativo y serializa la escritura de Users", function() {
         const r = createRuntime_();
         const policy = coordinatorPolicy_("AUTH", "acceptTerms");
         assert_(policy.writeResources.includes("USERS"), "acceptTerms debe reservar Users.");
-        assert_(policy.writeResources.includes("ACTIVE_SESSIONS"), "acceptTerms debe reservar ActiveSessions para verificar/reconciliar identidad.");
+        assert_(!policy.writeResources.includes("ACTIVE_SESSIONS"), "acceptTerms no debe escribir ActiveSessions.");
+        assert_(policy.readResources.includes("ACTIVE_SESSIONS"), "acceptTerms debe validar la sesión activa.");
+        assert_(policy.sharedWriteResources.includes("ACTIVE_SESSIONS"), "La lectura de sesión puede coexistir con sessionActivity.");
         const acceptance = acquire_(r, "AUTH", "acceptTerms");
         assert_(acceptance.status === "success", "acceptTerms debe obtener una lease autorizada.");
         const profile = acquire_(r, "USERS", "updateProfile");
         assert_(profile.status === "error" && profile.code === "busy", "La aceptación debe serializarse con cambios de Users.");
+        const login = acquire_(r, "AUTH", "login");
+        assert_(login.status === "error" && login.code === "busy", "La aceptación debe impedir una mutación concurrente de ActiveSessions.");
         release_(r, "AUTH", "acceptTerms", acceptance.token);
     });
 
@@ -563,7 +567,7 @@ function runSharedMutationCoordinatorTests() {
     });
 
     test_("AUTH serializa actividad de sesiones en todas las mutaciones autenticadas", function() {
-        ["acceptTerms","changePassword","resetUserPassword","resetUserSessions","clearSensitiveLogs","deleteUser","updateUser","logout"].forEach(action => {
+        ["changePassword","resetUserPassword","resetUserSessions","clearSensitiveLogs","deleteUser","updateUser","logout"].forEach(action => {
             const policy = coordinatorPolicy_("AUTH", action);
             assert_(policy.writeResources.includes("ACTIVE_SESSIONS"),
                 "AUTH/" + action + " debe reservar ActiveSessions mientras renueva o invalida la sesión.");
