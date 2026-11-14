@@ -3727,7 +3727,7 @@ function handleMigrateIdentifiers_(payload, logMessage) {
         }
     }
     manifestItems.sort((a, b) => a.entryIndex - b.entryIndex);
-    const pending = manifestItems.filter(item => item.status !== "VERIFIED" && item.status !== "ROLLED_BACK");
+    const pending = manifestItems.filter(item => item.status !== "VERIFIED" && item.status !== "ROLLED_BACK" && item.status !== "CONFLICT");
     const selected = pending.slice(0, batchSize);
     let processed = 0;
     for (const item of selected) {
@@ -3736,6 +3736,12 @@ function handleMigrateIdentifiers_(payload, logMessage) {
         const sheet = ss.getSheetByName(entry.sheet);
         if (!sheet || !identifierMigrationUniqueKey_(sheet, entry.keyColumn, entry.keyValue)) {
             identifierMigrationWriteManifestStatus_(manifestSheet, item, "CONFLICT", item.batch + 1, "La hoja o clave estable dejó de ser única.");
+            SpreadsheetApp.flush();
+            break;
+        }
+        const snapshot = ss.getSheetByName(entry.snapshotName);
+        if (!snapshot || identifierMigrationSheetDigest_(snapshot) !== entry.sourceSheetFingerprint) {
+            identifierMigrationWriteManifestStatus_(manifestSheet, item, "CONFLICT", item.batch + 1, "El snapshot de recuperación falta o no coincide.");
             SpreadsheetApp.flush();
             break;
         }
@@ -3804,7 +3810,8 @@ function handleRollbackIdentifiers_(payload) {
     for (const item of items) {
         if (item.status === "ROLLED_BACK") continue;
         if (item.status !== "VERIFIED") throw new Error("La reversión se detuvo: todas las entradas deben estar VERIFIED o ROLLED_BACK.");
-        const entry = identifierMigrationReadEntry_(item), sheet = ss.getSheetByName(entry.sheet);
+        const entry = identifierMigrationReadEntry_(item), sheet = ss.getSheetByName(entry.sheet), snapshot = ss.getSheetByName(entry.snapshotName);
+        if (!snapshot || identifierMigrationSheetDigest_(snapshot) !== entry.sourceSheetFingerprint) throw new Error("El snapshot de recuperación falta o no coincide; rollback detenido.");
         if (!sheet || !identifierMigrationUniqueKey_(sheet, entry.keyColumn, entry.keyValue) || identifierMigrationRowDigest_(sheet, entry.row) !== entry.afterFingerprint) {
             identifierMigrationWriteManifestStatus_(manifestSheet, item, "CONFLICT", item.batch, "La huella posterior cambió; rollback detenido.");
             SpreadsheetApp.flush();

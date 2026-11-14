@@ -41,7 +41,7 @@ function makeUtilities(){
 function makeHarness(initial){
  const ss=makeSpreadsheet(initial);
  const fn=new Function("getSpreadsheet","Utilities","SpreadsheetApp","Date",
-  "const IDENTIFIER_MIGRATION_MANIFEST_SHEET_ = "+JSON.stringify("__IdentifierMigrationManifest__")+";\n"+
+  "const IDENTIFIER_MIGRATION_MANIFEST_SHEET_ = \"__IdentifierMigrationManifest__\";\nconst IDENTIFIER_MIGRATION_MANIFEST_HEADERS_ = [\"migrationId\",\"manifestDigest\",\"entryIndex\",\"entryJson\",\"status\",\"batch\",\"createdAt\",\"updatedAt\",\"lastError\"];\nconst IDENTIFIER_MIGRATION_ENTITIES_ = Object.freeze({\n users:{sheet:\"Users\",idColumn:1,headers:[\"id\"],kind:\"user\",numeric:false},\n vehicle:{sheet:\"Cortes\",idColumn:1,headers:[\"id\"],kind:\"vehicle\",numeric:true},\n tutorial:{sheet:\"Tutorial\",idColumn:1,headers:[\"id\"],kind:\"tutorial\",numeric:false},\n problem:{sheet:\"pys\",idColumn:1,headers:[\"id_problem\"],kind:\"problem\",numeric:false},\n logo:{sheet:\"LogosMarca\",idColumn:1,headers:[\"id\"],kind:\"logo\",numeric:true}\n});\n"+"\n"+
   extract("identifierMigrationCanonical_")+extract("identifierMigrationDigest_")+extract("identifierMigrationNormalizeId_")+
   extract("identifierMigrationValidId_")+extract("identifierMigrationReadRow_")+extract("identifierMigrationRowDigest_")+
   extract("identifierMigrationSheetDigest_")+extract("identifierMigrationUniqueKey_")+extract("identifierMigrationIdCount_")+
