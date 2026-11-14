@@ -124,7 +124,7 @@ async function ensureSessionTouched_(token){
  if(state&&state.lastSuccess&&now-state.lastSuccess<SESSION_TOUCH_INTERVAL_MS)return;
  if(!state)state={lastSuccess:0,pending:null};
  const pending=routeAction('touchSession',{sessionToken:token}).then(result=>{
-  if(result&&result.valid===false&&!result.error&&!result.unavailable){
+  if(result&&result.valid===false&&!result.error&&!result.unavailable&&!['missing_sheet','role_revocation_pending'].includes(String(result.reason||''))){
    throw createRouteActionError_("La sesión no es válida o ha expirado.",{kind:"application",code:"SESSION_INVALID",httpStatus:null});
   }
   if(!result||result.valid!==true){
