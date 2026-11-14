@@ -48,6 +48,7 @@ function coordinatorPolicy_(service, operation) {
             freezeCortesIds: { read: identityRead, write: ["ACTIVE_SESSIONS", "CORTES"] }
         },
         ADMIN: {
+            sessionActivity: { write: ["ACTIVE_SESSIONS"] },
             backupDatabase: { maintenance: true },
             backupDrive: { read: identityRead, write: ["DRIVE"] },
             restoreDatabase: { maintenance: true },
