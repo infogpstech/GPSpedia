@@ -1,0 +1,112 @@
+# GPSpedia — Tareas activas y plan de paquetes
+
+Fecha de registro: 2026-11-14  
+Repositorio: `infogpstech/GPSpedia`  
+Rama de trabajo: `GPSpedia2.2.5_work`  
+Rama base protegida: `GPSpedia2.2.5`  
+HEAD al registrar: `c5453d6ff4b21b0dd8fede3f1b128e892e56c268`
+
+Este documento registra los requisitos nuevos y el orden de ejecución. La fuente normativa sigue siendo `NORMAS_DESAROLLO.md`; los registros archivados en `Olds/Documentacion_Legacy/` y `Olds/GPSpedia 2.2/` no se modifican.
+
+## Objetivo
+
+Simplificar la autenticación sin debilitar autorización; modernizar Inbox; endurecer controles de imágenes y permisos por rol; evaluar protección de pantalla con límites reales; completar migraciones de contraseñas e identificadores a mecanismos backend.
+
+## Registro de problemas
+
+| ID | Problema solicitado | Estado |
+|---|---|---|
+| GP-SEC-01 | Evitar validaciones periódicas/separadas; iniciar sesión una vez y conservar sesión y privilegios mientras siga vigente | PENDIENTE P0/P1 |
+| GP-UX-01 | Inbox organizado, elegante y similar en experiencia a Outlook/Gmail, con identidad GPSpedia | PENDIENTE P0/P3 |
+| GP-SEC-02 | Bloquear descargas casuales, clic derecho, menú contextual, copia y arrastre de imágenes | PENDIENTE P0/P4 |
+| GP-RBAC-01 | Compartir integrado para todos; compartir, imprimir y editar detalles solo Supervisor, Jefe y Desarrollador | PENDIENTE P0/P4 |
+| GP-SEC-03 | Evaluar mitigación de capturas de pantalla en web/PWA sin prometer bloqueo absoluto | PENDIENTE P0/P5 |
+| GP-DATA-01 | Disponer de migración explícita y verificable de contraseñas heredadas a hash seguro | PENDIENTE P0/P2 |
+| GP-DATA-02 | Sustituir IDs calculados por fórmulas por IDs backend para usuarios, vehículos, tutoriales y relays | PENDIENTE P0/P2 |
+
+## Hallazgos preliminares confirmados en código
+
+1. **Sesión:** `auth.js` tiene validación cacheada 60 s; `main.js` revalida al recuperar conexión; `api-config.js` ejecuta `touchSession` previo a acciones protegidas, limitado localmente a 5 minutos. AUTH conserva expiración absoluta de 3 meses e inactividad de 1 mes. P1 debe eliminar validaciones redundantes, pero mantener autorización backend en cada operación protegida.
+2. **Contraseñas:** AUTH ya migra una contraseña en texto plano a hash al login exitoso. El hash actual es SHA-256 con salt aleatorio. No se encontró todavía un comando de migración por lotes. Nuevas cuentas en `Services/users.js` también reciben hash. El coste del algoritmo actual debe evaluarse antes de seleccionar un formato más resistente.
+3. **IDs:** usuarios nuevos usan IDs secuenciales `USR-####`; vehículos ya tienen asignador backend central y acciones `allocateVehicleId` / `freezeCortesIds`; tutoriales usan `tut-` + operationId; Problemas usa `isue-` + secuencia. La cobertura de registros antiguos, fórmulas y relays requiere auditoría adicional.
+4. **Interacción con imágenes:** `clientInteractionPolicy.js` ya previene contextmenu, copy, cut, selectstart y dragstart en contenido no editable. Es una barrera contra acciones casuales, no impide inspección de red, extracción de URL ni captura del sistema.
+5. **Inbox:** ya existen lista/detalle, paginación, caché, toolbar y acciones. El rediseño debe preservar contratos y capacidades.
+6. **Roles:** el backend reconoce `supervisor`, `jefe` y también `gefe` como valor histórico. Antes de consolidar etiquetas debe determinarse si `Gefe` es alias de `Jefe` o un rol distinto.
+
+## Paquetes de ejecución
+
+### P0 — Auditoría y diseño técnico
+**Estado: EN PROGRESO**
+- [ ] Mapear flujo completo de login, restauración, validación, touch, revocación, expiración y logout.
+- [ ] Inventariar qué endpoints validan token y rol en backend, incluidos Inbox y acciones de imagen.
+- [ ] Confirmar semántica de roles existentes, especialmente `Gefe` frente a `Jefe`.
+- [ ] Revisar controles de share, print, download y edición en el modal; identificar todos los llamadores.
+- [ ] Inventariar hojas, encabezados, fórmulas, generadores, referencias y consumidores de IDs de usuarios, vehículos, tutoriales y relays.
+- [ ] Revisar estrategia de hash existente y compatibilidad de los servicios que verifican contraseñas.
+- [ ] Definir contratos, lotes, idempotencia, reconciliación y reversión. No ejecutar escrituras en producción.
+
+### P1 — Autenticación simplificada
+**Estado: PENDIENTE**
+- [ ] Una sola autenticación interactiva por sesión.
+- [ ] Conservar token/sesión al navegar entre páginas, actualizar y abrir modales.
+- [ ] Retirar llamadas separadas y periódicas redundantes de validación/touch.
+- [ ] Validar identidad, vigencia y rol dentro de la petición protegida del backend, sin un viaje de red adicional.
+- [ ] Mantener revocación, expiración, desactivación y cambios de privilegios efectivos en el servidor.
+- [ ] Probar concurrencia, múltiples pestañas, offline, reconexión y sesión revocada.
+
+### P2 — Migración de contraseñas e identificadores
+**Estado: PENDIENTE**
+- [ ] Diseñar hash versionado con salt único y coste adecuado a Apps Script; medir latencia y compatibilidad.
+- [ ] Implementar migración por lotes reanudable e idempotente de credenciales legacy; no registrar ni exportar contraseñas.
+- [ ] Mantener autenticación compatible durante transición y verificar conteos antes/después.
+- [ ] Auditar/normalizar IDs existentes y fórmulas; backend como única fuente para nuevos IDs.
+- [ ] Migrar usuarios, vehículos, tutoriales y relays sin romper enlaces, aprobaciones, logs ni referencias cruzadas.
+- [ ] Detectar duplicados/ambigüedades y detener solo los registros afectados; producir reporte de reconciliación.
+- [ ] Implementar modo dry-run, checkpoints y estrategia de reversión.
+
+### P3 — Rediseño Inbox
+**Estado: PENDIENTE**
+- [ ] Diseñar estructura de bandeja: navegación/categorías, búsqueda, filtros, lista con remitente/asunto/fecha/estado y panel de lectura.
+- [ ] Mejorar jerarquía visual, densidad, estados no leído/leído, acciones y vacíos/carga/error.
+- [ ] Adaptar móvil con navegación lista-detalle y controles táctiles.
+- [ ] Preservar mensajes, respuestas, adjuntos si existen, paginación, caché, archivado, lectura y permisos.
+- [ ] Probar tema claro/oscuro, teclado, accesibilidad y navegación Atrás.
+
+### P4 — Política de imágenes y permisos
+**Estado: PENDIENTE**
+- [ ] Definir una matriz de capacidades por rol en backend y frontend.
+- [ ] Compartir integrado del modal permitido a todos.
+- [ ] Compartir, imprimir y editar detalles solo Supervisor, Jefe y Desarrollador.
+- [ ] Restringir botones, enlaces directos, descarga, menú contextual, copiar/arrastrar en imágenes, sin romper campos editables ni accesibilidad.
+- [ ] Revisar exposición de URL originales y recursos estáticos; no confundir ocultar controles con autorización real.
+- [ ] Pruebas negativas: Técnico no ejecuta acciones privilegiadas manipulando DOM o llamando endpoints directamente.
+
+### P5 — Mitigación de capturas
+**Estado: PENDIENTE**
+- [ ] Investigar APIs y capacidades reales de navegadores/PWA/Android.
+- [ ] No asumir que `preventDefault` bloquea capturas del sistema.
+- [ ] Evaluar marca de agua contextual y ocultación de información sensible al cambiar visibilidad, solo si aporta protección sin degradar UX.
+- [ ] Documentar expresamente qué ataques no pueden impedirse en web.
+
+### P6 — Integración y regresión
+**Estado: PENDIENTE**
+- [ ] Pruebas por rol y sesión.
+- [ ] Pruebas de migración/reanudación/reconciliación y referencias.
+- [ ] Pruebas de Inbox en escritorio/móvil.
+- [ ] Pruebas de modal y llamadas directas al backend.
+- [ ] Pruebas de rendimiento, offline, reconexión y regresión de PWA.
+
+## Reglas de seguridad y aceptación
+
+- La sesión persistente no debe requerir que el usuario escriba credenciales nuevamente al navegar normalmente.
+- El cliente no es autoridad: el backend debe comprobar el token y el rol vigente en la operación sensible que procesa.
+- La validación de rol no debe provocar una llamada de red adicional antes de cada operación; debe formar parte de la propia solicitud backend.
+- Una sesión no es eterna: logout, expiración, revocación o desactivación deben impedir operaciones futuras.
+- Nunca guardar contraseñas en texto plano ni incluirlas en logs, reportes o archivos temporales.
+- Ninguna migración masiva se ejecuta sin dry-run, conteos, detección de duplicados, idempotencia y plan de recuperación.
+- No desplegar Apps Script ni modificar Spreadsheet/Drive productivos sin autorización expresa.
+- Ningún control web/PWA se describirá como prevención absoluta de capturas, extracción de recursos o fotografía externa.
+
+## Continuidad inmediata
+
+Completar el paquete P0 sobre los contratos y llamadores existentes. Después presentar el diseño técnico concreto y ejecutar P1/P2 antes de rediseños que dependan de la matriz definitiva de roles.

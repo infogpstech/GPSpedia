@@ -185,3 +185,50 @@ La rama base GPSpedia2.2.5 no se modifica. No se cambian deployments ni endpoint
 - **Pendiente externo:** validación visual en navegador/dispositivo con sesiones reales, conectividad intermitente y archivos reales de Drive. No se alteró la rama base ni se modificaron endpoints productivos.
 
 Commit de código validado por la ejecución completa: `2566547d19ae86d70cab07a768ba336958480b62`.
+
+
+## Nueva línea de trabajo — autenticación, Inbox, protección de imágenes y migraciones (2026-11-14)
+
+**Estado general: PLAN REGISTRADO; PAQUETE P0 EN PROGRESO.**  
+Rama autorizada: `GPSpedia2.2.5_work`. HEAD de inicio verificado: `c5453d6ff4b21b0dd8fede3f1b128e892e56c268`. La rama base `GPSpedia2.2.5` permanece fuera del alcance.
+
+### Requisitos incorporados
+1. Simplificar autenticación: una validación de credenciales en el inicio de sesión, sesión persistente y privilegios asociados al rol vigente. Evitar validaciones periódicas redundantes y viajes de red separados para comprobar sesión.
+2. Rediseñar Inbox con organización y experiencia de bandeja similares a Outlook/Gmail, conservando la identidad visual GPSpedia y priorizando móvil.
+3. Restringir descarga, menú contextual y acciones casuales de copia de imágenes. Mantener compartir integrado en el modal para todos los roles.
+4. Permitir compartir, imprimir y editar detalles desde el modal solo a Supervisor, Jefe y Desarrollador. Verificar el alias histórico `Gefe` antes de normalizar roles.
+5. Investigar controles frente a capturas de pantalla. No prometer ni diseñar un bloqueo absoluto en web/PWA: los navegadores no ofrecen una API web universal para impedir capturas del sistema operativo.
+6. Recuperar/implementar migración de contraseñas heredadas a hash seguro.
+7. Auditar y completar migración de IDs basados en fórmulas a identificadores asignados por backend para usuarios, vehículos, tutoriales y relays.
+
+### Hallazgos preliminares de P0
+- `JS/Frontend/auth.js` conserva sesión en almacenamiento local, tiene caché de validación de 60 s y comprueba sesión al restaurar la app; el estado local no debe convertirse por sí solo en autorización backend.
+- `JS/Frontend/api-config.js` ejecuta `touchSession` antes de acciones protegidas, con una ventana local de 5 minutos. Esta ruta añade una llamada separada que debe evaluarse para eliminarla sin debilitar la autorización de cada operación.
+- `Services/Auth.js` valida token, usuario, vigencia y revocación; aplica expiración absoluta de 3 meses e inactividad de 1 mes. La autorización por rol debe permanecer en backend para cada operación sensible, sin exigir una reautenticación del usuario.
+- `Services/Auth.js` ya convierte automáticamente una contraseña heredada a hash al iniciar sesión correctamente. El formato existente es SHA-256 con salt aleatorio; es una migración oportunista, no una herramienta administrativa por lotes, y el algoritmo requiere evaluación de coste antes de definir el formato objetivo.
+- `Services/users.js` ya genera IDs nuevos de usuario como `USR-0001` y almacena nuevas contraseñas con hash.
+- `Services/write.js` ya dispone de asignador backend de IDs numéricos para vehículos, contador central y acciones de asignación/congelación de fórmulas. Falta auditar la cobertura real de registros antiguos y el flujo de migración.
+- `Services/feedback.js` ya genera IDs de tutorial con prefijo `tut-` basados en identificadores de operación, y IDs de Problemas con prefijo `isue-`. La cobertura de IDs para Relay y el estado de las fórmulas restantes debe verificarse.
+- `JS/Frontend/clientInteractionPolicy.js` ya bloquea contextmenu, copy, cut, selectstart y dragstart en contenido no editable. Es fricción visual, no protección contra extracción de recursos ni capturas del sistema operativo.
+- Inbox ya cuenta con lista, detalle, paginación, caché, toolbar y acciones. El rediseño debe preservar contratos y capacidades existentes, no reemplazar el servicio de mensajería.
+
+### Paquetes y dependencias
+- **P0 — Auditoría y diseño técnico (EN PROGRESO):** inventario de rutas de autenticación/autorización, estados de sesión, roles reales, funciones del Inbox, políticas de imágenes, esquema de IDs y migraciones existentes. Definir contratos y plan de reversión.
+- **P1 — Autenticación simplificada (PENDIENTE; depende de P0):** eliminar llamadas redundantes de validación/touch de navegación y separar claramente autenticación inicial, persistencia de sesión y autorización backend por operación. Mantener revocación, expiración, bloqueo de cuenta y actualización inmediata de privilegios.
+- **P2 — Migraciones de credenciales e IDs (PENDIENTE; depende de P0):** migración verificable e idempotente de contraseñas a un formato de hash versionado; completar asignación de IDs backend para usuarios, vehículos, tutoriales y relays; detectar duplicados, referencias huérfanas y fórmulas no convertidas. Preparar ejecución por lotes, conteos antes/después y reversión.
+- **P3 — Inbox (PENDIENTE):** rediseño de navegación, carpetas/estados, lista de mensajes, panel de lectura, búsqueda, acciones y responsive móvil; preservar paginación, caché, lectura/no leído, archivado y permisos.
+- **P4 — Modal de imágenes y RBAC (PENDIENTE):** definir política de visualización/compartir y controles UI; imponer permisos en backend para compartir/ imprimir/editar cuando corresponda; todos los usuarios conservan solo el compartir integrado. Bloquear acciones casuales de descarga/contexto/copia en imágenes sin romper accesibilidad ni campos editables.
+- **P5 — Capturas de pantalla (PENDIENTE):** evaluar capacidades reales de navegador/PWA/Android. Implementar únicamente controles compatibles (por ejemplo, marca de agua contextual y ocultación de contenido sensible al perder visibilidad, si se justifica); documentar límites.
+- **P6 — Regresión e integración (PENDIENTE):** pruebas por rol, sesiones persistentes, revocación/expiración, migraciones, referencias, Inbox, modal, móvil, offline y rendimiento.
+
+### Criterios de aceptación transversales
+- No solicitar usuario/contraseña al navegar entre páginas o abrir modales mientras la sesión siga válida.
+- No hacer llamadas independientes periódicas de validación por rutina. Las operaciones protegidas siguen verificando token y rol en el backend dentro de su propia solicitud; el cliente nunca concede privilegios por confiar solo en localStorage.
+- Cambios de rol, desactivación, cierre de sesión o revocación deben reflejarse en operaciones posteriores; la persistencia no equivale a sesión eterna.
+- Migraciones repetibles sin duplicar IDs, perder referencias ni alterar registros ambiguos; simulación/plan antes de escritura y evidencia de reconciliación.
+- Los permisos de interfaz deben coincidir con controles backend. No confiar en ocultar botones.
+- La web/PWA no puede garantizar impedir capturas de pantalla, fotografías externas o acceso a recursos descargados por el navegador.
+- Cada paquete cierra con pruebas locales reproducibles, diff revisado, registro y commit en esta rama. Integración real con Apps Script/Spreadsheet, navegador y dispositivos se registra como validación Beta diferida.
+
+### Siguiente acción
+Completar P0 inspeccionando contratos de login, `touchSession`, middleware/handlers de cada servicio, Inbox, modal de compartir/imprimir/editar y esquemas de ID/formulas. No modificar datos productivos ni desplegar Apps Script durante la auditoría.

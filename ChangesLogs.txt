@@ -1340,3 +1340,10 @@ Commits: dacc854, 8be5281, f0645b5, 0e02d90, 5c58ed8, 024d604, 6bf5732, 9b2e781.
 2026-11-14 — VALIDACIÓN FINAL
 GitHub Actions: 75 suites, 1,149 pruebas aprobadas, 0 fallos. Comprobaciones de sintaxis Node.js y compilación GitHub Pages aprobadas. La validación visual con navegador y sesiones reales queda pendiente.
 ================================================================================
+
+
+2026-11-14 — Registro de nueva línea de trabajo GPSpedia:
+- Se creó `Tareas_Activas.md` con siete problemas reportados, hallazgos preliminares, paquetes P0–P6, dependencias y criterios de aceptación.
+- Se actualizó `checkpoint.md` con la continuidad del trabajo y el estado P0 EN PROGRESO.
+- Auditoría preliminar: existe migración oportunista de contraseñas legacy a SHA-256 con salt al iniciar sesión; no se encontró aún migración por lotes. Usuarios nuevos ya reciben ID USR-####; vehículos tienen asignador backend y congelación de fórmulas; tutoriales y Problemas ya generan IDs backend. Queda auditar fórmulas heredadas y relays.
+- La política clientInteractionPolicy ya bloquea algunas acciones casuales, pero no puede impedir capturas de pantalla ni extracción de recursos. No se implementó ni desplegó código o migraciones productivas en esta etapa.
