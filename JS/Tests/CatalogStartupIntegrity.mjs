@@ -78,7 +78,10 @@ function createHarness(options = {}) {
         function hasFreshCatalogSync_() { return false; }
         function markCatalogSync_() {}
         function scheduleCatalogPoll_() {}
+        function ensureCatalogSyncChannel_() {}
+        function broadcastCatalogSync_() {}
         ${extract('cancelCatalogLoad_')}
+        ${extract('requestCatalogFeedPage_')}
         ${extract('getCatalogFeedHead_')}
         ${extract('fetchCatalogDelta_')}
         ${extract('normalizeCatalogData')}
