@@ -155,6 +155,11 @@ test('Inbox y Developer reutilizan la validación reciente y comparten solicitud
     assert.match(source, /await pending\.promise/);
     assert.doesNotMatch(source, /authApi\.validateActiveSession\(true\)/);
 });
+test('Inbox y Developer pueden abrir su interfaz si AUTH está temporalmente indisponible', () => {
+    const source = readFileSync(new URL('../Frontend/ui.js', import.meta.url), 'utf8');
+    assert.match(source, /if \(valid === null\)[\s\S]*?isCurrentUiSessionContext_\(expected\)[\s\S]*?return localContext/);
+    assert.match(source, /Las operaciones siguen sujetas a validación del servidor/);
+});
 
 test('Inbox y Developer registran cierres completos en la pila de overlays', () => {
     const source = readFileSync(new URL('../Frontend/ui.js', import.meta.url), 'utf8');
@@ -169,4 +174,4 @@ test('Developer conserva los nombres de las secciones en navegación móvil', ()
     assert.match(source, /#dev-tools-modal \.dev-tools-sidebar\s*\{\s*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
 });
 
-console.log('OverlayMenuModalHistory:', passed + '/16 PASS');
+console.log('OverlayMenuModalHistory:', passed + '/17 PASS');
