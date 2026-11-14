@@ -47,3 +47,25 @@
 - `TermsAcceptance`: 19/19 PASS.
 - Coordinador compartido: 41/41 PASS.
 - No se ejecutaron pruebas con navegador/dispositivo real ni deployments Apps Script; la validación de aceptación, configuración FEEDBACK, permisos de Inbox y actualización PWA continúa pendiente en Beta.
+
+
+## 2026-11-14 — Inbox móvil y recarga de PWA
+
+- `JS/Frontend/ui.js`: la vista histórica de Inbox cambia a lista/detalle de una sola vista en móvil; agrega regreso a la lista, foco/teclado en elementos y barra contextual accesible para responder, resolver y borrar.
+- `JS/Frontend/ui.js`: elimina el botón de borrado genérico para `video_approval`, acción no admitida por `handleDeleteFeedbackItem`.
+- `style.css`: estilos para navegación móvil de solicitudes históricas y barra contextual sticky.
+- `index.html`: agrega «Recargar aplicación» al menú lateral.
+- `JS/Frontend/main.js`: la recarga explícita comprueba actualización del Service Worker con límite de espera de 3 segundos y después recarga el documento. El gesto pull-to-refresh sigue actualizando únicamente el catálogo.
+- `service-worker.js`: caché actualizado a `gpsepedia-cache-v27`.
+- `JS/Tests/InboxUi.mjs`: cobertura de navegación móvil, barra de acciones y eliminación no soportada en aprobaciones de vídeo.
+- `JS/Tests/PWAStartupScenarios.js`: cobertura de recarga explícita y actualización del Service Worker.
+- `JS/Tests/SessionStartupNavigation.mjs`: distingue sincronización de catálogo por gesto de recarga completa explícita.
+- `JS/Tests/TermsModalAccessibility.mjs`: valida versiones de caché sin fijar v26.
+
+### Validación ejecutada
+- GitHub Actions run `43630382765`: 94 suites / 1,392 pruebas aprobadas / 0 fallos.
+- `InboxUi`: 19/19 PASS.
+- `SessionStartupNavigation`: 13/13 PASS.
+- `PWAStartupScenarios`: 13/13 PASS.
+- Inventario del Service Worker: 33/33 recursos esenciales presentes.
+- Pendiente: comprobación visual en móviles reales, actualización de la PWA instalada y validación externa de servicios Apps Script.
