@@ -103,15 +103,15 @@ await run('primera instalación precarga el App Shell y el grafo de módulos', a
     const event = makeEvent();
     worker.listeners.install(event);
     await Promise.all(event.waits);
-    const assets = worker.cacheData.get('gpsepedia-cache-v21');
+    const assets = worker.cacheData.get('gpsepedia-cache-v22');
     assert.ok(assets, 'debe crear el caché de la versión actual');
-    for (const asset of ['./index.html', './JS/Frontend/main.js', './JS/Frontend/auth.js', './JS/Frontend/offline.js', './JS/Frontend/VinDifferentialEngine.js', './JS/Frontend/catalogRequest.js', './JS/Frontend/share-utils.js', './Images/Logo_TemaOscuro.png', './Images/tracklink_logo.png']) {
+    for (const asset of ['./index.html', './JS/Frontend/main.js', './JS/Frontend/auth.js', './JS/Frontend/offline.js', './JS/Frontend/api-config.js', './JS/Frontend/serviceMetrics.js', './JS/Frontend/VinDifferentialEngine.js', './JS/Frontend/catalogRequest.js', './JS/Frontend/share-utils.js', './Images/Logo_TemaOscuro.png', './Images/tracklink_logo.png']) {
         assert.ok(assets.has(asset), 'falta ' + asset);
     }
     assert.equal(worker.skipWaitingCalls, 1);
 });
 
-await run('actualización activa v20, elimina solo el caché anterior de GPSpedia y conserva otros', async () => {
+await run('actualización activa v21, elimina solo el caché anterior de GPSpedia y conserva otros', async () => {
     const worker = createWorkerHarness();
     worker.cacheData.set('gpsepedia-cache-v19', new Map([['./index.html', { old: true }]]));
     worker.cacheData.set('another-app-cache', new Map([['/other', { preserved: true }]]));
@@ -123,7 +123,7 @@ await run('actualización activa v20, elimina solo el caché anterior de GPSpedi
     await Promise.all(activateEvent.waits);
     assert.equal(worker.cacheData.has('gpsepedia-cache-v19'), false);
     assert.equal(worker.cacheData.has('another-app-cache'), true);
-    assert.equal(worker.cacheData.has('gpsepedia-cache-v21'), true);
+    assert.equal(worker.cacheData.has('gpsepedia-cache-v22'), true);
     assert.equal(worker.claimCalls, 1);
 });
 
