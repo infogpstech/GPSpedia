@@ -5006,6 +5006,12 @@ function initAdminPanelListeners() {
             latency.textContent = Number.isFinite(item.latency) ? `${Math.round(item.latency)} ms` : "Latencia no disponible";
             const version = document.createElement("span");
             version.textContent = item.metadata?.version ? `v${item.metadata.version}` : "Versión no reportada";
+            if (key === "AUTH" && item.metadata?.coordinatorConfigured === false) {
+                version.textContent += " · Coordinador pendiente";
+                if (typeof window.gpsepediaDeveloperLog === "function") {
+                    window.gpsepediaDeveloperLog("AUTH: falta configurar el coordinador compartido en las propiedades del proyecto Apps Script.", "warning");
+                }
+            }
             bottom.append(latency, version);
             card.append(top, bottom);
             card.addEventListener("click", () => { selectedServiceKey = key; renderServiceDashboard(); });
@@ -5044,6 +5050,9 @@ function initAdminPanelListeners() {
         metrics.className = "dev-service-metrics";
         metrics.append(
             createServiceMetric("Versión reportada", metadata.version || "No disponible"),
+            ...(selectedServiceKey === "AUTH" ? [createServiceMetric("Coordinador compartido",
+                metadata.coordinatorConfigured === true ? "Configurado" :
+                    metadata.coordinatorConfigured === false ? "Sin configurar" : "No verificado")] : []),
             createServiceMetric("Código HTTP", item.httpStatus === null || item.httpStatus === undefined ? "No disponible" : String(item.httpStatus)),
             createServiceMetric("Última comprobación", formatServiceCheckTime(item.checkedAt)),
             createServiceMetric("Última respuesta válida", formatServiceCheckTime(item.lastSuccessfulAt)),
