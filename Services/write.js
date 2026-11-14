@@ -158,8 +158,10 @@ function getSessionExpirationStatus_(row,now=new Date()){
 function getAuthenticatedCollaborator(payload, allowedRoles){
   const id=String(payload&&payload.userId||'').trim(),token=String(payload&&payload.sessionToken||'');if(!id||!token.trim())throw new Error("Acceso no autorizado: se requiere una sesión válida.");
   const ss=getSpreadsheet(),sh=ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS),uh=ss.getSheetByName(SHEET_NAMES.USERS);if(!sh||!uh)throw new Error("Acceso no autorizado: sesión no autorizada.");
-  const tokenMatches=sh.getDataRange().getValues().slice(1).filter(r=>r[COLS_ACTIVE_SESSIONS.ActiveSessions-1]===token);
-  if(tokenMatches.length!==1||String(tokenMatches[0][COLS_ACTIVE_SESSIONS.ID_Usuario-1]||'').trim()!==id||getSessionExpirationStatus_(tokenMatches[0],new Date()).expired)throw new Error("Acceso no autorizado: sesión inválida, duplicada, cruzada o expirada.");
+  const sessionsData=sh.getDataRange().getValues();
+  const tokenMatches=sessionsData.slice(1).map((row,index)=>({row,rowIndex:index+2})).filter(item=>item.row[COLS_ACTIVE_SESSIONS.ActiveSessions-1]===token);
+  if(tokenMatches.length!==1||String(tokenMatches[0].row[COLS_ACTIVE_SESSIONS.ID_Usuario-1]||'').trim()!==id||getSessionExpirationStatus_(tokenMatches[0].row,new Date()).expired)throw new Error("Acceso no autorizado: sesión inválida, duplicada, cruzada o expirada.");
+  const sessionMatch=tokenMatches[0];
   const userMatches=uh.getDataRange().getValues().slice(1).filter(r=>String(r[COLS_USERS.ID-1]||'').trim()===id);
   if(userMatches.length!==1)throw new Error("Acceso no autorizado: el perfil de usuario no es único.");
   const u=userMatches[0];if(String(u[COLS_USERS.SessionToken-1]||'').startsWith(ROLE_REVOCATION_SHARED_PREFIX))throw new Error("Acceso no autorizado: existe una revocación de rol pendiente. Inicia sesión nuevamente cuando finalice.");
@@ -167,7 +169,9 @@ function getAuthenticatedCollaborator(payload, allowedRoles){
   const rawRole=String(u[COLS_USERS.Privilegios-1]||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase(),role=rawRole;
   if(!username||username.startsWith('__deleted__:')||!['desarrollador','jefe','supervisor','tecnico','tecnico_exterior'].includes(role))throw new Error("Acceso no autorizado: la cuenta no está activa o no tiene un rol válido.");
   if(Array.isArray(allowedRoles)&&!allowedRoles.includes(role))throw new Error("Acceso no autorizado: tu rol no puede agregar información suplementaria.");
-  const name=String(u[COLS_USERS.Nombre_Completo-1]||'').trim();if(!name)throw new Error("El perfil del usuario no tiene un nombre completo registrado.");return name;
+  const name=String(u[COLS_USERS.Nombre_Completo-1]||'').trim();if(!name)throw new Error("El perfil del usuario no tiene un nombre completo registrado.");
+  sh.getRange(sessionMatch.rowIndex,COLS_ACTIVE_SESSIONS.LastActivityAt).setValue(new Date().toISOString());
+  return name;
 }
 // ============================================================================
 // ROUTER PRINCIPAL (doGet y doPost)
@@ -202,7 +206,19 @@ function doPost(e) {
     }
     if (!request || typeof request !== "object") return doPostInternal_(e);
     const action = String(request.action || "");
-    if (!isSharedMutationAction_(action)) return doPostInternal_(e);
+    if (!isSharedMutationAction_(action)) {
+        if (action !== "checkOperation") return doPostInternal_(e);
+        try {
+            return withSharedMutationLease_("WRITE", "sessionActivity", function() {
+                return doPostInternal_(e);
+            });
+        } catch (error) {
+            return ContentService.createTextOutput(JSON.stringify({
+                status: "error",
+                message: error && error.message ? error.message : "La operación fue rechazada por el coordinador compartido."
+            })).setMimeType(ContentService.MimeType.TEXT);
+        }
+    }
 
     const payload = request.payload && typeof request.payload === "object" ? request.payload : {};
     const nestedToken = String(payload.__sharedMutationToken || "").trim();
