@@ -147,6 +147,10 @@ Registrar duración por iteración, fecha, deployment/versión y runtime. Repeti
 
 ### P4 — Política de imágenes y permisos
 **Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
+
+**Validación local (2026-11-14):** GitHub Actions run `43620155376` PASS; `VehicleModalRolePolicy` 12/12, `ClientInteractionPolicy` 5/5, `ADMIN edición modal/RBAC` 9/9 y pruebas de contratos de roles/descarga completadas dentro de 93 suites / 1,364 pruebas / 0 fallos. La sintaxis de `clientInteractionPolicy.js` también aprobó. La inspección de ACL reales y las llamadas HTTP negativas requieren deployments/Drive Beta y permanecen pendientes.
+
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
 - [x] Consolidar la matriz de capacidades por rol en todos los módulos y endpoints en `MATRIZ_CAPACIDADES_ROLES.md`; las excepciones ADMIN y las acciones de imágenes quedan cubiertas por pruebas de contrato.
 - [x] Compartir integrado del modal permitido a todos.
 - [x] Compartir integrado disponible para todos; imprimir y editar detalles solo Supervisor, Jefe y Desarrollador, con validación de rol en backend.
@@ -156,8 +160,8 @@ Registrar duración por iteración, fecha, deployment/versión y runtime. Repeti
 - [x] Ocultar el control de descarga de imágenes reemplazadas a roles distintos de Desarrollador y conservar autorización exclusiva de Desarrollador en el endpoint.
 - [x] Aplicar fricción de menú contextual, copia, corte, selección y arrastre solo sobre medios (img/picture/video/canvas), conservando selección/copia de texto normal y edición en campos.
 - [x] Revisar estáticamente la exposición de URLs: Cortes, Tutorial, PyS y LogosMarca almacenan referencias Drive que llegan al frontend; `ui.js` convierte IDs Drive a `lh3.googleusercontent.com` y `offline.js` puede descargarlas a IndexedDB. El ocultamiento de botones no protege esos recursos.
-- [ ] Verificar en Beta los ACL reales de carpetas/archivos Drive y clasificar qué imágenes deben ser públicas por diseño; WRITE/ADMIN no muestran una comprobación general de ACL en todos los flujos.
-- [x] Completar revisión estática de exposición de URL originales y recursos estáticos; documentar que los recursos entregados al navegador son recuperables. [ ] Verificar ACL reales de Drive en Beta.
+- [ ] Validación Beta: verificar los ACL reales de carpetas/archivos Drive y clasificar qué imágenes deben ser públicas por diseño; WRITE/ADMIN no muestran una comprobación general de ACL en todos los flujos.
+- [x] Completar revisión estática de exposición de URL originales y recursos estáticos; documentar que los recursos entregados al navegador son recuperables. [ ] Validación Beta pendiente: verificar ACL reales de Drive.
 - [x] Pruebas de rol para impedir edición/impresión a Técnico y roles no autorizados; autorización backend validada con sesión real simulada. [x] Ampliar pruebas de contrato para las acciones de imágenes y endpoints privilegiados; las llamadas HTTP negativas contra deployments Beta siguen pendientes.
 
 ### P5 — Mitigación de capturas
@@ -173,7 +177,7 @@ Registrar duración por iteración, fecha, deployment/versión y runtime. Repeti
 - [x] Pruebas automatizadas por rol y sesión: AUTH, ADMIN modal, Inbox, coordinación de mutaciones y sesiones revocadas/expiradas.
 - [x] Pruebas unitarias de migración/reanudación/reconciliación: PBKDF2 batch, IDs, duplicados, fórmulas y referencias simuladas. La ejecución sobre datos reales sigue bloqueada hasta contar con copia/entorno Beta.
 - [ ] Pruebas de Inbox en escritorio/móvil en navegadores y dispositivos reales; CI verifica estructura, contratos y responsive CSS.
-- [x] Pruebas de contrato de modal y autorización backend con sesiones simuladas, incluyendo Técnico denegado y Supervisor/Jefe/Desarrollador permitidos. [ ] Llamadas HTTP negativas contra deployment Beta.
+- [x] Pruebas de contrato de modal y autorización backend con sesiones simuladas, incluyendo Técnico denegado y Supervisor/Jefe/Desarrollador permitidos. [ ] Validación Beta pendiente: llamadas HTTP negativas contra deployment.
 - [ ] Pruebas de rendimiento, offline, reconexión y regresión PWA en dispositivos reales; CI cubre escenarios automatizados, no reemplaza medición de campo.
 
 ## Reglas de seguridad y aceptación
