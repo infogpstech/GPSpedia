@@ -174,6 +174,7 @@ runGroup('38','INTEGRATION',()=>{
  runCli('AUG-033 timeout y reintentos idempotentes de lotes de auditoría','JS/Tests/AdminDriveAuditClientRetry.mjs');
  runCli('AUG-027 ciclo de papelera, restauración, eliminación definitiva, permisos e idempotencia','JS/Tests/AdminImageTrashLifecycle.mjs');
  runCli('AUG-023 contrato y validación de acciones ADMIN createSheet/addColumn','JS/Tests/AdminSheetActionsContract.mjs');
+ runCli('AUG-156 coordinación de inventario, escáner y migración de historial','JS/Tests/AdminImageScanCoordinatorContract.mjs');
  runCli('AUG-150 errores HTTP, red, JSON y aplicación en ADMIN','JS/Tests/RouteActionErrors.mjs');
  runCli('AUG-152 conversaciones Inbox, participantes, idempotencia y auditoría','JS/Tests/InboxConversations.mjs');
  runCli('AUG-152 interfaz Inbox, accesibilidad, borradores y sincronización','JS/Tests/InboxUi.mjs');
