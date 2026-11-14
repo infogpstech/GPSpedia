@@ -115,9 +115,13 @@ function coordinatorPolicy_(service, operation) {
     const policy = servicePolicies && servicePolicies[operation];
     if (!policy) throw new Error("La acción no está habilitada en la política del coordinador.");
 
+    const writeResources = (policy.write || []).slice();
+    if (service === "ADMIN" && !writeResources.includes("ACTIVE_SESSIONS")) {
+        writeResources.push("ACTIVE_SESSIONS");
+    }
     return {
         readResources: (policy.read || []).slice(),
-        writeResources: (policy.write || []).slice(),
+        writeResources,
         maintenance: policy.maintenance === true,
         nestedActions: policy.nestedActions || {}
     };
