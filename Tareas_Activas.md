@@ -75,9 +75,45 @@ Simplificar la autenticación sin debilitar autorización; modernizar Inbox; end
 ### P2 — Migración de contraseñas e identificadores
 **Estado: EN PROGRESO — CÓDIGO DE CONTRASEÑAS Y AUDITORÍA DE IDs IMPLEMENTADOS; EJECUCIÓN BETA Y MIGRACIÓN DE DATOS PENDIENTES.**
 - [x] Diseñar hash versionado PBKDF2-HMAC-SHA256 con salt aleatorio único, verificación en tiempo constante y compatibilidad con SHA-256/plaintext legacy; incluir benchmark para calibrar Apps Script.
+- [x] Exponer `benchmarkPasswordKdf` en AUTH, solo lectura y exclusivo de Desarrollador; valida la sesión sin actualizar actividad ni leer/escribir credenciales. La prueba automatizada cubre autorización, sesiones inválidas y ausencia de acceso a datos de usuarios.
 - [x] Implementar migración por lotes reanudable e idempotente de contraseñas plaintext legacy, con dry-run predeterminado, confirmación explícita y lotes de hasta 10 (predeterminado 5); no registrar ni exportar contraseñas.
 - [x] Mantener autenticación compatible: el login verifica PBKDF2, SHA-256 histórico y plaintext; SHA-256 histórico se rehashea al login porque no puede convertirse por lote sin conocer la contraseña.
-- [ ] Medir `benchmarkPasswordKdf_()` en el runtime real de Apps Script y fijar el coste definitivo; 12,000 iteraciones es provisional hasta esa medición.
+- [ ] Medir `benchmarkPasswordKdf` en el runtime real de Apps Script y fijar el coste definitivo; 12,000 iteraciones sigue siendo provisional hasta esa medición. No ejecutar en producción sin autorización.
+**Procedimiento de validación Beta del benchmark (pendiente de deployment actualizado):**
+
+Antes de cualquier prueba, desde la raíz del clon autorizado:
+
+```bash
+set -e
+test "$(basename "$(git rev-parse --show-toplevel)")" = "GPSpedia"
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work"
+test -z "$(git status --porcelain)" || { echo "Hay cambios locales; detener sin descartarlos."; exit 1; }
+git remote get-url origin | grep -q 'infogpstech/GPSpedia'
+git fetch origin GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git rev-parse HEAD
+```
+
+Después de sincronizar, copiar el valor vigente de `API_ENDPOINTS.AUTH` desde `JS/Frontend/api-config.js` y ejecutar en la consola del navegador con una sesión activa de Desarrollador (sustituir los dos marcadores; no compartir ni registrar el token):
+
+```javascript
+const AUTH_URL = "PEGAR_AQUI_API_ENDPOINTS_AUTH";
+const payload = {
+  userId: "ID_DEL_DESARROLLADOR",
+  sessionToken: "TOKEN_DE_LA_SESION_ACTIVA"
+};
+const response = await fetch(AUTH_URL, {
+  method: "POST",
+  headers: { "Content-Type": "text/plain" },
+  body: JSON.stringify({ action: "benchmarkPasswordKdf", payload })
+});
+const result = await response.json();
+if (result.status !== "success" || result.readOnly !== true) throw new Error(JSON.stringify(result));
+console.table(result.results);
+```
+
+Registrar duración por iteración, fecha, deployment/versión y runtime. Repetir al menos tres veces en condiciones comparables y usar la mediana; no cambiar `PASSWORD_KDF_ITERATIONS` hasta revisar los resultados y el margen de tiempo de ejecución. Esta prueba no migra contraseñas ni modifica hojas.
+
 - [ ] Ejecutar dry-run de migración en entorno Beta y verificar conteos; no ejecutar escritura productiva sin autorización y respaldo.
 - [x] Implementar auditoría de solo lectura de IDs y fórmulas para Users, Cortes, Tutorial, Relay, pys y LogosMarca; incluye duplicados, ausentes, malformados y muestras Relay.
 - [x] Endurecer el generador de IDs de usuarios para detectar duplicados aunque difieran en mayúsculas; sincronizar su fixture de prueba.
