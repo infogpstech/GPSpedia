@@ -10,6 +10,7 @@ function extract(name) {
     if (authSource.slice(start - 6, start) === 'async ') start -= 6;
     const candidates = [
         authSource.indexOf('\nfunction ', start + 12),
+        authSource.indexOf('\nasync function ', start + 12),
         authSource.indexOf('\nexport function ', start + 12),
         authSource.indexOf('\nexport async function ', start + 12)
     ].filter(index => index >= 0);
