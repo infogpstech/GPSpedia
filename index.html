@@ -197,6 +197,18 @@
                         <button class="inbox-secondary-button" type="submit">Buscar</button>
                     </div>
                 </form>
+                <div class="inbox-filter-row">
+                    <label for="inbox-category-filter">Categoría</label>
+                    <select id="inbox-category-filter" class="inbox-form-control">
+                        <option value="all">Todas las categorías</option>
+                        <option value="general">General</option>
+                        <option value="soporte">Soporte</option>
+                        <option value="acceso">Acceso</option>
+                        <option value="contenido">Contenido</option>
+                        <option value="instalacion">Instalación</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                </div>
                 <div id="inbox-conversation-list" class="inbox-conversation-list" aria-live="polite" aria-relevant="additions text"></div>
                 <nav class="inbox-pagination" aria-label="Paginación de conversaciones">
                     <button id="inbox-conversation-previous" class="inbox-secondary-button" type="button" disabled>Anterior</button>
