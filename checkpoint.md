@@ -624,10 +624,10 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 
 ## Estado de continuidad verificado (2026-11-14, cierre de esta iteración)
 
-- Rama de trabajo `GPSpedia2.2.5_work`: HEAD `48dca361cd547a6301f04c23af80eb772f13b6fe`.
+- Último HEAD de código validado: `48dca361cd547a6301f04c23af80eb772f13b6fe`; después se añadieron únicamente commits de checkpoint/changelog `5dedb8137a4c4083e8acdfbc3c5d2e02c02d5828` y `cd90aca0529f9880d74a343d63d6aa4e5c06c3bb`.
 - Rama base protegida `GPSpedia2.2.5`: HEAD `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; no se realizaron escrituras en esa rama.
 - Comparación GitHub: work está `ahead` 2,556 commits y `behind` 0 respecto de la base. No se intentó merge ni publicación.
-- Último workflow `service-tests` sobre HEAD de trabajo: **PASS**, 85 suites, 1,267 pruebas aprobadas, 0 fallos. Incluye `LogoIdIntegrity: 11/11`, `TutorialIntegrity: 27/27` y `PasswordKdfBenchmark: 6/6`.
+- Último workflow `service-tests` sobre código y commits documentales: **PASS**, 85 suites, 1,267 pruebas aprobadas, 0 fallos; CI sobre `cd90aca0529f9880d74a343d63d6aa4e5c06c3bb` completó correctamente. Incluye `LogoIdIntegrity: 11/11`, `TutorialIntegrity: 27/27` y `PasswordKdfBenchmark: 6/6`.
 - Implementaciones adicionales de esta iteración: IDs USERS case-insensitive, IDs Tutorial canónicos/idempotentes, compensación de altas LogosMarca, filtro de categorías Inbox conectado, primera fase RBAC de ficha, protección selectiva de medios y documentación de límites de captura.
 - Pendientes que requieren entorno externo: deployment AUTH/ADMIN actualizado en Beta, benchmark PBKDF2 en Apps Script, dry-run de migración de contraseñas/IDs sobre copia Beta, ACL reales de Drive, pruebas manuales de Inbox/roles y rendimiento/offline en dispositivos.
 - No se desplegó Apps Script, no se modificó Spreadsheet/Drive productivo y no se publicaron cambios en la rama base.
