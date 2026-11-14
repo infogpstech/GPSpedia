@@ -261,3 +261,10 @@
 - JS/Tests/CatalogChangeFeed.mjs: contrato de alta Logo y fallback reset; 16/16 PASS.
 - CI Node.js 22 run `43652869282`: SUCCESS; 98 suites / 1,467 pruebas / 0 fallos. CatalogSnapshotSync 27/27 y CatalogStartupIntegrity 18/18 PASS.
 - Relay no tiene un escritor catalogal identificado en WRITE/FEEDBACK/ADMIN; los registros históricos de Relay pueden carecer de ID. No se habilitó un productor artificial ni se generaron IDs.
+
+
+2026-11-14 — GP-CAT: SERIALIZACIÓN DE PUBLICACIÓN DE TUTORIALES
+- Services/feedback.js: la lectura del snapshot y la publicación del upsert de Tutoriales se ejecutan bajo ScriptLock. Esto evita que una publicación retrasada de una edición anterior quede después de un evento más reciente y haga retroceder el estado del consumidor.
+- Si el snapshot exacto o el envío fallan, se publica reset dentro de la misma sección serializada.
+- JS/Tests/CatalogChangeFeed.mjs: se amplía el contrato para comprobar adquisición/liberación del lock y orden lectura-publicación.
+- CI Node.js 22 run `43653060997`: SUCCESS; 98 suites / 1,467 pruebas / 0 fallos; CatalogChangeFeed 16/16 PASS.
