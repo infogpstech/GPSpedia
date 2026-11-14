@@ -361,3 +361,18 @@ Si cualquier comprobación falla, no continuar ni descartar cambios locales. Con
 - Evidencia CI HEAD `2a423e67ff87e32e3c86ab71899b83cf1fe2e7b3`: run `43626278768` SUCCESS, 93 suites / 1,366 pruebas / 0 fallos; sintaxis PASS. Pages run `43626278368` SUCCESS.
 - [ ] Validación Beta: comprobar apertura de paneles Developer desde sesión recién iniciada y restaurada, sin petición AUTH adicional; verificar que acciones protegidas siguen autorizándose en backend.
 - [ ] Validar escáner e inicialización de historial en deployment ADMIN Beta conectado a copia aislada de Spreadsheet/Drive; no ejecutar sobre datos productivos.
+
+## Aviso obligatorio y aceptación por dispositivo — 2026-11-14
+
+- [x] Corregir el conflicto entre `AUTH/acceptTerms` y `ADMIN/sessionActivity` sin eliminar la actualización protegida de actividad ni permitir que login/logout se solapen con escrituras de sesión.
+- [x] Recordar la aceptación por usuario, dispositivo/perfil de navegador y versión del aviso; conservarla después de cerrar sesión y volver a iniciar sesión.
+- [x] Mantener una aceptación independiente cuando el usuario accede desde otro dispositivo/perfil.
+- [x] Preservar el registro histórico anterior de `Users.TermsAcceptance` sin aplicarlo automáticamente a dispositivos nuevos.
+- [x] Añadir regresiones de concurrencia, persistencia local y accesibilidad del aviso.
+- [x] Validación local: SharedMutationCoordinator 41/41; TermsModalAccessibility 12/12; simulación aislada del handler AUTH y parsing/sintaxis PASS.
+- [ ] Validación Beta: aceptar, cerrar sesión y volver a entrar en el mismo navegador sin volver a mostrar el aviso.
+- [ ] Validación Beta: iniciar sesión desde un navegador/perfil nuevo y confirmar que el aviso aparece una vez; volver a abrir la plataforma y confirmar que no reaparece.
+- [ ] Desplegar `Services/Auth.js` y `Services/Coordinator.js` únicamente en el entorno Beta autorizado y verificar la aceptación con `ADMIN/sessionActivity` concurrente.
+- [ ] Confirmar que sesión inválida, expirada o con revocación pendiente continúa sin poder aceptar ni acceder al catálogo.
+
+**Nota de alcance:** el identificador se conserva en el almacenamiento local del origen y perfil de navegador. Borrar los datos del sitio o utilizar otro navegador/perfil genera una identidad local nueva; no se realiza identificación física ni fingerprinting del dispositivo.
