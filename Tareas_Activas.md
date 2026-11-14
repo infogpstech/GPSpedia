@@ -102,8 +102,10 @@ Simplificar la autenticación sin debilitar autorización; modernizar Inbox; end
 - [x] Unificar Jefe como valor canónico en AUTH, USERS, ADMIN, FEEDBACK, WRITE, Inbox y frontend; mantener conversión transitoria de registros heredados Gefe.
 - [x] En la Spreadsheet, migrar Users.Privilegios de Gefe a Jefe y actualizar la validación/lista desplegable (confirmado por el usuario el 2026-11-14).
 - [x] Retirar los conversores temporales Gefe → Jefe del backend y frontend; el código solo admite Jefe como valor canónico.
-- [ ] Restringir botones, enlaces directos, descarga, menú contextual, copiar/arrastrar en imágenes, sin romper campos editables ni accesibilidad.
-- [ ] Revisar exposición de URL originales y recursos estáticos; no confundir ocultar controles con autorización real.
+- [x] Ocultar el control de descarga de imágenes reemplazadas a roles distintos de Desarrollador y conservar autorización exclusiva de Desarrollador en el endpoint.
+- [x] Aplicar fricción de menú contextual, copia, corte, selección y arrastre solo sobre medios (img/picture/video/canvas), conservando selección/copia de texto normal y edición en campos.
+- [ ] Revisar exposición de URL originales y recursos estáticos: la interfaz web no puede impedir que un usuario extraiga una URL pública desde red/DOM/herramientas del navegador.
+- [ ] Completar auditoría de exposición de URL originales y recursos estáticos; no confundir ocultar controles con autorización real.
 - [x] Pruebas de rol para impedir edición/impresión a Técnico y roles no autorizados; autorización backend validada con sesión real simulada. [ ] Ampliar pruebas negativas a todas las acciones de imágenes y endpoints privilegiados.
 
 ### P5 — Mitigación de capturas
