@@ -127,6 +127,42 @@ await test('AUTH devuelve no disponible ante excepción interna, no sesión revo
     assert.equal(fn({ userId: 'U-TEST', sessionToken: 'token-test' }).valid, null);
 });
 
+await test('una respuesta legacy valid:false con error se normaliza como indisponibilidad', async () => {
+    const fnSource = extract(client, 'async function validateSessionCoordinated(user, force = false)', '\\nfunction loadUserLocalActivity');
+    const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
+    const factory = new AsyncFunction(
+        'isCurrentSession','getRecentValidation','apiValidateSession','navigator','AbortController',
+        'VALIDATION_TIMEOUT_MS','VALIDATION_LOCK_NAME','persistSessionValidation','isSessionProfileForUser_',
+        fnSource + '\\nreturn validateSessionCoordinated;'
+    );
+    const validate = factory(
+        () => true, () => false,
+        async () => ({ valid: false, error: 'Error temporal de Google Sheets' }),
+        { locks: null }, AbortController, 8000, 'test-lock', () => {}, () => true
+    );
+    const result = await validate({ ID: 'U-TEST', SessionToken: 'token-test' }, true);
+    assert.equal(result.valid, null);
+    assert.equal(result.unavailable, true);
+});
+
+await test('una respuesta valid:false sin error conserva el significado de revocación', async () => {
+    const fnSource = extract(client, 'async function validateSessionCoordinated(user, force = false)', '\\nfunction loadUserLocalActivity');
+    const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
+    const factory = new AsyncFunction(
+        'isCurrentSession','getRecentValidation','apiValidateSession','navigator','AbortController',
+        'VALIDATION_TIMEOUT_MS','VALIDATION_LOCK_NAME','persistSessionValidation','isSessionProfileForUser_',
+        fnSource + '\\nreturn validateSessionCoordinated;'
+    );
+    const validate = factory(
+        () => true, () => false,
+        async () => ({ valid: false, reason: 'missing_session' }),
+        { locks: null }, AbortController, 8000, 'test-lock', () => {}, () => true
+    );
+    const result = await validate({ ID: 'U-TEST', SessionToken: 'token-test' }, true);
+    assert.equal(result.valid, false);
+    assert.equal(result.reason, 'missing_session');
+});
+
 await test('AUTH mantiene false únicamente para identidad o token ausentes/revocados', () => {
     const handler = extract(service, 'function handleValidateSession(payload)', '\nfunction handleTouchSession(payload)');
     const fn = new Function('validateAndTouchSession_', 'logToSheet', handler + '\nreturn handleValidateSession;')(
@@ -151,4 +187,4 @@ await test('la validación reciente puede reutilizarse al restaurar una actualiz
     assert.match(check, /validateSessionCoordinated\(user, false\)/);
 });
 
-console.log('SessionRestoreOnValidationFailure: ' + passed + '/11 PASS');
+console.log('SessionRestoreOnValidationFailure: ' + passed + '/13 PASS');
