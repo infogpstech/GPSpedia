@@ -42,7 +42,7 @@ export const API_ENDPOINTS = {
     LEGACY: "https://script.google.com/macros/s/AKfycbwpIFH1nX2BZEjAKbpq9HJpEGNlo_0LqD1CwxWsWFo5J0AJDdbfMrKpcsAV4ZFJzFWd/exec",
     AUTH:     "https://script.google.com/macros/s/AKfycbyPLM0leEa7o9dvKk3Fe9_e9W7r6V0Ii3KxKNyDOb-EX9KpQWHDczcNFb6hSzlNSD-l/exec",
     CATALOG:  "https://script.google.com/macros/s/AKfycbxRwBKI_HyY4KWf1vny5kxhT5kmspDPj6BmNe-bAAcB27osXY5L0Ylx94RWrn9lJ9kW/exec",
-    WRITE:    "https://script.google.com/macros/s/AKfycbxMj8WFCMZVLXuk3N6_WCeEwNwhGAb589PJY4gc5ZjA8mrYsBN7-femz_FCH4eFj5vBDQ/exec",
+    WRITE:    "https://script.google.com/macros/s/AKfycbxsfyTOg7bKhPHP0lKCFYYUB7hlTSWdPuMMsm5dHFNpdLQGB-ZKdF_YuvTvU1rMmWKTRQ/exec",
     USERS:    "https://script.google.com/macros/s/AKfycbxxL4oEF9UeKFSgC7BJXYKRy6_Xwxq3UFif4_KRqwr4xPpucwxJmKf2FV4SU9mcmryetA/exec",
     FEEDBACK: "https://script.google.com/macros/s/AKfycbxBI3tno1YdJeq1bqkJiGuRGME23goB-DvYW0PR0yIXxrJch2GZK7_cBDZrxpj873DNFg/exec",
     UTILITIES: "https://script.google.com/macros/s/AKfycbxuVrpyNy2m8tyxshl3od-PnmUVc1z2hpiIXdZ6kpUb55x4EoPdUMctdCnoWhO29K4n/exec",
