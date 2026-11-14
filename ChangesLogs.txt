@@ -88,3 +88,13 @@
 - Validación CI run 43630870843: SUCCESS; 95 suites / 1,404 pruebas / 0 fallos; AUG-042 SessionUiRoleInvalidation 14/14 PASS.
 - Pendiente Beta: verificar visualmente la tarjeta con sesión Desarrollador restaurada y confirmar que roles no privilegiados no la ven ni pueden registrar tutoriales.
 ================================================================================
+================================================================================
+2026-11-14 — DIAGNÓSTICO DE COORDINADOR FEEDBACK PARA INBOX TÉCNICO
+- Services/feedback.js: GET ?debug=true informa coordinatorConfigured como booleano seguro, calculado con URL Apps Script de formato esperado, secreto local con longitud mínima y disponibilidad de withSharedMutationLease_. No expone ScriptProperties ni credenciales.
+- JS/Frontend/api-config.js: conserva el indicador de configuración para FEEDBACK además de AUTH.
+- JS/Frontend/ui.js: el panel Developer muestra el estado local del coordinador FEEDBACK y advierte cuando falta configuración; el estado positivo no se presenta como verificación de coincidencia remota.
+- Services/COORDINATOR_SETUP.md: documenta la señal y el cotejo de GPSpedia_COORDINATOR_SECRET con GPSpedia_COORDINATOR_SECRET_FEEDBACK.
+- JS/Tests/InboxRoleContract.js: pruebas de diagnóstico seguro, configuración ausente/URL inválida y acceso de roles Técnico/Técnico exterior al flujo de consulta.
+- Validación CI run 43631181979: SUCCESS; 95 suites / 1,407 pruebas / 0 fallos; InboxRoleContract/AUG-115 16/16 PASS.
+- Pendiente Beta: cotejar propiedades FEEDBACK/Coordinator y deployment; probar conversación con roles técnicos y rechazo de operaciones privilegiadas.
+================================================================================
