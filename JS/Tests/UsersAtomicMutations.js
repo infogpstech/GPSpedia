@@ -23,6 +23,17 @@ function runUsersAtomicMutationTests(usersSource, authSource, coordinatorSource)
         const end = candidates.length ? Math.min.apply(null, candidates) : text.length;
         return text.slice(start, end);
     };
+    run("USERS integra LastActivityAt dentro de la autenticación backend", function() {
+        const verifier = extract(source, "getVerifiedSession");
+        const dispatcher = extract(source, "doPost");
+        assert(verifier.includes("sessionsSheet.getRange(sessionMatch.rowIndex,COLS_ACTIVE_SESSIONS.LastActivityAt).setValue"),
+            "getVerifiedSession debe actualizar LastActivityAt tras validar al usuario.");
+        assert(dispatcher.includes('withSharedMutationLease_("USERS", "sessionActivity"'),
+            "getUsers debe adquirir una lease de actividad.");
+        assert(String(coordinatorSource || "").includes('sessionActivity: { write: ["ACTIVE_SESSIONS"] }'),
+            "El coordinador debe reservar ActiveSessions para lecturas autenticadas.");
+    });
+
     const names = [
         "normalizePassword", "normalizeUsername_", "generateNextUserId_", "findNextUserRow_",
         "withUsersMutationLock_", "normalizeNewUserInput_", "normalizeUserProfileUpdates_",
