@@ -21,30 +21,32 @@ function runAdminModalEditSecurityTests() {
         getSpreadsheet=()=>({getSheetByName:n=>n==="ActiveSessions"?dataSheet_(sessions):n==="Users"?dataSheet_(users):null});
     }
     try{
-        run_("Desarrollador y Gefe validan sesión vigente para el modal",()=>{
+        run_("Desarrollador y Jefe validan sesión vigente para el modal",()=>{
             session_("Desarrollador");assert_(assertModalEditSession({userId:"USR-T",sessionToken:"TOKEN-T"}).role==="Desarrollador");
-            session_("Gefe");assert_(assertModalEditSession({userId:"USR-T",sessionToken:"TOKEN-T"}).role==="Gefe");
+            session_("Jefe");assert_(assertModalEditSession({userId:"USR-T",sessionToken:"TOKEN-T"}).role==="Jefe");
+            session_("Gefe");assert_(assertModalEditSession({userId:"USR-T",sessionToken:"TOKEN-T"}).role==="Jefe");
         });
-        run_("jefe y roles ajenos quedan excluidos",()=>{
-            ["Jefe","Supervisor","Técnico","Invitado"].forEach(r=>{session_(r);expect_(()=>assertModalEditSession({userId:"USR-T",sessionToken:"TOKEN-T"}),"sesión no autorizada");});
+        run_("Jefe está permitido y los demás roles quedan excluidos",()=>{
+            session_("Jefe");assert_(assertModalEditSession({userId:"USR-T",sessionToken:"TOKEN-T"}).role==="Jefe");
+            ["Supervisor","Técnico","Invitado"].forEach(r=>{session_(r);expect_(()=>assertModalEditSession({userId:"USR-T",sessionToken:"TOKEN-T"}),"sesión no autorizada");});
         });
         run_("las demás acciones ADMIN siguen siendo exclusivas de Desarrollador",()=>{
-            session_("Gefe");expect_(()=>assertDeveloperSession({userId:"USR-T",sessionToken:"TOKEN-T"}),"sesión no autorizada");
+            session_("Jefe");expect_(()=>assertDeveloperSession({userId:"USR-T",sessionToken:"TOKEN-T"}),"sesión no autorizada");
             session_("Desarrollador");assert_(assertDeveloperSession({userId:"USR-T",sessionToken:"TOKEN-T"}).role==="Desarrollador");
         });
         run_("rechaza token ausente/cruzado/duplicado/expirado y perfil duplicado",()=>{
-            session_("Gefe");expect_(()=>assertModalEditSession({userId:"USR-T"}),"sesión no autorizada");
+            session_("Jefe");expect_(()=>assertModalEditSession({userId:"USR-T"}),"sesión no autorizada");
             expect_(()=>assertModalEditSession({userId:"OTHER",sessionToken:"TOKEN-T"}),"sesión inválida");
-            session_("Gefe",{duplicateToken:true});expect_(()=>assertModalEditSession({userId:"USR-T",sessionToken:"TOKEN-T"}),"sesión inválida");
-            session_("Gefe",{expired:true});expect_(()=>assertModalEditSession({userId:"USR-T",sessionToken:"TOKEN-T"}),"sesión inválida");
-            session_("Gefe",{duplicateUser:true});expect_(()=>assertModalEditSession({userId:"USR-T",sessionToken:"TOKEN-T"}),"perfil de usuario");
+            session_("Jefe",{duplicateToken:true});expect_(()=>assertModalEditSession({userId:"USR-T",sessionToken:"TOKEN-T"}),"sesión inválida");
+            session_("Jefe",{expired:true});expect_(()=>assertModalEditSession({userId:"USR-T",sessionToken:"TOKEN-T"}),"sesión inválida");
+            session_("Jefe",{duplicateUser:true});expect_(()=>assertModalEditSession({userId:"USR-T",sessionToken:"TOKEN-T"}),"perfil de usuario");
         });
         run_("rechaza revocación pendiente y cuenta desactivada",()=>{
-            session_("Gefe",{revoked:true});expect_(()=>assertModalEditSession({userId:"USR-T",sessionToken:"TOKEN-T"}),"revocación de rol");
-            const now=new Date();getSpreadsheet=()=>({getSheetByName:n=>n==="ActiveSessions"?dataSheet_([[],["USR-T","u","TOKEN-T",now,"",now]]):n==="Users"?dataSheet_([[],["USR-T","__deleted__:u","","Gefe"]]):null});
+            session_("Jefe",{revoked:true});expect_(()=>assertModalEditSession({userId:"USR-T",sessionToken:"TOKEN-T"}),"revocación de rol");
+            const now=new Date();getSpreadsheet=()=>({getSheetByName:n=>n==="ActiveSessions"?dataSheet_([[],["USR-T","u","TOKEN-T",now,"",now]]):n==="Users"?dataSheet_([[],["USR-T","__deleted__:u","","Jefe"]]):null});
             expect_(()=>assertModalEditSession({userId:"USR-T",sessionToken:"TOKEN-T"}),"cuenta inactiva");
         });
-        run_("solo tres acciones del modal admiten Gefe",()=>{
+        run_("solo tres acciones del modal admiten Jefe",()=>{
             assert_(ADMIN_MODAL_EDIT_ACTIONS.size===3);
             ["updateVehicleField","uploadAdminImage","getAdminImageUploadStatus"].forEach(a=>assert_(ADMIN_MODAL_EDIT_ACTIONS.has(a)));
             ["backupDatabase","driveCommand","getReplacedImages","recoverReplacedImage","getDriveStorage","reconcilePendingImageUploads"].forEach(a=>assert_(!ADMIN_MODAL_EDIT_ACTIONS.has(a)));
