@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { captureModalViewState, restoreModalViewState, shouldRecordModalTransition, pushModalNavigationContext, popModalNavigationContext } from '../../modalNavigation.js';
-const ui=readFileSync(new URL('../../ui.js',import.meta.url),'utf8'),main=readFileSync(new URL('../../main.js',import.meta.url),'utf8');
+import { captureModalViewState, restoreModalViewState, shouldRecordModalTransition, pushModalNavigationContext, popModalNavigationContext } from '../Frontend/modalNavigation.js';
+const ui=readFileSync(new URL('../Frontend/ui.js',import.meta.url),'utf8'),main=readFileSync(new URL('../Frontend/main.js',import.meta.url),'utf8');
 const css=readFileSync(new URL('../../style.css',import.meta.url),'utf8');
 let passed=0;function test(name,fn){fn();passed++;console.log('PASS',name);}
 function classes(initial=[]){const s=new Set(initial);return{contains:v=>s.has(v),add:v=>s.add(v),remove:v=>s.delete(v)};}
