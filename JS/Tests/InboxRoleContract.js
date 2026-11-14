@@ -14,6 +14,19 @@ function runInboxRoleContractTests(sources) {
  run('Detalle Inbox usa el rol normalizado del contexto',()=>{const s=ui.indexOf('export function renderInboxDetail(');assert(s>=0);const marks=["\nexport function ","\nfunction "].map(x=>ui.indexOf(x,s+20)).filter(x=>x>=0);const body=ui.slice(s,marks.length?Math.min(...marks):ui.length);assert(body.includes('const userRole = context.role'));assert(body.includes('canApproveInboxVideo_(userRole)'));assert(!/currentUser\.(?:Rol|Privilegios)/.test(body));});
  run('Backend mantiene RBAC para aprobación y rechazo',()=>{const s=feedback.indexOf('const FEEDBACK_ACTION_PERMISSIONS = Object.freeze(');assert(s>=0);const e=feedback.indexOf(');',s)+2;const policy=feedback.slice(s,e);assert(policy.includes('approveVideo: ["Desarrollador", "Jefe", "Supervisor"]'));assert(policy.includes('rejectVideo: ["Desarrollador", "Jefe", "Supervisor"]'));});
  run('FEEDBACK actualiza LastActivityAt después de autenticar y autorizar al actor',()=>{assert(feedback.includes('sh.getRange(sessionMatch.rowIndex,6).setValue(new Date().toISOString())'));const touch=feedback.indexOf('sh.getRange(sessionMatch.rowIndex,6).setValue');const allowed=feedback.indexOf('if(Array.isArray(allowedRoles)',feedback.indexOf('function assertFeedbackSession'));assert(touch>allowed,'La actividad no debe actualizarse antes de validar el rol solicitado.');});
+ run('FEEDBACK expone solo un booleano seguro para diagnosticar la configuración local del coordinador',()=>{
+  const helper=extract(feedback,'isFeedbackCoordinatorConfigured_');
+  const build=new Function('PropertiesService','withSharedMutationLease_',helper+'; return isFeedbackCoordinatorConfigured_;');
+  const configured=build({getScriptProperties:()=>({getProperty:key=>key==='GPSpedia_COORDINATOR_URL'?'https://script.google.com/macros/s/deployment/exec':'x'.repeat(40)})},()=>{});
+  const absent=build({getScriptProperties:()=>({getProperty:()=>''})},()=>{});
+  const malformed=build({getScriptProperties:()=>({getProperty:key=>key==='GPSpedia_COORDINATOR_URL'?'https://example.com/exec':'x'.repeat(40)})},()=>{});
+  assert(configured()===true,'Una URL Apps Script y secreto con longitud suficiente deben indicar configuración local presente.');
+  assert(absent()===false&&malformed()===false,'Configuración ausente o URL ajena debe reportarse como no configurada.');
+  assert(feedback.includes('coordinatorConfigured: isFeedbackCoordinatorConfigured_()'));
+  const debug=feedback.slice(feedback.indexOf('function doGet(e)'),feedback.indexOf('function isSharedMutationAction_'));
+  assert(debug.includes('coordinatorConfigured'));
+  assert(!debug.includes('GPSpedia_COORDINATOR_SECRET'),'El endpoint de diagnóstico no debe exponer nombres ni valores secretos.');
+ });
  run('Lecturas FEEDBACK protegidas adquieren lease de actividad; acciones públicas no',()=>{const d=feedback.slice(feedback.indexOf('function doPost(e)'),feedback.indexOf('const FEEDBACK_ACTION_PERMISSIONS'));assert(d.includes('withSharedMutationLease_("FEEDBACK", "sessionActivity"'));assert(d.includes('FEEDBACK_PUBLIC_ACTIONS.has(action)'));});
 
  run('Backend ignora rol falsificado y usa actor autenticado',()=>{const s=feedback.indexOf('const FEEDBACK_ACTION_PERMISSIONS = Object.freeze('),e=feedback.indexOf(');',s)+2;const api=new Function('assertFeedbackSession',feedback.slice(s,e)+'\n'+extract(feedback,'authorizeFeedbackAction_')+'\nreturn authorizeFeedbackAction_;')(()=>({userId:'U1',userName:'Verificado',role:'Supervisor'}));const out=api('approveVideo',{userRole:'Desarrollador'});assert(out.userRole==='Supervisor');});
