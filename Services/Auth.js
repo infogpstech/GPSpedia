@@ -902,12 +902,16 @@ function handleValidateSession(payload) {
         return validateAndTouchSession_(sessionToken, userId);
     } catch (error) {
         logToSheet('ERROR', `Error in handleValidateSession: ${error.message}`, { stack: error.stack });
-        return { valid: false, error: error.message };
+        // Un error de infraestructura no confirma la revocación del token.
+        return { valid: null, unavailable: true, reason: 'validation_unavailable' };
     }
 }
 function handleTouchSession(payload) {
     try { const token=payload&&payload.sessionToken; if(typeof token!=='string'||!token)return{valid:false}; return validateAndTouchSession_(token); }
-    catch(error){logToSheet('ERROR',`Error in handleTouchSession: ${error.message}`,{stack:error.stack});return{valid:false,error:error.message};}
+    catch(error){
+        logToSheet('ERROR',`Error in handleTouchSession: ${error.message}`,{stack:error.stack});
+        return{valid:null,unavailable:true,reason:'validation_unavailable'};
+    }
 }
 
 // Todas las mutaciones de ActiveSessions y las eliminaciones de cuenta se coordinan en AUTH.
@@ -1349,7 +1353,7 @@ function validateAndTouchSession_(token, expectedUserId = null) {
         const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
         const sessionsSheet = spreadsheet.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
         const usersSheet = spreadsheet.getSheetByName(SHEET_NAMES.USERS);
-        if (!sessionsSheet || !usersSheet) return { valid: false, reason: 'missing_sheet' };
+        if (!sessionsSheet || !usersSheet) return { valid: null, unavailable: true, reason: 'missing_sheet' };
         ensureActiveSessionsActivityColumn_(sessionsSheet);
         const data = sessionsSheet.getDataRange().getValues(), matches = [];
         for (let i = 1; i < data.length; i++) if (data[i][COLS_ACTIVE_SESSIONS.ActiveSessions - 1] === token) matches.push({ rowIndex: i + 1, row: data[i] });
@@ -1365,7 +1369,7 @@ function validateAndTouchSession_(token, expectedUserId = null) {
                 reconcileRoleRevocationUnderLock_(usersSheet, sessionsSheet, userId);
                 return { valid: false, reason: 'role_changed_reauthentication_required' };
             }
-        } catch (error) { return { valid: false, reason: 'role_revocation_pending' }; }
+        } catch (error) { return { valid: null, unavailable: true, reason: 'role_revocation_pending' }; }
         const expiration = getSessionExpirationStatus_(session.row, new Date());
         if (expiration.expired) {
             const requestRevocation = revokeLoginRequestForTokenUnderLock_(token, userId);
