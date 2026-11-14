@@ -1290,3 +1290,22 @@ Commits: dacc854, 8be5281, f0645b5, 0e02d90, 5c58ed8, 024d604, 6bf5732, 9b2e781.
 - JS/Frontend/api-config.js: se sustituye únicamente API_ENDPOINTS.AUTH por el nuevo deployment de Google Apps Script proporcionado. Se conservan las rutas de los demás servicios y el mapa de acciones.
 - Cambio realizado en GPSpedia2.2.5_work; no se modifica la rama base ni se realiza deployment desde GitHub.
 ================================================================================
+
+================================================================================
+2026-11-13 — CORRECCIÓN — SESIÓN AUTH, TÉRMINOS, MODALES, IMÁGENES Y MENSAJES
+- JS/Frontend/api-config.js: se conserva el nuevo endpoint AUTH informado por el usuario. acceptTerms ya no dispara touchSession redundante antes de la aceptación.
+- Services/Auth.js: validateSession pasa a ser una comprobación de solo lectura fuera del coordinador compartido. Verifica token único, identidad, usuario activo, expiración y revocación pendiente; usa tryLock limitado y devuelve indisponibilidad si no puede comprobarse. touchSession y las mutaciones siguen coordinadas.
+- Services/Auth.js: ActiveSessions agrega G (SessionTermsAcceptance). Cada token nuevo inicia con aceptación pendiente; acceptTerms registra la aceptación en esa sesión. Users.TermsAcceptance se conserva como registro histórico. Se rechaza el esquema si G tiene otro encabezado o datos sin encabezado.
+- Services/Auth.js: el diagnóstico GET ?debug=true informa coordinatorConfigured como booleano, sin exponer URL ni secretos. El panel Developer muestra el estado y los nombres de ScriptProperties que faltan.
+- Services/Coordinator.js: validateSession sale de la política de mutaciones; touchSession conserva la lease de identidad.
+- Services/Auth.js: se eliminan escrituras genéricas de logToSheet en cada solicitud y logs INFO/DEBUG de éxito del login; se reutiliza la instancia Spreadsheet abierta durante login.
+- JS/Frontend/auth.js + ui.js: el catálogo no se carga hasta aceptar los términos de la sesión. La aceptación confirma en AUTH, actualiza el estado local y entonces inicia la carga.
+- JS/Frontend/ui.js: Inbox y Developer pueden abrir la interfaz con rol local cuando AUTH devuelve indisponibilidad o error temporal. Una revocación confirmada sigue bloqueando; todas las operaciones protegidas mantienen validación backend.
+- JS/Frontend/ui.js: los errores extensos se guardan en la terminal del panel Developer y se muestran resumidos en los avisos. HTML/users.html y HTML/add_cortes.html aplican el mismo helper a errores extensos/dinámicos. Se mantienen detalladas las confirmaciones de operaciones destructivas.
+- JS/Frontend/ui.js: las imágenes se precargan fuera del elemento visible, con intento CORS y fallback sin CORS. Solo se asignan al elemento después de cargar; si fallan, se muestra un SVG local y no el icono roto.
+- service-worker.js: caché v24, estrategia cache-first para imágenes verificadas HTTP 200, actualización en segundo plano y límite de 150 imágenes.
+- Pruebas actualizadas: SessionUiRoleInvalidation, SessionProfileRefresh, SharedMutationCoordinator, TermsAcceptance, SessionRestoreOnValidationFailure, ServiceHealthContract, PWAStartupScenarios, TermsModalAccessibility, DevToolsModalAccessibility, OverlayMenuModalHistory e ImageResolutionVariants.
+- Validación aislada ejecutada: SessionUiRoleInvalidation 13/13 PASS; SessionProfileRefresh 21/21 PASS; SharedMutationCoordinator 34/34 PASS; validateSessionReadOnly_ 6/6 PASS; comprobaciones AUTH dirigidas 9/9 PASS; Service Worker cache-first 1/1 PASS; sintaxis backend/frontend/HTML/Service Worker PASS; espejo Services/Auth.js y JS/Tests/Auth.js idénticos salvo SPREADSHEET_ID.
+- No se ejecutó Node CLI completo ni pruebas reales en navegador Android/escritorio. No se consultó el endpoint externo desde este entorno.
+- Estado: IMPLEMENTADO EN GPSpedia2.2.5_work; despliegue AUTH/Frontend y validación Beta pendientes.
+================================================================================
