@@ -238,7 +238,9 @@ La acción del **botón integrado de compartir** en el modal es pública para to
 - [x] Verificar selección y acciones por ID, confirmaciones, revalidación backend de referencias y ausencia de eliminación definitiva masiva.
 
 ### GP-IMG-DATA-01 — Conciliación Drive de cortes ↔ Spreadsheet
-- [ ] Incorporar una función que recorra la carpeta Drive de cortes y compare cada imagen con los registros de la Spreadsheet.
+- [x] Implementar planner puro de conciliación por nombre canónico exacto, con destinos derivados de IDs de vehículo únicos y las ocho columnas de imagen de Cortes. La planificación no escribe datos.
+- [x] Cubrir coincidencias, ya vinculadas, archivos huérfanos, referencias externas, nombres duplicados, destinos ambiguos/ocupados, MIME/IDs inválidos y deduplicación (CortesImageReconciliation: 10/10 PASS).
+- [ ] Incorporar endpoint/flujo reanudable que recorra Drive y alimente el planner; mostrar resultados en una lista diferenciada.
 - [ ] Identificar y mostrar en una lista diferenciada las imágenes de Drive que no tienen correspondencia/URL registrada en la Spreadsheet.
 - [ ] Para coincidencias inequívocas, preparar la migración de la URL pública de la imagen al campo y fila correspondientes de la hoja; después, utilizar ese mismo campo para visualizar la imagen en el catálogo/formulario.
 - [ ] Antes de escribir, implementar modo de simulación (dry-run), reporte de coincidencias, duplicados, imágenes huérfanas y filas ambiguas. No asignar una imagen por similitud débil ni sobrescribir una URL existente sin una regla explícita.
@@ -249,7 +251,8 @@ La acción del **botón integrado de compartir** en el modal es pública para to
 - [ ] Revisar textos de Developer y formularios para retirar explicaciones redundantes o demasiado extensas; conservar etiquetas breves, claras y orientadas a la acción.
 - [ ] Cuando una explicación sea útil pero no deba permanecer visible, utilizar un icono ⓘ discreto que abra una burbuja contextual al pulsarlo.
 - [ ] Evitar que los botones expliquen su propia función con frases largas; usar iconografía reconocible y ayudas contextuales cuando sea necesario.
-- [ ] Aplicar el patrón en las funciones del panel Developer y en los campos pertinentes de `HTML/add_cortes.html`: versión/Trim Level, tipo de corte, configuración del relay y rango de años.
+- [x] Aplicar ayudas ⓘ accesibles en `HTML/add_cortes.html` para año/rango, versión de equipamiento, tipo de corte y configuración del relay.
+- [x] Añadir ayudas contextuales en los formularios dinámicos de sugerencia de cambio y alta de tutorial; apertura por pulsación, cierre fuera/Escape y foco restaurado.
 - [ ] Incorporar ayudas ⓘ en los formularios de tutoriales PYS para explicar el cambio o dato solicitado.
 - [ ] **Excluir expresamente el modal de detalles de vehículos:** no colocar allí el icono ⓘ ni burbujas de ayuda.
 - [ ] Mantener accesibilidad: controles con nombre accesible, foco visible, apertura/cierre por teclado y texto contextual legible en móvil.

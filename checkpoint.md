@@ -711,3 +711,18 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - GitHub Actions run 43610793648: 88 suites, 1,308 pruebas aprobadas, 0 fallos. GitHub Pages build/deployment PASS para el mismo HEAD.
 - Validación visual en navegador/dispositivo y operaciones con Drive real permanecen para Beta; no se ejecutaron movimientos ni borrados reales durante esta iteración.
 - Siguiente tarea: GP-IMG-DATA-01 — conciliación Drive de Cortes ↔ Spreadsheet, empezando por inventario/dry-run de solo lectura.
+
+
+## GP-IMG-DATA-01 — Planner de conciliación Drive ↔ Cortes (2026-11-14)
+
+- Se implementó `buildCortesImageReconciliationTargets_()`: genera destinos solo para filas con ID de vehículo único y para las ocho columnas de imagen configuradas; filas sin ID/duplicadas se separan como incidencias.
+- Se implementó `buildCortesImageReconciliationPlan_()`: coincidencia por nombre canónico exacto (sin similitud aproximada), clasificación de ya vinculados, huérfanos, referencias externas, duplicados, destinos ambiguos/ocupados y archivos inválidos. Nunca sobrescribe celdas no vacías y devuelve URL propuesta sin escribir.
+- `CortesImageReconciliation.mjs`: 10/10 PASS. CI run 43611979071: 90 suites, 1,322 pruebas aprobadas, 0 fallos.
+- Pendiente: endpoint/flujo reanudable para recorrer el árbol Drive, UI diferenciada, digest/estado persistente y prueba de idempotencia/rollback. No se ejecutó Drive/Spreadsheet real ni se escribieron datos.
+
+## GP-UX-INFO-01 — Ayudas contextuales parciales (2026-11-14)
+
+- `HTML/add_cortes.html`: ayudas accesibles para año/rango, versión de equipamiento, tipo de corte y configuración de relay.
+- `JS/Frontend/ui.js`: helper reutilizable aplicado a los campos de sugerencia de cambio y alta de tutorial; cierra ayudas al pulsar fuera o Escape y restaura foco. No se añadió ayuda al modal de detalles de vehículos.
+- `ContextualHelpForms.mjs`: 4/4 PASS. CI run 43611979071: 90 suites, 1,322 pruebas aprobadas, 0 fallos. Pages build/deployment en la rama work.
+- Pendiente: ayudas de otros formularios PYS, panel Developer, revisión de textos redundantes y validación visual/teclado en navegador real.

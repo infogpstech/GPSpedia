@@ -1678,3 +1678,12 @@ Rama: GPSpedia2.2.5_work
 - Revisión visual en dispositivos y operaciones Drive reales quedan para Beta; no se movieron ni borraron archivos reales.
 - Siguiente: GP-IMG-DATA-01, inventario/dry-run de conciliación Drive ↔ Spreadsheet.
 ================================================================================
+
+
+================================================================================
+2026-11-14 — GP-IMG-DATA-01 PLANNER Y GP-UX-INFO-01 AYUDAS CONTEXTUALES
+- Planner puro Drive ↔ Cortes por nombre canónico exacto; no realiza escrituras ni usa coincidencias aproximadas. Separa IDs/fila duplicados, referencias externas, huérfanos, ocupados y ambiguos.
+- CortesImageReconciliation: 10/10 PASS. Ayudas contextuales en add_cortes y formularios de sugerencia/tutorial; ContextualHelpForms: 4/4 PASS.
+- CI run 43611979071: 90 suites, 1,322 pruebas aprobadas, 0 fallos.
+- Pendientes: recorrido Drive reanudable, UI de conciliación, otros formularios PYS/Developer y revisión visual. Sin acceso/escritura real en Drive/Spreadsheet.
+================================================================================
