@@ -958,10 +958,34 @@ async function initializeApp() {
     });
 
 
-    // 4. Register the service worker
+    // 4. Registrar el Service Worker y comprobar actualizaciones en segundo plano.
+    // No se fuerza una recarga: la página activa conserva su estado y la versión nueva
+    // queda disponible para la siguiente navegación/recarga normal del usuario.
     if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./service-worker.js')
+        window.addEventListener('load', async () => {
+            try {
+                const registration = await navigator.serviceWorker.register('./service-worker.js', {
+                    updateViaCache: 'none'
+                });
+                let updateCheckInFlight = false;
+                const checkForServiceWorkerUpdate = () => {
+                    if (updateCheckInFlight || navigator.onLine === false ||
+                        (document && document.visibilityState === 'hidden')) return;
+                    updateCheckInFlight = true;
+                    registration.update()
+                        .catch(error => console.warn('No se pudo comprobar una actualización de GPSpedia:', error && error.message ? error.message : error))
+                        .finally(() => { updateCheckInFlight = false; });
+                };
+                checkForServiceWorkerUpdate();
+                window.addEventListener('online', checkForServiceWorkerUpdate);
+                window.addEventListener('focus', checkForServiceWorkerUpdate);
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'visible') checkForServiceWorkerUpdate();
+                });
+                window.setInterval(checkForServiceWorkerUpdate, 5 * 60 * 1000);
+            } catch (error) {
+                console.warn('No se pudo registrar el Service Worker de GPSpedia:', error && error.message ? error.message : error);
+            }
         });
     }
 
