@@ -21,7 +21,6 @@ function coordinatorPolicy_(service, operation) {
         AUTH: {
             login: { write: identityWrite },
             acceptTerms: { write: identityWrite },
-            validateSession: { write: identityWrite },
             touchSession: { write: identityWrite },
             changePassword: { write: identityWrite },
             resetUserPassword: { write: identityWrite },
