@@ -467,3 +467,15 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - No se desplegó ADMIN ni se modificó la Spreadsheet productiva. La validación de encabezado, fórmulas y datos debe completarse en Beta.
 - Relay permanece en auditoría solamente: no se encontró un endpoint versionado que cree filas Relay ni se pudo establecer su formato de ID con seguridad. No se inventó un generador ni se migraron datos.
 - Siguiente paquete de trabajo en código: P3 — rediseño Inbox, preservando contratos de mensajería, paginación, caché, permisos y navegación. La migración de datos P2 continúa condicionada a la auditoría real de Beta y a su plan de reversión.
+
+## P3 — Inbox: filtro de categorías y consolidación funcional (2026-11-14)
+
+**Estado: IMPLEMENTACIÓN CONSOLIDADA EN RAMA DE TRABAJO; PRUEBAS MANUALES REALES PENDIENTES.**
+
+- La revisión del frontend encontró que el selector de categorías estaba presente en `index.html` y el backend ya aceptaba/validaba `category`, pero el evento del selector no estaba conectado y el cliente no enviaba el filtro.
+- Se añadió estado de categoría en `ui.js`, listener `change` con lista permitida, reinicio de paginación/selección y envío de `category` en cada consulta. El wrapper `getInboxConversations` ya transmitía el campo al backend.
+- Se añadieron pruebas UI para comprobar el enlace del selector con la consulta y pruebas de servicio para filtrar resultados antes de paginar y rechazar categorías inválidas.
+- Revisión estática confirma bandejas Recibidos/No leídos/Enviados/Archivados, búsqueda en contenido de mensajes, paginación, panel de conversación, lectura/archivo por participante, sincronización periódica, solicitudes históricas separadas, navegación lista-detalle móvil y estilos accesibles.
+- GitHub Actions `service-tests` sobre HEAD `136fb78068d2f64a982189f6f0e614aef93b0643`: **PASS**, 78 suites, 1,200 pruebas aprobadas, 0 fallos. `InboxConversations: 29/29 PASS`; `InboxUi: 16/16 PASS`.
+- No se declara completada la validación visual/manual: faltan pruebas reales de tema claro/oscuro, lector de pantalla, teclado, navegación Atrás y tamaños/dispositivos. Las conversaciones nuevas son solo texto; no se habilitaron adjuntos no soportados por el backend.
+- Siguiente paquete: P4 — matriz de capacidades por rol y coherencia frontend/backend para compartir, imprimir, editar y descargar imágenes.
