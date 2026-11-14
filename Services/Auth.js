@@ -1126,6 +1126,47 @@ function parseTermsAcceptance_(value) {
     }
     return { version: record.version.trim(), acceptedAt: record.acceptedAt, status: 'accepted' };
 }
+function parseDeviceTermsAcceptanceStore_(value) {
+    const raw = value === null || value === undefined ? '' : String(value).trim();
+    if (!raw) return { schemaVersion: 1, devices: {}, legacyAcceptance: null };
+
+    let parsed;
+    try { parsed = JSON.parse(raw); }
+    catch (error) { throw new Error('El registro histórico de aceptación de términos no tiene un formato válido; no se modificó.'); }
+
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed) &&
+        parsed.schemaVersion === 1 && parsed.devices && typeof parsed.devices === 'object' &&
+        !Array.isArray(parsed.devices)) {
+        const devices = {};
+        Object.keys(parsed.devices).forEach(deviceId => {
+            if (!/^[a-f0-9]{32}$/i.test(deviceId)) {
+                throw new Error('El registro de aceptación contiene un identificador de dispositivo inválido; no se modificó.');
+            }
+            const acceptance = parseTermsAcceptance_(JSON.stringify(parsed.devices[deviceId]));
+            if (acceptance.status !== 'accepted') {
+                throw new Error('El registro de aceptación de un dispositivo está dañado; no se modificó.');
+            }
+            devices[deviceId.toLowerCase()] = acceptance;
+        });
+        let legacyAcceptance = null;
+        if (parsed.legacyAcceptance !== null && parsed.legacyAcceptance !== undefined) {
+            legacyAcceptance = parseTermsAcceptance_(JSON.stringify(parsed.legacyAcceptance));
+            if (legacyAcceptance.status !== 'accepted') {
+                throw new Error('El registro histórico de aceptación está dañado; no se modificó.');
+            }
+        }
+        return { schemaVersion: 1, devices, legacyAcceptance };
+    }
+
+    // Conserva el registro anterior por usuario como antecedente, pero no lo
+    // aplica a dispositivos nuevos: cada combinación usuario/dispositivo acepta una vez.
+    const legacyAcceptance = parseTermsAcceptance_(raw);
+    if (legacyAcceptance.status === 'accepted') {
+        return { schemaVersion: 1, devices: {}, legacyAcceptance };
+    }
+    throw new Error('El registro histórico de aceptación no se reconoce; no se modificó.');
+}
+
 function ensureTermsAcceptanceColumn_(sheet) {
     if (!sheet) throw new Error('No se encontró la hoja Users.');
     const column = COLS_USERS.TermsAcceptance;
@@ -2080,7 +2121,9 @@ function handleResetUserPassword(payload) {
 function handleAcceptTerms(payload) {
     const sessionToken = payload && payload.sessionToken;
     const requestedVersion = String(payload && payload.version || '').trim();
+    const deviceId = String(payload && payload.deviceId || '').trim().toLowerCase();
     if (typeof sessionToken !== 'string' || !sessionToken) throw new Error('Se requiere una sesión válida para aceptar los términos.');
+    if (!/^[a-f0-9]{32}$/.test(deviceId)) throw new Error('No se pudo identificar este dispositivo. Actualiza la página e intenta nuevamente.');
     if (requestedVersion !== TERMS_CURRENT_VERSION) throw new Error('La versión de términos enviada no coincide con la versión vigente. Actualiza la página e intenta nuevamente.');
     const lock = LockService.getScriptLock();
     let acquired = false;
@@ -2108,25 +2151,30 @@ function handleAcceptTerms(payload) {
         if (userMatches.length !== 1 || !isActiveAuthUserRecord(userMatches[0].row)) {
             throw new Error('No se pudo identificar una cuenta activa y única.');
         }
-        assertRequesterRoleRevocationClear_(usersSheet, sessionsSheet, userId);
-        ensureTermsAcceptanceColumn_(usersSheet);
-        ensureSessionTermsAcceptanceColumn_(sessionsSheet);
-        const sessionCell = sessionsSheet.getRange(session.rowIndex, COLS_ACTIVE_SESSIONS.SessionTermsAcceptance);
-        const sessionCurrent = parseTermsAcceptance_(sessionCell.getValue());
-        if (sessionCurrent.status === 'accepted' && sessionCurrent.version === TERMS_CURRENT_VERSION) {
-            return { status: 'success', accepted: true, alreadyAccepted: true, termsAcceptance: sessionCurrent };
+        if (hasPendingRoleRevocation_(userId, usersSheet)) {
+            throw new Error('La cuenta tiene un cambio de rol pendiente. Inicia sesión nuevamente cuando finalice.');
         }
-        const acceptance = { version: TERMS_CURRENT_VERSION, acceptedAt: new Date().toISOString(), status: 'accepted' };
-        const serialized = JSON.stringify(acceptance);
-        sessionCell.setValue(serialized);
+
+        ensureTermsAcceptanceColumn_(usersSheet);
         const userCell = usersSheet.getRange(userMatches[0].rowIndex, COLS_USERS.TermsAcceptance);
+        const acceptanceStore = parseDeviceTermsAcceptanceStore_(userCell.getValue());
+        const currentAcceptance = parseTermsAcceptance_(acceptanceStore.devices[deviceId] || null);
+        if (currentAcceptance.status === 'accepted' && currentAcceptance.version === TERMS_CURRENT_VERSION) {
+            return { status: 'success', accepted: true, alreadyAccepted: true, termsAcceptance: currentAcceptance };
+        }
+
+        const acceptance = { version: TERMS_CURRENT_VERSION, acceptedAt: new Date().toISOString(), status: 'accepted' };
+        acceptanceStore.devices[deviceId] = acceptance;
+        const serialized = JSON.stringify(acceptanceStore);
+        if (serialized.length > 45000) throw new Error('El historial de dispositivos alcanzó el límite seguro; no se modificó.');
         userCell.setValue(serialized);
         SpreadsheetApp.flush();
-        if (String(sessionCell.getValue() || '') !== serialized) throw new Error('No se pudo confirmar el registro de aceptación. El catálogo permanece bloqueado.');
-        return { status: 'success', accepted: true, alreadyAccepted: false, termsAcceptance: parseTermsAcceptance_(sessionCell.getValue()) };
+        if (String(userCell.getValue() || '') !== serialized) {
+            throw new Error('No se pudo confirmar el registro de aceptación. El catálogo permanece bloqueado.');
+        }
+        return { status: 'success', accepted: true, alreadyAccepted: false, termsAcceptance: acceptance };
     } finally { if (acquired) lock.releaseLock(); }
 }
-
 function handleMigrateLegacyPasswords(payload) {
     const actorUserId = normalizeUserId(payload && payload.userId);
     const sessionToken = payload && payload.sessionToken;
