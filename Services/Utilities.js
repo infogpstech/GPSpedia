@@ -22,8 +22,10 @@ function assertUtilitiesDeveloperSession_(payload,ss){
  if(!userId||!token)throw new Error("Acceso denegado: se requiere una sesión activa de Desarrollador.");
  const sh=ss.getSheetByName("ActiveSessions"),uh=ss.getSheetByName("Users");
  if(!sh||!uh)throw new Error("Acceso denegado: no se pudo verificar la sesión.");
- const sessions=sh.getDataRange().getValues().slice(1).filter(r=>String(r[2]||"").trim()===token);
- if(sessions.length!==1||String(sessions[0][0]||"").trim()!==userId||getUtilitiesSessionExpiration_(sessions[0],new Date()).expired)throw new Error("Acceso denegado: sesión inválida, duplicada, cruzada o expirada.");
+ const sessionRows=sh.getDataRange().getValues();
+ const sessions=sessionRows.slice(1).map((row,index)=>({row,rowIndex:index+2})).filter(item=>String(item.row[2]||"").trim()===token);
+ if(sessions.length!==1||String(sessions[0].row[0]||"").trim()!==userId||getUtilitiesSessionExpiration_(sessions[0].row,new Date()).expired)throw new Error("Acceso denegado: sesión inválida, duplicada, cruzada o expirada.");
+ const sessionMatch=sessions[0];
  const users=uh.getDataRange().getValues().slice(1).filter(r=>String(r[0]||"").trim()===userId);
  if(users.length!==1)throw new Error("Acceso denegado: perfil ausente o ambiguo.");
  const u=users[0],username=String(u[1]||"").trim();
@@ -31,6 +33,7 @@ function assertUtilitiesDeveloperSession_(payload,ss){
  if(String(u[7]||"").startsWith(ROLE_REVOCATION_SHARED_PREFIX))throw new Error("Acceso denegado: existe una revocación de rol pendiente.");
  const role=String(u[3]||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();
  if(role!=="desarrollador")throw new Error("Acceso denegado: acción reservada a Desarrollador.");
+ sh.getRange(sessionMatch.rowIndex,6).setValue(new Date().toISOString());
  return{userId,role:"Desarrollador"};
 }
 function getUtilitiesSessionExpiration_(row,now){
