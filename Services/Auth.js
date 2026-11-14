@@ -2108,7 +2108,7 @@ function handleMigrateLegacyPasswords(payload) {
     const confirmed = Boolean(payload && payload.confirm === true);
     const requestedBatchSize = Number(payload && payload.batchSize);
     const batchSize = Number.isInteger(requestedBatchSize) && requestedBatchSize > 0
-        ? Math.min(requestedBatchSize, 50) : 20;
+        ? Math.min(requestedBatchSize, 10) : 5;
     if (!actorUserId || typeof sessionToken !== 'string' || !sessionToken) {
         throw new Error('Se requiere una sesión de Desarrollador para migrar contraseñas.');
     }
@@ -2155,7 +2155,11 @@ function handleMigrateLegacyPasswords(payload) {
                 const stored = String(row[COLS_USERS.Password - 1] === null || row[COLS_USERS.Password - 1] === undefined
                     ? '' : row[COLS_USERS.Password - 1]);
                 if (!stored) { emptySkipped++; continue; }
-                if (stored.indexOf(PASSWORD_HASH_PREFIX) === 0) { alreadyCurrent++; continue; }
+                if (stored.indexOf(PASSWORD_HASH_PREFIX) === 0) {
+                    if (/^pbkdf2-sha256\$\d+\$[0-9a-f]{32}\$[0-9a-f]{64}$/i.test(stored)) alreadyCurrent++;
+                    else unsupportedSkipped++;
+                    continue;
+                }
                 if (stored.indexOf(LEGACY_PASSWORD_HASH_PREFIX) === 0) {
                     if (/^sha256\$[0-9a-f]{32}\$[0-9a-f]{64}$/i.test(stored)) legacyHashedPendingLogin++;
                     else unsupportedSkipped++;
