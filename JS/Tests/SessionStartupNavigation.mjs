@@ -6,7 +6,23 @@ const policy=read("../Frontend/clientInteractionPolicy.js"),apiConfig=read("../F
 const tests=[];function test(n,fn){fn();tests.push(n);}
 test("no existe revalidación redundante al recuperar conexión; el arranque conserva la validación inicial",()=>{assert.doesNotMatch(main,/revalidateSessionOnResume_|installSessionRevalidation_/);assert.doesNotMatch(main,/auth\.validateActiveSession\(/);assert.match(main,/await auth\.checkSession\(\)/);assert.match(auth,/export async function checkSession\(\)/);assert.match(auth,/validateSessionCoordinated\(user, false\)/);});
 test("el aviso superior no anuncia loading del catálogo",()=>assert.match(main,/banner\.hidden = !view\.visible \|\| currentState\.catalogLoadStatus === 'loading'/));
-test("pull-to-refresh sigue sincronizando solo catálogo y la recarga completa es una acción explícita",()=>{const start=main.indexOf("// --- LÓGICA DE GESTO PULL-TO-REFRESH");const end=main.indexOf("const refreshAppLink",start);assert.ok(start>=0&&end>start);assert.doesNotMatch(main.slice(start,end),/window\.location\.reload\(\)/);assert.match(main,/auth\.loadInitialData\(true\)/);assert.match(main,/MANUAL_CATALOG_REFRESH_COOLDOWN_MS = 15000/);assert.match(main,/refreshAppLink\.addEventListener\(\x27click\x27/);assert.match(main,/registration\.update\(\)/);assert.match(main,/window\.location\.reload\(\)/);assert.match(main,/touchStartY = null/);assert.match(main,/if \(!touch \|\| startY === null\) return/);assert.match(auth,/loadInitialData\(forceRefresh = false\)/);assert.match(auth,/if \(!forceRefresh && catalogLoaded && hasFreshCatalogSync_\(\)\) return/);});
+test("la actualización no añade controles ni intercepta el gesto nativo",()=>{
+ assert.equal(main.includes(".container.addEventListener('touchstart'"),false);
+ assert.equal(main.includes(".container.addEventListener('touchend'"),false);
+ assert.equal(main.includes("auth.loadInitialData(true)"),false);
+ assert.equal(main.includes("registration.update()"),false);
+ assert.equal(main.includes("window.location.reload()"),false);
+ assert.equal(main.includes("refreshAppLink"),false);
+ assert.equal(main.includes("MANUAL_CATALOG_REFRESH_COOLDOWN_MS"),false);
+});
+test("el catálogo conserva el arranque cache-first sin forzar recargas",()=>{
+ assert.ok(auth.includes("export async function loadInitialData(forceRefresh = false)"));
+ assert.ok(auth.includes("if (!forceRefresh && catalogLoaded && hasFreshCatalogSync_()) return"));
+});
+test("el catálogo conserva el arranque cache-first sin forzar recargas",()=>{
+ assert.match(auth,/loadInitialData\\(forceRefresh = false\\)/);
+ assert.match(auth,/if \\(!forceRefresh && catalogLoaded && hasFreshCatalogSync_\\(\\)\\) return/);
+});
 test("caché de sesión de 60 segundos",()=>{assert.match(auth,/VALIDATION_CACHE_TTL_MS = 60000/);assert.match(auth,/getRecentValidation\(user\)/);});
 test("AUTH indisponible conserva sesión sin banner",()=>{const a=auth.indexOf("function restoreSessionAfterValidationUnavailable_"),b=auth.indexOf("\nexport async function checkSession",a);assert.ok(a>=0&&b>a);const s=auth.slice(a,b);assert.match(s,/handleLoginSuccess\(user, false\)/);assert.doesNotMatch(s,/showGlobalError/);});
 test("catálogo reutiliza caché fresca y sincroniza silenciosamente",()=>{assert.match(auth,/CATALOG_REFRESH_TTL_MS = 60000/);assert.match(auth,/if \(!forceRefresh && catalogLoaded && hasFreshCatalogSync_\(\)\) return/);assert.match(auth,/markCatalogSync_\(\)/);assert.match(auth,/performSilentSync\(catalogData\)/);});
