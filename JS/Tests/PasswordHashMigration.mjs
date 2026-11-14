@@ -151,7 +151,7 @@ test("La migración batch usa dry-run por defecto y no escribe contraseñas",()=
 });
 test("El dry-run identifica IDs activos duplicados y bloquea la escritura",()=>{
     const h=migrationHarness();
-    h.users[2][0]="U1";
+    h.users[2][0]="U5";
     const dry=h.run({userId:"U1",sessionToken:"token-1",batchSize:1});
     assert.equal(dry.dryRun,true);
     assert.equal(dry.ambiguousActiveAccounts,2);
