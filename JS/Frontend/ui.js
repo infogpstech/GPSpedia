@@ -4219,6 +4219,7 @@ export async function openInbox() {
 // AUG-152 — Centro de conversaciones y notificaciones privadas.
 let inboxConversationFolder_ = "received";
 let inboxConversationQuery_ = "";
+let inboxConversationCategory_ = "all";
 let inboxConversationPageStack_ = [0];
 let inboxConversationPageIndex_ = 0;
 let inboxConversationItems_ = [];
@@ -4347,6 +4348,22 @@ function bindInboxControls_() {
         });
         searchForm.dataset.bound = "true";
     }
+    const categoryFilter = document.getElementById("inbox-category-filter");
+    if (categoryFilter && categoryFilter.dataset.bound !== "true") {
+        categoryFilter.addEventListener("change", () => {
+            const nextCategory = String(categoryFilter.value || "all").trim().toLowerCase();
+            inboxConversationCategory_ = ["all", "general", "soporte", "acceso", "contenido", "instalacion", "otro"].includes(nextCategory)
+                ? nextCategory : "all";
+            inboxConversationPageStack_ = [0];
+            inboxConversationPageIndex_ = 0;
+            inboxConversationSelectedId_ = "";
+            inboxConversationSelected_ = null;
+            inboxConversationMessages_ = [];
+            document.getElementById("inbox-modal-content")?.classList.remove("is-detail-open");
+            loadInboxConversations_({ reset: true });
+        });
+        categoryFilter.dataset.bound = "true";
+    }
     const refresh = document.getElementById("inbox-conversation-refresh");
     if (refresh && refresh.dataset.bound !== "true") {
         refresh.addEventListener("click", refreshInboxConversations_);
@@ -4425,7 +4442,7 @@ async function loadInboxConversations_(options = {}) {
         return;
     }
     try {
-        const response = await getInboxConversations(context, { cursor, pageSize: INBOX_CONVERSATION_PAGE_SIZE_, folder: inboxConversationFolder_, query: inboxConversationQuery_ });
+        const response = await getInboxConversations(context, { cursor, pageSize: INBOX_CONVERSATION_PAGE_SIZE_, folder: inboxConversationFolder_, category: inboxConversationCategory_, query: inboxConversationQuery_ });
         if (generation !== inboxConversationGeneration_ || !isCurrentUiSessionContext_(context)) return;
         if (!response || response.status !== "success") throw new Error(response && response.message || "No se pudo cargar Inbox.");
         inboxConversationItems_ = Array.isArray(response.data) ? response.data : [];
