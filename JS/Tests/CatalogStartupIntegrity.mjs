@@ -34,6 +34,7 @@ function createHarness(options = {}) {
     const cacheReads = options.cacheReads || [null];
     const offline = {
         isCompleteCatalogSnapshot,
+        compareCatalogSnapshots(previous, next) { return { hasChanges: JSON.stringify(previous) !== JSON.stringify(next) }; },
         async getCatalog() {
             const value = cacheReads[Math.min(cacheIndex++, cacheReads.length - 1)];
             if (value instanceof Error) throw value;
@@ -76,6 +77,7 @@ function createHarness(options = {}) {
         let catalogLoadController_ = null;
         function hasFreshCatalogSync_() { return false; }
         function markCatalogSync_() {}
+        function scheduleCatalogPoll_() {}
         ${extract('cancelCatalogLoad_')}
         ${extract('getCatalogFeedHead_')}
         ${extract('fetchCatalogDelta_')}
@@ -264,6 +266,20 @@ await test('el feed rechaza huecos de revisión y solicita reconciliación compl
     const result = await h.fetchDelta(5, { ID: 'USER-1', SessionToken: 'session-token' }, null);
     assert.equal(result.resetRequired, true);
     assert.equal(result.cursor, 7);
+});
+
+
+await test('la sincronización silenciosa no cambia el estado de carga ni descarga el snapshot si no hay novedades', async () => {
+    const cached = snapshot();
+    const h = createHarness({
+        cacheReads: [cached], cacheCursor: 5,
+        getCatalogChanges: async cursor => ({ status: 'success', currentRevision: 5, nextCursor: cursor, hasMore: false, resetRequired: false, changes: [] })
+    });
+    const result = await h.load(true, { silent: true, fromPoll: true });
+    assert.equal(result, true);
+    assert.equal(h.fetchCalls, 0);
+    assert.equal(h.state.catalogLoadStatus, 'idle');
+    assert.equal(h.patches.some(patch => Object.prototype.hasOwnProperty.call(patch, 'catalogLoadStatus')), false);
 });
 
 console.log('CatalogStartupIntegrity: ' + passed + '/' + passed + ' PASS');
