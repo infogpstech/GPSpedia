@@ -248,3 +248,22 @@ No se ejecutó GitHub Actions completo ni deployment/navegador Beta. La rama bas
 - `SessionStartupNavigation`: 13/13 PASS; `PWAStartupScenarios`: 13/13 PASS.
 - GitHub Actions run `43630382765`: 94 suites / 1,392 pruebas / 0 fallos.
 - No se afirma que el navegador/PWA bloquee capturas nativas. La prevención efectiva requiere un contenedor nativo con controles del sistema operativo.
+
+
+## AUD-2026-11-14-11 — Tarjeta de alta PyS tenía estructura distinta a las tarjetas relacionadas
+
+**Severidad:** Baja/Media — consistencia visual en el modal de detalle.  
+**Estado:** CORREGIDO EN RAMA DE TRABAJO; validación visual en navegador pendiente.
+
+### Evidencia y causa
+- `createPysCard()` devolvía un wrapper `.pys-card-wrapper` que contenía la tarjeta real.
+- La tarjeta «Agregar Problema» se agregaba directamente al carrusel, sin el wrapper equivalente. Por tanto, el dimensionamiento flex y la separación del carrusel no se aplicaban sobre la misma estructura.
+- La vista de un solo problema y la de varios problemas construían la tarjeta de alta de forma duplicada.
+
+### Corrección y validación
+- Se creó `createPysAssociationAddCard()`, que usa el mismo wrapper que `createPysCard()`.
+- Las tarjetas comparten 140×120 px; en carrusel, los wrappers reservan 160 px para conservar los 20 px de separación.
+- `PysModalNavigation.js` se corrigió para importar las rutas actuales y se incorporó al runner de regresión; anteriormente no se ejecutaba en CI.
+- `PysModalNavigation`: 9/9 PASS.
+- GitHub Actions run `43630661037`: 95 suites / 1,401 pruebas / 0 fallos.
+- Commits: UI `1c87d57d612d6fd8db7be4929012df6e4bf4b0fa`; CSS `5d6020462fb6d96b7be85eab818511646aeb2d27`; test/runner `52b1c05a3609215cb123a0508d20e81ba1167034`, `23d50d79c614dfcc3434deb9c25716ac93dc96d4`.
