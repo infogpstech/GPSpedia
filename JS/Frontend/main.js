@@ -23,6 +23,8 @@ let searchBlurTimeout;
 let isBackGestureBlurring = false;
 let sessionRevalidationInstalled_ = false;
 let sessionRevalidationInFlight_ = null;
+let lastManualCatalogRefreshAt_ = 0;
+const MANUAL_CATALOG_REFRESH_COOLDOWN_MS = 15000;
 function revalidateSessionOnResume_() {
     if (sessionRevalidationInFlight_) return sessionRevalidationInFlight_;
     if (typeof navigator !== 'undefined' && navigator.onLine === false) return null;
@@ -757,9 +759,14 @@ async function initializeApp() {
     container.addEventListener('touchend', (e) => {
         const touchEndY = e.changedTouches[0].pageY;
         const distance = touchEndY - touchStartY;
-        // Si el usuario desliza más de 150px hacia abajo estando en el tope
-        if (container.scrollTop === 0 && distance > 150) {
-            window.location.reload();
+        touchStartY = 0;
+        // El gesto refresca solo los datos del catálogo; no reinicia la página ni AUTH.
+        const now = Date.now();
+        if (container.scrollTop === 0 && distance > 150 && now - lastManualCatalogRefreshAt_ >= MANUAL_CATALOG_REFRESH_COOLDOWN_MS) {
+            lastManualCatalogRefreshAt_ = now;
+            auth.loadInitialData(true).catch(error => {
+                console.debug('No se pudo completar la actualización manual del catálogo:', error && error.message ? error.message : error);
+            });
         }
     }, { passive: true });
     document.getElementById('side-menu-logout-button').addEventListener('click', () => {

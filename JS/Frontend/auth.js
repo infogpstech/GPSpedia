@@ -159,7 +159,7 @@ function handleLoginSuccess(user, persist = true) {
     return appReady;
 }
 
-export async function loadInitialData() {
+export async function loadInitialData(forceRefresh = false) {
     cancelCatalogLoad_();
     if (typeof AbortController !== 'function') { setState({ catalogLoadStatus: 'error', catalogLoadError: 'Este navegador no permite cancelar solicitudes del catálogo.' }); showGlobalError('No se puede cargar el catálogo de forma segura porque el navegador no admite cancelación de solicitudes.'); return; }
     const loadController = new AbortController();
@@ -195,7 +195,7 @@ export async function loadInitialData() {
 
     if (!isCurrentLoad()) return;
     // Evitar otra descarga cuando la instantánea local acaba de sincronizarse.
-    if (catalogLoaded && hasFreshCatalogSync_()) return;
+    if (!forceRefresh && catalogLoaded && hasFreshCatalogSync_()) return;
 
     // 2. Cargar desde la red en segundo plano con timeout y reintentos acotados.
     try {
