@@ -25,6 +25,40 @@ check("El backend autoriza la edición según el rol vigente, sin confiar en el 
  assert.match(admin,/const ADMIN_MODAL_EDIT_ACTIONS = new Set\(\["updateVehicleField","uploadAdminImage","getAdminImageUploadStatus"\]\)/);
  assert.match(admin,/displayRole=role==="desarrollador"\?"Desarrollador":role==="jefe"\?"Jefe":"Supervisor"/);
 });
+check("El backend acepta Supervisor, Jefe y Desarrollador y rechaza otros roles",()=>{
+ const start=admin.indexOf("function getAdminSessionContext_(");
+ const end=admin.indexOf("\nfunction assertDeveloperSession",start);
+ assert.ok(start>=0&&end>start);
+ const deps={
+  getSpreadsheet:()=>({
+   getSheetByName:name=>name==="ActiveSessions"?{
+    getDataRange:()=>({getValues:()=>[[],["U1","user","token",new Date(Date.now()-60000),"",new Date()]]}),
+    getRange:()=>({setValue(){}})
+   }:name==="Users"?{
+    getDataRange:()=>({getValues:()=>[[],["U1","user","hash",globalRole,"","","Test User",""]]})
+   }:null
+  }),
+  getSessionExpirationStatus_:()=>({expired:false}),
+  ROLE_REVOCATION_SHARED_PREFIX:"__role_revocation_pending__:"
+ };
+ let globalRole="Supervisor";
+ const api=new Function("getSpreadsheet","getSessionExpirationStatus_","ROLE_REVOCATION_SHARED_PREFIX",
+  admin.slice(start,end)+"\n"+admin.slice(admin.indexOf("function assertDeveloperSession",end),admin.indexOf("\nconst ADMIN_MODAL_EDIT_ACTIONS",end))+
+  "\nreturn {assertDeveloperSession,assertModalEditSession};"
+ )(deps.getSpreadsheet,deps.getSessionExpirationStatus_,deps.ROLE_REVOCATION_SHARED_PREFIX);
+ for(const role of ["Desarrollador","Jefe","Supervisor"]){
+  globalRole=role;
+  assert.equal(api.assertModalEditSession({userId:"U1",sessionToken:"token"}).role,role);
+ }
+ for(const role of ["Técnico","Gefe","Invitado"]){
+  globalRole=role;
+  assert.throws(()=>api.assertModalEditSession({userId:"U1",sessionToken:"token"}));
+ }
+ globalRole="Supervisor";
+ assert.throws(()=>api.assertDeveloperSession({userId:"U1",sessionToken:"token"}));
+ globalRole="Desarrollador";
+ assert.equal(api.assertDeveloperSession({userId:"U1",sessionToken:"token"}).role,"Desarrollador");
+});
 check("Las demás acciones administrativas continúan exclusivas de Desarrollador",()=>{
  assert.match(admin,/function assertDeveloperSession\(payload\)\{return getAdminSessionContext_\(payload,\["desarrollador"\]\);\}/);
  assert.match(admin,/ADMIN_MODAL_EDIT_ACTIONS\.has\(action\) \? assertModalEditSession\(payload\) : assertDeveloperSession\(payload\)/);
