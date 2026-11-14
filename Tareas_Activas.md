@@ -58,18 +58,19 @@ Simplificar la autenticación sin debilitar autorización; modernizar Inbox; end
 **Validación diferida a Beta:** no se consultaron ni modificaron hojas Spreadsheet/Drive reales ni deployments. La existencia y contenido efectivo de fórmulas/IDs heredados, encabezados físicos, datos duplicados y referencias huérfanas deben comprobarse mediante un dry-run de solo lectura en una copia/entorno Beta autorizado. Esta limitación no bloquea el cierre del análisis estático local.
 
 ### P1 — Autenticación simplificada
-**Estado: EN PROGRESO**
+**Estado: IMPLEMENTADA EN RAMA DE TRABAJO; VALIDACIÓN BETA EXTERNA PENDIENTE.**
 
-**Diseño derivado de P0:** retirar `ensureSessionTouched_` del dispatcher solo después de que cada servicio protegido actualice `LastActivityAt` dentro de su propia operación, tras validar token, identidad, cuenta activa, expiración y rol vigente. La actualización debe coordinarse entre proyectos Apps Script para evitar carreras con logout, revocación o eliminación de filas. Mantener una validación de restauración al iniciar la app; no convertir fallos de red/AUTH en logout ni permitir que el estado local autorice operaciones.
+**Diseño derivado de P0:** cada servicio protegido actualiza `LastActivityAt` dentro de su propia operación, tras validar token, identidad, cuenta activa, expiración y rol vigente. La coordinación compartida evita carreras con logout, revocación o eliminación de filas. Se conserva la validación de restauración al iniciar la app; los fallos de red/AUTH no se convierten en logout y el estado local no autoriza operaciones.
 - [x] Eliminar la revalidación redundante al recuperar conexión; conservar la validación de restauración al iniciar la aplicación.
-- [ ] Una sola autenticación interactiva por sesión.
-- [ ] Conservar token/sesión al navegar entre páginas, actualizar y abrir modales.
-- [ ] Retirar llamadas separadas y periódicas redundantes de validación/touch.
-- [ ] Validar identidad, vigencia y rol dentro de la petición protegida del backend, sin un viaje de red adicional.
-- [ ] Mantener revocación, expiración, desactivación y cambios de privilegios efectivos en el servidor.
-- [ ] Probar concurrencia, múltiples pestañas, offline, reconexión y sesión revocada.
+- [ ] Una sola autenticación interactiva por sesión (validación Beta pendiente).
+- [ ] Conservar token/sesión al navegar entre páginas, actualizar y abrir modales (validación Beta pendiente).
+- [x] Retirar el preflight `ensureSessionTouched_` y las llamadas redundantes antes de operaciones protegidas.
+- [x] Validar identidad, vigencia y rol dentro de la petición protegida del backend, sin un viaje de red adicional.
+- [x] Mantener revocación, expiración, desactivación y cambios de privilegios efectivos en el servidor.
+- [x] Probar exclusión de concurrencia, sesión revocada y autorización backend en CI.
+- [ ] Validación Beta externa: múltiples pestañas, offline, reconexión y navegación/dispositivo real.
 
-**Validación de fase 1 (2026-11-14):** GitHub Actions PASS — 75 suites, 1,154 pruebas, 0 fallos; sintaxis JavaScript PASS. P1 continúa EN PROGRESO hasta integrar el touch de actividad dentro de cada operación backend protegida y eliminar el preflight de forma segura.
+**Validación final de implementación (2026-11-14):** GitHub Actions PASS — 75 suites, 1,170 pruebas aprobadas, 0 fallos; comprobaciones de sintaxis Node.js PASS. No se desplegaron Apps Script ni se modificaron datos productivos.
 
 ### P2 — Migración de contraseñas e identificadores
 **Estado: PENDIENTE**
