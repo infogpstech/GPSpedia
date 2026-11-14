@@ -143,14 +143,13 @@ function runSharedMutationCoordinatorTests() {
         release_(r, "WRITE", "addOrUpdateCut", write.token);
     });
 
-    test_("validateSession y touchSession bloquean mutaciones de identidad concurrentes", function() {
+    test_("validateSession es de solo lectura; touchSession sigue serializando cambios de identidad", function() {
         const r = createRuntime_();
-        const validation = acquire_(r, "AUTH", "validateSession");
-        const profile = acquire_(r, "USERS", "updateProfile");
-        assert_(profile.status === "error" && profile.code === "busy", "USERS debe esperar mientras AUTH actualiza/reconcilia sesión e identidad.");
-        release_(r, "AUTH", "validateSession", validation.token);
+        expectThrow_(() => coordinatorPolicy_("AUTH", "validateSession"), "no está habilitada");
         const touch = acquire_(r, "AUTH", "touchSession");
-        assert_(touch.status === "success", "AUTH debe adquirir lease después de liberar la anterior.");
+        assert_(touch.status === "success", "touchSession debe adquirir lease para actualizar ActiveSessions.");
+        const profile = acquire_(r, "USERS", "updateProfile");
+        assert_(profile.status === "error" && profile.code === "busy", "USERS debe esperar mientras AUTH actualiza ActiveSessions.");
         release_(r, "AUTH", "touchSession", touch.token);
     });
 
