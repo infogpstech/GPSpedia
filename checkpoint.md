@@ -883,3 +883,37 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - CI run 43616097773: 93 suites / 1,361 pruebas aprobadas / 0 fallos. `ContextualHelpForms` 12/12 y `DeveloperPanelUX` 3/3. Pages run 43616505909: build y deployment PASS.
 - El nuevo flujo de aplicación de imágenes queda oculto hasta que el backend ADMIN desplegado anuncie `capabilities.applyApprovedReconciliation`; Pages y Apps Script se despliegan por separado. No se ejecutaron escrituras productivas.
 - HEAD de código validado: `49bd0d1bacf00a22ea63d37a16d6e23a7e675b09`. Rama base verificada sin cambios en esta sesión: `GPSpedia2.2.5` en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+
+
+## Continuidad verificada — GP-IMG-DATA-01 (2026-11-14)
+
+**Estado de código:** implementación de conciliación y aplicación controlada presente en la rama de trabajo; las validaciones de Drive/Spreadsheet real permanecen diferidas a Beta.
+
+- Rama verificada: `GPSpedia2.2.5_work`.
+- HEAD remoto verificado al iniciar esta revisión: `e8bd98343197be6ff1fd63e87a57a74b6ccf169c` — `test(images): assert audit-backed capability gate`.
+- Desde el HEAD anterior documentado `49bd0d1bacf00a22ea63d37a16d6e23a7e675b09` hay 7 commits adicionales. El diff agregado afecta únicamente `ChangesLogs.txt`, `JS/Frontend/ui.js`, las dos pruebas de conciliación, `Services/admin.js`, `Tareas_Activas.md` y este checkpoint.
+- Rama base verificada: `GPSpedia2.2.5` en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; comparación base/trabajo: 2,638 commits adelantada, 0 detrás. No se escribió en la rama base.
+
+### Refuerzo de integridad revisado
+
+- ADMIN conserva por página del inventario de auditoría los IDs, nombres y MIME de los archivos junto con los IDs procesados.
+- La auditoría solo marca `imageMetadataVersion: 1` al completarse. La capacidad `applyApprovedReconciliation` se anuncia únicamente para una auditoría completa, vigente (máximo 6 horas), de la sesión actual, de la versión actual del servicio y con metadatos disponibles.
+- Antes de escribir, ADMIN vuelve a cargar y cotejar el inventario completo, comprueba correspondencia de IDs/conteos, bloquea nombres canónicos duplicados, verifica que los archivos no hayan cambiado y reconstruye el preview/digest. La UI no habilita propuestas desde un reporte local restaurado sin un handshake nuevo.
+- La aplicación conserva precondiciones de celda vacía/sin fórmula, bloqueo, read-back, auditoría y rollback condicionado al valor que escribió.
+
+### Validaciones ejecutadas en esta revisión
+
+- `CortesImageReconciliation.mjs`: 19/19 PASS.
+- `CortesImageReconciliationApply.mjs`: 8/8 PASS.
+- `CortesImageReconciliationUI.mjs`: 13/13 PASS.
+- Pruebas adicionales aisladas de persistencia/lectura de metadatos, detección de duplicados, rechazo de páginas/metadatos incompletos y conservación de inventario: 5/5 PASS.
+- Parsing V8 de `Services/admin.js`: PASS. Parsing del cuerpo de `JS/Frontend/ui.js` tras retirar únicamente los envoltorios estáticos `import/export`: PASS.
+- **Alcance de ejecución:** las tres suites y las pruebas adicionales se ejecutaron en un harness V8 con los contenidos recuperados de GitHub y adaptadores para las dependencias Node.js; no equivalen a ejecutar Node CLI. El runner completo `JS/Tests/RunServiceTests.mjs` y `node --check` no se ejecutaron porque no hay un clon local del repositorio disponible en este entorno y la conexión Git remota no resuelve DNS.
+- El API de GitHub no devolvió status checks para el HEAD `e8bd983`. La última CI registrada en el checkpoint anterior corresponde al HEAD `49bd0d1`: 93 suites / 1,361 pruebas PASS (run 43616097773); Pages build/deployment PASS (run 43616505909). No se atribuyen esos resultados al HEAD actual.
+
+### Pendiente para Beta / siguiente acción
+
+1. En un clon sincronizado de `GPSpedia2.2.5_work`, ejecutar el runner Node.js completo y comprobar GitHub Actions sobre el HEAD vigente.
+2. Desplegar `Services/admin.js` en el proyecto ADMIN de Beta y completar una auditoría Drive real para verificar persistencia de metadatos y handshake de capacidad.
+3. En una copia Beta autorizada, ejecutar preview y probar una aplicación aprobada, read-back, auditoría y rollback. No se ejecutó ninguna escritura en Drive/Spreadsheet ni se modificaron permisos durante esta revisión.
+4. La aplicación sobre datos productivos continúa requiriendo autorización expresa.
