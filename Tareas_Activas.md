@@ -91,6 +91,8 @@ Simplificar la autenticación sin debilitar autorización; modernizar Inbox; end
 - [ ] Definir una matriz de capacidades por rol en backend y frontend.
 - [ ] Compartir integrado del modal permitido a todos.
 - [ ] Compartir integrado disponible para todos; imprimir y editar detalles solo Supervisor, Jefe y Desarrollador.
+- [x] Unificar Jefe como valor canónico en AUTH, USERS, ADMIN, FEEDBACK, WRITE, Inbox y frontend; mantener conversión transitoria de registros heredados Gefe.
+- [ ] En la Spreadsheet, migrar Users.Privilegios de Gefe a Jefe, actualizar la validación/lista desplegable y retirar la compatibilidad heredada tras verificar cero valores antiguos.
 - [ ] Restringir botones, enlaces directos, descarga, menú contextual, copiar/arrastrar en imágenes, sin romper campos editables ni accesibilidad.
 - [ ] Revisar exposición de URL originales y recursos estáticos; no confundir ocultar controles con autorización real.
 - [ ] Pruebas negativas: Técnico no ejecuta acciones privilegiadas manipulando DOM o llamando endpoints directamente.
@@ -123,7 +125,7 @@ Simplificar la autenticación sin debilitar autorización; modernizar Inbox; end
 
 ## Continuidad inmediata
 
-Completar el paquete P0 sobre los contratos y llamadores existentes. Después presentar el diseño técnico concreto y ejecutar P1/P2 antes de rediseños que dependan de la matriz definitiva de roles.
+P0 — auditoría y diseño técnico — está completada. Continuar P1 (autenticación simplificada) y P2 (migración de contraseñas e identificadores); mantener P4 pendiente hasta completar la matriz de capacidades y la actualización externa de la Spreadsheet.
 
 
 ## Evidencia adicional de P0 — revisión de permisos y contratos (2026-11-14)
