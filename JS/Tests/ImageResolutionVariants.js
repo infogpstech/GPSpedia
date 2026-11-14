@@ -39,6 +39,8 @@ assert.equal(getThumbnailCacheKey('', 300), null);
 
 assert.match(uiSource, /offline\.getThumbnailCacheKey\(cleanId, normalizedSize\)/);
 assert.match(uiSource, /const probe = new Image\(\)/, 'la fuente remota se valida antes de asignarla al elemento visible');
+assert.match(uiSource, /probe\.crossOrigin = 'anonymous'/, 'intenta una carga CORS para permitir almacenamiento verificable');
+assert.match(uiSource, /startRemoteProbe\(false\)/, 'reintenta sin CORS para proveedores externos que no lo admiten');
 assert.match(uiSource, /probe\.onload = \(\) =>/);
 assert.match(uiSource, /imgElement\.removeAttribute\('src'\)/, 'el elemento no conserva una fuente rota durante la precarga');
 assert.match(uiSource, /gp-image-loading/);
