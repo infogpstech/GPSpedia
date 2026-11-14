@@ -3490,11 +3490,11 @@ function handleAddLogo(payload, logMessage) {
         newRow = lastRow + 1;
         lastColumn = Math.max(sheet.getLastColumn(), 4);
         newId = getNextLogoIdLocked_(sheet);
+        rowPrepared = true;
         if (lastRow > 1) {
             sheet.getRange(lastRow, 1, 1, lastColumn).copyTo(sheet.getRange(newRow, 1, 1, lastColumn));
             sheet.getRange(newRow, 2, 1, lastColumn - 1).clearContent();
         }
-        rowPrepared = true;
         sheet.getRange(newRow, 1).setValue(newId);
         sheet.getRange(newRow, 2).setValue(nombreMarca);
         sheet.getRange(newRow, 3).setValue(logoUrl);
