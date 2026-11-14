@@ -1546,3 +1546,17 @@ No se desplegaron servicios Apps Script, no se modificaron ScriptProperties, Spr
 - Los productores de backend aún publican reset para cambios multi-entidad. Siguiente paso: inspeccionar cada mutación FEEDBACK/ADMIN y emitir snapshots exactos solo después de verificar la fila final y su ID único; comenzar por Tutoriales y Logos.
 - PyS permanece separado de `getCatalogData`, usa `getPysData` y caché localStorage; no se debe tratar como una colección del snapshot IndexedDB sin diseñar una persistencia/cursor independiente.
 - No se modificaron Apps Script deployments, ScriptProperties, Spreadsheet, Drive, ACL ni datos productivos.
+
+
+## Continuidad — GP-CAT: upsert exacto de Tutoriales (2026-11-14)
+
+**Commit de código validado:** `4986148291ba7d0add094ad76e90fd9f2bf6897a`.
+
+- `Services/feedback.js`: `addTutorial` y `updateTutorialItem` publican un upsert de `tutoriales` solo después de que la operación responde éxito, se relee la fila por ID y se comprueba unicidad del ID persistente `tut-...`.
+- El snapshot conserva los campos del contrato de `Services/catalog.js` y normaliza la imagen a ID de Drive. Si la fila/ID no puede verificarse o falla la publicación, se intenta emitir reset seguro.
+- `approveVideo`/`rejectVideo` y mutaciones PyS siguen usando reset porque sus destinos/entidades pueden ser múltiples.
+- `JS/Tests/CatalogChangeFeed.mjs`: 15/15 PASS; `CatalogSnapshotSync`: 27/27 PASS.
+- GitHub Actions run `43652752655`: SUCCESS; 98 suites / 1,466 pruebas / 0 fallos.
+- El primer intento falló por una expresión regular con escapes dobles en el helper de imagen; se corrigió en `4986148` y el CI posterior aprobó.
+- Siguiente: upsert exacto para Logos tras alta ADMIN confirmada; después evaluar Relay y operaciones de edición/Video. PyS requiere un cursor/almacén separado y no debe mezclarse con el snapshot de IndexedDB sin una transición específica.
+- No se desplegaron Apps Script ni se modificaron Spreadsheet, Drive, ACL, ScriptProperties o datos productivos.
