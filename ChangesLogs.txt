@@ -1532,3 +1532,11 @@ Rama: GPSpedia2.2.5_work
 - No se añadió marca de agua ni ocultación por blur/visibilitychange: no impiden capturas y podrían degradar la lectura de diagramas.
 - README recomienda recursos privados y entrega autenticada/temporal cuando se requiera confidencialidad real.
 ================================================================================
+
+================================================================================
+2026-11-14 — P6 REGRESIÓN AUTOMATIZADA
+- GitHub Actions service-tests PASS: 80 suites; 1,211 pruebas aprobadas; 0 fallos.
+- Cobertura adicional: VehicleModalRolePolicy 6/6, ClientInteractionPolicy 5/5, InboxConversations 29/29, InboxUi 16/16, IdentifierAudit 7/7 y LogoIdIntegrity 6/6.
+- Pendiente validación Beta/real: migraciones con datos, llamadas HTTP por rol, dispositivos, rendimiento y permisos reales de recursos.
+- No hubo despliegue ni cambios de datos productivos.
+================================================================================
