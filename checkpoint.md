@@ -418,3 +418,17 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - Validación externa pendiente: múltiples pestañas, offline/reconexión y uso real en navegador/dispositivo. La implementación no se declara validada en Beta.
 
 **Siguiente tarea de desarrollo:** P2 — migración de contraseñas e identificadores, comenzando por inventario técnico y diseño seguro de la migración reanudable.
+
+## P2 — Subfase de contraseñas: PBKDF2 y migración batch (2026-11-14)
+
+**Estado: IMPLEMENTADA EN RAMA DE TRABAJO; CALIBRACIÓN APPS SCRIPT Y EJECUCIÓN BETA PENDIENTES.**
+
+- AUTH adopta formato versionado `pbkdf2-sha256$iteraciones$salt$digest`, con salt aleatorio de 128 bits, PBKDF2-HMAC-SHA256, comparación en tiempo constante y límites de coste al verificar hashes almacenados.
+- Coste inicial provisional: 12,000 iteraciones. Se añadió `benchmarkPasswordKdf_()` para medir 1,000, 2,500, 5,000, 10,000 y 12,000 iteraciones directamente en el runtime de Apps Script. La medición real no se ejecutó desde esta sesión; no se declara calibrado el coste definitivo.
+- `verifyStoredPassword` mantiene compatibilidad con hashes `sha256$` y contraseñas plaintext históricas. El login rehashea credenciales legacy exitosas al formato PBKDF2. Los SHA-256 históricos no se convierten por lote sin conocer la contraseña; se migran al iniciar sesión.
+- Se añadió acción AUTH `migrateLegacyPasswords`, protegida por rol Desarrollador y lease de Users/ActiveSessions. El modo predeterminado es dry-run; la escritura exige `dryRun:false` y `confirm:true`; procesa lotes de hasta 50, omite hashes ya migrados y permite reanudar repitiendo la acción.
+- La migración solo procesa cuentas activas con contraseña plaintext legacy; reporta conteos de hashes actuales, SHA-256 pendientes de login, filas inactivas/vacías y formatos no compatibles. No devuelve ni registra contraseñas.
+- Se añadió ruta de acción en `JS/Frontend/api-config.js`, pruebas de vectores PBKDF2, compatibilidad legacy, integridad del formato, dry-run, confirmación, reanudación e idempotencia.
+- GitHub Actions `service-tests` sobre `537839f6c74198d241a2b074cf38f1a4426dc1ae`: **PASS**, 76 suites, 1,185 pruebas aprobadas, 0 fallos.
+- No se ejecutó `migrateLegacyPasswords` contra la Spreadsheet productiva ni se desplegó AUTH. El benchmark debe ejecutarse en un deployment de prueba antes de fijar el coste final.
+- Siguiente subfase P2: inventario de generadores, fórmulas y referencias de IDs de Users, Vehicles/Cortes, Tutoriales, Problemas y Relay; después diseñar la reconciliación sin romper relaciones.
