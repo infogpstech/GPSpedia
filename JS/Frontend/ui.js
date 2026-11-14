@@ -8889,6 +8889,7 @@ function renderTermsGate_(user) {
             localStorage.setItem('gpsepedia_session', JSON.stringify(stored));
             user.TermsAcceptance = confirmed; setState({ currentUser: user });
             modal.style.display = 'none'; deactivateLegalModalFocus_(modal); container.style.display = 'block'; footer.style.display = 'flex';
+            if (typeof window.auth?.loadInitialData === 'function') window.auth.loadInitialData();
         } catch (error) {
             const message = error && error.message ? error.message : 'No se pudo registrar la aceptación.';
             if (errorMessage) errorMessage.textContent = message.length > 110 ? 'No se pudo registrar la aceptación.' : message;
@@ -8963,6 +8964,7 @@ export function showApp(user) {
             `;
         }
     }
+    return true;
 }
 
 // Variable local para rastrear el estado previo de los carruseles de actividad y evitar bucles
