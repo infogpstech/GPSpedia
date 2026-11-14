@@ -1457,3 +1457,13 @@ Rama: GPSpedia2.2.5_work
 - La primera ejecución detectó dos expectativas de pruebas obsoletas (alias Gefe y listener online no específico); ambas se corrigieron con alcance acotado y la ejecución final aprobó.
 - P1 continúa EN PROGRESO: falta integrar touch de actividad en operaciones protegidas y retirar el preflight sin debilitar autorización, revocación o expiración.
 ================================================================================
+
+================================================================================
+2026-11-14 — P1 FASE 2 PARCIAL: ACTIVIDAD INTEGRADA EN FEEDBACK
+- Services/Coordinator.js: FEEDBACK reserva ACTIVE_SESSIONS al validar operaciones protegidas; se añade lease sessionActivity para lecturas autenticadas.
+- Services/feedback.js: assertFeedbackSession actualiza LastActivityAt tras validar identidad, vigencia, estado, revocación y rol; las acciones públicas no renuevan sesión.
+- JS/Tests/VideoApprovalSessions.js: fixtures de hoja compatibles con setValue y pruebas de renovación válida/rechazo sin renovación.
+- JS/Tests/InboxRoleContract.js: contrato de actividad en lecturas FEEDBACK.
+- JS/Tests/InboxConversations.mjs y JS/Tests/SharedMutationCoordinator.js: expectativas de exclusión actualizadas para ACTIVE_SESSIONS.
+- GitHub Actions service-tests: PASS; 75 suites, 1,159 pruebas, 0 fallos. No se desplegó Apps Script ni se escribieron datos productivos.
+================================================================================
