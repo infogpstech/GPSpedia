@@ -3049,6 +3049,9 @@ async function insertNewVehicleFluently(item) {
     }
 
     const currentNav = getState().navigationState || {};
+    const prefersReducedMotion = typeof window !== 'undefined' &&
+        typeof window.matchMedia === 'function' &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const isMainLevel = currentNav.level === 'categorias';
 
     if (isMainLevel) {
@@ -3065,20 +3068,22 @@ async function insertNewVehicleFluently(item) {
 
         if (ultimosAgregadosTrack) {
             const newCard = crearCardVehiculo(item);
-            newCard.style.opacity = '0';
-            newCard.style.transform = 'scale(0.8) translateX(50px)';
-            newCard.style.transition = 'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+            newCard.style.opacity = prefersReducedMotion ? '1' : '0';
+            newCard.style.transform = prefersReducedMotion ? 'none' : 'scale(0.8) translateX(50px)';
+            newCard.style.transition = prefersReducedMotion ? 'none' :
+                'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
 
-            // Insertar al inicio de la lista de agregados recientemente
+            // Insertar al inicio sin alterar el flujo ni desplazar el carrusel.
             ultimosAgregadosTrack.insertBefore(newCard, ultimosAgregadosTrack.firstChild);
 
-            // Disparar animación fluida
-            requestAnimationFrame(() => {
-                setTimeout(() => {
-                    newCard.style.opacity = '1';
-                    newCard.style.transform = 'scale(1) translateX(0)';
-                }, 50);
-            });
+            if (!prefersReducedMotion) {
+                requestAnimationFrame(() => {
+                    setTimeout(() => {
+                        newCard.style.opacity = '1';
+                        newCard.style.transform = 'scale(1) translateX(0)';
+                    }, 50);
+                });
+            }
         }
     } else {
         // Insertar en la vista de cuadrícula si la navegación actual coincide con el elemento recién insertado
@@ -3099,16 +3104,18 @@ async function insertNewVehicleFluently(item) {
 
             if (isRelevant) {
                 const newCard = crearCardVehiculo(item);
-                newCard.style.opacity = '0';
-                newCard.style.transform = 'scale(0.8)';
-                newCard.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                newCard.style.opacity = prefersReducedMotion ? '1' : '0';
+                newCard.style.transform = prefersReducedMotion ? 'none' : 'scale(0.8)';
+                newCard.style.transition = prefersReducedMotion ? 'none' : 'opacity 0.5s ease, transform 0.5s ease';
                 activeGrid.appendChild(newCard);
-                requestAnimationFrame(() => {
-                    setTimeout(() => {
-                        newCard.style.opacity = '1';
-                        newCard.style.transform = 'scale(1)';
-                    }, 50);
-                });
+                if (!prefersReducedMotion) {
+                    requestAnimationFrame(() => {
+                        setTimeout(() => {
+                            newCard.style.opacity = '1';
+                            newCard.style.transform = 'scale(1)';
+                        }, 50);
+                    });
+                }
             }
         }
     }
