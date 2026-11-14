@@ -10,7 +10,8 @@ test("la actualización no añade controles ni intercepta el gesto nativo",()=>{
  assert.equal(main.includes(".container.addEventListener('touchstart'"),false);
  assert.equal(main.includes(".container.addEventListener('touchend'"),false);
  assert.equal(main.includes("auth.loadInitialData(true)"),false);
- assert.equal(main.includes("registration.update()"),false);
+ assert.equal(main.includes("registration.update()"),true);
+ assert.equal(main.includes("window.location.reload()"),false);
  assert.equal(main.includes("window.location.reload()"),false);
  assert.equal(main.includes("refreshAppLink"),false);
  assert.equal(main.includes("MANUAL_CATALOG_REFRESH_COOLDOWN_MS"),false);
