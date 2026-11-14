@@ -73,16 +73,16 @@ Simplificar la autenticación sin debilitar autorización; modernizar Inbox; end
 **Validación final de implementación (2026-11-14):** GitHub Actions PASS — 75 suites, 1,170 pruebas aprobadas, 0 fallos; comprobaciones de sintaxis Node.js PASS. No se desplegaron Apps Script ni se modificaron datos productivos.
 
 ### P2 — Migración de contraseñas e identificadores
-**Estado: EN PROGRESO — SUBTAREA DE CONTRASEÑAS IMPLEMENTADA; CALIBRACIÓN Y MIGRACIÓN DE IDs PENDIENTES.**
+**Estado: EN PROGRESO — CÓDIGO DE CONTRASEÑAS Y AUDITORÍA DE IDs IMPLEMENTADOS; EJECUCIÓN BETA Y MIGRACIÓN DE DATOS PENDIENTES.**
 - [x] Diseñar hash versionado PBKDF2-HMAC-SHA256 con salt aleatorio único, verificación en tiempo constante y compatibilidad con SHA-256/plaintext legacy; incluir benchmark para calibrar Apps Script.
-- [x] Implementar migración por lotes reanudable e idempotente de contraseñas plaintext legacy, con dry-run predeterminado, confirmación explícita y lotes de hasta 50; no registrar ni exportar contraseñas.
+- [x] Implementar migración por lotes reanudable e idempotente de contraseñas plaintext legacy, con dry-run predeterminado, confirmación explícita y lotes de hasta 10 (predeterminado 5); no registrar ni exportar contraseñas.
 - [x] Mantener autenticación compatible: el login verifica PBKDF2, SHA-256 histórico y plaintext; SHA-256 histórico se rehashea al login porque no puede convertirse por lote sin conocer la contraseña.
 - [ ] Medir `benchmarkPasswordKdf_()` en el runtime real de Apps Script y fijar el coste definitivo; 12,000 iteraciones es provisional hasta esa medición.
 - [ ] Ejecutar dry-run de migración en entorno Beta y verificar conteos; no ejecutar escritura productiva sin autorización y respaldo.
-- [ ] Auditar/normalizar IDs existentes y fórmulas; backend como única fuente para nuevos IDs.
-- [ ] Migrar usuarios, vehículos, tutoriales y relays sin romper enlaces, aprobaciones, logs ni referencias cruzadas.
-- [ ] Detectar duplicados/ambigüedades y detener solo los registros afectados; producir reporte de reconciliación.
-- [ ] Implementar checkpoints y estrategia de reversión para la migración de IDs.
+- [x] Implementar auditoría de solo lectura de IDs y fórmulas para Users, Cortes, Tutorial, Relay, pys y LogosMarca; incluye duplicados, ausentes, malformados y muestras Relay.\n- [x] Sustituir la fórmula de fila de LogosMarca por asignador numérico backend con contador y bloqueo.\n- [ ] Ejecutar auditoría en Beta y definir el formato de ID de Relay; el repositorio no contiene un endpoint de creación Relay ni define su formato actual.
+- [ ] Migrar usuarios, vehículos, tutoriales y relays sin romper enlaces, aprobaciones, logs ni referencias cruzadas, después de revisar el reporte real de auditoría.
+- [x] Implementar reporte de duplicados/ambigüedades por hoja sin modificar datos.\n- [ ] Resolver los conflictos encontrados en el reporte Beta y detener solo los registros afectados.
+- [ ] Implementar checkpoints y estrategia de reversión para la migración de IDs antes de cualquier escritura.
 
 ### P3 — Rediseño Inbox
 **Estado: PENDIENTE**
@@ -132,7 +132,7 @@ Simplificar la autenticación sin debilitar autorización; modernizar Inbox; end
 
 ## Continuidad inmediata
 
-P0 — auditoría y diseño técnico — está completada. Continuar P1 (autenticación simplificada) y P2 (migración de contraseñas e identificadores); mantener P4 pendiente hasta completar la matriz de capacidades y la actualización externa de la Spreadsheet.
+P0 y la implementación P1 están completadas. P2 continúa con calibración PBKDF2 y migración de IDs pendiente de auditoría/ejecución Beta; como P3 es independiente, continuar el rediseño de Inbox mientras se mantiene bloqueada cualquier escritura de migración hasta disponer del reporte real.
 
 
 ## Evidencia adicional de P0 — revisión de permisos y contratos (2026-11-14)
