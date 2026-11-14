@@ -529,8 +529,8 @@ function runSharedMutationCoordinatorTests() {
         const policy = coordinatorPolicy_("UTILITIES", "migrateTimestamps");
         ["USERS", "ACTIVE_SESSIONS", "CORTES", "DRIVE"].forEach(resource =>
             assert_(policy.readResources.includes(resource), "UTILITIES debe reservar lectura de " + resource + "."));
-        assert_(policy.writeResources.length === 1 && policy.writeResources[0] === "UTILITIES",
-            "La migración solo debe escribir en su recurso lógico UTILITIES.");
+        assert_(policy.writeResources.includes("UTILITIES") && policy.writeResources.includes("ACTIVE_SESSIONS"),
+            "La migración debe reservar su recurso lógico y ActiveSessions para actualizar actividad.");
         const r = createRuntime_();
         const utility = acquire_(r, "UTILITIES", "migrateTimestamps");
         assert_(utility.status === "success", "UTILITIES debe autenticarse con su secreto independiente.");
