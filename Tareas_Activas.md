@@ -542,3 +542,7 @@ Si cualquier comprobación falla, no continuar ni descartar cambios locales. Con
 - Pendiente Beta: comprobar `GPSpedia_COORDINATOR_URL` y `GPSpedia_COORDINATOR_SECRET` del proyecto FEEDBACK contra `GPSpedia_COORDINATOR_SECRET_FEEDBACK` del coordinador del mismo entorno; verificar que FEEDBACK tenga `SharedMutationClient.js` vigente y deployment actualizado. Después probar Técnico/Técnico exterior y rechazo de acciones privilegiadas.
 
 **Importante:** no se puede corregir la coincidencia real del secreto desde el repositorio. No se modificaron ScriptProperties, deployments ni datos productivos.
+### Preparación de pruebas Beta — AUG-155
+- Se añadió `AUG-155` al final de `lista_beta_parte2.txt` para verificar aviso por dispositivo, saludo, reacción útil, permisos y tarjeta Tutorial, dimensiones PyS, Inbox Técnico/Coordinator, Inbox móvil, actualización PWA y límites de captura de pantalla.
+- El bloque comienza con comandos seguros de verificación de repositorio/rama, rechazo de árbol sucio, `fetch` y `pull --ff-only`, y muestra el HEAD final, conforme a `NORMAS_DESAROLLO.md`.
+- No se ejecutó ninguna prueba Beta ni se modificaron propiedades, deployments o datos externos.
