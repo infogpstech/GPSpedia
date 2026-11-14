@@ -801,3 +801,15 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 ## GP-IMG-DATA-01 — Ajuste final de patrón de regresión (2026-11-14)
 
 - CI run 43614168781 volvió a fallar únicamente por el patrón regex de la prueba, que contenía escapes duplicados y buscaba barras invertidas literales. Se corrigió el regex y se hizo tolerante a espacios/saltos de línea también en la comprobación de `finally`.
+
+
+## GP-IMG-DATA-01 — Validación local completada (2026-11-14)
+
+- Persistencia/reanudación IndexedDB y recuperación segura ante ausencia de Web Crypto implementadas.
+- Pruebas unitarias del planner: `CortesImageReconciliation.mjs` 15/15 PASS.
+- Pruebas de UI/contratos: `CortesImageReconciliationUI.mjs` 11/11 PASS.
+- GitHub Actions run 43614230424: 91 suites, 1,338 pruebas aprobadas, 0 fallos.
+- GitHub Pages run 43614229665: build y deployment PASS.
+- Los fallos previos (runs 43613854019, 43614081536 y 43614168781) fueron de aserciones estáticas de test; se corrigieron y la ejecución posterior aprobó. No hubo fallos de lógica reproducibles en la suite final.
+- No se ejecutaron operaciones contra Drive/Spreadsheet ni se modificaron permisos. Quedan diferidas a Beta las comprobaciones de navegador real/IndexedDB entre pestañas y el flujo externo con Apps Script/Drive/Sheets.
+- Siguiente dependencia de GP-IMG-DATA-01: diseñar manifiesto de escritura con aprobación explícita por fila, precondiciones y verificación read-back; no ejecutar escrituras reales sin autorización expresa.
