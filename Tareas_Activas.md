@@ -80,6 +80,7 @@ Simplificar la autenticación sin debilitar autorización; modernizar Inbox; end
 - [ ] Medir `benchmarkPasswordKdf_()` en el runtime real de Apps Script y fijar el coste definitivo; 12,000 iteraciones es provisional hasta esa medición.
 - [ ] Ejecutar dry-run de migración en entorno Beta y verificar conteos; no ejecutar escritura productiva sin autorización y respaldo.
 - [x] Implementar auditoría de solo lectura de IDs y fórmulas para Users, Cortes, Tutorial, Relay, pys y LogosMarca; incluye duplicados, ausentes, malformados y muestras Relay.\n- [x] Sustituir la fórmula de fila de LogosMarca por asignador numérico backend con contador y bloqueo.\n- [ ] Ejecutar auditoría en Beta y definir el formato de ID de Relay; el repositorio no contiene un endpoint de creación Relay ni define su formato actual.
+- [x] Reemplazar la fórmula de fila de LogosMarca por asignación backend numérica, con contador persistente, exclusión mutua, detección de IDs duplicados/malformados y pruebas automatizadas.
 - [ ] Migrar usuarios, vehículos, tutoriales y relays sin romper enlaces, aprobaciones, logs ni referencias cruzadas, después de revisar el reporte real de auditoría.
 - [x] Implementar reporte de duplicados/ambigüedades por hoja sin modificar datos.\n- [ ] Resolver los conflictos encontrados en el reporte Beta y detener solo los registros afectados.
 - [ ] Implementar checkpoints y estrategia de reversión para la migración de IDs antes de cualquier escritura.
