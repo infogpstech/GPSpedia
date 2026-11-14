@@ -93,11 +93,22 @@ const VALIDATION_TIMEOUT_MS = 8000;
 const LOCK_WAIT_TIMEOUT_MS = 5000;
 const CATALOG_POLL_INTERVAL_MS = 45000;
 const CATALOG_POLL_MAX_INTERVAL_MS = 300000;
+const CATALOG_POLL_LEASE_KEY = "gpsepedia_catalog_poll_lease";
+const CATALOG_POLL_LEASE_MS = 60000;
+const CATALOG_SYNC_SIGNAL_KEY = "gpsepedia_catalog_sync_signal";
 let catalogLoadController_ = null;
 let catalogPollTimer_ = null;
 let catalogPollInterval_ = CATALOG_POLL_INTERVAL_MS;
 let catalogPollInFlight_ = false;
 let catalogPollListenersAttached_ = false;
+let catalogSyncChannel_ = null;
+let catalogSyncChannelAttached_ = false;
+const catalogTabId_ = (() => {
+    try {
+        if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
+    } catch (error) {}
+    return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2);
+})();
 
 function cancelCatalogLoad_() {
     const controller = catalogLoadController_;
@@ -112,9 +123,86 @@ function stopCatalogPolling_() {
     clearCatalogPollTimer_();
     catalogPollInterval_ = CATALOG_POLL_INTERVAL_MS;
 }
+
+function getCatalogPollLeaseStorageKey_(user) {
+    const userId = String(user && (user.ID || user.id) || "").trim();
+    return userId ? CATALOG_POLL_LEASE_KEY + ":" + encodeURIComponent(userId) : CATALOG_POLL_LEASE_KEY;
+}
+function tryAcquireCatalogPollLease_(user) {
+    try {
+        if (typeof localStorage === "undefined") return true;
+        const key = getCatalogPollLeaseStorageKey_(user);
+        const now = Date.now();
+        let current = null;
+        try { current = JSON.parse(localStorage.getItem(key) || "null"); } catch (error) {}
+        if (current && current.owner !== catalogTabId_ && Number(current.expiresAt) > now) return false;
+        localStorage.setItem(key, JSON.stringify({ owner: catalogTabId_, expiresAt: now + CATALOG_POLL_LEASE_MS }));
+        const verified = JSON.parse(localStorage.getItem(key) || "null");
+        return Boolean(verified && verified.owner === catalogTabId_);
+    } catch (error) {
+        // Si el almacenamiento está bloqueado, se prefiere sincronizar a omitir cambios.
+        return true;
+    }
+}
+function releaseCatalogPollLease_(user) {
+    try {
+        if (typeof localStorage === "undefined") return;
+        const key = getCatalogPollLeaseStorageKey_(user);
+        const current = JSON.parse(localStorage.getItem(key) || "null");
+        if (current && current.owner === catalogTabId_) localStorage.removeItem(key);
+    } catch (error) {}
+}
+async function handleCatalogSyncMessage_(message) {
+    if (!message || message.type !== "catalog-updated" || message.source === catalogTabId_) return;
+    const user = getState().currentUser;
+    const userId = String(user && (user.ID || user.id) || "").trim();
+    if (!userId || !isCurrentSession(user) || String(message.userId || "") !== userId) return;
+    try {
+        const localState = await offline.getCatalogSyncState();
+        if (!localState || !offline.isCompleteCatalogSnapshot(localState.snapshot)) return;
+        const incoming = normalizeCatalogData(localState.snapshot);
+        const current = getState().catalogData;
+        const changed = !offline.isCompleteCatalogSnapshot(current) ||
+            offline.compareCatalogSnapshots(current, incoming).hasChanges;
+        if (!changed || !isCurrentSession(user)) return;
+        if (await performSilentSync(incoming) === true) markCatalogSync_();
+    } catch (error) {
+        console.warn("No se pudo aplicar la sincronización recibida de otra pestaña:", error && error.message ? error.message : error);
+    }
+}
+function ensureCatalogSyncChannel_() {
+    if (catalogSyncChannelAttached_) return;
+    catalogSyncChannelAttached_ = true;
+    if (typeof BroadcastChannel === "function") {
+        try {
+            catalogSyncChannel_ = new BroadcastChannel("gpsepedia-catalog-sync");
+            catalogSyncChannel_.addEventListener("message", event => handleCatalogSyncMessage_(event && event.data));
+            return;
+        } catch (error) {
+            catalogSyncChannel_ = null;
+        }
+    }
+    if (typeof window !== "undefined" && window && typeof window.addEventListener === "function") {
+        window.addEventListener("storage", event => {
+            if (!event || event.key !== CATALOG_SYNC_SIGNAL_KEY || !event.newValue) return;
+            try { handleCatalogSyncMessage_(JSON.parse(event.newValue)); } catch (error) {}
+        });
+    }
+}
+function broadcastCatalogSync_(user) {
+    const userId = String(user && (user.ID || user.id) || "").trim();
+    if (!userId) return;
+    const message = { type: "catalog-updated", source: catalogTabId_, userId, timestamp: Date.now() };
+    ensureCatalogSyncChannel_();
+    try {
+        if (catalogSyncChannel_) catalogSyncChannel_.postMessage(message);
+        else if (typeof localStorage !== "undefined") localStorage.setItem(CATALOG_SYNC_SIGNAL_KEY, JSON.stringify(message));
+    } catch (error) {}
+}
 function ensureCatalogPollListeners_() {
     if (catalogPollListenersAttached_) return;
     catalogPollListenersAttached_ = true;
+    ensureCatalogSyncChannel_();
     if (typeof document !== "undefined" && document && typeof document.addEventListener === "function") {
         document.addEventListener("visibilitychange", () => {
             if (document.visibilityState === "hidden") clearCatalogPollTimer_();
@@ -149,6 +237,10 @@ async function runCatalogPoll_() {
         scheduleCatalogPoll_(5000);
         return;
     }
+    if (!tryAcquireCatalogPollLease_(user)) {
+        scheduleCatalogPoll_(catalogPollInterval_);
+        return;
+    }
     catalogPollInFlight_ = true;
     try {
         const synced = await loadInitialData(true, { silent: true, fromPoll: true });
@@ -159,6 +251,7 @@ async function runCatalogPoll_() {
         catalogPollInterval_ = Math.min(CATALOG_POLL_MAX_INTERVAL_MS, Math.max(CATALOG_POLL_INTERVAL_MS, catalogPollInterval_ * 2));
         console.warn("Falló la sincronización automática del catálogo:", error && error.message ? error.message : error);
     } finally {
+        releaseCatalogPollLease_(user);
         catalogPollInFlight_ = false;
         scheduleCatalogPoll_(catalogPollInterval_);
     }
@@ -316,6 +409,7 @@ export async function loadInitialData(forceRefresh = false, options = {}) {
     catalogLoadController_ = loadController;
     const isCurrentLoad = () => catalogLoadController_ === loadController && !loadController.signal.aborted;
     const currentUser = getState().currentUser;
+    ensureCatalogSyncChannel_();
     let catalogLoaded = false;
     let cachedCatalog = null;
     let cachedCursor = null;
@@ -441,6 +535,7 @@ export async function loadInitialData(forceRefresh = false, options = {}) {
         }
         if (!isCurrentLoad()) return;
         markCatalogSync_();
+        broadcastCatalogSync_(currentUser);
         catalogLoaded = true;
         if (!silent) setState({ catalogLoadStatus: 'ready', catalogLoadError: null });
 
