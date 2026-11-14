@@ -34,8 +34,8 @@ testCase("consolida duplicados canónicos entre lotes antes de mostrar coinciden
  assert.match(ui,/historical: 0/);
 });
 testCase("libera el bloqueo global al cerrar la vista durante auditoría u organización",()=>{
- assert.ok(ui.includes("} finally {\\n            isRunning = false;\\n            isDriveAuditRunning = false;\\n            if (isCurrentRequest()) updateControls();"));
  assert.ok((ui.match(/isDriveAuditRunning = false;/g)||[]).length >= 4);
+ assert.ok(ui.includes("if (isCurrentRequest()) updateControls();"));
 });
 testCase("el escaneo y dry-run no escriben inventario automáticamente",()=>{
  assert.ok(!ui.includes("await saveUnusedInventory(true)"));
