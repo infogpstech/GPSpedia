@@ -191,3 +191,9 @@
 - `Services/feedback.js`: `recordLike` publica el snapshot actualizado de Cortes tras confirmar el contador y liberar el lock. Los errores de publicación no revierten una reacción persistida y se registran en Logger.
 - `JS/Tests/CatalogChangeFeed.mjs`: añade un contrato para el productor `recordLike` y su manejo de fallos.
 - GP-CAT-01B permanece parcial; no se afirma sincronización completa ni se modifica el deployment de Apps Script.
+
+
+[2026-11-14] GP-CAT-01B — Validación del primer productor FEEDBACK
+- CI `43640695193`: 97 suites / 1,427 pruebas / 0 fallos; `CatalogChangeFeed.mjs`: 13/13 PASS.
+- El primer intento de CI detectó un escape incorrecto en una expresión regular del contrato de prueba; se corrigió en un commit separado sin reescribir historial y se repitieron las pruebas.
+- Pages `43640694382` estaba en espera al registrar esta nota; confirmar el resultado antes de cerrar la continuidad.

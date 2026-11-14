@@ -1422,5 +1422,5 @@ Este mecanismo de datos en vivo es independiente de la actualización de recurso
 
 - `Services/feedback.js`: después de que `handleRecordLike` confirma la escritura y libera su ScriptLock, el dispatcher vuelve a localizar el vehículo, construye el snapshot completo con `mapRowToObject` y publica un evento `upsert` de `cortes` en el feed autenticado.
 - La publicación está aislada: si falla el Coordinador, la reacción ya persistida conserva su respuesta exitosa y el error se registra en Logger. Los likes completados previamente no generan eventos repetidos.
-- `CatalogChangeFeed.mjs` añade un contrato para comprobar el orden de confirmación/publicación y el manejo de fallos del feed. Validación CI pendiente para este commit.
+- `CatalogChangeFeed.mjs` añade un contrato para comprobar el orden de confirmación/publicación y el manejo de fallos del feed. Validación CI `43640695193`: 97 suites / 1,427 pruebas / 0 fallos. Pages `43640694382` seguía en estado waiting al momento de registrar este checkpoint.
 - GP-CAT-01B sigue PARCIAL: faltan las demás rutas de escritura y el cliente IndexedDB/polling. No se ha desplegado Apps Script ni modificado ScriptProperties o datos productivos.

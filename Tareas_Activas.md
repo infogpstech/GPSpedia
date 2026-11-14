@@ -707,7 +707,7 @@ No marcar como completadas estas tareas hasta ejecutar las pruebas locales perti
 - `Services/SharedMutationClient.js`: métodos internos para publicar eventos y consultar el feed.
 - `Services/feedback.js`: endpoint `getCatalogChanges` autenticado contra ActiveSessions/Users; sin nueva interfaz.
 - `JS/Frontend/api-config.js`: acción enrutable a FEEDBACK; aún no se integra al arranque ni al sondeo del cliente.
-- `JS/Tests/CatalogChangeFeed.mjs`: 12/12 PASS; CI `43638952342`: 97 suites, 1,426 pruebas, 0 fallos.
+- `JS/Tests/CatalogChangeFeed.mjs`: 13/13 PASS; CI `43640695193`: 97 suites, 1,427 pruebas, 0 fallos.
 - Primer productor conectado: `FEEDBACK/recordLike` publica el snapshot completo de Cortes después de confirmar el contador y liberar el lock. El fallo del feed queda aislado y no invalida la reacción persistida.
 - **Limitación de este hito:** restan las demás rutas WRITE/FEEDBACK/ADMIN y el cliente IndexedDB; el feed no debe considerarse sincronización funcional para usuarios hasta completar esos productores y el consumidor.
 - No se añadió botón, panel, indicador ni sección visible.
