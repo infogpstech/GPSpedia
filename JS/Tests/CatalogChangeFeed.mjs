@@ -100,7 +100,7 @@ test("recordLike publica el snapshot de Cortes después de confirmar la escritur
 test("altas y ediciones de Tutoriales publican upsert exacto tras verificar fila e ID", () => {
     assert.match(feedbackSource,/function buildTutorialCatalogChange_\(reference\)[\s\S]*?findTutorialRow_\(sheet, reference, true\)[\s\S]*?collection: "tutoriales"[\s\S]*?operation: "upsert"/);
     assert.match(feedbackSource,/if \(action === "addTutorial" \|\| action === "updateTutorialItem"\)[\s\S]*?buildTutorialCatalogChange_\(tutorialId\)[\s\S]*?publishSharedCatalogChange_\("FEEDBACK", action, change\)/);
-    assert.match(feedbackSource,/if \(!\^tut-/);
+    assert.match(feedbackSource,/if \(!\/\^tut-/);
     assert.match(feedbackSource,/publishSharedCatalogChange_\("FEEDBACK", action, \{ operation: "reset" \}\)/);
 });
 test("WRITE y FEEDBACK publican reset solo después de mutaciones confirmadas", () => {
