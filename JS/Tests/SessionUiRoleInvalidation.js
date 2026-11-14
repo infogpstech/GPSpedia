@@ -52,6 +52,21 @@ function runSessionUiRoleInvalidationTests(sources) {
   assert(main.includes("window.state = state")&&main.includes("window.ui = ui"));
   assert(!/window\.ui\s*=\s*\{[^}]*SessionToken\s*:/.test(main));
  });
+ run("el contexto de rol reconoce sesiones AUTH heredadas con ID o id sin relajar token ni permisos",()=>{
+  const context=slice(ui,"function getUiSessionContext_(","function isCurrentUiSessionContext_");
+  assert(context.includes("user.ID || user.id"),"Debe aceptar las dos formas de identificador admitidas por AUTH.");
+  assert(context.includes("user.SessionToken"),"Debe seguir exigiendo token de sesión.");
+  assert(context.includes("normalizeUiRole_(user.Privilegios)"),"Debe normalizar el rol de la sesión autenticada.");
+ });
+ run("la tarjeta Agregar Tutorial se muestra solo a Desarrollador y el modal vuelve a validar el rol",()=>{
+  const render=slice(ui,"function mostrarTutorialesGrid()","function mostrarRelayGrid()");
+  assert(render.includes("getUiSessionContext_()?.role === \"desarrollador\""));
+  assert(render.includes("createCard.className = \"card card-create-tutorial\""));
+  assert(render.includes("grid.appendChild(createCard)"));
+  const modal=slice(ui,"export function openAddTutorialModal()","const SESSION_ABSOLUTE_MONTHS");
+  assert(modal.includes("getUiSessionContext_()?.role !== \"desarrollador\""));
+  assert(modal.includes("La sesión ya no tiene permisos para registrar tutoriales."));
+ });
  run("Inbox usa Privilegios normalizado y entrega el mismo rol a approve/reject",()=>{
   const f=slice(ui,"export function renderInboxDetail(","\nexport function ");
   assert(f.includes("const userRole = context.role"));
