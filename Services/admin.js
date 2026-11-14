@@ -3397,14 +3397,17 @@ function handleAddLogo(payload, logMessage) {
         catch (cleanupError) { markRecovery(cleanupError.message); }
         throw new Error("No se pudo bloquear la asignación de IDs de LogosMarca. Intente nuevamente.");
     }
+    let newRow = null, newId = null, lastColumn = 4, rowPrepared = false;
     try {
-        const lastRow = sheet.getLastRow(), newRow = lastRow + 1;
-        const lastColumn = Math.max(sheet.getLastColumn(), 4);
-        const newId = getNextLogoIdLocked_(sheet);
+        const lastRow = sheet.getLastRow();
+        newRow = lastRow + 1;
+        lastColumn = Math.max(sheet.getLastColumn(), 4);
+        newId = getNextLogoIdLocked_(sheet);
         if (lastRow > 1) {
             sheet.getRange(lastRow, 1, 1, lastColumn).copyTo(sheet.getRange(newRow, 1, 1, lastColumn));
             sheet.getRange(newRow, 2, 1, lastColumn - 1).clearContent();
         }
+        rowPrepared = true;
         sheet.getRange(newRow, 1).setValue(newId);
         sheet.getRange(newRow, 2).setValue(nombreMarca);
         sheet.getRange(newRow, 3).setValue(logoUrl);
@@ -3453,10 +3456,25 @@ function handleAddLogo(payload, logMessage) {
             markRecovery("La URL aparece en varias filas; se requiere reconciliación.");
             throw new Error("La URL del logotipo aparece en varias filas; el archivo se conservó para reconciliación.");
         }
+        let rowCleanupError = null;
+        if (rowPrepared && newRow && newRow <= sheet.getLastRow()) {
+            try {
+                sheet.getRange(newRow, 1, 1, lastColumn).clearContent();
+                SpreadsheetApp.flush();
+                const cleared = sheet.getRange(newRow, 1, 1, lastColumn).getValues()[0];
+                if (cleared.some(value => value !== "" && value !== null && value !== undefined)) {
+                    throw new Error("La fila parcial de LogosMarca no quedó vacía tras la compensación.");
+                }
+            } catch (cleanupError) { rowCleanupError = cleanupError; }
+        }
         try { trashUnlinkedFile(); }
         catch (cleanupError) {
-            markRecovery(cleanupError.message);
+            markRecovery(cleanupError.message + (rowCleanupError ? "; rowCleanup=" + rowCleanupError.message : ""));
             throw new Error(String(error && error.message || error) + " El archivo no vinculado quedó marcado para recuperación manual.");
+        }
+        if (rowCleanupError) {
+            markRecovery("La imagen se retiró, pero la fila parcial requiere limpieza: " + rowCleanupError.message);
+            throw new Error(String(error && error.message || error) + " La fila parcial requiere revisión manual.");
         }
         throw error;
     } finally {
