@@ -52,7 +52,11 @@ const LOGIN_REQUEST_TTL_MS = 24 * 60 * 60 * 1000;
 // ============================================================================
 // CONTRASEÑAS Y CONTROL DE INTENTOS DE INICIO DE SESIÓN
 // ============================================================================
-const PASSWORD_HASH_PREFIX = 'sha256$';
+const PASSWORD_HASH_PREFIX = 'pbkdf2-sha256$';
+const LEGACY_PASSWORD_HASH_PREFIX = 'sha256$';
+const PASSWORD_KDF_ITERATIONS = 12000;
+const PASSWORD_KDF_MIN_ITERATIONS = 1000;
+const PASSWORD_KDF_MAX_ITERATIONS = 200000;
 const LOGIN_MAX_ATTEMPTS = 5;
 const LOGIN_LOCKOUT_SECONDS = 15 * 60;
 
@@ -64,14 +68,43 @@ function digestToHex(bytes) {
     return bytes.map(byte => ((byte + 256) % 256).toString(16).padStart(2, '0')).join('');
 }
 
+function passwordHexToBytes_(hex) {
+    const value = String(hex || '');
+    if (!/^(?:[0-9a-f]{2})+$/i.test(value)) throw new Error('Salt de contraseña inválido.');
+    const bytes = [];
+    for (let i = 0; i < value.length; i += 2) {
+        const byte = parseInt(value.slice(i, i + 2), 16);
+        bytes.push(byte > 127 ? byte - 256 : byte);
+    }
+    return bytes;
+}
+
+// PBKDF2-HMAC-SHA256; el formato almacena versión, iteraciones, salt aleatorio y digest.
+function pbkdf2Sha256Hex_(password, saltHex, iterations) {
+    const rounds = Number(iterations);
+    if (!Number.isInteger(rounds) || rounds < PASSWORD_KDF_MIN_ITERATIONS || rounds > PASSWORD_KDF_MAX_ITERATIONS) {
+        throw new Error('Parámetro de coste PBKDF2 fuera de límites.');
+    }
+    const key = String(password);
+    const block = passwordHexToBytes_(saltHex).concat([0, 0, 0, 1]);
+    let u = Utilities.computeHmacSha256Signature(block, key, Utilities.Charset.UTF_8);
+    const result = u.map(byte => (byte + 256) % 256);
+    for (let round = 1; round < rounds; round++) {
+        u = Utilities.computeHmacSha256Signature(u, key, Utilities.Charset.UTF_8);
+        for (let i = 0; i < result.length; i++) result[i] ^= (u[i] + 256) % 256;
+    }
+    return digestToHex(result);
+}
+
 function createPasswordHash(password, enforceMinimumLength = true) {
     const normalizedPassword = normalizePassword(password);
     if (enforceMinimumLength && normalizedPassword.length < 8) {
         throw new Error('La contraseña debe tener al menos 8 caracteres después de quitar espacios al inicio y al final.');
     }
-    const salt = Utilities.getUuid().replace(/-/g, '');
-    const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, salt + ':' + normalizedPassword, Utilities.Charset.UTF_8);
-    return PASSWORD_HASH_PREFIX + salt + '$' + digestToHex(digest);
+    const salt = Utilities.getUuid().replace(/-/g, '').toLowerCase();
+    if (!/^[0-9a-f]{32}$/.test(salt)) throw new Error('No se pudo generar un salt aleatorio válido.');
+    const digest = pbkdf2Sha256Hex_(normalizedPassword, salt, PASSWORD_KDF_ITERATIONS);
+    return PASSWORD_HASH_PREFIX + PASSWORD_KDF_ITERATIONS + '$' + salt + '$' + digest;
 }
 
 function constantTimeEquals(left, right) {
@@ -86,11 +119,40 @@ function verifyStoredPassword(storedPassword, providedPassword) {
     const normalizedPassword = normalizePassword(providedPassword);
     if (stored.indexOf(PASSWORD_HASH_PREFIX) === 0) {
         const parts = stored.split('$');
-        if (parts.length !== 3 || !parts[1] || !/^[0-9a-f]{64}$/i.test(parts[2])) return { matches: false, legacy: false };
-        const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, parts[1] + ':' + normalizedPassword, Utilities.Charset.UTF_8);
-        return { matches: constantTimeEquals(digestToHex(digest), parts[2].toLowerCase()), legacy: false };
+        if (parts.length !== 4 || parts[0] !== 'pbkdf2-sha256' ||
+            !/^[0-9a-f]{32}$/i.test(parts[2]) || !/^[0-9a-f]{64}$/i.test(parts[3])) {
+            return { matches: false, legacy: false, needsRehash: false };
+        }
+        const iterations = Number(parts[1]);
+        if (!Number.isInteger(iterations) || iterations < PASSWORD_KDF_MIN_ITERATIONS || iterations > PASSWORD_KDF_MAX_ITERATIONS) {
+            return { matches: false, legacy: false, needsRehash: false };
+        }
+        const digest = pbkdf2Sha256Hex_(normalizedPassword, parts[2], iterations);
+        const matches = constantTimeEquals(digest, parts[3].toLowerCase());
+        return { matches, legacy: false, needsRehash: matches && iterations < PASSWORD_KDF_ITERATIONS };
     }
-    return { matches: normalizePassword(stored) === normalizedPassword, legacy: true };
+    if (stored.indexOf(LEGACY_PASSWORD_HASH_PREFIX) === 0) {
+        const parts = stored.split('$');
+        if (parts.length !== 3 || !/^[0-9a-f]{32}$/i.test(parts[1]) || !/^[0-9a-f]{64}$/i.test(parts[2])) {
+            return { matches: false, legacy: false, needsRehash: false };
+        }
+        const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, parts[1] + ':' + normalizedPassword, Utilities.Charset.UTF_8);
+        const matches = constantTimeEquals(digestToHex(digest), parts[2].toLowerCase());
+        return { matches, legacy: false, needsRehash: matches };
+    }
+    const matches = constantTimeEquals(stored, normalizedPassword);
+    return { matches, legacy: true, needsRehash: matches };
+}
+
+// Ejecutar desde el editor del proyecto AUTH en un entorno de prueba para calibrar
+// el coste real de Utilities.computeHmacSha256Signature; no lee ni modifica datos.
+function benchmarkPasswordKdf_() {
+    const salt = '00112233445566778899aabbccddeeff';
+    return [1000, 2500, 5000, 10000, PASSWORD_KDF_ITERATIONS].map(iterations => {
+        const started = Date.now();
+        pbkdf2Sha256Hex_('GPSpedia-KDF-benchmark-only', salt, iterations);
+        return { iterations, durationMs: Date.now() - started };
+    });
 }
 
 function getLoginAttemptCacheKey(username) {
@@ -843,7 +905,7 @@ function handleLogin(payload) {
                 invalidCredentials = true;
                 throw new Error('Credenciales inválidas.');
             }
-            if (currentPasswordCheck.legacy) {
+            if (currentPasswordCheck.needsRehash) {
                 userSheet.getRange(currentUserRows[0].rowIndex, COLS_USERS.Password)
                     .setValue(createPasswordHash(normalizedPassword, false));
             }
