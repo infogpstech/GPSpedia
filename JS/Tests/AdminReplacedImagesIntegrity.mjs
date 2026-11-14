@@ -433,7 +433,12 @@ check("La acción de migración coordina el lock, ejecuta el esquema y devuelve 
 
 check("La migración explícita queda protegida por lease y despachada por ADMIN",()=>{
     const source=readFileSync(new URL("../../Services/admin.js",import.meta.url),"utf8");
-    assert.ok(source.includes('"migrateReplacedImagesSchema"].includes(action)'));
+    const routerStart = source.indexOf("function isSharedMutationAction_(action) {");
+    const routerEnd = source.indexOf(String.fromCharCode(10) + "}", routerStart);
+    const mutationRouter = source.slice(routerStart, routerEnd);
+    assert.ok(routerStart >= 0 && routerEnd > routerStart);
+    assert.ok(mutationRouter.includes('"migrateReplacedImagesSchema"'));
+    assert.ok(mutationRouter.includes(".includes(action)"));
     assert.ok(source.includes("case 'migrateReplacedImagesSchema':"));
     assert.ok(source.includes("function handleMigrateReplacedImagesSchema"));
     const uiSource=ui;

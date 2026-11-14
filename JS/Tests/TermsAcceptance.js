@@ -122,7 +122,10 @@ test('el catálogo espera la aceptación y el renderizado completo se reanuda al
     assert.ok(acceptedAt >= 0 && resumeAt > acceptedAt && loadAt > resumeAt,
         'Tras persistir la aceptación debe reanudarse showApp antes de cargar el catálogo.');
     assert.ok(uiSource.includes("welcomeMsg.textContent = `Hola, ${displayName || 'Usuario'}`"));
-    assert.match(uiSource, /const userRole = normalizeUiRole_\(user && user\.Privilegios\)/);
+    assert.ok(uiSource.includes('function getUiSessionContext_(user = getState().currentUser)'));
+    assert.ok(uiSource.includes("const userId = String(user.ID || user.id || '').trim()"));
+    assert.ok(uiSource.includes("const sessionToken = String(user.SessionToken || '').trim()"));
+    assert.ok(uiSource.includes("const userRole = appContext ? appContext.role : ''"));
     assert.match(frontendAuthSource, /const appReady = handleLoginSuccess\(result\.user\)/);
     assert.match(frontendAuthSource, /if \(appReady\) loadInitialData\(\)/);
     assert.match(frontendAuthSource, /export async function loadInitialData\([^)]*\)/);

@@ -116,10 +116,16 @@ check("AUTH y USERS conservan jerarquía coherente para crear, modificar y elimi
  assert.ok(auth.includes("supervisor: role => role === 'tecnico'"));
  assert.ok(auth.includes("if (alreadyDeleted && requesterRole !== 'desarrollador')"));
 });
-check("Inbox admite los cinco roles y limita las consultas de otros roles a Desarrollador",()=>{
+check("Inbox admite los cinco roles y aplica la jerarquía de mensajes ordinarios",()=>{
  assert.ok(inbox.includes('INBOX_ACTIVE_ROLES_ = new Set(["desarrollador","jefe","supervisor","tecnico","tecnico_exterior"])'));
- assert.ok(inbox.includes('const type = actor.role === "desarrollador" ? "direct" : "developer_consult"'));
- assert.ok(inbox.includes('if (actor.role !== "desarrollador" && recipient.role !== "desarrollador")'));
+ assert.ok(inbox.includes('const INBOX_RECIPIENT_ROLE_POLICY_ = Object.freeze({'));
+ assert.ok(inbox.includes('jefe: new Set(["supervisor","tecnico","tecnico_exterior"])'));
+ assert.ok(inbox.includes('supervisor: new Set(["jefe"])'));
+ assert.ok(inbox.includes('tecnico: new Set(["supervisor"])'));
+ assert.ok(inbox.includes('tecnico_exterior: new Set(["supervisor"])'));
+ assert.ok(inbox.includes('const type = "direct";'));
+ assert.ok(inbox.includes('inboxAssertRecipientAllowed_(actor, recipient)'));
+ assert.doesNotMatch(inbox,/developer_consult/);
 });
 check("El benchmark PBKDF2 permanece exclusivo de Desarrollador",()=>{
  assert.ok(apiConfig.includes('normalizedRole !== "desarrollador"'));
