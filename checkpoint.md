@@ -545,3 +545,13 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - Se añadió `UserIdGenerator.mjs`: secuencia, duplicados case-insensitive, filas sin ID y filas plantilla vacías.
 - GitHub Actions `service-tests` sobre HEAD `217ad05818255cf4692bfd28e335a5b44130da3e`: **PASS**, 81 suites, 1,215 pruebas aprobadas, 0 fallos; `UserIdGenerator: 4/4 PASS`.
 - No se generaron IDs ni se modificó la Spreadsheet. La migración de registros existentes sigue condicionada a auditoría/dry-run Beta.
+
+## P2 — IDs de tutorial: canonicalización e idempotencia case-insensitive (2026-11-14)
+
+- `handleAddTutorial` normaliza el `operationId` a minúsculas antes de construir `tut-<operationId>`; los IDs nuevos tienen una representación canónica.
+- La detección de una fila existente y `findTutorialRow_` comparan el ID sin distinguir mayúsculas. Un reintento que use otra capitalización devuelve la fila original, conserva el ID histórico y no crea un duplicado.
+- Se añadieron pruebas para operationId uppercase y para reutilizar un ID histórico uppercase sin duplicar el tutorial.
+- Se incorporó `TutorialIntegrity.js` al runner CI; se corrigió la comparación entre objetos/arrays de realms distintos y ahora reporta fallos individuales.
+- Se sincronizó el fixture AUTH después de incorporar el endpoint de benchmark PBKDF2 y se ajustó su prueba para verificar duplicados activos sin invalidar al solicitante.
+- GitHub Actions `service-tests` sobre HEAD `2f85ef76d148487413904a71959acf36ddc74c22`: **PASS**, 83 suites, 1,250 pruebas aprobadas, 0 fallos. `TutorialIntegrity: 27/27 PASS`; `PasswordKdfBenchmark: 6/6 PASS`.
+- No se ejecutaron altas ni migraciones sobre Tutorial/Spreadsheet productiva.
