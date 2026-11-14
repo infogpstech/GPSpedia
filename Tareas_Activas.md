@@ -110,3 +110,18 @@ Simplificar la autenticación sin debilitar autorización; modernizar Inbox; end
 ## Continuidad inmediata
 
 Completar el paquete P0 sobre los contratos y llamadores existentes. Después presentar el diseño técnico concreto y ejecutar P1/P2 antes de rediseños que dependan de la matriz definitiva de roles.
+
+
+## Evidencia adicional de P0 — revisión de permisos y contratos (2026-11-14)
+
+- `Services/Auth.js` define `jefe` como alias de compatibilidad de `gefe`; ambos tienen límite de sesiones equivalente en la política actual. Para la matriz de permisos solicitada se tratarán como la misma categoría funcional, conservando ambos valores almacenados durante la transición.
+- `Services/feedback.js` valida token/usuario para acciones Inbox; las acciones de bandeja están registradas con lista de roles permitidos `null`, lo que permite a cualquier rol activo con sesión acceder a Inbox. Las acciones administrativas de feedback/video sí tienen listas explícitas.
+- `JS/Frontend/ui.js`: el botón de compartir del modal se crea para todos; el botón de imprimir también se crea para todos; el modo de edición del modal actualmente se habilita solo cuando el rol es `desarrollador`. La UI no coincide con el permiso solicitado para imprimir/editar de Supervisor, Jefe y Desarrollador.
+- `Services/write.js`: el registro de cortes ya obtiene opciones desde la hoja Relay y asigna IDs numéricos de vehículo en backend. Las acciones de mantenimiento de IDs de vehículo están restringidas a Desarrollador.
+- `Services/feedback.js`: tutoriales reciben IDs `tut-` vinculados a operationId y Problemas reciben IDs secuenciales `isue-`; la revisión de las hojas/fórmulas de Relay y de registros históricos aún está pendiente.
+- El flujo de login ya realiza conversión oportunista de texto plano a hash tras verificar correctamente la contraseña. Por tanto, la función ausente que reporta el usuario parece ser la migración administrativa explícita/batch y el cierre verificable del proceso, no la conversión al login.
+
+### Criterios de diseño que quedan fijados para paquetes posteriores
+- Una solicitud de negocio protegida debe autenticar token y rol dentro de su propio backend; eliminar la llamada previa separada `touchSession` no significa confiar en el navegador ni permitir acciones sin autorización.
+- La validación de token debe actualizar la actividad dentro de la misma operación cuando corresponda, respetando las ventanas de expiración y evitando un viaje adicional.
+- En el modal, compartir permanece permitido a todos; Supervisor, Jefe (incluyendo el alias histórico `Gefe`) y Desarrollador tendrán además imprimir y editar detalles. La matriz definitiva debe aplicarse también en backend.

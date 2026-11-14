@@ -1347,3 +1347,11 @@ GitHub Actions: 75 suites, 1,149 pruebas aprobadas, 0 fallos. Comprobaciones de 
 - Se actualizó `checkpoint.md` con la continuidad del trabajo y el estado P0 EN PROGRESO.
 - Auditoría preliminar: existe migración oportunista de contraseñas legacy a SHA-256 con salt al iniciar sesión; no se encontró aún migración por lotes. Usuarios nuevos ya reciben ID USR-####; vehículos tienen asignador backend y congelación de fórmulas; tutoriales y Problemas ya generan IDs backend. Queda auditar fórmulas heredadas y relays.
 - La política clientInteractionPolicy ya bloquea algunas acciones casuales, pero no puede impedir capturas de pantalla ni extracción de recursos. No se implementó ni desplegó código o migraciones productivas en esta etapa.
+
+
+2026-11-14 — Evidencia adicional de auditoría P0:
+- AUTH: `Jefe` está documentado en código como alias de compatibilidad de `Gefe`; se preservará compatibilidad al aplicar permisos.
+- Inbox: las acciones validan sesión backend y actualmente aceptan cualquier rol activo autenticado.
+- Modal de detalle: compartir e imprimir se renderizan para todos; edición in-modal está limitada al Desarrollador. La política debe ampliarse para Supervisor/Jefe y aplicarse también en backend.
+- IDs: ya existen generadores backend para usuarios, vehículos, tutoriales y Problemas. Falta inventariar fórmulas heredadas y el esquema de Relay antes de diseñar la migración completa.
+- Contraseñas: existe migración oportunista en login exitoso de texto plano a SHA-256 con salt; no se ha confirmado una herramienta de migración batch. No se ejecutaron escrituras productivas.

@@ -232,3 +232,12 @@ Rama autorizada: `GPSpedia2.2.5_work`. HEAD de inicio verificado: `c5453d6ff4b21
 
 ### Siguiente acción
 Completar P0 inspeccionando contratos de login, `touchSession`, middleware/handlers de cada servicio, Inbox, modal de compartir/imprimir/editar y esquemas de ID/formulas. No modificar datos productivos ni desplegar Apps Script durante la auditoría.
+
+
+### Evidencia adicional de auditoría P0 — 2026-11-14
+- `Services/Auth.js` confirma que `Jefe` es alias de compatibilidad de `Gefe`; conservar compatibilidad de ambos valores al aplicar la matriz RBAC.
+- `Services/feedback.js` valida sesión en acciones Inbox, pero no restringe la bandeja a roles administrativos.
+- En `ui.js`, compartir e imprimir aparecen actualmente para todos; edición in-modal solo para Desarrollador. Esto no satisface el permiso solicitado para imprimir/editar de Supervisor y Jefe.
+- Vehículos, usuarios, tutoriales y Problemas ya tienen mecanismos backend parciales de IDs; queda verificar fórmulas y referencias históricas, especialmente Relay.
+- La conversión de contraseña legacy ocurre al login correcto; falta determinar e implementar la utilidad explícita por lotes que el usuario reporta como ausente.
+- P0 continúa EN PROGRESO. No se modificó código funcional, hojas ni deployments durante esta auditoría.
