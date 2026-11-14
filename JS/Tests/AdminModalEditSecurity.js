@@ -21,14 +21,15 @@ function runAdminModalEditSecurityTests() {
         getSpreadsheet=()=>({getSheetByName:n=>n==="ActiveSessions"?dataSheet_(sessions):n==="Users"?dataSheet_(users):null});
     }
     try{
-        run_("Desarrollador y Jefe validan sesión vigente para el modal",()=>{
+        run_("Desarrollador, Jefe y Supervisor validan sesión vigente para el modal",()=>{
             session_("Desarrollador");assert_(assertModalEditSession({userId:"USR-T",sessionToken:"TOKEN-T"}).role==="Desarrollador");
             session_("Jefe");assert_(assertModalEditSession({userId:"USR-T",sessionToken:"TOKEN-T"}).role==="Jefe");
+            session_("Supervisor");assert_(assertModalEditSession({userId:"USR-T",sessionToken:"TOKEN-T"}).role==="Supervisor");
             session_("Gefe");expect_(()=>assertModalEditSession({userId:"USR-T",sessionToken:"TOKEN-T"}),"sesión no autorizada");
         });
-        run_("Jefe está permitido y los demás roles quedan excluidos",()=>{
-            session_("Jefe");assert_(assertModalEditSession({userId:"USR-T",sessionToken:"TOKEN-T"}).role==="Jefe");
-            ["Supervisor","Técnico","Invitado"].forEach(r=>{session_(r);expect_(()=>assertModalEditSession({userId:"USR-T",sessionToken:"TOKEN-T"}),"sesión no autorizada");});
+        run_("Solo los tres roles autorizados pueden editar; Técnico e Invitado quedan excluidos",()=>{
+            ["Desarrollador","Jefe","Supervisor"].forEach(r=>{session_(r);assert_(assertModalEditSession({userId:"USR-T",sessionToken:"TOKEN-T"}).role===r);});
+            ["Técnico","Invitado"].forEach(r=>{session_(r);expect_(()=>assertModalEditSession({userId:"USR-T",sessionToken:"TOKEN-T"}),"sesión no autorizada");});
         });
         run_("las demás acciones ADMIN siguen siendo exclusivas de Desarrollador",()=>{
             session_("Jefe");expect_(()=>assertDeveloperSession({userId:"USR-T",sessionToken:"TOKEN-T"}),"sesión no autorizada");
