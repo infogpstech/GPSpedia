@@ -1581,3 +1581,10 @@ Rama: GPSpedia2.2.5_work
 - FEEDBACK valida permisos en sugerencias/PyS; no se encontró validación ACL global en WRITE/ADMIN.
 - ACL reales de Drive pendientes de auditoría Beta; no se cambiaron permisos.
 ================================================================================
+
+================================================================================
+2026-11-14 — P2 PLAN DE MIGRACIÓN DE IDs
+- Creado PLAN_MIGRACION_IDS.md: inventario por entidad, snapshot, manifiesto, dry-run, lotes reanudables, verificación y rollback por huellas.
+- Se prohíbe renumerar IDs válidos y se bloquea Relay hasta conocer su esquema/escritor.
+- No se modificaron datos ni permisos productivos; motor y pruebas Beta pendientes.
+================================================================================
