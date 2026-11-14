@@ -86,14 +86,17 @@ const ROLE_REVOCATION_SHARED_PREFIX = "__role_revocation_pending__:";
 function getAdminSessionContext_(payload, allowedRoles){
  const id=String(payload&&payload.userId||"").trim(),token=String(payload&&payload.sessionToken||"").trim();if(!id||!token)throw new Error("Acceso denegado: sesión no autorizada.");
  const ss=getSpreadsheet(),sh=ss.getSheetByName("ActiveSessions"),uh=ss.getSheetByName("Users");if(!sh||!uh)throw new Error("Acceso denegado: sesión no autorizada.");
- const tokenMatches=sh.getDataRange().getValues().slice(1).filter(r=>String(r[2]||"").trim()===token);
- if(tokenMatches.length!==1||String(tokenMatches[0][0]||"").trim()!==id||getSessionExpirationStatus_(tokenMatches[0],new Date()).expired)throw new Error("Acceso denegado: sesión inválida, duplicada, cruzada o expirada.");
+ const sessionsData=sh.getDataRange().getValues();
+ const tokenMatches=sessionsData.slice(1).map((row,index)=>({row,rowIndex:index+2})).filter(item=>String(item.row[2]||"").trim()===token);
+ if(tokenMatches.length!==1||String(tokenMatches[0].row[0]||"").trim()!==id||getSessionExpirationStatus_(tokenMatches[0].row,new Date()).expired)throw new Error("Acceso denegado: sesión inválida, duplicada, cruzada o expirada.");
+ const sessionMatch=tokenMatches[0];
  const userMatches=uh.getDataRange().getValues().slice(1).filter(r=>String(r[0]||"").trim()===id);if(userMatches.length!==1)throw new Error("Acceso denegado: perfil de usuario ausente o ambiguo.");
  const u=userMatches[0];if(String(u[7]||"").startsWith(ROLE_REVOCATION_SHARED_PREFIX))throw new Error("Acceso no autorizado: existe una revocación de rol pendiente. Inicia sesión nuevamente cuando finalice.");
  const username=String(u[1]||"").trim();if(!username||username.startsWith("__deleted__:"))throw new Error("Acceso denegado: cuenta inactiva.");
  const rawRole=String(u[3]||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase(),role=rawRole;
  if(!Array.isArray(allowedRoles)||!allowedRoles.includes(role))throw new Error("Acceso denegado: sesión no autorizada.");
  const fullName=String(u[6]||"").trim(),displayRole=role==="desarrollador"?"Desarrollador":"Jefe";
+ sh.getRange(sessionMatch.rowIndex,6).setValue(new Date().toISOString());
  return{userId:id,role:displayRole,fullName,userName:fullName||username};
 }
 function assertDeveloperSession(payload){return getAdminSessionContext_(payload,["desarrollador"]);}
@@ -827,7 +830,19 @@ function doPost(e) {
     }
     if (!request || typeof request !== "object") return doPostInternal_(e);
     const action = String(request.action || "");
-    if (!isSharedMutationAction_(action)) return doPostInternal_(e);
+    if (!isSharedMutationAction_(action)) {
+        if (action === "ping") return doPostInternal_(e);
+        try {
+            return withSharedMutationLease_("ADMIN", "sessionActivity", function() {
+                return doPostInternal_(e);
+            });
+        } catch (error) {
+            return ContentService.createTextOutput(JSON.stringify({
+                status: "error",
+                message: error && error.message ? error.message : "La operación fue rechazada por el coordinador compartido."
+            })).setMimeType(ContentService.MimeType.TEXT);
+        }
+    }
 
     const payload = request.payload && typeof request.payload === "object" ? request.payload : {};
     const nestedToken = String(payload.__sharedMutationToken || "").trim();
