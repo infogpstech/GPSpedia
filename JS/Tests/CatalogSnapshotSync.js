@@ -1,11 +1,15 @@
 import assert from 'node:assert/strict';
 import {
     areCatalogCollectionsEqual,
+    applyCatalogChangesToSnapshot,
     compareCatalogSnapshots,
     getCatalog,
+    getCatalogSyncState,
     indexCatalogItemsById,
     isCompleteCatalogSnapshot,
-    saveCatalog
+    saveCatalog,
+    saveCatalogCursor,
+    saveCatalogWithCursor
 } from '../Frontend/offline.js';
 
 let passed = 0;
@@ -37,34 +41,30 @@ function installFakeIndexedDB() {
         objectStoreNames: { contains: name => stores.has(name) },
         createObjectStore(name) { stores.set(name, new Map()); return {}; },
         transaction() {
-            const transaction = {
-                oncomplete: null,
-                onerror: null,
-                onabort: null,
-                objectStore(name) {
-                    const store = stores.get(name);
-                    return {
-                        put(value, key) {
-                            const request = {};
-                            queueMicrotask(() => {
-                                store.set(key, structuredClone(value));
-                                request.result = key;
-                                if (request.onsuccess) request.onsuccess();
-                                if (typeof transaction.oncomplete === 'function') transaction.oncomplete();
-                            });
-                            return request;
-                        },
-                        get(key) {
-                            const request = {};
-                            queueMicrotask(() => {
-                                request.result = store.get(key);
-                                if (request.onsuccess) request.onsuccess();
-                                if (typeof transaction.oncomplete === 'function') transaction.oncomplete();
-                            });
-                            return request;
-                        }
-                    };
+            const transaction = { oncomplete: null, onerror: null, onabort: null, pending: 0, scheduled: false };
+            const completeIfReady = () => {
+                if (transaction.scheduled && transaction.pending === 0 && typeof transaction.oncomplete === 'function') {
+                    queueMicrotask(() => { if (transaction.pending === 0 && transaction.oncomplete) transaction.oncomplete(); });
                 }
+            };
+            transaction.objectStore = name => {
+                const store = stores.get(name);
+                const schedule = callback => {
+                    transaction.pending++;
+                    transaction.scheduled = true;
+                    const request = {};
+                    queueMicrotask(() => {
+                        try { callback(request); if (request.onsuccess) request.onsuccess(); }
+                        catch (error) { request.error = error; if (request.onerror) request.onerror(); transaction.onabort && transaction.onabort(); }
+                        transaction.pending--;
+                        completeIfReady();
+                    });
+                    return request;
+                };
+                return {
+                    put(value, key) { return schedule(request => { store.set(key, structuredClone(value)); request.result = key; }); },
+                    get(key) { return schedule(request => { request.result = structuredClone(store.get(key)); }); }
+                };
             };
             return transaction;
         }
@@ -188,9 +188,43 @@ async function runCatalogSnapshotSyncTests() {
         await assert.rejects(() => saveCatalog({ ...snapshot(), logos: null }), /instantánea completa/);
         assert.deepEqual(await getCatalog(), before);
     });
+    test('aplica upsert y delete de Cortes por ID sin alterar otras colecciones', () => {
+        const before = snapshot();
+        const result = applyCatalogChangesToSnapshot(before, [
+            { revision: 1, collection: 'cortes', recordId: 'C-1', operation: 'upsert', snapshot: { id: 'C-1', marca: 'Toyota actualizado' } },
+            { revision: 2, collection: 'cortes', recordId: 'C-2', operation: 'delete' },
+            { revision: 3, collection: 'cortes', recordId: 'C-3', operation: 'upsert', snapshot: { id: 'C-3', marca: 'Nissan' } }
+        ]);
+        assert.equal(result.resetRequired, false);
+        assert.deepEqual(result.snapshot.cortes, [{ id: 'C-1', marca: 'Toyota actualizado' }, { id: 'C-3', marca: 'Nissan' }]);
+        assert.deepEqual(result.snapshot.tutoriales, before.tutoriales);
+    });
+    test('reserva reset seguro para reset global y colecciones aún no soportadas', () => {
+        assert.equal(applyCatalogChangesToSnapshot(snapshot(), [{ revision: 1, collection: '*', operation: 'reset' }]).resetRequired, true);
+        assert.equal(applyCatalogChangesToSnapshot(snapshot(), [{ revision: 1, collection: 'pys', recordId: 'P-1', operation: 'upsert', snapshot: { id: 'P-1' } }]).resetRequired, true);
+    });
+    test('rechaza upsert de Corte con ID distinto al ID del evento', () => {
+        assert.throws(() => applyCatalogChangesToSnapshot(snapshot(), [
+            { revision: 1, collection: 'cortes', recordId: 'C-1', operation: 'upsert', snapshot: { id: 'C-2' } }
+        ]), /upsert de Corte inválido/);
+    });
+    await testAsync('snapshot y cursor se guardan y leen como estado sincronizado', async () => {
+        const current = snapshot();
+        await saveCatalogWithCursor(current, 12);
+        const saved = await getCatalogSyncState();
+        assert.deepEqual(saved.snapshot, current);
+        assert.equal(saved.cursor, 12);
+    });
+    await testAsync('actualizar cursor no sustituye la instantánea y rechaza valores inválidos', async () => {
+        const before = await getCatalog();
+        await saveCatalogCursor(13);
+        assert.deepEqual((await getCatalogSyncState()).snapshot, before);
+        assert.equal((await getCatalogSyncState()).cursor, 13);
+        await assert.rejects(() => saveCatalogCursor(-1), /cursor/);
+    });
 
-    console.log(`CatalogSnapshotSync: ${passed}/19 PASS`);
-    return { passed, total: 19 };
+    console.log(`CatalogSnapshotSync: ${passed}/24 PASS`);
+    return { passed, total: 24 };
 }
 
 try {
