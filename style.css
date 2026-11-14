@@ -2419,7 +2419,6 @@ body.dark-mode .terms-agreement-logo {
 }
 
 #dev-tools-modal .dev-tools-tabs:has(#dev-tab-diagnostics:focus-visible) .dev-tools-layout .dev-tab-link[for="dev-tab-diagnostics"],
-#dev-tools-modal .dev-tools-tabs:has(#dev-tab-backups:focus-visible) .dev-tools-layout .dev-tab-link[for="dev-tab-backups"],
 #dev-tools-modal .dev-tools-tabs:has(#dev-tab-database:focus-visible) .dev-tools-layout .dev-tab-link[for="dev-tab-database"],
 #dev-tools-modal .dev-tools-tabs:has(#dev-tab-images:focus-visible) .dev-tools-layout .dev-tab-link[for="dev-tab-images"],
 #dev-tools-modal .dev-tools-tabs:has(#dev-tab-system:focus-visible) .dev-tools-layout .dev-tab-link[for="dev-tab-system"] {
@@ -2438,7 +2437,6 @@ body.dark-mode .terms-agreement-logo {
 }
 
 #dev-tools-modal .dev-tools-tabs:has(#dev-tab-diagnostics:checked) .dev-tools-layout .dev-panel-diagnostics,
-#dev-tools-modal .dev-tools-tabs:has(#dev-tab-backups:checked) .dev-tools-layout .dev-panel-backups,
 #dev-tools-modal .dev-tools-tabs:has(#dev-tab-database:checked) .dev-tools-layout .dev-panel-database,
 #dev-tools-modal .dev-tools-tabs:has(#dev-tab-images:checked) .dev-tools-layout .dev-panel-images,
 #dev-tools-modal .dev-tools-tabs:has(#dev-tab-system:checked) .dev-tools-layout .dev-panel-system {
@@ -2446,7 +2444,6 @@ body.dark-mode .terms-agreement-logo {
 }
 
 #dev-tools-modal .dev-tools-tabs:has(#dev-tab-diagnostics:checked) .dev-tools-layout .dev-tab-link[for="dev-tab-diagnostics"],
-#dev-tools-modal .dev-tools-tabs:has(#dev-tab-backups:checked) .dev-tools-layout .dev-tab-link[for="dev-tab-backups"],
 #dev-tools-modal .dev-tools-tabs:has(#dev-tab-database:checked) .dev-tools-layout .dev-tab-link[for="dev-tab-database"],
 #dev-tools-modal .dev-tools-tabs:has(#dev-tab-images:checked) .dev-tools-layout .dev-tab-link[for="dev-tab-images"],
 #dev-tools-modal .dev-tools-tabs:has(#dev-tab-system:checked) .dev-tools-layout .dev-tab-link[for="dev-tab-system"] {
@@ -2802,7 +2799,6 @@ body.dark-mode #dev-tools-modal .dev-tools-sidebar {
 }
 
 #dev-tools-modal #dev-tab-diagnostics:checked ~ .dev-tools-layout .dev-tab-link[for="dev-tab-diagnostics"],
-#dev-tools-modal #dev-tab-backups:checked ~ .dev-tools-layout .dev-tab-link[for="dev-tab-backups"],
 #dev-tools-modal #dev-tab-database:checked ~ .dev-tools-layout .dev-tab-link[for="dev-tab-database"],
 #dev-tools-modal #dev-tab-images:checked ~ .dev-tools-layout .dev-tab-link[for="dev-tab-images"],
 #dev-tools-modal #dev-tab-system:checked ~ .dev-tools-layout .dev-tab-link[for="dev-tab-system"] {
@@ -2871,7 +2867,7 @@ body.dark-mode #dev-tools-modal .dev-tools-card {
 @media (max-width: 760px) {
     #dev-tools-modal .dev-tools-sidebar {
         display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 5px;
         overflow: visible;
         padding: 6px;
@@ -3395,6 +3391,36 @@ body.dark-mode #dev-tools-modal .dev-tools-card {
     font-size: 0.8rem;
 }
 
+
+#dev-tools-modal #clear-logs-option-select {
+    flex: 0 1 270px;
+    width: min(100%, 270px);
+    height: 38px;
+    min-height: 38px;
+    padding: 7px 10px;
+    font-size: 0.84rem;
+    line-height: 1.2;
+}
+@media (max-width: 520px) {
+    #dev-tools-modal #clear-logs-option-select { flex: 1 1 100%; width: 100%; }
+}
+
+.replaced-images-list .replaced-images-schema-migrate {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    grid-column: 1 / -1;
+    justify-self: center;
+    align-self: center;
+    width: min(100%, 220px);
+    min-width: 150px;
+    min-height: 38px;
+    margin: 0 auto 8px;
+    padding: 8px 14px;
+    font-size: 0.86rem;
+    line-height: 1.2;
+    border-radius: 8px;
+}
 
 /* Listas enriquecidas: cada lista conserva su propio marcador. */
 .rich-editor-toolbar {

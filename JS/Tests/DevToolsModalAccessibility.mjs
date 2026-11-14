@@ -102,17 +102,17 @@ test('el botón y el encabezado conservan foco visible en ambos temas', () => {
 });
 
 
-test('las cinco opciones usan un único grupo nativo de radios con etiquetas asociadas', () => {
+test('las cuatro opciones usan un único grupo nativo de radios con etiquetas asociadas', () => {
     const tabsStart = html.indexOf('<div class="dev-tools-tabs"');
     const tabsEnd = html.indexOf('<div class="dev-tools-panels">', tabsStart);
     const tabs = html.slice(tabsStart, tabsEnd);
     assert.ok(tabs.includes('<fieldset class="dev-tools-tab-options">'));
     assert.ok(tabs.includes('<legend>Secciones del panel de desarrollador</legend>'));
-    for (const id of ['diagnostics', 'backups', 'database', 'images', 'system']) {
+    for (const id of ['diagnostics', 'database', 'images', 'system']) {
         assert.ok(tabs.includes('id="dev-tab-' + id + '" aria-controls="dev-panel-' + id + '"'));
         assert.ok(tabs.includes('for="dev-tab-' + id + '"'));
     }
-    assert.equal((tabs.match(/type="radio" name="dev-tools-section"/g) || []).length, 5);
+    assert.equal((tabs.match(/type="radio" name="dev-tools-section"/g) || []).length, 4);
     assert.equal((tabs.match(/checked>/g) || []).length, 1);
 });
 test('el grupo nativo tiene leyenda y queda separado del contenido de los paneles', () => {
@@ -138,10 +138,34 @@ test('no mezcla roles tab/tablist/tabpanel con controles radio nativos', () => {
     assert.ok(tabs.includes('<fieldset class="dev-tools-tab-options">'));
     assert.ok(tabs.includes('type="radio" name="dev-tools-section"'));
 });
-test('los selectores CSS conservan visibilidad y foco para las cinco opciones', () => {
+test('los selectores CSS conservan visibilidad y foco para las cuatro opciones', () => {
     for (const id of ['diagnostics', 'backups', 'database', 'images', 'system']) {
         assert.ok(css.includes('.dev-tools-tabs:has(#dev-tab-' + id + ':checked)'));
         assert.ok(css.includes('.dev-tools-tabs:has(#dev-tab-' + id + ':focus-visible)'));
     }
+});
+test('Respaldos y Base de datos comparten una sola pestaña', () => {
+    const tabsStart = html.indexOf('<div class="dev-tools-tabs"');
+    const tabsEnd = html.indexOf('<div class="dev-tools-panels">', tabsStart);
+    const tabs = html.slice(tabsStart, tabsEnd);
+    assert.doesNotMatch(tabs, /dev-tab-backups|dev-panel-backups/);
+    const databaseStart = html.indexOf('<section id="dev-panel-database"');
+    const imagesStart = html.indexOf('<!-- Imágenes y Drive -->', databaseStart);
+    const databasePanel = html.slice(databaseStart, imagesStart);
+    assert.ok(databasePanel.includes('id="backup-management-panel"'));
+    assert.ok(databasePanel.includes('btn-admin-backup-db'));
+    assert.ok(databasePanel.includes('btn-admin-restore-db'));
+    assert.match(databasePanel, /Base de datos y respaldos/);
+});
+test('Migrar esquema y selector de limpieza conservan dimensiones compactas', () => {
+    assert.match(ui, /migrateButton\.className = "btn btn-primary replaced-images-schema-migrate"/);
+    assert.match(css, /\.replaced-images-schema-migrate\s*\{[^}]*min-height:\s*38px/);
+    assert.match(html, /id="clear-logs-option-select" class="dev-input dev-control-compact"/);
+    assert.match(css, /#dev-tools-modal #clear-logs-option-select\s*\{[^}]*height:\s*38px/);
+    assert.match(css, /grid-template-columns:\s*repeat\(4,\s*minmax\(0,\s*1fr\)\)/);
+});
+test('las limpiezas destructivas mantienen confirmación explícita', () => {
+    assert.match(ui, /const confirmation = "Se ejecutarán exclusivamente estas operaciones:/);
+    assert.match(ui, /if \(!confirm\(confirmation\)\) return/);
 });
 console.log('DevToolsModalAccessibility: ' + passed + '/' + passed + ' PASS');

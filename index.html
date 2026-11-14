@@ -263,7 +263,6 @@
             <fieldset class="dev-tools-tab-options">
                 <legend>Secciones del panel de desarrollador</legend>
             <input class="dev-tab-radio" type="radio" name="dev-tools-section" id="dev-tab-diagnostics" aria-controls="dev-panel-diagnostics" checked>
-            <input class="dev-tab-radio" type="radio" name="dev-tools-section" id="dev-tab-backups" aria-controls="dev-panel-backups">
             <input class="dev-tab-radio" type="radio" name="dev-tools-section" id="dev-tab-database" aria-controls="dev-panel-database">
             <input class="dev-tab-radio" type="radio" name="dev-tools-section" id="dev-tab-images" aria-controls="dev-panel-images">
             <input class="dev-tab-radio" type="radio" name="dev-tools-section" id="dev-tab-system" aria-controls="dev-panel-system">
@@ -273,9 +272,6 @@
                 <div class="dev-tools-sidebar">
                     <label class="dev-tab-link" for="dev-tab-diagnostics" title="Diagnóstico">
                         <i class="fa-solid fa-stethoscope"></i><span>Diagnóstico</span>
-                    </label>
-                    <label class="dev-tab-link" for="dev-tab-backups" title="Respaldos">
-                        <i class="fa-solid fa-shield-halved"></i><span>Respaldos</span>
                     </label>
                     <label class="dev-tab-link" for="dev-tab-database" title="Base de datos">
                         <i class="fa-solid fa-database"></i><span>Base de datos</span>
@@ -317,33 +313,20 @@
                         </div>
                     </section>
 
-                    <!-- Respaldos: acceso secundario a las herramientas ubicadas en Base de datos -->
-                    <section id="dev-panel-backups" class="dev-tab-panel dev-panel-backups" role="region" aria-labelledby="dev-panel-title-backups">
-                        <div class="dev-panel-heading">
-                            <h3 id="dev-panel-title-backups"><i class="fa-solid fa-shield-halved"></i> Respaldos y restauración</h3>
-                            <p>Las operaciones de respaldo y restauración se administran desde «Base de datos» mediante un único campo compartido.</p>
-                        </div>
-                        <div class="dev-card dev-tools-card">
-                            <strong><i class="fa-solid fa-database"></i> Herramientas centralizadas</strong>
-                            <p>Para crear un respaldo o restaurar una Spreadsheet o carpeta de Drive, abre la sección «Base de datos». Allí encontrarás las cuatro operaciones y el campo compartido para los enlaces.</p>
-                            <label class="btn btn-primary dev-action-full" for="dev-tab-database"><i class="fa-solid fa-arrow-right-to-bracket"></i> Ir a Base de datos</label>
-                        </div>
-                    </section>
-
                     <!-- Base de datos -->
                     <section id="dev-panel-database" class="dev-tab-panel dev-panel-database" role="region" aria-labelledby="dev-panel-title-database">
                         <div class="dev-panel-heading">
-                            <h3 id="dev-panel-title-database"><i class="fa-solid fa-database"></i> Base de datos</h3>
-                            <p>Herramientas de organización, diagnóstico y mantenimiento de registros.</p>
+                            <h3 id="dev-panel-title-database"><i class="fa-solid fa-database"></i> Base de datos y respaldos</h3>
+                            <p>Respaldos, migraciones y mantenimiento de registros.</p>
                         </div>
 
                         <div id="backup-management-panel" class="dev-card dev-tools-card">
                             <strong><i class="fa-solid fa-shield-halved"></i> Respaldos y restauración</strong>
-                            <p>Utiliza este mismo campo para consultar el enlace del último respaldo o introducir el enlace completo que deseas restaurar.</p>
+                            <p>El campo muestra el último respaldo o recibe el enlace que deseas restaurar.</p>
                             <div class="dev-backup-resource-field">
                                 <label for="backup-resource-input">Enlace completo del respaldo</label>
                                 <input type="text" id="backup-resource-input" class="dev-input" placeholder="Enlace de Spreadsheet o carpeta de Drive" autocomplete="off" spellcheck="false" aria-describedby="backup-resource-hint">
-                                <p id="backup-resource-hint" class="dev-empty-state" aria-live="polite">Selecciona una operación. El campo acepta enlaces completos de Spreadsheet o de carpetas de Drive.</p>
+                                <p id="backup-resource-hint" class="dev-empty-state" aria-live="polite">Acepta enlaces de Spreadsheet o carpetas de Drive.</p>
                             </div>
                             <div class="dev-action-row">
                                 <button type="button" id="btn-admin-backup-db" class="btn btn-primary"><i class="fa-solid fa-database"></i> Crear respaldo de Spreadsheet</button>
@@ -362,7 +345,7 @@
 
                         <div class="dev-card dev-tools-card">
                             <strong><i class="fa-solid fa-right-left"></i> Migración de VIN e idempotencia</strong>
-                            <p>Genera primero un respaldo de Spreadsheet desde la tarjeta superior. Después ejecuta la simulación para revisar cuántos identificadores se trasladarán y cuál será la hoja de destino. La confirmación solo se habilita con un respaldo verificado y una simulación correcta.</p>
+                            <p>Primero crea un respaldo verificado. Después simula el traslado; la confirmación se habilita solo si ambos pasos son correctos.</p>
                             <div class="dev-action-row">
                                 <button type="button" id="btn-admin-preview-vin-migration" class="btn btn-secondary" disabled><i class="fa-solid fa-magnifying-glass"></i> Simular migración</button>
                                 <button type="button" id="btn-admin-confirm-vin-migration" class="btn btn-warning" disabled><i class="fa-solid fa-database"></i> Confirmar migración</button>
@@ -372,7 +355,7 @@
 
                         <div class="dev-card dev-tools-card">
                             <strong><i class="fa-solid fa-barcode"></i> Motor de firmas diferenciales de VIN</strong>
-                            <p>Selecciona una o ambas operaciones. Si seleccionas las dos, se ejecutarán por separado y en orden.</p>
+                            <p>Marca las operaciones que deseas ejecutar. Si eliges ambas, se procesan por separado.</p>
                             <div class="dev-maintenance-options">
                                 <label class="dev-maintenance-option" for="recalculate-vin-signatures-checkbox">
                                     <input type="checkbox" id="recalculate-vin-signatures-checkbox">
@@ -406,18 +389,18 @@
 
                         <div class="dev-card dev-tools-card">
                             <strong><i class="fa-solid fa-broom"></i> Limpieza de registros</strong>
-                            <p>Selecciona una o ambas fuentes. Solo se ejecutarán las opciones marcadas.</p>
+                            <p>Marca las fuentes que deseas limpiar. Solo se ejecutarán las seleccionadas.</p>
                             <div class="dev-maintenance-options">
                                 <label class="dev-maintenance-option" for="clear-activity-logs-checkbox">
                                     <input type="checkbox" id="clear-activity-logs-checkbox">
                                     <span class="dev-maintenance-option-copy">
                                         <strong>Actividad de usuarios</strong>
-                                        <span>Limpiar registros de la hoja ActividadUsuario.</span>
+                                        <span>Limpiar registros de ActividadUsuario.</span>
                                     </span>
                                 </label>
                                 <div class="dev-maintenance-retention">
-                                    <label for="clear-logs-option-select">Alcance de ActividadUsuario</label>
-                                    <select id="clear-logs-option-select" class="dev-input">
+                                    <label for="clear-logs-option-select">Conservar registros</label>
+                                    <select id="clear-logs-option-select" class="dev-input dev-control-compact">
                                         <option value="week">Conservar los últimos 7 días</option>
                                         <option value="all">Limpiar todos los registros (conservar encabezados)</option>
                                     </select>
@@ -426,7 +409,7 @@
                                     <input type="checkbox" id="clear-sensitive-logs-checkbox">
                                     <span class="dev-maintenance-option-copy">
                                         <strong>Registro de Logs</strong>
-                                        <span>Retirar únicamente los registros que contienen datos confidenciales; conservar los demás registros y encabezados.</span>
+                                        <span>Retirar solo registros con datos confidenciales; conservar los demás y los encabezados.</span>
                                     </span>
                                 </label>
                             </div>
@@ -438,7 +421,7 @@
 
                         <div class="dev-card dev-tools-card">
                             <strong><i class="fa-solid fa-eye-slash"></i> Administración de cortes</strong>
-                            <button id="btn-admin-add-silent-cut" class="btn btn-danger dev-action-full"><i class="fa-solid fa-eye-slash"></i> Agregar corte silenciosamente (Panel Administrativo)</button>
+                            <button id="btn-admin-add-silent-cut" class="btn btn-danger dev-action-full"><i class="fa-solid fa-eye-slash"></i> Agregar corte en modo silencioso</button>
                         </div>
                     </section>
 
@@ -446,13 +429,13 @@
                     <section id="dev-panel-images" class="dev-tab-panel dev-panel-images" role="region" aria-labelledby="dev-panel-title-images">
                         <div class="dev-panel-heading">
                             <h3 id="dev-panel-title-images"><i class="fa-solid fa-images"></i> Imágenes y Google Drive</h3>
-                            <p>Organiza archivos, administra logotipos y revisa el historial de imágenes.</p>
+                            <p>Organiza imágenes, logotipos e historial de Drive.</p>
                         </div>
 
 
                         <div class="dev-card dev-tools-card">
                             <strong><i class="fa-brands fa-google-drive"></i> Monitor global de almacenamiento de Google Drive</strong>
-                            <p id="drive-storage-monitor-status" aria-live="polite">Consulta pendiente. El uso corresponde a todo Drive, no a la carpeta «Cortes». La cuota puede compartirse con otros servicios de Google.</p>
+                            <p id="drive-storage-monitor-status" aria-live="polite">Consulta pendiente. Muestra el uso global de Drive, no solo de la carpeta «Cortes».</p>
                             <div class="dev-action-row">
                                 <span>Usado en Drive: <strong id="drive-storage-used">No disponible</strong></span>
                                 <span>Uso total de la cuota: <strong id="drive-storage-account-used">No disponible</strong></span>
@@ -465,8 +448,8 @@
 
                         <div class="dev-card dev-tools-card">
                             <strong><i class="fa-solid fa-images"></i> Organización de imágenes</strong>
-                            <button id="btn-admin-normalize-images" class="btn btn-warning dev-action-full"><i class="fa-solid fa-images"></i> Normalizar nomenclatura y deduplicar imágenes en base de datos</button>
-                            <button id="btn-admin-organize-primary-images" class="btn btn-primary dev-action-full"><i class="fa-solid fa-folder-tree"></i> Organizar únicamente imágenes principales de vehículos</button>
+                            <button id="btn-admin-normalize-images" class="btn btn-warning dev-action-full"><i class="fa-solid fa-images"></i> Normalizar nombres y quitar duplicados</button>
+                            <button id="btn-admin-organize-primary-images" class="btn btn-primary dev-action-full"><i class="fa-solid fa-folder-tree"></i> Organizar imágenes principales de vehículos</button>
                             <button id="btn-admin-restore-trash" class="btn btn-warning dev-action-full" style="display: none;"><i class="fa-solid fa-trash-arrow-up"></i> Saneamiento y recuperación exhaustiva de imágenes en papelera</button>
                         </div>
 
@@ -484,8 +467,8 @@
                         <div class="dev-card dev-tools-card">
                             <strong><i class="fa-solid fa-clock-rotate-left"></i> Inventario e historial de imágenes</strong>
                             <div class="dev-action-row">
-                                <button type="button" id="btn-admin-view-replaced-images" class="btn btn-primary"><i class="fa-solid fa-images"></i> Consultar Inventario e Historial</button>
-                                <button type="button" id="btn-admin-audit-drive-images" class="btn btn-secondary"><i class="fa-brands fa-google-drive"></i> Auditar Árbol «Cortes»</button>
+                                <button type="button" id="btn-admin-view-replaced-images" class="btn btn-primary"><i class="fa-solid fa-images"></i> Abrir inventario e historial</button>
+                                <button type="button" id="btn-admin-audit-drive-images" class="btn btn-secondary"><i class="fa-brands fa-google-drive"></i> Auditar carpeta «Cortes»</button>
                             </div>
                         </div>
                     </section>
@@ -494,12 +477,12 @@
                     <section id="dev-panel-system" class="dev-tab-panel dev-panel-system" role="region" aria-labelledby="dev-panel-title-system">
                         <div class="dev-panel-heading">
                             <h3 id="dev-panel-title-system"><i class="fa-solid fa-gears"></i> Sistema</h3>
-                            <p>Herramientas que afectan el almacenamiento local de esta instalación.</p>
+                            <p>Preferencias y almacenamiento local de esta instalación.</p>
                         </div>
 
                         <div class="dev-card dev-tools-card">
                             <strong><i class="fa-solid fa-text-height"></i> Formato de texto enriquecido</strong>
-                            <p>Define qué formatos pueden utilizar los campos descriptivos. La preferencia se guarda únicamente en este navegador; el modo estricto es el predeterminado.</p>
+                            <p>Configura el formato de los campos descriptivos. La preferencia se guarda en este navegador.</p>
                             <label for="rich-text-mode-select">Modo de formato</label>
                             <select id="rich-text-mode-select" class="dev-input">
                                 <option value="strict">Estricto / Liviano (recomendado)</option>
@@ -510,8 +493,8 @@
 
                         <div class="dev-card dev-tools-card">
                             <strong><i class="fa-solid fa-database"></i> Caché local del cliente</strong>
-                            <p class="dev-warning-copy">Esta acción elimina la caché local de IndexedDB/Storage y recarga la aplicación.</p>
-                            <button id="btn-admin-clear-client-cache" class="btn btn-danger dev-action-full"><i class="fa-solid fa-database"></i> Vaciar Caché Local de Cliente (IndexedDB/Storage) y Recargar</button>
+                            <p class="dev-warning-copy">Elimina la caché local de IndexedDB y Storage; después recarga la aplicación.</p>
+                            <button id="btn-admin-clear-client-cache" class="btn btn-danger dev-action-full"><i class="fa-solid fa-database"></i> Vaciar caché local y recargar</button>
                         </div>
                     </section>
                 </div>
@@ -527,7 +510,7 @@
                 </div>
                 <div class="dev-terminal-row">
                     <span class="dev-terminal-prompt">&gt;</span>
-                    <input type="text" id="dev-terminal-input" placeholder="Comando (ej: dir, cd Subcarpeta, cd .., mkdir Pruebas, tree)..." class="dev-input" aria-label="Comando de terminal">
+                    <input type="text" id="dev-terminal-input" placeholder="Comando (dir, cd, mkdir, tree)..." class="dev-input" aria-label="Comando de terminal">
                     <button id="btn-terminal-send" class="btn btn-primary"><i class="fa-solid fa-terminal"></i> Ejecutar</button>
                 </div>
                 <div id="dev-progress-container" class="dev-progress-container">

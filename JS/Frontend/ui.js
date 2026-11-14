@@ -6726,7 +6726,7 @@ export async function openReplacedImagesModal() {
             if (schemaStatus === "migration_required" || schemaStatus === "not_initialized") {
                 const migrateButton = document.createElement("button");
                 migrateButton.type = "button";
-                migrateButton.className = "btn btn-primary";
+                migrateButton.className = "btn btn-primary replaced-images-schema-migrate";
                 migrateButton.textContent = schemaStatus === "not_initialized" ? "Inicializar historial" : "Migrar esquema";
                 migrateButton.onclick = async () => {
                     if (!isCurrentRequest()) return;
