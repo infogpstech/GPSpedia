@@ -66,12 +66,16 @@ testCase("restaura el reporte guardado al reabrir y solo reanuda estados parcial
  assert.ok(ui.includes("await saveProgress(\"running\")"));
  assert.ok(!ui.includes("saveProgress(nextBatchIndex === totalBatches ? \"complete\" : \"running\")"));
 });
-testCase("la firma se calcula dentro del try y cualquier fallo libera los bloqueos",()=>{
+testCase("la firma segura está protegida y cualquier fallo libera los bloqueos",()=>{
+ const helperStart=ui.indexOf("const createCortesImageFileSignature_ = async");
+ const helperEnd=ui.indexOf("const restoreCortesReconciliationState_",helperStart);
+ const helper=ui.slice(helperStart,helperEnd);
  const start=ui.indexOf("const runCortesReconciliation = async () => {");
  const end=ui.indexOf("\n    if (saveInventoryButton)",start);
  const fn=ui.slice(start,end);
- assert.ok(fn.indexOf("try {") < fn.indexOf("globalThis.crypto.subtle.digest"));
- assert.ok(fn.includes("if (!globalThis.crypto || !globalThis.crypto.subtle)"));
+ assert.ok(helper.includes("globalThis.crypto.subtle.digest"));
+ assert.ok(helper.includes("if (!globalThis.crypto || !globalThis.crypto.subtle)"));
+ assert.ok(fn.indexOf("try {") < fn.indexOf("createCortesImageFileSignature_(imageFiles)"));
  assert.match(fn,/if \(fileSignature\) \{\s+try \{ await saveProgress\("partial"\);/);
  assert.match(fn,/\} finally \{\s+isReconciling = false;\s+isRunning = false;\s+isDriveAuditRunning = false;/);
 });

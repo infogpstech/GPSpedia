@@ -1788,3 +1788,9 @@ Rama: GPSpedia2.2.5_work
 2026-11-14 — GP-IMG-DATA-01 ALINEAR LITERAL DE TEST DE RESTAURACION
 - Ajustada capitalización del literal esperado en la prueba estática de recuperación del reporte.
 ================================================================================
+
+
+================================================================================
+2026-11-14 — GP-IMG-DATA-01 ACTUALIZAR TEST DEL HELPER DE FIRMA
+- La regresión valida el helper compartido de SHA-256 y la llamada protegida desde la simulación tras extraer el cálculo para restauración del reporte.
+================================================================================

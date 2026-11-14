@@ -832,3 +832,9 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 ## GP-IMG-DATA-01 — Ajuste de texto en prueba de restauración (2026-11-14)
 
 - CI run 43614515817 falló por diferencia de capitalización en el literal del test: la UI presenta «pulsa Conciliar» en minúscula después de un punto y coma. Se alineó la aserción con el texto real; no se modificó la UI.
+
+
+## GP-IMG-DATA-01 — Actualizar prueba tras extraer helper de firma (2026-11-14)
+
+- CI run 43614576309 encontró que la regresión de firma seguía inspeccionando el cuerpo de `runCortesReconciliation`, aunque el cálculo SHA-256 se extrajo correctamente a `createCortesImageFileSignature_` para reutilizarlo al restaurar el reporte.
+- La prueba ahora verifica la disponibilidad de Web Crypto en el helper y que su llamada ocurra dentro del `try/finally` de la simulación; se mantienen las comprobaciones de guardado parcial y liberación de bloqueos.
