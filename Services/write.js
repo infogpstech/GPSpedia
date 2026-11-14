@@ -1144,7 +1144,7 @@ function persistSupplementaryInfoValues_(sheet,row,original,updated){
  try{range.setValues([updated]);SpreadsheetApp.flush();const saved=range.getValues()[0];if(!updated.every((v,i)=>String(saved[i]==null?"":saved[i])===String(v==null?"":v)))throw Error("La lectura posterior no coincide.");return true;}
  catch(e){let rollback="";try{range.setValues([original]);SpreadsheetApp.flush();}catch(r){rollback=" La reversión automática también falló: "+String(r&&r.message||r);}throw createSupplementaryInfoError_("SUPPLEMENTARY_PERSISTENCE_FAILED","No se pudo confirmar la escritura de la información suplementaria."+rollback);}
 }
-const SUPPLEMENTARY_INFO_ALLOWED_ROLES_ = Object.freeze(["desarrollador", "gefe", "jefe", "supervisor", "tecnico", "tecnico_exterior"]);
+const SUPPLEMENTARY_INFO_ALLOWED_ROLES_ = Object.freeze(["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"]);
 function handleAddSupplementaryInfo(payload){
  getAuthenticatedCollaborator(payload, SUPPLEMENTARY_INFO_ALLOWED_ROLES_);
  const lock=LockService.getScriptLock();try{lock.waitLock(30000);}catch(e){throw createSupplementaryInfoError_("SUPPLEMENTARY_LOCK_FAILED","No se pudo bloquear el registro de información suplementaria. Intente nuevamente.");}
