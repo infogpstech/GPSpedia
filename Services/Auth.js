@@ -2158,7 +2158,9 @@ function handleAcceptTerms(payload) {
         ensureTermsAcceptanceColumn_(usersSheet);
         const userCell = usersSheet.getRange(userMatches[0].rowIndex, COLS_USERS.TermsAcceptance);
         const acceptanceStore = parseDeviceTermsAcceptanceStore_(userCell.getValue());
-        const currentAcceptance = parseTermsAcceptance_(acceptanceStore.devices[deviceId] || null);
+        const currentAcceptance = acceptanceStore.devices[deviceId]
+            ? parseTermsAcceptance_(JSON.stringify(acceptanceStore.devices[deviceId]))
+            : parseTermsAcceptance_(null);
         if (currentAcceptance.status === 'accepted' && currentAcceptance.version === TERMS_CURRENT_VERSION) {
             return { status: 'success', accepted: true, alreadyAccepted: true, termsAcceptance: currentAcceptance };
         }
