@@ -1524,3 +1524,11 @@ Rama: GPSpedia2.2.5_work
 - CI PASS: 80 suites; 1,210 pruebas aprobadas; 0 fallos.
 - Pendiente: auditoría de URLs públicas y permisos reales de hosting/Drive; la política de navegador es disuasoria y no bloquea extracción técnica.
 ================================================================================
+
+================================================================================
+2026-11-14 — P5 EVALUACIÓN DE CAPTURAS WEB/PWA
+- Documentados límites de APIs web: no hay evento fiable para detectar o bloquear capturas nativas; getDisplayMedia es compartición iniciada por el usuario.
+- FLAG_SECURE corresponde a Android nativo y no está disponible para una PWA web.
+- No se añadió marca de agua ni ocultación por blur/visibilitychange: no impiden capturas y podrían degradar la lectura de diagramas.
+- README recomienda recursos privados y entrega autenticada/temporal cuando se requiera confidencialidad real.
+================================================================================
