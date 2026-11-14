@@ -1,6 +1,7 @@
 import { readFileSync, existsSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { createOverlayHistoryManager, overlayHistoryStateKey } from '../Frontend/overlayHistory.js';
+import { getOrCreateTermsDeviceId, getDeviceTermsAcceptance, saveDeviceTermsAcceptance } from '../Frontend/termsDeviceAcceptance.js';
 
 const root = new URL('../../', import.meta.url);
 const read = path => readFileSync(new URL(path, root), 'utf8');
@@ -10,6 +11,8 @@ const auth = read('JS/Frontend/auth.js');
 const main = read('JS/Frontend/main.js');
 const sw = read('service-worker.js');
 const css = read('style.css');
+const serviceAuth = read('Services/Auth.js');
+const coordinator = read('Services/Coordinator.js');
 let passed = 0;
 function test(name, callback) {
     callback();
@@ -87,11 +90,47 @@ test('el acuerdo se abre desde login, footer y enlace del aviso', () => {
     assert.match(main, /terms-link-in-modal.*addEventListener\('click', openTerms\)/);
     assert.match(ui, /termsNotice && termsNotice\.style\.display === 'flex' \? '3200' : ''/);
 });
-test('el catálogo permanece sin cargar hasta aceptar los términos de la sesión', () => {
+test('el aviso se recuerda por usuario y dispositivo, incluso después de cerrar sesión', () => {
+    const createStorage = () => {
+        const values = new Map();
+        return {
+            getItem: key => values.has(key) ? values.get(key) : null,
+            setItem: (key, value) => values.set(key, String(value)),
+            removeItem: key => values.delete(key)
+        };
+    };
+    const storage = createStorage();
+    const deviceA = getOrCreateTermsDeviceId(storage, { randomUUID: () => '11111111-1111-4111-8111-111111111111' });
+    const acceptance = { version: '2026-07', acceptedAt: '2026-11-14T12:00:00.000Z', status: 'accepted' };
+    saveDeviceTermsAcceptance(storage, 'USR-0001', deviceA, acceptance);
+    storage.setItem('gpsepedia_session', '{"SessionToken":"old"}');
+    storage.removeItem('gpsepedia_session');
+    assert.equal(getOrCreateTermsDeviceId(storage, { randomUUID: () => 'ffffffff-ffff-4fff-8fff-ffffffffffff' }), deviceA);
+    assert.deepEqual(getDeviceTermsAcceptance(storage, 'USR-0001', deviceA, '2026-07'), acceptance);
+    assert.equal(getDeviceTermsAcceptance(storage, 'USR-0002', deviceA, '2026-07'), null);
+    assert.equal(getDeviceTermsAcceptance(storage, 'USR-0001', deviceA, '2027-01'), null);
+
+    const newDeviceStorage = createStorage();
+    const deviceB = getOrCreateTermsDeviceId(newDeviceStorage, { randomUUID: () => '22222222-2222-4222-8222-222222222222' });
+    assert.notEqual(deviceB, deviceA);
+    assert.equal(getDeviceTermsAcceptance(newDeviceStorage, 'USR-0001', deviceB, '2026-07'), null);
+});
+test('el aviso bloquea el catálogo hasta confirmar la aceptación del dispositivo', () => {
     assert.match(ui, /if \(!renderTermsGate_\(user\)\) return;/);
-    assert.match(ui, /window\.auth\?\.loadInitialData/);
+    assert.match(ui, /getOrCreateTermsDeviceId\(localStorage, window\.crypto\)/);
+    assert.match(ui, /saveDeviceTermsAcceptance\(localStorage, userId, deviceId, confirmed\)/);
     assert.match(auth, /if \(appReady\) loadInitialData\(\)/);
     assert.match(auth, /if \(handleLoginSuccess\(validatedUser, false\)\) loadInitialData\(\)/);
+});
+test('AUTH registra la aceptación por dispositivo sin escribir ActiveSessions', () => {
+    const start = serviceAuth.indexOf('function handleAcceptTerms(payload) {');
+    const end = serviceAuth.indexOf('\nfunction handleMigrateLegacyPasswords(payload) {', start);
+    const handler = serviceAuth.slice(start, end);
+    assert.match(handler, /payload && payload\.deviceId/);
+    assert.match(handler, /COLS_USERS\.TermsAcceptance/);
+    assert.doesNotMatch(handler, /sessionCell\.setValue|ensureSessionTermsAcceptanceColumn_/);
+    assert.match(coordinator, /acceptTerms: \{ read: \["ACTIVE_SESSIONS"\], write: \["USERS"\], sharedWrite: \["ACTIVE_SESSIONS"\] \}/);
+    assert.match(coordinator, /operation !== "acceptTerms"/);
 });
 test('cerrar el acuerdo sobre el aviso limpia History API y conserva el aviso padre', () => {
     const history = createFakeHistory();
@@ -108,7 +147,8 @@ test('cerrar el acuerdo sobre el aviso limpia History API y conserva el aviso pa
     assert.equal(Object.prototype.hasOwnProperty.call(history.state, 'modalOpen'), false);
 });
 test('los logos usados por el contenido legal se precargan en el Service Worker', () => {
-    assert.match(sw, /gpsepedia-cache-v25/);
+    assert.match(sw, /gpsepedia-cache-v26/);
+    assert.match(sw, /\.\/JS\/Frontend\/termsDeviceAcceptance\.js/);
     for (const file of ['Images/Logo_TemaOscuro.png', 'Images/tracklink_logo.png']) {
         assert.ok(sw.includes("'./" + file + "'"), file + ' no está en CORE_ASSETS');
         assert.ok(existsSync(new URL('../../' + file, import.meta.url)), file + ' no existe en el repositorio');
