@@ -1827,3 +1827,14 @@ Rama: GPSpedia2.2.5_work
 - CI: 93 suites / 1,361 pruebas / 0 fallos; Pages build/deployment PASS.
 - El botón de aplicación de imágenes depende de capability ADMIN; permanece oculto hasta que se despliegue el backend compatible.
 ================================================================================
+
+
+================================================================================
+2026-11-14 — GP-IMG-DATA-01 INTEGRIDAD DEL INVENTARIO Y CAPABILITY HANDSHAKE
+- ADMIN conserva metadatos de archivo (ID, nombre y MIME) por página de auditoría y solo habilita la capacidad de aplicación para una auditoría completa, vigente, de la sesión y versión actuales.
+- Antes de aplicar propuestas, ADMIN coteja el inventario completo con los IDs procesados, bloquea nombres canónicos duplicados y verifica que los archivos sigan coincidiendo con los metadatos auditados.
+- La UI exige el handshake de capacidad del backend; un reporte restaurado desde IndexedDB permanece sin permiso de aplicación hasta obtener una verificación nueva.
+- Pruebas dirigidas ejecutadas en harness V8: planner 19/19, aplicación 8/8, UI 13/13 y comprobaciones aisladas de metadatos 5/5 PASS. Parsing V8 de ADMIN y del cuerpo del módulo UI PASS.
+- Node CLI completo y CI del HEAD e8bd983 no pudieron confirmarse desde este entorno. La última CI registrada corresponde al HEAD anterior 49bd0d1 (93 suites / 1,361 pruebas PASS); no se extrapola al HEAD actual.
+- No se ejecutaron escrituras en Drive/Spreadsheet ni cambios de permisos. Despliegue ADMIN y validación con copia Beta pendientes.
+================================================================================
