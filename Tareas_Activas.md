@@ -20,9 +20,13 @@ Simplificar la autenticación sin debilitar autorización; modernizar Inbox; end
 | GP-UX-01 | Inbox organizado, elegante y similar en experiencia a Outlook/Gmail, con identidad GPSpedia | PENDIENTE P0/P3 |
 | GP-SEC-02 | Bloquear descargas casuales, clic derecho, menú contextual, copia y arrastre de imágenes | PENDIENTE P0/P4 |
 | GP-RBAC-01 | Compartir integrado para todos; compartir, imprimir y editar detalles solo Supervisor, Jefe y Desarrollador | PENDIENTE P0/P4 |
-| GP-SEC-03 | Evaluar mitigación de capturas de pantalla en web/PWA sin prometer bloqueo absoluto | PENDIENTE P0/P5 |
+| GP-SEC-03 | Evaluar mitigación de capturas de pantalla en web/PWA sin prometer bloqueo absoluto; el usuario reporta que no existe estrategia aplicada en dispositivos móviles | PENDIENTE P0/P5 |
 | GP-DATA-01 | Disponer de migración explícita y verificable de contraseñas heredadas a hash seguro | PENDIENTE P0/P2 |
 | GP-DATA-02 | Sustituir IDs calculados por fórmulas por IDs backend para usuarios, vehículos, tutoriales y relays | PENDIENTE P0/P2 |
+| GP-UX-02 | Corregir saludo, registro de reacciones 👍🏿, tarjeta de alta de tutorial y altura de la tarjeta para agregar problema | PENDIENTE |
+| GP-UX-03 | Reorganizar Inbox móvil y sustituir acciones dispersas/textuales por una barra de herramientas y menú de acciones habituales | PENDIENTE |
+| GP-RBAC-02 | Habilitar y validar las funciones de Inbox para usuarios técnicos; actualmente reciben «servicio no autorizado para el coordinador compartido» | PENDIENTE |
+| GP-PWA-01 | Corregir el bloqueo de actualización y permitir recargar/actualizar la plataforma de forma controlada | PENDIENTE |
 
 ## Hallazgos preliminares confirmados en código
 
@@ -384,3 +388,41 @@ Si cualquier comprobación falla, no continuar ni descartar cambios locales. Con
 - [x] Conservar validateAndTouchSession_ para las demás mutaciones autenticadas.
 - [x] Probar que acceptTerms usa el preflight read-only y logout mantiene la ruta normal; PASS.
 - [x] Repetir SharedMutationCoordinator 41/41 y TermsModalAccessibility 12/12; PASS.
+
+
+## Incidencias nuevas reportadas por el usuario — 2026-11-14
+
+**Estado general: PENDIENTE DE REVISIÓN Y REPRODUCCIÓN.** Los puntos siguientes son síntomas reportados por el usuario; todavía no se ha confirmado su causa técnica ni se ha modificado código para corregirlos.
+
+### GP-UX-02 — Saludo, reacciones y tarjetas de contenido
+- [ ] **Mensaje de saludo:** no carga correctamente al abrir la plataforma. Revisar su ciclo de carga, datos requeridos, estado de sesión y manejo de errores.
+- [ ] **Reacción útil 👍🏿:** al pulsar el botón aparece «No se pudo registrar tu reacción. Reintentar». Revisar contrato del endpoint, permisos del rol, payload, coordinador compartido, persistencia e idempotencia para evitar reacciones duplicadas.
+- [ ] **Tarjeta de agregar tutorial:** no aparece en la sección Tutorial. Revisar condiciones de renderizado, permisos, estado vacío, filtros y rol que debe verla.
+- [ ] **Tarjeta de agregar problema:** en el carrusel de problemas relacionados del modal de detalle tiene una altura distinta a las tarjetas de problemas. Igualar estructura, altura y comportamiento responsive sin alterar el contenido de las tarjetas existentes.
+
+### GP-UX-03 — Inbox, principalmente en móvil
+- [ ] Reorganizar la interfaz móvil: distribución, jerarquía visual, lista/detalle, navegación y controles táctiles.
+- [ ] Sustituir las acciones presentadas como textos o controles dispersos por una barra de herramientas/menú de acciones coherente con una bandeja de entrada.
+- [ ] Incluir y ordenar las acciones esperadas: nuevo mensaje/conversación, borrar y demás acciones disponibles según tipo de elemento y permisos (por ejemplo, leer/no leer, archivar y responder cuando correspondan).
+- [ ] Mantener consistencia entre escritorio y móvil, accesibilidad, confirmaciones para acciones destructivas y actualización correcta del estado de la bandeja.
+- [ ] No inventar operaciones que el backend no soporte; revisar primero los contratos y capacidades reales.
+
+### GP-RBAC-02 — Inbox para usuarios técnicos
+- [ ] **Síntoma:** al entrar o utilizar Inbox con un usuario técnico aparece «servicio no autorizado para el coordinador compartido» y no se dispone de funciones.
+- [ ] Revisar política del coordinador, acciones compartidas, matriz de permisos, rol efectivo y autorización backend de cada operación.
+- [ ] Definir las funciones que corresponden al usuario técnico y permitir únicamente esas acciones. No resolverlo ampliando permisos generales ni debilitando la autorización de servidor.
+- [ ] Añadir pruebas de contrato y regresión para usuarios técnicos y para roles que no deben acceder a funciones privilegiadas.
+
+### GP-PWA-01 — Actualización y recarga de la plataforma
+- [ ] **Síntoma:** la plataforma impide la actualización y no permite recargar la página.
+- [ ] Revisar el ciclo de vida del Service Worker, caché, detección de nueva versión, clientes controlados, mensajes de actualización y cualquier bloqueo/intercepción de navegación o recarga.
+- [ ] Permitir que el usuario recargue la plataforma y completar actualizaciones de forma predecible, sin dejar la aplicación atrapada en una versión ni perder datos locales pendientes.
+- [ ] Probar actualización con una y varias pestañas, instalación PWA, recarga manual, offline/reconexión y recuperación ante una actualización interrumpida.
+
+### GP-SEC-03 — Mitigación de capturas de pantalla en móviles
+- [ ] Revisar qué medidas reales pueden aplicarse en navegadores móviles y PWA para dificultar capturas de pantalla o grabación.
+- [ ] Distinguir capacidades de Android/iOS y navegadores; documentar las limitaciones de una aplicación web y no prometer bloqueo absoluto cuando la plataforma no lo permita.
+- [ ] Evaluar medidas complementarias proporcionales (por ejemplo, ocultar o proteger contenido sensible en cambios de visibilidad si resulta viable), sin degradar la lectura normal ni presentar como bloqueo una simple barrera visual.
+- [ ] Validar en dispositivos móviles reales durante Beta; no afirmar protección efectiva basándose únicamente en inspección estática.
+
+**Criterio de trabajo:** registrar primero reproducción, archivos/contratos implicados, rol afectado y evidencia. Resolver por paquetes pequeños con pruebas de regresión; preservar las funciones existentes y la autorización backend. Estas incidencias nuevas no se consideran corregidas ni probadas por el mero hecho de registrarlas.
