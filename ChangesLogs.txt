@@ -1241,3 +1241,10 @@ Commits: dacc854, 8be5281, f0645b5, 0e02d90, 5c58ed8, 024d604, 6bf5732, 9b2e781.
 - JS/Frontend/api-config.js: se reexporta bucketServiceMetrics desde serviceMetrics.js para mantener el contrato utilizado por ui.js y corregir el error de importación que impedía iniciar la aplicación.
 - No se modifica la lógica de cálculo de métricas ni la configuración de endpoints.
 ================================================================================
+
+================================================================================
+2026-11-13 — CORRECCIÓN — ACTUALIZACIÓN DE CACHÉ PWA Y MÓDULO DE MÉTRICAS
+- service-worker.js: se incrementa gpsepedia-cache-v21 a gpsepedia-cache-v22 y se incorpora JS/Frontend/serviceMetrics.js al App Shell para precargar la dependencia utilizada por api-config.js.
+- JS/Tests/PWAStartupScenarios.js: se actualizan las verificaciones de versión y se comprueba la precarga del módulo de métricas.
+- Validación aislada: 8/8 comprobaciones de contrato de importación, precarga y activación del Service Worker PASS; 5/5 comprobaciones de agrupación de métricas PASS. Node CLI y navegador real no ejecutados.
+================================================================================
