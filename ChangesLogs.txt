@@ -98,3 +98,8 @@
 - Validación CI run 43631181979: SUCCESS; 95 suites / 1,407 pruebas / 0 fallos; InboxRoleContract/AUG-115 16/16 PASS.
 - Pendiente Beta: cotejar propiedades FEEDBACK/Coordinator y deployment; probar conversación con roles técnicos y rechazo de operaciones privilegiadas.
 ================================================================================
+================================================================================
+2026-11-14 — LISTA CONSOLIDADA DE VALIDACIÓN BETA PARA INCIDENCIAS REPORTADAS
+- lista_beta_parte2.txt: se agrega AUG-155 con preparación segura obligatoria (verificar repo/rama, detenerse ante árbol sucio, fetch + pull --ff-only y mostrar HEAD) y casos Beta de aviso/sesión, saludo, reacción útil, Tutoriales, PyS, Inbox Técnico, Inbox móvil, PWA y limitaciones de captura de pantalla.
+- Tareas_Activas.md: se referencia AUG-155 como plan de validación externa. No se ejecutaron pruebas Beta ni se modificaron ScriptProperties, deployments o datos externos.
+================================================================================
