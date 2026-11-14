@@ -1776,3 +1776,9 @@ Rama: GPSpedia2.2.5_work
 - La firma de inventario incluye ID, nombre y MIME; evita reusar progreso si cambia el nombre/tipo de un archivo.
 - El estado solo se marca completo después de consolidar el reporte final. Al actualizar un reporte completo se ejecuta un preview nuevo; los estados parciales sí reanudan lotes confirmados.
 ================================================================================
+
+
+================================================================================
+2026-11-14 — GP-IMG-DATA-01 AJUSTAR ASERCION DE RESTAURACION
+- Corregida la referencia de estado en la regresión estática: el flujo consulta previous.status, no saved.status.
+================================================================================

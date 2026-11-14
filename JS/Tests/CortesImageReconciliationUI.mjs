@@ -60,7 +60,7 @@ testCase("persiste y reanuda el preview por cuenta, auditoría, digest y lote co
 testCase("restaura el reporte guardado al reabrir y solo reanuda estados parciales",()=>{
  assert.ok(ui.includes("restoreCortesReconciliationState_()"));
  assert.ok(ui.includes("saved.status === \"complete\""));
- assert.ok(ui.includes("saved.status !== \"complete\" && previous.fileSignature === fileSignature"));
+ assert.ok(ui.includes("previous.status !== \"complete\" && previous.fileSignature === fileSignature"));
  assert.ok(ui.includes("Pulsa Conciliar para actualizarla con datos actuales"));
  assert.ok(ui.includes("String(file.fileName || \"\"), String(file.mimeType || \"\").toLowerCase()"));
  assert.ok(ui.includes("await saveProgress(\"running\")"));
