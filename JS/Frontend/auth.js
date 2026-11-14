@@ -74,8 +74,79 @@ function markCatalogSync_(){try{localStorage.setItem(CATALOG_LAST_SYNC_KEY,Strin
 
 const VALIDATION_TIMEOUT_MS = 8000;
 const LOCK_WAIT_TIMEOUT_MS = 5000;
+const CATALOG_POLL_INTERVAL_MS = 45000;
+const CATALOG_POLL_MAX_INTERVAL_MS = 300000;
 let catalogLoadController_ = null;
-function cancelCatalogLoad_() { const controller = catalogLoadController_; catalogLoadController_ = null; if (controller && !controller.signal.aborted) controller.abort(); }
+let catalogPollTimer_ = null;
+let catalogPollInterval_ = CATALOG_POLL_INTERVAL_MS;
+let catalogPollInFlight_ = false;
+let catalogPollListenersAttached_ = false;
+
+function cancelCatalogLoad_() {
+    const controller = catalogLoadController_;
+    catalogLoadController_ = null;
+    if (controller && !controller.signal.aborted) controller.abort();
+}
+function clearCatalogPollTimer_() {
+    if (catalogPollTimer_ !== null) clearTimeout(catalogPollTimer_);
+    catalogPollTimer_ = null;
+}
+function stopCatalogPolling_() {
+    clearCatalogPollTimer_();
+    catalogPollInterval_ = CATALOG_POLL_INTERVAL_MS;
+}
+function ensureCatalogPollListeners_() {
+    if (catalogPollListenersAttached_) return;
+    catalogPollListenersAttached_ = true;
+    if (typeof document !== "undefined" && document && typeof document.addEventListener === "function") {
+        document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "hidden") clearCatalogPollTimer_();
+            else scheduleCatalogPoll_(1000);
+        });
+    }
+    if (typeof window !== "undefined" && window && typeof window.addEventListener === "function") {
+        window.addEventListener("online", () => scheduleCatalogPoll_(1000));
+        window.addEventListener("offline", clearCatalogPollTimer_);
+    }
+}
+function scheduleCatalogPoll_(delayMs = catalogPollInterval_) {
+    clearCatalogPollTimer_();
+    const user = getState().currentUser;
+    if (!user || !user.SessionToken || !isCurrentSession(user)) return;
+    if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
+    if (typeof navigator !== "undefined" && navigator.onLine === false) return;
+    ensureCatalogPollListeners_();
+    catalogPollTimer_ = setTimeout(() => {
+        catalogPollTimer_ = null;
+        runCatalogPoll_();
+    }, Math.max(0, Number(delayMs) || 0));
+}
+async function runCatalogPoll_() {
+    if (catalogPollInFlight_) return;
+    const user = getState().currentUser;
+    if (!user || !user.SessionToken || !isCurrentSession(user)) {
+        stopCatalogPolling_();
+        return;
+    }
+    if (getState().catalogLoadStatus === "loading") {
+        scheduleCatalogPoll_(5000);
+        return;
+    }
+    catalogPollInFlight_ = true;
+    try {
+        await loadInitialData(true, { silent: true, fromPoll: true });
+        const status = getState().catalogLoadStatus;
+        catalogPollInterval_ = status === "ready"
+            ? CATALOG_POLL_INTERVAL_MS
+            : Math.min(CATALOG_POLL_MAX_INTERVAL_MS, Math.max(CATALOG_POLL_INTERVAL_MS, catalogPollInterval_ * 2));
+    } catch (error) {
+        catalogPollInterval_ = Math.min(CATALOG_POLL_MAX_INTERVAL_MS, Math.max(CATALOG_POLL_INTERVAL_MS, catalogPollInterval_ * 2));
+        console.warn("Falló la sincronización automática del catálogo:", error && error.message ? error.message : error);
+    } finally {
+        catalogPollInFlight_ = false;
+        scheduleCatalogPoll_(catalogPollInterval_);
+    }
+}
 
 function addSessionCalendarMonthsUTC(date,months){const d=new Date(date.getTime()),day=d.getUTCDate();d.setUTCDate(1);d.setUTCMonth(d.getUTCMonth()+months);const last=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,0)).getUTCDate();d.setUTCDate(Math.min(day,last));return d;}
 function getLocalSessionExpiry(user,now=new Date()){
@@ -216,7 +287,9 @@ function handleLoginSuccess(user, persist = true) {
     return appReady;
 }
 
-export async function loadInitialData(forceRefresh = false) {
+export async function loadInitialData(forceRefresh = false, options = {}) {
+    const settings = options && typeof options === "object" ? options : {};
+    const silent = settings.silent === true;
     cancelCatalogLoad_();
     if (typeof AbortController !== 'function') {
         setState({ catalogLoadStatus: 'error', catalogLoadError: 'Este navegador no permite cancelar solicitudes del catálogo.' });
@@ -230,7 +303,7 @@ export async function loadInitialData(forceRefresh = false) {
     let catalogLoaded = false;
     let cachedCatalog = null;
     let cachedCursor = null;
-    setState({ catalogLoadStatus: 'loading', catalogLoadError: null });
+    if (!silent) setState({ catalogLoadStatus: 'loading', catalogLoadError: null });
 
     // 1. Renderizar primero la instantánea local junto con su cursor persistido.
     try {
@@ -247,7 +320,7 @@ export async function loadInitialData(forceRefresh = false) {
                 throw new Error('No se confirmó el procesamiento del catálogo local.');
             }
             catalogLoaded = true;
-            setState({ catalogLoadStatus: 'ready', catalogLoadError: null });
+            if (!silent) setState({ catalogLoadStatus: 'ready', catalogLoadError: null });
         } else if (cachedCatalog) {
             console.warn('Se descartó una caché de catálogo incompleta o con IDs inválidos.');
             cachedCatalog = null;
@@ -262,7 +335,7 @@ export async function loadInitialData(forceRefresh = false) {
                 if (processCatalogData(normalizedCached) !== true) throw new Error('No se confirmó el procesamiento del catálogo local.');
                 catalogLoaded = true;
                 cachedCursor = null;
-                setState({ catalogLoadStatus: 'ready', catalogLoadError: null });
+                if (!silent) setState({ catalogLoadStatus: 'ready', catalogLoadError: null });
             } else cachedCatalog = null;
         } catch (fallbackError) {
             cachedCatalog = null;
@@ -289,7 +362,7 @@ export async function loadInitialData(forceRefresh = false) {
                     if (delta.cursor > cachedCursor) await offline.saveCatalogCursor(delta.cursor);
                     if (!isCurrentLoad()) return;
                     markCatalogSync_();
-                    setState({ catalogLoadStatus: 'ready', catalogLoadError: null });
+                    if (!silent) setState({ catalogLoadStatus: 'ready', catalogLoadError: null });
                     return;
                 } else {
                     const applied = offline.applyCatalogChangesToSnapshot(cachedCatalog, delta.changes);
@@ -347,7 +420,7 @@ export async function loadInitialData(forceRefresh = false) {
         if (!isCurrentLoad()) return;
         markCatalogSync_();
         catalogLoaded = true;
-        setState({ catalogLoadStatus: 'ready', catalogLoadError: null });
+        if (!silent) setState({ catalogLoadStatus: 'ready', catalogLoadError: null });
 
         // PyS usa un endpoint/almacenamiento separado y se reconcilia tras un reset/bootstrap.
         if (requiresFullSnapshot) {
@@ -364,22 +437,25 @@ export async function loadInitialData(forceRefresh = false) {
                     const normalizedCached = normalizeCatalogData(fallbackCatalog);
                     if (processCatalogData(normalizedCached) !== true) throw new Error('No se confirmó la recuperación del catálogo local.');
                     catalogLoaded = true;
-                    setState({ catalogLoadStatus: 'stale', catalogLoadError: error.message || 'La red no está disponible.' });
+                    if (!silent) setState({ catalogLoadStatus: 'stale', catalogLoadError: error.message || 'La red no está disponible.' });
                     return;
                 }
             } catch (fallbackError) {
                 console.warn("No se pudo recuperar una instantánea válida de la caché:", fallbackError && fallbackError.message ? fallbackError.message : fallbackError);
             }
             if (!catalogLoaded) {
-                setState({ catalogLoadStatus: 'error', catalogLoadError: error && error.message ? error.message : 'No se pudo cargar el catálogo.' });
+                if (!silent) setState({ catalogLoadStatus: 'error', catalogLoadError: error && error.message ? error.message : 'No se pudo cargar el catálogo.' });
                 showGlobalError("No se pudo cargar el catálogo. Verifica tu conexión.");
                 setState({ catalogData: { cortes: [], tutoriales: [], relay: [], logos: [], sortedCategories: [] } });
             }
         } else {
-            setState({ catalogLoadStatus: 'stale', catalogLoadError: error && error.message ? error.message : 'No se pudo actualizar el catálogo desde la red.' });
+            if (!silent) setState({ catalogLoadStatus: 'stale', catalogLoadError: error && error.message ? error.message : 'No se pudo actualizar el catálogo desde la red.' });
         }
     } finally {
-        if (catalogLoadController_ === loadController) catalogLoadController_ = null;
+        if (catalogLoadController_ === loadController) {
+            catalogLoadController_ = null;
+            if (settings.fromPoll !== true) scheduleCatalogPoll_();
+        }
     }
 }
 
@@ -548,6 +624,7 @@ export function logout(reason = null, expectedSession = null) {
 
     // Nunca borrar una sesión que haya sustituido a la que originó esta operación.
     if (guardedSession && !isCurrentSession(guardedSession)) return false;
+    stopCatalogPolling_();
     cancelCatalogLoad_();
     const logoutGeneration = ++logoutGeneration_;
     setState({ currentUser: null, searchHistory: [], viewedItems: [], catalogLoadStatus: 'idle', catalogLoadError: null });
