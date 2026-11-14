@@ -283,7 +283,12 @@ function doPostInternal_(e) {
     try {
         const request = JSON.parse(e && e.postData && e.postData.contents || "{}");
         const catalogWriters = ["addOrUpdateCut", "addSupplementaryInfo", "addVinToVehicle", "freezeCortesIds"];
-        if (response && response.status === "success" && catalogWriters.includes(String(request.action || ""))) {
+        const requestPayload = request.payload && typeof request.payload === "object" ? request.payload : {};
+        // Las acciones WRITE anidadas bajo mantenimiento ADMIN publican un único reset
+        // al cerrar el proceso padre, nunca durante una reorganización parcial.
+        if (response && response.status === "success" &&
+            !String(requestPayload.__sharedMutationToken || "").trim() &&
+            catalogWriters.includes(String(request.action || ""))) {
             try {
                 publishSharedCatalogChange_("WRITE", String(request.action), { operation: "reset" });
             } catch (catalogPublishError) {
