@@ -2,11 +2,21 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { captureModalViewState, restoreModalViewState, shouldRecordModalTransition, pushModalNavigationContext, popModalNavigationContext } from '../../modalNavigation.js';
 const ui=readFileSync(new URL('../../ui.js',import.meta.url),'utf8'),main=readFileSync(new URL('../../main.js',import.meta.url),'utf8');
+const css=readFileSync(new URL('../../style.css',import.meta.url),'utf8');
 let passed=0;function test(name,fn){fn();passed++;console.log('PASS',name);}
 function classes(initial=[]){const s=new Set(initial);return{contains:v=>s.has(v),add:v=>s.add(v),remove:v=>s.delete(v)};}
 function button(label,active=false){const panel={scrollHeight:240,style:{},classList:classes(['panel-desplegable'])},arrow={textContent:active?'▲':'▼'};return{textContent:label+(active?' ▲':' ▼'),classList:classes(active?['active']:[]),nextElementSibling:panel,querySelector:q=>q==='.accordion-arrow'?arrow:null,panel,arrow};}
 function track(name,left){return{classList:classes([name]),scrollLeft:left};}
 function modal(){const detail={scrollTop:0,buttons:[button('Apertura'),button('Posibles problemas',true)],tracks:[track('carousel-track',180),track('pys-models-track',95)],querySelectorAll(q){if(q==='.accordion-btn')return this.buttons;if(q==='.pys-models-track, .carousel-track')return this.tracks;return[];}};return{detail,querySelector:q=>q==='#detalleCompleto'?detail:null};}
+test('tarjeta Agregar Problema comparte wrapper y dimensiones con tarjetas relacionadas',()=>{
+ assert.ok(ui.includes('cardWrapper.className = "pys-card-wrapper"'));
+ assert.ok(ui.includes('function createPysAssociationAddCard'));
+ assert.ok(ui.includes('singleCardContainer.appendChild(createPysAssociationAddCard(activeItem, navOptions))'));
+ assert.ok(ui.includes('carouselTrack.appendChild(createPysAssociationAddCard(activeItem, navOptions))'));
+ assert.ok(css.includes('.pys-card-wrapper {'));
+ assert.ok(css.includes('.carousel-container .carousel-track > .pys-card-wrapper {'));
+ assert.ok(css.includes('height: 120px;'));
+});
 test('captures modal scroll, active accordion and both horizontal carousels',()=>{const m=modal();m.detail.scrollTop=420;const s=captureModalViewState(m);assert.equal(s.scrollTop,420);assert.equal(s.accordion.label,'Posibles problemas');assert.deepEqual(s.horizontalScrolls.map(x=>x.scrollLeft),[180,95]);});
 test('restores modal scroll, accordion state and carousel positions',()=>{const m=modal();m.detail.scrollTop=0;m.detail.tracks.forEach(x=>x.scrollLeft=0);m.detail.buttons[1].classList.remove('active');const s={scrollTop:350,accordion:{index:1,label:'Posibles problemas'},horizontalScrolls:[{className:'carousel-track',index:0,scrollLeft:160},{className:'pys-models-track',index:1,scrollLeft:80}]};const r=restoreModalViewState(m,s);assert.equal(r.accordionRestored,true);assert.equal(m.detail.scrollTop,350);assert.equal(m.detail.buttons[1].classList.contains('active'),true);assert.equal(m.detail.buttons[1].arrow.textContent,'▲');assert.equal(m.detail.buttons[1].panel.style.maxHeight,'240px');assert.deepEqual(m.detail.tracks.map(x=>x.scrollLeft),[160,80]);});
 test('deferred restoration does not reset vertical scroll after asynchronous content arrives',()=>{
