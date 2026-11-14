@@ -244,3 +244,12 @@
 - Primer CI detectó una expectativa de mensaje de error obsoleta en la prueba de upsert de Cortes; se ajustó la aserción al validador genérico y se repitió CI.
 - CI Node.js 22, run `43652551434`: SUCCESS; sintaxis PASS; 98 suites / 1,465 pruebas / 0 fallos. CatalogSnapshotSync 27/27, CatalogStartupIntegrity 18/18, SessionStartupNavigation 16/16 y PWAStartupScenarios 15/15 PASS.
 - Los productores de escritura para esas colecciones todavía publican reset seguro; este cambio habilita el consumidor, no afirma que el backend ya emita deltas exactos. PyS sigue usando su endpoint y caché separados.
+
+
+2026-11-14 — GP-CAT: PUBLICACIÓN INCREMENTAL EXACTA DE TUTORIALES
+- Services/feedback.js: addTutorial y updateTutorialItem vuelven a leer la fila final por ID único y construyen el snapshot con el mismo esquema/normalización de getCatalogData; publican upsert de `tutoriales` tras confirmar la mutación.
+- Si no se puede verificar la fila, el ID o publicar el upsert, se intenta publicar reset seguro; el error del feed no revierte una escritura confirmada.
+- approveVideo/rejectVideo y las mutaciones PyS continúan publicando reset porque pueden afectar destinos o entidades adicionales.
+- JS/Tests/CatalogChangeFeed.mjs: prueba contractual del orden confirmación → lectura/validación de ID → upsert exacto, con fallback reset.
+- CI Node.js 22 run `43652752655`: SUCCESS; sintaxis PASS; 98 suites / 1,466 pruebas / 0 fallos. CatalogChangeFeed 15/15; CatalogSnapshotSync 27/27; CatalogStartupIntegrity 18/18 PASS.
+- Un primer CI de este cambio detectó regex de imagen con escape doble; se corrigió y el CI posterior aprobó. No se desplegaron Apps Script ni se modificaron datos externos.
