@@ -453,3 +453,17 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - GitHub Actions `service-tests` sobre `955e09b428204c9e24ccd12f92a1e208135f4189`: **PASS**, 78 suites, 1,198 pruebas aprobadas, 0 fallos.
 - No se pudo ejecutar `auditIdentifiers` contra la Spreadsheet real desde esta sesión: el acceso al contenido de Google Sheets/Drive no está disponible en las herramientas conectadas. No se inventaron datos ni se ejecutó migración.
 - Próximo paso P2 de datos: ejecutar el reporte en Beta, revisar el formato de Relay y las referencias cruzadas; después construir/aplicar una migración con dry-run, respaldo, mapa de IDs, checkpoints y reversión. No escribir IDs reales hasta revisar ese reporte.
+
+## P2 — IDs LogosMarca: asignación backend (2026-11-14)
+
+**Estado: IMPLEMENTADA EN RAMA DE TRABAJO; AUDITORÍA Y VALIDACIÓN DE DATOS REALES EN BETA PENDIENTES.**
+
+- Se sustituyó la fórmula de fila de `LogosMarca` por un ID numérico permanente asignado por `getNextLogoIdLocked_()`.
+- El asignador usa `LockService.getScriptLock()`, un contador persistente en Script Properties y el máximo ID histórico leído de la hoja; evita reutilizar IDs si el contador quedó atrasado.
+- Antes de asignar, valida el encabezado `ID`, IDs numéricos positivos, duplicados (incluidos equivalentes como `1` y `001`) y filas con datos sin ID. Si encuentra ambigüedad, se detiene sin crear un nuevo ID.
+- La fila nueva recibe el ID con `setValue`, no fórmula; se comprueba el valor persistido y la ausencia de fórmula.
+- Se añadieron pruebas aisladas para continuidad del contador, contador adelantado, duplicados, IDs malformados, filas sin ID y plantillas con fórmulas históricas.
+- GitHub Actions `service-tests` sobre HEAD `2b096463488a8fa24d70b3d5ad49060eede0d3e3`: **PASS**, 78 suites, 1,198 pruebas aprobadas, 0 fallos.
+- No se desplegó ADMIN ni se modificó la Spreadsheet productiva. La validación de encabezado, fórmulas y datos debe completarse en Beta.
+- Relay permanece en auditoría solamente: no se encontró un endpoint versionado que cree filas Relay ni se pudo establecer su formato de ID con seguridad. No se inventó un generador ni se migraron datos.
+- Siguiente paquete de trabajo en código: P3 — rediseño Inbox, preservando contratos de mensajería, paginación, caché, permisos y navegación. La migración de datos P2 continúa condicionada a la auditoría real de Beta y a su plan de reversión.
