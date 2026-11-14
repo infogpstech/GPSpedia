@@ -8999,7 +8999,11 @@ function logDeveloperDiagnostic_(message, level = 'warning') {
 
 export function showGlobalError(message) {
     const original = String(message || 'No se pudo completar la operación.');
-    const concise = original.length > 110 ? 'No se pudo completar la operación.' : original;
+    const concise = original.length > 110
+        ? /AUTH|sesión|conexión|servidor/i.test(original)
+            ? 'Conexión temporalmente no disponible.'
+            : 'No se pudo completar la operación.'
+        : original;
     if (original.length > 110) {
         console.warn('[GPSpedia] ' + original);
         logDeveloperDiagnostic_(original, 'warning');
