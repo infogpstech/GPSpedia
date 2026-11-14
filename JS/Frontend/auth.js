@@ -6,7 +6,7 @@
 
 import { setState, getState } from './state.js';
 import { routeAction, fetchCatalogData, getCatalogChanges, login as apiLogin, validateSession as apiValidateSession, completeLoginRequest } from './api-config.js';
-import { showLoginScreen, showApp, showGlobalError } from './ui.js';
+import { showLoginScreen, showApp, showGlobalError, performSilentSync } from './ui.js';
 import * as offline from './offline.js';
 
 async function getCatalogFeedHead_(user, signal) {
@@ -330,7 +330,6 @@ export async function loadInitialData(forceRefresh = false) {
 
         if (!isCurrentLoad()) return;
         if (catalogLoaded) {
-            const { performSilentSync } = await import('./ui.js');
             if (!isCurrentLoad()) return;
             if (await performSilentSync(snapshotToApply) !== true) {
                 throw new Error('La sincronización del catálogo no confirmó su actualización.');
