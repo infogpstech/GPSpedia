@@ -242,6 +242,22 @@ run("Búsqueda y paginación respetan carpeta y cursor", () => {
     assert.equal(page.data[0].subject,"Consulta de relay");
     assert.equal(page.hasMore,false);
 });
+run("El filtro de categoría limita resultados antes de paginar", () => {
+    api.handleCreateInboxConversation({
+        ...actor("U1","token-a"),recipientId:"U3",subject:"Acceso a la plataforma",category:"acceso",
+        body:"Revisar permisos de acceso.",idempotencyKey:"category-filter-0001"
+    });
+    const filtered = api.handleGetInboxConversations({
+        ...actor("U1","token-a"),folder:"sent",category:"acceso",pageSize:1,cursor:"0"
+    });
+    assert.equal(filtered.total,1);
+    assert.equal(filtered.data.length,1);
+    assert.equal(filtered.data[0].category,"acceso");
+    assert.equal(filtered.hasMore,false);
+    assert.throws(() => api.handleGetInboxConversations({
+        ...actor("U1","token-a"),category:"invalida"
+    }),/categoría/);
+});
 run("El registro de auditoría no almacena el cuerpo del mensaje", () => {
     const audit = spreadsheet.getSheetByName("InboxConversationAudit");
     assert.ok(audit.getLastRow() >= 4);
