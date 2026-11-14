@@ -272,8 +272,9 @@ function generateNextUserId_(userSheet) {
         if (!hasAccountData && !id) return;
         if (!hasAccountData) return;
         if (!id) throw new Error('Existe una fila de usuario con datos pero sin ID. No se creó la cuenta.');
-        if (seen.has(id)) throw new Error('Se detectó un ID de usuario duplicado. No se creó la cuenta.');
-        seen.add(id);
+        const normalizedId = id.toUpperCase();
+        if (seen.has(normalizedId)) throw new Error('Se detectó un ID de usuario duplicado. No se creó la cuenta.');
+        seen.add(normalizedId);
 
         const match = /^USR-(\d{4,})$/i.exec(id);
         if (match) maxSequence = Math.max(maxSequence, Number(match[1]));
