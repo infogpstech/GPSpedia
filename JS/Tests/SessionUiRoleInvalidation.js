@@ -68,8 +68,8 @@ function runSessionUiRoleInvalidationTests(sources) {
   assert(can.includes("['desarrollador', 'jefe', 'supervisor']"));
   assert(!can.includes("'jefe'"));
   const policy=slice(feedback,"const FEEDBACK_ACTION_PERMISSIONS = Object.freeze(","\n);");
-  assert(policy.includes("approveVideo: [\"Desarrollador\", \"Gefe\", \"Supervisor\"]"));
-  assert(policy.includes("rejectVideo: [\"Desarrollador\", \"Gefe\", \"Supervisor\"]"));
+  assert(policy.includes("approveVideo: [\"Desarrollador\", \"Jefe\", \"Supervisor\"]"));
+  assert(policy.includes("rejectVideo: [\"Desarrollador\", \"Jefe\", \"Supervisor\"]"));
  });
  run("cambio de rol en servidor marca revocación, cierra sesiones y protege la última cuenta Desarrollador",()=>{
   const f=slice(authService,"function handleUpdateUser(","const SESSION_ABSOLUTE_MONTHS");
