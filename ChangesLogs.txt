@@ -1373,3 +1373,20 @@ GitHub Actions: 75 suites, 1,149 pruebas aprobadas, 0 fallos. Comprobaciones de 
 - Ayudas contextuales: se registran textos concisos e icono ⓘ en Developer, campos indicados de add_cortes y formularios PYS; se excluye el modal de detalles.
 - No se modificó código funcional ni se realizaron operaciones sobre Drive o Spreadsheet. Cambio exclusivamente documental.
 ================================================================================
+
+
+================================================================================
+REGISTRO DE AUDITORÍA Y CONTINUIDAD — 2026-11-14 (CIERRE P0)
+Rama: GPSpedia2.2.5_work
+HEAD verificado antes del registro: b55bf5866a9491e510881b3e59eea2cd9919e45e
+
+- Se completó la revisión estática del flujo AUTH, touchSession, expiración/revocación y validación de sesión en FEEDBACK, WRITE, USERS y ADMIN.
+- Se documentaron discrepancias de permisos: imprimir aparece para todos; editar está limitado en UI a Desarrollador y en ADMIN a Desarrollador/Gefe, no a la matriz Supervisor/Jefe/Desarrollador solicitada.
+- Se confirmó la incompatibilidad de normalización Jefe/Gefe entre AUTH, USERS, ADMIN y FEEDBACK; se preservará la equivalencia funcional solicitada sin alterar valores históricos.
+- Se inventariaron los generadores de IDs de usuarios, vehículos, tutoriales y PyS; Relay se consume como catálogo y no se encontró un escritor de filas Relay en los servicios versionados.
+- Se documentó la conversión oportunista de contraseñas a SHA-256 con salt y la ausencia de una migración batch.
+- La descarga de imágenes reemplazadas queda limitada al panel Developer y al rol Desarrollador, conforme a la autorización actual de ADMIN.
+- Se actualizó Tareas_Activas.md: P0 completada con validación Beta diferida; P1 queda como siguiente tarea.
+- No se modificó código funcional, ni se ejecutaron escrituras en Drive/Spreadsheet. No se ejecutaron pruebas Node/CLI por tratarse de cambios exclusivamente documentales. La validación física de hojas, fórmulas y datos heredados queda pendiente de dry-run en Beta.
+- No se atribuye un resultado de GitHub Actions a este commit documental; la consulta disponible de runs solo expone ejecuciones asociadas a pull requests.
+================================================================================
