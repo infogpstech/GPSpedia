@@ -1,0 +1,83 @@
+# Auditoría técnica — incidencias Developer y ADMIN
+
+Fecha: 2026-11-14  
+Repositorio: `infogpstech/GPSpedia`  
+Rama revisada: `GPSpedia2.2.5_work`  
+HEAD verificado al iniciar la revisión: `edac7202791223de890ed6d912cc93f7e1fbfa63`  
+Rama base: `GPSpedia2.2.5` (sin modificaciones)
+
+## Alcance y método
+
+Inspección estática de los flujos de apertura del panel Developer, despacho de acciones ADMIN, leases del coordinador compartido y migración del historial de imágenes. No se ejecutaron solicitudes contra deployments ni pruebas en navegador; por tanto, los hallazgos describen causas estructurales observables y distinguen lo que aún requiere reproducción.
+
+## Hallazgos
+
+### AUD-2026-11-14-01 — La migración del historial no está declarada en la política del coordinador
+
+**Severidad:** Alta — bloquea la inicialización solicitada.  
+**Estado:** Causa confirmada por inspección estática.
+
+**Evidencia**
+- `Services/admin.js`, `isSharedMutationAction_`: `migrateReplacedImagesSchema` está incluida entre las acciones que requieren lease específica.
+- `Services/admin.js`, `doPost`: para esa acción se solicita `withSharedMutationLease_("ADMIN", action, ...)`.
+- `Services/admin.js`, `doPostInternal_`: el `switch` despacha la acción a `handleMigrateReplacedImagesSchema`.
+- `Services/admin.js`, `handleMigrateReplacedImagesSchema`: inicializa la hoja y verifica/añade columnas de inventario; la operación está protegida además por ScriptLock.
+- `Services/Coordinator.js`, `coordinatorPolicy_`: existe política para varias acciones ADMIN, pero falta la entrada `migrateReplacedImagesSchema`. La función rechaza cualquier par servicio/operación sin política con el mensaje «La acción no está habilitada en la política del coordinador».
+
+**Conclusión**
+El nombre y el despacho de la acción son consistentes entre frontend y ADMIN. El rechazo ocurre porque el coordinador no tiene declarada su política. No hay evidencia de que sea un problema de rol o de configuración del endpoint.
+
+**Criterio de corrección**
+Declarar una política específica y de mínimo privilegio para la escritura del esquema `IMAGE_INVENTORY`, conservando la validación de sesión Desarrollador y el bloqueo/verificación del esquema. Añadir pruebas de contrato que confirmen autorización de esta operación y rechazo de operaciones no declaradas. No ampliar permisos globales.
+
+### AUD-2026-11-14-02 — El escáner comparte la lease genérica ADMIN/sessionActivity
+
+**Severidad:** Alta — puede impedir la carga del escáner cuando coinciden solicitudes ADMIN.  
+**Estado:** Mecanismo de contención confirmado estáticamente; reproducción en runtime pendiente.
+
+**Evidencia**
+- `Services/admin.js`, `isSharedMutationAction_`: `auditDriveImagesInCortes` no aparece en la lista de acciones coordinadas específicas. Tampoco aparecen consultas como `getReplacedImages`.
+- `Services/admin.js`, `doPost`: toda acción distinta de `ping` que no esté en esa lista se ejecuta bajo `withSharedMutationLease_("ADMIN", "sessionActivity", ...)`.
+- `Services/Coordinator.js`, `coordinatorPolicy_`: `ADMIN/sessionActivity` declara escritura sobre `ACTIVE_SESSIONS`.
+- `Services/Coordinator.js`, `hasConflict_`: dos leases que escriben el mismo recurso son incompatibles. El mensaje observado se construye con las operaciones activas que mantienen el conflicto.
+- `Services/admin.js`, `getAdminSessionContext_`: cada solicitud ADMIN valida la sesión y actualiza `ActiveSessions.LastActivityAt`; por eso la actividad de sesión no puede eliminarse sin sustituir esa protección.
+- `handleGetReplacedImages` realiza además una lectura de referencias activas del Spreadsheet, que puede prolongar la solicitud mientras otra consulta ADMIN intenta adquirir la misma lease.
+
+**Conclusión**
+Las consultas ADMIN no clasificadas como mutaciones específicas se serializan bajo el mismo nombre `ADMIN/sessionActivity`. Si la interfaz solicita inventario, historial u otras consultas de forma concurrente, una solicitud puede mantener la lease mientras otra agota su espera y recibe «recurso ocupado por operaciones activas ADMIN/sessionActivity». Esto coincide con el síntoma informado. La duración real y el orden de las solicitudes aún deben medirse en Beta.
+
+**Criterio de corrección**
+Revisar el ciclo completo de carga del panel y separar la coordinación de las lecturas prolongadas de la actualización de actividad de sesión. Mantener la validación de sesión y su escritura protegida; no desactivar la lease ni permitir escrituras simultáneas sobre `ACTIVE_SESSIONS`. Añadir pruebas de concurrencia que cubran la carga conjunta de escáner e historial, liberación de leases y reintento tras contención.
+
+### AUD-2026-11-14-03 — Acceso al panel Developer sin causa estática concluyente
+
+**Severidad:** Media — funcionalidad de acceso reportada como no disponible.  
+**Estado:** Pendiente de reproducción en navegador.
+
+**Evidencia**
+- `JS/Frontend/ui.js`, `showApp`: muestra el botón Developer cuando el rol normalizado es `desarrollador`.
+- `JS/Frontend/main.js`: el listener del botón llama a `ui.openDevTools` después de cerrar el menú lateral.
+- `JS/Frontend/ui.js`, `openDevTools`: requiere que `ensureUiSessionRole_(['desarrollador'])` devuelva el contexto actual.
+- `JS/Frontend/ui.js`, `getUiSessionContext_`: requiere `currentUser.ID`, `currentUser.SessionToken` y rol Desarrollador.
+- `Services/Auth.js`, `handleLogin`: la respuesta de login construye los campos `ID`, `Privilegios` y `SessionToken`, compatibles con el contrato anterior.
+
+**Conclusión**
+La ruta estática de menú y apertura es coherente y el contrato de login coincide con los campos que espera la UI. La inspección no demuestra por sí sola que el panel abra correctamente en navegador ni descarta un estado de sesión distinto en runtime. No se atribuye aún el fallo a AUTH, al rol o a la navegación.
+
+**Siguiente comprobación**
+Reproducir con una sesión Desarrollador recién iniciada y registrar, sin exponer el token: presencia de `currentUser`, presencia de ID y token, rol normalizado, resultado de `ensureUiSessionRole_`, ejecución del callback del menú y estado final de `#dev-tools-modal`. Comprobar también la misma ruta tras restaurar sesión.
+
+## Estado de validación y cambios
+
+- Revisión estática de los archivos citados: realizada.
+- Reproducción en navegador/Android/escritorio: no ejecutada; no hay entorno de navegador conectado en esta revisión.
+- Solicitudes a Apps Script/Coordinator y pruebas con Spreadsheet/Drive: no ejecutadas.
+- Pruebas automatizadas nuevas: no ejecutadas.
+- Código, políticas, endpoints, deployments y datos productivos: sin cambios.
+
+## Próximas acciones
+
+1. Corregir AUD-2026-11-14-01 con una política explícita y limitada para `IMAGE_INVENTORY`.
+2. Diseñar y probar la coordinación de AUD-2026-11-14-02 sin quitar la validación ni la actualización protegida de sesión.
+3. Reproducir AUD-2026-11-14-03 y corregir únicamente el punto que falle.
+4. Ejecutar pruebas de sintaxis, contratos, concurrencia y regresión antes de marcar cualquier corrección como completada.
