@@ -1560,3 +1560,16 @@ No se desplegaron servicios Apps Script, no se modificaron ScriptProperties, Spr
 - El primer intento falló por una expresión regular con escapes dobles en el helper de imagen; se corrigió en `4986148` y el CI posterior aprobó.
 - Siguiente: upsert exacto para Logos tras alta ADMIN confirmada; después evaluar Relay y operaciones de edición/Video. PyS requiere un cursor/almacén separado y no debe mezclarse con el snapshot de IndexedDB sin una transición específica.
 - No se desplegaron Apps Script ni se modificaron Spreadsheet, Drive, ACL, ScriptProperties o datos productivos.
+
+
+## Continuidad — GP-CAT: upsert exacto de Logos (2026-11-14)
+
+**Commit de código validado:** `f9816e8518ad323133efcb6ce22e3e396c13f0b1`.
+
+- `Services/admin.js`: tras `addLogo` exitoso y finalización de auditoría, se relee la fila por ID numérico y se comprueba que sea única y coincida con marca/URL de respuesta. El productor publica upsert de `logos` usando el ID de Drive normalizado igual que `Services/catalog.js`.
+- Si la verificación o publicación exacta falla, intenta reset seguro; las otras operaciones ADMIN conservan reset.
+- `JS/Tests/CatalogChangeFeed.mjs`: 16/16 PASS; prueba de publicación exacta de Logo y fallback reset.
+- GitHub Actions run `43652869282`: SUCCESS; 98 suites / 1,467 pruebas / 0 fallos.
+- Relay: no se identificó un escritor backend para la hoja Relay; los IDs históricos pueden estar ausentes. No se inventó un productor ni se generaron IDs. PyS sigue separado de la instantánea getCatalogData.
+- Siguiente: estudiar la consistencia de deltas PyS con un cursor/almacén independiente; luego revisar si Relay tiene alguna ruta real de edición backend antes de habilitar eventos por registro.
+- No se desplegaron Apps Script ni se modificaron Spreadsheet, Drive, ACL, ScriptProperties o datos productivos.
