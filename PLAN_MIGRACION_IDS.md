@@ -123,3 +123,31 @@ No borrar ni sobrescribir filas ambiguas para forzar una reversión.
 - Los IDs históricos de Users/Cortes/Tutorial/PyS/LogosMarca no se migran hasta disponer del reporte real de Beta.
 - La calibración final de PBKDF2 es independiente de esta migración y debe medirse en el runtime de Apps Script.
 - No se despliega ni se modifica Spreadsheet/Drive productivo como parte de este plan.
+
+
+## 10. Motor local de migración (implementado en GPSpedia2.2.5_work)
+
+El servicio ADMIN incorpora las acciones `migrateIdentifiers` y `rollbackIdentifiers`. Ambas requieren sesión verificada de Desarrollador y pasan por la lease compartida de mutaciones. El endpoint no se ejecutó contra la Spreadsheet real durante la implementación.
+
+### Alcance deliberadamente conservador
+
+- Entidades admitidas: Users, Cortes, Tutorial, pys y LogosMarca. Relay se rechaza explícitamente.
+- `fill_missing`: completa únicamente una celda ID realmente vacía, sin fórmula, cuando una clave estable distinta del ID identifica exactamente una fila. El ID nuevo debe cumplir el formato canónico y no existir ya.
+- `freeze_formula`: sustituye una fórmula ID por su valor actual únicamente si el valor cumple el formato vigente y es único; el identificador no cambia.
+- No renumera IDs válidos, no corrige duplicados/malformados ambiguos y no acepta una lista de referencias cruzadas incompleta. Los remapeos de IDs existentes quedan fuera hasta disponer de un inventario completo de referencias por fila y aprobación manual.
+
+### Protocolo del endpoint
+
+1. Llamar a `migrateIdentifiers` con `migrationId`, `changes[]` y `dryRun:true` (también es el modo predeterminado). Cada cambio incluye `entity`, `mode`, `row`, `keyColumn`, `keyValue`, `oldId` y `newId`. La simulación devuelve `manifestDigest` SHA-256 y no escribe hojas, propiedades ni archivos.
+2. Revisar el reporte y, solo después de aprobarlo, repetir con `dryRun:false`, `confirm:true`, el mismo `migrationId` y el `manifestDigest` devuelto. `batchSize` acepta 1–10 (predeterminado 5).
+3. El primer lote crea copias ocultas de las hojas afectadas y un manifiesto en `__IdentifierMigrationManifest__`. Cada fila conserva huella previa/posterior, clave estable, fórmula anterior, snapshot, estado y lote. La entrada del manifiesto queda fija; solo cambian los campos de estado/seguimiento.
+4. Reanudar enviando el mismo `migrationId` y `manifestDigest`; las entradas `VERIFIED` se omiten. Un cambio de huella o la pérdida del snapshot marca conflicto y detiene el lote.
+5. Para revertir, llamar a `rollbackIdentifiers` con `migrationId`, `manifestDigest`, `dryRun:false` y `confirm:true`. Solo revierte filas cuyo estado posterior coincide exactamente con la huella registrada; restaura la fórmula anterior cuando aplica. Los snapshots y el manifiesto se conservan.
+
+### Validación y límites
+
+- `JS/Tests/IdentifierMigration.mjs`: 9/9 PASS con Spreadsheet simulado, incluidos reanudación de lote y rollback ante cambios concurrentes.
+- GitHub Actions `service-tests`, run 847, commit `920ab3e1bd78467bda310e876bfdb6fd72103ab8`: 86 suites, 1,285 pruebas aprobadas, 0 fallos.
+- GitHub Pages compiló/publicó la rama de trabajo según la configuración autorizada.
+- Antes de usarlo en Beta se requiere un respaldo independiente de la Spreadsheet, un reporte real `auditIdentifiers` y revisión humana de cada clave estable/ID propuesto. Las copias ocultas del motor se guardan dentro de la misma Spreadsheet y no sustituyen ese respaldo independiente.
+- No se migraron datos reales, no se ejecutó el endpoint y no se alteró Drive. El motor no desbloquea Relay ni los conflictos que requieren mapear referencias existentes.

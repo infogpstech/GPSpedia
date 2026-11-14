@@ -1639,3 +1639,13 @@ Rama: GPSpedia2.2.5_work
 - Ampliadas pruebas de contrato para excepciones ADMIN, gestor de imágenes, jerarquía de usuarios y permisos de servicios.
 - Sin cambios de deployment ni llamadas HTTP a entornos productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-14 — P2 MOTOR LOCAL DE MIGRACIÓN DE IDS
+- ADMIN: acciones migrateIdentifiers y rollbackIdentifiers con sesión Desarrollador y lease compartida.
+- Soporta completar IDs vacíos con clave estable única y congelar fórmulas conservando IDs válidos; Relay, duplicados ambiguos y remapeos de referencias quedan excluidos.
+- Incluye dry-run, digest SHA-256, snapshots ocultos, manifiesto persistente, lotes reanudables, read-back y rollback condicionado a huellas.
+- IdentifierMigration: 9/9 PASS. CI run 847: 86 suites, 1,285 pruebas aprobadas, 0 fallos.
+- No se ejecutaron migraciones ni escrituras en Spreadsheet/Drive reales.
+================================================================================

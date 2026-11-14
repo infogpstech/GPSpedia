@@ -655,3 +655,15 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - Las acciones restantes del gestor de imágenes se comprueban como exclusivas de Desarrollador mediante el gate común del router ADMIN.
 - Las pruebas describen contratos locales; las llamadas HTTP negativas y ACL reales permanecen pendientes de Beta.
 - P2: GitHub Actions `service-tests` PASS, 85 suites, 1,270 pruebas aprobadas, 0 fallos (run 838, commit `2ce891d8ba1b0827fef00f1f0e8457b68f582973`).
+
+
+## P2 — Motor local de migración de identificadores (2026-11-14)
+
+- ADMIN incorpora `migrateIdentifiers` y `rollbackIdentifiers`, ambas reservadas a Desarrollador y protegidas por la lease compartida de mutaciones.
+- El motor admite solo completar IDs vacíos con clave estable única (`fill_missing`) y congelar el valor de IDs de fórmula válidos/únicos (`freeze_formula`). Admite Users, Cortes, Tutorial, pys y LogosMarca; Relay se rechaza.
+- Se prohíbe renumerar IDs válidos, resolver duplicados/malformados por inferencia o aceptar referencias cruzadas parciales. Los remapeos de IDs existentes requieren un inventario completo de referencias por fila.
+- Dry-run predeterminado, digest SHA-256, snapshot oculto por hoja, manifiesto persistente, lotes 1–10, read-back, reanudación idempotente y rollback condicionado a huellas.
+- Pruebas `IdentifierMigration.mjs`: 9/9 PASS. CI run 847: 86 suites, 1,285 pruebas aprobadas, 0 fallos. Sintaxis Node.js PASS.
+- GitHub Pages ejecutó su workflow sobre la rama de trabajo; la publicación de Pages está autorizada por el usuario para pruebas en modo producción.
+- No se ejecutó el motor contra Spreadsheet/Drive ni se modificaron datos reales. Antes de Beta: respaldo independiente, reporte de auditoría real, revisión de cada propuesta y prueba de rollback en copia Beta.
+- Commit de implementación/validación: `920ab3e1bd78467bda310e876bfdb6fd72103ab8`.
