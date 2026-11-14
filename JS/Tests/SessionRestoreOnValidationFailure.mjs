@@ -16,7 +16,7 @@ function extract(source, start, end) {
     return source.slice(i, j).trim().replace(/^export /, '');
 }
 
-function buildCheckSession(validation, options = {}) {
+async function buildCheckSession(validation, options = {}) {
     const user = {
         ID: 'U-TEST', Nombre_Usuario: 'tester', Privilegios: 'Tecnico',
         SessionToken: 'token-test', SessionCreatedAt: '2026-11-01T00:00:00.000Z',
@@ -42,7 +42,7 @@ function buildCheckSession(validation, options = {}) {
         'persistSessionValidation','handleLoginSuccess','loadInitialData','showGlobalError',
         'logout','console', helpers + '\n' + check + '\nreturn checkSession;'
     );
-    const fn = factory(
+    const fn = await factory(
         'gpsepedia_session', localStorage, () => {},
         message => calls.loginScreen.push(message),
         () => stored, sameSession,
@@ -68,7 +68,7 @@ async function test(name, fn) {
 }
 
 await test('un timeout de AUTH conserva y restaura la sesión local', async () => {
-    const t = buildCheckSession({ timeout: true });
+    const t = await buildCheckSession({ timeout: true });
     await t.run();
     assert.equal(t.calls.restored.length, 1);
     assert.equal(t.calls.loggedOut.length, 0);
