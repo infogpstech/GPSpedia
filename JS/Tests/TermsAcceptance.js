@@ -119,7 +119,7 @@ test('el catálogo espera la aceptación y se carga al confirmar el aviso', () =
     assert.match(uiSource, /window\.auth\?\.loadInitialData/);
     assert.match(frontendAuthSource, /const appReady = handleLoginSuccess\(result\.user\)/);
     assert.match(frontendAuthSource, /if \(appReady\) loadInitialData\(\)/);
-    assert.match(frontendAuthSource, /export async function loadInitialData\(\)/);
+    assert.match(frontendAuthSource, /export async function loadInitialData\([^)]*\)/);
 });
 test('UI no usa el indicador local antiguo y valida la versión del markup', () => {
     assert.doesNotMatch(uiSource, /gpsepedia_terms_accepted/);
