@@ -31,7 +31,7 @@ Simplificar la autenticación sin debilitar autorización; modernizar Inbox; end
 3. **IDs:** usuarios nuevos usan IDs secuenciales `USR-####`; vehículos ya tienen asignador backend central y acciones `allocateVehicleId` / `freezeCortesIds`; tutoriales usan `tut-` + operationId; Problemas usa `isue-` + secuencia. La cobertura de registros antiguos, fórmulas y relays requiere auditoría adicional.
 4. **Interacción con imágenes:** `clientInteractionPolicy.js` ya previene contextmenu, copy, cut, selectstart y dragstart en contenido no editable. Es una barrera contra acciones casuales, no impide inspección de red, extracción de URL ni captura del sistema.
 5. **Inbox:** ya existen lista/detalle, paginación, caché, toolbar y acciones. El rediseño debe preservar contratos y capacidades.
-6. **Roles:** el backend reconoce `supervisor`, `jefe` y también `gefe` como valor histórico. Antes de consolidar etiquetas debe determinarse si `Gefe` es alias de `Jefe` o un rol distinto.
+6. **Roles:** el valor canónico único es `Jefe`. `Gefe` queda únicamente como valor heredado que se normaliza temporalmente a `Jefe` para no bloquear cuentas existentes; debe migrarse en la hoja `Users` y retirarse de la validación de datos de la columna `Privilegios`.
 
 ## Paquetes de ejecución
 
@@ -40,7 +40,7 @@ Simplificar la autenticación sin debilitar autorización; modernizar Inbox; end
 
 - [x] Mapear el flujo de login, restauración, validación, touch, revocación, expiración y logout.
 - [x] Inventariar los endpoints y contratos de sesión/rol en AUTH, FEEDBACK, WRITE, USERS y ADMIN; identificar las lecturas públicas de CATALOG.
-- [x] Confirmar la semántica de roles. El usuario confirmó que **Gefe es el alias histórico de Jefe**; el código aún conserva valores y reglas distintas que deben normalizarse sin perder compatibilidad.
+- [x] Confirmar la semántica de roles. El usuario confirmó que **Jefe** es la escritura correcta y el único valor oficial; `Gefe` es un dato heredado que se convierte temporalmente a `Jefe`.
 - [x] Revisar share, print, download y edición del modal, sus llamadores y la autorización backend.
 - [x] Inventariar en código los esquemas, generadores, fórmulas y consumidores de IDs de usuarios, vehículos, tutoriales, problemas PyS y Relay.
 - [x] Revisar el hash actual, la conversión oportunista de contraseñas y los servicios que crean/verifican credenciales.
@@ -49,8 +49,8 @@ Simplificar la autenticación sin debilitar autorización; modernizar Inbox; end
 **Evidencia de cierre P0 (revisión estática de la rama):**
 1. AUTH: login idempotente por `requestId`; `validateSession` comprueba sesión sin actualizar actividad; `touchSession` actualiza `LastActivityAt`; logout/revocación invalidan la sesión. El cliente conserva el token en `localStorage`, cachea la validación durante 60 s y `routeAction` ejecuta un `touchSession` separado antes de acciones protegidas, con una ventana local de 5 minutos.
 2. Backend: FEEDBACK, WRITE, USERS y ADMIN comprueban token, identidad, vigencia y estado/rol en sus propias operaciones. CATALOG mantiene lecturas de catálogo/listas sin autenticación. Eliminar el preflight del navegador exige actualizar la actividad dentro de la operación protegida, no retirar la autorización backend.
-3. Roles: AUTH reconoce ambos valores y asigna límites distintos (`gefe`: 10; `jefe`: 3). `USERS_ALLOWED_ROLES_` no incluye `Jefe`, aunque la matriz de creación sí lo contempla como creador; ADMIN solo autoriza `desarrollador/gefe` para edición del modal y normaliza el rol mostrado de forma que puede ocultar la distinción. FEEDBACK contempla ambos valores. La matriz efectiva debe unificarse respetando la decisión del usuario: Supervisor, Jefe/Gefe y Desarrollador para imprimir/editar; compartir para todos.
-4. Modal: compartir está disponible para todos; imprimir se renderiza actualmente para todos; edición solo se ofrece al Desarrollador en UI. ADMIN exige `assertDeveloperSession` para operaciones administrativas generales y `assertModalEditSession` (actualmente Desarrollador/Gefe) para edición. Es una discrepancia confirmada para P4.
+3. Roles: el valor canónico es `jefe`; el código normaliza temporalmente `gefe` a `jefe` al leer datos heredados. AUTH, USERS, ADMIN, FEEDBACK, WRITE y frontend deben usar `Jefe`/`jefe` como único valor operativo. La matriz de permisos se mantiene como tarea separada.
+4. Modal: compartir está disponible para todos; imprimir se renderiza actualmente para todos; edición solo se ofrece al Desarrollador en UI. ADMIN exige `assertDeveloperSession` para operaciones administrativas generales y `assertModalEditSession` para edición. Es una discrepancia confirmada para P4.
 5. IDs: USERS crea `USR-####`; WRITE tiene contador central y asignador numérico para vehículos, además de acciones de mantenimiento/congelación; tutoriales usan `tut-` + `operationId`; problemas PyS usan `isue-###` y ledger `PysOperations` para reanudación/idempotencia. Relay declara columna `ID` y se consume desde CATALOG/WRITE para configuración; no se encontró un generador/escritor de filas Relay en los servicios versionados.
 6. Contraseñas: AUTH verifica el formato `sha256$<salt>$<digest>` y migra texto plano a ese hash tras un login correcto. USERS genera el mismo formato para nuevas cuentas. No existe una migración administrativa batch en el código revisado; SHA-256 con salt no incorpora un factor de trabajo y debe medirse un formato versionado más resistente antes de elegir parámetros.
 7. Permisos de imágenes: las acciones ADMIN generales, incluida `getReplacedImageDownloadUrl`, requieren Desarrollador. Por tanto, la descarga de la biblioteca puede quedar como excepción **solo dentro del panel Developer y para el rol Desarrollador**; no habilita descarga general para otros roles.
@@ -128,7 +128,7 @@ Completar el paquete P0 sobre los contratos y llamadores existentes. Después pr
 
 ## Evidencia adicional de P0 — revisión de permisos y contratos (2026-11-14)
 
-- El usuario confirmó `Gefe` como alias histórico de `Jefe`. El código no los normaliza uniformemente: AUTH define límites distintos (`gefe`: 10; `jefe`: 3), USERS no permite crear `Jefe` en `USERS_ALLOWED_ROLES_`, y ADMIN solo acepta `gefe` para edición. P4 debe corregir la matriz sin alterar los valores históricos.
+- El usuario confirmó `Jefe` como único valor oficial. Los servicios AUTH, USERS, ADMIN, FEEDBACK y WRITE, así como el frontend, ya usan `jefe` como valor operativo; solo conservan una conversión temporal para leer registros heredados `Gefe`. La actualización de los datos y de la lista desplegable de Spreadsheet queda pendiente de acceso a la hoja.
 - `Services/feedback.js` valida token/usuario para acciones Inbox; las acciones de bandeja están registradas con lista de roles permitidos `null`, lo que permite a cualquier rol activo con sesión acceder a Inbox. Las acciones administrativas de feedback/video sí tienen listas explícitas.
 - `JS/Frontend/ui.js`: el botón de compartir del modal se crea para todos; el botón de imprimir también se crea para todos; el modo de edición del modal actualmente se habilita solo cuando el rol es `desarrollador`. La UI no coincide con el permiso solicitado para imprimir/editar de Supervisor, Jefe y Desarrollador.
 - `Services/write.js`: el registro de cortes ya obtiene opciones desde la hoja Relay y asigna IDs numéricos de vehículo en backend. Las acciones de mantenimiento de IDs de vehículo están restringidas a Desarrollador.
@@ -138,7 +138,7 @@ Completar el paquete P0 sobre los contratos y llamadores existentes. Después pr
 ### Criterios de diseño que quedan fijados para paquetes posteriores
 - Una solicitud de negocio protegida debe autenticar token y rol dentro de su propio backend; eliminar la llamada previa separada `touchSession` no significa confiar en el navegador ni permitir acciones sin autorización.
 - La validación de token debe actualizar la actividad dentro de la misma operación cuando corresponda, respetando las ventanas de expiración y evitando un viaje adicional.
-- En el modal, compartir permanece permitido a todos; Supervisor, Jefe (incluyendo el alias histórico `Gefe`) y Desarrollador tendrán además imprimir y editar detalles. La matriz definitiva debe aplicarse también en backend.
+- En el modal, compartir permanece permitido a todos; Supervisor, Jefe y Desarrollador tendrán además imprimir y editar detalles. La matriz definitiva debe aplicarse también en backend.
 
 
 ## Aclaración de permisos confirmada por el usuario — 2026-11-14
@@ -147,7 +147,7 @@ La acción del **botón integrado de compartir** en el modal es pública para to
 
 - Todos los roles autenticados: pueden utilizar el botón integrado de compartir.
 - Roles superiores a Técnico y Técnico Exterior: pueden además imprimir y editar detalles desde el modal.
-- Roles privilegiados expresamente contemplados: Supervisor, Jefe (incluido alias histórico `Gefe`) y Desarrollador.
+- Roles privilegiados expresamente contemplados: Supervisor, Jefe y Desarrollador.
 - `Tecnico` y `tecnico_exterior` no pueden imprimir ni editar detalles desde el modal.
 - La matriz debe aplicarse tanto en la interfaz como en el backend cuando una acción tenga endpoint; ocultar botones no es control de seguridad.
 
