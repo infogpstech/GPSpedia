@@ -95,7 +95,10 @@ testCase("la aplicación requiere aprobación visible, confirmación y endpoint 
  assert.ok(admin.includes("function handleApplyCortesImageReconciliation_"));
  assert.ok(admin.includes("function buildCortesImageReconciliationApprovalManifest_"));
  assert.ok(admin.includes("rollbackConfirmed"));
- assert.ok(admin.includes("plan.capabilities = { applyApprovedReconciliation: true }"));
+ assert.ok(admin.includes("plan.capabilities = { applyApprovedReconciliation: applyCapabilityAvailable }"));
+ assert.ok(admin.includes("function loadDriveAuditFileMetadata_"));
+ assert.ok(admin.includes("function getCortesCanonicalDuplicateFileIds_"));
+ assert.ok(admin.includes("state.imageMetadataVersion = 1"));
  assert.ok(ui.includes("report.applyAvailable === true"));
  assert.ok(ui.includes("response.capabilities && response.capabilities.applyApprovedReconciliation === true"));
  assert.ok(ui.includes("auditId, files: batch"));
