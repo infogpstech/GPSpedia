@@ -6,6 +6,7 @@
 // 1. CONFIGURACIÓN
 import { runCatalogRequestWithRetry } from './catalogRequest.js';
 import { createServiceMetricsStore } from './serviceMetrics.js';
+export { bucketServiceMetrics } from './serviceMetrics.js';
 
 export const RICH_TEXT_MODE_KEY = "gpsepedia_rich_text_mode";
 export const RICH_TEXT_MODES = Object.freeze({ STRICT: "strict", ADVANCED: "advanced" });
