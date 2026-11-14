@@ -55,6 +55,13 @@ await check("Contrato válido exige identidad y estado y clasifica online", asyn
     assert.equal(item.httpStatus, 200);
     assert.equal(item.error, null);
 });
+await check("AUTH informa si el coordinador está configurado sin exponer secretos", async () => {
+    const ready = await scanOne("AUTH", response(200, { service: "GPSpedia-Auth", version: "2.2.5", status: "available", coordinatorConfigured: true }));
+    const missing = await scanOne("AUTH", response(200, { service: "GPSpedia-Auth", version: "2.2.5", status: "available", coordinatorConfigured: false }));
+    assert.equal(ready.metadata.coordinatorConfigured, true);
+    assert.equal(missing.metadata.coordinatorConfigured, false);
+    assert.doesNotMatch(JSON.stringify(ready.metadata), /secret|token|password/i);
+});
 await check("Latencia superior al umbral configurable se clasifica slow", async () => {
     const times = [100, 2300];
     const item = await scanOne("AUTH", response(200, { service: "GPSpedia-Auth", status: "available" }), {
