@@ -491,3 +491,11 @@ Estado: CORRECCIONES LOCALES PREPARADAS; BETA PENDIENTE.
 
 No se desplegaron servicios Apps Script, no se modificaron ScriptProperties, Spreadsheet, Drive, ACL ni datos productivos.
 ================================================================================
+
+
+AUD-2026-11-14-15 — CURSOR ANTIGUO TRAS SNAPSHOT DE RECUPERACIÓN
+Severidad: Alta (repetición de resets y riesgo de saltos si el cursor no corresponde al snapshot).
+Estado: CORREGIDO Y CUBIERTO POR PRUEBA.
+- Se detectó que una descarga completa de fallback podía reemplazar el snapshot y dejar persistido el cursor anterior, no vinculado a la nueva instantánea.
+- `offline.saveCatalog()` ahora guarda el snapshot y anula el cursor en la misma transacción. Solo `saveCatalogWithCursor()` confirma un cursor conocido junto con su snapshot.
+- `CatalogSnapshotSync` prueba que un snapshot sin revisión invalida el cursor anterior; `CatalogStartupIntegrity` prueba el fallback de feed y la invalidación.
