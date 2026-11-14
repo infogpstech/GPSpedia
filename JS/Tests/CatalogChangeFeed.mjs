@@ -100,6 +100,7 @@ test("recordLike publica el snapshot de Cortes después de confirmar la escritur
 test("WRITE y FEEDBACK publican reset solo después de mutaciones confirmadas", () => {
     assert.match(writeSource,/response && response\.status === "success"[\s\S]*?catalogWriters\.includes\(String\(request\.action \|\| ""\)\)[\s\S]*?publishSharedCatalogChange_\("WRITE"/);
     assert.match(writeSource,/\["addOrUpdateCut", "addSupplementaryInfo", "addVinToVehicle", "freezeCortesIds"\]/);
+    assert.match(writeSource,/!String\(requestPayload\.__sharedMutationToken \|\| ""\)\.trim\(\)/);
     assert.match(feedbackSource,/response && response\.status === "success"[\s\S]*?\["suggestYear", "addProblem", "addSolution", "addPrevention"[\s\S]*?publishSharedCatalogChange_\("FEEDBACK", action, \{ operation: "reset" \}\)/);
     assert.match(feedbackSource,/if \(action === "recordLike"[\s\S]*?publishSharedCatalogChange_\("FEEDBACK", "recordLike"/);
     assert.match(adminSource,/catalogWriters\.includes\(catalogAction\)[\s\S]*?publishSharedCatalogChange_\("ADMIN", catalogAction, \{ operation: "reset" \}\)/);
