@@ -133,6 +133,7 @@ runGroup('36','AUTH',()=>{
  runCli('AUTH PBKDF2 versionado, compatibilidad legacy y coste','JS/Tests/PasswordHashMigration.mjs');
  runCli('AUTH benchmark PBKDF2 protegido de solo lectura','JS/Tests/PasswordKdfBenchmark.mjs');
  runCli('ADMIN auditoría de referencias de IDs de Tutorial','JS/Tests/TutorialIdReferenceAudit.mjs');
+ runCli('ADMIN auditoría de referencias cruzadas de usuarios','JS/Tests/UserIdReferenceAudit.mjs');
  const auth=read('Services/Auth.js'),testAuth=read('JS/Tests/Auth.js'),html=read('HTML/users.html');
  const test=loadFunction('JS/Tests/LastDeveloperProtection.js','runLastDeveloperProtectionTests','\n\nimport {');
  const a=test({auth,html}),b=test({auth:testAuth,html});
