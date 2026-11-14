@@ -1631,3 +1631,11 @@ Rama: GPSpedia2.2.5_work
 - Relay sigue en diagnóstico por ausencia de escritor/formato verificable.
 - Auditoría de solo lectura; no se consultaron ni modificaron datos reales.
 ================================================================================
+
+
+================================================================================
+2026-11-14 — P4 MATRIZ DE CAPACIDADES POR ROL
+- Creada MATRIZ_CAPACIDADES_ROLES.md para AUTH, USERS, WRITE, FEEDBACK/PyS, ADMIN/imágenes e Inbox.
+- Ampliadas pruebas de contrato para excepciones ADMIN, gestor de imágenes, jerarquía de usuarios y permisos de servicios.
+- Sin cambios de deployment ni llamadas HTTP a entornos productivos.
+================================================================================

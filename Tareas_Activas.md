@@ -138,7 +138,7 @@ Registrar duración por iteración, fecha, deployment/versión y runtime. Repeti
 
 ### P4 — Política de imágenes y permisos
 **Estado: EN PROGRESO — POLÍTICA DE FICHA Y PROTECCIÓN SELECTIVA IMPLEMENTADAS; ACL DE DRIVE Y MATRIZ GLOBAL PENDIENTES.**
-- [ ] Completar una matriz única de capacidades por rol en todos los módulos y endpoints (la política de ficha técnica ya está aplicada; quedan las capacidades de imágenes y acciones administrativas).
+- [x] Consolidar la matriz de capacidades por rol en todos los módulos y endpoints en `MATRIZ_CAPACIDADES_ROLES.md`; las excepciones ADMIN y las acciones de imágenes quedan cubiertas por pruebas de contrato.
 - [x] Compartir integrado del modal permitido a todos.
 - [x] Compartir integrado disponible para todos; imprimir y editar detalles solo Supervisor, Jefe y Desarrollador, con validación de rol en backend.
 - [x] Unificar Jefe como valor canónico en AUTH, USERS, ADMIN, FEEDBACK, WRITE, Inbox y frontend; retirar los conversores temporales `Gefe` → `Jefe` tras la actualización de la Spreadsheet.
@@ -149,7 +149,7 @@ Registrar duración por iteración, fecha, deployment/versión y runtime. Repeti
 - [x] Revisar estáticamente la exposición de URLs: Cortes, Tutorial, PyS y LogosMarca almacenan referencias Drive que llegan al frontend; `ui.js` convierte IDs Drive a `lh3.googleusercontent.com` y `offline.js` puede descargarlas a IndexedDB. El ocultamiento de botones no protege esos recursos.
 - [ ] Verificar en Beta los ACL reales de carpetas/archivos Drive y clasificar qué imágenes deben ser públicas por diseño; WRITE/ADMIN no muestran una comprobación general de ACL en todos los flujos.
 - [x] Completar revisión estática de exposición de URL originales y recursos estáticos; documentar que los recursos entregados al navegador son recuperables. [ ] Verificar ACL reales de Drive en Beta.
-- [x] Pruebas de rol para impedir edición/impresión a Técnico y roles no autorizados; autorización backend validada con sesión real simulada. [ ] Ampliar pruebas negativas a todas las acciones de imágenes y endpoints privilegiados.
+- [x] Pruebas de rol para impedir edición/impresión a Técnico y roles no autorizados; autorización backend validada con sesión real simulada. [x] Ampliar pruebas de contrato para las acciones de imágenes y endpoints privilegiados; las llamadas HTTP negativas contra deployments Beta siguen pendientes.
 
 ### P5 — Mitigación de capturas
 **Estado: EVALUACIÓN TÉCNICA COMPLETADA; NO EXISTE BLOQUEO FIABLE DE CAPTURAS EN WEB/PWA.**

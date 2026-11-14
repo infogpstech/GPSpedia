@@ -646,3 +646,12 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - `IdentifierAudit.mjs` amplía las pruebas aisladas de Cortes, PyS y LogosMarca. No se consultaron ni modificaron hojas reales.
 - Siguiente subfase P2: implementar y probar localmente el motor de migración reanudable con snapshot/manifiesto, dry-run, huellas, verificación por lote y rollback condicionado. La ejecución real requiere copia Beta; no se autoriza escritura productiva.
 
+
+
+## P4 — Matriz consolidada de capacidades por rol (2026-11-14)
+
+- Se creó `MATRIZ_CAPACIDADES_ROLES.md` con capacidades por rol y contratos de AUTH, USERS, WRITE, FEEDBACK/PyS, ADMIN/imágenes e Inbox.
+- Se amplió `VehicleModalRolePolicy.mjs` para verificar los cinco roles activos, jerarquía de cuentas, permisos FEEDBACK/WRITE/Inbox, restricciones de benchmark y lista exacta de excepciones ADMIN.
+- Las acciones restantes del gestor de imágenes se comprueban como exclusivas de Desarrollador mediante el gate común del router ADMIN.
+- Las pruebas describen contratos locales; las llamadas HTTP negativas y ACL reales permanecen pendientes de Beta.
+- P2: GitHub Actions `service-tests` PASS, 85 suites, 1,270 pruebas aprobadas, 0 fallos (run 838, commit `2ce891d8ba1b0827fef00f1f0e8457b68f582973`).
