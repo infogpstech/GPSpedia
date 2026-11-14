@@ -122,13 +122,14 @@ test('el aviso bloquea el catálogo hasta confirmar la aceptación del dispositi
     assert.match(auth, /if \(appReady\) loadInitialData\(\)/);
     assert.match(auth, /if \(handleLoginSuccess\(validatedUser, false\)\) loadInitialData\(\)/);
 });
-test('AUTH registra la aceptación por dispositivo sin escribir ActiveSessions', () => {
+test('AUTH registra la aceptación por dispositivo sin escribir la columna de aceptación de la sesión', () => {
     const start = serviceAuth.indexOf('function handleAcceptTerms(payload) {');
     const end = serviceAuth.indexOf('\nfunction handleMigrateLegacyPasswords(payload) {', start);
     const handler = serviceAuth.slice(start, end);
     assert.match(handler, /payload && payload\.deviceId/);
     assert.match(handler, /COLS_USERS\.TermsAcceptance/);
     assert.doesNotMatch(handler, /sessionCell\.setValue|ensureSessionTermsAcceptanceColumn_/);
+    assert.match(serviceAuth, /function touchProtectedAuthRequestSession_\(action, payload\)[\s\S]*?validateAndTouchSession_\(token\)/);
     assert.match(coordinator, /acceptTerms: \{ read: \["ACTIVE_SESSIONS"\], write: \["USERS"\], sharedWrite: \["ACTIVE_SESSIONS"\] \}/);
     assert.match(coordinator, /operation !== "acceptTerms"/);
 });
