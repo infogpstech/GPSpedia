@@ -15,9 +15,9 @@ function extract(name){
 const handler=new Function("normalizeUserId","validateSessionReadOnly_","normalizeRoleName","benchmarkPasswordKdf_",
  extract("handleBenchmarkPasswordKdf_")+"\nreturn handleBenchmarkPasswordKdf_;");
 let validationCalls=0,benchmarkCalls=0;
-let session={valid:true,profile:{Privilegios:"Desarrollador"}};
-const run=handler(v=>String(v??"").trim(),(token,userId)=>{validationCalls++;assert.equal(token,"session-token");assert.equal(userId,"U1");return session;},
- v=>String(v||"").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").trim().toLowerCase(),
+let currentRole="Desarrollador",sessionValid=true;
+const run=handler(v=>String(v??"").trim(),(token,userId)=>{validationCalls++;assert.equal(token,"session-token");assert.equal(userId,"U1");return {valid:sessionValid,profile:{Privilegios:currentRole}};},
+ v=>String(v||"").trim().toLowerCase(),
  ()=>{benchmarkCalls++;return [{iterations:1000,durationMs:4},{iterations:12000,durationMs:25}];});
 let passed=0;
 function test(name,fn){fn();passed++;console.log("PASS "+name);}
@@ -28,12 +28,12 @@ test("Benchmark solo requiere sesión válida e identidad coincidente",()=>{
  assert.equal(result.results.length,2);assert.equal(validationCalls,1);assert.equal(benchmarkCalls,1);
 });
 test("Rechaza roles que no sean Desarrollador antes de ejecutar PBKDF2",()=>{
- session={valid:true,profile:{Privilegios:"Supervisor"}};
+ currentRole="Supervisor";
  assert.throws(()=>run({userId:"U1",sessionToken:"session-token"}),/reservado a Desarrollador/);
  assert.equal(benchmarkCalls,1);
 });
 test("Rechaza sesiones inválidas o temporalmente no verificables",()=>{
- session={valid:null,unavailable:true};
+ sessionValid=null;
  assert.throws(()=>run({userId:"U1",sessionToken:"session-token"}),/No se pudo validar la sesión/);
  assert.equal(benchmarkCalls,1);
 });
