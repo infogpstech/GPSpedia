@@ -1279,3 +1279,18 @@ Continuar con GP-RBAC-02: verificar contratos y autenticación de servicio FEEDB
 
 ### Siguiente acción
 Revisar los defectos restantes del backlog vigente en orden de dependencias: validar en pruebas aisladas la tarjeta Tutorial/PyS y el flujo de Inbox móvil ya implementados; después completar la verificación local integral del ciclo de actualización PWA y seguridad de interacción. Las comprobaciones que requieren navegador móvil, PWA instalada, Apps Script, Spreadsheet o secretos externos quedan en Beta y no deben simularse.
+## Preparación de validación Beta — AUG-155 (2026-11-14)
+
+Se añadió `AUG-155` al final de `lista_beta_parte2.txt`, con pruebas para los fallos reportados y sus correcciones: aceptación por perfil/dispositivo y concurrencia ADMIN, saludo, reacción útil, visibilidad y permisos de Tutorial, igualdad visual de tarjetas PyS, Inbox Técnico y coordinación FEEDBACK, navegación móvil del Inbox, actualización/recarga PWA y limitaciones de capturas nativas.
+
+El bloque inicia con comandos copiables que comprueban repositorio/remoto/rama, detienen la sincronización ante cambios locales, ejecutan `git fetch` y `git pull --ff-only`, y muestran el HEAD final. No se ejecutó Beta ni se alteraron ScriptProperties, deployments o datos externos.
+
+El archivo `lista_beta_parte2.txt` queda en 136,059 caracteres Unicode, por debajo del umbral de rotación de 180,000.
+
+### Validación de CI y Pages observada
+- CI run `43631266635`: SUCCESS, 95 suites / 1,407 pruebas / 0 fallos; AUG-115 16/16.
+- GitHub Pages run `43631266931` sobre el HEAD documental `3fde971febf37ed2d5c74ca52feb8b9fe6cad7cf`: SUCCESS.
+- Para el commit posterior que incorpora AUG-155, los workflows se dispararon; consultar sus resultados antes de afirmar estado de publicación.
+
+### Siguiente paso
+Continuar con la revisión integral local de las tareas implementadas y sus regresiones. Las pruebas con cuentas/dispositivos, Apps Script, ScriptProperties, Spreadsheet y deployments externos se ejecutan en Beta siguiendo AUG-155. No cambiar la rama base ni ejecutar operaciones productivas.
