@@ -929,7 +929,7 @@ export async function setOptimizedImage(imgElement, fileId, size = IMG_SIZE_SMAL
     const isCurrent = () => thumbnailObjectUrls.isCurrent(imgElement, requestToken);
     const setSource = (source, fallback = false) => {
         if (!isCurrent()) return false;
-        if (fallback) imgElement.classList.add('gp-image-fallback');
+        imgElement.classList.toggle('gp-image-fallback', fallback);
         imgElement.src = source;
         return true;
     };
@@ -993,7 +993,7 @@ export async function setOptimizedImage(imgElement, fileId, size = IMG_SIZE_SMAL
     };
     probe.onerror = () => {
         if (!isCurrent() || localThumbnailAttached) return;
-        markFailed(new Event('error'));
+        markFailed({ type: 'error' });
     };
     probe.src = remoteUrl;
 
@@ -8868,7 +8868,7 @@ function renderTermsGate_(user) {
             modal.style.display = 'none'; deactivateLegalModalFocus_(modal); container.style.display = 'block'; footer.style.display = 'flex';
         } catch (error) {
             const message = error && error.message ? error.message : 'No se pudo registrar la aceptación.';
-            if (errorMessage) errorMessage.textContent = message;
+            if (errorMessage) errorMessage.textContent = message.length > 110 ? 'No se pudo registrar la aceptación.' : message;
             showGlobalError(message); button.disabled = false;
         }
     };
@@ -9012,17 +9012,18 @@ export function mostrarNotificacion(message, type = 'info') {
 }
 
 export function showGlobalNotification(message, type = 'info') {
+    const original = String(message || 'No se pudo completar la operación.');
+    const concise = original.length > 110 ? 'Operación completada con observaciones.' : original;
+    if (original.length > 110) {
+        console.warn('[GPSpedia] ' + original);
+        logDeveloperDiagnostic_(original, type === 'error' ? 'error' : 'warning');
+    }
     const toast = document.getElementById('notification-toast');
     if (!toast) {
-        const original = String(message || 'No se pudo completar la operación.');
-        if (original.length > 110) {
-            console.warn('[GPSpedia] ' + original);
-            logDeveloperDiagnostic_(original, type === 'error' ? 'error' : 'warning');
-            alert('No se pudo completar la operación.');
-        } else alert(original);
+        alert(concise);
         return;
     }
-    toast.textContent = message;
+    toast.textContent = concise;
     if (type === 'success') {
         toast.style.backgroundColor = '#28a745';
     } else if (type === 'error') {
