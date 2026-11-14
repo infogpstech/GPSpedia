@@ -1452,3 +1452,44 @@ Este mecanismo de datos en vivo es independiente de la actualización de recurso
 - No se añadieron controles visibles. No se desplegaron Apps Script ni se modificaron ScriptProperties, Spreadsheet, Drive, ACL o datos productivos.
 - Las validaciones reales de navegador/dispositivo, Apps Script, OAuth y datos externos permanecen diferidas a Beta.
 
+
+
+## Continuidad — GP-CAT-01C..01E y GP-PWA-02 (2026-11-14)
+
+**HEAD verificado antes de esta adenda:** `f742db96c04bda6128abee152997ea5462fd7f6e` en `GPSpedia2.2.5_work`.  
+**Rama base:** `GPSpedia2.2.5`, HEAD `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; sin modificaciones.
+
+### GP-CAT-01C — Consumidor cache-first e incremental
+- `auth.js` lee snapshot+cursor de IndexedDB antes de red. Con cursor válido consulta solo `getCatalogChanges`; si el feed no contiene novedades, no invoca `fetchCatalogData` ni descarga colecciones.
+- `offline.js` lee y persiste snapshot/cursor en transacciones IndexedDB; el cursor se confirma junto al snapshot. Deltas por ID estable aplicables a Cortes; reset, colección no soportada, cursor vencido, huecos o error activan snapshot completo de recuperación.
+- El bootstrap consulta la revisión del feed antes del snapshot para evitar saltarse escrituras concurrentes; eventos que ocurren durante la lectura pueden repetirse, pero el delta es idempotente.
+- Requests de feed con timeout de 8 s y máximo de cinco páginas de 50 eventos por ciclo.
+
+### GP-CAT-01D — Sondeo y coordinación entre pestañas
+- Sondeo interno cada 45 s con la app visible y online; backoff hasta 5 min tras fallos; suspendido en background/offline y reanudado al recuperar foco/conexión.
+- Lease por usuario (60 s) reduce consultas duplicadas; BroadcastChannel y fallback storage event notifican a otras pestañas para leer el snapshot compartido de IndexedDB.
+- Polling y aplicación son silenciosos; no se añadieron botones, paneles, secciones ni indicadores visibles.
+
+### GP-CAT-01E — Reconciliación de vistas
+- `performSilentSync` actualiza tarjetas modificadas, modal de detalle abierto, altas/bajas y estado global; `updateFullState` refresca Tutoriales, Relay y Logos activos.
+- Los resets/bootstrap refrescan PyS, que conserva su caché/endpoint separado.
+- Cobertura de contrato de la reconciliación visual y del flujo multi-pestaña incorporada en `CatalogStartupIntegrity`.
+
+### GP-PWA-02 — Actualización del Service Worker
+- `main.js` registra el Service Worker con `updateViaCache: 'none'` y consulta actualizaciones al iniciar, al recuperar foco/conexión, al volver a primer plano y cada cinco minutos.
+- No se fuerza reload ni se añade control manual. `service-worker.js` usa `gpsepedia-cache-v28` y conserva `skipWaiting`/ `clients.claim`.
+- La recarga y el gesto nativos no se interceptan; la comprobación real en navegadores/PWA sigue pendiente de Beta.
+
+### Validación automatizada confirmada
+- Commit de código: `1bcaecb37d1560cb76a255de38f208df944b8b31`.
+- GitHub Actions service regression: run `43645307438`, SUCCESS; Node.js 22, sintaxis PASS; **98 suites / 1,458 pruebas / 0 fallos**.
+- GitHub Pages: run `43645306962`, SUCCESS.
+- Pruebas focalizadas: `CatalogChangeFeed` 14/14, `CatalogSnapshotSync` 24/24, `CatalogStartupIntegrity` 16/16, `SessionStartupNavigation` 16/16, `PWAStartupScenarios` 15/15.
+
+### Limitaciones / siguiente trabajo
+- Los eventos por registro se aplican actualmente a Cortes; cambios multi-entidad y otras colecciones usan reset seguro y pueden requerir snapshot completo. Optimizar esos productores con snapshots exactos es una mejora pendiente, no una condición para la seguridad del fallback.
+- Pendiente GP-CAT-01F Beta: dos o más usuarios/dispositivos, cambios remotos, latencia, offline/reconexión, pestañas concurrentes, cursor vencido y rendimiento móvil.
+- Pendiente GP-PWA-02 Beta: pull-to-refresh, recarga manual, actualización de PWA instalada y recuperación tras interrupción en Android/iOS/escritorio.
+- Pendiente despliegue/ejecución de incidencias ADMIN/Developer en una copia Beta aislada; no ejecutar contra producción.
+- Las tareas Inbox que requieren controles visibles adicionales (selección múltiple, nuevas acciones o paneles) permanecen diferidas por la instrucción expresa del usuario.
+- No se desplegaron Apps Script ni se modificaron datos productivos, ACL, Spreadsheet, Drive o ScriptProperties.
