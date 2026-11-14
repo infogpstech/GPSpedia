@@ -47,8 +47,8 @@ test("Conserva compatibilidad con IDs tut- históricos y reporta vacíos",()=>{
 });
 test("Audita Relay sin imponer un formato que no está definido",()=>{
     const sheet=makeSheet([["ID","config"],["R-1","A"],["r-1","B"],["","C"]]);
-    const r=auditColumn(sheet,{sheet:"Relay",column:1,kind:"relay",formatKnown:false});
-    assert.equal(r.formatKnown,false);assert.equal(r.duplicateIdCount,1);assert.equal(r.malformedIdCount,0);assert.equal(r.missingIdCount,1);
+    const r=auditColumn(sheet,{sheet:"Relay",column:1,kind:"relay",formatKnown:false,includeSamples:true});
+    assert.equal(r.formatKnown,false);assert.equal(r.duplicateIdCount,1);assert.equal(r.malformedIdCount,0);assert.equal(r.missingIdCount,1);assert.deepEqual(r.sampleIds,[{row:2,id:"R-1"},{row:3,id:"r-1"}]);
 });
 test("Detecta fórmulas ID y fórmulas sin valor sin modificarlas",()=>{
     const sheet=makeSheet([["ID","marca"],[1,"A"],["",""],[1,"B"]],[["ID"],["=ROW()-1"],["=ROW()-1"],[""]]);
