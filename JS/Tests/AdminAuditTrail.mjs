@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 
-const source = readFileSync(new URL("../Services/admin.js", import.meta.url), "utf8");
+const source = readFileSync(new URL("../../Services/admin.js", import.meta.url), "utf8");
 function extractFunction(name) {
     const start = source.indexOf("function " + name + "(");
     assert.ok(start >= 0, "No se encontró " + name);
@@ -24,7 +24,7 @@ const ADMIN_AUDIT_MAX_FINALIZED_ = 300;
 const ADMIN_AUDIT_MAX_PENDING_ = 20;
 const ADMIN_AUDIT_MAX_RECORD_LENGTH_ = 900;
 `;
-const syntax = spawnSync(process.execPath, ["--check", new URL("../Services/admin.js", import.meta.url).pathname], { encoding:"utf8" });
+const syntax = spawnSync(process.execPath, ["--check", new URL("../../Services/admin.js", import.meta.url).pathname], { encoding:"utf8" });
 assert.equal(syntax.status,0,"admin.js no supera node --check: "+syntax.stderr);
 
 function createProperties(seed={},options={}) {

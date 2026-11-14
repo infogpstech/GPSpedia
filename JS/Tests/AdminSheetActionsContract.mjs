@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-const adminSource = readFileSync(new URL("../Services/admin.js", import.meta.url), "utf8");
+const adminSource = readFileSync(new URL("../../Services/admin.js", import.meta.url), "utf8");
 const apiSource = readFileSync(new URL("../Frontend/api-config.js", import.meta.url), "utf8");
 const consumerSources = {
     ui: readFileSync(new URL("../Frontend/ui.js", import.meta.url), "utf8"),

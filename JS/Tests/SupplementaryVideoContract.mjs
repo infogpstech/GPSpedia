@@ -2,8 +2,8 @@ import { readFileSync } from "node:fs";
 const source=readFileSync("JS/Tests/SupplementaryVideoContract.js","utf8");
 const run=new Function(source+"\nreturn runSupplementaryVideoContractTests;")();
 const result=await run({
- write:readFileSync("JS/Services/write.js","utf8"),admin:readFileSync("JS/Services/admin.js","utf8"),
- catalog:readFileSync("JS/Services/catalog.js","utf8"),feedback:readFileSync("JS/Services/feedback.js","utf8"),
+ write:readFileSync("Services/write.js","utf8"),admin:readFileSync("Services/admin.js","utf8"),
+ catalog:readFileSync("Services/catalog.js","utf8"),feedback:readFileSync("Services/feedback.js","utf8"),
  ui:readFileSync("JS/Frontend/ui.js","utf8"),addCortes:readFileSync("HTML/add_cortes.html","utf8")
 });
 const total=result.passed+result.failed;
