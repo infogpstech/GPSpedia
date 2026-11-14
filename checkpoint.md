@@ -1111,3 +1111,17 @@ Rama autorizada: `GPSpedia2.2.5_work`. Rama base `GPSpedia2.2.5`: sin modificaci
 No se ejecutó GitHub Actions completo ni se probaron navegador, Apps Script, Spreadsheet o deployment Beta real. No se cambiaron endpoints, deployments ni datos productivos.
 
 **Alcance de dispositivo:** la identificación es persistente en el almacenamiento local del origen/perfil del navegador, sin fingerprinting físico. Borrar datos del sitio o usar otro navegador/perfil se considera una identidad local nueva.
+
+
+### Adenda — preflight de aceptación en solo lectura (2026-11-14)
+
+La última revisión del flujo detectó que el preflight común de AUTH todavía ejecutaba `validateAndTouchSession_` para `acceptTerms`, actualizando `LastActivityAt`. Se corrigió con una rama específica que llama a `validateSessionReadOnly_(token, userId)`; no renueva actividad ni reconcilia sesiones. `handleAcceptTerms` vuelve a validar el token y el usuario antes de persistir la aceptación en Users. El resto de las mutaciones autenticadas conserva la actualización normal de actividad.
+
+Validación repetida tras este ajuste:
+- SharedMutationCoordinator: 41/41 PASS.
+- TermsModalAccessibility: 12/12 PASS.
+- Prueba aislada del preflight: acceptTerms usa lectura; logout conserva la ruta normal de actualización. PASS.
+- Parsing/sintaxis de ocho archivos de código y pruebas: PASS.
+- Espejo `Services/Auth.js` / `JS/Tests/Auth.js`: sincronizado.
+
+El HEAD previo a esta adenda se verificará al publicar el checkpoint. No se ejecutó CI completo, navegador ni Apps Script Beta. La validación y el despliegue Beta siguen pendientes.
