@@ -253,3 +253,11 @@
 - JS/Tests/CatalogChangeFeed.mjs: prueba contractual del orden confirmación → lectura/validación de ID → upsert exacto, con fallback reset.
 - CI Node.js 22 run `43652752655`: SUCCESS; sintaxis PASS; 98 suites / 1,466 pruebas / 0 fallos. CatalogChangeFeed 15/15; CatalogSnapshotSync 27/27; CatalogStartupIntegrity 18/18 PASS.
 - Un primer CI de este cambio detectó regex de imagen con escape doble; se corrigió y el CI posterior aprobó. No se desplegaron Apps Script ni se modificaron datos externos.
+
+
+2026-11-14 — GP-CAT: PUBLICACIÓN INCREMENTAL EXACTA DE LOGOS
+- Services/admin.js: addLogo, después de cerrar la auditoría y confirmar éxito, relee LogosMarca por ID numérico y valida unicidad, nombre de marca y URL exacta. Publica upsert de `logos` con el mismo ID de imagen normalizado que usa getCatalogData.
+- Si la fila no es única, no coincide o no puede normalizarse la imagen, el productor publica reset seguro. Las demás mutaciones ADMIN conservan reset.
+- JS/Tests/CatalogChangeFeed.mjs: contrato de alta Logo y fallback reset; 16/16 PASS.
+- CI Node.js 22 run `43652869282`: SUCCESS; 98 suites / 1,467 pruebas / 0 fallos. CatalogSnapshotSync 27/27 y CatalogStartupIntegrity 18/18 PASS.
+- Relay no tiene un escritor catalogal identificado en WRITE/FEEDBACK/ADMIN; los registros históricos de Relay pueden carecer de ID. No se habilitó un productor artificial ni se generaron IDs.
