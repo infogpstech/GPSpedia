@@ -9223,7 +9223,12 @@ function renderTermsGate_(user) {
             stored.TermsAcceptance = confirmed;
             localStorage.setItem('gpsepedia_session', JSON.stringify(stored));
             user.TermsAcceptance = confirmed; setState({ currentUser: user });
-            modal.style.display = 'none'; deactivateLegalModalFocus_(modal); container.style.display = 'block'; footer.style.display = 'flex';
+            // Reanudar el renderizado completo de la app después de aceptar el aviso.
+            // showApp vuelve a pasar por renderTermsGate_ (que ya reconoce la aceptación local)
+            // y termina de pintar saludo, navegación y controles según el rol.
+            if (showApp(user) !== true) {
+                throw new Error('No se pudo completar la apertura de la aplicación después de aceptar el aviso.');
+            }
             if (typeof window.auth?.loadInitialData === 'function') window.auth.loadInitialData();
         } catch (error) {
             const message = error && error.message ? error.message : 'No se pudo registrar la aceptación.';
