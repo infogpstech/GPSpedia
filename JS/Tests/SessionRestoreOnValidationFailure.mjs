@@ -117,9 +117,8 @@ await test('una expiración local confirmada conserva el cierre de sesión', asy
 
 await test('AUTH devuelve no disponible ante excepción interna, no sesión revocada', () => {
     const handler = extract(service, 'function handleValidateSession(payload)', '\nfunction handleTouchSession(payload)');
-    const fn = new Function('validateAndTouchSession_', 'logToSheet', handler + '\nreturn handleValidateSession;')(
-        () => { throw new Error('Spreadsheet temporalmente no disponible'); },
-        () => {}
+    const fn = new Function('validateSessionReadOnly_', handler + '\nreturn handleValidateSession;')(
+        () => { throw new Error('Spreadsheet temporalmente no disponible'); }
     );
     const result = fn({ userId: 'U-TEST', sessionToken: 'token-test' });
     assert.equal(result.valid, null);
@@ -165,8 +164,8 @@ await test('una respuesta valid:false sin error conserva el significado de revoc
 
 await test('AUTH mantiene false únicamente para identidad o token ausentes/revocados', () => {
     const handler = extract(service, 'function handleValidateSession(payload)', '\nfunction handleTouchSession(payload)');
-    const fn = new Function('validateAndTouchSession_', 'logToSheet', handler + '\nreturn handleValidateSession;')(
-        () => ({ valid: false, reason: 'missing_session' }), () => {}
+    const fn = new Function('validateSessionReadOnly_', handler + '\nreturn handleValidateSession;')(
+        () => ({ valid: false, reason: 'missing_session' })
     );
     assert.equal(fn({ userId: 'U-TEST', sessionToken: 'token-test' }).valid, false);
     assert.equal(fn({ userId: 'U-TEST' }).valid, false);
@@ -208,6 +207,15 @@ await test('AUTH trata hojas faltantes y revocación pendiente como indisponibil
     assert.match(service, /valid: null, unavailable: true, reason: 'missing_sheet'/);
     assert.match(service, /valid: null, unavailable: true, reason: 'role_revocation_pending'/);
 });
+await test('validateSession no depende del coordinador y conserva comprobaciones de identidad y expiración', () => {
+    const router = extract(service, 'function isSharedMutationAction_(action)', '\nfunction doPost(e)');
+    assert.doesNotMatch(router, /validateSession/);
+    const validator = extract(service, 'function validateSessionReadOnly_(', '\nfunction handleValidateSession');
+    assert.match(validator, /getSessionExpirationStatus_/);
+    assert.match(validator, /identity_mismatch/);
+    assert.match(validator, /isActiveAuthUserRecord/);
+    assert.match(validator, /SessionTermsAcceptance/);
+});
 
 await test('las operaciones protegidas distinguen indisponibilidad de sesión inválida', () => {
     assert.match(api, /result&&result\.valid===false&&!result\.error&&!result\.unavailable/);
@@ -219,4 +227,4 @@ await test('la validación reciente puede reutilizarse al restaurar una actualiz
     assert.match(check, /validateSessionCoordinated\(user, false\)/);
 });
 
-console.log('SessionRestoreOnValidationFailure: ' + passed + '/14 PASS');
+console.log('SessionRestoreOnValidationFailure: ' + passed + '/15 PASS');
