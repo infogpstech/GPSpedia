@@ -30,7 +30,7 @@ function runUsersAtomicMutationTests(usersSource, authSource, coordinatorSource)
     ];
     const code = "const COLS_USERS={ID:1,Nombre_Usuario:2,Password:3,Privilegios:4,Telefono:5,Correo_Electronico:6,Nombre_Completo:7,SessionToken:8,TermsAcceptance:9};\n" +
         "const SHEET_NAMES={USERS:'Users'};\n" +
-        "const USERS_ALLOWED_ROLES_=Object.freeze(['Desarrollador','Gefe','Supervisor','Tecnico','Tecnico_exterior']);\n" +
+        "const USERS_ALLOWED_ROLES_=Object.freeze(['Desarrollador','Jefe','Supervisor','Tecnico','Tecnico_exterior']);\n" +
         names.map(name => extract(source, name)).join("\n") +
         "\nreturn {normalizeNewUserInput_,normalizeUserProfileUpdates_,findUniqueUserRow_,findNextUserRow_,writeUserRangeAtomically_,handleCreateUser,handleUpdateProfile,withUsersMutationLock_};";
     function fixture(options) {
