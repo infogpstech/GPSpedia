@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { createOverlayHistoryManager, overlayHistoryStateKey } from '../Frontend/overlayHistory.js';
 
 const read = path => readFileSync(new URL('../../' + path, import.meta.url), 'utf8');
-const html = read('index.html'), ui = read('JS/Frontend/ui.js'), main = read('JS/Frontend/main.js'), css = read('style.css');
+const html = read('index.html'), ui = read('JS/Frontend/ui.js'), main = read('JS/Frontend/main.js'), css = read('style.css'), usersPage = read('HTML/users.html'), addCortesPage = read('HTML/add_cortes.html');
 let passed = 0;
 function test(name, fn) { fn(); passed++; console.log('PASS ' + name); }
 function fakeHistory() {
@@ -71,6 +71,15 @@ test('el panel diagnostica la configuración del coordinador AUTH', () => {
     assert.match(ui, /metadata\.coordinatorConfigured === false/);
     assert.match(ui, /Coordinador pendiente/);
     assert.match(ui, /Coordinador compartido/);
+});
+test('las páginas auxiliares remiten los detalles largos al aviso central', () => {
+    for (const source of [usersPage, addCortesPage]) {
+        assert.match(source, /function showConciseAlert_\(message\)/);
+        assert.match(source, /hostUi\.showGlobalError\(detail\)/);
+        assert.match(source, /No se pudo completar la operación\./);
+    }
+    assert.match(addCortesPage, /showConciseAlert_\(/);
+    assert.match(usersPage, /showConciseAlert_\(/);
 });
 test('el cierre del panel elimina su entrada y conserva la sección anterior', () => {
     const history = fakeHistory();
