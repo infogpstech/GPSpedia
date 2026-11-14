@@ -697,10 +697,10 @@ No marcar como completadas estas tareas hasta ejecutar las pruebas locales perti
 12. **Pruebas:** arranque con caché y red lenta; caché sin cambios; alta/modificación/baja de cada entidad desde otra sesión; dos o más pestañas; reconexión; cursor expirado; delta paginado; respuesta duplicada/fuera de orden; escritura fallida; edición abierta; operación offline pendiente; permisos; animación reducida; rendimiento móvil. Probar que un registro creado por usuario A aparece en usuario B sin recargar, cerrar ni reabrir.
 
 ### Evidencia técnica actual
-- `auth.js` lee snapshot+cursor local antes de red. Si el cursor está vigente, consulta únicamente el feed autenticado; sin novedades no llama `fetchCatalogData()` ni descarga colecciones completas. `getCatalogFeedChanges` pagina hasta 5 páginas de 50 eventos; solicitudes limitadas a 8 s.
-- `offline.js` lee snapshot+cursor en una transacción y guarda ambos atómicamente. Aplica upsert/delete por ID estable para `cortes`; reset, colecciones no soportadas, cursor vencido, huecos o respuestas inconsistentes activan snapshot completo seguro. Los productores multi-entidad usan reset como fallback, por lo que no todos los cambios son todavía deltas por registro.
+- `auth.js` lee snapshot+cursor local antes de red. Si el cursor está vigente, consulta únicamente el feed autenticado; sin novedades no llama `fetchCatalogData()` ni descarga colecciones completas. `getCatalogChanges` pagina hasta 5 páginas de 50 eventos; solicitudes limitadas a 8 s.
+- `offline.js` lee snapshot+cursor en una transacción y guarda ambos atómicamente. `saveCatalog()` invalida el cursor previo cuando guarda un snapshot sin revisión. Aplica upsert/delete por ID estable para `cortes`; reset, colecciones no soportadas, cursor vencido, huecos o respuestas inconsistentes activan snapshot completo seguro. Los productores multi-entidad usan reset como fallback, por lo que no todos los cambios son todavía deltas por registro.
 - `auth.js` realiza sondeo adaptativo solo con la app visible y online; se pausa al ocultarse/desconectarse y reanuda al recuperar visibilidad/conexión. Las pestañas coordinan polling con lease por usuario y comparten actualizaciones por BroadcastChannel o evento storage.
-- `ui.js` usa `performSilentSync`: actualiza tarjetas modificadas, modal activo, altas/bajas y vistas de Tutoriales/Relay/Logos. Los resets refrescan el cache separado de PyS. No se añaden controles ni paneles visibles.
+- `ui.js` usa `performSilentSync`: actualiza tarjetas modificadas, modal activo, altas/bajas y vistas de Tutoriales/Relay/Logos. Las tarjetas nuevas respetan `prefers-reduced-motion`; los resets refrescan el cache separado de PyS. No se añaden controles ni paneles visibles.
 - CI cubre arranque cache-first, delta vacío sin snapshot completo, upsert, reset, huecos de revisión, cursor transaccional, sincronización silenciosa y coordinación entre pestañas. La validación de red/latencia/dispositivos y concurrencia multiusuario real sigue pendiente en Beta.
 
 ### GP-CAT-01B — Feed incremental backend (primer hito, 2026-11-14)
@@ -708,10 +708,10 @@ No marcar como completadas estas tareas hasta ejecutar las pruebas locales perti
 - `Services/Coordinator.js`: journal interno versionado con revisiones monotónicas, eventos por propiedad, retención de 100 eventos, cursor, paginación (1–50), autenticación por secreto de servicio, detección de cursor vencido/futuro, huecos/corrupción y eventos reset. Snapshots superiores al límite seguro se convierten en reset.
 - `Services/SharedMutationClient.js`: métodos internos para publicar eventos y consultar el feed.
 - `Services/feedback.js`: endpoint `getCatalogChanges` autenticado contra ActiveSessions/Users; sin nueva interfaz.
-- `JS/Frontend/api-config.js`: acción enrutable a FEEDBACK; aún no se integra al arranque ni al sondeo del cliente.
-- `JS/Tests/CatalogChangeFeed.mjs`: 14/14 PASS; `CatalogSnapshotSync`: 24/24 PASS; `CatalogStartupIntegrity`: 16/16 PASS; `SessionStartupNavigation`: 16/16 PASS.
-- CI Node.js 22 del commit `1bcaecb37d1560cb76a255de38f208df944b8b31`: sintaxis PASS; 98 suites / 1,458 pruebas / 0 fallos. GitHub Pages del mismo HEAD aún debe confirmarse.
-- **Limitación vigente:** los upserts por registro están habilitados actualmente para `cortes`; las operaciones que pueden afectar varias filas/colecciones publican `reset`, por lo que todavía pueden requerir snapshot completo. El sondeo en vivo ya está implementado, pero la comprobación Beta multiusuario y la medición de rendimiento en dispositivos reales siguen pendientes.
+- `JS/Frontend/api-config.js`: acción `getCatalogChanges` integrada en el arranque cache-first y el sondeo autenticado; admite cancelación mediante `AbortSignal`.
+- `JS/Tests/CatalogChangeFeed.mjs`: 14/14 PASS; `CatalogSnapshotSync`: 25/25 PASS; `CatalogStartupIntegrity`: 18/18 PASS; `SessionStartupNavigation`: 16/16 PASS; `PWAStartupScenarios`: 15/15 PASS.
+- CI Node.js 22 del commit `4ba299ac771a8a3e60f413134c1c59afc4c708e4`: sintaxis PASS; 98 suites / 1,463 pruebas / 0 fallos. Pages de este SHA fue cancelado por la ejecución documental posterior; consultar Pages del HEAD documental actual.
+- **Limitación vigente:** los upserts por registro están habilitados actualmente para `cortes`; las operaciones que pueden afectar varias filas/colecciones publican `reset`, por lo que todavía pueden requerir snapshot completo. El sondeo en vivo ya está implementado; la comprobación Beta multiusuario y el rendimiento en dispositivos reales siguen pendientes.
 - No se añadió botón, panel, indicador ni sección visible.
 
 ### Criterios de aceptación
