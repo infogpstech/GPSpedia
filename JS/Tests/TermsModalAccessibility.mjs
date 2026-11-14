@@ -6,6 +6,7 @@ const root = new URL('../../', import.meta.url);
 const read = path => readFileSync(new URL(path, root), 'utf8');
 const html = read('index.html');
 const ui = read('JS/Frontend/ui.js');
+const auth = read('JS/Frontend/auth.js');
 const main = read('JS/Frontend/main.js');
 const sw = read('service-worker.js');
 const css = read('style.css');
@@ -85,6 +86,12 @@ test('el acuerdo se abre desde login, footer y enlace del aviso', () => {
     assert.match(main, /login-terms-link.*addEventListener\('click', openTerms\)/);
     assert.match(main, /terms-link-in-modal.*addEventListener\('click', openTerms\)/);
     assert.match(ui, /termsNotice && termsNotice\.style\.display === 'flex' \? '3200' : ''/);
+});
+test('el catálogo permanece sin cargar hasta aceptar los términos de la sesión', () => {
+    assert.match(ui, /if \(!renderTermsGate_\(user\)\) return;/);
+    assert.match(ui, /window\.auth\?\.loadInitialData/);
+    assert.match(auth, /if \(appReady\) loadInitialData\(\)/);
+    assert.match(auth, /if \(handleLoginSuccess\(validatedUser, false\)\) loadInitialData\(\)/);
 });
 test('cerrar el acuerdo sobre el aviso limpia History API y conserva el aviso padre', () => {
     const history = createFakeHistory();
