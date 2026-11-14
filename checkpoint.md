@@ -873,3 +873,13 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - Planner: `CortesImageReconciliation.mjs` 19/19 PASS. UI: `CortesImageReconciliationUI.mjs` 13/13 PASS. GitHub Actions run 43615392436: 92 suites, 1,346 pruebas aprobadas, 0 fallos. GitHub Pages run 43615391867: build y deployment PASS.
 - La acción de aplicación no fue invocada; no se escribieron celdas, no se movieron archivos ni se modificaron permisos. La validación con Apps Script/Drive/Spreadsheet reales y navegador/IndexedDB queda diferida a Beta. La escritura productiva permanece sujeta a autorización expresa.
 - HEAD al cierre de esta actualización: `cefbc86158b6f19611e6ec726a00cfb6a768e9a1` (rama `GPSpedia2.2.5_work`).
+
+
+## GP-UX-INFO-01 — Cierre local (2026-11-14)
+
+- Se revisaron etiquetas de Developer y formularios, se redujeron textos de botones y se trasladaron explicaciones operativas a ayudas contextuales.
+- La ayuda dinámica se controla con listeners delegados únicos en `document`, admite clic/foco por botón, cierre fuera/Escape, `aria-describedby` y restauración de foco. La burbuja queda fuera de etiquetas checkbox y funciona con plantillas de modal restauradas.
+- Ayudas en alta de tutorial, PYS y controles de mantenimiento Developer. El modal de detalles de vehículos permanece excluido y cubierto por prueba.
+- CI run 43616097773: 93 suites / 1,361 pruebas aprobadas / 0 fallos. `ContextualHelpForms` 12/12 y `DeveloperPanelUX` 3/3. Pages run 43616505909: build y deployment PASS.
+- El nuevo flujo de aplicación de imágenes queda oculto hasta que el backend ADMIN desplegado anuncie `capabilities.applyApprovedReconciliation`; Pages y Apps Script se despliegan por separado. No se ejecutaron escrituras productivas.
+- HEAD de código validado: `49bd0d1bacf00a22ea63d37a16d6e23a7e675b09`. Rama base verificada sin cambios en esta sesión: `GPSpedia2.2.5` en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.

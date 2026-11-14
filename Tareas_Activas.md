@@ -249,15 +249,16 @@ La acción del **botón integrado de compartir** en el modal es pública para to
 - [ ] La escritura real en Drive/Spreadsheet productivos y la ejecución de migraciones requieren autorización expresa; no forman parte del registro documental actual.
 
 ### GP-UX-INFO-01 — Textos concisos y ayuda contextual
-- [ ] Revisar textos de Developer y formularios para retirar explicaciones redundantes o demasiado extensas; conservar etiquetas breves, claras y orientadas a la acción.
-- [ ] Cuando una explicación sea útil pero no deba permanecer visible, utilizar un icono ⓘ discreto que abra una burbuja contextual al pulsarlo.
-- [ ] Evitar que los botones expliquen su propia función con frases largas; usar iconografía reconocible y ayudas contextuales cuando sea necesario.
+- [x] Revisar textos de Developer y formularios; se retiraron explicaciones redundantes y se conservaron etiquetas breves, claras y orientadas a la acción.
+- [x] Cuando una explicación sea útil pero no deba permanecer visible, utilizar un icono ⓘ discreto que abra una burbuja contextual al pulsarlo.
+- [x] Evitar que los botones expliquen su propia función con frases largas; se acortaron las etiquetas y se conservaron nombres accesibles completos donde aplica.
 - [x] Aplicar ayudas ⓘ accesibles en `HTML/add_cortes.html` para año/rango, versión de equipamiento, tipo de corte y configuración del relay.
 - [x] Añadir ayudas contextuales en los formularios dinámicos de sugerencia de cambio y alta de tutorial; apertura por pulsación, cierre fuera/Escape y foco restaurado.
-- [ ] Incorporar ayudas ⓘ en los formularios de tutoriales PYS para explicar el cambio o dato solicitado.
-- [ ] **Excluir expresamente el modal de detalles de vehículos:** no colocar allí el icono ⓘ ni burbujas de ayuda.
-- [ ] Mantener accesibilidad: controles con nombre accesible, foco visible, apertura/cierre por teclado y texto contextual legible en móvil.
+- [x] Incorporar ayudas ⓘ en los formularios de alta de tutoriales y PYS para explicar el dato solicitado.
+- [x] **Excluir expresamente el modal de detalles de vehículos:** no se añadieron iconos ni burbujas en `mostrarDetalleModal`; prueba de exclusión incluida.
+- [x] Mantener accesibilidad: nombres accesibles, foco visible, apertura por pulsación, cierre fuera/Escape, `aria-describedby` y texto legible en móvil.
 
+- Validación CI: `ContextualHelpForms` 12/12 PASS; `DeveloperPanelUX` 3/3 PASS; 93 suites / 1,361 pruebas / 0 fallos. GitHub Pages build/deployment PASS (2026-11-14).
 ### Criterios de aceptación
 - Developer presenta Respaldo y Base de datos en la misma pestaña; controles de migración y limpieza tienen tamaños proporcionados y consistentes.
 - [x] La biblioteca de imágenes ofrece cuadrícula/lista, miniaturas dimensionadas según la vista, selección múltiple y menú contextual de tres puntos con acciones coherentes y autorizadas.

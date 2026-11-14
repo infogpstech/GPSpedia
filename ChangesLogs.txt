@@ -1818,3 +1818,12 @@ Rama: GPSpedia2.2.5_work
 - Validación CI: 92 suites / 1,346 pruebas / 0 fallos; Pages build/deployment PASS.
 - No se ejecutó la acción contra datos productivos ni se modificaron permisos o archivos Drive.
 ================================================================================
+
+
+================================================================================
+2026-11-14 — GP-UX-INFO-01 CIERRE LOCAL
+- Ayudas contextuales en alta de tutoriales/PYS y controles Developer; listeners globales con cierre fuera/Escape y restauración de foco.
+- Botones y etiquetas acortados; el modal de detalles de vehículos permanece excluido.
+- CI: 93 suites / 1,361 pruebas / 0 fallos; Pages build/deployment PASS.
+- El botón de aplicación de imágenes depende de capability ADMIN; permanece oculto hasta que se despliegue el backend compatible.
+================================================================================
