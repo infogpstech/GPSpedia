@@ -1355,3 +1355,9 @@ GitHub Actions: 75 suites, 1,149 pruebas aprobadas, 0 fallos. Comprobaciones de 
 - Modal de detalle: compartir e imprimir se renderizan para todos; edición in-modal está limitada al Desarrollador. La política debe ampliarse para Supervisor/Jefe y aplicarse también en backend.
 - IDs: ya existen generadores backend para usuarios, vehículos, tutoriales y Problemas. Falta inventariar fórmulas heredadas y el esquema de Relay antes de diseñar la migración completa.
 - Contraseñas: existe migración oportunista en login exitoso de texto plano a SHA-256 con salt; no se ha confirmado una herramienta de migración batch. No se ejecutaron escrituras productivas.
+
+
+2026-11-14 — Corrección de matriz RBAC confirmada por el usuario:
+- Compartir mediante el botón integrado del modal permanece disponible para todos los roles, incluidos Técnico y Técnico Exterior.
+- Imprimir y editar detalles se reservan a Supervisor, Jefe (incluido alias histórico Gefe) y Desarrollador.
+- Se corrigió la redacción del plan para distinguir compartir de las acciones administrativas.

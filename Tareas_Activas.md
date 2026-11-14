@@ -76,7 +76,7 @@ Simplificar la autenticación sin debilitar autorización; modernizar Inbox; end
 **Estado: PENDIENTE**
 - [ ] Definir una matriz de capacidades por rol en backend y frontend.
 - [ ] Compartir integrado del modal permitido a todos.
-- [ ] Compartir, imprimir y editar detalles solo Supervisor, Jefe y Desarrollador.
+- [ ] Compartir integrado disponible para todos; imprimir y editar detalles solo Supervisor, Jefe y Desarrollador.
 - [ ] Restringir botones, enlaces directos, descarga, menú contextual, copiar/arrastrar en imágenes, sin romper campos editables ni accesibilidad.
 - [ ] Revisar exposición de URL originales y recursos estáticos; no confundir ocultar controles con autorización real.
 - [ ] Pruebas negativas: Técnico no ejecuta acciones privilegiadas manipulando DOM o llamando endpoints directamente.
@@ -125,3 +125,14 @@ Completar el paquete P0 sobre los contratos y llamadores existentes. Después pr
 - Una solicitud de negocio protegida debe autenticar token y rol dentro de su propio backend; eliminar la llamada previa separada `touchSession` no significa confiar en el navegador ni permitir acciones sin autorización.
 - La validación de token debe actualizar la actividad dentro de la misma operación cuando corresponda, respetando las ventanas de expiración y evitando un viaje adicional.
 - En el modal, compartir permanece permitido a todos; Supervisor, Jefe (incluyendo el alias histórico `Gefe`) y Desarrollador tendrán además imprimir y editar detalles. La matriz definitiva debe aplicarse también en backend.
+
+
+## Aclaración de permisos confirmada por el usuario — 2026-11-14
+
+La acción del **botón integrado de compartir** en el modal es pública para todos los roles, incluidos `Tecnico` y `tecnico_exterior`. No debe confundirse con las acciones administrativas del modal.
+
+- Todos los roles autenticados: pueden utilizar el botón integrado de compartir.
+- Roles superiores a Técnico y Técnico Exterior: pueden además imprimir y editar detalles desde el modal.
+- Roles privilegiados expresamente contemplados: Supervisor, Jefe (incluido alias histórico `Gefe`) y Desarrollador.
+- `Tecnico` y `tecnico_exterior` no pueden imprimir ni editar detalles desde el modal.
+- La matriz debe aplicarse tanto en la interfaz como en el backend cuando una acción tenga endpoint; ocultar botones no es control de seguridad.

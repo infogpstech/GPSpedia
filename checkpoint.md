@@ -241,3 +241,9 @@ Completar P0 inspeccionando contratos de login, `touchSession`, middleware/handl
 - Vehículos, usuarios, tutoriales y Problemas ya tienen mecanismos backend parciales de IDs; queda verificar fórmulas y referencias históricas, especialmente Relay.
 - La conversión de contraseña legacy ocurre al login correcto; falta determinar e implementar la utilidad explícita por lotes que el usuario reporta como ausente.
 - P0 continúa EN PROGRESO. No se modificó código funcional, hojas ni deployments durante esta auditoría.
+
+
+### Corrección confirmada de matriz de permisos — 2026-11-14
+- El botón integrado de compartir del modal está disponible para todos los usuarios, incluidos Técnico y Técnico Exterior.
+- Las acciones restantes solicitadas (imprimir y editar detalles) requieren un rol superior a Técnico/Técnico Exterior: Supervisor, Jefe (alias histórico `Gefe`) o Desarrollador.
+- No restringir compartir general al grupo administrativo. Aplicar la distinción en UI y backend donde corresponda.
