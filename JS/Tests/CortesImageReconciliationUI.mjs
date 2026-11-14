@@ -22,9 +22,9 @@ testCase("el frontend consume el endpoint y presenta estados diferenciados",()=>
  assert.ok(html.includes('id="btn-audit-drive-reconcile"'));
 });
 testCase("limita reintentos y libera el bloqueo global si la vista deja de ser actual",()=>{
- assert.match(ui,/routeActionWithRetry\\("previewCortesImageReconciliation"/);
+ assert.match(ui,/routeActionWithRetry\("previewCortesImageReconciliation"/);
  assert.match(ui,/shouldContinue: isCurrentRequest/);
- assert.match(ui,/isDriveAuditRunning = false;[\\s\\S]*if \\(isCurrentRequest\\(\\)\\) updateControls\\(\\)/);
+ assert.match(ui,/isDriveAuditRunning = false;[\s\S]*if \(isCurrentRequest\(\)\) updateControls\(\)/);
 });
 testCase("consolida duplicados canónicos entre lotes antes de mostrar coincidencias",()=>{
  assert.match(ui,/const canonicalGroups = new Map/);
