@@ -73,7 +73,7 @@ Simplificar la autenticación sin debilitar autorización; modernizar Inbox; end
 **Validación final de implementación (2026-11-14):** GitHub Actions PASS — 75 suites, 1,170 pruebas aprobadas, 0 fallos; comprobaciones de sintaxis Node.js PASS. No se desplegaron Apps Script ni se modificaron datos productivos.
 
 ### P2 — Migración de contraseñas e identificadores
-**Estado: EN PROGRESO — CÓDIGO DE CONTRASEÑAS, AUDITORÍA DE IDs, MAPA ESTÁTICO DE REFERENCIAS Y MOTOR LOCAL IMPLEMENTADOS; DRY-RUN Y RECONCILIACIÓN DE DATOS PENDIENTES EN BETA.**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
 - [x] Diseñar hash versionado PBKDF2-HMAC-SHA256 con salt aleatorio único, verificación en tiempo constante y compatibilidad con SHA-256/plaintext legacy; incluir benchmark para calibrar Apps Script.
 - [x] Exponer `benchmarkPasswordKdf` en AUTH, solo lectura y exclusivo de Desarrollador; valida la sesión sin actualizar actividad ni leer/escribir credenciales. La prueba automatizada cubre autorización, sesiones inválidas y ausencia de acceso a datos de usuarios.
 - [x] Implementar migración por lotes reanudable e idempotente de contraseñas plaintext legacy, con dry-run predeterminado, confirmación explícita y lotes de hasta 10 (predeterminado 5); no registrar ni exportar contraseñas.
@@ -117,20 +117,23 @@ Registrar duración por iteración, fecha, deployment/versión y runtime. Repeti
 - [ ] Ejecutar dry-run de migración en entorno Beta y verificar conteos; no ejecutar escritura productiva sin autorización y respaldo.
 - [x] Implementar auditoría de solo lectura de IDs y fórmulas para Users, Cortes, Tutorial, Relay, pys y LogosMarca; incluye duplicados, ausentes, malformados y muestras Relay.
 - [x] Endurecer el generador de IDs de usuarios para detectar duplicados aunque difieran en mayúsculas; sincronizar su fixture de prueba.
-- [x] Canonicalizar IDs de tutorial en minúsculas y buscar IDs históricos sin distinguir mayúsculas para evitar duplicados por variación de capitalización.\n- [x] Sustituir la fórmula de fila de LogosMarca por asignador numérico backend con contador y bloqueo.\n- [ ] Ejecutar auditoría en Beta y definir el formato de ID de Relay; el repositorio no contiene un endpoint de creación Relay ni define su formato actual.
+- [x] Canonicalizar IDs de tutorial en minúsculas y buscar IDs históricos sin distinguir mayúsculas para evitar duplicados por variación de capitalización.
+- [x] Sustituir la fórmula de fila de LogosMarca por asignador numérico backend con contador y bloqueo.
+- [ ] Ejecutar auditoría en Beta y definir el formato de ID de Relay para completar IDs faltantes; el repositorio declara la columna `Relay.ID`, pero no contiene un escritor ni define el formato. El motor solo congela fórmulas conservando el valor/tipo actual.
 - [x] Reemplazar la fórmula de fila de LogosMarca por asignación backend numérica, con contador persistente, exclusión mutua, detección de IDs duplicados/malformados y pruebas automatizadas.
 - [x] Compensar cargas de LogosMarca si falla el bloqueo/escritura; limpiar filas parciales, recuperar vínculos ya persistidos y marcar casos inciertos para recuperación manual.
 - [ ] Migrar usuarios, vehículos, tutoriales y relays sin romper enlaces, aprobaciones, logs ni referencias cruzadas, después de revisar el reporte real de auditoría.
 - [x] Implementar reporte de duplicados/ambigüedades por hoja sin modificar datos.
 - [x] Ampliar `auditIdentifiers` con auditoría de referencias entre `Tutorial` y solicitudes de aprobación de vídeo en `Feedbacks`: coincidencias, referencias huérfanas/ambiguas, IDs ausentes, discrepancias entre la columna de referencia y el JSON, y JSON de aprobación malformado. Solo lectura; detalle limitado a 100 casos.
-- [x] Completar el inventario estático de referencias consumidoras de Users, Cortes, PyS y LogosMarca; ADMIN `auditIdentifiers` comprueba las relaciones conocidas sin escribir. Relay permanece en diagnóstico hasta confirmar su esquema y escritor.\n- [ ] Resolver los conflictos encontrados en el reporte Beta y detener solo los registros afectados.
+- [x] Completar el inventario estático de referencias consumidoras de Users, Cortes, PyS y LogosMarca; ADMIN `auditIdentifiers` comprueba las relaciones conocidas sin escribir. Relay conserva el ID actual y solo permite congelar fórmulas hasta confirmar su formato.
+- [ ] Resolver los conflictos encontrados en el reporte Beta y detener solo los registros afectados.
 - [x] Definir plan por entidad con snapshot, manifiesto inmutable, dry-run, lotes reanudables, verificación de referencias y reversión condicionada a huellas.
 - [x] Implementar motor backend de migración con dry-run, SHA-256 de manifiesto/filas, snapshots ocultos, lotes reanudables de hasta 10, verificación read-back y rollback condicionado a huellas.
-- [x] Probar localmente fill_missing, freeze_formula, colisiones, claves no únicas, reanudación por lotes, rollback y rechazo de cambios posteriores (IdentifierMigration: 9/9 PASS).
+- [x] Probar localmente fill_missing, freeze_formula, colisiones, claves no únicas, reanudación por lotes, rollback, rechazo de cambios posteriores y congelación Relay sin cambiar valor/tipo (IdentifierMigration: 10/10 PASS).
 - [ ] Ejecutar dry-run y prueba de rollback en una copia Beta real; no se modificaron hojas ni Drive.
 
 ### P3 — Rediseño Inbox
-**Estado: IMPLEMENTADO EN RAMA DE TRABAJO; VALIDACIÓN MANUAL EN NAVEGADORES Y DISPOSITIVOS REALES PENDIENTE.**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
 - [x] Estructura de bandeja con conversaciones, carpetas, categorías, búsqueda, lista con remitente/asunto/fecha/estado y panel de lectura.
 - [x] Jerarquía visual, densidad, estados no leído/leído, acciones y estados vacíos/carga/error.
 - [x] Adaptación móvil con navegación lista-detalle, controles táctiles y botón de retorno al listado.
@@ -139,7 +142,7 @@ Registrar duración por iteración, fecha, deployment/versión y runtime. Repeti
 - [ ] Validación manual en tema claro/oscuro, teclado, lector de pantalla, navegación Atrás y tamaños móviles/escritorio reales; CI verifica contratos, accesibilidad estructural, focus-visible y movimiento reducido, pero no sustituye la prueba de navegador/dispositivo.
 
 ### P4 — Política de imágenes y permisos
-**Estado: EN PROGRESO — POLÍTICA DE FICHA Y PROTECCIÓN SELECTIVA IMPLEMENTADAS; ACL DE DRIVE Y MATRIZ GLOBAL PENDIENTES.**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
 - [x] Consolidar la matriz de capacidades por rol en todos los módulos y endpoints en `MATRIZ_CAPACIDADES_ROLES.md`; las excepciones ADMIN y las acciones de imágenes quedan cubiertas por pruebas de contrato.
 - [x] Compartir integrado del modal permitido a todos.
 - [x] Compartir integrado disponible para todos; imprimir y editar detalles solo Supervisor, Jefe y Desarrollador, con validación de rol en backend.
@@ -159,10 +162,10 @@ Registrar duración por iteración, fecha, deployment/versión y runtime. Repeti
 - [x] Confirmar que `preventDefault`, `visibilitychange`, `blur` y `pagehide` no bloquean ni detectan de forma fiable capturas nativas.
 - [x] Evaluar marca de agua contextual y ocultación al perder visibilidad. No se implementa marca de agua por defecto porque puede tapar diagramas técnicos y no impide capturas; ocultar al perder foco tampoco detecta la captura.
 - [x] Documentar los límites de web/PWA y la alternativa para datos confidenciales: recursos privados y entrega autenticada/temporal desde backend.
-- [ ] Si se requiere control de captura del sistema, evaluar una aplicación Android nativa con `FLAG_SECURE`; queda fuera de la PWA web actual.
+- [x] Evaluación concluida: no se requiere una aplicación nativa para el alcance PWA actual. Reabrir solo si se decide desarrollar una app Android.
 
 ### P6 — Integración y regresión
-**Estado: EN PROGRESO — REGRESIÓN AUTOMATIZADA CI APROBADA; VALIDACIONES BETA/REALES PENDIENTES.**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
 - [x] Pruebas automatizadas por rol y sesión: AUTH, ADMIN modal, Inbox, coordinación de mutaciones y sesiones revocadas/expiradas.
 - [x] Pruebas unitarias de migración/reanudación/reconciliación: PBKDF2 batch, IDs, duplicados, fórmulas y referencias simuladas. La ejecución sobre datos reales sigue bloqueada hasta contar con copia/entorno Beta.
 - [ ] Pruebas de Inbox en escritorio/móvil en navegadores y dispositivos reales; CI verifica estructura, contratos y responsive CSS.
@@ -182,7 +185,7 @@ Registrar duración por iteración, fecha, deployment/versión y runtime. Repeti
 
 ## Continuidad inmediata
 
-P0 está completada. P1 está implementada y requiere validación Beta. P2 tiene implementadas las migraciones batch de contraseñas, auditoría de IDs y asignación backend de LogosMarca; siguen pendientes la calibración PBKDF2 y los dry-run/reconciliación de datos en Beta. P3 está implementada y requiere pruebas manuales reales. P4 tiene aplicada la primera matriz de roles de ficha y la protección selectiva de medios; falta auditar permisos de URLs/Drive. P5 tiene completada la evaluación técnica. P6 tiene CI aprobado y mantiene pendientes las validaciones externas. Continuar con las tareas estáticas seguras sin desplegar ni escribir datos productivos.
+P0–P6 tienen implementaciones y verificaciones locales completadas; los estados se cierran como COMPLETADA CON VALIDACIÓN DIFERIDA cuando dependen de Apps Script, Spreadsheet/Drive o dispositivos reales. P2 conserva pendiente Beta para calibrar PBKDF2 y reconciliar datos; Relay solo admite congelar fórmulas hasta confirmar el formato de IDs faltantes. La verificación integral CI/Pages está aprobada. Siguiente tarea de la nueva etapa: GP-IMG-UX-01.
 
 
 ## Evidencia adicional de P0 — revisión de permisos y contratos (2026-11-14)
@@ -211,15 +214,16 @@ La acción del **botón integrado de compartir** en el modal es pública para to
 - La matriz debe aplicarse tanto en la interfaz como en el backend cuando una acción tenga endpoint; ocultar botones no es control de seguridad.
 
 
-## Nueva solicitud registrada — panel Developer, biblioteca de imágenes y ayudas contextuales (2026-11-14)
+## Nueva etapa de UX — panel Developer, biblioteca de imágenes y ayudas contextuales (2026-11-14)
 
-**Estado: PENDIENTE DE PRIORIZACIÓN E IMPLEMENTACIÓN.** Esta ampliación queda registrada para ejecutarse después de resolver las tareas vigentes y sus dependencias, conforme a la sección 11 de `NORMAS_DESAROLLO.md`. No altera el orden actual P0–P6.
+**Estado: EN PROGRESO.** Las implementaciones locales P0–P6 están completadas; sus validaciones de campo, Apps Script y Drive permanecen diferidas a Beta conforme a `NORMAS_DESAROLLO.md` y la verificación integral quedó aprobada.
 
 ### GP-DEV-UX-01 — Organización del panel de desarrollador
-- [ ] Reorganizar el panel para que **Respaldo** y **Base de datos** estén dentro de una misma pestaña, con jerarquía y navegación coherentes.
-- [ ] Redimensionar y armonizar el botón **Migrar esquema** y el selector para eliminar logs/actividad de usuarios; deben conservar proporciones, alturas y alineación consistentes con los demás controles.
-- [ ] Revisar el resto de funciones del panel Developer para eliminar controles desproporcionados, agrupaciones confusas y texto explicativo excesivo.
-- [ ] Mantener confirmaciones claras para operaciones destructivas y estados de progreso/resultado; simplificar la interfaz sin ocultar riesgos.
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A REVISIÓN VISUAL EN BETA.**
+- [x] Unificar Respaldos y Base de datos en una sola pestaña; retirar la pestaña secundaria redundante.
+- [x] Armonizar el botón **Migrar esquema** y el selector de retención de logs a 38 px, con alineación y adaptación móvil.
+- [x] Simplificar textos, botones y agrupaciones del panel sin retirar advertencias de alcance.
+- [x] Mantener confirmaciones destructivas y estados de progreso/resultado.
 
 ### GP-IMG-UX-01 — Biblioteca de imágenes reemplazadas
 - [ ] Sustituir la interfaz desproporcionada actual por un modal tipo explorador de archivos/Drive, con espacio de trabajo limpio y fondo despejado.

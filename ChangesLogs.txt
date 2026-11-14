@@ -1658,3 +1658,13 @@ Rama: GPSpedia2.2.5_work
 - SessionActivityCoordination: 6/6 PASS. CI run 850: 87 suites, 1,292 pruebas aprobadas, 0 fallos.
 - Validación de deployments Apps Script y pruebas de sesiones/dispositivos reales permanecen diferidas a Beta; no se desplegó Apps Script.
 ================================================================================
+
+
+================================================================================
+2026-11-14 — P2 RELAY Y GP-DEV-UX-01
+- El motor admite congelar fórmulas de Relay preservando el valor/tipo exactos; completar IDs Relay faltantes continúa deshabilitado hasta confirmar formato y escritor.
+- GP-DEV-UX-01: se unificó Respaldos/Base de datos, se retiró la pestaña redundante, se armonizaron Migrar esquema y el selector de retención (38 px) y se redujo texto redundante sin retirar confirmaciones.
+- DevToolsModalAccessibility: 19/19 PASS. IdentifierMigration: 10/10 PASS.
+- CI run 855: 87 suites, 1,296 pruebas aprobadas, 0 fallos. GitHub Pages build/deployment PASS.
+- Sin despliegues Apps Script ni escrituras en Spreadsheet/Drive reales; revisión visual/ACL permanece diferida a Beta.
+================================================================================

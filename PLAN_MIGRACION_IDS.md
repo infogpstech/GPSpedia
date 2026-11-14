@@ -119,7 +119,7 @@ No borrar ni sobrescribir filas ambiguas para forzar una reversión.
 
 ## 9. Bloqueos conocidos y condiciones para iniciar
 
-- Relay permanece bloqueado hasta confirmar su esquema real y localizar el proceso que crea/actualiza sus filas.
+- Relay declara `ID` en la columna 1. El motor permite únicamente `freeze_formula`, preservando exactamente el valor y tipo; `fill_missing` permanece bloqueado hasta confirmar formato y proceso de creación/actualización.
 - Los IDs históricos de Users/Cortes/Tutorial/PyS/LogosMarca no se migran hasta disponer del reporte real de Beta.
 - La calibración final de PBKDF2 es independiente de esta migración y debe medirse en el runtime de Apps Script.
 - No se despliega ni se modifica Spreadsheet/Drive productivo como parte de este plan.
@@ -131,7 +131,7 @@ El servicio ADMIN incorpora las acciones `migrateIdentifiers` y `rollbackIdentif
 
 ### Alcance deliberadamente conservador
 
-- Entidades admitidas: Users, Cortes, Tutorial, pys y LogosMarca. Relay se rechaza explícitamente.
+- Entidades admitidas: Users, Cortes, Tutorial, pys y LogosMarca para `fill_missing`/`freeze_formula`; Relay solo admite `freeze_formula` y conserva el valor/tipo actual. Su formato de ID sigue sin confirmarse y `fill_missing` está bloqueado.
 - `fill_missing`: completa únicamente una celda ID realmente vacía, sin fórmula, cuando una clave estable distinta del ID identifica exactamente una fila. El ID nuevo debe cumplir el formato canónico y no existir ya.
 - `freeze_formula`: sustituye una fórmula ID por su valor actual únicamente si el valor cumple el formato vigente y es único; el identificador no cambia.
 - No renumera IDs válidos, no corrige duplicados/malformados ambiguos y no acepta una lista de referencias cruzadas incompleta. Los remapeos de IDs existentes quedan fuera hasta disponer de un inventario completo de referencias por fila y aprobación manual.
@@ -146,8 +146,8 @@ El servicio ADMIN incorpora las acciones `migrateIdentifiers` y `rollbackIdentif
 
 ### Validación y límites
 
-- `JS/Tests/IdentifierMigration.mjs`: 9/9 PASS con Spreadsheet simulado, incluidos reanudación de lote y rollback ante cambios concurrentes.
-- GitHub Actions `service-tests`, run 847, commit `920ab3e1bd78467bda310e876bfdb6fd72103ab8`: 86 suites, 1,285 pruebas aprobadas, 0 fallos.
+- `JS/Tests/IdentifierMigration.mjs`: 10/10 PASS con Spreadsheet simulado, incluidos reanudación de lote, rollback ante cambios concurrentes y congelación Relay sin alterar valor/tipo.
+- GitHub Actions `service-tests`, run 855, commit `de36ee05f474f6aaabfa4d1ceea3579f2ad0adc5`: 87 suites, 1,296 pruebas aprobadas, 0 fallos.
 - GitHub Pages compiló/publicó la rama de trabajo según la configuración autorizada.
 - Antes de usarlo en Beta se requiere un respaldo independiente de la Spreadsheet, un reporte real `auditIdentifiers` y revisión humana de cada clave estable/ID propuesto. Las copias ocultas del motor se guardan dentro de la misma Spreadsheet y no sustituyen ese respaldo independiente.
-- No se migraron datos reales, no se ejecutó el endpoint y no se alteró Drive. El motor no desbloquea Relay ni los conflictos que requieren mapear referencias existentes.
+- No se migraron datos reales, no se ejecutó el endpoint y no se alteró Drive. Relay solo puede congelar IDs de fórmula; los IDs faltantes y los conflictos que requieren mapear referencias existentes siguen sujetos a auditoría real y revisión manual.

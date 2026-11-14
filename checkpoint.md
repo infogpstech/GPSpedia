@@ -681,3 +681,21 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - `SessionActivityCoordination.mjs`: 6/6 PASS. GitHub Actions run 850: 87 suites, 1,292 pruebas aprobadas, 0 fallos.
 - Validación Beta diferida: actualizar los proyectos Apps Script correspondientes (incluido Coordinator) y probar sesiones reales, pestañas simultáneas, revocación, expiración, offline/reconexión y navegación en dispositivos. No se desplegó Apps Script ni se modificaron datos reales.
 - Commit de código: `3531df5e16f0d401c3fba3702422db3e9016a979`.
+
+
+## P2 — Extensión conservadora para Relay (2026-11-14)
+
+- Se confirmó en `Services/catalog.js` y en el esquema ADMIN que la hoja se llama `Relay` y su ID está en la columna 1 con encabezado `ID`; el repositorio no contiene un escritor de filas Relay ni un formato confirmado para IDs faltantes.
+- El motor ahora permite únicamente `freeze_formula` en Relay: conserva el valor y tipo exactos del ID, verifica unicidad y permite rollback de la fórmula original. `fill_missing` continúa rechazado hasta conocer el formato y el proceso de creación.
+- Prueba específica añadida: congelar fórmula Relay, verificar valor/tipo y restaurar fórmula. `IdentifierMigration.mjs`: 10/10 PASS.
+- CI run 855: 87 suites, 1,296 pruebas aprobadas, 0 fallos. Pages build/deployment PASS.
+- No se consultó ni modificó la hoja real Relay; no se inventó un generador.
+
+## Verificación integral local P0–P6 y GP-DEV-UX-01 (2026-11-14)
+
+- Las implementaciones locales P0–P6 quedan completadas con validaciones externas diferidas a Beta donde corresponde; no se desplegó Apps Script ni se escribieron datos reales.
+- CI run 855: 87 suites, 1,296 pruebas aprobadas, 0 fallos; `IdentifierMigration` 10/10 y `DevToolsModalAccessibility` 19/19 PASS. Comprobación de sintaxis Node.js PASS.
+- GitHub Pages build/deployment PASS en la rama de trabajo, autorizado por el usuario para pruebas en modo producción.
+- GP-DEV-UX-01: se retiró la pestaña Respaldos redundante; respaldos y mantenimiento quedan juntos en Base de datos. Botón Migrar esquema y selector de retención quedan a 38 px; textos se simplificaron y confirmaciones destructivas permanecen.
+- No se dispuso de navegador real ni acceso a Google Drive/Sheets para pruebas visuales/ACL; estas validaciones se conservan para Beta.
+- Siguiente tarea independiente registrada: GP-IMG-UX-01 — rediseño de la biblioteca de imágenes reemplazadas.
