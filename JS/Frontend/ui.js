@@ -4113,6 +4113,8 @@ function setupModal(modalId, openFn) {
                 const historyManager = window.overlayHistory;
                 if (overlayId && historyManager && historyManager.has(overlayId)) {
                     historyManager.close(overlayId);
+                } else if (typeof modal.__gpOverlayClose === 'function') {
+                    modal.__gpOverlayClose();
                 } else {
                     modal.style.display = 'none';
                 }
@@ -4166,11 +4168,6 @@ const openInboxModal_ = setupModal('inbox-modal', async (options = {}) => {
     const consultButton = document.getElementById('inbox-consult-developer');
     if (newMessageButton) newMessageButton.hidden = context.role !== 'desarrollador';
     if (consultButton) consultButton.hidden = context.role === 'desarrollador';
-    const closeButton = modal.querySelector('.info-close-btn');
-    if (closeButton && closeButton.dataset.inboxCloseBound !== 'true') {
-        closeButton.addEventListener('click', closeInboxModal_);
-        closeButton.dataset.inboxCloseBound = 'true';
-    }
     if (modal.dataset.inboxBackdropBound !== 'true') {
         modal.addEventListener('click', event => { if (event.target === modal) closeInboxModal_(); });
         modal.dataset.inboxBackdropBound = 'true';
