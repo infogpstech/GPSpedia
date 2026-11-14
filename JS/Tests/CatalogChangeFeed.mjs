@@ -90,9 +90,9 @@ test("FEEDBACK expone la lectura autenticada y el cliente enruta al servicio cor
     assert.match(apiSource,/'getCatalogChanges': 'FEEDBACK'/);
 });
 test("recordLike publica el snapshot de Cortes después de confirmar la escritura", () => {
-    assert.match(feedbackSource,/case 'recordLike':\\s*response = handleRecordLike\\(payload\\)/);
-    assert.match(feedbackSource,/if \\(action === "recordLike"[\\s\\S]*?response\\.status === "success"[\\s\\S]*?publishSharedCatalogChange_\\("FEEDBACK", "recordLike"/);
-    assert.match(feedbackSource,/mapRowToObject\\(row, COLS_CORTES\\)/);
-    assert.match(feedbackSource,/catch \\(catalogPublishError\\)[\\s\\S]*?El like se guardó, pero no se pudo publicar/);
+    assert.match(feedbackSource,/case 'recordLike':\s*response = handleRecordLike\(payload\)/);
+    assert.match(feedbackSource,/if \(action === "recordLike"[\s\S]*?response\.status === "success"[\s\S]*?publishSharedCatalogChange_\("FEEDBACK", "recordLike"/);
+    assert.match(feedbackSource,/mapRowToObject\(row, COLS_CORTES\)/);
+    assert.match(feedbackSource,/catch \(catalogPublishError\)[\s\S]*?El like se guardó, pero no se pudo publicar/);
 });
 console.log("CatalogChangeFeed: " + passed + "/13 PASS");
