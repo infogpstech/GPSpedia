@@ -133,14 +133,17 @@ function runSharedMutationCoordinatorTests() {
         release_(r, "ADMIN", "restoreDrive", admin.token);
     });
 
-    test_("Operaciones sobre recursos independientes pueden coexistir", function() {
+    test_("FEEDBACK actualiza actividad y serializa escrituras con lecturas de identidad", function() {
         const r = createRuntime_();
         const feedback = acquire_(r, "FEEDBACK", "reportProblem");
         assert_(feedback.status === "success", "FEEDBACK debía obtener lease.");
         const write = acquire_(r, "WRITE", "addOrUpdateCut");
-        assert_(write.status === "success", "WRITE no comparte recursos de escritura con reportProblem.");
+        assert_(write.status === "error" && write.code === "busy",
+            "WRITE debe esperar mientras FEEDBACK actualiza LastActivityAt y WRITE lee ActiveSessions.");
         release_(r, "FEEDBACK", "reportProblem", feedback.token);
-        release_(r, "WRITE", "addOrUpdateCut", write.token);
+        const retry = acquire_(r, "WRITE", "addOrUpdateCut");
+        assert_(retry.status === "success", "WRITE debe continuar tras liberar la actualización de actividad.");
+        release_(r, "WRITE", "addOrUpdateCut", retry.token);
     });
 
     test_("validateSession es de solo lectura; touchSession sigue serializando cambios de identidad", function() {
@@ -250,10 +253,13 @@ function runSharedMutationCoordinatorTests() {
         const stored = JSON.parse(r.properties.getProperty("GPSpedia_SHARED_MUTATION_LEASES"));
         assert_(!stored.some(lease => lease.maintenance && lease.operation === "migrateCortesOperationIds"),
             "La reserva de mantenimiento debe retirarse cuando la migración no logra drenar.");
-        const independent = acquire_(r, "FEEDBACK", "reportProblem");
-        assert_(independent.status === "success", "Al cancelar la reserva, operaciones independientes deben poder continuar.");
-        release_(r, "FEEDBACK", "reportProblem", independent.token);
+        const serialized = acquire_(r, "FEEDBACK", "reportProblem");
+        assert_(serialized.status === "error" && serialized.code === "busy",
+            "FEEDBACK debe esperar mientras WRITE mantiene lectura de ActiveSessions.");
         release_(r, "WRITE", "addOrUpdateCut", write.token);
+        const independent = acquire_(r, "FEEDBACK", "reportProblem");
+        assert_(independent.status === "success", "FEEDBACK debe continuar tras liberar la lectura de identidad.");
+        release_(r, "FEEDBACK", "reportProblem", independent.token);
     });
 
     test_("Una reserva de drenaje abandonada se recupera a los 60 segundos", function() {
