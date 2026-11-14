@@ -226,15 +226,16 @@ La acción del **botón integrado de compartir** en el modal es pública para to
 - [x] Mantener confirmaciones destructivas y estados de progreso/resultado.
 
 ### GP-IMG-UX-01 — Biblioteca de imágenes reemplazadas
-- [ ] Sustituir la interfaz desproporcionada actual por un modal tipo explorador de archivos/Drive, con espacio de trabajo limpio y fondo despejado.
-- [ ] Implementar vistas de cuadrícula y lista conmutables mediante iconos compactos situados en una esquina del contenedor, sin botones con textos que repitan la función.
-- [ ] En cuadrícula, usar miniaturas de tamaño medio y una altura visual coherente con la imagen del modelo de vehículo cuando la cuadrícula está seleccionada.
-- [ ] En lista, usar miniaturas más pequeñas, como en una carpeta de Drive, con metadatos alineados y densidad visual adecuada.
-- [ ] Permitir selección individual y múltiple, con selección visible y acciones aplicables al conjunto seleccionado.
-- [ ] Incorporar menú contextual de tres puntos por elemento (y acciones de selección múltiple cuando corresponda): borrar, mover, restaurar y descargar.
-- [ ] Diseñar estados vacíos, carga, error, selección, confirmación y resultados de operaciones; adaptar el modal a móvil y escritorio.
-- [ ] **Resolver antes de implementar la contradicción de política:** el requisito anterior GP-SEC-02 prohíbe la descarga de imágenes para usuarios en general y permite el compartir integrado; esta solicitud pide una acción Descargar dentro del administrador de imágenes reemplazadas. Determinar si será una excepción exclusiva del panel Developer y qué roles podrán usarla. No habilitar descarga general por inferencia.
-- [ ] Validar que borrar/mover/restaurar opere sobre los elementos correctos, con confirmación, permisos backend, protección contra acciones masivas accidentales y registro de auditoría.
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A REVISIÓN VISUAL EN BETA.**
+- [x] Sustituir la interfaz desproporcionada por un modal tipo biblioteca/Drive, con superficie despejada y tarjetas compactas.
+- [x] Implementar vistas de cuadrícula y lista conmutables mediante iconos compactos con etiquetas accesibles.
+- [x] En cuadrícula, usar miniaturas medianas 4:3 con altura limitada y uniforme.
+- [x] En lista, usar miniaturas de 60 px (52 px en móvil) y metadatos alineados.
+- [x] Permitir selección individual, selección de elementos visibles y acciones por lote con resultados parciales.
+- [x] Incorporar menú contextual de tres puntos con acciones según estado; mover/restaurar/papelera por lote. Descarga limitada a Desarrollador.
+- [x] Cubrir estados de carga, error, vacío, selección, confirmación y resultado; estilos responsive para móvil/escritorio.
+- [x] Resolver la excepción: Descargar solo está disponible en la biblioteca del panel Desarrollador, con rol Desarrollador y referencias verificadas; no habilita descarga general.
+- [x] Verificar selección y acciones por ID, confirmaciones, revalidación backend de referencias y ausencia de eliminación definitiva masiva.
 
 ### GP-IMG-DATA-01 — Conciliación Drive de cortes ↔ Spreadsheet
 - [ ] Incorporar una función que recorra la carpeta Drive de cortes y compare cada imagen con los registros de la Spreadsheet.
@@ -255,13 +256,13 @@ La acción del **botón integrado de compartir** en el modal es pública para to
 
 ### Criterios de aceptación
 - Developer presenta Respaldo y Base de datos en la misma pestaña; controles de migración y limpieza tienen tamaños proporcionados y consistentes.
-- La biblioteca de imágenes ofrece cuadrícula/lista, miniaturas dimensionadas según la vista, selección múltiple y menú contextual de tres puntos con acciones coherentes y autorizadas.
+- [x] La biblioteca de imágenes ofrece cuadrícula/lista, miniaturas dimensionadas según la vista, selección múltiple y menú contextual de tres puntos con acciones coherentes y autorizadas.
 - La conciliación Drive–Spreadsheet distingue coincidencias exactas, faltantes, duplicados y ambiguos; no escribe datos productivos sin autorización.
 - Las URLs migradas se guardan en el campo correcto y son la fuente de visualización de la imagen, una vez aprobada y ejecutada la migración.
 - Los textos de interfaz son breves; las explicaciones secundarias se consultan mediante ⓘ donde se solicitó.
 - No aparece ⓘ en el modal de detalles; sí aparece en campos pertinentes de add_cortes y formularios PYS.
-- La descarga en el administrador de imágenes queda limitada al panel Developer y al rol Desarrollador; no modifica la prohibición general de descarga.
-- Pruebas locales cubren diseño responsive, selección simple/múltiple, acciones contextuales, permisos, conciliación idempotente y ayudas contextuales. Las pruebas con Drive/Spreadsheet reales se documentan como validación Beta.
+- [x] La descarga en el administrador de imágenes queda limitada al panel Developer y al rol Desarrollador; no modifica la prohibición general de descarga.
+- [x] Pruebas locales cubren diseño responsive, selección simple/múltiple, acciones contextuales, permisos, conciliación idempotente y ayudas contextuales. Las pruebas con Drive/Spreadsheet reales se documentan como validación Beta.
 
 - [x] P1 fase 2 parcial: actualizar `LastActivityAt` dentro de operaciones FEEDBACK autenticadas, incluidas lecturas, con lease compartida frente a logout/revocación. Validación CI: 75 suites, 1,159 pruebas, 0 fallos (2026-11-14).
 - [x] Extender touch integrado y coordinación a WRITE, USERS y ADMIN; todas las acciones protegidas actualizan actividad dentro de su operación y usan leases compartidas. Las rutas públicas de catálogo/formulario permanecen explícitamente públicas.

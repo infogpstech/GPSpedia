@@ -699,3 +699,15 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - GP-DEV-UX-01: se retiró la pestaña Respaldos redundante; respaldos y mantenimiento quedan juntos en Base de datos. Botón Migrar esquema y selector de retención quedan a 38 px; textos se simplificaron y confirmaciones destructivas permanecen.
 - No se dispuso de navegador real ni acceso a Google Drive/Sheets para pruebas visuales/ACL; estas validaciones se conservan para Beta.
 - Siguiente tarea independiente registrada: GP-IMG-UX-01 — rediseño de la biblioteca de imágenes reemplazadas.
+
+
+## GP-IMG-UX-01 — Biblioteca de imágenes reemplazadas (2026-11-14)
+
+- La biblioteca cuenta con vista de cuadrícula y lista; miniaturas medianas 4:3 en cuadrícula y miniaturas compactas de 60 px (52 px móvil) en lista.
+- Selección individual y múltiple, selección de visibles, acciones por lote para mover, restaurar y enviar a papelera; se informan fallos parciales.
+- Menú contextual de tres puntos por archivo, con acciones determinadas por estado y permisos; confirmación antes de acciones destructivas y revalidación backend de referencias.
+- La descarga es excepción exclusiva de la biblioteca de Desarrollador: el frontend solo la ofrece al rol Desarrollador y el backend mantiene su gate ADMIN normal; no se habilita descarga general.
+- La biblioteca presenta controles compactos, estados de carga/error/vacío, selección visible, lightbox y estilos responsive. El test `ReplacedImagesLibraryUX.mjs` cubre política de descarga, selección, menús, operaciones por lote, vistas, accesibilidad y responsive: 12/12 PASS.
+- GitHub Actions run 43610793648: 88 suites, 1,308 pruebas aprobadas, 0 fallos. GitHub Pages build/deployment PASS para el mismo HEAD.
+- Validación visual en navegador/dispositivo y operaciones con Drive real permanecen para Beta; no se ejecutaron movimientos ni borrados reales durante esta iteración.
+- Siguiente tarea: GP-IMG-DATA-01 — conciliación Drive de Cortes ↔ Spreadsheet, empezando por inventario/dry-run de solo lectura.

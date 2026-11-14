@@ -1668,3 +1668,13 @@ Rama: GPSpedia2.2.5_work
 - CI run 855: 87 suites, 1,296 pruebas aprobadas, 0 fallos. GitHub Pages build/deployment PASS.
 - Sin despliegues Apps Script ni escrituras en Spreadsheet/Drive reales; revisión visual/ACL permanece diferida a Beta.
 ================================================================================
+
+
+================================================================================
+2026-11-14 — GP-IMG-UX-01 BIBLIOTECA DE IMÁGENES REEMPLAZADAS
+- Cerrado el rediseño de biblioteca: cuadrícula/lista, miniaturas proporcionales, selección individual/múltiple, acciones por lote y menú contextual de tres puntos.
+- Descarga restringida al rol Desarrollador dentro de la biblioteca; sin habilitar descarga general. Acciones destructivas requieren confirmación y validación backend de referencias.
+- ReplacedImagesLibraryUX: 12/12 PASS. CI run 43610793648: 88 suites, 1,308 pruebas aprobadas, 0 fallos. Pages PASS.
+- Revisión visual en dispositivos y operaciones Drive reales quedan para Beta; no se movieron ni borraron archivos reales.
+- Siguiente: GP-IMG-DATA-01, inventario/dry-run de conciliación Drive ↔ Spreadsheet.
+================================================================================
