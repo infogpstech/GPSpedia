@@ -208,3 +208,22 @@
 - CI del commit de código 25d7d91f369c4949f65373c44dd7fefddfc653c2: Node.js 22; sintaxis PASS; 97 suites / 1,428 pruebas / 0 fallos; CatalogChangeFeed 14/14 PASS. La compilación Pages de ese commit fue cancelada por una ejecución posterior; verificar el resultado del HEAD documental vigente.
 - No se desplegaron Apps Script, no se modificaron ScriptProperties, Spreadsheet, Drive ni datos productivos. GP-CAT-01C (consumidor IndexedDB) y GP-CAT-01D (sondeo/coordinación multi-pestaña) siguen pendientes.
 ================================================================================
+
+
+================================================================================
+2026-11-14 — GP-CAT-01C..01E: CONSUMIDOR INCREMENTAL, SONDEO Y RECONCILIACIÓN
+- JS/Frontend/offline.js: lectura de snapshot+cursor desde la misma transacción IndexedDB; persistencia atómica del snapshot y cursor; guardado independiente del cursor; aplicación validada de upsert/delete por ID estable en Cortes. Reset y colecciones no soportadas requieren snapshot completo.
+- JS/Frontend/api-config.js: getCatalogChanges admite AbortSignal. JS/Frontend/auth.js: bootstrap consulta el head del feed antes del snapshot; con cursor válido consulta páginas incrementales y evita fetchCatalogData cuando no hay cambios. Los huecos, cursor vencido, reset, delta no soportado o error activan reconciliación completa segura. Cada solicitud de feed tiene timeout de 8 s.
+- Sondeo interno cada 45 s mientras la página está visible y online; backoff hasta 5 min tras fallos; se suspende al ocultarse/desconectarse y se reanuda al recuperar foco/conexión.
+- Coordinación entre pestañas: lease de sondeo por usuario (60 s), BroadcastChannel y fallback storage event; las pestañas reciben el snapshot compartido desde IndexedDB sin duplicar descargas cuando hay un líder.
+- ui.js: performSilentSync reconcilia tarjetas modificadas, modal abierto, altas y bajas; updateFullState actualiza vistas de Tutoriales, Relay y Logos. Un reset refresca el cache separado de PyS.
+- Pruebas: CatalogSnapshotSync 24/24; CatalogStartupIntegrity 16/16; SessionStartupNavigation 16/16; PWAStartupScenarios 15/15.
+- CI Node.js 22 del commit de código 1bcaecb37d1560cb76a255de38f208df944b8b31: sintaxis PASS; 98 suites / 1,458 pruebas / 0 fallos. GitHub Pages del mismo commit: SUCCESS.
+- Limitación segura: upsert/delete por registro está implementado para Cortes; acciones multi-entidad y colecciones auxiliares publican reset, que puede activar snapshot completo. La prueba Beta multiusuario/dispositivo y rendimiento real siguen pendientes.
+
+2026-11-14 — GP-PWA-02: ACTUALIZACIÓN NATIVA EN SEGUNDO PLANO
+- JS/Frontend/main.js: registro del Service Worker con updateViaCache='none'; comprobación de actualizaciones al registrar, recuperar foco/conexión, volver a primer plano y cada 5 minutos. No se fuerza window.location.reload() ni se añade botón o panel visible.
+- service-worker.js: caché App Shell versionada a gpsepedia-cache-v28; se conserva skipWaiting/clients.claim y el ciclo de navegación normal.
+- Pruebas PWAStartupScenarios 15/15 y SessionStartupNavigation 16/16 PASS. Validación de recarga manual, pull-to-refresh y actualización instalada queda pendiente en dispositivos Beta.
+- No se desplegó Apps Script ni se modificaron Spreadsheet, Drive, ScriptProperties o ACL productivos.
+================================================================================
