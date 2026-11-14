@@ -3306,10 +3306,11 @@ function handleAddLogo(payload, logMessage) {
     catch (error) { throw new Error("No se pudo bloquear la asignación de IDs de LogosMarca. Intente nuevamente."); }
     try {
         const lastRow = sheet.getLastRow(), newRow = lastRow + 1;
+        const lastColumn = Math.max(sheet.getLastColumn(), 4);
         const newId = getNextLogoIdLocked_(sheet);
         if (lastRow > 1) {
-            sheet.getRange(lastRow, 1, 1, sheet.getLastColumn()).copyTo(sheet.getRange(newRow, 1, 1, sheet.getLastColumn()));
-            sheet.getRange(newRow, 2, 1, sheet.getLastColumn() - 1).clearContent();
+            sheet.getRange(lastRow, 1, 1, lastColumn).copyTo(sheet.getRange(newRow, 1, 1, lastColumn));
+            sheet.getRange(newRow, 2, 1, lastColumn - 1).clearContent();
         }
         sheet.getRange(newRow, 1).setValue(newId);
         sheet.getRange(newRow, 2).setValue(nombreMarca);
