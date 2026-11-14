@@ -1778,3 +1778,59 @@ CRITERIO DE CIERRE
 - Si FEEDBACK/Coordinator falla por configuración, conservar el resultado como pendiente de integración Beta; no atribuirlo a RBAC sin evidencia.
 - No desplegar a producción, no modificar datos productivos y no copiar secretos a los registros.
 ================================================================================
+
+
+================================================================================
+AUG-156 — ACCESO DEVELOPER, ESCÁNER Y MIGRACIÓN DEL HISTORIAL DE IMÁGENES
+
+PREPARACIÓN OBLIGATORIA — ejecutar antes de cualquier prueba, desde una terminal dentro del repositorio local. Esta secuencia no descarta cambios y se detiene si el árbol está sucio:
+```bash
+set -eu
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ROOT="$(git rev-parse --show-toplevel)"
+test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in *infogpstech/GPSpedia.git) ;; *) echo "Remote incorrecto: $REMOTE_URL"; exit 1 ;; esac
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH" || { echo "Rama incorrecta"; exit 1; }
+test -z "$(git status --porcelain)" || { echo "Hay cambios locales sin guardar; detener sincronización y preservarlos"; exit 1; }
+git fetch origin "$EXPECTED_BRANCH"
+git pull --ff-only origin "$EXPECTED_BRANCH"
+printf 'Repositorio: %s\nRama: %s\nHEAD: ' "$ROOT" "$(git branch --show-current)"
+git rev-parse HEAD
+git status --short --branch
+```
+
+ENTORNO Y REGISTRO
+- Usar exclusivamente cuenta Desarrollador de prueba, cuentas de roles no privilegiados, proyectos Apps Script Beta y una Spreadsheet/Drive desechables. No usar producción.
+- Registrar fecha/hora, HEAD, navegador/SO/dispositivo, rol, versión de ADMIN y Coordinator y resultado PASS/FAIL/NO EJECUTADA.
+- No copiar secretos, tokens, URL privadas ni datos personales a capturas o registros. La comprobación de propiedades debe ser de solo lectura.
+
+1. ACCESO AL PANEL DEVELOPER
+- Iniciar sesión como Desarrollador y abrir el menú lateral. Confirmar que aparece «Desarrollador» y que abre el panel sin pedir una segunda autenticación.
+- Cerrar sesión, volver a iniciar y repetir. Después recargar la aplicación y repetir con la sesión restaurada.
+- Si el botón no aparece o el panel no abre, registrar únicamente presencia/ausencia de ID, SessionToken y rol normalizado; nunca registrar sus valores.
+- Iniciar sesión como Técnico, Técnico exterior, Supervisor y Jefe. Confirmar que no ven ni pueden abrir el panel Developer y que las acciones ADMIN siguen rechazando sus solicitudes.
+
+2. CARGA DE INVENTARIO E HISTORIAL
+- Confirmar que los deployments Beta de Coordinator y ADMIN incluyen las políticas de getReplacedImages, getDriveStorage, getCortesImageFolders y auditDriveImagesInCortes.
+- Abrir el panel Developer y cargar el inventario/historial. Confirmar que las consultas responden sin «recurso ocupado por operaciones activas ADMIN/sessionActivity».
+- Iniciar el escáner de imágenes mientras se consulta el historial. Confirmar que ambas lecturas pueden coexistir y que el progreso/cursor del escáner se conserva.
+- Repetir la carga en dos pestañas. Confirmar que no se pierde el estado de la cuenta ni se mezclan los resultados de auditoría entre sesiones.
+
+3. CONCURRENCIA Y PROTECCIÓN DE ESCRITURAS
+- Intentar iniciar dos escáneres simultáneos en la misma cuenta. El segundo debe esperar o recibir un mensaje controlado; no debe sobrescribir el estado del primero.
+- Mientras el escáner conserva su snapshot, intentar una operación de escritura de inventario/Drive en el entorno desechable. Debe esperar o ser rechazada por conflicto, sin escritura parcial.
+- Al finalizar/liberar el escáner, repetir la operación y confirmar que puede continuar.
+- Probar continuación de cursor, reintento de la misma página y respuesta repetida; confirmar idempotencia y ausencia de progreso duplicado.
+
+4. INICIALIZAR HISTORIAL
+- En una Spreadsheet Beta desechable sin hoja de historial, pulsar «Inicializar historial». Confirmar que Coordinator acepta ADMIN/migrateReplacedImagesSchema y que la acción termina correctamente.
+- Repetir la inicialización. Debe ser idempotente: no duplicar encabezados, no sobrescribir datos y no crear columnas repetidas.
+- Probar una hoja con encabezados antiguos y otra con encabezados incompletos. Confirmar que solo se agregan los campos faltantes y que los datos existentes se conservan.
+- Si aparece «La acción no está habilitada en la política del coordinador», registrar versión de Coordinator y ADMIN y detener la prueba. El deployment Beta del Coordinator debe actualizarse antes que ADMIN si la política no está publicada. No ampliar permisos ni cambiar ScriptProperties fuera del entorno Beta autorizado.
+
+CRITERIO DE CIERRE
+- Marcar cada subprueba PASS, FAIL o NO EJECUTADA y adjuntar evidencia no sensible.
+- La validación local de contratos no sustituye la prueba con Apps Script/Spreadsheet/Drive reales en Beta.
+- No desplegar a producción, no modificar datos productivos y no copiar secretos a los registros.
+================================================================================
