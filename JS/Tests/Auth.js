@@ -410,10 +410,15 @@ function handleClearSensitiveLogs(payload) {
 // ============================================================================
 function doGet(e) {
     if (e.parameter.debug === 'true') {
+        const scriptProperties = PropertiesService.getScriptProperties();
+        const coordinatorUrl = String(scriptProperties.getProperty('GPSpedia_COORDINATOR_URL') || '').trim();
+        const coordinatorSecret = String(scriptProperties.getProperty('GPSpedia_COORDINATOR_SECRET') || '');
         const serviceState = {
             service: 'GPSpedia-Auth',
-            version: '2.2.5', // Mantener sincronizado con la versión del componente
-            status: 'available'
+            version: '2.2.5',
+            status: 'available',
+            coordinatorConfigured: coordinatorUrl.startsWith('https://script.google.com/macros/s/') &&
+                coordinatorUrl.endsWith('/exec') && coordinatorSecret.length >= 32
         };
         return ContentService.createTextOutput(JSON.stringify(serviceState, null, 2))
             .setMimeType(ContentService.MimeType.JSON);
