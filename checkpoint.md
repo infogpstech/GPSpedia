@@ -80,3 +80,62 @@ La rama base `GPSpedia2.2.5` permanece intacta.
 - No se modificaron los endpoints de otros servicios ni el enrutamiento de acciones.
 - Commit de configuración: `471ee04321c635e62b1ac8078985d96d098be747`.
 - Pendiente para Beta: verificar que el deployment responde con el contrato `GPSpedia-Auth` y probar login, validateSession, touchSession, acceptTerms y logout. El cambio de URL no publica ni altera el código del proyecto Apps Script.
+
+ 
+## Corrección integral — AUTH, términos, modales, imágenes y avisos
+
+**Estado: IMPLEMENTADA EN RAMA DE TRABAJO; DESPLIEGUE Y BETA PENDIENTES**
+
+### Cambios
+
+1. **Validación AUTH al actualizar**
+   - `validateSession` ahora es una comprobación de solo lectura, independiente del coordinador compartido. Verifica token único, identidad, usuario activo, expiración y revocación pendiente.
+   - La lectura usa `tryLock(2500)`; si el recurso está ocupado o falta una dependencia, devuelve indisponibilidad, nunca una revocación inventada.
+   - `touchSession` continúa actualizando actividad bajo lease coordinada. Las operaciones protegidas no se habilitan por el fallback local.
+   - El nuevo endpoint de diagnóstico `?debug=true` informa `coordinatorConfigured` sin revelar secretos. Developer muestra si faltan `GPSpedia_COORDINATOR_URL` o `GPSpedia_COORDINATOR_SECRET`.
+
+2. **Inbox y Developer**
+   - Si AUTH devuelve `valid:null` o un error transitorio, se permite abrir la interfaz usando el rol de la sesión local vigente.
+   - Una respuesta `valid:false` confirmada sigue bloqueando y cerrando la sesión.
+   - Las operaciones de Inbox/Developer continúan protegidas por los servicios backend y `touchSession`.
+
+3. **Términos por sesión**
+   - `ActiveSessions` incorpora la columna G `SessionTermsAcceptance`.
+   - Cada token nuevo empieza pendiente y debe aceptar la versión vigente. La aceptación queda ligada al token; la columna I de Users se conserva como historial.
+   - El catálogo no se descarga ni muestra antes de aceptar. Tras confirmar `acceptTerms`, se inicia la carga.
+   - Si la columna G contiene otro encabezado o datos sin encabezado, AUTH falla cerrado sin sobrescribirlos.
+
+4. **Tiempo de inicio de sesión**
+   - Se eliminaron escrituras INFO/DEBUG genéricas a Spreadsheet en cada solicitud y logs de éxito innecesarios.
+   - Login reutiliza la instancia de Spreadsheet abierta y evita una llamada `touchSession` redundante al aceptar términos.
+   - La mejora real de latencia debe medirse contra el deployment Beta.
+
+5. **Imágenes**
+   - La URL remota se precarga antes de asignarse al elemento visible; intenta CORS y reintenta sin CORS cuando el proveedor no lo admite.
+   - Se usa un SVG local como fallback, evitando el icono roto.
+   - Service Worker v24 aplica cache-first a imágenes verificadas HTTP 200, actualiza en segundo plano y limita el caché a 150 imágenes.
+
+6. **Mensajes**
+   - Los avisos globales de más de 110 caracteres se reducen a un mensaje esencial; el detalle se conserva en consola y en la terminal de Developer.
+   - HTML/users.html y HTML/add_cortes.html envían también los errores extensos/dinámicos al aviso central.
+   - Las confirmaciones de operaciones destructivas conservan la explicación necesaria para que el usuario decida con seguridad.
+
+### Validación realizada
+- SessionUiRoleInvalidation: 13/13 PASS.
+- SessionProfileRefresh: 21/21 PASS.
+- SharedMutationCoordinator: 34/34 PASS.
+- validateSessionReadOnly_: 6/6 PASS.
+- Comprobaciones AUTH dirigidas: 9/9 PASS.
+- Service Worker cache-first: 1/1 PASS.
+- Sintaxis de Services/Auth.js, Services/Coordinator.js, SharedMutationClient.js, ui.js, api-config.js, auth.js, main.js, service-worker.js y scripts inline de HTML: PASS.
+- Espejo de pruebas JS/Tests/Auth.js sincronizado con Services/Auth.js, salvo el SPREADSHEET_ID aislado.
+- No se ejecutó Node CLI completo ni se realizaron pruebas reales de interfaz en Android/escritorio. El endpoint AUTH externo no pudo consultarse desde este entorno.
+
+### Despliegue y validación pendientes
+1. Actualizar el proyecto Apps Script del nuevo endpoint AUTH con `Services/Auth.js` y `Services/SharedMutationClient.js`; publicar una nueva versión del deployment.
+2. Verificar en ScriptProperties de AUTH `GPSpedia_COORDINATOR_URL` y `GPSpedia_COORDINATOR_SECRET`; el coordinador debe tener el secreto correspondiente `GPSpedia_COORDINATOR_SECRET_AUTH`. En Developer, escanear servicios y confirmar AUTH con identidad `GPSpedia-Auth` y `coordinatorConfigured: true`.
+3. Confirmar que la columna G de ActiveSessions está libre para `SessionTermsAcceptance`; el primer login la crea automáticamente si está vacía.
+4. Publicar la rama de trabajo en Beta y probar: login/latencia, aviso en cada token nuevo, aceptación, refresh, sesión expirada/revocada, red lenta/offline, apertura de Inbox/Developer al primer clic, operaciones protegidas, imágenes en caché y errores en terminal.
+5. Ejecutar con Node CLI los archivos de pruebas actualizados, incluida la suite PWA y de accesibilidad.
+
+La rama base `GPSpedia2.2.5` no se modifica. No se realizó deployment productivo.
