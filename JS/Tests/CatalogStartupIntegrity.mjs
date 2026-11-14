@@ -27,7 +27,7 @@ function createHarness(options = {}) {
         catalogData: { cortes: [], tutoriales: [], relay: [], logos: [], sortedCategories: [] }
     };
     const errors = [], warnings = [], patches = [];
-    let cacheIndex = 0, saveCalls = 0, pysCalls = 0;
+    let cacheIndex = 0, saveCalls = 0, pysCalls = 0, fetchCalls = 0, savedCursor = null, cursorWrites = 0;
     let failCatalogWrites = Number(options.failCatalogWrites || 0);
     const cacheReads = options.cacheReads || [null];
     const offline = {
@@ -37,11 +37,22 @@ function createHarness(options = {}) {
             if (value instanceof Error) throw value;
             return value === undefined ? null : value;
         },
-        async getCatalogSyncState() { return { snapshot: await this.getCatalog(), cursor: null }; },
+        async getCatalogSyncState() { return { snapshot: await this.getCatalog(), cursor: options.cacheCursor === undefined ? null : options.cacheCursor }; },
         async saveCatalog(value) { saveCalls++; return value; },
-        async saveCatalogWithCursor(value, cursor) { saveCalls++; return { saved: true, cursor }; },
-        async saveCatalogCursor(cursor) { return { saved: true, cursor }; },
-        applyCatalogChangesToSnapshot(previous) { return { resetRequired: false, snapshot: previous }; }
+        async saveCatalogWithCursor(value, cursor) { saveCalls++; savedCursor = cursor; return { saved: true, cursor }; },
+        async saveCatalogCursor(cursor) { cursorWrites++; savedCursor = cursor; return { saved: true, cursor }; },
+        applyCatalogChangesToSnapshot(previous, changes) {
+            const cortes = previous.cortes.slice();
+            changes.forEach(change => {
+                const index = cortes.findIndex(item => String(item.id) === String(change.recordId));
+                if (change.operation === 'delete') { if (index >= 0) cortes.splice(index, 1); }
+                else if (change.operation === 'upsert') {
+                    if (index >= 0) cortes[index] = change.snapshot;
+                    else cortes.push(change.snapshot);
+                }
+            });
+            return { resetRequired: false, snapshot: { ...previous, cortes } };
+        }
     };
     const getCatalogChanges = options.getCatalogChanges || (async cursor => ({
         status: 'success', currentRevision: 0, nextCursor: cursor, hasMore: false, resetRequired: false, changes: []
@@ -54,10 +65,11 @@ function createHarness(options = {}) {
         }
         Object.assign(state, patch);
     };
-    const fetchCatalogData = options.fetchCatalogData || (async () => {
+    const fetchCatalogDataImpl = options.fetchCatalogData || (async () => {
         if (options.networkError) throw options.networkError;
         return { data: options.networkData === undefined ? snapshot() : options.networkData };
     });
+    const fetchCatalogData = async requestOptions => { fetchCalls++; return fetchCatalogDataImpl(requestOptions); };
     const factorySource = `
         let catalogLoadController_ = null;
         ${extract('cancelCatalogLoad_')}
@@ -66,11 +78,11 @@ function createHarness(options = {}) {
         ${extract('normalizeCatalogData')}
         ${extract('processCatalogData')}
         ${extract('loadInitialData')}
-        return { loadInitialData, cancelCatalogLoad_ };
+        return { loadInitialData, cancelCatalogLoad_, fetchCatalogDelta_ };
     `;
     const app = new Function(
         'offline', 'fetchCatalogData', 'getCatalogChanges', 'getState', 'setState', 'showGlobalError', 'loadPysData',
-        'console', 'AbortController', 'setTimeout', factorySource
+        'performSilentSync', 'console', 'AbortController', 'setTimeout', factorySource
     )(
         offline,
         fetchCatalogData,
@@ -79,6 +91,7 @@ function createHarness(options = {}) {
         setState,
         message => errors.push(message),
         async () => { pysCalls++; },
+        async data => { setState({ catalogData: data }); return true; },
         { log() {}, warn: (...args) => warnings.push(args), error() {} },
         AbortController,
         () => 0
@@ -87,7 +100,11 @@ function createHarness(options = {}) {
         state, errors, warnings, patches,
         load: app.loadInitialData,
         cancel: app.cancelCatalogLoad_,
+        fetchDelta: app.fetchCatalogDelta_,
         get saveCalls() { return saveCalls; },
+        get fetchCalls() { return fetchCalls; },
+        get savedCursor() { return savedCursor; },
+        get cursorWrites() { return cursorWrites; },
         get pysCalls() { return pysCalls; },
         get cacheReads() { return cacheIndex; }
     };
@@ -191,6 +208,58 @@ await test('la sincronización silenciosa propaga errores y confirma resultado e
     assert.match(source, /return true;/);
     assert.match(source, /throw e;/);
     assert.match(uiSource.slice(end), /return true;[\s\S]*?throw e;/);
+});
+
+
+await test('una caché con cursor y feed vacío evita descargar el catálogo completo', async () => {
+    const cached = snapshot();
+    const h = createHarness({
+        cacheReads: [cached], cacheCursor: 5,
+        getCatalogChanges: async cursor => ({ status: 'success', currentRevision: 5, nextCursor: cursor, hasMore: false, resetRequired: false, changes: [] })
+    });
+    await h.load();
+    assert.equal(h.fetchCalls, 0);
+    assert.equal(h.state.catalogLoadStatus, 'ready');
+    assert.equal(h.saveCalls, 0);
+});
+await test('un delta de Cortes actualiza la caché y persiste el cursor sin snapshot completo', async () => {
+    const cached = snapshot();
+    const h = createHarness({
+        cacheReads: [cached], cacheCursor: 5,
+        getCatalogChanges: async cursor => ({
+            status: 'success', currentRevision: 6, nextCursor: 6, hasMore: false, resetRequired: false,
+            changes: [{ revision: 6, collection: 'cortes', recordId: 'C-1', operation: 'upsert', snapshot: { id: 'C-1', marca: 'Toyota nuevo', categoria: 'pickup' } }]
+        })
+    });
+    await h.load();
+    assert.equal(h.fetchCalls, 0);
+    assert.equal(h.state.catalogData.cortes[0].marca, 'Toyota nuevo');
+    assert.equal(h.savedCursor, 6);
+    assert.equal(h.saveCalls, 1);
+});
+await test('un reset del feed solicita snapshot completo y confirma la revisión recibida', async () => {
+    const cached = snapshot();
+    const h = createHarness({
+        cacheReads: [cached], cacheCursor: 5,
+        getCatalogChanges: async () => ({ status: 'success', currentRevision: 7, nextCursor: 7, hasMore: false, resetRequired: true, changes: [] }),
+        networkData: snapshot([{ id: 'C-9', marca: 'Nissan', categoria: 'pickup' }])
+    });
+    await h.load();
+    assert.equal(h.fetchCalls, 1);
+    assert.equal(h.state.catalogData.cortes[0].id, 'C-9');
+    assert.equal(h.savedCursor, 7);
+    assert.equal(h.pysCalls, 1);
+});
+await test('el feed rechaza huecos de revisión y solicita reconciliación completa', async () => {
+    const h = createHarness({
+        getCatalogChanges: async () => ({
+            status: 'success', currentRevision: 7, nextCursor: 7, hasMore: false, resetRequired: false,
+            changes: [{ revision: 7, collection: 'cortes', recordId: 'C-7', operation: 'delete' }]
+        })
+    });
+    const result = await h.fetchDelta(5, { ID: 'USER-1', SessionToken: 'session-token' }, null);
+    assert.equal(result.resetRequired, true);
+    assert.equal(result.cursor, 7);
 });
 
 console.log('CatalogStartupIntegrity: ' + passed + '/' + passed + ' PASS');
