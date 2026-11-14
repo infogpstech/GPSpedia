@@ -80,6 +80,13 @@ test('API dirige acceptTerms a AUTH sin ejecutar un touchSession redundante', ()
     assert.match(apiConfigSource, /'acceptTerms': 'AUTH'/);
     assert.match(apiConfigSource, /!\['login','validateSession','touchSession','acceptTerms','logout'\]\.includes\(action\)/);
 });
+test('el catálogo espera la aceptación y se carga al confirmar el aviso', () => {
+    assert.match(uiSource, /if \(!renderTermsGate_\(user\)\) return;/);
+    assert.match(uiSource, /window\.auth\?\.loadInitialData/);
+    assert.match(authSource, /const appReady = showApp\(user\) === true/);
+    assert.match(authSource, /if \(appReady\) loadInitialData\(\)/);
+    assert.match(authSource, /export async function loadInitialData\(\)/);
+});
 test('UI no usa el indicador local antiguo y valida la versión del markup', () => {
     assert.doesNotMatch(uiSource, /gpsepedia_terms_accepted/);
     assert.match(htmlSource, /data-terms-version="2026-07"/); assert.match(htmlSource, /id="terms-error"/);
@@ -88,4 +95,4 @@ test('UI conserva el bloqueo ante errores de backend o caché local', () => {
     assert.match(uiSource, /El catálogo permanece bloqueado/);
     assert.match(uiSource, /localStorage\.setItem\('gpsepedia_session'/);
 });
-console.log('TermsAcceptance: ' + passed + '/16 PASS');
+console.log('TermsAcceptance: ' + passed + '/17 PASS');
