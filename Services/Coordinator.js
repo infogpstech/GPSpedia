@@ -117,7 +117,7 @@ function coordinatorPolicy_(service, operation) {
     if (!policy) throw new Error("La acción no está habilitada en la política del coordinador.");
 
     const writeResources = (policy.write || []).slice();
-    if (service === "ADMIN" && !writeResources.includes("ACTIVE_SESSIONS")) {
+    if (["ADMIN", "AUTH"].includes(service) && !writeResources.includes("ACTIVE_SESSIONS")) {
         writeResources.push("ACTIVE_SESSIONS");
     }
     return {
