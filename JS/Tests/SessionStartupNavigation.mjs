@@ -17,14 +17,14 @@ test("la imagen remota empieza antes de esperar IndexedDB y evita una sonda dupl
 test("compresión de miniaturas es opcional y aplica backoff",()=>{assert.match(offline,/THUMBNAIL_FAILURE_BACKOFF_MS = 5 \* 60 \* 1000/);assert.match(offline,/thumbnailCompressionFailures_\.set\(cacheKey/);assert.match(offline,/Se omitió la compresión opcional de miniatura/);assert.doesNotMatch(offline,/Thumbnail compression failed for/);});
 test("política de contexto protege medios sin bloquear texto ni campos editables",()=>{assert.match(policy,/isEditableTarget_/);assert.match(policy,/isProtectedMediaTarget_/);assert.match(policy,/!isEditableTarget_\(event\.target\)&&isProtectedMediaTarget_\(event\.target\)/);assert.match(policy,/input, textarea, select/);assert.match(policy,/img, picture, video, canvas/);assert.match(users,/clientInteractionPolicy\.js/);assert.match(addCuts,/clientInteractionPolicy\.js/);});
 test("login reutiliza el mismo requestId tras un fallo transitorio y solo limpia la solicitud completada",async()=>{
- const source=apiConfig.replace(/\\bexport\\s+(?=(?:async\\s+)?function\\b)/g,"");
- const extractFunction=name=>{const re=new RegExp("(?:async\\\\s+)?function\\\\s+"+name+"\\\\s*\\\\(");const match=re.exec(source);assert.ok(match,"Falta función "+name);const start=match.index;const next=source.slice(match.index+match[0].length).search(/\\n(?:export\\s+)?(?:async\\s+)?function\\s+/);return source.slice(start,next<0?undefined:match.index+match[0].length+next).trim();};
- const functions=["createLoginRequestId_","loginRequestStorageKey_","login","completeLoginRequest"].map(extractFunction).join("\\n");
+ const source=apiConfig.replace(/\bexport\s+(?=(?:async\s+)?function\b)/g,"");
+ const extractFunction=name=>{const re=new RegExp("(?:async\\s+)?function\\s+"+name+"\\s*\\(");const match=re.exec(source);assert.ok(match,"Falta función "+name);const start=match.index;const next=source.slice(match.index+match[0].length).search(/\n(?:export\s+)?(?:async\s+)?function\s+/);return source.slice(start,next<0?undefined:match.index+match[0].length+next).trim();};
+ const functions=["createLoginRequestId_","loginRequestStorageKey_","login","completeLoginRequest"].map(extractFunction).join("\n");
  const values=new Map();const storage={getItem:k=>values.has(k)?values.get(k):null,setItem:(k,v)=>values.set(k,String(v)),removeItem:k=>values.delete(k)};
  let generated=0,calls=0,firstRequestId="";
  const cryptoMock={randomUUID:()=>"request-"+(++generated)};
  const routeAction=async(action,payload)=>{assert.equal(action,"login");calls++;if(calls===1){firstRequestId=payload.requestId;throw new Error("network unavailable");}assert.equal(payload.requestId,firstRequestId,"El reintento debe conservar el ID idempotente");return{user:{ID:"U1"}};};
- const api=new Function("sessionStorage","crypto","routeAction",functions+"\\nreturn {login,completeLoginRequest,loginRequestStorageKey_};")(storage,cryptoMock,routeAction);
+ const api=new Function("sessionStorage","crypto","routeAction",functions+"\nreturn {login,completeLoginRequest,loginRequestStorageKey_};")(storage,cryptoMock,routeAction);
  await assert.rejects(api.login(" Tech ","secret"),/network unavailable/);
  const key=api.loginRequestStorageKey_("TECH");assert.equal(values.get(key),firstRequestId);
  const result=await api.login("tech","secret");assert.equal(result.loginRequestId,firstRequestId);assert.equal(result.user.ID,"U1");assert.equal(calls,2);assert.equal(generated,1);
