@@ -6,7 +6,7 @@ function runLastDeveloperProtectionTests(sources) {
     const equal=(a,b,m)=>{if(a!==b)throw new Error(m||'Esperado '+b+', recibido '+a);};
     const run=(name,fn)=>{try{fn();passed++;results.push({name,status:'PASS'});}catch(e){failed++;results.push({name,status:'FAIL',message:String(e.message||e)});}};
     const extract=(src,name,endMarker)=>{const s=src.indexOf('function '+name+'(');assert(s>=0,'No se encontró '+name);const e=endMarker?src.indexOf(endMarker,s):src.indexOf('\nfunction ',s+10);assert(!endMarker||e>s,'No se encontró fin de '+name);return src.slice(s,e>s?e:src.length).trim();};
-    const normalize=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+    const normalize=v=>{const role=String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();return role==='gefe'?'jefe':role;};
     const active=row=>Boolean(row&&String(row[1]||'').trim()&&!String(row[1]).startsWith('__deleted__:')&&['desarrollador','jefe','supervisor','tecnico','tecnico_exterior'].includes(normalize(row[3])));
     const userCols={ID:1,Nombre_Usuario:2,Password:3,Privilegios:4,Telefono:5,Correo_Electronico:6,Nombre_Completo:7,SessionToken:8,TermsAcceptance:9};
     const sessionCols={ID_Usuario:1,Usuario:2,ActiveSessions:3,date:4,Logs:5,LastActivityAt:6};
