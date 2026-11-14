@@ -172,6 +172,38 @@ await test('AUTH mantiene false únicamente para identidad o token ausentes/revo
     assert.equal(fn({ userId: 'U-TEST' }).valid, false);
 });
 
+await test('touchSession distingue una dependencia caída de un token revocado', async () => {
+    const handler = extract(service, 'function handleTouchSession(payload)', '\\n// Todas las mutaciones de ActiveSessions');
+    const fn = new Function('validateAndTouchSession_', 'logToSheet', handler + '\\nreturn handleTouchSession;')(
+        () => { throw new Error('LockService temporalmente ocupado'); }, () => {}
+    );
+    const serverResult = fn({ sessionToken: 'token-test' });
+    assert.equal(serverResult.valid, null);
+    assert.equal(serverResult.unavailable, true);
+
+    const touchSource = extract(api, 'async function ensureSessionTouched_(token)', '\\n// 2. LÓGICA DE RUTEO CENTRAL');
+    const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
+    const factory = new AsyncFunction(
+        'routeAction','sessionTouchState','SESSION_TOUCH_INTERVAL_MS','createRouteActionError_',
+        'localStorage','console',touchSource + '\\nreturn ensureSessionTouched_;'
+    );
+    const makeError = (message, metadata) => Object.assign(new Error(message), metadata);
+    async function invoke(result) {
+        const ensure = await factory(async () => result, new Map(), 10000, makeError,
+            { getItem: () => null, setItem() {} }, { warn() {} });
+        try { await ensure('token-test'); return null; } catch (error) { return error; }
+    }
+    const unavailable = await invoke({ valid: null, unavailable: true });
+    assert.equal(unavailable.kind, 'network');
+    assert.equal(unavailable.code, 'SESSION_VALIDATION_UNAVAILABLE');
+    const revoked = await invoke({ valid: false, reason: 'missing_session' });
+    assert.equal(revoked.kind, 'application');
+    assert.equal(revoked.code, 'SESSION_INVALID');
+    const missingSheet = await invoke({ valid: false, reason: 'missing_sheet' });
+    assert.equal(missingSheet.kind, 'network');
+    assert.equal(missingSheet.code, 'SESSION_VALIDATION_UNAVAILABLE');
+});
+
 await test('AUTH trata hojas faltantes y revocación pendiente como indisponibilidad temporal', () => {
     assert.match(service, /valid: null, unavailable: true, reason: 'missing_sheet'/);
     assert.match(service, /valid: null, unavailable: true, reason: 'role_revocation_pending'/);
@@ -187,4 +219,4 @@ await test('la validación reciente puede reutilizarse al restaurar una actualiz
     assert.match(check, /validateSessionCoordinated\(user, false\)/);
 });
 
-console.log('SessionRestoreOnValidationFailure: ' + passed + '/13 PASS');
+console.log('SessionRestoreOnValidationFailure: ' + passed + '/14 PASS');
