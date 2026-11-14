@@ -990,3 +990,12 @@ La anotación previa que declaraba inaccesibles los runs de push queda superada 
 - P3 se registra como **COMPLETADA CON VALIDACIÓN DIFERIDA A BETA**. La prueba manual de tema claro/oscuro, teclado, lector de pantalla, navegación Atrás y dispositivos/navegadores reales queda pendiente; no se simuló.
 - Commit de actualización del backlog: `e9b556c96e2b2bc9ec38b8f3bdaf68f30c726665`; changelog: `22aad0d7d4dd62e4e3c56b70700ee42c41e27c4f`.
 - Siguiente paquete: P4 — política de imágenes y permisos. La revisión estática y las pruebas locales de roles/contratos figuran completadas; falta verificar ACL reales de Drive y solicitudes HTTP negativas contra deployments Beta. La integración Google Drive aparece deshabilitada por administración en el catálogo de conectores disponible, por lo que no se puede inspeccionar Drive desde esta sesión; no se intentarán cambios de ACL.
+
+
+## Continuidad P4 — política de imágenes y permisos (2026-11-14)
+
+- Se cerró P4 a nivel local como **COMPLETADA CON VALIDACIÓN DIFERIDA A BETA**. La matriz de capacidades, control de acciones por rol, restricciones de descarga, protección de medios contra interacciones casuales y autorización backend cuentan con cobertura local.
+- Evidencia CI consultada directamente en el run `43620155376`: `VehicleModalRolePolicy` 12/12 PASS; `ClientInteractionPolicy` 5/5 PASS; `ADMIN edición modal/RBAC` 9/9 PASS; 93 suites / 1,364 pruebas / 0 fallos; sintaxis Node.js PASS.
+- Pendiente Beta: revisar ACL reales de carpetas/archivos Drive y clasificar recursos públicos/privados; ejecutar llamadas HTTP negativas contra deployments para confirmar rechazos efectivos. El conector Google Drive aparece `DISABLED_BY_ADMIN` y no disponible para conexión; no se cambiaron permisos ni se accedió a datos productivos.
+- Commits de documentación P4: backlog `4977834526c7ae081419214f79415f0c5ee3ec6f`; changelog `6fb5e1101f4520d91196c67508fed13afa7f88c5`.
+- Próxima tarea en orden: P5 ya es una evaluación concluida; revisar P6 integración/regresión para confirmar si queda alguna prueba local adicional. Las pruebas reales de campo/PWA se mantienen separadas como validación Beta.
