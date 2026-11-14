@@ -6,14 +6,13 @@ const helperMatch = apiSource.match(/function createRouteActionError_\([\s\S]*?\
 const routeMatch = apiSource.match(/export async function routeAction\([\s\S]*?\n\}/);
 assert.ok(helperMatch, "No se encontró createRouteActionError_.");
 assert.ok(routeMatch, "No se encontró routeAction.");
-assert.ok(apiSource.includes('throw createRouteActionError_("La sesión no es válida o ha expirado.",{kind:"application",code:"SESSION_INVALID",httpStatus:null});'));
 const routeSource = routeMatch[0].replace("export async function", "async function");
 const metrics = [];
-function buildRouteAction(fetchImpl, touchSession = async () => {}) {
+function buildRouteAction(fetchImpl) {
     metrics.length = 0;
-    return new Function("ACTION_TO_SERVICE_MAP","API_ENDPOINTS","ensureSessionTouched_","recordServiceMetric","fetch",
+    return new Function("ACTION_TO_SERVICE_MAP","API_ENDPOINTS","recordServiceMetric","fetch",
         helperMatch[0] + "\n" + routeSource + "\nreturn routeAction;")(
-        { testAction:"TEST" }, { TEST:"https://test.invalid/exec" }, touchSession, event=>metrics.push(event), fetchImpl
+        { testAction:"TEST" }, { TEST:"https://test.invalid/exec" }, event=>metrics.push(event), fetchImpl
     );
 }
 function response(status, body, ok = status >= 200 && status < 300) {
@@ -67,12 +66,12 @@ await check("Rechaza arrays como respuesta JSON de API",async()=>{
     await expectError(async()=>response(200,"[]"),{},{
         kind:"invalid_response",code:"INVALID_RESPONSE",httpStatus:200,outcome:"invalid_response"});
 });
-await check("Clasifica la sesión rechazada antes de ejecutar la acción",async()=>{
-    const sessionError=new Error("La sesión no es válida o ha expirado.");
-    Object.assign(sessionError,{kind:"application",code:"SESSION_INVALID",httpStatus:null});
-    const action=buildRouteAction(async()=>{throw new Error("No debe enviar la acción.");},async()=>{throw sessionError;});
-    await assert.rejects(action("testAction",{sessionToken:"token"}),error=>error.code==="SESSION_INVALID");
-    assert.equal(metrics[0].outcome,"api_error");assert.equal(metrics[0].httpStatus,null);
+await check("No ejecuta touchSession previo y envía una sola petición al servicio de la acción",async()=>{
+    let calls=0,requestedUrl="";
+    const action=buildRouteAction(async(url,options)=>{calls++;requestedUrl=url;assert.equal(JSON.parse(options.body).action,"testAction");return response(200,JSON.stringify({status:"success"}));});
+    await action("testAction",{sessionToken:"token"});
+    assert.equal(calls,1);assert.equal(requestedUrl,"https://test.invalid/exec");
+    assert.doesNotMatch(routeSource,/ensureSessionTouched_|touchSession/);
 });
 await check("Devuelve intacta una respuesta válida y registra éxito",async()=>{
     const action=buildRouteAction(async()=>response(200,JSON.stringify({status:"success",value:7})));
