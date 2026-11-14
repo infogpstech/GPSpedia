@@ -547,7 +547,7 @@ function runSharedMutationCoordinatorTests() {
         const r = createRuntime_();
         const policy = coordinatorPolicy_("AUTH", "acceptTerms");
         assert_(policy.writeResources.includes("USERS"), "acceptTerms debe reservar Users.");
-        assert_(!policy.writeResources.includes("ACTIVE_SESSIONS"), "acceptTerms no debe escribir ActiveSessions.");
+        assert_(!policy.writeResources.includes("ACTIVE_SESSIONS"), "acceptTerms no debe reservar una escritura exclusiva de ActiveSessions; su actualización de actividad es cooperativa.");
         assert_(policy.readResources.includes("ACTIVE_SESSIONS"), "acceptTerms debe validar la sesión activa.");
         assert_(policy.sharedWriteResources.includes("ACTIVE_SESSIONS"), "La lectura de sesión puede coexistir con sessionActivity.");
         const acceptance = acquire_(r, "AUTH", "acceptTerms");
