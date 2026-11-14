@@ -115,3 +115,10 @@
 - JS/Tests/SessionUiRoleInvalidation.js: regresión de visibilidad/apertura Developer (15/15 PASS en ejecución aislada).
 - Validación aislada adicional: AdminImageScanCoordinatorContract PASS. Node CLI completo, GitHub Actions y Beta quedan pendientes; no se modificaron servicios externos ni datos.
 ================================================================================
+
+
+================================================================================
+2026-11-14 — AMPLIACIÓN DE PRUEBAS DEL ROUTER ADMIN
+- AdminImageScanCoordinatorContract.mjs: se añade ejecución aislada de doPost con coordinador simulado para verificar leases específicas, propagación del token, fallback de acciones heredadas y tratamiento de ping.
+- Resultado: PASS en ejecución aislada; no equivale a Node CLI/GitHub Actions ni a integración Beta.
+================================================================================
