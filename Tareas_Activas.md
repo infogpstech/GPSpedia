@@ -26,7 +26,7 @@ Simplificar la autenticación sin debilitar autorización; modernizar Inbox; end
 | GP-UX-02 | Corregir saludo, registro de reacciones 👍🏿, tarjeta de alta de tutorial y altura de la tarjeta para agregar problema | PENDIENTE |
 | GP-UX-03 | Reorganizar Inbox móvil y sustituir acciones dispersas/textuales por una barra de herramientas y menú de acciones habituales | PENDIENTE |
 | GP-RBAC-02 | Habilitar y validar las funciones de Inbox para usuarios técnicos; actualmente reciben «servicio no autorizado para el coordinador compartido» | PENDIENTE |
-| GP-PWA-01 | Corregir el bloqueo de actualización y permitir recargar/actualizar la plataforma de forma controlada | PENDIENTE |
+| GP-PWA-01 | Actualización y recarga manual de la plataforma | SUPERADA: no implementar controles manuales; continuar con GP-PWA-02 y GP-CAT-01 |
 
 ## Hallazgos preliminares confirmados en código
 
@@ -481,12 +481,12 @@ Si cualquier comprobación falla, no continuar ni descartar cambios locales. Con
 - Revisar en FEEDBACK `GPSpedia_COORDINATOR_URL` y `GPSpedia_COORDINATOR_SECRET`; el secreto debe coincidir con `GPSpedia_COORDINATOR_SECRET_FEEDBACK` del coordinador del mismo entorno. Confirmar también que el deployment contiene `SharedMutationClient.js` y las políticas vigentes. No ampliar roles ni debilitar autorización para ocultar un error de configuración.
 - Prueba Beta requerida: lectura y conversación directa con Técnico/Técnico_exterior, y rechazo de acciones privilegiadas para roles no autorizados.
 
-### GP-PWA-01 — Recarga y actualización
-**Estado: EN PROGRESO — diagnóstico estático parcial.**
+### GP-PWA-01 — Recarga manual de la plataforma
+**Estado: SUPERADA POR INSTRUCCIÓN DEL USUARIO (2026-11-14).**
 
-- El Service Worker versionado actual es `gpsepedia-cache-v26`; su instalación usa `skipWaiting()`, activación usa `clients.claim()` y navegación intenta red antes de fallback de caché.
-- No se encontró un listener global que cancele F5/Ctrl+R ni una intercepción de `beforeunload`. El gesto pull-to-refresh de `main.js` actualiza el catálogo sin recargar el documento; por ello no constituye una recarga completa de la PWA.
-- Falta implementar y probar un mecanismo explícito y seguro de recarga/actualización para usuarios de PWA, preservando borradores y operaciones locales pendientes. Probar múltiples pestañas, actualización de Service Worker, offline/reconexión y recarga manual.
+- Se retira el requisito de añadir una acción propia de recarga. No se implementará un botón, enlace, menú ni control manual equivalente.
+- La actualización de recursos debe depender del ciclo nativo del navegador/Service Worker (GP-PWA-02); la actualización de datos debe ser automática y silenciosa (GP-CAT-01).
+- Preservar sesión, borradores y operaciones offline; no borrar almacenamiento ni forzar recargas para instalar versiones nuevas.
 
 ### GP-SEC-03 — Capturas de pantalla en móviles
 **Estado: EVALUACIÓN TÉCNICA LOCAL PARCIAL; PRUEBAS BETA PENDIENTES.**
@@ -509,13 +509,11 @@ Si cualquier comprobación falla, no continuar ni descartar cambios locales. Con
 - Pruebas: `InboxUi` 19/19 PASS; CI run `43630382765`: 94 suites / 1,392 pruebas / 0 fallos. Falta comprobar distribución, scroll, foco, tamaños y acciones en Android/iOS reales.
 
 ### GP-PWA-01 — Recarga y actualización explícita
-**Estado: CORRECCIÓN LOCAL IMPLEMENTADA; VALIDACIÓN EN DISPOSITIVOS PENDIENTE.**
+**Estado: SUPERADA; CONTROL MANUAL RETIRADO EN GP-PWA-02.**
 
-- Se agregó «Recargar aplicación» al menú lateral. Al activarlo, cierra el menú, consulta `ServiceWorkerRegistration.update()` con espera máxima de 3 segundos y recarga el documento.
-- El gesto pull-to-refresh conserva su comportamiento de sincronizar únicamente el catálogo; no se convierte en una recarga que interrumpa operaciones involuntariamente.
-- Se incrementó el caché del Service Worker a `gpsepedia-cache-v27`. Se comprobó que los 33 recursos esenciales declarados existen en la rama.
-- Pruebas: `SessionStartupNavigation` 13/13 PASS; `PWAStartupScenarios` 13/13 PASS; CI run `43630382765`: 94 suites / 1,392 pruebas / 0 fallos.
-- Falta validar en PWA Android/iOS la instalación de v27, actualización desde v26, recarga manual, modo offline y conservación de sesión/borradores.
+- Históricamente se añadió «Recargar aplicación» y su listener, pero el usuario indicó que no desea acciones manuales nuevas. Ambos se retiraron en el commit `a1575c742600d5c9f6a67e86ff15a692de28c89e`.
+- No reutilizar ni reintroducir `registration.update()` + `window.location.reload()` como acción visible. La actualización de recursos queda a cargo del navegador/Service Worker y los datos se sincronizan en segundo plano mediante GP-CAT-01.
+- La validación de actualización nativa y conservación de sesión/datos locales permanece en Beta; no se exige pulsar un control propio.
 
 ### GP-SEC-03 — Capturas de pantalla
 **Estado: LIMITACIÓN TÉCNICA CONFIRMADA; NO SE PROMETE BLOQUEO WEB.**
