@@ -1424,3 +1424,31 @@ Este mecanismo de datos en vivo es independiente de la actualización de recurso
 - La publicación está aislada: si falla el Coordinador, la reacción ya persistida conserva su respuesta exitosa y el error se registra en Logger. Los likes completados previamente no generan eventos repetidos.
 - `CatalogChangeFeed.mjs` añade un contrato para comprobar el orden de confirmación/publicación y el manejo de fallos del feed. Validación CI `43640695193`: 97 suites / 1,427 pruebas / 0 fallos. Pages `43640694382` seguía en estado waiting al momento de registrar este checkpoint.
 - GP-CAT-01B sigue PARCIAL: faltan las demás rutas de escritura y el cliente IndexedDB/polling. No se ha desplegado Apps Script ni modificado ScriptProperties o datos productivos.
+
+
+## Continuidad — GP-CAT-01B productores completos y validación local (2026-11-14)
+
+**HEAD verificado antes de esta adenda:** `f0ed46729cb546ea15d4fcd8036034e7ee997782` en `GPSpedia2.2.5_work`.  
+**Rama base:** `GPSpedia2.2.5`, HEAD `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; sin modificaciones.
+
+### Implementación
+- `Services/Coordinator.js` conserva el journal autenticado, revisiones monotónicas, cursor, paginación, retención y reset ante cursor vencido/corrupto.
+- `Services/write.js`: las mutaciones confirmadas de Cortes publican reset. Una acción WRITE anidada con token de mantenimiento no publica durante el proceso padre.
+- `Services/feedback.js`: `recordLike` publica upsert exacto de Cortes; sugerencias de año, PyS, relaciones, tutoriales y aprobación/rechazo de vídeo publican reset después de confirmar.
+- `Services/admin.js`: las mutaciones catalogales publican reset tras completar la operación y cerrar la auditoría persistente.
+- `JS/Tests/CatalogChangeFeed.mjs`: cobertura de productores WRITE/FEEDBACK/ADMIN, publicación posterior a confirmación y diferimiento de mutaciones anidadas.
+
+### Validación ejecutada
+- GitHub Actions service-tests run `43643985281`, commit de código `25d7d91f369c4949f65373c44dd7fefddfc653c2`: **SUCCESS**.
+- Node.js 22: sintaxis de módulos modificados PASS.
+- Regresión completa: **97 suites / 1,428 pruebas / 0 fallos**.
+- `CatalogChangeFeed`: **14/14 PASS**.
+- Pages del commit de código: ejecución cancelada por una ejecución posterior; no se declara Pages PASS para ese SHA. Consultar la compilación del HEAD documental actual antes de afirmar publicación.
+
+### Estado y siguiente tarea
+- GP-CAT-01B: productores conectados en rama de trabajo; el feed sigue sin consumidor y aún no reduce descargas ni actualiza sesiones abiertas.
+- Siguiente: GP-CAT-01C — integrar lectura incremental autenticada con el arranque cache-first y persistencia transaccional del cursor/delta en IndexedDB. Un reset debe activar reconciliación completa segura; un delta vacío no debe descargar colecciones.
+- Después: GP-CAT-01D sondeo adaptativo y coordinación entre pestañas; GP-CAT-01E reconciliación de vistas/animaciones; GP-CAT-01F regresión integral y Beta.
+- No se añadieron controles visibles. No se desplegaron Apps Script ni se modificaron ScriptProperties, Spreadsheet, Drive, ACL o datos productivos.
+- Las validaciones reales de navegador/dispositivo, Apps Script, OAuth y datos externos permanecen diferidas a Beta.
+
