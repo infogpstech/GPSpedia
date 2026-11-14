@@ -107,9 +107,11 @@ test('USERS mantiene la columna privada fuera de la escritura de perfil', () => 
     assert.match(usersSource, /TermsAcceptance: 9/); assert.match(usersTestSource, /TermsAcceptance: 9/);
     assert.match(usersSource, /if \(key !== 'Nombre_Completo'\)/);
 });
-test('API dirige acceptTerms a AUTH sin ejecutar un touchSession redundante', () => {
+test('API dirige acceptTerms a AUTH sin enviar una llamada touchSession adicional', () => {
     assert.match(apiConfigSource, /'acceptTerms': 'AUTH'/);
-    assert.match(apiConfigSource, /!\['login','validateSession','touchSession','acceptTerms','logout'\]\.includes\(action\)/);
+    assert.match(apiConfigSource, /body: JSON\.stringify\(\{ action, payload \}\)/);
+    assert.match(uiSource, /routeAction\('acceptTerms',[\s\S]*?deviceId/);
+    assert.doesNotMatch(uiSource, /routeAction\('touchSession'/);
 });
 test('el catálogo espera la aceptación y se carga al confirmar el aviso', () => {
     assert.match(uiSource, /if \(!renderTermsGate_\(user\)\) return;/);
