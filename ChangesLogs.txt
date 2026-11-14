@@ -1248,3 +1248,9 @@ Commits: dacc854, 8be5281, f0645b5, 0e02d90, 5c58ed8, 024d604, 6bf5732, 9b2e781.
 - JS/Tests/PWAStartupScenarios.js: se actualizan las verificaciones de versión y se comprueba la precarga del módulo de métricas.
 - Validación aislada: 8/8 comprobaciones de contrato de importación, precarga y activación del Service Worker PASS; 5/5 comprobaciones de agrupación de métricas PASS. Node CLI y navegador real no ejecutados.
 ================================================================================
+
+================================================================================
+2026-11-13 — CORRECCIÓN — COMPROBACIÓN DE VISIBILIDAD DEL LIGHTBOX
+- JS/Frontend/main.js: se define localmente isLightboxVisible() antes de su uso en handleViewportChange(), comprobando de forma segura la existencia del elemento y su clase visible.
+- Validación aislada V8: parsing de main.js aprobado y 3/3 escenarios de visibilidad PASS (elemento inexistente, oculto y visible). Navegador real pendiente de Beta.
+================================================================================
