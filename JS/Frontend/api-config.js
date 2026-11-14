@@ -653,6 +653,6 @@ export async function rejectVideo(itemId, rejecterName, reason, userRole, sessio
 }
 
 
-export async function getCatalogChanges(cursor = 0, limit = 50, sessionPayload = {}) {
-    return await routeAction("getCatalogChanges", { ...sessionPayload, cursor, limit });
+export async function getCatalogChanges(cursor = 0, limit = 50, sessionPayload = {}, options = {}) {
+    return await routeAction("getCatalogChanges", { ...sessionPayload, cursor, limit }, null, options);
 }
