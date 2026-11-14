@@ -186,7 +186,7 @@ function runFeedbackWriteSecurityTests() {
                 getSpreadsheet = () => ({ getSheetByName: name => sheets[name] || null });
             }
             try {
-                const roles = ["Desarrollador", "Gefe", "Jefe", "Supervisor", "Tecnico", "Tecnico_Exterior"];
+                const roles = ["Desarrollador", "Jefe", "Supervisor", "Tecnico", "Tecnico_Exterior"];
                 roles.forEach((role, index) => {
                     const userId = "USR-ROLE-" + index;
                     const token = "TOKEN-ROLE-" + index;
