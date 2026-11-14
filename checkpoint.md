@@ -361,3 +361,15 @@ SIGUIENTE TRABAJO
 - Las pruebas de contrato se actualizaron para rechazar `Gefe` y aceptar `Jefe`.
 - No se accedió ni modificó la Spreadsheet desde esta sesión; la actualización se registra como confirmación del usuario. No se desplegaron servicios Apps Script.
 - P4 sigue pendiente por completar y aplicar la matriz de capacidades del modal/imágenes. La siguiente tarea de ejecución general es P1 — autenticación simplificada.
+
+
+## P1 — Fase 1: revalidación redundante al recuperar conexión (2026-11-14)
+
+**Estado: IMPLEMENTADA EN RAMA; VALIDACIÓN AUTOMATIZADA PENDIENTE.**
+
+- Se eliminó de `JS/Frontend/main.js` el listener `online` que llamaba `auth.validateActiveSession(false)` al recuperar conectividad.
+- Se conserva `auth.checkSession()` al inicializar la aplicación: es la comprobación de restauración necesaria para detectar revocación/expiración confirmadas.
+- Se conserva `touchSession` previo a operaciones protegidas. Retirarlo antes de integrar una actualización de actividad segura dentro de cada operación backend rompería el mantenimiento de la expiración por inactividad o debilitaría la sesión.
+- Se actualizó `JS/Tests/SessionStartupNavigation.mjs` para exigir ausencia del listener/revalidación adicional y presencia de la validación inicial.
+- Próxima fase: integrar actualización de actividad dentro de las peticiones protegidas mediante coordinación compartida entre servicios; mapear también acciones de solo lectura antes de eliminar el preflight `touchSession`.
+- No se modificó la rama base ni se desplegaron Apps Script.

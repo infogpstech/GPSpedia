@@ -21,25 +21,8 @@ import { pushNavigationState, replaceNavigationState, navigationHistoryStateKey 
 let deferredPrompt;
 let searchBlurTimeout;
 let isBackGestureBlurring = false;
-let sessionRevalidationInstalled_ = false;
-let sessionRevalidationInFlight_ = null;
 let lastManualCatalogRefreshAt_ = 0;
 const MANUAL_CATALOG_REFRESH_COOLDOWN_MS = 15000;
-function revalidateSessionOnResume_() {
-    if (sessionRevalidationInFlight_) return sessionRevalidationInFlight_;
-    if (typeof navigator !== 'undefined' && navigator.onLine === false) return null;
-    const currentUser = state.getState().currentUser;
-    if (!currentUser || !currentUser.SessionToken || typeof auth.validateActiveSession !== 'function') return null;
-    sessionRevalidationInFlight_ = auth.validateActiveSession(false)
-        .catch(error => { console.debug('La revalidación silenciosa de sesión se pospuso:', error && error.message ? error.message : error); return null; })
-        .finally(() => { sessionRevalidationInFlight_ = null; });
-    return sessionRevalidationInFlight_;
-}
-function installSessionRevalidation_() {
-    if (sessionRevalidationInstalled_) return;
-    sessionRevalidationInstalled_ = true;
-    window.addEventListener('online', revalidateSessionOnResume_);
-}
 
 function installCatalogStatusBanner_() {
     let banner = document.getElementById('catalog-status-banner');
@@ -1016,7 +999,6 @@ async function initializeApp() {
     // Se asegura que todo esté inicializado antes de validar la sesión
     setTimeout(async () => {
         await auth.checkSession();
-        installSessionRevalidation_();
 
         // --- DEEP LINKING: IDENTIDAD ESTABLE CON COMPATIBILIDAD HISTÓRICA ---
         const sharedLink = decodeSharedVehicleHash(window.location.hash);

@@ -1428,3 +1428,13 @@ Rama: GPSpedia2.2.5_work
 - Validación automatizada pendiente de ejecutar tras publicar este commit.
 - Estado: sub tarea de normalización de rol COMPLETADA EN CÓDIGO; P4 continúa pendiente por la matriz completa de capacidades.
 ================================================================================
+
+
+================================================================================
+2026-11-14 — P1, FASE 1: ELIMINAR REVALIDACIÓN REDUNDANTE AL RECUPERAR CONEXIÓN
+- JS/Frontend/main.js: se retiró el listener `online` que disparaba `validateActiveSession` al recuperar conectividad.
+- Se conserva `auth.checkSession()` como comprobación de restauración al iniciar/actualizar la aplicación. Las operaciones protegidas mantienen su validación backend y el mecanismo touchSession existente.
+- JS/Tests/SessionStartupNavigation.mjs: el contrato ahora verifica que no exista revalidación adicional por evento online y que se conserve la validación inicial.
+- No se retiró touchSession ni se alteraron expiración, revocación o autorización backend.
+- Validación automatizada pendiente de ejecutar tras publicar el cambio.
+================================================================================
