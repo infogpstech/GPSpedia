@@ -933,8 +933,10 @@ export async function setOptimizedImage(imgElement, fileId, size = IMG_SIZE_SMAL
         imgElement.src = source;
         return true;
     };
+    let imageLoaded = false;
     const markLoaded = () => {
         if (!isCurrent()) return;
+        imageLoaded = true;
         imgElement.classList.remove('gp-image-loading', 'gp-image-unavailable');
         const isFallback = imgElement.src === IMAGE_FALLBACK_DATA_URL;
         imgElement.classList.toggle('gp-image-fallback', isFallback);
@@ -973,45 +975,21 @@ export async function setOptimizedImage(imgElement, fileId, size = IMG_SIZE_SMAL
         return;
     }
 
-    try {
-        const cachedBlob = await Promise.race([
-            offline.getThumbnail(cleanId, normalizedSize),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('DB Timeout')), 800))
-        ]).catch(() => null);
-        if (!isCurrent()) return;
-        if (cachedBlob && thumbnailObjectUrls.attach(cacheKey, cachedBlob, imgElement, requestToken)) return;
-    } catch (error) {
-        console.warn('No se pudo leer la miniatura local; se intentará cargar desde la red.');
-    }
-
-    if (!isCurrent()) return;
+    // Iniciar la imagen original de inmediato; la consulta IndexedDB ocurre en paralelo.
     const remoteUrl = getImageUrl(cleanId, normalizedSize);
-    let localThumbnailAttached = false;
-    const startRemoteProbe = useCors => {
-        const probe = new Image();
-        probe.decoding = 'async';
-        if (useCors) probe.crossOrigin = 'anonymous';
-        probe.onload = () => {
-            if (!isCurrent() || localThumbnailAttached) return;
-            setSource(remoteUrl);
-        };
-        probe.onerror = () => {
-            if (!isCurrent() || localThumbnailAttached) return;
-            if (useCors) {
-                startRemoteProbe(false);
-                return;
-            }
-            markFailed({ type: 'error' });
-        };
-        probe.src = remoteUrl;
-    };
-    startRemoteProbe(true);
+    setSource(remoteUrl);
+    const cachedBlob = await Promise.race([
+        offline.getThumbnail(cleanId, normalizedSize),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('DB Timeout')), 800))
+    ]).catch(() => null);
+    if (!isCurrent()) return;
+    if (cachedBlob && !imageLoaded && thumbnailObjectUrls.attach(cacheKey, cachedBlob, imgElement, requestToken)) return;
 
-    if (cleanId && typeof cleanId === 'string' && !cleanId.startsWith('blob:') &&
+    if (!cachedBlob && cleanId && typeof cleanId === 'string' && !cleanId.startsWith('blob:') &&
         !cleanId.startsWith('data:') && !cleanId.includes('placehold.co')) {
         offline.compressAndStoreThumbnail(remoteUrl, cleanId, normalizedSize).then(blob => {
-            if (blob && isCurrent() && thumbnailObjectUrls.attach(cacheKey, blob, imgElement, requestToken)) {
-                localThumbnailAttached = true;
+            if (blob && !imageLoaded && isCurrent()) {
+                thumbnailObjectUrls.attach(cacheKey, blob, imgElement, requestToken);
             }
         }).catch(() => {});
     }
