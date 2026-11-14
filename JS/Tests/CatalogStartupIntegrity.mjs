@@ -315,4 +315,13 @@ await test('la reconciliación silenciosa actualiza tarjetas, modales y vistas a
     assert.match(authSource, /performSilentSync\(snapshotToApply\)/);
     assert.match(authSource, /broadcastCatalogSync_\(currentUser, requiresFullSnapshot\)/);
 });
+await test('la entrada de nuevas tarjetas respeta prefers-reduced-motion', async () => {
+    const start = uiSource.indexOf('async function insertNewVehicleFluently(');
+    const end = uiSource.indexOf('function createPysCard(', start);
+    assert.ok(start >= 0 && end > start);
+    const insertion = uiSource.slice(start, end);
+    assert.match(insertion, /prefers-reduced-motion: reduce/);
+    assert.match(insertion, /if \(!prefersReducedMotion\)/);
+    assert.match(insertion, /newCard\.style\.transition = prefersReducedMotion \? 'none'/);
+});
 console.log('CatalogStartupIntegrity: ' + passed + '/' + passed + ' PASS');
