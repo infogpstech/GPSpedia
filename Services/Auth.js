@@ -465,10 +465,26 @@ function doPost(e) {
     }
 }
 
+function touchProtectedAuthRequestSession_(action, payload) {
+    if (!isSharedMutationAction_(action) || action === "login" || action === "touchSession") return;
+    const token = payload && payload.sessionToken;
+    if (typeof token !== "string" || !token) {
+        throw new Error("Acceso denegado: se requiere una sesión válida para esta operación.");
+    }
+    const result = validateAndTouchSession_(token);
+    if (!result || result.valid !== true) {
+        if (result && result.unavailable) {
+            throw new Error("No se pudo verificar la sesión temporalmente. Intenta nuevamente.");
+        }
+        throw new Error("Acceso denegado: la sesión no es válida, expiró o requiere autenticación nuevamente.");
+    }
+}
+
 function doPostInternal_(e) {
     let response;
     try {
         const request = JSON.parse(e.postData.contents);
+        touchProtectedAuthRequestSession_(request.action, request.payload || {});
 
         switch (request.action) {
             case 'login':
