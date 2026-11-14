@@ -492,3 +492,15 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - GitHub Actions `service-tests` sobre HEAD `9524f2f1789df4551c4d6a9c37f7a13822d43e66`: **PASS**, 79 suites, 1,205 pruebas aprobadas, 0 fallos; `VehicleModalRolePolicy: 5/5 PASS`.
 - No se desplegó ADMIN ni se modificaron datos productivos. La comprobación corresponde a código/CI; la validación visual por rol en Beta sigue pendiente.
 - Siguiente subfase P4: revisar y restringir descarga de imágenes, exposición de URL y acciones de contexto/copia/arrastre sin afectar controles editables ni accesibilidad.
+
+## P4 — Protección de imágenes y controles de descarga (2026-11-14)
+
+**Estado: FRICCIÓN CLIENTE Y CONTROL DE DESCARGA ADMINISTRATIVA IMPLEMENTADOS; URL PÚBLICAS Y AUDITORÍA GLOBAL PENDIENTES.**
+
+- `clientInteractionPolicy.js` ahora bloquea menú contextual, copy/cut, selección y dragstart solo cuando el objetivo es un medio (`img`, `picture`, `video`, `canvas` o `data-protect-media`). El texto normal conserva selección/copia y los campos editables conservan sus controles.
+- La política se instala en la aplicación principal y en las páginas HTML auxiliares ya inventariadas.
+- El botón de descarga de imágenes reemplazadas solo se renderiza para Desarrollador; `getReplacedImageDownloadUrl` sigue fuera de `ADMIN_MODAL_EDIT_ACTIONS` y requiere `assertDeveloperSession` en backend.
+- Se añadieron pruebas aisladas `ClientInteractionPolicy.mjs` para verificar bloqueo selectivo, texto normal, campos editables e instalación idempotente.
+- GitHub Actions `service-tests` sobre HEAD `e96cc8bb3bbaac6e7f9644c160b898fb81a8cc4c`: **PASS**, 80 suites, 1,210 pruebas aprobadas, 0 fallos. `ClientInteractionPolicy: 5/5 PASS`; `VehicleModalRolePolicy: 5/5 PASS`.
+- Límite de seguridad: los guardas son fricción contra acciones casuales, no protección criptográfica. Si una imagen usa una URL pública, puede extraerse desde red, DOM, caché o herramientas del navegador; no se afirma que la web pueda impedirlo.
+- No se desplegaron cambios ni se alteraron permisos de Drive. La verificación de acceso real a recursos estáticos requiere revisión del hosting/Drive y entorno Beta.
