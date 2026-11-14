@@ -3684,7 +3684,7 @@ function normalizeUiRole_(role) {
 }
 
 function canApproveInboxVideo_(role) {
-    return ['desarrollador', 'gefe', 'supervisor'].includes(normalizeUiRole_(role));
+    return ['desarrollador', 'jefe', 'supervisor'].includes(normalizeUiRole_(role));
 }
 
 function getUiSessionContext_(user = getState().currentUser) {
@@ -4174,7 +4174,7 @@ const openDashboardModal_ = setupModal('dashboard-modal', async () => {
 });
 
 export async function openDashboard() {
-    const context = await ensureUiSessionRole_(['desarrollador', 'gefe', 'supervisor']);
+    const context = await ensureUiSessionRole_(['desarrollador', 'jefe', 'supervisor']);
     if (!context) return;
     return openDashboardModal_();
 }
@@ -4208,7 +4208,7 @@ const openInboxModal_ = setupModal('inbox-modal', async (options = {}) => {
 
 export async function openInbox() {
     const returnFocus = document.activeElement;
-    const context = await ensureUiSessionRole_(['desarrollador', 'gefe', 'jefe', 'supervisor', 'tecnico', 'tecnico_exterior']);
+    const context = await ensureUiSessionRole_(['desarrollador', 'jefe', 'jefe', 'supervisor', 'tecnico', 'tecnico_exterior']);
     if (!context) return;
     return openInboxModal_({ returnFocus });
 }
@@ -7798,7 +7798,7 @@ export function renderInboxList(items) {
     const isCurrentInboxView = () => Boolean(context &&
         generation === inboxViewGeneration_ &&
         isCurrentUiSessionContext_(context) &&
-        ['desarrollador', 'gefe', 'jefe', 'supervisor'].includes(context.role));
+        ['desarrollador', 'jefe', 'jefe', 'supervisor'].includes(context.role));
     if (!isCurrentInboxView()) {
         listContainer.replaceChildren();
         const detail = document.getElementById('inbox-detail');
@@ -7878,7 +7878,7 @@ export function renderInboxDetail(item) {
         viewGeneration === inboxViewGeneration_ &&
         detailGeneration === inboxDetailGeneration_ &&
         isCurrentUiSessionContext_(context) &&
-        ['desarrollador', 'gefe', 'jefe', 'supervisor'].includes(context.role));
+        ['desarrollador', 'jefe', 'jefe', 'supervisor'].includes(context.role));
     if (!detailContainer) return;
     if (!isCurrentInboxDetail()) {
         detailContainer.replaceChildren();
@@ -8898,12 +8898,12 @@ export function showApp(user) {
 
     const inboxBtn = document.getElementById('inbox-btn');
     if (inboxBtn) {
-        inboxBtn.style.display = ['desarrollador', 'gefe', 'jefe', 'supervisor', 'tecnico', 'tecnico_exterior'].includes(userRole) ? 'flex' : 'none';
+        inboxBtn.style.display = ['desarrollador', 'jefe', 'jefe', 'supervisor', 'tecnico', 'tecnico_exterior'].includes(userRole) ? 'flex' : 'none';
     }
 
     const dashboardBtn = document.getElementById('dashboard-btn');
     if (dashboardBtn) {
-        dashboardBtn.style.display = ['desarrollador', 'gefe', 'supervisor'].includes(userRole) ? 'flex' : 'none';
+        dashboardBtn.style.display = ['desarrollador', 'jefe', 'supervisor'].includes(userRole) ? 'flex' : 'none';
     }
 
     // Protección de renderizado: No mostrar el catálogo si los datos no están listos.
@@ -13112,7 +13112,7 @@ export function exportVehiclePrintSheet(item) {
 
 export async function loadAndRenderInbox(options = {}) {
     const suppliedContext = options && options.context;
-    const requestContext = suppliedContext || await ensureUiSessionRole_(['desarrollador', 'gefe', 'jefe', 'supervisor']);
+    const requestContext = suppliedContext || await ensureUiSessionRole_(['desarrollador', 'jefe', 'jefe', 'supervisor']);
     if (!requestContext || !isCurrentUiSessionContext_(requestContext)) return;
     if (options.reset === true) {
         inboxPageCursorStack_ = [null];
