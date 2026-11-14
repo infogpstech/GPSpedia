@@ -1270,3 +1270,16 @@ Commits: dacc854, 8be5281, f0645b5, 0e02d90, 5c58ed8, 024d604, 6bf5732, 9b2e781.
 - Validación local adaptada: compilación V8 de los bloques modificados PASS; 4/4 escenarios de pila de overlays PASS; validación concurrente compartida 1/1 PASS; contratos estáticos 10/10 PASS. Node CLI, suite completa en navegador y DOM/dispositivos reales no ejecutados; estos últimos quedan para Beta.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 ================================================================================
+
+================================================================================
+2026-11-13 — CORRECCIÓN — RESTAURACIÓN DE SESIÓN TRAS ACTUALIZAR GPSpedia
+- JS/Frontend/auth.js: checkSession reutiliza una validación AUTH reciente y, ante timeout, desconexión o respuesta no concluyente, restaura la sesión local sin eliminar el token ni mostrar el login como si la cuenta estuviera cerrada. showApp sigue aplicando el bloqueo de aceptación de términos vigente. La expiración local y una revocación remota confirmada mantienen el cierre de sesión.
+- JS/Frontend/auth.js: las respuestas legacy valid:false con error de infraestructura y los motivos missing_sheet/role_revocation_pending se normalizan como indisponibilidad, no como revocación.
+- JS/Frontend/api-config.js: touchSession distingue valid:false confirmado de errores temporales de AUTH; las operaciones protegidas se detienen cuando no se puede verificar, pero no se etiqueta al usuario como desconectado.
+- Services/Auth.js: validateSession y touchSession devuelven valid:null/unavailable ante excepciones internas; hojas faltantes y errores al procesar una revocación pendiente también se clasifican como indisponibilidad. Un token ausente, inexistente, expirado o revocado continúa devolviendo valid:false.
+- JS/Tests/SessionRestoreOnValidationFailure.mjs: 14 casos de regresión para timeout, offline, errores legacy, revocación confirmada, expiración y touchSession.
+- Validación aislada en V8: 17/17 escenarios PASS; compilación sintáctica de checkSession, validación coordinada, touchSession y handlers AUTH PASS; sintaxis del nuevo test PASS.
+- Pendiente: ejecutar el archivo .mjs con Node CLI y desplegar Services/Auth.js en el proyecto de Google Apps Script AUTH correspondiente. El cambio de frontend es compatible con la respuesta legacy actual; el código fuente del servicio no se despliega automáticamente desde GitHub.
+- No se modificó service-worker.js: no se encontró que el Service Worker borre gpsepedia_session; la causa identificada está en la recuperación de sesión al iniciar la aplicación.
+- Estado: CORRECCIÓN IMPLEMENTADA EN RAMA DE TRABAJO; DESPLIEGUE AUTH Y PRUEBA BETA PENDIENTES.
+================================================================================
