@@ -1333,3 +1333,103 @@ function normalizeId(id) {
                   id.match(/\/d\/([a-zA-Z0-9_-]+)/);
     return match ? match[1] : id;
 }
+
+
+// Estado independiente para reanudar la simulación Drive ↔ Cortes sin mezclar
+// cuentas ni sobrescribir el estado paginado de la auditoría recursiva.
+function getCortesImageReconciliationStateKey(userId) {
+    const ownerId = String(userId === null || userId === undefined ? '' : userId).trim();
+    return ownerId ? 'cortesImageReconciliation:' + encodeURIComponent(ownerId) : '';
+}
+function getCortesImageReconciliationStateSignature(state) {
+    const snapshot = Object.assign({}, state);
+    delete snapshot.signature;
+    return JSON.stringify(snapshot);
+}
+export async function saveCortesImageReconciliationState(state, userId) {
+    const ownerId = String(userId === null || userId === undefined ? '' : userId).trim();
+    const key = getCortesImageReconciliationStateKey(ownerId);
+    if (!key || !state || typeof state !== 'object') return null;
+    const auditId = String(state.auditId || '').trim();
+    const fileSignature = String(state.fileSignature || '');
+    const sourceDigest = String(state.sourceDigest || '');
+    const nextBatchIndex = Number(state.nextBatchIndex);
+    const expectedRevision = Number(state.revision);
+    if (!/^[0-9a-f-]{36}$/i.test(auditId) ||
+        !/^[a-f0-9]{64}$/i.test(fileSignature) ||
+        (sourceDigest && !/^[a-f0-9]{64}$/i.test(sourceDigest)) ||
+        !Number.isSafeInteger(nextBatchIndex) || nextBatchIndex < 0 ||
+        !Number.isSafeInteger(expectedRevision) || expectedRevision < 0 ||
+        !Array.isArray(state.results) || !Array.isArray(state.invalidFiles) ||
+        !Array.isArray(state.rowIssues) || !state.counts || typeof state.counts !== 'object') return null;
+    const next = {
+        key, ownerId, auditId, fileSignature, sourceDigest,
+        referenceCheckStatus: String(state.referenceCheckStatus || ''),
+        nextBatchIndex, revision: expectedRevision + 1,
+        results: state.results, invalidFiles: state.invalidFiles,
+        rowIssues: state.rowIssues, counts: state.counts,
+        status: ['running', 'partial', 'complete'].includes(state.status) ? state.status : 'partial',
+        updatedAt: Date.now()
+    };
+    if (JSON.stringify(next).length > 8 * 1024 * 1024) return null;
+    next.signature = getCortesImageReconciliationStateSignature(next);
+    try {
+        return await performAdminAuditTransaction((store, control) => {
+            const request = store.get(key);
+            request.onsuccess = () => {
+                const current = request.result;
+                if (current && (current.ownerId !== ownerId || current.key !== key ||
+                    !Number.isSafeInteger(Number(current.revision)) ||
+                    Number(current.revision) !== expectedRevision)) {
+                    control.abort(new Error('La simulación local cambió en otra pestaña; vuelve a abrir el panel para recuperar el estado más reciente.'));
+                    return;
+                }
+                if (!current && expectedRevision !== 0) {
+                    control.abort(new Error('El estado de simulación local ya no existe; no se sobrescribirá el progreso.'));
+                    return;
+                }
+                store.put(next);
+                control.setResult(next);
+            };
+        });
+    } catch (error) {
+        console.error('No se pudo guardar el progreso de conciliación:', error);
+        return null;
+    }
+}
+export async function getCortesImageReconciliationState(userId, auditId) {
+    const ownerId = String(userId === null || userId === undefined ? '' : userId).trim();
+    const key = getCortesImageReconciliationStateKey(ownerId);
+    const requestedAuditId = String(auditId || '').trim();
+    if (!key || !/^[0-9a-f-]{36}$/i.test(requestedAuditId)) return null;
+    const entry = await performAdminStateOp('readonly', store => store.get(key));
+    if (!entry || entry.key !== key || entry.ownerId !== ownerId || entry.auditId !== requestedAuditId ||
+        !Number.isSafeInteger(Number(entry.revision)) || Number(entry.revision) < 1 ||
+        !Number.isSafeInteger(Number(entry.nextBatchIndex)) || entry.nextBatchIndex < 0 ||
+        !/^[a-f0-9]{64}$/i.test(String(entry.fileSignature || '')) ||
+        (entry.sourceDigest && !/^[a-f0-9]{64}$/i.test(String(entry.sourceDigest))) ||
+        !Array.isArray(entry.results) || !Array.isArray(entry.invalidFiles) ||
+        !Array.isArray(entry.rowIssues) || !entry.counts ||
+        entry.signature !== getCortesImageReconciliationStateSignature(entry)) return null;
+    return entry;
+}
+export async function clearCortesImageReconciliationState(userId, auditId) {
+    const ownerId = String(userId === null || userId === undefined ? '' : userId).trim();
+    const key = getCortesImageReconciliationStateKey(ownerId);
+    if (!key) return false;
+    const requestedAuditId = String(auditId || '').trim();
+    try {
+        return await performAdminAuditTransaction((store, control) => {
+            const request = store.get(key);
+            request.onsuccess = () => {
+                const entry = request.result;
+                if (entry && entry.ownerId === ownerId && (!requestedAuditId || entry.auditId === requestedAuditId)) {
+                    store.delete(key);
+                }
+                control.setResult(true);
+            };
+        }) === true;
+    } catch (error) {
+        return false;
+    }
+}

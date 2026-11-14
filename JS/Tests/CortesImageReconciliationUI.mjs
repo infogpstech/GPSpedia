@@ -45,6 +45,18 @@ testCase("el escaneo y dry-run no escriben inventario automáticamente",()=>{
  assert.ok(html.includes('id="btn-audit-drive-save-inventory"'));
  assert.ok(ui.includes("No se escribió en Spreadsheet"));
 });
+testCase("persiste y reanuda el preview por cuenta, auditoría, digest y lote confirmado",()=>{
+ assert.ok(ui.includes("offline.saveCortesImageReconciliationState"));
+ assert.ok(ui.includes("offline.getCortesImageReconciliationState"));
+ assert.ok(ui.includes("offline.clearCortesImageReconciliationState"));
+ assert.ok(ui.includes("nextBatchIndex = batchIndex + 1"));
+ assert.ok(ui.includes("previous.fileSignature === fileSignature"));
+ assert.ok(ui.includes("Simulación parcial guardada"));
+ assert.ok(off.includes("export async function saveCortesImageReconciliationState"));
+ assert.ok(off.includes("export async function getCortesImageReconciliationState"));
+ assert.ok(off.includes("export async function clearCortesImageReconciliationState"));
+ assert.ok(off.includes("current.revision !== expectedRevision"));
+});
 testCase("el reporte usa texto seguro y no modifica datos productivos",()=>{
  assert.match(ui,/title\.textContent = String\(item\.fileName/);
  assert.match(ui,/aggregate\.counts\.matched \+ " coincidencias exactas propuestas; referencias: " \+ referenceCheckStatus/);

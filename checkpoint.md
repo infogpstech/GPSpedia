@@ -769,3 +769,11 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - Pruebas: `CortesImageReconciliation.mjs` 15/15 PASS; `CortesImageReconciliationUI.mjs` 9/9 PASS. GitHub Actions run 43613537658: 91 suites, 1,336 pruebas aprobadas, 0 fallos.
 - El reporte propone URL `https://drive.google.com/uc?export=view&id=...` solo si el acceso público ya está verificado. No escribe en Spreadsheet/Drive ni modifica permisos.
 - Pendiente: persistir cursor/progreso del preview, manifiesto de escritura con aprobación por fila, aplicar URLs con read-back, validar catálogo/formulario, conteos antes/después, auditoría y rollback; probar en copia Beta. No se ejecutó contra Drive/Spreadsheet reales.
+
+
+## GP-IMG-DATA-01 — Persistencia y reanudación del preview (2026-11-14)
+
+- Se agregó almacenamiento IndexedDB separado del cursor/inventario de auditoría, con clave por usuario y validación de `auditId`, firma de la lista de archivos, digest de fuentes, lote confirmado y revisión CAS.
+- Cada lote de preview se persiste solo después de validar la respuesta del backend; una interrupción permite continuar desde el siguiente lote confirmado sin repetir los anteriores. Si cambia la lista de archivos se descarta el progreso de ese auditId y se reinicia el preview.
+- El guardado local valida integridad estructural, límite de tamaño y revisión concurrente; no escribe en Drive ni Spreadsheet.
+- Añadida regresión estática UI para contrato de persistencia/reanudación. Validación CI pendiente.

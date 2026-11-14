@@ -1732,3 +1732,12 @@ Rama: GPSpedia2.2.5_work
 - CortesImageReconciliation: 15/15 PASS; CortesImageReconciliationUI: 9/9 PASS. CI run 43613537658: 91 suites, 1,336 pruebas aprobadas, 0 fallos.
 - Solo dry-run; no se modificó Spreadsheet, Drive ni permisos. Pendiente persistencia/reanudación del preview, aprobación/manifiesto de escritura, read-back, rollback y Beta.
 ================================================================================
+
+
+================================================================================
+2026-11-14 — GP-IMG-DATA-01 PERSISTENCIA REANUDABLE DEL PREVIEW
+- Nuevo estado IndexedDB independiente del inventario de auditoría, aislado por usuario y auditId.
+- Guarda digest de fuentes, firma de archivos, resultados agregados y próximo lote confirmado; revisión CAS evita sobrescrituras concurrentes.
+- Al reabrir el panel, el preview recupera los lotes confirmados y continúa desde el siguiente. Si cambia el conjunto de archivos, reinicia con estado limpio.
+- No se ejecutaron escrituras en Drive/Spreadsheet ni cambios de permisos.
+================================================================================

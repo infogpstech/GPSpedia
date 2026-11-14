@@ -245,7 +245,7 @@ La acción del **botón integrado de compartir** en el modal es pública para to
 - [x] Generar URL pública propuesta para cada coincidencia exacta con acceso público ya verificado; el reporte identifica ID, vehículo, fila y campo destino.
 - [ ] Aplicar únicamente las propuestas aprobadas en las celdas correspondientes y verificar que el catálogo/formulario continúe leyendo el mismo campo. Aún no se escribe.
 - [x] Implementar modo dry-run y reporte diferenciado de coincidencias, duplicados, imágenes sin correspondencia y filas ambiguas; nunca asignar por similitud débil ni sobrescribir una URL existente.
-- [ ] Persistir el manifiesto/digest y el progreso del preview para reanudar desde el último lote tras una interrupción; añadir conteos antes/después de las escrituras, auditoría de cada asignación y rollback condicionado a huellas. La auditoría Drive tiene cursor reanudable y el preview usa lotes con digest estable, pero si se interrumpe debe reiniciarse el preview completo.
+- [x] Persistir el manifiesto/digest y el progreso del preview para reanudar desde el último lote confirmado tras una interrupción; el estado queda aislado por cuenta y auditoría, valida la firma de archivos y usa revisión CAS. Pendiente para una fase posterior: conteos antes/después de las escrituras, auditoría de cada asignación y rollback condicionado a huellas.
 - [ ] La escritura real en Drive/Spreadsheet productivos y la ejecución de migraciones requieren autorización expresa; no forman parte del registro documental actual.
 
 ### GP-UX-INFO-01 — Textos concisos y ayuda contextual

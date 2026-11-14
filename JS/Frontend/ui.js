@@ -7761,6 +7761,10 @@ export async function openAuditDriveModal() {
             if (reconciliationStatus) reconciliationStatus.textContent = "La auditoría no encontró archivos de imagen para conciliar.";
             return;
         }
+        if (!auditId) {
+            if (reconciliationStatus) reconciliationStatus.textContent = "No existe un identificador verificable de auditoría; inicia una auditoría nueva.";
+            return;
+        }
         isReconciling = true;
         isRunning = true;
         isDriveAuditRunning = true;
@@ -7775,12 +7779,52 @@ export async function openAuditDriveModal() {
                 referenced_elsewhere: 0, historical: 0, access_restricted: 0, unverifiable: 0, invalid: 0
             }
         };
-        let sourceDigest = "", referenceCheckStatus = "";
+        const fileSignaturePayload = JSON.stringify(imageFiles.map(file => String(file.fileId || "")));
+        const fileSignature = await (async () => {
+            const bytes = new TextEncoder().encode(fileSignaturePayload);
+            const digest = await crypto.subtle.digest("SHA-256", bytes);
+            return Array.from(new Uint8Array(digest)).map(value => value.toString(16).padStart(2, "0")).join("");
+        })();
+        let sourceDigest = "", referenceCheckStatus = "", nextBatchIndex = 0, revision = 0;
+        const batchSize = 25;
+        const totalBatches = Math.ceil(imageFiles.length / batchSize);
+        const saveProgress = async status => {
+            if (!isCurrentRequest()) return;
+            const saved = await offline.saveCortesImageReconciliationState({
+                auditId, fileSignature, sourceDigest, referenceCheckStatus,
+                nextBatchIndex, revision, results: aggregate.results,
+                invalidFiles: aggregate.invalidFiles, rowIssues: aggregate.rowIssues,
+                counts: aggregate.counts, status
+            }, requestContext.userId);
+            if (!saved) throw new Error("IndexedDB no confirmó la persistencia del progreso de conciliación.");
+            revision = Number(saved.revision);
+        };
         try {
-            const batchSize = 25;
-            const totalBatches = Math.ceil(imageFiles.length / batchSize);
-            for (let offset = 0, batchIndex = 0; offset < imageFiles.length; offset += batchSize, batchIndex++) {
+            const previous = await offline.getCortesImageReconciliationState(requestContext.userId, auditId);
+            if (!isCurrentRequest()) return;
+            if (previous && previous.fileSignature === fileSignature &&
+                previous.nextBatchIndex <= totalBatches && previous.results.length <= imageFiles.length * 2) {
+                aggregate.results = previous.results;
+                aggregate.invalidFiles = previous.invalidFiles;
+                aggregate.rowIssues = previous.rowIssues;
+                Object.keys(aggregate.counts).forEach(key => {
+                    aggregate.counts[key] = Math.max(0, Number(previous.counts[key]) || 0);
+                });
+                sourceDigest = previous.sourceDigest;
+                referenceCheckStatus = previous.referenceCheckStatus;
+                nextBatchIndex = previous.nextBatchIndex;
+                revision = previous.revision;
+                if (reconciliationStatus) reconciliationStatus.textContent =
+                    "Progreso recuperado: " + nextBatchIndex + " de " + totalBatches + " lotes guardados. Continuando sin repetir lotes confirmados…";
+            } else {
+                if (previous) await offline.clearCortesImageReconciliationState(requestContext.userId, auditId);
                 if (!isCurrentRequest()) return;
+                await saveProgress("running");
+            }
+
+            for (let batchIndex = nextBatchIndex; batchIndex < totalBatches; batchIndex++) {
+                if (!isCurrentRequest()) return;
+                const offset = batchIndex * batchSize;
                 const batch = imageFiles.slice(offset, offset + batchSize).map(file => ({
                     fileId: String(file.fileId || ""), fileName: String(file.fileName || "")
                 }));
@@ -7810,10 +7854,14 @@ export async function openAuditDriveModal() {
                 Object.keys(aggregate.counts).forEach(key => {
                     aggregate.counts[key] += Number(response.counts && response.counts[key]) || 0;
                 });
+                nextBatchIndex = batchIndex + 1;
+                await saveProgress(nextBatchIndex === totalBatches ? "complete" : "running");
+                if (!isCurrentRequest()) return;
                 if (reconciliationStatus) reconciliationStatus.textContent =
-                    "Simulando lote " + (batchIndex + 1) + " de " + totalBatches + " · " +
-                    Math.min(offset + batch.length, imageFiles.length) + " de " + imageFiles.length + " imágenes. Sin escrituras.";
+                    "Simulando lote " + nextBatchIndex + " de " + totalBatches + " · " +
+                    Math.min(offset + batch.length, imageFiles.length) + " de " + imageFiles.length + " imágenes. Progreso guardado; sin escrituras.";
             }
+
             // Un nombre canónico duplicado puede caer en lotes distintos; nunca se elige uno automáticamente.
             const canonicalGroups = new Map();
             aggregate.results.forEach(item => {
@@ -7839,16 +7887,24 @@ export async function openAuditDriveModal() {
             aggregate.counts.invalid = aggregate.invalidFiles.length;
             aggregate.manifestDigest = sourceDigest;
             aggregate.referenceCheckStatus = referenceCheckStatus;
+            await saveProgress("complete");
+            if (!isCurrentRequest()) return;
             renderCortesReconciliationReport_(aggregate);
             if (reconciliationStatus) reconciliationStatus.textContent =
-                "Simulación terminada. " + aggregate.counts.matched + " coincidencias exactas propuestas; referencias: " + referenceCheckStatus + ". No se modificó Spreadsheet, Drive ni permisos."
+                "Simulación terminada. " + aggregate.counts.matched + " coincidencias exactas propuestas; referencias: " + referenceCheckStatus + ". Progreso guardado localmente. No se modificó Spreadsheet, Drive ni permisos.";
         } catch (error) {
             if (!isCurrentRequest()) return;
-            if (reconciliationStatus) reconciliationStatus.textContent =
-                "La simulación se detuvo sin realizar escrituras: " + String(error && error.message || error);
+            try { await saveProgress("partial"); }
+            catch (persistenceError) {
+                if (reconciliationStatus) reconciliationStatus.textContent =
+                    "La simulación se detuvo. No se confirmó el último progreso local: " + String(persistenceError && persistenceError.message || persistenceError);
+            }
+            if (reconciliationStatus && !reconciliationStatus.textContent.includes("No se confirmó")) {
+                reconciliationStatus.textContent =
+                    "Simulación parcial guardada. Al reintentar se continuará desde el último lote confirmado. " +
+                    String(error && error.message || error);
+            }
         } finally {
-            // La sesión o el modal pueden cambiar mientras la petición está pendiente.
-            // El flag global debe liberarse aunque la vista ya no sea la actual.
             isReconciling = false;
             isRunning = false;
             isDriveAuditRunning = false;
