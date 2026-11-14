@@ -70,3 +70,13 @@ La siguiente acción es validar en Beta la interacción real de Inbox y Develope
 4. Confirmar que una sesión realmente revocada o expirada sigue enviando al login y que la aceptación de términos de una versión nueva continúa bloqueando el catálogo.
 
 La rama base `GPSpedia2.2.5` permanece intacta.
+
+
+## Actualización del endpoint AUTH
+
+**Estado: CAMBIO DE CONFIGURACIÓN PUBLICADO EN RAMA DE TRABAJO**
+
+- `JS/Frontend/api-config.js`: `API_ENDPOINTS.AUTH` apunta ahora al deployment proporcionado: `https://script.google.com/macros/s/AKfycbw9Xr8_Pzi_rSt8YYXu8SuaYqMdj_VxzsgtUnztDcjT_aQdxFeHVYYSW9HXDjAmXl4D/exec`.
+- No se modificaron los endpoints de otros servicios ni el enrutamiento de acciones.
+- Commit de configuración: `471ee04321c635e62b1ac8078985d96d098be747`.
+- Pendiente para Beta: verificar que el deployment responde con el contrato `GPSpedia-Auth` y probar login, validateSession, touchSession, acceptTerms y logout. El cambio de URL no publica ni altera el código del proyecto Apps Script.
