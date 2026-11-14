@@ -44,29 +44,33 @@ function runSessionProfileRefreshTests(sources) {
  run('La respuesta cacheada no borra la aceptación de términos existente',()=>{const accepted={...user,TermsAcceptance:{version:'2026-07',acceptedAt:'2026-11-01',status:'accepted'}};storage.setItem('gpsepedia_session',JSON.stringify(accepted));state={currentUser:{...accepted}};const updated=api.persistSessionValidation(accepted,{valid:true,cached:true});equal(updated.TermsAcceptance.version,'2026-07');equal(JSON.parse(storage.getItem('gpsepedia_session')).TermsAcceptance.status,'accepted');});
 
  run('Valida que el perfil pertenezca al ID de la sesión',()=>{const f=extract(client,'isSessionProfileForUser_');const check=new Function(f+'\nreturn isSessionProfileForUser_;')();equal(check(user,{ID:'U1',Privilegios:'Tecnico'}),true);equal(check(user,{ID:'U2',Privilegios:'Desarrollador'}),false);equal(check(user,null),false);});
- run('AUTH actualiza LastActivityAt dentro de la misma operación protegida',()=>{
+ run('AUTH valida acceptTerms en solo lectura y conserva touch para otras mutaciones',()=>{
   const helper=extract(services[0][1],'touchProtectedAuthRequestSession_');
-  const fn=new Function('isSharedMutationAction_','validateAndTouchSession_',helper+'\nreturn touchProtectedAuthRequestSession_;')(
+  const calls={read:0,touch:0};
+  const fn=new Function('isSharedMutationAction_','normalizeUserId','validateSessionReadOnly_','validateAndTouchSession_',helper+'\\nreturn touchProtectedAuthRequestSession_;')(
    action=>['acceptTerms','changePassword','resetUserPassword','resetUserSessions','clearSensitiveLogs','deleteUser','updateUser','logout','migrateLegacyPasswords'].includes(action),
-   token=>({valid:true,lastActivityAt:'2026-11-14T12:00:00.000Z'})
+   value=>String(value||'').trim(),
+   (token,userId)=>{calls.read++;return{valid:true,userId};},
+   token=>{calls.touch++;return{valid:true,lastActivityAt:'2026-11-14T12:00:00.000Z'};}
   );
-  let calls=0;
-  const touch=new Function('isSharedMutationAction_','validateAndTouchSession_',helper+'\nreturn touchProtectedAuthRequestSession_;')(
-   action=>['acceptTerms','changePassword','resetUserPassword','resetUserSessions','clearSensitiveLogs','deleteUser','updateUser','logout','migrateLegacyPasswords'].includes(action),
-   token=>{calls++;return{valid:true};}
+  fn('acceptTerms',{sessionToken:'valid-token',userId:'U1'});
+  equal(calls.read,1,'acceptTerms debe validar la sesión sin actualizar LastActivityAt.');
+  equal(calls.touch,0,'acceptTerms no debe ejecutar validateAndTouchSession_.');
+  fn('updateUser',{sessionToken:'valid-token'});
+  equal(calls.touch,1,'Las demás mutaciones protegidas deben actualizar LastActivityAt.');
+  fn('login',{});
+  fn('touchSession',{sessionToken:'valid-token'});
+  fn('migrateLegacyPasswords',{sessionToken:'valid-token'});
+  equal(calls.touch,1,'login, touchSession y migración batch no deben duplicar la actualización.');
+  const invalid=new Function('isSharedMutationAction_','normalizeUserId','validateSessionReadOnly_','validateAndTouchSession_',helper+'\\nreturn touchProtectedAuthRequestSession_;')(
+   ()=>true,value=>String(value||'').trim(),()=>({valid:false,reason:'missing_session'}),()=>({valid:false})
   );
-  touch('acceptTerms',{sessionToken:'valid-token'});
-  equal(calls,1);
-  touch('login',{});
-  touch('touchSession',{sessionToken:'valid-token'});
-  touch('migrateLegacyPasswords',{sessionToken:'valid-token'});
-  equal(calls,1,'login, touchSession y la migración batch no deben duplicar la actualización.');
   let rejected=false;
-  const invalid=new Function('isSharedMutationAction_','validateAndTouchSession_',helper+'\nreturn touchProtectedAuthRequestSession_;')(
-   ()=>true,()=>({valid:false,reason:'missing_session'})
-  );
+  try{invalid('acceptTerms',{sessionToken:'bad-token',userId:'U1'});}catch(e){rejected=true;}
+  assert(rejected,'acceptTerms no debe continuar con sesión inválida.');
+  rejected=false;
   try{invalid('updateUser',{sessionToken:'bad-token'});}catch(e){rejected=true;}
-  assert(rejected,'Una operación protegida no debe continuar con sesión inválida.');
+  assert(rejected,'Una mutación protegida no debe continuar con sesión inválida.');
   const dispatcher=extract(services[0][1],'doPostInternal_');
   assert(dispatcher.includes('touchProtectedAuthRequestSession_(request.action, request.payload || {})'));
  });
