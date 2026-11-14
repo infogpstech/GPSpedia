@@ -1072,3 +1072,42 @@ La rama base `GPSpedia2.2.5` permanece fuera del alcance.
 - Pendiente de Beta: validar en navegador que abrir paneles no produce una llamada AUTH adicional y que una sesión revocada/rol retirado no puede ejecutar operaciones protegidas.
 - Rama base `GPSpedia2.2.5` sin modificaciones.
 
+
+
+## Corrección — aviso obligatorio por usuario/dispositivo (2026-11-14)
+
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**  
+HEAD funcional/documental previo a este checkpoint: `5796cf04c2a9570214e661df5956c7174c162358`.  
+Rama autorizada: `GPSpedia2.2.5_work`. Rama base `GPSpedia2.2.5`: sin modificaciones.
+
+### Causa confirmada
+- `Services/admin.js` envuelve las consultas ADMIN no mutables en `ADMIN/sessionActivity`, cuya lease mantiene acceso cooperativo a `ACTIVE_SESSIONS`.
+- `AUTH/acceptTerms` reservaba `ACTIVE_SESSIONS` como escritura exclusiva. El preflight `touchProtectedAuthRequestSession_` actualiza `LastActivityAt`; cuando coincidía con la lease ADMIN, el coordinador rechazaba la aceptación por conflicto.
+- La UI comprobaba `TermsAcceptance` ligado al token de sesión. Un login nuevo generaba otro token y hacía reaparecer el aviso incluso en el mismo navegador.
+
+### Implementación
+- `JS/Frontend/termsDeviceAcceptance.js`: identificador aleatorio persistente por origen/perfil de navegador y aceptación local por usuario, dispositivo y versión.
+- `JS/Frontend/ui.js`: el aviso solo se muestra si la combinación usuario/dispositivo no ha aceptado la versión vigente. La aceptación confirmada sobrevive al logout/login.
+- `Services/Auth.js`: valida sesión, identidad, vigencia, cuenta y revocación de rol; registra la aceptación en `Users.TermsAcceptance` como mapa por dispositivo. Conserva el registro anterior como antecedente y no lo aplica a dispositivos nuevos. El handler no escribe la aceptación en la fila de ActiveSessions.
+- `Services/Coordinator.js`: `AUTH/acceptTerms` usa acceso cooperativo a `ACTIVE_SESSIONS` para la validación/actualización de actividad y escritura exclusiva en `USERS`. Puede coexistir con `ADMIN/sessionActivity`; login/logout y otras mutaciones exclusivas siguen protegidas.
+- `service-worker.js`: caché v26 y precarga del módulo nuevo.
+- `JS/Tests/Auth.js`: espejo del handler AUTH actualizado.
+- Pruebas: `JS/Tests/SharedMutationCoordinator.js` y `JS/Tests/TermsModalAccessibility.mjs`.
+
+### Validación local ejecutada
+- SharedMutationCoordinator: **41/41 PASS**.
+- TermsModalAccessibility: **12/12 PASS**.
+- Simulación aislada de `handleAcceptTerms`: aceptación inicial, repetición en el mismo dispositivo (`alreadyAccepted:true`), aceptación independiente en un segundo dispositivo y preservación del registro histórico; sin escritura de la columna de aceptación de ActiveSessions desde el handler.
+- Parsing/sintaxis de los archivos de código y pruebas modificados: PASS.
+- Espejo funcional `Services/Auth.js` / `JS/Tests/Auth.js`: sincronizado.
+
+### Pendiente para Beta
+1. Desplegar las versiones actualizadas de `Services/Auth.js` y `Services/Coordinator.js` en los proyectos Apps Script de Beta; el commit de GitHub no actualiza esos deployments.
+2. En el mismo navegador/perfil: aceptar, cerrar sesión, iniciar sesión de nuevo y confirmar que el aviso no reaparece.
+3. En otro navegador/perfil: confirmar que el aviso aparece la primera vez; aceptarlo, cerrar/reabrir la plataforma y confirmar que no reaparece.
+4. Ejecutar aceptación mientras existe `ADMIN/sessionActivity` y confirmar que no devuelve recurso ocupado.
+5. Verificar que token inválido, sesión expirada y revocación pendiente continúan rechazados.
+
+No se ejecutó GitHub Actions completo ni se probaron navegador, Apps Script, Spreadsheet o deployment Beta real. No se cambiaron endpoints, deployments ni datos productivos.
+
+**Alcance de dispositivo:** la identificación es persistente en el almacenamiento local del origen/perfil del navegador, sin fingerprinting físico. Borrar datos del sitio o usar otro navegador/perfil se considera una identidad local nueva.
