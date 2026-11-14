@@ -2939,6 +2939,16 @@ function buildCortesImageReconciliationPlan_(targets, driveFiles, activeReferenc
                     reason: "El archivo no tiene acceso público verificado; no se modificaron sus permisos." });
                 return;
             }
+            if (referenceScanVerified === false) {
+                results.push({ status: "unverifiable", fileId, fileName: file.fileName, target, locations,
+                    reason: "La búsqueda de referencias del Spreadsheet no pudo verificarse por completo." });
+                return;
+            }
+            if (file.accessPublic !== true) {
+                results.push({ status: "access_restricted", fileId, fileName: file.fileName, target,
+                    reason: "El archivo no tiene acceso público verificado; no se modificaron sus permisos." });
+                return;
+            }
             if (locations.length) {
                 results.push({ status: "ambiguous", fileId, fileName: file.fileName, target, locations,
                     reason: "La referencia del archivo no coincide de forma inequívoca con el destino vacío." });
