@@ -118,6 +118,14 @@ await run('main.js define la comprobación de visibilidad del lightbox antes de 
     assert.match(mainSource.slice(definition, call), /classList\.contains\('visible'\)/);
 });
 
+await run('el menú permite comprobar el Service Worker y recargar el documento completo', async () => {
+    const html = fs.readFileSync(new URL('../../index.html', import.meta.url), 'utf8');
+    assert.match(html, /id="side-menu-refresh-link"/);
+    assert.match(mainSource, /refreshAppLink\.addEventListener\('click'/);
+    assert.match(mainSource, /registration\.update\(\)/);
+    assert.match(mainSource, /window\.location\.reload\(\)/);
+    assert.match(mainSource, /window\.setTimeout\(resolve, 3000\)/);
+});
 await run('primera instalación precarga el App Shell y el grafo de módulos', async () => {
     const worker = createWorkerHarness();
     const event = makeEvent();
@@ -249,4 +257,4 @@ await run('snapshots representativos de 0 a 10,000 Cortes conservan el contrato 
     assert.equal(isCompleteCatalogSnapshot(duplicate), false);
 });
 
-console.log('PWAStartupScenarios: ' + passed + '/12 PASS');
+console.log('PWAStartupScenarios: ' + passed + '/13 PASS');
