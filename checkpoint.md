@@ -518,3 +518,15 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - No se cambió código de captura, no se bloquearon atajos/zoom ni se añadió una falsa detección de screenshots.
 - La evaluación no sustituye una revisión de permisos de hosting/Drive y no certifica que los recursos actuales sean privados.
 - Siguiente: P6 — integración/regresión global y pruebas negativas por rol; quedan pendientes validaciones Beta reales de P1/P2/P3/P4 y auditoría de URLs.
+
+## P6 — Integración y regresión automatizada (2026-11-14)
+
+**Estado: SUITE AUTOMATIZADA APROBADA; VALIDACIÓN EXTERNA PENDIENTE.**
+
+- GitHub Actions `service-tests` sobre HEAD `6d67fc4b8fd0e60eb626a223bf2274e34e49f1b7`: **PASS**, 80 suites, 1,211 pruebas aprobadas, 0 fallos.
+- `VehicleModalRolePolicy: 6/6 PASS`: visibilidad compartir/imprimir/editar, autorización backend por rol y descarga de imágenes restringida a Desarrollador.
+- `ClientInteractionPolicy: 5/5 PASS`: controles de medios, texto seleccionable/copiar y campos editables.
+- `InboxConversations: 29/29 PASS`; `InboxUi: 16/16 PASS`; `IdentifierAudit: 7/7 PASS`; `LogoIdIntegrity: 6/6 PASS`.
+- Las pruebas de P1/P2 y RBAC validan lógica, contratos, dry-run, lotes, idempotencia, sesiones simuladas y referencias sintéticas. No ejecutan una migración contra Spreadsheet/Drive real.
+- Pendiente de entorno externo: dry-run de contraseñas e IDs en Beta, llamadas HTTP negativas por rol contra deployments, navegación/Inbox en navegador y dispositivos reales, mediciones de KDF, pruebas de rendimiento y conectividad en campo, verificación de permisos reales de URLs/Drive.
+- No se desplegaron servicios ni se modificaron datos productivos. La rama base protegida no se modificó.
