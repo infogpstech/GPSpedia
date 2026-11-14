@@ -1467,3 +1467,13 @@ Rama: GPSpedia2.2.5_work
 - JS/Tests/InboxConversations.mjs y JS/Tests/SharedMutationCoordinator.js: expectativas de exclusión actualizadas para ACTIVE_SESSIONS.
 - GitHub Actions service-tests: PASS; 75 suites, 1,159 pruebas, 0 fallos. No se desplegó Apps Script ni se escribieron datos productivos.
 ================================================================================
+
+================================================================================
+2026-11-14 — P1 FASE 2 COMPLETADA: TOUCH INTEGRADO Y PREFLIGHT RETIRADO
+- FEEDBACK, WRITE, USERS, ADMIN, UTILITIES y AUTH actualizan LastActivityAt dentro de sus operaciones protegidas; las acciones de solo lectura protegidas también adquieren leases donde corresponde.
+- El coordinador compartido reserva ACTIVE_SESSIONS para evitar carreras con logout, revocación, eliminación y operaciones anidadas ADMIN→WRITE.
+- JS/Frontend/api-config.js: eliminado ensureSessionTouched_ y el request touchSession previo a routeAction. La validación de restauración inicial permanece.
+- Pruebas: fixtures de sesión/Spreadsheet, touch válido y rechazo sin renovación, concurrencia, leases, revocación y despacho de una sola petición.
+- GitHub Actions service-tests: PASS; 75 suites, 1,170 pruebas, 0 fallos. Sintaxis Node.js PASS.
+- No se desplegaron Apps Script ni se modificaron datos productivos. Beta externa de múltiples pestañas, offline/reconexión y navegador/dispositivo queda pendiente.
+================================================================================
