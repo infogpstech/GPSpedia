@@ -121,6 +121,7 @@ test('ui.js registra el menú idempotentemente y serializa su cierre', () => {
     assert.match(source, /export function closeSideMenuAndRun\(callback\)/);
     assert.match(source, /historyManager\.close\(SIDE_MENU_HISTORY_ID_\)/);
     assert.match(source, /historyManager\.has\(overlayId\)/);
+    assert.match(source, /typeof modal\.__gpOverlayClose === 'function'/);
 });
 
 test('Inbox, Dashboard, Changelog y DevTools esperan el cierre del menú', () => {
