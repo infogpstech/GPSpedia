@@ -58,6 +58,16 @@ function runSessionUiRoleInvalidationTests(sources) {
   assert(context.includes("user.SessionToken"),"Debe seguir exigiendo token de sesión.");
   assert(context.includes("normalizeUiRole_(user.Privilegios)"),"Debe normalizar el rol de la sesión autenticada.");
  });
+ run("el contexto de sesión acepta ID e id heredados y rechaza sesiones sin token",()=>{
+  const helpers=slice(ui,"function normalizeUiRole_","function isCurrentUiSessionContext_");
+  const resolve=new Function("getState",helpers+"; return getUiSessionContext_();");
+  const legacy=resolve(()=>({currentUser:{id:"legacy-user",SessionToken:"token-1",Privilegios:"Desarrollador"}}));
+  assert(legacy&&legacy.userId==="legacy-user"&&legacy.role==="desarrollador");
+  const canonical=resolve(()=>({currentUser:{ID:"canonical-user",SessionToken:"token-2",Privilegios:"Técnico"}}));
+  assert(canonical&&canonical.userId==="canonical-user"&&canonical.role==="tecnico");
+  const invalid=resolve(()=>({currentUser:{id:"legacy-user",Privilegios:"Desarrollador"}}));
+  assert(invalid===null,"Una sesión sin token no debe producir contexto autenticado.");
+ });
  run("la tarjeta Agregar Tutorial se muestra solo a Desarrollador y el modal vuelve a validar el rol",()=>{
   const render=slice(ui,"function mostrarTutorialesGrid()","function mostrarRelayGrid()");
   assert(render.includes("getUiSessionContext_()?.role === \"desarrollador\""));
