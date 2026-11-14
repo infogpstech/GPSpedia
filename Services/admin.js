@@ -3222,6 +3222,80 @@ function auditIdentifierColumn_(sheet, spec) {
     return result;
 }
 
+function auditTutorialApprovalReferences_(tutorialSheet, feedbackSheet) {
+    if (!tutorialSheet) return { status: "incomplete", reason: "missing_tutorial_sheet", approvalRecords: 0 };
+    const tutorialLastRow = tutorialSheet.getLastRow();
+    const tutorialRows = tutorialLastRow > 1
+        ? tutorialSheet.getRange(2, 1, tutorialLastRow - 1, 1).getValues()
+        : [];
+    const idCounts = new Map();
+    tutorialRows.forEach(row => {
+        const id = String(row[0] === null || row[0] === undefined ? "" : row[0]).trim().toLowerCase();
+        if (id) idCounts.set(id, (idCounts.get(id) || 0) + 1);
+    });
+    const result = {
+        status: "success", readOnly: true, tutorialRecords: tutorialRows.length,
+        approvalRecords: 0, matchedReferences: 0, missingReferenceIds: 0,
+        orphanReferences: 0, ambiguousReferences: 0, rowReferenceMismatches: 0,
+        metadataReferenceMismatches: 0, malformedApprovalRecords: 0,
+        details: [], detailsTruncated: false
+    };
+    if (!feedbackSheet) {
+        result.status = "incomplete";
+        result.reason = "missing_feedbacks_sheet";
+        return result;
+    }
+    const feedbackLastRow = feedbackSheet.getLastRow();
+    const rows = feedbackLastRow > 1
+        ? feedbackSheet.getRange(2, 1, feedbackLastRow - 1, Math.max(4, feedbackSheet.getLastColumn())).getValues()
+        : [];
+    const addDetail = detail => {
+        if (result.details.length < 100) result.details.push(detail);
+        else result.detailsTruncated = true;
+    };
+    rows.forEach((row, index) => {
+        const raw = String(row[3] === null || row[3] === undefined ? "" : row[3]);
+        if (!raw) return;
+        let record;
+        try { record = JSON.parse(raw); }
+        catch (error) {
+            if (/video_approval/i.test(raw)) {
+                result.malformedApprovalRecords++;
+                addDetail({ feedbackRow: index + 2, issue: "malformed_video_approval_json" });
+            }
+            return;
+        }
+        if (!record || record.subType !== "video_approval" || String(record.contentType || "") !== "tutorial") return;
+        result.approvalRecords++;
+        const referenceId = String(record.referenceId || "").trim();
+        const rowReferenceId = String(row[2] === null || row[2] === undefined ? "" : row[2]).trim();
+        const metadataReferenceId = String(record.metadata && record.metadata.tutorialId || "").trim();
+        if (!referenceId) {
+            result.missingReferenceIds++;
+            addDetail({ feedbackRow: index + 2, issue: "missing_reference_id" });
+            return;
+        }
+        if (rowReferenceId !== referenceId) {
+            result.rowReferenceMismatches++;
+            addDetail({ feedbackRow: index + 2, issue: "row_reference_mismatch", rowReferenceId, referenceId });
+        }
+        if (metadataReferenceId && metadataReferenceId.toLowerCase() !== referenceId.toLowerCase()) {
+            result.metadataReferenceMismatches++;
+            addDetail({ feedbackRow: index + 2, issue: "metadata_reference_mismatch", metadataReferenceId, referenceId });
+        }
+        const count = idCounts.get(referenceId.toLowerCase()) || 0;
+        if (count === 1) result.matchedReferences++;
+        else if (count === 0) {
+            result.orphanReferences++;
+            addDetail({ feedbackRow: index + 2, issue: "orphan_reference", referenceId });
+        } else {
+            result.ambiguousReferences++;
+            addDetail({ feedbackRow: index + 2, issue: "ambiguous_reference", referenceId, matches: count });
+        }
+    });
+    return result;
+}
+
 function handleAuditIdentifiers() {
     const ss = getSpreadsheet();
     const specs = [
@@ -3233,8 +3307,12 @@ function handleAuditIdentifiers() {
         { sheet: "LogosMarca", column: 1, kind: "logo", expectedFormat: "Entero positivo; se inspeccionan fórmulas históricas" }
     ];
     const sheets = specs.map(spec => auditIdentifierColumn_(ss.getSheetByName(spec.sheet), spec));
+    const tutorialReferences = auditTutorialApprovalReferences_(
+        ss.getSheetByName("Tutorial"), ss.getSheetByName("Feedbacks")
+    );
     return {
         status: "success", readOnly: true, generatedAt: new Date().toISOString(),
+        tutorialReferences,
         summary: {
             sheetsFound: sheets.filter(item => item.exists).length,
             duplicateIdCount: sheets.reduce((sum, item) => sum + item.duplicateIdCount, 0),
