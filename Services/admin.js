@@ -1367,8 +1367,8 @@ function doPostInternal_(e) {
         if (auditEventId) response.auditEventId = auditEventId;
     }
 
-    // ADMIN puede cambiar varias filas o colecciones; se publica reset tras cerrar la auditoría.
-    // El cliente hará bootstrap/reconciliación completa solo cuando reciba este evento.
+    // ADMIN publica un delta exacto para alta de Logo cuando la fila final puede verificarse.
+    // El resto de operaciones multi-fila conserva el reset seguro tras cerrar la auditoría.
     const catalogWriters = ["addLogo", "updateVehicleField", "uploadAdminImage", "normalizeImages",
         "organizePrimaryVehicleImages", "recoverReplacedImage", "deleteReplacedImage",
         "restoreReplacedImageFromTrash", "moveReplacedImage", "applyCortesImageReconciliation",
@@ -1377,15 +1377,51 @@ function doPostInternal_(e) {
     if (catalogAction && catalogWriters.includes(catalogAction) && response &&
         (response.status === "success" || response.status === "warning")) {
         try {
-            publishSharedCatalogChange_("ADMIN", catalogAction, { operation: "reset" });
+            if (catalogAction === "addLogo" && response.status === "success") {
+                const change = buildLogoCatalogChange_(response.logoId, response.logoUrl, payload && payload.nombreMarca);
+                publishSharedCatalogChange_("ADMIN", catalogAction, change);
+            } else {
+                publishSharedCatalogChange_("ADMIN", catalogAction, { operation: "reset" });
+            }
         } catch (catalogPublishError) {
-            Logger.log("La operación ADMIN se confirmó, pero no se pudo publicar el reset del catálogo: " +
-                (catalogPublishError && catalogPublishError.message ? catalogPublishError.message : "CatalogFeedError"));
+            try {
+                publishSharedCatalogChange_("ADMIN", catalogAction, { operation: "reset" });
+            } catch (resetPublishError) {
+                Logger.log("La operación ADMIN se confirmó, pero no se pudo publicar su cambio: " +
+                    (resetPublishError && resetPublishError.message ? resetPublishError.message : "CatalogFeedError"));
+            }
         }
     }
 
     return ContentService.createTextOutput(JSON.stringify(response))
         .setMimeType(ContentService.MimeType.TEXT);
+}
+
+function buildLogoCatalogChange_(logoId, logoUrl, brandName) {
+    const normalizedId = Number(logoId);
+    const normalizedBrand = String(brandName || "").trim();
+    const normalizedUrl = String(logoUrl || "").trim();
+    if (!Number.isSafeInteger(normalizedId) || normalizedId < 1 || !normalizedBrand || !normalizedUrl) {
+        throw new Error("La respuesta de alta de Logo no contiene ID, marca y URL verificables.");
+    }
+    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.LOGOS_MARCA);
+    if (!sheet || sheet.getLastRow() < 2) throw new Error("No se encontró la fila de Logo confirmada.");
+    const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, Math.max(sheet.getLastColumn(), 3)).getValues();
+    const matches = rows.map((row, index) => ({ row, rowNumber: index + 2 }))
+        .filter(item => Number(item.row[0]) === normalizedId);
+    if (matches.length !== 1) throw new Error("El ID de Logo no identifica una única fila.");
+    const row = matches[0].row;
+    if (String(row[1] || "").trim() !== normalizedBrand || String(row[2] || "").trim() !== normalizedUrl) {
+        throw new Error("La fila de Logo no coincide con la respuesta confirmada.");
+    }
+    const imageMatch = normalizedUrl.match(/(?:[?&]id=|file\\/d\\/)([A-Za-z0-9_-]{20,})/i);
+    if (!imageMatch) throw new Error("La URL del Logo no contiene un ID de imagen normalizable.");
+    return {
+        collection: "logos",
+        recordId: String(normalizedId),
+        operation: "upsert",
+        snapshot: { id: row[0], nombreMarca: row[1], urlLogo: imageMatch[1] }
+    };
 }
 
 // ============================================================================
