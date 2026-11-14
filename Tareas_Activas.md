@@ -289,3 +289,55 @@ La acción del **botón integrado de compartir** en el modal es pública para to
 - El workflow `.github/workflows/service-tests.yml` ejecuta Node.js 22, comprobación de sintaxis de módulos principales y `JS/Tests/RunServiceTests.mjs` (servicios WRITE, ADMIN, FEEDBACK, CATALOG, UTILITIES, AUTH, USERS e integración).
 - Esta actualización documental se utiliza para activar la verificación automatizada en la rama autorizada. El resultado de CI se registrará solo después de consultarlo en GitHub Actions.
 - Las validaciones con navegador/dispositivo real, Apps Script, OAuth, Drive y Spreadsheet continúan siendo validaciones Beta y no bloquean el cierre local.
+
+
+## Protocolo consolidado de validación Beta — 2026-11-14
+
+Antes de ejecutar **cualquier** prueba Beta, desde la raíz del clon local:
+
+```bash
+set -euo pipefail
+test "$(basename "$(git rev-parse --show-toplevel)")" = "GPSpedia"
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work"
+test -z "$(git status --porcelain)" || { echo "Hay cambios locales; detener sin descartarlos."; exit 1; }
+git remote get-url origin | grep -Eq 'infogpstech/GPSpedia(\.git)?$'
+git fetch origin GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work"
+git rev-parse HEAD
+```
+
+Si cualquier comprobación falla, no continuar ni descartar cambios locales. Confirmar que el HEAD obtenido coincide con el commit que se desea validar.
+
+### P1 — Sesión y autenticación
+- Iniciar sesión una vez y recorrer catálogo, fichas, modales y páginas secundarias; verificar que la navegación normal no solicita credenciales nuevamente.
+- Recargar, abrir/cerrar modales y navegar atrás/adelante; comprobar restauración de sesión y rol.
+- Abrir dos pestañas; cerrar sesión o revocar en una y verificar que la otra no pueda ejecutar operaciones protegidas después de actualizar su estado.
+- Probar pérdida de red, modo offline y reconexión; un fallo de red no debe provocar logout falso y ninguna caché local debe autorizar acciones protegidas.
+
+### P2 — Contraseñas e identificadores
+- En deployment AUTH de Beta, ejecutar el benchmark `benchmarkPasswordKdf` con sesión Desarrollador, registrar tres mediciones y usar la mediana. No cambiar el coste hasta revisar margen de ejecución.
+- En copia Beta aislada, ejecutar primero `auditIdentifiers` y dry-run de migración; comparar conteos, duplicados, fórmulas, referencias y manifiesto. No ejecutar migración productiva.
+- Confirmar con el responsable de datos el formato de ID Relay antes de proponer o completar IDs ausentes.
+- Solo en copia Beta y con autorización específica, ejecutar lotes de prueba, interrumpir/reanudar y verificar read-back, idempotencia y rollback condicionado a huellas. Comparar referencias de usuarios, vehículos, tutoriales, relays y aprobaciones antes/después.
+
+### P3 — Inbox y accesibilidad
+- En navegadores de escritorio y móvil, revisar tema claro/oscuro, teclado, foco visible, lector de pantalla, navegación Atrás, lista/detalle, búsqueda, filtros, paginación y estados de carga/error.
+- Verificar que lectura, respuesta, archivado y categorías conservan permisos y estado tras recarga y cambio de dispositivo.
+
+### P4 — ACL de imágenes y permisos
+- En Drive Beta, inspeccionar ACL de carpetas y archivos de Cortes, Tutorial, PyS y LogosMarca; clasificar cuáles deben ser públicos por diseño y cuáles privados.
+- Comparar permisos reales con los contratos de lectura/descarga. No cambiar ACL durante la auditoría; cualquier corrección debe tener alcance y aprobación propios.
+- Verificar con solicitudes HTTP de roles permitidos/no permitidos que el backend rechaza las operaciones privilegiadas de forma efectiva.
+
+### GP-IMG-DATA-01 — Conciliación y aplicación controlada
+- En una copia Beta de Drive y Spreadsheet, completar auditoría recursiva, confirmar metadatos y capability handshake, generar preview y revisar coincidencias, huérfanos, duplicados y destinos ambiguos.
+- Aprobar una o pocas asignaciones de prueba; verificar precondiciones, conteos, read-back y auditoría. Provocar un fallo controlado solo si existe una copia desechable y verificar que el rollback no sobrescribe cambios externos.
+- No mover, eliminar ni modificar archivos/hojas productivos. La escritura productiva requiere autorización expresa e independiente.
+
+### P6 — Regresión de campo y PWA
+- Ejecutar pruebas de Inbox en escritorio/móvil y verificar rendimiento de carga, caché, thumbnails, instalación PWA, offline, reconexión y recuperación después de suspensión.
+- Revisar navegación, historial, modales, actualización del service worker y consistencia entre pestañas/dispositivos.
+- Registrar dispositivo, sistema operativo, navegador, versión de deployment, fecha, pasos, resultado y evidencia reproducible.
+
+**Criterio de registro:** documentar cada prueba como PASS, FAIL o NO EJECUTADA; adjuntar evidencia mínima y separar fallos locales de limitaciones de entorno. Ninguna validación Beta autoriza por sí sola operaciones productivas.
