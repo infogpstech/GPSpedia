@@ -152,7 +152,8 @@ test('cerrar el acuerdo sobre el aviso limpia History API y conserva el aviso pa
     assert.equal(Object.prototype.hasOwnProperty.call(history.state, 'modalOpen'), false);
 });
 test('los logos usados por el contenido legal se precargan en el Service Worker', () => {
-    assert.match(sw, /const CACHE_NAME='gpsepedia-cache-v\\d+'/);
+    const cacheName = sw.match(/const CACHE_NAME='([^']+)'/)?.[1];
+    assert.ok(/^gpsepedia-cache-v[0-9]+$/.test(cacheName || ''), 'el Service Worker debe declarar una versión de caché GPSpedia');
     assert.match(sw, /\.\/JS\/Frontend\/termsDeviceAcceptance\.js/);
     for (const file of ['Images/Logo_TemaOscuro.png', 'Images/tracklink_logo.png']) {
         assert.ok(sw.includes("'./" + file + "'"), file + ' no está en CORE_ASSETS');
