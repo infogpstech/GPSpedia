@@ -3940,6 +3940,7 @@ function resetRoleScopedViews_() {
 function resetSessionUi_() {
     developerDiagnosticQueue_.length = 0;
     window.gpsepediaDeveloperLog = null;
+    window.__gpsepediaAuthCoordinatorWarningLogged = false;
     inEditMode = false;
     window.inEditMode = false;
     clearInMemoryEditBackup_();
@@ -5020,8 +5021,9 @@ function initAdminPanelListeners() {
             version.textContent = item.metadata?.version ? `v${item.metadata.version}` : "Versión no reportada";
             if (key === "AUTH" && item.metadata?.coordinatorConfigured === false) {
                 version.textContent += " · Coordinador pendiente";
-                if (typeof window.gpsepediaDeveloperLog === "function") {
-                    window.gpsepediaDeveloperLog("AUTH: falta configurar el coordinador compartido en las propiedades del proyecto Apps Script.", "warning");
+                if (!window.__gpsepediaAuthCoordinatorWarningLogged && typeof window.gpsepediaDeveloperLog === "function") {
+                    window.__gpsepediaAuthCoordinatorWarningLogged = true;
+                    window.gpsepediaDeveloperLog("AUTH: configura GPSpedia_COORDINATOR_URL y GPSpedia_COORDINATOR_SECRET en ScriptProperties.", "warning");
                 }
             }
             bottom.append(latency, version);
