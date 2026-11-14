@@ -47,19 +47,20 @@ function runSessionProfileRefreshTests(sources) {
  run('AUTH actualiza LastActivityAt dentro de la misma operación protegida',()=>{
   const helper=extract(services[0][1],'touchProtectedAuthRequestSession_');
   const fn=new Function('isSharedMutationAction_','validateAndTouchSession_',helper+'\nreturn touchProtectedAuthRequestSession_;')(
-   action=>['acceptTerms','changePassword','resetUserPassword','resetUserSessions','clearSensitiveLogs','deleteUser','updateUser','logout'].includes(action),
+   action=>['acceptTerms','changePassword','resetUserPassword','resetUserSessions','clearSensitiveLogs','deleteUser','updateUser','logout','migrateLegacyPasswords'].includes(action),
    token=>({valid:true,lastActivityAt:'2026-11-14T12:00:00.000Z'})
   );
   let calls=0;
   const touch=new Function('isSharedMutationAction_','validateAndTouchSession_',helper+'\nreturn touchProtectedAuthRequestSession_;')(
-   action=>['acceptTerms','changePassword','resetUserPassword','resetUserSessions','clearSensitiveLogs','deleteUser','updateUser','logout'].includes(action),
+   action=>['acceptTerms','changePassword','resetUserPassword','resetUserSessions','clearSensitiveLogs','deleteUser','updateUser','logout','migrateLegacyPasswords'].includes(action),
    token=>{calls++;return{valid:true};}
   );
   touch('acceptTerms',{sessionToken:'valid-token'});
   equal(calls,1);
   touch('login',{});
   touch('touchSession',{sessionToken:'valid-token'});
-  equal(calls,1,'login y touchSession no deben duplicar la actualización.');
+  touch('migrateLegacyPasswords',{sessionToken:'valid-token'});
+  equal(calls,1,'login, touchSession y la migración batch no deben duplicar la actualización.');
   let rejected=false;
   const invalid=new Function('isSharedMutationAction_','validateAndTouchSession_',helper+'\nreturn touchProtectedAuthRequestSession_;')(
    ()=>true,()=>({valid:false,reason:'missing_session'})
