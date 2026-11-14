@@ -119,9 +119,10 @@ check("Sanitiza IDs y etapas y excluye credenciales",()=>{
     assert.equal(h.api.safeAdminAuditStage_("Etapa\nprivada\u0000"),"Ejecucion");
     assert.equal(h.api.safeAdminAuditStage_("Reorganización de imágenes para vehículo ABC123"),"Organizacion");
 });
-check("Acepta actor autenticado Desarrollador o Gefe y rechaza actor inválido",()=>{
+check("Acepta actor autenticado Desarrollador o Jefe (incluida compatibilidad heredada) y rechaza actor inválido",()=>{
     const second=h.api.beginAdminAuditEvent_("updateVehicleField",{vehicleId:23},{userId:"user-43",role:"Gefe"},new Date());
     assert.ok(second.eventId);
+    assert.equal(second.actorRole,"jefe");
     assert.throws(()=>h.api.beginAdminAuditEvent_("updateVehicleField",{}, {userId:"user-44",role:"Tecnico"},new Date()),error=>error.code==="ADMIN_AUDIT_ACTOR_INVALID");
 });
 check("La retención elimina eventos finalizados mayores a 180 días",()=>{
