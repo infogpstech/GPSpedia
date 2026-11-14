@@ -378,3 +378,12 @@ SIGUIENTE TRABAJO
 ### Corrección detectada por regresión — rol Gefe
 
 La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba obsoleto en `JS/Tests/AddSupplementaryInfoIntegrity.js`: la lista permitida aún incluía `gefe`. Se retiró ese alias y se añadió una prueba negativa para confirmar que `Gefe` es rechazado. La suite completa debe repetirse; no se atribuye este fallo al cambio de revalidación.
+
+
+### Validación final — P1, fase 1 (2026-11-14)
+
+- Commit validado: `988e35ffdd30d139d6ea5593a6d7f2343af69a00`.
+- GitHub Actions `service-tests`: PASS; 75 suites, 1,154 pruebas aprobadas y 0 fallos.
+- Sintaxis JavaScript del workflow: PASS.
+- `SessionStartupNavigation`: 12/12 PASS.
+- P1 sigue EN PROGRESO. La fase siguiente debe trasladar la actualización de actividad a las operaciones backend protegidas, cubriendo también lecturas, con coordinación compatible con logout, revocación de rol y borrado de usuario. No retirar `touchSession` hasta cerrar esa integración y sus pruebas de concurrencia.

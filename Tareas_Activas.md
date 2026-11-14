@@ -69,6 +69,8 @@ Simplificar la autenticación sin debilitar autorización; modernizar Inbox; end
 - [ ] Mantener revocación, expiración, desactivación y cambios de privilegios efectivos en el servidor.
 - [ ] Probar concurrencia, múltiples pestañas, offline, reconexión y sesión revocada.
 
+**Validación de fase 1 (2026-11-14):** GitHub Actions PASS — 75 suites, 1,154 pruebas, 0 fallos; sintaxis JavaScript PASS. P1 continúa EN PROGRESO hasta integrar el touch de actividad dentro de cada operación backend protegida y eliminar el preflight de forma segura.
+
 ### P2 — Migración de contraseñas e identificadores
 **Estado: PENDIENTE**
 - [ ] Diseñar hash versionado con salt único y coste adecuado a Apps Script; medir latencia y compatibilidad.

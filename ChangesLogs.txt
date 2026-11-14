@@ -1446,3 +1446,14 @@ Rama: GPSpedia2.2.5_work
 - Se corrigió el fixture y se añadió una prueba negativa que confirma el rechazo explícito de `Gefe`.
 - La ejecución inicial de service-tests falló en esa única expectativa; se repetirá la suite completa tras la corrección.
 ================================================================================
+
+
+================================================================================
+2026-11-14 — VALIDACIÓN DE P1, FASE 1
+- GitHub Actions `service-tests` sobre el commit `988e35ffdd30d139d6ea5593a6d7f2343af69a00`: PASS.
+- Comprobación sintáctica de los módulos JavaScript configurados por el workflow: PASS.
+- Regresión: 75 suites, 1,154 pruebas aprobadas, 0 fallos de suite.
+- La prueba SessionStartupNavigation confirma que no queda revalidación AUTH redundante al recuperar conexión y que `checkSession()` se mantiene en el arranque.
+- La primera ejecución detectó dos expectativas de pruebas obsoletas (alias Gefe y listener online no específico); ambas se corrigieron con alcance acotado y la ejecución final aprobó.
+- P1 continúa EN PROGRESO: falta integrar touch de actividad en operaciones protegidas y retirar el preflight sin debilitar autorización, revocación o expiración.
+================================================================================
