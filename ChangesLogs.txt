@@ -6,3 +6,15 @@
 - JS/Tests/SessionUiRoleInvalidation.js y DevToolsModalAccessibility.mjs: regresiones para asegurar que abrir paneles no invoque validateActiveSession ni routeAction.
 - CI HEAD `2a423e67ff87e32e3c86ab71899b83cf1fe2e7b3`: run `43626278768` SUCCESS; 93 suites / 1,366 pruebas / 0 fallos; `SessionUiRoleInvalidation` 11/11, `SessionStartupNavigation` 13/13, `OverlayMenuModalHistory` 19/19, `DevToolsModalAccessibility` 19/19; sintaxis PASS. Pages run `43626278368` SUCCESS. Validación de navegador/Beta pendiente.
 ================================================================================
+
+================================================================================
+2026-11-14 — AVISO IMPORTANTE POR USUARIO/DISPOSITIVO Y DESBLOQUEO DE ACEPTACIÓN
+- JS/Frontend/termsDeviceAcceptance.js: nuevo identificador aleatorio persistente por perfil de navegador y registro local de aceptación por usuario, dispositivo y versión. La aceptación sobrevive al cierre de sesión.
+- JS/Frontend/ui.js: renderTermsGate_ consulta el registro por usuario/dispositivo; solo muestra el aviso si esa combinación no ha aceptado la versión vigente. La aceptación del servidor se confirma antes de habilitar el catálogo.
+- Services/Auth.js: acceptTerms valida la sesión y registra el dispositivo en Users.TermsAcceptance; conserva los registros históricos anteriores y no escribe la aceptación en la fila de ActiveSessions.
+- Services/Coordinator.js: AUTH/acceptTerms usa actividad cooperativa en ACTIVE_SESSIONS y escritura exclusiva en USERS, evitando el conflicto con ADMIN/sessionActivity sin relajar las mutaciones de identidad/sesión.
+- service-worker.js: caché v26 y precarga del nuevo módulo.
+- JS/Tests/Auth.js, JS/Tests/SharedMutationCoordinator.js y JS/Tests/TermsModalAccessibility.mjs: espejo AUTH y regresiones de aceptación por dispositivo, persistencia tras logout, nueva combinación usuario/dispositivo y concurrencia.
+- Validación local: SharedMutationCoordinator 41/41 PASS; TermsModalAccessibility 12/12 PASS; simulación aislada del handler AUTH PASS; parsing/sintaxis de los archivos modificados PASS.
+- Pendiente: GitHub Actions completo, despliegue de AUTH/Coordinator en Beta y pruebas reales de navegador/dispositivo. No se modificaron deployments, datos productivos ni la rama base.
+================================================================================
