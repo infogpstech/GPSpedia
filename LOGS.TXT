@@ -47,3 +47,20 @@ HEAD de inicio revisado: `edac7202791223de890ed6d912cc93f7e1fbfa63`.
 
 Validación: inspección estática realizada; no se ejecutaron pruebas de navegador, Apps Script, Coordinator, Spreadsheet ni Drive. No se modificó código, política, endpoint, deployment ni dato productivo.
 ================================================================================
+
+================================================================================
+2026-11-14 — AVISO IMPORTANTE BLOQUEADO POR ADMIN/sessionActivity
+Síntoma reportado: la aplicación no avanza del aviso de términos; al aceptar aparece el recurso ocupado por operaciones activas ADMIN/sessionActivity.
+
+Causa confirmada: AUTH/acceptTerms reservaba ACTIVE_SESSIONS como escritura exclusiva, mientras las consultas ADMIN mantenían una lease cooperativa ADMIN/sessionActivity sobre el mismo recurso. Además, la aceptación se estaba registrando por token de sesión, por lo que cada login nuevo volvía a mostrar el aviso.
+
+Corrección local en GPSpedia2.2.5_work:
+- La aceptación se almacena por usuario y dispositivo/perfil de navegador en Users.TermsAcceptance. La aceptación histórica anterior se conserva sin aplicarse a dispositivos nuevos.
+- Un identificador aleatorio persistente en localStorage mantiene la identidad local después de cerrar sesión. La combinación usuario/dispositivo/versión determina si el aviso ya fue aceptado.
+- AUTH/acceptTerms conserva validación de sesión y actividad; coordina ACTIVE_SESSIONS como acceso cooperativo y persiste la aceptación en USERS. No se elimina la validación de token ni el control de revocación.
+- El coordinador permite que AUTH/acceptTerms coincida con ADMIN/sessionActivity, pero mantiene el conflicto con operaciones exclusivas de identidad y sesión.
+
+Validación local: SharedMutationCoordinator 41/41 PASS; TermsModalAccessibility 12/12 PASS; simulación aislada del handler AUTH PASS; sintaxis/parsing de archivos modificados PASS.
+Pendiente: desplegar Services/Auth.js y Services/Coordinator.js en Beta y probar cierre/reinicio de sesión en el mismo navegador, primer login desde otro perfil y concurrencia real. No se modificaron deployments ni datos productivos.
+Nota: borrar los datos del sitio o utilizar otro navegador/perfil crea un identificador local nuevo; no se utiliza fingerprinting físico.
+================================================================================
