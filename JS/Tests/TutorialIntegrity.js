@@ -117,8 +117,8 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
         assert.equal(result.referenceId, "tut-" + operationId);
         assert.equal(h.state.inserted, true);
         assert.deepEqual(h.sheet.data[0], headers);
-        assert.deepEqual(h.sheet.data[1], ["tut-" + operationId, base.tema, "", base.comoIdentificarlo,
-            base.dondeEncontrarlo, base.detalles, "", base.userName]);
+        assert.equal(JSON.stringify(h.sheet.data[1]), JSON.stringify(["tut-" + operationId, base.tema, "", base.comoIdentificarlo,
+            base.dondeEncontrarlo, base.detalles, "", base.userName]));
         assert.equal(h.state.lockWaits, 1);
         assert.equal(h.state.lockReleases, 1);
     });
@@ -346,10 +346,10 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
         const result = readCatalogTutorials_(catalog, [headers, row]);
         assert.equal(result.status, "success");
         assert.equal(result.data.tutoriales.length, 1);
-        assert.deepEqual(result.data.tutoriales[0], {
+        assert.equal(JSON.stringify(result.data.tutoriales[0]), JSON.stringify({
             ID: row[0], Tema: row[1], Imagen: row[2], comoIdentificarlo: row[3],
             dondeEncontrarlo: row[4], Detalles: row[5], Video: row[6], Colaborador: row[7]
-        });
+        }));
     });
 
     test("CATALOG conserva lectura de registros históricos A:G sin inventar Colaborador", () => {
