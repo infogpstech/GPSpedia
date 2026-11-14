@@ -7,7 +7,7 @@ function runLastDeveloperProtectionTests(sources) {
     const run=(name,fn)=>{try{fn();passed++;results.push({name,status:'PASS'});}catch(e){failed++;results.push({name,status:'FAIL',message:String(e.message||e)});}};
     const extract=(src,name,endMarker)=>{const s=src.indexOf('function '+name+'(');assert(s>=0,'No se encontró '+name);const e=endMarker?src.indexOf(endMarker,s):src.indexOf('\nfunction ',s+10);assert(!endMarker||e>s,'No se encontró fin de '+name);return src.slice(s,e>s?e:src.length).trim();};
     const normalize=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
-    const active=row=>Boolean(row&&String(row[1]||'').trim()&&!String(row[1]).startsWith('__deleted__:')&&['desarrollador','gefe','jefe','supervisor','tecnico','tecnico_exterior'].includes(normalize(row[3])));
+    const active=row=>Boolean(row&&String(row[1]||'').trim()&&!String(row[1]).startsWith('__deleted__:')&&['desarrollador','jefe','supervisor','tecnico','tecnico_exterior'].includes(normalize(row[3])));
     const userCols={ID:1,Nombre_Usuario:2,Password:3,Privilegios:4,Telefono:5,Correo_Electronico:6,Nombre_Completo:7,SessionToken:8,TermsAcceptance:9};
     const sessionCols={ID_Usuario:1,Usuario:2,ActiveSessions:3,date:4,Logs:5,LastActivityAt:6};
     const helper=extract(auth,'countActiveDevelopers_');
@@ -134,14 +134,14 @@ function runLastDeveloperProtectionTests(sources) {
     });
     run('Bloquea la degradación del último Desarrollador antes de escribir',()=>{
         const h=makeHarness([['D1','dev','pw','Desarrollador','','','','tok1']],[['D1','dev','tok1',new Date(),'','']]);
-        let error;try{h.update({userId:'D1',updates:{Privilegios:'Gefe',Nombre_Completo:'No escribir'},sessionToken:'tok1'});}catch(e){error=e;}
+        let error;try{h.update({userId:'D1',updates:{Privilegios:'Jefe',Nombre_Completo:'No escribir'},sessionToken:'tok1'});}catch(e){error=e;}
         assert(error&&/última cuenta activa/.test(error.message),'No se rechazó la degradación del último Desarrollador');
         equal(h.users[1][3],'Desarrollador');equal(h.users[1][6],'','Hubo una escritura antes del rechazo');
     });
     run('Permite degradar si queda otro Desarrollador activo',()=>{
         const h=makeHarness([['D1','dev','pw','Desarrollador','','','','tok1'],['D2','dev2','pw','Desarrollador']],[['D1','dev','tok1',new Date(),'','']]);
-        const result=h.update({userId:'D2',updates:{Privilegios:'Gefe'},sessionToken:'tok1'});
-        equal(result.status,'success');equal(h.users[2][3],'Gefe');equal(count(h.users.slice(1)),1);
+        const result=h.update({userId:'D2',updates:{Privilegios:'Jefe'},sessionToken:'tok1'});
+        equal(result.status,'success');equal(h.users[2][3],'Jefe');equal(count(h.users.slice(1)),1);
     });
     run('Recupera nombre y rol tras fallo de la segunda escritura y reintento idempotente',()=>{
         const h=makeHarness(
