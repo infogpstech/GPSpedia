@@ -1198,6 +1198,9 @@ function doPostInternal_(e) {
             case 'getAdminImageUploadStatus':
                 response = handleGetAdminImageUploadStatus(payload, logMessage);
                 break;
+            case 'auditIdentifiers':
+                response = handleAuditIdentifiers();
+                break;
             // Compatibilidad directa histórica; el mapa canónico dirige esta acción a WRITE.
             case 'checkOperation':
                 response = handleCheckOperation(payload);
@@ -3150,6 +3153,97 @@ function deleteEmptyFoldersRecursively(folder, rootDriveFolderId) {
 /**
  * 8. Registro de nuevos logotipos de fabricante con soporte transparente
  */
+function auditIdentifierColumn_(sheet, spec) {
+    if (!sheet) return { sheet: spec.sheet, exists: false, formatKnown: spec.formatKnown !== false };
+    const lastRow = sheet.getLastRow(), lastColumn = Math.max(sheet.getLastColumn(), spec.column);
+    const result = {
+        sheet: spec.sheet, exists: true, formatKnown: spec.formatKnown !== false,
+        expectedFormat: spec.expectedFormat || "Identificador único no vacío",
+        recordsWithId: 0, missingIdCount: 0, malformedIdCount: 0,
+        duplicateIdCount: 0, formulaCount: 0, unresolvedFormulaCount: 0,
+        missingIdRows: [], malformedIds: [], duplicateIds: [], formulaRows: []
+    };
+    if (lastRow < 2) return result;
+    const rows = sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues();
+    const formulas = sheet.getRange(2, spec.column, lastRow - 1, 1).getFormulas();
+    const seen = new Map();
+    const addDetail = (list, item) => { if (list.length < 100) list.push(item); };
+    rows.forEach((row, index) => {
+        const rowNumber = index + 2;
+        const raw = row[spec.column - 1];
+        const id = String(raw === null || raw === undefined ? "" : raw).trim();
+        const formula = String(formulas[index] && formulas[index][0] || "");
+        const hasRowData = row.some(value => value !== "" && value !== null && value !== undefined);
+        if (!hasRowData && !formula) return;
+        if (formula) {
+            result.formulaCount++;
+            addDetail(result.formulaRows, rowNumber);
+        }
+        if (!id) {
+            if (formula) result.unresolvedFormulaCount++;
+            else {
+                result.missingIdCount++;
+                addDetail(result.missingIdRows, rowNumber);
+            }
+            return;
+        }
+        result.recordsWithId++;
+        let key = id.toLowerCase(), valid = true;
+        if (spec.kind === "user") valid = /^USR-\d{4,}$/i.test(id);
+        else if (spec.kind === "vehicle" || spec.kind === "logo") {
+            const numeric = Number(id);
+            valid = Number.isSafeInteger(numeric) && numeric > 0;
+            if (valid) key = String(numeric);
+        } else if (spec.kind === "tutorial") valid = /^tut-[a-z0-9_-]{1,80}$/i.test(id);
+        else if (spec.kind === "problem") {
+            const match = /^isue-(\d+)$/i.exec(id), numeric = match ? Number(match[1]) : NaN;
+            valid = Number.isSafeInteger(numeric) && numeric > 0;
+            if (valid) key = String(numeric);
+        }
+        if (!valid) {
+            result.malformedIdCount++;
+            addDetail(result.malformedIds, { row: rowNumber, id });
+        }
+        if (!seen.has(key)) seen.set(key, []);
+        seen.get(key).push(rowNumber);
+    });
+    for (const [id, rowNumbers] of seen.entries()) {
+        if (rowNumbers.length > 1) {
+            result.duplicateIdCount++;
+            addDetail(result.duplicateIds, { id, rows: rowNumbers.slice(0, 100) });
+        }
+    }
+    result.detailsTruncated = result.missingIdCount > result.missingIdRows.length ||
+        result.malformedIdCount > result.malformedIds.length ||
+        result.duplicateIdCount > result.duplicateIds.length ||
+        result.formulaCount > result.formulaRows.length;
+    return result;
+}
+
+function handleAuditIdentifiers() {
+    const ss = getSpreadsheet();
+    const specs = [
+        { sheet: "Users", column: 1, kind: "user", expectedFormat: "USR-0001 o superior" },
+        { sheet: "Cortes", column: 1, kind: "vehicle", expectedFormat: "Entero positivo" },
+        { sheet: "Tutorial", column: 1, kind: "tutorial", expectedFormat: "tut-<operationId>; los IDs vacíos históricos se reportan aparte" },
+        { sheet: "Relay", column: 1, kind: "relay", formatKnown: false, expectedFormat: "Formato pendiente de confirmar con el esquema/datos actuales" },
+        { sheet: "pys", column: 1, kind: "problem", expectedFormat: "isue-<sufijo numérico positivo>" },
+        { sheet: "LogosMarca", column: 1, kind: "logo", expectedFormat: "Entero positivo; se inspeccionan fórmulas históricas" }
+    ];
+    const sheets = specs.map(spec => auditIdentifierColumn_(ss.getSheetByName(spec.sheet), spec));
+    return {
+        status: "success", readOnly: true, generatedAt: new Date().toISOString(),
+        summary: {
+            sheetsFound: sheets.filter(item => item.exists).length,
+            duplicateIdCount: sheets.reduce((sum, item) => sum + item.duplicateIdCount, 0),
+            malformedIdCount: sheets.reduce((sum, item) => sum + item.malformedIdCount, 0),
+            missingIdCount: sheets.reduce((sum, item) => sum + item.missingIdCount, 0),
+            formulaCount: sheets.reduce((sum, item) => sum + item.formulaCount, 0)
+        },
+        sheets
+    };
+}
+
 function handleAddLogo(payload, logMessage) {
     const { nombreMarca, fileData, filename, mimeType } = payload;
     if (!nombreMarca || !fileData || !filename || !mimeType) {
