@@ -200,6 +200,24 @@
 }
     </style>
     <link rel="stylesheet" href="../button-system.css">
+    <script>
+        function showConciseAlert_(message) {
+            const detail = String(message || 'No se pudo completar la operación.');
+            let hostUi = null;
+            try {
+                hostUi = window.parent && window.parent !== window ? window.parent.ui : null;
+            } catch (error) {}
+            if (!hostUi && window.ui) hostUi = window.ui;
+            if (hostUi && typeof hostUi.showGlobalError === 'function') {
+                hostUi.showGlobalError(detail);
+                return;
+            }
+            if (detail.length > 110) {
+                console.warn('[GPSpedia] ' + detail);
+                alert('No se pudo completar la operación.');
+            } else alert(detail);
+        }
+    </script>
 </head>
 <body>
     <div class="container">
@@ -704,7 +722,7 @@ async function handleUserFormSubmit(e) {
                         window.state.setState({ currentUser: null });
                     }
                 }
-                alert('No se pudo confirmar el cambio de rol por un fallo de conexión. La sesión se cerró localmente y la revocación remota quedó pendiente; inicia sesión nuevamente cuando se restablezca la conexión.');
+                showConciseAlert_('No se pudo confirmar el cambio de rol por un fallo de conexión. La sesión se cerró localmente y la revocación remota quedó pendiente; inicia sesión nuevamente cuando se restablezca la conexión.');
                 window.location.replace('../index.html');
                 return;
             }
