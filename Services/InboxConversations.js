@@ -334,6 +334,8 @@ function handleSendInboxMessage(payload) {
 function handleGetInboxConversations(payload) {
     const actor = inboxConversationActor_(payload), folder = String(payload.folder || "received").trim().toLowerCase();
     if (!["all","received","unread","sent","archived"].includes(folder)) throw new Error("La carpeta de Inbox no es válida.");
+    const category = String(payload.category || "all").trim().toLowerCase();
+    if (category !== "all" && !INBOX_CATEGORIES_.has(category)) throw new Error("La categoría de Inbox no es válida.");
     const query = String(payload.query || "").trim().slice(0,80).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
     const cursorRaw = String(payload.cursor === undefined || payload.cursor === null ? "0" : payload.cursor);
     if (!/^\d{1,7}$/.test(cursorRaw)) throw new Error("El cursor no es válido.");
@@ -376,6 +378,8 @@ function handleGetInboxConversations(payload) {
                 type:String(row[5] || "direct"),status:String(row[6] || "open"),createdAt:String(row[1] || ""),
                 updatedAt:String(row[2] || ""),createdById:String(row[7] || ""),lastMessageAt:String(row[14] || ""),
                 lastMessagePreview:String(row[15] || ""),messageCount:Math.max(0,Number(row[16]) || 0),
+                lastMessageAuthorName:String((conversationMessages.find(message => String(message[0]) === String(row[13])) || [])[4] || ""),
+                lastMessageAuthorId:String((conversationMessages.find(message => String(message[0]) === String(row[13])) || [])[3] || ""),
                 otherParticipants:other.map(user => ({id:user.id,name:String(user.name || ""),role:String(user.role || "")})),
                 unreadCount,archived:state[4] === true,hasSent:state[5] === true,hasReceived:state[6] === true
             };
@@ -385,8 +389,11 @@ function handleGetInboxConversations(payload) {
             else { if (item.hasReceived) result.received++; if (item.unreadCount > 0) result.unread++; if (item.hasSent) result.sent++; }
             return result;
         },{received:0,unread:0,sent:0,archived:0});
-        const matchesQuery = item => !query || [item.subject,item.category,item.lastMessagePreview,...item.otherParticipants.map(user => user.name)]
-            .join(" ").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().includes(query);
+        const matchesQuery = item => !query || [
+            item.subject,item.category,item.lastMessagePreview,item.lastMessageAuthorName,
+            ...item.otherParticipants.map(user => user.name),
+            ...(messagesByConversation.get(item.conversationId) || []).map(message => String(message[6] || ""))
+        ].join(" ").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().includes(query);
         const filtered = summaries.filter(item => {
             if (folder === "archived") return item.archived;
             if (item.archived) return false;
@@ -394,7 +401,9 @@ function handleGetInboxConversations(payload) {
             if (folder === "unread") return item.unreadCount > 0;
             if (folder === "sent") return item.hasSent;
             return true;
-        }).filter(matchesQuery).sort((a,b) => new Date(b.lastMessageAt || b.updatedAt).getTime() - new Date(a.lastMessageAt || a.updatedAt).getTime());
+        }).filter(item => category === "all" || item.category === category)
+            .filter(matchesQuery)
+            .sort((a,b) => new Date(b.lastMessageAt || b.updatedAt).getTime() - new Date(a.lastMessageAt || a.updatedAt).getTime());
         const data = filtered.slice(offset,offset+pageSize), nextOffset = offset + data.length, hasMore = nextOffset < filtered.length;
         return {status:"success",data,counts,total:filtered.length,nextCursor:hasMore?String(nextOffset):null,hasMore,pageSize};
     });
