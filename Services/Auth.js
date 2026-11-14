@@ -556,6 +556,22 @@ function touchProtectedAuthRequestSession_(action, payload) {
     if (typeof token !== "string" || !token) {
         throw new Error("Acceso denegado: se requiere una sesión válida para esta operación.");
     }
+
+    // La aceptación solo necesita validar la sesión; no debe renovar LastActivityAt
+    // ni competir con ADMIN/sessionActivity. El handler vuelve a validar antes de escribir Users.
+    if (action === "acceptTerms") {
+        const userId = normalizeUserId(payload && payload.userId);
+        if (!userId) throw new Error("Acceso denegado: se requiere la identidad del usuario.");
+        const validation = validateSessionReadOnly_(token, userId);
+        if (!validation || validation.valid !== true) {
+            if (validation && validation.unavailable) {
+                throw new Error("No se pudo verificar la sesión temporalmente. Intenta nuevamente.");
+            }
+            throw new Error("Acceso denegado: la sesión no es válida, expiró o requiere autenticación nuevamente.");
+        }
+        return;
+    }
+
     const result = validateAndTouchSession_(token);
     if (!result || result.valid !== true) {
         if (result && result.unavailable) {
