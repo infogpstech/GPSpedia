@@ -25,7 +25,7 @@ function makeSheet(name,rows,formulas=[]){
    setValue(v){while(self.rows.length<row)self.rows.push([]);while(self.rows[row-1].length<col)self.rows[row-1].push("");self.rows[row-1][col-1]=v;while(self.formulas.length<row)self.formulas.push([]);while(self.formulas[row-1].length<col)self.formulas[row-1].push("");self.formulas[row-1][col-1]="";return this;},
    setFormula(v){this.setValue(self.rows[row-1]?.[col-1]??"");self.formulas[row-1][col-1]=v;return this;},
    clearContent(){return this.setValue("");},
-   setValues(values){values.forEach((r,i)=>r.forEach((v,j)=>this.setValue(v)));return this;}
+   setValues(values){values.forEach((r,i)=>r.forEach((v,j)=>{while(self.rows.length<row+i)self.rows.push([]);while(self.rows[row-1+i].length<col+j)self.rows[row-1+i].push("");self.rows[row-1+i][col-1+j]=v;while(self.formulas.length<row+i)self.formulas.push([]);while(self.formulas[row-1+i].length<col+j)self.formulas[row-1+i].push("");self.formulas[row-1+i][col-1+j]="";}));return this;}
   };},
   copyTo(ss){const copy=makeSheet("Copy",this.rows,this.formulas);ss.sheets.push(copy);return copy;}
  };
