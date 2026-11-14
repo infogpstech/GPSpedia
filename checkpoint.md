@@ -970,3 +970,14 @@ Esta adenda corrige las notas anteriores que indicaban que no era posible consul
 - Rama base verificada en la comparación: `GPSpedia2.2.5`, sin avance detrás ni cambios incorporados por esta tarea; la rama de trabajo permanece 2,648 commits ahead y 0 behind, con merge base `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
 
 La anotación previa que declaraba inaccesibles los runs de push queda superada por esta evidencia; se conserva como historial y esta adenda es el estado vigente.
+
+
+## Continuidad P1 — autenticación simplificada (2026-11-14)
+
+- Se retomó el backlog desde `Tareas_Activas.md`; P1 era el siguiente paquete ordenado. Se confirmó que el cliente mantiene sesión persistida, restaura/valida al iniciar, conserva la identidad al navegar/recargar y utiliza `requestId` idempotente para evitar solicitudes de login duplicadas ante reintentos.
+- Se añadió cobertura de comportamiento aislada en `JS/Tests/SessionStartupNavigation.mjs`: fallo transitorio seguido de reintento con el mismo `requestId`, clave de usuario normalizada, finalización de la solicitud exitosa y protección para que una respuesta antigua no borre un request posterior.
+- Primera ejecución de CI del cambio (run `43620023357`) falló por escapes incorrectos en el regex del harness de prueba; la nueva prueba sí llegó a ejecutarse y aprobó, pero el extractor falló después. Se corrigió el harness en un commit separado, sin alterar código de producción, y se repitió la suite completa.
+- Validación final en el HEAD del cambio de prueba `881ebac152faee2a57c95bcd0a9794249ed81810`: run `43620074644` **success**, Node.js 22.23.4, 93 suites / 1,364 pruebas aprobadas / 0 fallos; `node --check` y todos los pasos del job PASS; `SessionStartupNavigation` 13/13 PASS.
+- P1 se registra como **COMPLETADA CON VALIDACIÓN DIFERIDA A BETA**. Las pruebas con múltiples pestañas, offline/reconexión y dispositivos/navegadores reales permanecen pendientes de Beta; no bloquean el cierre local según las normas.
+- Commits de esta continuación: prueba inicial `3d6b1a4c17a5c04522eec0cbcdb6c332c05758cd`; corrección del harness `881ebac152faee2a57c95bcd0a9794249ed81810`; backlog P1 `8ce0b1620897bcc7d8104b09d8b468614f4b97a2`; changelog `389166ef91df7073b2b60d1b892378272ce27d0d`.
+- Siguiente paquete del backlog: P2 — migración de contraseñas e identificadores. El código/motor y pruebas locales están implementados; las acciones pendientes dependen de benchmark en runtime Apps Script Beta, auditoría real de IDs/Relay y dry-run/rollback sobre copia Beta. Se revisarán dependencias para determinar si hay una prueba local adicional que pueda cerrarse sin acceso externo.
