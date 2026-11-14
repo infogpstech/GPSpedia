@@ -66,12 +66,14 @@ check("El backend acepta Supervisor, Jefe y Desarrollador y rechaza otros roles"
  assert.equal(api.assertDeveloperSession({userId:"U1",sessionToken:"token"}).role,"Desarrollador");
 });
 check("La descarga de imágenes reemplazadas queda exclusiva de Desarrollador en UI y backend",()=>{
- const start=ui.indexOf("const downloadButton = createActionButton('fa-download'");
- const end=ui.indexOf("const moveButton =",start);
+ const start=ui.indexOf("function getReplacedImageCapabilities_");
+ const end=ui.indexOf("\n}\n",start)+2;
  assert.ok(start>=0&&end>start);
- const block=ui.slice(start,end);
- assert.match(block,/normalizeUiRole_\(getUiSessionContext_\(\)\?\.role \|\| ""\) === "desarrollador"/);
- assert.match(block,/if \(canDownloadReplacedImage\) actions\.appendChild\(downloadButton\)/);
+ const getCapabilities=new Function(ui.slice(start,end)+";return getReplacedImageCapabilities_;")();
+ const item={tipo_registro:"reemplazada",estado:"historica",active_reference_count:0};
+ assert.equal(getCapabilities(item,true,"verified","Desarrollador").canDownload,true);
+ assert.equal(getCapabilities(item,true,"verified","Tecnico").canDownload,false);
+ assert.match(ui,/if \(capabilities\.canDownload\) addMenuAction\("fa-download"/);
  assert.doesNotMatch(admin,/const ADMIN_MODAL_EDIT_ACTIONS = new Set\([^;]*getReplacedImageDownloadUrl/);
  assert.match(admin,/case 'getReplacedImageDownloadUrl':/);
  assert.match(admin,/ADMIN_MODAL_EDIT_ACTIONS\.has\(action\) \? assertModalEditSession\(payload\) : assertDeveloperSession\(payload\)/);

@@ -603,7 +603,7 @@ check("La interfaz muestra estados históricos y filas inválidas en una secció
     assert.ok(ui.includes("cachedReview"));
     assert.ok(ui.includes("replaced-images-review"));
     assert.ok(ui.includes("Registros que requieren revisión"));
-    assert.ok(ui.includes("['historica', 'restablecida'].includes(status)"));
+    assert.ok(ui.includes('["historica", "restablecida"].includes(status)'));
     assert.ok(ui.includes("referenceSafe"));
     assert.ok(ui.includes("schemaWarnings"));
 });
