@@ -1390,3 +1390,16 @@ HEAD verificado antes del registro: b55bf5866a9491e510881b3e59eea2cd9919e45e
 - No se modificó código funcional, ni se ejecutaron escrituras en Drive/Spreadsheet. No se ejecutaron pruebas Node/CLI por tratarse de cambios exclusivamente documentales. La validación física de hojas, fórmulas y datos heredados queda pendiente de dry-run en Beta.
 - No se atribuye un resultado de GitHub Actions a este commit documental; la consulta disponible de runs solo expone ejecuciones asociadas a pull requests.
 ================================================================================
+
+
+================================================================================
+NORMALIZACIÓN DEL ROL JEFE — 2026-11-14
+Rama: GPSpedia2.2.5_work
+
+- Se establece **Jefe** como única denominación oficial del rol. La forma «Gefe» deja de aparecer en las opciones de asignación y en las matrices de permisos.
+- Se unificaron los valores operativos en AUTH, USERS, ADMIN, FEEDBACK, WRITE y el frontend: `jefe` / `Jefe`.
+- Se unificaron los límites de sesión, reglas de creación/edición de usuarios, validaciones de rol y permisos de los elementos de interfaz que dependían del valor anterior.
+- Se conserva una conversión de compatibilidad al leer registros heredados `Gefe`, tratándolos como `Jefe`. Esta conversión es transitoria para evitar bloquear cuentas antes de actualizar la hoja Users.
+- **Pendiente externo:** actualizar la validación/lista desplegable de la columna `Privilegios` de la hoja `Users` para sustituir `Gefe` por `Jefe`, y migrar los registros existentes cuyo valor sea `Gefe` a `Jefe`. No se modificó la Spreadsheet porque no hay acceso de lectura/escritura autorizado a esa hoja desde esta sesión.
+- No se desplegaron proyectos Apps Script. No se ejecutaron pruebas Node/CLI ni pruebas contra Spreadsheet; la validación realizada fue estática sobre los archivos de la rama.
+================================================================================
