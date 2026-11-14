@@ -464,9 +464,7 @@ function doPost(e) {
 function doPostInternal_(e) {
     let response;
     try {
-        logToSheet('INFO', 'doPost received a request.');
         const request = JSON.parse(e.postData.contents);
-        logToSheet('DEBUG', `Request parsed. Action: ${request.action}`);
 
         switch (request.action) {
             case 'login':
@@ -864,7 +862,6 @@ function handleLogin(payload) {
             logToSheet('ERROR', 'Failed to create or recover active session.', { error: sessionOperationError.message, requestId: loginRequestId });
             throw sessionOperationError;
         }
-        if (oldestSession) logToSheet('INFO', 'Session limit reached. Previous session token invalidated.', { oldestSession });
         if (sessionCleanupPending) logToSheet('ERROR', 'Login succeeded but an inactive session row could not be deleted.', { userId, requestId: loginRequestId });
 
         const user = {
