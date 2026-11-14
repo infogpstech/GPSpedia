@@ -14,6 +14,8 @@ function runCheckOperationSecurityTests(sources) {
  run("completada solo devuelve los siete campos permitidos",()=>{const r=make(()=>true,()=>({status:"completed",rowValues:["secret"]}),()=>({id:"V",timestamp:"t",email:"private",rowData:["secret"]}))({userId:"a",sessionToken:"s",opId:"OP-1-X"});a(JSON.stringify(Object.keys(r).sort())===JSON.stringify(["exists","operationHash","operationStatus","pending","status","timestamp","vehicleId"].sort()));});
  run("autenticación precede lookup y opId no es credencial",()=>{const h=ex(w,"handleCheckOperation"),g=ex(ui,"getOrGenerateOpId");a(h.indexOf("getAuthenticatedCollaborator(payload)")<h.indexOf("findRowByOpId("));a(/userId/.test(ui)&&/sessionToken/.test(ui)&&/getAddCutOperationPendingOperation/.test(g)&&/getRandomValues/.test(g)&&/Uint8Array\(16\)/.test(g)&&!/Math\.random/.test(g));});
  run("opId ausente falla tras autenticar antes de lookup",()=>{let x=0,y=0,bad=false;try{make(()=>x++,()=>{y++;},()=>({}))({userId:"a",sessionToken:"s"});}catch(_){bad=true;}a(bad&&x===1&&y===0);});
+ run("checkOperation renueva actividad dentro de una lease compartida",()=>{const d=ex(w,"doPost");a(d.includes('withSharedMutationLease_("WRITE", "sessionActivity"'));a(d.includes('action !== "checkOperation"'));});
+
  run("opId genera 128 bits y consulta primero el snapshot IndexedDB",()=>{const g=ex(ui,"getOrGenerateOpId");a(/getAddCutOperationPendingOperation/.test(g)&&/getRandomValues/.test(g)&&/Uint8Array\(16\)/.test(g)&&!/Math\.random/.test(g));});
  run("esquema A:F añade huella SHA-256 sin columna de propietario",()=>a(/IDEMPOTENCIA_HEADERS\s*=\s*\["opId",\s*"vehicleId",\s*"slotIndex",\s*"timestamp",\s*"status",\s*"operationHash"\]/.test(w)));
  return{status:failed?"FAIL":"PASS",passed,failed,results};
