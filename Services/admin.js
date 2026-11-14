@@ -3296,6 +3296,92 @@ function auditTutorialApprovalReferences_(tutorialSheet, feedbackSheet) {
     return result;
 }
 
+function auditUserIdReferences_(ss) {
+    const usersSheet = ss && ss.getSheetByName("Users");
+    if (!usersSheet) return { status: "incomplete", reason: "missing_users_sheet" };
+    const userLastRow = usersSheet.getLastRow();
+    const userRows = userLastRow > 1 ? usersSheet.getRange(2, 1, userLastRow - 1, 1).getValues() : [];
+    const userCounts = new Map();
+    userRows.forEach(row => {
+        const id = String(row[0] === null || row[0] === undefined ? "" : row[0]).trim().toUpperCase();
+        if (id) userCounts.set(id, (userCounts.get(id) || 0) + 1);
+    });
+    const result = {
+        status: "success", readOnly: true, userRecords: userRows.length,
+        duplicateUserIds: Array.from(userCounts.values()).filter(count => count > 1).length,
+        referencesScanned: 0, matchedReferences: 0, orphanReferences: 0,
+        ambiguousReferences: 0, sentinelReferencesSkipped: 0,
+        malformedMetadataRecords: 0, sourcesScanned: [], details: [], detailsTruncated: false
+    };
+    const addDetail = detail => {
+        if (result.details.length < 100) result.details.push(detail);
+        else result.detailsTruncated = true;
+    };
+    const checkReference = (value, sheetName, rowNumber, fieldName) => {
+        const id = String(value === null || value === undefined ? "" : value).trim();
+        if (!id) return;
+        if (id === "0" || /^N\/A$/i.test(id) || /^anon:/i.test(id)) {
+            result.sentinelReferencesSkipped++;
+            return;
+        }
+        result.referencesScanned++;
+        const count = userCounts.get(id.toUpperCase()) || 0;
+        if (count === 1) result.matchedReferences++;
+        else if (count === 0) {
+            result.orphanReferences++;
+            addDetail({ sheet: sheetName, row: rowNumber, field: fieldName, issue: "orphan_user_reference", userId: id });
+        } else {
+            result.ambiguousReferences++;
+            addDetail({ sheet: sheetName, row: rowNumber, field: fieldName, issue: "ambiguous_user_reference", userId: id, matches: count });
+        }
+    };
+    const scanColumn = (sheetName, column, fieldName, transform) => {
+        const sheet = ss.getSheetByName(sheetName);
+        if (!sheet || sheet.getLastRow() < 2) return;
+        const values = sheet.getRange(2, column, sheet.getLastRow() - 1, 1).getValues();
+        result.sourcesScanned.push(sheetName + "." + fieldName);
+        values.forEach((row, index) => checkReference(transform ? transform(row[0]) : row[0], sheetName, index + 2, fieldName));
+    };
+    scanColumn("ActiveSessions", 1, "ID_Usuario");
+    scanColumn("ActividadUsuario", 3, "idUsuario");
+    scanColumn("Contactanos", 2, "User_ID");
+    scanColumn("Contactanos", 6, "ID_usuario_responde");
+    scanColumn("InboxAuditLog", 3, "actorId");
+    scanColumn("FeedbackLikes", 1, "actorKey", value => {
+        const key = String(value || "").trim();
+        return key.startsWith("user:") ? key.slice(5) : "";
+    });
+    const feedbackSheet = ss.getSheetByName("Feedbacks");
+    if (feedbackSheet && feedbackSheet.getLastRow() > 1) {
+        result.sourcesScanned.push("Feedbacks.metadata");
+        const rows = feedbackSheet.getRange(2, 4, feedbackSheet.getLastRow() - 1, 1).getValues();
+        const scanObject = (value, rowNumber, path) => {
+            if (!value || typeof value !== "object") return;
+            if (Array.isArray(value)) {
+                value.forEach((item, index) => scanObject(item, rowNumber, path + "[" + index + "]"));
+                return;
+            }
+            Object.keys(value).forEach(key => {
+                const nextPath = path ? path + "." + key : key;
+                if (key === "userId" || key === "createdByUserId") {
+                    checkReference(value[key], "Feedbacks", rowNumber, nextPath);
+                } else if (value[key] && typeof value[key] === "object") {
+                    scanObject(value[key], rowNumber, nextPath);
+                }
+            });
+        };
+        rows.forEach((row, index) => {
+            const raw = String(row[0] === null || row[0] === undefined ? "" : row[0]).trim();
+            if (!raw) return;
+            try { scanObject(JSON.parse(raw), index + 2, ""); }
+            catch (error) {
+                if (/"(?:userId|createdByUserId)"\s*:/.test(raw)) result.malformedMetadataRecords++;
+            }
+        });
+    }
+    return result;
+}
+
 function handleAuditIdentifiers() {
     const ss = getSpreadsheet();
     const specs = [
@@ -3310,9 +3396,10 @@ function handleAuditIdentifiers() {
     const tutorialReferences = auditTutorialApprovalReferences_(
         ss.getSheetByName("Tutorial"), ss.getSheetByName("Feedbacks")
     );
+    const userReferences = auditUserIdReferences_(ss);
     return {
         status: "success", readOnly: true, generatedAt: new Date().toISOString(),
-        tutorialReferences,
+        tutorialReferences, userReferences,
         summary: {
             sheetsFound: sheets.filter(item => item.exists).length,
             duplicateIdCount: sheets.reduce((sum, item) => sum + item.duplicateIdCount, 0),
