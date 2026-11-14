@@ -6559,6 +6559,21 @@ function getDeveloperSessionPayload() {
 /**
  * TAREA 2: Modal de Gestión y Consulta del Inventario e Historial de Imágenes
  */
+function getReplacedImageCapabilities_(rep, schemaReady, referenceCheckStatus, role) {
+    const type = rep.tipo_registro || (rep.origen_registro === "auditoria_drive" ? "sin_uso_detectado" : "reemplazada");
+    const isUnused = type === "sin_uso_detectado";
+    const status = String(rep.estado || (isUnused ? "sin_uso_detectado" : "historica"));
+    const referenceSafe = schemaReady && referenceCheckStatus === "verified" && Number(rep.active_reference_count || 0) === 0;
+    const canManage = referenceSafe && (isUnused ? status === "sin_uso_detectado" : ["historica", "restablecida"].includes(status));
+    const canTrash = referenceSafe && (canManage || status === "requiere_revision");
+    const canRestoreFromTrash = schemaReady && ["en_papelera", "requiere_revision"].includes(status);
+    const canPermanentlyDelete = referenceSafe && ["en_papelera", "eliminacion_pendiente", "requiere_revision"].includes(status);
+    const canRecover = !isUnused && ["historica", "restablecida"].includes(status) && canManage;
+    const canDownload = String(role || "").trim().toLowerCase() === "desarrollador" && referenceSafe && (isUnused ? status === "sin_uso_detectado" : ["historica", "restablecida"].includes(status));
+    const canMarkInUse = status === "requiere_revision" && schemaReady && referenceCheckStatus === "verified";
+    return { type, isUnused, status, referenceSafe, canManage, canMove: canManage, canTrash, canRestoreFromTrash, canPermanentlyDelete, canRecover, canDownload, canMarkInUse };
+}
+
 export async function openReplacedImagesModal() {
     const requestContext = await ensureUiSessionRole_(['desarrollador']);
     if (!requestContext) return;
@@ -6573,6 +6588,10 @@ export async function openReplacedImagesModal() {
     let referenceCheckStatus = "unavailable";
     let schemaWarnings = [];
     let folders = [];
+    const selectedIds = new Set();
+    let visibleItems = [];
+    let closeMenusHandler = null;
+    let closeMenusKeyHandler = null;
     const replacedOverlayId = 'ui-modal:replaced-images-modal';
     modal.dataset.gpOverlayHistoryId = replacedOverlayId;
     modal.__gpOverlayClose = () => {
@@ -6585,6 +6604,12 @@ export async function openReplacedImagesModal() {
         referenceCheckStatus = "unavailable";
         schemaWarnings = [];
         folders = [];
+        selectedIds.clear();
+        visibleItems = [];
+        if (closeMenusHandler) document.removeEventListener("click", closeMenusHandler);
+        if (closeMenusKeyHandler) document.removeEventListener("keydown", closeMenusKeyHandler);
+        closeMenusHandler = null;
+        closeMenusKeyHandler = null;
         const list = document.getElementById('replaced-images-list-container');
         if (list) list.replaceChildren();
         modal.style.display = 'none';
@@ -6601,6 +6626,12 @@ export async function openReplacedImagesModal() {
     const newFolderInput = document.getElementById('replaced-images-new-folder-name');
     const createFolderBtn = document.getElementById('btn-create-replaced-images-folder');
     const folderStatus = document.getElementById('replaced-images-folder-status');
+    const selectAllCheckbox = document.getElementById("replaced-images-select-all");
+    const selectionCount = document.getElementById("replaced-images-selection-count");
+    const bulkMoveButton = document.getElementById("btn-replaced-bulk-move");
+    const bulkRestoreButton = document.getElementById("btn-replaced-bulk-restore");
+    const bulkTrashButton = document.getElementById("btn-replaced-bulk-trash");
+    const clearSelectionButton = document.getElementById("btn-replaced-clear-selection");
     const lightbox = document.getElementById('replaced-image-lightbox');
     const lightboxContent = document.getElementById('replaced-image-lightbox-content');
     const lightboxImage = document.getElementById('replaced-image-lightbox-image');
@@ -6622,6 +6653,7 @@ export async function openReplacedImagesModal() {
                 closeReplacedImagesLightbox_(true);
             });
         }
+        closeMenus();
         lightboxImage.src = getImageUrl(rep.url_visualizacion || rep.url_anterior || rep.archivo_drive_id, IMG_SIZE_LARGE);
         lightboxImage.alt = rep.nombre_archivo || 'Imagen de Google Drive';
         lightboxImage.onerror = () => {
@@ -6673,6 +6705,8 @@ export async function openReplacedImagesModal() {
             const response = await routeAction('getReplacedImages', getDeveloperSessionPayload());
             if (!isCurrentRequest()) return;
             cachedReplaced = response && Array.isArray(response.data) ? response.data : [];
+            const currentIds = new Set(cachedReplaced.map(item => String(item.id_reemplazo || "")));
+            selectedIds.forEach(id => { if (!currentIds.has(id)) selectedIds.delete(id); });
             cachedReview = response && Array.isArray(response.review) ? response.review : [];
             schemaStatus = String(response && response.schemaStatus || "not_initialized");
             schemaReady = schemaStatus === "ready";
@@ -6713,321 +6747,176 @@ export async function openReplacedImagesModal() {
         }
     };
 
-    const renderList = (filterText = '') => {
-        if (!isCurrentRequest() || !listContainer) return;
-        listContainer.innerHTML = '';
-        listContainer.className = 'replaced-images-list view-' + currentView;
-        if (!schemaReady || referenceCheckStatus !== "verified") {
-            const warning = document.createElement("div");
-            warning.className = "replaced-images-empty";
-            warning.textContent = schemaWarnings.length ? schemaWarnings.join(" ") :
-                "No se pudo verificar el esquema o las referencias. Las acciones permanecen deshabilitadas.";
-            listContainer.appendChild(warning);
-            if (schemaStatus === "migration_required" || schemaStatus === "not_initialized") {
-                const migrateButton = document.createElement("button");
-                migrateButton.type = "button";
-                migrateButton.className = "btn btn-primary replaced-images-schema-migrate";
-                migrateButton.textContent = schemaStatus === "not_initialized" ? "Inicializar historial" : "Migrar esquema";
-                migrateButton.onclick = async () => {
-                    if (!isCurrentRequest()) return;
-                    migrateButton.disabled = true;
-                    migrateButton.textContent = "Verificando esquema...";
-                    try {
-                        await routeAction("migrateReplacedImagesSchema", getDeveloperSessionPayload());
-                        if (!isCurrentRequest()) return;
-                        mostrarNotificacion("El esquema del historial fue verificado.", "success");
-                        await loadData();
-                    } catch (error) {
-                        if (isCurrentRequest()) alert(error.message || String(error));
-                    } finally {
-                        if (migrateButton.isConnected && isCurrentRequest()) {
-                            migrateButton.disabled = false;
-                            migrateButton.textContent = schemaStatus === "not_initialized" ? "Inicializar historial" : "Migrar esquema";
-                        }
-                    }
-                };
-                listContainer.appendChild(migrateButton);
-            }
-        }
-        const query = String(filterText || '').toLowerCase().trim();
-        const filtered = cachedReplaced.filter((item) => {
-            if (!query) return true;
-            return [
-                item.nombre_archivo, item.referencia_texto, item.campo, item.archivo_drive_id,
-                item.registro_id, item.ubicacion_actual, item.ubicacion_original, item.origen_registro,
-                item.estado, item.estado_organizacion, item.error_organizacion
-            ].some((value) => String(value || '').toLowerCase().includes(query));
-        });
-
-        if (!filtered.length) {
-            const empty = document.createElement("div");
-            empty.className = "replaced-images-empty";
-            empty.textContent = "No hay registros válidos que coincidan con el filtro.";
-            listContainer.appendChild(empty);
-        }
-
-        filtered.forEach((rep) => {
-            const type = rep.tipo_registro || (rep.origen_registro === 'auditoria_drive' ? 'sin_uso_detectado' : 'reemplazada');
-            const isUnused = type === 'sin_uso_detectado';
-            const status = String(rep.estado || (isUnused ? 'sin_uso_detectado' : 'historica'));
-            const statusLabel = isUnused
-                ? (status === 'sin_uso_detectado' ? 'Sin uso detectado' : status.replace(/_/g, ' '))
-                : (status === 'historica' ? 'Reemplazada' : status.replace(/_/g, ' '));
-            const referenceSafe = schemaReady && referenceCheckStatus === "verified" &&
-                Number(rep.active_reference_count || 0) === 0;
-            const canManage = referenceSafe && (isUnused
-                ? status === 'sin_uso_detectado'
-                : ['historica', 'restablecida'].includes(status));
-            const canTrash = referenceSafe && (canManage || status === 'requiere_revision');
-            const canRestoreFromTrash = schemaReady && ['en_papelera', 'requiere_revision'].includes(status);
-            const canPermanentlyDelete = referenceSafe && ['en_papelera', 'eliminacion_pendiente', 'requiere_revision'].includes(status);
-            const card = document.createElement('article');
-            card.className = 'replaced-image-card' + (currentView === 'list' ? ' replaced-image-card-list' : '');
-
-            if (currentView === 'grid') {
-                const previewButton = document.createElement('button');
-                previewButton.type = 'button';
-                previewButton.className = 'replaced-image-preview';
-                previewButton.title = 'Ver imagen ampliada';
-                previewButton.setAttribute('aria-label', 'Ver ' + (rep.nombre_archivo || 'imagen') + ' en tamaño ampliado');
-                const image = document.createElement('img');
-                image.src = getImageUrl(rep.url_visualizacion || rep.url_anterior || rep.archivo_drive_id, IMG_SIZE_MEDIUM);
-                image.alt = rep.nombre_archivo || 'Imagen de Drive';
-                image.loading = 'lazy';
-                image.onerror = () => {
-                    image.onerror = null;
-                    image.src = 'https://placehold.co/400x300/cccccc/333333?text=Vista+no+disponible';
-                };
-                previewButton.appendChild(image);
-                previewButton.onclick = () => openLightbox(rep);
-                card.appendChild(previewButton);
-            } else {
-                const fileIcon = document.createElement('button');
-                fileIcon.type = 'button';
-                fileIcon.className = 'replaced-image-list-icon';
-                fileIcon.title = 'Ver imagen ampliada';
-                fileIcon.setAttribute('aria-label', 'Ver ' + (rep.nombre_archivo || 'imagen') + ' en tamaño ampliado');
-                fileIcon.innerHTML = '<i class="fa-solid fa-file-image" aria-hidden="true"></i>';
-                fileIcon.onclick = () => openLightbox(rep);
-                card.appendChild(fileIcon);
-            }
-
-            const info = document.createElement('div');
-            info.className = 'replaced-image-info';
-            const title = document.createElement('strong');
-            title.className = 'replaced-image-name';
-            title.textContent = rep.nombre_archivo || (isUnused ? 'Imagen sin uso detectado' : (rep.referencia_texto || 'Imagen reemplazada'));
-            const typeLabel = document.createElement('span');
-            typeLabel.className = 'replaced-image-type ' + (isUnused ? 'is-unused' : 'is-replaced');
-            typeLabel.textContent = isUnused ? 'Sin uso detectado' : 'Reemplazada';
-            const details = document.createElement('span');
-            details.className = 'replaced-image-details';
-            details.textContent = 'ID Drive: ' + (rep.archivo_drive_id || 'No disponible') +
-                (rep.tipo_mime ? ' · ' + rep.tipo_mime : '') +
-                (rep.campo ? ' · Campo: ' + rep.campo : '');
-            const location = document.createElement('span');
-            location.className = 'replaced-image-details';
-            location.textContent = 'Ubicación: ' + (rep.ubicacion_actual || rep.ubicacion_original || 'No disponible');
-            const dateDetails = document.createElement('span');
-            dateDetails.className = 'replaced-image-details';
-            dateDetails.textContent = (isUnused
-                ? 'Detectada: ' + (rep.fecha_deteccion || 'Fecha no disponible') + ' · Creada: ' + (rep.fecha_creacion_drive || 'Fecha no disponible')
-                : 'Reemplazada: ' + (rep.fecha_reemplazo || 'Fecha no disponible') + (rep.referencia_texto ? ' · Referencia: ' + rep.referencia_texto : ''));
-            const statusText = document.createElement('span');
-            statusText.className = 'replaced-image-status';
-            statusText.textContent = 'Estado: ' + statusLabel;
-            const organizationDetails = document.createElement('span');
-            organizationDetails.className = 'replaced-image-details';
-            const organizationStatus = String(rep.estado_organizacion || '');
-            const organizationError = String(rep.error_organizacion || '');
-            const organizationLabels = {
-                organizada: 'Organizada en Imagenes_Sin_Uso',
-                movida_manual: 'Movida manualmente',
-                pendiente: 'Pendiente de organización',
-                error: 'Error de organización',
-                bloqueada: 'Organización bloqueada',
-                no_confirmada: 'No confirmada'
-            };
-            organizationDetails.textContent = 'Organización: ' +
-                (organizationLabels[organizationStatus] || organizationStatus || 'No registrada') +
-                (organizationError ? ' · ' + organizationError : '');
-            if (organizationError) statusText.title = organizationError;
-            if (currentView === 'list') {
-                info.append(title, statusText);
-            } else {
-                info.append(title, typeLabel, details, location, dateDetails, statusText);
-                if (isUnused) info.append(organizationDetails);
-            }
-            card.appendChild(info);
-
-            const actions = document.createElement('div');
-            actions.className = 'replaced-image-actions';
-
-            const downloadButton = createActionButton('fa-download', 'Descargar', 'btn-secondary', async () => {
-                await runButtonAction(downloadButton, 'Preparando...', async () => {
-                    const response = await routeAction('getReplacedImageDownloadUrl', {
-                        ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo
-                    });
-                    if (!isCurrentRequest()) return;
-                    const anchor = document.createElement('a');
-                    anchor.href = response.downloadUrl;
-                    anchor.rel = 'noopener noreferrer';
-                    anchor.download = response.fileName || rep.nombre_archivo || '';
-                    document.body.appendChild(anchor);
-                    anchor.click();
-                    anchor.remove();
-                    mostrarNotificacion('Se abrió la descarga de ' + (response.fileName || rep.nombre_archivo || 'la imagen') + '.', 'success');
-                });
-            });
-            const canDownloadReplacedImage = normalizeUiRole_(getUiSessionContext_()?.role || "") === "desarrollador";
-            if (canDownloadReplacedImage) actions.appendChild(downloadButton);
-
-            const moveButton = createActionButton('fa-folder-open', 'Mover', 'btn-secondary', async () => {
-                if (!folderSelect || !folderSelect.value) {
-                    alert('No hay una carpeta destino seleccionada.');
-                    return;
-                }
-                const selectedOption = folderSelect.options[folderSelect.selectedIndex];
-                const targetName = selectedOption ? selectedOption.textContent : 'la carpeta seleccionada';
-                if (!confirm('¿Mover "' + (rep.nombre_archivo || 'esta imagen') + '" a "' + targetName + '"?')) return;
-                await runButtonAction(moveButton, 'Moviendo...', async () => {
-                    const response = await routeAction('moveReplacedImage', {
-                        ...getDeveloperSessionPayload(),
-                        id_reemplazo: rep.id_reemplazo,
-                        targetFolderId: folderSelect.value
-                    });
-                    if (!isCurrentRequest()) return;
-                    mostrarNotificacion(response.message || 'Imagen movida correctamente.', 'success');
-                    await loadData();
-                });
-            });
-            moveButton.disabled = !canManage;
-            actions.appendChild(moveButton);
-
-            if (!isUnused && ['historica', 'restablecida'].includes(status)) {
-                const recoverButton = createActionButton('fa-clock-rotate-left', 'Restaurar', 'btn-primary', async () => {
-                    if (!confirm('¿Restaurar esta imagen al campo ' + (rep.campo || 'registrado') + '? La imagen actualmente activa pasará al historial.')) return;
-                    await runButtonAction(recoverButton, 'Restaurando...', async () => {
-                        const response = await routeAction('recoverReplacedImage', {
-                            ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo
-                        });
-                        if (!isCurrentRequest()) return;
-                        mostrarNotificacion(response.message || 'Imagen histórica restablecida.', 'success');
-                        await loadData();
-                    });
-                });
-                recoverButton.disabled = !canManage;
-                actions.appendChild(recoverButton);
-            }
-
-            const deleteButton = createActionButton('fa-trash', 'Enviar a papelera', 'btn-danger', async () => {
-                const description = isUnused
-                    ? '¿Enviar esta imagen sin uso a la papelera de Google Drive?'
-                    : '¿Enviar esta imagen reemplazada a la papelera de Google Drive? La restauración histórica dejará de estar disponible mientras permanezca allí.';
-                if (!confirm(description + ' El servidor volverá a validar las referencias y la ubicación.')) return;
-                await runButtonAction(deleteButton, 'Enviando...', async () => {
-                    const response = await routeAction('deleteReplacedImage', {
-                        ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo
-                    });
-                    if (!isCurrentRequest()) return;
-                    mostrarNotificacion(response.message || 'Imagen enviada a papelera.', 'success');
-                    await loadData();
-                });
-            });
-            deleteButton.disabled = !canTrash;
-            actions.appendChild(deleteButton);
-
-            if (status === 'en_papelera' || status === 'requiere_revision') {
-                const restoreTrashButton = createActionButton('fa-trash-arrow-up', 'Restaurar de papelera', 'btn-primary', async () => {
-                    if (!confirm('¿Restaurar este archivo en Google Drive? Esta acción no volverá a asociarlo automáticamente a un campo del Spreadsheet.')) return;
-                    await runButtonAction(restoreTrashButton, 'Restaurando...', async () => {
-                        const response = await routeAction('restoreReplacedImageFromTrash', {
-                            ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo
-                        });
-                        if (!isCurrentRequest()) return;
-                        mostrarNotificacion(response.message || 'Archivo restaurado desde papelera.', 'success');
-                        await loadData();
-                    });
-                });
-                restoreTrashButton.disabled = !canRestoreFromTrash;
-                actions.appendChild(restoreTrashButton);
-            }
-
-            if (status === 'en_papelera' || status === 'eliminacion_pendiente' || status === 'requiere_revision') {
-                const permanentDeleteButton = createActionButton('fa-trash-can', status === 'eliminacion_pendiente' ? 'Verificar eliminación' : 'Eliminar definitivamente', 'btn-danger', async () => {
-                    const warning = status === 'eliminacion_pendiente'
-                        ? '¿Verificar y finalizar la eliminación definitiva de este archivo?'
-                        : 'Esta acción es irreversible. ¿Eliminar definitivamente el archivo de Google Drive?';
-                    if (!confirm(warning + ' El servidor volverá a comprobar que no existan referencias activas.')) return;
-                    await runButtonAction(permanentDeleteButton, 'Eliminando...', async () => {
-                        const response = await routeAction('permanentlyDeleteReplacedImage', {
-                            ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo
-                        });
-                        if (!isCurrentRequest()) return;
-                        mostrarNotificacion(response.message || 'Eliminación definitiva verificada.', 'success');
-                        await loadData();
-                    });
-                });
-                permanentDeleteButton.disabled = !canPermanentlyDelete;
-                actions.appendChild(permanentDeleteButton);
-            }
-
-            if (status === 'requiere_revision') {
-                const markInUseButton = createActionButton('fa-shield-halved', 'Marcar en uso', 'btn-secondary', async () => {
-                    if (!confirm('¿Marcar esta imagen como en uso? Quedará protegida frente a la organización automática y las acciones de eliminación.')) return;
-                    await runButtonAction(markInUseButton, 'Protegiendo...', async () => {
-                        const response = await routeAction('markReplacedImageInUse', {
-                            ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo
-                        });
-                        if (!isCurrentRequest()) return;
-                        mostrarNotificacion(response.message || 'Imagen marcada en uso.', 'success');
-                        await loadData();
-                    });
-                });
-                markInUseButton.disabled = !schemaReady || referenceCheckStatus !== 'verified';
-                actions.appendChild(markInUseButton);
-            }
-
-            card.appendChild(actions);
-            listContainer.appendChild(card);
-        });
-
-        if (cachedReview.length) {
-            const reviewSection = document.createElement("section");
-            reviewSection.className = "replaced-images-review";
-            const heading = document.createElement("h4");
-            heading.textContent = "Registros que requieren revisión (" + cachedReview.length + ")";
-            reviewSection.appendChild(heading);
-            cachedReview.forEach(item => {
-                const row = document.createElement("article");
-                row.className = "replaced-image-card replaced-image-review-card";
-                const info = document.createElement("div");
-                info.className = "replaced-image-info";
-                const title = document.createElement("strong");
-                title.textContent = item.nombre_archivo || ("Fila " + item.rowNumber);
-                const identifier = document.createElement("span");
-                identifier.className = "replaced-image-details";
-                identifier.textContent = "Fila " + item.rowNumber + " · ID: " + (item.id_reemplazo || "Sin ID") +
-                    " · Estado: " + (item.estado || "Sin estado");
-                const reason = document.createElement("span");
-                reason.className = "replaced-image-status";
-                reason.textContent = "Motivo: " + (item.reason || "Registro no verificable.");
-                info.append(title, identifier, reason);
-                if (item.reconciliationUrl) {
-                    const reconcileButton = document.createElement("button");
-                    reconcileButton.type = "button";
-                    reconcileButton.className = "btn btn-secondary";
-                    reconcileButton.textContent = "Abrir filas para reconciliación manual";
-                    reconcileButton.onclick = () => window.open(item.reconciliationUrl, "_blank", "noopener");
-                    info.appendChild(reconcileButton);
-                }
-                row.appendChild(info);
-                reviewSection.appendChild(row);
-            });
-            listContainer.appendChild(reviewSection);
-        }
+    const getSelectedItems = () => visibleItems.filter(item => selectedIds.has(String(item.id_reemplazo || "")));
+    const updateSelectionToolbar = () => {
+        const selected = getSelectedItems();
+        const capabilities = selected.map(item => getReplacedImageCapabilities_(item, schemaReady, referenceCheckStatus, getUiSessionContext_()?.role));
+        const allCanMove = selected.length > 0 && capabilities.every(item => item.canMove);
+        const allCanTrash = selected.length > 0 && capabilities.every(item => item.canTrash);
+        const allCanRestoreFromTrash = selected.length > 0 && capabilities.every(item => item.canRestoreFromTrash);
+        const allCanRecover = selected.length > 0 && capabilities.every(item => item.canRecover);
+        const allVisibleSelected = visibleItems.length > 0 && visibleItems.every(item => selectedIds.has(String(item.id_reemplazo || "")));
+        const someVisibleSelected = visibleItems.some(item => selectedIds.has(String(item.id_reemplazo || "")));
+        if (selectionCount) selectionCount.textContent = selected.length + (selected.length === 1 ? " seleccionada" : " seleccionadas");
+        if (selectAllCheckbox) { selectAllCheckbox.checked = allVisibleSelected; selectAllCheckbox.indeterminate = someVisibleSelected && !allVisibleSelected; selectAllCheckbox.disabled = visibleItems.length === 0; }
+        if (bulkMoveButton) { bulkMoveButton.hidden = !allCanMove; bulkMoveButton.disabled = !folderSelect || !folderSelect.value; }
+        if (bulkTrashButton) { bulkTrashButton.hidden = !allCanTrash; bulkTrashButton.disabled = false; }
+        if (bulkRestoreButton) { bulkRestoreButton.hidden = !(allCanRestoreFromTrash || allCanRecover); bulkRestoreButton.disabled = false; }
+        if (clearSelectionButton) clearSelectionButton.hidden = selected.length === 0;
     };
 
+    const closeMenus = (restoreFocus = false) => {
+        if (!listContainer) return;
+        let focusTarget = null;
+        listContainer.querySelectorAll(".replaced-image-menu").forEach(menu => {
+            const panel = menu.querySelector(".replaced-image-menu-panel");
+            const trigger = menu.querySelector(".replaced-image-menu-trigger");
+            if (panel && !panel.hidden) { panel.hidden = true; if (trigger) trigger.setAttribute("aria-expanded", "false"); focusTarget = trigger || focusTarget; }
+        });
+        if (restoreFocus && focusTarget) focusTarget.focus();
+    };
+    closeMenusHandler = event => { const target = event.target; if (!(target instanceof Element) || !target.closest(".replaced-image-menu")) closeMenus(); };
+    closeMenusKeyHandler = event => { if (event.key === "Escape") closeMenus(true); };
+    document.addEventListener("click", closeMenusHandler);
+    document.addEventListener("keydown", closeMenusKeyHandler);
+
+    const runBulkOperation = async (button, busyLabel, items, confirmation, operation) => {
+        if (!items.length || !isCurrentRequest() || !confirm(confirmation)) return;
+        const original = button.innerHTML, failures = []; let succeeded = 0;
+        button.disabled = true;
+        button.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><span>' + busyLabel + '</span>';
+        try {
+            for (let index = 0; index < items.length; index++) {
+                if (!isCurrentRequest()) return;
+                if (selectionCount) selectionCount.textContent = "Procesando " + (index + 1) + " de " + items.length + "...";
+                const item = items[index];
+                try { await operation(item); succeeded++; }
+                catch (error) { failures.push({ id: String(item.id_reemplazo || ""), name: item.nombre_archivo || "Imagen", message: String(error && error.message || error) }); }
+            }
+            if (!isCurrentRequest()) return;
+            selectedIds.clear(); failures.forEach(item => selectedIds.add(item.id));
+            await loadData();
+            if (!isCurrentRequest()) return;
+            if (failures.length) { mostrarNotificacion(succeeded + " procesadas; " + failures.length + " requieren revisión.", "warning"); if (selectionCount) selectionCount.title = failures.map(item => item.name + ": " + item.message).join("\n"); }
+            else { if (selectionCount) selectionCount.removeAttribute("title"); mostrarNotificacion(succeeded + " imágenes procesadas correctamente.", "success"); }
+        } finally { if (button.isConnected && isCurrentRequest()) { button.disabled = false; button.innerHTML = original; updateSelectionToolbar(); } }
+    };
+
+    const renderList = (filterText = "") => {
+        if (!isCurrentRequest() || !listContainer) return;
+        listContainer.innerHTML = ""; listContainer.className = "replaced-images-list view-" + currentView;
+        if (!schemaReady || referenceCheckStatus !== "verified") {
+            const warning = document.createElement("div"); warning.className = "replaced-images-empty";
+            warning.textContent = schemaWarnings.length ? schemaWarnings.join(" ") : "No se pudo verificar el esquema o las referencias. Las acciones permanecen deshabilitadas.";
+            listContainer.appendChild(warning);
+            if (schemaStatus === "migration_required" || schemaStatus === "not_initialized") {
+                const migrateButton = document.createElement("button"); migrateButton.type = "button"; migrateButton.className = "btn btn-primary replaced-images-schema-migrate";
+                migrateButton.textContent = schemaStatus === "not_initialized" ? "Inicializar historial" : "Migrar esquema";
+                migrateButton.onclick = async () => {
+                    if (!isCurrentRequest()) return; migrateButton.disabled = true; migrateButton.textContent = "Verificando esquema...";
+                    try { await routeAction("migrateReplacedImagesSchema", getDeveloperSessionPayload()); if (!isCurrentRequest()) return; mostrarNotificacion("El esquema del historial fue verificado.", "success"); await loadData(); }
+                    catch (error) { if (isCurrentRequest()) alert(error.message || String(error)); }
+                    finally { if (migrateButton.isConnected && isCurrentRequest()) { migrateButton.disabled = false; migrateButton.textContent = schemaStatus === "not_initialized" ? "Inicializar historial" : "Migrar esquema"; } }
+                }; listContainer.appendChild(migrateButton);
+            }
+        }
+        const query = String(filterText || "").toLowerCase().trim();
+        const filtered = cachedReplaced.filter(item => !query || [item.nombre_archivo, item.referencia_texto, item.campo, item.archivo_drive_id, item.registro_id, item.ubicacion_actual, item.ubicacion_original, item.origen_registro, item.estado, item.estado_organizacion, item.error_organizacion].some(value => String(value || "").toLowerCase().includes(query)));
+        visibleItems = filtered;
+        const visibleIds = new Set(filtered.map(item => String(item.id_reemplazo || "")));
+        selectedIds.forEach(id => { if (!visibleIds.has(id)) selectedIds.delete(id); });
+        if (!filtered.length) { const empty = document.createElement("div"); empty.className = "replaced-images-empty"; empty.textContent = "No hay registros válidos que coincidan con el filtro."; listContainer.appendChild(empty); }
+        filtered.forEach((rep, index) => {
+            const capabilities = getReplacedImageCapabilities_(rep, schemaReady, referenceCheckStatus, getUiSessionContext_()?.role);
+            const { isUnused, status } = capabilities;
+            const statusLabel = isUnused ? (status === "sin_uso_detectado" ? "Sin uso detectado" : status.replace(/_/g, " ")) : (status === "historica" ? "Reemplazada" : status.replace(/_/g, " "));
+            const card = document.createElement("article"); card.className = "replaced-image-card" + (currentView === "list" ? " replaced-image-card-list" : "") + (selectedIds.has(String(rep.id_reemplazo || "")) ? " is-selected" : "");
+            const cardToolbar = document.createElement("div"); cardToolbar.className = "replaced-image-card-toolbar";
+            const selectLabel = document.createElement("label"); selectLabel.className = "replaced-image-select"; selectLabel.title = "Seleccionar " + (rep.nombre_archivo || "imagen");
+            const selectCheckbox = document.createElement("input"); selectCheckbox.type = "checkbox"; selectCheckbox.checked = selectedIds.has(String(rep.id_reemplazo || "")); selectCheckbox.setAttribute("aria-label", "Seleccionar " + (rep.nombre_archivo || "imagen"));
+            selectCheckbox.onchange = () => { const id = String(rep.id_reemplazo || ""); if (selectCheckbox.checked) selectedIds.add(id); else selectedIds.delete(id); card.classList.toggle("is-selected", selectCheckbox.checked); updateSelectionToolbar(); };
+            selectLabel.appendChild(selectCheckbox); cardToolbar.appendChild(selectLabel);
+            const menuWrapper = document.createElement("div"); menuWrapper.className = "replaced-image-menu";
+            const menuButton = document.createElement("button"); menuButton.type = "button"; menuButton.className = "replaced-image-menu-trigger"; menuButton.innerHTML = '<i class="fa-solid fa-ellipsis-vertical" aria-hidden="true"></i>';
+            menuButton.title = "Más acciones"; menuButton.setAttribute("aria-label", "Más acciones para " + (rep.nombre_archivo || "imagen")); menuButton.setAttribute("aria-haspopup", "menu"); menuButton.setAttribute("aria-expanded", "false");
+            const menuPanel = document.createElement("div"); menuPanel.className = "replaced-image-menu-panel"; menuPanel.id = "replaced-image-menu-" + index; menuPanel.hidden = true;
+            menuPanel.setAttribute("role", "menu"); menuPanel.setAttribute("aria-label", "Acciones para " + (rep.nombre_archivo || "imagen")); menuButton.setAttribute("aria-controls", menuPanel.id);
+            menuButton.onclick = event => { event.stopPropagation(); const shouldOpen = menuPanel.hidden; closeMenus(); if (shouldOpen) { menuPanel.hidden = false; menuButton.setAttribute("aria-expanded", "true"); const firstAction = menuPanel.querySelector("button"); if (firstAction) firstAction.focus(); } };
+            menuWrapper.append(menuButton, menuPanel); cardToolbar.appendChild(menuWrapper);
+            const addMenuAction = (icon, label, busyLabel, handler, danger = false) => {
+                const button = document.createElement("button"); button.type = "button"; button.className = "replaced-image-menu-item" + (danger ? " is-danger" : ""); button.setAttribute("role", "menuitem");
+                const iconNode = document.createElement("i"); iconNode.className = "fa-solid " + icon; iconNode.setAttribute("aria-hidden", "true");
+                const textNode = document.createElement("span"); textNode.textContent = label; button.append(iconNode, textNode);
+                button.onclick = event => { event.stopPropagation(); closeMenus(); void runButtonAction(button, busyLabel, handler); }; menuPanel.appendChild(button);
+            };
+            if (capabilities.canDownload) addMenuAction("fa-download", "Descargar", "Preparando...", async () => {
+                const response = await routeAction("getReplacedImageDownloadUrl", { ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo }); if (!isCurrentRequest()) return;
+                const anchor = document.createElement("a"); anchor.href = response.downloadUrl; anchor.rel = "noopener noreferrer"; anchor.download = response.fileName || rep.nombre_archivo || ""; document.body.appendChild(anchor); anchor.click(); anchor.remove(); mostrarNotificacion("Se abrió la descarga de " + (response.fileName || rep.nombre_archivo || "la imagen") + ".", "success");
+            });
+            if (capabilities.canMove) addMenuAction("fa-folder-open", "Mover", "Moviendo...", async () => {
+                if (!folderSelect || !folderSelect.value) { alert("No hay una carpeta destino seleccionada."); return; }
+                const option = folderSelect.options[folderSelect.selectedIndex], targetName = option ? option.textContent : "la carpeta seleccionada";
+                if (!confirm("¿Mover \"" + (rep.nombre_archivo || "esta imagen") + "\" a \"" + targetName + "\"?")) return;
+                const response = await routeAction("moveReplacedImage", { ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo, targetFolderId: folderSelect.value }); if (!isCurrentRequest()) return; mostrarNotificacion(response.message || "Imagen movida correctamente.", "success"); await loadData();
+            });
+            if (capabilities.canRecover) addMenuAction("fa-clock-rotate-left", "Restaurar al campo", "Restaurando...", async () => {
+                if (!confirm("¿Restaurar esta imagen al campo " + (rep.campo || "registrado") + "? La imagen actualmente activa pasará al historial.")) return;
+                const response = await routeAction("recoverReplacedImage", { ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo }); if (!isCurrentRequest()) return; mostrarNotificacion(response.message || "Imagen histórica restablecida.", "success"); await loadData();
+            });
+            if (capabilities.canRestoreFromTrash) addMenuAction("fa-trash-arrow-up", "Restaurar de papelera", "Restaurando...", async () => {
+                if (!confirm("¿Restaurar este archivo en Google Drive? No volverá a asociarse automáticamente a un campo del Spreadsheet.")) return;
+                const response = await routeAction("restoreReplacedImageFromTrash", { ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo }); if (!isCurrentRequest()) return; mostrarNotificacion(response.message || "Archivo restaurado desde papelera.", "success"); await loadData();
+            });
+            if (capabilities.canTrash) addMenuAction("fa-trash", "Enviar a papelera", "Enviando...", async () => {
+                const description = isUnused ? "¿Enviar esta imagen sin uso a la papelera de Google Drive?" : "¿Enviar esta imagen reemplazada a la papelera? La restauración histórica quedará suspendida mientras esté allí.";
+                if (!confirm(description + " El servidor volverá a validar las referencias y la ubicación.")) return;
+                const response = await routeAction("deleteReplacedImage", { ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo }); if (!isCurrentRequest()) return; mostrarNotificacion(response.message || "Imagen enviada a papelera.", "success"); await loadData();
+            }, true);
+            if (capabilities.canPermanentlyDelete) addMenuAction("fa-trash-can", status === "eliminacion_pendiente" ? "Verificar eliminación" : "Eliminar definitivamente", "Eliminando...", async () => {
+                const warning = status === "eliminacion_pendiente" ? "¿Verificar y finalizar la eliminación definitiva de este archivo?" : "Esta acción es irreversible. ¿Eliminar definitivamente el archivo de Google Drive?";
+                if (!confirm(warning + " El servidor volverá a comprobar que no existan referencias activas.")) return;
+                const response = await routeAction("permanentlyDeleteReplacedImage", { ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo }); if (!isCurrentRequest()) return; mostrarNotificacion(response.message || "Eliminación definitiva verificada.", "success"); await loadData();
+            }, true);
+            if (capabilities.canMarkInUse) addMenuAction("fa-shield-halved", "Marcar en uso", "Protegiendo...", async () => {
+                if (!confirm("¿Marcar esta imagen como en uso? Quedará protegida frente a la organización automática y las acciones de eliminación.")) return;
+                const response = await routeAction("markReplacedImageInUse", { ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo }); if (!isCurrentRequest()) return; mostrarNotificacion(response.message || "Imagen marcada en uso.", "success"); await loadData();
+            });
+            menuButton.disabled = menuPanel.childElementCount === 0; if (menuButton.disabled) menuButton.title = "Sin acciones disponibles"; card.appendChild(cardToolbar);
+            const previewButton = document.createElement("button"); previewButton.type = "button"; previewButton.className = currentView === "grid" ? "replaced-image-preview" : "replaced-image-list-thumb";
+            previewButton.title = "Ver imagen ampliada"; previewButton.setAttribute("aria-label", "Ver " + (rep.nombre_archivo || "imagen") + " en tamaño ampliado");
+            const image = document.createElement("img"); image.src = getImageUrl(rep.url_visualizacion || rep.url_anterior || rep.archivo_drive_id, currentView === "grid" ? IMG_SIZE_MEDIUM : IMG_SIZE_SMALL);
+            image.alt = rep.nombre_archivo || "Imagen de Drive"; image.loading = "lazy"; image.decoding = "async"; image.onerror = () => { image.onerror = null; image.src = "https://placehold.co/400x300/cccccc/333333?text=Vista+no+disponible"; };
+            previewButton.appendChild(image); previewButton.onclick = () => openLightbox(rep); card.appendChild(previewButton);
+            const info = document.createElement("div"); info.className = "replaced-image-info";
+            const title = document.createElement("strong"); title.className = "replaced-image-name"; title.textContent = rep.nombre_archivo || (isUnused ? "Imagen sin uso detectado" : (rep.referencia_texto || "Imagen reemplazada"));
+            const typeLabel = document.createElement("span"); typeLabel.className = "replaced-image-type " + (isUnused ? "is-unused" : "is-replaced"); typeLabel.textContent = isUnused ? "Sin uso detectado" : "Reemplazada";
+            const details = document.createElement("span"); details.className = "replaced-image-details"; details.textContent = (rep.tipo_mime || "Imagen") + " · ID: " + (rep.archivo_drive_id || "No disponible") + (rep.campo ? " · Campo: " + rep.campo : "");
+            const location = document.createElement("span"); location.className = "replaced-image-details"; location.textContent = "Ubicación: " + (rep.ubicacion_actual || rep.ubicacion_original || "No disponible");
+            const dateDetails = document.createElement("span"); dateDetails.className = "replaced-image-details"; dateDetails.textContent = (isUnused ? "Detectada: " + (rep.fecha_deteccion || "Fecha no disponible") : "Reemplazada: " + (rep.fecha_reemplazo || "Fecha no disponible"));
+            const statusText = document.createElement("span"); statusText.className = "replaced-image-status"; statusText.textContent = "Estado: " + statusLabel;
+            const organizationDetails = document.createElement("span"); organizationDetails.className = "replaced-image-details";
+            const organizationStatus = String(rep.estado_organizacion || ""), organizationError = String(rep.error_organizacion || "");
+            const organizationLabels = { organizada: "Organizada en Imagenes_Sin_Uso", movida_manual: "Movida manualmente", pendiente: "Pendiente de organización", error: "Error de organización", bloqueada: "Organización bloqueada", no_confirmada: "No confirmada" };
+            organizationDetails.textContent = "Organización: " + (organizationLabels[organizationStatus] || organizationStatus || "No registrada") + (organizationError ? " · " + organizationError : ""); if (organizationError) statusText.title = organizationError;
+            if (currentView === "list") info.append(title, typeLabel, location, dateDetails, statusText); else info.append(title, typeLabel, details, location, dateDetails, statusText);
+            if (isUnused && (currentView === "grid" || organizationError)) info.append(organizationDetails);
+            card.appendChild(info); listContainer.appendChild(card);
+        });
+        if (cachedReview.length) {
+            const reviewSection = document.createElement("section"); reviewSection.className = "replaced-images-review";
+            const heading = document.createElement("h4"); heading.textContent = "Registros que requieren revisión (" + cachedReview.length + ")"; reviewSection.appendChild(heading);
+            cachedReview.forEach(item => {
+                const row = document.createElement("article"); row.className = "replaced-image-card replaced-image-review-card";
+                const info = document.createElement("div"); info.className = "replaced-image-info";
+                const title = document.createElement("strong"); title.textContent = item.nombre_archivo || ("Fila " + item.rowNumber);
+                const identifier = document.createElement("span"); identifier.className = "replaced-image-details"; identifier.textContent = "Fila " + item.rowNumber + " · ID: " + (item.id_reemplazo || "Sin ID") + " · Estado: " + (item.estado || "Sin estado");
+                const reason = document.createElement("span"); reason.className = "replaced-image-status"; reason.textContent = "Motivo: " + (item.reason || "Registro no verificable."); info.append(title, identifier, reason);
+                if (item.reconciliationUrl) { const reconcileButton = document.createElement("button"); reconcileButton.type = "button"; reconcileButton.className = "btn btn-secondary"; reconcileButton.textContent = "Abrir filas para reconciliación manual"; reconcileButton.onclick = () => window.open(item.reconciliationUrl, "_blank", "noopener"); info.appendChild(reconcileButton); }
+                row.appendChild(info); reviewSection.appendChild(row);
+            }); listContainer.appendChild(reviewSection);
+        }
+        updateSelectionToolbar();
+    };
     const setView = async (view) => {
         currentView = view;
         if (listViewBtn) listViewBtn.setAttribute('aria-pressed', String(view === 'list'));
@@ -7041,6 +6930,10 @@ export async function openReplacedImagesModal() {
         const historyManager = window.overlayHistory;
         if (historyManager && historyManager.has(replacedOverlayId)) historyManager.close(replacedOverlayId);
         else {
+            if (closeMenusHandler) document.removeEventListener("click", closeMenusHandler);
+            if (closeMenusKeyHandler) document.removeEventListener("keydown", closeMenusKeyHandler);
+            selectedIds.clear();
+            visibleItems = [];
             replacedImagesModalGeneration_ += 1;
             closeReplacedImagesLightbox_(true);
             cachedReplaced = [];
@@ -7054,10 +6947,16 @@ export async function openReplacedImagesModal() {
             modal.style.display = 'none';
         }
     };
-    if (filterInput) filterInput.oninput = () => renderList(filterInput.value);
+    if (filterInput) filterInput.oninput = () => { selectedIds.clear(); renderList(filterInput.value); };
     if (refreshBtn) refreshBtn.onclick = () => { loadData(); loadFolders(); };
     if (listViewBtn) listViewBtn.onclick = () => setView('list');
     if (gridViewBtn) gridViewBtn.onclick = () => setView('grid');
+    if (selectAllCheckbox) selectAllCheckbox.onchange = () => { visibleItems.forEach(item => { const id = String(item.id_reemplazo || ""); if (selectAllCheckbox.checked) selectedIds.add(id); else selectedIds.delete(id); }); renderList(filterInput ? filterInput.value : ""); };
+    if (clearSelectionButton) clearSelectionButton.onclick = () => { selectedIds.clear(); renderList(filterInput ? filterInput.value : ""); };
+    if (folderSelect) folderSelect.onchange = updateSelectionToolbar;
+    if (bulkMoveButton) bulkMoveButton.onclick = () => { const items = getSelectedItems(); if (!folderSelect || !folderSelect.value) { alert("Selecciona una carpeta destino."); return; } const option = folderSelect.options[folderSelect.selectedIndex], targetName = option ? option.textContent : "la carpeta seleccionada"; void runBulkOperation(bulkMoveButton, "Moviendo...", items, "¿Mover " + items.length + " imágenes a " + targetName + "? El servidor validará cada archivo por separado.", async item => { await routeAction("moveReplacedImage", { ...getDeveloperSessionPayload(), id_reemplazo: item.id_reemplazo, targetFolderId: folderSelect.value }); }); };
+    if (bulkTrashButton) bulkTrashButton.onclick = () => { const items = getSelectedItems(); void runBulkOperation(bulkTrashButton, "Enviando...", items, "¿Enviar " + items.length + " imágenes a la papelera de Google Drive? Cada archivo se volverá a validar antes del movimiento.", async item => { await routeAction("deleteReplacedImage", { ...getDeveloperSessionPayload(), id_reemplazo: item.id_reemplazo }); }); };
+    if (bulkRestoreButton) bulkRestoreButton.onclick = () => { const items = getSelectedItems(); const allFromTrash = items.length > 0 && items.every(item => getReplacedImageCapabilities_(item, schemaReady, referenceCheckStatus, getUiSessionContext_()?.role).canRestoreFromTrash); const confirmation = allFromTrash ? "¿Restaurar " + items.length + " archivos desde la papelera de Drive? No se asociarán automáticamente a campos del Spreadsheet." : "¿Restaurar " + items.length + " imágenes históricas en sus campos? Las imágenes actualmente activas pasarán al historial."; void runBulkOperation(bulkRestoreButton, "Restaurando...", items, confirmation, async item => { const capabilities = getReplacedImageCapabilities_(item, schemaReady, referenceCheckStatus, getUiSessionContext_()?.role); const action = capabilities.canRestoreFromTrash ? "restoreReplacedImageFromTrash" : "recoverReplacedImage"; await routeAction(action, { ...getDeveloperSessionPayload(), id_reemplazo: item.id_reemplazo }); }); };
 
     if (createFolderBtn) createFolderBtn.onclick = async () => {
         const name = newFolderInput ? newFolderInput.value.trim() : '';

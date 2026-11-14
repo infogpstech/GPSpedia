@@ -78,6 +78,7 @@ runGroup('32','ADMIN',()=>{
  runCli('P2 auditoría de identificadores sin escritura','JS/Tests/IdentifierAudit.mjs');
  runCli('P2 motor de migración de IDs, lotes, huellas y rollback','JS/Tests/IdentifierMigration.mjs');
  runCli('P1 coordinación de actividad y sesiones protegidas por servicio','JS/Tests/SessionActivityCoordination.mjs');
+ runCli('GP-IMG-UX-01 biblioteca de imágenes: selección, menús y vistas','JS/Tests/ReplacedImagesLibraryUX.mjs');
  runCli('P2 asignador backend de IDs LogosMarca','JS/Tests/LogoIdIntegrity.mjs');
 });
 runGroup('33','FEEDBACK',()=>{

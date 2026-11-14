@@ -523,39 +523,41 @@
 </div>
 
 <!-- MODAL DE GESTIÓN DEL INVENTARIO E HISTORIAL DE IMÁGENES -->
-<div id="replaced-images-modal" class="info-modal" style="display: none; z-index: 2600;">
+<div id="replaced-images-modal" class="info-modal" style="display: none; z-index: 2600;" role="dialog" aria-modal="true" aria-labelledby="replaced-images-title">
     <div class="info-modal-content replaced-images-modal-content">
-        <span class="info-close-btn" id="close-replaced-images-modal">&times;</span>
-        <h2><i class="fa-solid fa-images"></i> Gestor de Imágenes sin Uso</h2>
-        <p class="replaced-images-description">
-            Administra imágenes que ya no están referenciadas en las hojas del Spreadsheet que contienen imágenes. La auditoría recorre el árbol de Drive «Cortes» y contrasta los archivos con las referencias de todas las hojas; no mueve archivos durante el escaneo. Al confirmar el inventario, las imágenes sin uso elegibles se trasladan a «Cortes/Imagenes_Sin_Uso». Los movimientos posteriores y el envío a papelera siguen sujetos a acciones explícitas.
-        </p>
-
+        <button type="button" class="info-close-btn" id="close-replaced-images-modal" aria-label="Cerrar biblioteca de imágenes">&times;</button>
+        <h2 id="replaced-images-title"><i class="fa-solid fa-images"></i> Biblioteca de imágenes</h2>
+        <p class="replaced-images-description">Historial e imágenes sin uso detectado en Drive/Cortes. Las acciones se habilitan solo cuando el servidor confirma que el archivo no tiene referencias activas.</p>
         <div class="replaced-images-toolbar">
-            <input type="text" id="filter-replaced-images-input" placeholder="Filtrar por archivo, ubicación o ID..." class="dev-input">
-            <div class="replaced-images-view-switch" role="group" aria-label="Tipo de vista">
-                <button type="button" id="btn-replaced-view-list" class="btn btn-secondary" aria-pressed="false" title="Vista de lista"><i class="fa-solid fa-list"></i> Lista</button>
-                <button type="button" id="btn-replaced-view-grid" class="btn btn-secondary" aria-pressed="true" title="Vista de cuadrícula"><i class="fa-solid fa-grip"></i> Cuadrícula</button>
+            <input type="text" id="filter-replaced-images-input" placeholder="Buscar por nombre, ubicación o ID..." class="dev-input" aria-label="Buscar imágenes">
+            <button type="button" id="btn-refresh-replaced-images" class="btn btn-secondary replaced-images-icon-button" aria-label="Actualizar biblioteca" title="Actualizar"><i class="fa-solid fa-arrows-rotate"></i></button>
+            <div class="replaced-images-view-switch" role="group" aria-label="Vista de imágenes">
+                <button type="button" id="btn-replaced-view-grid" class="btn btn-secondary" aria-label="Vista de cuadrícula" aria-pressed="true" title="Cuadrícula"><i class="fa-solid fa-grip"></i></button>
+                <button type="button" id="btn-replaced-view-list" class="btn btn-secondary" aria-label="Vista de lista" aria-pressed="false" title="Lista"><i class="fa-solid fa-list"></i></button>
             </div>
-            <button type="button" id="btn-refresh-replaced-images" class="btn btn-secondary"><i class="fa-solid fa-arrows-rotate"></i> Actualizar</button>
         </div>
-
+        <div class="replaced-images-selection-toolbar" id="replaced-images-selection-toolbar">
+            <label class="replaced-images-select-all"><input type="checkbox" id="replaced-images-select-all" aria-label="Seleccionar todas las imágenes visibles"><span>Seleccionar visibles</span></label>
+            <span id="replaced-images-selection-count" class="replaced-images-selection-count" aria-live="polite">0 seleccionadas</span>
+            <div class="replaced-images-selection-actions">
+                <button type="button" id="btn-replaced-bulk-move" class="btn btn-secondary" hidden disabled><i class="fa-solid fa-folder-open" aria-hidden="true"></i> Mover</button>
+                <button type="button" id="btn-replaced-bulk-restore" class="btn btn-primary" hidden disabled><i class="fa-solid fa-rotate-left" aria-hidden="true"></i> Restaurar</button>
+                <button type="button" id="btn-replaced-bulk-trash" class="btn btn-danger" hidden disabled><i class="fa-solid fa-trash" aria-hidden="true"></i> Papelera</button>
+                <button type="button" id="btn-replaced-clear-selection" class="btn btn-secondary" hidden><i class="fa-solid fa-xmark" aria-hidden="true"></i> Cancelar</button>
+            </div>
+        </div>
         <div class="replaced-images-folder-toolbar">
-            <label for="replaced-images-target-folder">Mover a carpeta:</label>
-            <select id="replaced-images-target-folder" class="dev-input">
-                <option value="">Cargando carpetas...</option>
-            </select>
-            <input type="text" id="replaced-images-new-folder-name" class="dev-input" placeholder="Nombre de la nueva carpeta">
-            <button type="button" id="btn-create-replaced-images-folder" class="btn btn-primary"><i class="fa-solid fa-folder-plus"></i> Crear carpeta</button>
+            <label for="replaced-images-target-folder">Destino:</label>
+            <select id="replaced-images-target-folder" class="dev-input"><option value="">Cargando carpetas...</option></select>
+            <input type="text" id="replaced-images-new-folder-name" class="dev-input" placeholder="Nueva carpeta" aria-label="Nombre de nueva carpeta">
+            <button type="button" id="btn-create-replaced-images-folder" class="btn btn-primary"><i class="fa-solid fa-folder-plus" aria-hidden="true"></i> Crear carpeta</button>
         </div>
         <div id="replaced-images-folder-status" class="replaced-images-folder-status" aria-live="polite"></div>
-
-        <div id="replaced-images-list-container" class="replaced-images-list view-grid" aria-live="polite">
+        <div id="replaced-images-list-container" class="replaced-images-list view-grid" aria-live="polite" aria-label="Archivos de imágenes">
             <div class="replaced-images-empty"><i class="fa-solid fa-spinner fa-spin"></i> Cargando inventario e historial...</div>
         </div>
     </div>
 </div>
-
 <div id="replaced-image-lightbox" class="replaced-image-lightbox" style="display: none;" role="dialog" aria-modal="true" aria-label="Vista ampliada de imagen">
     <div id="replaced-image-lightbox-content" class="replaced-image-lightbox-content">
         <button type="button" id="replaced-image-lightbox-close" class="replaced-image-lightbox-close" aria-label="Cerrar vista ampliada"><i class="fa-solid fa-xmark"></i></button>
