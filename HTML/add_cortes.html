@@ -631,7 +631,7 @@
                 populateSelect('tipoCorte1', dropdowns.tipoDeCorte);
                 populateSelect('configRelay1', dropdowns.configRelay, "Corte a ignición");
             } catch (error) {
-                alert(`Error al cargar datos del formulario: ${error.message}`);
+                showConciseAlert_(`Error al cargar datos del formulario: ${error.message}`);
             } finally {
                 toggleLoading(false);
             }
@@ -857,7 +857,7 @@
                     proceedToStage2(null); // No matches, proceed to create new vehicle
                 }
             } catch (error) {
-                alert(`Error al verificar: ${error.message}`);
+                showConciseAlert_(`Error al verificar: ${error.message}`);
             } finally {
                 isSubmittingStage1 = false;
                 if (btn) btn.classList.remove('btn-loading');
