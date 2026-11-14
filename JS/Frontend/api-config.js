@@ -597,6 +597,9 @@ export async function checkAllServicesHealth(options = {}) {
                                     version,
                                     reportedStatus
                                 };
+                                if (serviceKey === "AUTH" && typeof data.coordinatorConfigured === "boolean") {
+                                    metadata.coordinatorConfigured = data.coordinatorConfigured;
+                                }
                                 if (reportedStatus === "available" || reportedStatus === "online") {
                                     const status = latency >= slowThresholdMs ? "slow" : "online";
                                     result = makeResult(status, startTime, checkedAtMs, {
