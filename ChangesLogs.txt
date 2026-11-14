@@ -1546,3 +1546,11 @@ Rama: GPSpedia2.2.5_work
 - Corregido estado obsoleto de Gefe: la Spreadsheet/lista de opciones ya fue actualizada por el usuario y el código solo reconoce Jefe.
 - Actualizada continuidad inmediata P1–P6 y validaciones externas pendientes.
 ================================================================================
+
+================================================================================
+2026-11-14 — P2 IDs USERS
+- Detección de IDs duplicados case-insensitive en generateNextUserId_.
+- Fixture JS/Tests/users.js sincronizado con Services/users.js.
+- UserIdGenerator 4/4 PASS. CI PASS: 81 suites; 1,215 pruebas; 0 fallos.
+- No se ejecutó ninguna escritura de datos; migración real pendiente de Beta.
+================================================================================
