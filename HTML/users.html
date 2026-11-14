@@ -201,6 +201,12 @@
     </style>
     <link rel="stylesheet" href="../button-system.css">
     <script>
+        function normalizeUserRoleName(value) {
+            const role = String(value || '').trim();
+            const normalized = role.toLowerCase();
+            return normalized === 'gefe' || normalized === 'jefe' ? 'Jefe' : role;
+        }
+
         function showConciseAlert_(message) {
             const detail = String(message || 'No se pudo completar la operación.');
             let hostUi = null;
@@ -379,8 +385,8 @@ document.addEventListener('DOMContentLoaded', () => {
     displayProfile();
     setupEventListeners();
 
-    const userRole = (currentUser.Privilegios || '').trim();
-    if (['Desarrollador', 'Gefe', 'Jefe', 'Supervisor'].includes(userRole)) {
+    const userRole = normalizeUserRoleName(currentUser.Privilegios);
+    if (['Desarrollador', 'Jefe', 'Supervisor'].includes(userRole)) {
         document.getElementById('user-management-section').style.display = 'block';
         fetchUsers();
     }
@@ -389,7 +395,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function displayProfile() {
     document.getElementById('profile-username').textContent = currentUser.Nombre_Usuario;
     document.getElementById('profile-fullname').textContent = currentUser.Nombre_Completo; // Corregido
-    document.getElementById('profile-role').textContent = currentUser.Privilegios;
+    document.getElementById('profile-role').textContent = normalizeUserRoleName(currentUser.Privilegios);
 }
 
 async function postToAction(action, payload = {}) {
@@ -549,8 +555,8 @@ function openUserModal(user = null) {
     const roleSelect = document.getElementById('role');
     roleSelect.innerHTML = '';
     let availableRoles = [];
-    if (currentUser.Privilegios === 'Desarrollador') availableRoles = ['Desarrollador', 'Gefe', 'Supervisor', 'Tecnico', 'Tecnico_exterior'];
-    else if (currentUser.Privilegios === 'Gefe' || currentUser.Privilegios === 'Jefe') availableRoles = ['Supervisor', 'Tecnico'];
+    if (normalizeUserRoleName(currentUser.Privilegios) === 'Desarrollador') availableRoles = ['Desarrollador', 'Jefe', 'Supervisor', 'Tecnico', 'Tecnico_exterior'];
+    else if (normalizeUserRoleName(currentUser.Privilegios) === 'Jefe') availableRoles = ['Supervisor', 'Tecnico'];
     else if (currentUser.Privilegios === 'Supervisor') availableRoles = ['Tecnico'];
 
     availableRoles.forEach(role => {
@@ -559,7 +565,7 @@ function openUserModal(user = null) {
         option.textContent = role;
         roleSelect.appendChild(option);
     });
-    if(user) roleSelect.value = user.Privilegios;
+    if(user) roleSelect.value = normalizeUserRoleName(user.Privilegios);
     const passwordGroup=document.getElementById('user-password-group');
     const isDeveloper=String(currentUser.Privilegios||'').trim().toLowerCase()==='desarrollador';
     if(passwordGroup)passwordGroup.style.display=user&&(!isDeveloper||String(user.ID)===String(currentUser.ID))?'none':'block';
