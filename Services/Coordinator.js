@@ -52,7 +52,17 @@ function coordinatorPolicy_(service, operation) {
         },
         ADMIN: {
             sessionActivity: { sharedWrite: ["ACTIVE_SESSIONS"] },
-            migrateReplacedImagesSchema: { read: identityRead, write: ["IMAGE_INVENTORY"] },
+            // Las consultas y el escáner comparten la actualización cooperativa de LastActivityAt.
+            // Sus lecturas prolongadas no deben quedar etiquetadas como ADMIN/sessionActivity.
+            getReplacedImages: { read: ["USERS", "CORTES", "DRIVE", "IMAGE_INVENTORY", "TUTORIAL", "FEEDBACK", "LOGOS"], sharedWrite: ["ACTIVE_SESSIONS"] },
+            getDriveStorage: { read: ["USERS", "DRIVE"], sharedWrite: ["ACTIVE_SESSIONS"] },
+            getCortesImageFolders: { read: ["USERS", "DRIVE"], sharedWrite: ["ACTIVE_SESSIONS"] },
+            auditDriveImagesInCortes: {
+                read: ["USERS", "CORTES", "DRIVE", "IMAGE_INVENTORY", "TUTORIAL", "FEEDBACK", "LOGOS"],
+                sharedWrite: ["ACTIVE_SESSIONS"],
+                write: ["IMAGE_AUDIT_STATE"]
+            },
+            migrateReplacedImagesSchema: { read: ["USERS"], sharedWrite: ["ACTIVE_SESSIONS"], write: ["IMAGE_INVENTORY"] },
             backupDatabase: { maintenance: true },
             backupDrive: { read: identityRead, write: ["DRIVE"] },
             restoreDatabase: { maintenance: true },
