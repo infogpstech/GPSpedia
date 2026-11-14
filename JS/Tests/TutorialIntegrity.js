@@ -116,7 +116,7 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
         assert.equal(result.status, "success");
         assert.equal(result.referenceId, "tut-" + operationId);
         assert.equal(h.state.inserted, true);
-        assert.deepEqual(h.sheet.data[0], headers);
+        assert.equal(JSON.stringify(h.sheet.data[0]), JSON.stringify(headers));
         assert.equal(JSON.stringify(h.sheet.data[1]), JSON.stringify(["tut-" + operationId, base.tema, "", base.comoIdentificarlo,
             base.dondeEncontrarlo, base.detalles, "", base.userName]));
         assert.equal(h.state.lockWaits, 1);
