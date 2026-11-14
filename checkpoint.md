@@ -1298,7 +1298,7 @@ Continuar con la revisión integral local de las tareas implementadas y sus regr
 
 ## Continuidad — incidencias de acceso Developer e historial/escáner (2026-11-14)
 
-**HEAD de la última escritura registrada:** 93074d7b5da8c99238ee9d86e0de0d68e8a52577 en GPSpedia2.2.5_work. La rama base GPSpedia2.2.5 no se modificó.
+**HEAD funcional antes de los registros documentales:** 93074d7b5da8c99238ee9d86e0de0d68e8a52577 en GPSpedia2.2.5_work. El plan Beta AUG-156 quedó registrado en el commit documental 3b10bc9322b726194b09d3e338876fb40a9a001b. La rama base GPSpedia2.2.5 no se modificó.
 
 ### Cambios implementados
 - Services/Coordinator.js: políticas específicas para getReplacedImages, getDriveStorage, getCortesImageFolders y auditDriveImagesInCortes. Las lecturas comparten únicamente la actualización cooperativa de actividad; el escáner serializa su estado lógico y reserva lecturas de los recursos que inspecciona.
@@ -1320,3 +1320,9 @@ Continuar con la revisión integral local de las tareas implementadas y sus regr
 3. Probar la carga simultánea del inventario/historial y el escáner; comprobar reanudación del cursor, bloqueo de doble escáner y espera de escrituras incompatibles.
 4. Reproducir acceso Developer con login nuevo y restaurado; confirmar el modal y rechazos de roles no autorizados.
 5. No modificar deployments ni recursos productivos.
+
+
+### Preparación Beta actualizada
+- Se añadió AUG-156 al final de lista_beta_parte2.txt (140,827 caracteres; debajo del umbral de rotación).
+- Incluye comandos de sincronización seguros al inicio, verificación de acceso Developer, carga simultánea de inventario/escáner, exclusión de doble escáner, protección de escrituras y migración idempotente del historial.
+- Requiere Coordinator y ADMIN Beta compatibles. No se ejecutó ninguna prueba externa ni se modificaron propiedades o deployments.
