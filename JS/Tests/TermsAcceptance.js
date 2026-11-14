@@ -9,7 +9,7 @@ const apiConfigSource = readFileSync(new URL('../../api-config.js', import.meta.
 const uiSource = readFileSync(new URL('../../ui.js', import.meta.url), 'utf8');
 const htmlSource = readFileSync(new URL('../../index.html', import.meta.url), 'utf8');
 const sandbox = { SpreadsheetApp: { flush() {} }, console, Date, JSON, Object, String, Number, Array };
-runInNewContext(authSource + '\n;globalThis.__termsHelpers = { parseTermsAcceptance_, ensureTermsAcceptanceColumn_ };', sandbox);
+runInNewContext(authSource + '\n;globalThis.__termsHelpers = { parseTermsAcceptance_, ensureTermsAcceptanceColumn_, ensureSessionTermsAcceptanceColumn_ };', sandbox);
 const helpers = sandbox.__termsHelpers;
 let passed = 0;
 function test(name, operation) {
@@ -30,6 +30,20 @@ function fakeUsersSheet(header = '', value = '') {
         }
     };
 }
+
+function fakeActiveSessionsSheet(header = '', value = '') {
+    let storedHeader = header, storedValue = value;
+    return {
+        getLastRow() { return storedValue ? 2 : 1; },
+        getRange(row, column) {
+            return {
+                getValue() { return row === 1 && column === 7 ? storedHeader : (row === 2 && column === 7 ? storedValue : ''); },
+                setValue(next) { if (row === 1 && column === 7) storedHeader = next; else if (row === 2 && column === 7) storedValue = next; },
+                getValues() { return [[storedValue]]; }
+            };
+        }
+    };
+}
 test('celda vacía requiere aceptación', () => assert.deepEqual(plain(helpers.parseTermsAcceptance_('')), { version: '', acceptedAt: '', status: 'pending' }));
 test('aceptación vigente y timestamp válido se reconoce', () => {
     const value = JSON.stringify({ version: '2026-07', acceptedAt: '2026-07-18T12:00:00.000Z', status: 'accepted' });
@@ -45,15 +59,27 @@ test('estado distinto de accepted se rechaza', () => assert.equal(helpers.parseT
 test('crea el encabezado I solo cuando la celda está libre', () => assert.equal(helpers.ensureTermsAcceptanceColumn_(fakeUsersSheet()), 9));
 test('no reemplaza un encabezado diferente', () => assert.throws(() => helpers.ensureTermsAcceptanceColumn_(fakeUsersSheet('OtroCampo')), /otro encabezado/i));
 test('no adopta datos preexistentes bajo encabezado vacío', () => assert.throws(() => helpers.ensureTermsAcceptanceColumn_(fakeUsersSheet('', 'dato existente')), /datos sin encabezado/i));
-test('AUTH y su espejo de pruebas incluyen la acción y la columna', () => {
+test('crea SessionTermsAcceptance en G sin tocar el esquema de ActiveSessions', () => assert.equal(helpers.ensureSessionTermsAcceptanceColumn_(fakeActiveSessionsSheet()), 7));
+test('no reemplaza encabezados ni datos existentes en G', () => {
+    assert.throws(() => helpers.ensureSessionTermsAcceptanceColumn_(fakeActiveSessionsSheet('OtroCampo')), /otro encabezado/i);
+    assert.throws(() => helpers.ensureSessionTermsAcceptanceColumn_(fakeActiveSessionsSheet('', 'dato existente')), /datos sin encabezado/i);
+});
+test('AUTH y su espejo incluyen aceptación por sesión y lectura no mutadora', () => {
     assert.match(authSource, /case 'acceptTerms'/); assert.match(authTestSource, /case 'acceptTerms'/);
     assert.match(authSource, /TermsAcceptance: 9/); assert.match(authTestSource, /TermsAcceptance: 9/);
+    assert.match(authSource, /SessionTermsAcceptance: 7/); assert.match(authTestSource, /SessionTermsAcceptance: 7/);
+    assert.match(authSource, /function validateSessionReadOnly_/);
+    assert.match(authSource, /sessionCell\.setValue\(serialized\)/);
+    assert.doesNotMatch(authSource.match(/function isSharedMutationAction_\(action\) \{([\s\S]*?)\n\}/)[1], /validateSession/);
 });
 test('USERS mantiene la columna privada fuera de la escritura de perfil', () => {
     assert.match(usersSource, /TermsAcceptance: 9/); assert.match(usersTestSource, /TermsAcceptance: 9/);
     assert.match(usersSource, /Solo permitir cambios en Nombre_Completo/);
 });
-test('API dirige acceptTerms a AUTH', () => assert.match(apiConfigSource, /'acceptTerms': 'AUTH'/));
+test('API dirige acceptTerms a AUTH sin ejecutar un touchSession redundante', () => {
+    assert.match(apiConfigSource, /'acceptTerms': 'AUTH'/);
+    assert.match(apiConfigSource, /!\['login','validateSession','touchSession','acceptTerms','logout'\]\.includes\(action\)/);
+});
 test('UI no usa el indicador local antiguo y valida la versión del markup', () => {
     assert.doesNotMatch(uiSource, /gpsepedia_terms_accepted/);
     assert.match(htmlSource, /data-terms-version="2026-07"/); assert.match(htmlSource, /id="terms-error"/);
