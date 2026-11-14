@@ -487,6 +487,25 @@ function runSharedMutationCoordinatorTests() {
         expectThrow_(() => coordinatorPolicy_("FEEDBACK", "assignCollaborator"), "política");
     });
 
+    test_("FEEDBACK touch de actividad serializa sesiones con logout y revocaciones AUTH", function() {
+        const policy = coordinatorPolicy_("FEEDBACK", "sessionActivity");
+        assert_(policy.writeResources.length === 1 && policy.writeResources[0] === "ACTIVE_SESSIONS",
+            "La lectura protegida debe reservar escritura exclusiva de ActiveSessions.");
+        const r = createRuntime_();
+        const activity = acquire_(r, "FEEDBACK", "sessionActivity");
+        assert_(activity.status === "success", "La acción protegida debe adquirir lease de actividad.");
+        const logout = acquire_(r, "AUTH", "logout");
+        assert_(logout.status === "error" && logout.code === "busy",
+            "Logout no debe invalidar la sesión mientras una operación autenticada la actualiza.");
+        const profile = acquire_(r, "USERS", "updateProfile");
+        assert_(profile.status === "error" && profile.code === "busy",
+            "Cambios de perfil no deben competir con la actualización de actividad.");
+        release_(r, "FEEDBACK", "sessionActivity", activity.token);
+        const retry = acquire_(r, "AUTH", "logout");
+        assert_(retry.status === "success", "Logout debe continuar tras terminar la operación protegida.");
+        release_(r, "AUTH", "logout", retry.token);
+    });
+
     test_("AUTH acceptTerms serializa la aceptación con las mutaciones de identidad", function() {
         const r = createRuntime_();
         const policy = coordinatorPolicy_("AUTH", "acceptTerms");
