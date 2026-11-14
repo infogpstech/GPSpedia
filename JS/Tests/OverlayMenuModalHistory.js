@@ -161,6 +161,30 @@ test('abrir Inbox y Developer reutiliza el rol de sesión sin llamar nuevamente 
     assert.doesNotMatch(guard, /validateActiveSession|routeAction\(/);
     assert.doesNotMatch(guard, /uiRoleValidationInFlight_/);
 });
+
+test('el acceso Developer comprueba localmente el rol antes de abrir el modal', () => {
+    const source = readFileSync(new URL('../Frontend/ui.js', import.meta.url), 'utf8');
+    const start = source.indexOf('export async function openDevTools(');
+    const end = source.indexOf('\n}', start);
+    const open = source.slice(start, end);
+    assert.match(open, /ensureUiSessionRole_\(\['desarrollador'\]\)/);
+    assert.match(open, /return openDevToolsModal_/);
+    assert.doesNotMatch(open, /await\s/);
+});
+
+test('Inbox y Dashboard conservan sus allowlists de rol sin solicitudes AUTH al abrir', () => {
+    const source = readFileSync(new URL('../Frontend/ui.js', import.meta.url), 'utf8');
+    const dashboardStart = source.indexOf('export async function openDashboard()');
+    const dashboardEnd = source.indexOf('\n}', dashboardStart);
+    const inboxStart = source.indexOf('export async function openInbox()');
+    const inboxEnd = source.indexOf('\n}', inboxStart);
+    const dashboard = source.slice(dashboardStart, dashboardEnd);
+    const inbox = source.slice(inboxStart, inboxEnd);
+    assert.match(dashboard, /ensureUiSessionRole_\(\['desarrollador', 'jefe', 'supervisor'\]\)/);
+    assert.match(inbox, /ensureUiSessionRole_\(\['desarrollador', 'jefe', 'supervisor', 'tecnico', 'tecnico_exterior'\]\)/);
+    assert.doesNotMatch(dashboard + inbox, /validateActiveSession|routeAction\(/);
+    assert.doesNotMatch(dashboard + inbox, /await\s+ensureUiSessionRole_/);
+});
 test('los errores extensos se registran para Developer y se acortan en los avisos', () => {
     const source = readFileSync(new URL('../Frontend/ui.js', import.meta.url), 'utf8');
     assert.match(source, /developerDiagnosticQueue_/);
