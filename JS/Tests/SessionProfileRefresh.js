@@ -4,19 +4,19 @@ function runSessionProfileRefreshTests(sources) {
  const assert=(v,m)=>{if(!v)throw Error(m||'Aserción fallida');},equal=(a,b,m)=>{if(a!==b)throw Error(m||'Esperado '+b+', recibido '+a);};
  const run=(name,fn)=>{try{fn();passed++;results.push({name,status:'PASS'});}catch(e){failed++;results.push({name,status:'FAIL',message:String(e.message||e)});}};
  const extract=(s,n,end)=>{const i=s.indexOf('function '+n+'(');assert(i>=0,'No se encontró '+n);const j=end?s.indexOf(end,i+10):s.indexOf('\nfunction ',i+10);assert(!end||j>i,'No se encontró cierre '+n);return s.slice(i,j>i?j:s.length).trim();};
- const uc={ID:1,Nombre_Usuario:2,Password:3,Privilegios:4,Telefono:5,Correo_Electronico:6,Nombre_Completo:7,SessionToken:8,TermsAcceptance:9},sc={ID_Usuario:1,Usuario:2,ActiveSessions:3,date:4,Logs:5,LastActivityAt:6};
+ const uc={ID:1,Nombre_Usuario:2,Password:3,Privilegios:4,Telefono:5,Correo_Electronico:6,Nombre_Completo:7,SessionToken:8,TermsAcceptance:9},sc={ID_Usuario:1,Usuario:2,ActiveSessions:3,date:4,Logs:5,LastActivityAt:6,SessionTermsAcceptance:7};
  const norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
  const active=r=>Boolean(r&&String(r[1]||'').trim()&&!String(r[1]||'').startsWith('__deleted__:')&&['desarrollador','gefe','jefe','supervisor','tecnico','tecnico_exterior'].includes(norm(r[3])));
  function server(source,o={}) {
   const users=[['ID','Usuario','Password','Privilegios','Telefono','Correo','Nombre','Token','Terms'],...(o.users||[['U1','user1','HASH','Tecnico','1111','old@test','Old name','token-1','{"version":"2026-07","acceptedAt":"2026-11-01","status":"accepted"}']]).map(r=>r.slice())];
-  const sessions=[['ID','Usuario','Token','Date','Logs','LastActivity'],...(o.sessions||[['U1','user1','token-1',new Date('2026-11-01T10:00:00Z'),'','2026-11-01T10:00:00Z']]).map(r=>r.slice())];
+  const sessions=[['ID','Usuario','Token','Date','Logs','LastActivity','SessionTermsAcceptance'],...(o.sessions||[['U1','user1','token-1',new Date('2026-11-01T10:00:00Z'),'','2026-11-01T10:00:00Z','{"version":"2026-07","acceptedAt":"2026-11-01","status":"accepted"}']]).map(r=>r.slice())];
   const sheet=rows=>({getDataRange:()=>({getValues:()=>rows.map(r=>r.slice())}),getRange:(r,c)=>({getValue:()=>rows[r-1][c-1],setValue:v=>{rows[r-1][c-1]=v;}})});
   const us=sheet(users),ss=sheet(sessions),deps={
    LockService:{getScriptLock:()=>({waitLock:()=>{},releaseLock:()=>{}})},
    SpreadsheetApp:{openById:()=>({getSheetByName:n=>n==='Users'?us:n==='ActiveSessions'?ss:null}),flush:()=>{}},
    SPREADSHEET_ID:'ISOLATED_TEST_ONLY',SHEET_NAMES:{USERS:'Users',ACTIVE_SESSIONS:'ActiveSessions'},COLS_USERS:uc,COLS_ACTIVE_SESSIONS:sc,
    normalizeUserId:v=>String(v??'').trim(),isActiveAuthUserRecord:active,hasPendingRoleRevocation_:()=>o.pending===true,reconcileRoleRevocationUnderLock_:()=>({pending:false}),
-   getSessionExpirationStatus_:r=>({expired:false,createdAt:new Date(r[3])}),ensureActiveSessionsActivityColumn_:()=>{},ensureTermsAcceptanceColumn_:()=>{},
+   getSessionExpirationStatus_:r=>({expired:false,createdAt:new Date(r[3])}),ensureActiveSessionsActivityColumn_:()=>{},ensureSessionTermsAcceptanceColumn_:()=>{},ensureTermsAcceptanceColumn_:()=>{},
    parseTermsAcceptance_:v=>JSON.parse(String(v)),revokeLoginRequestForTokenUnderLock_:()=>({pending:false})
   };
   const fn=new Function(...Object.keys(deps),extract(source,'validateAndTouchSession_')+'\nreturn validateAndTouchSession_;')(...Object.values(deps));
@@ -24,6 +24,7 @@ function runSessionProfileRefreshTests(sources) {
  }
  services.forEach(([label,source])=>{
   run(label+': devuelve perfil actual de Users',()=>{const r=server(source,{users:[['U1','user1','HASH','Supervisor','2222','new@test','Updated name','token-1','{"version":"2026-07","acceptedAt":"2026-11-01","status":"accepted"}']]})('token-1','U1');equal(r.valid,true);equal(r.profile.ID,'U1');equal(r.profile.Nombre_Completo,'Updated name');equal(r.profile.Privilegios,'Supervisor');equal(r.profile.Telefono,'2222');equal(r.profile.Correo_Electronico,'new@test');});
+  run(label+': usa la aceptación de la sesión y no la aceptación global del usuario',()=>{const r=server(source,{users:[['U1','user1','HASH','Tecnico','','','Name','token-1','{"version":"2026-07","acceptedAt":"2026-11-01","status":"accepted"}']],sessions:[['U1','user1','token-1',new Date('2026-11-01T10:00:00Z'),'','2026-11-01T10:00:00Z',''] ]})('token-1','U1');equal(r.valid,true);equal(r.termsAcceptance.status,'pending');});
   run(label+': no expone contraseña ni token',()=>{const r=server(source)('token-1','U1');equal(r.valid,true);assert(!('Password'in r.profile)&&!('SessionToken'in r.profile)&&!('sessionToken'in r));});
   run(label+': rechaza ID solicitado distinto al token',()=>{const r=server(source)('token-1','U2');equal(r.valid,false);assert(!r.profile);});
   run(label+': rechaza ID de usuario duplicado',()=>{const r=server(source,{users:[['U1','one','HASH','Tecnico','','','One','token-1','{}'],['U1','two','HASH','Supervisor','','','Two','token-1','{}']]})('token-1','U1');equal(r.valid,false);assert(!r.profile);});
