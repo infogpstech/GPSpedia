@@ -30,6 +30,26 @@ check("Las solicitudes históricas siguen separadas y conservan sus contenedores
     assert.match(html, /id="inbox-detail"/);
     assert.match(ui, /loadAndRenderInbox\(\{ context, reset:/);
 });
+check("Las solicitudes históricas usan navegación móvil de una sola vista y regreso accesible", () => {
+    assert.match(ui, /is-request-detail-open/);
+    assert.match(ui, /mobileBack = makeElement\('button', 'inbox-mobile-back', 'Volver a solicitudes'\)/);
+    assert.match(ui, /itemDiv\.setAttribute\('role', 'button'\)/);
+    assert.match(ui, /itemDiv\.addEventListener\('keydown'/);
+    assert.match(css, /#inbox-modal-content\.is-request-detail-open[\\s\\S]*#inbox-detail/);
+});
+check("Las solicitudes exponen una barra contextual con responder, resolver y borrar", () => {
+    assert.match(ui, /actionToolbar\.setAttribute\('role', 'toolbar'\)/);
+    assert.match(ui, /actionToolbar\.appendChild\(replyButton\)/);
+    assert.match(ui, /actionToolbar\.appendChild\(deleteButton\)/);
+    assert.match(css, /\.inbox-action-toolbar/);
+    assert.match(css, /#inbox-action-toolbar/);
+});
+check("Las aprobaciones de vídeo no ofrecen una eliminación genérica no soportada", () => {
+    const start = ui.indexOf('if (isVideoItem) {', ui.indexOf('export function renderInboxDetail('));
+    const end = ui.indexOf('} else {', start);
+    assert.ok(start >= 0 && end > start);
+    assert.doesNotMatch(ui.slice(start, end), /inbox-delete-btn/);
+});
 check("Los mensajes y nombres se insertan como texto, no como HTML", () => {
     assert.match(ui, /inboxCreateNode_\("p", "inbox-message-body", message\.body \|\| ""\)/);
     assert.doesNotMatch(ui, /innerHTML\s*=\s*[^;]*(message\.body|body\.value)/);
