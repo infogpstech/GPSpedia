@@ -529,3 +529,16 @@ Si cualquier comprobación falla, no continuar ni descartar cambios locales. Con
 
 ### GP-UX-03 / GP-PWA-01
 - Se conserva la implementación móvil de Inbox y recarga PWA registrada en la adenda anterior. La validación visual/dispositivos reales y la actualización de la PWA instalada siguen reservadas a Beta.
+## Adenda — diagnóstico de Inbox Técnico y coordinador FEEDBACK (2026-11-14)
+
+### GP-RBAC-02 — Inbox para usuarios técnicos
+**Estado: IMPLEMENTACIÓN LOCAL DE DIAGNÓSTICO COMPLETADA; VALIDACIÓN DE CONFIGURACIÓN BETA PENDIENTE.**
+
+- Verificado en código: `openInbox()` admite `tecnico` y `tecnico_exterior`; el backend de conversaciones incluye ambos roles en `INBOX_ACTIVE_ROLES_`. La pestaña de solicitudes históricas queda oculta para técnicos; la consulta al Desarrollador es la acción de inicio que se les presenta.
+- Verificado en contratos: los destinatarios de un técnico se limitan a usuarios Desarrollador. Las operaciones de conversación mantienen autenticación de usuario, participación y leases del coordinador; no se amplió RBAC.
+- El mensaje «Servicio no autorizado para el coordinador compartido» se origina en la autenticación de servicio de Coordinator, antes de evaluar permisos del usuario.
+- Se añadió `coordinatorConfigured` al diagnóstico `GET ?debug=true` de FEEDBACK. Solo indica presencia/formato local de URL y secreto y disponibilidad del cliente; no verifica coincidencia con el secreto remoto. El panel Developer conserva esta señal y advierte si falta configuración.
+- Pruebas AUG-115: 16/16 PASS. GitHub Actions run `43631181979`: SUCCESS, 95 suites / 1,407 pruebas / 0 fallos.
+- Pendiente Beta: comprobar `GPSpedia_COORDINATOR_URL` y `GPSpedia_COORDINATOR_SECRET` del proyecto FEEDBACK contra `GPSpedia_COORDINATOR_SECRET_FEEDBACK` del coordinador del mismo entorno; verificar que FEEDBACK tenga `SharedMutationClient.js` vigente y deployment actualizado. Después probar Técnico/Técnico exterior y rechazo de acciones privilegiadas.
+
+**Importante:** no se puede corregir la coincidencia real del secreto desde el repositorio. No se modificaron ScriptProperties, deployments ni datos productivos.
