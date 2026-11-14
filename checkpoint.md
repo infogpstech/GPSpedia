@@ -1265,3 +1265,17 @@ Comprobar el Pages build más reciente; después, seguir con reproducción visua
 
 ### Siguiente tarea
 Continuar con GP-RBAC-02: verificar contratos y autenticación de servicio FEEDBACK para Inbox Técnico. El código admite `tecnico` y `tecnico_exterior`; el mensaje «Servicio no autorizado para el coordinador compartido» se genera en `Coordinator.authenticate_()` cuando FEEDBACK no está permitido o falta/no coincide su secreto. Añadir diagnóstico no sensible del estado de configuración si aporta valor, sin exponer secretos ni modificar ScriptProperties/deployments. En paralelo, completar revisión de acciones y permisos de Inbox y mantener las pruebas de dispositivos para Beta.
+## Continuidad — diagnóstico de Inbox Técnico / FEEDBACK Coordinator (2026-11-14)
+
+**Hallazgo confirmado en código:** el mensaje «Servicio no autorizado para el coordinador compartido» se genera en `Services/Coordinator.js` durante autenticación del servicio. FEEDBACK debe estar permitido y presentar un secreto que coincida con `GPSpedia_COORDINATOR_SECRET_FEEDBACK` del coordinador del mismo entorno. No es un mensaje RBAC del usuario.
+
+**Soporte Técnico verificado:** `openInbox()` admite `tecnico` y `tecnico_exterior`; `Services/InboxConversations.js` incluye ambos en roles activos. La UI oculta solicitudes históricas y permite el flujo de consulta al Desarrollador; el backend limita sus destinatarios a Desarrollador. Las conversaciones directas mantienen verificación de identidad, participación y leases coordinadas. No se amplió RBAC.
+
+**Mejora local de diagnóstico:** FEEDBACK `GET ?debug=true` devuelve `coordinatorConfigured` booleano, basado en formato de URL, longitud mínima del secreto local y disponibilidad del cliente. El panel Developer muestra el estado. El booleano positivo no verifica la coincidencia remota; no se exponen valores, URL ni tokens. Documentado en `Services/COORDINATOR_SETUP.md`.
+
+**Pruebas:** AUG-115 `InboxRoleContract` 16/16 PASS; GitHub Actions run `43631181979` SUCCESS, 95 suites / 1,407 pruebas / 0 fallos.
+
+**Pendiente Beta:** cotejar las propiedades del proyecto FEEDBACK con el coordinador Beta, confirmar `SharedMutationClient.js` y deployment vigente, probar lectura/envío/archivo con Técnico y Técnico exterior, y confirmar rechazo de operaciones privilegiadas. No se modificaron ScriptProperties, deployments ni datos.
+
+### Siguiente acción
+Revisar los defectos restantes del backlog vigente en orden de dependencias: validar en pruebas aisladas la tarjeta Tutorial/PyS y el flujo de Inbox móvil ya implementados; después completar la verificación local integral del ciclo de actualización PWA y seguridad de interacción. Las comprobaciones que requieren navegador móvil, PWA instalada, Apps Script, Spreadsheet o secretos externos quedan en Beta y no deben simularse.
