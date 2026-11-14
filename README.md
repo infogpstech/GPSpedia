@@ -18,10 +18,9 @@ GPSpedia/
 ├── HTML/              # páginas secundarias
 ├── JS/
 │   ├── Frontend/      # módulos del navegador
-│   ├── Services/      # fuentes JavaScript de servicios
 │   └── Tests/         # suites y runner Node.js
+├── Services/          # microservicios Apps Script y auxiliares de backend
 ├── Images/            # logos e iconos
-├── Services/          # documentación y auxiliares no-JS
 └── service-worker.js  # raíz para conservar el alcance PWA
 ```
 
@@ -124,7 +123,7 @@ La confidencialidad y la integridad no dependen de ocultar el frontend: los serv
 
 ## 5. Visibilidad de fuentes y separación de servicios
 
-El repositorio de GitHub `infogpstech/GPSpedia` tiene visibilidad **pública**. Por lo tanto, todos los archivos versionados en la rama publicada, incluidas las fuentes que se encuentren dentro de `JS/Services/`, son accesibles para quienes puedan consultar el repositorio. Las fuentes backend se mantienen aquí para desarrollo, revisión y pruebas; su presencia no demuestra que un deployment o endpoint haya sido creado, actualizado o publicado desde GitHub.
+El repositorio de GitHub `infogpstech/GPSpedia` tiene visibilidad **pública**. Por lo tanto, todos los archivos versionados en la rama publicada, incluidas las fuentes que se encuentren dentro de `Services/`, son accesibles para quienes puedan consultar el repositorio. Las fuentes backend se mantienen aquí para desarrollo, revisión y pruebas; su presencia no demuestra que un deployment o endpoint haya sido creado, actualizado o publicado desde GitHub.
 
 La visibilidad del repositorio y la ejecución de los microservicios son aspectos distintos. Los deployments, endpoints, permisos de Google y datos de Spreadsheet/Drive se administran en sus plataformas respectivas. No se debe inferir su estado ni sus permisos a partir del código versionado.
 

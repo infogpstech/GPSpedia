@@ -2,14 +2,14 @@
 
 ## Componentes
 
-- `JS/Services/Coordinator.js`: servicio Apps Script independiente. Mantiene las leases en ScriptProperties y no accede a Spreadsheet ni Drive.
-- `JS/Services/SharedMutationClient.js`: cliente servidor-a-servidor que debe incluirse en cada proyecto AUTH, USERS, WRITE, ADMIN, FEEDBACK y UTILITIES.
+- `Services/Coordinator.js`: servicio Apps Script independiente. Mantiene las leases en ScriptProperties y no accede a Spreadsheet ni Drive.
+- `Services/SharedMutationClient.js`: cliente servidor-a-servidor que debe incluirse en cada proyecto AUTH, USERS, WRITE, ADMIN, FEEDBACK y UTILITIES.
 - Los routers de esos servicios delegan las acciones mutadoras al coordinador antes de ejecutar sus handlers. Los locks locales existentes se conservan.
 - En FEEDBACK, `createInboxConversation`, `sendInboxMessage`, `markInboxRead` y `archiveInboxConversation` reservan lectura de `USERS/ACTIVE_SESSIONS` y escritura de `FEEDBACK`; las lecturas de Inbox no adquieren lease mutadora.
 
 ## Configuración de cada entorno
 
-Crear un proyecto Apps Script independiente para el coordinador. Copiar únicamente `JS/Services/Coordinator.js`, crear un deployment como aplicación web y conservar su URL `/exec`. No reemplazar deployments actuales de los servicios.
+Crear un proyecto Apps Script independiente para el coordinador. Copiar únicamente `Services/Coordinator.js`, crear un deployment como aplicación web y conservar su URL `/exec`. No reemplazar deployments actuales de los servicios.
 
 En ScriptProperties del proyecto coordinador, crear seis secretos independientes:
 
@@ -22,7 +22,7 @@ En ScriptProperties del proyecto coordinador, crear seis secretos independientes
 
 Cada secreto debe tener al menos 32 caracteres aleatorios. Generar uno distinto por servicio. No guardar los valores en el repositorio, código fuente, navegador, hojas de cálculo ni logs.
 
-En el proyecto Apps Script de cada servicio, incluir `JS/Services/SharedMutationClient.js` y crear estas dos ScriptProperties:
+En el proyecto Apps Script de cada servicio, incluir `Services/SharedMutationClient.js` y crear estas dos ScriptProperties:
 
 - `GPSpedia_COORDINATOR_URL`: URL /exec del coordinador correspondiente al mismo entorno.
 - `GPSpedia_COORDINATOR_SECRET`: el secreto específico de ese servicio, idéntico al valor configurado para ese servicio en el coordinador.

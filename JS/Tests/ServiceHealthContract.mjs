@@ -6,13 +6,13 @@ const read = path => readFileSync(new URL(path, root), "utf8");
 const apiSource = read("JS/Frontend/api-config.js");
 const uiSource = read("JS/Frontend/ui.js");
 const backendSources = {
-    AUTH: read("JS/Services/Auth.js"),
-    CATALOG: read("JS/Services/catalog.js"),
-    WRITE: read("JS/Services/write.js"),
-    USERS: read("JS/Services/users.js"),
-    FEEDBACK: read("JS/Services/feedback.js"),
-    UTILITIES: read("JS/Services/Utilities.js"),
-    ADMIN: read("JS/Services/admin.js")
+    AUTH: read("Services/Auth.js"),
+    CATALOG: read("Services/catalog.js"),
+    WRITE: read("Services/write.js"),
+    USERS: read("Services/users.js"),
+    FEEDBACK: read("Services/feedback.js"),
+    UTILITIES: read("Services/Utilities.js"),
+    ADMIN: read("Services/admin.js")
 };
 const contractsMatch = apiSource.match(/export const SERVICE_HEALTH_CONTRACTS = Object\.freeze\((\{[\s\S]*?\})\);/);
 assert.ok(contractsMatch, "No se encontró SERVICE_HEALTH_CONTRACTS.");
