@@ -146,3 +146,17 @@ Evidencia: commits 0bfb340583062891f3438dc12b8ab814520b7629 y ca6bf55564308d13b6
 - El identificador es persistente por origen y perfil de navegador, no una huella física del hardware. Borrar los datos del sitio o usar otro navegador/perfil se considera un dispositivo nuevo.
 
 La rama base `GPSpedia2.2.5` no fue modificada. No se cambiaron deployments ni datos productivos.
+
+
+### Adenda AUD-2026-11-14-04 — validación previa de aceptación en solo lectura
+
+Una revisión adicional del flujo completo detectó que `touchProtectedAuthRequestSession_` seguía llamando a `validateAndTouchSession_` antes de ejecutar `handleAcceptTerms`, lo que actualizaba `LastActivityAt` en ActiveSessions. Aunque la lease ya era cooperativa, esa escritura podía coincidir con otra actualización de actividad.
+
+- Se añadió una ruta específica para `acceptTerms` que usa `validateSessionReadOnly_(token, userId)`. No actualiza `LastActivityAt` ni reconcilia/revoca sesiones desde el preflight.
+- `handleAcceptTerms` vuelve a validar token, identidad, expiración, cuenta y estado de revocación antes de escribir el registro por dispositivo en Users.
+- Las demás mutaciones autenticadas conservan `validateAndTouchSession_` y su actualización de actividad.
+- La clasificación cooperativa de `ACTIVE_SESSIONS` en el coordinador permite la lectura de validación junto a `ADMIN/sessionActivity`, pero sigue generando conflicto con las escrituras exclusivas de identidad/sesión.
+- Prueba de preflight aislada: acceptTerms usa la validación de solo lectura; logout conserva la ruta de validación/actualización normal. PASS.
+- SharedMutationCoordinator: 41/41 PASS; TermsModalAccessibility: 12/12 PASS; parsing/sintaxis de ocho archivos modificados PASS; espejo AUTH sincronizado.
+
+No se ejecutó GitHub Actions completo ni deployment/navegador Beta. La rama base permanece intacta.
