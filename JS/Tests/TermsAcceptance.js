@@ -114,9 +114,15 @@ test('API dirige acceptTerms a AUTH sin enviar una llamada touchSession adiciona
     assert.match(uiSource, /routeAction\('acceptTerms',[\s\S]*?deviceId/);
     assert.doesNotMatch(uiSource, /routeAction\('touchSession'/);
 });
-test('el catálogo espera la aceptación y se carga al confirmar el aviso', () => {
+test('el catálogo espera la aceptación y el renderizado completo se reanuda al confirmar el aviso', () => {
     assert.match(uiSource, /if \(!renderTermsGate_\(user\)\) return;/);
-    assert.match(uiSource, /window\.auth\?\.loadInitialData/);
+    const acceptedAt = uiSource.indexOf('saveDeviceTermsAcceptance(localStorage, userId, deviceId, confirmed)');
+    const resumeAt = uiSource.indexOf('showApp(user) !== true', acceptedAt);
+    const loadAt = uiSource.indexOf('window.auth?.loadInitialData', resumeAt);
+    assert.ok(acceptedAt >= 0 && resumeAt > acceptedAt && loadAt > resumeAt,
+        'Tras persistir la aceptación debe reanudarse showApp antes de cargar el catálogo.');
+    assert.ok(uiSource.includes("welcomeMsg.textContent = `Hola, ${displayName || 'Usuario'}`"));
+    assert.match(uiSource, /const userRole = normalizeUiRole_\(user && user\.Privilegios\)/);
     assert.match(frontendAuthSource, /const appReady = handleLoginSuccess\(result\.user\)/);
     assert.match(frontendAuthSource, /if \(appReady\) loadInitialData\(\)/);
     assert.match(frontendAuthSource, /export async function loadInitialData\([^)]*\)/);
