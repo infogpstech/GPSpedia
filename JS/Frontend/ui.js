@@ -9102,6 +9102,18 @@ export function closeSideMenuAndRun(callback) {
             settled = true;
             if (fallbackTimer !== null) window.clearTimeout(fallbackTimer);
             window.removeEventListener('popstate', onPopState);
+            if (historyManager.has(SIDE_MENU_HISTORY_ID_)) {
+                historyManager.handlePopState({ __gpOverlayStack: [] });
+                if (window.history && typeof window.history.replaceState === 'function') {
+                    const currentHistoryState = window.history.state && typeof window.history.state === 'object'
+                        ? window.history.state
+                        : {};
+                    window.history.replaceState({
+                        ...currentHistoryState,
+                        __gpOverlayStack: historyManager.getStack()
+                    }, '');
+                }
+            }
             if (menu && menu.classList.contains('open')) closeSideMenu(true);
             runCallback().then(resolve);
         };

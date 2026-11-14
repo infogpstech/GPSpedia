@@ -220,8 +220,9 @@ export async function loadInitialData() {
         if (!isCurrentLoad()) return;
 
         // Guardar solo una instantánea que ya se procesó correctamente.
-        offline.saveCatalog(catalogData).catch(e => console.warn("Error guardando catálogo en caché:", e));
-        markCatalogSync_();
+        offline.saveCatalog(catalogData)
+            .then(() => markCatalogSync_())
+            .catch(e => console.warn("Error guardando catálogo en caché:", e));
         catalogLoaded = true;
         setState({ catalogLoadStatus: 'ready', catalogLoadError: null });
 

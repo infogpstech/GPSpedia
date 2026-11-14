@@ -158,3 +158,5 @@ La rama base `GPSpedia2.2.5` no se modifica. No se realizó deployment productiv
 Node CLI completo, GitHub Actions y pruebas Beta de navegación entre index.html, users.html y add_cortes.html; sesión expirada/revocada; conexión intermitente; modales Developer/Inbox; imágenes Drive y PWA instalada.
 
 La rama base GPSpedia2.2.5 no se modifica. No se cambian deployments ni endpoints productivos.
+
+- 2026-11-13 — Ajuste posterior de robustez: el fallback del menú retira también la entrada interna de overlay y sincroniza History.state; el timestamp de catálogo solo se confirma después de guardar la instantánea. Se actualizaron pruebas de overlays para el nuevo modelo de validación AUTH no bloqueante y se corrigieron sus aserciones de política visual.

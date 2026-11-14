@@ -1320,3 +1320,5 @@ Commits: dacc854, 8be5281, f0645b5, 0e02d90, 5c58ed8, 024d604, 6bf5732, 9b2e781.
 - service-worker.js: caché v25. Se agregan pruebas de regresión y comprobaciones de sintaxis al workflow.
 - README.md: documenta el alcance disuasorio y los límites de la política visual.
 ================================================================================
+
+- 2026-11-13 — Ajuste posterior de robustez: el fallback del menú retira también la entrada interna de overlay y sincroniza History.state; el timestamp de catálogo solo se confirma después de guardar la instantánea. Se actualizaron pruebas de overlays para el nuevo modelo de validación AUTH no bloqueante y se corrigieron sus aserciones de política visual.

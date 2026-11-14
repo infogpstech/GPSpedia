@@ -154,19 +154,23 @@ test('Inbox y Developer reutilizan la validación reciente y comparten solicitud
     const source = readFileSync(new URL('../Frontend/ui.js', import.meta.url), 'utf8');
     assert.match(source, /let uiRoleValidationInFlight_ = null/);
     assert.match(source, /authApi\.validateActiveSession\(false\)/);
-    assert.match(source, /await pending\.promise/);
+    assert.doesNotMatch(source, /await pending\.promise/);
+    assert.match(source, /promise\.then\(/);
     assert.doesNotMatch(source, /authApi\.validateActiveSession\(true\)/);
+    assert.match(source, /return current && isCurrentUiSessionContext_\(expected\)/);
 });
 test('Inbox y Developer pueden abrir su interfaz si AUTH está temporalmente indisponible', () => {
     const source = readFileSync(new URL('../Frontend/ui.js', import.meta.url), 'utf8');
-    assert.match(source, /if \(valid === null\)[\s\S]*?isCurrentUiSessionContext_\(expected\)[\s\S]*?return localContext/);
-    assert.match(source, /Las operaciones siguen sujetas a validación del servidor/);
+    assert.match(source, /if \(!authApi \|\| typeof authApi\.validateActiveSession !== 'function'\)[\s\S]*?return expected/);
+    assert.match(source, /if \(valid === null\) logDeveloperDiagnostic_/);
+    assert.match(source, /Las operaciones protegidas seguirán validándose en el servidor/);
 });
 test('un rechazo de red durante la validación tampoco deja bloqueados los modales', () => {
     const source = readFileSync(new URL('../Frontend/ui.js', import.meta.url), 'utf8');
     const guard = source.slice(source.indexOf('async function ensureUiSessionRole_'), source.indexOf('\nfunction getSessionPayload_'));
-    assert.match(guard, /catch \(error\)[\s\S]*?getUiSessionContext_\(\)[\s\S]*?return localContext/);
-    assert.match(guard, /Error temporal al validar AUTH/);
+    assert.match(guard, /promise\.then\([\s\S]*?error =>/);
+    assert.match(guard, /La validación de AUTH se pospuso por una incidencia de conexión/);
+    assert.doesNotMatch(guard, /showGlobalError\('Conexión temporalmente no disponible/);
 });
 test('los errores extensos se registran para Developer y se acortan en los avisos', () => {
     const source = readFileSync(new URL('../Frontend/ui.js', import.meta.url), 'utf8');
