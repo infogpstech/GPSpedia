@@ -546,3 +546,34 @@ Si cualquier comprobación falla, no continuar ni descartar cambios locales. Con
 - Se añadió `AUG-155` al final de `lista_beta_parte2.txt` para verificar aviso por dispositivo, saludo, reacción útil, permisos y tarjeta Tutorial, dimensiones PyS, Inbox Técnico/Coordinator, Inbox móvil, actualización PWA y límites de captura de pantalla.
 - El bloque comienza con comandos seguros de verificación de repositorio/rama, rechazo de árbol sucio, `fetch` y `pull --ff-only`, y muestra el HEAD final, conforme a `NORMAS_DESAROLLO.md`.
 - No se ejecutó ninguna prueba Beta ni se modificaron propiedades, deployments o datos externos.
+
+
+## Adenda — incidencias de acceso Developer y coordinación del historial (2026-11-14)
+
+**Estado general: CORRECCIÓN LOCAL IMPLEMENTADA; VALIDACIÓN COMPLETA Y BETA PENDIENTES.**
+
+### GP-DEV-01 — Acceso al panel Developer
+- [x] Unificar la condición de visibilidad del botón con el contexto autenticado requerido para abrir el panel: ID/id, SessionToken y rol desarrollador.
+- [x] Mostrar un mensaje explicativo si se intenta abrir el panel sin contexto válido; no ampliar permisos ni realizar una validación AUTH adicional.
+- [ ] Reproducir en navegador con login nuevo y sesión restaurada; confirmar apertura del modal y disponibilidad de sus controles.
+- [ ] Confirmar que Técnico, Técnico exterior, Supervisor y Jefe no pueden abrir el panel ni invocar acciones ADMIN.
+
+### GP-ADMIN-01 — Escáner e inventario de imágenes
+- [x] Separar getReplacedImages, getDriveStorage y getCortesImageFolders de la lease genérica ADMIN/sessionActivity.
+- [x] Asignar a auditDriveImagesInCortes una lease propia que conserva actividad de sesión cooperativa y serializa el estado reanudable del escáner.
+- [x] Añadir pruebas de concurrencia para lecturas simultáneas, doble escáner y bloqueo de escrituras incompatibles.
+- [ ] Validar en Beta con Coordinator y ADMIN actualizados que inventario e historial cargan mientras se ejecuta el escáner, sin error de recurso ocupado.
+- [ ] Verificar que el escáner conserva cursor, reintentos idempotentes y recuperación de lotes.
+
+### GP-ADMIN-02 — Inicialización del historial
+- [x] Ajustar la política de migrateReplacedImagesSchema: lectura de USERS, escritura cooperativa de ACTIVE_SESSIONS y escritura exclusiva de IMAGE_INVENTORY.
+- [x] Conservar la validación de sesión Desarrollador, ScriptLock y verificación de encabezados.
+- [ ] Actualizar únicamente los deployments Beta de Coordinator y ADMIN con las versiones compatibles de la rama.
+- [ ] Ejecutar «Inicializar historial» en una Spreadsheet Beta desechable y confirmar idempotencia; no ejecutar contra producción.
+
+### Validación local ejecutada de forma aislada
+- SharedMutationCoordinator: 42/42 PASS.
+- AdminImageScanCoordinatorContract: PASS.
+- SessionUiRoleInvalidation: 15/15 PASS.
+- No se ejecutó el runner Node.js completo ni GitHub Actions desde esta sesión. No se consultaron ni modificaron Apps Script, ScriptProperties, Spreadsheet, Drive o deployments externos.
+- Se añadió AUG-156 a lista_beta_parte2.txt, con preparación segura de repositorio/rama y casos específicos para estos tres problemas.
