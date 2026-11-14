@@ -206,3 +206,5 @@ La acción del **botón integrado de compartir** en el modal es pública para to
 - La descarga en el administrador de imágenes queda limitada al panel Developer y al rol Desarrollador; no modifica la prohibición general de descarga.
 - Pruebas locales cubren diseño responsive, selección simple/múltiple, acciones contextuales, permisos, conciliación idempotente y ayudas contextuales. Las pruebas con Drive/Spreadsheet reales se documentan como validación Beta.
 
+- [x] P1 fase 2 parcial: actualizar `LastActivityAt` dentro de operaciones FEEDBACK autenticadas, incluidas lecturas, con lease compartida frente a logout/revocación. Validación CI: 75 suites, 1,159 pruebas, 0 fallos (2026-11-14).
+- [ ] Extender touch integrado y coordinación a WRITE, USERS y ADMIN; contemplar leases anidadas ADMIN→WRITE y todas las acciones protegidas antes de retirar el preflight frontend.
