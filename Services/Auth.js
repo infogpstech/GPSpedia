@@ -999,7 +999,8 @@ function countActiveDevelopers_(records) {
     }).length;
 }
 function normalizeRoleName(value) {
-    return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+    const normalized = String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+    return normalized === 'gefe' ? 'jefe' : normalized; // Compatibilidad temporal con registros heredados.
 }
 function normalizeUserId(value) {
     return String(value === null || value === undefined ? '' : value).trim();
