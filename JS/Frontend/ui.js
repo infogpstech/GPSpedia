@@ -985,17 +985,25 @@ export async function setOptimizedImage(imgElement, fileId, size = IMG_SIZE_SMAL
     if (!isCurrent()) return;
     const remoteUrl = getImageUrl(cleanId, normalizedSize);
     let localThumbnailAttached = false;
-    const probe = new Image();
-    probe.decoding = 'async';
-    probe.onload = () => {
-        if (!isCurrent() || localThumbnailAttached) return;
-        setSource(remoteUrl);
+    const startRemoteProbe = useCors => {
+        const probe = new Image();
+        probe.decoding = 'async';
+        if (useCors) probe.crossOrigin = 'anonymous';
+        probe.onload = () => {
+            if (!isCurrent() || localThumbnailAttached) return;
+            setSource(remoteUrl);
+        };
+        probe.onerror = () => {
+            if (!isCurrent() || localThumbnailAttached) return;
+            if (useCors) {
+                startRemoteProbe(false);
+                return;
+            }
+            markFailed({ type: 'error' });
+        };
+        probe.src = remoteUrl;
     };
-    probe.onerror = () => {
-        if (!isCurrent() || localThumbnailAttached) return;
-        markFailed({ type: 'error' });
-    };
-    probe.src = remoteUrl;
+    startRemoteProbe(true);
 
     if (cleanId && typeof cleanId === 'string' && !cleanId.startsWith('blob:') &&
         !cleanId.startsWith('data:') && !cleanId.includes('placehold.co')) {
