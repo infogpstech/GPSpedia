@@ -1250,3 +1250,18 @@ Continuar con GP-UX-02: reproducir la ausencia de «Agregar Tutorial» con una s
 
 ### Siguiente acción
 Comprobar el Pages build más reciente; después, seguir con reproducción visual de «Agregar Tutorial» para Desarrollador y de las tarjetas PyS, y validación de Inbox/recarga en Android/iOS. Mantener registrados los pendientes externos AUTH/Coordinator y FEEDBACK sin alterar producción.
+
+## Continuidad — compatibilidad de contexto de sesión y tarjeta Agregar Tutorial (2026-11-14)
+
+**Corrección local:** `getUiSessionContext_()` en `JS/Frontend/ui.js` ahora resuelve el ID mediante `user.ID || user.id`, alineándose con `JS/Frontend/auth.js`, que acepta ambas formas al restaurar una sesión. La función sigue exigiendo `SessionToken` y normaliza el rol desde `Privilegios`.
+
+**Causa del fallo de tarjeta:** el renderizado de Tutoriales condiciona «Agregar Tutorial» a que el contexto local tenga rol `desarrollador`. Las sesiones heredadas con `id` minúscula eran aceptadas por AUTH, pero no producían contexto UI porque el helper solo leía `ID`; la condición de renderizado quedaba falsa. Se mantiene la protección de `openAddTutorialModal()` y la política backend `addTutorial: [Desarrollador]`.
+
+**Pruebas y CI:** AUG-042 `SessionUiRoleInvalidation` 14/14 PASS; GitHub Actions run `43630870843` SUCCESS, 95 suites / 1,404 pruebas / 0 fallos. Se añadió cobertura dinámica para sesiones con `ID`, `id`, normalización de «Técnico» y rechazo de sesiones sin token.
+
+**Registros:** `Auditoría.txt` AUD-2026-11-14-11; `Tareas_Activas.md` actualiza GP-UX-02 y registra validación Beta pendiente; `ChangesLogs.txt` describe el cambio.
+
+**Estado visual diferido:** no se dispone de navegador real en esta sesión. En Beta, comprobar la tarjeta con sesión Desarrollador restaurada y confirmar que Técnico no la ve ni puede invocar `addTutorial`. La tarjeta «Agregar Problema» tiene estructura normalizada y pruebas `PysModalNavigation` 9/9; falta medición visual real.
+
+### Siguiente tarea
+Continuar con GP-RBAC-02: verificar contratos y autenticación de servicio FEEDBACK para Inbox Técnico. El código admite `tecnico` y `tecnico_exterior`; el mensaje «Servicio no autorizado para el coordinador compartido» se genera en `Coordinator.authenticate_()` cuando FEEDBACK no está permitido o falta/no coincide su secreto. Añadir diagnóstico no sensible del estado de configuración si aporta valor, sin exponer secretos ni modificar ScriptProperties/deployments. En paralelo, completar revisión de acciones y permisos de Inbox y mantener las pruebas de dispositivos para Beta.
