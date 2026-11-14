@@ -320,15 +320,15 @@ const FEEDBACK_ACTION_PERMISSIONS = Object.freeze({
     recordLike: null, reportProblem: null, addProblem: null, addSolution: null, addPrevention: null,
     addVehicleToProblem: null, removeVehicleFromProblem: ["Desarrollador"], updatePysItem: ["Desarrollador"],
     updateTutorialItem: ["Desarrollador"], suggestCutChange: null, addTutorial: ["Desarrollador"],
-    getFeedbackItems: ["Desarrollador", "Gefe", "Jefe", "Supervisor"],
-    replyToFeedback: ["Desarrollador", "Gefe", "Jefe", "Supervisor"],
-    markAsResolved: ["Desarrollador", "Gefe", "Jefe", "Supervisor"],
-    deleteFeedbackItem: ["Desarrollador", "Gefe", "Jefe", "Supervisor"],
+    getFeedbackItems: ["Desarrollador", "Jefe", "Supervisor"],
+    replyToFeedback: ["Desarrollador", "Jefe", "Supervisor"],
+    markAsResolved: ["Desarrollador", "Jefe", "Supervisor"],
+    deleteFeedbackItem: ["Desarrollador", "Jefe", "Supervisor"],
     getInboxRecipients: null, getInboxConversations: null, getInboxMessages: null,
     createInboxConversation: null, sendInboxMessage: null, markInboxRead: null, archiveInboxConversation: null,
-    getActivityLogs: ["Desarrollador", "Gefe", "Supervisor"], clearActivityLogs: ["Desarrollador"],
+    getActivityLogs: ["Desarrollador", "Jefe", "Supervisor"], clearActivityLogs: ["Desarrollador"],
     initYouTubeUpload: null, getVideoApprovalByOperation: null, submitVideoForApproval: null,
-    approveVideo: ["Desarrollador", "Gefe", "Supervisor"], rejectVideo: ["Desarrollador", "Gefe", "Supervisor"]
+    approveVideo: ["Desarrollador", "Jefe", "Supervisor"], rejectVideo: ["Desarrollador", "Jefe", "Supervisor"]
 });
 const FEEDBACK_PUBLIC_ACTIONS = new Set(["getPysData", "sendContactForm"]);
 function authorizeFeedbackAction_(action, payload) {
@@ -3048,7 +3048,7 @@ function removeRejectedVideoFromDestination_(videoData) {
 
 function handleApproveVideoUnlocked_(payload) {
     const { itemId, userName, userRole } = payload || {};
-    const allowedRoles = ["Desarrollador", "Gefe", "Supervisor"];
+    const allowedRoles = ["Desarrollador", "Jefe", "Supervisor"];
     if (!userRole || !allowedRoles.includes(userRole)) throw new Error("No tienes permisos suficientes para aprobar vídeos.");
     const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
     if (!sheet) throw new Error("Hoja Feedbacks no encontrada.");
@@ -3130,7 +3130,7 @@ function handleApproveVideoUnlocked_(payload) {
  */
 function handleRejectVideoUnlocked_(payload) {
     const { itemId, userName, reason, userRole } = payload || {};
-    const allowedRoles = ["Desarrollador", "Gefe", "Supervisor"];
+    const allowedRoles = ["Desarrollador", "Jefe", "Supervisor"];
     if (!userRole || !allowedRoles.includes(userRole)) throw new Error("No tienes permisos suficientes para rechazar vídeos.");
     const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
     if (!sheet) throw new Error("Hoja Feedbacks no encontrada.");
