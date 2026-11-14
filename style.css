@@ -3897,3 +3897,25 @@ body.inbox-open { overflow: hidden; }
         font-size: 1.08rem !important;
     }
 }
+
+
+/* Carga progresiva de imágenes: no mostrar el icono roto mientras se valida la fuente. */
+img.gp-image-loading {
+    background: linear-gradient(100deg, rgba(128, 128, 128, 0.08) 20%, rgba(128, 128, 128, 0.18) 38%, rgba(128, 128, 128, 0.08) 56%);
+    background-size: 220% 100%;
+    animation: gp-image-placeholder 1.2s ease-in-out infinite;
+    color: transparent;
+}
+img.gp-image-unavailable {
+    background: rgba(128, 128, 128, 0.10);
+}
+img.gp-image-loaded {
+    animation: none;
+    transition: opacity 160ms ease;
+}
+@keyframes gp-image-placeholder {
+    to { background-position-x: -220%; }
+}
+@media (prefers-reduced-motion: reduce) {
+    img.gp-image-loading { animation: none; }
+}
