@@ -18,3 +18,13 @@
 - Validación local: SharedMutationCoordinator 41/41 PASS; TermsModalAccessibility 12/12 PASS; simulación aislada del handler AUTH PASS; parsing/sintaxis de los archivos modificados PASS.
 - Pendiente: GitHub Actions completo, despliegue de AUTH/Coordinator en Beta y pruebas reales de navegador/dispositivo. No se modificaron deployments, datos productivos ni la rama base.
 ================================================================================
+
+
+================================================================================
+2026-11-14 — AJUSTE DE VALIDACIÓN PREVIA DE ACEPTACIÓN
+- Services/Auth.js y JS/Tests/Auth.js: acceptTerms utiliza validateSessionReadOnly_(token, userId) en el preflight; no actualiza LastActivityAt ni ejecuta reconciliación de sesión antes de registrar la aceptación. El handler vuelve a validar antes de escribir Users.
+- Las demás mutaciones autenticadas conservan validateAndTouchSession_ y la actualización normal de actividad.
+- Services/Coordinator.js: se documenta que la lease compartida ACTIVE_SESSIONS permite la coexistencia con ADMIN/sessionActivity sin introducir escrituras de actividad desde acceptTerms.
+- Pruebas locales: SharedMutationCoordinator 41/41 PASS; TermsModalAccessibility 12/12 PASS; simulación del preflight PASS; parsing/sintaxis PASS.
+- Validación Beta y despliegue Apps Script pendientes.
+================================================================================
