@@ -1495,3 +1495,13 @@ Rama: GPSpedia2.2.5_work
 - Inventario: Users USR-####; Cortes numérico; Tutorial tut-<operationId>; PyS isue-###; Relay solo lectura y formato no definido en código.
 - GitHub Actions service-tests: PASS; 78 suites, 1,198 pruebas, 0 fallos. No se ejecutó auditoría ni migración en la Spreadsheet real; no hubo escrituras productivas.
 ================================================================================
+
+================================================================================
+2026-11-14 — P3 INBOX: CONEXIÓN DEL FILTRO DE CATEGORÍAS
+- Conectado el selector de categorías del modal Inbox al estado del frontend y a la consulta paginada.
+- El cambio de categoría reinicia el cursor y la selección activa; la lista permitida coincide con las categorías backend.
+- Añadidas pruebas de UI y backend para filtro, paginación y rechazo de categorías inválidas.
+- Revisión del rediseño: carpetas, búsqueda, lectura/archivo, paginación, sincronización, solicitudes históricas, responsive móvil y accesibilidad estructural.
+- CI PASS: 78 suites; 1,200 pruebas aprobadas; 0 fallos. InboxConversations 29/29; InboxUi 16/16.
+- Pendiente validación manual en navegadores/dispositivos reales, lectores de pantalla, temas y navegación Atrás.
+================================================================================
