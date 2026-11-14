@@ -160,6 +160,13 @@ test('Inbox y Developer pueden abrir su interfaz si AUTH está temporalmente ind
     assert.match(source, /if \(valid === null\)[\s\S]*?isCurrentUiSessionContext_\(expected\)[\s\S]*?return localContext/);
     assert.match(source, /Las operaciones siguen sujetas a validación del servidor/);
 });
+test('los errores extensos se registran para Developer y se acortan en los avisos', () => {
+    const source = readFileSync(new URL('../Frontend/ui.js', import.meta.url), 'utf8');
+    assert.match(source, /developerDiagnosticQueue_/);
+    assert.match(source, /logDeveloperDiagnostic_\(original, 'warning'\)/);
+    assert.match(source, /original\.length > 110/);
+    assert.match(source, /window\.gpsepediaDeveloperLog/);
+});
 
 test('Inbox y Developer registran cierres completos en la pila de overlays', () => {
     const source = readFileSync(new URL('../Frontend/ui.js', import.meta.url), 'utf8');
@@ -174,4 +181,4 @@ test('Developer conserva los nombres de las secciones en navegación móvil', ()
     assert.match(source, /#dev-tools-modal \.dev-tools-sidebar\s*\{\s*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
 });
 
-console.log('OverlayMenuModalHistory:', passed + '/17 PASS');
+console.log('OverlayMenuModalHistory:', passed + '/18 PASS');
