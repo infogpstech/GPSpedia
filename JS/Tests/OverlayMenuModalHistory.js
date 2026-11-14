@@ -163,7 +163,7 @@ test('Inbox y Developer pueden abrir su interfaz si AUTH está temporalmente ind
     const source = readFileSync(new URL('../Frontend/ui.js', import.meta.url), 'utf8');
     assert.match(source, /if \(!authApi \|\| typeof authApi\.validateActiveSession !== 'function'\)[\s\S]*?return expected/);
     assert.match(source, /if \(valid === null\) logDeveloperDiagnostic_/);
-    assert.match(source, /Las operaciones protegidas seguirán validándose en el servidor/);
+    assert.match(source, /las operaciones protegidas seguirán validándose en el servidor/i);
 });
 test('un rechazo de red durante la validación tampoco deja bloqueados los modales', () => {
     const source = readFileSync(new URL('../Frontend/ui.js', import.meta.url), 'utf8');
