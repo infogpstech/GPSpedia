@@ -16,10 +16,11 @@ test("la actualización no añade controles ni intercepta el gesto nativo",()=>{
  assert.equal(main.includes("MANUAL_CATALOG_REFRESH_COOLDOWN_MS"),false);
 });
 test("el catálogo conserva el arranque cache-first sin forzar recargas",()=>{
- assert.ok(auth.includes("export async function loadInitialData(forceRefresh = false)"));
+ assert.ok(auth.includes("export async function loadInitialData(forceRefresh = false, options = {})"));
  assert.ok(auth.includes("if (!forceRefresh && catalogLoaded && hasFreshCatalogSync_()) return"));
 });
 test("caché de sesión de 60 segundos",()=>{assert.match(auth,/VALIDATION_CACHE_TTL_MS = 60000/);assert.match(auth,/getRecentValidation\(user\)/);});
+test("el sondeo incremental es silencioso, adaptativo y se suspende en segundo plano",()=>{assert.match(auth,/CATALOG_POLL_INTERVAL_MS = 45000/);assert.match(auth,/CATALOG_POLL_MAX_INTERVAL_MS = 300000/);assert.match(auth,/document\.visibilityState === "hidden"/);assert.match(auth,/window\.addEventListener\("online"/);assert.match(auth,/loadInitialData\(true, \{ silent: true, fromPoll: true \}\)/);assert.match(auth,/if \(!silent\) setState\(\{ catalogLoadStatus: 'loading'/);assert.match(auth,/stopCatalogPolling_\(\)/);});
 test("AUTH indisponible conserva sesión sin banner",()=>{const a=auth.indexOf("function restoreSessionAfterValidationUnavailable_"),b=auth.indexOf("\nexport async function checkSession",a);assert.ok(a>=0&&b>a);const s=auth.slice(a,b);assert.match(s,/handleLoginSuccess\(user, false\)/);assert.doesNotMatch(s,/showGlobalError/);});
 test("catálogo reutiliza caché fresca y consulta deltas sin descargar snapshots cuando no hay cambios",()=>{assert.match(auth,/CATALOG_REFRESH_TTL_MS = 60000/);assert.match(auth,/if \(!forceRefresh && catalogLoaded && hasFreshCatalogSync_\(\)\) return/);assert.match(auth,/fetchCatalogDelta_\(cachedCursor, currentUser, loadController\.signal\)/);assert.match(auth,/delta\.changes\.length === 0[\s\S]*?return;/);assert.match(auth,/performSilentSync\(snapshotToApply\)/);assert.match(auth,/saveCatalogWithCursor\(snapshotToApply, cursorToPersist\)/);});
 test("saludo usa nombre o ID y no queda vacío",()=>{assert.match(ui,/const displayName = String\(user &&/);assert.match(ui,/welcomeMsg\.textContent = `Hola, \$\{displayName \|\| 'Usuario'\}`/);});
