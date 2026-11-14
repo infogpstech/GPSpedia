@@ -1067,7 +1067,7 @@ function roleRevocationPropertyKey_(userId) {
 function isRoleRevocationPendingValue_(value) { return String(value || '').startsWith(ROLE_REVOCATION_SHARED_PREFIX); }
 function parseRoleRevocationMarker_(raw) {
  if(typeof raw!=='string'||!raw)return null;let marker;try{marker=JSON.parse(raw);}catch(error){return{invalid:true};}
- if(!marker||typeof marker!=='object'||Array.isArray(marker)||!normalizeUserId(marker.userId)||typeof marker.oldRole!=='string'||!marker.oldRole.trim()||typeof marker.newRole!=='string'||!marker.newRole.trim()||!Number.isFinite(Number(marker.markedAt))||!['desarrollador','gefe','jefe','supervisor','tecnico','tecnico_exterior'].includes(normalizeRoleName(marker.oldRole))||!['desarrollador','gefe','supervisor','tecnico','tecnico_exterior'].includes(normalizeRoleName(marker.newRole)))return{invalid:true};
+ if(!marker||typeof marker!=='object'||Array.isArray(marker)||!normalizeUserId(marker.userId)||typeof marker.oldRole!=='string'||!marker.oldRole.trim()||typeof marker.newRole!=='string'||!marker.newRole.trim()||!Number.isFinite(Number(marker.markedAt))||!['desarrollador','jefe','supervisor','tecnico','tecnico_exterior'].includes(normalizeRoleName(marker.oldRole))||!['desarrollador','jefe','supervisor','tecnico','tecnico_exterior'].includes(normalizeRoleName(marker.newRole)))return{invalid:true};
  if(Object.prototype.hasOwnProperty.call(marker,'newFullName')&&(typeof marker.newFullName!=='string'||marker.newFullName.length>120))return{invalid:true};
  return marker;
 }
