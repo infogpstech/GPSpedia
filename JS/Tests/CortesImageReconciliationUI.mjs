@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 const root=resolve(dirname(fileURLToPath(import.meta.url)),"../..");
 const read=path=>fs.readFileSync(resolve(root,path),"utf8");
-const html=read("index.html"),ui=read("JS/Frontend/ui.js"),css=read("style.css"),api=read("JS/Frontend/api-config.js"),admin=read("Services/admin.js");
+const html=read("index.html"),ui=read("JS/Frontend/ui.js"),css=read("style.css"),api=read("JS/Frontend/api-config.js"),admin=read("Services/admin.js"),off=read("JS/Frontend/offline.js");
 let passed=0;function testCase(name,fn){fn();passed++;console.log("PASS "+name);}
 testCase("la simulación solo se habilita después de completar la auditoría",()=>{
  assert.match(ui,/reconcileButton\.hidden = !complete/);

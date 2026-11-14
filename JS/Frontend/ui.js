@@ -7817,7 +7817,7 @@ export async function openAuditDriveModal() {
                 if (reconciliationStatus) reconciliationStatus.textContent =
                     "Progreso recuperado: " + nextBatchIndex + " de " + totalBatches + " lotes guardados. Continuando sin repetir lotes confirmados…";
             } else {
-                if (previous) await offline.clearCortesImageReconciliationState(requestContext.userId, auditId);
+                if (previous) await offline.clearCortesImageReconciliationState(requestContext.userId);
                 if (!isCurrentRequest()) return;
                 await saveProgress("running");
             }
