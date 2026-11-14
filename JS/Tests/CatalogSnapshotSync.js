@@ -29,7 +29,7 @@ function snapshot(overrides = {}) {
         cortes: [{ id: 'C-1', marca: 'Toyota' }, { id: 'C-2', marca: 'Honda' }],
         tutoriales: [{ ID: 'T-1', Tema: 'Instalación', Detalles: 'A' }],
         relay: [{ ID: 'R-1', configuracion: '5 pines', funcion: 'A' }],
-        logos: [{ nombreMarca: 'Toyota', urlLogo: 'logo-a' }],
+        logos: [{ id: 'L-1', nombreMarca: 'Toyota', urlLogo: 'logo-a' }],
         ...overrides
     };
 }
@@ -203,6 +203,28 @@ async function runCatalogSnapshotSyncTests() {
         assert.equal(applyCatalogChangesToSnapshot(snapshot(), [{ revision: 1, collection: '*', operation: 'reset' }]).resetRequired, true);
         assert.equal(applyCatalogChangesToSnapshot(snapshot(), [{ revision: 1, collection: 'pys', recordId: 'P-1', operation: 'upsert', snapshot: { id: 'P-1' } }]).resetRequired, true);
     });
+    test('aplica deltas por ID estable en Tutoriales, Relay y Logos', () => {
+        const before = snapshot();
+        const result = applyCatalogChangesToSnapshot(before, [
+            { revision: 1, collection: 'tutoriales', recordId: 'T-1', operation: 'upsert', snapshot: { ID: 'T-1', Tema: 'Instalación actualizada' } },
+            { revision: 2, collection: 'relay', recordId: 'R-1', operation: 'delete' },
+            { revision: 3, collection: 'relay', recordId: 'R-2', operation: 'upsert', snapshot: { ID: 'R-2', configuracion: '4 pines' } },
+            { revision: 4, collection: 'logos', recordId: 'L-1', operation: 'upsert', snapshot: { id: 'L-1', nombreMarca: 'Toyota', urlLogo: 'logo-b' } }
+        ]);
+        assert.equal(result.resetRequired, false);
+        assert.deepEqual(result.snapshot.tutoriales, [{ ID: 'T-1', Tema: 'Instalación actualizada' }]);
+        assert.deepEqual(result.snapshot.relay, [{ ID: 'R-2', configuracion: '4 pines' }]);
+        assert.deepEqual(result.snapshot.logos, [{ id: 'L-1', nombreMarca: 'Toyota', urlLogo: 'logo-b' }]);
+        assert.deepEqual(result.snapshot.cortes, before.cortes);
+    });
+    test('usa reset seguro si una colección afectada contiene IDs ausentes o duplicados', () => {
+        const legacy = snapshot({ tutoriales: [{ Tema: 'Sin ID' }] });
+        const result = applyCatalogChangesToSnapshot(legacy, [
+            { revision: 1, collection: 'tutoriales', recordId: 'T-2', operation: 'upsert', snapshot: { ID: 'T-2' } }
+        ]);
+        assert.equal(result.resetRequired, true);
+        assert.equal(result.snapshot, null);
+    });
     test('rechaza upsert de Corte con ID distinto al ID del evento', () => {
         assert.throws(() => applyCatalogChangesToSnapshot(snapshot(), [
             { revision: 1, collection: 'cortes', recordId: 'C-1', operation: 'upsert', snapshot: { id: 'C-2' } }
@@ -230,8 +252,8 @@ async function runCatalogSnapshotSyncTests() {
         assert.equal(saved.cursor, null);
     });
 
-    console.log(`CatalogSnapshotSync: ${passed}/25 PASS`);
-    return { passed, total: 25 };
+    console.log(`CatalogSnapshotSync: ${passed}/27 PASS`);
+    return { passed, total: 27 };
 }
 
 try {
