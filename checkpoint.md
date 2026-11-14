@@ -1132,3 +1132,20 @@ El HEAD previo a esta adenda se verificará al publicar el checkpoint. No se eje
 - Rama base verificada: `GPSpedia2.2.5`, HEAD `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; no se publicó ningún cambio en ella.
 - Se verificaron en la rama de trabajo los archivos AUTH, Coordinator, UI, módulo de aceptación por dispositivo, Service Worker, pruebas y registros operativos.
 - La validación local indicada arriba corresponde a las últimas versiones de código; GitHub Actions completo y pruebas Beta siguen sin ejecutarse.
+
+## Nuevas incidencias registradas — 2026-11-14
+
+**Estado:** registradas en el backlog; todavía no diagnosticadas ni corregidas.  
+**Rama:** `GPSpedia2.2.5_work`. La rama base protegida `GPSpedia2.2.5` no se modificó.
+
+Se añadieron a `Tareas_Activas.md` y al final de `LOGS.TXT` los siguientes reportes:
+
+- **GP-UX-02:** mensaje de saludo no carga; reacción «útil» 👍🏿 devuelve «No se pudo registrar tu reacción. Reintentar»; tarjeta para agregar tutorial ausente; tarjeta para agregar problema en carrusel de relacionados con altura distinta.
+- **GP-UX-03:** Inbox desordenado en móvil; rediseñar con barra/menú de acciones habituales (nuevo, borrar y las acciones soportadas), manteniendo permisos y accesibilidad.
+- **GP-RBAC-02:** usuarios técnicos no pueden usar Inbox y reciben «servicio no autorizado para el coordinador compartido». Revisar acción, política del coordinador y permisos efectivos, sin ampliar privilegios generales.
+- **GP-PWA-01:** la plataforma impide actualizarse y no permite recargar la página; revisar Service Worker, caché, ciclo de actualización y recarga segura.
+- **GP-SEC-03 (ampliación):** el usuario reporta ausencia de medidas para mitigar capturas de pantalla en móviles. Evaluar capacidades reales de Android/iOS/web/PWA y documentar límites; no prometer bloqueo absoluto.
+
+**Archivos actualizados:** `Tareas_Activas.md` y `LOGS.TXT`. No se modificó código, permisos, endpoints, Service Worker, deployments ni datos. No se ejecutaron pruebas porque esta intervención fue únicamente de registro.
+
+**Siguiente paso:** continuar primero con las tareas vigentes y sus dependencias según la sección 11 de `NORMAS_DESAROLLO.md`; priorizar cualquier incidencia nueva que bloquee una función actual o comprometa continuidad/seguridad. Para cada reporte, reproducir y revisar contratos/consumidores antes de corregir. No asumir una causa a partir del mensaje visible.
