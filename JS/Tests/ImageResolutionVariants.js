@@ -38,6 +38,11 @@ assert.equal(getThumbnailCacheKey(fileId, 800) === getThumbnailCacheKey(fileId, 
 assert.equal(getThumbnailCacheKey('', 300), null);
 
 assert.match(uiSource, /offline\.getThumbnailCacheKey\(cleanId, normalizedSize\)/);
+assert.match(uiSource, /const probe = new Image\(\)/, 'la fuente remota se valida antes de asignarla al elemento visible');
+assert.match(uiSource, /probe\.onload = \(\) =>/);
+assert.match(uiSource, /imgElement\.removeAttribute\('src'\)/, 'el elemento no conserva una fuente rota durante la precarga');
+assert.match(uiSource, /gp-image-loading/);
+assert.match(uiSource, /IMAGE_FALLBACK_DATA_URL/);
 assert.match(uiSource, /offline\.compressAndStoreThumbnail\(remoteUrl, cleanId, normalizedSize\)\.then\(blob =>/);
 assert.match(uiSource, /thumbnailObjectUrls\.attach\(cacheKey, blob, imgElement, requestToken\)/);
 assert.match(uiSource, /getImageUrl\([^\n]*IMG_SIZE_LARGE\)/, 'el Lightbox debe solicitar la fuente grande');
