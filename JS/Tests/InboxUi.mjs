@@ -21,7 +21,7 @@ check("El Inbox es un diálogo modal accesible", () => {
     assert.match(ui, /activateLegalModalFocus_\(modal,[\s\S]*allowEscape: true/);
 });
 check("Todos los roles activos pueden abrir conversaciones", () => {
-    assert.match(ui, /ensureUiSessionRole_\(\['desarrollador', 'gefe', 'jefe', 'supervisor', 'tecnico', 'tecnico_exterior'\]\)/);
+    assert.match(ui, /ensureUiSessionRole_\(\['desarrollador', 'jefe', 'supervisor', 'tecnico', 'tecnico_exterior'\]\)/);
     assert.match(ui, /'tecnico', 'tecnico_exterior'\]\.includes\(userRole\)/);
 });
 check("Las solicitudes históricas siguen separadas y conservan sus contenedores", () => {
