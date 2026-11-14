@@ -3380,9 +3380,23 @@ function handleAddLogo(payload, logMessage) {
     const file = logosFolder.createFile(blob);
     const logoUrl = `https://drive.google.com/uc?export=view&id=${file.getId()}`;
 
+    const markRecovery = reason => {
+        try { if (file && typeof file.setDescription === "function") file.setDescription("GPSpedia LogosMarca — RECOVERY_REQUIRED\nimageUrl=" + logoUrl + "\nreason=" + String(reason || "No se pudo confirmar la vinculación.").slice(0, 300)); }
+        catch (metadataError) { console.error("No se pudo marcar un logotipo para recuperación:", metadataError); }
+    };
+    const trashUnlinkedFile = () => {
+        if (!file || typeof file.setTrashed !== "function") throw new Error("Drive no permite retirar el archivo sin vincular.");
+        file.setTrashed(true);
+        if (typeof file.isTrashed === "function" && file.isTrashed() !== true) throw new Error("Drive no confirmó que el archivo sin vincular quedara en papelera.");
+    };
+
     const lock = LockService.getScriptLock();
     try { lock.waitLock(30000); }
-    catch (error) { throw new Error("No se pudo bloquear la asignación de IDs de LogosMarca. Intente nuevamente."); }
+    catch (error) {
+        try { trashUnlinkedFile(); }
+        catch (cleanupError) { markRecovery(cleanupError.message); }
+        throw new Error("No se pudo bloquear la asignación de IDs de LogosMarca. Intente nuevamente.");
+    }
     try {
         const lastRow = sheet.getLastRow(), newRow = lastRow + 1;
         const lastColumn = Math.max(sheet.getLastColumn(), 4);
@@ -3401,11 +3415,50 @@ function handleAddLogo(payload, logMessage) {
         if (Number(generatedId) !== newId || generatedFormula) {
             throw new Error("No se pudo confirmar el ID numérico permanente del logotipo.");
         }
+        try { if (typeof file.setDescription === "function") file.setDescription("GPSpedia LogosMarca — LINKED\nlogoId=" + newId); }
+        catch (metadataError) { console.warn("No se pudo actualizar metadata del logotipo vinculado:", metadataError); }
         logMessage("Registro Logo", `Registro completado. ID de logotipo asignado: ${generatedId}`);
         return {
             status: "success", logoId: generatedId, logoUrl,
             message: "Logotipo registrado exitosamente en la base de datos conservando su formato y transparencia."
         };
+    } catch (error) {
+        let matches;
+        try {
+            const last = sheet.getLastRow();
+            const width = Math.max(sheet.getLastColumn(), 4);
+            const rows = last > 1 ? sheet.getRange(2, 1, last - 1, width).getValues() : [];
+            matches = rows.map((row, index) => ({ row, rowIndex: index + 2 }))
+                .filter(item => String(item.row[2] || "").trim() === logoUrl);
+        } catch (readError) {
+            markRecovery("No se pudo verificar la fila después del error: " + String(readError && readError.message || readError));
+            throw new Error(String(error && error.message || error) + " El estado del vínculo no pudo verificarse; el archivo se conservó para recuperación.");
+        }
+        if (matches.length === 1) {
+            const row = matches[0].row;
+            const recoveredId = Number(row[0]);
+            if (Number.isSafeInteger(recoveredId) && recoveredId > 0 &&
+                String(row[1] || "").trim() === String(nombreMarca).trim() &&
+                String(row[3] || "").trim() === String(nombreMarca).trim()) {
+                try { if (typeof file.setDescription === "function") file.setDescription("GPSpedia LogosMarca — LINKED\nlogoId=" + recoveredId); } catch (metadataError) {}
+                return {
+                    status: "success", logoId: recoveredId, logoUrl, recovered: true,
+                    message: "Logotipo registrado y verificado después de una respuesta parcial."
+                };
+            }
+            markRecovery("La fila enlazada no coincide con los metadatos esperados.");
+            throw new Error("El logotipo quedó asociado a una fila que requiere revisión; el archivo se conservó.");
+        }
+        if (matches.length > 1) {
+            markRecovery("La URL aparece en varias filas; se requiere reconciliación.");
+            throw new Error("La URL del logotipo aparece en varias filas; el archivo se conservó para reconciliación.");
+        }
+        try { trashUnlinkedFile(); }
+        catch (cleanupError) {
+            markRecovery(cleanupError.message);
+            throw new Error(String(error && error.message || error) + " El archivo no vinculado quedó marcado para recuperación manual.");
+        }
+        throw error;
     } finally {
         lock.releaseLock();
     }
