@@ -400,3 +400,21 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - Sintaxis Node.js configurada por el workflow: PASS.
 - No se desplegó Apps Script ni se modificaron Spreadsheet/Drive productivos.
 - Pendiente: aplicar el mismo patrón, con coordinación compatible con leases anidadas y operaciones de ADMIN, a WRITE, USERS y ADMIN; después eliminar el preflight `ensureSessionTouched_` del frontend y ejecutar regresión completa.
+
+## P1 — Fase 2 completada: actividad integrada y preflight retirado (2026-11-14)
+
+**Estado: IMPLEMENTADA EN RAMA DE TRABAJO; VALIDACIÓN BETA EXTERNA PENDIENTE.**
+
+- FEEDBACK: validación central de sesión actualiza `LastActivityAt`; las lecturas protegidas usan lease `sessionActivity`; acciones públicas no renuevan sesión.
+- WRITE: `getAuthenticatedCollaborator` actualiza actividad; `checkOperation` usa lease de actividad. Las mutaciones reservan `ACTIVE_SESSIONS`; ADMIN→WRITE conserva autorización anidada y reserva el mismo recurso.
+- USERS: `getVerifiedSession` actualiza actividad; `getUsers` usa lease; las mutaciones protegen `ACTIVE_SESSIONS` y Users.
+- ADMIN: `getAdminSessionContext_` actualiza actividad para operaciones protegidas; las lecturas usan lease; el coordinador añade exclusión sobre `ACTIVE_SESSIONS` para todas las acciones ADMIN.
+- UTILITIES: la migración protegida actualiza actividad y reserva `ACTIVE_SESSIONS`.
+- AUTH: las mutaciones autenticadas actualizan actividad dentro de `doPostInternal_`; login y touchSession conservan su flujo propio; validateSession permanece de solo lectura. Las leases AUTH reservan `ACTIVE_SESSIONS`.
+- Frontend: se retiró `ensureSessionTouched_` y el viaje separado `touchSession` previo a cada operación. `touchSession` permanece disponible como acción explícita/compatibilidad; no es un preflight de `routeAction`.
+- Se añadieron/ajustaron pruebas de actividad válida, rechazo sin renovación, leases y conflictos con logout/revocación, fixtures de Sheets y contrato de una sola petición.
+- GitHub Actions `service-tests` sobre `55ad0ffeac8f39f397a34cdac3ed70e64953cb7f`: **PASS**, 75 suites, 1,170 pruebas aprobadas, 0 fallos. Sintaxis Node.js: PASS.
+- No se desplegaron Apps Script ni se escribieron datos en Spreadsheet/Drive productivos. La rama base `GPSpedia2.2.5` permanece intacta.
+- Validación externa pendiente: múltiples pestañas, offline/reconexión y uso real en navegador/dispositivo. La implementación no se declara validada en Beta.
+
+**Siguiente tarea de desarrollo:** P2 — migración de contraseñas e identificadores, comenzando por inventario técnico y diseño seguro de la migración reanudable.
