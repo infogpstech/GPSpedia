@@ -1438,3 +1438,11 @@ Rama: GPSpedia2.2.5_work
 - No se retiró touchSession ni se alteraron expiración, revocación o autorización backend.
 - Validación automatizada pendiente de ejecutar tras publicar el cambio.
 ================================================================================
+
+
+================================================================================
+2026-11-14 — AJUSTE DE PRUEBA TRAS RETIRAR EL ROL HEREDADO
+- La regresión P1 detectó que JS/Tests/AddSupplementaryInfoIntegrity.js aún incluía `gefe` en la lista de roles operativos permitidos, aunque el backend ya lo había retirado.
+- Se corrigió el fixture y se añadió una prueba negativa que confirma el rechazo explícito de `Gefe`.
+- La ejecución inicial de service-tests falló en esa única expectativa; se repetirá la suite completa tras la corrección.
+================================================================================
