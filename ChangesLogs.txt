@@ -1260,3 +1260,13 @@ Commits: dacc854, 8be5281, f0645b5, 0e02d90, 5c58ed8, 024d604, 6bf5732, 9b2e781.
 - service-worker.js: se incrementa gpsepedia-cache-v22 a gpsepedia-cache-v23 para que los clientes reciban la versión corregida de main.js.
 - JS/Tests/PWAStartupScenarios.js: se actualizan las expectativas de caché y se añade una comprobación de regresión que verifica la definición previa de isLightboxVisible().
 ================================================================================
+
+================================================================================
+2026-11-13 — CORRECCIÓN — APERTURA Y PRESENTACIÓN DE INBOX Y DEVELOPER
+- JS/Frontend/ui.js: ensureUiSessionRole_ reutiliza la validación reciente de sesión (validateActiveSession(false)) y comparte la solicitud en curso por usuario/token. La vista protegida sigue requiriendo validación confirmada; las operaciones continúan sujetas a autorización del servidor. Un resultado temporal null/error mantiene cerrada la vista sin cerrar la sesión.
+- JS/Frontend/ui.js: setupModal ejecuta el callback de cierre propio cuando no hay entrada en la pila; Inbox detiene sincronización, restaura el estado del documento y libera el foco al cerrarse por Atrás; Developer actualiza aria-hidden y libera el foco.
+- style.css: se reorganiza la navegación móvil de Developer para conservar los nombres de las cinco secciones y se mejora la distribución de encabezado, acciones, carpetas y búsqueda de Inbox. Se mantienen variables de color y estilos existentes.
+- JS/Tests/OverlayMenuModalHistory.js: se amplía la cobertura con validación reciente/concurrente, cierre de modales y etiquetas móviles.
+- Validación local adaptada: compilación V8 de los bloques modificados PASS; 4/4 escenarios de pila de overlays PASS; validación concurrente compartida 1/1 PASS; contratos estáticos 10/10 PASS. Node CLI, suite completa en navegador y DOM/dispositivos reales no ejecutados; estos últimos quedan para Beta.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+================================================================================
