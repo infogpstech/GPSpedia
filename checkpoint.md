@@ -1294,3 +1294,29 @@ El archivo `lista_beta_parte2.txt` queda en 136,059 caracteres Unicode, por deba
 
 ### Siguiente paso
 Continuar con la revisión integral local de las tareas implementadas y sus regresiones. Las pruebas con cuentas/dispositivos, Apps Script, ScriptProperties, Spreadsheet y deployments externos se ejecutan en Beta siguiendo AUG-155. No cambiar la rama base ni ejecutar operaciones productivas.
+
+
+## Continuidad — incidencias de acceso Developer e historial/escáner (2026-11-14)
+
+**HEAD de la última escritura registrada:** 93074d7b5da8c99238ee9d86e0de0d68e8a52577 en GPSpedia2.2.5_work. La rama base GPSpedia2.2.5 no se modificó.
+
+### Cambios implementados
+- Services/Coordinator.js: políticas específicas para getReplacedImages, getDriveStorage, getCortesImageFolders y auditDriveImagesInCortes. Las lecturas comparten únicamente la actualización cooperativa de actividad; el escáner serializa su estado lógico y reserva lecturas de los recursos que inspecciona.
+- migrateReplacedImagesSchema: política corregida para que getAdminSessionContext_() pueda actualizar LastActivityAt mediante sharedWrite sin convertir la migración en mantenimiento global.
+- Services/admin.js: nuevas rutas de lease para consultas de lectura; auditDriveImagesInCortes pasa a operación coordinada específica y mantiene assertDeveloperSession, auditoría y ScriptLock.
+- JS/Frontend/ui.js: la visibilidad del botón Developer y su apertura usan el mismo contexto autenticado. Si falta ID/token o el rol no corresponde, se explica el motivo sin conceder acceso.
+- Se añadió JS/Tests/AdminImageScanCoordinatorContract.mjs y se registró en RunServiceTests.mjs.
+
+### Validación aislada
+- SharedMutationCoordinator: 42/42 PASS.
+- AdminImageScanCoordinatorContract: PASS.
+- SessionUiRoleInvalidation: 15/15 PASS.
+- Estas pruebas se ejecutaron mediante harness aislado en esta sesión. No equivalen a ejecutar el runner Node CLI completo ni GitHub Actions; ambas validaciones deben consultarse/ejecutarse antes del cierre.
+- No se accedió a Apps Script, ScriptProperties, Spreadsheet, Drive ni deployments. No se hicieron cambios productivos.
+
+### Pendientes
+1. Revisar los commits y el diff completo, comprobar el estado de Actions disponible y ejecutar Node CLI si se dispone del clon local.
+2. En Beta, actualizar Coordinator y ADMIN de forma compatible y verificar que la política de migrateReplacedImagesSchema está desplegada; no basta con que exista en GitHub.
+3. Probar la carga simultánea del inventario/historial y el escáner; comprobar reanudación del cursor, bloqueo de doble escáner y espera de escrituras incompatibles.
+4. Reproducir acceso Developer con login nuevo y restaurado; confirmar el modal y rechazos de roles no autorizados.
+5. No modificar deployments ni recursos productivos.
