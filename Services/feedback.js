@@ -267,12 +267,26 @@ const INBOX_AUDIT_HEADERS = Object.freeze(["eventId","timestamp","actorId","acto
 // ============================================================================
 // ROUTER PRINCIPAL (doGet y doPost)
 // ============================================================================
+function isFeedbackCoordinatorConfigured_() {
+    try {
+        const properties = PropertiesService.getScriptProperties();
+        const url = String(properties.getProperty("GPSpedia_COORDINATOR_URL") || "").trim();
+        const secret = String(properties.getProperty("GPSpedia_COORDINATOR_SECRET") || "");
+        return url.startsWith("https://script.google.com/macros/s/") &&
+            url.endsWith("/exec") && secret.length >= 32 &&
+            typeof withSharedMutationLease_ === "function";
+    } catch (error) {
+        return false;
+    }
+}
+
 function doGet(e) {
-    if (e.parameter.debug === 'true') {
+    if (e && e.parameter && e.parameter.debug === 'true') {
         const serviceState = {
             service: 'GPSpedia-Feedback',
             version: '1.2.1',
-            status: 'available'
+            status: 'available',
+            coordinatorConfigured: isFeedbackCoordinatorConfigured_()
         };
         return ContentService.createTextOutput(JSON.stringify(serviceState, null, 2))
             .setMimeType(ContentService.MimeType.JSON);
