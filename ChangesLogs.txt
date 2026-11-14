@@ -122,3 +122,11 @@
 - AdminImageScanCoordinatorContract.mjs: se añade ejecución aislada de doPost con coordinador simulado para verificar leases específicas, propagación del token, fallback de acciones heredadas y tratamiento de ping.
 - Resultado: PASS en ejecución aislada; no equivale a Node CLI/GitHub Actions ni a integración Beta.
 ================================================================================
+
+================================================================================
+2026-11-14 — REGISTRO DE REQUISITOS: ACTUALIZACIÓN PWA NATIVA E INBOX JERÁRQUICO
+- Tareas_Activas.md: se registran GP-PWA-02 y GP-INBOX-04A..04D con alcance, matriz de destinatarios, operaciones de bandeja y orden de ejecución.
+- Evidencia PWA inspeccionada: main.js intercepta touchstart/touchend en .container y sustituye el gesto por loadInitialData(true); index.html incluye el enlace Recargar aplicación y main.js ejecuta registration.update() más location.reload(). style.css usa overflow-y:auto en .container. Es necesario validar el efecto conjunto del scroll interno y los listeners en navegadores reales.
+- Evidencia Inbox inspeccionada: la UI ofrece consulta directa al Desarrollador para roles no desarrollador; Services/InboxConversations.js limita destinatarios de esos roles al Desarrollador. No existe aún el flujo jerárquico solicitado ni selección múltiple para marcar no leído/borrar.
+- Este commit registra requisitos y hallazgos; no contiene correcciones funcionales ni pruebas de comportamiento. Sin cambios en deployments, endpoints o datos externos.
+================================================================================

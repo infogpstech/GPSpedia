@@ -1332,3 +1332,15 @@ Continuar con la revisión integral local de las tareas implementadas y sus regr
 - Commit de prueba: 5c246f9d060d34c85f6d3f0b7f233008306ee887.
 - AdminImageScanCoordinatorContract ejecuta doPost con un coordinador simulado y comprueba los nombres de lease, propagación del token y fallback seguro.
 - Resultado aislado: PASS. El Node CLI completo y GitHub Actions siguen sin estado verificable desde las herramientas disponibles.
+
+
+## Continuidad — PWA nativa e Inbox por jerarquía (2026-11-14)
+
+**Estado: REQUISITOS REGISTRADOS; implementación pendiente.**
+
+- El usuario rechazó el botón «Recargar aplicación»: debe eliminarse. La actualización debe funcionar con el mecanismo/gesto nativo del navegador.
+- Evidencia a investigar: JS/Frontend/main.js intercepta touchstart/touchend en .container y ejecuta auth.loadInitialData(true); .container tiene overflow-y:auto, por lo que el scroll independiente puede impedir el pull-to-refresh nativo. También existen #side-menu-refresh-link y un listener que llama registration.update() y window.location.reload(). Revisar conjuntamente el scroll raíz, CSS y ciclo de vida SW antes de cerrar causa raíz.
+- Inbox solicitado: lista de recibidos como vista inicial; barra de herramientas para seleccionar, marcar no leído, borrar, responder y crear; selector de destinatario restringido por rango; navegación Recibidos/No leídos/Enviados/Archivados; diseño móvil lista/detalle.
+- Matriz solicitada: Técnico/Técnico exterior → Supervisor; Supervisor → Jefe; contacto con Desarrollador exclusivamente mediante ticket de problema. El backend actual permite que los no desarrolladores contacten directamente al Desarrollador, por lo que debe corregirse junto con la UI.
+- Registro detallado, IDs GP-PWA-02 y GP-INBOX-04A..04D, orden de implementación y criterios de validación en Tareas_Activas.md.
+- No se modificó código funcional, Service Worker, endpoints, deployments ni datos externos durante este registro. La rama base permanece protegida.

@@ -357,3 +357,38 @@ En la revisión del estado actual de GPSpedia2.2.5_work, migrateReplacedImagesSc
 ### Adenda de validación — despacho dinámico de leases (2026-11-14)
 - AdminImageScanCoordinatorContract ahora ejecuta doPost con un coordinador simulado y verifica que las tres consultas seleccionadas usen sus nombres de operación, que el escáner y la migración propaguen el token de lease, que las acciones heredadas conserven sessionActivity y que ping no reserve una lease.
 - Resultado de la ejecución aislada: PASS. No se ejecutó Apps Script ni se modificaron datos externos.
+
+================================================================================
+AUD-2026-11-14-09 — GESTO NATIVO PWA INTERCEPTADO Y RECARGA MANUAL INTRODUCIDA
+Severidad: Alta (experiencia/actualización de cliente)
+Estado: Hallazgo confirmado en código; causa completa pendiente de reproducción Beta.
+
+Evidencia:
+- JS/Frontend/main.js: listener touchstart/touchend en .container captura el gesto cuando scrollTop es 0 y, con distancia >150 px, ejecuta auth.loadInitialData(true). El gesto se convierte en sincronización de catálogo y no en navegación/recarga nativa.
+- style.css: .container mantiene overflow-y:auto como scroll principal independiente.
+- index.html: existe #side-menu-refresh-link con texto «Recargar aplicación».
+- JS/Frontend/main.js: el listener del enlace llama registration.update() y window.location.reload().
+Impacto: el gesto nativo no tiene garantizado el control del scroll raíz; la sincronización parcial no fuerza descarga del documento ni asegura actualización del App Shell.
+Criterio de corrección: retirar el control manual y la interceptación; restaurar el comportamiento nativo, revisar scroll raíz y políticas SW/caché, y probar versiones nuevas en navegadores/PWA instaladas.
+
+AUD-2026-11-14-10 — MODELO DE DESTINATARIOS INBOX CONTRADICE JERARQUÍA SOLICITADA
+Severidad: Alta (autorización/comunicación)
+Estado: Hallazgo confirmado en código; cambio requerido.
+
+Evidencia:
+- JS/Frontend/ui.js: openInboxModal_ muestra «Consultar al desarrollador» a todo rol distinto de Desarrollador; openInboxNewConversationForm_ configura mode=consult para cualquier actor no desarrollador.
+- Services/InboxConversations.js: handleGetInboxRecipients filtra destinatarios para que cualquier actor no desarrollador solo vea usuarios Desarrollador; handleCreateInboxConversation rechaza como destinatario a cualquier rol distinto de Desarrollador para esos actores.
+- El usuario requiere Técnico/Técnico exterior → Supervisor; Supervisor → Jefe; contacto al Desarrollador solo por ticket de problema.
+Impacto: el flujo actual no implementa la cadena de comunicación requerida y fuerza contacto directo ordinario al Desarrollador.
+Criterio de corrección: imponer matriz de rangos en backend y UI; crear canal de tickets para Desarrollador; añadir pruebas de autorización para cada rol y destinatario.
+
+AUD-2026-11-14-11 — FALTAN OPERACIONES MASIVAS DE BANDEJA
+Severidad: Media-Alta (funcionalidad Inbox)
+Estado: Hallazgo confirmado en UI/contratos inspeccionados.
+
+Evidencia:
+- index.html ofrece carpetas Recibidos/No leídos/Enviados/Archivados y navegación lista/detalle.
+- JS/Frontend/ui.js no presenta selección múltiple de conversaciones ni acciones masivas de marcar no leído y borrar; las acciones actuales se limitan a marcar leído al abrir y archivar/restaurar.
+Impacto: el Inbox no ofrece la barra de herramientas solicitada para administrar mensajes recibidos.
+Criterio de corrección: implementar selección individual/todos los visibles, marcado persistente no leído y borrado seguro por usuario, con autorización backend, confirmación y pruebas de regresión.
+================================================================================

@@ -580,3 +580,63 @@ Si cualquier comprobación falla, no continuar ni descartar cambios locales. Con
 
 
 **Ampliación de pruebas GP-ADMIN-01/02 (2026-11-14):** AdminImageScanCoordinatorContract ahora prueba también el despacho dinámico de doPost con un coordinador simulado: consultas con leases propias, propagación del token del escáner/migración, fallback de acciones heredadas y bypass de lease para ping. Resultado aislado: PASS.
+
+
+## Adenda — requisitos corregidos de actualización PWA e Inbox (2026-11-14)
+
+**Estado: REQUISITOS REGISTRADOS; IMPLEMENTACIÓN PENDIENTE.** Esta adenda precisa y reemplaza cualquier interpretación anterior que propusiera una recarga manual como solución al gesto nativo.
+
+### GP-PWA-02 — Restaurar actualización nativa del navegador/PWA
+**Prioridad: alta.**
+- No debe existir un botón, enlace ni acción de menú «Recargar aplicación» o equivalente. Retirar el control añadido para ese propósito y su listener asociado.
+- La plataforma debe poder actualizarse mediante el mecanismo nativo del navegador, incluido el gesto pull-to-refresh cuando el navegador lo ofrece. No interceptar ni sustituir el gesto por una sincronización parcial del catálogo.
+- Investigar y corregir la causa raíz en el scroll principal, eventos táctiles, CSS de overscroll/touch-action, navegación y ciclo de vida del Service Worker. La solución debe permitir que la navegación vuelva a solicitar el documento y que el Service Worker detecte/active versiones nuevas sin depender de un botón propio.
+- Revisar las políticas de caché de HTML, módulos JS y App Shell para evitar que una actualización nativa muestre una mezcla de versiones. Preservar sesión, borradores y datos locales legítimos; no borrar almacenamiento de usuario para forzar la actualización.
+- Añadir pruebas de contrato que aseguren que la aplicación no registra un manejador que consuma el gesto nativo ni ofrece recarga manual, y pruebas del ciclo de actualización del Service Worker. La verificación final del gesto queda reservada a Beta en Android/iOS/escritorio compatibles.
+
+**Evidencia inicial:** JS/Frontend/main.js mantiene un listener touchstart/touchend sobre .container que, al superar 150 px, llama auth.loadInitialData(true) en lugar de dejar actuar al navegador. style.css define .container como contenedor independiente con overflow-y:auto (línea aproximada 89), por lo que el contenido no usa necesariamente el scroll raíz que activa el pull-to-refresh nativo. index.html contiene #side-menu-refresh-link («Recargar aplicación») y main.js ejecuta registration.update() seguido de window.location.reload(). El Service Worker usa networkResponse para navegaciones, pero la interacción entre el contenedor desplazable, el gesto personalizado y la actualización instalada debe validarse antes de atribuir toda la causa a un único factor.
+
+### GP-INBOX-04 — Bandeja de entrada con barra de herramientas y jerarquía de comunicación
+**Prioridad: alta.** Rediseñar la bandeja como una bandeja de mensajes recibidos, no como un conjunto de botones dispersos. La primera vista será la lista de mensajes recibidos; el detalle se abrirá al seleccionar un mensaje/conversación.
+
+**Barra superior de herramientas:**
+- Seleccionar mensajes (selección individual y seleccionar todos los visibles).
+- Marcar como no leídos los mensajes/conversaciones seleccionados.
+- Borrar los elementos seleccionados, con confirmación y validación de permisos en backend.
+- Responder al mensaje/conversación seleccionada.
+- Crear un mensaje nuevo cuando el rango lo permita.
+- Elegir destinatario mediante selector únicamente para los rangos autorizados; no presentar opciones de destinatarios superiores a quien no tenga permiso.
+- Las acciones deben habilitarse/deshabilitarse según selección, estado, carpeta y rol. La selección múltiple no debe provocar que «Responder» se aplique ambiguamente a varios destinatarios.
+
+**Navegación de bandeja:**
+- Recibidos como vista inicial.
+- No leídos, Enviados y Archivados como vistas/carpetas accesibles desde la barra de navegación de la bandeja.
+- Búsqueda y filtros deben permanecer disponibles sin desplazar ni ocultar las acciones principales.
+- En móvil, la barra debe ser compacta, accesible y persistente; la lista y el detalle deben conservar navegación lista/detalle sin desorden ni desbordamiento horizontal.
+
+**Jerarquía obligatoria de destinatarios:**
+- Técnico y Técnico exterior: solo pueden iniciar mensajes ordinarios dirigidos a un Supervisor autorizado.
+- Supervisor: solo puede iniciar mensajes ordinarios dirigidos a un Jefe.
+- Jefe: puede seleccionar usuarios de rango inferior conforme a la política que se implemente y valide; no puede usar el mensaje ordinario para eludir el canal de incidencias del Desarrollador.
+- Contactar al Desarrollador debe realizarse mediante un ticket/reporte de problema, con categoría, asunto, descripción y seguimiento; no mediante una conversación directa ordinaria.
+- El selector de usuario debe mostrar exclusivamente destinatarios permitidos para el actor. La misma matriz debe imponerse en Services/InboxConversations.js y/o el servicio backend correspondiente, no solo ocultarse en la interfaz.
+- Validar tanto la creación de conversaciones como respuestas, lectura, archivado y borrado; impedir suplantación, escalamiento de destinatario y acceso a conversaciones ajenas.
+
+**Operaciones y datos:**
+- «Marcar como no leídos» debe persistir el estado por destinatario y actualizar contadores/listas.
+- «Borrar» debe tener semántica definida y segura (borrado/ocultación para el usuario, sin destruir el historial de otros participantes ni los registros de auditoría).
+- «Responder» debe conservar el hilo y dirigirse solo a los participantes autorizados.
+- Crear mensaje nuevo debe validar destinatario, rango, categoría, asunto, contenido e idempotencia.
+- Mantener borradores, paginación, sincronización, accesibilidad y diseño responsive.
+- Incorporar pruebas UI, contrato, backend y anti-regresión para toda la matriz de rangos y operaciones masivas.
+
+**Hallazgos iniciales:** index.html ya presenta Recibidos/No leídos/Enviados/Archivados, pero los botones de acciones globales son limitados y no existe selección múltiple de conversaciones. JS/Frontend/ui.js muestra «Consultar al desarrollador» a cualquier rol no desarrollador y el formulario crea una consulta directa. Services/InboxConversations.js actualmente permite que cualquier rol no desarrollador envíe únicamente a Desarrollador (handleGetInboxRecipients y handleCreateInboxConversation), lo que contradice la jerarquía ahora solicitada. El backend tampoco expone todavía las operaciones masivas de marcar no leído y borrar conversación descritas aquí.
+
+### Orden de ejecución
+1. GP-PWA-02: retirar el desvío del gesto y el botón de recarga; corregir scroll raíz/Service Worker y cubrirlo con pruebas.
+2. GP-INBOX-04A: definir e implementar la matriz de destinatarios en backend y reflejarla en el selector/UI.
+3. GP-INBOX-04B: implementar lista recibidos como pantalla inicial y barra de herramientas con selección, no leído, borrar y responder.
+4. GP-INBOX-04C: completar creación de mensajes, canal de ticket al Desarrollador y vistas de bandeja.
+5. GP-INBOX-04D: pruebas de permisos por rol, operaciones masivas, móvil, accesibilidad y regresión.
+
+No marcar como completadas estas tareas hasta ejecutar las pruebas locales pertinentes y registrar por separado las verificaciones Beta. No se autoriza modificar deployments ni datos productivos.
