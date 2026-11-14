@@ -66,7 +66,7 @@ test("La acción agregada es de solo lectura y devuelve un resumen de todas las 
         LogosMarca:makeSheet([["id"],[1]],[["id"],["=ROW()-1"]])
     };
     const getSpreadsheet=()=>({getSheetByName:name=>sheets[name]||null});
-    const run=new Function("getSpreadsheet",extract("auditIdentifierColumn_")+"\n"+extract("handleAuditIdentifiers")+"\nreturn handleAuditIdentifiers;")(getSpreadsheet);
+    const run=new Function("getSpreadsheet",extract("auditIdentifierColumn_")+"\n"+extract("auditTutorialApprovalReferences_")+"\n"+extract("handleAuditIdentifiers")+"\nreturn handleAuditIdentifiers;")(getSpreadsheet);
     const result=run();
     assert.equal(result.status,"success");assert.equal(result.readOnly,true);assert.equal(result.sheets.length,6);assert.equal(result.summary.sheetsFound,6);
     assert.equal(Object.values(sheets).reduce((n,s)=>n+s.writes,0),0);
