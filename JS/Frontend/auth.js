@@ -8,6 +8,7 @@ import { setState, getState } from './state.js';
 import { routeAction, fetchCatalogData, getCatalogChanges, login as apiLogin, validateSession as apiValidateSession, completeLoginRequest } from './api-config.js';
 import { showLoginScreen, showApp, showGlobalError, performSilentSync } from './ui.js';
 import * as offline from './offline.js';
+import { loadPysData } from './pys-data.js';
 
 async function getCatalogFeedHead_(user, signal) {
     const userId = String(user && (user.ID || user.id) || "").trim();
@@ -61,8 +62,6 @@ async function fetchCatalogDelta_(cursor, user, signal) {
     }
     return { resetRequired: true, cursor: currentRevision, currentRevision, changes: [] };
 }
-
-import { loadPysData } from './pys-data.js';
 
 const SESSION_KEY = 'gpsepedia_session';
 let logoutGeneration_ = 0;
