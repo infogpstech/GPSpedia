@@ -65,6 +65,8 @@ function coordinatorPolicy_(service, operation) {
             updateVehicleField: { read: identityRead, write: ["CORTES", "DRIVE"] },
             uploadAdminImage: { read: identityRead, write: ["CORTES", "DRIVE", "IMAGE_INVENTORY"] },
             migrateCortesOperationIds: { maintenance: true }, // Dry-run y confirmación comparten la ventana exclusiva.
+            migrateIdentifiers: { maintenance: true },
+            rollbackIdentifiers: { maintenance: true },
             reconcilePendingImageUploads: { maintenance: true },
             addOrUpdateCut: {
                 read: identityRead,

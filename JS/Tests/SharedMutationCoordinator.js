@@ -318,6 +318,19 @@ function runSharedMutationCoordinatorTests() {
         const policy = coordinatorPolicy_("ADMIN", "migrateCortesOperationIds");
         assert_(policy.maintenance === true, "La migración debe declararse como mantenimiento exclusivo.");
     });
+    test_("La migración de IDs y su rollback exigen mantenimiento exclusivo", function() {
+        ["migrateIdentifiers", "rollbackIdentifiers"].forEach(action => {
+            const policy = coordinatorPolicy_("ADMIN", action);
+            assert_(policy.maintenance === true, action + " debe drenar operaciones activas.");
+            assert_(policy.writeResources.includes("ACTIVE_SESSIONS"), action + " debe coordinar la actividad de sesión.");
+            const r = createRuntime_();
+            const lease = acquire_(r, "ADMIN", action);
+            assert_(lease.status === "success", action + " debe adquirir la ventana exclusiva.");
+            const concurrent = acquire_(r, "WRITE", "addOrUpdateCut");
+            assert_(concurrent.status === "error" && concurrent.code === "busy", action + " debe bloquear escrituras concurrentes.");
+            release_(r, "ADMIN", action, lease.token);
+        });
+    });
 
     test_("ADMIN addOrUpdateCut autoriza solo allocateVehicleId anidado", function() {
         const r = createRuntime_();
