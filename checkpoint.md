@@ -1416,3 +1416,11 @@ Este mecanismo de datos en vivo es independiente de la actualización de recurso
 - `CatalogChangeFeed.mjs`: 12/12 PASS. CI `43638952342`: 97 suites / 1,426 pruebas / 0 fallos. GitHub Pages `43638951478`: SUCCESS para el mismo commit.
 - Aún no se conectaron las rutas de escritura reales ni el cliente IndexedDB/polling; no afirmar que el catálogo ya se sincroniza automáticamente. Siguiente: conectar los escritores con snapshots/patches idempotentes y reset por colección, luego integrar el cliente transaccional.
 - No hay controles nuevos visibles; todo el flujo es interno.
+
+
+## Continuidad — GP-CAT-01B conexión del primer productor (2026-11-14)
+
+- `Services/feedback.js`: después de que `handleRecordLike` confirma la escritura y libera su ScriptLock, el dispatcher vuelve a localizar el vehículo, construye el snapshot completo con `mapRowToObject` y publica un evento `upsert` de `cortes` en el feed autenticado.
+- La publicación está aislada: si falla el Coordinador, la reacción ya persistida conserva su respuesta exitosa y el error se registra en Logger. Los likes completados previamente no generan eventos repetidos.
+- `CatalogChangeFeed.mjs` añade un contrato para comprobar el orden de confirmación/publicación y el manejo de fallos del feed. Validación CI pendiente para este commit.
+- GP-CAT-01B sigue PARCIAL: faltan las demás rutas de escritura y el cliente IndexedDB/polling. No se ha desplegado Apps Script ni modificado ScriptProperties o datos productivos.

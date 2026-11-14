@@ -491,6 +491,30 @@ function doPostInternal_(e) {
             default:
                 throw new Error(`Acción desconocida en Feedback Service: ${action}`);
         }
+
+        // Publicar el cambio solo después de confirmar el like y liberar su ScriptLock.
+        // Un fallo del feed no revierte ni convierte en error una reacción ya guardada.
+        if (action === "recordLike" && response && response.status === "success" && !response.alreadyLiked) {
+            try {
+                const cutsSheet = getSafeSheet(SHEET_NAMES.CORTES);
+                if (!cutsSheet) throw new Error("No se encontró la hoja Cortes para publicar el cambio.");
+                const changedVehicleId = String(payload.vehicleId || "").trim();
+                const ids = cutsSheet.getLastRow() > 1
+                    ? cutsSheet.getRange(2, COLS_CORTES.id, cutsSheet.getLastRow() - 1, 1).getValues().flat()
+                    : [];
+                const matches = [];
+                ids.forEach((id, index) => { if (String(id || "").trim() === changedVehicleId) matches.push(index + 2); });
+                if (matches.length !== 1) throw new Error("No se pudo identificar de forma única el vehículo actualizado.");
+                const row = cutsSheet.getRange(matches[0], 1, 1, cutsSheet.getLastColumn()).getValues()[0];
+                const snapshot = mapRowToObject(row, COLS_CORTES);
+                publishSharedCatalogChange_("FEEDBACK", "recordLike", {
+                    collection: "cortes", recordId: changedVehicleId, operation: "upsert", snapshot: snapshot
+                });
+            } catch (catalogPublishError) {
+                console.error("El like se guardó, pero no se pudo publicar su cambio incremental:",
+                    catalogPublishError && catalogPublishError.message ? catalogPublishError.message : catalogPublishError);
+            }
+        }
     } catch (error) {
         response = { status: 'error', message: error.message };
     }

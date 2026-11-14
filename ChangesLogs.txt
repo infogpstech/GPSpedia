@@ -185,3 +185,9 @@
 - FEEDBACK: endpoint getCatalogChanges autenticado por sesión; api-config enruta la acción.
 - CatalogChangeFeed.mjs: 12/12 PASS. GitHub Actions: 97 suites, 1,426 pruebas aprobadas, 0 fallos.
 - Productores WRITE/FEEDBACK/ADMIN y cliente IndexedDB aún no integrados; no hay sincronización visible ni controles nuevos.
+
+
+[2026-11-14] GP-CAT-01B — Conexión del primer productor FEEDBACK
+- `Services/feedback.js`: `recordLike` publica el snapshot actualizado de Cortes tras confirmar el contador y liberar el lock. Los errores de publicación no revierten una reacción persistida y se registran en Logger.
+- `JS/Tests/CatalogChangeFeed.mjs`: añade un contrato para el productor `recordLike` y su manejo de fallos.
+- GP-CAT-01B permanece parcial; no se afirma sincronización completa ni se modifica el deployment de Apps Script.

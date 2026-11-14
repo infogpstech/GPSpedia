@@ -673,7 +673,7 @@ No marcar como completadas estas tareas hasta ejecutar las pruebas locales perti
 
 
 ## GP-CAT-01 — Catálogo cache-first con actualización incremental y animada en vivo
-**Prioridad: alta. Estado: EN PROGRESO. GP-CAT-01A COMPLETADA; GP-CAT-01B PARCIAL: journal monotónico autenticado en Coordinador, endpoint FEEDBACK paginado y cliente servidor-a-servidor publicados. Falta conectar los escritores a la publicación de eventos y completar pruebas de retención/cursor en Beta; GP-CAT-01C..01F pendientes.**
+**Prioridad: alta. Estado: EN PROGRESO. GP-CAT-01A COMPLETADA; GP-CAT-01B PARCIAL: journal monotónico autenticado en Coordinador, endpoint FEEDBACK paginado y cliente servidor-a-servidor publicados; primer productor real conectado (`FEEDBACK/recordLike` → snapshot actualizado de Cortes). Restan las demás rutas de escritura, el cliente incremental y pruebas Beta; GP-CAT-01C..01F pendientes.**
 
 ### Objetivo de experiencia
 - Al abrir la plataforma, mostrar primero y sin demora la última instantánea válida del catálogo guardada localmente (IndexedDB), tanto con conexión como sin ella. La interfaz no debe esperar a descargar todo el catálogo para empezar a ser utilizable.
@@ -708,7 +708,8 @@ No marcar como completadas estas tareas hasta ejecutar las pruebas locales perti
 - `Services/feedback.js`: endpoint `getCatalogChanges` autenticado contra ActiveSessions/Users; sin nueva interfaz.
 - `JS/Frontend/api-config.js`: acción enrutable a FEEDBACK; aún no se integra al arranque ni al sondeo del cliente.
 - `JS/Tests/CatalogChangeFeed.mjs`: 12/12 PASS; CI `43638952342`: 97 suites, 1,426 pruebas, 0 fallos.
-- **Limitación de este hito:** todavía no se conectaron las rutas WRITE/FEEDBACK/ADMIN para publicar cada escritura real; el feed no debe considerarse funcional para usuarios hasta integrar esos productores y luego el cliente IndexedDB.
+- Primer productor conectado: `FEEDBACK/recordLike` publica el snapshot completo de Cortes después de confirmar el contador y liberar el lock. El fallo del feed queda aislado y no invalida la reacción persistida.
+- **Limitación de este hito:** restan las demás rutas WRITE/FEEDBACK/ADMIN y el cliente IndexedDB; el feed no debe considerarse sincronización funcional para usuarios hasta completar esos productores y el consumidor.
 - No se añadió botón, panel, indicador ni sección visible.
 
 ### Criterios de aceptación
