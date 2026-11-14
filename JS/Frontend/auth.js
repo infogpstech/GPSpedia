@@ -5,9 +5,63 @@
 // - Update the user state.
 
 import { setState, getState } from './state.js';
-import { routeAction, fetchCatalogData, login as apiLogin, validateSession as apiValidateSession, completeLoginRequest } from './api-config.js';
+import { routeAction, fetchCatalogData, getCatalogChanges, login as apiLogin, validateSession as apiValidateSession, completeLoginRequest } from './api-config.js';
 import { showLoginScreen, showApp, showGlobalError } from './ui.js';
 import * as offline from './offline.js';
+
+async function getCatalogFeedHead_(user, signal) {
+    const userId = String(user && (user.ID || user.id) || "").trim();
+    const sessionToken = String(user && user.SessionToken || "").trim();
+    if (!userId || !sessionToken) throw new Error("La sesión no permite consultar el feed incremental.");
+    const page = await getCatalogChanges(0, 1, { userId, sessionToken }, { signal });
+    const revision = Number(page && page.currentRevision);
+    if (!page || page.status !== "success" || !Number.isSafeInteger(revision) || revision < 0) {
+        throw new Error("El feed no devolvió una revisión inicial válida.");
+    }
+    return revision;
+}
+
+async function fetchCatalogDelta_(cursor, user, signal) {
+    const userId = String(user && (user.ID || user.id) || "").trim();
+    const sessionToken = String(user && user.SessionToken || "").trim();
+    if (!userId || !sessionToken || !Number.isSafeInteger(cursor) || cursor < 0) {
+        throw new Error("La sesión o el cursor no permiten sincronizar el catálogo.");
+    }
+    let nextCursor = cursor;
+    let currentRevision = cursor;
+    const changes = [];
+    for (let pageNumber = 0; pageNumber < 5; pageNumber++) {
+        const page = await getCatalogChanges(nextCursor, 50, { userId, sessionToken }, { signal });
+        const pageRevision = Number(page && page.currentRevision);
+        if (!page || page.status !== "success" || !Number.isSafeInteger(pageRevision) || pageRevision < nextCursor ||
+            !Array.isArray(page.changes) || !Number.isSafeInteger(Number(page.nextCursor)) ||
+            typeof page.hasMore !== "boolean") {
+            throw new Error("El feed devolvió una página incremental inválida.");
+        }
+        currentRevision = Math.max(currentRevision, pageRevision);
+        if (page.resetRequired === true) {
+            return { resetRequired: true, cursor: currentRevision, currentRevision, changes: [] };
+        }
+        const previousCursor = nextCursor;
+        for (const change of page.changes) {
+            if (!change || !Number.isSafeInteger(change.revision) || change.revision !== nextCursor + 1) {
+                return { resetRequired: true, cursor: currentRevision, currentRevision, changes: [] };
+            }
+            changes.push(change);
+            nextCursor = change.revision;
+        }
+        if (Number(page.nextCursor) !== nextCursor ||
+            (page.hasMore && nextCursor <= previousCursor) ||
+            (!page.hasMore && nextCursor < pageRevision)) {
+            throw new Error("El cursor del feed no coincide con la secuencia de revisiones.");
+        }
+        if (!page.hasMore) {
+            return { resetRequired: false, cursor: nextCursor, currentRevision, changes };
+        }
+    }
+    return { resetRequired: true, cursor: currentRevision, currentRevision, changes: [] };
+}
+
 import { loadPysData } from './pys-data.js';
 
 const SESSION_KEY = 'gpsepedia_session';
@@ -165,24 +219,30 @@ function handleLoginSuccess(user, persist = true) {
 
 export async function loadInitialData(forceRefresh = false) {
     cancelCatalogLoad_();
-    if (typeof AbortController !== 'function') { setState({ catalogLoadStatus: 'error', catalogLoadError: 'Este navegador no permite cancelar solicitudes del catálogo.' }); showGlobalError('No se puede cargar el catálogo de forma segura porque el navegador no admite cancelación de solicitudes.'); return; }
+    if (typeof AbortController !== 'function') {
+        setState({ catalogLoadStatus: 'error', catalogLoadError: 'Este navegador no permite cancelar solicitudes del catálogo.' });
+        showGlobalError('No se puede cargar el catálogo de forma segura porque el navegador no admite cancelación de solicitudes.');
+        return;
+    }
     const loadController = new AbortController();
     catalogLoadController_ = loadController;
     const isCurrentLoad = () => catalogLoadController_ === loadController && !loadController.signal.aborted;
+    const currentUser = getState().currentUser;
     let catalogLoaded = false;
+    let cachedCatalog = null;
+    let cachedCursor = null;
     setState({ catalogLoadStatus: 'loading', catalogLoadError: null });
 
-    // 1. Intentar cargar desde caché local inmediatamente (Cache-First)
+    // 1. Renderizar primero la instantánea local junto con su cursor persistido.
     try {
-        // Phase 3.3: Usar Promise.race para no bloquear indefinidamente si IndexedDB está lento
-        const cachedCatalog = await Promise.race([
-            offline.getCatalog(),
+        const cachedState = await Promise.race([
+            offline.getCatalogSyncState(),
             new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout local")), 3000))
         ]);
-
         if (!isCurrentLoad()) return;
+        cachedCatalog = cachedState && cachedState.snapshot;
+        cachedCursor = cachedState && Number.isSafeInteger(cachedState.cursor) ? cachedState.cursor : null;
         if (offline.isCompleteCatalogSnapshot(cachedCatalog)) {
-            console.log("Cargando catálogo desde caché local...");
             const normalizedCached = normalizeCatalogData(cachedCatalog);
             if (processCatalogData(normalizedCached) !== true) {
                 throw new Error('No se confirmó el procesamiento del catálogo local.');
@@ -191,90 +251,134 @@ export async function loadInitialData(forceRefresh = false) {
             setState({ catalogLoadStatus: 'ready', catalogLoadError: null });
         } else if (cachedCatalog) {
             console.warn('Se descartó una caché de catálogo incompleta o con IDs inválidos.');
+            cachedCatalog = null;
         }
-    } catch (e) {
+    } catch (error) {
         if (!isCurrentLoad()) return;
-        console.warn("Error o timeout al leer catálogo de IndexedDB:", e);
+        console.warn("Error o timeout al leer catálogo de IndexedDB:", error);
+        try {
+            cachedCatalog = await offline.getCatalog();
+            if (offline.isCompleteCatalogSnapshot(cachedCatalog)) {
+                const normalizedCached = normalizeCatalogData(cachedCatalog);
+                if (processCatalogData(normalizedCached) !== true) throw new Error('No se confirmó el procesamiento del catálogo local.');
+                catalogLoaded = true;
+                cachedCursor = null;
+                setState({ catalogLoadStatus: 'ready', catalogLoadError: null });
+            } else cachedCatalog = null;
+        } catch (fallbackError) {
+            cachedCatalog = null;
+            cachedCursor = null;
+        }
     }
 
     if (!isCurrentLoad()) return;
-    // Evitar otra descarga cuando la instantánea local acaba de sincronizarse.
     if (!forceRefresh && catalogLoaded && hasFreshCatalogSync_()) return;
 
-    // 2. Cargar desde la red en segundo plano con timeout y reintentos acotados.
     try {
-        const apiResponse = await fetchCatalogData({ signal: loadController.signal, timeoutMs: 8000, retries: 2, baseDelayMs: 400 });
-        if (!isCurrentLoad()) return;
-        const rawCatalogData = apiResponse && apiResponse.data;
-        if (!offline.isCompleteCatalogSnapshot(rawCatalogData)) {
-            throw new Error('El servicio no devolvió una instantánea completa con colecciones válidas.');
-        }
-        const catalogData = normalizeCatalogData(rawCatalogData);
+        let snapshotToApply = null;
+        let cursorToPersist = null;
+        let requiresFullSnapshot = !catalogLoaded || !Number.isSafeInteger(cachedCursor);
 
+        if (!requiresFullSnapshot) {
+            try {
+                const delta = await fetchCatalogDelta_(cachedCursor, currentUser, loadController.signal);
+                if (!isCurrentLoad()) return;
+                if (delta.resetRequired) {
+                    requiresFullSnapshot = true;
+                    cursorToPersist = delta.cursor;
+                } else if (delta.changes.length === 0) {
+                    if (delta.cursor > cachedCursor) await offline.saveCatalogCursor(delta.cursor);
+                    if (!isCurrentLoad()) return;
+                    markCatalogSync_();
+                    setState({ catalogLoadStatus: 'ready', catalogLoadError: null });
+                    return;
+                } else {
+                    const applied = offline.applyCatalogChangesToSnapshot(cachedCatalog, delta.changes);
+                    if (applied.resetRequired) {
+                        requiresFullSnapshot = true;
+                        cursorToPersist = delta.currentRevision;
+                    } else {
+                        snapshotToApply = normalizeCatalogData(applied.snapshot);
+                        cursorToPersist = delta.cursor;
+                    }
+                }
+            } catch (feedError) {
+                if (!isCurrentLoad()) return;
+                console.warn("No se pudo aplicar el feed incremental; se solicitará una reconciliación completa:", feedError);
+                requiresFullSnapshot = true;
+                cursorToPersist = null;
+            }
+        } else {
+            try {
+                cursorToPersist = await getCatalogFeedHead_(currentUser, loadController.signal);
+            } catch (headError) {
+                if (!isCurrentLoad()) return;
+                console.warn("No se pudo establecer el cursor inicial del catálogo:", headError);
+                cursorToPersist = null;
+            }
+        }
+
+        if (requiresFullSnapshot) {
+            const apiResponse = await fetchCatalogData({ signal: loadController.signal, timeoutMs: 8000, retries: 2, baseDelayMs: 400 });
+            if (!isCurrentLoad()) return;
+            const rawCatalogData = apiResponse && apiResponse.data;
+            if (!offline.isCompleteCatalogSnapshot(rawCatalogData)) {
+                throw new Error('El servicio no devolvió una instantánea completa con colecciones válidas.');
+            }
+            snapshotToApply = normalizeCatalogData(rawCatalogData);
+        }
+
+        if (!isCurrentLoad()) return;
         if (catalogLoaded) {
-            // Sincronización silenciosa: también debe confirmar el procesamiento antes de declarar ready.
             const { performSilentSync } = await import('./ui.js');
             if (!isCurrentLoad()) return;
-            if (await performSilentSync(catalogData) !== true) {
+            if (await performSilentSync(snapshotToApply) !== true) {
                 throw new Error('La sincronización del catálogo no confirmó su actualización.');
             }
-        } else if (processCatalogData(catalogData) !== true) {
+        } else if (processCatalogData(snapshotToApply) !== true) {
             throw new Error('No se confirmó el procesamiento del catálogo recibido.');
         }
         if (!isCurrentLoad()) return;
 
-        // Guardar solo una instantánea que ya se procesó correctamente.
-        offline.saveCatalog(catalogData)
-            .then(() => markCatalogSync_())
-            .catch(e => console.warn("Error guardando catálogo en caché:", e));
+        // El cursor se confirma en la misma transacción que el snapshot ya aplicado.
+        if (Number.isSafeInteger(cursorToPersist)) {
+            await offline.saveCatalogWithCursor(snapshotToApply, cursorToPersist);
+        } else {
+            await offline.saveCatalog(snapshotToApply);
+        }
+        if (!isCurrentLoad()) return;
+        markCatalogSync_();
         catalogLoaded = true;
         setState({ catalogLoadStatus: 'ready', catalogLoadError: null });
 
-        // Precarga compartida de Problemas y Soluciones; búsqueda y modales reutilizan esta misma petición.
-        loadPysData({ refresh: true }).catch(e => console.warn("Error precargando PyS en segundo plano:", e));
-
+        // PyS usa un endpoint/almacenamiento separado y se reconcilia tras un reset/bootstrap.
+        if (requiresFullSnapshot) {
+            loadPysData({ refresh: true }).catch(error => console.warn("Error precargando PyS en segundo plano:", error));
+        }
     } catch (error) {
         if (!isCurrentLoad()) return;
-        console.warn("Fallo al cargar catálogo desde red:", error);
-
-        // Phase 3.3/3.4: Solo mostrar error si REALMENTE no hay nada cargado ni se pudo cargar del caché tras el fallo de red
+        console.warn("Fallo al sincronizar el catálogo:", error);
         if (!catalogLoaded) {
             try {
-                const cachedCatalog = await offline.getCatalog();
+                const fallbackCatalog = await offline.getCatalog();
                 if (!isCurrentLoad()) return;
-                if (offline.isCompleteCatalogSnapshot(cachedCatalog)) {
-                    const normalizedCached = normalizeCatalogData(cachedCatalog);
-                    if (processCatalogData(normalizedCached) !== true) {
-                        throw new Error('No se confirmó la recuperación del catálogo local.');
-                    }
+                if (offline.isCompleteCatalogSnapshot(fallbackCatalog)) {
+                    const normalizedCached = normalizeCatalogData(fallbackCatalog);
+                    if (processCatalogData(normalizedCached) !== true) throw new Error('No se confirmó la recuperación del catálogo local.');
                     catalogLoaded = true;
                     setState({ catalogLoadStatus: 'stale', catalogLoadError: error.message || 'La red no está disponible.' });
-                    console.log("Catalog rehydrated from cache after network failure.");
                     return;
                 }
-            } catch (e) {
-                console.warn("No se pudo recuperar una instantánea válida de la caché:", e && e.message ? e.message : e);
+            } catch (fallbackError) {
+                console.warn("No se pudo recuperar una instantánea válida de la caché:", fallbackError && fallbackError.message ? fallbackError.message : fallbackError);
             }
-
             if (!catalogLoaded) {
-                // No hay datos locales ni de red válidos.
                 setState({ catalogLoadStatus: 'error', catalogLoadError: error && error.message ? error.message : 'No se pudo cargar el catálogo.' });
                 showGlobalError("No se pudo cargar el catálogo. Verifica tu conexión.");
-
-                // Asegurar un estado vacío coherente para limpiar skeletons y datos parciales.
-                setState({
-                    catalogData: {
-                        cortes: [],
-                        tutoriales: [],
-                        relay: [],
-                        logos: [],
-                        sortedCategories: []
-                    }
-                });
-            } else {
-                // La caché se procesó, aunque fallara la confirmación del estado stale.
-                setState({ catalogLoadStatus: 'stale', catalogLoadError: error && error.message ? error.message : 'No se pudo actualizar el catálogo desde la red.' });
+                setState({ catalogData: { cortes: [], tutoriales: [], relay: [], logos: [], sortedCategories: [] } });
             }
+        } else {
+            setState({ catalogLoadStatus: 'stale', catalogLoadError: error && error.message ? error.message : 'No se pudo actualizar el catálogo desde la red.' });
         }
     } finally {
         if (catalogLoadController_ === loadController) catalogLoadController_ = null;
