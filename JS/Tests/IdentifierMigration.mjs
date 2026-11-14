@@ -69,8 +69,8 @@ testCase("dry-run genera digest y no crea manifiesto ni snapshot",()=>{
 });
 testCase("rechaza Relay y formatos de ID desconocidos",()=>{
  const h=makeHarness(makeBase());
- assert.throws(()=>h.fn.migrate({...change,changes:[{...change.changes[0],entity:"relay"}]}),/Relay permanece/);
  assert.throws(()=>h.fn.migrate({...change,changes:[{...change.changes[0],newId:"bad"}]}),/formato vigente/);
+ assert.throws(()=>h.fn.migrate({...change,changes:[{...change.changes[0],entity:"relay",mode:"fill_missing",row:2,keyColumn:2,keyValue:"alpha",oldId:"",newId:"legacy-1"}]}),/Relay no admite fill_missing/);
 });
 testCase("rechaza claves no únicas y cambios de IDs válidos",()=>{
  const data=makeBase();data.Users.rows.push(["","beta","Otro"]);
@@ -129,5 +129,12 @@ testCase("reanuda lotes parciales sin recalcular huellas de filas ya aplicadas",
  const first=h.fn.migrate(payload);assert.equal(first.verified,1);assert.equal(first.remaining,1);
  const second=h.fn.migrate(payload);assert.equal(second.verified,2);assert.equal(second.remaining,0);
  assert.equal(h.ss.getSheetByName("Users").rows[2][0],"USR-0002");assert.equal(h.ss.getSheetByName("Users").rows[3][0],"USR-0003");
+});
+testCase("Relay solo congela fórmulas preservando el valor y el tipo del ID",()=>{
+ const h=makeHarness(makeBase()),proposal={migrationId:"idm-relay-001",changes:[{entity:"relay",mode:"freeze_formula",row:2,keyColumn:2,keyValue:"Relay 5 pines",oldId:"1",newId:"1"}],dryRun:true};
+ const dry=h.fn.migrate(proposal);h.fn.migrate({...proposal,dryRun:false,confirm:true,manifestDigest:dry.manifestDigest});
+ assert.equal(h.ss.getSheetByName("Relay").rows[1][0],1);assert.equal(h.ss.getSheetByName("Relay").formulas[1][0],"");
+ h.fn.rollback({migrationId:proposal.migrationId,manifestDigest:dry.manifestDigest,dryRun:false,confirm:true});
+ assert.equal(h.ss.getSheetByName("Relay").formulas[1][0],"=ROW()-1");
 });
 console.log("IdentifierMigration: "+passed+"/"+passed+" PASS");

@@ -3471,7 +3471,8 @@ const IDENTIFIER_MIGRATION_ENTITIES_ = Object.freeze({
     vehicle: { sheet: "Cortes", idColumn: 1, headers: ["id"], kind: "vehicle", numeric: true },
     tutorial: { sheet: "Tutorial", idColumn: 1, headers: ["id"], kind: "tutorial", numeric: false },
     problem: { sheet: "pys", idColumn: 1, headers: ["id_problem"], kind: "problem", numeric: false },
-    logo: { sheet: "LogosMarca", idColumn: 1, headers: ["id"], kind: "logo", numeric: true }
+    logo: { sheet: "LogosMarca", idColumn: 1, headers: ["id"], kind: "logo", numeric: true },
+    relay: { sheet: "Relay", idColumn: 1, headers: ["id"], kind: "relay", numeric: false }
 });
 
 function identifierMigrationCanonical_(value) {
@@ -3512,6 +3513,7 @@ function identifierMigrationValidId_(kind, value) {
     if (kind === "vehicle" || kind === "logo") return /^[1-9][0-9]*$/.test(raw) && Number.isSafeInteger(Number(raw));
     if (kind === "tutorial") return /^tut-[a-z0-9][a-z0-9_-]*$/i.test(raw);
     if (kind === "problem") return /^isue-[0-9]+$/i.test(raw) && Number(raw.slice(5)) > 0;
+    if (kind === "relay") return raw.length > 0 && raw.length <= 128 && !/[\\u0000-\\u001f]/.test(raw);
     return false;
 }
 
@@ -3562,7 +3564,6 @@ function identifierMigrationBuildPlan_(payload, ss) {
         if (!change || typeof change !== "object" || Array.isArray(change)) throw new Error("Cambio inválido en la posición " + index + ".");
         if (Array.isArray(change.references) && change.references.length) throw new Error("No se aceptan referencias manuales incompletas. Las referencias cruzadas deben resolverse en una tarea específica antes de migrar IDs existentes.");
         const entity = String(change.entity || "").trim().toLowerCase();
-        if (entity === "relay") throw new Error("Relay permanece en diagnóstico: no se conoce su escritor ni su formato de ID.");
         const spec = IDENTIFIER_MIGRATION_ENTITIES_[entity];
         if (!spec) throw new Error("Entidad no admitida: " + entity + ".");
         const sheet = ss.getSheetByName(spec.sheet);
@@ -3585,6 +3586,7 @@ function identifierMigrationBuildPlan_(payload, ss) {
         if (!identifierMigrationValidId_(spec.kind, proposedText)) throw new Error("El ID propuesto no cumple el formato vigente para " + entity + ".");
         if ((spec.kind === "user" && proposedText !== proposedText.toUpperCase()) || ((spec.kind === "tutorial" || spec.kind === "problem") && proposedText !== proposedText.toLowerCase())) throw new Error("El ID propuesto debe usar la capitalización canónica para " + entity + ".");
         if (mode === "fill_missing") {
+            if (entity === "relay") throw new Error("Relay no admite fill_missing hasta confirmar su formato y escritor de ID; solo se permite congelar fórmulas conservando el valor existente.");
             if (currentText || currentFormula) throw new Error("fill_missing solo puede completar una celda ID realmente vacía y sin fórmula.");
             if (String(change.oldId === null || change.oldId === undefined ? "" : change.oldId).trim()) throw new Error("oldId debe estar vacío para fill_missing.");
         } else if (mode === "freeze_formula") {
@@ -3605,15 +3607,16 @@ function identifierMigrationBuildPlan_(payload, ss) {
         if (mode === "fill_missing" && existingCount !== 0) throw new Error("El ID propuesto ya existe en " + spec.sheet + ".");
         if (mode === "freeze_formula" && existingCount !== 1) throw new Error("El ID de fórmula no es único en " + spec.sheet + ".");
         if (!sheetDigests[spec.sheet]) sheetDigests[spec.sheet] = identifierMigrationSheetDigest_(sheet);
+        const newValue = mode === "freeze_formula" ? currentId : (spec.numeric ? Number(proposedText) : proposedText);
         const simulated = { values: rowData.values.slice(), formulas: rowData.formulas.slice() };
-        simulated.values[spec.idColumn - 1] = spec.numeric ? Number(proposedText) : proposedText;
+        simulated.values[spec.idColumn - 1] = newValue;
         simulated.formulas[spec.idColumn - 1] = "";
         const sourceFingerprint = identifierMigrationDigest_(rowData);
         const afterFingerprint = identifierMigrationDigest_(simulated);
         entries.push({
             migrationId, entryIndex: index + 1, entity, sheet: spec.sheet, row, idColumn: spec.idColumn,
             mode, oldValue: currentId === null || currentId === undefined ? "" : currentId,
-            oldFormula: currentFormula, newValue: spec.numeric ? Number(proposedText) : proposedText,
+            oldFormula: currentFormula, newValue,
             newId: proposedText, keyColumn, keyValue, sourceFingerprint, afterFingerprint,
             sourceSheetFingerprint: sheetDigests[spec.sheet],
             snapshotName: "__IDM_" + identifierMigrationDigest_(migrationId).slice(0, 12) + "_" + entity,
