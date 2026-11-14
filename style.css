@@ -4078,3 +4078,10 @@ img.gp-image-loaded {
 }
 .audit-reconciliation-approval input { width: 16px; height: 16px; accent-color: var(--accent-color); }
 #btn-audit-drive-apply-reconciliation { margin-top: 12px; }
+
+
+.gp-help-label-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.gp-help-label-row > label { flex: 0 1 auto; min-width: 0; }
+.gp-context-help-trigger { flex: 0 0 24px; margin: 0; }
+.gp-context-help-panel { max-width: 100%; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .gp-context-help-panel { font-size: .78rem; padding: 8px; } }

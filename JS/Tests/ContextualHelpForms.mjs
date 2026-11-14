@@ -20,12 +20,34 @@ testCase("El patrón contextual tiene foco visible, contraste por tema y estado 
 testCase("La ayuda se controla por pulsación, se cierra fuera y permite Escape",()=>{
  assert.ok(html.includes("document.addEventListener(\'click\', event =>"));assert.ok(html.includes("event.key === \'Escape\'"));assert.ok(html.includes("closeContextHelp(true)"));
 });
+testCase("la ayuda dinámica se cierra al pulsar fuera y anuncia el panel asociado",()=>{
+ const ui=fs.readFileSync(resolve(root,"JS/Frontend/ui.js"),"utf8");
+ assert.ok(ui.includes('document.addEventListener("click", event =>'));
+ assert.ok(ui.includes('element.closest(".gp-context-help-panel")'));
+ assert.ok(ui.includes('trigger.setAttribute("aria-describedby", panel.id)'));
+ assert.ok(ui.includes('closeContextualHelpPanels_(true)'));
+ assert.ok(ui.includes('active.focus()'));
+});
+testCase("el alta de tutorial y los controles Developer tienen ayuda contextual",()=>{
+ const ui=fs.readFileSync(resolve(root,"JS/Frontend/ui.js"),"utf8");
+ const tutorial=ui.slice(ui.indexOf("export function openAddTutorialModal"),ui.indexOf("export async function openAssociateExistingProblemModal"));
+ for(const id of ["tut-tema","tut-como-identificarlo","tut-donde-encontrarlo","tut-desc"]) assert.ok(tutorial.includes('attachContextualHelp_(content, "'+id+'"'),id);
+ const developer=ui.slice(ui.indexOf("const openDevToolsModal_"),ui.indexOf("export async function openDevTools"));
+ for(const id of ["recalculate-vin-signatures-checkbox","diagnose-vin-signatures-checkbox","clear-activity-logs-checkbox","clear-logs-option-select","clear-sensitive-logs-checkbox"]) assert.ok(developer.includes('attachContextualHelp_(modal, "'+id+'"'),id);
+});
+testCase("el modal de detalles de vehículos permanece sin ayudas contextuales",()=>{
+ const ui=fs.readFileSync(resolve(root,"JS/Frontend/ui.js"),"utf8");
+ const start=ui.indexOf("function mostrarDetalleModal");
+ const end=ui.indexOf("\nfunction ",start+10);
+ assert.ok(start>=0&&end>start);
+ assert.equal(ui.slice(start,end).includes("attachContextualHelp_"),false);
+});
 console.log("ContextualHelpForms: "+passed+"/"+passed+" PASS");
 testCase("Los formularios dinámicos de sugerencias PYS incluyen ayudas asociadas y accesibles",()=>{
  const ui=fs.readFileSync(resolve(root,"JS/Frontend/ui.js"),"utf8");
  assert.match(ui,/function attachContextualHelp_\(root, fieldId, message\)/);
  for(const id of ["sug-tipo","sug-relay","sug-ubicacion","sug-color","sug-check-engine","sug-detalles","tut-tema","tut-como-identificarlo","tut-donde-encontrarlo","tut-desc"]){ assert.ok(ui.includes('attachContextualHelp_(content, "'+id+'"'),id); }
- assert.match(ui,/role', 'tooltip'/);assert.match(ui,/event\.key !== 'Escape'/);assert.match(ui,/active\.focus\(\)/);
+ assert.match(ui,/setAttribute\("role", "tooltip"\)/);assert.match(ui,/event.key !== "Escape"/);assert.match(ui,/active.focus\(\)/);
  assert.match(fs.readFileSync(resolve(root,"style.css"),"utf8"),/\.gp-context-help-trigger:focus-visible/);
 });
 

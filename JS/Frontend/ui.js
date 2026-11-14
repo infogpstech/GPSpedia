@@ -4862,6 +4862,11 @@ const openDevToolsModal_ = setupModal('dev-tools-modal', (options = {}) => {
     };
     modal.setAttribute('aria-hidden', 'false');
     modal.style.display = 'flex';
+    attachContextualHelp_(modal, "recalculate-vin-signatures-checkbox", "Calcula firmas de VIN y guarda el resultado en el almacenamiento local; no modifica el Spreadsheet.");
+    attachContextualHelp_(modal, "diagnose-vin-signatures-checkbox", "Muestra la disponibilidad y distribución de firmas sin cambiar datos.");
+    attachContextualHelp_(modal, "clear-activity-logs-checkbox", "Limpia ActividadUsuario según el periodo elegido en «Conservar registros».");
+    attachContextualHelp_(modal, "clear-logs-option-select", "Elige si se conservan los últimos siete días o se limpian todos los registros, manteniendo encabezados.");
+    attachContextualHelp_(modal, "clear-sensitive-logs-checkbox", "Retira solo entradas con datos confidenciales; conserva los demás registros y encabezados.");
     activateLegalModalFocus_(modal, {
         initialFocus: modal.querySelector('#dev-tools-title'),
         returnFocus: options.returnFocus,
@@ -9980,43 +9985,79 @@ function createSuggestionOperationId_() {
     throw new Error("El navegador no dispone de un generador seguro para identificar la sugerencia.");
 }
 
+let gpContextHelpGlobalListenersInstalled_ = false;
+
+function closeContextualHelpPanels_(restoreFocus) {
+    const active = document.querySelector('.gp-context-help-trigger[aria-expanded="true"]');
+    document.querySelectorAll('.gp-context-help-panel').forEach(panel => { panel.hidden = true; });
+    document.querySelectorAll('.gp-context-help-trigger').forEach(trigger => {
+        trigger.setAttribute("aria-expanded", "false");
+        trigger.removeAttribute("aria-describedby");
+    });
+    if (restoreFocus && active) active.focus();
+}
+
+function ensureContextualHelpGlobalListeners_() {
+    if (gpContextHelpGlobalListenersInstalled_) return;
+    gpContextHelpGlobalListenersInstalled_ = true;
+    document.addEventListener("click", event => {
+        const element = event.target instanceof Element ? event.target : null;
+        const trigger = element ? element.closest(".gp-context-help-trigger") : null;
+        if (trigger) {
+            const wasExpanded = trigger.getAttribute("aria-expanded") === "true";
+            closeContextualHelpPanels_(false);
+            if (!wasExpanded) {
+                const scope = trigger.closest(".info-modal-content") || trigger.closest("#dev-tools-modal") || document;
+                const panelId = trigger.getAttribute("aria-controls");
+                const panel = panelId ? scope.querySelector("#" + panelId) : null;
+                if (panel) {
+                    panel.hidden = false;
+                    trigger.setAttribute("aria-expanded", "true");
+                    trigger.setAttribute("aria-describedby", panel.id);
+                }
+            }
+            return;
+        }
+        if (element && element.closest(".gp-context-help-panel")) return;
+        closeContextualHelpPanels_(false);
+    });
+    document.addEventListener("keydown", event => {
+        if (event.key !== "Escape") return;
+        if (!document.querySelector('.gp-context-help-trigger[aria-expanded="true"]')) return;
+        closeContextualHelpPanels_(true);
+    });
+}
+
 function attachContextualHelp_(root, fieldId, message) {
     if (!root || !fieldId) return;
     const label = root.querySelector('label[for="' + fieldId + '"]');
-    const field = root.querySelector('#' + fieldId);
-    if (!label || !field || label.parentElement.classList.contains('gp-help-label-row')) return;
-    const row = document.createElement('div'); row.className = 'gp-help-label-row';
-    const button = document.createElement('button'); button.type = 'button'; button.className = 'gp-context-help-trigger';
-    button.setAttribute('aria-label', 'Ayuda sobre ' + label.textContent.trim()); button.setAttribute('aria-expanded', 'false');
-    button.setAttribute('aria-controls', 'context-help-' + fieldId); button.title = 'Ayuda';
+    const field = root.querySelector("#" + fieldId);
+    if (!label || !field || label.parentElement.classList.contains("gp-help-label-row")) return;
+    const labelParent = label.parentNode;
+    const fieldInsideLabel = label.contains(field);
+    const row = document.createElement("div");
+    row.className = "gp-help-label-row";
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "gp-context-help-trigger";
+    button.setAttribute("aria-label", "Ayuda sobre " + label.textContent.trim());
+    button.setAttribute("aria-expanded", "false");
+    button.setAttribute("aria-controls", "context-help-" + fieldId);
+    button.title = "Ayuda";
     button.innerHTML = '<i class="fa-solid fa-circle-info" aria-hidden="true"></i>';
-    const panel = document.createElement('span'); panel.className = 'gp-context-help-panel'; panel.id = 'context-help-' + fieldId;
-    panel.setAttribute('role', 'tooltip'); panel.hidden = true; panel.textContent = message;
-    label.parentNode.insertBefore(row, label); row.append(label, button); label.parentNode.insertBefore(panel, field);
-    if (root.dataset.gpContextHelpReady === 'true') return;
-    root.dataset.gpContextHelpReady = 'true';
-    root.addEventListener('click', event => {
-        const trigger = event.target instanceof Element ? event.target.closest('.gp-context-help-trigger') : null;
-        if (trigger) {
-            const target = root.querySelector('#' + trigger.getAttribute('aria-controls'));
-            const shouldOpen = target && target.hidden;
-            root.querySelectorAll('.gp-context-help-panel').forEach(item => { item.hidden = true; });
-            root.querySelectorAll('.gp-context-help-trigger').forEach(item => item.setAttribute('aria-expanded', 'false'));
-            if (shouldOpen) { target.hidden = false; trigger.setAttribute('aria-expanded', 'true'); }
-        } else if (!(event.target instanceof Element) || !event.target.closest('.gp-context-help-panel')) {
-            root.querySelectorAll('.gp-context-help-panel').forEach(item => { item.hidden = true; });
-            root.querySelectorAll('.gp-context-help-trigger').forEach(item => item.setAttribute('aria-expanded', 'false'));
-        }
-    });
-    root.addEventListener('keydown', event => {
-        if (event.key !== 'Escape') return;
-        const active = root.querySelector('.gp-context-help-trigger[aria-expanded="true"]');
-        if (!active) return;
-        root.querySelectorAll('.gp-context-help-panel').forEach(item => { item.hidden = true; });
-        root.querySelectorAll('.gp-context-help-trigger').forEach(item => item.setAttribute('aria-expanded', 'false'));
-        active.focus();
-    });
+    const panel = document.createElement("span");
+    panel.className = "gp-context-help-panel";
+    panel.id = "context-help-" + fieldId;
+    panel.setAttribute("role", "tooltip");
+    panel.hidden = true;
+    panel.textContent = message;
+    labelParent.insertBefore(row, label);
+    row.append(label, button);
+    if (fieldInsideLabel) labelParent.insertBefore(panel, row.nextSibling);
+    else labelParent.insertBefore(panel, field);
+    ensureContextualHelpGlobalListeners_();
 }
+
 export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, reportId = "", reportActivaTestigo = undefined) {
     const existing = document.getElementById("suggest-cut-modal");
     if (existing) existing.remove();
@@ -11317,7 +11358,7 @@ export function openAddProblemModal(preAssociatedVehicle = null, navOptions = {}
         <form id="add-pys-form" style="display:flex; flex-direction:column; gap:12px; margin-top:15px;">
             <!-- TAREA 11 (12.1): ALCANCE EN FORMULARIO DE PROBLEMAS (GENERAL VS ESPECÍFICO) -->
             <div class="form-group">
-                <label for="pys-alcance">Alcance del Problema</label>
+                <label for="pys-alcance">Alcance</label>
                 <select id="pys-alcance" class="dev-input" style="padding: 6px;">
                     <option value="general" selected>General (Aplica a todos los vehículos)</option>
                     <option value="especifico">Modelo específico</option>
@@ -11325,22 +11366,22 @@ export function openAddProblemModal(preAssociatedVehicle = null, navOptions = {}
             </div>
 
             <div id="pys-models-section" style="display: none; border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; background: rgba(0,0,0,0.02);">
-                <label for="pys-search-vehicle">Buscar Vehículos Relacionados</label>
+                <label for="pys-search-vehicle">Buscar vehículos</label>
                 <input type="text" id="pys-search-vehicle" placeholder="Buscar por Marca o Modelo..." class="dev-input" style="width: 100%; padding: 6px; margin-top: 4px;">
                 <div id="pys-vehicle-search-results" style="max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; margin-top: 6px;"></div>
                 <div id="pys-selected-models-list" style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px;"></div>
             </div>
 
             <div class="form-group">
-                <label for="pys-titulo">Título del Problema (máx. 15 caracteres)</label>
+                <label for="pys-titulo">Título (máx. 15 caracteres)</label>
                 <input type="text" id="pys-titulo" maxlength="15" required placeholder="Ej. Falla relay pump">
             </div>
             <div class="form-group">
-                <label for="pys-img-file">Imagen del Problema</label>
+                <label for="pys-img-file">Imagen</label>
                 <input type="file" id="pys-img-file" accept="image/jpeg,image/png,image/webp" required>
             </div>
             <div class="form-group">
-                <label for="pys-detalle">Detalle del Problema (máx. 200 caracteres)</label>
+                <label for="pys-detalle">Detalle (máx. 200 caracteres)</label>
                 <div class="rich-editor-toolbar" data-rich-target="pys-detalle"></div>
                 <textarea id="pys-detalle" maxlength="200" rows="4" required placeholder="Describe el problema..."></textarea>
             </div>
@@ -11354,7 +11395,7 @@ export function openAddProblemModal(preAssociatedVehicle = null, navOptions = {}
                 <textarea id="pys-solucion" maxlength="700" rows="4" placeholder="Explica la solución..."></textarea>
             </div>
             <div class="form-group">
-                <label for="pys-prevenir">Cómo Prevenir (opcional, máx. 700 caracteres)</label>
+                <label for="pys-prevenir">Prevención (opcional, máx. 700 caracteres)</label>
                 <textarea id="pys-prevenir" maxlength="700" rows="3" placeholder="Recomendación preventiva..."></textarea>
             </div>
 
@@ -11371,17 +11412,6 @@ export function openAddProblemModal(preAssociatedVehicle = null, navOptions = {}
     attachContextualHelp_(content, "pys-sin-solucion", "Activa esta opción si todavía no existe una solución confirmada.");
     attachContextualHelp_(content, "pys-solucion", "Explica los pasos correctivos que ya fueron comprobados.");
     attachContextualHelp_(content, "pys-prevenir", "Añade recomendaciones para evitar que la falla vuelva a presentarse.");
-    [
-        ["pys-alcance", "Indica si el problema aplica a todos los vehículos o solo a modelos seleccionados."],
-        ["pys-search-vehicle", "Busca y selecciona los modelos en los que se reproduce el problema."],
-        ["pys-titulo", "Usa un título corto que permita reconocer la falla."],
-        ["pys-img-file", "Adjunta una imagen clara que muestre el componente o la falla."],
-        ["pys-detalle", "Describe el síntoma, las condiciones en que aparece y el componente afectado."],
-        ["pys-sin-solucion", "Activa esta opción si todavía no existe una solución confirmada."],
-        ["pys-solucion", "Explica los pasos correctivos que ya fueron comprobados."],
-        ["pys-prevenir", "Añade recomendaciones para evitar que la falla vuelva a presentarse."]
-    ].forEach(([fieldId, message]) => attachContextualHelp_(content, fieldId, message));
-
     modal.appendChild(content);
     document.body.appendChild(modal);
 
@@ -12360,6 +12390,10 @@ export function openAddTutorialModal() {
     `;
 
     mountRichTextToolbars(content);
+    attachContextualHelp_(content, "tut-tema", "Usa un título breve que identifique el procedimiento o componente tratado.");
+    attachContextualHelp_(content, "tut-como-identificarlo", "Describe señales visibles o características para reconocer el componente antes de intervenir.");
+    attachContextualHelp_(content, "tut-donde-encontrarlo", "Indica su ubicación dentro del vehículo y las referencias de acceso.");
+    attachContextualHelp_(content, "tut-desc", "Resume el procedimiento, las precauciones y los puntos que requieren atención.");
     modal.appendChild(content);
     document.body.appendChild(modal);
     content.querySelector(".info-close-btn").onclick = () => modal.remove();

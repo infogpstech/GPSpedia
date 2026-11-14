@@ -331,7 +331,7 @@
                             <div class="dev-action-row">
                                 <button type="button" id="btn-admin-backup-db" class="btn btn-primary"><i class="fa-solid fa-database"></i> Crear respaldo de Spreadsheet</button>
                                 <button type="button" id="btn-admin-backup-drive" class="btn btn-primary"><i class="fa-brands fa-google-drive"></i> Crear respaldo de Drive</button>
-                                <button type="button" id="btn-admin-resume-drive-backup" class="btn btn-secondary" disabled><i class="fa-solid fa-rotate"></i> Continuar respaldo de Drive</button>
+                                <button type="button" id="btn-admin-resume-drive-backup" class="btn btn-secondary" disabled><i class="fa-solid fa-rotate"></i> Continuar respaldo</button>
                             </div>
                             <div class="dev-action-row">
                                 <button type="button" id="btn-admin-restore-db" class="btn btn-warning"><i class="fa-solid fa-table"></i> Restaurar Spreadsheet</button>
@@ -361,19 +361,19 @@
                                     <input type="checkbox" id="recalculate-vin-signatures-checkbox">
                                     <span class="dev-maintenance-option-copy">
                                         <strong>Recalcular firmas</strong>
-                                        <span>Analizar los VIN del catálogo en memoria y guardar las firmas calculadas en el almacenamiento local.</span>
+                                        
                                     </span>
                                 </label>
                                 <label class="dev-maintenance-option" for="diagnose-vin-signatures-checkbox">
                                     <input type="checkbox" id="diagnose-vin-signatures-checkbox">
                                     <span class="dev-maintenance-option-copy">
                                         <strong>Diagnóstico de firmas</strong>
-                                        <span>Consultar las firmas disponibles en memoria y mostrar su distribución por estado.</span>
+                                        
                                     </span>
                                 </label>
                             </div>
                             <button type="button" id="btn-admin-run-vin-actions" class="btn btn-primary dev-action-full">
-                                <i class="fa-solid fa-play"></i> Ejecutar acciones seleccionadas
+                                <i class="fa-solid fa-play"></i> Ejecutar acciones
                             </button>
                             <p id="vin-actions-progress" class="dev-empty-state" role="status" aria-live="polite">No se ha ejecutado ninguna acción en esta sesión.</p>
                             <div class="dev-vin-action-status">
@@ -384,7 +384,7 @@
 
                         <div class="dev-card dev-tools-card">
                             <strong><i class="fa-solid fa-list-ol"></i> Organización de registros</strong>
-                            <button id="btn-admin-reorganize-db" class="btn btn-warning dev-action-full"><i class="fa-solid fa-sort-alpha-down"></i> Reorganizar base de datos alfabéticamente (por Marca)</button>
+                            <button id="btn-admin-reorganize-db" class="btn btn-warning dev-action-full" title="Reorganizar la base de datos alfabéticamente por marca" aria-label="Reorganizar la base de datos alfabéticamente por marca"><i class="fa-solid fa-sort-alpha-down"></i> Ordenar por marca</button>
                         </div>
 
                         <div class="dev-card dev-tools-card">
@@ -409,19 +409,19 @@
                                     <input type="checkbox" id="clear-sensitive-logs-checkbox">
                                     <span class="dev-maintenance-option-copy">
                                         <strong>Registro de Logs</strong>
-                                        <span>Retirar solo registros con datos confidenciales; conservar los demás y los encabezados.</span>
+                                        
                                     </span>
                                 </label>
                             </div>
                             <button type="button" id="btn-admin-clear-selected-logs" class="btn btn-danger dev-action-full">
-                                <i class="fa-solid fa-trash-can"></i> Ejecutar limpieza seleccionada
+                                <i class="fa-solid fa-trash-can"></i> Limpiar selección
                             </button>
                             <p id="clear-selected-logs-status" class="dev-empty-state" role="status" aria-live="polite">No se ha ejecutado ninguna limpieza en esta sesión.</p>
                         </div>
 
                         <div class="dev-card dev-tools-card">
                             <strong><i class="fa-solid fa-eye-slash"></i> Administración de cortes</strong>
-                            <button id="btn-admin-add-silent-cut" class="btn btn-danger dev-action-full"><i class="fa-solid fa-eye-slash"></i> Agregar corte en modo silencioso</button>
+                            <button id="btn-admin-add-silent-cut" class="btn btn-danger dev-action-full"><i class="fa-solid fa-eye-slash"></i> Agregar corte silencioso</button>
                         </div>
                     </section>
 
@@ -443,14 +443,14 @@
                                 <span>Disponible en la cuota: <strong id="drive-storage-remaining">No disponible</strong></span>
                                 <span>Porcentaje utilizado: <strong id="drive-storage-percent">No disponible</strong></span>
                             </div>
-                            <button type="button" id="btn-admin-refresh-drive-storage" class="btn btn-secondary dev-action-full"><i class="fa-solid fa-arrows-rotate"></i> Actualizar almacenamiento global</button>
+                            <button type="button" id="btn-admin-refresh-drive-storage" class="btn btn-secondary dev-action-full"><i class="fa-solid fa-arrows-rotate"></i> Actualizar almacenamiento</button>
                         </div>
 
                         <div class="dev-card dev-tools-card">
                             <strong><i class="fa-solid fa-images"></i> Organización de imágenes</strong>
-                            <button id="btn-admin-normalize-images" class="btn btn-warning dev-action-full"><i class="fa-solid fa-images"></i> Normalizar nombres y quitar duplicados</button>
-                            <button id="btn-admin-organize-primary-images" class="btn btn-primary dev-action-full"><i class="fa-solid fa-folder-tree"></i> Organizar imágenes principales de vehículos</button>
-                            <button id="btn-admin-restore-trash" class="btn btn-warning dev-action-full" style="display: none;"><i class="fa-solid fa-trash-arrow-up"></i> Saneamiento y recuperación exhaustiva de imágenes en papelera</button>
+                            <button id="btn-admin-normalize-images" class="btn btn-warning dev-action-full" title="Normalizar nombres y quitar duplicados" aria-label="Normalizar nombres y quitar duplicados"><i class="fa-solid fa-images"></i> Normalizar imágenes</button>
+                            <button id="btn-admin-organize-primary-images" class="btn btn-primary dev-action-full" title="Organizar imágenes principales de vehículos" aria-label="Organizar imágenes principales de vehículos"><i class="fa-solid fa-folder-tree"></i> Organizar imágenes</button>
+                            <button id="btn-admin-restore-trash" class="btn btn-warning dev-action-full" style="display: none;" title="Revisar y recuperar imágenes de la papelera" aria-label="Revisar y recuperar imágenes de la papelera"><i class="fa-solid fa-trash-arrow-up"></i> Revisar papelera</button>
                         </div>
 
                         <div class="dev-card dev-tools-card">
@@ -468,7 +468,7 @@
                             <strong><i class="fa-solid fa-clock-rotate-left"></i> Inventario e historial de imágenes</strong>
                             <div class="dev-action-row">
                                 <button type="button" id="btn-admin-view-replaced-images" class="btn btn-primary"><i class="fa-solid fa-images"></i> Abrir inventario e historial</button>
-                                <button type="button" id="btn-admin-audit-drive-images" class="btn btn-secondary"><i class="fa-brands fa-google-drive"></i> Auditar carpeta «Cortes»</button>
+                                <button type="button" id="btn-admin-audit-drive-images" class="btn btn-secondary"><i class="fa-brands fa-google-drive"></i> Auditar Cortes</button>
                             </div>
                         </div>
                     </section>
@@ -494,7 +494,7 @@
                         <div class="dev-card dev-tools-card">
                             <strong><i class="fa-solid fa-database"></i> Caché local del cliente</strong>
                             <p class="dev-warning-copy">Elimina la caché local de IndexedDB y Storage; después recarga la aplicación.</p>
-                            <button id="btn-admin-clear-client-cache" class="btn btn-danger dev-action-full"><i class="fa-solid fa-database"></i> Vaciar caché local y recargar</button>
+                            <button id="btn-admin-clear-client-cache" class="btn btn-danger dev-action-full"><i class="fa-solid fa-database"></i> Limpiar caché y recargar</button>
                         </div>
                     </section>
                 </div>

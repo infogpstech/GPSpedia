@@ -20,4 +20,16 @@ testCase("los botones de acciones comparten altura, espaciado y distribución",(
  assert.match(css,/#dev-tools-modal \.dev-action-row button,\s*#dev-tools-modal \.dev-action-full \{\s*min-width: 0;\s*min-height: 38px/);
  assert.match(css,/@media \(max-width: 520px\) \{\s*#dev-tools-modal \.dev-action-row \{ grid-template-columns: minmax\(0, 1fr\); \}/);
 });
+testCase("los botones Developer usan etiquetas breves y conservan nombre accesible completo",()=>{
+ for(const [id,label,aria] of [
+  ["btn-admin-reorganize-db","Ordenar por marca","Reorganizar la base de datos alfabéticamente por marca"],
+  ["btn-admin-normalize-images","Normalizar imágenes","Normalizar nombres y quitar duplicados"],
+  ["btn-admin-organize-primary-images","Organizar imágenes","Organizar imágenes principales de vehículos"],
+  ["btn-admin-restore-trash","Revisar papelera","Revisar y recuperar imágenes de la papelera"]
+ ]) {
+  const start=html.indexOf('id="'+id+'"');
+  const button=html.slice(start,html.indexOf("</button>",start));
+  assert.ok(button.includes(label),id);assert.ok(button.includes('aria-label="'+aria+'"'),id);
+ }
+});
 console.log("DeveloperPanelUX: "+passed+"/"+passed+" PASS");
