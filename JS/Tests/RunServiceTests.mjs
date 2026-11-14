@@ -68,6 +68,7 @@ runGroup('31','WRITE',()=>{
 runGroup('32','ADMIN',()=>{
  const a=read('Services/admin.js');
  recordResult('ADMIN edición modal/RBAC',loadFunction('JS/Tests/AdminModalEditIntegrity.js','runAdminModalEditIntegrityTests')(a));
+ runCli('P4 política de roles para compartir, imprimir y editar ficha','JS/Tests/VehicleModalRolePolicy.mjs');
  recordResult('ADMIN compensación de reemplazos in-modal/AUG-038',loadFunction('JS/Tests/AdminImageReplacementCompensation.js','runAdminImageReplacementCompensationTests')(read('JS/Frontend/ui.js'),a));
  recordResult('ADMIN respaldo/restauración/rollback',loadFunction('JS/Tests/AdminRestoreRecovery.js','runAdminRestoreRecoveryTests')(a));
  runCli('ADMIN reanudación de respaldo Drive y sintaxis Node.js','JS/Tests/AdminBackupResumeUI.mjs');
