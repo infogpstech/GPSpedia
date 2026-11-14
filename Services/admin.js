@@ -3583,6 +3583,7 @@ function identifierMigrationBuildPlan_(payload, ss) {
         const currentFormula = String(rowData.formulas[spec.idColumn - 1] || "");
         const proposedText = String(change.newId === null || change.newId === undefined ? "" : change.newId).trim();
         if (!identifierMigrationValidId_(spec.kind, proposedText)) throw new Error("El ID propuesto no cumple el formato vigente para " + entity + ".");
+        if ((spec.kind === "user" && proposedText !== proposedText.toUpperCase()) || ((spec.kind === "tutorial" || spec.kind === "problem") && proposedText !== proposedText.toLowerCase())) throw new Error("El ID propuesto debe usar la capitalización canónica para " + entity + ".");
         if (mode === "fill_missing") {
             if (currentText || currentFormula) throw new Error("fill_missing solo puede completar una celda ID realmente vacía y sin fórmula.");
             if (String(change.oldId === null || change.oldId === undefined ? "" : change.oldId).trim()) throw new Error("oldId debe estar vacío para fill_missing.");
@@ -3615,7 +3616,7 @@ function identifierMigrationBuildPlan_(payload, ss) {
             oldFormula: currentFormula, newValue: spec.numeric ? Number(proposedText) : proposedText,
             newId: proposedText, keyColumn, keyValue, sourceFingerprint, afterFingerprint,
             sourceSheetFingerprint: sheetDigests[spec.sheet],
-            snapshotName: "__IDM_" + migrationId.slice(0, 12) + "_" + entity,
+            snapshotName: "__IDM_" + identifierMigrationDigest_(migrationId).slice(0, 12) + "_" + entity,
             status: "PLANNED"
         });
     });
@@ -3668,9 +3669,9 @@ function identifierMigrationFindManifest_(sheet, migrationId) {
 }
 
 function identifierMigrationWriteManifestStatus_(sheet, item, status, batch, errorMessage) {
-    sheet.getRange(item.rowIndex, 5, 1, 4).setValues([[
-        status, batch || item.batch || 0, new Date().toISOString(), String(errorMessage || "").slice(0, 300)
-    ]]);
+    sheet.getRange(item.rowIndex, 5).setValue(status);
+    sheet.getRange(item.rowIndex, 6).setValue(batch || item.batch || 0);
+    sheet.getRange(item.rowIndex, 8, 1, 2).setValues([[new Date().toISOString(), String(errorMessage || "").slice(0, 300)]]);
     item.status = status;
     item.batch = batch || item.batch || 0;
 }
@@ -3721,10 +3722,6 @@ function handleMigrateIdentifiers_(payload, logMessage) {
     } else {
         if (manifestItems.some(item => item.manifestDigest !== digest) || manifestItems.length > 100) throw new Error("El manifiesto existente no coincide con el digest confirmado.");
         entries = manifestItems.map(identifierMigrationReadEntry_);
-        if (options.changes && options.changes.length) {
-            const fresh = identifierMigrationBuildPlan_(options, ss);
-            if (fresh.manifestDigest !== digest) throw new Error("El plan reenviado no coincide con el manifiesto original.");
-        }
     }
     manifestItems.sort((a, b) => a.entryIndex - b.entryIndex);
     const pending = manifestItems.filter(item => item.status !== "VERIFIED" && item.status !== "ROLLED_BACK" && item.status !== "CONFLICT");

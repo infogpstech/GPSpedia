@@ -119,4 +119,15 @@ testCase("congela fórmula sin renumerar y puede restaurarla",()=>{
  h.fn.rollback({migrationId:proposal.migrationId,manifestDigest:dry.manifestDigest,dryRun:false,confirm:true});
  assert.equal(h.ss.getSheetByName("Users").formulas[1][0],"=ROW()-1");
 });
+testCase("reanuda lotes parciales sin recalcular huellas de filas ya aplicadas",()=>{
+ const data=makeBase();data.Users.rows.push(["","gamma","Gamma"]);
+ const h=makeHarness(data),proposal={migrationId:"idm-batch-0001",changes:[
+  {entity:"users",mode:"fill_missing",row:3,keyColumn:2,keyValue:"beta",oldId:"",newId:"USR-0002"},
+  {entity:"users",mode:"fill_missing",row:4,keyColumn:2,keyValue:"gamma",oldId:"",newId:"USR-0003"}
+ ],dryRun:true};
+ const dry=h.fn.migrate(proposal),payload={...proposal,dryRun:false,confirm:true,manifestDigest:dry.manifestDigest,batchSize:1};
+ const first=h.fn.migrate(payload);assert.equal(first.verified,1);assert.equal(first.remaining,1);
+ const second=h.fn.migrate(payload);assert.equal(second.verified,2);assert.equal(second.remaining,0);
+ assert.equal(h.ss.getSheetByName("Users").rows[2][0],"USR-0002");assert.equal(h.ss.getSheetByName("Users").rows[3][0],"USR-0003");
+});
 console.log("IdentifierMigration: "+passed+"/"+passed+" PASS");
