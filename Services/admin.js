@@ -2981,9 +2981,8 @@ function collectReplacedImageHistoryIds_() {
     if (!sheet || sheet.getLastRow() < 2) return ids;
     const rows = sheet.getDataRange().getValues();
     for (let r = 1; r < rows.length; r++) {
-        const row = rows[r], status = String(row[10] || "").trim();
-        if (status === "eliminada") continue;
-        new Set([].concat(extractDriveFileIds(row[5]), extractDriveFileIds(row[7]))).forEach(id => ids.add(id));
+        const row = rows[r];
+        new Set([].concat(extractDriveFileIds(row[5]), extractDriveFileIds(row[7]), extractDriveFileIds(row[8]))).forEach(id => ids.add(id));
     }
     return ids;
 }

@@ -16,7 +16,7 @@ testCase("el frontend procesa lotes acotados y verifica consistencia del snapsho
  assert.match(ui,/response\.writePerformed !== false/);
 });
 testCase("el frontend consume el endpoint y presenta estados diferenciados",()=>{
- assert.match(ui,/routeAction\("previewCortesImageReconciliation"/);
+ assert.ok(ui.includes('routeActionWithRetry("previewCortesImageReconciliation"'));
  ["matched","already_linked","historical","orphaned","ambiguous","occupied","referenced_elsewhere","access_restricted","unverifiable","invalid"].forEach(s=>assert.ok(ui.includes(s),s));
  assert.ok(html.includes('id="audit-drive-reconciliation-panel"'));
  assert.ok(html.includes('id="btn-audit-drive-reconcile"'));

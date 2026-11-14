@@ -78,4 +78,5 @@ testCase("deduplica el mismo ID de Drive y devuelve conteos coherentes",()=>{
  assert.equal(p.results.length,1);assert.equal(p.counts.matched,1);assert.equal(p.counts.invalid,0);
 });
 assert.match(admin,/function collectReplacedImageHistoryIds_\(/);
+assert.match(admin,/extractDriveFileIds\(row\[8\]\)/);
 console.log("CortesImageReconciliation: "+passed+"/"+passed+" PASS");
