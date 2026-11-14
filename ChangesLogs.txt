@@ -1838,3 +1838,10 @@ Rama: GPSpedia2.2.5_work
 - Node CLI completo y CI del HEAD e8bd983 no pudieron confirmarse desde este entorno. La última CI registrada corresponde al HEAD anterior 49bd0d1 (93 suites / 1,361 pruebas PASS); no se extrapola al HEAD actual.
 - No se ejecutaron escrituras en Drive/Spreadsheet ni cambios de permisos. Despliegue ADMIN y validación con copia Beta pendientes.
 ================================================================================
+
+================================================================================
+2026-11-14 — DOCUMENTACIÓN DE VERIFICACIÓN INTEGRAL Y BETA
+- Se corrigió la continuidad del backlog: GP-IMG-UX-01 ya está completada; la siguiente etapa local es la verificación técnica integral.
+- Se agregó un protocolo consolidado de validación Beta en Tareas_Activas.md. Comienza con comprobaciones de repositorio/rama/árbol limpio y sincronización fast-forward, y separa pruebas de sesión, migraciones, Inbox, ACL, conciliación de imágenes y PWA.
+- No se modificó código funcional, no se desplegaron servicios ni se ejecutaron operaciones en Drive/Spreadsheet.
+================================================================================
