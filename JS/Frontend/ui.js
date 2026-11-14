@@ -24,6 +24,7 @@ import { loadPysData, getCachedPysData, getPysDataFreshness, invalidatePysDataCa
 import { captureModalViewState, restoreModalViewState, shouldRecordModalTransition, pushModalNavigationContext, popModalNavigationContext } from './modalNavigation.js';
 import { createRichTextToolbar, sanitizeHtmlContent, refreshRichTextToolbars } from './rich-text.js';
 import { renderActivityLogs } from './activityDashboard.js';
+import { getOrCreateTermsDeviceId, getDeviceTermsAcceptance, saveDeviceTermsAcceptance } from './termsDeviceAcceptance.js';
 
 async function clearServiceWorkerRuntimeCache_(windowRef, timeoutMs = 5000) {
     if (!windowRef || !windowRef.navigator || !windowRef.navigator.serviceWorker) {
@@ -9177,23 +9178,36 @@ function renderTermsGate_(user) {
     };
     if (!container || !footer || !modal || !button) return keepBlocked('No se pudo cargar el aviso obligatorio de términos. El catálogo permanecerá bloqueado.');
     if (modal.dataset.termsVersion !== TERMS_CURRENT_VERSION) return keepBlocked('La versión del aviso y la versión de términos del sistema no coinciden. Actualiza la página; el catálogo permanece bloqueado.');
-    const acceptance = user && user.TermsAcceptance, acceptedAt = acceptance && Date.parse(acceptance.acceptedAt);
-    const accepted = Boolean(acceptance && acceptance.status === 'accepted' &&
-        acceptance.version === TERMS_CURRENT_VERSION && Number.isFinite(acceptedAt));
-    if (accepted) {
+
+    const userId = String(user && (user.ID || user.id) || '').trim();
+    if (!userId) return keepBlocked('No se pudo identificar al usuario para comprobar la aceptación del aviso.');
+    let deviceId, acceptance;
+    try {
+        deviceId = getOrCreateTermsDeviceId(localStorage, window.crypto);
+        acceptance = getDeviceTermsAcceptance(localStorage, userId, deviceId, TERMS_CURRENT_VERSION);
+    } catch (error) {
+        return keepBlocked(error && error.message ? error.message : 'No se pudo identificar este dispositivo. El catálogo permanecerá bloqueado.');
+    }
+
+    if (acceptance) {
         modal.style.display = 'none'; deactivateLegalModalFocus_(modal); button.disabled = false;
         if (errorMessage) errorMessage.textContent = '';
         container.style.display = 'block'; footer.style.display = 'flex'; return true;
     }
+
     container.style.display = 'none'; footer.style.display = 'none'; modal.style.display = 'flex';
     button.disabled = false;
     activateLegalModalFocus_(modal, { initialFocus: button, allowEscape: false });
     button.onclick = async () => {
         button.disabled = true; if (errorMessage) errorMessage.textContent = '';
         try {
-            const userId = String(user && (user.ID || user.id) || '').trim(), sessionToken = user && user.SessionToken;
-            if (!userId || typeof sessionToken !== 'string' || !sessionToken) throw new Error('No se pudo identificar la sesión activa. Inicia sesión nuevamente.');
-            const result = await routeAction('acceptTerms', { userId, sessionToken, version: TERMS_CURRENT_VERSION });
+            const sessionToken = user && user.SessionToken;
+            if (!userId || typeof sessionToken !== 'string' || !sessionToken) {
+                throw new Error('No se pudo identificar la sesión activa. Inicia sesión nuevamente.');
+            }
+            const result = await routeAction('acceptTerms', {
+                userId, sessionToken, version: TERMS_CURRENT_VERSION, deviceId
+            });
             const confirmed = result && result.termsAcceptance;
             if (!result || result.status !== 'success' || result.accepted !== true ||
                 !confirmed || confirmed.status !== 'accepted' || confirmed.version !== TERMS_CURRENT_VERSION ||
@@ -9204,6 +9218,8 @@ function renderTermsGate_(user) {
             if (!stored || String(stored.ID || stored.id || '') !== userId || stored.SessionToken !== sessionToken) {
                 throw new Error('La sesión local cambió durante la aceptación. Inicia sesión nuevamente.');
             }
+
+            saveDeviceTermsAcceptance(localStorage, userId, deviceId, confirmed);
             stored.TermsAcceptance = confirmed;
             localStorage.setItem('gpsepedia_session', JSON.stringify(stored));
             user.TermsAcceptance = confirmed; setState({ currentUser: user });
@@ -9217,7 +9233,6 @@ function renderTermsGate_(user) {
     };
     return false;
 }
-
 export function showApp(user) {
     const appContext = getUiSessionContext_(user);
     const appContextKey = appContext
