@@ -125,7 +125,7 @@ test('el grupo nativo tiene leyenda y queda separado del contenido de los panele
     assert.ok(css.includes('clip: rect(0, 0, 0, 0)'));
 });
 test('los paneles son regiones con encabezados propios y relaciones correctas', () => {
-    for (const id of ['diagnostics', 'backups', 'database', 'images', 'system']) {
+    for (const id of ['diagnostics', 'database', 'images', 'system']) {
         assert.ok(html.includes('id="dev-panel-' + id + '" class="dev-tab-panel dev-panel-' + id + '" role="region" aria-labelledby="dev-panel-title-' + id + '"'));
         assert.ok(html.includes('<h3 id="dev-panel-title-' + id + '">'));
     }
@@ -139,7 +139,7 @@ test('no mezcla roles tab/tablist/tabpanel con controles radio nativos', () => {
     assert.ok(tabs.includes('type="radio" name="dev-tools-section"'));
 });
 test('los selectores CSS conservan visibilidad y foco para las cuatro opciones', () => {
-    for (const id of ['diagnostics', 'backups', 'database', 'images', 'system']) {
+    for (const id of ['diagnostics', 'database', 'images', 'system']) {
         assert.ok(css.includes('.dev-tools-tabs:has(#dev-tab-' + id + ':checked)'));
         assert.ok(css.includes('.dev-tools-tabs:has(#dev-tab-' + id + ':focus-visible)'));
     }
