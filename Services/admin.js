@@ -2971,6 +2971,23 @@ function buildCortesImageReconciliationPlan_(targets, driveFiles, activeReferenc
  * Dry-run de conciliación. Lee Cortes y valida cada archivo dentro del árbol Drive.
  * No cambia celdas, archivos, permisos ni carpetas.
  */
+/**
+ * Los archivos que ya aparecen en el historial no se reutilizan como candidatos,
+ * incluso si no tienen referencias activas en las celdas de Cortes.
+ */
+function collectReplacedImageHistoryIds_() {
+    const ids = new Set();
+    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.IMAGENES_REEMPLAZADAS);
+    if (!sheet || sheet.getLastRow() < 2) return ids;
+    const rows = sheet.getDataRange().getValues();
+    for (let r = 1; r < rows.length; r++) {
+        const row = rows[r], status = String(row[10] || "").trim();
+        if (status === "eliminada") continue;
+        new Set([].concat(extractDriveFileIds(row[5]), extractDriveFileIds(row[7]))).forEach(id => ids.add(id));
+    }
+    return ids;
+}
+
 function handlePreviewCortesImageReconciliation_(payload, logMessage, developerContext) {
     const ownerId = String(developerContext && developerContext.userId || "").trim();
     if (!ownerId) throw new Error("La conciliación requiere una sesión Desarrollador verificada.");
