@@ -51,7 +51,7 @@ self.addEventListener('fetch',event=>{
  if(request.destination==='image'){
   const updatePromise=caches.open(CACHE_NAME).then(async cache=>{
    const response=await fetch(request);
-   if(response&&(response.status===200||response.type==='opaque')){
+   if(response&&response.status===200){
     try{
      await cache.put(request,response.clone());
      const keys=await cache.keys();
