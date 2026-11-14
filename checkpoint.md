@@ -1022,3 +1022,28 @@ La anotación previa que declaraba inaccesibles los runs de push queda superada 
 Las incidencias 2 y 3 podrían compartir una dependencia de coordinación del flujo de inventario/historial, pero la causa común no está confirmada. La incidencia 1 se mantiene separada hasta contar con reproducción y evidencia.
 
 **Siguiente acción:** reproducir los tres síntomas en entorno autorizado, correlacionar los mensajes con los contratos cliente/backend y revisar el coordinador compartido. Priorizar la recuperación del acceso Developer y del escáner sin relajar controles de sesión, permisos ni concurrencia. No se han realizado cambios de código ni deployments para estas incidencias.
+
+
+## Revisión diagnóstica — incidencias Developer y ADMIN (2026-11-14)
+
+**Estado: DIAGNÓSTICO ESTÁTICO PARCIAL COMPLETADO; CORRECCIONES PENDIENTES.**  
+HEAD de inicio de revisión confirmado: `edac7202791223de890ed6d912cc93f7e1fbfa63`.
+
+### Hallazgos
+1. **Inicializar historial — causa confirmada:** `migrateReplacedImagesSchema` aparece en `isSharedMutationAction_` y en el dispatcher de `Services/admin.js`, pero falta en `coordinatorPolicy_()` de `Services/Coordinator.js`. El coordinador rechaza las acciones sin política. La acción migra y verifica columnas de `Imagenes_Reemplazadas`; la corrección debe declarar una política mínima para `IMAGE_INVENTORY`, sin ampliar permisos generales y conservando la sesión Desarrollador y ScriptLock.
+2. **Escáner — mecanismo de contención identificado:** `auditDriveImagesInCortes` y `getReplacedImages` no están clasificadas como acciones coordinadas específicas. `doPost` las envuelve en `ADMIN/sessionActivity`, que escribe `ACTIVE_SESSIONS`. El coordinador impide leases concurrentes que escriben el mismo recurso; la validación ADMIN también actualiza `ActiveSessions.LastActivityAt`. Esto explica el mensaje de recurso ocupado cuando coinciden solicitudes, pero el orden/duración exactos deben reproducirse en Beta. No retirar la protección de sesión ni habilitar escrituras simultáneas como solución rápida.
+3. **Panel Developer — causa no confirmada:** el flujo estático de botón, listener, `openDevTools` y contrato de AUTH (`ID`, `Privilegios`, `SessionToken`) es consistente. Falta reproducir en navegador y observar contexto de sesión, resultado de `ensureUiSessionRole_`, ejecución del callback y estado del modal.
+
+### Registro y validación
+- Nuevo informe técnico: `Auditoría.txt`, hallazgos AUD-2026-11-14-01 a AUD-2026-11-14-03; commit `76f4e37b8392bb057d8462d2a7384316aeea3470`.
+- Adenda al registro activo `LOGS.TXT`; commit `a3bec62bf7acea483fd41ccdbff0cfe62fd4c48d`.
+- Revisión estática realizada; no se ejecutaron pruebas automatizadas nuevas, navegador, Apps Script, Coordinator, Spreadsheet ni Drive.
+- No se modificó código, política, endpoint, deployment ni datos productivos.
+
+### Siguiente acción
+1. Corregir la política ausente de `migrateReplacedImagesSchema` y añadir pruebas de contrato.
+2. Rediseñar/probar la coordinación de las consultas ADMIN concurrentes, manteniendo la escritura protegida de actividad de sesión.
+3. Reproducir el fallo de acceso Developer en navegador antes de tocar el flujo UI/AUTH.
+4. Ejecutar sintaxis, pruebas de lógica, concurrencia y regresión; registrar por separado cualquier validación Beta pendiente.
+
+La rama base `GPSpedia2.2.5` permanece fuera del alcance.
