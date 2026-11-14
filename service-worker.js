@@ -1,4 +1,4 @@
-const CACHE_NAME='gpsepedia-cache-v23';
+const CACHE_NAME='gpsepedia-cache-v24';
 const CORE_ASSETS=['./','./index.html','./HTML/add_cortes.html','./HTML/users.html','./JS/Frontend/main.js','./JS/Frontend/auth.js','./JS/Frontend/ui.js','./JS/Frontend/rich-text.js','./JS/Frontend/state.js','./JS/Frontend/navigation.js','./JS/Frontend/offline.js','./JS/Frontend/lightbox.js','./JS/Frontend/api-config.js','./JS/Frontend/serviceMetrics.js','./JS/Frontend/VinDifferentialEngine.js','./JS/Frontend/search-utils.js','./JS/Frontend/share-utils.js','./JS/Frontend/catalogStatus.js','./JS/Frontend/catalogRequest.js','./JS/Frontend/pys-data.js','./JS/Frontend/validationSubmission.js','./JS/Frontend/likeState.js','./JS/Frontend/youtubeUpload.js','./JS/Frontend/imageObjectUrlCache.js','./JS/Frontend/thumbnailCompressionQueue.js','./JS/Frontend/modalNavigation.js','./style.css','./button-system.css','./manifest.json','./Images/Logo_TemaOscuro.png','./Images/tracklink_logo.png'];
 const OPTIONAL_ASSETS=['./Images/icon-v3-192x192.png','./Images/icon-v3-512x512.png','./Images/icon-pwa-192x192.png','./Images/icon-pwa-512x512.png'];
 function isQuotaExceeded(error){return Boolean(error&&(error.name==='QuotaExceededError'||error.code===22));}
@@ -47,17 +47,35 @@ self.addEventListener('message',event=>{
 });
 self.addEventListener('fetch',event=>{
  if(event.request.method!=='GET')return;
- const networkResponse=fetch(event.request);
+ const request=event.request;
+ if(request.destination==='image'){
+  const updatePromise=caches.open(CACHE_NAME).then(async cache=>{
+   const response=await fetch(request);
+   if(response&&(response.status===200||response.type==='opaque')){
+    try{
+     await cache.put(request,response.clone());
+     const keys=await cache.keys();
+     const images=keys.filter(key=>key.destination==='image');
+     while(images.length>150){const oldest=images.shift();await cache.delete(oldest);}
+    }catch(error){reportCacheWriteError(error,request.url);}
+   }
+   return response;
+  });
+  event.waitUntil(updatePromise.then(()=>undefined).catch(()=>undefined));
+  event.respondWith(caches.open(CACHE_NAME).then(cache=>cache.match(request)).then(cached=>cached||updatePromise));
+  return;
+ }
+ const networkResponse=fetch(request);
  const cacheWrite=networkResponse.then(response=>{
   if(!response||response.status!==200)return;
-  return caches.open(CACHE_NAME).then(cache=>cache.put(event.request,response.clone()))
-   .catch(error=>reportCacheWriteError(error,event.request.url));
+  return caches.open(CACHE_NAME).then(cache=>cache.put(request,response.clone()))
+   .catch(error=>reportCacheWriteError(error,request.url));
  }).catch(()=>undefined);
  event.waitUntil(cacheWrite);
- if(event.request.mode==='navigate'){
-  event.respondWith(networkResponse.catch(()=>caches.match(event.request,{ignoreSearch:true})
+ if(request.mode==='navigate'){
+  event.respondWith(networkResponse.catch(()=>caches.match(request,{ignoreSearch:true})
    .then(cached=>cached||caches.match('./index.html'))));
   return;
  }
- event.respondWith(networkResponse.catch(()=>caches.match(event.request,{ignoreSearch:true})));
+ event.respondWith(networkResponse.catch(()=>caches.match(request,{ignoreSearch:true})));
 });
