@@ -466,3 +466,31 @@ Si cualquier comprobación falla, no continuar ni descartar cambios locales. Con
 - `clientInteractionPolicy.js` aplica restricciones disuasorias sobre menú contextual, copia/selección y arrastre de medios protegidos.
 - La documentación del proyecto ya establece que navegador/PWA no dispone de una API web interoperable para bloquear capturas nativas ni aplicar Android `FLAG_SECURE`; no se prometerá bloqueo absoluto.
 - Evaluar únicamente mitigaciones que aporten protección real y no oculten contenido durante la lectura normal. Validar comportamiento en Android/iOS reales y registrar expresamente qué medidas son disuasorias y cuáles no están disponibles.
+
+
+## Adenda de implementación — Inbox móvil y recarga PWA (2026-11-14)
+
+### GP-UX-03 — Bandeja de entrada móvil y acciones
+**Estado: CORRECCIÓN LOCAL IMPLEMENTADA; VALIDACIÓN VISUAL BETA PENDIENTE.**
+
+- La vista de solicitudes históricas ahora cambia a una sola vista en móvil: lista o detalle, con botón «Volver a solicitudes» para regresar sin apilar ambos paneles.
+- Los elementos de la lista admiten foco de teclado y apertura mediante Enter/Espacio.
+- El detalle incorpora una barra contextual de acciones accesible: enviar respuesta, marcar como resuelto y borrar, según el tipo de registro y los permisos existentes.
+- Las aprobaciones de vídeo ya no muestran «Borrar mensaje» genérico, porque el backend `deleteFeedbackItem` no admite `video_approval`; se conservan Aprobar/Rechazar cuando corresponde.
+- Las conversaciones directas conservan las acciones soportadas por backend: nuevo mensaje, enviar, marcar leído y archivar/restaurar. No se ofrece eliminación de conversación directa porque no existe una operación de borrado en el contrato actual.
+- Pruebas: `InboxUi` 19/19 PASS; CI run `43630382765`: 94 suites / 1,392 pruebas / 0 fallos. Falta comprobar distribución, scroll, foco, tamaños y acciones en Android/iOS reales.
+
+### GP-PWA-01 — Recarga y actualización explícita
+**Estado: CORRECCIÓN LOCAL IMPLEMENTADA; VALIDACIÓN EN DISPOSITIVOS PENDIENTE.**
+
+- Se agregó «Recargar aplicación» al menú lateral. Al activarlo, cierra el menú, consulta `ServiceWorkerRegistration.update()` con espera máxima de 3 segundos y recarga el documento.
+- El gesto pull-to-refresh conserva su comportamiento de sincronizar únicamente el catálogo; no se convierte en una recarga que interrumpa operaciones involuntariamente.
+- Se incrementó el caché del Service Worker a `gpsepedia-cache-v27`. Se comprobó que los 33 recursos esenciales declarados existen en la rama.
+- Pruebas: `SessionStartupNavigation` 13/13 PASS; `PWAStartupScenarios` 13/13 PASS; CI run `43630382765`: 94 suites / 1,392 pruebas / 0 fallos.
+- Falta validar en PWA Android/iOS la instalación de v27, actualización desde v26, recarga manual, modo offline y conservación de sesión/borradores.
+
+### GP-SEC-03 — Capturas de pantalla
+**Estado: LIMITACIÓN TÉCNICA CONFIRMADA; NO SE PROMETE BLOQUEO WEB.**
+
+- Una PWA en navegador no puede impedir de forma fiable la captura nativa del sistema operativo. `FLAG_SECURE` solo está disponible en una aplicación Android nativa/controlada por el contenedor.
+- Las restricciones de menú contextual/copia/arrastre siguen siendo disuasorias para medios, no protección contra screenshots. Cualquier marca de agua u otra disuasión visual requiere evaluación de legibilidad y aprobación antes de incorporarse.
