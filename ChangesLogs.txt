@@ -1515,3 +1515,12 @@ Rama: GPSpedia2.2.5_work
 - CI PASS: 79 suites; 1,205 pruebas aprobadas; 0 fallos.
 - Pendiente: matriz completa de permisos, protección de imágenes y validación visual en Beta.
 ================================================================================
+
+================================================================================
+2026-11-14 — P4 SEGURIDAD DE IMÁGENES
+- Descarga de imágenes reemplazadas visible solo para Desarrollador; endpoint ADMIN mantiene validación backend exclusiva.
+- Guardas de menú contextual, copia/corte, selección y arrastre limitados a imágenes/medios; texto y campos editables quedan utilizables.
+- ClientInteractionPolicy: 5/5 PASS. VehicleModalRolePolicy: 5/5 PASS.
+- CI PASS: 80 suites; 1,210 pruebas aprobadas; 0 fallos.
+- Pendiente: auditoría de URLs públicas y permisos reales de hosting/Drive; la política de navegador es disuasoria y no bloquea extracción técnica.
+================================================================================
