@@ -1125,3 +1125,10 @@ Validación repetida tras este ajuste:
 - Espejo `Services/Auth.js` / `JS/Tests/Auth.js`: sincronizado.
 
 El HEAD previo a esta adenda se verificará al publicar el checkpoint. No se ejecutó CI completo, navegador ni Apps Script Beta. La validación y el despliegue Beta siguen pendientes.
+
+### Verificación de publicación y ramas — 2026-11-14
+
+- HEAD de la rama de trabajo antes de esta actualización del checkpoint: `7b22709b00fa3bb095a241ffd1856a600739e2f9`.
+- Rama base verificada: `GPSpedia2.2.5`, HEAD `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; no se publicó ningún cambio en ella.
+- Se verificaron en la rama de trabajo los archivos AUTH, Coordinator, UI, módulo de aceptación por dispositivo, Service Worker, pruebas y registros operativos.
+- La validación local indicada arriba corresponde a las últimas versiones de código; GitHub Actions completo y pruebas Beta siguen sin ejecutarse.
