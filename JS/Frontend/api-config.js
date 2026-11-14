@@ -124,7 +124,12 @@ async function ensureSessionTouched_(token){
  if(state&&state.lastSuccess&&now-state.lastSuccess<SESSION_TOUCH_INTERVAL_MS)return;
  if(!state)state={lastSuccess:0,pending:null};
  const pending=routeAction('touchSession',{sessionToken:token}).then(result=>{
-  if(!result||result.valid!==true)throw createRouteActionError_("La sesión no es válida o ha expirado.",{kind:"application",code:"SESSION_INVALID",httpStatus:null});
+  if(result&&result.valid===false&&!result.error&&!result.unavailable){
+   throw createRouteActionError_("La sesión no es válida o ha expirado.",{kind:"application",code:"SESSION_INVALID",httpStatus:null});
+  }
+  if(!result||result.valid!==true){
+   throw createRouteActionError_("AUTH no pudo confirmar la sesión temporalmente. La operación no se ejecutó.",{kind:"network",code:"SESSION_VALIDATION_UNAVAILABLE",httpStatus:null});
+  }
   state.lastSuccess=Date.now();
   try{const raw=localStorage.getItem('gpsepedia_session');if(raw){const user=JSON.parse(raw);if(user&&user.SessionToken===token){user.SessionLastActivityAt=result.lastActivityAt||new Date().toISOString();localStorage.setItem('gpsepedia_session',JSON.stringify(user));}}}catch(e){console.warn('No se pudo actualizar la actividad local:',e.message);}
  }).finally(()=>{state.pending=null;sessionTouchState.set(token,state);});
