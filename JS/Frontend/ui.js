@@ -6879,7 +6879,8 @@ export async function openReplacedImagesModal() {
                     mostrarNotificacion('Se abrió la descarga de ' + (response.fileName || rep.nombre_archivo || 'la imagen') + '.', 'success');
                 });
             });
-            if (canManage) actions.appendChild(downloadButton);
+            const canDownloadReplacedImage = normalizeUiRole_(getUiSessionContext_()?.role || "") === "desarrollador";
+            if (canDownloadReplacedImage) actions.appendChild(downloadButton);
 
             const moveButton = createActionButton('fa-folder-open', 'Mover', 'btn-secondary', async () => {
                 if (!folderSelect || !folderSelect.value) {
