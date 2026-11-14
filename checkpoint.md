@@ -1223,3 +1223,30 @@ Continuar con GP-UX-03: revisar el diseño móvil de Inbox y sus contratos de se
 
 ### Siguiente tarea
 Continuar con GP-UX-02: reproducir la ausencia de «Agregar Tutorial» con una sesión Desarrollador y medir la tarjeta «Agregar Problema» frente a las tarjetas reales en el modal. Después validar visualmente Inbox y recarga PWA en dispositivos. Mantener en paralelo los pendientes externos AUTH/Coordinator y FEEDBACK; no desplegar ni alterar datos productivos.
+
+
+## Continuidad — corrección de tarjeta PyS relacionada (2026-11-14)
+
+**HEAD confirmado antes de esta actualización:** `d04af4d712e5bc57b833cc5e47e71499dbe6d27f` en `GPSpedia2.2.5_work`.  
+**Rama base:** `GPSpedia2.2.5`, HEAD `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; sin modificaciones.
+
+### Corrección adicional
+- Se detectó que las tarjetas reales PyS se insertaban dentro de `.pys-card-wrapper`, pero «Agregar Problema» se insertaba directamente en el carrusel. La diferencia de estructura hacía que las reglas flex y el espaciado se aplicaran a elementos distintos.
+- `createPysAssociationAddCard()` ahora comparte wrapper con `createPysCard()`. La tarjeta interna usa 140×120 px; el wrapper de carrusel usa 160 px para incluir 20 px de separación. Se reutiliza la misma función tanto con un problema como con varios.
+- Se corrigieron las rutas de `PysModalNavigation.js` y se registró esa suite en `RunServiceTests.mjs`; antes no se ejecutaba por el runner.
+- CI run `43630661037`: **SUCCESS**, 95 suites / 1,401 pruebas / 0 fallos; `PysModalNavigation` 9/9 PASS.
+
+### Pendientes visuales y de entorno
+- Verificar en navegador real que «Agregar Problema» tenga igual alto que la tarjeta de problema, con uno y varios elementos, en móvil y escritorio.
+- La tarjeta «Agregar Tutorial» permanece limitada al rol Desarrollador, tanto en UI como en backend. No se amplió RBAC; reproducir su ausencia con una sesión Desarrollador válida.
+- Inbox móvil y recarga PWA tienen correcciones locales con CI PASS, pero falta prueba en dispositivos Android/iOS instalados.
+- El error de aceptación de términos y el error de autorización del Inbox Técnico requieren verificación del deployment Apps Script y ScriptProperties Beta; no se alteraron datos ni deployments.
+- La PWA no puede bloquear capturas nativas de forma fiable; para bloqueo efectivo se requiere contenedor nativo Android con `FLAG_SECURE`. Las restricciones web actuales son disuasorias.
+
+### Estado de CI y publicación
+- Service regression tests en el HEAD funcional `23d50d79c614dfcc3434deb9c25716ac93dc96d4`: SUCCESS, 95 suites / 1,401 pruebas.
+- Pages build asociado a ese commit fue cancelado por una ejecución posterior. Verificar el último Pages run correspondiente al HEAD documental vigente antes de afirmar publicación.
+- No se han ejecutado pruebas manuales en móviles ni llamadas de validación a servicios Apps Script.
+
+### Siguiente acción
+Comprobar el Pages build más reciente; después, seguir con reproducción visual de «Agregar Tutorial» para Desarrollador y de las tarjetas PyS, y validación de Inbox/recarga en Android/iOS. Mantener registrados los pendientes externos AUTH/Coordinator y FEEDBACK sin alterar producción.
