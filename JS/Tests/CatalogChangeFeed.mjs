@@ -4,6 +4,7 @@ const read = path => readFileSync(new URL(path, import.meta.url), "utf8");
 const coordinatorSource = read("../../Services/Coordinator.js");
 const feedbackSource = read("../../Services/feedback.js");
 const writeSource = read("../../Services/write.js");
+const adminSource = read("../../Services/admin.js");
 const apiSource = read("../Frontend/api-config.js");
 let passed = 0;
 function test(name, fn) { fn(); passed++; console.log("PASS " + name); }
@@ -101,5 +102,7 @@ test("WRITE y FEEDBACK publican reset solo después de mutaciones confirmadas", 
     assert.match(writeSource,/\["addOrUpdateCut", "addSupplementaryInfo", "addVinToVehicle", "freezeCortesIds"\]/);
     assert.match(feedbackSource,/response && response\.status === "success"[\s\S]*?\["suggestYear", "addProblem", "addSolution", "addPrevention"[\s\S]*?publishSharedCatalogChange_\("FEEDBACK", action, \{ operation: "reset" \}\)/);
     assert.match(feedbackSource,/if \(action === "recordLike"[\s\S]*?publishSharedCatalogChange_\("FEEDBACK", "recordLike"/);
+    assert.match(adminSource,/catalogWriters\.includes\(catalogAction\)[\s\S]*?publishSharedCatalogChange_\("ADMIN", catalogAction, \{ operation: "reset" \}\)/);
+    assert.match(adminSource,/finalizeAdminAuditEvent_\(auditEvent[\s\S]*?publishSharedCatalogChange_/);
 });
 console.log("CatalogChangeFeed: " + passed + "/14 PASS");
