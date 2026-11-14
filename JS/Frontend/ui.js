@@ -3698,7 +3698,8 @@ function canApproveInboxVideo_(role) {
 
 function getUiSessionContext_(user = getState().currentUser) {
     if (!user) return null;
-    const userId = String(user.ID || '').trim();
+    // AUTH acepta sesiones heredadas con ID o id; el contexto UI debe resolver ambas formas.
+    const userId = String(user.ID || user.id || '').trim();
     const sessionToken = String(user.SessionToken || '').trim();
     if (!userId || !sessionToken) return null;
     return { userId, sessionToken, role: normalizeUiRole_(user.Privilegios) };
