@@ -267,3 +267,24 @@ No se ejecutó GitHub Actions completo ni deployment/navegador Beta. La rama bas
 - `PysModalNavigation`: 9/9 PASS.
 - GitHub Actions run `43630661037`: 95 suites / 1,401 pruebas / 0 fallos.
 - Commits: UI `1c87d57d612d6fd8db7be4929012df6e4bf4b0fa`; CSS `5d6020462fb6d96b7be85eab818511646aeb2d27`; test/runner `52b1c05a3609215cb123a0508d20e81ba1167034`, `23d50d79c614dfcc3434deb9c25716ac93dc96d4`.
+
+
+## AUD-2026-11-14-11 — Contexto de rol incompleto para sesiones heredadas
+
+**Severidad:** Media — visibilidad de funciones dependientes del rol.  
+**Estado:** CORREGIDO EN RAMA DE TRABAJO; validación visual Beta pendiente.
+
+### Evidencia y causa
+- `JS/Frontend/auth.js` acepta sesiones almacenadas con identificador `user.ID || user.id` al restaurar la sesión.
+- `JS/Frontend/ui.js`, `getUiSessionContext_()` solo leía `user.ID`. En sesiones heredadas que conservan únicamente `id` en minúscula, el contexto de UI quedaba `null` aunque AUTH aceptara la sesión y conservara el token.
+- La tarjeta «Agregar Tutorial» depende de `getUiSessionContext_()?.role === 'desarrollador'`. Por tanto, la diferencia entre los contratos de ID podía ocultar la tarjeta y otras funciones de UI basadas en el contexto, sin que el backend tuviera un problema de permisos.
+- La operación `openAddTutorialModal()` ya vuelve a comprobar el rol Desarrollador; se conserva esa protección y la autorización backend de `addTutorial`.
+
+### Corrección y validación
+- `getUiSessionContext_()` ahora resuelve el identificador con `user.ID || user.id`, pero sigue exigiendo `SessionToken` y normalizando el rol desde `Privilegios`.
+- `SessionUiRoleInvalidation.js` añade pruebas de contrato y ejecución dinámica para sesiones con `ID` y `id`, normalización de roles con acentos y rechazo de sesiones sin token.
+- Se añadieron comprobaciones de que la tarjeta Tutorial sigue reservada a Desarrollador y el modal vuelve a verificar el rol antes de abrir/guardar.
+- CI run `43630870843` SUCCESS: **95 suites / 1,404 pruebas / 0 fallos**; prueba AUG-042 `SessionUiRoleInvalidation` 14/14 PASS.
+- No se ejecutó un navegador real ni se verificó la sesión concreta del reporte. Falta comprobar visualmente con una cuenta Desarrollador y una sesión heredada en Beta.
+
+No se amplió la matriz de permisos, no se alteró el backend de tutoriales y no se modificó la rama base.
