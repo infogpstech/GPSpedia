@@ -8960,7 +8960,7 @@ function getCortesCanonicalDuplicateFileIds_(fileMetadata) {
     (Array.isArray(fileMetadata) ? fileMetadata : []).forEach(item => {
         if (!String(item && item.mimeType || "").toLowerCase().startsWith("image/")) return;
         const fileId = String(item && item.fileId || "");
-        const canonical = String(item && item.fileName || "").replace(/\\.[^.]+$/, "").trim().toLowerCase();
+        const canonical = String(item && item.fileName || "").replace(/\.[^.]+$/, "").trim().toLowerCase();
         if (!fileId || !canonical) return;
         if (!groups.has(canonical)) groups.set(canonical, []);
         groups.get(canonical).push(fileId);
