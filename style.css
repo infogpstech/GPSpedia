@@ -4021,3 +4021,22 @@ img.gp-image-loaded {
 .gp-context-help-trigger:focus-visible { outline:2px solid var(--accent-color); outline-offset:2px; }
 .gp-context-help-panel { display:block; margin:-2px 0 8px; padding:8px 10px; border:1px solid var(--border-color); border-left:3px solid var(--accent-color); border-radius:7px; background:var(--card-bg); color:var(--text-color); font-size:.8rem; line-height:1.45; }
 .gp-context-help-panel[hidden] { display:none; }
+
+/* Conciliación Drive ↔ Cortes: reporte compacto y revisable. */
+.audit-drive-reconciliation-panel { margin-top: 14px; padding: 12px; border: 1px solid var(--border-color); border-radius: 10px; background: var(--card-bg); }
+.audit-drive-reconciliation-panel[hidden] { display: none !important; }
+.audit-drive-reconciliation-panel h3 { margin: 0 0 6px; font-size: .98rem; }
+.audit-drive-reconciliation-panel p { margin: 4px 0 10px; color: var(--text-disabled); font-size: .8rem; }
+.audit-drive-reconciliation-counts { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.audit-reconciliation-count { padding: 4px 8px; border: 1px solid var(--border-color); border-radius: 999px; font-size: .74rem; }
+.audit-drive-reconciliation-results { display: flex; flex-direction: column; gap: 6px; max-height: 360px; overflow: auto; }
+.audit-reconciliation-row { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 4px 12px; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 7px; font-size: .78rem; overflow-wrap: anywhere; }
+.audit-reconciliation-row > span:not(.audit-reconciliation-status-label), .audit-reconciliation-row > code { grid-column: 1 / -1; color: var(--text-disabled); font-size: .73rem; white-space: normal; }
+.audit-reconciliation-status-label { align-self: start; color: var(--text-disabled); font-weight: 700; }
+.audit-reconciliation-row.status-matched { border-left: 3px solid #23865b; }
+.audit-reconciliation-row.status-ambiguous, .audit-reconciliation-row.status-unverifiable, .audit-reconciliation-row.status-invalid { border-left: 3px solid #c58a24; }
+@media (max-width: 600px) {
+    .audit-drive-reconciliation-panel { padding: 9px; }
+    .audit-reconciliation-row { grid-template-columns: 1fr; }
+    .audit-reconciliation-status-label { grid-column: 1; }
+}

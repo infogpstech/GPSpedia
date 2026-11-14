@@ -7025,6 +7025,11 @@ export async function openAuditDriveModal() {
     const startButton = document.getElementById('btn-audit-drive-start');
     const resumeButton = document.getElementById('btn-audit-drive-resume');
     const organizeButton = document.getElementById('btn-audit-drive-organize');
+    const reconcileButton = document.getElementById('btn-audit-drive-reconcile');
+    const reconciliationPanel = document.getElementById('audit-drive-reconciliation-panel');
+    const reconciliationStatus = document.getElementById('audit-drive-reconciliation-status');
+    const reconciliationCounts = document.getElementById('audit-drive-reconciliation-counts');
+    const reconciliationResults = document.getElementById('audit-drive-reconciliation-results');
     if (!summaryEl || !container) return;
     if (closeBtn) closeBtn.onclick = () => {
         const historyManager = window.overlayHistory;
@@ -7095,6 +7100,7 @@ export async function openAuditDriveModal() {
     let pendingBatchFiles = [];
     let savedState = null;
     let isRunning = false;
+    let isReconciling = false;
 
     const appendFiles = (files) => {
         if (!isCurrentRequest()) return;
@@ -7399,6 +7405,10 @@ export async function openAuditDriveModal() {
             organizeButton.hidden = !canOrganize;
             organizeButton.disabled = isRunning || isDriveAuditRunning || !canOrganize;
         }
+        if (reconcileButton) {
+            reconcileButton.hidden = !complete;
+            reconcileButton.disabled = isRunning || isDriveAuditRunning || isReconciling || !complete;
+        }
     };
 
     const restoreState = (state) => {
@@ -7649,7 +7659,143 @@ export async function openAuditDriveModal() {
 
     if (startButton) startButton.onclick = () => runAudit(false);
     if (resumeButton) resumeButton.onclick = () => runAudit(true);
+
+    const renderCortesReconciliationReport_ = report => {
+        if (!reconciliationPanel || !reconciliationCounts || !reconciliationResults) return;
+        reconciliationPanel.hidden = false;
+        reconciliationCounts.replaceChildren();
+        reconciliationResults.replaceChildren();
+        const labels = {
+            matched: "Coincidencia exacta", already_linked: "Ya vinculada", orphaned: "Sin correspondencia",
+            ambiguous: "Ambigua", occupied: "Destino ocupado", referenced_elsewhere: "Referenciada en otra ubicación",
+            access_restricted: "Acceso no público", unverifiable: "No verificable", invalid: "Archivo inválido"
+        };
+        Object.keys(labels).forEach(key => {
+            const count = Number(report.counts && report.counts[key]) || 0;
+            if (!count) return;
+            const chip = document.createElement("span");
+            chip.className = "audit-reconciliation-count";
+            chip.textContent = labels[key] + ": " + count;
+            reconciliationCounts.appendChild(chip);
+        });
+        const rows = [];
+        (report.results || []).forEach(item => rows.push(item));
+        (report.invalidFiles || []).forEach(item => rows.push({ ...item, status: "invalid" }));
+        const visibleRows = rows.slice(0, 500);
+        visibleRows.forEach(item => {
+            const row = document.createElement("article");
+            row.className = "audit-reconciliation-row status-" + String(item.status || "invalid").replace(/[^a-z_]/g, "");
+            const title = document.createElement("strong");
+            title.textContent = String(item.fileName || item.fileId || "Archivo sin nombre");
+            const detail = document.createElement("span");
+            const target = item.target;
+            detail.textContent = target
+                ? "Vehículo " + target.vehicleId + " · Fila " + target.row + " · Campo " + target.field
+                : (item.locations && item.locations.length ? item.locations.map(location => location.sheet + " · fila " + location.row + " · columna " + location.column).join("; ") : "");
+            const status = document.createElement("span");
+            status.className = "audit-reconciliation-status-label";
+            status.textContent = labels[item.status] || String(item.status || "Sin estado");
+            row.append(title, status);
+            if (detail.textContent) row.appendChild(detail);
+            if (item.reason) {
+                const reason = document.createElement("span");
+                reason.textContent = String(item.reason);
+                row.appendChild(reason);
+            }
+            if (item.proposedUrl) {
+                const url = document.createElement("code");
+                url.textContent = "URL propuesta: " + item.proposedUrl;
+                row.appendChild(url);
+            }
+            reconciliationResults.appendChild(row);
+        });
+        if (rows.length > visibleRows.length) {
+            const note = document.createElement("p");
+            note.textContent = "Se muestran " + visibleRows.length + " de " + rows.length + " resultados. El reporte completo permanece en memoria durante esta sesión.";
+            reconciliationResults.appendChild(note);
+        }
+        if (report.rowIssues && report.rowIssues.length) {
+            const issues = document.createElement("p");
+            issues.textContent = "Filas que requieren revisión: " + report.rowIssues.length + ". No se generaron destinos para esas filas.";
+            reconciliationResults.appendChild(issues);
+        }
+    };
+
+    const runCortesReconciliation = async () => {
+        if (!isCurrentRequest() || !complete || isReconciling || isRunning || isDriveAuditRunning) return;
+        const imageFiles = allFiles.filter(file => String(file.mimeType || "").toLowerCase().startsWith("image/"));
+        if (!imageFiles.length) {
+            if (reconciliationPanel) reconciliationPanel.hidden = false;
+            if (reconciliationStatus) reconciliationStatus.textContent = "La auditoría no encontró archivos de imagen para conciliar.";
+            return;
+        }
+        isReconciling = true;
+        isRunning = true;
+        isDriveAuditRunning = true;
+        if (reconciliationPanel) reconciliationPanel.hidden = false;
+        if (reconciliationResults) reconciliationResults.replaceChildren();
+        if (reconciliationCounts) reconciliationCounts.replaceChildren();
+        if (reconciliationStatus) reconciliationStatus.textContent = "Preparando simulación de " + imageFiles.length + " imágenes…";
+        updateControls();
+        const aggregate = {
+            results: [], invalidFiles: [], rowIssues: [], counts: {
+                matched: 0, already_linked: 0, orphaned: 0, ambiguous: 0, occupied: 0,
+                referenced_elsewhere: 0, access_restricted: 0, unverifiable: 0, invalid: 0
+            }
+        };
+        let sourceDigest = "";
+        try {
+            const batchSize = 25;
+            const totalBatches = Math.ceil(imageFiles.length / batchSize);
+            for (let offset = 0, batchIndex = 0; offset < imageFiles.length; offset += batchSize, batchIndex++) {
+                if (!isCurrentRequest()) return;
+                const batch = imageFiles.slice(offset, offset + batchSize).map(file => ({
+                    fileId: String(file.fileId || ""), fileName: String(file.fileName || "")
+                }));
+                const response = await routeAction("previewCortesImageReconciliation", {
+                    ...getDeveloperSessionPayload(), files: batch
+                });
+                if (!isCurrentRequest()) return;
+                if (!response || response.writePerformed !== false ||
+                    !/^[a-f0-9]{64}$/i.test(String(response.manifestDigest || "")) ||
+                    !Array.isArray(response.results) || !Array.isArray(response.invalidFiles)) {
+                    throw new Error("ADMIN devolvió un reporte de conciliación incompleto o no verificable.");
+                }
+                if (sourceDigest && sourceDigest !== response.manifestDigest) {
+                    throw new Error("Los datos de Cortes o sus referencias cambiaron durante la simulación. No se combinaron lotes; vuelve a ejecutar la auditoría.");
+                }
+                sourceDigest = response.manifestDigest;
+                aggregate.results.push(...response.results);
+                aggregate.invalidFiles.push(...response.invalidFiles);
+                if (!batchIndex) aggregate.rowIssues = Array.isArray(response.rowIssues) ? response.rowIssues : [];
+                Object.keys(aggregate.counts).forEach(key => {
+                    aggregate.counts[key] += Number(response.counts && response.counts[key]) || 0;
+                });
+                if (reconciliationStatus) reconciliationStatus.textContent =
+                    "Simulando lote " + (batchIndex + 1) + " de " + totalBatches + " · " +
+                    Math.min(offset + batch.length, imageFiles.length) + " de " + imageFiles.length + " imágenes. Sin escrituras.";
+            }
+            aggregate.manifestDigest = sourceDigest;
+            aggregate.referenceCheckStatus = "verified";
+            renderCortesReconciliationReport_(aggregate);
+            if (reconciliationStatus) reconciliationStatus.textContent =
+                "Simulación terminada. " + aggregate.counts.matched + " coincidencias exactas propuestas; no se modificó Spreadsheet, Drive ni permisos.";
+        } catch (error) {
+            if (!isCurrentRequest()) return;
+            if (reconciliationStatus) reconciliationStatus.textContent =
+                "La simulación se detuvo sin realizar escrituras: " + String(error && error.message || error);
+        } finally {
+            if (isCurrentRequest()) {
+                isReconciling = false;
+                isRunning = false;
+                isDriveAuditRunning = false;
+                updateControls();
+            }
+        }
+    };
+
     if (organizeButton) organizeButton.onclick = () => organizeUnusedImages();
+    if (reconcileButton) reconcileButton.onclick = () => runCortesReconciliation();
 
     try {
         savedState = await offline.getDriveAuditState(requestContext.userId);

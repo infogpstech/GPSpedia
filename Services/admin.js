@@ -3023,17 +3023,21 @@ function handlePreviewCortesImageReconciliation_(payload, logMessage, developerC
     const plan = buildCortesImageReconciliationPlan_(targetSnapshot.targets, files, referenceSnapshot.references, referenceScanVerified);
     plan.invalidFiles.push.apply(plan.invalidFiles, invalid);
     plan.counts.invalid = plan.invalidFiles.length;
-    const digestPayload = JSON.stringify({
+    const sourceDigestPayload = JSON.stringify({
         targets: targetSnapshot.targets.map(target => [target.row, target.vehicleId, target.field, target.currentValue, target.hasFormula, target.baseName]),
         references: Array.from(referenceSnapshot.references.entries()).map(([id, locations]) => [id, locations]).sort((a,b)=>a[0].localeCompare(b[0])),
-        files: files.map(file => [file.fileId, file.fileName, file.mimeType, file.accessPublic]).sort((a,b)=>a[0].localeCompare(b[0]))
+        unverifiableReferenceCount: Number(referenceSnapshot.unverifiableReferenceCount || 0)
     });
-    const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, digestPayload)
+    const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, sourceDigestPayload)
+        .map(value => ("0" + ((value + 256) % 256).toString(16)).slice(-2)).join("");
+    const batchDigestPayload = JSON.stringify(files.map(file => [file.fileId, file.fileName, file.mimeType, file.accessPublic]).sort((a,b)=>a[0].localeCompare(b[0])));
+    const batchDigest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, batchDigestPayload)
         .map(value => ("0" + ((value + 256) % 256).toString(16)).slice(-2)).join("");
     plan.referenceCheckStatus = referenceScanVerified ? "verified" : "unverifiable";
     plan.rowIssues = targetSnapshot.rowIssues;
     plan.sourceLastRow = targetSnapshot.sourceLastRow;
     plan.manifestDigest = digest;
+    plan.batchDigest = batchDigest;
     plan.writePerformed = false;
     logMessage && logMessage("Conciliación Drive ↔ Cortes",
         "Dry-run: " + plan.counts.matched + " coincidencias exactas, " + plan.counts.orphaned +

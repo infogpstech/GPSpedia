@@ -81,6 +81,7 @@ runGroup('32','ADMIN',()=>{
  runCli('P1 coordinación de actividad y sesiones protegidas por servicio','JS/Tests/SessionActivityCoordination.mjs');
  runCli('GP-IMG-UX-01 biblioteca de imágenes: selección, menús y vistas','JS/Tests/ReplacedImagesLibraryUX.mjs');
  runCli('GP-IMG-DATA-01 planner exacto de conciliación Drive ↔ Cortes','JS/Tests/CortesImageReconciliation.mjs');
+ runCli('GP-IMG-DATA-01 UI de simulación y reporte de conciliación','JS/Tests/CortesImageReconciliationUI.mjs');
  runCli('P2 asignador backend de IDs LogosMarca','JS/Tests/LogoIdIntegrity.mjs');
 });
 runGroup('33','FEEDBACK',()=>{

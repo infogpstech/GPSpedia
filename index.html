@@ -582,11 +582,18 @@
             <button type="button" id="btn-audit-drive-start" class="btn btn-primary"><i class="fa-solid fa-rotate"></i> Iniciar nueva auditoría</button>
             <button type="button" id="btn-audit-drive-resume" class="btn btn-secondary" hidden disabled><i class="fa-solid fa-play"></i> Continuar auditoría</button>
             <button type="button" id="btn-audit-drive-organize" class="btn btn-secondary" hidden disabled><i class="fa-solid fa-folder-open"></i> Organizar imágenes confirmadas</button>
+            <button type="button" id="btn-audit-drive-reconcile" class="btn btn-secondary" hidden disabled><i class="fa-solid fa-link"></i> Simular conciliación con Cortes</button>
         </div>
         <div id="audit-drive-summary" style="margin-bottom: 10px; font-size: 0.85rem; font-weight: 600;"></div>
         <div id="audit-drive-results-container" style="max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 5px;">
             <div style="text-align:center; padding:20px; color:var(--text-disabled);"><i class="fa-solid fa-spinner fa-spin"></i> Explorando árbol de Drive...</div>
         </div>
+        <section id="audit-drive-reconciliation-panel" class="audit-drive-reconciliation-panel" hidden aria-live="polite">
+            <h3>Conciliación Drive ↔ Cortes</h3>
+            <p id="audit-drive-reconciliation-status">La simulación no modifica Spreadsheet, Drive ni permisos.</p>
+            <div id="audit-drive-reconciliation-counts" class="audit-drive-reconciliation-counts"></div>
+            <div id="audit-drive-reconciliation-results" class="audit-drive-reconciliation-results"></div>
+        </section>
     </div>
 </div>
 
