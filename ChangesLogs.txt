@@ -197,3 +197,14 @@
 - CI `43640695193`: 97 suites / 1,427 pruebas / 0 fallos; `CatalogChangeFeed.mjs`: 13/13 PASS.
 - El primer intento de CI detectó un escape incorrecto en una expresión regular del contrato de prueba; se corrigió en un commit separado sin reescribir historial y se repitieron las pruebas.
 - Pages `43640694382` estaba en espera al registrar esta nota; confirmar el resultado antes de cerrar la continuidad.
+
+
+================================================================================
+2026-11-14 — GP-CAT-01B: CONEXIÓN DE PRODUCTORES WRITE / FEEDBACK / ADMIN
+- Services/write.js: las mutaciones confirmadas addOrUpdateCut, addSupplementaryInfo, addVinToVehicle y freezeCortesIds publican un evento reset del catálogo; los fallos de publicación se aíslan y no revierten la escritura.
+- Services/feedback.js: recordLike conserva su evento upsert preciso de Cortes; suggestYear, altas/ediciones PyS, relaciones de vehículos, tutoriales y aprobación/rechazo de vídeo publican reset tras confirmar la mutación.
+- Services/admin.js: las operaciones que pueden alterar datos visibles publican reset después de completar la operación y cerrar su evento de auditoría. Los cambios WRITE anidados bajo mantenimiento ADMIN no publican prematuramente; el reset queda a cargo del proceso padre.
+- JS/Tests/CatalogChangeFeed.mjs: cobertura de productores WRITE/FEEDBACK/ADMIN, aislamiento de errores y prevención de publicación intermedia durante mantenimiento.
+- CI del commit de código 25d7d91f369c4949f65373c44dd7fefddfc653c2: Node.js 22; sintaxis PASS; 97 suites / 1,428 pruebas / 0 fallos; CatalogChangeFeed 14/14 PASS. La compilación Pages de ese commit fue cancelada por una ejecución posterior; verificar el resultado del HEAD documental vigente.
+- No se desplegaron Apps Script, no se modificaron ScriptProperties, Spreadsheet, Drive ni datos productivos. GP-CAT-01C (consumidor IndexedDB) y GP-CAT-01D (sondeo/coordinación multi-pestaña) siguen pendientes.
+================================================================================
