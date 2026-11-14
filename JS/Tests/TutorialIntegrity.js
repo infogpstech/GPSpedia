@@ -131,6 +131,23 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
         assert.equal(h.sheet.data.length, 2);
     });
 
+    test("normaliza operationId a minúsculas para producir IDs tut canónicos", () => {
+        const h = buildHarness_(feedback, { missingSheet: true });
+        const result = h.api.add({ ...base, operationId: operationId.toUpperCase() });
+        assert.equal(result.referenceId, "tut-" + operationId);
+        assert.equal(h.sheet.data[1][0], "tut-" + operationId);
+    });
+
+    test("reintenta una fila histórica tut con distinta capitalización sin duplicarla", () => {
+        const legacyId = "tut-" + operationId.toUpperCase();
+        const oldRow = [legacyId, base.tema, "", base.comoIdentificarlo, base.dondeEncontrarlo, base.detalles, "", base.userName];
+        const h = buildHarness_(feedback, { rows: [headers, oldRow] });
+        const result = h.api.add(base);
+        assert.equal(result.referenceId, legacyId);
+        assert.equal(result.alreadyCreated, true);
+        assert.equal(h.sheet.data.length, 2);
+    });
+
     test("rechaza reutilizar operationId con contenido diferente", () => {
         const h = buildHarness_(feedback, { missingSheet: true });
         h.api.add(base);
