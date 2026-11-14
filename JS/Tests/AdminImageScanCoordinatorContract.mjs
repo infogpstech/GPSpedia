@@ -53,4 +53,45 @@ assert.ok(migration.sharedWriteResources.includes("ACTIVE_SESSIONS"),
     "La inicialización debe mantener la escritura de actividad protegida.");
 assert.equal(migration.maintenance, false);
 
+const routerHarness = new Function(
+    extractFunction(admin, "isSharedMutationAction_") + "\n" +
+    extractFunction(admin, "isSharedReadAction_") + "\n" +
+    extractFunction(admin, "doPost") + "\n" +
+    `
+    const calls = [];
+    function withSharedMutationLease_(service, operation, callback) {
+        calls.push({ service, operation });
+        return callback("coordinated-token");
+    }
+    function doPostInternal_(event) { return JSON.parse(event.postData.contents); }
+    const ContentService = { createTextOutput: value => ({ value, setMimeType() { return this; } }), MimeType: { TEXT: "text/plain" } };
+    return {
+        calls,
+        send(action) {
+            calls.length = 0;
+            const event = { postData: { contents: JSON.stringify({ action, payload: { userId: "test-user" } }) } };
+            return { result: doPost(event), calls: calls.slice() };
+        }
+    };
+    `
+)();
+for (const action of ["getReplacedImages", "getDriveStorage", "getCortesImageFolders"]) {
+    const routed = routerHarness.send(action);
+    assert.equal(routed.calls.length, 1);
+    assert.equal(routed.calls[0].service, "ADMIN");
+    assert.equal(routed.calls[0].operation, action,
+        action + " debe adquirir su lease específica y no ADMIN/sessionActivity.");
+}
+for (const action of ["auditDriveImagesInCortes", "migrateReplacedImagesSchema"]) {
+    const routed = routerHarness.send(action);
+    assert.equal(routed.calls.length, 1);
+    assert.equal(routed.calls[0].operation, action);
+    assert.equal(routed.result.payload.__sharedMutationToken, "coordinated-token");
+}
+const fallback = routerHarness.send("unknownAdminAction");
+assert.equal(fallback.calls[0].operation, "sessionActivity",
+    "Las acciones heredadas deben conservar la protección de sesión por defecto.");
+const ping = routerHarness.send("ping");
+assert.equal(ping.calls.length, 0, "ping no debe reservar una lease de escritura.");
+
 console.log("AdminImageScanCoordinatorContract: PASS");
