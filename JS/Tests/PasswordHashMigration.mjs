@@ -149,6 +149,25 @@ test("La migración batch usa dry-run por defecto y no escribe contraseñas",()=
     assert.equal(r.legacyHashedPendingLogin,1);assert.equal(r.alreadyCurrent,2);assert.deepEqual(h.users,before);
     assert.ok(!JSON.stringify(r).includes("PlainLegacyA")&&!JSON.stringify(r).includes("PlainLegacyB"));
 });
+test("El dry-run identifica IDs activos duplicados y bloquea la escritura",()=>{
+    const h=migrationHarness();
+    h.users[2][0]="U1";
+    const dry=h.run({userId:"U1",sessionToken:"token-1",batchSize:1});
+    assert.equal(dry.dryRun,true);
+    assert.equal(dry.ambiguousActiveAccounts,2);
+    assert.throws(()=>h.run({userId:"U1",sessionToken:"token-1",dryRun:false,confirm:true,batchSize:1}),/ID vacío o duplicado/);
+    assert.equal(h.stats().hashCounter,0);
+    assert.equal(h.users[2][2],"PlainLegacyA");
+});
+test("El dry-run identifica IDs activos vacíos y bloquea la escritura",()=>{
+    const h=migrationHarness();
+    h.users[2][0]="";
+    const dry=h.run({userId:"U1",sessionToken:"token-1",batchSize:1});
+    assert.equal(dry.ambiguousActiveAccounts,1);
+    assert.throws(()=>h.run({userId:"U1",sessionToken:"token-1",dryRun:false,confirm:true,batchSize:1}),/ID vacío o duplicado/);
+    assert.equal(h.stats().hashCounter,0);
+    assert.equal(h.users[2][2],"PlainLegacyA");
+});
 test("La migración exige confirmación explícita para escribir",()=>{
     const h=migrationHarness();assert.throws(()=>h.run({userId:"U1",sessionToken:"token-1",dryRun:false}));
     assert.equal(h.stats().hashCounter,0);
