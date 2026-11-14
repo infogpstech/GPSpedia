@@ -819,7 +819,7 @@ function doGet(e) {
 
 
 function isSharedMutationAction_(action) {
-    return ["backupDatabase","backupDrive","restoreDatabase","restoreDrive","reorganizeDatabase","normalizeImages","organizePrimaryVehicleImages","restoreAllTrashedImages","addLogo","updateVehicleField","uploadAdminImage","migrateCortesOperationIds","migrateIdentifiers","rollbackIdentifiers","reconcilePendingImageUploads","addOrUpdateCut","addSupplementaryInfo","createSheet","addColumn","driveCommand","recoverReplacedImage","deleteReplacedImage","restoreReplacedImageFromTrash","permanentlyDeleteReplacedImage","markReplacedImageInUse","saveUnusedImagesInventory","createCortesImageFolder","moveReplacedImage","getReplacedImageDownloadUrl","migrateReplacedImagesSchema"].includes(action);
+    return ["backupDatabase","backupDrive","restoreDatabase","restoreDrive","reorganizeDatabase","normalizeImages","organizePrimaryVehicleImages","restoreAllTrashedImages","addLogo","updateVehicleField","uploadAdminImage","migrateCortesOperationIds","migrateIdentifiers","rollbackIdentifiers","reconcilePendingImageUploads","addOrUpdateCut","addSupplementaryInfo","createSheet","addColumn","driveCommand","recoverReplacedImage","deleteReplacedImage","restoreReplacedImageFromTrash","permanentlyDeleteReplacedImage","markReplacedImageInUse","saveUnusedImagesInventory","applyCortesImageReconciliation","createCortesImageFolder","moveReplacedImage","getReplacedImageDownloadUrl","migrateReplacedImagesSchema"].includes(action);
 }
 
 function doPost(e) {
@@ -953,7 +953,7 @@ function getAdminAuditPartialResult_(response) {
     const source = response && typeof response === "object" ? response : {};
     const summary = {};
     [
-        "processed", "total", "itemErrors", "successCount", "errorCount",
+        "processed", "total", "itemErrors", "successCount", "errorCount", "appliedCount", "rolledBackCount", "beforeCount", "afterCount",
         "deletedCount", "restoredCount", "movedCount", "skippedCount",
         "failedCount", "createdCount", "recoveredCount"
     ].forEach(key => {
@@ -1241,6 +1241,9 @@ function doPostInternal_(e) {
             case 'previewCortesImageReconciliation':
                 response = handlePreviewCortesImageReconciliation_(payload, logMessage, developerContext);
                 break;
+            case 'applyCortesImageReconciliation':
+                response = handleApplyCortesImageReconciliation_(payload, logMessage, developerContext);
+                break;
             case 'migrateReplacedImagesSchema':
                 response = handleMigrateReplacedImagesSchema(payload, logMessage);
                 break;
@@ -1288,7 +1291,7 @@ function doPostInternal_(e) {
 
         const endTime = new Date();
         const durationSec = ((endTime - startTime) / 1000).toFixed(2);
-        if (action === 'organizePrimaryVehicleImages' &&
+        if ((action === 'organizePrimaryVehicleImages' || action === 'applyCortesImageReconciliation') &&
             (response.status === 'warning' || Number(response.itemErrors) > 0)) {
             logMessage("Finalización", "Organización finalizada con advertencias. Duración total: " + durationSec + "s", 0, 0, true);
         } else {
@@ -2865,6 +2868,43 @@ function buildCortesImageReconciliationTargets_() {
  * Clasifica archivos de Drive contra destinos de Cortes por nombre canónico exacto.
  * Un resultado "matched" solo es una propuesta; nunca modifica Spreadsheet ni Drive.
  */
+function buildCortesImageReconciliationApprovalManifest_(plan, approvals, expectedDigest) {
+    const digest = String(expectedDigest || "").trim();
+    if (!plan || plan.writePerformed !== false || !/^[a-f0-9]{64}$/i.test(digest) || digest !== String(plan.manifestDigest || "")) throw new Error("El manifiesto de aprobación no coincide con el preview vigente.");
+    if (!Array.isArray(approvals) || !approvals.length || approvals.length > 10) throw new Error("Aprueba entre 1 y 10 propuestas por operación.");
+    const allowedFields = new Set(["imagenVehiculo", "imgCorte1", "imgCorte2", "imgCorte3", "imgApertura", "imgCableAlimen", "imgCableAlimen2", "imgCableAlimen3"]);
+    const resultsById = new Map();
+    (Array.isArray(plan.results) ? plan.results : []).forEach(item => {
+        const id = String(item && item.fileId || "");
+        if (!id) return;
+        if (!resultsById.has(id)) resultsById.set(id, []);
+        resultsById.get(id).push(item);
+    });
+    const seenFiles = new Set(), seenTargets = new Set(), manifest = [];
+    approvals.forEach(approval => {
+        const fileId = String(approval && approval.fileId || "").trim();
+        const row = Number(approval && approval.row), column = Number(approval && approval.column);
+        const vehicleId = String(approval && approval.vehicleId || "").trim();
+        const field = String(approval && approval.field || "").trim();
+        const proposedUrl = String(approval && approval.proposedUrl || "").trim();
+        if (!/^[a-zA-Z0-9_-]{20,}$/.test(fileId) || !Number.isSafeInteger(row) || row < 2 || !Number.isSafeInteger(column) || column < 1 || !vehicleId || !allowedFields.has(field) || !proposedUrl) throw new Error("Una aprobación contiene una identidad o destino inválido.");
+        if (seenFiles.has(fileId)) throw new Error("No se puede aprobar dos veces el mismo archivo.");
+        const targetKey = row + ":" + column;
+        if (seenTargets.has(targetKey)) throw new Error("No se puede aprobar más de un archivo para la misma celda.");
+        seenFiles.add(fileId); seenTargets.add(targetKey);
+        const candidates = resultsById.get(fileId) || [];
+        if (candidates.length !== 1) throw new Error("La propuesta ya no existe de forma única en el preview.");
+        const candidate = candidates[0], target = candidate.target || {};
+        if (candidate.status !== "matched" || Number(target.row) !== row || Number(target.column) !== column ||
+            String(target.vehicleId || "") !== vehicleId || String(target.field || "") !== field ||
+            String(candidate.proposedUrl || "") !== proposedUrl || String(target.currentValue || "") !== "" || target.hasFormula === true) {
+            throw new Error("La propuesta aprobada ya no coincide con el destino exacto o no es una coincidencia segura.");
+        }
+        manifest.push({ fileId, fileName: String(candidate.fileName || ""), row, column, vehicleId, field, proposedUrl, manifestDigest: digest });
+    });
+    return manifest;
+}
+
 function buildCortesImageReconciliationPlan_(targets, driveFiles, activeReferences, referenceScanVerified, historicalDriveIds) {
     if (!Array.isArray(targets) || !Array.isArray(driveFiles)) throw new Error("El plan requiere destinos y archivos en formato de lista.");
     const references = activeReferences instanceof Map ? activeReferences : new Map();
@@ -3062,6 +3102,96 @@ function handlePreviewCortesImageReconciliation_(payload, logMessage, developerC
     return plan;
 }
 
+
+function countCortesImageCells_(sheet) {
+    const fields = ["imagenVehiculo", "imgCorte1", "imgCorte2", "imgCorte3", "imgApertura", "imgCableAlimen", "imgCableAlimen2", "imgCableAlimen3"];
+    const columns = fields.map(field => Number(COLS_CORTES[field])).filter(column => Number.isInteger(column) && column > 0);
+    if (columns.length !== fields.length || new Set(columns).size !== fields.length) throw new Error("Mapa de columnas de imágenes de Cortes inválido.");
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) return 0;
+    const values = sheet.getRange(2, 1, lastRow - 1, Math.max.apply(null, columns)).getValues();
+    return values.reduce((total, row) => total + columns.filter(column => String(row[column - 1] == null ? "" : row[column - 1]).trim() !== "").length, 0);
+}
+
+function handleApplyCortesImageReconciliation_(payload, logMessage, developerContext) {
+    if (!payload || payload.confirmed !== true) throw new Error("La aplicación requiere confirmación explícita del Desarrollador.");
+    const ownerId = String(developerContext && developerContext.userId || "").trim();
+    const approvals = Array.isArray(payload.approved) ? payload.approved : [];
+    if (!ownerId) throw new Error("La aplicación requiere una sesión Desarrollador verificada.");
+    if (!/^[a-f0-9]{64}$/i.test(String(payload.manifestDigest || ""))) throw new Error("Falta el digest del preview aprobado.");
+    if (!approvals.length || approvals.length > 10) throw new Error("La operación debe contener entre 1 y 10 propuestas aprobadas.");
+    const lock = LockService.getScriptLock();
+    try { lock.waitLock(30000); } catch (error) { throw new Error("No se pudo bloquear la aplicación de imágenes. Intenta nuevamente."); }
+    try {
+        const preview = handlePreviewCortesImageReconciliation_({
+            files: approvals.map(item => ({ fileId: String(item && item.fileId || "") }))
+        }, logMessage, developerContext);
+        const manifest = buildCortesImageReconciliationApprovalManifest_(preview, approvals, payload.manifestDigest);
+        const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+        if (!sheet) throw new Error("No se encontró la hoja Cortes.");
+        const beforeCount = countCortesImageCells_(sheet);
+        const prepared = manifest.map(item => {
+            if (item.row > sheet.getLastRow() || Number(COLS_CORTES[item.field]) !== item.column) throw new Error("El destino aprobado ya no corresponde a la estructura actual de Cortes.");
+            const vehicleId = String(sheet.getRange(item.row, COLS_CORTES.id).getValue() || "").trim();
+            const cell = sheet.getRange(item.row, item.column);
+            const value = cell.getValue(), formula = String(cell.getFormula() || "");
+            if (vehicleId !== item.vehicleId || (value !== "" && value !== null) || formula) throw new Error("La celda " + item.row + ":" + item.column + " cambió desde el preview. No se escribió ninguna propuesta.");
+            return { item, cell, writeAttempted: false };
+        });
+        const attempted = [];
+        try {
+            prepared.forEach(entry => {
+                const item = entry.item;
+                attempted.push(entry);
+                entry.writeAttempted = true;
+                entry.cell.setValue(item.proposedUrl);
+                SpreadsheetApp.flush();
+                if (String(entry.cell.getValue() || "") !== item.proposedUrl || String(entry.cell.getFormula() || "")) throw new Error("La verificación read-back falló en " + item.row + ":" + item.column + ".");
+                const details = JSON.stringify({ row: item.row, column: item.column, field: item.field, vehicleId: item.vehicleId, manifestDigest: item.manifestDigest, operation: "apply" });
+                if (!recordImageAdministrationActivity(developerContext, "cortes_image_reconciliation_applied", item.fileId, details)) throw new Error("No se pudo registrar la asignación " + item.fileId + " en ActividadUsuario.");
+                if (logMessage) logMessage("Reconciliación", "URL verificada en Cortes, fila " + item.row + ", campo " + item.field + ".");
+            });
+            const afterCount = countCortesImageCells_(sheet);
+            if (afterCount !== beforeCount + manifest.length) throw new Error("El conteo de celdas de imagen no coincide con las asignaciones confirmadas.");
+            return { status: "success", writePerformed: true, processed: manifest.length, total: manifest.length,
+                appliedCount: manifest.length, failedCount: 0, beforeCount, afterCount, rollbackConfirmed: true,
+                manifestDigest: preview.manifestDigest, message: "Se aplicaron y verificaron todas las propuestas aprobadas." };
+        } catch (applyError) {
+            const rollbackErrors = [], rolledBack = [];
+            for (let index = attempted.length - 1; index >= 0; index--) {
+                const entry = attempted[index], item = entry.item;
+                if (!entry.writeAttempted) continue;
+                try {
+                    const current = entry.cell.getValue(), formula = String(entry.cell.getFormula() || "");
+                    if (String(current || "") === item.proposedUrl && !formula) {
+                        entry.cell.clearContent();
+                        SpreadsheetApp.flush();
+                        if (entry.cell.getValue() !== "" || String(entry.cell.getFormula() || "")) throw new Error("Read-back de rollback no confirmó celda vacía.");
+                        rolledBack.push(item.fileId);
+                        if (!recordImageAdministrationActivity(developerContext, "cortes_image_reconciliation_rollback", item.fileId,
+                            JSON.stringify({ row: item.row, column: item.column, field: item.field, manifestDigest: item.manifestDigest, operation: "rollback" }))) rollbackErrors.push(item.fileId + ": no se pudo registrar el rollback.");
+                    } else if (current !== "" && current !== null) rollbackErrors.push(item.fileId + ": la celda cambió; no se sobrescribió durante el rollback.");
+                } catch (rollbackError) {
+                    rollbackErrors.push(item.fileId + ": " + String(rollbackError && rollbackError.message || rollbackError));
+                }
+            }
+            const afterCount = countCortesImageCells_(sheet);
+            const remaining = attempted.filter(entry => {
+                try { return String(entry.cell.getValue() || "") === entry.item.proposedUrl; } catch (error) { return true; }
+            }).length;
+            const rollbackConfirmed = rollbackErrors.length === 0 && remaining === 0 && afterCount === beforeCount;
+            return {
+                status: rollbackConfirmed ? "warning" : "partial", writePerformed: attempted.length > 0,
+                processed: attempted.length, total: manifest.length, appliedCount: remaining,
+                rolledBackCount: rolledBack.length, failedCount: 1, beforeCount, afterCount,
+                rollbackConfirmed, partial: !rollbackConfirmed,
+                message: String(applyError && applyError.message || applyError), rollbackErrors: rollbackErrors.slice(0, 10)
+            };
+        }
+    } finally {
+        lock.releaseLock();
+    }
+}
 
 function buildCanonicalImageFilename(vehicleInfo, fieldName, file, extraSuffix) {
     const extension = getCanonicalImageExtension(file);

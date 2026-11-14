@@ -848,3 +848,11 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - GitHub Actions run 43614652559: 91 suites, 1,339 pruebas aprobadas, 0 fallos. GitHub Pages run 43614652263: build y deployment PASS.
 - No se ejecutaron escrituras en Drive/Spreadsheet ni cambios de permisos. Las pruebas de navegador real/IndexedDB entre pestañas y las llamadas a Apps Script/Drive/Sheets quedan para Beta.
 - Siguiente tarea local de GP-IMG-DATA-01: diseñar y probar el manifiesto de aplicación con aprobación por fila, precondiciones, conteos antes/después, auditoría por asignación, read-back y rollback condicionado a huellas. La aplicación real sigue sin ejecutarse y requiere autorización expresa.
+
+
+## GP-IMG-DATA-01 — Aplicación controlada de propuestas aprobadas (2026-11-14)
+
+- Se agregó un validador puro de manifiesto que solo admite resultados `matched` del preview vigente, digest idéntico, archivo/celda únicos y coincidencia exacta de fila, columna, vehículo, campo y URL.
+- El handler ADMIN exige confirmación explícita, sesión Desarrollador, lease de mutación y bloqueo de script; vuelve a generar el preview, precondiciona todas las celdas antes de escribir, verifica cada URL por read-back y registra cada asignación.
+- Ante fallo, el rollback solo limpia una celda si todavía contiene exactamente la URL escrita y no tiene fórmula; cualquier cambio externo se conserva y se reporta para revisión manual. Incluye conteos antes/después y resumen en auditoría ADMIN.
+- Pruebas puras del manifiesto añadidas. UI y CI pendientes; no se ejecutó la acción contra Spreadsheet/Drive.

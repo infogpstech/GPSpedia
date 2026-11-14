@@ -14,6 +14,30 @@ const id=n=>"drive-file-id-000000000000000"+n;
 const target=(baseName,extra={})=>({row:2,vehicleId:"V-001",field:"imagenVehiculo",column:9,baseName,currentValue:"",...extra});
 const file=(n,name,mimeType="image/jpeg")=>({fileId:id(n),fileName:name,mimeType,accessPublic:true});
 let passed=0;function testCase(name,fn){fn();passed++;console.log("PASS "+name);}
+const validatorStart=admin.indexOf("function buildCortesImageReconciliationApprovalManifest_");
+const validatorEnd=admin.indexOf("\n}\n",validatorStart)+2;
+assert.ok(validatorStart>=0&&validatorEnd>validatorStart,"validador de aprobaciones ausente");
+const validator=new Function(admin.slice(validatorStart,validatorEnd)+";return buildCortesImageReconciliationApprovalManifest_;")();
+const digest="a".repeat(64);
+const approved=(extra={})=>({fileId:id(1),row:2,column:9,vehicleId:"V-001",field:"imagenVehiculo",proposedUrl:"https://drive.google.com/uc?export=view&id="+id(1),...extra});
+const matchedPlan=()=>({writePerformed:false,manifestDigest:digest,results:[{status:"matched",fileId:id(1),fileName:"same.png",target:target("same"),proposedUrl:"https://drive.google.com/uc?export=view&id="+id(1)}]});
+testCase("el manifiesto acepta solo una propuesta exacta del preview",()=>{
+ const result=validator(matchedPlan(),[approved()],digest);
+ assert.equal(result.length,1);assert.equal(result[0].fileId,id(1));assert.equal(result[0].column,9);
+});
+testCase("rechaza digest distinto y resultados que no sean matched",()=>{
+ assert.throws(()=>validator(matchedPlan(),[approved()],"b".repeat(64)),/no coincide/);
+ const plan=matchedPlan();plan.results[0].status="occupied";
+ assert.throws(()=>validator(plan,[approved()],digest),/coincidencia segura/);
+});
+testCase("rechaza fila, campo, columna o URL alterados",()=>{
+ for(const change of [{row:3},{column:10},{field:"imgCorte2"},{proposedUrl:"https://example.com/"}]) assert.throws(()=>validator(matchedPlan(),[approved(change)],digest));
+});
+testCase("rechaza archivo o celda aprobados más de una vez",()=>{
+ assert.throws(()=>validator(matchedPlan(),[approved(),approved()],digest),/dos veces/);
+ const plan=matchedPlan();plan.results.push({...plan.results[0],fileId:id(2),target:{...plan.results[0].target}});
+ assert.throws(()=>validator(plan,[approved(),approved({fileId:id(2),proposedUrl:"https://drive.google.com/uc?export=view&id="+id(2)})],digest),/misma celda/);
+});
 testCase("no reutiliza imágenes que ya están en el historial",()=>{
  const p=planner([target("same")],[file(1,"same.png")],new Map(),true,new Set([id(1)]));
  assert.equal(p.results[0].status,"historical");
