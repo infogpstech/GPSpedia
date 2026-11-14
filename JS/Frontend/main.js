@@ -748,18 +748,21 @@ async function initializeApp() {
 
     // --- LÓGICA DE GESTO PULL-TO-REFRESH (Restaurada) ---
     const container = document.querySelector('.container');
-    let touchStartY = 0;
+    let touchStartY = null;
 
     container.addEventListener('touchstart', (e) => {
-        if (container.scrollTop === 0) {
+        touchStartY = null;
+        if (container.scrollTop === 0 && e.touches && e.touches[0]) {
             touchStartY = e.touches[0].pageY;
         }
     }, { passive: true });
 
     container.addEventListener('touchend', (e) => {
-        const touchEndY = e.changedTouches[0].pageY;
-        const distance = touchEndY - touchStartY;
-        touchStartY = 0;
+        const startY = touchStartY;
+        const touch = e.changedTouches && e.changedTouches[0];
+        touchStartY = null;
+        if (!touch || startY === null) return;
+        const distance = touch.pageY - startY;
         // El gesto refresca solo los datos del catálogo; no reinicia la página ni AUTH.
         const now = Date.now();
         if (container.scrollTop === 0 && distance > 150 && now - lastManualCatalogRefreshAt_ >= MANUAL_CATALOG_REFRESH_COOLDOWN_MS) {
