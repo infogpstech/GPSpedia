@@ -69,3 +69,13 @@
 - `PWAStartupScenarios`: 13/13 PASS.
 - Inventario del Service Worker: 33/33 recursos esenciales presentes.
 - Pendiente: comprobación visual en móviles reales, actualización de la PWA instalada y validación externa de servicios Apps Script.
+
+
+## 2026-11-14 — Normalización de tarjetas PyS relacionadas
+
+- `JS/Frontend/ui.js`: `createPysCard()` y la nueva `createPysAssociationAddCard()` utilizan el mismo wrapper `.pys-card-wrapper`; las vistas de problema único y carrusel reutilizan la misma función de alta.
+- `style.css`: se fija el tamaño de wrapper/tarjeta a 140×120 px y el wrapper de carrusel a 160 px para mantener separación uniforme.
+- `JS/Tests/PysModalNavigation.js`: se corrigen rutas de importación y se agrega cobertura del wrapper y dimensiones.
+- `JS/Tests/RunServiceTests.mjs`: se registra la suite PyS para que CI realmente ejecute la regresión.
+- Validación GitHub Actions run `43630661037`: 95 suites / 1,401 pruebas / 0 fallos; `PysModalNavigation` 9/9 PASS.
+- Pendiente: inspección visual del modal en Android/iOS y escritorio.
