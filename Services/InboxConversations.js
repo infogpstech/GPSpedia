@@ -8,7 +8,7 @@ const INBOX_MESSAGE_HEADERS_ = Object.freeze(["messageId","conversationId","crea
 const INBOX_STATE_HEADERS_ = Object.freeze(["conversationId","userId","lastReadAt","lastReadMessageId","archived","hasSent","hasReceived","updatedAt","lastReceivedMessageId","lastSentMessageId"]);
 const INBOX_CONVERSATION_AUDIT_HEADERS_ = Object.freeze(["eventId","timestamp","actorId","actorName","action","conversationId","messageId","details"]);
 const INBOX_CATEGORIES_ = new Set(["general","soporte","acceso","contenido","instalacion","otro"]);
-const INBOX_ACTIVE_ROLES_ = new Set(["desarrollador","gefe","jefe","supervisor","tecnico","tecnico_exterior"]);
+const INBOX_ACTIVE_ROLES_ = new Set(["desarrollador","jefe","supervisor","tecnico","tecnico_exterior"]);
 
 function withInboxConversationLock_(callback) {
     const lock = LockService.getScriptLock();
