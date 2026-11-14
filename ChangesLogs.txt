@@ -1477,3 +1477,13 @@ Rama: GPSpedia2.2.5_work
 - GitHub Actions service-tests: PASS; 75 suites, 1,170 pruebas, 0 fallos. Sintaxis Node.js PASS.
 - No se desplegaron Apps Script ni se modificaron datos productivos. Beta externa de múltiples pestañas, offline/reconexión y navegador/dispositivo queda pendiente.
 ================================================================================
+
+================================================================================
+2026-11-14 — P2 SUBFASE CONTRASEÑAS: PBKDF2 Y MIGRACIÓN POR LOTES
+- AUTH: PBKDF2-HMAC-SHA256 versionado con salt aleatorio de 128 bits; compatibilidad de verificación con SHA-256 y plaintext legacy; rehash oportunista al login.
+- Se añade benchmarkPasswordKdf_() para calibración de coste en Apps Script. 12,000 iteraciones queda provisional hasta medir en runtime real.
+- Se añade acción migrateLegacyPasswords: dry-run por defecto, confirmación explícita para escritura, lotes hasta 50, reanudación por omisión de hashes migrados, validación Developer y lease Users/ActiveSessions.
+- SHA-256 legacy no se convierte por lote sin contraseña; se rehashea tras login exitoso. No se exportan ni registran secretos.
+- Pruebas PasswordHashMigration: vectores PBKDF2, formatos, legacy, dry-run, confirmación, lotes e idempotencia.
+- GitHub Actions service-tests: PASS; 76 suites, 1,185 pruebas, 0 fallos. No se ejecutó migración productiva ni deployment AUTH.
+================================================================================
