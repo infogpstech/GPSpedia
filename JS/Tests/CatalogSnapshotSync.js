@@ -222,9 +222,16 @@ async function runCatalogSnapshotSyncTests() {
         assert.equal((await getCatalogSyncState()).cursor, 13);
         await assert.rejects(() => saveCatalogCursor(-1), /cursor/);
     });
+    await testAsync('guardar snapshot sin revisión invalida un cursor anterior', async () => {
+        await saveCatalogWithCursor(snapshot(), 21);
+        await saveCatalog(snapshot([{ id: 'C-9', marca: 'Nissan' }]));
+        const saved = await getCatalogSyncState();
+        assert.equal(saved.snapshot.cortes[0].id, 'C-9');
+        assert.equal(saved.cursor, null);
+    });
 
-    console.log(`CatalogSnapshotSync: ${passed}/24 PASS`);
-    return { passed, total: 24 };
+    console.log(`CatalogSnapshotSync: ${passed}/25 PASS`);
+    return { passed, total: 25 };
 }
 
 try {
