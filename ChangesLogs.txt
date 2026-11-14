@@ -1588,3 +1588,11 @@ Rama: GPSpedia2.2.5_work
 - Se prohíbe renumerar IDs válidos y se bloquea Relay hasta conocer su esquema/escritor.
 - No se modificaron datos ni permisos productivos; motor y pruebas Beta pendientes.
 ================================================================================
+
+================================================================================
+2026-11-14 — P2 AUDITORÍA DE REFERENCIAS DE TUTORIAL
+- ADMIN: auditIdentifiers ahora comprueba referencias de video_approval hacia Tutorial y detecta huérfanas, ambiguas, ausentes, discrepancias de referencia/metadata y JSON malformado.
+- Pruebas: TutorialIdReferenceAudit 6/6 PASS; IdentifierAudit 7/7 PASS.
+- CI: 84 suites; 1,256 pruebas aprobadas; 0 fallos.
+- No hubo escrituras en Spreadsheet ni migración de IDs; validación con datos reales pendiente de Beta.
+================================================================================
