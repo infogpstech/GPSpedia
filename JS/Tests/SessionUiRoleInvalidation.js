@@ -66,7 +66,7 @@ function runSessionUiRoleInvalidationTests(sources) {
  run("Jefe puede acceder al Inbox y aprobar o rechazar según la matriz del backend",()=>{
   const can=slice(ui,"function canApproveInboxVideo_(","function getUiSessionContext_");
   assert(can.includes("['desarrollador', 'jefe', 'supervisor']"));
-  assert(!can.includes("'jefe'"));
+  assert(can.includes("'jefe'"));
   const policy=slice(feedback,"const FEEDBACK_ACTION_PERMISSIONS = Object.freeze(","\n);");
   assert(policy.includes("approveVideo: [\"Desarrollador\", \"Jefe\", \"Supervisor\"]"));
   assert(policy.includes("rejectVideo: [\"Desarrollador\", \"Jefe\", \"Supervisor\"]"));
