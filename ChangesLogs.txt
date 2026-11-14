@@ -1235,3 +1235,9 @@ Commits: dacc854, 8be5281, f0645b5, 0e02d90, 5c58ed8, 024d604, 6bf5732, 9b2e781.
 - Validaciones Beta pendientes: instalación/actualización PWA y navegación offline en navegador/dispositivo real; ciclo de vida del Service Worker en hosting; copia manual y validación de Apps Script, Spreadsheet, Drive y endpoints externos. Sin deployments ni operaciones productivas.
 - No se ejecutó Node CLI local desde esta sesión; la evidencia automatizada corresponde a GitHub Actions.
 ================================================================================
+
+================================================================================
+2026-11-13 — CORRECCIÓN — EXPORTACIÓN DE MÉTRICAS DE SERVICIOS
+- JS/Frontend/api-config.js: se reexporta bucketServiceMetrics desde serviceMetrics.js para mantener el contrato utilizado por ui.js y corregir el error de importación que impedía iniciar la aplicación.
+- No se modifica la lógica de cálculo de métricas ni la configuración de endpoints.
+================================================================================
