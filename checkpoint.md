@@ -864,3 +864,12 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - Tras una aplicación confirmada, se elimina el preview local y se ejecuta una simulación nueva para leer de vuelta el estado resultante. Si la respuesta es parcial o incierta, no se intenta repetir automáticamente la escritura y se solicita actualizar el preview.
 - La llamada de mutación usa un único intento para evitar reintentos ciegos ante timeout. No se ha ejecutado el botón ni se han escrito datos productivos.
 - Pruebas UI añadidas; CI pendiente.
+
+
+## GP-IMG-DATA-01 — Aplicación aprobada y paquete validado (2026-11-14)
+
+- UI: casillas de aprobación por coincidencia exacta, límite de 10 asignaciones y confirmación explícita. El reporte completo recuperado se identifica como copia local; la acción ADMIN vuelve a validar el preview y el digest antes de escribir.
+- ADMIN: endpoint de mutación protegido por sesión Desarrollador, lease compartida y bloqueo de script. Prevalida todas las celdas/IDs, exige destino vacío sin fórmula, escribe individualmente, verifica read-back, registra cada asignación y compara conteos antes/después. Ante error, rollback solo si la celda conserva la URL escrita; no sobrescribe cambios externos.
+- Planner: `CortesImageReconciliation.mjs` 19/19 PASS. UI: `CortesImageReconciliationUI.mjs` 13/13 PASS. GitHub Actions run 43615392436: 92 suites, 1,346 pruebas aprobadas, 0 fallos. GitHub Pages run 43615391867: build y deployment PASS.
+- La acción de aplicación no fue invocada; no se escribieron celdas, no se movieron archivos ni se modificaron permisos. La validación con Apps Script/Drive/Spreadsheet reales y navegador/IndexedDB queda diferida a Beta. La escritura productiva permanece sujeta a autorización expresa.
+- HEAD al cierre de esta actualización: `cefbc86158b6f19611e6ec726a00cfb6a768e9a1` (rama `GPSpedia2.2.5_work`).

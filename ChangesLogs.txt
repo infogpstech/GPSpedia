@@ -1810,3 +1810,11 @@ Rama: GPSpedia2.2.5_work
 - Nuevo botón invoca el endpoint ADMIN de aplicación controlada; después de éxito se borra el estado previo y se vuelve a generar el preview.
 - Timeout/resultado incierto no genera reintentos automáticos. No se ejecutó la operación productiva.
 ================================================================================
+
+
+================================================================================
+2026-11-14 — GP-IMG-DATA-01 CIERRE LOCAL DE APLICACION APROBADA
+- Se completó el flujo de aprobación individual y aplicación controlada: preview fresco, digest, precondiciones, bloqueo, read-back, auditoría por asignación, conteos y rollback condicionado.
+- Validación CI: 92 suites / 1,346 pruebas / 0 fallos; Pages build/deployment PASS.
+- No se ejecutó la acción contra datos productivos ni se modificaron permisos o archivos Drive.
+================================================================================
