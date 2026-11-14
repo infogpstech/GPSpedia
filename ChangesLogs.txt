@@ -235,3 +235,12 @@
 - JS/Tests/CatalogStartupIntegrity.mjs: caso de regresión para feed fallido + snapshot completo y comprobación de que el cursor queda nulo.
 - JS/Frontend/ui.js: insertNewVehicleFluently respeta prefers-reduced-motion; las tarjetas nuevas mantienen entrada sin transición cuando el usuario solicita movimiento reducido.
 - CI Node.js 22 del HEAD `6af6d78e2c68d0175566626177ca41fe2496d2d5`: run `43645790740` SUCCESS; 98 suites / 1,463 pruebas / 0 fallos. GitHub Pages run `43645790429` SUCCESS.
+
+
+2026-11-14 — GP-CAT-01: CONSUMIDOR DE DELTAS PARA COLECCIONES AUXILIARES
+- JS/Frontend/offline.js: applyCatalogChangesToSnapshot ahora aplica upsert/delete por ID persistente en Cortes, Tutoriales, Relay y Logos. Usa `id` para Cortes/Logos y `ID` para Tutoriales/Relay; conserva intactas las colecciones no afectadas.
+- Seguridad de compatibilidad: si la colección afectada contiene registros sin ID estable o IDs duplicados, devuelve resetRequired y no fabrica claves ni modifica el snapshot. Las colecciones no soportadas continúan solicitando reconciliación completa.
+- JS/Tests/CatalogSnapshotSync.js: fixture de Logos con ID y pruebas de deltas multi-colección, altas, modificaciones, bajas y fallback seguro para IDs heredados ausentes.
+- Primer CI detectó una expectativa de mensaje de error obsoleta en la prueba de upsert de Cortes; se ajustó la aserción al validador genérico y se repitió CI.
+- CI Node.js 22, run `43652551434`: SUCCESS; sintaxis PASS; 98 suites / 1,465 pruebas / 0 fallos. CatalogSnapshotSync 27/27, CatalogStartupIntegrity 18/18, SessionStartupNavigation 16/16 y PWAStartupScenarios 15/15 PASS.
+- Los productores de escritura para esas colecciones todavía publican reset seguro; este cambio habilita el consumidor, no afirma que el backend ya emita deltas exactos. PyS sigue usando su endpoint y caché separados.
