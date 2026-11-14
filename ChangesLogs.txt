@@ -1573,3 +1573,11 @@ Rama: GPSpedia2.2.5_work
 - Tareas_Activas: procedimiento de validación Beta con sincronización segura al inicio.
 - Pendiente: medición en deployment Apps Script real y decisión del coste PBKDF2; no se cambió el valor provisional ni se migraron datos.
 ================================================================================
+
+================================================================================
+2026-11-14 — P4 REVISIÓN ESTÁTICA DE URLS DE IMÁGENES
+- Referencias Drive se entregan al frontend y algunas se descargan a IndexedDB para uso offline; deben tratarse como recuperables por quien las visualiza.
+- Descarga explícita de imágenes reemplazadas sigue restringida a Desarrollador, pero eso no hace privadas las URLs de renderizado.
+- FEEDBACK valida permisos en sugerencias/PyS; no se encontró validación ACL global en WRITE/ADMIN.
+- ACL reales de Drive pendientes de auditoría Beta; no se cambiaron permisos.
+================================================================================
