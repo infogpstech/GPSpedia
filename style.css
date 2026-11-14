@@ -4182,3 +4182,28 @@ img.gp-image-loaded {
         white-space: normal;
     }
 }
+
+
+/* Tarjetas PyS relacionadas: mismo wrapper y alto para problemas y tarjeta de alta. */
+.pys-card-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 140px;
+    height: 120px;
+    flex: 0 0 140px;
+}
+.pys-card-wrapper > .card {
+    width: 140px;
+    height: 120px;
+    max-width: 140px;
+}
+.carousel-container .carousel-track > .pys-card-wrapper {
+    width: 160px;
+    height: 120px;
+    flex: 0 0 160px;
+}
+.carousel-container .carousel-track > .pys-card-wrapper > .card {
+    width: 140px;
+    height: 120px;
+    margin-right: 20px;
+}
