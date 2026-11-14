@@ -1863,3 +1863,11 @@ Rama: GPSpedia2.2.5_work
 - La primera ejecución CI detectó un error de escape en el harness nuevo; se corrigió y se repitió la ejecución completa. Resultado final: GitHub Actions run `43620074644`, Node.js 22.23.4, 93 suites / 1,364 pruebas / 0 fallos; `SessionStartupNavigation` 13/13 PASS.
 - P1 se registra como COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Quedan pendientes únicamente las comprobaciones externas de múltiples pestañas, offline/reconexión y dispositivos reales.
 ================================================================================
+
+
+================================================================================
+2026-11-14 — P3 INBOX: CIERRE LOCAL CON VALIDACIÓN BETA DIFERIDA
+- Se consolidó el estado de P3 en `Tareas_Activas.md`: interfaz de bandeja, lista/detalle móvil, búsqueda, categorías, paginación, caché aislada por sesión, lectura, respuesta, archivado, auditoría y permisos cuentan con implementación y pruebas locales.
+- Evidencia CI del HEAD previo al registro documental (`a43491bc...`), run `43620155376`: Node.js 22.23.4; InboxConversations 29/29 PASS; InboxUi 16/16 PASS; regresión integral 93 suites / 1,364 pruebas / 0 fallos; pasos de sintaxis PASS.
+- Las pruebas manuales de tema claro/oscuro, teclado, lector de pantalla, navegación Atrás y dispositivos/navegadores reales permanecen pendientes de Beta. No se declaran ejecutadas.
+================================================================================
