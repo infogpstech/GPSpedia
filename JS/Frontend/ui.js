@@ -936,8 +936,10 @@ export async function setOptimizedImage(imgElement, fileId, size = IMG_SIZE_SMAL
     const markLoaded = () => {
         if (!isCurrent()) return;
         imgElement.classList.remove('gp-image-loading', 'gp-image-unavailable');
+        const isFallback = imgElement.src === IMAGE_FALLBACK_DATA_URL;
+        imgElement.classList.toggle('gp-image-fallback', isFallback);
         imgElement.classList.add('gp-image-loaded');
-        imgElement.dataset.gpImageState = imgElement.classList.contains('gp-image-fallback') ? 'fallback' : 'loaded';
+        imgElement.dataset.gpImageState = isFallback ? 'fallback' : 'loaded';
         imgElement.setAttribute('aria-busy', 'false');
     };
     const markFailed = event => {
