@@ -1344,3 +1344,10 @@ Continuar con la revisión integral local de las tareas implementadas y sus regr
 - Matriz solicitada: Técnico/Técnico exterior → Supervisor; Supervisor → Jefe; contacto con Desarrollador exclusivamente mediante ticket de problema. El backend actual permite que los no desarrolladores contacten directamente al Desarrollador, por lo que debe corregirse junto con la UI.
 - Registro detallado, IDs GP-PWA-02 y GP-INBOX-04A..04D, orden de implementación y criterios de validación en Tareas_Activas.md.
 - No se modificó código funcional, Service Worker, endpoints, deployments ni datos externos durante este registro. La rama base permanece protegida.
+
+
+## Continuidad — GP-CAT-01 catálogo cache-first e incremental (2026-11-14)
+**Estado: REQUISITO REGISTRADO; implementación pendiente.**
+El usuario solicita que la plataforma renderice primero el catálogo de IndexedDB y después sincronice silenciosamente solo altas/modificaciones/bajas; novedades creadas por otro usuario deben aparecer en sesiones abiertas sin recarga, cierre ni reingreso, con animación elegante y fluida. Cobertura: Cortes, problemas, tutoriales y modelos.
+Hallazgo: auth.js ya lee el snapshot local antes de la red, pero después de la ventana de 60 segundos descarga fetchCatalogData como snapshot completo. offline.js reemplaza el snapshot completo; compareCatalogSnapshots compara colecciones, pero no existe feed incremental confiable con cursor para las sesiones abiertas. Debe diseñarse revisión/feed backend, polling adaptativo/coordinación multi-pestaña, aplicación transaccional y actualización de vistas sin perder scroll/filtros/modales/operaciones pendientes. Detalles y criterios de aceptación en Tareas_Activas.md, GP-CAT-01A..01F.
+Este mecanismo de datos en vivo es independiente de la actualización de recursos PWA de GP-PWA-02; no debe depender de reload ni sustituir el gesto nativo.

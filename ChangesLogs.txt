@@ -130,3 +130,12 @@
 - Evidencia Inbox inspeccionada: la UI ofrece consulta directa al Desarrollador para roles no desarrollador; Services/InboxConversations.js limita destinatarios de esos roles al Desarrollador. No existe aún el flujo jerárquico solicitado ni selección múltiple para marcar no leído/borrar.
 - Este commit registra requisitos y hallazgos; no contiene correcciones funcionales ni pruebas de comportamiento. Sin cambios en deployments, endpoints o datos externos.
 ================================================================================
+
+================================================================================
+2026-11-14 — REGISTRO GP-CAT-01: CATÁLOGO CACHE-FIRST E INCREMENTAL EN VIVO
+- Se registra requisito para mostrar IndexedDB primero y sincronizar solo altas, modificaciones y bajas en segundo plano.
+- Se exige que cambios de otros usuarios aparezcan en sesiones activas sin recarga/cierre/reingreso, con animación accesible y fluida.
+- Inspección: auth.js ya lee caché antes de red, pero tras TTL de 60 s llama fetchCatalogData y espera snapshot completo; offline.js persiste snapshots completos y compareCatalogSnapshots compara contenido, sin feed incremental de backend.
+- Se registran subtareas GP-CAT-01A..01F, criterios de aceptación, cobertura de entidades, seguridad, transacciones, coordinación multi-pestaña y pruebas.
+- Solo documentación; no se modificó lógica funcional ni se ejecutaron pruebas.
+================================================================================

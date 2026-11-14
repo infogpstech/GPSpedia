@@ -392,3 +392,18 @@ Evidencia:
 Impacto: el Inbox no ofrece la barra de herramientas solicitada para administrar mensajes recibidos.
 Criterio de corrección: implementar selección individual/todos los visibles, marcado persistente no leído y borrado seguro por usuario, con autorización backend, confirmación y pruebas de regresión.
 ================================================================================
+
+================================================================================
+AUD-2026-11-14-12 — CATÁLOGO ONLINE NO USA FEED INCREMENTAL Y NO DETECTA CAMBIOS EN VIVO
+Severidad: Alta (rendimiento y frescura de datos)
+Estado: Hallazgo confirmado en el flujo cliente; endpoint/feed incremental y mecanismo de novedades pendientes de inspección/implementación.
+
+Evidencia:
+- JS/Frontend/auth.js: loadInitialData intenta primero offline.getCatalog() y procesa un snapshot completo válido desde IndexedDB.
+- auth.js limita la omisión de una nueva descarga a CATALOG_REFRESH_TTL_MS=60000. Fuera de esa ventana llama fetchCatalogData() y exige una instantánea completa.
+- Cuando ya había caché, el resultado de red se entrega a performSilentSync(), por lo que existe reconciliación silenciosa de snapshots, pero la transferencia sigue siendo completa.
+- JS/Frontend/offline.js: saveCatalog reemplaza la instantánea completa; compareCatalogSnapshots puede detectar altas/modificaciones/bajas, pero no ofrece por sí mismo un cursor de cambios servidor ni detección activa en sesiones abiertas.
+Impacto: el inicio online puede descargar todo el catálogo; una novedad creada por otro usuario no necesariamente aparece mientras una sesión permanece abierta, hasta que se produce otra sincronización.
+Corrección requerida: feed autenticado incremental con revisión/cursor, bootstrap completo solo cuando sea necesario, detección adaptativa de novedades, coordinación entre pestañas, aplicación transaccional y reconciliación animada sin recarga.
+No confundir sincronización de datos con actualización de los recursos PWA/Service Worker.
+================================================================================

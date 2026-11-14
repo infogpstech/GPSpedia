@@ -640,3 +640,51 @@ Si cualquier comprobación falla, no continuar ni descartar cambios locales. Con
 5. GP-INBOX-04D: pruebas de permisos por rol, operaciones masivas, móvil, accesibilidad y regresión.
 
 No marcar como completadas estas tareas hasta ejecutar las pruebas locales pertinentes y registrar por separado las verificaciones Beta. No se autoriza modificar deployments ni datos productivos.
+
+
+## GP-CAT-01 — Catálogo cache-first con actualización incremental y animada en vivo
+**Prioridad: alta. Estado: REQUISITO REGISTRADO; diseño/implementación y pruebas pendientes.**
+
+### Objetivo de experiencia
+- Al abrir la plataforma, mostrar primero y sin demora la última instantánea válida del catálogo guardada localmente (IndexedDB), tanto con conexión como sin ella. La interfaz no debe esperar a descargar todo el catálogo para empezar a ser utilizable.
+- En segundo plano, comprobar si hay novedades y obtener únicamente registros nuevos o modificados desde la última versión/cursor conocido. No volver a descargar ni reconstruir todas las colecciones en cada apertura cuando no haya cambios.
+- Los cambios publicados por cualquier usuario deben aparecer automáticamente en las sesiones abiertas de los demás usuarios, sin recargar el documento, cerrar la PWA ni salir y volver a entrar.
+- Integrar los cambios de forma silenciosa y fluida: los nuevos Cortes, problemas, tutoriales y modelos deben incorporarse al catálogo y a las vistas pertinentes con una animación elegante, breve y no intrusiva. Los cambios de registros existentes deben actualizarse en contexto; las bajas deben retirarse de forma coherente.
+- Mostrar una señal visual discreta de sincronización/actualización solo cuando aporte información. No usar un botón de recarga ni una animación que bloquee la navegación.
+
+### Requisitos funcionales y técnicos
+1. **Arranque cache-first:** inicializar IndexedDB, leer el snapshot completo local y renderizarlo inmediatamente. La lectura local no debe esperar a red ni bloquear el hilo principal. Si no hay caché válida, mostrar el estado de carga inicial y solicitar la instantánea completa.
+2. **Sincronización incremental:** diseñar un contrato backend de cambios desde un cursor/revisión monotónico (por ejemplo catalogRevision/updatedAt) que devuelva solo altas, modificaciones y bajas de Cortes, problemas, tutoriales y modelos. Debe incluir paginación/continuación si el delta excede el límite de respuesta. La descarga completa queda como bootstrap, recuperación ante cursor vencido/inconsistente y reconciliación controlada, no como rutina de cada apertura.
+3. **Publicación de cambios:** toda escritura confirmada que afecte al catálogo debe actualizar una revisión/feed confiable. La actualización solo se anuncia después de confirmar la persistencia del cambio; no mostrar altas optimistas como si fueran definitivas.
+4. **Detección mientras la app está abierta:** implementar un mecanismo ligero y autenticado de consulta de novedades (polling adaptativo, por ejemplo al iniciar, al recuperar foco/conexión y con intervalo moderado mientras esté visible) o mecanismo equivalente compatible con el backend. Evitar solicitudes completas repetidas, ráfagas, sondeo cuando la app está oculta y concurrencia innecesaria. Coordinar pestañas para reducir consultas duplicadas y propagar cambios entre ellas.
+5. **Aplicación atómica del delta:** validar cursor, esquema, IDs estables y pertenencia de cada colección; aplicar los cambios en una transacción local coherente, persistir el nuevo cursor solo después de confirmar el delta y actualizar el estado de la interfaz sin reemplazos parciales inconsistentes. Si falla, conservar la última instantánea válida y reintentar de forma acotada.
+6. **Sincronización entre vistas:** actualizar contadores, categorías, búsquedas, listas, carruseles y datos de detalle abiertos. No cerrar modales, reiniciar scroll, borrar filtros ni perder navegación por la llegada de novedades. Si un usuario está editando un registro, evitar sobrescribir su formulario; reconciliar al terminar.
+7. **Integridad de operaciones locales:** no sobrescribir ni descartar operaciones pendientes, borradores, datos offline ni cambios locales no confirmados. Separar los datos del catálogo confirmado de las colas de escritura pendientes.
+8. **Animación y accesibilidad:** animar la entrada de tarjetas/registros nuevos con transición breve y suave, sin saltos de layout; respetar prefers-reduced-motion, accesibilidad y rendimiento en móviles modestos. No animar indiscriminadamente todos los elementos en cada sincronización.
+9. **Cobertura de entidades:** Cortes, Problemas y Soluciones (PyS), Tutoriales y modelos/catálogos auxiliares que se muestran al usuario. Documentar cuáles comparten el feed y cuáles necesitan revisión/cursor propio.
+10. **Seguridad:** autenticar cada consulta; aplicar permisos y visibilidad por rol en servidor; no revelar datos privados ni confiar en el cursor enviado por el cliente para autorizar acceso.
+11. **Observabilidad:** registrar última sincronización confirmada, cursor/revisión, duración, tamaño del delta y fallos sin exponer contenido sensible. La UI debe distinguir caché disponible, sincronizando, actualizado y sin conexión.
+12. **Pruebas:** arranque con caché y red lenta; caché sin cambios; alta/modificación/baja de cada entidad desde otra sesión; dos o más pestañas; reconexión; cursor expirado; delta paginado; respuesta duplicada/fuera de orden; escritura fallida; edición abierta; operación offline pendiente; permisos; animación reducida; rendimiento móvil. Probar que un registro creado por usuario A aparece en usuario B sin recargar, cerrar ni reabrir.
+
+### Evidencia técnica actual
+- JS/Frontend/auth.js ya intenta leer offline.getCatalog() antes de la red y renderiza un snapshot completo válido; sin embargo, salvo una ventana local de 60 segundos (gpsepedia_catalog_last_sync), realiza fetchCatalogData() y valida una instantánea completa al abrir. Si ya hay caché, ejecuta performSilentSync(catalogData), pero la respuesta de red sigue siendo el catálogo completo.
+- JS/Frontend/offline.js implementa saveCatalog() como reemplazo del snapshot completo; el comentario del contrato indica que getCatalogData entrega una instantánea completa, no un delta. También existe compareCatalogSnapshots() que detecta altas, modificaciones y bajas de Cortes, y cambios en tutoriales/relay/logos, pero no constituye por sí solo un feed incremental desde backend.
+- Por tanto, ya existe una base de cache-first y reconciliación visual silenciosa, pero falta resolver la descarga completa repetida y la detección de novedades de otros usuarios mientras la app permanece abierta. El requisito no debe registrarse como una función inexistente ni darse por completado por el solo hecho de leer IndexedDB primero.
+
+### Criterios de aceptación
+- En una apertura con caché válida, el catálogo se ve inmediatamente desde IndexedDB, sin esperar la red.
+- Con cero novedades, la comprobación de fondo transfiere solo metadatos/cursor mínimo y no descarga las colecciones completas.
+- Una alta confirmada por otro usuario aparece en una sesión ya abierta dentro del intervalo de sincronización acordado, sin recarga ni reingreso.
+- Altas, modificaciones y bajas se reflejan en todas las colecciones objetivo, manteniendo filtros, scroll, modal y operaciones pendientes.
+- No se pierde ni duplica información ante fallos, reconexiones, pestañas simultáneas o respuestas repetidas.
+- La animación es discreta, fluida, accesible y no afecta el rendimiento móvil.
+
+### Dependencias y orden
+- GP-CAT-01A: auditar contratos de escritura y definir revisión/feed común para todas las entidades.
+- GP-CAT-01B: endpoint incremental autenticado y paginado; snapshot completo solo para bootstrap/reparación.
+- GP-CAT-01C: cliente cache-first con cursor y aplicación transaccional del delta.
+- GP-CAT-01D: detección adaptativa en sesiones activas y coordinación entre pestañas.
+- GP-CAT-01E: reconciliación de vistas y animaciones accesibles.
+- GP-CAT-01F: pruebas automatizadas, rendimiento y Beta multiusuario/dispositivo.
+
+Este requerimiento complementa GP-PWA-02: sincronizar el catálogo en vivo no debe interceptar el gesto nativo ni recargar el documento. Son dos mecanismos distintos: la PWA actualiza sus recursos de aplicación mediante el ciclo normal del Service Worker/navegador; los datos del catálogo se sincronizan incrementalmente dentro de la sesión.
