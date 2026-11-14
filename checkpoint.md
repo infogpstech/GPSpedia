@@ -777,3 +777,9 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - Cada lote de preview se persiste solo después de validar la respuesta del backend; una interrupción permite continuar desde el siguiente lote confirmado sin repetir los anteriores. Si cambia la lista de archivos se descarta el progreso de ese auditId y se reinicia el preview.
 - El guardado local valida integridad estructural, límite de tamaño y revisión concurrente; no escribe en Drive ni Spreadsheet.
 - Añadida regresión estática UI para contrato de persistencia/reanudación. Validación CI pendiente.
+
+
+## GP-IMG-DATA-01 — Corrección de aserción de concurrencia (2026-11-14)
+
+- CI run 43613854019 detectó un fallo exclusivo de la aserción estática: el test esperaba `current.revision !== expectedRevision`, mientras el código convierte la revisión almacenada con `Number(current.revision)` antes de compararla.
+- La condición CAS de IndexedDB no se modificó; se corrigió el test para verificar la expresión implementada. Repetir CI completo antes de cerrar.

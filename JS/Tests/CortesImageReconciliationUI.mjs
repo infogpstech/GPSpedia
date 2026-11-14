@@ -55,7 +55,7 @@ testCase("persiste y reanuda el preview por cuenta, auditoría, digest y lote co
  assert.ok(off.includes("export async function saveCortesImageReconciliationState"));
  assert.ok(off.includes("export async function getCortesImageReconciliationState"));
  assert.ok(off.includes("export async function clearCortesImageReconciliationState"));
- assert.ok(off.includes("current.revision !== expectedRevision"));
+ assert.ok(off.includes("Number(current.revision) !== expectedRevision"));
 });
 testCase("el reporte usa texto seguro y no modifica datos productivos",()=>{
  assert.match(ui,/title\.textContent = String\(item\.fileName/);

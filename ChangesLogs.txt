@@ -1741,3 +1741,10 @@ Rama: GPSpedia2.2.5_work
 - Al reabrir el panel, el preview recupera los lotes confirmados y continúa desde el siguiente. Si cambia el conjunto de archivos, reinicia con estado limpio.
 - No se ejecutaron escrituras en Drive/Spreadsheet ni cambios de permisos.
 ================================================================================
+
+
+================================================================================
+2026-11-14 — GP-IMG-DATA-01 CORREGIR ASSERTION DE REVISION CAS
+- Ajustada la aserción UI para reflejar la conversión numérica aplicada a la revisión almacenada en IndexedDB.
+- No se alteró el comportamiento de persistencia ni la condición de concurrencia.
+================================================================================
