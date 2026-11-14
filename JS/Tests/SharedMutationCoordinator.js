@@ -649,6 +649,36 @@ function runSharedMutationCoordinatorTests() {
         expectThrow_(() => acquire_(r, "ADMIN", "unknownImageAction"), "política");
     });
 
+    test_("ADMIN separa lecturas de inventario y escáner de la lease genérica", function() {
+        const r = createRuntime_();
+        const sessionActivity = acquire_(r, "ADMIN", "sessionActivity");
+        const inventory = acquire_(r, "ADMIN", "getReplacedImages");
+        const storage = acquire_(r, "ADMIN", "getDriveStorage");
+        const folders = acquire_(r, "ADMIN", "getCortesImageFolders");
+        const scan = acquire_(r, "ADMIN", "auditDriveImagesInCortes");
+        assert_(sessionActivity.status === "success" && inventory.status === "success" &&
+            storage.status === "success" && folders.status === "success" && scan.status === "success",
+            "Las consultas y el escáner deben coexistir con la actualización cooperativa de actividad.");
+        const duplicateScan = acquire_(r, "ADMIN", "auditDriveImagesInCortes");
+        assert_(duplicateScan.status === "error" && duplicateScan.code === "busy",
+            "Dos escáneres no deben escribir simultáneamente el estado de auditoría.");
+        const migration = acquire_(r, "ADMIN", "migrateReplacedImagesSchema");
+        assert_(migration.status === "error" && migration.code === "busy",
+            "La migración debe esperar mientras inventario/escáner leen IMAGE_INVENTORY.");
+        const inventoryWrite = acquire_(r, "ADMIN", "saveUnusedImagesInventory");
+        assert_(inventoryWrite.status === "error" && inventoryWrite.code === "busy",
+            "La escritura de inventario/Drive debe esperar mientras el escáner conserva su snapshot.");
+        release_(r, "ADMIN", "auditDriveImagesInCortes", scan.token);
+        release_(r, "ADMIN", "getReplacedImages", inventory.token);
+        release_(r, "ADMIN", "getDriveStorage", storage.token);
+        release_(r, "ADMIN", "getCortesImageFolders", folders.token);
+        release_(r, "ADMIN", "sessionActivity", sessionActivity.token);
+        const migrationRetry = acquire_(r, "ADMIN", "migrateReplacedImagesSchema");
+        assert_(migrationRetry.status === "success",
+            "La inicialización del historial debe continuar después de liberar las lecturas.");
+        release_(r, "ADMIN", "migrateReplacedImagesSchema", migrationRetry.token);
+    });
+
     const summary = { status: failed === 0 ? "PASS" : "FAIL", passed, failed, results };
     return summary;
 }
