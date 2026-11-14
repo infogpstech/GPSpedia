@@ -577,3 +577,6 @@ Si cualquier comprobación falla, no continuar ni descartar cambios locales. Con
 - SessionUiRoleInvalidation: 15/15 PASS.
 - No se ejecutó el runner Node.js completo ni GitHub Actions desde esta sesión. No se consultaron ni modificaron Apps Script, ScriptProperties, Spreadsheet, Drive o deployments externos.
 - Se añadió AUG-156 a lista_beta_parte2.txt, con preparación segura de repositorio/rama y casos específicos para estos tres problemas.
+
+
+**Ampliación de pruebas GP-ADMIN-01/02 (2026-11-14):** AdminImageScanCoordinatorContract ahora prueba también el despacho dinámico de doPost con un coordinador simulado: consultas con leases propias, propagación del token del escáner/migración, fallback de acciones heredadas y bypass de lease para ping. Resultado aislado: PASS.
