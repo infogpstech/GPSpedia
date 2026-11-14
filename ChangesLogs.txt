@@ -1554,3 +1554,12 @@ Rama: GPSpedia2.2.5_work
 - UserIdGenerator 4/4 PASS. CI PASS: 81 suites; 1,215 pruebas; 0 fallos.
 - No se ejecutó ninguna escritura de datos; migración real pendiente de Beta.
 ================================================================================
+
+================================================================================
+2026-11-14 — P2 IDs TUTORIAL
+- IDs tut- nuevos normalizados a minúsculas; búsqueda/idempotencia de IDs históricos case-insensitive.
+- Pruebas de operationId uppercase y reintento sobre fila histórica uppercase.
+- TutorialIntegrity integrado en CI: 27/27 PASS.
+- Fixtures AUTH sincronizados y PasswordKdfBenchmark 6/6 PASS.
+- CI PASS: 83 suites; 1,250 pruebas aprobadas; 0 fallos.
+================================================================================
