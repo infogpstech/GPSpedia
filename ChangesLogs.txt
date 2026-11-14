@@ -1540,3 +1540,9 @@ Rama: GPSpedia2.2.5_work
 - Pendiente validación Beta/real: migraciones con datos, llamadas HTTP por rol, dispositivos, rendimiento y permisos reales de recursos.
 - No hubo despliegue ni cambios de datos productivos.
 ================================================================================
+
+================================================================================
+2026-11-14 — SINCRONIZACIÓN DE DOCUMENTACIÓN
+- Corregido estado obsoleto de Gefe: la Spreadsheet/lista de opciones ya fue actualizada por el usuario y el código solo reconoce Jefe.
+- Actualizada continuidad inmediata P1–P6 y validaciones externas pendientes.
+================================================================================
