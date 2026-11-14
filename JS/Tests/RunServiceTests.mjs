@@ -80,6 +80,7 @@ runGroup('32','ADMIN',()=>{
 });
 runGroup('33','FEEDBACK',()=>{
  const feedback=read('Services/feedback.js');
+ runCli('P2 IDs canónicos e idempotencia de Tutorial','JS/Tests/TutorialIntegrity.js');
  const lockService={getScriptLock:()=>({waitLock(){},releaseLock(){}})};
  const spreadsheet={flush(){}};
  const utilities={getUuid:()=>'test-uuid',formatDate:()=>'2026-11-12',base64Decode:()=>[1],newBlob:()=>({})};
