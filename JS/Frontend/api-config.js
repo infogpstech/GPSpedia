@@ -305,7 +305,7 @@ export async function getInboxRecipients(sessionPayload = {}) {
 }
 export async function getInboxConversations(sessionPayload = {}, options = {}) {
     const source = options && typeof options === 'object' ? options : {};
-    return await routeAction('getInboxConversations', { ...sessionPayload, cursor: source.cursor, pageSize: source.pageSize, folder: source.folder, query: source.query });
+    return await routeAction('getInboxConversations', { ...sessionPayload, cursor: source.cursor, pageSize: source.pageSize, folder: source.folder, query: source.query, category: source.category });
 }
 export async function getInboxMessages(conversationId, sessionPayload = {}, options = {}) {
     const source = options && typeof options === 'object' ? options : {};
