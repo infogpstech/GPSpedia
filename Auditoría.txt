@@ -160,3 +160,54 @@ Una revisión adicional del flujo completo detectó que `touchProtectedAuthReque
 - SharedMutationCoordinator: 41/41 PASS; TermsModalAccessibility: 12/12 PASS; parsing/sintaxis de ocho archivos modificados PASS; espejo AUTH sincronizado.
 
 No se ejecutó GitHub Actions completo ni deployment/navegador Beta. La rama base permanece intacta.
+
+
+## AUD-2026-11-14-05 — Renderizado incompleto después de aceptar el aviso
+
+**Severidad:** Media — experiencia de inicio y controles de navegación.  
+**Estado:** CORREGIDO EN RAMA DE TRABAJO; validación visual Beta pendiente.
+
+### Evidencia y causa
+- En `JS/Frontend/ui.js`, `showApp(user)` retorna cuando `renderTermsGate_(user)` indica que la aceptación sigue pendiente.
+- El handler del botón aceptaba y persistía la aceptación, ocultaba el modal y mostraba contenedores, pero no reanudaba el resto de `showApp`. El saludo y los controles de navegación por rol quedaban sin renderizar después de la primera aceptación en un perfil nuevo.
+
+### Corrección y validación
+- Tras confirmar la persistencia local, el handler vuelve a ejecutar `showApp(user)`; el gate reconoce la aceptación ya guardada y el flujo termina de renderizar saludo, menú y controles de rol antes de iniciar la carga del catálogo.
+- Prueba `TermsAcceptance`: 19/19 PASS.
+- GitHub Actions run `43629775820`: 94 suites / 1,388 pruebas / 0 fallos; sintaxis PASS.
+- Commit funcional: `75e3400794ef321f9a92b2ddc60982ee3b842515`; regresión: `be6c9d9010227c255ae43a620979c4fe1e95c4cc`.
+
+## AUD-2026-11-14-06 — FEEDBACK/recordLike no reservaba la actividad de sesión
+
+**Severidad:** Media — concurrencia y consistencia de actividad.  
+**Estado:** CORREGIDO EN RAMA DE TRABAJO; validación Beta pendiente.
+
+### Evidencia y causa
+- `Services/feedback.js`, `assertFeedbackSession()`, actualiza `ActiveSessions.LastActivityAt` al autenticar el actor.
+- La política `FEEDBACK/recordLike` de `Services/Coordinator.js` reservaba `CORTES`, `FEEDBACK` y `ACTIVITY`, pero omitía `ACTIVE_SESSIONS`. La lease no representaba todos los recursos escritos por la operación y no protegía esa actualización frente a otras operaciones coordinadas.
+
+### Corrección y validación
+- `recordLike` reserva ahora `ACTIVE_SESSIONS`, `CORTES`, `FEEDBACK` y `ACTIVITY`, usando la misma política de actividad protegida que el resto de mutaciones FEEDBACK.
+- La prueba del coordinador comprueba la reserva de los cuatro recursos y que `ADMIN/sessionActivity` espere hasta liberar la lease.
+- GitHub Actions run `43629580642`: 94 suites / 1,388 pruebas / 0 fallos; coordinador 41/41 PASS.
+- Commits: código `99dc4417a83e771a87655d18b6407fb64cfa8f56`; prueba `2bdddb0f9450f36e58c4e07059095d78108e973d`.
+
+## AUD-2026-11-14-07 — Diagnóstico de autorización del coordinador FEEDBACK
+
+**Severidad:** Alta funcional si se confirma en Beta.  
+**Estado:** CAUSA DE CONFIGURACIÓN POSIBLE IDENTIFICADA; NO CONFIRMADA EN DEPLOYMENT.
+
+- `Services/Coordinator.js`, función `authenticate_()`, devuelve exactamente «Servicio no autorizado para el coordinador compartido» cuando el servicio no está permitido o el secreto esperado no existe/no coincide.
+- Las acciones de Inbox admiten los roles técnicos en `Services/feedback.js` y `Services/InboxConversations.js`; el texto del coordinador corresponde a autenticación entre servicios, no al rechazo RBAC del usuario.
+- Acción de diagnóstico: comprobar en el proyecto FEEDBACK Beta `GPSpedia_COORDINATOR_URL` y `GPSpedia_COORDINATOR_SECRET`, y cotejar el segundo con `GPSpedia_COORDINATOR_SECRET_FEEDBACK` del coordinador del mismo entorno. Confirmar que FEEDBACK incluye `SharedMutationClient.js` vigente.
+- No se dispone de acceso a ScriptProperties ni al deployment Apps Script en esta sesión. No se afirma que la configuración externa esté corregida.
+
+## AUD-2026-11-14-08 — Síntoma de aceptación de términos no reproducido en pruebas locales
+
+**Severidad:** Alta funcional — impide iniciar la aplicación si persiste en el deployment.  
+**Estado:** CÓDIGO LOCAL CON POLÍTICA CORRECTA; VALIDACIÓN EXTERNA PENDIENTE.
+
+- La rama contiene `AUTH/acceptTerms` con lectura y escritura cooperativa de `ACTIVE_SESSIONS`, escritura exclusiva de `USERS`, preflight de sesión de solo lectura y validación adicional antes de persistir la aceptación.
+- Las pruebas aisladas confirman que la aceptación puede coexistir con `ADMIN/sessionActivity`; `TermsAcceptance` 19/19 PASS y CI run `43629775820` 94 suites / 1,388 pruebas / 0 fallos.
+- El mensaje reportado de recurso ocupado no se reprodujo localmente. La discrepancia apunta a revisar versiones desplegadas de Coordinator/AUTH y configuración del coordinador; no es evidencia suficiente para afirmar una causa externa concreta.
+- No se modificaron deployments, ScriptProperties ni datos productivos. La prueba de aceptación concurrente queda pendiente en Beta.
