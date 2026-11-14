@@ -41,7 +41,7 @@ function createHarness(options = {}) {
             return value === undefined ? null : value;
         },
         async getCatalogSyncState() { return { snapshot: await this.getCatalog(), cursor: options.cacheCursor === undefined ? null : options.cacheCursor }; },
-        async saveCatalog(value) { saveCalls++; return value; },
+        async saveCatalog(value) { saveCalls++; savedCursor = null; return value; },
         async saveCatalogWithCursor(value, cursor) { saveCalls++; savedCursor = cursor; return { saved: true, cursor }; },
         async saveCatalogCursor(cursor) { cursorWrites++; savedCursor = cursor; return { saved: true, cursor }; },
         applyCatalogChangesToSnapshot(previous, changes) {
@@ -269,6 +269,17 @@ await test('el feed rechaza huecos de revisión y solicita reconciliación compl
     const result = await h.fetchDelta(5, { ID: 'USER-1', SessionToken: 'session-token' }, null);
     assert.equal(result.resetRequired, true);
     assert.equal(result.cursor, 7);
+});
+await test('si el feed falla y se usa snapshot completo, el cursor anterior se invalida', async () => {
+    const h = createHarness({
+        cacheReads: [snapshot()], cacheCursor: 5,
+        getCatalogChanges: async () => { throw new Error('feed offline'); },
+        networkData: snapshot([{ id: 'C-9', marca: 'Nissan', categoria: 'pickup' }])
+    });
+    const result = await h.load(true);
+    assert.equal(result, true);
+    assert.equal(h.fetchCalls, 1);
+    assert.equal(h.savedCursor, null);
 });
 
 
