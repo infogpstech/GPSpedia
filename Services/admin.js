@@ -3161,7 +3161,7 @@ function auditIdentifierColumn_(sheet, spec) {
         sheet: spec.sheet, exists: true, formatKnown: spec.formatKnown !== false,
         expectedFormat: spec.expectedFormat || "Identificador único no vacío",
         recordsWithId: 0, missingIdCount: 0, malformedIdCount: 0,
-        duplicateIdCount: 0, formulaCount: 0, unresolvedFormulaCount: 0,
+        duplicateIdCount: 0, formulaCount: 0, unresolvedFormulaCount: 0, sampleIds: [],
         missingIdRows: [], malformedIds: [], duplicateIds: [], formulaRows: []
     };
     if (lastRow < 2) return result;
@@ -3189,6 +3189,7 @@ function auditIdentifierColumn_(sheet, spec) {
             return;
         }
         result.recordsWithId++;
+        if (spec.includeSamples && result.sampleIds.length < 20) result.sampleIds.push({ row: rowNumber, id });
         let key = id.toLowerCase(), valid = true;
         if (spec.kind === "user") valid = /^USR-\d{4,}$/i.test(id);
         else if (spec.kind === "vehicle" || spec.kind === "logo") {
@@ -3227,7 +3228,7 @@ function handleAuditIdentifiers() {
         { sheet: "Users", column: 1, kind: "user", expectedFormat: "USR-0001 o superior" },
         { sheet: "Cortes", column: 1, kind: "vehicle", expectedFormat: "Entero positivo" },
         { sheet: "Tutorial", column: 1, kind: "tutorial", expectedFormat: "tut-<operationId>; los IDs vacíos históricos se reportan aparte" },
-        { sheet: "Relay", column: 1, kind: "relay", formatKnown: false, expectedFormat: "Formato pendiente de confirmar con el esquema/datos actuales" },
+        { sheet: "Relay", column: 1, kind: "relay", formatKnown: false, includeSamples: true, expectedFormat: "Formato pendiente de confirmar con el esquema/datos actuales" },
         { sheet: "pys", column: 1, kind: "problem", expectedFormat: "isue-<sufijo numérico positivo>" },
         { sheet: "LogosMarca", column: 1, kind: "logo", expectedFormat: "Entero positivo; se inspeccionan fórmulas históricas" }
     ];
