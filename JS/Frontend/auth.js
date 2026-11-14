@@ -158,6 +158,9 @@ async function handleCatalogSyncMessage_(message) {
     const userId = String(user && (user.ID || user.id) || "").trim();
     if (!userId || !isCurrentSession(user) || String(message.userId || "") !== userId) return;
     try {
+        if (message.refreshPys === true) {
+            loadPysData({ refresh: true }).catch(error => console.warn("No se pudo refrescar PyS desde otra pestaña:", error));
+        }
         const localState = await offline.getCatalogSyncState();
         if (!localState || !offline.isCompleteCatalogSnapshot(localState.snapshot)) return;
         const incoming = normalizeCatalogData(localState.snapshot);
@@ -189,10 +192,10 @@ function ensureCatalogSyncChannel_() {
         });
     }
 }
-function broadcastCatalogSync_(user) {
+function broadcastCatalogSync_(user, refreshPys = false) {
     const userId = String(user && (user.ID || user.id) || "").trim();
     if (!userId) return;
-    const message = { type: "catalog-updated", source: catalogTabId_, userId, timestamp: Date.now() };
+    const message = { type: "catalog-updated", source: catalogTabId_, userId, refreshPys: refreshPys === true, timestamp: Date.now() };
     ensureCatalogSyncChannel_();
     try {
         if (catalogSyncChannel_) catalogSyncChannel_.postMessage(message);
@@ -535,7 +538,7 @@ export async function loadInitialData(forceRefresh = false, options = {}) {
         }
         if (!isCurrentLoad()) return;
         markCatalogSync_();
-        broadcastCatalogSync_(currentUser);
+        broadcastCatalogSync_(currentUser, requiresFullSnapshot);
         catalogLoaded = true;
         if (!silent) setState({ catalogLoadStatus: 'ready', catalogLoadError: null });
 
