@@ -97,6 +97,12 @@ test("recordLike publica el snapshot de Cortes después de confirmar la escritur
     assert.match(feedbackSource,/mapRowToObject\(row, COLS_CORTES\)/);
     assert.match(feedbackSource,/catch \(catalogPublishError\)[\s\S]*?El like se guardó, pero no se pudo publicar/);
 });
+test("altas y ediciones de Tutoriales publican upsert exacto tras verificar fila e ID", () => {
+    assert.match(feedbackSource,/function buildTutorialCatalogChange_\(reference\)[\s\S]*?findTutorialRow_\(sheet, reference, true\)[\s\S]*?collection: "tutoriales"[\s\S]*?operation: "upsert"/);
+    assert.match(feedbackSource,/if \(action === "addTutorial" \|\| action === "updateTutorialItem"\)[\s\S]*?buildTutorialCatalogChange_\(tutorialId\)[\s\S]*?publishSharedCatalogChange_\("FEEDBACK", action, change\)/);
+    assert.match(feedbackSource,/if \(!\^tut-/);
+    assert.match(feedbackSource,/publishSharedCatalogChange_\("FEEDBACK", action, \{ operation: "reset" \}\)/);
+});
 test("WRITE y FEEDBACK publican reset solo después de mutaciones confirmadas", () => {
     assert.match(writeSource,/response && response\.status === "success"[\s\S]*?catalogWriters\.includes\(String\(request\.action \|\| ""\)\)[\s\S]*?publishSharedCatalogChange_\("WRITE"/);
     assert.match(writeSource,/\["addOrUpdateCut", "addSupplementaryInfo", "addVinToVehicle", "freezeCortesIds"\]/);
@@ -106,4 +112,4 @@ test("WRITE y FEEDBACK publican reset solo después de mutaciones confirmadas", 
     assert.match(adminSource,/catalogWriters\.includes\(catalogAction\)[\s\S]*?publishSharedCatalogChange_\("ADMIN", catalogAction, \{ operation: "reset" \}\)/);
     assert.match(adminSource,/finalizeAdminAuditEvent_\(auditEvent[\s\S]*?publishSharedCatalogChange_/);
 });
-console.log("CatalogChangeFeed: " + passed + "/14 PASS");
+console.log("CatalogChangeFeed: " + passed + "/15 PASS");
