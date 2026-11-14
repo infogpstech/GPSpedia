@@ -37,7 +37,7 @@ function createHarness(options={}) {
  const handlePreviewCortesImageReconciliation_=payload=>{previewCalls++;assert.deepEqual(payload.files,[{fileId}]);return {writePerformed:false,manifestDigest:options.previewDigest||digest,results:[{status:"matched",fileId,fileName:"same.png",target:{row:2,column:9,vehicleId:"V-001",field:"imagenVehiculo",currentValue:"",hasFormula:false},proposedUrl:url}]};};
  const recordImageAdministrationActivity=(context,action,id,details)=>{activityCalls.push({action,id,details});if(options.activityFailure&&action==="cortes_image_reconciliation_applied"){if(options.externalChange)values[1][8]="https://manual.example/changed";return false;}return true;};
  const factory=new Function("LockService","handlePreviewCortesImageReconciliation_","getSpreadsheet","SHEET_NAMES","COLS_CORTES","SpreadsheetApp","recordImageAdministrationActivity","loadDriveAuditServerState_","getLatestDriveAuditIdForUser_","loadDriveAuditSeenIds_","loadDriveAuditFileMetadata_","ADMIN_SERVICE_VERSION",
-  validatorSource+"\n"+countSource+"\n"+duplicateSource+"\n"+handlerSource+"\\nreturn handleApplyCortesImageReconciliation_;");
+  validatorSource+"\n"+countSource+"\n"+duplicateSource+"\n"+handlerSource+"\nreturn handleApplyCortesImageReconciliation_;");
  const handler=factory(LockService,handlePreviewCortesImageReconciliation_,getSpreadsheet,SHEET_NAMES,COLS_CORTES,SpreadsheetApp,recordImageAdministrationActivity,loadDriveAuditServerState_,getLatestDriveAuditIdForUser_,loadDriveAuditSeenIds_,loadDriveAuditFileMetadata_,"2.6.2");
  const payload={confirmed:true,auditId,manifestDigest:digest,approved:[approval]};
  return {handler,payload,values,activityCalls,get released(){return released;},get previewCalls(){return previewCalls;}};
