@@ -4,5 +4,5 @@
 - Las funciones de apertura ya no disparan una consulta AUTH adicional para mostrar paneles. El control visual comprueba el rol local vigente y se eliminaron los await asociados.
 - Se mantiene la validación de sesión al iniciar/restaurar la aplicación y la autorización de token, identidad, vigencia, estado de cuenta y rol dentro de cada operación protegida del backend.
 - JS/Tests/SessionUiRoleInvalidation.js y DevToolsModalAccessibility.mjs: regresiones para asegurar que abrir paneles no invoque validateActiveSession ni routeAction.
-- CI y validación de navegador/Beta pendientes de ejecutar tras publicar este cambio.
+- CI HEAD `2a423e67ff87e32e3c86ab71899b83cf1fe2e7b3`: run `43626278768` SUCCESS; 93 suites / 1,366 pruebas / 0 fallos; `SessionUiRoleInvalidation` 11/11, `SessionStartupNavigation` 13/13, `OverlayMenuModalHistory` 19/19, `DevToolsModalAccessibility` 19/19; sintaxis PASS. Pages run `43626278368` SUCCESS. Validación de navegador/Beta pendiente.
 ================================================================================

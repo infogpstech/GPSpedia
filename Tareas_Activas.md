@@ -358,5 +358,6 @@ Si cualquier comprobación falla, no continuar ni descartar cambios locales. Con
 - [x] Actualizar el contrato de InboxConversations.mjs por el nuevo campo sharedWriteResources.
 - Evidencia CI del HEAD ca6bf55564308d13b68d5554f6b62d098a963855: run 43624818215 SUCCESS, 93 suites / 1,366 pruebas / 0 fallos; sintaxis PASS. Pages run 43624817783 build/deployment SUCCESS.
 - [x] AUD-2026-11-14-03 — corrección local: retirar revalidación AUTH redundante al abrir paneles; usar el rol ya autenticado en el contexto de sesión. Regresión añadida para impedir validateActiveSession/routeAction desde el helper de apertura.
+- Evidencia CI HEAD `2a423e67ff87e32e3c86ab71899b83cf1fe2e7b3`: run `43626278768` SUCCESS, 93 suites / 1,366 pruebas / 0 fallos; sintaxis PASS. Pages run `43626278368` SUCCESS.
 - [ ] Validación Beta: comprobar apertura de paneles Developer desde sesión recién iniciada y restaurada, sin petición AUTH adicional; verificar que acciones protegidas siguen autorizándose en backend.
 - [ ] Validar escáner e inicialización de historial en deployment ADMIN Beta conectado a copia aislada de Spreadsheet/Drive; no ejecutar sobre datos productivos.

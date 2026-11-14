@@ -113,4 +113,4 @@ Evidencia: commits 0bfb340583062891f3438dc12b8ab814520b7629 y ca6bf55564308d13b6
 
 **Límite de seguridad preservado:** la validación de sesión al iniciar/restaurar la aplicación se mantiene. Las operaciones protegidas siguen verificando token, identidad, vigencia, estado de cuenta y rol en el backend dentro de la propia petición de negocio. No se ha eliminado autorización del servidor ni se ha convertido el rol local en permiso suficiente para modificar datos.
 
-**Validación:** se añadieron regresiones que exigen ausencia de `validateActiveSession` y `routeAction` en el helper de apertura. La ejecución completa de CI y la comprobación visual en navegador/Beta quedan pendientes de esta publicación.
+**Validación:** GitHub Actions run `43626278768` SUCCESS — 93 suites, 1,366 pruebas aprobadas, 0 fallos; `SessionUiRoleInvalidation` 11/11, `SessionStartupNavigation` 13/13, `OverlayMenuModalHistory` 19/19 y `DevToolsModalAccessibility` 19/19; `node --check` PASS. Pages run `43626278368` SUCCESS. La comprobación visual en navegador/Beta sigue pendiente.

@@ -1062,12 +1062,13 @@ La rama base `GPSpedia2.2.5` permanece fuera del alcance.
 
 ## Corrección de apertura de paneles Developer — 2026-11-14
 
-**Estado: IMPLEMENTADA EN RAMA DE TRABAJO; CI Y BETA PENDIENTES**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA**
 
 - Causa identificada en `JS/Frontend/ui.js`: `ensureUiSessionRole_` lanzaba `validateActiveSession(false)` en segundo plano cada vez que se abría una vista privilegiada. Aunque no esperaba la respuesta para mostrar el panel, generaba una petición AUTH redundante.
 - Corrección: el helper consulta ahora el contexto local de sesión y el rol ya establecidos al iniciar sesión; no solicita otra validación ni ejecuta una petición de red para abrir paneles. Se eliminaron los `await` asociados.
 - Se conserva la validación de sesión al iniciar/restaurar la aplicación y la autorización backend integrada en cada operación protegida (token, identidad, vigencia, estado y rol). No se debilitan permisos de escritura ni se confía en el cliente para autorizar acciones.
 - Pruebas actualizadas: `SessionUiRoleInvalidation.js` y `DevToolsModalAccessibility.mjs` verifican que el helper no invoque `validateActiveSession` ni `routeAction`.
-- Pendiente: ejecutar CI sobre el nuevo HEAD y validar en navegador/Beta que la apertura no produce una llamada AUTH adicional y que una sesión revocada/rol retirado no puede ejecutar operaciones protegidas.
+- Evidencia CI: HEAD `2a423e67ff87e32e3c86ab71899b83cf1fe2e7b3`; run `43626278768` SUCCESS, 93 suites / 1,366 pruebas / 0 fallos; `SessionUiRoleInvalidation` 11/11, `SessionStartupNavigation` 13/13, `OverlayMenuModalHistory` 19/19, `DevToolsModalAccessibility` 19/19 y `node --check` PASS. Pages run `43626278368` SUCCESS.
+- Pendiente de Beta: validar en navegador que abrir paneles no produce una llamada AUTH adicional y que una sesión revocada/rol retirado no puede ejecutar operaciones protegidas.
 - Rama base `GPSpedia2.2.5` sin modificaciones.
 
