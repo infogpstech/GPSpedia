@@ -1414,7 +1414,7 @@ function buildLogoCatalogChange_(logoId, logoUrl, brandName) {
     if (String(row[1] || "").trim() !== normalizedBrand || String(row[2] || "").trim() !== normalizedUrl) {
         throw new Error("La fila de Logo no coincide con la respuesta confirmada.");
     }
-    const imageMatch = normalizedUrl.match(/(?:[?&]id=|file\\/d\\/)([A-Za-z0-9_-]{20,})/i);
+    const imageMatch = normalizedUrl.match(/(?:[?&]id=|file\/d\/)([A-Za-z0-9_-]{20,})/i);
     if (!imageMatch) throw new Error("La URL del Logo no contiene un ID de imagen normalizable.");
     return {
         collection: "logos",
