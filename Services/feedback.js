@@ -518,13 +518,27 @@ function doPostInternal_(e) {
             ["suggestYear", "addProblem", "addSolution", "addPrevention", "addVehicleToProblem",
              "removeVehicleFromProblem", "updatePysItem", "updateTutorialItem", "addTutorial",
              "approveVideo", "rejectVideo"].includes(action)) {
-            // Estas acciones pueden modificar varias filas/entidades; reset seguro hasta disponer
-            // de snapshots exactos por operación. Un fallo del feed no revierte la escritura.
+            // Tutoriales puede publicar un snapshot exacto tras verificar su ID único y fila final.
+            // Las mutaciones PyS/multi-entidad conservan reset hasta disponer de snapshots propios.
             try {
-                publishSharedCatalogChange_("FEEDBACK", action, { operation: "reset" });
+                if (action === "addTutorial" || action === "updateTutorialItem") {
+                    const tutorialId = action === "addTutorial"
+                        ? response.referenceId
+                        : response.updated && response.updated.tutorialId;
+                    if (!tutorialId) throw new Error("La operación no devolvió un ID de tutorial verificable.");
+                    const change = buildTutorialCatalogChange_(tutorialId);
+                    publishSharedCatalogChange_("FEEDBACK", action, change);
+                } else {
+                    publishSharedCatalogChange_("FEEDBACK", action, { operation: "reset" });
+                }
             } catch (catalogPublishError) {
-                console.error("La operación FEEDBACK se confirmó, pero no se pudo publicar el reset del catálogo:",
-                    catalogPublishError && catalogPublishError.message ? catalogPublishError.message : "CatalogFeedError");
+                // Si no puede obtenerse/publicarse un snapshot exacto, el reset conserva la coherencia.
+                try {
+                    publishSharedCatalogChange_("FEEDBACK", action, { operation: "reset" });
+                } catch (resetPublishError) {
+                    console.error("La operación FEEDBACK se confirmó, pero no se pudo publicar su cambio:",
+                        resetPublishError && resetPublishError.message ? resetPublishError.message : "CatalogFeedError");
+                }
             }
         }
     } catch (error) {
@@ -2493,6 +2507,39 @@ function normalizeTutorialField_(value, label, maxLength, required) {
     if (required && !text) throw new Error(label + " es obligatorio.");
     if (text.length > maxLength) throw new Error(label + " no puede exceder " + maxLength + " caracteres.");
     return text;
+}
+
+function normalizeTutorialCatalogImageId_(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return null;
+    const match = raw.match(/file\\/d\\/([A-Za-z0-9_-]+)|id=([A-Za-z0-9_-]+)|\\/d\\/([A-Za-z0-9_-]+)/i);
+    if (match) {
+        const id = match[1] || match[2] || match[3];
+        return id && id.length > 20 ? id : null;
+    }
+    return raw.length > 20 && !raw.includes("/") && !raw.includes(":") ? raw : null;
+}
+
+function buildTutorialCatalogChange_(reference) {
+    const sheet = getTutorialSheet_(false);
+    if (!sheet) throw new Error("No se encontró la hoja Tutorial para publicar el cambio.");
+    const record = findTutorialRow_(sheet, reference, true);
+    const row = record.row;
+    const id = String(row[0] || "").trim();
+    if (!/^tut-[A-Za-z0-9_-]{20,80}$/i.test(id)) {
+        throw new Error("El tutorial no tiene un ID persistente compatible con el feed.");
+    }
+    const snapshot = {
+        ID: id,
+        Tema: row[1] === "" || row[1] === undefined ? null : row[1],
+        Imagen: normalizeTutorialCatalogImageId_(row[2]),
+        comoIdentificarlo: row[3] === "" || row[3] === undefined ? null : row[3],
+        dondeEncontrarlo: row[4] === "" || row[4] === undefined ? null : row[4],
+        Detalles: row[5] === "" || row[5] === undefined ? null : row[5],
+        Video: row[6] === "" || row[6] === undefined ? null : row[6],
+        Colaborador: row[7] === "" || row[7] === undefined ? null : row[7]
+    };
+    return { collection: "tutoriales", recordId: id, operation: "upsert", snapshot: snapshot };
 }
 
 function findTutorialRow_(sheet, reference, preferId) {
