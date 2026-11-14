@@ -114,3 +114,35 @@ Evidencia: commits 0bfb340583062891f3438dc12b8ab814520b7629 y ca6bf55564308d13b6
 **Límite de seguridad preservado:** la validación de sesión al iniciar/restaurar la aplicación se mantiene. Las operaciones protegidas siguen verificando token, identidad, vigencia, estado de cuenta y rol en el backend dentro de la propia petición de negocio. No se ha eliminado autorización del servidor ni se ha convertido el rol local en permiso suficiente para modificar datos.
 
 **Validación:** GitHub Actions run `43626278768` SUCCESS — 93 suites, 1,366 pruebas aprobadas, 0 fallos; `SessionUiRoleInvalidation` 11/11, `SessionStartupNavigation` 13/13, `OverlayMenuModalHistory` 19/19 y `DevToolsModalAccessibility` 19/19; `node --check` PASS. Pages run `43626278368` SUCCESS. La comprobación visual en navegador/Beta sigue pendiente.
+
+
+## AUD-2026-11-14-04 — Aviso obligatorio bloqueado por ADMIN/sessionActivity
+
+**Severidad:** Alta funcional — el usuario no puede completar el inicio de la aplicación.  
+**Estado:** CORREGIDO EN CÓDIGO; validación de deployment y navegador pendiente.
+
+### Evidencia y causa confirmada
+- `Services/admin.js` envuelve las consultas ADMIN no mutables en `ADMIN/sessionActivity`, cuya lease declara `ACTIVE_SESSIONS` como escritura cooperativa.
+- `AUTH/acceptTerms` tenía una política de escritura exclusiva sobre `ACTIVE_SESSIONS`. Además, `touchProtectedAuthRequestSession_` actualiza `LastActivityAt` antes de ejecutar el handler.
+- La combinación provocaba que la aceptación de términos chocara con una operación `ADMIN/sessionActivity` activa y devolviera el mensaje de recurso ocupado.
+- `renderTermsGate_` consultaba la aceptación ligada al token de sesión. Cada login nuevo generaba un token y volvía a mostrar el aviso, aunque el usuario ya lo hubiera aceptado en ese mismo navegador/dispositivo.
+
+### Corrección aplicada
+- La aceptación se guarda en `Users.TermsAcceptance` como registro por usuario y dispositivo. Se preserva la aceptación histórica anterior como `legacyAcceptance`, sin aplicarla automáticamente a dispositivos nuevos.
+- `termsDeviceAcceptance.js` genera y conserva un identificador aleatorio de 128 bits en `localStorage`. La aceptación local queda asociada a usuario, dispositivo y versión del aviso; cerrar sesión no elimina ese registro.
+- `handleAcceptTerms` conserva la validación de token, identidad, vigencia, cuenta y revocación de rol. El handler persiste la aceptación en Users y no modifica la columna de aceptación de ActiveSessions.
+- `AUTH/acceptTerms` ahora coordina la actividad de sesión de forma cooperativa sobre `ACTIVE_SESSIONS` y mantiene la escritura exclusiva sobre `USERS`. Puede coexistir con `ADMIN/sessionActivity`, pero las mutaciones exclusivas de identidad/sesión siguen bloqueándose.
+- El Service Worker pasa a caché v26 e incluye el nuevo módulo entre los recursos esenciales.
+
+### Validación local ejecutada
+- `SharedMutationCoordinator`: 41/41 PASS, incluyendo coexistencia AUTH/ADMIN y bloqueo de login concurrente.
+- `TermsModalAccessibility`: 12/12 PASS, incluyendo persistencia tras logout, separación entre usuarios/dispositivos y cambio de versión.
+- Simulación aislada de `handleAcceptTerms`: primera aceptación confirmada; repetición en el mismo dispositivo devuelve `alreadyAccepted:true`; un segundo dispositivo registra una aceptación independiente; el registro histórico se conserva; el handler no escribe en ActiveSessions.
+- Parsing/sintaxis de los ocho archivos de código y pruebas modificados: PASS. El espejo `JS/Tests/Auth.js` coincide con los bloques funcionales de `Services/Auth.js`.
+
+### Validación pendiente
+- No se ejecutó GitHub Actions completo ni se desplegaron `Services/Auth.js` o `Services/Coordinator.js` en Apps Script.
+- Pendiente probar en Beta: aceptar aviso, cerrar sesión y volver a entrar en el mismo navegador; abrir desde un navegador/perfil nuevo; reabrir la plataforma; probar con ADMIN/sessionActivity concurrente y con sesión revocada.
+- El identificador es persistente por origen y perfil de navegador, no una huella física del hardware. Borrar los datos del sitio o usar otro navegador/perfil se considera un dispositivo nuevo.
+
+La rama base `GPSpedia2.2.5` no fue modificada. No se cambiaron deployments ni datos productivos.
