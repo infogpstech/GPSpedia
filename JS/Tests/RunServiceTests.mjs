@@ -145,6 +145,7 @@ runGroup('36','AUTH',()=>{
 });
 runGroup('37','USERS',()=>{
  const users=read('Services/users.js'),testUsers=read('JS/Tests/users.js');
+ runCli('P2 generador backend de IDs de usuario','JS/Tests/UserIdGenerator.mjs');
  recordResult('USERS mutaciones/RBAC/rollback/coordinación',loadFunction('JS/Tests/UsersAtomicMutations.js','runUsersAtomicMutationTests')(users,read('Services/Auth.js'),read('Services/Coordinator.js')));
  if(normalizedCopy(users)!==normalizedCopy(testUsers)) throw new Error('La copia USERS difiere fuera del ID aislado.');
  recordResult('USERS fixture/paridad',{passed:1,failed:0,total:1});
