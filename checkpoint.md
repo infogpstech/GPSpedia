@@ -598,3 +598,13 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - GitHub Actions `service-tests` sobre HEAD `26f0b2450249f18f5c82f4ea087130ca0ae9b856`: **PASS**, 84 suites, 1,256 pruebas aprobadas, 0 fallos.
 - No se ejecutó contra Spreadsheet real; el reporte real queda para Beta después de sincronizar la rama. La auditoría cubre referencias de vídeo de Tutorial, no constituye todavía un inventario completo de referencias de Users/Cortes/PyS/LogosMarca.
 - Siguiente subfase P2: ampliar el inventario de referencias consumidoras de las demás entidades antes de proponer cualquier ID sustituto. No iniciar escrituras hasta disponer de reporte Beta, snapshot y manifiesto aprobados.
+
+## P2 — LogosMarca: compensación de fallos y recuperación de altas (2026-11-14)
+
+- Se corrigió `handleAddLogo` para retirar a papelera el archivo subido si no se pudo adquirir el bloqueo o no llegó a vincularse a una fila.
+- Si falla una escritura parcial, se limpia la fila recién preparada y se verifica que quede vacía antes de considerar completada la compensación.
+- Si la respuesta de `SpreadsheetApp.flush()` falla pero la fila única quedó persistida con ID, marca y URL correctos, el handler recupera la operación y devuelve éxito sin crear un duplicado al reintentar.
+- Si no puede comprobar el vínculo o encuentra una asociación ambigua, conserva el archivo y marca su descripción como `RECOVERY_REQUIRED`; no elimina un archivo que podría estar referenciado.
+- `LogoIdIntegrity.mjs` cubre bloqueo fallido, escritura URL fallida, fila parcial, flush incierto y recuperación de estado.
+- GitHub Actions `service-tests` sobre HEAD `6405f282c29416143e8d9eec41d4ccb75c0a6942`: **PASS**, 84 suites, 1,260 pruebas aprobadas, 0 fallos. `LogoIdIntegrity: 10/10 PASS`.
+- No se modificaron hojas/Drive productivos ni se desplegó ADMIN.
