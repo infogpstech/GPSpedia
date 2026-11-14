@@ -116,26 +116,6 @@ function createRouteActionError_(message, options = {}) {
     return error;
 }
 
-const sessionTouchState=new Map();
-const SESSION_TOUCH_INTERVAL_MS=5*60*1000;
-async function ensureSessionTouched_(token){
- const now=Date.now();let state=sessionTouchState.get(token);
- if(state&&state.pending)return state.pending;
- if(state&&state.lastSuccess&&now-state.lastSuccess<SESSION_TOUCH_INTERVAL_MS)return;
- if(!state)state={lastSuccess:0,pending:null};
- const pending=routeAction('touchSession',{sessionToken:token}).then(result=>{
-  if(result&&result.valid===false&&!result.error&&!result.unavailable&&!['missing_sheet','role_revocation_pending'].includes(String(result.reason||''))){
-   throw createRouteActionError_("La sesión no es válida o ha expirado.",{kind:"application",code:"SESSION_INVALID",httpStatus:null});
-  }
-  if(!result||result.valid!==true){
-   throw createRouteActionError_("AUTH no pudo confirmar la sesión temporalmente. La operación no se ejecutó.",{kind:"network",code:"SESSION_VALIDATION_UNAVAILABLE",httpStatus:null});
-  }
-  state.lastSuccess=Date.now();
-  try{const raw=localStorage.getItem('gpsepedia_session');if(raw){const user=JSON.parse(raw);if(user&&user.SessionToken===token){user.SessionLastActivityAt=result.lastActivityAt||new Date().toISOString();localStorage.setItem('gpsepedia_session',JSON.stringify(user));}}}catch(e){console.warn('No se pudo actualizar la actividad local:',e.message);}
- }).finally(()=>{state.pending=null;sessionTouchState.set(token,state);});
- state.pending=pending;sessionTouchState.set(token,state);return pending;
-}
-
 // 2. LÓGICA DE RUTEO CENTRAL
 export async function routeAction(action, payload = {}, serviceOverride = null, requestOptions = {}) {
     const service = serviceOverride || ACTION_TO_SERVICE_MAP[action];
@@ -145,19 +125,6 @@ export async function routeAction(action, payload = {}, serviceOverride = null, 
     const requestStartedAt = Date.now();
     let outcome = "network_error", httpStatus = null;
     try {
-        const token=payload&&typeof payload==='object'&&typeof payload.sessionToken==='string'?payload.sessionToken:'';
-        if(token&&!['login','validateSession','touchSession','acceptTerms','logout'].includes(action)) {
-            try {
-                await ensureSessionTouched_(token);
-            } catch (sessionError) {
-                const sessionKind = String(sessionError && sessionError.kind || "");
-                outcome = sessionKind === "http" ? "http_error" :
-                    sessionKind === "application" ? "api_error" :
-                    sessionKind === "invalid_response" ? "invalid_response" : "network_error";
-                httpStatus = sessionError && sessionError.httpStatus !== undefined ? sessionError.httpStatus : null;
-                throw sessionError;
-            }
-        }
         let response;
         try {
             response = await fetch(targetUrl, {
