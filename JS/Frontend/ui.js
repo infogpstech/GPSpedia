@@ -10034,7 +10034,6 @@ function attachContextualHelp_(root, fieldId, message) {
     const field = root.querySelector("#" + fieldId);
     if (!label || !field || label.parentElement.classList.contains("gp-help-label-row")) return;
     const labelParent = label.parentNode;
-    const fieldInsideLabel = label.contains(field);
     const row = document.createElement("div");
     row.className = "gp-help-label-row";
     const button = document.createElement("button");
@@ -10053,8 +10052,7 @@ function attachContextualHelp_(root, fieldId, message) {
     panel.textContent = message;
     labelParent.insertBefore(row, label);
     row.append(label, button);
-    if (fieldInsideLabel) labelParent.insertBefore(panel, row.nextSibling);
-    else labelParent.insertBefore(panel, field);
+    labelParent.insertBefore(panel, row.nextSibling);
     ensureContextualHelpGlobalListeners_();
 }
 

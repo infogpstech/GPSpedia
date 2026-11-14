@@ -42,7 +42,7 @@ testCase("el modal de detalles de vehículos permanece sin ayudas contextuales",
  assert.ok(start>=0&&end>start);
  assert.equal(ui.slice(start,end).includes("attachContextualHelp_"),false);
 });
-console.log("ContextualHelpForms: "+passed+"/"+passed+" PASS");
+
 testCase("Los formularios dinámicos de sugerencias PYS incluyen ayudas asociadas y accesibles",()=>{
  const ui=fs.readFileSync(resolve(root,"JS/Frontend/ui.js"),"utf8");
  assert.match(ui,/function attachContextualHelp_\(root, fieldId, message\)/);
@@ -66,3 +66,18 @@ testCase("respaldo y base de datos permanecen en la misma pestaña y sus control
  assert.match(css,/grid-template-columns: repeat\(auto-fit, minmax\(170px, 1fr\)\)/);
  assert.match(css,/@media \(max-width: 520px\)/);
 });
+
+testCase("la burbuja queda fuera de etiquetas checkbox y se coloca después del control de ayuda",()=>{
+ const ui=fs.readFileSync(resolve(root,"JS/Frontend/ui.js"),"utf8");
+ assert.ok(ui.includes("labelParent.insertBefore(panel, row.nextSibling)"));
+ assert.ok(ui.includes("const label = root.querySelector('label[for=\"' + fieldId + '\"]')"));
+ assert.ok(ui.includes("const field = root.querySelector(\"#\" + fieldId)"));
+});
+testCase("el formulario PYS registra cada ayuda una sola vez",()=>{
+ const ui=fs.readFileSync(resolve(root,"JS/Frontend/ui.js"),"utf8");
+ const start=ui.indexOf("export function openAddProblemModal");
+ const end=ui.indexOf("export function openSearchVehicleForPysAssociationModal",start);
+ const body=ui.slice(start,end);
+ assert.equal((body.match(/attachContextualHelp_\(content, \"pys-/g)||[]).length,8);
+});
+console.log("ContextualHelpForms: "+passed+"/"+passed+" PASS");
