@@ -472,11 +472,21 @@ function runSharedMutationCoordinatorTests() {
         release_(second, "FEEDBACK", "removeVehicleFromProblem", relationLease.token);
     });
 
-    test_("FEEDBACK recordLike reserves CORTES, FEEDBACK ledger and ACTIVITY", function() {
+    test_("FEEDBACK recordLike reserves session activity, CORTES, FEEDBACK ledger and ACTIVITY", function() {
         const policy = coordinatorPolicy_("FEEDBACK", "recordLike");
-        assert_(policy.writeResources.includes("CORTES"), "recordLike debe reservar Cortes.");
-        assert_(policy.writeResources.includes("FEEDBACK"), "recordLike debe reservar FeedbackLikes.");
-        assert_(policy.writeResources.includes("ACTIVITY"), "recordLike debe reservar Activity.");
+        ["ACTIVE_SESSIONS", "CORTES", "FEEDBACK", "ACTIVITY"].forEach(function(resource) {
+            assert_(policy.writeResources.includes(resource), "recordLike debe reservar " + resource + ".");
+        });
+        const r = createRuntime_();
+        const like = acquire_(r, "FEEDBACK", "recordLike");
+        assert_(like.status === "success", "recordLike debe obtener su lease.");
+        const adminActivity = acquire_(r, "ADMIN", "sessionActivity");
+        assert_(adminActivity.status === "error" && adminActivity.code === "busy",
+            "ADMIN/sessionActivity debe esperar mientras recordLike actualiza la sesión.");
+        release_(r, "FEEDBACK", "recordLike", like.token);
+        const retry = acquire_(r, "ADMIN", "sessionActivity");
+        assert_(retry.status === "success", "ADMIN/sessionActivity debe continuar después de liberar recordLike.");
+        release_(r, "ADMIN", "sessionActivity", retry.token);
     });
     test_("FEEDBACK suggestYear y approveVideo reservan Cortes, Feedback y Activity", function() {
         ["suggestYear", "approveVideo"].forEach(function(action) {
