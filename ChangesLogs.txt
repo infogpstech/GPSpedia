@@ -1609,3 +1609,9 @@ Rama: GPSpedia2.2.5_work
 - Un fallo en copyTo ahora activa la limpieza de la fila destino y la compensación del archivo.
 - LogoIdIntegrity 11/11 PASS. CI PASS: 84 suites; 1,261 pruebas; 0 fallos.
 ================================================================================
+
+================================================================================
+2026-11-14 — SINCRONIZACIÓN P4/P2
+- P4 actualizado a EN PROGRESO; revisión estática de URLs completada y ACL de Drive Beta pendiente.
+- Corregidos saltos de línea literales en Tareas_Activas.md.
+================================================================================
