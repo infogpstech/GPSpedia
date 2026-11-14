@@ -292,7 +292,7 @@ export function showSavingIndicator(status, message = "") {
 function getCurrentEditOwnerContext_() {
     const context = getUiSessionContext_();
     const role = String(context && context.role || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
-    return context && ["desarrollador", "gefe"].includes(role) ? context : null;
+    return context && ["desarrollador", "jefe"].includes(role) ? context : null;
 }
 
 function getEditBackupStore_(ownerId) {
@@ -4241,7 +4241,7 @@ const INBOX_MESSAGE_PAGE_SIZE_ = 50;
 const INBOX_SYNC_INTERVAL_MS_ = 60000;
 
 function inboxCanSeeRequests_(role) {
-    return ["desarrollador", "gefe", "jefe", "supervisor"].includes(normalizeUiRole_(role));
+    return ["desarrollador", "jefe", "supervisor"].includes(normalizeUiRole_(role));
 }
 function inboxSessionPayload_() { return getUiSessionContext_() || {}; }
 function inboxNewIdempotencyKey_() {
