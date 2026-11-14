@@ -387,3 +387,16 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - Sintaxis JavaScript del workflow: PASS.
 - `SessionStartupNavigation`: 12/12 PASS.
 - P1 sigue EN PROGRESO. La fase siguiente debe trasladar la actualización de actividad a las operaciones backend protegidas, cubriendo también lecturas, con coordinación compatible con logout, revocación de rol y borrado de usuario. No retirar `touchSession` hasta cerrar esa integración y sus pruebas de concurrencia.
+
+## P1 — Fase 2 parcial: actividad integrada en FEEDBACK (2026-11-14)
+
+**Estado: IMPLEMENTADA Y VALIDADA LOCALMENTE; P1 GLOBAL EN PROGRESO.**
+
+- `Services/Coordinator.js`: la política FEEDBACK reserva `ACTIVE_SESSIONS` para las operaciones autenticadas que actualizan actividad; se añadió `sessionActivity` para las lecturas protegidas.
+- `Services/feedback.js`: `assertFeedbackSession` actualiza `LastActivityAt` solo después de validar token único, correspondencia de usuario, expiración, cuenta activa, revocación pendiente y rol permitido. Las lecturas autenticadas adquieren lease; las acciones públicas quedan fuera.
+- La lease serializa la escritura de actividad con logout, revocación y otras operaciones que leen/modifican identidad. Las pruebas de concurrencia se actualizaron para reflejar este conflicto de recursos.
+- Fixtures de FEEDBACK actualizados para modelar `getRange().setValue()`; se añadieron pruebas de renovación válida y rechazo sin renovación.
+- Validación GitHub Actions `service-tests` sobre `04b32ab9f5db6414855b43e0940107faa51de557`: **PASS**, 75 suites, 1,159 pruebas aprobadas, 0 fallos.
+- Sintaxis Node.js configurada por el workflow: PASS.
+- No se desplegó Apps Script ni se modificaron Spreadsheet/Drive productivos.
+- Pendiente: aplicar el mismo patrón, con coordinación compatible con leases anidadas y operaciones de ADMIN, a WRITE, USERS y ADMIN; después eliminar el preflight `ensureSessionTouched_` del frontend y ejecutar regresión completa.
