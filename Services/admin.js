@@ -3095,6 +3095,7 @@ function handlePreviewCortesImageReconciliation_(payload, logMessage, developerC
     plan.historicalReferenceCount = historicalDriveIds.size;
     plan.manifestDigest = digest;
     plan.batchDigest = batchDigest;
+    plan.capabilities = { applyApprovedReconciliation: true };
     plan.writePerformed = false;
     logMessage && logMessage("Conciliación Drive ↔ Cortes",
         "Dry-run: " + plan.counts.matched + " coincidencias exactas, " + plan.counts.orphaned +

@@ -7704,7 +7704,7 @@ export async function openAuditDriveModal() {
         if (!applyReconciliationButton || !reconciliationResults) return;
         const checked = reconciliationResults.querySelectorAll('input[data-reconciliation-approve="true"]:checked');
         const count = checked.length;
-        const available = currentReconciliationReport && currentReconciliationReport.status === "complete";
+        const available = currentReconciliationReport && currentReconciliationReport.status === "complete" && currentReconciliationReport.applyAvailable === true;
         applyReconciliationButton.hidden = !available || !currentReconciliationReport.results.some(item => item.status === "matched");
         applyReconciliationButton.disabled = !available || count < 1 || count > 10 || isRunning || isDriveAuditRunning || isReconciling;
         applyReconciliationButton.textContent = count
@@ -7749,7 +7749,7 @@ export async function openAuditDriveModal() {
             status.className = "audit-reconciliation-status-label";
             status.textContent = labels[item.status] || String(item.status || "Sin estado");
             row.append(title, status);
-            if (report.status === "complete" && item.status === "matched" && item.target && item.proposedUrl) {
+            if (report.status === "complete" && report.applyAvailable === true && item.status === "matched" && item.target && item.proposedUrl) {
                 const approvalLabel = document.createElement("label");
                 approvalLabel.className = "audit-reconciliation-approval";
                 const approval = document.createElement("input");
@@ -7821,7 +7821,7 @@ export async function openAuditDriveModal() {
             }
             const report = {
                 results: saved.results, invalidFiles: saved.invalidFiles, rowIssues: saved.rowIssues,
-                counts: saved.counts, manifestDigest: saved.sourceDigest, status: saved.status,
+                counts: saved.counts, manifestDigest: saved.sourceDigest, status: saved.status, applyAvailable: false,
                 referenceCheckStatus: saved.referenceCheckStatus
             };
             renderCortesReconciliationReport_(report);
@@ -7858,13 +7858,14 @@ export async function openAuditDriveModal() {
         if (reconciliationStatus) reconciliationStatus.textContent = "Preparando simulación de " + imageFiles.length + " imágenes…";
         updateControls();
         const aggregate = {
-            results: [], invalidFiles: [], rowIssues: [], counts: {
+            results: [], invalidFiles: [], rowIssues: [], applyAvailable: false, counts: {
                 matched: 0, already_linked: 0, orphaned: 0, ambiguous: 0, occupied: 0,
                 referenced_elsewhere: 0, historical: 0, access_restricted: 0, unverifiable: 0, invalid: 0
             }
         };
         let fileSignature = "";
         let sourceDigest = "", referenceCheckStatus = "", nextBatchIndex = 0, revision = 0;
+        let applyCapabilityKnown = false, resumedFromSavedState = false;
         const batchSize = 25;
         const totalBatches = Math.ceil(imageFiles.length / batchSize);
         const saveProgress = async status => {
@@ -7895,6 +7896,7 @@ export async function openAuditDriveModal() {
                 referenceCheckStatus = previous.referenceCheckStatus;
                 nextBatchIndex = previous.nextBatchIndex;
                 revision = previous.revision;
+                resumedFromSavedState = true;
                 if (reconciliationStatus) reconciliationStatus.textContent =
                     "Progreso recuperado: " + nextBatchIndex + " de " + totalBatches + " lotes guardados. Continuando sin repetir lotes confirmados…";
             } else {
@@ -7929,6 +7931,13 @@ export async function openAuditDriveModal() {
                     throw new Error("El estado de verificación de referencias cambió entre lotes.");
                 }
                 referenceCheckStatus = String(response.referenceCheckStatus || "unavailable");
+                const supportsApply = Boolean(response.capabilities && response.capabilities.applyApprovedReconciliation === true);
+                if (!applyCapabilityKnown) {
+                    aggregate.applyAvailable = supportsApply;
+                    applyCapabilityKnown = true;
+                } else if (aggregate.applyAvailable !== supportsApply) {
+                    throw new Error("La capacidad del backend ADMIN cambió entre lotes. No se habilitará la aplicación con un preview mixto.");
+                }
                 aggregate.results.push(...response.results);
                 aggregate.invalidFiles.push(...response.invalidFiles);
                 if (!batchIndex) aggregate.rowIssues = Array.isArray(response.rowIssues) ? response.rowIssues : [];
@@ -7941,6 +7950,31 @@ export async function openAuditDriveModal() {
                 if (reconciliationStatus) reconciliationStatus.textContent =
                     "Simulando lote " + nextBatchIndex + " de " + totalBatches + " · " +
                     Math.min(offset + batch.length, imageFiles.length) + " de " + imageFiles.length + " imágenes. Progreso guardado; sin escrituras.";
+            }
+
+            // En una reanudación interrumpida después del último lote, obtener un handshake fresco
+            // y confirmar que el snapshot sigue siendo el mismo antes de consolidar.
+            if (resumedFromSavedState && !applyCapabilityKnown && totalBatches > 0 && nextBatchIndex >= totalBatches && sourceDigest) {
+                const verificationBatch = imageFiles.slice(0, batchSize).map(file => ({
+                    fileId: String(file.fileId || ""), fileName: String(file.fileName || "")
+                }));
+                const verification = await routeActionWithRetry("previewCortesImageReconciliation", {
+                    ...getDeveloperSessionPayload(), files: verificationBatch
+                }, {
+                    timeoutMs: 45000, maxAttempts: 3, retryDelayMs: 500, shouldContinue: isCurrentRequest
+                });
+                if (!isCurrentRequest()) return;
+                if (!verification || verification.writePerformed !== false ||
+                    !/^[a-f0-9]{64}$/i.test(String(verification.manifestDigest || "")) ||
+                    !Array.isArray(verification.results) || !Array.isArray(verification.invalidFiles)) {
+                    throw new Error("No se pudo revalidar el manifiesto antes de consolidar el último lote guardado.");
+                }
+                if (sourceDigest !== verification.manifestDigest ||
+                    referenceCheckStatus !== String(verification.referenceCheckStatus || "unavailable")) {
+                    throw new Error("Los datos de Cortes o sus referencias cambiaron después del último lote guardado. Inicia una auditoría Drive nueva antes de consolidar.");
+                }
+                aggregate.applyAvailable = Boolean(verification.capabilities && verification.capabilities.applyApprovedReconciliation === true);
+                applyCapabilityKnown = true;
             }
 
             // Un nombre canónico duplicado puede caer en lotes distintos; nunca se elige uno automáticamente.
