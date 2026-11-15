@@ -1019,7 +1019,7 @@ El trabajo local GP-INBOX-04B/04C/04D queda cubierto en backend y contratos. No 
 
 ### Adenda P2 — cierre local de migración de IDs por fórmula (2026-11-15)
 
-<badge>COMPLETADA CON VALIDACIÓN DIFERIDA</badge>
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA**
 
 - La auditoría del modal Desarrollador inspecciona las columnas identificadoras de todas las hojas visibles y muestra fórmula y valor calculado. La migración no renumera: conserva exactamente los valores existentes y retira solo fórmulas que tengan un generador backend compatible.
 - Formatos con prefijo y relleno numérico se guardan en `__IdentifierSequenceConfig__`; el generador de Users, FEEDBACK y ADMIN los consulta para conservar el formato histórico. Las fórmulas numéricas de Cortes y LogosMarca pueden congelarse porque sus generadores backend ya asignan IDs numéricos.
