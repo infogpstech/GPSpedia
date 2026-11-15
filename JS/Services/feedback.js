@@ -94,6 +94,15 @@ function getSessionExpirationStatus_(row,now=new Date()){
  return{expired:false};
 }
 function assertFeedbackSession(payload,allowedRoles){
+ const trusted=payload&&payload.__sharedSessionActor;
+ if(trusted&&typeof trusted.userId==="string"&&typeof trusted.role==="string"&&Number.isSafeInteger(trusted.epoch)&&trusted.epoch>0){
+  const id=trusted.userId.trim(),requested=String(payload.userId||id).trim(),normalized=normalizeFeedbackRole(trusted.role);
+  const displayRoles={desarrollador:"Desarrollador",jefe:"Jefe",supervisor:"Supervisor",tecnico:"Tecnico",tecnico_exterior:"Tecnico_exterior"};
+  if(!id||requested!==id||!displayRoles[normalized])throw new Error("Acceso denegado: sesión no autorizada.");
+  if(Array.isArray(allowedRoles)&&!allowedRoles.some(x=>normalizeFeedbackRole(x)===normalized))throw new Error("Acceso denegado: sesión no autorizada.");
+  const userName=String(trusted.fullName||"").trim()||"Usuario";
+  return{userId:id,role:displayRoles[normalized],userName,epoch:trusted.epoch};
+ }
  const id=String(payload&&payload.userId||"").trim(),token=String(payload&&payload.sessionToken||"");if(!id||!token.trim())throw new Error("Acceso denegado: sesión no autorizada.");
  const ss=getSpreadsheet(),sh=ss.getSheetByName("ActiveSessions"),uh=ss.getSheetByName("Users");if(!sh||!uh)throw new Error("Acceso denegado: sesión no autorizada.");
  const tokenMatches=findUniqueRowsByExactValue_(sh,3,token,6,false);
