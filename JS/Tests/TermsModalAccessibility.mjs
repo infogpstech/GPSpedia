@@ -129,11 +129,13 @@ test('AUTH registra la aceptación por dispositivo sin escribir la columna de ac
     assert.match(handler, /payload && payload\.deviceId/);
     assert.match(handler, /COLS_USERS\.TermsAcceptance/);
     assert.doesNotMatch(handler, /sessionCell\.setValue|ensureSessionTermsAcceptanceColumn_/);
-    const preflightStart = serviceAuth.indexOf('function touchProtectedAuthRequestSession_(action, payload) {');
-    const preflightEnd = serviceAuth.indexOf('\nfunction doPostInternal_(e) {', preflightStart);
-    const preflight = serviceAuth.slice(preflightStart, preflightEnd);
-    assert.match(preflight, /action === "acceptTerms"[\s\S]*?validateSessionReadOnly_\(token, userId\)/);
-    assert.match(preflight, /const result = validateAndTouchSession_\(token\)/);
+    assert.match(handler, /findSessionRowsByTokenUnderLock_/);
+    assert.match(handler, /getSessionExpirationStatus_/);
+    assert.match(handler, /assertRequesterRoleRevocationClear_/);
+    const dispatchStart = serviceAuth.indexOf('function doPostInternal_(e) {');
+    const dispatchEnd = serviceAuth.indexOf('\\nfunction ', dispatchStart + 10);
+    const dispatcher = serviceAuth.slice(dispatchStart, dispatchEnd);
+    assert.doesNotMatch(dispatcher, /touchProtectedAuthRequestSession_|validateAndTouchSession_|validateSessionReadOnly_/);
     assert.match(coordinator, /acceptTerms: \{ read: \["ACTIVE_SESSIONS"\], write: \["USERS"\], sharedWrite: \["ACTIVE_SESSIONS"\] \}/);
     assert.match(coordinator, /operation !== "acceptTerms"/);
 });
