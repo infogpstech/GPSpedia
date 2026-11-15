@@ -38,6 +38,14 @@ function harness(initial,config=null){
 }
 let passed=0;function test(name,fn){fn();passed++;console.log("PASS "+name);}
 const formula='="U-"&TEXTO(FILA()-1,"000")';
+test("Los escritores de actividad, sugerencias y contacto asignan IDs desde backend",()=>{
+ for (const name of ["handleSuggestYearLocked","logUserActivity","handleSuggestCutChange","handleSendContactForm"]) {
+  assert.match(extract(name),/getNextFormulaBasedId_/,name+" debe asignar el ID desde backend");
+ }
+ assert.match(source,/copyRowPresentationOnly_\(sheet,\s*sourceRow,\s*targetRow/);
+ assert.match(source,/CopyPasteType\.PASTE_FORMAT/);
+ assert.match(source,/CopyPasteType\.PASTE_DATA_VALIDATION/);
+});
 test("Reconoce fórmula U-001 y conserva prefijo y relleno",()=>{
  const h=harness(sheet("Users",[["ID"],["U-001"],["U-002"]],[["ID"],[formula],[formula]]));
  assert.equal(h.api.getFormulaBasedIdPattern_(h.ss.sheets[0],1).prefix,"U-");
