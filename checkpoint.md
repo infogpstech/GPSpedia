@@ -479,3 +479,28 @@
 - `getVerifiedSession` ya encontraba la fila única del usuario para validar cuenta, revocación y rol. `handleUpdateProfile` volvía a recorrer la columna ID para encontrar esa misma fila. Ahora el verificador devuelve `userRowIndex` y el handler lo reutiliza dentro del mismo lock, comprobando que sea un entero de fila de datos. El índice no procede del navegador.
 - Se sincronizó el espejo `JS/Tests/users.js` con el servicio y se amplió `JS/Tests/UsersAtomicMutations.js` para comprobar que no exista la segunda búsqueda.
 - CI Node.js 22 run `43684916807`: SUCCESS; **100 suites / 1,525 pruebas / 0 fallos**. GitHub Pages run `43684916573`: build, reporte y deploy SUCCESS. No se modificaron datos productivos ni se desplegó Apps Script.
+
+
+## Continuidad P1 — contexto central de sesión (2026-11-15)
+
+- Repositorio: `infogpstech/GPSpedia`.
+- Rama de trabajo: `GPSpedia2.2.5_work`; rama base protegida: `GPSpedia2.2.5`.
+- HEAD verificado antes de este registro: `8de81256e886d334fd3756584c6849f115bd9674`.
+- Estado: implementación del contexto central en curso de validación. No se ha desplegado Apps Script ni se han modificado hojas/Drive productivos.
+
+### Cambios implementados en la rama
+
+1. `Coordinator.js` 1.4.0 conserva contexto por usuario/token en ScriptProperties: rol, epoch, `revokedBefore`, creación y última actividad. `syncUserSessions` reconcilia los tokens de `ActiveSessions`; `registerSession`, `validateSessionContext`, `revokeSession` y `revokeUserSessions` gestionan registro, restauración e invalidación.
+2. El epoch y `revokedBefore` impiden que una sesión anterior a una revocación global vuelva a registrarse aunque una limpieza de la hoja haya quedado incompleta. Logout revoca un token; cambios de rol, contraseña, eliminación y reset global revocan todas las sesiones.
+3. AUTH registra/sincroniza sesiones en login; la primera restauración puede migrar sesiones previas solo cuando no existe un contexto revocado. AUTH sincroniza LastActivityAt en inicio/restauración y operaciones sensibles, no como preflight de cada servicio.
+4. `SharedMutationClient` transmite credenciales al adquirir la lease y devuelve el actor verificado en esa respuesta. `withSharedSessionActor_` elimina `__sharedSessionActor` y `__feedbackActor` enviados por el navegador antes de adjuntar el actor confiable.
+5. USERS, WRITE, ADMIN, FEEDBACK y UTILITIES consumen el actor central; se sustituyen locks de hojas de sesión por el recurso lógico `SESSION_CONTEXTS`. Los servicios ya no escriben ni reservan `ACTIVE_SESSIONS` en cada acción.
+6. Se modificaron contratos y regresiones en `SharedMutationCoordinator.js` y `SessionActivityCoordination.mjs`; `JS/Tests/Auth.js` se mantiene como espejo exacto de `JS/Services/Auth.js`.
+7. Se actualizó `Services/COORDINATOR_SETUP.md` y `README.md`; `Tareas_Activas.md` registra el alcance implementado y mantiene la validación pendiente.
+
+### Validación y siguiente paso
+
+- Pruebas agregadas: sincronización de múltiples sesiones, tokens sin `userId`, limpieza de índices, barrera `revokedBefore`, sesión anterior a revocación, actor confiable, sanitización de campos enviados por cliente, concurrencia entre servicios y revocación.
+- No se ejecutaron Node.js/CLI local ni CI integral en esta sesión. Las herramientas de ejecución local no devolvieron un entorno utilizable y no se obtuvo un run de Actions asociado al HEAD actual. No declarar PASS por revisión estática.
+- Siguiente tarea: ejecutar `node --check` y `JS/Tests/RunServiceTests.mjs` en entorno Node.js; corregir fallos, repetir suite y comprobar GitHub Actions. Después validar en Beta: login, restauración de sesión previa, múltiples dispositivos, logout individual, revocación global, cambio de rol, expiración e intentos con tokens obsoletos.
+- Mantener `GPSpedia2.2.5` intacta. No publicar deployments ni ejecutar migraciones/datos productivos sin autorización documentada.
