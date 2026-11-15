@@ -679,6 +679,85 @@ function runSharedMutationCoordinatorTests() {
         release_(r, "ADMIN", "migrateReplacedImagesSchema", migrationRetry.token);
     });
 
+
+    test_("El contexto compartido registra sesiones y entrega el actor confiable dentro de la lease", function() {
+        const r = createRuntime_();
+        const createdAt = 1700000000000;
+        const registered = r.request("registerSession", "AUTH", "registerSession", {
+            userId: "USR-1001", sessionToken: "session-token-0000000000000001",
+            role: "supervisor", fullName: "Técnico de prueba",
+            createdAt: createdAt, lastActivityAt: createdAt
+        });
+        assert_(registered.status === "success" && registered.registered, "AUTH debe registrar el contexto.");
+        const lease = r.request("acquire", "FEEDBACK", "reportProblem", {
+            requestId: r.uuid(), waitMs: 0, userId: "USR-1001",
+            sessionToken: "session-token-0000000000000001"
+        });
+        assert_(lease.status === "success" && lease.actor && lease.actor.userId === "USR-1001",
+            "La lease debe transportar el actor verificado.");
+        assert_(lease.actor.role === "supervisor" && lease.actor.epoch === 1,
+            "El rol y epoch deben proceder del contexto central.");
+        const nested = r.request("validate", "FEEDBACK", "reportProblem", { token: lease.token });
+        assert_(nested.status === "success" && nested.actor.role === "supervisor",
+            "La validación de una lease anidada debe conservar el actor.");
+        release_(r, "FEEDBACK", "reportProblem", lease.token);
+    });
+
+    test_("El registro de sesión es idempotente y no permite cambiar el rol de un token existente", function() {
+        const r = createRuntime_();
+        const payload = {
+            userId: "USR-1002", sessionToken: "session-token-0000000000000002",
+            role: "tecnico", fullName: "Técnico", createdAt: 1700000000000, lastActivityAt: 1700000000000
+        };
+        const first = r.request("registerSession", "AUTH", "registerSession", payload);
+        const retry = r.request("registerSession", "AUTH", "registerSession", payload);
+        assert_(first.status === "success" && retry.status === "success" && retry.recovered,
+            "El reintento debe recuperar la misma sesión sin duplicarla.");
+        expectThrow_(() => r.request("registerSession", "AUTH", "registerSession",
+            Object.assign({}, payload, { role: "desarrollador" })), "no coincide");
+    });
+
+    test_("La revocación individual conserva otras sesiones y la revocación global incrementa el epoch", function() {
+        const r = createRuntime_();
+        const base = { userId: "USR-1003", role: "tecnico", fullName: "Técnico", createdAt: 1700000000000, lastActivityAt: 1700000000000 };
+        const firstToken = "session-token-0000000000000003";
+        const secondToken = "session-token-0000000000000004";
+        r.request("registerSession", "AUTH", "registerSession", Object.assign({}, base, { sessionToken: firstToken }));
+        r.request("registerSession", "AUTH", "registerSession", Object.assign({}, base, { sessionToken: secondToken }));
+        r.request("revokeSession", "AUTH", "revokeSession", { userId: base.userId, sessionToken: firstToken });
+        const denied = r.request("acquire", "FEEDBACK", "reportProblem", {
+            requestId: r.uuid(), waitMs: 0, userId: base.userId, sessionToken: firstToken
+        });
+        assert_(denied.status === "error", "La sesión revocada debe rechazarse.");
+        const valid = r.request("acquire", "FEEDBACK", "reportProblem", {
+            requestId: r.uuid(), waitMs: 0, userId: base.userId, sessionToken: secondToken
+        });
+        assert_(valid.status === "success", "La otra sesión debe seguir activa.");
+        release_(r, "FEEDBACK", "reportProblem", valid.token);
+        const revoked = r.request("revokeUserSessions", "AUTH", "revokeUserSessions", { userId: base.userId });
+        assert_(revoked.status === "success" && revoked.epoch === 2, "La revocación global debe avanzar el epoch.");
+        const after = r.request("acquire", "FEEDBACK", "reportProblem", {
+            requestId: r.uuid(), waitMs: 0, userId: base.userId, sessionToken: secondToken
+        });
+        assert_(after.status === "error", "La revocación global debe invalidar todos los tokens.");
+    });
+
+    test_("El contexto central aplica expiración absoluta y por inactividad", function() {
+        const r = createRuntime_();
+        const createdAt = 1700000000000;
+        r.request("registerSession", "AUTH", "registerSession", {
+            userId: "USR-1004", sessionToken: "session-token-0000000000000005",
+            role: "tecnico", fullName: "Técnico", createdAt: createdAt, lastActivityAt: createdAt
+        });
+        r.advance(32 * 24 * 60 * 60 * 1000);
+        const expired = r.request("acquire", "WRITE", "addOrUpdateCut", {
+            requestId: r.uuid(), waitMs: 0, userId: "USR-1004",
+            sessionToken: "session-token-0000000000000005"
+        });
+        assert_(expired.status === "error" && expired.message.includes("expiró"),
+            "Una sesión inactiva por más de un mes debe expirar en el coordinador.");
+    });
+
     const summary = { status: failed === 0 ? "PASS" : "FAIL", passed, failed, results };
     return summary;
 }
