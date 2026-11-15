@@ -9,7 +9,7 @@
 - CI Node.js 22 run `43753616255`: **SUCCESS; 100 suites / 1,544 pruebas / 0 fallos**. `InboxUi` 22/22.
 - P1 sesión central y compatibilidad de hashes: implementación local y CI completados; Beta pendiente. Hashes AUTH/USERS PBKDF2-HMAC-SHA256, salt aleatorio, 12,000 iteraciones. Sin complejidad adicional ni incremento del coste de login.
 - GP-INBOX-04B: backend de marcar no leído y ocultación individual, idempotencia, auditoría y preservación del historial del otro participante. La hoja `InboxConversationFlags` se crea de forma diferida.
-- GP-INBOX-04C: `reportProblem` como ticket con categoría/asunto/descrición/respuesta/estado; `getMyProblemReports` devuelve solo tickets del actor autenticado y pagina por cursor estable `reportId`.
+- GP-INBOX-04C: `reportProblem` como ticket con categoría/asunto/descripción/respuesta/estado; `getMyProblemReports` devuelve solo tickets del actor autenticado y pagina por cursor estable `reportId`.
 - GP-INBOX-04D: contratos locales RBAC, accesibilidad estructural y regresión; no se añadieron controles visibles. Historial propio en UI y selección múltiple siguen diferidos.
 - GP-CAT-01, GP-PWA-02, GP-DATA, GP-IMG-DATA, GP-DEV y GP-ADMIN: implementación/preparación local completada según tareas; validaciones reales de Beta pendientes.
 - Se añadió protocolo GP-INBOX-04B/04C/04D a `lista_beta_parte2.txt` con preflight seguro, cuentas Beta y casos de privacidad, tickets, RBAC y accesibilidad.
