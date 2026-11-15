@@ -44,35 +44,15 @@ function runSessionProfileRefreshTests(sources) {
  run('La respuesta cacheada no borra la aceptación de términos existente',()=>{const accepted={...user,TermsAcceptance:{version:'2026-07',acceptedAt:'2026-11-01',status:'accepted'}};storage.setItem('gpsepedia_session',JSON.stringify(accepted));state={currentUser:{...accepted}};const updated=api.persistSessionValidation(accepted,{valid:true,cached:true});equal(updated.TermsAcceptance.version,'2026-07');equal(JSON.parse(storage.getItem('gpsepedia_session')).TermsAcceptance.status,'accepted');});
 
  run('Valida que el perfil pertenezca al ID de la sesión',()=>{const f=extract(client,'isSessionProfileForUser_');const check=new Function(f+'\nreturn isSessionProfileForUser_;')();equal(check(user,{ID:'U1',Privilegios:'Tecnico'}),true);equal(check(user,{ID:'U2',Privilegios:'Desarrollador'}),false);equal(check(user,null),false);});
- run('AUTH valida acceptTerms en solo lectura y conserva touch para otras mutaciones',()=>{
-  const helper=extract(services[0][1],'touchProtectedAuthRequestSession_');
-  const calls={read:0,touch:0};
-  const fn=new Function('isSharedMutationAction_','normalizeUserId','validateSessionReadOnly_','validateAndTouchSession_',helper+'\nreturn touchProtectedAuthRequestSession_;')(
-   action=>['acceptTerms','changePassword','resetUserPassword','resetUserSessions','clearSensitiveLogs','deleteUser','updateUser','logout','migrateLegacyPasswords'].includes(action),
-   value=>String(value||'').trim(),
-   (token,userId)=>{calls.read++;return{valid:true,userId};},
-   token=>{calls.touch++;return{valid:true,lastActivityAt:'2026-11-14T12:00:00.000Z'};}
-  );
-  fn('acceptTerms',{sessionToken:'valid-token',userId:'U1'});
-  equal(calls.read,1,'acceptTerms debe validar la sesión sin actualizar LastActivityAt.');
-  equal(calls.touch,0,'acceptTerms no debe ejecutar validateAndTouchSession_.');
-  fn('updateUser',{sessionToken:'valid-token'});
-  equal(calls.touch,1,'Las demás mutaciones protegidas deben actualizar LastActivityAt.');
-  fn('login',{});
-  fn('touchSession',{sessionToken:'valid-token'});
-  fn('migrateLegacyPasswords',{sessionToken:'valid-token'});
-  equal(calls.touch,1,'login, touchSession y migración batch no deben duplicar la actualización.');
-  const invalid=new Function('isSharedMutationAction_','normalizeUserId','validateSessionReadOnly_','validateAndTouchSession_',helper+'\nreturn touchProtectedAuthRequestSession_;')(
-   ()=>true,value=>String(value||'').trim(),()=>({valid:false,reason:'missing_session'}),()=>({valid:false})
-  );
-  let rejected=false;
-  try{invalid('acceptTerms',{sessionToken:'bad-token',userId:'U1'});}catch(e){rejected=true;}
-  assert(rejected,'acceptTerms no debe continuar con sesión inválida.');
-  rejected=false;
-  try{invalid('updateUser',{sessionToken:'bad-token'});}catch(e){rejected=true;}
-  assert(rejected,'Una mutación protegida no debe continuar con sesión inválida.');
-  const dispatcher=extract(services[0][1],'doPostInternal_');
-  assert(dispatcher.includes('touchProtectedAuthRequestSession_(request.action, request.payload || {})'));
+ run('AUTH valida acceptTerms dentro del handler y evita preflight duplicado',()=>{
+  const auth=services[0][1],dispatch=extract(auth,'doPostInternal_'),accept=extract(auth,'handleAcceptTerms');
+  assert(!dispatch.includes('touchProtectedAuthRequestSession_'));
+  assert(!dispatch.includes('validateAndTouchSession_')&&!dispatch.includes('validateSessionReadOnly_'));
+  assert(accept.includes('lock.waitLock(10000)'));
+  assert(accept.includes('findSessionRowsByTokenUnderLock_(sessionsSheet, sessionToken)'));
+  assert(accept.includes('getSessionExpirationStatus_(session.row, new Date())'));
+  assert(accept.includes('hasPendingRoleRevocation_(userId, usersSheet)'));
+  assert(!accept.includes('LastActivityAt'));
  });
  run('Rechaza respuesta válida cuyo perfil pertenece a otra cuenta',()=>{const i=client.indexOf('async function validateSessionCoordinated('),j=client.indexOf('\nfunction loadUserLocalActivity',i);assert(i>=0&&j>i);const f=client.slice(i,j);assert(f.includes("Object.prototype.hasOwnProperty.call(result,'profile')"));assert(f.includes("reason:'profile_identity_mismatch'"));assert(f.indexOf("reason:'profile_identity_mismatch'")<f.indexOf('persistSessionValidation(user,result)'));});
  return {status:failed?'FAIL':'PASS',passed,failed,results};
