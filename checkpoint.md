@@ -592,3 +592,16 @@ No quedan tareas locales independientes de Inbox dentro del alcance autorizado. 
 - CI Node.js 22 run `43753616255`: SUCCESS; **100 suites / 1,544 pruebas / 0 fallos**.
 - `lista_beta_parte2.txt` ahora contiene protocolo detallado GP-INBOX-04B/04C/04D, con preflight seguro y prohibición explícita de producción/despliegues no autorizados.
 - Pendiente: pruebas Beta con deployments/Spreadsheet/Drive aislados y dispositivos reales; historial propio de tickets y selector categoría/asunto en UI; barra/selección múltiple. No añadir controles visibles hasta autorización. No desplegar Apps Script ni modificar datos productivos.
+
+## Continuidad P2 — IDs por fórmula y generación backend (2026-11-15)
+
+**Rama:** `GPSpedia2.2.5_work`. La base protegida no se modificó.
+
+- Se implementó en el modal Desarrollador la auditoría global de columnas ID y la migración por lotes de fórmulas a valores estáticos, conservando el valor exacto, prefijo y relleno del ID.
+- La simulación y el manifiesto diferencian fórmulas compatibles de patrones no reconocidos. Solo se congelan secuencias compatibles con el generador backend; no se renumeran IDs ni se migran valores vacíos/duplicados.
+- Los lotes requieren digest vigente, respaldo de Spreadsheet verificado en servidor y confirmación; snapshots y manifiesto permiten verificar/reanudar.
+- FEEDBACK reemplaza copia de fórmulas por asignación backend secuencial y bloqueada en los escritores de actividad, sugerencias, reportes y contacto. La copia de formato/validación permanece permitida. Users/Cortes ya generan ID desde backend.
+- `IdentifierFormulaMigration`: 4/4 PASS en el CI validado anterior; se añadió una prueba adicional para excluir fórmulas no reconocidas. `FeedbackFormulaIdAllocator`: 5/5 PASS en CI.
+- Último CI completo validado antes del último ajuste de exclusión: run `43758115537`, HEAD `b9642cc66d250a29f450b53f6a4e7154d4927f2e`, SUCCESS; 102 suites / 1,553 pruebas / 0 fallos. El ajuste de exclusión y su prueba deben quedar validados por el siguiente CI antes de cerrar.
+- No se ejecutó migración real ni despliegue Apps Script. Próximo paso: CI, revisión final de todos los escritores/columnas formula-ID, y luego preparar dry-run en copia Beta. Relay no tiene escritor backend de registros ni formato confirmado: mantener bloqueado.
+
