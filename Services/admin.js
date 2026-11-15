@@ -1370,9 +1370,8 @@ function doPostInternal_(e) {
     // ADMIN publica un delta exacto para alta de Logo cuando la fila final puede verificarse.
     // El resto de operaciones multi-fila conserva el reset seguro tras cerrar la auditoría.
     const catalogWriters = ["addLogo", "updateVehicleField", "uploadAdminImage", "recoverReplacedImage",
-        "normalizeImages", "organizePrimaryVehicleImages", "applyCortesImageReconciliation",
-        "restoreDatabase", "reorganizeDatabase", "migrateIdentifiers", "rollbackIdentifiers",
-        "reconcilePendingImageUploads"];
+        "normalizeImages", "applyCortesImageReconciliation", "restoreDatabase", "reorganizeDatabase",
+        "migrateIdentifiers", "rollbackIdentifiers"];
     if (catalogAction && catalogWriters.includes(catalogAction) && response &&
         (response.status === "success" || response.status === "warning")) {
         try {
