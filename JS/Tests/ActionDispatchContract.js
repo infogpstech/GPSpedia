@@ -136,17 +136,12 @@ function runActionDispatchContractTests(sources) {
             }
         }
     });
-    run_("las acciones externas tienen servicio, consumidor y origen documentados", () => {
-        for (const [action, entry] of Object.entries(external)) {
-            assert_(actionMap[action] === entry.service, action + " no coincide con su servicio externo.");
-            assert_(endpoints.includes(entry.service), action + " apunta a un endpoint externo inexistente.");
-            assert_(!!entry.consumer && !!entry.source, action + " carece de consumidor u origen documentado.");
-        }
-        assert_(actionMap.logFrontend === "LEGACY", "logFrontend no apunta a LEGACY.");
-        assert_(external.logFrontend && external.logFrontend.consumer.includes("users.html"), "Falta el consumidor documentado de logFrontend.");
-        const legacy = (endpointBlock.match(/LEGACY\s*:\s*['"]([^'"]+)['"]/) || [])[1];
-        const scriptUrl = (String(input.usersHtml || "").match(/const\s+SCRIPT_URL\s*=\s*['"]([^'"]+)['"]/) || [])[1];
-        assert_(!!legacy && scriptUrl === legacy, "SCRIPT_URL de users.html no coincide con API_ENDPOINTS.LEGACY.");
+    run_("retira LEGACY y su consumidor remoto de logging", () => {
+        assert_(!endpoints.includes("LEGACY"), "LEGACY sigue publicado en API_ENDPOINTS.");
+        assert_(!Object.prototype.hasOwnProperty.call(actionMap, "logFrontend"), "logFrontend sigue enrutada.");
+        assert_(Object.keys(external).length === 0, "EXTERNAL_ACTIONS aún publica acciones heredadas.");
+        assert_(!String(input.usersHtml || "").includes("SCRIPT_URL"), "users.html todavía llama al endpoint heredado.");
+        assert_(!String(input.usersHtml || "").includes("logFrontend"), "users.html todavía consume logFrontend.");
     });
     run_("retira rutas sin consumidor o sustituidas", () => {
         for (const action of ["addCorte","migrateYearRanges","assignCollaborator"]) {

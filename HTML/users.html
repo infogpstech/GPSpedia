@@ -332,23 +332,12 @@ import { routeAction } from '../JS/Frontend/api-config.js';
 import * as offline from '../JS/Frontend/offline.js';
 import { createOverlayHistoryManager } from '../JS/Frontend/overlayHistory.js';
 // COMPONENT VERSION: 3.9.1
-// --- LÓGICA DE DEPURACIÓN REMOTA ---
-function remoteLog(level, message, data = {}) {
-    fetch(SCRIPT_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'logFrontend', payload: { level, message, data } }),
-        keepalive: true
-    }).catch(console.error);
-}
+// Los errores de esta pantalla se conservan en la consola del navegador;
+// no se envían a un deployment LEGACY fuera del repositorio.
 window.onerror = function(message, source, lineno, colno, error) {
-    remoteLog('ERROR', 'Unhandled exception on users.html', {
-        message: message, source: source, lineno: lineno, colno: colno, stack: error ? error.stack : 'N/A'
-    });
+    console.error("Error en users.html:", { message, source, lineno, colno, stack: error ? error.stack : null });
     return false;
 };
-
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwpIFH1nX2BZEjAKbpq9HJpEGNlo_0LqD1CwxWsWFo5J0AJDdbfMrKpcsAV4ZFJzFWd/exec";
 const SESSION_KEY = 'gpsepedia_session';
 let currentUser = null;
 let allUsers = [];
@@ -646,9 +635,9 @@ async function handleUserFormSubmit(e) {
                 }
                 try {
                     const cleared = await offline.clearDriveAuditState(submittingSession.userId);
-                    if (!cleared) remoteLog('warn', 'La limpieza del estado de auditoría Drive quedó pendiente tras el cambio de rol propio.');
+                    if (!cleared) console.warn('La limpieza del estado de auditoría Drive quedó pendiente tras el cambio de rol propio.');
                 } catch (clearError) {
-                    remoteLog('warn', 'No se pudo confirmar la limpieza del estado de auditoría Drive tras el cambio de rol propio.');
+                    console.warn('No se pudo confirmar la limpieza del estado de auditoría Drive tras el cambio de rol propio.');
                 }
                 if (!isSubmittingSessionCurrent()) return;
                 localStorage.removeItem(SESSION_KEY);

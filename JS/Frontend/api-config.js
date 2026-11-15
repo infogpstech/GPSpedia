@@ -39,7 +39,6 @@ export function setRichTextMode(mode, actorRole) {
 }
 
 export const API_ENDPOINTS = {
-    LEGACY: "https://script.google.com/macros/s/AKfycbwpIFH1nX2BZEjAKbpq9HJpEGNlo_0LqD1CwxWsWFo5J0AJDdbfMrKpcsAV4ZFJzFWd/exec",
     AUTH:     "https://script.google.com/macros/s/AKfycbw4D76ye47SR-egsRKSzAdgLn4O0rxbsTGHlH1YDT7OSCzIUyIbGZTgSZiYOWcGibng/exec",
     CATALOG:  "https://script.google.com/macros/s/AKfycbxRwBKI_HyY4KWf1vny5kxhT5kmspDPj6BmNe-bAAcB27osXY5L0Ylx94RWrn9lJ9kW/exec",
     WRITE:    "https://script.google.com/macros/s/AKfycbw0sFMF2lGRzYa3yDxLnpkNZ_qeBBT17WIe-U8vcpghwCZczCRoXb-nxl9b4pFJk1l1Mg/exec",
@@ -68,7 +67,6 @@ export const ACTION_TO_SERVICE_MAP = {
     'getReplacedImages': 'ADMIN',
     'previewCortesImageReconciliation': 'ADMIN', 'applyCortesImageReconciliation': 'ADMIN', 'migrateReplacedImagesSchema': 'ADMIN', 'getDriveStorage': 'ADMIN', 'recoverReplacedImage': 'ADMIN', 'deleteReplacedImage': 'ADMIN', 'restoreReplacedImageFromTrash': 'ADMIN', 'permanentlyDeleteReplacedImage': 'ADMIN', 'markReplacedImageInUse': 'ADMIN', 'auditDriveImagesInCortes': 'ADMIN', 'saveUnusedImagesInventory': 'ADMIN',
     'getCortesImageFolders': 'ADMIN', 'createCortesImageFolder': 'ADMIN', 'moveReplacedImage': 'ADMIN', 'getReplacedImageDownloadUrl': 'ADMIN',
-    'logFrontend': 'LEGACY'
 };
 
 /**
@@ -81,13 +79,8 @@ export const SERVICE_COMPATIBILITY_ACTIONS = {
     ADMIN: ['checkOperation', 'addOrUpdateCut', 'addSupplementaryInfo']
 };
 
-/**
- * Acciones cuyo dispatcher pertenece a un proyecto Apps Script externo al repo.
- * logFrontend sigue siendo consumida directamente por users.html (remoteLog).
- */
-export const EXTERNAL_ACTIONS = {
-    logFrontend: { service: 'LEGACY', consumer: 'users.html: remoteLog', source: 'deployment externo no versionado en este repositorio' }
-};
+/** No hay acciones externas o servicios heredados habilitados. */
+export const EXTERNAL_ACTIONS = Object.freeze({});
 
 const serviceMetricsStore = createServiceMetricsStore();
 function recordServiceMetric(event) {
@@ -400,7 +393,6 @@ export const SERVICE_HEALTH_CONTRACTS = Object.freeze({
     FEEDBACK: "GPSpedia-Feedback",
     UTILITIES: "GPSpedia-Utilities",
     ADMIN: "GPSpedia-Admin",
-    LEGACY: null
 });
 export const SERVICE_HEALTH_TIMEOUT_MS = 8000;
 export const SERVICE_HEALTH_SLOW_THRESHOLD_MS = 2000;
@@ -457,9 +449,7 @@ export async function checkAllServicesHealth(options = {}) {
             if (expectedIdentity === undefined || expectedIdentity === null) {
                 result = makeResult("unknown", startTime, now(), {
                     errorCode: expectedIdentity === null ? "HEALTH_IDENTITY_UNVERIFIED" : "HEALTH_CONTRACT_UNDEFINED",
-                    error: expectedIdentity === null
-                        ? "El deployment LEGACY es externo y no tiene una identidad verificable desde este repositorio; no se consulta."
-                        : "No existe un contrato de identidad configurado para este servicio; no se consulta."
+                    error: "No existe un contrato de identidad configurado para este servicio; no se consulta."
                 });
             } else if (typeof fetchImpl !== "function") {
                 const checkedAtMs = now();
