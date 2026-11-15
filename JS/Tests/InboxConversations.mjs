@@ -412,6 +412,22 @@ run("Los reintentos idempotentes no retroceden el último mensaje cuando hay mar
     assert.equal(conversationRow[16],3);
     assert.equal(messages.length,3);
     assert.equal(second.messageId,messages[1][0]);
+
+    const newestPage = api.handleGetInboxMessages({
+        ...actor("U1","token-a"),conversationId:created.conversationId,pageSize:1,cursor:"0"
+    });
+    assert.deepEqual(newestPage.data.map(message => message.messageId),[third.messageId]);
+    assert.ok(newestPage.nextCursor);
+    const middlePage = api.handleGetInboxMessages({
+        ...actor("U1","token-a"),conversationId:created.conversationId,pageSize:1,cursor:newestPage.nextCursor
+    });
+    assert.deepEqual(middlePage.data.map(message => message.messageId),[second.messageId]);
+    assert.ok(middlePage.nextCursor);
+    const oldestPage = api.handleGetInboxMessages({
+        ...actor("U1","token-a"),conversationId:created.conversationId,pageSize:1,cursor:middlePage.nextCursor
+    });
+    assert.deepEqual(oldestPage.data.map(message => message.messageId),[created.messageId]);
+    assert.equal(oldestPage.nextCursor,null);
 });
 
 run("Los cursores inválidos se rechazan antes de consultar páginas", () => {
