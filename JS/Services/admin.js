@@ -145,7 +145,7 @@ function getAdminSessionContext_(payload, allowedRoles){
 }
 function assertDeveloperSession(payload){return getAdminSessionContext_(payload,["desarrollador"]);}
 function assertModalEditSession(payload){return getAdminSessionContext_(payload,["desarrollador","jefe","supervisor"]);}
-const ADMIN_MODAL_EDIT_ACTIONS = new Set(["updateVehicleField","uploadAdminImage","getAdminImageUploadStatus"]);
+const ADMIN_MODAL_EDIT_ACTIONS = new Set(["getDropdownData","updateVehicleField","uploadAdminImage","getAdminImageUploadStatus"]);
 const ADMIN_MODAL_EDIT_FIELDS = new Set([
  "categoria","modelo","versionesAplicables","tipoEncendido","anoDesde","anoHasta","vin","notaImportante",
  "apertura","cableAlimen","cableAlimen2","cableAlimen3",

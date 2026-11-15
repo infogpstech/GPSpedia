@@ -78,3 +78,9 @@ Las acciones del gestor de imágenes se ejecutan únicamente desde ADMIN y requi
 - La validación es individual: referencias nuevas, referencias no interpretables, estados históricos no resueltos, IDs ambiguos y duplicados por Drive ID bloquean el archivo afectado sin cancelar el resto del lote. El inventario no sobrescribe `en_uso`, `requiere_revision`, `en_papelera` ni `eliminacion_pendiente`.
 - Las escrituras por fila se verifican por lectura posterior y se reintentan una vez. Si una escritura parcial no puede reconciliarse y la identidad sigue verificable, el registro queda en `requiere_revision`; el organizador exige coincidencia de auditId, inventoryOperationId y resultado `confirmado`.
 - Los estados de auditoría expiran a las seis horas; los cursores vencidos requieren un nuevo escaneo. No se ejecutan operaciones sobre Spreadsheet/Drive productivos. La integración real de CacheService, PropertiesService, permisos y concurrencia permanece diferida a Beta aislada.
+
+
+## Lectura de opciones del modal de detalle (GP-BETA-02)
+- `getDropdownData` es una lectura necesaria para los controles de edición del modal y debe admitir la misma matriz de roles que `updateVehicleField`: Desarrollador, Jefe y Supervisor.
+- La acción no concede permisos de escritura adicionales; cada cambio sigue usando `updateVehicleField` y su validación backend.
+- El handler queda incluido en `ADMIN_MODAL_EDIT_ACTIONS`, por lo que el dispatcher usa `assertModalEditSession` y no exige Desarrollador exclusivamente.

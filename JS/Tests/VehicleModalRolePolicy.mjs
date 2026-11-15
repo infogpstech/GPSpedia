@@ -28,7 +28,7 @@ check("Imprimir y editar detalles se limitan a Supervisor, Jefe y Desarrollador"
 });
 check("El backend autoriza la edición según el rol vigente, sin confiar en el cliente",()=>{
  assert.match(admin,/function assertModalEditSession\(payload\)\{return getAdminSessionContext_\(payload,\["desarrollador","jefe","supervisor"\]\);\}/);
- assert.match(admin,/const ADMIN_MODAL_EDIT_ACTIONS = new Set\(\["updateVehicleField","uploadAdminImage","getAdminImageUploadStatus"\]\)/);
+ assert.match(admin,/const ADMIN_MODAL_EDIT_ACTIONS = new Set\(\["getDropdownData","updateVehicleField","uploadAdminImage","getAdminImageUploadStatus"\]\)/);
  assert.match(admin,/displayRole=role==="desarrollador"\?"Desarrollador":role==="jefe"\?"Jefe":"Supervisor"/);
 });
 check("El backend acepta Supervisor, Jefe y Desarrollador y rechaza otros roles",()=>{
@@ -92,7 +92,7 @@ check("El gestor de imágenes ADMIN queda reservado a Desarrollador salvo las tr
  const modal=admin.match(/const ADMIN_MODAL_EDIT_ACTIONS = new Set\(\[([^\]]+)\]\)/);
  assert.ok(modal);
  const allowed=[...modal[1].matchAll(/"([^"]+)"/g)].map(m=>m[1]).sort();
- assert.deepEqual(allowed,["getAdminImageUploadStatus","updateVehicleField","uploadAdminImage"].sort());
+ assert.deepEqual(allowed,["getAdminImageUploadStatus","getDropdownData","updateVehicleField","uploadAdminImage"].sort());
  const router=admin.slice(admin.indexOf("function doPostInternal_("));
  const routed=[...router.matchAll(/case ['"]([^'"]+)['"]:/g)].map(match=>match[1]);
  const imageActions=["normalizeImages","organizePrimaryVehicleImages","restoreAllTrashedImages","addLogo","getReplacedImages","migrateReplacedImagesSchema","getDriveStorage","recoverReplacedImage","deleteReplacedImage","restoreReplacedImageFromTrash","permanentlyDeleteReplacedImage","markReplacedImageInUse","auditDriveImagesInCortes","saveUnusedImagesInventory","getCortesImageFolders","createCortesImageFolder","moveReplacedImage","getReplacedImageDownloadUrl"];
