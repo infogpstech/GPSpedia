@@ -902,3 +902,27 @@ Las fuentes de servicios JavaScript se centralizan bajo `JS/Services/`. La carpe
 - [ ] Validar en Beta login, restauración de sesión previa, múltiples dispositivos, logout individual, revocación global, cambio de rol, expiración y tokens obsoletos.
 
 Commits: `64f47f037f6c326a38d479e81527f7054d18f583`, `e1cf604f6dd6fa1a0594b8aa0fc3d8572db4ed10`, `df17da845f68d70c7c3fae747467ece9cb49b66b`, `2b671a5113eba058646e55037a72d80e98a29202`. No se modificó la rama base ni se desplegó Apps Script.
+
+## Aclaración de requisitos del usuario — contraseñas y Apps Script (2026-11-15)
+
+Esta aclaración delimita el trabajo futuro y debe leerse junto con la fuente normativa `NORMAS_DESAROLLO.md`.
+
+### Contraseñas
+- Requisito: almacenar contraseñas mediante hash, nunca en texto plano; mantener el inicio de sesión ágil y rápido.
+- No incrementar iteraciones/coste del hash ni añadir factores, pasos interactivos o verificaciones de red adicionales por iniciativa propia. La seguridad debe ser proporcional y no degradar innecesariamente la experiencia.
+- El formato debe ser compatible entre AUTH y USERS. La inspección de esta rama encontró implementaciones distintas: AUTH usa PBKDF2-HMAC-SHA256 con 12,000 iteraciones; USERS crea hashes SHA-256 con salt. En la próxima iteración, revisar y unificar el formato de almacenamiento/verificación con el menor coste razonable, sin aumentar la latencia del login. No ejecutar migraciones reales sin autorización.
+- El benchmark del runtime Apps Script y cualquier migración de credenciales que requiera el servicio desplegado quedan pendientes para Beta. No asumir que el usuario solicita aumentar PBKDF2 ni convertirlo en un flujo de autenticación más complejo.
+
+### Servicios Apps Script
+- Sí se pueden modificar ahora los archivos fuente de los servicios Apps Script en esta rama, corregir su lógica, actualizar contratos y agregar pruebas locales.
+- Solo quedan pendientes las pruebas que requieran publicar/desplegar los servicios o llamar a un deployment actualizado, así como las validaciones con credenciales, propiedades, hojas o datos del entorno Beta.
+- Registrar esas pruebas como pendientes de despliegue/validación Beta; no bloquear por ello el trabajo local independiente ni declarar resultados remotos como PASS sin ejecutarlos.
+- No desplegar ni modificar proyectos Apps Script remotos, propiedades, hojas o datos productivos como parte de esta iteración.
+
+### Estado de CI que debe retomarse
+- HEAD de la rama al registrar esta aclaración: `3765bee922c68044d81c9ed55178b19752182737`.
+- La ejecución de servicios asociada a ese HEAD reportó 72 suites, 1,116 pruebas aprobadas y 3 suites fallidas.
+- Fallos identificados: AUTH/USERS no encuentran `revokeSharedUserSessionContexts_` en sus entornos aislados; el espejo de prueba `JS/Tests/users.js` difiere del servicio fuera del ID aislado; la prueba de integración AUG-156 falla como consecuencia de la regresión.
+- Próxima iteración: corregir primero estos defectos locales, sincronizar los espejos/fixtures requeridos y volver a ejecutar sintaxis y regresión integral. No debilitar autorización, revocación ni protección de sesiones para hacer pasar las pruebas.
+- No se ha desplegado Apps Script ni se han modificado datos productivos.
+
