@@ -353,6 +353,24 @@
                         </div>
 
                         <div class="dev-card dev-tools-card">
+                            <strong><i class="fa-solid fa-fingerprint"></i> Auditoría de IDs y fórmulas</strong>
+                            <p>Inspecciona las columnas identificadoras de todas las hojas, mostrando el valor calculado y la fórmula original. Esta auditoría no modifica datos.</p>
+                            <button type="button" id="btn-admin-audit-identifiers" class="btn btn-secondary dev-action-full"><i class="fa-solid fa-magnifying-glass"></i> Auditar IDs y fórmulas</button>
+                            <p id="identifier-audit-status" class="dev-empty-state" role="status" aria-live="polite">Auditoría pendiente.</p>
+                            <div id="identifier-audit-results" class="dev-empty-state" aria-live="polite"></div>
+                        </div>
+
+                        <div class="dev-card dev-tools-card">
+                            <strong><i class="fa-solid fa-lock"></i> Migración de contraseñas heredadas</strong>
+                            <p>Convierte contraseñas plaintext elegibles a hash. La simulación no escribe datos; la migración se ejecuta en lotes confirmados de hasta 5 cuentas.</p>
+                            <div class="dev-action-row">
+                                <button type="button" id="btn-admin-preview-password-migration" class="btn btn-secondary"><i class="fa-solid fa-magnifying-glass"></i> Simular</button>
+                                <button type="button" id="btn-admin-confirm-password-migration" class="btn btn-warning" disabled><i class="fa-solid fa-shield-halved"></i> Migrar lote</button>
+                            </div>
+                            <p id="password-migration-status" class="dev-empty-state" role="status" aria-live="polite">Pendiente. Revisa primero la simulación.</p>
+                        </div>
+
+                        <div class="dev-card dev-tools-card">
                             <strong><i class="fa-solid fa-barcode"></i> Motor de firmas diferenciales de VIN</strong>
                             <p>Selecciona las acciones; cada una se ejecuta por separado.</p>
                             <div class="dev-maintenance-options">
