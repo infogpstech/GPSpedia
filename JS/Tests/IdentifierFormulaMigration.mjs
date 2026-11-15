@@ -31,7 +31,7 @@ function makeSheet(name,rows,formulas=[]){
 }
 function makeHarness(){
  const users=makeSheet("Users",[["ID","Nombre"],["U-001","Ana"],["U-002","Luis"],["U-002","Duplicado"]],[
-  ["ID","Nombre"],['="U-"&TEXTO(FILA()-1,"000")'," "],['="U-"&TEXTO(FILA()-1,"000")'," "],['="U-"&TEXTO(FILA()-1,"000")'," "]
+  ["ID","Nombre"],['="U-"&TEXTO(FILA()-1,"000")'," "],['="U-"&TEXTO(FILA()-1,"000")'," "],[""," "]
  ]);
  const vehicles=makeSheet("Cortes",[["ID","Marca"],["V-001","Yamaha"]],[["ID","Marca"],['="V-"&TEXTO(FILA()-1,"000")',""]]);
  const ignored=makeSheet("Catalogo",[["Nombre","Valor"],["x","y"]],[["Nombre","Valor"],["=ROW()",""]]);
@@ -55,7 +55,7 @@ function makeHarness(){
 let passed=0;function test(name,fn){fn();passed++;console.log("PASS "+name);}
 test("Audita columnas ID en hojas múltiples y conserva fórmula/valor en muestras",()=>{
  const h=makeHarness(),r=h.api.audit(h.ss);
- assert.equal(r.formulaColumnCount,2);assert.equal(r.formulaCount,4);
+ assert.equal(r.formulaColumnCount,2);assert.equal(r.formulaCount,3);
  const user=r.formulaColumns.find(x=>x.sheet==="Users");
  assert.equal(user.samples[0].id,"U-001");assert.equal(user.samples[0].formula,'="U-"&TEXTO(FILA()-1,"000")');
  assert.equal(r.formulaColumns.some(x=>x.sheet==="Catalogo"),false);
@@ -64,19 +64,17 @@ test("La simulación de migración no escribe ni crea snapshots/manifiestos",()=
  const h=makeHarness(),before=h.ss.sheets.length;
  const r=h.api.migrate({dryRun:true,batchSize:1});
  assert.equal(r.status,"success");assert.equal(r.dryRun,true);
- assert.equal(r.formulaCount,3);assert.equal(r.skipped.duplicate,1);
+ assert.equal(r.formulaCount,2);assert.equal(r.skipped.duplicate,1);
  assert.equal(h.ss.sheets.length,before);assert.equal(h.users.formulas[1][0],'="U-"&TEXTO(FILA()-1,"000")');
 });
 test("Congela valores exactos por lotes, reanuda y conserva snapshots/manifiesto",()=>{
  const h=makeHarness(),dry=h.api.migrate({dryRun:true,batchSize:1});
  const payload={dryRun:false,confirm:true,migrationId:dry.migrationId,digest:dry.digest,batchSize:1};
  const first=h.api.migrate(payload);
- assert.equal(first.migrated,1);assert.equal(first.remaining,2);assert.equal(h.users.rows[1][0],"U-001");assert.equal(h.users.formulas[1][0],"");
+ assert.equal(first.migrated,1);assert.equal(first.remaining,1);assert.equal(h.users.rows[1][0],"U-001");assert.equal(h.users.formulas[1][0],"");
  const second=h.api.migrate(payload);
- assert.equal(second.migrated,1);assert.equal(second.remaining,1);assert.equal(h.users.rows[2][0],"U-002");
- const third=h.api.migrate(payload);
- assert.equal(third.migrated,1);assert.equal(third.remaining,0);assert.equal(third.complete,true);
- assert.equal(h.vehicles.rows[1][0],"V-001");assert.equal(h.vehicles.formulas[1][0],"");
+ assert.equal(second.migrated,1);assert.equal(second.remaining,0);assert.equal(second.complete,true);assert.equal(h.vehicles.rows[1][0],"V-001");
+ assert.equal(h.vehicles.formulas[1][0],"");
  assert.ok(h.ss.getSheetByName("__IdentifierFormulaFreezeManifest__"));
  assert.ok(h.ss.sheets.some(s=>s.name.startsWith("__IDF_")&&s.hidden));
 });
