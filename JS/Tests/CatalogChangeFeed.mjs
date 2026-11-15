@@ -122,6 +122,14 @@ test("WRITE publica upsert exacto de Cortes tras releer fila y conserva reset pa
     assert.ok(writeSource.includes('publishSharedCatalogChange_("WRITE", action, { operation: "reset" })'));
     assert.ok(writeSource.includes("getScriptLock()") && writeSource.includes("waitLock(15000)"));
 });
+test("ADMIN ediciones In-Modal publican upsert exacto de Cortes y mantenimiento masivo conserva reset", () => {
+    assert.ok(adminSource.includes("function buildAdminCortesCatalogChange_(reference)"));
+    assert.ok(adminSource.includes("function publishAdminCortesCatalogChange_(action, reference)"));
+    assert.ok(adminSource.includes('["updateVehicleField", "uploadAdminImage"].includes(catalogAction)'));
+    assert.ok(adminSource.includes("publishAdminCortesCatalogChange_(catalogAction, vehicleId)"));
+    assert.ok(adminSource.includes("findUniqueAdminVehicleRow_"));
+    assert.ok(adminSource.includes('publishSharedCatalogChange_("ADMIN", catalogAction, { operation: "reset" })'));
+});
 test("approveVideo/rejectVideo publican upsert del destino único y conservan reset si no se verifica", () => {
     assert.ok(feedbackSource.includes("contentType: videoData.contentType"));
     assert.ok(feedbackSource.includes("referenceId: videoData.referenceId"));
@@ -159,4 +167,4 @@ test("WRITE y FEEDBACK publican deltas exactos y conservan reset para operacione
     assert.match(adminSource,/catalogWriters\.includes\(catalogAction\)[\s\S]*?publishSharedCatalogChange_\("ADMIN", catalogAction, \{ operation: "reset" \}\)/);
     assert.match(adminSource,/finalizeAdminAuditEvent_\(auditEvent[\s\S]*?publishSharedCatalogChange_/);
 });
-console.log("CatalogChangeFeed: " + passed + "/20 PASS");
+console.log("CatalogChangeFeed: " + passed + "/21 PASS");
