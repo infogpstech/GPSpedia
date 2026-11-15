@@ -839,6 +839,8 @@ Las fuentes de servicios JavaScript se centralizan bajo `JS/Services/`. La carpe
 - [x] Conservar la autorización backend: el rol interno procede de Users y cualquier campo `__feedbackActor` aportado por el navegador es sobrescrito por el dispatcher.
 - [x] Verificar el comportamiento actual de Inbox: solo quien inició el caso puede agregar comentarios; Supervisor, Jefe o Desarrollador pueden cerrarlo; el cierre se serializa y bloquea comentarios posteriores. Las pruebas de cierre y comentarios están incluidas en InboxConversations.
 - [ ] Diseñar e implementar el contexto/caché de sesión compartido para los demás servicios, sin consultar la hoja completa en cada acción y sin permitir que logout, revocación, expiración, desactivación o cambio de rol queden ignorados. No retirar la validación backend hasta demostrar estas garantías con pruebas de concurrencia.
-- [ ] Ejecutar CI integral en el HEAD publicado y registrar su resultado.
+- [x] Ejecutar CI integral en el HEAD publicado: Node.js 22 run `43678752084` SUCCESS; sintaxis PASS; **100 suites / 1,523 pruebas / 0 fallos**. GitHub Pages run `43678751430` SUCCESS.
 
 **Validación aislada de esta adenda:** InboxConversations 40/40 PASS; InboxRoleContract 17/17 PASS; parsing de los dos servicios modificados PASS. La autenticación global simplificada continúa pendiente; no se declara completada por haber eliminado únicamente la duplicación de Inbox.
+
+- El commit `a98d3d110acc3730143636ca26f5f36a55f19b6e` quedó publicado en `GPSpedia2.2.5_work`; la rama base permanece intacta.

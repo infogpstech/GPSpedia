@@ -441,3 +441,8 @@
 - El cierre de casos ya estaba implementado en esta rama: Supervisor/Jefe/Desarrollador, bloqueo de comentarios tras cierre y auditoría. La política de comentarios también restringe las respuestas al creador del caso.
 - Pendiente: la solicitud de no validar sesión en cada acción requiere una solución compartida entre AUTH/FEEDBACK/WRITE/USERS/ADMIN que mantenga revocación, logout, expiración y cambios de rol. Este commit elimina solo la doble validación de Inbox; no afirma que la optimización global esté terminada.
 - No se desplegaron Apps Script ni se modificaron Spreadsheet, Drive, ScriptProperties o datos productivos.
+
+- Publicación: commit `a98d3d110acc3730143636ca26f5f36a55f19b6e` en `GPSpedia2.2.5_work`; base `GPSpedia2.2.5` verificada sin cambios en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- CI Node.js 22 run `43678752084`: SUCCESS; **100 suites / 1,523 pruebas / 0 fallos**; comprobación de sintaxis PASS.
+- GitHub Pages run `43678751430`: build, reporte y deploy SUCCESS.
+- La optimización global de sesión sigue abierta: el cambio actual solo evita la validación duplicada dentro de Inbox. No se modificaron deployments de Apps Script ni datos productivos.

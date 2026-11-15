@@ -462,3 +462,6 @@
 - El campo interno enviado desde el navegador no concede permisos: el dispatcher lo sobrescribe con el actor verificado.
 - Pruebas aisladas: InboxConversations 40/40 PASS; InboxRoleContract 17/17 PASS. Parsing sintáctico de InboxConversations.js y feedback.js PASS.
 - Esta mejora elimina una validación duplicada en Inbox. El resto de servicios protegidos mantiene una validación backend por solicitud; la simplificación global requiere un contexto/caché compartido que conserve revocación, cierre de sesión, expiración y cambios de rol. No se debilitó ese control.
+
+- CI Node.js 22 run 43678752084: SUCCESS; sintaxis PASS; **100 suites / 1,523 pruebas / 0 fallos**.
+- GitHub Pages run 43678751430: build, reporte y deploy SUCCESS.
