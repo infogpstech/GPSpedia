@@ -1647,6 +1647,36 @@ function runFeedbackWriteSecurityTests() {
                 logUserActivity = originalLog;
             }
         });
+        test_("getMyProblemReports devuelve únicamente tickets de la sesión autenticada y pagina resultados", function() {
+            const originalGetSafeSheet = getSafeSheet;
+            const originalGetReportMetadataColumn = getReportMetadataColumn;
+            try {
+                const headers = ["ID","Usuario","ID_vehiculo","Problema","Respuesta","Se resolvio","Responde","Reporte de util","anoSugerido","reportMetadata"];
+                const metadata = (reportId,userId,subject) => JSON.stringify({
+                    reportId,userId,vehicleId:"VEH-1",corteIndex:1,activaTestigoMotor:false,
+                    category:"incidencia_tecnica",subject
+                });
+                const ownA = ["ROW-A","Usuario verificado","VEH-1","Falla A","Respuesta A",false,"Desarrollador","","",metadata("REP-MY-001","USR-TEST-01","Ticket A")];
+                const other = ["ROW-X","Otro usuario","VEH-2","Falla ajena","",false,"","","",metadata("REP-MY-002","USR-OTHER-02","Ticket ajeno")];
+                const ownB = ["ROW-B","Usuario verificado","VEH-1","Falla B","Respuesta B",true,"Desarrollador","","",metadata("REP-MY-003","USR-TEST-01","Ticket B")];
+                const sheet = makeSheet([headers,ownA,other,ownB]);
+                getSafeSheet = () => sheet;
+                getReportMetadataColumn = () => 10;
+                const first = handleGetMyProblemReports({sessionToken:"TEST_SESSION",userId:"IDENTIDAD-FALSA",cursor:"0",pageSize:1});
+                assert_(first.status === "success" && first.total === 2 && first.data.length === 1);
+                assert_(first.data[0].subject === "Ticket B" && first.data[0].category === "incidencia_tecnica" &&
+                    first.data[0].reply === "Respuesta B" && first.data[0].isResolved === true,
+                    "El ticket debe devolver asunto, categoría, respuesta y estado.");
+                assert_(first.nextCursor === "1" && first.hasMore === true);
+                const second = handleGetMyProblemReports({sessionToken:"TEST_SESSION",userId:"IDENTIDAD-FALSA",cursor:first.nextCursor,pageSize:1});
+                assert_(second.data.length === 1 && second.data[0].subject === "Ticket A" && second.hasMore === false);
+                assert_(first.data.concat(second.data).every(item => item.user === "Usuario verificado"),
+                    "La lista solo debe incluir reportes pertenecientes al actor autenticado.");
+            } finally {
+                getSafeSheet = originalGetSafeSheet;
+                getReportMetadataColumn = originalGetReportMetadataColumn;
+            }
+        });
         test_("reportProblem rechaza categorías de ticket fuera de la lista permitida", function() {
             expectThrow_(() => handleReportProblem({
                 vehicleId:"VEH-1",problemText:"Falla",userId:"USR-TEST-01",userName:"Usuario",
