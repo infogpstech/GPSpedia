@@ -1260,15 +1260,15 @@ export async function saveSearch(term, ownerId, metadata = {}) {
     const normalizedTerm = String(term === null || term === undefined ? '' : term).toLowerCase().trim();
     if (!owner || !normalizedTerm || isPotentialVinSearchTerm(normalizedTerm)) return null;
     const entry = { term: buildOwnerScopedKey(owner, normalizedTerm), ownerId: owner, query: normalizedTerm, timestamp: Date.now(), metadata };
-    return performOp('searchHistory', 'readwrite', store => store.put(entry));
+    return performOp('searchHistory', 'readwrite', store => store.put(entry), { silent: true });
 }
 export async function getSearchHistory(ownerId, limit = 10) {
     const owner = normalizeLocalOwnerId(ownerId);
     if (!owner) return [];
-    const all = await performOp('searchHistory', 'readonly', store => store.getAll());
+    const all = await performOp('searchHistory', 'readonly', store => store.getAll(), { silent: true });
     if (!all) return [];
     const legacyVinTerms = all.filter(entry => entry && !entry.ownerId && isPotentialVinSearchTerm(entry.term)).map(entry => entry.term);
-    if (legacyVinTerms.length) await Promise.all(legacyVinTerms.map(term => performOp('searchHistory', 'readwrite', store => store.delete(term))));
+    if (legacyVinTerms.length) await Promise.all(legacyVinTerms.map(term => performOp('searchHistory', 'readwrite', store => store.delete(term), { silent: true })));
     return all.filter(entry => entry && entry.ownerId === owner && typeof entry.query === 'string')
         .sort((a,b) => b.timestamp-a.timestamp).slice(0,limit).map(entry => ({ ...entry, term: entry.query }));
 }
@@ -1292,7 +1292,7 @@ export async function saveViewedItem(item, ownerId) {
     if (!owner || !item || item.id === undefined || item.id === null) return null;
     const itemId = String(item.id);
     const entry = { id: buildOwnerScopedKey(owner, itemId), ownerId: owner, itemId, timestamp: Date.now(), data: item };
-    const result = await performOp('viewedItems', 'readwrite', store => store.put(entry));
+    const result = await performOp('viewedItems', 'readwrite', store => store.put(entry), { silent: true });
     cacheItemImages(item).catch(err => console.warn("Error precargando imágenes de visto recientemente:", err));
     return result;
 }
@@ -1304,7 +1304,7 @@ export async function cacheItemImages(item) {
 export async function getViewedItems(ownerId, limit = 20) {
     const owner = normalizeLocalOwnerId(ownerId);
     if (!owner) return [];
-    const all = await performOp('viewedItems','readonly',store=>store.getAll());
+    const all = await performOp('viewedItems','readonly',store=>store.getAll(), { silent: true });
     if (!all) return [];
     return all.filter(entry=>entry&&entry.ownerId===owner&&entry.data).sort((a,b)=>b.timestamp-a.timestamp)
         .slice(0,limit).map(entry=>({id:entry.itemId,timestamp:entry.timestamp,data:entry.data}));

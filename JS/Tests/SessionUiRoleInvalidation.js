@@ -124,7 +124,8 @@ function runSessionUiRoleInvalidationTests(sources) {
   const f=slice(auth,"export async function validateActiveSession(","export async function checkSession");
   assert(f.includes("result.valid === false")&&f.includes("logout('Tu sesión ya no está vigente. Inicia sesión nuevamente.', user)"));
   const startup=slice(auth,"export async function checkSession()","export async function ");
-  assert(startup.includes("validateSessionCoordinated(user, false)"));
+  assert(!startup.includes("validateSessionCoordinated")&&!startup.includes("apiValidateSession"));
+  assert(startup.includes("normalizedRole")&&startup.includes("handleLoginSuccess(user, false)"));
   const guard=slice(ui,"function ensureUiSessionRole_(","function getSessionPayload_");
   assert(!guard.includes("validateActiveSession"));
   assert(authService.includes("validateAndTouchSession_"),"El backend conserva la autorización integrada en la operación protegida.");

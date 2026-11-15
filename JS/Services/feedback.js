@@ -656,7 +656,6 @@ const FEEDBACK_ACTION_PERMISSIONS = Object.freeze({
     replyToFeedback: ["Desarrollador", "Jefe", "Supervisor"],
     markAsResolved: ["Desarrollador", "Jefe", "Supervisor"],
     deleteFeedbackItem: ["Desarrollador", "Jefe", "Supervisor"],
-    getCatalogChanges: null,
     getInboxRecipients: null, getInboxConversations: null, getInboxMessages: null,
     createInboxConversation: null, sendInboxMessage: null, markInboxRead: null, markInboxUnread: null, deleteInboxConversation: null, archiveInboxConversation: null,
     closeInboxConversation: ["Desarrollador", "Jefe", "Supervisor"],
@@ -664,7 +663,7 @@ const FEEDBACK_ACTION_PERMISSIONS = Object.freeze({
     initYouTubeUpload: null, getVideoApprovalByOperation: null, submitVideoForApproval: null,
     approveVideo: ["Desarrollador", "Jefe", "Supervisor"], rejectVideo: ["Desarrollador", "Jefe", "Supervisor"]
 });
-const FEEDBACK_PUBLIC_ACTIONS = new Set(["getPysData", "sendContactForm"]);
+const FEEDBACK_PUBLIC_ACTIONS = new Set(["getPysData", "sendContactForm", "getCatalogChanges"]);
 function authorizeFeedbackAction_(action, payload) {
     const source = payload && typeof payload === "object" ? payload : {};
     if (action === "suggestYear") return { ...source, ...resolveSuggestionYearActor(source) };
@@ -2703,7 +2702,8 @@ function buildPysExpectedRow_(id,p,url,models){return[id,p.titulo,p.descripcion,
 function pysRowMatchesPayload_(row,expected){return expected.every((v,i)=>String(row[i]==null?"":row[i])===String(v));}
 function verifyPendingPysImageFile_(r,image,folder){const file=DriveApp.getFileById(r.imageFileId);if(!file||(typeof file.isTrashed==="function"&&file.isTrashed()===true)||String(file.getMimeType())!==image.mimeType||Number(file.getSize())!==image.sizeBytes||r.imageUrl!=="https://drive.google.com/file/d/"+r.imageFileId+"/view")throw new Error("La imagen pendiente de la operación PyS no coincide con el contenido recibido; requiere revisión.");const d=String(file.getDescription()||"");if(!d.includes("problemId="+r.problemId)||!d.includes("fileId="+r.imageFileId))throw new Error("Los metadatos de la imagen pendiente PyS no permiten confirmar su asociación.");const parents=file.getParents();let direct=false;while(parents.hasNext())if(String(parents.next().getId())===String(folder.getId()))direct=true;if(!direct)throw new Error("La imagen pendiente no pertenece a la carpeta PyS autorizada.");assertPysImageFolderPermissions_(file,folder);return file;}
 function handleGetCatalogChanges(payload) {
-    getFeedbackActor_(payload, null);
+    // El feed solo contiene snapshots publicados del catálogo público; no requiere
+    // identidad FEEDBACK ni una lease de usuario para una consulta de solo lectura.
     const result = getSharedCatalogChanges_(payload && payload.cursor, payload && payload.limit);
     return result && result.status === "success"
         ? result

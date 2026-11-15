@@ -5,7 +5,17 @@ const main=read("../Frontend/main.js"),auth=read("../Frontend/auth.js"),ui=read(
 const policy=read("../Frontend/clientInteractionPolicy.js"),apiConfig=read("../Frontend/api-config.js"),users=read("../../HTML/users.html"),addCuts=read("../../HTML/add_cortes.html");
 const tests=[];function test(n,fn){fn();tests.push(n);}
 test("PWA declara la capacidad móvil estándar y conserva la etiqueta Apple",()=>{const index=read("../../index.html");assert.match(index,/<meta name="mobile-web-app-capable" content="yes">/);assert.match(index,/<meta name="apple-mobile-web-app-capable" content="yes">/);});
-test("no existe revalidación redundante al recuperar conexión; el arranque conserva la validación inicial",()=>{assert.doesNotMatch(main,/revalidateSessionOnResume_|installSessionRevalidation_/);assert.doesNotMatch(main,/auth\.validateActiveSession\(/);assert.match(main,/await auth\.checkSession\(\)/);assert.match(auth,/export async function checkSession\(\)/);assert.match(auth,/validateSessionCoordinated\(user, false\)/);});
+test("restaurar sesión usa el usuario y rol verificados en login sin otro viaje AUTH",()=>{
+ assert.doesNotMatch(main,/revalidateSessionOnResume_|installSessionRevalidation_/);
+ assert.doesNotMatch(main,/auth\.validateActiveSession\(/);
+ assert.match(main,/await auth\.checkSession\(\)/);
+ const start=auth.indexOf("export async function checkSession()"),end=auth.indexOf("\nexport async function login(",start);
+ assert.ok(start>=0&&end>start);
+ const check=auth.slice(start,end);
+ assert.doesNotMatch(check,/validateSessionCoordinated|apiValidateSession/);
+ assert.match(check,/user\.Privilegios/);
+ assert.match(check,/handleLoginSuccess\(user, false\)/);
+});
 test("el aviso superior no anuncia loading del catálogo",()=>assert.match(main,/banner\.hidden = !view\.visible \|\| currentState\.catalogLoadStatus === 'loading'/));
 test("la actualización no añade controles ni intercepta el gesto nativo",()=>{
  assert.equal(main.includes(".container.addEventListener('touchstart'"),false);
@@ -21,7 +31,12 @@ test("el catálogo conserva el arranque cache-first sin forzar recargas",()=>{
  assert.ok(auth.includes("export async function loadInitialData(forceRefresh = false, options = {})"));
  assert.ok(auth.includes("if (!forceRefresh && catalogLoaded && hasFreshCatalogSync_()) return"));
 });
-test("caché de sesión de 60 segundos",()=>{assert.match(auth,/VALIDATION_CACHE_TTL_MS = 60000/);assert.match(auth,/getRecentValidation\(user\)/);});
+test("restauración local no repite la consulta de usuario y rol",()=>{
+ const start=auth.indexOf("export async function checkSession()"),end=auth.indexOf("\nexport async function login(",start);
+ const check=auth.slice(start,end);
+ assert.doesNotMatch(check,/apiValidateSession|validateSessionCoordinated/);
+ assert.match(check,/normalizedRole/);
+});
 test("el sondeo incremental es silencioso, adaptativo y se suspende en segundo plano",()=>{assert.match(auth,/CATALOG_POLL_INTERVAL_MS = 45000/);assert.match(auth,/CATALOG_POLL_MAX_INTERVAL_MS = 300000/);assert.match(auth,/document\.visibilityState === "hidden"/);assert.match(auth,/window\.addEventListener\("online"/);assert.match(auth,/loadInitialData\(true, \{ silent: true, fromPoll: true \}\)/);assert.ok(auth.indexOf("offline.getCatalogSyncState()") < auth.indexOf("if (!catalogLoaded && !silent) setState({ catalogLoadStatus: 'loading'"), "El estado loading debe establecerse después de comprobar la caché local");assert.match(auth,/stopCatalogPolling_\(\)/);});
 test("las pestañas coordinan el sondeo y reciben cambios sin recargar el catálogo",()=>{assert.match(auth,/CATALOG_POLL_LEASE_MS = 60000/);assert.match(auth,/tryAcquireCatalogPollLease_\(user\)/);assert.match(auth,/releaseCatalogPollLease_\(user\)/);assert.match(auth,/new BroadcastChannel\("gpsepedia-catalog-sync"\)/);assert.match(auth,/handleCatalogSyncMessage_\(event && event\.data\)/);assert.match(auth,/offline\.getCatalogSyncState\(\)/);assert.match(auth,/broadcastCatalogSync_\(currentUser, requiresFullSnapshot \|\| pysDeltaChanges\.length > 0\)/);assert.match(auth,/message\.refreshPys === true/);});
 test("AUTH indisponible conserva sesión sin banner",()=>{const a=auth.indexOf("function restoreSessionAfterValidationUnavailable_"),b=auth.indexOf("\nexport async function checkSession",a);assert.ok(a>=0&&b>a);const s=auth.slice(a,b);assert.match(s,/handleLoginSuccess\(user, false\)/);assert.doesNotMatch(s,/showGlobalError/);});

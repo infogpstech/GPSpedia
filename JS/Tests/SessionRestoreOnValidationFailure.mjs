@@ -67,54 +67,52 @@ async function test(name, fn) {
     console.log('PASS ' + name);
 }
 
-await test('un timeout de AUTH conserva y restaura la sesión local', async () => {
-    const t = await buildCheckSession({ timeout: true });
+await test('restaura la identidad y rol verificados en login sin consultar AUTH de nuevo', async () => {
+    const t = await buildCheckSession({ valid: false, reason: 'missing_session' });
     await t.run();
+    assert.equal(t.calls.validations, 0);
     assert.equal(t.calls.restored.length, 1);
     assert.equal(t.calls.loggedOut.length, 0);
     assert.equal(t.calls.loaded, 1);
     assert.ok(t.getStored());
-    assert.match(t.calls.warnings[0], /se conservó la sesión local/i);
 });
-
-await test('un resultado de verificación no disponible no se interpreta como revocación', async () => {
-    const t = buildCheckSession({ valid: null, unavailable: true });
+await test('restaura sesión local aunque AUTH esté temporalmente inaccesible', async () => {
+    const t = await buildCheckSession(new Error('NETWORK_ERROR'));
     await t.run();
-    assert.equal(t.calls.restored.length, 1);
-    assert.equal(t.calls.loggedOut.length, 0);
-    assert.ok(t.getStored());
-});
-
-await test('un fallo de red conserva la sesión y permite reintentar después', async () => {
-    const t = buildCheckSession(new Error('NETWORK_ERROR'));
-    await t.run();
+    assert.equal(t.calls.validations, 0);
     assert.equal(t.calls.restored.length, 1);
     assert.equal(t.calls.loggedOut.length, 0);
     assert.equal(t.calls.removed, 0);
 });
-
-await test('sin conexión restaura la sesión local sin llamar a AUTH', async () => {
-    const t = buildCheckSession(new Error('No debe consultar AUTH'), { offline: true });
+await test('sin conexión restaura la misma sesión sin consultar AUTH', async () => {
+    const t = await buildCheckSession(new Error('No debe consultar AUTH'), { offline: true });
     await t.run();
     assert.equal(t.calls.validations, 0);
     assert.equal(t.calls.restored.length, 1);
     assert.equal(t.calls.loggedOut.length, 0);
 });
-
-await test('una revocación confirmada por AUTH sí cierra la sesión', async () => {
-    const t = buildCheckSession({ valid: false, reason: 'missing_session' });
+await test('la expiración local todavía cierra la sesión', async () => {
+    const t = await buildCheckSession({ valid: true }, { expired: true });
     await t.run();
+    assert.equal(t.calls.validations, 0);
     assert.equal(t.calls.loggedOut.length, 1);
     assert.equal(t.calls.restored.length, 0);
 });
-
-await test('una expiración local confirmada conserva el cierre de sesión', async () => {
-    const t = buildCheckSession({ valid: true }, { expired: true });
+await test('un rol ausente o desconocido no restaura una sesión local', async () => {
+    const t = await buildCheckSession({ valid: true });
+    t.user.Privilegios = 'Rol desconocido';
     await t.run();
-    assert.equal(t.calls.loggedOut.length, 1);
+    assert.equal(t.calls.validations, 0);
     assert.equal(t.calls.restored.length, 0);
+    assert.equal(t.calls.removed, 1);
+    assert.equal(t.calls.loginScreen.length, 1);
 });
-
+await test('el coordinador mantiene la barrera de token, epoch y revocación para acciones protegidas', () => {
+    const source = readFileSync(resolve(root, 'JS/Services/Coordinator.js'), 'utf8');
+    assert.match(source, /function authorizeSession_\(userId, token, currentTime\)/);
+    assert.match(source, /session\.createdAt <= Number\(context\.revokedBefore \|\| 0\)/);
+    assert.match(source, /currentTime >= absoluteExpiry \|\| currentTime >= idleExpiry/);
+});
 await test('AUTH devuelve no disponible ante excepción interna, no sesión revocada', () => {
     const handler = extract(service, 'function handleValidateSession(payload)', '\nfunction handleTouchSession(payload)');
     const fn = new Function('validateSessionReadOnly_', handler + '\nreturn handleValidateSession;')(
@@ -222,9 +220,11 @@ await test('las operaciones protegidas distinguen indisponibilidad de sesión in
     assert.match(api, /SESSION_VALIDATION_UNAVAILABLE/);
 });
 
-await test('la validación reciente puede reutilizarse al restaurar una actualización rápida', () => {
+await test('la restauración no ejecuta una segunda validación de AUTH', () => {
     const check = extract(client, 'export async function checkSession()', '\nexport async function login(');
-    assert.match(check, /validateSessionCoordinated\(user, false\)/);
+    assert.doesNotMatch(check, /validateSessionCoordinated|apiValidateSession/);
+    assert.match(check, /normalizedRole/);
+    assert.match(check, /handleLoginSuccess\(user, false\)/);
 });
 
-console.log('SessionRestoreOnValidationFailure: ' + passed + '/15 PASS');
+console.log('SessionRestoreOnValidationFailure: ' + passed + '/' + passed + ' PASS');

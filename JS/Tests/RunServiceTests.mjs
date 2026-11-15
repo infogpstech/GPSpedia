@@ -145,6 +145,7 @@ runGroup('35','UTILITIES',()=>{
 });
 runGroup('36','AUTH',()=>{
  runCli('AUTH aceptación de términos por usuario y dispositivo','JS/Tests/TermsAcceptance.js');
+ runCli('AUTH restauración de sesión sin revalidación redundante','JS/Tests/SessionRestoreOnValidationFailure.mjs');
  runCli('AUTH PBKDF2 versionado, compatibilidad legacy y coste','JS/Tests/PasswordHashMigration.mjs');
  runCli('AUTH benchmark PBKDF2 protegido de solo lectura','JS/Tests/PasswordKdfBenchmark.mjs');
  runCli('ADMIN auditoría de referencias de IDs de Tutorial','JS/Tests/TutorialIdReferenceAudit.mjs');

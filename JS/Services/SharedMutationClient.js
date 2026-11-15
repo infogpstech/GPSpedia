@@ -97,7 +97,33 @@ function createSharedMutationClient_(dependencies) {
     }
 
     function getCatalogChanges(cursor, limit) {
-        return send_("getCatalogChanges", "FEEDBACK", "getCatalogChanges", { cursor: cursor, limit: limit });
+        const url = String(properties.getProperty("GPSpedia_COORDINATOR_URL") || "").trim();
+        if (!url.startsWith("https://script.google.com/macros/s/") || !url.endsWith("/exec")) {
+            throw new Error("La URL del coordinador compartido no está configurada correctamente.");
+        }
+        const query = "?catalogFeed=1&cursor=" + encodeURIComponent(cursor == null ? 0 : cursor) +
+            "&limit=" + encodeURIComponent(limit == null ? 50 : limit);
+        let response;
+        try {
+            response = fetch(url + query, {
+                method: "get",
+                muteHttpExceptions: true,
+                followRedirects: true
+            });
+        } catch (error) {
+            throw new Error("No fue posible consultar el feed público del catálogo.");
+        }
+        const httpStatus = response.getResponseCode();
+        let result;
+        try {
+            result = JSON.parse(response.getContentText());
+        } catch (error) {
+            throw new Error("El coordinador no devolvió un feed de catálogo JSON válido (HTTP " + httpStatus + ").");
+        }
+        if (httpStatus < 200 || httpStatus >= 300 || !result || result.status !== "success") {
+            throw new Error(result && result.message ? result.message : "No se pudo consultar el feed público del catálogo (HTTP " + httpStatus + ").");
+        }
+        return result;
     }
     function registerSession(userId, sessionToken, role, fullName, createdAt, lastActivityAt) {
         return send_("registerSession", "AUTH", "registerSession", { userId, sessionToken, role, fullName, createdAt, lastActivityAt });

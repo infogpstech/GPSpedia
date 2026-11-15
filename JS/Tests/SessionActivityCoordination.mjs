@@ -34,7 +34,9 @@ testCase("FEEDBACK coordina operaciones protegidas y deja públicas solo las rut
  assert.match(feedback,/return withSharedMutationLease_\("FEEDBACK", "sessionActivity"/);
  assert.match(feedback,/return withSharedMutationLease_\("FEEDBACK", action/);
  assert.match(feedback,/touchSessionActivityIfDue_\(sh,sessionMatch\.rowIndex,sessionMatch\.row,6\)/);
- assert.match(feedback,/new Set\(\["getPysData", "sendContactForm"\]\)/);
+ assert.match(feedback,/new Set\(\["getPysData", "sendContactForm", "getCatalogChanges"\]\)/);
+ assert.doesNotMatch(feedback,/getCatalogChanges:\s*null/);
+ assert.match(client,/catalogFeed=1/);
  assert.match(feedback,/const actor = assertFeedbackSession\(source, FEEDBACK_ACTION_PERMISSIONS\[action\]\)/);
 });
 testCase("Los servicios localizan token y perfil por fila exacta y reducen escrituras de actividad",()=>{

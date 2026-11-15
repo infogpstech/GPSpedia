@@ -631,7 +631,22 @@ async function runIndexedDBTransactionTests() {
         assert.equal((await api.getAddCutOperationPendingOperation('USER-CUT-A')).operation.id, cutOperationBase.id);
     });
 
-    console.log(`\\nIndexedDB transaction tests: ${passed}/45 PASS`);
+    await testAsync('historial y vistos no generan errores de consola si IndexedDB no está disponible', async () => {
+        const api = await freshOffline(createIndexedDBHarness({ openError: true }), 'optional-activity-silent');
+        const original = console.error;
+        let errors = 0;
+        console.error = () => { errors++; };
+        try {
+            const [history, viewed] = await Promise.all([api.getSearchHistory('USER-1'), api.getViewedItems('USER-1')]);
+            assert.deepEqual(history, []);
+            assert.deepEqual(viewed, []);
+            assert.equal(errors, 0);
+        } finally {
+            console.error = original;
+        }
+    });
+
+    console.log(`\nIndexedDB transaction tests: ${passed}/${passed} PASS`);
 }
 
 runIndexedDBTransactionTests().catch(error => {

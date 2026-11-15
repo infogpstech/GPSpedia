@@ -446,7 +446,7 @@ export async function loadInitialData(forceRefresh = false, options = {}) {
             idbFastCandidate,
             fallbackFastCandidate,
             combinedCacheRead,
-            new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout local")), 3000))
+            new Promise(resolve => setTimeout(() => resolve({ source: "timeout", state: null }), 3000))
         ]);
         const cachedState = cachedResult && cachedResult.state;
         if (!isCurrentLoad()) return;
@@ -764,28 +764,19 @@ export async function checkSession() {
         return;
     }
     if (!isCurrentSession(user)) return;
-    if (window.navigator && window.navigator.onLine === false) {
-        restoreSessionAfterValidationUnavailable_(user);
+    // La identidad y el rol se verificaron al iniciar sesión. La restauración utiliza
+    // ese perfil local sin otro viaje de red a AUTH. El backend sigue autorizando cada
+    // solicitud protegida mediante el token y el contexto central de sesión/revocación;
+    // nunca confía en el rol enviado por el navegador.
+    const normalizedRole = String(user.Privilegios || "")
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase().replace(/\s+/g, "_");
+    if (!["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"].includes(normalizedRole)) {
+        if (localStorage.getItem(SESSION_KEY) === sessionData) localStorage.removeItem(SESSION_KEY);
+        setState({ currentUser: null, searchHistory: [], viewedItems: [] });
+        showLoginScreen("La sesión no contiene un rol válido. Inicia sesión nuevamente.");
         return;
     }
-    try {
-        // Permite reutilizar una confirmación AUTH muy reciente tras una actualización rápida.
-        const result = await validateSessionCoordinated(user, false);
-        if (result && result.stale) return;
-        if (result && result.valid === true) {
-            const validatedUser = persistSessionValidation(user, result);
-            if (!validatedUser || !sameSession(readStoredSession(), user)) return;
-            if (handleLoginSuccess(validatedUser, false)) loadInitialData(); return;
-        }
-        if (result && result.valid === false) {
-            logout("Tu sesión ha expirado o fue revocada. Inicia sesión nuevamente.", user);
-            return;
-        }
-        restoreSessionAfterValidationUnavailable_(user);
-    } catch (error) {
-        if (!isCurrentSession(user)) return;
-        restoreSessionAfterValidationUnavailable_(user, error);
-    }
+    if (handleLoginSuccess(user, false)) loadInitialData();
 }
 
 export async function login(username, password) {

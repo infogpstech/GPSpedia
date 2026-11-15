@@ -6,6 +6,7 @@ const feedbackSource = read("../Services/feedback.js");
 const writeSource = read("../Services/write.js");
 const adminSource = read("../Services/admin.js");
 const apiSource = read("../Frontend/api-config.js");
+const clientSource = read("../Services/SharedMutationClient.js");
 let passed = 0;
 function test(name, fn) { fn(); passed++; console.log("PASS " + name); }
 const propertiesStore = {};
@@ -61,8 +62,8 @@ test("reset explícito se publica como evento global", () => {
     const page = request("getCatalogChanges","FEEDBACK","getCatalogChanges",{cursor:3,limit:5});
     assert.equal(page.changes[0].collection,"*"); assert.equal(page.changes[0].operation,"reset");
 });
-test("rechaza consultas incrementales desde servicios distintos de FEEDBACK", () => {
-    assert.throws(()=>request("getCatalogChanges","WRITE","getCatalogChanges",{cursor:0,limit:5}),/solo está habilitada para FEEDBACK/);
+test("rechaza consultas POST internas del feed desde servicios distintos de FEEDBACK", () => {
+    assert.throws(()=>request("getCatalogChanges","WRITE","getCatalogChanges",{cursor:0,limit:5}),/no está habilitada para este origen/);
 });
 test("rechaza cursor futuro y límites fuera del contrato", () => {
     assert.equal(request("getCatalogChanges","FEEDBACK","getCatalogChanges",{cursor:999,limit:5}).resetRequired,true);
@@ -85,12 +86,48 @@ test("huecos o eventos corruptos obligan a reiniciar el cursor", () => {
 test("se autentica cada solicitud y no permite leer el feed con secreto incorrecto", () => {
     assert.throws(()=>request("getCatalogChanges","FEEDBACK","getCatalogChanges",{cursor:0,limit:5},"bad"),/no autorizado/);
 });
-test("FEEDBACK expone la lectura autenticada y el cliente enruta al servicio correcto", () => {
-    assert.match(feedbackSource,/getCatalogChanges:\s*null/);
+test("el feed público no exige actor ni secreto interno de FEEDBACK", () => {
+    assert.doesNotMatch(feedbackSource,/getCatalogChanges:\s*null/);
+    assert.match(feedbackSource,/const FEEDBACK_PUBLIC_ACTIONS = new Set\(\[[^\]]*getCatalogChanges/);
     assert.match(feedbackSource,/case 'getCatalogChanges':\s*response = handleGetCatalogChanges\(payload\)/);
-    assert.match(feedbackSource,/function handleGetCatalogChanges\(payload\)[\s\S]*?getFeedbackActor_\(payload, null\)/);
-    assert.match(feedbackSource,/function getFeedbackActor_\(payload,allowedRoles\)[\s\S]*?assertFeedbackSession\(payload,allowedRoles\)/);
+    assert.doesNotMatch(feedbackSource,/function handleGetCatalogChanges\(payload\)[\s\S]*?getFeedbackActor_\(payload, null\)/);
+    assert.match(clientSource,/catalogFeed=1/);
+    assert.match(coordinatorSource,/function doGet\(e\)/);
     assert.match(apiSource,/'getCatalogChanges': 'FEEDBACK'/);
+});
+test("la lectura pública preserva cursor y límites sin autenticar servicio", () => {
+    const headPage = coordinator.getPublicCatalogChanges({cursor:Number.MAX_SAFE_INTEGER,limit:1});
+    assert.equal(headPage.status,"success");
+    assert.equal(headPage.resetRequired,true);
+    request("publishCatalogChange","WRITE","addOrUpdateCut",{change:{collection:"cortes",recordId:"PUBLIC-READ-1",operation:"delete"}});
+    const page = coordinator.getPublicCatalogChanges({cursor:headPage.currentRevision,limit:1});
+    assert.equal(page.status,"success");
+    assert.equal(page.changes.length,1);
+    assert.equal(page.changes[0].recordId,"PUBLIC-READ-1");
+    assert.equal(page.nextCursor,headPage.currentRevision+1);
+    assert.throws(()=>coordinator.getPublicCatalogChanges({cursor:-1,limit:5}),/cursor/);
+    assert.throws(()=>coordinator.getPublicCatalogChanges({cursor:0,limit:51}),/entre 1 y 50/);
+});
+test("SharedMutationClient usa GET y funciona sin GPSpedia_COORDINATOR_SECRET", () => {
+    const clientFactory = new Function("dependencies",clientSource+"\nreturn createSharedMutationClient_(dependencies);");
+    const client = clientFactory({
+        properties: { getProperty: key => key === "GPSpedia_COORDINATOR_URL" ? "https://script.google.com/macros/s/TEST_DEPLOYMENT/exec" : null },
+        uuid,
+        logger: () => {},
+        fetch: (url,options) => {
+            assert.equal(options.method,"get");
+            const parsed = new URL(url);
+            assert.equal(parsed.searchParams.get("catalogFeed"),"1");
+            const data = coordinator.getPublicCatalogChanges({cursor:parsed.searchParams.get("cursor"),limit:parsed.searchParams.get("limit")});
+            return {getResponseCode:()=>200,getContentText:()=>JSON.stringify(data)};
+        }
+    });
+    const headPage = coordinator.getPublicCatalogChanges({cursor:Number.MAX_SAFE_INTEGER,limit:1});
+    request("publishCatalogChange","WRITE","addOrUpdateCut",{change:{collection:"cortes",recordId:"PUBLIC-CLIENT-1",operation:"delete"}});
+    const page = client.getCatalogChanges(headPage.currentRevision,1);
+    assert.equal(page.status,"success");
+    assert.equal(page.changes.length,1);
+    assert.equal(page.changes[0].recordId,"PUBLIC-CLIENT-1");
 });
 test("recordLike publica un snapshot completo y ordenado de Cortes sin helpers externos", () => {
     assert.match(feedbackSource,/case 'recordLike':\s*response = handleRecordLike\(payload\)/);

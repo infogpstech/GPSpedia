@@ -870,8 +870,8 @@ function createSharedMutationCoordinator_(dependencies) {
     }
 
     function getCatalogChanges_(service, operation, payload) {
-        if (service !== "FEEDBACK" || operation !== "getCatalogChanges") {
-            throw new Error("La consulta incremental solo está habilitada para FEEDBACK.");
+        if (!((service === "FEEDBACK" || service === "PUBLIC") && operation === "getCatalogChanges")) {
+            throw new Error("La consulta incremental no está habilitada para este origen.");
         }
         const cursor = payload.cursor === undefined || payload.cursor === null || payload.cursor === "" ? 0 : Number(payload.cursor);
         const requestedLimit = payload.limit === undefined ? 50 : Number(payload.limit);
@@ -924,10 +924,37 @@ function createSharedMutationCoordinator_(dependencies) {
         throw new Error("Acción interna desconocida para el coordinador.");
     }
 
-    return { handleRequest: handleRequest };
+    return {
+        handleRequest: handleRequest,
+        // Feed público: solo expone los eventos ya publicados de colecciones del catálogo.
+        // Las escrituras y las operaciones de sesión continúan en el canal POST autenticado.
+        getPublicCatalogChanges: function(payload) {
+            return getCatalogChanges_("PUBLIC", "getCatalogChanges", payload || {});
+        }
+    };
 }
 
-function doGet() {
+function doGet(e) {
+    const parameters = e && e.parameter && typeof e.parameter === "object" ? e.parameter : {};
+    if (String(parameters.catalogFeed || "") === "1") {
+        let response;
+        try {
+            const coordinator = createSharedMutationCoordinator_({
+                properties: PropertiesService.getScriptProperties(),
+                lockService: LockService,
+                now: function() { return Date.now(); },
+                uuid: function() { return Utilities.getUuid(); },
+                sleep: function(milliseconds) { Utilities.sleep(milliseconds); }
+            });
+            response = coordinator.getPublicCatalogChanges({
+                cursor: parameters.cursor,
+                limit: parameters.limit
+            });
+        } catch (error) {
+            response = { status: "error", message: error && error.message ? error.message : "No se pudo consultar el catálogo." };
+        }
+        return ContentService.createTextOutput(JSON.stringify(response)).setMimeType(ContentService.MimeType.JSON);
+    }
     return ContentService.createTextOutput(JSON.stringify({
         status: "success",
         service: "GPSpedia-SharedMutationCoordinator",

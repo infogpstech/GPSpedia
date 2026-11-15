@@ -43,7 +43,10 @@ function createHarness(options = {}) {
             if (value instanceof Error) throw value;
             return value === undefined ? null : value;
         },
-        async getCatalogSyncState() { return { snapshot: await this.getCatalog(), cursor: options.cacheCursor === undefined ? null : options.cacheCursor }; },
+        async getCatalogSyncState() {
+            if (options.pendingIndexedDbRead) return new Promise(() => {});
+            return { snapshot: await this.getCatalog(), cursor: options.cacheCursor === undefined ? null : options.cacheCursor };
+        },
         async getCatalogFallbackCache() { return options.fallbackCache || null; },
         async saveCatalogFallbackCache(snapshot, cursor) { this.fallbackSaved = { snapshot, cursor }; return true; },
         async saveCatalog(value) {
@@ -123,7 +126,10 @@ function createHarness(options = {}) {
         async data => { setState({ catalogData: data }); return true; },
         { log() {}, warn: (...args) => warnings.push(args), error() {} },
         AbortController,
-        () => 0
+        (callback, delay) => {
+            if (options.forceLocalCacheTimeout && delay === 3000) { queueMicrotask(callback); return 1; }
+            return 0;
+        }
     );
     return {
         state, errors, warnings, patches,
@@ -392,5 +398,15 @@ await test('la entrada de nuevas tarjetas respeta prefers-reduced-motion', async
     assert.match(insertion, /prefers-reduced-motion: reduce/);
     assert.match(insertion, /if \(!prefersReducedMotion\)/);
     assert.match(insertion, /newCard\.style\.transition = prefersReducedMotion \? 'none'/);
+});
+await test('una apertura IndexedDB lenta no crea un falso error local ni bloquea el snapshot remoto', async () => {
+    const h = createHarness({ pendingIndexedDbRead: true, forceLocalCacheTimeout: true });
+    const result = await h.load(true);
+    assert.equal(result, true);
+    assert.equal(h.fetchCalls, 1);
+    assert.equal(h.state.catalogLoadStatus, 'ready');
+    assert.equal(h.warnings.some(args => String(args[0] || '').includes('Timeout local')), false);
+    assert.equal(authSource.includes('new Error("Timeout local")'), false);
+    assert.match(authSource, /source: "timeout", state: null/);
 });
 console.log('CatalogStartupIntegrity: ' + passed + '/' + passed + ' PASS');

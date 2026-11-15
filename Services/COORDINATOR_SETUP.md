@@ -79,7 +79,13 @@ Los servicios `USERS`, `WRITE`, `ADMIN`, `FEEDBACK` y `UTILITIES` envían `userI
 
 ## Diagnóstico de autorización del coordinador FEEDBACK
 
-El error `Servicio no autorizado para el coordinador compartido` se produce en la autenticación del servicio, antes de evaluar el rol del usuario. Para FEEDBACK, comprobar en el proyecto Apps Script del servicio que `GPSpedia_COORDINATOR_URL` apunta al coordinador del mismo entorno y que `GPSpedia_COORDINATOR_SECRET` coincide exactamente con `GPSpedia_COORDINATOR_SECRET_FEEDBACK` del coordinador. Confirmar también que FEEDBACK incluye la versión vigente de `JS/Services/SharedMutationClient.js` y que el coordinador desplegado contiene la política de `FEEDBACK/sessionActivity` y las acciones utilizadas. No corregir este error ampliando roles ni relajando las listas RBAC: una credencial de servicio inválida debe seguir fallando cerrada.
+El feed incremental del catálogo es una lectura pública y de solo lectura. La versión actual del coordinador expone el endpoint GET de consulta con los parámetros catalogFeed=1, cursor y limit; devuelve exclusivamente eventos del journal del catálogo público (Cortes, Tutoriales, Relay y Logos), cuyo contenido también se entrega mediante el servicio público CATALOG.
+
+- La lectura del feed no adquiere una lease de usuario ni utiliza GPSpedia_COORDINATOR_SECRET_FEEDBACK. No se debe configurar un secreto en el navegador ni exponer credenciales para consultar el catálogo.
+- El POST interno de Coordinator sigue autenticando por secreto de servicio y conserva deny-by-default para leases, publicaciones, sesiones y mutaciones.
+- Las rutas privadas de FEEDBACK (Inbox, actividad, tickets y mutaciones) siguen requiriendo el secreto de servicio correcto y el actor de sesión confiable. La excepción del feed no se extiende a esas acciones.
+- Si el error de servicio no autorizado aparece todavía al consultar getCatalogChanges, comprobar que el deployment Beta de Coordinator y el de FEEDBACK incluyen esta versión compatible. Un deployment antiguo puede seguir ejecutando el cliente POST/FEEDBACK anterior.
+- Para fallos de otras acciones FEEDBACK, cotejar de forma privada GPSpedia_COORDINATOR_URL y GPSpedia_COORDINATOR_SECRET del proyecto FEEDBACK con el deployment y GPSpedia_COORDINATOR_SECRET_FEEDBACK del coordinador del mismo entorno. No imprimir ni registrar valores.
 
 ## Política y recuperación
 
@@ -92,15 +98,3 @@ El token de lease solo se transmite entre servicios Apps Script. No debe exponer
 ## Límites de esta entrega
 
 No se modifica `JS/Frontend/api-config.js`, no se cambian endpoints de servicios existentes y no se realizan deployments ni pruebas contra Spreadsheet/Drive productivos. La activación requiere desplegar/configurar primero el coordinador de cada entorno y después actualizar los proyectos de servicio. Las pruebas reales de concurrencia entre proyectos y la validación de deployments quedan diferidas a Beta.
-
-
-## Diagnóstico: «Servicio no autorizado para el coordinador compartido» en FEEDBACK
-
-Este mensaje se genera en el coordinador cuando el servicio presentado no está autorizado o el secreto recibido no coincide. Para el feed incremental, FEEDBACK debe usar el mismo entorno en ambos extremos:
-
-1. En ScriptProperties del proyecto FEEDBACK, comprobar que `GPSpedia_COORDINATOR_URL` apunta al deployment `/exec` del coordinador de ese entorno.
-2. Comparar de forma privada `GPSpedia_COORDINATOR_SECRET` de FEEDBACK con `GPSpedia_COORDINATOR_SECRET_FEEDBACK` del proyecto coordinador. Deben coincidir exactamente y tener al menos 32 caracteres.
-3. Confirmar que el deployment FEEDBACK incluye `SharedMutationClient.js` y no apunta a un coordinador Beta/producción distinto.
-4. No imprimir, copiar a logs ni registrar los secretos. `coordinatorConfigured` solo valida presencia/formato local; no demuestra que el secreto coincida con el coordinador remoto.
-
-La lectura del feed no puede omitir la autenticación del coordinador ni sustituirla por un secreto del navegador. Corregir los valores únicamente en los proyectos Apps Script del entorno autorizado; no cambiar endpoints ni secretos productivos desde el frontend.
