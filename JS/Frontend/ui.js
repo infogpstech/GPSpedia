@@ -6192,12 +6192,17 @@ ${elapsedSec}s
                         const count = document.createElement('p');
                         count.textContent = item.formulaCount + ' fórmulas detectadas.';
                         section.append(heading, count);
-                        (item.samples || []).slice(0, 8).forEach(sample => {
+                        (item.samples || []).slice(0, 100).forEach(sample => {
                             const line = document.createElement('p');
                             line.textContent = 'Fila ' + sample.row + ' · ID calculado: ' +
                                 String(sample.id) + ' · Fórmula: ' + sample.formula;
                             section.appendChild(line);
                         });
+                        if (item.samplesTruncated) {
+                            const more = document.createElement('p');
+                            more.textContent = 'Se muestran las primeras 100 filas; el reporte contiene más coincidencias.';
+                            section.appendChild(more);
+                        }
                         identifierAuditResults.appendChild(section);
                     });
                     if (!columns.length) identifierAuditResults.textContent = 'No se encontraron fórmulas en columnas con encabezados identificadores.';
