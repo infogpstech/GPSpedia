@@ -141,6 +141,15 @@ Registrar duración por iteración, fecha, deployment/versión y runtime. Repeti
 - [x] Probar localmente fill_missing, freeze_formula, colisiones, claves no únicas, reanudación por lotes, rollback, rechazo de cambios posteriores y congelación Relay sin cambiar valor/tipo (IdentifierMigration: 10/10 PASS).
 - [ ] Ejecutar dry-run y prueba de rollback en una copia Beta real; no se modificaron hojas ni Drive.
 
+**Ampliación confirmada por el usuario (2026-11-15) — migración integral de IDs calculados por fórmula:**
+- La migración no se limita a Users y Cortes ni a las seis entidades que hoy conoce el motor. Debe descubrir todas las columnas de identificador cuyo valor se calcula mediante fórmulas y que se propagan copiando la fórmula de la fila anterior.
+- En el modal de Desarrollador, la auditoría debe mostrar por cada columna/hoja el encabezado, letra/índice de columna, fórmula detectada y el valor calculado resultante por fila. Ejemplos de formatos que deben conservarse: `="U-"&TEXTO(FILA()-1,"000")` → `U-001`; `="V-"&TEXTO(FILA()-1,"000")` → `V-001`.
+- La migración debe sustituir cada fórmula por su valor calculado exacto, sin renumerar registros, cambiar prefijos, padding, mayúsculas/minúsculas ni alterar referencias existentes. Las fórmulas originales y valores previos deben quedar incluidos en el manifiesto/snapshot para verificación y rollback.
+- Para altas nuevas, cada escritor backend debe asignar el ID respetando el patrón detectado/configurado para esa columna; no se debe volver a copiar fórmulas desde la fila anterior. El asignador debe ser centralizado, concurrente y comprobar colisiones contra los valores existentes antes de reservar un ID.
+- No inferir que todas las columnas usan secuencia numérica simple: se debe analizar la fórmula/patrón real y bloquear cualquier columna cuyo patrón no pueda interpretarse con seguridad. Relay y otras columnas sin escritor/formato confirmado permanecen en solo auditoría/congelación segura hasta completar su análisis.
+- El reporte debe distinguir columnas identificadoras con fórmula, identificadores fijos ya backend, fórmulas no reconocidas, valores vacíos, duplicados y conflictos de referencias. La ejecución de escritura seguirá requiriendo respaldo verificado, dry-run aprobado y confirmación explícita.
+- No ejecutar migraciones ni pruebas de despliegue de Apps Script contra datos reales durante esta implementación local; la validación de datos/deployment queda para Beta.
+
 ### P3 — Rediseño Inbox
 **Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
 
