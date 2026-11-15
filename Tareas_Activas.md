@@ -1001,3 +1001,19 @@ El trabajo local GP-INBOX-04B/04C/04D queda cubierto en backend y contratos. No 
 - Sin cambios de código después de ese CI; el commit posterior `e311fb6895e035f57277d01e180f29241c9d414e` solo añade el protocolo Beta. No se desplegó Apps Script ni se crearon hojas remotas.
 
 **Siguiente estado:** no quedan tareas locales independientes de Inbox pendientes dentro del alcance autorizado. Quedan las validaciones Beta, integración visual del historial propio/selector de ticket y selección múltiple, que requieren despliegues autorizados o nuevos controles visibles. Continuar con auditorías locales independientes solo si no requieren esos controles ni acceso a datos externos.
+
+### P2 — Migración global de fórmulas ID y asignación backend (2026-11-15)
+
+**Estado: IMPLEMENTACIÓN LOCAL EN RAMA; VALIDACIÓN DE DATOS REALES DIFERIDA A BETA.**
+
+- El modal Desarrollador incluye auditoría global de columnas identificadoras en todas las hojas visibles, mostrando hoja, columna, valor calculado y fórmula original.
+- La migración conserva exactamente los IDs y su formato actual; no renumera registros. Solo incluye fórmulas reconocidas como secuencias compatibles (por ejemplo, `="U-"&TEXTO(FILA()-1,"000")` y `="V-"&TEXTO(FILA()-1,"000")`), con valor no vacío, fila con datos y valor único.
+- Las fórmulas no reconocidas, IDs duplicados, resultados vacíos y filas sin datos se excluyen del lote; las fórmulas no reconocidas quedan señaladas para revisión y no se congelan sin un generador backend compatible.
+- La migración usa simulación, digest/huellas, snapshot completo por hoja, manifiesto oculto, confirmación con respaldo verificado y lotes reanudables. Cada celda se convierte en su valor calculado y se verifica que la fórmula desapareció sin alterar el ID.
+- Los patrones reconocidos se guardan en configuración central oculta para que el backend conserve prefijo y relleno numérico después de retirar las fórmulas.
+- Se reemplazó la copia de fórmulas en los escritores de FEEDBACK por asignación backend secuencial con ScriptLock; la copia de formato y validaciones se mantiene separada. Users y Cortes ya disponían de asignación backend.
+- No se ejecutó la migración sobre Spreadsheet real ni se desplegó Apps Script. La auditoría real de todas las hojas, confirmación de fórmulas/IDs actuales y ejecución de lotes quedan para una copia Beta autorizada. Relay sigue sin escritor backend confirmado; no se generan IDs ni se congela una fórmula cuyo patrón no esté soportado.
+- Pruebas: `IdentifierFormulaMigration` (incluye multihoja, simulación sin escritura, lotes/reanudación, huella obsoleta y exclusión de fórmulas no reconocidas); `FeedbackFormulaIdAllocator` (secuencia backend, bloqueo, configuración persistida, duplicados y filas sin ID). CI Node.js 22 run `43758115537`, HEAD `b9642cc66d250a29f450b53f6a4e7154d4927f2e`: SUCCESS; **102 suites / 1,553 pruebas / 0 fallos**.
+
+**Pendiente:** ejecutar dry-run sobre copia Beta; revisar todos los encabezados/formulas reportados, incluidos patrones no reconocidos; verificar referencias y escritores backend por hoja; autorizar lotes, reanudación y rollback únicamente en Beta. No tocar producción.
+
