@@ -549,7 +549,8 @@ function createSharedMutationCoordinator_(dependencies) {
                     if (!sessionUserId) throw new Error("La sesión fue revocada, no existe o no es única.");
                 }
                 if (Boolean(sessionUserId) !== Boolean(sessionToken)) throw new Error("La identidad de sesión está incompleta.");
-                const actor = service !== "AUTH" && sessionToken ? authorizeSession_(sessionUserId, sessionToken, currentTime) : null;
+                const actor = sessionToken && !(service === "AUTH" && operation === "logout")
+                    ? authorizeSession_(sessionUserId, sessionToken, currentTime) : null;
                 const current = readLeases_();
                 const pruned = pruneExpiredLeases_(current, currentTime);
                 const leases = pruned.leases;
