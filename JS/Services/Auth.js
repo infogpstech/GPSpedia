@@ -1138,6 +1138,7 @@ function handleValidateSession(payload) {
         if (!userId || !sessionToken) return { valid: false };
         const sharedContext = validateSharedSessionContext_(userId, sessionToken);
         if (!sharedContext || sharedContext.valid !== true || !sharedContext.actor) return { valid: false, reason: 'shared_context_invalid' };
+        syncAuthSheetActivityFromActor_(userId, sessionToken, sharedContext.actor);
         return validateSessionReadOnly_(sessionToken, userId, sharedContext.actor);
     } catch (error) {
         console.error('handleValidateSession:', error && error.message ? error.message : error);
