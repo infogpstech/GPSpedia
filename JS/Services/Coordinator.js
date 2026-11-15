@@ -449,7 +449,12 @@ function createSharedMutationCoordinator_(dependencies) {
         if (!userId || !token) throw new Error("La revocación requiere userId y sessionToken.");
         return withCoordinatorLock_(() => {
             const context = readAuthContext_(userId);
-            if (!context) return { status: "success", revoked: false, alreadyRevoked: true };
+            if (!context) {
+                if (String(properties.getProperty(authTokenIndexKey_(token)) || "") === userId) {
+                    properties.deleteProperty(authTokenIndexKey_(token));
+                }
+                return { status: "success", revoked: false, alreadyRevoked: true };
+            }
             const previous = context.sessions.length;
             context.sessions = context.sessions.filter(session => !constantTimeEquals_(session.token, token));
             saveAuthContext_(context);
@@ -544,6 +549,11 @@ function createSharedMutationCoordinator_(dependencies) {
                     properties.deleteProperty(authTokenIndexKey_(session.token));
                 }
             });
+            rejectedTokens.forEach(token => {
+                if (String(properties.getProperty(authTokenIndexKey_(token)) || "") === userId) {
+                    properties.deleteProperty(authTokenIndexKey_(token));
+                }
+            });
             accepted.forEach(session => properties.setProperty(authTokenIndexKey_(session.token), userId));
             context.sessions = accepted;
             saveAuthContext_(context);
@@ -578,10 +588,17 @@ function createSharedMutationCoordinator_(dependencies) {
         const matches = context.sessions.filter(session => constantTimeEquals_(session.token, token));
         if (matches.length !== 1) throw new Error("La sesión fue revocada, no existe o no es única.");
         const session = matches[0];
+        if (session.createdAt <= Number(context.revokedBefore || 0)) {
+            context.sessions = context.sessions.filter(item => item !== session);
+            saveAuthContext_(context);
+            if (String(properties.getProperty(authTokenIndexKey_(token)) || "") === userId) {
+                properties.deleteProperty(authTokenIndexKey_(token));
+            }
+            throw new Error("La sesión fue revocada; inicia sesión nuevamente.");
+        }
         const absoluteExpiry = addUtcMonths_(session.createdAt, SHARED_AUTH_ABSOLUTE_MONTHS_);
         const idleExpiry = addUtcMonths_(session.lastActivityAt, SHARED_AUTH_IDLE_MONTHS_);
-        if (session.createdAt <= Number(context.revokedBefore || 0) ||
-            !Number.isFinite(absoluteExpiry) || !Number.isFinite(idleExpiry) ||
+        if (!Number.isFinite(absoluteExpiry) || !Number.isFinite(idleExpiry) ||
             currentTime >= absoluteExpiry || currentTime >= idleExpiry) {
             context.sessions = context.sessions.filter(item => item !== session);
             saveAuthContext_(context);
