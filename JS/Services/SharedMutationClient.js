@@ -173,3 +173,30 @@ function revokeSharedUserSessionContexts_(userId) {
     });
     return client.revokeUserSessions(userId);
 }
+
+
+function withSharedSessionActor_(event, actor) {
+    const source = event && event.postData && typeof event.postData.contents === "string"
+        ? event.postData.contents : "{}";
+    const request = JSON.parse(source);
+    if (!request || typeof request !== "object" || Array.isArray(request)) {
+        throw new Error("La solicitud protegida no tiene un formato válido.");
+    }
+    const payload = request.payload && typeof request.payload === "object" && !Array.isArray(request.payload)
+        ? Object.assign({}, request.payload) : {};
+    delete payload.__sharedSessionActor;
+    if (actor && typeof actor === "object" &&
+        typeof actor.userId === "string" && typeof actor.role === "string" &&
+        Number.isSafeInteger(actor.epoch) && actor.epoch > 0) {
+        payload.__sharedSessionActor = {
+            userId: actor.userId,
+            role: actor.role,
+            fullName: String(actor.fullName || ""),
+            epoch: actor.epoch
+        };
+    }
+    request.payload = payload;
+    return Object.assign({}, event || {}, {
+        postData: Object.assign({}, event && event.postData || {}, { contents: JSON.stringify(request) })
+    });
+}
