@@ -1255,6 +1255,9 @@ function doPostInternal_(e) {
             case 'auditIdentifiers':
                 response = handleAuditIdentifiers();
                 break;
+            case 'freezeIdentifierFormulas':
+                response = handleFreezeIdentifierFormulas_(payload);
+                break;
             case 'migrateIdentifiers':
                 response = handleMigrateIdentifiers_(payload, logMessage);
                 break;
@@ -4209,6 +4212,189 @@ function auditAllFormulaIdentifierColumns_(ss) {
         formulaCount,
         formulaColumnCount: columns.length
     };
+}
+
+const IDENTIFIER_FORMULA_FREEZE_MANIFEST_ = "__IdentifierFormulaFreezeManifest__";
+const IDENTIFIER_FORMULA_FREEZE_HEADERS_ = ["migrationId","digest","entryIndex","entryJson","status","batch","updatedAt","lastError"];
+
+function buildIdentifierFormulaFreezePlan_(ss, migrationId) {
+    const headerPattern = /^(?:id|id_[a-z0-9_]+|[a-z0-9_]+_id|identificador|codigo_id)$/i;
+    const entries = [], sheetDigests = {}, skipped = { emptyResult: 0, duplicate: 0, emptyRecord: 0 };
+    ss.getSheets().forEach(sheet => {
+        if (sheet.getName().startsWith("__") || sheet.isSheetHidden()) return;
+        const lastRow = sheet.getLastRow(), lastColumn = sheet.getLastColumn();
+        if (lastRow < 2 || lastColumn < 1) return;
+        const range = sheet.getRange(1, 1, lastRow, lastColumn);
+        const values = range.getValues(), formulas = range.getFormulas();
+        const headers = values[0] || [];
+        headers.forEach((headerValue, columnIndex) => {
+            if (!headerPattern.test(String(headerValue || "").trim())) return;
+            const counts = new Map();
+            for (let rowIndex = 1; rowIndex < values.length; rowIndex++) {
+                const raw = values[rowIndex][columnIndex];
+                const normalized = String(raw === null || raw === undefined ? "" : raw).trim().toLowerCase();
+                if (normalized) counts.set(normalized, (counts.get(normalized) || 0) + 1);
+            }
+            for (let rowIndex = 1; rowIndex < values.length; rowIndex++) {
+                const formula = String((formulas[rowIndex] || [])[columnIndex] || "");
+                if (!formula) continue;
+                const row = values[rowIndex] || [];
+                const hasRecordData = row.some((cell, index) => index !== columnIndex && cell !== "" && cell !== null && cell !== undefined);
+                if (!hasRecordData) { skipped.emptyRecord++; continue; }
+                const value = row[columnIndex];
+                const id = String(value === null || value === undefined ? "" : value).trim();
+                if (!id) { skipped.emptyResult++; continue; }
+                if ((counts.get(id.toLowerCase()) || 0) !== 1) { skipped.duplicate++; continue; }
+                const rowNumber = rowIndex + 1;
+                const rowData = { values: row.slice(), formulas: formulas[rowIndex].slice() };
+                const key = sheet.getName() + ":" + (columnIndex + 1) + ":" + rowNumber;
+                if (!sheetDigests[sheet.getName()]) sheetDigests[sheet.getName()] = identifierMigrationSheetDigest_(sheet);
+                entries.push({
+                    migrationId, entryIndex: entries.length + 1, sheet: sheet.getName(),
+                    column: columnIndex + 1, row: rowNumber, header: String(headerValue),
+                    oldValue: value, oldFormula: formula,
+                    sourceFingerprint: identifierMigrationDigest_(rowData),
+                    snapshotFingerprint: sheetDigests[sheet.getName()],
+                    snapshotName: "__IDF_" + identifierMigrationDigest_(migrationId + "|" + sheet.getName()).slice(0, 16),
+                    key
+                });
+            }
+        });
+    });
+    const digestPayload = entries.map(entry => ({
+        sheet: entry.sheet, column: entry.column, row: entry.row, header: entry.header,
+        oldValue: identifierMigrationCanonical_(entry.oldValue), oldFormula: entry.oldFormula,
+        sourceFingerprint: entry.sourceFingerprint, snapshotFingerprint: entry.snapshotFingerprint
+    }));
+    return {
+        migrationId, entries,
+        digest: identifierMigrationDigest_(digestPayload),
+        sheetCount: Object.keys(sheetDigests).length,
+        skipped
+    };
+}
+
+function ensureIdentifierFormulaFreezeManifest_(ss) {
+    let sheet = ss.getSheetByName(IDENTIFIER_FORMULA_FREEZE_MANIFEST_);
+    if (!sheet) {
+        sheet = ss.insertSheet(IDENTIFIER_FORMULA_FREEZE_MANIFEST_);
+        sheet.getRange(1, 1, 1, IDENTIFIER_FORMULA_FREEZE_HEADERS_.length).setValues([IDENTIFIER_FORMULA_FREEZE_HEADERS_]);
+        sheet.hideSheet();
+    }
+    const headers = sheet.getRange(1, 1, 1, IDENTIFIER_FORMULA_FREEZE_HEADERS_.length).getValues()[0].map(value => String(value || ""));
+    if (JSON.stringify(headers) !== JSON.stringify(IDENTIFIER_FORMULA_FREEZE_HEADERS_)) throw new Error("El manifiesto de congelación de fórmulas tiene un esquema incompatible.");
+    return sheet;
+}
+
+function findIdentifierFormulaFreezeManifest_(sheet, migrationId) {
+    if (sheet.getLastRow() < 2) return [];
+    return sheet.getRange(2, 1, sheet.getLastRow() - 1, IDENTIFIER_FORMULA_FREEZE_HEADERS_.length).getValues()
+        .map((row, index) => ({
+            rowIndex: index + 2, migrationId: String(row[0] || ""), digest: String(row[1] || ""),
+            entryIndex: Number(row[2]), entryJson: String(row[3] || ""), status: String(row[4] || ""),
+            batch: Number(row[5]) || 0
+        })).filter(item => item.migrationId === migrationId);
+}
+
+function handleFreezeIdentifierFormulas_(payload) {
+    const options = payload || {}, ss = getSpreadsheet();
+    const migrationId = String(options.migrationId || Utilities.getUuid().replace(/-/g, "")).trim();
+    if (!/^[A-Za-z0-9]{16,64}$/.test(migrationId)) throw new Error("migrationId inválido.");
+    const lock = LockService.getScriptLock();
+    let acquired = false;
+    try {
+        lock.waitLock(10000); acquired = true;
+        const plan = buildIdentifierFormulaFreezePlan_(ss, migrationId);
+        const dryRun = options.dryRun !== false;
+        if (dryRun) {
+            return {
+                status: "success", dryRun: true, migrationId, digest: plan.digest,
+                formulaCount: plan.entries.length, sheetCount: plan.sheetCount,
+                skipped: plan.skipped,
+                samples: plan.entries.slice(0, 100).map(entry => ({
+                    sheet: entry.sheet, column: entry.column, row: entry.row,
+                    id: entry.oldValue, formula: entry.oldFormula
+                })),
+                message: "Simulación de solo lectura. Se conservarán los valores calculados y se retirarán únicamente las fórmulas verificadas."
+            };
+        }
+        if (options.confirm !== true || String(options.digest || "") !== plan.digest) {
+            throw new Error("La confirmación requiere el digest exacto de una simulación vigente. Vuelve a simular.");
+        }
+        const manifest = ensureIdentifierFormulaFreezeManifest_(ss);
+        let items = findIdentifierFormulaFreezeManifest_(manifest, migrationId);
+        if (!items.length) {
+            const snapshots = {};
+            plan.entries.forEach(entry => {
+                if (snapshots[entry.sheet]) return;
+                const source = ss.getSheetByName(entry.sheet);
+                if (!source || identifierMigrationSheetDigest_(source) !== entry.snapshotFingerprint) {
+                    throw new Error("La hoja " + entry.sheet + " cambió desde la simulación; no se creó el manifiesto.");
+                }
+                let snapshot = ss.getSheetByName(entry.snapshotName);
+                if (!snapshot) {
+                    snapshot = source.copyTo(ss);
+                    snapshot.setName(entry.snapshotName);
+                    snapshot.hideSheet();
+                }
+                if (identifierMigrationSheetDigest_(snapshot) !== entry.snapshotFingerprint) {
+                    throw new Error("El snapshot de " + entry.sheet + " no coincide con la huella previa.");
+                }
+                snapshots[entry.sheet] = true;
+            });
+            const now = new Date().toISOString();
+            const rows = plan.entries.map(entry => [
+                migrationId, plan.digest, entry.entryIndex, JSON.stringify(entry), "PLANNED", 0, now, ""
+            ]);
+            if (rows.length) manifest.getRange(manifest.getLastRow() + 1, 1, rows.length, IDENTIFIER_FORMULA_FREEZE_HEADERS_.length).setValues(rows);
+            SpreadsheetApp.flush();
+            items = findIdentifierFormulaFreezeManifest_(manifest, migrationId);
+            if (items.length !== plan.entries.length || items.some(item => item.digest !== plan.digest)) {
+                throw new Error("No se pudo verificar el manifiesto de migración de fórmulas.");
+            }
+        } else if (items.some(item => item.digest !== plan.digest) || items.length !== plan.entries.length) {
+            throw new Error("El manifiesto existente no coincide con la simulación confirmada.");
+        }
+        items.sort((a, b) => a.entryIndex - b.entryIndex);
+        const pending = items.filter(item => item.status !== "VERIFIED" && item.status !== "CONFLICT");
+        const selected = pending.slice(0, Math.min(10, Math.max(1, Number(options.batchSize) || 5)));
+        let migrated = 0;
+        for (const item of selected) {
+            const entry = JSON.parse(item.entryJson);
+            const sheet = ss.getSheetByName(entry.sheet);
+            if (!sheet) throw new Error("No existe la hoja " + entry.sheet + ".");
+            const rowRange = sheet.getRange(entry.row, 1, 1, sheet.getLastColumn());
+            const rowData = { values: rowRange.getValues()[0], formulas: rowRange.getFormulas()[0] };
+            const cell = sheet.getRange(entry.row, entry.column);
+            const currentFormula = String(cell.getFormula() || "");
+            const currentValue = cell.getValue();
+            if (identifierMigrationDigest_(rowData) !== entry.sourceFingerprint ||
+                currentFormula !== entry.oldFormula ||
+                identifierMigrationCanonical_(currentValue) !== identifierMigrationCanonical_(entry.oldValue)) {
+                manifest.getRange(item.rowIndex, 5, 1, 4).setValues([["CONFLICT", item.batch + 1, new Date().toISOString(), "La fila cambió después del dry-run."]]);
+                SpreadsheetApp.flush();
+                throw new Error("Migración detenida por conflicto en " + entry.sheet + " fila " + entry.row + ".");
+            }
+            cell.setValue(entry.oldValue);
+            SpreadsheetApp.flush();
+            if (String(cell.getFormula() || "") || identifierMigrationCanonical_(cell.getValue()) !== identifierMigrationCanonical_(entry.oldValue)) {
+                throw new Error("No se pudo verificar el valor estático de " + entry.sheet + " fila " + entry.row + ".");
+            }
+            manifest.getRange(item.rowIndex, 5, 1, 4).setValues([["VERIFIED", item.batch + 1, new Date().toISOString(), ""]]);
+            SpreadsheetApp.flush();
+            migrated++;
+        }
+        const refreshed = findIdentifierFormulaFreezeManifest_(manifest, migrationId);
+        const remaining = refreshed.filter(item => item.status !== "VERIFIED" && item.status !== "CONFLICT").length;
+        return {
+            status: "success", dryRun: false, migrationId, digest: plan.digest,
+            migrated, remaining, complete: remaining === 0,
+            skipped: plan.skipped,
+            message: remaining ? "Lote verificado. La migración puede reanudarse con el mismo migrationId y digest." : "Todas las fórmulas identificadoras elegibles fueron sustituidas por sus valores calculados y verificadas."
+        };
+    } finally {
+        if (acquired) lock.releaseLock();
+    }
 }
 
 function handleAuditIdentifiers() {
