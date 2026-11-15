@@ -88,6 +88,7 @@ runGroup('32','ADMIN',()=>{
 });
 runGroup('33','FEEDBACK',()=>{
  const feedback=read('Services/feedback.js');
+ runCli('AUG-087 caché PyS y aplicación incremental del feed','JS/Tests/PysDataCache.js');
  runCli('P2 IDs canónicos e idempotencia de Tutorial','JS/Tests/TutorialIntegrity.js');
  runCli('PYS tarjetas relacionadas y navegación del modal','JS/Tests/PysModalNavigation.js');
  const lockService={getScriptLock:()=>({waitLock(){},releaseLock(){}})};

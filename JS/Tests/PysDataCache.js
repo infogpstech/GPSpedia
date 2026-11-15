@@ -51,4 +51,4 @@ async function runPysDataCacheTests(){
  await test("TTL expira al superar cinco minutos",async()=>{const h=buildHarness({state:{pysData:[{id:"old"}],pysDataUpdatedAt:NOW-ttl()-1,pysDataStale:false}});h.enqueue(()=>Promise.resolve({status:"success",data:[{id:"fresh"}]}));await h.api.loadPysData();assert.equal(h.requests,1);});
  return{status:failed?"FAIL":"PASS",passed,failed,results};
 }
-const result=await runPysDataCacheTests();console.log(JSON.stringify(result,null,2));if(result.status!=="PASS")process.exitCode=1;
+const result=await runPysDataCacheTests();console.log("PysDataCache: "+result.passed+"/"+(result.passed+result.failed)+" PASS");console.log(JSON.stringify(result,null,2));if(result.status!=="PASS")process.exitCode=1;
