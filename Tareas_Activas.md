@@ -821,3 +821,10 @@ Las fuentes de servicios JavaScript se centralizan bajo `JS/Services/`. La carpe
 - Se añadió regresión con timestamps deliberadamente descendentes y paginación de un mensaje por página; comprueba orden por inserción, cursores y coherencia del marcador de lectura.
 - CI Node.js 22 run `43676078785`: SUCCESS; **100 suites / 1,519 pruebas / 0 fallos**; InboxConversations 37/37 PASS; sintaxis PASS. Pages run `43676078270` SUCCESS.
 - No se agregaron controles visibles ni se modificaron permisos, endpoints o integraciones externas. GP-INBOX-04B..04D siguen abiertas para su alcance funcional pendiente.
+
+
+## Adenda GP-INBOX — rechazo de mutaciones por terceros (2026-11-15)
+
+- `JS/Tests/InboxConversations.mjs`: se añadió una regresión que intenta responder y marcar como leído desde una identidad ajena a la conversación; ambas operaciones deben rechazarse y no deben modificar filas de mensajes ni estados.
+- CI Node.js 22 run `43676278019`: SUCCESS; **100 suites / 1,520 pruebas / 0 fallos**; InboxConversations 38/38 PASS; sintaxis PASS. Pages run `43676277745` SUCCESS.
+- Solo se amplió cobertura de autorización; no se añadieron controles visibles ni se alteró el backend. GP-INBOX-04D continúa abierta para el resto de la matriz y regresión.

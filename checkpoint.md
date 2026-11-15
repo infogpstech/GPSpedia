@@ -418,3 +418,12 @@
 - GitHub Pages run `43676078270`: build, reporte y deploy SUCCESS.
 - Commit de código: `7fbdd3a4ffb857b7db91414e9f72c68f3c97d8ec`. Rama de trabajo verificada; rama base `GPSpedia2.2.5` permanece en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
 - Sin cambios de UI, endpoints, permisos, esquema de hojas, deployments, ScriptProperties ni datos externos. Validación con Spreadsheet/Coordinator real continúa diferida a Beta. GP-INBOX-04B..04D permanecen abiertas en el alcance funcional mayor.
+
+
+## Adenda — GP-INBOX autorización de mutaciones por participante (2026-11-15)
+
+- Se añadió cobertura explícita para que un tercero ajeno a una conversación no pueda responder ni cambiar su marcador de lectura.
+- La regresión comprueba además que los intentos rechazados no agregan mensajes ni crean/modifican estados del participante.
+- CI Node.js 22 run `43676278019`: SUCCESS; sintaxis PASS; **100 suites / 1,520 pruebas / 0 fallos**; `InboxConversations` 38/38 PASS.
+- GitHub Pages run `43676277745`: build, reporte y deploy SUCCESS.
+- Commit de pruebas: `eb1d9d1b2469801663cb8424f7bf0a246acfe4b6`. No se modificó código funcional, interfaz ni permisos; la validación de integración real sigue diferida a Beta.
