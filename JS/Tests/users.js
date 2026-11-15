@@ -237,7 +237,7 @@ function getVerifiedSession(sessionToken) {
     const rawRole = String(userRows[0].row[COLS_USERS.Privilegios-1] || '').trim();
     const role = rawRole;
     touchSessionActivityIfDue_(sessionsSheet,sessionMatch.rowIndex,sessionMatch.row,COLS_ACTIVE_SESSIONS.LastActivityAt);
-    return { userId, role };
+    return { userId, role, userRowIndex: userRows[0].rowIndex };
 }
 
 // ============================================================================
@@ -540,13 +540,14 @@ function handleUpdateProfile(payload) {
     if (!userId || typeof sessionToken !== 'string' || !sessionToken.trim()) throw new Error('Datos insuficientes.');
 
     return withUsersMutationLock_(() => {
-        const { userId: authenticatedUserId } = getVerifiedSession(sessionToken);
+        const { userId: authenticatedUserId, userRowIndex } = getVerifiedSession(sessionToken);
         if (String(authenticatedUserId).trim() !== userId) {
             throw new Error('Acceso no autorizado: Solo puedes editar tu propio perfil.');
         }
         const userSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.USERS);
         if (!userSheet) throw new Error('Hoja de usuarios no encontrada.');
-        const rowIndex = findUniqueUserRow_(userSheet, userId);
+        const rowIndex = userRowIndex;
+        if (!Number.isInteger(rowIndex) || rowIndex < 2) throw new Error('No se pudo confirmar la fila del perfil autenticado.');
         writeUserRangeAtomically_(userSheet, rowIndex, COLS_USERS.Nombre_Completo, [[updates.Nombre_Completo]]);
         return { status: 'success', message: 'Perfil actualizado correctamente.' };
     });
