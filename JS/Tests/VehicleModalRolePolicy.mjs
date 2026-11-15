@@ -141,3 +141,17 @@ let passed=0;
 for(const item of cases){try{item.fn();passed++;console.log("PASS "+item.name);}catch(error){console.error("FAIL "+item.name+": "+(error&&error.message||error));}}
 console.log("VehicleModalRolePolicy: "+passed+"/"+cases.length+" PASS");
 if(passed!==cases.length)process.exitCode=1;
+
+check("Activar edición no espera a IndexedDB para cargar operaciones de imagen",()=>{
+ const start=ui.indexOf("const pendingImagesPromise = loadPendingAdminImageUploads");
+ const render=ui.indexOf("mostrarDetalleModal(editedItemBuffer, true, navOptions)",start);
+ const wait=ui.indexOf("await loadPendingAdminImageUploads",start);
+ assert.ok(start>=0&&render>start,"El modo edición debe renderizar después de iniciar la lectura opcional.");
+ assert.equal(wait,-1,"El modo edición no debe esperar IndexedDB.");
+ assert.match(ui,/if \(!pendingAdminImageUploadsLoaded\.has\(ownerVehicleKey\)\) \{\s*showSavingIndicator\("error"/);
+});
+check("Las opciones de edición se precargan al abrir el detalle y comparten una sola solicitud",()=>{
+ assert.match(ui,/let dropdownOptionsPromise = null/);
+ assert.match(ui,/if \(!dropdownOptions && !dropdownOptionsPromise\) precargarDropdownOptions\(\)\.catch/);
+ assert.match(ui,/if \(dropdownOptionsPromise\) return dropdownOptionsPromise/);
+});

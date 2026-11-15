@@ -176,6 +176,7 @@ let originalItemBackupOwnerId = null;
 let originalItemBackupVehicleId = null;
 let editedItemBuffer = null;
 let dropdownOptions = null;
+let dropdownOptionsPromise = null;
 const ADMIN_IMAGE_UPLOAD_FIELDS = [
     "imagenVehiculo", "imgCorte1", "imgCorte2", "imgCorte3",
     "imgApertura", "imgCableAlimen", "imgCableAlimen2", "imgCableAlimen3"
@@ -237,15 +238,19 @@ window.inEditMode = false;
 
 async function precargarDropdownOptions() {
     if (dropdownOptions) return dropdownOptions;
-    try {
-        const res = await routeAction('getDropdownData');
-        if (res && res.dropdowns) {
-            dropdownOptions = res.dropdowns;
+    if (dropdownOptionsPromise) return dropdownOptionsPromise;
+    dropdownOptionsPromise = (async () => {
+        try {
+            const res = await routeAction('getDropdownData');
+            if (res && res.dropdowns) dropdownOptions = res.dropdowns;
+        } catch (e) {
+            console.error("Error precargando dropdowns para edición:", e && e.name || "DropdownError");
+        } finally {
+            dropdownOptionsPromise = null;
         }
-    } catch (e) {
-        console.error("Error precargando dropdowns para edición:", e);
-    }
-    return dropdownOptions;
+        return dropdownOptions;
+    })();
+    return dropdownOptionsPromise;
 }
 
 export function showSavingIndicator(status, message = "") {
@@ -2134,6 +2139,8 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
     const activeItem = (catalogData && catalogData.cortes)
         ? catalogData.cortes.find(c => String(c.id) === String(item.id)) || item
         : item;
+    // Preparar listas de edición mientras el usuario consulta el detalle, sin bloquear su apertura.
+    if (!dropdownOptions && !dropdownOptionsPromise) precargarDropdownOptions().catch(() => {});
     const ownerId = String(currentUser && (currentUser.ID || currentUser.id) || '').trim();
     if (ownerId && ownerId !== '0') {
         offline.saveViewedItem(activeItem, ownerId).then(() => {
@@ -2305,20 +2312,27 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
                 inEditMode = true;
                 window.inEditMode = true;
 
+                // La lista de opciones se precarga desde que se abrió el detalle; reutilizar la promesa
+                // compartida evita solicitudes duplicadas al pulsar Editar.
                 await precargarDropdownOptions();
                 if (!isCurrentUiSessionContext_(editSession)) {
                     inEditMode = false; window.inEditMode = false; clearInMemoryEditBackup_();
                     return;
                 }
-                const pendingImagesLoaded = await loadPendingAdminImageUploads(cleanVehicleId, editSession.userId);
-                if (!isCurrentUiSessionContext_(editSession)) {
-                    inEditMode = false; window.inEditMode = false; clearInMemoryEditBackup_();
-                    return;
-                }
-                if (!pendingImagesLoaded) {
-                    showSavingIndicator("warning", "No se pudo consultar IndexedDB; los reemplazos de imagen quedarán bloqueados hasta verificar su estado.");
-                }
+                // IndexedDB solo es imprescindible para recuperar reemplazos de imagen pendientes.
+                // La edición de texto/campos no debe esperar a ese almacén opcional.
+                const pendingImagesPromise = loadPendingAdminImageUploads(cleanVehicleId, editSession.userId)
+                    .catch(error => {
+                        console.warn("No se pudo consultar el estado local de reemplazos:", error && error.name || "StorageError");
+                        return false;
+                    });
                 mostrarDetalleModal(editedItemBuffer, true, navOptions);
+                pendingImagesPromise.then(pendingImagesLoaded => {
+                    if (!pendingImagesLoaded && isCurrentUiSessionContext_(editSession) &&
+                        inEditMode && originalItemBackupVehicleId === cleanVehicleId) {
+                        showSavingIndicator("warning", "Los reemplazos de imagen están bloqueados hasta verificar su estado local.");
+                    }
+                });
             };
             headerDiv.appendChild(editBtn);
         }
