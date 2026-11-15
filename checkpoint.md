@@ -397,3 +397,11 @@
 - No se modificó código de producción, UI, permisos, endpoints, deployments ni datos externos. La validación con Spreadsheet/Coordinator real y usuarios/dispositivos permanece diferida a Beta.
 - HEAD de trabajo: `26eb353d3e908ad9e6d77ccecbd9248fc0ffb982`; rama base `GPSpedia2.2.5`: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin modificaciones.
 - GP-INBOX-04B..04D permanecen abiertas para sus funcionalidades mayores; continuar únicamente con mejoras internas que no agreguen controles visibles sin autorización.
+
+
+## Adenda — GP-INBOX paginación del historial con timestamps iguales (2026-11-15)
+
+- Se amplió la regresión de idempotencia para recorrer, con pageSize=1, un historial de tres mensajes que comparten timestamp. Se comprueba el orden más reciente a más antiguo, cursores consecutivos sin repetición y finalización sin cursor siguiente.
+- CI Node.js 22 run `43675102668`: SUCCESS; 100 suites / 1,518 pruebas / 0 fallos; `InboxConversations` 36/36 PASS.
+- GitHub Pages run `43675101929`: build, reporte y deploy SUCCESS.
+- HEAD de código: `843269309f01d7c78a89b6a6fd29c7d57baa11a1`; HEAD documental previo: `bf850349b9e965e531446f76e876cfc42b622bad`. Base intacta en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.

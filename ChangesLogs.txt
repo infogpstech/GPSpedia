@@ -435,3 +435,9 @@
 - Se aisló el caso del límite de creación del fixture preservando la fila de encabezados de InboxMessages.
 - CI Node.js 22 run `43674775675`: SUCCESS; sintaxis PASS; 100 suites / 1,518 pruebas / 0 fallos; InboxConversations 36/36 PASS.
 - GitHub Pages run `43674775262`: build, reporte y deploy SUCCESS. Sin cambios en producción, interfaz, permisos ni recursos externos; integración real diferida a Beta.
+
+
+2026-11-15 — GP-INBOX: anti-regresión de paginación histórica con timestamps iguales
+- Se amplió la prueba de idempotencia para paginar tres mensajes con la misma marca de tiempo, de uno en uno, verificando orden, cursores y ausencia de duplicados.
+- CI Node.js 22 run 43675102668: SUCCESS; 100 suites / 1,518 pruebas / 0 fallos; InboxConversations 36/36 PASS.
+- GitHub Pages run 43675101929: build, reporte y deploy SUCCESS. Sin cambios de producción o interfaz.

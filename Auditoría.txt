@@ -698,3 +698,9 @@ Estado: CORREGIDO Y VALIDADO EN CI.
 - Corrección final: se preservó la cabecera y se ajustó únicamente el timestamp de filas de datos existentes antes de crear las dos conversaciones de prueba.
 - CI Node.js 22 run 43674775675: SUCCESS; 100 suites / 1,518 pruebas / 0 fallos; InboxConversations 36/36 PASS. Pages run 43674775262 SUCCESS.
 - El hallazgo afecta exclusivamente al aislamiento del test; no se modificó el limitador ni la lógica de producción.
+
+
+[2026-11-15] Adenda AUD-2026-11-15-32 — cobertura del historial con timestamps iguales
+- La prueba de mensajes con timestamp idéntico ahora recorre todas las páginas con pageSize=1 y verifica orden más reciente/antiguo, cursor siguiente, ausencia de duplicados y terminación.
+- CI Node.js 22 run 43675102668: SUCCESS; 100 suites / 1,518 pruebas / 0 fallos; InboxConversations 36/36 PASS. Pages run 43675101929 SUCCESS.
+- Se amplió la cobertura de la prueba; no se modificó la lógica de producción.

@@ -808,3 +808,6 @@ Las fuentes de servicios JavaScript se centralizan bajo `JS/Services/`. La carpe
 - CI Node.js 22 run `43674775675`: SUCCESS; **100 suites / 1,518 pruebas / 0 fallos**; `InboxConversations` 36/36 PASS; sintaxis PASS.
 - GitHub Pages run `43674775262`: SUCCESS.
 - No hubo cambios de producción, UI, permisos, endpoints ni recursos externos. La validación de integración real permanece diferida a Beta. GP-INBOX-04B..04D siguen abiertas en sus funciones mayores pendientes.
+
+
+**Adenda de pruebas de GP-INBOX (2026-11-15):** la regresión de mensajes con timestamp idéntico también recorre el historial en páginas de un mensaje, verifica orden inverso cronológico (más reciente a más antiguo), cursores sin repetición y fin de historial. CI Node.js 22 run `43675102668`: 100 suites / 1,518 pruebas / 0 fallos; InboxConversations 36/36 PASS. Pages run `43675101929` SUCCESS. No cambia el estado de GP-INBOX-04B..04D ni autoriza nuevos controles visibles.
