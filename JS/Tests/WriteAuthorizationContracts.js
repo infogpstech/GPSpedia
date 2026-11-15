@@ -28,7 +28,7 @@ function runWriteAuthorizationContracts(sources) {
    if(!payload||!payload.userId||!payload.sessionToken)throw Error("Sesión inválida.");
    const role=options.roleAtRead?options.roleAtRead(roleReads+1,lockAcquired):(options.role||"Desarrollador");
    roleReads++;
-   const normalized=String(role||"").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").trim().toLowerCase();
+   const normalized=String(role||"").trim().toLowerCase();
    if(Array.isArray(allowedRoles)&&!allowedRoles.includes(normalized))throw Error("El mantenimiento de IDs de Cortes requiere privilegio Desarrollador.");
    return "Nombre Servidor";
   };
