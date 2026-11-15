@@ -4203,6 +4203,62 @@ function auditAllFormulaIdentifierColumns_(ss) {
     return { formulaColumns: columns, formulaCount, formulaColumnCount: columns.length };
 }
 
+const IDENTIFIER_SEQUENCE_CONFIG_SHEET_ = "__IdentifierSequenceConfig__";
+const IDENTIFIER_SEQUENCE_CONFIG_HEADERS_ = ["sheet","column","header","prefix","padding","formula","updatedAt"];
+
+function parseIdentifierSequenceFormula_(formula) {
+    const raw = String(formula || "").trim();
+    const match = /^=\s*"([^"]{1,40})"\s*&\s*(?:TEXTO|TEXT)\s*\(\s*(?:FILA|ROW)\s*\(\s*\)\s*-\s*\d+\s*,\s*"([0]+)"\s*\)\s*$/i.exec(raw);
+    if (!match) return null;
+    return { prefix: match[1], padding: match[2].length, formula: raw };
+}
+
+function persistIdentifierSequenceConfigs_(ss, entries) {
+    const supported = new Map();
+    (entries || []).forEach(entry => {
+        const pattern = entry.pattern || parseIdentifierSequenceFormula_(entry.oldFormula);
+        if (!pattern) return;
+        const key = entry.sheet + ":" + entry.column;
+        const existing = supported.get(key);
+        if (existing && (existing.prefix !== pattern.prefix || existing.padding !== pattern.padding || existing.formula !== pattern.formula)) {
+            throw new Error("La columna " + key + " contiene más de un patrón de ID; no se configuró un generador automático.");
+        }
+        supported.set(key, {
+            sheet: entry.sheet, column: entry.column, header: entry.header,
+            prefix: pattern.prefix, padding: pattern.padding, formula: pattern.formula
+        });
+    });
+    if (!supported.size) return { configured: 0, unsupported: (entries || []).length };
+    let sheet = ss.getSheetByName(IDENTIFIER_SEQUENCE_CONFIG_SHEET_);
+    if (!sheet) {
+        sheet = ss.insertSheet(IDENTIFIER_SEQUENCE_CONFIG_SHEET_);
+        sheet.getRange(1, 1, 1, IDENTIFIER_SEQUENCE_CONFIG_HEADERS_.length).setValues([IDENTIFIER_SEQUENCE_CONFIG_HEADERS_]);
+        sheet.hideSheet();
+    }
+    const actualHeaders = sheet.getRange(1, 1, 1, IDENTIFIER_SEQUENCE_CONFIG_HEADERS_.length).getValues()[0].map(value => String(value || ""));
+    if (JSON.stringify(actualHeaders) !== JSON.stringify(IDENTIFIER_SEQUENCE_CONFIG_HEADERS_)) {
+        throw new Error("La configuración de secuencias ID tiene un esquema incompatible.");
+    }
+    const lastRow = sheet.getLastRow();
+    const existingRows = lastRow > 1
+        ? sheet.getRange(2, 1, lastRow - 1, IDENTIFIER_SEQUENCE_CONFIG_HEADERS_.length).getValues()
+        : [];
+    const now = new Date().toISOString(), additions = [];
+    supported.forEach(config => {
+        const found = existingRows.find(row => String(row[0]) === config.sheet && Number(row[1]) === config.column);
+        if (found) {
+            if (String(found[3]) !== config.prefix || Number(found[4]) !== config.padding || String(found[5]) !== config.formula) {
+                throw new Error("La configuración de ID para " + config.sheet + " columna " + config.column + " ya existe con otro patrón.");
+            }
+            return;
+        }
+        additions.push([config.sheet, config.column, config.header, config.prefix, config.padding, config.formula, now]);
+    });
+    if (additions.length) sheet.getRange(sheet.getLastRow() + 1, 1, additions.length, IDENTIFIER_SEQUENCE_CONFIG_HEADERS_.length).setValues(additions);
+    SpreadsheetApp.flush();
+    return { configured: supported.size, unsupported: Math.max(0, (entries || []).length - supported.size) };
+}
+
 const IDENTIFIER_FORMULA_FREEZE_MANIFEST_ = "__IdentifierFormulaFreezeManifest__";
 const IDENTIFIER_FORMULA_FREEZE_HEADERS_ = ["migrationId","digest","entryIndex","entryJson","status","batch","updatedAt","lastError"];
 
@@ -4241,6 +4297,7 @@ function buildIdentifierFormulaFreezePlan_(ss, migrationId) {
                     migrationId, entryIndex: entries.length + 1, sheet: sheet.getName(),
                     column: columnIndex + 1, row: rowNumber, header: String(headerValue),
                     oldValue: value, oldFormula: formula,
+                    pattern: parseIdentifierSequenceFormula_(formula),
                     sourceFingerprint: identifierMigrationDigest_(rowData),
                     snapshotFingerprint: sheetDigests[sheet.getName()],
                     snapshotName: "__IDF_" + identifierMigrationDigest_(migrationId + "|" + sheet.getName()).slice(0, 16)
@@ -4251,6 +4308,7 @@ function buildIdentifierFormulaFreezePlan_(ss, migrationId) {
     const digestPayload = entries.map(entry => ({
         sheet: entry.sheet, column: entry.column, row: entry.row, header: entry.header,
         oldValue: identifierMigrationCanonical_(entry.oldValue), oldFormula: entry.oldFormula,
+        pattern: entry.pattern || null,
         sourceFingerprint: entry.sourceFingerprint, snapshotFingerprint: entry.snapshotFingerprint
     }));
     return {
@@ -4348,6 +4406,7 @@ function handleFreezeIdentifierFormulas_(payload, developerContext) {
         }
         if (!manifest) manifest = ensureIdentifierFormulaFreezeManifest_(ss);
         if (!items.length) items = findIdentifierFormulaFreezeManifest_(manifest, migrationId);
+        const sequenceConfig = persistIdentifierSequenceConfigs_(ss, plan.entries);
         if (items.some(item => item.digest !== plan.digest) || items.length !== plan.entries.length) throw new Error("El manifiesto existente no coincide con la simulación confirmada.");
         items.sort((a, b) => a.entryIndex - b.entryIndex);
         const pending = items.filter(item => item.status !== "VERIFIED" && item.status !== "CONFLICT");
@@ -4381,6 +4440,7 @@ function handleFreezeIdentifierFormulas_(payload, developerContext) {
         return {
             status: "success", dryRun: false, migrationId, digest: plan.digest,
             migrated, remaining, complete: remaining === 0, skipped: plan.skipped,
+            sequenceConfig,
             message: remaining ? "Lote verificado. La migración puede reanudarse con el mismo migrationId y digest." : "Todas las fórmulas identificadoras elegibles fueron sustituidas por sus valores calculados y verificadas."
         };
     } finally {
