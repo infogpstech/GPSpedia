@@ -6156,6 +6156,135 @@ ${elapsedSec}s
 
     updateVinMigrationControls();
 
+    // Auditoría global de fórmulas en columnas identificadoras.
+    const auditIdentifiersButton = document.getElementById('btn-admin-audit-identifiers');
+    const identifierAuditStatus = document.getElementById('identifier-audit-status');
+    const identifierAuditResults = document.getElementById('identifier-audit-results');
+    if (auditIdentifiersButton) {
+        auditIdentifiersButton.onclick = async () => {
+            auditIdentifiersButton.disabled = true;
+            if (identifierAuditStatus) identifierAuditStatus.textContent = 'Analizando todas las hojas y columnas ID. No se modificarán datos.';
+            if (identifierAuditResults) identifierAuditResults.replaceChildren();
+            try {
+                const result = await runAction('auditIdentifiers');
+                if (!result || result.status !== 'success' || result.readOnly !== true) {
+                    throw new Error('El servidor no confirmó una auditoría de solo lectura.');
+                }
+                const summary = result.summary || {};
+                const columns = Array.isArray(result.formulaColumns) ? result.formulaColumns : [];
+                if (identifierAuditStatus) {
+                    identifierAuditStatus.textContent = 'Auditoría completada: ' +
+                        (summary.formulaCount || 0) + ' fórmulas en ' +
+                        (summary.formulaColumnCount || 0) + ' columnas identificadoras; ' +
+                        (summary.duplicateIdCount || 0) + ' grupos de IDs duplicados; ' +
+                        (summary.missingIdCount || 0) + ' IDs ausentes en las hojas catalogadas.';
+                }
+                if (identifierAuditResults) {
+                    columns.forEach(item => {
+                        const section = document.createElement('section');
+                        section.className = 'dev-audit-result';
+                        const heading = document.createElement('strong');
+                        heading.textContent = item.sheet + ' · ' + item.header + ' (columna ' + item.column + ')';
+                        const count = document.createElement('p');
+                        count.textContent = item.formulaCount + ' fórmulas detectadas.';
+                        section.append(heading, count);
+                        (item.samples || []).slice(0, 8).forEach(sample => {
+                            const line = document.createElement('p');
+                            line.textContent = 'Fila ' + sample.row + ' · ID calculado: ' +
+                                String(sample.id) + ' · Fórmula: ' + sample.formula;
+                            section.appendChild(line);
+                        });
+                        identifierAuditResults.appendChild(section);
+                    });
+                    if (!columns.length) identifierAuditResults.textContent = 'No se encontraron fórmulas en columnas con encabezados identificadores.';
+                }
+                log('[ID AUDIT] ' + (identifierAuditStatus ? identifierAuditStatus.textContent : 'Auditoría completada.'));
+            } catch (error) {
+                if (identifierAuditStatus) identifierAuditStatus.textContent = 'No se pudo completar la auditoría: ' + (error.message || String(error));
+                log('[ID AUDIT] ' + (error.message || String(error)), false, true);
+            } finally {
+                auditIdentifiersButton.disabled = false;
+            }
+        };
+    }
+
+    // Migración de contraseñas: simulación y un lote por confirmación explícita.
+    const previewPasswordMigrationButton = document.getElementById('btn-admin-preview-password-migration');
+    const confirmPasswordMigrationButton = document.getElementById('btn-admin-confirm-password-migration');
+    const passwordMigrationStatus = document.getElementById('password-migration-status');
+    let passwordMigrationPreview = null;
+    let passwordMigrationRunning = false;
+    if (previewPasswordMigrationButton) {
+        previewPasswordMigrationButton.onclick = async () => {
+            if (passwordMigrationRunning) return;
+            passwordMigrationRunning = true;
+            passwordMigrationPreview = null;
+            if (confirmPasswordMigrationButton) confirmPasswordMigrationButton.disabled = true;
+            previewPasswordMigrationButton.disabled = true;
+            if (passwordMigrationStatus) passwordMigrationStatus.textContent = 'Ejecutando simulación de contraseñas. No se escribirán credenciales.';
+            try {
+                const result = await runAction('migrateLegacyPasswords', { dryRun: true, batchSize: 5 });
+                if (!result || result.status !== 'success' || result.dryRun !== true) throw new Error('El servidor no confirmó el dry-run.');
+                passwordMigrationPreview = result;
+                if (passwordMigrationStatus) passwordMigrationStatus.textContent =
+                    'Cuentas plaintext elegibles: ' + result.eligiblePlaintext +
+                    '; próximo lote: ' + result.wouldMigrate +
+                    '; hashes actuales: ' + result.alreadyCurrent +
+                    '; SHA-256 legacy pendientes de login: ' + result.legacyHashedPendingLogin +
+                    '; cuentas ambiguas: ' + result.ambiguousActiveAccounts +
+                    '; omitidas por formato no compatible: ' + result.unsupportedSkipped +
+                    (result.complete ? '. No hay credenciales plaintext pendientes.' : '.');
+                if (confirmPasswordMigrationButton) {
+                    confirmPasswordMigrationButton.disabled = result.complete ||
+                        result.ambiguousActiveAccounts > 0 || result.wouldMigrate < 1;
+                }
+            } catch (error) {
+                if (passwordMigrationStatus) passwordMigrationStatus.textContent = 'Error en la simulación: ' + (error.message || String(error));
+                log('[PASSWORD MIGRATION] ' + (error.message || String(error)), false, true);
+            } finally {
+                passwordMigrationRunning = false;
+                previewPasswordMigrationButton.disabled = false;
+            }
+        };
+    }
+    if (confirmPasswordMigrationButton) {
+        confirmPasswordMigrationButton.onclick = async () => {
+            if (passwordMigrationRunning || !passwordMigrationPreview ||
+                passwordMigrationPreview.complete || passwordMigrationPreview.ambiguousActiveAccounts > 0) return;
+            const plan = passwordMigrationPreview;
+            const confirmation = 'Se migrarán hasta ' + plan.wouldMigrate +
+                ' contraseñas plaintext a hash. No se mostrarán ni registrarán las contraseñas. ¿Confirmas este lote?';
+            if (!confirm(confirmation)) return;
+            passwordMigrationRunning = true;
+            confirmPasswordMigrationButton.disabled = true;
+            if (previewPasswordMigrationButton) previewPasswordMigrationButton.disabled = true;
+            if (passwordMigrationStatus) passwordMigrationStatus.textContent = 'Migrando lote y verificando cada credencial...';
+            try {
+                const result = await runAction('migrateLegacyPasswords', { dryRun: false, confirm: true, batchSize: 5 });
+                if (!result || result.status !== 'success' || result.dryRun !== false) throw new Error('El servidor no confirmó la escritura del lote.');
+                passwordMigrationPreview = {
+                    complete: result.complete,
+                    eligiblePlaintext: result.remainingPlaintext,
+                    wouldMigrate: Math.min(result.remainingPlaintext, 5),
+                    ambiguousActiveAccounts: 0
+                };
+                if (passwordMigrationStatus) passwordMigrationStatus.textContent =
+                    'Lote verificado: ' + result.migrated +
+                    ' contraseñas migradas; quedan ' + result.remainingPlaintext +
+                    ' plaintext. ' + (result.complete ? 'Migración completada.' : 'Puedes confirmar el siguiente lote.');
+                confirmPasswordMigrationButton.disabled = result.complete || result.remainingPlaintext < 1;
+                log('[PASSWORD MIGRATION] ' + (passwordMigrationStatus ? passwordMigrationStatus.textContent : 'Lote completado.'));
+            } catch (error) {
+                passwordMigrationPreview = null;
+                if (passwordMigrationStatus) passwordMigrationStatus.textContent = 'La migración no se confirmó: ' + (error.message || String(error)) + '. Ejecuta una nueva simulación antes de reintentar.';
+                log('[PASSWORD MIGRATION] ' + (error.message || String(error)), false, true);
+            } finally {
+                passwordMigrationRunning = false;
+                if (previewPasswordMigrationButton) previewPasswordMigrationButton.disabled = false;
+            }
+        };
+    }
+
     // 5. Mantenimiento y Organización
     // Ejecutar las acciones VIN seleccionadas mediante un único handler.
     const runVinActionsBtn = document.getElementById('btn-admin-run-vin-actions');
