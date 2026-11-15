@@ -57,6 +57,12 @@ function runInboxRoleContractTests(sources) {
   assert(modal.includes("requestsTab.hidden = !inboxCanSeeRequests_(context.role)"));
   assert(modal.includes("if (newMessageButton) newMessageButton.hidden = false"));
   assert(!ui.includes("inbox-consult-developer"));
+  assert(feedback.includes('reportProblem: null')&&feedback.includes('case \'reportProblem\''),
+   'El reporte de problema autenticado debe seguir siendo el canal de incidencias para soporte.');
+  assert(feedback.includes('function handleReplyToFeedback')&&feedback.includes('function handleMarkAsResolved'),
+   'El ticket debe conservar respuesta y resolución.');
+  assert(ui.includes("Estado del ticket")&&ui.includes("ticketCategoryLabels"),
+   'El detalle del reporte debe mostrar categoría y estado sin añadir controles nuevos.');
   const formStart=ui.indexOf("async function openInboxNewConversationForm_()");
   const formEnd=ui.indexOf("\nasync function toggleInboxConversationArchive_",formStart);
   const form=ui.slice(formStart,formEnd);
