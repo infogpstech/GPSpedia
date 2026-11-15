@@ -37,20 +37,22 @@ const inventory = policy("ADMIN", "getReplacedImages");
 for (const resource of ["USERS", "CORTES", "DRIVE", "IMAGE_INVENTORY"]) {
     assert.ok(inventory.readResources.includes(resource), "Inventario debe reservar lectura de " + resource);
 }
-assert.ok(inventory.sharedWriteResources.includes("ACTIVE_SESSIONS"),
-    "Inventario debe actualizar actividad de forma cooperativa.");
+assert.ok(inventory.readResources.includes("SESSION_CONTEXTS"));
+assert.ok(!inventory.writeResources.includes("ACTIVE_SESSIONS"),
+    "Inventario no debe escribir LastActivityAt en cada lectura.");
 const scan = policy("ADMIN", "auditDriveImagesInCortes");
 for (const resource of ["CORTES", "DRIVE", "IMAGE_INVENTORY"]) {
     assert.ok(scan.readResources.includes(resource), "Escáner debe reservar lectura de " + resource);
 }
-assert.ok(scan.sharedWriteResources.includes("ACTIVE_SESSIONS"));
+assert.ok(scan.readResources.includes("SESSION_CONTEXTS"));
+assert.ok(!scan.writeResources.includes("ACTIVE_SESSIONS"));
 assert.ok(scan.writeResources.includes("IMAGE_AUDIT_STATE"),
     "El estado del escáner debe serializarse sin bloquear las lecturas del inventario.");
 const migration = policy("ADMIN", "migrateReplacedImagesSchema");
-assert.deepEqual(migration.readResources, ["USERS"]);
+assert.deepEqual(migration.readResources, ["USERS", "SESSION_CONTEXTS"]);
 assert.deepEqual(migration.writeResources, ["IMAGE_INVENTORY"]);
-assert.ok(migration.sharedWriteResources.includes("ACTIVE_SESSIONS"),
-    "La inicialización debe mantener la escritura de actividad protegida.");
+assert.ok(!migration.writeResources.includes("ACTIVE_SESSIONS"),
+    "La inicialización no debe modificar la actividad de sesión.");
 assert.equal(migration.maintenance, false);
 
 const routerHarness = new Function(
