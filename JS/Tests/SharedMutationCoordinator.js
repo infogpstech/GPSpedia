@@ -341,7 +341,7 @@ function runSharedMutationCoordinatorTests() {
         ["migrateIdentifiers", "rollbackIdentifiers"].forEach(action => {
             const policy = coordinatorPolicy_("ADMIN", action);
             assert_(policy.maintenance === true, action + " debe drenar operaciones activas.");
-            assert_(policy.sharedWriteResources.includes("ACTIVE_SESSIONS"), action + " debe coordinar la actividad de sesión como escritura cooperativa.");
+            assert_(policy.readResources.includes("SESSION_CONTEXTS"), action + " debe validar el contexto de sesión compartido.");
             const r = createRuntime_();
             const lease = acquire_(r, "ADMIN", action);
             assert_(lease.status === "success", action + " debe adquirir la ventana exclusiva.");
@@ -482,12 +482,10 @@ function runSharedMutationCoordinatorTests() {
         const like = acquire_(r, "FEEDBACK", "recordLike");
         assert_(like.status === "success", "recordLike debe obtener su lease.");
         const adminActivity = acquire_(r, "ADMIN", "sessionActivity");
-        assert_(adminActivity.status === "error" && adminActivity.code === "busy",
-            "ADMIN/sessionActivity debe esperar mientras recordLike actualiza la sesión.");
+        assert_(adminActivity.status === "success",
+            "ADMIN/sessionActivity puede coexistir con recordLike porque ambos leen el contexto central.");
+        release_(r, "ADMIN", "sessionActivity", adminActivity.token);
         release_(r, "FEEDBACK", "recordLike", like.token);
-        const retry = acquire_(r, "ADMIN", "sessionActivity");
-        assert_(retry.status === "success", "ADMIN/sessionActivity debe continuar después de liberar recordLike.");
-        release_(r, "ADMIN", "sessionActivity", retry.token);
     });
     test_("FEEDBACK suggestYear y approveVideo reservan Cortes, Feedback y Activity", function() {
         ["suggestYear", "approveVideo"].forEach(function(action) {
@@ -581,7 +579,11 @@ function runSharedMutationCoordinatorTests() {
         ["changePassword","resetUserPassword","resetUserSessions","clearSensitiveLogs","deleteUser","updateUser","logout"].forEach(action => {
             const policy = coordinatorPolicy_("AUTH", action);
             assert_(policy.writeResources.includes("ACTIVE_SESSIONS"),
-                "AUTH/" + action + " debe reservar ActiveSessions mientras renueva o invalida la sesión.");
+                "AUTH/" + action + " debe sincronizar actividad ocasional en ActiveSessions.");
+            if (["changePassword","resetUserPassword","resetUserSessions","deleteUser","updateUser","logout"].includes(action)) {
+                assert_(policy.writeResources.includes("SESSION_CONTEXTS"),
+                    "AUTH/" + action + " debe bloquear el contexto compartido durante la revocación.");
+            }
         });
     });
 
@@ -616,7 +618,7 @@ function runSharedMutationCoordinatorTests() {
     });
 
 
-    test_("ADMIN permite consultas concurrentes con actualización cooperativa de actividad", function() {
+    test_("ADMIN permite consultas concurrentes con lectura del contexto central", function() {
         const r = createRuntime_();
         const policy = coordinatorPolicy_("ADMIN", "sessionActivity");
         assert_(policy.readResources.includes("SESSION_CONTEXTS"), "ADMIN debe leer el contexto central de sesión.");
@@ -625,10 +627,10 @@ function runSharedMutationCoordinatorTests() {
         const first = acquire_(r, "ADMIN", "sessionActivity");
         const second = acquire_(r, "ADMIN", "sessionActivity");
         assert_(first.status === "success" && second.status === "success",
-            "Dos consultas ADMIN protegidas deben poder coexistir mientras solo actualizan LastActivityAt.");
+            "Dos consultas ADMIN protegidas deben poder coexistir porque solo leen SESSION_CONTEXTS.");
         const logout = acquire_(r, "AUTH", "logout");
         assert_(logout.status === "error" && logout.code === "busy",
-            "La escritura cooperativa ADMIN debe seguir bloqueando logout y revocaciones AUTH.");
+            "La lectura de SESSION_CONTEXTS debe seguir bloqueando logout y revocaciones AUTH.");
         release_(r, "ADMIN", "sessionActivity", first.token);
         release_(r, "ADMIN", "sessionActivity", second.token);
         const retry = acquire_(r, "AUTH", "logout");
@@ -662,7 +664,7 @@ function runSharedMutationCoordinatorTests() {
         const scan = acquire_(r, "ADMIN", "auditDriveImagesInCortes");
         assert_(sessionActivity.status === "success" && inventory.status === "success" &&
             storage.status === "success" && folders.status === "success" && scan.status === "success",
-            "Las consultas y el escáner deben coexistir con la actualización cooperativa de actividad.");
+            "Las consultas y el escáner deben coexistir con la lectura del contexto central.");
         const duplicateScan = acquire_(r, "ADMIN", "auditDriveImagesInCortes");
         assert_(duplicateScan.status === "error" && duplicateScan.code === "busy",
             "Dos escáneres no deben escribir simultáneamente el estado de auditoría.");
