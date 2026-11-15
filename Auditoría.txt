@@ -753,3 +753,12 @@ Estado: IMPLEMENTADO Y VALIDADO POR CI.
 - Las leases del Coordinator para estas acciones declaran lectura de USERS y ACTIVE_SESSIONS; las operaciones que cambian identidad/rol escriben esos recursos, evitando intercalación durante la operación protegida.
 - Pruebas actualizadas: información suplementaria 56/56; asignación de IDs/consumidores 10/10; minimización WRITE 13/13. CI integral 100 suites / 1,525 pruebas PASS; Pages SUCCESS.
 - No se acepta rol enviado por cliente, no se quitó la autorización backend y no hubo despliegue ni cambios en datos productivos.
+
+
+AUD-2026-11-15-38 — REUTILIZACIÓN DE FILA AUTENTICADA EN USERS
+Severidad: Rendimiento / lectura redundante.
+Estado: IMPLEMENTADO; CI PENDIENTE.
+- `getVerifiedSession` localiza la fila del usuario por ID único para validar estado y rol. `handleUpdateProfile` repetía la búsqueda por ID para escribir en esa misma fila.
+- Se devuelve el índice de fila desde el verificador backend y se reutiliza en el handler, dentro del mismo bloqueo. El navegador no puede fijar ese índice.
+- Se añadió una aserción de contrato en UsersAtomicMutations y se sincronizó el espejo de servicio.
+- No se debilitó la autenticación ni la autorización, y no se tocaron datos ni despliegues productivos.
