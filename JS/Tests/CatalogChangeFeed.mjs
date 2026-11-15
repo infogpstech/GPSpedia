@@ -125,11 +125,14 @@ test("mutaciones PyS publican upsert exacto tras verificar ID y fila bajo lock",
     assert.ok(feedbackSource.includes("function publishPysCatalogChange_(action, reference)"));
     assert.ok(feedbackSource.includes('publishPysCatalogChange_(action, problemId)'));
 });
-test("WRITE y FEEDBACK publican reset solo después de mutaciones confirmadas", () => {
-    assert.match(writeSource,/response && response\.status === "success"[\s\S]*?catalogWriters\.includes\(String\(request\.action \|\| ""\)\)[\s\S]*?publishSharedCatalogChange_\("WRITE"/);
+test("WRITE y FEEDBACK publican deltas exactos y conservan reset para operaciones masivas", () => {
+    assert.match(writeSource,/response && response\.status === "success"[\s\S]*?catalogWriters\.includes\(action\)[\s\S]*?publishCortesCatalogChange_\(action, vehicleId\)/);
     assert.match(writeSource,/\["addOrUpdateCut", "addSupplementaryInfo", "addVinToVehicle", "freezeCortesIds"\]/);
+    assert.ok(writeSource.includes('publishSharedCatalogChange_("WRITE", action, { operation: "reset" })'));
     assert.match(writeSource,/!String\(requestPayload\.__sharedMutationToken \|\| ""\)\.trim\(\)/);
-    assert.match(feedbackSource,/response && response\.status === "success"[\s\S]*?\["suggestYear", "addProblem", "addSolution", "addPrevention"[\s\S]*?publishSharedCatalogChange_\("FEEDBACK", action, \{ operation: "reset" \}\)/);
+    assert.ok(feedbackSource.includes("publishPysCatalogChange_(action, problemId)"));
+    assert.ok(feedbackSource.includes("publishTutorialCatalogChange_(action, tutorialId)"));
+    assert.ok(feedbackSource.includes('publishSharedCatalogChange_("FEEDBACK", action, { operation: "reset" })'));
     assert.match(feedbackSource,/if \(action === "recordLike"[\s\S]*?publishSharedCatalogChange_\("FEEDBACK", "recordLike"/);
     assert.match(adminSource,/catalogWriters\.includes\(catalogAction\)[\s\S]*?publishSharedCatalogChange_\("ADMIN", catalogAction, \{ operation: "reset" \}\)/);
     assert.match(adminSource,/finalizeAdminAuditEvent_\(auditEvent[\s\S]*?publishSharedCatalogChange_/);
