@@ -612,20 +612,35 @@ function handleMarkInboxUnread(payload) {
         const unreadCount = Math.max(1,messages.slice(readIndex + 1).filter(item => String(item[3]) !== actor.id).length);
         const flagsSheet = existingFlagsSheet || inboxConversationSheet_(INBOX_CONVERSATION_FLAGS_SHEET_,INBOX_FLAGS_HEADERS_,true);
         const flag = existingFlag || inboxEnsureFlag_(flagsSheet,conversationId,actor.id,new Date().toISOString());
-        const changed = !inboxFlagIsTrue_(flag.row[2]);
+        const unreadChanged = !inboxFlagIsTrue_(flag.row[2]);
+        const stateWasArchived = Boolean(state && inboxFlagIsTrue_(state.row[4]));
+        const changed = unreadChanged || stateWasArchived;
         if (changed) {
-            const previous = flag.row.slice(), row = flag.row.slice(), now = new Date().toISOString();
-            row[2] = true; row[4] = now;
-            inboxWriteFlag_(flagsSheet,flag,row);
+            const now = new Date().toISOString();
+            const previousFlag = flag.row.slice(), previousState = stateWasArchived ? state.row.slice() : null;
+            const nextFlag = flag.row.slice();
+            nextFlag[2] = true; nextFlag[4] = now;
+            const nextState = stateWasArchived ? state.row.slice() : null;
+            if (nextState) { nextState[4] = false; nextState[7] = now; }
             try {
-                inboxAppendAudit_(sheets.audit,actor,"mark_unread",conversationId,"","Conversación marcada como no leída para este participante.");
+                if (nextState) inboxWriteState_(sheets.states,state,nextState);
+                if (unreadChanged) inboxWriteFlag_(flagsSheet,flag,nextFlag);
+                inboxAppendAudit_(sheets.audit,actor,"mark_unread",conversationId,"",
+                    stateWasArchived ? "Conversación marcada como no leída y retirada de Archivados para este participante." :
+                        "Conversación marcada como no leída para este participante.");
             } catch (error) {
-                try { inboxWriteFlag_(flagsSheet,flag,previous); }
-                catch (rollbackError) { console.error("No se pudo revertir el marcador no leído tras fallar la auditoría:",rollbackError); }
+                if (unreadChanged) {
+                    try { inboxWriteFlag_(flagsSheet,flag,previousFlag); }
+                    catch (rollbackError) { console.error("No se pudo revertir el marcador no leído tras fallar la auditoría:",rollbackError); }
+                }
+                if (previousState) {
+                    try { inboxWriteState_(sheets.states,state,previousState); }
+                    catch (rollbackError) { console.error("No se pudo revertir el archivo tras fallar la auditoría:",rollbackError); }
+                }
                 throw error;
             }
         }
-        return {status:"success",conversationId,markedUnread:true,alreadyMarkedUnread:!changed,unreadCount};
+        return {status:"success",conversationId,markedUnread:true,alreadyMarkedUnread:!unreadChanged,unarchived:stateWasArchived,unreadCount};
     });
 }
 function handleDeleteInboxConversation(payload) {
