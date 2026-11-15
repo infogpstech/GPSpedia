@@ -1,10 +1,11 @@
 # GPSpedia — Tareas activas y plan de paquetes
 
-Fecha de registro: 2026-11-14  
+Fecha de registro: 2026-11-15  
 Repositorio: `infogpstech/GPSpedia`  
 Rama de trabajo: `GPSpedia2.2.5_work`  
 Rama base protegida: `GPSpedia2.2.5`  
-HEAD al registrar la última actualización previa: `3601098443bac3ed5ec95d9aa866c468ed50bcce`
+HEAD de código validado: `7a58da9a012cd12084f2de3bfb729994f296729b`  
+HEAD de la rama base verificado: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`
 
 Este documento registra los requisitos nuevos y el orden de ejecución. La fuente normativa sigue siendo `NORMAS_DESAROLLO.md`; los registros archivados en `Olds/Documentacion_Legacy/` y `Olds/GPSpedia 2.2/` no se modifican.
 
@@ -16,25 +17,27 @@ Simplificar la autenticación sin debilitar autorización; modernizar Inbox; end
 
 | ID | Problema solicitado | Estado |
 |---|---|---|
-| GP-SEC-01 | Evitar validaciones periódicas/separadas; iniciar sesión una vez y conservar sesión y privilegios mientras siga vigente | EN PROGRESO — contexto central implementado en rama; CI y Beta pendientes |
+| GP-SEC-01 | Simplificar validación de sesión y centralizar contexto/revocación sin pasos extra de login | IMPLEMENTACIÓN LOCAL COMPLETADA; CI 100 suites/1,544 pruebas PASS; VALIDACIÓN BETA PENDIENTE |
 | GP-UX-01 | Inbox organizado, elegante y similar en experiencia a Outlook/Gmail, con identidad GPSpedia | COMPLETADA CON VALIDACIÓN DIFERIDA A BETA |
 | GP-SEC-02 | Bloquear descargas casuales, clic derecho, menú contextual, copia y arrastre de imágenes | COMPLETADA CON VALIDACIÓN DIFERIDA A BETA |
 | GP-RBAC-01 | Compartir integrado para todos; compartir, imprimir y editar detalles solo Supervisor, Jefe y Desarrollador | COMPLETADA CON VALIDACIÓN DIFERIDA A BETA |
-| GP-SEC-03 | Evaluar mitigación de capturas de pantalla en web/PWA sin prometer bloqueo absoluto; el usuario reporta que no existe estrategia aplicada en dispositivos móviles | EVALUACIÓN TÉCNICA COMPLETADA; SIN BLOQUEO FIABLE EN WEB/PWA |
-| GP-DATA-01 | Disponer de migración explícita y verificable de contraseñas heredadas a hash seguro | IMPLEMENTACIÓN COMPLETADA; BENCHMARK BETA PENDIENTE |
-| GP-DATA-02 | Sustituir IDs calculados por fórmulas por IDs backend para usuarios, vehículos, tutoriales y relays | IMPLEMENTACIÓN COMPLETADA; MIGRACIÓN REAL BETA PENDIENTE |
+| GP-SEC-03 | Evaluar mitigación de capturas de pantalla en web/PWA sin prometer bloqueo absoluto | EVALUACIÓN TÉCNICA LOCAL COMPLETADA; VALIDACIÓN EN DISPOSITIVOS BETA PENDIENTE |
+| GP-DATA-01 | Disponer de hashes compatibles y migración explícita de contraseñas heredadas | AUTH/USERS generan PBKDF2-HMAC-SHA256 con salt y 12,000 iteraciones; sin pasos extra ni aumento de coste. BENCHMARK/MIGRACIÓN BETA PENDIENTES |
+| GP-DATA-02 | Sustituir IDs calculados por fórmulas por IDs backend para usuarios, vehículos, tutoriales y relays | IMPLEMENTACIÓN LOCAL Y MOTOR DE MIGRACIÓN COMPLETADOS; AUDITORÍA/MIGRACIÓN REAL BETA PENDIENTES |
 | GP-UX-02 | Corregir saludo, registro de reacciones 👍🏿, tarjeta de alta de tutorial y altura de la tarjeta para agregar problema | CORRECCIONES LOCALES COMPLETADAS; VALIDACIÓN VISUAL BETA PENDIENTE |
 | GP-UX-03 | Reorganizar Inbox móvil y sustituir acciones dispersas/textuales por una barra de herramientas y menú de acciones habituales | CORRECCIÓN LOCAL IMPLEMENTADA; VALIDACIÓN VISUAL BETA PENDIENTE |
-| GP-RBAC-02 | Habilitar y validar las funciones de Inbox para usuarios técnicos; actualmente reciben «servicio no autorizado para el coordinador compartido» | DIAGNÓSTICO LOCAL COMPLETADO; CONFIGURACIÓN FEEDBACK BETA PENDIENTE |
-| GP-PWA-01 | Actualización y recarga manual de la plataforma | CORRECCIÓN LOCAL: no hay bloqueo de recarga; se añadieron comprobaciones de actualización en segundo plano, sin recarga forzada ni controles nuevos. Beta pendiente |
+| GP-RBAC-02 | Habilitar y validar las funciones de Inbox para usuarios técnicos | CONTRATOS LOCALES COMPLETADOS; CONFIGURACIÓN FEEDBACK/COORDINATOR BETA PENDIENTE |
+| GP-INBOX-04B/04C/04D | Estado privado, tickets de soporte, RBAC, accesibilidad y regresión Inbox | BACKEND Y CONTRATOS LOCALES COMPLETADOS; UI DE ACCIONES/HISTORIAL PROPIO DIFERIDA; BETA PENDIENTE |
+| GP-CAT-01 | Catálogo cache-first con feed incremental, deltas y sincronización silenciosa | IMPLEMENTACIÓN LOCAL COMPLETADA; VALIDACIÓN MULTIUSUARIO/DISPOSITIVOS BETA PENDIENTE |
+| GP-PWA-01/02 | Actualización nativa y segundo plano de recursos PWA | IMPLEMENTACIÓN LOCAL COMPLETADA; VALIDACIÓN EN PWA/DISPOSITIVOS BETA PENDIENTE; SIN CONTROL MANUAL DE RECARGA |
 
 ## Hallazgos preliminares confirmados en código
 
-1. **Sesión:** `auth.js` tiene validación cacheada 60 s; `main.js` revalida al recuperar conexión; `api-config.js` ejecuta `touchSession` previo a acciones protegidas, limitado localmente a 5 minutos. AUTH conserva expiración absoluta de 3 meses e inactividad de 1 mes. P1 debe eliminar validaciones redundantes, pero mantener autorización backend en cada operación protegida.
-2. **Contraseñas:** AUTH ya migra una contraseña en texto plano a hash al login exitoso. El hash actual es SHA-256 con salt aleatorio. No se encontró todavía un comando de migración por lotes. Nuevas cuentas en `Services/users.js` también reciben hash. El coste del algoritmo actual debe evaluarse antes de seleccionar un formato más resistente.
+1. **Sesión:** AUTH/USERS usan el contexto central `SESSION_CONTEXTS` con época y barrera `revokedBefore`; las operaciones protegidas mantienen autorización backend sin repetir prevalidaciones innecesarias. `AUTH/acceptTerms` no registra actividad por cada aceptación. CI integral aprobado; restauración, revocación y concurrencia reales siguen pendientes de Beta.
+2. **Contraseñas:** AUTH y USERS generan `PBKDF2-HMAC-SHA256` con salt aleatorio y 12,000 iteraciones. Se conserva lectura compatible de `sha256$` y credenciales heredadas; AUTH rehashea oportunistamente tras login correcto. No se aumentó el coste, no se añadieron pasos al inicio de sesión ni se ejecutó migración masiva. Benchmark Apps Script y migración Beta pendientes.
 3. **IDs:** usuarios nuevos usan IDs secuenciales `USR-####`; vehículos ya tienen asignador backend central y acciones `allocateVehicleId` / `freezeCortesIds`; tutoriales usan `tut-` + operationId; Problemas usa `isue-` + secuencia. La cobertura de registros antiguos, fórmulas y relays requiere auditoría adicional.
 4. **Interacción con imágenes:** `clientInteractionPolicy.js` ya previene contextmenu, copy, cut, selectstart y dragstart en contenido no editable. Es una barrera contra acciones casuales, no impide inspección de red, extracción de URL ni captura del sistema.
-5. **Inbox:** ya existen lista/detalle, paginación, caché, toolbar y acciones. El rediseño debe preservar contratos y capacidades.
+5. **Inbox:** lista/detalle, paginación estable, caché, toolbar existente y RBAC están implementados. GP-INBOX-04B añade backend privado para no leídos/ocultación; 04C usa `reportProblem` como ticket con categoría/asunto/seguimiento y consulta privada paginada; 04D cubre contratos locales. No se añadieron controles nuevos; la UI de historial propio y selección múltiple queda diferida.
 6. **Roles:** el valor canónico único es `Jefe`. La hoja `Users.Privilegios` y su lista de validación ya fueron actualizadas por el usuario; los conversores temporales `Gefe` → `Jefe` se retiraron del backend y frontend. El código ya no acepta `Gefe`.
 
 ## Paquetes de ejecución
