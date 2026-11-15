@@ -117,3 +117,9 @@ Estado: PENDIENTE DE REVISIÓN Y REPRODUCCIÓN. Los siguientes síntomas fueron 
 
 Registro asociado: `Tareas_Activas.md`, IDs GP-UX-02, GP-UX-03, GP-RBAC-02, GP-PWA-01 y ampliación GP-SEC-03. No se realizaron cambios de código, permisos, endpoints, Service Worker ni deployments durante este registro.
 ================================================================================
+
+================================================================================
+2026-11-15 — P2: MIGRACIÓN GLOBAL DE IDs POR FÓRMULA
+CI Node.js 22 run 43759427935: SUCCESS, 102 suites, 1,558 pruebas, 0 fallos. IdentifierFormulaMigration 7/7; FeedbackFormulaIdAllocator 5/5; UserIdGenerator 6/6; PasswordHashMigration 18/18; LogoIdIntegrity 11/11; UsersAtomicMutations 15/15. La migración no se ejecutó en Spreadsheet real. No se desplegaron servicios Apps Script ni se modificaron datos productivos. Validación Beta pendiente en copia aislada.
+================================================================================
+
