@@ -527,3 +527,10 @@
 - RBAC, jerarquía, actor autenticado, auditoría y operaciones Inbox cubiertos por las suites existentes.
 - CI Node.js 22 run 43753485398 SUCCESS: 100 suites, 1,544 pruebas, 0 fallos.
 - Pendiente Beta: lector de pantalla, tema claro/oscuro, Atrás, tamaños reales Android/iOS/desktop, conectividad y pestañas. Sin despliegues Apps Script ni cambios en datos productivos.
+
+
+2026-11-15 | GPSpedia2.2.5_work | Inbox cursor estable y protocolo Beta
+- getMyProblemReports usa cursor estable por reportId, evitando saltos/duplicaciones por nuevas inserciones entre páginas y rechazando cursores de otras cuentas.
+- Añadido a lista_beta_parte2.txt el protocolo GP-INBOX-04B/04C/04D con preflight seguro, acciones de estado privado, tickets, RBAC, accesibilidad y validación real en Beta.
+- CI Node.js 22 run 43753616255 SUCCESS: 100 suites, 1,544 pruebas, 0 fallos; InboxUi 22/22.
+- Sin despliegue Apps Script ni cambios productivos.
