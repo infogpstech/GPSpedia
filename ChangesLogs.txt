@@ -428,3 +428,10 @@
 - GitHub Actions Node.js 22 run 43673118833: SUCCESS; sintaxis PASS; 100 suites / 1,515 pruebas / 0 fallos. La suite añadida aprobó caché 5/5, paginación 4/4 y contratos UI 5/5.
 - GitHub Pages run 43673118102: build, reporte y deploy SUCCESS.
 - Sin cambios de código funcional, interfaz, permisos, endpoints ni datos externos.
+
+
+2026-11-15 — GP-INBOX: cobertura de validación de cursores y empate temporal
+- `JS/Tests/InboxConversations.mjs`: pruebas de rechazo de cursores inválidos, cursor de historial con ancla expirada y paginación de conversaciones con timestamp igual y desempate por ID.
+- Se aisló el caso del límite de creación del fixture preservando la fila de encabezados de InboxMessages.
+- CI Node.js 22 run `43674775675`: SUCCESS; sintaxis PASS; 100 suites / 1,518 pruebas / 0 fallos; InboxConversations 36/36 PASS.
+- GitHub Pages run `43674775262`: build, reporte y deploy SUCCESS. Sin cambios en producción, interfaz, permisos ni recursos externos; integración real diferida a Beta.

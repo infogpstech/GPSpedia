@@ -797,3 +797,14 @@ Las fuentes de servicios JavaScript se centralizan bajo `JS/Services/`. La carpe
 - GitHub Pages run 43673118102: build, reporte y deploy SUCCESS.
 - No se añadieron controles visibles ni se modificaron funciones de producción, permisos, endpoints o datos.
 - GP-INBOX-04B..04D permanecen EN PROGRESO/PENDIENTES en sus funcionalidades mayores; esta corrección no las cierra. La integración real con Apps Script/Spreadsheet/Coordinator y las pruebas Beta de roles/dispositivos siguen diferidas.
+
+
+## Cierre de subcorrección — GP-INBOX validación de cursores (2026-11-15)
+
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
+
+- Se añadieron tres casos a `JS/Tests/InboxConversations.mjs`: rechazo de cursores inválidos, rechazo de ancla de historial inexistente/expirada y desempate determinista por ID con timestamps iguales y páginas sin repetición.
+- La prueba de empate se aisló del rate limit de creación sin alterar los encabezados de `InboxMessages`. Las dos primeras ejecuciones CI detectaron, respectivamente, el límite del fixture y una alteración accidental del encabezado; ambos problemas de prueba quedaron corregidos.
+- CI Node.js 22 run `43674775675`: SUCCESS; **100 suites / 1,518 pruebas / 0 fallos**; `InboxConversations` 36/36 PASS; sintaxis PASS.
+- GitHub Pages run `43674775262`: SUCCESS.
+- No hubo cambios de producción, UI, permisos, endpoints ni recursos externos. La validación de integración real permanece diferida a Beta. GP-INBOX-04B..04D siguen abiertas en sus funciones mayores pendientes.

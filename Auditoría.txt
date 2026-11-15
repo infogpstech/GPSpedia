@@ -688,3 +688,13 @@ Estado: CORRECCIÓN LOCAL PREPARADA; CI PENDIENTE.
 - Corrección: rutas actualizadas a JS/Frontend/ y JS/Services/, raíz calculada con import.meta.url, y suite agregada al grupo INTEGRATION.
 - Evidencia de cierre local: CI Node.js 22 run 43673118833, 100 suites / 1,515 pruebas / 0 fallos; AUG-116 14/14; Pages run 43673118102 SUCCESS.
 - Estado: CORREGIDO Y VALIDADO EN CI. Pruebas externas de Inbox permanecen reservadas a Beta.
+
+
+AUD-2026-11-15-32 — AISLAMIENTO INSUFICIENTE EN NUEVA PRUEBA DE PAGINACIÓN INBOX
+Severidad: Baja (la suite de pruebas no era reproducible por interferencia del límite de frecuencia del fixture).
+Estado: CORREGIDO Y VALIDADO EN CI.
+- Evidencia: la prueba que creaba dos conversaciones para validar el desempate por ID heredaba mensajes recientes de los casos anteriores y superaba el límite de creación de ocho mensajes por minuto.
+- Primer ajuste: se envejecieron filas del fixture, pero se incluyó accidentalmente la fila de encabezados; la validación de esquema detectó el error antes de continuar.
+- Corrección final: se preservó la cabecera y se ajustó únicamente el timestamp de filas de datos existentes antes de crear las dos conversaciones de prueba.
+- CI Node.js 22 run 43674775675: SUCCESS; 100 suites / 1,518 pruebas / 0 fallos; InboxConversations 36/36 PASS. Pages run 43674775262 SUCCESS.
+- El hallazgo afecta exclusivamente al aislamiento del test; no se modificó el limitador ni la lógica de producción.

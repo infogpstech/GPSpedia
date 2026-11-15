@@ -383,3 +383,17 @@
 - No se modificó código funcional, interfaz, permisos, endpoints ni datos externos. No se ejecutaron pruebas Apps Script/Spreadsheet reales; continúan diferidas a Beta.
 - Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin modificaciones.
 - Continuidad: la cobertura local de caché/paginación queda integrada. GP-INBOX-04B..04D siguen abiertas para funciones masivas y controles visibles sujetos a autorización; continuar solo con mejoras internas que no amplíen la interfaz.
+
+
+## Cierre — GP-INBOX validación de cursores y desempate estable (2026-11-15)
+
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
+
+- Commit de pruebas inicial: `c5751afdc3ffcd764fdfdf0b67fef1ecc6e3a070`; ajuste del aislamiento de fixture: `d634ec453b0e92ae5dfe4f700c676e78e3370205`; corrección final de fixture: `26eb353d3e908ad9e6d77ccecbd9248fc0ffb982`.
+- `JS/Tests/InboxConversations.mjs`: se agregaron pruebas para rechazar cursores inválidos en bandeja e historial, rechazar un cursor ancla cuyo mensaje expiró y mantener paginación sin duplicados cuando dos conversaciones comparten timestamp, usando ID como desempate.
+- La primera ejecución CI falló porque el caso nuevo superó el límite de creación de mensajes del fixture. El primer aislamiento tocó también la fila de encabezados y produjo un error de esquema; se corrigió limitando la antigüedad a filas de datos y preservando encabezados.
+- CI Node.js 22 run `43674775675`: SUCCESS; sintaxis PASS; **100 suites / 1,518 pruebas / 0 fallos**. `InboxConversations` 36/36 PASS, incluidas las tres pruebas nuevas.
+- GitHub Pages run `43674775262`: build, reporte y deploy SUCCESS para el mismo HEAD.
+- No se modificó código de producción, UI, permisos, endpoints, deployments ni datos externos. La validación con Spreadsheet/Coordinator real y usuarios/dispositivos permanece diferida a Beta.
+- HEAD de trabajo: `26eb353d3e908ad9e6d77ccecbd9248fc0ffb982`; rama base `GPSpedia2.2.5`: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin modificaciones.
+- GP-INBOX-04B..04D permanecen abiertas para sus funcionalidades mayores; continuar únicamente con mejoras internas que no agreguen controles visibles sin autorización.
