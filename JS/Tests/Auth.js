@@ -1136,7 +1136,21 @@ function handleValidateSession(payload) {
     try {
         const { userId, sessionToken } = payload || {};
         if (!userId || !sessionToken) return { valid: false };
-        const sharedContext = validateSharedSessionContext_(userId, sessionToken);
+        let sharedContext;
+        try {
+            sharedContext = validateSharedSessionContext_(userId, sessionToken);
+        } catch (contextError) {
+            const message = String(contextError && contextError.message || contextError);
+            if (!message.includes("no está registrada en el contexto compartido")) throw contextError;
+            const legacyValidation = validateSessionReadOnly_(sessionToken, userId);
+            if (!legacyValidation || legacyValidation.valid !== true || !legacyValidation.profile) return legacyValidation;
+            syncSharedSessionContextsForUser_(
+                userId,
+                legacyValidation.profile.Privilegios,
+                legacyValidation.profile.Nombre_Completo
+            );
+            sharedContext = validateSharedSessionContext_(userId, sessionToken);
+        }
         if (!sharedContext || sharedContext.valid !== true || !sharedContext.actor) return { valid: false, reason: 'shared_context_invalid' };
         syncAuthSheetActivityFromActor_(userId, sessionToken, sharedContext.actor);
         return validateSessionReadOnly_(sessionToken, userId, sharedContext.actor);
