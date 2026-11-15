@@ -567,7 +567,7 @@ function doPost(e) {
         ? { session: { userId: payload.userId, sessionToken: payload.sessionToken } } : undefined;
     try {
         return withSharedMutationLease_("AUTH", action, function(token, actor) {
-            if (actor) syncAuthSheetActivityFromActor_(actor.userId, payload.sessionToken, actor);
+            if (actor && payload.sessionToken) syncAuthSheetActivityFromActor_(actor.userId, payload.sessionToken, actor);
             const wrappedEvent = withSharedSessionActor_(e, actor);
             return doPostInternal_(wrappedEvent);
         }, Object.assign(sessionOptions || {}, nestedToken ? { nestedToken: nestedToken } : {}));
