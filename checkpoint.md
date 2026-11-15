@@ -527,3 +527,13 @@
 - Próximo trabajo local: corregir los contratos/fixtures y la disponibilidad de la función compartida en los entornos de prueba; volver a ejecutar `node --check` y la regresión integral Node.js 22. Después, dejar explícitamente pendientes las pruebas de despliegue Beta que correspondan.
 - Esta actualización es documental; no modifica lógica de autenticación ni despliega servicios Apps Script. No se modificaron hojas, Drive, propiedades ni datos productivos.
 
+
+
+## Continuidad — P1 sesión central y compatibilidad de contraseñas (2026-11-15)
+
+- Repositorio `infogpstech/GPSpedia`; rama `GPSpedia2.2.5_work`; HEAD validado: `b5cca78a65b5a9be39b999306abd3365da99c269`. Rama base `GPSpedia2.2.5` verificada sin cambios en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- Corregidos los fallos locales del CI inicial: dependencia de revocación central en el harness AUTH; sincronización del espejo USERS; wrapper de actor en el harness de ADMIN; expectativas de contratos Inbox/acceptTerms/Coordinator alineadas con `SESSION_CONTEXTS` y la política `trackActivity: false`.
+- AUTH y USERS generan ahora el mismo formato `pbkdf2-sha256$12000$salt$digest`, con salt UUID aleatorio. Se conserva lectura compatible de `sha256$` y plaintext heredado; AUTH rehashea oportunistamente tras verificar correctamente credenciales antiguas. No se aumentaron iteraciones, no se añadieron pasos al login y no se ejecutó migración masiva.
+- Prueba cruzada AUTH/USERS añadida a `PasswordHashMigration.mjs`. CI Node.js 22 run `43752042270`: SUCCESS; **100 suites / 1,535 pruebas / 0 fallos**; `node --check` PASS. GitHub Pages run `43752040706`: build/reporte/deploy SUCCESS.
+- No se desplegó Apps Script ni se modificaron datos productivos. Validación Beta pendiente: deployments compatibles, credenciales, properties, Spreadsheet, login, restauración, varios dispositivos, logout individual, revocación global, cambio de rol/contraseña, expiración y tokens obsoletos. Benchmark de KDF real pendiente; no aumentar el coste configurado sin evidencia y autorización.
+- Siguiente trabajo local: GP-INBOX-04B, limitado a correcciones internas y pruebas. No añadir botones, paneles, pestañas, secciones ni acciones visibles nuevas sin autorización. Operaciones masivas/controles visibles 04B..04D siguen diferidos.
