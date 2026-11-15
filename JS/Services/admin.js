@@ -883,7 +883,7 @@ function doPost(e) {
     const payload = request.payload && typeof request.payload === "object" ? request.payload : {};
     const sessionOptions = { session: { userId: payload.userId, sessionToken: payload.sessionToken } };
     if (!isSharedMutationAction_(action)) {
-        if (action === "ping") return doPostInternal_(e);
+        if (action === "ping") return doPostInternal_(withSharedSessionActor_(e, null));
         const operation = isSharedReadAction_(action) ? action : "sessionActivity";
         try {
             return withSharedMutationLease_("ADMIN", operation, function(token, actor) {
