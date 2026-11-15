@@ -587,3 +587,12 @@ Estado: CORREGIDO EN RAMA; VALIDACIÓN BETA PENDIENTE.
 - Corrección: se retiran del grupo catalogWriters. recoverReplacedImage se separa: solo publica upsert si cambia la referencia activa de una fila Cortes, con ID y campo explícitos; si ya estaba activa no publica.
 - Las operaciones masivas conservan reset. No se modifican datos ni archivos productivos durante esta auditoría.
 - CI Node.js 22 run 43659554751: 99 suites / 1,493 pruebas / 0 fallos.
+
+
+AUD-2026-11-14-25 — RESET DE CATÁLOGO EN OPERACIONES ADMIN DRIVE/LEDGER-ONLY
+Severidad: Baja (reconciliación completa sin modificación del modelo de catálogo).
+Estado: CORREGIDO EN RAMA; VALIDACIÓN BETA PENDIENTE.
+- Hallazgo: organizePrimaryVehicleImages y reconcilePendingImageUploads estaban incluidas en catalogWriters aunque no modifican referencias de Cortes.
+- Evidencia: organizePrimaryVehicleImages solo mueve/renombra el mismo archivo por ID y carpetas; reconcilePendingImageUploads actualiza ImageUploadLedger y metadatos Drive, no celdas Cortes. restoreAllTrashedImages ya no publica eventos.
+- Corrección: se retiran las dos acciones de catalogWriters. normalizeImages y applyCortesImageReconciliation siguen con reset por modificar varias filas/referencias; restauración de base y migraciones también.
+- CI Node.js 22 run 43659723527: 99 suites / 1,494 pruebas / 0 fallos.

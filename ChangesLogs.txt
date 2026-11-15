@@ -343,3 +343,11 @@
 - Las operaciones masivas de restauración, normalización, organización y reconciliación mantienen reset.
 - CatalogChangeFeed 22/22, CatalogSnapshotSync 29/29 y PysDataCache 18/18 PASS.
 - CI Node.js 22 run 43659554751: SUCCESS; 99 suites / 1,493 pruebas / 0 fallos.
+
+
+2026-11-14 — GP-CAT: EXCLUSIÓN DE ACCIONES ADMIN DRIVE/LEDGER-ONLY
+- organizePrimaryVehicleImages mueve/renombra archivos manteniendo el mismo ID y no escribe celdas Cortes; se retira de catalogWriters.
+- reconcilePendingImageUploads actualiza ImageUploadLedger y metadatos de Drive, no filas Cortes; se retira de catalogWriters.
+- restoreAllTrashedImages ya estaba excluida. normalizeImages y applyCortesImageReconciliation mantienen reset por reescribir referencias; las migraciones y restauraciones de base mantienen reset.
+- CatalogChangeFeed 23/23, CatalogSnapshotSync 29/29 y PysDataCache 18/18 PASS.
+- CI Node.js 22 run 43659723527: SUCCESS; 99 suites / 1,494 pruebas / 0 fallos.

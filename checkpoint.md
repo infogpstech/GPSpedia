@@ -1733,3 +1733,17 @@ No se desplegaron servicios Apps Script, no se modificaron ScriptProperties, Spr
 - GitHub Actions run `43659554751`: SUCCESS; Node.js 22; sintaxis PASS; **99 suites / 1,493 pruebas / 0 fallos**.
 - GitHub Pages run `43659554417` pendiente de confirmar al momento de este checkpoint.
 - Siguiente: GP-CAT-01P — auditar las operaciones masivas y confirmar que los resets no se disparan desde acciones que solo leen o modifican metadatos fuera del catálogo.
+
+
+## Continuidad — GP-CAT-01P: exclusión de acciones ADMIN Drive/ledger-only (2026-11-14)
+
+**Commit de código:** `b19f838c7982aa13ca9097d608ffa68e863abad7`.
+
+- `organizePrimaryVehicleImages` mueve/renombra el mismo archivo Drive y normaliza carpetas, pero no escribe referencias de Cortes ni cambia el ID del archivo. Se retira de `catalogWriters`.
+- `reconcilePendingImageUploads` actualiza únicamente `ImageUploadLedger` y metadatos/nombres/descripciones Drive; no modifica filas Cortes. Se retira de `catalogWriters`.
+- `restoreAllTrashedImages` ya estaba excluida del grupo de escritores de catálogo; su operación restaura disponibilidad de archivos sin cambiar las celdas de referencia.
+- `normalizeImages` puede duplicar archivos compartidos y actualizar URLs de varias filas; conserva reset. `applyCortesImageReconciliation` escribe varias celdas/filas; conserva reset. Restauraciones de base, reorganización y migraciones de IDs también conservan reset.
+- `CatalogChangeFeed`: 23/23 PASS; `CatalogSnapshotSync`: 29/29 PASS; `PysDataCache`: 18/18 PASS.
+- GitHub Actions run `43659723527`: SUCCESS; Node.js 22; sintaxis PASS; **99 suites / 1,494 pruebas / 0 fallos**.
+- GitHub Pages run `43659722781` pendiente de confirmar al momento de este checkpoint.
+- Siguiente: GP-CAT-01Q — convertir la reconciliación confirmada de imágenes Cortes (máximo 10 asignaciones) en upserts agrupados por vehículo, con reset de recuperación si cualquier snapshot falla.
