@@ -6240,7 +6240,7 @@ ${elapsedSec}s
                     '; resultado vacío: ' + result.skipped.emptyResult +
                     '; fila sin otros datos: ' + result.skipped.emptyRecord +
                     '; fórmulas con patrón compatible con backend: ' + result.formulaCount +
-                    '; fórmulas con patrón no reconocido (no se migrarán): ' + result.skipped.unsupportedPattern +
+                    '; fórmulas sin generador backend compatible para esa hoja (no se migrarán): ' + result.skipped.unsupportedPattern +
                     '. Se conservará cada ID calculado sin renumerarlo.';
                 const backupMatches = Boolean(verifiedDatabaseBackupId &&
                     normalizeSpreadsheetBackupId(backupResourceInput ? backupResourceInput.value : '') === verifiedDatabaseBackupId);
