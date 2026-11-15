@@ -859,7 +859,8 @@ function syncSharedSessionContextsForUser_(userId, role, fullName) {
     if (!sessionsSheet) throw new Error("No se encontró ActiveSessions para sincronizar el contexto compartido.");
     const rows = sessionsSheet.getDataRange().getValues().slice(1).filter(row =>
         normalizeUserId(row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]) === normalizedId &&
-        String(row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || "").trim()
+        String(row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || "").trim() &&
+        !getSessionExpirationStatus_(row, new Date()).expired
     );
     if (!rows.length) throw new Error("No hay sesiones activas que registrar en el contexto compartido.");
     if (rows.length > 5) throw new Error("La cuenta supera el límite seguro de sesiones compartidas.");
