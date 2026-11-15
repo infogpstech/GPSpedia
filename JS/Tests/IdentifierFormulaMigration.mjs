@@ -63,7 +63,8 @@ test("La simulación de migración no escribe ni crea snapshots/manifiestos",()=
  const h=makeHarness(),before=h.ss.sheets.length;
  const r=h.api.migrate({dryRun:true,batchSize:1});
  assert.equal(r.status,"success");assert.equal(r.dryRun,true);
- assert.equal(r.formulaCount,2);assert.equal(r.skipped.duplicate,1);
+ assert.equal(r.formulaCount,2);assert.equal(r.patternRecognizedCount,2);assert.equal(r.patternUnsupportedCount,0);
+ assert.equal(r.skipped.duplicate,1);
  assert.equal(h.ss.sheets.length,before);assert.equal(h.users.formulas[1][0],'="U-"&TEXTO(FILA()-1,"000")');
 });
 test("Congela valores exactos por lotes, reanuda y conserva snapshots/manifiesto",()=>{
