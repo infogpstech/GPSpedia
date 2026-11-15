@@ -14,7 +14,7 @@ const DRIVE_FOLDER_ID = '1-8QqhS-wtEFFwyBG8CmnEOp5i8rxSM-2';
 let spreadsheet = null;
 
 
-const WRITE_SERVICE_URL = "https://script.google.com/macros/s/AKfycbxMj8WFCMZVLXuk3N6_WCeEwNwhGAb589PJY4gc5ZjA8mrYsBN7-femz_FCH4eFj5vBDQ/exec";
+const WRITE_SERVICE_URL = "https://script.google.com/macros/s/AKfycbw0sFMF2lGRzYa3yDxLnpkNZ_qeBBT17WIe-U8vcpghwCZczCRoXb-nxl9b4pFJk1l1Mg/exec";
 const LOGOS_MARCA_ID_COUNTER_PROPERTY = "LOGOS_MARCA_ID_COUNTER";
 
 /** WRITE es la autoridad única para asignar y estabilizar IDs de Cortes. */
