@@ -37,7 +37,7 @@ function makeHarness(){
  const ignored=makeSheet("Catalogo",[["Nombre","Valor"],["x","y"]],[["Nombre","Valor"],["=ROW()",""]]);
  const ss={sheets:[users,vehicles,ignored],getSheets(){return this.sheets;},getSheetByName(n){return this.sheets.find(s=>s.name===n)||null;},
   insertSheet(n){const sh=makeSheet(n,[[]]);this.sheets.push(sh);return sh;}};
- const Utilities={DigestAlgorithm:{SHA_256:"SHA_256"},Charset:{UTF_8:"UTF-8"},computeDigest(_a,v){return Array.from(createHash("sha256").update(String(v),"utf8").digest()).map(b=>b>127?b-256:b);}};
+ const Utilities={DigestAlgorithm:{SHA_256:"SHA_256"},Charset:{UTF_8:"UTF-8"},getUuid:()=>"12345678-1234-4234-8234-123456789012",computeDigest(_a,v){return Array.from(createHash("sha256").update(String(v),"utf8").digest()).map(b=>b>127?b-256:b);}};
  const LockService={getScriptLock:()=>({waitLock(){},releaseLock(){}})};
  const SpreadsheetApp={flush(){}};
  const code=[
