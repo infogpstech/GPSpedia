@@ -123,8 +123,10 @@ test("WRITE publica upsert exacto de Cortes tras releer fila y conserva reset pa
     assert.ok(writeSource.includes("getScriptLock()") && writeSource.includes("waitLock(15000)"));
 });
 test("suggestYear publica Cortes solo cuando se aplica o recupera una ampliación confirmada", () => {
-    assert.match(feedbackSource,/action === "suggestYear" && response[\\s\\S]*?response\\.recovered === false[\\s\\S]*?response\\.recovered === true[\\s\\S]*?publishFeedbackCortesCatalogChange_\\(action, vehicleId\\)/);
-    assert.doesNotMatch(feedbackSource,/\\["suggestYear", "addProblem", "addSolution"/);
+    assert.ok(feedbackSource.includes('action === "suggestYear" && response &&'));
+    assert.ok(feedbackSource.includes('(response.recovered === false || response.recovered === true)'));
+    assert.ok(feedbackSource.includes('publishFeedbackCortesCatalogChange_(action, vehicleId)'));
+    assert.ok(!feedbackSource.includes('["suggestYear", "addProblem", "addSolution"'));
     assert.ok(coordinatorSource.includes('"suggestYear"'));
 });
 test("mutaciones PyS publican upsert exacto tras verificar ID y fila bajo lock", () => {
