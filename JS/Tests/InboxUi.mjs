@@ -109,6 +109,10 @@ check("Los wrappers de API conservan el contrato de Inbox", () => {
         assert.match(api, new RegExp("export async function " + name + "\\("));
     }
 });
+check("La paginación conserva los cursores opacos de Inbox sin convertirlos a offsets", () => {
+    assert.match(ui, /inboxConversationPageStack_\.push\(inboxConversationNextCursor\)/);
+    assert.doesNotMatch(ui, /inboxConversationPageStack_\.push\(Number\(inboxConversationNextCursor\)\)/);
+});
 check("El modal mantiene los controles de lectura para tecnologías de asistencia", () => {
     assert.match(html, /id="inbox-conversation-list"[^>]*aria-live="polite"/);
     assert.match(html, /id="inbox-conversation-status"[^>]*role="status"[^>]*aria-live="polite"/);

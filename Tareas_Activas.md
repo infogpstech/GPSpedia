@@ -760,3 +760,8 @@ Este requerimiento complementa GP-PWA-02: sincronizar el catálogo en vivo no de
 ## Adenda de rutas tras centralización JavaScript — 2026-11-15
 
 Las fuentes de servicios JavaScript se centralizan bajo `JS/Services/`. La carpeta `Services/` conserva documentación y auxiliares no JavaScript. Las referencias a `Services/*.js` en entradas históricas describen la ubicación anterior y no deben interpretarse como rutas vigentes; en GP-INBOX-04, la ruta actual de la implementación es `JS/Services/InboxConversations.js`. `service-worker.js` permanece en la raíz por su alcance PWA.
+
+
+## Adenda de continuidad Inbox — paginación concurrente (2026-11-15)
+
+**GP-INBOX-04B: EN PROGRESO; mejora interna permitida, sin controles visibles nuevos.** Se detectó que la paginación por offset podía repetir u omitir conversaciones cuando una conversación recibía actividad nueva o el ancla se archivaba; la paginación del historial también podía repetir el último mensaje anterior si llegaba un mensaje nuevo entre solicitudes. Se sustituye el offset por cursores estables: clave de orden (fecha + ID) para conversaciones y ancla por ID para mensajes. La UI conserva el cursor opaco sin convertirlo a número. Se añaden pruebas de regresión para concurrencia y contrato UI. Las funciones masivas y los nuevos controles visibles de GP-INBOX-04B..04D siguen diferidos hasta autorización expresa. No se modifican deployments ni datos externos.

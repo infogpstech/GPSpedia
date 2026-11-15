@@ -4377,7 +4377,7 @@ function bindInboxControls_() {
         next.addEventListener("click", () => {
             if (!inboxConversationHasMore_ || inboxConversationNextCursor_ === null) return;
             inboxConversationPageStack_ = inboxConversationPageStack_.slice(0, inboxConversationPageIndex_ + 1);
-            inboxConversationPageStack_.push(Number(inboxConversationNextCursor));
+            inboxConversationPageStack_.push(inboxConversationNextCursor);
             inboxConversationPageIndex_ += 1;
             loadInboxConversations_();
         });

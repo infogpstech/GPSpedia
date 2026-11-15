@@ -268,6 +268,30 @@ run("Búsqueda y paginación respetan carpeta y cursor", () => {
     assert.equal(page.data[0].subject,"Consulta de relay");
     assert.equal(page.hasMore,false);
 });
+run("La paginación de conversaciones tolera actividad nueva y archivo del ancla", () => {
+    const initial = api.handleCreateInboxConversation({
+        ...actor("U1","token-a"),recipientId:"U3",subject:"Ancla de paginación",category:"general",
+        body:"Primera página.",idempotencyKey:"page-anchor-base-01"
+    });
+    const initialRow = spreadsheet.getSheetByName("InboxConversations").rows.find(row => row[0] === initial.conversationId);
+    initialRow[14] = "2099-01-01T00:00:00.000Z";
+    initialRow[2] = initialRow[14];
+    const firstPage = api.handleGetInboxConversations({ ...actor("U1","token-a"),folder:"sent",pageSize:1,cursor:"0" });
+    assert.equal(firstPage.data[0].conversationId,initial.conversationId);
+    assert.ok(firstPage.nextCursor);
+    api.handleArchiveInboxConversation({ ...actor("U1","token-a"),conversationId:initial.conversationId,archived:true });
+    const newer = api.handleCreateInboxConversation({
+        ...actor("U1","token-a"),recipientId:"U3",subject:"Conversación posterior",category:"general",
+        body:"Se creó después de consultar la primera página.",idempotencyKey:"page-anchor-newer-01"
+    });
+    const newerRow = spreadsheet.getSheetByName("InboxConversations").rows.find(row => row[0] === newer.conversationId);
+    newerRow[14] = "2100-01-01T00:00:00.000Z";
+    newerRow[2] = newerRow[14];
+    const nextPage = api.handleGetInboxConversations({ ...actor("U1","token-a"),folder:"sent",pageSize:1,cursor:firstPage.nextCursor });
+    assert.equal(nextPage.data.length,1);
+    assert.notEqual(nextPage.data[0].conversationId,initial.conversationId);
+    assert.notEqual(nextPage.data[0].conversationId,newer.conversationId);
+});
 run("El filtro de categoría limita resultados antes de paginar", () => {
     api.handleCreateInboxConversation({
         ...actor("U1","token-a"),recipientId:"U3",subject:"Acceso a la plataforma",category:"acceso",
@@ -324,6 +348,22 @@ run("La paginación de mensajes entrega primero los más recientes y permite rec
     assert.equal(cursor,null,"La paginación debe terminar.");
     assert.equal(new Set(ids).size,ids.length,"No debe repetir mensajes entre páginas.");
     assert.equal(ids.length,latest.total,"Debe recorrer todos los mensajes del historial.");
+});
+run("La paginación del historial no repite mensajes si llega uno nuevo entre páginas", () => {
+    const latest = api.handleGetInboxMessages({ ...actor("U1","token-a"),conversationId:first.conversationId,pageSize:1,cursor:"0" });
+    assert.equal(latest.data.length,1);
+    assert.ok(latest.nextCursor);
+    const appended = api.handleSendInboxMessage({
+        ...actor("U2","token-b"),conversationId:first.conversationId,
+        body:"Mensaje recibido después de abrir la página histórica.",idempotencyKey:"page-message-race-01"
+    });
+    assert.ok(appended.messageId);
+    const older = api.handleGetInboxMessages({
+        ...actor("U1","token-a"),conversationId:first.conversationId,pageSize:1,cursor:latest.nextCursor
+    });
+    assert.equal(older.data.length,1);
+    assert.notEqual(older.data[0].messageId,latest.data[0].messageId);
+    assert.notEqual(older.data[0].messageId,appended.messageId);
 });
 run("Las mutaciones Inbox se coordinan con cambios de identidad y otras escrituras FEEDBACK", () => {
     const match = feedbackSource.match(/function isSharedMutationAction_\(action\)\s*\{[\s\S]*?\n\}/);

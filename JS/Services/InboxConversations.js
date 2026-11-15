@@ -354,8 +354,17 @@ function handleGetInboxConversations(payload) {
     if (category !== "all" && !INBOX_CATEGORIES_.has(category)) throw new Error("La categoría de Inbox no es válida.");
     const query = String(payload.query || "").trim().slice(0,80).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
     const cursorRaw = String(payload.cursor === undefined || payload.cursor === null ? "0" : payload.cursor);
-    if (!/^\d{1,7}$/.test(cursorRaw)) throw new Error("El cursor no es válido.");
-    const offset = Number(cursorRaw), requestedSize = Number(payload.pageSize);
+    let anchorTimestamp = null, anchorConversationId = "";
+    if (cursorRaw !== "0") {
+        const separator = cursorRaw.lastIndexOf("|");
+        const timestamp = separator > 0 ? Date.parse(cursorRaw.slice(0,separator)) : NaN;
+        anchorConversationId = separator > 0 ? cursorRaw.slice(separator+1) : "";
+        if (!Number.isFinite(timestamp) || !/^[A-Za-z0-9_-]{8,100}$/.test(anchorConversationId)) {
+            throw new Error("El cursor no es válido.");
+        }
+        anchorTimestamp = timestamp;
+    }
+    const requestedSize = Number(payload.pageSize);
     const pageSize = Number.isFinite(requestedSize) ? Math.max(1,Math.min(50,Math.floor(requestedSize))) : 20;
     return withInboxConversationLock_(() => {
         const convSheet = inboxConversationSheet_(INBOX_CONVERSATIONS_SHEET_,INBOX_CONVERSATION_HEADERS_,false);
@@ -419,17 +428,36 @@ function handleGetInboxConversations(payload) {
             return true;
         }).filter(item => category === "all" || item.category === category)
             .filter(matchesQuery)
-            .sort((a,b) => new Date(b.lastMessageAt || b.updatedAt).getTime() - new Date(a.lastMessageAt || a.updatedAt).getTime());
-        const data = filtered.slice(offset,offset+pageSize), nextOffset = offset + data.length, hasMore = nextOffset < filtered.length;
-        return {status:"success",data,counts,total:filtered.length,nextCursor:hasMore?String(nextOffset):null,hasMore,pageSize};
+             .sort((a,b) => {
+                const timeA = Date.parse(a.lastMessageAt || a.updatedAt) || 0;
+                const timeB = Date.parse(b.lastMessageAt || b.updatedAt) || 0;
+                return timeB - timeA || String(b.conversationId).localeCompare(String(a.conversationId));
+            });
+        // El cursor conserva la clave de orden, no el offset ni la fila: si el
+        // elemento ancla se archiva o recibe actividad nueva, las páginas siguen.
+        const startIndex = anchorTimestamp === null ? 0 : filtered.findIndex(item => {
+            const itemTimestamp = Date.parse(item.lastMessageAt || item.updatedAt) || 0;
+            return itemTimestamp < anchorTimestamp ||
+                (itemTimestamp === anchorTimestamp && String(item.conversationId).localeCompare(anchorConversationId) < 0);
+        });
+        const safeStartIndex = startIndex < 0 ? filtered.length : startIndex;
+        const data = filtered.slice(safeStartIndex,safeStartIndex+pageSize);
+        const hasMore = safeStartIndex + data.length < filtered.length;
+        const lastItem = data[data.length - 1];
+        const lastItemTimestamp = lastItem ? (Date.parse(lastItem.lastMessageAt || lastItem.updatedAt) || 0) : 0;
+        const nextCursor = hasMore && lastItem
+            ? new Date(lastItemTimestamp).toISOString() + "|" + lastItem.conversationId
+            : null;
+        return {status:"success",data,counts,total:filtered.length,nextCursor,hasMore,pageSize};
     });
 }
 function handleGetInboxMessages(payload) {
     const actor = inboxConversationActor_(payload), conversationId = String(payload.conversationId || "").trim();
     if (!conversationId) throw new Error("Se requiere una conversación.");
     const cursorRaw = String(payload.cursor === undefined || payload.cursor === null ? "0" : payload.cursor);
-    if (!/^\d{1,7}$/.test(cursorRaw)) throw new Error("El cursor no es válido.");
-    const offset = Number(cursorRaw), requestedSize = Number(payload.pageSize);
+    if (cursorRaw !== "0" && !/^[A-Za-z0-9_-]{8,100}$/.test(cursorRaw)) throw new Error("El cursor no es válido.");
+    const anchorMessageId = cursorRaw === "0" ? "" : cursorRaw;
+    const requestedSize = Number(payload.pageSize);
     const pageSize = Number.isFinite(requestedSize) ? Math.max(1,Math.min(100,Math.floor(requestedSize))) : 50;
     return withInboxConversationLock_(() => {
         const convSheet = inboxConversationSheet_(INBOX_CONVERSATIONS_SHEET_,INBOX_CONVERSATION_HEADERS_,false);
@@ -439,14 +467,21 @@ function handleGetInboxMessages(payload) {
         inboxAssertParticipant_(found.row,actor.id);
         const messages = inboxConversationRows_(messageSheet,INBOX_MESSAGE_HEADERS_.length).filter(row => String(row[1]) === conversationId)
             .sort((a,b) => new Date(a[2]).getTime() - new Date(b[2]).getTime());
-        const endIndex = Math.max(0, messages.length - offset);
-        const startIndex = Math.max(0, endIndex - pageSize);
+        // Cursor anclado al mensaje más antiguo de la página entregada. Los
+        // mensajes nuevos quedan fuera de las páginas históricas ya iniciadas.
+        const anchorIndex = anchorMessageId
+            ? messages.findIndex(message => String(message[0]) === anchorMessageId)
+            : messages.length;
+        if (anchorMessageId && anchorIndex < 0) throw new Error("El cursor del historial expiró; vuelve a cargar la conversación.");
+        const endIndex = anchorIndex;
+        const startIndex = Math.max(0,endIndex-pageSize);
         const data = messages.slice(startIndex,endIndex).map(row => ({
             messageId:String(row[0]),conversationId:String(row[1]),createdAt:String(row[2]),authorId:String(row[3]),
             authorName:String(row[4]),authorRole:String(row[5]),body:String(row[6] || "")
         }));
-        const nextOffset = offset + data.length, hasMore = startIndex > 0;
-        return {status:"success",data,total:messages.length,nextCursor:hasMore?String(nextOffset):null,hasMore,pageSize};
+        const hasMore = startIndex > 0;
+        const nextCursor = hasMore && data.length ? data[0].messageId : null;
+        return {status:"success",data,total:messages.length,nextCursor,hasMore,pageSize};
     });
 }
 function handleMarkInboxRead(payload) {

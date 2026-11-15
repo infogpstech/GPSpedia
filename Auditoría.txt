@@ -642,3 +642,12 @@ Estado: CORREGIDO EN RAMA.
 - **Evidencia:** diez fuentes ahora están en `JS/Services/`; no quedan archivos `.js` en `Services/`. Se actualizaron el runner, las suites Node.js, workflow y documentación activa.
 - **Validación:** GitHub Actions run `43664165206` SUCCESS; 99 suites / 1,497 pruebas / 0 fallos; sintaxis PASS. GitHub Pages run `43664164792` SUCCESS.
 - **Estado:** HALLAZGO CERRADO. Las validaciones de copia manual en Apps Script y de navegador/PWA real permanecen diferidas a Beta y no forman parte del cierre local.
+
+
+AUD-2026-11-15-29 — CURSORES DE PAGINACIÓN INESTABLES EN INBOX
+Severidad: Media (puede repetir u omitir conversaciones/mensajes al paginar durante actividad concurrente).
+Estado: CORRECCIÓN LOCAL PREPARADA; CI PENDIENTE.
+- Evidencia: `JS/Services/InboxConversations.js` usaba offsets numéricos sobre colecciones ordenadas por actividad. Si llegaba un mensaje o cambiaba el orden entre páginas, el offset pasaba a apuntar a otra fila. En el historial, insertar un mensaje al final desplazaba el límite y podía repetir el mensaje más reciente de la página anterior. En la bandeja, archivar la fila que servía de ancla también desplazaba el offset.
+- Corrección: cursor de conversaciones basado en timestamp de orden e ID estable, independiente de que la fila ancla desaparezca o cambie su actividad; cursor de mensajes basado en el ID del mensaje más antiguo de la página. La UI deja de convertir cursores a Number.
+- Pruebas añadidas: nueva conversación/actividad y archivo del elemento de la página anterior; mensaje nuevo entre páginas; contrato UI de cursor opaco.
+- Riesgo residual: la ordenación y consistencia de datos externos requiere validación en Spreadsheet Beta; no se ha ejecutado contra recursos reales.

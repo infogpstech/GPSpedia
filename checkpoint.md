@@ -306,3 +306,14 @@
 - La rotación del checkpoint conserva el historial previo en `Checkpoint_Archive/checkpoint_legacy_parte_001.md`, con manifiesto y reconstrucción exacta comprobada.
 - No se cambiaron lógica de negocio, contratos, endpoints, deployments, ScriptProperties, Spreadsheet, Drive ni datos productivos.
 - Pendiente de Beta: copiar/verificar manualmente las fuentes en proyectos Apps Script aislados y validar ciclo PWA/Service Worker en navegadores/dispositivos reales. Estas pruebas no se simularon.
+
+
+## Continuidad — GP-INBOX paginación estable (2026-11-15)
+
+**Estado:** corrección local preparada para publicar y validar CI.
+
+- HEAD de partida: `35d9b4c160191989b7d6a4b1137d90c961ba1f57` en `GPSpedia2.2.5_work`; rama base `GPSpedia2.2.5` sin cambios.
+- Hallazgo: los cursores numéricos por offset en conversaciones e historial no eran estables ante mensajes nuevos/reordenamiento; podían repetir u omitir registros entre páginas.
+- Cambio preparado: conversaciones usan cursor compuesto por fecha de orden + conversationId; mensajes usan cursor por messageId. UI conserva el cursor opaco. No se añadieron controles visibles ni se modificaron contratos de escritura, roles o datos.
+- Pruebas nuevas: concurrencia de conversaciones con nueva actividad/archivo del elemento anterior; mensaje nuevo entre páginas históricas; contrato UI que impide convertir el cursor a número.
+- Siguiente validación: CI completo Node.js, revisión del diff y prueba de regresión Inbox. Beta de servicios reales continúa diferida; no se ejecutaron despliegues ni accesos a Spreadsheet/Drive.
