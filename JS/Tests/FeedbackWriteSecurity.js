@@ -1625,13 +1625,19 @@ function runFeedbackWriteSecurityTests() {
                 const payload = {
                     vehicleId: "VEH-1", problemText: "Falla intermitente",
                     userId: "USR-TEST-01", userName: "Usuario verificado",
-                    reportId, corteIndex: 2, activaTestigoMotor: true
+                    reportId, corteIndex: 2, activaTestigoMotor: true,
+                    category: "instalacion", subject: "Falla de encendido"
                 };
                 const first = handleReportProblem(payload);
                 assert_(first.status === "success" && first.alreadyReported === false && first.reportId === reportId);
                 assert_(sheet.rows.length === 3, "El primer envío debe crear una sola fila.");
                 const savedMetadata = JSON.parse(sheet.rows[2][9]);
                 assert_(savedMetadata.userId === "USR-TEST-01", "La metadata debe conservar la identidad validada.");
+                assert_(savedMetadata.category === "instalacion" && savedMetadata.subject === "Falla de encendido",
+                    "El reporte debe guardar categoría y asunto para el seguimiento como ticket.");
+                const inboxItem = mapInboxFeedbackRow_(sheet.rows[2],10);
+                assert_(inboxItem.category === "instalacion" && inboxItem.subject === "Falla de encendido" &&
+                    inboxItem.content === "Falla intermitente", "Inbox debe exponer categoría, asunto y descripción del ticket.");
                 const retry = handleReportProblem(payload);
                 assert_(retry.status === "success" && retry.alreadyReported === true && retry.reportId === reportId);
                 assert_(sheet.rows.length === 3, "El reintento no debe crear una segunda fila.");
@@ -1640,6 +1646,18 @@ function runFeedbackWriteSecurityTests() {
                 ensureReportMetadataColumn = originalEnsure;
                 logUserActivity = originalLog;
             }
+        });
+        test_("reportProblem rechaza categorías de ticket fuera de la lista permitida", function() {
+            const originalEnsure = ensureReportMetadataColumn;
+            try {
+                getSafeSheet = () => makeSheet([Array(10).fill("header"),["REP-TEMPLATE","","","","","","","","",""]]);
+                ensureReportMetadataColumn = () => 10;
+                LockService = { getScriptLock: () => ({ waitLock: function() {}, releaseLock: function() {} }) };
+                expectThrow_(() => handleReportProblem({
+                    vehicleId:"VEH-1",problemText:"Falla",userId:"USR-TEST-01",userName:"Usuario",
+                    reportId:"REP-CATEGORY-001",corteIndex:1,activaTestigoMotor:false,category:"admin"
+                }),"categoría");
+            } finally { ensureReportMetadataColumn = originalEnsure; }
         });
         test_("reportProblem rechaza reutilizar un reportId con datos distintos", function() {
             const reportId = "REP-1731260000001-def456";
