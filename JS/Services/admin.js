@@ -4155,6 +4155,7 @@ function auditLogoBrandReferences_(ss) {
 }
 
 function auditAllFormulaIdentifierColumns_(ss) {
+    if (!ss || typeof ss.getSheets !== "function") return { formulaColumns: [], formulaCount: 0, formulaColumnCount: 0 };
     const headerPattern = /^(?:id|id_[a-z0-9_]+|id_de_[a-z0-9_]+|[a-z0-9_]+_id|identificador|identifier|codigo|codigo_id|code)$/i;
     const columns = [];
     let formulaCount = 0;
