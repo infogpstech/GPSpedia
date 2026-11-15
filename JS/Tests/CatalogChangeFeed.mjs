@@ -95,6 +95,13 @@ test("el feed público no exige actor ni secreto interno de FEEDBACK", () => {
     assert.match(coordinatorSource,/function doGet\(e\)/);
     assert.match(apiSource,/'getCatalogChanges': 'FEEDBACK'/);
 });
+test("el navegador consume el feed público por GET y evita el POST autenticado", () => {
+    const feedClient = apiSource.slice(apiSource.indexOf("export async function getCatalogChanges"));
+    assert.ok(feedClient.includes('method: "GET"'));
+    assert.ok(feedClient.includes("catalogFeed=1"));
+    assert.ok(feedbackSource.includes('if (String(parameters.catalogFeed || "") === "1")'));
+    assert.ok(feedbackSource.includes("getSharedCatalogChanges_(cursor, limit)"));
+});
 test("la lectura pública preserva cursor y límites sin autenticar servicio", () => {
     const headPage = coordinator.getPublicCatalogChanges({cursor:Number.MAX_SAFE_INTEGER,limit:1});
     assert.equal(headPage.status,"success");

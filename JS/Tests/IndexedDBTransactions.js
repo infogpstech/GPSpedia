@@ -37,7 +37,7 @@ function createIndexedDBHarness(options = {}) {
   };
   transactionQueue.push(tx);activateNext();return tx;
  }};
- const indexedDB={open(){openCount++;const request={};connections.push(database);queueMicrotask(()=>{if(options.openError){request.error=new DOMException('IndexedDB unavailable','UnknownError');if(request.onerror)request.onerror();return;}if(options.blocked){if(request.onblocked)request.onblocked();return;}if(openCount===1&&request.onupgradeneeded)request.onupgradeneeded({target:{result:database}});request.result=database;if(request.onsuccess)request.onsuccess({target:{result:database}});});return request;}};
+ const indexedDB={open(){openCount++;const request={};connections.push(database);const complete=()=>{if(options.openError){request.error=new DOMException('IndexedDB unavailable','UnknownError');if(request.onerror)request.onerror();return;}if(openCount===1&&request.onupgradeneeded)request.onupgradeneeded({target:{result:database}});request.result=database;if(request.onsuccess)request.onsuccess({target:{result:database}});};queueMicrotask(()=>{if(options.blocked){if(request.onblocked)request.onblocked();if(options.blockedThenSuccess)setTimeout(complete,options.blockedDelay||5);return;}if(options.openDelayMs>0)setTimeout(complete,options.openDelayMs);else complete();});return request;}};
  return{indexedDB,database,connections,stores,get openCount(){return openCount;},get maxActiveTransactions(){return maxActiveTransactions;}};
 }
 async function freshOffline(harness, label) {
@@ -90,6 +90,23 @@ async function runIndexedDBTransactionTests() {
         await assert.rejects(blockedOffline.initDB(), /bloqueada/);
         assert.equal(blockedHarness.openCount, 1);
     });
+    const delayedHarness = createIndexedDBHarness({ openDelayMs: 125 });
+    const delayedOffline = await freshOffline(delayedHarness, 'delayed-open');
+    await testAsync('un timeout local no abandona ni duplica una apertura IndexedDB que termina después', async () => {
+        await assert.rejects(delayedOffline.initDB({ timeoutMs: 100 }), /apertura de IndexedDB sigue pendiente/);
+        await new Promise(resolve => setTimeout(resolve, 140));
+        assert.ok(await delayedOffline.initDB({ timeoutMs: 100 }));
+        assert.equal(delayedHarness.openCount, 1);
+    });
+    const blockedRecoveryHarness = createIndexedDBHarness({ blocked: true, blockedThenSuccess: true, blockedDelay: 10 });
+    const blockedRecoveryOffline = await freshOffline(blockedRecoveryHarness, 'blocked-recovery');
+    await testAsync('una apertura bloqueada se reutiliza cuando la pestaña anterior libera la base', async () => {
+        await assert.rejects(blockedRecoveryOffline.initDB(), /bloqueada por otra pestaña/);
+        await new Promise(resolve => setTimeout(resolve, 20));
+        assert.ok(await blockedRecoveryOffline.initDB());
+        assert.equal(blockedRecoveryHarness.openCount, 1);
+    });
+
     await testAsync('la caché opcional de miniaturas omite IndexedDB no disponible sin inundar la consola', async () => {
         const harness = createIndexedDBHarness({ openError: true });
         const api = await freshOffline(harness, 'thumbnail-storage-backoff');

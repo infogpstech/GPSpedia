@@ -18,8 +18,8 @@ function harness({addAllError=null,optionalError=null,putError=null,networkError
 function event(request={method:'GET',mode:'cors',url:'/JS/Frontend/main.js'}){return{request,waits:[],response:null,waitUntil(p){this.waits.push(Promise.resolve(p));},respondWith(p){this.response=Promise.resolve(p);}};}
 test('precache incluye el grafo transitivo y VinDifferentialEngine',async()=>{
  const h=harness(),e=event();h.listeners.install(e);await Promise.all(e.waits);
- for(const p of ['./JS/Frontend/main.js','./JS/Frontend/VinDifferentialEngine.js','./JS/Frontend/share-utils.js','./JS/Frontend/catalogStatus.js','./JS/Frontend/catalogRequest.js','./JS/Frontend/pys-data.js','./JS/Frontend/validationSubmission.js','./JS/Frontend/likeState.js','./JS/Frontend/youtubeUpload.js','./JS/Frontend/imageObjectUrlCache.js','./JS/Frontend/thumbnailCompressionQueue.js','./JS/Frontend/modalNavigation.js','./style.css','./button-system.css'])assert.ok(h.assets.includes(p),p);
- assert.match(source,/gpsepedia-cache-v19/);
+ for(const p of ['./JS/Frontend/main.js','./JS/Frontend/auth.js','./JS/Frontend/offline.js','./JS/Frontend/VinDifferentialEngine.js','./JS/Frontend/share-utils.js','./JS/Frontend/catalogStatus.js','./JS/Frontend/catalogRequest.js','./JS/Frontend/pys-data.js','./JS/Frontend/validationSubmission.js','./JS/Frontend/likeState.js','./JS/Frontend/youtubeUpload.js','./JS/Frontend/imageObjectUrlCache.js','./JS/Frontend/thumbnailCompressionQueue.js','./JS/Frontend/modalNavigation.js','./style.css','./button-system.css'])assert.ok(h.assets.includes(p),p);
+ assert.match(source,/gpsepedia-cache-v29/);
  assert.equal(h.skip,1);
 });
 test('cuota opcional no impide instalar App Shell',async()=>{
