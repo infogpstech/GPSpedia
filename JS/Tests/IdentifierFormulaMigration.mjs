@@ -42,8 +42,6 @@ function makeHarness(){
  const SpreadsheetApp={flush(){}};
  const code=[
   extract("identifierMigrationCanonical_"),extract("identifierMigrationDigest_"),extract("identifierMigrationSheetDigest_"),
-  'const IDENTIFIER_FORMULA_FREEZE_MANIFEST_="__IdentifierFormulaFreezeManifest__";',
-  'const IDENTIFIER_FORMULA_FREEZE_HEADERS_=["migrationId","digest","entryIndex","entryJson","status","batch","updatedAt","lastError"];',
   extract("auditAllFormulaIdentifierColumns_"),extract("parseIdentifierSequenceFormula_"),
   extract("persistIdentifierSequenceConfigs_"),extract("buildIdentifierFormulaFreezePlan_"),
   extract("ensureIdentifierFormulaFreezeManifest_"),extract("findIdentifierFormulaFreezeManifest_"),
