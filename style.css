@@ -4250,6 +4250,7 @@ img.gp-image-loaded {
 }
 #dev-tools-modal .dev-tab-link {
     flex: 0 0 42px;
+    flex-basis: 42px;
     width: 42px;
     min-width: 42px;
     height: 40px;
