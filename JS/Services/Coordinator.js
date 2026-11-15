@@ -28,57 +28,54 @@ const CATALOG_CHANGE_ALLOWED_WRITERS_ = Object.freeze({
 });
 
 function coordinatorPolicy_(service, operation) {
-    const identityRead = ["USERS", "ACTIVE_SESSIONS"];
+    const identityRead = ["USERS", "SESSION_CONTEXTS"];
     const identityWrite = ["USERS", "ACTIVE_SESSIONS", "LOGS"];
     const feedbackRead = identityRead;
-    const feedbackWrite = ["ACTIVE_SESSIONS", "FEEDBACK", "ACTIVITY"];
+    const feedbackWrite = ["FEEDBACK", "ACTIVITY"];
 
     const policies = {
         AUTH: {
-            login: { write: identityWrite },
-            // AUTH valida ActiveSessions en modo cooperativo, sin tocar LastActivityAt, y guarda la aceptación en Users.
-            // Puede coexistir con ADMIN/sessionActivity, pero no con escrituras exclusivas de sesión.
-            acceptTerms: { read: ["ACTIVE_SESSIONS"], write: ["USERS"], sharedWrite: ["ACTIVE_SESSIONS"] },
-            touchSession: { write: identityWrite },
-            changePassword: { write: identityWrite },
-            resetUserPassword: { write: identityWrite },
-            resetUserSessions: { write: ["ACTIVE_SESSIONS", "LOGS"] },
+            login: { write: [...identityWrite, "SESSION_CONTEXTS"] },
+            acceptTerms: { read: ["SESSION_CONTEXTS"], write: ["USERS"] },
+            touchSession: { read: ["SESSION_CONTEXTS"], write: ["ACTIVE_SESSIONS"] },
+            changePassword: { write: [...identityWrite, "SESSION_CONTEXTS"] },
+            resetUserPassword: { write: [...identityWrite, "SESSION_CONTEXTS"] },
+            resetUserSessions: { write: ["ACTIVE_SESSIONS", "LOGS", "SESSION_CONTEXTS"] },
             clearSensitiveLogs: { read: identityRead, write: ["LOGS"] },
-            deleteUser: { write: identityWrite },
-            updateUser: { write: identityWrite },
-            logout: { write: identityWrite },
+            deleteUser: { write: [...identityWrite, "SESSION_CONTEXTS"] },
+            updateUser: { write: [...identityWrite, "SESSION_CONTEXTS"] },
+            logout: { write: [...identityWrite, "SESSION_CONTEXTS"] },
             migrateLegacyPasswords: { write: identityWrite },
-            migrateLegacyRoleRevocationMarkersToSharedState: { write: ["USERS", "LOGS"] }
+            migrateLegacyRoleRevocationMarkersToSharedState: { write: ["USERS", "LOGS", "SESSION_CONTEXTS"] }
         },
         USERS: {
-            sessionActivity: { write: ["ACTIVE_SESSIONS"] },
-            createUser: { read: ["ACTIVE_SESSIONS"], write: ["ACTIVE_SESSIONS", "USERS"] },
-            updateProfile: { read: ["ACTIVE_SESSIONS"], write: ["ACTIVE_SESSIONS", "USERS"] }
+            sessionActivity: { read: identityRead },
+            createUser: { read: identityRead, write: ["USERS"] },
+            updateProfile: { read: identityRead, write: ["USERS"] }
         },
         UTILITIES: {
-            migrateTimestamps: { read: ["ACTIVE_SESSIONS", "CORTES", "DRIVE"], write: ["UTILITIES"] }
+            migrateTimestamps: { read: ["SESSION_CONTEXTS", "CORTES", "DRIVE"], write: ["UTILITIES"] }
         },
         WRITE: {
-            sessionActivity: { write: ["ACTIVE_SESSIONS"] },
-            addOrUpdateCut: { read: identityRead, write: ["ACTIVE_SESSIONS", "CORTES", "DRIVE", "IDEMPOTENCIA", "IMAGE_UPLOAD_LEDGER"] },
-            addSupplementaryInfo: { read: identityRead, write: ["ACTIVE_SESSIONS", "CORTES", "DRIVE", "IMAGE_UPLOAD_LEDGER"] },
-            addVinToVehicle: { read: identityRead, write: ["ACTIVE_SESSIONS", "CORTES"] },
-            allocateVehicleId: { read: identityRead, write: ["ACTIVE_SESSIONS", "CORTES"] },
-            freezeCortesIds: { read: identityRead, write: ["ACTIVE_SESSIONS", "CORTES"] }
+            sessionActivity: { read: identityRead },
+            addOrUpdateCut: { read: identityRead, write: ["CORTES", "DRIVE", "IDEMPOTENCIA", "IMAGE_UPLOAD_LEDGER"] },
+            addSupplementaryInfo: { read: identityRead, write: ["CORTES", "DRIVE", "IMAGE_UPLOAD_LEDGER"] },
+            addVinToVehicle: { read: identityRead, write: ["CORTES"] },
+            allocateVehicleId: { read: identityRead, write: ["CORTES"] },
+            freezeCortesIds: { read: identityRead, write: ["CORTES"] }
         },
         ADMIN: {
-            sessionActivity: { sharedWrite: ["ACTIVE_SESSIONS"] },
+            sessionActivity: { read: ["SESSION_CONTEXTS"] },
             // Las consultas y el escáner comparten la actualización cooperativa de LastActivityAt.
             // Sus lecturas prolongadas no deben quedar etiquetadas como ADMIN/sessionActivity.
-            getReplacedImages: { read: ["USERS", "CORTES", "DRIVE", "IMAGE_INVENTORY", "TUTORIAL", "FEEDBACK", "LOGOS"], sharedWrite: ["ACTIVE_SESSIONS"] },
-            getDriveStorage: { read: ["USERS", "DRIVE"], sharedWrite: ["ACTIVE_SESSIONS"] },
-            getCortesImageFolders: { read: ["USERS", "DRIVE"], sharedWrite: ["ACTIVE_SESSIONS"] },
+            getReplacedImages: { read: ["USERS", "CORTES", "DRIVE", "IMAGE_INVENTORY", "TUTORIAL", "FEEDBACK", "LOGOS"] },
+            getDriveStorage: { read: ["USERS", "DRIVE"] },
+            getCortesImageFolders: { read: ["USERS", "DRIVE"] },
             auditDriveImagesInCortes: {
                 read: ["USERS", "CORTES", "DRIVE", "IMAGE_INVENTORY", "TUTORIAL", "FEEDBACK", "LOGOS"],
-                sharedWrite: ["ACTIVE_SESSIONS"],
                 write: ["IMAGE_AUDIT_STATE"]
             },
-            migrateReplacedImagesSchema: { read: ["USERS"], sharedWrite: ["ACTIVE_SESSIONS"], write: ["IMAGE_INVENTORY"] },
+            migrateReplacedImagesSchema: { read: ["USERS"], write: ["IMAGE_INVENTORY"] },
             backupDatabase: { maintenance: true },
             backupDrive: { read: identityRead, write: ["DRIVE"] },
             restoreDatabase: { maintenance: true },
@@ -99,7 +96,7 @@ function coordinatorPolicy_(service, operation) {
             reconcilePendingImageUploads: { maintenance: true },
             addOrUpdateCut: {
                 read: identityRead,
-                write: ["ACTIVE_SESSIONS", "CORTES", "DRIVE", "IDEMPOTENCIA", "IMAGE_UPLOAD_LEDGER"],
+                write: ["CORTES", "DRIVE", "IDEMPOTENCIA", "IMAGE_UPLOAD_LEDGER"],
                 nestedActions: { WRITE: ["allocateVehicleId"] }
             },
             addSupplementaryInfo: { read: identityRead, write: ["CORTES", "DRIVE", "IMAGE_UPLOAD_LEDGER"] },
@@ -116,7 +113,7 @@ function coordinatorPolicy_(service, operation) {
             getReplacedImageDownloadUrl: { read: [...identityRead, "DRIVE"], write: ["ACTIVITY"] }
         },
         FEEDBACK: {
-            sessionActivity: { write: ["ACTIVE_SESSIONS"] },
+            sessionActivity: { read: feedbackRead },
             recordLike: { read: feedbackRead, write: [...feedbackWrite, "CORTES"] },
             reportProblem: { read: feedbackRead, write: feedbackWrite },
             addProblem: { read: [...feedbackRead, "CORTES"], write: [...feedbackWrite, "DRIVE"] },
@@ -137,11 +134,11 @@ function coordinatorPolicy_(service, operation) {
             submitVideoForApproval: { read: [...feedbackRead, "TUTORIAL"], write: feedbackWrite },
             approveVideo: { read: [...feedbackRead, "TUTORIAL"], write: ["CORTES", "TUTORIAL", ...feedbackWrite] },
             rejectVideo: { read: [...feedbackRead, "TUTORIAL"], write: ["TUTORIAL", ...feedbackWrite] },
-            createInboxConversation: { read: feedbackRead, write: ["ACTIVE_SESSIONS", "FEEDBACK"] },
-            sendInboxMessage: { read: feedbackRead, write: ["ACTIVE_SESSIONS", "FEEDBACK"] },
-            markInboxRead: { read: feedbackRead, write: ["ACTIVE_SESSIONS", "FEEDBACK"] },
-            archiveInboxConversation: { read: feedbackRead, write: ["ACTIVE_SESSIONS", "FEEDBACK"] },
-            closeInboxConversation: { read: feedbackRead, write: ["ACTIVE_SESSIONS", "FEEDBACK"] }
+            createInboxConversation: { read: feedbackRead, write: ["FEEDBACK"] },
+            sendInboxMessage: { read: feedbackRead, write: ["FEEDBACK"] },
+            markInboxRead: { read: feedbackRead, write: ["FEEDBACK"] },
+            archiveInboxConversation: { read: feedbackRead, write: ["FEEDBACK"] },
+            closeInboxConversation: { read: feedbackRead, write: ["FEEDBACK"] }
         }
     };
 
