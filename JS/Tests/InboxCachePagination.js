@@ -1,8 +1,9 @@
 // Contratos locales de caché e Inbox paginado — AUG-116.
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import vm from "node:vm";
-import { createInboxPageCache } from "../../inboxPageCache.js";
+import { createInboxPageCache } from "../Frontend/inboxPageCache.js";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 function runInboxCacheTests() {
     const results = [];
@@ -116,14 +117,14 @@ function runInboxPaginationTests(feedbackSource) {
     return { status: failed === 0 ? "PASS" : "FAIL", passed, failed, results };
 }
 
-const root = process.cwd();
-const feedback = fs.readFileSync(root + "/Services/feedback.js", "utf8");
-const ui = fs.readFileSync(root + "/ui.js", "utf8");
+const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+const feedback = fs.readFileSync(resolve(root, "JS/Services/feedback.js"), "utf8");
+const ui = fs.readFileSync(resolve(root, "JS/Frontend/ui.js"), "utf8");
 const cacheResults = runInboxCacheTests();
 const paginationResults = runInboxPaginationTests(feedback);
 const checks = [
     ["El modal utiliza el loader paginado común", /loadAndRenderInbox\(\{ context, reset: true \}\)/.test(ui)],
-    ["La caché no utiliza almacenamiento persistente", !/localStorage|sessionStorage|indexedDB/.test(fs.readFileSync(root + "/inboxPageCache.js", "utf8"))],
+    ["La caché no utiliza almacenamiento persistente", !/localStorage|sessionStorage|indexedDB/.test(fs.readFileSync(resolve(root, "JS/Frontend/inboxPageCache.js"), "utf8"))],
     ["La UI no conserva el caché global anterior", !/inboxCacheData/.test(ui)],
     ["La UI invalida la caché tras las cinco mutaciones", (ui.match(/invalidateInboxCache_\(/g) || []).length >= 6],
     ["La UI incorpora navegación de páginas", /inbox-page-next/.test(ui) && /inbox-page-previous/.test(ui)]
