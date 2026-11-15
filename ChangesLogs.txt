@@ -512,3 +512,11 @@
 - Añadida prueba cruzada AUTH/USERS en PasswordHashMigration.mjs.
 - CI Node.js 22 run 43752042270: SUCCESS; 100 suites, 1,535 pruebas, 0 fallos; node --check PASS. GitHub Pages run 43752040706: SUCCESS.
 - Sin despliegues Apps Script ni modificaciones a Sheets, Drive, ScriptProperties o datos productivos. Validaciones remotas de sesión/credenciales quedan pendientes de Beta.
+
+
+2026-11-15 | GPSpedia2.2.5_work | GP-INBOX-04B/04C backend
+- FEEDBACK: nuevas acciones autenticadas/coordinadas markInboxUnread y deleteInboxConversation. Estado por participante en hoja adicional InboxConversationFlags creada de forma diferida; no cambia InboxConversationState ni borra mensajes/historial compartido. No se agregaron controles visibles.
+- markInboxUnread: requiere mensaje recibido, idempotente, auditable, reversible con lectura y desarchiva si corresponde. deleteInboxConversation: ocultación individual, bloquea acceso del participante y conserva historial para el otro; idempotencia y auditoría con intento de rollback si falla el audit.
+- reportProblem: guarda category/subject en reportMetadata, defaults cuando la UI no los envía; mapInboxFeedbackRow_ y detalle Inbox exponen categoría, asunto, descripción, respuesta y estado. getMyProblemReports devuelve tickets del actor autenticado, paginados, ignorando userId del cliente. Sin nueva pestaña/botón/panel de tickets.
+- CI run 43753335306 SUCCESS: 100 suites, 1,542 pruebas, 0 fallos; InboxConversations 46/46; node --check PASS.
+- No deployment Apps Script, no creación de hoja real, no cambios de datos productivos. UI completa, selección múltiple, accesibilidad móvil y Beta quedan pendientes.
