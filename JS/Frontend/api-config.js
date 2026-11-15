@@ -648,5 +648,31 @@ export async function rejectVideo(itemId, rejecterName, reason, userRole, sessio
 
 
 export async function getCatalogChanges(cursor = 0, limit = 50, sessionPayload = {}, options = {}) {
-    return await routeAction("getCatalogChanges", { ...sessionPayload, cursor, limit }, null, options);
+    const normalizedCursor = Number(cursor), normalizedLimit = Number(limit);
+    if (!Number.isSafeInteger(normalizedCursor) || normalizedCursor < 0) throw new TypeError("El cursor del catálogo no es válido.");
+    if (!Number.isInteger(normalizedLimit) || normalizedLimit < 1 || normalizedLimit > 50) throw new TypeError("El límite del feed debe estar entre 1 y 50.");
+    const requestStartedAt = Date.now();
+    let outcome = "network_error", httpStatus = null;
+    const query = "?catalogFeed=1&cursor=" + encodeURIComponent(normalizedCursor) + "&limit=" + encodeURIComponent(normalizedLimit);
+    try {
+        let response;
+        try {
+            response = await fetch(API_ENDPOINTS.FEEDBACK + query, { method: "GET", redirect: "follow", signal: options && options.signal ? options.signal : undefined });
+        } catch (error) {
+            const aborted = Boolean(options && options.signal && options.signal.aborted) || Boolean(error && error.name === "AbortError");
+            throw createRouteActionError_(aborted ? "La consulta del catálogo fue cancelada o agotó el tiempo de espera." : "No se recibió respuesta del feed público del catálogo.", { kind: aborted ? "abort" : "network", code: aborted ? "REQUEST_ABORTED" : "CATALOG_FEED_NETWORK_ERROR", cause: error });
+        }
+        httpStatus = Number(response && response.status);
+        if (!response || !Number.isInteger(httpStatus) || httpStatus < 100 || httpStatus > 599) throw createRouteActionError_("El feed no devolvió una respuesta HTTP válida.", { kind: "network", code: "CATALOG_FEED_NO_HTTP_RESPONSE" });
+        if (!response.ok) throw createRouteActionError_("El feed del catálogo respondió HTTP " + httpStatus + ".", { kind: "http", code: "CATALOG_FEED_HTTP_ERROR", httpStatus });
+        let body;
+        try { body = await response.text(); } catch (error) { throw createRouteActionError_("No se pudo leer la respuesta del feed del catálogo.", { kind: "invalid_response", code: "CATALOG_FEED_READ_ERROR", httpStatus, cause: error }); }
+        let result;
+        try { result = JSON.parse(body); } catch (error) { throw createRouteActionError_("El feed del catálogo no devolvió JSON válido.", { kind: "invalid_response", code: "CATALOG_FEED_INVALID_JSON", httpStatus, cause: error }); }
+        if (!result || typeof result !== "object" || Array.isArray(result) || result.status !== "success") throw createRouteActionError_(result && typeof result.message === "string" ? result.message : "El feed público del catálogo no está disponible.", { kind: "application", code: "CATALOG_FEED_REJECTED", httpStatus });
+        outcome = "success";
+        return result;
+    } finally {
+        recordServiceMetric({ service: "FEEDBACK", action: "getCatalogChanges", timestamp: requestStartedAt, durationMs: Date.now() - requestStartedAt, outcome, httpStatus });
+    }
 }

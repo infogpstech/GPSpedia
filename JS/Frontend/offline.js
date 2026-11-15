@@ -13,92 +13,97 @@ const DB_VERSION = 4; // Añade persistencia local del inventario administrativo
 let dbPromise = null;
 let dbRetryAfter = 0;
 let dbRetryError = null;
+let dbBlockedPromise = null;
+let dbBlockedError = null;
+let rejectDbBlocked = null;
 const DB_OPEN_RETRY_DELAY_MS = 15000;
+const DB_OPEN_TIMEOUT_MS = 10000;
 
-/**
- * Abre IndexedDB y libera la conexión cuando otra pestaña solicita una versión
- * distinta. Un upgrade bloqueado falla de forma explícita en vez de dejar una
- * promesa pendiente hasta un timeout silencioso.
- */
+function waitForDatabaseOpen_(openingPromise, blockedPromise, options = {}) {
+    if (dbBlockedError) return Promise.reject(dbBlockedError);
+    const requestedTimeout = Number(options && options.timeoutMs);
+    const timeoutMs = Number.isFinite(requestedTimeout) && requestedTimeout > 0
+        ? Math.min(30000, Math.max(100, Math.round(requestedTimeout))) : DB_OPEN_TIMEOUT_MS;
+    let timeoutId = null;
+    const timeoutPromise = new Promise((resolve, reject) => {
+        timeoutId = setTimeout(() => {
+            const error = new Error('La apertura de IndexedDB sigue pendiente después de ' + timeoutMs + ' ms; se conserva la solicitud activa y no se abre otra en paralelo.');
+            error.code = 'IDB_UNAVAILABLE';
+            error.name = 'IndexedDBPendingError';
+            reject(error);
+        }, timeoutMs);
+    });
+    const candidates = [openingPromise, timeoutPromise];
+    if (blockedPromise) candidates.push(blockedPromise);
+    return Promise.race(candidates).finally(() => { if (timeoutId !== null) clearTimeout(timeoutId); });
+}
+
+/** Mantiene una sola apertura pendiente incluso si el consumidor agota su espera. */
 export async function initDB(options = {}) {
     const silent = options && options.silent === true;
-    if (dbPromise) return dbPromise;
+    if (dbPromise) return waitForDatabaseOpen_(dbPromise, dbBlockedPromise, options);
     if (Date.now() < dbRetryAfter) return Promise.reject(dbRetryError || new Error('IndexedDB no está disponible temporalmente.'));
 
     let openingPromise;
+    const blockedPromise = new Promise((resolve, reject) => { rejectDbBlocked = reject; });
+    blockedPromise.catch(() => {});
+    dbBlockedPromise = blockedPromise;
     openingPromise = new Promise((resolve, reject) => {
-        let settled = false;
-        let timeout = null;
-        let request;
-
-        const clearOpenState = () => {
-            if (timeout !== null) clearTimeout(timeout);
-            timeout = null;
-        };
-        const fail = (error) => {
-            if (settled) return;
-            settled = true;
+        const fail = error => {
+            const failure = new Error(error && error.message ? error.message : 'IndexedDB no pudo inicializarse.');
+            failure.code = 'IDB_UNAVAILABLE';
+            if (error && error.name) failure.name = error.name;
             if (dbPromise === openingPromise) dbPromise = null;
-            clearOpenState();
-            dbRetryError = new Error(error && error.message ? error.message : 'IndexedDB no pudo inicializarse.');
-            dbRetryError.code = 'IDB_UNAVAILABLE';
-            if (error && error.name) dbRetryError.name = error.name;
+            dbBlockedError = null;
+            dbBlockedPromise = null;
+            rejectDbBlocked = null;
+            dbRetryError = failure;
             dbRetryAfter = Date.now() + DB_OPEN_RETRY_DELAY_MS;
-            if (!silent) console.warn('IndexedDB no está disponible temporalmente; se reintentará más adelante:', dbRetryError.message);
-            reject(dbRetryError);
+            if (!silent) console.warn('IndexedDB no está disponible temporalmente; se reintentará más adelante:', failure.message);
+            reject(failure);
         };
-
         try {
             if (typeof indexedDB === 'undefined') throw new Error('IndexedDB no está disponible.');
-            timeout = setTimeout(() => fail(new Error('IndexedDB initialization timed out.')), 10000);
-            request = indexedDB.open(DB_NAME, DB_VERSION);
-
-            request.onerror = (event) => {
-                fail(event && event.target && event.target.error || request.error || new Error('IndexedDB open failed.'));
-            };
-
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
+            request.onerror = event => fail(event && event.target && event.target.error || request.error || new Error('IndexedDB open failed.'));
             request.onblocked = () => {
-                fail(new Error('La actualización de IndexedDB está bloqueada por otra pestaña. Ciérrala y vuelve a intentar.'));
+                if (dbBlockedError) return;
+                dbBlockedError = new Error('La actualización de IndexedDB está bloqueada por otra pestaña. Se conservará la apertura pendiente y se reutilizará cuando se libere.');
+                dbBlockedError.code = 'IDB_UNAVAILABLE';
+                dbBlockedError.name = 'IndexedDBBlockedError';
+                if (!silent) console.warn(dbBlockedError.message);
+                if (rejectDbBlocked) rejectDbBlocked(dbBlockedError);
             };
-
-            request.onupgradeneeded = (event) => {
-                const dbInstance = event.target.result;
-                if (!dbInstance.objectStoreNames.contains('catalog')) dbInstance.createObjectStore('catalog');
-                if (!dbInstance.objectStoreNames.contains('searchHistory')) dbInstance.createObjectStore('searchHistory', { keyPath: 'term' });
-                if (!dbInstance.objectStoreNames.contains('viewedItems')) dbInstance.createObjectStore('viewedItems', { keyPath: 'id' });
-                if (!dbInstance.objectStoreNames.contains('thumbnails')) dbInstance.createObjectStore('thumbnails');
-                if (!dbInstance.objectStoreNames.contains('validationCache')) dbInstance.createObjectStore('validationCache', { keyPath: 'vehicleId' });
-                if (!dbInstance.objectStoreNames.contains('adminLocalState')) dbInstance.createObjectStore('adminLocalState', { keyPath: 'key' });
+            request.onupgradeneeded = event => {
+                const db = event.target.result;
+                if (!db.objectStoreNames.contains('catalog')) db.createObjectStore('catalog');
+                if (!db.objectStoreNames.contains('searchHistory')) db.createObjectStore('searchHistory', { keyPath: 'term' });
+                if (!db.objectStoreNames.contains('viewedItems')) db.createObjectStore('viewedItems', { keyPath: 'id' });
+                if (!db.objectStoreNames.contains('thumbnails')) db.createObjectStore('thumbnails');
+                if (!db.objectStoreNames.contains('validationCache')) db.createObjectStore('validationCache', { keyPath: 'vehicleId' });
+                if (!db.objectStoreNames.contains('adminLocalState')) db.createObjectStore('adminLocalState', { keyPath: 'key' });
             };
-
-            request.onsuccess = (event) => {
+            request.onsuccess = event => {
                 const database = event.target.result;
-                if (settled) {
-                    database.close();
-                    return;
-                }
+                const readyPromise = Promise.resolve(database);
                 database.onversionchange = () => {
                     database.close();
-                    if (dbPromise === openingPromise) dbPromise = null;
+                    if (dbPromise === readyPromise) dbPromise = null;
                 };
-                settled = true;
                 dbRetryAfter = 0;
                 dbRetryError = null;
-                clearOpenState();
+                dbBlockedError = null;
+                dbBlockedPromise = null;
+                rejectDbBlocked = null;
+                dbPromise = readyPromise;
                 resolve(database);
             };
-        } catch (error) {
-            fail(error);
-        }
+        } catch (error) { fail(error); }
     });
-
     dbPromise = openingPromise;
-    openingPromise.catch(() => {
-        if (dbPromise === openingPromise) dbPromise = null;
-    });
-    return openingPromise;
+    openingPromise.catch(() => { if (dbPromise === openingPromise) dbPromise = null; });
+    return waitForDatabaseOpen_(openingPromise, blockedPromise, options);
 }
-
 /**
  * Ejecuta una operación y solo confirma el resultado después de que finalice
  * la transacción completa. request.onsuccess no garantiza que el commit ocurra.
