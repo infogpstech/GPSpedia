@@ -436,10 +436,16 @@ function isSensitiveLogRecord_(row) {
 }
 
 function handleClearSensitiveLogs(payload) {
-    const userId = normalizeUserId(payload && payload.userId);
-    const sessionToken = payload && payload.sessionToken;
-    if (!userId || typeof sessionToken !== "string" || !sessionToken) {
-        throw new Error("Se requiere una sesión válida de Desarrollador para purgar Logs.");
+    // La sesión/token ya fueron autorizados por Coordinator en doPost().
+    // Solo se consume el actor confiable y su rol; no se vuelven a leer Users/ActiveSessions.
+    const actor = payload && payload.__sharedSessionActor;
+    const requestedUserId = normalizeUserId(payload && payload.userId);
+    const userId = normalizeUserId(actor && actor.userId);
+    const actorRole = normalizeRoleName(actor && actor.role);
+    if (!actor || !userId || requestedUserId !== userId ||
+        !Number.isSafeInteger(actor.epoch) || actor.epoch < 1 ||
+        actorRole !== "desarrollador") {
+        throw new Error("Acceso denegado: la purga de Logs está reservada a una sesión Desarrollador autorizada.");
     }
 
     const lock = LockService.getScriptLock();
@@ -454,41 +460,7 @@ function handleClearSensitiveLogs(payload) {
 
         const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
         const logsSheet = spreadsheet.getSheetByName(SHEET_NAMES.LOGS);
-        const sessionsSheet = spreadsheet.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
-        const usersSheet = spreadsheet.getSheetByName(SHEET_NAMES.USERS);
-        if (!logsSheet || !sessionsSheet || !usersSheet) {
-            throw new Error("No se encontraron las hojas Logs, ActiveSessions y Users.");
-        }
-
-        const sessionsData = sessionsSheet.getDataRange().getValues();
-        const requesterSessions = sessionsData.slice(1).filter(row =>
-            row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] === sessionToken
-        );
-        if (requesterSessions.length !== 1) {
-            throw new Error(requesterSessions.length > 1
-                ? "El token del solicitante está duplicado; no se modificó Logs."
-                : "Acceso denegado: sesión inválida o expirada.");
-        }
-
-        const requesterSession = requesterSessions[0];
-        if (normalizeUserId(requesterSession[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]) !== userId) {
-            throw new Error("Acceso denegado: la sesión no corresponde al usuario indicado.");
-        }
-        const expiration = getSessionExpirationStatus_(requesterSession, new Date());
-        if (expiration.expired) {
-            throw new Error("Acceso denegado: la sesión expiró por " + expiration.reason + ".");
-        }
-
-        const requesterUsers = usersSheet.getDataRange().getValues().slice(1).filter(row =>
-            normalizeUserId(row[COLS_USERS.ID - 1]) === userId
-        );
-        if (requesterUsers.length !== 1 || !isActiveAuthUserRecord(requesterUsers[0])) {
-            throw new Error("Acceso denegado: no se pudo identificar una cuenta activa y única.");
-        }
-        assertRequesterRoleRevocationClear_(usersSheet, sessionsSheet, userId);
-        if (normalizeRoleName(requesterUsers[0][COLS_USERS.Privilegios - 1]) !== "desarrollador") {
-            throw new Error("Acceso denegado: la purga de Logs está reservada a Desarrollador.");
-        }
+        if (!logsSheet) throw new Error("No se encontró la hoja Logs.");
 
         const lastRow = logsSheet.getLastRow();
         if (lastRow < 1) throw new Error("La hoja Logs no contiene una fila de encabezados.");
@@ -630,7 +602,9 @@ function doPost(e) {
         ? { session: { userId: payload.userId, sessionToken: payload.sessionToken } } : undefined;
     try {
         return withSharedMutationLease_("AUTH", action, function(token, actor) {
-            if (actor && payload.sessionToken) syncAuthSheetActivityFromActor_(actor.userId, payload.sessionToken, actor);
+            // Coordinator valida token, epoch, expiración y revocación una sola vez
+            // y entrega el actor confiable al handler. No sincronizar ActiveSessions
+            // mediante una lectura completa en cada acción AUTH.
             const wrappedEvent = withSharedSessionActor_(e, actor);
             return doPostInternal_(wrappedEvent);
         }, Object.assign(sessionOptions || {}, nestedToken ? { nestedToken: nestedToken } : {}));
