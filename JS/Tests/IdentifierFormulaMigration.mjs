@@ -42,7 +42,10 @@ function makeHarness(){
  const SpreadsheetApp={flush(){}};
  const code=[
   extract("identifierMigrationCanonical_"),extract("identifierMigrationDigest_"),extract("identifierMigrationSheetDigest_"),
-  extract("auditAllFormulaIdentifierColumns_"),extract("buildIdentifierFormulaFreezePlan_"),
+  'const IDENTIFIER_FORMULA_FREEZE_MANIFEST_="__IdentifierFormulaFreezeManifest__";',
+  'const IDENTIFIER_FORMULA_FREEZE_HEADERS_=["migrationId","digest","entryIndex","entryJson","status","batch","updatedAt","lastError"];',
+  extract("auditAllFormulaIdentifierColumns_"),extract("parseIdentifierSequenceFormula_"),
+  extract("persistIdentifierSequenceConfigs_"),extract("buildIdentifierFormulaFreezePlan_"),
   extract("ensureIdentifierFormulaFreezeManifest_"),extract("findIdentifierFormulaFreezeManifest_"),
   extract("handleFreezeIdentifierFormulas_"),
   "return {audit:auditAllFormulaIdentifierColumns_,plan:buildIdentifierFormulaFreezePlan_,migrate:handleFreezeIdentifierFormulas_};"
@@ -74,6 +77,8 @@ test("Congela valores exactos por lotes, reanuda y conserva snapshots/manifiesto
  assert.equal(second.migrated,1);assert.equal(second.remaining,0);assert.equal(second.complete,true);assert.equal(h.vehicles.rows[1][0],"V-001");
  assert.equal(h.vehicles.formulas[1][0],"");
  assert.ok(h.ss.getSheetByName("__IdentifierFormulaFreezeManifest__"));
+ const config=h.ss.getSheetByName("__IdentifierSequenceConfig__");
+ assert.ok(config);assert.equal(config.rows.length,3);
  assert.ok(h.ss.sheets.some(s=>s.name.startsWith("__IDF_")&&s.hidden));
 });
 test("Rechaza una simulación obsoleta antes de crear snapshots o escribir",()=>{
