@@ -106,7 +106,7 @@ async function runIndexedDBTransactionTests() {
             assert.equal(harness.openCount, 1);
             assert.equal(counts.error, 0);
             assert.equal(counts.debug, 0);
-            assert.equal(counts.warn, 1);
+            assert.equal(counts.warn, 0);
         } finally {
             console.error = original.error; console.debug = original.debug; console.warn = original.warn;
         }
