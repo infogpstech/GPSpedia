@@ -32,18 +32,19 @@ export async function initDB() {
 
         const clearOpenState = () => {
             if (timeout !== null) clearTimeout(timeout);
-            if (dbPromise === openingPromise) dbPromise = null;
+            timeout = null;
         };
         const fail = (error) => {
             if (settled) return;
             settled = true;
+            if (dbPromise === openingPromise) dbPromise = null;
             clearOpenState();
             reject(error instanceof Error ? error : new Error('IndexedDB no pudo inicializarse.'));
         };
 
         try {
             if (typeof indexedDB === 'undefined') throw new Error('IndexedDB no está disponible.');
-            timeout = setTimeout(() => fail(new Error('IndexedDB initialization timed out.')), 5000);
+            timeout = setTimeout(() => fail(new Error('IndexedDB initialization timed out.')), 10000);
             request = indexedDB.open(DB_NAME, DB_VERSION);
 
             request.onerror = (event) => {
