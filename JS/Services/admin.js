@@ -4231,6 +4231,10 @@ function getNextAdminFormulaBasedId_(sheet, idColumn) {
         const ss = getSpreadsheet(), configSheet = ss.getSheetByName(IDENTIFIER_SEQUENCE_CONFIG_SHEET_);
         let pattern = null;
         if (configSheet && configSheet.getLastRow() > 1) {
+            const actualHeaders = configSheet.getRange(1, 1, 1, IDENTIFIER_SEQUENCE_CONFIG_HEADERS_.length).getValues()[0].map(value => String(value || ""));
+            if (JSON.stringify(actualHeaders) !== JSON.stringify(IDENTIFIER_SEQUENCE_CONFIG_HEADERS_)) {
+                throw new Error("El esquema de configuración de secuencias ID no es compatible.");
+            }
             const rows = configSheet.getRange(2, 1, configSheet.getLastRow() - 1, IDENTIFIER_SEQUENCE_CONFIG_HEADERS_.length).getValues();
             const matches = rows.filter(row => String(row[0]) === sheet.getName() && Number(row[1]) === idColumn);
             if (matches.length > 1) throw new Error("La configuración de ID está duplicada para " + sheet.getName() + ".");
@@ -4253,7 +4257,7 @@ function getNextAdminFormulaBasedId_(sheet, idColumn) {
                 throw new Error("La columna ID de " + sheet.getName() + " contiene patrones diferentes.");
             }
         }
-        if (!pattern.prefix || !Number.isInteger(pattern.padding) || pattern.padding < 1 || pattern.padding > 20) {
+        if (!pattern.prefix || !pattern.formula || !Number.isInteger(pattern.padding) || pattern.padding < 1 || pattern.padding > 20) {
             throw new Error("La configuración de ID de " + sheet.getName() + " no es válida.");
         }
         if (formulas.some(formula => formula && formula !== pattern.formula)) {
