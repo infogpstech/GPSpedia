@@ -8,7 +8,7 @@ import { setState, getState } from './state.js';
 import { routeAction, fetchCatalogData, getCatalogChanges, login as apiLogin, validateSession as apiValidateSession, completeLoginRequest } from './api-config.js';
 import { showLoginScreen, showApp, showGlobalError, performSilentSync } from './ui.js';
 import * as offline from './offline.js';
-import { loadPysData, applyPysCatalogChanges } from './pys-data.js';
+import { loadPysData, applyPysCatalogChanges, getPysDataCursor, setPysDataCursor, getPysDataFreshness } from './pys-data.js';
 
 async function requestCatalogFeedPage_(cursor, limit, sessionPayload, parentSignal) {
     if (typeof AbortController !== "function") throw new Error("AbortController no está disponible para limitar el feed.");
@@ -158,10 +158,13 @@ async function handleCatalogSyncMessage_(message) {
     const userId = String(user && (user.ID || user.id) || "").trim();
     if (!userId || !isCurrentSession(user) || String(message.userId || "") !== userId) return;
     try {
-        if (message.refreshPys === true) {
-            loadPysData({ refresh: true }).catch(error => console.warn("No se pudo refrescar PyS desde otra pestaña:", error));
-        }
         const localState = await offline.getCatalogSyncState();
+        if (message.refreshPys === true) {
+            const cursor = localState && Number.isSafeInteger(localState.cursor) ? localState.cursor : null;
+            loadPysData({ refresh: true })
+                .then(() => setPysDataCursor(cursor))
+                .catch(error => console.warn("No se pudo refrescar PyS desde otra pestaña:", error));
+        }
         if (!localState || !offline.isCompleteCatalogSnapshot(localState.snapshot)) return;
         const incoming = normalizeCatalogData(localState.snapshot);
         const current = getState().catalogData;
@@ -481,6 +484,11 @@ export async function loadInitialData(forceRefresh = false, options = {}) {
                     requiresFullSnapshot = true;
                     cursorToPersist = delta.cursor;
                 } else if (delta.changes.length === 0) {
+                    const pysFreshness = getPysDataFreshness();
+                    if (!pysFreshness.hasCache || pysFreshness.updatedAt <= 0 || getPysDataCursor() !== cachedCursor) {
+                        await loadPysData({ refresh: true });
+                    }
+                    setPysDataCursor(delta.cursor);
                     if (delta.cursor > cachedCursor) await offline.saveCatalogCursor(delta.cursor);
                     if (!isCurrentLoad()) return;
                     markCatalogSync_();
@@ -536,12 +544,16 @@ export async function loadInitialData(forceRefresh = false, options = {}) {
 
         // PyS comparte las revisiones del feed, pero conserva su caché independiente.
         // Aplicar sus eventos antes de confirmar el cursor evita perder cambios si falla la caché.
-        if (requiresFullSnapshot) {
+        const pysFreshness = getPysDataFreshness();
+        const pysCacheAligned = pysFreshness.hasCache && pysFreshness.updatedAt > 0 &&
+            Number.isSafeInteger(getPysDataCursor()) && getPysDataCursor() === cachedCursor;
+        if (requiresFullSnapshot || !pysCacheAligned) {
             await loadPysData({ refresh: true });
         } else if (pysDeltaChanges.length) {
-            const pysResult = applyPysCatalogChanges(pysDeltaChanges);
+            const pysResult = applyPysCatalogChanges(pysDeltaChanges, cursorToPersist);
             if (!pysResult || pysResult.needsRefresh) await loadPysData({ refresh: true });
         }
+        setPysDataCursor(cursorToPersist);
 
         // El cursor se confirma en la misma transacción que el snapshot ya aplicado.
         if (Number.isSafeInteger(cursorToPersist)) {

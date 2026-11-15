@@ -91,6 +91,7 @@ function createHarness(options = {}) {
     `;
     const app = new Function(
         'offline', 'fetchCatalogData', 'getCatalogChanges', 'getState', 'setState', 'showGlobalError', 'loadPysData',
+        'applyPysCatalogChanges', 'getPysDataCursor', 'setPysDataCursor', 'getPysDataFreshness',
         'performSilentSync', 'console', 'AbortController', 'setTimeout', factorySource
     )(
         offline,
@@ -100,6 +101,10 @@ function createHarness(options = {}) {
         setState,
         message => errors.push(message),
         async () => { pysCalls++; },
+        () => ({ changed: false, needsRefresh: false }),
+        () => options.pysCursor === undefined ? options.cacheCursor : options.pysCursor,
+        () => true,
+        () => ({ hasCache: options.pysCacheAvailable !== false, updatedAt: options.pysUpdatedAt === undefined ? 1 : options.pysUpdatedAt }),
         async data => { setState({ catalogData: data }); return true; },
         { log() {}, warn: (...args) => warnings.push(args), error() {} },
         AbortController,

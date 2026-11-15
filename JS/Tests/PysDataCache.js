@@ -10,7 +10,7 @@ function buildHarness(options={}){
  const localStorage={getItem:key=>storage.has(key)?storage.get(key):null,setItem:(key,value)=>storage.set(key,String(value)),removeItem:key=>storage.delete(key)};
  const context={routeAction:()=>{requests++;const next=queued.shift();return next?next():Promise.resolve({status:"success",data:[]});},getState:()=>({...state}),setState:patch=>{state={...state,...patch};},localStorage,Date:{now:()=>now},Promise,Set,TypeError,Error,JSON,Array,Number,String,Object,Math,console:{warn:()=>{},error:()=>{}}};
  const code=source.replace(/^import .*;\n/gm,"").replace(/\bexport\s+(?=(?:async\s+)?function|const|let|class)/g,"");
- vm.runInNewContext(code+"\nthis.api={loadPysData,getCachedPysData,getPysDataFreshness,invalidatePysDataCache,applyPysCatalogChanges,subscribePysDataLoaded,ttl:PYS_CACHE_TTL_MS};",context);
+ vm.runInNewContext(code+"\nthis.api={loadPysData,getCachedPysData,getPysDataFreshness,getPysDataCursor,setPysDataCursor,invalidatePysDataCache,applyPysCatalogChanges,subscribePysDataLoaded,ttl:PYS_CACHE_TTL_MS};",context);
  return{api:context.api,get state(){return state;},get requests(){return requests;},storage,enqueue:fn=>queued.push(fn),setNow:value=>{now=value;}};
 }
 function ttl(){return 5*60*1000;}
@@ -28,16 +28,30 @@ async function runPysDataCacheTests(){
  await test("considera una colección vacía como caché válida",async()=>{const h=buildHarness({storage:{gpsepedia_pys_cache:"[]",gpsepedia_pys_cache_updated_at:String(NOW-1000)}});assert.deepEqual(h.api.getCachedPysData(),[]);assert.equal(h.api.getPysDataFreshness().hasCache,true);assert.deepEqual(await h.api.loadPysData(),[]);assert.equal(h.requests,0);});
  await test("guarda marca temporal y notifica listeners al completar la carga",async()=>{const h=buildHarness();let notified=0;h.api.subscribePysDataLoaded(data=>{notified++;assert.equal(data.length,1);});h.enqueue(()=>Promise.resolve({status:"success",data:[{id:"saved"}]}));await h.api.loadPysData();assert.equal(notified,1);assert.equal(h.storage.get("gpsepedia_pys_cache_updated_at"),String(NOW));assert.equal(JSON.parse(h.storage.get("gpsepedia_pys_cache"))[0].id,"saved");});
  await test("la UI centraliza caché, advierte obsolescencia e invalida tras mutaciones",async()=>{assert.match(uiSource,/getCachedPysData/);assert.match(uiSource,/getPysDataFreshness/);assert.match(uiSource,/invalidatePysDataCache/);assert.match(uiSource,/pys-stale-notice/);assert.doesNotMatch(uiSource,/localStorage\.getItem\('gpsepedia_pys_cache'\)/);assert.doesNotMatch(uiSource,/loadPysData\(\{\s*refresh:\s*true\s*\}\)/);assert.ok((uiSource.match(/invalidatePysDataCache\(\)/g)||[]).length>=6);});
+ await test("evita descarga completa al vencer TTL si el cursor del feed está alineado",async()=>{
+  const h=buildHarness({state:{pysData:[{id_problem:"isue-001"}],pysDataUpdatedAt:NOW-ttl()-1,pysDataStale:false},storage:{gpsepedia_pys_cache_cursor:"18"}});
+  assert.deepEqual(await h.api.loadPysData(),[{id_problem:"isue-001"}]);assert.equal(h.requests,0);
+ });
+ await test("la invalidación explícita sigue permitiendo recuperación completa",async()=>{
+  const h=buildHarness({state:{pysData:[{id_problem:"isue-001"}],pysDataUpdatedAt:NOW,pysDataStale:false},storage:{gpsepedia_pys_cache_cursor:"18"}});
+  h.api.invalidatePysDataCache();h.enqueue(()=>Promise.resolve({status:"success",data:[{id_problem:"isue-001",Problema:"Actualizado"}]}));
+  assert.equal((await h.api.loadPysData())[0].Problema,"Actualizado");assert.equal(h.requests,1);
+ });
+ await test("setPysDataCursor marca la caché fresca y conserva solo revisiones válidas",async()=>{
+  const h=buildHarness({state:{pysData:[{id_problem:"isue-001"}],pysDataUpdatedAt:NOW-ttl()-1,pysDataStale:true}});
+  assert.equal(h.api.setPysDataCursor(22),true);assert.equal(h.api.getPysDataCursor(),22);assert.equal(h.api.getPysDataFreshness().stale,false);
+  assert.equal(h.api.setPysDataCursor(-1),true);assert.equal(h.api.getPysDataCursor(),null);
+ });
  await test("aplica upsert y delete PyS por ID persistente y notifica una sola vez",async()=>{
   const h=buildHarness({state:{pysData:[{id_problem:"isue-001",Problema:"Anterior"},{id_problem:"isue-002",Problema:"Retirar"}],pysDataUpdatedAt:NOW-1000,pysDataStale:false}});
   let notified=0;h.api.subscribePysDataLoaded(()=>{notified++;});
   const result=h.api.applyPysCatalogChanges([
    {collection:"pys",recordId:"isue-001",operation:"upsert",snapshot:{id_problem:"isue-001",Problema:"Actualizado"}},
    {collection:"pys",recordId:"isue-002",operation:"delete"}
-  ]);
+  ],19);
   assert.equal(result.changed,true);assert.equal(result.needsRefresh,false);
   assert.deepEqual(h.state.pysData,[{id_problem:"isue-001",Problema:"Actualizado"}]);
-  assert.equal(notified,1);assert.equal(JSON.parse(h.storage.get("gpsepedia_pys_cache"))[0].Problema,"Actualizado");
+  assert.equal(notified,1);assert.equal(JSON.parse(h.storage.get("gpsepedia_pys_cache"))[0].Problema,"Actualizado");assert.equal(h.api.getPysDataCursor(),19);
  });
  await test("solicita snapshot completo si PyS no tiene caché o IDs estables",async()=>{
   const missing=buildHarness();assert.equal(missing.api.applyPysCatalogChanges([{collection:"pys",recordId:"isue-001",operation:"delete"}]).needsRefresh,true);

@@ -2,6 +2,7 @@ import { routeAction } from './api-config.js';
 import { getState, setState } from './state.js';
 const PYS_CACHE_KEY="gpsepedia_pys_cache";
 const PYS_CACHE_TIMESTAMP_KEY="gpsepedia_pys_cache_updated_at";
+const PYS_CACHE_CURSOR_KEY="gpsepedia_pys_cache_cursor";
 export const PYS_CACHE_TTL_MS=5*60*1000;
 const PYS_CACHE_RETRY_DELAY_MS=30*1000;
 const pysDataLoadedListeners=new Set();
@@ -18,8 +19,23 @@ export function getPysDataFreshness(){
  const data=getCachedPysData(),current=getState(),updatedAt=Number(current.pysDataUpdatedAt)||0,expired=!updatedAt||Date.now()-updatedAt>PYS_CACHE_TTL_MS;
  return{hasCache:Array.isArray(data),stale:Array.isArray(data)&&(current.pysDataStale===true||expired),updatedAt,loading:current.pysDataLoading===true,error:current.pysDataError||null};
 }
+export function getPysDataCursor(){
+ try{const raw=localStorage.getItem(PYS_CACHE_CURSOR_KEY);if(raw===null||raw==="")return null;const value=Number(raw);return Number.isSafeInteger(value)&&value>=0?value:null;}
+ catch(error){return null;}
+}
+export function setPysDataCursor(cursor){
+ if(!Array.isArray(getCachedPysData()))return false;
+ const valid=Number.isSafeInteger(cursor)&&cursor>=0,now=Date.now();
+ try{
+  localStorage.setItem(PYS_CACHE_TIMESTAMP_KEY,String(now));
+  if(valid)localStorage.setItem(PYS_CACHE_CURSOR_KEY,String(cursor));
+  else localStorage.removeItem(PYS_CACHE_CURSOR_KEY);
+ }catch(error){return false;}
+ setState({pysDataUpdatedAt:now,pysDataStale:false,pysDataError:null,pysDataLastAttemptAt:now});
+ return true;
+}
 export function invalidatePysDataCache(){cacheGeneration++;const data=getCachedPysData();setState({pysDataStale:true,pysDataUpdatedAt:0,pysDataError:null,pysDataLastAttemptAt:0});try{localStorage.removeItem(PYS_CACHE_TIMESTAMP_KEY);}catch(error){}return data;}
-export function applyPysCatalogChanges(changes){
+export function applyPysCatalogChanges(changes,cursor){
  if(!Array.isArray(changes))return{changed:false,needsRefresh:true};
  const relevant=changes.filter(change=>change&&(change.collection==="pys"||change.operation==="reset"||change.resetRequired===true));
  if(!relevant.length)return{changed:false,needsRefresh:false};
@@ -46,8 +62,10 @@ export function applyPysCatalogChanges(changes){
  cacheGeneration++;
  cacheHydrated=true;
  setState({pysData:next,pysDataUpdatedAt:now,pysDataStale:false,pysDataError:null,pysDataLoading:false,pysDataLastAttemptAt:now});
- try{localStorage.setItem(PYS_CACHE_KEY,JSON.stringify(next));localStorage.setItem(PYS_CACHE_TIMESTAMP_KEY,String(now));}
- catch(error){return{changed:false,needsRefresh:true};}
+ try{
+  localStorage.setItem(PYS_CACHE_KEY,JSON.stringify(next));localStorage.setItem(PYS_CACHE_TIMESTAMP_KEY,String(now));
+  if(Number.isSafeInteger(cursor)&&cursor>=0)localStorage.setItem(PYS_CACHE_CURSOR_KEY,String(cursor));
+ }catch(error){return{changed:false,needsRefresh:true};}
  pysDataLoadedListeners.forEach(listener=>{try{listener(next);}catch(error){console.warn("Error notificando el delta de PyS:",error);}});
  return{changed:true,needsRefresh:false,data:next};
 }
@@ -71,6 +89,9 @@ function fetchPysData_(){
 export function loadPysData({refresh=false}={}){
  const cached=getCachedPysData();if(inFlightPromise)return inFlightPromise;const freshness=getPysDataFreshness();
  if(!refresh&&freshness.hasCache&&!freshness.stale)return Promise.resolve(cached);
+ // Con cursor conocido, el feed global garantiza la frescura; el TTL no debe forzar
+ // una descarga completa si no hubo cambios. updatedAt=0 sigue forzando recuperación tras invalidación.
+ if(!refresh&&freshness.hasCache&&freshness.updatedAt>0&&getPysDataCursor()!==null)return Promise.resolve(cached);
  const lastAttemptAt=Number(getState().pysDataLastAttemptAt)||0;
  if(!refresh&&freshness.hasCache&&freshness.stale&&freshness.error&&lastAttemptAt&&Date.now()-lastAttemptAt<PYS_CACHE_RETRY_DELAY_MS)return Promise.resolve(cached);
  return fetchPysData_();
