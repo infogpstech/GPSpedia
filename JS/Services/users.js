@@ -72,6 +72,12 @@ function passwordHexToBytes_(hex) {
     return bytes;
 }
 
+// Utilities requiere un byte[] de Java; los arreglos JS (number[]) no son compatibles.
+function computePasswordHmacSha256_(value, key) {
+    const javaBytes = Utilities.newBlob(value).getBytes();
+    return Utilities.computeHmacSha256Signature(javaBytes, key, Utilities.Charset.UTF_8);
+}
+
 function pbkdf2Sha256Hex_(password, saltHex, iterations) {
     const rounds = Number(iterations);
     if (!Number.isInteger(rounds) || rounds < PASSWORD_KDF_MIN_ITERATIONS || rounds > PASSWORD_KDF_MAX_ITERATIONS) {
@@ -79,10 +85,10 @@ function pbkdf2Sha256Hex_(password, saltHex, iterations) {
     }
     const key = String(password);
     const block = passwordHexToBytes_(saltHex).concat([0, 0, 0, 1]);
-    let u = Utilities.computeHmacSha256Signature(block, key, Utilities.Charset.UTF_8);
+    let u = computePasswordHmacSha256_(block, key);
     const result = u.map(byte => (byte + 256) % 256);
     for (let round = 1; round < rounds; round++) {
-        u = Utilities.computeHmacSha256Signature(u, key, Utilities.Charset.UTF_8);
+        u = computePasswordHmacSha256_(u, key);
         for (let i = 0; i < result.length; i++) result[i] ^= (u[i] + 256) % 256;
     }
     return digestToHex(result);

@@ -26,17 +26,19 @@ function extract(name){
 let uuidCounter=0;
 const Utilities={
     Charset:{UTF_8:"UTF_8"},
+    newBlob:value=>({getBytes:()=>Buffer.from(Array.from(value,byte=>byte&255))}),
     DigestAlgorithm:{SHA_256:"SHA_256"},
     getUuid:()=>("12345678-1234-4234-8234-"+String(++uuidCounter).padStart(12,"0")),
     computeDigest:(algorithm,value)=>Array.from(createHash("sha256").update(String(value),"utf8").digest()).map(b=>b>127?b-256:b),
     computeHmacSha256Signature:(value,key)=>{
-        const data=Array.isArray(value)?Buffer.from(value.map(b=>b&255)):Buffer.from(String(value),"utf8");
+        if(!Buffer.isBuffer(value)) throw new TypeError("HMAC requiere un byte[] convertido, no un arreglo JS number[].");
+        const data=value;
         return Array.from(createHmac("sha256",Buffer.from(String(key),"utf8")).update(data).digest()).map(b=>b>127?b-256:b);
     }
 };
 const code=[
     extract("normalizePassword"),extract("digestToHex"),extract("passwordHexToBytes_"),
-    extract("pbkdf2Sha256Hex_"),extract("createPasswordHash"),extract("constantTimeEquals"),
+    extract("computePasswordHmacSha256_"),extract("pbkdf2Sha256Hex_"),extract("createPasswordHash"),extract("constantTimeEquals"),
     extract("verifyStoredPassword")
 ].join("\n");
 const api=new Function("Utilities","PASSWORD_HASH_PREFIX","LEGACY_PASSWORD_HASH_PREFIX",
@@ -62,7 +64,7 @@ test("El formato almacena versión, coste, salt aleatorio y digest",()=>{
 });
 const usersHashCode=[
     extractFrom(usersSource,"normalizePassword"),extractFrom(usersSource,"digestToHex"),
-    extractFrom(usersSource,"passwordHexToBytes_"),extractFrom(usersSource,"pbkdf2Sha256Hex_"),
+    extractFrom(usersSource,"passwordHexToBytes_"),extractFrom(usersSource,"computePasswordHmacSha256_"),extractFrom(usersSource,"pbkdf2Sha256Hex_"),
     extractFrom(usersSource,"createPasswordHash"),extractFrom(usersSource,"constantTimeEquals"),
     extractFrom(usersSource,"verifyStoredPassword")
 ].join("\n");
