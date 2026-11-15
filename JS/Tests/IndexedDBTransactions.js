@@ -42,7 +42,7 @@ function createIndexedDBHarness(options = {}) {
 }
 async function freshOffline(harness, label) {
     globalThis.indexedDB = harness.indexedDB;
-    return import(`../../offline.js?indexeddb-${label}-${Date.now()}-${Math.random()}`);
+    return import(`../Frontend/offline.js?indexeddb-${label}-${Date.now()}-${Math.random()}`);
 }
 
 async function runIndexedDBTransactionTests() {
