@@ -1369,9 +1369,8 @@ function doPostInternal_(e) {
 
     // ADMIN publica un delta exacto para alta de Logo cuando la fila final puede verificarse.
     // El resto de operaciones multi-fila conserva el reset seguro tras cerrar la auditoría.
-    const catalogWriters = ["addLogo", "updateVehicleField", "uploadAdminImage", "normalizeImages",
-        "organizePrimaryVehicleImages", "recoverReplacedImage", "deleteReplacedImage",
-        "restoreReplacedImageFromTrash", "moveReplacedImage", "applyCortesImageReconciliation",
+    const catalogWriters = ["addLogo", "updateVehicleField", "uploadAdminImage", "recoverReplacedImage",
+        "normalizeImages", "organizePrimaryVehicleImages", "applyCortesImageReconciliation",
         "restoreDatabase", "reorganizeDatabase", "migrateIdentifiers", "rollbackIdentifiers",
         "reconcilePendingImageUploads"];
     if (catalogAction && catalogWriters.includes(catalogAction) && response &&
@@ -1384,6 +1383,12 @@ function doPostInternal_(e) {
                 const vehicleId = String(payload && payload.vehicleId || response.vehicleId || "").trim();
                 if (!vehicleId) throw new Error("La operación ADMIN no devolvió un ID de vehículo verificable.");
                 publishAdminCortesCatalogChange_(catalogAction, vehicleId);
+            } else if (catalogAction === "recoverReplacedImage" && response.status === "success") {
+                if (response.catalogChanged === true) {
+                    const vehicleId = String(response.vehicleId || "").trim();
+                    if (!vehicleId) throw new Error("La recuperación no devolvió el ID de vehículo modificado.");
+                    publishAdminCortesCatalogChange_(catalogAction, vehicleId);
+                }
             } else {
                 publishSharedCatalogChange_("ADMIN", catalogAction, { operation: "reset" });
             }
@@ -8441,7 +8446,7 @@ function handleRecoverReplacedImage(payload, logMessage) {
         if(referenceSnapshot.unverifiableReferenceCount>0)throw new Error("No se puede restaurar mientras existan referencias de Drive no interpretables en el Spreadsheet.");
         const conflicts=referenceSnapshot.references.get(driveId)||[];
         if(conflicts.some(reference=>reference.sheet!==SHEET_NAMES.CORTES||reference.row!==actualRow||reference.column!==COLS_CORTES[campo]))throw new Error("La imagen histórica ya está referenciada en otra ubicación de Cortes; no se duplicará su asociación.");
-        if(currentActiveUrl===urlHistorica&&previousHistoryStatus==="restablecida")return {status:"success",message:"La imagen ya estaba activa y el historial confirma el estado restablecida.",restoredUrl:urlHistorica,unchanged:true};
+        if(currentActiveUrl===urlHistorica&&previousHistoryStatus==="restablecida")return {status:"success",message:"La imagen ya estaba activa y el historial confirma el estado restablecida.",restoredUrl:urlHistorica,vehicleId:registroId,fieldName:campo,catalogChanged:false,unchanged:true};
         let swappedRecord=null;
         if(currentActiveUrl&&currentActiveUrl!==urlHistorica)swappedRecord=recordReplacedImage({tipoContenido:"vehiculo",registroId,campo,imagenAnteriorUrl:currentActiveUrl,sustituidaPorUrl:urlHistorica,nombreVehiculo:repData[9]||""});
         try{
@@ -8458,7 +8463,7 @@ function handleRecoverReplacedImage(payload, logMessage) {
             throw operationError;
         }
         logMessage&&logMessage("Imágenes Reemplazadas","Imagen histórica restaurada para el vehículo '"+registroId+"', campo '"+campo+"'.");
-        return {status:"success",message:"La imagen histórica quedó activa y la versión anterior se conservó en el historial.",restoredUrl:urlHistorica};
+        return {status:"success",message:"La imagen histórica quedó activa y la versión anterior se conservó en el historial.",restoredUrl:urlHistorica,vehicleId:registroId,fieldName:campo,catalogChanged:currentActiveUrl!==urlHistorica};
     }finally{lock.releaseLock();}
 }
 function recordImageAdministrationActivity(developerContext, activityType, associatedId, details) {

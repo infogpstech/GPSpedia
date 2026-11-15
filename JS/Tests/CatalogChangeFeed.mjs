@@ -122,6 +122,17 @@ test("WRITE publica upsert exacto de Cortes tras releer fila y conserva reset pa
     assert.ok(writeSource.includes('publishSharedCatalogChange_("WRITE", action, { operation: "reset" })'));
     assert.ok(writeSource.includes("getScriptLock()") && writeSource.includes("waitLock(15000)"));
 });
+test("recuperación de imagen publica delta solo si cambia la fila; operaciones Drive-only no resetean catálogo", () => {
+    assert.ok(adminSource.includes("catalogChanged:currentActiveUrl!==urlHistorica"));
+    assert.ok(adminSource.includes("response.catalogChanged === true"));
+    const start = adminSource.indexOf("const catalogWriters =");
+    const end = adminSource.indexOf("];", start) + 2;
+    const writers = adminSource.slice(start, end);
+    assert.ok(writers.includes('"recoverReplacedImage"'));
+    assert.ok(!writers.includes('"deleteReplacedImage"'));
+    assert.ok(!writers.includes('"restoreReplacedImageFromTrash"'));
+    assert.ok(!writers.includes('"moveReplacedImage"'));
+});
 test("ADMIN ediciones In-Modal publican upsert exacto de Cortes y mantenimiento masivo conserva reset", () => {
     assert.ok(adminSource.includes("function buildAdminCortesCatalogChange_(reference)"));
     assert.ok(adminSource.includes("function publishAdminCortesCatalogChange_(action, reference)"));
@@ -167,4 +178,4 @@ test("WRITE y FEEDBACK publican deltas exactos y conservan reset para operacione
     assert.match(adminSource,/catalogWriters\.includes\(catalogAction\)[\s\S]*?publishSharedCatalogChange_\("ADMIN", catalogAction, \{ operation: "reset" \}\)/);
     assert.match(adminSource,/finalizeAdminAuditEvent_\(auditEvent[\s\S]*?publishSharedCatalogChange_/);
 });
-console.log("CatalogChangeFeed: " + passed + "/21 PASS");
+console.log("CatalogChangeFeed: " + passed + "/22 PASS");
