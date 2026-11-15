@@ -4,6 +4,7 @@ const read=p=>fs.readFileSync(new URL(p,import.meta.url),"utf8");
 const main=read("../Frontend/main.js"),auth=read("../Frontend/auth.js"),ui=read("../Frontend/ui.js"),offline=read("../Frontend/offline.js");
 const policy=read("../Frontend/clientInteractionPolicy.js"),apiConfig=read("../Frontend/api-config.js"),users=read("../../HTML/users.html"),addCuts=read("../../HTML/add_cortes.html");
 const tests=[];function test(n,fn){fn();tests.push(n);}
+test("PWA declara la capacidad móvil estándar y conserva la etiqueta Apple",()=>{const index=read("../../index.html");assert.match(index,/<meta name="mobile-web-app-capable" content="yes">/);assert.match(index,/<meta name="apple-mobile-web-app-capable" content="yes">/);});
 test("no existe revalidación redundante al recuperar conexión; el arranque conserva la validación inicial",()=>{assert.doesNotMatch(main,/revalidateSessionOnResume_|installSessionRevalidation_/);assert.doesNotMatch(main,/auth\.validateActiveSession\(/);assert.match(main,/await auth\.checkSession\(\)/);assert.match(auth,/export async function checkSession\(\)/);assert.match(auth,/validateSessionCoordinated\(user, false\)/);});
 test("el aviso superior no anuncia loading del catálogo",()=>assert.match(main,/banner\.hidden = !view\.visible \|\| currentState\.catalogLoadStatus === 'loading'/));
 test("la actualización no añade controles ni intercepta el gesto nativo",()=>{

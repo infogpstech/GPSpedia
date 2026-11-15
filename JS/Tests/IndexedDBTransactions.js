@@ -85,8 +85,31 @@ async function runIndexedDBTransactionTests() {
 
     const blockedHarness = createIndexedDBHarness({ blocked: true });
     const blockedOffline = await freshOffline(blockedHarness, 'blocked');
-    await testAsync('onblocked falla de forma explícita y no deja la apertura pendiente', async () => {
+    await testAsync('onblocked aplica backoff y evita reabrir IndexedDB en cada operación', async () => {
         await assert.rejects(blockedOffline.initDB(), /bloqueada/);
+        await assert.rejects(blockedOffline.initDB(), /bloqueada/);
+        assert.equal(blockedHarness.openCount, 1);
+    });
+    await testAsync('la caché opcional de miniaturas omite IndexedDB no disponible sin inundar la consola', async () => {
+        const harness = createIndexedDBHarness({ openError: true });
+        const api = await freshOffline(harness, 'thumbnail-storage-backoff');
+        const original = { error: console.error, debug: console.debug, warn: console.warn };
+        const counts = { error: 0, debug: 0, warn: 0 };
+        console.error = () => { counts.error++; }; console.debug = () => { counts.debug++; }; console.warn = () => { counts.warn++; };
+        try {
+            const results = await Promise.all([
+                api.compressAndStoreThumbnail('https://images.example/a.jpg', 'file-a', 300),
+                api.compressAndStoreThumbnail('https://images.example/b.jpg', 'file-b', 300),
+                api.compressAndStoreThumbnail('https://images.example/c.jpg', 'file-c', 300)
+            ]);
+            assert.deepEqual(results, [null, null, null]);
+            assert.equal(harness.openCount, 1);
+            assert.equal(counts.error, 0);
+            assert.equal(counts.debug, 0);
+            assert.equal(counts.warn, 1);
+        } finally {
+            console.error = original.error; console.debug = original.debug; console.warn = original.warn;
+        }
     });
 
     const scopedHarness = createIndexedDBHarness();
@@ -608,7 +631,7 @@ async function runIndexedDBTransactionTests() {
         assert.equal((await api.getAddCutOperationPendingOperation('USER-CUT-A')).operation.id, cutOperationBase.id);
     });
 
-    console.log(`\\nIndexedDB transaction tests: ${passed}/44 PASS`);
+    console.log(`\\nIndexedDB transaction tests: ${passed}/45 PASS`);
 }
 
 runIndexedDBTransactionTests().catch(error => {

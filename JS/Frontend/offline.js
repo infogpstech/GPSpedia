@@ -11,6 +11,9 @@ const DB_NAME = 'GPSpedia_DB';
 const DB_VERSION = 4; // Añade persistencia local del inventario administrativo.
 
 let dbPromise = null;
+let dbRetryAfter = 0;
+let dbRetryError = null;
+const DB_OPEN_RETRY_DELAY_MS = 15000;
 
 /**
  * Abre IndexedDB y libera la conexión cuando otra pestaña solicita una versión
@@ -19,6 +22,7 @@ let dbPromise = null;
  */
 export async function initDB() {
     if (dbPromise) return dbPromise;
+    if (Date.now() < dbRetryAfter) return Promise.reject(dbRetryError || new Error('IndexedDB no está disponible temporalmente.'));
 
     let openingPromise;
     openingPromise = new Promise((resolve, reject) => {
@@ -72,6 +76,8 @@ export async function initDB() {
                     if (dbPromise === openingPromise) dbPromise = null;
                 };
                 settled = true;
+                dbRetryAfter = 0;
+                dbRetryError = null;
                 clearOpenState();
                 resolve(database);
             };
@@ -91,7 +97,7 @@ export async function initDB() {
  * Ejecuta una operación y solo confirma el resultado después de que finalice
  * la transacción completa. request.onsuccess no garantiza que el commit ocurra.
  */
-async function performOp(storeName, mode, callback) {
+async function performOp(storeName, mode, callback, options = {}) {
     try {
         const database = await initDB();
         if (!database) throw new Error('Could not initialize IndexedDB');
@@ -141,7 +147,7 @@ async function performOp(storeName, mode, callback) {
             }
         });
     } catch (err) {
-        console.error(`Database operation failed on ${storeName}:`, err);
+        if (!(options && options.silent)) console.error(`Database operation failed on ${storeName}:`, err);
         return null;
     }
 }
@@ -1272,12 +1278,12 @@ function isThumbnailExpired(entry, now = Date.now()) {
  return !Number.isFinite(cachedAt) || cachedAt <= 0 || now - cachedAt >= THUMBNAIL_TTL_MS;
 }
 async function purgeExpiredThumbnailEntries(now = Date.now()) {
- const entries = await performOp("thumbnails", "readonly", store => store.getAll());
+ const entries = await performOp("thumbnails", "readonly", store => store.getAll(), { silent: true });
  if (!Array.isArray(entries) || !entries.length) return;
  const keys = entries.filter(entry => entry && typeof entry === "object" &&
   !(typeof Blob !== "undefined" && entry instanceof Blob) &&
   isThumbnailExpired(entry, now) && typeof entry.key === "string").map(entry => entry.key);
- await Promise.all(keys.map(key => performOp("thumbnails", "readwrite", store => store.delete(key))));
+ await Promise.all(keys.map(key => performOp("thumbnails", "readwrite", store => store.delete(key), { silent: true })));
 }
 // Límite de variantes persistidas; la cuota global de IndexedDB se trata en otra iteración.
 const MAX_THUMBNAIL_ENTRIES = 200;
@@ -1429,6 +1435,7 @@ export async function compressAndStoreThumbnail(url,rawFileId,requestedSize=400)
  if(!rawFileId||(typeof rawFileId==="string"&&rawFileId.includes("placehold.co")))return null;
  const fileId=normalizeId(rawFileId);if(!fileId)return null;
  const width=normalizeThumbnailSize(requestedSize),cacheKey=buildThumbnailCacheKey(fileId,width);
+ if(Date.now()<dbRetryAfter)return null;
  const retryAfter=thumbnailCompressionFailures_.get(cacheKey)||0;
  if(retryAfter>Date.now())return null;
  if(retryAfter)thumbnailCompressionFailures_.delete(cacheKey);
@@ -1459,20 +1466,24 @@ export async function compressAndStoreThumbnail(url,rawFileId,requestedSize=400)
  }catch(error){
   thumbnailCompressionFailures_.set(cacheKey,Date.now()+THUMBNAIL_FAILURE_BACKOFF_MS);
   if(thumbnailCompressionFailures_.size>300)thumbnailCompressionFailures_.delete(thumbnailCompressionFailures_.keys().next().value);
-  console.debug("Se omitió la compresión opcional de miniatura:",fileId,error&&error.message?error.message:error&&error.name||"error");
+  if(Date.now()>=dbRetryAfter)console.debug("Se omitió la compresión opcional de miniatura:",fileId,error&&error.message?error.message:error&&error.name||"error");
   return null;
  }
 }
 export async function getThumbnail(rawFileId,requestedSize=400){
- const fileId=normalizeId(rawFileId);if(!fileId||typeof fileId!=="string")return null;
- await purgeExpiredThumbnailEntries();
- const cacheKey=buildThumbnailCacheKey(fileId,requestedSize);
- const cached=await readFreshThumbnail(cacheKey);
- if(cached)return cached;
- // Un registro histórico indexado solo por ID no declara la resolución del Blob.
- // Se elimina en lugar de reutilizarlo como una variante compatible.
- const legacy=await performOp("thumbnails","readonly",store=>store.get(fileId));
- if(legacy)await performOp("thumbnails","readwrite",store=>store.delete(fileId));
+ const fileId=normalizeId(rawFileId);if(!fileId||typeof fileId!=="string"||Date.now()<dbRetryAfter)return null;
+ try{
+  await purgeExpiredThumbnailEntries();
+  const cacheKey=buildThumbnailCacheKey(fileId,requestedSize);
+  const cached=await readFreshThumbnail(cacheKey);
+  if(cached)return cached;
+  // Un registro histórico indexado solo por ID no declara la resolución del Blob.
+  // Se elimina en lugar de reutilizarlo como una variante compatible.
+  const legacy=await performOp("thumbnails","readonly",store=>store.get(fileId),{silent:true});
+  if(legacy)await performOp("thumbnails","readwrite",store=>store.delete(fileId),{silent:true});
+ }catch(error){
+  if(Date.now()>=dbRetryAfter)console.debug("Se omitió la lectura de miniatura local:",error&&error.message?error.message:error&&error.name||"error");
+ }
  return null;
 }
 

@@ -189,6 +189,7 @@ runGroup('38','INTEGRATION',()=>{
  runCli('AUG-148 accesibilidad y foco del modal de desarrollador','JS/Tests/DevToolsModalAccessibility.mjs');
  runCli('CATALOG reintentos y cancelación','JS/Tests/CatalogRequestRetry.js');
  runCli('CATALOG escenarios de arranque PWA','JS/Tests/PWAStartupScenarios.js');
+ runCli('AUG-IndexedDB apertura compartida, backoff y miniaturas opcionales','JS/Tests/IndexedDBTransactions.js');
  runCli('CATALOG integridad del arranque y recuperación','JS/Tests/CatalogStartupIntegrity.mjs');
   runCli('AUG-047 accesibilidad, foco, navegación y offline de modales legales','JS/Tests/TermsModalAccessibility.mjs');
   runCli('AUG-144 QR local y privacidad de vídeos no listados','JS/Tests/PrintQrPrivacy.mjs');
