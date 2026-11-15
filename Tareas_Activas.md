@@ -765,3 +765,8 @@ Las fuentes de servicios JavaScript se centralizan bajo `JS/Services/`. La carpe
 ## Adenda de continuidad Inbox — paginación concurrente (2026-11-15)
 
 **GP-INBOX-04B: EN PROGRESO; mejora interna permitida, sin controles visibles nuevos.** Se detectó que la paginación por offset podía repetir u omitir conversaciones cuando una conversación recibía actividad nueva o el ancla se archivaba; la paginación del historial también podía repetir el último mensaje anterior si llegaba un mensaje nuevo entre solicitudes. Se sustituye el offset por cursores estables: clave de orden (fecha + ID) para conversaciones y ancla por ID para mensajes. La UI conserva el cursor opaco sin convertirlo a número. Se añaden pruebas de regresión para concurrencia y contrato UI. Las funciones masivas y los nuevos controles visibles de GP-INBOX-04B..04D siguen diferidos hasta autorización expresa. No se modifican deployments ni datos externos.
+
+
+## Cierre de subcorrección Inbox — paginación estable (2026-11-15)
+
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.** Los cursores de conversación (timestamp + ID) y mensajes (ID ancla) ya no dependen de offsets que cambian con actividad concurrente. La UI mantiene el cursor opaco. Pruebas de regresión: InboxConversations 32/32 PASS; InboxUi 20/20 PASS. CI Node.js 22 run 43665177415: 99 suites / 1,500 pruebas / 0 fallos; GitHub Pages run 43665176707 SUCCESS. La validación con Spreadsheet/Coordinator Beta reales permanece pendiente. GP-INBOX-04B..04D continúan pendientes para las funciones y controles visibles diferidos por instrucción del usuario.

@@ -391,3 +391,10 @@
 
 
 [2026-11-15] GP-INBOX-04B — estabilidad de paginación: se sustituyeron offsets mutables por cursores estables en la bandeja (fecha de orden + ID de conversación) y en el historial (ID del mensaje más antiguo de la página). La UI conserva el cursor opaco. Se añadieron pruebas de regresión para actividad nueva, archivo del elemento de referencia y llegada de mensajes entre páginas, además de una comprobación del contrato UI. No se añadieron controles visibles, no se cambiaron permisos ni se modificaron deployments o datos externos. Validación CI pendiente al registrar el cambio.
+
+
+[2026-11-15] Validación de GP-INBOX paginación estable
+- GitHub Actions Node.js 22, run `43665177415`: **SUCCESS**; sintaxis PASS; 99 suites / 1,500 pruebas / 0 fallos. `InboxConversations` 32/32 PASS y `InboxUi` 20/20 PASS.
+- GitHub Pages run `43665176707`: **SUCCESS** (build y deploy).
+- El diff se limita a cursores/paginación de Inbox, pruebas de regresión y registros asociados. No se añadieron controles visibles ni se cambiaron roles, contratos de escritura, deployments o datos externos.
+- Estado de esta subcorrección: **COMPLETADA CON VALIDACIÓN DIFERIDA A BETA**. La verificación de orden/paginación con Spreadsheet y Coordinator Beta reales queda pendiente; GP-INBOX-04B..04D siguen abiertas en lo relativo a controles y flujos aún no implementados/autorizados.

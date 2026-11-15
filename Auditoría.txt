@@ -651,3 +651,10 @@ Estado: CORRECCIÓN LOCAL PREPARADA; CI PENDIENTE.
 - Corrección: cursor de conversaciones basado en timestamp de orden e ID estable, independiente de que la fila ancla desaparezca o cambie su actividad; cursor de mensajes basado en el ID del mensaje más antiguo de la página. La UI deja de convertir cursores a Number.
 - Pruebas añadidas: nueva conversación/actividad y archivo del elemento de la página anterior; mensaje nuevo entre páginas; contrato UI de cursor opaco.
 - Riesgo residual: la ordenación y consistencia de datos externos requiere validación en Spreadsheet Beta; no se ha ejecutado contra recursos reales.
+
+
+[2026-11-15] Cierre AUD-2026-11-15-29 — cursores de paginación Inbox
+- **Corrección publicada:** `27239def189f8eee818b359f2c95fcfbfe313db5`.
+- **Validación local:** CI Node.js 22 run `43665177415` SUCCESS; 99 suites / 1,500 pruebas / 0 fallos; InboxConversations 32/32, InboxUi 20/20; sintaxis PASS.
+- **Pages:** run `43665176707` SUCCESS.
+- **Estado:** HALLAZGO CORREGIDO EN RAMA. La prueba de campo con Spreadsheet/Coordinator Beta reales queda diferida; no se simuló.

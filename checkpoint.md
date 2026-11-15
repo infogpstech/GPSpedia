@@ -317,3 +317,15 @@
 - Cambio preparado: conversaciones usan cursor compuesto por fecha de orden + conversationId; mensajes usan cursor por messageId. UI conserva el cursor opaco. No se añadieron controles visibles ni se modificaron contratos de escritura, roles o datos.
 - Pruebas nuevas: concurrencia de conversaciones con nueva actividad/archivo del elemento anterior; mensaje nuevo entre páginas históricas; contrato UI que impide convertir el cursor a número.
 - Siguiente validación: CI completo Node.js, revisión del diff y prueba de regresión Inbox. Beta de servicios reales continúa diferida; no se ejecutaron despliegues ni accesos a Spreadsheet/Drive.
+
+
+## Cierre — GP-INBOX paginación estable (2026-11-15)
+
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
+
+- Commit de implementación y pruebas: `27239def189f8eee818b359f2c95fcfbfe313db5`.
+- GitHub Actions Node.js 22 run `43665177415`: SUCCESS; sintaxis PASS; 99 suites / 1,500 pruebas / 0 fallos. InboxConversations 32/32 y InboxUi 20/20 PASS.
+- GitHub Pages run `43665176707`: SUCCESS.
+- La paginación de conversaciones usa clave de orden timestamp + ID; el historial usa ID de mensaje ancla. UI conserva cursores opacos. Pruebas reproducen mensajes nuevos entre páginas, actividad nueva y archivo del elemento previo.
+- No se añadieron controles visibles, no se cambiaron permisos ni se ejecutaron despliegues o accesos a datos productivos.
+- Pendiente Beta: validar lecturas concurrentes, orden temporal y paginación con Spreadsheet/Coordinator aislados y cuentas de prueba. GP-INBOX-04B..04D permanecen abiertas en sus funcionalidades restantes.
