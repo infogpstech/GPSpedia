@@ -1834,3 +1834,88 @@ CRITERIO DE CIERRE
 - La validación local de contratos no sustituye la prueba con Apps Script/Spreadsheet/Drive reales en Beta.
 - No desplegar a producción, no modificar datos productivos y no copiar secretos a los registros.
 ================================================================================
+
+
+
+================================================================================
+AUG-157 — VALIDACIÓN BETA DEL FEED INCREMENTAL Y CACHÉ EN VIVO (GP-CAT-01T)
+
+PREPARACIÓN OBLIGATORIA — ejecutar antes de cualquier prueba, desde una terminal dentro del repositorio local. La secuencia verifica la identidad del repositorio/rama, se detiene ante cambios locales y sincroniza únicamente mediante fast-forward; no descarta archivos ni reescribe historial.
+
+```bash
+set -euo pipefail
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ROOT="$(git rev-parse --show-toplevel)"
+test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in
+  https://github.com/infogpstech/GPSpedia.git|https://github.com/infogpstech/GPSpedia) ;;
+  *) echo "Remoto incorrecto: $REMOTE_URL"; exit 1 ;;
+esac
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH" || { echo "Rama incorrecta"; exit 1; }
+test -z "$(git status --porcelain)" || { echo "Hay cambios locales sin guardar; detener y preservarlos."; exit 1; }
+git fetch origin "$EXPECTED_BRANCH"
+git pull --ff-only origin "$EXPECTED_BRANCH"
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH"
+printf 'Repositorio: %s\nRama: %s\nHEAD: ' "$ROOT" "$(git branch --show-current)"
+git rev-parse HEAD
+git status --short --branch
+```
+
+ENTORNO Y REGISTRO
+- Usar exclusivamente proyectos Apps Script, Coordinator, Spreadsheet, Drive, cuentas y registros de prueba Beta. No usar deployments, hojas, archivos, cuentas ni endpoints productivos.
+- Antes de iniciar, confirmar que AUTH, CATALOG, WRITE, FEEDBACK, ADMIN y Coordinator Beta corresponden a una misma versión compatible de esta rama. No desplegar ni cambiar ScriptProperties como parte de esta prueba.
+- Registrar fecha/hora, HEAD, versión frontend/Service Worker, versiones de cada deployment, navegador/SO/dispositivo, rol de cada cuenta y resultados PASS/FAIL/NO EJECUTADA.
+- Usar al menos dos cuentas de prueba autorizadas y dos contextos independientes (dos perfiles/dispositivos); añadir dos pestañas del mismo usuario para comprobar coordinación local.
+- No registrar tokens, secretos, URLs temporales, datos personales ni cuerpos sensibles. No utilizar cuentas reales ni datos de producción.
+
+1. ARRANQUE CACHE-FIRST Y MEDICIÓN
+- Con caché vacía, iniciar sesión y medir por separado tiempo hasta primer catálogo visible, finalización del snapshot y primera respuesta del feed.
+- Con caché válida, cerrar/reabrir la aplicación y confirmar que el catálogo aparece desde IndexedDB antes de completar la red; registrar el tiempo hasta primer contenido visible.
+- Conservar DevTools Network y comprobar que el bootstrap obtiene un cursor coherente con el snapshot y que la persistencia de snapshot/cursor es atómica.
+- Repetir con red lenta, latencia alta y pérdida temporal de conectividad. Una caché válida debe permanecer visible como stale; un error de red no debe borrar el último snapshot válido.
+
+2. FEED SIN NOVEDADES
+- Dejar el catálogo sin escrituras durante varios ciclos de sondeo mientras la aplicación permanece visible y online.
+- Confirmar que `getCatalogChanges` consulta desde el cursor vigente y que una respuesta sin novedades actualiza la frescura sin llamar a `getCatalogData` ni descargar las colecciones completas.
+- Registrar cantidad/tamaño de solicitudes, duración, cursor anterior/nuevo y número de eventos. No copiar cuerpos de respuesta con información sensible.
+- Ocultar la pestaña y desconectar la red: el sondeo debe pausarse. Recuperar visibilidad/conexión y comprobar reanudación con backoff sin ráfagas ni solicitudes duplicadas.
+
+3. PROPAGACIÓN ENTRE USUARIOS, PESTAÑAS Y DISPOSITIVOS
+- Abrir la aplicación con la cuenta A en un dispositivo/contexto y con la cuenta B en otro. Dejar ambas sesiones abiertas y con el catálogo ya cargado.
+- Desde A, crear o modificar un registro Cortes de prueba mediante el flujo WRITE autorizado. Confirmar que B recibe el upsert y actualiza la tarjeta sin recargar ni cerrar/reabrir la aplicación.
+- Repetir con una modificación FEEDBACK que afecte PyS y con un tutorial/logotipo de prueba por los flujos autorizados. Confirmar que cada consumidor aplica su colección correcta y conserva el cursor global.
+- Abrir dos pestañas de la misma cuenta. Confirmar que solo la pestaña líder realiza el sondeo, que las demás reciben la actualización por BroadcastChannel o storage event y que el lease se recupera si la pestaña líder se cierra abruptamente.
+- Ejecutar dos escrituras independientes casi simultáneas desde A y otra cuenta. Verificar revisiones monotónicas, ausencia de eventos perdidos/duplicados y convergencia del catálogo en todos los contextos.
+- Medir latencia desde la confirmación de escritura en servidor hasta la actualización visible en B; repetir al menos cinco veces y registrar mediana y máximo, sin asumir un intervalo que no haya sido observado.
+
+4. PRODUCTORES, DELTAS Y RECUPERACIÓN
+- Verificar por separado los productores WRITE, FEEDBACK y ADMIN que estén disponibles en el entorno Beta: alta/edición de Cortes, recordLike, suggestYear cuando realmente se aplica, aprobación/rechazo de vídeo con destino verificado, edición In-Modal, reemplazo/recuperación de imagen y operaciones por lote.
+- Confirmar que una mutación individual publica un upsert con ID estable y snapshot completo; las acciones sin cambio de catálogo (votos previos, freezeCortesIds, movimientos Drive/ledger-only) no publican eventos.
+- En una reconciliación/normalización de imágenes de prueba, comprobar un upsert por vehículo modificado. Si falta un ID, hay warning/error o falla una preparación/publicación, confirmar reset de recuperación y convergencia posterior mediante snapshot.
+- Confirmar que las operaciones masivas de restauración de base, reorganización y migración de IDs conservan reset global. No ejecutar estas operaciones sobre recursos productivos.
+- No esperar cambios Relay: no existe un escritor backend de registros Relay identificado en esta rama.
+
+5. PAGINACIÓN, CURSOR Y RESPUESTAS REPETIDAS
+- En el entorno aislado, generar suficientes eventos de prueba para superar el tamaño de una página y confirmar que el cliente pagina hasta completar el delta, sin saltos ni duplicaciones.
+- Repetir una respuesta/evento ya aplicado y comprobar idempotencia. Si el entorno permite controlar la entrega, retrasar una respuesta anterior y comprobar que no revierte un snapshot de revisión más reciente.
+- Probar cursor vencido, futuro, corrupto o con hueco de revisión. El cliente debe recuperar mediante snapshot completo y persistir snapshot/cursor coherentes; no debe marcar el catálogo como actualizado si falla el procesamiento.
+- Inyectar fallo de red durante una página intermedia y reconectar. Confirmar que el cliente reanuda desde el último cursor confirmado sin perder eventos ni duplicar cambios visibles.
+
+6. ESTADOS ABIERTOS, OFFLINE Y RECUPERACIÓN
+- Mantener una tarjeta y un modal de detalle abiertos mientras otra cuenta modifica el registro. Confirmar actualización silenciosa sin cerrar el modal, perder scroll/filtros ni borrar una edición pendiente.
+- Desconectar la red antes de una escritura offline permitida, reconectar y comprobar reintento/idempotencia. No confundir una operación pendiente con una escritura confirmada.
+- Cerrar una pestaña durante una sincronización y reabrirla; verificar recuperación desde IndexedDB y el cursor persistido.
+- Probar reset del feed con una vista abierta y confirmar reconciliación completa sin dejar colecciones mezcladas entre revisiones.
+
+7. SEGURIDAD Y AISLAMIENTO
+- Consultar el feed con sesión inválida, expirada, revocada y con rol no autorizado cuando corresponda. Confirmar rechazo backend y ausencia de datos de catálogo en respuestas de error.
+- Intentar cursor manipulado o perteneciente a otra sesión; el cursor no debe actuar como autorización ni permitir leer datos no autorizados.
+- Confirmar que las respuestas/logs no exponen secretos, tokens, datos personales ni información interna de infraestructura.
+
+CRITERIOS DE CIERRE
+- Cada subprueba debe quedar marcada PASS, FAIL o NO EJECUTADA con evidencia no sensible y versión exacta de los deployments.
+- Registrar tiempos de primer contenido, snapshot, consulta sin novedades, propagación y reconexión; separar mediana/máximo de impresiones cualitativas.
+- Si una prueba falla por deployment/configuración Beta incompatible, documentar versiones y causa; no modificar producción ni ampliar permisos como workaround.
+- No declarar validación Beta aprobada a partir de CI, simulaciones o revisión estática. La prueba de campo se considera ejecutada únicamente cuando se realiza en los proyectos, cuentas, dispositivos y servicios Beta aislados.
+================================================================================

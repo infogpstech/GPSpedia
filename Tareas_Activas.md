@@ -197,7 +197,7 @@ Registrar duración por iteración, fecha, deployment/versión y runtime. Repeti
 
 ## Continuidad inmediata
 
-P0–P6 y los paquetes locales de UX/imagen cuentan con implementación y verificaciones locales completadas; los estados se cierran como COMPLETADA CON VALIDACIÓN DIFERIDA cuando dependen de Apps Script, Spreadsheet/Drive o dispositivos reales. P2 conserva pendiente Beta para calibrar PBKDF2 y reconciliar datos. La auditoría confirmó que Relay no tiene un escritor backend de registros: solo se permite congelar fórmulas conservando IDs existentes; no se inventarán IDs. Siguiente tarea de la nueva etapa: GP-CAT-01T — validación Beta externa: concurrencia real entre usuarios, pestañas y dispositivos; latencia de apertura y reconexión del feed/cache.
+P0–P6 y los paquetes locales de UX/imagen cuentan con implementación y verificaciones locales completadas; los estados se cierran como COMPLETADA CON VALIDACIÓN DIFERIDA cuando dependen de Apps Script, Spreadsheet/Drive o dispositivos reales. P2 conserva pendiente Beta para calibrar PBKDF2 y reconciliar datos. La auditoría confirmó que Relay no tiene un escritor backend de registros: solo se permite congelar fórmulas conservando IDs existentes; no se inventarán IDs. GP-CAT-01T queda preparada para ejecución en Beta mediante AUG-157; la validación de campo se difiere hasta disponer de proyectos Apps Script/Coordinator, Spreadsheet/Drive, cuentas y dispositivos Beta compatibles.
 
 
 ## Evidencia adicional de P0 — revisión de permisos y contratos (2026-11-14)
@@ -752,3 +752,6 @@ Este requerimiento complementa GP-PWA-02: sincronizar el catálogo en vivo no de
 - GP-CAT-01R: COMPLETADA EN RAMA; normalizeImages registra los vehicleId de las filas donde duplica y reescribe una referencia, y publica upserts agrupados por vehículo. Si alguna fila modificada carece de ID, hay error/warning o falla un snapshot, publica reset seguro. Si solo renombra/mueve archivos sin cambiar celdas, no emite evento. CatalogChangeFeed 25/25 PASS.
 
 - GP-CAT-01S: COMPLETADA EN RAMA; freezeCortesIds solo congela fórmulas y verifica que los valores de ID permanezcan idénticos, por lo que no modifica el snapshot ni publica evento. restoreDatabase, reorganizeDatabase, migrateIdentifiers y rollbackIdentifiers conservan reset por su alcance multi-fila/colección. CatalogChangeFeed 26/26 PASS.
+
+
+- GP-CAT-01T: IMPLEMENTACIÓN LOCAL Y PREPARACIÓN COMPLETADAS CON VALIDACIÓN DIFERIDA A BETA. La rama actual tiene CI integral aprobado (99 suites / 1,497 pruebas / 0 fallos), Pages PASS y se añadió AUG-157 con protocolo seguro para caché, feed sin novedades, productores, propagación multiusuario/multi-pestaña, paginación, cursor, reconexión y seguridad. La ejecución real sigue pendiente de deployments Apps Script/Coordinator, Spreadsheet/Drive y cuentas/dispositivos Beta compatibles; no se simula ni se declara PASS.

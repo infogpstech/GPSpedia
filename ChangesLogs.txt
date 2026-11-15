@@ -375,3 +375,10 @@
 - restoreDatabase, reorganizeDatabase, migrateIdentifiers y rollbackIdentifiers conservan reset por modificar múltiples filas/colecciones/IDs.
 - CatalogChangeFeed 26/26, CatalogSnapshotSync 29/29 y PysDataCache 18/18 PASS.
 - CI Node.js 22 run 43660486963: SUCCESS; 99 suites / 1,497 pruebas / 0 fallos. GitHub Pages run 43660485941: SUCCESS.
+
+
+2026-11-14/15 — GP-CAT-01T: PREPARACIÓN DE VALIDACIÓN BETA DEL FEED INCREMENTAL
+- Se añadió AUG-157 a lista_beta_parte2.txt con comandos iniciales de verificación/sincronización segura y casos de arranque cache-first, feed sin novedades, propagación multiusuario/multi-pestaña, productores WRITE/FEEDBACK/ADMIN, deltas y resets, paginación/cursor, offline/reconexión y seguridad.
+- Tareas_Activas.md y checkpoint.md actualizan el estado de GP-CAT-01T: implementación y preparación local completadas con validación de campo diferida a Beta.
+- CI del HEAD previo al registro: run 43660678226 SUCCESS, 99 suites / 1,497 pruebas / 0 fallos; GitHub Pages run 43660677054 SUCCESS.
+- No se ejecutaron ni modificaron deployments, ScriptProperties, Spreadsheet, Drive, OAuth ni datos productivos.

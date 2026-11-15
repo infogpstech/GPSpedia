@@ -1791,3 +1791,20 @@ No se desplegaron servicios Apps Script, no se modificaron ScriptProperties, Spr
 - GitHub Actions run `43660486963`: SUCCESS; Node.js 22; sintaxis PASS; **99 suites / 1,497 pruebas / 0 fallos**.
 - GitHub Pages run `43660485941`: SUCCESS.
 - Siguiente: GP-CAT-01T — validación Beta externa de concurrencia multiusuario, propagación entre pestañas/dispositivos, latencia y reconexión. No se simula ni se declara aprobada sin el entorno desplegado.
+
+
+## Verificación integral y continuidad GP-CAT-01T — 2026-11-14/15
+
+**Rama verificada:** `GPSpedia2.2.5_work`.
+**HEAD verificado antes del registro:** `cb2ecf29c91af7b5dec5074851ce6c022401ed91`.
+**Rama base protegida:** `GPSpedia2.2.5` en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; sin modificaciones realizadas.
+
+- Se volvió a leer íntegramente `NORMAS_DESAROLLO.md`; se consultaron README, contexto operativo, checkpoint, tareas y registros activos pertinentes.
+- GitHub Actions en el HEAD actual: run `43660678226` SUCCESS. Node.js 22; comprobación `node --check` de módulos configurados PASS; **99 suites / 1,497 pruebas aprobadas / 0 fallos**.
+- Suites destacadas: `IdentifierMigration` 10/10, `PysDataCache` 18/18, `CatalogChangeFeed` 26/26, `CatalogSnapshotSync` 29/29, `InboxConversations` 30/30 y coordinación compartida/concurrencia/leases ejecutada por el runner integral.
+- GitHub Pages run `43660677054`: SUCCESS para el mismo HEAD.
+- La verificación local/integral está aprobada. No se ejecutaron pruebas contra Apps Script, Spreadsheet, Drive, OAuth, YouTube ni dispositivos/navegadores Beta; tampoco se modificaron deployments, ScriptProperties ni datos productivos.
+- GP-CAT-01T: se añadió `AUG-157` a `lista_beta_parte2.txt`. Incluye preparación obligatoria de repositorio/rama/árbol limpio y pruebas de arranque cache-first, feed sin novedades, propagación entre usuarios/pestañas/dispositivos, productores, deltas/reset, paginación, cursor, offline/reconexión, estados abiertos y autorización.
+- Estado GP-CAT-01T: **COMPLETADA CON VALIDACIÓN DIFERIDA A BETA** en cuanto a implementación y preparación local. La ejecución real de AUG-157 queda pendiente de proyectos/deployments Beta compatibles, Spreadsheet/Drive aislados y cuentas/dispositivos de prueba. No se simula ni se atribuye aprobación a CI.
+- Restricción vigente: GP-INBOX-04B..04D requieren controles/acciones visibles nuevos en parte de su alcance; la instrucción del usuario de no añadir controles visibles sin autorización sigue vigente. No se implementaron ni se alteró su alcance.
+- Siguiente paso permitido: ejecutar AUG-157 en Beta aislada cuando exista el entorno compatible; registrar PASS/FAIL/NO EJECUTADA por caso. No desplegar a producción.
