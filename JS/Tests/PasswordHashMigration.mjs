@@ -164,6 +164,7 @@ function migrationHarness(actorRole="Desarrollador"){
         getSessionExpirationStatus_:()=>({expired:false}),
         assertRequesterRoleRevocationClear_:()=>{},
         ensureActiveSessionsActivityColumn_:()=>{},
+        requireSharedAuthActor_:(payload,allowedRoles)=>{const actor=payload&&payload.__sharedSessionActor;const userId=String(actor&&actor.userId||"").trim(),role=String(actor&&actor.role||"").trim().toLowerCase();if(!userId||!Number.isSafeInteger(actor&&actor.epoch)||actor.epoch<1||!allowedRoles.includes(role))throw new Error("Acceso denegado.");return{userId,role,epoch:actor.epoch};},
         createPasswordHash:()=>{hashCounter++;return "pbkdf2-sha256$12000$"+String(hashCounter).padStart(32,"0")+"$"+"d".repeat(64);},
         LockService:{getScriptLock:()=>({waitLock:()=>{waits++;},releaseLock:()=>{releases++;}})},
         SpreadsheetApp:{openById:()=>ss,flush:()=>{}},
@@ -176,7 +177,7 @@ function migrationHarness(actorRole="Desarrollador"){
     };
     users[1][3]=actorRole;
     const fn=new Function(...Object.keys(deps),extract("handleMigrateLegacyPasswords")+"\nreturn handleMigrateLegacyPasswords;")(...Object.values(deps));
-    return {run:payload=>fn(payload),users,sessions,stats:()=>({hashCounter,waits,releases})};
+    return {run:payload=>fn({...payload,__sharedSessionActor:{userId:payload.userId,role:actorRole,epoch:1}}),users,sessions,stats:()=>({hashCounter,waits,releases})};
 }
 test("La migración batch usa dry-run por defecto y no escribe contraseñas",()=>{
     const h=migrationHarness(),before=h.users.map(r=>r.slice()),r=h.run({userId:"U1",sessionToken:"token-1",batchSize:1});
