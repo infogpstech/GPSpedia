@@ -87,11 +87,13 @@ testCase("Coordinator reserva ActiveSessions y permite solo las dos operaciones 
 
 testCase("El contexto central de sesión se registra al login, se revoca y se reutiliza en los servicios",()=>{
  assert.match(auth,/syncSharedSessionContextsForUser_\(/);
- assert.match(auth,/registerSharedSessionContext_\(/);
+ assert.match(auth,/syncSharedUserSessionContexts_\(/);
  assert.match(auth,/revokeSharedUserSessionContexts_\(/);
  assert.match(auth,/revokeSharedSessionContext_\(/);
  assert.match(auth,/validateSharedSessionContext_\(userId, sessionToken\)/);
  assert.match(coordinator,/function registerSession_\(/);
+ assert.match(coordinator,/function syncUserSessions_\(/);
+ assert.match(client,/function syncSharedUserSessionContexts_\(/);
  assert.match(coordinator,/function revokeSession_\(/);
  assert.match(coordinator,/function revokeUserSessions_\(/);
  assert.match(coordinator,/function authorizeSession_\(/);
