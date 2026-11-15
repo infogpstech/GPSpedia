@@ -404,3 +404,8 @@
 - JS/Services/InboxConversations.js: la actualización del resumen de conversación compara el orden de inserción de mensajes bajo ScriptLock, en vez de comparar timestamps que pueden coincidir; messageCount se reconstruye desde las filas persistidas.
 - JS/Tests/InboxConversations.mjs: regresión con tres mensajes de timestamp idéntico y reintentos de operaciones anteriores; verifica que último mensaje, preview y contador no retrocedan ni se dupliquen.
 - Validación CI pendiente al publicar. No se añadieron controles visibles, endpoints ni cambios de permisos; no se modificaron deployments ni datos externos.
+
+
+2026-11-15 — Corrección de referencia en el flujo de envío Inbox
+- JS/Services/InboxConversations.js: handleSendInboxMessage ahora pasa su arreglo local `messages` al helper de actualización del resumen; handleCreateInboxConversation conserva `messageRows`.
+- La primera ejecución CI encontró el ReferenceError antes de ejecutar la regresión nueva. Validación posterior pendiente.

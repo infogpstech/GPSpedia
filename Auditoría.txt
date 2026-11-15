@@ -667,3 +667,6 @@ Estado: CORRECCIÓN LOCAL PREPARADA; CI PENDIENTE.
 - Corrección: comparar la posición de los mensajes de esa conversación en el orden de inserción serializado por ScriptLock; reconstruir `messageCount` desde las filas reales y no incrementar durante un replay. Si el ID guardado del último mensaje no existe, reconstruir el resumen desde el mensaje final persistido.
 - Prueba añadida: tres mensajes con timestamp igual y replay de la creación inicial y de una respuesta intermedia; el último mensaje, preview y contador deben permanecer correctos.
 - No se añaden controles ni endpoints, no se cambian roles y no se modifican servicios externos.
+
+
+[2026-11-15] Adenda AUD-2026-11-15-30 — el primer CI detectó un error de integración de la corrección: la llamada de handleSendInboxMessage recibió el identificador de variable messageRows, que no existe en ese handler (usa messages). node --check pasó, pero InboxConversations falló con ReferenceError. Se corrigió el argumento en la llamada; la regresión específica aún no se ejecutó en un CI aprobado. Estado permanece CORRECCIÓN EN VALIDACIÓN.

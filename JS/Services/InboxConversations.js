@@ -352,7 +352,7 @@ function handleSendInboxMessage(payload) {
         const now = new Date().toISOString();
         const isNewMessage = !message;
         if (isNewMessage) { inboxAssertRateLimit_(messages,actor.id,new Date(now)); message = inboxAppendMessage_(sheets.messages,conversationId,actor,body,key,hash,now); messages.push(message.row); }
-        inboxUpdateConversationForMessage_(sheets.conversations,found,message.row,messageRows,now);
+        inboxUpdateConversationForMessage_(sheets.conversations,found,message.row,messages,now);
         inboxUpdateParticipantStates_(sheets.states,conversationId,participants,actor,message.row[0],messages,now);
         inboxAppendAudit_(sheets.audit,actor,"message",conversationId,message.row[0],"Mensaje agregado a la conversación.");
         return {status:"success",conversationId,messageId:message.row[0],idempotentReplay:!isNewMessage};

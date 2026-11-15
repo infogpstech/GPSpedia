@@ -775,3 +775,6 @@ Las fuentes de servicios JavaScript se centralizan bajo `JS/Services/`. La carpe
 ## Adenda GP-INBOX — consistencia del resumen ante reintentos idempotentes (2026-11-15)
 
 **GP-INBOX-04B: subcorrección interna; pendiente de CI.** Se detectó que el resumen de conversación comparaba timestamps con `>=`; si dos mensajes compartían el mismo milisegundo, el replay de una solicitud antigua podía retroceder el último mensaje y duplicar `messageCount`. La corrección usa el orden de inserción de los mensajes serializados por ScriptLock y calcula el contador desde las filas persistidas. Se añadió una regresión con timestamps iguales y replay de operaciones anteriores. No se añadieron controles visibles, endpoints ni permisos. Las funciones masivas y el canal de incidencias siguen diferidos por la restricción de interfaz vigente.
+
+
+**Adenda de validación — GP-INBOX idempotencia (2026-11-15):** el primer CI del commit `4f5a4dfe73333027d157fdd7505514ffc6ae7b11` encontró una referencia de variable incorrecta en `handleSendInboxMessage` (`messageRows` en lugar de `messages`). Sintaxis PASS; suite Inbox falló antes de ejecutar la nueva regresión. Se corrigió la llamada; la validación completa permanece pendiente.

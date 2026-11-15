@@ -341,3 +341,10 @@
 - Prueba añadida: tres mensajes con timestamp igual y reintentos de la creación inicial y de una respuesta intermedia; verifica que el último ID, preview y contador permanezcan estables.
 - No se modifican roles, endpoints, controles visibles, deployments ni datos externos.
 - Próximo paso: revisar el diff, ejecutar CI Node.js 22 y Pages, corregir fallos locales y verificar el HEAD remoto y la rama base.
+
+
+## Corrección de llamada en GP-INBOX idempotencia (2026-11-15)
+
+- Commit inicial de implementación: `4f5a4dfe73333027d157fdd7505514ffc6ae7b11`.
+- CI Node.js 22 run `43672294645`: sintaxis PASS; la suite integral detectó `ReferenceError: messageRows is not defined` en `handleSendInboxMessage`, porque ese flujo denomina `messages` al arreglo de filas. El resto de suites ejecutadas antes del fallo pasó; la regresión nueva aún no llegó a ejecutarse.
+- Corrección preparada: la llamada de `handleSendInboxMessage` pasa su arreglo `messages`; la llamada de creación conserva `messageRows`. Se repetirá CI y se actualizará este registro con el resultado real.
