@@ -11,8 +11,8 @@ const auth = read('JS/Frontend/auth.js');
 const main = read('JS/Frontend/main.js');
 const sw = read('service-worker.js');
 const css = read('style.css');
-const serviceAuth = read('Services/Auth.js');
-const coordinator = read('Services/Coordinator.js');
+const serviceAuth = read('JS/Services/Auth.js');
+const coordinator = read('JS/Services/Coordinator.js');
 let passed = 0;
 function test(name, callback) {
     callback();

@@ -42,6 +42,6 @@ jobs:
           node --check JS/Frontend/offline.js
           node --check JS/Frontend/clientInteractionPolicy.js
           node --check service-worker.js
-          node --check Services/admin.js
+          node --check JS/Services/admin.js
       - name: Run isolated service regression suites
         run: node --experimental-default-type=module JS/Tests/RunServiceTests.mjs

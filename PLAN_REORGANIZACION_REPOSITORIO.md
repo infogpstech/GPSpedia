@@ -1,6 +1,6 @@
 # Plan de reorganización estructural del repositorio GPSpedia
 
-**Estado:** COMPLETADO — estructura, rutas operativas y documentación Beta alineadas; regresión automatizada aprobada.  
+**Estado al inicio de esta revisión:** EN PROGRESO — se detectó que la centralización de fuentes Apps Script no estaba reflejada en el árbol real; se corrigen rutas y ubicación, con CI pendiente.  
 **Repositorio:** `infogpstech/GPSpedia`  
 **Rama autorizada:** `GPSpedia2.2.5_work`  
 **Rama base protegida:** `GPSpedia2.2.5`  
@@ -204,3 +204,10 @@ La reorganización podrá marcarse como **COMPLETADA** o **COMPLETADA CON VALIDA
 
 - Commit de reorganización con regresión aprobada: `8748d5a39ad87a3e63d6e4c3d334fe03f454420b`.
 - Verificación posterior de documentación y workflow: HEAD `1e35ca9b94c03a548341096b09d085a5a2258c83`; ejecución `43522115876` SUCCESS, con verificación de rama, sintaxis y suite automatizada.
+
+
+## 13. Adenda de reconciliación estructural — 2026-11-15
+
+La verificación del árbol real en `GPSpedia2.2.5_work` detectó que el registro de ejecución anterior afirmaba que las fuentes Apps Script ya estaban en `JS/Services/`, pero los diez archivos JavaScript seguían ubicados en `Services/`. También persistían referencias activas a ambas rutas en el runner, suites Node.js, workflow y guía de coordinación. El registro anterior se conserva como evidencia histórica, pero no describe el árbol vigente en ese momento.
+
+En esta iteración se preparó la centralización de los diez archivos fuente en `JS/Services/` y la actualización de los consumidores detectados. `service-worker.js` permanece en la raíz por su alcance PWA; `Services/` conserva únicamente documentación y auxiliares no JavaScript. La lógica de negocio, contratos, endpoints, deployments, hojas y datos no forman parte del cambio. El cierre queda sujeto al resultado de GitHub Actions y a la verificación posterior del árbol y de las referencias.

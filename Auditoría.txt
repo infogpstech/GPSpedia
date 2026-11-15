@@ -625,3 +625,12 @@ Estado: CORREGIDO EN RAMA.
 - Corrección: se retira freezeCortesIds de catalogWriters. allocateVehicleId tampoco publica evento por ser solo reserva del contador.
 - Los restablecimientos de base, reorganización y migración/rollback de identificadores conservan reset por alcance multi-fila/colección.
 - CI Node.js 22 run 43660486963: 99 suites / 1,497 pruebas / 0 fallos; GitHub Pages SUCCESS.
+
+
+[2026-11-15] Hallazgo de consistencia estructural — rutas de servicios JavaScript
+
+- **Ubicación/evidencia:** `PLAN_REORGANIZACION_REPOSITORIO.md` (registro de ejecución, sección 12) declaraba que las fuentes Apps Script estaban en `JS/Services/`, pero el árbol de `GPSpedia2.2.5_work` en HEAD `05f4674067b36be995599f4b9b15ae2dad1decaa` conservaba diez `.js` en `Services/`. `JS/Tests/RunServiceTests.mjs`, suites `.mjs` y `.github/workflows/service-tests.yml` todavía consumían la ruta anterior; README y `Services/COORDINATOR_SETUP.md` presentaban rutas contradictorias.
+- **Impacto:** la estructura real no coincidía con la documentación ni con el objetivo de centralización; mover fuentes sin actualizar todos los consumidores habría roto el runner y las validaciones.
+- **Severidad:** baja (consistencia/mantenibilidad; no se observó cambio de comportamiento productivo).
+- **Corrección preparada:** trasladar las diez fuentes a `JS/Services/` sin alterar su contenido y actualizar las referencias activas identificadas. `service-worker.js` se mantiene en raíz y `Services/` conserva documentos/auxiliares no-JS.
+- **Cierre:** pendiente de publicación y aprobación de CI en el commit de esta iteración.

@@ -6,7 +6,7 @@ import { dirname, resolve } from 'node:path';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const client = readFileSync(resolve(root, 'JS/Frontend/auth.js'), 'utf8');
 const api = readFileSync(resolve(root, 'JS/Frontend/api-config.js'), 'utf8');
-const service = readFileSync(resolve(root, 'Services/Auth.js'), 'utf8');
+const service = readFileSync(resolve(root, 'JS/Services/Auth.js'), 'utf8');
 
 function extract(source, start, end) {
     const i = source.indexOf(start);

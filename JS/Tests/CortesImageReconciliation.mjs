@@ -3,7 +3,7 @@ import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 const root=resolve(dirname(fileURLToPath(import.meta.url)),"../..");
-const admin=fs.readFileSync(resolve(root,"Services/admin.js"),"utf8");
+const admin=fs.readFileSync(resolve(root,"JS/Services/admin.js"),"utf8");
 const start=admin.indexOf("function buildCortesImageReconciliationPlan_");
 const end=admin.indexOf("\n}\n",start)+2;
 assert.ok(start>=0&&end>start,"planner de conciliación ausente");

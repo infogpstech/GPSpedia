@@ -4,12 +4,12 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 const root=resolve(dirname(fileURLToPath(import.meta.url)),"../..");
 const ui=readFileSync(resolve(root,"JS/Frontend/ui.js"),"utf8");
-const admin=readFileSync(resolve(root,"Services/admin.js"),"utf8");
-const auth=readFileSync(resolve(root,"Services/Auth.js"),"utf8");
-const users=readFileSync(resolve(root,"Services/users.js"),"utf8");
-const write=readFileSync(resolve(root,"Services/write.js"),"utf8");
-const feedback=readFileSync(resolve(root,"Services/feedback.js"),"utf8");
-const inbox=readFileSync(resolve(root,"Services/InboxConversations.js"),"utf8");
+const admin=readFileSync(resolve(root,"JS/Services/admin.js"),"utf8");
+const auth=readFileSync(resolve(root,"JS/Services/Auth.js"),"utf8");
+const users=readFileSync(resolve(root,"JS/Services/users.js"),"utf8");
+const write=readFileSync(resolve(root,"JS/Services/write.js"),"utf8");
+const feedback=readFileSync(resolve(root,"JS/Services/feedback.js"),"utf8");
+const inbox=readFileSync(resolve(root,"JS/Services/InboxConversations.js"),"utf8");
 const apiConfig=readFileSync(resolve(root,"JS/Frontend/api-config.js"),"utf8");
 const cases=[];
 function check(name,fn){cases.push({name,fn});}

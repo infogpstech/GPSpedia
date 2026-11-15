@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 const root=resolve(dirname(fileURLToPath(import.meta.url)),"../..");
 const read=path=>fs.readFileSync(resolve(root,path),"utf8");
-const ui=read("JS/Frontend/ui.js"),html=read("index.html"),css=read("style.css"),admin=read("Services/admin.js");
+const ui=read("JS/Frontend/ui.js"),html=read("index.html"),css=read("style.css"),admin=read("JS/Services/admin.js");
 const helperStart=ui.indexOf("function getReplacedImageCapabilities_(");
 const helperEnd=ui.indexOf("\n}\n",helperStart)+2;
 assert.ok(helperStart>=0&&helperEnd>helperStart,"helper de capacidades ausente");

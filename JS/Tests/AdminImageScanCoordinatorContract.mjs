@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-const admin = readFileSync(new URL("../../Services/admin.js", import.meta.url), "utf8");
-const coordinator = readFileSync(new URL("../../Services/Coordinator.js", import.meta.url), "utf8");
+const admin = readFileSync(new URL("../Services/admin.js", import.meta.url), "utf8");
+const coordinator = readFileSync(new URL("../Services/Coordinator.js", import.meta.url), "utf8");
 
 function extractFunction(source, name) {
     const match = source.match(new RegExp("function " + name + "\\([^\\n]*\\) \\{[\\s\\S]*?\\n\\}"));

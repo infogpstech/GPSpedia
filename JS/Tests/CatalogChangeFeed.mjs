@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 const read = path => readFileSync(new URL(path, import.meta.url), "utf8");
-const coordinatorSource = read("../../Services/Coordinator.js");
-const feedbackSource = read("../../Services/feedback.js");
-const writeSource = read("../../Services/write.js");
-const adminSource = read("../../Services/admin.js");
+const coordinatorSource = read("../Services/Coordinator.js");
+const feedbackSource = read("../Services/feedback.js");
+const writeSource = read("../Services/write.js");
+const adminSource = read("../Services/admin.js");
 const apiSource = read("../Frontend/api-config.js");
 let passed = 0;
 function test(name, fn) { fn(); passed++; console.log("PASS " + name); }

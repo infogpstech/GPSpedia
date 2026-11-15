@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 const root=resolve(dirname(fileURLToPath(import.meta.url)),"../..");
-const admin=readFileSync(resolve(root,"Services/admin.js"),"utf8");
+const admin=readFileSync(resolve(root,"JS/Services/admin.js"),"utf8");
 function extract(name){
  const start=admin.indexOf("function "+name+"(");
  assert.ok(start>=0,"No se encontró "+name);

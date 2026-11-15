@@ -2,9 +2,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 
-const admin = readFileSync(new URL("../../Services/admin.js", import.meta.url), "utf8");
+const admin = readFileSync(new URL("../Services/admin.js", import.meta.url), "utf8");
 const ui = readFileSync(new URL("../Frontend/ui.js", import.meta.url), "utf8");
-const coordinator = readFileSync(new URL("../../Services/Coordinator.js", import.meta.url), "utf8");
+const coordinator = readFileSync(new URL("../Services/Coordinator.js", import.meta.url), "utf8");
 const html = readFileSync(new URL("../../index.html", import.meta.url), "utf8");
 const offline = readFileSync(new URL("../Frontend/offline.js", import.meta.url), "utf8");
 let passed = 0;
@@ -432,7 +432,7 @@ check("La acción de migración coordina el lock, ejecuta el esquema y devuelve 
 });
 
 check("La migración explícita queda protegida por lease y despachada por ADMIN",()=>{
-    const source=readFileSync(new URL("../../Services/admin.js",import.meta.url),"utf8");
+    const source=readFileSync(new URL("../Services/admin.js",import.meta.url),"utf8");
     const routerStart = source.indexOf("function isSharedMutationAction_(action) {");
     const routerEnd = source.indexOf(String.fromCharCode(10) + "}", routerStart);
     const mutationRouter = source.slice(routerStart, routerEnd);

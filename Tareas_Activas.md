@@ -755,3 +755,8 @@ Este requerimiento complementa GP-PWA-02: sincronizar el catálogo en vivo no de
 
 
 - GP-CAT-01T: IMPLEMENTACIÓN LOCAL Y PREPARACIÓN COMPLETADAS CON VALIDACIÓN DIFERIDA A BETA. La rama actual tiene CI integral aprobado (99 suites / 1,497 pruebas / 0 fallos), Pages PASS y se añadió AUG-157 con protocolo seguro para caché, feed sin novedades, productores, propagación multiusuario/multi-pestaña, paginación, cursor, reconexión y seguridad. La ejecución real sigue pendiente de deployments Apps Script/Coordinator, Spreadsheet/Drive y cuentas/dispositivos Beta compatibles; no se simula ni se declara PASS.
+
+
+## Adenda de rutas tras centralización JavaScript — 2026-11-15
+
+Las fuentes de servicios JavaScript se centralizan bajo `JS/Services/`. La carpeta `Services/` conserva documentación y auxiliares no JavaScript. Las referencias a `Services/*.js` en entradas históricas describen la ubicación anterior y no deben interpretarse como rutas vigentes; en GP-INBOX-04, la ruta actual de la implementación es `JS/Services/InboxConversations.js`. `service-worker.js` permanece en la raíz por su alcance PWA.
