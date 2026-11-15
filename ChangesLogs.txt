@@ -557,3 +557,11 @@
 - CI Node.js 22 run 43763589080, HEAD 4dd79e767bb0aa024e897b572e1844a640cdaf11: SUCCESS; 102 suites, 1,558 pruebas, 0 fallos. PasswordHashMigration 18/18 PASS.
 - El primer intento de CI detectó desincronización del espejo AUTH; se sincronizó y se repitió la suite completa con resultado satisfactorio.
 - No se desplegó Apps Script ni se modificaron contraseñas, hojas, propiedades o datos productivos. Runtime Apps Script y latencia del KDF pendientes de Beta.
+
+
+2026-11-15 — Correcciones PWA/IndexedDB y diagnóstico FEEDBACK/Coordinator
+- index.html: añadido mobile-web-app-capable=yes, conservando la etiqueta Apple.
+- JS/Frontend/offline.js: backoff compartido de 15 s tras fallo/bloqueo IndexedDB; limpieza y lectura de miniaturas silenciosa cuando el almacén opcional no está disponible; getThumbnail devuelve null sin bloquear la imagen remota ni cambiar el esquema.
+- JS/Tests/IndexedDBTransactions.js: regresiones para backoff y compresión concurrente con IndexedDB no disponible; SessionStartupNavigation comprueba metadatos PWA; suite integrada al runner.
+- El error Coordinator se origina en authenticate_ de Coordinator.js: servicio FEEDBACK no autorizado o secreto FEEDBACK no coincidente. Requiere cotejo privado de ScriptProperties/deployment; no se debilitó autenticación ni se expusieron secretos.
+- El frontend ya cae a snapshot completo cuando falla el cursor/feed. Sin despliegues Apps Script ni cambios en propiedades, endpoints, hojas o datos productivos.

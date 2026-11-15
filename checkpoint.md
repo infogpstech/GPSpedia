@@ -1,3 +1,25 @@
+# Continuidad — errores PWA, Coordinator e IndexedDB (2026-11-15)
+
+**Rama:** `GPSpedia2.2.5_work`  
+**HEAD de código:** `8d71b310a389a18fb10ec87ae2c4f71d5a033fcd`  
+**Rama base:** `GPSpedia2.2.5` — `d9acc68d889985c2e2f42fe3a02e502efc86ead1` (sin cambios).
+
+## Resultado de esta iteración
+- Se añadió `mobile-web-app-capable=yes`, conservando la etiqueta Apple para Safari.
+- IndexedDB: backoff compartido de 15 s tras fallo/bloqueo; limpieza de miniaturas silenciosa; compresión y lectura de miniaturas se omiten si IndexedDB no está disponible. No se modifica el esquema ni se bloquea la imagen remota.
+- FEEDBACK/Coordinator: diagnóstico confirmado en `Coordinator.js/authenticate_`. Se compara el servicio y el secreto FEEDBACK del proyecto cliente contra `GPSpedia_COORDINATOR_SECRET_FEEDBACK` del coordinador. `coordinatorConfigured` no verifica igualdad. Requiere cotejo privado de ScriptProperties y deployment FEEDBACK/Coordinator en Beta; no se debilita autenticación.
+- El arranque captura el fallo del cursor/feed y cae a snapshot completo; puede cargar catálogo sin deltas. La sincronización incremental remota no se considera reparada hasta validar la configuración.
+
+## Validación
+- Regresiones añadidas en `JS/Tests/IndexedDBTransactions.js` para backoff y compresión concurrente; `SessionStartupNavigation.mjs` comprueba metadatos PWA. Suite IndexedDB integrada en `RunServiceTests.mjs`.
+- CI pendiente de verificar tras el commit.
+- Sin despliegues Apps Script, cambios en ScriptProperties/endpoints/secretos, ni modificaciones de Spreadsheet/Drive/datos productivos.
+
+## Siguiente acción
+Verificar CI y corregir fallos locales. En Beta comparar en privado `GPSpedia_COORDINATOR_URL` y `GPSpedia_COORDINATOR_SECRET` de FEEDBACK con el deployment y `GPSpedia_COORDINATOR_SECRET_FEEDBACK` del coordinador del mismo entorno. No publicar los valores.
+
+---
+
 # Continuidad — corrección HMAC-SHA256 de PBKDF2 (2026-11-15)
 
 **Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**

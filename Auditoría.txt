@@ -786,3 +786,16 @@ Severidad: Alta / autenticación — Estado: CORREGIDO Y VALIDADO LOCALMENTE; RU
 - Validación: CI Node.js 22 run 43763589080 SUCCESS; 102 suites / 1,558 pruebas / 0 fallos; PasswordHashMigration 18/18 PASS, incluido vector PBKDF2 de Node.js y verificación cruzada AUTH/USERS.
 - La primera ejecución CI detectó un espejo AUTH desactualizado; se sincronizó y la repetición integral aprobó. No se desplegó Apps Script ni se tocaron credenciales/datos reales.
 - Pendiente Beta: ejecutar login/creación de usuario contra deployment Apps Script autorizado y medir latencia real; no inferir esos resultados de CI local.
+
+
+AUD-2026-11-15-41 — FALLA DE AUTORIZACIÓN DEL COORDINADOR DESDE FEEDBACK
+Severidad: Media / sincronización incremental — Estado: DIAGNÓSTICO LOCAL COMPLETADO; CONFIGURACIÓN REMOTA PENDIENTE DE BETA.
+- Evidencia: getCatalogChanges → getSharedCatalogChanges_ → SharedMutationClient.send_; Coordinator.js/authenticate_ rechaza el servicio o secreto con «Servicio no autorizado para el coordinador compartido».
+- FEEDBACK envía service=FEEDBACK y GPSpedia_COORDINATOR_SECRET; el coordinador compara con GPSpedia_COORDINATOR_SECRET_FEEDBACK. coordinatorConfigured solo valida presencia/formato local, no igualdad remota.
+- Impacto: no se obtiene cursor/delta inicial. El frontend captura el fallo y solicita snapshot completo; puede cargar catálogo sin sincronización incremental.
+- No se modificaron endpoints, secretos, deployments ni propiedades. Acción Beta: cotejar URL/secret FEEDBACK y deployment del mismo entorno sin exponer valores.
+
+AUD-2026-11-15-42 — TIMEOUT/REINTENTOS DE INDEXEDDB EN CACHÉ DE MINIATURAS
+Severidad: Baja / almacenamiento local opcional — Estado: CORREGIDO LOCALMENTE; CI PENDIENTE.
+- Evidencia: cada compresión invoca purgeExpiredThumbnailEntries; performOp registraba como error de base principal el fallo del almacén opcional thumbnails. Muchas miniaturas en paralelo repetían la misma apertura fallida.
+- Corrección: backoff compartido de 15 s tras error/bloqueo; limpieza opcional silenciosa; compresión omitida durante backoff; getThumbnail devuelve null cuando IndexedDB no está disponible. La imagen remota sigue disponible. Sin cambios de esquema ni borrado de datos.

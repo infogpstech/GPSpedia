@@ -92,3 +92,15 @@ El token de lease solo se transmite entre servicios Apps Script. No debe exponer
 ## Límites de esta entrega
 
 No se modifica `JS/Frontend/api-config.js`, no se cambian endpoints de servicios existentes y no se realizan deployments ni pruebas contra Spreadsheet/Drive productivos. La activación requiere desplegar/configurar primero el coordinador de cada entorno y después actualizar los proyectos de servicio. Las pruebas reales de concurrencia entre proyectos y la validación de deployments quedan diferidas a Beta.
+
+
+## Diagnóstico: «Servicio no autorizado para el coordinador compartido» en FEEDBACK
+
+Este mensaje se genera en el coordinador cuando el servicio presentado no está autorizado o el secreto recibido no coincide. Para el feed incremental, FEEDBACK debe usar el mismo entorno en ambos extremos:
+
+1. En ScriptProperties del proyecto FEEDBACK, comprobar que `GPSpedia_COORDINATOR_URL` apunta al deployment `/exec` del coordinador de ese entorno.
+2. Comparar de forma privada `GPSpedia_COORDINATOR_SECRET` de FEEDBACK con `GPSpedia_COORDINATOR_SECRET_FEEDBACK` del proyecto coordinador. Deben coincidir exactamente y tener al menos 32 caracteres.
+3. Confirmar que el deployment FEEDBACK incluye `SharedMutationClient.js` y no apunta a un coordinador Beta/producción distinto.
+4. No imprimir, copiar a logs ni registrar los secretos. `coordinatorConfigured` solo valida presencia/formato local; no demuestra que el secreto coincida con el coordinador remoto.
+
+La lectura del feed no puede omitir la autenticación del coordinador ni sustituirla por un secreto del navegador. Corregir los valores únicamente en los proyectos Apps Script del entorno autorizado; no cambiar endpoints ni secretos productivos desde el frontend.

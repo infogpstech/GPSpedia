@@ -1041,3 +1041,12 @@ El trabajo local GP-INBOX-04B/04C/04D queda cubierto en backend y contratos. No 
 - Sincronizadas las copias de prueba AUTH/USERS y reforzado `PasswordHashMigration.mjs` para que el HMAC del harness rechace arreglos JS sin convertir.
 - CI Node.js 22 run `43763589080`: **102 suites / 1,558 pruebas / 0 fallos**; `PasswordHashMigration` 18/18 PASS.
 - Pendiente únicamente la validación del runtime y latencia en deployment Apps Script/Beta. No se desplegó ni se alteraron datos reales.
+
+
+## Incidencias de consola reportadas (2026-11-15)
+
+| Incidencia | Diagnóstico / acción | Estado |
+|---|---|---|
+| `apple-mobile-web-app-capable` deprecated | Añadido `mobile-web-app-capable=yes`; se conserva el meta Apple para Safari. | CORRECCIÓN LOCAL; CI PENDIENTE |
+| `getCatalogChanges`: servicio no autorizado por Coordinator | FEEDBACK o su secreto no coincide con la configuración del coordinador. El frontend conserva fallback a snapshot completo; verificar ScriptProperties y deployment en Beta. No exponer secretos. | DIAGNÓSTICO LOCAL COMPLETADO; CONFIGURACIÓN BETA PENDIENTE |
+| IndexedDB initialization timed out en miniaturas | Backoff compartido, limpieza opcional silenciosa y caché omitida durante indisponibilidad; imagen remota no se bloquea. | CORRECCIÓN LOCAL; CI PENDIENTE |
