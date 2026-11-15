@@ -4208,9 +4208,18 @@ const IDENTIFIER_SEQUENCE_CONFIG_HEADERS_ = ["sheet","column","header","prefix",
 
 function parseIdentifierSequenceFormula_(formula) {
     const raw = String(formula || "").trim();
+    const numeric = /^=\s*(?:FILA|ROW)\s*\(\s*\)\s*-\s*\d+\s*$/i.exec(raw);
+    if (numeric) return { prefix: "", padding: 0, formula: raw, numericOnly: true };
     const match = /^=\s*"([^"]{1,40})"\s*&\s*(?:TEXTO|TEXT)\s*\(\s*(?:FILA|ROW)\s*\(\s*\)\s*-\s*\d+\s*,\s*"([0]+)"\s*\)\s*$/i.exec(raw);
     if (!match) return null;
-    return { prefix: match[1], padding: match[2].length, formula: raw };
+    return { prefix: match[1], padding: match[2].length, formula: raw, numericOnly: false };
+}
+
+function isIdentifierFormulaPatternSupported_(sheetName, pattern) {
+    if (!pattern) return false;
+    if (sheetName === "Users") return pattern.numericOnly !== true;
+    if (sheetName === "Cortes" || sheetName === "LogosMarca") return pattern.numericOnly === true;
+    return ["Feedbacks", "ActividadUsuario", "Contactanos"].includes(sheetName) && pattern.numericOnly !== true;
 }
 
 function copyAdminRowPresentationOnly_(sheet, sourceRow, targetRow, lastColumn) {
@@ -4297,7 +4306,7 @@ function persistIdentifierSequenceConfigs_(ss, entries) {
     const supported = new Map();
     (entries || []).forEach(entry => {
         const pattern = entry.pattern || parseIdentifierSequenceFormula_(entry.oldFormula);
-        if (!pattern) return;
+        if (!pattern || pattern.numericOnly) return;
         const key = entry.sheet + ":" + entry.column;
         const existing = supported.get(key);
         if (existing && (existing.prefix !== pattern.prefix || existing.padding !== pattern.padding || existing.formula !== pattern.formula)) {
@@ -4337,7 +4346,11 @@ function persistIdentifierSequenceConfigs_(ss, entries) {
     });
     if (additions.length) sheet.getRange(sheet.getLastRow() + 1, 1, additions.length, IDENTIFIER_SEQUENCE_CONFIG_HEADERS_.length).setValues(additions);
     SpreadsheetApp.flush();
-    return { configured: supported.size, unsupported: unsupportedCount };
+    return {
+        configured: supported.size,
+        numericOnly: (entries || []).filter(entry => entry.pattern && entry.pattern.numericOnly).length,
+        unsupported: unsupportedCount
+    };
 }
 
 const IDENTIFIER_FORMULA_FREEZE_MANIFEST_ = "__IdentifierFormulaFreezeManifest__";
@@ -4371,7 +4384,7 @@ function buildIdentifierFormulaFreezePlan_(ss, migrationId) {
                 const id = String(value === null || value === undefined ? "" : value).trim();
                 if (!id) { skipped.emptyResult++; continue; }
                 const pattern = parseIdentifierSequenceFormula_(formula);
-                if (!pattern) { skipped.unsupportedPattern++; continue; }
+                if (!isIdentifierFormulaPatternSupported_(sheet.getName(), pattern)) { skipped.unsupportedPattern++; continue; }
                 if ((counts.get(id.toLowerCase()) || 0) !== 1) { skipped.duplicate++; continue; }
                 const rowNumber = rowIndex + 1;
                 const rowData = { values: row.slice(), formulas: (formulas[rowIndex] || []).slice() };
