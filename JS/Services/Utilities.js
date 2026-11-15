@@ -18,6 +18,12 @@ function doPost(e){
  return ContentService.createTextOutput(JSON.stringify(response)).setMimeType(ContentService.MimeType.JSON);
 }
 function assertUtilitiesDeveloperSession_(payload,ss){
+ const trusted=payload&&payload.__sharedSessionActor;
+ if(trusted&&typeof trusted.userId==="string"&&typeof trusted.role==="string"&&Number.isSafeInteger(trusted.epoch)&&trusted.epoch>0){
+  const userId=trusted.userId.trim(),requested=String(payload.userId||userId).trim();
+  if(!userId||requested!==userId||trusted.role.trim().toLowerCase()!=="desarrollador")throw new Error("Acceso denegado: acción reservada a Desarrollador.");
+  return{userId,role:"Desarrollador",epoch:trusted.epoch};
+ }
  const userId=String(payload&&payload.userId||"").trim(),token=String(payload&&payload.sessionToken||"").trim();
  if(!userId||!token)throw new Error("Acceso denegado: se requiere una sesión activa de Desarrollador.");
  const sh=ss.getSheetByName("ActiveSessions"),uh=ss.getSheetByName("Users");
@@ -45,7 +51,11 @@ function getUtilitiesSessionExpiration_(row,now){
  return{expired:false};
 }
 function migrateTimestamps(payload){
- return withSharedMutationLease_("UTILITIES","migrateTimestamps",function(){return migrateTimestampsSafe_(payload);});
+ const session={userId:payload&&payload.userId,sessionToken:payload&&payload.sessionToken};
+ return withSharedMutationLease_("UTILITIES","migrateTimestamps",function(token,actor){
+  const trustedPayload=Object.assign({},payload||{},{__sharedSessionActor:actor});
+  return migrateTimestampsSafe_(trustedPayload);
+ },{session});
 }
 function migrateTimestampsSafe_(payload){
  const lock=LockService.getScriptLock();let acquired=false;
