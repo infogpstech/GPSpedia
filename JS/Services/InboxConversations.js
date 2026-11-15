@@ -476,8 +476,11 @@ function handleGetInboxMessages(payload) {
         if (!convSheet || !messageSheet) throw new Error("No se encontró la conversación.");
         const found = inboxFindConversation_(inboxConversationRows_(convSheet,INBOX_CONVERSATION_HEADERS_.length),conversationId);
         inboxAssertParticipant_(found.row,actor.id);
-        const messages = inboxConversationRows_(messageSheet,INBOX_MESSAGE_HEADERS_.length).filter(row => String(row[1]) === conversationId)
-            .sort((a,b) => new Date(a[2]).getTime() - new Date(b[2]).getTime());
+        const messages = inboxConversationRows_(messageSheet,INBOX_MESSAGE_HEADERS_.length)
+            .filter(row => String(row[1]) === conversationId);
+        // ScriptLock serializa las escrituras y la hoja conserva el orden de inserción.
+        // Ese orden es la secuencia canónica: no depende de timestamps que pueden
+        // coincidir o retroceder si el reloj del entorno se ajusta.
         // Cursor anclado al mensaje más antiguo de la página entregada. Los
         // mensajes nuevos quedan fuera de las páginas históricas ya iniciadas.
         const anchorIndex = anchorMessageId

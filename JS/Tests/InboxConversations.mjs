@@ -475,4 +475,40 @@ run("La paginación de conversaciones mantiene el desempate estable por ID con t
     assert.equal(secondPage.data[0].conversationId,[one.conversationId,two.conversationId].sort()[0]);
     assert.notEqual(firstPage.data[0].conversationId,secondPage.data[0].conversationId);
 });
+run("El historial respeta el orden de inserción cuando las marcas de tiempo retroceden", () => {
+    const created = api.handleCreateInboxConversation({
+        ...actor("U1","token-a"),recipientId:"U3",subject:"Orden canónico del historial",category:"general",
+        body:"Primer mensaje.",idempotencyKey:"history-order-create-01"
+    });
+    const second = api.handleSendInboxMessage({
+        ...actor("U3","token-c"),conversationId:created.conversationId,body:"Segundo mensaje.",
+        idempotencyKey:"history-order-reply-01"
+    });
+    const third = api.handleSendInboxMessage({
+        ...actor("U1","token-a"),conversationId:created.conversationId,body:"Tercer mensaje.",
+        idempotencyKey:"history-order-reply-02"
+    });
+    const rows = spreadsheet.getSheetByName("InboxMessages").rows.filter(row => row[1] === created.conversationId);
+    rows[0][2] = "2099-01-03T00:00:00.000Z";
+    rows[1][2] = "2099-01-02T00:00:00.000Z";
+    rows[2][2] = "2099-01-01T00:00:00.000Z";
+
+    const newest = api.handleGetInboxMessages({
+        ...actor("U1","token-a"),conversationId:created.conversationId,pageSize:1,cursor:"0"
+    });
+    assert.deepEqual(newest.data.map(message => message.messageId),[third.messageId]);
+    const middle = api.handleGetInboxMessages({
+        ...actor("U1","token-a"),conversationId:created.conversationId,pageSize:1,cursor:newest.nextCursor
+    });
+    assert.deepEqual(middle.data.map(message => message.messageId),[second.messageId]);
+    const oldest = api.handleGetInboxMessages({
+        ...actor("U1","token-a"),conversationId:created.conversationId,pageSize:1,cursor:middle.nextCursor
+    });
+    assert.deepEqual(oldest.data.map(message => message.messageId),[created.messageId]);
+    assert.equal(oldest.nextCursor,null);
+    const read = api.handleMarkInboxRead({
+        ...actor("U1","token-a"),conversationId:created.conversationId,throughMessageId:third.messageId
+    });
+    assert.equal(read.unreadCount,0);
+});
 console.log("InboxConversations: " + passed + "/" + passed + " PASS");
