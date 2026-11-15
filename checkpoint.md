@@ -1762,3 +1762,17 @@ No se desplegaron servicios Apps Script, no se modificaron ScriptProperties, Spr
 - GitHub Actions run `43659982658`: SUCCESS; Node.js 22; sintaxis PASS; **99 suites / 1,495 pruebas / 0 fallos**.
 - GitHub Pages run `43659982190` pendiente de confirmar al momento de este checkpoint.
 - Siguiente: GP-CAT-01R — revisar `normalizeImages` y publicar deltas por cada vehículo con referencias efectivamente reescritas; conservar reset si el lote no puede enumerarse íntegramente.
+
+
+## Continuidad — GP-CAT-01R: deltas para lotes de normalización de imágenes (2026-11-14)
+
+**Commit de implementación:** `3f629c8133edcb7f09ff720a745be534cc8ea4b0`.
+**Commit de salvaguarda de IDs:** `504599b096ad7029563dd96f4071b6e5b93fd000`.
+
+- `handleNormalizeImages` solo reescribe una celda de Cortes cuando debe separar una referencia de imagen compartida creando una copia independiente. Ahora registra el ID del vehículo inmediatamente después de cada `setValue`, deduplica por fila y devuelve `changedVehicleIds`.
+- Si la fila modificada no tiene ID, marca `changedRowsWithoutId` y el publicador emite reset. Si la acción devuelve warning/error, el publicador también emite reset para cubrir escrituras parciales. Si el lote solo renombra/mueve archivos conservando IDs y celdas, no publica evento.
+- En lotes exitosos, se construyen todos los snapshots antes del primer evento y se publica un upsert por vehículo con el helper ADMIN agrupado.
+- `CatalogChangeFeed`: 25/25 PASS; `CatalogSnapshotSync`: 29/29 PASS; `PysDataCache`: 18/18 PASS.
+- GitHub Actions run `43660231720`: SUCCESS; Node.js 22; sintaxis PASS; **99 suites / 1,496 pruebas / 0 fallos**.
+- GitHub Pages run `43660231534` pendiente de confirmar al momento de este checkpoint.
+- Siguiente: GP-CAT-01S — auditar `freezeCortesIds`, `restoreDatabase`, `reorganizeDatabase`, `migrateIdentifiers` y `rollbackIdentifiers`; mantener reset solo donde el alcance multi-fila/IDs lo justifique.

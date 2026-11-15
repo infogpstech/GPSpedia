@@ -359,3 +359,11 @@
 - Si un snapshot o publicación falla, se emite reset de recuperación para evitar dejar un lote parcialmente sincronizado.
 - CatalogChangeFeed 24/24, CatalogSnapshotSync 29/29 y PysDataCache 18/18 PASS.
 - CI Node.js 22 run 43659982658: SUCCESS; 99 suites / 1,495 pruebas / 0 fallos.
+
+
+2026-11-14 — GP-CAT: DELTAS PARA LOTES DE normalizeImages
+- normalizeImages registra vehicleId cuando duplica una imagen compartida y reescribe la celda de Cortes; publica upsert agrupado por vehículo.
+- Si falta ID en una fila modificada o el lote devuelve warning/error, se publica reset de recuperación. Los renombrados/movimientos de archivos que conservan ID y celdas no generan eventos.
+- Todos los snapshots se preparan antes de publicar; la salvaguarda de error/ID evita perder cambios parciales.
+- CatalogChangeFeed 25/25, CatalogSnapshotSync 29/29 y PysDataCache 18/18 PASS.
+- CI Node.js 22 run 43660231720: SUCCESS; 99 suites / 1,496 pruebas / 0 fallos.

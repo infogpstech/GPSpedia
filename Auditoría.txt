@@ -606,3 +606,12 @@ Estado: CORREGIDO EN RAMA; VALIDACIÓN BETA PENDIENTE.
 - La acción sigue limitada a 10 propuestas por ejecución y verifica el read-back antes de informar éxito.
 - CI Node.js 22 run 43659982658: 99 suites / 1,495 pruebas / 0 fallos.
 - Pendiente: probar aplicación de varios campos del mismo vehículo y de varios vehículos en Beta aislada.
+
+
+AUD-2026-11-14-27 — RESET GLOBAL EN LOTES normalizeImages
+Severidad: Media (un lote podía modificar pocas filas y reconstruir todo el catálogo).
+Estado: CORREGIDO EN RAMA; VALIDACIÓN BETA PENDIENTE.
+- Hallazgo: normalizeImages puede duplicar archivos compartidos y reescribir celdas de imagen de una o varias filas Cortes; los cambios de nombre/carpeta no modifican el modelo.
+- Corrección: captura vehicleId solo después de setValue; deduplica IDs y publica upsert por vehículo tras verificar snapshots. Si una fila modificada carece de ID, el resultado contiene warning/error o falla un snapshot, se usa reset. Los lotes sin cambios de celdas no publican eventos.
+- CI Node.js 22 run 43660231720: 99 suites / 1,496 pruebas / 0 fallos.
+- Pendiente: validar duplicación de referencias compartidas y sincronización entre pestañas/dispositivos en Beta.
