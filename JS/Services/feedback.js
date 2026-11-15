@@ -315,6 +315,96 @@ const COLS_ACTIVIDAD_USUARIO = {
     detalle: 7
 };
 
+const IDENTIFIER_SEQUENCE_CONFIG_SHEET = "__IdentifierSequenceConfig__";
+const IDENTIFIER_SEQUENCE_CONFIG_HEADERS = ["sheet","column","header","prefix","padding","formula","updatedAt"];
+
+function parseFeedbackIdFormula_(formula) {
+    const raw = String(formula || "").trim();
+    const match = /^=\s*"([^"]{1,40})"\s*&\s*(?:TEXTO|TEXT)\s*\(\s*(?:FILA|ROW)\s*\(\s*\)\s*-\s*\d+\s*,\s*"([0]+)"\s*\)\s*$/i.exec(raw);
+    return match ? { prefix: match[1], padding: match[2].length, formula: raw } : null;
+}
+
+function getFormulaBasedIdPattern_(sheet, idColumn) {
+    const ss = getSpreadsheet(), configSheet = ss.getSheetByName(IDENTIFIER_SEQUENCE_CONFIG_SHEET);
+    if (configSheet && configSheet.getLastRow() > 1) {
+        const headers = configSheet.getRange(1, 1, 1, IDENTIFIER_SEQUENCE_CONFIG_HEADERS.length).getValues()[0].map(value => String(value || ""));
+        if (JSON.stringify(headers) !== JSON.stringify(IDENTIFIER_SEQUENCE_CONFIG_HEADERS)) {
+            throw new Error("La configuración central de secuencias ID tiene un esquema incompatible.");
+        }
+        const rows = configSheet.getRange(2, 1, configSheet.getLastRow() - 1, IDENTIFIER_SEQUENCE_CONFIG_HEADERS.length).getValues();
+        const matches = rows.filter(row => String(row[0]) === sheet.getName() && Number(row[1]) === idColumn);
+        if (matches.length > 1) throw new Error("La configuración de ID está duplicada para " + sheet.getName() + " columna " + idColumn + ".");
+        if (matches.length === 1) {
+            const pattern = { prefix: String(matches[0][3] || ""), padding: Number(matches[0][4]), formula: String(matches[0][5] || "") };
+            if (!pattern.prefix || !Number.isInteger(pattern.padding) || pattern.padding < 1 || pattern.padding > 20) {
+                throw new Error("La configuración de secuencia ID no es válida para " + sheet.getName() + ".");
+            }
+            return pattern;
+        }
+    }
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) throw new Error("No existe una fórmula ni configuración previa para generar IDs en " + sheet.getName() + ".");
+    const formulas = sheet.getRange(2, idColumn, lastRow - 1, 1).getFormulas().flat().filter(Boolean);
+    if (!formulas.length) throw new Error("No se ha confirmado el patrón backend de ID para " + sheet.getName() + ". La operación se detuvo sin insertar el registro.");
+    const patterns = formulas.map(parseFeedbackIdFormula_);
+    if (patterns.some(pattern => !pattern)) throw new Error("La fórmula ID de " + sheet.getName() + " no tiene un patrón secuencial compatible; se requiere revisión.");
+    const first = patterns[0];
+    if (patterns.some(pattern => pattern.prefix !== first.prefix || pattern.padding !== first.padding || pattern.formula !== first.formula)) {
+        throw new Error("La columna ID de " + sheet.getName() + " contiene fórmulas con patrones diferentes; se requiere revisión.");
+    }
+    return first;
+}
+
+function copyRowPresentationOnly_(sheet, sourceRow, targetRow, lastColumn) {
+    if (!sheet || sourceRow < 1 || targetRow < 2 || lastColumn < 1) return;
+    const source = sheet.getRange(sourceRow, 1, 1, lastColumn);
+    const target = sheet.getRange(targetRow, 1, 1, lastColumn);
+    source.copyTo(target, SpreadsheetApp.CopyPasteType.PASTE_FORMAT, false);
+    source.copyTo(target, SpreadsheetApp.CopyPasteType.PASTE_DATA_VALIDATION, false);
+}
+
+function getNextFormulaBasedId_(sheet, idColumn) {
+    if (!sheet || !Number.isInteger(idColumn) || idColumn < 1) throw new Error("Hoja o columna ID inválida.");
+    const lock = LockService.getScriptLock();
+    const alreadyHeld = typeof lock.hasLock === "function" && lock.hasLock();
+    let acquired = false;
+    try {
+        if (!alreadyHeld) { lock.waitLock(15000); acquired = true; }
+        const pattern = getFormulaBasedIdPattern_(sheet, idColumn);
+        const lastRow = sheet.getLastRow();
+        const values = lastRow > 1 ? sheet.getRange(2, idColumn, lastRow - 1, 1).getValues().flat() : [];
+        const seen = new Set();
+        let maxSuffix = 0;
+        values.forEach((value, index) => {
+            const id = String(value === null || value === undefined ? "" : value).trim();
+            if (!id) return;
+            if (!id.startsWith(pattern.prefix)) throw new Error("El ID de " + sheet.getName() + " fila " + (index + 2) + " no coincide con el prefijo configurado.");
+            const suffix = id.slice(pattern.prefix.length);
+            if (!/^\d+$/.test(suffix)) throw new Error("El ID de " + sheet.getName() + " fila " + (index + 2) + " no conserva el sufijo numérico configurado.");
+            const normalized = id.toLowerCase();
+            if (seen.has(normalized)) throw new Error("Se detectó el ID duplicado " + id + " en " + sheet.getName() + "; no se asignó otro ID.");
+            seen.add(normalized);
+            const numeric = Number(suffix);
+            if (!Number.isSafeInteger(numeric) || numeric < 1) throw new Error("El sufijo ID de " + sheet.getName() + " no es un entero seguro.");
+            maxSuffix = Math.max(maxSuffix, numeric);
+        });
+        const properties = PropertiesService.getScriptProperties();
+        const propertyKey = "GPSpedia_ID_SEQUENCE_" + sheet.getName().replace(/[^A-Za-z0-9]/g, "_") +
+            "_" + idColumn + "_" + pattern.prefix.replace(/[^A-Za-z0-9]/g, "_");
+        const storedRaw = properties.getProperty(propertyKey);
+        const stored = storedRaw === null ? 0 : Number(storedRaw);
+        if (!Number.isSafeInteger(stored) || stored < 0) throw new Error("El contador backend de " + sheet.getName() + " contiene un valor inválido.");
+        const next = Math.max(maxSuffix, stored) + 1;
+        if (!Number.isSafeInteger(next) || next < 1) throw new Error("Se agotó la secuencia segura de IDs para " + sheet.getName() + ".");
+        const id = pattern.prefix + String(next).padStart(pattern.padding, "0");
+        if (seen.has(id.toLowerCase())) throw new Error("El siguiente ID ya existe en " + sheet.getName() + ".");
+        properties.setProperty(propertyKey, String(next));
+        return id;
+    } finally {
+        if (acquired) lock.releaseLock();
+    }
+}
+
 const INBOX_AUDIT_SHEET_NAME = "InboxAuditLog";
 const INBOX_AUDIT_HEADERS = Object.freeze(["eventId","timestamp","actorId","actorName","action","itemType","itemId","details"]);
 
