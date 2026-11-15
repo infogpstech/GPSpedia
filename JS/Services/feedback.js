@@ -240,7 +240,13 @@ function parseReportMetadata(rawValue, rowVehicleId) {
         if (!/^REP-[A-Za-z0-9_-]{1,80}$/.test(reportId) || !vehicleId ||
             vehicleId !== String(rowVehicleId || "").trim() || !Number.isInteger(corteIndex) ||
             corteIndex < 1 || corteIndex > 3 || typeof parsed.activaTestigoMotor !== "boolean") return null;
-        const metadata = { reportId, vehicleId, corteIndex, activaTestigoMotor: parsed.activaTestigoMotor };
+        const validCategories = new Set(["incidencia_tecnica","instalacion","acceso","contenido","otro"]);
+        const categoryRaw = String(parsed.category || "incidencia_tecnica").trim().toLowerCase();
+        const category = validCategories.has(categoryRaw) ? categoryRaw : "incidencia_tecnica";
+        const defaultSubject = "Reporte técnico de vehículo " + vehicleId + " — Corte #" + String(corteIndex);
+        const subjectRaw = String(parsed.subject || "").replace(/\s+/g," ").trim();
+        const subject = subjectRaw && subjectRaw.length <= 200 ? subjectRaw : defaultSubject;
+        const metadata = { reportId, vehicleId, corteIndex, activaTestigoMotor: parsed.activaTestigoMotor, category, subject };
         const imageMetadata = normalizeReportImageMetadata_(parsed);
         if (imageMetadata) Object.assign(metadata, imageMetadata);
         return metadata;
@@ -1632,6 +1638,18 @@ function handleReportProblem(payload) {
         if (typeof payload.activaTestigoMotor!=="boolean") throw new Error("El indicador del testigo del motor debe ser booleano.");
         reportContext={reportId,vehicleId:String(vehicleId),corteIndex,activaTestigoMotor:payload.activaTestigoMotor};
     }
+    const validTicketCategories = new Set(["incidencia_tecnica","instalacion","acceso","contenido","otro"]);
+    const ticketCategory = String(payload.category === undefined ? "incidencia_tecnica" : payload.category).trim().toLowerCase();
+    if (!validTicketCategories.has(ticketCategory)) throw new Error("La categoría del reporte no es válida.");
+    const defaultTicketSubject = reportContext
+        ? "Reporte técnico de vehículo " + String(vehicleId) + " — Corte #" + String(reportContext.corteIndex)
+        : "Reporte en Vehículo #" + String(vehicleId);
+    const ticketSubject = normalizeFeedbackText_(payload.subject === undefined || payload.subject === null || payload.subject === ""
+        ? defaultTicketSubject : payload.subject,"El asunto del reporte",200);
+    if (!reportContext && (payload.category !== undefined || payload.subject !== undefined)) {
+        throw new Error("La categoría y el asunto requieren un reporte individual con identificador.");
+    }
+    if (reportContext) { reportContext.category = ticketCategory; reportContext.subject = ticketSubject; }
     const imageAttachment=validateReportImageAttachment_(payload.imageAttachment);
     if(imageAttachment&&!reportContext) throw new Error("El adjunto requiere un identificador de reporte individual válido.");
     const lock=LockService.getScriptLock(); lock.waitLock(10000);
@@ -1648,6 +1666,8 @@ function handleReportProblem(payload) {
                     String(existing.row[COLS_FEEDBACKS.Problema-1]||"")===normalizedProblemText&&
                     String(existing.metadata.vehicleId||"")===String(vehicleId)&&Number(existing.metadata.corteIndex)===reportContext.corteIndex&&
                     existing.metadata.activaTestigoMotor===reportContext.activaTestigoMotor&&
+                    String(existing.metadata.category || "incidencia_tecnica")===reportContext.category&&
+                    String(existing.metadata.subject || defaultTicketSubject)===reportContext.subject&&
                     (!existing.metadata.userId||String(existing.metadata.userId)===String(userId));
                 if(!sameReport) throw new Error("El identificador del reporte ya pertenece a un reporte distinto; no se creó otro registro.");
                 const oldImage=normalizeReportImageMetadata_(existing.metadata);
@@ -1677,7 +1697,8 @@ function handleReportProblem(payload) {
             sheet.getRange(newRowNumber,COLS_FEEDBACKS.Usuario,1,3).setValues([[userName,vehicleId,normalizedProblemText]]);
             if(reportContext) {
                 const metadata={reportId:reportContext.reportId,userId:String(userId),vehicleId:String(vehicleId),
-                    corteIndex:reportContext.corteIndex,activaTestigoMotor:reportContext.activaTestigoMotor};
+                    corteIndex:reportContext.corteIndex,activaTestigoMotor:reportContext.activaTestigoMotor,
+                    category:reportContext.category,subject:reportContext.subject};
                 if(uploadedImage) Object.assign(metadata,uploadedImage.metadata);
                 sheet.getRange(newRowNumber,metadataColumn).setValue(JSON.stringify(metadata));
                 if(uploadedImage) resolvedImageUrl=uploadedImage.metadata.imageUrl;
@@ -1704,7 +1725,7 @@ function handleReportProblem(payload) {
     } finally { lock.releaseLock(); }
     if(!duplicateReport) logUserActivity(userId,userName,"report_problem",vehicleId,normalizedProblemText);
     return {status:"success",message:duplicateReport?"El reporte ya estaba registrado; se devolvió el identificador existente.":"Problema reportado.",
-        reportId:generatedReportId,alreadyReported:duplicateReport,imageAttached:Boolean(resolvedImageUrl),imageUrl:resolvedImageUrl};
+        reportId:generatedReportId,category:ticketCategory,subject:ticketSubject,alreadyReported:duplicateReport,imageAttached:Boolean(resolvedImageUrl),imageUrl:resolvedImageUrl};
 }
 function enforceFeedbackRateLimit_(scope, limit, windowSeconds) {
     const cache = CacheService.getScriptCache();
@@ -1904,7 +1925,10 @@ function mapInboxFeedbackRow_(row, reportMetadataColumn) {
  const suggestionData=parseCutSuggestionRecord(rawContent,rowVehicleId,rowUserName),isResolved=row[COLS_FEEDBACKS["Se resolvio"]-1]===true;
  if(suggestionData)suggestionData.status=isResolved?"resuelta":"pendiente_revision";
  const reportContent=suggestionData?normalizeInboxStoredText_(suggestionData.details,5000,"Sugerencia de cambio de corte."):normalizeInboxStoredText_(rawContent,5000,"");
- return{type:"problem_report",id:normalizeInboxStoredText_(row[COLS_FEEDBACKS.ID-1],120,""),subject:suggestionData?"Sugerencia de cambio — Corte #"+String(suggestionData.corteIndex):"Reporte en Vehículo #"+rowVehicleId,content:reportContent,user:rowUserName,vehicleId:rowVehicleId,reportMetadata,suggestionData,reply:normalizeInboxStoredText_(row[COLS_FEEDBACKS.Respuesta-1],5000,""),isResolved,responder:normalizeInboxStoredText_(row[COLS_FEEDBACKS.Responde-1],INBOX_VIDEO_USER_MAX_LENGTH,"Admin")};
+ const reportCategory=suggestionData?"contenido":(reportMetadata&&reportMetadata.category||"incidencia_tecnica");
+ const reportSubject=suggestionData?"Sugerencia de cambio — Corte #"+String(suggestionData.corteIndex):
+  (reportMetadata&&reportMetadata.subject||"Reporte en Vehículo #"+rowVehicleId);
+ return{type:"problem_report",id:normalizeInboxStoredText_(row[COLS_FEEDBACKS.ID-1],120,""),subject:reportSubject,category:reportCategory,content:reportContent,user:rowUserName,vehicleId:rowVehicleId,reportMetadata,suggestionData,reply:normalizeInboxStoredText_(row[COLS_FEEDBACKS.Respuesta-1],5000,""),isResolved,responder:normalizeInboxStoredText_(row[COLS_FEEDBACKS.Responde-1],INBOX_VIDEO_USER_MAX_LENGTH,"Admin")};
 }
 function mapInboxContactRow_(row) {
  return{type:"contact_form",id:normalizeInboxStoredText_(row[COLS_CONTACTANOS.Contacto_ID-1],120,""),subject:normalizeInboxStoredText_(row[COLS_CONTACTANOS.Asunto-1],200,"Mensaje de contacto"),content:normalizeInboxStoredText_(row[COLS_CONTACTANOS.Mensaje-1],5000,""),user:"Formulario de Contacto",vehicleId:null,reply:normalizeInboxStoredText_(row[COLS_CONTACTANOS.Respuesta_mensaje-1],5000,""),isResolved:null,responder:normalizeInboxStoredText_(row[COLS_CONTACTANOS.ID_usuario_responde-1],INBOX_VIDEO_USER_MAX_LENGTH,"Admin")};
