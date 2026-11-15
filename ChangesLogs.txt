@@ -540,3 +540,11 @@
 - Actualizada la tabla ejecutiva de Tareas_Activas.md con el estado real de P1, GP-DATA, GP-CAT, PWA e Inbox; corregida la descripción obsoleta de hashes AUTH/USERS.
 - Prependido a checkpoint.md un estado actual con HEAD de código validado 7a58da9a, CI 100 suites/1,544 pruebas PASS, límites de despliegue y siguiente paso.
 - Rama base GPSpedia2.2.5 permanece sin cambios. Sin despliegues Apps Script ni cambios de datos productivos.
+
+2026-11-15 | GPSpedia2.2.5_work | P2 migración global de IDs por fórmula y generadores backend
+- Modal Desarrollador: auditoría de columnas ID en todas las hojas visibles; migración de fórmulas compatibles a valores estáticos sin renumerar; snapshots, manifiesto, digest, respaldo verificado y lotes reanudables.
+- Persistencia del patrón prefijo/relleno para Users, FEEDBACK y ADMIN; fórmulas numéricas compatibles con generadores existentes de Cortes/LogosMarca. Patrones sin generador backend compatible quedan excluidos y reportados.
+- FEEDBACK, ADMIN y WRITE dejan de copiar fórmulas al crear filas; copian únicamente formato/validaciones. USERS adapta el generador para respetar el patrón histórico configurado.
+- Modal de contraseñas mantiene la migración por lotes a hashes sin agregar pasos al inicio de sesión.
+- Archivos principales: JS/Services/admin.js, feedback.js, users.js, write.js; JS/Frontend/api-config.js, ui.js; JS/Tests/IdentifierFormulaMigration.mjs, FeedbackFormulaIdAllocator.mjs, UserIdGenerator.mjs, UsersAtomicMutations.js, LogoIdIntegrity.mjs y fixture USERS.
+
