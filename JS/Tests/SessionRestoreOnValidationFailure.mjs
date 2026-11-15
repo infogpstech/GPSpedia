@@ -160,13 +160,23 @@ await test('una respuesta valid:false sin error conserva el significado de revoc
     assert.equal(result.reason, 'missing_session');
 });
 
-await test('AUTH mantiene false únicamente para identidad o token ausentes/revocados', () => {
+await test('AUTH conserva rechazo para identidad incompleta y valida contexto antes del token', () => {
     const handler = extract(service, 'function handleValidateSession(payload)', '\nfunction handleTouchSession(payload)');
-    const fn = new Function('validateSessionReadOnly_', handler + '\nreturn handleValidateSession;')(
-        () => ({ valid: false, reason: 'missing_session' })
+    const calls = { sessionValidation: 0, activity: 0 };
+    const fn = new Function(
+        'validateSharedSessionContext_','syncAuthSheetActivityFromActor_','validateSessionReadOnly_',
+        handler + '\nreturn handleValidateSession;'
+    )(
+        () => ({ valid: true, actor: { userId: 'U-TEST', role: 'Tecnico', userName: 'tester' } }),
+        () => { calls.activity++; },
+        () => { calls.sessionValidation++; return { valid: false, reason: 'missing_session' }; }
     );
-    assert.equal(fn({ userId: 'U-TEST', sessionToken: 'token-test' }).valid, false);
     assert.equal(fn({ userId: 'U-TEST' }).valid, false);
+    const validPayload = fn({ userId: 'U-TEST', sessionToken: 'token-test' });
+    assert.equal(validPayload.valid, false);
+    assert.equal(validPayload.reason, 'missing_session');
+    assert.equal(calls.sessionValidation, 1);
+    assert.equal(calls.activity, 1);
 });
 
 await test('touchSession distingue una dependencia caída de un token revocado', async () => {
