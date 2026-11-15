@@ -313,7 +313,7 @@ await test('la reconciliación silenciosa actualiza tarjetas, modales y vistas a
     assert.match(full, /mostrarRelayGrid\(\)/);
     assert.match(full, /options\.logosChanged === true/);
     assert.match(authSource, /performSilentSync\(snapshotToApply\)/);
-    assert.match(authSource, /broadcastCatalogSync_\(currentUser, requiresFullSnapshot\)/);
+    assert.match(authSource, /broadcastCatalogSync_\(currentUser, requiresFullSnapshot \|\| pysDeltaChanges\.length > 0\)/);
 });
 await test('la entrada de nuevas tarjetas respeta prefers-reduced-motion', async () => {
     const start = uiSource.indexOf('async function insertNewVehicleFluently(');
