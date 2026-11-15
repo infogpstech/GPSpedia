@@ -680,3 +680,11 @@ Estado: CORRECCIÓN LOCAL PREPARADA; CI PENDIENTE.
 
 
 [2026-11-15] Evidencia final AUD-2026-11-15-30 — GitHub Pages run `43672478619`: build, reporte y deploy SUCCESS para el commit `7fb110c6979ac0d0d16fd526734872eb41414da8`. La rama base continúa en `d9acc68d889985c2e2f42fe3a02e502efc86ead1` y no fue modificada. Hallazgo cerrado localmente; validación externa diferida a Beta.
+
+
+[2026-11-15] AUD-2026-11-15-31 — cobertura de caché/paginación Inbox desconectada del CI
+- Evidencia: JS/Tests/InboxCachePagination.js conservaba imports y rutas previas a la reorganización (../../inboxPageCache.js, /Services/feedback.js, /ui.js) y no aparecía en JS/Tests/RunServiceTests.mjs.
+- Impacto: cinco pruebas de caché, cuatro de paginación y cinco contratos UI no se ejecutaban en la regresión integral; la suite tampoco resolvía su raíz desde la ubicación del archivo.
+- Corrección: rutas actualizadas a JS/Frontend/ y JS/Services/, raíz calculada con import.meta.url, y suite agregada al grupo INTEGRATION.
+- Evidencia de cierre local: CI Node.js 22 run 43673118833, 100 suites / 1,515 pruebas / 0 fallos; AUG-116 14/14; Pages run 43673118102 SUCCESS.
+- Estado: CORREGIDO Y VALIDADO EN CI. Pruebas externas de Inbox permanecen reservadas a Beta.

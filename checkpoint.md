@@ -369,3 +369,17 @@
 - GitHub Pages run `43672478619`: build, reporte y deploy SUCCESS.
 - Rama base `GPSpedia2.2.5` verificada en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; no se modificó.
 - No se ejecutaron pruebas contra Apps Script/Spreadsheet reales ni se modificaron deployments, ScriptProperties o datos externos. La prueba Beta permanece diferida.
+
+
+## Continuidad — restauración de cobertura Inbox AUG-116 (2026-11-15)
+
+**Commit de pruebas:** c15c1235b4686783ba4a152410ff859274b532f5 (test(inbox): restore cache pagination suite in CI).
+
+- Se detectó que JS/Tests/InboxCachePagination.js no estaba conectado al runner integral y conservaba rutas anteriores a la centralización de JS/Frontend/ y JS/Services/.
+- Se corrigieron las rutas de inboxPageCache.js, ui.js y feedback.js; la raíz del repositorio ahora se resuelve desde import.meta.url, sin depender del directorio desde el que se ejecute Node.
+- Se incorporó la suite al grupo INTEGRATION de JS/Tests/RunServiceTests.mjs.
+- La suite añadida aprobó: caché 5/5, paginación 4/4 y contratos UI 5/5. CI Node.js 22 run 43673118833: SUCCESS; sintaxis PASS; **100 suites / 1,515 pruebas / 0 fallos**.
+- GitHub Pages run 43673118102: build, reporte y deploy SUCCESS para este HEAD.
+- No se modificó código funcional, interfaz, permisos, endpoints ni datos externos. No se ejecutaron pruebas Apps Script/Spreadsheet reales; continúan diferidas a Beta.
+- Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin modificaciones.
+- Continuidad: la cobertura local de caché/paginación queda integrada. GP-INBOX-04B..04D siguen abiertas para funciones masivas y controles visibles sujetos a autorización; continuar solo con mejoras internas que no amplíen la interfaz.

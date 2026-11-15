@@ -420,3 +420,11 @@
 2026-11-15 — Publicación Pages de la corrección Inbox idempotencia
 - GitHub Pages run `43672478619`: build, reporte de estado y deploy SUCCESS para el HEAD `7fb110c6979ac0d0d16fd526734872eb41414da8`.
 - La rama base `GPSpedia2.2.5` permanece en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; no fue modificada.
+
+
+2026-11-15 — Restauración de la suite de caché y paginación Inbox (AUG-116)
+- JS/Tests/InboxCachePagination.js: se actualizaron las rutas del módulo de caché, UI y servicio FEEDBACK para reflejar la estructura vigente; la raíz se calcula desde la ubicación del archivo de prueba.
+- JS/Tests/RunServiceTests.mjs: se integró AUG-116 en el grupo INTEGRATION para que se ejecute en el CI completo.
+- GitHub Actions Node.js 22 run 43673118833: SUCCESS; sintaxis PASS; 100 suites / 1,515 pruebas / 0 fallos. La suite añadida aprobó caché 5/5, paginación 4/4 y contratos UI 5/5.
+- GitHub Pages run 43673118102: build, reporte y deploy SUCCESS.
+- Sin cambios de código funcional, interfaz, permisos, endpoints ni datos externos.

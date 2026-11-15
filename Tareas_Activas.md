@@ -786,3 +786,14 @@ Las fuentes de servicios JavaScript se centralizan bajo `JS/Services/`. La carpe
 
 
 **Evidencia adicional de publicación — GP-INBOX idempotencia (2026-11-15):** GitHub Pages run `43672478619`: build, reporte y deploy SUCCESS. HEAD de código/registros verificado `7fb110c6979ac0d0d16fd526734872eb41414da8`; rama base sin cambios. Se conserva la validación real de Spreadsheet/Coordinator como pendiente Beta, sin bloquear el cierre local.
+
+
+## Adenda — GP-INBOX / AUG-116: suite de caché y paginación integrada (2026-11-15)
+
+**Subtarea local de cobertura: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
+
+- Se corrigieron las rutas obsoletas de JS/Tests/InboxCachePagination.js tras la centralización de carpetas y se incorporó la ejecución al runner integral.
+- CI Node.js 22 run 43673118833: SUCCESS; **100 suites / 1,515 pruebas / 0 fallos**. AUG-116: caché 5/5, paginación 4/4 y contratos UI 5/5. Sintaxis PASS.
+- GitHub Pages run 43673118102: build, reporte y deploy SUCCESS.
+- No se añadieron controles visibles ni se modificaron funciones de producción, permisos, endpoints o datos.
+- GP-INBOX-04B..04D permanecen EN PROGRESO/PENDIENTES en sus funcionalidades mayores; esta corrección no las cierra. La integración real con Apps Script/Spreadsheet/Coordinator y las pruebas Beta de roles/dispositivos siguen diferidas.
