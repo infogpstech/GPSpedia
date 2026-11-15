@@ -28,7 +28,7 @@ function runLastDeveloperProtectionTests(sources) {
             deleteRow:row=>{if(isSessions&&fail){fail=false;throw new Error('Fallo simulado al eliminar fila');}rows.splice(row-1,1);},
             _rows:rows
         });
-        const usersSheet=makeSheet(users,false),sessionsSheet=makeSheet(sessions,true),logs=[];
+        const usersSheet=makeSheet(users,false),sessionsSheet=makeSheet(sessions,true),logs=[],revokedSharedUsers=[];
         const context={
             SPREADSHEET_ID:'TEST',SHEET_NAMES:{USERS:'Users',ACTIVE_SESSIONS:'ActiveSessions'},
             ROLE_REVOCATION_SHARED_PREFIX:'__role_revocation_pending__:',
@@ -37,6 +37,7 @@ function runLastDeveloperProtectionTests(sources) {
             normalizeRoleName:normalize,isActiveAuthUserRecord:active,countActiveDevelopers_:count,
             getSessionExpirationStatus_:()=>({expired:false}),assertRequesterRoleRevocationClear_:()=>{},
             hasPendingRoleRevocation_:()=>false,revokePendingLoginRequestsForUserUnderLock_:()=>({pending:false}),
+            revokeSharedUserSessionContexts_:id=>{revokedSharedUsers.push(String(id));return{revokedSessions:0};},
             roleRevocationPropertyKey_:id=>'role:'+id,
             parseSharedRoleRevocationMarker_:value=>{const raw=String(value||'');if(!raw.startsWith('__role_revocation_pending__:'))return null;try{return JSON.parse(raw.slice('__role_revocation_pending__:'.length));}catch(_){return{invalid:true};}},
             parseRoleRevocationMarker_:raw=>{try{return JSON.parse(raw);}catch(_){return{invalid:true};}},
@@ -59,7 +60,7 @@ function runLastDeveloperProtectionTests(sources) {
         };
         const update=new Function(...Object.keys(context),extract(auth,'handleUpdateUser','\n\nconst SESSION_ABSOLUTE_MONTHS')+'\nreturn handleUpdateUser;')(...Object.values(context));
         const remove=new Function(...Object.keys(context),extract(auth,'handleDeleteUser')+'\nreturn handleDeleteUser;')(...Object.values(context));
-        return {update,remove,users,sessions,logs};
+        return {update,remove,users,sessions,logs,revokedSharedUsers};
     };
     run('Reconciliación real conserva el marcador y recupera nombre tras fallo de escritura',()=>{
         const helperNames=['parseRoleRevocationMarker_','parseSharedRoleRevocationMarker_','sameRoleRevocationMarker_','revokeAllUserSessionsUnderLock_','deleteRevokedSessionRowsUnderLock_','reconcileRoleRevocationUnderLock_'];
@@ -142,6 +143,7 @@ function runLastDeveloperProtectionTests(sources) {
         const h=makeHarness([['D1','dev','pw','Desarrollador','','','','tok1'],['D2','dev2','pw','Desarrollador']],[['D1','dev','tok1',new Date(),'','']]);
         const result=h.update({userId:'D2',updates:{Privilegios:'Jefe'},sessionToken:'tok1'});
         equal(result.status,'success');equal(h.users[2][3],'Jefe');equal(count(h.users.slice(1)),1);
+        equal(h.revokedSharedUsers.join(','),'D2','El cambio de rol debe revocar el contexto central de la cuenta objetivo.');
     });
     run('Recupera nombre y rol tras fallo de la segunda escritura y reintento idempotente',()=>{
         const h=makeHarness(
@@ -177,6 +179,7 @@ function runLastDeveloperProtectionTests(sources) {
         const result=h.remove({userId:'T1',sessionToken:'tok1'});
         equal(result.status,'success');equal(result.closedSessions,2);equal(h.sessions.length,2);
         assert(h.sessions.slice(1).every(row=>row[0]!=='T1'));assert(h.logs.some(row=>row[1]==='Account logically deleted in AUTH.'));
+        equal(h.revokedSharedUsers.join(','),'T1','Eliminar la cuenta debe revocar sus contextos centrales.');
     });
     run('Permite eliminar un Desarrollador cuando otro permanece activo',()=>{
         const h=makeHarness([['D1','dev1','pw','Desarrollador','','','','tok1'],['D2','dev2','pw','Desarrollador','','','','tok2']],[['D1','dev1','tok1',new Date(),'',''],['D2','dev2','tok2',new Date(),'','']]);
