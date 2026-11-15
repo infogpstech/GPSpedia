@@ -34,7 +34,7 @@ function makeHarness(){
  const users=makeSheet("Users",[["ID","Nombre"],["U-001","Ana"],["U-002","Luis"],["U-002","Duplicado"]],[
   ["ID","Nombre"],['="U-"&TEXTO(FILA()-1,"000")'," "],['="U-"&TEXTO(FILA()-1,"000")'," "],[""," "]
  ]);
- const vehicles=makeSheet("Cortes",[["ID","Marca"],["V-001","Yamaha"]],[["ID","Marca"],['="V-"&TEXTO(FILA()-1,"000")',""]]);
+ const vehicles=makeSheet("Cortes",[["ID","Marca"],[1,"Yamaha"]],[["ID","Marca"],["=FILA()-1",""]]);
  const ignored=makeSheet("Catalogo",[["Nombre","Valor"],["x","y"]],[["Nombre","Valor"],["=ROW()",""]]);
  const ss={sheets:[users,vehicles,ignored],getSheets(){return this.sheets;},getSheetByName(n){return this.sheets.find(s=>s.name===n)||null;},
   insertSheet(n){const sh=makeSheet(n,[[]]);this.sheets.push(sh);return sh;}};
@@ -74,10 +74,10 @@ test("Congela valores exactos por lotes, reanuda y conserva snapshots/manifiesto
  const h=makeHarness(),dry=h.api.migrate({dryRun:true,batchSize:1});
  const payload={dryRun:false,confirm:true,migrationId:dry.migrationId,digest:dry.digest,batchSize:1};
  const first=h.api.migrate(payload);
- assert.equal(first.migrated,1);assert.equal(first.remaining,1);assert.equal(first.sequenceConfig.configured,2);assert.equal(first.sequenceConfig.unsupported,0);
+ assert.equal(first.migrated,1);assert.equal(first.remaining,1);assert.equal(first.sequenceConfig.configured,1);assert.equal(first.sequenceConfig.numericOnly,1);assert.equal(first.sequenceConfig.unsupported,0);
  assert.equal(h.users.rows[1][0],"U-001");assert.equal(h.users.formulas[1][0],"");
  const second=h.api.migrate(payload);
- assert.equal(second.migrated,1);assert.equal(second.remaining,0);assert.equal(second.complete,true);assert.equal(h.vehicles.rows[1][0],"V-001");
+ assert.equal(second.migrated,1);assert.equal(second.remaining,0);assert.equal(second.complete,true);assert.equal(h.vehicles.rows[1][0],1);
  assert.equal(h.vehicles.formulas[1][0],"");
  assert.ok(h.ss.getSheetByName("__IdentifierFormulaFreezeManifest__"));
  const config=h.ss.getSheetByName("__IdentifierSequenceConfig__");
@@ -94,10 +94,11 @@ test("Los escritores ADMIN y WRITE no copian fórmulas al crear registros",()=>{
  assert.match(write,/previousRowRange\.copyTo\(newRowRange,\s*SpreadsheetApp\.CopyPasteType\.PASTE_FORMAT/);
 });
 test("El backend de ADMIN genera el siguiente ID desde la configuración persistida",()=>{
- const h=makeHarness(),dry=h.api.migrate({dryRun:true});
+ const h=makeHarness();h.users.rows.pop();h.users.formulas.pop();
+ const dry=h.api.migrate({dryRun:true});
  const payload={dryRun:false,confirm:true,migrationId:dry.migrationId,digest:dry.digest,batchSize:5};
  h.api.migrate(payload);h.api.migrate(payload);
- assert.equal(h.api.nextId(h.vehicles,1),"V-002");
+ assert.equal(h.api.nextId(h.users,1),"U-003");
 });
 test("No congela fórmulas ID cuyo patrón no puede migrarse a un generador backend seguro",()=>{
  const h=makeHarness();
