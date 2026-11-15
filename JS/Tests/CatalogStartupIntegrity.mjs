@@ -30,6 +30,9 @@ function createHarness(options = {}) {
     };
     const errors = [], warnings = [], patches = [];
     let cacheIndex = 0, saveCalls = 0, pysCalls = 0, fetchCalls = 0, savedCursor = null, cursorWrites = 0;
+    let releaseCatalogPersistence = null;
+    const delayedCatalogPersistence = options.delayCatalogPersistence
+        ? new Promise(resolve => { releaseCatalogPersistence = resolve; }) : null;
     let failCatalogWrites = Number(options.failCatalogWrites || 0);
     const cacheReads = options.cacheReads || [null];
     const offline = {
@@ -46,11 +49,13 @@ function createHarness(options = {}) {
         async saveCatalog(value) {
             saveCalls++; savedCursor = null;
             if (options.failCatalogPersistence) throw new Error('IndexedDB initialization timed out');
+            if (delayedCatalogPersistence) return delayedCatalogPersistence.then(() => value);
             return value;
         },
         async saveCatalogWithCursor(value, cursor) {
             saveCalls++; savedCursor = cursor;
             if (options.failCatalogPersistence) throw new Error('IndexedDB initialization timed out');
+            if (delayedCatalogPersistence) return delayedCatalogPersistence.then(() => ({ saved: true, cursor }));
             return { saved: true, cursor };
         },
         async saveCatalogCursor(cursor) { cursorWrites++; savedCursor = cursor; return { saved: true, cursor }; },
@@ -131,7 +136,8 @@ function createHarness(options = {}) {
         get cursorWrites() { return cursorWrites; },
         get pysCalls() { return pysCalls; },
         get cacheReads() { return cacheIndex; },
-        get offlineFallbackSaved() { return offline.fallbackSaved; }
+        get offlineFallbackSaved() { return offline.fallbackSaved; },
+        releaseCatalogPersistence() { if (releaseCatalogPersistence) releaseCatalogPersistence(); }
     };
 }
 
@@ -160,6 +166,15 @@ await test('recupera el catálogo desde CacheStorage cuando IndexedDB no respond
     assert.equal(h.state.catalogLoadStatus, 'ready');
     assert.equal(h.state.catalogData.cortes[0].id, 'C-FALLBACK');
     assert.equal(h.fetchCalls, 0);
+});
+await test('muestra el snapshot remoto antes de esperar la persistencia local', async () => {
+    const h = createHarness({ delayCatalogPersistence: true });
+    const pending = h.load();
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(h.state.catalogLoadStatus, 'ready');
+    assert.equal(h.state.catalogData.cortes.length > 0, true);
+    h.releaseCatalogPersistence();
+    await pending;
 });
 await test('guarda una copia alternativa del snapshot aunque falle IndexedDB', async () => {
     const remote = snapshot([{ id: 'C-FALLBACK-SAVE', marca: 'Mazda', categoria: 'pickup' }]);
