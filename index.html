@@ -355,7 +355,11 @@
                         <div class="dev-card dev-tools-card">
                             <strong><i class="fa-solid fa-fingerprint"></i> Auditoría de IDs y fórmulas</strong>
                             <p>Inspecciona las columnas identificadoras de todas las hojas, mostrando el valor calculado y la fórmula original. Esta auditoría no modifica datos.</p>
-                            <button type="button" id="btn-admin-audit-identifiers" class="btn btn-secondary dev-action-full"><i class="fa-solid fa-magnifying-glass"></i> Auditar IDs y fórmulas</button>
+                            <div class="dev-action-row">
+                                <button type="button" id="btn-admin-audit-identifiers" class="btn btn-secondary"><i class="fa-solid fa-magnifying-glass"></i> Auditar IDs y fórmulas</button>
+                                <button type="button" id="btn-admin-preview-id-freeze" class="btn btn-secondary"><i class="fa-solid fa-list-check"></i> Simular migración</button>
+                                <button type="button" id="btn-admin-confirm-id-freeze" class="btn btn-warning" disabled><i class="fa-solid fa-database"></i> Migrar lote</button>
+                            </div>
                             <p id="identifier-audit-status" class="dev-empty-state" role="status" aria-live="polite">Auditoría pendiente.</p>
                             <div id="identifier-audit-results" class="dev-empty-state" aria-live="polite"></div>
                         </div>
