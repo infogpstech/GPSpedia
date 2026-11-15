@@ -4600,7 +4600,6 @@ function renderInboxConversationDetail_(options = {}) {
         messages.appendChild(bubble);
     });
     detail.appendChild(messages);
-    const context = getUiSessionContext_();
     if (item.status !== "open") {
         detail.appendChild(inboxCreateNode_("p", "inbox-state-message", "Caso cerrado. No se pueden agregar más comentarios."));
     } else if (context && context.userId === String(item.createdById || "")) {
