@@ -360,7 +360,7 @@ function createSharedMutationCoordinator_(dependencies) {
             throw new Error("El contexto compartido de sesión tiene un esquema inválido; el acceso permanece denegado.");
         }
         context.sessions.forEach(session => {
-            if (!session || typeof session.token !== "string" || session.token.length < 16 || session.token.length > 256 ||
+            if (!session || typeof session.token !== "string" || session.token.length < 16 || session.token.length > 128 ||
                 typeof session.role !== "string" ||
                 !["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"].includes(session.role) ||
                 typeof session.fullName !== "string" || session.fullName.length > 120 ||
@@ -390,7 +390,7 @@ function createSharedMutationCoordinator_(dependencies) {
         const fullName = String(payload.fullName || "");
         const createdAt = Number(payload.createdAt);
         const lastActivityAt = Number(payload.lastActivityAt);
-        if (!userId || userId.length > 128 || token.length < 16 || token.length > 256 ||
+        if (!userId || userId.length > 128 || token.length < 16 || token.length > 128 ||
             !["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"].includes(role) ||
             fullName.length > 120 || !Number.isFinite(createdAt) || !Number.isFinite(lastActivityAt) ||
             createdAt <= 0 || lastActivityAt < createdAt) {
@@ -401,9 +401,17 @@ function createSharedMutationCoordinator_(dependencies) {
             const context = readAuthContext_(userId) || {
                 schemaVersion: 1, userId: userId, epoch: 1, sessions: []
             };
+            const priorSessions = context.sessions.slice();
             context.sessions = context.sessions.filter(session =>
                 currentTime < addUtcMonths_(session.createdAt, SHARED_AUTH_ABSOLUTE_MONTHS_) &&
                 currentTime < addUtcMonths_(session.lastActivityAt, SHARED_AUTH_IDLE_MONTHS_));
+            const activeTokens = new Set(context.sessions.map(session => session.token));
+            priorSessions.forEach(session => {
+                if (!activeTokens.has(session.token) &&
+                    String(properties.getProperty(authTokenIndexKey_(session.token)) || "") === userId) {
+                    properties.deleteProperty(authTokenIndexKey_(session.token));
+                }
+            });
             const indexedOwner = String(properties.getProperty(authTokenIndexKey_(token)) || "");
             if (indexedOwner && indexedOwner !== userId) throw new Error("El token ya está asociado a otra cuenta.");
             const existing = context.sessions.filter(session => constantTimeEquals_(session.token, token));
@@ -458,6 +466,7 @@ function createSharedMutationCoordinator_(dependencies) {
             const context = readAuthContext_(userId) || {
                 schemaVersion: 1, userId: userId, epoch: 0, sessions: []
             };
+            if (context.epoch >= Number.MAX_SAFE_INTEGER) throw new Error("Se agotó el contador de epoch de sesión.");
             context.epoch += 1;
             const revokedTokens = context.sessions.map(session => session.token);
             context.sessions = [];
