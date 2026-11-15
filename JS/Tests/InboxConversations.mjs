@@ -208,6 +208,7 @@ run("Un tercero no puede responder ni alterar el marcador de lectura", () => {
 });
 const initialMessages = api.handleGetInboxMessages({ ...actor("U2","token-b"),conversationId:first.conversationId });
 const firstMessageId = initialMessages.data[0].messageId;
+api.handleMarkInboxRead({ ...actor("U2","token-b"),conversationId:first.conversationId,throughMessageId:firstMessageId });
 const reply = { ...actor("U1","token-a"),conversationId:first.conversationId,body:"Seguimiento del caso.",idempotencyKey:"reply-key-0001" };
 const sent = api.handleSendInboxMessage(reply);
 run("Solo quien inició la conversación puede agregar comentarios", () => {
@@ -225,7 +226,7 @@ run("El reintento del mismo mensaje es idempotente y no duplica el contador", ()
     assert.equal(replay.messageId,sent.messageId);
     assert.equal(replay.idempotentReplay,true);
     assert.equal(spreadsheet.getSheetByName("InboxMessages").getLastRow(),7);
-    const unread = api.handleGetInboxConversations({ ...actor("U1","token-a"),folder:"unread" });
+    const unread = api.handleGetInboxConversations({ ...actor("U2","token-b"),folder:"unread" });
     assert.equal(unread.data[0].unreadCount,1);
 });
 run("Una clave de mensaje no se puede reutilizar con otro cuerpo", () => {
@@ -262,7 +263,7 @@ run("Las solicitudes de lectura tardías no hacen retroceder el marcador", () =>
         body:"Comentario más reciente para probar el orden.",idempotencyKey:"read-order-0001"
     });
     api.handleMarkInboxRead({ ...actor("U2","token-b"),conversationId:first.conversationId,throughMessageId:newest.messageId });
-    const stale = api.handleMarkInboxRead({ ...actor("U1","token-a"),conversationId:first.conversationId,throughMessageId:firstMessageId });
+    const stale = api.handleMarkInboxRead({ ...actor("U2","token-b"),conversationId:first.conversationId,throughMessageId:firstMessageId });
     assert.equal(stale.unreadCount,0);
     const state = spreadsheet.getSheetByName("InboxConversationState").rows
         .find(row => row[0] === first.conversationId && row[1] === "U2");
@@ -338,6 +339,8 @@ run("Las mutaciones liberan el lock incluso cuando una validación falla", () =>
     assert.ok(lockReleased > before);
 });
 run("El mensaje se conserva como texto literal y no se ejecuta ni interpreta HTML", () => {
+    // Aislar la prueba del límite de frecuencia acumulado en las pruebas previas.
+    for (const row of spreadsheet.getSheetByName("InboxMessages").rows.slice(1)) row[2] = "2000-01-01T00:00:00.000Z";
     const result = api.handleCreateInboxConversation({
         ...actor("U1","token-a"),recipientId:"U2",subject:"Texto literal",category:"general",
         body:"<img src=x onerror=alert(1)>",idempotencyKey:"create-key-0004"
