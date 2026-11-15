@@ -137,7 +137,7 @@ test('AUTH registra la aceptación por dispositivo sin escribir la columna de ac
     const dispatcher = serviceAuth.slice(dispatchStart, dispatchEnd);
     assert.doesNotMatch(dispatcher, /touchProtectedAuthRequestSession_|validateAndTouchSession_|validateSessionReadOnly_/);
     assert.match(coordinator, /acceptTerms: \{ read: \["SESSION_CONTEXTS"\], write: \["USERS"\], trackActivity: false \}/);
-    assert.match(coordinator, /operation !== "acceptTerms"/);
+    assert.match(coordinator, /policy\.trackActivity !== false/);
 });
 test('cerrar el acuerdo sobre el aviso limpia History API y conserva el aviso padre', () => {
     const history = createFakeHistory();
