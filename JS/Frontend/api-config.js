@@ -63,7 +63,7 @@ export const ACTION_TO_SERVICE_MAP = {
     'migrateTimestamps': 'UTILITIES',
     'ping': 'ADMIN', 'migrateCortesOperationIds': 'ADMIN', 'migrateIdentifiers': 'ADMIN', 'rollbackIdentifiers': 'ADMIN', 'reconcilePendingImageUploads': 'ADMIN',
     'backupDatabase': 'ADMIN', 'backupDrive': 'ADMIN', 'restoreDatabase': 'ADMIN', 'restoreDrive': 'ADMIN',
-    'reorganizeDatabase': 'ADMIN', 'normalizeImages': 'ADMIN', 'organizePrimaryVehicleImages': 'ADMIN', 'restoreAllTrashedImages': 'ADMIN', 'addLogo': 'ADMIN', 'auditIdentifiers': 'ADMIN', 'createSheet': 'ADMIN', 'addColumn': 'ADMIN', 'driveCommand': 'ADMIN',
+    'reorganizeDatabase': 'ADMIN', 'normalizeImages': 'ADMIN', 'organizePrimaryVehicleImages': 'ADMIN', 'restoreAllTrashedImages': 'ADMIN', 'addLogo': 'ADMIN', 'auditIdentifiers': 'ADMIN', 'freezeIdentifierFormulas': 'ADMIN', 'createSheet': 'ADMIN', 'addColumn': 'ADMIN', 'driveCommand': 'ADMIN',
     'updateVehicleField': 'ADMIN', 'uploadAdminImage': 'ADMIN', 'getAdminImageUploadStatus': 'ADMIN',
     'getReplacedImages': 'ADMIN',
     'previewCortesImageReconciliation': 'ADMIN', 'applyCortesImageReconciliation': 'ADMIN', 'migrateReplacedImagesSchema': 'ADMIN', 'getDriveStorage': 'ADMIN', 'recoverReplacedImage': 'ADMIN', 'deleteReplacedImage': 'ADMIN', 'restoreReplacedImageFromTrash': 'ADMIN', 'permanentlyDeleteReplacedImage': 'ADMIN', 'markReplacedImageInUse': 'ADMIN', 'auditDriveImagesInCortes': 'ADMIN', 'saveUnusedImagesInventory': 'ADMIN',
