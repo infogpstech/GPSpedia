@@ -1648,16 +1648,10 @@ function runFeedbackWriteSecurityTests() {
             }
         });
         test_("reportProblem rechaza categorías de ticket fuera de la lista permitida", function() {
-            const originalEnsure = ensureReportMetadataColumn;
-            try {
-                getSafeSheet = () => makeSheet([Array(10).fill("header"),["REP-TEMPLATE","","","","","","","","",""]]);
-                ensureReportMetadataColumn = () => 10;
-                LockService = { getScriptLock: () => ({ waitLock: function() {}, releaseLock: function() {} }) };
-                expectThrow_(() => handleReportProblem({
-                    vehicleId:"VEH-1",problemText:"Falla",userId:"USR-TEST-01",userName:"Usuario",
-                    reportId:"REP-CATEGORY-001",corteIndex:1,activaTestigoMotor:false,category:"admin"
-                }),"categoría");
-            } finally { ensureReportMetadataColumn = originalEnsure; }
+            expectThrow_(() => handleReportProblem({
+                vehicleId:"VEH-1",problemText:"Falla",userId:"USR-TEST-01",userName:"Usuario",
+                reportId:"REP-CATEGORY-001",corteIndex:1,activaTestigoMotor:false,category:"admin"
+            }),"categoría");
         });
         test_("reportProblem rechaza reutilizar un reportId con datos distintos", function() {
             const reportId = "REP-1731260000001-def456";
