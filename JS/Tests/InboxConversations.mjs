@@ -585,7 +585,7 @@ run("El historial respeta el orden de inserción cuando las marcas de tiempo ret
 
 run("Marcar como no leída crea un indicador privado, idempotente y reversible al leer", () => {
     const created = api.handleCreateInboxConversation({
-        ...actor("U1","token-a"),recipientId:"U2",subject:"Marcar no leída",category:"general",
+        ...actor("U3","token-c"),recipientId:"U2",subject:"Marcar no leída",category:"general",
         body:"Mensaje que el destinatario puede marcar como no leído.",idempotencyKey:"mark-unread-create-01"
     });
     const messages = api.handleGetInboxMessages({ ...actor("U2","token-b"),conversationId:created.conversationId });
@@ -606,14 +606,14 @@ run("Marcar como no leída crea un indicador privado, idempotente y reversible a
 });
 run("No se puede marcar como no leída una conversación sin mensajes recibidos", () => {
     const created = api.handleCreateInboxConversation({
-        ...actor("U1","token-a"),recipientId:"U2",subject:"Solo enviado",category:"general",
+        ...actor("U3","token-c"),recipientId:"U2",subject:"Solo enviado",category:"general",
         body:"Este mensaje lo envié yo.",idempotencyKey:"mark-unread-no-incoming-01"
     });
-    assert.throws(() => api.handleMarkInboxUnread({ ...actor("U1","token-a"),conversationId:created.conversationId }),/No hay mensajes recibidos/);
+    assert.throws(() => api.handleMarkInboxUnread({ ...actor("U3","token-c"),conversationId:created.conversationId }),/No hay mensajes recibidos/);
 });
 run("Borrar oculta solo la copia del participante y conserva mensajes e historial del otro", () => {
     const created = api.handleCreateInboxConversation({
-        ...actor("U1","token-a"),recipientId:"U2",subject:"Ocultación privada",category:"general",
+        ...actor("U3","token-c"),recipientId:"U2",subject:"Ocultación privada",category:"general",
         body:"El historial debe permanecer para ambos.",idempotencyKey:"delete-private-create-01"
     });
     const messageSheet = spreadsheet.getSheetByName("InboxMessages");
@@ -624,15 +624,15 @@ run("Borrar oculta solo la copia del participante y conserva mensajes e historia
     assert.equal(api.handleGetInboxConversations({ ...actor("U2","token-b"),folder:"all" }).data.some(row => row.conversationId === created.conversationId),false);
     assert.throws(() => api.handleGetInboxMessages({ ...actor("U2","token-b"),conversationId:created.conversationId }),/ocultada/);
     assert.throws(() => api.handleMarkInboxRead({ ...actor("U2","token-b"),conversationId:created.conversationId }),/ocultada/);
-    const senderList = api.handleGetInboxConversations({ ...actor("U1","token-a"),folder:"sent" });
+    const senderList = api.handleGetInboxConversations({ ...actor("U3","token-c"),folder:"sent" });
     assert.equal(senderList.data.some(row => row.conversationId === created.conversationId),true);
-    assert.equal(api.handleGetInboxMessages({ ...actor("U1","token-a"),conversationId:created.conversationId }).data.length,1);
+    assert.equal(api.handleGetInboxMessages({ ...actor("U3","token-c"),conversationId:created.conversationId }).data.length,1);
     const reply = api.handleSendInboxMessage({
-        ...actor("U1","token-a"),conversationId:created.conversationId,body:"El otro participante aún puede continuar.",
+        ...actor("U3","token-c"),conversationId:created.conversationId,body:"El otro participante aún puede continuar.",
         idempotencyKey:"delete-private-followup-01"
     });
     assert.equal(reply.status,"success");
-    assert.equal(api.handleGetInboxMessages({ ...actor("U1","token-a"),conversationId:created.conversationId }).data.length,2);
+    assert.equal(api.handleGetInboxMessages({ ...actor("U3","token-c"),conversationId:created.conversationId }).data.length,2);
     assert.equal(api.handleGetInboxConversations({ ...actor("U2","token-b"),folder:"all" }).data.some(row => row.conversationId === created.conversationId),false);
     const replay = api.handleDeleteInboxConversation({ ...actor("U2","token-b"),conversationId:created.conversationId });
     assert.equal(replay.alreadyDeleted,true);
@@ -642,13 +642,13 @@ run("Borrar oculta solo la copia del participante y conserva mensajes e historia
 });
 run("Un tercero no puede marcar como no leída ni ocultar una conversación ajena", () => {
     const created = api.handleCreateInboxConversation({
-        ...actor("U1","token-a"),recipientId:"U2",subject:"Protección de acciones",category:"general",
+        ...actor("U3","token-c"),recipientId:"U2",subject:"Protección de acciones",category:"general",
         body:"Solo los participantes pueden cambiar su estado.",idempotencyKey:"inbox-private-actions-01"
     });
     const flags = spreadsheet.getSheetByName("InboxConversationFlags");
     const before = flags.getLastRow();
-    assert.throws(() => api.handleMarkInboxUnread({ ...actor("U3","token-c"),conversationId:created.conversationId }),/permiso/);
-    assert.throws(() => api.handleDeleteInboxConversation({ ...actor("U3","token-c"),conversationId:created.conversationId }),/permiso/);
+    assert.throws(() => api.handleMarkInboxUnread({ ...actor("U1","token-a"),conversationId:created.conversationId }),/permiso/);
+    assert.throws(() => api.handleDeleteInboxConversation({ ...actor("U1","token-a"),conversationId:created.conversationId }),/permiso/);
     assert.equal(flags.getLastRow(),before);
 });
 run("El estado privado usa una hoja adicional sin alterar el esquema de lectura existente", () => {
