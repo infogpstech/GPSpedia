@@ -1399,10 +1399,8 @@ function handleSuggestYearLocked(payload) {
     if (!alreadyReported) {
         const newRowNumber = sheet.getLastRow() + 1;
         const lastCol = Math.max(sheet.getLastColumn(), actorColumn, 9);
-        if (newRowNumber > 2) {
-            sheet.getRange(2, 1, 1, lastCol).copyTo(sheet.getRange(newRowNumber, 1, 1, lastCol));
-            sheet.getRange(newRowNumber, 2, 1, lastCol - 1).clearContent();
-        }
+        if (newRowNumber > 2) copyRowPresentationOnly_(sheet, 2, newRowNumber, lastCol);
+        sheet.getRange(newRowNumber, COLS_FEEDBACKS.ID).setValue(getNextFormulaBasedId_(sheet, COLS_FEEDBACKS.ID));
         const values = [[userName, normalizedVehicleId, problema, respuestaText, "", "", "", year]];
         sheet.getRange(newRowNumber, 2, 1, values[0].length).setValues(values);
         sheet.getRange(newRowNumber, actorColumn).setValue(actorKey);
@@ -1541,18 +1539,13 @@ function logUserActivity(userId, userName, activityType, associatedId, details) 
         const lastCol = Math.max(sheet.getLastColumn(), 7);
         const FORMULA_ROW = 2;
 
-        // 1. Copiar la fila con fórmulas para asegurar el ID correcto (F-XXX)
-        if (lastRow >= FORMULA_ROW) {
-            const formulaRange = sheet.getRange(FORMULA_ROW, 1, 1, lastCol);
-            const newRowRange = sheet.getRange(newRowNumber, 1, 1, lastCol);
-            formulaRange.copyTo(newRowRange);
-            // Preservar ID (col 1), limpiar el resto
-            if (lastCol > 1) {
-                sheet.getRange(newRowNumber, 2, 1, lastCol - 1).clearContent();
-            }
-        }
+        // Copiar solo formato/validaciones; el ID lo asigna el backend.
+        if (lastRow >= FORMULA_ROW) copyRowPresentationOnly_(sheet, FORMULA_ROW, newRowNumber, lastCol);
+        sheet.getRange(newRowNumber, COLS_ACTIVIDAD_USUARIO.id).setValue(
+            getNextFormulaBasedId_(sheet, COLS_ACTIVIDAD_USUARIO.id)
+        );
 
-        // 2. Preparar los datos que se van a escribir, EXCLUYENDO la columna de ID.
+        // Preparar los datos de actividad, excluyendo la columna ID.
         const dataToWrite = [
             new Date().toISOString(),
             userId,
@@ -1782,10 +1775,8 @@ function handleReportProblem(payload) {
         if(!duplicateReport) {
             const lastRow=sheet.getLastRow(),newRowNumber=lastRow+1; pendingRowNumber=newRowNumber;
             const FORMULA_ROW=2,lastCol=reportContext?Math.max(sheet.getLastColumn(),metadataColumn,8):(sheet.getLastColumn()||8);
-            if(lastRow>=FORMULA_ROW) {
-                sheet.getRange(FORMULA_ROW,1,1,lastCol).copyTo(sheet.getRange(newRowNumber,1,1,lastCol));
-                if(lastCol>1) sheet.getRange(newRowNumber,2,1,lastCol-1).clearContent();
-            }
+            if(lastRow>=FORMULA_ROW) copyRowPresentationOnly_(sheet,FORMULA_ROW,newRowNumber,lastCol);
+            sheet.getRange(newRowNumber,COLS_FEEDBACKS.ID).setValue(getNextFormulaBasedId_(sheet,COLS_FEEDBACKS.ID));
             if(imageAttachment) uploadedImage=saveReportImageAttachment_(imageAttachment,reportContext.reportId);
             sheet.getRange(newRowNumber,COLS_FEEDBACKS.Usuario,1,3).setValues([[userName,vehicleId,normalizedProblemText]]);
             if(reportContext) {
@@ -1840,10 +1831,10 @@ function handleSendContactForm(payload) {
     const sheet = getSafeSheet(SHEET_NAMES.CONTACTANOS);
     if (!sheet) throw new Error("Hoja Contactanos no encontrada.");
     const lastRow = sheet.getLastRow(), newRowNumber = lastRow + 1, lastCol = sheet.getLastColumn() || 6;
-    if (lastRow >= 2) {
-        sheet.getRange(2, 1, 1, lastCol).copyTo(sheet.getRange(newRowNumber, 1, 1, lastCol));
-        if (lastCol > 1) sheet.getRange(newRowNumber, 2, 1, lastCol - 1).clearContent();
-    }
+    if (lastRow >= 2) copyRowPresentationOnly_(sheet, 2, newRowNumber, lastCol);
+    sheet.getRange(newRowNumber, COLS_CONTACTANOS.Contacto_ID).setValue(
+        getNextFormulaBasedId_(sheet, COLS_CONTACTANOS.Contacto_ID)
+    );
     sheet.getRange(newRowNumber, COLS_CONTACTANOS.User_ID, 1, 3).setValues([["N/A", "Contacto de " + name, "De: " + email + "\n\n" + message]]);
     SpreadsheetApp.flush();
     return { status: "success", message: "Formulario de contacto enviado." };
@@ -2436,10 +2427,8 @@ function handleSuggestCutChange(payload) {
         const lastRow = sheet.getLastRow(), newRowNumber = lastRow + 1;
         pendingRowNumber = newRowNumber;
         const FORMULA_ROW = 2, lastCol = sheet.getLastColumn() || 8;
-        if (lastRow >= FORMULA_ROW) {
-            sheet.getRange(FORMULA_ROW, 1, 1, lastCol).copyTo(sheet.getRange(newRowNumber, 1, 1, lastCol));
-            if (lastCol > 1) sheet.getRange(newRowNumber, 2, 1, lastCol - 1).clearContent();
-        }
+        if (lastRow >= FORMULA_ROW) copyRowPresentationOnly_(sheet, FORMULA_ROW, newRowNumber, lastCol);
+        sheet.getRange(newRowNumber, COLS_FEEDBACKS.ID).setValue(getNextFormulaBasedId_(sheet, COLS_FEEDBACKS.ID));
         if (normalizedImage) uploadedImage = saveSuggestionImageAttachment_(normalizedImage, normalizedVehicleId, normalizedCorteIndex);
         const imageMetadata = uploadedImage ? uploadedImage.metadata : null;
         const suggestionRecord = {
