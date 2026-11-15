@@ -69,11 +69,12 @@ function createSharedMutationClient_(dependencies) {
         }
 
         const requestId = uuid();
+        const sessionToken = String(options && options.session && options.session.sessionToken || "");
         const acquired = send_("acquire", service, operation, {
             requestId: requestId,
             waitMs: 12000,
-            userId: String(options && options.session && options.session.userId || ""),
-            sessionToken: String(options && options.session && options.session.sessionToken || "")
+            userId: sessionToken ? String(options && options.session && options.session.userId || "") : "",
+            sessionToken: sessionToken
         });
         const token = String(acquired.token || "");
         if (!/^[A-Za-z0-9_-]{40,100}$/.test(token)) {
