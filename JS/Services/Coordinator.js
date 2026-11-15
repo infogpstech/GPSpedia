@@ -471,6 +471,21 @@ function createSharedMutationCoordinator_(dependencies) {
         });
     }
 
+
+    function validateSessionContext_(service, operation, payload) {
+        if (service !== "AUTH" || operation !== "validateSessionContext") {
+            throw new Error("Solo AUTH puede consultar la restauración de sesión.");
+        }
+        const userId = String(payload.userId || "").trim();
+        const token = String(payload.sessionToken || "");
+        if (!userId || !token) throw new Error("La validación requiere userId y sessionToken.");
+        return withCoordinatorLock_(() => ({
+            status: "success",
+            valid: true,
+            actor: authorizeSession_(userId, token, now())
+        }));
+    }
+
     function authorizeSession_(userId, token, currentTime) {
         const context = readAuthContext_(userId);
         if (!context) throw new Error("La sesión no está registrada en el contexto compartido; inicia sesión nuevamente.");
@@ -796,6 +811,7 @@ function createSharedMutationCoordinator_(dependencies) {
         if (action === "registerSession") return registerSession_(service, operation, payload);
         if (action === "revokeSession") return revokeSession_(service, operation, payload);
         if (action === "revokeUserSessions") return revokeUserSessions_(service, operation, payload);
+        if (action === "validateSessionContext") return validateSessionContext_(service, operation, payload);
         throw new Error("Acción interna desconocida para el coordinador.");
     }
 
