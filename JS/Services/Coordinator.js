@@ -36,7 +36,7 @@ function coordinatorPolicy_(service, operation) {
     const policies = {
         AUTH: {
             login: { write: [...identityWrite, "SESSION_CONTEXTS"] },
-            acceptTerms: { read: ["SESSION_CONTEXTS"], write: ["USERS"] },
+            acceptTerms: { read: ["SESSION_CONTEXTS"], write: ["USERS"], trackActivity: false },
             touchSession: { read: ["SESSION_CONTEXTS"], write: ["ACTIVE_SESSIONS"] },
             changePassword: { write: [...identityWrite, "SESSION_CONTEXTS"] },
             resetUserPassword: { write: [...identityWrite, "SESSION_CONTEXTS"] },
@@ -152,7 +152,7 @@ function coordinatorPolicy_(service, operation) {
         !readResources.includes("SESSION_CONTEXTS") && !writeResources.includes("SESSION_CONTEXTS")) {
         readResources.push("SESSION_CONTEXTS");
     }
-    if (service === "AUTH" && !writeResources.includes("ACTIVE_SESSIONS")) {
+    if (service === "AUTH" && policy.trackActivity !== false && !writeResources.includes("ACTIVE_SESSIONS")) {
         writeResources.push("ACTIVE_SESSIONS");
     }
     return {
