@@ -4151,6 +4151,66 @@ function auditLogoBrandReferences_(ss) {
  brands.forEach((name,k)=>{const n=counts.get(k)||0;if(n===1)out.exactMatches++;else{if(n===0)out.missingExactMatches++;else out.ambiguousExactMatches++;if(out.details.length<100)out.details.push({brand:name,issue:n===0?"missing_exact_logo_name":"ambiguous_exact_logo_name",matches:n});else out.detailsTruncated=true;}});return out;
 }
 
+function auditAllFormulaIdentifierColumns_(ss) {
+    const columns = [];
+    let formulaCount = 0;
+    const headerPattern = /^(?:id|id_[a-z0-9_]+|[a-z0-9_]+_id|identificador|codigo_id)$/i;
+    ss.getSheets().forEach(sheet => {
+        const name = sheet.getName();
+        if (name.startsWith("__") || sheet.isSheetHidden()) return;
+        const lastRow = sheet.getLastRow(), lastColumn = sheet.getLastColumn();
+        if (lastRow < 2 || lastColumn < 1) return;
+        const headers = sheet.getRange(1, 1, 1, lastColumn).getDisplayValues()[0];
+        headers.forEach((headerValue, index) => {
+            const header = String(headerValue || "").trim();
+            if (!headerPattern.test(header)) return;
+            const column = index + 1;
+            const range = sheet.getRange(2, column, lastRow - 1, 1);
+            const formulas = range.getFormulas();
+            const values = range.getValues();
+            const samples = [];
+            let count = 0;
+            formulas.forEach((row, offset) => {
+                const formula = String(row[0] || "");
+                if (!formula) return;
+                const value = values[offset][0];
+                const rowNumber = offset + 2;
+                const rowValues = sheet.getRange(rowNumber, 1, 1, lastColumn).getValues()[0];
+                const hasRecordData = rowValues.some((cell, cellIndex) =>
+                    cellIndex !== index && cell !== "" && cell !== null && cell !== undefined
+                );
+                if (!hasRecordData) return;
+                count++;
+                if (samples.length < 100) {
+                    const prefixMatch = /"([^"]{1,24})"/.exec(formula);
+                    samples.push({
+                        row: rowNumber,
+                        id: value === null || value === undefined ? "" : value,
+                        formula,
+                        prefix: prefixMatch ? prefixMatch[1] : "",
+                        valueType: typeof value
+                    });
+                }
+            });
+            if (!count) return;
+            formulaCount += count;
+            columns.push({
+                sheet: name,
+                column,
+                header,
+                formulaCount: count,
+                samples,
+                samplesTruncated: count > samples.length
+            });
+        });
+    });
+    return {
+        formulaColumns: columns,
+        formulaCount,
+        formulaColumnCount: columns.length
+    };
+}
+
 function handleAuditIdentifiers() {
     const ss = getSpreadsheet();
     const specs = [
@@ -4169,6 +4229,7 @@ function handleAuditIdentifiers() {
     const vehicleReferences = auditVehicleIdReferences_(ss);
     const problemReferences = auditProblemIdReferences_(ss);
     const logoReferences = auditLogoBrandReferences_(ss);
+    const formulaAudit = auditAllFormulaIdentifierColumns_(ss);
     return {
         status: "success", readOnly: true, generatedAt: new Date().toISOString(),
         tutorialReferences, userReferences, vehicleReferences, problemReferences, logoReferences,
@@ -4177,8 +4238,10 @@ function handleAuditIdentifiers() {
             duplicateIdCount: sheets.reduce((sum, item) => sum + item.duplicateIdCount, 0),
             malformedIdCount: sheets.reduce((sum, item) => sum + item.malformedIdCount, 0),
             missingIdCount: sheets.reduce((sum, item) => sum + item.missingIdCount, 0),
-            formulaCount: sheets.reduce((sum, item) => sum + item.formulaCount, 0)
+            formulaCount: formulaAudit.formulaCount,
+            formulaColumnCount: formulaAudit.formulaColumnCount
         },
+        formulaColumns: formulaAudit.formulaColumns,
         sheets
     };
 }
