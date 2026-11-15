@@ -6,6 +6,7 @@ import { dirname, resolve } from "node:path";
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),"../..");
 const admin=fs.readFileSync(resolve(root,"JS/Services/admin.js"),"utf8");
+const write=fs.readFileSync(resolve(root,"JS/Services/write.js"),"utf8");
 function extract(name){
  const start=admin.indexOf("function "+name+"(");
  assert.ok(start>=0,"No se encontró "+name);
@@ -82,6 +83,15 @@ test("Congela valores exactos por lotes, reanuda y conserva snapshots/manifiesto
  const config=h.ss.getSheetByName("__IdentifierSequenceConfig__");
  assert.ok(config);assert.equal(config.rows.length,3);
  assert.ok(h.ss.sheets.some(s=>s.name.startsWith("__IDF_")&&s.hidden));
+});
+test("Los escritores ADMIN y WRITE no copian fórmulas al crear registros",()=>{
+ const activity=extract("recordImageAdministrationActivity");
+ assert.match(activity,/getNextAdminFormulaBasedId_\(sheet,\s*1\)/);
+ assert.doesNotMatch(activity,/copyTo\(newRowRange\)/);
+ assert.match(admin,/copyAdminRowPresentationOnly_\(sheet,\s*lastRow,\s*newRow,\s*lastColumn\)/);
+ assert.match(admin,/copyAdminRowPresentationOnly_\(sheet,\s*lastRow,\s*rowIndex,\s*lastColumn\)/);
+ assert.doesNotMatch(write,/previousRowRange\.copyTo\(newRowRange\);/);
+ assert.match(write,/previousRowRange\.copyTo\(newRowRange,\s*SpreadsheetApp\.CopyPasteType\.PASTE_FORMAT/);
 });
 test("El backend de ADMIN genera el siguiente ID desde la configuración persistida",()=>{
  const h=makeHarness(),dry=h.api.migrate({dryRun:true});
