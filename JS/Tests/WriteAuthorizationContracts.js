@@ -35,7 +35,7 @@ function runWriteAuthorizationContracts(sources) {
   const spreadsheet=()=>{spreadsheetReads++;return{getSheetByName(name){if(name==="Cortes")return{getLastRow:()=>1};return null;}};};
   const lockService={getScriptLock:()=>({waitLock(){lockAcquired++;},releaseLock(){lockReleased++;}})};
   const fn=new Function("getAuthenticatedCollaborator","getSpreadsheet","SHEET_NAMES","COLS_USERS","LockService","getNextCortesVehicleIdLocked",
-   auth+"\\n"+allocate+"\\nreturn handleAllocateVehicleId;")(
+   auth+"\n"+allocate+"\nreturn handleAllocateVehicleId;")(
    authFn,spreadsheet,{USERS:"Users",CORTES:"Cortes"},{ID:1,Privilegios:4},lockService,()=>{allocations++;return 77;});
   return{fn,stats:()=>({authCalls,roleReads,lockAcquired,lockReleased,allocations,spreadsheetReads})};
  }
