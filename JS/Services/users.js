@@ -47,7 +47,96 @@ const COLS_ACTIVE_SESSIONS = {
 // ============================================================================
 // HASH DE CONTRASEÑAS (FORMATO COMPARTIDO CON AUTH)
 // ============================================================================
-const PASSWORD_HASH_PREFIX = 'pbkdf2-sha256
+const PASSWORD_HASH_PREFIX = 'pbkdf2-sha256$';
+const LEGACY_PASSWORD_HASH_PREFIX = 'sha256$';
+const PASSWORD_KDF_ITERATIONS = 12000;
+const PASSWORD_KDF_MIN_ITERATIONS = 1000;
+const PASSWORD_KDF_MAX_ITERATIONS = 200000;
+
+function normalizePassword(password) {
+    return String(password === null || password === undefined ? '' : password).trim();
+}
+
+function digestToHex(bytes) {
+    return bytes.map(byte => ((byte + 256) % 256).toString(16).padStart(2, '0')).join('');
+}
+
+function passwordHexToBytes_(hex) {
+    const value = String(hex || '');
+    if (!/^(?:[0-9a-f]{2})+$/i.test(value)) throw new Error('Salt de contraseña inválido.');
+    const bytes = [];
+    for (let i = 0; i < value.length; i += 2) {
+        const byte = parseInt(value.slice(i, i + 2), 16);
+        bytes.push(byte > 127 ? byte - 256 : byte);
+    }
+    return bytes;
+}
+
+function pbkdf2Sha256Hex_(password, saltHex, iterations) {
+    const rounds = Number(iterations);
+    if (!Number.isInteger(rounds) || rounds < PASSWORD_KDF_MIN_ITERATIONS || rounds > PASSWORD_KDF_MAX_ITERATIONS) {
+        throw new Error('Parámetro de coste PBKDF2 fuera de límites.');
+    }
+    const key = String(password);
+    const block = passwordHexToBytes_(saltHex).concat([0, 0, 0, 1]);
+    let u = Utilities.computeHmacSha256Signature(block, key, Utilities.Charset.UTF_8);
+    const result = u.map(byte => (byte + 256) % 256);
+    for (let round = 1; round < rounds; round++) {
+        u = Utilities.computeHmacSha256Signature(u, key, Utilities.Charset.UTF_8);
+        for (let i = 0; i < result.length; i++) result[i] ^= (u[i] + 256) % 256;
+    }
+    return digestToHex(result);
+}
+
+function createPasswordHash(password) {
+    const normalizedPassword = normalizePassword(password);
+    if (normalizedPassword.length < 8) {
+        throw new Error('La contraseña debe tener al menos 8 caracteres después de quitar espacios al inicio y al final.');
+    }
+    const salt = Utilities.getUuid().replace(/-/g, '').toLowerCase();
+    if (!/^[0-9a-f]{32}$/.test(salt)) throw new Error('No se pudo generar un salt aleatorio válido.');
+    const digest = pbkdf2Sha256Hex_(normalizedPassword, salt, PASSWORD_KDF_ITERATIONS);
+    return PASSWORD_HASH_PREFIX + PASSWORD_KDF_ITERATIONS + '$' + salt + '$' + digest;
+}
+
+function constantTimeEquals(left, right) {
+    if (left.length !== right.length) return false;
+    let difference = 0;
+    for (let i = 0; i < left.length; i++) difference |= left.charCodeAt(i) ^ right.charCodeAt(i);
+    return difference === 0;
+}
+
+function verifyStoredPassword(storedPassword, providedPassword) {
+    const stored = String(storedPassword === null || storedPassword === undefined ? '' : storedPassword);
+    const normalizedPassword = normalizePassword(providedPassword);
+    if (stored.indexOf(PASSWORD_HASH_PREFIX) === 0) {
+        const parts = stored.split('$');
+        if (parts.length !== 4 || parts[0] !== 'pbkdf2-sha256' ||
+            !/^[0-9a-f]{32}$/i.test(parts[2]) || !/^[0-9a-f]{64}$/i.test(parts[3])) {
+            return { matches: false, legacy: false, needsRehash: false };
+        }
+        const iterations = Number(parts[1]);
+        if (!Number.isInteger(iterations) || iterations < PASSWORD_KDF_MIN_ITERATIONS || iterations > PASSWORD_KDF_MAX_ITERATIONS) {
+            return { matches: false, legacy: false, needsRehash: false };
+        }
+        const digest = pbkdf2Sha256Hex_(normalizedPassword, parts[2], iterations);
+        const matches = constantTimeEquals(digest, parts[3].toLowerCase());
+        return { matches, legacy: false, needsRehash: matches && iterations < PASSWORD_KDF_ITERATIONS };
+    }
+    if (stored.indexOf(LEGACY_PASSWORD_HASH_PREFIX) === 0) {
+        const parts = stored.split('$');
+        if (parts.length !== 3 || !/^[0-9a-f]{32}$/i.test(parts[1]) || !/^[0-9a-f]{64}$/i.test(parts[2])) {
+            return { matches: false, legacy: false, needsRehash: false };
+        }
+        const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, parts[1] + ':' + normalizedPassword, Utilities.Charset.UTF_8);
+        const matches = constantTimeEquals(digestToHex(digest), parts[2].toLowerCase());
+        return { matches, legacy: false, needsRehash: matches };
+    }
+    const matches = constantTimeEquals(stored, normalizedPassword);
+    return { matches, legacy: true, needsRehash: matches };
+}
+
+
 // ============================================================================
 // ROUTER PRINCIPAL (doGet y doPost)
 // ============================================================================
