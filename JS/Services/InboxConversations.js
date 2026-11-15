@@ -2,10 +2,12 @@
 const INBOX_CONVERSATIONS_SHEET_ = "InboxConversations";
 const INBOX_MESSAGES_SHEET_ = "InboxMessages";
 const INBOX_CONVERSATION_STATE_SHEET_ = "InboxConversationState";
+const INBOX_CONVERSATION_FLAGS_SHEET_ = "InboxConversationFlags";
 const INBOX_CONVERSATION_AUDIT_SHEET_ = "InboxConversationAudit";
 const INBOX_CONVERSATION_HEADERS_ = Object.freeze(["conversationId","createdAt","updatedAt","subject","category","type","status","createdById","createdByName","createdByRole","participantsJson","createKey","createHash","lastMessageId","lastMessageAt","lastMessagePreview","messageCount"]);
 const INBOX_MESSAGE_HEADERS_ = Object.freeze(["messageId","conversationId","createdAt","authorId","authorName","authorRole","body","idempotencyKey","payloadHash"]);
 const INBOX_STATE_HEADERS_ = Object.freeze(["conversationId","userId","lastReadAt","lastReadMessageId","archived","hasSent","hasReceived","updatedAt","lastReceivedMessageId","lastSentMessageId"]);
+const INBOX_FLAGS_HEADERS_ = Object.freeze(["conversationId","userId","unreadOverride","deleted","updatedAt"]);
 const INBOX_CONVERSATION_AUDIT_HEADERS_ = Object.freeze(["eventId","timestamp","actorId","actorName","action","conversationId","messageId","details"]);
 const INBOX_CATEGORIES_ = new Set(["general","soporte","acceso","contenido","instalacion","otro"]);
 const INBOX_ACTIVE_ROLES_ = new Set(["desarrollador","jefe","supervisor","tecnico","tecnico_exterior"]);
@@ -199,6 +201,42 @@ function inboxWriteState_(sheet, found, row) {
     sheet.getRange(found.rowNumber, 1, 1, INBOX_STATE_HEADERS_.length).setValues([row]);
     found.row = row;
 }
+function inboxFlagIsTrue_(value) {
+    return value === true || String(value || "").trim().toLowerCase() === "true";
+}
+function inboxFindFlag_(sheet, conversationId, userId) {
+    if (!sheet) return null;
+    const rows = inboxConversationRows_(sheet,INBOX_FLAGS_HEADERS_.length), matches = [];
+    rows.forEach((row,index) => {
+        if (String(row[0]) === conversationId && String(row[1]) === userId) matches.push({row,rowNumber:index+2});
+    });
+    if (matches.length > 1) throw new Error("Las preferencias del participante están duplicadas.");
+    return matches.length ? matches[0] : null;
+}
+function inboxEnsureFlag_(sheet, conversationId, userId, now) {
+    const found = inboxFindFlag_(sheet,conversationId,userId);
+    if (found) return found;
+    const row = [conversationId,userId,false,false,now], rowNumber = sheet.getLastRow() + 1;
+    const range = sheet.getRange(rowNumber,1,1,row.length);
+    range.setValues([row]); SpreadsheetApp.flush();
+    const saved = range.getValues()[0];
+    if (row.some((value,index) => String(saved[index]) !== String(value))) throw new Error("No se pudo confirmar el estado privado de Inbox.");
+    return {row,rowNumber};
+}
+function inboxWriteFlag_(sheet, found, row) {
+    const range = sheet.getRange(found.rowNumber,1,1,INBOX_FLAGS_HEADERS_.length);
+    range.setValues([row]); SpreadsheetApp.flush();
+    const saved = range.getValues()[0];
+    if (row.some((value,index) => String(saved[index]) !== String(value))) throw new Error("No se pudo confirmar el cambio de estado privado de Inbox.");
+    found.row = row;
+}
+function inboxAssertVisible_(sheet, conversationId, userId) {
+    const flag = inboxFindFlag_(sheet,conversationId,userId);
+    if (flag && inboxFlagIsTrue_(flag.row[3])) {
+        throw new Error("La conversación fue ocultada de tu bandeja y ya no está disponible.");
+    }
+    return flag;
+}
 function inboxFindMessageByKey_(rows, conversationId, authorId, key) {
     const matches = [];
     rows.forEach((row, index) => {
@@ -349,6 +387,7 @@ function handleSendInboxMessage(payload) {
     return withInboxConversationLock_(() => {
         const sheets = ensureInboxConversationSheets_(), conversations = inboxConversationRows_(sheets.conversations,INBOX_CONVERSATION_HEADERS_.length);
         const found = inboxFindConversation_(conversations,conversationId), participants = inboxAssertParticipant_(found.row,actor.id);
+        inboxAssertVisible_(inboxConversationSheet_(INBOX_CONVERSATION_FLAGS_SHEET_,INBOX_FLAGS_HEADERS_,false),conversationId,actor.id);
         if (String(found.row[7] || "").trim() !== actor.id) throw new Error("Solo quien inició el caso puede agregar comentarios.");
         if (String(found.row[6]) !== "open") throw new Error("El caso está cerrado y no admite más comentarios.");
         const messages = inboxConversationRows_(sheets.messages,INBOX_MESSAGE_HEADERS_.length);
@@ -388,6 +427,8 @@ function handleGetInboxConversations(payload) {
         if (!convSheet || !stateSheet) return {status:"success",data:[],counts:{received:0,unread:0,sent:0,archived:0},total:0,nextCursor:null,hasMore:false,pageSize};
         const conversations = inboxConversationRows_(convSheet,INBOX_CONVERSATION_HEADERS_.length);
         const stateRows = inboxConversationRows_(stateSheet,INBOX_STATE_HEADERS_.length);
+        const flagsSheet = inboxConversationSheet_(INBOX_CONVERSATION_FLAGS_SHEET_,INBOX_FLAGS_HEADERS_,false);
+        const flagRows = inboxConversationRows_(flagsSheet,INBOX_FLAGS_HEADERS_.length);
         const messageSheet = inboxConversationSheet_(INBOX_MESSAGES_SHEET_,INBOX_MESSAGE_HEADERS_,false);
         const messageRows = inboxConversationRows_(messageSheet,INBOX_MESSAGE_HEADERS_.length);
         const messagesByConversation = new Map();
@@ -404,16 +445,28 @@ function handleGetInboxConversations(payload) {
                 stateMap.set(key,row);
             }
         });
+        const flagsMap = new Map();
+        flagRows.forEach(row => {
+            if (String(row[1]) === actor.id) {
+                const key = String(row[0]) + "|" + actor.id;
+                if (flagsMap.has(key)) throw new Error("Las preferencias del participante están duplicadas.");
+                flagsMap.set(key,row);
+            }
+        });
         const summaries = conversations.filter(row => {
             try { return inboxParticipants_(row).some(user => user.id === actor.id); } catch (_) { return false; }
         }).map(row => {
             const participants = inboxParticipants_(row), other = participants.filter(user => user.id !== actor.id);
             const state = stateMap.get(String(row[0]) + "|" + actor.id) || [];
+            const flag = flagsMap.get(String(row[0]) + "|" + actor.id) || [];
+            if (inboxFlagIsTrue_(flag[3])) return null;
             const conversationMessages = messagesByConversation.get(String(row[0])) || [];
             const lastReadMessageId = String(state[3] || "");
             const readIndex = lastReadMessageId ? conversationMessages.findIndex(message => String(message[0]) === lastReadMessageId) : -1;
             if (lastReadMessageId && readIndex < 0) throw new Error("El marcador de lectura no pertenece al historial de la conversación.");
-            const unreadCount = conversationMessages.slice(readIndex + 1).filter(message => String(message[3]) !== actor.id).length;
+            const incomingUnreadCount = conversationMessages.slice(readIndex + 1).filter(message => String(message[3]) !== actor.id).length;
+            const isMarkedUnread = inboxFlagIsTrue_(flag[2]);
+            const unreadCount = Math.max(incomingUnreadCount,isMarkedUnread ? 1 : 0);
             return {
                 conversationId:String(row[0]),subject:String(row[3] || ""),category:String(row[4] || "general"),
                 type:String(row[5] || "direct"),status:String(row[6] || "open"),createdAt:String(row[1] || ""),
@@ -422,9 +475,9 @@ function handleGetInboxConversations(payload) {
                 lastMessageAuthorName:String((conversationMessages.find(message => String(message[0]) === String(row[13])) || [])[4] || ""),
                 lastMessageAuthorId:String((conversationMessages.find(message => String(message[0]) === String(row[13])) || [])[3] || ""),
                 otherParticipants:other.map(user => ({id:user.id,name:String(user.name || ""),role:String(user.role || "")})),
-                unreadCount,archived:state[4] === true,hasSent:state[5] === true,hasReceived:state[6] === true
+                unreadCount,isMarkedUnread,archived:state[4] === true,hasSent:state[5] === true,hasReceived:state[6] === true
             };
-        });
+        }).filter(Boolean);
         const counts = summaries.reduce((result,item) => {
             if (item.archived) result.archived++;
             else { if (item.hasReceived) result.received++; if (item.unreadCount > 0) result.unread++; if (item.hasSent) result.sent++; }
@@ -481,6 +534,7 @@ function handleGetInboxMessages(payload) {
         if (!convSheet || !messageSheet) throw new Error("No se encontró la conversación.");
         const found = inboxFindConversation_(inboxConversationRows_(convSheet,INBOX_CONVERSATION_HEADERS_.length),conversationId);
         inboxAssertParticipant_(found.row,actor.id);
+        inboxAssertVisible_(inboxConversationSheet_(INBOX_CONVERSATION_FLAGS_SHEET_,INBOX_FLAGS_HEADERS_,false),conversationId,actor.id);
         const messages = inboxConversationRows_(messageSheet,INBOX_MESSAGE_HEADERS_.length)
             .filter(row => String(row[1]) === conversationId);
         // ScriptLock serializa las escrituras y la hoja conserva el orden de inserción.
@@ -510,7 +564,12 @@ function handleMarkInboxRead(payload) {
         const sheets = ensureInboxConversationSheets_();
         const found = inboxFindConversation_(inboxConversationRows_(sheets.conversations,INBOX_CONVERSATION_HEADERS_.length),conversationId);
         inboxAssertParticipant_(found.row,actor.id);
-        const state = inboxEnsureState_(sheets.states,conversationId,actor.id,new Date().toISOString()), row = state.row.slice();
+        const flagsSheet = inboxConversationSheet_(INBOX_CONVERSATION_FLAGS_SHEET_,INBOX_FLAGS_HEADERS_,false);
+        inboxAssertVisible_(flagsSheet,conversationId,actor.id);
+        const now = new Date().toISOString();
+        const state = inboxEnsureState_(sheets.states,conversationId,actor.id,now), row = state.row.slice();
+        const flag = inboxFindFlag_(flagsSheet,conversationId,actor.id);
+        const wasMarkedUnread = Boolean(flag && inboxFlagIsTrue_(flag.row[2]));
         const messages = inboxConversationRows_(sheets.messages,INBOX_MESSAGE_HEADERS_.length).filter(item => String(item[1]) === conversationId);
         const throughId = String(payload.throughMessageId || "");
         const requestedIndex = throughId ? messages.findIndex(item => String(item[0]) === throughId) : messages.length - 1;
@@ -518,15 +577,78 @@ function handleMarkInboxRead(payload) {
         const previousMarker = String(row[3] || "");
         const previousIndex = previousMarker ? messages.findIndex(item => String(item[0]) === previousMarker) : -1;
         if (previousMarker && previousIndex < 0) throw new Error("El marcador de lectura no pertenece al historial de la conversación.");
-        // Los reintentos y las respuestas tardías nunca deben hacer retroceder la lectura.
-        const effectiveIndex = Math.max(previousIndex, requestedIndex);
+        const effectiveIndex = Math.max(previousIndex,requestedIndex);
         row[2] = effectiveIndex >= 0 ? messages[effectiveIndex][2] : "";
         row[3] = effectiveIndex >= 0 ? String(messages[effectiveIndex][0]) : "";
-        row[7] = new Date().toISOString();
+        row[7] = now;
         inboxWriteState_(sheets.states,state,row);
+        if (wasMarkedUnread) {
+            const flagRow = flag.row.slice(); flagRow[2] = false; flagRow[4] = now;
+            inboxWriteFlag_(flagsSheet,flag,flagRow);
+        }
         const unread = messages.slice(effectiveIndex + 1).filter(item => String(item[3]) !== actor.id).length;
-        if (previousMarker !== row[3]) inboxAppendAudit_(sheets.audit,actor,"read",conversationId,row[3],"Lectura confirmada hasta el mensaje indicado.");
+        if (previousMarker !== row[3] || wasMarkedUnread) inboxAppendAudit_(sheets.audit,actor,"read",conversationId,row[3],"Lectura confirmada hasta el mensaje indicado.");
         return {status:"success",conversationId,unreadCount:unread};
+    });
+}
+function handleMarkInboxUnread(payload) {
+    const actor = inboxConversationActor_(payload), conversationId = String(payload.conversationId || "").trim();
+    if (!conversationId || conversationId.length > 100) throw new Error("La conversación no es válida.");
+    return withInboxConversationLock_(() => {
+        const sheets = ensureInboxConversationSheets_();
+        const found = inboxFindConversation_(inboxConversationRows_(sheets.conversations,INBOX_CONVERSATION_HEADERS_.length),conversationId);
+        inboxAssertParticipant_(found.row,actor.id);
+        const existingFlagsSheet = inboxConversationSheet_(INBOX_CONVERSATION_FLAGS_SHEET_,INBOX_FLAGS_HEADERS_,false);
+        const existingFlag = inboxFindFlag_(existingFlagsSheet,conversationId,actor.id);
+        if (existingFlag && inboxFlagIsTrue_(existingFlag.row[3])) throw new Error("La conversación fue ocultada de tu bandeja y ya no está disponible.");
+        const messages = inboxConversationRows_(sheets.messages,INBOX_MESSAGE_HEADERS_.length).filter(item => String(item[1]) === conversationId);
+        if (!messages.some(item => String(item[3]) !== actor.id)) {
+            throw new Error("No hay mensajes recibidos que se puedan marcar como no leídos.");
+        }
+        const state = inboxFindState_(sheets.states,conversationId,actor.id);
+        const lastReadMessageId = String(state && state.row[3] || "");
+        const readIndex = lastReadMessageId ? messages.findIndex(item => String(item[0]) === lastReadMessageId) : -1;
+        if (lastReadMessageId && readIndex < 0) throw new Error("El marcador de lectura no pertenece al historial de la conversación.");
+        const unreadCount = Math.max(1,messages.slice(readIndex + 1).filter(item => String(item[3]) !== actor.id).length);
+        const flagsSheet = existingFlagsSheet || inboxConversationSheet_(INBOX_CONVERSATION_FLAGS_SHEET_,INBOX_FLAGS_HEADERS_,true);
+        const flag = existingFlag || inboxEnsureFlag_(flagsSheet,conversationId,actor.id,new Date().toISOString());
+        const changed = !inboxFlagIsTrue_(flag.row[2]);
+        if (changed) {
+            const previous = flag.row.slice(), row = flag.row.slice(), now = new Date().toISOString();
+            row[2] = true; row[4] = now;
+            inboxWriteFlag_(flagsSheet,flag,row);
+            try {
+                inboxAppendAudit_(sheets.audit,actor,"mark_unread",conversationId,"","Conversación marcada como no leída para este participante.");
+            } catch (error) {
+                try { inboxWriteFlag_(flagsSheet,flag,previous); }
+                catch (rollbackError) { console.error("No se pudo revertir el marcador no leído tras fallar la auditoría:",rollbackError); }
+                throw error;
+            }
+        }
+        return {status:"success",conversationId,markedUnread:true,alreadyMarkedUnread:!changed,unreadCount};
+    });
+}
+function handleDeleteInboxConversation(payload) {
+    const actor = inboxConversationActor_(payload), conversationId = String(payload.conversationId || "").trim();
+    if (!conversationId || conversationId.length > 100) throw new Error("La conversación no es válida.");
+    return withInboxConversationLock_(() => {
+        const sheets = ensureInboxConversationSheets_();
+        const found = inboxFindConversation_(inboxConversationRows_(sheets.conversations,INBOX_CONVERSATION_HEADERS_.length),conversationId);
+        inboxAssertParticipant_(found.row,actor.id);
+        const flagsSheet = inboxConversationSheet_(INBOX_CONVERSATION_FLAGS_SHEET_,INBOX_FLAGS_HEADERS_,true);
+        const flag = inboxEnsureFlag_(flagsSheet,conversationId,actor.id,new Date().toISOString());
+        if (inboxFlagIsTrue_(flag.row[3])) return {status:"success",conversationId,deleted:true,alreadyDeleted:true};
+        const previous = flag.row.slice(), row = flag.row.slice(), now = new Date().toISOString();
+        row[2] = false; row[3] = true; row[4] = now;
+        inboxWriteFlag_(flagsSheet,flag,row);
+        try {
+            inboxAppendAudit_(sheets.audit,actor,"delete",conversationId,"","Conversación ocultada solo para este participante; se conserva el historial.");
+        } catch (error) {
+            try { inboxWriteFlag_(flagsSheet,flag,previous); }
+            catch (rollbackError) { console.error("No se pudo revertir la ocultación tras fallar la auditoría:",rollbackError); }
+            throw error;
+        }
+        return {status:"success",conversationId,deleted:true,alreadyDeleted:false};
     });
 }
 function handleArchiveInboxConversation(payload) {
@@ -536,6 +658,7 @@ function handleArchiveInboxConversation(payload) {
         const sheets = ensureInboxConversationSheets_();
         const found = inboxFindConversation_(inboxConversationRows_(sheets.conversations,INBOX_CONVERSATION_HEADERS_.length),conversationId);
         inboxAssertParticipant_(found.row,actor.id);
+        inboxAssertVisible_(inboxConversationSheet_(INBOX_CONVERSATION_FLAGS_SHEET_,INBOX_FLAGS_HEADERS_,false),conversationId,actor.id);
         const state = inboxEnsureState_(sheets.states,conversationId,actor.id,new Date().toISOString()), row = state.row.slice();
         const changed = row[4] !== payload.archived;
         row[4] = payload.archived; row[7] = new Date().toISOString();
@@ -554,6 +677,7 @@ function handleCloseInboxConversation(payload) {
         const sheets = ensureInboxConversationSheets_();
         const found = inboxFindConversation_(inboxConversationRows_(sheets.conversations,INBOX_CONVERSATION_HEADERS_.length),conversationId);
         inboxAssertParticipant_(found.row,actor.id);
+        inboxAssertVisible_(inboxConversationSheet_(INBOX_CONVERSATION_FLAGS_SHEET_,INBOX_FLAGS_HEADERS_,false),conversationId,actor.id);
         if (String(found.row[6]) === "closed") return {status:"success",conversationId,closed:true,alreadyClosed:true};
         if (String(found.row[6]) !== "open") throw new Error("El estado del caso no permite cerrarlo.");
         const now = new Date().toISOString(), row = found.row.slice();
