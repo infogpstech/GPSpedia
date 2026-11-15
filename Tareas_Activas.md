@@ -887,3 +887,18 @@ Las fuentes de servicios JavaScript se centralizan bajo `JS/Services/`. La carpe
 - Se sincronizó `JS/Tests/Auth.js` con `JS/Services/Auth.js` y se actualizaron `Services/COORDINATOR_SETUP.md` y `README.md`.
 - **No ejecutado en esta sesión:** Node.js/CLI local, CI integral y pruebas Beta reales. No se declara PASS hasta disponer de esos resultados.
 - **Pendiente:** ejecutar las 100+ suites, `node --check`, GitHub Actions, revisar el resultado y corregir cualquier regresión. Después validar login, múltiples dispositivos, logout individual, revocación global, cambio de rol, expiración y recuperación de sesiones en Beta. No desplegar Apps Script ni modificar datos productivos sin autorización.
+
+
+## Adenda P1 — contratos de coordinación y aceptación de términos (2026-11-15)
+
+**Estado: CORREGIDO EN CÓDIGO; VALIDACIÓN CI PENDIENTE.**
+
+- [x] Evitar que `AUTH/acceptTerms` herede una reserva de escritura de `ACTIVE_SESSIONS`; la operación usa lectura de `SESSION_CONTEXTS` y escritura de `USERS`.
+- [x] Actualizar el contrato de aceptación de términos para comprobar el contexto central de solo lectura.
+- [x] Actualizar USERS para comprobar que `sessionActivity` lee identidad/contexto sin exigir escritura en `ACTIVE_SESSIONS`.
+- [x] Actualizar el contrato de inventario/escáner ADMIN: las lecturas usan `SESSION_CONTEXTS`; no actualizan actividad por cada consulta.
+- [ ] Ejecutar node --check y la suite integral Node.js 22 en el HEAD actual.
+- [ ] Confirmar GitHub Actions asociado al HEAD y resolver cualquier regresión restante.
+- [ ] Validar en Beta login, restauración de sesión previa, múltiples dispositivos, logout individual, revocación global, cambio de rol, expiración y tokens obsoletos.
+
+Commits: `64f47f037f6c326a38d479e81527f7054d18f583`, `e1cf604f6dd6fa1a0594b8aa0fc3d8572db4ed10`, `df17da845f68d70c7c3fae747467ece9cb49b66b`, `2b671a5113eba058646e55037a72d80e98a29202`. No se modificó la rama base ni se desplegó Apps Script.
