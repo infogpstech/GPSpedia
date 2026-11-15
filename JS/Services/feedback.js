@@ -630,7 +630,7 @@ function doPost(e) {
     if (!request || typeof request !== "object") return doPostInternal_(e);
     const action = String(request.action || "");
     const payload = request.payload && typeof request.payload === "object" ? request.payload : {};
-    const sessionOptions = { session: { userId: payload.userId, sessionToken: payload.sessionToken } };
+    const sessionOptions = { session: { sessionToken: payload.sessionToken } };
     if (!isSharedMutationAction_(action)) {
         if (!Object.prototype.hasOwnProperty.call(FEEDBACK_ACTION_PERMISSIONS, action) || FEEDBACK_PUBLIC_ACTIONS.has(action)) {
             return doPostInternal_(withSharedSessionActor_(e, null));

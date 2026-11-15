@@ -234,7 +234,7 @@ function doPost(e) {
     if (!request || typeof request !== "object") return doPostInternal_(e);
     const action = String(request.action || "");
     const payload = request.payload && typeof request.payload === "object" ? request.payload : {};
-    const sessionOptions = { session: { userId: payload.userId, sessionToken: payload.sessionToken } };
+    const sessionOptions = { session: { sessionToken: payload.sessionToken } };
     if (!isSharedMutationAction_(action)) {
         if (action !== "getUsers") return doPostInternal_(withSharedSessionActor_(e, null));
         try {
