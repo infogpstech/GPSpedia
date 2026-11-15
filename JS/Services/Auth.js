@@ -878,7 +878,7 @@ function sharedSessionTimestamp_(value) {
     return timestamp;
 }
 
-function syncSharedSessionContextsForUser_(userId, role, fullName) {
+function syncSharedSessionContextsForUser_(userId, role, fullName, currentSessionToken) {
     const normalizedId = normalizeUserId(userId);
     const normalizedRole = normalizeRoleName(role);
     if (!normalizedId || !["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"].includes(normalizedRole)) {
@@ -886,23 +886,40 @@ function syncSharedSessionContextsForUser_(userId, role, fullName) {
     }
     const sessionsSheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
     if (!sessionsSheet) throw new Error("No se encontró ActiveSessions para sincronizar el contexto compartido.");
-    const rows = sessionsSheet.getDataRange().getValues().slice(1).filter(row =>
-        normalizeUserId(row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]) === normalizedId &&
-        String(row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || "").trim() &&
-        !getSessionExpirationStatus_(row, new Date()).expired
-    );
-    if (!rows.length) throw new Error("No hay sesiones activas que registrar en el contexto compartido.");
+    const rows = sessionsSheet.getDataRange().getValues().slice(1)
+        .map((row, index) => ({ row, rowIndex: index + 2 }))
+        .filter(item => normalizeUserId(item.row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]) === normalizedId &&
+            String(item.row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || "").trim());
     if (rows.length > 5) throw new Error("La cuenta supera el límite seguro de sesiones compartidas.");
-    revokeSharedUserSessionContexts_(normalizedId);
-    rows.forEach(row => {
-        const token = String(row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || "");
-        const createdAt = sharedSessionTimestamp_(row[COLS_ACTIVE_SESSIONS.date - 1]);
-        const activityValue = row[COLS_ACTIVE_SESSIONS.LastActivityAt - 1] || row[COLS_ACTIVE_SESSIONS.date - 1];
-        const lastActivityAt = sharedSessionTimestamp_(activityValue);
-        registerSharedSessionContext_(normalizedId, token, normalizedRole, String(fullName || ""), createdAt, lastActivityAt);
+
+    const sessions = [], malformedTokens = [];
+    rows.forEach(item => {
+        const token = String(item.row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || "");
+        try {
+            const createdAt = sharedSessionTimestamp_(item.row[COLS_ACTIVE_SESSIONS.date - 1]);
+            const activityValue = item.row[COLS_ACTIVE_SESSIONS.LastActivityAt - 1] || item.row[COLS_ACTIVE_SESSIONS.date - 1];
+            const lastActivityAt = sharedSessionTimestamp_(activityValue);
+            sessions.push({ token, createdAt, lastActivityAt });
+        } catch (error) {
+            malformedTokens.push(token);
+        }
     });
-    return { registered: rows.length };
+
+    const synchronized = syncSharedUserSessionContexts_(normalizedId, normalizedRole, String(fullName || ""), sessions);
+    if (!synchronized || synchronized.status !== "success" || !Array.isArray(synchronized.acceptedTokens)) {
+        throw new Error("No se pudo confirmar la sincronización central de sesiones.");
+    }
+    const rejected = new Set([...(synchronized.rejectedTokens || []), ...malformedTokens]);
+    rows.forEach(item => {
+        const token = String(item.row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || "");
+        if (rejected.has(token)) sessionsSheet.getRange(item.rowIndex, COLS_ACTIVE_SESSIONS.ActiveSessions).clearContent();
+    });
+    if (!synchronized.acceptedTokens.includes(String(currentSessionToken || ""))) {
+        throw new Error("La sesión fue revocada o expiró antes de sincronizarse. Inicia sesión nuevamente.");
+    }
+    return { registered: synchronized.synced, epoch: synchronized.epoch };
 }
+
 
 function handleLogin(payload) {
     let normalizedUsername = '';
@@ -1027,7 +1044,8 @@ function handleLogin(payload) {
         syncSharedSessionContextsForUser_(
             userId,
             foundUserRow[COLS_USERS.Privilegios - 1],
-            foundUserRow[COLS_USERS.Nombre_Completo - 1]
+            foundUserRow[COLS_USERS.Nombre_Completo - 1],
+            sessionToken
         );
 
         const user = {
@@ -1147,7 +1165,8 @@ function handleValidateSession(payload) {
             syncSharedSessionContextsForUser_(
                 userId,
                 legacyValidation.profile.Privilegios,
-                legacyValidation.profile.Nombre_Completo
+                legacyValidation.profile.Nombre_Completo,
+                sessionToken
             );
             sharedContext = validateSharedSessionContext_(userId, sessionToken);
         }
