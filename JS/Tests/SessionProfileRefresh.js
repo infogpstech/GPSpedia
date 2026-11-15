@@ -49,9 +49,10 @@ function runSessionProfileRefreshTests(sources) {
   assert(!dispatch.includes('touchProtectedAuthRequestSession_'));
   assert(!dispatch.includes('validateAndTouchSession_')&&!dispatch.includes('validateSessionReadOnly_'));
   assert(accept.includes('lock.waitLock(10000)'));
-  assert(accept.includes('findSessionRowsByTokenUnderLock_(sessionsSheet, sessionToken)'));
-  assert(accept.includes('getSessionExpirationStatus_(session.row, new Date())'));
-  assert(accept.includes('hasPendingRoleRevocation_(userId, usersSheet)'));
+  assert(accept.includes('requireSharedAuthActor_('));
+  assert(!accept.includes('findSessionRowsByTokenUnderLock_'));
+  assert(!accept.includes('getSessionExpirationStatus_'));
+  assert(!accept.includes('hasPendingRoleRevocation_'));
   assert(!accept.includes('LastActivityAt'));
  });
  run('Rechaza respuesta válida cuyo perfil pertenece a otra cuenta',()=>{const i=client.indexOf('async function validateSessionCoordinated('),j=client.indexOf('\nfunction loadUserLocalActivity',i);assert(i>=0&&j>i);const f=client.slice(i,j);assert(f.includes("Object.prototype.hasOwnProperty.call(result,'profile')"));assert(f.includes("reason:'profile_identity_mismatch'"));assert(f.indexOf("reason:'profile_identity_mismatch'")<f.indexOf('persistSessionValidation(user,result)'));});
