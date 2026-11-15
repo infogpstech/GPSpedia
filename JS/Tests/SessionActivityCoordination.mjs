@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 const root=resolve(dirname(fileURLToPath(import.meta.url)),"../..");
 const read=path=>fs.readFileSync(resolve(root,path),"utf8");
-const api=read("JS/Frontend/api-config.js"),write=read("JS/Services/write.js"),users=read("JS/Services/users.js"),admin=read("JS/Services/admin.js"),feedback=read("JS/Services/feedback.js"),auth=read("JS/Services/Auth.js"),coordinator=read("JS/Services/Coordinator.js");
+const api=read("JS/Frontend/api-config.js"),write=read("JS/Services/write.js"),users=read("JS/Services/users.js"),admin=read("JS/Services/admin.js"),feedback=read("JS/Services/feedback.js"),auth=read("JS/Services/Auth.js"),coordinator=read("JS/Services/Coordinator.js"),client=read("JS/Services/SharedMutationClient.js");
 let passed=0;function testCase(name,fn){fn();passed++;console.log("PASS "+name);}
 testCase("WRITE coordina las operaciones protegidas y actualiza actividad dentro de la sesión validada",()=>{
  assert.match(write,/function isSharedMutationAction_\(action\)\s*\{\s*return \["addOrUpdateCut","addSupplementaryInfo","addVinToVehicle","allocateVehicleId","freezeCortesIds"\]/);
@@ -84,4 +84,28 @@ testCase("Coordinator reserva ActiveSessions y permite solo las dos operaciones 
  assert.match(coordinator,/migrateIdentifiers:\s*\{ maintenance: true \}/);
  assert.match(coordinator,/rollbackIdentifiers:\s*\{ maintenance: true \}/);
 });
+
+testCase("El contexto central de sesión se registra al login, se revoca y se reutiliza en los servicios",()=>{
+ assert.match(auth,/syncSharedSessionContextsForUser_\(/);
+ assert.match(auth,/registerSharedSessionContext_\(/);
+ assert.match(auth,/revokeSharedUserSessionContexts_\(/);
+ assert.match(auth,/revokeSharedSessionContext_\(/);
+ assert.match(auth,/validateSharedSessionContext_\(userId, sessionToken\)/);
+ assert.match(coordinator,/function registerSession_\(/);
+ assert.match(coordinator,/function revokeSession_\(/);
+ assert.match(coordinator,/function revokeUserSessions_\(/);
+ assert.match(coordinator,/function authorizeSession_\(/);
+ assert.match(coordinator,/function validateSessionContext_\(/);
+ assert.match(client,/options && options\.session/);
+ assert.match(client,/function withSharedSessionActor_\(/);
+ for(const source of [users,write,admin,feedback]){
+  assert.match(source,/sessionOptions = \{ session: \{ userId: payload\.userId, sessionToken: payload\.sessionToken \} \}/);
+  assert.match(source,/withSharedSessionActor_\(e, actor\)/);
+ }
+ assert.match(users,/payload && payload\.__sharedSessionActor/);
+ assert.match(write,/payload&&payload\.__sharedSessionActor/);
+ assert.match(admin,/payload&&payload\.__sharedSessionActor/);
+ assert.match(feedback,/payload&&payload\.__sharedSessionActor/);
+});
+
 console.log("SessionActivityCoordination: "+passed+"/"+passed+" PASS");
