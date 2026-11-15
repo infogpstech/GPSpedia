@@ -912,7 +912,10 @@ function syncSharedSessionContextsForUser_(userId, role, fullName, currentSessio
     const rejected = new Set([...(synchronized.rejectedTokens || []), ...malformedTokens]);
     rows.forEach(item => {
         const token = String(item.row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || "");
-        if (rejected.has(token)) sessionsSheet.getRange(item.rowIndex, COLS_ACTIVE_SESSIONS.ActiveSessions).clearContent();
+        if (rejected.has(token)) {
+            revokeSharedSessionContext_(normalizedId, token);
+            sessionsSheet.getRange(item.rowIndex, COLS_ACTIVE_SESSIONS.ActiveSessions).clearContent();
+        }
     });
     if (!synchronized.acceptedTokens.includes(String(currentSessionToken || ""))) {
         throw new Error("La sesión fue revocada o expiró antes de sincronizarse. Inicia sesión nuevamente.");
