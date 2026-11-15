@@ -764,3 +764,15 @@ Estado: IMPLEMENTADO; CI PENDIENTE.
 - No se debilitó la autenticación ni la autorización, y no se tocaron datos ni despliegues productivos.
 
 - CI Node.js 22 run `43684916807`: SUCCESS; 100 suites / 1,525 pruebas / 0 fallos. GitHub Pages run `43684916573`: SUCCESS.
+
+
+AUD-2026-11-15-39 — CONTEXTO CENTRAL DE SESIÓN E INVALIDACIÓN POR EPOCH
+Severidad: Seguridad / rendimiento / coordinación de autenticación.
+Estado: IMPLEMENTADO EN RAMA; VALIDACIÓN AUTOMATIZADA Y BETA PENDIENTES.
+- Se reemplazó la validación repetida contra Users/ActiveSessions en los servicios protegidos por un contexto central mantenido en ScriptProperties del Coordinator. El actor se entrega junto con la lease; el cliente no puede inyectar `__sharedSessionActor` ni `__feedbackActor`.
+- Se incorporó `syncUserSessions` para reconciliar sesiones vigentes, limpiar índices obsoletos y preservar las sesiones activas de otros dispositivos. `revokedBefore` y el epoch impiden reactivar tokens anteriores a una revocación global aunque queden filas residuales en ActiveSessions.
+- Logout revoca el token individual. Cambio de rol, cambio/restablecimiento de contraseña, eliminación y reset global revocan todas las sesiones. Las operaciones protegidas reservan el recurso lógico SESSION_CONTEXTS; las operaciones de revocación lo reservan en escritura para impedir intercalación.
+- USERS, WRITE, ADMIN, FEEDBACK y UTILITIES reutilizan el actor central y dejan de reservar/escribir ActiveSessions en cada acción. AUTH conserva la sincronización de actividad en login, restauración y operaciones sensibles.
+- Se agregó cobertura para sincronización, tokens sin userId, revocación, actor confiable, sanitización y concurrencia en SharedMutationCoordinator y SessionActivityCoordination. El espejo JS/Tests/Auth.js se sincronizó.
+- Se actualizó Services/COORDINATOR_SETUP.md y README.md. El código no se ha desplegado y no se han tocado datos productivos.
+- Node.js/CLI y CI integral no se ejecutaron/verificaron en esta sesión. No afirmar PASS hasta ejecutar la suite completa y revisar GitHub Actions. La integración Beta debe comprobar login, múltiples dispositivos, logout individual, revocación global, cambio de rol, expiración y recuperación de sesiones.
