@@ -413,4 +413,47 @@ run("Los reintentos idempotentes no retroceden el último mensaje cuando hay mar
     assert.equal(messages.length,3);
     assert.equal(second.messageId,messages[1][0]);
 });
+
+run("Los cursores inválidos se rechazan antes de consultar páginas", () => {
+    assert.throws(() => api.handleGetInboxConversations({
+        ...actor("U1","token-a"),folder:"sent",cursor:"cursor inválido"
+    }),/cursor no es válido/i);
+    assert.throws(() => api.handleGetInboxMessages({
+        ...actor("U1","token-a"),conversationId:first.conversationId,cursor:"cursor inválido"
+    }),/cursor no es válido/i);
+});
+run("El historial rechaza un cursor ancla cuyo mensaje ya no existe", () => {
+    assert.throws(() => api.handleGetInboxMessages({
+        ...actor("U1","token-a"),conversationId:first.conversationId,cursor:"message-anchor-expired-0001"
+    }),/cursor del historial expiró/i);
+});
+run("La paginación de conversaciones mantiene el desempate estable por ID con timestamps iguales", () => {
+    const one = api.handleCreateInboxConversation({
+        ...actor("U1","token-a"),recipientId:"U3",subject:"Cursor igual uno",category:"general",
+        body:"Primera conversación de prueba.",idempotencyKey:"cursor-tie-create-01"
+    });
+    const two = api.handleCreateInboxConversation({
+        ...actor("U1","token-a"),recipientId:"U3",subject:"Cursor igual dos",category:"general",
+        body:"Segunda conversación de prueba.",idempotencyKey:"cursor-tie-create-02"
+    });
+    const sheet = spreadsheet.getSheetByName("InboxConversations");
+    const sameTimestamp = "2097-04-05T06:07:08.000Z";
+    for (const id of [one.conversationId,two.conversationId]) {
+        const row = sheet.rows.find(item => item[0] === id);
+        row[2] = sameTimestamp;
+        row[14] = sameTimestamp;
+    }
+    const firstPage = api.handleGetInboxConversations({
+        ...actor("U1","token-a"),folder:"sent",query:"cursor igual",pageSize:1,cursor:"0"
+    });
+    assert.equal(firstPage.data.length,1);
+    assert.equal(firstPage.data[0].conversationId,[one.conversationId,two.conversationId].sort().reverse()[0]);
+    assert.ok(firstPage.nextCursor);
+    const secondPage = api.handleGetInboxConversations({
+        ...actor("U1","token-a"),folder:"sent",query:"cursor igual",pageSize:1,cursor:firstPage.nextCursor
+    });
+    assert.equal(secondPage.data.length,1);
+    assert.equal(secondPage.data[0].conversationId,[one.conversationId,two.conversationId].sort()[0]);
+    assert.notEqual(firstPage.data[0].conversationId,secondPage.data[0].conversationId);
+});
 console.log("InboxConversations: " + passed + "/" + passed + " PASS");
