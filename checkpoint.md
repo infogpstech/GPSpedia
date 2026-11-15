@@ -348,3 +348,15 @@
 - Commit inicial de implementación: `4f5a4dfe73333027d157fdd7505514ffc6ae7b11`.
 - CI Node.js 22 run `43672294645`: sintaxis PASS; la suite integral detectó `ReferenceError: messageRows is not defined` en `handleSendInboxMessage`, porque ese flujo denomina `messages` al arreglo de filas. El resto de suites ejecutadas antes del fallo pasó; la regresión nueva aún no llegó a ejecutarse.
 - Corrección preparada: la llamada de `handleSendInboxMessage` pasa su arreglo `messages`; la llamada de creación conserva `messageRows`. Se repetirá CI y se actualizará este registro con el resultado real.
+
+
+## Cierre local — GP-INBOX consistencia del resumen en reintentos idempotentes (2026-11-15)
+
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
+
+- Commits de implementación/corrección: `4f5a4dfe73333027d157fdd7505514ffc6ae7b11` y `826725f9bf93aba171357950849ec4ed6d73fc81`.
+- El primer CI detectó y permitió corregir una referencia de variable errónea en el handler de envío. El CI posterior aprobó: run `43672378358`, Node.js 22, sintaxis PASS, **99 suites / 1,501 pruebas / 0 fallos**. `InboxConversations` 33/33 PASS; la regresión de timestamps iguales y replay se ejecutó correctamente.
+- GitHub Pages build run `43672377873`: build PASS; deployment se encontraba en curso al momento de este registro, por lo que no se declara completado todavía.
+- Se corrigió la comparación por timestamp para que el resumen siga el orden de inserción serializado por ScriptLock y el contador se derive de las filas persistidas.
+- No se añadieron controles visibles, endpoints, permisos ni cambios externos. La validación con Spreadsheet/Coordinator reales permanece diferida a Beta.
+- La tarea mayor GP-INBOX-04B sigue EN PROGRESO por las operaciones masivas y controles de interfaz diferidos; esta subcorrección interna sí queda cerrada localmente.

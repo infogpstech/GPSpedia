@@ -670,3 +670,10 @@ Estado: CORRECCIÓN LOCAL PREPARADA; CI PENDIENTE.
 
 
 [2026-11-15] Adenda AUD-2026-11-15-30 — el primer CI detectó un error de integración de la corrección: la llamada de handleSendInboxMessage recibió el identificador de variable messageRows, que no existe en ese handler (usa messages). node --check pasó, pero InboxConversations falló con ReferenceError. Se corrigió el argumento en la llamada; la regresión específica aún no se ejecutó en un CI aprobado. Estado permanece CORRECCIÓN EN VALIDACIÓN.
+
+
+[2026-11-15] Cierre AUD-2026-11-15-30 — reintentos idempotentes de Inbox
+- Corrección final publicada en `826725f9bf93aba171357950849ec4ed6d73fc81`; la llamada de envío pasa el arreglo `messages` correcto.
+- CI Node.js 22 run `43672378358`: SUCCESS; 99 suites / 1,501 pruebas / 0 fallos; `InboxConversations` 33/33 PASS; sintaxis PASS.
+- La regresión fuerza timestamps iguales en tres mensajes y repite dos operaciones anteriores; confirma que el último ID, preview y contador no retroceden ni se duplican.
+- Estado: HALLAZGO CORREGIDO EN RAMA; integración real con Spreadsheet/Coordinator queda diferida a Beta.

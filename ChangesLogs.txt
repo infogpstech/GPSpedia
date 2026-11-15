@@ -409,3 +409,9 @@
 2026-11-15 — Corrección de referencia en el flujo de envío Inbox
 - JS/Services/InboxConversations.js: handleSendInboxMessage ahora pasa su arreglo local `messages` al helper de actualización del resumen; handleCreateInboxConversation conserva `messageRows`.
 - La primera ejecución CI encontró el ReferenceError antes de ejecutar la regresión nueva. Validación posterior pendiente.
+
+
+2026-11-15 — Validación de consistencia de reintentos idempotentes Inbox
+- GitHub Actions Node.js 22 run `43672378358`: SUCCESS; sintaxis PASS; 99 suites / 1,501 pruebas / 0 fallos. InboxConversations 33/33 PASS, incluida la nueva regresión de timestamps iguales.
+- La primera ejecución falló por una referencia de variable incorrecta en handleSendInboxMessage; se corrigió antes de la ejecución aprobada.
+- GitHub Pages run `43672377873`: build PASS; deployment aún en ejecución al momento de registrar esta nota.

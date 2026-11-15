@@ -778,3 +778,8 @@ Las fuentes de servicios JavaScript se centralizan bajo `JS/Services/`. La carpe
 
 
 **Adenda de validación — GP-INBOX idempotencia (2026-11-15):** el primer CI del commit `4f5a4dfe73333027d157fdd7505514ffc6ae7b11` encontró una referencia de variable incorrecta en `handleSendInboxMessage` (`messageRows` en lugar de `messages`). Sintaxis PASS; suite Inbox falló antes de ejecutar la nueva regresión. Se corrigió la llamada; la validación completa permanece pendiente.
+
+
+## Cierre de subcorrección — GP-INBOX reintentos idempotentes (2026-11-15)
+
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.** El resumen de conversación ya compara posiciones de mensajes persistidos y no timestamps que pueden coincidir; `messageCount` se reconstruye desde las filas reales. Regresión con tres mensajes del mismo milisegundo y reintentos de creación/respuesta anterior: PASS. CI Node.js 22 run `43672378358`: 99 suites / 1,501 pruebas / 0 fallos; `InboxConversations` 33/33 PASS; sintaxis PASS. La primera ejecución falló por una referencia local de variable en el handler de envío, corregida en `826725f9bf93aba171357950849ec4ed6d73fc81`. La validación Beta real queda diferida. GP-INBOX-04B..04D permanecen abiertas para las funciones mayores pendientes.
