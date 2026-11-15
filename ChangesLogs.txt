@@ -367,3 +367,11 @@
 - Todos los snapshots se preparan antes de publicar; la salvaguarda de error/ID evita perder cambios parciales.
 - CatalogChangeFeed 25/25, CatalogSnapshotSync 29/29 y PysDataCache 18/18 PASS.
 - CI Node.js 22 run 43660231720: SUCCESS; 99 suites / 1,496 pruebas / 0 fallos.
+
+
+2026-11-14 — GP-CAT: EXCLUSIÓN DE freezeCortesIds DEL FEED
+- handleFreezeCortesIds convierte fórmulas de ID en valores estáticos y verifica que cada valor siga siendo idéntico; no modifica los datos del snapshot. Se retira de catalogWriters y deja de generar reset.
+- allocateVehicleId tampoco publica evento porque solo reserva el contador central.
+- restoreDatabase, reorganizeDatabase, migrateIdentifiers y rollbackIdentifiers conservan reset por modificar múltiples filas/colecciones/IDs.
+- CatalogChangeFeed 26/26, CatalogSnapshotSync 29/29 y PysDataCache 18/18 PASS.
+- CI Node.js 22 run 43660486963: SUCCESS; 99 suites / 1,497 pruebas / 0 fallos. GitHub Pages run 43660485941: SUCCESS.

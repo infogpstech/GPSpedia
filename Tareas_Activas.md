@@ -197,7 +197,7 @@ Registrar duración por iteración, fecha, deployment/versión y runtime. Repeti
 
 ## Continuidad inmediata
 
-P0–P6 y los paquetes locales de UX/imagen cuentan con implementación y verificaciones locales completadas; los estados se cierran como COMPLETADA CON VALIDACIÓN DIFERIDA cuando dependen de Apps Script, Spreadsheet/Drive o dispositivos reales. P2 conserva pendiente Beta para calibrar PBKDF2 y reconciliar datos. La auditoría confirmó que Relay no tiene un escritor backend de registros: solo se permite congelar fórmulas conservando IDs existentes; no se inventarán IDs. Siguiente tarea de la nueva etapa: GP-CAT-01S — auditar los últimos productores que conservan reset (freezeCortesIds y restauración/migración de base) y confirmar que su alcance es realmente multi-fila.
+P0–P6 y los paquetes locales de UX/imagen cuentan con implementación y verificaciones locales completadas; los estados se cierran como COMPLETADA CON VALIDACIÓN DIFERIDA cuando dependen de Apps Script, Spreadsheet/Drive o dispositivos reales. P2 conserva pendiente Beta para calibrar PBKDF2 y reconciliar datos. La auditoría confirmó que Relay no tiene un escritor backend de registros: solo se permite congelar fórmulas conservando IDs existentes; no se inventarán IDs. Siguiente tarea de la nueva etapa: GP-CAT-01T — validación Beta externa: concurrencia real entre usuarios, pestañas y dispositivos; latencia de apertura y reconexión del feed/cache.
 
 
 ## Evidencia adicional de P0 — revisión de permisos y contratos (2026-11-14)
@@ -732,7 +732,7 @@ No marcar como completadas estas tareas hasta ejecutar las pruebas locales perti
 - GP-CAT-01G: COMPLETADA EN RAMA; productores FEEDBACK y caché PyS aplican deltas por ID estable; CI 15/15 en PysDataCache. Beta multiusuario y Apps Script real pendientes.
 - GP-CAT-01H: AUDITORÍA COMPLETADA; no existe escritor backend de registros Relay. Se mantiene el reset para mantenimiento ADMIN amplio; no se inventan IDs ni rutas de escritura.
 - GP-CAT-01I: COMPLETADA EN RAMA; la caché PyS persiste el cursor global, actualiza frescura con deltas/feed sin novedades y evita snapshot completo solo por TTL. Invalidación explícita, cursor no alineado o reset conservan recuperación completa; PysDataCache 18/18 PASS.
-- GP-CAT-01J: COMPLETADA EN RAMA; addOrUpdateCut, addSupplementaryInfo y addVinToVehicle publican upsert exacto de Cortes tras releer una fila única. freezeCortesIds mantiene reset; deltas de Cortes recalculan categoryCounts/sortedCategories. CI CatalogChangeFeed 18/18 y CatalogSnapshotSync 29/29 PASS.
+- GP-CAT-01J: COMPLETADA EN RAMA; addOrUpdateCut, addSupplementaryInfo y addVinToVehicle publican upsert exacto de Cortes tras releer una fila única. freezeCortesIds no publica evento porque solo convierte fórmulas a valores conservando y verificando los mismos IDs; deltas de Cortes recalculan categoryCounts/sortedCategories. CI CatalogChangeFeed 18/18 y CatalogSnapshotSync 29/29 PASS.
 - GP-CAT-01K: COMPLETADA EN RAMA; recordLike ya no invoca mapRowToObject no definido. Publica snapshot FEEDBACK completo, normalizado y ordenado, con VIN/activaTestigo dinámicos, bajo ScriptLock y reset de recuperación.
 
 Este requerimiento complementa GP-PWA-02: sincronizar el catálogo en vivo no debe interceptar el gesto nativo ni recargar el documento. Son dos mecanismos distintos: la PWA actualiza sus recursos de aplicación mediante el ciclo normal del Service Worker/navegador; los datos del catálogo se sincronizan incrementalmente dentro de la sesión.
@@ -750,3 +750,5 @@ Este requerimiento complementa GP-PWA-02: sincronizar el catálogo en vivo no de
 - GP-CAT-01Q: COMPLETADA EN RAMA; applyCortesImageReconciliation devuelve IDs únicos del manifiesto aplicado y publica un upsert por vehículo bajo un único ScriptLock. Todos los snapshots se verifican antes del primer evento; cualquier fallo parcial dispara reset de recuperación. CatalogChangeFeed 24/24 PASS.
 
 - GP-CAT-01R: COMPLETADA EN RAMA; normalizeImages registra los vehicleId de las filas donde duplica y reescribe una referencia, y publica upserts agrupados por vehículo. Si alguna fila modificada carece de ID, hay error/warning o falla un snapshot, publica reset seguro. Si solo renombra/mueve archivos sin cambiar celdas, no emite evento. CatalogChangeFeed 25/25 PASS.
+
+- GP-CAT-01S: COMPLETADA EN RAMA; freezeCortesIds solo congela fórmulas y verifica que los valores de ID permanezcan idénticos, por lo que no modifica el snapshot ni publica evento. restoreDatabase, reorganizeDatabase, migrateIdentifiers y rollbackIdentifiers conservan reset por su alcance multi-fila/colección. CatalogChangeFeed 26/26 PASS.

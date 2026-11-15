@@ -615,3 +615,13 @@ Estado: CORREGIDO EN RAMA; VALIDACIÓN BETA PENDIENTE.
 - Corrección: captura vehicleId solo después de setValue; deduplica IDs y publica upsert por vehículo tras verificar snapshots. Si una fila modificada carece de ID, el resultado contiene warning/error o falla un snapshot, se usa reset. Los lotes sin cambios de celdas no publican eventos.
 - CI Node.js 22 run 43660231720: 99 suites / 1,496 pruebas / 0 fallos.
 - Pendiente: validar duplicación de referencias compartidas y sincronización entre pestañas/dispositivos en Beta.
+
+
+AUD-2026-11-14-28 — RESET INNECESARIO EN freezeCortesIds
+Severidad: Baja (reconciliación global después de una operación que no cambia datos del catálogo).
+Estado: CORREGIDO EN RAMA.
+- Hallazgo: freezeCortesIds publicaba reset después de convertir fórmulas de ID a valores estáticos.
+- Evidencia: buildCortesIdFreezePlan obtiene los valores actuales; después de setValues el handler relee cada celda y verifica que el valor sea idéntico al esperado y que no queden fórmulas. No cambia IDs ni otros campos del snapshot.
+- Corrección: se retira freezeCortesIds de catalogWriters. allocateVehicleId tampoco publica evento por ser solo reserva del contador.
+- Los restablecimientos de base, reorganización y migración/rollback de identificadores conservan reset por alcance multi-fila/colección.
+- CI Node.js 22 run 43660486963: 99 suites / 1,497 pruebas / 0 fallos; GitHub Pages SUCCESS.

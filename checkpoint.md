@@ -1776,3 +1776,18 @@ No se desplegaron servicios Apps Script, no se modificaron ScriptProperties, Spr
 - GitHub Actions run `43660231720`: SUCCESS; Node.js 22; sintaxis PASS; **99 suites / 1,496 pruebas / 0 fallos**.
 - GitHub Pages run `43660231534` pendiente de confirmar al momento de este checkpoint.
 - Siguiente: GP-CAT-01S — auditar `freezeCortesIds`, `restoreDatabase`, `reorganizeDatabase`, `migrateIdentifiers` y `rollbackIdentifiers`; mantener reset solo donde el alcance multi-fila/IDs lo justifique.
+
+
+## Continuidad — GP-CAT-01S: reset de mantenimiento WRITE y operaciones multi-fila (2026-11-14)
+
+**Commit de código:** `bb28f106d9e1d98bb83c67689ccb8da6b57bda85`.
+**Commit de contrato de prueba:** `8ee4bfee516298f62ab3c03c7a643b2e2195a373`.
+
+- Auditoría de `handleFreezeCortesIds`: construye un plan para todas las filas, convierte fórmulas heredadas a valores estáticos y verifica después que cada valor de ID sea idéntico al valor previsto y que no queden fórmulas. No cambia IDs ni otros campos del snapshot; por tanto, se elimina de `catalogWriters` y no publica reset.
+- `allocateVehicleId` tampoco publica evento porque solo reserva/actualiza el contador central, sin insertar ni modificar un registro Cortes.
+- `restoreDatabase`, `reorganizeDatabase`, `migrateIdentifiers` y `rollbackIdentifiers` conservan reset: pueden restaurar/reordenar varias colecciones o modificar múltiples IDs; no se puede representar con un único upsert por registro.
+- Primer CI detectó una expectativa de prueba antigua que aún incluía freezeCortesIds en catalogWriters; se actualizó el contrato. La prueba específica confirma que el plan compara valores antes/después y no altera el snapshot.
+- `CatalogChangeFeed`: 26/26 PASS; `CatalogSnapshotSync`: 29/29 PASS; `PysDataCache`: 18/18 PASS.
+- GitHub Actions run `43660486963`: SUCCESS; Node.js 22; sintaxis PASS; **99 suites / 1,497 pruebas / 0 fallos**.
+- GitHub Pages run `43660485941`: SUCCESS.
+- Siguiente: GP-CAT-01T — validación Beta externa de concurrencia multiusuario, propagación entre pestañas/dispositivos, latencia y reconexión. No se simula ni se declara aprobada sin el entorno desplegado.
