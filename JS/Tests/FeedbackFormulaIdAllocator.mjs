@@ -31,7 +31,8 @@ function harness(initial,config=null){
  const code=[
   'const IDENTIFIER_SEQUENCE_CONFIG_SHEET="__IdentifierSequenceConfig__";',
   'const IDENTIFIER_SEQUENCE_CONFIG_HEADERS=["sheet","column","header","prefix","padding","formula","updatedAt"];',
-  extract("parseFeedbackIdFormula_"),extract("getFormulaBasedIdPattern_"),extract("getNextFormulaBasedId_")
+  extract("parseFeedbackIdFormula_"),extract("getFormulaBasedIdPattern_"),extract("getNextFormulaBasedId_"),
+  "return {parseFeedbackIdFormula_,getFormulaBasedIdPattern_,getNextFormulaBasedId_};"
  ].join("\n");
  const api=new Function("getSpreadsheet","LockService","PropertiesService",code)(()=>ss,{getScriptLock:()=>lock},PropertiesService);
  return {api,ss,props,stats:()=>({waits,releases,held})};
