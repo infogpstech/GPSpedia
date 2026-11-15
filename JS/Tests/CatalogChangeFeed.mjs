@@ -88,7 +88,8 @@ test("se autentica cada solicitud y no permite leer el feed con secreto incorrec
 test("FEEDBACK expone la lectura autenticada y el cliente enruta al servicio correcto", () => {
     assert.match(feedbackSource,/getCatalogChanges:\s*null/);
     assert.match(feedbackSource,/case 'getCatalogChanges':\s*response = handleGetCatalogChanges\(payload\)/);
-    assert.match(feedbackSource,/function handleGetCatalogChanges\(payload\)[\s\S]*?assertFeedbackSession\(payload, null\)/);
+    assert.match(feedbackSource,/function handleGetCatalogChanges\(payload\)[\s\S]*?getFeedbackActor_\(payload, null\)/);
+    assert.match(feedbackSource,/function getFeedbackActor_\(payload,allowedRoles\)[\s\S]*?assertFeedbackSession\(payload,allowedRoles\)/);
     assert.match(apiSource,/'getCatalogChanges': 'FEEDBACK'/);
 });
 test("recordLike publica un snapshot completo y ordenado de Cortes sin helpers externos", () => {
