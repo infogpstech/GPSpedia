@@ -546,6 +546,7 @@ function createSharedMutationCoordinator_(dependencies) {
                 const sessionToken = String(payload.sessionToken || "");
                 if (sessionToken && !sessionUserId) {
                     sessionUserId = String(properties.getProperty(authTokenIndexKey_(sessionToken)) || "");
+                    if (!sessionUserId) throw new Error("La sesión fue revocada, no existe o no es única.");
                 }
                 if (Boolean(sessionUserId) !== Boolean(sessionToken)) throw new Error("La identidad de sesión está incompleta.");
                 const actor = service !== "AUTH" && sessionToken ? authorizeSession_(sessionUserId, sessionToken, currentTime) : null;
