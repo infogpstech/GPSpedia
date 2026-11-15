@@ -166,8 +166,8 @@ function runActionDispatchContractTests(sources) {
     });
     run_("ADMIN separa acciones de edición modal del resto de acciones exclusivas de Desarrollador", () => {
         const adminSource = String(input.ADMIN || "");
-        assert_(adminSource.includes('const ADMIN_MODAL_EDIT_ACTIONS = new Set(["updateVehicleField","uploadAdminImage","getAdminImageUploadStatus"]);'),
-            "La lista de acciones de Jefe debe limitarse a las tres operaciones del modal.");
+        assert_(adminSource.includes('const ADMIN_MODAL_EDIT_ACTIONS = new Set(["getDropdownData","updateVehicleField","uploadAdminImage","getAdminImageUploadStatus"]);'),
+            "La lista de acciones de Jefe debe limitarse a las lecturas/opciones y operaciones propias del modal.");
         assert_(adminSource.includes("ADMIN_MODAL_EDIT_ACTIONS.has(action) ? assertModalEditSession(payload) : assertDeveloperSession(payload)"),
             "ADMIN debe exigir sesión Desarrollador para acciones ajenas al modal.");
         assert_(adminSource.includes('function assertModalEditSession(payload){return getAdminSessionContext_(payload,["desarrollador","jefe","supervisor"]);}'),
