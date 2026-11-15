@@ -457,3 +457,17 @@
 - `JS/Tests/SessionActivityCoordination.mjs`: el contrato anterior que exigía preflight se reemplazó por pruebas estáticas de validación dentro de cada handler y ausencia de preflight duplicado.
 - Validación CI posterior a la publicación pendiente. No se desplegaron Apps Script ni se modificaron Spreadsheet, Drive, ScriptProperties o datos productivos.
 - Siguiente: verificar CI, revisar posibles validaciones adicionales en WRITE/USERS/ADMIN y mantener pendiente el diseño de invalidación compartida antes de introducir caché de sesión.
+
+
+## Checkpoint actualizado — optimización de sesión AUTH/WRITE (2026-11-14)
+
+- Repositorio: `infogpstech/GPSpedia`; rama activa: `GPSpedia2.2.5_work`; HEAD: `79e536913ba42c4ddef10ae84e0dbc713f92ee06`.
+- Rama base protegida `GPSpedia2.2.5`: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; sin modificaciones.
+- AUTH: eliminado el preflight duplicado en `doPostInternal_`. Las operaciones protegidas revisadas validan sesión/identidad/estado/rol en su handler bajo bloqueo. `handleLogout` puede limpiar sesiones expiradas o ya revocadas.
+- WRITE: `handleAddSupplementaryInfo` autentica una vez dentro del bloqueo; `handleAllocateVehicleId` autentica una vez después de adquirirlo. `assertDeveloperForIdMaintenance` usa `getAuthenticatedCollaborator(payload, ["desarrollador"])`, que valida rol con el mismo perfil autenticado y evita el escaneo completo adicional de Users.
+- Las leases WRITE de Coordinator mantienen lectura de USERS y ACTIVE_SESSIONS durante estas operaciones, impidiendo que una mutación de identidad/rol se intercale hasta liberar la lease.
+- FEEDBACK Inbox y `getCatalogChanges` reutilizan el actor confiable inyectado por el dispatcher. ADMIN valida el contexto en el despacho.
+- Validación CI Node.js 22: run `43684553225` — 100 suites, 1,525 pruebas aprobadas, 0 fallos. Pages run `43684552773` — SUCCESS.
+- Límite actual: no se ha implementado caché global de sesión/epoch. Cada operación protegida sigue haciendo una comprobación backend efectiva; los cambios eliminan duplicaciones y lecturas completas, no eliminan la autorización por operación.
+- Próximo paso: auditar Coordinator y los flujos de revocación para diseñar contexto/epoch compartido con invalidación inmediata, pruebas de concurrencia y expiración antes de sustituir las comprobaciones actuales.
+- No se desplegó Apps Script ni se modificaron Spreadsheet, Drive, ScriptProperties o datos productivos.

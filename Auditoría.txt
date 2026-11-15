@@ -742,3 +742,14 @@ Estado: IMPLEMENTADO; CI PENDIENTE.
 - Se eliminó el preflight. `handleAcceptTerms`, `handleChangePassword`, `handleResetUserPassword`, `handleResetUserSessions`, `handleClearSensitiveLogs`, `handleDeleteUser` y `handleUpdateUser` mantienen validación de sesión/identidad/vigencia y los controles de rol/estado que corresponden. `handleLogout` conserva la verificación del token y del usuario, sin exigir que la sesión siga activa para completar su limpieza.
 - Se añadió una regresión en `SessionActivityCoordination.mjs` para comprobar que el dispatcher no revalida y que los ocho handlers verifican la sesión dentro del bloqueo.
 - No se debilita la autorización backend ni se confía en el rol enviado por el cliente. CI pendiente; sin despliegues ni cambios en datos productivos.
+
+
+AUD-2026-11-15-38 — OPTIMIZACIÓN DE AUTORIZACIÓN EN WRITE
+Severidad: Rendimiento / controles de acceso.
+Estado: IMPLEMENTADO Y VALIDADO POR CI.
+- handleAddSupplementaryInfo dejó de autenticar antes de esperar el ScriptLock; la única autenticación se realiza en handleAddSupplementaryInfoLocked, ya dentro del bloqueo y antes de leer o modificar Cortes.
+- handleAllocateVehicleId dejó de autenticar antes del ScriptLock; su única comprobación se realiza dentro del bloqueo, antes de consultar/asignar el siguiente ID.
+- assertDeveloperForIdMaintenance ahora usa getAuthenticatedCollaborator(payload, ["desarrollador"]), que verifica token, sesión, perfil y rol real con la misma lectura acotada. Se eliminó el segundo escaneo completo de Users.
+- Las leases del Coordinator para estas acciones declaran lectura de USERS y ACTIVE_SESSIONS; las operaciones que cambian identidad/rol escriben esos recursos, evitando intercalación durante la operación protegida.
+- Pruebas actualizadas: información suplementaria 56/56; asignación de IDs/consumidores 10/10; minimización WRITE 13/13. CI integral 100 suites / 1,525 pruebas PASS; Pages SUCCESS.
+- No se acepta rol enviado por cliente, no se quitó la autorización backend y no hubo despliegue ni cambios en datos productivos.

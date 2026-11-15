@@ -475,3 +475,15 @@
 - La autorización por operación no se elimina: el handler sigue consultando la sesión y el perfil actuales en el servidor. Las operaciones de migración y benchmark conservan sus validaciones independientes.
 - Validación local de sintaxis y contrato estático: pendiente de ejecutar en CI tras publicar este cambio. No se desplegaron Apps Script ni se modificaron datos productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-14 — REDUCCIÓN DE VALIDACIONES REPETIDAS DE SESIÓN (AUTH / WRITE)
+- AUTH: se eliminó el preflight del dispatcher. Las ocho operaciones protegidas revisadas validan sesión, identidad, vigencia y estado/rol actual dentro de sus handlers y bajo bloqueo. Logout conserva limpieza idempotente para tokens expirados o revocados.
+- WRITE: handleAddSupplementaryInfo valida una sola vez dentro del bloqueo. handleAllocateVehicleId valida una sola vez después de adquirir el bloqueo. assertDeveloperForIdMaintenance delega el control de rol a getAuthenticatedCollaborator(payload, ["desarrollador"]), evitando una segunda lectura completa de Users.
+- Las operaciones WRITE conservan la lease del Coordinator con lectura de USERS/ACTIVE_SESSIONS; los cambios de identidad/rol que escriben esos recursos no pueden intercalarse durante la operación. La comprobación se realiza después de adquirir el bloqueo.
+- FEEDBACK reutiliza el actor autenticado inyectado por el dispatcher en getCatalogChanges; ADMIN mantiene una validación por despacho. No se confía en roles enviados por el navegador.
+- Se adaptaron harnesses de pruebas a TextFinder/lecturas por rango y al touch de actividad cada cinco minutos. Se sincronizaron espejos AUTH/USERS.
+- CI Node.js 22: run 43684553225 — 100 suites, 1,525 pruebas PASS, 0 fallos. Pages run 43684552773 — SUCCESS.
+- La caché global de sesión con invalidación por epoch aún no está implementada; cada operación protegida conserva una validación backend efectiva. Sin despliegue de Apps Script ni cambios en datos productivos.
+================================================================================

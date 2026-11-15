@@ -852,3 +852,14 @@ Las fuentes de servicios JavaScript se centralizan bajo `JS/Services/`. La carpe
 - [x] Conservar validación de token, identidad, expiración, estado activo y rol en cada handler; logout mantiene limpieza idempotente incluso para sesiones expiradas/revocadas.
 - [x] Añadir contrato estático que verifica las ocho operaciones protegidas y que el dispatcher no realiza una segunda lectura.
 - [ ] Ejecutar CI integral y registrar resultados; después continuar con duplicaciones locales de WRITE/FEEDBACK/USERS/ADMIN.
+
+
+## P1 — optimización de autenticación y actividad (2026-11-14)
+
+- [x] FEEDBACK Inbox reutiliza el actor verificado del dispatcher y no repite validación dentro del handler.
+- [x] AUTH elimina el preflight común duplicado; las ocho operaciones protegidas revisadas validan dentro del handler y bajo bloqueo.
+- [x] WRITE elimina validación repetida en información suplementaria y asignación de IDs; la autorización Desarrollador se obtiene junto con la identidad en una sola consulta autenticada, sin recorrer Users completa.
+- [x] FEEDBACK, USERS, WRITE y ADMIN usan búsqueda por identificador acotada y actualización LastActivityAt por intervalo de cinco minutos donde aplica.
+- [x] CI integral y Pages aprobados: 100 suites / 1,525 pruebas PASS; Pages SUCCESS.
+- [ ] Diseñar e implementar contexto de sesión compartido con invalidación inmediata por epoch para todos los servicios. Hasta completar y probar esa garantía, mantener una validación backend por operación protegida.
+- [ ] Validación Beta y pruebas de concurrencia/revocación en Apps Script pendientes; no desplegar sin autorización.
