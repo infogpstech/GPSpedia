@@ -336,8 +336,17 @@ function getFormulaBasedIdPattern_(sheet, idColumn) {
         if (matches.length > 1) throw new Error("La configuración de ID está duplicada para " + sheet.getName() + " columna " + idColumn + ".");
         if (matches.length === 1) {
             const pattern = { prefix: String(matches[0][3] || ""), padding: Number(matches[0][4]), formula: String(matches[0][5] || "") };
-            if (!pattern.prefix || !Number.isInteger(pattern.padding) || pattern.padding < 1 || pattern.padding > 20) {
-                throw new Error("La configuración de secuencia ID no es válida para " + sheet.getName() + ".");
+            const currentHeader = String(sheet.getRange(1, idColumn).getValue() || "").trim();
+            if (!pattern.prefix || !Number.isInteger(pattern.padding) || pattern.padding < 1 || pattern.padding > 20 ||
+                currentHeader !== String(matches[0][2] || "")) {
+                throw new Error("La configuración de secuencia ID no coincide con la columna actual de " + sheet.getName() + ".");
+            }
+            const currentLastRow = sheet.getLastRow();
+            if (currentLastRow > 1) {
+                const currentFormulas = sheet.getRange(2, idColumn, currentLastRow - 1, 1).getFormulas().flat().filter(Boolean);
+                if (currentFormulas.some(formula => formula !== pattern.formula)) {
+                    throw new Error("La columna ID de " + sheet.getName() + " contiene una fórmula distinta de la configuración backend.");
+                }
             }
             return pattern;
         }
