@@ -478,4 +478,4 @@
 - Rama de trabajo `GPSpedia2.2.5_work`; HEAD previo al ajuste `8f6bd8992cd1542c2fa4ff00f1c9d1c2efdadd3d`; rama base protegida `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
 - `getVerifiedSession` ya encontraba la fila única del usuario para validar cuenta, revocación y rol. `handleUpdateProfile` volvía a recorrer la columna ID para encontrar esa misma fila. Ahora el verificador devuelve `userRowIndex` y el handler lo reutiliza dentro del mismo lock, comprobando que sea un entero de fila de datos. El índice no procede del navegador.
 - Se sincronizó el espejo `JS/Tests/users.js` con el servicio y se amplió `JS/Tests/UsersAtomicMutations.js` para comprobar que no exista la segunda búsqueda.
-- CI integral pendiente. No se modificaron datos productivos ni se desplegó Apps Script.
+- CI Node.js 22 run `43684916807`: SUCCESS; **100 suites / 1,525 pruebas / 0 fallos**. GitHub Pages run `43684916573`: build, reporte y deploy SUCCESS. No se modificaron datos productivos ni se desplegó Apps Script.
