@@ -193,6 +193,19 @@ run("El destinatario solo ve sus conversaciones y el contador unread inicial", (
 run("El participante no autorizado no puede leer mensajes", () => {
     assert.throws(() => api.handleGetInboxMessages({ ...actor("U3","token-c"),conversationId:first.conversationId }),/permiso/);
 });
+run("Un tercero no puede responder ni alterar el marcador de lectura", () => {
+    const messagesBefore = spreadsheet.getSheetByName("InboxMessages").getLastRow();
+    const statesBefore = spreadsheet.getSheetByName("InboxConversationState").getLastRow();
+    assert.throws(() => api.handleSendInboxMessage({
+        ...actor("U3","token-c"),conversationId:first.conversationId,body:"Respuesta no autorizada.",
+        idempotencyKey:"outsider-reply-0001"
+    }),/permiso/);
+    assert.throws(() => api.handleMarkInboxRead({
+        ...actor("U3","token-c"),conversationId:first.conversationId
+    }),/permiso/);
+    assert.equal(spreadsheet.getSheetByName("InboxMessages").getLastRow(),messagesBefore);
+    assert.equal(spreadsheet.getSheetByName("InboxConversationState").getLastRow(),statesBefore);
+});
 const initialMessages = api.handleGetInboxMessages({ ...actor("U2","token-b"),conversationId:first.conversationId });
 const firstMessageId = initialMessages.data[0].messageId;
 const reply = { ...actor("U2","token-b"),conversationId:first.conversationId,body:"Gracias por la bienvenida.",idempotencyKey:"reply-key-0001" };
