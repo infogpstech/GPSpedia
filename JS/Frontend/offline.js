@@ -39,7 +39,10 @@ export async function initDB() {
             settled = true;
             if (dbPromise === openingPromise) dbPromise = null;
             clearOpenState();
-            reject(error instanceof Error ? error : new Error('IndexedDB no pudo inicializarse.'));
+            dbRetryError = error instanceof Error ? error : new Error('IndexedDB no pudo inicializarse.');
+            dbRetryAfter = Date.now() + DB_OPEN_RETRY_DELAY_MS;
+            console.warn('IndexedDB no está disponible temporalmente; se reintentará más adelante:', dbRetryError.message);
+            reject(dbRetryError);
         };
 
         try {
