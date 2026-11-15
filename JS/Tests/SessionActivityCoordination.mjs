@@ -91,6 +91,8 @@ testCase("El contexto central de sesión se registra al login, se revoca y se re
  assert.match(auth,/revokeSharedUserSessionContexts_\(/);
  assert.match(auth,/revokeSharedSessionContext_\(/);
  assert.match(auth,/validateSharedSessionContext_\(userId, sessionToken\)/);
+ assert.match(auth,/const sessionOptions = payload\.sessionToken && action !== "logout"/);
+ assert.match(auth,/syncAuthSheetActivityFromActor_\(actor\.userId, payload\.sessionToken, actor\)/);
  assert.match(coordinator,/function registerSession_\(/);
  assert.match(coordinator,/function syncUserSessions_\(/);
  assert.match(client,/function syncSharedUserSessionContexts_\(/);
@@ -100,6 +102,7 @@ testCase("El contexto central de sesión se registra al login, se revoca y se re
  assert.match(coordinator,/function validateSessionContext_\(/);
  assert.match(client,/options && options\.session/);
  assert.match(client,/function withSharedSessionActor_\(/);
+ assert.match(client,/delete payload\.__feedbackActor/);
  for(const source of [users,write,admin,feedback]){
   assert.match(source,/sessionOptions = \{ session: \{ userId: payload\.userId, sessionToken: payload\.sessionToken \} \}/);
   assert.match(source,/withSharedSessionActor_\(e, actor\)/);
