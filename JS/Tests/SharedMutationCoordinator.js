@@ -757,6 +757,55 @@ function runSharedMutationCoordinatorTests() {
         }), "revocada");
     });
 
+    test_("La sincronización preserva sesiones activas y elimina tokens que ya no están en ActiveSessions", function() {
+        const r = createRuntime_();
+        const base = { userId: "USR-1006", role: "tecnico", fullName: "Técnico", createdAt: 1700000000000, lastActivityAt: 1700000000000 };
+        const firstToken = "session-token-0000000000000007";
+        const secondToken = "session-token-0000000000000008";
+        r.request("syncUserSessions", "AUTH", "syncUserSessions", {
+            userId: base.userId, role: base.role, fullName: base.fullName,
+            sessions: [
+                { token: firstToken, createdAt: base.createdAt, lastActivityAt: base.lastActivityAt },
+                { token: secondToken, createdAt: base.createdAt, lastActivityAt: base.lastActivityAt }
+            ]
+        });
+        const synced = r.request("syncUserSessions", "AUTH", "syncUserSessions", {
+            userId: base.userId, role: base.role, fullName: base.fullName,
+            sessions: [{ token: secondToken, createdAt: base.createdAt, lastActivityAt: base.lastActivityAt }]
+        });
+        assert_(synced.synced === 1 && synced.acceptedTokens[0] === secondToken,
+            "La sincronización debe conservar solo las sesiones presentes en ActiveSessions.");
+        expectThrow_(() => r.request("acquire", "FEEDBACK", "reportProblem", {
+            requestId: r.uuid(), waitMs: 0, userId: base.userId, sessionToken: firstToken
+        }), "revocada");
+    });
+
+    test_("El epoch de revocación impide volver a registrar tokens anteriores al reset", function() {
+        const r = createRuntime_();
+        const userId = "USR-1007", oldToken = "session-token-0000000000000009";
+        const oldCreatedAt = 1700000000000;
+        r.request("registerSession", "AUTH", "registerSession", {
+            userId, sessionToken: oldToken, role: "tecnico", fullName: "Técnico",
+            createdAt: oldCreatedAt, lastActivityAt: oldCreatedAt
+        });
+        r.request("revokeUserSessions", "AUTH", "revokeUserSessions", { userId });
+        const sync = r.request("syncUserSessions", "AUTH", "syncUserSessions", {
+            userId, role: "tecnico", fullName: "Técnico",
+            sessions: [{ token: oldToken, createdAt: oldCreatedAt, lastActivityAt: oldCreatedAt }]
+        });
+        assert_(sync.acceptedTokens.length === 0 && sync.rejectedTokens.includes(oldToken),
+            "Una sesión anterior a revokedBefore debe quedar excluida aunque siga en la hoja.");
+        const newToken = "session-token-0000000000000010", newCreatedAt = oldCreatedAt + 1;
+        const fresh = r.request("syncUserSessions", "AUTH", "syncUserSessions", {
+            userId, role: "tecnico", fullName: "Técnico",
+            sessions: [{ token: newToken, createdAt: newCreatedAt, lastActivityAt: newCreatedAt }]
+        });
+        assert_(fresh.acceptedTokens.includes(newToken), "Una sesión creada después de la revocación puede registrarse.");
+        expectThrow_(() => r.request("acquire", "FEEDBACK", "reportProblem", {
+            requestId: r.uuid(), waitMs: 0, userId, sessionToken: oldToken
+        }), "revocada");
+    });
+
     test_("El contexto central aplica expiración absoluta y por inactividad", function() {
         const r = createRuntime_();
         const createdAt = 1700000000000;
