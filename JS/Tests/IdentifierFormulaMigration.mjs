@@ -49,7 +49,7 @@ function makeHarness(){
   extract("handleFreezeIdentifierFormulas_"),
   "return {audit:auditAllFormulaIdentifierColumns_,plan:buildIdentifierFormulaFreezePlan_,migrate:handleFreezeIdentifierFormulas_};"
  ].join("\n");
- const api=new Function("getSpreadsheet","Utilities","LockService","SpreadsheetApp",code)(()=>ss,Utilities,LockService,SpreadsheetApp);
+ const api=new Function("getSpreadsheet","Utilities","LockService","SpreadsheetApp","verifyVinMigrationBackup",code)(()=>ss,Utilities,LockService,SpreadsheetApp,()=>({backupId:"verified-test-backup"}));
  return {ss,users,vehicles,api};
 }
 let passed=0;function test(name,fn){fn();passed++;console.log("PASS "+name);}
