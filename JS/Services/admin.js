@@ -4300,59 +4300,76 @@ function handleFreezeIdentifierFormulas_(payload) {
     const options = payload || {}, ss = getSpreadsheet();
     const migrationId = String(options.migrationId || Utilities.getUuid().replace(/-/g, "")).trim();
     if (!/^[A-Za-z0-9]{16,64}$/.test(migrationId)) throw new Error("migrationId inválido.");
+    const dryRun = options.dryRun !== false;
     const lock = LockService.getScriptLock();
     let acquired = false;
     try {
         lock.waitLock(10000); acquired = true;
-        const plan = buildIdentifierFormulaFreezePlan_(ss, migrationId);
-        const dryRun = options.dryRun !== false;
-        if (dryRun) {
-            return {
-                status: "success", dryRun: true, migrationId, digest: plan.digest,
-                formulaCount: plan.entries.length, sheetCount: plan.sheetCount,
-                skipped: plan.skipped,
-                samples: plan.entries.slice(0, 100).map(entry => ({
-                    sheet: entry.sheet, column: entry.column, row: entry.row,
-                    id: entry.oldValue, formula: entry.oldFormula
-                })),
-                message: "Simulación de solo lectura. Se conservarán los valores calculados y se retirarán únicamente las fórmulas verificadas."
-            };
-        }
-        if (options.confirm !== true || String(options.digest || "") !== plan.digest) {
-            throw new Error("La confirmación requiere el digest exacto de una simulación vigente. Vuelve a simular.");
-        }
-        const manifest = ensureIdentifierFormulaFreezeManifest_(ss);
-        let items = findIdentifierFormulaFreezeManifest_(manifest, migrationId);
-        if (!items.length) {
-            const snapshots = {};
-            plan.entries.forEach(entry => {
-                if (snapshots[entry.sheet]) return;
-                const source = ss.getSheetByName(entry.sheet);
-                if (!source || identifierMigrationSheetDigest_(source) !== entry.snapshotFingerprint) {
-                    throw new Error("La hoja " + entry.sheet + " cambió desde la simulación; no se creó el manifiesto.");
-                }
-                let snapshot = ss.getSheetByName(entry.snapshotName);
-                if (!snapshot) {
-                    snapshot = source.copyTo(ss);
-                    snapshot.setName(entry.snapshotName);
-                    snapshot.hideSheet();
-                }
-                if (identifierMigrationSheetDigest_(snapshot) !== entry.snapshotFingerprint) {
-                    throw new Error("El snapshot de " + entry.sheet + " no coincide con la huella previa.");
-                }
-                snapshots[entry.sheet] = true;
-            });
-            const now = new Date().toISOString();
-            const rows = plan.entries.map(entry => [
-                migrationId, plan.digest, entry.entryIndex, JSON.stringify(entry), "PLANNED", 0, now, ""
-            ]);
-            if (rows.length) manifest.getRange(manifest.getLastRow() + 1, 1, rows.length, IDENTIFIER_FORMULA_FREEZE_HEADERS_.length).setValues(rows);
-            SpreadsheetApp.flush();
+        let plan = null, manifest = null, items = [];
+        if (!dryRun) {
+            if (options.confirm !== true) throw new Error("La migración requiere confirm:true.");
+            manifest = ensureIdentifierFormulaFreezeManifest_(ss);
             items = findIdentifierFormulaFreezeManifest_(manifest, migrationId);
-            if (items.length !== plan.entries.length || items.some(item => item.digest !== plan.digest)) {
-                throw new Error("No se pudo verificar el manifiesto de migración de fórmulas.");
+        }
+        if (!dryRun && items.length) {
+            const digest = String(options.digest || "");
+            if (!digest || items.some(item => item.digest !== digest)) throw new Error("El manifiesto no coincide con el digest confirmado.");
+            plan = {
+                migrationId, digest,
+                entries: items.map(item => JSON.parse(item.entryJson)),
+                skipped: { emptyResult: 0, duplicate: 0, emptyRecord: 0 }
+            };
+        } else {
+            plan = buildIdentifierFormulaFreezePlan_(ss, migrationId);
+            if (dryRun) {
+                return {
+                    status: "success", dryRun: true, migrationId, digest: plan.digest,
+                    formulaCount: plan.entries.length, sheetCount: plan.sheetCount,
+                    skipped: plan.skipped,
+                    samples: plan.entries.slice(0, 100).map(entry => ({
+                        sheet: entry.sheet, column: entry.column, row: entry.row,
+                        id: entry.oldValue, formula: entry.oldFormula
+                    })),
+                    message: "Simulación de solo lectura. Se conservarán los valores calculados y se retirarán únicamente las fórmulas verificadas."
+                };
             }
-        } else if (items.some(item => item.digest !== plan.digest) || items.length !== plan.entries.length) {
+            if (String(options.digest || "") !== plan.digest) {
+                throw new Error("La hoja cambió desde la simulación; vuelve a auditar y simular antes de confirmar.");
+            }
+            if (!items.length) {
+                const snapshots = {};
+                plan.entries.forEach(entry => {
+                    if (snapshots[entry.sheet]) return;
+                    const source = ss.getSheetByName(entry.sheet);
+                    if (!source || identifierMigrationSheetDigest_(source) !== entry.snapshotFingerprint) {
+                        throw new Error("La hoja " + entry.sheet + " cambió desde la simulación; no se creó el manifiesto.");
+                    }
+                    let snapshot = ss.getSheetByName(entry.snapshotName);
+                    if (!snapshot) {
+                        snapshot = source.copyTo(ss);
+                        snapshot.setName(entry.snapshotName);
+                        snapshot.hideSheet();
+                    }
+                    if (identifierMigrationSheetDigest_(snapshot) !== entry.snapshotFingerprint) {
+                        throw new Error("El snapshot de " + entry.sheet + " no coincide con la huella previa.");
+                    }
+                    snapshots[entry.sheet] = true;
+                });
+                const now = new Date().toISOString();
+                const rows = plan.entries.map(entry => [
+                    migrationId, plan.digest, entry.entryIndex, JSON.stringify(entry), "PLANNED", 0, now, ""
+                ]);
+                if (rows.length) manifest.getRange(manifest.getLastRow() + 1, 1, rows.length, IDENTIFIER_FORMULA_FREEZE_HEADERS_.length).setValues(rows);
+                SpreadsheetApp.flush();
+                items = findIdentifierFormulaFreezeManifest_(manifest, migrationId);
+                if (items.length !== plan.entries.length || items.some(item => item.digest !== plan.digest)) {
+                    throw new Error("No se pudo verificar el manifiesto de migración de fórmulas.");
+                }
+            }
+        }
+        if (!manifest) manifest = ensureIdentifierFormulaFreezeManifest_(ss);
+        if (!items.length) items = findIdentifierFormulaFreezeManifest_(manifest, migrationId);
+        if (items.some(item => item.digest !== plan.digest) || items.length !== plan.entries.length) {
             throw new Error("El manifiesto existente no coincide con la simulación confirmada.");
         }
         items.sort((a, b) => a.entryIndex - b.entryIndex);
