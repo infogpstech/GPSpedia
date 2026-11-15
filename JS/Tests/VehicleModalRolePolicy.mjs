@@ -35,21 +35,26 @@ check("El backend acepta Supervisor, Jefe y Desarrollador y rechaza otros roles"
  const start=admin.indexOf("function getAdminSessionContext_(");
  const end=admin.indexOf("\nfunction assertDeveloperSession",start);
  assert.ok(start>=0&&end>start);
+ const makeSheet=rows=>({
+  getLastRow:()=>rows.length,getLastColumn:()=>Math.max(...rows.map(row=>row.length)),
+  getDataRange:()=>({getValues:()=>rows.map(row=>row.slice())}),
+  getRange:(row,column,numRows=1,numColumns=1)=>({
+   getValues:()=>rows.slice(row-1,row-1+numRows).map(values=>values.slice(column-1,column-1+numColumns)),
+   getValue:()=>rows[row-1][column-1],setValue:value=>{rows[row-1][column-1]=value;}
+  })
+ });
  const deps={
-  getSpreadsheet:()=>({
-   getSheetByName:name=>name==="ActiveSessions"?{
-    getDataRange:()=>({getValues:()=>[[],["U1","user","token",new Date(Date.now()-60000),"",new Date()]]}),
-    getRange:()=>({setValue(){}})
-   }:name==="Users"?{
-    getDataRange:()=>({getValues:()=>[[],["U1","user","hash",globalRole,"","","Test User",""]]})
-   }:null
-  }),
+  getSpreadsheet:()=>({getSheetByName:name=>name==="ActiveSessions"?makeSheet([[],["U1","user","token",new Date(Date.now()-60000),"",new Date()]]):name==="Users"?makeSheet([[],["U1","user","hash",globalRole,"","","Test User",""]]):null}),
   getSessionExpirationStatus_:()=>({expired:false}),
   ROLE_REVOCATION_SHARED_PREFIX:"__role_revocation_pending__:"
  };
  let globalRole="Supervisor";
+ const helpersStart=admin.indexOf("function findUniqueRowsByExactValue_(");
+ const helpersEnd=admin.indexOf("function getAdminSessionContext_(",helpersStart);
+ assert.ok(helpersStart>=0&&helpersEnd>helpersStart);
+ const sessionHelpers=admin.slice(helpersStart,helpersEnd);
  const api=new Function("getSpreadsheet","getSessionExpirationStatus_","ROLE_REVOCATION_SHARED_PREFIX",
-  admin.slice(start,end)+"\n"+admin.slice(admin.indexOf("function assertDeveloperSession",end),admin.indexOf("\nconst ADMIN_MODAL_EDIT_ACTIONS",end))+
+  sessionHelpers+admin.slice(start,end)+"\n"+admin.slice(admin.indexOf("function assertDeveloperSession",end),admin.indexOf("\nconst ADMIN_MODAL_EDIT_ACTIONS",end))+
   "\nreturn {assertDeveloperSession,assertModalEditSession};"
  )(deps.getSpreadsheet,deps.getSessionExpirationStatus_,deps.ROLE_REVOCATION_SHARED_PREFIX);
  for(const role of ["Desarrollador","Jefe","Supervisor"]){
