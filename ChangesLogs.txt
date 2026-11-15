@@ -278,3 +278,10 @@
 - CI Node.js 22 run 43657720605: SUCCESS; sintaxis PASS; 99 suites / 1,484 pruebas / 0 fallos.
 - CI detectó primero expectativas antiguas y una ruta relativa del harness; ambas se corrigieron y la ejecución completa posterior aprobó.
 - No se desplegaron Apps Script ni se modificaron Spreadsheet, Drive, ScriptProperties, ACL o datos productivos. Beta multiusuario/dispositivos sigue pendiente.
+
+
+2026-11-14 — GP-CAT: AUDITORÍA DE ESCRITURAS RELAY
+- Services/catalog.js solo lee la hoja Relay y la convierte al contrato de catálogo; Services/write.js y Services/feedback.js la consultan para validar configuraciones, pero no escriben registros Relay.
+- Services/admin.js no expone alta/edición de registros Relay. El mantenimiento de IDs solo permite freeze_formula conservando un ID válido y único; fill_missing está expresamente rechazado hasta confirmar el formato y el escritor.
+- No existe acción de frontend/API que escriba filas Relay. Se mantiene el reset en operaciones ADMIN masivas; no se crean IDs ni productores artificiales.
+- GP-CAT-01H: auditoría estática completada. Revisión de datos y fórmulas físicos pendiente de copia Beta autorizada; no se consultaron ni modificaron recursos productivos.

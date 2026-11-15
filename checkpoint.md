@@ -1613,3 +1613,20 @@ No se desplegaron servicios Apps Script, no se modificaron ScriptProperties, Spr
 ### Siguiente trabajo
 - Auditar si existe un escritor backend real para Relay y si dispone de ID persistente verificable; no crear IDs ni productores artificiales.
 - Después continuar con las tareas activas restantes y la validación Beta autorizada. No desplegar manualmente Apps Script ni modificar datos productivos.
+
+
+## Continuidad — auditoría de escritores Relay (2026-11-14)
+
+**HEAD verificado:** `231ac92ca85ec1a34def0085cb7941306635eb28`.
+
+### Hallazgo y decisión
+- `Services/catalog.js` únicamente lee la hoja Relay y transforma sus filas al contrato de catálogo mediante `COLS_RELAY`.
+- `Services/write.js` lee la hoja Relay para validar las opciones de configuración al crear/editar Cortes; no escribe registros Relay.
+- `Services/feedback.js` lee configuraciones Relay asociadas a Cortes; no contiene acciones de alta/edición Relay.
+- `Services/admin.js` no expone una acción de alta/edición de registros Relay. El mantenimiento de identificadores permite `freeze_formula` solo cuando conserva un ID válido existente y único; rechaza `fill_missing` para Relay hasta confirmar su formato/escritor. La lectura de imágenes Relay corresponde al escaneo de referencias, no a una mutación de registros.
+- No se encontró una acción de frontend/API que escriba filas Relay. Por tanto, no hay un productor legítimo de upsert por registro que se pueda conectar al feed. Se mantiene el reset de las operaciones ADMIN masivas; no se crean IDs, acciones ni botones artificiales.
+
+### Resultado
+- GP-CAT-01H: auditoría estática completada. Relay conserva su lectura de catálogo y los IDs existentes; no se habilita publicación por registro sin una ruta de escritura real.
+- Siguiente tarea: GP-CAT-01I — registrar la revisión global del feed junto con la caché PyS para evitar que el TTL provoque una descarga completa cuando no hubo cambios.
+- La validación de hojas reales/IDs históricos sigue pendiente de una copia Beta autorizada; no se inspeccionaron ni modificaron Spreadsheet/Drive productivos.

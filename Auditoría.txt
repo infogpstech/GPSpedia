@@ -509,3 +509,12 @@ Estado: CORREGIDO EN RAMA; VALIDACIÓN BETA PENDIENTE.
 - Fallback: reset global, caché ausente/corrupta, IDs duplicados/ausentes, evento malformado o snapshot no verificable provocan recuperación completa; no se inventan IDs ni se elimina contenido.
 - Pruebas: CatalogChangeFeed 17/17, CatalogSnapshotSync 28/28, PysDataCache 15/15 PASS. CI Node.js 22 run 43657720605: 99 suites / 1,484 pruebas / 0 fallos.
 - Pendiente: Apps Script/Spreadsheet reales, concurrencia multiusuario y latencia en Beta aislada.
+
+
+AUD-2026-11-14-17 — AUSENCIA DE ESCRITOR DE REGISTROS RELAY
+Severidad: Baja (limita la publicación incremental por registro; no se identifica una mutación ordinaria que sincronizar).
+Estado: AUDITORÍA ESTÁTICA COMPLETADA; VALIDACIÓN DE DATOS HEREDADOS BETA PENDIENTE.
+- Services/catalog.js lee Relay; WRITE y FEEDBACK solo leen su dominio para validar configuraciones de Cortes.
+- ADMIN no expone alta/edición de registros Relay. El mantenimiento de IDs admite únicamente freeze_formula conservando el ID actual válido y único; rechaza fill_missing para Relay.
+- No se encontró acción de frontend/API que escriba filas Relay. No se debe inventar un escritor ni asignar IDs históricos. Las operaciones ADMIN masivas continúan publicando reset.
+- Pendiente: inspeccionar encabezados, fórmulas, IDs y referencias en copia Beta de solo lectura antes de considerar una ruta de escritura.

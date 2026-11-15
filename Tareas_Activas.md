@@ -197,7 +197,7 @@ Registrar duración por iteración, fecha, deployment/versión y runtime. Repeti
 
 ## Continuidad inmediata
 
-P0–P6 tienen implementaciones y verificaciones locales completadas; los estados se cierran como COMPLETADA CON VALIDACIÓN DIFERIDA cuando dependen de Apps Script, Spreadsheet/Drive o dispositivos reales. P2 conserva pendiente Beta para calibrar PBKDF2 y reconciliar datos; Relay solo admite congelar fórmulas hasta confirmar el formato de IDs faltantes. La verificación integral CI/Pages está aprobada. Siguiente tarea de la nueva etapa: GP-IMG-UX-01.
+P0–P6 y los paquetes locales de UX/imagen cuentan con implementación y verificaciones locales completadas; los estados se cierran como COMPLETADA CON VALIDACIÓN DIFERIDA cuando dependen de Apps Script, Spreadsheet/Drive o dispositivos reales. P2 conserva pendiente Beta para calibrar PBKDF2 y reconciliar datos. La auditoría confirmó que Relay no tiene un escritor backend de registros: solo se permite congelar fórmulas conservando IDs existentes; no se inventarán IDs. Siguiente tarea de la nueva etapa: GP-CAT-01I — alinear la frescura de la caché PyS con el cursor global para evitar snapshots completos periódicos sin cambios.
 
 
 ## Evidencia adicional de P0 — revisión de permisos y contratos (2026-11-14)
@@ -711,7 +711,7 @@ No marcar como completadas estas tareas hasta ejecutar las pruebas locales perti
 - `JS/Frontend/api-config.js`: acción `getCatalogChanges` integrada en el arranque cache-first y el sondeo autenticado; admite cancelación mediante `AbortSignal`.
 - `JS/Tests/CatalogChangeFeed.mjs`: 14/14 PASS; `CatalogSnapshotSync`: 25/25 PASS; `CatalogStartupIntegrity`: 18/18 PASS; `SessionStartupNavigation`: 16/16 PASS; `PWAStartupScenarios`: 15/15 PASS.
 - CI Node.js 22 del HEAD `6af6d78e2c68d0175566626177ca41fe2496d2d5`: run `43645790740` SUCCESS; sintaxis PASS; 98 suites / 1,463 pruebas / 0 fallos. GitHub Pages run `43645790429` SUCCESS.
-- **Limitación vigente:** el consumidor admite deltas por ID estable en Cortes, Tutoriales, Relay y Logos. FEEDBACK publica upsert exacto para altas/ediciones de Tutoriales; ADMIN publica upsert exacto al agregar Logos, ambos tras releer y verificar la fila/ID únicos. Las demás mutaciones aún usan `reset`. Relay no tiene un escritor backend catalogal identificado y sus IDs históricos requieren auditoría; PyS conserva endpoint/caché separados y continúa usando refresh completo. La comprobación Beta multiusuario y el rendimiento en dispositivos reales siguen pendientes.
+- **Limitación vigente:** el consumidor principal admite deltas por ID estable en Cortes, Tutoriales, Relay y Logos; PyS se mantiene en una caché separada y recibe upsert/delete desde el mismo feed global. FEEDBACK publica upsert exacto para Tutoriales y PyS; ADMIN publica upsert exacto al agregar Logos. Las operaciones masivas y los resets mantienen reconciliación completa. Relay no tiene escritor backend de registros; solo existe congelación de fórmulas de ID conservando el valor, y no se habilitará un productor por registro sin una ruta real de escritura. La validación Beta multiusuario y el rendimiento en dispositivos reales siguen pendientes.
 - No se añadió botón, panel, indicador ni sección visible.
 
 ### Criterios de aceptación
@@ -730,5 +730,7 @@ No marcar como completadas estas tareas hasta ejecutar las pruebas locales perti
 - GP-CAT-01E: IMPLEMENTADA; reconciliación silenciosa de tarjetas, modal y vistas, con pruebas de contrato.
 - GP-CAT-01F: CI COMPLETADA; Beta de varios usuarios/dispositivos, latencia, offline y recuperación aún pendiente.
 - GP-CAT-01G: COMPLETADA EN RAMA; productores FEEDBACK y caché PyS aplican deltas por ID estable; CI 15/15 en PysDataCache. Beta multiusuario y Apps Script real pendientes.
+- GP-CAT-01H: AUDITORÍA COMPLETADA; no existe escritor backend de registros Relay. Se mantiene el reset para mantenimiento ADMIN amplio; no se inventan IDs ni rutas de escritura.
+- GP-CAT-01I: PENDIENTE; alinear cursor de caché PyS con el feed global para que una caché ya sincronizada no descargue el snapshot completo solo por superar el TTL.
 
 Este requerimiento complementa GP-PWA-02: sincronizar el catálogo en vivo no debe interceptar el gesto nativo ni recargar el documento. Son dos mecanismos distintos: la PWA actualiza sus recursos de aplicación mediante el ciclo normal del Service Worker/navegador; los datos del catálogo se sincronizan incrementalmente dentro de la sesión.
