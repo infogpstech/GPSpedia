@@ -586,7 +586,7 @@ function createSharedMutationCoordinator_(dependencies) {
                 };
                 leases.push(lease);
                 saveLeases_(leases);
-                return { kind: "success", token: token, expiresAt: lease.expiresAt };
+                return { kind: "success", token: token, expiresAt: lease.expiresAt, actor: lease.actor || null };
             });
 
             if (outcome.kind === "success") {
