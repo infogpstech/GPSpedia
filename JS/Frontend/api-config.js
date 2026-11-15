@@ -80,7 +80,7 @@ export const SERVICE_COMPATIBILITY_ACTIONS = {
 };
 
 /** No hay acciones externas o servicios heredados habilitados. */
-export const EXTERNAL_ACTIONS = {};
+export const EXTERNAL_ACTIONS = {\n};
 
 const serviceMetricsStore = createServiceMetricsStore();
 function recordServiceMetric(event) {

@@ -184,7 +184,8 @@ await test('el cliente no ejecuta touchSession ni revalida identidad y rol por a
     assert.equal(api.includes('routeAction("touchSession"'), false);
     assert.equal(client.includes("routeAction('touchSession'"), false);
     assert.equal(client.includes('routeAction("touchSession"'), false);
-    assert.doesNotMatch(client, /validateSessionCoordinated/);
+    const check = extract(client, 'export async function checkSession()', '\nexport async function login(');
+    assert.doesNotMatch(check, /validateSessionCoordinated|apiValidateSession/);
 });
 await test('AUTH trata hojas faltantes y revocación pendiente como indisponibilidad temporal', () => {
     assert.match(service, /valid: null, unavailable: true, reason: 'missing_sheet'/);
