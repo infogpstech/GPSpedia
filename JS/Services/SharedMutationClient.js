@@ -107,9 +107,13 @@ function createSharedMutationClient_(dependencies) {
     function revokeUserSessions(userId) {
         return send_("revokeUserSessions", "AUTH", "revokeUserSessions", { userId });
     }
+    function validateSessionContext(userId, sessionToken) {
+        return send_("validateSessionContext", "AUTH", "validateSessionContext", { userId, sessionToken });
+    }
 
     return { withLease: withLease, publishCatalogChange: publishCatalogChange, getCatalogChanges: getCatalogChanges,
-        registerSession: registerSession, revokeSession: revokeSession, revokeUserSessions: revokeUserSessions };
+        registerSession: registerSession, revokeSession: revokeSession, revokeUserSessions: revokeUserSessions,
+        validateSessionContext: validateSessionContext };
 }
 
 function withSharedMutationLease_(service, operation, callback, options) {
@@ -199,4 +203,15 @@ function withSharedSessionActor_(event, actor) {
     return Object.assign({}, event || {}, {
         postData: Object.assign({}, event && event.postData || {}, { contents: JSON.stringify(request) })
     });
+}
+
+
+function validateSharedSessionContext_(userId, sessionToken) {
+    const client = createSharedMutationClient_({
+        properties: PropertiesService.getScriptProperties(),
+        fetch: function(url, options) { return UrlFetchApp.fetch(url, options); },
+        uuid: function() { return Utilities.getUuid(); },
+        logger: function(message) { Logger.log(message); }
+    });
+    return client.validateSessionContext(userId, sessionToken);
 }
