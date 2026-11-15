@@ -547,3 +547,12 @@
 - CI Node.js 22 run `43753335306`: SUCCESS, **100 suites / 1,542 pruebas / 0 fallos**; InboxConversations 46/46; node --check PASS.
 - Pendiente: UI de tickets propios y selector visual categoría/asunto, barra/selección múltiple 04B, revisión RBAC/accesibilidad/móvil 04D y Beta con servicios desplegados. No se desplegó Apps Script ni se tocaron Sheets/Drive/ScriptProperties productivos. La hoja InboxConversationFlags no se ha creado en remoto.
 - Próximo trabajo local: GP-INBOX-04D, revisión de contratos RBAC/accesibilidad/regresión sin controles nuevos. Mantener toda validación remota en pendiente de Beta.
+
+
+## Continuidad GP-INBOX-04D (2026-11-15)
+
+- HEAD de código validado: `849e4aa0ddd23c41d635fffee4bba31b006a14b0`; rama base `GPSpedia2.2.5` sin cambios, SHA `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- GP-INBOX-04D local: contratos RBAC, jerarquía, auditoría, foco/teclado, ARIA, reduced-motion, responsive y regresión cubiertos. `InboxUi` 22/22 PASS. Se añadieron comprobaciones para los metadatos de ticket y para no conectar acciones diferidas a controles visibles.
+- CI Node.js 22 run `43753485398`: SUCCESS, **100 suites / 1,544 pruebas / 0 fallos**.
+- Pendiente Beta: lector de pantalla y navegación real, temas, Atrás, tamaños/dispositivos Android/iOS/desktop, conectividad y pestañas. Acciones masivas/selección múltiple siguen sin UI hasta autorización.
+- Sin despliegues Apps Script ni modificaciones de hojas/datos productivos.
