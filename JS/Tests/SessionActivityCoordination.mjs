@@ -8,7 +8,7 @@ const api=read("JS/Frontend/api-config.js"),write=read("JS/Services/write.js"),u
 let passed=0;function testCase(name,fn){fn();passed++;console.log("PASS "+name);}
 testCase("WRITE coordina las operaciones protegidas y actualiza actividad dentro de la sesión validada",()=>{
  assert.match(write,/function isSharedMutationAction_\(action\)\s*\{\s*return \["addOrUpdateCut","addSupplementaryInfo","addVinToVehicle","allocateVehicleId","freezeCortesIds"\]/);
- assert.match(write,/if \(action !== "checkOperation"\) return doPostInternal_\(e\);\s*try \{\s*return withSharedMutationLease_\("WRITE", "sessionActivity"/);
+ assert.match(write,/if \(action !== "checkOperation"\) return doPostInternal_\(withSharedSessionActor_\(e, null\)\);\s*try \{\s*return withSharedMutationLease_\("WRITE", "sessionActivity"/);
  assert.match(write,/touchSessionActivityIfDue_\(sh,sessionMatch\.rowIndex,sessionMatch\.row,COLS_ACTIVE_SESSIONS\.LastActivityAt\)/);
  ["handleCheckOperation","handleAddOrUpdateCutLocked","handleAddVinToVehicleLocked","assertDeveloperForIdMaintenance"].forEach(name=>{
   const i=write.indexOf("function "+name);assert.ok(i>=0,name);
@@ -16,7 +16,7 @@ testCase("WRITE coordina las operaciones protegidas y actualiza actividad dentro
  });
 });
 testCase("USERS coordina lecturas y mutaciones y actualiza LastActivityAt al verificar sesión",()=>{
- assert.match(users,/if \(action !== "getUsers"\) return doPostInternal_\(e\);\s*try \{\s*return withSharedMutationLease_\("USERS", "sessionActivity"/);
+ assert.match(users,/if \(action !== "getUsers"\) return doPostInternal_\(withSharedSessionActor_\(e, null\)\);\s*try \{\s*return withSharedMutationLease_\("USERS", "sessionActivity"/);
  assert.match(users,/function isSharedMutationAction_\(action\)\s*\{\s*return \["createUser","updateProfile"\]/);
  assert.match(users,/touchSessionActivityIfDue_\(sessionsSheet,sessionMatch\.rowIndex,sessionMatch\.row,COLS_ACTIVE_SESSIONS\.LastActivityAt\)/);
  ["handleGetUsers","handleCreateUser","handleUpdateProfile"].forEach(name=>{
@@ -25,7 +25,7 @@ testCase("USERS coordina lecturas y mutaciones y actualiza LastActivityAt al ver
  });
 });
 testCase("ADMIN exige sesión y coordina tanto lecturas como mutaciones protegidas",()=>{
- assert.match(admin,/if \(!isSharedMutationAction_\(action\)\) \{\s*if \(action === "ping"\) return doPostInternal_\(e\);\s*const operation = isSharedReadAction_\(action\) \? action : "sessionActivity";\s*try \{\s*return withSharedMutationLease_\("ADMIN", operation/);
+ assert.match(admin,/if \(!isSharedMutationAction_\(action\)\) \{\s*if \(action === "ping"\) return doPostInternal_\(withSharedSessionActor_\(e, null\)\);\s*const operation = isSharedReadAction_\(action\) \? action : "sessionActivity";\s*try \{\s*return withSharedMutationLease_\("ADMIN", operation/);
  assert.match(admin,/return withSharedMutationLease_\("ADMIN", action/);
  assert.match(admin,/touchSessionActivityIfDue_\(sh,sessionMatch\.rowIndex,sessionMatch\.row,6\)/);
  assert.match(admin,/const developerContext = action === 'ping' \? null : \(ADMIN_MODAL_EDIT_ACTIONS\.has\(action\) \? assertModalEditSession\(payload\) : assertDeveloperSession\(payload\)\)/);
