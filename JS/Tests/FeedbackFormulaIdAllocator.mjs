@@ -75,5 +75,7 @@ test("Detiene asignación si el patrón es desconocido, inconsistente o los IDs 
  assert.throws(()=>mixed.api.getNextFormulaBasedId_(mixed.ss.sheets[0],1),/patrones diferentes/);
  const duplicate=harness(sheet("Users",[["ID"],["U-001"],["U-001"]],[["ID"],[formula],[formula]]));
  assert.throws(()=>duplicate.api.getNextFormulaBasedId_(duplicate.ss.sheets[0],1),/ID duplicado/);
+ const missing=harness(sheet("Users",[["ID","Nombre"],["U-001","Ana"],["","Luis"]],[["ID","Nombre"],[formula,""],["",""]]));
+ assert.throws(()=>missing.api.getNextFormulaBasedId_(missing.ss.sheets[0],1),/contiene datos, pero no tiene ID/);
 });
 console.log("FeedbackFormulaIdAllocator: "+passed+"/"+passed+" PASS");
