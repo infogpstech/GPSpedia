@@ -454,3 +454,11 @@
 - JS/Tests/InboxConversations.mjs: se verifica que un usuario no participante no puede enviar respuestas ni alterar el marcador de lectura, y que las operaciones rechazadas no escriben mensajes ni estados.
 - CI Node.js 22 run 43676278019: SUCCESS; sintaxis PASS; 100 suites / 1,520 pruebas / 0 fallos; InboxConversations 38/38 PASS.
 - GitHub Pages run 43676277745: build, reporte y deploy SUCCESS. Cambio limitado a pruebas; sin cambios funcionales o de interfaz.
+
+
+2026-11-14 — FEEDBACK/Inbox: evitar doble validación de identidad por solicitud
+- `JS/Services/feedback.js`: el dispatcher adjunta el actor autenticado en un campo interno después de validar el token y obtener el rol real del servidor.
+- `JS/Services/InboxConversations.js`: los handlers reutilizan ese actor y no vuelven a consultar ActiveSessions/Users dentro de la misma solicitud. Las llamadas internas de prueba conservan el fallback de autenticación.
+- El campo interno enviado desde el navegador no concede permisos: el dispatcher lo sobrescribe con el actor verificado.
+- Pruebas aisladas: InboxConversations 40/40 PASS; InboxRoleContract 17/17 PASS. Parsing sintáctico de InboxConversations.js y feedback.js PASS.
+- Esta mejora elimina una validación duplicada en Inbox. El resto de servicios protegidos mantiene una validación backend por solicitud; la simplificación global requiere un contexto/caché compartido que conserve revocación, cierre de sesión, expiración y cambios de rol. No se debilitó ese control.

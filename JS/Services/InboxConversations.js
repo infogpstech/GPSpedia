@@ -109,7 +109,11 @@ function inboxConversationHash_(value) {
     return digest.map(byte => ((byte + 256) % 256).toString(16).padStart(2, "0")).join("");
 }
 function inboxConversationActor_(payload) {
-    const verified = assertFeedbackSession(payload, null);
+    // El dispatcher ya verificó la sesión y adjunta este actor de confianza.
+    // El fallback mantiene las pruebas/llamadas internas independientes.
+    const verified = payload && payload.__feedbackActor
+        ? payload.__feedbackActor
+        : assertFeedbackSession(payload, null);
     const id = String(verified && verified.userId || "").trim();
     const name = String(verified && verified.userName || "").trim();
     const role = normalizeFeedbackRole(verified && verified.role);

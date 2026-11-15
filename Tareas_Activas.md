@@ -828,3 +828,17 @@ Las fuentes de servicios JavaScript se centralizan bajo `JS/Services/`. La carpe
 - `JS/Tests/InboxConversations.mjs`: se añadió una regresión que intenta responder y marcar como leído desde una identidad ajena a la conversación; ambas operaciones deben rechazarse y no deben modificar filas de mensajes ni estados.
 - CI Node.js 22 run `43676278019`: SUCCESS; **100 suites / 1,520 pruebas / 0 fallos**; InboxConversations 38/38 PASS; sintaxis PASS. Pages run `43676277745` SUCCESS.
 - Solo se amplió cobertura de autorización; no se añadieron controles visibles ni se alteró el backend. GP-INBOX-04D continúa abierta para el resto de la matriz y regresión.
+
+
+## Adenda P1 — sesión activa y eliminación de validaciones redundantes (2026-11-14)
+
+**Estado: EN PROGRESO.** Esta adenda precisa el nuevo requisito de rendimiento: iniciar sesión debe establecer la identidad y el rol operativo para las actividades normales, sin comprobaciones repetitivas innecesarias.
+
+- [x] Confirmar que el cliente ya no ejecuta un preflight de sesión antes de cada acción protegida; la sesión se restaura/valida al iniciar la aplicación.
+- [x] Eliminar la segunda validación que Inbox ejecutaba dentro de cada handler después de que el dispatcher FEEDBACK ya había autenticado la misma solicitud. El actor confiable se adjunta en el servidor y se reutiliza.
+- [x] Conservar la autorización backend: el rol interno procede de Users y cualquier campo `__feedbackActor` aportado por el navegador es sobrescrito por el dispatcher.
+- [x] Verificar el comportamiento actual de Inbox: solo quien inició el caso puede agregar comentarios; Supervisor, Jefe o Desarrollador pueden cerrarlo; el cierre se serializa y bloquea comentarios posteriores. Las pruebas de cierre y comentarios están incluidas en InboxConversations.
+- [ ] Diseñar e implementar el contexto/caché de sesión compartido para los demás servicios, sin consultar la hoja completa en cada acción y sin permitir que logout, revocación, expiración, desactivación o cambio de rol queden ignorados. No retirar la validación backend hasta demostrar estas garantías con pruebas de concurrencia.
+- [ ] Ejecutar CI integral en el HEAD publicado y registrar su resultado.
+
+**Validación aislada de esta adenda:** InboxConversations 40/40 PASS; InboxRoleContract 17/17 PASS; parsing de los dos servicios modificados PASS. La autenticación global simplificada continúa pendiente; no se declara completada por haber eliminado únicamente la duplicación de Inbox.

@@ -38,7 +38,7 @@ class FakeSpreadsheet {
     getSheetByName(name) { return this.sheets.get(name) || null; }
     insertSheet(name) { const sheet = new FakeSheet(name); this.sheets.set(name, sheet); return sheet; }
 }
-let uuid = 0, lockAcquired = 0, lockReleased = 0;
+let uuid = 0, lockAcquired = 0, lockReleased = 0, sessionValidationCount = 0;
 const spreadsheet = new FakeSpreadsheet();
 const users = spreadsheet.insertSheet("Users");
 users.getRange(1, 1, 9, 9).setValues([
@@ -57,6 +57,7 @@ function normalizeRole(value) {
     return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
 }
 function assertSession(payload) {
+    sessionValidationCount++;
     const id = tokens.get(String(payload.sessionToken || ""));
     if (!id || id !== String(payload.userId || "")) throw new Error("Sesión inválida.");
     const row = users.rows.slice(1).find(item => item[0] === id);
@@ -95,6 +96,12 @@ run("Crea conversación directa individual desde Desarrollador", () => {
     assert.equal(spreadsheet.getSheetByName("InboxMessages").getLastRow(),2);
     assert.equal(spreadsheet.getSheetByName("Feedbacks"),null);
     assert.equal(spreadsheet.getSheetByName("Contactanos"),null);
+});
+run("El actor ya autenticado se reutiliza sin volver a validar la sesión dentro de Inbox", () => {
+    const before = sessionValidationCount;
+    const trustedActor = { userId:"U1", userName:"Ana Desarrolladora", role:"Desarrollador" };
+    api.handleGetInboxRecipients({ ...actor("U1","token-a"), __feedbackActor:trustedActor });
+    assert.equal(sessionValidationCount,before);
 });
 run("Destinatarios de Desarrollador provienen de USERS y excluyen cuentas inactivas", () => {
     const result = api.handleGetInboxRecipients(actor("U1","token-a"));

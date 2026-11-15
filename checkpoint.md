@@ -427,3 +427,17 @@
 - CI Node.js 22 run `43676278019`: SUCCESS; sintaxis PASS; **100 suites / 1,520 pruebas / 0 fallos**; `InboxConversations` 38/38 PASS.
 - GitHub Pages run `43676277745`: build, reporte y deploy SUCCESS.
 - Commit de pruebas: `eb1d9d1b2469801663cb8424f7bf0a246acfe4b6`. No se modificó código funcional, interfaz ni permisos; la validación de integración real sigue diferida a Beta.
+
+
+## Continuidad — actor autenticado reutilizado en Inbox (2026-11-14)
+
+**HEAD remoto de partida:** `4c6a4aadb73500351af382e28206085863dc4bf9` en `GPSpedia2.2.5_work`. La rama base `GPSpedia2.2.5` permanece sin cambios.
+
+- `JS/Services/feedback.js`: el dispatcher valida la solicitud y adjunta el actor verificado en `__feedbackActor` después de expandir el payload no confiable.
+- `JS/Services/InboxConversations.js`: el actor del dispatcher se reutiliza en los handlers, evitando una segunda llamada a `assertFeedbackSession` y una segunda lectura/touch de sesión dentro de la misma operación. El fallback de validación sigue disponible para invocaciones internas aisladas.
+- `JS/Tests/InboxConversations.mjs`: nueva prueba de que el actor ya autenticado no vuelve a disparar la validación de sesión.
+- `JS/Tests/InboxRoleContract.js`: contrato de que el dispatcher sobrescribe cualquier actor aportado por el cliente y el backend de Inbox reutiliza únicamente el actor adjuntado por el dispatcher.
+- Validación local aislada: InboxConversations 40/40 PASS; InboxRoleContract 17/17 PASS; parsing sintáctico de InboxConversations.js y feedback.js PASS.
+- El cierre de casos ya estaba implementado en esta rama: Supervisor/Jefe/Desarrollador, bloqueo de comentarios tras cierre y auditoría. La política de comentarios también restringe las respuestas al creador del caso.
+- Pendiente: la solicitud de no validar sesión en cada acción requiere una solución compartida entre AUTH/FEEDBACK/WRITE/USERS/ADMIN que mantenga revocación, logout, expiración y cambios de rol. Este commit elimina solo la doble validación de Inbox; no afirma que la optimización global esté terminada.
+- No se desplegaron Apps Script ni se modificaron Spreadsheet, Drive, ScriptProperties o datos productivos.

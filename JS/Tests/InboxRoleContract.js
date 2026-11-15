@@ -19,6 +19,13 @@ function runInboxRoleContractTests(sources) {
   assert(ui.includes('__gpsepediaFeedbackCoordinatorWarningLogged'));
  });
  run('Backend mantiene RBAC para aprobación y rechazo',()=>{const s=feedback.indexOf('const FEEDBACK_ACTION_PERMISSIONS = Object.freeze(');assert(s>=0);const e=feedback.indexOf(');',s)+2;const policy=feedback.slice(s,e);assert(policy.includes('approveVideo: ["Desarrollador", "Jefe", "Supervisor"]'));assert(policy.includes('rejectVideo: ["Desarrollador", "Jefe", "Supervisor"]'));});
+ run('Inbox reutiliza el actor autenticado por el dispatcher y evita una segunda lectura de sesión',()=>{
+  assert(feedback.includes('userRole: actor.role, __feedbackActor: actor'),'El dispatcher no adjunta el actor verificado.');
+  assert(inbox.includes('payload && payload.__feedbackActor'),'Inbox no reutiliza el actor verificado.');
+  const authorized=feedback.indexOf('const authorized = { ...source');
+  const actorAttach=feedback.indexOf('__feedbackActor: actor',authorized);
+  assert(authorized>=0&&actorAttach>authorized,'El actor confiable debe sobrescribir cualquier campo enviado por el cliente.');
+ });
  run('FEEDBACK actualiza LastActivityAt después de autenticar y autorizar al actor',()=>{assert(feedback.includes('sh.getRange(sessionMatch.rowIndex,6).setValue(new Date().toISOString())'));const touch=feedback.indexOf('sh.getRange(sessionMatch.rowIndex,6).setValue');const allowed=feedback.indexOf('if(Array.isArray(allowedRoles)',feedback.indexOf('function assertFeedbackSession'));assert(touch>allowed,'La actividad no debe actualizarse antes de validar el rol solicitado.');});
  run('FEEDBACK expone solo un booleano seguro para diagnosticar la configuración local del coordinador',()=>{
   const helper=extract(feedback,'isFeedbackCoordinatorConfigured_');

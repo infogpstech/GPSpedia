@@ -509,7 +509,7 @@ function authorizeFeedbackAction_(action, payload) {
     if (action === "suggestYear") return { ...source, ...resolveSuggestionYearActor(source) };
     if (Object.prototype.hasOwnProperty.call(FEEDBACK_ACTION_PERMISSIONS, action)) {
         const actor = assertFeedbackSession(source, FEEDBACK_ACTION_PERMISSIONS[action]);
-        const authorized = { ...source, userId: actor.userId, userName: actor.userName, userRole: actor.role };
+        const authorized = { ...source, userId: actor.userId, userName: actor.userName, userRole: actor.role, __feedbackActor: actor };
         if (action === "replyToFeedback") authorized.responderName = actor.userName;
         if (action === "approveVideo") authorized.approverName = actor.userName;
         if (action === "rejectVideo") authorized.rejecterName = actor.userName;
