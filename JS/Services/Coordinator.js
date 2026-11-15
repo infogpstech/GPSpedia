@@ -56,7 +56,7 @@ function coordinatorPolicy_(service, operation) {
             updateProfile: { read: ["ACTIVE_SESSIONS"], write: ["ACTIVE_SESSIONS", "USERS"] }
         },
         UTILITIES: {
-            migrateTimestamps: { read: [...identityRead, "CORTES", "DRIVE"], write: ["ACTIVE_SESSIONS", "UTILITIES"] }
+            migrateTimestamps: { read: ["ACTIVE_SESSIONS", "CORTES", "DRIVE"], write: ["UTILITIES"] }
         },
         WRITE: {
             sessionActivity: { write: ["ACTIVE_SESSIONS"] },
