@@ -533,7 +533,7 @@ function createSharedMutationCoordinator_(dependencies) {
                 const indexedOwner = String(properties.getProperty(authTokenIndexKey_(token)) || "");
                 if (indexedOwner && indexedOwner !== userId) throw new Error("Un token de sesión pertenece a otra cuenta.");
                 const previous = context.sessions.find(session => constantTimeEquals_(session.token, token));
-                if (previous && previous.role !== role) throw new Error("El rol de una sesión existente cambió; debe iniciar sesión nuevamente.");
+                if (previous && (previous.role !== role || previous.createdAt !== createdAt)) throw new Error("El rol o la fecha de una sesión existente cambió; debe iniciar sesión nuevamente.");
                 accepted.push({
                     token: token,
                     role: role,
