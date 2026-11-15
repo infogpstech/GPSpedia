@@ -148,3 +148,22 @@ Las tareas de mejora e implementación ya identificadas en el backlog vigente ti
 - Corregir los defectos reproducibles encontrados y volver a ejecutar las pruebas afectadas. Los hallazgos no críticos fuera del alcance deben quedar documentados y priorizados, sin convertir la fase de verificación en una vía para incorporar indefinidamente nuevas funcionalidades.
 - Una vez resueltas las tareas vigentes y aprobada la verificación integral, se podrá abrir una nueva etapa de planificación y aceptar nuevas tareas, sustentadas en necesidades o evidencia nuevas.
 
+## 12. Requisitos expresos del usuario: contraseñas y servicios Apps Script
+
+Estos requisitos delimitan el alcance de las siguientes iteraciones y prevalecen sobre propuestas técnicas anteriores que los contradigan:
+
+### 12.1 Contraseñas e inicio de sesión
+- Las contraseñas deben almacenarse como hashes; nunca en texto plano.
+- El inicio de sesión debe mantenerse ágil y rápido. No añadir pasos interactivos, desafíos, verificaciones adicionales ni viajes de red que no sean indispensables para autenticar y autorizar correctamente.
+- No aumentar el coste computacional del hash ni introducir mecanismos de autenticación más complejos por iniciativa propia. Cualquier cambio del algoritmo, parámetros o flujo debe demostrar una necesidad real y respetar el objetivo de baja latencia.
+- Mantener una protección razonable frente a recuperación por diccionario mediante un esquema de hash con salt; no interpretar «basta que sean hasheadas» como autorización para almacenar contraseñas en texto plano, usar un hash sin salt o debilitar la seguridad deliberadamente.
+- Unificar los servicios AUTH y USERS en un formato compatible, sin hacer más lento el login. Antes de cambiar el formato existente, revisar compatibilidad y migración; no ejecutar migraciones sobre datos reales sin autorización.
+
+### 12.2 Servicios Apps Script y pruebas de despliegue
+- Está permitido modificar, corregir, reorganizar y preparar en la rama de trabajo los archivos fuente de Apps Script y sus contratos, como parte de las tareas autorizadas.
+- Está permitido ejecutar pruebas locales, unitarias, de contrato, simulaciones y regresiones automatizadas que no requieran publicar ni alterar proyectos Apps Script desplegados.
+- No confundir la modificación del código fuente con un despliegue o una validación del servicio remoto.
+- Las pruebas que necesiten un deployment actualizado, invocaciones de servicios Apps Script desplegados, credenciales/propiedades del proyecto, hojas o datos del entorno Beta deben quedar registradas como **PENDIENTES DE DESPLIEGUE / VALIDACIÓN BETA** hasta que se realice ese despliegue y se autorice el entorno de prueba.
+- No omitir, simular ni marcar como aprobadas esas pruebas remotas antes de ejecutarlas. Registrar los requisitos previos, procedimiento y evidencia esperada para la siguiente iteración.
+- Esta reserva de pruebas no impide completar ahora el código fuente y las pruebas locales independientes del deployment.
+
