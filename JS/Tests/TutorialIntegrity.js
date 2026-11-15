@@ -384,10 +384,10 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
 
 if (process.argv[1] && process.argv[1].endsWith("TutorialIntegrity.js")) {
     const result = runTutorialIntegrityTests({
-        feedback: fs.readFileSync("Services/feedback.js", "utf8"),
+        feedback: fs.readFileSync("JS/Services/feedback.js", "utf8"),
         ui: fs.readFileSync("JS/Frontend/ui.js", "utf8"),
-        coordinator: fs.readFileSync("Services/Coordinator.js", "utf8"),
-        catalog: fs.readFileSync("Services/catalog.js", "utf8")
+        coordinator: fs.readFileSync("JS/Services/Coordinator.js", "utf8"),
+        catalog: fs.readFileSync("JS/Services/catalog.js", "utf8")
     });
     console.log("TutorialIntegrity: " + result.passed + "/" + (result.passed + result.failed) + " PASS");
     if (result.failed) console.error(JSON.stringify(result.results.filter(item => item.status === "FAIL")));

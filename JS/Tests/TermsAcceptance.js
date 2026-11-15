@@ -1,15 +1,15 @@
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import assert from 'node:assert/strict';
-const authSource = readFileSync(new URL('../../Services/Auth.js', import.meta.url), 'utf8');
+const authSource = readFileSync(new URL('../Services/Auth.js', import.meta.url), 'utf8');
 const authTestSource = readFileSync(new URL('./Auth.js', import.meta.url), 'utf8');
-const usersSource = readFileSync(new URL('../../Services/users.js', import.meta.url), 'utf8');
+const usersSource = readFileSync(new URL('../Services/users.js', import.meta.url), 'utf8');
 const usersTestSource = readFileSync(new URL('./users.js', import.meta.url), 'utf8');
 const apiConfigSource = readFileSync(new URL('../Frontend/api-config.js', import.meta.url), 'utf8');
 const uiSource = readFileSync(new URL('../Frontend/ui.js', import.meta.url), 'utf8');
 const frontendAuthSource = readFileSync(new URL('../Frontend/auth.js', import.meta.url), 'utf8');
 const htmlSource = readFileSync(new URL('../../index.html', import.meta.url), 'utf8');
-const coordinatorSource = readFileSync(new URL('../../Services/Coordinator.js', import.meta.url), 'utf8');
+const coordinatorSource = readFileSync(new URL('../Services/Coordinator.js', import.meta.url), 'utf8');
 const termsDeviceSource = readFileSync(new URL('../Frontend/termsDeviceAcceptance.js', import.meta.url), 'utf8');
 const sandbox = { SpreadsheetApp: { flush() {} }, console, Date, JSON, Object, String, Number, Array };
 runInNewContext(authSource + '\n;globalThis.__termsHelpers = { parseTermsAcceptance_, parseDeviceTermsAcceptanceStore_, ensureTermsAcceptanceColumn_, ensureSessionTermsAcceptanceColumn_ };', sandbox);
