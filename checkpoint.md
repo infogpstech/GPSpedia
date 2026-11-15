@@ -1691,3 +1691,17 @@ No se desplegaron servicios Apps Script, no se modificaron ScriptProperties, Spr
 - GitHub Actions run `43658998921`: SUCCESS; Node.js 22; sintaxis PASS; **99 suites / 1,490 pruebas / 0 fallos**.
 - GitHub Pages run `43658998608` pendiente de confirmar al momento de este checkpoint.
 - Siguiente: GP-CAT-01M — auditar `approveVideo`/`rejectVideo`; mantener reset global si pueden modificar varias filas o no existe un identificador único verificable.
+
+
+## Continuidad — GP-CAT-01M: deltas para aprobación/rechazo de vídeos (2026-11-14)
+
+**Commit de código:** `485b444e9d71f99c29f9896e4d0835a4c7ba7099`.
+
+- `handleApproveVideoUnlocked_` y `handleRejectVideoUnlocked_` ahora devuelven `contentType` y `referenceId` junto al `targetType` confirmado por la operación.
+- El publicador FEEDBACK valida que tipo de destino y tipo de contenido coincidan y enruta a un constructor completo de snapshot: Cortes, PyS o Tutoriales. La aprobación/rechazo publica el registro final después de la escritura; si falta ID, el tipo no coincide o falla la verificación, se usa reset seguro.
+- La aprobación de Tutoriales incluye la miniatura que se crea/retira junto con el vídeo; el constructor de Tutoriales relee ambos campos.
+- Se retiraron approveVideo/rejectVideo del grupo genérico de resets. Las operaciones de aprobación solo actualizan el destino verificado; el estado de Feedbacks permanece fuera del catálogo.
+- `CatalogChangeFeed`: 20/20 PASS; `CatalogSnapshotSync`: 29/29 PASS; `PysDataCache`: 18/18 PASS.
+- GitHub Actions run `43659142503`: SUCCESS; Node.js 22; sintaxis PASS; **99 suites / 1,491 pruebas / 0 fallos**.
+- GitHub Pages run `43659142194` pendiente de confirmar al momento de este checkpoint.
+- Siguiente: GP-CAT-01N — auditar operaciones ADMIN de imágenes, separar mutaciones de una fila verificable de reorganizaciones/restauraciones masivas.

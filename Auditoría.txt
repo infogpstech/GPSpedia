@@ -558,3 +558,13 @@ Estado: CORREGIDO EN RAMA; VALIDACIÓN BETA PENDIENTE.
 - La fila se relee y se serializa bajo ScriptLock; ante error se usa reset seguro.
 - CatalogChangeFeed 19/19 PASS; CI Node.js 22 run 43658998921: 99 suites / 1,490 pruebas / 0 fallos.
 - Pendiente: validar umbral de tres usuarios y actualización multiusuario en Beta aislada.
+
+
+AUD-2026-11-14-22 — RESET GLOBAL PARA APROBACIÓN/RECHAZO DE VÍDEOS DE DESTINO ÚNICO
+Severidad: Media (reconstrucción completa tras modificar un único destino).
+Estado: CORREGIDO EN RAMA; VALIDACIÓN BETA PENDIENTE.
+- Hallazgo: approveVideo/rejectVideo publicaban reset global aun cuando la operación actualiza o limpia un único destino identificable de tipo Cortes, PyS o Tutoriales.
+- Corrección: las respuestas incluyen contentType, referenceId y targetType verificados. FEEDBACK valida su coincidencia y publica upsert con el constructor completo de la colección destino; Tutoriales incluye la miniatura modificada.
+- Si el destino no coincide, falta ID o falla la publicación, se conserva reset seguro. No se publican deltas para solicitudes de vídeo pendientes que todavía no modifican el catálogo.
+- CI Node.js 22 run 43659142503: SUCCESS; 99 suites / 1,491 pruebas / 0 fallos.
+- Pendiente: validar aprobación/rechazo concurrente y propagación entre usuarios/dispositivos en Beta aislada.

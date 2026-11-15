@@ -319,3 +319,11 @@
 - La fila se relee mediante el constructor completo de FEEDBACK y se publica bajo ScriptLock; si no puede verificarse, se usa reset seguro.
 - CatalogChangeFeed 19/19, CatalogSnapshotSync 29/29, PysDataCache 18/18 PASS.
 - CI Node.js 22 run 43658998921: SUCCESS; 99 suites / 1,490 pruebas / 0 fallos.
+
+
+2026-11-14 — GP-CAT: DELTAS PARA APROBACIÓN Y RECHAZO DE VÍDEOS
+- approveVideo/rejectVideo devuelven contentType/referenceId del destino además de targetType.
+- FEEDBACK valida coincidencia del destino y publica upsert exacto usando el constructor correspondiente de Cortes, PyS o Tutoriales. La miniatura de Tutoriales se incluye en el snapshot después de aprobar/rechazar.
+- Se elimina reset genérico para estas dos acciones; si el destino no coincide o no se puede verificar, se publica reset seguro.
+- CatalogChangeFeed 20/20, CatalogSnapshotSync 29/29 y PysDataCache 18/18 PASS.
+- CI Node.js 22 run 43659142503: SUCCESS; 99 suites / 1,491 pruebas / 0 fallos.
