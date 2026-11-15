@@ -80,6 +80,7 @@ runGroup('32','ADMIN',()=>{
  runCli('P2 migración integral de fórmulas ID, valores y lotes reanudables','JS/Tests/IdentifierFormulaMigration.mjs');
  runCli('UX ayudas contextuales del formulario de cortes','JS/Tests/ContextualHelpForms.mjs');
   runCli('UX proporciones del panel Developer','JS/Tests/DeveloperPanelUX.mjs');
+  runCli('Drive alertas privadas por umbral de cuota y monitor GDrive','JS/Tests/DriveStorageAlerts.mjs');
  runCli('P1 coordinación de actividad y sesiones protegidas por servicio','JS/Tests/SessionActivityCoordination.mjs');
  runCli('GP-IMG-UX-01 biblioteca de imágenes: selección, menús y vistas','JS/Tests/ReplacedImagesLibraryUX.mjs');
  runCli('GP-IMG-DATA-01 planner exacto de conciliación Drive ↔ Cortes','JS/Tests/CortesImageReconciliation.mjs');

@@ -605,7 +605,7 @@ function doGet(e) {
 
 
 function isSharedMutationAction_(action) {
-    return ["recordLike","reportProblem","addProblem","addSolution","addPrevention","addVehicleToProblem","removeVehicleFromProblem","updatePysItem","updateTutorialItem","suggestCutChange","suggestYear","addTutorial","sendContactForm","replyToFeedback","markAsResolved","deleteFeedbackItem","clearActivityLogs","submitVideoForApproval","approveVideo","rejectVideo","createInboxConversation","sendInboxMessage","markInboxRead","markInboxUnread","deleteInboxConversation","archiveInboxConversation","closeInboxConversation"].includes(action);
+    return ["recordLike","reportProblem","addProblem","addSolution","addPrevention","addVehicleToProblem","removeVehicleFromProblem","updatePysItem","updateTutorialItem","suggestCutChange","suggestYear","addTutorial","sendContactForm","replyToFeedback","markAsResolved","deleteFeedbackItem","clearActivityLogs","submitVideoForApproval","approveVideo","rejectVideo","createInboxConversation","sendInboxMessage","notifyDevelopersDriveCritical","markInboxRead","markInboxUnread","deleteInboxConversation","archiveInboxConversation","closeInboxConversation"].includes(action);
 }
 
 function doPost(e) {
@@ -656,7 +656,7 @@ const FEEDBACK_ACTION_PERMISSIONS = Object.freeze({
     replyToFeedback: ["Desarrollador", "Jefe", "Supervisor"],
     markAsResolved: ["Desarrollador", "Jefe", "Supervisor"],
     deleteFeedbackItem: ["Desarrollador", "Jefe", "Supervisor"],
-    getInboxRecipients: null, getInboxConversations: null, getInboxMessages: null,
+    getInboxRecipients: null, notifyDevelopersDriveCritical: ["Desarrollador"], getInboxConversations: null, getInboxMessages: null,
     createInboxConversation: null, sendInboxMessage: null, markInboxRead: null, markInboxUnread: null, deleteInboxConversation: null, archiveInboxConversation: null,
     closeInboxConversation: ["Desarrollador", "Jefe", "Supervisor"],
     getActivityLogs: ["Desarrollador", "Jefe", "Supervisor"], clearActivityLogs: ["Desarrollador"],
@@ -755,6 +755,9 @@ function doPostInternal_(e) {
                 break;
             case 'getInboxRecipients':
                 response = handleGetInboxRecipients(payload);
+                break;
+            case 'notifyDevelopersDriveCritical':
+                response = handleNotifyDevelopersDriveCritical(payload);
                 break;
             case 'getInboxConversations':
                 response = handleGetInboxConversations(payload);

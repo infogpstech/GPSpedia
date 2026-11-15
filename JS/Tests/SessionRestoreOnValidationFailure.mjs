@@ -201,9 +201,12 @@ await test('validateSession no depende del coordinador y conserva comprobaciones
     assert.match(validator, /SessionTermsAcceptance/);
 });
 
-await test('las operaciones protegidas distinguen indisponibilidad de sesión inválida', () => {
-    assert.match(api, /result&&result\.valid===false&&!result\.error&&!result\.unavailable/);
-    assert.match(api, /SESSION_VALIDATION_UNAVAILABLE/);
+await test('el cliente no revalida identidad por acción y el backend mantiene la sesión protegida', () => {
+    const check = extract(client, 'export async function checkSession()', '\nexport async function login(');
+    assert.doesNotMatch(check, /validateSessionCoordinated|apiValidateSession/);
+    assert.equal(api.includes("routeAction('touchSession'"), false);
+    const coordinator = readFileSync(resolve(root, 'JS/Services/Coordinator.js'), 'utf8');
+    assert.match(coordinator, /function authorizeSession_\(userId, token, currentTime\)/);
 });
 
 await test('la restauración no ejecuta una segunda validación de AUTH', () => {

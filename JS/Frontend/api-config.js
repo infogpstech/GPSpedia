@@ -56,7 +56,7 @@ export const ACTION_TO_SERVICE_MAP = {
     'getCatalogChanges': 'FEEDBACK',
     'recordLike': 'FEEDBACK', 'reportProblem': 'FEEDBACK', 'sendContactForm': 'FEEDBACK', 'addTutorial': 'FEEDBACK', 'suggestYear': 'FEEDBACK', 'suggestCutChange': 'FEEDBACK', 'getPysData': 'FEEDBACK', 'addProblem': 'FEEDBACK', 'addSolution': 'FEEDBACK', 'addPrevention': 'FEEDBACK', 'addVehicleToProblem': 'FEEDBACK',
     'getFeedbackItems': 'FEEDBACK', 'getMyProblemReports': 'FEEDBACK', 'replyToFeedback': 'FEEDBACK', 'markAsResolved': 'FEEDBACK', 'getActivityLogs': 'FEEDBACK', 'deleteFeedbackItem': 'FEEDBACK', 'clearActivityLogs': 'FEEDBACK', 'clearSensitiveLogs': 'AUTH',
-    'getInboxRecipients': 'FEEDBACK', 'getInboxConversations': 'FEEDBACK', 'getInboxMessages': 'FEEDBACK', 'createInboxConversation': 'FEEDBACK', 'sendInboxMessage': 'FEEDBACK', 'markInboxRead': 'FEEDBACK', 'markInboxUnread': 'FEEDBACK', 'deleteInboxConversation': 'FEEDBACK', 'archiveInboxConversation': 'FEEDBACK', 'closeInboxConversation': 'FEEDBACK',
+    'getInboxRecipients': 'FEEDBACK', 'notifyDevelopersDriveCritical': 'FEEDBACK', 'getInboxConversations': 'FEEDBACK', 'getInboxMessages': 'FEEDBACK', 'createInboxConversation': 'FEEDBACK', 'sendInboxMessage': 'FEEDBACK', 'markInboxRead': 'FEEDBACK', 'markInboxUnread': 'FEEDBACK', 'deleteInboxConversation': 'FEEDBACK', 'archiveInboxConversation': 'FEEDBACK', 'closeInboxConversation': 'FEEDBACK',
     'initYouTubeUpload': 'FEEDBACK', 'getVideoApprovalByOperation': 'FEEDBACK', 'submitVideoForApproval': 'FEEDBACK', 'approveVideo': 'FEEDBACK', 'rejectVideo': 'FEEDBACK',
     'removeVehicleFromProblem': 'FEEDBACK', 'updatePysItem': 'FEEDBACK', 'updateTutorialItem': 'FEEDBACK',
     'migrateTimestamps': 'UTILITIES',
@@ -80,7 +80,8 @@ export const SERVICE_COMPATIBILITY_ACTIONS = {
 };
 
 /** No hay acciones externas o servicios heredados habilitados. */
-export const EXTERNAL_ACTIONS = {\n};
+export const EXTERNAL_ACTIONS = {
+};
 
 const serviceMetricsStore = createServiceMetricsStore();
 function recordServiceMetric(event) {

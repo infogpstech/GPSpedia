@@ -32,4 +32,16 @@ testCase("los botones Developer usan etiquetas breves y conservan nombre accesib
   assert.ok(button.includes(label),id);assert.ok(button.includes('aria-label="'+aria+'"'),id);
  }
 });
+
+testCase("la consola está sobre las pestañas y ocupa una franja de altura amplia",()=>{
+ assert.ok(html.indexOf('class="dev-console-shared"') < html.indexOf('class="dev-tools-tabs"'));
+ assert.match(css,/#dev-tools-modal \.dev-console-shared \{[\s\S]*?flex: 0 0 44%/);
+ assert.match(css,/#dev-tools-modal \.dev-console-output \{[\s\S]*?flex: 1 1 0/);
+});
+testCase("la navegación es horizontal, con icono compacto y expansión animada",()=>{
+ assert.match(css,/#dev-tools-modal \.dev-tools-sidebar \{[\s\S]*?flex-direction: row/);
+ assert.match(css,/#dev-tools-modal \.dev-tab-link \{[\s\S]*?flex-basis: 42px/);
+ assert.match(css,/transition: width \.24s ease, flex-basis \.24s ease/);
+ assert.match(css,/max-width: 180px;[\s\S]*?opacity: 1/);
+});
 console.log("DeveloperPanelUX: "+passed+"/"+passed+" PASS");

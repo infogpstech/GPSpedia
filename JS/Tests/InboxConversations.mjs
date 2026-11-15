@@ -79,7 +79,7 @@ const LockService = {
 const SpreadsheetApp = { flush() {} };
 const api = new Function(
     "getSpreadsheet","LockService","SpreadsheetApp","Utilities","assertFeedbackSession","normalizeFeedbackRole",
-    source + "\nreturn { handleGetInboxRecipients, handleCreateInboxConversation, handleSendInboxMessage, handleGetInboxConversations, handleGetInboxMessages, handleMarkInboxRead, handleMarkInboxUnread, handleDeleteInboxConversation, handleArchiveInboxConversation, handleCloseInboxConversation, inboxCanStartConversationWith_ };"
+    source + "\nreturn { handleGetInboxRecipients, handleNotifyDevelopersDriveCritical, handleCreateInboxConversation, handleSendInboxMessage, handleGetInboxConversations, handleGetInboxMessages, handleMarkInboxRead, handleMarkInboxUnread, handleDeleteInboxConversation, handleArchiveInboxConversation, handleCloseInboxConversation, inboxCanStartConversationWith_ };"
 )(() => spreadsheet, LockService, SpreadsheetApp, Utilities, assertSession, normalizeRole);
 
 const actor = (id, token) => ({ userId: id, sessionToken: token });
@@ -669,4 +669,31 @@ run("El estado privado usa una hoja adicional sin alterar el esquema de lectura 
         ["conversationId","userId","lastReadAt","lastReadMessageId","archived","hasSent","hasReceived","updatedAt","lastReceivedMessageId","lastSentMessageId"]);
 });
 
+run("la alerta de cuota crea mensajes del sistema solo para desarrolladores y es idempotente por día", () => {
+    const firstAlert = api.handleNotifyDevelopersDriveCritical({
+        ...actor("U1","token-a"), usagePercent: 82.5, alertDate: "20261115"
+    });
+    assert.equal(firstAlert.status,"success");
+    assert.equal(firstAlert.notifiedCount,2);
+    assert.equal(firstAlert.developerCount,2);
+    const conversations = spreadsheet.getSheetByName("InboxConversations");
+    const alertRows = conversations.rows.slice(1).filter(row =>
+        String(row[7]) === "GPSpedia-System" && String(row[11]).startsWith("drive80_20261115_")
+    );
+    assert.equal(alertRows.length,2);
+    const recipients = alertRows.map(row => JSON.parse(row[10]).find(user => user.id !== "GPSpedia-System").id).sort();
+    assert.deepEqual(recipients,["U1","U3"]);
+    const afterCount = conversations.getLastRow();
+    const repeated = api.handleNotifyDevelopersDriveCritical({
+        ...actor("U1","token-a"), usagePercent: 91, alertDate: "20261115"
+    });
+    assert.equal(repeated.status,"success");
+    assert.equal(conversations.getLastRow(),afterCount);
+    assert.throws(() => api.handleNotifyDevelopersDriveCritical({
+        ...actor("U2","token-b"), usagePercent: 90, alertDate: "20261115"
+    }),/Solo Desarrollador/);
+    assert.throws(() => api.handleNotifyDevelopersDriveCritical({
+        ...actor("U1","token-a"), usagePercent: 79.9, alertDate: "20261115"
+    }),/80/);
+});
 console.log("InboxConversations: " + passed + "/" + passed + " PASS");

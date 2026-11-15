@@ -24,6 +24,7 @@ import { loadPysData, getCachedPysData, getPysDataFreshness, invalidatePysDataCa
 import { captureModalViewState, restoreModalViewState, shouldRecordModalTransition, pushModalNavigationContext, popModalNavigationContext } from './modalNavigation.js';
 import { createRichTextToolbar, sanitizeHtmlContent, refreshRichTextToolbars } from './rich-text.js';
 import { renderActivityLogs } from './activityDashboard.js';
+import { getDriveStorageCriticalState } from './driveStorageAlerts.js';
 import { getOrCreateTermsDeviceId, getDeviceTermsAcceptance, saveDeviceTermsAcceptance } from './termsDeviceAcceptance.js';
 
 async function clearServiceWorkerRuntimeCache_(windowRef, timeoutMs = 5000) {
@@ -297,7 +298,7 @@ export function showSavingIndicator(status, message = "") {
 
 function getCurrentEditOwnerContext_() {
     const context = getUiSessionContext_();
-    const role = String(context && context.role || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+            .trim().toLowerCase();
     return context && ["desarrollador", "jefe", "supervisor"].includes(role) ? context : null;
 }
 
@@ -6808,6 +6809,31 @@ ${elapsedSec}s
     const driveStorageLimit = document.getElementById('drive-storage-limit');
     const driveStorageRemaining = document.getElementById('drive-storage-remaining');
     const driveStoragePercent = document.getElementById('drive-storage-percent');
+    let driveCriticalConsoleAlertShown = false;
+    let driveCriticalInboxNotificationSent = false;
+    const notifyDeveloperInboxOfDriveCritical_ = async (usagePercent) => {
+        const currentUser = getState().currentUser;
+        const role = String(currentUser && currentUser.Privilegios || "").trim().toLowerCase();
+        if (role !== "desarrollador" || driveCriticalInboxNotificationSent || !isAdminPanelCurrent_()) return;
+        const sessionPayload = getDeveloperSessionPayload();
+        const dayKey = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+        try {
+            const result = await routeAction("notifyDevelopersDriveCritical", {
+                ...sessionPayload,
+                usagePercent,
+                alertDate: dayKey
+            });
+            if (!result || result.status !== "success") {
+                throw new Error(result && result.message ? result.message : "No se pudo registrar la alerta privada de Drive.");
+            }
+            driveCriticalInboxNotificationSent = true;
+            log("Alerta crítica de Drive registrada en Inbox para " +
+                Number(result.notifiedCount || 0) + " cuenta(s) Desarrollador.", true);
+        } catch (error) {
+            log("Error enviando alerta crítica de Drive a Inbox: " +
+                (error && error.message ? error.message : "Error desconocido"), true, true);
+        }
+    };
     const formatStorageBytes = (value) => {
         if (value === null || value === undefined || value === '') return 'No disponible';
         const bytes = Number(value);
@@ -6834,9 +6860,23 @@ ${elapsedSec}s
                         ? 'Sin límite reportado (posible cuota ilimitada)'
                         : 'No disponible'));
             if (driveStorageRemaining) driveStorageRemaining.textContent = formatStorageBytes(response.remainingBytes);
-            if (driveStoragePercent) driveStoragePercent.textContent =
-                response.usagePercent !== null && response.usagePercent !== undefined && Number.isFinite(Number(response.usagePercent))
-                    ? Number(response.usagePercent).toFixed(2) + '%' : 'No disponible';
+            const criticalState = getDriveStorageCriticalState(response);
+            if (driveStoragePercent) {
+                driveStoragePercent.textContent = criticalState.usagePercent !== null
+                    ? criticalState.usagePercent.toFixed(2) + '%' : 'No disponible';
+                driveStoragePercent.classList.toggle('is-critical', criticalState.critical);
+            }
+            if (criticalState.critical) {
+                if (!driveCriticalConsoleAlertShown) {
+                    log("ALERTA CRÍTICA: Google Drive utiliza " + criticalState.usagePercent.toFixed(2) +
+                        " % de su cuota. Se alcanzó el umbral de 80 %.", false, true);
+                    driveCriticalConsoleAlertShown = true;
+                }
+                void notifyDeveloperInboxOfDriveCritical_(criticalState.usagePercent);
+            } else {
+                driveCriticalConsoleAlertShown = false;
+                if (criticalState.usagePercent === null || criticalState.usagePercent < 80) driveCriticalInboxNotificationSent = false;
+            }
             if (driveStorageStatus) driveStorageStatus.textContent = 'Actualizado: ' +
                 new Date(response.capturedAt || Date.now()).toLocaleString() + '. Fuente: ' +
                 (response.source || 'Google Drive') + '.' + (response.warning ? ' ' + response.warning : '');

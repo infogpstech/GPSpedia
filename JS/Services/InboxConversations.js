@@ -154,6 +154,45 @@ function inboxAssertRecipientAllowed_(actor, recipient) {
         throw new Error("El destinatario no está permitido por la jerarquía de comunicación.");
     }
 }
+function handleNotifyDevelopersDriveCritical(payload) {
+    const requester = inboxConversationActor_(payload);
+    if (requester.role !== "desarrollador") throw new Error("Solo Desarrollador puede emitir alertas críticas de Drive.");
+    const usagePercent = Number(payload && payload.usagePercent);
+    if (!Number.isFinite(usagePercent) || usagePercent < 80 || usagePercent > 100) {
+        throw new Error("La alerta de Drive requiere una cuota válida igual o superior al 80 %.");
+    }
+    const alertDate = String(payload && payload.alertDate || "").replace(/[^0-9]/g, "").slice(0, 8);
+    if (!/^[0-9]{8}$/.test(alertDate)) throw new Error("La fecha de alerta no es válida.");
+
+    const usersSheet = getSpreadsheet().getSheetByName("Users");
+    if (!usersSheet) throw new Error("No se encontró la hoja USERS.");
+    const userRows = inboxConversationRows_(usersSheet, Math.max(8, usersSheet.getLastColumn()));
+    const developerIds = new Set();
+    const developers = userRows.filter(row => inboxActiveUserRow_(row) &&
+        normalizeFeedbackRole(row[3]) === "desarrollador").map(row => {
+            const id = String(row[0] || "").trim();
+            if (!id || developerIds.has(id)) return null;
+            developerIds.add(id);
+            return id;
+        }).filter(Boolean);
+    const systemActor = { userId: "GPSpedia-System", userName: "GPSpedia", role: "desarrollador" };
+    const body = "El uso de la cuota compartida de Google Drive alcanzó o superó el umbral crítico del 80 %. Revisa el Monitor de GDrive en el panel de desarrollador.";
+    let notifiedCount = 0;
+    developers.forEach(recipientId => {
+        const safeRecipientId = recipientId.replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 60);
+        const result = handleCreateInboxConversation({
+            __feedbackActor: systemActor,
+            recipientId,
+            subject: "Alerta de almacenamiento Drive",
+            body,
+            category: "general",
+            idempotencyKey: "drive80_" + alertDate + "_" + safeRecipientId
+        });
+        if (result && result.status === "success") notifiedCount++;
+    });
+    return { status: "success", notifiedCount, developerCount: developers.length, usagePercent };
+}
+
 function handleGetInboxRecipients(payload) {
     const actor = inboxConversationActor_(payload), sheet = getSpreadsheet().getSheetByName("Users");
     if (!sheet) throw new Error("No se encontró la hoja USERS.");
