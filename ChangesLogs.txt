@@ -494,3 +494,13 @@
 - `handleUpdateProfile`, dentro del mismo bloqueo de mutación, reutiliza ese índice en lugar de volver a escanear la columna ID con `findUniqueUserRow_`. La fila procede de la verificación backend y se conserva la comprobación de identidad; no se acepta un índice enviado por el cliente.
 - Se amplió `UsersAtomicMutations` para comprobar el contrato y evitar que el handler vuelva a llamar al buscador.
 - CI Node.js 22 run `43684916807`: SUCCESS; sintaxis PASS; **100 suites / 1,525 pruebas / 0 fallos**. GitHub Pages run `43684916573`: build, reporte y deploy SUCCESS. No se modificaron roles, permisos, esquema, endpoints ni datos productivos.
+
+
+2026-11-15 — CONTEXTO CENTRAL DE SESIÓN Y COORDINACIÓN POR EPOCH (P1)
+- Coordinator 1.4.0: contexto de sesión por usuario/token en ScriptProperties, índice token→usuario, `syncUserSessions`, validación de contexto, revocación individual/global, epoch y barrera `revokedBefore`.
+- AUTH sincroniza sesiones en login, restaura/migra sesiones previas solo si no existe revocación, sincroniza actividad central con ActiveSessions en restauración y operaciones sensibles, y revoca antes de cambios de rol, contraseña, eliminación o reset de sesiones.
+- SharedMutationClient devuelve el actor verificado junto con la lease; el servidor elimina actores internos aportados por el navegador. USERS, WRITE, ADMIN, FEEDBACK y UTILITIES reutilizan el actor y ya no realizan consultas/escrituras de ActiveSessions por cada acción.
+- Coordinator usa `SESSION_CONTEXTS` como recurso lógico: las operaciones protegidas lo leen y las operaciones de AUTH que crean/revocan sesiones lo escriben. Se retiraron los locks de ActiveSessions de los servicios ordinarios; AUTH mantiene su sincronización ocasional de la hoja.
+- Se actualizaron las políticas de recursos y las regresiones `SharedMutationCoordinator.js` y `SessionActivityCoordination.mjs`; se sincronizó el espejo `JS/Tests/Auth.js`.
+- Se actualizaron `Services/COORDINATOR_SETUP.md`, `README.md`, `Tareas_Activas.md`, `checkpoint.md` y `Auditoría.txt`.
+- Validación pendiente: no se ejecutaron Node.js/CLI ni CI integral en esta sesión; pruebas agregadas aún no equivalen a PASS. Beta y deployments de Apps Script no ejecutados. No hubo cambios en datos productivos ni en la rama base.
