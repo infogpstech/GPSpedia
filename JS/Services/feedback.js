@@ -505,7 +505,7 @@ function doPost(e) {
     const sessionOptions = { session: { userId: payload.userId, sessionToken: payload.sessionToken } };
     if (!isSharedMutationAction_(action)) {
         if (!Object.prototype.hasOwnProperty.call(FEEDBACK_ACTION_PERMISSIONS, action) || FEEDBACK_PUBLIC_ACTIONS.has(action)) {
-            return doPostInternal_(e);
+            return doPostInternal_(withSharedSessionActor_(e, null));
         }
         try {
             return withSharedMutationLease_("FEEDBACK", "sessionActivity", function(token, actor) {
