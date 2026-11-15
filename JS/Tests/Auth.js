@@ -884,43 +884,51 @@ function syncSharedSessionContextsForUser_(userId, role, fullName, currentSessio
     if (!normalizedId || !["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"].includes(normalizedRole)) {
         throw new Error("No se pudo registrar una identidad o rol válido en el contexto compartido.");
     }
-    const sessionsSheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
-    if (!sessionsSheet) throw new Error("No se encontró ActiveSessions para sincronizar el contexto compartido.");
-    const rows = sessionsSheet.getDataRange().getValues().slice(1)
-        .map((row, index) => ({ row, rowIndex: index + 2 }))
-        .filter(item => normalizeUserId(item.row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]) === normalizedId &&
-            String(item.row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || "").trim());
-    if (rows.length > 5) throw new Error("La cuenta supera el límite seguro de sesiones compartidas.");
+    const lock = LockService.getScriptLock();
+    let acquired = false;
+    try {
+        lock.waitLock(10000);
+        acquired = true;
+        const sessionsSheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
+        if (!sessionsSheet) throw new Error("No se encontró ActiveSessions para sincronizar el contexto compartido.");
+        const rows = sessionsSheet.getDataRange().getValues().slice(1)
+            .map((row, index) => ({ row, rowIndex: index + 2 }))
+            .filter(item => normalizeUserId(item.row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]) === normalizedId &&
+                String(item.row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || "").trim());
+        if (rows.length > 5) throw new Error("La cuenta supera el límite seguro de sesiones compartidas.");
 
-    const sessions = [], malformedTokens = [];
-    rows.forEach(item => {
-        const token = String(item.row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || "");
-        try {
-            const createdAt = sharedSessionTimestamp_(item.row[COLS_ACTIVE_SESSIONS.date - 1]);
-            const activityValue = item.row[COLS_ACTIVE_SESSIONS.LastActivityAt - 1] || item.row[COLS_ACTIVE_SESSIONS.date - 1];
-            const lastActivityAt = sharedSessionTimestamp_(activityValue);
-            sessions.push({ token, createdAt, lastActivityAt });
-        } catch (error) {
-            malformedTokens.push(token);
-        }
-    });
+        const sessions = [], malformedTokens = [];
+        rows.forEach(item => {
+            const token = String(item.row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || "");
+            try {
+                const createdAt = sharedSessionTimestamp_(item.row[COLS_ACTIVE_SESSIONS.date - 1]);
+                const activityValue = item.row[COLS_ACTIVE_SESSIONS.LastActivityAt - 1] || item.row[COLS_ACTIVE_SESSIONS.date - 1];
+                const lastActivityAt = sharedSessionTimestamp_(activityValue);
+                sessions.push({ token, createdAt, lastActivityAt });
+            } catch (error) {
+                malformedTokens.push(token);
+            }
+        });
 
-    const synchronized = syncSharedUserSessionContexts_(normalizedId, normalizedRole, String(fullName || ""), sessions);
-    if (!synchronized || synchronized.status !== "success" || !Array.isArray(synchronized.acceptedTokens)) {
-        throw new Error("No se pudo confirmar la sincronización central de sesiones.");
-    }
-    const rejected = new Set([...(synchronized.rejectedTokens || []), ...malformedTokens]);
-    rows.forEach(item => {
-        const token = String(item.row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || "");
-        if (rejected.has(token)) {
-            revokeSharedSessionContext_(normalizedId, token);
-            sessionsSheet.getRange(item.rowIndex, COLS_ACTIVE_SESSIONS.ActiveSessions).clearContent();
+        const synchronized = syncSharedUserSessionContexts_(normalizedId, normalizedRole, String(fullName || ""), sessions);
+        if (!synchronized || synchronized.status !== "success" || !Array.isArray(synchronized.acceptedTokens)) {
+            throw new Error("No se pudo confirmar la sincronización central de sesiones.");
         }
-    });
-    if (!synchronized.acceptedTokens.includes(String(currentSessionToken || ""))) {
-        throw new Error("La sesión fue revocada o expiró antes de sincronizarse. Inicia sesión nuevamente.");
+        const rejected = new Set([...(synchronized.rejectedTokens || []), ...malformedTokens]);
+        rows.forEach(item => {
+            const token = String(item.row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || "");
+            if (rejected.has(token)) {
+                if (malformedTokens.includes(token)) revokeSharedSessionContext_(normalizedId, token);
+                sessionsSheet.getRange(item.rowIndex, COLS_ACTIVE_SESSIONS.ActiveSessions).clearContent();
+            }
+        });
+        if (!synchronized.acceptedTokens.includes(String(currentSessionToken || ""))) {
+            throw new Error("La sesión fue revocada o expiró antes de sincronizarse. Inicia sesión nuevamente.");
+        }
+        return { registered: synchronized.synced, epoch: synchronized.epoch };
+    } finally {
+        if (acquired) lock.releaseLock();
     }
-    return { registered: synchronized.synced, epoch: synchronized.epoch };
 }
 
 
