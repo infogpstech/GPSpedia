@@ -1047,7 +1047,11 @@ export async function getCatalog() {
 }
 
 const CATALOG_FALLBACK_CACHE_NAME = 'gpsepedia-catalog-fallback-v1';
-const CATALOG_FALLBACK_CACHE_URL = new URL('./__local_cache__/catalog-snapshot.json', import.meta.url).href;
+const CATALOG_FALLBACK_CACHE_PATH = '/__gpsepedia_local__/catalog-snapshot.json';
+function getCatalogFallbackCacheUrl_() {
+    const origin = typeof location !== 'undefined' && location.origin ? location.origin : '';
+    return origin ? origin + CATALOG_FALLBACK_CACHE_PATH : CATALOG_FALLBACK_CACHE_PATH;
+}
 
 /**
  * Copia independiente del snapshot público del catálogo. Permite arrancar
@@ -1058,7 +1062,7 @@ export async function getCatalogFallbackCache() {
     if (typeof caches === 'undefined' || typeof Response === 'undefined') return null;
     try {
         const cache = await caches.open(CATALOG_FALLBACK_CACHE_NAME);
-        const response = await cache.match(CATALOG_FALLBACK_CACHE_URL);
+        const response = await cache.match(getCatalogFallbackCacheUrl_());
         if (!response) return null;
         const stored = await response.json();
         if (!stored || !isCompleteCatalogSnapshot(stored.snapshot)) return null;
@@ -1078,7 +1082,7 @@ export async function saveCatalogFallbackCache(snapshot, cursor = null) {
     if (!isCompleteCatalogSnapshot(snapshot)) return false;
     try {
         const cache = await caches.open(CATALOG_FALLBACK_CACHE_NAME);
-        await cache.put(CATALOG_FALLBACK_CACHE_URL, new Response(JSON.stringify({
+        await cache.put(getCatalogFallbackCacheUrl_(), new Response(JSON.stringify({
             snapshot,
             cursor: Number.isSafeInteger(cursor) && cursor >= 0 ? cursor : null,
             savedAt: Date.now()

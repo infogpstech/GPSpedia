@@ -425,24 +425,27 @@ export async function loadInitialData(forceRefresh = false, options = {}) {
 
     // 1. Renderizar primero la instantánea local junto con su cursor persistido.
     try {
-        const fallbackCacheCandidate = typeof offline.getCatalogFallbackCache === "function"
-            ? offline.getCatalogFallbackCache().then(state => ({ source: "cache-storage", state })).catch(() => null)
+        const idbRead = offline.getCatalogSyncState().catch(() => null);
+        const fallbackRead = typeof offline.getCatalogFallbackCache === "function"
+            ? offline.getCatalogFallbackCache().catch(() => null)
             : Promise.resolve(null);
-        const idbCacheCandidate = offline.getCatalogSyncState()
-            .then(state => ({ source: "indexeddb", state }))
-            .catch(() => null);
-        const preferredCacheCandidate = idbCacheCandidate.then(async result =>
-            offline.isCompleteCatalogSnapshot(result && result.state && result.state.snapshot)
-                ? result
-                : await fallbackCacheCandidate
+        const combinedCacheRead = Promise.all([idbRead, fallbackRead]).then(([idbState, fallbackState]) => {
+            if (offline.isCompleteCatalogSnapshot(idbState && idbState.snapshot)) return { source: "indexeddb", state: idbState };
+            if (offline.isCompleteCatalogSnapshot(fallbackState && fallbackState.snapshot)) return { source: "cache-storage", state: fallbackState };
+            return { source: "empty", state: null };
+        });
+        const idbFastCandidate = idbRead.then(state =>
+            offline.isCompleteCatalogSnapshot(state && state.snapshot)
+                ? { source: "indexeddb", state } : combinedCacheRead
         );
-        const fastFallbackCandidate = fallbackCacheCandidate.then(result =>
-            offline.isCompleteCatalogSnapshot(result && result.state && result.state.snapshot)
-                ? result : new Promise(() => {})
+        const fallbackFastCandidate = fallbackRead.then(state =>
+            offline.isCompleteCatalogSnapshot(state && state.snapshot)
+                ? { source: "cache-storage", state } : combinedCacheRead
         );
         const cachedResult = await Promise.race([
-            preferredCacheCandidate,
-            fastFallbackCandidate,
+            idbFastCandidate,
+            fallbackFastCandidate,
+            combinedCacheRead,
             new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout local")), 3000))
         ]);
         const cachedState = cachedResult && cachedResult.state;
