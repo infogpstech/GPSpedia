@@ -137,7 +137,7 @@ test("WRITE y FEEDBACK publican deltas exactos y conservan reset para operacione
     assert.ok(feedbackSource.includes("publishPysCatalogChange_(action, problemId)"));
     assert.ok(feedbackSource.includes("publishTutorialCatalogChange_(action, tutorialId)"));
     assert.ok(feedbackSource.includes('publishSharedCatalogChange_("FEEDBACK", action, { operation: "reset" })'));
-    assert.match(feedbackSource,/if \(action === "recordLike"[\s\S]*?publishSharedCatalogChange_\("FEEDBACK", "recordLike"/);
+    assert.ok(feedbackSource.includes('publishFeedbackCortesCatalogChange_("recordLike", changedVehicleId)'));
     assert.match(adminSource,/catalogWriters\.includes\(catalogAction\)[\s\S]*?publishSharedCatalogChange_\("ADMIN", catalogAction, \{ operation: "reset" \}\)/);
     assert.match(adminSource,/finalizeAdminAuditEvent_\(auditEvent[\s\S]*?publishSharedCatalogChange_/);
 });
