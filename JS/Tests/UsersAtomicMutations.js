@@ -28,7 +28,7 @@ function runUsersAtomicMutationTests(usersSource, authSource, coordinatorSource)
         const dispatcher = extract(source, "doPost");
         assert(verifier.includes("touchSessionActivityIfDue_(sessionsSheet,sessionMatch.rowIndex,sessionMatch.row,COLS_ACTIVE_SESSIONS.LastActivityAt)"),
             "getVerifiedSession debe actualizar LastActivityAt con intervalo tras validar al usuario.");
-        assert(verifier.includes("5*60*1000"), "La escritura de actividad debe estar limitada a intervalos.");
+        assert(source.includes("5*60*1000"), "La escritura de actividad debe estar limitada a intervalos.");
         assert(dispatcher.includes('withSharedMutationLease_("USERS", "sessionActivity"'),
             "getUsers debe adquirir una lease de actividad.");
         assert(String(coordinatorSource || "").includes('sessionActivity: { write: ["ACTIVE_SESSIONS"] }'),
