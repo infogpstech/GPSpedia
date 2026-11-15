@@ -534,3 +534,9 @@
 - Añadido a lista_beta_parte2.txt el protocolo GP-INBOX-04B/04C/04D con preflight seguro, acciones de estado privado, tickets, RBAC, accesibilidad y validación real en Beta.
 - CI Node.js 22 run 43753616255 SUCCESS: 100 suites, 1,544 pruebas, 0 fallos; InboxUi 22/22.
 - Sin despliegue Apps Script ni cambios productivos.
+
+
+2026-11-15 | GPSpedia2.2.5_work | Actualización de resumen y checkpoint
+- Actualizada la tabla ejecutiva de Tareas_Activas.md con el estado real de P1, GP-DATA, GP-CAT, PWA e Inbox; corregida la descripción obsoleta de hashes AUTH/USERS.
+- Prependido a checkpoint.md un estado actual con HEAD de código validado 7a58da9a, CI 100 suites/1,544 pruebas PASS, límites de despliegue y siguiente paso.
+- Rama base GPSpedia2.2.5 permanece sin cambios. Sin despliegues Apps Script ni cambios de datos productivos.
