@@ -298,7 +298,7 @@ export function showSavingIndicator(status, message = "") {
 
 function getCurrentEditOwnerContext_() {
     const context = getUiSessionContext_();
-            .trim().toLowerCase();
+    const role = String(context && context.role || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
     return context && ["desarrollador", "jefe", "supervisor"].includes(role) ? context : null;
 }
 
@@ -6834,6 +6834,7 @@ ${elapsedSec}s
                 (error && error.message ? error.message : "Error desconocido"), true, true);
         }
     };
+
     const formatStorageBytes = (value) => {
         if (value === null || value === undefined || value === '') return 'No disponible';
         const bytes = Number(value);
@@ -6869,13 +6870,15 @@ ${elapsedSec}s
             if (criticalState.critical) {
                 if (!driveCriticalConsoleAlertShown) {
                     log("ALERTA CRÍTICA: Google Drive utiliza " + criticalState.usagePercent.toFixed(2) +
-                        " % de su cuota. Se alcanzó el umbral de 80 %.", false, true);
+                        " % de su cuota compartida. Se alcanzó el umbral de 80 %.", false, true);
                     driveCriticalConsoleAlertShown = true;
                 }
                 void notifyDeveloperInboxOfDriveCritical_(criticalState.usagePercent);
             } else {
                 driveCriticalConsoleAlertShown = false;
-                if (criticalState.usagePercent === null || criticalState.usagePercent < 80) driveCriticalInboxNotificationSent = false;
+                if (criticalState.usagePercent === null || criticalState.usagePercent < 80) {
+                    driveCriticalInboxNotificationSent = false;
+                }
             }
             if (driveStorageStatus) driveStorageStatus.textContent = 'Actualizado: ' +
                 new Date(response.capturedAt || Date.now()).toLocaleString() + '. Fuente: ' +
