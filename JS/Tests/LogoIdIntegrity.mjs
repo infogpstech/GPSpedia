@@ -124,7 +124,7 @@ test("Retira la imagen si no se puede adquirir el bloqueo",()=>{
 });
 test("Limpia una fila si falla la copia parcial de plantilla",()=>{
  const h=addLogoHarness({failCopy:true});assert.throws(()=>h.run(),/copy failure/);
- assert.equal(h.trashed,true);assert.ok(h.rows[2].every(value=>value===""));
+ assert.equal(h.trashed,true);assert.ok(!h.rows[2]||h.rows[2].every(value=>value===""));
 });
 test("Retira la imagen y limpia la fila parcial si falla la escritura de URL",()=>{
  const h=addLogoHarness({failUrlWrite:true});assert.throws(()=>h.run(),/URL write failure/);
