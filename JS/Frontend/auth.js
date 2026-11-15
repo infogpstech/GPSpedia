@@ -573,8 +573,14 @@ export async function loadInitialData(forceRefresh = false, options = {}) {
             if (await performSilentSync(snapshotToApply) !== true) {
                 throw new Error('La sincronización del catálogo no confirmó su actualización.');
             }
-        } else if (processCatalogData(snapshotToApply) !== true) {
-            throw new Error('No se confirmó el procesamiento del catálogo recibido.');
+        } else {
+            if (processCatalogData(snapshotToApply) !== true) {
+                throw new Error('No se confirmó el procesamiento del catálogo recibido.');
+            }
+            // Desde este punto el catálogo remoto ya es utilizable en memoria.
+            // El almacenamiento local y los datos auxiliares no deben retener el arranque.
+            catalogLoaded = true;
+            if (!silent) setState({ catalogLoadStatus: 'ready', catalogLoadError: null });
         }
         if (!isCurrentLoad()) return;
 
@@ -593,22 +599,19 @@ export async function loadInitialData(forceRefresh = false, options = {}) {
 
         // La caché local es secundaria: una indisponibilidad de IndexedDB no debe
         // descartar el catálogo remoto que ya se procesó correctamente en memoria.
-        try {
-            if (Number.isSafeInteger(cursorToPersist)) {
-                await offline.saveCatalogWithCursor(snapshotToApply, cursorToPersist);
-            } else {
-                await offline.saveCatalog(snapshotToApply);
-            }
-        } catch (storageError) {
+        const persistenceTasks = [];
+        const indexedDbSave = Number.isSafeInteger(cursorToPersist)
+            ? offline.saveCatalogWithCursor(snapshotToApply, cursorToPersist)
+            : offline.saveCatalog(snapshotToApply);
+        persistenceTasks.push(Promise.resolve(indexedDbSave).catch(storageError => {
             console.warn("El catálogo se actualizó en memoria, pero no pudo persistirse en IndexedDB:", storageError);
-        }
+        }));
         if (typeof offline.saveCatalogFallbackCache === "function") {
-            try {
-                await offline.saveCatalogFallbackCache(snapshotToApply, cursorToPersist);
-            } catch (fallbackStorageError) {
+            persistenceTasks.push(Promise.resolve(offline.saveCatalogFallbackCache(snapshotToApply, cursorToPersist)).catch(fallbackStorageError => {
                 console.warn("No se pudo actualizar la caché alternativa del catálogo:", fallbackStorageError && fallbackStorageError.name || "CacheStorageError");
-            }
+            }));
         }
+        await Promise.all(persistenceTasks);
         if (!isCurrentLoad()) return;
         markCatalogSync_();
         broadcastCatalogSync_(currentUser, requiresFullSnapshot || pysDeltaChanges.length > 0);
