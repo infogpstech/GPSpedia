@@ -302,3 +302,12 @@
 - CatalogChangeFeed 18/18 PASS; CatalogSnapshotSync 29/29 PASS.
 - CI Node.js 22 run 43658509818: SUCCESS; 99 suites / 1,489 pruebas / 0 fallos.
 - Primer CI encontró una expectativa de prueba obsoleta que exigía reset para todas las mutaciones WRITE; se actualizó al nuevo contrato de upsert exacto y reset masivo.
+
+
+2026-11-14 — GP-CAT: CORRECCIÓN DEL PUBLICADOR FEEDBACK recordLike
+- Se detectó que el publicador de recordLike invocaba mapRowToObject(row, COLS_CORTES), función no definida en el servicio FEEDBACK ni en sus dependencias compartidas del repositorio. El fallo se capturaba y dejaba el like confirmado sin evento incremental.
+- Se reemplazó por buildFeedbackCortesCatalogChange_: valida ID único, mapea VIN/activaTestigo solo si existen encabezados, normaliza imágenes Drive y YouTube, y ordena los slots por utilidad como catalog.js.
+- La lectura/publicación se serializa bajo ScriptLock y emite reset seguro si no puede verificar la fila.
+- El helper WRITE ahora excluye activaTestigo del mapa base y lo agrega solo con encabezados reales, evitando diferencias entre el snapshot incremental y el completo.
+- CatalogChangeFeed 18/18, CatalogSnapshotSync 29/29 y PysDataCache 18/18 PASS.
+- CI Node.js 22 run 43658821960: SUCCESS; 99 suites / 1,489 pruebas / 0 fallos.

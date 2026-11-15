@@ -1661,3 +1661,19 @@ No se desplegaron servicios Apps Script, no se modificaron ScriptProperties, Spr
 - GitHub Pages run `43658509235` pendiente de confirmar en este momento.
 - No se desplegaron Apps Script ni se modificaron datos productivos. Beta multiusuario, latencia y validación de las escrituras reales siguen pendientes.
 - Siguiente: GP-CAT-01K — revisar el snapshot de `recordLike` y la mutación `suggestYear` en FEEDBACK antes de habilitar más upserts.
+
+
+## Continuidad — GP-CAT-01K: snapshot FEEDBACK completo para recordLike (2026-11-14)
+
+**Commit de corrección:** `7dcf994477d6cd477df9016ee08b05936c36c393`.
+**Commit de contrato de prueba:** `bf4a527f8dd7968bc1c2a001e11d6aef01c16196`.
+**Commit de ajuste de expectativa heredada:** `a00a0246f5359aa038b9de3ad05576a010dd2a9a`.
+
+- Hallazgo: el publicador de `recordLike` llamaba `mapRowToObject(row, COLS_CORTES)`, pero esa función no está definida en el servicio FEEDBACK ni en sus dependencias compartidas del repositorio. El error se capturaba y registraba, por lo que el like se confirmaba pero no se publicaba el delta.
+- El snapshot anterior también omitía VIN y campos `activaTestigo` dinámicos y no reordenaba los slots después de cambiar su utilidad.
+- Corrección: FEEDBACK incorpora su constructor de snapshot de Cortes alineado con `catalog.js`: ID único, encabezados dinámicos VIN/activaTestigo, imágenes Drive y YouTube normalizados, y slots ordenados por utilidad. La publicación se serializa bajo ScriptLock; ante inconsistencia se emite reset seguro.
+- `Services/write.js` ajusta el mapeo de activaTestigo para incluir los campos solo si los encabezados existen, igual que el contrato de catálogo.
+- `CatalogChangeFeed`: 18/18 PASS; `CatalogSnapshotSync`: 29/29 PASS; `PysDataCache`: 18/18 PASS.
+- GitHub Actions run `43658821960`: SUCCESS; Node.js 22; sintaxis PASS; **99 suites / 1,489 pruebas / 0 fallos**.
+- GitHub Pages run `43658822214` pendiente de confirmar al momento de este checkpoint.
+- Siguiente: GP-CAT-01L — auditar `suggestYear`; conservar reset hasta confirmar si modifica una o varias filas y verificar el snapshot resultante.

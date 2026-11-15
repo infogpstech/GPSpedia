@@ -538,3 +538,13 @@ Estado: CORREGIDO EN RAMA; VALIDACIÓN BETA PENDIENTE.
 - El consumidor recalcula categoryCounts/sortedCategories al aplicar cambios de Cortes.
 - Pruebas: CatalogChangeFeed 18/18, CatalogSnapshotSync 29/29 PASS; CI Node.js 22 run 43658509818: 99 suites / 1,489 pruebas / 0 fallos.
 - Pendiente: pruebas de concurrencia real, read-back en Spreadsheet Beta y latencia multiusuario.
+
+
+AUD-2026-11-14-20 — PUBLICADOR recordLike CON DEPENDENCIA NO DEFINIDA
+Severidad: Alta (el contador de likes se confirmaba sin publicar el delta del catálogo).
+Estado: CORREGIDO EN RAMA; VALIDACIÓN BETA PENDIENTE.
+- Hallazgo: el bloque post-mutación de FEEDBACK llamaba mapRowToObject(row, COLS_CORTES), pero la función no estaba definida en feedback.js, Utilities.js, Coordinator.js ni SharedMutationClient.js. El catch solo registraba el error; no se publicaba reset alternativo.
+- Efecto: el like se guardaba, pero el catálogo de otras pestañas/dispositivos podía conservar el contador anterior hasta una reconciliación posterior.
+- Corrección: constructor propio de snapshot alineado con catalog.js, incluyendo VIN y activaTestigo dinámicos, normalización de imágenes/YouTube y orden de cortes. Publicación bajo ScriptLock; fallback reset si falla la verificación/publicación.
+- CI Node.js 22 run 43658821960: SUCCESS; 99 suites / 1,489 pruebas / 0 fallos.
+- Pendiente: comprobar en Beta aislada la reacción simultánea de varios usuarios y la actualización entre pestañas/dispositivos.
