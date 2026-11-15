@@ -74,7 +74,7 @@ const usersApi=new Function("Utilities","PASSWORD_HASH_PREFIX","LEGACY_PASSWORD_
 
 test("AUTH y USERS comparten PBKDF2-HMAC-SHA256 con el mismo coste y formato",()=>{
     const fromUsers=usersApi.createPasswordHash("SharedPassword2026");
-    assert.match(fromUsers,/^pbkdf2-sha256\\$12000\\$[0-9a-f]{32}\\$[0-9a-f]{64}$/);
+    assert.match(fromUsers,/^pbkdf2-sha256\$12000\$[0-9a-f]{32}\$[0-9a-f]{64}$/);
     assert.equal(api.verifyStoredPassword(fromUsers,"SharedPassword2026").matches,true);
     const fromAuth=api.createPasswordHash("SharedPassword2026");
     assert.equal(usersApi.verifyStoredPassword(fromAuth,"SharedPassword2026").matches,true);
