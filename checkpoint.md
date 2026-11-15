@@ -1,3 +1,26 @@
+# Continuidad — correcciones PWA, IndexedDB y diagnóstico Coordinator (2026-11-15)
+
+**Rama:** `GPSpedia2.2.5_work`  
+**HEAD de código validado:** `c982ade64442bcc35686d5a22207dd8c25153ee0`  
+**Rama base:** `GPSpedia2.2.5` — `d9acc68d889985c2e2f42fe3a02e502efc86ead1` (sin cambios).
+
+## Resultado
+- `index.html`: añadido `mobile-web-app-capable=yes`; se conserva `apple-mobile-web-app-capable=yes` para Safari.
+- `JS/Frontend/offline.js`: `initDB` conserva la promesa/conexión abierta hasta `versionchange` (antes la limpiaba también tras éxito, provocando aperturas repetidas); timeout de apertura ampliado de 5 a 10 s; backoff compartido de 15 s tras error/bloqueo. La purga/lectura de miniaturas es silenciosa y la caché opcional se omite durante indisponibilidad. No cambia el esquema ni bloquea imágenes remotas.
+- FEEDBACK/Coordinator: diagnóstico confirmado en `Coordinator.js/authenticate_`. El secreto FEEDBACK del servicio debe coincidir con `GPSpedia_COORDINATOR_SECRET_FEEDBACK` del coordinador del mismo entorno. `coordinatorConfigured` no verifica igualdad. El frontend conserva fallback a snapshot completo; los deltas remotos requieren cotejo privado de ScriptProperties/deployment en Beta. No se debilitó la autenticación.
+
+## Validación local/CI
+- GitHub Actions Node.js 22 run `43765191870`, HEAD `c982ade64442bcc35686d5a22207dd8c25153ee0`: **SUCCESS; 103 suites / 1,604 pruebas / 0 fallos**.
+- `IndexedDBTransactions`: 45/45 PASS; `SessionStartupNavigation`: 17/17 PASS; sintaxis de módulos modificados PASS.
+- Durante la activación de la suite IndexedDB se encontraron y corrigieron defectos del propio harness (ruta de importación incorrecta, prueba async sin await y expectativas de nombres de error) y un defecto real: el estado de apertura se borraba también tras éxito. La repetición final aprobó.
+- GitHub Pages run `43765191755`: build y reporte PASS; despliegue en progreso al registrar este checkpoint.
+- Sin despliegues Apps Script, cambios en ScriptProperties/endpoints/secretos, ni modificaciones de Spreadsheet/Drive/datos productivos.
+
+## Pendiente Beta
+Cotejar en privado `GPSpedia_COORDINATOR_URL` y `GPSpedia_COORDINATOR_SECRET` de FEEDBACK con el deployment y `GPSpedia_COORDINATOR_SECRET_FEEDBACK` del coordinador del mismo entorno. Después comprobar el feed incremental con una sesión Beta. No publicar los secretos.
+
+---
+
 # Continuidad — errores PWA, Coordinator e IndexedDB (2026-11-15)
 
 **Rama:** `GPSpedia2.2.5_work`  

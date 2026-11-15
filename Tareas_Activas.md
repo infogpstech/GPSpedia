@@ -1050,3 +1050,10 @@ El trabajo local GP-INBOX-04B/04C/04D queda cubierto en backend y contratos. No 
 | `apple-mobile-web-app-capable` deprecated | Añadido `mobile-web-app-capable=yes`; se conserva el meta Apple para Safari. | CORRECCIÓN LOCAL; CI PENDIENTE |
 | `getCatalogChanges`: servicio no autorizado por Coordinator | FEEDBACK o su secreto no coincide con la configuración del coordinador. El frontend conserva fallback a snapshot completo; verificar ScriptProperties y deployment en Beta. No exponer secretos. | DIAGNÓSTICO LOCAL COMPLETADO; CONFIGURACIÓN BETA PENDIENTE |
 | IndexedDB initialization timed out en miniaturas | Backoff compartido, limpieza opcional silenciosa y caché omitida durante indisponibilidad; imagen remota no se bloquea. | CORRECCIÓN LOCAL; CI PENDIENTE |
+
+
+### Cierre de incidencias de consola — validación local (2026-11-15)
+
+- Meta PWA: **COMPLETADA**. Se añadió la etiqueta estándar y se conservó la específica de Apple.
+- IndexedDB/miniaturas: **COMPLETADA CON VALIDACIÓN DIFERIDA**. CI run 43765191870 PASS; IndexedDBTransactions 45/45; backoff, conexión persistente y omisión segura de caché opcional.
+- FEEDBACK/Coordinator: **DIAGNÓSTICO LOCAL COMPLETADO; VALIDACIÓN BETA PENDIENTE**. El error es un rechazo de autenticación del servicio FEEDBACK frente al secreto registrado en el coordinador. La carga de catálogo conserva fallback a snapshot completo; falta cotejo de ScriptProperties/deployment del entorno Beta.

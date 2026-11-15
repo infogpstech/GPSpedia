@@ -799,3 +799,10 @@ AUD-2026-11-15-42 — TIMEOUT/REINTENTOS DE INDEXEDDB EN CACHÉ DE MINIATURAS
 Severidad: Baja / almacenamiento local opcional — Estado: CORREGIDO LOCALMENTE; CI PENDIENTE.
 - Evidencia: cada compresión invoca purgeExpiredThumbnailEntries; performOp registraba como error de base principal el fallo del almacén opcional thumbnails. Muchas miniaturas en paralelo repetían la misma apertura fallida.
 - Corrección: backoff compartido de 15 s tras error/bloqueo; limpieza opcional silenciosa; compresión omitida durante backoff; getThumbnail devuelve null cuando IndexedDB no está disponible. La imagen remota sigue disponible. Sin cambios de esquema ni borrado de datos.
+
+
+ADENDA AUD-2026-11-15-42 — VALIDACIÓN DE CORRECCIÓN INDEXEDDB
+- CI Node.js 22 run 43765191870: SUCCESS; 103 suites / 1,604 pruebas / 0 fallos. IndexedDBTransactions 45/45 PASS y SessionStartupNavigation 17/17 PASS; sintaxis PASS.
+- La prueba integrada detectó que la promesa dbPromise se limpiaba también al abrir correctamente la base. Se corrigió para conservar la conexión hasta versionchange y evitar aperturas repetidas. El timeout pasó de 5 a 10 segundos y el backoff de 15 segundos se activa tras error/bloqueo.
+- La suite IndexedDB fue integrada al runner. Se corrigieron fallos iniciales de su harness y se repitió CI hasta resultado satisfactorio.
+- Estado: COMPLETADA localmente con validación CI. No se cambió el esquema ni se borraron datos.

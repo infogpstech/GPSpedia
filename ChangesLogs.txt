@@ -565,3 +565,10 @@
 - JS/Tests/IndexedDBTransactions.js: regresiones para backoff y compresión concurrente con IndexedDB no disponible; SessionStartupNavigation comprueba metadatos PWA; suite integrada al runner.
 - El error Coordinator se origina en authenticate_ de Coordinator.js: servicio FEEDBACK no autorizado o secreto FEEDBACK no coincidente. Requiere cotejo privado de ScriptProperties/deployment; no se debilitó autenticación ni se expusieron secretos.
 - El frontend ya cae a snapshot completo cuando falla el cursor/feed. Sin despliegues Apps Script ni cambios en propiedades, endpoints, hojas o datos productivos.
+
+
+2026-11-15 — Validación final de correcciones PWA/IndexedDB/Coordinator
+- Se corrigió initDB para mantener dbPromise resuelta mientras la conexión siga válida; se limpia únicamente ante error o versionchange. Timeout 10 s y backoff 15 s tras fallo.
+- CI Node.js 22 run 43765191870, HEAD c982ade64442bcc35686d5a22207dd8c25153ee0: SUCCESS; 103 suites / 1,604 pruebas / 0 fallos. IndexedDBTransactions 45/45; SessionStartupNavigation 17/17; sintaxis PASS.
+- La integración de IndexedDB en el runner permitió descubrir y corregir defectos en su fixture/expectativas y la limpieza prematura de dbPromise. Las ejecuciones posteriores se repitieron hasta PASS.
+- Pages run 43765191755: build/reporte PASS; deploy en progreso al registrar esta nota. Coordinator FEEDBACK sigue pendiente de cotejo de ScriptProperties en Beta. Sin cambios de datos ni despliegues Apps Script.
