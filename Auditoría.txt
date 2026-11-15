@@ -568,3 +568,13 @@ Estado: CORREGIDO EN RAMA; VALIDACIÓN BETA PENDIENTE.
 - Si el destino no coincide, falta ID o falla la publicación, se conserva reset seguro. No se publican deltas para solicitudes de vídeo pendientes que todavía no modifican el catálogo.
 - CI Node.js 22 run 43659142503: SUCCESS; 99 suites / 1,491 pruebas / 0 fallos.
 - Pendiente: validar aprobación/rechazo concurrente y propagación entre usuarios/dispositivos en Beta aislada.
+
+
+AUD-2026-11-14-23 — RESET GLOBAL EN EDICIÓN IN-MODAL Y REEMPLAZO DE IMAGEN INDIVIDUAL
+Severidad: Media (reconstrucción completa tras editar una fila de Cortes).
+Estado: CORREGIDO EN RAMA; VALIDACIÓN BETA PENDIENTE.
+- Hallazgo: updateVehicleField y uploadAdminImage modifican una sola fila identificada de Cortes, pero ADMIN publicaba reset global tras cada éxito.
+- Corrección: se relee el registro por vehicleId y se publica upsert completo con contrato de catálogo, incluyendo VIN/activaTestigo dinámicos, imágenes Drive, YouTube y orden de slots. Lectura/publicación bajo ScriptLock.
+- Si la fila no es única, el ID falta o el snapshot no se puede verificar, se usa reset. Las respuestas warning y operaciones masivas mantienen reset; getAdminImageUploadStatus no publica porque es lectura.
+- CI Node.js 22 run 43659408356: 99 suites / 1,492 pruebas / 0 fallos.
+- Pendiente: pruebas reales de edición simultánea y reemplazo de imagen en Beta aislada.

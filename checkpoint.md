@@ -1705,3 +1705,16 @@ No se desplegaron servicios Apps Script, no se modificaron ScriptProperties, Spr
 - GitHub Actions run `43659142503`: SUCCESS; Node.js 22; sintaxis PASS; **99 suites / 1,491 pruebas / 0 fallos**.
 - GitHub Pages run `43659142194` pendiente de confirmar al momento de este checkpoint.
 - Siguiente: GP-CAT-01N — auditar operaciones ADMIN de imágenes, separar mutaciones de una fila verificable de reorganizaciones/restauraciones masivas.
+
+
+## Continuidad — GP-CAT-01N: deltas de edición In-Modal y reemplazo de imágenes ADMIN (2026-11-14)
+
+**Commit de código:** `2accae55b1f34507f5b02adf19b96e023313a5ec`.
+
+- `updateVehicleField` y `uploadAdminImage` modifican un solo vehículo por ID único. Tras respuesta `success`, ADMIN relee la fila final y publica upsert Cortes completo; el payload de la acción aporta el ID porque la respuesta de edición no lo devolvía.
+- El constructor usa el mismo contrato que `catalog.js`: VIN y activaTestigo solo si existen encabezados, normalización de imágenes Drive y YouTube y orden de slots por utilidad. La lectura/publicación se serializa bajo ScriptLock; si no se puede verificar, se usa reset.
+- `getAdminImageUploadStatus` sigue siendo lectura y no publica eventos. Las acciones con warning, reorganizaciones, restauraciones, reconciliaciones, backups y migraciones conservan reset.
+- `CatalogChangeFeed`: 21/21 PASS; `CatalogSnapshotSync`: 29/29 PASS; `PysDataCache`: 18/18 PASS.
+- GitHub Actions run `43659408356`: SUCCESS; Node.js 22; sintaxis PASS; **99 suites / 1,492 pruebas / 0 fallos**.
+- GitHub Pages run `43659407831` pendiente de confirmar al momento de este checkpoint.
+- Siguiente: GP-CAT-01O — auditar acciones de reemplazo/recuperación de imágenes para separar mutaciones de una fila de cambios que solo afectan Drive/ledger.

@@ -327,3 +327,11 @@
 - Se elimina reset genérico para estas dos acciones; si el destino no coincide o no se puede verificar, se publica reset seguro.
 - CatalogChangeFeed 20/20, CatalogSnapshotSync 29/29 y PysDataCache 18/18 PASS.
 - CI Node.js 22 run 43659142503: SUCCESS; 99 suites / 1,491 pruebas / 0 fallos.
+
+
+2026-11-14 — GP-CAT: DELTAS ADMIN PARA EDICIÓN IN-MODAL Y REEMPLAZO DE IMÁGENES
+- updateVehicleField y uploadAdminImage publican upsert Cortes tras éxito y relectura de una fila única por vehicleId.
+- El snapshot incluye VIN/activaTestigo solo cuando existen encabezados reales, normaliza IDs Drive y URLs YouTube y ordena los slots de corte por utilidad.
+- La lectura/publicación se serializa bajo ScriptLock; si no se verifica el ID/fila, se usa reset seguro. getAdminImageUploadStatus sigue siendo solo lectura; operaciones masivas y respuestas warning mantienen reset.
+- CatalogChangeFeed 21/21, CatalogSnapshotSync 29/29 y PysDataCache 18/18 PASS.
+- CI Node.js 22 run 43659408356: SUCCESS; 99 suites / 1,492 pruebas / 0 fallos.
