@@ -193,6 +193,13 @@ function touchSessionActivityIfDue_(sheet,rowIndex,row,activityColumn) {
 }
 
 function getAuthenticatedCollaborator(payload, allowedRoles){
+  const trusted=payload&&payload.__sharedSessionActor;
+  if(trusted&&typeof trusted.userId==="string"&&typeof trusted.role==="string"&&Number.isSafeInteger(trusted.epoch)&&trusted.epoch>0){
+    const id=trusted.userId.trim(),requested=String(payload.userId||id).trim(),role=trusted.role.trim().toLowerCase(),name=String(trusted.fullName||"").trim();
+    if(!id||requested!==id||!name||!["desarrollador","jefe","supervisor","tecnico","tecnico_exterior"].includes(role))throw new Error("Acceso no autorizado: el contexto compartido no es válido.");
+    if(Array.isArray(allowedRoles)&&!allowedRoles.includes(role))throw new Error("Acceso no autorizado: tu rol no puede realizar esta operación.");
+    return name;
+  }
   const id=String(payload&&payload.userId||'').trim(),token=String(payload&&payload.sessionToken||'');if(!id||!token.trim())throw new Error("Acceso no autorizado: se requiere una sesión válida.");
   const ss=getSpreadsheet(),sh=ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS),uh=ss.getSheetByName(SHEET_NAMES.USERS);if(!sh||!uh)throw new Error("Acceso no autorizado: sesión no autorizada.");
   const tokenMatches=findUniqueRowsByExactValue_(sh,COLS_ACTIVE_SESSIONS.ActiveSessions,token,6,false);
