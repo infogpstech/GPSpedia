@@ -199,7 +199,11 @@ function runUsersAtomicMutationTests(usersSource, authSource, coordinatorSource)
             ["USR-0001","usuario1","","Tecnico","","","Uno","",""],
             ["USR-0001","usuario2","","Tecnico","","","Dos","",""]
         ];
-        const f=fixture({rows});
+        const f=fixture({rows,getVerifiedSession:()=>{
+            const matches=rows.map((row,index)=>({row,index:index+1})).filter(item=>item.row[0]==="USR-0001");
+            if(matches.length!==1)throw new Error("ID de usuario ausente o duplicado.");
+            return {userId:"USR-0001",role:"Tecnico",userRowIndex:matches[0].index};
+        }});
         let rejected=false;try{f.api.handleUpdateProfile({userId:"USR-0001",updates:{Nombre_Completo:"Cambio"},sessionToken:"SESSION"});}catch(_){rejected=true;}
         assert(rejected);equal(f.sheet._rows[1][6],"Uno");equal(f.sheet._rows[2][6],"Dos");
     });
