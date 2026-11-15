@@ -52,21 +52,20 @@ testCase("Los servicios localizan token y perfil por fila exacta y reducen escri
   assert.match(source,/5\*60\*1000/);
  }
 });
-testCase("AUTH valida una sola vez dentro de cada handler protegido, sin preflight duplicado",()=>{
+testCase("AUTH usa el actor central y no repite verificaciones de usuario/rol en cada handler",()=>{
  assert.equal(auth.includes("touchProtectedAuthRequestSession_"),false);
  const dispatchStart=auth.indexOf("function doPostInternal_(");
  const dispatchEnd=auth.indexOf("\nfunction ",dispatchStart+10);
  const dispatch=auth.slice(dispatchStart,dispatchEnd<0?auth.length:dispatchEnd);
  assert.equal(dispatch.includes("validateAndTouchSession_"),false);
  assert.equal(dispatch.includes("validateSessionReadOnly_"),false);
- const handlerNames=["handleAcceptTerms","handleChangePassword","handleResetUserPassword","handleResetUserSessions","handleClearSensitiveLogs","handleDeleteUser","handleUpdateUser","handleLogout"];
+ assert.match(auth,/function requireSharedAuthActor_\(/);
+ const handlerNames=["handleAcceptTerms","handleChangePassword","handleResetUserPassword","handleResetUserSessions","handleClearSensitiveLogs","handleDeleteUser","handleUpdateUser","handleMigrateLegacyPasswords"];
  for(const name of handlerNames){
   const start=auth.indexOf("function "+name+"(");assert.ok(start>=0,"Falta "+name);
   const end=auth.indexOf("\nfunction ",start+10),body=auth.slice(start,end<0?auth.length:end);
-  assert.match(body,/sessionToken/ ,name+" debe exigir token");
-  const lock=body.indexOf("waitLock");
-  const sessionLookup=["findSessionRowsByTokenUnderLock_","sessionsSheet.getDataRange()","sessionsData"].map(x=>body.indexOf(x)).filter(x=>x>=0);
-  assert.ok(lock>=0&&sessionLookup.some(x=>x>lock),name+" debe comprobar la sesión dentro de su bloqueo");
+  assert.match(body,/requireSharedAuthActor_\(/,name+" debe consumir el actor central");
+  assert.doesNotMatch(body,/findSessionRowsByTokenUnderLock_|getSessionExpirationStatus_/,name+" no debe revalidar la sesión");
  }
  const logout=auth.slice(auth.indexOf("function handleLogout("));
  assert.match(logout,/findSessionRowsByTokenUnderLock_\(sessionsSheet, sessionToken\)/);
@@ -74,8 +73,8 @@ testCase("AUTH valida una sola vez dentro de cada handler protegido, sin preflig
  assert.equal(logout.includes("getSessionExpirationStatus_"),false,"Logout debe poder limpiar sesiones expiradas o ya revocadas");
  assert.equal(api.includes("ensureSessionTouched_"),false);
  assert.equal(api.includes("touchSessionBeforeAction"),false);
+ assert.match(auth,/const sessionOptions = payload\.sessionToken && action !== "logout"\s*\? \{ session: \{ sessionToken: payload\.sessionToken \} \}/);
 });
-
 testCase("Coordinator usa SESSION_CONTEXTS como barrera lógica y conserva las operaciones ADMIN→WRITE declaradas",()=>{
  assert.match(coordinator,/ADMIN:\s*\{\s*sessionActivity:\s*\{ read: \["SESSION_CONTEXTS"\] \}/);
  assert.match(coordinator,/migrateReplacedImagesSchema:\s*\{ read: \["USERS"\], write: \["IMAGE_INVENTORY"\] \}/);

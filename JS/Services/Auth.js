@@ -435,18 +435,24 @@ function isSensitiveLogRecord_(row) {
     return containsCredentialFields || containsLoginUsername || isPasswordComparison;
 }
 
+function requireSharedAuthActor_(payload, allowedRoles, actionLabel) {
+    const actor = payload && payload.__sharedSessionActor;
+    const userId = normalizeUserId(actor && actor.userId);
+    const role = normalizeRoleName(actor && actor.role);
+    if (!actor || !userId || !Number.isSafeInteger(actor.epoch) || actor.epoch < 1 ||
+        !Array.isArray(allowedRoles) || !allowedRoles.includes(role)) {
+        throw new Error("Acceso denegado: el contexto central no autoriza " + String(actionLabel || "esta operación") + ".");
+    }
+    return { userId, role, fullName: String(actor.fullName || ""), epoch: actor.epoch };
+}
+
 function handleClearSensitiveLogs(payload) {
     // La sesión/token ya fueron autorizados por Coordinator en doPost().
     // Solo se consume el actor confiable y su rol; no se vuelven a leer Users/ActiveSessions.
-    const actor = payload && payload.__sharedSessionActor;
+    const actor = requireSharedAuthActor_(payload, ["desarrollador"], "la purga de Logs");
     const requestedUserId = normalizeUserId(payload && payload.userId);
-    const userId = normalizeUserId(actor && actor.userId);
-    const actorRole = normalizeRoleName(actor && actor.role);
-    if (!actor || !userId || requestedUserId !== userId ||
-        !Number.isSafeInteger(actor.epoch) || actor.epoch < 1 ||
-        actorRole !== "desarrollador") {
-        throw new Error("Acceso denegado: la purga de Logs está reservada a una sesión Desarrollador autorizada.");
-    }
+    const userId = actor.userId;
+    if (requestedUserId && requestedUserId !== userId) throw new Error("La identidad solicitante no coincide con el actor autorizado.");
 
     const lock = LockService.getScriptLock();
     let lockAcquired = false;
@@ -599,7 +605,7 @@ function doPost(e) {
     const payload = request.payload && typeof request.payload === "object" ? request.payload : {};
     const nestedToken = String(payload.__sharedMutationToken || "").trim();
     const sessionOptions = payload.sessionToken && action !== "logout"
-        ? { session: { userId: payload.userId, sessionToken: payload.sessionToken } } : undefined;
+        ? { session: { sessionToken: payload.sessionToken } } : undefined;
     try {
         return withSharedMutationLease_("AUTH", action, function(token, actor) {
             // Coordinator valida token, epoch, expiración y revocación una sola vez
@@ -1565,19 +1571,17 @@ function reconcileRoleRevocationUnderLock_(usersSheet,sessionsSheet,userId) {
 }
 
 function handleUpdateUser(payload) {
+    const actor = requireSharedAuthActor_(payload, ["desarrollador", "jefe", "supervisor"], "actualizar usuarios");
+    const requesterUserId = actor.userId;
     const userId = normalizeUserId(payload && payload.userId);
     const updates = payload && payload.updates;
-    const sessionToken = payload && payload.sessionToken;
-    if (!userId || !updates || typeof sessionToken !== 'string' || !sessionToken) {
-        throw new Error('Datos insuficientes para actualizar. Se requiere sessionToken.');
-    }
+    if (!userId || !updates || typeof updates !== "object" || Array.isArray(updates)) throw new Error("Datos insuficientes para actualizar el usuario destino.");
     if (updates.Password) {
         throw new Error('El restablecimiento administrativo de contraseñas debe realizarse mediante AUTH con el rol Desarrollador.');
     }
 
     const lock = LockService.getScriptLock();
     let acquired = false;
-    let requesterUserId = '';
     let roleChanged = false;
     let cleanupPending = false;
     let revokedSessions = 0;
@@ -1590,30 +1594,14 @@ function handleUpdateUser(payload) {
         const sessionsSheet = ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
         if (!usersSheet || !sessionsSheet) throw new Error('No se encontraron las hojas Users y ActiveSessions.');
 
-        const sessionRows = sessionsSheet.getDataRange().getValues().slice(1)
-            .filter(row => row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] === sessionToken);
-        if (sessionRows.length !== 1) throw new Error('Acceso no autorizado: sesión inválida, duplicada o expirada.');
-        const expiration = getSessionExpirationStatus_(sessionRows[0], new Date());
-        if (expiration.expired) throw new Error('La sesión del solicitante expiró por ' + expiration.reason + '.');
-        requesterUserId = normalizeUserId(sessionRows[0][COLS_ACTIVE_SESSIONS.ID_Usuario - 1]);
-        if (!requesterUserId) throw new Error('Identidad de sesión inválida.');
-        if (hasPendingRoleRevocation_(requesterUserId)) {
-            reconcileRoleRevocationUnderLock_(usersSheet, sessionsSheet, requesterUserId);
-            throw new Error('Tu rol cambió o tiene una revocación pendiente. Inicia sesión nuevamente.');
-        }
-
         const users = usersSheet.getDataRange().getValues().slice(1)
             .map((row, index) => ({ row, rowIndex: index + 2 }));
-        const requesterRows = users.filter(item => normalizeUserId(item.row[COLS_USERS.ID - 1]) === requesterUserId);
         const targetRows = users.filter(item => normalizeUserId(item.row[COLS_USERS.ID - 1]) === userId);
-        if (requesterRows.length !== 1 || !isActiveAuthUserRecord(requesterRows[0].row)) {
-            throw new Error('No se pudo identificar una cuenta solicitante activa y única.');
-        }
         if (targetRows.length !== 1 || !isActiveAuthUserRecord(targetRows[0].row)) {
             throw new Error('El usuario destino no existe, está desactivado o su ID no es único.');
         }
 
-        const requesterRole = normalizeRoleName(requesterRows[0].row[COLS_USERS.Privilegios - 1]);
+        const requesterRole = actor.role;
         const currentTargetRole = String(targetRows[0].row[COLS_USERS.Privilegios - 1] || '').trim();
         const normalizedTargetRole = normalizeRoleName(currentTargetRole);
         const canUpdate = {
@@ -1622,7 +1610,7 @@ function handleUpdateUser(payload) {
             supervisor: role => role === 'tecnico'
         };
         if (!canUpdate[requesterRole] || !canUpdate[requesterRole](normalizedTargetRole)) {
-            throw new Error(`Rol '${requesterRows[0].row[COLS_USERS.Privilegios - 1]}' no tiene permisos para modificar a un '${currentTargetRole}'.`);
+            throw new Error(`Rol '${requesterRole}' no tiene permisos para modificar a un '${currentTargetRole}'.`);
         }
 
         const allowedRoles = {
@@ -1789,15 +1777,13 @@ function validateAndTouchSession_(token, expectedUserId = null) {
 }
 
 function handleResetUserSessions(payload) {
+    const actor = requireSharedAuthActor_(payload, ["desarrollador"], "cerrar sesiones de otro usuario");
+    const requesterUserId = actor.userId;
     const targetUserId = normalizeUserId(payload && payload.targetUserId);
-    const sessionToken = payload && payload.sessionToken;
-    if (!targetUserId || typeof sessionToken !== 'string' || !sessionToken) {
-        throw new Error('Datos insuficientes para cerrar las sesiones del usuario.');
-    }
+    if (!targetUserId) throw new Error("Se requiere el usuario destino para cerrar sus sesiones.");
 
     const lock = LockService.getScriptLock();
     let acquired = false;
-    let requesterUserId = '';
     let targetUsername = '';
     let revokedSessions = 0;
     let cleanupPending = false;
@@ -1810,23 +1796,9 @@ function handleResetUserSessions(payload) {
         const usersSheet = ss.getSheetByName(SHEET_NAMES.USERS);
         if (!sessionsSheet || !usersSheet) throw new Error('No se encontraron las hojas Users y ActiveSessions.');
 
-        const requesterMatches = findSessionRowsByTokenUnderLock_(sessionsSheet, sessionToken);
-        if (requesterMatches.length !== 1) throw new Error('Sesión solicitante inválida o duplicada.');
-        const expiry = getSessionExpirationStatus_(requesterMatches[0].row, new Date());
-        if (expiry.expired) throw new Error('La sesión del solicitante expiró por ' + expiry.reason + '.');
-        requesterUserId = normalizeUserId(requesterMatches[0].row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]);
-        assertRequesterRoleRevocationClear_(usersSheet, sessionsSheet, requesterUserId);
-
         const users = usersSheet.getDataRange().getValues().slice(1)
             .map((row, index) => ({ row, rowIndex: index + 2 }));
-        const requesterRows = users.filter(item => normalizeUserId(item.row[COLS_USERS.ID - 1]) === requesterUserId);
         const targetRows = users.filter(item => normalizeUserId(item.row[COLS_USERS.ID - 1]) === targetUserId);
-        if (requesterRows.length !== 1 || !isActiveAuthUserRecord(requesterRows[0].row)) {
-            throw new Error('No se pudo identificar una cuenta solicitante activa y única.');
-        }
-        if (normalizeRoleName(requesterRows[0].row[COLS_USERS.Privilegios - 1]) !== 'desarrollador') {
-            throw new Error('Acceso denegado. Esta operación está reservada al rol Desarrollador.');
-        }
         if (requesterUserId === targetUserId) throw new Error('No puedes cerrar remotamente tu propia sesión desde esta operación.');
         if (targetRows.length !== 1 || !isActiveAuthUserRecord(targetRows[0].row)) {
             throw new Error('El usuario seleccionado no existe, está desactivado o su ID no es único.');
@@ -1887,15 +1859,13 @@ function handleResetUserSessions(payload) {
 }
 
 function handleDeleteUser(payload) {
+    const actor = requireSharedAuthActor_(payload, ["desarrollador", "jefe", "supervisor"], "eliminar usuarios");
+    const requesterUserId = actor.userId;
     const userId = normalizeUserId(payload && payload.userId);
-    const sessionToken = payload && payload.sessionToken;
-    if (!userId || typeof sessionToken !== 'string' || !sessionToken) {
-        throw new Error('Datos insuficientes para eliminar. Se requiere userId y sessionToken.');
-    }
+    if (!userId) throw new Error("Se requiere el usuario destino para eliminar.");
 
     const lock = LockService.getScriptLock();
     let lockAcquired = false;
-    let requesterUserId = '';
     let closedSessions = 0;
     let deletionError = null;
     let alreadyDeleted = false;
@@ -1912,25 +1882,7 @@ function handleDeleteUser(payload) {
         }
 
         const sessionsData = sessionsSheet.getDataRange().getValues();
-        const requesterSessions = sessionsData.slice(1).filter(row =>
-            row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] === sessionToken
-        );
-        if (requesterSessions.length !== 1) {
-            throw new Error(requesterSessions.length > 1
-                ? 'Token solicitante duplicado; no se modificó ninguna cuenta.'
-                : 'Sesión inválida o expirada.');
-        }
-
-        const requesterExpiration=getSessionExpirationStatus_(requesterSessions[0],new Date());
-        if(requesterExpiration.expired)throw new Error('La sesión del solicitante expiró por '+requesterExpiration.reason+'.');
-        requesterUserId = normalizeUserId(requesterSessions[0][COLS_ACTIVE_SESSIONS.ID_Usuario - 1]);
-        if (!requesterUserId) {
-            throw new Error('Identidad de sesión inválida.');
-        }
-        assertRequesterRoleRevocationClear_(usersSheet, sessionsSheet, requesterUserId);
-
         const usersData = usersSheet.getDataRange().getValues();
-        const requesterRows = [];
         const targetRows = [];
         const uniqueIds = new Set();
 
@@ -1947,13 +1899,9 @@ function handleDeleteUser(payload) {
             }
             if (rowId) uniqueIds.add(rowId);
 
-            if (rowId === requesterUserId) requesterRows.push({ rowIndex: i + 1, row });
             if (rowId === userId) targetRows.push({ rowIndex: i + 1, row });
         }
 
-        if (requesterRows.length !== 1 || !isActiveAuthUserRecord(requesterRows[0].row)) {
-            throw new Error('Solicitante no único o inactivo.');
-        }
         if (requesterUserId === userId) {
             throw new Error('No puedes eliminar tu propia cuenta.');
         }
@@ -1963,7 +1911,7 @@ function handleDeleteUser(payload) {
 
         const target = targetRows[0];
         alreadyDeleted = !isActiveAuthUserRecord(target.row);
-        const requesterRole = normalizeRoleName(requesterRows[0].row[COLS_USERS.Privilegios - 1]);
+        const requesterRole = actor.role;
         const targetRole = normalizeRoleName(target.row[COLS_USERS.Privilegios - 1]);
         const canDelete = {
             desarrollador: () => true,
@@ -2109,13 +2057,12 @@ function clearUserSessionPointerUnderLock_(usersSheet, rowIndex) {
 }
 
 function handleChangePassword(payload) {
-    const userId = normalizeUserId(payload && payload.userId);
+    const actor = requireSharedAuthActor_(payload, ["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"], "cambiar contraseña");
+    const userId = actor.userId;
+    const requestedUserId = normalizeUserId(payload && payload.userId);
     const currentPassword = payload && payload.currentPassword;
     const newPassword = payload && payload.newPassword;
-    const token = payload && payload.sessionToken;
-    if (!userId || !currentPassword || !newPassword || typeof token !== 'string' || !token) {
-        throw new Error('Datos insuficientes para cambiar la contraseña.');
-    }
+    if ((requestedUserId && requestedUserId !== userId) || !currentPassword || !newPassword) throw new Error("Datos insuficientes o identidad incorrecta para cambiar la contraseña.");
 
     const lock = LockService.getScriptLock();
     let acquired = false;
@@ -2129,26 +2076,11 @@ function handleChangePassword(payload) {
         const usersSheet = ss.getSheetByName(SHEET_NAMES.USERS);
         const sessionsSheet = ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
         if (!usersSheet || !sessionsSheet) throw new Error('No se encontraron las hojas Users y ActiveSessions.');
-        ensureActiveSessionsActivityColumn_(sessionsSheet);
-
-        const requester = findSessionRowsByTokenUnderLock_(sessionsSheet, token);
-        if (requester.length !== 1 || normalizeUserId(requester[0].row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]) !== userId) {
-            throw new Error('Acceso no autorizado: sesión inválida o identidad no coincidente.');
-        }
-        const expiry = getSessionExpirationStatus_(requester[0].row, new Date());
-        if (expiry.expired) throw new Error('La sesión expiró por ' + expiry.reason + '.');
-
         const matches = usersSheet.getDataRange().getValues().slice(1)
             .map((row, index) => ({ row, rowIndex: index + 2 }))
             .filter(item => normalizeUserId(item.row[COLS_USERS.ID - 1]) === userId);
         if (matches.length !== 1 || !isActiveAuthUserRecord(matches[0].row)) {
             throw new Error('No se pudo identificar una cuenta activa y única.');
-        }
-        if (hasPendingRoleRevocation_(userId)) {
-            const pending = reconcileRoleRevocationUnderLock_(usersSheet, sessionsSheet, userId);
-            throw new Error(pending.pending
-                ? 'La revocación de sesiones por cambio de rol sigue pendiente. Intenta nuevamente más tarde.'
-                : 'Tu rol cambió y todas tus sesiones fueron cerradas. Inicia sesión nuevamente antes de cambiar la contraseña.');
         }
         if (!verifyStoredPassword(matches[0].row[COLS_USERS.Password - 1], currentPassword).matches) {
             throw new Error('La contraseña actual es incorrecta.');
@@ -2191,16 +2123,14 @@ function handleChangePassword(payload) {
 }
 
 function handleResetUserPassword(payload) {
+    const actor = requireSharedAuthActor_(payload, ["desarrollador"], "restablecer contraseñas");
+    const requesterId = actor.userId;
     const targetId = normalizeUserId(payload && payload.targetUserId);
     const newPassword = payload && payload.newPassword;
-    const token = payload && payload.sessionToken;
-    if (!targetId || !newPassword || typeof token !== 'string' || !token) {
-        throw new Error('Datos insuficientes para restablecer la contraseña.');
-    }
+    if (!targetId || !newPassword) throw new Error("Datos insuficientes para restablecer la contraseña.");
 
     const lock = LockService.getScriptLock();
     let acquired = false;
-    let requesterId = '';
     let revokedSessions = 0;
     let cleanupPending = false;
     let cleanupError = null;
@@ -2211,24 +2141,10 @@ function handleResetUserPassword(payload) {
         const usersSheet = ss.getSheetByName(SHEET_NAMES.USERS);
         const sessionsSheet = ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
         if (!usersSheet || !sessionsSheet) throw new Error('No se encontraron las hojas Users y ActiveSessions.');
-        ensureActiveSessionsActivityColumn_(sessionsSheet);
-
-        const requester = findSessionRowsByTokenUnderLock_(sessionsSheet, token);
-        if (requester.length !== 1) throw new Error('Sesión solicitante inválida o duplicada.');
-        const expiry = getSessionExpirationStatus_(requester[0].row, new Date());
-        if (expiry.expired) throw new Error('La sesión del solicitante expiró por ' + expiry.reason + '.');
-        requesterId = normalizeUserId(requester[0].row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]);
-        assertRequesterRoleRevocationClear_(usersSheet, sessionsSheet, requesterId);
-        if (requesterId === targetId) throw new Error('Para cambiar tu propia contraseña utiliza la opción Cambiar contraseña del perfil.');
-
+        if (requesterId === targetId) throw new Error("Para cambiar tu propia contraseña utiliza la opción Cambiar contraseña del perfil.");
         const users = usersSheet.getDataRange().getValues().slice(1)
             .map((row, index) => ({ row, rowIndex: index + 2 }));
-        const actor = users.filter(item => normalizeUserId(item.row[COLS_USERS.ID - 1]) === requesterId);
         const target = users.filter(item => normalizeUserId(item.row[COLS_USERS.ID - 1]) === targetId);
-        if (actor.length !== 1 || !isActiveAuthUserRecord(actor[0].row) ||
-            normalizeRoleName(actor[0].row[COLS_USERS.Privilegios - 1]) !== 'desarrollador') {
-            throw new Error('Acceso denegado: solo una cuenta Desarrollador activa puede restablecer contraseñas.');
-        }
         if (target.length !== 1 || !isActiveAuthUserRecord(target[0].row)) {
             throw new Error('La cuenta destino no existe, está desactivada o su ID no es único.');
         }
@@ -2275,10 +2191,12 @@ function handleResetUserPassword(payload) {
 
 
 function handleAcceptTerms(payload) {
-    const sessionToken = payload && payload.sessionToken;
+    const actor = requireSharedAuthActor_(payload, ["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"], "aceptar términos");
+    const userId = actor.userId;
+    const requestedUserId = normalizeUserId(payload && payload.userId);
     const requestedVersion = String(payload && payload.version || '').trim();
     const deviceId = String(payload && payload.deviceId || '').trim().toLowerCase();
-    if (typeof sessionToken !== 'string' || !sessionToken) throw new Error('Se requiere una sesión válida para aceptar los términos.');
+    if (requestedUserId && requestedUserId !== userId) throw new Error("La identidad no coincide con la sesión autorizada.");
     if (!/^[a-f0-9]{32}$/.test(deviceId)) throw new Error('No se pudo identificar este dispositivo. Actualiza la página e intenta nuevamente.');
     if (requestedVersion !== TERMS_CURRENT_VERSION) throw new Error('La versión de términos enviada no coincide con la versión vigente. Actualiza la página e intenta nuevamente.');
     const lock = LockService.getScriptLock();
@@ -2287,30 +2205,13 @@ function handleAcceptTerms(payload) {
         lock.waitLock(10000); acquired = true;
         const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
         const usersSheet = spreadsheet.getSheetByName(SHEET_NAMES.USERS);
-        const sessionsSheet = spreadsheet.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
-        if (!usersSheet || !sessionsSheet) throw new Error('No se encontraron las hojas Users y ActiveSessions.');
-        const sessionMatches = findSessionRowsByTokenUnderLock_(sessionsSheet, sessionToken);
-        if (sessionMatches.length !== 1) throw new Error(sessionMatches.length > 1
-            ? 'El token de sesión está duplicado; no se registró la aceptación.'
-            : 'La sesión no es válida o expiró. Inicia sesión nuevamente.');
-        const session = sessionMatches[0];
-        const userId = normalizeUserId(session.row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]);
-        if (!userId) throw new Error('No se pudo identificar al usuario de la sesión.');
-        if (payload && payload.userId !== undefined && normalizeUserId(payload.userId) !== userId) {
-            throw new Error('La identidad enviada no corresponde a la sesión activa.');
-        }
-        const expiration = getSessionExpirationStatus_(session.row, new Date());
-        if (expiration.expired) throw new Error('La sesión expiró por ' + expiration.reason + '.');
+        if (!usersSheet) throw new Error('No se encontró la hoja Users.');
         const userMatches = usersSheet.getDataRange().getValues().slice(1)
             .map((row, index) => ({ row, rowIndex: index + 2 }))
             .filter(item => normalizeUserId(item.row[COLS_USERS.ID - 1]) === userId);
         if (userMatches.length !== 1 || !isActiveAuthUserRecord(userMatches[0].row)) {
             throw new Error('No se pudo identificar una cuenta activa y única.');
         }
-        if (hasPendingRoleRevocation_(userId, usersSheet)) {
-            throw new Error('La cuenta tiene un cambio de rol pendiente. Inicia sesión nuevamente cuando finalice.');
-        }
-
         ensureTermsAcceptanceColumn_(usersSheet);
         const userCell = usersSheet.getRange(userMatches[0].rowIndex, COLS_USERS.TermsAcceptance);
         const acceptanceStore = parseDeviceTermsAcceptanceStore_(userCell.getValue());
@@ -2334,16 +2235,13 @@ function handleAcceptTerms(payload) {
     } finally { if (acquired) lock.releaseLock(); }
 }
 function handleMigrateLegacyPasswords(payload) {
-    const actorUserId = normalizeUserId(payload && payload.userId);
-    const sessionToken = payload && payload.sessionToken;
+    const actor = requireSharedAuthActor_(payload, ["desarrollador"], "migrar contraseñas heredadas");
+    const actorUserId = actor.userId;
     const dryRun = !payload || payload.dryRun !== false;
     const confirmed = Boolean(payload && payload.confirm === true);
     const requestedBatchSize = Number(payload && payload.batchSize);
     const batchSize = Number.isInteger(requestedBatchSize) && requestedBatchSize > 0
         ? Math.min(requestedBatchSize, 10) : 5;
-    if (!actorUserId || typeof sessionToken !== 'string' || !sessionToken) {
-        throw new Error('Se requiere una sesión de Desarrollador para migrar contraseñas.');
-    }
     if (!dryRun && !confirmed) {
         throw new Error('La migración con escritura requiere confirm:true después de revisar el dry-run.');
     }
@@ -2355,27 +2253,7 @@ function handleMigrateLegacyPasswords(payload) {
         acquired = true;
         const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
         const usersSheet = ss.getSheetByName(SHEET_NAMES.USERS);
-        const sessionsSheet = ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
-        if (!usersSheet || !sessionsSheet) throw new Error('No se encontraron Users y ActiveSessions.');
-        ensureActiveSessionsActivityColumn_(sessionsSheet);
-
-        const requester = findSessionRowsByTokenUnderLock_(sessionsSheet, sessionToken);
-        if (requester.length !== 1 ||
-            normalizeUserId(requester[0].row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]) !== actorUserId) {
-            throw new Error('Acceso denegado: sesión inválida o identidad no coincidente.');
-        }
-        const expiration = getSessionExpirationStatus_(requester[0].row, new Date());
-        if (expiration.expired) throw new Error('Acceso denegado: la sesión expiró por ' + expiration.reason + '.');
-        const actorRows = usersSheet.getDataRange().getValues().slice(1)
-            .filter(row => normalizeUserId(row[COLS_USERS.ID - 1]) === actorUserId);
-        if (actorRows.length !== 1 || !isActiveAuthUserRecord(actorRows[0])) {
-            throw new Error('Acceso denegado: cuenta solicitante inactiva o ambigua.');
-        }
-        assertRequesterRoleRevocationClear_(usersSheet, sessionsSheet, actorUserId);
-        if (normalizeRoleName(actorRows[0][COLS_USERS.Privilegios - 1]) !== 'desarrollador') {
-            throw new Error('Acceso denegado: la migración de contraseñas está reservada a Desarrollador.');
-        }
-        sessionsSheet.getRange(requester[0].rowIndex, COLS_ACTIVE_SESSIONS.LastActivityAt).setValue(new Date().toISOString());
+        if (!usersSheet) throw new Error('No se encontró la hoja Users.');
 
         const readCandidates = () => {
             const rows = usersSheet.getDataRange().getValues();
