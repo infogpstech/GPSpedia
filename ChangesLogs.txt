@@ -293,3 +293,12 @@
 - JS/Frontend/auth.js: alinea la revisión PyS con el cursor IndexedDB en deltas vacíos, deltas con cambios, bootstrap/reset y difusión entre pestañas. No adelanta el cursor PyS antes de aplicar los cambios.
 - PysDataCache 18/18 PASS. CI Node.js 22 run 43658124484: SUCCESS; 99 suites / 1,487 pruebas / 0 fallos. GitHub Pages run 43658124316: SUCCESS.
 - GP-CAT-01I completada en rama; validación Beta multiusuario/dispositivo pendiente.
+
+
+2026-11-14 — GP-CAT: PUBLICACIÓN INCREMENTAL DE ESCRITURAS WRITE
+- Services/write.js: addOrUpdateCut, addSupplementaryInfo y addVinToVehicle publican upsert exacto de Cortes tras éxito y relectura de una fila única por ID. El snapshot normaliza imágenes Drive y URLs YouTube, mapea VIN/activaTestigo según encabezados y ordena slots de corte por utilidad igual que catalog.js.
+- La lectura/publicación queda serializada bajo ScriptLock; cualquier ID ambiguo, snapshot no verificable o fallo de publicación conserva reset seguro. freezeCortesIds mantiene reset por ser una operación multi-fila/IDs; acciones WRITE anidadas bajo ADMIN no publican antes del proceso padre.
+- JS/Frontend/offline.js recalcula categoryCounts y sortedCategories tras deltas de Cortes.
+- CatalogChangeFeed 18/18 PASS; CatalogSnapshotSync 29/29 PASS.
+- CI Node.js 22 run 43658509818: SUCCESS; 99 suites / 1,489 pruebas / 0 fallos.
+- Primer CI encontró una expectativa de prueba obsoleta que exigía reset para todas las mutaciones WRITE; se actualizó al nuevo contrato de upsert exacto y reset masivo.

@@ -527,3 +527,14 @@ Estado: CORREGIDO EN RAMA; VALIDACIÓN BETA PENDIENTE.
 - Corrección: la caché PyS persiste la revisión global aplicada. El TTL por sí solo no fuerza una descarga cuando hay cursor válido y marca de datos existente; el feed actualiza la frescura sin descargar filas. Invalidación explícita, cursor desalineado, caché ausente y reset continúan usando snapshot completo.
 - Pruebas PysDataCache 18/18 PASS; CI Node.js 22 run 43658124484: 99 suites / 1,487 pruebas / 0 fallos; Pages run 43658124316 SUCCESS.
 - Pendiente: validar el comportamiento de varias sesiones/dispositivos y reconexión en entorno Beta.
+
+
+AUD-2026-11-14-19 — RESET GLOBAL INNECESARIO EN MUTACIONES WRITE DE UNA FILA
+Severidad: Media (reconstrucción completa del catálogo tras operaciones de un solo vehículo).
+Estado: CORREGIDO EN RAMA; VALIDACIÓN BETA PENDIENTE.
+- Hallazgo: addOrUpdateCut, addSupplementaryInfo y addVinToVehicle modifican una fila de Cortes, pero el productor WRITE publicaba reset global tras cada éxito.
+- Corrección: se relee la fila por ID único y se publica upsert de Cortes con el contrato de catálogo: imágenes Drive normalizadas, URL YouTube normalizada, columnas dinámicas y slots ordenados por utilidad. La lectura/publicación se serializa bajo ScriptLock.
+- Si no se verifica una única fila o el snapshot/publicación falla, se conserva reset seguro. freezeCortesIds sigue siendo reset por alcance multi-fila; las acciones anidadas bajo ADMIN esperan la publicación del proceso padre.
+- El consumidor recalcula categoryCounts/sortedCategories al aplicar cambios de Cortes.
+- Pruebas: CatalogChangeFeed 18/18, CatalogSnapshotSync 29/29 PASS; CI Node.js 22 run 43658509818: 99 suites / 1,489 pruebas / 0 fallos.
+- Pendiente: pruebas de concurrencia real, read-back en Spreadsheet Beta y latencia multiusuario.

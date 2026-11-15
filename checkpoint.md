@@ -1644,3 +1644,20 @@ No se desplegaron servicios Apps Script, no se modificaron ScriptProperties, Spr
 - GitHub Pages run `43658124316`: SUCCESS para el commit de código.
 - No se añadieron controles visibles ni se desplegaron Apps Script. La validación real de sincronización multiusuario, latencia y reconexión sigue pendiente en Beta.
 - Siguiente: GP-CAT-01J — revisar productores WRITE y emitir upsert exacto solo donde la fila final pueda reproducirse fielmente con el contrato de `Services/catalog.js`; mantener reset en operaciones multi-fila/IDs.
+
+
+## Continuidad — GP-CAT-01J: upsert exacto de operaciones WRITE (2026-11-14)
+
+**Commit de código:** `83700aac9854bc625aed100090c18665f7111529`.
+**Commit de ajuste de contratos de prueba:** `0e61bf7772f1a992493eb02aba781e23e32aa379`.
+
+- `Services/write.js`: `addOrUpdateCut`, `addSupplementaryInfo` y `addVinToVehicle` publican upsert de Cortes tras confirmar éxito y releer exactamente una fila por ID. El constructor reproduce el contrato de `Services/catalog.js`: mapeo de columnas dinámicas VIN/activaTestigo, normalización de imágenes Drive, normalización YouTube y orden de los tres slots de corte por utilidad.
+- La lectura del snapshot y publicación se serializan bajo ScriptLock. Si falta ID, hay duplicados, la fila no coincide o falla la publicación, se intenta reset seguro. Las llamadas WRITE anidadas bajo ADMIN no publican durante la mutación padre.
+- `freezeCortesIds` conserva reset porque puede afectar varios IDs/filas.
+- `JS/Frontend/offline.js`: después de aplicar deltas de Cortes recalcula `categoryCounts` y `sortedCategories`, evitando filtros desactualizados cuando se crea o cambia la categoría de un vehículo.
+- `JS/Tests/CatalogChangeFeed.mjs`: 18/18 PASS; `CatalogSnapshotSync`: 29/29 PASS.
+- Primer CI detectó una expectativa antigua que exigía reset para todas las mutaciones WRITE; se actualizó el contrato para exigir upsert exacto en operaciones de una fila y reset para migración masiva.
+- GitHub Actions run `43658509818`: SUCCESS; Node.js 22; sintaxis PASS; **99 suites / 1,489 pruebas / 0 fallos**.
+- GitHub Pages run `43658509235` pendiente de confirmar en este momento.
+- No se desplegaron Apps Script ni se modificaron datos productivos. Beta multiusuario, latencia y validación de las escrituras reales siguen pendientes.
+- Siguiente: GP-CAT-01K — revisar el snapshot de `recordLike` y la mutación `suggestYear` en FEEDBACK antes de habilitar más upserts.
