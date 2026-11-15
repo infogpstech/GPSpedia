@@ -537,3 +537,13 @@
 - Prueba cruzada AUTH/USERS añadida a `PasswordHashMigration.mjs`. CI Node.js 22 run `43752042270`: SUCCESS; **100 suites / 1,535 pruebas / 0 fallos**; `node --check` PASS. GitHub Pages run `43752040706`: build/reporte/deploy SUCCESS.
 - No se desplegó Apps Script ni se modificaron datos productivos. Validación Beta pendiente: deployments compatibles, credenciales, properties, Spreadsheet, login, restauración, varios dispositivos, logout individual, revocación global, cambio de rol/contraseña, expiración y tokens obsoletos. Benchmark de KDF real pendiente; no aumentar el coste configurado sin evidencia y autorización.
 - Siguiente trabajo local: GP-INBOX-04B, limitado a correcciones internas y pruebas. No añadir botones, paneles, pestañas, secciones ni acciones visibles nuevas sin autorización. Operaciones masivas/controles visibles 04B..04D siguen diferidos.
+
+
+## Continuidad GP-INBOX-04B/04C (2026-11-15)
+
+- HEAD de código validado: `9e3a2c0c9dffc04a42c775e709f7bf1c14b02fd7`; rama base protegida `GPSpedia2.2.5` sin cambios, SHA `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- GP-INBOX-04B backend: `markInboxUnread` y `deleteInboxConversation` autenticadas/coordinadas. Hoja `InboxConversationFlags` lazy-created; no altera hojas existentes. Marcar no leído es reversible/idempotente/auditado; ocultar el acceso solo para el participante y conserva el historial del otro. No se agregaron controles visibles.
+- GP-INBOX-04C backend: `reportProblem` guarda categoría/asunto con valores por defecto cuando la UI no los envía; el detalle del Inbox de soporte muestra categoría y estado. `getMyProblemReports` devuelve tickets propios paginados y filtra por el actor de sesión, no por userId cliente. Respuestas/resolución siguen usando `replyToFeedback` y `markAsResolved`. Sin nuevas pestañas/botones/paneles para usuarios.
+- CI Node.js 22 run `43753335306`: SUCCESS, **100 suites / 1,542 pruebas / 0 fallos**; InboxConversations 46/46; node --check PASS.
+- Pendiente: UI de tickets propios y selector visual categoría/asunto, barra/selección múltiple 04B, revisión RBAC/accesibilidad/móvil 04D y Beta con servicios desplegados. No se desplegó Apps Script ni se tocaron Sheets/Drive/ScriptProperties productivos. La hoja InboxConversationFlags no se ha creado en remoto.
+- Próximo trabajo local: GP-INBOX-04D, revisión de contratos RBAC/accesibilidad/regresión sin controles nuevos. Mantener toda validación remota en pendiente de Beta.
