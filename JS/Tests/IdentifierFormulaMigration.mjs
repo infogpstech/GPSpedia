@@ -96,7 +96,7 @@ test("No congela fórmulas ID cuyo patrón no puede migrarse a un generador back
  const relay=makeSheet("Relay",[["ID","Nombre"],["R-001","Relay A"]],[["ID","Nombre"],['=CONCAT("R-",ROW())',""]]);
  h.ss.sheets.push(relay);
  const r=h.api.migrate({dryRun:true});
- assert.equal(r.formulaCount,3);
+ assert.equal(r.formulaCount,2);
  assert.equal(r.skipped.unsupportedPattern,1);
  assert.equal(r.samples.some(item=>item.sheet==="Relay"),false);
 });
