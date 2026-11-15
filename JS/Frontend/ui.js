@@ -6239,6 +6239,8 @@ ${elapsedSec}s
                     result.sheetCount + ' hojas. Omitidos por ID duplicado: ' + result.skipped.duplicate +
                     '; resultado vacío: ' + result.skipped.emptyResult +
                     '; fila sin otros datos: ' + result.skipped.emptyRecord +
+                    '; patrones reconocidos para backend: ' + result.patternRecognizedCount +
+                    '; patrones que requieren revisión: ' + result.patternUnsupportedCount +
                     '. Se conservará cada ID calculado sin renumerarlo.';
                 const backupMatches = Boolean(verifiedDatabaseBackupId &&
                     normalizeSpreadsheetBackupId(backupResourceInput ? backupResourceInput.value : '') === verifiedDatabaseBackupId);
@@ -6278,7 +6280,11 @@ ${elapsedSec}s
                 if (!result || result.status !== 'success' || result.dryRun !== false) throw new Error('El servidor no confirmó el lote.');
                 if (identifierAuditStatus) identifierAuditStatus.textContent =
                     'Lote verificado: ' + result.migrated + ' fórmulas congeladas; quedan ' +
-                    result.remaining + '. ' + (result.complete ? 'Migración completada.' : 'Puedes confirmar el siguiente lote.');
+                    result.remaining + '. Secuencias backend configuradas: ' +
+                    (result.sequenceConfig ? result.sequenceConfig.configured : 0) +
+                    '; patrones pendientes de interpretación: ' +
+                    (result.sequenceConfig ? result.sequenceConfig.unsupported : 0) +
+                    '. ' + (result.complete ? 'Migración completada.' : 'Puedes confirmar el siguiente lote.');
                 if (result.complete) {
                     idFreezePreview = null;
                     confirmIdFreezeButton.disabled = true;
