@@ -926,3 +926,19 @@ Esta aclaración delimita el trabajo futuro y debe leerse junto con la fuente no
 - Próxima iteración: corregir primero estos defectos locales, sincronizar los espejos/fixtures requeridos y volver a ejecutar sintaxis y regresión integral. No debilitar autorización, revocación ni protección de sesiones para hacer pasar las pruebas.
 - No se ha desplegado Apps Script ni se han modificado datos productivos.
 
+
+
+## Adenda P1 — sesión central, contratos y hashes compatibles (2026-11-15)
+
+**Estado local: COMPLETADO CON VALIDACIÓN DIFERIDA A BETA.**
+
+- Se corrigieron los tres fallos iniciales de la regresión: el harness aislado de AUTH ahora inyecta y verifica la revocación central; el espejo `JS/Tests/users.js` volvió a sincronizarse con el servicio; y el contrato de ADMIN simula el wrapper de actor confiable para comprobar la propagación del token de lease.
+- Se alinearon las expectativas de Inbox, aceptación de términos y coordinación compartida con la política vigente: `AUTH/acceptTerms` lee `SESSION_CONTEXTS`, escribe `USERS` y no actualiza `ACTIVE_SESSIONS` en cada aceptación. No se alteró la lógica funcional para hacer pasar las pruebas.
+- Se unificó la creación de hashes de AUTH y USERS en `PBKDF2-HMAC-SHA256`, formato versionado con salt aleatorio y 12,000 iteraciones. No se aumentó el coste configurado ni se añadieron pasos al inicio de sesión. USERS conserva verificación compatible de hashes `sha256$` históricos; AUTH conserva la migración oportunista de credenciales antiguas tras un login correcto. No se ejecutó migración masiva ni se modificaron credenciales reales.
+- Se amplió `PasswordHashMigration.mjs` para verificar hashes cruzados AUTH/USERS, formato, coste, salt, hashes históricos y compatibilidad de lectura.
+- GitHub Actions Node.js 22, run `43752042270`, asociado al HEAD `b5cca78a65b5a9be39b999306abd3365da99c269`: **SUCCESS; 100 suites / 1,535 pruebas / 0 fallos**. `node --check` aprobado para los módulos modificados. Resultados focalizados: PasswordHashMigration 18/18; AUTH aislado 32/32; USERS mutaciones 15/15; SharedMutationCoordinator 49/49; InboxConversations 40/40; AdminImageScanCoordinatorContract 1/1; TermsModalAccessibility 12/12.
+- GitHub Pages run `43752040706`: build, reporte y deploy SUCCESS. No se desplegó ningún servicio Apps Script ni se modificaron proyectos remotos, propiedades, hojas, Drive o datos productivos.
+- **Pendiente de Beta:** login y creación de usuario con deployments compatibles; restauración y sincronización de sesiones previas; varios dispositivos; logout individual; revocación global; cambio de rol/contraseña; expiración y rechazo de tokens obsoletos. También queda pendiente calibrar el tiempo real del KDF en Apps Script; no cambiar iteraciones sin evidencia y autorización.
+- El texto anterior de esta tarea que indicaba unificar AUTH/USERS en una iteración futura queda supersedido por esta adenda. No ejecutar migraciones reales sin autorización.
+
+**Siguiente tarea local:** continuar GP-INBOX-04B solo con correcciones internas y pruebas que no requieran controles visibles nuevos. Las acciones masivas y cambios de interfaz de GP-INBOX-04B..04D siguen diferidos hasta autorización expresa. Las validaciones que requieran Spreadsheet/Coordinator/deployments reales quedan pendientes de Beta.
