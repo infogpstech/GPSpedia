@@ -132,7 +132,7 @@ await test('una respuesta legacy valid:false con error se normaliza como indispo
         'VALIDATION_TIMEOUT_MS','VALIDATION_LOCK_NAME','persistSessionValidation','isSessionProfileForUser_',
         fnSource + '\nreturn validateSessionCoordinated;'
     );
-    const validate = factory(
+    const validate = await factory(
         () => true, () => false,
         async () => ({ valid: false, error: 'Error temporal de Google Sheets' }),
         { locks: null }, AbortController, 8000, 'test-lock', () => {}, () => true
@@ -150,7 +150,7 @@ await test('una respuesta valid:false sin error conserva el significado de revoc
         'VALIDATION_TIMEOUT_MS','VALIDATION_LOCK_NAME','persistSessionValidation','isSessionProfileForUser_',
         fnSource + '\nreturn validateSessionCoordinated;'
     );
-    const validate = factory(
+    const validate = await factory(
         () => true, () => false,
         async () => ({ valid: false, reason: 'missing_session' }),
         { locks: null }, AbortController, 8000, 'test-lock', () => {}, () => true
