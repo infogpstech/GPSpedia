@@ -840,6 +840,40 @@ function createOrRecoverLoginSessionUnderLock_(userSheet, sessionsSheet, userRow
     return { token, createdAt, sessionCount, oldestSession, cleanupPending, termsAcceptance };
 }
 
+
+function sharedSessionTimestamp_(value) {
+    const timestamp = value instanceof Date ? value.getTime() : new Date(value).getTime();
+    if (!Number.isFinite(timestamp) || timestamp <= 0) {
+        throw new Error("No se pudo establecer la vigencia del contexto compartido de sesión.");
+    }
+    return timestamp;
+}
+
+function syncSharedSessionContextsForUser_(userId, role, fullName) {
+    const normalizedId = normalizeUserId(userId);
+    const normalizedRole = normalizeRoleName(role);
+    if (!normalizedId || !["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"].includes(normalizedRole)) {
+        throw new Error("No se pudo registrar una identidad o rol válido en el contexto compartido.");
+    }
+    const sessionsSheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
+    if (!sessionsSheet) throw new Error("No se encontró ActiveSessions para sincronizar el contexto compartido.");
+    const rows = sessionsSheet.getDataRange().getValues().slice(1).filter(row =>
+        normalizeUserId(row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]) === normalizedId &&
+        String(row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || "").trim()
+    );
+    if (!rows.length) throw new Error("No hay sesiones activas que registrar en el contexto compartido.");
+    if (rows.length > 5) throw new Error("La cuenta supera el límite seguro de sesiones compartidas.");
+    revokeSharedUserSessionContexts_(normalizedId);
+    rows.forEach(row => {
+        const token = String(row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || "");
+        const createdAt = sharedSessionTimestamp_(row[COLS_ACTIVE_SESSIONS.date - 1]);
+        const activityValue = row[COLS_ACTIVE_SESSIONS.LastActivityAt - 1] || row[COLS_ACTIVE_SESSIONS.date - 1];
+        const lastActivityAt = sharedSessionTimestamp_(activityValue);
+        registerSharedSessionContext_(normalizedId, token, normalizedRole, String(fullName || ""), createdAt, lastActivityAt);
+    });
+    return { registered: rows.length };
+}
+
 function handleLogin(payload) {
     let normalizedUsername = '';
     let attemptId = null;
@@ -960,6 +994,11 @@ function handleLogin(payload) {
             throw sessionOperationError;
         }
         if (sessionCleanupPending) logToSheet('ERROR', 'Login succeeded but an inactive session row could not be deleted.', { userId, requestId: loginRequestId });
+        syncSharedSessionContextsForUser_(
+            userId,
+            foundUserRow[COLS_USERS.Privilegios - 1],
+            foundUserRow[COLS_USERS.Nombre_Completo - 1]
+        );
 
         const user = {
             ID: userId,
@@ -1507,6 +1546,9 @@ function handleUpdateUser(payload) {
         if (hasPending && hasFullNameUpdate && pendingMarker.newFullName !== requestedFullName) {
             throw new Error('El nombre solicitado no coincide con la actualización pendiente. Completa primero esa operación.');
         }
+        if (nextRole !== currentTargetRole || hasPending) {
+            revokeSharedUserSessionContexts_(userId);
+        }
         if (nextRole !== currentTargetRole && !hasPending) {
             const marker = { userId, markedAt: Date.now(), oldRole: currentTargetRole, newRole: nextRole };
             if (hasFullNameUpdate) marker.newFullName = requestedFullName;
@@ -1666,6 +1708,7 @@ function handleResetUserSessions(payload) {
         }
 
         targetUsername = String(targetRows[0].row[COLS_USERS.Nombre_Usuario - 1] || '');
+        revokeSharedUserSessionContexts_(targetUserId);
         if (hasPendingRoleRevocation_(targetUserId)) {
             const reconciliation = reconcileRoleRevocationUnderLock_(usersSheet, sessionsSheet, targetUserId);
             revokedSessions = reconciliation.revokedSessions || 0;
@@ -1838,6 +1881,8 @@ function handleDeleteUser(payload) {
             throw new Error('No se pudieron invalidar todos los intentos de login pendientes; la cuenta no fue eliminada.');
         }
 
+        revokeSharedUserSessionContexts_(userId);
+
         // Congelar los IDs calculados actuales antes de cambiar nombres/roles.
         // Esto conserva referencias históricas aunque alguna fórmula dependa de otros campos.
         if (usersData.length > 1) {
@@ -1985,6 +2030,7 @@ function handleChangePassword(payload) {
         }
 
         const newHash = createPasswordHash(newPassword);
+        revokeSharedUserSessionContexts_(userId);
         const revocation = revokeAllUserSessionsUnderLock_(sessionsSheet, userId);
         revokedSessions = revocation.revokedSessions;
         if (revocation.pendingRows.length || revocation.pendingLoginRequests) {
@@ -2067,6 +2113,7 @@ function handleResetUserPassword(payload) {
         }
 
         const newHash = createPasswordHash(newPassword);
+        revokeSharedUserSessionContexts_(targetId);
         const revocation = revokeAllUserSessionsUnderLock_(sessionsSheet, targetId);
         revokedSessions = revocation.revokedSessions;
         if (revocation.pendingRows.length || revocation.pendingLoginRequests) {
@@ -2339,6 +2386,7 @@ function handleLogout(payload) {
                 throw new Error('No se pudo confirmar la invalidación del intento de login asociado. Reintenta el cierre.');
             }
 
+            revokeSharedSessionContext_(requestedUserId, sessionToken);
             let clearError = null;
             try { sessionsSheet.getRange(session.rowIndex, COLS_ACTIVE_SESSIONS.ActiveSessions).clearContent(); }
             catch (error) { clearError = error; }
@@ -2381,6 +2429,7 @@ function handleLogout(payload) {
             if (requestRevocation.pending) {
                 throw new Error('No se pudo confirmar la invalidación del intento de login asociado. Reintenta el cierre.');
             }
+            revokeSharedSessionContext_(requestedUserId, sessionToken);
             alreadyRevoked = true;
 
             if (staleUserMatches.length === 1) {
