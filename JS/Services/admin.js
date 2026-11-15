@@ -122,6 +122,13 @@ function touchSessionActivityIfDue_(sheet,rowIndex,row,activityColumn) {
 
 const ROLE_REVOCATION_SHARED_PREFIX = "__role_revocation_pending__:";
 function getAdminSessionContext_(payload, allowedRoles){
+ const trusted=payload&&payload.__sharedSessionActor;
+ if(trusted&&typeof trusted.userId==="string"&&typeof trusted.role==="string"&&Number.isSafeInteger(trusted.epoch)&&trusted.epoch>0){
+  const id=trusted.userId.trim(),requested=String(payload.userId||id).trim(),role=trusted.role.trim().toLowerCase();
+  if(!id||requested!==id||!Array.isArray(allowedRoles)||!allowedRoles.includes(role))throw new Error("Acceso denegado: sesión no autorizada.");
+  const fullName=String(trusted.fullName||"").trim(),displayRole=role==="desarrollador"?"Desarrollador":role==="jefe"?"Jefe":"Supervisor";
+  return{userId:id,role:displayRole,fullName,userName:fullName||"Usuario",epoch:trusted.epoch};
+ }
  const id=String(payload&&payload.userId||"").trim(),token=String(payload&&payload.sessionToken||"").trim();if(!id||!token)throw new Error("Acceso denegado: sesión no autorizada.");
  const ss=getSpreadsheet(),sh=ss.getSheetByName("ActiveSessions"),uh=ss.getSheetByName("Users");if(!sh||!uh)throw new Error("Acceso denegado: sesión no autorizada.");
  const tokenMatches=findUniqueRowsByExactValue_(sh,3,token,6,false);
