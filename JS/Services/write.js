@@ -1175,12 +1175,13 @@ const filename = buildCanonicalImageBaseName(vehicleInfo, "imgCorte" + cutSlotIn
         rowIndex = lastRow + 1;
         const lastColumn = sheet.getLastColumn();
 
-        // Copiar la plantilla de formato/validación; el nuevo ID será un valor estático.
+        // Copiar únicamente formato/validaciones; el ID lo asigna el backend.
         const previousRowRange = sheet.getRange(lastRow, 1, 1, lastColumn);
         const newRowRange = sheet.getRange(rowIndex, 1, 1, lastColumn);
-        previousRowRange.copyTo(newRowRange);
+        previousRowRange.copyTo(newRowRange, SpreadsheetApp.CopyPasteType.PASTE_FORMAT, false);
+        previousRowRange.copyTo(newRowRange, SpreadsheetApp.CopyPasteType.PASTE_DATA_VALIDATION, false);
 
-        // Limpiar los datos heredados y retirar expresamente la fórmula copiada de la columna ID.
+        // Limpiar los datos heredados; no se copian fórmulas de la fila anterior.
         const dataRange = sheet.getRange(rowIndex, 2, 1, lastColumn - 1);
         dataRange.clearContent();
         sheet.getRange(rowIndex, COLS_CORTES.id).clearContent();
