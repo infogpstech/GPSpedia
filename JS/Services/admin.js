@@ -873,13 +873,15 @@ function doPost(e) {
     }
     if (!request || typeof request !== "object") return doPostInternal_(e);
     const action = String(request.action || "");
+    const payload = request.payload && typeof request.payload === "object" ? request.payload : {};
+    const sessionOptions = { session: { userId: payload.userId, sessionToken: payload.sessionToken } };
     if (!isSharedMutationAction_(action)) {
         if (action === "ping") return doPostInternal_(e);
         const operation = isSharedReadAction_(action) ? action : "sessionActivity";
         try {
-            return withSharedMutationLease_("ADMIN", operation, function() {
-                return doPostInternal_(e);
-            });
+            return withSharedMutationLease_("ADMIN", operation, function(token, actor) {
+                return doPostInternal_(withSharedSessionActor_(e, actor));
+            }, sessionOptions);
         } catch (error) {
             return ContentService.createTextOutput(JSON.stringify({
                 status: "error",
@@ -888,16 +890,15 @@ function doPost(e) {
         }
     }
 
-    const payload = request.payload && typeof request.payload === "object" ? request.payload : {};
     const nestedToken = String(payload.__sharedMutationToken || "").trim();
     try {
-        return withSharedMutationLease_("ADMIN", action, function(token) {
+        return withSharedMutationLease_("ADMIN", action, function(token, actor) {
             request.payload = Object.assign({}, payload, { __sharedMutationToken: token });
             const wrappedEvent = Object.assign({}, e || {}, {
                 postData: Object.assign({}, e && e.postData || {}, { contents: JSON.stringify(request) })
             });
-            return doPostInternal_(wrappedEvent);
-        }, nestedToken ? { nestedToken: nestedToken } : undefined);
+            return doPostInternal_(withSharedSessionActor_(wrappedEvent, actor));
+        }, Object.assign(sessionOptions, nestedToken ? { nestedToken: nestedToken } : {}));
     } catch (error) {
         return ContentService.createTextOutput(JSON.stringify({
             status: "error",
