@@ -71,7 +71,8 @@ test("Congela valores exactos por lotes, reanuda y conserva snapshots/manifiesto
  const h=makeHarness(),dry=h.api.migrate({dryRun:true,batchSize:1});
  const payload={dryRun:false,confirm:true,migrationId:dry.migrationId,digest:dry.digest,batchSize:1};
  const first=h.api.migrate(payload);
- assert.equal(first.migrated,1);assert.equal(first.remaining,1);assert.equal(h.users.rows[1][0],"U-001");assert.equal(h.users.formulas[1][0],"");
+ assert.equal(first.migrated,1);assert.equal(first.remaining,1);assert.equal(first.sequenceConfig.configured,2);assert.equal(first.sequenceConfig.unsupported,0);
+ assert.equal(h.users.rows[1][0],"U-001");assert.equal(h.users.formulas[1][0],"");
  const second=h.api.migrate(payload);
  assert.equal(second.migrated,1);assert.equal(second.remaining,0);assert.equal(second.complete,true);assert.equal(h.vehicles.rows[1][0],"V-001");
  assert.equal(h.vehicles.formulas[1][0],"");
