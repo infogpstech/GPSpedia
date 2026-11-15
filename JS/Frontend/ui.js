@@ -6208,6 +6208,75 @@ ${elapsedSec}s
         };
     }
 
+    // Congelación de fórmulas ID: conserva valor/tipo y mantiene la fórmula original en el snapshot/manifiesto.
+    const previewIdFreezeButton = document.getElementById('btn-admin-preview-id-freeze');
+    const confirmIdFreezeButton = document.getElementById('btn-admin-confirm-id-freeze');
+    let idFreezePreview = null;
+    let idFreezeRunning = false;
+    if (previewIdFreezeButton) {
+        previewIdFreezeButton.onclick = async () => {
+            if (idFreezeRunning) return;
+            idFreezeRunning = true;
+            idFreezePreview = null;
+            if (confirmIdFreezeButton) confirmIdFreezeButton.disabled = true;
+            previewIdFreezeButton.disabled = true;
+            if (identifierAuditStatus) identifierAuditStatus.textContent = 'Simulando congelación de fórmulas ID. No se modificarán datos.';
+            try {
+                const result = await runAction('freezeIdentifierFormulas', { dryRun: true, batchSize: 5 });
+                if (!result || result.status !== 'success' || result.dryRun !== true) throw new Error('El servidor no confirmó la simulación.');
+                idFreezePreview = result;
+                if (identifierAuditStatus) identifierAuditStatus.textContent =
+                    'Simulación de migración: ' + result.formulaCount + ' fórmulas elegibles en ' +
+                    result.sheetCount + ' hojas. Omitidos por ID duplicado: ' + result.skipped.duplicate +
+                    '; resultado vacío: ' + result.skipped.emptyResult +
+                    '; fila sin otros datos: ' + result.skipped.emptyRecord +
+                    '. Se conservará cada ID calculado sin renumerarlo.';
+                if (confirmIdFreezeButton) confirmIdFreezeButton.disabled = result.formulaCount < 1;
+            } catch (error) {
+                if (identifierAuditStatus) identifierAuditStatus.textContent = 'No se pudo simular la migración: ' + (error.message || String(error));
+                log('[ID FREEZE] ' + (error.message || String(error)), false, true);
+            } finally {
+                idFreezeRunning = false;
+                previewIdFreezeButton.disabled = false;
+            }
+        };
+    }
+    if (confirmIdFreezeButton) {
+        confirmIdFreezeButton.onclick = async () => {
+            if (idFreezeRunning || !idFreezePreview || idFreezePreview.formulaCount < 1) return;
+            const plan = idFreezePreview;
+            if (!confirm('Se congelarán hasta 5 fórmulas ID por lote, conservando exactamente sus valores calculados. La fórmula original quedará respaldada en snapshots/manifiesto. ¿Confirmas este lote?')) return;
+            idFreezeRunning = true;
+            confirmIdFreezeButton.disabled = true;
+            if (previewIdFreezeButton) previewIdFreezeButton.disabled = true;
+            try {
+                const result = await runAction('freezeIdentifierFormulas', {
+                    dryRun: false, confirm: true, migrationId: plan.migrationId,
+                    digest: plan.digest, batchSize: 5
+                });
+                if (!result || result.status !== 'success' || result.dryRun !== false) throw new Error('El servidor no confirmó el lote.');
+                if (identifierAuditStatus) identifierAuditStatus.textContent =
+                    'Lote verificado: ' + result.migrated + ' fórmulas congeladas; quedan ' +
+                    result.remaining + '. ' + (result.complete ? 'Migración completada.' : 'Puedes confirmar el siguiente lote.');
+                if (result.complete) {
+                    idFreezePreview = null;
+                    confirmIdFreezeButton.disabled = true;
+                } else {
+                    idFreezePreview = Object.assign({}, plan, { formulaCount: result.remaining });
+                    confirmIdFreezeButton.disabled = false;
+                }
+                log('[ID FREEZE] ' + (identifierAuditStatus ? identifierAuditStatus.textContent : 'Lote verificado.'));
+            } catch (error) {
+                idFreezePreview = null;
+                if (identifierAuditStatus) identifierAuditStatus.textContent = 'La migración se detuvo sin continuar el lote: ' + (error.message || String(error)) + '. Ejecuta una nueva auditoría antes de reintentar.';
+                log('[ID FREEZE] ' + (error.message || String(error)), false, true);
+            } finally {
+                idFreezeRunning = false;
+                if (previewIdFreezeButton) previewIdFreezeButton.disabled = false;
+            }
+        };
+    }
+
     // Migración de contraseñas: simulación y un lote por confirmación explícita.
     const previewPasswordMigrationButton = document.getElementById('btn-admin-preview-password-migration');
     const confirmPasswordMigrationButton = document.getElementById('btn-admin-confirm-password-migration');
