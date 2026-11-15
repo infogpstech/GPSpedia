@@ -166,7 +166,8 @@ function runSharedMutationCoordinatorTests() {
         const terms = coordinatorPolicy_("AUTH", "acceptTerms");
         assert_(terms.readResources.includes("SESSION_CONTEXTS"), "acceptTerms debe leer el contexto central de sesión.");
         assert_(terms.writeResources.includes("USERS"), "acceptTerms debe persistir el registro por usuario.");
-        assert_(terms.writeResources.includes("ACTIVE_SESSIONS"), "La sincronización ocasional de actividad debe reservar ActiveSessions.");
+        assert_(terms.trackActivity === false, "acceptTerms no debe actualizar actividad durante la aceptación.");
+        assert_(!terms.writeResources.includes("ACTIVE_SESSIONS"), "acceptTerms no debe escribir ActiveSessions.");
         assert_(!terms.writeResources.includes("SESSION_CONTEXTS"), "acceptTerms no debe revocar el contexto compartido.");
 
         const acceptance = acquire_(r, "AUTH", "acceptTerms");
@@ -552,11 +553,12 @@ function runSharedMutationCoordinatorTests() {
         release_(r, "AUTH", "logout", retry.token);
     });
 
-    test_("AUTH acceptTerms valida ActiveSessions en modo cooperativo y serializa la escritura de Users", function() {
+    test_("AUTH acceptTerms valida contexto central en solo lectura y serializa la escritura de Users", function() {
         const r = createRuntime_();
         const policy = coordinatorPolicy_("AUTH", "acceptTerms");
         assert_(policy.writeResources.includes("USERS"), "acceptTerms debe reservar Users.");
-        assert_(policy.writeResources.includes("ACTIVE_SESSIONS"), "acceptTerms debe sincronizar actividad de forma ocasional.");
+        assert_(!policy.writeResources.includes("ACTIVE_SESSIONS"), "acceptTerms no debe escribir actividad por solicitud.");
+        assert_(policy.trackActivity === false, "acceptTerms debe omitir la actualización de actividad.");
         assert_(policy.readResources.includes("SESSION_CONTEXTS"), "acceptTerms debe validar el contexto central.");
         assert_(!policy.writeResources.includes("SESSION_CONTEXTS"), "acceptTerms no debe revocar sesiones.");
         const acceptance = acquire_(r, "AUTH", "acceptTerms");
