@@ -6038,6 +6038,10 @@ ${elapsedSec}s
             verifiedDatabaseBackupId = null;
             vinMigrationPreview = null;
             vinMigrationPreviewBackupId = null;
+            idFreezePreview = null;
+            passwordMigrationPreview = null;
+            if (confirmIdFreezeButton) confirmIdFreezeButton.disabled = true;
+            if (confirmPasswordMigrationButton) confirmPasswordMigrationButton.disabled = true;
             if (vinMigrationStatus) {
                 vinMigrationStatus.textContent = 'El enlace cambió. Genera un nuevo respaldo de Spreadsheet para habilitar la migración.';
             }
@@ -6231,7 +6235,12 @@ ${elapsedSec}s
                     '; resultado vacío: ' + result.skipped.emptyResult +
                     '; fila sin otros datos: ' + result.skipped.emptyRecord +
                     '. Se conservará cada ID calculado sin renumerarlo.';
-                if (confirmIdFreezeButton) confirmIdFreezeButton.disabled = result.formulaCount < 1;
+                const backupMatches = Boolean(verifiedDatabaseBackupId &&
+                    normalizeSpreadsheetBackupId(backupResourceInput ? backupResourceInput.value : '') === verifiedDatabaseBackupId);
+                if (confirmIdFreezeButton) confirmIdFreezeButton.disabled = result.formulaCount < 1 || !backupMatches;
+                if (!backupMatches && identifierAuditStatus) {
+                    identifierAuditStatus.textContent += ' Para habilitar la escritura, crea y conserva un respaldo de Spreadsheet verificado.';
+                }
             } catch (error) {
                 if (identifierAuditStatus) identifierAuditStatus.textContent = 'No se pudo simular la migración: ' + (error.message || String(error));
                 log('[ID FREEZE] ' + (error.message || String(error)), false, true);
@@ -6245,6 +6254,13 @@ ${elapsedSec}s
         confirmIdFreezeButton.onclick = async () => {
             if (idFreezeRunning || !idFreezePreview || idFreezePreview.formulaCount < 1) return;
             const plan = idFreezePreview;
+            const currentBackupId = normalizeSpreadsheetBackupId(backupResourceInput ? backupResourceInput.value : '');
+            if (!verifiedDatabaseBackupId || currentBackupId !== verifiedDatabaseBackupId) {
+                idFreezePreview = null;
+                confirmIdFreezeButton.disabled = true;
+                if (identifierAuditStatus) identifierAuditStatus.textContent = 'No hay un respaldo de Spreadsheet verificado o el enlace cambió. Genera un respaldo y vuelve a simular.';
+                return;
+            }
             if (!confirm('Se congelarán hasta 5 fórmulas ID por lote, conservando exactamente sus valores calculados. La fórmula original quedará respaldada en snapshots/manifiesto. ¿Confirmas este lote?')) return;
             idFreezeRunning = true;
             confirmIdFreezeButton.disabled = true;
@@ -6304,8 +6320,13 @@ ${elapsedSec}s
                     '; omitidas por formato no compatible: ' + result.unsupportedSkipped +
                     (result.complete ? '. No hay credenciales plaintext pendientes.' : '.');
                 if (confirmPasswordMigrationButton) {
+                    const backupMatches = Boolean(verifiedDatabaseBackupId &&
+                        normalizeSpreadsheetBackupId(backupResourceInput ? backupResourceInput.value : '') === verifiedDatabaseBackupId);
                     confirmPasswordMigrationButton.disabled = result.complete ||
-                        result.ambiguousActiveAccounts > 0 || result.wouldMigrate < 1;
+                        result.ambiguousActiveAccounts > 0 || result.wouldMigrate < 1 || !backupMatches;
+                    if (!backupMatches && passwordMigrationStatus) {
+                        passwordMigrationStatus.textContent += ' Para habilitar la escritura, crea y conserva un respaldo de Spreadsheet verificado.';
+                    }
                 }
             } catch (error) {
                 if (passwordMigrationStatus) passwordMigrationStatus.textContent = 'Error en la simulación: ' + (error.message || String(error));
@@ -6321,6 +6342,13 @@ ${elapsedSec}s
             if (passwordMigrationRunning || !passwordMigrationPreview ||
                 passwordMigrationPreview.complete || passwordMigrationPreview.ambiguousActiveAccounts > 0) return;
             const plan = passwordMigrationPreview;
+            const currentBackupId = normalizeSpreadsheetBackupId(backupResourceInput ? backupResourceInput.value : '');
+            if (!verifiedDatabaseBackupId || currentBackupId !== verifiedDatabaseBackupId) {
+                passwordMigrationPreview = null;
+                confirmPasswordMigrationButton.disabled = true;
+                if (passwordMigrationStatus) passwordMigrationStatus.textContent = 'No hay un respaldo de Spreadsheet verificado o el enlace cambió. Genera un respaldo y vuelve a simular.';
+                return;
+            }
             const confirmation = 'Se migrarán hasta ' + plan.wouldMigrate +
                 ' contraseñas plaintext a hash. No se mostrarán ni registrarán las contraseñas. ¿Confirmas este lote?';
             if (!confirm(confirmation)) return;
