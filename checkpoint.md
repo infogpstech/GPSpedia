@@ -329,3 +329,15 @@
 - La paginación de conversaciones usa clave de orden timestamp + ID; el historial usa ID de mensaje ancla. UI conserva cursores opacos. Pruebas reproducen mensajes nuevos entre páginas, actividad nueva y archivo del elemento previo.
 - No se añadieron controles visibles, no se cambiaron permisos ni se ejecutaron despliegues o accesos a datos productivos.
 - Pendiente Beta: validar lecturas concurrentes, orden temporal y paginación con Spreadsheet/Coordinator aislados y cuentas de prueba. GP-INBOX-04B..04D permanecen abiertas en sus funcionalidades restantes.
+
+
+## Continuidad — GP-INBOX consistencia de reintentos idempotentes (2026-11-15)
+
+**HEAD de partida:** `faba35ad96df57496be14718f844ffc7969a3aef` en `GPSpedia2.2.5_work`.
+**Estado:** corrección preparada; publicación y CI pendientes.
+
+- Hallazgo: dos mensajes pueden compartir timestamp de milisegundo. El helper del resumen comparaba solo la fecha y admitía igualdad, de modo que un replay de un mensaje anterior podía sustituir al último mensaje y volver a incrementar el contador.
+- Cambio preparado: `inboxUpdateConversationForMessage_` compara índices en el orden de inserción persistido bajo ScriptLock, reconstruye el contador desde los mensajes de la conversación y repara el resumen desde el último mensaje guardado cuando el ID previo ya no existe.
+- Prueba añadida: tres mensajes con timestamp igual y reintentos de la creación inicial y de una respuesta intermedia; verifica que el último ID, preview y contador permanezcan estables.
+- No se modifican roles, endpoints, controles visibles, deployments ni datos externos.
+- Próximo paso: revisar el diff, ejecutar CI Node.js 22 y Pages, corregir fallos locales y verificar el HEAD remoto y la rama base.

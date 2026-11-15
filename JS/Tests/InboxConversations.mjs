@@ -377,4 +377,40 @@ run("Las mutaciones Inbox se coordinan con cambios de identidad y otras escritur
         });
     }
 });
+run("Los reintentos idempotentes no retroceden el último mensaje cuando hay marcas de tiempo iguales", () => {
+    const created = api.handleCreateInboxConversation({
+        ...actor("U1","token-a"),recipientId:"U3",subject:"Orden de mensajes",category:"general",
+        body:"Mensaje inicial.",idempotencyKey:"equal-time-create-01"
+    });
+    const second = api.handleSendInboxMessage({
+        ...actor("U3","token-c"),conversationId:created.conversationId,body:"Respuesta intermedia.",
+        idempotencyKey:"equal-time-reply-01"
+    });
+    const third = api.handleSendInboxMessage({
+        ...actor("U1","token-a"),conversationId:created.conversationId,body:"Respuesta más reciente.",
+        idempotencyKey:"equal-time-reply-02"
+    });
+    const messages = spreadsheet.getSheetByName("InboxMessages").rows.filter(row => row[1] === created.conversationId);
+    const sameTimestamp = "2026-11-15T12:00:00.000Z";
+    messages.forEach(row => { row[2] = sameTimestamp; });
+    const conversationRow = spreadsheet.getSheetByName("InboxConversations").rows.find(row => row[0] === created.conversationId);
+    conversationRow[14] = sameTimestamp;
+    conversationRow[13] = third.messageId;
+    conversationRow[15] = "Respuesta más reciente.";
+    conversationRow[16] = 3;
+
+    api.handleCreateInboxConversation({
+        ...actor("U1","token-a"),recipientId:"U3",subject:"Orden de mensajes",category:"general",
+        body:"Mensaje inicial.",idempotencyKey:"equal-time-create-01"
+    });
+    api.handleSendInboxMessage({
+        ...actor("U3","token-c"),conversationId:created.conversationId,body:"Respuesta intermedia.",
+        idempotencyKey:"equal-time-reply-01"
+    });
+    assert.equal(conversationRow[13],third.messageId);
+    assert.equal(conversationRow[15],"Respuesta más reciente.");
+    assert.equal(conversationRow[16],3);
+    assert.equal(messages.length,3);
+    assert.equal(second.messageId,messages[1][0]);
+});
 console.log("InboxConversations: " + passed + "/" + passed + " PASS");

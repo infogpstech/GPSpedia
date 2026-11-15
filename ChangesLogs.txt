@@ -398,3 +398,9 @@
 - GitHub Pages run `43665176707`: **SUCCESS** (build y deploy).
 - El diff se limita a cursores/paginación de Inbox, pruebas de regresión y registros asociados. No se añadieron controles visibles ni se cambiaron roles, contratos de escritura, deployments o datos externos.
 - Estado de esta subcorrección: **COMPLETADA CON VALIDACIÓN DIFERIDA A BETA**. La verificación de orden/paginación con Spreadsheet y Coordinator Beta reales queda pendiente; GP-INBOX-04B..04D siguen abiertas en lo relativo a controles y flujos aún no implementados/autorizados.
+
+
+2026-11-15 — GP-INBOX: CONSISTENCIA DEL RESUMEN EN REINTENTOS IDEMPOTENTES
+- JS/Services/InboxConversations.js: la actualización del resumen de conversación compara el orden de inserción de mensajes bajo ScriptLock, en vez de comparar timestamps que pueden coincidir; messageCount se reconstruye desde las filas persistidas.
+- JS/Tests/InboxConversations.mjs: regresión con tres mensajes de timestamp idéntico y reintentos de operaciones anteriores; verifica que último mensaje, preview y contador no retrocedan ni se dupliquen.
+- Validación CI pendiente al publicar. No se añadieron controles visibles, endpoints ni cambios de permisos; no se modificaron deployments ni datos externos.

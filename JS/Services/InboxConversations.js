@@ -227,14 +227,25 @@ function inboxAppendMessage_(sheet, conversationId, actor, body, key, hash, now)
     if (row.some((value,index) => String(saved[index]) !== String(value))) throw new Error("No se pudo confirmar el mensaje guardado.");
     return { row, rowNumber };
 }
-function inboxUpdateConversationForMessage_(sheet, found, message, now) {
+function inboxUpdateConversationForMessage_(sheet, found, message, messageRows, now) {
     const row = found.row.slice();
-    const currentTime = new Date(row[14] || 0).getTime();
-    const messageTime = new Date(message[2]).getTime();
-    const isCurrentMessage = String(row[13] || "") === String(message[0]);
-    if (!isCurrentMessage && (!Number.isFinite(currentTime) || messageTime >= currentTime)) {
-        row[2] = now; row[13] = message[0]; row[14] = message[2];
-        row[15] = String(message[6] || "").slice(0,180); row[16] = Math.max(0,Number(row[16]) || 0) + 1;
+    const conversationMessages = messageRows.filter(item => String(item[1]) === String(message[1]));
+    const messageIndex = conversationMessages.findIndex(item => String(item[0]) === String(message[0]));
+    if (messageIndex < 0) throw new Error("No se pudo localizar el mensaje para actualizar la conversación.");
+    const storedLastMessageIndex = row[13]
+        ? conversationMessages.findIndex(item => String(item[0]) === String(row[13]))
+        : -1;
+    // La hoja conserva el orden de inserción bajo ScriptLock. El índice evita
+    // que dos mensajes con la misma marca de tiempo hagan retroceder el resumen
+    // cuando se reintenta una solicitud idempotente anterior.
+    const effectiveLastMessageIndex = storedLastMessageIndex >= 0
+        ? storedLastMessageIndex
+        : conversationMessages.length - 1;
+    if (storedLastMessageIndex < 0 || messageIndex > effectiveLastMessageIndex) {
+        const latestMessage = conversationMessages[storedLastMessageIndex < 0 ? conversationMessages.length - 1 : messageIndex];
+        row[2] = now; row[13] = latestMessage[0]; row[14] = latestMessage[2];
+        row[15] = String(latestMessage[6] || "").slice(0,180);
+        row[16] = conversationMessages.length;
         sheet.getRange(found.rowNumber,1,1,INBOX_CONVERSATION_HEADERS_.length).setValues([row]);
         SpreadsheetApp.flush(); found.row = row;
     }
@@ -318,7 +329,7 @@ function handleCreateInboxConversation(payload) {
         const isNewMessage = !message;
         if (isNewMessage) { message = inboxAppendMessage_(sheets.messages,conversationId,actor,body,messageKey,messageHash,now); messageRows.push(message.row); }
         const found = {row:conversationRow,rowNumber};
-        inboxUpdateConversationForMessage_(sheets.conversations,found,message.row,now);
+        inboxUpdateConversationForMessage_(sheets.conversations,found,message.row,messageRows,now);
         inboxUpdateParticipantStates_(sheets.states,conversationId,inboxParticipants_(found.row),actor,message.row[0],messageRows,now);
         inboxAppendAudit_(sheets.audit,actor,"conversation_created",conversationId,message.row[0],"Conversación creada para un destinatario individual.");
         return {status:"success",conversationId,messageId:message.row[0],idempotentReplay:Boolean(existing.length)};
@@ -341,7 +352,7 @@ function handleSendInboxMessage(payload) {
         const now = new Date().toISOString();
         const isNewMessage = !message;
         if (isNewMessage) { inboxAssertRateLimit_(messages,actor.id,new Date(now)); message = inboxAppendMessage_(sheets.messages,conversationId,actor,body,key,hash,now); messages.push(message.row); }
-        inboxUpdateConversationForMessage_(sheets.conversations,found,message.row,now);
+        inboxUpdateConversationForMessage_(sheets.conversations,found,message.row,messageRows,now);
         inboxUpdateParticipantStates_(sheets.states,conversationId,participants,actor,message.row[0],messages,now);
         inboxAppendAudit_(sheets.audit,actor,"message",conversationId,message.row[0],"Mensaje agregado a la conversación.");
         return {status:"success",conversationId,messageId:message.row[0],idempotentReplay:!isNewMessage};

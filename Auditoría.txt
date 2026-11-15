@@ -658,3 +658,12 @@ Estado: CORRECCIÓN LOCAL PREPARADA; CI PENDIENTE.
 - **Validación local:** CI Node.js 22 run `43665177415` SUCCESS; 99 suites / 1,500 pruebas / 0 fallos; InboxConversations 32/32, InboxUi 20/20; sintaxis PASS.
 - **Pages:** run `43665176707` SUCCESS.
 - **Estado:** HALLAZGO CORREGIDO EN RAMA. La prueba de campo con Spreadsheet/Coordinator Beta reales queda diferida; no se simuló.
+
+
+AUD-2026-11-15-30 — REINTENTOS IDEMPOTENTES PUEDEN RETROCEDER EL ÚLTIMO MENSAJE
+Severidad: Media (el resumen y contador de una conversación podían dejar de representar el historial más reciente).
+Estado: CORRECCIÓN LOCAL PREPARADA; CI PENDIENTE.
+- Evidencia: `inboxUpdateConversationForMessage_` comparaba únicamente marcas de tiempo y usaba `>=`. Dos mensajes creados dentro del mismo milisegundo pueden compartir timestamp; al reintentar una creación/envío anterior, el helper podía sustituir el último mensaje por uno previo e incrementar de nuevo `messageCount`.
+- Corrección: comparar la posición de los mensajes de esa conversación en el orden de inserción serializado por ScriptLock; reconstruir `messageCount` desde las filas reales y no incrementar durante un replay. Si el ID guardado del último mensaje no existe, reconstruir el resumen desde el mensaje final persistido.
+- Prueba añadida: tres mensajes con timestamp igual y replay de la creación inicial y de una respuesta intermedia; el último mensaje, preview y contador deben permanecer correctos.
+- No se añaden controles ni endpoints, no se cambian roles y no se modifican servicios externos.

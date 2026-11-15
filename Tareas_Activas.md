@@ -770,3 +770,8 @@ Las fuentes de servicios JavaScript se centralizan bajo `JS/Services/`. La carpe
 ## Cierre de subcorrección Inbox — paginación estable (2026-11-15)
 
 **Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.** Los cursores de conversación (timestamp + ID) y mensajes (ID ancla) ya no dependen de offsets que cambian con actividad concurrente. La UI mantiene el cursor opaco. Pruebas de regresión: InboxConversations 32/32 PASS; InboxUi 20/20 PASS. CI Node.js 22 run 43665177415: 99 suites / 1,500 pruebas / 0 fallos; GitHub Pages run 43665176707 SUCCESS. La validación con Spreadsheet/Coordinator Beta reales permanece pendiente. GP-INBOX-04B..04D continúan pendientes para las funciones y controles visibles diferidos por instrucción del usuario.
+
+
+## Adenda GP-INBOX — consistencia del resumen ante reintentos idempotentes (2026-11-15)
+
+**GP-INBOX-04B: subcorrección interna; pendiente de CI.** Se detectó que el resumen de conversación comparaba timestamps con `>=`; si dos mensajes compartían el mismo milisegundo, el replay de una solicitud antigua podía retroceder el último mensaje y duplicar `messageCount`. La corrección usa el orden de inserción de los mensajes serializados por ScriptLock y calcula el contador desde las filas persistidas. Se añadió una regresión con timestamps iguales y replay de operaciones anteriores. No se añadieron controles visibles, endpoints ni permisos. Las funciones masivas y el canal de incidencias siguen diferidos por la restricción de interfaz vigente.
