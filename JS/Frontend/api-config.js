@@ -40,10 +40,10 @@ export function setRichTextMode(mode, actorRole) {
 
 export const API_ENDPOINTS = {
     LEGACY: "https://script.google.com/macros/s/AKfycbwpIFH1nX2BZEjAKbpq9HJpEGNlo_0LqD1CwxWsWFo5J0AJDdbfMrKpcsAV4ZFJzFWd/exec",
-    AUTH:     "https://script.google.com/macros/s/AKfycbyaQbzvWpf2AfLCQ-YCh87AT4hL2Fi5HgKsUPvFXMN6QjAx7eZEbREXndpKMeHNanKp/exec",
+    AUTH:     "https://script.google.com/macros/s/AKfycbw4D76ye47SR-egsRKSzAdgLn4O0rxbsTGHlH1YDT7OSCzIUyIbGZTgSZiYOWcGibng/exec",
     CATALOG:  "https://script.google.com/macros/s/AKfycbxRwBKI_HyY4KWf1vny5kxhT5kmspDPj6BmNe-bAAcB27osXY5L0Ylx94RWrn9lJ9kW/exec",
     WRITE:    "https://script.google.com/macros/s/AKfycbw0sFMF2lGRzYa3yDxLnpkNZ_qeBBT17WIe-U8vcpghwCZczCRoXb-nxl9b4pFJk1l1Mg/exec",
-    USERS:    "https://script.google.com/macros/s/AKfycbxJ9yYU7w2jhesXGGw-zkweAAvMst8lUmNRBghqfsSzsScR7GfhaMCvBm7KZR3FGPo7Ag/exec",
+    USERS:    "https://script.google.com/macros/s/AKfycbxGXSmBdypiSfzc2pSnLhBm-qut1mdEYMev9uI2399xsy7aV3gTuNpnWxHkofb3Ukh8ig/exec",
     FEEDBACK: "https://script.google.com/macros/s/AKfycbxIDRtmUeJrPr6xTKqfMUc04aFLOFfG_Eh8Pj_9xeTrH8QSPh7ZirXggfgnZyaglAr94w/exec",
     UTILITIES: "https://script.google.com/macros/s/AKfycbxX4rUIdTwz3JaaJele3Ijkyxx1lvkocMSSC4cVgILy32TY9bdDkjv6RAXmoUZghMO4/exec",
     ADMIN: "https://script.google.com/macros/s/AKfycbytb5b3xeohYXLIs-NJwlXOGWaJ3lNk-a6XkjlUmuc1BG56YcyaOtO53Z4SvXeu-C8/exec"
