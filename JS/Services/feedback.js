@@ -380,13 +380,20 @@ function getNextFormulaBasedId_(sheet, idColumn) {
     try {
         if (!alreadyHeld) { lock.waitLock(15000); acquired = true; }
         const pattern = getFormulaBasedIdPattern_(sheet, idColumn);
-        const lastRow = sheet.getLastRow();
-        const values = lastRow > 1 ? sheet.getRange(2, idColumn, lastRow - 1, 1).getValues().flat() : [];
+        const lastRow = sheet.getLastRow(), lastColumn = Math.max(sheet.getLastColumn(), idColumn);
+        const rows = lastRow > 1 ? sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues() : [];
         const seen = new Set();
         let maxSuffix = 0;
-        values.forEach((value, index) => {
-            const id = String(value === null || value === undefined ? "" : value).trim();
-            if (!id) return;
+        rows.forEach((row, index) => {
+            const rawId = row[idColumn - 1];
+            const id = String(rawId === null || rawId === undefined ? "" : rawId).trim();
+            const hasRecordData = row.some((value, columnIndex) =>
+                columnIndex !== idColumn - 1 && value !== "" && value !== null && value !== undefined
+            );
+            if (!id) {
+                if (hasRecordData) throw new Error("La fila " + (index + 2) + " de " + sheet.getName() + " contiene datos, pero no tiene ID.");
+                return;
+            }
             if (!id.startsWith(pattern.prefix)) throw new Error("El ID de " + sheet.getName() + " fila " + (index + 2) + " no coincide con el prefijo configurado.");
             const suffix = id.slice(pattern.prefix.length);
             if (!/^\d+$/.test(suffix)) throw new Error("El ID de " + sheet.getName() + " fila " + (index + 2) + " no conserva el sufijo numérico configurado.");
