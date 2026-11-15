@@ -1017,3 +1017,16 @@ El trabajo local GP-INBOX-04B/04C/04D queda cubierto en backend y contratos. No 
 
 **Pendiente:** ejecutar dry-run sobre copia Beta; revisar todos los encabezados/formulas reportados, incluidos patrones no reconocidos; verificar referencias y escritores backend por hoja; autorizar lotes, reanudación y rollback únicamente en Beta. No tocar producción.
 
+### Adenda P2 — cierre local de migración de IDs por fórmula (2026-11-15)
+
+<badge>COMPLETADA CON VALIDACIÓN DIFERIDA</badge>
+
+- La auditoría del modal Desarrollador inspecciona las columnas identificadoras de todas las hojas visibles y muestra fórmula y valor calculado. La migración no renumera: conserva exactamente los valores existentes y retira solo fórmulas que tengan un generador backend compatible.
+- Formatos con prefijo y relleno numérico se guardan en `__IdentifierSequenceConfig__`; el generador de Users, FEEDBACK y ADMIN los consulta para conservar el formato histórico. Las fórmulas numéricas de Cortes y LogosMarca pueden congelarse porque sus generadores backend ya asignan IDs numéricos.
+- Los escritores de FEEDBACK, ADMIN y WRITE ya no copian fórmulas de filas anteriores al crear registros; copian solo formato/validaciones y asignan el ID desde backend. USERS también respeta el patrón histórico configurado. Las escrituras protegidas siguen pasando por el coordinador compartido.
+- Patrones sin generador compatible, IDs vacíos/duplicados y filas vacías se excluyen del lote y se reportan. Relay y otras hojas sin escritor backend confirmado no se migran automáticamente; no se inventa su formato.
+- La migración requiere dry-run, digest vigente, backup de Spreadsheet verificado por servidor, snapshot por hoja, manifiesto, confirmación y lotes reanudables. No se ha ejecutado sobre datos reales.
+- La migración de contraseñas del modal conserva el flujo simple de login; solo convierte credenciales heredadas a hash. `PasswordHashMigration` 18/18 PASS.
+- CI Node.js 22 run `43759427935`: SUCCESS; **102 suites / 1,558 pruebas / 0 fallos**. Suites clave: `IdentifierFormulaMigration` 7/7, `FeedbackFormulaIdAllocator` 5/5, `UserIdGenerator` 6/6, `LogoIdIntegrity` 11/11, `UsersAtomicMutations` 15/15.
+- Pendiente de Beta: dry-run en copia aislada, revisión de fórmulas no compatibles y referencias, y ejecución autorizada de lotes. Sin deployment de Apps Script ni cambios de datos productivos.
+
