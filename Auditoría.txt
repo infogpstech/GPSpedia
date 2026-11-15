@@ -737,7 +737,7 @@ Estado: CORREGIDO EN FEEDBACK/INBOX; optimización global pendiente.
 
 AUD-2026-11-15-36 — ELIMINACIÓN DE PREFLIGHT DUPLICADO EN AUTH
 Severidad: Rendimiento / validación redundante.
-Estado: IMPLEMENTADO; CI PENDIENTE.
+Estado: IMPLEMENTADO Y VALIDADO.
 - El dispatcher AUTH ejecutaba `touchProtectedAuthRequestSession_` y volvía a leer ActiveSessions/Users antes de llamar a handlers que realizaban la misma comprobación dentro de su bloqueo.
 - Se eliminó el preflight. `handleAcceptTerms`, `handleChangePassword`, `handleResetUserPassword`, `handleResetUserSessions`, `handleClearSensitiveLogs`, `handleDeleteUser` y `handleUpdateUser` mantienen validación de sesión/identidad/vigencia y los controles de rol/estado que corresponden. `handleLogout` conserva la verificación del token y del usuario, sin exigir que la sesión siga activa para completar su limpieza.
 - Se añadió una regresión en `SessionActivityCoordination.mjs` para comprobar que el dispatcher no revalida y que los ocho handlers verifican la sesión dentro del bloqueo.
@@ -762,3 +762,5 @@ Estado: IMPLEMENTADO; CI PENDIENTE.
 - Se devuelve el índice de fila desde el verificador backend y se reutiliza en el handler, dentro del mismo bloqueo. El navegador no puede fijar ese índice.
 - Se añadió una aserción de contrato en UsersAtomicMutations y se sincronizó el espejo de servicio.
 - No se debilitó la autenticación ni la autorización, y no se tocaron datos ni despliegues productivos.
+
+- CI Node.js 22 run `43684916807`: SUCCESS; 100 suites / 1,525 pruebas / 0 fallos. GitHub Pages run `43684916573`: SUCCESS.
