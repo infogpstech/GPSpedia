@@ -733,3 +733,12 @@ Estado: CORREGIDO EN FEEDBACK/INBOX; optimización global pendiente.
 - Corrección: el dispatcher adjunta el actor verificado en __feedbackActor después de expandir el payload; inboxConversationActor_ reutiliza ese objeto y conserva fallback para invocaciones internas aisladas. El campo aportado por el navegador se sobrescribe en el servidor.
 - CI Node.js 22 run 43678752084 SUCCESS; 100 suites / 1,523 pruebas / 0 fallos. Pages run 43678751430 SUCCESS.
 - Persisten lecturas completas de sesión en los helpers de otros servicios. No se retira la comprobación de token por solicitud ni la revocación inmediata; continuar la optimización sin introducir caché no invalidable.
+
+
+AUD-2026-11-15-36 — ELIMINACIÓN DE PREFLIGHT DUPLICADO EN AUTH
+Severidad: Rendimiento / validación redundante.
+Estado: IMPLEMENTADO; CI PENDIENTE.
+- El dispatcher AUTH ejecutaba `touchProtectedAuthRequestSession_` y volvía a leer ActiveSessions/Users antes de llamar a handlers que realizaban la misma comprobación dentro de su bloqueo.
+- Se eliminó el preflight. `handleAcceptTerms`, `handleChangePassword`, `handleResetUserPassword`, `handleResetUserSessions`, `handleClearSensitiveLogs`, `handleDeleteUser` y `handleUpdateUser` mantienen validación de sesión/identidad/vigencia y los controles de rol/estado que corresponden. `handleLogout` conserva la verificación del token y del usuario, sin exigir que la sesión siga activa para completar su limpieza.
+- Se añadió una regresión en `SessionActivityCoordination.mjs` para comprobar que el dispatcher no revalida y que los ocho handlers verifican la sesión dentro del bloqueo.
+- No se debilita la autorización backend ni se confía en el rol enviado por el cliente. CI pendiente; sin despliegues ni cambios en datos productivos.

@@ -446,3 +446,14 @@
 - CI Node.js 22 run `43678752084`: SUCCESS; **100 suites / 1,523 pruebas / 0 fallos**; comprobación de sintaxis PASS.
 - GitHub Pages run `43678751430`: build, reporte y deploy SUCCESS.
 - La optimización global de sesión sigue abierta: el cambio actual solo evita la validación duplicada dentro de Inbox. No se modificaron deployments de Apps Script ni datos productivos.
+
+
+## Continuidad — reducción de validaciones redundantes en AUTH (2026-11-14)
+
+- Rama de trabajo: `GPSpedia2.2.5_work`.
+- HEAD de partida: `86f06c3b9b9b493751631b51898d1d618415371f`; rama base protegida: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- `JS/Services/Auth.js`: el dispatcher ya no valida/toca sesión antes de despachar. Las ocho operaciones protegidas revisadas validan token e identidad dentro de sus handlers y bajo bloqueo; las acciones sensibles verifican también cuenta activa, expiración, revocación pendiente y rol real cuando corresponde.
+- `handleLogout` mantiene la coincidencia token/usuario y la limpieza idempotente de sesiones expiradas o ya revocadas.
+- `JS/Tests/SessionActivityCoordination.mjs`: el contrato anterior que exigía preflight se reemplazó por pruebas estáticas de validación dentro de cada handler y ausencia de preflight duplicado.
+- Validación CI posterior a la publicación pendiente. No se desplegaron Apps Script ni se modificaron Spreadsheet, Drive, ScriptProperties o datos productivos.
+- Siguiente: verificar CI, revisar posibles validaciones adicionales en WRITE/USERS/ADMIN y mantener pendiente el diseño de invalidación compartida antes de introducir caché de sesión.

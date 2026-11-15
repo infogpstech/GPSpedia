@@ -50,13 +50,30 @@ testCase("Los servicios localizan token y perfil por fila exacta y reducen escri
   assert.match(source,/5\*60\*1000/);
  }
 });
-testCase("AUTH actualiza actividad en la misma petición protegida y el frontend ya no ejecuta preflight",()=>{
- assert.match(auth,/touchProtectedAuthRequestSession_\(request\.action, request\.payload \|\| \{\}\)/);
- assert.match(auth,/const result = validateAndTouchSession_\(token\)/);
- assert.match(auth,/sessionsSheet\.getRange\(session\.rowIndex, COLS_ACTIVE_SESSIONS\.LastActivityAt\)\.setValue\(lastActivityAt\)/);
+testCase("AUTH valida una sola vez dentro de cada handler protegido, sin preflight duplicado",()=>{
+ assert.equal(auth.includes("touchProtectedAuthRequestSession_"),false);
+ const dispatchStart=auth.indexOf("function doPostInternal_(");
+ const dispatchEnd=auth.indexOf("\nfunction ",dispatchStart+10);
+ const dispatch=auth.slice(dispatchStart,dispatchEnd<0?auth.length:dispatchEnd);
+ assert.equal(dispatch.includes("validateAndTouchSession_"),false);
+ assert.equal(dispatch.includes("validateSessionReadOnly_"),false);
+ const handlerNames=["handleAcceptTerms","handleChangePassword","handleResetUserPassword","handleResetUserSessions","handleClearSensitiveLogs","handleDeleteUser","handleUpdateUser","handleLogout"];
+ for(const name of handlerNames){
+  const start=auth.indexOf("function "+name+"(");assert.ok(start>=0,"Falta "+name);
+  const end=auth.indexOf("\nfunction ",start+10),body=auth.slice(start,end<0?auth.length:end);
+  assert.match(body,/sessionToken/ ,name+" debe exigir token");
+  const lock=body.indexOf("waitLock");
+  const sessionLookup=["findSessionRowsByTokenUnderLock_","sessionsSheet.getDataRange()","sessionsData"].map(x=>body.indexOf(x)).filter(x=>x>=0);
+  assert.ok(lock>=0&&sessionLookup.some(x=>x>lock),name+" debe comprobar la sesión dentro de su bloqueo");
+ }
+ const logout=auth.slice(auth.indexOf("function handleLogout("));
+ assert.match(logout,/findSessionRowsByTokenUnderLock_\(sessionsSheet, sessionToken\)/);
+ assert.match(logout,/sessionUserId !== requestedUserId/);
+ assert.equal(logout.includes("getSessionExpirationStatus_"),false,"Logout debe poder limpiar sesiones expiradas o ya revocadas");
  assert.equal(api.includes("ensureSessionTouched_"),false);
  assert.equal(api.includes("touchSessionBeforeAction"),false);
 });
+
 testCase("Coordinator reserva ActiveSessions y permite solo las dos operaciones ADMIN→WRITE declaradas",()=>{
  assert.match(coordinator,/ADMIN:\s*\{\s*sessionActivity:\s*\{ sharedWrite: \["ACTIVE_SESSIONS"\] \}/);
  assert.match(coordinator,/migrateReplacedImagesSchema:\s*\{ read: \["USERS"\], sharedWrite: \["ACTIVE_SESSIONS"\], write: \["IMAGE_INVENTORY"\] \}/);

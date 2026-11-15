@@ -844,3 +844,11 @@ Las fuentes de servicios JavaScript se centralizan bajo `JS/Services/`. La carpe
 **Validación aislada de esta adenda:** InboxConversations 40/40 PASS; InboxRoleContract 17/17 PASS; parsing de los dos servicios modificados PASS. La autenticación global simplificada continúa pendiente; no se declara completada por haber eliminado únicamente la duplicación de Inbox.
 
 - El commit `a98d3d110acc3730143636ca26f5f36a55f19b6e` quedó publicado en `GPSpedia2.2.5_work`; la rama base permanece intacta.
+
+
+## P1 — eliminación de prevalidación redundante en AUTH (2026-11-14)
+
+- [x] Retirar el preflight común de `doPostInternal_` cuando el handler protegido ya valida la sesión dentro de su bloqueo.
+- [x] Conservar validación de token, identidad, expiración, estado activo y rol en cada handler; logout mantiene limpieza idempotente incluso para sesiones expiradas/revocadas.
+- [x] Añadir contrato estático que verifica las ocho operaciones protegidas y que el dispatcher no realiza una segunda lectura.
+- [ ] Ejecutar CI integral y registrar resultados; después continuar con duplicaciones locales de WRITE/FEEDBACK/USERS/ADMIN.

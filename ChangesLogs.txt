@@ -465,3 +465,13 @@
 
 - CI Node.js 22 run 43678752084: SUCCESS; sintaxis PASS; **100 suites / 1,523 pruebas / 0 fallos**.
 - GitHub Pages run 43678751430: build, reporte y deploy SUCCESS.
+
+
+================================================================================
+2026-11-14 — AUTH: eliminar la validación previa duplicada de sesión
+- `JS/Services/Auth.js`: se retiró la prevalidación del dispatcher `doPostInternal_` porque las ocho operaciones protegidas ya validan token, identidad, vigencia y estado/rol del usuario dentro de sus propios handlers y bajo su bloqueo.
+- `handleLogout` conserva su validación de coincidencia token/usuario y permite completar la limpieza de sesiones expiradas o ya revocadas; ya no queda bloqueado por una prevalidación de sesión activa.
+- `JS/Tests/SessionActivityCoordination.mjs`: contrato para comprobar que AUTH no ejecuta un preflight adicional y que cada handler protegido realiza su propia comprobación dentro del bloqueo.
+- La autorización por operación no se elimina: el handler sigue consultando la sesión y el perfil actuales en el servidor. Las operaciones de migración y benchmark conservan sus validaciones independientes.
+- Validación local de sintaxis y contrato estático: pendiente de ejecutar en CI tras publicar este cambio. No se desplegaron Apps Script ni se modificaron datos productivos.
+================================================================================
