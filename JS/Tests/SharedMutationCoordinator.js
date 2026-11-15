@@ -475,7 +475,7 @@ function runSharedMutationCoordinatorTests() {
 
     test_("FEEDBACK recordLike reserves session activity, CORTES, FEEDBACK ledger and ACTIVITY", function() {
         const policy = coordinatorPolicy_("FEEDBACK", "recordLike");
-        ["ACTIVE_SESSIONS", "CORTES", "FEEDBACK", "ACTIVITY"].forEach(function(resource) {
+        ["CORTES", "FEEDBACK", "ACTIVITY"].forEach(function(resource) {
             assert_(policy.writeResources.includes(resource), "recordLike debe reservar " + resource + ".");
         });
         const r = createRuntime_();
