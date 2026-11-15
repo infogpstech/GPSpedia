@@ -102,6 +102,9 @@ function createSharedMutationClient_(dependencies) {
     function registerSession(userId, sessionToken, role, fullName, createdAt, lastActivityAt) {
         return send_("registerSession", "AUTH", "registerSession", { userId, sessionToken, role, fullName, createdAt, lastActivityAt });
     }
+    function syncUserSessions(userId, role, fullName, sessions) {
+        return send_("syncUserSessions", "AUTH", "syncUserSessions", { userId, role, fullName, sessions });
+    }
     function revokeSession(userId, sessionToken) {
         return send_("revokeSession", "AUTH", "revokeSession", { userId, sessionToken });
     }
@@ -113,7 +116,8 @@ function createSharedMutationClient_(dependencies) {
     }
 
     return { withLease: withLease, publishCatalogChange: publishCatalogChange, getCatalogChanges: getCatalogChanges,
-        registerSession: registerSession, revokeSession: revokeSession, revokeUserSessions: revokeUserSessions,
+        registerSession: registerSession, syncUserSessions: syncUserSessions,
+        revokeSession: revokeSession, revokeUserSessions: revokeUserSessions,
         validateSessionContext: validateSessionContext };
 }
 
@@ -216,4 +220,15 @@ function validateSharedSessionContext_(userId, sessionToken) {
         logger: function(message) { Logger.log(message); }
     });
     return client.validateSessionContext(userId, sessionToken);
+}
+
+
+function syncSharedUserSessionContexts_(userId, role, fullName, sessions) {
+    const client = createSharedMutationClient_({
+        properties: PropertiesService.getScriptProperties(),
+        fetch: function(url, options) { return UrlFetchApp.fetch(url, options); },
+        uuid: function() { return Utilities.getUuid(); },
+        logger: function(message) { Logger.log(message); }
+    });
+    return client.syncUserSessions(userId, role, fullName, sessions);
 }
