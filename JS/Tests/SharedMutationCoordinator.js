@@ -725,10 +725,9 @@ function runSharedMutationCoordinatorTests() {
         r.request("registerSession", "AUTH", "registerSession", Object.assign({}, base, { sessionToken: firstToken }));
         r.request("registerSession", "AUTH", "registerSession", Object.assign({}, base, { sessionToken: secondToken }));
         r.request("revokeSession", "AUTH", "revokeSession", { userId: base.userId, sessionToken: firstToken });
-        const denied = r.request("acquire", "FEEDBACK", "reportProblem", {
+        expectThrow_(() => r.request("acquire", "FEEDBACK", "reportProblem", {
             requestId: r.uuid(), waitMs: 0, userId: base.userId, sessionToken: firstToken
-        });
-        assert_(denied.status === "error", "La sesión revocada debe rechazarse.");
+        }), "revocada");
         const valid = r.request("acquire", "FEEDBACK", "reportProblem", {
             requestId: r.uuid(), waitMs: 0, userId: base.userId, sessionToken: secondToken
         });
@@ -736,10 +735,9 @@ function runSharedMutationCoordinatorTests() {
         release_(r, "FEEDBACK", "reportProblem", valid.token);
         const revoked = r.request("revokeUserSessions", "AUTH", "revokeUserSessions", { userId: base.userId });
         assert_(revoked.status === "success" && revoked.epoch === 2, "La revocación global debe avanzar el epoch.");
-        const after = r.request("acquire", "FEEDBACK", "reportProblem", {
+        expectThrow_(() => r.request("acquire", "FEEDBACK", "reportProblem", {
             requestId: r.uuid(), waitMs: 0, userId: base.userId, sessionToken: secondToken
-        });
-        assert_(after.status === "error", "La revocación global debe invalidar todos los tokens.");
+        }), "revocada");
     });
 
     test_("El contexto central aplica expiración absoluta y por inactividad", function() {
@@ -750,12 +748,10 @@ function runSharedMutationCoordinatorTests() {
             role: "tecnico", fullName: "Técnico", createdAt: createdAt, lastActivityAt: createdAt
         });
         r.advance(32 * 24 * 60 * 60 * 1000);
-        const expired = r.request("acquire", "WRITE", "addOrUpdateCut", {
+        expectThrow_(() => r.request("acquire", "WRITE", "addOrUpdateCut", {
             requestId: r.uuid(), waitMs: 0, userId: "USR-1004",
             sessionToken: "session-token-0000000000000005"
-        });
-        assert_(expired.status === "error" && expired.message.includes("expiró"),
-            "Una sesión inactiva por más de un mes debe expirar en el coordinador.");
+        }), "expiró");
     });
 
     const summary = { status: failed === 0 ? "PASS" : "FAIL", passed, failed, results };
