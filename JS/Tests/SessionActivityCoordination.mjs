@@ -9,7 +9,7 @@ let passed=0;function testCase(name,fn){fn();passed++;console.log("PASS "+name);
 testCase("WRITE coordina las operaciones protegidas y actualiza actividad dentro de la sesión validada",()=>{
  assert.match(write,/function isSharedMutationAction_\(action\)\s*\{\s*return \["addOrUpdateCut","addSupplementaryInfo","addVinToVehicle","allocateVehicleId","freezeCortesIds"\]/);
  assert.match(write,/if \(action !== "checkOperation"\) return doPostInternal_\(e\);\s*try \{\s*return withSharedMutationLease_\("WRITE", "sessionActivity"/);
- assert.match(write,/sh\.getRange\(sessionMatch\.rowIndex,COLS_ACTIVE_SESSIONS\.LastActivityAt\)\.setValue\(new Date\(\)\.toISOString\(\)\)/);
+ assert.match(write,/touchSessionActivityIfDue_\(sh,sessionMatch\.rowIndex,sessionMatch\.row,COLS_ACTIVE_SESSIONS\.LastActivityAt\)/);
  ["handleCheckOperation","handleAddOrUpdateCutLocked","handleAddVinToVehicleLocked","assertDeveloperForIdMaintenance"].forEach(name=>{
   const i=write.indexOf("function "+name);assert.ok(i>=0,name);
   const j=write.indexOf("\nfunction ",i+10);assert.match(write.slice(i,j<0?undefined:j),/getAuthenticatedCollaborator\(/,name+" debe autenticar y tocar actividad");
@@ -18,7 +18,7 @@ testCase("WRITE coordina las operaciones protegidas y actualiza actividad dentro
 testCase("USERS coordina lecturas y mutaciones y actualiza LastActivityAt al verificar sesión",()=>{
  assert.match(users,/if \(action !== "getUsers"\) return doPostInternal_\(e\);\s*try \{\s*return withSharedMutationLease_\("USERS", "sessionActivity"/);
  assert.match(users,/function isSharedMutationAction_\(action\)\s*\{\s*return \["createUser","updateProfile"\]/);
- assert.match(users,/sessionsSheet\.getRange\(sessionMatch\.rowIndex,COLS_ACTIVE_SESSIONS\.LastActivityAt\)\.setValue\(new Date\(\)\.toISOString\(\)\)/);
+ assert.match(users,/touchSessionActivityIfDue_\(sessionsSheet,sessionMatch\.rowIndex,sessionMatch\.row,COLS_ACTIVE_SESSIONS\.LastActivityAt\)/);
  ["handleGetUsers","handleCreateUser","handleUpdateProfile"].forEach(name=>{
   const i=users.indexOf("function "+name);assert.ok(i>=0,name);
   const j=users.indexOf("\nfunction ",i+10);assert.match(users.slice(i,j<0?undefined:j),/getVerifiedSession\(/,name+" debe validar la sesión dentro de la operación");
@@ -27,15 +27,28 @@ testCase("USERS coordina lecturas y mutaciones y actualiza LastActivityAt al ver
 testCase("ADMIN exige sesión y coordina tanto lecturas como mutaciones protegidas",()=>{
  assert.match(admin,/if \(!isSharedMutationAction_\(action\)\) \{\s*if \(action === "ping"\) return doPostInternal_\(e\);\s*const operation = isSharedReadAction_\(action\) \? action : "sessionActivity";\s*try \{\s*return withSharedMutationLease_\("ADMIN", operation/);
  assert.match(admin,/return withSharedMutationLease_\("ADMIN", action/);
- assert.match(admin,/sh\.getRange\(sessionMatch\.rowIndex,6\)\.setValue\(new Date\(\)\.toISOString\(\)\)/);
+ assert.match(admin,/touchSessionActivityIfDue_\(sh,sessionMatch\.rowIndex,sessionMatch\.row,6\)/);
  assert.match(admin,/const developerContext = action === 'ping' \? null : \(ADMIN_MODAL_EDIT_ACTIONS\.has\(action\) \? assertModalEditSession\(payload\) : assertDeveloperSession\(payload\)\)/);
 });
 testCase("FEEDBACK coordina operaciones protegidas y deja públicas solo las rutas declaradas",()=>{
  assert.match(feedback,/return withSharedMutationLease_\("FEEDBACK", "sessionActivity"/);
  assert.match(feedback,/return withSharedMutationLease_\("FEEDBACK", action/);
- assert.match(feedback,/sh\.getRange\(sessionMatch\.rowIndex,6\)\.setValue\(new Date\(\)\.toISOString\(\)\)/);
+ assert.match(feedback,/touchSessionActivityIfDue_\(sh,sessionMatch\.rowIndex,sessionMatch\.row,6\)/);
  assert.match(feedback,/new Set\(\["getPysData", "sendContactForm"\]\)/);
  assert.match(feedback,/const actor = assertFeedbackSession\(source, FEEDBACK_ACTION_PERMISSIONS\[action\]\)/);
+});
+testCase("Los servicios localizan token y perfil por fila exacta y reducen escrituras de actividad",()=>{
+ const specs=[[feedback,"assertFeedbackSession"],[users,"getVerifiedSession"],[admin,"getAdminSessionContext_"],[write,"getAuthenticatedCollaborator"]];
+ for(const [source,name] of specs){
+  const start=source.indexOf("function "+name+"(");assert.ok(start>=0,name);
+  const end=source.indexOf("\nfunction ",start+10),body=source.slice(start,end<0?source.length:end);
+  assert.match(body,/findUniqueRowsByExactValue_\(/,name+" no usa búsqueda directa");
+  assert.equal(body.includes("getDataRange()"),false,name+" todavía recorre la hoja completa");
+  assert.match(source,/function findUniqueRowsByExactValue_\(/);
+  assert.match(source,/createTextFinder\(/);
+  assert.match(source,/function touchSessionActivityIfDue_\(/);
+  assert.match(source,/5\*60\*1000/);
+ }
 });
 testCase("AUTH actualiza actividad en la misma petición protegida y el frontend ya no ejecuta preflight",()=>{
  assert.match(auth,/touchProtectedAuthRequestSession_\(request\.action, request\.payload \|\| \{\}\)/);

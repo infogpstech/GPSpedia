@@ -155,22 +155,58 @@ function getSessionExpirationStatus_(row,now=new Date()){
  if(now.getTime()>=add(activity,1).getTime())return{expired:true,reason:'inactivity_expiration'};
  return{expired:false};
 }
+function findUniqueRowsByExactValue_(sheet,column,value,minWidth=1,trimCell=false) {
+    if (!sheet || !value) return [];
+    const lastRow = Number(sheet.getLastRow ? sheet.getLastRow() : 0);
+    if (lastRow < 2) return [];
+    const expected = String(value), range = sheet.getRange(2,column,lastRow-1,1);
+    let rowNumbers = [];
+    if (range && typeof range.createTextFinder === "function") {
+        const finder = range.createTextFinder(expected);
+        if (finder && typeof finder.matchCase === "function") finder.matchCase(true);
+        if (finder && typeof finder.matchEntireCell === "function") finder.matchEntireCell(!trimCell);
+        const matches = finder && typeof finder.findAll === "function" ? finder.findAll() || [] : [];
+        rowNumbers = matches.map(cell => cell.getRow());
+    } else {
+        const values = range.getValues();
+        for (let i=0;i<values.length;i++) {
+            const actual = String(values[i][0] === null || values[i][0] === undefined ? "" : values[i][0]);
+            if ((trimCell ? actual.trim() : actual) === expected) rowNumbers.push(i+2);
+        }
+    }
+    const lastColumn = Number(sheet.getLastColumn ? sheet.getLastColumn() : 0);
+    const width = Math.max(Number(minWidth)||1,lastColumn||1);
+    return rowNumbers.map(rowIndex => ({rowIndex,row:sheet.getRange(rowIndex,1,1,width).getValues()[0]}))
+        .filter(item => {
+            const actual = String(item.row[column-1] === null || item.row[column-1] === undefined ? "" : item.row[column-1]);
+            return (trimCell ? actual.trim() : actual) === expected;
+        });
+}
+function touchSessionActivityIfDue_(sheet,rowIndex,row,activityColumn) {
+    const now = new Date(), raw = row[activityColumn-1] === null || row[activityColumn-1] === undefined || String(row[activityColumn-1]).trim() === "" ? row[3] : row[activityColumn-1];
+    const last = raw instanceof Date ? new Date(raw.getTime()) : new Date(raw);
+    if (Number.isNaN(last.getTime()) || now.getTime()-last.getTime() < 5*60*1000) return false;
+    const token = String(row[2] || ""), currentToken = String(sheet.getRange(rowIndex,3).getValue() || "");
+    if (!token || currentToken !== token) return false;
+    sheet.getRange(rowIndex,activityColumn).setValue(now.toISOString());
+    return true;
+}
+
 function getAuthenticatedCollaborator(payload, allowedRoles){
   const id=String(payload&&payload.userId||'').trim(),token=String(payload&&payload.sessionToken||'');if(!id||!token.trim())throw new Error("Acceso no autorizado: se requiere una sesión válida.");
   const ss=getSpreadsheet(),sh=ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS),uh=ss.getSheetByName(SHEET_NAMES.USERS);if(!sh||!uh)throw new Error("Acceso no autorizado: sesión no autorizada.");
-  const sessionsData=sh.getDataRange().getValues();
-  const tokenMatches=sessionsData.slice(1).map((row,index)=>({row,rowIndex:index+2})).filter(item=>item.row[COLS_ACTIVE_SESSIONS.ActiveSessions-1]===token);
+  const tokenMatches=findUniqueRowsByExactValue_(sh,COLS_ACTIVE_SESSIONS.ActiveSessions,token,6,false);
   if(tokenMatches.length!==1||String(tokenMatches[0].row[COLS_ACTIVE_SESSIONS.ID_Usuario-1]||'').trim()!==id||getSessionExpirationStatus_(tokenMatches[0].row,new Date()).expired)throw new Error("Acceso no autorizado: sesión inválida, duplicada, cruzada o expirada.");
   const sessionMatch=tokenMatches[0];
-  const userMatches=uh.getDataRange().getValues().slice(1).filter(r=>String(r[COLS_USERS.ID-1]||'').trim()===id);
+  const userMatches=findUniqueRowsByExactValue_(uh,COLS_USERS.ID,id,9,true);
   if(userMatches.length!==1)throw new Error("Acceso no autorizado: el perfil de usuario no es único.");
-  const u=userMatches[0];if(String(u[COLS_USERS.SessionToken-1]||'').startsWith(ROLE_REVOCATION_SHARED_PREFIX))throw new Error("Acceso no autorizado: existe una revocación de rol pendiente. Inicia sesión nuevamente cuando finalice.");
+  const u=userMatches[0].row;if(String(u[COLS_USERS.SessionToken-1]||'').startsWith(ROLE_REVOCATION_SHARED_PREFIX))throw new Error("Acceso no autorizado: existe una revocación de rol pendiente. Inicia sesión nuevamente cuando finalice.");
   const username=String(u[COLS_USERS.Nombre_Usuario-1]||'').trim();
   const rawRole=String(u[COLS_USERS.Privilegios-1]||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase(),role=rawRole;
   if(!username||username.startsWith('__deleted__:')||!['desarrollador','jefe','supervisor','tecnico','tecnico_exterior'].includes(role))throw new Error("Acceso no autorizado: la cuenta no está activa o no tiene un rol válido.");
   if(Array.isArray(allowedRoles)&&!allowedRoles.includes(role))throw new Error("Acceso no autorizado: tu rol no puede agregar información suplementaria.");
   const name=String(u[COLS_USERS.Nombre_Completo-1]||'').trim();if(!name)throw new Error("El perfil del usuario no tiene un nombre completo registrado.");
-  sh.getRange(sessionMatch.rowIndex,COLS_ACTIVE_SESSIONS.LastActivityAt).setValue(new Date().toISOString());
+  touchSessionActivityIfDue_(sh,sessionMatch.rowIndex,sessionMatch.row,COLS_ACTIVE_SESSIONS.LastActivityAt);
   return name;
 }
 // ============================================================================

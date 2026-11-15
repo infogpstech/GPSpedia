@@ -83,21 +83,57 @@ function getSessionExpirationStatus_(row,now=new Date()){
  if(now.getTime()>=add(activity,1).getTime())return{expired:true,reason:'inactivity_expiration'};
  return{expired:false};
 }
+function findUniqueRowsByExactValue_(sheet,column,value,minWidth=1,trimCell=false) {
+    if (!sheet || !value) return [];
+    const lastRow = Number(sheet.getLastRow ? sheet.getLastRow() : 0);
+    if (lastRow < 2) return [];
+    const expected = String(value), range = sheet.getRange(2,column,lastRow-1,1);
+    let rowNumbers = [];
+    if (range && typeof range.createTextFinder === "function") {
+        const finder = range.createTextFinder(expected);
+        if (finder && typeof finder.matchCase === "function") finder.matchCase(true);
+        if (finder && typeof finder.matchEntireCell === "function") finder.matchEntireCell(!trimCell);
+        const matches = finder && typeof finder.findAll === "function" ? finder.findAll() || [] : [];
+        rowNumbers = matches.map(cell => cell.getRow());
+    } else {
+        const values = range.getValues();
+        for (let i=0;i<values.length;i++) {
+            const actual = String(values[i][0] === null || values[i][0] === undefined ? "" : values[i][0]);
+            if ((trimCell ? actual.trim() : actual) === expected) rowNumbers.push(i+2);
+        }
+    }
+    const lastColumn = Number(sheet.getLastColumn ? sheet.getLastColumn() : 0);
+    const width = Math.max(Number(minWidth)||1,lastColumn||1);
+    return rowNumbers.map(rowIndex => ({rowIndex,row:sheet.getRange(rowIndex,1,1,width).getValues()[0]}))
+        .filter(item => {
+            const actual = String(item.row[column-1] === null || item.row[column-1] === undefined ? "" : item.row[column-1]);
+            return (trimCell ? actual.trim() : actual) === expected;
+        });
+}
+function touchSessionActivityIfDue_(sheet,rowIndex,row,activityColumn) {
+    const now = new Date(), raw = row[activityColumn-1] === null || row[activityColumn-1] === undefined || String(row[activityColumn-1]).trim() === "" ? row[3] : row[activityColumn-1];
+    const last = raw instanceof Date ? new Date(raw.getTime()) : new Date(raw);
+    if (Number.isNaN(last.getTime()) || now.getTime()-last.getTime() < 5*60*1000) return false;
+    const token = String(row[2] || ""), currentToken = String(sheet.getRange(rowIndex,3).getValue() || "");
+    if (!token || currentToken !== token) return false;
+    sheet.getRange(rowIndex,activityColumn).setValue(now.toISOString());
+    return true;
+}
+
 const ROLE_REVOCATION_SHARED_PREFIX = "__role_revocation_pending__:";
 function getAdminSessionContext_(payload, allowedRoles){
  const id=String(payload&&payload.userId||"").trim(),token=String(payload&&payload.sessionToken||"").trim();if(!id||!token)throw new Error("Acceso denegado: sesión no autorizada.");
  const ss=getSpreadsheet(),sh=ss.getSheetByName("ActiveSessions"),uh=ss.getSheetByName("Users");if(!sh||!uh)throw new Error("Acceso denegado: sesión no autorizada.");
- const sessionsData=sh.getDataRange().getValues();
- const tokenMatches=sessionsData.slice(1).map((row,index)=>({row,rowIndex:index+2})).filter(item=>String(item.row[2]||"").trim()===token);
- if(tokenMatches.length!==1||String(tokenMatches[0].row[0]||"").trim()!==id||getSessionExpirationStatus_(tokenMatches[0].row,new Date()).expired)throw new Error("Acceso denegado: sesión inválida, duplicada, cruzada o expirada.");
+ const tokenMatches=findUniqueRowsByExactValue_(sh,3,token,6,false);
+ if(tokenMatches.length!==1||String(tokenMatches[0].row[2]||"").trim()!==token||String(tokenMatches[0].row[0]||"").trim()!==id||getSessionExpirationStatus_(tokenMatches[0].row,new Date()).expired)throw new Error("Acceso denegado: sesión inválida, duplicada, cruzada o expirada.");
  const sessionMatch=tokenMatches[0];
- const userMatches=uh.getDataRange().getValues().slice(1).filter(r=>String(r[0]||"").trim()===id);if(userMatches.length!==1)throw new Error("Acceso denegado: perfil de usuario ausente o ambiguo.");
- const u=userMatches[0];if(String(u[7]||"").startsWith(ROLE_REVOCATION_SHARED_PREFIX))throw new Error("Acceso no autorizado: existe una revocación de rol pendiente. Inicia sesión nuevamente cuando finalice.");
+ const userMatches=findUniqueRowsByExactValue_(uh,1,id,8,true);if(userMatches.length!==1)throw new Error("Acceso denegado: perfil de usuario ausente o ambiguo.");
+ const u=userMatches[0].row;if(String(u[7]||"").startsWith(ROLE_REVOCATION_SHARED_PREFIX))throw new Error("Acceso no autorizado: existe una revocación de rol pendiente. Inicia sesión nuevamente cuando finalice.");
  const username=String(u[1]||"").trim();if(!username||username.startsWith("__deleted__:"))throw new Error("Acceso denegado: cuenta inactiva.");
  const rawRole=String(u[3]||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase(),role=rawRole;
  if(!Array.isArray(allowedRoles)||!allowedRoles.includes(role))throw new Error("Acceso denegado: sesión no autorizada.");
  const fullName=String(u[6]||"").trim(),displayRole=role==="desarrollador"?"Desarrollador":role==="jefe"?"Jefe":"Supervisor";
- sh.getRange(sessionMatch.rowIndex,6).setValue(new Date().toISOString());
+ touchSessionActivityIfDue_(sh,sessionMatch.rowIndex,sessionMatch.row,6);
  return{userId:id,role:displayRole,fullName,userName:fullName||username};
 }
 function assertDeveloperSession(payload){return getAdminSessionContext_(payload,["desarrollador"]);}

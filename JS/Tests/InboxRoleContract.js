@@ -26,7 +26,8 @@ function runInboxRoleContractTests(sources) {
   const actorAttach=feedback.indexOf('__feedbackActor: actor',authorized);
   assert(authorized>=0&&actorAttach>authorized,'El actor confiable debe sobrescribir cualquier campo enviado por el cliente.');
  });
- run('FEEDBACK actualiza LastActivityAt después de autenticar y autorizar al actor',()=>{assert(feedback.includes('sh.getRange(sessionMatch.rowIndex,6).setValue(new Date().toISOString())'));const touch=feedback.indexOf('sh.getRange(sessionMatch.rowIndex,6).setValue');const allowed=feedback.indexOf('if(Array.isArray(allowedRoles)',feedback.indexOf('function assertFeedbackSession'));assert(touch>allowed,'La actividad no debe actualizarse antes de validar el rol solicitado.');});
+ run('FEEDBACK actualiza LastActivityAt con intervalo y después de autorizar al actor',()=>{const start=feedback.indexOf('function assertFeedbackSession');const touch=feedback.indexOf('touchSessionActivityIfDue_(sh,sessionMatch.rowIndex,sessionMatch.row,6)',start);const allowed=feedback.indexOf('if(Array.isArray(allowedRoles)',start);assert(touch>allowed,'La actividad no debe actualizarse antes de validar el rol solicitado.');assert(feedback.includes('5*60*1000'));});
+ run('getCatalogChanges reutiliza el actor del dispatcher y no repite la validación',()=>{const start=feedback.indexOf('function handleGetCatalogChanges(');const end=feedback.indexOf('\nfunction ',start+10);const body=feedback.slice(start,end<0?feedback.length:end);assert(body.includes('getFeedbackActor_(payload, null)'));assert(!body.includes('assertFeedbackSession('));});
  run('FEEDBACK expone solo un booleano seguro para diagnosticar la configuración local del coordinador',()=>{
   const helper=extract(feedback,'isFeedbackCoordinatorConfigured_');
   const build=new Function('PropertiesService','withSharedMutationLease_',helper+'; return isFeedbackCoordinatorConfigured_;');
