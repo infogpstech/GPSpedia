@@ -360,18 +360,60 @@ function handleGetUsers(payload) {
     return { status: 'success', users: users };
 }
 
+function parseUserIdSequenceFormula_(formula) {
+    const raw = String(formula || "").trim();
+    const match = /^=\s*"([^"]{1,40})"\s*&\s*(?:TEXTO|TEXT)\s*\(\s*(?:FILA|ROW)\s*\(\s*\)\s*-\s*\d+\s*,\s*"([0]+)"\s*\)\s*$/i.exec(raw);
+    return match ? { prefix: match[1], padding: match[2].length, formula: raw } : null;
+}
+
+function getUserIdSequencePattern_(userSheet) {
+    const configHeaders = ["sheet","column","header","prefix","padding","formula","updatedAt"];
+    const configSheet = getSpreadsheet().getSheetByName("__IdentifierSequenceConfig__");
+    if (configSheet && configSheet.getLastRow() > 1) {
+        const headers = configSheet.getRange(1, 1, 1, configHeaders.length).getValues()[0].map(value => String(value || ""));
+        if (JSON.stringify(headers) !== JSON.stringify(configHeaders)) {
+            throw new Error("La configuración central de IDs no tiene un esquema compatible.");
+        }
+        const rows = configSheet.getRange(2, 1, configSheet.getLastRow() - 1, configHeaders.length).getValues();
+        const matches = rows.filter(row => String(row[0]) === "Users" && Number(row[1]) === COLS_USERS.ID);
+        if (matches.length > 1) throw new Error("La configuración de IDs de Users está duplicada.");
+        if (matches.length === 1) {
+            const pattern = { prefix: String(matches[0][3] || ""), padding: Number(matches[0][4]), formula: String(matches[0][5] || "") };
+            if (String(userSheet.getRange(1, COLS_USERS.ID).getValue() || "").trim() !== String(matches[0][2] || "") ||
+                !pattern.prefix || !pattern.formula || !Number.isInteger(pattern.padding) || pattern.padding < 1 || pattern.padding > 20) {
+                throw new Error("La configuración backend de IDs no coincide con la columna Users.");
+            }
+            const lastRow = userSheet.getLastRow();
+            const formulas = lastRow > 1 ? userSheet.getRange(2, COLS_USERS.ID, lastRow - 1, 1).getFormulas().flat() : [];
+            if (formulas.some(formula => formula && formula !== pattern.formula)) {
+                throw new Error("La columna Users.ID contiene una fórmula distinta de la configuración backend.");
+            }
+            return pattern;
+        }
+    }
+    const lastRow = userSheet.getLastRow();
+    const formulas = lastRow > 1 ? userSheet.getRange(2, COLS_USERS.ID, lastRow - 1, 1).getFormulas().flat().filter(Boolean) : [];
+    if (!formulas.length) return { prefix: "USR-", padding: 4, formula: "" };
+    const patterns = formulas.map(parseUserIdSequenceFormula_);
+    if (patterns.some(pattern => !pattern)) throw new Error("La fórmula histórica de Users.ID no es compatible con un generador backend seguro.");
+    const first = patterns[0];
+    if (patterns.some(pattern => pattern.prefix !== first.prefix || pattern.padding !== first.padding || pattern.formula !== first.formula)) {
+        throw new Error("Users.ID contiene fórmulas con formatos diferentes; se requiere revisión.");
+    }
+    return first;
+}
+
 // Genera IDs permanentes secuenciales. La columna ID se escribe como valor,
 // nunca se copia ni se conserva su fórmula en las filas nuevas.
 function generateNextUserId_(userSheet) {
+    const pattern = getUserIdSequencePattern_(userSheet);
     const lastRow = userSheet.getLastRow();
-    if (lastRow < 2) return 'USR-0001';
-
     const lastColumn = Math.max(userSheet.getLastColumn(), COLS_USERS.SessionToken);
-    const rows = userSheet.getRange(2, 1, lastRow - 1, lastColumn).getValues();
+    const rows = lastRow > 1 ? userSheet.getRange(2, 1, lastRow - 1, lastColumn).getValues() : [];
     const seen = new Set();
     let maxSequence = 0;
 
-    rows.forEach(row => {
+    rows.forEach((row, index) => {
         const id = String(row[COLS_USERS.ID - 1] === null || row[COLS_USERS.ID - 1] === undefined
             ? '' : row[COLS_USERS.ID - 1]).trim();
         const hasAccountData = row.slice(1).some(value =>
@@ -380,18 +422,21 @@ function generateNextUserId_(userSheet) {
         if (!hasAccountData && !id) return;
         if (!hasAccountData) return;
         if (!id) throw new Error('Existe una fila de usuario con datos pero sin ID. No se creó la cuenta.');
+        if (!id.startsWith(pattern.prefix) || !/^\d+$/.test(id.slice(pattern.prefix.length))) {
+            throw new Error('El ID de usuario de la fila ' + (index + 2) + ' no coincide con el formato backend configurado.');
+        }
         const normalizedId = id.toUpperCase();
         if (seen.has(normalizedId)) throw new Error('Se detectó un ID de usuario duplicado. No se creó la cuenta.');
         seen.add(normalizedId);
-
-        const match = /^USR-(\d{4,})$/i.exec(id);
-        if (match) maxSequence = Math.max(maxSequence, Number(match[1]));
+        const suffix = Number(id.slice(pattern.prefix.length));
+        if (!Number.isSafeInteger(suffix) || suffix < 1) throw new Error('El sufijo del ID de usuario no es un entero positivo seguro.');
+        maxSequence = Math.max(maxSequence, suffix);
     });
 
     if (!Number.isSafeInteger(maxSequence) || maxSequence >= Number.MAX_SAFE_INTEGER) {
         throw new Error('Se agotó el rango disponible para generar IDs de usuario.');
     }
-    return 'USR-' + String(maxSequence + 1).padStart(4, '0');
+    return pattern.prefix + String(maxSequence + 1).padStart(pattern.padding, '0');
 }
 
 // Reutiliza la primera fila sin datos de cuenta. Si la hoja tiene fórmulas
