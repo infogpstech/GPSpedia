@@ -65,13 +65,15 @@ function createSharedMutationClient_(dependencies) {
         if (nestedToken) {
             const validation = send_("validate", service, operation, { token: nestedToken });
             if (!validation.valid) throw new Error("La lease interna no autoriza esta acción.");
-            return callback(nestedToken);
+            return callback(nestedToken, validation.actor || null);
         }
 
         const requestId = uuid();
         const acquired = send_("acquire", service, operation, {
             requestId: requestId,
-            waitMs: 12000
+            waitMs: 12000,
+            userId: String(options && options.session && options.session.userId || ""),
+            sessionToken: String(options && options.session && options.session.sessionToken || "")
         });
         const token = String(acquired.token || "");
         if (!/^[A-Za-z0-9_-]{40,100}$/.test(token)) {
@@ -79,7 +81,7 @@ function createSharedMutationClient_(dependencies) {
         }
 
         try {
-            return callback(token);
+            return callback(token, acquired.actor || null);
         } finally {
             try {
                 send_("release", service, operation, { token: token });
@@ -96,8 +98,18 @@ function createSharedMutationClient_(dependencies) {
     function getCatalogChanges(cursor, limit) {
         return send_("getCatalogChanges", "FEEDBACK", "getCatalogChanges", { cursor: cursor, limit: limit });
     }
+    function registerSession(userId, sessionToken, role, fullName, createdAt, lastActivityAt) {
+        return send_("registerSession", "AUTH", "registerSession", { userId, sessionToken, role, fullName, createdAt, lastActivityAt });
+    }
+    function revokeSession(userId, sessionToken) {
+        return send_("revokeSession", "AUTH", "revokeSession", { userId, sessionToken });
+    }
+    function revokeUserSessions(userId) {
+        return send_("revokeUserSessions", "AUTH", "revokeUserSessions", { userId });
+    }
 
-    return { withLease: withLease, publishCatalogChange: publishCatalogChange, getCatalogChanges: getCatalogChanges };
+    return { withLease: withLease, publishCatalogChange: publishCatalogChange, getCatalogChanges: getCatalogChanges,
+        registerSession: registerSession, revokeSession: revokeSession, revokeUserSessions: revokeUserSessions };
 }
 
 function withSharedMutationLease_(service, operation, callback, options) {
@@ -129,4 +141,35 @@ function getSharedCatalogChanges_(cursor, limit) {
         logger: function(message) { Logger.log(message); }
     });
     return client.getCatalogChanges(cursor, limit);
+}
+
+
+function registerSharedSessionContext_(userId, sessionToken, role, fullName, createdAt, lastActivityAt) {
+    const client = createSharedMutationClient_({
+        properties: PropertiesService.getScriptProperties(),
+        fetch: function(url, options) { return UrlFetchApp.fetch(url, options); },
+        uuid: function() { return Utilities.getUuid(); },
+        logger: function(message) { Logger.log(message); }
+    });
+    return client.registerSession(userId, sessionToken, role, fullName, createdAt, lastActivityAt);
+}
+
+function revokeSharedSessionContext_(userId, sessionToken) {
+    const client = createSharedMutationClient_({
+        properties: PropertiesService.getScriptProperties(),
+        fetch: function(url, options) { return UrlFetchApp.fetch(url, options); },
+        uuid: function() { return Utilities.getUuid(); },
+        logger: function(message) { Logger.log(message); }
+    });
+    return client.revokeSession(userId, sessionToken);
+}
+
+function revokeSharedUserSessionContexts_(userId) {
+    const client = createSharedMutationClient_({
+        properties: PropertiesService.getScriptProperties(),
+        fetch: function(url, options) { return UrlFetchApp.fetch(url, options); },
+        uuid: function() { return Utilities.getUuid(); },
+        logger: function(message) { Logger.log(message); }
+    });
+    return client.revokeUserSessions(userId);
 }
