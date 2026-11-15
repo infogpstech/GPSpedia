@@ -35,6 +35,7 @@ function runLastDeveloperProtectionTests(sources) {
             COLS_USERS:userCols,COLS_ACTIVE_SESSIONS:sessionCols,
             normalizeUserId:v=>String(v===null||v===undefined?'':v).trim(),
             normalizeRoleName:normalize,isActiveAuthUserRecord:active,countActiveDevelopers_:count,
+            requireSharedAuthActor_:(payload,allowedRoles)=>{const actor=payload&&payload.__sharedSessionActor;const userId=String(actor&&actor.userId||"").trim(),role=normalize(actor&&actor.role);if(!userId||!Number.isSafeInteger(actor&&actor.epoch)||actor.epoch<1||!allowedRoles.includes(role))throw new Error("Acceso denegado.");return{userId,role,epoch:actor.epoch};},
             getSessionExpirationStatus_:()=>({expired:false}),assertRequesterRoleRevocationClear_:()=>{},
             hasPendingRoleRevocation_:()=>false,revokePendingLoginRequestsForUserUnderLock_:()=>({pending:false}),
             revokeSharedUserSessionContexts_:id=>{revokedSharedUsers.push(String(id));return{revokedSessions:0};},
@@ -60,7 +61,14 @@ function runLastDeveloperProtectionTests(sources) {
         };
         const update=new Function(...Object.keys(context),extract(auth,'handleUpdateUser','\n\nconst SESSION_ABSOLUTE_MONTHS')+'\nreturn handleUpdateUser;')(...Object.values(context));
         const remove=new Function(...Object.keys(context),extract(auth,'handleDeleteUser')+'\nreturn handleDeleteUser;')(...Object.values(context));
-        return {update,remove,users,sessions,logs,revokedSharedUsers};
+        const actorUserId=String(sessionRows[0]&&sessionRows[0][0]||"");
+        const actorRow=userRows.find(row=>String(row[0])===actorUserId);
+        const trustedActor={userId:actorUserId,role:actorRow&&actorRow[3],epoch:1};
+        return {
+            update:payload=>update({...payload,__sharedSessionActor:trustedActor}),
+            remove:payload=>remove({...payload,__sharedSessionActor:trustedActor}),
+            users,sessions,logs,revokedSharedUsers
+        };
     };
     run('Reconciliación real conserva el marcador y recupera nombre tras fallo de escritura',()=>{
         const helperNames=['parseRoleRevocationMarker_','parseSharedRoleRevocationMarker_','sameRoleRevocationMarker_','revokeAllUserSessionsUnderLock_','deleteRevokedSessionRowsUnderLock_','reconcileRoleRevocationUnderLock_'];
