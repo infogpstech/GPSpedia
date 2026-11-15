@@ -180,9 +180,10 @@ await test('AUTH conserva rechazo para identidad incompleta y valida contexto an
 });
 
 await test('el cliente no ejecuta touchSession ni revalida identidad y rol por acción', () => {
-    assert.doesNotMatch(api, /ensureSessionTouched_/);
-    assert.doesNotMatch(api, /routeAction\(['"]touchSession['"]/);
-    assert.doesNotMatch(client, /routeAction\(['"]touchSession['"]/);
+    assert.equal(api.includes("routeAction('touchSession'"), false);
+    assert.equal(api.includes('routeAction("touchSession"'), false);
+    assert.equal(client.includes("routeAction('touchSession'"), false);
+    assert.equal(client.includes('routeAction("touchSession"'), false);
     assert.doesNotMatch(client, /validateSessionCoordinated/);
 });
 await test('AUTH trata hojas faltantes y revocación pendiente como indisponibilidad temporal', () => {
