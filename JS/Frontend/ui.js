@@ -6239,8 +6239,8 @@ ${elapsedSec}s
                     result.sheetCount + ' hojas. Omitidos por ID duplicado: ' + result.skipped.duplicate +
                     '; resultado vacío: ' + result.skipped.emptyResult +
                     '; fila sin otros datos: ' + result.skipped.emptyRecord +
-                    '; patrones reconocidos para backend: ' + result.patternRecognizedCount +
-                    '; patrones que requieren revisión: ' + result.patternUnsupportedCount +
+                    '; fórmulas con patrón compatible con backend: ' + result.formulaCount +
+                    '; fórmulas con patrón no reconocido (no se migrarán): ' + result.skipped.unsupportedPattern +
                     '. Se conservará cada ID calculado sin renumerarlo.';
                 const backupMatches = Boolean(verifiedDatabaseBackupId &&
                     normalizeSpreadsheetBackupId(backupResourceInput ? backupResourceInput.value : '') === verifiedDatabaseBackupId);
