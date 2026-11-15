@@ -39,16 +39,20 @@ function makeHarness(){
   insertSheet(n){const sh=makeSheet(n,[[]]);this.sheets.push(sh);return sh;}};
  const Utilities={DigestAlgorithm:{SHA_256:"SHA_256"},Charset:{UTF_8:"UTF-8"},getUuid:()=>"12345678-1234-4234-8234-123456789012",computeDigest(_a,v){return Array.from(createHash("sha256").update(String(v),"utf8").digest()).map(b=>b>127?b-256:b);}};
  const LockService={getScriptLock:()=>({waitLock(){},releaseLock(){}})};
+ const properties={};
+ const PropertiesService={getScriptProperties:()=>({getProperty:key=>properties[key]??null,setProperty:(key,value)=>{properties[key]=String(value);}})};
  const SpreadsheetApp={flush(){}};
  const code=[
   extract("identifierMigrationCanonical_"),extract("identifierMigrationDigest_"),extract("identifierMigrationSheetDigest_"),
   extract("auditAllFormulaIdentifierColumns_"),extract("parseIdentifierSequenceFormula_"),
   extract("persistIdentifierSequenceConfigs_"),extract("buildIdentifierFormulaFreezePlan_"),
   extract("ensureIdentifierFormulaFreezeManifest_"),extract("findIdentifierFormulaFreezeManifest_"),
-  extract("handleFreezeIdentifierFormulas_"),
-  "return {audit:auditAllFormulaIdentifierColumns_,plan:buildIdentifierFormulaFreezePlan_,migrate:handleFreezeIdentifierFormulas_};"
+  extract("handleFreezeIdentifierFormulas_"),extract("getNextAdminFormulaBasedId_"),
+  'const IDENTIFIER_SEQUENCE_CONFIG_SHEET_="__IdentifierSequenceConfig__";',
+  'const IDENTIFIER_SEQUENCE_CONFIG_HEADERS_=["sheet","column","header","prefix","padding","formula","updatedAt"];',
+  "return {audit:auditAllFormulaIdentifierColumns_,plan:buildIdentifierFormulaFreezePlan_,migrate:handleFreezeIdentifierFormulas_,nextId:getNextAdminFormulaBasedId_};"
  ].join("\n");
- const api=new Function("getSpreadsheet","Utilities","LockService","SpreadsheetApp","verifyVinMigrationBackup",code)(()=>ss,Utilities,LockService,SpreadsheetApp,()=>({backupId:"verified-test-backup"}));
+ const api=new Function("getSpreadsheet","Utilities","LockService","SpreadsheetApp","PropertiesService","verifyVinMigrationBackup",code)(()=>ss,Utilities,LockService,SpreadsheetApp,PropertiesService,()=>({backupId:"verified-test-backup"}));
  return {ss,users,vehicles,api};
 }
 let passed=0;function test(name,fn){fn();passed++;console.log("PASS "+name);}
@@ -80,6 +84,12 @@ test("Congela valores exactos por lotes, reanuda y conserva snapshots/manifiesto
  const config=h.ss.getSheetByName("__IdentifierSequenceConfig__");
  assert.ok(config);assert.equal(config.rows.length,3);
  assert.ok(h.ss.sheets.some(s=>s.name.startsWith("__IDF_")&&s.hidden));
+});
+test("El backend de ADMIN genera el siguiente ID desde la configuración persistida",()=>{
+ const h=makeHarness(),dry=h.api.migrate({dryRun:true});
+ const payload={dryRun:false,confirm:true,migrationId:dry.migrationId,digest:dry.digest,batchSize:5};
+ h.api.migrate(payload);h.api.migrate(payload);
+ assert.equal(h.api.nextId(h.vehicles,1),"V-002");
 });
 test("No congela fórmulas ID cuyo patrón no puede migrarse a un generador backend seguro",()=>{
  const h=makeHarness();
