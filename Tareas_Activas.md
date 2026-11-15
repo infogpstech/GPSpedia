@@ -967,3 +967,15 @@ Esta aclaración delimita el trabajo futuro y debe leerse junto con la fuente no
 **Pendiente:** integración de la vista de tickets propios sin crear controles hasta autorización; selector visual de categoría/asunto; barra de acciones y selección múltiple 04B; pruebas de RBAC, navegación móvil y flujo de ticket con despliegues/Spreadsheet de Beta. No se desplegó Apps Script ni se creó `InboxConversationFlags` en ninguna hoja real.
 
 La siguiente revisión local debe centrarse en GP-INBOX-04D (contratos RBAC, accesibilidad y regresión de los flujos existentes), sin añadir controles visibles. Todas las pruebas que dependan de servicios desplegados siguen pendientes de Beta.
+
+
+## Adenda GP-INBOX-04D — regresión, RBAC y accesibilidad estructural (2026-11-15)
+
+**Estado local: VALIDADO; PRUEBAS EN DISPOSITIVOS REALES PENDIENTES DE BETA.**
+
+- Se amplió `InboxUi.mjs` para comprobar que el detalle de tickets presenta categoría, asunto, descripción, respuesta y estado, y que las acciones diferidas `markInboxUnread`, `deleteInboxConversation` y `getMyProblemReports` no se conectan a controles visibles ni generan pestañas/botones nuevos.
+- La cobertura automatizada existente verifica RBAC y jerarquía de destinatarios, sesión/actor confiable, operaciones Inbox, auditoría, foco/teclado, roles ARIA, movimiento reducido y reglas responsive. No se añadieron controles visibles.
+- `InboxUi`: **22/22 PASS**. CI Node.js 22 run `43753485398`, HEAD `849e4aa0ddd23c41d635fffee4bba31b006a14b0`: **SUCCESS; 100 suites / 1,544 pruebas / 0 fallos**.
+- **Pendiente de Beta:** tema claro/oscuro, lector de pantalla, teclado y navegación Atrás en navegador real; pruebas Android/iOS/desktop con tamaños reales, conectividad intermitente y varias pestañas. La selección múltiple y barra de acciones siguen diferidas hasta autorización expresa.
+
+El trabajo local GP-INBOX-04B/04C/04D queda cubierto en backend y contratos. No se desplegó Apps Script ni se modificaron hojas o datos productivos.
