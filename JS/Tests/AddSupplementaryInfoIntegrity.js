@@ -50,9 +50,10 @@ function runAddSupplementaryInfoIntegrityTests(sources) {
  run_("Coordinador cubre Cortes, Drive y ledger",function(){assert_(String(sources.coordinator||"").includes('addSupplementaryInfo: { read: identityRead, write: ["CORTES", "DRIVE", "IMAGE_UPLOAD_LEDGER"] }'));});
  run_("UI no calcula slot desde item posiblemente obsoleto",function(){assert_(!String(sources.ui||"").includes("if (!item.cableAlimen)")&&String(sources.ui||"").includes("El servidor asigna el primer par"));});
 
+ const helperStart=String(sources.write).indexOf("function findUniqueRowsByExactValue_(");
  const authStart=String(sources.write).indexOf("function getAuthenticatedCollaborator(");
  const authEnd=String(sources.write).indexOf("\n// ============================================================================",authStart);
- const authSource=String(sources.write).slice(authStart,authEnd);
+ const authSource=String(sources.write).slice(helperStart,authEnd);
  const authNames={ACTIVE_SESSIONS:"ActiveSessions",USERS:"Users"};
  const authColsSessions={ActiveSessions:3,ID_Usuario:1};
  const authColsUsers={ID:1,Nombre_Usuario:2,Privilegios:4,Nombre_Completo:7,SessionToken:8};
@@ -63,7 +64,14 @@ function runAddSupplementaryInfoIntegrityTests(sources) {
   const user=["user-1",options.deleted?"__deleted__:tecnico":"tecnico","",role||"Tecnico","","","Nombre Servidor",options.revoked?"__role_revocation_pending__:pending":"token-1",""];
   const rows={ActiveSessions:[["userId","username","token","createdAt","logs","lastActivityAt"],session],Users:[["id","username","password","role","phone","email","fullName","session","terms"],user]};
   if(options.duplicate)rows.ActiveSessions.push(session.slice());
-  const sheets={getSheetByName:name=>rows[name]?{getDataRange:()=>({getValues:()=>rows[name]}),getRange:(row,column)=>({setValue:value=>{rows[name][row-1][column-1]=value;}})}:null};
+  const sheets={getSheetByName:name=>rows[name]?{
+   getLastRow:()=>rows[name].length,getLastColumn:()=>Math.max(...rows[name].map(row=>row.length)),
+   getDataRange:()=>({getValues:()=>rows[name].map(row=>row.slice())}),
+   getRange:(row,column,numRows=1,numColumns=1)=>({
+    getValues:()=>rows[name].slice(row-1,row-1+numRows).map(values=>values.slice(column-1,column-1+numColumns)),
+    getValue:()=>rows[name][row-1][column-1],setValue:value=>{rows[name][row-1][column-1]=value;}
+   })
+  }:null};
   const getAuth=new Function("getSpreadsheet","SHEET_NAMES","COLS_ACTIVE_SESSIONS","COLS_USERS","ROLE_REVOCATION_SHARED_PREFIX","getSessionExpirationStatus_",authSource+";return getAuthenticatedCollaborator;")(
    ()=>sheets,authNames,{ActiveSessions:3,ID_Usuario:1,LastActivityAt:6},{ID:1,Nombre_Usuario:2,Privilegios:4,Nombre_Completo:7,SessionToken:8},"__role_revocation_pending__:",row=>({expired:row[3]==="expired"}));
   return {getAuth,rows};
