@@ -1,6 +1,6 @@
 # Plan de reorganización estructural del repositorio GPSpedia
 
-**Estado al inicio de esta revisión:** EN PROGRESO — se detectó que la centralización de fuentes Apps Script no estaba reflejada en el árbol real; se corrigen rutas y ubicación, con CI pendiente.  
+**Estado:** COMPLETADO CON VALIDACIÓN DIFERIDA A BETA — fuentes JavaScript centralizadas en `JS/Services/`, consumidores sincronizados y regresión automatizada aprobada. La copia/validación de Apps Script y servicios externos permanece pendiente de Beta.  
 **Repositorio:** `infogpstech/GPSpedia`  
 **Rama autorizada:** `GPSpedia2.2.5_work`  
 **Rama base protegida:** `GPSpedia2.2.5`  
@@ -210,4 +210,16 @@ La reorganización podrá marcarse como **COMPLETADA** o **COMPLETADA CON VALIDA
 
 La verificación del árbol real en `GPSpedia2.2.5_work` detectó que el registro de ejecución anterior afirmaba que las fuentes Apps Script ya estaban en `JS/Services/`, pero los diez archivos JavaScript seguían ubicados en `Services/`. También persistían referencias activas a ambas rutas en el runner, suites Node.js, workflow y guía de coordinación. El registro anterior se conserva como evidencia histórica, pero no describe el árbol vigente en ese momento.
 
-En esta iteración se preparó la centralización de los diez archivos fuente en `JS/Services/` y la actualización de los consumidores detectados. `service-worker.js` permanece en la raíz por su alcance PWA; `Services/` conserva únicamente documentación y auxiliares no JavaScript. La lógica de negocio, contratos, endpoints, deployments, hojas y datos no forman parte del cambio. El cierre queda sujeto al resultado de GitHub Actions y a la verificación posterior del árbol y de las referencias.
+En esta iteración se completó la centralización de los diez archivos fuente en `JS/Services/` y la actualización de los consumidores detectados. `service-worker.js` permanece en la raíz por su alcance PWA; `Services/` conserva únicamente documentación y auxiliares no JavaScript. La lógica de negocio, contratos, endpoints, deployments, hojas y datos no forman parte del cambio. El cierre queda sujeto al resultado de GitHub Actions y a la verificación posterior del árbol y de las referencias.
+
+
+## 14. Cierre y validación — 2026-11-15
+
+- Commit de reubicación: `a878415f2ea0f1d0c3116e09e9a872292d0bb57e`.
+- Commit de corrección de dos referencias Node.js restantes (`TutorialIntegrity.js` y `TermsAcceptance.js`): `34ae0fb64e28ec88da7da406b81e732842207158`.
+- GitHub Actions `43664165206`: **SUCCESS**; Node.js 22; comprobación sintáctica PASS; **99 suites / 1,497 pruebas / 0 fallos**.
+- GitHub Pages `43664164792`: **SUCCESS** para el mismo HEAD.
+- Verificación del árbol: diez fuentes en `JS/Services/`, ninguna fuente `.js` permanece en `Services/`; todos los JavaScript/MJS activos están bajo `JS/`, salvo `service-worker.js` en raíz por alcance PWA. Los HTML activos son `index.html`, `HTML/add_cortes.html` y `HTML/users.html`; no hay imágenes activas fuera de `Images/`.
+- La carpeta `Services/` conserva documentación/auxiliares no JavaScript. No se alteraron fuentes Apps Script, lógica, contratos, endpoints, deployments, ScriptProperties, Spreadsheet, Drive ni datos productivos.
+- El historial de `checkpoint.md` se rotó sin pérdida en `Checkpoint_Archive/`; la reconstrucción exacta del contenido previo a la nueva entrada fue comprobada antes de publicar.
+- **Estado final:** COMPLETADO CON VALIDACIÓN DIFERIDA A BETA. Queda pendiente la copia manual/verificación de los fuentes en proyectos Apps Script aislados y la validación de hosting/PWA en navegador real; no se bloquea el cierre local ni se atribuye despliegue externo.

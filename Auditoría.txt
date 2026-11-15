@@ -634,3 +634,11 @@ Estado: CORREGIDO EN RAMA.
 - **Severidad:** baja (consistencia/mantenibilidad; no se observó cambio de comportamiento productivo).
 - **Corrección preparada:** trasladar las diez fuentes a `JS/Services/` sin alterar su contenido y actualizar las referencias activas identificadas. `service-worker.js` se mantiene en raíz y `Services/` conserva documentos/auxiliares no-JS.
 - **Cierre:** pendiente de publicación y aprobación de CI en el commit de esta iteración.
+
+
+[2026-11-15] Cierre del hallazgo de rutas de servicios JavaScript
+
+- **Corrección publicada:** commit `a878415f2ea0f1d0c3116e09e9a872292d0bb57e` y corrección de referencias residuales `34ae0fb64e28ec88da7da406b81e732842207158`.
+- **Evidencia:** diez fuentes ahora están en `JS/Services/`; no quedan archivos `.js` en `Services/`. Se actualizaron el runner, las suites Node.js, workflow y documentación activa.
+- **Validación:** GitHub Actions run `43664165206` SUCCESS; 99 suites / 1,497 pruebas / 0 fallos; sintaxis PASS. GitHub Pages run `43664164792` SUCCESS.
+- **Estado:** HALLAZGO CERRADO. Las validaciones de copia manual en Apps Script y de navegador/PWA real permanecen diferidas a Beta y no forman parte del cierre local.

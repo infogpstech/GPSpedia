@@ -293,3 +293,16 @@
 - `service-worker.js` permanece en raíz por alcance PWA. `Services/` conserva documentación/auxiliares no-JS. No se cambian lógica, contratos, endpoints, deployments ni datos.
 - El cierre depende de GitHub Actions y de comprobar que no queden referencias activas a rutas anteriores.
 - Rama base protegida: `GPSpedia2.2.5`; no se realizaron cambios en ella.
+
+
+## Cierre — centralización de servicios JavaScript (2026-11-15)
+
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
+
+- Commit de reubicación: `a878415f2ea0f1d0c3116e09e9a872292d0bb57e`; commit de corrección de rutas residuales en `TutorialIntegrity.js` y `TermsAcceptance.js`: `34ae0fb64e28ec88da7da406b81e732842207158`.
+- GitHub Actions run `43664165206`: SUCCESS; Node.js 22; sintaxis PASS; **99 suites / 1,497 pruebas / 0 fallos**.
+- GitHub Pages run `43664164792`: SUCCESS para el mismo HEAD.
+- Árbol verificado: diez fuentes en `JS/Services/`, cero fuentes JavaScript en `Services/`; todos los JS/MJS activos bajo `JS/`, excepto `service-worker.js` en raíz. `Services/` conserva documentos/auxiliares no-JS; HTML e imágenes activas están centralizados en `HTML/` e `Images/`.
+- La rotación del checkpoint conserva el historial previo en `Checkpoint_Archive/checkpoint_legacy_parte_001.md`, con manifiesto y reconstrucción exacta comprobada.
+- No se cambiaron lógica de negocio, contratos, endpoints, deployments, ScriptProperties, Spreadsheet, Drive ni datos productivos.
+- Pendiente de Beta: copiar/verificar manualmente las fuentes en proyectos Apps Script aislados y validar ciclo PWA/Service Worker en navegadores/dispositivos reales. Estas pruebas no se simularon.
