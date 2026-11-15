@@ -96,7 +96,7 @@ testCase("El contexto central de sesión se registra al login, se revoca y se re
  assert.match(auth,/revokeSharedSessionContext_\(/);
  assert.match(auth,/validateSharedSessionContext_\(userId, sessionToken\)/);
  assert.match(auth,/const sessionOptions = payload\.sessionToken && action !== "logout"/);
- assert.match(auth,/syncAuthSheetActivityFromActor_\(actor\.userId, payload\.sessionToken, actor\)/);
+ assert.match(auth,/syncAuthSheetActivityFromActor_\(userId, sessionToken, sharedContext\.actor\)/);
  assert.match(coordinator,/function registerSession_\(/);
  assert.match(coordinator,/function syncUserSessions_\(/);
  assert.match(client,/function syncSharedUserSessionContexts_\(/);

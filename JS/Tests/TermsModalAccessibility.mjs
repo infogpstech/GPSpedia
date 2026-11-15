@@ -129,9 +129,8 @@ test('AUTH registra la aceptación por dispositivo sin escribir la columna de ac
     assert.match(handler, /payload && payload\.deviceId/);
     assert.match(handler, /COLS_USERS\.TermsAcceptance/);
     assert.doesNotMatch(handler, /sessionCell\.setValue|ensureSessionTermsAcceptanceColumn_/);
-    assert.match(handler, /findSessionRowsByTokenUnderLock_/);
-    assert.match(handler, /getSessionExpirationStatus_/);
-    assert.match(handler, /hasPendingRoleRevocation_\(userId, usersSheet\)/);
+    assert.match(handler, /requireSharedAuthActor_\(/);
+    assert.doesNotMatch(handler, /findSessionRowsByTokenUnderLock_|getSessionExpirationStatus_|hasPendingRoleRevocation_/);
     const dispatchStart = serviceAuth.indexOf('function doPostInternal_(e) {');
     const dispatchEnd = serviceAuth.indexOf('\nfunction ', dispatchStart + 10);
     const dispatcher = serviceAuth.slice(dispatchStart, dispatchEnd);

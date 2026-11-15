@@ -6,7 +6,7 @@
 // ============================================================================
 // CONFIGURACIÓN GLOBAL
 // ============================================================================
-const SPREADSHEET_ID = "__ISOLATED_TEST_SPREADSHEET__";
+const SPREADSHEET_ID = "1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3fteXYt3Os";
 let spreadsheet = null;
 
 function getSpreadsheet() {
@@ -234,7 +234,7 @@ function doPost(e) {
     if (!request || typeof request !== "object") return doPostInternal_(e);
     const action = String(request.action || "");
     const payload = request.payload && typeof request.payload === "object" ? request.payload : {};
-    const sessionOptions = { session: { userId: payload.userId, sessionToken: payload.sessionToken } };
+    const sessionOptions = { session: { sessionToken: payload.sessionToken } };
     if (!isSharedMutationAction_(action)) {
         if (action !== "getUsers") return doPostInternal_(withSharedSessionActor_(e, null));
         try {
