@@ -4,7 +4,7 @@ Fecha de registro: 2026-11-15
 Repositorio: `infogpstech/GPSpedia`  
 Rama de trabajo: `GPSpedia2.2.5_work`  
 Rama base protegida: `GPSpedia2.2.5`  
-HEAD de código validado: `498fef7717fe13b405cdfdffd018c2d0fa8ff988`  
+HEAD de código validado: `664f9f745f5d2a742ee88e368347f125c3f8db9d`  
 HEAD de la rama base verificado: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`
 
 Este documento registra los requisitos nuevos y el orden de ejecución. La fuente normativa sigue siendo `NORMAS_DESAROLLO.md`; los registros archivados en `Olds/Documentacion_Legacy/` y `Olds/GPSpedia 2.2/` no se modifican.
@@ -1066,15 +1066,23 @@ El trabajo local GP-INBOX-04B/04C/04D queda cubierto en backend y contratos. No 
 
 | ID | Problema / resultado requerido | Estado |
 |---|---|---|
-| GP-BETA-01 | Inbox: mostrar conversaciones y mensajes; conservar contenido al refrescar y acelerar lectura del detalle | EN PROGRESO — investigar error FEEDBACK/Coordinator y completar caché temporal de mensajes |
-| GP-BETA-02 | Modal de detalle de corte: abrir y permitir editar con baja latencia, sin viajes/validaciones redundantes | PENDIENTE DE ANÁLISIS DE TRAZA Y OPTIMIZACIÓN |
+| GP-BETA-01 | Inbox: mostrar conversaciones y mensajes; conservar contenido al refrescar y acelerar lectura del detalle | CORRECCIÓN LOCAL DE CONSERVACIÓN/CACHÉ IMPLEMENTADA; FEEDBACK/COORDINATOR BETA PENDIENTE |
+| GP-BETA-02 | Modal de detalle de corte: abrir y permitir editar con baja latencia, sin viajes/validaciones redundantes | OPTIMIZACIÓN LOCAL IMPLEMENTADA; VALIDACIÓN DE LATENCIA BETA PENDIENTE |
 | GP-BETA-03 | Borrar logs conforme al rol autorizado | PENDIENTE — revisar política FEEDBACK/AUTH, interfaz y errores del servicio |
 | GP-BETA-04 | Ejecutar auditoría de carpeta Cortes conforme al rol autorizado | PENDIENTE — separar permiso de auditoría de permisos destructivos; mantener límites de árbol Drive |
 | GP-BETA-05 | Consultar imágenes históricas conforme al rol autorizado; mutaciones destructivas siguen restringidas | PENDIENTE — separar lectura de inventario/histórico y acciones de administración |
-| GP-BETA-06 | Eliminar revalidaciones interactivas/redundantes por acción; sesión y rol confiables asociados a la sesión vigente | EN PROGRESO — revisar todos los servicios/handlers; no confiar en rol cliente ni quitar revocación/expiración |
-| GP-BETA-07 | Catálogo cache-first: render inmediato, sin parpadeos/avisos si caché válida; delta silencioso; snapshot solo en caché vacía/reset | EN PROGRESO — corrección de estado visual y pruebas; investigar timeout IndexedDB Beta |
+| GP-BETA-06 | Eliminar revalidaciones interactivas/redundantes por acción; sesión y rol confiables asociados a la sesión vigente | REVISIÓN PARCIAL — actor central reutilizado; definir alcance de invalidación/epoch sin bypass y revisar servicios restantes |
+| GP-BETA-07 | Catálogo cache-first: render inmediato, sin parpadeos/avisos si caché válida; delta silencioso; snapshot solo en caché vacía/reset | CORRECCIÓN LOCAL VALIDADA EN CI; TIMEOUT INDEXEDDB Y PRUEBA DE CAMPO BETA PENDIENTES |
 | GP-BETA-08 | IndexedDB: determinar por qué falla apertura en Beta y evitar que historial/vistos/miniaturas bloqueen otras funciones | EN PROGRESO — CI previo PASS; causa de navegador Beta pendiente |
 | GP-BETA-09 | FEEDBACK/Coordinator: resolver rechazo de autenticación que bloquea Inbox y feed incremental | PENDIENTE DE CONFIGURACIÓN BETA — cotejar deployment y ScriptProperties sin revelar secretos |
+
+### Avance de implementación (2026-11-15)
+- `auth.js`: el estado visual `loading` se difiere hasta comprobar que no existe snapshot válido. Si la caché está disponible, el catálogo pasa a `ready` sin parpadeo y continúa la sincronización delta silenciosa. Si la lectura inicial agota el timeout, no se repite de inmediato otra apertura IndexedDB sobre la misma promesa pendiente.
+- `ui.js`: Inbox conserva lista y mensajes visibles mientras refresca. El hilo reciente se cachea en memoria por conversación, aislado por usuario/sesión, con TTL de 60 segundos y límite de 40 conversaciones; se limpia al cambiar de sesión.
+- `ui.js`: el modal inicia la lectura de operaciones de imagen IndexedDB en segundo plano; el usuario puede editar campos de texto sin esperar a ese almacén opcional. Los reemplazos de imagen siguen bloqueados hasta confirmar el estado local.
+- `ui.js` / `admin.js`: las opciones de edición se precargan al abrir el detalle y se comparte una sola solicitud. `getDropdownData` admite la misma matriz de roles que la edición modal (Desarrollador/Jefe/Supervisor); las mutaciones mantienen sus controles actuales.
+- CI Node.js 22 run `43768407672`, HEAD `664f9f745f5d2a742ee88e368347f125c3f8db9d`: **SUCCESS; 103 suites / 1,610 pruebas / 0 fallos**. VehicleModalRolePolicy 12/12; CatalogStartupIntegrity 20/20; InboxUi 24/24.
+- No se desplegaron Apps Script ni se cambiaron ScriptProperties, hojas, Drive o datos productivos.
 
 ### Orden de ejecución
 1. Corregir la UX de arranque cache-first y la conservación del catálogo; validar pruebas de regresión.

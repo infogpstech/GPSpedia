@@ -835,3 +835,16 @@ Fuente: observaciones del usuario durante pruebas reales en navegador Beta y tra
 - Coordinator: rechazo FEEDBACK es dependencia de configuración remota, no debe “corregirse” quitando autenticación compartida.
 
 ================================================================================
+
+
+================================================================================
+2026-11-15 — ADENDA DE IMPLEMENTACIÓN GP-BETA-01/02/06/07/08
+- auth.js: el estado loading ya no se activa antes de comprobar la caché. Si existe snapshot completo, el catálogo se marca ready y continúa el delta silencioso. Si el primer intento de lectura vence por el timeout local, no se encadena otra apertura IndexedDB inmediata sobre la misma promesa.
+- ui.js: la lista Inbox no se reemplaza por un placeholder durante refresh. Los mensajes recientes se conservan en una caché de memoria por conversación, aislada por sesión, TTL 60 s y máximo 40 conversaciones; se limpia al cambiar de sesión. La lectura remota sigue ejecutándose para refrescar.
+- ui.js: la activación de edición ya no espera a consultar las ocho claves de operaciones pendientes de imagen en IndexedDB. La lectura continúa en segundo plano; el guard de convertImageToEditable mantiene bloqueado el reemplazo hasta confirmar todas las claves.
+- ui.js: dropdownOptions se precarga al abrir el modal y las llamadas concurrentes comparten una promesa.
+- admin.js: getDropdownData pasa a ADMIN_MODAL_EDIT_ACTIONS, por lo que Desarrollador/Jefe/Supervisor pueden consultar opciones de edición. No concede permisos adicionales de escritura.
+- CI run 43768407672: SUCCESS; 103 suites / 1,610 pruebas / 0 fallos. CatalogStartupIntegrity 20/20, InboxUi 24/24, VehicleModalRolePolicy 12/12.
+- La primera ejecución posterior a mover el estado loading falló solo porque SessionStartupNavigation esperaba el código anterior; se actualizó la expectativa para exigir que el estado loading se establezca después de consultar la caché. La siguiente ejecución integral aprobó.
+- Pendientes no resueltos: causa raíz del timeout IndexedDB en navegador Beta; autenticación FEEDBACK/Coordinator; permisos efectivos para borrado de logs, auditoría Drive e imágenes históricas según el rol concreto utilizado en Beta. No se cambió la matriz destructiva sin confirmar el rol requerido.
+================================================================================

@@ -717,3 +717,19 @@ No quedan tareas locales independientes de Inbox dentro del alcance autorizado. 
 - El rechazo FEEDBACK/Coordinator ya aparece en consola Beta. No se puede corregir en código local si la URL/secreto de ScriptProperties del deployment están desalineados; no se modifica configuración remota ni se debilita la autenticación.
 - Siguiente acción inmediata: corregir el estado visual del catálogo para no marcar loading hasta confirmar caché ausente; mantener Inbox visible durante refresh y añadir pruebas de regresión. Después optimizar el detalle/modal y separar permisos de lectura de acciones destructivas.
 - No se desplegaron Apps Script, no se modificaron ScriptProperties, Spreadsheet, Drive ni datos productivos.
+
+
+---
+
+# Continuidad — primera corrección funcional de GP-BETA-01/02/07 (2026-11-15)
+
+- Rama: `GPSpedia2.2.5_work`; HEAD de implementación: `664f9f745f5d2a742ee88e368347f125c3f8db9d`. Rama base `GPSpedia2.2.5` verificada intacta en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- Normativa: sección 13 añadida a `NORMAS_DESAROLLO.md` para cache-first, sincronización silenciosa, Inbox sin parpadeos, edición ágil y sesión/rol sin revalidaciones redundantes.
+- Requisitos y tareas GP-BETA-01..09 registrados en `Tareas_Activas.md`; evidencia en `Auditoría.txt` y cambios en `ChangesLogs.txt`.
+- Catálogo: el estado loading se difiere hasta comprobar ausencia de snapshot válido; caché válida pasa a ready antes del delta. Si la lectura local vence por Timeout local, no se repite inmediatamente la misma apertura IndexedDB.
+- Inbox: lista/mensajes no se reemplazan por placeholders durante refresh. Se añade caché temporal de mensajes por conversación, aislada por la sesión completa, TTL 60 s y máximo 40 conversaciones.
+- Modal: consulta de operaciones de imagen IndexedDB en segundo plano; los campos de texto pueden editarse sin esperar al almacén opcional. Los reemplazos de imagen siguen cerrados hasta confirmar estado. Dropdowns se precargan al abrir el detalle y usan promesa compartida.
+- RBAC modal: `getDropdownData` ahora admite Desarrollador/Jefe/Supervisor como lectura necesaria para la edición; no se alteran permisos destructivos.
+- CI Node.js 22 run `43768407672`: **SUCCESS; 103 suites / 1,610 pruebas / 0 fallos**. GitHub Pages run `43768406704` estaba en ejecución al redactar esta actualización.
+- Aún no corregido: configuración FEEDBACK/Coordinator en deployment Beta; raíz del timeout IndexedDB; permisos de borrado de logs/auditoría Drive/lectura histórica según el rol concreto. No se debilitó autorización ni se modificaron deployments/ScriptProperties/datos productivos.
+- Siguiente: confirmar el rol usado en Beta para ajustar únicamente las capacidades que deban estar disponibles; continuar con traza de modal/Drive, errores FEEDBACK y diagnóstico de IndexedDB. No habilitar acciones destructivas a roles no autorizados por inferencia.

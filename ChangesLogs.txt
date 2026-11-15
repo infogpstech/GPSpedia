@@ -591,3 +591,16 @@
 - Auditoría.txt registra las observaciones de campo y distingue los síntomas confirmados de las causas aún pendientes de comprobar.
 - Esta adenda es documental; no modifica código de servicios ni configuración/deployments.
 ================================================================================
+
+
+================================================================================
+2026-11-15 — GP-BETA: DISPONIBILIDAD CACHE-FIRST, INBOX Y MODAL
+- JS/Frontend/auth.js: difiere catalogLoadStatus=loading hasta comprobar que no existe snapshot local válido; evita repetir inmediatamente una apertura IndexedDB tras Timeout local.
+- JS/Frontend/ui.js: conserva conversaciones/mensajes durante refresco y añade caché temporal de mensajes aislada por sesión (TTL 60 s, máximo 40 conversaciones).
+- JS/Frontend/ui.js: inicia en segundo plano la lectura de operaciones de imagen pendientes; la edición de campos no espera IndexedDB. Los reemplazos de imagen continúan bloqueados hasta verificar el estado local.
+- JS/Frontend/ui.js: precarga dropdowns al abrir el detalle y comparte una promesa para evitar solicitudes duplicadas.
+- JS/Services/admin.js: getDropdownData se incorpora a la política de lectura/edición modal para Desarrollador, Jefe y Supervisor; no amplía las acciones de escritura.
+- Pruebas: CatalogStartupIntegrity, InboxUi, VehicleModalRolePolicy y ActionDispatchContract actualizadas.
+- CI Node.js 22 run 43768407672: SUCCESS; 103 suites / 1,610 pruebas / 0 fallos.
+- No se desplegaron Apps Script ni se alteraron ScriptProperties, Spreadsheet, Drive o datos productivos.
+================================================================================
