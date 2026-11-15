@@ -190,6 +190,7 @@ function withSharedSessionActor_(event, actor) {
     const payload = request.payload && typeof request.payload === "object" && !Array.isArray(request.payload)
         ? Object.assign({}, request.payload) : {};
     delete payload.__sharedSessionActor;
+    delete payload.__feedbackActor;
     if (actor && typeof actor === "object" &&
         typeof actor.userId === "string" && typeof actor.role === "string" &&
         Number.isSafeInteger(actor.epoch) && actor.epoch > 0) {
