@@ -2015,3 +2015,15 @@ CRITERIOS DE CIERRE
 - Si una prueba falla por versiones o secretos de Coordinator incompatibles, documentar el entorno y detenerse; no debilitar RBAC ni modificar producción.
 - No ejecutar despliegues adicionales ni migraciones productivas sin autorización expresa.
 ================================================================================
+
+## P2 — Protocolo Beta: IDs de fórmula a generación backend
+
+1. Usar una copia aislada de Spreadsheet, nunca la base productiva. Verificar backup completo y que el enlace corresponda a la copia autorizada.
+2. En el modal Desarrollador, ejecutar auditoría global de columnas ID y guardar el resultado de cada hoja: encabezado, columna, fila, ID calculado, fórmula original, duplicados, vacíos y patrones no reconocidos.
+3. Ejecutar dry-run. Confirmar que solo aparecen como elegibles las fórmulas de secuencia compatibles; los patrones no reconocidos, IDs duplicados, resultados vacíos y filas sin datos deben quedar excluidos.
+4. Revisar referencias cruzadas y escritores de cada hoja. Confirmar que el backend asigna el ID con el mismo prefijo y relleno que la fórmula histórica antes de congelarla.
+5. Ejecutar un lote pequeño, verificar valor/tipo de ID y ausencia de fórmula, interrumpir y reanudar con el mismo migrationId/digest. Verificar snapshots, manifiesto, contador backend y unicidad.
+6. Probar altas nuevas desde cada flujo que escribía IDs mediante copia de fórmula. Confirmar que el ID nuevo se asigna desde backend y que no se copian fórmulas.
+7. Ensayar rollback solo si las huellas coinciden y dentro de la copia Beta. Documentar cualquier conflicto antes de continuar.
+8. Relay permanece excluido hasta confirmar su formato y un escritor backend real. No inventar IDs ni alterar referencias de producción.
+
