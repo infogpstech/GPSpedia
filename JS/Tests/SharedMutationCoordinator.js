@@ -133,27 +133,30 @@ function runSharedMutationCoordinatorTests() {
         release_(r, "ADMIN", "restoreDrive", admin.token);
     });
 
-    test_("FEEDBACK actualiza actividad y serializa escrituras con lecturas de identidad", function() {
+    test_("FEEDBACK y WRITE comparten solo lectura de contexto y permiten operaciones independientes", function() {
         const r = createRuntime_();
         const feedback = acquire_(r, "FEEDBACK", "reportProblem");
-        assert_(feedback.status === "success", "FEEDBACK debía obtener lease.");
         const write = acquire_(r, "WRITE", "addOrUpdateCut");
-        assert_(write.status === "error" && write.code === "busy",
-            "WRITE debe esperar mientras FEEDBACK actualiza LastActivityAt y WRITE lee ActiveSessions.");
+        assert_(feedback.status === "success" && write.status === "success",
+            "Las operaciones con contexto de sesión en lectura y recursos de negocio distintos deben coexistir.");
         release_(r, "FEEDBACK", "reportProblem", feedback.token);
-        const retry = acquire_(r, "WRITE", "addOrUpdateCut");
-        assert_(retry.status === "success", "WRITE debe continuar tras liberar la actualización de actividad.");
-        release_(r, "WRITE", "addOrUpdateCut", retry.token);
+        release_(r, "WRITE", "addOrUpdateCut", write.token);
     });
 
-    test_("validateSession es de solo lectura; touchSession sigue serializando cambios de identidad", function() {
+    test_("validateSession usa contexto central y touchSession no bloquea lecturas de perfil", function() {
         const r = createRuntime_();
         expectThrow_(() => coordinatorPolicy_("AUTH", "validateSession"), "no está habilitada");
         const touch = acquire_(r, "AUTH", "touchSession");
-        assert_(touch.status === "success", "touchSession debe adquirir lease para actualizar ActiveSessions.");
+        assert_(touch.status === "success", "touchSession debe adquirir lease para sincronizar actividad.");
         const profile = acquire_(r, "USERS", "updateProfile");
-        assert_(profile.status === "error" && profile.code === "busy", "USERS debe esperar mientras AUTH actualiza ActiveSessions.");
+        assert_(profile.status === "success", "El toque de actividad no debe bloquear operaciones que solo leen SESSION_CONTEXTS.");
+        const logout = acquire_(r, "AUTH", "logout");
+        assert_(logout.status === "error" && logout.code === "busy", "Logout debe esperar mientras una operación autenticada conserva el contexto.");
+        release_(r, "USERS", "updateProfile", profile.token);
         release_(r, "AUTH", "touchSession", touch.token);
+        const retry = acquire_(r, "AUTH", "logout");
+        assert_(retry.status === "success", "Logout debe continuar tras finalizar las operaciones protegidas.");
+        release_(r, "AUTH", "logout", retry.token);
     });
 
     test_("AUTH acceptTerms puede convivir con ADMIN sessionActivity sin liberar la protección de login", function() {
@@ -161,10 +164,10 @@ function runSharedMutationCoordinatorTests() {
         const adminActivity = acquire_(r, "ADMIN", "sessionActivity");
         assert_(adminActivity.status === "success", "ADMIN/sessionActivity debía obtener su lease compartida.");
         const terms = coordinatorPolicy_("AUTH", "acceptTerms");
-        assert_(terms.readResources.includes("ACTIVE_SESSIONS"), "acceptTerms debe validar la sesión existente.");
+        assert_(terms.readResources.includes("SESSION_CONTEXTS"), "acceptTerms debe leer el contexto central de sesión.");
         assert_(terms.writeResources.includes("USERS"), "acceptTerms debe persistir el registro por usuario.");
-        assert_(!terms.writeResources.includes("ACTIVE_SESSIONS"), "acceptTerms no debe modificar ActiveSessions.");
-        assert_(terms.sharedWriteResources.includes("ACTIVE_SESSIONS"), "La lectura de sesión debe poder convivir con el toque de actividad.");
+        assert_(terms.writeResources.includes("ACTIVE_SESSIONS"), "La sincronización ocasional de actividad debe reservar ActiveSessions.");
+        assert_(!terms.writeResources.includes("SESSION_CONTEXTS"), "acceptTerms no debe revocar el contexto compartido.");
 
         const acceptance = acquire_(r, "AUTH", "acceptTerms");
         assert_(acceptance.status === "success", "Aceptar términos no debe quedar bloqueado por ADMIN/sessionActivity.");
@@ -272,12 +275,10 @@ function runSharedMutationCoordinatorTests() {
         assert_(!stored.some(lease => lease.maintenance && lease.operation === "migrateCortesOperationIds"),
             "La reserva de mantenimiento debe retirarse cuando la migración no logra drenar.");
         const serialized = acquire_(r, "FEEDBACK", "reportProblem");
-        assert_(serialized.status === "error" && serialized.code === "busy",
-            "FEEDBACK debe esperar mientras WRITE mantiene lectura de ActiveSessions.");
+        assert_(serialized.status === "success",
+            "FEEDBACK puede coexistir con WRITE cuando ambos solo leen SESSION_CONTEXTS y escriben recursos distintos.");
+        release_(r, "FEEDBACK", "reportProblem", serialized.token);
         release_(r, "WRITE", "addOrUpdateCut", write.token);
-        const independent = acquire_(r, "FEEDBACK", "reportProblem");
-        assert_(independent.status === "success", "FEEDBACK debe continuar tras liberar la lectura de identidad.");
-        release_(r, "FEEDBACK", "reportProblem", independent.token);
     });
 
     test_("Una reserva de drenaje abandonada se recupera a los 60 segundos", function() {
@@ -536,8 +537,8 @@ function runSharedMutationCoordinatorTests() {
 
     test_("FEEDBACK touch de actividad serializa sesiones con logout y revocaciones AUTH", function() {
         const policy = coordinatorPolicy_("FEEDBACK", "sessionActivity");
-        assert_(policy.writeResources.length === 1 && policy.writeResources[0] === "ACTIVE_SESSIONS",
-            "La lectura protegida debe reservar escritura exclusiva de ActiveSessions.");
+        assert_(policy.readResources.includes("SESSION_CONTEXTS") && policy.writeResources.length === 0,
+            "La lectura protegida debe usar el contexto central sin escribir ActiveSessions.");
         const r = createRuntime_();
         const activity = acquire_(r, "FEEDBACK", "sessionActivity");
         assert_(activity.status === "success", "La acción protegida debe adquirir lease de actividad.");
@@ -557,9 +558,9 @@ function runSharedMutationCoordinatorTests() {
         const r = createRuntime_();
         const policy = coordinatorPolicy_("AUTH", "acceptTerms");
         assert_(policy.writeResources.includes("USERS"), "acceptTerms debe reservar Users.");
-        assert_(!policy.writeResources.includes("ACTIVE_SESSIONS"), "acceptTerms no debe reservar una escritura exclusiva de ActiveSessions; valida la sesión en modo cooperativo.");
-        assert_(policy.readResources.includes("ACTIVE_SESSIONS"), "acceptTerms debe validar la sesión activa.");
-        assert_(policy.sharedWriteResources.includes("ACTIVE_SESSIONS"), "La lectura de sesión puede coexistir con sessionActivity.");
+        assert_(policy.writeResources.includes("ACTIVE_SESSIONS"), "acceptTerms debe sincronizar actividad de forma ocasional.");
+        assert_(policy.readResources.includes("SESSION_CONTEXTS"), "acceptTerms debe validar el contexto central.");
+        assert_(!policy.writeResources.includes("SESSION_CONTEXTS"), "acceptTerms no debe revocar sesiones.");
         const acceptance = acquire_(r, "AUTH", "acceptTerms");
         assert_(acceptance.status === "success", "acceptTerms debe obtener una lease autorizada.");
         const profile = acquire_(r, "USERS", "updateProfile");
@@ -586,9 +587,10 @@ function runSharedMutationCoordinatorTests() {
 
     test_("UTILITIES usa contexto central y conserva exclusión sobre identidad, Cortes y Drive", function() {
         const policy = coordinatorPolicy_("UTILITIES", "migrateTimestamps");
-        ["ACTIVE_SESSIONS", "CORTES", "DRIVE"].forEach(resource =>
+        ["SESSION_CONTEXTS", "CORTES", "DRIVE"].forEach(resource =>
             assert_(policy.readResources.includes(resource), "UTILITIES debe reservar lectura de " + resource + "."));
-        assert_(!policy.readResources.includes("USERS"), "El rol ya procede del contexto central y no requiere reservar Users.");
+        assert_(!policy.readResources.includes("ACTIVE_SESSIONS") && !policy.readResources.includes("USERS"),
+            "La identidad ya procede del contexto central y no requiere reservar hojas de sesión o perfil.");
         assert_(policy.writeResources.includes("UTILITIES") && !policy.writeResources.includes("ACTIVE_SESSIONS"),
             "La migración debe reservar su recurso lógico sin escribir LastActivityAt en cada operación.");
         const r = createRuntime_();
@@ -617,8 +619,9 @@ function runSharedMutationCoordinatorTests() {
     test_("ADMIN permite consultas concurrentes con actualización cooperativa de actividad", function() {
         const r = createRuntime_();
         const policy = coordinatorPolicy_("ADMIN", "sessionActivity");
-        assert_(policy.sharedWriteResources.includes("ACTIVE_SESSIONS"), "ADMIN debe declarar LastActivityAt como escritura cooperativa.");
-        assert_(!policy.writeResources.includes("ACTIVE_SESSIONS"), "La actividad cooperativa no debe declararse como escritura exclusiva.");
+        assert_(policy.readResources.includes("SESSION_CONTEXTS"), "ADMIN debe leer el contexto central de sesión.");
+        assert_(!policy.writeResources.includes("ACTIVE_SESSIONS") && !policy.sharedWriteResources.includes("ACTIVE_SESSIONS"),
+            "ADMIN no debe escribir LastActivityAt en cada acción.");
         const first = acquire_(r, "ADMIN", "sessionActivity");
         const second = acquire_(r, "ADMIN", "sessionActivity");
         assert_(first.status === "success" && second.status === "success",
@@ -637,8 +640,8 @@ function runSharedMutationCoordinatorTests() {
         const policy = coordinatorPolicy_("ADMIN", "migrateReplacedImagesSchema");
         assert_(policy.writeResources.length === 1 && policy.writeResources[0] === "IMAGE_INVENTORY",
             "La migración solo debe escribir el recurso lógico IMAGE_INVENTORY.");
-        assert_(policy.sharedWriteResources.includes("ACTIVE_SESSIONS"),
-            "La migración debe conservar la actualización protegida de actividad.");
+        assert_(policy.readResources.includes("SESSION_CONTEXTS"),
+            "La migración debe conservar la lectura del contexto central.");
         assert_(policy.maintenance === false, "La inicialización no debe reservar mantenimiento global.");
         const r = createRuntime_();
         const migration = acquire_(r, "ADMIN", "migrateReplacedImagesSchema");
