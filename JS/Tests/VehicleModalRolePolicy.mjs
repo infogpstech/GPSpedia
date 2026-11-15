@@ -50,7 +50,7 @@ check("El backend acepta Supervisor, Jefe y Desarrollador y rechaza otros roles"
  };
  let globalRole="Supervisor";
  const helpersStart=admin.indexOf("function findUniqueRowsByExactValue_(");
- const helpersEnd=admin.indexOf("function getAdminSessionContext_(",helpersStart);
+ const helpersEnd=admin.indexOf("const ROLE_REVOCATION_SHARED_PREFIX",helpersStart);
  assert.ok(helpersStart>=0&&helpersEnd>helpersStart);
  const sessionHelpers=admin.slice(helpersStart,helpersEnd);
  const api=new Function("getSpreadsheet","getSessionExpirationStatus_","ROLE_REVOCATION_SHARED_PREFIX",
