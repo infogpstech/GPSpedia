@@ -654,10 +654,23 @@ function doPostInternal_(e) {
                 console.error("La sugerencia de año se procesó, pero no se pudo publicar su cambio incremental:",
                     catalogPublishError && catalogPublishError.message ? catalogPublishError.message : catalogPublishError);
             }
+        } else if ((action === "approveVideo" || action === "rejectVideo") && response && response.status === "success") {
+            try {
+                const targetType = String(response.targetType || "").trim();
+                const contentType = String(response.contentType || "").trim();
+                const referenceId = String(response.referenceId || "").trim();
+                if (!referenceId || targetType !== contentType) throw new Error("El destino del vídeo no se pudo verificar.");
+                if (targetType === "corte") publishFeedbackCortesCatalogChange_(action, referenceId);
+                else if (targetType === "pys") publishPysCatalogChange_(action, referenceId);
+                else if (targetType === "tutorial") publishTutorialCatalogChange_(action, referenceId);
+                else throw new Error("El tipo de destino del vídeo no está soportado por el feed.");
+            } catch (catalogPublishError) {
+                try { publishSharedCatalogChange_("FEEDBACK", action, { operation: "reset" }); }
+                catch (resetError) { console.error("No se pudo publicar el cambio de vídeo ni su reset de recuperación:", resetError); }
+            }
         } else if (response && response.status === "success" &&
             ["addProblem", "addSolution", "addPrevention", "addVehicleToProblem",
-             "removeVehicleFromProblem", "updatePysItem", "updateTutorialItem", "addTutorial",
-             "approveVideo", "rejectVideo"].includes(action)) {
+             "removeVehicleFromProblem", "updatePysItem", "updateTutorialItem", "addTutorial"].includes(action)) {
             // PyS y Tutoriales publican snapshots individuales después de verificar la fila persistida.
             try {
                 if (["addProblem", "addSolution", "addPrevention", "addVehicleToProblem",
@@ -3404,7 +3417,9 @@ function handleApproveVideoUnlocked_(payload) {
             alreadyApproved: true,
             message: "La solicitud ya estaba aprobada; se verificó o completó la publicación en el destino.",
             videoUrl: videoData.videoUrl,
-            targetType: targetResult.targetType
+            targetType: targetResult.targetType,
+            contentType: videoData.contentType,
+            referenceId: videoData.referenceId
         };
     }
 
@@ -3450,7 +3465,9 @@ function handleApproveVideoUnlocked_(payload) {
         status: "success",
         message: "Vídeo aprobado y publicado en GPSpedia.",
         videoUrl: savedPayload.videoUrl,
-        targetType: targetResult.targetType
+        targetType: targetResult.targetType,
+        contentType: savedPayload.contentType,
+        referenceId: savedPayload.referenceId
     };
 }
 
@@ -3488,7 +3505,7 @@ function handleRejectVideoUnlocked_(payload) {
         saved[COLS_FEEDBACKS["Se resolvio"] - 1] !== true) {
         throw new Error("El enlace pendiente se retiró del destino, pero no se pudo confirmar el rechazo. Reintenta la misma solicitud.");
     }
-    return { status: "success", message: "Vídeo rechazado.", statusState: "rejected", targetType: targetResult.targetType };
+    return { status: "success", message: "Vídeo rechazado.", statusState: "rejected", targetType: targetResult.targetType, contentType: videoData.contentType, referenceId: videoData.referenceId };
 }
 
 /**

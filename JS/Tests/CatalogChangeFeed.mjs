@@ -122,6 +122,17 @@ test("WRITE publica upsert exacto de Cortes tras releer fila y conserva reset pa
     assert.ok(writeSource.includes('publishSharedCatalogChange_("WRITE", action, { operation: "reset" })'));
     assert.ok(writeSource.includes("getScriptLock()") && writeSource.includes("waitLock(15000)"));
 });
+test("approveVideo/rejectVideo publican upsert del destino único y conservan reset si no se verifica", () => {
+    assert.ok(feedbackSource.includes("contentType: videoData.contentType"));
+    assert.ok(feedbackSource.includes("referenceId: videoData.referenceId"));
+    assert.ok(feedbackSource.includes("contentType: savedPayload.contentType"));
+    assert.ok(feedbackSource.includes('targetType !== contentType'));
+    assert.ok(feedbackSource.includes('publishFeedbackCortesCatalogChange_(action, referenceId)'));
+    assert.ok(feedbackSource.includes('publishPysCatalogChange_(action, referenceId)'));
+    assert.ok(feedbackSource.includes('publishTutorialCatalogChange_(action, referenceId)'));
+    assert.ok(feedbackSource.includes('publishSharedCatalogChange_("FEEDBACK", action, { operation: "reset" })'));
+    assert.ok(!feedbackSource.includes('"addTutorial", "approveVideo", "rejectVideo"].includes(action)'));
+});
 test("suggestYear publica Cortes solo cuando se aplica o recupera una ampliación confirmada", () => {
     assert.ok(feedbackSource.includes('action === "suggestYear" && response &&'));
     assert.ok(feedbackSource.includes('(response.recovered === false || response.recovered === true)'));
@@ -148,4 +159,4 @@ test("WRITE y FEEDBACK publican deltas exactos y conservan reset para operacione
     assert.match(adminSource,/catalogWriters\.includes\(catalogAction\)[\s\S]*?publishSharedCatalogChange_\("ADMIN", catalogAction, \{ operation: "reset" \}\)/);
     assert.match(adminSource,/finalizeAdminAuditEvent_\(auditEvent[\s\S]*?publishSharedCatalogChange_/);
 });
-console.log("CatalogChangeFeed: " + passed + "/19 PASS");
+console.log("CatalogChangeFeed: " + passed + "/20 PASS");
