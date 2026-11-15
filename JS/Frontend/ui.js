@@ -8320,6 +8320,7 @@ export function renderInboxDetail(item) {
     const canApprove = canApproveInboxVideo_(userRole);
     const reportMetadata = item.type === 'problem_report' && item.reportMetadata ? item.reportMetadata : null;
     const suggestionData = item.type === 'problem_report' && item.suggestionData ? item.suggestionData : null;
+    const ticketCategoryLabels = { incidencia_tecnica: 'Incidencia técnica', instalacion: 'Instalación', acceso: 'Acceso', contenido: 'Contenido', otro: 'Otro' };
     const proposedValues = suggestionData && suggestionData.proposedValues ? suggestionData.proposedValues : {};
     const proposedTestigoLabel = proposedValues.activaTestigo === true
         ? 'Sí: el corte activa el testigo del motor.'
@@ -8372,8 +8373,10 @@ export function renderInboxDetail(item) {
 
     if (reportMetadata) {
         const panel = makePanel('0 0 12px 0');
+        appendLabeledValue(panel, 'Categoría', ticketCategoryLabels[reportMetadata.category] || 'Incidencia técnica');
         appendLabeledValue(panel, 'Identificador del reporte', reportMetadata.reportId || '');
         appendLabeledValue(panel, 'Corte reportado', '#' + String(Number(reportMetadata.corteIndex)), 'margin:0 0 4px 0;');
+        appendLabeledValue(panel, 'Estado del ticket', item.isResolved ? 'Resuelto' : 'Pendiente de atención', 'margin:0 0 4px 0;');
         appendLabeledValue(panel, 'Testigo del motor',
             reportMetadata.activaTestigoMotor === true
                 ? 'El técnico confirma que este corte activa el testigo del motor.'
