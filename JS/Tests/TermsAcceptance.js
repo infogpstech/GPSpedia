@@ -98,7 +98,7 @@ test('AUTH y su espejo guardan aceptación por dispositivo y validan la sesión 
     assert.doesNotMatch(handler, /sessionCell\.setValue|ensureSessionTermsAcceptanceColumn_/);
     assert.match(handler, /findSessionRowsByTokenUnderLock_/);
     assert.match(handler, /getSessionExpirationStatus_/);
-    assert.match(handler, /assertRequesterRoleRevocationClear_/);
+    assert.match(handler, /hasPendingRoleRevocation_\(userId, usersSheet\)/);
     const dispatchStart = authSource.indexOf('function doPostInternal_(e) {');
     const dispatchEnd = authSource.indexOf('\\nfunction ', dispatchStart + 10);
     const dispatcher = authSource.slice(dispatchStart, dispatchEnd);
