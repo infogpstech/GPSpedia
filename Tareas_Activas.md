@@ -942,3 +942,28 @@ Esta aclaración delimita el trabajo futuro y debe leerse junto con la fuente no
 - El texto anterior de esta tarea que indicaba unificar AUTH/USERS en una iteración futura queda supersedido por esta adenda. No ejecutar migraciones reales sin autorización.
 
 **Siguiente tarea local:** continuar GP-INBOX-04B solo con correcciones internas y pruebas que no requieran controles visibles nuevos. Las acciones masivas y cambios de interfaz de GP-INBOX-04B..04D siguen diferidos hasta autorización expresa. Las validaciones que requieran Spreadsheet/Coordinator/deployments reales quedan pendientes de Beta.
+
+
+## Adenda GP-INBOX-04B/04C — backend de no leídos, ocultación y tickets (2026-11-15)
+
+**Estado local: BACKEND IMPLEMENTADO Y VALIDADO; INTERFAZ Y BETA DIFERIDAS.**
+
+### GP-INBOX-04B — estado privado por participante
+- Añadidas las acciones autenticadas y coordinadas `markInboxUnread` y `deleteInboxConversation` en FEEDBACK, Coordinator y el mapa de servicios.
+- La hoja adicional `InboxConversationFlags` se crea de forma diferida solo al usar una de estas acciones. No se alteró el esquema existente de `InboxConversationState`.
+- Marcar no leído requiere al menos un mensaje recibido, es idempotente, se registra en auditoría y se elimina al confirmar lectura. Si la conversación estaba archivada, se desarchiva para que aparezca en la bandeja de no leídos.
+- Eliminar aplica ocultación individual: el participante deja de verla y no puede leerla, responderla, archivarla ni cerrarla; el otro participante conserva los mensajes y el historial. No se borran filas ni mensajes. La acción es idempotente y deja auditoría; se intenta revertir el cambio de estado si falla el registro de auditoría.
+- No se añadieron controles visibles, botones ni pestañas. La selección múltiple y la barra de acciones de 04B continúan diferidas.
+
+### GP-INBOX-04C — reporte de problema como ticket
+- El flujo existente `reportProblem` continúa siendo el canal de soporte; no se habilitó conversación directa ordinaria con Desarrollador.
+- Los reportes con identificador ahora almacenan categoría y asunto en `reportMetadata`. Categorías permitidas: `incidencia_tecnica`, `instalacion`, `acceso`, `contenido`, `otro`. Si la interfaz existente no envía categoría/asunto, se asigna `incidencia_tecnica` y se genera un asunto a partir del vehículo y corte. La descripción sigue siendo el texto del reporte.
+- El Inbox de soporte recibe categoría, asunto, descripción, respuesta y estado; el detalle existente muestra categoría y estado del ticket. El seguimiento/resolución continúa usando `replyToFeedback` y `markAsResolved`.
+- Añadida la acción autenticada `getMyProblemReports`: filtra por el ID del actor validado en la sesión (ignora el ID enviado por el cliente), pagina resultados y devuelve solo tickets propios con respuesta y estado. Queda lista para futura integración de interfaz; no se añadió pestaña, botón ni panel nuevo para usuarios.
+- Pruebas de categoría/asunto, idempotencia, paginación y aislamiento por propietario añadidas.
+
+**Validación:** GitHub Actions Node.js 22, run `43753335306`, HEAD `9e3a2c0c9dffc04a42c775e709f7bf1c14b02fd7`: **SUCCESS; 100 suites / 1,542 pruebas / 0 fallos**. `InboxConversations` 46/46; `node --check` de los módulos frontend aplicables aprobado.
+
+**Pendiente:** integración de la vista de tickets propios sin crear controles hasta autorización; selector visual de categoría/asunto; barra de acciones y selección múltiple 04B; pruebas de RBAC, navegación móvil y flujo de ticket con despliegues/Spreadsheet de Beta. No se desplegó Apps Script ni se creó `InboxConversationFlags` en ninguna hoja real.
+
+La siguiente revisión local debe centrarse en GP-INBOX-04D (contratos RBAC, accesibilidad y regresión de los flujos existentes), sin añadir controles visibles. Todas las pruebas que dependan de servicios desplegados siguen pendientes de Beta.
