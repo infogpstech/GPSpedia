@@ -133,7 +133,7 @@ test('AUTH registra la aceptación por dispositivo sin escribir la columna de ac
     assert.match(handler, /getSessionExpirationStatus_/);
     assert.match(handler, /hasPendingRoleRevocation_\(userId, usersSheet\)/);
     const dispatchStart = serviceAuth.indexOf('function doPostInternal_(e) {');
-    const dispatchEnd = serviceAuth.indexOf('\\nfunction ', dispatchStart + 10);
+    const dispatchEnd = serviceAuth.indexOf('\nfunction ', dispatchStart + 10);
     const dispatcher = serviceAuth.slice(dispatchStart, dispatchEnd);
     assert.doesNotMatch(dispatcher, /touchProtectedAuthRequestSession_|validateAndTouchSession_|validateSessionReadOnly_/);
     assert.match(coordinator, /acceptTerms: \{ read: \["ACTIVE_SESSIONS"\], write: \["USERS"\], sharedWrite: \["ACTIVE_SESSIONS"\] \}/);
