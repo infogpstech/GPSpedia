@@ -733,3 +733,17 @@ No quedan tareas locales independientes de Inbox dentro del alcance autorizado. 
 - CI Node.js 22 run `43768407672`: **SUCCESS; 103 suites / 1,610 pruebas / 0 fallos**. GitHub Pages run `43768406704` estaba en ejecución al redactar esta actualización.
 - Aún no corregido: configuración FEEDBACK/Coordinator en deployment Beta; raíz del timeout IndexedDB; permisos de borrado de logs/auditoría Drive/lectura histórica según el rol concreto. No se debilitó autorización ni se modificaron deployments/ScriptProperties/datos productivos.
 - Siguiente: confirmar el rol usado en Beta para ajustar únicamente las capacidades que deban estar disponibles; continuar con traza de modal/Drive, errores FEEDBACK y diagnóstico de IndexedDB. No habilitar acciones destructivas a roles no autorizados por inferencia.
+
+
+---
+
+# Continuidad — fallback CacheStorage y disponibilidad inmediata del catálogo (2026-11-15)
+
+- Rama `GPSpedia2.2.5_work`; HEAD de implementación y pruebas: `79bf376d6489068ee95314aec6bf9f02b20895ac`. Rama base `GPSpedia2.2.5` permanece en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- `offline.js`: respaldo independiente del snapshot público del catálogo y cursor en CacheStorage; no incluye sesión, tokens, historial, datos administrativos ni operaciones pendientes.
+- `auth.js`: lectura en paralelo de IndexedDB/CacheStorage; elige una instantánea completa válida y conserva cursor para deltas. Si IndexedDB no abre, la copia alternativa permite evitar snapshot completo del servidor cuando hay cursor válido.
+- La instantánea de red se procesa y presenta en memoria antes de persistir. El estado ready no espera IndexedDB; las dos persistencias se intentan en paralelo y fallan de forma independiente.
+- Regresión añadida para snapshot disponible antes de completar persistencia local. CI Node.js 22 run `43768956946`: **SUCCESS; 103 suites / 1,616 pruebas / 0 fallos**; CatalogStartupIntegrity 23/23, InboxUi 24/24, VehicleModalRolePolicy 12/12, IndexedDBTransactions 45/45.
+- El CI anterior para commit `cecc4d9` detectó un harness con await no resuelto y un test que evaluaba `import.meta` mediante `new Function`; ambos se corrigieron antes del CI aprobado. No se ocultan fallos intermedios.
+- GitHub Pages para este HEAD todavía estaba en cola al redactar esta adenda.
+- Pendientes Beta: causa raíz de IndexedDB; FEEDBACK/Coordinator (Inbox y feed); roles concretos para borrado de logs, auditoría Drive e imágenes históricas. No se modificó ningún deployment, ScriptProperties, Spreadsheet ni Drive.

@@ -848,3 +848,15 @@ Fuente: observaciones del usuario durante pruebas reales en navegador Beta y tra
 - La primera ejecución posterior a mover el estado loading falló solo porque SessionStartupNavigation esperaba el código anterior; se actualizó la expectativa para exigir que el estado loading se establezca después de consultar la caché. La siguiente ejecución integral aprobó.
 - Pendientes no resueltos: causa raíz del timeout IndexedDB en navegador Beta; autenticación FEEDBACK/Coordinator; permisos efectivos para borrado de logs, auditoría Drive e imágenes históricas según el rol concreto utilizado en Beta. No se cambió la matriz destructiva sin confirmar el rol requerido.
 ================================================================================
+
+
+================================================================================
+2026-11-15 — ADENDA: INDEXEDDB NO DISPONIBLE, RESPALDO LOCAL EN CACHESTORAGE
+- Hallazgo: el timeout de apertura IndexedDB podía impedir leer la caché y forzar una descarga completa del catálogo en cada arranque. La corrección previa no resolvía la disponibilidad de la caché cuando el almacén principal no abría.
+- Corrección: offline.js mantiene una segunda copia del snapshot público y cursor en CacheStorage, independiente de IndexedDB. auth.js consulta ambas fuentes y utiliza cualquier snapshot completo válido; el cursor permite seguir usando deltas.
+- La instantánea se presenta en memoria y el estado ready se establece antes de esperar las escrituras locales. IndexedDB y CacheStorage se actualizan en paralelo; un fallo de una no invalida el catálogo visible.
+- Alcance de la copia: solo catálogo público (Cortes, Tutoriales, Relay, Logos); no contiene tokens, identidad de sesión, historial, vistos, datos administrativos ni operaciones pendientes.
+- Regresión: fallback cuando IndexedDB falla, recuperación de cursor, persistencia alternativa y ready antes de completar escritura local.
+- CI Node.js 22 run 43768956946: SUCCESS; 103 suites / 1,616 pruebas / 0 fallos; CatalogStartupIntegrity 23/23; IndexedDBTransactions 45/45.
+- Riesgo residual: la causa exacta del timeout IndexedDB en Beta sigue sin identificar; CacheStorage reduce el impacto y mantiene datos locales, pero no sustituye la investigación de navegador.
+================================================================================

@@ -604,3 +604,14 @@
 - CI Node.js 22 run 43768407672: SUCCESS; 103 suites / 1,610 pruebas / 0 fallos.
 - No se desplegaron Apps Script ni se alteraron ScriptProperties, Spreadsheet, Drive o datos productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-15 — GP-BETA: CACHESTORAGE ALTERNATIVO Y ARRANQUE NO BLOQUEANTE
+- JS/Frontend/offline.js: añadido respaldo del snapshot público completo y cursor en CacheStorage, separado de IndexedDB; sin datos de sesión o administración.
+- JS/Frontend/auth.js: lectura paralela de IndexedDB/CacheStorage, recuperación cache-first desde cualquiera de las fuentes y sincronización delta cuando hay cursor. El snapshot remoto se presenta en memoria y pasa a ready antes de esperar persistencia.
+- IndexedDB y CacheStorage se actualizan en paralelo; la indisponibilidad de IndexedDB no impide la visualización ni fuerza por sí sola una descarga completa en siguientes inicios.
+- JS/Tests/CatalogStartupIntegrity.mjs: pruebas de fallback, cursor y presentación antes de persistencia.
+- CI Node.js 22 run 43768956946: SUCCESS; 103 suites / 1,616 pruebas / 0 fallos.
+- La causa raíz de IndexedDB queda pendiente de diagnóstico Beta; no se borraron bases ni almacenes.
+================================================================================

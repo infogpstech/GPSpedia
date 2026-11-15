@@ -1072,7 +1072,7 @@ El trabajo local GP-INBOX-04B/04C/04D queda cubierto en backend y contratos. No 
 | GP-BETA-04 | Ejecutar auditoría de carpeta Cortes conforme al rol autorizado | PENDIENTE — separar permiso de auditoría de permisos destructivos; mantener límites de árbol Drive |
 | GP-BETA-05 | Consultar imágenes históricas conforme al rol autorizado; mutaciones destructivas siguen restringidas | PENDIENTE — separar lectura de inventario/histórico y acciones de administración |
 | GP-BETA-06 | Eliminar revalidaciones interactivas/redundantes por acción; sesión y rol confiables asociados a la sesión vigente | REVISIÓN PARCIAL — actor central reutilizado; definir alcance de invalidación/epoch sin bypass y revisar servicios restantes |
-| GP-BETA-07 | Catálogo cache-first: render inmediato, sin parpadeos/avisos si caché válida; delta silencioso; snapshot solo en caché vacía/reset | CORRECCIÓN LOCAL VALIDADA EN CI; TIMEOUT INDEXEDDB Y PRUEBA DE CAMPO BETA PENDIENTES |
+| GP-BETA-07 | Catálogo cache-first: render inmediato, sin parpadeos/avisos si caché válida; delta silencioso; snapshot solo en caché vacía/reset | CACHESTORAGE FALLBACK + READY EN MEMORIA VALIDADOS EN CI; CAUSA RAÍZ INDEXEDDB Y PRUEBA DE CAMPO BETA PENDIENTES |
 | GP-BETA-08 | IndexedDB: determinar por qué falla apertura en Beta y evitar que historial/vistos/miniaturas bloqueen otras funciones | EN PROGRESO — CI previo PASS; causa de navegador Beta pendiente |
 | GP-BETA-09 | FEEDBACK/Coordinator: resolver rechazo de autenticación que bloquea Inbox y feed incremental | PENDIENTE DE CONFIGURACIÓN BETA — cotejar deployment y ScriptProperties sin revelar secretos |
 
@@ -1100,3 +1100,11 @@ El trabajo local GP-INBOX-04B/04C/04D queda cubierto en backend y contratos. No 
 - Modal, logs, auditoría e imágenes históricas funcionan para los roles definidos en la matriz.
 - No hay autenticación interactiva ni lectura repetida de Users/ActiveSessions por acción; la autorización se basa en actor confiable y mantiene revocación central.
 - Pruebas locales aprobadas; las pruebas de campo con FEEDBACK/ADMIN/Coordinator/Drive/Spreadsheet desplegados se registran como pendientes Beta hasta disponer de deployment/configuración.
+
+
+### Adenda GP-BETA-07/08 — caché alternativa independiente de IndexedDB (2026-11-15)
+- `offline.js` mantiene una copia del snapshot público completo en CacheStorage, independiente de IndexedDB. La clave se limita al mismo origen; no almacena tokens, sesiones, historial, datos administrativos ni operaciones pendientes.
+- `auth.js` consulta en paralelo IndexedDB y CacheStorage; usa la primera instantánea completa disponible. Si IndexedDB está bloqueado/no responde, la caché alternativa conserva snapshot y cursor para continuar con deltas sin descargar el catálogo completo.
+- Cuando se recibe un snapshot remoto en un dispositivo nuevo, el catálogo pasa a estado ready en memoria inmediatamente después de procesarse. La persistencia en IndexedDB y CacheStorage se ejecuta en paralelo y no bloquea la visualización.
+- CI Node.js 22 run `43768956946`: SUCCESS; **103 suites / 1,616 pruebas / 0 fallos**. `CatalogStartupIntegrity` 23/23; `InboxUi` 24/24; `VehicleModalRolePolicy` 12/12; `IndexedDBTransactions` 45/45.
+- El timeout de apertura IndexedDB no está corregido en su causa raíz; CacheStorage es una ruta alternativa de recuperación, no un reemplazo del diagnóstico de navegador Beta.
