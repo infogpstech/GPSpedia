@@ -325,6 +325,10 @@ function parseFeedbackIdFormula_(formula) {
 }
 
 function getFormulaBasedIdPattern_(sheet, idColumn) {
+    const header = String(sheet.getRange(1, idColumn).getValue() || "").trim().toLowerCase().replace(/\\s+/g, "_");
+    if (!/^(?:id|id_[a-z0-9_]+|id_de_[a-z0-9_]+|[a-z0-9_]+_id|identificador|identifier|codigo|codigo_id|code)$/.test(header)) {
+        throw new Error("La columna seleccionada no tiene un encabezado ID reconocido en " + sheet.getName() + ".");
+    }
     const ss = getSpreadsheet(), configSheet = ss.getSheetByName(IDENTIFIER_SEQUENCE_CONFIG_SHEET);
     if (configSheet && configSheet.getLastRow() > 1) {
         const headers = configSheet.getRange(1, 1, 1, IDENTIFIER_SEQUENCE_CONFIG_HEADERS.length).getValues()[0].map(value => String(value || ""));
