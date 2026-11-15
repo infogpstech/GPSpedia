@@ -39,7 +39,7 @@ function runUsersAtomicMutationTests(usersSource, authSource, coordinatorSource)
     });
 
     const names = [
-        "normalizePassword", "normalizeUsername_", "generateNextUserId_", "findNextUserRow_",
+        "normalizePassword", "normalizeUsername_", "parseUserIdSequenceFormula_", "getUserIdSequencePattern_", "generateNextUserId_", "findNextUserRow_",
         "withUsersMutationLock_", "normalizeNewUserInput_", "normalizeUserProfileUpdates_",
         "findUniqueUserRow_", "writeUserRangeAtomically_", "handleCreateUser", "handleUpdateProfile"
     ];
