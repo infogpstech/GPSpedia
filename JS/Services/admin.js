@@ -4368,6 +4368,8 @@ function handleFreezeIdentifierFormulas_(payload, developerContext) {
                 return {
                     status: "success", dryRun: true, migrationId, digest: plan.digest,
                     formulaCount: plan.entries.length, sheetCount: plan.sheetCount,
+                    patternRecognizedCount: plan.entries.filter(entry => Boolean(entry.pattern)).length,
+                    patternUnsupportedCount: plan.entries.filter(entry => !entry.pattern).length,
                     skipped: plan.skipped,
                     samples: plan.entries.slice(0, 100).map(entry => ({
                         sheet: entry.sheet, column: entry.column, row: entry.row,
