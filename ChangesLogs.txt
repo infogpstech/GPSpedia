@@ -615,3 +615,21 @@
 - CI Node.js 22 run 43768956946: SUCCESS; 103 suites / 1,616 pruebas / 0 fallos.
 - La causa raíz de IndexedDB queda pendiente de diagnóstico Beta; no se borraron bases ni almacenes.
 ================================================================================
+================================================================================
+2026-11-15 — SESIÓN GP-BETA: FEED, SESIÓN, INDEXEDDB, LEGACY Y PANEL
+HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
+
+- JS/Services/Coordinator.js: lectura GET pública y acotada del feed incremental; POST interno mantiene autenticación.
+- JS/Services/SharedMutationClient.js: getCatalogChanges usa el feed público sin depender del secreto interno FEEDBACK.
+- JS/Services/feedback.js: getCatalogChanges se sirve como lectura pública; las rutas privadas siguen bajo sus controles.
+- JS/Frontend/auth.js: restauración de la sesión sin consulta AUTH redundante; conserva rol permitido y deja la autorización de operaciones protegidas en el actor central.
+- JS/Frontend/offline.js: fallos de apertura IndexedDB opcional no bloquean lecturas/escrituras recuperables del catálogo ni llenan la consola; las fallas reales de transacción siguen rechazándose.
+- JS/Frontend/api-config.js y HTML/users.html: retirada del endpoint heredado LEGACY y del logging remoto externo.
+- JS/Frontend/ui.js, index.html y style.css: alerta crítica Drive 80 %, monitor GDrive, consola superior y pestañas horizontales compactas.
+- JS/Services/InboxConversations.js / feedback.js: alerta Drive como mensaje del sistema para cuentas activas Desarrollador; control de rol y clave idempotente por día/destinatario.
+- JS/Tests/: contratos y regresiones para feed público, restauración de sesión, degradación IndexedDB, UX de panel y alerta Inbox.
+- Validación: CI run 43775146844 — 105 suites, 1,645 pruebas aprobadas, 0 fallos; GitHub Pages run 43775145793 — build/deploy SUCCESS.
+- No se desplegaron proyectos Apps Script ni se modificaron ScriptProperties, hojas Spreadsheet, Drive o datos productivos.
+
+================================================================================
+

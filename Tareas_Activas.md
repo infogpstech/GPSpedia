@@ -1108,3 +1108,42 @@ El trabajo local GP-INBOX-04B/04C/04D queda cubierto en backend y contratos. No 
 - Cuando se recibe un snapshot remoto en un dispositivo nuevo, el catálogo pasa a estado ready en memoria inmediatamente después de procesarse. La persistencia en IndexedDB y CacheStorage se ejecuta en paralelo y no bloquea la visualización.
 - CI Node.js 22 run `43768956946`: SUCCESS; **103 suites / 1,616 pruebas / 0 fallos**. `CatalogStartupIntegrity` 23/23; `InboxUi` 24/24; `VehicleModalRolePolicy` 12/12; `IndexedDBTransactions` 45/45.
 - El timeout de apertura IndexedDB no está corregido en su causa raíz; CacheStorage es una ruta alternativa de recuperación, no un reemplazo del diagnóstico de navegador Beta.
+---
+
+## Adenda de continuidad — correcciones de autenticación, feed, almacenamiento y panel (2026-11-15)
+
+**HEAD validado:** e7958f57af9d1a92f85ba8bdd164c65157059561  
+**Rama base protegida:** d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).  
+**CI Node.js 22:** run 43775146844, **105 suites / 1,645 pruebas / 0 fallos**.  
+**GitHub Pages:** run 43775145793, build y deploy aprobados.
+
+### Estado actualizado de GP-BETA-01..09
+
+| ID | Estado al corte | Evidencia / siguiente acción |
+|---|---|---|
+| GP-BETA-01 Inbox | **EN PROGRESO — local aprobado; Beta pendiente** | Se conserva la lista y los mensajes durante refrescos, y se mantiene la caché temporal por sesión. Se corrigió el feed público de catálogo que antes dependía de la autenticación interna FEEDBACK. Falta validar lectura real de conversaciones/mensajes con el deployment Beta y revisar errores de cada acción privada de Inbox. |
+| GP-BETA-02 Modal de detalle | **COMPLETADA CON VALIDACIÓN DIFERIDA** | Precarga de opciones, promesa compartida y eliminación de la consulta redundante de AUTH al restaurar sesión. Medir apertura y edición en navegador Beta. |
+| GP-BETA-03 Borrado de logs | **PENDIENTE** | Auditar matriz de permisos en interfaz y FEEDBACK/ADMIN. No conceder permiso por inferencia ni alterar restricciones destructivas sin determinar el rol funcional requerido. |
+| GP-BETA-04 Auditoría de carpeta Cortes | **PENDIENTE** | Revisar permiso de lectura/ejecución, límites al árbol Cortes, registro de progreso y separación frente a movimientos/eliminaciones. |
+| GP-BETA-05 Imágenes históricas | **PENDIENTE** | Separar consulta de inventario/historial de acciones de mover, restaurar o enviar a papelera. Mantener mutaciones bajo permisos más estrictos. |
+| GP-BETA-06 Sesión y rol | **COMPLETADA EN FRONTEND; AUDITORÍA BACKEND EN PROGRESO** | La restauración de sesión ya no consulta AUTH/Users de nuevo para recuperar el perfil. Coordinator conserva actor confiable, token, expiración y revocación; no se acepta el rol enviado por el navegador. Revisar los servicios restantes para quitar lecturas redundantes de Users/ActiveSessions, sin quitar autorización central. |
+| GP-BETA-07 Catálogo cache-first | **COMPLETADA CON VALIDACIÓN DIFERIDA** | Snapshot visible desde memoria/caché y sincronización delta; CacheStorage sirve de respaldo independiente. La persistencia IndexedDB opcional no debe bloquear la interfaz. |
+| GP-BETA-08 IndexedDB | **COMPLETADA EN MANEJO LOCAL; CAUSA AMBIENTAL BETA PENDIENTE** | Errores de apertura clasificados como IDB_UNAVAILABLE; lecturas/escrituras opcionales del catálogo, historial y vistos pueden degradarse sin inundar la consola. Abortos y errores de cuota/transacción siguen siendo fallos reales. No se borran bases ni almacenes. |
+| GP-BETA-09 FEEDBACK/Coordinator | **FEED PÚBLICO CORREGIDO; INBOX PRIVADO PENDIENTE DE BETA** | getCatalogChanges usa GET público de solo lectura, separado del POST autenticado de Coordinator. Las acciones privadas FEEDBACK continúan autenticadas con actor de sesión. Comprobar despliegues y propiedades de servicio en Beta sin divulgar secretos. |
+
+### Correcciones adicionales incorporadas
+
+- Se retiró LEGACY de API_ENDPOINTS, del mapa de acciones y del registro de salud. HTML/users.html deja de enviar errores a un deployment externo antiguo; conserva el diagnóstico local en consola.
+- El Monitor de GDrive muestra el porcentaje y resalta el umbral crítico del 80 %. La alerta privada se crea como mensaje del sistema para todas las cuentas activas con rol Desarrollador. FEEDBACK restringe esa acción al rol Desarrollador y usa idempotencia diaria por destinatario.
+- El panel de desarrollador coloca la consola en la parte superior, amplía su área y cambia la navegación a pestañas horizontales compactas con expansión animada.
+- El gráfico de tráfico sigue midiendo solicitudes observadas en el navegador/sesión actual; no representa tráfico global de todos los usuarios. No presentarlo como métrica global hasta disponer de telemetría agregada del servidor.
+
+### Siguiente orden de trabajo
+
+1. Auditar y corregir GP-BETA-03: borrado de logs, su dispatcher y la matriz FEEDBACK/ADMIN.
+2. Auditar GP-BETA-04: ejecución de auditoría Drive y separar permisos de lectura de acciones destructivas.
+3. Auditar GP-BETA-05: consulta de imágenes históricas y permisos específicos de mutación.
+4. Completar auditoría backend de GP-BETA-06: buscar lecturas redundantes de Users/ActiveSessions y revalidaciones por acción en todos los servicios; mantener actor central y control de revocación.
+5. Investigar en navegador Beta el origen ambiental de indexedDB.open bloqueado/expirado. No usar deleteDatabase, limpiar almacenamiento ni borrar adminLocalState.
+6. Validar Inbox privado, GDrive, Coordinator y tiempos del modal en Beta. No desplegar Apps Script ni modificar ScriptProperties/datos productivos sin autorización.
+

@@ -860,3 +860,45 @@ Fuente: observaciones del usuario durante pruebas reales en navegador Beta y tra
 - CI Node.js 22 run 43768956946: SUCCESS; 103 suites / 1,616 pruebas / 0 fallos; CatalogStartupIntegrity 23/23; IndexedDBTransactions 45/45.
 - Riesgo residual: la causa exacta del timeout IndexedDB en Beta sigue sin identificar; CacheStorage reduce el impacto y mantiene datos locales, pero no sustituye la investigación de navegador.
 ================================================================================
+================================================================================
+2026-11-15 — ADENDA: CAUSAS DE FEED, SESIÓN, INDEXEDDB Y SERVICIO HEREDADO
+HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
+CI Node.js 22: 105 suites / 1,645 pruebas / 0 fallos. Pages build/deploy: SUCCESS.
+
+1. FEED INCREMENTAL — severidad P1
+- Evidencia: JS/Services/SharedMutationClient.js consultaba getCatalogChanges mediante el POST interno FEEDBACK; JS/Services/feedback.js volvía a exigir actor/lease para una lectura del journal público; JS/Services/Coordinator.js restringía el feed al origen FEEDBACK.
+- Impacto: un desacuerdo de secretos/deployment FEEDBACK/Coordinator podía rechazar deltas aunque el catálogo fuera público y el usuario ya hubiese iniciado sesión.
+- Corrección local: endpoint GET público con cursor/límite, separado del POST autenticado. No expone credenciales y solo devuelve eventos del journal público. FEEDBACK privado y mutaciones siguen protegidos.
+- Validación: regresiones CatalogChangeFeed y SessionActivityCoordination incluidas en CI aprobado. Lectura real del deployment Beta pendiente.
+
+2. RESTAURACIÓN DE SESIÓN — severidad P1
+- Evidencia: JS/Frontend/auth.js, checkSession(), hacía una segunda llamada de validación AUTH después de recuperar una sesión ya autenticada y persistida.
+- Impacto: viajes de red repetidos, demora de inicio y cierre falso de interfaz cuando AUTH no respondía temporalmente.
+- Corrección local: restaurar el perfil y rol de la sesión verificados en login, comprobando formato/rol permitido sin repetir el viaje AUTH. Las acciones protegidas siguen utilizando el actor confiable de Coordinator; no se acepta el rol del navegador.
+- Alcance pendiente: auditar todos los servicios para confirmar que no se consulten Users/ActiveSessions innecesariamente por acción y preservar epoch, expiración y revocación.
+
+3. INDEXEDDB OPCIONAL — severidad P1
+- Evidencia: JS/Frontend/offline.js, initDB() y operaciones de catálogo, historial, vistos y miniaturas. indexedDB.open puede fallar o quedar bloqueado/expirado; las operaciones de persistencia opcional generaban advertencias/error visibles.
+- Impacto: ruido en consola y riesgo de que una caché no disponible afecte módulos que pueden funcionar con memoria/CacheStorage.
+- Corrección local: clasificar fallo de apertura como IDB_UNAVAILABLE, hacer silenciosas y recuperables las operaciones opcionales y devolver estado explícito de caché no guardada. Fallos genuinos de commit, abort y cuota no se ocultan.
+- Validación: IndexedDBTransactions y regresiones de arranque incluidas en CI aprobado.
+- Riesgo residual: CI no puede determinar por qué el navegador Beta bloquea/expira su apertura. Se requiere diagnóstico del navegador real. No borrar la base ni el almacenamiento del sitio.
+
+4. SERVICIO LEGACY — severidad P2
+- Evidencia: HTML/users.html enviaba logs a un SCRIPT_URL externo asociado a logFrontend; el servicio y dispatcher no tenían fuente operativa verificable en este repositorio.
+- Impacto: solicitudes hacia un deployment heredado fuera de control de versión y error remoto que no podía auditarse localmente.
+- Corrección local: retirar LEGACY, logFrontend, SCRIPT_URL y remoteLog; mantener errores de la página en consola local.
+- Validación: contratos de rutas/salud y CI aprobados.
+
+5. TRÁFICO DEL PANEL — severidad informativa
+- Evidencia: JS/Frontend/serviceMetrics.js mantiene eventos en memoria de la sesión; renderServiceTrafficChart() usa getServiceMetricsSnapshot() local y la etiqueta aclara que son solicitudes iniciadas en este navegador.
+- Impacto: no se puede interpretar como telemetría agregada de toda la plataforma.
+- Acción: conservar la etiqueta y no presentarlo como tráfico global. Una métrica global necesitará agregación desde servidor; no añadir esa infraestructura fuera del backlog actual.
+
+6. PERMISOS DE ADMINISTRACIÓN — hallazgos abiertos P0
+- Requisitos afectados: borrado de logs, ejecución de auditoría de carpeta Cortes y consulta de imágenes históricas.
+- Estado: todavía no corregidos en esta iteración. Se debe trazar cada ruta frontend → dispatcher → servicio → Coordinator, documentar el permiso real y separar consulta/lectura de acciones destructivas.
+- No conceder roles por inferencia ni retirar guardas destructivas sin definir la matriz funcional del requisito.
+
+================================================================================
+

@@ -747,3 +747,43 @@ No quedan tareas locales independientes de Inbox dentro del alcance autorizado. 
 - El CI anterior para commit `cecc4d9` detectó un harness con await no resuelto y un test que evaluaba `import.meta` mediante `new Function`; ambos se corrigieron antes del CI aprobado. No se ocultan fallos intermedios.
 - GitHub Pages para este HEAD todavía estaba en cola al redactar esta adenda.
 - Pendientes Beta: causa raíz de IndexedDB; FEEDBACK/Coordinator (Inbox y feed); roles concretos para borrado de logs, auditoría Drive e imágenes históricas. No se modificó ningún deployment, ScriptProperties, Spreadsheet ni Drive.
+---
+
+# Continuidad — commit de disponibilidad, autorización y alertas de desarrollador (2026-11-15)
+
+## Estado verificado
+
+- Repositorio infogpstech/GPSpedia.
+- Rama de trabajo GPSpedia2.2.5_work.
+- HEAD comprobado: e7958f57af9d1a92f85ba8bdd164c65157059561.
+- Padre: d953beef6e06ce71519d7199a49675d9a4dfa4e5.
+- Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- CI Node.js 22 run 43775146844: **SUCCESS; 105 suites, 1,645 pruebas, 0 fallos de suite**.
+- GitHub Pages run 43775145793: build y deploy **SUCCESS**.
+
+## Cambios ya publicados en la rama de trabajo
+
+- JS/Services/Coordinator.js, SharedMutationClient.js y feedback.js: feed incremental del catálogo expuesto por GET público y de solo lectura. POST de Coordinator, mutaciones, leases y funciones privadas continúan autenticadas.
+- JS/Frontend/auth.js: restauración del perfil de sesión sin segunda consulta AUTH al arrancar. Coordinator conserva la validación del actor central, token, expiración y revocación; el cliente no es fuente de permisos.
+- JS/Frontend/offline.js: fallback CacheStorage, manejo no bloqueante de caché IndexedDB opcional, historial y vistos. Una apertura IndexedDB no disponible no debe impedir el catálogo; errores genuinos de transacción/cuota siguen visibles.
+- JS/Tests/: regresiones de feed, restauración de sesión, Inbox, IndexedDB, panel y monitor de cuota. CI aprobado en el HEAD indicado.
+- JS/Frontend/api-config.js y HTML/users.html: retirada de la llamada externa LEGACY para logging remoto. Errores de users.html se conservan en consola local.
+- index.html, style.css y JS/Frontend/ui.js: consola encima de pestañas, navegación horizontal compacta y monitor de cuota Drive.
+- JS/Services/InboxConversations.js y feedback.js: acción restringida a Desarrollador para registrar alertas de Drive como mensajes del sistema dirigidos a cuentas activas con ese rol; idempotencia por fecha y destinatario.
+
+## Hallazgos y pendientes reales
+
+1. GP-BETA-03 — borrado de logs: pendiente de revisión end-to-end de RBAC, dispatcher e interfaz.
+2. GP-BETA-04 — ejecutar auditoría Drive: pendiente de revisar rol requerido, lectura y límites de árbol Cortes; mantener las acciones destructivas separadas.
+3. GP-BETA-05 — imágenes históricas: pendiente de separar consulta/inventario de mover, restaurar y eliminar.
+4. GP-BETA-06 — revisión backend global pendiente: eliminar consultas redundantes a Users/ActiveSessions por acción. No eliminar autorización central ni confiar en roles del navegador. Actor de sesión, epoch, expiración y revocación permanecen protegidos en Coordinator.
+5. GP-BETA-01/09 — el feed público ya no utiliza el secreto privado FEEDBACK; la lectura de Inbox y las mutaciones privadas requieren validación del deployment Beta y trazado separado.
+6. GP-BETA-08 — la app puede degradarse sin IndexedDB; la causa ambiental de indexedDB.open bloqueado/expirado solo puede determinarse con eventos y estado real del navegador Beta. No borrar bases ni almacenamiento del sitio.
+7. Métricas de tráfico: el gráfico actual representa solicitudes vistas desde esta sesión/navegador, no el tráfico global. Para global se requiere agregación desde servidor.
+
+## Siguiente acción inmediata
+
+Continuar sin esperar al despliegue Beta con la auditoría del borrado de logs, la auditoría Drive y el inventario de imágenes históricas. Inspeccionar consumidores, contratos y matriz de roles en los servicios y sus tests; corregir el origen y ampliar regresiones. Mantener las pruebas de campo y configuración remota como validación diferida.
+
+No se desplegaron Apps Script, no se cambiaron ScriptProperties y no se alteraron Spreadsheet, Drive ni datos productivos.
+
