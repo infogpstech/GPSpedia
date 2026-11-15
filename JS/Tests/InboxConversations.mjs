@@ -604,6 +604,17 @@ run("Marcar como no leída crea un indicador privado, idempotente y reversible a
     assert.equal(read.unreadCount,0);
     assert.equal(api.handleGetInboxConversations({ ...actor("U2","token-b"),folder:"unread" }).data.some(row => row.conversationId === created.conversationId),false);
 });
+run("Marcar como no leída desde Archivados restaura la conversación a la bandeja no leída", () => {
+    const created = api.handleCreateInboxConversation({
+        ...actor("U3","token-c"),recipientId:"U2",subject:"Restaurar al marcar no leído",category:"general",
+        body:"La acción debe quitar el archivo privado.",idempotencyKey:"mark-unread-unarchive-01"
+    });
+    api.handleArchiveInboxConversation({ ...actor("U2","token-b"),conversationId:created.conversationId,archived:true });
+    const marked = api.handleMarkInboxUnread({ ...actor("U2","token-b"),conversationId:created.conversationId });
+    assert.equal(marked.unarchived,true);
+    assert.equal(api.handleGetInboxConversations({ ...actor("U2","token-b"),folder:"archived" }).data.some(row => row.conversationId === created.conversationId),false);
+    assert.equal(api.handleGetInboxConversations({ ...actor("U2","token-b"),folder:"unread" }).data.some(row => row.conversationId === created.conversationId),true);
+});
 run("No se puede marcar como no leída una conversación sin mensajes recibidos", () => {
     const created = api.handleCreateInboxConversation({
         ...actor("U3","token-c"),recipientId:"U2",subject:"Solo enviado",category:"general",
