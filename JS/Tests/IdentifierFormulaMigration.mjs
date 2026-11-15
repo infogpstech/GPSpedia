@@ -43,6 +43,8 @@ function makeHarness(){
  const PropertiesService={getScriptProperties:()=>({getProperty:key=>properties[key]??null,setProperty:(key,value)=>{properties[key]=String(value);}})};
  const SpreadsheetApp={flush(){}};
  const code=[
+  'const IDENTIFIER_FORMULA_FREEZE_MANIFEST_="__IdentifierFormulaFreezeManifest__";',
+  'const IDENTIFIER_FORMULA_FREEZE_HEADERS_=["migrationId","digest","entryIndex","entryJson","status","batch","updatedAt","lastError"];',
   extract("identifierMigrationCanonical_"),extract("identifierMigrationDigest_"),extract("identifierMigrationSheetDigest_"),
   extract("auditAllFormulaIdentifierColumns_"),extract("parseIdentifierSequenceFormula_"),
   extract("persistIdentifierSequenceConfigs_"),extract("buildIdentifierFormulaFreezePlan_"),
