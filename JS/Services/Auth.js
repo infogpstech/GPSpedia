@@ -2257,7 +2257,16 @@ function handleMigrateLegacyPasswords(payload) {
         acquired = true;
         const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
         const usersSheet = ss.getSheetByName(SHEET_NAMES.USERS);
-        if (!usersSheet) throw new Error('No se encontró la hoja Users.');
+        const sessionsSheet = ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
+        if (!usersSheet || !sessionsSheet) throw new Error('No se encontraron las hojas Users y ActiveSessions.');
+        ensureActiveSessionsActivityColumn_(sessionsSheet);
+        const sessionToken = String(payload && payload.sessionToken || "").trim();
+        if (sessionToken) {
+            const activityRows = findSessionRowsByTokenUnderLock_(sessionsSheet, sessionToken);
+            if (activityRows.length === 1) {
+                sessionsSheet.getRange(activityRows[0].rowIndex, COLS_ACTIVE_SESSIONS.LastActivityAt).setValue(new Date().toISOString());
+            }
+        }
 
         const readCandidates = () => {
             const rows = usersSheet.getDataRange().getValues();

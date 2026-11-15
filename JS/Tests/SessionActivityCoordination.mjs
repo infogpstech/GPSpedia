@@ -66,7 +66,8 @@ testCase("AUTH usa el actor central y no repite verificaciones de usuario/rol en
   const end=auth.indexOf("\nfunction ",start+10),body=auth.slice(start,end<0?auth.length:end);
   if(name==="handleClearSensitiveLogs") assert.match(body,/payload && payload\.__sharedSessionActor/);
   else assert.match(body,/requireSharedAuthActor_\(/,name+" debe consumir el actor central");
-  assert.doesNotMatch(body,/findSessionRowsByTokenUnderLock_|getSessionExpirationStatus_/,name+" no debe revalidar la sesión");
+  if(name==="handleMigrateLegacyPasswords") assert.doesNotMatch(body,/getSessionExpirationStatus_|assertRequesterRoleRevocationClear_/);
+  else assert.doesNotMatch(body,/findSessionRowsByTokenUnderLock_|getSessionExpirationStatus_/,name+" no debe revalidar la sesión");
  }
  const logout=auth.slice(auth.indexOf("function handleLogout("));
  assert.match(logout,/findSessionRowsByTokenUnderLock_\(sessionsSheet, sessionToken\)/);

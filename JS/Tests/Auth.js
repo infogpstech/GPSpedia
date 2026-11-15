@@ -449,10 +449,14 @@ function requireSharedAuthActor_(payload, allowedRoles, actionLabel) {
 function handleClearSensitiveLogs(payload) {
     // La sesión/token ya fueron autorizados por Coordinator en doPost().
     // Solo se consume el actor confiable y su rol; no se vuelven a leer Users/ActiveSessions.
-    const actor = requireSharedAuthActor_(payload, ["desarrollador"], "la purga de Logs");
+    const actor = payload && payload.__sharedSessionActor;
     const requestedUserId = normalizeUserId(payload && payload.userId);
-    const userId = actor.userId;
-    if (requestedUserId && requestedUserId !== userId) throw new Error("La identidad solicitante no coincide con el actor autorizado.");
+    const userId = normalizeUserId(actor && actor.userId);
+    const actorRole = normalizeRoleName(actor && actor.role);
+    if (!actor || !userId || requestedUserId !== userId ||
+        !Number.isSafeInteger(actor.epoch) || actor.epoch < 1 || actorRole !== "desarrollador") {
+        throw new Error("Acceso denegado: la purga de Logs está reservada a una sesión Desarrollador autorizada.");
+    }
 
     const lock = LockService.getScriptLock();
     let lockAcquired = false;
@@ -2253,7 +2257,16 @@ function handleMigrateLegacyPasswords(payload) {
         acquired = true;
         const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
         const usersSheet = ss.getSheetByName(SHEET_NAMES.USERS);
-        if (!usersSheet) throw new Error('No se encontró la hoja Users.');
+        const sessionsSheet = ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
+        if (!usersSheet || !sessionsSheet) throw new Error('No se encontraron las hojas Users y ActiveSessions.');
+        ensureActiveSessionsActivityColumn_(sessionsSheet);
+        const sessionToken = String(payload && payload.sessionToken || "").trim();
+        if (sessionToken) {
+            const activityRows = findSessionRowsByTokenUnderLock_(sessionsSheet, sessionToken);
+            if (activityRows.length === 1) {
+                sessionsSheet.getRange(activityRows[0].rowIndex, COLS_ACTIVE_SESSIONS.LastActivityAt).setValue(new Date().toISOString());
+            }
+        }
 
         const readCandidates = () => {
             const rows = usersSheet.getDataRange().getValues();
