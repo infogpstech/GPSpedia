@@ -122,6 +122,11 @@ test("WRITE publica upsert exacto de Cortes tras releer fila y conserva reset pa
     assert.ok(writeSource.includes('publishSharedCatalogChange_("WRITE", action, { operation: "reset" })'));
     assert.ok(writeSource.includes("getScriptLock()") && writeSource.includes("waitLock(15000)"));
 });
+test("suggestYear publica Cortes solo cuando se aplica o recupera una ampliación confirmada", () => {
+    assert.match(feedbackSource,/action === "suggestYear" && response[\\s\\S]*?response\\.recovered === false[\\s\\S]*?response\\.recovered === true[\\s\\S]*?publishFeedbackCortesCatalogChange_\\(action, vehicleId\\)/);
+    assert.doesNotMatch(feedbackSource,/\\["suggestYear", "addProblem", "addSolution"/);
+    assert.ok(coordinatorSource.includes('"suggestYear"'));
+});
 test("mutaciones PyS publican upsert exacto tras verificar ID y fila bajo lock", () => {
     assert.ok(coordinatorSource.includes('const CATALOG_CHANGE_COLLECTIONS_ = new Set(["cortes", "pys"'));
     assert.ok(feedbackSource.includes("function buildPysCatalogChange_(reference)"));
@@ -141,4 +146,4 @@ test("WRITE y FEEDBACK publican deltas exactos y conservan reset para operacione
     assert.match(adminSource,/catalogWriters\.includes\(catalogAction\)[\s\S]*?publishSharedCatalogChange_\("ADMIN", catalogAction, \{ operation: "reset" \}\)/);
     assert.match(adminSource,/finalizeAdminAuditEvent_\(auditEvent[\s\S]*?publishSharedCatalogChange_/);
 });
-console.log("CatalogChangeFeed: " + passed + "/18 PASS");
+console.log("CatalogChangeFeed: " + passed + "/19 PASS");

@@ -643,8 +643,19 @@ function doPostInternal_(e) {
                 console.error("El like se guardó, pero no se pudo publicar su cambio incremental:",
                     catalogPublishError && catalogPublishError.message ? catalogPublishError.message : catalogPublishError);
             }
+        } else if (action === "suggestYear" && response &&
+            (response.recovered === false || response.recovered === true)) {
+            // Solo una aplicación de rango confirmada modifica la fila Cortes; los votos previos no generan delta.
+            try {
+                const vehicleId = String(payload.vehicleId || "").trim();
+                if (!vehicleId) throw new Error("No se recibió el ID del vehículo actualizado.");
+                publishFeedbackCortesCatalogChange_(action, vehicleId);
+            } catch (catalogPublishError) {
+                console.error("La sugerencia de año se procesó, pero no se pudo publicar su cambio incremental:",
+                    catalogPublishError && catalogPublishError.message ? catalogPublishError.message : catalogPublishError);
+            }
         } else if (response && response.status === "success" &&
-            ["suggestYear", "addProblem", "addSolution", "addPrevention", "addVehicleToProblem",
+            ["addProblem", "addSolution", "addPrevention", "addVehicleToProblem",
              "removeVehicleFromProblem", "updatePysItem", "updateTutorialItem", "addTutorial",
              "approveVideo", "rejectVideo"].includes(action)) {
             // PyS y Tutoriales publican snapshots individuales después de verificar la fila persistida.
