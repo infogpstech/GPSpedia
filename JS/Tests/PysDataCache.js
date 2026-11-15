@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import vm from "node:vm";
-const source=fs.readFileSync("pys-data.js","utf8");
-const uiSource=fs.readFileSync("ui.js","utf8");
+const source=fs.readFileSync(new URL("../Frontend/pys-data.js",import.meta.url),"utf8");
+const uiSource=fs.readFileSync(new URL("../Frontend/ui.js",import.meta.url),"utf8");
 const NOW=1800000000000;
 function buildHarness(options={}){
  let now=options.now??NOW,state={...(options.state||{})},requests=0;
