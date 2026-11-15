@@ -542,7 +542,7 @@ const FEEDBACK_ACTION_PERMISSIONS = Object.freeze({
     recordLike: null, reportProblem: null, addProblem: null, addSolution: null, addPrevention: null,
     addVehicleToProblem: null, removeVehicleFromProblem: ["Desarrollador"], updatePysItem: ["Desarrollador"],
     updateTutorialItem: ["Desarrollador"], suggestCutChange: null, addTutorial: ["Desarrollador"],
-    getFeedbackItems: ["Desarrollador", "Jefe", "Supervisor"],
+    getFeedbackItems: ["Desarrollador", "Jefe", "Supervisor"], getMyProblemReports: null,
     replyToFeedback: ["Desarrollador", "Jefe", "Supervisor"],
     markAsResolved: ["Desarrollador", "Jefe", "Supervisor"],
     deleteFeedbackItem: ["Desarrollador", "Jefe", "Supervisor"],
@@ -628,6 +628,9 @@ function doPostInternal_(e) {
             // --- INBOX ACTIONS ---
             case 'getFeedbackItems':
                 response = handleGetFeedbackItems(payload);
+                break;
+            case 'getMyProblemReports':
+                response = handleGetMyProblemReports(payload);
                 break;
             case 'replyToFeedback':
                 response = handleReplyToFeedback(payload);
@@ -1966,6 +1969,36 @@ function handleGetFeedbackItems(payload) {
   .concat(contactRows.map(mapInboxContactRow_));
  const nextOffset=offset+data.length,hasMore=nextOffset<total;
  return{status:"success",data,nextCursor:hasMore?String(nextOffset):null,hasMore,pageSize,total};
+}
+
+function handleGetMyProblemReports(payload) {
+    const actor = getFeedbackActor_(payload,null);
+    const source = payload && typeof payload === "object" ? payload : {};
+    const rawCursor = source.cursor === undefined || source.cursor === null || source.cursor === "" ? "0" : String(source.cursor).trim();
+    if (!/^\d{1,9}$/.test(rawCursor)) throw new Error("El cursor de tickets no es válido.");
+    const offset = Number(rawCursor);
+    if (!Number.isSafeInteger(offset) || offset < 0) throw new Error("El cursor de tickets no es válido.");
+    const requestedSize = Number(source.pageSize);
+    const pageSize = Number.isFinite(requestedSize) ? Math.max(1,Math.min(100,Math.floor(requestedSize))) : 40;
+    const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
+    if (!sheet || sheet.getLastRow() < 2) return {status:"success",data:[],nextCursor:null,hasMore:false,pageSize,total:0};
+    const metadataColumn = getReportMetadataColumn(sheet);
+    if (!metadataColumn) return {status:"success",data:[],nextCursor:null,hasMore:false,pageSize,total:0};
+    const width = Math.max(metadataColumn,9);
+    const rows = sheet.getRange(2,1,sheet.getLastRow()-1,width).getValues().reverse();
+    const ownedReports = [];
+    rows.forEach(row => {
+        const vehicleId = normalizeInboxStoredText_(row[COLS_FEEDBACKS.ID_vehiculo-1],120,"");
+        const rawMetadata = String(row[metadataColumn-1] || "");
+        let storedMetadata = null;
+        try { storedMetadata = JSON.parse(rawMetadata); } catch (error) {}
+        if (!storedMetadata || String(storedMetadata.userId || "").trim() !== actor.userId) return;
+        if (!parseReportMetadata(rawMetadata,vehicleId)) return;
+        ownedReports.push(mapInboxFeedbackRow_(row,metadataColumn));
+    });
+    const data = ownedReports.slice(offset,offset+pageSize);
+    const nextOffset = offset + data.length, hasMore = nextOffset < ownedReports.length;
+    return {status:"success",data,nextCursor:hasMore?String(nextOffset):null,hasMore,pageSize,total:ownedReports.length};
 }
 
 function ensureInboxAuditSheet_() {
