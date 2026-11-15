@@ -425,25 +425,27 @@ export async function loadInitialData(forceRefresh = false, options = {}) {
 
     // 1. Renderizar primero la instantánea local junto con su cursor persistido.
     try {
-        const neverResolve = () => new Promise(() => {});
-        const idbCacheCandidate = offline.getCatalogSyncState().then(state =>
-            offline.isCompleteCatalogSnapshot(state && state.snapshot)
-                ? { source: "indexeddb", state }
-                : neverResolve()
-        ).catch(() => neverResolve());
         const fallbackCacheCandidate = typeof offline.getCatalogFallbackCache === "function"
-            ? offline.getCatalogFallbackCache().then(state =>
-                offline.isCompleteCatalogSnapshot(state && state.snapshot)
-                    ? { source: "cache-storage", state }
-                    : neverResolve()
-            ).catch(() => neverResolve())
-            : neverResolve();
+            ? offline.getCatalogFallbackCache().then(state => ({ source: "cache-storage", state })).catch(() => null)
+            : Promise.resolve(null);
+        const idbCacheCandidate = offline.getCatalogSyncState()
+            .then(state => ({ source: "indexeddb", state }))
+            .catch(() => null);
+        const preferredCacheCandidate = idbCacheCandidate.then(async result =>
+            offline.isCompleteCatalogSnapshot(result && result.state && result.state.snapshot)
+                ? result
+                : await fallbackCacheCandidate
+        );
+        const fastFallbackCandidate = fallbackCacheCandidate.then(result =>
+            offline.isCompleteCatalogSnapshot(result && result.state && result.state.snapshot)
+                ? result : new Promise(() => {})
+        );
         const cachedResult = await Promise.race([
-            idbCacheCandidate,
-            fallbackCacheCandidate,
+            preferredCacheCandidate,
+            fastFallbackCandidate,
             new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout local")), 3000))
         ]);
-        const cachedState = cachedResult.state;
+        const cachedState = cachedResult && cachedResult.state;
         if (!isCurrentLoad()) return;
         cachedCatalog = cachedState && cachedState.snapshot;
         cachedCursor = cachedState && Number.isSafeInteger(cachedState.cursor) ? cachedState.cursor : null;
@@ -477,6 +479,7 @@ export async function loadInitialData(forceRefresh = false, options = {}) {
                 cachedCatalog = fallbackState.snapshot;
                 cachedCursor = Number.isSafeInteger(fallbackState.cursor) ? fallbackState.cursor : null;
             } else {
+                cachedCursor = null;
                 // Un timeout del primer open comparte la misma promesa pendiente;
                 // no repetir inmediatamente la misma apertura desde getCatalog().
                 if (String(error && error.message || "").includes("Timeout local")) throw error;
@@ -489,7 +492,6 @@ export async function loadInitialData(forceRefresh = false, options = {}) {
                     offline.compareCatalogSnapshots(currentCatalog, normalizedCached).hasChanges;
                 if (shouldRehydrate && processCatalogData(normalizedCached) !== true) throw new Error('No se confirmó el procesamiento del catálogo local.');
                 catalogLoaded = true;
-                cachedCursor = null;
                 if (!silent) setState({ catalogLoadStatus: 'ready', catalogLoadError: null });
             } else cachedCatalog = null;
         } catch (fallbackError) {
