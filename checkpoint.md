@@ -1718,3 +1718,18 @@ No se desplegaron servicios Apps Script, no se modificaron ScriptProperties, Spr
 - GitHub Actions run `43659408356`: SUCCESS; Node.js 22; sintaxis PASS; **99 suites / 1,492 pruebas / 0 fallos**.
 - GitHub Pages run `43659407831` pendiente de confirmar al momento de este checkpoint.
 - Siguiente: GP-CAT-01O — auditar acciones de reemplazo/recuperación de imágenes para separar mutaciones de una fila de cambios que solo afectan Drive/ledger.
+
+
+## Continuidad — GP-CAT-01O: auditoría de recuperación y movimientos de imágenes (2026-11-14)
+
+**Commit de código:** `5cc19aced2da93599128f75fab346a4e5e79b008`.
+
+- `recoverReplacedImage` puede restaurar una imagen histórica en un campo activo de una fila Cortes. La respuesta ahora informa `vehicleId`, `fieldName` y `catalogChanged`; publica upsert exacto solo si la referencia activa cambió. Si el registro ya estaba activo o el ID/fila no se verifica, no emite un delta; si falla el snapshot, el helper usa reset.
+- `deleteReplacedImage` envía a papelera una imagen histórica/sin uso y actualiza el ledger; valida que no existan referencias activas y no modifica la hoja Cortes. Se elimina del grupo de escritores del catálogo.
+- `restoreReplacedImageFromTrash` restaura el archivo y el estado del historial, pero explícitamente no modifica referencias del Spreadsheet; no emite evento.
+- `moveReplacedImage` mueve un archivo sin referencias activas y actualiza metadatos del ledger, no el catálogo; no emite evento.
+- Las operaciones masivas (restoreAllTrashedImages, normalizeImages, organizePrimaryVehicleImages, applyCortesImageReconciliation, restoreDatabase y migraciones) conservan reset.
+- `CatalogChangeFeed`: 22/22 PASS; `CatalogSnapshotSync`: 29/29 PASS; `PysDataCache`: 18/18 PASS.
+- GitHub Actions run `43659554751`: SUCCESS; Node.js 22; sintaxis PASS; **99 suites / 1,493 pruebas / 0 fallos**.
+- GitHub Pages run `43659554417` pendiente de confirmar al momento de este checkpoint.
+- Siguiente: GP-CAT-01P — auditar las operaciones masivas y confirmar que los resets no se disparan desde acciones que solo leen o modifican metadatos fuera del catálogo.

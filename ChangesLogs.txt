@@ -335,3 +335,11 @@
 - La lectura/publicación se serializa bajo ScriptLock; si no se verifica el ID/fila, se usa reset seguro. getAdminImageUploadStatus sigue siendo solo lectura; operaciones masivas y respuestas warning mantienen reset.
 - CatalogChangeFeed 21/21, CatalogSnapshotSync 29/29 y PysDataCache 18/18 PASS.
 - CI Node.js 22 run 43659408356: SUCCESS; 99 suites / 1,492 pruebas / 0 fallos.
+
+
+2026-11-14 — GP-CAT: AUDITORÍA DE OPERACIONES DE IMÁGENES REEMPLAZADAS
+- recoverReplacedImage publica upsert Cortes solo cuando cambia la referencia activa de una fila; devuelve vehicleId/fieldName/catalogChanged para confirmar el alcance. Si no hay cambio de fila, no se emite evento.
+- deleteReplacedImage, restoreReplacedImageFromTrash y moveReplacedImage solo afectan archivos Drive y/o el ledger de historial; no modifican referencias del Spreadsheet y se retiran del grupo de productores del catálogo.
+- Las operaciones masivas de restauración, normalización, organización y reconciliación mantienen reset.
+- CatalogChangeFeed 22/22, CatalogSnapshotSync 29/29 y PysDataCache 18/18 PASS.
+- CI Node.js 22 run 43659554751: SUCCESS; 99 suites / 1,493 pruebas / 0 fallos.

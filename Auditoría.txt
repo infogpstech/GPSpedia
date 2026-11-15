@@ -578,3 +578,12 @@ Estado: CORREGIDO EN RAMA; VALIDACIÓN BETA PENDIENTE.
 - Si la fila no es única, el ID falta o el snapshot no se puede verificar, se usa reset. Las respuestas warning y operaciones masivas mantienen reset; getAdminImageUploadStatus no publica porque es lectura.
 - CI Node.js 22 run 43659408356: 99 suites / 1,492 pruebas / 0 fallos.
 - Pendiente: pruebas reales de edición simultánea y reemplazo de imagen en Beta aislada.
+
+
+AUD-2026-11-14-24 — EVENTOS DE CATÁLOGO EN OPERACIONES DRIVE-ONLY
+Severidad: Baja (reset innecesario sin cambio del modelo de catálogo).
+Estado: CORREGIDO EN RAMA; VALIDACIÓN BETA PENDIENTE.
+- Hallazgo: deleteReplacedImage, restoreReplacedImageFromTrash y moveReplacedImage publicaban reset aunque solo cambiaban el estado/ubicación de archivos Drive y metadatos del ledger, sin modificar referencias del Spreadsheet.
+- Corrección: se retiran del grupo catalogWriters. recoverReplacedImage se separa: solo publica upsert si cambia la referencia activa de una fila Cortes, con ID y campo explícitos; si ya estaba activa no publica.
+- Las operaciones masivas conservan reset. No se modifican datos ni archivos productivos durante esta auditoría.
+- CI Node.js 22 run 43659554751: 99 suites / 1,493 pruebas / 0 fallos.
