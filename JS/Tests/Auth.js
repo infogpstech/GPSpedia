@@ -840,6 +840,41 @@ function createOrRecoverLoginSessionUnderLock_(userSheet, sessionsSheet, userRow
     return { token, createdAt, sessionCount, oldestSession, cleanupPending, termsAcceptance };
 }
 
+
+function sharedSessionTimestamp_(value) {
+    const timestamp = value instanceof Date ? value.getTime() : new Date(value).getTime();
+    if (!Number.isFinite(timestamp) || timestamp <= 0) {
+        throw new Error("No se pudo establecer la vigencia del contexto compartido de sesión.");
+    }
+    return timestamp;
+}
+
+function syncSharedSessionContextsForUser_(userId, role, fullName) {
+    const normalizedId = normalizeUserId(userId);
+    const normalizedRole = normalizeRoleName(role);
+    if (!normalizedId || !["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"].includes(normalizedRole)) {
+        throw new Error("No se pudo registrar una identidad o rol válido en el contexto compartido.");
+    }
+    const sessionsSheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
+    if (!sessionsSheet) throw new Error("No se encontró ActiveSessions para sincronizar el contexto compartido.");
+    const rows = sessionsSheet.getDataRange().getValues().slice(1).filter(row =>
+        normalizeUserId(row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]) === normalizedId &&
+        String(row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || "").trim() &&
+        !getSessionExpirationStatus_(row, new Date()).expired
+    );
+    if (!rows.length) throw new Error("No hay sesiones activas que registrar en el contexto compartido.");
+    if (rows.length > 5) throw new Error("La cuenta supera el límite seguro de sesiones compartidas.");
+    revokeSharedUserSessionContexts_(normalizedId);
+    rows.forEach(row => {
+        const token = String(row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || "");
+        const createdAt = sharedSessionTimestamp_(row[COLS_ACTIVE_SESSIONS.date - 1]);
+        const activityValue = row[COLS_ACTIVE_SESSIONS.LastActivityAt - 1] || row[COLS_ACTIVE_SESSIONS.date - 1];
+        const lastActivityAt = sharedSessionTimestamp_(activityValue);
+        registerSharedSessionContext_(normalizedId, token, normalizedRole, String(fullName || ""), createdAt, lastActivityAt);
+    });
+    return { registered: rows.length };
+}
+
 function handleLogin(payload) {
     let normalizedUsername = '';
     let attemptId = null;
@@ -960,6 +995,11 @@ function handleLogin(payload) {
             throw sessionOperationError;
         }
         if (sessionCleanupPending) logToSheet('ERROR', 'Login succeeded but an inactive session row could not be deleted.', { userId, requestId: loginRequestId });
+        syncSharedSessionContextsForUser_(
+            userId,
+            foundUserRow[COLS_USERS.Privilegios - 1],
+            foundUserRow[COLS_USERS.Nombre_Completo - 1]
+        );
 
         const user = {
             ID: userId,
@@ -994,7 +1034,7 @@ function handleLogin(payload) {
     }
 }
 
-function validateSessionReadOnly_(sessionToken, expectedUserId) {
+function validateSessionReadOnly_(sessionToken, expectedUserId, trustedActor) {
     const lock = LockService.getScriptLock();
     let acquired = false;
     try {
@@ -1015,8 +1055,11 @@ function validateSessionReadOnly_(sessionToken, expectedUserId) {
         const session = matches[0];
         const userId = normalizeUserId(session.row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]);
         if (!userId || userId !== normalizeUserId(expectedUserId)) return { valid: false, reason: 'identity_mismatch' };
-        const expiration = getSessionExpirationStatus_(session.row, new Date());
-        if (expiration.expired) return { valid: false, reason: expiration.reason };
+        if (trustedActor && (trustedActor.userId !== userId || !Number.isSafeInteger(trustedActor.epoch) || trustedActor.epoch < 1)) {
+            return { valid: false, reason: 'shared_context_identity_mismatch' };
+        }
+        const expiration = trustedActor ? null : getSessionExpirationStatus_(session.row, new Date());
+        if (expiration && expiration.expired) return { valid: false, reason: expiration.reason };
         if (hasPendingRoleRevocation_(userId)) return { valid: null, unavailable: true, reason: 'role_revocation_pending' };
         const users = usersSheet.getDataRange().getValues().slice(1)
             .map((row, index) => ({ row, rowIndex: index + 2 }))
@@ -1024,6 +1067,12 @@ function validateSessionReadOnly_(sessionToken, expectedUserId) {
         if (users.length !== 1 || !isActiveAuthUserRecord(users[0].row)) {
             return { valid: false, reason: 'inactive_or_ambiguous_user' };
         }
+        if (trustedActor && normalizeRoleName(users[0].row[COLS_USERS.Privilegios - 1]) !== String(trustedActor.role || '').trim().toLowerCase()) {
+            return { valid: false, reason: 'role_changed' };
+        }
+        const createdAtValue = session.row[COLS_ACTIVE_SESSIONS.date - 1];
+        const createdAt = createdAtValue instanceof Date ? new Date(createdAtValue.getTime()) : new Date(createdAtValue);
+        if (Number.isNaN(createdAt.getTime())) return { valid: null, unavailable: true, reason: 'invalid_session_timestamp' };
         const sessionTermsHeader = String(sessionsSheet.getRange(1, COLS_ACTIVE_SESSIONS.SessionTermsAcceptance).getValue() || '').trim();
         if (sessionTermsHeader && sessionTermsHeader !== 'SessionTermsAcceptance') {
             return { valid: null, unavailable: true, reason: 'terms_schema_conflict' };
@@ -1032,8 +1081,10 @@ function validateSessionReadOnly_(sessionToken, expectedUserId) {
             ? parseTermsAcceptance_(session.row[COLS_ACTIVE_SESSIONS.SessionTermsAcceptance - 1])
             : { version: '', acceptedAt: '', status: 'pending' };
         return {
-            valid: true, userId, createdAt: expiration.createdAt.toISOString(),
-            lastActivityAt: session.row[COLS_ACTIVE_SESSIONS.LastActivityAt - 1] || session.row[COLS_ACTIVE_SESSIONS.date - 1],
+            valid: true, userId, createdAt: createdAt.toISOString(),
+            lastActivityAt: trustedActor
+                ? new Date(trustedActor.lastActivityAt).toISOString()
+                : (session.row[COLS_ACTIVE_SESSIONS.LastActivityAt - 1] || session.row[COLS_ACTIVE_SESSIONS.date - 1]),
             termsAcceptance,
             profile: {
                 ID: userId,
@@ -1056,7 +1107,9 @@ function handleValidateSession(payload) {
     try {
         const { userId, sessionToken } = payload || {};
         if (!userId || !sessionToken) return { valid: false };
-        return validateSessionReadOnly_(sessionToken, userId);
+        const sharedContext = validateSharedSessionContext_(userId, sessionToken);
+        if (!sharedContext || sharedContext.valid !== true || !sharedContext.actor) return { valid: false, reason: 'shared_context_invalid' };
+        return validateSessionReadOnly_(sessionToken, userId, sharedContext.actor);
     } catch (error) {
         console.error('handleValidateSession:', error && error.message ? error.message : error);
         return { valid: null, unavailable: true, reason: 'validation_unavailable' };
@@ -1507,6 +1560,9 @@ function handleUpdateUser(payload) {
         if (hasPending && hasFullNameUpdate && pendingMarker.newFullName !== requestedFullName) {
             throw new Error('El nombre solicitado no coincide con la actualización pendiente. Completa primero esa operación.');
         }
+        if (nextRole !== currentTargetRole || hasPending) {
+            revokeSharedUserSessionContexts_(userId);
+        }
         if (nextRole !== currentTargetRole && !hasPending) {
             const marker = { userId, markedAt: Date.now(), oldRole: currentTargetRole, newRole: nextRole };
             if (hasFullNameUpdate) marker.newFullName = requestedFullName;
@@ -1666,6 +1722,7 @@ function handleResetUserSessions(payload) {
         }
 
         targetUsername = String(targetRows[0].row[COLS_USERS.Nombre_Usuario - 1] || '');
+        revokeSharedUserSessionContexts_(targetUserId);
         if (hasPendingRoleRevocation_(targetUserId)) {
             const reconciliation = reconcileRoleRevocationUnderLock_(usersSheet, sessionsSheet, targetUserId);
             revokedSessions = reconciliation.revokedSessions || 0;
@@ -1838,6 +1895,8 @@ function handleDeleteUser(payload) {
             throw new Error('No se pudieron invalidar todos los intentos de login pendientes; la cuenta no fue eliminada.');
         }
 
+        revokeSharedUserSessionContexts_(userId);
+
         // Congelar los IDs calculados actuales antes de cambiar nombres/roles.
         // Esto conserva referencias históricas aunque alguna fórmula dependa de otros campos.
         if (usersData.length > 1) {
@@ -1985,6 +2044,7 @@ function handleChangePassword(payload) {
         }
 
         const newHash = createPasswordHash(newPassword);
+        revokeSharedUserSessionContexts_(userId);
         const revocation = revokeAllUserSessionsUnderLock_(sessionsSheet, userId);
         revokedSessions = revocation.revokedSessions;
         if (revocation.pendingRows.length || revocation.pendingLoginRequests) {
@@ -2067,6 +2127,7 @@ function handleResetUserPassword(payload) {
         }
 
         const newHash = createPasswordHash(newPassword);
+        revokeSharedUserSessionContexts_(targetId);
         const revocation = revokeAllUserSessionsUnderLock_(sessionsSheet, targetId);
         revokedSessions = revocation.revokedSessions;
         if (revocation.pendingRows.length || revocation.pendingLoginRequests) {
@@ -2339,6 +2400,7 @@ function handleLogout(payload) {
                 throw new Error('No se pudo confirmar la invalidación del intento de login asociado. Reintenta el cierre.');
             }
 
+            revokeSharedSessionContext_(requestedUserId, sessionToken);
             let clearError = null;
             try { sessionsSheet.getRange(session.rowIndex, COLS_ACTIVE_SESSIONS.ActiveSessions).clearContent(); }
             catch (error) { clearError = error; }
@@ -2381,6 +2443,7 @@ function handleLogout(payload) {
             if (requestRevocation.pending) {
                 throw new Error('No se pudo confirmar la invalidación del intento de login asociado. Reintenta el cierre.');
             }
+            revokeSharedSessionContext_(requestedUserId, sessionToken);
             alreadyRevoked = true;
 
             if (staleUserMatches.length === 1) {
