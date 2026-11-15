@@ -1747,3 +1747,18 @@ No se desplegaron servicios Apps Script, no se modificaron ScriptProperties, Spr
 - GitHub Actions run `43659723527`: SUCCESS; Node.js 22; sintaxis PASS; **99 suites / 1,494 pruebas / 0 fallos**.
 - GitHub Pages run `43659722781` pendiente de confirmar al momento de este checkpoint.
 - Siguiente: GP-CAT-01Q — convertir la reconciliación confirmada de imágenes Cortes (máximo 10 asignaciones) en upserts agrupados por vehículo, con reset de recuperación si cualquier snapshot falla.
+
+
+## Continuidad — GP-CAT-01Q: upserts agrupados para reconciliación de imágenes Cortes (2026-11-14)
+
+**Commit de código:** `2348dae3a3785e392f9944ebbddc662c10fc96ae`.
+**Commit de corrección de prueba:** `956ba22ceb12f3ae4fbd8a79e6cde8b0caf98246`.
+
+- `handleApplyCortesImageReconciliation_` devuelve `appliedVehicleIds` únicos derivados del manifiesto que ya pasó auditoría, preview, validación de digest, verificación de celdas y read-back.
+- `publishAdminCortesCatalogChanges_` adquiere ScriptLock una sola vez, deduplica IDs, construye y verifica todos los snapshots antes de publicar el primer evento y emite un upsert por vehículo. Si falla cualquier snapshot/publicación, emite reset para recuperar el estado completo, incluso si algún upsert ya se publicó.
+- La operación sigue limitada a 10 propuestas aprobadas por ejecución; los cambios en varios campos del mismo vehículo generan un solo upsert.
+- Primer CI detectó comillas anidadas incorrectas en una aserción estática de prueba; se corrigió el test sin cambiar el código funcional.
+- `CatalogChangeFeed`: 24/24 PASS; `CatalogSnapshotSync`: 29/29 PASS; `PysDataCache`: 18/18 PASS.
+- GitHub Actions run `43659982658`: SUCCESS; Node.js 22; sintaxis PASS; **99 suites / 1,495 pruebas / 0 fallos**.
+- GitHub Pages run `43659982190` pendiente de confirmar al momento de este checkpoint.
+- Siguiente: GP-CAT-01R — revisar `normalizeImages` y publicar deltas por cada vehículo con referencias efectivamente reescritas; conservar reset si el lote no puede enumerarse íntegramente.

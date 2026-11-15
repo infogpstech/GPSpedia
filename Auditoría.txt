@@ -596,3 +596,13 @@ Estado: CORREGIDO EN RAMA; VALIDACIÓN BETA PENDIENTE.
 - Evidencia: organizePrimaryVehicleImages solo mueve/renombra el mismo archivo por ID y carpetas; reconcilePendingImageUploads actualiza ImageUploadLedger y metadatos Drive, no celdas Cortes. restoreAllTrashedImages ya no publica eventos.
 - Corrección: se retiran las dos acciones de catalogWriters. normalizeImages y applyCortesImageReconciliation siguen con reset por modificar varias filas/referencias; restauración de base y migraciones también.
 - CI Node.js 22 run 43659723527: 99 suites / 1,494 pruebas / 0 fallos.
+
+
+AUD-2026-11-14-26 — RESET GLOBAL TRAS RECONCILIACIÓN CONFIRMADA DE IMÁGENES
+Severidad: Media (hasta 10 asignaciones confirmadas podían reconstruir el catálogo completo).
+Estado: CORREGIDO EN RAMA; VALIDACIÓN BETA PENDIENTE.
+- Hallazgo: applyCortesImageReconciliation ya generaba un manifiesto con vehicleId por propuesta, pero el publicador ADMIN descartaba esos IDs y enviaba reset.
+- Corrección: devuelve IDs únicos aplicados; el publicador relee cada fila bajo un único ScriptLock, prepara todos los snapshots y publica un upsert por vehículo. Si cualquier preparación/publicación falla, emite reset de recuperación.
+- La acción sigue limitada a 10 propuestas por ejecución y verifica el read-back antes de informar éxito.
+- CI Node.js 22 run 43659982658: 99 suites / 1,495 pruebas / 0 fallos.
+- Pendiente: probar aplicación de varios campos del mismo vehículo y de varios vehículos en Beta aislada.

@@ -351,3 +351,11 @@
 - restoreAllTrashedImages ya estaba excluida. normalizeImages y applyCortesImageReconciliation mantienen reset por reescribir referencias; las migraciones y restauraciones de base mantienen reset.
 - CatalogChangeFeed 23/23, CatalogSnapshotSync 29/29 y PysDataCache 18/18 PASS.
 - CI Node.js 22 run 43659723527: SUCCESS; 99 suites / 1,494 pruebas / 0 fallos.
+
+
+2026-11-14 — GP-CAT: DELTAS AGRUPADOS PARA applyCortesImageReconciliation
+- La reconciliación confirmada devuelve IDs únicos de vehículos derivados del manifiesto aprobado y verificado.
+- ADMIN construye todos los snapshots bajo un único ScriptLock antes de publicar el primer evento y emite un upsert por vehículo; varios campos de un mismo vehículo producen un solo evento.
+- Si un snapshot o publicación falla, se emite reset de recuperación para evitar dejar un lote parcialmente sincronizado.
+- CatalogChangeFeed 24/24, CatalogSnapshotSync 29/29 y PysDataCache 18/18 PASS.
+- CI Node.js 22 run 43659982658: SUCCESS; 99 suites / 1,495 pruebas / 0 fallos.
