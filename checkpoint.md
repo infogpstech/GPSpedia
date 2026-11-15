@@ -1630,3 +1630,17 @@ No se desplegaron servicios Apps Script, no se modificaron ScriptProperties, Spr
 - GP-CAT-01H: auditoría estática completada. Relay conserva su lectura de catálogo y los IDs existentes; no se habilita publicación por registro sin una ruta de escritura real.
 - Siguiente tarea: GP-CAT-01I — registrar la revisión global del feed junto con la caché PyS para evitar que el TTL provoque una descarga completa cuando no hubo cambios.
 - La validación de hojas reales/IDs históricos sigue pendiente de una copia Beta autorizada; no se inspeccionaron ni modificaron Spreadsheet/Drive productivos.
+
+
+## Continuidad — GP-CAT-01I: cursor y frescura de caché PyS (2026-11-14)
+
+**Commit de código:** `779be6f0bbdcc1a7b3ae5788317063ea5d275be9`.
+
+- `JS/Frontend/pys-data.js`: añade `gpsepedia_pys_cache_cursor`, `getPysDataCursor()` y `setPysDataCursor()`. La caché guarda la revisión del feed global que ya aplicó.
+- Una caché con cursor válido no descarga `getPysData` completo solo porque venció el TTL de cinco minutos. La sincronización del feed actualiza el cursor y la marca de frescura cuando no hay eventos PyS; si hay eventos, aplica upsert/delete y avanza el cursor. La invalidación explícita (updatedAt=0), la ausencia de caché, un cursor no alineado y los resets siguen forzando reconciliación completa.
+- `auth.js` alinea el cursor PyS con el cursor IndexedDB al iniciar, al procesar deltas y al recibir difusión entre pestañas. Aplica el delta antes de confirmar el cursor; ante fallo de persistencia vuelve a snapshot completo.
+- `JS/Tests/PysDataCache.js`: 18/18 PASS, incluidos TTL con cursor, invalidación explícita, revisión válida e integración de upsert/delete.
+- GitHub Actions run `43658124484`: SUCCESS; Node.js 22; sintaxis PASS; **99 suites / 1,487 pruebas / 0 fallos**.
+- GitHub Pages run `43658124316`: SUCCESS para el commit de código.
+- No se añadieron controles visibles ni se desplegaron Apps Script. La validación real de sincronización multiusuario, latencia y reconexión sigue pendiente en Beta.
+- Siguiente: GP-CAT-01J — revisar productores WRITE y emitir upsert exacto solo donde la fila final pueda reproducirse fielmente con el contrato de `Services/catalog.js`; mantener reset en operaciones multi-fila/IDs.

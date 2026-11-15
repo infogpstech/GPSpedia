@@ -518,3 +518,12 @@ Estado: AUDITORÍA ESTÁTICA COMPLETADA; VALIDACIÓN DE DATOS HEREDADOS BETA PEN
 - ADMIN no expone alta/edición de registros Relay. El mantenimiento de IDs admite únicamente freeze_formula conservando el ID actual válido y único; rechaza fill_missing para Relay.
 - No se encontró acción de frontend/API que escriba filas Relay. No se debe inventar un escritor ni asignar IDs históricos. Las operaciones ADMIN masivas continúan publicando reset.
 - Pendiente: inspeccionar encabezados, fórmulas, IDs y referencias en copia Beta de solo lectura antes de considerar una ruta de escritura.
+
+
+AUD-2026-11-14-18 — DESCARGA COMPLETA PyS POR EXPIRACIÓN DE TTL
+Severidad: Media (tráfico innecesario y latencia al abrir la sección PyS).
+Estado: CORREGIDO EN RAMA; VALIDACIÓN BETA PENDIENTE.
+- Hallazgo: aunque el feed ya entregaba deltas PyS, loadPysData podía volver a descargar toda la colección al vencer su TTL de cinco minutos, incluso cuando el cursor global ya había confirmado que no existían cambios.
+- Corrección: la caché PyS persiste la revisión global aplicada. El TTL por sí solo no fuerza una descarga cuando hay cursor válido y marca de datos existente; el feed actualiza la frescura sin descargar filas. Invalidación explícita, cursor desalineado, caché ausente y reset continúan usando snapshot completo.
+- Pruebas PysDataCache 18/18 PASS; CI Node.js 22 run 43658124484: 99 suites / 1,487 pruebas / 0 fallos; Pages run 43658124316 SUCCESS.
+- Pendiente: validar el comportamiento de varias sesiones/dispositivos y reconexión en entorno Beta.

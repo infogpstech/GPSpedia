@@ -285,3 +285,11 @@
 - Services/admin.js no expone alta/edición de registros Relay. El mantenimiento de IDs solo permite freeze_formula conservando un ID válido y único; fill_missing está expresamente rechazado hasta confirmar el formato y el escritor.
 - No existe acción de frontend/API que escriba filas Relay. Se mantiene el reset en operaciones ADMIN masivas; no se crean IDs ni productores artificiales.
 - GP-CAT-01H: auditoría estática completada. Revisión de datos y fórmulas físicos pendiente de copia Beta autorizada; no se consultaron ni modificaron recursos productivos.
+
+
+2026-11-14 — GP-CAT: REVISIÓN PERSISTENTE DE CACHÉ PyS
+- JS/Frontend/pys-data.js: almacena el cursor global que ya aplicó la caché PyS y expone lectura/actualización segura de esa revisión.
+- Una caché con cursor alineado no solicita getPysData completo solo por vencer el TTL; el polling incremental actualiza cursor y frescura sin descargar registros. Invalidación explícita, caché ausente, cursor desalineado y reset mantienen snapshot completo de recuperación.
+- JS/Frontend/auth.js: alinea la revisión PyS con el cursor IndexedDB en deltas vacíos, deltas con cambios, bootstrap/reset y difusión entre pestañas. No adelanta el cursor PyS antes de aplicar los cambios.
+- PysDataCache 18/18 PASS. CI Node.js 22 run 43658124484: SUCCESS; 99 suites / 1,487 pruebas / 0 fallos. GitHub Pages run 43658124316: SUCCESS.
+- GP-CAT-01I completada en rama; validación Beta multiusuario/dispositivo pendiente.
