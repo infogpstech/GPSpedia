@@ -715,3 +715,21 @@ Estado: CORREGIDO Y VALIDADO EN CI.
 - Regresión: tres mensajes con timestamps deliberadamente descendentes; paginación pageSize=1 verifica orden por inserción, cursores y lectura hasta el último mensaje.
 - CI Node.js 22 run 43676078785: SUCCESS; 100 suites / 1,519 pruebas / 0 fallos; InboxConversations 37/37 PASS. Pages run 43676078270 SUCCESS.
 - No hubo cambios de esquema, UI, permisos, endpoints ni datos productivos. Integración real diferida a Beta.
+
+
+AUD-2026-11-15-34 — COMENTARIOS Y CIERRE DE CASOS INBOX
+Severidad: Control funcional y de autorización.
+Estado: IMPLEMENTADO Y VALIDADO EN CI/PAGES; Beta pendiente.
+- Solo el creador de la conversación puede agregar comentarios mientras el caso esté abierto.
+- Supervisor, Jefe o Desarrollador participante puede cerrar. El backend verifica rol y participación, serializa el cambio, confirma estado closed y registra auditoría.
+- El cierre repetido es idempotente y los comentarios posteriores se rechazan en backend. Archivar/restaurar no cierra el caso.
+- CI Node.js 22 run 43678752084: SUCCESS; 100 suites / 1,523 pruebas / 0 fallos; InboxConversations 40/40; InboxUi 20/20. Pages run 43678751430 SUCCESS.
+- No se modificaron deployments, ScriptProperties ni datos productivos.
+
+AUD-2026-11-15-35 — VALIDACIÓN DE SESIÓN DUPLICADA EN FEEDBACK/INBOX
+Severidad: Baja (lectura y touch de sesión repetidos dentro de una misma petición).
+Estado: CORREGIDO EN FEEDBACK/INBOX; optimización global pendiente.
+- Hallazgo: el dispatcher FEEDBACK ya autenticaba y autorizaba al actor; los handlers Inbox volvían a ejecutar assertFeedbackSession, duplicando lectura de ActiveSessions/Users y actualización de LastActivityAt.
+- Corrección: el dispatcher adjunta el actor verificado en __feedbackActor después de expandir el payload; inboxConversationActor_ reutiliza ese objeto y conserva fallback para invocaciones internas aisladas. El campo aportado por el navegador se sobrescribe en el servidor.
+- CI Node.js 22 run 43678752084 SUCCESS; 100 suites / 1,523 pruebas / 0 fallos. Pages run 43678751430 SUCCESS.
+- Persisten lecturas completas de sesión en los helpers de otros servicios. No se retira la comprobación de token por solicitud ni la revocación inmediata; continuar la optimización sin introducir caché no invalidable.
