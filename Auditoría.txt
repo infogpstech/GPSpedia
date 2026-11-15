@@ -806,3 +806,15 @@ ADENDA AUD-2026-11-15-42 — VALIDACIÓN DE CORRECCIÓN INDEXEDDB
 - La prueba integrada detectó que la promesa dbPromise se limpiaba también al abrir correctamente la base. Se corrigió para conservar la conexión hasta versionchange y evitar aperturas repetidas. El timeout pasó de 5 a 10 segundos y el backoff de 15 segundos se activa tras error/bloqueo.
 - La suite IndexedDB fue integrada al runner. Se corrigieron fallos iniciales de su harness y se repitió CI hasta resultado satisfactorio.
 - Estado: COMPLETADA localmente con validación CI. No se cambió el esquema ni se borraron datos.
+
+
+================================================================================
+2026-11-15 — HALLAZGO: FALLO DE PERSISTENCIA PODÍA INVALIDAR CATÁLOGO EN MEMORIA
+- Ubicación: JS/Frontend/auth.js, loadInitialData(), persistencia final de snapshot/cursor.
+- Evidencia: la rama de catálogo inicial procesaba la instantánea remota en memoria, pero un rechazo de offline.saveCatalog()/saveCatalogWithCursor() se propagaba al catch general. Como catalogLoaded aún era false, el fallback local podía fallar por la misma indisponibilidad de IndexedDB y terminar vaciando catalogData.
+- Impacto: un fallo de almacenamiento local impedía utilizar datos válidos ya recibidos por red.
+- Severidad: media; afecta disponibilidad del catálogo cuando IndexedDB no abre, sin evidencia de corrupción o pérdida de datos remotos.
+- Corrección: persistencia best-effort; conservar la instantánea válida en memoria y registrar el fallo de caché sin convertirlo en fallo de carga remota.
+- Regresión: CatalogStartupIntegrity.mjs simula timeout de persistencia y comprueba conservación de datos y estado ready.
+- Límite: esta corrección no repara la causa raíz del timeout de apertura IndexedDB ni la autorización del Coordinator; ambos requieren diagnóstico Beta separado.
+================================================================================

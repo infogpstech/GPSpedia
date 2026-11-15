@@ -41,8 +41,16 @@ function createHarness(options = {}) {
             return value === undefined ? null : value;
         },
         async getCatalogSyncState() { return { snapshot: await this.getCatalog(), cursor: options.cacheCursor === undefined ? null : options.cacheCursor }; },
-        async saveCatalog(value) { saveCalls++; savedCursor = null; return value; },
-        async saveCatalogWithCursor(value, cursor) { saveCalls++; savedCursor = cursor; return { saved: true, cursor }; },
+        async saveCatalog(value) {
+            saveCalls++; savedCursor = null;
+            if (options.failCatalogPersistence) throw new Error('IndexedDB initialization timed out');
+            return value;
+        },
+        async saveCatalogWithCursor(value, cursor) {
+            saveCalls++; savedCursor = cursor;
+            if (options.failCatalogPersistence) throw new Error('IndexedDB initialization timed out');
+            return { saved: true, cursor };
+        },
         async saveCatalogCursor(cursor) { cursorWrites++; savedCursor = cursor; return { saved: true, cursor }; },
         applyCatalogChangesToSnapshot(previous, changes) {
             const cortes = previous.cortes.slice();
@@ -139,6 +147,16 @@ await test('procesa respuesta de red válida y confirma ready después de actual
     assert.deepEqual(h.state.catalogData.sortedCategories, ['pickup']);
     assert.equal(h.saveCalls, 1);
     assert.equal(h.errors.length, 0);
+});
+await test('mantiene visible el catálogo remoto cuando IndexedDB falla al persistirlo', async () => {
+    const valid = snapshot([{ id: 'C-LOCAL-FAIL', marca: 'Honda', categoria: 'pickup' }]);
+    const h = createHarness({ networkData: valid, failCatalogPersistence: true });
+    const result = await h.load();
+    assert.equal(result, true);
+    assert.equal(h.state.catalogLoadStatus, 'ready');
+    assert.equal(h.state.catalogData.cortes[0].id, 'C-LOCAL-FAIL');
+    assert.equal(h.errors.length, 0);
+    assert.equal(h.warnings.some(entry => String(entry[0]).includes('no pudo persistirse en IndexedDB')), true);
 });
 await test('acepta catálogo vacío válido desde red como ready, no como error', async () => {
     const h = createHarness({ networkData: snapshot([]) });

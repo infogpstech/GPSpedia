@@ -555,11 +555,16 @@ export async function loadInitialData(forceRefresh = false, options = {}) {
         }
         setPysDataCursor(cursorToPersist);
 
-        // El cursor se confirma en la misma transacción que el snapshot ya aplicado.
-        if (Number.isSafeInteger(cursorToPersist)) {
-            await offline.saveCatalogWithCursor(snapshotToApply, cursorToPersist);
-        } else {
-            await offline.saveCatalog(snapshotToApply);
+        // La caché local es secundaria: una indisponibilidad de IndexedDB no debe
+        // descartar el catálogo remoto que ya se procesó correctamente en memoria.
+        try {
+            if (Number.isSafeInteger(cursorToPersist)) {
+                await offline.saveCatalogWithCursor(snapshotToApply, cursorToPersist);
+            } else {
+                await offline.saveCatalog(snapshotToApply);
+            }
+        } catch (storageError) {
+            console.warn("El catálogo se actualizó en memoria, pero no pudo persistirse en IndexedDB:", storageError);
         }
         if (!isCurrentLoad()) return;
         markCatalogSync_();

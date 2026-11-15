@@ -681,3 +681,22 @@ No quedan tareas locales independientes de Inbox dentro del alcance autorizado. 
 - No se ejecutó migración en Spreadsheet real ni se desplegaron servicios Apps Script. Las validaciones de deployment, referencias reales y ejecución de lotes quedan **PENDIENTES DE BETA** en copia aislada. El protocolo P2 en `lista_beta_parte2.txt` ya inicia con preflight obligatorio de árbol limpio y sincronización fast-forward.
 - Siguiente acción: al autorizar entorno Beta, sincronizar la rama mediante el preflight, verificar backup de la copia, ejecutar auditoría y dry-run; revisar cada patrón excluido y referencias antes de confirmar lotes. No tocar producción.
 
+
+---
+
+# Continuidad — resiliencia del catálogo ante fallo de persistencia IndexedDB (2026-11-15)
+
+**Rama:** `GPSpedia2.2.5_work`  
+**Commit padre verificado:** `d93bef3ff90969173c879b59ab968c3337db04f8`
+
+## Hallazgo nuevo a partir de consola Beta
+- El arranque vuelve a mostrar `IndexedDB initialization timed out` al abrir `GPSpedia_DB`; por eso fallan lecturas de catálogo, historial y elementos vistos. El timeout local de 3 segundos en `auth.js` ocurre antes del timeout de apertura de IndexedDB y no constituye por sí solo otro fallo.
+- Se confirma un defecto adicional del cliente: si la descarga remota devuelve una instantánea válida pero falla `saveCatalog`/`saveCatalogWithCursor`, el error se propagaba al bloque general y podía limpiar `catalogData` aunque ya se hubiera procesado correctamente en memoria.
+- Corrección local: la persistencia del snapshot/cursor pasa a ser best-effort. Un error de IndexedDB se registra, pero no invalida ni borra el catálogo remoto que ya está en memoria. La disponibilidad de la caché se recuperará en siguientes intentos; no se borra ni recrea la base.
+
+## Validación
+- Añadida regresión a `CatalogStartupIntegrity.mjs` para simular timeout al persistir y comprobar que el catálogo remoto sigue visible, el estado de carga no pasa a error y no se muestra error global.
+- Pendiente ejecutar GitHub Actions tras publicar este cambio; no se declara PASS antes del resultado.
+- La causa ambiental exacta de la apertura IndexedDB que queda pendiente requiere inspección del navegador Beta (almacenamiento del sitio, pestañas/conexiones antiguas, eventos de apertura y disponibilidad de IndexedDB). No ejecutar `deleteDatabase`, limpiar almacenamiento ni borrar `adminLocalState`.
+- El rechazo `Servicio no autorizado para el coordinador compartido` permanece separado: cotejar en privado deployment y ScriptProperties de FEEDBACK/Coordinator en Beta. No se debilita la autenticación ni se publican secretos.
+- No se desplegaron Apps Script ni se modificaron ScriptProperties, endpoints, Spreadsheet, Drive o datos productivos.

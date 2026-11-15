@@ -29,6 +29,7 @@ Simplificar la autenticación sin debilitar autorización; modernizar Inbox; end
 | GP-RBAC-02 | Habilitar y validar las funciones de Inbox para usuarios técnicos | CONTRATOS LOCALES COMPLETADOS; CONFIGURACIÓN FEEDBACK/COORDINATOR BETA PENDIENTE |
 | GP-INBOX-04B/04C/04D | Estado privado, tickets de soporte, RBAC, accesibilidad y regresión Inbox | BACKEND Y CONTRATOS LOCALES COMPLETADOS; UI DE ACCIONES/HISTORIAL PROPIO DIFERIDA; BETA PENDIENTE |
 | GP-CAT-01 | Catálogo cache-first con feed incremental, deltas y sincronización silenciosa | IMPLEMENTACIÓN LOCAL COMPLETADA; VALIDACIÓN MULTIUSUARIO/DISPOSITIVOS BETA PENDIENTE |
+| GP-CAT-01-R | Mantener el catálogo remoto disponible cuando falla la persistencia local IndexedDB | CORRECCIÓN LOCAL IMPLEMENTADA; CI PENDIENTE |
 | GP-PWA-01/02 | Actualización nativa y segundo plano de recursos PWA | IMPLEMENTACIÓN LOCAL COMPLETADA; VALIDACIÓN EN PWA/DISPOSITIVOS BETA PENDIENTE; SIN CONTROL MANUAL DE RECARGA |
 
 ## Hallazgos preliminares confirmados en código

@@ -572,3 +572,13 @@
 - CI Node.js 22 run 43765191870, HEAD c982ade64442bcc35686d5a22207dd8c25153ee0: SUCCESS; 103 suites / 1,604 pruebas / 0 fallos. IndexedDBTransactions 45/45; SessionStartupNavigation 17/17; sintaxis PASS.
 - La integración de IndexedDB en el runner permitió descubrir y corregir defectos en su fixture/expectativas y la limpieza prematura de dbPromise. Las ejecuciones posteriores se repitieron hasta PASS.
 - Pages run 43765191755: build/reporte PASS; deploy en progreso al registrar esta nota. Coordinator FEEDBACK sigue pendiente de cotejo de ScriptProperties en Beta. Sin cambios de datos ni despliegues Apps Script.
+
+
+================================================================================
+2026-11-15 — RESILIENCIA DE CARGA DEL CATÁLOGO ANTE FALLO DE INDEXEDDB
+- JS/Frontend/auth.js: la escritura de snapshot/cursor en IndexedDB se trata como persistencia secundaria; si falla después de procesar una instantánea remota válida, se conserva el catálogo en memoria y no se convierte la carga en error ni se vacía la interfaz.
+- JS/Tests/CatalogStartupIntegrity.mjs: regresión para timeout de persistencia y conservación del catálogo remoto en memoria.
+- La apertura de IndexedDB sigue presentando timeout en el navegador reportado; su causa ambiental queda pendiente de diagnóstico Beta. No se borra la base ni sus almacenes.
+- El error de autorización FEEDBACK/Coordinator sigue siendo una dependencia independiente de configuración Beta.
+- No se modificaron deployments, ScriptProperties, endpoints ni datos externos.
+================================================================================
