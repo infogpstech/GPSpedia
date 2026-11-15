@@ -109,6 +109,15 @@ test("alta ADMIN de Logo publica upsert exacto tras verificar la fila persistida
     assert.match(adminSource,/catalogAction === "addLogo"[\s\S]*?buildLogoCatalogChange_\(response\.logoId, response\.logoUrl, payload && payload\.nombreMarca\)[\s\S]*?publishSharedCatalogChange_\("ADMIN", catalogAction, change\)/);
     assert.match(adminSource,/publishSharedCatalogChange_\("ADMIN", catalogAction, \{ operation: "reset" \}\)/);
 });
+test("WRITE publica upsert exacto de Cortes tras releer fila y conserva reset para migración masiva", () => {
+    assert.ok(writeSource.includes("function buildCortesCatalogChange_(reference)"));
+    assert.ok(writeSource.includes("function publishCortesCatalogChange_(action, reference)"));
+    assert.ok(writeSource.includes('collection: "cortes", recordId: wanted, operation: "upsert"'));
+    assert.ok(writeSource.includes('["addOrUpdateCut", "addSupplementaryInfo", "addVinToVehicle"].includes(action)'));
+    assert.ok(writeSource.includes('publishCortesCatalogChange_(action, vehicleId)'));
+    assert.ok(writeSource.includes('publishSharedCatalogChange_("WRITE", action, { operation: "reset" })'));
+    assert.ok(writeSource.includes("getScriptLock()") && writeSource.includes("waitLock(15000)"));
+});
 test("mutaciones PyS publican upsert exacto tras verificar ID y fila bajo lock", () => {
     assert.ok(coordinatorSource.includes('const CATALOG_CHANGE_COLLECTIONS_ = new Set(["cortes", "pys"'));
     assert.ok(feedbackSource.includes("function buildPysCatalogChange_(reference)"));
@@ -125,4 +134,4 @@ test("WRITE y FEEDBACK publican reset solo después de mutaciones confirmadas", 
     assert.match(adminSource,/catalogWriters\.includes\(catalogAction\)[\s\S]*?publishSharedCatalogChange_\("ADMIN", catalogAction, \{ operation: "reset" \}\)/);
     assert.match(adminSource,/finalizeAdminAuditEvent_\(auditEvent[\s\S]*?publishSharedCatalogChange_/);
 });
-console.log("CatalogChangeFeed: " + passed + "/17 PASS");
+console.log("CatalogChangeFeed: " + passed + "/18 PASS");

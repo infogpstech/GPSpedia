@@ -203,6 +203,20 @@ async function runCatalogSnapshotSyncTests() {
         assert.equal(applyCatalogChangesToSnapshot(snapshot(), [{ revision: 1, collection: '*', operation: 'reset' }]).resetRequired, true);
         assert.equal(applyCatalogChangesToSnapshot(snapshot(), [{ revision: 1, collection: 'unknown', recordId: 'X-1', operation: 'upsert', snapshot: { id: 'X-1' } }]).resetRequired, true);
     });
+    test('recalcula categoryCounts y sortedCategories al aplicar upsert/delete de Cortes', () => {
+        const before = snapshot({
+            cortes: [{ id: 'C-1', categoria: 'Pickup' }, { id: 'C-2', categoria: 'Sedan' }],
+            categoryCounts: { Pickup: 1, Sedan: 1 },
+            sortedCategories: ['Pickup', 'Sedan']
+        });
+        const result = applyCatalogChangesToSnapshot(before, [
+            { revision: 1, collection: 'cortes', recordId: 'C-1', operation: 'upsert', snapshot: { id: 'C-1', categoria: 'Sedan' } },
+            { revision: 2, collection: 'cortes', recordId: 'C-2', operation: 'delete' }
+        ]);
+        assert.equal(result.resetRequired, false);
+        assert.deepEqual(result.snapshot.categoryCounts, { Sedan: 1 });
+        assert.deepEqual(result.snapshot.sortedCategories, ['Sedan']);
+    });
     test('ignora eventos PyS en el snapshot principal sin solicitar descarga completa', () => {
         const before = snapshot();
         const result = applyCatalogChangesToSnapshot(before, [
@@ -260,8 +274,8 @@ async function runCatalogSnapshotSyncTests() {
         assert.equal(saved.cursor, null);
     });
 
-    console.log(`CatalogSnapshotSync: ${passed}/28 PASS`);
-    return { passed, total: 28 };
+    console.log(`CatalogSnapshotSync: ${passed}/29 PASS`);
+    return { passed, total: 29 };
 }
 
 try {

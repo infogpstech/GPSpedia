@@ -1174,6 +1174,14 @@ export function applyCatalogChangesToSnapshot(previous, changes) {
     }
     const snapshot = { ...previous };
     indexes.forEach((index, collection) => { snapshot[collection] = Array.from(index.values()); });
+    if (indexes.has("cortes")) {
+        const categoryCounts = {};
+        snapshot.cortes.forEach(item => {
+            if (item && item.categoria) categoryCounts[item.categoria] = (categoryCounts[item.categoria] || 0) + 1;
+        });
+        snapshot.categoryCounts = categoryCounts;
+        snapshot.sortedCategories = Object.keys(categoryCounts).sort((a, b) => categoryCounts[b] - categoryCounts[a]);
+    }
     if (!isCompleteCatalogSnapshot(snapshot)) throw new Error('El delta produjo un catálogo inválido.');
     return { resetRequired: false, snapshot };
 }
