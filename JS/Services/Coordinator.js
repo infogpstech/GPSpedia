@@ -3,7 +3,7 @@
 // No accede a Spreadsheet ni Drive. El estado de leases vive en ScriptProperties.
 // ============================================================================
 
-const SHARED_MUTATION_COORDINATOR_VERSION = "1.2.0";
+const SHARED_MUTATION_COORDINATOR_VERSION = "1.3.0";
 const SHARED_MUTATION_LEASES_PROPERTY = "GPSpedia_SHARED_MUTATION_LEASES";
 const SHARED_MUTATION_LEASE_TTL_MS = 45 * 60 * 1000;
 const SHARED_MUTATION_DRAIN_RESERVATION_TTL_MS = 60 * 1000;
@@ -15,6 +15,11 @@ const CATALOG_CHANGE_EVENT_PREFIX_ = "GPSpedia_CATALOG_CHANGE_EVENT_";
 const CATALOG_CHANGE_MAX_EVENTS_ = 100;
 const CATALOG_CHANGE_MAX_EVENT_LENGTH_ = 4000;
 const CATALOG_CHANGE_COLLECTIONS_ = new Set(["cortes", "pys", "tutoriales", "logos", "relay"]);
+const SHARED_AUTH_CONTEXT_PREFIX_ = "GPSpedia_AUTH_CONTEXT_V1_";
+const SHARED_AUTH_CONTEXT_MAX_LENGTH_ = 8000;
+const SHARED_AUTH_IDLE_MONTHS_ = 1;
+const SHARED_AUTH_ABSOLUTE_MONTHS_ = 3;
+const SHARED_AUTH_TOUCH_INTERVAL_MS_ = 5 * 60 * 1000;
 const CATALOG_CHANGE_ALLOWED_WRITERS_ = Object.freeze({
     WRITE: new Set(["addOrUpdateCut","addSupplementaryInfo","addVinToVehicle","freezeCortesIds"]),
     FEEDBACK: new Set(["recordLike","suggestYear","addProblem","addSolution","addPrevention","addVehicleToProblem","removeVehicleFromProblem","updatePysItem","addTutorial","updateTutorialItem","approveVideo","rejectVideo"]),
@@ -321,6 +326,159 @@ function createSharedMutationCoordinator_(dependencies) {
         });
     }
 
+
+    function addUtcMonths_(timestamp, months) {
+        const source = new Date(Number(timestamp));
+        if (!Number.isFinite(source.getTime())) return NaN;
+        const day = source.getUTCDate();
+        source.setUTCDate(1);
+        source.setUTCMonth(source.getUTCMonth() + Number(months));
+        const lastDay = new Date(Date.UTC(source.getUTCFullYear(), source.getUTCMonth() + 1, 0)).getUTCDate();
+        source.setUTCDate(Math.min(day, lastDay));
+        return source.getTime();
+    }
+
+    function authContextKey_(userId) {
+        return SHARED_AUTH_CONTEXT_PREFIX_ + encodeURIComponent(String(userId));
+    }
+
+    function readAuthContext_(userId) {
+        const raw = properties.getProperty(authContextKey_(userId));
+        if (!raw) return null;
+        let context;
+        try { context = JSON.parse(raw); }
+        catch (error) { throw new Error("El contexto compartido de sesión está dañado; el acceso permanece denegado."); }
+        if (!context || typeof context !== "object" || Array.isArray(context) ||
+            context.schemaVersion !== 1 || context.userId !== String(userId) ||
+            !Number.isSafeInteger(context.epoch) || context.epoch < 1 ||
+            !Array.isArray(context.sessions) || context.sessions.length > 5) {
+            throw new Error("El contexto compartido de sesión tiene un esquema inválido; el acceso permanece denegado.");
+        }
+        context.sessions.forEach(session => {
+            if (!session || typeof session.token !== "string" || session.token.length < 16 || session.token.length > 256 ||
+                typeof session.role !== "string" ||
+                !["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"].includes(session.role) ||
+                typeof session.fullName !== "string" || session.fullName.length > 120 ||
+                !Number.isFinite(session.createdAt) || !Number.isFinite(session.lastActivityAt) ||
+                session.createdAt <= 0 || session.lastActivityAt < session.createdAt) {
+                throw new Error("El contexto compartido contiene una sesión inválida; el acceso permanece denegado.");
+            }
+        });
+        return context;
+    }
+
+    function saveAuthContext_(context) {
+        const serialized = JSON.stringify(context);
+        if (serialized.length > SHARED_AUTH_CONTEXT_MAX_LENGTH_) {
+            throw new Error("El contexto compartido de sesión superó el tamaño permitido; no se concedió acceso.");
+        }
+        properties.setProperty(authContextKey_(context.userId), serialized);
+    }
+
+    function registerSession_(service, operation, payload) {
+        if (service !== "AUTH" || operation !== "registerSession") {
+            throw new Error("Solo AUTH puede registrar contextos de sesión.");
+        }
+        const userId = String(payload.userId || "").trim();
+        const token = String(payload.sessionToken || "");
+        const role = String(payload.role || "").trim().toLowerCase();
+        const fullName = String(payload.fullName || "");
+        const createdAt = Number(payload.createdAt);
+        const lastActivityAt = Number(payload.lastActivityAt);
+        if (!userId || userId.length > 128 || token.length < 16 || token.length > 256 ||
+            !["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"].includes(role) ||
+            fullName.length > 120 || !Number.isFinite(createdAt) || !Number.isFinite(lastActivityAt) ||
+            createdAt <= 0 || lastActivityAt < createdAt) {
+            throw new Error("Los datos del contexto de sesión no son válidos.");
+        }
+        return withCoordinatorLock_(() => {
+            const currentTime = now();
+            const context = readAuthContext_(userId) || {
+                schemaVersion: 1, userId: userId, epoch: 1, sessions: []
+            };
+            context.sessions = context.sessions.filter(session =>
+                currentTime < addUtcMonths_(session.createdAt, SHARED_AUTH_ABSOLUTE_MONTHS_) &&
+                currentTime < addUtcMonths_(session.lastActivityAt, SHARED_AUTH_IDLE_MONTHS_));
+            const existing = context.sessions.filter(session => constantTimeEquals_(session.token, token));
+            if (existing.length > 1) throw new Error("El token aparece duplicado en el contexto compartido.");
+            if (existing.length === 1) {
+                const session = existing[0];
+                if (session.role !== role || session.fullName !== fullName || session.createdAt !== createdAt) {
+                    throw new Error("El contexto existente no coincide con la sesión; inicia sesión nuevamente.");
+                }
+                session.lastActivityAt = Math.max(session.lastActivityAt, lastActivityAt);
+                saveAuthContext_(context);
+                return { status: "success", registered: true, recovered: true, epoch: context.epoch };
+            }
+            if (context.sessions.length >= 5) {
+                throw new Error("El contexto compartido alcanzó el límite seguro de sesiones activas.");
+            }
+            context.sessions.push({ token, role, fullName, createdAt, lastActivityAt });
+            saveAuthContext_(context);
+            return { status: "success", registered: true, recovered: false, epoch: context.epoch };
+        });
+    }
+
+    function revokeSession_(service, operation, payload) {
+        if (service !== "AUTH" || operation !== "revokeSession") {
+            throw new Error("Solo AUTH puede revocar una sesión individual.");
+        }
+        const userId = String(payload.userId || "").trim();
+        const token = String(payload.sessionToken || "");
+        if (!userId || !token) throw new Error("La revocación requiere userId y sessionToken.");
+        return withCoordinatorLock_(() => {
+            const context = readAuthContext_(userId);
+            if (!context) return { status: "success", revoked: false, alreadyRevoked: true };
+            const previous = context.sessions.length;
+            context.sessions = context.sessions.filter(session => !constantTimeEquals_(session.token, token));
+            saveAuthContext_(context);
+            return { status: "success", revoked: context.sessions.length !== previous, alreadyRevoked: context.sessions.length === previous };
+        });
+    }
+
+    function revokeUserSessions_(service, operation, payload) {
+        if (service !== "AUTH" || operation !== "revokeUserSessions") {
+            throw new Error("Solo AUTH puede revocar todas las sesiones de una cuenta.");
+        }
+        const userId = String(payload.userId || "").trim();
+        if (!userId || userId.length > 128) throw new Error("La revocación requiere un userId válido.");
+        return withCoordinatorLock_(() => {
+            const context = readAuthContext_(userId) || {
+                schemaVersion: 1, userId: userId, epoch: 0, sessions: []
+            };
+            context.epoch += 1;
+            context.sessions = [];
+            saveAuthContext_(context);
+            return { status: "success", revoked: true, epoch: context.epoch };
+        });
+    }
+
+    function authorizeSession_(userId, token, currentTime) {
+        const context = readAuthContext_(userId);
+        if (!context) throw new Error("La sesión no está registrada en el contexto compartido; inicia sesión nuevamente.");
+        const matches = context.sessions.filter(session => constantTimeEquals_(session.token, token));
+        if (matches.length !== 1) throw new Error("La sesión fue revocada, no existe o no es única.");
+        const session = matches[0];
+        const absoluteExpiry = addUtcMonths_(session.createdAt, SHARED_AUTH_ABSOLUTE_MONTHS_);
+        const idleExpiry = addUtcMonths_(session.lastActivityAt, SHARED_AUTH_IDLE_MONTHS_);
+        if (!Number.isFinite(absoluteExpiry) || !Number.isFinite(idleExpiry) ||
+            currentTime >= absoluteExpiry || currentTime >= idleExpiry) {
+            context.sessions = context.sessions.filter(item => item !== session);
+            saveAuthContext_(context);
+            throw new Error("La sesión expiró; inicia sesión nuevamente.");
+        }
+        if (currentTime - session.lastActivityAt >= SHARED_AUTH_TOUCH_INTERVAL_MS_) {
+            session.lastActivityAt = currentTime;
+            saveAuthContext_(context);
+        }
+        return {
+            userId: context.userId,
+            role: session.role,
+            fullName: session.fullName,
+            epoch: context.epoch
+        };
+    }
+
     function acquire_(service, operation, payload) {
         const policy = coordinatorPolicy_(service, operation);
         const maintenanceRequest = policy.maintenance === true;
@@ -337,6 +495,10 @@ function createSharedMutationCoordinator_(dependencies) {
         while (true) {
             const outcome = withCoordinatorLock_(() => {
                 const currentTime = now();
+                const sessionUserId = String(payload.userId || "").trim();
+                const sessionToken = String(payload.sessionToken || "");
+                if (Boolean(sessionUserId) !== Boolean(sessionToken)) throw new Error("La identidad de sesión está incompleta.");
+                const actor = service !== "AUTH" && sessionToken ? authorizeSession_(sessionUserId, sessionToken, currentTime) : null;
                 const current = readLeases_();
                 const pruned = pruneExpiredLeases_(current, currentTime);
                 const leases = pruned.leases;
@@ -356,7 +518,7 @@ function createSharedMutationCoordinator_(dependencies) {
                                 existing.phase = "active";
                                 existing.expiresAt = currentTime + SHARED_MUTATION_LEASE_TTL_MS;
                                 saveLeases_(leases);
-                                return { kind: "success", token: existing.token, expiresAt: existing.expiresAt };
+                                return { kind: "success", token: existing.token, expiresAt: existing.expiresAt, actor: existing.actor || actor };
                             }
                             if (pruned.changed) saveLeases_(leases);
                             return busyOutcome_(active, null, true);
@@ -365,7 +527,7 @@ function createSharedMutationCoordinator_(dependencies) {
                         throw new Error("La lease de mantenimiento aún no está activa.");
                     }
                     if (pruned.changed) saveLeases_(leases);
-                    return { kind: "success", token: existing.token, expiresAt: existing.expiresAt };
+                    return { kind: "success", token: existing.token, expiresAt: existing.expiresAt, actor: existing.actor || actor };
                 }
 
                 if (maintenanceRequest) {
@@ -417,6 +579,7 @@ function createSharedMutationCoordinator_(dependencies) {
                     sharedWriteResources: policy.sharedWriteResources,
                     maintenance: policy.maintenance,
                     nestedActions: policy.nestedActions,
+                    actor: actor,
                     phase: "active",
                     createdAt: currentTime,
                     expiresAt: currentTime + SHARED_MUTATION_LEASE_TTL_MS
@@ -427,7 +590,7 @@ function createSharedMutationCoordinator_(dependencies) {
             });
 
             if (outcome.kind === "success") {
-                return { status: "success", token: outcome.token, expiresAt: outcome.expiresAt };
+                return { status: "success", token: outcome.token, expiresAt: outcome.expiresAt, actor: outcome.actor || null };
             }
             if (now() >= deadline) {
                 if (maintenanceRequest) {
@@ -500,7 +663,8 @@ function createSharedMutationCoordinator_(dependencies) {
                 valid: true,
                 ownerService: lease.service,
                 ownerOperation: lease.operation,
-                expiresAt: lease.expiresAt
+                expiresAt: lease.expiresAt,
+                actor: lease.actor || null
             };
         });
     }
@@ -605,6 +769,9 @@ function createSharedMutationCoordinator_(dependencies) {
         if (action === "validate") return validate_(service, operation, payload);
         if (action === "publishCatalogChange") return publishCatalogChange_(service, operation, payload);
         if (action === "getCatalogChanges") return getCatalogChanges_(service, operation, payload);
+        if (action === "registerSession") return registerSession_(service, operation, payload);
+        if (action === "revokeSession") return revokeSession_(service, operation, payload);
+        if (action === "revokeUserSessions") return revokeUserSessions_(service, operation, payload);
         throw new Error("Acción interna desconocida para el coordinador.");
     }
 
