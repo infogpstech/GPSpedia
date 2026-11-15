@@ -504,3 +504,11 @@
 - Se actualizaron las políticas de recursos y las regresiones `SharedMutationCoordinator.js` y `SessionActivityCoordination.mjs`; se sincronizó el espejo `JS/Tests/Auth.js`.
 - Se actualizaron `Services/COORDINATOR_SETUP.md`, `README.md`, `Tareas_Activas.md`, `checkpoint.md` y `Auditoría.txt`.
 - Validación pendiente: no se ejecutaron Node.js/CLI ni CI integral en esta sesión; pruebas agregadas aún no equivalen a PASS. Beta y deployments de Apps Script no ejecutados. No hubo cambios en datos productivos ni en la rama base.
+
+2026-11-15 | GPSpedia2.2.5_work | P1 sesión central, contratos y hashes AUTH/USERS
+- Corregidos los harness/fixtures de AUTH, USERS y ADMIN para que sus pruebas aisladas representen las dependencias compartidas reales; sincronizado JS/Tests/users.js con JS/Services/users.js.
+- Alineados los contratos de Inbox y aceptación de términos con la política SESSION_CONTEXTS; acceptTerms no escribe ACTIVE_SESSIONS ni actualiza actividad por solicitud.
+- USERS ahora crea hashes PBKDF2-HMAC-SHA256 con salt aleatorio y 12,000 iteraciones, compatible con AUTH. Se mantiene lectura de formatos SHA-256 y plaintext heredados; no se ejecutó migración masiva ni se modificaron credenciales reales.
+- Añadida prueba cruzada AUTH/USERS en PasswordHashMigration.mjs.
+- CI Node.js 22 run 43752042270: SUCCESS; 100 suites, 1,535 pruebas, 0 fallos; node --check PASS. GitHub Pages run 43752040706: SUCCESS.
+- Sin despliegues Apps Script ni modificaciones a Sheets, Drive, ScriptProperties o datos productivos. Validaciones remotas de sesión/credenciales quedan pendientes de Beta.
