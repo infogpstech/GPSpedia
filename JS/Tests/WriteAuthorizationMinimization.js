@@ -19,21 +19,23 @@ function runWriteAuthorizationMinimizationTests(sources) {
   }
   throw Error("Función incompleta: "+name);
  }
- run("handleAddSupplementaryInfo rechaza sesión antes de adquirir lock o mutar",()=>{
-  const fn=new Function("getAuthenticatedCollaborator","LockService","handleAddSupplementaryInfoLocked",
+ run("handleAddSupplementaryInfo adquiere lock y delega autenticación antes de mutar",()=>{
+  let acquired=0,released=0,delegated=false,rejected=false;
+  const fn=new Function("LockService","handleAddSupplementaryInfoLocked",
    extract(write,"handleAddSupplementaryInfo")+";return handleAddSupplementaryInfo;")(
-   ()=>{throw Error("unauthorized");},{getScriptLock:()=>({waitLock(){throw Error("No debe adquirir lock");},releaseLock(){}})},
-   ()=>{throw Error("No debe ejecutar mutación");});
-  let rejected=false;try{fn({vehicleId:"V1"});}catch(e){rejected=true;}assert(rejected);
+   {getScriptLock:()=>({waitLock(){acquired++;},releaseLock(){released++;}})},
+   ()=>{delegated=true;throw Error("unauthorized");});
+  try{fn({vehicleId:"V1"});}catch(_){rejected=true;}
+  assert(rejected&&delegated&&acquired===1&&released===1);
  });
- run("La mutación suplementaria revalida identidad y rol después del lock",()=>{
+ run("La mutación suplementaria valida una sola vez después de adquirir el lock",()=>{
   const outer=extract(write,"handleAddSupplementaryInfo"),inner=extract(write,"handleAddSupplementaryInfoLocked");
-  assert(outer.indexOf("getAuthenticatedCollaborator(payload")<outer.indexOf("waitLock"));
+  assert(!outer.includes("getAuthenticatedCollaborator("));
+  assert(outer.indexOf("waitLock")<outer.indexOf("handleAddSupplementaryInfoLocked(payload)"));
   assert(outer.includes("finally")&&outer.includes("releaseLock"));
   assert(inner.includes("getAuthenticatedCollaborator(payload, SUPPLEMENTARY_INFO_ALLOWED_ROLES_)"));
   assert(inner.indexOf("getAuthenticatedCollaborator")<inner.indexOf("getSpreadsheet()"));
  });
-
  run("WRITE declara contratos locales idénticos a AUTH para Users y ActiveSessions",()=>{
   assert(write.includes("const COLS_USERS = Object.freeze({")&&write.includes("Privilegios: 4")&&write.includes("Nombre_Completo: 7")&&write.includes("SessionToken: 8"));
   assert(write.includes("const COLS_ACTIVE_SESSIONS = Object.freeze({")&&write.includes("ID_Usuario: 1")&&write.includes("ActiveSessions: 3")&&write.includes("LastActivityAt: 6"));
@@ -46,36 +48,35 @@ function runWriteAuthorizationMinimizationTests(sources) {
   assert(helper.includes("COLS_USERS.Privilegios")&&helper.includes("COLS_USERS.Nombre_Completo"));
   assert(!helper.includes("payload.colaborador"));
  });
- run("allocateVehicleId valida sesión y rol Desarrollador antes y dentro del lock",()=>{
+ run("allocateVehicleId valida sesión y rol Desarrollador una vez dentro del lock",()=>{
   const handler=extract(write,"handleAllocateVehicleId"),auth=extract(write,"assertDeveloperForIdMaintenance");
-  assert(handler.indexOf("assertDeveloperForIdMaintenance(payload)")<handler.indexOf("waitLock"));
+  assert(handler.indexOf("waitLock")<handler.indexOf("assertDeveloperForIdMaintenance(payload)"));
+  assert((handler.match(/assertDeveloperForIdMaintenance\(payload\)/g)||[]).length===1);
   assert(handler.lastIndexOf("assertDeveloperForIdMaintenance(payload)")<handler.indexOf("getNextCortesVehicleIdLocked"));
   assert(handler.includes("finally")&&handler.includes("releaseLock"));
-  assert(auth.includes("getAuthenticatedCollaborator(payload)")&&auth.includes('role !== "desarrollador"'));
-  assert(!auth.includes("payload.role")&&!auth.includes("payload.userRole"));
+  assert(auth.includes('getAuthenticatedCollaborator(payload, ["desarrollador"])'));
+  assert(!auth.includes("getSpreadsheet")&&!auth.includes("payload.role")&&!auth.includes("payload.userRole"));
  });
- run("allocateVehicleId rechaza colaborador ordinario sin incrementar contador",()=>{
+ run("allocateVehicleId rechaza rol ordinario dentro del lock sin incrementar contador",()=>{
   const auth=extract(write,"assertDeveloperForIdMaintenance"),handler=extract(write,"handleAllocateVehicleId");
-  let count=0,role="tecnico",locked=0;
-  const getAuth=()=>true,users={getDataRange:()=>({getValues:()=>[["id","user","password","role"],["U1","tech","",role]]})};
-  const deps={
-   getAuthenticatedCollaborator:getAuth,getSpreadsheet:()=>({getSheetByName:()=>users}),
-   SHEET_NAMES:{USERS:"Users"},COLS_USERS:{ID:1,Privilegios:4}
-  };
-  const check=new Function("deps",Object.keys(deps).map(k=>"const "+k+"=deps."+k+";").join(String.fromCharCode(10))+auth+";return assertDeveloperForIdMaintenance;")(deps);
+  let count=0,locked=0,released=0;
+  const check=new Function("getAuthenticatedCollaborator",auth+";return assertDeveloperForIdMaintenance;")(
+   (payload,roles)=>{if(!roles.includes("desarrollador"))throw Error("política incorrecta");throw Error("Se requiere privilegio Desarrollador.");});
   const fn=new Function("assertDeveloperForIdMaintenance","LockService","getSpreadsheet","SHEET_NAMES","getNextCortesVehicleIdLocked",
-   handler+";return handleAllocateVehicleId;")(check,{getScriptLock:()=>({waitLock(){locked++;},releaseLock(){locked--;}})},()=>({getSheetByName:()=>({})}),{CORTES:"Cortes"},()=>{count++;return 99;});
-  let rejected=false;try{fn({userId:"U1",sessionToken:"valid",role:"desarrollador"});}catch(_){rejected=true;}
-  assert(rejected&&count===0&&locked===0,"El rol enviado por cliente autorizó el contador.");
+   handler+";return handleAllocateVehicleId;")(check,{getScriptLock:()=>({waitLock(){locked++;},releaseLock(){released++;}})},
+   ()=>({getSheetByName:()=>({})}),{CORTES:"Cortes"},()=>{count++;return 99;});
+  let rejected=false;try{fn({userId:"U1",sessionToken:"valid",role:"Desarrollador"});}catch(e){rejected=/privilegio Desarrollador/.test(e.message);}
+  assert(rejected&&count===0&&locked===1&&released===1);
  });
- run("allocateVehicleId permite solo perfil Desarrollador verificado en Users",()=>{
+ run("allocateVehicleId permite solo rol Desarrollador devuelto por autenticación servidor",()=>{
   const auth=extract(write,"assertDeveloperForIdMaintenance"),handler=extract(write,"handleAllocateVehicleId");
-  const users={getDataRange:()=>({getValues:()=>[["id","user","password","role"],["U1","dev","","Desarrollador"]]})};
-  const deps={getAuthenticatedCollaborator:()=>true,getSpreadsheet:()=>({getSheetByName:()=>users}),SHEET_NAMES:{USERS:"Users"},COLS_USERS:{ID:1,Privilegios:4}};
-  const check=new Function("deps",Object.keys(deps).map(k=>"const "+k+"=deps."+k+";").join(String.fromCharCode(10))+auth+";return assertDeveloperForIdMaintenance;")(deps);
-  let calls=0;const fn=new Function("assertDeveloperForIdMaintenance","LockService","getSpreadsheet","SHEET_NAMES","getNextCortesVehicleIdLocked",handler+";return handleAllocateVehicleId;")(
-   check,{getScriptLock:()=>({waitLock(){},releaseLock(){}})},()=>({getSheetByName:()=>({})}),{CORTES:"Cortes"},()=>{calls++;return 42;});
-  assert(fn({userId:"U1",sessionToken:"valid",role:"tecnico"}).vehicleId===42&&calls===1);
+  const check=new Function("getAuthenticatedCollaborator",auth+";return assertDeveloperForIdMaintenance;")(
+   (payload,roles)=>{if(!roles.includes("desarrollador"))throw Error("Falta política");return "Desarrollador verificado";});
+  let calls=0,locked=0,released=0;
+  const fn=new Function("assertDeveloperForIdMaintenance","LockService","getSpreadsheet","SHEET_NAMES","getNextCortesVehicleIdLocked",
+   handler+";return handleAllocateVehicleId;")(check,{getScriptLock:()=>({waitLock(){locked++;},releaseLock(){released++;}})},
+   ()=>({getSheetByName:()=>({})}),{CORTES:"Cortes"},()=>{calls++;return 42;});
+  assert(fn({userId:"U1",sessionToken:"valid",role:"Tecnico"}).vehicleId===42&&calls===1&&locked===1&&released===1);
  });
  run("checkOperation está autenticado y no devuelve rowData",()=>{
   const fn=extract(write,"handleCheckOperation");
