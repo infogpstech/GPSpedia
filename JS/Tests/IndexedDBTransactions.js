@@ -646,6 +646,27 @@ async function runIndexedDBTransactionTests() {
         }
     });
 
+    await testAsync('el catálogo sigue disponible desde memoria/CacheStorage sin errores de consola si IndexedDB no abre', async () => {
+        const api = await freshOffline(createIndexedDBHarness({ openError: true }), 'catalog-cache-unavailable-silent');
+        const originalWarn = console.warn;
+        const originalError = console.error;
+        let warnings = 0;
+        let errors = 0;
+        console.warn = () => { warnings++; };
+        console.error = () => { errors++; };
+        try {
+            assert.deepEqual(await api.getCatalogSyncState(), { snapshot: null, cursor: null });
+            assert.equal(await api.getCatalog(), null);
+            const snapshot = { cortes: [], tutoriales: [], relay: [], logos: [] };
+            assert.deepEqual(await api.saveCatalog(snapshot), { saved: false, storage: 'indexeddb' });
+            assert.equal(warnings, 0);
+            assert.equal(errors, 0);
+        } finally {
+            console.warn = originalWarn;
+            console.error = originalError;
+        }
+    });
+
     console.log(`\nIndexedDB transaction tests: ${passed}/${passed} PASS`);
 }
 

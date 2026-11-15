@@ -20,7 +20,8 @@ const DB_OPEN_RETRY_DELAY_MS = 15000;
  * distinta. Un upgrade bloqueado falla de forma explícita en vez de dejar una
  * promesa pendiente hasta un timeout silencioso.
  */
-export async function initDB() {
+export async function initDB(options = {}) {
+    const silent = options && options.silent === true;
     if (dbPromise) return dbPromise;
     if (Date.now() < dbRetryAfter) return Promise.reject(dbRetryError || new Error('IndexedDB no está disponible temporalmente.'));
 
@@ -39,9 +40,11 @@ export async function initDB() {
             settled = true;
             if (dbPromise === openingPromise) dbPromise = null;
             clearOpenState();
-            dbRetryError = error instanceof Error ? error : new Error('IndexedDB no pudo inicializarse.');
+            dbRetryError = new Error(error && error.message ? error.message : 'IndexedDB no pudo inicializarse.');
+            dbRetryError.code = 'IDB_UNAVAILABLE';
+            if (error && error.name) dbRetryError.name = error.name;
             dbRetryAfter = Date.now() + DB_OPEN_RETRY_DELAY_MS;
-            console.warn('IndexedDB no está disponible temporalmente; se reintentará más adelante:', dbRetryError.message);
+            if (!silent) console.warn('IndexedDB no está disponible temporalmente; se reintentará más adelante:', dbRetryError.message);
             reject(dbRetryError);
         };
 
@@ -55,7 +58,6 @@ export async function initDB() {
             };
 
             request.onblocked = () => {
-                console.warn('IndexedDB upgrade blocked by another open tab.');
                 fail(new Error('La actualización de IndexedDB está bloqueada por otra pestaña. Ciérrala y vuelve a intentar.'));
             };
 
@@ -103,7 +105,7 @@ export async function initDB() {
  */
 async function performOp(storeName, mode, callback, options = {}) {
     try {
-        const database = await initDB();
+        const database = await initDB({ silent: options && options.silent === true });
         if (!database) throw new Error('Could not initialize IndexedDB');
 
         return await new Promise((resolve, reject) => {
@@ -1032,8 +1034,8 @@ export async function saveCatalog(newData) {
             // Un snapshot sin revisión del feed invalida cualquier cursor anterior.
             store.put(null, CATALOG_SYNC_CURSOR_KEY);
             return newData;
-        });
-        if (result === null || result === undefined) throw new Error('IndexedDB no confirmó la escritura del catálogo.');
+        }, { silent: true });
+        if (result === null || result === undefined) return { saved: false, storage: 'indexeddb' };
         newData.cortes.slice(-15).forEach(item => cacheItemImages(item).catch(() => {}));
         return result;
     } catch (error) {
@@ -1043,7 +1045,7 @@ export async function saveCatalog(newData) {
 }
 
 export async function getCatalog() {
-    return performOp('catalog', 'readonly', (store) => store.get('current'));
+    return performOp('catalog', 'readonly', (store) => store.get('current'), { silent: true });
 }
 
 const CATALOG_FALLBACK_CACHE_NAME = 'gpsepedia-catalog-fallback-v1';
@@ -1096,8 +1098,14 @@ export async function saveCatalogFallbackCache(snapshot, cursor = null) {
 
 const CATALOG_SYNC_CURSOR_KEY = 'syncCursor';
 
-function performCatalogSyncTransaction(mode, callback) {
-    return initDB().then(database => new Promise((resolve, reject) => {
+function performCatalogSyncTransaction(mode, callback, options = {}) {
+    const silent = options && options.silent === true;
+    return initDB({ silent }).catch(error => {
+        if (silent && error && error.code === 'IDB_UNAVAILABLE') return null;
+        throw error;
+    }).then(database => {
+        if (!database) return null;
+        return new Promise((resolve, reject) => {
         let transaction;
         let result;
         let failure = null;
@@ -1113,12 +1121,13 @@ function performCatalogSyncTransaction(mode, callback) {
             try { if (transaction) transaction.abort(); } catch (abortError) {}
             reject(error);
         }
-    }));
+        });
+    });
 }
 
 /** Lee snapshot y cursor desde la misma transacción para evitar pares incoherentes. */
 export async function getCatalogSyncState() {
-    return performCatalogSyncTransaction('readonly', (store, transaction) => {
+    const state = await performCatalogSyncTransaction('readonly', (store, transaction) => {
         let snapshot, cursor, completed = 0;
         const result = { snapshot: null, cursor: null };
         const finish = () => {
@@ -1141,7 +1150,8 @@ export async function getCatalogSyncState() {
             try { transaction.abort(); } catch (abortError) {}
         };
         return result;
-    }).then(result => result || { snapshot: null, cursor: null });
+    }, { silent: true });
+    return state || { snapshot: null, cursor: null };
 }
 
 /** Persiste snapshot y cursor en una única transacción; el cursor nunca adelanta al snapshot. */
@@ -1154,7 +1164,8 @@ export async function saveCatalogWithCursor(newData, cursor) {
         store.put(newData, 'current');
         store.put(cursor, CATALOG_SYNC_CURSOR_KEY);
         return { saved: true, cursor };
-    });
+    }, { silent: true });
+    if (!result) return { saved: false, storage: 'indexeddb', cursor };
     newData.cortes.slice(-15).forEach(item => cacheItemImages(item).catch(() => {}));
     return result;
 }
@@ -1162,10 +1173,11 @@ export async function saveCatalogWithCursor(newData, cursor) {
 /** Actualiza solo el cursor cuando una página vacía confirma que no hay cambios. */
 export async function saveCatalogCursor(cursor) {
     if (!Number.isSafeInteger(cursor) || cursor < 0) throw new TypeError('El cursor del catálogo no es válido.');
-    return performCatalogSyncTransaction('readwrite', store => {
+    const result = await performCatalogSyncTransaction('readwrite', store => {
         store.put(cursor, CATALOG_SYNC_CURSOR_KEY);
         return { saved: true, cursor };
-    });
+    }, { silent: true });
+    return result || { saved: false, storage: 'indexeddb', cursor };
 }
 
 /**
