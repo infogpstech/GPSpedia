@@ -605,3 +605,19 @@ No quedan tareas locales independientes de Inbox dentro del alcance autorizado. 
 - Último CI completo validado antes del último ajuste de exclusión: run `43758115537`, HEAD `b9642cc66d250a29f450b53f6a4e7154d4927f2e`, SUCCESS; 102 suites / 1,553 pruebas / 0 fallos. El ajuste de exclusión y su prueba deben quedar validados por el siguiente CI antes de cerrar.
 - No se ejecutó migración real ni despliegue Apps Script. Próximo paso: CI, revisión final de todos los escritores/columnas formula-ID, y luego preparar dry-run en copia Beta. Relay no tiene escritor backend de registros ni formato confirmado: mantener bloqueado.
 
+## Estado de continuidad — cierre local P2 (2026-11-15)
+
+**Este estado actualiza la adenda P2 anterior; prevalecen estos resultados.**
+
+- Repositorio: `infogpstech/GPSpedia`.
+- Rama autorizada: `GPSpedia2.2.5_work`. HEAD de código/documentación validado: `e92ed13473ac2a39a5f20b630590f1f42eee7de4`.
+- Rama base protegida `GPSpedia2.2.5`: HEAD `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin modificaciones.
+- CI Node.js 22 run `43759543652`: SUCCESS; **102 suites / 1,558 pruebas / 0 fallos**. También aprobó la comprobación sintáctica de los módulos modificados.
+- Suites específicas: `IdentifierFormulaMigration` 7/7; `FeedbackFormulaIdAllocator` 5/5; `UserIdGenerator` 6/6; `PasswordHashMigration` 18/18; `LogoIdIntegrity` 11/11; `UsersAtomicMutations` 15/15.
+- El modal Desarrollador permite auditar columnas ID de todas las hojas visibles, simular la conversión y migrar por lotes las fórmulas con generador backend compatible. Conserva los valores y el formato histórico; no renumera.
+- Generadores integrados: Users lee la configuración de prefijo/relleno; FEEDBACK y ADMIN usan el mismo contrato de configuración para sus columnas secuenciales; Cortes y LogosMarca conservan sus asignadores numéricos existentes. Los escritores de FEEDBACK, ADMIN y WRITE ya no copian fórmulas al crear filas.
+- Fórmulas con patrón o escritor no compatible, incluyendo Relay mientras no exista un escritor/backend contract confirmado, quedan excluidas y visibles para revisión. No se generan IDs supuestos.
+- La migración de contraseñas queda accesible desde el modal y conserva autenticación ágil; las contraseñas heredadas se convierten a hash por lotes. No se cambió el flujo de login.
+- No se ejecutó migración en Spreadsheet real ni se desplegaron servicios Apps Script. Las validaciones de deployment, referencias reales y ejecución de lotes quedan **PENDIENTES DE BETA** en copia aislada. El protocolo P2 en `lista_beta_parte2.txt` ya inicia con preflight obligatorio de árbol limpio y sincronización fast-forward.
+- Siguiente acción: al autorizar entorno Beta, sincronizar la rama mediante el preflight, verificar backup de la copia, ejecutar auditoría y dry-run; revisar cada patrón excluido y referencias antes de confirmar lotes. No tocar producción.
+
