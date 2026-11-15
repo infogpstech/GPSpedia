@@ -870,4 +870,4 @@ Las fuentes de servicios JavaScript se centralizan bajo `JS/Services/`. La carpe
 - [x] Reutilizar en `handleUpdateProfile` el índice de fila que `getVerifiedSession` ya obtuvo al validar el usuario dentro del bloqueo.
 - [x] No confiar en un índice enviado por el cliente; el valor se produce exclusivamente en backend.
 - [x] Añadir contrato de regresión para verificar que el handler no vuelve a llamar a `findUniqueUserRow_`.
-- [ ] Confirmar CI integral verde para el commit de este ajuste.
+- [x] Confirmar CI integral verde: Node.js 22 run `43684916807`, 100 suites / 1,525 pruebas / 0 fallos; Pages run `43684916573` SUCCESS.
