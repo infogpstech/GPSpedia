@@ -268,3 +268,13 @@
 - Si el snapshot exacto o el envío fallan, se publica reset dentro de la misma sección serializada.
 - JS/Tests/CatalogChangeFeed.mjs: se amplía el contrato para comprobar adquisición/liberación del lock y orden lectura-publicación.
 - CI Node.js 22 run `43653060997`: SUCCESS; 98 suites / 1,467 pruebas / 0 fallos; CatalogChangeFeed 16/16 PASS.
+
+
+2026-11-14 — GP-CAT: SINCRONIZACIÓN INCREMENTAL DE PROBLEMAS Y SOLUCIONES
+- Services/feedback.js: addProblem, addSolution, addPrevention, addVehicleToProblem, removeVehicleFromProblem y updatePysItem publican upsert de `pys` solo tras confirmar éxito y verificar una fila única por id_problem. La lectura/publicación se serializa bajo ScriptLock; si no se puede confirmar el snapshot, se emite reset seguro.
+- JS/Frontend/pys-data.js: aplica upsert/delete por ID persistente isue-N en la caché separada de PyS; conserva la recuperación mediante getPysData completo ante reset, IDs ausentes/duplicados, evento inválido o caché no disponible.
+- JS/Frontend/offline.js y auth.js: el feed global avanza su cursor sin forzar la descarga del catálogo principal por eventos PyS; los deltas se aplican antes de confirmar el cursor y se notifican a otras pestañas.
+- JS/Tests/CatalogChangeFeed.mjs: 17/17 PASS; CatalogSnapshotSync: 28/28 PASS; PysDataCache: 15/15 PASS.
+- CI Node.js 22 run 43657720605: SUCCESS; sintaxis PASS; 99 suites / 1,484 pruebas / 0 fallos.
+- CI detectó primero expectativas antiguas y una ruta relativa del harness; ambas se corrigieron y la ejecución completa posterior aprobó.
+- No se desplegaron Apps Script ni se modificaron Spreadsheet, Drive, ScriptProperties, ACL o datos productivos. Beta multiusuario/dispositivos sigue pendiente.

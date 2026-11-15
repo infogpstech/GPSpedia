@@ -1584,3 +1584,32 @@ No se desplegaron servicios Apps Script, no se modificaron ScriptProperties, Spr
 - Prueba contractual ampliada: adquisición y liberación de lock, lectura de fila y publicación protegidas.
 - GitHub Actions run `43653060997`: SUCCESS; 98 suites / 1,467 pruebas / 0 fallos; CatalogChangeFeed 16/16 PASS.
 - Siguiente: mantener reset para PyS/Relay hasta disponer de persistencia/cursor y escritores backend identificados; no inventar rutas de escritura ni IDs históricos.
+
+
+## Continuidad — GP-CAT: deltas incrementales de PyS (2026-11-14)
+
+**HEAD de trabajo verificado:** `fa0388dfd4688044c6f7811e906a35cd6c8096ed`.
+
+**Commits de implementación y validación:**
+- `3adfaa802f136996e3951415ecdd0795a8ac5a68` — publicación y consumo incremental de PyS.
+- `2053f13ad834beea4fa3af1dd8de0fba936ddc1d` — contratos de difusión entre pestañas actualizados.
+- `87512cb22437cf31c05802860e788ed2a6c1a303` — suite PyS incorporada al CI.
+- `fa0388dfd4688044c6f7811e906a35cd6c8096ed` — rutas del harness corregidas para ejecución desde la raíz.
+
+### Cambio realizado
+- `Services/feedback.js`: `addProblem`, `addSolution`, `addPrevention`, `addVehicleToProblem`, `removeVehicleFromProblem` y `updatePysItem` publican upsert de `pys` después de confirmar la mutación y releer una fila única por `id_problem`. La lectura y publicación se serializan bajo ScriptLock; si el snapshot no puede verificarse, se emite reset seguro.
+- `JS/Frontend/offline.js`: el consumidor del snapshot principal ignora los eventos `pys` sin forzar una descarga del catálogo general. El cursor global continúa avanzando.
+- `JS/Frontend/pys-data.js`: aplica upsert/delete por ID persistente `isue-N` sobre la caché separada de PyS. Si faltan datos/IDs válidos, hay duplicados, el evento no coincide o llega un reset global, solicita la instantánea completa de PyS.
+- `JS/Frontend/auth.js`: aplica los deltas PyS antes de confirmar el cursor del catálogo y notifica a las demás pestañas para refrescar su caché independiente.
+- No se creó una segunda infraestructura de cursor ni se mezcló PyS con IndexedDB del catálogo principal. No se añadieron controles visibles.
+
+### Validación
+- GitHub Actions run `43657720605`: SUCCESS; Node.js 22; sintaxis PASS; **99 suites / 1,484 pruebas / 0 fallos**.
+- `PysDataCache`: 15/15 PASS; `CatalogChangeFeed`: 17/17 PASS; `CatalogSnapshotSync`: 28/28 PASS; `CatalogStartupIntegrity`: 18/18 PASS; `SessionStartupNavigation`: 16/16 PASS.
+- Se corrigieron dos problemas de pruebas detectados por CI: una expectativa antigua del argumento de difusión y rutas relativas del harness PyS. La ejecución final completa aprobó.
+- GitHub Pages run `43657719742` quedó pendiente de confirmar al momento de este checkpoint; no se declara despliegue validado hasta verificar su conclusión.
+- La validación de Apps Script/Spreadsheet/Drive reales, sincronización simultánea entre usuarios/dispositivos y latencia de Beta sigue pendiente.
+
+### Siguiente trabajo
+- Auditar si existe un escritor backend real para Relay y si dispone de ID persistente verificable; no crear IDs ni productores artificiales.
+- Después continuar con las tareas activas restantes y la validación Beta autorizada. No desplegar manualmente Apps Script ni modificar datos productivos.

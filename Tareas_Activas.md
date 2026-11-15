@@ -698,9 +698,9 @@ No marcar como completadas estas tareas hasta ejecutar las pruebas locales perti
 
 ### Evidencia técnica actual
 - `auth.js` lee snapshot+cursor local antes de red. Si el cursor está vigente, consulta únicamente el feed autenticado; sin novedades no llama `fetchCatalogData()` ni descarga colecciones completas. `getCatalogChanges` pagina hasta 5 páginas de 50 eventos; solicitudes limitadas a 8 s.
-- `offline.js` lee snapshot+cursor en una transacción y guarda ambos atómicamente. `saveCatalog()` invalida el cursor previo cuando guarda un snapshot sin revisión. `applyCatalogChangesToSnapshot()` admite upsert/delete por ID estable en `cortes`, `tutoriales`, `relay` y `logos` (`id` para Cortes/Logos, `ID` para Tutoriales/Relay); si la colección afectada contiene IDs ausentes/duplicados, se usa reset seguro. Los productores multi-entidad aún publican reset hasta que cada mutación pueda obtener un snapshot exacto confirmado.
+- `offline.js` lee snapshot+cursor en una transacción y guarda ambos atómicamente. `saveCatalog()` invalida el cursor previo cuando guarda un snapshot sin revisión. `applyCatalogChangesToSnapshot()` admite upsert/delete por ID estable en `cortes`, `tutoriales`, `relay` y `logos`; ignora `pys` porque esa colección conserva caché separada. `pys-data.js` aplica los eventos PyS por `id_problem` estable (`isue-N`) y usa snapshot completo como recuperación ante IDs inválidos, duplicados o reset. No se generan IDs artificiales.
 - `auth.js` realiza sondeo adaptativo solo con la app visible y online; se pausa al ocultarse/desconectarse y reanuda al recuperar visibilidad/conexión. Las pestañas coordinan polling con lease por usuario y comparten actualizaciones por BroadcastChannel o evento storage.
-- `ui.js` usa `performSilentSync`: actualiza tarjetas modificadas, modal activo, altas/bajas y vistas de Tutoriales/Relay/Logos. Las tarjetas nuevas respetan `prefers-reduced-motion`; los resets refrescan el cache separado de PyS. No se añaden controles ni paneles visibles.
+- `ui.js` usa `performSilentSync`: actualiza tarjetas modificadas, modal activo, altas/bajas y vistas de Tutoriales/Relay/Logos. Las tarjetas nuevas respetan `prefers-reduced-motion`; los deltas PyS actualizan su caché separada y los resets fuerzan una reconciliación completa. No se añaden controles ni paneles visibles.
 - CI cubre arranque cache-first, delta vacío sin snapshot completo, upsert, reset, huecos de revisión, cursor transaccional, sincronización silenciosa y coordinación entre pestañas. La validación de red/latencia/dispositivos y concurrencia multiusuario real sigue pendiente en Beta.
 
 ### GP-CAT-01B — Feed incremental backend (primer hito, 2026-11-14)
@@ -729,5 +729,6 @@ No marcar como completadas estas tareas hasta ejecutar las pruebas locales perti
 - GP-CAT-01D: COMPLETADA en rama; polling visible/online, backoff y coordinación multi-pestaña.
 - GP-CAT-01E: IMPLEMENTADA; reconciliación silenciosa de tarjetas, modal y vistas, con pruebas de contrato.
 - GP-CAT-01F: CI COMPLETADA; Beta de varios usuarios/dispositivos, latencia, offline y recuperación aún pendiente.
+- GP-CAT-01G: COMPLETADA EN RAMA; productores FEEDBACK y caché PyS aplican deltas por ID estable; CI 15/15 en PysDataCache. Beta multiusuario y Apps Script real pendientes.
 
 Este requerimiento complementa GP-PWA-02: sincronizar el catálogo en vivo no debe interceptar el gesto nativo ni recargar el documento. Son dos mecanismos distintos: la PWA actualiza sus recursos de aplicación mediante el ciclo normal del Service Worker/navegador; los datos del catálogo se sincronizan incrementalmente dentro de la sesión.

@@ -499,3 +499,13 @@ Estado: CORREGIDO Y CUBIERTO POR PRUEBA.
 - Se detectó que una descarga completa de fallback podía reemplazar el snapshot y dejar persistido el cursor anterior, no vinculado a la nueva instantánea.
 - `offline.saveCatalog()` ahora guarda el snapshot y anula el cursor en la misma transacción. Solo `saveCatalogWithCursor()` confirma un cursor conocido junto con su snapshot.
 - `CatalogSnapshotSync` prueba que un snapshot sin revisión invalida el cursor anterior; `CatalogStartupIntegrity` prueba el fallback de feed y la invalidación.
+
+
+AUD-2026-11-14-16 — SINCRONIZACIÓN INCREMENTAL DE PyS
+Severidad: Media (tráfico de red y frescura de la caché independiente).
+Estado: CORREGIDO EN RAMA; VALIDACIÓN BETA PENDIENTE.
+- Hallazgo: las mutaciones PyS publicaban reset global y el cliente dependía de getPysData completo para reconciliar la colección, aunque el feed compartido ya admitía la colección pys.
+- Corrección: las seis acciones FEEDBACK de mutación PyS publican upsert exacto tras confirmar la escritura y verificar ID/fila única bajo ScriptLock. El cliente aplica eventos sobre la caché PyS separada y el consumidor del catálogo principal ignora esa colección sin perder el cursor global.
+- Fallback: reset global, caché ausente/corrupta, IDs duplicados/ausentes, evento malformado o snapshot no verificable provocan recuperación completa; no se inventan IDs ni se elimina contenido.
+- Pruebas: CatalogChangeFeed 17/17, CatalogSnapshotSync 28/28, PysDataCache 15/15 PASS. CI Node.js 22 run 43657720605: 99 suites / 1,484 pruebas / 0 fallos.
+- Pendiente: Apps Script/Spreadsheet reales, concurrencia multiusuario y latencia en Beta aislada.
