@@ -96,10 +96,13 @@ test('AUTH y su espejo guardan aceptación por dispositivo y validan la sesión 
     assert.match(handler, /payload && payload\.deviceId/);
     assert.match(handler, /acceptanceStore\.devices\[deviceId\]/);
     assert.doesNotMatch(handler, /sessionCell\.setValue|ensureSessionTermsAcceptanceColumn_/);
-    const preflightStart = authSource.indexOf('function touchProtectedAuthRequestSession_(action, payload) {');
-    const preflightEnd = authSource.indexOf('\nfunction doPostInternal_(e) {', preflightStart);
-    const preflight = authSource.slice(preflightStart, preflightEnd);
-    assert.match(preflight, /action === "acceptTerms"[\s\S]*?validateSessionReadOnly_\(token, userId\)/);
+    assert.match(handler, /findSessionRowsByTokenUnderLock_/);
+    assert.match(handler, /getSessionExpirationStatus_/);
+    assert.match(handler, /assertRequesterRoleRevocationClear_/);
+    const dispatchStart = authSource.indexOf('function doPostInternal_(e) {');
+    const dispatchEnd = authSource.indexOf('\\nfunction ', dispatchStart + 10);
+    const dispatcher = authSource.slice(dispatchStart, dispatchEnd);
+    assert.doesNotMatch(dispatcher, /touchProtectedAuthRequestSession_|validateAndTouchSession_|validateSessionReadOnly_/);
     assert.match(coordinatorSource, /acceptTerms: \{ read: \["ACTIVE_SESSIONS"\], write: \["USERS"\], sharedWrite: \["ACTIVE_SESSIONS"\] \}/);
     assert.match(termsDeviceSource, /TERMS_DEVICE_ID_STORAGE_KEY/);
     assert.doesNotMatch(authSource.match(/function isSharedMutationAction_\(action\) \{([\s\S]*?)\n\}/)[1], /validateSession/);
