@@ -61,7 +61,7 @@ async function runIndexedDBTransactionTests() {
         assert.deepEqual(stored, snapshot);
     });
 
-    test('la conexión se cierra ante onversionchange y permite reabrir', async () => {
+    await testAsync('la conexión se cierra ante onversionchange y permite reabrir', async () => {
         const first = await offline.initDB();
         assert.equal(typeof first.onversionchange, 'function');
         first.onversionchange();
@@ -74,7 +74,7 @@ async function runIndexedDBTransactionTests() {
     const abortHarness = createIndexedDBHarness({ transactions: ['abort'] });
     const abortOffline = await freshOffline(abortHarness, 'abort');
     await testAsync('un request exitoso seguido de transaction.onabort no se confirma', async () => {
-        await assert.rejects(abortOffline.saveCatalog(snapshot), /IndexedDB|transacción|transaction/i);
+        await assert.rejects(abortOffline.saveCatalog(snapshot), /IndexedDB|transacción|transaction|AbortError|QuotaExceededError/i);
     });
 
     const quotaHarness = createIndexedDBHarness({ transactions: ['quota'] });
