@@ -79,7 +79,7 @@ const LockService = {
 const SpreadsheetApp = { flush() {} };
 const api = new Function(
     "getSpreadsheet","LockService","SpreadsheetApp","Utilities","assertFeedbackSession","normalizeFeedbackRole",
-    source + "\nreturn { handleGetInboxRecipients, handleCreateInboxConversation, handleSendInboxMessage, handleGetInboxConversations, handleGetInboxMessages, handleMarkInboxRead, handleArchiveInboxConversation, handleCloseInboxConversation, inboxCanStartConversationWith_ };"
+    source + "\nreturn { handleGetInboxRecipients, handleCreateInboxConversation, handleSendInboxMessage, handleGetInboxConversations, handleGetInboxMessages, handleMarkInboxRead, handleMarkInboxUnread, handleDeleteInboxConversation, handleArchiveInboxConversation, handleCloseInboxConversation, inboxCanStartConversationWith_ };"
 )(() => spreadsheet, LockService, SpreadsheetApp, Utilities, assertSession, normalizeRole);
 
 const actor = (id, token) => ({ userId: id, sessionToken: token });
@@ -441,7 +441,7 @@ run("Las mutaciones Inbox se coordinan con cambios de identidad y otras escritur
     assert.ok(match,"No se encontró el filtro de mutaciones coordinadas de FEEDBACK.");
     const isSharedMutationAction = new Function(match[0] + "; return isSharedMutationAction_;")();
     const coordinatorPolicy = new Function(coordinatorSource + "\nreturn coordinatorPolicy_;");
-    for (const action of ["createInboxConversation","sendInboxMessage","markInboxRead","archiveInboxConversation","closeInboxConversation"]) {
+    for (const action of ["createInboxConversation","sendInboxMessage","markInboxRead","markInboxUnread","deleteInboxConversation","archiveInboxConversation","closeInboxConversation"]) {
         assert.equal(isSharedMutationAction(action),true,action+" debe adquirir una lease compartida.");
         assert.deepEqual(coordinatorPolicy()("FEEDBACK",action),{
             readResources:["USERS","SESSION_CONTEXTS"],writeResources:["FEEDBACK"],sharedWriteResources:[],maintenance:false,nestedActions:{}
@@ -582,4 +582,80 @@ run("El historial respeta el orden de inserción cuando las marcas de tiempo ret
     });
     assert.equal(read.unreadCount,0);
 });
+
+run("Marcar como no leída crea un indicador privado, idempotente y reversible al leer", () => {
+    const created = api.handleCreateInboxConversation({
+        ...actor("U1","token-a"),recipientId:"U2",subject:"Marcar no leída",category:"general",
+        body:"Mensaje que el destinatario puede marcar como no leído.",idempotencyKey:"mark-unread-create-01"
+    });
+    const messages = api.handleGetInboxMessages({ ...actor("U2","token-b"),conversationId:created.conversationId });
+    api.handleMarkInboxRead({ ...actor("U2","token-b"),conversationId:created.conversationId,throughMessageId:messages.data[0].messageId });
+    const marked = api.handleMarkInboxUnread({ ...actor("U2","token-b"),conversationId:created.conversationId });
+    assert.equal(marked.markedUnread,true); assert.equal(marked.alreadyMarkedUnread,false); assert.equal(marked.unreadCount,1);
+    const list = api.handleGetInboxConversations({ ...actor("U2","token-b"),folder:"unread" });
+    const item = list.data.find(row => row.conversationId === created.conversationId);
+    assert.ok(item); assert.equal(item.isMarkedUnread,true); assert.equal(item.unreadCount,1);
+    const replay = api.handleMarkInboxUnread({ ...actor("U2","token-b"),conversationId:created.conversationId });
+    assert.equal(replay.alreadyMarkedUnread,true);
+    const audit = spreadsheet.getSheetByName("InboxConversationAudit").rows.slice(1)
+        .filter(row => row[4] === "mark_unread" && row[5] === created.conversationId);
+    assert.equal(audit.length,1);
+    const read = api.handleMarkInboxRead({ ...actor("U2","token-b"),conversationId:created.conversationId });
+    assert.equal(read.unreadCount,0);
+    assert.equal(api.handleGetInboxConversations({ ...actor("U2","token-b"),folder:"unread" }).data.some(row => row.conversationId === created.conversationId),false);
+});
+run("No se puede marcar como no leída una conversación sin mensajes recibidos", () => {
+    const created = api.handleCreateInboxConversation({
+        ...actor("U1","token-a"),recipientId:"U2",subject:"Solo enviado",category:"general",
+        body:"Este mensaje lo envié yo.",idempotencyKey:"mark-unread-no-incoming-01"
+    });
+    assert.throws(() => api.handleMarkInboxUnread({ ...actor("U1","token-a"),conversationId:created.conversationId }),/No hay mensajes recibidos/);
+});
+run("Borrar oculta solo la copia del participante y conserva mensajes e historial del otro", () => {
+    const created = api.handleCreateInboxConversation({
+        ...actor("U1","token-a"),recipientId:"U2",subject:"Ocultación privada",category:"general",
+        body:"El historial debe permanecer para ambos.",idempotencyKey:"delete-private-create-01"
+    });
+    const messageSheet = spreadsheet.getSheetByName("InboxMessages");
+    const messagesBefore = messageSheet.getLastRow();
+    const deleted = api.handleDeleteInboxConversation({ ...actor("U2","token-b"),conversationId:created.conversationId });
+    assert.equal(deleted.deleted,true); assert.equal(deleted.alreadyDeleted,false);
+    assert.equal(messageSheet.getLastRow(),messagesBefore);
+    assert.equal(api.handleGetInboxConversations({ ...actor("U2","token-b"),folder:"all" }).data.some(row => row.conversationId === created.conversationId),false);
+    assert.throws(() => api.handleGetInboxMessages({ ...actor("U2","token-b"),conversationId:created.conversationId }),/ocultada/);
+    assert.throws(() => api.handleMarkInboxRead({ ...actor("U2","token-b"),conversationId:created.conversationId }),/ocultada/);
+    const senderList = api.handleGetInboxConversations({ ...actor("U1","token-a"),folder:"sent" });
+    assert.equal(senderList.data.some(row => row.conversationId === created.conversationId),true);
+    assert.equal(api.handleGetInboxMessages({ ...actor("U1","token-a"),conversationId:created.conversationId }).data.length,1);
+    const reply = api.handleSendInboxMessage({
+        ...actor("U1","token-a"),conversationId:created.conversationId,body:"El otro participante aún puede continuar.",
+        idempotencyKey:"delete-private-followup-01"
+    });
+    assert.equal(reply.status,"success");
+    assert.equal(api.handleGetInboxMessages({ ...actor("U1","token-a"),conversationId:created.conversationId }).data.length,2);
+    assert.equal(api.handleGetInboxConversations({ ...actor("U2","token-b"),folder:"all" }).data.some(row => row.conversationId === created.conversationId),false);
+    const replay = api.handleDeleteInboxConversation({ ...actor("U2","token-b"),conversationId:created.conversationId });
+    assert.equal(replay.alreadyDeleted,true);
+    const audit = spreadsheet.getSheetByName("InboxConversationAudit").rows.slice(1)
+        .filter(row => row[4] === "delete" && row[5] === created.conversationId);
+    assert.equal(audit.length,1);
+});
+run("Un tercero no puede marcar como no leída ni ocultar una conversación ajena", () => {
+    const created = api.handleCreateInboxConversation({
+        ...actor("U1","token-a"),recipientId:"U2",subject:"Protección de acciones",category:"general",
+        body:"Solo los participantes pueden cambiar su estado.",idempotencyKey:"inbox-private-actions-01"
+    });
+    const flags = spreadsheet.getSheetByName("InboxConversationFlags");
+    const before = flags.getLastRow();
+    assert.throws(() => api.handleMarkInboxUnread({ ...actor("U3","token-c"),conversationId:created.conversationId }),/permiso/);
+    assert.throws(() => api.handleDeleteInboxConversation({ ...actor("U3","token-c"),conversationId:created.conversationId }),/permiso/);
+    assert.equal(flags.getLastRow(),before);
+});
+run("El estado privado usa una hoja adicional sin alterar el esquema de lectura existente", () => {
+    const flags = spreadsheet.getSheetByName("InboxConversationFlags");
+    assert.deepEqual(flags.rows[0],["conversationId","userId","unreadOverride","deleted","updatedAt"]);
+    assert.deepEqual(spreadsheet.getSheetByName("InboxConversationState").rows[0],
+        ["conversationId","userId","lastReadAt","lastReadMessageId","archived","hasSent","hasReceived","updatedAt","lastReceivedMessageId","lastSentMessageId"]);
+});
+
 console.log("InboxConversations: " + passed + "/" + passed + " PASS");
