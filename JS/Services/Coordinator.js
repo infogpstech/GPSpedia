@@ -146,17 +146,18 @@ function coordinatorPolicy_(service, operation) {
     const policy = servicePolicies && servicePolicies[operation];
     if (!policy) throw new Error("La acción no está habilitada en la política del coordinador.");
 
+    const readResources = (policy.read || []).slice();
     const writeResources = (policy.write || []).slice();
     const sharedWriteResources = (policy.sharedWrite || []).slice();
-    if (service === "ADMIN" && !writeResources.includes("ACTIVE_SESSIONS") &&
-        !sharedWriteResources.includes("ACTIVE_SESSIONS")) {
-        sharedWriteResources.push("ACTIVE_SESSIONS");
+    if ((service === "ADMIN" || service === "AUTH") &&
+        !readResources.includes("SESSION_CONTEXTS") && !writeResources.includes("SESSION_CONTEXTS")) {
+        readResources.push("SESSION_CONTEXTS");
     }
-    if (service === "AUTH" && operation !== "acceptTerms" && !writeResources.includes("ACTIVE_SESSIONS")) {
+    if (service === "AUTH" && !writeResources.includes("ACTIVE_SESSIONS")) {
         writeResources.push("ACTIVE_SESSIONS");
     }
     return {
-        readResources: (policy.read || []).slice(),
+        readResources: readResources,
         writeResources,
         sharedWriteResources,
         maintenance: policy.maintenance === true,
