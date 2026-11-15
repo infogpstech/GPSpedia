@@ -1919,3 +1919,99 @@ CRITERIOS DE CIERRE
 - Si una prueba falla por deployment/configuración Beta incompatible, documentar versiones y causa; no modificar producción ni ampliar permisos como workaround.
 - No declarar validación Beta aprobada a partir de CI, simulaciones o revisión estática. La prueba de campo se considera ejecutada únicamente cuando se realiza en los proyectos, cuentas, dispositivos y servicios Beta aislados.
 ================================================================================
+
+
+================================================================================
+GP-INBOX-04B/04C/04D — VALIDACIÓN BETA DE ESTADO PRIVADO, TICKETS Y RBAC
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde una terminal dentro del repositorio local. Esta prueba se ejecuta únicamente después de que el usuario autorice el despliegue de los servicios Apps Script compatibles en un entorno Beta aislado.
+
+```bash
+set -euo pipefail
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ROOT="$(git rev-parse --show-toplevel)"
+test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in
+  https://github.com/infogpstech/GPSpedia.git|https://github.com/infogpstech/GPSpedia) ;;
+  *) echo "Remoto incorrecto: $REMOTE_URL"; exit 1 ;;
+esac
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH" || { echo "Rama incorrecta"; exit 1; }
+test -z "$(git status --porcelain)" || { echo "Hay cambios locales sin guardar; detener y preservarlos."; exit 1; }
+git fetch origin "$EXPECTED_BRANCH"
+git pull --ff-only origin "$EXPECTED_BRANCH"
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH"
+printf 'Repositorio: %s\nRama: %s\nHEAD: ' "$ROOT" "$(git branch --show-current)"
+git rev-parse HEAD
+git status --short --branch
+```
+
+PRECONDICIONES Y SEGURIDAD
+- No ejecutar esta validación hasta contar con autorización expresa para actualizar los deployments Apps Script Beta. No desplegar producción ni modificar sus propiedades.
+- Usar una Spreadsheet Beta desechable y carpeta Drive Beta aislada; no reutilizar datos ni cuentas productivas.
+- Confirmar que AUTH, FEEDBACK, Coordinator y los servicios relacionados usan versiones compatibles de la misma rama. Registrar URL/versión de deployment sin copiar tokens ni secretos.
+- Preparar como mínimo tres cuentas de prueba: técnico A, técnico B y Desarrollador D. Añadir una cuarta cuenta C para intentos de acceso no autorizado.
+- Registrar HEAD, fecha/hora, deployment/versiones, navegador/SO/dispositivo, rol, resultado PASS/FAIL/NO EJECUTADA y evidencia no sensible.
+- No crear manualmente la hoja `InboxConversationFlags` antes de probar las acciones; debe crearse de forma diferida al usar marcar no leído u ocultar conversación.
+- No añadir botones, pestañas, paneles ni controles nuevos durante esta prueba. La UI de historial propio de tickets y la selección múltiple permanecen diferidas.
+
+1. HOJA DE ESTADO PRIVADO Y COMPATIBILIDAD
+- En la Spreadsheet Beta, registrar los encabezados de `InboxConversationState` antes de ejecutar las nuevas acciones.
+- Crear una conversación de prueba sin usar marcar no leído ni ocultar. Confirmar que la hoja `InboxConversationFlags` aún no existe y que las operaciones normales de Inbox funcionan.
+- Ejecutar por primera vez `markInboxUnread`; confirmar que se crea `InboxConversationFlags` con los encabezados exactos `conversationId,userId,unreadOverride,deleted,updatedAt`.
+- Confirmar que `InboxConversationState` conserva sus diez columnas originales y que no se reescriben ni migran sus filas.
+- Repetir la acción en otra conversación y verificar que no se crean filas duplicadas para el mismo par conversación/usuario.
+
+2. MARCAR COMO NO LEÍDA
+- A crea una conversación y B la recibe. B abre la conversación y marca lectura hasta el último mensaje; verificar unreadCount=0.
+- B ejecuta `markInboxUnread`; verificar que aparece en la carpeta no leídos con indicador y unreadCount al menos 1.
+- Repetir la solicitud; debe ser idempotente y no duplicar el evento de auditoría.
+- Abrir la conversación y confirmar lectura; el indicador privado debe limpiarse y la conversación debe salir de no leídos.
+- Archivar otra conversación recibida y luego marcarla como no leída; confirmar que se desarchiva para B y vuelve a no leídos.
+- Intentar marcar como no leída una conversación que solo contiene mensajes enviados por el actor; debe rechazarse sin crear un estado no leído falso.
+- C debe intentar marcar como no leída una conversación A-B; debe rechazarse por no ser participante.
+
+3. OCULTAR/ELIMINAR SOLO PARA EL PARTICIPANTE
+- A crea una conversación con B. B ejecuta `deleteInboxConversation`.
+- Confirmar que desaparece de todas las carpetas de B y que B no puede obtener mensajes, responder, archivar, cerrar ni marcar lectura de esa conversación.
+- Confirmar que A todavía puede listar, leer y continuar la conversación.
+- Comprobar que no se borran filas de `InboxConversations`, `InboxMessages` ni auditoría y que el historial de A permanece íntegro.
+- Repetir la eliminación de B; debe responder idempotentemente y no añadir otro evento de auditoría.
+- C intenta ocultar la conversación A-B; debe rechazarse sin crear una fila de estado privado.
+- Enviar un nuevo mensaje desde A después de que B haya ocultado su copia; B debe seguir sin verla y A debe conservar el historial.
+- No ejecutar borrado físico ni editar manualmente los registros de historial.
+
+4. TICKET/REPORTE DE PROBLEMA Y SEGUIMIENTO
+- Desde la UI existente, A crea un reporte de problema para un vehículo/corte Beta. Confirmar que se genera reportId, descripción, categoría por defecto `incidencia_tecnica` y asunto generado con vehículo/corte.
+- Verificar que la categoría/asunto se guardan en `reportMetadata` y que el reporte aparece en el Inbox de soporte de D con asunto, categoría, descripción, autor y estado.
+- Probar las categorías permitidas por API: `incidencia_tecnica`, `instalacion`, `acceso`, `contenido`, `otro`. Categorías no permitidas deben rechazarse.
+- Repetir un reporte con el mismo reportId y mismo contenido/categoría/asunto; debe devolver el registro existente. Reutilizar reportId con contenido, categoría o asunto distintos debe rechazarse.
+- D responde mediante `replyToFeedback` y marca resuelto mediante `markAsResolved`. Confirmar que el detalle de soporte muestra respuesta y estado actualizado.
+- A consulta `getMyProblemReports`; debe recibir solo sus propios tickets con asunto, categoría, descripción, respuesta y estado.
+- Repetir la consulta enviando un userId de B/C en el payload; la respuesta debe seguir limitada al actor autenticado A.
+- Crear tickets para A y B y probar paginación por cursor estable reportId. Una inserción nueva entre páginas no debe duplicar ni omitir registros después del ancla.
+- Usar como cursor un reportId perteneciente a B/C; la consulta de A debe rechazarlo sin revelar datos del otro usuario.
+- Confirmar que el usuario no puede abrir `getFeedbackItems` para consultar todos los reportes; ese acceso permanece restringido a los roles autorizados de soporte.
+
+5. RBAC Y CANAL DE CONTACTO CON DESARROLLADOR
+- Técnico y Técnico_exterior pueden utilizar el reporte de problema autenticado y consultar únicamente sus tickets propios.
+- Verificar que la matriz de Inbox sigue impidiendo conversación directa ordinaria de Técnico/Supervisor/Jefe hacia Desarrollador cuando la política no la permite.
+- Confirmar que `reportProblem` es el canal de soporte y que no aparece un control «Consultar al desarrollador» ni un destinatario Desarrollador en la conversación directa no autorizada.
+- Verificar que Desarrollador/Jefe/Supervisor conservan los permisos de lectura/respuesta/resolución establecidos; no ampliar roles para evitar errores de configuración.
+- Probar sesión expirada, token revocado, actor ausente y userId falsificado. Todas las acciones deben rechazarse en backend sin filtrar tickets ni historial.
+
+6. ACCESIBILIDAD, MÓVIL Y REGRESIÓN
+- En el detalle existente del ticket, comprobar que categoría y estado se leen correctamente y que asunto, descripción y respuesta siguen disponibles.
+- Confirmar que no se añadieron controles visibles para `markInboxUnread`, `deleteInboxConversation` ni `getMyProblemReports`; la integración de UI de historial propio y selección múltiple está pendiente de autorización.
+- Probar teclado (Tab, Shift+Tab, Enter, Escape), foco visible, lector de pantalla, roles/labels ARIA y `prefers-reduced-motion`.
+- Probar tema claro/oscuro, navegación Atrás, lista/detalle móvil, scroll, texto largo y tamaños reales Android/iOS/desktop.
+- Probar dos pestañas y dos dispositivos; confirmar que el estado privado se mantiene por participante y que no se duplica la auditoría.
+- Verificar que errores de red/reintentos no crean duplicados ni borran borradores u operaciones offline.
+
+CRITERIOS DE CIERRE
+- Registrar cada subprueba como PASS, FAIL o NO EJECUTADA con evidencia no sensible y versiones exactas.
+- Confirmar que las filas/mensajes históricos se conservan y que la hoja de flags contiene solo el estado privado necesario.
+- No declarar PASS a partir de CI o mocks; el cierre Beta requiere ejecución contra deployments Apps Script y Spreadsheet Beta aislados.
+- Si una prueba falla por versiones o secretos de Coordinator incompatibles, documentar el entorno y detenerse; no debilitar RBAC ni modificar producción.
+- No ejecutar despliegues adicionales ni migraciones productivas sin autorización expresa.
+================================================================================
