@@ -25,10 +25,13 @@ function runUsersAtomicMutationTests(usersSource, authSource, coordinatorSource)
     };
     run("USERS integra LastActivityAt dentro de la autenticación backend", function() {
         const verifier = extract(source, "getVerifiedSession");
+        const profileHandler = extract(source, "handleUpdateProfile");
         const dispatcher = extract(source, "doPost");
         assert(verifier.includes("touchSessionActivityIfDue_(sessionsSheet,sessionMatch.rowIndex,sessionMatch.row,COLS_ACTIVE_SESSIONS.LastActivityAt)"),
             "getVerifiedSession debe actualizar LastActivityAt con intervalo tras validar al usuario.");
         assert(source.includes("5*60*1000"), "La escritura de actividad debe estar limitada a intervalos.");
+        assert(verifier.includes("userRowIndex: userRows[0].rowIndex"), "La sesión verificada debe devolver la fila del usuario ya localizada.");
+        assert(profileHandler.includes("userRowIndex") && !profileHandler.includes("findUniqueUserRow_"), "La actualización de perfil debe reutilizar la fila autenticada sin repetir la búsqueda por ID.");
         assert(dispatcher.includes('withSharedMutationLease_("USERS", "sessionActivity"'),
             "getUsers debe adquirir una lease de actividad.");
         assert(String(coordinatorSource || "").includes('sessionActivity: { write: ["ACTIVE_SESSIONS"] }'),
@@ -110,7 +113,7 @@ function runUsersAtomicMutationTests(usersSource, authSource, coordinatorSource)
         )(
             {getScriptLock:()=>lock},
             {CopyPasteType:{PASTE_FORMAT:"FORMAT",PASTE_DATA_VALIDATION:"VALIDATION"},flush(){if(failFlush){failFlush=false;throw new Error("flush simulado");}}},
-            options.getVerifiedSession || (()=>({userId:"USR-0001",role:"Desarrollador"})),
+            options.getVerifiedSession || (()=>({userId:"USR-0001",role:"Desarrollador",userRowIndex:2})),
             ()=>({getSheetByName:()=>sheet}),
             password=>"HASH:"+password
         );
