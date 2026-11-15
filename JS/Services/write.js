@@ -252,7 +252,7 @@ function doPost(e) {
     const payload = request.payload && typeof request.payload === "object" ? request.payload : {};
     const sessionOptions = { session: { userId: payload.userId, sessionToken: payload.sessionToken } };
     if (!isSharedMutationAction_(action)) {
-        if (action !== "checkOperation") return doPostInternal_(e);
+        if (action !== "checkOperation") return doPostInternal_(withSharedSessionActor_(e, null));
         try {
             return withSharedMutationLease_("WRITE", "sessionActivity", function(token, actor) {
                 return doPostInternal_(withSharedSessionActor_(e, actor));
