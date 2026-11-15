@@ -180,7 +180,7 @@ await test('AUTH conserva rechazo para identidad incompleta y valida contexto an
 });
 
 await test('touchSession distingue una dependencia caída de un token revocado', async () => {
-    const handler = extract(service, 'function handleTouchSession(payload)', '\\n// Todas las mutaciones de ActiveSessions');
+    const handler = extract(service, 'function handleTouchSession(payload)', '\n// Todas las mutaciones de ActiveSessions');
     const fn = new Function('validateAndTouchSession_', 'logToSheet', handler + '\\nreturn handleTouchSession;')(
         () => { throw new Error('LockService temporalmente ocupado'); }, () => {}
     );
