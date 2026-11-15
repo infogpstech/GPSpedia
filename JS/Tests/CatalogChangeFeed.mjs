@@ -109,6 +109,13 @@ test("alta ADMIN de Logo publica upsert exacto tras verificar la fila persistida
     assert.match(adminSource,/catalogAction === "addLogo"[\s\S]*?buildLogoCatalogChange_\(response\.logoId, response\.logoUrl, payload && payload\.nombreMarca\)[\s\S]*?publishSharedCatalogChange_\("ADMIN", catalogAction, change\)/);
     assert.match(adminSource,/publishSharedCatalogChange_\("ADMIN", catalogAction, \{ operation: "reset" \}\)/);
 });
+test("mutaciones PyS publican upsert exacto tras verificar ID y fila bajo lock", () => {
+    assert.ok(coordinatorSource.includes('const CATALOG_CHANGE_COLLECTIONS_ = new Set(["cortes", "pys"'));
+    assert.ok(feedbackSource.includes("function buildPysCatalogChange_(reference)"));
+    assert.ok(feedbackSource.includes('collection: "pys", recordId: id, operation: "upsert"'));
+    assert.ok(feedbackSource.includes("function publishPysCatalogChange_(action, reference)"));
+    assert.ok(feedbackSource.includes('publishPysCatalogChange_(action, problemId)'));
+});
 test("WRITE y FEEDBACK publican reset solo después de mutaciones confirmadas", () => {
     assert.match(writeSource,/response && response\.status === "success"[\s\S]*?catalogWriters\.includes\(String\(request\.action \|\| ""\)\)[\s\S]*?publishSharedCatalogChange_\("WRITE"/);
     assert.match(writeSource,/\["addOrUpdateCut", "addSupplementaryInfo", "addVinToVehicle", "freezeCortesIds"\]/);
@@ -118,4 +125,4 @@ test("WRITE y FEEDBACK publican reset solo después de mutaciones confirmadas", 
     assert.match(adminSource,/catalogWriters\.includes\(catalogAction\)[\s\S]*?publishSharedCatalogChange_\("ADMIN", catalogAction, \{ operation: "reset" \}\)/);
     assert.match(adminSource,/finalizeAdminAuditEvent_\(auditEvent[\s\S]*?publishSharedCatalogChange_/);
 });
-console.log("CatalogChangeFeed: " + passed + "/16 PASS");
+console.log("CatalogChangeFeed: " + passed + "/17 PASS");

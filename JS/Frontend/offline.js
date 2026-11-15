@@ -1148,6 +1148,8 @@ export function applyCatalogChangesToSnapshot(previous, changes) {
         }
         if (change.operation === 'reset' || change.resetRequired === true) return { resetRequired: true, snapshot: null };
         const collection = String(change.collection || '');
+        // PyS tiene caché propia; el consumidor principal avanza su cursor sin reconstruir el catálogo.
+        if (collection === 'pys') continue;
         if (!supported.includes(collection)) return { resetRequired: true, snapshot: null };
         if (!indexes.has(collection)) {
             try {

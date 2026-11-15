@@ -19,6 +19,38 @@ export function getPysDataFreshness(){
  return{hasCache:Array.isArray(data),stale:Array.isArray(data)&&(current.pysDataStale===true||expired),updatedAt,loading:current.pysDataLoading===true,error:current.pysDataError||null};
 }
 export function invalidatePysDataCache(){cacheGeneration++;const data=getCachedPysData();setState({pysDataStale:true,pysDataUpdatedAt:0,pysDataError:null,pysDataLastAttemptAt:0});try{localStorage.removeItem(PYS_CACHE_TIMESTAMP_KEY);}catch(error){}return data;}
+export function applyPysCatalogChanges(changes){
+ if(!Array.isArray(changes))return{changed:false,needsRefresh:true};
+ const relevant=changes.filter(change=>change&&(change.collection==="pys"||change.operation==="reset"||change.resetRequired===true));
+ if(!relevant.length)return{changed:false,needsRefresh:false};
+ if(relevant.some(change=>change.operation==="reset"||change.resetRequired===true||change.collection==="*"))return{changed:false,needsRefresh:true};
+ const current=getCachedPysData();if(!Array.isArray(current))return{changed:false,needsRefresh:true};
+ const index=new Map();
+ for(const item of current){
+  const id=String(item&&item.id_problem||"").trim(),key=id.toLowerCase();
+  if(!/^isue-\d+$/i.test(id)||index.has(key))return{changed:false,needsRefresh:true};
+  index.set(key,item);
+ }
+ let changed=false;
+ for(const event of relevant){
+  const id=String(event.recordId||"").trim(),key=id.toLowerCase();
+  if(!/^isue-\d+$/i.test(id))return{changed:false,needsRefresh:true};
+  if(event.operation==="delete"){changed=index.delete(key)||changed;continue;}
+  const record=event.snapshot;
+  if(event.operation!=="upsert"||!record||typeof record!=="object"||Array.isArray(record)||
+     String(record.id_problem||"").trim().toLowerCase()!==key)return{changed:false,needsRefresh:true};
+  index.set(key,record);changed=true;
+ }
+ if(!changed)return{changed:false,needsRefresh:false};
+ const next=Array.from(index.values()),now=Date.now();
+ cacheGeneration++;
+ cacheHydrated=true;
+ setState({pysData:next,pysDataUpdatedAt:now,pysDataStale:false,pysDataError:null,pysDataLoading:false,pysDataLastAttemptAt:now});
+ try{localStorage.setItem(PYS_CACHE_KEY,JSON.stringify(next));localStorage.setItem(PYS_CACHE_TIMESTAMP_KEY,String(now));}
+ catch(error){return{changed:false,needsRefresh:true};}
+ pysDataLoadedListeners.forEach(listener=>{try{listener(next);}catch(error){console.warn("Error notificando el delta de PyS:",error);}});
+ return{changed:true,needsRefresh:false,data:next};
+}
 function fetchPysData_(){
  if(inFlightPromise)return inFlightPromise;const startedAt=Date.now();setState({pysDataLoading:true,pysDataError:null,pysDataLastAttemptAt:startedAt});let pending;
  pending=(async()=>{

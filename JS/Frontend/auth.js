@@ -8,7 +8,7 @@ import { setState, getState } from './state.js';
 import { routeAction, fetchCatalogData, getCatalogChanges, login as apiLogin, validateSession as apiValidateSession, completeLoginRequest } from './api-config.js';
 import { showLoginScreen, showApp, showGlobalError, performSilentSync } from './ui.js';
 import * as offline from './offline.js';
-import { loadPysData } from './pys-data.js';
+import { loadPysData, applyPysCatalogChanges } from './pys-data.js';
 
 async function requestCatalogFeedPage_(cursor, limit, sessionPayload, parentSignal) {
     if (typeof AbortController !== "function") throw new Error("AbortController no está disponible para limitar el feed.");
@@ -418,6 +418,7 @@ export async function loadInitialData(forceRefresh = false, options = {}) {
     let catalogLoaded = false;
     let cachedCatalog = null;
     let cachedCursor = null;
+    let pysDeltaChanges = [];
     if (!silent) setState({ catalogLoadStatus: 'loading', catalogLoadError: null });
 
     // 1. Renderizar primero la instantánea local junto con su cursor persistido.
@@ -486,6 +487,7 @@ export async function loadInitialData(forceRefresh = false, options = {}) {
                     if (!silent) setState({ catalogLoadStatus: 'ready', catalogLoadError: null });
                     return true;
                 } else {
+                    pysDeltaChanges = delta.changes.filter(change => change && change.collection === "pys");
                     const applied = offline.applyCatalogChangesToSnapshot(cachedCatalog, delta.changes);
                     if (applied.resetRequired) {
                         requiresFullSnapshot = true;
@@ -532,6 +534,15 @@ export async function loadInitialData(forceRefresh = false, options = {}) {
         }
         if (!isCurrentLoad()) return;
 
+        // PyS comparte las revisiones del feed, pero conserva su caché independiente.
+        // Aplicar sus eventos antes de confirmar el cursor evita perder cambios si falla la caché.
+        if (requiresFullSnapshot) {
+            await loadPysData({ refresh: true });
+        } else if (pysDeltaChanges.length) {
+            const pysResult = applyPysCatalogChanges(pysDeltaChanges);
+            if (!pysResult || pysResult.needsRefresh) await loadPysData({ refresh: true });
+        }
+
         // El cursor se confirma en la misma transacción que el snapshot ya aplicado.
         if (Number.isSafeInteger(cursorToPersist)) {
             await offline.saveCatalogWithCursor(snapshotToApply, cursorToPersist);
@@ -540,14 +551,9 @@ export async function loadInitialData(forceRefresh = false, options = {}) {
         }
         if (!isCurrentLoad()) return;
         markCatalogSync_();
-        broadcastCatalogSync_(currentUser, requiresFullSnapshot);
+        broadcastCatalogSync_(currentUser, requiresFullSnapshot || pysDeltaChanges.length > 0);
         catalogLoaded = true;
         if (!silent) setState({ catalogLoadStatus: 'ready', catalogLoadError: null });
-
-        // PyS usa un endpoint/almacenamiento separado y se reconcilia tras un reset/bootstrap.
-        if (requiresFullSnapshot) {
-            loadPysData({ refresh: true }).catch(error => console.warn("Error precargando PyS en segundo plano:", error));
-        }
         return true;
     } catch (error) {
         if (!isCurrentLoad()) return;

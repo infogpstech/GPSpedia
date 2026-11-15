@@ -518,10 +518,16 @@ function doPostInternal_(e) {
             ["suggestYear", "addProblem", "addSolution", "addPrevention", "addVehicleToProblem",
              "removeVehicleFromProblem", "updatePysItem", "updateTutorialItem", "addTutorial",
              "approveVideo", "rejectVideo"].includes(action)) {
-            // Tutoriales puede publicar un snapshot exacto tras verificar su ID único y fila final.
-            // Las mutaciones PyS/multi-entidad conservan reset hasta disponer de snapshots propios.
+            // PyS y Tutoriales publican snapshots individuales después de verificar la fila persistida.
             try {
-                if (action === "addTutorial" || action === "updateTutorialItem") {
+                if (["addProblem", "addSolution", "addPrevention", "addVehicleToProblem",
+                    "removeVehicleFromProblem", "updatePysItem"].includes(action)) {
+                    const problemId = action === "addProblem"
+                        ? response.problemId
+                        : payload && payload.problemId;
+                    if (!problemId) throw new Error("La operación PyS no devolvió un ID verificable.");
+                    publishPysCatalogChange_(action, problemId);
+                } else if (action === "addTutorial" || action === "updateTutorialItem") {
                     const tutorialId = action === "addTutorial"
                         ? response.referenceId
                         : response.updated && response.updated.tutorialId;
@@ -2328,6 +2334,45 @@ function handleGetCatalogChanges(payload) {
 }
 
 function handleGetPysData(){const sheet=getPysSheet_(false);if(!sheet||sheet.getLastRow()<2)return{status:"success",data:[]};const rows=sheet.getRange(2,1,sheet.getLastRow()-1,10).getValues();return{status:"success",data:rows.filter(r=>r.some(v=>v!==""&&v!==null&&v!==undefined)).map(r=>({id_problem:r[0],Problema:r[1],Descripcion:r[2],Se_soluciono:r[3],Solucion:r[4],Prevenir:r[5],Imagen:normalizePysImageReference_(r[6]),Video:r[7],Colaborador:r[8]||"",modelosAsociados:parseModelosAsociados(r[9]||"")}))};}
+
+function buildPysCatalogChange_(reference) {
+    const sheet = getPysSheet_(false);
+    if (!sheet) throw new Error("No se encontró la hoja PyS para publicar el cambio.");
+    const matches = findPysRowsById_(sheet, reference);
+    if (matches.length !== 1) throw new Error(matches.length ? "El ID del problema PyS está duplicado." : "Problema PyS no encontrado.");
+    const row = matches[0].row;
+    const id = String(row[0] || "").trim();
+    if (!/^isue-\d+$/i.test(id)) throw new Error("El problema PyS no tiene un ID persistente compatible con el feed.");
+    const snapshot = {
+        id_problem: id,
+        Problema: row[1] === "" || row[1] === undefined ? null : row[1],
+        Descripcion: row[2] === "" || row[2] === undefined ? null : row[2],
+        Se_soluciono: row[3] === "" || row[3] === undefined ? null : row[3],
+        Solucion: row[4] === "" || row[4] === undefined ? null : row[4],
+        Prevenir: row[5] === "" || row[5] === undefined ? null : row[5],
+        Imagen: normalizePysImageReference_(row[6]),
+        Video: row[7] === "" || row[7] === undefined ? null : row[7],
+        Colaborador: row[8] || "",
+        modelosAsociados: parseModelosAsociados(row[9] || "")
+    };
+    return { collection: "pys", recordId: id, operation: "upsert", snapshot: snapshot };
+}
+
+function publishPysCatalogChange_(action, reference) {
+    const lock = LockService.getScriptLock();
+    lock.waitLock(15000);
+    try {
+        try {
+            const change = buildPysCatalogChange_(reference);
+            publishSharedCatalogChange_("FEEDBACK", action, change);
+        } catch (catalogPublishError) {
+            // Lectura y publicación quedan serializadas para no emitir snapshots PyS atrasados.
+            publishSharedCatalogChange_("FEEDBACK", action, { operation: "reset" });
+        }
+    } finally {
+        lock.releaseLock();
+    }
+}
 
 const PYS_TITLE_MAX_LENGTH=15;
 const PYS_DESCRIPTION_MAX_LENGTH=200;

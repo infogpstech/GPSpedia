@@ -199,9 +199,17 @@ async function runCatalogSnapshotSyncTests() {
         assert.deepEqual(result.snapshot.cortes, [{ id: 'C-1', marca: 'Toyota actualizado' }, { id: 'C-3', marca: 'Nissan' }]);
         assert.deepEqual(result.snapshot.tutoriales, before.tutoriales);
     });
-    test('reserva reset seguro para reset global y colecciones aún no soportadas', () => {
+    test('reserva reset seguro para reset global y colecciones desconocidas', () => {
         assert.equal(applyCatalogChangesToSnapshot(snapshot(), [{ revision: 1, collection: '*', operation: 'reset' }]).resetRequired, true);
-        assert.equal(applyCatalogChangesToSnapshot(snapshot(), [{ revision: 1, collection: 'pys', recordId: 'P-1', operation: 'upsert', snapshot: { id: 'P-1' } }]).resetRequired, true);
+        assert.equal(applyCatalogChangesToSnapshot(snapshot(), [{ revision: 1, collection: 'unknown', recordId: 'X-1', operation: 'upsert', snapshot: { id: 'X-1' } }]).resetRequired, true);
+    });
+    test('ignora eventos PyS en el snapshot principal sin solicitar descarga completa', () => {
+        const before = snapshot();
+        const result = applyCatalogChangesToSnapshot(before, [
+            { revision: 1, collection: 'pys', recordId: 'isue-001', operation: 'upsert', snapshot: { id_problem: 'isue-001', Problema: 'Nuevo' } }
+        ]);
+        assert.equal(result.resetRequired, false);
+        assert.deepEqual(result.snapshot, before);
     });
     test('aplica deltas por ID estable en Tutoriales, Relay y Logos', () => {
         const before = snapshot();
@@ -252,8 +260,8 @@ async function runCatalogSnapshotSyncTests() {
         assert.equal(saved.cursor, null);
     });
 
-    console.log(`CatalogSnapshotSync: ${passed}/27 PASS`);
-    return { passed, total: 27 };
+    console.log(`CatalogSnapshotSync: ${passed}/28 PASS`);
+    return { passed, total: 28 };
 }
 
 try {
