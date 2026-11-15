@@ -1388,6 +1388,11 @@ function doPostInternal_(e) {
                     if (!vehicleId) throw new Error("La recuperación no devolvió el ID de vehículo modificado.");
                     publishAdminCortesCatalogChange_(catalogAction, vehicleId);
                 }
+            } else if (catalogAction === "applyCortesImageReconciliation" &&
+                response.status === "success" && response.writePerformed === true) {
+                const vehicleIds = Array.isArray(response.appliedVehicleIds) ? response.appliedVehicleIds : [];
+                if (!vehicleIds.length) throw new Error("La reconciliación confirmada no devolvió vehículos modificados.");
+                publishAdminCortesCatalogChanges_(catalogAction, vehicleIds);
             } else {
                 publishSharedCatalogChange_("ADMIN", catalogAction, { operation: "reset" });
             }
@@ -1539,6 +1544,26 @@ function publishAdminCortesCatalogChange_(action, reference) {
     }
 }
 
+
+function publishAdminCortesCatalogChanges_(action, references) {
+    const lock = LockService.getScriptLock();
+    lock.waitLock(15000);
+    try {
+        try {
+            const ids = Array.from(new Set((Array.isArray(references) ? references : [])
+                .map(value => String(value === null || value === undefined ? "" : value).trim())
+                .filter(Boolean)));
+            if (!ids.length) throw new Error("La reconciliación no devolvió IDs de vehículos modificados.");
+            const changes = ids.map(id => buildAdminCortesCatalogChange_(id));
+            if (changes.length !== ids.length) throw new Error("No se pudieron verificar todos los registros modificados.");
+            changes.forEach(change => publishSharedCatalogChange_("ADMIN", action, change));
+        } catch (catalogPublishError) {
+            publishSharedCatalogChange_("ADMIN", action, { operation: "reset" });
+        }
+    } finally {
+        lock.releaseLock();
+    }
+}
 
 function buildLogoCatalogChange_(logoId, logoUrl, brandName) {
     const normalizedId = Number(logoId);
@@ -3399,6 +3424,7 @@ function handleApplyCortesImageReconciliation_(payload, logMessage, developerCon
             if (afterCount !== beforeCount + manifest.length) throw new Error("El conteo de celdas de imagen no coincide con las asignaciones confirmadas.");
             return { status: "success", writePerformed: true, processed: manifest.length, total: manifest.length,
                 appliedCount: manifest.length, failedCount: 0, beforeCount, afterCount, rollbackConfirmed: true,
+                appliedVehicleIds: Array.from(new Set(manifest.map(item => String(item.vehicleId || "").trim()).filter(Boolean))),
                 manifestDigest: preview.manifestDigest, message: "Se aplicaron y verificaron todas las propuestas aprobadas." };
         } catch (applyError) {
             const rollbackErrors = [], rolledBack = [];
