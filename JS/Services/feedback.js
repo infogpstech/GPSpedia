@@ -489,7 +489,7 @@ function doGet(e) {
 
 
 function isSharedMutationAction_(action) {
-    return ["recordLike","reportProblem","addProblem","addSolution","addPrevention","addVehicleToProblem","removeVehicleFromProblem","updatePysItem","updateTutorialItem","suggestCutChange","suggestYear","addTutorial","sendContactForm","replyToFeedback","markAsResolved","deleteFeedbackItem","clearActivityLogs","submitVideoForApproval","approveVideo","rejectVideo","createInboxConversation","sendInboxMessage","markInboxRead","archiveInboxConversation","closeInboxConversation"].includes(action);
+    return ["recordLike","reportProblem","addProblem","addSolution","addPrevention","addVehicleToProblem","removeVehicleFromProblem","updatePysItem","updateTutorialItem","suggestCutChange","suggestYear","addTutorial","sendContactForm","replyToFeedback","markAsResolved","deleteFeedbackItem","clearActivityLogs","submitVideoForApproval","approveVideo","rejectVideo","createInboxConversation","sendInboxMessage","markInboxRead","markInboxUnread","deleteInboxConversation","archiveInboxConversation","closeInboxConversation"].includes(action);
 }
 
 function doPost(e) {
@@ -542,7 +542,7 @@ const FEEDBACK_ACTION_PERMISSIONS = Object.freeze({
     deleteFeedbackItem: ["Desarrollador", "Jefe", "Supervisor"],
     getCatalogChanges: null,
     getInboxRecipients: null, getInboxConversations: null, getInboxMessages: null,
-    createInboxConversation: null, sendInboxMessage: null, markInboxRead: null, archiveInboxConversation: null,
+    createInboxConversation: null, sendInboxMessage: null, markInboxRead: null, markInboxUnread: null, deleteInboxConversation: null, archiveInboxConversation: null,
     closeInboxConversation: ["Desarrollador", "Jefe", "Supervisor"],
     getActivityLogs: ["Desarrollador", "Jefe", "Supervisor"], clearActivityLogs: ["Desarrollador"],
     initYouTubeUpload: null, getVideoApprovalByOperation: null, submitVideoForApproval: null,
@@ -652,6 +652,12 @@ function doPostInternal_(e) {
                 break;
             case 'markInboxRead':
                 response = handleMarkInboxRead(payload);
+                break;
+            case 'markInboxUnread':
+                response = handleMarkInboxUnread(payload);
+                break;
+            case 'deleteInboxConversation':
+                response = handleDeleteInboxConversation(payload);
                 break;
             case 'archiveInboxConversation':
                 response = handleArchiveInboxConversation(payload);
