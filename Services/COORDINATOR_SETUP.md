@@ -36,6 +36,40 @@ AUTH/USERS/UTILITIES de prueba deben apuntar a un coordinador de prueba independ
 
 La acción FEEDBACK `initYouTubeUpload` no adquiere lease: inicia una sesión de carga en YouTube y no modifica los recursos compartidos de Spreadsheet/Drive. El registro y aprobación posteriores sí se coordinan; el contrato de YouTube permanece en AUG-043.
 
+## Contexto central de sesión (versión 1.4.0)
+
+El coordinador mantiene la identidad activa en `ScriptProperties`, sin consultar `Users` ni `ActiveSessions` en cada operación de los demás servicios.
+
+- `GPSpedia_AUTH_CONTEXT_V1_<userId>` conserva el epoch, la marca `revokedBefore` y hasta cinco sesiones activas.
+- `GPSpedia_AUTH_TOKEN_V1_<token>` permite resolver el usuario cuando una petición protegida solo incluye `sessionToken`.
+- Cada sesión conserva token, rol normalizado, nombre, fecha de creación y última actividad.
+- La vigencia absoluta es de tres meses; la inactividad máxima es de un mes.
+- La actividad central se actualiza como máximo una vez cada cinco minutos.
+
+Acciones internas disponibles únicamente para el servicio `AUTH`:
+
+- `syncUserSessions`: sincroniza el conjunto de tokens que realmente aparece en `ActiveSessions`, conserva sesiones vigentes y elimina índices obsoletos.
+- `registerSession`: registra una sesión individual.
+- `validateSessionContext`: valida la restauración de sesión al iniciar la aplicación.
+- `revokeSession`: invalida una sesión concreta.
+- `revokeUserSessions`: incrementa el epoch, fija `revokedBefore` y revoca todas las sesiones.
+
+`AUTH` sincroniza las sesiones al iniciar sesión. La primera validación de una sesión creada antes de esta versión puede migrarla desde `ActiveSessions`, siempre que no exista una revocación previa. Un token revocado, expirado o anterior a `revokedBefore` nunca se vuelve a registrar por esa vía.
+
+Al cerrar sesión se revoca únicamente el token correspondiente. Los cambios de rol, eliminación de cuenta, cambios/restablecimientos de contraseña y restablecimientos globales de sesiones revocan el contexto antes de modificar los registros de la hoja.
+
+Los servicios `USERS`, `WRITE`, `ADMIN`, `FEEDBACK` y `UTILITIES` envían `userId` y `sessionToken` al adquirir la lease. El coordinador devuelve el actor verificado en esa misma respuesta; `SharedMutationClient` elimina cualquier actor enviado por el navegador y adjunta únicamente el actor recibido del coordinador. Los helpers de autorización consumen ese contexto sin repetir búsquedas de sesión en hojas. `USERS/updateProfile` conserva una búsqueda exacta de la fila del usuario porque necesita localizar la fila que modificará.
+
+### Recursos de coordinación
+
+`SESSION_CONTEXTS` es un recurso lógico, no una hoja de cálculo:
+
+- Las operaciones protegidas lo reservan en lectura.
+- Las operaciones de `AUTH` que crean o revocan sesiones lo reservan en escritura.
+- Así, una revocación espera a que terminen las operaciones protegidas en curso y ninguna operación nueva puede usar el contexto anterior.
+- Las operaciones ordinarias ya no escriben `LastActivityAt` ni reservan `ACTIVE_SESSIONS` en cada solicitud. `AUTH` sincroniza esa columna durante el inicio de sesión, la restauración y las operaciones sensibles de autenticación.
+
+`UTILITIES/migrateTimestamps` reserva `SESSION_CONTEXTS`, `CORTES` y `DRIVE` en lectura, y `UTILITIES` en escritura. No necesita leer `Users` ni `ActiveSessions` para autorizar al desarrollador.
 ## AUTH: sesión y aceptación de términos
 
 - Los endpoints de diagnóstico `GET ?debug=true` de AUTH y FEEDBACK devuelven `coordinatorConfigured` como booleano. No exponen URL, secretos ni tokens. El panel Developer muestra el estado local de configuración para ambos servicios. En FEEDBACK, `true` solo confirma que hay URL con formato esperado y secreto de longitud suficiente, no que el secreto coincida con el coordinador remoto; el mensaje de servicio no autorizado todavía requiere cotejar ambos valores dentro del mismo entorno.
