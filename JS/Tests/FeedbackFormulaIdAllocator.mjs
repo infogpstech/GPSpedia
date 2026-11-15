@@ -39,7 +39,7 @@ function harness(initial,config=null){
 let passed=0;function test(name,fn){fn();passed++;console.log("PASS "+name);}
 const formula='="U-"&TEXTO(FILA()-1,"000")';
 test("Los escritores de actividad, sugerencias y contacto asignan IDs desde backend",()=>{
- for (const name of ["handleSuggestYearLocked","logUserActivity","handleSuggestCutChange","handleSendContactForm"]) {
+ for (const name of ["handleSuggestYearLocked","logUserActivity","handleSuggestCutChange","handleReportProblem","handleSendContactForm"]) {
   assert.match(extract(name),/getNextFormulaBasedId_/,name+" debe asignar el ID desde backend");
  }
  assert.match(source,/copyRowPresentationOnly_\(sheet,\s*sourceRow,\s*targetRow/);
