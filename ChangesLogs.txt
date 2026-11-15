@@ -487,3 +487,10 @@
 - CI Node.js 22: run 43684553225 — 100 suites, 1,525 pruebas PASS, 0 fallos. Pages run 43684552773 — SUCCESS.
 - La caché global de sesión con invalidación por epoch aún no está implementada; cada operación protegida conserva una validación backend efectiva. Sin despliegue de Apps Script ni cambios en datos productivos.
 ================================================================================
+
+
+2026-11-15 — USERS: reutilizar la fila del usuario autenticado en actualización de perfil
+- `getVerifiedSession` devuelve el índice de la fila de Users que ya localizó y validó por ID único.
+- `handleUpdateProfile`, dentro del mismo bloqueo de mutación, reutiliza ese índice en lugar de volver a escanear la columna ID con `findUniqueUserRow_`. La fila procede de la verificación backend y se conserva la comprobación de identidad; no se acepta un índice enviado por el cliente.
+- Se amplió `UsersAtomicMutations` para comprobar el contrato y evitar que el handler vuelva a llamar al buscador.
+- Validación CI pendiente. No se modificaron roles, permisos, esquema, endpoints ni datos productivos.
