@@ -280,6 +280,146 @@ function isFeedbackCoordinatorConfigured_() {
     }
 }
 
+function getFeedbackCortesColumnMap_(sheet) {
+    const columnMap = { ...COLS_CORTES };
+    // El contrato del catálogo solo incluye estos campos si existen encabezados reales.
+    delete columnMap.activaTestigo1;
+    delete columnMap.activaTestigo2;
+    delete columnMap.activaTestigo3;
+    const lastColumn = sheet.getLastColumn();
+    if (lastColumn < 1) return columnMap;
+    const headers = sheet.getRange(1, 1, 1, lastColumn).getValues()[0];
+    const vinMatches = [];
+    headers.forEach((value, index) => {
+        if (String(value || "").trim().toLowerCase() === "vin") vinMatches.push(index + 1);
+    });
+    if (vinMatches.length > 1) throw new Error("La hoja Cortes contiene encabezados VIN duplicados.");
+    if (vinMatches.length === 1) columnMap.vin = vinMatches[0];
+    ["activaTestigo1", "activaTestigo2", "activaTestigo3"].forEach(name => {
+        const matches = [];
+        headers.forEach((value, index) => { if (String(value || "").trim() === name) matches.push(index + 1); });
+        if (matches.length > 1) throw new Error("El encabezado " + name + " está duplicado.");
+        if (matches.length === 1) columnMap[name] = matches[0];
+    });
+    return columnMap;
+}
+
+function normalizeFeedbackCatalogImageId_(value) {
+    if (!value || typeof value !== "string" || !value.trim()) return null;
+    const trimmed = value.trim();
+    const match = trimmed.match(/file\/d\/([a-zA-Z0-9_-]+)|id=([a-zA-Z0-9_-]+)|\/d\/([a-zA-Z0-9_-]+)/);
+    if (match) {
+        const fileId = match[1] || match[2] || match[3];
+        return fileId && fileId.length > 20 ? fileId : null;
+    }
+    return trimmed.length > 20 && !trimmed.includes("/") && !trimmed.includes(":") ? trimmed : null;
+}
+
+function normalizeFeedbackCatalogYouTubeUrl_(url) {
+    if (typeof url !== "string") return null;
+    const candidate = url.trim();
+    const idPattern = /^[A-Za-z0-9_-]{11}$/;
+    if (idPattern.test(candidate)) return "https://www.youtube.com/embed/" + candidate + "?enablejsapi=1";
+    const parts = candidate.match(/^https:\/\/([^/?#]+)(\/[^?#]*)?(?:\?([^#]*))?(?:#.*)?$/i);
+    if (!parts) return null;
+    const authority = parts[1].toLowerCase();
+    if (authority.includes("@") || authority.includes(":")) return null;
+    const host = authority, path = parts[2] || "/", query = parts[3] || "";
+    let videoId = "";
+    if (host === "youtu.be") {
+        const match = path.match(/^\/([A-Za-z0-9_-]{11})\/?$/);
+        videoId = match ? match[1] : "";
+    } else if (["youtube.com", "www.youtube.com", "m.youtube.com", "youtube-nocookie.com", "www.youtube-nocookie.com"].includes(host)) {
+        if (path === "/watch") {
+            const ids = [];
+            try {
+                query.split("&").filter(Boolean).forEach(part => {
+                    const pair = part.split("=");
+                    const key = decodeURIComponent(pair.shift().replace(/\+/g, " "));
+                    if (key === "v") ids.push(decodeURIComponent(pair.join("=").replace(/\+/g, " ")));
+                });
+            } catch (error) { return null; }
+            if (ids.length !== 1) return null;
+            videoId = ids[0];
+        } else {
+            const match = path.match(/^\/(?:embed|shorts|live)\/([A-Za-z0-9_-]{11})\/?$/);
+            videoId = match ? match[1] : "";
+        }
+    } else return null;
+    if (!idPattern.test(videoId)) return null;
+    return "https://www.youtube.com/embed/" + videoId + "?enablejsapi=1";
+}
+
+function buildFeedbackCortesCatalogChange_(reference) {
+    const sheet = getSafeSheet(SHEET_NAMES.CORTES);
+    if (!sheet || sheet.getLastRow() < 2) throw new Error("No se encontró la hoja Cortes para publicar el cambio.");
+    const wanted = String(reference === null || reference === undefined ? "" : reference).trim();
+    if (!wanted) throw new Error("El ID del vehículo está vacío.");
+    const ids = sheet.getRange(2, COLS_CORTES.id, sheet.getLastRow() - 1, 1).getValues().flat();
+    const matches = [];
+    ids.forEach((id, index) => { if (String(id === null || id === undefined ? "" : id).trim() === wanted) matches.push(index + 2); });
+    if (matches.length !== 1) throw new Error(matches.length ? "El ID del vehículo está duplicado." : "No se encontró la fila final del vehículo.");
+    const row = sheet.getRange(matches[0], 1, 1, sheet.getLastColumn()).getValues()[0];
+    const columnMap = getFeedbackCortesColumnMap_(sheet);
+    const imageFields = new Set(["imagenVehiculo", "imgCorte1", "imgCorte2", "imgCorte3", "imgApertura",
+        "imgCableAlimen", "imgCableAlimen2", "imgCableAlimen3"]);
+    const snapshot = {};
+    Object.keys(columnMap).forEach(key => {
+        const raw = row[columnMap[key] - 1];
+        const value = raw === undefined || raw === "" ? null : raw;
+        snapshot[key] = imageFields.has(key) ? normalizeFeedbackCatalogImageId_(value) : value;
+    });
+    if (snapshot.videoGuiaDesarmeUrl) {
+        snapshot.Video = normalizeFeedbackCatalogYouTubeUrl_(snapshot.videoGuiaDesarmeUrl);
+        delete snapshot.videoGuiaDesarmeUrl;
+    }
+    const cuts = [
+        { index: 1, util: parseInt(snapshot.utilCorte1, 10) || 0 },
+        { index: 2, util: parseInt(snapshot.utilCorte2, 10) || 0 },
+        { index: 3, util: parseInt(snapshot.utilCorte3, 10) || 0 }
+    ].sort((a, b) => b.util - a.util);
+    const temp = {};
+    for (let index = 1; index <= 3; index++) {
+        temp[index] = {
+            tipo: snapshot["tipoCorte" + index], ubicacion: snapshot["ubicacionCorte" + index],
+            color: snapshot["colorCableCorte" + index], config: snapshot["configRelay" + index],
+            img: snapshot["imgCorte" + index], util: snapshot["utilCorte" + index],
+            activaTestigo: snapshot["activaTestigo" + index], colaborador: snapshot["colaboradorCorte" + index]
+        };
+    }
+    cuts.forEach((cut, position) => {
+        const target = position + 1, source = temp[cut.index];
+        snapshot["tipoCorte" + target] = source.tipo;
+        snapshot["ubicacionCorte" + target] = source.ubicacion;
+        snapshot["colorCableCorte" + target] = source.color;
+        snapshot["configRelay" + target] = source.config;
+        snapshot["imgCorte" + target] = source.img;
+        snapshot["utilCorte" + target] = source.util;
+        snapshot["activaTestigo" + target] = source.activaTestigo;
+        snapshot["colaboradorCorte" + target] = source.colaborador;
+    });
+    if (String(snapshot.id === null || snapshot.id === undefined ? "" : snapshot.id).trim() !== wanted) {
+        throw new Error("La fila releída no conserva el ID solicitado.");
+    }
+    return { collection: "cortes", recordId: wanted, operation: "upsert", snapshot: snapshot };
+}
+
+function publishFeedbackCortesCatalogChange_(action, reference) {
+    const lock = LockService.getScriptLock();
+    lock.waitLock(15000);
+    try {
+        try {
+            const change = buildFeedbackCortesCatalogChange_(reference);
+            publishSharedCatalogChange_("FEEDBACK", action, change);
+        } catch (catalogPublishError) {
+            publishSharedCatalogChange_("FEEDBACK", action, { operation: "reset" });
+        }
+    } finally {
+        lock.releaseLock();
+    }
+}
+
+
 function doGet(e) {
     if (e && e.parameter && e.parameter.debug === 'true') {
         const serviceState = {
@@ -496,20 +636,9 @@ function doPostInternal_(e) {
         // Un fallo del feed no revierte ni convierte en error una reacción ya guardada.
         if (action === "recordLike" && response && response.status === "success" && !response.alreadyLiked) {
             try {
-                const cutsSheet = getSafeSheet(SHEET_NAMES.CORTES);
-                if (!cutsSheet) throw new Error("No se encontró la hoja Cortes para publicar el cambio.");
                 const changedVehicleId = String(payload.vehicleId || "").trim();
-                const ids = cutsSheet.getLastRow() > 1
-                    ? cutsSheet.getRange(2, COLS_CORTES.id, cutsSheet.getLastRow() - 1, 1).getValues().flat()
-                    : [];
-                const matches = [];
-                ids.forEach((id, index) => { if (String(id || "").trim() === changedVehicleId) matches.push(index + 2); });
-                if (matches.length !== 1) throw new Error("No se pudo identificar de forma única el vehículo actualizado.");
-                const row = cutsSheet.getRange(matches[0], 1, 1, cutsSheet.getLastColumn()).getValues()[0];
-                const snapshot = mapRowToObject(row, COLS_CORTES);
-                publishSharedCatalogChange_("FEEDBACK", "recordLike", {
-                    collection: "cortes", recordId: changedVehicleId, operation: "upsert", snapshot: snapshot
-                });
+                if (!changedVehicleId) throw new Error("No se recibió el ID del vehículo actualizado.");
+                publishFeedbackCortesCatalogChange_("recordLike", changedVehicleId);
             } catch (catalogPublishError) {
                 console.error("El like se guardó, pero no se pudo publicar su cambio incremental:",
                     catalogPublishError && catalogPublishError.message ? catalogPublishError.message : catalogPublishError);

@@ -319,6 +319,10 @@ function doPostInternal_(e) {
 
 function getWriteCortesColumnMap_(sheet) {
     const columnMap = { ...COLS_CORTES };
+    // El contrato del catálogo solo incluye estos campos si existen encabezados reales.
+    delete columnMap.activaTestigo1;
+    delete columnMap.activaTestigo2;
+    delete columnMap.activaTestigo3;
     const lastColumn = sheet.getLastColumn();
     if (lastColumn < 1) return columnMap;
     const headers = sheet.getRange(1, 1, 1, lastColumn).getValues()[0];

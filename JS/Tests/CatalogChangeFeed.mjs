@@ -91,11 +91,15 @@ test("FEEDBACK expone la lectura autenticada y el cliente enruta al servicio cor
     assert.match(feedbackSource,/function handleGetCatalogChanges\(payload\)[\s\S]*?assertFeedbackSession\(payload, null\)/);
     assert.match(apiSource,/'getCatalogChanges': 'FEEDBACK'/);
 });
-test("recordLike publica el snapshot de Cortes después de confirmar la escritura", () => {
-    assert.match(feedbackSource,/case 'recordLike':\s*response = handleRecordLike\(payload\)/);
-    assert.match(feedbackSource,/if \(action === "recordLike"[\s\S]*?response\.status === "success"[\s\S]*?publishSharedCatalogChange_\("FEEDBACK", "recordLike"/);
-    assert.match(feedbackSource,/mapRowToObject\(row, COLS_CORTES\)/);
-    assert.match(feedbackSource,/catch \(catalogPublishError\)[\s\S]*?El like se guardó, pero no se pudo publicar/);
+test("recordLike publica un snapshot completo y ordenado de Cortes sin helpers externos", () => {
+    assert.match(feedbackSource,/case 'recordLike':\\s*response = handleRecordLike\\(payload\\)/);
+    assert.match(feedbackSource,/if \\(action === "recordLike"[\\s\\S]*?response\\.status === "success"[\\s\\S]*?publishFeedbackCortesCatalogChange_\\("recordLike", changedVehicleId\\)/);
+    assert.ok(feedbackSource.includes("function buildFeedbackCortesCatalogChange_(reference)"));
+    assert.ok(feedbackSource.includes("function getFeedbackCortesColumnMap_(sheet)"));
+    assert.ok(feedbackSource.includes("normalizeFeedbackCatalogImageId_"));
+    assert.ok(feedbackSource.includes("normalizeFeedbackCatalogYouTubeUrl_"));
+    assert.ok(!feedbackSource.includes("mapRowToObject(row, COLS_CORTES)"));
+    assert.match(feedbackSource,/function publishFeedbackCortesCatalogChange_\\(action, reference\\)[\\s\\S]*?getScriptLock\\(\\)[\\s\\S]*?waitLock\\(15000\\)[\\s\\S]*?publishSharedCatalogChange_\\("FEEDBACK", action, change\\)/);
 });
 test("altas y ediciones de Tutoriales publican upsert exacto tras verificar fila e ID", () => {
     assert.match(feedbackSource,/function buildTutorialCatalogChange_\(reference\)[\s\S]*?findTutorialRow_\(sheet, reference, true\)[\s\S]*?collection: "tutoriales"[\s\S]*?operation: "upsert"/);
