@@ -122,6 +122,13 @@ test("WRITE publica upsert exacto de Cortes tras releer fila y conserva reset pa
     assert.ok(writeSource.includes('publishSharedCatalogChange_("WRITE", action, { operation: "reset" })'));
     assert.ok(writeSource.includes("getScriptLock()") && writeSource.includes("waitLock(15000)"));
 });
+test("normalizeImages publica solo filas reescritas y usa reset ante respuestas parciales/error", () => {
+    assert.ok(adminSource.includes("const changedVehicleIds = new Set()"));
+    assert.ok(adminSource.includes("changedVehicleIds.add(changedVehicleId)"));
+    assert.ok(adminSource.includes("changedVehicleIds: Array.from(changedVehicleIds)"));
+    assert.ok(adminSource.includes("publishAdminCortesCatalogChanges_(catalogAction, changedVehicleIds)"));
+    assert.ok(adminSource.includes('response.status === "error"'));
+});
 test("reconciliación confirmada publica un upsert por vehículo único y reserva reset para fallos", () => {
     assert.ok(adminSource.includes('appliedVehicleIds: Array.from(new Set(manifest.map(item => String(item.vehicleId || "").trim()).filter(Boolean)))'));
     assert.ok(adminSource.includes("function publishAdminCortesCatalogChanges_(action, references)"));
@@ -197,4 +204,4 @@ test("WRITE y FEEDBACK publican deltas exactos y conservan reset para operacione
     assert.match(adminSource,/catalogWriters\.includes\(catalogAction\)[\s\S]*?publishSharedCatalogChange_\("ADMIN", catalogAction, \{ operation: "reset" \}\)/);
     assert.match(adminSource,/finalizeAdminAuditEvent_\(auditEvent[\s\S]*?publishSharedCatalogChange_/);
 });
-console.log("CatalogChangeFeed: " + passed + "/24 PASS");
+console.log("CatalogChangeFeed: " + passed + "/25 PASS");

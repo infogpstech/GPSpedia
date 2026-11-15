@@ -1373,7 +1373,7 @@ function doPostInternal_(e) {
         "normalizeImages", "applyCortesImageReconciliation", "restoreDatabase", "reorganizeDatabase",
         "migrateIdentifiers", "rollbackIdentifiers"];
     if (catalogAction && catalogWriters.includes(catalogAction) && response &&
-        (response.status === "success" || response.status === "warning")) {
+        (response.status === "success" || response.status === "warning" || response.status === "error")) {
         try {
             if (catalogAction === "addLogo" && response.status === "success") {
                 const change = buildLogoCatalogChange_(response.logoId, response.logoUrl, payload && payload.nombreMarca);
@@ -1388,6 +1388,9 @@ function doPostInternal_(e) {
                     if (!vehicleId) throw new Error("La recuperación no devolvió el ID de vehículo modificado.");
                     publishAdminCortesCatalogChange_(catalogAction, vehicleId);
                 }
+            } else if (catalogAction === "normalizeImages" && response.status === "success") {
+                const changedVehicleIds = Array.isArray(response.changedVehicleIds) ? response.changedVehicleIds : [];
+                if (changedVehicleIds.length) publishAdminCortesCatalogChanges_(catalogAction, changedVehicleIds);
             } else if (catalogAction === "applyCortesImageReconciliation" &&
                 response.status === "success" && response.writePerformed === true) {
                 const vehicleIds = Array.isArray(response.appliedVehicleIds) ? response.appliedVehicleIds : [];
@@ -2714,7 +2717,8 @@ function handleNormalizeImages(payload, logMessage) {
             lote: lote,
             filaInicial: filaInicial,
             ultimaFilaProcesada: filaInicial - 1,
-            estado: "completado"
+            estado: "completado",
+            changedVehicleIds: []
         };
     }
 
@@ -2723,6 +2727,7 @@ function handleNormalizeImages(payload, logMessage) {
     let imagesDuplicated = 0;
     let imagesSkippedConflicts = 0;
     let foldersRenamed = 0;
+    const changedVehicleIds = new Set();
 
     const imgFields = ['imagenVehiculo', 'imgCorte1', 'imgCorte2', 'imgCorte3', 'imgApertura', 'imgCableAlimen', 'imgCableAlimen2', 'imgCableAlimen3'];
 
@@ -2829,6 +2834,8 @@ function handleNormalizeImages(payload, logMessage) {
                                 fileToProcess.setName(newFilename);
                                 imgUrl = `https://drive.google.com/uc?export=view&id=${fileToProcess.getId()}`;
                                 sheet.getRange(rowNum, colIndex + 1).setValue(imgUrl);
+                                const changedVehicleId = String(vehicleInfo.id || "").trim();
+                                if (changedVehicleId) changedVehicleIds.add(changedVehicleId);
                                 imagesDuplicated++;
                                 imagesRenamed++;
                             }
@@ -2878,7 +2885,8 @@ function handleNormalizeImages(payload, logMessage) {
         lote: lote,
         filaInicial: filaInicial,
         ultimaFilaProcesada: ultimaFilaProcesada,
-        estado: estado
+        estado: estado,
+        changedVehicleIds: Array.from(changedVehicleIds)
     };
 }
 
