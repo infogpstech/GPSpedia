@@ -557,7 +557,7 @@ function createSharedMutationCoordinator_(dependencies) {
                         lease.phase = "active";
                         lease.expiresAt = currentTime + SHARED_MUTATION_LEASE_TTL_MS;
                         saveLeases_(leases);
-                        return { kind: "success", token: token, expiresAt: lease.expiresAt };
+                        return { kind: "success", token: token, expiresAt: lease.expiresAt, actor: lease.actor || null };
                     }
                     saveLeases_(leases);
                     return busyOutcome_(active, null, true);
