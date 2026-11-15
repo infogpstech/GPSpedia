@@ -197,7 +197,7 @@ Registrar duración por iteración, fecha, deployment/versión y runtime. Repeti
 
 ## Continuidad inmediata
 
-P0–P6 y los paquetes locales de UX/imagen cuentan con implementación y verificaciones locales completadas; los estados se cierran como COMPLETADA CON VALIDACIÓN DIFERIDA cuando dependen de Apps Script, Spreadsheet/Drive o dispositivos reales. P2 conserva pendiente Beta para calibrar PBKDF2 y reconciliar datos. La auditoría confirmó que Relay no tiene un escritor backend de registros: solo se permite congelar fórmulas conservando IDs existentes; no se inventarán IDs. Siguiente tarea de la nueva etapa: GP-CAT-01L — auditar el alcance real de suggestYear y mantener reset salvo que se confirme una única fila final y su snapshot íntegro.
+P0–P6 y los paquetes locales de UX/imagen cuentan con implementación y verificaciones locales completadas; los estados se cierran como COMPLETADA CON VALIDACIÓN DIFERIDA cuando dependen de Apps Script, Spreadsheet/Drive o dispositivos reales. P2 conserva pendiente Beta para calibrar PBKDF2 y reconciliar datos. La auditoría confirmó que Relay no tiene un escritor backend de registros: solo se permite congelar fórmulas conservando IDs existentes; no se inventarán IDs. Siguiente tarea de la nueva etapa: GP-CAT-01M — auditar approveVideo/rejectVideo y determinar si cada operación afecta una sola fila verificable o si debe conservar reset global.
 
 
 ## Evidencia adicional de P0 — revisión de permisos y contratos (2026-11-14)
@@ -736,3 +736,5 @@ No marcar como completadas estas tareas hasta ejecutar las pruebas locales perti
 - GP-CAT-01K: COMPLETADA EN RAMA; recordLike ya no invoca mapRowToObject no definido. Publica snapshot FEEDBACK completo, normalizado y ordenado, con VIN/activaTestigo dinámicos, bajo ScriptLock y reset de recuperación.
 
 Este requerimiento complementa GP-PWA-02: sincronizar el catálogo en vivo no debe interceptar el gesto nativo ni recargar el documento. Son dos mecanismos distintos: la PWA actualiza sus recursos de aplicación mediante el ciclo normal del Service Worker/navegador; los datos del catálogo se sincronizan incrementalmente dentro de la sesión.
+
+- GP-CAT-01L: COMPLETADA EN RAMA; suggestYear publica upsert solo cuando response.recovered es true/false (aplicación confirmada o recuperada del rango). Los votos previos y respuestas que no modifican Cortes no generan reset ni delta. CatalogChangeFeed 19/19 PASS.

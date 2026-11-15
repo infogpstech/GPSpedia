@@ -1677,3 +1677,17 @@ No se desplegaron servicios Apps Script, no se modificaron ScriptProperties, Spr
 - GitHub Actions run `43658821960`: SUCCESS; Node.js 22; sintaxis PASS; **99 suites / 1,489 pruebas / 0 fallos**.
 - GitHub Pages run `43658822214` pendiente de confirmar al momento de este checkpoint.
 - Siguiente: GP-CAT-01L — auditar `suggestYear`; conservar reset hasta confirmar si modifica una o varias filas y verificar el snapshot resultante.
+
+
+## Continuidad — GP-CAT-01L: deltas de ampliación de rango suggestYear (2026-11-14)
+
+**Commit de código:** `e39854e9b9c201e7ae967f3601a67f5d6bbb69b9`.
+**Commit de contrato de prueba:** `7fdf73189300db8f08c9b1c2f062cecb6145c473`.
+
+- `handleSuggestYearLocked` modifica la fila Cortes únicamente cuando tres aportantes verificados confirman una ampliación válida y se completa `FeedbackYearApplications`. Los votos previos, sugerencias anónimas, rangos ya cubiertos y respuestas sin aplicación no modifican Cortes.
+- FEEDBACK ahora publica upsert exacto solo cuando la respuesta contiene `recovered === false` (aplicación nueva confirmada) o `recovered === true` (recuperación de una aplicación pendiente ya aplicada). Se usa `payload.vehicleId` y el constructor completo de snapshot FEEDBACK. Los demás resultados no publican cambios de catálogo.
+- Si no se puede verificar la fila o publicar el snapshot, el helper mantiene reset seguro.
+- `CatalogChangeFeed`: 19/19 PASS; `CatalogSnapshotSync`: 29/29 PASS; `PysDataCache`: 18/18 PASS.
+- GitHub Actions run `43658998921`: SUCCESS; Node.js 22; sintaxis PASS; **99 suites / 1,490 pruebas / 0 fallos**.
+- GitHub Pages run `43658998608` pendiente de confirmar al momento de este checkpoint.
+- Siguiente: GP-CAT-01M — auditar `approveVideo`/`rejectVideo`; mantener reset global si pueden modificar varias filas o no existe un identificador único verificable.

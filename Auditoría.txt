@@ -548,3 +548,13 @@ Estado: CORREGIDO EN RAMA; VALIDACIÓN BETA PENDIENTE.
 - Corrección: constructor propio de snapshot alineado con catalog.js, incluyendo VIN y activaTestigo dinámicos, normalización de imágenes/YouTube y orden de cortes. Publicación bajo ScriptLock; fallback reset si falla la verificación/publicación.
 - CI Node.js 22 run 43658821960: SUCCESS; 99 suites / 1,489 pruebas / 0 fallos.
 - Pendiente: comprobar en Beta aislada la reacción simultánea de varios usuarios y la actualización entre pestañas/dispositivos.
+
+
+AUD-2026-11-14-21 — RESET INNECESARIO EN SUGERENCIAS DE AÑO SIN CAMBIO DE CATÁLOGO
+Severidad: Media (reconstrucción completa tras votos que solo modifican Feedbacks).
+Estado: CORREGIDO EN RAMA; VALIDACIÓN BETA PENDIENTE.
+- Hallazgo: suggestYear publicaba reset tras cualquier respuesta exitosa, aunque la mayoría de respuestas solo registran votos en Feedbacks y no modifican la fila Cortes.
+- Corrección: publica upsert por ID de vehículo solo cuando el flujo confirma una ampliación nueva o recupera una aplicación pendiente ya aplicada (recovered false/true). Las demás respuestas no publican evento.
+- La fila se relee y se serializa bajo ScriptLock; ante error se usa reset seguro.
+- CatalogChangeFeed 19/19 PASS; CI Node.js 22 run 43658998921: 99 suites / 1,490 pruebas / 0 fallos.
+- Pendiente: validar umbral de tres usuarios y actualización multiusuario en Beta aislada.

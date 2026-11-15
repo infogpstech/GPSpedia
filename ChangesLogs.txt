@@ -311,3 +311,11 @@
 - El helper WRITE ahora excluye activaTestigo del mapa base y lo agrega solo con encabezados reales, evitando diferencias entre el snapshot incremental y el completo.
 - CatalogChangeFeed 18/18, CatalogSnapshotSync 29/29 y PysDataCache 18/18 PASS.
 - CI Node.js 22 run 43658821960: SUCCESS; 99 suites / 1,489 pruebas / 0 fallos.
+
+
+2026-11-14 — GP-CAT: DELTA EXACTO PARA suggestYear
+- FEEDBACK publica upsert Cortes solo cuando suggestYear confirma una ampliación de rango nueva (recovered=false) o recupera una aplicación pendiente que terminó de aplicar el rango (recovered=true).
+- Votos que no alcanzan el umbral, sugerencias anónimas, años ya cubiertos y respuestas que no alteran Cortes no emiten reset ni delta.
+- La fila se relee mediante el constructor completo de FEEDBACK y se publica bajo ScriptLock; si no puede verificarse, se usa reset seguro.
+- CatalogChangeFeed 19/19, CatalogSnapshotSync 29/29, PysDataCache 18/18 PASS.
+- CI Node.js 22 run 43658998921: SUCCESS; 99 suites / 1,490 pruebas / 0 fallos.
