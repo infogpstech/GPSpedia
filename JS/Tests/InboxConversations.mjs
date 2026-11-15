@@ -78,7 +78,7 @@ const LockService = {
 const SpreadsheetApp = { flush() {} };
 const api = new Function(
     "getSpreadsheet","LockService","SpreadsheetApp","Utilities","assertFeedbackSession","normalizeFeedbackRole",
-    source + "\nreturn { handleGetInboxRecipients, handleCreateInboxConversation, handleSendInboxMessage, handleGetInboxConversations, handleGetInboxMessages, handleMarkInboxRead, handleArchiveInboxConversation, inboxCanStartConversationWith_ };"
+    source + "\nreturn { handleGetInboxRecipients, handleCreateInboxConversation, handleSendInboxMessage, handleGetInboxConversations, handleGetInboxMessages, handleMarkInboxRead, handleArchiveInboxConversation, handleCloseInboxConversation, inboxCanStartConversationWith_ };"
 )(() => spreadsheet, LockService, SpreadsheetApp, Utilities, assertSession, normalizeRole);
 
 const actor = (id, token) => ({ userId: id, sessionToken: token });
@@ -208,12 +208,16 @@ run("Un tercero no puede responder ni alterar el marcador de lectura", () => {
 });
 const initialMessages = api.handleGetInboxMessages({ ...actor("U2","token-b"),conversationId:first.conversationId });
 const firstMessageId = initialMessages.data[0].messageId;
-const reply = { ...actor("U2","token-b"),conversationId:first.conversationId,body:"Gracias por la bienvenida.",idempotencyKey:"reply-key-0001" };
+const reply = { ...actor("U1","token-a"),conversationId:first.conversationId,body:"Seguimiento del caso.",idempotencyKey:"reply-key-0001" };
 const sent = api.handleSendInboxMessage(reply);
-run("Permite respuesta bidireccional y actualiza no leídos del otro participante", () => {
+run("Solo quien inició la conversación puede agregar comentarios", () => {
+    assert.throws(() => api.handleSendInboxMessage({
+        ...actor("U2","token-b"),conversationId:first.conversationId,body:"Respuesta del destinatario.",
+        idempotencyKey:"recipient-reply-0001"
+    }),/Solo quien inició/);
     assert.equal(sent.status,"success");
     assert.equal(sent.idempotentReplay,false);
-    const unread = api.handleGetInboxConversations({ ...actor("U1","token-a"),folder:"unread" });
+    const unread = api.handleGetInboxConversations({ ...actor("U2","token-b"),folder:"unread" });
     assert.equal(unread.data[0].unreadCount,1);
 });
 run("El reintento del mismo mensaje es idempotente y no duplica el contador", () => {
@@ -234,34 +238,34 @@ run("El autor no puede consultar una conversación ajena aunque conozca su ID", 
 });
 run("Marca como leído hasta el mensaje indicado sin borrar mensajes posteriores", () => {
     const result = api.handleMarkInboxRead({
-        ...actor("U1","token-a"),conversationId:first.conversationId,throughMessageId:sent.messageId
+        ...actor("U2","token-b"),conversationId:first.conversationId,throughMessageId:sent.messageId
     });
     assert.equal(result.unreadCount,0);
-    const unread = api.handleGetInboxConversations({ ...actor("U1","token-a"),folder:"unread" });
+    const unread = api.handleGetInboxConversations({ ...actor("U2","token-b"),folder:"unread" });
     assert.equal(unread.total,0);
     assert.equal(unread.data.some(item => item.conversationId === first.conversationId),false);
 });
 run("La auditoría distingue la lectura de cada participante", () => {
     const followup = api.handleSendInboxMessage({
-        ...actor("U2","token-b"),conversationId:first.conversationId,
-        body:"Mensaje para comprobar lectura por participante.",idempotencyKey:"audit-reply-0001"
+        ...actor("U1","token-a"),conversationId:first.conversationId,
+        body:"Comentario para comprobar lectura por participante.",idempotencyKey:"audit-reply-0001"
     });
-    api.handleMarkInboxRead({ ...actor("U1","token-a"),conversationId:first.conversationId,throughMessageId:followup.messageId });
     api.handleMarkInboxRead({ ...actor("U2","token-b"),conversationId:first.conversationId,throughMessageId:followup.messageId });
+    api.handleMarkInboxRead({ ...actor("U1","token-a"),conversationId:first.conversationId,throughMessageId:followup.messageId });
     const audit = spreadsheet.getSheetByName("InboxConversationAudit").rows.slice(1)
         .filter(row => row[4] === "read" && row[6] === followup.messageId);
     assert.deepEqual(audit.map(row => row[2]).sort(),["U1","U2"]);
 });
 run("Las solicitudes de lectura tardías no hacen retroceder el marcador", () => {
     const newest = api.handleSendInboxMessage({
-        ...actor("U2","token-b"),conversationId:first.conversationId,
-        body:"Mensaje más reciente para probar el orden.",idempotencyKey:"read-order-0001"
+        ...actor("U1","token-a"),conversationId:first.conversationId,
+        body:"Comentario más reciente para probar el orden.",idempotencyKey:"read-order-0001"
     });
-    api.handleMarkInboxRead({ ...actor("U1","token-a"),conversationId:first.conversationId,throughMessageId:newest.messageId });
+    api.handleMarkInboxRead({ ...actor("U2","token-b"),conversationId:first.conversationId,throughMessageId:newest.messageId });
     const stale = api.handleMarkInboxRead({ ...actor("U1","token-a"),conversationId:first.conversationId,throughMessageId:firstMessageId });
     assert.equal(stale.unreadCount,0);
     const state = spreadsheet.getSheetByName("InboxConversationState").rows
-        .find(row => row[0] === first.conversationId && row[1] === "U1");
+        .find(row => row[0] === first.conversationId && row[1] === "U2");
     assert.equal(state[3],newest.messageId);
 });
 run("Archivo y restauración son estados privados por participante", () => {
@@ -367,8 +371,8 @@ run("La paginación del historial no repite mensajes si llega uno nuevo entre p�
     assert.equal(latest.data.length,1);
     assert.ok(latest.nextCursor);
     const appended = api.handleSendInboxMessage({
-        ...actor("U2","token-b"),conversationId:first.conversationId,
-        body:"Mensaje recibido después de abrir la página histórica.",idempotencyKey:"page-message-race-01"
+        ...actor("U1","token-a"),conversationId:first.conversationId,
+        body:"Comentario agregado después de abrir la página histórica.",idempotencyKey:"page-message-race-01"
     });
     assert.ok(appended.messageId);
     const older = api.handleGetInboxMessages({
@@ -378,12 +382,56 @@ run("La paginación del historial no repite mensajes si llega uno nuevo entre p�
     assert.notEqual(older.data[0].messageId,latest.data[0].messageId);
     assert.notEqual(older.data[0].messageId,appended.messageId);
 });
+run("Supervisor, Jefe y Desarrollador pueden cerrar casos; el cierre bloquea comentarios", () => {
+    const supervisorCase = api.handleCreateInboxConversation({
+        ...actor("U2","token-b"),recipientId:"U6",subject:"Reporte para Supervisor",category:"soporte",
+        body:"Solicito revisión.",idempotencyKey:"close-case-supervisor-01"
+    });
+    assert.throws(() => api.handleCloseInboxConversation({
+        ...actor("U2","token-b"),conversationId:supervisorCase.conversationId
+    }),/Solo Supervisor/);
+    assert.throws(() => api.handleCloseInboxConversation({
+        ...actor("U3","token-c"),conversationId:supervisorCase.conversationId
+    }),/permiso/);
+    assert.throws(() => api.handleSendInboxMessage({
+        ...actor("U6","token-d"),conversationId:supervisorCase.conversationId,body:"Respuesta del destinatario.",
+        idempotencyKey:"close-case-recipient-reply-01"
+    }),/Solo quien inició/);
+    const closed = api.handleCloseInboxConversation({
+        ...actor("U6","token-d"),conversationId:supervisorCase.conversationId
+    });
+    assert.equal(closed.closed,true);
+    assert.equal(closed.alreadyClosed,false);
+    const replay = api.handleCloseInboxConversation({
+        ...actor("U6","token-d"),conversationId:supervisorCase.conversationId
+    });
+    assert.equal(replay.alreadyClosed,true);
+    assert.throws(() => api.handleSendInboxMessage({
+        ...actor("U2","token-b"),conversationId:supervisorCase.conversationId,body:"Comentario tardío.",
+        idempotencyKey:"close-case-reply-01"
+    }),/cerrado/);
+    const supervisorRow = spreadsheet.getSheetByName("InboxConversations").rows.find(item => item[0] === supervisorCase.conversationId);
+    assert.equal(supervisorRow[6],"closed");
+    const jefeCase = api.handleCreateInboxConversation({
+        ...actor("U6","token-d"),recipientId:"U7",subject:"Reporte para Jefe",category:"soporte",
+        body:"Solicito autorización.",idempotencyKey:"close-case-jefe-01"
+    });
+    assert.equal(api.handleCloseInboxConversation({ ...actor("U7","token-e"),conversationId:jefeCase.conversationId }).closed,true);
+    const developerCase = api.handleCreateInboxConversation({
+        ...actor("U1","token-a"),recipientId:"U2",subject:"Reporte para Desarrollador",category:"general",
+        body:"Solicito seguimiento.",idempotencyKey:"close-case-dev-01"
+    });
+    assert.equal(api.handleCloseInboxConversation({ ...actor("U1","token-a"),conversationId:developerCase.conversationId }).closed,true);
+    const audit = spreadsheet.getSheetByName("InboxConversationAudit").rows.slice(1)
+        .filter(row => row[4] === "close" && row[5] === supervisorCase.conversationId);
+    assert.equal(audit.length,1);
+});
 run("Las mutaciones Inbox se coordinan con cambios de identidad y otras escrituras FEEDBACK", () => {
     const match = feedbackSource.match(/function isSharedMutationAction_\(action\)\s*\{[\s\S]*?\n\}/);
     assert.ok(match,"No se encontró el filtro de mutaciones coordinadas de FEEDBACK.");
     const isSharedMutationAction = new Function(match[0] + "; return isSharedMutationAction_;")();
     const coordinatorPolicy = new Function(coordinatorSource + "\nreturn coordinatorPolicy_;");
-    for (const action of ["createInboxConversation","sendInboxMessage","markInboxRead","archiveInboxConversation"]) {
+    for (const action of ["createInboxConversation","sendInboxMessage","markInboxRead","archiveInboxConversation","closeInboxConversation"]) {
         assert.equal(isSharedMutationAction(action),true,action+" debe adquirir una lease compartida.");
         assert.deepEqual(coordinatorPolicy()("FEEDBACK",action),{
             readResources:["USERS","ACTIVE_SESSIONS"],writeResources:["ACTIVE_SESSIONS","FEEDBACK"],sharedWriteResources:[],maintenance:false,nestedActions:{}
@@ -396,7 +444,7 @@ run("Los reintentos idempotentes no retroceden el último mensaje cuando hay mar
         body:"Mensaje inicial.",idempotencyKey:"equal-time-create-01"
     });
     const second = api.handleSendInboxMessage({
-        ...actor("U3","token-c"),conversationId:created.conversationId,body:"Respuesta intermedia.",
+        ...actor("U1","token-a"),conversationId:created.conversationId,body:"Comentario intermedio.",
         idempotencyKey:"equal-time-reply-01"
     });
     const third = api.handleSendInboxMessage({
@@ -417,7 +465,7 @@ run("Los reintentos idempotentes no retroceden el último mensaje cuando hay mar
         body:"Mensaje inicial.",idempotencyKey:"equal-time-create-01"
     });
     api.handleSendInboxMessage({
-        ...actor("U3","token-c"),conversationId:created.conversationId,body:"Respuesta intermedia.",
+        ...actor("U1","token-a"),conversationId:created.conversationId,body:"Comentario intermedio.",
         idempotencyKey:"equal-time-reply-01"
     });
     assert.equal(conversationRow[13],third.messageId);
@@ -494,7 +542,7 @@ run("El historial respeta el orden de inserción cuando las marcas de tiempo ret
         body:"Primer mensaje.",idempotencyKey:"history-order-create-01"
     });
     const second = api.handleSendInboxMessage({
-        ...actor("U3","token-c"),conversationId:created.conversationId,body:"Segundo mensaje.",
+        ...actor("U1","token-a"),conversationId:created.conversationId,body:"Segundo comentario.",
         idempotencyKey:"history-order-reply-01"
     });
     const third = api.handleSendInboxMessage({

@@ -6,7 +6,7 @@ import { createPrintableQrDataUrl } from './printQr.js';
 // - Contain all functions that directly manipulate the DOM.
 // - Use document.createElement, not HTML strings.
 
-import { getFeedbackItems, getInboxRecipients, getInboxConversations, getInboxMessages, createInboxConversation, sendInboxMessage, markInboxRead, archiveInboxConversation, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, clearSensitiveLogs, checkAllServicesHealth, bucketServiceMetrics, getServiceMetricsSnapshot, subscribeServiceMetrics, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange, approveVideo, rejectVideo, getRichTextMode, setRichTextMode, routeActionWithRetry } from './api-config.js';
+import { getFeedbackItems, getInboxRecipients, getInboxConversations, getInboxMessages, createInboxConversation, sendInboxMessage, markInboxRead, archiveInboxConversation, closeInboxConversation as apiCloseInboxConversation, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, clearSensitiveLogs, checkAllServicesHealth, bucketServiceMetrics, getServiceMetricsSnapshot, subscribeServiceMetrics, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange, approveVideo, rejectVideo, getRichTextMode, setRichTextMode, routeActionWithRetry } from './api-config.js';
 import { getState, setState, subscribe } from './state.js';
 import * as offline from './offline.js';
 import { createEditBackupStore, getEditBackupFieldsToRestore } from './editBackupStore.js';
@@ -4569,6 +4569,14 @@ function renderInboxConversationDetail_(options = {}) {
     archive.type = "button";
     archive.addEventListener("click", () => toggleInboxConversationArchive_(item));
     header.append(back, titleBlock, archive);
+    const context = getUiSessionContext_();
+    if (item.status === "open" && context &&
+        ["desarrollador","jefe","supervisor"].includes(normalizeUiRole_(context.role))) {
+        const close = inboxCreateNode_("button", "inbox-thread-archive inbox-thread-close", "Cerrar caso");
+        close.type = "button";
+        close.addEventListener("click", () => closeSelectedInboxConversation_(item));
+        header.appendChild(close);
+    }
     detail.appendChild(header);
     const messages = inboxCreateNode_("div", "inbox-thread-messages");
     messages.id = "inbox-conversation-messages";
@@ -4592,8 +4600,14 @@ function renderInboxConversationDetail_(options = {}) {
         messages.appendChild(bubble);
     });
     detail.appendChild(messages);
-    if (item.status === "open") renderInboxReplyForm_(detail, item);
-    else detail.appendChild(inboxCreateNode_("p", "inbox-state-message", "Esta conversación está cerrada."));
+    const context = getUiSessionContext_();
+    if (item.status !== "open") {
+        detail.appendChild(inboxCreateNode_("p", "inbox-state-message", "Caso cerrado. No se pueden agregar más comentarios."));
+    } else if (context && context.userId === String(item.createdById || "")) {
+        renderInboxReplyForm_(detail, item);
+    } else {
+        detail.appendChild(inboxCreateNode_("p", "inbox-state-message", "Solo quien inició el caso puede agregar comentarios."));
+    }
 }
 function renderInboxReplyForm_(detail, item) {
     const context = getUiSessionContext_(), draftKind = "reply:" + item.conversationId, draft = inboxReadDraft_(draftKind);
@@ -4770,6 +4784,24 @@ async function toggleInboxConversationArchive_(item) {
         } else renderInboxConversationDetail_();
         inboxSetStatus_(item.archived ? "Conversación restaurada." : "Conversación archivada.", false);
     } catch (error) { inboxSetStatus_(error && error.message ? error.message : "No se pudo actualizar el archivo.", true); }
+}
+async function closeSelectedInboxConversation_(item) {
+    const context = getUiSessionContext_();
+    if (!context || !item || item.status !== "open") return;
+    if (typeof window !== "undefined" && typeof window.confirm === "function" &&
+        !window.confirm("¿Cerrar este caso? Después del cierre no se podrán agregar más comentarios.")) return;
+    try {
+        const response = await apiCloseInboxConversation(item.conversationId, context);
+        if (!response || response.status !== "success" || response.closed !== true) {
+            throw new Error(response && response.message || "No se pudo cerrar el caso.");
+        }
+        await loadInboxConversations_({ reset: true, preserveScroll: true });
+        inboxConversationSelected_ = { ...item, status: "closed" };
+        renderInboxConversationDetail_();
+        inboxSetStatus_("Caso cerrado. Ya no admite más comentarios.", false);
+    } catch (error) {
+        inboxSetStatus_(error && error.message ? error.message : "No se pudo cerrar el caso.", true);
+    }
 }
 async function refreshInboxConversations_() {
     if (inboxConversationSyncBusy_ || inboxConversationCurrentView_ !== "conversations") return;

@@ -441,7 +441,7 @@ function doGet(e) {
 
 
 function isSharedMutationAction_(action) {
-    return ["recordLike","reportProblem","addProblem","addSolution","addPrevention","addVehicleToProblem","removeVehicleFromProblem","updatePysItem","updateTutorialItem","suggestCutChange","suggestYear","addTutorial","sendContactForm","replyToFeedback","markAsResolved","deleteFeedbackItem","clearActivityLogs","submitVideoForApproval","approveVideo","rejectVideo","createInboxConversation","sendInboxMessage","markInboxRead","archiveInboxConversation"].includes(action);
+    return ["recordLike","reportProblem","addProblem","addSolution","addPrevention","addVehicleToProblem","removeVehicleFromProblem","updatePysItem","updateTutorialItem","suggestCutChange","suggestYear","addTutorial","sendContactForm","replyToFeedback","markAsResolved","deleteFeedbackItem","clearActivityLogs","submitVideoForApproval","approveVideo","rejectVideo","createInboxConversation","sendInboxMessage","markInboxRead","archiveInboxConversation","closeInboxConversation"].includes(action);
 }
 
 function doPost(e) {
@@ -498,6 +498,7 @@ const FEEDBACK_ACTION_PERMISSIONS = Object.freeze({
     getCatalogChanges: null,
     getInboxRecipients: null, getInboxConversations: null, getInboxMessages: null,
     createInboxConversation: null, sendInboxMessage: null, markInboxRead: null, archiveInboxConversation: null,
+    closeInboxConversation: ["Desarrollador", "Jefe", "Supervisor"],
     getActivityLogs: ["Desarrollador", "Jefe", "Supervisor"], clearActivityLogs: ["Desarrollador"],
     initYouTubeUpload: null, getVideoApprovalByOperation: null, submitVideoForApproval: null,
     approveVideo: ["Desarrollador", "Jefe", "Supervisor"], rejectVideo: ["Desarrollador", "Jefe", "Supervisor"]
@@ -609,6 +610,9 @@ function doPostInternal_(e) {
                 break;
             case 'archiveInboxConversation':
                 response = handleArchiveInboxConversation(payload);
+                break;
+            case 'closeInboxConversation':
+                response = handleCloseInboxConversation(payload);
                 break;
             case 'clearActivityLogs':
                 response = handleClearActivityLogs(payload);

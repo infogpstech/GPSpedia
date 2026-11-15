@@ -79,9 +79,12 @@ check("El filtro visual de categorías actualiza la consulta y reinicia la pagin
     assert.match(ui, /category: inboxConversationCategory_/);
     assert.match(ui, /inboxConversationPageStack_ = \[0\]/);
 });
-check("El estado de lectura y archivo usa las acciones del backend", () => {
+check("El estado de lectura, archivo y cierre usa las acciones del backend", () => {
     assert.match(ui, /markInboxRead\(conversationId, latest\.messageId, context\)/);
     assert.match(ui, /archiveInboxConversation\(item\.conversationId, !item\.archived, context\)/);
+    assert.match(ui, /apiCloseInboxConversation\(item\.conversationId, context\)/);
+    assert.match(ui, /Solo quien inició el caso puede agregar comentarios/);
+    assert.match(ui, /Caso cerrado\. No se pueden agregar más comentarios/);
 });
 check("Las notificaciones internas reflejan el total de conversaciones no leídas", () => {
     assert.match(html, /id="inbox-notification-count"/);
@@ -105,7 +108,7 @@ check("El diseño responde a móvil, teclado y movimiento reducido", () => {
     assert.match(css, /prefers-reduced-motion/);
 });
 check("Los wrappers de API conservan el contrato de Inbox", () => {
-    for (const name of ["getInboxRecipients","getInboxConversations","getInboxMessages","createInboxConversation","sendInboxMessage","markInboxRead","archiveInboxConversation"]) {
+    for (const name of ["getInboxRecipients","getInboxConversations","getInboxMessages","createInboxConversation","sendInboxMessage","markInboxRead","archiveInboxConversation","closeInboxConversation"]) {
         assert.match(api, new RegExp("export async function " + name + "\\("));
     }
 });

@@ -134,7 +134,8 @@ function coordinatorPolicy_(service, operation) {
             createInboxConversation: { read: feedbackRead, write: ["ACTIVE_SESSIONS", "FEEDBACK"] },
             sendInboxMessage: { read: feedbackRead, write: ["ACTIVE_SESSIONS", "FEEDBACK"] },
             markInboxRead: { read: feedbackRead, write: ["ACTIVE_SESSIONS", "FEEDBACK"] },
-            archiveInboxConversation: { read: feedbackRead, write: ["ACTIVE_SESSIONS", "FEEDBACK"] }
+            archiveInboxConversation: { read: feedbackRead, write: ["ACTIVE_SESSIONS", "FEEDBACK"] },
+            closeInboxConversation: { read: feedbackRead, write: ["ACTIVE_SESSIONS", "FEEDBACK"] }
         }
     };
 

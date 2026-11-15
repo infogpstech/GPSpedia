@@ -345,7 +345,8 @@ function handleSendInboxMessage(payload) {
     return withInboxConversationLock_(() => {
         const sheets = ensureInboxConversationSheets_(), conversations = inboxConversationRows_(sheets.conversations,INBOX_CONVERSATION_HEADERS_.length);
         const found = inboxFindConversation_(conversations,conversationId), participants = inboxAssertParticipant_(found.row,actor.id);
-        if (String(found.row[6]) !== "open") throw new Error("La conversación está cerrada.");
+        if (String(found.row[7] || "").trim() !== actor.id) throw new Error("Solo quien inició el caso puede agregar comentarios.");
+        if (String(found.row[6]) !== "open") throw new Error("El caso está cerrado y no admite más comentarios.");
         const messages = inboxConversationRows_(sheets.messages,INBOX_MESSAGE_HEADERS_.length);
         let message = inboxFindMessageByKey_(messages,conversationId,actor.id,key);
         if (message && String(message.row[8]) !== hash) throw new Error("La clave idempotente ya se utilizó con otro contenido.");
@@ -537,5 +538,28 @@ function handleArchiveInboxConversation(payload) {
         inboxWriteState_(sheets.states,state,row);
         if (changed) inboxAppendAudit_(sheets.audit,actor,payload.archived?"archive":"unarchive",conversationId,"","Estado de archivo actualizado.");
         return {status:"success",conversationId,archived:payload.archived};
+    });
+}
+function handleCloseInboxConversation(payload) {
+    const actor = inboxConversationActor_(payload), conversationId = String(payload.conversationId || "").trim();
+    if (!conversationId || conversationId.length > 100) throw new Error("La conversación no es válida.");
+    if (!["desarrollador","jefe","supervisor"].includes(actor.role)) {
+        throw new Error("Solo Supervisor, Jefe o Desarrollador pueden cerrar un caso.");
+    }
+    return withInboxConversationLock_(() => {
+        const sheets = ensureInboxConversationSheets_();
+        const found = inboxFindConversation_(inboxConversationRows_(sheets.conversations,INBOX_CONVERSATION_HEADERS_.length),conversationId);
+        inboxAssertParticipant_(found.row,actor.id);
+        if (String(found.row[6]) === "closed") return {status:"success",conversationId,closed:true,alreadyClosed:true};
+        if (String(found.row[6]) !== "open") throw new Error("El estado del caso no permite cerrarlo.");
+        const now = new Date().toISOString(), row = found.row.slice();
+        row[2] = now;
+        row[6] = "closed";
+        sheets.conversations.getRange(found.rowNumber,1,1,INBOX_CONVERSATION_HEADERS_.length).setValues([row]);
+        SpreadsheetApp.flush();
+        const saved = sheets.conversations.getRange(found.rowNumber,1,1,INBOX_CONVERSATION_HEADERS_.length).getValues()[0];
+        if (String(saved[6]) !== "closed" || String(saved[2]) !== now) throw new Error("No se pudo confirmar el cierre del caso.");
+        inboxAppendAudit_(sheets.audit,actor,"close",conversationId,"","Caso cerrado; no admite más comentarios.");
+        return {status:"success",conversationId,closed:true,alreadyClosed:false};
     });
 }
