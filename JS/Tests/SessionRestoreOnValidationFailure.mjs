@@ -181,18 +181,18 @@ await test('AUTH conserva rechazo para identidad incompleta y valida contexto an
 
 await test('touchSession distingue una dependencia caída de un token revocado', async () => {
     const handler = extract(service, 'function handleTouchSession(payload)', '\n// Todas las mutaciones de ActiveSessions');
-    const fn = new Function('validateAndTouchSession_', 'logToSheet', handler + '\\nreturn handleTouchSession;')(
+    const fn = new Function('validateAndTouchSession_', 'logToSheet', handler + '\nreturn handleTouchSession;')(
         () => { throw new Error('LockService temporalmente ocupado'); }, () => {}
     );
     const serverResult = fn({ sessionToken: 'token-test' });
     assert.equal(serverResult.valid, null);
     assert.equal(serverResult.unavailable, true);
 
-    const touchSource = extract(api, 'async function ensureSessionTouched_(token)', '\\n// 2. LÓGICA DE RUTEO CENTRAL');
+    const touchSource = extract(api, 'async function ensureSessionTouched_(token)', '\n// 2. LÓGICA DE RUTEO CENTRAL');
     const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
     const factory = new AsyncFunction(
         'routeAction','sessionTouchState','SESSION_TOUCH_INTERVAL_MS','createRouteActionError_',
-        'localStorage','console',touchSource + '\\nreturn ensureSessionTouched_;'
+        'localStorage','console',touchSource + '\nreturn ensureSessionTouched_;'
     );
     const makeError = (message, metadata) => Object.assign(new Error(message), metadata);
     async function invoke(result) {
