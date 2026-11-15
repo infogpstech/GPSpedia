@@ -511,6 +511,8 @@ function createSharedMutationCoordinator_(dependencies) {
             userId: context.userId,
             role: session.role,
             fullName: session.fullName,
+            createdAt: session.createdAt,
+            lastActivityAt: session.lastActivityAt,
             epoch: context.epoch
         };
     }
