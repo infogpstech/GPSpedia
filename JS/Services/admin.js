@@ -4265,7 +4265,7 @@ const IDENTIFIER_FORMULA_FREEZE_HEADERS_ = ["migrationId","digest","entryIndex",
 
 function buildIdentifierFormulaFreezePlan_(ss, migrationId) {
     const headerPattern = /^(?:id|id_[a-z0-9_]+|id_de_[a-z0-9_]+|[a-z0-9_]+_id|identificador|identifier|codigo|codigo_id|code)$/i;
-    const entries = [], sheetDigests = {}, skipped = { emptyResult: 0, duplicate: 0, emptyRecord: 0 };
+    const entries = [], sheetDigests = {}, skipped = { emptyResult: 0, duplicate: 0, emptyRecord: 0, unsupportedPattern: 0 };
     ss.getSheets().forEach(sheet => {
         if (sheet.getName().startsWith("__") || sheet.isSheetHidden()) return;
         const lastRow = sheet.getLastRow(), lastColumn = sheet.getLastColumn();
@@ -4290,6 +4290,8 @@ function buildIdentifierFormulaFreezePlan_(ss, migrationId) {
                 const value = row[columnIndex];
                 const id = String(value === null || value === undefined ? "" : value).trim();
                 if (!id) { skipped.emptyResult++; continue; }
+                const pattern = parseIdentifierSequenceFormula_(formula);
+                if (!pattern) { skipped.unsupportedPattern++; continue; }
                 if ((counts.get(id.toLowerCase()) || 0) !== 1) { skipped.duplicate++; continue; }
                 const rowNumber = rowIndex + 1;
                 const rowData = { values: row.slice(), formulas: (formulas[rowIndex] || []).slice() };
@@ -4298,7 +4300,7 @@ function buildIdentifierFormulaFreezePlan_(ss, migrationId) {
                     migrationId, entryIndex: entries.length + 1, sheet: sheet.getName(),
                     column: columnIndex + 1, row: rowNumber, header: String(headerValue),
                     oldValue: value, oldFormula: formula,
-                    pattern: parseIdentifierSequenceFormula_(formula),
+                    pattern,
                     sourceFingerprint: identifierMigrationDigest_(rowData),
                     snapshotFingerprint: sheetDigests[sheet.getName()],
                     snapshotName: "__IDF_" + identifierMigrationDigest_(migrationId + "|" + sheet.getName()).slice(0, 16)
@@ -4361,7 +4363,7 @@ function handleFreezeIdentifierFormulas_(payload, developerContext) {
             if (!digest || items.some(item => item.digest !== digest)) throw new Error("El manifiesto no coincide con el digest confirmado.");
             plan = {
                 migrationId, digest, entries: items.map(item => JSON.parse(item.entryJson)),
-                skipped: { emptyResult: 0, duplicate: 0, emptyRecord: 0 }
+                skipped: { emptyResult: 0, duplicate: 0, emptyRecord: 0, unsupportedPattern: 0 }
             };
         } else {
             plan = buildIdentifierFormulaFreezePlan_(ss, migrationId);
