@@ -311,14 +311,14 @@ function createSharedMutationCoordinator_(dependencies) {
             const ownLease = pruned.leases[index];
             if (ownLease.phase !== "draining") {
                 if (pruned.changed) saveLeases_(pruned.leases);
-                return { kind: "success", token: ownLease.token, expiresAt: ownLease.expiresAt };
+                return { kind: "success", token: ownLease.token, expiresAt: ownLease.expiresAt, actor: ownLease.actor || null };
             }
             const active = pruned.leases.filter(lease => lease.token !== ownLease.token);
             if (!active.length) {
                 ownLease.phase = "active";
                 ownLease.expiresAt = now() + SHARED_MUTATION_LEASE_TTL_MS;
                 saveLeases_(pruned.leases);
-                return { kind: "success", token: ownLease.token, expiresAt: ownLease.expiresAt };
+                return { kind: "success", token: ownLease.token, expiresAt: ownLease.expiresAt, actor: ownLease.actor || null };
             }
             const busy = busyOutcome_(active, null, true);
             pruned.leases.splice(index, 1);
@@ -694,6 +694,7 @@ function createSharedMutationCoordinator_(dependencies) {
                         sharedWriteResources: policy.sharedWriteResources,
                         maintenance: true,
                         nestedActions: policy.nestedActions,
+                        actor: actor,
                         phase: "draining",
                         createdAt: currentTime,
                         expiresAt: currentTime + SHARED_MUTATION_DRAIN_RESERVATION_TTL_MS
@@ -743,7 +744,7 @@ function createSharedMutationCoordinator_(dependencies) {
                 if (maintenanceRequest) {
                     const finalOutcome = settleMaintenanceTimeout_(service, operation, requestId);
                     if (finalOutcome.kind === "success") {
-                        return { status: "success", token: finalOutcome.token, expiresAt: finalOutcome.expiresAt };
+                        return { status: "success", token: finalOutcome.token, expiresAt: finalOutcome.expiresAt, actor: finalOutcome.actor || null };
                     }
                     return {
                         status: "error",
