@@ -449,10 +449,14 @@ function requireSharedAuthActor_(payload, allowedRoles, actionLabel) {
 function handleClearSensitiveLogs(payload) {
     // La sesión/token ya fueron autorizados por Coordinator en doPost().
     // Solo se consume el actor confiable y su rol; no se vuelven a leer Users/ActiveSessions.
-    const actor = requireSharedAuthActor_(payload, ["desarrollador"], "la purga de Logs");
+    const actor = payload && payload.__sharedSessionActor;
     const requestedUserId = normalizeUserId(payload && payload.userId);
-    const userId = actor.userId;
-    if (requestedUserId && requestedUserId !== userId) throw new Error("La identidad solicitante no coincide con el actor autorizado.");
+    const userId = normalizeUserId(actor && actor.userId);
+    const actorRole = normalizeRoleName(actor && actor.role);
+    if (!actor || !userId || requestedUserId !== userId ||
+        !Number.isSafeInteger(actor.epoch) || actor.epoch < 1 || actorRole !== "desarrollador") {
+        throw new Error("Acceso denegado: la purga de Logs está reservada a una sesión Desarrollador autorizada.");
+    }
 
     const lock = LockService.getScriptLock();
     let lockAcquired = false;
