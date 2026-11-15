@@ -504,3 +504,15 @@
 - No se ejecutaron Node.js/CLI local ni CI integral en esta sesión. Las herramientas de ejecución local no devolvieron un entorno utilizable y no se obtuvo un run de Actions asociado al HEAD actual. No declarar PASS por revisión estática.
 - Siguiente tarea: ejecutar `node --check` y `JS/Tests/RunServiceTests.mjs` en entorno Node.js; corregir fallos, repetir suite y comprobar GitHub Actions. Después validar en Beta: login, restauración de sesión previa, múltiples dispositivos, logout individual, revocación global, cambio de rol, expiración e intentos con tokens obsoletos.
 - Mantener `GPSpedia2.2.5` intacta. No publicar deployments ni ejecutar migraciones/datos productivos sin autorización documentada.
+
+
+## Continuidad P1 — corrección de contratos de sesión central (2026-11-15)
+
+- Rama de trabajo: `GPSpedia2.2.5_work`; rama base protegida: `GPSpedia2.2.5` (sin cambios).
+- Se corrigió `Coordinator.js`: `AUTH/acceptTerms` ahora declara explícitamente `trackActivity: false`. La aceptación consulta `SESSION_CONTEXTS` y escribe únicamente en `USERS`; no hereda una reserva innecesaria de escritura sobre `ACTIVE_SESSIONS`.
+- Se alinearon `TermsAcceptance.js`, `UsersAtomicMutations.js` y `AdminImageScanCoordinatorContract.mjs` con la arquitectura vigente: las lecturas autenticadas consumen contexto central y no actualizan `LastActivityAt` en cada solicitud.
+- Commits secuenciales en la rama: `64f47f0` (política AUTH), `e1cf604` (contrato términos), `df17da8` (contrato USERS), `2b671a5` (contrato ADMIN). HEAD registrado: `2b671a5113eba058646e55037a72d80e98a29202`.
+- Revisión estática posterior: los cuatro archivos contienen los cambios esperados; se confirmó que los contratos ADMIN ya no exigen `ACTIVE_SESSIONS` compartido. No se ejecutó Node.js local.
+- La ejecución de GitHub Actions para este HEAD no se ha podido confirmar mediante los estados disponibles; el estado combinado consultado devolvió cero estados. Por tanto, la regresión continúa **pendiente de validación** y no se declara PASS.
+- Siguiente: obtener una ejecución CI vinculada a este HEAD, revisar `node --check` y las 66+ suites; corregir fallos reales sin debilitar la autorización ni la barrera `revokedBefore`. Después completar pruebas Beta de login, restauración, múltiples dispositivos, logout individual, revocación global, cambio de rol, expiración y tokens obsoletos.
+- No se desplegó Apps Script ni se modificaron hojas, Drive o datos productivos.
