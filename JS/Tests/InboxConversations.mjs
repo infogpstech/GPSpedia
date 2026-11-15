@@ -339,6 +339,8 @@ run("Las mutaciones liberan el lock incluso cuando una validación falla", () =>
     assert.ok(lockReleased > before);
 });
 run("El mensaje se conserva como texto literal y no se ejecuta ni interpreta HTML", () => {
+    // Aislar la prueba del límite de frecuencia acumulado en las pruebas previas.
+    for (const row of spreadsheet.getSheetByName("InboxMessages").rows.slice(1)) row[2] = "2000-01-01T00:00:00.000Z";
     const result = api.handleCreateInboxConversation({
         ...actor("U1","token-a"),recipientId:"U2",subject:"Texto literal",category:"general",
         body:"<img src=x onerror=alert(1)>",idempotencyKey:"create-key-0004"
