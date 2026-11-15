@@ -3,7 +3,7 @@
 // No accede a Spreadsheet ni Drive. El estado de leases vive en ScriptProperties.
 // ============================================================================
 
-const SHARED_MUTATION_COORDINATOR_VERSION = "1.3.0";
+const SHARED_MUTATION_COORDINATOR_VERSION = "1.4.0";
 const SHARED_MUTATION_LEASES_PROPERTY = "GPSpedia_SHARED_MUTATION_LEASES";
 const SHARED_MUTATION_LEASE_TTL_MS = 45 * 60 * 1000;
 const SHARED_MUTATION_DRAIN_RESERVATION_TTL_MS = 60 * 1000;
@@ -66,8 +66,7 @@ function coordinatorPolicy_(service, operation) {
         },
         ADMIN: {
             sessionActivity: { read: ["SESSION_CONTEXTS"] },
-            // Las consultas y el escáner comparten la actualización cooperativa de LastActivityAt.
-            // Sus lecturas prolongadas no deben quedar etiquetadas como ADMIN/sessionActivity.
+            // Las acciones ADMIN leen el contexto central; no escriben LastActivityAt por cada solicitud.
             getReplacedImages: { read: ["USERS", "CORTES", "DRIVE", "IMAGE_INVENTORY", "TUTORIAL", "FEEDBACK", "LOGOS"] },
             getDriveStorage: { read: ["USERS", "DRIVE"] },
             getCortesImageFolders: { read: ["USERS", "DRIVE"] },
