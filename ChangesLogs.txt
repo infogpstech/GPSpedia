@@ -548,3 +548,12 @@
 - Modal de contraseñas mantiene la migración por lotes a hashes sin agregar pasos al inicio de sesión.
 - Archivos principales: JS/Services/admin.js, feedback.js, users.js, write.js; JS/Frontend/api-config.js, ui.js; JS/Tests/IdentifierFormulaMigration.mjs, FeedbackFormulaIdAllocator.mjs, UserIdGenerator.mjs, UsersAtomicMutations.js, LogoIdIntegrity.mjs y fixture USERS.
 
+
+
+2026-11-15 | GPSpedia2.2.5_work | Corrección de HMAC-SHA256 en PBKDF2 AUTH/USERS
+- Corregido el error de tipos que surgía al pasar arreglos JavaScript number[] a Utilities.computeHmacSha256Signature. Se sustituyó la llamada por helpers SHA-256/HMAC-SHA256 que procesan los bytes binarios sin convertirlos a texto ni alterar los bloques PBKDF2.
+- AUTH y USERS conservan PBKDF2-HMAC-SHA256, salt aleatorio, 12,000 iteraciones, formato de hash y flujo de login. Sin migraciones ni cambios en credenciales existentes.
+- Sincronizadas JS/Tests/Auth.js y JS/Tests/users.js; PasswordHashMigration.mjs ahora valida el vector de referencia Node.js y rechaza que el harness acepte number[] directamente como mensaje HMAC.
+- CI Node.js 22 run 43763589080, HEAD 4dd79e767bb0aa024e897b572e1844a640cdaf11: SUCCESS; 102 suites, 1,558 pruebas, 0 fallos. PasswordHashMigration 18/18 PASS.
+- El primer intento de CI detectó desincronización del espejo AUTH; se sincronizó y se repitió la suite completa con resultado satisfactorio.
+- No se desplegó Apps Script ni se modificaron contraseñas, hojas, propiedades o datos productivos. Runtime Apps Script y latencia del KDF pendientes de Beta.

@@ -776,3 +776,13 @@ Estado: IMPLEMENTADO EN RAMA; VALIDACIÓN AUTOMATIZADA Y BETA PENDIENTES.
 - Se agregó cobertura para sincronización, tokens sin userId, revocación, actor confiable, sanitización y concurrencia en SharedMutationCoordinator y SessionActivityCoordination. El espejo JS/Tests/Auth.js se sincronizó.
 - Se actualizó Services/COORDINATOR_SETUP.md y README.md. El código no se ha desplegado y no se han tocado datos productivos.
 - Node.js/CLI y CI integral no se ejecutaron/verificaron en esta sesión. No afirmar PASS hasta ejecutar la suite completa y revisar GitHub Actions. La integración Beta debe comprobar login, múltiples dispositivos, logout individual, revocación global, cambio de rol, expiración y recuperación de sesiones.
+
+AUD-2026-11-15-40 — INCOMPATIBILIDAD DE TIPO EN HMAC-SHA256 DE PBKDF2
+Severidad: Alta / autenticación — Estado: CORREGIDO Y VALIDADO LOCALMENTE; RUNTIME APPS SCRIPT PENDIENTE DE BETA.
+- Evidencia: AUTH y USERS construían el bloque PBKDF2 como arreglo JavaScript number[] y lo enviaban a Utilities.computeHmacSha256Signature. El runtime reportó que los parámetros (number[], String, Utilities.Charset) no coincidían con la firma del método. El mismo problema podía repetirse con los bloques HMAC intermedios devueltos como arreglos.
+- Impacto: la creación o verificación de hashes PBKDF2 podía fallar en ejecución en Apps Script, afectando el inicio de sesión y la creación de usuarios cuando el flujo necesitaba calcular/verificar el hash.
+- Corrección: implementación de SHA-256 y HMAC-SHA256 sobre bytes en JS/Services/Auth.js y JS/Services/users.js; la contraseña se convierte a bytes UTF-8 y el salt/contador/bloques intermedios permanecen binarios. No se convierte el mensaje a texto ni se cambia PBKDF2.
+- Se preservaron 12,000 iteraciones, salt aleatorio, formato pbkdf2-sha256$ y flujo de login. Se sincronizaron los espejos de prueba y se añadió una comprobación estricta del tipo en PasswordHashMigration.mjs.
+- Validación: CI Node.js 22 run 43763589080 SUCCESS; 102 suites / 1,558 pruebas / 0 fallos; PasswordHashMigration 18/18 PASS, incluido vector PBKDF2 de Node.js y verificación cruzada AUTH/USERS.
+- La primera ejecución CI detectó un espejo AUTH desactualizado; se sincronizó y la repetición integral aprobó. No se desplegó Apps Script ni se tocaron credenciales/datos reales.
+- Pendiente Beta: ejecutar login/creación de usuario contra deployment Apps Script autorizado y medir latencia real; no inferir esos resultados de CI local.

@@ -1030,3 +1030,14 @@ El trabajo local GP-INBOX-04B/04C/04D queda cubierto en backend y contratos. No 
 - CI Node.js 22 run `43759427935`: SUCCESS; **102 suites / 1,558 pruebas / 0 fallos**. Suites clave: `IdentifierFormulaMigration` 7/7, `FeedbackFormulaIdAllocator` 5/5, `UserIdGenerator` 6/6, `LogoIdIntegrity` 11/11, `UsersAtomicMutations` 15/15.
 - Pendiente de Beta: dry-run en copia aislada, revisión de fórmulas no compatibles y referencias, y ejecución autorizada de lotes. Sin deployment de Apps Script ni cambios de datos productivos.
 
+
+
+### Incidencia — error de firma HMAC-SHA256 en autenticación
+
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
+
+- Causa: PBKDF2 enviaba un arreglo JavaScript `number[]` a `Utilities.computeHmacSha256Signature`, cuya firma no acepta ese tipo para el parámetro de mensaje. El error se producía al crear/verificar hashes mediante AUTH/USERS.
+- Corrección: implementación binaria de SHA-256/HMAC-SHA256 en los servicios AUTH y USERS. Se preservan los bytes de PBKDF2 y el vector estándar; no cambia el formato `pbkdf2-sha256$`, el salt aleatorio, el coste de 12,000 iteraciones ni el flujo de login.
+- Sincronizadas las copias de prueba AUTH/USERS y reforzado `PasswordHashMigration.mjs` para que el HMAC del harness rechace arreglos JS sin convertir.
+- CI Node.js 22 run `43763589080`: **102 suites / 1,558 pruebas / 0 fallos**; `PasswordHashMigration` 18/18 PASS.
+- Pendiente únicamente la validación del runtime y latencia en deployment Apps Script/Beta. No se desplegó ni se alteraron datos reales.

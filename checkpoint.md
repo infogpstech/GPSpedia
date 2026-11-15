@@ -1,3 +1,18 @@
+# Continuidad — corrección HMAC-SHA256 de PBKDF2 (2026-11-15)
+
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
+
+- HEAD de código: `51a24d0a606b578520a948987cf25757839cf376`; sincronización de fixture AUTH: `4dd79e767bb0aa024e897b572e1844a640cdaf11`.
+- Se corrigió la incompatibilidad de tipo en `Utilities.computeHmacSha256Signature`: PBKDF2 necesita bloques binarios, mientras que la llamada anterior entregaba arreglos JavaScript `number[]` a una firma que no los admite.
+- AUTH y USERS ahora calculan SHA-256/HMAC-SHA256 sobre bytes con helpers binarios compatibles, preservando UTF-8 para la contraseña y los bytes exactos del salt, el contador y los bloques intermedios. Se conserva PBKDF2-HMAC-SHA256, 12,000 iteraciones, salt aleatorio, formato almacenado y flujo de login; no se ejecutaron migraciones.
+- Sincronizadas las copias `JS/Tests/Auth.js` y `JS/Tests/users.js` con sus servicios.
+- CI Node.js 22 run `43763589080`, HEAD `4dd79e767bb0aa024e897b572e1844a640cdaf11`: **SUCCESS; 102 suites / 1,558 pruebas / 0 fallos**. `PasswordHashMigration` 18/18 PASS, incluyendo vector PBKDF2 de referencia Node.js, compatibilidad cruzada AUTH/USERS y verificación de hashes correctos/incorrectos. Los pasos de verificación de rama y sintaxis del workflow también aprobaron.
+- Un intento intermedio quedó registrado en el historial: el primer CI detectó que la copia de prueba AUTH no estaba sincronizada. Se corrigió la copia y se repitió la suite completa; la ejecución final aprobó.
+- No se desplegaron servicios Apps Script ni se modificaron credenciales, hojas, propiedades o datos productivos.
+- **Pendiente de Beta:** ejecutar creación/verificación de contraseña en el runtime real de Apps Script y medir la latencia efectiva del KDF con el deployment autorizado. No cambiar el coste ni desplegar durante esta tarea.
+
+---
+
 # ESTADO ACTUAL — GPSpedia (2026-11-15)
 
 **Rama de trabajo:** `GPSpedia2.2.5_work`  
