@@ -1033,7 +1033,7 @@ function handleLogin(payload) {
     }
 }
 
-function validateSessionReadOnly_(sessionToken, expectedUserId) {
+function validateSessionReadOnly_(sessionToken, expectedUserId, trustedActor) {
     const lock = LockService.getScriptLock();
     let acquired = false;
     try {
@@ -1054,8 +1054,11 @@ function validateSessionReadOnly_(sessionToken, expectedUserId) {
         const session = matches[0];
         const userId = normalizeUserId(session.row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]);
         if (!userId || userId !== normalizeUserId(expectedUserId)) return { valid: false, reason: 'identity_mismatch' };
-        const expiration = getSessionExpirationStatus_(session.row, new Date());
-        if (expiration.expired) return { valid: false, reason: expiration.reason };
+        if (trustedActor && (trustedActor.userId !== userId || !Number.isSafeInteger(trustedActor.epoch) || trustedActor.epoch < 1)) {
+            return { valid: false, reason: 'shared_context_identity_mismatch' };
+        }
+        const expiration = trustedActor ? null : getSessionExpirationStatus_(session.row, new Date());
+        if (expiration && expiration.expired) return { valid: false, reason: expiration.reason };
         if (hasPendingRoleRevocation_(userId)) return { valid: null, unavailable: true, reason: 'role_revocation_pending' };
         const users = usersSheet.getDataRange().getValues().slice(1)
             .map((row, index) => ({ row, rowIndex: index + 2 }))
@@ -1063,6 +1066,12 @@ function validateSessionReadOnly_(sessionToken, expectedUserId) {
         if (users.length !== 1 || !isActiveAuthUserRecord(users[0].row)) {
             return { valid: false, reason: 'inactive_or_ambiguous_user' };
         }
+        if (trustedActor && normalizeRoleName(users[0].row[COLS_USERS.Privilegios - 1]) !== String(trustedActor.role || '').trim().toLowerCase()) {
+            return { valid: false, reason: 'role_changed' };
+        }
+        const createdAtValue = session.row[COLS_ACTIVE_SESSIONS.date - 1];
+        const createdAt = createdAtValue instanceof Date ? new Date(createdAtValue.getTime()) : new Date(createdAtValue);
+        if (Number.isNaN(createdAt.getTime())) return { valid: null, unavailable: true, reason: 'invalid_session_timestamp' };
         const sessionTermsHeader = String(sessionsSheet.getRange(1, COLS_ACTIVE_SESSIONS.SessionTermsAcceptance).getValue() || '').trim();
         if (sessionTermsHeader && sessionTermsHeader !== 'SessionTermsAcceptance') {
             return { valid: null, unavailable: true, reason: 'terms_schema_conflict' };
@@ -1071,8 +1080,10 @@ function validateSessionReadOnly_(sessionToken, expectedUserId) {
             ? parseTermsAcceptance_(session.row[COLS_ACTIVE_SESSIONS.SessionTermsAcceptance - 1])
             : { version: '', acceptedAt: '', status: 'pending' };
         return {
-            valid: true, userId, createdAt: expiration.createdAt.toISOString(),
-            lastActivityAt: session.row[COLS_ACTIVE_SESSIONS.LastActivityAt - 1] || session.row[COLS_ACTIVE_SESSIONS.date - 1],
+            valid: true, userId, createdAt: createdAt.toISOString(),
+            lastActivityAt: trustedActor
+                ? new Date(trustedActor.lastActivityAt).toISOString()
+                : (session.row[COLS_ACTIVE_SESSIONS.LastActivityAt - 1] || session.row[COLS_ACTIVE_SESSIONS.date - 1]),
             termsAcceptance,
             profile: {
                 ID: userId,
@@ -1095,7 +1106,9 @@ function handleValidateSession(payload) {
     try {
         const { userId, sessionToken } = payload || {};
         if (!userId || !sessionToken) return { valid: false };
-        return validateSessionReadOnly_(sessionToken, userId);
+        const sharedContext = validateSharedSessionContext_(userId, sessionToken);
+        if (!sharedContext || sharedContext.valid !== true || !sharedContext.actor) return { valid: false, reason: 'shared_context_invalid' };
+        return validateSessionReadOnly_(sessionToken, userId, sharedContext.actor);
     } catch (error) {
         console.error('handleValidateSession:', error && error.message ? error.message : error);
         return { valid: null, unavailable: true, reason: 'validation_unavailable' };
