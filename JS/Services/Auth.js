@@ -521,6 +521,35 @@ function isSharedMutationAction_(action) {
     return ["login","touchSession","acceptTerms","changePassword","resetUserPassword","resetUserSessions","clearSensitiveLogs","deleteUser","updateUser","logout","migrateLegacyPasswords"].includes(action);
 }
 
+
+function syncAuthSheetActivityFromActor_(userId, sessionToken, actor) {
+    if (!actor || !actor.userId || actor.userId !== normalizeUserId(userId) ||
+        !sessionToken || !Number.isFinite(Number(actor.lastActivityAt))) {
+        throw new Error("No se pudo confirmar el contexto de sesión para la operación AUTH.");
+    }
+    const sessionsSheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
+    if (!sessionsSheet) throw new Error("No se encontró ActiveSessions para sincronizar la actividad.");
+    const rows = sessionsSheet.getDataRange().getValues();
+    const matches = [];
+    for (let index = 1; index < rows.length; index++) {
+        if (String(rows[index][COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || "") === String(sessionToken)) {
+            matches.push({ row: rows[index], rowIndex: index + 1 });
+        }
+    }
+    if (matches.length !== 1 ||
+        normalizeUserId(matches[0].row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]) !== normalizeUserId(userId)) {
+        throw new Error("La sesión no coincide con un registro único de ActiveSessions.");
+    }
+    const currentValue = matches[0].row[COLS_ACTIVE_SESSIONS.LastActivityAt - 1] ||
+        matches[0].row[COLS_ACTIVE_SESSIONS.date - 1];
+    const current = currentValue instanceof Date ? currentValue.getTime() : new Date(currentValue).getTime();
+    const central = Number(actor.lastActivityAt);
+    if (!Number.isFinite(current) || central > current) {
+        sessionsSheet.getRange(matches[0].rowIndex, COLS_ACTIVE_SESSIONS.LastActivityAt).setValue(new Date(central));
+    }
+    return true;
+}
+
 function doPost(e) {
     let request;
     try {
@@ -534,14 +563,14 @@ function doPost(e) {
 
     const payload = request.payload && typeof request.payload === "object" ? request.payload : {};
     const nestedToken = String(payload.__sharedMutationToken || "").trim();
+    const sessionOptions = payload.sessionToken && action !== "logout"
+        ? { session: { userId: payload.userId, sessionToken: payload.sessionToken } } : undefined;
     try {
-        return withSharedMutationLease_("AUTH", action, function(token) {
-            
-            const wrappedEvent = Object.assign({}, e || {}, {
-                postData: Object.assign({}, e && e.postData || {}, { contents: JSON.stringify(request) })
-            });
+        return withSharedMutationLease_("AUTH", action, function(token, actor) {
+            if (actor) syncAuthSheetActivityFromActor_(actor.userId, payload.sessionToken, actor);
+            const wrappedEvent = withSharedSessionActor_(e, actor);
             return doPostInternal_(wrappedEvent);
-        }, nestedToken ? { nestedToken: nestedToken } : undefined);
+        }, Object.assign(sessionOptions || {}, nestedToken ? { nestedToken: nestedToken } : {}));
     } catch (error) {
         return ContentService.createTextOutput(JSON.stringify({
             status: "error",
