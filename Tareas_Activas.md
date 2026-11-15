@@ -811,3 +811,13 @@ Las fuentes de servicios JavaScript se centralizan bajo `JS/Services/`. La carpe
 
 
 **Adenda de pruebas de GP-INBOX (2026-11-15):** la regresión de mensajes con timestamp idéntico también recorre el historial en páginas de un mensaje, verifica orden inverso cronológico (más reciente a más antiguo), cursores sin repetición y fin de historial. CI Node.js 22 run `43675102668`: 100 suites / 1,518 pruebas / 0 fallos; InboxConversations 36/36 PASS. Pages run `43675101929` SUCCESS. No cambia el estado de GP-INBOX-04B..04D ni autoriza nuevos controles visibles.
+
+
+## Adenda GP-INBOX — orden canónico del historial (2026-11-15)
+
+**Subcorrección interna: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
+
+- Se corrigió la discrepancia entre el historial, que ordenaba por timestamp, y el resumen/lectura, que siguen el orden de inserción protegido por ScriptLock. El historial ahora conserva la secuencia persistida, resistente a timestamps iguales o retrocesos del reloj.
+- Se añadió regresión con timestamps deliberadamente descendentes y paginación de un mensaje por página; comprueba orden por inserción, cursores y coherencia del marcador de lectura.
+- CI Node.js 22 run `43676078785`: SUCCESS; **100 suites / 1,519 pruebas / 0 fallos**; InboxConversations 37/37 PASS; sintaxis PASS. Pages run `43676078270` SUCCESS.
+- No se agregaron controles visibles ni se modificaron permisos, endpoints o integraciones externas. GP-INBOX-04B..04D siguen abiertas para su alcance funcional pendiente.

@@ -405,3 +405,16 @@
 - CI Node.js 22 run `43675102668`: SUCCESS; 100 suites / 1,518 pruebas / 0 fallos; `InboxConversations` 36/36 PASS.
 - GitHub Pages run `43675101929`: build, reporte y deploy SUCCESS.
 - HEAD de código: `843269309f01d7c78a89b6a6fd29c7d57baa11a1`; HEAD documental previo: `bf850349b9e965e531446f76e876cfc42b622bad`. Base intacta en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+
+
+## Cierre — GP-INBOX orden canónico del historial (2026-11-15)
+
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
+
+- Hallazgo: `handleGetInboxMessages` ordenaba por timestamp mientras el resumen, los contadores de no leídos y `handleMarkInboxRead` usaban el orden de inserción serializado bajo ScriptLock. Un ajuste/reversa del reloj podía mostrar mensajes en un orden distinto al que determina la lectura.
+- Corrección en `JS/Services/InboxConversations.js`: el historial conserva el orden de inserción persistido, que es la secuencia canónica de escritura bajo el lock; los cursores por ID continúan anclados al mensaje más antiguo de cada página.
+- Regresión en `JS/Tests/InboxConversations.mjs`: tres mensajes insertados en orden normal reciben timestamps deliberadamente descendentes; se verifica paginación de más reciente a más antiguo por inserción, cursores sin duplicados y coherencia con marcar como leído.
+- CI Node.js 22 run `43676078785`: SUCCESS; sintaxis PASS; **100 suites / 1,519 pruebas / 0 fallos**; `InboxConversations` 37/37 PASS.
+- GitHub Pages run `43676078270`: build, reporte y deploy SUCCESS.
+- Commit de código: `7fbdd3a4ffb857b7db91414e9f72c68f3c97d8ec`. Rama de trabajo verificada; rama base `GPSpedia2.2.5` permanece en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- Sin cambios de UI, endpoints, permisos, esquema de hojas, deployments, ScriptProperties ni datos externos. Validación con Spreadsheet/Coordinator real continúa diferida a Beta. GP-INBOX-04B..04D permanecen abiertas en el alcance funcional mayor.
