@@ -520,3 +520,10 @@
 - reportProblem: guarda category/subject en reportMetadata, defaults cuando la UI no los envía; mapInboxFeedbackRow_ y detalle Inbox exponen categoría, asunto, descripción, respuesta y estado. getMyProblemReports devuelve tickets del actor autenticado, paginados, ignorando userId del cliente. Sin nueva pestaña/botón/panel de tickets.
 - CI run 43753335306 SUCCESS: 100 suites, 1,542 pruebas, 0 fallos; InboxConversations 46/46; node --check PASS.
 - No deployment Apps Script, no creación de hoja real, no cambios de datos productivos. UI completa, selección múltiple, accesibilidad móvil y Beta quedan pendientes.
+
+
+2026-11-15 | GPSpedia2.2.5_work | GP-INBOX-04D regresión y accesibilidad
+- InboxUi ampliado a 22/22: verificación de metadatos del ticket y estado, descripción/respuesta, ausencia de controles visibles para acciones backend diferidas; conserva contratos de teclado/foco, ARIA, reduced-motion y responsive.
+- RBAC, jerarquía, actor autenticado, auditoría y operaciones Inbox cubiertos por las suites existentes.
+- CI Node.js 22 run 43753485398 SUCCESS: 100 suites, 1,544 pruebas, 0 fallos.
+- Pendiente Beta: lector de pantalla, tema claro/oscuro, Atrás, tamaños reales Android/iOS/desktop, conectividad y pestañas. Sin despliegues Apps Script ni cambios en datos productivos.
