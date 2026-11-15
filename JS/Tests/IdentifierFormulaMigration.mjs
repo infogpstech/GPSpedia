@@ -81,6 +81,15 @@ test("Congela valores exactos por lotes, reanuda y conserva snapshots/manifiesto
  assert.ok(config);assert.equal(config.rows.length,3);
  assert.ok(h.ss.sheets.some(s=>s.name.startsWith("__IDF_")&&s.hidden));
 });
+test("No congela fórmulas ID cuyo patrón no puede migrarse a un generador backend seguro",()=>{
+ const h=makeHarness();
+ const relay=makeSheet("Relay",[["ID","Nombre"],["R-001","Relay A"]],[["ID","Nombre"],['=CONCAT("R-",ROW())',""]]);
+ h.ss.sheets.push(relay);
+ const r=h.api.migrate({dryRun:true});
+ assert.equal(r.formulaCount,3);
+ assert.equal(r.skipped.unsupportedPattern,1);
+ assert.equal(r.samples.some(item=>item.sheet==="Relay"),false);
+});
 test("Rechaza una simulación obsoleta antes de crear snapshots o escribir",()=>{
  const h=makeHarness(),dry=h.api.migrate({dryRun:true});
  h.users.rows[1][1]="Dato cambiado";
