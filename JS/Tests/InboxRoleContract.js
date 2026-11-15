@@ -19,6 +19,12 @@ function runInboxRoleContractTests(sources) {
   assert(ui.includes('__gpsepediaFeedbackCoordinatorWarningLogged'));
  });
  run('Backend mantiene RBAC para aprobación y rechazo',()=>{const s=feedback.indexOf('const FEEDBACK_ACTION_PERMISSIONS = Object.freeze(');assert(s>=0);const e=feedback.indexOf(');',s)+2;const policy=feedback.slice(s,e);assert(policy.includes('approveVideo: ["Desarrollador", "Jefe", "Supervisor"]'));assert(policy.includes('rejectVideo: ["Desarrollador", "Jefe", "Supervisor"]'));});
+ run('Las acciones de no leído y ocultación son autenticadas, coordinadas y privadas',()=>{
+  assert(feedback.includes('markInboxUnread: null')&&feedback.includes('deleteInboxConversation: null'),'Las acciones nuevas deben exigir actor autenticado.');
+  assert(feedback.includes('handleMarkInboxUnread(payload)')&&feedback.includes('handleDeleteInboxConversation(payload)'),'FEEDBACK debe despachar ambas acciones.');
+  assert(inbox.includes('function handleMarkInboxUnread(payload)')&&inbox.includes('function handleDeleteInboxConversation(payload)'),'Los handlers backend no están definidos.');
+  assert(inbox.includes('inboxAssertVisible_')&&inbox.includes('Conversación ocultada solo para este participante'),'El borrado debe ocultar solo al participante y preservar el historial.');
+ });
  run('Inbox reutiliza el actor autenticado por el dispatcher y evita una segunda lectura de sesión',()=>{
   assert(feedback.includes('userRole: actor.role, __feedbackActor: actor'),'El dispatcher no adjunta el actor verificado.');
   assert(inbox.includes('payload && payload.__feedbackActor'),'Inbox no reutiliza el actor verificado.');
