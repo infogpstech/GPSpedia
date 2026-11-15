@@ -87,11 +87,13 @@ function addLogoHarness(options={}){
  sheetValue.getRange=(row,col,nr=1,nc=1)=>{
   const range=originalGetRange(row,col,nr,nc);
   range.row=row;range.col=col;range.nr=nr;range.nc=nc;
-  range.copyTo=destination=>{
+  range.copyTo=(destination,pasteType)=>{
+   if(options.failCopy)throw new Error("copy failure simulated");
+   if(pasteType==="PASTE_FORMAT"||pasteType==="PASTE_DATA_VALIDATION")return destination;
    const source=rows.slice(row-1,row-1+nr).map(item=>item.slice());
    while(rows.length<destination.row+destination.nr-1)rows.push(["","","",""]);
    for(let r=0;r<nr;r++)for(let c=0;c<nc;c++)rows[destination.row-1+r][destination.col-1+c]=source[r][c];
-   if(options.failCopy){rows[destination.row-1][0]=source[0][0];throw new Error("copy failure simulated");}
+   return destination;
   };
   return range;
  };
@@ -109,11 +111,11 @@ function addLogoHarness(options={}){
   getOrCreateSubFolder:()=>folder,
   Utilities:{base64Decode:()=>[1,2,3],newBlob:()=>({})},
   LockService:{getScriptLock:()=>lock},
-  SpreadsheetApp:{flush},
+  SpreadsheetApp:{flush,CopyPasteType:{PASTE_FORMAT:"PASTE_FORMAT",PASTE_DATA_VALIDATION:"PASTE_DATA_VALIDATION"}},
   PropertiesService:{getScriptProperties:()=>properties},
   LOGOS_MARCA_ID_COUNTER_PROPERTY:"LOGOS_MARCA_ID_COUNTER"
  };
- const fn=new Function(...Object.keys(deps),extract("getNextLogoIdLocked_")+"\n"+extract("handleAddLogo")+"\nreturn handleAddLogo;")(...Object.values(deps));
+ const fn=new Function(...Object.keys(deps),extract("copyAdminRowPresentationOnly_")+"\n"+extract("getNextLogoIdLocked_")+"\n"+extract("handleAddLogo")+"\nreturn handleAddLogo;")(...Object.values(deps));
  return {run:()=>fn({nombreMarca:"Marca nueva",fileData:"AQID",filename:"logo.png",mimeType:"image/png"},()=>{}),
   rows,file,get trashed(){return trashed;},get description(){return description;}};
 }
