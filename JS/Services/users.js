@@ -119,12 +119,14 @@ function doPost(e) {
     }
     if (!request || typeof request !== "object") return doPostInternal_(e);
     const action = String(request.action || "");
+    const payload = request.payload && typeof request.payload === "object" ? request.payload : {};
+    const sessionOptions = { session: { userId: payload.userId, sessionToken: payload.sessionToken } };
     if (!isSharedMutationAction_(action)) {
         if (action !== "getUsers") return doPostInternal_(e);
         try {
-            return withSharedMutationLease_("USERS", "sessionActivity", function() {
-                return doPostInternal_(e);
-            });
+            return withSharedMutationLease_("USERS", "sessionActivity", function(token, actor) {
+                return doPostInternal_(withSharedSessionActor_(e, actor));
+            }, sessionOptions);
         } catch (error) {
             return ContentService.createTextOutput(JSON.stringify({
                 status: "error",
@@ -133,16 +135,11 @@ function doPost(e) {
         }
     }
 
-    const payload = request.payload && typeof request.payload === "object" ? request.payload : {};
     const nestedToken = String(payload.__sharedMutationToken || "").trim();
     try {
-        return withSharedMutationLease_("USERS", action, function(token) {
-            
-            const wrappedEvent = Object.assign({}, e || {}, {
-                postData: Object.assign({}, e && e.postData || {}, { contents: JSON.stringify(request) })
-            });
-            return doPostInternal_(wrappedEvent);
-        }, nestedToken ? { nestedToken: nestedToken } : undefined);
+        return withSharedMutationLease_("USERS", action, function(token, actor) {
+            return doPostInternal_(withSharedSessionActor_(e, actor));
+        }, Object.assign(sessionOptions, nestedToken ? { nestedToken: nestedToken } : {}));
     } catch (error) {
         return ContentService.createTextOutput(JSON.stringify({
             status: "error",
