@@ -181,14 +181,49 @@ function doPostInternal_(e) {
 
 function parseSessionDate_(v){if(v===null||v===undefined||String(v).trim()==='')return null;const d=v instanceof Date?new Date(v.getTime()):new Date(v);return Number.isNaN(d.getTime())?null:d;}
 function addCalendarMonthsUTC_(date,months){const d=new Date(date.getTime()),day=d.getUTCDate();d.setUTCDate(1);d.setUTCMonth(d.getUTCMonth()+months);const last=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,0)).getUTCDate();d.setUTCDate(Math.min(day,last));return d;}
+function findUniqueRowsByExactValue_(sheet,column,value,minWidth=1,trimCell=false) {
+    if (!sheet || !value) return [];
+    const lastRow = Number(sheet.getLastRow ? sheet.getLastRow() : 0);
+    if (lastRow < 2) return [];
+    const expected = String(value), range = sheet.getRange(2,column,lastRow-1,1);
+    let rowNumbers = [];
+    if (range && typeof range.createTextFinder === "function") {
+        const finder = range.createTextFinder(expected);
+        if (finder && typeof finder.matchCase === "function") finder.matchCase(true);
+        if (finder && typeof finder.matchEntireCell === "function") finder.matchEntireCell(!trimCell);
+        const matches = finder && typeof finder.findAll === "function" ? finder.findAll() || [] : [];
+        rowNumbers = matches.map(cell => cell.getRow());
+    } else {
+        const values = range.getValues();
+        for (let i=0;i<values.length;i++) {
+            const actual = String(values[i][0] === null || values[i][0] === undefined ? "" : values[i][0]);
+            if ((trimCell ? actual.trim() : actual) === expected) rowNumbers.push(i+2);
+        }
+    }
+    const lastColumn = Number(sheet.getLastColumn ? sheet.getLastColumn() : 0);
+    const width = Math.max(Number(minWidth)||1,lastColumn||1);
+    return rowNumbers.map(rowIndex => ({rowIndex,row:sheet.getRange(rowIndex,1,1,width).getValues()[0]}))
+        .filter(item => {
+            const actual = String(item.row[column-1] === null || item.row[column-1] === undefined ? "" : item.row[column-1]);
+            return (trimCell ? actual.trim() : actual) === expected;
+        });
+}
+function touchSessionActivityIfDue_(sheet,rowIndex,row,activityColumn) {
+    const now = new Date(), raw = row[activityColumn-1] === null || row[activityColumn-1] === undefined || String(row[activityColumn-1]).trim() === "" ? row[3] : row[activityColumn-1];
+    const last = raw instanceof Date ? new Date(raw.getTime()) : new Date(raw);
+    if (Number.isNaN(last.getTime()) || now.getTime()-last.getTime() < 5*60*1000) return false;
+    const token = String(row[2] || ""), currentToken = String(sheet.getRange(rowIndex,3).getValue() || "");
+    if (!token || currentToken !== token) return false;
+    sheet.getRange(rowIndex,activityColumn).setValue(now.toISOString());
+    return true;
+}
+
 function getSessionExpirationStatus_(row,now=new Date()){const created=parseSessionDate_(row[COLS_ACTIVE_SESSIONS.date-1]),raw=row[COLS_ACTIVE_SESSIONS.LastActivityAt-1],activity=raw===null||raw===undefined||String(raw).trim()===''?created:parseSessionDate_(raw);if(!created||!activity)return{expired:true,reason:'invalid_timestamp'};if(now.getTime()>=addCalendarMonthsUTC_(created,3).getTime())return{expired:true,reason:'absolute_expiration'};if(now.getTime()>=addCalendarMonthsUTC_(activity,1).getTime())return{expired:true,reason:'inactivity_expiration'};return{expired:false};}
 function getVerifiedSession(sessionToken) {
     if (!sessionToken) throw new Error("Acceso no autorizado: Se requiere token de sesión.");
     const ss = getSpreadsheet(), sessionsSheet = ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
     if (!sessionsSheet) throw new Error("Acceso no autorizado: Sesión no autorizada.");
-    const sessionRows = sessionsSheet.getDataRange().getValues();
-    const matches = sessionRows.slice(1).map((row,index)=>({row,rowIndex:index+2}))
-        .filter(item=>item.row[COLS_ACTIVE_SESSIONS.ActiveSessions-1]===sessionToken);
+    const matches = findUniqueRowsByExactValue_(sessionsSheet,COLS_ACTIVE_SESSIONS.ActiveSessions,sessionToken,6,false);
     if (matches.length !== 1) throw new Error("Acceso no autorizado: Sesión inválida, duplicada o expirada.");
     const sessionMatch=matches[0],expiration=getSessionExpirationStatus_(sessionMatch.row,new Date());
     if(expiration.expired)throw new Error('Acceso no autorizado: Sesión expirada por '+expiration.reason+'.');
@@ -196,12 +231,12 @@ function getVerifiedSession(sessionToken) {
     if (!userId) throw new Error("Acceso no autorizado: Identidad de sesión inválida.");
     const usersSheet = ss.getSheetByName(SHEET_NAMES.USERS);
     if (!usersSheet) throw new Error("Hoja de usuarios no encontrada.");
-    const userRows = usersSheet.getDataRange().getValues().slice(1).filter(row => String(row[COLS_USERS.ID-1] ?? '').trim() === userId);
-    if (userRows.length !== 1 || !isActiveUserRecord(userRows[0])) throw new Error("Acceso no autorizado: Usuario inexistente o desactivado.");
-    if (hasPendingRoleRevocationForUser_(userRows[0])) throw new Error("Acceso no autorizado: existe una revocación de rol pendiente. Inicia sesión nuevamente cuando finalice.");
-    const rawRole = String(userRows[0][COLS_USERS.Privilegios-1] || '').trim();
+    const userRows = findUniqueRowsByExactValue_(usersSheet,COLS_USERS.ID,userId,9,true);
+    if (userRows.length !== 1 || !isActiveUserRecord(userRows[0].row)) throw new Error("Acceso no autorizado: Usuario inexistente o desactivado.");
+    if (hasPendingRoleRevocationForUser_(userRows[0].row)) throw new Error("Acceso no autorizado: existe una revocación de rol pendiente. Inicia sesión nuevamente cuando finalice.");
+    const rawRole = String(userRows[0].row[COLS_USERS.Privilegios-1] || '').trim();
     const role = rawRole;
-    sessionsSheet.getRange(sessionMatch.rowIndex,COLS_ACTIVE_SESSIONS.LastActivityAt).setValue(new Date().toISOString());
+    touchSessionActivityIfDue_(sessionsSheet,sessionMatch.rowIndex,sessionMatch.row,COLS_ACTIVE_SESSIONS.LastActivityAt);
     return { userId, role };
 }
 
