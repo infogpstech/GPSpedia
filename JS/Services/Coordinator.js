@@ -356,6 +356,7 @@ function createSharedMutationCoordinator_(dependencies) {
         if (!context || typeof context !== "object" || Array.isArray(context) ||
             context.schemaVersion !== 1 || context.userId !== String(userId) ||
             !Number.isSafeInteger(context.epoch) || context.epoch < 1 ||
+            (context.revokedBefore !== undefined && (!Number.isFinite(context.revokedBefore) || context.revokedBefore < 0)) ||
             !Array.isArray(context.sessions) || context.sessions.length > 5) {
             throw new Error("El contexto compartido de sesión tiene un esquema inválido; el acceso permanece denegado.");
         }
@@ -401,8 +402,10 @@ function createSharedMutationCoordinator_(dependencies) {
             const context = readAuthContext_(userId) || {
                 schemaVersion: 1, userId: userId, epoch: 1, sessions: []
             };
+            context.revokedBefore = Number(context.revokedBefore || 0);
             const priorSessions = context.sessions.slice();
             context.sessions = context.sessions.filter(session =>
+                session.createdAt > context.revokedBefore &&
                 currentTime < addUtcMonths_(session.createdAt, SHARED_AUTH_ABSOLUTE_MONTHS_) &&
                 currentTime < addUtcMonths_(session.lastActivityAt, SHARED_AUTH_IDLE_MONTHS_));
             const activeTokens = new Set(context.sessions.map(session => session.token));
@@ -412,6 +415,7 @@ function createSharedMutationCoordinator_(dependencies) {
                     properties.deleteProperty(authTokenIndexKey_(session.token));
                 }
             });
+            if (createdAt <= Number(context.revokedBefore || 0)) throw new Error("La sesión fue revocada antes de registrarse.");
             const indexedOwner = String(properties.getProperty(authTokenIndexKey_(token)) || "");
             if (indexedOwner && indexedOwner !== userId) throw new Error("El token ya está asociado a otra cuenta.");
             const existing = context.sessions.filter(session => constantTimeEquals_(session.token, token));
@@ -468,6 +472,7 @@ function createSharedMutationCoordinator_(dependencies) {
             };
             if (context.epoch >= Number.MAX_SAFE_INTEGER) throw new Error("Se agotó el contador de epoch de sesión.");
             context.epoch += 1;
+            context.revokedBefore = now();
             const revokedTokens = context.sessions.map(session => session.token);
             context.sessions = [];
             saveAuthContext_(context);
@@ -480,6 +485,78 @@ function createSharedMutationCoordinator_(dependencies) {
         });
     }
 
+
+
+    function syncUserSessions_(service, operation, payload) {
+        if (service !== "AUTH" || operation !== "syncUserSessions") {
+            throw new Error("Solo AUTH puede sincronizar las sesiones activas de una cuenta.");
+        }
+        const userId = String(payload.userId || "").trim();
+        const role = String(payload.role || "").trim().toLowerCase();
+        const fullName = String(payload.fullName || "");
+        const inputSessions = payload.sessions;
+        if (!userId || userId.length > 128 ||
+            !["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"].includes(role) ||
+            fullName.length > 120 || !Array.isArray(inputSessions) || inputSessions.length > 5) {
+            throw new Error("La sincronización de sesiones contiene datos inválidos.");
+        }
+        return withCoordinatorLock_(() => {
+            const currentTime = now();
+            const context = readAuthContext_(userId) || {
+                schemaVersion: 1, userId: userId, epoch: 1, revokedBefore: 0, sessions: []
+            };
+            context.revokedBefore = Number(context.revokedBefore || 0);
+            const accepted = [];
+            const rejectedTokens = [];
+            const seen = new Set();
+            inputSessions.forEach(item => {
+                const token = String(item && item.token || "");
+                const createdAt = Number(item && item.createdAt);
+                const lastActivityAt = Number(item && item.lastActivityAt);
+                if (token.length < 16 || token.length > 128 || !Number.isFinite(createdAt) ||
+                    !Number.isFinite(lastActivityAt) || createdAt <= 0 || lastActivityAt < createdAt ||
+                    seen.has(token)) {
+                    throw new Error("La lista de sesiones contiene un token, fecha o duplicado inválido.");
+                }
+                seen.add(token);
+                if (createdAt <= context.revokedBefore ||
+                    currentTime >= addUtcMonths_(createdAt, SHARED_AUTH_ABSOLUTE_MONTHS_) ||
+                    currentTime >= addUtcMonths_(lastActivityAt, SHARED_AUTH_IDLE_MONTHS_)) {
+                    rejectedTokens.push(token);
+                    return;
+                }
+                const indexedOwner = String(properties.getProperty(authTokenIndexKey_(token)) || "");
+                if (indexedOwner && indexedOwner !== userId) throw new Error("Un token de sesión pertenece a otra cuenta.");
+                const previous = context.sessions.find(session => constantTimeEquals_(session.token, token));
+                if (previous && previous.role !== role) throw new Error("El rol de una sesión existente cambió; debe iniciar sesión nuevamente.");
+                accepted.push({
+                    token: token,
+                    role: role,
+                    fullName: fullName,
+                    createdAt: createdAt,
+                    lastActivityAt: Math.max(lastActivityAt, previous ? previous.lastActivityAt : 0)
+                });
+            });
+            const acceptedTokens = new Set(accepted.map(session => session.token));
+            context.sessions.forEach(session => {
+                if (!acceptedTokens.has(session.token) &&
+                    String(properties.getProperty(authTokenIndexKey_(session.token)) || "") === userId) {
+                    properties.deleteProperty(authTokenIndexKey_(session.token));
+                }
+            });
+            accepted.forEach(session => properties.setProperty(authTokenIndexKey_(session.token), userId));
+            context.sessions = accepted;
+            saveAuthContext_(context);
+            return {
+                status: "success",
+                synced: accepted.length,
+                acceptedTokens: accepted.map(session => session.token),
+                rejectedTokens: rejectedTokens,
+                revokedBefore: context.revokedBefore,
+                epoch: context.epoch
+            };
+        });
+    }
 
     function validateSessionContext_(service, operation, payload) {
         if (service !== "AUTH" || operation !== "validateSessionContext") {
@@ -503,7 +580,8 @@ function createSharedMutationCoordinator_(dependencies) {
         const session = matches[0];
         const absoluteExpiry = addUtcMonths_(session.createdAt, SHARED_AUTH_ABSOLUTE_MONTHS_);
         const idleExpiry = addUtcMonths_(session.lastActivityAt, SHARED_AUTH_IDLE_MONTHS_);
-        if (!Number.isFinite(absoluteExpiry) || !Number.isFinite(idleExpiry) ||
+        if (session.createdAt <= Number(context.revokedBefore || 0) ||
+            !Number.isFinite(absoluteExpiry) || !Number.isFinite(idleExpiry) ||
             currentTime >= absoluteExpiry || currentTime >= idleExpiry) {
             context.sessions = context.sessions.filter(item => item !== session);
             saveAuthContext_(context);
@@ -822,6 +900,7 @@ function createSharedMutationCoordinator_(dependencies) {
         if (action === "publishCatalogChange") return publishCatalogChange_(service, operation, payload);
         if (action === "getCatalogChanges") return getCatalogChanges_(service, operation, payload);
         if (action === "registerSession") return registerSession_(service, operation, payload);
+        if (action === "syncUserSessions") return syncUserSessions_(service, operation, payload);
         if (action === "revokeSession") return revokeSession_(service, operation, payload);
         if (action === "revokeUserSessions") return revokeUserSessions_(service, operation, payload);
         if (action === "validateSessionContext") return validateSessionContext_(service, operation, payload);
