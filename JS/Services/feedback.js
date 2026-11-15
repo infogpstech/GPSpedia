@@ -1974,10 +1974,8 @@ function handleGetFeedbackItems(payload) {
 function handleGetMyProblemReports(payload) {
     const actor = getFeedbackActor_(payload,null);
     const source = payload && typeof payload === "object" ? payload : {};
-    const rawCursor = source.cursor === undefined || source.cursor === null || source.cursor === "" ? "0" : String(source.cursor).trim();
-    if (!/^\d{1,9}$/.test(rawCursor)) throw new Error("El cursor de tickets no es válido.");
-    const offset = Number(rawCursor);
-    if (!Number.isSafeInteger(offset) || offset < 0) throw new Error("El cursor de tickets no es válido.");
+    const cursor = source.cursor === undefined || source.cursor === null ? "" : String(source.cursor).trim();
+    if (cursor.length > 120 || /[\r\n]/.test(cursor)) throw new Error("El cursor de tickets no es válido.");
     const requestedSize = Number(source.pageSize);
     const pageSize = Number.isFinite(requestedSize) ? Math.max(1,Math.min(100,Math.floor(requestedSize))) : 40;
     const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
@@ -1996,9 +1994,17 @@ function handleGetMyProblemReports(payload) {
         if (!parseReportMetadata(rawMetadata,vehicleId)) return;
         ownedReports.push(mapInboxFeedbackRow_(row,metadataColumn));
     });
-    const data = ownedReports.slice(offset,offset+pageSize);
-    const nextOffset = offset + data.length, hasMore = nextOffset < ownedReports.length;
-    return {status:"success",data,nextCursor:hasMore?String(nextOffset):null,hasMore,pageSize,total:ownedReports.length};
+    let startIndex = 0;
+    if (cursor) {
+        const anchorIndex = ownedReports.findIndex(item => item.reportMetadata && item.reportMetadata.reportId === cursor);
+        if (anchorIndex < 0) throw new Error("El cursor de tickets ya no es válido para esta cuenta.");
+        startIndex = anchorIndex + 1;
+    }
+    const data = ownedReports.slice(startIndex,startIndex+pageSize);
+    const hasMore = startIndex + data.length < ownedReports.length;
+    const nextCursor = hasMore && data.length && data[data.length-1].reportMetadata
+        ? data[data.length-1].reportMetadata.reportId : null;
+    return {status:"success",data,nextCursor,hasMore,pageSize,total:ownedReports.length};
 }
 
 function ensureInboxAuditSheet_() {
