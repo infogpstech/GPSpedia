@@ -77,6 +77,7 @@ runGroup('32','ADMIN',()=>{
  runCli('AUG-021 auditoría persistente de operaciones ADMIN','JS/Tests/AdminAuditTrail.mjs');
  runCli('P2 auditoría de identificadores sin escritura','JS/Tests/IdentifierAudit.mjs');
  runCli('P2 motor de migración de IDs, lotes, huellas y rollback','JS/Tests/IdentifierMigration.mjs');
+ runCli('P2 migración integral de fórmulas ID, valores y lotes reanudables','JS/Tests/IdentifierFormulaMigration.mjs');
  runCli('UX ayudas contextuales del formulario de cortes','JS/Tests/ContextualHelpForms.mjs');
   runCli('UX proporciones del panel Developer','JS/Tests/DeveloperPanelUX.mjs');
  runCli('P1 coordinación de actividad y sesiones protegidas por servicio','JS/Tests/SessionActivityCoordination.mjs');
