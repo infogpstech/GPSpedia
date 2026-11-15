@@ -123,7 +123,7 @@ test("WRITE publica upsert exacto de Cortes tras releer fila y conserva reset pa
     assert.ok(writeSource.includes("getScriptLock()") && writeSource.includes("waitLock(15000)"));
 });
 test("reconciliación confirmada publica un upsert por vehículo único y reserva reset para fallos", () => {
-    assert.ok(adminSource.includes("appliedVehicleIds: Array.from(new Set(manifest.map(item => String(item.vehicleId || "").trim()).filter(Boolean)))"));
+    assert.ok(adminSource.includes('appliedVehicleIds: Array.from(new Set(manifest.map(item => String(item.vehicleId || "").trim()).filter(Boolean)))'));
     assert.ok(adminSource.includes("function publishAdminCortesCatalogChanges_(action, references)"));
     assert.ok(adminSource.includes("publishAdminCortesCatalogChanges_(catalogAction, vehicleIds)"));
     assert.ok(adminSource.includes("const changes = ids.map(id => buildAdminCortesCatalogChange_(id))"));
