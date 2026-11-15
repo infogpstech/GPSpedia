@@ -120,7 +120,7 @@ test('el aviso bloquea el catálogo hasta confirmar la aceptación del dispositi
     assert.match(ui, /getOrCreateTermsDeviceId\(localStorage, window\.crypto\)/);
     assert.match(ui, /saveDeviceTermsAcceptance\(localStorage, userId, deviceId, confirmed\)/);
     assert.match(auth, /if \(appReady\) loadInitialData\(\)/);
-    assert.match(auth, /if \(handleLoginSuccess\(validatedUser, false\)\) loadInitialData\(\)/);
+    assert.match(auth, /if \(handleLoginSuccess\(user, false\)\) loadInitialData\(\)/);
 });
 test('AUTH registra la aceptación por dispositivo sin escribir la columna de aceptación de la sesión', () => {
     const start = serviceAuth.indexOf('function handleAcceptTerms(payload) {');

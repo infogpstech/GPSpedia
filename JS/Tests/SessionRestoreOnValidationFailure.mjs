@@ -125,12 +125,12 @@ await test('AUTH devuelve no disponible ante excepción interna, no sesión revo
 });
 
 await test('una respuesta legacy valid:false con error se normaliza como indisponibilidad', async () => {
-    const fnSource = extract(client, 'async function validateSessionCoordinated(user, force = false)', '\\nfunction loadUserLocalActivity');
+    const fnSource = extract(client, 'async function validateSessionCoordinated(user, force = false)', '\nfunction loadUserLocalActivity');
     const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
     const factory = new AsyncFunction(
         'isCurrentSession','getRecentValidation','apiValidateSession','navigator','AbortController',
         'VALIDATION_TIMEOUT_MS','VALIDATION_LOCK_NAME','persistSessionValidation','isSessionProfileForUser_',
-        fnSource + '\\nreturn validateSessionCoordinated;'
+        fnSource + '\nreturn validateSessionCoordinated;'
     );
     const validate = factory(
         () => true, () => false,
@@ -143,12 +143,12 @@ await test('una respuesta legacy valid:false con error se normaliza como indispo
 });
 
 await test('una respuesta valid:false sin error conserva el significado de revocación', async () => {
-    const fnSource = extract(client, 'async function validateSessionCoordinated(user, force = false)', '\\nfunction loadUserLocalActivity');
+    const fnSource = extract(client, 'async function validateSessionCoordinated(user, force = false)', '\nfunction loadUserLocalActivity');
     const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
     const factory = new AsyncFunction(
         'isCurrentSession','getRecentValidation','apiValidateSession','navigator','AbortController',
         'VALIDATION_TIMEOUT_MS','VALIDATION_LOCK_NAME','persistSessionValidation','isSessionProfileForUser_',
-        fnSource + '\\nreturn validateSessionCoordinated;'
+        fnSource + '\nreturn validateSessionCoordinated;'
     );
     const validate = factory(
         () => true, () => false,

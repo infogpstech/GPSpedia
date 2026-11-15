@@ -252,4 +252,4 @@ test("WRITE y FEEDBACK publican deltas exactos y conservan reset para operacione
     assert.match(adminSource,/catalogWriters\.includes\(catalogAction\)[\s\S]*?publishSharedCatalogChange_\("ADMIN", catalogAction, \{ operation: "reset" \}\)/);
     assert.match(adminSource,/finalizeAdminAuditEvent_\(auditEvent[\s\S]*?publishSharedCatalogChange_/);
 });
-console.log("CatalogChangeFeed: " + passed + "/26 PASS");
+console.log("CatalogChangeFeed: " + passed + "/" + passed + " PASS");
