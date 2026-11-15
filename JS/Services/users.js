@@ -216,7 +216,32 @@ function touchSessionActivityIfDue_(sheet,rowIndex,row,activityColumn) {
 }
 
 function getSessionExpirationStatus_(row,now=new Date()){const created=parseSessionDate_(row[COLS_ACTIVE_SESSIONS.date-1]),raw=row[COLS_ACTIVE_SESSIONS.LastActivityAt-1],activity=raw===null||raw===undefined||String(raw).trim()===''?created:parseSessionDate_(raw);if(!created||!activity)return{expired:true,reason:'invalid_timestamp'};if(now.getTime()>=addCalendarMonthsUTC_(created,3).getTime())return{expired:true,reason:'absolute_expiration'};if(now.getTime()>=addCalendarMonthsUTC_(activity,1).getTime())return{expired:true,reason:'inactivity_expiration'};return{expired:false};}
-function getVerifiedSession(sessionToken) {
+function getVerifiedSession(sessionToken, payload, requireUserRow) {
+    const trustedActor = payload && payload.__sharedSessionActor;
+    if (trustedActor && typeof trustedActor.userId === "string" &&
+        typeof trustedActor.role === "string" && Number.isSafeInteger(trustedActor.epoch) && trustedActor.epoch > 0) {
+        const userId = trustedActor.userId.trim();
+        const requestedUserId = String(payload.userId || userId).trim();
+        const normalizedRole = trustedActor.role.trim().toLowerCase();
+        const displayRoles = {
+            desarrollador: "Desarrollador", jefe: "Jefe", supervisor: "Supervisor",
+            tecnico: "Tecnico", tecnico_exterior: "Tecnico_exterior"
+        };
+        if (!userId || requestedUserId !== userId || !displayRoles[normalizedRole]) {
+            throw new Error("Acceso no autorizado: el contexto compartido no coincide con la identidad solicitada.");
+        }
+        let userRowIndex = null;
+        if (requireUserRow === true) {
+            const usersSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.USERS);
+            const userRows = findUniqueRowsByExactValue_(usersSheet, COLS_USERS.ID, userId, 9, true);
+            if (userRows.length !== 1 || !isActiveUserRecord(userRows[0].row) ||
+                String(userRows[0].row[COLS_USERS.Privilegios - 1] || "").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").trim().toLowerCase() !== normalizedRole) {
+                throw new Error("Acceso no autorizado: el perfil ya no coincide con el contexto de sesión.");
+            }
+            userRowIndex = userRows[0].rowIndex;
+        }
+        return { userId, role: displayRoles[normalizedRole], userRowIndex, epoch: trustedActor.epoch };
+    }
     if (!sessionToken) throw new Error("Acceso no autorizado: Se requiere token de sesión.");
     const ss = getSpreadsheet(), sessionsSheet = ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
     if (!sessionsSheet) throw new Error("Acceso no autorizado: Sesión no autorizada.");
@@ -251,7 +276,7 @@ function isActiveUserRecord(row) {
 
 function handleGetUsers(payload) {
     const { sessionToken } = payload;
-    const { role: requesterRole } = getVerifiedSession(sessionToken);
+    const { role: requesterRole } = getVerifiedSession(sessionToken, payload);
 
     if (!['Desarrollador', 'Jefe', 'Supervisor'].includes(requesterRole)) {
         throw new Error('Acceso denegado. Permisos insuficientes.');
@@ -487,7 +512,7 @@ function handleCreateUser(payload) {
     const passwordHash = createPasswordHash(normalized.password);
 
     return withUsersMutationLock_(() => {
-        const { role: creatorRole } = getVerifiedSession(sessionToken);
+        const { role: creatorRole } = getVerifiedSession(sessionToken, payload);
         const allowedRoles = {
             'Desarrollador': ['Desarrollador', 'Jefe', 'Supervisor', 'Tecnico', 'Tecnico_exterior'],
             'Jefe': ['Supervisor', 'Tecnico'],
@@ -537,7 +562,7 @@ function handleUpdateProfile(payload) {
     if (!userId || typeof sessionToken !== 'string' || !sessionToken.trim()) throw new Error('Datos insuficientes.');
 
     return withUsersMutationLock_(() => {
-        const { userId: authenticatedUserId, userRowIndex } = getVerifiedSession(sessionToken);
+        const { userId: authenticatedUserId, userRowIndex } = getVerifiedSession(sessionToken, payload, true);
         if (String(authenticatedUserId).trim() !== userId) {
             throw new Error('Acceso no autorizado: Solo puedes editar tu propio perfil.');
         }
