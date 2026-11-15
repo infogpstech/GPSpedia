@@ -1256,7 +1256,7 @@ function doPostInternal_(e) {
                 response = handleAuditIdentifiers();
                 break;
             case 'freezeIdentifierFormulas':
-                response = handleFreezeIdentifierFormulas_(payload);
+                response = handleFreezeIdentifierFormulas_(payload, developerContext);
                 break;
             case 'migrateIdentifiers':
                 response = handleMigrateIdentifiers_(payload, logMessage);
@@ -4280,7 +4280,7 @@ function findIdentifierFormulaFreezeManifest_(sheet, migrationId) {
         })).filter(item => item.migrationId === migrationId);
 }
 
-function handleFreezeIdentifierFormulas_(payload) {
+function handleFreezeIdentifierFormulas_(payload, developerContext) {
     const options = payload || {}, ss = getSpreadsheet();
     const migrationId = String(options.migrationId || Utilities.getUuid().replace(/-/g, "")).trim();
     if (!/^[A-Za-z0-9]{16,64}$/.test(migrationId)) throw new Error("migrationId inválido.");
@@ -4292,6 +4292,7 @@ function handleFreezeIdentifierFormulas_(payload) {
         let plan = null, manifest = null, items = [];
         if (!dryRun) {
             if (options.confirm !== true) throw new Error("La migración requiere confirm:true.");
+            verifyVinMigrationBackup(options.backupId, developerContext);
             manifest = ensureIdentifierFormulaFreezeManifest_(ss);
             items = findIdentifierFormulaFreezeManifest_(manifest, migrationId);
         }
