@@ -74,11 +74,14 @@ testCase("AUTH valida una sola vez dentro de cada handler protegido, sin preflig
  assert.equal(api.includes("touchSessionBeforeAction"),false);
 });
 
-testCase("Coordinator reserva ActiveSessions y permite solo las dos operaciones ADMIN→WRITE declaradas",()=>{
- assert.match(coordinator,/ADMIN:\s*\{\s*sessionActivity:\s*\{ sharedWrite: \["ACTIVE_SESSIONS"\] \}/);
- assert.match(coordinator,/migrateReplacedImagesSchema:\s*\{ read: \["USERS"\], sharedWrite: \["ACTIVE_SESSIONS"\], write: \["IMAGE_INVENTORY"\] \}/);
- assert.match(coordinator,/const sharedWriteResources = \(policy\.sharedWrite \|\| \[\]\)\.slice\(\)/);
- assert.match(coordinator,/sharedWriteResources\.push\("ACTIVE_SESSIONS"\)/);
+testCase("Coordinator usa SESSION_CONTEXTS como barrera lógica y conserva las operaciones ADMIN→WRITE declaradas",()=>{
+ assert.match(coordinator,/ADMIN:\s*\{\s*sessionActivity:\s*\{ read: \["SESSION_CONTEXTS"\] \}/);
+ assert.match(coordinator,/migrateReplacedImagesSchema:\s*\{ read: \["USERS"\], write: \["IMAGE_INVENTORY"\] \}/);
+ assert.match(coordinator,/readResources\.push\("SESSION_CONTEXTS"\)/);
+ assert.match(coordinator,/writeResources\.push\("ACTIVE_SESSIONS"\)/);
+ assert.equal(coordinator.includes('sharedWrite: ["ACTIVE_SESSIONS"]'),false);
+ assert.match(coordinator,/login: \{ write: \[\.\.\.identityWrite, "SESSION_CONTEXTS"\] \}/);
+ assert.match(coordinator,/logout: \{ write: \[\.\.\.identityWrite, "SESSION_CONTEXTS"\] \}/);
  assert.match(coordinator,/nestedActions:\s*\{ WRITE: \["allocateVehicleId"\] \}/);
  assert.match(coordinator,/nestedActions:\s*\{ WRITE: \["freezeCortesIds"\] \}/);
  assert.match(coordinator,/migrateIdentifiers:\s*\{ maintenance: true \}/);
