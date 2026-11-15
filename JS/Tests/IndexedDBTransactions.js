@@ -80,7 +80,7 @@ async function runIndexedDBTransactionTests() {
     const quotaHarness = createIndexedDBHarness({ transactions: ['quota'] });
     const quotaOffline = await freshOffline(quotaHarness, 'quota');
     await testAsync('un error de cuota rechaza la escritura y no se presenta como guardada', async () => {
-        await assert.rejects(quotaOffline.saveCatalog(snapshot), /IndexedDB|transacción|transaction/i);
+        await assert.rejects(quotaOffline.saveCatalog(snapshot), /IndexedDB|transacción|transaction|QuotaExceededError/i);
     });
 
     const blockedHarness = createIndexedDBHarness({ blocked: true });
