@@ -109,7 +109,8 @@ check("WRITE acepta los cinco roles activos y restringe el mantenimiento de IDs"
  assert.ok(write.includes("['desarrollador','jefe','supervisor','tecnico','tecnico_exterior'].includes(role)"));
  assert.ok(write.includes('SUPPLEMENTARY_INFO_ALLOWED_ROLES_ = Object.freeze(["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"])'));
  const start=write.indexOf("function assertDeveloperForIdMaintenance"),end=write.indexOf("\nfunction ",start+10);
- assert.ok(start>=0&&end>start);assert.ok(write.slice(start,end).includes('getAuthenticatedCollaborator(payload, ["desarrollador"])'));\n assert.doesNotMatch(write.slice(start,end),/getDataRange\(\)|getSpreadsheet\(\)/);
+ assert.ok(start>=0&&end>start);assert.ok(write.slice(start,end).includes('getAuthenticatedCollaborator(payload, ["desarrollador"])'));
+ assert.doesNotMatch(write.slice(start,end),/getDataRange\(\)|getSpreadsheet\(\)/);
 });
 check("AUTH y USERS conservan jerarquía coherente para crear, modificar y eliminar cuentas",()=>{
  assert.ok(users.includes("'Desarrollador': ['Desarrollador', 'Jefe', 'Supervisor', 'Tecnico', 'Tecnico_exterior']"));
