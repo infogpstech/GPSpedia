@@ -584,12 +584,13 @@ function runSharedMutationCoordinatorTests() {
         });
     });
 
-    test_("UTILITIES migra timestamps con lease sobre identidad, Cortes y Drive", function() {
+    test_("UTILITIES usa contexto central y conserva exclusión sobre identidad, Cortes y Drive", function() {
         const policy = coordinatorPolicy_("UTILITIES", "migrateTimestamps");
-        ["USERS", "ACTIVE_SESSIONS", "CORTES", "DRIVE"].forEach(resource =>
+        ["ACTIVE_SESSIONS", "CORTES", "DRIVE"].forEach(resource =>
             assert_(policy.readResources.includes(resource), "UTILITIES debe reservar lectura de " + resource + "."));
-        assert_(policy.writeResources.includes("UTILITIES") && policy.writeResources.includes("ACTIVE_SESSIONS"),
-            "La migración debe reservar su recurso lógico y ActiveSessions para actualizar actividad.");
+        assert_(!policy.readResources.includes("USERS"), "El rol ya procede del contexto central y no requiere reservar Users.");
+        assert_(policy.writeResources.includes("UTILITIES") && !policy.writeResources.includes("ACTIVE_SESSIONS"),
+            "La migración debe reservar su recurso lógico sin escribir LastActivityAt en cada operación.");
         const r = createRuntime_();
         const utility = acquire_(r, "UTILITIES", "migrateTimestamps");
         assert_(utility.status === "success", "UTILITIES debe autenticarse con su secreto independiente.");
