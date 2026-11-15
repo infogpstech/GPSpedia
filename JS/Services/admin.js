@@ -862,13 +862,13 @@ function doGet(e) {
 
 
 function isSharedMutationAction_(action) {
-    return ["backupDatabase","backupDrive","restoreDatabase","restoreDrive","reorganizeDatabase","normalizeImages","organizePrimaryVehicleImages","restoreAllTrashedImages","addLogo","updateVehicleField","uploadAdminImage","migrateCortesOperationIds","migrateIdentifiers","rollbackIdentifiers","reconcilePendingImageUploads","addOrUpdateCut","addSupplementaryInfo","createSheet","addColumn","driveCommand","recoverReplacedImage","deleteReplacedImage","restoreReplacedImageFromTrash","permanentlyDeleteReplacedImage","markReplacedImageInUse","saveUnusedImagesInventory","applyCortesImageReconciliation","createCortesImageFolder","moveReplacedImage","getReplacedImageDownloadUrl","migrateReplacedImagesSchema","auditDriveImagesInCortes"].includes(action);
+    return ["backupDatabase","backupDrive","restoreDatabase","restoreDrive","reorganizeDatabase","normalizeImages","organizePrimaryVehicleImages","restoreAllTrashedImages","addLogo","updateVehicleField","uploadAdminImage","migrateCortesOperationIds","migrateIdentifiers","rollbackIdentifiers","freezeIdentifierFormulas","reconcilePendingImageUploads","addOrUpdateCut","addSupplementaryInfo","createSheet","addColumn","driveCommand","recoverReplacedImage","deleteReplacedImage","restoreReplacedImageFromTrash","permanentlyDeleteReplacedImage","markReplacedImageInUse","saveUnusedImagesInventory","applyCortesImageReconciliation","createCortesImageFolder","moveReplacedImage","getReplacedImageDownloadUrl","migrateReplacedImagesSchema","auditDriveImagesInCortes"].includes(action);
 }
 
 // Consultas largas de inventario/Drive obtienen una lease propia de lectura.
 // No se registran como mutaciones ni generan eventos administrativos de escritura.
 function isSharedReadAction_(action) {
-    return ["getReplacedImages", "getDriveStorage", "getCortesImageFolders"].includes(action);
+    return ["getReplacedImages", "getDriveStorage", "getCortesImageFolders", "auditIdentifiers"].includes(action);
 }
 
 function doPost(e) {
