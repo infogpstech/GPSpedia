@@ -1830,6 +1830,9 @@ function enforceFeedbackRateLimit_(scope, limit, windowSeconds) {
     cache.put(key, String(current + 1), windowSeconds);
 }
 function handleSendContactForm(payload) {
+    const lock = LockService.getScriptLock();
+    lock.waitLock(15000);
+    try {
     const name = String(payload && payload.name || "").trim();
     const email = String(payload && payload.email || "").trim();
     const message = String(payload && payload.message || "").trim();
@@ -1847,6 +1850,10 @@ function handleSendContactForm(payload) {
     sheet.getRange(newRowNumber, COLS_CONTACTANOS.User_ID, 1, 3).setValues([["N/A", "Contacto de " + name, "De: " + email + "\n\n" + message]]);
     SpreadsheetApp.flush();
     return { status: "success", message: "Formulario de contacto enviado." };
+
+    } finally {
+        lock.releaseLock();
+    }
 }
 
 // ============================================================================
