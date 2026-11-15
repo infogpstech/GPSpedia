@@ -902,3 +902,16 @@ CI Node.js 22: 105 suites / 1,645 pruebas / 0 fallos. Pages build/deploy: SUCCES
 
 ================================================================================
 
+
+
+## GP-BETA-08/09 — causa raíz IndexedDB y feed de catálogo (2026-11-15)
+
+**Estado: EN PROGRESO — corrección local publicada; ejecución CI y validación Beta pendientes.**
+
+- IndexedDB: una apertura podía agotar el timeout del consumidor y, aun así, el `IDBOpenDBRequest` original seguir pendiente. Limpiar el estado en ese momento permitía abrir solicitudes adicionales en paralelo. Ahora timeout y `onblocked` no descartan la apertura subyacente: se conserva una única solicitud, se reutiliza y puede completar cuando se libere la conexión anterior. Los errores definitivos de apertura mantienen backoff.
+- Feed: el frontend usaba POST FEEDBACK para leer cambios públicos, aunque el Coordinator ya expone `GET ?catalogFeed=1` sin secreto de servicio. FEEDBACK ahora expone el feed por GET y el frontend usa esa ruta directamente; el endpoint valida cursor/límite y conserva el contrato de respuesta. Se mantiene la autenticación para escrituras y operaciones protegidas.
+- PWA: se incrementó Service Worker `gpsepedia-cache-v28` a `v29` para instalar una caché nueva y retirar la anterior al activar el worker actualizado. La consola reporta `Timeout local`, literal que no aparece en el `auth.js` actual recuperado; se sospecha una versión cliente antigua y se debe verificar el worker desplegado en Beta.
+- Sesiones: no se eliminan los secretos servicio-a-servicio ni la revocación central. El actor/rol se obtiene del contexto de sesión registrado en login; la autorización central sigue comprobando vigencia y revocación sin volver a consultar Users/ActiveSessions por cada operación.
+- Código publicado: `82e2ffe101f96e0ec0e43f801470f36accde8def`. Pruebas añadidas/actualizadas en `22920fdacec0b226c2898787d4bc9b7534120b3b`. No se desplegó Apps Script ni se modificaron ScriptProperties, secretos, hojas, Drive o datos productivos.
+
+**Pendiente:** ejecutar `IndexedDBTransactions.js`, `CatalogChangeFeed.mjs`, `ServiceWorkerCache.js`, sintaxis Node.js y suite integral en GitHub Actions. En Beta comprobar FEEDBACK `GET ?catalogFeed=1`, instalación del Service Worker v29 y comportamiento de IndexedDB en el navegador real.
