@@ -126,6 +126,8 @@ test("normalizeImages publica solo filas reescritas y usa reset ante respuestas 
     assert.ok(adminSource.includes("const changedVehicleIds = new Set()"));
     assert.ok(adminSource.includes("changedVehicleIds.add(changedVehicleId)"));
     assert.ok(adminSource.includes("changedVehicleIds: Array.from(changedVehicleIds)"));
+    assert.ok(adminSource.includes("changedRowsWithoutId: changedRowsWithoutId"));
+    assert.ok(adminSource.includes("response.changedRowsWithoutId === true"));
     assert.ok(adminSource.includes("publishAdminCortesCatalogChanges_(catalogAction, changedVehicleIds)"));
     assert.ok(adminSource.includes('response.status === "error"'));
 });

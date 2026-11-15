@@ -1390,7 +1390,11 @@ function doPostInternal_(e) {
                 }
             } else if (catalogAction === "normalizeImages" && response.status === "success") {
                 const changedVehicleIds = Array.isArray(response.changedVehicleIds) ? response.changedVehicleIds : [];
-                if (changedVehicleIds.length) publishAdminCortesCatalogChanges_(catalogAction, changedVehicleIds);
+                if (response.changedRowsWithoutId === true) {
+                    publishSharedCatalogChange_("ADMIN", catalogAction, { operation: "reset" });
+                } else if (changedVehicleIds.length) {
+                    publishAdminCortesCatalogChanges_(catalogAction, changedVehicleIds);
+                }
             } else if (catalogAction === "applyCortesImageReconciliation" &&
                 response.status === "success" && response.writePerformed === true) {
                 const vehicleIds = Array.isArray(response.appliedVehicleIds) ? response.appliedVehicleIds : [];
@@ -2718,7 +2722,8 @@ function handleNormalizeImages(payload, logMessage) {
             filaInicial: filaInicial,
             ultimaFilaProcesada: filaInicial - 1,
             estado: "completado",
-            changedVehicleIds: []
+            changedVehicleIds: [],
+            changedRowsWithoutId: false
         };
     }
 
@@ -2728,6 +2733,7 @@ function handleNormalizeImages(payload, logMessage) {
     let imagesSkippedConflicts = 0;
     let foldersRenamed = 0;
     const changedVehicleIds = new Set();
+    let changedRowsWithoutId = false;
 
     const imgFields = ['imagenVehiculo', 'imgCorte1', 'imgCorte2', 'imgCorte3', 'imgApertura', 'imgCableAlimen', 'imgCableAlimen2', 'imgCableAlimen3'];
 
@@ -2836,6 +2842,7 @@ function handleNormalizeImages(payload, logMessage) {
                                 sheet.getRange(rowNum, colIndex + 1).setValue(imgUrl);
                                 const changedVehicleId = String(vehicleInfo.id || "").trim();
                                 if (changedVehicleId) changedVehicleIds.add(changedVehicleId);
+                                else changedRowsWithoutId = true;
                                 imagesDuplicated++;
                                 imagesRenamed++;
                             }
@@ -2886,7 +2893,8 @@ function handleNormalizeImages(payload, logMessage) {
         filaInicial: filaInicial,
         ultimaFilaProcesada: ultimaFilaProcesada,
         estado: estado,
-        changedVehicleIds: Array.from(changedVehicleIds)
+        changedVehicleIds: Array.from(changedVehicleIds),
+        changedRowsWithoutId: changedRowsWithoutId
     };
 }
 
