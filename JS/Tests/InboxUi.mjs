@@ -90,6 +90,17 @@ check("Las notificaciones internas reflejan el total de conversaciones no leída
     assert.match(html, /id="inbox-notification-count"/);
     assert.match(ui, /counts && counts\.unread/);
 });
+check("La lista y los mensajes existentes permanecen visibles durante la actualización", () => {
+    assert.match(ui, /if \(!inboxConversationItems_\.length && !list\.childElementCount\) list\.replaceChildren/);
+    assert.match(ui, /if \(!options\.older && !options\.preserveScroll && !inboxConversationMessages_\.length\) renderInboxConversationDetail_/);
+});
+check("El historial reciente de mensajes se reutiliza por sesión y se limpia al cambiar de cuenta", () => {
+    assert.match(ui, /const inboxConversationMessageCache_ = new Map\(\)/);
+    assert.match(ui, /INBOX_MESSAGE_CACHE_TTL_MS_ = 60000/);
+    assert.match(ui, /inboxConversationMessageCache_\.clear\(\)/);
+    assert.match(ui, /inboxConversationMessageCache_\.set\(conversationId/);
+    assert.match(ui, /const cacheIsFresh = Boolean\(cached && Date\.now\(\) - cached\.savedAt <= INBOX_MESSAGE_CACHE_TTL_MS_\)/);
+});
 check("La sincronización está acotada por intervalo y tamaño de página", () => {
     assert.match(ui, /INBOX_CONVERSATION_PAGE_SIZE_ = 20/);
     assert.match(ui, /INBOX_MESSAGE_PAGE_SIZE_ = 50/);

@@ -422,7 +422,6 @@ export async function loadInitialData(forceRefresh = false, options = {}) {
     let cachedCatalog = null;
     let cachedCursor = null;
     let pysDeltaChanges = [];
-    if (!silent) setState({ catalogLoadStatus: 'loading', catalogLoadError: null });
 
     // 1. Renderizar primero la instantánea local junto con su cursor persistido.
     try {
@@ -450,7 +449,14 @@ export async function loadInitialData(forceRefresh = false, options = {}) {
     } catch (error) {
         if (!isCurrentLoad()) return;
         console.warn("Error o timeout al leer catálogo de IndexedDB:", error);
+        // Solo mostramos carga cuando la lectura local no entregó una caché utilizable.
+        if (!silent && !offline.isCompleteCatalogSnapshot(getState().catalogData)) {
+            setState({ catalogLoadStatus: 'loading', catalogLoadError: null });
+        }
         try {
+            // Un timeout del primer open de IndexedDB comparte la misma promesa pendiente;
+            // no repetir inmediatamente la misma apertura desde getCatalog().
+            if (String(error && error.message || "").includes("Timeout local")) throw error;
             cachedCatalog = await offline.getCatalog();
             if (offline.isCompleteCatalogSnapshot(cachedCatalog)) {
                 const normalizedCached = normalizeCatalogData(cachedCatalog);
@@ -469,6 +475,7 @@ export async function loadInitialData(forceRefresh = false, options = {}) {
     }
 
     if (!isCurrentLoad()) return;
+    if (!catalogLoaded && !silent) setState({ catalogLoadStatus: 'loading', catalogLoadError: null });
     if (!forceRefresh && catalogLoaded && hasFreshCatalogSync_()) return;
 
     try {

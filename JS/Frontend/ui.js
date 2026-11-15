@@ -3741,10 +3741,14 @@ function invalidateInboxCache_(context = getUiSessionContext_()) {
 }
 
 let lastInboxCacheScope_ = inboxPageCache_.getScopeKey(getUiSessionContext_());
+const inboxConversationMessageCache_ = new Map();
+const INBOX_MESSAGE_CACHE_TTL_MS_ = 60000;
+const INBOX_MESSAGE_CACHE_MAX_ENTRIES_ = 40;
 subscribe(() => {
     const nextScope = inboxPageCache_.getScopeKey(getUiSessionContext_());
     if (nextScope !== lastInboxCacheScope_) {
         inboxPageCache_.clear();
+        inboxConversationMessageCache_.clear();
         lastInboxCacheScope_ = nextScope;
         inboxPageCursorStack_ = [null];
         inboxPageIndex_ = 0;
@@ -4421,7 +4425,7 @@ async function loadInboxConversations_(options = {}) {
     const cursor = inboxConversationPageStack_[inboxConversationPageIndex_] || 0;
     const generation = ++inboxConversationGeneration_;
     const previousScroll = list.scrollTop;
-    if (!options.preserveScroll || !inboxConversationItems_.length) list.replaceChildren(inboxCreateNode_("p", "inbox-state-message", "Cargando conversaciones…"));
+    if (!inboxConversationItems_.length && !list.childElementCount) list.replaceChildren(inboxCreateNode_("p", "inbox-state-message", "Cargando conversaciones…"));
     if (typeof navigator !== "undefined" && navigator.onLine === false) {
         inboxSetStatus_("Sin conexión. Los borradores se conservarán en esta sesión.", true);
         return;
@@ -4485,12 +4489,14 @@ function renderInboxConversationPagination_() {
 async function selectInboxConversation_(item) {
     inboxConversationSelectedId_ = String(item.conversationId || "");
     inboxConversationSelected_ = item;
-    inboxConversationMessages_ = [];
-    inboxConversationMessagesCursor_ = null;
-    inboxConversationMessagesHasMore_ = false;
+    const cached = inboxConversationMessageCache_.get(inboxConversationSelectedId_);
+    const cacheIsFresh = Boolean(cached && Date.now() - cached.savedAt <= INBOX_MESSAGE_CACHE_TTL_MS_);
+    inboxConversationMessages_ = cacheIsFresh ? cached.messages.slice() : [];
+    inboxConversationMessagesCursor_ = cacheIsFresh ? cached.cursor : null;
+    inboxConversationMessagesHasMore_ = cacheIsFresh && cached.hasMore === true;
     document.getElementById("inbox-modal-content")?.classList.add("is-detail-open");
     renderInboxConversationDetail_();
-    await loadInboxMessages_(inboxConversationSelectedId_, { reset: true, markRead: true });
+    await loadInboxMessages_(inboxConversationSelectedId_, { reset: true, markRead: true, preserveScroll: cacheIsFresh });
 }
 async function loadInboxMessages_(conversationId, options = {}) {
     const context = getUiSessionContext_();
@@ -4501,7 +4507,7 @@ async function loadInboxMessages_(conversationId, options = {}) {
     const previousScroll = before ? before.scrollTop : 0;
     const previousHeight = before ? before.scrollHeight : 0;
     const wasAtBottom = before ? before.scrollHeight - before.scrollTop - before.clientHeight < 48 : true;
-    if (!options.older && !options.preserveScroll) renderInboxConversationDetail_({ loading: true });
+    if (!options.older && !options.preserveScroll && !inboxConversationMessages_.length) renderInboxConversationDetail_({ loading: true });
     if (typeof navigator !== "undefined" && navigator.onLine === false) {
         inboxSetStatus_("Sin conexión. El borrador del mensaje se conserva.", true);
         return;
@@ -4520,6 +4526,18 @@ async function loadInboxMessages_(conversationId, options = {}) {
         } else inboxConversationMessages_ = incoming;
         inboxConversationMessagesCursor_ = response.nextCursor === undefined ? null : response.nextCursor;
         inboxConversationMessagesHasMore_ = response.hasMore === true;
+        if (!options.older) {
+            inboxConversationMessageCache_.delete(conversationId);
+            inboxConversationMessageCache_.set(conversationId, {
+                messages: inboxConversationMessages_.slice(-INBOX_MESSAGE_PAGE_SIZE_),
+                cursor: inboxConversationMessagesCursor_,
+                hasMore: inboxConversationMessagesHasMore_,
+                savedAt: Date.now()
+            });
+            while (inboxConversationMessageCache_.size > INBOX_MESSAGE_CACHE_MAX_ENTRIES_) {
+                inboxConversationMessageCache_.delete(inboxConversationMessageCache_.keys().next().value);
+            }
+        }
         renderInboxConversationDetail_();
         const messageList = document.getElementById("inbox-conversation-messages");
         if (messageList) {

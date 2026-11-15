@@ -148,6 +148,16 @@ await test('procesa respuesta de red válida y confirma ready después de actual
     assert.equal(h.saveCalls, 1);
     assert.equal(h.errors.length, 0);
 });
+await test('no muestra estado de carga cuando existe una caché local válida', async () => {
+    const cached = snapshot([{ id: 'C-CACHE-FIRST', marca: 'Toyota', categoria: 'pickup' }]);
+    const h = createHarness({ cacheReads: [cached], cacheCursor: 5,
+        getCatalogChanges: async cursor => ({ status: 'success', currentRevision: 5, nextCursor: cursor, hasMore: false, resetRequired: false, changes: [] })
+    });
+    await h.load();
+    assert.equal(h.state.catalogLoadStatus, 'ready');
+    assert.equal(h.patches.some(patch => patch.catalogLoadStatus === 'loading'), false);
+    assert.equal(h.fetchCalls, 0);
+});
 await test('mantiene visible el catálogo remoto cuando IndexedDB falla al persistirlo', async () => {
     const valid = snapshot([{ id: 'C-LOCAL-FAIL', marca: 'Honda', categoria: 'pickup' }]);
     const h = createHarness({ networkData: valid, failCatalogPersistence: true });
