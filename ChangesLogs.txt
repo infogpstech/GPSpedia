@@ -493,4 +493,4 @@
 - `getVerifiedSession` devuelve el índice de la fila de Users que ya localizó y validó por ID único.
 - `handleUpdateProfile`, dentro del mismo bloqueo de mutación, reutiliza ese índice en lugar de volver a escanear la columna ID con `findUniqueUserRow_`. La fila procede de la verificación backend y se conserva la comprobación de identidad; no se acepta un índice enviado por el cliente.
 - Se amplió `UsersAtomicMutations` para comprobar el contrato y evitar que el handler vuelva a llamar al buscador.
-- Validación CI pendiente. No se modificaron roles, permisos, esquema, endpoints ni datos productivos.
+- CI Node.js 22 run `43684916807`: SUCCESS; sintaxis PASS; **100 suites / 1,525 pruebas / 0 fallos**. GitHub Pages run `43684916573`: build, reporte y deploy SUCCESS. No se modificaron roles, permisos, esquema, endpoints ni datos productivos.
