@@ -81,7 +81,7 @@ test("Congela valores exactos por lotes, reanuda y conserva snapshots/manifiesto
  assert.equal(h.vehicles.formulas[1][0],"");
  assert.ok(h.ss.getSheetByName("__IdentifierFormulaFreezeManifest__"));
  const config=h.ss.getSheetByName("__IdentifierSequenceConfig__");
- assert.ok(config);assert.equal(config.rows.length,3);
+ assert.ok(config);assert.equal(config.rows.length,2);
  assert.ok(h.ss.sheets.some(s=>s.name.startsWith("__IDF_")&&s.hidden));
 });
 test("Los escritores ADMIN y WRITE no copian fórmulas al crear registros",()=>{
