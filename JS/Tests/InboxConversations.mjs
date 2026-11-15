@@ -428,6 +428,9 @@ run("El historial rechaza un cursor ancla cuyo mensaje ya no existe", () => {
     }),/cursor del historial expiró/i);
 });
 run("La paginación de conversaciones mantiene el desempate estable por ID con timestamps iguales", () => {
+    // Aislar este caso del límite de creación acumulado por las pruebas anteriores.
+    const existingMessages = spreadsheet.getSheetByName("InboxMessages").rows;
+    for (const row of existingMessages) row[2] = "2000-01-01T00:00:00.000Z";
     const one = api.handleCreateInboxConversation({
         ...actor("U1","token-a"),recipientId:"U3",subject:"Cursor igual uno",category:"general",
         body:"Primera conversación de prueba.",idempotencyKey:"cursor-tie-create-01"
