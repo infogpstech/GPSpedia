@@ -46,7 +46,7 @@ function makeHarness(){
  const code=[
   extract("identifierMigrationCanonical_"),extract("identifierMigrationDigest_"),extract("identifierMigrationSheetDigest_"),
   extract("auditAllFormulaIdentifierColumns_"),extract("parseIdentifierSequenceFormula_"),
-  extract("persistIdentifierSequenceConfigs_"),extract("buildIdentifierFormulaFreezePlan_"),
+  extract("isIdentifierFormulaPatternSupported_"),extract("persistIdentifierSequenceConfigs_"),extract("buildIdentifierFormulaFreezePlan_"),
   extract("ensureIdentifierFormulaFreezeManifest_"),extract("findIdentifierFormulaFreezeManifest_"),
   extract("handleFreezeIdentifierFormulas_"),extract("getNextAdminFormulaBasedId_"),
   "return {audit:auditAllFormulaIdentifierColumns_,plan:buildIdentifierFormulaFreezePlan_,migrate:handleFreezeIdentifierFormulas_,nextId:getNextAdminFormulaBasedId_};"
