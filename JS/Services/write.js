@@ -554,7 +554,6 @@ function getNextCortesVehicleIdLocked(sheet) {
 
 /** Endpoint autenticado para que ADMIN solicite un ID al asignador central. */
 function handleAllocateVehicleId(payload) {
-    assertDeveloperForIdMaintenance(payload);
     const lock = LockService.getScriptLock();
     try { lock.waitLock(30000); }
     catch (error) { throw new Error("No se pudo obtener el bloqueo central de IDs. Intente nuevamente."); }
@@ -568,21 +567,7 @@ function handleAllocateVehicleId(payload) {
 }
 
 function assertDeveloperForIdMaintenance(payload) {
-    getAuthenticatedCollaborator(payload);
-    const userId = String(payload && payload.userId || "").trim();
-    const usersSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.USERS);
-    if (!usersSheet) throw new Error("No se encontró la hoja Users.");
-    const rows = usersSheet.getDataRange().getValues();
-    const userMatches = rows.slice(1).filter(row =>
-        String(row[COLS_USERS.ID - 1] || "").trim() === userId);
-    if (userMatches.length !== 1) {
-        throw new Error("No se pudo resolver un perfil único para el mantenimiento de IDs.");
-    }
-    const role = String(userMatches[0][COLS_USERS.Privilegios - 1] || "")
-        .normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
-    if (role !== "desarrollador") {
-        throw new Error("El mantenimiento de IDs de Cortes requiere privilegio Desarrollador.");
-    }
+    return getAuthenticatedCollaborator(payload, ["desarrollador"]);
 }
 
 function verifyCortesIdsBackup(value) {
@@ -1372,7 +1357,6 @@ function persistSupplementaryInfoValues_(sheet,row,original,updated){
 }
 const SUPPLEMENTARY_INFO_ALLOWED_ROLES_ = Object.freeze(["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"]);
 function handleAddSupplementaryInfo(payload){
- getAuthenticatedCollaborator(payload, SUPPLEMENTARY_INFO_ALLOWED_ROLES_);
  const lock=LockService.getScriptLock();try{lock.waitLock(30000);}catch(e){throw createSupplementaryInfoError_("SUPPLEMENTARY_LOCK_FAILED","No se pudo bloquear el registro de información suplementaria. Intente nuevamente.");}
  try{return handleAddSupplementaryInfoLocked(payload);}finally{lock.releaseLock();}
 }
