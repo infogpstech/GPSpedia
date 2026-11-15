@@ -1662,16 +1662,18 @@ function runFeedbackWriteSecurityTests() {
                 const sheet = makeSheet([headers,ownA,other,ownB]);
                 getSafeSheet = () => sheet;
                 getReportMetadataColumn = () => 10;
-                const first = handleGetMyProblemReports({sessionToken:"TEST_SESSION",userId:"IDENTIDAD-FALSA",cursor:"0",pageSize:1});
+                const first = handleGetMyProblemReports({sessionToken:"TEST_SESSION",userId:"IDENTIDAD-FALSA",cursor:"",pageSize:1});
                 assert_(first.status === "success" && first.total === 2 && first.data.length === 1);
                 assert_(first.data[0].subject === "Ticket B" && first.data[0].category === "incidencia_tecnica" &&
                     first.data[0].reply === "Respuesta B" && first.data[0].isResolved === true,
                     "El ticket debe devolver asunto, categoría, respuesta y estado.");
-                assert_(first.nextCursor === "1" && first.hasMore === true);
+                assert_(first.nextCursor === "REP-MY-003" && first.hasMore === true);
                 const second = handleGetMyProblemReports({sessionToken:"TEST_SESSION",userId:"IDENTIDAD-FALSA",cursor:first.nextCursor,pageSize:1});
                 assert_(second.data.length === 1 && second.data[0].subject === "Ticket A" && second.hasMore === false);
                 assert_(first.data.concat(second.data).every(item => item.user === "Usuario verificado"),
                     "La lista solo debe incluir reportes pertenecientes al actor autenticado.");
+                expectThrow_(() => handleGetMyProblemReports({sessionToken:"TEST_SESSION",cursor:"REP-MY-002",pageSize:1}),
+                    "no es válido para esta cuenta");
             } finally {
                 getSafeSheet = originalGetSafeSheet;
                 getReportMetadataColumn = originalGetReportMetadataColumn;
