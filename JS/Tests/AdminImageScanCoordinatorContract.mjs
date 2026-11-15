@@ -63,8 +63,9 @@ const routerHarness = new Function(
     const calls = [];
     function withSharedMutationLease_(service, operation, callback) {
         calls.push({ service, operation });
-        return callback("coordinated-token");
+        return callback("coordinated-token", { userId: "test-user", role: "Desarrollador", epoch: 1 });
     }
+    function withSharedSessionActor_(event, actor) { return event; }
     function doPostInternal_(event) { return JSON.parse(event.postData.contents); }
     const ContentService = { createTextOutput: value => ({ value, setMimeType() { return this; } }), MimeType: { TEXT: "text/plain" } };
     return {
