@@ -16,6 +16,7 @@ const CATALOG_CHANGE_MAX_EVENTS_ = 100;
 const CATALOG_CHANGE_MAX_EVENT_LENGTH_ = 4000;
 const CATALOG_CHANGE_COLLECTIONS_ = new Set(["cortes", "pys", "tutoriales", "logos", "relay"]);
 const SHARED_AUTH_CONTEXT_PREFIX_ = "GPSpedia_AUTH_CONTEXT_V1_";
+const SHARED_AUTH_TOKEN_INDEX_PREFIX_ = "GPSpedia_AUTH_TOKEN_V1_";
 const SHARED_AUTH_CONTEXT_MAX_LENGTH_ = 8000;
 const SHARED_AUTH_IDLE_MONTHS_ = 1;
 const SHARED_AUTH_ABSOLUTE_MONTHS_ = 3;
@@ -342,6 +343,10 @@ function createSharedMutationCoordinator_(dependencies) {
         return SHARED_AUTH_CONTEXT_PREFIX_ + encodeURIComponent(String(userId));
     }
 
+    function authTokenIndexKey_(token) {
+        return SHARED_AUTH_TOKEN_INDEX_PREFIX_ + encodeURIComponent(String(token));
+    }
+
     function readAuthContext_(userId) {
         const raw = properties.getProperty(authContextKey_(userId));
         if (!raw) return null;
@@ -399,6 +404,8 @@ function createSharedMutationCoordinator_(dependencies) {
             context.sessions = context.sessions.filter(session =>
                 currentTime < addUtcMonths_(session.createdAt, SHARED_AUTH_ABSOLUTE_MONTHS_) &&
                 currentTime < addUtcMonths_(session.lastActivityAt, SHARED_AUTH_IDLE_MONTHS_));
+            const indexedOwner = String(properties.getProperty(authTokenIndexKey_(token)) || "");
+            if (indexedOwner && indexedOwner !== userId) throw new Error("El token ya está asociado a otra cuenta.");
             const existing = context.sessions.filter(session => constantTimeEquals_(session.token, token));
             if (existing.length > 1) throw new Error("El token aparece duplicado en el contexto compartido.");
             if (existing.length === 1) {
@@ -407,6 +414,7 @@ function createSharedMutationCoordinator_(dependencies) {
                     throw new Error("El contexto existente no coincide con la sesión; inicia sesión nuevamente.");
                 }
                 session.lastActivityAt = Math.max(session.lastActivityAt, lastActivityAt);
+                properties.setProperty(authTokenIndexKey_(token), userId);
                 saveAuthContext_(context);
                 return { status: "success", registered: true, recovered: true, epoch: context.epoch };
             }
@@ -414,6 +422,7 @@ function createSharedMutationCoordinator_(dependencies) {
                 throw new Error("El contexto compartido alcanzó el límite seguro de sesiones activas.");
             }
             context.sessions.push({ token, role, fullName, createdAt, lastActivityAt });
+            properties.setProperty(authTokenIndexKey_(token), userId);
             saveAuthContext_(context);
             return { status: "success", registered: true, recovered: false, epoch: context.epoch };
         });
@@ -432,6 +441,9 @@ function createSharedMutationCoordinator_(dependencies) {
             const previous = context.sessions.length;
             context.sessions = context.sessions.filter(session => !constantTimeEquals_(session.token, token));
             saveAuthContext_(context);
+            if (String(properties.getProperty(authTokenIndexKey_(token)) || "") === userId) {
+                properties.deleteProperty(authTokenIndexKey_(token));
+            }
             return { status: "success", revoked: context.sessions.length !== previous, alreadyRevoked: context.sessions.length === previous };
         });
     }
@@ -447,8 +459,14 @@ function createSharedMutationCoordinator_(dependencies) {
                 schemaVersion: 1, userId: userId, epoch: 0, sessions: []
             };
             context.epoch += 1;
+            const revokedTokens = context.sessions.map(session => session.token);
             context.sessions = [];
             saveAuthContext_(context);
+            revokedTokens.forEach(token => {
+                if (String(properties.getProperty(authTokenIndexKey_(token)) || "") === userId) {
+                    properties.deleteProperty(authTokenIndexKey_(token));
+                }
+            });
             return { status: "success", revoked: true, epoch: context.epoch };
         });
     }
@@ -465,6 +483,9 @@ function createSharedMutationCoordinator_(dependencies) {
             currentTime >= absoluteExpiry || currentTime >= idleExpiry) {
             context.sessions = context.sessions.filter(item => item !== session);
             saveAuthContext_(context);
+            if (String(properties.getProperty(authTokenIndexKey_(token)) || "") === userId) {
+                properties.deleteProperty(authTokenIndexKey_(token));
+            }
             throw new Error("La sesión expiró; inicia sesión nuevamente.");
         }
         if (currentTime - session.lastActivityAt >= SHARED_AUTH_TOUCH_INTERVAL_MS_) {
@@ -495,8 +516,11 @@ function createSharedMutationCoordinator_(dependencies) {
         while (true) {
             const outcome = withCoordinatorLock_(() => {
                 const currentTime = now();
-                const sessionUserId = String(payload.userId || "").trim();
+                let sessionUserId = String(payload.userId || "").trim();
                 const sessionToken = String(payload.sessionToken || "");
+                if (sessionToken && !sessionUserId) {
+                    sessionUserId = String(properties.getProperty(authTokenIndexKey_(sessionToken)) || "");
+                }
                 if (Boolean(sessionUserId) !== Boolean(sessionToken)) throw new Error("La identidad de sesión está incompleta.");
                 const actor = service !== "AUTH" && sessionToken ? authorizeSession_(sessionUserId, sessionToken, currentTime) : null;
                 const current = readLeases_();
