@@ -863,3 +863,11 @@ Las fuentes de servicios JavaScript se centralizan bajo `JS/Services/`. La carpe
 - [x] CI integral y Pages aprobados: 100 suites / 1,525 pruebas PASS; Pages SUCCESS.
 - [ ] Diseñar e implementar contexto de sesión compartido con invalidación inmediata por epoch para todos los servicios. Hasta completar y probar esa garantía, mantener una validación backend por operación protegida.
 - [ ] Validación Beta y pruebas de concurrencia/revocación en Apps Script pendientes; no desplegar sin autorización.
+
+
+## P1 — eliminar búsqueda duplicada de usuario en actualización de perfil (2026-11-15)
+
+- [x] Reutilizar en `handleUpdateProfile` el índice de fila que `getVerifiedSession` ya obtuvo al validar el usuario dentro del bloqueo.
+- [x] No confiar en un índice enviado por el cliente; el valor se produce exclusivamente en backend.
+- [x] Añadir contrato de regresión para verificar que el handler no vuelve a llamar a `findUniqueUserRow_`.
+- [ ] Confirmar CI integral verde para el commit de este ajuste.
