@@ -556,3 +556,12 @@
 - CI Node.js 22 run `43753485398`: SUCCESS, **100 suites / 1,544 pruebas / 0 fallos**.
 - Pendiente Beta: lector de pantalla y navegación real, temas, Atrás, tamaños/dispositivos Android/iOS/desktop, conectividad y pestañas. Acciones masivas/selección múltiple siguen sin UI hasta autorización.
 - Sin despliegues Apps Script ni modificaciones de hojas/datos productivos.
+
+
+## Continuidad final GP-INBOX-04B/04C/04D (2026-11-15)
+
+- HEAD documental: `e311fb6895e035f57277d01e180f29241c9d414e`; HEAD de código validado: `7a58da9a012cd12084f2de3bfb729994f296729b`. Rama base `GPSpedia2.2.5` permanece en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- GP-INBOX-04B backend: acciones privadas marcar no leído y ocultar, hoja de flags diferida, idempotencia, auditoría y conservación de historial. GP-INBOX-04C: categoría/asunto de tickets, canal reportProblem, respuestas/resolución y consulta privada de tickets propios con cursor estable por reportId. GP-INBOX-04D: contratos RBAC, accesibilidad y regresión; InboxUi 22/22.
+- CI Node.js 22 run `43753616255`: SUCCESS; **100 suites / 1,544 pruebas / 0 fallos**.
+- `lista_beta_parte2.txt` ahora contiene protocolo detallado GP-INBOX-04B/04C/04D, con preflight seguro y prohibición explícita de producción/despliegues no autorizados.
+- Pendiente: pruebas Beta con deployments/Spreadsheet/Drive aislados y dispositivos reales; historial propio de tickets y selector categoría/asunto en UI; barra/selección múltiple. No añadir controles visibles hasta autorización. No desplegar Apps Script ni modificar datos productivos.
