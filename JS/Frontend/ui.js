@@ -6268,7 +6268,7 @@ ${elapsedSec}s
             try {
                 const result = await runAction('freezeIdentifierFormulas', {
                     dryRun: false, confirm: true, migrationId: plan.migrationId,
-                    digest: plan.digest, batchSize: 5
+                    digest: plan.digest, batchSize: 5, backupId: verifiedDatabaseBackupId
                 });
                 if (!result || result.status !== 'success' || result.dryRun !== false) throw new Error('El servidor no confirmó el lote.');
                 if (identifierAuditStatus) identifierAuditStatus.textContent =
