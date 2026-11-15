@@ -50,8 +50,6 @@ function makeHarness(){
   extract("persistIdentifierSequenceConfigs_"),extract("buildIdentifierFormulaFreezePlan_"),
   extract("ensureIdentifierFormulaFreezeManifest_"),extract("findIdentifierFormulaFreezeManifest_"),
   extract("handleFreezeIdentifierFormulas_"),extract("getNextAdminFormulaBasedId_"),
-  'const IDENTIFIER_SEQUENCE_CONFIG_SHEET_="__IdentifierSequenceConfig__";',
-  'const IDENTIFIER_SEQUENCE_CONFIG_HEADERS_=["sheet","column","header","prefix","padding","formula","updatedAt"];',
   "return {audit:auditAllFormulaIdentifierColumns_,plan:buildIdentifierFormulaFreezePlan_,migrate:handleFreezeIdentifierFormulas_,nextId:getNextAdminFormulaBasedId_};"
  ].join("\n");
  const api=new Function("getSpreadsheet","Utilities","LockService","SpreadsheetApp","PropertiesService","verifyVinMigrationBackup",code)(()=>ss,Utilities,LockService,SpreadsheetApp,PropertiesService,()=>({backupId:"verified-test-backup"}));
