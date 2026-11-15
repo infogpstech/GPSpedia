@@ -98,7 +98,7 @@ testCase("El contexto central de sesión se registra al login, se revoca y se re
  assert.match(coordinator,/function validateSessionContext_\(/);
  assert.match(client,/options && options\.session/);
  assert.match(client,/function withSharedSessionActor_\(/);
- for(const source of [users,write,admin,feedback,utilities]){
+ for(const source of [users,write,admin,feedback]){
   assert.match(source,/sessionOptions = \{ session: \{ userId: payload\.userId, sessionToken: payload\.sessionToken \} \}/);
   assert.match(source,/withSharedSessionActor_\(e, actor\)/);
  }
@@ -108,6 +108,8 @@ testCase("El contexto central de sesión se registra al login, se revoca y se re
  assert.match(feedback,/payload&&payload\.__sharedSessionActor/);
  assert.match(utilities,/payload&&payload\.__sharedSessionActor/);
  assert.match(utilities,/withSharedMutationLease_\("UTILITIES","migrateTimestamps"/);
+ assert.match(utilities,/__sharedSessionActor:actor/);
+ assert.match(utilities,/sessionToken:payload&&payload\.sessionToken/);
 });
 
 console.log("SessionActivityCoordination: "+passed+"/"+passed+" PASS");
