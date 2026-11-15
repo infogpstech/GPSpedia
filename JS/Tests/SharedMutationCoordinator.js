@@ -690,7 +690,7 @@ function runSharedMutationCoordinatorTests() {
         });
         assert_(registered.status === "success" && registered.registered, "AUTH debe registrar el contexto.");
         const lease = r.request("acquire", "FEEDBACK", "reportProblem", {
-            requestId: r.uuid(), waitMs: 0, userId: "USR-1001",
+            requestId: r.uuid(), waitMs: 0,
             sessionToken: "session-token-0000000000000001"
         });
         assert_(lease.status === "success" && lease.actor && lease.actor.userId === "USR-1001",
@@ -701,6 +701,22 @@ function runSharedMutationCoordinatorTests() {
         assert_(nested.status === "success" && nested.actor.role === "supervisor",
             "La validación de una lease anidada debe conservar el actor.");
         release_(r, "FEEDBACK", "reportProblem", lease.token);
+    });
+
+    test_("SharedMutationClient transmite sesión y devuelve el actor sin una segunda llamada", function() {
+        const r = createRuntime_();
+        r.request("registerSession", "AUTH", "registerSession", {
+            userId: "USR-1005", sessionToken: "session-token-0000000000000006",
+            role: "jefe", fullName: "Jefe de prueba",
+            createdAt: 1700000000000, lastActivityAt: 1700000000000
+        });
+        const client = r.makeClient("FEEDBACK");
+        const actor = client.withLease("FEEDBACK", "reportProblem", function(token, verifiedActor) {
+            assert_(/^[A-Za-z0-9_-]{40,100}$/.test(token), "El cliente debe recibir la lease.");
+            return verifiedActor;
+        }, { session: { sessionToken: "session-token-0000000000000006" } });
+        assert_(actor && actor.userId === "USR-1005" && actor.role === "jefe",
+            "El cliente debe reutilizar la respuesta de acquire para entregar el actor.");
     });
 
     test_("El registro de sesión es idempotente y no permite cambiar el rol de un token existente", function() {
