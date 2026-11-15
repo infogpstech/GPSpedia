@@ -979,3 +979,13 @@ La siguiente revisión local debe centrarse en GP-INBOX-04D (contratos RBAC, acc
 - **Pendiente de Beta:** tema claro/oscuro, lector de pantalla, teclado y navegación Atrás en navegador real; pruebas Android/iOS/desktop con tamaños reales, conectividad intermitente y varias pestañas. La selección múltiple y barra de acciones siguen diferidas hasta autorización expresa.
 
 El trabajo local GP-INBOX-04B/04C/04D queda cubierto en backend y contratos. No se desplegó Apps Script ni se modificaron hojas o datos productivos.
+
+
+## Adenda GP-INBOX-04C — cursor estable de tickets y protocolo Beta (2026-11-15)
+
+- `getMyProblemReports` ahora pagina por cursor estable basado en `reportId`, no por offset numérico. La siguiente página se ubica después del ticket ancla; un cursor perteneciente a otra cuenta se rechaza. Se añadió prueba de paginación e aislamiento por propietario.
+- Se amplió `lista_beta_parte2.txt` con el protocolo GP-INBOX-04B/04C/04D: preflight Git seguro, creación diferida de `InboxConversationFlags`, marcar no leído, ocultación individual, preservación del historial compartido, tickets/categorías/respuestas, cursor estable, RBAC, accesibilidad y pruebas en dispositivos reales. El protocolo indica expresamente no ejecutarlo hasta autorización de despliegues Beta y prohíbe tocar producción.
+- CI Node.js 22 run `43753616255`, HEAD de código `7a58da9a012cd12084f2de3bfb729994f296729b`: **SUCCESS; 100 suites / 1,544 pruebas / 0 fallos**. `InboxUi` 22/22 PASS.
+- Sin cambios de código después de ese CI; el commit posterior `e311fb6895e035f57277d01e180f29241c9d414e` solo añade el protocolo Beta. No se desplegó Apps Script ni se crearon hojas remotas.
+
+**Siguiente estado:** no quedan tareas locales independientes de Inbox pendientes dentro del alcance autorizado. Quedan las validaciones Beta, integración visual del historial propio/selector de ticket y selección múltiple, que requieren despliegues autorizados o nuevos controles visibles. Continuar con auditorías locales independientes solo si no requieren esos controles ni acceso a datos externos.
