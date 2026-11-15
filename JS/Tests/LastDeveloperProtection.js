@@ -212,8 +212,8 @@ function runLastDeveloperProtectionTests(sources) {
     run('Ambas mutaciones usan lock y validan actor y objetivo únicos',()=>{
         const u=extract(auth,'handleUpdateUser','\n\nconst SESSION_ABSOLUTE_MONTHS'),d=extract(auth,'handleDeleteUser');
         assert(u.includes('LockService.getScriptLock()')&&d.includes('LockService.getScriptLock()'));
-        assert(u.includes('requesterRows.length !== 1')&&u.includes('targetRows.length !== 1'));
-        assert(d.includes('requesterRows.length !== 1')&&d.includes('targetRows.length !== 1'));
+        assert(u.includes('const requesterUserId = actor.userId')&&u.includes('const requesterRole = actor.role')&&u.includes('targetRows.length !== 1'));
+        assert(d.includes('const requesterUserId = actor.userId')&&d.includes('const requesterRole = actor.role')&&d.includes('targetRows.length !== 1'));
     });
     run('La protección de degradación ocurre antes de cualquier escritura de perfil',()=>{
         const u=extract(auth,'handleUpdateUser','\n\nconst SESSION_ABSOLUTE_MONTHS'),d=extract(auth,'handleDeleteUser');
