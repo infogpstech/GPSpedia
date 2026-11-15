@@ -703,3 +703,17 @@ No quedan tareas locales independientes de Inbox dentro del alcance autorizado. 
 - No se desplegaron Apps Script ni se modificaron ScriptProperties, endpoints, Spreadsheet, Drive o datos productivos.
 
 **HEAD de trabajo tras validar CI:** `498fef7717fe13b405cdfdffd018c2d0fa8ff988`.
+
+
+---
+
+# Continuidad — correcciones de disponibilidad y rendimiento reportadas en Beta (2026-11-15)
+
+- Repositorio: `infogpstech/GPSpedia`; rama autorizada: `GPSpedia2.2.5_work`; HEAD de partida verificado: `931beeadca7477f8e0115223f6b8eb112a553eb1`.
+- Rama base protegida `GPSpedia2.2.5`: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin cambios.
+- Se leyeron las normas completas antes de modificar. Se registró en la sección 13 de `NORMAS_DESAROLLO.md` el comportamiento cache-first, la sincronización silenciosa, la disponibilidad de Inbox, el rendimiento del modal y la política de sesión/RBAC.
+- `Tareas_Activas.md` registra GP-BETA-01..09 como prioridad P0. `Auditoría.txt` incorpora síntomas y hallazgos iniciales; `ChangesLogs.txt` describe el cambio documental.
+- Evidencia inicial: `auth.js` establece `catalogLoadStatus=loading` antes de leer IndexedDB, por lo que puede mostrar parpadeo aun cuando exista snapshot. `loadInboxConversations_` reemplaza la lista por un placeholder de carga y `loadInboxMessages_` muestra estado loading al abrir detalle. La lectura de Inbox depende de FEEDBACK/Coordinator.
+- El rechazo FEEDBACK/Coordinator ya aparece en consola Beta. No se puede corregir en código local si la URL/secreto de ScriptProperties del deployment están desalineados; no se modifica configuración remota ni se debilita la autenticación.
+- Siguiente acción inmediata: corregir el estado visual del catálogo para no marcar loading hasta confirmar caché ausente; mantener Inbox visible durante refresh y añadir pruebas de regresión. Después optimizar el detalle/modal y separar permisos de lectura de acciones destructivas.
+- No se desplegaron Apps Script, no se modificaron ScriptProperties, Spreadsheet, Drive ni datos productivos.

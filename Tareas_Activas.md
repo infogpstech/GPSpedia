@@ -1058,3 +1058,37 @@ El trabajo local GP-INBOX-04B/04C/04D queda cubierto en backend y contratos. No 
 - Meta PWA: **COMPLETADA**. Se añadió la etiqueta estándar y se conservó la específica de Apple.
 - IndexedDB/miniaturas: **COMPLETADA CON VALIDACIÓN DIFERIDA**. CI run 43765191870 PASS; IndexedDBTransactions 45/45; backoff, conexión persistente y omisión segura de caché opcional.
 - FEEDBACK/Coordinator: **DIAGNÓSTICO LOCAL COMPLETADO; VALIDACIÓN BETA PENDIENTE**. El error es un rechazo de autenticación del servicio FEEDBACK frente al secreto registrado en el coordinador. La carga de catálogo conserva fallback a snapshot completo; falta cotejo de ScriptProperties/deployment del entorno Beta.
+
+
+## Iteración Beta — disponibilidad, rendimiento y permisos por rol (2026-11-15)
+
+**Prioridad: P0 — bloquea validación funcional de Beta.** Los problemas siguientes fueron reportados durante pruebas reales del navegador. No son hipótesis de laboratorio.
+
+| ID | Problema / resultado requerido | Estado |
+|---|---|---|
+| GP-BETA-01 | Inbox: mostrar conversaciones y mensajes; conservar contenido al refrescar y acelerar lectura del detalle | EN PROGRESO — investigar error FEEDBACK/Coordinator y completar caché temporal de mensajes |
+| GP-BETA-02 | Modal de detalle de corte: abrir y permitir editar con baja latencia, sin viajes/validaciones redundantes | PENDIENTE DE ANÁLISIS DE TRAZA Y OPTIMIZACIÓN |
+| GP-BETA-03 | Borrar logs conforme al rol autorizado | PENDIENTE — revisar política FEEDBACK/AUTH, interfaz y errores del servicio |
+| GP-BETA-04 | Ejecutar auditoría de carpeta Cortes conforme al rol autorizado | PENDIENTE — separar permiso de auditoría de permisos destructivos; mantener límites de árbol Drive |
+| GP-BETA-05 | Consultar imágenes históricas conforme al rol autorizado; mutaciones destructivas siguen restringidas | PENDIENTE — separar lectura de inventario/histórico y acciones de administración |
+| GP-BETA-06 | Eliminar revalidaciones interactivas/redundantes por acción; sesión y rol confiables asociados a la sesión vigente | EN PROGRESO — revisar todos los servicios/handlers; no confiar en rol cliente ni quitar revocación/expiración |
+| GP-BETA-07 | Catálogo cache-first: render inmediato, sin parpadeos/avisos si caché válida; delta silencioso; snapshot solo en caché vacía/reset | EN PROGRESO — corrección de estado visual y pruebas; investigar timeout IndexedDB Beta |
+| GP-BETA-08 | IndexedDB: determinar por qué falla apertura en Beta y evitar que historial/vistos/miniaturas bloqueen otras funciones | EN PROGRESO — CI previo PASS; causa de navegador Beta pendiente |
+| GP-BETA-09 | FEEDBACK/Coordinator: resolver rechazo de autenticación que bloquea Inbox y feed incremental | PENDIENTE DE CONFIGURACIÓN BETA — cotejar deployment y ScriptProperties sin revelar secretos |
+
+### Orden de ejecución
+1. Corregir la UX de arranque cache-first y la conservación del catálogo; validar pruebas de regresión.
+2. Trazar FEEDBACK/Coordinator y separar fallo de configuración remota de errores propios de Inbox.
+3. Optimizar caché/lectura de conversaciones y mensajes, conservando aislamiento por usuario/sesión.
+4. Revisar modal de corte y eliminar llamadas redundantes; conservar guardas de concurrencia y permisos.
+5. Alinear la matriz RBAC de borrado de logs, auditoría Drive e imágenes históricas; separar lecturas de acciones destructivas.
+6. Revisar autorización global para retirar revalidaciones duplicadas sin aceptar roles del cliente ni perder revocación/expiración.
+7. Ejecutar CI completo y preparar protocolo Beta con preflight Git seguro. Despliegues Apps Script y cambios de ScriptProperties quedan fuera de esta iteración salvo autorización específica.
+
+### Criterios de cierre
+- El catálogo local se presenta antes de iniciar sincronización remota cuando existe snapshot válido.
+- La carga de catálogo no se invalida por fallos de miniaturas, historial, vistos o caché opcional.
+- Inbox lista y mensajes visibles; detalle no se vacía durante refresco.
+- Modal, logs, auditoría e imágenes históricas funcionan para los roles definidos en la matriz.
+- No hay autenticación interactiva ni lectura repetida de Users/ActiveSessions por acción; la autorización se basa en actor confiable y mantiene revocación central.
+- Pruebas locales aprobadas; las pruebas de campo con FEEDBACK/ADMIN/Coordinator/Drive/Spreadsheet desplegados se registran como pendientes Beta hasta disponer de deployment/configuración.

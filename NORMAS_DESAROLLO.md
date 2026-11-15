@@ -167,3 +167,39 @@ Estos requisitos delimitan el alcance de las siguientes iteraciones y prevalecen
 - No omitir, simular ni marcar como aprobadas esas pruebas remotas antes de ejecutarlas. Registrar los requisitos previos, procedimiento y evidencia esperada para la siguiente iteración.
 - Esta reserva de pruebas no impide completar ahora el código fuente y las pruebas locales independientes del deployment.
 
+
+
+## 13. Requisitos expresos de Beta: disponibilidad inmediata, rendimiento y sesión por rol
+
+Estos requisitos son obligatorios para las correcciones de rendimiento y experiencia reportadas en las pruebas Beta.
+
+### 13.1 Catálogo cache-first y arranque sin parpadeos
+- Si existe una instantánea local completa y válida en IndexedDB/caché, mostrarla inmediatamente y conservarla visible durante toda la sincronización.
+- No mostrar spinner, banner, texto de «cargando catálogo» ni vaciar/ocultar el contenido cuando exista una caché válida. Las actualizaciones de cursor/deltas deben ejecutarse en segundo plano y ser silenciosas.
+- No solicitar una instantánea completa al servidor en cada inicio. Con caché válida y cursor vigente, solicitar únicamente deltas; recurrir al snapshot completo solo si no existe caché utilizable, el cursor exige reset o la reconciliación demuestra que hace falta.
+- La primera sesión en un dispositivo sin caché puede mostrar estado de carga mientras descarga la instantánea inicial. Después debe persistirla localmente para siguientes inicios.
+- La indisponibilidad de IndexedDB no debe impedir mostrar datos ya cargados en memoria ni bloquear la interfaz. No borrar, recrear ni limpiar bases/almacenes para ocultar errores; preservar los almacenes administrativos y operaciones recuperables.
+- Las operaciones de almacenamiento opcional (miniaturas, historial local y vistos) no deben bloquear el catálogo ni las acciones independientes.
+
+### 13.2 Inbox, modales y operaciones de uso frecuente
+- Inbox debe presentar conversaciones y mensajes disponibles sin bloquear la interfaz durante una actualización. Conservar los datos existentes mientras se refrescan y utilizar caché temporal aislada por usuario y sesión cuando sea seguro.
+- El detalle del corte debe abrirse y permitir edición sin viajes de red redundantes ni esperas por recursos no relacionados. Priorizar la información del catálogo local; enviar solo los campos modificados y mantener las protecciones de concurrencia.
+- Borrado de logs, auditoría de carpetas e imágenes históricas deben estar accesibles a los roles autorizados por la matriz RBAC vigente. Una limitación de interfaz no debe contradecir el permiso backend ni viceversa. Las operaciones destructivas conservan sus restricciones más estrictas.
+- Los errores de un servicio (Coordinator, FEEDBACK, ADMIN, Drive o Spreadsheet) deben mostrarse de forma localizada y no bloquear módulos independientes.
+
+### 13.3 Sesión y autorización sin revalidaciones redundantes
+- Autenticar al usuario al iniciar sesión y restaurar/validar la sesión al iniciar la aplicación cuando corresponda. Resolver el rol desde una fuente confiable del servidor y mantenerlo asociado a la sesión vigente.
+- No solicitar contraseña, confirmación interactiva, validación de identidad ni consulta redundante de Users/ActiveSessions antes de cada clic o acción.
+- Las acciones protegidas deben consumir el actor confiable de la sesión central; no confiar en userId, rol o permisos enviados por el navegador. La matriz de permisos se evalúa usando ese actor, sin repetir autenticación interactiva ni recorrer hojas de usuarios en cada handler.
+- Mantener revocación, expiración, epoch y cambios de rol efectivos. El contexto central/Coordinator es la fuente para invalidar sesiones revocadas; no se puede sustituir por un rol editable en localStorage ni por un bypass de autorización.
+- No quitar restricciones RBAC para habilitar una función a un rol que no tenga permiso. Corregir discrepancias entre interfaz y backend y ajustar la matriz solo cuando el requisito funcional determine expresamente los roles autorizados.
+- Optimizar latencia y duplicaciones sin debilitar la autorización, la auditoría, la idempotencia ni los controles de concurrencia.
+
+### 13.4 Criterios de aceptación para Beta
+- Sesión con caché: catálogo visible desde el primer render, sin snapshot completo ni mensajes de carga; sincronización delta silenciosa.
+- Dispositivo nuevo/sin caché: carga inicial visible y una sola descarga de snapshot; la siguiente apertura utiliza caché.
+- IndexedDB no disponible: interfaz en línea funcional, sin borrar datos locales ni bloquear funciones que no dependen del almacenamiento.
+- Inbox: abrir lista, seleccionar conversación, leer mensajes y volver a abrir el detalle sin vaciar el contenido mientras se refresca.
+- Modal de corte: abrir, modificar y guardar campos con respuesta ágil y sin validaciones interactivas repetidas.
+- Operaciones ADMIN/FEEDBACK: borrado de logs, auditoría de carpeta e imágenes históricas funcionan para los roles previstos; roles no autorizados siguen rechazados por backend.
+- Registrar tiempos medidos, rol de prueba, navegador/dispositivo, estado de caché y respuesta del servicio. No considerar un error de configuración de deployment como fallo de lógica local ni marcar una validación Beta sin evidencia.

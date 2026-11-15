@@ -582,3 +582,12 @@
 - El error de autorización FEEDBACK/Coordinator sigue siendo una dependencia independiente de configuración Beta.
 - No se modificaron deployments, ScriptProperties, endpoints ni datos externos.
 ================================================================================
+
+
+================================================================================
+2026-11-15 — REGISTRO DE NUEVA ITERACIÓN BETA (GP-BETA-01..09)
+- Añadidos a NORMAS_DESAROLLO.md los requisitos obligatorios de arranque cache-first, sincronización silenciosa, continuidad de Inbox, rendimiento del modal, permisos por rol y eliminación de revalidaciones redundantes.
+- Añadido a Tareas_Activas.md el paquete P0 GP-BETA-01..09, con orden de ejecución y criterios de aceptación.
+- Auditoría.txt registra las observaciones de campo y distingue los síntomas confirmados de las causas aún pendientes de comprobar.
+- Esta adenda es documental; no modifica código de servicios ni configuración/deployments.
+================================================================================

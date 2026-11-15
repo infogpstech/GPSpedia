@@ -818,3 +818,20 @@ ADENDA AUD-2026-11-15-42 — VALIDACIÓN DE CORRECCIÓN INDEXEDDB
 - Regresión: CatalogStartupIntegrity.mjs simula timeout de persistencia y comprueba conservación de datos y estado ready.
 - Límite: esta corrección no repara la causa raíz del timeout de apertura IndexedDB ni la autorización del Coordinator; ambos requieren diagnóstico Beta separado.
 ================================================================================
+
+
+================================================================================
+2026-11-15 — ADENDA DE HALLAZGOS REPORTADOS EN PRUEBAS BETA (GP-BETA-01..09)
+Fuente: observaciones del usuario durante pruebas reales en navegador Beta y trazas de consola aportadas en esta conversación.
+
+- Inbox: no se visualizan mensajes; el frontend solicita FEEDBACK y el servicio depende de lease compartida/actor central. La consola anterior ya mostró «Servicio no autorizado para el coordinador compartido» en FEEDBACK. Hipótesis prioritaria: configuración de FEEDBACK/Coordinator en el deployment Beta; debe confirmarse cotejando URL y secreto del servicio, sin exponerlos. No atribuir aún todo el fallo de Inbox a UI.
+- Modal de detalle: demora para habilitar edición. Pendiente medir las llamadas de apertura/guardado, identificar esperas de servicio y validar si hay solicitudes redundantes.
+- Logs: no se pueden borrar. FEEDBACK declara clearActivityLogs para Desarrollador; AUTH clearSensitiveLogs también requiere su política. Confirmar rol usado y respuesta del endpoint antes de modificar permisos.
+- Auditoría de carpeta: el handler de auditoría exige Desarrollador y mantiene propietario del cursor por usuario; la interfaz debe alinearse con el rol autorizado sin abrir operaciones destructivas.
+- Imágenes históricas: openReplacedImagesModal actualmente limita la apertura al rol Desarrollador. El backend ADMIN también usa assertDeveloperSession para la lectura del inventario. Requiere separar lectura de historial de mutaciones, sujeto a matriz RBAC.
+- Autorización: Coordinator valida token/estado/epoch desde SESSION_CONTEXTS al adquirir lease y entrega actor confiable. FEEDBACK/ADMIN/WRITE consumen ese actor; hay que evitar duplicación/consultas de Users y ActiveSessions, pero no confiar en rol enviado por el navegador ni desactivar revocación.
+- Catálogo: loadInitialData marca status loading antes de intentar leer IndexedDB; eso puede producir parpadeo aunque la caché local termine siendo válida. Corrección local prevista: diferir el estado visible de carga hasta comprobar que no hay snapshot utilizable y mantener los datos actuales durante sincronización silenciosa.
+- IndexedDB: los timeouts de apertura hacen fallar catálogo, historial, vistos y miniaturas. La causa exacta en navegador Beta no se puede inferir de los logs actuales; se necesita medir eventos open/blocked/error, estado de otras pestañas y disponibilidad de indexedDB.
+- Coordinator: rechazo FEEDBACK es dependencia de configuración remota, no debe “corregirse” quitando autenticación compartida.
+
+================================================================================
