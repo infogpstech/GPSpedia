@@ -516,3 +516,14 @@
 - La ejecución de GitHub Actions para este HEAD no se ha podido confirmar mediante los estados disponibles; el estado combinado consultado devolvió cero estados. Por tanto, la regresión continúa **pendiente de validación** y no se declara PASS.
 - Siguiente: obtener una ejecución CI vinculada a este HEAD, revisar `node --check` y las 66+ suites; corregir fallos reales sin debilitar la autorización ni la barrera `revokedBefore`. Después completar pruebas Beta de login, restauración, múltiples dispositivos, logout individual, revocación global, cambio de rol, expiración y tokens obsoletos.
 - No se desplegó Apps Script ni se modificaron hojas, Drive o datos productivos.
+
+## Requisitos de continuidad — contraseñas y servicios Apps Script (2026-11-15)
+
+- Rama: `GPSpedia2.2.5_work`; rama base protegida: `GPSpedia2.2.5`.
+- El usuario aclaró el alcance: las contraseñas deben almacenarse mediante hash y el inicio de sesión debe seguir siendo ágil. No aumentar por iniciativa propia el coste computacional del hash ni añadir pasos, factores o verificaciones extra que ralenticen el login. Revisar en la próxima iteración la diferencia entre AUTH (PBKDF2-HMAC-SHA256, 12,000 iteraciones) y USERS (SHA-256 con salt) y unificar el formato con un criterio de protección razonable y baja latencia. No almacenar texto plano ni ejecutar migraciones reales sin autorización.
+- El usuario confirmó que sí se pueden modificar ahora los archivos fuente de Apps Script en la rama. Se pueden corregir servicios, contratos y pruebas locales. Solo las pruebas que dependan de desplegar/publicar los servicios, invocar deployments actualizados o utilizar credenciales/propiedades/hojas del entorno Beta quedan pendientes hasta después del despliegue. No se debe bloquear el trabajo local independiente por esas pruebas diferidas.
+- Se registraron estos requisitos en `NORMAS_DESAROLLO.md` (commit `be3dada8f50ced2fcb12559c132be4ab72efa0e1`) y `Tareas_Activas.md` (commit `a684dc7cdfe0b2c606ad11a7eb8b4817694971c4`).
+- CI observado para HEAD previo `3765bee922c68044d81c9ed55178b19752182737`: regresión de servicios con 72 suites, 1,116 pruebas aprobadas y 3 suites fallidas. Fallos: `revokeSharedUserSessionContexts_` no definido en los entornos aislados de AUTH/USERS; espejo `JS/Tests/users.js` desincronizado respecto a `JS/Services/users.js`; integración AUG-156 falla como consecuencia. No se marca como aprobado.
+- Próximo trabajo local: corregir los contratos/fixtures y la disponibilidad de la función compartida en los entornos de prueba; volver a ejecutar `node --check` y la regresión integral Node.js 22. Después, dejar explícitamente pendientes las pruebas de despliegue Beta que correspondan.
+- Esta actualización es documental; no modifica lógica de autenticación ni despliega servicios Apps Script. No se modificaron hojas, Drive, propiedades ni datos productivos.
+
