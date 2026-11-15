@@ -4213,6 +4213,82 @@ function parseIdentifierSequenceFormula_(formula) {
     return { prefix: match[1], padding: match[2].length, formula: raw };
 }
 
+function copyAdminRowPresentationOnly_(sheet, sourceRow, targetRow, lastColumn) {
+    if (!sheet || sourceRow < 1 || targetRow < 2 || lastColumn < 1) return;
+    const source = sheet.getRange(sourceRow, 1, 1, lastColumn);
+    const target = sheet.getRange(targetRow, 1, 1, lastColumn);
+    source.copyTo(target, SpreadsheetApp.CopyPasteType.PASTE_FORMAT, false);
+    source.copyTo(target, SpreadsheetApp.CopyPasteType.PASTE_DATA_VALIDATION, false);
+}
+
+function getNextAdminFormulaBasedId_(sheet, idColumn) {
+    if (!sheet || !Number.isInteger(idColumn) || idColumn < 1) throw new Error("Hoja o columna ID inválida.");
+    const lock = LockService.getScriptLock();
+    const alreadyHeld = typeof lock.hasLock === "function" && lock.hasLock();
+    let acquired = false;
+    try {
+        if (!alreadyHeld) { lock.waitLock(15000); acquired = true; }
+        const ss = getSpreadsheet(), configSheet = ss.getSheetByName(IDENTIFIER_SEQUENCE_CONFIG_SHEET_);
+        let pattern = null;
+        if (configSheet && configSheet.getLastRow() > 1) {
+            const rows = configSheet.getRange(2, 1, configSheet.getLastRow() - 1, IDENTIFIER_SEQUENCE_CONFIG_HEADERS_.length).getValues();
+            const matches = rows.filter(row => String(row[0]) === sheet.getName() && Number(row[1]) === idColumn);
+            if (matches.length > 1) throw new Error("La configuración de ID está duplicada para " + sheet.getName() + ".");
+            if (matches.length === 1) {
+                if (String(sheet.getRange(1, idColumn).getValue() || "").trim() !== String(matches[0][2] || "")) {
+                    throw new Error("El encabezado ID de " + sheet.getName() + " no coincide con la configuración backend.");
+                }
+                pattern = { prefix: String(matches[0][3] || ""), padding: Number(matches[0][4]), formula: String(matches[0][5] || "") };
+            }
+        }
+        const lastRow = sheet.getLastRow(), lastColumn = Math.max(sheet.getLastColumn(), idColumn);
+        const formulas = lastRow > 1 ? sheet.getRange(2, idColumn, lastRow - 1, 1).getFormulas().flat() : [];
+        if (!pattern) {
+            const detected = formulas.filter(Boolean).map(parseIdentifierSequenceFormula_);
+            if (!detected.length || detected.some(item => !item)) {
+                throw new Error("No hay patrón de ID reconocido ni configuración backend para " + sheet.getName() + ".");
+            }
+            pattern = detected[0];
+            if (detected.some(item => item.prefix !== pattern.prefix || item.padding !== pattern.padding || item.formula !== pattern.formula)) {
+                throw new Error("La columna ID de " + sheet.getName() + " contiene patrones diferentes.");
+            }
+        }
+        if (!pattern.prefix || !Number.isInteger(pattern.padding) || pattern.padding < 1 || pattern.padding > 20) {
+            throw new Error("La configuración de ID de " + sheet.getName() + " no es válida.");
+        }
+        if (formulas.some(formula => formula && formula !== pattern.formula)) {
+            throw new Error("La columna ID de " + sheet.getName() + " contiene una fórmula distinta de la configuración.");
+        }
+        const rows = lastRow > 1 ? sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues() : [];
+        const seen = new Set(); let maxSuffix = 0;
+        rows.forEach((row, index) => {
+            const raw = row[idColumn - 1], id = String(raw === null || raw === undefined ? "" : raw).trim();
+            const hasData = row.some((value, columnIndex) => columnIndex !== idColumn - 1 && value !== "" && value !== null && value !== undefined);
+            if (!id) { if (hasData) throw new Error("La fila " + (index + 2) + " de " + sheet.getName() + " contiene datos, pero no tiene ID."); return; }
+            if (!id.startsWith(pattern.prefix) || !/^\d+$/.test(id.slice(pattern.prefix.length))) {
+                throw new Error("El ID de " + sheet.getName() + " fila " + (index + 2) + " no coincide con el patrón configurado.");
+            }
+            const key = id.toLowerCase();
+            if (seen.has(key)) throw new Error("Se detectó el ID duplicado " + id + " en " + sheet.getName() + ".");
+            seen.add(key);
+            const suffix = Number(id.slice(pattern.prefix.length));
+            if (!Number.isSafeInteger(suffix) || suffix < 1) throw new Error("El sufijo ID no es un entero positivo seguro.");
+            maxSuffix = Math.max(maxSuffix, suffix);
+        });
+        const properties = PropertiesService.getScriptProperties();
+        const key = "GPSpedia_ID_SEQUENCE_" + sheet.getName().replace(/[^A-Za-z0-9]/g, "_") +
+            "_" + idColumn + "_" + pattern.prefix.replace(/[^A-Za-z0-9]/g, "_");
+        const storedRaw = properties.getProperty(key), stored = storedRaw === null ? 0 : Number(storedRaw);
+        if (!Number.isSafeInteger(stored) || stored < 0) throw new Error("El contador backend de " + sheet.getName() + " no es válido.");
+        const next = Math.max(maxSuffix, stored) + 1;
+        if (!Number.isSafeInteger(next) || next < 1) throw new Error("Se agotó la secuencia de IDs de " + sheet.getName() + ".");
+        properties.setProperty(key, String(next));
+        return pattern.prefix + String(next).padStart(pattern.padding, "0");
+    } finally {
+        if (acquired) lock.releaseLock();
+    }
+}
+
 function persistIdentifierSequenceConfigs_(ss, entries) {
     const supported = new Map();
     (entries || []).forEach(entry => {
@@ -4941,7 +5017,7 @@ function handleAddLogo(payload, logMessage) {
         newId = getNextLogoIdLocked_(sheet);
         rowPrepared = true;
         if (lastRow > 1) {
-            sheet.getRange(lastRow, 1, 1, lastColumn).copyTo(sheet.getRange(newRow, 1, 1, lastColumn));
+            copyAdminRowPresentationOnly_(sheet, lastRow, newRow, lastColumn);
             sheet.getRange(newRow, 2, 1, lastColumn - 1).clearContent();
         }
         sheet.getRange(newRow, 1).setValue(newId);
@@ -6147,9 +6223,7 @@ const filename = buildCanonicalImageBaseName(vehicleInfo, "imgCorte" + cutSlotIn
         const lastColumn = sheet.getLastColumn();
 
         // Copiar la plantilla de formato/validación y retirar la fórmula heredada de ID.
-        const previousRowRange = sheet.getRange(lastRow, 1, 1, lastColumn);
-        const newRowRange = sheet.getRange(rowIndex, 1, 1, lastColumn);
-        previousRowRange.copyTo(newRowRange);
+        copyAdminRowPresentationOnly_(sheet, lastRow, rowIndex, lastColumn);
 
         const dataRange = sheet.getRange(rowIndex, 2, 1, lastColumn - 1);
         dataRange.clearContent();
@@ -8865,13 +8939,8 @@ function recordImageAdministrationActivity(developerContext, activityType, assoc
         const lastRow = sheet.getLastRow();
         const newRowNumber = lastRow + 1;
         const lastColumn = Math.max(sheet.getLastColumn(), 7);
-        if (lastRow >= 2) {
-            const formulaRange = sheet.getRange(2, 1, 1, lastColumn);
-            const newRowRange = sheet.getRange(newRowNumber, 1, 1, lastColumn);
-            formulaRange.copyTo(newRowRange);
-            if (lastColumn > 1) sheet.getRange(newRowNumber, 2, 1, lastColumn - 1).clearContent();
-        }
-
+        if (lastRow >= 2) copyAdminRowPresentationOnly_(sheet, 2, newRowNumber, lastColumn);
+        sheet.getRange(newRowNumber, 1).setValue(getNextAdminFormulaBasedId_(sheet, 1));
         sheet.getRange(newRowNumber, 2, 1, 6).setValues([[
             new Date().toISOString(),
             developerContext.userId,
