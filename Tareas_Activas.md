@@ -4,7 +4,7 @@ Fecha de registro: 2026-11-15
 Repositorio: `infogpstech/GPSpedia`  
 Rama de trabajo: `GPSpedia2.2.5_work`  
 Rama base protegida: `GPSpedia2.2.5`  
-HEAD de código validado: `7a58da9a012cd12084f2de3bfb729994f296729b`  
+HEAD de código validado: `498fef7717fe13b405cdfdffd018c2d0fa8ff988`  
 HEAD de la rama base verificado: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`
 
 Este documento registra los requisitos nuevos y el orden de ejecución. La fuente normativa sigue siendo `NORMAS_DESAROLLO.md`; los registros archivados en `Olds/Documentacion_Legacy/` y `Olds/GPSpedia 2.2/` no se modifican.
@@ -29,7 +29,7 @@ Simplificar la autenticación sin debilitar autorización; modernizar Inbox; end
 | GP-RBAC-02 | Habilitar y validar las funciones de Inbox para usuarios técnicos | CONTRATOS LOCALES COMPLETADOS; CONFIGURACIÓN FEEDBACK/COORDINATOR BETA PENDIENTE |
 | GP-INBOX-04B/04C/04D | Estado privado, tickets de soporte, RBAC, accesibilidad y regresión Inbox | BACKEND Y CONTRATOS LOCALES COMPLETADOS; UI DE ACCIONES/HISTORIAL PROPIO DIFERIDA; BETA PENDIENTE |
 | GP-CAT-01 | Catálogo cache-first con feed incremental, deltas y sincronización silenciosa | IMPLEMENTACIÓN LOCAL COMPLETADA; VALIDACIÓN MULTIUSUARIO/DISPOSITIVOS BETA PENDIENTE |
-| GP-CAT-01-R | Mantener el catálogo remoto disponible cuando falla la persistencia local IndexedDB | CORRECCIÓN LOCAL IMPLEMENTADA; CI PENDIENTE |
+| GP-CAT-01-R | Mantener el catálogo remoto disponible cuando falla la persistencia local IndexedDB | COMPLETADA LOCALMENTE; CI 103 suites/1,606 pruebas PASS; VALIDACIÓN DE APERTURA INDEXEDDB EN BETA PENDIENTE |
 | GP-PWA-01/02 | Actualización nativa y segundo plano de recursos PWA | IMPLEMENTACIÓN LOCAL COMPLETADA; VALIDACIÓN EN PWA/DISPOSITIVOS BETA PENDIENTE; SIN CONTROL MANUAL DE RECARGA |
 
 ## Hallazgos preliminares confirmados en código

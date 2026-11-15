@@ -687,7 +687,7 @@ No quedan tareas locales independientes de Inbox dentro del alcance autorizado. 
 # Continuidad — resiliencia del catálogo ante fallo de persistencia IndexedDB (2026-11-15)
 
 **Rama:** `GPSpedia2.2.5_work`  
-**Commit padre verificado:** `d93bef3ff90969173c879b59ab968c3337db04f8`
+**Commit de implementación:** `498fef7717fe13b405cdfdffd018c2d0fa8ff988`
 
 ## Hallazgo nuevo a partir de consola Beta
 - El arranque vuelve a mostrar `IndexedDB initialization timed out` al abrir `GPSpedia_DB`; por eso fallan lecturas de catálogo, historial y elementos vistos. El timeout local de 3 segundos en `auth.js` ocurre antes del timeout de apertura de IndexedDB y no constituye por sí solo otro fallo.
@@ -696,7 +696,10 @@ No quedan tareas locales independientes de Inbox dentro del alcance autorizado. 
 
 ## Validación
 - Añadida regresión a `CatalogStartupIntegrity.mjs` para simular timeout al persistir y comprobar que el catálogo remoto sigue visible, el estado de carga no pasa a error y no se muestra error global.
-- Pendiente ejecutar GitHub Actions tras publicar este cambio; no se declara PASS antes del resultado.
+- GitHub Actions Node.js 22 run `43766371233`, commit `498fef7717fe13b405cdfdffd018c2d0fa8ff988`: **SUCCESS; 103 suites / 1,606 pruebas / 0 fallos**. `CatalogStartupIntegrity`: 19/19 PASS; `IndexedDBTransactions`: 45/45 PASS; sintaxis de módulos modificados PASS.
+- GitHub Pages run `43766370693` para este commit estaba en cola al actualizar el checkpoint; despliegue todavía no confirmado.
 - La causa ambiental exacta de la apertura IndexedDB que queda pendiente requiere inspección del navegador Beta (almacenamiento del sitio, pestañas/conexiones antiguas, eventos de apertura y disponibilidad de IndexedDB). No ejecutar `deleteDatabase`, limpiar almacenamiento ni borrar `adminLocalState`.
 - El rechazo `Servicio no autorizado para el coordinador compartido` permanece separado: cotejar en privado deployment y ScriptProperties de FEEDBACK/Coordinator en Beta. No se debilita la autenticación ni se publican secretos.
 - No se desplegaron Apps Script ni se modificaron ScriptProperties, endpoints, Spreadsheet, Drive o datos productivos.
+
+**HEAD de trabajo tras validar CI:** `498fef7717fe13b405cdfdffd018c2d0fa8ff988`.
