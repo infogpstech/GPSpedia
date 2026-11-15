@@ -783,3 +783,6 @@ Las fuentes de servicios JavaScript se centralizan bajo `JS/Services/`. La carpe
 ## Cierre de subcorrección — GP-INBOX reintentos idempotentes (2026-11-15)
 
 **Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.** El resumen de conversación ya compara posiciones de mensajes persistidos y no timestamps que pueden coincidir; `messageCount` se reconstruye desde las filas reales. Regresión con tres mensajes del mismo milisegundo y reintentos de creación/respuesta anterior: PASS. CI Node.js 22 run `43672378358`: 99 suites / 1,501 pruebas / 0 fallos; `InboxConversations` 33/33 PASS; sintaxis PASS. La primera ejecución falló por una referencia local de variable en el handler de envío, corregida en `826725f9bf93aba171357950849ec4ed6d73fc81`. La validación Beta real queda diferida. GP-INBOX-04B..04D permanecen abiertas para las funciones mayores pendientes.
+
+
+**Evidencia adicional de publicación — GP-INBOX idempotencia (2026-11-15):** GitHub Pages run `43672478619`: build, reporte y deploy SUCCESS. HEAD de código/registros verificado `7fb110c6979ac0d0d16fd526734872eb41414da8`; rama base sin cambios. Se conserva la validación real de Spreadsheet/Coordinator como pendiente Beta, sin bloquear el cierre local.

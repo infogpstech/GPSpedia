@@ -360,3 +360,12 @@
 - Se corrigió la comparación por timestamp para que el resumen siga el orden de inserción serializado por ScriptLock y el contador se derive de las filas persistidas.
 - No se añadieron controles visibles, endpoints, permisos ni cambios externos. La validación con Spreadsheet/Coordinator reales permanece diferida a Beta.
 - La tarea mayor GP-INBOX-04B sigue EN PROGRESO por las operaciones masivas y controles de interfaz diferidos; esta subcorrección interna sí queda cerrada localmente.
+
+
+## Verificación final de publicación — GP-INBOX reintentos idempotentes (2026-11-15)
+
+- HEAD de implementación y registros: `7fb110c6979ac0d0d16fd526734872eb41414da8` en `GPSpedia2.2.5_work`.
+- CI Node.js 22 run `43672479275`: SUCCESS; sintaxis PASS; **99 suites / 1,501 pruebas / 0 fallos**. `InboxConversations` 33/33 PASS, incluida la regresión de timestamps iguales y replay.
+- GitHub Pages run `43672478619`: build, reporte y deploy SUCCESS.
+- Rama base `GPSpedia2.2.5` verificada en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; no se modificó.
+- No se ejecutaron pruebas contra Apps Script/Spreadsheet reales ni se modificaron deployments, ScriptProperties o datos externos. La prueba Beta permanece diferida.

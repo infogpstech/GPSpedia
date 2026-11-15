@@ -415,3 +415,8 @@
 - GitHub Actions Node.js 22 run `43672378358`: SUCCESS; sintaxis PASS; 99 suites / 1,501 pruebas / 0 fallos. InboxConversations 33/33 PASS, incluida la nueva regresión de timestamps iguales.
 - La primera ejecución falló por una referencia de variable incorrecta en handleSendInboxMessage; se corrigió antes de la ejecución aprobada.
 - GitHub Pages run `43672377873`: build PASS; deployment aún en ejecución al momento de registrar esta nota.
+
+
+2026-11-15 — Publicación Pages de la corrección Inbox idempotencia
+- GitHub Pages run `43672478619`: build, reporte de estado y deploy SUCCESS para el HEAD `7fb110c6979ac0d0d16fd526734872eb41414da8`.
+- La rama base `GPSpedia2.2.5` permanece en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; no fue modificada.
