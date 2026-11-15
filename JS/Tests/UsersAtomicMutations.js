@@ -34,8 +34,8 @@ function runUsersAtomicMutationTests(usersSource, authSource, coordinatorSource)
         assert(profileHandler.includes("userRowIndex") && !profileHandler.includes("findUniqueUserRow_"), "La actualización de perfil debe reutilizar la fila autenticada sin repetir la búsqueda por ID.");
         assert(dispatcher.includes('withSharedMutationLease_("USERS", "sessionActivity"'),
             "getUsers debe adquirir una lease de actividad.");
-        assert(String(coordinatorSource || "").includes('sessionActivity: { write: ["ACTIVE_SESSIONS"] }'),
-            "El coordinador debe reservar ActiveSessions para lecturas autenticadas.");
+        assert(String(coordinatorSource || "").includes('sessionActivity: { read: identityRead }'),
+            "USERS debe validar la actividad leyendo el contexto central sin reservar escrituras en ActiveSessions.");
     });
 
     const names = [
