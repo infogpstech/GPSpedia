@@ -40,13 +40,13 @@ export function setRichTextMode(mode, actorRole) {
 
 export const API_ENDPOINTS = {
     LEGACY: "https://script.google.com/macros/s/AKfycbwpIFH1nX2BZEjAKbpq9HJpEGNlo_0LqD1CwxWsWFo5J0AJDdbfMrKpcsAV4ZFJzFWd/exec",
-    AUTH:     "https://script.google.com/macros/s/AKfycbyPLM0leEa7o9dvKk3Fe9_e9W7r6V0Ii3KxKNyDOb-EX9KpQWHDczcNFb6hSzlNSD-l/exec",
+    AUTH:     "https://script.google.com/macros/s/AKfycbyaQbzvWpf2AfLCQ-YCh87AT4hL2Fi5HgKsUPvFXMN6QjAx7eZEbREXndpKMeHNanKp/exec",
     CATALOG:  "https://script.google.com/macros/s/AKfycbxRwBKI_HyY4KWf1vny5kxhT5kmspDPj6BmNe-bAAcB27osXY5L0Ylx94RWrn9lJ9kW/exec",
-    WRITE:    "https://script.google.com/macros/s/AKfycbxsfyTOg7bKhPHP0lKCFYYUB7hlTSWdPuMMsm5dHFNpdLQGB-ZKdF_YuvTvU1rMmWKTRQ/exec",
-    USERS:    "https://script.google.com/macros/s/AKfycbxxL4oEF9UeKFSgC7BJXYKRy6_Xwxq3UFif4_KRqwr4xPpucwxJmKf2FV4SU9mcmryetA/exec",
-    FEEDBACK: "https://script.google.com/macros/s/AKfycbxBI3tno1YdJeq1bqkJiGuRGME23goB-DvYW0PR0yIXxrJch2GZK7_cBDZrxpj873DNFg/exec",
-    UTILITIES: "https://script.google.com/macros/s/AKfycbxuVrpyNy2m8tyxshl3od-PnmUVc1z2hpiIXdZ6kpUb55x4EoPdUMctdCnoWhO29K4n/exec",
-    ADMIN: "https://script.google.com/macros/s/AKfycbyi8yR3elzy6tqqNWDWjq71zDPa9tWU8MWY4ySRpepVYr-wN7m6upaZIAd-oV334V2u/exec"
+    WRITE:    "https://script.google.com/macros/s/AKfycbw0sFMF2lGRzYa3yDxLnpkNZ_qeBBT17WIe-U8vcpghwCZczCRoXb-nxl9b4pFJk1l1Mg/exec",
+    USERS:    "https://script.google.com/macros/s/AKfycbxJ9yYU7w2jhesXGGw-zkweAAvMst8lUmNRBghqfsSzsScR7GfhaMCvBm7KZR3FGPo7Ag/exec",
+    FEEDBACK: "https://script.google.com/macros/s/AKfycbxIDRtmUeJrPr6xTKqfMUc04aFLOFfG_Eh8Pj_9xeTrH8QSPh7ZirXggfgnZyaglAr94w/exec",
+    UTILITIES: "https://script.google.com/macros/s/AKfycbxX4rUIdTwz3JaaJele3Ijkyxx1lvkocMSSC4cVgILy32TY9bdDkjv6RAXmoUZghMO4/exec",
+    ADMIN: "https://script.google.com/macros/s/AKfycbytb5b3xeohYXLIs-NJwlXOGWaJ3lNk-a6XkjlUmuc1BG56YcyaOtO53Z4SvXeu-C8/exec"
 };
 
 export const ACTION_TO_SERVICE_MAP = {
