@@ -122,6 +122,19 @@ check("El modal mantiene los controles de lectura para tecnologías de asistenci
     assert.match(ui, /setAttribute\("aria-pressed"/);
 });
 
+check("El detalle existente de reportes muestra categoría, asunto, descripción, respuesta y estado del ticket", () => {
+    assert.match(ui, /ticketCategoryLabels/);
+    assert.match(ui, /appendLabeledValue\(panel, 'Categoría'/);
+    assert.match(ui, /appendLabeledValue\(panel, 'Estado del ticket'/);
+    assert.match(ui, /item\.subject/);
+    assert.match(ui, /item\.content/);
+    assert.match(ui, /item\.reply/);
+    assert.match(ui, /item\.isResolved/);
+});
+check("Las acciones y la consulta de tickets propios no añaden controles visibles antes de autorización", () => {
+    assert.doesNotMatch(ui, /markInboxUnread|deleteInboxConversation|getMyProblemReports/);
+    assert.doesNotMatch(html, /inbox-mark-unread|inbox-delete-conversation|inbox-my-tickets/);
+});
 let passed = 0;
 for (const item of cases) {
     try { item.fn(); passed++; console.log("PASS " + item.name); }
