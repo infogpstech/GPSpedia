@@ -422,7 +422,7 @@ function generateNextUserId_(userSheet) {
         if (!hasAccountData && !id) return;
         if (!hasAccountData) return;
         if (!id) throw new Error('Existe una fila de usuario con datos pero sin ID. No se creó la cuenta.');
-        if (!id.startsWith(pattern.prefix) || !/^\d+$/.test(id.slice(pattern.prefix.length))) {
+        if (!id.toUpperCase().startsWith(pattern.prefix.toUpperCase()) || !/^\d+$/.test(id.slice(pattern.prefix.length))) {
             throw new Error('El ID de usuario de la fila ' + (index + 2) + ' no coincide con el formato backend configurado.');
         }
         const normalizedId = id.toUpperCase();
