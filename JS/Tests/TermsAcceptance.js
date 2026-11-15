@@ -100,7 +100,7 @@ test('AUTH y su espejo guardan aceptación por dispositivo y validan la sesión 
     assert.match(handler, /getSessionExpirationStatus_/);
     assert.match(handler, /hasPendingRoleRevocation_\(userId, usersSheet\)/);
     const dispatchStart = authSource.indexOf('function doPostInternal_(e) {');
-    const dispatchEnd = authSource.indexOf('\\nfunction ', dispatchStart + 10);
+    const dispatchEnd = authSource.indexOf('\nfunction ', dispatchStart + 10);
     const dispatcher = authSource.slice(dispatchStart, dispatchEnd);
     assert.doesNotMatch(dispatcher, /touchProtectedAuthRequestSession_|validateAndTouchSession_|validateSessionReadOnly_/);
     assert.match(coordinatorSource, /acceptTerms: \{ read: \["ACTIVE_SESSIONS"\], write: \["USERS"\], sharedWrite: \["ACTIVE_SESSIONS"\] \}/);
