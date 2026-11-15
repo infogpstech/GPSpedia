@@ -444,7 +444,7 @@ run("Las mutaciones Inbox se coordinan con cambios de identidad y otras escritur
     for (const action of ["createInboxConversation","sendInboxMessage","markInboxRead","archiveInboxConversation","closeInboxConversation"]) {
         assert.equal(isSharedMutationAction(action),true,action+" debe adquirir una lease compartida.");
         assert.deepEqual(coordinatorPolicy()("FEEDBACK",action),{
-            readResources:["USERS","ACTIVE_SESSIONS"],writeResources:["ACTIVE_SESSIONS","FEEDBACK"],sharedWriteResources:[],maintenance:false,nestedActions:{}
+            readResources:["USERS","SESSION_CONTEXTS"],writeResources:["FEEDBACK"],sharedWriteResources:[],maintenance:false,nestedActions:{}
         });
     }
 });
