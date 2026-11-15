@@ -16,7 +16,7 @@ Simplificar la autenticación sin debilitar autorización; modernizar Inbox; end
 
 | ID | Problema solicitado | Estado |
 |---|---|---|
-| GP-SEC-01 | Evitar validaciones periódicas/separadas; iniciar sesión una vez y conservar sesión y privilegios mientras siga vigente | COMPLETADA CON VALIDACIÓN DIFERIDA A BETA |
+| GP-SEC-01 | Evitar validaciones periódicas/separadas; iniciar sesión una vez y conservar sesión y privilegios mientras siga vigente | EN PROGRESO — contexto central implementado en rama; CI y Beta pendientes |
 | GP-UX-01 | Inbox organizado, elegante y similar en experiencia a Outlook/Gmail, con identidad GPSpedia | COMPLETADA CON VALIDACIÓN DIFERIDA A BETA |
 | GP-SEC-02 | Bloquear descargas casuales, clic derecho, menú contextual, copia y arrastre de imágenes | COMPLETADA CON VALIDACIÓN DIFERIDA A BETA |
 | GP-RBAC-01 | Compartir integrado para todos; compartir, imprimir y editar detalles solo Supervisor, Jefe y Desarrollador | COMPLETADA CON VALIDACIÓN DIFERIDA A BETA |
@@ -62,11 +62,11 @@ Simplificar la autenticación sin debilitar autorización; modernizar Inbox; end
 **Validación diferida a Beta:** no se consultaron ni modificaron hojas Spreadsheet/Drive reales ni deployments. La existencia y contenido efectivo de fórmulas/IDs heredados, encabezados físicos, datos duplicados y referencias huérfanas deben comprobarse mediante un dry-run de solo lectura en una copia/entorno Beta autorizado. Esta limitación no bloquea el cierre del análisis estático local.
 
 ### P1 — Autenticación simplificada
-**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
+**Estado: EN PROGRESO — falta ejecutar la validación integral del nuevo contexto central y completar Beta.**
 
 **Validación local (2026-11-14):** GitHub Actions run `43620155376` PASS con Node.js 22.23.4; `InboxConversations` 29/29 PASS, `InboxUi` 16/16 PASS y regresión integral 93 suites / 1,364 pruebas / 0 fallos. Las comprobaciones de sintaxis configuradas también aprobaron. La validación manual de navegadores/dispositivos queda diferida a Beta.
 
-**Diseño derivado de P0:** cada servicio protegido actualiza `LastActivityAt` dentro de su propia operación, tras validar token, identidad, cuenta activa, expiración y rol vigente. La coordinación compartida evita carreras con logout, revocación o eliminación de filas. Se conserva la validación de restauración al iniciar la app; los fallos de red/AUTH no se convierten en logout y el estado local no autoriza operaciones.
+**Diseño actualizado:** cada operación protegida obtiene una sola autorización central al adquirir su lease. El coordinador reutiliza el contexto de identidad/rol en `ScriptProperties` y actualiza la actividad con intervalo limitado; los servicios no consultan `Users` ni `ActiveSessions` para revalidar cada acción. `SESSION_CONTEXTS` coordina las operaciones con logout, revocación y cambios de rol. AUTH sincroniza `LastActivityAt` en la hoja durante login, restauración y operaciones sensibles. Se conserva la validación de restauración al iniciar la app; los fallos de red/AUTH no se convierten en logout y el estado local no autoriza operaciones.
 - [x] Eliminar la revalidación redundante al recuperar conexión; conservar la validación de restauración al iniciar la aplicación.
 - [x] Una sola autenticación interactiva por sesión: login idempotente por `requestId`, con reintento estable tras fallo transitorio y limpieza condicionada al request completado. Validación de campo diferida a Beta.
 - [x] Conservar token/sesión entre navegación, recarga y apertura de modales mediante persistencia local; restaurar y validar al iniciar sin solicitar credenciales nuevamente mientras la sesión siga vigente. Validación de campo diferida a Beta.
@@ -838,7 +838,8 @@ Las fuentes de servicios JavaScript se centralizan bajo `JS/Services/`. La carpe
 - [x] Eliminar la segunda validación que Inbox ejecutaba dentro de cada handler después de que el dispatcher FEEDBACK ya había autenticado la misma solicitud. El actor confiable se adjunta en el servidor y se reutiliza.
 - [x] Conservar la autorización backend: el rol interno procede de Users y cualquier campo `__feedbackActor` aportado por el navegador es sobrescrito por el dispatcher.
 - [x] Verificar el comportamiento actual de Inbox: solo quien inició el caso puede agregar comentarios; Supervisor, Jefe o Desarrollador pueden cerrarlo; el cierre se serializa y bloquea comentarios posteriores. Las pruebas de cierre y comentarios están incluidas en InboxConversations.
-- [ ] Diseñar e implementar el contexto/caché de sesión compartido para los demás servicios, sin consultar la hoja completa en cada acción y sin permitir que logout, revocación, expiración, desactivación o cambio de rol queden ignorados. No retirar la validación backend hasta demostrar estas garantías con pruebas de concurrencia.
+- [x] Implementar el contexto/caché de sesión compartido para AUTH, USERS, WRITE, ADMIN, FEEDBACK y UTILITIES, sin consultas de sesión a las hojas en cada acción; logout, revocación, expiración y cambios de rol quedan protegidos por el coordinador.
+- [ ] Ejecutar las pruebas de concurrencia y regresión agregadas, y validar revocación/expiración en Beta antes de declarar completada la simplificación.
 - [x] Ejecutar CI integral en el HEAD publicado: Node.js 22 run `43678752084` SUCCESS; sintaxis PASS; **100 suites / 1,523 pruebas / 0 fallos**. GitHub Pages run `43678751430` SUCCESS.
 
 **Validación aislada de esta adenda:** InboxConversations 40/40 PASS; InboxRoleContract 17/17 PASS; parsing de los dos servicios modificados PASS. La autenticación global simplificada continúa pendiente; no se declara completada por haber eliminado únicamente la duplicación de Inbox.
@@ -861,7 +862,8 @@ Las fuentes de servicios JavaScript se centralizan bajo `JS/Services/`. La carpe
 - [x] WRITE elimina validación repetida en información suplementaria y asignación de IDs; la autorización Desarrollador se obtiene junto con la identidad en una sola consulta autenticada, sin recorrer Users completa.
 - [x] FEEDBACK, USERS, WRITE y ADMIN usan búsqueda por identificador acotada y actualización LastActivityAt por intervalo de cinco minutos donde aplica.
 - [x] CI integral y Pages aprobados: 100 suites / 1,525 pruebas PASS; Pages SUCCESS.
-- [ ] Diseñar e implementar contexto de sesión compartido con invalidación inmediata por epoch para todos los servicios. Hasta completar y probar esa garantía, mantener una validación backend por operación protegida.
+- [x] Implementar contexto de sesión compartido con invalidación por epoch y barrera `revokedBefore` para todos los servicios; la autorización backend se conserva en una única puerta central integrada en la lease.
+- [ ] Ejecutar pruebas integrales de concurrencia, revocación, expiración y migración de sesiones previas; validar en Beta antes de cerrar P1.
 - [ ] Validación Beta y pruebas de concurrencia/revocación en Apps Script pendientes; no desplegar sin autorización.
 
 
@@ -871,3 +873,17 @@ Las fuentes de servicios JavaScript se centralizan bajo `JS/Services/`. La carpe
 - [x] No confiar en un índice enviado por el cliente; el valor se produce exclusivamente en backend.
 - [x] Añadir contrato de regresión para verificar que el handler no vuelve a llamar a `findUniqueUserRow_`.
 - [x] Confirmar CI integral verde: Node.js 22 run `43684916807`, 100 suites / 1,525 pruebas / 0 fallos; Pages run `43684916573` SUCCESS.
+
+## Adenda P1 — contexto central y barrera de revocación (2026-11-15)
+
+**Estado: IMPLEMENTACIÓN EN `GPSpedia2.2.5_work`; VALIDACIÓN PENDIENTE.**
+
+- Se añadió contexto central por usuario/token en `ScriptProperties`, con rol, epoch, `revokedBefore`, fecha de creación y última actividad.
+- `syncUserSessions` reconcilia las sesiones de `ActiveSessions` sin revocar las sesiones válidas de otros dispositivos; elimina índices obsoletos y no permite reactivar tokens anteriores a una revocación global.
+- Logout revoca un token; cambio de rol, eliminación de cuenta, cambio/restablecimiento de contraseña y reset global revocan todas las sesiones antes de modificar los registros.
+- AUTH restaura y migra sesiones previas solo cuando no existe una revocación central previa. Las sesiones antiguas que quedaron en la hoja por una limpieza incompleta se rechazan y se limpian.
+- USERS, WRITE, ADMIN, FEEDBACK y UTILITIES reutilizan el actor verificado recibido en la misma lease. Se elimina la dependencia de lecturas/escrituras de `ActiveSessions` por acción y se usa `SESSION_CONTEXTS` como recurso lógico de coordinación.
+- Se agregaron regresiones para sincronización de sesiones, tokens sin `userId`, barrera de revocación, actor confiable, sanitización de actores enviados por cliente y concurrencia entre servicios.
+- Se sincronizó `JS/Tests/Auth.js` con `JS/Services/Auth.js` y se actualizaron `Services/COORDINATOR_SETUP.md` y `README.md`.
+- **No ejecutado en esta sesión:** Node.js/CLI local, CI integral y pruebas Beta reales. No se declara PASS hasta disponer de esos resultados.
+- **Pendiente:** ejecutar las 100+ suites, `node --check`, GitHub Actions, revisar el resultado y corregir cualquier regresión. Después validar login, múltiples dispositivos, logout individual, revocación global, cambio de rol, expiración y recuperación de sesiones en Beta. No desplegar Apps Script ni modificar datos productivos sin autorización.
