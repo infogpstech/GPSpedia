@@ -6,11 +6,18 @@ function runVideoApprovalSessionTests() {
     function assert_(v,m){if(!v)throw new Error(m||"Aserción fallida.");}
     function expect_(fn,t){let e=null;try{fn();}catch(x){e=x;}assert_(!!e,"Se esperaba rechazo.");if(t)assert_(String(e.message||e).includes(t),"Error inesperado: "+String(e.message||e));}
     function run_(n,fn){try{fn();passed++;results.push({name:n,status:"PASS"});}catch(e){failed++;results.push({name:n,status:"FAIL",message:String(e.message||e)});}}
-    function sheet_(rows){return{getDataRange:()=>({getValues:()=>rows}),getRange:(row,column)=>({setValue:value=>{rows[row-1][column-1]=value;}})};}
+    function sheet_(rows){return{
+        getLastRow:()=>rows.length,getLastColumn:()=>Math.max(...rows.map(row=>row.length)),
+        getDataRange:()=>({getValues:()=>rows.map(row=>row.slice())}),
+        getRange:(row,column,numRows=1,numColumns=1)=>({
+            getValues:()=>rows.slice(row-1,row-1+numRows).map(values=>values.slice(column-1,column-1+numColumns)),
+            getValue:()=>rows[row-1][column-1],setValue:value=>{rows[row-1][column-1]=value;}
+        })
+    };}
     function setup_(options){
         options=options||{};
         const now=new Date();
-        const session=["user-1","usuario","token-1",new Date(now.getTime()-60000),"",new Date(now.getTime()-1000)];
+        const session=["user-1","usuario","token-1",new Date(now.getTime()-60000),"",new Date(now.getTime()-10*60*1000)];
         const user=["user-1","usuario","","Desarrollador","","","Técnico",""];
         if(options.expired)session[5]=new Date(now.getTime()-35*24*60*60*1000);
         if(options.revoked)user[7]=ROLE_REVOCATION_SHARED_PREFIX+"pending";
