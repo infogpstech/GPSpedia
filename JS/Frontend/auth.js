@@ -425,10 +425,25 @@ export async function loadInitialData(forceRefresh = false, options = {}) {
 
     // 1. Renderizar primero la instantánea local junto con su cursor persistido.
     try {
-        const cachedState = await Promise.race([
-            offline.getCatalogSyncState(),
+        const neverResolve = () => new Promise(() => {});
+        const idbCacheCandidate = offline.getCatalogSyncState().then(state =>
+            offline.isCompleteCatalogSnapshot(state && state.snapshot)
+                ? { source: "indexeddb", state }
+                : neverResolve()
+        ).catch(() => neverResolve());
+        const fallbackCacheCandidate = typeof offline.getCatalogFallbackCache === "function"
+            ? offline.getCatalogFallbackCache().then(state =>
+                offline.isCompleteCatalogSnapshot(state && state.snapshot)
+                    ? { source: "cache-storage", state }
+                    : neverResolve()
+            ).catch(() => neverResolve())
+            : neverResolve();
+        const cachedResult = await Promise.race([
+            idbCacheCandidate,
+            fallbackCacheCandidate,
             new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout local")), 3000))
         ]);
+        const cachedState = cachedResult.state;
         if (!isCurrentLoad()) return;
         cachedCatalog = cachedState && cachedState.snapshot;
         cachedCursor = cachedState && Number.isSafeInteger(cachedState.cursor) ? cachedState.cursor : null;
@@ -454,10 +469,19 @@ export async function loadInitialData(forceRefresh = false, options = {}) {
             setState({ catalogLoadStatus: 'loading', catalogLoadError: null });
         }
         try {
-            // Un timeout del primer open de IndexedDB comparte la misma promesa pendiente;
-            // no repetir inmediatamente la misma apertura desde getCatalog().
-            if (String(error && error.message || "").includes("Timeout local")) throw error;
-            cachedCatalog = await offline.getCatalog();
+            // CacheStorage es independiente de IndexedDB y puede recuperar el snapshot
+            // incluso cuando el open de la base local permanece pendiente.
+            const fallbackState = typeof offline.getCatalogFallbackCache === "function"
+                ? await offline.getCatalogFallbackCache() : null;
+            if (fallbackState && offline.isCompleteCatalogSnapshot(fallbackState.snapshot)) {
+                cachedCatalog = fallbackState.snapshot;
+                cachedCursor = Number.isSafeInteger(fallbackState.cursor) ? fallbackState.cursor : null;
+            } else {
+                // Un timeout del primer open comparte la misma promesa pendiente;
+                // no repetir inmediatamente la misma apertura desde getCatalog().
+                if (String(error && error.message || "").includes("Timeout local")) throw error;
+                cachedCatalog = await offline.getCatalog();
+            }
             if (offline.isCompleteCatalogSnapshot(cachedCatalog)) {
                 const normalizedCached = normalizeCatalogData(cachedCatalog);
                 const currentCatalog = getState().catalogData;
@@ -572,6 +596,13 @@ export async function loadInitialData(forceRefresh = false, options = {}) {
             }
         } catch (storageError) {
             console.warn("El catálogo se actualizó en memoria, pero no pudo persistirse en IndexedDB:", storageError);
+        }
+        if (typeof offline.saveCatalogFallbackCache === "function") {
+            try {
+                await offline.saveCatalogFallbackCache(snapshotToApply, cursorToPersist);
+            } catch (fallbackStorageError) {
+                console.warn("No se pudo actualizar la caché alternativa del catálogo:", fallbackStorageError && fallbackStorageError.name || "CacheStorageError");
+            }
         }
         if (!isCurrentLoad()) return;
         markCatalogSync_();

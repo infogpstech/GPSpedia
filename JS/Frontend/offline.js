@@ -1046,6 +1046,50 @@ export async function getCatalog() {
     return performOp('catalog', 'readonly', (store) => store.get('current'));
 }
 
+const CATALOG_FALLBACK_CACHE_NAME = 'gpsepedia-catalog-fallback-v1';
+const CATALOG_FALLBACK_CACHE_URL = new URL('./__local_cache__/catalog-snapshot.json', import.meta.url).href;
+
+/**
+ * Copia independiente del snapshot público del catálogo. Permite arrancar
+ * desde CacheStorage si IndexedDB está bloqueado/no disponible en el navegador.
+ * No contiene sesión, historial, datos administrativos ni tokens.
+ */
+export async function getCatalogFallbackCache() {
+    if (typeof caches === 'undefined' || typeof Response === 'undefined') return null;
+    try {
+        const cache = await caches.open(CATALOG_FALLBACK_CACHE_NAME);
+        const response = await cache.match(CATALOG_FALLBACK_CACHE_URL);
+        if (!response) return null;
+        const stored = await response.json();
+        if (!stored || !isCompleteCatalogSnapshot(stored.snapshot)) return null;
+        return {
+            snapshot: stored.snapshot,
+            cursor: Number.isSafeInteger(stored.cursor) && stored.cursor >= 0 ? stored.cursor : null,
+            savedAt: Number.isFinite(stored.savedAt) ? stored.savedAt : 0
+        };
+    } catch (error) {
+        return null;
+    }
+}
+
+/** Guarda solo la instantánea pública completa; el fallo de esta caché es opcional. */
+export async function saveCatalogFallbackCache(snapshot, cursor = null) {
+    if (typeof caches === 'undefined' || typeof Response === 'undefined') return false;
+    if (!isCompleteCatalogSnapshot(snapshot)) return false;
+    try {
+        const cache = await caches.open(CATALOG_FALLBACK_CACHE_NAME);
+        await cache.put(CATALOG_FALLBACK_CACHE_URL, new Response(JSON.stringify({
+            snapshot,
+            cursor: Number.isSafeInteger(cursor) && cursor >= 0 ? cursor : null,
+            savedAt: Date.now()
+        }), { headers: { 'Content-Type': 'application/json' } }));
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
+
+
 const CATALOG_SYNC_CURSOR_KEY = 'syncCursor';
 
 function performCatalogSyncTransaction(mode, callback) {

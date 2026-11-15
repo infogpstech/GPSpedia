@@ -41,6 +41,8 @@ function createHarness(options = {}) {
             return value === undefined ? null : value;
         },
         async getCatalogSyncState() { return { snapshot: await this.getCatalog(), cursor: options.cacheCursor === undefined ? null : options.cacheCursor }; },
+        async getCatalogFallbackCache() { return options.fallbackCache || null; },
+        async saveCatalogFallbackCache(snapshot, cursor) { this.fallbackSaved = { snapshot, cursor }; return true; },
         async saveCatalog(value) {
             saveCalls++; savedCursor = null;
             if (options.failCatalogPersistence) throw new Error('IndexedDB initialization timed out');
@@ -128,7 +130,8 @@ function createHarness(options = {}) {
         get savedCursor() { return savedCursor; },
         get cursorWrites() { return cursorWrites; },
         get pysCalls() { return pysCalls; },
-        get cacheReads() { return cacheIndex; }
+        get cacheReads() { return cacheIndex; },
+        get offlineFallbackSaved() { return offline.fallbackSaved; }
     };
 }
 
@@ -147,6 +150,24 @@ await test('procesa respuesta de red válida y confirma ready después de actual
     assert.deepEqual(h.state.catalogData.sortedCategories, ['pickup']);
     assert.equal(h.saveCalls, 1);
     assert.equal(h.errors.length, 0);
+});
+await test('recupera el catálogo desde CacheStorage cuando IndexedDB no responde', async () => {
+    const fallback = { snapshot: snapshot([{ id: 'C-FALLBACK', marca: 'Honda', categoria: 'pickup' }]), cursor: 9 };
+    const h = createHarness({ cacheReads: [new Error('IndexedDB initialization timed out')], fallbackCache: fallback,
+        getCatalogChanges: async cursor => ({ status: 'success', currentRevision: 9, nextCursor: cursor, hasMore: false, resetRequired: false, changes: [] })
+    });
+    await h.load();
+    assert.equal(h.state.catalogLoadStatus, 'ready');
+    assert.equal(h.state.catalogData.cortes[0].id, 'C-FALLBACK');
+    assert.equal(h.fetchCalls, 0);
+});
+await test('guarda una copia alternativa del snapshot aunque falle IndexedDB', async () => {
+    const remote = snapshot([{ id: 'C-FALLBACK-SAVE', marca: 'Mazda', categoria: 'pickup' }]);
+    const h = createHarness({ networkData: remote, failCatalogPersistence: true });
+    await h.load();
+    assert.equal(h.state.catalogData.cortes[0].id, 'C-FALLBACK-SAVE');
+    assert.equal(h.state.catalogLoadStatus, 'ready');
+    assert.equal(h.offlineFallbackSaved.snapshot.cortes[0].id, 'C-FALLBACK-SAVE');
 });
 await test('no muestra estado de carga cuando existe una caché local válida', async () => {
     const cached = snapshot([{ id: 'C-CACHE-FIRST', marca: 'Toyota', categoria: 'pickup' }]);
