@@ -59,6 +59,8 @@ function runInboxRoleContractTests(sources) {
   assert(!ui.includes("inbox-consult-developer"));
   assert(feedback.includes('reportProblem: null')&&feedback.includes('case \'reportProblem\''),
    'El reporte de problema autenticado debe seguir siendo el canal de incidencias para soporte.');
+  assert(feedback.includes('getMyProblemReports: null')&&feedback.includes('handleGetMyProblemReports(payload)'),
+   'El usuario debe poder consultar solo sus tickets y respuestas mediante su sesión.');
   assert(feedback.includes('function handleReplyToFeedback')&&feedback.includes('function handleMarkAsResolved'),
    'El ticket debe conservar respuesta y resolución.');
   assert(ui.includes("Estado del ticket")&&ui.includes("ticketCategoryLabels"),
