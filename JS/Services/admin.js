@@ -4228,7 +4228,8 @@ function persistIdentifierSequenceConfigs_(ss, entries) {
             prefix: pattern.prefix, padding: pattern.padding, formula: pattern.formula
         });
     });
-    if (!supported.size) return { configured: 0, unsupported: (entries || []).length };
+    const unsupportedCount = (entries || []).filter(entry => !(entry.pattern || parseIdentifierSequenceFormula_(entry.oldFormula))).length;
+    if (!supported.size) return { configured: 0, unsupported: unsupportedCount };
     let sheet = ss.getSheetByName(IDENTIFIER_SEQUENCE_CONFIG_SHEET_);
     if (!sheet) {
         sheet = ss.insertSheet(IDENTIFIER_SEQUENCE_CONFIG_SHEET_);
@@ -4256,7 +4257,7 @@ function persistIdentifierSequenceConfigs_(ss, entries) {
     });
     if (additions.length) sheet.getRange(sheet.getLastRow() + 1, 1, additions.length, IDENTIFIER_SEQUENCE_CONFIG_HEADERS_.length).setValues(additions);
     SpreadsheetApp.flush();
-    return { configured: supported.size, unsupported: Math.max(0, (entries || []).length - supported.size) };
+    return { configured: supported.size, unsupported: unsupportedCount };
 }
 
 const IDENTIFIER_FORMULA_FREEZE_MANIFEST_ = "__IdentifierFormulaFreezeManifest__";
