@@ -283,7 +283,7 @@ function doPostInternal_(e) {
         const request = JSON.parse(e && e.postData && e.postData.contents || "{}");
         const action = String(request.action || "");
         const requestPayload = request.payload && typeof request.payload === "object" ? request.payload : {};
-        const catalogWriters = ["addOrUpdateCut", "addSupplementaryInfo", "addVinToVehicle", "freezeCortesIds"];
+        const catalogWriters = ["addOrUpdateCut", "addSupplementaryInfo", "addVinToVehicle"];
         if (response && response.status === "success" &&
             !String(requestPayload.__sharedMutationToken || "").trim() &&
             catalogWriters.includes(action)) {
