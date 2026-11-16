@@ -2135,10 +2135,14 @@ function handleGetFeedbackItems(payload) {
   contactRows=readInboxSheetPage_(contactSheet,contactOffset,take);
  }
  const reportMetadataColumn=feedbackRows.length?getReportMetadataColumn(feedbackSheet):0;
- const data=feedbackRows.map(row=>mapInboxFeedbackRow_(row,reportMetadataColumn))
+ const actor=payload&&payload.__feedbackActor?payload.__feedbackActor:getFeedbackActor_(payload,null);
+ const canSeeVideoApprovals=String(actor&&actor.role||"")==="Desarrollador";
+ const mappedFeedback=feedbackRows.map(row=>mapInboxFeedbackRow_(row,reportMetadataColumn));
+ const data=mappedFeedback.filter(item=>canSeeVideoApprovals||item.type!=="video_approval")
   .concat(contactRows.map(mapInboxContactRow_));
- const nextOffset=offset+data.length,hasMore=nextOffset<total;
- return{status:"success",data,nextCursor:hasMore?String(nextOffset):null,hasMore,pageSize,total};
+ const consumedCount=feedbackRows.length+contactRows.length;
+ const nextOffset=offset+consumedCount,hasMore=nextOffset<total;
+ return{status:"success",data,nextCursor:hasMore?String(nextOffset):null,hasMore,pageSize,total:canSeeVideoApprovals?total:null};
 }
 
 function handleGetMyProblemReports(payload) {
