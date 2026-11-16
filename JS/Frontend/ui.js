@@ -22,7 +22,7 @@ import { thumbnailObjectUrls } from './imageObjectUrlCache.js';
 import { createInboxPageCache, mergeInboxMessagePages } from './inboxPageCache.js';
 import { loadPysData, getCachedPysData, getPysDataFreshness, invalidatePysDataCache } from './pys-data.js';
 import { captureModalViewState, restoreModalViewState, shouldRecordModalTransition, pushModalNavigationContext, popModalNavigationContext } from './modalNavigation.js';
-import { createRichTextToolbar, sanitizeHtmlContent, refreshRichTextToolbars, mountRichTextEditors, positionRichTextMenu, stripRichTextDemoPlaceholder } from './rich-text.js';
+import { createRichTextToolbar, sanitizeHtmlContent, refreshRichTextToolbars, mountRichTextEditors, positionRichTextMenu, stripRichTextDemoPlaceholder, bindRichTextEditorSelection_ } from './rich-text.js';
 import { renderActivityLogs, renderActivityContributions } from './activityDashboard.js';
 import { getDriveStorageCriticalState } from './driveStorageAlerts.js';
 import { getOrCreateTermsDeviceId, getDeviceTermsAcceptance, saveDeviceTermsAcceptance } from './termsDeviceAcceptance.js';
@@ -9297,6 +9297,7 @@ function createInboxRichEditor_(sourceId, editorId, initialHtml, labelText) {
     source.hidden = true; source.tabIndex = -1; source.setAttribute("aria-hidden", "true");
     const editor = inboxCreateNode_("div", "inbox-message-input inbox-rich-editor");
     editor.id = editorId; editor.setAttribute("contenteditable", "true");
+    bindRichTextEditorSelection_(editor);
     editor.setAttribute("role", "textbox"); editor.setAttribute("aria-multiline", "true");
     editor.setAttribute("aria-label", labelText || "Mensaje"); editor.setAttribute("aria-required", "true");
     editor.setAttribute("spellcheck", "true"); editor.dataset.placeholder = labelText || "Escribe un mensaje";
