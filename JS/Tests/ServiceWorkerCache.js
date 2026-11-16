@@ -5,6 +5,11 @@ import vm from 'node:vm';
 const source = fs.readFileSync(new URL('../../service-worker.js', import.meta.url), 'utf8');
 const cases = [];
 const test = (name, run) => cases.push({ name, run });
+test('App Shell incrementa versión e incluye la hoja de estilos corregida', async () => {
+ assert.match(source, /gpsepedia-cache-v43/);
+ assert.ok(source.includes("'./style.css'"));
+});
+
 const quota = () => Object.assign(new Error('Storage quota exceeded'), { name: 'QuotaExceededError' });
 
 function makeResponse(body = 'network', status = 200, type = 'basic') {
