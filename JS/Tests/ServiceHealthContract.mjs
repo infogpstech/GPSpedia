@@ -127,7 +127,7 @@ await check("LEGACY está retirado del registro, documentación activa y red", a
     assert.equal(contracts.LEGACY, undefined);
     assert.equal(apiSource.includes("LEGACY"), false);
     assert.equal(apiSource.includes("logFrontend"), false);
-    assert.doesNotMatch(healthDoc, /\\| LEGACY \\|/);
+    assert.doesNotMatch(healthDoc, /\| LEGACY \|/);
     assert.match(healthDoc, /LEGACY está retirado y no forma parte del inventario/);
     assert.match(healthDoc, /no genera solicitudes/);
 });
