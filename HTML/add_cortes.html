@@ -650,7 +650,7 @@
                         renderAddCutDropdowns_(cached.dropdowns);
                         hasCached = true;
                     }
-                } catch (error) { console.warn('[GPSpedia] No se pudo leer la caché de listas del formulario.'); }
+                } catch (error) { /* La caché es opcional; continuar con la fuente remota. */ }
             }
             toggleLoading(!hasCached);
             try {
@@ -659,7 +659,7 @@
                 renderAddCutDropdowns_(response.dropdowns);
                 if (key) {
                     try { sessionStorage.setItem(key, JSON.stringify({ savedAt: Date.now(), dropdowns: response.dropdowns })); }
-                    catch (error) { console.warn('[GPSpedia] No se pudo guardar la caché de listas del formulario:', error && error.name || 'StorageError'); }
+                    catch (error) { /* La caché es opcional; el formulario sigue funcionando sin persistencia local. */ }
                 }
             } catch (error) {
                 if (!hasCached) showConciseAlert_(`Error al cargar datos del formulario: ${error.message}`);
