@@ -1891,3 +1891,5 @@ Backlog y registro de cambios sincronizados con este estado. La rama base perman
 - **Estado:** implementación publicada en la rama de trabajo; pendiente CI sobre el commit y aceptación visual en navegador/Beta.
 
 - Tercer ajuste de contrato: se sustituyeron expresiones regulares innecesariamente complejas por verificaciones de fragmentos literales; la prueba anterior se parseaba, pero la expresión escapada se compilaba incorrectamente en Node 22. Se vuelve a ejecutar la suite.
+
+- CI run `43901604085` confirmó el cambio funcional de tarjeta, pero la nueva prueba Pys tenía expresiones regulares sobreescapadas. Se sustituyen por comprobaciones literales explícitas y se repite la suite.

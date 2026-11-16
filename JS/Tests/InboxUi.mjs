@@ -93,19 +93,14 @@ check("La bandeja tiene carpetas, búsqueda y paginación", () => {
     assert.match(ui, /inboxConversationNextCursor_/);
 });
 check("La búsqueda se cierra al usar otra acción, cambiar de pestaña o volver a pulsar la lupa", () => {
-    for (const fragment of [
-        "function closeInboxSearch_()",
-        'inboxContent.addEventListener("click"',
-        'button.id === "inbox-search-toggle"',
-        "closeInboxSearch_();",
-        'searchToggle.addEventListener("click"',
-        "async function setInboxSection_(section) {",
-        'if (nextView !== "conversations") closeInboxSearch_()',
-        "form.hidden = true",
-        'setAttribute("aria-expanded", "false")'
-    ]) assert.ok(ui.includes(fragment), "Falta contrato de cierre de búsqueda: " + fragment);
+    assert.match(ui, /function closeInboxSearch_\\(\\)/);
+    assert.match(ui, /inboxContent\\.addEventListener\\("click",[\\s\\S]*?button\\.id === "inbox-search-toggle"[\\s\\S]*?closeInboxSearch_\\(\\)/);
+    assert.match(ui, /searchToggle\\.addEventListener\\("click",[\\s\\S]*?closeInboxSearch_\\(\\)/);
+    assert.match(ui, /async function setInboxSection_\\(section\\) \\{\\s*closeInboxSearch_\\(\\)/);
+    assert.match(ui, /if \\(nextView !== "conversations"\\) closeInboxSearch_\\(\\)/);
+    assert.match(ui, /form\\.hidden = true/);
+    assert.match(ui, /setAttribute\\("aria-expanded", "false"\\)/);
 });
-
 check("General y Soporte no muestran selector de categoría y conservan la búsqueda por contenido", () => {
     assert.doesNotMatch(html, /inbox-category-filter|inbox-filter-row/);
     assert.match(html, /id="inbox-search-toggle"/);
