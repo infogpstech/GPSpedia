@@ -720,7 +720,7 @@ const trustedInboxActor = { userId:"U1", userName:"Ana Desarrolladora", role:"De
 const dispatch = new Function(
     "FEEDBACK_ACTION_PERMISSIONS", "FEEDBACK_PUBLIC_ACTIONS", "withSharedMutationLease_",
     "withSharedSessionActor_", "doPostInternal_", "ContentService",
-    mutationMatch[0] + "\\n" + postMatch[0] + "\\nreturn doPost;"
+    mutationMatch[0] + String.fromCharCode(10) + postMatch[0] + String.fromCharCode(10) + "return doPost;"
 )(
     { getInboxRecipients:null, getInboxConversations:null, getInboxMessages:null, createInboxConversation:null },
     new Set(),
