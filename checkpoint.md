@@ -1621,3 +1621,35 @@ Requisitos registrados: GP-UX-INBOX-01 (secciones General, Soporte, Contáctanos
 Inspección inicial: Inbox actual combina conversaciones y solicitudes históricas en pestañas; users.html consulta getUsers sin caché propia y apila acciones verticalmente en móvil; Service Worker está en v31 y cache-first no garantiza restauración del DOM al volver de páginas independientes. Las aprobaciones de vídeo conservan restricciones por rol. Tareas_Activas.md no existe; Tareas_Pendientes.md es el backlog operativo vigente.
 
 Estado: requisitos registrados, implementación pendiente. Próxima acción: mapear las fuentes de solicitudes y permisos antes de cambiar el Inbox; luego implementar caché e interfaz con pruebas de regresión. No se ejecutaron pruebas nuevas ni despliegues.
+
+
+## Cierre local — fase Inbox y navegación (2026-11-16)
+
+**Estado:** IMPLEMENTACIÓN LOCAL COMPLETADA; validación Beta de interfaz y entorno externo pendiente.  
+**Commit de código validado:** 2c64a5dcd329790316cfc672c9a630856ee63537  
+**Documentación de cierre:** Tareas_Pendientes.md actualizada en 260df6c0d147d41622a714ff75c3d54c94ee0b84.
+
+### Implementación
+- index.html: estructura de bandeja con menú lateral hamburguesa, secciones General, Soporte, Contáctanos, Reportes y Aportaciones; acciones superiores con iconos de composición y actualización.
+- JS/Frontend/ui.js: cambio de sección, filtros por fuente/tipo, navegación y control de visibilidad de Aportaciones solo Desarrollador; eliminación de solicitudes con icono de papelera; controles de aprobación restringidos en UI al rol Desarrollador.
+- JS/Services/feedback.js: FEEDBACK solo permite approveVideo/rejectVideo al rol Desarrollador y omite los registros video_approval en las lecturas de getFeedbackItems para actores que no sean Desarrollador.
+- HTML/users.html: caché sessionStorage por identidad/rol/huella de sesión, TTL de cinco minutos, render inmediato de caché vigente y actualización remota; acciones Editar/Eliminar iconográficas en un grupo horizontal y cierre de sesiones separado.
+- HTML/add_cortes.html: caché sessionStorage de listas desplegables por usuario/sesión, render inmediato de datos vigentes y revalidación remota sin depender de la caché.
+- style.css: panel lateral plegable, distribución responsive de bandejas y acciones del modal de detalle alineadas en esquina superior derecha, antes del cierre.
+- service-worker.js: caché App Shell actualizada a v32.
+
+### Validación ejecutada
+- GitHub Actions, workflow de regresión: SUCCESS.
+- Resultado: 126 suites, 1,864 pruebas aprobadas, 0 fallos de suite.
+- GitHub Pages build/deployment workflow: SUCCESS.
+- Contratos relevantes: InboxUi 31/31; InboxRoleContract 21/21; paginación Inbox 4/4; ButtonWidthPolicy 5/5; CutDetailModalLayout 8/8; ServiceWorkerCache 9/9.
+- Las primeras ejecuciones revelaron expectativas antiguas de rol, disposición de botones, versión de caché y política de logging; se corrigieron y la ejecución final quedó verde.
+
+### Pendientes Beta / entorno externo
+- Verificar visualmente en navegador de escritorio y móvil los tamaños, navegación lateral, accesibilidad táctil y contraste en temas claro/oscuro.
+- Confirmar el retorno real a index.html mediante BFCache en navegadores/dispositivos objetivo; las pruebas automatizadas validan la caché del App Shell, pero no simulan el ciclo completo del navegador móvil.
+- Probar con registros reales las cinco secciones, paginación cuando una página contenga solo tipos de otra sección, operaciones de responder/resolver/eliminar y permisos de cada rol.
+- Verificar la revalidación remota de listas desplegables y usuarios con cambios concurrentes; no se ejecutó despliegue de Apps Script ni se alteraron datos productivos.
+
+### Continuidad
+Los cuatro requerimientos GP-UX-INBOX-01, GP-PERF-PAGES-01, GP-UX-USERS-01 y GP-UX-CUT-MODAL-01 quedan cerrados a nivel de código y pruebas automatizadas, con aceptación Beta pendiente. Rama base GPSpedia2.2.5 sin modificaciones.
