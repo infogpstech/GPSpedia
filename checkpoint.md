@@ -1,3 +1,28 @@
+# Actualización de continuidad — GP-UX-INBOX-04 (2026-11-16)
+
+**Rama de trabajo:** `GPSpedia2.2.5_work`  
+**HEAD de código y pruebas validado:** `5862d79530e3c2d5753c3a6c0ab1ca05f823672b`  
+**Rama base protegida:** `GPSpedia2.2.5` — `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; sin modificaciones.  
+**PR #128:** se conserva abierto en borrador.
+
+## Resultado
+- `index.html`: eliminados los filtros independientes «Leídos» y «No leídos»; «Recibidos» conserva la bandeja conjunta. Se mantienen Enviados, Archivados, Nuevo mensaje y Buscar.
+- `JS/Frontend/ui.js`: cada conversación muestra a la izquierda un icono accesible de sobre cerrado si tiene mensajes sin leer y sobre abierto si ya fue leída. El estado se deriva de `unreadCount`; no se modifica el servicio ni el dato persistido.
+- `style.css`: barra móvil con cinco columnas iguales y gap constante para todas las acciones. Se elimina la expansión horizontal del botón activo que ocasionaba la superposición y se unifican las dimensiones del botón de búsqueda y los demás controles.
+- `JS/Tests/InboxUi.mjs`: pruebas de regresión para la retirada de filtros, distribución móvil y estado de lectura.
+
+## Validación
+- GitHub Actions Node.js 22 run `43883547065`: **SUCCESS — 129 suites / 1,901 pruebas / 0 fallos**.
+- `InboxUi`: **36/36 PASS**.
+- GitHub Pages run `43883547321`: **SUCCESS**.
+- La misma validación de regresión volvió a aprobar en el commit documental posterior `141678380127dc705dba7775d83863120f0850bf`.
+- Sin cambios en Apps Script, backend, contratos, permisos ni datos de conversaciones.
+
+## Pendiente
+- Verificación visual en dispositivo móvil real durante Beta; la corrección estructural y sus regresiones locales están completadas.
+
+---
+
 # Continuidad vigente — GPSpedia (2026-11-16)
 
 **Rama de trabajo:** `GPSpedia2.2.5_work`  
