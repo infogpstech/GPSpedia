@@ -707,7 +707,7 @@ const FEEDBACK_ACTION_PERMISSIONS = Object.freeze({
     getRichTextMode: null, setRichTextMode: ["Desarrollador"],
     getActivityLogs: ["Desarrollador", "Jefe", "Supervisor"], clearActivityLogs: ["Desarrollador"],
     initYouTubeUpload: null, getVideoApprovalByOperation: null, submitVideoForApproval: null,
-    approveVideo: ["Desarrollador", "Jefe", "Supervisor"], rejectVideo: ["Desarrollador", "Jefe", "Supervisor"]
+    approveVideo: ["Desarrollador"], rejectVideo: ["Desarrollador"]
 });
 const FEEDBACK_PUBLIC_ACTIONS = new Set(["getPysData", "sendContactForm", "getCatalogChanges"]);
 function authorizeFeedbackAction_(action, payload) {
