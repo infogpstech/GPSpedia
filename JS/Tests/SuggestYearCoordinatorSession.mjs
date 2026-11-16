@@ -57,7 +57,7 @@ const authResult = post(authenticated, {
     userName: "Nombre falsificado", userRole: "Desarrollador", vehicleId: "VEH-1", year: 2025
 });
 assert.equal(authResult.status, "success");
-assert.deepEqual(authenticated.calls.map(call => [call.service, call.operation]), [["FEEDBACK", "sessionActivity"]]);
+assert.deepEqual(authenticated.calls.map(call => [call.service, call.operation]), [["FEEDBACK", "suggestYear"]]);
 assert.equal(authenticated.captured.length, 1);
 assert.equal(authenticated.captured[0].userId, "USR-42");
 assert.equal(authenticated.captured[0].userName, "Nombre verificado");
