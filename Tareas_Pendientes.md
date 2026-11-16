@@ -840,3 +840,10 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - Preservar handlers, permisos, navegación y datos. No modificar servicios Apps Script ni deployments.
 - App Shell v48; pruebas CutDetailModalLayout, ServiceWorkerCache y OfflineBrandAssets actualizadas.
 - CI automatizada y aceptación visual Beta pendientes de evidencia.
+
+
+### Adenda de validación — GP-UX-CUT-MODAL-04 / GP-UX-TUTORIAL-MODAL-01
+- Inspección estática dirigida sobre los archivos publicados: **9/9 comprobaciones PASS** (divisor, márgenes, overflow de logo, tipografía, dimensiones de acciones, cierre tutorial, ajuste entre palabras y App Shell v48).
+- El estado combinado consultado para el HEAD no expone checks; el endpoint de workflow disponible solo devuelve ejecuciones asociadas a pull requests. No se afirma CI aprobada.
+- El intento de clonar la rama para ejecutar Node.js localmente no pudo resolver github.com. Las suites Node.js completas quedan pendientes de un entorno con acceso al repositorio o de evidencia de GitHub Actions.
+- Aceptación visual escritorio/Android/PWA pendiente de Beta.
