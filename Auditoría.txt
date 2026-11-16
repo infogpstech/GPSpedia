@@ -1674,3 +1674,7 @@ ADENDA DE AUDITORÍA — GP-UX-INBOX-RICH-EDITOR-01 — 2026-11-16
 - Los campos de una sola línea no se convierten. Los textarea de otros formularios que no tenían herramienta enriquecida (por ejemplo, el reporte de error de corte) permanecen sin formato añadido. Los campos de identificación y ubicación del tutorial se mantienen como texto simple porque el contrato backend los almacena como texto plano.
 - Implementación: superficie `contenteditable` visible y textarea fuente oculto sincronizado con HTML saneado; conservación de límites de caracteres, eventos de guardado al perder foco, validación de campos obligatorios y saneamiento de pegado. Se mantienen separados los modos básico, listas y completo.
 - Estado inicial: pruebas automatizadas incorporadas al runner; ejecución CI y validación visual en navegador/Android/PWA pendientes de comprobar.
+
+
+### Seguimiento de CI — GP-UX-RICH-FORMS-01 — 2026-11-16
+- Las primeras ejecuciones detectaron y permitieron corregir un ancla de inserción sintáctica y una expectativa de prueba obsoleta para el contrato de Tutorial. La ejecución posterior validó sintaxis y 1,650 pruebas; la única suite restante falló por conservar la expectativa del caché v51. Se actualiza el contrato de prueba a v52 y se espera la reejecución.

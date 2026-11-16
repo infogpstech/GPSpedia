@@ -1364,3 +1364,7 @@ GP-UX-INBOX-RICH-EDITOR-01 — 2026-11-16
 - `JS/Frontend/main.js` y `HTML/add_cortes.html`: activación del editor visual en Contáctanos y en el formulario independiente de cortes; sincronización de cambios programáticos del campo de ubicación.
 - `style.css`: estilos compartidos de la superficie visual y listas personalizadas. `service-worker.js`: App Shell v52.
 - `JS/Tests/InboxUi.mjs`: contratos para los tres tipos de editor, formularios, saneamiento y sincronización.
+
+
+### Corrección de CI — GP-UX-RICH-FORMS-01 — 2026-11-16
+- Se actualizó `JS/Tests/ServiceWorkerCache.js` para esperar la nueva versión `gpsepedia-cache-v52`; la implementación del Service Worker ya había sido incrementada correctamente.

@@ -219,3 +219,9 @@ El checkpoint acumulativo anterior se conserva íntegro en `Checkpoint_Archive/c
 - Se agrega la barra de listas a Prevención PyS durante creación, para igualar la herramienta ya presente durante edición. Inbox permanece completo y aislado.
 - Archivos modificados: `JS/Frontend/rich-text.js`, `JS/Frontend/ui.js`, `JS/Frontend/main.js`, `HTML/add_cortes.html`, `style.css`, `service-worker.js`, `JS/Tests/InboxUi.mjs`, `Auditoría.txt`, `ChangesLogs.txt` y este checkpoint.
 - Estado al publicar: pruebas locales Node.js no disponibles en esta sesión; se incorporan contratos al runner CI. CI/Pages y validación visual Android/PWA quedan pendientes de resultados reales.
+
+
+### Corrección de regresión de pruebas — GP-UX-RICH-FORMS-01 — 2026-11-16
+- CI run `43968040912` detectó un error sintáctico en el montaje de los campos dinámicos de alimentación y una expectativa histórica en `TutorialIntegrity.js`; ambos fueron corregidos en `0b2c151`.
+- CI run `43968323034` confirmó sintaxis válida y 1,650 pruebas aprobadas; quedó una única suite fallida porque `ServiceWorkerCache.js` aún esperaba App Shell v51. Se actualiza su contrato a v52 en este commit.
+- El resultado de CI completo se mantiene pendiente de la siguiente ejecución.
