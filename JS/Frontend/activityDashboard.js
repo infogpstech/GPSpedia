@@ -62,10 +62,12 @@ export function normalizeContributionRows(contributions) {
         .replace(/(^|[\s'-])(\p{L})/gu, (_match, prefix, letter) => prefix + letter.toLocaleUpperCase("es"));
     entries.forEach(entry => {
         if (!entry || typeof entry !== "object") return;
-        const names = Array.from(new Set(parseNames(entry.nombreUsuario).map(name => {
+        const namesByKey = new Map();
+        parseNames(entry.nombreUsuario).forEach(name => {
             const key = normalizeKey(name);
-            return key ? { key, name: displayName(name) } : null;
-        }).filter(Boolean).map(item => JSON.stringify(item)))).map(value => JSON.parse(value));
+            if (key && !namesByKey.has(key)) namesByKey.set(key, { key, name: displayName(name) });
+        });
+        const names = Array.from(namesByKey.values());
         const cuts = toCount(entry.cortesAportados);
         const vehicles = toCount(entry.vehiculosConAportes);
         names.forEach(({ key, name }) => {
