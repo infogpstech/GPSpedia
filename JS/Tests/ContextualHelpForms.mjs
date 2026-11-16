@@ -20,7 +20,7 @@ testCase("Las ayudas son botones accesibles y no alteran el envío del formulari
  assert.ok(html.includes("aria-label=\"Ayuda sobre el año\""));assert.ok(html.includes("aria-label=\"Ayuda sobre la configuración de relay\""));
 });
 testCase("El patrón contextual tiene foco visible, contraste por tema y estado oculto",()=>{
- assert.ok(helpCss.includes(".gp-help-trigger:focus-visible"));assert.ok(helpCss.includes("var(--gp-color-info-bg)"));assert.ok(helpCss.includes(".gp-help-popover[hidden]"));
+ assert.ok(helpCss.includes(".gp-help-trigger:focus-visible"));assert.ok(helpCss.includes("var(--gp-color-info-bg,"));assert.ok(helpCss.includes(".gp-help-popover[hidden]"));
 });
 testCase("La ayuda se controla por pulsación, se cierra fuera y permite Escape",()=>{
  assert.ok(html.includes("document.addEventListener(\'click\', event =>"));assert.ok(html.includes("event.key === \'Escape\'"));assert.ok(html.includes("closeContextHelp(true)"));
