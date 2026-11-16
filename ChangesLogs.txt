@@ -1124,3 +1124,13 @@ VALIDACIÓN FINAL — GP-UX-INBOX-RBAC-01 / GP-UX-RELAY-HEADER-01
 - GitHub Pages build/deploy run 43890220482: SUCCESS.
 - Se corrigieron durante la iteración las expectativas obsoletas de la prueba de RBAC y las referencias de caché v36; la ejecución final corresponde a App Shell v37.
 - Pendiente únicamente la aceptación visual Beta. Sin modificaciones backend, Apps Script ni datos productivos.
+
+
+================================================================================
+2026-11-16 — GP-UX-INBOX-SEARCH-DISMISS-01
+- JS/Frontend/ui.js: cierre centralizado del formulario de búsqueda al pulsar otro control del modal, cambiar sección/vista o volver a pulsar la lupa; se sincronizan hidden y atributos ARIA.
+- JS/Tests/InboxUi.mjs: regresión para cierre por acciones y navegación.
+- service-worker.js: App Shell actualizado a gpsepedia-cache-v38.
+- JS/Tests/ServiceWorkerCache.js: expectativa de versión sincronizada.
+- Sin cambios en servicios Apps Script, contratos backend, permisos, conversaciones ni datos externos.
+================================================================================

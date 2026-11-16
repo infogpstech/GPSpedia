@@ -1856,3 +1856,16 @@ Backlog y registro de cambios sincronizados con este estado. La rama base perman
 - Regresión: `ResponsiveFormsUsers` **16/16 PASS**; `ButtonWidthPolicy` **5/5 PASS**. GitHub Actions Node.js 22 run `43879864027`: **SUCCESS — 128 suites / 1,897 pruebas / 0 fallos**. GitHub Pages run `43879862392`: **SUCCESS**.
 - No se modificaron Apps Script, servicios, backend, autenticación, datos ni deployments. La revisión visual en móviles reales queda pendiente de Beta.
 - HEAD de código: `81a0852c7a549dc21c5d341dbad1767c535fafee`; rama base protegida `GPSpedia2.2.5` permanece en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+
+
+---
+
+## Continuidad — cierre automático de búsqueda Inbox (2026-11-16)
+
+- **Requerimiento:** al activar la lupa se muestra la búsqueda; se cierra al volver a pulsarla, cambiar de sección/pestaña o utilizar otra acción del modal.
+- **Causa:** el manejador original solo retiraba la clase visual al cerrar y no ocultaba el formulario ni restablecía el estado accesible; los demás controles no cerraban de forma centralizada la búsqueda.
+- **Corrección:** `JS/Frontend/ui.js` incorpora `closeInboxSearch_` y delegación de clics en el modal. Se excluyen la propia lupa y el submit de búsqueda; las demás acciones cierran el formulario y sincronizan `hidden`, `aria-expanded` y `aria-label`. El cambio de sección/vista también lo cierra.
+- **Pruebas añadidas:** `JS/Tests/InboxUi.mjs` cubre cierre por acción, pestaña, toggle y estado accesible.
+- **PWA:** Service Worker actualizado a `gpsepedia-cache-v38`; contrato `ServiceWorkerCache.js` sincronizado.
+- **Estado al iniciar:** rama `GPSpedia2.2.5_work`, HEAD `c1b15ba879f287d77a609f5ffc0d2d3f918a5f89`. No se modificó la rama base ni servicios Apps Script/datos externos.
+- **Validación:** pendiente de ejecutar CI Node.js 22 sobre el commit resultante; inspección visual de navegador real queda para Beta. No se declara aprobación anticipada.

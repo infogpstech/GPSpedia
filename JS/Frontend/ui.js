@@ -4431,6 +4431,18 @@ function inboxUpdateUnreadBadge_(counts) {
     badge.hidden = unread <= 0;
     badge.setAttribute("aria-label", unread + " conversaciones sin leer");
 }
+function closeInboxSearch_() {
+    const form = document.getElementById("inbox-conversation-search-form");
+    const toggle = document.getElementById("inbox-search-toggle");
+    if (form) {
+        form.classList.remove("is-open");
+        form.hidden = true;
+    }
+    if (toggle) {
+        toggle.setAttribute("aria-expanded", "false");
+        toggle.setAttribute("aria-label", "Mostrar búsqueda");
+    }
+}
 function bindInboxControls_() {
     const sectionNav = document.getElementById("inbox-section-nav");
     if (sectionNav && sectionNav.dataset.bound !== "true") {
@@ -4479,6 +4491,16 @@ function bindInboxControls_() {
     }
     const searchForm = document.getElementById("inbox-conversation-search-form");
     const searchToggle = document.getElementById("inbox-search-toggle");
+    const inboxContent = document.getElementById("inbox-modal-content");
+    if (inboxContent && inboxContent.dataset.searchDismissBound !== "true") {
+        inboxContent.addEventListener("click", event => {
+            const button = event.target.closest("button");
+            if (!button || button.id === "inbox-search-toggle" ||
+                button.closest("#inbox-conversation-search-form")) return;
+            closeInboxSearch_();
+        });
+        inboxContent.dataset.searchDismissBound = "true";
+    }
     if (searchToggle && searchToggle.dataset.bound !== "true") {
         searchToggle.addEventListener("click", () => {
             if (!searchForm) return;
@@ -4493,7 +4515,7 @@ function bindInboxControls_() {
                 });
                 document.getElementById("inbox-conversation-search")?.focus();
             } else {
-                searchForm.classList.remove("is-open");
+                closeInboxSearch_();
             }
         });
         searchToggle.dataset.bound = "true";
@@ -4531,6 +4553,7 @@ function bindInboxControls_() {
     }
 }
 async function setInboxSection_(section) {
+    closeInboxSearch_();
     const context = getUiSessionContext_();
     const allowed = ["general", "soporte", "contact", "reports", "contributions"];
     const requested = allowed.includes(section) ? section : "general";
@@ -4553,6 +4576,7 @@ async function setInboxView_(view, options = {}) {
     const context = getUiSessionContext_();
     const nextView = view === "requests" && inboxCanSeeRequests_(context && context.role) ? "requests" : "conversations";
     inboxConversationCurrentView_ = nextView;
+    if (nextView !== "conversations") closeInboxSearch_();
     const searchToggle = document.getElementById("inbox-search-toggle");
     const newMessageButton = document.getElementById("inbox-new-message");
     if (searchToggle) searchToggle.hidden = nextView !== "conversations";
