@@ -125,3 +125,11 @@ El checkpoint acumulativo anterior se conserva íntegro en `Checkpoint_Archive/c
 - GitHub Pages run `43939460856`: **SUCCESS — build y deploy**.
 - Estado: **COMPLETADA CON VALIDACIÓN DIFERIDA**. Falta inspección visual en Android/PWA y escritorio; no se presenta como realizada.
 - Rama base `GPSpedia2.2.5` verificada sin diferencias respecto al SHA protegido `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+
+### GP-UX-INBOX-DESKTOP-02 — Corrección de escritorio y editor — 2026-11-16
+- HEAD confirmado al iniciar: `6c11602600fd04039608c67da973e9b87447fa94`, rama `GPSpedia2.2.5_work`; rama base protegida `GPSpedia2.2.5`.
+- Se revisaron `Images/tests/modal_inbox_bandeja.png` y `Images/tests/modal_inbox_reportes.png`.
+- Diagnóstico: el formulario nuevo no tenía una región de scroll flexible; los controles Salir/Enviar podían quedar debajo del área recortada. Plantilla y Categoría se renderizaban como campos verticales independientes. La lupa mostraba su etiqueta dentro de un botón de ancho fijo. La lista vacía ocupaba todo el alto del sidebar.
+- Implementación preparada: scroll propio del formulario con acciones sticky; selectores en fila; toolbar compartida en nuevo mensaje y respuesta; renderizado del contenido enriquecido después de sanitización; altura compacta de la lista vacía y lupa cuadrada sin etiqueta visible.
+- App Shell v46. Pruebas InboxUi, ServiceWorkerCache y OfflineBrandAssets reforzadas.
+- Estado al registrar: cambios locales en construcción/publicación; CI aún no ejecutada. No se modifican Apps Script, deployments, RBAC ni datos externos.
