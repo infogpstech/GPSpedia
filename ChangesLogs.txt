@@ -1036,3 +1036,15 @@ HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
 - Pruebas: CutDetailModalLayout 9/9; OfflineBrandAssets 4/4; ServiceWorkerCache 9/9. GitHub Actions SUCCESS: 127 suites, 1,869 pruebas aprobadas, 0 fallos. GitHub Pages build/deployment SUCCESS.
 - Pendiente Beta: comprobar visualmente marcas/logos con distintas proporciones, Splash oscuro, favicon y funcionamiento sin conexión en navegador/dispositivo real. No se desplegaron servicios ni se modificaron datos productivos.
 - Tareas registradas y cerradas a nivel de implementación en Tareas_Pendientes.md; checkpoint.md actualizado.
+
+
+================================================================================
+2026-11-16 — GP-UX-INBOX-02: LISTA, BÚSQUEDA Y PAGINACIÓN UNIFORME
+- index.html: lupa para desplegar búsqueda; selector de categoría retirado; carpetas iconográficas con estado activo expandible; barra única de paginación con flechas y numeración contextual.
+- style.css: espacio de trabajo flexible a toda la altura disponible, scroll interno ampliado, animación de búsqueda y etiquetas de carpetas, ajustes responsive y movimiento reducido.
+- JS/Frontend/ui.js: búsqueda por texto, retirada del filtro visual de categoría y reutilización del mismo paginador entre conversaciones y solicitudes históricas.
+- JS/Services/InboxConversations.js: nueva carpeta «read» para conversaciones recibidas sin mensajes pendientes de lectura.
+- JS/Tests/InboxUi.mjs y JS/Tests/InboxConversations.mjs: regresiones para controles, búsqueda, paginación compartida y carpeta de leídos.
+- No se desplegaron servicios Apps Script ni se modificaron hojas, secretos o datos externos.
+- Validación automatizada y aceptación visual aún pendientes; no se declaran pruebas aprobadas en este registro.
+================================================================================
