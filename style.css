@@ -4888,45 +4888,18 @@ body.dark-mode #login-modal #login-error.login-session-ended {
     #inbox-modal-content .inbox-icon-action { flex-basis:36px; width:36px; min-width:36px; height:36px; min-height:36px; }
     #inbox-modal-content .inbox-section-nav button { font-size:.62rem; }
 }
-/* GP-UX-CUT-MODAL-01 — acciones inmediatamente antes del control de cierre. */
-.detail-modal-toolbar {
-    position:relative;
-    display:flex;
-    align-items:center;
-    justify-content:flex-start;
-    flex-wrap:wrap;
-    gap:8px;
-    min-height:42px;
-    padding:0 46px 8px 0;
-}
-.detail-modal-title {
-    order:0;
-    flex:1 1 260px;
-    min-width:0;
-    width:auto;
-    max-width:100%;
-    padding:0;
-    margin:0;
-    border:0;
-}
-.detail-modal-saving-indicator {
-    position:static;
-    order:1;
-    flex:0 1 auto;
-    margin:0;
-}
-.detail-modal-header-actions {
-    order:2;
-    margin-left:auto;
-    flex:0 1 auto;
-    flex-wrap:nowrap;
-    justify-content:flex-end;
-}
+/* GP-UX-CUT-MODAL-01 — conservar la cuadrícula del encabezado; las acciones no cambian de fila. */
 .detail-modal-toolbar > .info-close-btn {
-    position:absolute !important; top:0 !important; right:0 !important;
-    margin:0 !important; flex:0 0 38px; width:38px; min-width:38px; height:38px; min-height:38px;
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
+    margin: 0 !important;
+    width: 38px;
+    min-width: 38px;
+    height: 38px;
+    min-height: 38px;
 }
-@media (max-width:560px) {
+@media (max-width: 560px) {
     .detail-modal-toolbar {
         grid-template-columns: minmax(0, 1fr) auto;
         column-gap: 5px;
@@ -4945,7 +4918,6 @@ body.dark-mode #login-modal #login-error.login-session-ended {
         font-size: .95rem;
     }
 }
-
 
 /* GP-UX-INBOX-02 — aprovechar la altura del modal y unificar la navegación. */
 #inbox-modal-content.inbox-modal-content { height:min(900px,calc(100dvh - 24px)); max-height:calc(100dvh - 24px) !important; min-height:0; }
