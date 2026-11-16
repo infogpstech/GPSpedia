@@ -74,3 +74,12 @@ El checkpoint acumulativo anterior se conserva íntegro en `Checkpoint_Archive/c
 - Commits de código de esta corrección: c7ba5876742f92e0025485376431b8c98fc03d06, f4b485530d5d7cdd76901f8fc5f357381e7f1cb8, 6971db7ae35cc0141d44a885edb865786ed50080, fd09b10109c49face04a9bf98892500066ce5b0c, 2bc026cf2647174e6fb0d747e270e6f55958cbc4.
 - Inspección estática: no queda regla display:flex para .detail-modal-toolbar; el bloque grid permanece; no queda order:2 para .detail-modal-header-actions.
 - Pendiente: ejecutar CI Node.js y comprobar el diff completo; aceptación visual en Android/navegador móvil/PWA instalada queda pendiente de Beta. No se modificaron deployments, Apps Script ni datos externos.
+
+
+
+### Estado de validación y HEAD — GP-UX-CUT-MODAL-01 — 2026-11-16
+- HEAD remoto verificado de la rama de trabajo: 2e544048a7f8104133ce46380b0bcb0840def18d (docs(checkpoint): registrar segunda corrección del modal).
+- Compare GPSpedia2.2.5_work → HEAD: identical. Compare GPSpedia2.2.5 → d9acc68d889985c2e2f42fe3a02e502efc86ead1: identical; la rama base permanece intacta.
+- Comprobaciones estáticas reproducibles sobre el contenido GitHub: 10/10 PASS (cascada CSS, cuadrícula, acciones, cierre, App Shell v43 y pruebas asociadas).
+- Node.js y GitHub Actions: PENDIENTES DE CONFIRMACIÓN. No se recibió estado de checks; el entorno local no pudo clonar por falta de resolución de github.com. No se afirma ejecución de las suites.
+- La tarea permanece EN PROGRESO hasta confirmar CI; inspección visual real en Android/PWA sigue pendiente de Beta.
