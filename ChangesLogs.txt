@@ -843,3 +843,9 @@ HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
 - JS/Tests/DeveloperPanelCopy.mjs: valida brevedad, accesibilidad de ayudas, conservación de estados y exclusión del modal de detalles de vehículos.
 - JS/Tests/RunServiceTests.mjs: suite BETA-035 integrada.
 ================================================================================
+
+
+================================================================================
+2026-11-16 — AJUSTE DE FUENTE CSS EN PRUEBA BETA-035
+- JS/Tests/DeveloperPanelCopy.mjs: valida el foco visible en contextual-help.css y la distribución del panel en style.css.
+================================================================================

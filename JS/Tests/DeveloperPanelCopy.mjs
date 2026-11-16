@@ -6,6 +6,7 @@ import { dirname, resolve } from "node:path";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const html = readFileSync(resolve(root, "index.html"), "utf8");
 const css = readFileSync(resolve(root, "style.css"), "utf8");
+const helpCss = readFileSync(resolve(root, "contextual-help.css"), "utf8");
 const ui = readFileSync(resolve(root, "JS/Frontend/ui.js"), "utf8");
 const start = html.indexOf('<!-- ========= MODAL DE DESARROLLADOR ========= -->');
 const end = html.indexOf('<!-- ========= MODAL DE ACEPTACIÓN DE CONDICIONES ========= -->', start);
@@ -31,7 +32,7 @@ testCase("las explicaciones secundarias se ocultan en ayudas accesibles", () => 
         assert.match(developer, panel, id);
     }
     assert.match(developer, /aria-expanded="false"/);
-    assert.match(css, /\.gp-help-trigger:focus-visible/);
+    assert.match(helpCss, /\.gp-help-trigger:focus-visible/);
     assert.match(css, /\.dev-heading-with-help/);
 });
 

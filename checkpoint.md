@@ -1314,3 +1314,6 @@ El usuario confirmó que el backlog pendiente también comprende la organizació
 - `style.css`: filas de encabezado con ayuda y ajuste responsive.
 - Se preservan IDs y acciones; se mantiene sin cambios el modal de detalle de vehículos.
 - Suite `DeveloperPanelCopy` (6 casos) agregada al runner; pendiente CI y validación visual.
+
+
+- Ajuste preventivo de BETA-035: la prueba de ayudas contextuales consulta `contextual-help.css` para validar el foco visible (la regla compartida no está en `style.css`); las reglas de distribución propias del panel se verifican en `style.css`.
