@@ -20,7 +20,7 @@ check("El Inbox es un diálogo modal accesible", () => {
     for (const section of ["general", "soporte", "contact", "reports", "contributions"]) assert.ok(html.includes('data-inbox-section="' + section + '"'));
     assert.match(ui, /function setInboxSection_\(/);
     assert.match(ui, /context.role !== "desarrollador"/);
-    assert.match(ui, /item.type === "video_approval"/);
+    assert.match(ui, /item.type === ['\"]video_approval['\"]/);
     assert.match(html, /id="inbox-modal-content"[^>]*role="dialog"[^>]*aria-modal="true"/);
     assert.match(html, /aria-labelledby="inbox-modal-title"/);
     assert.match(html, /aria-label="Cerrar bandeja de entrada"/);
@@ -38,7 +38,7 @@ check("Las solicitudes históricas siguen separadas y conservan sus contenedores
 });
 check("Las solicitudes históricas usan navegación móvil de una sola vista y regreso accesible", () => {
     assert.match(ui, /is-request-detail-open/);
-    assert.match(ui, /mobileBack = makeElement\('button', 'inbox-mobile-back', 'Volver a solicitudes'\)/);
+    assert.match(ui, /mobileBack = makeElement\('button', 'inbox-mobile-back', 'Volver a la bandeja'\)/);
     assert.match(ui, /itemDiv\.setAttribute\('role', 'button'\)/);
     assert.match(ui, /itemDiv\.addEventListener\('keydown'/);
     assert.ok(css.includes("#inbox-modal-content.is-request-detail-open .inbox-requests-view #inbox-detail"));
