@@ -111,3 +111,21 @@ Esta revisión confirma contratos y rutas del código versionado; **no sustituye
 - GitHub Pages run `43787360402`: build y deploy SUCCESS.
 
 **Pendiente:** verificar todos los modales en Beta con tema claro/oscuro, móvil/escritorio, teclado, foco, lectores de pantalla y navegación Atrás. BETA-021 a BETA-026 continúan abiertos; no se consideran resueltos por este cambio.
+
+
+## Adenda — criterios UX ampliados por el usuario (2026-11-16)
+
+La organización integral del modal Desarrollador, la política de nombres largos, la reducción de textos innecesarios y las ayudas funcionales mediante ⓘ quedan incorporadas a BETA-021–026 y BETA-030–035. Se conserva la exclusión de ⓘ en el modal de detalles de vehículos.
+
+## Aclaración de alcance UX solicitada por el usuario — 2026-11-16
+
+Esta aclaración forma parte de las tareas de interfaz ya abiertas (BETA-021 a BETA-026 y BETA-030 a BETA-035); no constituye una línea de trabajo independiente ni autoriza a posponer el backlog vigente.
+
+- **Organización integral del modal Desarrollador:** revisar la estructura completa, agrupación de herramientas, jerarquía visual, navegación, consola, acciones y espacios. Evitar secciones duplicadas o controles dispersos; agrupar por finalidad y mantener las operaciones relacionadas juntas. Conservar permisos, confirmaciones destructivas y trazabilidad.
+- **Política de nombres largos:** los títulos, nombres de secciones, botones y etiquetas de interfaz deben ser breves, identificables y consistentes. Sustituir frases largas por nombres funcionales cortos sin perder el significado. Para nombres de registros, archivos, vehículos u otros datos reales, preservar el valor original; adaptar su presentación para evitar desbordamientos (ajuste de línea, ancho flexible o detalle contextual), sin truncar ni modificar el dato almacenado. Cuando se use una abreviatura, debe ser inequívoca y mantener el nombre completo disponible mediante accesibilidad o detalle contextual.
+- **Política de textos:** eliminar explicaciones repetitivas, obvias, promocionales o innecesariamente detalladas. Los controles deben indicar la acción o el dato solicitado, no describir párrafos sobre su propio funcionamiento. Mantener visibles solo instrucciones indispensables para evitar errores o advertencias de riesgo; mover el contexto secundario a ayuda ⓘ.
+- **Ayuda funcional con ⓘ:** cada icono debe explicar concretamente qué hace la función, qué cambia, cuándo utilizarla y, si corresponde, sus efectos o restricciones. La ayuda debe ser breve, específica al control y abrirse bajo demanda; no repetir la etiqueta ni mostrar documentación extensa. Debe funcionar por pulsación, teclado y lector de pantalla, con foco visible, cierre accesible y comportamiento responsive. No añadir ⓘ indiscriminadamente ni al modal de detalles de vehículos, cuya exclusión sigue vigente.
+- **Coherencia visual y estructural:** aplicar un sistema común de títulos, botones, campos, selectores, iconos, espaciado, estados y ayudas. La revisión debe abarcar Developer y las demás vistas incluidas en BETA-021–026, sin resolver cada pantalla con estilos aislados.
+- **Aceptación:** comprobar que el modal Developer tenga una jerarquía clara y compacta; que no haya títulos/controles desbordados; que los textos visibles sean concisos; que cada ⓘ aporte información útil y contextual; y que se conserven todos los comportamientos, permisos y advertencias necesarios.
+
+La tarea GP-DEV-UX-01 ya cerrada conserva su alcance original (agrupación Respaldos/Base de datos y ajustes indicados en su registro). Esta aclaración amplía los criterios pendientes de estandarización global y consola; no invalida ni reabre el trabajo previamente completado.

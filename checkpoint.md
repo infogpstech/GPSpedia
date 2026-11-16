@@ -1136,3 +1136,8 @@ Se amplió `AdminImageScanCoordinatorContract.mjs` para exigir que cada mutació
 - BETA-020 queda implementada localmente, pendiente de validación visual y accesible en Beta real. BETA-021–026 siguen pendientes de implementación.
 
 **Siguiente paquete:** BETA-021 (sistema global de botones, campos y selectores), seguido de BETA-022–026. No desplegar Apps Script ni modificar datos productivos.
+
+
+## Aclaración de alcance UX — continuidad (2026-11-16)
+
+El usuario confirmó que el backlog pendiente también comprende la organización integral del modal Desarrollador, nuevos requerimientos visuales/estructurales, política para nombres largos, reducción de textos demasiado detallados y ayudas funcionales mediante ⓘ. Se incorporaron los criterios de aceptación a `Tareas_Activas.md` y `Tareas_beta.md`, dentro de BETA-021–026 y BETA-030–035. La política conserva los datos originales, evita desbordamientos y exige que ⓘ explique función, efecto y restricciones de forma breve. Sigue vigente la exclusión de ayudas ⓘ en el modal de detalles de vehículos. GP-DEV-UX-01 no se reabre: su alcance original permanece completado.
