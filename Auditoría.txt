@@ -1349,3 +1349,39 @@ Validación:
 
 Estado: CORREGIDO LOCALMENTE Y VALIDADO EN CI. PENDIENTE BETA: cotejar configuración privada FEEDBACK/Coordinator, probar Inbox/actividad/tráfico/preferencia desde usuarios reales, sesión revocada con caché 2.2.0 y navegación/cache en dispositivos. La alineación visual de otros modales no enumerados requiere una revisión adicional.
 ==========================================================
+
+
+==========================================================
+AUDITORÍA — 2026-11-16 — AUD-2026-11-16-05
+Ámbito: JS/Services/InboxConversations.js, JS/Services/feedback.js, JS/Frontend/auth.js, JS/Frontend/ui.js, JS/Frontend/api-config.js, JS/Frontend/activityDashboard.js, index.html, style.css.
+
+Hallazgos:
+1. El Inbox dependía de que existieran las hojas InboxConversations, InboxMessages, InboxConversationState, InboxConversationFlags e InboxConversationAudit y sus encabezados. La falta de InboxConversationAudit detenía la carga con «esquema Inbox incompleto».
+2. El feed incremental del catálogo usaba 2,000 ms por intento y el cliente marcaba cualquier error como motivo para una reconciliación completa, aun cuando la caché local y su cursor fueran válidos.
+3. «Vistos recientemente» esperaba la escritura IndexedDB y después volvía a leer el almacén completo antes de actualizar la UI; además, el suscriptor comparaba solo la cantidad de elementos, por lo que no detectaba sustituciones con el carrusel lleno.
+4. El encabezado de detalle permitía que el logo participara en la contracción flex y que el texto del modelo forzara una distribución menos estable.
+5. El panel de actividad solo presentaba eventos; no agregaba aportes de cortes por usuario aunque la hoja Cortes ya conserva colaborador por slot.
+
+Correcciones:
+- Se implementó findOrCreateInboxSheet_ y ensureInboxConversationSheets_ para inicializar las cinco hojas y encabezados canónicos. Las columnas faltantes se insertan en su posición, preservando las columnas restantes y sus datos; no se renombran hojas, no se borran columnas extra y se rechazan encabezados duplicados.
+- Se mantiene una barrera de integridad: la creación de estructura no fabrica estados/mensajes para registros existentes. Los huérfanos o estados incompletos siguen produciendo errores explícitos.
+- Timeout de getCatalogChanges: 5,000 ms por intento con reintentos existentes. Los errores transitorios con snapshot completo y cursor válido mantienen la vista local y no disparan snapshot completo.
+- Vistos recientes: actualización optimista inmediata, persistencia en segundo plano, lecturas de historial/vistos independientes y firma por identidad/orden/timestamp.
+- Logo: flex no encogible; título del modelo pasa a una línea inferior cuando no cabe el ancho mínimo.
+- Actividad: nueva pestaña Aportes por usuario. Agrega cada slot con tipo y colaborador en Cortes, agrupado por nombre normalizado; resuelve ID solo con coincidencia única en Users.
+
+Esquema Inbox canónico:
+- InboxConversations: conversationId, createdAt, updatedAt, subject, category, type, status, createdById, createdByName, createdByRole, participantsJson, createKey, createHash, lastMessageId, lastMessageAt, lastMessagePreview, messageCount.
+- InboxMessages: messageId, conversationId, createdAt, authorId, authorName, authorRole, body, idempotencyKey, payloadHash.
+- InboxConversationState: conversationId, userId, lastReadAt, lastReadMessageId, archived, hasSent, hasReceived, updatedAt, lastReceivedMessageId, lastSentMessageId.
+- InboxConversationFlags: conversationId, userId, unreadOverride, deleted, updatedAt.
+- InboxConversationAudit: eventId, timestamp, actorId, actorName, action, conversationId, messageId, details.
+
+Validación:
+- GitHub Actions Node.js 22 run 43818461461: SUCCESS — 126 suites / 1,864 pruebas / 0 fallos.
+- GitHub Pages run 43818460507: SUCCESS.
+- Pruebas nuevas: bootstrap de hojas/columnas Inbox, agregación de aportes y carrusel optimista; las pruebas existentes de catálogo y lectura acotada de actividad también pasan.
+- Pendiente Beta: prueba aislada de creación/columnas, Inbox con cuentas reales, feed con latencia, IndexedDB/dispositivos, ajuste responsivo del encabezado y verificación de conteos contra datos reales.
+
+Estado: IMPLEMENTADO Y VALIDADO EN CI; DEPLOYMENT/SPREADSHEET BETA PENDIENTE. No se modificaron Apps Script desplegados, secretos, ScriptProperties, hojas, permisos, Drive ni datos productivos.
+==========================================================

@@ -1,22 +1,21 @@
 # Continuidad vigente — GPSpedia (2026-11-16)
 
 **Rama de trabajo:** `GPSpedia2.2.5_work`  
-**HEAD de código validado:** `e4850ea35e5d84b0b2c07c60cb0a63f0f24c7982`  
-**Último commit documental antes de este resumen:** `8efb0f602fb56cbf51e4e7771f99fe3d8e77521d`  
-**Rama base:** `GPSpedia2.2.5` — `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; sin modificaciones.
+**HEAD actual:** `c5b07dbea1256a6c91475712d80260983bed8715`  
+**Rama base protegida:** `GPSpedia2.2.5` — `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; sin modificaciones.  
+**PR #128:** abierto y en borrador; base y head corresponden a las ramas previstas.
 
-## Estado vigente
+## Validación local y CI
 
-- CI Node.js 22: **SUCCESS — 124 suites / 1,847 pruebas / 0 fallos** (run `43815317885`).
-- GitHub Pages: **SUCCESS** (run `43815317615`).
-- El acceso Developer, la recuperación de sesión heredada, el Service Worker cache-first y los reintentos de FEEDBACK están corregidos y validados localmente.
-- El usuario informó que actualizó el secreto de FEEDBACK en su deployment. La igualdad de propiedades y la operación real de Inbox/actividad/tráfico siguen pendientes de verificación Beta.
-- Desarrollador ya tenía `SESSION_LIMITS = Infinity`; la política se conserva y se cubre con pruebas.
-- La revisión transversal de alineación de los demás modales continúa **PENDIENTE LOCAL**; los cierres tutorial/relay, la barra de acciones de cortes y la ayuda de consola sí fueron corregidos.
+- GitHub Actions Node.js 22: **SUCCESS — 126 suites / 1,864 pruebas / 0 fallos** (run `43818461461`).
+- GitHub Pages: **SUCCESS** (run `43818460507`).
+- El bloque de acceso Developer/sesiones/PWA de la iteración anterior continúa cubierto por sus pruebas.
+- Esta iteración completa el bootstrap seguro del esquema Inbox, fallback incremental ante timeout transitorio, actualización optimista de «Vistos recientemente», layout del modelo/logo y pestaña de aportes por usuario.
+- La URL del servicio actualizada por el usuario en `api-config.js` se conserva; su correspondencia con el deployment Beta todavía requiere comprobación real.
 
-## Siguiente acción
+## Siguiente fase
 
-Realizar las pruebas Beta detalladas en `Tareas_Pendientes.md`, sin cambiar deployments o datos productivos desde esta iteración. Después completar la auditoría transversal de modales y repetir regresión local.
+Ejecutar la validación Beta enumerada en `Tareas_Pendientes.md`, empezando por una copia aislada de Spreadsheet. No crear/migrar datos de conversaciones huérfanas, desplegar Apps Script ni alterar secretos o datos productivos. Después continuar la auditoría transversal de alineación de los demás modales, aún pendiente localmente.
 
 ---
 

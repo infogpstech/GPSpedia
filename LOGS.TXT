@@ -137,3 +137,17 @@ ADENDA — 2026-11-16 — CIERRE LOCAL DE INCIDENCIAS DE ACCESO, PWA Y SESIÓN
 - Pendiente Beta: probar los deployments FEEDBACK/Coordinator con usuario real, tráfico global ADMIN, sesión heredada 2.2.0 y navegación cache-first en dispositivos. La revisión global de alineación de otros modales permanece local pendiente.
 - Sin cambios a rama base, deployments Apps Script, secretos, ScriptProperties, Spreadsheet, Drive ni datos productivos.
 ================================================================================
+
+
+================================================================================
+ADENDA — 2026-11-16 — INBOX SCHEMA / CATÁLOGO / VISTOS / APORTES
+- Inbox ahora busca o crea las hojas InboxConversations, InboxMessages, InboxConversationState, InboxConversationFlags e InboxConversationAudit; añade encabezados/columnas ausentes sin renombrar ni borrar hojas/columnas adicionales.
+- Se preserva la integridad de registros existentes: crear una hoja vacía no crea estados de participantes ni repara mensajes huérfanos; esas condiciones siguen notificándose.
+- getCatalogChanges aumenta timeout por intento a 5 s y conserva snapshot/cursor válido ante fallos transitorios, sin forzar snapshot completo.
+- «Vistos recientemente» se actualiza de inmediato en memoria, persiste en segundo plano y no depende de una lectura posterior completa de IndexedDB.
+- Se añadió el tab «Aportes por usuario» con cortes aportados y vehículos distintos, basándose en los colaboradores registrados en cada slot de Cortes.
+- Logo de marca no se comprime; el título del modelo salta debajo cuando no cabe su ancho mínimo.
+- CI Node.js 22: 126 suites / 1,864 pruebas / 0 fallos. GitHub Pages: SUCCESS.
+- Pendiente Beta: verificar esquema y datos en copia aislada de Spreadsheet, usuarios reales de Inbox, conteos de aportes, URL de servicio, latencia del feed y comportamiento de carrusel/layout en dispositivos.
+- No se alteraron deployments Apps Script, secretos, ScriptProperties, hojas, permisos, Drive ni datos productivos.
+================================================================================

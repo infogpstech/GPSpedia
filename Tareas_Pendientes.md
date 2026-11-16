@@ -5,7 +5,7 @@ Fecha de consolidación: 2026-11-16
 Repositorio: `infogpstech/GPSpedia`  
 Rama autorizada: `GPSpedia2.2.5_work`  
 Rama base protegida: `GPSpedia2.2.5`  
-HEAD de código validado al consolidar: `e4850ea35e5d84b0b2c07c60cb0a63f0f24c7982`
+HEAD de código y pruebas validado al consolidar: `c5b07dbea1256a6c91475712d80260983bed8715`
 
 Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_beta.md`, integrando sus pendientes por sector y orden de ejecución. El historial y la evidencia de trabajo anterior permanecen en `checkpoint.md` y en `Olds/Documentacion_Legacy/`. La única fuente normativa continúa siendo `NORMAS_DESAROLLO.md`.
 
@@ -25,6 +25,78 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 3. Cerrar las revisiones locales pendientes de servicios, sesión, identificadores y telemetría.
 4. Ejecutar la regresión integral local una vez completadas las implementaciones vigentes.
 5. Realizar las validaciones Beta en el orden de dependencias indicado, sin simularlas ni bloquear el cierre local por falta de deployment.
+
+## Bloque prioritario — Inbox, feed de catálogo, vistos recientes y aportes de usuarios (2026-11-16)
+
+**Estado:** IMPLEMENTACIÓN LOCAL COMPLETADA Y VALIDADA EN CI; VALIDACIÓN EN SPREADSHEET/BETA PENDIENTE.  
+**HEAD probado:** `c5b07dbea1256a6c91475712d80260983bed8715`.
+
+### P1 — Autocreación segura del esquema Inbox
+**Estado local: COMPLETADO.**
+
+- `findOrCreateInboxSheet_` reutiliza la hoja con el nombre contractual y solo crea la hoja cuando no existe.
+- `ensureInboxConversationSheets_` inicializa las cinco hojas requeridas: `InboxConversations`, `InboxMessages`, `InboxConversationState`, `InboxConversationFlags` e `InboxConversationAudit`.
+- Esquema canónico:
+  - `InboxConversations`: `conversationId, createdAt, updatedAt, subject, category, type, status, createdById, createdByName, createdByRole, participantsJson, createKey, createHash, lastMessageId, lastMessageAt, lastMessagePreview, messageCount`.
+  - `InboxMessages`: `messageId, conversationId, createdAt, authorId, authorName, authorRole, body, idempotencyKey, payloadHash`.
+  - `InboxConversationState`: `conversationId, userId, lastReadAt, lastReadMessageId, archived, hasSent, hasReceived, updatedAt, lastReceivedMessageId, lastSentMessageId`.
+  - `InboxConversationFlags`: `conversationId, userId, unreadOverride, deleted, updatedAt`.
+  - `InboxConversationAudit`: `eventId, timestamp, actorId, actorName, action, conversationId, messageId, details`.
+- Si faltan encabezados/columnas, se insertan en su posición contractual y se desplazan las columnas existentes para preservar sus valores. Los encabezados duplicados provocan error seguro; no se renombra ninguna hoja ni se eliminan columnas extra.
+- La creación de una hoja vacía no inventa estados o mensajes de conversaciones preexistentes. Si quedan mensajes huérfanos o estados de participantes incompletos, la lectura conserva el error de integridad en lugar de presentar una bandeja vacía o fabricar datos.
+
+### P1 — Feed incremental del catálogo
+**Estado local: COMPLETADO.**
+
+- El timeout por intento se eleva de 2,000 a 5,000 ms, conservando los reintentos acotados existentes.
+- Si falla transitoriamente el feed y hay un snapshot completo y cursor válido, se conserva el catálogo mostrado y se evita descargar/reconciliar todo el snapshot. El siguiente ciclo vuelve a intentar solo el delta.
+- La reconciliación completa queda reservada para caché/cursor inválido, reset o inconsistencias reales.
+
+### P2 — Carrusel «Vistos recientemente»
+**Estado local: COMPLETADO.**
+
+- La tarjeta se actualiza optimistamente en memoria al abrir el detalle; la escritura en IndexedDB continúa en segundo plano y ya no se encadena con una lectura completa del almacén.
+- La carga de historial y vistos se desacopla para que una apertura lenta de IndexedDB no retrase ambos.
+- El render detecta cambios de IDs/orden/timestamps, no solo cambios en la cantidad de elementos; se actualiza incluso cuando el carrusel ya tiene 20 elementos.
+
+### P2 — Encabezado del detalle de cortes
+**Estado local: COMPLETADO.**
+
+- El logo de marca tiene `flex: 0 0 auto` y ancho máximo propio; no se comprime para acomodar el modelo.
+- El nombre del modelo se mantiene a la derecha mientras existe espacio horizontal y pasa debajo del logo cuando no cabe el ancho mínimo legible. El texto puede envolver palabras sin deformar el logo.
+
+### P2 — Pestaña de aportes en Panel de Actividad
+**Estado local: COMPLETADO.**
+
+- Se añade la pestaña «Aportes por usuario», separada de «Actividad de usuarios».
+- El backend cuenta cada slot de corte con tipo y colaborador asignado en `Cortes` (`colaboradorCorte1..3` y `tipoCorte1..3`), agrupa por nombre normalizado y muestra cortes aportados y vehículos distintos.
+- El ID de usuario solo se asocia cuando el nombre coincide de forma única con el registro `Users`; no se atribuye por coincidencias ambiguas. Los registros sin colaborador no se asignan arbitrariamente.
+
+### Validación Beta pendiente
+
+Antes de cualquier prueba Beta, sincronizar y verificar el árbol limpio siguiendo el procedimiento obligatorio de `NORMAS_DESAROLLO.md`; no usar comandos destructivos:
+
+```bash
+git status --short --branch
+git branch --show-current
+git rev-parse HEAD
+git fetch origin GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short
+```
+
+1. En una copia Beta de la Spreadsheet, eliminar solo una hoja/columna de prueba para verificar que Inbox crea la estructura contractual y conserva los datos de las columnas que permanecen; no ejecutar esta prueba sobre producción.
+2. Probar Inbox con usuarios reales de los roles autorizados y comprobar creación, envío, lectura, archivado, borrado, auditoría y ausencia de hojas duplicadas.
+3. Revisar que las filas antiguas con mensajes/estados huérfanos se reporten explícitamente; decidir cualquier migración de datos por separado, nunca generar estados ficticios.
+4. Medir `getCatalogChanges` con red lenta y confirmar que un timeout conserva el snapshot/cursor y no dispara una descarga completa innecesaria.
+5. Medir «Vistos recientemente» en frío/caliente, con 20 elementos, varias pestañas y IndexedDB bloqueado; verificar actualización inmediata y persistencia posterior.
+6. Revisar en móvil/escritorio modelos cortos y largos con logos de distintos anchos.
+7. Confirmar que «Aportes por usuario» coincide con la asignación de colaboradores en la hoja `Cortes`; revisar nombres repetidos/ambiguos y cortes históricos sin colaborador.
+8. Verificar la URL de servicio que el usuario actualizó en `api-config.js` contra el deployment Beta y comprobar que las acciones apuntan al servicio esperado. La URL se conserva sin alterarla en esta iteración.
+
+No desplegar Apps Script ni modificar secretos, ScriptProperties, permisos, hojas, Drive o datos productivos desde esta fase local.
+
+---
 
 ## Bloque prioritario — autorización Developer, sesiones, FEEDBACK y PWA (2026-11-16)
 

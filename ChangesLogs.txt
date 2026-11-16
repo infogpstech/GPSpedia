@@ -980,3 +980,18 @@ HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
 - Commits de implementación: 2e7a587, d8e72a7, 966f73d, 10d4579, e4850ea.
 - Validaciones con deployments FEEDBACK/Coordinator y dispositivos quedan pendientes de Beta; no se desplegaron Apps Script ni se modificaron secretos, ScriptProperties, hojas, Drive o datos productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-16 — GP-INBOX / GP-CATALOG / GP-RECENT / GP-ACTIVITY / GP-UI
+- Inbox: findOrCreateInboxSheet_ + ensureInboxConversationSheets_ crean/reutilizan las cinco hojas requeridas y completan encabezados/columnas canónicas. Inserción no destructiva, preserva columnas restantes; no renombra hojas ni elimina columnas extra.
+- Esquema canónico: InboxConversations (17 columnas), InboxMessages (9), InboxConversationState (10), InboxConversationFlags (5), InboxConversationAudit (8). Los registros huérfanos/estados incompletos siguen generando error de integridad; no se inventan filas.
+- Catálogo: timeout incremental elevado de 2 s a 5 s por intento. Error de red/timeout transitorio con snapshot completo y cursor válido conserva caché y evita reconciliación completa.
+- Vistos recientemente: actualización optimista en memoria, escritura IDB en segundo plano, carga independiente de historial/vistos y firma por IDs/timestamps para detectar sustituciones con 20 elementos.
+- Detalle de cortes: logo no encogible; título modelo se envuelve debajo del logo cuando el ancho disponible no alcanza el mínimo.
+- Panel de actividad: pestaña «Aportes por usuario»; cuenta slots de corte por colaborador, muestra cortes y vehículos distintos, vincula User ID solo si el nombre es único.
+- Nuevas suites: ActivityDashboardContributions y RecentlyViewedCarousel; ampliación de InboxConversations y CatalogStartupIntegrity/CatalogFeedRetry.
+- CI Node.js 22 run 43818461461: SUCCESS — 126 suites / 1,864 pruebas / 0 fallos. Pages run 43818460507: SUCCESS.
+- La URL de servicio actualizada por el usuario en api-config.js se conserva; confirmar el deployment Beta antes de pruebas reales.
+- Sin despliegue Apps Script ni cambios a secretos, ScriptProperties, Spreadsheet, permisos, Drive o datos productivos.
+================================================================================
