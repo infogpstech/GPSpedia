@@ -23,24 +23,28 @@ function createHarness(options={}) {
  const formulas=new Map();
  const cell=(row,column)=>({getValue:()=>values[row-1][column-1],getFormula:()=>formulas.get(row+":"+column)||"",setValue:value=>{values[row-1][column-1]=value;},clearContent:()=>{values[row-1][column-1]="";}});
  const sheet={getLastRow:()=>2,getRange:(row,column,numRows,numColumns)=>numRows!==undefined&&numColumns!==undefined?{getValues:()=>values.slice(row-1,row-1+numRows).map(line=>line.slice(column-1,column-1+numColumns))}:cell(row,column)};
- let released=false,previewCalls=0,activityCalls=[];
+ let released=false,previewCalls=0,activityCalls=[],backupChecks=0,cacheRemovals=[];
  const lock={waitLock:()=>{},releaseLock:()=>{released=true;}},LockService={getScriptLock:()=>lock};
  const SHEET_NAMES={CORTES:"Cortes"};
  const COLS_CORTES={id:1,imagenVehiculo:9,imgCorte1:10,imgCorte2:11,imgCorte3:12,imgApertura:13,imgCableAlimen:14,imgCableAlimen2:15,imgCableAlimen3:16};
  const SpreadsheetApp={flush:()=>{}},getSpreadsheet=()=>({getSheetByName:name=>name==="Cortes"?sheet:null});
  const metadata=options.metadata||[{fileId,fileName:"same.png",mimeType:"image/png"}];
- const auditState={ownerId:"DEV-1",status:"complete",scanVersion:"2.6.2",imageMetadataVersion:1,completedAt:Date.now(),pageCount:1,totalDiscovered:metadata.length};
+ const auditState={ownerId:"DEV-1",status:"complete",scanVersion:"2.7.1",imageMetadataVersion:1,completedAt:Date.now(),pageCount:1,totalDiscovered:metadata.length};
  const loadDriveAuditServerState_=id=>{assert.equal(id,auditId);return auditState;};
  const getLatestDriveAuditIdForUser_=owner=>{assert.equal(owner,"DEV-1");return auditId;};
  const loadDriveAuditSeenIds_=()=>({fileIds:metadata.map(item=>item.fileId)});
  const loadDriveAuditFileMetadata_=()=>metadata;
- const handlePreviewCortesImageReconciliation_=payload=>{previewCalls++;assert.deepEqual(payload.files,[{fileId}]);return {writePerformed:false,manifestDigest:options.previewDigest||digest,results:[{status:"matched",fileId,fileName:"same.png",target:{row:2,column:9,vehicleId:"V-001",field:"imagenVehiculo",currentValue:"",hasFormula:false},proposedUrl:url}]};};
+ const handlePreviewCortesImageReconciliation_=payload=>{previewCalls++;assert.deepEqual(payload.files,[{fileId}]);assert.equal(payload.auditId,auditId);return {writePerformed:false,manifestDigest:options.previewDigest||digest,missingReferenceCheckStatus:"verified",missingReferences:options.missingReferences||[],results:[{status:"matched",fileId,fileName:"same.png",target:{row:2,column:9,vehicleId:"V-001",field:"imagenVehiculo",currentValue:"",hasFormula:false},proposedUrl:url}]};};
  const recordImageAdministrationActivity=(context,action,id,details)=>{activityCalls.push({action,id,details});if(options.activityFailure&&action==="cortes_image_reconciliation_applied"){if(options.externalChange)values[1][8]="https://manual.example/changed";return false;}return true;};
- const factory=new Function("LockService","handlePreviewCortesImageReconciliation_","getSpreadsheet","SHEET_NAMES","COLS_CORTES","SpreadsheetApp","recordImageAdministrationActivity","loadDriveAuditServerState_","getLatestDriveAuditIdForUser_","loadDriveAuditSeenIds_","loadDriveAuditFileMetadata_","ADMIN_SERVICE_VERSION",
+ const backupId="backup-file-id-0000000000000001";
+ const verifyImageReconciliationBackup_=(id,context)=>{backupChecks++;if(id!==backupId||!context||context.userId!=="DEV-1"||options.backupFailure)throw new Error("respaldo no válido");return {backupId:id,backupName:"GPSpedia_DB_BACKUP_test",fingerprint:"b".repeat(64)};};
+ const CacheService={getScriptCache:()=>({remove:key=>cacheRemovals.push(key)})};
+ const getImageReconciliationBackupCacheKey=userId=>"CORTES_IMAGE_RECONCILIATION_BACKUP_"+userId;
+ const factory=new Function("LockService","handlePreviewCortesImageReconciliation_","getSpreadsheet","SHEET_NAMES","COLS_CORTES","SpreadsheetApp","recordImageAdministrationActivity","loadDriveAuditServerState_","getLatestDriveAuditIdForUser_","loadDriveAuditSeenIds_","loadDriveAuditFileMetadata_","ADMIN_SERVICE_VERSION","verifyImageReconciliationBackup_","CacheService","getImageReconciliationBackupCacheKey",
   validatorSource+"\n"+countSource+"\n"+duplicateSource+"\n"+handlerSource+"\nreturn handleApplyCortesImageReconciliation_;");
- const handler=factory(LockService,handlePreviewCortesImageReconciliation_,getSpreadsheet,SHEET_NAMES,COLS_CORTES,SpreadsheetApp,recordImageAdministrationActivity,loadDriveAuditServerState_,getLatestDriveAuditIdForUser_,loadDriveAuditSeenIds_,loadDriveAuditFileMetadata_,"2.6.2");
- const payload={confirmed:true,auditId,manifestDigest:digest,approved:[approval]};
- return {handler,payload,values,activityCalls,get released(){return released;},get previewCalls(){return previewCalls;}};
+ const handler=factory(LockService,handlePreviewCortesImageReconciliation_,getSpreadsheet,SHEET_NAMES,COLS_CORTES,SpreadsheetApp,recordImageAdministrationActivity,loadDriveAuditServerState_,getLatestDriveAuditIdForUser_,loadDriveAuditSeenIds_,loadDriveAuditFileMetadata_,"2.7.1",verifyImageReconciliationBackup_,CacheService,getImageReconciliationBackupCacheKey);
+ const payload={confirmed:true,auditId,backupId,manifestDigest:digest,approved:[approval]};
+ return {handler,payload,values,activityCalls,cacheRemovals,get backupChecks(){return backupChecks;},get released(){return released;},get previewCalls(){return previewCalls;}};
 }
 let passed=0;
 function testCase(name,fn){fn();passed++;console.log("PASS "+name);}
@@ -49,7 +53,10 @@ testCase("aplica una propuesta aprobada y verifica el conteo antes/después",()=
  assert.equal(result.status,"success");assert.equal(result.appliedCount,1);
  assert.equal(result.beforeCount,0);assert.equal(result.afterCount,1);
  assert.equal(h.values[1][8],url);assert.equal(h.previewCalls,1);assert.equal(h.released,true);
+ assert.equal(h.backupChecks,1);assert.equal(result.backupId,h.payload.backupId);
+ assert.equal(h.cacheRemovals.length,1);
  assert.equal(h.activityCalls[0].action,"cortes_image_reconciliation_applied");
+ assert.ok(h.activityCalls[0].details.includes(h.payload.backupId));
 });
 testCase("rechaza digest vencido antes de escribir y libera el bloqueo",()=>{
  const h=createHarness({previewDigest:"b".repeat(64)});
@@ -94,4 +101,65 @@ testCase("rechaza archivos renombrados después de la auditoría completa",()=>{
  assert.throws(()=>h.handler(h.payload,()=>{},{userId:"DEV-1"}),/cambió desde la auditoría/);
  assert.equal(h.values[1][8],"");assert.equal(h.previewCalls,1);assert.equal(h.released,true);
 });
-console.log("CortesImageReconciliationApply: "+passed+"/8 PASS");
+testCase("rechaza la aplicación si no se proporciona un respaldo",()=>{
+ const h=createHarness();
+ assert.throws(()=>h.handler({...h.payload,backupId:""},()=>{},{userId:"DEV-1"}),/respaldo completo y verificado/);
+ assert.equal(h.backupChecks,0);assert.equal(h.previewCalls,0);assert.equal(h.values[1][8],"");
+});
+testCase("rechaza un respaldo que no puede verificarse antes de la simulación",()=>{
+ const h=createHarness({backupFailure:true});
+ assert.throws(()=>h.handler(h.payload,()=>{},{userId:"DEV-1"}),/respaldo no válido/);
+ assert.equal(h.backupChecks,1);assert.equal(h.previewCalls,0);assert.equal(h.values[1][8],"");
+});
+testCase("bloquea la aplicación cuando existen referencias de Cortes sin archivo verificado",()=>{
+ const h=createHarness({missingReferences:[{fileId:"missing-drive-file-000000000000",status:"missing_or_unverifiable"}]});
+ assert.throws(()=>h.handler(h.payload,()=>{},{userId:"DEV-1"}),/referencias de Cortes sin archivo verificado/);
+ assert.equal(h.previewCalls,1);assert.equal(h.values[1][8],"");
+});
+
+function createBackupVerifier(options={}) {
+ const backupId="backup-file-id-0000000000000001", sourceId="source-spreadsheet-id";
+ const fingerprint="a".repeat(64), backupName="GPSpedia_DB_BACKUP_run-1";
+ const record={backupId,backupName,sourceSpreadsheetId:sourceId,createdAt:"run-1",fingerprint,sheetCount:4,rowCount:40,cellCount:400,formulaCount:12};
+ const manifest={kind:"GPSpedia_DB_BACKUP_MANIFEST",version:2,status:"complete",sourceSpreadsheetId:sourceId,createdAt:"run-1",fingerprint,sheetCount:4};
+ const backupFile={isTrashed:()=>false,getMimeType:()=>"application/vnd.google-apps.spreadsheet",getName:()=>backupName,
+  getSharingAccess:()=>options.access||"PRIVATE",getDescription:()=>JSON.stringify(options.badManifest?{...manifest,status:"partial"}:manifest)};
+ const backupSpreadsheet={getId:()=>backupId,getSheetByName:()=>({})};
+ const sourceSpreadsheet={getId:()=>sourceId};
+ const cache={get:key=>JSON.stringify(options.badCache?{...record,backupId:"another-backup-id-000000000000"}:record)};
+ const CacheService={getScriptCache:()=>cache};
+ const DriveApp={Access:{PRIVATE:"PRIVATE"},getFileById:()=>backupFile};
+ const SpreadsheetApp={openById:()=>backupSpreadsheet};
+ const adminRestoreValidateDatabaseSchema_=ss=>{
+  const result={fingerprint,sheetCount:4,rowCount:40,cellCount:400,formulaCount:12};
+  if(options.backupFingerprint && ss.getId()===backupId)result.fingerprint=options.backupFingerprint;
+  if(options.sourceFingerprint && ss.getId()===sourceId)result.fingerprint=options.sourceFingerprint;
+  return result;
+ };
+ const keyStart=admin.indexOf("function getImageReconciliationBackupCacheKey");
+ const keyEnd=admin.indexOf("\n}\n",keyStart)+2;
+ const verifyStart=admin.indexOf("function verifyImageReconciliationBackup_");
+ const verifyEnd=admin.indexOf("\n}\n",verifyStart)+2;
+ const keySource=admin.slice(keyStart,keyEnd),verifySource=admin.slice(verifyStart,verifyEnd);
+ const verify=new Function("CacheService","DriveApp","SpreadsheetApp","SPREADSHEET_ID","SHEET_NAMES","isDirectChildOfDriveRoot","ADMIN_RESTORE_DB_MANIFEST_DESCRIPTION_","adminRestoreValidateDatabaseSchema_","getSpreadsheet",
+  keySource+"\n"+verifySource+"\nreturn verifyImageReconciliationBackup_;")(
+  CacheService,DriveApp,SpreadsheetApp,sourceId,{CORTES:"Cortes"},()=>true,"GPSpedia_DB_BACKUP_MANIFEST",
+  adminRestoreValidateDatabaseSchema_,()=>sourceSpreadsheet);
+ return {verify,backupId,fingerprint};
+}
+testCase("verifica copia, manifiesto, ACL privada y fingerprint actual del respaldo",()=>{
+ const h=createBackupVerifier(),result=h.verify(h.backupId,{userId:"DEV-1"});
+ assert.equal(result.backupId,h.backupId);assert.equal(result.fingerprint,h.fingerprint);
+});
+testCase("rechaza respaldos públicos, alterados o con manifiesto inválido",()=>{
+ assert.throws(()=>createBackupVerifier({access:"ANYONE_WITH_LINK"}).verify("backup-file-id-0000000000000001",{userId:"DEV-1"}),/no es privado/);
+ assert.throws(()=>createBackupVerifier({backupFingerprint:"b".repeat(64)}).verify("backup-file-id-0000000000000001",{userId:"DEV-1"}),/cambió después/);
+ assert.throws(()=>createBackupVerifier({badManifest:true}).verify("backup-file-id-0000000000000001",{userId:"DEV-1"}),/manifiesto/);
+});
+testCase("rechaza respaldo de otra sesión y base operativa modificada",()=>{
+ assert.throws(()=>createBackupVerifier({badCache:true}).verify("backup-file-id-0000000000000001",{userId:"DEV-1"}),/esta sesión/);
+ assert.throws(()=>createBackupVerifier({sourceFingerprint:"b".repeat(64)}).verify("backup-file-id-0000000000000001",{userId:"DEV-1"}),/base de datos cambió/);
+});
+assert.match(admin,/getImageReconciliationBackupCacheKey\(developerContext\.userId\)/);
+assert.match(admin,/backupFile\.getSharingAccess\(\) !== DriveApp\.Access\.PRIVATE/);
+console.log("CortesImageReconciliationApply: "+passed+"/"+passed+" PASS");
