@@ -33,6 +33,18 @@ testCase("el título y metadatos se separan del área de edición", () => {
     assert.match(css, /\.detail-modal-title-text \{[\s\S]*?overflow-wrap: anywhere/);
 });
 
+testCase("el logo conserva el tamaño de la rama base y el modelo solo baja si excede el modal", () => {
+    assert.match(css, /\.brand-logo-modal \{[\s\S]*?height: 48px !important;[\s\S]*?max-height: 48px !important/);
+    assert.match(css, /@media \(max-width: 600px\)[\s\S]*?\.brand-logo-modal \{\s*height: 38px !important;\s*max-height: 38px !important/);
+    assert.match(css, /\.detail-modal-title \.brand-logo-modal \{[\s\S]*?flex: 0 0 auto;[\s\S]*?max-width: none/);
+    assert.match(css, /\.detail-modal-title--stacked \.detail-modal-title-text \{[\s\S]*?flex: 1 1 100%/);
+    assert.match(detail, /const updateTitleLayout = \(\) =>/);
+    assert.match(detail, /const requiredWidth = logoImg\.getBoundingClientRect\(\)\.width \+ gap \+ naturalTitleWidth/);
+    assert.match(detail, /requiredWidth > titleContainer\.clientWidth \+ 1/);
+    assert.match(detail, /titleContainer\.classList\.toggle\('detail-modal-title--stacked', shouldStack\)/);
+    assert.match(detail, /new ResizeObserver\(updateTitleLayout\)/);
+});
+
 testCase("los cinco campos de edición se agrupan en una rejilla con asociaciones accesibles", () => {
     assert.match(detail, /editHeaderWrapper\.className = "detail-edit-grid"/);
     assert.match(detail, /appendEditField\(versLabel, versInput\)/);
