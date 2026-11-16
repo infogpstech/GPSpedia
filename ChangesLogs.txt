@@ -1049,3 +1049,15 @@ HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
 - No se desplegaron servicios Apps Script ni se modificaron hojas, secretos o datos externos.
 - Validación automatizada y aceptación visual aún pendientes; no se declaran pruebas aprobadas en este registro.
 ================================================================================
+
+
+================================================================================
+2026-11-16 — GP-UX-INBOX-03 / GP-DASH-ATTR-01
+- index.html: acciones Nuevo mensaje y Buscar reubicadas dentro de la barra de carpetas del Inbox.
+- JS/Frontend/ui.js: visibilidad de ambas acciones sincronizada con la vista de conversaciones/solicitudes.
+- style.css: lista de solicitudes/reportes ocupa el espacio flexible vertical en PWA móvil; el detalle permanece oculto hasta selección; barra de carpetas adaptada a los dos iconos nuevos.
+- JS/Frontend/activityDashboard.js: sanitización y normalización frontend de colaboradores compartidos separados por <br>; agrupación insensible a acentos, mayúsculas, puntuación y espacios; presentación con iniciales en mayúscula.
+- JS/Tests/InboxUi.mjs y JS/Tests/ActivityDashboardContributions.mjs: nuevas regresiones de layout, ubicación de controles y normalización.
+- service-worker.js: versión gpsepedia-cache-v35 e inclusión de activityDashboard.js en el App Shell; JS/Tests/ServiceWorkerCache.js actualizado.
+- Sin cambios en servicios Apps Script, hojas, datos persistentes ni backend.
+================================================================================
