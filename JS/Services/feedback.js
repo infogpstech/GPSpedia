@@ -2255,7 +2255,7 @@ function buildCutContributionSummary_() {
  const slotValues=slotColumns.map(slot=>sheet.getRange(2,slot.type,count,slot.collaborator-slot.type+1).getValues());
  const usersSheet=getSpreadsheet().getSheetByName("Users");
  const userRows=usersSheet&&usersSheet.getLastRow()>1?usersSheet.getRange(2,1,usersSheet.getLastRow()-1,Math.max(8,usersSheet.getLastColumn())).getValues():[];
- const cleanName=value=>String(value||"").replace(/\s*\[OP-[A-Za-z0-9_-]+\]/gi,"").trim();
+ const cleanName=value=>String(value||"").replace(/\s*\[OP-[A-Za-z0-9_-]+\]/gi,"").replace(/\s*\([^)]*\)/g," ").replace(/\s+/g," ").trim();
  const keyOf=value=>cleanName(value).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
  const idsByName=new Map();
  userRows.forEach(row=>{
@@ -2268,8 +2268,8 @@ function buildCutContributionSummary_() {
   const vehicleId=String(vehicleIds[rowIndex]&&vehicleIds[rowIndex][0]||"").trim();
   for(let slot=0;slot<slotColumns.length;slot++){
    const column=slotColumns[slot],values=slotValues[slot][rowIndex]||[];
-   const type=String(values[0]||"").trim(),name=cleanName(values[column.collaborator-column.type]),key=keyOf(name);
-   if(!type||!key)continue;
+   const type=String(values[0]||"").trim(),name=cleanName(values[column.collaborator-column.type])||"Comunidad de técnicos",key=keyOf(name);
+   if(!type)continue;
    let entry=stats.get(key);
    if(!entry){const ids=idsByName.get(key)||[];entry={userId:ids.length===1?ids[0]:"",nombreUsuario:name,cortesAportados:0,_vehicles:new Set()};stats.set(key,entry);}
    entry.cortesAportados++;if(vehicleId)entry._vehicles.add(vehicleId);
