@@ -135,19 +135,22 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 - Validar todos los modales en tema claro/oscuro, móvil/escritorio, teclado, foco, lector de pantalla y navegación Atrás.
 
 ### BETA-030 — Navegación del panel Desarrollador
-**Estado: IMPLEMENTACIÓN LOCAL REPORTADA; PENDIENTE DE REVISIÓN Y BETA.**
+**Estado: IMPLEMENTACIÓN LOCAL COMPLETADA; VALIDACIÓN VISUAL BETA PENDIENTE.**
 
-- Confirmar barra horizontal de herramientas, iconos y expansión de la pestaña activa.
-- Revisar jerarquía, agrupación y navegación del modal completo.
-- Evitar secciones duplicadas y controles dispersos; agrupar herramientas por finalidad.
-- Conservar permisos, confirmaciones destructivas y trazabilidad.
+- La navegación usa una barra horizontal de cuatro opciones con iconos compactos; la pestaña activa expande su etiqueta.
+- Las cuatro opciones son radios nativos asociados a sus labels y a cuatro paneles únicos. La inspección estática no encontró IDs duplicados dentro del modal.
+- Respaldos y Base de datos comparten una sola sección; se conserva la agrupación de Diagnóstico, Imágenes y Drive y Sistema.
+- Se revisaron jerarquía, nombres accesibles, foco, teclado, navegación History API, confirmaciones destructivas y ayudas contextuales.
+- Pruebas locales aisladas: DeveloperPanelUX 7/7, DevToolsModalAccessibility 19/19 y DeveloperPanelCopy 6/6.
+- Pendiente Beta: inspección visual real en navegador móvil/escritorio, teclado y lector de pantalla. No se alteraron permisos ni acciones destructivas.
 
 ### BETA-031 — Animación del título
-**Estado: IMPLEMENTACIÓN LOCAL REPORTADA; PENDIENTE BETA.**
+**Estado: IMPLEMENTACIÓN LOCAL COMPLETADA; VALIDACIÓN VISUAL BETA PENDIENTE.**
 
-- Verificar expansión del título al seleccionar pestaña.
-- Respetar `prefers-reduced-motion` y validar en dispositivos reales.
-
+- El título del modal usa la expansión dev-tools-title-expand; la preferencia prefers-reduced-motion desactiva la animación.
+- La etiqueta de la pestaña activa se expande mediante ancho y opacidad; ahora sus transiciones también se desactivan cuando el usuario solicita movimiento reducido.
+- Se añadió una regresión específica en DeveloperPanelUX; resultado actualizado: 7/7 PASS.
+- Pendiente Beta: comprobar apertura, cambio de pestaña y preferencia de movimiento reducido en navegadores y dispositivos reales.
 ### BETA-032 — Consola central
 **Estado: IMPLEMENTACIÓN LOCAL COMPLETADA; PENDIENTE BETA.**
 
