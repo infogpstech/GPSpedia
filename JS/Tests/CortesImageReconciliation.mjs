@@ -173,6 +173,18 @@ testCase("identifica referencias de Cortes fuera del inventario, en papelera y n
  assert.deepEqual(result.missingReferences.map(item=>item.status).sort(),
   ["ambiguous_location","missing_from_audit","missing_or_unverifiable","outside_cortes_tree","trashed"].sort());
 });
+testCase("conserva el total real cuando el detalle de referencias faltantes se limita a 200",()=>{
+ const refs=new Map(Array.from({length:205},(_,index)=>[
+  "missing-file-"+String(index).padStart(20,"0"),[{sheet:"Cortes",row:index+2,column:9}]
+ ]));
+ const DriveApp={getFileById:()=>({isTrashed:()=>false})};
+ const find=new Function("SHEET_NAMES","DriveApp","getSingleParentFolderInsideCortes",
+  admin.slice(admin.indexOf("function findMissingCortesDriveReferences_"),admin.indexOf("\\n}\\n",admin.indexOf("function findMissingCortesDriveReferences_"))+2)+
+  "\\nreturn findMissingCortesDriveReferences_;")({CORTES:"Cortes"},DriveApp,()=>({}));
+ const result=find(refs,[],"root");
+ assert.equal(result.verified,true);assert.equal(result.totalMissingReferences,205);
+ assert.equal(result.missingReferences.length,200);assert.equal(result.truncated,true);
+});
 testCase("solo el acceso por enlace lector permite asignar y marca exposición innecesaria",()=>{
  const active=planner([target("same")],[{...file(1,"same.png"),accessClass:"public_link_viewer"}],new Map());
  assert.equal(active.results[0].status,"matched");assert.equal(active.results[0].publicityCompliance,"compliant");
