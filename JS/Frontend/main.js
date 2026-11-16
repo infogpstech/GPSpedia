@@ -667,8 +667,8 @@ async function initializeApp() {
     const darkModeToggle = document.getElementById('dark-mode-toggle');
 
     const updateLogos = (isDark) => {
-        const logoUrl = isDark ? 'Images/Logo_TemaOscuro.png' : 'https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=2048';
-        const splashUrl = isDark ? 'Images/Logo_TemaOscuro.png' : 'https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=512';
+        const logoUrl = isDark ? 'Images/Logo_TemaOscuro.png' : 'Images/icon-v3-512x512.png';
+        const splashUrl = isDark ? 'Images/Logo_TemaOscuro.png' : 'Images/icon-v3-512x512.png';
         const loginUrl = isDark ? 'Images/Logo_TemaOscuro.png' : 'Images/icon-v3-512x512.png';
 
         document.querySelectorAll('.app-logo').forEach(img => img.src = logoUrl);
