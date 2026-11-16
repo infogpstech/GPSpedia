@@ -131,7 +131,7 @@ El checkpoint acumulativo anterior se conserva íntegro en `Checkpoint_Archive/c
 - Se revisaron `Images/tests/modal_inbox_bandeja.png` y `Images/tests/modal_inbox_reportes.png`.
 - Diagnóstico: el formulario nuevo no tenía una región de scroll flexible; los controles Salir/Enviar podían quedar debajo del área recortada. Plantilla y Categoría se renderizaban como campos verticales independientes. La lupa mostraba su etiqueta dentro de un botón de ancho fijo. La lista vacía ocupaba todo el alto del sidebar.
 - Implementación preparada: scroll propio del formulario con acciones sticky; selectores en fila; toolbar compartida en nuevo mensaje y respuesta; renderizado del contenido enriquecido después de sanitización; altura compacta de la lista vacía y lupa cuadrada sin etiqueta visible.
-- App Shell v46. Pruebas InboxUi, ServiceWorkerCache y OfflineBrandAssets reforzadas.
-- Estado al registrar: cambios locales en construcción/publicación; CI aún no ejecutada. No se modifican Apps Script, deployments, RBAC ni datos externos.
+- App Shell v47. Pruebas InboxUi, ServiceWorkerCache y OfflineBrandAssets reforzadas.
+- Estado actualizado: cambios publicados secuencialmente en GPSpedia2.2.5_work hasta HEAD be7a1a5548c7ef66712c6ceecee701fb264f82c9; CI no confirmada. No se modifican Apps Script, deployments, RBAC ni datos externos.
 
 - Adenda: la barra del Inbox se fuerza al modo avanzado sin cambiar la preferencia global. Se conserva al refrescar toolbars y el sanitizador recibe el modo avanzado explícito solo para mensajes de Inbox. App Shell v47.
