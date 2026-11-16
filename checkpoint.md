@@ -1477,3 +1477,35 @@ El usuario confirmó que el backlog pendiente también comprende la organizació
 
 ### Siguiente tarea local
 **BETA-042 — Auditoría de retirada del servicio Legacy.** Inventariar referencias residuales en código, UI, registros, contratos y workflows; no borrar datos históricos ni elementos de compatibilidad sin confirmar sus consumidores.
+
+
+## Continuidad — BETA-042 auditoría de retirada Legacy (2026-11-16)
+
+**Rama:** `GPSpedia2.2.5_work`  
+**HEAD de código validado:** `dd3edab7a6a950242b26b038dfb07734a6cd42c3`  
+**HEAD documental previo:** `161e15dfff9a3d3c6d69560f0c7b007b7a4ee207`  
+**Rama base protegida:** `GPSpedia2.2.5` — `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, intacta.
+
+### Resultado
+- Se auditó el inventario de siete servicios, módulos Frontend, HTML, mapa de acciones, contratos, pruebas, documentación activa y workflow.
+- No existen endpoint, acción, ruta UI ni consumidor activo para LEGACY. No quedan referencias ejecutables a `logFrontend`, `SCRIPT_URL` ni `remoteLog`.
+- API/action map y `SERVICE_HEALTH_CONTRACTS` contienen solo los siete servicios vigentes. `ActionDispatchContract` verifica que no se haya reintroducido LEGACY.
+- `Services/SERVICE_HEALTH.md` ya no incluye LEGACY en la tabla de servicios; mantiene una nota separada de retirada sin endpoint ni solicitudes de red.
+- Se preservaron menciones históricas de auditoría/checkpoint. No se borraron logs, registros históricos ni datos externos.
+
+### Commits relevantes
+- `31a24ef75a6f57fa56fc57ef3e0a4575716d0de0` — retirar LEGACY del inventario de salud.
+- `41e60777ea38bddc122847b9a516f5b7681380a7` — ampliar contrato documental de retirada.
+- `dd3edab7a6a950242b26b038dfb07734a6cd42c3` — corregir patrón de prueba.
+- `839556395210395d55bb5342ecc8fa9ad3f6d72a` — backlog actualizado.
+- `951d1c9243ed377d42a8e9c592f6a86636de7f40` — changelog actualizado.
+- `161e15dfff9a3d3c6d69560f0c7b007b7a4ee207` — adenda de auditoría.
+
+### Validación
+- `ServiceHealthContract`: 17/17 PASS.
+- `ActionDispatchContract`: 12/12 PASS.
+- GitHub Actions Node.js 22 run `43800322470`: **SUCCESS — 118 suites / 1,765 pruebas / 0 fallos**.
+- La inexistencia de deployments Legacy externos y de tráfico residual en navegador real queda pendiente de Beta; no bloquea el cierre local.
+
+### Siguiente tarea local
+**BETA-043 — Tráfico global por servicio.** Diseñar e implementar agregación backend central con ventanas temporales, deduplicación y separación explícita del contador local del navegador. Evitar que la telemetría añada un viaje síncrono por petición o bloquee las operaciones.
