@@ -4642,7 +4642,11 @@ function renderInboxConversationList_() {
     const list = document.getElementById("inbox-conversation-list");
     if (!list) return;
     list.replaceChildren();
-    if (!inboxConversationItems_.length) {
+    const sidebar = list.closest(".inbox-conversation-sidebar");
+    const isEmpty = !inboxConversationItems_.length;
+    list.classList.toggle("is-empty", isEmpty);
+    if (sidebar) sidebar.classList.toggle("is-empty", isEmpty);
+    if (isEmpty) {
         list.appendChild(inboxCreateNode_("p", "inbox-state-message", inboxConversationQuery_ ? "No hay conversaciones que coincidan con la búsqueda." : "No hay conversaciones en esta carpeta."));
         return;
     }
@@ -4817,9 +4821,11 @@ function renderInboxConversationDetail_(options = {}) {
     inboxConversationMessages_.forEach(message => {
         const own = message.authorId === (getUiSessionContext_() || {}).userId;
         const bubble = inboxCreateNode_("article", "inbox-message-bubble" + (own ? " is-own" : ""));
+        const messageBody = inboxCreateNode_("div", "inbox-message-body");
+        messageBody.innerHTML = sanitizeHtmlContent(String(message.body || ""));
         bubble.append(
             inboxCreateNode_("div", "inbox-message-meta", String(message.authorName || "Usuario") + " · " + inboxFormatDate_(message.createdAt)),
-            inboxCreateNode_("p", "inbox-message-body", message.body || "")
+            messageBody
         );
         messages.appendChild(bubble);
     });
@@ -4840,11 +4846,14 @@ function renderInboxReplyForm_(detail, item) {
     const textarea = inboxCreateNode_("textarea", "inbox-message-input");
     textarea.id = "inbox-reply-body"; textarea.rows = 3; textarea.maxLength = 5000; textarea.required = true;
     textarea.value = String(draft.body || "");
+    const toolbar = createRichTextToolbar(textarea.id);
+    toolbar.classList.add("inbox-rich-text-toolbar");
+    toolbar.addEventListener("click", () => textarea.dispatchEvent(new Event("input", { bubbles: true })));
     const status = inboxCreateNode_("p", "inbox-form-status");
     status.setAttribute("role", "status"); status.setAttribute("aria-live", "polite");
     const send = inboxCreateNode_("button", "inbox-primary-button", "Enviar mensaje");
     send.type = "submit";
-    form.append(label, textarea, status, send);
+    form.append(label, toolbar, textarea, status, send);
     textarea.addEventListener("input", () => {
         const current = inboxReadDraft_(draftKind), body = textarea.value;
         if (current.lastAttemptBody && current.lastAttemptBody !== body) current.idempotencyKey = "";
@@ -4930,26 +4939,39 @@ async function openInboxNewConversationForm_() {
         { id: "welcome-technician", label: "Bienvenida para técnicos", subject: "Bienvenido al equipo técnico de GPSpedia", body: "Hola. Te damos la bienvenida. Utiliza este canal para compartir consultas técnicas, comunicar incidencias y dar seguimiento a los temas relacionados con GPSpedia." }
     ];
     templates.forEach(item => { const option = inboxCreateNode_("option", "", item.label); option.value = item.id; template.appendChild(option); });
-    if (!isDeveloper) { templateLabel.hidden = true; template.hidden = true; }
     const subject = addField("Asunto", "inbox-new-subject", document.createElement("input"));
     subject.type = "text"; subject.maxLength = 150; subject.required = true;
     subject.value = String(draft.subject || "");
-    const category = addField("Categoría", "inbox-new-category", document.createElement("select"));
+
+    const templateCategoryRow = inboxCreateNode_("div", "inbox-template-category-row");
+    const templateField = inboxCreateNode_("div", "inbox-template-field");
+    templateField.append(templateLabel, template);
+    templateField.hidden = !isDeveloper;
+    const categoryField = inboxCreateNode_("div", "inbox-category-field");
+    const categoryLabel = inboxCreateNode_("label", "", "Categoría");
+    categoryLabel.htmlFor = "inbox-new-category";
+    const category = document.createElement("select");
+    category.id = "inbox-new-category"; category.className = "inbox-form-control";
     ["general","soporte","acceso","contenido","instalacion","otro"].forEach(value => {
         const option = inboxCreateNode_("option", "", value.charAt(0).toUpperCase() + value.slice(1)); option.value = value; category.appendChild(option);
     });
     category.value = String(draft.category || "general");
-    const body = addField("Mensaje", "inbox-new-body", document.createElement("textarea"));
-    body.rows = 6; body.maxLength = 5000; body.required = true; body.classList.add("inbox-message-input");
+    categoryField.append(categoryLabel, category);
+    templateCategoryRow.append(templateField, categoryField);
+    templateCategoryRow.classList.toggle("is-category-only", !isDeveloper);
+    form.appendChild(templateCategoryRow);
+
+    const bodyLabel = inboxCreateNode_("label", "", "Mensaje");
+    bodyLabel.htmlFor = "inbox-new-body";
+    const body = document.createElement("textarea");
+    body.id = "inbox-new-body"; body.rows = 6; body.maxLength = 5000; body.required = true;
+    body.className = "inbox-form-control inbox-message-input";
     body.value = String(draft.body || "");
+    const toolbar = createRichTextToolbar(body.id);
+    toolbar.classList.add("inbox-rich-text-toolbar");
+    const formActions = inboxCreateNode_("div", "inbox-compose-actions");
+    form.append(bodyLabel, toolbar, body);
     if (draft.templateId) template.value = draft.templateId;
-    if (isDeveloper) {
-        const subjectLabel = form.querySelector('label[for="inbox-new-subject"]');
-        if (subjectLabel) {
-            form.insertBefore(templateLabel, subjectLabel);
-            form.insertBefore(template, subjectLabel);
-        }
-    }
     const formStatus = inboxCreateNode_("p", "inbox-form-status");
     formStatus.setAttribute("role", "status"); formStatus.setAttribute("aria-live", "polite");
     const send = inboxCreateNode_("button", "inbox-primary-button", "Enviar mensaje");
@@ -4962,6 +4984,7 @@ async function openInboxNewConversationForm_() {
         inboxSaveDraft_(draftKind, { ...current, recipientId: recipient.value, subject: subject.value, category: category.value, body: body.value, templateId: template.value });
     };
     [recipient,subject,category,body].forEach(element => { element.addEventListener("input", persist); element.addEventListener("change", persist); });
+    toolbar.addEventListener("click", persist);
     template.addEventListener("change", () => {
         const selected = templates.find(item => item.id === template.value);
         if (selected && selected.id) { subject.value = selected.subject; body.value = selected.body; category.value = "general"; }
