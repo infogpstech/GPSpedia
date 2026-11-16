@@ -263,7 +263,7 @@ check("El compositor nuevo permite desplazamiento vertical y mantiene Salir/Envi
 check("Salir y Enviar mensaje permanecen juntos, con dimensiones iguales y Enviar a la derecha", () => {
     assert.match(ui, /formActions\.append\(makeCancelButton\(\), send\)/);
     assert.match(css, /\.inbox-compose-actions\s*\{[^}]*flex-wrap:\s*nowrap/s);
-    assert.match(css, /\.inbox-compose-actions > \.inbox-cancel-compose,[\s\S]*?\.inbox-compose-actions > \.inbox-primary-button\s*\{[\s\S]*?width:104px;[\s\S]*?height:40px/s);
+    assert.match(css, /\.inbox-compose-actions > \.inbox-cancel-compose,[\s\S]*?\.inbox-compose-actions > \.inbox-primary-button\s*\{[\s\S]*?width:64px;[\s\S]*?height:40px/s);
 });
 check("El botón de opciones queda antes de Negrita y su menú se ancla al borde izquierdo", () => {
     assert.match(ui, /composerOptions\.dataset\.richToolbarPosition = "start"/);

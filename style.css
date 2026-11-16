@@ -4992,10 +4992,10 @@ body.dark-mode #login-modal #login-error.login-session-ended {
 #inbox-modal-content .inbox-cancel-compose { min-height:40px; padding:8px 16px; }
 #inbox-modal-content .inbox-compose-actions > .inbox-cancel-compose,
 #inbox-modal-content .inbox-compose-actions > .inbox-primary-button {
-    flex:0 0 104px; width:104px; min-width:104px; max-width:104px;
-    height:40px; min-height:40px; padding:0 5px;
+    flex:0 0 64px; width:64px; min-width:64px; max-width:64px;
+    height:40px; min-height:40px; padding:0 2px;
     display:inline-flex; align-items:center; justify-content:center;
-    white-space:nowrap; font-size:.72rem; line-height:1;
+    white-space:normal; text-align:center; font-size:.7rem; line-height:1.05;
 }
 #inbox-modal-content .inbox-folder-nav button[aria-pressed="true"] { gap:7px; min-width:max-content; }
 #inbox-modal-content .inbox-folder-nav button[aria-pressed="true"] span { max-width:110px; margin-left:1px; opacity:1; transform:translateX(0); }
