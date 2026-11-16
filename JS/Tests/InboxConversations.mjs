@@ -755,7 +755,7 @@ run("Las acciones de preferencias inicializan la hoja faltante", () => {
     const flags=spreadsheet.getSheetByName("InboxConversationFlags");
     spreadsheet.sheets.delete("InboxConversationFlags");
     try {
-        api.handleMarkInboxUnread({ ...actor("U1","token-a"),conversationId:first.conversationId });
+        assert.throws(() => api.handleMarkInboxUnread({ ...actor("U1","token-a"),conversationId:first.conversationId }),/No hay mensajes recibidos/);
         assert.deepEqual(spreadsheet.getSheetByName("InboxConversationFlags").rows[0],inboxSchemaHeaders.InboxConversationFlags);
     } finally { spreadsheet.sheets.set("InboxConversationFlags",flags); }
 });
