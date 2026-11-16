@@ -93,7 +93,7 @@ check("La bandeja tiene carpetas, búsqueda y paginación", () => {
     assert.match(ui, /inboxConversationNextCursor_/);
 });
 check("La búsqueda se cierra al usar otra acción, cambiar de pestaña o volver a pulsar la lupa", () => {
-    assert.match(ui, /function closeInboxSearch_\\(\\)/);
+    assert.match(ui, /function closeInboxSearch_\(\)/);
     assert.match(ui, /inboxContent\.addEventListener\("click",[\s\S]*?button\.id === "inbox-search-toggle"[\s\S]*?closeInboxSearch_\(\)/);
     assert.match(ui, /searchToggle\.addEventListener\("click",[\s\S]*?closeInboxSearch_\(\)/);
     assert.match(ui, /async function setInboxSection_\(section\) \{\s*closeInboxSearch_\(\)/);

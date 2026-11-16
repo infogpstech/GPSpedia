@@ -1874,3 +1874,5 @@ Backlog y registro de cambios sincronizados con este estado. La rama base perman
 ### Adenda de validación — GP-UX-INBOX-SEARCH-DISMISS-01
 - CI inicial run `43900747098` detectó una expresión regular mal escapada en el nuevo contrato de InboxUi; el fallo estaba en la prueba, no en la sintaxis de `ui.js` ni en la lógica funcional. La suite se detuvo antes de completar la validación de esta tarea.
 - Se corrigieron los escapes de las expresiones de prueba. Se vuelve a ejecutar CI sobre el nuevo commit; hasta obtener resultado se mantiene la validación local/CI sin aprobar.
+
+- Segundo CI run `43900956260`: la nueva comprobación del nombre del helper tenía un escape adicional; la implementación y las otras comprobaciones se cargaron, pero InboxUi quedó en 38/39. Se corrige el patrón del contrato y se repite CI.
