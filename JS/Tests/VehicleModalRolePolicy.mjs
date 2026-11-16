@@ -104,7 +104,8 @@ check("FEEDBACK conserva permisos separados para aportaciones, moderación y man
  assert.ok(feedback.includes('recordLike: null'));
  ["reportProblem","addProblem","addSolution","addPrevention","addVehicleToProblem","suggestCutChange","getInboxRecipients","getInboxConversations","getInboxMessages","createInboxConversation","sendInboxMessage","markInboxRead","archiveInboxConversation"].forEach(a=>assert.ok(feedback.includes(a+": null"),a));
  ["removeVehicleFromProblem","updatePysItem","updateTutorialItem","addTutorial","clearActivityLogs"].forEach(a=>assert.ok(feedback.includes(a+': ["Desarrollador"]'),a));
- ["getFeedbackItems","replyToFeedback","markAsResolved","deleteFeedbackItem","getActivityLogs","approveVideo","rejectVideo"].forEach(a=>assert.ok(feedback.includes(a+': ["Desarrollador", "Jefe", "Supervisor"]'),a));
+ ["getFeedbackItems","replyToFeedback","markAsResolved","deleteFeedbackItem","getActivityLogs"].forEach(a=>assert.ok(feedback.includes(a+': ["Desarrollador", "Jefe", "Supervisor"]'),a));
+ ["approveVideo","rejectVideo"].forEach(a=>assert.ok(feedback.includes(a+': ["Desarrollador"]'),a));
 });
 check("WRITE acepta los cinco roles activos y restringe el mantenimiento de IDs",()=>{
  assert.ok(write.includes("['desarrollador','jefe','supervisor','tecnico','tecnico_exterior'].includes(role)"));
