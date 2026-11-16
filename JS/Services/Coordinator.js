@@ -21,6 +21,10 @@ const SHARED_AUTH_CONTEXT_MAX_LENGTH_ = 8000;
 const SHARED_AUTH_IDLE_MONTHS_ = 1;
 const SHARED_AUTH_ABSOLUTE_MONTHS_ = 3;
 const SHARED_AUTH_TOUCH_INTERVAL_MS_ = 5 * 60 * 1000;
+const SERVICE_TRAFFIC_BUCKET_PREFIX_ = "GPSpedia_SERVICE_TRAFFIC_HOUR_";
+const SERVICE_TRAFFIC_BUCKET_MS_ = 60 * 60 * 1000;
+const SERVICE_TRAFFIC_WINDOW_MS_ = 24 * 60 * 60 * 1000;
+const SERVICE_TRAFFIC_SERVICES_ = Object.freeze(["AUTH", "CATALOG", "WRITE", "USERS", "FEEDBACK", "UTILITIES", "ADMIN"]);
 const CATALOG_CHANGE_ALLOWED_WRITERS_ = Object.freeze({
     WRITE: new Set(["addOrUpdateCut","addSupplementaryInfo","addVinToVehicle","freezeCortesIds"]),
     FEEDBACK: new Set(["recordLike","suggestYear","addProblem","addSolution","addPrevention","addVehicleToProblem","removeVehicleFromProblem","updatePysItem","addTutorial","updateTutorialItem","approveVideo","rejectVideo"]),
@@ -587,11 +591,95 @@ function createSharedMutationCoordinator_(dependencies) {
         const userId = String(payload.userId || "").trim();
         const token = String(payload.sessionToken || "");
         if (!userId || !token) throw new Error("La validación requiere userId y sessionToken.");
-        return withCoordinatorLock_(() => ({
-            status: "success",
-            valid: true,
-            actor: authorizeSession_(userId, token, now())
-        }));
+        return withCoordinatorLock_(() => {
+            const currentTime = now();
+            const actor = authorizeSession_(userId, token, currentTime);
+            try { recordServiceTrafficEvent_("AUTH", currentTime); }
+            catch (trafficError) { /* La telemetría nunca debe bloquear la restauración de sesión. */ }
+            return { status: "success", valid: true, actor };
+        });
+    }
+
+    function recordServiceTrafficEvent_(service, capturedAt) {
+        if (!SERVICE_TRAFFIC_SERVICES_.includes(service)) return false;
+        const bucketStart = Math.floor(Number(capturedAt) / SERVICE_TRAFFIC_BUCKET_MS_) * SERVICE_TRAFFIC_BUCKET_MS_;
+        if (!Number.isSafeInteger(bucketStart) || bucketStart <= 0) return false;
+        const key = SERVICE_TRAFFIC_BUCKET_PREFIX_ + bucketStart;
+        let bucket = { version: 1, startAt: bucketStart, counts: {} };
+        const raw = properties.getProperty(key);
+        if (raw) {
+            try {
+                const parsed = JSON.parse(raw);
+                if (parsed && parsed.version === 1 && parsed.startAt === bucketStart &&
+                    parsed.counts && typeof parsed.counts === "object" && !Array.isArray(parsed.counts)) {
+                    bucket = parsed;
+                }
+            } catch (error) { /* Un bucket dañado se reemplaza sin afectar la operación protegida. */ }
+        }
+        const current = Number(bucket.counts[service] || 0);
+        bucket.counts[service] = Number.isSafeInteger(current) && current >= 0
+            ? Math.min(Number.MAX_SAFE_INTEGER, current + 1) : 1;
+        properties.setProperty(key, JSON.stringify(bucket));
+        return true;
+    }
+
+    function readServiceTraffic_(service, operation) {
+        if (service !== "ADMIN" || operation !== "getServiceTraffic") {
+            throw new Error("Solo ADMIN puede consultar la telemetría global.");
+        }
+        return withCoordinatorLock_(() => {
+            const capturedAt = now();
+            const currentBucket = Math.floor(capturedAt / SERVICE_TRAFFIC_BUCKET_MS_) * SERVICE_TRAFFIC_BUCKET_MS_;
+            const firstBucket = currentBucket - SERVICE_TRAFFIC_WINDOW_MS_ + SERVICE_TRAFFIC_BUCKET_MS_;
+            const all = properties.getProperties() || {};
+            const stored = new Map();
+            Object.keys(all).forEach(key => {
+                if (!key.startsWith(SERVICE_TRAFFIC_BUCKET_PREFIX_)) return;
+                const startAt = Number(key.slice(SERVICE_TRAFFIC_BUCKET_PREFIX_.length));
+                if (!Number.isSafeInteger(startAt) || startAt < firstBucket || startAt > currentBucket) {
+                    properties.deleteProperty(key);
+                    return;
+                }
+                let parsed;
+                try { parsed = JSON.parse(all[key]); } catch (error) { parsed = null; }
+                if (!parsed || parsed.version !== 1 || parsed.startAt !== startAt ||
+                    !parsed.counts || typeof parsed.counts !== "object" || Array.isArray(parsed.counts)) {
+                    properties.deleteProperty(key);
+                    return;
+                }
+                const counts = {};
+                SERVICE_TRAFFIC_SERVICES_.forEach(keyName => {
+                    const value = Number(parsed.counts[keyName] || 0);
+                    counts[keyName] = Number.isSafeInteger(value) && value >= 0 ? value : 0;
+                });
+                stored.set(startAt, counts);
+            });
+
+            const zeroCounts = () => Object.fromEntries(SERVICE_TRAFFIC_SERVICES_.map(key => [key, 0]));
+            const totals = { lastHour: zeroCounts(), last6Hours: zeroCounts(), last24Hours: zeroCounts() };
+            const buckets = [];
+            for (let startAt = firstBucket; startAt <= currentBucket; startAt += SERVICE_TRAFFIC_BUCKET_MS_) {
+                const counts = stored.get(startAt) || zeroCounts();
+                buckets.push({ startAt, counts });
+                SERVICE_TRAFFIC_SERVICES_.forEach(key => {
+                    const value = counts[key] || 0;
+                    if (startAt + SERVICE_TRAFFIC_BUCKET_MS_ > capturedAt - 60 * 60 * 1000) totals.lastHour[key] += value;
+                    if (startAt + SERVICE_TRAFFIC_BUCKET_MS_ > capturedAt - 6 * 60 * 60 * 1000) totals.last6Hours[key] += value;
+                    totals.last24Hours[key] += value;
+                });
+            }
+            return {
+                status: "success",
+                scope: "coordinator_protected_operations",
+                capturedAt,
+                windowMs: SERVICE_TRAFFIC_WINDOW_MS_,
+                bucketMs: SERVICE_TRAFFIC_BUCKET_MS_,
+                services: SERVICE_TRAFFIC_SERVICES_.slice(),
+                buckets,
+                totals,
+                excluded: ["lecturas públicas no coordinadas", "feed público del catálogo", "sondeos de salud"]
+            };
+        });
     }
 
     function authorizeSession_(userId, token, currentTime) {
@@ -677,6 +765,8 @@ function createSharedMutationCoordinator_(dependencies) {
                                 existing.phase = "active";
                                 existing.expiresAt = currentTime + SHARED_MUTATION_LEASE_TTL_MS;
                                 saveLeases_(leases);
+                                try { recordServiceTrafficEvent_(service, currentTime); }
+                                catch (trafficError) { /* Métrica best-effort: no afecta la lease. */ }
                                 return { kind: "success", token: existing.token, expiresAt: existing.expiresAt, actor: existing.actor || actor };
                             }
                             if (pruned.changed) saveLeases_(leases);
@@ -717,6 +807,8 @@ function createSharedMutationCoordinator_(dependencies) {
                         lease.phase = "active";
                         lease.expiresAt = currentTime + SHARED_MUTATION_LEASE_TTL_MS;
                         saveLeases_(leases);
+                        try { recordServiceTrafficEvent_(service, currentTime); }
+                        catch (trafficError) { /* Métrica best-effort: no afecta la lease. */ }
                         return { kind: "success", token: token, expiresAt: lease.expiresAt, actor: lease.actor || null };
                     }
                     saveLeases_(leases);
@@ -746,6 +838,8 @@ function createSharedMutationCoordinator_(dependencies) {
                 };
                 leases.push(lease);
                 saveLeases_(leases);
+                try { recordServiceTrafficEvent_(service, currentTime); }
+                catch (trafficError) { /* Métrica best-effort: no afecta la lease. */ }
                 return { kind: "success", token: token, expiresAt: lease.expiresAt, actor: lease.actor || null };
             });
 
@@ -934,6 +1028,7 @@ function createSharedMutationCoordinator_(dependencies) {
         if (action === "revokeSession") return revokeSession_(service, operation, payload);
         if (action === "revokeUserSessions") return revokeUserSessions_(service, operation, payload);
         if (action === "validateSessionContext") return validateSessionContext_(service, operation, payload);
+        if (action === "getServiceTraffic") return readServiceTraffic_(service, operation);
         throw new Error("Acción interna desconocida para el coordinador.");
     }
 
