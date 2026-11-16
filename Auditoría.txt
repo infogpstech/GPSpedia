@@ -996,3 +996,10 @@ Los cambios reportados en checkpoint (consola 50%, pestañas horizontales, títu
 **Hallazgo:** `admin.js/isSharedMutationAction_` declaraba `markReplacedImageInUse`, `applyCortesImageReconciliation` y `freezeIdentifierFormulas`, pero `Coordinator.js/coordinatorPolicy_('ADMIN')` no tenía entradas para ellas. La adquisición de lease fallaba con rechazo de operación no autorizada, antes de ejecutar el handler.
 **Corrección:** políticas explícitas de mínimo privilegio; mantenimiento exclusivo para congelación de fórmulas multhoja. Prueba de contrato ampliada para detectar cualquier mutación ADMIN futura sin política.
 **Estado:** cambio local preparado para CI; validar las tres funciones en Beta después de publicar los servicios autorizados.
+
+
+[2026-11-15] Auditoría de cobertura Coordinator — continuación
+- Evidencia: `admin.js:isSharedReadAction_` declara `auditIdentifiers`, pero `Coordinator.js:coordinatorPolicy_('ADMIN')` no tenía esa operación; el router adquiere una lease dedicada y el Coordinator la rechaza. `handleAuditIdentifiers` es de solo lectura y examina Users, Cortes, Tutorial, Feedbacks/PyS, LogosMarca y Relay.
+- Evidencia: `feedback.js:isSharedMutationAction_` declara `notifyDevelopersDriveCritical`, sin política Coordinator. El handler `InboxConversations.js:handleNotifyDevelopersDriveCritical` consulta Users y crea conversaciones/mensajes idempotentes en FEEDBACK.
+- Impacto: ambas acciones podían fallar antes de ejecutar el handler con “La acción no está habilitada en la política del coordinador.” Severidad: alta funcional; no hay evidencia de bypass de permisos.
+- Corrección: política de lectura ADMIN/auditIdentifiers y política FEEDBACK/notifyDevelopersDriveCritical con lectura USERS/SESSION_CONTEXTS y escritura FEEDBACK; contrato ampliado para cobertura integral.
