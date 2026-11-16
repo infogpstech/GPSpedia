@@ -918,3 +918,15 @@ HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
 - Se actualizó DeveloperOperationMessages.mjs para reflejar el texto vigente del resumen sin cambiar la operación.
 - Validación real de Drive API, ACL, Spreadsheet y ciclo de aplicación queda reservada a Beta. No se desplegaron Apps Script ni se modificaron datos externos.
 ================================================================================
+
+================================================================================
+2026-11-16 — CIERRE LOCAL GP-BETA-06: suggestYear Y ACCIONES PROTEGIDAS
+- JS/Services/feedback.js: el conteo de votos positivos se centraliza en countVerifiedPositiveYearSuggestionVotes_; umbral explícito YEAR_SUGGESTION_VOTE_THRESHOLD_=3. Solo cuentan actores verificados distintos para el mismo vehículo/año.
+- Se conserva la ruta anónima de suggestYear con rate limit 30/hora y sin capacidad de aplicar automáticamente rangos; la ruta autenticada consume el actor central FEEDBACK.
+- JS/Services/Auth.js: benchmarkPasswordKdf se clasifica como lectura compartida; el router obtiene actor central y el handler utiliza requireSharedAuthActor_ sin revalidar Users/ActiveSessions.
+- JS/Services/Coordinator.js: política AUTH/benchmarkPasswordKdf de lectura SESSION_CONTEXTS, sin escritura adicional de actividad.
+- JS/Tests/PasswordKdfBenchmark.mjs y SuggestYearVoteThreshold.mjs; RunServiceTests.mjs incorpora la prueba del umbral. JS/Tests/Auth.js se sincroniza como fixture aislado del servicio AUTH.
+- CI Node.js 22 run 43799503142: SUCCESS — 118 suites / 1,765 pruebas / 0 fallos.
+- Pruebas específicas: SuggestYearCoordinatorSession 2/2; SuggestYearVoteThreshold 6/6; PasswordKdfBenchmark 5/5; ActionDispatchContract 12/12 PASS.
+- La validación con deployments AUTH/FEEDBACK/Coordinator y hojas aisladas queda pendiente de Beta. Sin invocaciones de deployments ni cambios en datos externos.
+================================================================================
