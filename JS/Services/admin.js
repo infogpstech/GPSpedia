@@ -8810,7 +8810,7 @@ function handleGetReplacedImages(payload, logMessage) {
     const headers = schema.headers, rows = schema.sheet.getDataRange().getValues();
     const columnIndex = name => headers.indexOf(name), valueAt = (row, name) => { const index = columnIndex(name); return index >= 0 ? row[index] : ""; };
     let referenceSnapshot = null, referenceCheckStatus = "unavailable";
-    try { referenceSnapshot = collectActiveDriveReferences(true); referenceCheckStatus = referenceSnapshot.unverifiableReferenceCount > 0 ? "unverifiable" : "verified"; }
+    try { referenceSnapshot = collectActiveDriveReferences(false); referenceCheckStatus = referenceSnapshot.unverifiableReferenceCount > 0 ? "unverifiable" : "verified"; }
     catch (error) { referenceCheckStatus = "unavailable"; }
     const idCounts = new Map(), idRows = new Map();
     for (let r = 1; r < rows.length; r++) {
