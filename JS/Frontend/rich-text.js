@@ -89,8 +89,8 @@ function splitSelectionIntoListItems(selected) {
     return items.map(item => item || "<br>");
 }
 
-export function applyRichTextFormat(targetId, format, extraValue = null) {
-    if (getRichTextMode() !== "advanced" && format !== "bold") return;
+export function applyRichTextFormat(targetId, format, extraValue = null, options = {}) {
+    if (getRichTextMode() !== "advanced" && !options.forceAdvanced && format !== "bold") return;
     const textarea = document.getElementById(targetId);
     if (!textarea) return;
     attachListKeyboardBehavior(textarea);
@@ -245,13 +245,15 @@ function attachListKeyboardBehavior(textarea) {
     });
 }
 
-export function createRichTextToolbar(targetId) {
+export function createRichTextToolbar(targetId, options = {}) {
     const mode = getRichTextMode();
-    const isAdvanced = mode === "advanced";
+    const forceAdvanced = options.forceAdvanced === true;
+    const isAdvanced = forceAdvanced || mode === "advanced";
     const toolbar = document.createElement("div");
     toolbar.className = "rich-editor-toolbar";
     toolbar.dataset.richTargetId = String(targetId);
     toolbar.dataset.richTextMode = mode;
+    toolbar.dataset.richTextForceAdvanced = String(forceAdvanced);
     toolbar.style.cssText = "display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-bottom:4px;";
 
     const makeButton = (label, title, callback) => {
@@ -268,12 +270,12 @@ export function createRichTextToolbar(targetId) {
         return button;
     };
 
-    toolbar.appendChild(makeButton("B", "Negrita", () => applyRichTextFormat(targetId, "bold")));
+    toolbar.appendChild(makeButton("B", "Negrita", () => applyRichTextFormat(targetId, "bold", null, { forceAdvanced })));
 
     if (isAdvanced) {
-        toolbar.appendChild(makeButton("I", "Cursiva", () => applyRichTextFormat(targetId, "italic")));
-        toolbar.appendChild(makeButton("U", "Subrayado", () => applyRichTextFormat(targetId, "underline")));
-        toolbar.appendChild(makeButton("S", "Tachado", () => applyRichTextFormat(targetId, "strike")));
+        toolbar.appendChild(makeButton("I", "Cursiva", () => applyRichTextFormat(targetId, "italic", null, { forceAdvanced })));
+        toolbar.appendChild(makeButton("U", "Subrayado", () => applyRichTextFormat(targetId, "underline", null, { forceAdvanced })));
+        toolbar.appendChild(makeButton("S", "Tachado", () => applyRichTextFormat(targetId, "strike", null, { forceAdvanced })));
     }
 
     const colorPicker = document.createElement("input");
@@ -289,7 +291,7 @@ export function createRichTextToolbar(targetId) {
         sizeSelect.style.cssText = "height:28px; padding:2px 4px; border:1px solid var(--border-color, #ccc); border-radius:4px;";
         sizeSelect.innerHTML = '<option value="">Tamaño</option><option value="0.85em">Pequeño</option><option value="1em">Normal</option><option value="1.2em">Grande</option><option value="1.5em">Encabezado</option>';
         sizeSelect.addEventListener("change", event => {
-            if (event.target.value) applyRichTextFormat(targetId, "size", event.target.value);
+            if (event.target.value) applyRichTextFormat(targetId, "size", event.target.value, { forceAdvanced });
             event.target.value = "";
         });
         toolbar.appendChild(sizeSelect);
@@ -299,7 +301,7 @@ export function createRichTextToolbar(targetId) {
         fontSelect.style.cssText = "height:28px; padding:2px 4px; border:1px solid var(--border-color, #ccc); border-radius:4px;";
         fontSelect.innerHTML = '<option value="">Fuente</option><option value="Arial">Arial</option><option value="Segoe UI">Segoe UI</option><option value="Courier New">Monospace</option><option value="Georgia">Georgia</option>';
         fontSelect.addEventListener("change", event => {
-            if (event.target.value) applyRichTextFormat(targetId, "font", event.target.value);
+            if (event.target.value) applyRichTextFormat(targetId, "font", event.target.value, { forceAdvanced });
             event.target.value = "";
         });
         toolbar.appendChild(fontSelect);
@@ -310,8 +312,8 @@ export function createRichTextToolbar(targetId) {
         markerSelect.style.cssText = "height:28px; padding:2px 4px; border:1px solid var(--border-color, #ccc); border-radius:4px;";
         markerSelect.innerHTML = '<option value="bullet">• Viñeta</option><option value="hyphen">- Guion</option><option value="arrow">→ Flecha</option><option value="check">✓ Verificación</option>';
         toolbar.appendChild(markerSelect);
-        toolbar.appendChild(makeButton("• Lista", "Lista no ordenada", () => applyRichTextFormat(targetId, "ul", markerSelect.value)));
-        toolbar.appendChild(makeButton("1. Lista", "Lista ordenada", () => applyRichTextFormat(targetId, "ol")));
+        toolbar.appendChild(makeButton("• Lista", "Lista no ordenada", () => applyRichTextFormat(targetId, "ul", markerSelect.value, { forceAdvanced })));
+        toolbar.appendChild(makeButton("1. Lista", "Lista ordenada", () => applyRichTextFormat(targetId, "ol", null, { forceAdvanced })));
     }
 
     if (isAdvanced) {
@@ -327,7 +329,11 @@ export function refreshRichTextToolbars(root = document) {
     toolbars.forEach(toolbar => {
         const targetId = toolbar.dataset.richTargetId;
         if (!targetId || !toolbar.parentNode) return;
-        toolbar.replaceWith(createRichTextToolbar(targetId));
+        const nextToolbar = createRichTextToolbar(targetId, {
+            forceAdvanced: toolbar.dataset.richTextForceAdvanced === "true"
+        });
+        toolbar.classList.forEach(className => nextToolbar.classList.add(className));
+        toolbar.replaceWith(nextToolbar);
         refreshed++;
     });
     return refreshed;
@@ -353,11 +359,11 @@ function sanitizeSafeStyle(styleText, mode = getRichTextMode()) {
     return safe.join(";");
 }
 
-export function sanitizeHtmlContent(htmlStr) {
+export function sanitizeHtmlContent(htmlStr, modeOverride = null) {
     if (!htmlStr) return "";
     const parser = new DOMParser();
     const doc = parser.parseFromString(String(htmlStr), "text/html");
-    const mode = getRichTextMode();
+    const mode = modeOverride === "advanced" ? "advanced" : getRichTextMode();
     const allowedTags = mode === "advanced"
         ? new Set(["B", "STRONG", "SPAN", "BR", "P", "DIV", "I", "EM", "U", "S", "STRIKE", "OL", "UL", "LI", "A", "IMG", "SMALL", "MARK", "FONT"])
         : new Set(["B", "STRONG", "SPAN", "BR"]);
