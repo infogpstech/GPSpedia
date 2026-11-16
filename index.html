@@ -176,9 +176,7 @@
                 <span id="inbox-notification-count" class="inbox-notification-count" role="status" aria-live="polite" hidden>0</span>
             </div>
             <div class="inbox-header-actions">
-                <button id="inbox-new-message" class="inbox-primary-button inbox-icon-action" type="button" aria-label="Nuevo mensaje" title="Nuevo mensaje" hidden><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i></button>
-                <button id="inbox-search-toggle" class="inbox-secondary-button inbox-icon-action" type="button" aria-label="Mostrar búsqueda" aria-controls="inbox-conversation-search-form" aria-expanded="false" title="Buscar"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i></button>
-                <button id="inbox-conversation-refresh" class="inbox-secondary-button inbox-icon-action" type="button" aria-label="Actualizar bandeja" title="Actualizar"><i class="fa-solid fa-rotate" aria-hidden="true"></i></button>
+<button id="inbox-conversation-refresh" class="inbox-secondary-button inbox-icon-action" type="button" aria-label="Actualizar bandeja" title="Actualizar"><i class="fa-solid fa-rotate" aria-hidden="true"></i></button>
             </div>
         </header>
         <nav id="inbox-view-tabs" class="inbox-view-tabs" aria-label="Vistas de bandeja" hidden>
@@ -202,6 +200,8 @@
                     <button type="button" data-inbox-folder="unread" aria-pressed="false" aria-label="No leídos" title="No leídos"><i class="fa-solid fa-envelope" aria-hidden="true"></i><span>No leídos</span></button>
                     <button type="button" data-inbox-folder="sent" aria-pressed="false" aria-label="Enviados" title="Enviados"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Enviados</span></button>
                     <button type="button" data-inbox-folder="archived" aria-pressed="false" aria-label="Archivados" title="Archivados"><i class="fa-solid fa-box-archive" aria-hidden="true"></i><span>Archivados</span></button>
+                    <button id="inbox-new-message" class="inbox-primary-button inbox-icon-action inbox-folder-action" type="button" aria-label="Nuevo mensaje" title="Nuevo mensaje" hidden><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i></button>
+                    <button id="inbox-search-toggle" class="inbox-secondary-button inbox-icon-action inbox-folder-action" type="button" aria-label="Mostrar búsqueda" aria-controls="inbox-conversation-search-form" aria-expanded="false" title="Buscar"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i></button>
                 </nav>
                 <form id="inbox-conversation-search-form" class="inbox-search-form" role="search" hidden>
                     <label for="inbox-conversation-search">Buscar conversaciones</label>
