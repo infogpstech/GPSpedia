@@ -84,10 +84,16 @@ assert.equal(policy("ADMIN", "applyCortesImageReconciliation").readResources.inc
 assert.equal(policy("ADMIN", "freezeIdentifierFormulas").maintenance, true);
 
 // Toda lectura ADMIN que solicita lease dedicada debe tener una política.
-for (const action of ["getReplacedImages", "getDriveStorage", "getCortesImageFolders", "auditIdentifiers", "checkOperation", "getAdminImageUploadStatus", "previewCortesImageReconciliation"]) {
+for (const action of ["getReplacedImages", "getDriveStorage", "getCortesImageFolders", "auditIdentifiers", "checkOperation", "getAdminImageUploadStatus", "previewCortesImageReconciliation", "getServiceTraffic"]) {
     assert.equal(read(action), true, action + " debe usar una lease de lectura.");
     assert.ok(policy("ADMIN", action), "Falta política explícita para ADMIN/" + action);
 }
+const serviceTraffic = policy("ADMIN", "getServiceTraffic");
+assert.ok(serviceTraffic.readResources.includes("SERVICE_TRAFFIC"));
+assert.deepEqual(serviceTraffic.writeResources, []);
+assert.equal(read("getServiceTraffic"), true);
+assert.equal(mutation("getServiceTraffic"), false);
+
 const identifierAudit = policy("ADMIN", "auditIdentifiers");
 for (const resource of ["USERS", "CORTES", "TUTORIAL", "FEEDBACK", "LOGOS", "RELAY"]) {
     assert.ok(identifierAudit.readResources.includes(resource),
