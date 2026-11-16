@@ -2083,8 +2083,8 @@ function handleChangePassword(payload) {
         const matches = usersSheet.getDataRange().getValues().slice(1)
             .map((row, index) => ({ row, rowIndex: index + 2 }))
             .filter(item => normalizeUserId(item.row[COLS_USERS.ID - 1]) === userId);
-        if (matches.length !== 1 || !isActiveAuthUserRecord(matches[0].row)) {
-            throw new Error('No se pudo identificar una cuenta activa y única.');
+        if (matches.length !== 1) {
+            throw new Error('No se pudo localizar una fila única para la cuenta autenticada.');
         }
         if (!verifyStoredPassword(matches[0].row[COLS_USERS.Password - 1], currentPassword).matches) {
             throw new Error('La contraseña actual es incorrecta.');
@@ -2213,8 +2213,8 @@ function handleAcceptTerms(payload) {
         const userMatches = usersSheet.getDataRange().getValues().slice(1)
             .map((row, index) => ({ row, rowIndex: index + 2 }))
             .filter(item => normalizeUserId(item.row[COLS_USERS.ID - 1]) === userId);
-        if (userMatches.length !== 1 || !isActiveAuthUserRecord(userMatches[0].row)) {
-            throw new Error('No se pudo identificar una cuenta activa y única.');
+        if (userMatches.length !== 1) {
+            throw new Error('No se pudo localizar una fila única para registrar la aceptación.');
         }
         ensureTermsAcceptanceColumn_(usersSheet);
         const userCell = usersSheet.getRange(userMatches[0].rowIndex, COLS_USERS.TermsAcceptance);

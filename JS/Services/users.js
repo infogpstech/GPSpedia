@@ -348,9 +348,8 @@ function getVerifiedSession(sessionToken, payload, requireUserRow) {
         if (requireUserRow === true) {
             const usersSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.USERS);
             const userRows = findUniqueRowsByExactValue_(usersSheet, COLS_USERS.ID, userId, 9, true);
-            if (userRows.length !== 1 || !isActiveUserRecord(userRows[0].row) ||
-                String(userRows[0].row[COLS_USERS.Privilegios - 1] || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase() !== normalizedRole) {
-                throw new Error("Acceso no autorizado: el perfil ya no coincide con el contexto de sesión.");
+            if (userRows.length !== 1) {
+                throw new Error("No se encontró una fila única para actualizar el perfil autenticado.");
             }
             userRowIndex = userRows[0].rowIndex;
         }
