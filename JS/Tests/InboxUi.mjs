@@ -70,11 +70,11 @@ check("Las aprobaciones de vídeo no ofrecen una eliminación genérica no sopor
     assert.doesNotMatch(ui.slice(start, end), /inbox-delete-btn/);
 });
 check("Los mensajes del Inbox renderizan formato únicamente después del sanitizador compartido", () => {
-    assert.match(ui, /messageBody\.innerHTML\s*=\s*sanitizeHtmlContent\(String\(message\.body \|\| ""\)\)/);
-    assert.match(ui, /createRichTextToolbar\(textarea\.id, \{ forceAdvanced: true \}\)/);
-    assert.match(ui, /createRichTextToolbar\(body\.id, \{ forceAdvanced: true \}\)/);
+    assert.match(ui, /messageBody\.innerHTML\s*=\s*sanitizeHtmlContent\(String\(message\.body \|\| ""\), "advanced"\)/);
+    assert.match(ui, /createInboxRichTextToolbar\(textarea\.id\)/);
+    assert.match(ui, /createInboxRichTextToolbar\(body\.id\)/);
     assert.match(ui, /sanitizeHtmlContent\(String\(message\.body \|\| ""\), "advanced"\)/);
-    assert.match(ui, /form\.append\(label, toolbar, textarea, status, send\)/);
+    assert.match(ui, /form\.append\(label, editorShell, status, send\)/);
 });
 check("Los borradores se recuperan por usuario y se limpian al cambiar de sesión", () => {
     assert.match(ui, /sessionStorage\.getItem/);

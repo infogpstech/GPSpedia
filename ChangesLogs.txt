@@ -1310,3 +1310,10 @@ GP-UX-CUT-MODAL-04 / GP-UX-TUTORIAL-MODAL-01 — 2026-11-16
 - service-worker.js: App Shell actualizado a v48.
 - JS/Tests/CutDetailModalLayout.mjs, ServiceWorkerCache.js y OfflineBrandAssets.mjs: contratos de regresión actualizados.
 ================================================================================
+
+
+================================================================================
+GP-UX-INBOX-DESKTOP-02 / GP-UX-CUT-MODAL-05 — adenda 2026-11-16
+- Se actualizó el contrato InboxUi de renderizado sanitizado para reflejar el toolbar compacto del Inbox y el wrapper visual del editor; se conserva la exigencia de sanitización explícita en modo avanzado.
+- Se corrigieron dos defectos de las pruebas introducidas/obsoletas encontrados por GitHub Actions; no se cambió el sanitizador ni se relajó su contrato.
+================================================================================

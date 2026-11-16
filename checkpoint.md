@@ -167,3 +167,11 @@ El checkpoint acumulativo anterior se conserva íntegro en `Checkpoint_Archive/c
 - HEAD documental confirmado al terminar la publicación: bcaac4156c52decfdcd07ec4f1f07788208aa6dc. Compare de ramas: GPSpedia2.2.5_work ahead; base GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1, behind_by 0.
 - GitHub combined status no devolvió checks y el endpoint de workflow disponible solo expone runs de PR. El clon superficial para ejecutar Node.js local falló por DNS de github.com. CI Node.js completa no confirmada.
 - Estado: EN PROGRESO hasta disponer de ejecución Node.js/CI verificable. Validación visual escritorio, Android y PWA instalada pendiente de Beta. No se modificaron Apps Script, deployments ni datos externos.
+
+
+### Validación y corrección de contratos — GP-UX-INBOX-DESKTOP-02 / GP-UX-CUT-MODAL-05 — 2026-11-16
+- HEAD de implementación: 44464456e0b1bcbcc66a1b3f0fdd970587850ef7; contratos reorganizados en e944a753ceb5a62585fa7bac3349f5f75ccec6ad.
+- Run 43946240367: sintaxis de InboxUi falló por regex nueva mal escapada; corregida antes del siguiente run.
+- Run 43946386787: 48/49 InboxUi PASS; el único fallo fue un contrato previo que esperaba createRichTextToolbar directo y el formulario sin wrapper. Se actualiza para comprobar createInboxRichTextToolbar, editorShell y sanitización avanzada explícita.
+- Las suites específicas de nueva barra, persistencia de controles extra, búsqueda expandible y fondos por tema pasaron en ese run.
+- Pendiente repetir CI Node.js completa, validar CutDetailModalLayout y Pages; inspección visual escritorio/móvil/PWA queda para Beta.

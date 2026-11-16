@@ -847,3 +847,11 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - El estado combinado consultado para el HEAD no expone checks; el endpoint de workflow disponible solo devuelve ejecuciones asociadas a pull requests. No se afirma CI aprobada.
 - El intento de clonar la rama para ejecutar Node.js localmente no pudo resolver github.com. Las suites Node.js completas quedan pendientes de un entorno con acceso al repositorio o de evidencia de GitHub Actions.
 - Aceptación visual escritorio/Android/PWA pendiente de Beta.
+
+
+### Adenda de implementación — GP-UX-INBOX-DESKTOP-02 / GP-UX-CUT-MODAL-05 — 2026-11-16
+- Publicados cambios de toolbar compacta iconográfica, menús desplegables, menú apilado de categoría/plantilla, editor integrado, búsqueda expandible y divisor simétrico.
+- App Shell actualizado a v49.
+- CI run 43946240367 detectó una expresión regular inválida en una prueba nueva; corregida en e944a753ceb5a62585fa7bac3349f5f75ccec6ad.
+- CI run 43946386787 avanzó hasta InboxUi y detectó un contrato heredado que esperaba la estructura anterior de toolbar/sanitización; actualizar a la estructura compacta actual y mantener la comprobación de sanitización explícita en modo avanzado.
+- Estado EN PROGRESO hasta CI integral aprobada. Beta visual pendiente.
