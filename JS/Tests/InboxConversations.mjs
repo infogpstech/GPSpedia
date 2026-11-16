@@ -712,6 +712,72 @@ run("Una hoja de mensajes faltante se informa en lugar de mostrar conversaciones
         /falta la hoja de mensajes/);
     spreadsheet.sheets.set("InboxMessages", messagesSheet);
 });
+
+run("Inbox sin hojas relacionadas se muestra vacío sin crear ni modificar hojas", () => {
+    const names = ["InboxConversations","InboxMessages","InboxConversationState","InboxConversationFlags","InboxConversationAudit"];
+    const saved = new Map(names.map(name => [name,spreadsheet.getSheetByName(name)]));
+    names.forEach(name => spreadsheet.sheets.delete(name));
+    try {
+        const result = api.handleGetInboxConversations({ ...actor("U1","token-a"), folder:"received" });
+        assert.equal(result.status,"success");
+        assert.equal(result.total,0);
+        names.forEach(name => assert.equal(spreadsheet.getSheetByName(name),null));
+    } finally {
+        saved.forEach((sheet,name) => { if (sheet) spreadsheet.sheets.set(name,sheet); });
+    }
+});
+run("Las hojas dependientes huérfanas no se interpretan como un Inbox vacío", () => {
+    const conversations = spreadsheet.getSheetByName("InboxConversations");
+    const states = spreadsheet.getSheetByName("InboxConversationState");
+    spreadsheet.sheets.delete("InboxConversations");
+    spreadsheet.sheets.delete("InboxConversationState");
+    try {
+        assert.throws(() => api.handleGetInboxConversations({ ...actor("U1","token-a"), folder:"received" }),
+            /hojas dependientes/);
+    } finally {
+        spreadsheet.sheets.set("InboxConversations",conversations);
+        spreadsheet.sheets.set("InboxConversationState",states);
+    }
+});
+run("Una hoja Inbox vacía no se inicializa durante una lectura", () => {
+    const stateSheet = spreadsheet.getSheetByName("InboxConversationState");
+    assert.ok(stateSheet);
+    const emptySheet = new FakeSheet("InboxConversationState");
+    spreadsheet.sheets.set("InboxConversationState",emptySheet);
+    try {
+        assert.throws(() => api.handleGetInboxConversations({ ...actor("U1","token-a"), folder:"received" }),/está vacío/);
+        assert.equal(emptySheet.getLastRow(),0);
+    } finally {
+        spreadsheet.sheets.set("InboxConversationState",stateSheet);
+    }
+});
+run("Un esquema parcial no crea automáticamente las hojas faltantes al escribir", () => {
+    const messagesSheet = spreadsheet.getSheetByName("InboxMessages");
+    assert.ok(messagesSheet);
+    spreadsheet.sheets.delete("InboxMessages");
+    try {
+        assert.throws(() => api.handleCreateInboxConversation({
+            ...actor("U1","token-a"),recipientId:"U2",subject:"Esquema parcial",category:"general",
+            body:"No debe crear hojas faltantes.",idempotencyKey:"partial-schema-0001"
+        }),/esquema Inbox está incompleto/);
+        assert.equal(spreadsheet.getSheetByName("InboxMessages"),null);
+    } finally {
+        spreadsheet.sheets.set("InboxMessages",messagesSheet);
+    }
+});
+run("Los participantes dañados se informan y no se ocultan como una bandeja vacía", () => {
+    const conversations = spreadsheet.getSheetByName("InboxConversations");
+    const row = conversations.rows.find(item => String(item[0]) === first.conversationId);
+    assert.ok(row);
+    const previous = row[10];
+    row[10] = "{";
+    try {
+        assert.throws(() => api.handleGetInboxConversations({ ...actor("U1","token-a"), folder:"received" }),
+            /lista de participantes está dañada/);
+    } finally {
+        row[10] = previous;
+    }
+});
 const mutationMatch = feedbackSource.match(/^function isSharedMutationAction_\(action\) \{[\s\S]*?^\}/m);
 const postMatch = feedbackSource.match(/^function doPost\(e\) \{[\s\S]*?^\}/m);
 assert.ok(mutationMatch && postMatch, "No se pudieron extraer los despachadores FEEDBACK.");
