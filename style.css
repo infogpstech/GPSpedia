@@ -4828,6 +4828,7 @@ body.dark-mode #login-modal #login-error.login-session-ended {
     color:var(--gp-color-text,var(--text-color,#222)); background:transparent; font:inherit; cursor:pointer;
 }
 #inbox-modal-content .inbox-section-nav button i { width:20px; flex:0 0 20px; text-align:center; color:var(--gp-color-text-muted,var(--text-medium,#667085)); }
+#inbox-modal-content .inbox-section-nav button[hidden], #inbox-modal-content .inbox-folder-nav button[hidden] { display:none !important; }
 #inbox-modal-content .inbox-section-nav button[aria-pressed="true"] {
     color:var(--gp-color-accent,var(--accent-color,#1769aa)); background:color-mix(in srgb,var(--gp-color-accent,#1769aa) 12%,transparent); font-weight:700;
 }
@@ -4839,6 +4840,9 @@ body.dark-mode #login-modal #login-error.login-session-ended {
 #inbox-modal-content .inbox-requests-view .inbox-layout-wrapper { display:flex; gap:12px; }
 #inbox-modal-content .inbox-requests-view #inbox-list { flex:0 0 min(34%,340px); overflow:auto; }
 #inbox-modal-content .inbox-requests-view #inbox-detail { flex:1 1 0; min-width:0; overflow:auto; }
+.relay-detail-toolbar { position:relative; display:flex; align-items:flex-start; justify-content:flex-start; width:100%; min-height:42px; padding:0 48px 8px 0; margin:0 0 20px !important; }
+.relay-detail-toolbar .relay-detail-title { flex:1 1 auto; min-width:0; margin:0; padding:0; text-align:left; overflow-wrap:anywhere; }
+.relay-detail-toolbar > .info-close-btn { position:absolute !important; top:0 !important; right:0 !important; margin:0 !important; }
 #inbox-modal-content .inbox-action-toolbar button#inbox-delete-btn {
     width:40px; min-width:40px; height:40px; min-height:40px; padding:0;
     display:inline-flex; align-items:center; justify-content:center;
@@ -4901,6 +4905,12 @@ body.dark-mode #login-modal #login-error.login-session-ended {
 #inbox-modal-content .inbox-folder-nav button { display:inline-flex; align-items:center; justify-content:center; gap:0; min-width:38px; min-height:38px; padding:7px 10px; overflow:hidden; white-space:nowrap; transition:min-width .24s ease,padding .24s ease,background-color .2s ease,color .2s ease; }
 #inbox-modal-content .inbox-folder-nav button i { flex:0 0 auto; font-size:.95rem; }
 #inbox-modal-content .inbox-folder-nav button span { display:inline-block; max-width:0; margin-left:0; overflow:hidden; opacity:0; transform:translateX(-5px); transition:max-width .26s ease,margin-left .22s ease,opacity .2s ease,transform .22s ease; }
+#inbox-modal-content .inbox-folder-nav .inbox-folder-action span { max-width:none; margin-left:0; opacity:1; transform:none; }
+#inbox-modal-content.inbox-modal-content { position:relative; }
+#inbox-modal-content .inbox-floating-new-message { position:absolute; right:18px; bottom:18px; z-index:6; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; width:58px; min-width:58px; height:58px; min-height:58px; padding:6px; border-radius:50%; box-shadow:0 4px 14px rgba(0,0,0,.22); }
+#inbox-modal-content .inbox-floating-new-message span { display:block; max-width:none; margin:0; overflow:visible; opacity:1; transform:none; font-size:.62rem; line-height:1; }
+#inbox-modal-content .inbox-compose-actions { display:flex; justify-content:flex-end; flex-wrap:wrap; gap:8px; margin-top:8px; }
+#inbox-modal-content .inbox-cancel-compose { min-height:40px; padding:8px 16px; }
 #inbox-modal-content .inbox-folder-nav button[aria-pressed="true"] { gap:7px; min-width:max-content; }
 #inbox-modal-content .inbox-folder-nav button[aria-pressed="true"] span { max-width:110px; margin-left:1px; opacity:1; transform:translateX(0); }
 #inbox-modal-content .inbox-pagination { flex:0 0 auto; display:flex; align-items:center; justify-content:center; gap:14px; min-height:38px; padding-top:5px; }

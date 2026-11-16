@@ -30,6 +30,19 @@ check("Todos los roles activos pueden abrir conversaciones", () => {
     assert.match(ui, /ensureUiSessionRole_\(\['desarrollador', 'jefe', 'supervisor', 'tecnico', 'tecnico_exterior'\]\)/);
     assert.match(ui, /'tecnico', 'tecnico_exterior'\]\.includes\(userRole\)/);
 });
+check("La matriz de secciones Inbox coincide con los permisos de cada rol", () => {
+    assert.match(ui, /desarrollador:\["general","soporte","contact","reports","contributions"\]/);
+    assert.match(ui, /jefe:\["general","contact","reports"\]/);
+    assert.match(ui, /supervisor:\["general","reports"\]/);
+    assert.match(ui, /tecnico:\["general","reports"\]/);
+    assert.match(ui, /tecnico_exterior:\["general","reports"\]/);
+    assert.match(ui, /button.hidden = !inboxRoleCanSeeSection_/);
+});
+check("Técnicos consultan reportes propios y no reciben acciones administrativas", () => {
+    assert.match(ui, /routeAction\('getMyProblemReports'/);
+    assert.match(ui, /item.reportMetadata && String\(item.reportMetadata.userId/);
+    assert.match(ui, /inboxCanManageRequests_\(userRole\)/);
+});
 check("Las solicitudes históricas siguen separadas y conservan sus contenedores", () => {
     assert.match(html, /id="inbox-requests-view"/);
     assert.match(html, /id="inbox-list"/);
@@ -101,6 +114,11 @@ check("La barra móvil elimina filtros de lectura y distribuye cinco acciones co
     assert.doesNotMatch(html, /data-inbox-folder="read"|data-inbox-folder="unread"/);
     assert.match(html, /id="inbox-new-message"/);
     assert.match(html, /id="inbox-search-toggle"/);
+    assert.match(html, /id="inbox-new-message"[^>]*>[\s\S]*<span>Nuevo<\/span>/);
+    assert.match(html, /id="inbox-search-toggle"[^>]*>[\s\S]*<span>Buscar<\/span>/);
+    assert.match(css, /inbox-floating-new-message[\s\S]*?position:absolute/);
+    assert.match(ui, /Salir y cancelar el mensaje nuevo/);
+    assert.match(css, /inbox-folder-nav button\[hidden\][\s\S]*?display:none !important/);
     assert.match(css, /grid-template-columns:\s*repeat\(5,\s*minmax\(0,1fr\)\)/);
     assert.match(css, /inbox-folder-nav button\[aria-pressed="true"\][\s\S]*?min-width:0/);
     assert.match(css, /inbox-folder-nav \.inbox-folder-action[\s\S]*?width:100%/);

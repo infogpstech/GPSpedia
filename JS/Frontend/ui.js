@@ -4303,10 +4303,10 @@ const openInboxModal_ = setupModal('inbox-modal', async (options = {}) => {
     bindInboxControls_();
     const requestsTab = document.getElementById('inbox-requests-tab');
     if (requestsTab) requestsTab.hidden = !inboxCanSeeRequests_(context.role);
+    const sectionNav = document.getElementById('inbox-section-nav');
+    if (sectionNav) sectionNav.querySelectorAll('[data-inbox-section]').forEach(button => { button.hidden = !inboxRoleCanSeeSection_(context.role, button.dataset.inboxSection); });
     const newMessageButton = document.getElementById('inbox-new-message');
     if (newMessageButton) newMessageButton.hidden = false;
-    const contributionsSection = document.getElementById('inbox-contributions-section');
-    if (contributionsSection) contributionsSection.hidden = context.role !== 'desarrollador';
     const workspace = document.getElementById('inbox-workspace');
     if (workspace) workspace.classList.remove('is-nav-collapsed');
     if (modal.dataset.inboxBackdropBound !== 'true') {
@@ -4358,9 +4358,12 @@ const INBOX_CONVERSATION_PAGE_SIZE_ = 20;
 const INBOX_MESSAGE_PAGE_SIZE_ = 50;
 const INBOX_SYNC_INTERVAL_MS_ = 60000;
 
-function inboxCanSeeRequests_(role) {
-    return ["desarrollador", "jefe", "supervisor"].includes(normalizeUiRole_(role));
+function inboxRoleCanSeeSection_(role, section) {
+    const access = { desarrollador:["general","soporte","contact","reports","contributions"], jefe:["general","contact","reports"], supervisor:["general","reports"], tecnico:["general","reports"], tecnico_exterior:["general","reports"] };
+    return (access[normalizeUiRole_(role)] || []).includes(section);
 }
+function inboxCanSeeRequests_(role) { return inboxRoleCanSeeSection_(role, "reports"); }
+function inboxCanManageRequests_(role) { return ["desarrollador","jefe","supervisor"].includes(normalizeUiRole_(role)); }
 function inboxSessionPayload_() { return getUiSessionContext_() || {}; }
 function inboxNewIdempotencyKey_() {
     try {
@@ -4529,9 +4532,8 @@ function bindInboxControls_() {
 async function setInboxSection_(section) {
     const context = getUiSessionContext_();
     const allowed = ["general", "soporte", "contact", "reports", "contributions"];
-    const next = allowed.includes(section) ? section : "general";
-    if (next === "contributions" && (!context || context.role !== "desarrollador")) return;
-    if (["contact", "reports", "contributions"].includes(next) && !inboxCanSeeRequests_(context && context.role)) return;
+    const requested = allowed.includes(section) ? section : "general";
+    const next = context && inboxRoleCanSeeSection_(context.role, requested) ? requested : "general";
     inboxActiveSection_ = next;
     const nav = document.getElementById("inbox-section-nav");
     if (nav) nav.querySelectorAll("[data-inbox-section]").forEach(button => {
@@ -4852,16 +4854,20 @@ async function openInboxNewConversationForm_() {
     const draftKind = "new:direct", legacyDraftKind = isDeveloper ? "" : "new:consult";
     const detail = document.getElementById("inbox-conversation-detail");
     if (!detail) return;
+    let cancelled = false;
+    const cancelNewMessage = () => { cancelled = true; inboxClearDraft_(draftKind); if (legacyDraftKind) inboxClearDraft_(legacyDraftKind); inboxConversationSelectedId_ = ""; inboxConversationSelected_ = null; inboxConversationMessages_ = []; document.getElementById("inbox-modal-content")?.classList.remove("is-detail-open"); detail.replaceChildren(inboxCreateNode_("p", "inbox-state-message", "Selecciona una conversación para consultar sus mensajes.")); };
+    const makeCancelButton = () => { const button = inboxCreateNode_("button", "inbox-secondary-button inbox-cancel-compose", "Salir"); button.type = "button"; button.setAttribute("aria-label", "Salir y cancelar el mensaje nuevo"); button.addEventListener("click", cancelNewMessage); return button; };
     inboxConversationSelectedId_ = ""; inboxConversationSelected_ = null; inboxConversationMessages_ = [];
     document.getElementById("inbox-modal-content")?.classList.add("is-detail-open");
     detail.replaceChildren();
     const status = inboxCreateNode_("p", "inbox-form-status", "Cargando destinatarios…");
     status.setAttribute("role", "status"); status.setAttribute("aria-live", "polite");
     detail.appendChild(inboxCreateNode_("h3", "inbox-new-title", "Nuevo mensaje"));
-    detail.appendChild(status);
+    detail.append(makeCancelButton(), status);
     let recipients = [];
     try {
         const response = await getInboxRecipients(context);
+        if (cancelled || !isCurrentUiSessionContext_(context)) return;
         if (!response || response.status !== "success") throw new Error(response && response.message || "No se pudieron cargar los destinatarios.");
         recipients = Array.isArray(response.recipients) ? response.recipients : [];
     } catch (error) {
@@ -4922,7 +4928,9 @@ async function openInboxNewConversationForm_() {
     const formStatus = inboxCreateNode_("p", "inbox-form-status");
     formStatus.setAttribute("role", "status"); formStatus.setAttribute("aria-live", "polite");
     const send = inboxCreateNode_("button", "inbox-primary-button", "Enviar mensaje");
-    send.type = "submit"; form.append(formStatus, send); detail.append(heading, form);
+    send.type = "submit";
+    const formActions = inboxCreateNode_("div", "inbox-compose-actions"); formActions.append(makeCancelButton(), send);
+    form.append(formStatus, formActions); detail.append(heading, form);
     const persist = () => {
         const current = inboxReadDraft_(draftKind), fingerprint = [recipient.value,subject.value,category.value,body.value].join("|");
         if (current.lastAttemptFingerprint && current.lastAttemptFingerprint !== fingerprint) current.idempotencyKey = "";
@@ -9062,7 +9070,7 @@ export function renderInboxList(items) {
     const isCurrentInboxView = () => Boolean(context &&
         generation === inboxViewGeneration_ &&
         isCurrentUiSessionContext_(context) &&
-        ['desarrollador', 'jefe', 'supervisor'].includes(context.role));
+        ['desarrollador', 'jefe', 'supervisor', 'tecnico', 'tecnico_exterior'].includes(normalizeUiRole_(context.role)));
     if (!isCurrentInboxView()) {
         listContainer.replaceChildren();
         const detail = document.getElementById('inbox-detail');
@@ -9073,8 +9081,13 @@ export function renderInboxList(items) {
     listContainer.replaceChildren();
     document.getElementById('inbox-modal-content')?.classList.remove('is-request-detail-open');
     const section = inboxRequestSection_;
+    const ownReportsOnly = ['tecnico', 'tecnico_exterior'].includes(normalizeUiRole_(context.role));
     const visibleItems = (Array.isArray(items) ? items : []).filter(item => {
-        if (section === 'reports') return item.type === 'problem_report' || Boolean(item.suggestionData);
+        if (section === 'reports') {
+            if (item.type !== 'problem_report' && !item.suggestionData) return false;
+            if (ownReportsOnly) return Boolean(item.reportMetadata && String(item.reportMetadata.userId || '') === String(context.userId));
+            return true;
+        }
         if (section === 'contributions') return context.role === 'desarrollador' && item.type === 'video_approval';
         if (section === 'contact') return item.type !== 'problem_report' && item.type !== 'video_approval' && !item.suggestionData;
         return true;
@@ -9160,7 +9173,7 @@ export function renderInboxDetail(item) {
         viewGeneration === inboxViewGeneration_ &&
         detailGeneration === inboxDetailGeneration_ &&
         isCurrentUiSessionContext_(context) &&
-        ['desarrollador', 'jefe', 'supervisor'].includes(context.role));
+        ['desarrollador', 'jefe', 'supervisor', 'tecnico', 'tecnico_exterior'].includes(normalizeUiRole_(context.role)));
     if (!detailContainer) return;
     if (!isCurrentInboxDetail()) {
         detailContainer.replaceChildren();
@@ -9358,7 +9371,7 @@ export function renderInboxDetail(item) {
             actionToolbar.appendChild(approvalRow);
         }
         actionToolbar.hidden = actionToolbar.childElementCount === 0;
-    } else {
+    } else if (inboxCanManageRequests_(userRole)) {
         const actions = makeElement('div', 'inbox-actions');
         const toolbar = makeElement('div');
         toolbar.id = 'inbox-toolbar-container';
@@ -10737,9 +10750,9 @@ function mostrarDetalleRelayModal(item) {
     cont.innerHTML = "";
 
     const headerDiv = document.createElement("div");
-    headerDiv.className = "detail-modal-toolbar";
-    headerDiv.style.marginBottom = "20px";
+    headerDiv.className = "detail-modal-toolbar relay-detail-toolbar";
     const title = document.createElement("h2");
+    title.className = "relay-detail-title";
     title.textContent = item.configuracion;
     title.style.color = "#007bff";
     headerDiv.appendChild(title);
@@ -10755,7 +10768,7 @@ function mostrarDetalleRelayModal(item) {
         }
     };
     closeBtn.className = "info-close-btn";
-    closeBtn.style.cssText = "position:static; margin-left:8px; flex:0 0 auto;";
+    closeBtn.style.cssText = "position:absolute; top:0; right:0; margin:0;";
     headerDiv.appendChild(closeBtn);
     cont.appendChild(headerDiv);
 
@@ -14545,8 +14558,10 @@ export function exportVehiclePrintSheet(item) {
 
 export async function loadAndRenderInbox(options = {}) {
     const suppliedContext = options && options.context;
-    const requestContext = suppliedContext || ensureUiSessionRole_(['desarrollador', 'jefe', 'supervisor']);
+    const requestContext = suppliedContext || ensureUiSessionRole_(['desarrollador', 'jefe', 'supervisor', 'tecnico', 'tecnico_exterior']);
     if (!requestContext || !isCurrentUiSessionContext_(requestContext)) return;
+    const ownReportsOnly = ['tecnico', 'tecnico_exterior'].includes(normalizeUiRole_(requestContext.role));
+    if (ownReportsOnly && inboxRequestSection_ !== 'reports') return;
     if (options.reset === true) {
         inboxPageCursorStack_ = [null];
         inboxPageIndex_ = 0;
@@ -14558,7 +14573,7 @@ export async function loadAndRenderInbox(options = {}) {
     const listContainer = document.getElementById('inbox-list');
     if (!listContainer) return;
 
-    const cached = inboxPageCache_.get(requestContext, cursor, { pageSize: INBOX_PAGE_SIZE_, allowStale: true });
+    const cached = ownReportsOnly ? null : inboxPageCache_.get(requestContext, cursor, { pageSize: INBOX_PAGE_SIZE_, allowStale: true });
     if (cached) {
         renderInboxList(cached.value.data);
         renderInboxPagination_(cached.value, requestContext, generation);
@@ -14571,12 +14586,12 @@ export async function loadAndRenderInbox(options = {}) {
     }
 
     try {
-        const result = await getFeedbackItems(getSessionPayload_(), { cursor, pageSize: INBOX_PAGE_SIZE_ });
+        const result = ownReportsOnly ? await routeAction('getMyProblemReports', { ...getSessionPayload_(), cursor, pageSize: INBOX_PAGE_SIZE_ }) : await getFeedbackItems(getSessionPayload_(), { cursor, pageSize: INBOX_PAGE_SIZE_ });
         if (!isCurrentInboxRequest()) return;
         if (!result || result.status !== 'success' || !Array.isArray(result.data)) {
             throw new Error(result && result.message ? result.message : 'El servidor devolvió una página de Inbox inválida.');
         }
-        inboxPageCache_.set(requestContext, cursor, result, INBOX_PAGE_SIZE_);
+        if (!ownReportsOnly) inboxPageCache_.set(requestContext, cursor, result, INBOX_PAGE_SIZE_);
         renderInboxList(result.data);
         renderInboxPagination_(result, requestContext, generation);
     } catch (error) {

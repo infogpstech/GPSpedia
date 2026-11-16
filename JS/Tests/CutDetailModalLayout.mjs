@@ -14,6 +14,17 @@ const detail = ui.slice(start, end > start ? end : undefined);
 let passed = 0;
 function testCase(name, fn) { fn(); passed++; console.log("PASS " + name); }
 
+testCase("el modal Relay coloca título a la izquierda y cierre arriba a la derecha", () => {
+    const relayStart = ui.indexOf("function mostrarDetalleRelayModal");
+    const relayEnd = ui.indexOf("\n}", relayStart);
+    const relay = ui.slice(relayStart, relayEnd > relayStart ? relayEnd : relayStart + 2200);
+    assert.match(relay, /detail-modal-toolbar relay-detail-toolbar/);
+    assert.match(relay, /relay-detail-title/);
+    assert.match(relay, /position:absolute; top:0; right:0/);
+    assert.match(css, /\.relay-detail-toolbar \{[\s\S]*?justify-content:flex-start/);
+    assert.match(css, /\.relay-detail-toolbar > \.info-close-btn \{[\s\S]*?right:0/);
+});
+
 testCase("la cabecera y acciones del modal se agrupan en una barra flexible", () => {
     assert.match(detail, /headerDiv\.className = "detail-modal-toolbar"/);
     for (const label of ["Compartir vehículo", "Imprimir ficha técnica", "Activar modo edición", "Guardar cambios", "Descartar cambios"]) {
