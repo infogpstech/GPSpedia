@@ -77,7 +77,7 @@ export const API_ENDPOINTS = {
     CATALOG:  "https://script.google.com/macros/s/AKfycbzcBNC_sFFcdKxwBZFXfQHZsfpCGiZeKpQ8BjiTWn50qdVSfZRraHjELXBFY2tF8qc/exec",
     WRITE:    "https://script.google.com/macros/s/AKfycbxvf5jWXXy5pxQZgCqgKmlfBWfAwxIyhjQG39fs9dFKM4ub-NkWzA2-0-8PXBJsHVnsdg/exec",
     USERS:    "https://script.google.com/macros/s/AKfycbybSky5wR-91VVu1SHK514e6gxGMpoW3kHbPGxX7HyWBmrJn5cL4iY2T1eoKLhCR9SX9Q/exec",
-    FEEDBACK: "https://script.google.com/macros/s/AKfycby3hMxLsvdO-7kA3dHIlZ7mURGnnq3uyyuxa_HVpDqv4dPtjIphk1GXNCcduHaC8Kk3VA/exec",
+    FEEDBACK: "https://script.google.com/macros/s/AKfycbw7p4RWg7Z1fdpcLAu4y4VVIlbApm0ZbSJwu3fAxApmnSUJXEPYoG7jbS-Gu09ApxWMZA/exec",
     UTILITIES: "https://script.google.com/macros/s/AKfycbybdK2X19erOie1lrdcy6WoHd0Jy1_IUFTjZWg9NcXkpfg-80S-l8hebKwLUjaoTVLb/exec",
     ADMIN: "https://script.google.com/macros/s/AKfycbySsBEP3iqP5wQqwMWix5OjsWtweUsQC7TBG83mdY98_bpcTnUZl5Nc6zdTem0V0aMN/exec"
 };
