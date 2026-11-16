@@ -148,19 +148,16 @@ check("Todas las secciones reutilizan un único paginador con flechas y numeraci
     assert.match(ui, /label\.textContent = currentPage \+ "\/" \+ pageCount/);
     assert.doesNotMatch(html, /inbox-conversation-previous|inbox-conversation-next|inbox-category-filter/);
 });
-check("La barra móvil elimina filtros de lectura y distribuye cinco acciones con espacios uniformes", () => {
-    assert.match(html, /data-inbox-folder="received"[^>]*>[\s\S]*<span>Recibidos<\/span>/);
-    assert.doesNotMatch(html, /data-inbox-folder="read"|data-inbox-folder="unread"/);
-    assert.match(html, /id="inbox-new-message"/);
+check("Nuevo mensaje reemplaza Solicitudes en la barra superior y desaparece el botón flotante", () => {
+    assert.match(html, /id="inbox-view-tabs"[^>]*aria-label="Acciones de bandeja"/);
+    assert.match(html, /id="inbox-new-message"[^>]*>[\s\S]*<span>Nuevo mensaje<\/span>/);
+    assert.doesNotMatch(html, /inbox-requests-tab|inbox-floating-new-message/);
+    assert.doesNotMatch(html, /id="inbox-new-message"[\s\S]*?id="inbox-folder-nav"/);
     assert.match(html, /id="inbox-search-toggle"/);
-    assert.match(html, /id="inbox-new-message"[^>]*>[\s\S]*<span>Nuevo<\/span>/);
-    assert.match(html, /id="inbox-search-toggle"[^>]*>[\s\S]*<span>Buscar<\/span>/);
-    assert.match(css, /inbox-floating-new-message[\s\S]*?position:absolute/);
+    assert.match(ui, /if \(newMessageButton\) newMessageButton\.hidden = false/);
     assert.match(ui, /Salir y cancelar el mensaje nuevo/);
     assert.match(css, /inbox-folder-nav button\[hidden\][\s\S]*?display:none !important/);
-    assert.match(css, /grid-template-columns:\s*repeat\(5,\s*minmax\(0,1fr\)\)/);
-    assert.match(css, /inbox-folder-nav button\[aria-pressed="true"\][\s\S]*?min-width:0/);
-    assert.match(css, /inbox-folder-nav \.inbox-folder-action[\s\S]*?width:100%/);
+    assert.match(css, /grid-template-columns:\s*repeat\(4,\s*minmax\(0,1fr\)\)/);
 });
 check("Cada conversación muestra a la izquierda un icono accesible de leído o no leído", () => {
     assert.match(ui, /const unreadCount = Math\.max\(0, Number\(item\.unreadCount\) \|\| 0\)/);
@@ -240,15 +237,20 @@ check("Reportes y solicitudes usan toda la altura disponible de la lista en PWA 
     assert.match(css, /\.inbox-requests-view #inbox-detail\s*\{[^}]*display:\s*none/s);
     assert.match(css, /\.is-request-detail-open \.inbox-requests-view #inbox-list\s*\{\s*display:\s*none/s);
 });
-check("Crear y buscar comparten la barra de iconos de las carpetas", () => {
+check("Nuevo mensaje está en la barra superior y Buscar permanece junto a las carpetas", () => {
     const folderStart = html.indexOf('id="inbox-folder-nav"');
     const folderEnd = html.indexOf("</nav>", folderStart);
     const folderMarkup = html.slice(folderStart, folderEnd);
+    const actionStart = html.indexOf('id="inbox-view-tabs"');
+    const actionEnd = html.indexOf("</nav>", actionStart);
+    const actionMarkup = html.slice(actionStart, actionEnd);
     assert.ok(folderStart >= 0 && folderEnd > folderStart);
-    assert.match(folderMarkup, /id="inbox-new-message"/);
     assert.match(folderMarkup, /id="inbox-search-toggle"/);
-    assert.doesNotMatch(html.slice(html.indexOf('class="inbox-header-actions"'), folderStart), /inbox-new-message|inbox-search-toggle/);
-    assert.match(ui, /if \(newMessageButton\) newMessageButton\.hidden = nextView !== "conversations"/);
+    assert.doesNotMatch(folderMarkup, /inbox-new-message/);
+    assert.match(actionMarkup, /id="inbox-new-message"/);
+    assert.doesNotMatch(actionMarkup, /inbox-requests-tab|data-inbox-view="requests"/);
+    assert.match(ui, /if \(newMessageButton\) newMessageButton\.hidden = false/);
+    assert.match(ui, /if \(inboxConversationCurrentView_ !== "conversations"\) await setInboxSection_\("general"\)/);
 });
 check("Los wrappers de API conservan el contrato de Inbox", () => {
     for (const name of ["getInboxRecipients","getInboxConversations","getInboxMessages","createInboxConversation","sendInboxMessage","markInboxRead","archiveInboxConversation","closeInboxConversation"]) {
@@ -404,10 +406,13 @@ check("La barra aplica formato sobre la selección real del editor visual", () =
     assert.match(rich, /\["insertUnorderedList", null\]/);
     assert.match(rich, /editor\.dispatchEvent\(new Event\("input", \{ bubbles: true \}\)\)/);
 });
-check("Los menús de fuente y listas se despliegan hacia la izquierda del botón", () => {
-    const menuRule = css.slice(css.lastIndexOf("GP-UX-INBOX-RICH-EDITOR-01"));
-    assert.match(menuRule, /\.rich-toolbar-menu\s*\{[^}]*left:auto; right:0/s);
-    assert.match(menuRule, /max-width:calc\(100vw - 24px\)/);
+check("Los menús flotan sobre el editor: listas hacia la derecha y categorías hacia la izquierda", () => {
+    assert.match(rich, /positionRichTextMenu\(menu, trigger, "left"\)/);
+    assert.match(ui, /positionRichTextMenu\(composerOptionsMenu, composerOptionsButton, "right"\)/);
+    assert.match(rich, /menu\.style\.position = "fixed"/);
+    assert.match(ui, /document\.addEventListener\("pointerdown",[\s\S]*?closeInboxRichToolbarMenus_/);
+    assert.match(ui, /category\.addEventListener\("change", closeComposerOptions\)/);
+    assert.match(ui, /template\.addEventListener\("change", \(\) => \{\s*closeComposerOptions\(\)/);
 });
 check("La barra compacta reduce separación y ancho de iconos en PWA móvil", () => {
     const toolbarRule = css.slice(css.lastIndexOf("GP-UX-INBOX-RICH-EDITOR-01"));
@@ -422,6 +427,34 @@ check("Las fuentes nativas ampliadas están permitidas por el sanitizador y disp
     assert.match(rich, /const SAFE_FONT_VALUES = new Set\(SAFE_FONTS\.values\(\)\)/);
 });
 
+
+
+check("Al abrir una conversación o redactar, la lista lateral se oculta y el detalle ocupa todo el ancho", () => {
+    assert.match(ui, /classList\.add\("is-detail-open"\)/);
+    assert.match(css, /#inbox-modal-content\.is-detail-open \.inbox-conversation-sidebar\s*\{[^}]*display:none !important/s);
+    assert.match(css, /#inbox-modal-content\.is-detail-open \.inbox-conversations-view\s*\{[^}]*grid-template-columns:minmax\(0,1fr\)/s);
+    assert.match(css, /#inbox-modal-content\.is-detail-open \.inbox-mobile-back\s*\{[^}]*display:inline-flex/s);
+});
+check("El compositor aprovecha la altura, elimina el título redundante y compacta el asunto", () => {
+    assert.doesNotMatch(ui, /inbox-new-title|Nuevo mensaje\"\)/);
+    assert.match(css, /\.inbox-new-conversation-form \.inbox-editor-shell\s*\{[^}]*min-height:260px/s);
+    assert.match(css, /\.inbox-new-conversation-form \.inbox-editor-shell \.inbox-rich-editor\s*\{[^}]*min-height:240px/s);
+    assert.match(css, /#inbox-new-subject\s*\{[^}]*height:34px;[^}]*padding:5px 9px/s);
+    assert.match(css, /\.inbox-pagination\s*\{[^}]*margin-top:auto/s);
+    assert.match(css, /\.inbox-search-row input\s*\{[^}]*height:32px;[^}]*padding:4px 8px/s);
+});
+check("Los scrollbars del Inbox usan un indicador fino, redondeado, translúcido y oculto hasta interacción", () => {
+    assert.match(css, /scrollbar-width:thin;\s*scrollbar-color:transparent transparent/);
+    assert.match(css, /::-webkit-scrollbar-thumb[\s\S]*?border-radius:999px/);
+    assert.match(css, /:hover::-webkit-scrollbar-thumb[\s\S]*?background:color-mix/);
+});
+check("Los editores eliminan el texto de demostración heredado sin reemplazar el placeholder", () => {
+    assert.match(rich, /export function stripRichTextDemoPlaceholder\(value\)/);
+    assert.match(rich, /text\.toLocaleLowerCase\(\) === "texto en negrita" \? "" : source/);
+    assert.match(rich, /sanitizeHtmlContent\(stripRichTextDemoPlaceholder\(source\.value \|\| ""\), mode\)/);
+    assert.match(ui, /sanitizeHtmlContent\(stripRichTextDemoPlaceholder\(initialHtml \|\| ""\), "advanced"\)/);
+    assert.doesNotMatch(rich, /selected \|\| "texto en negrita"/);
+});
 
 check("Los formularios distinguen editores básicos, editores con listas y el Inbox completo", () => {
     assert.ok(ui.includes('mode: LIST_RICH_TEXT_FIELDS_.has(String(targetId)) ? "lists" : "basic"'));
