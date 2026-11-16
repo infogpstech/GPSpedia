@@ -1248,3 +1248,11 @@ Se creó `Tareas_beta.md` con los IDs BETA-001 a BETA-052, criterios de aceptaci
 - Las sugerencias autenticadas conservan la lease específica `FEEDBACK/suggestYear` y el actor confiable central.
 - CI run `43782403026`: SUCCESS; 107 suites / 1,655 pruebas / 0 fallos.
 - **Pendiente Beta:** verificar sugerencia anónima, autenticada y aplicación efectiva del umbral. La revisión global de servicios sigue abierta; esta corrección no cierra GP-BETA-06 completo.
+
+
+### Adenda 2026-11-16 — GP-BETA-03/04/05: corrección transversal de sesión Developer
+- **Causa detectada:** `getDeveloperSessionPayload()` solo leía `currentUser.ID`, aunque el contexto de sesión de la interfaz admite `ID` o `id`. En sesiones heredadas con `id`, las operaciones administrativas que usan este helper fallaban antes de llegar al backend.
+- **Corregido:** el helper obtiene el identificador y token desde `getUiSessionContext_()`; prueba agregada para ambos formatos.
+- **GP-BETA-04/05:** se añadió además la reserva Coordinator `RELAY` para las tres operaciones que usan escaneo global de referencias de imágenes.
+- **CI:** run `43782723331` SUCCESS — 107 suites / 1,656 pruebas / 0 fallos.
+- **Estado:** corrección de código aprobada; GP-BETA-03 (borrado logs), GP-BETA-04 (auditoría Drive) y GP-BETA-05 (imágenes históricas) siguen ABIERTAS hasta validación Beta. La discrepancia ID/id es una causa común probable, no se declara causa única sin reproducir con la sesión Beta.
