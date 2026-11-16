@@ -4067,7 +4067,7 @@ function resetSessionUi_() {
         'audit-drive-results-container', 'audit-drive-summary',
         'replaced-images-folder-status', 'selected-logo-file-name',
         'vin-migration-status', 'vin-recalculate-status', 'vin-diagnostic-status',
-        'service-health-detail', 'service-traffic-chart'
+        'service-health-detail', 'service-traffic-chart', 'global-service-traffic-chart'
     ];
     transientAdminIds.forEach(id => {
         const element = document.getElementById(id);
@@ -5137,6 +5137,8 @@ function initAdminPanelListeners() {
     window.gpsepediaRequestDeveloperConsoleConfirmation = requestDeveloperConsoleConfirmation_;
 
     let serviceHealthResults = {}, selectedServiceKey = null, isHealthScanRunning = false;
+    let globalServiceTrafficData = null, globalServiceTrafficError = null;
+    let globalServiceTrafficLoading = false, lastGlobalServiceTrafficFetchAt = 0;
     function formatServiceCheckTime(value) {
         if (!value) return "No disponible";
         const date = new Date(value);
@@ -5384,10 +5386,137 @@ function initAdminPanelListeners() {
             : "Serie agrupada por inicio de solicitud; ventana móvil exacta de quince minutos.";
         container.appendChild(note);
     }
+    function renderGlobalServiceTrafficChart_() {
+        const container = document.getElementById("global-service-traffic-chart");
+        if (!container) return;
+        container.replaceChildren();
+        if (globalServiceTrafficError) {
+            const error = document.createElement("p");
+            error.className = "dev-empty-state";
+            error.textContent = "No fue posible recuperar el agregado global: " + globalServiceTrafficError;
+            container.appendChild(error);
+            return;
+        }
+        const data = globalServiceTrafficData;
+        if (!data || data.scope !== "coordinator_protected_operations" ||
+            !Array.isArray(data.services) || !Array.isArray(data.buckets) || !data.totals) {
+            const empty = document.createElement("p");
+            empty.className = "dev-empty-state";
+            empty.textContent = globalServiceTrafficLoading
+                ? "Consultando el agregado global..."
+                : "Aún no hay operaciones protegidas registradas por Coordinator.";
+            container.appendChild(empty);
+            return;
+        }
+
+        const sumCounts = values => Object.values(values || {}).reduce((sum, value) => sum + Math.max(0, Number(value) || 0), 0);
+        const summary = document.createElement("div");
+        summary.className = "dev-service-metrics";
+        summary.append(
+            createServiceMetric("Última hora", String(sumCounts(data.totals.lastHour))),
+            createServiceMetric("Últimas 6 h", String(sumCounts(data.totals.last6Hours))),
+            createServiceMetric("Últimas 24 h", String(sumCounts(data.totals.last24Hours)))
+        );
+        container.appendChild(summary);
+
+        const buckets = data.buckets.slice().sort((a, b) => Number(a.startAt) - Number(b.startAt));
+        const services = data.services.filter(service => /^[A-Z_]{2,20}$/.test(String(service)));
+        if (!buckets.length || !services.length) {
+            const empty = document.createElement("p");
+            empty.className = "dev-empty-state";
+            empty.textContent = "No hay buckets globales disponibles.";
+            container.appendChild(empty);
+            return;
+        }
+        const series = services.map(service => ({
+            service,
+            counts: buckets.map(bucket => Math.max(0, Number(bucket.counts && bucket.counts[service]) || 0))
+        }));
+        const maxValue = Math.max(1, ...series.flatMap(item => item.counts));
+        const width = 920, height = 270, left = 48, right = 18, top = 18, bottom = 42;
+        const plotWidth = width - left - right, plotHeight = height - top - bottom;
+        const ns = "http://www.w3.org/2000/svg";
+        const svg = document.createElementNS(ns, "svg");
+        svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+        svg.setAttribute("class", "dev-service-traffic-svg");
+        svg.setAttribute("role", "img");
+        svg.setAttribute("aria-label", "Operaciones protegidas globales registradas por Coordinator, agrupadas por hora durante las últimas 24 horas.");
+        [0, Math.ceil(maxValue / 2), maxValue].filter((value, index, values) => values.indexOf(value) === index).forEach(value => {
+            const y = top + plotHeight - (value / maxValue) * plotHeight;
+            const line = document.createElementNS(ns, "line");
+            line.setAttribute("x1", left); line.setAttribute("x2", width - right);
+            line.setAttribute("y1", y); line.setAttribute("y2", y);
+            line.setAttribute("class", "dev-service-traffic-gridline");
+            svg.appendChild(line);
+            const label = document.createElementNS(ns, "text");
+            label.setAttribute("x", left - 10); label.setAttribute("y", y + 4);
+            label.setAttribute("text-anchor", "end"); label.setAttribute("class", "dev-service-traffic-axis");
+            label.textContent = String(value); svg.appendChild(label);
+        });
+        const labelIndexes = [...new Set([0, 6, 12, 18, buckets.length - 1])].filter(index => index >= 0 && index < buckets.length);
+        labelIndexes.forEach(index => {
+            const x = left + (index / Math.max(1, buckets.length - 1)) * plotWidth;
+            const label = document.createElementNS(ns, "text");
+            label.setAttribute("x", x); label.setAttribute("y", height - 12);
+            label.setAttribute("text-anchor", "middle"); label.setAttribute("class", "dev-service-traffic-axis");
+            label.textContent = new Date(Number(buckets[index].startAt)).toLocaleTimeString([], { hour: "2-digit" });
+            svg.appendChild(label);
+        });
+        series.forEach((item, index) => {
+            const points = item.counts.map((count, bucketIndex) => {
+                const x = left + (bucketIndex / Math.max(1, buckets.length - 1)) * plotWidth;
+                const y = top + plotHeight - (count / maxValue) * plotHeight;
+                return `${x},${y}`;
+            }).join(" ");
+            const line = document.createElementNS(ns, "polyline");
+            line.setAttribute("points", points);
+            line.setAttribute("class", `dev-service-traffic-line dev-service-color-${index % 8}`);
+            svg.appendChild(line);
+        });
+        container.appendChild(svg);
+        const legend = document.createElement("div");
+        legend.className = "dev-service-traffic-legend";
+        series.forEach((item, index) => {
+            const entry = document.createElement("span");
+            entry.className = `dev-service-traffic-legend-item dev-service-color-${index % 8}`;
+            entry.textContent = item.service;
+            legend.appendChild(entry);
+        });
+        container.appendChild(legend);
+        const note = document.createElement("p");
+        note.className = "dev-service-note";
+        note.textContent = "Agregado central de operaciones protegidas que obtuvieron una lease. No incluye lecturas públicas no coordinadas, el feed público ni sondeos de salud; no equivale al total de solicitudes HTTP.";
+        container.appendChild(note);
+    }
+
+    async function loadGlobalServiceTraffic_(force = false) {
+        if (globalServiceTrafficLoading || !isAdminPanelCurrent_()) return;
+        if (!force && Date.now() - lastGlobalServiceTrafficFetchAt < 60000) return;
+        globalServiceTrafficLoading = true;
+        lastGlobalServiceTrafficFetchAt = Date.now();
+        globalServiceTrafficError = null;
+        renderGlobalServiceTrafficChart_();
+        try {
+            const result = await routeActionWithRetry("getServiceTraffic", {}, { timeoutMs: 15000, maxAttempts: 2 });
+            if (!isAdminPanelCurrent_()) return;
+            if (!result || result.status !== "success" || result.scope !== "coordinator_protected_operations") {
+                throw new Error(result && result.message ? result.message : "Respuesta de telemetría no válida.");
+            }
+            globalServiceTrafficData = result;
+            globalServiceTrafficError = null;
+        } catch (error) {
+            globalServiceTrafficError = error && error.message ? error.message : "Error de consulta.";
+        } finally {
+            globalServiceTrafficLoading = false;
+            if (isAdminPanelCurrent_()) renderGlobalServiceTrafficChart_();
+        }
+    }
+
     function renderServiceDashboard() {
         if (!isAdminPanelCurrent_()) return;
         renderServiceCards();
         renderServiceDetail();
+        renderGlobalServiceTrafficChart_();
         renderServiceTrafficChart();
     }
     async function runServicesHealthScan() {
@@ -5403,6 +5532,7 @@ function initAdminPanelListeners() {
             if (!isAdminPanelCurrent_()) return;
             if (!selectedServiceKey || !serviceHealthResults[selectedServiceKey]) selectedServiceKey = Object.keys(serviceHealthResults)[0] || null;
             renderServiceDashboard();
+            await loadGlobalServiceTraffic_(true);
             log("[SALUD] Diagnóstico de servicios completado.");
         } catch (e) {
             log(`[SALUD ERROR] Fallo al escanear servicios: ${e.message}`, false, true);
@@ -5414,6 +5544,8 @@ function initAdminPanelListeners() {
     }
     const scanBtn = document.getElementById("btn-check-services-health");
     if (scanBtn) scanBtn.onclick = () => runServicesHealthScan();
+    const globalTrafficRefreshBtn = document.getElementById("btn-refresh-global-service-traffic");
+    if (globalTrafficRefreshBtn) globalTrafficRefreshBtn.onclick = () => loadGlobalServiceTraffic_(true);
     if (!window.adminServiceMetricsUnsubscribe) {
         window.adminServiceMetricsUnsubscribe = subscribeServiceMetrics(() => {
             if (!isAdminPanelCurrent_() || !isServiceDiagnosticsVisible_()) return;
@@ -5441,6 +5573,7 @@ function initAdminPanelListeners() {
             if (!isAdminPanelCurrent_() || !isServiceDiagnosticsVisible_()) return;
             renderServiceTrafficChart();
             if (selectedServiceKey) renderServiceDetail();
+            if (Date.now() - lastGlobalServiceTrafficFetchAt >= 60000) loadGlobalServiceTraffic_();
         }, 15000);
     }
 
