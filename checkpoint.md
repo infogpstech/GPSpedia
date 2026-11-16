@@ -159,3 +159,11 @@ El checkpoint acumulativo anterior se conserva íntegro en `Checkpoint_Archive/c
   - b1e169b5cd341ffea98fb563b6ddb86ee190e2bd — OfflineBrandAssets.
 - Implementación: divisor en fila completa con margen lateral; logo con overflow visible y padding; modelo/Relay a 2rem; acciones 40 px escritorio / 36 px móvil y cierre 40 px; tutorial con encabezado flex propio, ajuste de palabras y cierre absoluto a la derecha.
 - Estado: implementación publicada; revisión del diff y CI pendientes. Inspección visual Android/PWA y escritorio pendiente de Beta. No se modifican Apps Script, deployments ni datos externos.
+
+
+### Validación de publicación — GP-UX-CUT-MODAL-04 / GP-UX-TUTORIAL-MODAL-01 — 2026-11-16
+- Verificación estática dirigida: **9/9 PASS** sobre el código y los contratos publicados.
+- Commits individuales y archivos confirmados mediante fetch_commit: ui.js, style.css, CutDetailModalLayout.mjs, service-worker.js, ServiceWorkerCache.js, OfflineBrandAssets.mjs y registros.
+- HEAD documental confirmado al terminar la publicación: bcaac4156c52decfdcd07ec4f1f07788208aa6dc. Compare de ramas: GPSpedia2.2.5_work ahead; base GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1, behind_by 0.
+- GitHub combined status no devolvió checks y el endpoint de workflow disponible solo expone runs de PR. El clon superficial para ejecutar Node.js local falló por DNS de github.com. CI Node.js completa no confirmada.
+- Estado: EN PROGRESO hasta disponer de ejecución Node.js/CI verificable. Validación visual escritorio, Android y PWA instalada pendiente de Beta. No se modificaron Apps Script, deployments ni datos externos.
