@@ -1382,3 +1382,7 @@ GP-UX-INBOX-RICH-EDITOR-01 — 2026-11-16
 - CI `43969111663`: 130 suites / 1,941 pruebas / 0 fallos.
 - GitHub Pages `43969110185`: SUCCESS.
 - Implementación cerrada con validación diferida a Beta para inspección visual real en Android/PWA y escritorio.
+
+
+### GP-UX-RICH-FORMS-02 — 2026-11-16
+- `style.css`: el desplegable de categorías se abre hacia la izquierda y el de viñetas/listas hacia la derecha, con anclajes independientes.
