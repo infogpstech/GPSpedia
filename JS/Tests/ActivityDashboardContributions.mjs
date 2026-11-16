@@ -17,7 +17,9 @@ const userRows=[Array(8).fill("header"),["U1","ana","","","","","Ana",""],["U2",
 const sheet=rows=>({getLastRow:()=>rows.length,getLastColumn:()=>rows[0].length,getRange:(r,c,n,w)=>({getValues:()=>rows.slice(r-1,r-1+n).map(row=>row.slice(c-1,c-1+w))})});
 const ss={getSheetByName:name=>name==="Cortes"?sheet(cortesRows):name==="Users"?sheet(userRows):null};
 const aggregate=new Function("getSpreadsheet","SHEET_NAMES","COLS_CORTES",helper+";return buildCutContributionSummary_;")(()=>ss,{CORTES:"Cortes"},columns)();
-assert.deepEqual(aggregate,[{userId:"U1",nombreUsuario:"Ana",cortesAportados:3,vehiculosConAportes:2},{userId:"U2",nombreUsuario:"Luis",cortesAportados:1,vehiculosConAportes:1}]);
+assert.deepEqual(aggregate,[{userId:"U1",nombreUsuario:"Ana",cortesAportados:3,vehiculosConAportes:2},{userId:"U2",nombreUsuario:"Luis",cortesAportados:1,vehiculosConAportes:1},{userId:"",nombreUsuario:"Comunidad de técnicos",cortesAportados:1,vehiculosConAportes:1}]);
+assert.match(helper,/\|\|"Comunidad de técnicos"/);
+assert.match(helper,/replace\(\/\\s\*\\\(\[\^\)\]\*\\\)\/g/);
 assert.match(dash,/export function renderActivityContributions/);
 assert.match(ui,/renderActivityContributions\(contributionContainer/);
 assert.match(html,/data-activity-tab="contributions"/);
@@ -27,9 +29,16 @@ const normalized=normalizeContributionRows([
  {nombreUsuario:"pablo pena .",cortesAportados:3,vehiculosConAportes:2},
  {nombreUsuario:"MÁRIA   LÓPEZ.",cortesAportados:1,vehiculosConAportes:1},
  {nombreUsuario:"<b>JOSE</b> <i>GARCIA</i>",cortesAportados:1,vehiculosConAportes:1},
- {nombreUsuario:"Pablo Peña.<br><script>alert('x')</script>",cortesAportados:1,vehiculosConAportes:1}
+ {nombreUsuario:"Pablo Peña.<br><script>alert('x')</script>",cortesAportados:1,vehiculosConAportes:1},
+ {nombreUsuario:"Byron Lopez (apert)",cortesAportados:2,vehiculosConAportes:1},
+ {nombreUsuario:"BYRON LÓPEZ (corte)",cortesAportados:3,vehiculosConAportes:2},
+ {nombreUsuario:"Comunidad Internacional de técnicos",cortesAportados:2,vehiculosConAportes:1},
+ {nombreUsuario:"Comunidad de técnicos.",cortesAportados:1,vehiculosConAportes:1},
+ {nombreUsuario:"",cortesAportados:1,vehiculosConAportes:1}
 ]);
 assert.deepEqual(normalized,[
+ {nombreUsuario:"Byron Lopez",cortesAportados:5,vehiculosConAportes:2},
+ {nombreUsuario:"Comunidad de técnicos",cortesAportados:3,vehiculosConAportes:1},
  {nombreUsuario:"Pablo Peña",cortesAportados:6,vehiculosConAportes:2},
  {nombreUsuario:"María López",cortesAportados:3,vehiculosConAportes:1},
  {nombreUsuario:"Jose Garcia",cortesAportados:1,vehiculosConAportes:1}
@@ -44,4 +53,4 @@ const tbody=new FakeElement("tbody");tbody.ownerDocument=doc;
 renderActivityContributions(tbody,[{nombreUsuario:"pAbLo pEñA.<br>PABLO PENA",cortesAportados:2,vehiculosConAportes:1}],doc);
 assert.equal(tbody.children.length,1);
 assert.deepEqual(tbody.children[0].children.map(cell=>cell.textContent),["Pablo Peña","2","1"]);
-console.log("ActivityDashboardContributions: 9/9 PASS");
+console.log("ActivityDashboardContributions: 14/14 PASS");
