@@ -55,7 +55,7 @@ testCase("inventario, organización y conciliación conservan estados y reportan
     assert.match(audit, /\[ORGANIZACIÓN DRIVE\]/);
     assert.match(audit, /\[CONCILIACIÓN DRIVE\]/);
     assert.match(audit, /rollback confirmado/);
-    assert.match(audit, /No se modificó Spreadsheet, Drive ni permisos/);
+    assert.match(audit, /Sin cambios en Spreadsheet, Drive ni permisos/);
 });
 
 console.log("DeveloperOperationMessages: " + passed + "/" + passed + " PASS");
