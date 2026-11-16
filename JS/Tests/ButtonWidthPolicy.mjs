@@ -40,12 +40,12 @@ testCase("la navegación Inbox distribuye las pestañas y evita botones de acci�
     assert.match(css, /#inbox-modal-content \.inbox-pagination button/);
 });
 
-testCase("el ancho completo queda reservado a .btn-block y formularios", () => {
+testCase("el ancho completo queda reservado a .btn-block y las acciones de usuarios son compactas", () => {
     assert.match(controls, /\.btn-block \{\s*display: flex;\s*width: 100%/);
     assert.match(index, /id="side-menu-logout-button" class="btn btn-danger btn-block"/);
     assert.match(index, /id="btn-accept-terms" class="btn btn-primary btn-block"/);
     assert.match(css, /@media \(max-width: 600px\)[\s\S]*?\.modal-actions button,[\s\S]*?width: 100%/);
-    assert.match(users, /\.actions-cell \.btn-sm \{\s*width: 100%/);
+    assert.match(users, /\.actions-cell \.btn-sm \{\s*flex:0 0 38px; width:38px/);
 });
 
 console.log("ButtonWidthPolicy: " + passed + "/" + passed + " PASS");
