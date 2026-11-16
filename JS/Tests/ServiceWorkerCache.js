@@ -104,7 +104,9 @@ test('precache conserva el App Shell, las páginas auxiliares y el grafo JS', as
   './JS/Frontend/VinDifferentialEngine.js', './JS/Frontend/catalogRequest.js',
   './style.css', './button-system.css'
  ]) assert.ok(h.assets.includes(path), path);
- assert.match(source, /gpsepedia-cache-v32/);
+ assert.match(source, /gpsepedia-cache-v33/);
+ assert.ok(h.assets.includes('./Images/icon-v3-512x512.png'));
+ assert.ok(h.assets.includes('./Images/Logo_TemaOscuro.png'));
  assert.equal(h.skip, 1);
 });
 test('cuota de recursos opcionales no impide instalar el App Shell', async () => {
