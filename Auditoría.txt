@@ -1559,3 +1559,10 @@ Validación prevista:
 - Regresión completa Node.js y CI. La inspección visual en navegador real queda pendiente de Beta.
 No se modifican backend, Apps Script, permisos, servicios desplegados ni datos externos.
 ================================================================================
+
+ADENDA — GP-UX-INBOX-DESKTOP-02 — 2026-11-16
+- Se fuerza el modo avanzado únicamente en los editores del Inbox para que la barra incluya negrita, cursiva, subrayado, tachado, color, tamaño, fuente y listas, sin alterar la preferencia global del resto de la plataforma.
+- El sanitizador compartido acepta modo avanzado explícito solo para el contenido de conversaciones Inbox; mantiene su modo global predeterminado para los demás módulos.
+- La actualización de la barra conserva su modo forzado y las clases visuales; las acciones de formato notifican al borrador para preservar los cambios.
+- Como también cambia JS/Frontend/rich-text.js, el App Shell se incrementa de v46 a v47. Las pruebas de caché/offline se alinean a v47.
+- Validación automatizada pendiente; no afirmar CI ni inspección visual real.
