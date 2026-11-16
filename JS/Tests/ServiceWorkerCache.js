@@ -35,35 +35,36 @@ function harness(options = {}) {
    assets.push(path);
   },
   async match(request) {
-   const key = typeof request === 'string' ? new URL(request, origin).href : new URL(request.url, origin).href;
+   const key = typeof request === 'string' ? new URL(request, baseUrl).href : new URL(request.url, baseUrl).href;
    return cacheEntries.get(key) || null;
   },
   async put(request, response) {
    if (options.putError) throw options.putError;
-   const key = typeof request === 'string' ? new URL(request, origin).href : new URL(request.url, origin).href;
+   const key = typeof request === 'string' ? new URL(request, baseUrl).href : new URL(request.url, baseUrl).href;
    cacheEntries.set(key, response);
   },
   async keys() {
    return [...cacheEntries.keys()].map(url => ({ url, destination: 'image' }));
   },
   async delete(request) {
-   const key = typeof request === 'string' ? new URL(request, origin).href : new URL(request.url, origin).href;
+   const key = typeof request === 'string' ? new URL(request, baseUrl).href : new URL(request.url, baseUrl).href;
    return cacheEntries.delete(key);
   }
  };
  const origin = 'https://infogpstech.github.io';
+ const baseUrl = origin + '/GPSpedia/';
  const cachesApi = {
   async open() { return cache; },
   async keys() { return ['gpsepedia-cache-v29', 'other-app-cache']; },
   async delete() { return true; },
   async match(request) {
-   const key = typeof request === 'string' ? new URL(request, origin).href : new URL(request.url, origin).href;
+   const key = typeof request === 'string' ? new URL(request, baseUrl).href : new URL(request.url, baseUrl).href;
    return cacheEntries.get(key) || null;
   }
  };
  const context = {
   self: {
-   location: { origin, href: origin + '/GPSpedia/' },
+   location: { origin, href: baseUrl },
    addEventListener: (name, fn) => { listeners[name] = fn; },
    skipWaiting: async () => { skip += 1; },
    clients: { claim: async () => {} }

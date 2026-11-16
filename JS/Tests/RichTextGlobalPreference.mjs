@@ -24,9 +24,9 @@ function createStorage(initial = {}) {
         setItem(key, value) { values.set(key, String(value)); } };
 }
 const apiBlock = extract(apiSource, "export const RICH_TEXT_MODE_KEY", "export const API_ENDPOINTS").replace(/^export /gm, "");
-function createApi(storage, handler) {
-    return new Function("localStorage", "routeAction", apiBlock +
-        "\nreturn { RICH_TEXT_MODE_KEY, RICH_TEXT_MODES, getRichTextMode, loadRichTextMode, setRichTextMode };")(storage, handler);
+function createApi(storage, handler, retryHandler = async (action, payload, options) => handler(action, payload, options)) {
+    return new Function("localStorage", "routeAction", "routeActionWithRetry", apiBlock +
+        "\nreturn { RICH_TEXT_MODE_KEY, RICH_TEXT_MODES, getRichTextMode, loadRichTextMode, setRichTextMode };")(storage, handler, retryHandler);
 }
 const results = [];
 let passed = 0;
@@ -38,15 +38,20 @@ testCase("el formato cacheado predeterminado es estricto", () => {
 });
 
 testCase("la carga global requiere sesión y usa getRichTextMode", async () => {
-    let call = null;
+    let call = null, retryOptions = null;
     const storage = createStorage();
     const api = createApi(storage, async (action, payload) => {
+        call = { action, payload };
+        return { status: "success", mode: "advanced" };
+    }, async (action, payload, options) => {
+        retryOptions = options;
         call = { action, payload };
         return { status: "success", mode: "advanced" };
     });
     await assert.rejects(() => api.loadRichTextMode({ userId: "u1" }), /sesión activa/);
     assert.equal(await api.loadRichTextMode({ userId: "u1", sessionToken: "t1" }), "advanced");
     assert.deepEqual(call, { action: "getRichTextMode", payload: { userId: "u1", sessionToken: "t1" } });
+    assert.deepEqual(retryOptions, { timeoutMs: 6000, maxAttempts: 2, retryDelayMs: 250 });
     assert.equal(api.getRichTextMode(), "advanced");
 });
 
@@ -101,6 +106,7 @@ testCase("FEEDBACK declara permisos y despacho para lectura de todos los roles y
 
 testCase("Coordinator protege el recurso de configuración global con actor autenticado", () => {
     assert.match(coordinator, /getRichTextMode:\s*\{\s*read:\s*feedbackRead\s*\}/);
+    assert.match(apiSource, /routeActionWithRetry\("getRichTextMode"[\s\S]*?timeoutMs: 6000[\s\S]*?maxAttempts: 2/);
     assert.match(coordinator, /setRichTextMode:\s*\{\s*read:\s*feedbackRead,\s*write:\s*\["RICH_TEXT_CONFIG"\]\s*\}/);
 });
 

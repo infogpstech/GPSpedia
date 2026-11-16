@@ -736,7 +736,9 @@ export async function validateActiveSession(force = false) {
     if (!sameSession(memoryUser, user)) handleLoginSuccess(user, false);
     const expiration = getLocalSessionExpiry(user);
     if (expiration) {
-        endSessionForReauthentication_(user);
+        logout(expiration === 'absolute_expiration'
+            ? 'Tu sesión alcanzó su vigencia máxima. Inicia sesión nuevamente.'
+            : 'Tu sesión expiró por inactividad. Inicia sesión nuevamente.', user);
         return false;
     }
     if (typeof navigator !== 'undefined' && navigator.onLine === false) return null;
@@ -745,7 +747,7 @@ export async function validateActiveSession(force = false) {
         if (!isCurrentSession(user)) return false;
         if (result && result.valid === true) return true;
         if (result && result.valid === false) {
-            endSessionForReauthentication_(user);
+            logout('Tu sesión ya no está vigente. Inicia sesión nuevamente.', user);
             return false;
         }
         return null;

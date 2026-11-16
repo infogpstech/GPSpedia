@@ -40,7 +40,13 @@ function getRichTextSession_(session) {
 
 export async function loadRichTextMode(session) {
     const sessionPayload = getRichTextSession_(session);
-    const response = await routeAction("getRichTextMode", sessionPayload);
+    // La lectura es idempotente: dos intentos acotados evitan dejar el arranque
+    // esperando indefinidamente si FEEDBACK/Coordinator tarda en responder.
+    const response = await routeActionWithRetry("getRichTextMode", sessionPayload, {
+        timeoutMs: 6000,
+        maxAttempts: 2,
+        retryDelayMs: 250
+    });
     const mode = normalizeRichTextMode_(response && response.mode);
     if (!response || response.status !== "success" || !mode) {
         throw new Error("No se recibió una configuración global de texto válida.");
