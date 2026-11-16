@@ -133,3 +133,5 @@ El checkpoint acumulativo anterior se conserva íntegro en `Checkpoint_Archive/c
 - Implementación preparada: scroll propio del formulario con acciones sticky; selectores en fila; toolbar compartida en nuevo mensaje y respuesta; renderizado del contenido enriquecido después de sanitización; altura compacta de la lista vacía y lupa cuadrada sin etiqueta visible.
 - App Shell v46. Pruebas InboxUi, ServiceWorkerCache y OfflineBrandAssets reforzadas.
 - Estado al registrar: cambios locales en construcción/publicación; CI aún no ejecutada. No se modifican Apps Script, deployments, RBAC ni datos externos.
+
+- Adenda: la barra del Inbox se fuerza al modo avanzado sin cambiar la preferencia global. Se conserva al refrescar toolbars y el sanitizador recibe el modo avanzado explícito solo para mensajes de Inbox. App Shell v47.
