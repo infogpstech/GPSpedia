@@ -1093,3 +1093,9 @@ VALIDACIÓN LOCAL POSTERIOR — GP-UX-INBOX-03 / GP-DASH-ATTR-01
 - JS/Tests/ResponsiveFormsUsers.js: 16/16 PASS. ButtonWidthPolicy: 5/5 PASS.
 - GitHub Actions Node.js 22 run 43879864027: SUCCESS — 128 suites / 1,897 pruebas / 0 fallos. GitHub Pages run 43879862392: SUCCESS.
 - Validación visual en móviles reales pendiente de Beta. Sin cambios de Apps Script, servicios, backend o datos externos.
+
+2026-11-16 — GP-UX-CUT-CONTRIBUTOR-01
+- JS/Frontend/ui.js: el modal de detalle muestra «Aportado por: Comunidad de técnicos» en los cortes sin colaborador registrado o con el campo vacío; conserva el nombre normalizado cuando existe y no muestra la atribución en modo edición.
+- JS/Tests/CutDetailContributorFallback.mjs: regresión para el fallback comunitario y su alcance de presentación.
+- JS/Tests/RunServiceTests.mjs: incorpora la regresión al runner integral.
+- Sin modificaciones de datos históricos, contratos ni servicios Apps Script.
