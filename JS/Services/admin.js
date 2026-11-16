@@ -868,7 +868,7 @@ function isSharedMutationAction_(action) {
 // Consultas largas de inventario/Drive obtienen una lease propia de lectura.
 // No se registran como mutaciones ni generan eventos administrativos de escritura.
 function isSharedReadAction_(action) {
-    return ["getReplacedImages", "getDriveStorage", "getCortesImageFolders", "auditIdentifiers"].includes(action);
+    return ["getReplacedImages", "getDriveStorage", "getCortesImageFolders", "auditIdentifiers", "checkOperation", "getAdminImageUploadStatus", "previewCortesImageReconciliation"].includes(action);
 }
 
 function doPost(e) {
