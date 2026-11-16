@@ -726,3 +726,14 @@ HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
 - CI GitHub Actions run 43782403026: SUCCESS; 107 suites / 1,655 pruebas / 0 fallos; sintaxis PASS.
 - GitHub Pages run 43782402510: pendiente al último chequeo. Validación Beta pendiente; no se desplegó Apps Script ni se modificaron datos o propiedades externas.
 ================================================================================
+
+
+================================================================================
+2026-11-16 — CORRECCIONES DE SESIÓN ADMIN Y COORDINACIÓN DE ESCANEOS DRIVE
+- JS/Frontend/ui.js: getDeveloperSessionPayload() ahora usa getUiSessionContext_() para resolver de forma común ID/id y conservar el token requerido. Evita fallos locales de las operaciones Developer en sesiones heredadas. Aplica a limpieza de ActividadUsuario/Logs, historial de imágenes, auditoría Drive y otras acciones que usan el helper.
+- JS/Tests/SessionUiRoleInvalidation.js: nueva cobertura para payload Developer con ambos formatos y rechazo de contexto ausente.
+- JS/Services/Coordinator.js: getReplacedImages, previewCortesImageReconciliation y auditDriveImagesInCortes ahora reservan RELAY porque collectActiveDriveReferences() recorre también esa hoja.
+- JS/Tests/AdminImageScanCoordinatorContract.mjs: exige reserva RELAY en las tres rutas globales de imágenes.
+- CI run 43782723331: SUCCESS; 107 suites / 1,656 pruebas / 0 fallos.
+- GitHub Pages run 43782722962: pendiente al último chequeo. Validación Beta pendiente; no se desplegó Apps Script ni se alteraron datos externos.
+================================================================================
