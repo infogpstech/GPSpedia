@@ -378,22 +378,28 @@ function handleGetDropdownData() {
             if (criteriaValues && typeof criteriaValues.getValues === "function") categorias = criteriaValues.getValues().flat().map(v=>String(v==null?"":v).trim()).filter(Boolean);
             else if (Array.isArray(criteriaValues)) categorias = criteriaValues.flat().map(v=>String(v==null?"":v).trim()).filter(Boolean);
         }
-        const cortesData = cortesSheet.getDataRange().getValues(), relayData = relaySheet.getDataRange().getValues();
-        const rows = Array.isArray(cortesData) ? cortesData.slice(1) : [], relayRows = Array.isArray(relayData) ? relayData.slice(1) : [];
-        const uniqueSorted = (sourceRows, indexes) => {
-            const values = new Set();
-            sourceRows.forEach(row => indexes.forEach(index => {
-                const value = String(row && row[index] != null ? row[index] : "").trim();
-                if (value) values.add(value);
-            }));
-            return Array.from(values).sort((a,b)=>a.localeCompare(b));
+        const readColumnValues = (sheet, column) => {
+            const lastRow = Number(sheet.getLastRow()) || 0;
+            if (lastRow < 2) return [];
+            return sheet.getRange(2, column, lastRow - 1, 1).getValues().map(row => row[0]);
         };
+        const uniqueSorted = values => Array.from(new Set(values
+            .map(value => String(value == null ? "" : value).trim())
+            .filter(Boolean))).sort((a,b)=>a.localeCompare(b));
+        const marcas = readColumnValues(cortesSheet, COLS_CORTES.marca);
+        const tiposCorte = [
+            ...readColumnValues(cortesSheet, COLS_CORTES.tipoCorte1),
+            ...readColumnValues(cortesSheet, COLS_CORTES.tipoCorte2),
+            ...readColumnValues(cortesSheet, COLS_CORTES.tipoCorte3)
+        ];
+        const tiposEncendido = readColumnValues(cortesSheet, COLS_CORTES.tipoEncendido);
+        const configuracionesRelay = readColumnValues(relaySheet, COLS_RELAY.configuracion);
         return {status:"success",dropdowns:{
             categoria:categorias,
-            marca:uniqueSorted(rows,[COLS_CORTES.marca-1]),
-            tipoDeCorte:uniqueSorted(rows,[COLS_CORTES.tipoCorte1-1,COLS_CORTES.tipoCorte2-1,COLS_CORTES.tipoCorte3-1]),
-            tipoDeEncendido:uniqueSorted(rows,[COLS_CORTES.tipoEncendido-1]),
-            configRelay:uniqueSorted(relayRows,[COLS_RELAY.configuracion-1])
+            marca:uniqueSorted(marcas),
+            tipoDeCorte:uniqueSorted(tiposCorte),
+            tipoDeEncendido:uniqueSorted(tiposEncendido),
+            configRelay:uniqueSorted(configuracionesRelay)
         }};
     } catch (error) {
         return {status:"error",message:"Failed to get dropdown data.",details:{errorMessage:error&&error.message?error.message:String(error)}};
