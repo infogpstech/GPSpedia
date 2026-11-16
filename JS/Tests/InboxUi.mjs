@@ -97,20 +97,20 @@ check("Todas las secciones reutilizan un único paginador con flechas y numeraci
     assert.doesNotMatch(html, /inbox-conversation-previous|inbox-conversation-next|inbox-category-filter/);
 });
 check("La barra móvil elimina filtros de lectura y distribuye cinco acciones con espacios uniformes", () => {
-    assert.match(html, /data-inbox-folder="received"[^>]*>[\\s\\S]*<span>Recibidos<\\/span>/);
+    assert.match(html, /data-inbox-folder="received"[^>]*>[\s\S]*<span>Recibidos<\/span>/);
     assert.doesNotMatch(html, /data-inbox-folder="read"|data-inbox-folder="unread"/);
     assert.match(html, /id="inbox-new-message"/);
     assert.match(html, /id="inbox-search-toggle"/);
-    assert.match(css, /grid-template-columns:\\s*repeat\\(5,\\s*minmax\\(0,1fr\\)\\)/);
-    assert.match(css, /inbox-folder-nav button\\[aria-pressed="true"\\][\\s\\S]*?min-width:0/);
-    assert.match(css, /inbox-folder-nav \\.inbox-folder-action[\\s\\S]*?width:100%/);
+    assert.match(css, /grid-template-columns:\s*repeat\(5,\s*minmax\(0,1fr\)\)/);
+    assert.match(css, /inbox-folder-nav button\[aria-pressed="true"\][\s\S]*?min-width:0/);
+    assert.match(css, /inbox-folder-nav \.inbox-folder-action[\s\S]*?width:100%/);
 });
 check("Cada conversación muestra a la izquierda un icono accesible de leído o no leído", () => {
-    assert.match(ui, /const unreadCount = Math\\.max\\(0, Number\\(item\\.unreadCount\\) \\|\\| 0\\)/);
+    assert.match(ui, /const unreadCount = Math\.max\(0, Number\(item\.unreadCount\) \|\| 0\)/);
     assert.match(ui, /inbox-conversation-read-state/);
-    assert.match(ui, /aria-label", unreadCount > 0 \\? "Conversación sin leer" : "Conversación leída"/);
-    assert.match(ui, /unreadCount > 0 \\? "fa-solid fa-envelope" : "fa-solid fa-envelope-open"/);
-    assert.match(css, /inbox-conversation-read-state[\\s\\S]*?grid-row:1 \\/ span 4/);
+    assert.match(ui, /aria-label", unreadCount > 0 \? "Conversación sin leer" : "Conversación leída"/);
+    assert.match(ui, /unreadCount > 0 \? "fa-solid fa-envelope" : "fa-solid fa-envelope-open"/);
+    assert.match(css, /inbox-conversation-read-state[\s\S]*?grid-row:1\s*\/\s*span 4/);
     assert.doesNotMatch(ui, /inbox-conversation-unread/);
 });
 check("El estado de lectura, archivo y cierre usa las acciones del backend", () => {
