@@ -295,10 +295,14 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 - Cualquier escritura de conciliación continúa requiriendo respaldo, dry-run y aprobación explícita del Desarrollador.
 
 ### GP-BETA-06 — suggestYear y cobertura de acciones protegidas
-**Estado: CORRECCIÓN LOCAL DE suggestYear COMPLETADA; PENDIENTE DE AUDITORÍA Y BETA.**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
 
-- Probar ruta anónima y autenticada, y el umbral efectivo de sugerencias.
-- Revisar acciones protegidas fuera de los routers compartidos para detectar omisiones de Coordinator o contratos inconsistentes.
+- Se verificó la ruta autenticada de `suggestYear`: la identidad y el rol proceden del actor central de FEEDBACK; la ruta anónima conserva el identificador no verificado, aplica límite de 30 solicitudes por hora y no puede modificar automáticamente el catálogo.
+- Se aisló el conteo de votos positivos verificados. El umbral de ampliación automática es 3 usuarios verificados distintos; duplicados del mismo actor, aportes anónimos, respuestas negativas y votos de otro vehículo/año no cuentan.
+- La auditoría de routers identificó `benchmarkPasswordKdf` como acción de solo lectura que aún consultaba localmente `Users/ActiveSessions`. Se incorporó a la ruta de lectura compartida AUTH y a la política Coordinator con lectura de `SESSION_CONTEXTS`, sin escritura adicional de actividad. El handler consume `requireSharedAuthActor_` y ya no revalida localmente la sesión.
+- Se revisaron AUTH, USERS, FEEDBACK, WRITE, ADMIN, UTILITIES y CATALOG. Las operaciones protegidas quedan cubiertas por lease/actor central; las excepciones son endpoints de validación de sesión, salud y lecturas públicas documentadas, además de la ruta anónima limitada de suggestYear. No se detectó otro handler protegido fuera del coordinador.
+- Pruebas: `SuggestYearCoordinatorSession` 2/2, `SuggestYearVoteThreshold` 6/6, `PasswordKdfBenchmark` 5/5, `ActionDispatchContract` 12/12 PASS. GitHub Actions Node.js 22 run `43799503142`: SUCCESS — 118 suites / 1,765 pruebas / 0 fallos.
+- Pendiente Beta: validar las rutas con despliegues AUTH/FEEDBACK/Coordinator actualizados y hojas aisladas, confirmar el límite de sugerencias en ejecución real y medir el flujo de aprobación de tres aportantes. No se invocaron deployments ni se modificaron datos externos.
 
 ---
 
