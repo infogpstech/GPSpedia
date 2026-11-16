@@ -45,3 +45,13 @@ Retomar el backlog vigente desde `Tareas_Pendientes.md`. No iniciar refactorizac
 El checkpoint acumulativo anterior se conserva íntegro en `Checkpoint_Archive/checkpoint_legacy_parte_002.md`. Su longitud era de 194,292 caracteres Unicode. El manifiesto registra la rotación y mantiene la referencia a la parte archivada anterior.
 
 - Ajuste final de posición del botón «Nuevo mensaje»: se elevó a 64 px sobre el borde inferior del modal y en móvil respeta el safe-area, dejando libre la navegación/paginación. App Shell actualizado a v41; CI pendiente.
+
+
+### Validación final de la iteración — 2026-11-16
+
+- GitHub Actions Node.js 22 run `43907008784`: **SUCCESS — 129 suites / 1,900 pruebas / 0 fallos**.
+- `PysModalNavigation`: 10/10 PASS; `InboxUi`: 42/42 PASS; `InboxConversations`: 61/61 PASS; `ActivityDashboardContributions`: 1/1 PASS.
+- GitHub Pages run `43907008756`: **SUCCESS**.
+- Ajuste de botón flotante Nuevo (64 px + safe-area móvil) incluido en la ejecución aprobada.
+- Inicio: `section-selector` margin-bottom de 20 px a 6 px (**reducción del 70 %**); carruseles con márgenes uniformes de 12/16 px.
+- Estado de rama previo a este cierre documental: `131903bfa3966d777419983c310ab024ca33146b`. La rama base permanece intacta.

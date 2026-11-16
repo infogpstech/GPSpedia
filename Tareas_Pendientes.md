@@ -749,3 +749,5 @@ No usar `reset --hard`, `clean`, force push ni comandos que descarten cambios. N
 - **Beta pendiente:** revisión visual en dispositivos, usuarios reales y servicios Apps Script/Spreadsheet en entorno autorizado. Sin despliegues ni alteración de datos productivos.
 
 - Adenda 2026-11-16: posición final del botón flotante Nuevo ajustada a 64 px sobre el pie/paginación y safe-area móvil; contrato InboxUi y App Shell v41 incorporados. CI pendiente de esta adenda.
+
+- Validación final posterior al ajuste del botón flotante: CI run 43907008784 SUCCESS — 129 suites / 1,900 pruebas / 0 fallos; GitHub Pages run 43907008756 SUCCESS. El espacio inferior del selector de secciones se redujo de 20 px a 6 px (70 %) y los carruseles mantienen separación uniforme.

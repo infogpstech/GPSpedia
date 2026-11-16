@@ -1215,3 +1215,9 @@ CIERRE DE ITERACIÓN GP-UX — 2026-11-16
 ================================================================================
 
 ADENDA — GP-UX-INBOX-03: botón flotante Nuevo se eleva sobre la paginación (bottom 64 px) y respeta safe-area móvil; App Shell v41 y pruebas offline sincronizadas.
+
+ADENDA FINAL 2026-11-16 — VALIDACIÓN GP-UX
+- Botón flotante Nuevo elevado a 64 px sobre paginación y safe-area móvil; App Shell v41.
+- Selector principal: margin-bottom 20 px → 6 px (70 % de reducción); márgenes de carruseles uniformados.
+- CI Node.js 22 run 43907008784: SUCCESS — 129 suites / 1,900 pruebas / 0 fallos. InboxUi 42/42; PysModalNavigation 10/10; InboxConversations 61/61; ActivityDashboardContributions 1/1.
+- GitHub Pages run 43907008756: SUCCESS.
