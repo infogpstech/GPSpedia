@@ -1229,7 +1229,8 @@ Se creó `Tareas_beta.md` con los IDs BETA-001 a BETA-052, criterios de aceptaci
 - [x] Detectar política faltante para `ADMIN/auditIdentifiers` (lectura de Users, Cortes, Tutorial, Feedbacks/PyS, LogosMarca y Relay).
 - [x] Detectar política faltante para `FEEDBACK/notifyDevelopersDriveCritical` (lee destinatarios en Users y crea Inbox en FEEDBACK).
 - [x] Publicar corrección y contrato de cobertura; prueba contractual local 1/1 PASS y sintaxis de Coordinator/admin/feedback/InboxConversations PASS.
-- [ ] Ejecutar CI integral en GitHub Actions; los checks del HEAD aún no reportan resultados.
+- [x] CI GitHub Actions run `43781271855`: **SUCCESS**, 106 suites / 1,653 pruebas / 0 fallos; sintaxis aprobada.
+- [ ] GitHub Pages run `43781271945`: construcción/despliegue aún pendiente al último chequeo.
 - [ ] Validación de la alerta y auditoría de IDs contra Spreadsheet/Drive real: diferida a Beta.
 
 - [x] Ampliar la auditoría a todas las acciones del dispatcher ADMIN: `checkOperation`, `getAdminImageUploadStatus` y `previewCortesImageReconciliation` pasan a lecturas dedicadas con recursos explícitos.
