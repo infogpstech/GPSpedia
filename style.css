@@ -5191,3 +5191,86 @@ body.dark-mode #login-modal #login-error.login-session-ended {
 #inbox-modal-content .inbox-folder-nav button.inbox-floating-new-message span {
     display:none;
 }
+
+
+/* GP-UX-INBOX-DESKTOP-02 — desplazamiento real del compositor y controles compactos. */
+#inbox-modal-content .inbox-new-conversation-form {
+    flex:1 1 0;
+    min-height:0;
+    min-width:0;
+    overflow-x:hidden;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    scrollbar-gutter:stable;
+}
+#inbox-modal-content .inbox-new-conversation-form > label,
+#inbox-modal-content .inbox-new-conversation-form > input,
+#inbox-modal-content .inbox-new-conversation-form > select,
+#inbox-modal-content .inbox-new-conversation-form > textarea,
+#inbox-modal-content .inbox-new-conversation-form > .inbox-template-category-row,
+#inbox-modal-content .inbox-new-conversation-form > .rich-editor-toolbar {
+    flex-shrink:0;
+}
+#inbox-modal-content .inbox-template-category-row {
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px;
+    min-width:0;
+    flex:0 0 auto;
+}
+#inbox-modal-content .inbox-template-field,
+#inbox-modal-content .inbox-category-field {
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+    gap:4px;
+}
+#inbox-modal-content .inbox-template-category-row.is-category-only {
+    grid-template-columns:minmax(0,1fr);
+}
+#inbox-modal-content .inbox-template-category-row select { width:100%; min-width:0; }
+#inbox-modal-content .inbox-compose-actions {
+    position:sticky;
+    bottom:0;
+    z-index:2;
+    flex:0 0 auto;
+    padding:8px 0 2px;
+    border-top:1px solid var(--gp-color-border,var(--border-color,#ddd));
+    background:var(--gp-color-elevated,var(--modal-bg,#fff));
+}
+#inbox-modal-content .inbox-folder-nav #inbox-search-toggle {
+    flex:0 0 38px;
+    width:38px;
+    min-width:38px;
+    max-width:38px;
+    padding:7px;
+}
+#inbox-modal-content .inbox-folder-nav #inbox-search-toggle span { display:none; }
+#inbox-modal-content .inbox-conversation-list.is-empty {
+    flex:0 0 auto;
+    max-height:48px;
+    overflow:hidden;
+}
+#inbox-modal-content .inbox-conversation-sidebar.is-empty {
+    height:auto;
+    align-self:start;
+}
+#inbox-modal-content .inbox-rich-text-toolbar {
+    flex:0 0 auto;
+    width:100%;
+    margin:0 0 4px !important;
+    padding:6px;
+    border:1px solid var(--gp-color-border,var(--border-color,#ddd));
+    border-radius:8px;
+    background:var(--gp-color-surface,var(--card-bg,#fff));
+}
+#inbox-modal-content .inbox-rich-text-toolbar button,
+#inbox-modal-content .inbox-rich-text-toolbar select { max-width:100%; }
+@media (max-width:760px) {
+    #inbox-modal-content .inbox-template-category-row { grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; }
+    #inbox-modal-content .inbox-new-conversation-form { flex:1 1 0; }
+}
+@media (max-width:420px) {
+    #inbox-modal-content .inbox-template-category-row { gap:5px; }
+    #inbox-modal-content .inbox-template-category-row select { padding:8px 6px; font-size:.82rem; }
+}
