@@ -81,7 +81,8 @@ testCase("la firma segura está protegida y cualquier fallo libera los bloqueos"
 });
 testCase("el reporte usa texto seguro y no modifica datos productivos",()=>{
  assert.match(ui,/title\.textContent = String\(item\.fileName/);
- assert.match(ui,/aggregate\.counts\.matched \+ " coincidencias exactas propuestas; referencias: " \+ referenceCheckStatus/);
+ assert.match(ui,/const reconciliationMessage = "Simulación terminada\\. " \+ aggregate\.counts\.matched/);
+ assert.match(ui,/logDeveloperOperation_\("\\[CONCILIACIÓN DRIVE\\] " \+ reconciliationMessage/);
  assert.match(admin,/function handlePreviewCortesImageReconciliation_/);
  assert.match(admin,/plan\.writePerformed = false/);
  assert.match(api,/'previewCortesImageReconciliation': 'ADMIN'/);

@@ -820,3 +820,10 @@ HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
 - JS/Tests/RunServiceTests.mjs: integra la suite BETA-034.
 - Tareas_Pendientes.md y checkpoint.md actualizados; BETA-035 queda como siguiente tarea local.
 ================================================================================
+
+
+================================================================================
+2026-11-16 — ACTUALIZACIÓN DE CONTRATO DE CONCILIACIÓN BETA-034
+- JS/Tests/CortesImageReconciliationUI.mjs: valida el mensaje de simulación compartido entre estado visual y consola Developer, en lugar de exigir su construcción inline.
+- Motivo: el texto se extrajo a reconciliationMessage para evitar divergencias entre canales de información.
+================================================================================

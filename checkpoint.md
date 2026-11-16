@@ -1292,3 +1292,8 @@ El usuario confirmó que el backlog pendiente también comprende la organizació
 - Se mantienen los estados detallados en cada vista y se evita duplicar avisos externos.
 - Prueba específica integrada en CI: `DeveloperOperationMessages` (5 casos). Pendiente ejecución de regresión y validación visual/operativa Beta.
 - **Siguiente tarea local:** BETA-035 — compactar textos y etiquetas del panel Developer y trasladar explicación secundaria a ayudas contextuales.
+
+
+### Ajuste de contrato de prueba — BETA-034
+- CI detectó una expectativa literal antigua en `CortesImageReconciliationUI.mjs`: el test exigía construir el texto directamente en `textContent`. BETA-034 extrae el mismo texto a `reconciliationMessage` para reutilizarlo en la consola central y el estado de vista.
+- Se actualizó el contrato para exigir tanto la variable compartida como su registro en la consola; el resultado funcional del mensaje se conserva.
