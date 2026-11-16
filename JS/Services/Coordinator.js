@@ -67,15 +67,15 @@ function coordinatorPolicy_(service, operation) {
         ADMIN: {
             sessionActivity: { read: ["SESSION_CONTEXTS"] },
             // Las acciones ADMIN leen el contexto central; no escriben LastActivityAt por cada solicitud.
-            getReplacedImages: { read: ["USERS", "CORTES", "DRIVE", "IMAGE_INVENTORY", "TUTORIAL", "FEEDBACK", "LOGOS"] },
+            getReplacedImages: { read: ["USERS", "CORTES", "DRIVE", "IMAGE_INVENTORY", "TUTORIAL", "FEEDBACK", "LOGOS", "RELAY"] },
             getDriveStorage: { read: ["USERS", "DRIVE"] },
             getCortesImageFolders: { read: ["USERS", "DRIVE"] },
             auditIdentifiers: { read: ["USERS", "CORTES", "TUTORIAL", "FEEDBACK", "LOGOS", "RELAY"] },
             checkOperation: { read: [...identityRead, "CORTES", "IDEMPOTENCIA"] },
             getAdminImageUploadStatus: { read: [...identityRead, "CORTES", "DRIVE"], write: ["IMAGE_UPLOAD_LEDGER"] },
-            previewCortesImageReconciliation: { read: [...identityRead, "CORTES", "DRIVE", "IMAGE_INVENTORY", "IMAGE_AUDIT_STATE", "TUTORIAL", "FEEDBACK", "LOGOS"] },
+            previewCortesImageReconciliation: { read: [...identityRead, "CORTES", "DRIVE", "IMAGE_INVENTORY", "IMAGE_AUDIT_STATE", "TUTORIAL", "FEEDBACK", "LOGOS", "RELAY"] },
             auditDriveImagesInCortes: {
-                read: ["USERS", "CORTES", "DRIVE", "IMAGE_INVENTORY", "TUTORIAL", "FEEDBACK", "LOGOS"],
+                read: ["USERS", "CORTES", "DRIVE", "IMAGE_INVENTORY", "TUTORIAL", "FEEDBACK", "LOGOS", "RELAY"],
                 write: ["IMAGE_AUDIT_STATE"]
             },
             migrateReplacedImagesSchema: { read: ["USERS"], write: ["IMAGE_INVENTORY"] },
