@@ -1,4 +1,4 @@
-const CACHE_NAME='gpsepedia-cache-v29';
+const CACHE_NAME='gpsepedia-cache-v30';
 const CORE_ASSETS=['./','./index.html','./HTML/add_cortes.html','./HTML/users.html','./JS/Frontend/main.js','./JS/Frontend/clientInteractionPolicy.js','./JS/Frontend/auth.js','./JS/Frontend/ui.js','./JS/Frontend/termsDeviceAcceptance.js','./JS/Frontend/rich-text.js','./JS/Frontend/state.js','./JS/Frontend/navigation.js','./JS/Frontend/offline.js','./JS/Frontend/lightbox.js','./JS/Frontend/api-config.js','./JS/Frontend/serviceMetrics.js','./JS/Frontend/VinDifferentialEngine.js','./JS/Frontend/search-utils.js','./JS/Frontend/share-utils.js','./JS/Frontend/catalogStatus.js','./JS/Frontend/catalogRequest.js','./JS/Frontend/pys-data.js','./JS/Frontend/validationSubmission.js','./JS/Frontend/likeState.js','./JS/Frontend/youtubeUpload.js','./JS/Frontend/imageObjectUrlCache.js','./JS/Frontend/thumbnailCompressionQueue.js','./JS/Frontend/modalNavigation.js','./style.css','./contextual-help.css','./button-system.css','./manifest.json','./Images/Logo_TemaOscuro.png','./Images/tracklink_logo.png'];
 const OPTIONAL_ASSETS=['./Images/icon-v3-192x192.png','./Images/icon-v3-512x512.png','./Images/icon-pwa-192x192.png','./Images/icon-pwa-512x512.png'];
 function isQuotaExceeded(error){return Boolean(error&&(error.name==='QuotaExceededError'||error.code===22));}
@@ -45,37 +45,69 @@ self.addEventListener('message',event=>{
   if(reply)reply.postMessage({status:'error',message:error&&error.message?error.message:'No se pudo limpiar Cache Storage.'});
  }));
 });
-self.addEventListener('fetch',event=>{
- if(event.request.method!=='GET')return;
- const request=event.request;
- if(request.destination==='image'){
-  const updatePromise=caches.open(CACHE_NAME).then(async cache=>{
-   const response=await fetch(request);
-   if(response&&response.status===200){
-    try{
-     await cache.put(request,response.clone());
-     const keys=await cache.keys();
-     const images=keys.filter(key=>key.destination==='image');
-     while(images.length>150){const oldest=images.shift();await cache.delete(oldest);}
-    }catch(error){reportCacheWriteError(error,request.url);}
+function isCacheableRequest_(request) {
+ if (!request || request.method !== 'GET') return false;
+ if (request.destination === 'image') return true;
+ let url;
+ try { url = new URL(request.url, self.location.href); } catch (error) { return false; }
+ if (url.protocol !== 'https:' && url.protocol !== 'http:') return false;
+ if (url.origin === self.location.origin) {
+  if (request.mode === 'navigate' || request.destination === 'document' ||
+      request.destination === 'script' || request.destination === 'style' ||
+      request.destination === 'font') return true;
+  return /\\.(?:html?|mjs|js|css|json|webmanifest|woff2?|ttf|otf|svg|png|jpe?g|webp|gif|ico)$/i.test(url.pathname);
+ }
+ // Solo se permite almacenamiento externo para recursos estáticos del CDN de iconos.
+ return url.hostname === 'cdnjs.cloudflare.com' &&
+  /\\.(?:css|woff2?|ttf|otf)$/i.test(url.pathname);
+}
+
+async function fetchAndCache_(request) {
+ const cache = await caches.open(CACHE_NAME);
+ const response = await fetch(request);
+ if (!response || (response.status !== 200 && response.type !== 'opaque')) {
+  return { response, cacheWrite: Promise.resolve() };
+ }
+ let cacheWrite = Promise.resolve();
+ try {
+  // Clonar antes de entregar la respuesta original a respondWith: ambos cuerpos
+  // quedan independientes y Cache Storage no compite con el consumidor de la página.
+  const cacheCopy = response.clone();
+  cacheWrite = cache.put(request, cacheCopy).then(async () => {
+   if (request.destination !== 'image') return;
+   const keys = await cache.keys();
+   const images = keys.filter(key => key.destination === 'image');
+   while (images.length > 150) {
+    const oldest = images.shift();
+    await cache.delete(oldest);
    }
-   return response;
-  });
-  event.waitUntil(updatePromise.then(()=>undefined).catch(()=>undefined));
-  event.respondWith(caches.open(CACHE_NAME).then(cache=>cache.match(request)).then(cached=>cached||updatePromise));
-  return;
+  }).catch(error => reportCacheWriteError(error, request.url));
+ } catch (error) {
+  reportCacheWriteError(error, request.url);
  }
- const networkResponse=fetch(request);
- const cacheWrite=networkResponse.then(response=>{
-  if(!response||response.status!==200)return;
-  return caches.open(CACHE_NAME).then(cache=>cache.put(request,response.clone()))
-   .catch(error=>reportCacheWriteError(error,request.url));
- }).catch(()=>undefined);
- event.waitUntil(cacheWrite);
- if(request.mode==='navigate'){
-  event.respondWith(networkResponse.catch(()=>caches.match(request,{ignoreSearch:true})
-   .then(cached=>cached||caches.match('./index.html'))));
-  return;
- }
- event.respondWith(networkResponse.catch(()=>caches.match(request,{ignoreSearch:true})));
+ return { response, cacheWrite };
+}
+
+function offlineNavigationFallback_(request) {
+ return caches.match(request, { ignoreSearch: true }).then(cached => {
+  if (cached) return cached;
+  return caches.match(new URL('./index.html', self.location.href).href);
+ });
+}
+
+self.addEventListener('fetch', event => {
+ const request = event.request;
+ if (!isCacheableRequest_(request)) return;
+
+ const cachedResponse = caches.open(CACHE_NAME).then(cache => cache.match(request));
+ const updatePromise = fetchAndCache_(request);
+ event.waitUntil(updatePromise.then(result => result.cacheWrite).catch(() => undefined));
+
+ event.respondWith(cachedResponse.then(cached => {
+  if (cached) return cached;
+  return updatePromise.then(result => result.response);
+ }).catch(error => {
+  if (request.mode === 'navigate') return offlineNavigationFallback_(request);
+  throw error;
+ }));
 });

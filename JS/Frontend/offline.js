@@ -96,7 +96,7 @@ export async function initDB(options = {}) {
  */
 async function performOp(storeName, mode, callback, options = {}) {
     try {
-        const database = await initDB({ silent: options && options.silent === true });
+        const database = await initDB({ silent: options && options.silent === true, timeoutMs: options && options.timeoutMs });
         if (!database) throw new Error('Could not initialize IndexedDB');
 
         return await new Promise((resolve, reject) => {
@@ -1281,13 +1281,13 @@ export async function saveValidationResponse(vehicleId, response, ownerId) {
     const recordId = String(vehicleId === null || vehicleId === undefined ? '' : vehicleId).trim();
     if (!owner || !recordId) return null;
     const entry = { vehicleId: buildOwnerScopedKey(owner, recordId), ownerId: owner, recordId, timestamp: Date.now(), response };
-    return performOp('validationCache', 'readwrite', store => store.put(entry));
+    return performOp('validationCache', 'readwrite', store => store.put(entry), { silent: true, timeoutMs: 2500 });
 }
 export async function getValidationResponse(vehicleId, ownerId) {
     const owner = normalizeLocalOwnerId(ownerId);
     const recordId = String(vehicleId === null || vehicleId === undefined ? '' : vehicleId).trim();
     if (!owner || !recordId) return null;
-    const entry = await performOp('validationCache', 'readonly', store => store.get(buildOwnerScopedKey(owner, recordId)));
+    const entry = await performOp('validationCache', 'readonly', store => store.get(buildOwnerScopedKey(owner, recordId)), { silent: true, timeoutMs: 2500 });
     return entry && entry.ownerId === owner && entry.recordId === recordId ? entry : null;
 }
 export async function saveViewedItem(item, ownerId) {

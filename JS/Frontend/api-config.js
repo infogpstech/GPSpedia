@@ -685,14 +685,53 @@ export async function getCatalogChanges(cursor = 0, limit = 50, sessionPayload =
     try {
         let response;
         try {
-            response = await fetch(API_ENDPOINTS.FEEDBACK + query, { method: "GET", redirect: "follow", signal: options && options.signal ? options.signal : undefined });
+            response = await runCatalogRequestWithRetry(async signal => {
+                const current = await fetch(API_ENDPOINTS.FEEDBACK + query, {
+                    method: "GET", redirect: "follow", signal
+                });
+                const status = Number(current && current.status);
+                if (!current || !Number.isInteger(status) || status < 100 || status > 599) {
+                    const error = new Error("El feed no devolvió una respuesta HTTP válida.");
+                    error.retryable = true;
+                    throw error;
+                }
+                if (!current.ok) {
+                    const error = new Error("El feed del catálogo respondió HTTP " + status + ".");
+                    error.status = status;
+                    throw error;
+                }
+                return current;
+            }, {
+                signal: options && options.signal ? options.signal : undefined,
+                timeoutMs: 2000,
+                retries: 2,
+                baseDelayMs: 200
+            });
         } catch (error) {
-            const aborted = Boolean(options && options.signal && options.signal.aborted) || Boolean(error && error.name === "AbortError");
-            throw createRouteActionError_(aborted ? "La consulta del catálogo fue cancelada o agotó el tiempo de espera." : "No se recibió respuesta del feed público del catálogo.", { kind: aborted ? "abort" : "network", code: aborted ? "REQUEST_ABORTED" : "CATALOG_FEED_NETWORK_ERROR", cause: error });
+            const aborted = Boolean(options && options.signal && options.signal.aborted) ||
+                Boolean(error && error.name === "AbortError");
+            httpStatus = Number.isInteger(Number(error && error.status)) ? Number(error.status) : null;
+            outcome = aborted ? "abort" : httpStatus !== null ? "http_error" : "network_error";
+            if (aborted) {
+                throw createRouteActionError_("La consulta del catálogo fue cancelada o agotó el tiempo de espera.", {
+                    kind: "abort", code: "REQUEST_ABORTED", cause: error
+                });
+            }
+            if (httpStatus !== null) {
+                throw createRouteActionError_("El feed del catálogo respondió HTTP " + httpStatus + ".", {
+                    kind: "http", code: "CATALOG_FEED_HTTP_ERROR", httpStatus, cause: error
+                });
+            }
+            throw createRouteActionError_("No se recibió respuesta del feed público del catálogo.", {
+                kind: "network", code: "CATALOG_FEED_NETWORK_ERROR", cause: error
+            });
         }
         httpStatus = Number(response && response.status);
-        if (!response || !Number.isInteger(httpStatus) || httpStatus < 100 || httpStatus > 599) throw createRouteActionError_("El feed no devolvió una respuesta HTTP válida.", { kind: "network", code: "CATALOG_FEED_NO_HTTP_RESPONSE" });
-        if (!response.ok) throw createRouteActionError_("El feed del catálogo respondió HTTP " + httpStatus + ".", { kind: "http", code: "CATALOG_FEED_HTTP_ERROR", httpStatus });
+        if (!response || !Number.isInteger(httpStatus) || httpStatus < 100 || httpStatus > 599) {
+            throw createRouteActionError_("El feed no devolvió una respuesta HTTP válida.", {
+                kind: "network", code: "CATALOG_FEED_NO_HTTP_RESPONSE"
+            });
+        }
         let body;
         try { body = await response.text(); } catch (error) { throw createRouteActionError_("No se pudo leer la respuesta del feed del catálogo.", { kind: "invalid_response", code: "CATALOG_FEED_READ_ERROR", httpStatus, cause: error }); }
         let result;

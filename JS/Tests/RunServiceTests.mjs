@@ -204,8 +204,11 @@ runGroup('38','INTEGRATION',()=>{
  runCli('BETA-034 mensajes de operaciones Developer centralizados','JS/Tests/DeveloperOperationMessages.mjs');
  runCli('BETA-035 textos compactos y ayudas del panel Developer','JS/Tests/DeveloperPanelCopy.mjs');
  runCli('CATALOG reintentos y cancelación','JS/Tests/CatalogRequestRetry.js');
+  runCli('CATALOG feed incremental con reintentos acotados','JS/Tests/CatalogFeedRetry.mjs');
+  runCli('PWA cache-first, App Shell y cuerpos independientes','JS/Tests/ServiceWorkerCache.js');
  runCli('CATALOG escenarios de arranque PWA','JS/Tests/PWAStartupScenarios.js');
  runCli('AUG-IndexedDB apertura compartida, backoff y miniaturas opcionales','JS/Tests/IndexedDBTransactions.js');
+  runCli('AUG cache opcional de validación sin bloquear modales','JS/Tests/OptionalValidationCache.mjs');
  runCli('CATALOG integridad del arranque y recuperación','JS/Tests/CatalogStartupIntegrity.mjs');
   runCli('AUG-047 accesibilidad, foco, navegación y offline de modales legales','JS/Tests/TermsModalAccessibility.mjs');
   runCli('AUG-144 QR local y privacidad de vídeos no listados','JS/Tests/PrintQrPrivacy.mjs');
