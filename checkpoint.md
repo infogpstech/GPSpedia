@@ -937,3 +937,8 @@ Se amplió `AdminImageScanCoordinatorContract.mjs` para exigir que cada mutació
 - Sintaxis JavaScript: `Coordinator.js`, `admin.js`, `feedback.js` e `InboxConversations.js` PASS.
 - La lectura `getAdminImageUploadStatus` reserva `IMAGE_UPLOAD_LEDGER` en escritura porque su helper puede inicializar la hoja. `previewCortesImageReconciliation` y `checkOperation` reservan sus recursos de lectura para coordinarse con operaciones concurrentes.
 - CI integral GitHub Actions pendiente de reporte; validación Beta/runtime Apps Script pendiente. No se ha desplegado ni modificado datos externos.
+
+
+### CI de la auditoría Coordinator — resultado
+- GitHub Actions `GPSpedia service regression tests`, run `43781271855`, commit `9370827c8d6ab8fb12ce8db80930c5e3b8bdbbb8`: **SUCCESS**, 106 suites, 1,653 pruebas, 0 fallos; sintaxis de módulos modificados PASS.
+- `pages build and deployment`, run `43781271945`: pendiente al momento de la consulta. No equivale a despliegue de Apps Script.
