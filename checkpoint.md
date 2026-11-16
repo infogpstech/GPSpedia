@@ -266,3 +266,16 @@ El checkpoint acumulativo anterior se conserva íntegro en `Checkpoint_Archive/c
 - GitHub Pages run `43975016203`: **SUCCESS** (build, deploy y reporte de estado).
 - HEAD de trabajo confirmado: `1df72703df343be253fc994d20ba9a60dfc52ef4`; padre del commit de implementación: `4f5afa281f9b98ab886271ada71626ce12a0de6b`. Rama base protegida continúa en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
 - Estado: **COMPLETADA CON VALIDACIÓN DIFERIDA A BETA**. La validación visual en escritorio, Android y PWA instalada permanece pendiente; no se ejecutó inspección física de dispositivos.
+
+
+
+### Implementación — GP-UX-RICH-TOOLBARS-01 — 2026-11-16
+- Solicitud: aplicar a todas las barras de texto enriquecido fuera del Inbox su misma presentación visual, sin agregar funciones.
+- Rama autorizada: `GPSpedia2.2.5_work`; rama base `GPSpedia2.2.5` sin modificaciones. El checkpoint previo registraba HEAD `1df72703df343be253fc994d20ba9a60dfc52ef4`; Git confirmó que la rama tenía un commit documental adicional antes de esta tarea. Se trabajó mediante escrituras secuenciales sobre la rama autorizada, sin forzar referencias.
+- `JS/Frontend/rich-text.js`: `createRichTextToolbar()` conserva los perfiles funcionales básico, listas y avanzado. Los botones se muestran con iconos Font Awesome, tooltip y etiqueta accesible. Los selectores nativos existentes de tamaño, fuente y marcador, sus opciones y eventos se mantienen; no se incorporan menús ni comandos nuevos. La barra independiente del Inbox no se modifica.
+- `style.css`: presentación compartida compacta, bordes, fondo, iconos, selectores nativos y adaptación con salto de línea para pantallas estrechas.
+- `service-worker.js`: App Shell actualizado a v55. Contratos de caché ajustados en `JS/Tests/ServiceWorkerCache.js` y `JS/Tests/OfflineBrandAssets.mjs`.
+- `JS/Tests/InboxUi.mjs`: contratos de iconografía, perfiles de funciones y conservación de selectores nativos.
+- Registros actualizados: `Auditoría.txt` y `ChangesLogs.txt`. No se encontró `Tareas.txt` ni `Tareas_Activas.md` en la raíz de esta rama.
+- Commits de implementación/pruebas y registros publicados secuencialmente: `1ff5c59`, `d14ca5d`, `597c148`, `f2d9682`, `196e521`, `236ba83`, `37d0df9`, `721a77d`, `0baae44`, `233507c`, `3c4b4ac`, `79ff61f`.
+- Estado: **EN PROGRESO** hasta completar CI y revisión final del diff. Inspección visual real en escritorio, Android y PWA queda reservada para Beta; no se declara realizada.
