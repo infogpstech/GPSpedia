@@ -5,6 +5,9 @@ import { dirname, resolve } from "node:path";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const auth = readFileSync(resolve(root, "JS/Services/Auth.js"), "utf8");
+const feedback = readFileSync(resolve(root, "JS/Services/feedback.js"), "utf8");
+const coordinator = readFileSync(resolve(root, "JS/Services/Coordinator.js"), "utf8");
+const apiConfig = readFileSync(resolve(root, "JS/Frontend/api-config.js"), "utf8");
 const declaration = "function handleClearSensitiveLogs(payload)";
 const start = auth.indexOf(declaration);
 assert.ok(start >= 0, "No se encontró handleClearSensitiveLogs.");
@@ -125,4 +128,63 @@ test("AUTH no relee ActiveSessions para sincronizar cada acción", () => {
     assert.match(auth, /function handleClearSensitiveLogs\(payload\)[\s\S]*?payload\.__sharedSessionActor/);
 });
 
+function extractTopLevelFunction(source, name) {
+    const match = source.match(new RegExp("^function " + name + "\\([^\\n]*\\) \\{[\\s\\S]*?^\\}", "m"));
+    assert.ok(match, "No se encontró " + name);
+    return match[0];
+}
+function createDispatchHarness(source, service, extraBindings = {}) {
+    const mutation = extractTopLevelFunction(source, "isSharedMutationAction_");
+    const post = extractTopLevelFunction(source, "doPost");
+    const calls = [];
+    const actor = { userId:"DEV-1", role:"Desarrollador", fullName:"Ana", epoch:7 };
+    const bindings = {
+        withSharedMutationLease_(requestedService, operation, callback, options) {
+            calls.push({ service:requestedService, operation, sessionToken:options && options.session && options.session.sessionToken });
+            return callback("coordinator-token", actor);
+        },
+        withSharedSessionActor_(event, trustedActor) {
+            const request = JSON.parse(event.postData.contents);
+            request.payload.__sharedSessionActor = trustedActor;
+            event.postData.contents = JSON.stringify(request);
+            return event;
+        },
+        doPostInternal_(event) { return JSON.parse(event.postData.contents).payload; },
+        ContentService: { createTextOutput: value => ({ value, setMimeType() { return this; } }), MimeType:{TEXT:"text/plain"} },
+        ...extraBindings
+    };
+    const names = Object.keys(bindings);
+    const values = Object.values(bindings);
+    const dispatcher = new Function(...names, mutation + String.fromCharCode(10) + post +
+        String.fromCharCode(10) + "return doPost;")(...values);
+    return { calls, send(action) {
+        calls.length = 0;
+        const event = { postData:{contents:JSON.stringify({action,payload:{userId:"DEV-1",sessionToken:"trusted-session"}})} };
+        return dispatcher(event);
+    }};
+}
+test("la limpieza de Logs usa la lease AUTH específica y el actor central", () => {
+    assert.match(apiConfig, /['"]clearSensitiveLogs['"]\s*:\s*['"]AUTH['"]/);
+    const harness = createDispatchHarness(auth,"AUTH");
+    const payload = harness.send("clearSensitiveLogs");
+    assert.deepEqual(harness.calls,[{service:"AUTH",operation:"clearSensitiveLogs",sessionToken:"trusted-session"}]);
+    assert.equal(payload.__sharedSessionActor.userId,"DEV-1");
+    assert.equal(payload.__sharedSessionActor.epoch,7);
+    const policy = new Function(coordinator + String.fromCharCode(10) + "return coordinatorPolicy_;")();
+    assert.ok(policy("AUTH","clearSensitiveLogs").writeResources.includes("LOGS"));
+});
+test("la limpieza de ActividadUsuario usa la lease FEEDBACK específica y RBAC Desarrollador", () => {
+    assert.match(apiConfig, /['"]clearActivityLogs['"]\s*:\s*['"]FEEDBACK['"]/);
+    const harness = createDispatchHarness(feedback,"FEEDBACK",{
+        FEEDBACK_ACTION_PERMISSIONS:{clearActivityLogs:["Desarrollador"]},
+        FEEDBACK_PUBLIC_ACTIONS:new Set()
+    });
+    const payload = harness.send("clearActivityLogs");
+    assert.deepEqual(harness.calls,[{service:"FEEDBACK",operation:"clearActivityLogs",sessionToken:"trusted-session"}]);
+    assert.equal(payload.__sharedSessionActor.userId,"DEV-1");
+    assert.equal(payload.__sharedSessionActor.epoch,7);
+    assert.match(feedback,/clearActivityLogs:\s*\["Desarrollador"\]/);
+    const policy = new Function(coordinator + String.fromCharCode(10) + "return coordinatorPolicy_;")();
+    assert.ok(policy("FEEDBACK","clearActivityLogs").writeResources.includes("ACTIVITY"));
+});
 console.log("SensitiveLogsTrustedActor: " + passed + "/" + passed + " PASS");
