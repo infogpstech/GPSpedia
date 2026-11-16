@@ -923,3 +923,9 @@ Se amplió `AdminImageScanCoordinatorContract.mjs` para exigir que cada mutació
 - Cobertura comprobada: 33 mutaciones ADMIN, 4 lecturas ADMIN dedicadas y 28 mutaciones FEEDBACK; sin políticas faltantes.
 - `AdminImageScanCoordinatorContract`: 1/1 PASS ejecutado sobre los archivos recuperados de la rama. Sintaxis de `Coordinator.js`, `admin.js`, `feedback.js` e `InboxConversations.js`: PASS.
 - Pendiente: suite integral CI de GitHub Actions y validación remota Beta. La comprobación local no equivale a ejecución en runtime Apps Script.
+
+
+### Ampliación de lecturas ADMIN
+- Se identificaron tres acciones adicionales que antes caían en `ADMIN/sessionActivity`: `checkOperation`, `getAdminImageUploadStatus` y `previewCortesImageReconciliation`.
+- Se añadieron políticas de lectura dedicadas; `getAdminImageUploadStatus` reserva escritura de `IMAGE_UPLOAD_LEDGER` porque `getOrCreateAdminImageUploadsSheet()` puede crear la hoja.
+- Prueba contractual ampliada para verificar sus recursos y clasificación. Pendiente publicar y ejecutar validaciones locales/CI.
