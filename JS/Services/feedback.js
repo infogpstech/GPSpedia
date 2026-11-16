@@ -2241,7 +2241,14 @@ function handleMarkAsResolved(payload) {
 function buildCutContributionSummary_() {
  const sheet=getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
  if(!sheet||sheet.getLastRow()<2)return[];
- const rows=sheet.getRange(2,1,sheet.getLastRow()-1,COLS_CORTES.colaboradorCorte3).getValues();
+ const count=sheet.getLastRow()-1;
+ const vehicleIds=sheet.getRange(2,COLS_CORTES.id,count,1).getValues();
+ const slotColumns=[
+  {type:COLS_CORTES.tipoCorte1,collaborator:COLS_CORTES.colaboradorCorte1},
+  {type:COLS_CORTES.tipoCorte2,collaborator:COLS_CORTES.colaboradorCorte2},
+  {type:COLS_CORTES.tipoCorte3,collaborator:COLS_CORTES.colaboradorCorte3}
+ ];
+ const slotValues=slotColumns.map(slot=>sheet.getRange(2,slot.type,count,slot.collaborator-slot.type+1).getValues());
  const usersSheet=getSpreadsheet().getSheetByName("Users");
  const userRows=usersSheet&&usersSheet.getLastRow()>1?usersSheet.getRange(2,1,usersSheet.getLastRow()-1,Math.max(8,usersSheet.getLastColumn())).getValues():[];
  const cleanName=value=>String(value||"").replace(/\s*\[OP-[A-Za-z0-9_-]+\]/gi,"").trim();
@@ -2253,19 +2260,21 @@ function buildCutContributionSummary_() {
   [fullName,username].forEach(name=>{const key=keyOf(name),ids=idsByName.get(key)||[];ids.push(id);idsByName.set(key,ids);});
  });
  const stats=new Map();
- rows.forEach(row=>{
-  const vehicleId=String(row[COLS_CORTES.id-1]||"").trim();
-  for(let slot=1;slot<=3;slot++){
-   const type=String(row[COLS_CORTES["tipoCorte"+slot]-1]||"").trim(),name=cleanName(row[COLS_CORTES["colaboradorCorte"+slot]-1]),key=keyOf(name);
+ for(let rowIndex=0;rowIndex<count;rowIndex++){
+  const vehicleId=String(vehicleIds[rowIndex]&&vehicleIds[rowIndex][0]||"").trim();
+  for(let slot=0;slot<slotColumns.length;slot++){
+   const column=slotColumns[slot],values=slotValues[slot][rowIndex]||[];
+   const type=String(values[0]||"").trim(),name=cleanName(values[column.collaborator-column.type]),key=keyOf(name);
    if(!type||!key)continue;
    let entry=stats.get(key);
    if(!entry){const ids=idsByName.get(key)||[];entry={userId:ids.length===1?ids[0]:"",nombreUsuario:name,cortesAportados:0,_vehicles:new Set()};stats.set(key,entry);}
    entry.cortesAportados++;if(vehicleId)entry._vehicles.add(vehicleId);
   }
- });
+ }
  return Array.from(stats.values()).map(entry=>({userId:entry.userId,nombreUsuario:entry.nombreUsuario,cortesAportados:entry.cortesAportados,vehiculosConAportes:entry._vehicles.size}))
   .sort((x,y)=>y.cortesAportados-x.cortesAportados||x.nombreUsuario.localeCompare(y.nombreUsuario,"es"));
 }
+
 function handleGetActivityLogs(payload) {
  const pageSize=100;
  const readLatestRows=(sheet,columnCount)=>{if(!sheet)return[];const lastRow=sheet.getLastRow();if(lastRow<=1)return[];const startRow=Math.max(2,lastRow-pageSize+1),rowCount=lastRow-startRow+1;return sheet.getRange(startRow,1,rowCount,columnCount).getValues();};
