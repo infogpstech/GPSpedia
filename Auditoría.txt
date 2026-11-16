@@ -1566,3 +1566,8 @@ ADENDA — GP-UX-INBOX-DESKTOP-02 — 2026-11-16
 - La actualización de la barra conserva su modo forzado y las clases visuales; las acciones de formato notifican al borrador para preservar los cambios.
 - Como también cambia JS/Frontend/rich-text.js, el App Shell se incrementa de v46 a v47. Las pruebas de caché/offline se alinean a v47.
 - Validación automatizada pendiente; no afirmar CI ni inspección visual real.
+
+ADENDA DE VALIDACIÓN — AUD-2026-11-16-07
+- La primera expresión de regresión para scroll tomaba la última regla CSS, que era una excepción responsive y no la regla desktop principal. Se corrigió para comenzar desde el bloque GP-UX-INBOX-DESKTOP-02 y verificar flex + overflow-y en la misma declaración.
+- Parseo sintáctico estático de cuatro archivos: 4/4 PASS. Comprobaciones estáticas dirigidas: 15/15 PASS.
+- La API de estado/checks de GitHub no devolvió ejecuciones para el HEAD consultado. CI Node.js integral y aceptación visual en escritorio real siguen pendientes; no se atribuyen como aprobadas.
