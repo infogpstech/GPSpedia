@@ -1509,3 +1509,40 @@ El usuario confirmó que el backlog pendiente también comprende la organizació
 
 ### Siguiente tarea local
 **BETA-043 — Tráfico global por servicio.** Diseñar e implementar agregación backend central con ventanas temporales, deduplicación y separación explícita del contador local del navegador. Evitar que la telemetría añada un viaje síncrono por petición o bloquee las operaciones.
+
+
+## Continuidad — BETA-043 y regresión integral local (2026-11-16)
+
+**Rama:** `GPSpedia2.2.5_work`  
+**HEAD con CI aprobado:** `37b4df1eb4e9c39dd0c6e25e6ecfe140aeea1a5d`  
+**Rama base protegida:** `GPSpedia2.2.5` — `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, intacta.
+
+### BETA-043 — resultado
+- Coordinator consolida conteos por servicio en buckets horarios de 24 horas, almacenados en ScriptProperties. Cuenta operaciones protegidas que obtuvieron lease; el mismo `requestId` reutiliza la lease y no duplica el evento.
+- El registro se ejecuta dentro de la llamada existente a Coordinator, bajo lock y como best-effort. No agrega una llamada de red independiente por operación; un fallo de telemetría no bloquea la operación protegida.
+- `ADMIN/getServiceTraffic` expone solo agregados y está restringido al rol Desarrollador. Se excluyen la propia consulta, lecturas públicas no coordinadas, feed público y sondeos de salud.
+- La UI presenta por separado el tráfico global coordinado y la actividad local del navegador (15 minutos, máximo 600 eventos); el texto de ayuda aclara que el agregado no representa todas las solicitudes HTTP.
+- `Services/COORDINATOR_SETUP.md` documenta almacenamiento, alcance, deduplicación, límites y separación de fuentes.
+
+### Correcciones de validación
+- Se alineó `DeveloperPanelCopy.mjs` con el texto visible vigente.
+- Se incorporó `ServiceTrafficAdminContract.mjs` al runner integral.
+- Se corrigieron los `requestId` de los fixtures para respetar el mínimo de 20 caracteres.
+- Se alineó el contrato documental con el lugar donde se explica el alcance de la métrica y se añadió la sección de telemetría al documento de Coordinator.
+
+### Validación local
+- `ServiceTrafficAdminContract`: 20/20 PASS.
+- `ServiceMetricsTelemetry`: 10/10 PASS.
+- Coordinador compartido, concurrencia y leases: 54/54 PASS.
+- GitHub Actions Node.js 22 run `43807777744`: **SUCCESS — 119 suites / 1,790 pruebas / 0 fallos**; sintaxis de módulos modificados aprobada.
+- GitHub Pages run `43807776532`: **SUCCESS**.
+- Commits principales: `4ba394daabad6787d0fc6f94edd5012b4bb6b1f7` (separación global/local), `081a36cd3f626ad37423b605a50a87254b84f080` (gráfico global), `30815659eaf994737e2a2f45789b421c67e7544e` (excluir auto-consultas), `d132676c3368ddc8563f4651f4acb8e79e0bc0a2` (contrato), `52615e0f12e23e3926af3c08aa2bb0b80f50b7e8`, `ad6b906d76a12bda71725aa149edc2fe33f18676`, `a0072c8676ae1ab906b33d8c471944c49e3a651e`, `6bc9b7e14dd74532bbbf52094fc3a304a52e6e9b` y `37b4df1eb4e9c39dd0c6e25e6ecfe140aeea1a5d` (ajustes de pruebas, runner y documentación).
+- No se ejecutó Node CLI manual en este entorno. GitHub Actions ejecutó el runner completo con Node.js 22.
+- No se desplegaron Apps Script ni se modificaron ScriptProperties, Spreadsheet, Drive, ACL, secretos o datos productivos.
+
+### Estado y continuidad
+- BETA-043: **COMPLETADA CON VALIDACIÓN DIFERIDA A BETA**.
+- Regresión integral local: **COMPLETADA** en el HEAD indicado.
+- Las validaciones reales de deployments, roles, métricas entre instancias, navegador y dispositivos quedan para Beta; no bloquean el cierre local.
+- La rama base protegida no fue modificada.
+- Siguiente fase: ejecutar únicamente las validaciones Beta previstas en `Tareas_Pendientes.md`; no se identificó otra implementación local pendiente dentro del conjunto actual de tareas.
