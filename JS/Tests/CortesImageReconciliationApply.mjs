@@ -34,7 +34,7 @@ function createHarness(options={}) {
  const getLatestDriveAuditIdForUser_=owner=>{assert.equal(owner,"DEV-1");return auditId;};
  const loadDriveAuditSeenIds_=()=>({fileIds:metadata.map(item=>item.fileId)});
  const loadDriveAuditFileMetadata_=()=>metadata;
- const handlePreviewCortesImageReconciliation_=payload=>{previewCalls++;assert.deepEqual(payload.files,[{fileId}]);assert.equal(payload.auditId,auditId);return {writePerformed:false,manifestDigest:options.previewDigest||digest,missingReferenceCheckStatus:"verified",missingReferences:options.missingReferences||[],results:[{status:"matched",fileId,fileName:"same.png",target:{row:2,column:9,vehicleId:"V-001",field:"imagenVehiculo",currentValue:"",hasFormula:false},proposedUrl:url}]};};
+ const handlePreviewCortesImageReconciliation_=payload=>{previewCalls++;assert.deepEqual(payload.files,[{fileId}]);assert.equal(payload.auditId,auditId);return {writePerformed:false,manifestDigest:options.previewDigest||digest,missingReferenceCheckStatus:"verified",missingReferences:options.missingReferences||[],missingReferenceCount:options.missingReferenceCount===undefined?(options.missingReferences||[]).length:options.missingReferenceCount,results:[{status:"matched",fileId,fileName:"same.png",target:{row:2,column:9,vehicleId:"V-001",field:"imagenVehiculo",currentValue:"",hasFormula:false},proposedUrl:url}]};};
  const recordImageAdministrationActivity=(context,action,id,details)=>{activityCalls.push({action,id,details});if(options.activityFailure&&action==="cortes_image_reconciliation_applied"){if(options.externalChange)values[1][8]="https://manual.example/changed";return false;}return true;};
  const backupId="backup-file-id-0000000000000001";
  const verifyImageReconciliationBackup_=(id,context)=>{backupChecks++;if(id!==backupId||!context||context.userId!=="DEV-1"||options.backupFailure)throw new Error("respaldo no válido");return {backupId:id,backupName:"GPSpedia_DB_BACKUP_test",fingerprint:"b".repeat(64)};};
@@ -113,6 +113,11 @@ testCase("rechaza un respaldo que no puede verificarse antes de la simulación",
 });
 testCase("bloquea la aplicación cuando existen referencias de Cortes sin archivo verificado",()=>{
  const h=createHarness({missingReferences:[{fileId:"missing-drive-file-000000000000",status:"missing_or_unverifiable"}]});
+ assert.throws(()=>h.handler(h.payload,()=>{},{userId:"DEV-1"}),/referencias de Cortes sin archivo verificado/);
+ assert.equal(h.previewCalls,1);assert.equal(h.values[1][8],"");
+});
+testCase("bloquea la aplicación si el total de referencias supera el detalle truncado",()=>{
+ const h=createHarness({missingReferenceCount:205,missingReferences:[]});
  assert.throws(()=>h.handler(h.payload,()=>{},{userId:"DEV-1"}),/referencias de Cortes sin archivo verificado/);
  assert.equal(h.previewCalls,1);assert.equal(h.values[1][8],"");
 });
