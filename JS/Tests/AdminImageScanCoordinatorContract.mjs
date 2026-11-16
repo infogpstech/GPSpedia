@@ -180,7 +180,7 @@ const ping = routerHarness.send("ping");
 assert.equal(ping.calls.length, 0, "ping no debe reservar una lease de escritura.");
 
 
-const adminCaseNames = [...admin.matchAll(/case\\s+['"]([^'"]+)['"]\\s*:/g)].map(match => match[1]);
+const adminCaseNames = [...admin.matchAll(/case\s+['"]([^'"]+)['"]\s*:/g)].map(match => match[1]);
 for (const action of adminCaseNames) {
     assert.ok(action === "ping" || mutation(action) || read(action),
         "La acción ADMIN/" + action + " no está clasificada en el dispatcher compartido.");
