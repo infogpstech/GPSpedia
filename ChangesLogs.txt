@@ -1011,3 +1011,16 @@ HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
 - El Inbox deberá separar General, Soporte, Contáctanos, Reportes y Aportaciones (solo Desarrollador), preservando contratos y permisos backend.
 - La caché deberá aislarse por sesión e invalidarse tras mutaciones; no almacenar tokens ni secretos en cachés de datos.
 - Esta entrada registra requisitos, no implementaciones ni validaciones completadas.
+
+
+===========
+2026-11-16 — Cierre de implementación GP-UX-INBOX-01 / GP-PERF-PAGES-01 / GP-UX-USERS-01 / GP-UX-CUT-MODAL-01
+- Inbox: menú lateral hamburguesa responsive con General, Soporte, Contáctanos, Reportes y Aportaciones; las aportaciones se muestran únicamente a Desarrollador. Los botones de composición/actualización y eliminación utilizan iconografía con nombres accesibles.
+- Seguridad FEEDBACK: approveVideo y rejectVideo quedan limitadas al rol Desarrollador; getFeedbackItems no devuelve registros video_approval a otros roles.
+- Caché: users.html conserva lista de usuarios vigente en sessionStorage por identidad y sesión, con TTL de cinco minutos y revalidación remota; add_cortes.html conserva listas desplegables por usuario/sesión, con TTL de diez minutos.
+- Tabla de usuarios: editar y eliminar son botones iconográficos compactos y horizontales; el cierre de sesiones permanece como acción separada.
+- Modal de detalle: compartir, editar e imprimir quedan alineados a la derecha, inmediatamente antes del botón de cierre.
+- Service Worker: actualización de App Shell a gpsepedia-cache-v32.
+- Pruebas: GitHub Actions SUCCESS; 126 suites, 1,864 pruebas aprobadas, 0 fallos. GitHub Pages build/deployment SUCCESS.
+- Validación diferida: revisión visual real de escritorio/móvil, BFCache en dispositivos objetivo y pruebas operativas con registros reales. No se desplegaron servicios Apps Script ni se modificaron datos productivos.
+- Continuidad registrada en checkpoint.md; backlog actualizado en Tareas_Pendientes.md.
