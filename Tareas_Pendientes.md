@@ -363,10 +363,16 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 - No retirar la barrera central de token, expiración, epoch, revocación ni autorización por rol.
 
 ### BETA-051 — Validaciones duplicadas
-**Estado: AUDITORÍA LOCAL AVANZADA; PENDIENTE DE REVISIÓN GLOBAL Y BETA.**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
 
-- Identificar viajes de red y verificaciones redundantes restantes.
-- Mantener autorización backend dentro de la propia operación protegida; no sustituirla por confianza en frontend.
+- Auditoría de los módulos Frontend, HTML y servicios: no hay llamadas periódicas a `touchSession`; las operaciones protegidas usan el actor central de Coordinator y no hacen una llamada previa a `validateSession`.
+- Se detectó y retiró en `JS/Frontend/youtubeUpload.js` una validación de sesión de red antes de consultar/crear la operación de vídeo. `getVideoApprovalByOperation`, `initYouTubeUpload` y `submitVideoForApproval` ya exigen sesión mediante FEEDBACK/Coordinator; la validación previa duplicaba un viaje de red sin cerrar una condición de carrera adicional.
+- Se conserva la comprobación local de identidad/token durante el flujo de subida para detectar cambios de sesión mientras se prepara la operación.
+- Se conserva `validateSession` en `HTML/users.html` únicamente como recuperación cuando falla un cambio del propio rol; no es una prevalidación de cada acción.
+- La validación de sesión al iniciar/restaurar la aplicación se mantiene separada y con caché local; la ruta `validateSession` sigue siendo el mecanismo específico de restauración, no un paso previo de cada botón.
+- Se confirmó que las demás acciones protegidas no invocan AUTH/validateSession por separado: Coordinator valida token, epoch, expiración y revocación, y los handlers consumen el actor confiable.
+- Prueba `VideoApprovalClientContract`: 10/10 PASS. GitHub Actions Node.js 22 run `43799943070`: SUCCESS — 118 suites / 1,765 pruebas / 0 fallos.
+- Pendiente Beta: medir tiempos reales de inicio de subida y confirmar con deployments FEEDBACK/Coordinator que no se requiere prevalidación adicional. No se modificaron deployments ni datos externos.
 
 ### BETA-052 — Persistencia y recuperación de sesión
 **Estado: IMPLEMENTACIÓN LOCAL REPORTADA; PENDIENTE BETA.**
