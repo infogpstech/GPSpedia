@@ -972,3 +972,28 @@ Se amplió `AdminImageScanCoordinatorContract.mjs` para exigir que cada mutació
 3. En GP-BETA-04/05, revisar configuración y deployment de ADMIN, esquema real de `Imagenes_Reemplazadas`, acceso Drive y resultados de las rutas. No inferir que una prueba local demuestra acceso real.
 4. Completar auditoría de acciones de lectura FEEDBACK/Inbox y sus recursos coordinados. Mantener actor central y RBAC backend; no quitar revocación/expiración.
 5. Confirmar el resultado de Pages para el HEAD correspondiente. No realizar despliegues Apps Script ni cambios productivos.
+
+
+## Continuidad — correcciones Developer/Drive (2026-11-16)
+
+**Código validado:** `dac1f3f0c5cf519a19eaab1d08731b861da388d5`  
+**HEAD documental posterior:** `6db6d6a229b42a8bb7c29e6c40ce592822d7363a`  
+**CI servicios:** run `43782723331` SUCCESS — 107 suites / 1,656 pruebas / 0 fallos.  
+**GitHub Pages:** run `43782722962` en progreso al momento del registro.
+
+### Hallazgos corregidos
+1. **Payload Developer (AUD-2026-11-16-03):** `getDeveloperSessionPayload()` solo leía `currentUser.ID`, mientras el contexto de sesión acepta `ID` o `id`. Se unificó con `getUiSessionContext_()`. Esto puede bloquear localmente limpieza de logs, historial de imágenes, auditoría Drive y otras operaciones administrativas en sesiones heredadas. Prueba añadida para ambos formatos.
+2. **Recursos Coordinator (AUD-2026-11-16-02):** `collectActiveDriveReferences()` recorre todas las hojas, incluida `Relay`. Se añadió `RELAY` a las políticas de `getReplacedImages`, `previewCortesImageReconciliation` y `auditDriveImagesInCortes`, y se reforzó el contrato.
+
+### Validación y límites
+- CI valida contratos y pruebas aisladas, no acceso real a Google Apps Script, Spreadsheet o Drive.
+- No se desplegó Apps Script ni se modificaron ScriptProperties, secretos, hojas, Drive o datos externos.
+- GP-BETA-03 (limpieza de logs), GP-BETA-04 (auditoría Drive) y GP-BETA-05 (historial de imágenes) siguen pendientes de validación Beta con las sesiones reales. La causa de payload ID/id puede explicar fallos comunes a estas acciones, pero no se afirma que sea la única causa.
+- GP-BETA-06 (suggestYear) quedó corregido en código y CI; falta validación Beta de las rutas anónima y autenticada.
+
+### Siguiente trabajo
+1. Continuar auditoría end-to-end de Inbox (listar conversaciones, cargar mensajes, marcar lectura y permisos por rol).
+2. Revisar y probar los despachadores FEEDBACK/AUTH de limpieza de logs con contratos de ruta y actor, sin eliminar controles centrales de revocación/expiración.
+3. Revisar duración y reanudación de `auditDriveImagesInCortes`, además del estado/esquema real de `Imagenes_Reemplazadas`.
+4. Investigar discrepancias de versión/deployment y caché entre assets servidos y rama; no deducir deployment a partir de GitHub Pages.
+5. Mantener despliegues Apps Script y pruebas productivas fuera de esta iteración.
