@@ -20,6 +20,8 @@ const SAFE_FONT_VALUES = new Set(SAFE_FONTS.values());
 const SAFE_SIZES = new Set(["0.85em", "1em", "1.2em", "1.5em"]);
 const SAFE_NAMED_COLORS = new Set(["red", "blue", "green", "black", "white", "orange", "yellow", "gray", "grey", "purple", "teal", "navy"]);
 const richEditorSelectionRanges_ = new WeakMap();
+let richSelectionChangeBound_ = false;
+let richActiveEditorRef_ = null;
 
 function rememberRichTextSelection_(targetOrId) {
     const editor = typeof targetOrId === "string" ? resolveRichTextTarget_(targetOrId) : targetOrId;
@@ -27,7 +29,7 @@ function rememberRichTextSelection_(targetOrId) {
     const selection = window.getSelection?.();
     if (!selection || !selection.rangeCount) return false;
     const range = selection.getRangeAt(0);
-    if (!editor.contains(range.commonAncestorContainer)) return false;
+    if (range.commonAncestorContainer !== editor && !editor.contains(range.commonAncestorContainer)) return false;
     richEditorSelectionRanges_.set(editor, range.cloneRange());
     return true;
 }
@@ -36,7 +38,7 @@ function restoreRichTextSelection_(editor) {
     if (!isRichContentEditable_(editor)) return false;
     editor.focus({ preventScroll: true });
     const saved = richEditorSelectionRanges_.get(editor);
-    if (saved && editor.contains(saved.commonAncestorContainer)) {
+    if (saved && (saved.commonAncestorContainer === editor || editor.contains(saved.commonAncestorContainer))) {
         const selection = window.getSelection?.();
         if (!selection) return false;
         selection.removeAllRanges();
@@ -44,15 +46,26 @@ function restoreRichTextSelection_(editor) {
         return true;
     }
     const selection = window.getSelection?.();
-    return Boolean(selection && selection.rangeCount && editor.contains(selection.getRangeAt(0).commonAncestorContainer));
+    return Boolean(selection && selection.rangeCount && (selection.getRangeAt(0).commonAncestorContainer === editor || editor.contains(selection.getRangeAt(0).commonAncestorContainer)));
 }
 
 export function bindRichTextEditorSelection_(editor) {
     if (!isRichContentEditable_(editor) || editor.dataset.richSelectionBound === "true") return;
     editor.dataset.richSelectionBound = "true";
     const remember = () => rememberRichTextSelection_(editor);
-    ["keyup", "mouseup", "touchend", "input", "blur"].forEach(type => editor.addEventListener(type, remember));
-    document.addEventListener("selectionchange", remember);
+    ["keyup", "mouseup", "touchend", "input"].forEach(type => editor.addEventListener(type, remember));
+    editor.addEventListener("focus", () => {
+        richActiveEditorRef_ = typeof WeakRef === "function" ? new WeakRef(editor) : { deref: () => editor };
+        remember();
+    });
+    editor.addEventListener("blur", () => {
+        remember();
+        if (richActiveEditorRef_?.deref() === editor) richActiveEditorRef_ = null;
+    });
+    if (!richSelectionChangeBound_) {
+        richSelectionChangeBound_ = true;
+        document.addEventListener("selectionchange", () => richActiveEditorRef_?.deref() && rememberRichTextSelection_(richActiveEditorRef_.deref()));
+    }
     editor.addEventListener("contextmenu", event => event.preventDefault());
 }
 
@@ -328,7 +341,7 @@ function wrapRichEditorSelection_(editor, styleProperty, styleValue) {
     const selection = window.getSelection?.();
     if (!selection || !selection.rangeCount) return false;
     const range = selection.getRangeAt(0);
-    if (!editor.contains(range.commonAncestorContainer)) return false;
+    if (range.commonAncestorContainer !== editor && !editor.contains(range.commonAncestorContainer)) return false;
     const wrapper = document.createElement("span");
     wrapper.style.setProperty(styleProperty, styleValue);
     if (range.collapsed) {
