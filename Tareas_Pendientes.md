@@ -18,6 +18,44 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 - No desplegar Apps Script, modificar ScriptProperties, secretos, hojas, permisos, Drive ni datos productivos sin autorización expresa.
 - Las pruebas Beta deben iniciar con los comandos seguros de sincronización exigidos por `NORMAS_DESAROLLO.md`.
 
+## Nuevo bloque prioritario — Inbox, caché de navegación y controles visuales (2026-11-16)
+
+**Estado general: EN PROGRESO.** Requisitos incorporados desde la solicitud del usuario. No se consideran implementados por su sola inclusión en este backlog.
+
+### GP-UX-INBOX-01 — Rediseño de la bandeja de entrada
+**Prioridad: P1 · Estado: EN PROGRESO**
+- Reorganizar el Inbox con una experiencia consistente en escritorio y móvil, tomando como referencia de interacción la bandeja de Outlook, sin copiar su identidad visual.
+- Menú lateral hamburguesa, colapsable/autoocultable en escritorio y adaptado a móvil, con secciones: General (mensajes directos), Soporte (tickets), Contáctanos (formularios de contacto), Reportes (reportes de problemas de los modales de detalle) y Aportaciones (aprobaciones de YouTube, exclusivamente Desarrollador).
+- Separar correctamente las fuentes/tipos de datos existentes; no mezclar tickets, mensajes directos, formularios, reportes ni aprobaciones.
+- Barra superior: título, botón hamburguesa y acciones de creación con iconografía accesible. Incorporar icono de papelera para eliminar mensajes donde la acción y los permisos existentes lo permitan.
+- Mantener paginación, búsqueda, estados leído/no leído, archivado, auditoría, roles y autorización backend actuales.
+- Validar navegación, responsive, accesibilidad, tema claro/oscuro, teclado y separación de permisos.
+
+### GP-PERF-PAGES-01 — Caché de usuarios y continuidad entre páginas
+**Prioridad: P1 · Estado: PENDIENTE**
+- Cachear la lista de usuarios en users.html, aislada por identidad/rol/token de sesión, mostrar caché válida inmediatamente y revalidar en segundo plano.
+- Actualizar/inutilizar la caché tras crear, editar, eliminar usuarios o cerrar sesiones; no conservar datos entre sesiones distintas ni reemplazar datos frescos por respuestas antiguas.
+- En add_cortes.html, conservar en caché los datos de catálogo/usuarios que realmente consuma el formulario, sin persistir secretos ni datos de formulario sensibles.
+- Al regresar a index.html desde users.html o add_cortes.html, restaurar el App Shell y el estado visible sin parpadeo ni recarga completa cuando el navegador/PWA lo permita; mantener navegación Atrás/Adelante, sesión y sincronización silenciosa.
+- No vaciar catálogo válido ni disparar snapshots completos por defecto; respetar la política cache-first del catálogo y el Service Worker.
+
+### GP-UX-USERS-01 — Acciones compactas en la tabla de usuarios
+**Prioridad: P2 · Estado: PENDIENTE**
+- Sustituir texto de Editar/Eliminar por iconos profesionales (lápiz y papelera), con etiquetas accesibles y tooltips.
+- Mantener editar y eliminar en una misma fila horizontal, con botones compactos de proporción cuadrada en escritorio y móvil.
+- Mantener separado el control privilegiado de cierre de sesiones y sus permisos actuales.
+
+### GP-UX-CUT-MODAL-01 — Posición de acciones del modal de detalle
+**Prioridad: P2 · Estado: PENDIENTE**
+- Ubicar compartir, editar e imprimir en la esquina superior derecha del encabezado, inmediatamente a la izquierda del botón cerrar.
+- Evitar centrado vertical/horizontal en la cabecera y conservar tamaños táctiles, orden, accesibilidad y reglas RBAC.
+
+### Dependencias y aceptación
+1. Auditar estructura HTML/CSS y handlers actuales antes de cambiar cada flujo.
+2. Completar primero GP-UX-INBOX-01, después GP-PERF-PAGES-01 y finalmente los dos ajustes compactos de controles.
+3. Agregar pruebas de contrato/UI para filtros por sección, permisos de Aportaciones, invalidación de caché, restauración de página y disposición responsive.
+4. Mantener validaciones de servicios/deployments reales y pruebas de dispositivos como PENDIENTES BETA; no desplegar Apps Script ni alterar datos externos.
+
 ## Orden general de ejecución
 
 1. Corregir y completar las tareas locales de experiencia de usuario y Developer, comenzando por BETA-021.
