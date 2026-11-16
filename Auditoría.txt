@@ -1078,3 +1078,27 @@ Validación:
 - Beta pendiente para confirmar limpieza de logs, lectura del historial y ejecución de auditoría con una sesión heredada y una sesión actual.
 - No se desplegó Apps Script ni se modificaron datos externos.
 ================================================================================
+
+
+================================================================================
+AUD-2026-11-16-04 — ADMIN: consultas del historial y captura inicial de auditoría con espera insuficiente/costo excesivo
+Severidad: Media-Alta — disponibilidad en inventarios grandes.
+Estado: OPTIMIZADO EN RAMA; CI APROBADO; VALIDACIÓN BETA PENDIENTE.
+
+Causas:
+- handleGetReplacedImages() invocaba collectActiveDriveReferences(true), que materializa un arreglo de ubicaciones (hoja/fila/columna) para cada referencia de Drive.
+- El consumidor solo necesita saber si un archivo tiene al menos una referencia activa para impedir acciones destructivas; no utiliza las ubicaciones ni muestra el conteo exacto.
+- La captura inicial de auditDriveImagesInCortes realiza el escaneo global de referencias, lectura del historial y persistencia del snapshot antes del primer lote de Drive. El cliente limitaba esa primera solicitud a 45 s y no la reintentaba, aunque las continuaciones sí tienen cursor y son reintentables.
+
+Correcciones:
+- El historial usa collectActiveDriveReferences(false), que conserva el estado verificado y la condición de referencia activa sin materializar ubicaciones completas. Una referencia activa sigue produciendo active_reference_count > 0 y bloquea las acciones destructivas.
+- La carga del historial usa routeActionWithRetry con timeout de 120 s y dos intentos; es una lectura idempotente y se cancela si el modal deja de ser vigente.
+- La captura inicial de auditoría Drive tiene timeout de 120 s; los lotes con cursor conservan 45 s y hasta tres intentos con el mismo cursor.
+- Se actualizaron contratos de coordinación, lectura compacta y timeout/reintentos del cliente.
+
+Validación:
+- CI run 43783119482, commit 6794022176044b25958de1aa77598c4c1bf0424a: SUCCESS; 107 suites / 1,656 pruebas / 0 fallos.
+- La prueba anterior detectó una aserción de timeout obsoleta; se actualizó al nuevo contrato y el run final pasó.
+- Falta comprobar tiempos reales, tamaño de snapshot y respuesta de Drive en Beta. No se afirma que 120 s elimine todo posible timeout.
+- No se desplegó Apps Script ni se modificaron hojas, Drive o datos externos.
+================================================================================
