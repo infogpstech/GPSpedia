@@ -3733,11 +3733,12 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
         }
         container.appendChild(relayContainer);
 
-        if (cutData.colaborador && !inEditMode) {
+        if (!inEditMode) {
+            const collaboratorName = String(cutData.colaborador || '').trim() || 'Comunidad de técnicos';
             const colabP = document.createElement('p');
             // Comentario: Se añade una clase para un estilo dedicado y robusto desde style.css
             colabP.className = "colaborador-info";
-            colabP.innerHTML = `Aportado por: <strong>${cleanColaboradorName(cutData.colaborador)}</strong>`;
+            colabP.innerHTML = `Aportado por: <strong>${cleanColaboradorName(collaboratorName)}</strong>`;
             container.appendChild(colabP);
         }
     }
