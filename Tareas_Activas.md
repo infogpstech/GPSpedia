@@ -1256,3 +1256,11 @@ Se creó `Tareas_beta.md` con los IDs BETA-001 a BETA-052, criterios de aceptaci
 - **GP-BETA-04/05:** se añadió además la reserva Coordinator `RELAY` para las tres operaciones que usan escaneo global de referencias de imágenes.
 - **CI:** run `43782723331` SUCCESS — 107 suites / 1,656 pruebas / 0 fallos.
 - **Estado:** corrección de código aprobada; GP-BETA-03 (borrado logs), GP-BETA-04 (auditoría Drive) y GP-BETA-05 (imágenes históricas) siguen ABIERTAS hasta validación Beta. La discrepancia ID/id es una causa común probable, no se declara causa única sin reproducir con la sesión Beta.
+
+
+### Adenda 2026-11-16 — GP-BETA-04/05: optimización de lecturas Drive
+- Historial de imágenes: se sustituyó el escaneo de referencias con ubicaciones completas por captura compacta de existencia de referencias activas. Se mantiene el bloqueo de acciones destructivas si existe cualquier referencia.
+- Auditoría Drive: timeout inicial ampliado a 120 s; las continuaciones con cursor conservan timeout de 45 s y reintentos idempotentes.
+- Lectura del historial: timeout acotado de 120 s y dos intentos seguros.
+- CI run `43783119482`: SUCCESS — 107 suites / 1,656 pruebas / 0 fallos.
+- **Pendiente Beta:** medir tiempos reales y confirmar consulta de historial/auditoría con Drive y Spreadsheet desplegados. GP-BETA-04 y GP-BETA-05 siguen ABIERTAS.
