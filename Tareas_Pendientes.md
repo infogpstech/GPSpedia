@@ -824,3 +824,5 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - App Shell v47; toolbar avanzada forzada solo en Inbox, sanitización avanzada específica y pruebas InboxUi, ServiceWorkerCache y OfflineBrandAssets actualizadas. CI y aceptación visual Beta pendientes.
 
 - Adenda: el Inbox usa la barra avanzada completa independientemente de la preferencia simplificada global; el resto de los editores conserva la configuración del usuario. La sanitización avanzada se aplica solo al contenido de Inbox. App Shell v47.
+
+- Adenda de validación: sintaxis estática 4/4 y verificaciones específicas 15/15 PASS. La suite Node.js integral no se marca aprobada porque GitHub no ha devuelto un estado de CI para el HEAD actual.
