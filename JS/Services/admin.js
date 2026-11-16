@@ -925,7 +925,7 @@ function isSharedMutationAction_(action) {
 // Consultas largas de inventario/Drive obtienen una lease propia de lectura.
 // No se registran como mutaciones ni generan eventos administrativos de escritura.
 function isSharedReadAction_(action) {
-    return ["getReplacedImages", "getDriveStorage", "getCortesImageFolders", "auditIdentifiers", "checkOperation", "getAdminImageUploadStatus", "previewCortesImageReconciliation"].includes(action);
+    return ["getReplacedImages", "getDriveStorage", "getCortesImageFolders", "auditIdentifiers", "checkOperation", "getAdminImageUploadStatus", "previewCortesImageReconciliation", "getServiceTraffic"].includes(action);
 }
 
 function doPost(e) {
@@ -1362,6 +1362,9 @@ function doPostInternal_(e) {
                 break;
             case 'getDriveStorage':
                 response = handleGetDriveStorage(payload, logMessage);
+                break;
+            case 'getServiceTraffic':
+                response = handleGetServiceTraffic_(payload, logMessage, developerContext);
                 break;
             case 'recoverReplacedImage':
                 response = handleRecoverReplacedImage(payload, logMessage);
@@ -8845,6 +8848,20 @@ function recordReplacedImage(data) {
 /**
  * Handler: Consultar imágenes reemplazadas
  */
+
+function handleGetServiceTraffic_(payload, logMessage, developerContext) {
+    if (!developerContext || String(developerContext.role || "").toLowerCase() !== "desarrollador") {
+        throw new Error("Acceso denegado: la telemetría global está reservada a Desarrollador.");
+    }
+    const result = getSharedServiceTraffic_();
+    if (!result || result.status !== "success" || !Array.isArray(result.buckets) || !result.totals) {
+        throw new Error("No se pudo recuperar la telemetría global del coordinador.");
+    }
+    if (typeof logMessage === "function") {
+        logMessage("Telemetría global", "Se recuperaron métricas agregadas de operaciones protegidas.", 1, 1);
+    }
+    return result;
+}
 
 function handleGetDriveStorage(payload, logMessage) {
     const parseBytes = value => {
