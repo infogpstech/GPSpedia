@@ -303,3 +303,13 @@ El checkpoint acumulativo anterior se conserva íntegro en `Checkpoint_Archive/c
 - Validación estática: parsing V8 aprobado para `rich-text.js`, `ui.js`, `InboxUi.mjs`, `ServiceWorkerCache.js` y `OfflineBrandAssets.mjs` tras retirar imports/export e `import.meta` únicamente para el chequeo; balance de llaves CSS aprobado; comprobaciones de handlers, persistencia de rango, iconos y versión v56 aprobadas.
 - Pendiente: ejecutar suites Node.js completas/CI y validación visual real de selección, menú contextual y clipboard en Android PWA y escritorio. La causa y el código compartido indican que el defecto también era posible en escritorio; no se afirma que se haya probado físicamente en ambos.
 - Estado: EN PROGRESO hasta completar revisión final, pruebas disponibles y verificar HEAD remoto.
+
+
+### Verificación posterior — GP-UX-RICH-EDITOR-SELECTION-02 — 2026-11-16
+- Revisión de implementación: los controles de ambas barras capturan la selección antes de recibir el foco; el editor restaura el rango antes de aplicar color, fuente o tamaño. El marcador de color conserva el caret incluso cuando el rango tiene como contenedor común al propio editor vacío.
+- El seguimiento de selectionchange usa una única suscripción global con referencia débil al editor activo; al perder foco se conserva el último rango y se libera la referencia activa, evitando una suscripción global por cada formulario dinámico.
+- Parsing V8 aprobado para rich-text.js, ui.js, InboxUi.mjs, ServiceWorkerCache.js y OfflineBrandAssets.mjs (imports/exports e import.meta retirados solo en las copias usadas para parsing). Balance de llaves CSS y contratos estáticos dirigidos aprobados.
+- No se ejecutó la suite Node.js completa desde este entorno. La consulta de estado combinada del commit 18e9926d46bb6befe5dfb3d195847e07d6d29b3d devolvió statuses: []; la integración disponible solo expone ejecuciones de workflows asociadas a PR y no devolvió ninguna. No se declara CI aprobada.
+- Git confirma HEAD 18e9926d46bb6befe5dfb3d195847e07d6d29b3d en GPSpedia2.2.5_work; comparación contra GPSpedia2.2.5: 3,834 commits adelantada, 0 detrás; SHA de base d9acc68d889985c2e2f42fe3a02e502efc86ead1 sin cambios.
+- Aún pendiente: suite integral Node.js/CI cuando el workflow esté disponible y validación visual real en escritorio y Android/PWA (cambio sucesivo de colores con texto previo, formato de selección, menús contextuales y portapapeles).
+- Estado: EN PROGRESO hasta disponer de las pruebas completas; el código está publicado únicamente en la rama de trabajo.
