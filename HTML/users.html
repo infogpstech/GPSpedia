@@ -138,17 +138,42 @@
         .dark-mode .modal-content {
             border-color: rgba(255,255,255,0.1);
         }
+        .modal-content { position: relative; }
         .close-btn {
-            color: var(--gp-color-text-muted);
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-        }
-        .close-btn:hover, .close-btn:focus {
-            color: black;
-            text-decoration: none;
+            appearance: none;
+            position: absolute;
+            top: 10px;
+            right: 12px;
+            z-index: 5;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            min-width: 40px;
+            height: 40px;
+            min-height: 40px;
+            padding: 0;
+            border: 1px solid var(--gp-color-border, #b8c2cc);
+            border-radius: 10px;
+            color: var(--gp-color-text, #222);
+            background: var(--gp-color-surface, #fff);
+            font: inherit;
+            font-size: 24px;
+            font-weight: 600;
+            line-height: 1;
             cursor: pointer;
+            transition: color .16s ease, background-color .16s ease, border-color .16s ease, box-shadow .16s ease;
         }
+        .close-btn:hover:not(:disabled) {
+            color: var(--gp-color-text, #111);
+            background: var(--gp-color-surface-hover, #edf2f7);
+            border-color: var(--gp-color-border-strong, #8795a5);
+        }
+        .close-btn:focus-visible {
+            outline: 3px solid var(--btn-focus-ring, rgba(13, 110, 253, .5));
+            outline-offset: 2px;
+        }
+        @media (prefers-reduced-motion: reduce) { .close-btn { transition: none; } }
         .form-group {
             margin-bottom: 15px;
         }
@@ -265,7 +290,7 @@
     <!-- User Modal (for Create/Edit) -->
     <div id="user-modal" class="modal">
         <div class="modal-content">
-            <span class="close-btn">&times;</span>
+            <button type="button" class="close-btn" aria-label="Cerrar ventana">&times;</button>
             <h2 id="user-modal-title"></h2>
             <form id="user-form">
                 <input type="hidden" id="user-id">
@@ -293,7 +318,7 @@
     <!-- Edit Name Modal -->
     <div id="name-modal" class="modal">
         <div class="modal-content">
-            <span class="close-btn">&times;</span>
+            <button type="button" class="close-btn" aria-label="Cerrar ventana">&times;</button>
             <h2>Editar Nombre</h2>
             <form id="name-form">
                 <div class="form-group">
@@ -308,7 +333,7 @@
     <!-- Change Password Modal -->
     <div id="password-modal" class="modal">
         <div class="modal-content">
-            <span class="close-btn">&times;</span>
+            <button type="button" class="close-btn" aria-label="Cerrar ventana">&times;</button>
             <h2>Cambiar Contraseña</h2>
             <form id="password-form">
                 <div class="form-group">

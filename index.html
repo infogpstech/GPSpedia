@@ -233,7 +233,7 @@
 <!-- ========= MODAL DE DASHBOARD ========= -->
 <div id="dashboard-modal" class="info-modal">
     <div class="info-modal-content" style="max-width: 900px;">
-        <span class="info-close-btn">&times;</span>
+        <button type="button" class="info-close-btn" aria-label="Cerrar ventana">&times;</button>
         <h2 class="inbox-modal-title"><i class="fa-solid fa-chart-line"></i> Panel de Actividad</h2>
         <div style="overflow-x: auto;">
             <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
@@ -581,7 +581,7 @@
 </div>
 <div id="replaced-image-lightbox" class="replaced-image-lightbox" style="display: none;" role="dialog" aria-modal="true" aria-label="Vista ampliada de imagen">
     <div id="replaced-image-lightbox-content" class="replaced-image-lightbox-content">
-        <button type="button" id="replaced-image-lightbox-close" class="replaced-image-lightbox-close" aria-label="Cerrar vista ampliada"><i class="fa-solid fa-xmark"></i></button>
+        <button type="button" id="replaced-image-lightbox-close" class="info-close-btn replaced-image-lightbox-close" aria-label="Cerrar vista ampliada">&times;</button>
         <img id="replaced-image-lightbox-image" src="" alt="Imagen ampliada">
         <p id="replaced-image-lightbox-title"></p>
         <span class="replaced-image-lightbox-hint">Pulsa la imagen para acercar o alejar. Pulsa fuera o Esc para cerrar.</span>
@@ -591,7 +591,7 @@
 <!-- MODAL DE AUDITORÍA DE ARCHIVOS EN CARPETA CORTES (TAREA 2) -->
 <div id="audit-drive-modal" class="info-modal" style="display: none; z-index: 2600;">
     <div class="info-modal-content" style="max-width: 900px; width: 95%;">
-        <span class="info-close-btn" id="close-audit-drive-modal">&times;</span>
+        <button type="button" class="info-close-btn" id="close-audit-drive-modal" aria-label="Cerrar ventana">&times;</button>
         <h2><i class="fa-brands fa-google-drive"></i> Auditoría de Imágenes en Carpeta «Cortes»</h2>
         <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:12px;">
             Exploración recursiva limitada estrictamente al árbol de la carpeta principal «Cortes». El progreso y los resultados parciales se conservan localmente. La auditoría y el registro no mueven archivos; cualquier traslado requiere una acción explícita y confirmación del Desarrollador.
@@ -855,7 +855,7 @@
 <!-- TAREA 2 (B02): ACTUALIZACIÓN DE CONTENIDO Y ESTILOS DE MODALES INFORMATIVOS (SOBRE NOSOTROS Y TÉRMINOS) -->
 <div id="about-us-modal" class="info-modal">
   <div class="info-modal-content">
-    <span class="info-close-btn">&times;</span>
+    <button type="button" class="info-close-btn" aria-label="Cerrar ventana">&times;</button>
     <h1>Sobre Nosotros</h1>
     <p>GPSpedia es una plataforma especializada en la consulta técnica y estandarizada de información vehicular, diseñada para técnicos, instaladores y profesionales que trabajan con sistemas de rastreo, seguridad y control vehicular.</p>
     <p>Nuestro objetivo es facilitar el acceso rápido y organizado a información técnica de utilidad práctica, ayudando a reducir errores durante los procesos de instalación y optimizando los tiempos de trabajo mediante una base de conocimiento estructurada, visual y en constante evolución.</p>
@@ -886,7 +886,7 @@
 
 <div id="contact-modal" class="info-modal">
   <div class="info-modal-content">
-    <span class="info-close-btn">&times;</span>
+    <button type="button" class="info-close-btn" aria-label="Cerrar ventana">&times;</button>
     <h2>Contáctanos</h2>
     <p>Si tienes sugerencias, problemas con la plataforma o necesitas soporte técnico, por favor utiliza este formulario. Tu feedback es importante para nosotros.</p>
     <form id="contact-form">
@@ -911,7 +911,7 @@
 
 <div id="faq-modal" class="info-modal">
   <div class="info-modal-content">
-    <span class="info-close-btn">&times;</span>
+    <button type="button" class="info-close-btn" aria-label="Cerrar ventana">&times;</button>
     <h2>Preguntas Frecuentes (FAQ)</h2>
     <div class="accordion">
       <div class="accordion-item"><div class="accordion-header">¿GPSpedia es un sistema de rastreo GPS?<i class="fas fa-chevron-down"></i></div><div class="accordion-content"><p>No. GPSpedia no rastrea vehículos ni gestiona dispositivos. Es una plataforma informativa y de consulta técnica.</p></div></div>
@@ -928,7 +928,7 @@
 
 <div id="changelog-modal" class="info-modal">
   <div class="info-modal-content">
-    <span class="info-close-btn">&times;</span>
+    <button type="button" class="info-close-btn" aria-label="Cerrar ventana">&times;</button>
     <h2 style="margin-bottom: 15px;"><i class="fa-solid fa-history"></i> Registro de Cambios</h2>
     <p style="margin-bottom: 25px; color: var(--text-disabled, #777); font-size: 0.9em; line-height: 1.4;">Descubre la evolución y mejoras incorporadas en la plataforma de forma cronológica.</p>
 
@@ -1081,7 +1081,7 @@
 <!-- ========= MODAL DE INSTALACIÓN PARA iOS ========= -->
 <div id="ios-install-modal" class="info-modal" style="display: none; z-index: 2100;">
     <div class="info-modal-content" style="max-width: 400px; padding: 20px; border-radius: 15px; text-align: center;">
-        <span class="info-close-btn" id="ios-install-close" style="top: 5px; right: 15px;">&times;</span>
+        <button type="button" class="info-close-btn" id="ios-install-close" aria-label="Cerrar ventana">&times;</button>
         <img src="https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=w256" alt="Logo de GPSpedia" style="max-width: 80px; margin-bottom: 15px; filter: drop-shadow(0px 4px 10px rgba(0,0,0,0.15));">
         <h3 style="margin-top: 0; margin-bottom: 10px; color: var(--accent-color);">Instala GPSpedia en tu iPhone o iPad</h3>
         <p style="font-size: 0.95em; color: var(--text-color); margin-bottom: 20px; line-height: 1.5;">Instala esta aplicación en tu dispositivo para acceder de forma rápida y usarla offline en cualquier momento.</p>

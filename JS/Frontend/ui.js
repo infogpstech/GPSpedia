@@ -2340,6 +2340,8 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
     }
 
     const closeBtn = document.createElement("button");
+    closeBtn.type = "button";
+    closeBtn.setAttribute("aria-label", "Cerrar ventana");
     closeBtn.innerHTML = "&times;";
     closeBtn.onclick=async()=>{
         if(inEditMode){const discarded=await exitModalEditMode(false,activeItem.id,false,navOptions);if(!discarded)return;}
@@ -2350,7 +2352,7 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
         else{document.getElementById("modalDetalle").classList.remove("visible");modalNavStack.length=0;if(isSearchActive&&searchInput)setTimeout(()=>searchInput.focus(),300);}
     };
     closeBtn.className = "info-close-btn";
-    closeBtn.style.cssText = "position: static; font-size: 1.8em; padding: 0 4px;";
+    closeBtn.style.cssText = "position: static; margin-left: auto;";
     headerDiv.appendChild(closeBtn);
     cont.appendChild(headerDiv);
 
@@ -3669,8 +3671,10 @@ function renderRelayInfoModal(relayInfo) {
     const content = document.createElement('div');
     content.className = 'info-modal-content';
 
-    const closeBtn = document.createElement('span');
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
     closeBtn.className = 'info-close-btn';
+    closeBtn.setAttribute('aria-label', 'Cerrar ventana');
     closeBtn.innerHTML = '&times;';
     closeBtn.onclick = () => {
         const overlayId = modal.dataset.gpOverlayHistoryId;
@@ -10220,7 +10224,7 @@ export function openReportCutModal(vehicleId, corteNum, currentCutData) {
     const reportId = `REP-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
     content.innerHTML = `
-        <span class="info-close-btn">&times;</span>
+        <button type="button" class="info-close-btn" aria-label="Cerrar ventana">&times;</button>
         <h2 id="report-cut-heading"><i class="fa-solid fa-triangle-exclamation" style="color:#dc3545;"></i></h2>
         <p id="report-cut-summary" style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;"></p>
         <form id="report-cut-form" style="display:flex; flex-direction:column; gap:12px;">
@@ -10344,7 +10348,7 @@ function showReportSuccessModal(vehicleId, corteNum, currentCutData, reportId, r
     content.style.textAlign = "center";
 
     content.innerHTML = `
-        <span class="info-close-btn">&times;</span>
+        <button type="button" class="info-close-btn" aria-label="Cerrar ventana">&times;</button>
         <div style="font-size:2.5rem; color:#28a745; margin-bottom:10px;">
             <i class="fa-solid fa-circle-check"></i>
         </div>
@@ -10494,7 +10498,7 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
         ? reportActivaTestigo : normalizeActivaTestigoValue(currentCutData.activaTestigo);
 
     content.innerHTML = `
-        <span class="info-close-btn">&times;</span>
+        <button type="button" class="info-close-btn" aria-label="Cerrar ventana">&times;</button>
         <h2 id="suggest-cut-heading"><i class="fa-solid fa-pen-to-square"></i></h2>
         <p id="suggest-cut-summary" style="font-size:0.85em; color:var(--text-disabled); margin-bottom:12px;"></p>
         <form id="suggest-cut-form" style="display:flex; flex-direction:column; gap:12px;">
@@ -10707,7 +10711,7 @@ export function openExpandMenuModal(item) {
     content.style.maxWidth = "400px";
 
     content.innerHTML = `
-        <span class="info-close-btn">&times;</span>
+        <button type="button" class="info-close-btn" aria-label="Cerrar ventana">&times;</button>
         <h2><i class="fa-solid fa-circle-plus"></i> Ampliar Información</h2>
         <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">${item.marca} ${item.modelo} (${item.anoDesde}-${item.anoHasta})</p>
 
@@ -10799,7 +10803,7 @@ export function openAddVinModal(item) {
     }
 
     content.innerHTML = `
-        <span class="info-close-btn">&times;</span>
+        <button type="button" class="info-close-btn" aria-label="Cerrar ventana">&times;</button>
         <h2><i class="fa-solid fa-barcode"></i> Agregar VIN / Chasis</h2>
         <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">${item.marca} ${item.modelo} (${item.anoDesde}-${item.anoHasta})</p>
 
@@ -11012,7 +11016,7 @@ function openAddCutForModelModal(item) {
     content.style.maxWidth = "500px";
 
     content.innerHTML = `
-        <span class="info-close-btn">&times;</span>
+        <button type="button" class="info-close-btn" aria-label="Cerrar ventana">&times;</button>
         <h2><i class="fa-solid fa-plus-circle"></i> Agregar Nuevo Corte</h2>
         <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">Modelo: ${item.marca} ${item.modelo}</p>
         <div id="add-cut-pending-notice" role="status" style="display:none; padding:10px; border-radius:8px; background:var(--surface-secondary, rgba(0,123,255,0.08)); font-size:0.9em;"></div>
@@ -11437,7 +11441,7 @@ export function openAddAperturaModal(item) {
     content.style.maxWidth = "500px";
 
     content.innerHTML = `
-        <span class="info-close-btn">&times;</span>
+        <button type="button" class="info-close-btn" aria-label="Cerrar ventana">&times;</button>
         <h2><i class="fa-solid fa-door-open"></i> Agregar Apertura de Puertas</h2>
         <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">${item.marca} ${item.modelo}</p>
 
@@ -11513,7 +11517,7 @@ export function openAddFeedModal(item) {
     content.style.maxWidth = "500px";
 
     content.innerHTML = `
-        <span class="info-close-btn">&times;</span>
+        <button type="button" class="info-close-btn" aria-label="Cerrar ventana">&times;</button>
         <h2><i class="fa-solid fa-plug"></i> Agregar Cable de Alimentación</h2>
         <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">${item.marca} ${item.modelo}</p>
 
@@ -11625,7 +11629,7 @@ export function openAddVideoModal(item) {
     content.className = "info-modal-content";
     content.style.maxWidth = "500px";
     content.innerHTML = `
-        <span class="info-close-btn">&times;</span>
+        <button type="button" class="info-close-btn" aria-label="Cerrar ventana">&times;</button>
         <h2><i class="fa-brands fa-youtube" style="color:#ff0000;"></i> Vídeo Guía de Desarme</h2>
         <p id="vehicle-video-context" style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;"></p>
         <p style="font-size:0.9em; margin-bottom:14px;">Los vídeos se suben como no listados y solo se muestran en la ficha después de aprobarse.</p>
@@ -11757,7 +11761,7 @@ export function openAddProblemModal(preAssociatedVehicle = null, navOptions = {}
     content.style.maxWidth = "550px";
 
     content.innerHTML = `
-        <span class="info-close-btn">&times;</span>
+        <button type="button" class="info-close-btn" aria-label="Cerrar ventana">&times;</button>
         <h2><i class="fa-solid fa-triangle-exclamation"></i> Registrar Problema</h2>
 
         <form id="add-pys-form" style="display:flex; flex-direction:column; gap:12px; margin-top:15px;">
@@ -12040,7 +12044,7 @@ export function openSearchVehicleForPysAssociationModal(problemId, onAssociated,
     content.style.maxWidth = "520px";
 
     content.innerHTML = `
-        <span class="info-close-btn">&times;</span>
+        <button type="button" class="info-close-btn" aria-label="Cerrar ventana">&times;</button>
         <h2><i class="fa-solid fa-car"></i> Asociar Modelos de Vehículos</h2>
         <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:12px;">
             Busca y selecciona uno o más vehículos para relacionarlos con este problema.
@@ -12214,7 +12218,7 @@ export function openConfirmVehicleForPysModal(vehicle, onConfirm) {
     content.style.maxWidth = "420px";
 
     content.innerHTML = `
-        <span class="info-close-btn">&times;</span>
+        <button type="button" class="info-close-btn" aria-label="Cerrar ventana">&times;</button>
         <h2>Confirmar Vehículo</h2>
         <div style="display:flex; flex-direction:column; align-items:stretch; gap:10px; margin-top:10px; width:100%;">
             <div style="width:100%; overflow:hidden; border-radius:8px; max-height:200px; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.03);">
@@ -12770,7 +12774,7 @@ export function openAddTutorialModal() {
     content.className = "info-modal-content";
     content.style.maxWidth = "560px";
     content.innerHTML = `
-        <span class="info-close-btn">&times;</span>
+        <button type="button" class="info-close-btn" aria-label="Cerrar ventana">&times;</button>
         <h2><i class="fa-solid fa-book-open"></i> Agregar Nuevo Tutorial</h2>
         <form id="add-tutorial-form" style="display:flex; flex-direction:column; gap:12px; margin-top:15px;">
             <div class="form-group">
@@ -14028,7 +14032,7 @@ export async function openAssociateExistingProblemModal(vehicle, navOptions = {}
     content.style.maxWidth = "550px";
 
     content.innerHTML = `
-        <span class="info-close-btn">&times;</span>
+        <button type="button" class="info-close-btn" aria-label="Cerrar ventana">&times;</button>
         <h2><i class="fa-solid fa-triangle-exclamation"></i> Agregar Problema Relacionado</h2>
         <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:12px;">${vehicle.marca} ${vehicle.modelo} (${vehicle.anoDesde})</p>
 
