@@ -1397,3 +1397,6 @@ GP-UX-RICH-TOOLBARS-01 — 2026-11-16
 - `service-worker.js`: App Shell actualizado a v55 para refrescar los estilos en PWA.
 - Contratos: `JS/Tests/InboxUi.mjs`, `JS/Tests/ServiceWorkerCache.js` y `JS/Tests/OfflineBrandAssets.mjs`.
 ================================================================================
+
+
+- Corrección de preservación de perfiles: las barras estándar ya no declaran el indicador reservado a la variante compacta preexistente. Se amplió InboxUi para comprobar que el refresco dinámico no convierte perfiles básico/listas en avanzado.
