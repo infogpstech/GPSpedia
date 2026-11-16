@@ -258,7 +258,8 @@ check("El compositor nuevo permite desplazamiento vertical y mantiene Salir/Envi
     assert.ok(composerLayout.length > 0);
     assert.match(composerLayout, /flex:\s*1 1 0/);
     assert.match(composerLayout, /overflow-y:\s*auto/);
-    assert.match(css, /\.inbox-compose-actions\s*\{[^}]*position:\s*sticky/s);
+    const composeActionsLayout = css.slice(css.lastIndexOf("#inbox-modal-content .inbox-compose-actions {"));
+    assert.match(composeActionsLayout, /position:\s*sticky/);
     assert.match(ui, /formActions\.append\(makeCancelButton\(\), send\)/);
 });
 check("Plantilla y categoría comparten una fila inmediatamente antes del editor", () => {
