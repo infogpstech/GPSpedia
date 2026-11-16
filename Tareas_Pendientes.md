@@ -5,7 +5,7 @@ Fecha de consolidación: 2026-11-16
 Repositorio: `infogpstech/GPSpedia`  
 Rama autorizada: `GPSpedia2.2.5_work`  
 Rama base protegida: `GPSpedia2.2.5`  
-HEAD de código y pruebas validado en esta corrección: `95dd8205269849344b69b77e22898e4763096830`
+HEAD de código y pruebas validado en esta corrección: `07eca822c4fd06b5ebeb605256f918069c96d798`
 
 Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_beta.md`, integrando sus pendientes por sector y orden de ejecución. El historial y la evidencia de trabajo anterior permanecen en `checkpoint.md` y en `Olds/Documentacion_Legacy/`. La única fuente normativa continúa siendo `NORMAS_DESAROLLO.md`.
 
@@ -798,7 +798,16 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 
 
 ## ADENDA — GP-UX-CUT-MODAL-03 / GP-UX-USERS-03 — 2026-11-16
-**Estado: EN PROGRESO.**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.**
 - Modal de corte: separar el logotipo (columna izquierda, más grande) del nombre del modelo. El nombre queda a la derecha, debajo de la fila superior de acciones y alineado al borde inferior del logo. Compartir, imprimir, editar/guardar y cerrar permanecen en la parte superior derecha, sin cambiar RBAC ni handlers.
 - users.html: encabezados exactos «Usuario», «Nombre», «Rol» y «acciones». La tabla usa el 100 % del ancho de su contenedor, con columnas fijas y sin scroll horizontal. La columna Rol reserva ancho suficiente y no divide nombres de rol a mitad de palabra; los botones de acciones se compactan en pantallas muy estrechas.
 - Pruebas anti-regresión: CutDetailModalLayout, ResponsiveFormsUsers y ButtonWidthPolicy. App Shell actualizado a v45 porque style.css y HTML/users.html forman parte de la caché.
+
+
+### Validación local y cierre — GP-UX-CUT-MODAL-03 / GP-UX-USERS-03
+- GitHub Actions Node.js 22, run `43939461276`: **SUCCESS — 129 suites / 1,904 pruebas / 0 fallos**.
+- Pruebas específicas: CutDetailModalLayout **14/14**, ResponsiveFormsUsers **17/17**, ButtonWidthPolicy **5/5**, ServiceWorkerCache **10/10**, OfflineBrandAssets **4/4**.
+- Comprobación sintáctica de los módulos JavaScript modificados: **SUCCESS**.
+- GitHub Pages run `43939460856`: **SUCCESS** (build y deploy).
+- Código validado en commit `07eca822c4fd06b5ebeb605256f918069c96d798`.
+- Pendiente diferido a Beta: inspección visual en Android/PWA instalada, viewport estrecho y escritorio; verificar que el logo se muestra completo, que las acciones quedan en la parte superior derecha, que el modelo alinea su base con la imagen y que las cuatro columnas de usuarios usan todo el ancho sin scroll horizontal. No se afirma haber realizado esa inspección real.

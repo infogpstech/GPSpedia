@@ -114,3 +114,14 @@ El checkpoint acumulativo anterior se conserva íntegro en `Checkpoint_Archive/c
 - Capturas localizadas en `Images/tests/`: `modal_antes.png`, `Modal_despues.png`, `modal_users_antes.jpeg`. Se pudo inspeccionar la captura anterior y la captura de usuarios; el conector no expuso los bytes de `Modal_despues.png` (archivo de 2,017,189 bytes). La distribución solicitada por el usuario en texto se usa como criterio explícito.
 - Alcance en implementación: encabezado de corte con logo grande a la izquierda, acciones en la fila superior derecha, modelo en la fila inferior derecha alineado a la base del logo; tabla de usuarios con encabezados cortos, distribución 100 % y rol sin cortes internos. Sin cambios de backend, RBAC ni handlers.
 - App Shell previsto v45 por cambios en CSS y HTML precargados.
+
+
+### Cierre local — GP-UX-CUT-MODAL-03 / GP-UX-USERS-03 — 2026-11-16
+- Commit de código: `07eca822c4fd06b5ebeb605256f918069c96d798`.
+- Modal de corte: logo real 120 px escritorio / 104 px móvil; imagen a la izquierda; compartir/imprimir/editar en la parte superior derecha junto al cierre; modelo en la fila inferior derecha alineado al borde inferior de la imagen. El campo de edición ocupa la misma celda que el nombre en modo edición.
+- `HTML/users.html`: encabezados «Usuario», «Nombre», «Rol», «acciones»; tabla de ancho 100 %, columnas fijas y sin scroll horizontal; rol sin saltos dentro de palabras; botones de acción 28 px en viewport ≤420 px para conservar las tres acciones en una fila.
+- App Shell `gpsepedia-cache-v45`; pruebas de caché y recursos offline sincronizadas.
+- GitHub Actions run `43939461276`: **SUCCESS — 129 suites / 1,904 pruebas / 0 fallos**. CutDetailModalLayout 14/14; ResponsiveFormsUsers 17/17; ButtonWidthPolicy 5/5; ServiceWorkerCache 10/10; OfflineBrandAssets 4/4. Sintaxis de módulos modificados aprobada.
+- GitHub Pages run `43939460856`: **SUCCESS — build y deploy**.
+- Estado: **COMPLETADA CON VALIDACIÓN DIFERIDA**. Falta inspección visual en Android/PWA y escritorio; no se presenta como realizada.
+- Rama base `GPSpedia2.2.5` verificada sin diferencias respecto al SHA protegido `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.

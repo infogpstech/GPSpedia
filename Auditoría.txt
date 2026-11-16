@@ -1507,7 +1507,7 @@ AUDITORÍA COMPLEMENTARIA — 2026-11-16 — AUD-2026-11-16-06
 ## AUD-2026-11-16-04 — Distribución del modal de corte y tabla de usuarios
 
 **Severidad:** Media — jerarquía visual del encabezado y distribución incompleta de la tabla móvil.  
-**Estado:** IMPLEMENTACIÓN EN CURSO; validación automatizada pendiente.
+**Estado:** COMPLETADA LOCALMENTE; aceptación visual en Android/PWA pendiente de Beta.
 
 ### Evidencia
 - Captura `Images/tests/modal_antes.png`: el modelo aparece inmediatamente a la derecha del logo y a media altura; la barra de acciones está en la misma franja superior. No corresponde a la nueva distribución solicitada.
@@ -1523,3 +1523,12 @@ AUDITORÍA COMPLEMENTARIA — 2026-11-16 — AUD-2026-11-16-06
 
 ### Archivos afectados
 `style.css`, `JS/Frontend/ui.js`, `HTML/users.html`, pruebas de layout y caché/App Shell.
+
+
+### Validación final — AUD-2026-11-16-04
+- GitHub Actions Node.js 22 run `43939461276`: **SUCCESS — 129 suites / 1,904 pruebas / 0 fallos**.
+- Suites específicas: CutDetailModalLayout 14/14; ResponsiveFormsUsers 17/17; ButtonWidthPolicy 5/5; ServiceWorkerCache 10/10; OfflineBrandAssets 4/4.
+- Comprobación de sintaxis de `JS/Frontend/ui.js` y `service-worker.js`: aprobada por CI.
+- GitHub Pages run `43939460856`: **SUCCESS — build y deploy**.
+- El cambio preserva los handlers, permisos RBAC, IDs y contratos de usuarios; no modifica backend ni servicios Apps Script.
+- Aceptación visual real en Android/PWA y escritorio: pendiente de Beta. La captura `Images/tests/Modal_despues.png` se encuentra en el repositorio, pero el conector no permitió recuperar su contenido binario por su tamaño; la distribución se implementó según el esquema proporcionado por el usuario.
