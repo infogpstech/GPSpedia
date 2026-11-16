@@ -1283,3 +1283,11 @@ CAMBIO EN PROGRESO — GP-UX-CUT-MODAL-03 / GP-UX-USERS-03 — 2026-11-16
 - users.html: encabezados Usuario / Nombre / Rol / acciones; tabla de ancho completo, columnas fijas, rol sin saltos dentro de palabra y sin desplazamiento horizontal. Acciones compactadas para viewport de 420 px o menos.
 - Pruebas de layout actualizadas y App Shell v45.
 ================================================================================
+
+================================================================================
+CAMBIOS — 2026-11-16 — GP-UX-INBOX-DESKTOP-02
+- JS/Frontend/ui.js: toolbar enriquecida en compositores, campos Plantilla/Categoría agrupados, lista vacía identificada para layout compacto y mensajes mostrados tras sanitización.
+- style.css: scroll vertical del formulario, acciones sticky, selectores en dos columnas, panel vacío compacto y lupa sin etiqueta recortada.
+- service-worker.js: App Shell v46.
+- JS/Tests/InboxUi.mjs, ServiceWorkerCache.js y OfflineBrandAssets.mjs: contratos de regresión actualizados.
+================================================================================
