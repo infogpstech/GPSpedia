@@ -63,4 +63,4 @@ El checkpoint acumulativo anterior se conserva íntegro en `Checkpoint_Archive/c
 - Corrección preparada: grid de dos columnas con logo/modelo a la izquierda, acciones no envolventes a la derecha y cierre fijo en esquina superior derecha. Botones 34 px escritorio/32 px móvil. Logo +20 %: 57.6 px escritorio y 45.6 px móvil.
 - App Shell actualizado de v41 a v42 para invalidar CSS previo en PWA.
 - Auditoría registrada como AUD-2026-11-16-02; pruebas CutDetailModalLayout, ServiceWorkerCache y OfflineBrandAssets actualizadas.
-- Estado: CI pendiente; aceptación visual en navegador móvil/PWA real pendiente de Beta. No se modificó Apps Script ni datos externos.
+- Estado: GitHub Actions Node.js run `43913616427` SUCCESS; aceptación visual en navegador móvil/PWA real pendiente de Beta. No se modificó Apps Script ni datos externos.

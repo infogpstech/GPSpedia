@@ -757,11 +757,11 @@ No usar `reset --hard`, `clean`, force push ni comandos que descarten cambios. N
 
 ## Adenda correctiva — GP-UX-CUT-MODAL-01 — 2026-11-16
 
-**Estado local:** CORRECCIÓN IMPLEMENTADA; CI PENDIENTE. **Beta visual:** PENDIENTE.
+**Estado local:** CORRECCIÓN IMPLEMENTADA Y VALIDADA EN CI. **Beta visual:** PENDIENTE.
 
 - Corregir la regresión en móvil/PWA que desplazaba los botones compartir, editar e imprimir debajo del logo.
 - Mantener las tres acciones agrupadas en la parte superior derecha, inmediatamente a la izquierda del botón cerrar; el logo/modelo permanece en el área izquierda sin empujar ni envolver las acciones.
 - Ampliar el logo de marca un 20 % respecto a las dimensiones anteriores: escritorio 48 → 57.6 px; móvil 38 → 45.6 px.
 - Reducir moderadamente los botones: 34 × 34 px en escritorio y 32 × 32 px en móvil.
 - Invalidar el App Shell previo para que PWA reciba el CSS corregido.
-- Validar CutDetailModalLayout, ServiceWorkerCache y OfflineBrandAssets; en Beta comprobar viewport móvil estrecho, PWA instalada, orientación vertical/horizontal, roles con y sin permisos de editar/imprimir, y modelos cortos/largos.
+- GitHub Actions Node.js run `43913616427`: SUCCESS; incluye la suite de regresión del repositorio. En Beta comprobar viewport móvil estrecho, PWA instalada, orientación vertical/horizontal, roles con y sin permisos de editar/imprimir, y modelos cortos/largos.

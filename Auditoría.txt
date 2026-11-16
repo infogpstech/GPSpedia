@@ -1430,5 +1430,5 @@ AUDITORÍA COMPLEMENTARIA — 2026-11-16 — AUD-2026-11-16-06
 - Se amplió CutDetailModalLayout y se incrementó el App Shell de v41 a v42 para invalidar CSS previo en PWA.
 
 ### Validación
-- Pruebas locales y CI: pendientes de ejecución tras publicar este cambio.
+- GitHub Actions Node.js run `43913616427`: **SUCCESS**. La suite de regresión del repositorio terminó correctamente.
 - Aceptación visual en navegador móvil/PWA real: pendiente de Beta; no se afirma como ejecutada.

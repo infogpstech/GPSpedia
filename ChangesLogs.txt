@@ -1230,5 +1230,5 @@ ADENDA CORRECTIVA — GP-UX-CUT-MODAL-01 — 2026-11-16
 - service-worker.js: App Shell actualizado de v41 a v42 para invalidar CSS anterior en PWA.
 - JS/Tests/CutDetailModalLayout.mjs, JS/Tests/ServiceWorkerCache.js y JS/Tests/OfflineBrandAssets.mjs: regresiones responsive y de caché actualizadas.
 - Causa corregida: flex-basis:100% aplicado al título en móvil junto con flex-wrap del toolbar.
-- CI y revisión visual Beta quedan pendientes hasta ejecutar la validación posterior a este commit.
+- GitHub Actions Node.js run 43913616427: SUCCESS. La aceptación visual en navegador móvil/PWA real permanece pendiente de Beta.
 ================================================================================
