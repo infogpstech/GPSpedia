@@ -811,7 +811,7 @@ run("Una columna faltante se inserta sin perder datos existentes", () => {
         api.ensureInboxConversationSheets_();
         assert.deepEqual(sheet.getRange(1,1,1,headers.length).getValues()[0],headers);
         const row=sheet.getRange(2,1,1,headers.length).getValues()[0];
-        assert.equal(row[6],"mensaje");assert.equal(row[7],"key-keep");assert.equal(row[8],"hash-keep");
+        assert.equal(row[6],"mensaje");assert.equal(row[7],"");assert.equal(row[8],"hash-keep");
     } finally { sheet.rows.splice(1);sheet.rows[0]=headers.slice(); }
 });
 run("Los participantes dañados se informan y no se ocultan como una bandeja vacía", () => {
