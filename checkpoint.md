@@ -1408,3 +1408,41 @@ El usuario confirmó que el backlog pendiente también comprende la organizació
 - Pendiente Beta: probar ACL heredadas y reales, Drive API habilitada, Spreadsheet/Drive de copia autorizada y el ciclo de respaldo/aprobación/aplicación/read-back/rollback en entorno aislado.
 - Siguiente tarea local: GP-BETA-06 — completar auditoría de acciones protegidas fuera de los routers compartidos. Después BETA-042, BETA-043 y BETA-051.
 - Las tareas de UX Developer BETA-021–026 y BETA-030–035 permanecen cerradas localmente; no reabrir GP-DEV-UX-01.
+
+
+## Continuidad — GP-BETA-06 suggestYear y autorización central (2026-11-16)
+
+**Rama:** `GPSpedia2.2.5_work`  
+**HEAD documental actual:** `9cf70613fea47267027956c4a969cd63005d4916`  
+**HEAD de código validado:** `394d6bac3cb8ce353bb566a7380bdc88d1577504`  
+**Rama base protegida:** `GPSpedia2.2.5` — `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, intacta.
+
+### Resultado
+- `suggestYear` conserva dos rutas diferenciadas: actor central para usuarios autenticados; ruta anónima `anon:unverified` con límite 30/hora y sin aplicación automática al catálogo.
+- El conteo positivo se aisló en `countVerifiedPositiveYearSuggestionVotes_`; el umbral explícito es tres actores verificados distintos. No se cuentan duplicados del mismo actor, anónimos, claves de aplicación, respuestas negativas ni otros vehículos/años.
+- Auditoría de servicios AUTH, USERS, FEEDBACK, WRITE, ADMIN, UTILITIES y CATALOG: se detectó `benchmarkPasswordKdf` como acción protegida de solo lectura que hacía validación local de sesión/rol. Se integró a la ruta de lectura compartida AUTH; Coordinator lee `SESSION_CONTEXTS` sin añadir escritura de actividad; el handler consume `requireSharedAuthActor_`.
+- Las excepciones restantes son la validación inicial/restauración de sesión, ping/health, lecturas públicas y la ruta anónima de suggestYear. No se identificaron otros handlers protegidos fuera de la coordinación compartida.
+- Se sincronizó `JS/Tests/Auth.js` con `JS/Services/Auth.js`, conservando un ID de Spreadsheet aislado para el fixture.
+
+### Commits relevantes
+- `8352375902fcdcb0d46f57f959eb5320d6229d26` — AUTH benchmark con actor central.
+- `4a7f7dc7ebbd5cdead8fef4a87813d0e2ac5d85d` — política Coordinator para lectura del benchmark.
+- `353e0f3d551f567b059520dd1243162edc6d6f7c` y `e9e1a7b07ac4b63de77dcdd2b794ab67fae4998b` — contrato de pruebas del benchmark.
+- `531ddefdd3fc7a3ba35b81dcd5038cbc69a9689f` — fixture AUTH sincronizado.
+- `3fecec660a0f328e3857526bf585151d01993d04` — helper de conteo de votos suggestYear.
+- `c6db5197bd7d65d3c9c08903d145437187bbd67e`, `855e7e7313c07bb6b2077527fd749ed7d42c2443`, `394d6bac3cb8ce353bb566a7380bdc88d1577504` — prueba de umbral, runner y corrección del extractor de prueba.
+- `acae703cace0ab152725c80adf0c2e2dccbe0424` — backlog actualizado.
+- `660b5834aafc82d7905f5c672a71f0b9d8c1ea70` — changelog actualizado.
+- `9cf70613fea47267027956c4a969cd63005d4916` — adenda de auditoría.
+
+### Validación
+- `SuggestYearCoordinatorSession`: 2/2 PASS.
+- `SuggestYearVoteThreshold`: 6/6 PASS.
+- `PasswordKdfBenchmark`: 5/5 PASS.
+- `ActionDispatchContract`: 12/12 PASS.
+- Fixture AUTH: 32/32 y paridad 1/1 PASS.
+- GitHub Actions Node.js 22 run `43799503142`: **SUCCESS — 118 suites / 1,765 pruebas / 0 fallos**.
+- Validación con deployments AUTH/FEEDBACK/Coordinator y hojas aisladas diferida a Beta; no se ejecutaron llamadas remotas ni se modificaron datos externos.
+
+### Siguiente tarea local
+**BETA-051 — Validaciones duplicadas.** Completar la revisión global de viajes de red y verificaciones repetidas, sin retirar autorización backend, actor central, RBAC, expiración, epoch ni revocación. Después continuar BETA-042 (auditoría de retirada Legacy) y BETA-043 (telemetría global). Las pruebas que dependan exclusivamente de despliegue quedan excluidas del recuento de tareas locales.
