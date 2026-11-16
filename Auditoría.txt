@@ -1038,3 +1038,43 @@ Validación:
 - No se desplegó Apps Script ni se modificaron ScriptProperties, secretos, hojas, Drive o datos externos.
 - Falta validar en Beta una sugerencia anónima y otra autenticada, incluida la aplicación de rango cuando se alcanza el umbral.
 ================================================================================
+
+
+================================================================================
+AUD-2026-11-16-02 — ADMIN: reserva incompleta de recursos en escaneos globales de imágenes
+Severidad: Media — consistencia ante concurrencia de escrituras y auditorías.
+Estado: CORREGIDO EN RAMA; CI APROBADO; VALIDACIÓN BETA PENDIENTE.
+
+Causa:
+- collectActiveDriveReferences() recorre todas las hojas del Spreadsheet (excepto una lista explícita) y también consulta imágenes sobrepuestas.
+- Las operaciones ADMIN getReplacedImages, previewCortesImageReconciliation y auditDriveImagesInCortes utilizan ese recorrido global.
+- Sus políticas Coordinator reservaban CORTES, DRIVE, IMAGE_INVENTORY y otras hojas, pero omitían RELAY, que también forma parte del recorrido.
+- La omisión no explicaba por sí sola un rechazo de autorización; sí dejaba una lectura global sin reserva completa frente a cualquier escritor que use el recurso RELAY.
+
+Corrección:
+- Se agregó RELAY a las lecturas de las tres políticas ADMIN.
+- AdminImageScanCoordinatorContract.mjs ahora exige RELAY para inventario, auditoría y vista previa.
+Validación:
+- CI run 43782723331, commit dac1f3f0c5cf519a19eaab1d08731b861da388d5: SUCCESS; 107 suites / 1,656 pruebas / 0 fallos.
+- La comprobación local/CI no accede al Spreadsheet o Drive real. Beta pendiente.
+
+================================================================================
+AUD-2026-11-16-03 — UI: payload Developer incompatible con sesiones heredadas ID/id
+Severidad: Alta — bloqueaba llamadas administrativas antes de llegar a los servicios.
+Estado: CORREGIDO EN RAMA; CI APROBADO; VALIDACIÓN BETA PENDIENTE.
+
+Causa:
+- getUiSessionContext_ acepta expresamente identificadores de sesión en formato ID o id, pero getDeveloperSessionPayload() leía exclusivamente currentUser.ID.
+- En sesiones heredadas con currentUser.id, el panel podía reconocer el rol y abrirse, pero las operaciones que construían el payload Developer fallaban localmente con «No se encontró una sesión autenticada válida».
+- El helper es usado por la limpieza de ActividadUsuario y Logs, consultas de imágenes históricas, auditoría Drive y otras operaciones administrativas; por eso podía afectar varias funciones Developer a la vez.
+
+Corrección:
+- getDeveloperSessionPayload() obtiene userId y sessionToken desde getUiSessionContext_(), fuente común que valida ambos formatos y exige token.
+- Se añadió prueba de contrato para ambos formatos y rechazo de contexto ausente.
+- No se añadió una consulta AUTH adicional ni se relajó RBAC backend.
+
+Validación:
+- CI run 43782723331, commit dac1f3f0c5cf519a19eaab1d08731b861da388d5: SUCCESS; 107 suites / 1,656 pruebas / 0 fallos.
+- Beta pendiente para confirmar limpieza de logs, lectura del historial y ejecución de auditoría con una sesión heredada y una sesión actual.
+- No se desplegó Apps Script ni se modificaron datos externos.
+================================================================================
