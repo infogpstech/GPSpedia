@@ -220,18 +220,7 @@ function benchmarkPasswordKdf_() {
 
 // Diagnóstico de coste PBKDF2: solo lectura, exclusivo de Desarrollador y sin credenciales reales.
 function handleBenchmarkPasswordKdf_(payload) {
-    const userId = normalizeUserId(payload && payload.userId);
-    const sessionToken = payload && payload.sessionToken;
-    if (!userId || typeof sessionToken !== 'string' || !sessionToken.trim()) {
-        throw new Error('Se requiere una sesión válida de Desarrollador para ejecutar el benchmark.');
-    }
-    const session = validateSessionReadOnly_(sessionToken, userId);
-    if (!session || session.valid !== true) {
-        throw new Error('No se pudo validar la sesión para ejecutar el benchmark.');
-    }
-    if (normalizeRoleName(session.profile && session.profile.Privilegios) !== 'desarrollador') {
-        throw new Error('Acceso denegado: el benchmark PBKDF2 está reservado a Desarrollador.');
-    }
+    requireSharedAuthActor_(payload, ["desarrollador"], "el benchmark PBKDF2");
     return {
         status: 'success',
         benchmarkOnly: true,
@@ -566,6 +555,9 @@ function isSharedMutationAction_(action) {
     return ["login","touchSession","acceptTerms","changePassword","resetUserPassword","resetUserSessions","clearSensitiveLogs","deleteUser","updateUser","logout","migrateLegacyPasswords"].includes(action);
 }
 
+function isSharedReadAction_(action) {
+    return ["benchmarkPasswordKdf"].includes(action);
+}
 
 function syncAuthSheetActivityFromActor_(userId, sessionToken, actor) {
     if (!actor || !actor.userId || actor.userId !== normalizeUserId(userId) ||
@@ -604,7 +596,7 @@ function doPost(e) {
     }
     if (!request || typeof request !== "object") return doPostInternal_(e);
     const action = String(request.action || "");
-    if (!isSharedMutationAction_(action)) return doPostInternal_(withSharedSessionActor_(e, null));
+    if (!isSharedMutationAction_(action) && !isSharedReadAction_(action)) return doPostInternal_(withSharedSessionActor_(e, null));
 
     const payload = request.payload && typeof request.payload === "object" ? request.payload : {};
     const nestedToken = String(payload.__sharedMutationToken || "").trim();
