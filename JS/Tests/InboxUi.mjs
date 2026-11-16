@@ -272,12 +272,12 @@ check("Salir y Enviar mensaje permanecen juntos, con dimensiones iguales y Envia
     assert.match(css, /\.inbox-compose-actions\s*\{[^}]*flex-wrap:\s*nowrap/s);
     assert.match(css, /\.inbox-compose-actions > \.inbox-cancel-compose,[\s\S]*?\.inbox-compose-actions > \.inbox-primary-button\s*\{[\s\S]*?width:64px;[\s\S]*?height:40px/s);
 });
-check("El botón de opciones queda antes de Negrita y su menú se ancla al borde izquierdo", () => {
+check("El botón de opciones queda antes de Negrita y su menú de categorías se abre hacia la izquierda", () => {
     assert.match(ui, /composerOptions\.dataset\.richToolbarPosition = "start"/);
     assert.match(ui, /toolbar\.insertBefore\(composerOptions, toolbar\.firstChild\)/);
+    assert.match(ui, /positionRichTextMenu\(composerOptionsMenu, composerOptionsButton, "right"\)/);
     assert.match(rich, /child\.dataset\.richToolbarPosition === "start"/);
     assert.match(rich, /nextToolbar\.insertBefore\(child, nextToolbar\.firstChild\)/);
-    assert.match(css, /\.inbox-composer-options-menu\s*\{[^}]*left:0; right:auto/s);
     assert.match(css, /\.inbox-composer-options-menu\s*\{[^}]*max-width:calc\(100vw - 24px\)/s);
 });
 check("Plantilla y categoría se apilan dentro del desplegable de opciones de la barra", () => {
