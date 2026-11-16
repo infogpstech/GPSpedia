@@ -1231,3 +1231,33 @@ Límites:
 - No se consultaron deployments FEEDBACK/Coordinator ni hojas Spreadsheet reales.
 - La verificación en servicios desplegados, cuentas Beta y dispositivos reales queda reservada a Beta. No se hicieron escrituras ni migraciones externas.
 ==========================================================
+
+==========================================================
+AUD-2026-11-16-10 — Developer: expansión de pestañas ignoraba movimiento reducido
+Severidad: Baja — accesibilidad y preferencia de movimiento.
+Estado: CORREGIDO EN RAMA; PRUEBAS LOCALES AISLADAS APROBADAS; VALIDACIÓN VISUAL BETA PENDIENTE.
+
+Evidencia:
+- style.css, la navegación Developer anima el ancho/flex-basis de .dev-tab-link y el max-width/opacidad de .dev-tab-link span para expandir la etiqueta activa.
+- La regla prefers-reduced-motion anterior desactivaba la animación de .dev-tools-title, pero no esas transiciones de navegación.
+- DeveloperPanelUX.mjs cubría la animación del título, pero no la preferencia de movimiento reducido para la expansión de la pestaña.
+
+Corrección:
+- Se añadió una regla prefers-reduced-motion que desactiva la animación del título y las transiciones de .dev-tab-link y .dev-tab-link span.
+- Se añadió una prueba que comprueba ambos comportamientos.
+
+Revisión BETA-030:
+- Se confirmaron cuatro radios nativos, cuatro labels asociados y cuatro paneles; no se detectaron IDs duplicados dentro del modal.
+- La navegación es horizontal, compacta por icono y expande el texto de la pestaña activa.
+- Respaldos y Base de datos comparten una sola pestaña; las pruebas de accesibilidad verifican foco, teclado, roles nativos, navegación e historial.
+- Las confirmaciones destructivas y los controles de rol permanecen en sus rutas existentes.
+
+Validación local aislada:
+- DeveloperPanelUX.mjs: 7/7 PASS.
+- DevToolsModalAccessibility.mjs: 19/19 PASS.
+- DeveloperPanelCopy.mjs: 6/6 PASS.
+- Node.js CLI y GitHub Actions no se confirmaron desde esta sesión; no se ejecutó inspección visual en navegador real.
+
+Límite:
+- BETA-030 y BETA-031 quedan completadas a nivel de implementación local. La inspección visual y de movimiento reducido en dispositivos reales queda para Beta. No se cambiaron permisos ni endpoints.
+==========================================================
