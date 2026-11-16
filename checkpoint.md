@@ -1744,3 +1744,16 @@ Backlog y registro de cambios sincronizados con este estado. La rama base perman
 - Durante la regresión se corrigieron una expectativa obsoleta del nombre de cursor en Inbox, la deduplicación de dos variantes del mismo colaborador dentro de una sola celda compartida y la expectativa de versión del Service Worker. La repetición posterior aprobó todas las suites.
 - Las dos tareas quedan **COMPLETADAS CON VALIDACIÓN DIFERIDA A BETA**. Pendiente visual PWA en móvil y verificación de conteos de aportadores/vehículos con registros reales; no se desplegó Apps Script ni se alteraron datos externos.
 - HEAD de rama de trabajo al registrar: `2b78d8337e01629a30c17f968238edbd971baa8d`. Rama base `GPSpedia2.2.5`: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin modificaciones.
+
+
+---
+
+## Adenda — Aportadores por rol y comunidad técnica (2026-11-16)
+
+- En `JS/Frontend/activityDashboard.js`, el normalizador elimina el texto entre paréntesis antes de agrupar nombres; por ejemplo, `Byron Lopez (apert)` y `Byron López (corte)` se muestran como un único técnico: **Byron Lopez**.
+- Las variantes `Comunidad Internacional de técnicos` y `Comunidad de técnicos` se agrupan bajo el nombre canónico **Comunidad de técnicos**, insensible a mayúsculas, acentos y puntuación.
+- Hallazgo de contrato: `buildCutContributionSummary_` descartaba slots con tipo de corte registrado y colaborador vacío; el frontend no podía recuperar esos conteos. En `JS/Services/feedback.js` se aplica el fallback `Comunidad de técnicos` para esos slots. No se cambia el formato de respuesta, los datos persistidos ni la estructura de hojas.
+- `JS/Tests/ActivityDashboardContributions.mjs`: casos para roles entre paréntesis, alias de comunidad y técnico ausente.
+- Service Worker actualizado a `gpsepedia-cache-v36` para refrescar el módulo frontend.
+- Validación GitHub Actions Node.js 22: **127 suites / 1,881 pruebas / 0 fallos**; ActivityDashboardContributions 14/14, ServiceWorkerCache 9/9, OfflineBrandAssets 4/4. Run `43876854218`.
+- No se ha ejecutado deployment de Apps Script ni validación con hojas reales; comprobar los registros históricos y el total de vehículos en Beta.
