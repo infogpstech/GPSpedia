@@ -33,7 +33,15 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 **Prioridad inmediata.** Las mejoras deben formar un sistema común, no una colección de correcciones aisladas.
 
 ### BETA-021 — Sistema visual común
-**Estado: PENDIENTE LOCAL.**
+**Estado: IMPLEMENTACIÓN LOCAL COMPLETADA; PENDIENTE BETA.**
+
+- Commit: `b4112e798abe831059f6c6d929d3cf82743a2689`.
+- `button-system.css` ahora centraliza tokens y estados para campos de texto, selectores y áreas de texto, además del sistema existente de botones.
+- Se unificaron colores por tema, dimensiones base, borde, tipografía, foco visible, estados deshabilitado/error y comportamiento móvil. Se excluyeron checkboxes, radios, archivos, rangos, selectores de color y controles de acción; se conservaron excepciones compactas justificadas.
+- La suite `GlobalControlSystem.mjs` quedó integrada en el runner: 7/7 PASS.
+- CI run `43788784398`: SUCCESS — 109 suites, 1,677 pruebas aprobadas, 0 fallos; sintaxis PASS.
+- GitHub Pages run `43788783931`: SUCCESS.
+- Pendiente Beta: comprobar visualmente formularios y modales en tema claro/oscuro, móvil/escritorio, foco/teclado y lectores de pantalla.
 
 - Definir tokens y patrones compartidos para botones, campos, selectores, iconos, espaciado, tipografía y estados.
 - Aplicar estados coherentes: normal, hover, focus, disabled, error y loading.

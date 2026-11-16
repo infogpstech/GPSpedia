@@ -1151,3 +1151,17 @@ El usuario confirmó que el backlog pendiente también comprende la organizació
 - La primera tarea de implementación será BETA-021: sistema visual común de botones, campos y selectores, integrando los criterios de nombres largos, textos concisos, ayudas contextuales y organización Developer ya confirmados.
 - Rama de trabajo: `GPSpedia2.2.5_work`. Rama base `GPSpedia2.2.5` sin modificaciones.
 - No se realizaron despliegues Apps Script ni cambios en datos, propiedades, secretos o recursos productivos.
+
+
+## Continuidad — BETA-021 sistema global de controles (2026-11-16)
+
+- **Commit:** `b4112e798abe831059f6c6d929d3cf82743a2689` — `feat: estandarizar controles globales de formulario`.
+- Se amplió `button-system.css` para centralizar botones y controles de formulario: inputs de texto, selects y textareas; tokens semánticos por tema; tamaños, bordes, tipografía, foco visible, disabled, error, placeholders y reglas responsive.
+- Se excluyeron checkbox, radio, file, range, color y controles de acción. Se preservaron excepciones compactas del editor enriquecido, consola Developer e Inbox.
+- Se agregó `JS/Tests/GlobalControlSystem.mjs` y se integró al runner real de CI.
+- **Prueba específica:** GlobalControlSystem 7/7 PASS.
+- **CI:** run `43788784398` SUCCESS — 109 suites / 1,677 pruebas / 0 fallos; comprobaciones de sintaxis PASS.
+- **GitHub Pages:** run `43788783931` SUCCESS.
+- BETA-021 queda completada localmente con validación visual Beta pendiente. No se ejecutaron pruebas en navegador real ni se desplegaron Apps Script.
+- **Siguiente tarea local:** BETA-022, ajustar dimensiones de botones para evitar anchos completos o excesivos sin afectar etiquetas accesibles ni formularios que requieren ancho completo.
+- Rama base `GPSpedia2.2.5` permanece intacta.
