@@ -4337,6 +4337,7 @@ let inboxConversationPageStack_ = [0];
 let inboxConversationPageIndex_ = 0;
 let inboxConversationItems_ = [];
 let inboxConversationCounts_ = {};
+let inboxConversationTotal_ = 0;
 let inboxConversationNextCursor_ = null;
 let inboxConversationHasMore_ = false;
 let inboxConversationSelectedId_ = "";
@@ -4577,6 +4578,7 @@ async function loadInboxConversations_(options = {}) {
         if (!response || response.status !== "success") throw new Error(response && response.message || "No se pudo cargar Inbox.");
         inboxConversationItems_ = Array.isArray(response.data) ? response.data : [];
         inboxConversationCounts_ = response.counts || {};
+        inboxConversationTotal_ = Number.isFinite(Number(response.total)) ? Math.max(0, Number(response.total)) : 0;
         inboxConversationNextCursor_ = response.nextCursor === undefined ? null : response.nextCursor;
         inboxConversationHasMore_ = response.hasMore === true;
         inboxUpdateUnreadBadge_(inboxConversationCounts_);
@@ -4626,9 +4628,8 @@ function renderInboxConversationPagination_() {
     const label = document.getElementById("inbox-page-label");
     if (!navigation || !previous || !next || !label) return;
     const currentPage = inboxConversationPageIndex_ + 1;
-    const total = Number(inboxConversationCounts_.total);
-    const pageCount = Number.isFinite(total) && total > 0
-        ? Math.max(1, Math.ceil(total / INBOX_CONVERSATION_PAGE_SIZE_))
+    const pageCount = inboxConversationTotal_ > 0
+        ? Math.max(1, Math.ceil(inboxConversationTotal_ / INBOX_CONVERSATION_PAGE_SIZE_))
         : currentPage + (inboxConversationHasMore_ ? 1 : 0);
     previous.disabled = inboxConversationPageIndex_ <= 0;
     next.disabled = !inboxConversationHasMore_ || inboxConversationNextCursor_ === null;
