@@ -1002,3 +1002,12 @@ HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
 - buildCutContributionSummary_ optimizado: lee solo IDs y bloques tipo/colaborador de cada uno de los tres slots; deduplica el mismo User ID cuando username/fullName coinciden tras normalización.
 - Suite ActivityDashboardContributions ahora prueba el cálculo real con datos simulados y verifica conteo por cortes/vehículos e identidad.
 - CI Node.js 22 run 43819335894: SUCCESS — 126 suites / 1,863 pruebas / 0 fallos. Pages run 43819335683: SUCCESS.
+
+
+===========
+2026-11-16 — GP-UX-INBOX-01 / GP-PERF-PAGES-01 / GP-UX-USERS-01 / GP-UX-CUT-MODAL-01
+- Se registran requisitos de rediseño del Inbox, caché de usuarios y navegación sin parpadeos, controles compactos en users.html y reubicación de acciones del modal de detalle.
+- Alcance inicial: index.html, style.css, JS/Frontend/ui.js, HTML/users.html, HTML/add_cortes.html, service-worker.js y pruebas relacionadas.
+- El Inbox deberá separar General, Soporte, Contáctanos, Reportes y Aportaciones (solo Desarrollador), preservando contratos y permisos backend.
+- La caché deberá aislarse por sesión e invalidarse tras mutaciones; no almacenar tokens ni secretos en cachés de datos.
+- Esta entrada registra requisitos, no implementaciones ni validaciones completadas.
