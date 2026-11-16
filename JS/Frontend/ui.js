@@ -3863,39 +3863,30 @@ subscribe(() => {
 });
 
 function renderInboxPagination_(page, context, generation) {
-    const listContainer = document.getElementById('inbox-list');
-    if (!listContainer || !page || generation !== inboxViewGeneration_ || !isCurrentUiSessionContext_(context)) return;
-    const navigation = document.createElement('div');
-    navigation.className = 'inbox-pagination';
-    navigation.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 4px;';
-    const previous = document.createElement('button');
-    previous.type = 'button';
-    previous.id = 'inbox-page-previous';
-    previous.className = 'btn btn-secondary';
-    previous.textContent = 'Anterior';
+    const navigation = document.getElementById("inbox-pagination");
+    const previous = document.getElementById("inbox-page-previous");
+    const next = document.getElementById("inbox-page-next");
+    const label = document.getElementById("inbox-page-label");
+    if (!navigation || !previous || !next || !label || !page ||
+        generation !== inboxViewGeneration_ || !isCurrentUiSessionContext_(context)) return;
+    const currentPage = inboxPageIndex_ + 1;
+    const pageCount = Number.isFinite(Number(page.total))
+        ? Math.max(1, Math.ceil(Number(page.total) / INBOX_PAGE_SIZE_))
+        : currentPage + (page.hasMore === true ? 1 : 0);
     previous.disabled = inboxPageIndex_ <= 0;
-    previous.addEventListener('click', () => {
+    next.disabled = page.hasMore !== true || !page.nextCursor;
+    label.textContent = currentPage + "/" + pageCount;
+    previous.onclick = () => {
         if (generation !== inboxViewGeneration_ || !isCurrentUiSessionContext_(context) || inboxPageIndex_ <= 0) return;
         inboxPageIndex_ -= 1;
         loadAndRenderInbox({ context, cursor: inboxPageCursorStack_[inboxPageIndex_] });
-    });
-    const label = document.createElement('span');
-    label.textContent = 'Página ' + String(inboxPageIndex_ + 1) + (Number.isFinite(page.total) ? ' · ' + String(page.total) + ' registros' : '');
-    label.setAttribute('aria-live', 'polite');
-    const next = document.createElement('button');
-    next.type = 'button';
-    next.id = 'inbox-page-next';
-    next.className = 'btn btn-primary';
-    next.textContent = 'Siguiente';
-    next.disabled = page.hasMore !== true || !page.nextCursor;
-    next.addEventListener('click', () => {
+    };
+    next.onclick = () => {
         if (generation !== inboxViewGeneration_ || !isCurrentUiSessionContext_(context) || !page.nextCursor) return;
         inboxPageCursorStack_[inboxPageIndex_ + 1] = page.nextCursor;
         inboxPageIndex_ += 1;
         loadAndRenderInbox({ context, cursor: page.nextCursor });
-    });
-    navigation.append(previous, label, next);
-    listContainer.appendChild(navigation);
+    };
 }
 
 
@@ -4322,7 +4313,7 @@ const openInboxModal_ = setupModal('inbox-modal', async (options = {}) => {
         modal.dataset.inboxBackdropBound = 'true';
     }
     activateLegalModalFocus_(modal, {
-        initialFocus: modal.querySelector('#inbox-conversation-search'),
+        initialFocus: modal.querySelector('#inbox-search-toggle'),
         returnFocus: options.returnFocus, allowEscape: true, close: closeInboxModal_
     });
     await setInboxSection_('general');
@@ -4481,6 +4472,21 @@ function bindInboxControls_() {
         folderNav.dataset.bound = "true";
     }
     const searchForm = document.getElementById("inbox-conversation-search-form");
+    const searchToggle = document.getElementById("inbox-search-toggle");
+    if (searchToggle && searchToggle.dataset.bound !== "true") {
+        searchToggle.addEventListener("click", () => {
+            if (!searchForm) return;
+            const opening = !searchForm.classList.contains("is-open");
+            searchForm.hidden = false;
+            searchForm.classList.toggle("is-open", opening);
+            searchToggle.setAttribute("aria-expanded", String(opening));
+            searchToggle.setAttribute("aria-label", opening ? "Ocultar búsqueda" : "Mostrar búsqueda");
+            if (opening) document.getElementById("inbox-conversation-search")?.focus();
+            else if (!inboxConversationQuery_) searchForm.hidden = true;
+        });
+        searchToggle.dataset.bound = "true";
+        searchToggle.setAttribute("aria-expanded", "false");
+    }
     if (searchForm && searchForm.dataset.bound !== "true") {
         searchForm.addEventListener("submit", event => {
             event.preventDefault();
@@ -4492,22 +4498,6 @@ function bindInboxControls_() {
         });
         searchForm.dataset.bound = "true";
     }
-    const categoryFilter = document.getElementById("inbox-category-filter");
-    if (categoryFilter && categoryFilter.dataset.bound !== "true") {
-        categoryFilter.addEventListener("change", () => {
-            const nextCategory = String(categoryFilter.value || "all").trim().toLowerCase();
-            inboxConversationCategory_ = ["all", "general", "soporte", "acceso", "contenido", "instalacion", "otro"].includes(nextCategory)
-                ? nextCategory : "all";
-            inboxConversationPageStack_ = [0];
-            inboxConversationPageIndex_ = 0;
-            inboxConversationSelectedId_ = "";
-            inboxConversationSelected_ = null;
-            inboxConversationMessages_ = [];
-            document.getElementById("inbox-modal-content")?.classList.remove("is-detail-open");
-            loadInboxConversations_({ reset: true });
-        });
-        categoryFilter.dataset.bound = "true";
-    }
     const refresh = document.getElementById("inbox-conversation-refresh");
     if (refresh && refresh.dataset.bound !== "true") {
         refresh.addEventListener("click", refreshInboxConversations_);
@@ -4518,27 +4508,7 @@ function bindInboxControls_() {
         newMessage.addEventListener("click", openInboxNewConversationForm_);
         newMessage.dataset.bound = "true";
     }
-    const previous = document.getElementById("inbox-conversation-previous");
-    if (previous && previous.dataset.bound !== "true") {
-        previous.addEventListener("click", () => {
-            if (inboxConversationPageIndex_ <= 0) return;
-            inboxConversationPageIndex_ -= 1;
-            loadInboxConversations_({ preserveScroll: true });
-        });
-        previous.dataset.bound = "true";
-    }
-    const next = document.getElementById("inbox-conversation-next");
-    if (next && next.dataset.bound !== "true") {
-        next.addEventListener("click", () => {
-            if (!inboxConversationHasMore_ || inboxConversationNextCursor_ === null) return;
-            inboxConversationPageStack_ = inboxConversationPageStack_.slice(0, inboxConversationPageIndex_ + 1);
-            inboxConversationPageStack_.push(inboxConversationNextCursor);
-            inboxConversationPageIndex_ += 1;
-            loadInboxConversations_();
-        });
-        next.dataset.bound = "true";
-    }
-    if (!inboxConnectivityBound_) {
+old conversation buttons    if (!inboxConnectivityBound_) {
         window.addEventListener("online", () => {
             if (document.getElementById("inbox-modal")?.style.display !== "none") refreshInboxConversations_();
         });
@@ -4562,8 +4532,6 @@ async function setInboxSection_(section) {
     if (next === "general" || next === "soporte") {
         inboxRequestSection_ = "";
         inboxConversationCategory_ = next;
-        const category = document.getElementById("inbox-category-filter");
-        if (category) category.value = next;
         await setInboxView_("conversations", { reset: true });
         return;
     }
@@ -4652,12 +4620,31 @@ function renderInboxConversationList_() {
     });
 }
 function renderInboxConversationPagination_() {
-    const previous = document.getElementById("inbox-conversation-previous");
-    const next = document.getElementById("inbox-conversation-next");
-    const label = document.getElementById("inbox-conversation-page-label");
-    if (previous) previous.disabled = inboxConversationPageIndex_ <= 0;
-    if (next) next.disabled = !inboxConversationHasMore_;
-    if (label) label.textContent = "Página " + (inboxConversationPageIndex_ + 1);
+    const navigation = document.getElementById("inbox-pagination");
+    const previous = document.getElementById("inbox-page-previous");
+    const next = document.getElementById("inbox-page-next");
+    const label = document.getElementById("inbox-page-label");
+    if (!navigation || !previous || !next || !label) return;
+    const currentPage = inboxConversationPageIndex_ + 1;
+    const total = Number(inboxConversationCounts_.total);
+    const pageCount = Number.isFinite(total) && total > 0
+        ? Math.max(1, Math.ceil(total / INBOX_CONVERSATION_PAGE_SIZE_))
+        : currentPage + (inboxConversationHasMore_ ? 1 : 0);
+    previous.disabled = inboxConversationPageIndex_ <= 0;
+    next.disabled = !inboxConversationHasMore_ || inboxConversationNextCursor_ === null;
+    label.textContent = currentPage + "/" + pageCount;
+    previous.onclick = () => {
+        if (inboxConversationCurrentView_ !== "conversations" || inboxConversationPageIndex_ <= 0) return;
+        inboxConversationPageIndex_ -= 1;
+        loadInboxConversations_({ preserveScroll: true });
+    };
+    next.onclick = () => {
+        if (inboxConversationCurrentView_ !== "conversations" || !inboxConversationHasMore_ || inboxConversationNextCursor_ === null) return;
+        inboxConversationPageStack_ = inboxConversationPageStack_.slice(0, inboxConversationPageIndex_ + 1);
+        inboxConversationPageStack_.push(inboxConversationNextCursor_);
+        inboxConversationPageIndex_ += 1;
+        loadInboxConversations_();
+    };
 }
 async function selectInboxConversation_(item) {
     inboxConversationSelectedId_ = String(item.conversationId || "");
