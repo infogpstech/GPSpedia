@@ -283,11 +283,16 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 - No inicializar ni reparar estructuras reales a ciegas ni tocar producción.
 
 ### GP-IMG-DATA-01 — Conciliación Drive ↔ Spreadsheet y ACL
-**Estado: DISEÑO/IMPLEMENTACIÓN LOCAL PARCIAL; PENDIENTE BETA.**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
 
-- Verificar ACL reales de carpetas/archivos Drive y clasificar qué imágenes deben ser públicas por diseño.
-- Comparar referencias de Cortes con Drive: coincidencias, faltantes, duplicados y ambiguos.
-- Cualquier escritura de conciliación requiere copia, dry-run, respaldo y autorización expresa.
+- Se completó el flujo local de auditoría ACL por archivo y cadena de carpetas: solo `anyone/reader` con `allowFileDiscovery=false` cumple la política de acceso por enlace; acceso indexable, escritura pública y ACL no verificable se bloquean.
+- La comparación cubre coincidencias exactas, referencias activas en otras celdas/hojas, historial, duplicados, destinos ocupados, archivos faltantes, papelera, ubicaciones externas y ambiguas.
+- El detalle de referencias faltantes se limita a 200 elementos sin perder el conteo total; la aplicación comprueba el conteo completo y no depende del detalle truncado.
+- La aplicación exige respaldo de Spreadsheet completo, privado y asociado a la sesión Developer; verifica manifiesto, fingerprint del respaldo y del origen, auditoría vigente, digest y aprobación explícita. Conserva read-back, auditoría de cambios y rollback condicionado.
+- La UI persiste y reanuda simulaciones por cuenta/auditoría/digest; no escribe durante el dry-run ni cambia ACL o archivos.
+- Pruebas locales CI Node.js 22: `CortesImageReconciliation` 28/28, `CortesImageReconciliationApply` 15/15, `CortesImageReconciliationUI` 13/13 y `AdminImageScanCoordinatorContract` 1/1 PASS. CI run `43798680601`: SUCCESS — 117 suites / 1,760 pruebas / 0 fallos.
+- Pendiente Beta: validar ACL y herencia reales con Drive API habilitada, inventario/Spreadsheet de copia autorizada y flujo de respaldo/aplicación en entorno aislado. No se desplegó Apps Script ni se modificaron Drive, ACL, Spreadsheet o datos externos.
+- Cualquier escritura de conciliación continúa requiriendo respaldo, dry-run y aprobación explícita del Desarrollador.
 
 ### GP-BETA-06 — suggestYear y cobertura de acciones protegidas
 **Estado: CORRECCIÓN LOCAL DE suggestYear COMPLETADA; PENDIENTE DE AUDITORÍA Y BETA.**
