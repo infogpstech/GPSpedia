@@ -1,7 +1,7 @@
 # Continuidad vigente — GPSpedia (2026-11-16)
 
 **Rama de trabajo:** `GPSpedia2.2.5_work`  
-**HEAD actual:** `c5b07dbea1256a6c91475712d80260983bed8715`  
+**Último HEAD de código y pruebas validado:** `c5b07dbea1256a6c91475712d80260983bed8715`  
 **Rama base protegida:** `GPSpedia2.2.5` — `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; sin modificaciones.  
 **PR #128:** abierto y en borrador; base y head corresponden a las ramas previstas.
 
