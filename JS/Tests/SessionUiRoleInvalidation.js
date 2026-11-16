@@ -131,9 +131,9 @@ function runSessionUiRoleInvalidationTests(sources) {
   assert(rejected,"Debe rechazar sesiones sin contexto o token.");
  });
  run("Las operaciones UI no dependen de currentUser.ID sin fallback ni contexto común",()=>{
-  assert.doesNotMatch(ui,/currentUser\\.ID(?!\\s*\\|\\|\\s*currentUser\\.id)/);
-  assert.match(ui,/function getDeveloperSessionPayload\\(\\) \\{[\\s\\S]*?getUiSessionContext_\\(\\)/);
-  assert.match(ui,/const latestSessionContext = getUiSessionContext_\\(\\)/);
+  assert(!/currentUser\.ID(?!\s*\|\|\s*currentUser\.id)/.test(ui),"No debe quedar ninguna operación dependiente de currentUser.ID exclusivo.");
+  assert(/function getDeveloperSessionPayload\(\) \{[\s\S]*?getUiSessionContext_\(\)/.test(ui),"El payload Developer debe usar el contexto común.");
+  assert(/const latestSessionContext = getUiSessionContext_\(\)/.test(ui),"El reintento de corte debe resolver la sesión actual con el contexto común.");
  });
  run("AUTH conserva la validación de inicio/restauración y el backend protege las operaciones; los paneles no revalidan",()=>{
   const f=slice(auth,"export async function validateActiveSession(","export async function checkSession");
