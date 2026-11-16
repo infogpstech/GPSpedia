@@ -1064,3 +1064,22 @@ Se amplió `AdminImageScanCoordinatorContract.mjs` para exigir que cada mutació
 2. Seguir con limpieza de Logs, auditoría Drive e historial de imágenes; verificar los resultados en Beta cuando el despliegue autorizado esté disponible.
 3. Revisar latencia real de dropdowns y modal de edición de Cortes.
 4. Confirmar GitHub Pages del último HEAD documental; no confundirlo con Apps Script deployment.
+
+
+## Continuidad — limpieza de Logs/ActividadUsuario (2026-11-16)
+
+**Código validado:** `fe9749c7f57f1a70f72850543e881266e90c0b9b`  
+**CI servicios:** run `43783958890` SUCCESS — 108 suites / 1,662 pruebas / 0 fallos.
+
+- Auditoría end-to-end de dispatcher: `clearSensitiveLogs` → AUTH/lease específica, política de escritura LOGS, actor central y rol Desarrollador.
+- `clearActivityLogs` → FEEDBACK/lease específica, política ACTIVITY, actor central y RBAC Desarrollador.
+- UI utiliza el payload normalizado ID/id corregido anteriormente.
+- `SensitiveLogsTrustedActor.mjs` prueba ambos despachadores y recursos; 6/6 PASS.
+- No se reprodujo contra hojas reales. Si Beta continúa fallando después del despliegue autorizado, registrar respuesta y contadores de la operación; no quitar controles de sesión o RBAC.
+- No se desplegaron AUTH/FEEDBACK ni se modificaron hojas externas.
+
+### Estado
+- GP-BETA-03: rutas y contratos de borrado verificados; causa común probable ID/id corregida; ejecución Beta pendiente.
+- GP-BETA-04/05: auditoría Drive e historial optimizados; ejecución Beta pendiente.
+- GP-BETA-010/Inbox: esquema parcial ahora genera error explícito; inspección Beta pendiente.
+- GP-BETA-02: lectura de dropdowns reducida; medición Beta pendiente.
