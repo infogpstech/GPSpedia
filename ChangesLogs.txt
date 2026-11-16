@@ -1201,3 +1201,15 @@ ADENDA — GP-UX-INBOX-CACHE-SEARCH-01: expectativas heredadas de Inbox ajustada
 ================================================================================
 
 ADENDA — GP-UX-VIDEO-OWN-STATUS-01: contrato de InboxUi ajustado para verificar que técnicos solo renderizan problem_report y video_approval de su endpoint propio.
+
+
+================================================================================
+CIERRE DE ITERACIÓN GP-UX — 2026-11-16
+- Tarjeta Agregar Modelo: altura uniforme 140 × 120 px.
+- Dashboard de aportes: nombres separados por coma y salto de línea se contabilizan individualmente.
+- Inbox: cierre coherente de búsqueda, búsqueda global, caché cache-first por sesión y estado leído/no leído por icono.
+- Solicitudes: técnicos y técnicos exteriores ven solo sus propios vídeos, con estado y motivo de rechazo.
+- CI Node.js 22 run 43906071405: SUCCESS — 129 suites / 1,899 pruebas / 0 fallos.
+- GitHub Pages run 43906069774: SUCCESS.
+- Validación visual Beta y comprobación de Apps Script/Spreadsheet con datos reales pendientes. Sin despliegues ni cambios de datos externos.
+================================================================================

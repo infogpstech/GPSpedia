@@ -732,3 +732,18 @@ No usar `reset --hard`, `clean`, force push ni comandos que descarten cambios. N
 - Validación pendiente: ejecutar InboxUi, CutDetailModalLayout, regresión Node y revisar CI; después inspección visual Beta.
 
 - Cierre local 2026-11-16: GitHub Actions Node.js 22 **129 suites / 1,904 pruebas / 0 fallos** (run `43890221048`); InboxUi 38/38; CutDetailModalLayout 10/10; ServiceWorkerCache 9/9; OfflineBrandAssets 4/4. GitHub Pages build/deploy SUCCESS (run `43890220482`).
+
+
+---
+
+## Cierre local de solicitudes GP-UX — 2026-11-16
+
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
+
+- **GP-UX-PYS-ADD-MODEL-CARD-01:** altura de tarjeta «Agregar Modelo» igualada a 140 × 120 px; CI PysModalNavigation 10/10.
+- **GP-DASH-ATTR-01:** se confirma separación por coma y saltos de línea; la prueba de aportes publica 1/1 PASS.
+- **GP-UX-INBOX-02 / GP-UX-INBOX-SEARCH-DISMISS-01:** búsqueda activable/desactivable por lupa y cierre al usar otra acción o cambiar de sección; búsqueda global sobre todas las bandejas/categorías.
+- **GP-UX-INBOX-CACHE-SEARCH-01:** caché de páginas por identidad de sesión, carpeta, categoría, consulta y cursor; apertura cache-first, refresco silencioso y preservación de la bandeja si falla la red.
+- **GP-UX-VIDEO-OWN-STATUS-01:** técnicos y técnicos exteriores consultan únicamente sus propios vídeos con estado y razón de rechazo en Solicitudes; acciones administrativas continúan reservadas a Desarrollador.
+- **Validación CI:** run 43906071405 SUCCESS — 129 suites / 1,899 pruebas / 0 fallos. Pages run 43906069774 SUCCESS.
+- **Beta pendiente:** revisión visual en dispositivos, usuarios reales y servicios Apps Script/Spreadsheet en entorno autorizado. Sin despliegues ni alteración de datos productivos.

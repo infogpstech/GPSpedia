@@ -1393,3 +1393,20 @@ AUDITORÍA COMPLEMENTARIA — 2026-11-16 — AUD-2026-11-16-06
 - Prueba de agregación con datos simulados: Ana 3 cortes/2 vehículos y Luis 1 corte/1 vehículo; IDs asociados correctamente.
 - CI final: run 43819335894 SUCCESS — 126 suites / 1,863 pruebas / 0 fallos. Pages run 43819335683 SUCCESS.
 - Estado: IMPLEMENTADO Y VALIDADO EN CI; Beta sigue pendiente para comprobar Spreadsheet real, deployment de servicio, datos de aportes y dispositivos.
+
+
+## AUD-2026-11-16-01 — Altura inconsistente de «Agregar Modelo» en carrusel PyS
+
+**Severidad:** Baja — consistencia visual en modal de detalle de Problemas y Soluciones.  
+**Estado:** CORREGIDO EN RAMA DE TRABAJO; aceptación visual Beta pendiente.
+
+### Evidencia y causa
+- En `JS/Frontend/ui.js`, la tarjeta `card-create-vehicle-assoc` recibía estilos inline `height:auto`, `min-height:0` y `align-self:stretch`.
+- Estos overrides anulaban las dimensiones fijas de 140 × 120 px definidas en `style.css` para las tarjetas de alta del carrusel.
+
+### Corrección y validación
+- Se retiraron los tres overrides inline y se conserva el dimensionamiento compartido de la clase CSS.
+- Se añadió regresión en `JS/Tests/PysModalNavigation.js`; resultado 10/10 PASS.
+- GitHub Actions Node.js 22 run 43906071405: SUCCESS — 129 suites / 1,899 pruebas / 0 fallos.
+- GitHub Pages run 43906069774: SUCCESS.
+- Pendiente Beta: inspección visual en dispositivos con diferentes proporciones de pantalla. No se modificaron datos ni servicios externos.

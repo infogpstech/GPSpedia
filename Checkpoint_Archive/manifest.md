@@ -12,3 +12,14 @@ El checkpoint acumulativo superó el umbral normativo de 180,000 caracteres. Se 
 - Las nuevas entradas de continuidad se conservan en el checkpoint activo y no alteran el contenido archivado.
 
 Para reconstruir el checkpoint previo a la nueva entrada de continuidad, concatenar la parte archivada y el contenido de `checkpoint.md` hasta antes del encabezado `## Continuidad — centralización de fuentes Apps Script en JS/Services (2026-11-15)`.
+
+
+## Rotación del checkpoint — 2026-11-16
+
+- Parte archivada: `Checkpoint_Archive/checkpoint_legacy_parte_002.md`
+- Contenido archivado: copia íntegra byte-a-byte del `checkpoint.md` previo a esta rotación.
+- Longitud del contenido archivado: 194292 caracteres Unicode (medidos con Array.from).
+- SHA Git del blob archivado: `9cda4a684fde899983390c3c4dfae24d08f0e5e1`.
+- Continuidad activa: `checkpoint.md`, resumida y sincronizada con el HEAD verificado `52a05fb9aca89cabc685d9e0fba5b1b011370a89`.
+- Verificación: el blob archivado se creó directamente a partir del contenido completo del checkpoint anterior; no se truncaron ni omitieron secciones. La parte archivada es inmutable.
+- La parte anterior `checkpoint_legacy_parte_001.md` permanece intacta.
