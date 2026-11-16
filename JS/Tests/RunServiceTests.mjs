@@ -136,6 +136,7 @@ runGroup('33','FEEDBACK',()=>{
  runCli('AUG-043 cliente YouTube, sesión y transferencia','JS/Tests/YouTubeUploadClientNode.mjs');
 });
 runGroup('34','CATALOG',()=>{
+ runCli('CATALOG dropdowns lee solo columnas necesarias para editar cortes','JS/Tests/CatalogDropdownRead.mjs');
  runCli('CATALOG feed incremental autenticado, cursor y recuperación','JS/Tests/CatalogChangeFeed.mjs');
  runCli('CATALOG readiness','JS/Tests/CatalogReadiness.js');
  runCli('CATALOG snapshots/IndexedDB aislado','JS/Tests/CatalogSnapshotSync.js');
