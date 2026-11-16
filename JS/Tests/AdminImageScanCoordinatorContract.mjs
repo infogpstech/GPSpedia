@@ -42,6 +42,8 @@ assert.match(historyHandler, /collectActiveDriveReferences\(false\)/,
     "El historial solo necesita saber si hay referencias activas; no debe materializar ubicaciones completas.");
 assert.match(historyHandler, /active_reference_count:\s*Array\.isArray\(activeReferences\)\s*\?\s*activeReferences\.length\s*:\s*activeReferences\s*\?\s*1\s*:\s*0/,
     "Una referencia activa booleana debe seguir bloqueando acciones destructivas.");
+assert.match(ui, /routeActionWithRetry\(['"]getReplacedImages['"][\s\S]*?timeoutMs:\s*120000,\s*maxAttempts:\s*2/,
+    "La lectura del historial debe tener timeout acotado y reintento seguro de solo lectura.");
 const inventory = policy("ADMIN", "getReplacedImages");
 for (const resource of ["USERS", "CORTES", "DRIVE", "IMAGE_INVENTORY", "RELAY"]) {
     assert.ok(inventory.readResources.includes(resource), "Inventario debe reservar lectura de " + resource);
