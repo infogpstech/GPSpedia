@@ -144,3 +144,33 @@ testCase("en móvil/PWA las acciones permanecen arriba a la derecha y el modelo 
 });
 
 console.log("CutDetailModalLayout: " + passed + "/" + passed + " PASS");
+
+
+testCase("el divisor azul ocupa el ancho del encabezado y la sombra del logo no se recorta", () => {
+    assert.match(detail, /headerDivider\.className = "detail-modal-divider"/);
+    assert.match(detail, /headerDiv\.insertBefore\(headerDivider, savingIndicator\)/);
+    assert.match(css, /\.detail-modal-divider \{[\s\S]*?grid-column: 1 \/ -1;[\s\S]*?grid-row: 3;[\s\S]*?margin: 10px 12px 0/);
+    assert.match(css, /\.detail-modal-title \{[\s\S]*?overflow: visible !important;[\s\S]*?padding: 8px;[\s\S]*?border: 0/);
+    assert.match(css, /\.detail-modal-title \.brand-logo-modal \{[\s\S]*?object-fit: contain/);
+});
+
+testCase("modelo y acciones adoptan el tamaño reforzado del encabezado Relay", () => {
+    assert.match(css, /\.detail-modal-title-text \{[\s\S]*?font-size: 2rem/);
+    assert.match(css, /\.relay-detail-toolbar \.relay-detail-title \{[\s\S]*?font-size: 2rem/);
+    assert.match(css, /\.detail-modal-header-actions \.share-modal-btn \{[\s\S]*?width: 40px;[\s\S]*?height: 40px/);
+    assert.match(css, /\.detail-modal-toolbar > \.info-close-btn \{[\s\S]*?width: 40px;[\s\S]*?height: 40px/);
+    assert.match(css, /@media \(max-width: 560px\)[\s\S]*?\.detail-modal-header-actions \.share-modal-btn \{[\s\S]*?width: 36px;[\s\S]*?height: 36px/);
+});
+
+testCase("el título tutorial se ajusta entre palabras y el cierre queda anclado a la esquina derecha", () => {
+    const tutorialStart = ui.indexOf("export function mostrarDetalleTutorialModal");
+    const tutorialEnd = ui.indexOf("\nfunction ", tutorialStart + 1);
+    const tutorial = ui.slice(tutorialStart, tutorialEnd > tutorialStart ? tutorialEnd : undefined);
+    assert.match(tutorial, /detail-modal-toolbar tutorial-detail-toolbar/);
+    assert.match(tutorial, /title\.className = "tutorial-detail-title"/);
+    assert.match(tutorial, /controlsContainer\.className = "tutorial-detail-header-actions"/);
+    assert.match(tutorial, /tutorial-detail-close/);
+    assert.doesNotMatch(tutorial, /closeBtn\.style\.cssText = "position:static/);
+    assert.match(css, /\.tutorial-detail-title \{[\s\S]*?white-space: normal;[\s\S]*?overflow-wrap: normal;[\s\S]*?word-break: normal;[\s\S]*?hyphens: none/);
+    assert.match(css, /\.tutorial-detail-toolbar > \.tutorial-detail-header-actions > \.tutorial-detail-close \{[\s\S]*?position: absolute !important;[\s\S]*?right: 0 !important/);
+});
