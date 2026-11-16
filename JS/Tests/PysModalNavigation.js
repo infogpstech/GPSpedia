@@ -17,6 +17,15 @@ test('tarjeta Agregar Problema comparte wrapper y dimensiones con tarjetas relac
  assert.ok(css.includes('.carousel-container .carousel-track > .pys-card-wrapper {'));
  assert.ok(css.includes('height: 120px;'));
 });
+test('tarjeta Agregar Modelo conserva las dimensiones de las tarjetas del carrusel',()=>{
+ const start=ui.indexOf('const addCard = document.createElement("div");',ui.indexOf('CARRUSEL DE MODELOS DE VEHÍCULOS RELACIONADOS'));
+ const end=ui.indexOf('addCard.innerHTML',start);
+ assert.ok(start>=0&&end>start);
+ const style=ui.slice(start,end);
+ assert.doesNotMatch(style,/height:\\s*auto|min-height:\\s*0|align-self:\\s*stretch/);
+ assert.match(style,/className = "card card-create-vehicle-assoc"/);
+ assert.match(css,/\\.card-create-vehicle-assoc,[\\s\\S]*?height: 120px;[\\s\\S]*?min-height: 120px;/);
+});
 test('captures modal scroll, active accordion and both horizontal carousels',()=>{const m=modal();m.detail.scrollTop=420;const s=captureModalViewState(m);assert.equal(s.scrollTop,420);assert.equal(s.accordion.label,'Posibles problemas');assert.deepEqual(s.horizontalScrolls.map(x=>x.scrollLeft),[180,95]);});
 test('restores modal scroll, accordion state and carousel positions',()=>{const m=modal();m.detail.scrollTop=0;m.detail.tracks.forEach(x=>x.scrollLeft=0);m.detail.buttons[1].classList.remove('active');const s={scrollTop:350,accordion:{index:1,label:'Posibles problemas'},horizontalScrolls:[{className:'carousel-track',index:0,scrollLeft:160},{className:'pys-models-track',index:1,scrollLeft:80}]};const r=restoreModalViewState(m,s);assert.equal(r.accordionRestored,true);assert.equal(m.detail.scrollTop,350);assert.equal(m.detail.buttons[1].classList.contains('active'),true);assert.equal(m.detail.buttons[1].arrow.textContent,'▲');assert.equal(m.detail.buttons[1].panel.style.maxHeight,'240px');assert.deepEqual(m.detail.tracks.map(x=>x.scrollLeft),[160,80]);});
 test('deferred restoration does not reset vertical scroll after asynchronous content arrives',()=>{

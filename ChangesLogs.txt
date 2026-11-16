@@ -1142,3 +1142,12 @@ ADENDA — CI run 43900956260: InboxUi 38/39 por escape adicional en el patrón 
 
 ADENDA 2026-11-16 — GP-DASH-ATTR CI
 - ActivityDashboardContributions ya ejecutaba sus aserciones de coma y multilínea, pero el runner integral exigía una línea de resumen N/N PASS. Se normaliza la salida para hacer verificable la suite; sin cambios en lógica de datos.
+
+
+================================================================================
+2026-11-16 — GP-UX-PYS-ADD-MODEL-CARD-01
+- JS/Frontend/ui.js: se eliminan height:auto, min-height:0 y align-self:stretch de la tarjeta «Agregar Modelo», que anulaban el tamaño uniforme de 140 × 120 px definido por su clase.
+- JS/Tests/PysModalNavigation.js: regresión para la dimensión y ausencia de overrides.
+- service-worker.js: App Shell actualizado a gpsepedia-cache-v39; JS/Tests/ServiceWorkerCache.js sincronizado.
+- Sin cambios en backend, servicios Apps Script, relaciones ni datos.
+================================================================================

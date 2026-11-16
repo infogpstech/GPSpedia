@@ -62,4 +62,4 @@ assert.deepEqual(sharedContributors,[
  {nombreUsuario:"Byron Lopez",cortesAportados:5,vehiculosConAportes:2},
  {nombreUsuario:"Pablo Peña",cortesAportados:5,vehiculosConAportes:2}
 ]);
-console.log("1/1 PASS — ActivityDashboardContributions (separadores multilínea y coma)");
+console.log("ActivityDashboardContributions: PASS (separadores multilínea y coma)");

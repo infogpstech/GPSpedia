@@ -1878,3 +1878,14 @@ Backlog y registro de cambios sincronizados con este estado. La rama base perman
 - Segundo CI run `43900956260`: la nueva comprobación del nombre del helper tenía un escape adicional; la implementación y las otras comprobaciones se cargaron, pero InboxUi quedó en 38/39. Se corrige el patrón del contrato y se repite CI.
 
 - Hallazgo adicional de CI anterior run `43897233001`: `ActivityDashboardContributions.mjs` completaba sus aserciones, pero su salida no contenía el resumen numérico `N/N PASS` requerido por `RunServiceTests.mjs`; por ello el runner la clasificaba como «no publicó resumen verificable». Se normaliza la salida de la suite a `1/1 PASS` sin cambiar su cobertura ni la lógica de aportaciones.
+
+
+---
+
+## Continuidad — tarjeta Agregar Modelo del carrusel PyS (2026-11-16)
+
+- **Causa confirmada:** en el carrusel de vehículos relacionados, la tarjeta «Agregar Modelo» recibía estilos inline `height:auto`, `min-height:0` y `align-self:stretch`, que anulaban las dimensiones uniformes declaradas por `.card-create-vehicle-assoc` (140 × 120 px).
+- **Corrección:** se retiran esos overrides inline; la tarjeta conserva el ancho de 140 px y hereda altura/min-height de 120 px, igual que el patrón compartido de creación.
+- **Prueba:** `PysModalNavigation.js` verifica que no vuelvan los overrides y que CSS mantenga las dimensiones 140 × 120 px.
+- **PWA:** App Shell actualizado a `gpsepedia-cache-v39`.
+- **Estado:** implementación publicada en la rama de trabajo; pendiente CI sobre el commit y aceptación visual en navegador/Beta.
