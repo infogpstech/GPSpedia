@@ -1224,3 +1224,19 @@ El usuario confirmó que el backlog pendiente también comprende la organizació
 - BETA-025 queda completada localmente; validación con nombres reales en dispositivos Beta pendiente. No se alteraron nombres almacenados ni se desplegaron servicios Apps Script.
 - **Siguiente tarea local:** BETA-026, reorganizar el modal de detalle/corte sin agregar ayudas `ⓘ` al modal de detalles de vehículos, preservando sus acciones y permisos.
 - Rama base `GPSpedia2.2.5` permanece intacta.
+
+
+## Continuidad — BETA-026 modal de detalle y apertura rápida de edición (2026-11-16)
+
+- **Último commit de implementación/pruebas:** `d2cbb2da7048ad697fec0b3cddaf88dbf549e152` — `test: ajustar comprobación de carga asíncrona de opciones`.
+- El modal de detalle se organiza con barra de acciones flexible, título/metadatos separados, edición en cuadrícula de dos columnas y una columna en móvil, nota de ancho completo, imagen limitada y secciones visuales para corte recomendado y acordeones.
+- Se añadieron asociaciones label/id a los campos y nombres accesibles a los botones de compartir, imprimir, editar, guardar, descartar y ampliar. Se preservan permisos y operaciones existentes.
+- **Corrección de latencia:** se eliminó el `await precargarDropdownOptions()` antes de abrir el editor. La vista de edición aparece de inmediato; los cuatro tipos de selector se hidratan al resolverse la promesa compartida, manteniendo el valor actual y evitando solicitudes duplicadas.
+- Se corrigió el contenedor de metadatos para que el formulario de edición no inserte un `div` dentro de un `p`.
+- No se agregaron botones `ⓘ` al modal de detalles de vehículos.
+- **Prueba específica:** `CutDetailModalLayout` 8/8 PASS.
+- **CI final:** run `43791647009` SUCCESS — 113 suites / 1,710 pruebas / 0 fallos.
+- **GitHub Pages:** run `43791646615` SUCCESS.
+- BETA-026 queda completada localmente; la validación con latencia real, servicios desplegados y dispositivos Beta sigue pendiente. No se desplegaron servicios Apps Script.
+- **Siguiente tarea local:** BETA-027, continuar la estandarización visual y estructural de los paneles de administración según el backlog unificado.
+- Rama base `GPSpedia2.2.5` permanece intacta.

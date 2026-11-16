@@ -113,7 +113,15 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 - Toda abreviatura debe ser inequívoca y mantener disponible el nombre completo mediante accesibilidad o detalle.
 
 ### BETA-026 — Modal de detalle de corte
-**Estado: PENDIENTE LOCAL.**
+**Estado: IMPLEMENTACIÓN LOCAL COMPLETADA; PENDIENTE BETA.**
+
+- Se reorganizó la cabecera y barra de acciones; título y metadatos quedan separados del área de edición.
+- Los campos de versión, encendido, rango de años, categoría y VIN se agrupan en una cuadrícula de dos columnas, con una columna en móvil. Nota y VIN ocupan el ancho disponible cuando corresponde.
+- Se añadieron asociaciones `label`/`id` y nombres accesibles a las acciones. Se mantienen permisos, guardado, edición, impresión y cierre.
+- La edición ya no espera la respuesta remota de las opciones: abre inmediatamente y completa los selectores al resolverse la promesa compartida, preservando el valor actual.
+- Se ajustaron imagen, aviso, corte recomendado y acordeones. No se añadieron ayudas `ⓘ` al modal de detalles de vehículos.
+- `CutDetailModalLayout`: 8/8 PASS. CI run `43791647009`: SUCCESS — 113 suites, 1,710 pruebas aprobadas, 0 fallos. GitHub Pages run `43791646615`: SUCCESS.
+- Pendiente Beta: validar interacción real, velocidad con latencia de red, carga de opciones, guardado, permisos y distribución en móvil/escritorio.
 
 - Reorganizar jerarquía, distribución y densidad para reducir saturación.
 - Agrupar campos y acciones relacionados; usar pestañas solo si mejoran la navegación.
