@@ -1168,6 +1168,22 @@ function getAppliedSuggestionActorKey_(actorKey) {
     return "applied:" + String(actorKey || "").trim();
 }
 
+const YEAR_SUGGESTION_VOTE_THRESHOLD_ = 3;
+
+function countVerifiedPositiveYearSuggestionVotes_(rows, vehicleId, year, actorColumn) {
+    const voteActors = new Set();
+    (Array.isArray(rows) ? rows : []).forEach(row => {
+        const rowVehicleId = String(row[COLS_FEEDBACKS.ID_vehiculo - 1] || "").trim();
+        const rowYear = Number(row[COLS_FEEDBACKS.anoSugerido - 1]);
+        const actorKey = String(row[actorColumn - 1] || "").trim();
+        if (rowVehicleId === String(vehicleId || "").trim() && rowYear === Number(year) &&
+            isVerifiedSuggestionActorKey_(actorKey) && isPositiveYearSuggestionRow(row)) {
+            voteActors.add(actorKey);
+        }
+    });
+    return voteActors.size;
+}
+
 function getFeedbackYearApplicationsSheet_(createIfMissing) {
     const headers = [
         "operationId", "vehicleId", "year", "previousFrom", "previousTo",
@@ -1484,15 +1500,7 @@ function handleSuggestYearLocked(payload) {
     }
 
     const allData = sheet.getDataRange().getValues().slice(1);
-    const voteActors = new Set();
-    allData.forEach(row => {
-        const rowId = String(row[COLS_FEEDBACKS.ID_vehiculo - 1] || "").trim();
-        const rowYear = Number(row[COLS_FEEDBACKS.anoSugerido - 1]);
-        const rowActorKey = String(row[actorColumn - 1] || "").trim();
-        if (rowId === normalizedVehicleId && rowYear === year &&
-            isVerifiedSuggestionActorKey_(rowActorKey) && isPositiveYearSuggestionRow(row)) voteActors.add(rowActorKey);
-    });
-    const voteCount = voteActors.size;
+    const voteCount = countVerifiedPositiveYearSuggestionVotes_(allData, normalizedVehicleId, year, actorColumn);
 
     if (!isPositive) {
         return alreadyReported
@@ -1509,7 +1517,7 @@ function handleSuggestYearLocked(payload) {
     if (isAnonymousActor) {
         return { status: "info", recorded: true, message: "La sugerencia anónima quedó registrada para revisión manual; no cuenta para modificar automáticamente el catálogo." };
     }
-    if (voteCount < 3) {
+    if (voteCount < YEAR_SUGGESTION_VOTE_THRESHOLD_) {
         const prefix = alreadyReported ? "Tu aporte ya estaba registrado." : "Sugerencia registrada.";
         return { status: "success", message: prefix + " Votos de usuarios verificados: " + voteCount + "/3." };
     }
