@@ -109,9 +109,10 @@
         .dark-mode .user-table th {
             background-color: var(--gp-color-surface);
         }
-        .actions-cell .btn-sm {
-            margin-right: 5px;
-        }
+        .actions-cell { display:flex; flex-direction:row; align-items:center; justify-content:flex-start; flex-wrap:nowrap; gap:7px; min-width:92px; }
+        .actions-cell .btn-sm { margin:0; }
+        .actions-cell .user-icon-action { display:inline-flex; align-items:center; justify-content:center; flex:0 0 38px; width:38px; min-width:38px; height:38px; min-height:38px; padding:0; border-radius:9px; font-size:1rem; }
+        .actions-cell .user-icon-action i { pointer-events:none; }
 
         /* Modal Styles */
         .modal {
@@ -205,8 +206,9 @@
  .user-table th:nth-child(2), .user-table td:nth-child(2) { width: 31%; }
  .user-table th:nth-child(3), .user-table td:nth-child(3) { width: 17%; }
  .user-table th:nth-child(4), .user-table td:nth-child(4) { width: 29%; }
- .actions-cell { display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
- .actions-cell .btn-sm { width: 100%; min-width: 0; min-height: 40px; margin: 0; padding: 7px 5px; white-space: normal; overflow-wrap: anywhere; line-height: 1.25; }
+ .actions-cell { display:flex; flex-direction:row; align-items:center; justify-content:flex-start; flex-wrap:nowrap; gap:6px; min-width:0; }
+ .actions-cell .btn-sm { flex:0 0 38px; width:38px; min-width:38px; height:38px; min-height:38px; margin:0; padding:0; white-space:nowrap; line-height:1; }
+ .actions-cell .user-session-action { flex:0 0 auto; width:auto; min-width:38px; padding:0 8px; font-size:.75rem; }
  .modal { padding: 12px; overflow-y: auto; }
  .modal-content { width: 100%; margin: 0 auto; padding: 16px; max-height: calc(100vh - 24px); max-height: calc(100dvh - 24px); }
  .modal-content form .btn { width: 100%; min-height: 44px; white-space: normal; }
@@ -366,6 +368,33 @@ window.onerror = function(message, source, lineno, colno, error) {
 const SESSION_KEY = 'gpsepedia_session';
 let currentUser = null;
 let allUsers = [];
+let usersFetchGeneration = 0;
+const USERS_CACHE_TTL_MS = 5 * 60 * 1000;
+function usersCacheKey_() {
+    const id = String(currentUser && (currentUser.ID || currentUser.id) || '').trim();
+    const role = String(currentUser && currentUser.Privilegios || '').trim().toLowerCase();
+    const token = String(currentUser && currentUser.SessionToken || '');
+    if (!id || !role || !token) return '';
+    let fingerprint = 2166136261;
+    for (let i = 0; i < token.length; i++) fingerprint = Math.imul(fingerprint ^ token.charCodeAt(i), 16777619);
+    return 'gpsepedia_users_v1:' + encodeURIComponent(id) + ':' + encodeURIComponent(role) + ':' + (fingerprint >>> 0).toString(36);
+}
+function readUsersCache_() {
+    const key = usersCacheKey_();
+    if (!key) return null;
+    try {
+        const cached = JSON.parse(sessionStorage.getItem(key) || 'null');
+        if (!cached || !Array.isArray(cached.users) || !Number.isFinite(cached.savedAt)) return null;
+        return { users: cached.users, stale: Date.now() - cached.savedAt > USERS_CACHE_TTL_MS };
+    } catch (error) { return null; }
+}
+function writeUsersCache_(users) {
+    const key = usersCacheKey_();
+    if (!key || !Array.isArray(users)) return;
+    try { sessionStorage.setItem(key, JSON.stringify({ savedAt: Date.now(), users })); } catch (error) {
+        console.warn('[GPSpedia] No se pudo actualizar la caché de usuarios:', error && error.name || 'StorageError');
+    }
+}
 
 /* TAREA 2 (B16): GESTIÓN DE USUARIOS, RBAC Y SEGURIDAD */
 document.addEventListener('DOMContentLoaded', () => {
@@ -424,16 +453,33 @@ async function postToAction(action, payload = {}) {
     }
 }
 
-async function fetchUsers() {
+async function fetchUsers(options = {}) {
+    const generation = ++usersFetchGeneration;
+    const sessionSnapshot = currentUser && {
+        id: String(currentUser.ID || currentUser.id || ''),
+        token: String(currentUser.SessionToken || ''),
+        role: String(currentUser.Privilegios || '').toLowerCase()
+    };
+    if (!sessionSnapshot || !sessionSnapshot.id || !sessionSnapshot.token) return;
+    if (options.background !== true) {
+        const cached = readUsersCache_();
+        if (cached && cached.users.length) {
+            allUsers = cached.users;
+            renderUserTable();
+        }
+    }
     try {
-        // FIX: Send sessionToken for secure, backend-driven authorization
-        const result = await postToAction('getUsers', {
-            sessionToken: currentUser.SessionToken
-        });
+        const result = await postToAction('getUsers', { sessionToken: sessionSnapshot.token });
+        const stillSameSession = currentUser &&
+            String(currentUser.ID || currentUser.id || '') === sessionSnapshot.id &&
+            String(currentUser.SessionToken || '') === sessionSnapshot.token &&
+            String(currentUser.Privilegios || '').toLowerCase() === sessionSnapshot.role;
+        if (generation !== usersFetchGeneration || !stillSameSession || !result || !Array.isArray(result.users)) return;
         allUsers = result.users;
+        writeUsersCache_(allUsers);
         renderUserTable();
     } catch (error) {
-        // Error is handled in postToAction
+        // La caché visible se conserva si falla la actualización remota.
     }
 }
 
@@ -459,15 +505,19 @@ function renderUserTable() {
         actionsCell.className = 'actions-cell';
 
         const editButton = document.createElement('button');
-        editButton.className = 'btn btn-warning btn-sm';
-        editButton.textContent = 'Editar';
+        editButton.className = 'btn btn-warning btn-sm user-icon-action';
+        editButton.innerHTML = '<i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>';
+        editButton.title = 'Editar usuario';
+        editButton.setAttribute('aria-label', 'Editar usuario ' + String(user.Nombre_Usuario || ''));
         editButton.addEventListener('click', () => openUserModal(user));
         actionsCell.appendChild(editButton);
 
         if (String(user.ID) !== String(currentUser.ID)) {
             const deleteButton = document.createElement('button');
-            deleteButton.className = 'btn btn-danger btn-sm';
-            deleteButton.textContent = 'Eliminar';
+            deleteButton.className = 'btn btn-danger btn-sm user-icon-action';
+            deleteButton.innerHTML = '<i class="fa-solid fa-trash-can" aria-hidden="true"></i>';
+            deleteButton.title = 'Eliminar usuario';
+            deleteButton.setAttribute('aria-label', 'Eliminar usuario ' + String(user.Nombre_Usuario || ''));
             deleteButton.addEventListener('click', (e) => deleteUser(user.ID, user.Nombre_Usuario, e.currentTarget));
             actionsCell.appendChild(deleteButton);
         }
@@ -475,8 +525,9 @@ function renderUserTable() {
         const isDeveloper = String(currentUser.Privilegios || '').trim().toLowerCase() === 'desarrollador';
         if (isDeveloper && String(user.ID) !== String(currentUser.ID)) {
             const resetSessionsButton = document.createElement('button');
-            resetSessionsButton.className = 'btn btn-danger btn-sm';
+            resetSessionsButton.className = 'btn btn-danger btn-sm user-session-action';
             resetSessionsButton.textContent = 'Cerrar sesiones';
+            resetSessionsButton.title = 'Cerrar todas las sesiones del usuario';
             resetSessionsButton.addEventListener('click', (e) => resetUserSessions(user.ID, user.Nombre_Usuario, e.currentTarget));
             actionsCell.appendChild(resetSessionsButton);
         }
