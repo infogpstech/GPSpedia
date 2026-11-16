@@ -1193,3 +1193,19 @@ El usuario confirmó que el backlog pendiente también comprende la organizació
 - BETA-023 queda completada localmente; la activación y validación del servicio FEEDBACK/Coordinator en Beta siguen pendientes. No se escribieron ScriptProperties reales ni se desplegaron servicios.
 - **Siguiente tarea local:** BETA-024, completar la política de textos breves y ayudas contextuales `ⓘ` bajo demanda, sin perder advertencias ni información necesaria.
 - Rama base `GPSpedia2.2.5` permanece intacta.
+
+
+## Continuidad — BETA-024 ayudas contextuales y textos concisos (2026-11-16)
+
+- **Último commit de implementación/pruebas:** `480893141157a45b7a7e1368a45d57d65c67881e` — `test: ajustar contraste contextual con fallback semántico`.
+- Se creó `contextual-help.css` y se unificó el patrón visual y semántico de ayudas `ⓘ` entre `index.html`, formularios dinámicos de `ui.js` y `HTML/add_cortes.html`.
+- Los disparadores comparten las clases `.gp-help-trigger` / `.gp-help-popover`; tienen nombre accesible, estado expandido, relación con el panel, descripción asociada al abrir, foco visible y cierre por pulsación fuera/Escape con restauración de foco.
+- Los botones de ayuda se separaron de las etiquetas `label`; se evitó anidar controles interactivos. La hoja compartida se incluyó en `CORE_ASSETS` del Service Worker.
+- Se preservó la exclusión explícita del modal de detalles de vehículos.
+- **Prueba específica:** `ContextualHelpForms` 16/16 PASS.
+- **CI final:** run `43790442965` SUCCESS — 111 suites / 1,695 pruebas / 0 fallos.
+- **GitHub Pages:** run `43790443032` SUCCESS (build y deploy).
+- Las primeras ejecuciones detectaron errores en el contrato de prueba (declaración duplicada y expectativa de fallback CSS); se corrigieron antes de la ejecución final.
+- BETA-024 queda completada localmente; la comprobación visual y accesible en dispositivos reales sigue pendiente de Beta. No se desplegaron servicios Apps Script.
+- **Siguiente tarea local:** BETA-025, política de nombres largos, títulos y etiquetas sin modificar el valor original almacenado.
+- Rama base `GPSpedia2.2.5` permanece intacta.

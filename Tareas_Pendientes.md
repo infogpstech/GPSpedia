@@ -81,7 +81,15 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 - Evitar estilos o comportamientos exclusivos de una sola vista.
 
 ### BETA-024 — Ayuda contextual y textos concisos
-**Estado: PENDIENTE LOCAL.**
+**Estado: IMPLEMENTACIÓN LOCAL COMPLETADA; PENDIENTE BETA.**
+
+- Se creó `contextual-help.css` como hoja común para los controles `ⓘ` de la vista principal y formularios auxiliares.
+- `attachContextualHelp_` y el formulario `add_cortes` usan ahora los mismos selectores, estilos, `role=tooltip`, `aria-controls`, `aria-expanded` y `aria-describedby`.
+- Los botones de ayuda quedaron fuera de las etiquetas de campos para evitar contenido interactivo anidado; se conserva apertura por pulsación, cierre fuera/Escape y restauración de foco.
+- La hoja se agregó al shell offline del Service Worker. El modal de detalles de vehículos continúa expresamente sin ayudas contextuales.
+- Se compactaron etiquetas de campos técnicos sin alterar sus datos ni reglas de validación.
+- `ContextualHelpForms`: 16/16 PASS. CI run `43790442965`: SUCCESS — 111 suites, 1,695 pruebas aprobadas, 0 fallos. GitHub Pages run `43790443032`: SUCCESS.
+- Pendiente Beta: comprobar visualmente los popovers en tema claro/oscuro, móvil/escritorio, teclado y lectores de pantalla.
 
 - Retirar explicaciones repetitivas, obvias o innecesariamente extensas.
 - Mantener visibles etiquetas breves, instrucciones indispensables y advertencias de riesgo.
