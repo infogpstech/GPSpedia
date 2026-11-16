@@ -5546,7 +5546,7 @@ body.dark-mode #inbox-modal-content .inbox-editor-shell { background:#2b3036; }
 
 /* GP-UX-RICH-TOOLBARS-01 — presentación común basada en la barra del Inbox. */
 .rich-editor-toolbar-compact {
-    display:flex; flex-wrap:nowrap; align-items:center; gap:1px;
+    display:flex; flex-wrap:wrap; align-items:center; gap:1px;
     width:100%; min-width:0; box-sizing:border-box; margin:0 0 4px !important;
     padding:2px; border:1px solid var(--gp-color-border,var(--border-color,#ddd));
     border-radius:8px; background:var(--gp-color-surface,var(--card-bg,#fff));
@@ -5568,6 +5568,13 @@ body.dark-mode #inbox-modal-content .inbox-editor-shell { background:#2b3036; }
     border-color:var(--gp-color-border,var(--border-color,#ddd));
     background:var(--gp-color-button-bg,var(--button-bg,#eee));
 }
+.rich-editor-toolbar-compact .rich-toolbar-native-select {
+    flex:0 1 auto; width:auto; min-width:58px; max-width:105px; height:29px;
+    padding:2px 4px; border:1px solid var(--gp-color-border,var(--border-color,#ccc));
+    border-radius:6px; color:var(--gp-color-text,var(--text-color,#333));
+    background:var(--gp-color-elevated,var(--modal-bg,#fff)); font-size:.72rem;
+}
+.rich-editor-toolbar-compact .rich-toolbar-marker-select { max-width:90px; }
 .rich-editor-toolbar-compact .rich-toolbar-color-group { position:relative; }
 .rich-editor-toolbar-compact .rich-toolbar-color-input {
     position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;
