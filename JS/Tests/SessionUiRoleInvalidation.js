@@ -95,7 +95,7 @@ function runSessionUiRoleInvalidationTests(sources) {
   assert(f.includes("canApproveInboxVideo_(userRole)"));
   assert(f.includes("approveVideo(item.id, userName, userRole, getSessionPayload_())"));
   assert(f.includes("rejectVideo(item.id, userName, reason, userRole, getSessionPayload_())"));
-  assert(f.includes("['desarrollador', 'jefe', 'supervisor'].includes(context.role)"));
+  assert(f.includes("['desarrollador', 'jefe', 'supervisor', 'tecnico', 'tecnico_exterior'].includes(normalizeUiRole_(context.role))"));
  });
  run("Jefe puede consultar el Inbox pero no aprobar ni rechazar vídeos",()=>{
   const can=slice(ui,"function canApproveInboxVideo_(","function getUiSessionContext_");

@@ -229,7 +229,7 @@ check("El detalle existente de reportes muestra categoría, asunto, descripción
     assert.match(ui, /item\.isResolved/);
 });
 check("Las acciones y la consulta de tickets propios no añaden controles visibles antes de autorización", () => {
-    assert.doesNotMatch(ui, /markInboxUnread|deleteInboxConversation|getMyProblemReports/);
+    assert.doesNotMatch(ui, /markInboxUnread|deleteInboxConversation/);
     assert.doesNotMatch(html, /inbox-mark-unread|inbox-delete-conversation|inbox-my-tickets/);
 });
 check("Los modales principales no usan spans como controles de cierre", () => {

@@ -9371,7 +9371,8 @@ export function renderInboxDetail(item) {
             actionToolbar.appendChild(approvalRow);
         }
         actionToolbar.hidden = actionToolbar.childElementCount === 0;
-    } else if (inboxCanManageRequests_(userRole)) {
+    } else {
+        if (inboxCanManageRequests_(userRole)) {
         const actions = makeElement('div', 'inbox-actions');
         const toolbar = makeElement('div');
         toolbar.id = 'inbox-toolbar-container';
@@ -9399,6 +9400,7 @@ export function renderInboxDetail(item) {
         actionToolbar.appendChild(deleteButton);
         actions.append(toolbar, replyTextarea);
         detailContainer.appendChild(actions);
+        }
     }
 
     // Listeners para aprobación/rechazo de vídeos
