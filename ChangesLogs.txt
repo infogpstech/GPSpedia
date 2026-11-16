@@ -1301,3 +1301,12 @@ ADENDA — GP-UX-INBOX-DESKTOP-02
 
 - JS/Tests/InboxUi.mjs: se corrigió el selector de la prueba de scroll para comprobar la regla desktop principal y no el override responsive posterior.
 - Validación estática: sintaxis 4/4; contratos visuales dirigidos 15/15. CI integral pendiente de confirmación.
+
+
+================================================================================
+GP-UX-CUT-MODAL-04 / GP-UX-TUTORIAL-MODAL-01 — 2026-11-16
+- JS/Frontend/ui.js: divisor independiente en el encabezado de corte; clases específicas para título, controles y cierre del modal de tutoriales.
+- style.css: línea azul de ancho útil completo, márgenes laterales, separación del logo, overflow visible para preservar drop-shadow, tipografía y controles ampliados; título tutorial con ajuste entre palabras y cierre en esquina superior derecha.
+- service-worker.js: App Shell actualizado a v48.
+- JS/Tests/CutDetailModalLayout.mjs, ServiceWorkerCache.js y OfflineBrandAssets.mjs: contratos de regresión actualizados.
+================================================================================
