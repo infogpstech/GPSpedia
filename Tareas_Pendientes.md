@@ -433,17 +433,25 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 - Pendiente Beta: confirmar que no existe deployment Legacy activo en la plataforma externa y que los navegadores no emiten solicitudes residuales. Esta verificación externa no bloquea el cierre local.
 
 ### BETA-043 — Tráfico global por servicio
-**Estado: PENDIENTE DE DISEÑO E IMPLEMENTACIÓN LOCAL.**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
 
-- Diseñar telemetría centralizada por servicio y plataforma con ventanas temporales, deduplicación y agregación backend.
-- Distinguir tráfico global de actividad del navegador local.
-- No presentar la suma de contadores locales como tráfico global.
+- Coordinator agrega en ScriptProperties buckets horarios de 24 horas por servicio. Solo cuenta operaciones protegidas que obtuvieron lease; los reintentos con el mismo `requestId` no duplican el conteo.
+- El registro se realiza dentro de la solicitud existente a Coordinator, bajo lock y como best-effort; no añade una llamada de red independiente por acción ni bloquea la operación si falla la telemetría.
+- `ADMIN/getServiceTraffic` es de solo lectura y queda reservado al rol Desarrollador. Devuelve agregados sin identidad ni datos de sesión; excluye la propia consulta, lecturas públicas no coordinadas, feed público y sondeos de salud.
+- La UI separa el agregado global de la actividad local del navegador (15 minutos, máximo 600 eventos). La ayuda aclara que el agregado global no representa todas las solicitudes HTTP.
+- Pruebas: `ServiceTrafficAdminContract` 20/20; `ServiceMetricsTelemetry` 10/10; Coordinador compartido 54/54. GitHub Actions Node.js 22 run `43807777744`: SUCCESS — 119 suites / 1,790 pruebas / 0 fallos.
+- GitHub Pages run `43807776532`: SUCCESS.
+- Pendiente Beta: validar la agregación entre deployments reales, permisos de Desarrollador y evolución de los buckets con tráfico de la plataforma. No se desplegaron Apps Script ni se modificaron ScriptProperties o datos externos.
 
 ---
 
 ## 8. Regresión integral y validación de campo
 
-**Estado: PENDIENTE DE EJECUCIÓN FINAL TRAS COMPLETAR LAS IMPLEMENTACIONES LOCALES.**
+**Estado: REGRESIÓN INTEGRAL LOCAL COMPLETADA; VALIDACIONES DE CAMPO PENDIENTES DE BETA.**
+
+- GitHub Actions Node.js 22 en el HEAD validado: 119 suites / 1,790 pruebas / 0 fallos; comprobación de sintaxis aprobada.
+- GitHub Pages build/deployment: SUCCESS. La rama base permanece intacta.
+- La integración con deployments Apps Script, datos/ACL reales, navegador y dispositivos se conserva como validación Beta; no se simula ni se contabiliza como trabajo local pendiente.
 
 - Ejecutar sintaxis y pruebas integrales Node.js en el HEAD final.
 - Confirmar GitHub Actions asociado al commit y corregir regresiones reproducibles.
