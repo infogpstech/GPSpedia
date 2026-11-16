@@ -1342,3 +1342,16 @@ El usuario confirmó que el backlog pendiente también comprende la organizació
 - Se actualizaron contratos de regresión para títulos compactos en Developer, monitor Drive, formato global, leyenda de pestañas y accesibilidad del cierre; se conservaron nombres accesibles completos en acciones de imágenes.
 - Pendiente: inspección visual real en navegador Beta (móvil/escritorio, teclado, lector de pantalla, tema claro/oscuro). No se desplegaron servicios Apps Script.
 - **Siguiente tarea local del backlog:** GP-INBOX — auditoría funcional end-to-end del flujo UI → API → FEEDBACK → Coordinator → InboxConversations → Spreadsheet.
+
+ 
+## Continuidad — GP-INBOX: auditoría y endurecimiento local (2026-11-16)
+
+- HEAD de código y pruebas revisadas: `cfb49335d24fef3f2fe7396a32d82ef5b443af62`.
+- Commits relevantes: `e068dc6e57a734bb70478f2b94d624f2627f967b`, `f1d63de7945f03e622b9942e0b34ba5e11b578f6`, `484cafc45905253101dfed88bf91112eb8bca274`, `936313b7048a565ff51871efc752f3825c8a5499`, `cfb49335d24fef3f2fe7396a32d82ef5b443af62`.
+- El esquema Inbox dejó de crearse o inicializarse automáticamente. Se validan hojas requeridas, datos huérfanos, IDs, estados, contador y referencia al último mensaje; los participantes dañados generan error explícito.
+- Se añadieron pruebas para ausencia/vacío de hojas, esquema parcial, preferencias ausentes, participantes dañados, contador inconsistente y estados incompletos.
+- Validación aislada: InboxConversations 59/59; InboxUi 31/31; InboxRoleContract 20/20; InboxAuditTrail 15/15; InboxCachePagination 5/5; paginación 4/4. Total: 134 comprobaciones PASS.
+- Node.js CLI no se ejecutó; el contenedor no pudo clonar GitHub. La sintaxis del módulo UI se comprobó con compilación JavaScript tras retirar la sintaxis de módulo. GitHub Actions no pudo confirmarse (estado combinado vacío y sin listado de ejecuciones push).
+- No se desplegaron servicios Apps Script ni se modificaron hojas, secretos o datos externos. La integración real queda para Beta y no bloquea el cierre local.
+- GP-INBOX pasa a **COMPLETADA CON VALIDACIÓN DIFERIDA**.
+- **Siguiente tarea local:** revisar la implementación y los contratos pendientes de BETA-030 y BETA-031; después continuar con GP-IMG-DATA-01, GP-BETA-06, BETA-042, BETA-043 y BETA-051.
