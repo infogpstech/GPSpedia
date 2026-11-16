@@ -1598,3 +1598,10 @@ Validación:
 - Inspección visual en escritorio, Android y PWA instalada pendiente de Beta.
 - Sin cambios en permisos, handlers de negocio, Apps Script, deployments o datos externos.
 ================================================================================
+
+
+ADENDA DE VALIDACIÓN — AUD-2026-11-16-08
+- Inspección estática dirigida sobre los archivos remotos: 9/9 comprobaciones PASS.
+- Se confirmó que el commit publicado más reciente de esta fase modifica únicamente checkpoint.md; los commits de implementación afectan ui.js, style.css, CutDetailModalLayout, service-worker.js y pruebas de caché/offline.
+- El estado combinado consultado no expone checks y la consulta de workflow disponible no incluye ejecuciones push. El clon superficial para ejecutar Node.js local falló por imposibilidad de resolver github.com.
+- No se atribuyen como ejecutadas las suites Node.js ni la inspección visual. Ambas permanecen pendientes de evidencia externa/Beta según corresponda.
