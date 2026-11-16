@@ -1653,3 +1653,33 @@ Estado: requisitos registrados, implementación pendiente. Próxima acción: map
 
 ### Continuidad
 Los cuatro requerimientos GP-UX-INBOX-01, GP-PERF-PAGES-01, GP-UX-USERS-01 y GP-UX-CUT-MODAL-01 quedan cerrados a nivel de código y pruebas automatizadas, con aceptación Beta pendiente. Rama base GPSpedia2.2.5 sin modificaciones.
+
+
+## Continuidad — identidad visual, modal y recursos offline (2026-11-16)
+
+**Estado:** implementación y regresión automatizada completadas; comprobación visual/offline real pendiente de Beta.  
+**HEAD de código validado:** `bc8997b60fadb5715777b202d78d16a7e631306f`  
+**Rama base protegida:** `GPSpedia2.2.5` (`d9acc68d889985c2e2f42fe3a02e502efc86ead1`), sin modificaciones.
+
+### Modal de detalle de corte
+- Comparación directa de `style.css` con la rama base: tamaño original del logo `height/max-height: 48px` en escritorio y `38px` hasta 600 px. La altura no había sido reducida; sí existía un límite adicional de ancho de 140 px en la rama de trabajo que comprimía logos panorámicos. Se eliminó ese límite y se conserva el tamaño base.
+- El modelo se mantiene junto al logo a la derecha mientras quepa. El cálculo usa ancho natural del texto + ancho real del logo + gap frente al ancho interno del contenedor. Solo se apila si excede ese espacio.
+- `ResizeObserver` actualiza la disposición ante cambios de tamaño; se desconecta al cerrar el modal.
+
+### Logo local, Splash y favicon
+- El encabezado y Splash claro usan `Images/icon-v3-512x512.png` local, sin dependencia de Drive.
+- La lógica de tema conserva `Images/Logo_TemaOscuro.png` en encabezado/Splash cuando está activo el modo oscuro.
+- El favicon utiliza el PNG oficial local. La prueba inspecciona la cabecera PNG y exige tipo con canal alfa; no se acepta un fondo blanco opaco.
+- Service Worker actualizado a `gpsepedia-cache-v33` e incluye logo claro y oscuro en recursos precargados.
+
+### Validación
+- GitHub Actions regresión: SUCCESS.
+- 127 suites; 1,869 pruebas aprobadas; 0 fallos.
+- `CutDetailModalLayout`: 9/9.
+- `OfflineBrandAssets`: 4/4.
+- `ServiceWorkerCache`: 9/9.
+- GitHub Pages build/deployment: SUCCESS.
+- Pendiente Beta: revisar el ajuste con marcas/logos panorámicos y cuadrados en varios tamaños de pantalla, Splash en modo oscuro, favicon y carga/arranque sin conexión real. No se realizó despliegue de servicios ni se alteraron datos productivos.
+
+### Documentos
+Backlog y registro de cambios sincronizados con este estado. La rama base permanece intacta.
