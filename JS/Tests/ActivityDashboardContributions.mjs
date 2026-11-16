@@ -12,14 +12,14 @@ const helper=fb.slice(fb.indexOf("function buildCutContributionSummary_()"),fb.i
 assert.match(fb,/contributions:buildCutContributionSummary_\(\)/);
 const columns={id:1,tipoCorte1:12,colaboradorCorte1:18,tipoCorte2:19,colaboradorCorte2:25,tipoCorte3:26,colaboradorCorte3:32};
 const makeRow=(id,slots)=>{const row=Array(32).fill("");row[0]=id;slots.forEach(([type,person],slot)=>{row[[12,19,26][slot]-1]=type;row[[18,25,32][slot]-1]=person;});return row;};
-const cortesRows=[Array(32).fill("header"),makeRow("V1",[["Corte","Ana"],["Corte","Luis"]]),makeRow("V2",[["Corte","Ana"],["",""],["Corte","Ana"]])];
+const cortesRows=[Array(32).fill("header"),makeRow("V1",[["Corte","Ana"],["Corte","Luis"]]),makeRow("V2",[["Corte","Ana"],["",""],["Corte","Ana"]]),makeRow("V3",[["Corte",""]])];
 const userRows=[Array(8).fill("header"),["U1","ana","","","","","Ana",""],["U2","luis","","","","","Luis",""]];
 const sheet=rows=>({getLastRow:()=>rows.length,getLastColumn:()=>rows[0].length,getRange:(r,c,n,w)=>({getValues:()=>rows.slice(r-1,r-1+n).map(row=>row.slice(c-1,c-1+w))})});
 const ss={getSheetByName:name=>name==="Cortes"?sheet(cortesRows):name==="Users"?sheet(userRows):null};
 const aggregate=new Function("getSpreadsheet","SHEET_NAMES","COLS_CORTES",helper+";return buildCutContributionSummary_;")(()=>ss,{CORTES:"Cortes"},columns)();
 assert.deepEqual(aggregate,[{userId:"U1",nombreUsuario:"Ana",cortesAportados:3,vehiculosConAportes:2},{userId:"U2",nombreUsuario:"Luis",cortesAportados:1,vehiculosConAportes:1},{userId:"",nombreUsuario:"Comunidad de técnicos",cortesAportados:1,vehiculosConAportes:1}]);
-assert.match(helper,/\|\|"Comunidad de técnicos"/);
-assert.match(helper,/replace\(\/\\s\*\\\(\[\^\)\]\*\\\)\/g/);
+assert.ok(helper.includes('||"Comunidad de técnicos"'));
+assert.ok(helper.includes('.replace(/\\s*\\([^)]*\\)/g," ")'));
 assert.match(dash,/export function renderActivityContributions/);
 assert.match(ui,/renderActivityContributions\(contributionContainer/);
 assert.match(html,/data-activity-tab="contributions"/);
