@@ -71,20 +71,22 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 - Invalidar el App Shell anterior mediante `gpsepedia-cache-v34` y comprobar que Service Worker sirve los archivos actualizados.
 
 ### GP-UX-INBOX-03 — Altura completa de listas y barra de acciones en PWA
-**Prioridad: P1 · Estado: EN PROGRESO; pendiente de regresión local.**
+**Prioridad: P1 · Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
 - En la vista móvil/PWA de solicitudes y reportes, la lista debe ocupar todo el espacio vertical disponible entre la navegación y la paginación.
 - El detalle se oculta mientras no exista una solicitud seleccionada; al abrir un detalle, la navegación de regreso mantiene el comportamiento actual.
 - Mover «Nuevo mensaje» y «Buscar» desde la cabecera a la misma barra de iconos de Recibidos, Leídos, No leídos, Enviados y Archivados.
 - Mantener los IDs, handlers, accesibilidad, visibilidad por vista y permisos existentes.
+- Validación local: InboxUi 35/35; regresión global 127 suites / 1,876 pruebas / 0 fallos. Aceptación visual PWA en dispositivo real pendiente de Beta.
 
 ### GP-DASH-ATTR-01 — Normalización visual de aportadores compartidos
-**Prioridad: P1 · Estado: EN PROGRESO; implementación frontend aplicada, pendiente de regresión local.**
+**Prioridad: P1 · Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
 - Separar colaboradores dentro de un mismo campo mediante etiquetas HTML `<br>` (incluidas variantes con espacios y barra).
 - Sanitizar etiquetas, scripts, identificadores auxiliares, puntuación final y espacios; no interpretar los nombres como HTML.
 - Agrupar alias ignorando mayúsculas, acentos y puntuación; presentar nombres con inicial mayúscula en cada palabra.
 - Repartir las aportaciones de una fila compartida a cada colaborador y consolidar variantes del mismo nombre en una sola fila del dashboard.
 - Mantener el cambio en frontend; no alterar Apps Script, hojas ni datos almacenados si la información agregada existente es suficiente.
 - Como el backend solo entrega conteos agregados y no IDs de vehículos por aportador, al consolidar alias se conserva el mayor conteo de vehículos observado para evitar sumar duplicados; validar esta limitación frente a los datos de Beta.
+- Validación local: ActivityDashboardContributions 9/9; regresión global 127 suites / 1,876 pruebas / 0 fallos. Revisar conteo de vehículos compartidos y muestras históricas en Beta.
 
 ## Orden general de ejecución
 
