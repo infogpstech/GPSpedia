@@ -1238,5 +1238,5 @@ El usuario confirmó que el backlog pendiente también comprende la organizació
 - **CI final:** run `43791647009` SUCCESS — 113 suites / 1,710 pruebas / 0 fallos.
 - **GitHub Pages:** run `43791646615` SUCCESS.
 - BETA-026 queda completada localmente; la validación con latencia real, servicios desplegados y dispositivos Beta sigue pendiente. No se desplegaron servicios Apps Script.
-- **Siguiente tarea local:** BETA-027, continuar la estandarización visual y estructural de los paneles de administración según el backlog unificado.
+- **Siguiente tarea local:** BETA-032 — centralizar en la consola Developer los mensajes de éxito, error, progreso y confirmación. BETA-030 y BETA-031 permanecen reportadas como implementadas localmente, pendientes de revisión y validación Beta; el backlog no contiene BETA-027–029.
 - Rama base `GPSpedia2.2.5` permanece intacta.
