@@ -69,7 +69,7 @@ assert.equal(policy("ADMIN", "applyCortesImageReconciliation").writeResources.in
 assert.equal(policy("ADMIN", "freezeIdentifierFormulas").maintenance, true);
 
 // Toda lectura ADMIN que solicita lease dedicada debe tener una política.
-for (const action of ["getReplacedImages", "getDriveStorage", "getCortesImageFolders", "auditIdentifiers"]) {
+for (const action of ["getReplacedImages", "getDriveStorage", "getCortesImageFolders", "auditIdentifiers", "checkOperation", "getAdminImageUploadStatus", "previewCortesImageReconciliation"]) {
     assert.equal(read(action), true, action + " debe usar una lease de lectura.");
     assert.ok(policy("ADMIN", action), "Falta política explícita para ADMIN/" + action);
 }
@@ -80,6 +80,21 @@ for (const resource of ["USERS", "CORTES", "TUTORIAL", "FEEDBACK", "LOGOS", "REL
 }
 assert.deepEqual(identifierAudit.writeResources, [],
     "La auditoría de identificadores es estrictamente de solo lectura.");
+
+const operationRead = policy("ADMIN", "checkOperation");
+assert.ok(operationRead.readResources.includes("CORTES"));
+assert.ok(operationRead.readResources.includes("IDEMPOTENCIA"));
+const uploadStatus = policy("ADMIN", "getAdminImageUploadStatus");
+assert.ok(uploadStatus.readResources.includes("CORTES"));
+assert.ok(uploadStatus.readResources.includes("DRIVE"));
+assert.ok(uploadStatus.writeResources.includes("IMAGE_UPLOAD_LEDGER"),
+    "La consulta puede inicializar el ledger de imágenes y debe reservar su escritura.");
+const reconciliationPreview = policy("ADMIN", "previewCortesImageReconciliation");
+for (const resource of ["CORTES", "DRIVE", "IMAGE_INVENTORY", "IMAGE_AUDIT_STATE", "TUTORIAL", "FEEDBACK", "LOGOS"]) {
+    assert.ok(reconciliationPreview.readResources.includes(resource),
+        "La vista previa debe reservar lectura de " + resource);
+}
+
 
 // Toda mutación declarada por FEEDBACK debe tener política explícita en Coordinator.
 const feedbackMutationList = extractFunction(feedback, "isSharedMutationAction_");
@@ -164,4 +179,10 @@ assert.equal(fallback.calls[0].operation, "sessionActivity",
 const ping = routerHarness.send("ping");
 assert.equal(ping.calls.length, 0, "ping no debe reservar una lease de escritura.");
 
+
+const adminCaseNames = [...admin.matchAll(/case\\s+['"]([^'"]+)['"]\\s*:/g)].map(match => match[1]);
+for (const action of adminCaseNames) {
+    assert.ok(action === "ping" || mutation(action) || read(action),
+        "La acción ADMIN/" + action + " no está clasificada en el dispatcher compartido.");
+}
 console.log("AdminImageScanCoordinatorContract: 1/1 PASS");
