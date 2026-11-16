@@ -1294,3 +1294,14 @@ Se creó `Tareas_beta.md` con los IDs BETA-001 a BETA-052, criterios de aceptaci
 - Se mantiene la protección de propietario: una operación pendiente no puede cambiar de cuenta.
 - CI run `43784270101`: SUCCESS — 108 suites / 1,663 pruebas / 0 fallos.
 - Pendiente Beta con sesiones heredadas y operaciones reales; no se desplegó AUTH/WRITE.
+
+
+## GP-INBOX-ORDER-01 — orden estable del historial (2026-11-16)
+
+- [x] Auditar el flujo UI/API/FEEDBACK y confirmar que el backend entrega mensajes en orden de inserción.
+- [x] Corregir la mezcla de caché y mensajes nuevos para no ordenar por timestamps no monotónicos.
+- [x] Añadir regresión por retroceso de fecha, reemplazo de mensaje existente e idempotencia.
+- [x] CI run `43786801781`: 108 suites / 1,664 pruebas / 0 fallos; InboxConversations 50/50; InboxUi 25/25; sintaxis PASS.
+- [x] GitHub Pages run `43786801161`: build/deploy SUCCESS.
+- [ ] Validar lectura, orden, refresco y marcador de lectura en deployment/navegador Beta real.
+- No se desplegaron servicios Apps Script ni se modificaron datos productivos.

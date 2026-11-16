@@ -1095,3 +1095,19 @@ Se amplió `AdminImageScanCoordinatorContract.mjs` para exigir que cada mutació
 - La suite UI impide reintroducir accesos ID-only.
 - Beta pendiente con sesión heredada, VIN y operación pendiente real. No se desplegaron AUTH/WRITE.
 
+
+
+## Continuidad — corrección del orden canónico del Inbox (2026-11-16)
+
+**HEAD de código:** `fd800c270985a15afba1f3e6f283eabd17988217`  
+**Commit:** `fix: preservar orden canonico de mensajes Inbox`
+
+- Se revisó el flujo completo de Inbox: wrapper UI/API, dispatcher FEEDBACK, actor central, handlers de lista y mensajes y contratos de paginación.
+- El backend conserva el orden de inserción porque los timestamps pueden coincidir o retroceder. El frontend reordenaba por `createdAt` al combinar la caché con la respuesta más reciente, contradiciendo el contrato del backend.
+- Se agregó `mergeInboxMessagePages`: conserva el orden de inserción, actualiza mensajes repetidos en su posición y agrega los nuevos en el orden recibido. Se mantiene la caché por sesión, la paginación y la lectura hasta el último mensaje.
+- Regresión añadida en `JS/Tests/InboxUi.mjs`: fechas retrocedidas, actualización de un ID existente e idempotencia de la combinación.
+- CI run `43786801781`: SUCCESS — 108 suites / 1,664 pruebas / 0 fallos; `InboxConversations` 50/50, `InboxUi` 25/25 y comprobaciones `node --check` PASS.
+- GitHub Pages run `43786801161`: build y deploy SUCCESS.
+- No se desplegaron Apps Script ni se modificaron Spreadsheet, Drive, secretos o datos productivos. La comprobación real de lectura de mensajes sigue pendiente en Beta.
+
+**Siguiente trabajo:** completar la auditoría local de BETA-010 a BETA-014 y continuar con BETA-020 a BETA-026. La validación externa requiere deployments y cuentas Beta; no se marcará como aprobada sin evidencia.
