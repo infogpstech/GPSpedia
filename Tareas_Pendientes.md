@@ -422,10 +422,15 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 - Probar valores bajo, igual y sobre el umbral; evitar alertas repetidas o duplicadas.
 
 ### BETA-042 — Servicio Legacy
-**Estado: RETIRADA PARCIAL REPORTADA; PENDIENTE DE AUDITORÍA LOCAL.**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
 
-- Auditar inventario completo de servicios, UI, registros, contratos y referencias residuales.
-- No borrar datos históricos sin autorización.
+- Auditoría de los servicios versionados, Frontend, HTML, API/action map, contratos, pruebas, documentación operativa y workflows.
+- No existen servicio, endpoint, acción, ruta de frontend ni consumidor activo para LEGACY. Se retiraron `logFrontend`, `SCRIPT_URL` y `remoteLog`; los errores del navegador permanecen en consola local.
+- `ACTION_TO_SERVICE_MAP` y `SERVICE_HEALTH_CONTRACTS` contienen únicamente los siete servicios vigentes. `ActionDispatchContract` confirma que no hay rutas LEGACY.
+- `SERVICE_HEALTH.md` ya no incluye LEGACY como servicio verificable; conserva una nota explícita de retirada sin endpoint ni solicitudes de red.
+- Las referencias históricas de Auditoría/checkpoint se preservan como evidencia; no se borraron registros ni datos históricos.
+- `ServiceHealthContract`: 17/17 PASS; `ActionDispatchContract`: 12/12 PASS. GitHub Actions Node.js 22 run `43800322470`: SUCCESS — 118 suites / 1,765 pruebas / 0 fallos.
+- Pendiente Beta: confirmar que no existe deployment Legacy activo en la plataforma externa y que los navegadores no emiten solicitudes residuales. Esta verificación externa no bloquea el cierre local.
 
 ### BETA-043 — Tráfico global por servicio
 **Estado: PENDIENTE DE DISEÑO E IMPLEMENTACIÓN LOCAL.**
