@@ -15,8 +15,6 @@ const mutation = new Function(extractFunction(admin, "isSharedMutationAction_") 
 const read = new Function(extractFunction(admin, "isSharedReadAction_") +
     "\nreturn isSharedReadAction_;")();
 const policy = new Function(coordinator + "\nreturn coordinatorPolicy_;")();
-const feedbackMutation = new Function(extractFunction(feedback, "isSharedMutationAction_") +
-    "\nreturn isSharedMutationAction_;")();
 
 for (const action of ["getReplacedImages", "getDriveStorage", "getCortesImageFolders"]) {
     assert.equal(read(action), true, action + " debe usar una lease de lectura específica.");
@@ -95,6 +93,34 @@ assert.ok(driveAlert.readResources.includes("USERS"),
 assert.ok(driveAlert.writeResources.includes("FEEDBACK"),
     "La alerta de Drive crea conversaciones y mensajes en FEEDBACK.");
 
+const feedbackRouterHarness = new Function(
+    extractFunction(feedback, "isSharedMutationAction_") + "\\n" +
+    extractFunction(feedback, "doPost") + "\\n" +
+    `
+    const calls = [];
+    function withSharedMutationLease_(service, operation, callback) {
+        calls.push({ service, operation });
+        return callback("coordinated-token", { userId: "developer", role: "Desarrollador" });
+    }
+    function withSharedSessionActor_(event, actor) { return event; }
+    function doPostInternal_(event) { return JSON.parse(event.postData.contents); }
+    const ContentService = { createTextOutput: value => ({ value, setMimeType() { return this; } }), MimeType: { TEXT: "text/plain" } };
+    return {
+        calls,
+        send(action) {
+            calls.length = 0;
+            const event = { postData: { contents: JSON.stringify({ action, payload: { sessionToken: "test-session" } }) } };
+            return { result: doPost(event), calls: calls.slice() };
+        }
+    };
+    `
+)();
+const driveAlertRoute = feedbackRouterHarness.send("notifyDevelopersDriveCritical");
+assert.equal(driveAlertRoute.calls.length, 1);
+assert.equal(driveAlertRoute.calls[0].service, "FEEDBACK");
+assert.equal(driveAlertRoute.calls[0].operation, "notifyDevelopersDriveCritical");
+
+
 
 const routerHarness = new Function(
     extractFunction(admin, "isSharedMutationAction_") + "\n" +
@@ -119,7 +145,7 @@ const routerHarness = new Function(
     };
     `
 )();
-for (const action of ["getReplacedImages", "getDriveStorage", "getCortesImageFolders"]) {
+for (const action of ["getReplacedImages", "getDriveStorage", "getCortesImageFolders", "auditIdentifiers"]) {
     const routed = routerHarness.send(action);
     assert.equal(routed.calls.length, 1);
     assert.equal(routed.calls[0].service, "ADMIN");
