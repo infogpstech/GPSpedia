@@ -1607,3 +1607,17 @@ El usuario confirmó que el backlog pendiente también comprende la organizació
 ## Siguiente fase
 
 Ejecutar las comprobaciones Beta enumeradas en `Tareas_Pendientes.md`. No se debe considerar probada la autorización real entre deployments ni el comportamiento en dispositivos solo por los tests Node.js.
+
+---
+
+## Continuidad — nueva fase de UX Inbox y navegación (2026-11-16)
+
+Rama: GPSpedia2.2.5_work
+HEAD de inicio verificado: c4a6d1f2d5f5208aa8c4290c7b23c851ea1cc101
+Rama base protegida: GPSpedia2.2.5 (sin modificaciones).
+
+Requisitos registrados: GP-UX-INBOX-01 (secciones General, Soporte, Contáctanos, Reportes y Aportaciones solo Desarrollador); GP-PERF-PAGES-01 (caché de usuarios y continuidad index/users/add_cortes); GP-UX-USERS-01 (acciones compactas con iconos horizontales); GP-UX-CUT-MODAL-01 (acciones en esquina superior derecha junto a cerrar).
+
+Inspección inicial: Inbox actual combina conversaciones y solicitudes históricas en pestañas; users.html consulta getUsers sin caché propia y apila acciones verticalmente en móvil; Service Worker está en v31 y cache-first no garantiza restauración del DOM al volver de páginas independientes. Las aprobaciones de vídeo conservan restricciones por rol. Tareas_Activas.md no existe; Tareas_Pendientes.md es el backlog operativo vigente.
+
+Estado: requisitos registrados, implementación pendiente. Próxima acción: mapear las fuentes de solicitudes y permisos antes de cambiar el Inbox; luego implementar caché e interfaz con pruebas de regresión. No se ejecutaron pruebas nuevas ni despliegues.
