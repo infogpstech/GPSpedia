@@ -33,6 +33,7 @@ test("el encabezado y el Splash claro usan el logo oficial local", () => {
 test("el logo oscuro permanece asignado al Splash cuando el tema oscuro está activo", () => {
     assert.match(main, /const splashUrl = isDark \? 'Images\/Logo_TemaOscuro\.png'/);
     assert.ok(worker.includes("'./Images/Logo_TemaOscuro.png'"));
+    assert.ok(worker.includes("'./JS/Frontend/activityDashboard.js'"));
 });
 
 test("el favicon apunta al PNG oficial local con canal alfa", () => {
