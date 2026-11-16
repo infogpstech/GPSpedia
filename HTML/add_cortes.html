@@ -515,7 +515,7 @@
                         document.getElementById('tipoCorte1').value = data.tipoCorte1 || '';
                         document.getElementById('configRelay1').value = data.configRelay1 || '';
                         document.getElementById('ubicacionCorte1').value = data.ubicacionCorte1 || '';
-                        syncRichTextEditorFromSource(document.getElementById('ubicacionCorte1'));
+                        if (typeof syncRichTextEditorFromSource === 'function') syncRichTextEditorFromSource(document.getElementById('ubicacionCorte1'));
                         document.getElementById('colorCableCorte1').value = data.colorCableCorte1 || '';
                         if (document.getElementById('silentRegister')) document.getElementById('silentRegister').checked = !!data.silentRegister;
                         if (document.getElementById('testigoMotor')) document.getElementById('testigoMotor').checked = !!data.testigoMotor;
@@ -1164,7 +1164,7 @@
                 [document.getElementById('ubicacionCorte1'), document.getElementById('ubicacionCorte2'), document.getElementById('ubicacionCorte3')].filter(Boolean).forEach(textarea => {
                     if (checkbox && checkbox.checked) { if (!textarea.value.includes(testigoHTML)) textarea.value += testigoHTML; }
                     else if (textarea.value.includes(testigoHTML)) textarea.value = textarea.value.replace(testigoHTML, '');
-                    syncRichTextEditorFromSource(textarea);
+                    if (typeof syncRichTextEditorFromSource === 'function') syncRichTextEditorFromSource(textarea);
                 });
                 let base64Veh = null;
                 const vehFileInput = document.getElementById('imagenVehiculo');

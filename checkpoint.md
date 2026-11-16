@@ -231,3 +231,8 @@ El checkpoint acumulativo anterior se conserva íntegro en `Checkpoint_Archive/c
 - CI run `43968512704`: sintaxis y 1,660 pruebas aprobadas; una suite restante (`OfflineBrandAssets.mjs`) mantenía una expectativa de App Shell v51. Se actualiza el contrato a v52.
 - `ServiceWorkerCache.js` ya fue actualizado; se conserva la versión v52 como única versión vigente del App Shell.
 - Resultado CI completo pendiente de la siguiente ejecución.
+
+
+### Ajuste de compatibilidad con pruebas de recuperación — GP-UX-RICH-FORMS-01 — 2026-11-16
+- CI run `43968763296` validó 1,911 pruebas y sintaxis, pero la suite de recuperación de operaciones de `add_cortes` ejecuta el script en un contexto aislado sin imports de módulos. Se protegen las sincronizaciones auxiliares con comprobación de disponibilidad para conservar compatibilidad con ese entorno y no interferir con la recuperación.
+- La sincronización sigue activa en la página real, donde la función sí está importada.

@@ -1682,3 +1682,7 @@ ADENDA DE AUDITORÍA — GP-UX-INBOX-RICH-EDITOR-01 — 2026-11-16
 
 ### Seguimiento PWA — GP-UX-RICH-FORMS-01 — 2026-11-16
 - La reejecución superó sintaxis y 1,660 pruebas; la suite pendiente detectó otra expectativa histórica de App Shell v51 en OfflineBrandAssets. Se actualiza a v52.
+
+
+### Seguimiento de recuperación offline — GP-UX-RICH-FORMS-01 — 2026-11-16
+- Se detectó que el test de recuperación de operaciones ejecuta el módulo independiente sin resolver imports ES. Se protegieron las llamadas auxiliares de sincronización; en ejecución real la función importada está disponible.

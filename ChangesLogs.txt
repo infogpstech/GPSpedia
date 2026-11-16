@@ -1372,3 +1372,7 @@ GP-UX-INBOX-RICH-EDITOR-01 — 2026-11-16
 
 ### Contrato PWA actualizado — GP-UX-RICH-FORMS-01 — 2026-11-16
 - Se actualizó `JS/Tests/OfflineBrandAssets.mjs` para validar `gpsepedia-cache-v52`, alineándolo con el App Shell actual.
+
+
+### Compatibilidad del editor con recuperación offline — GP-UX-RICH-FORMS-01 — 2026-11-16
+- Las llamadas de sincronización del editor en `HTML/add_cortes.html` ahora comprueban que el módulo esté disponible antes de ejecutarse, evitando afectar el contexto aislado de pruebas de recuperación.
