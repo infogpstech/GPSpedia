@@ -73,17 +73,33 @@ check("La interfaz incluye destinatario único y plantillas editables", () => {
     assert.match(ui, /body\.maxLength = 5000/);
 });
 check("La bandeja tiene carpetas, búsqueda y paginación", () => {
-    for (const folder of ["received", "unread", "sent", "archived"]) assert.match(html, new RegExp('data-inbox-folder="' + folder + '"'));
+    for (const folder of ["received", "read", "unread", "sent", "archived"]) assert.match(html, new RegExp('data-inbox-folder="' + folder + '"'));
     assert.match(html, /id="inbox-conversation-search-form"/);
     assert.match(ui, /getInboxConversations\(context,[\s\S]*folder: inboxConversationFolder_/);
     assert.match(ui, /inboxConversationNextCursor_/);
 });
-check("El filtro visual de categorías actualiza la consulta y reinicia la paginación", () => {
-    assert.match(html, /id="inbox-category-filter"/);
-    assert.match(ui, /categoryFilter\.addEventListener\("change"/);
-    assert.match(ui, /inboxConversationCategory_ = \["all", "general", "soporte", "acceso", "contenido", "instalacion", "otro"\]/);
+check("General y Soporte no muestran selector de categoría y conservan la búsqueda por contenido", () => {
+    assert.doesNotMatch(html, /inbox-category-filter|inbox-filter-row/);
+    assert.match(html, /id="inbox-search-toggle"/);
+    assert.match(ui, /searchToggle\.addEventListener\("click"/);
+    assert.match(ui, /inboxConversationQuery_ = String\(input && input\.value/);
+    assert.match(ui, /getInboxConversations\(context,[\s\S]*query: inboxConversationQuery_/);
     assert.match(ui, /category: inboxConversationCategory_/);
-    assert.match(ui, /inboxConversationPageStack_ = \[0\]/);
+});
+check("Todas las secciones reutilizan un único paginador con flechas y numeración contextual", () => {
+    assert.equal((html.match(/id="inbox-pagination"/g) || []).length, 1);
+    assert.match(html, /id="inbox-page-previous"[^>]*>←</);
+    assert.match(html, /id="inbox-page-next"[^>]*>→</);
+    assert.match(html, /id="inbox-page-label"[^>]*>1\/1</);
+    assert.match(ui, /document\.getElementById\("inbox-pagination"\)/);
+    assert.match(ui, /label\.textContent = currentPage \+ "\/" \+ pageCount/);
+    assert.doesNotMatch(html, /inbox-conversation-previous|inbox-conversation-next|inbox-category-filter/);
+});
+check("Las carpetas muestran iconos y expanden el nombre de la seleccionada", () => {
+    assert.match(html, /data-inbox-folder="read"[^>]*>[\s\S]*fa-envelope-open/);
+    assert.match(html, /data-inbox-folder="received"[^>]*>[\s\S]*<span>Recibidos<\/span>/);
+    assert.match(css, /\.inbox-folder-nav button\[aria-pressed="true"\] span/);
+    assert.match(css, /transition:max-width/);
 });
 check("El estado de lectura, archivo y cierre usa las acciones del backend", () => {
     assert.match(ui, /markInboxRead\(conversationId, latest\.messageId, context\)/);
@@ -133,6 +149,8 @@ check("La sincronización está acotada por intervalo y tamaño de página", () 
 check("El modal bloquea el scroll de fondo y mantiene scroll interno", () => {
     assert.match(css, /body\.inbox-open\s*\{\s*overflow:\s*hidden/s);
     assert.match(css, /\.inbox-conversation-list\s*\{[^}]*overflow-y:\s*auto/s);
+    assert.match(css, /\.inbox-workspace-content\s*\{[^}]*min-height:\s*0/s);
+    assert.match(css, /\.inbox-conversation-sidebar\s*\{[^}]*height:\s*100%/s);
     assert.match(css, /\.inbox-thread-messages\s*\{[^}]*overflow-y:\s*auto/s);
 });
 check("El diseño responde a móvil, teclado y movimiento reducido", () => {
