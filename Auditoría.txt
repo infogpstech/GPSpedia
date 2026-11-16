@@ -1302,3 +1302,13 @@ La única referencia activa de documentación se reorganizó como nota de servic
 Validación: ServiceHealthContract 17/17, ActionDispatchContract 12/12; CI Node.js 22 run 43800322470: 118 suites / 1,765 pruebas / 0 fallos.
 Estado: COMPLETADO LOCALMENTE. Verificar la inexistencia de deployments externos y tráfico real queda pendiente de Beta; no se modificaron deployments ni datos externos.
 ==========================================================
+
+
+==========================================================
+ADENDA DE CIERRE — 2026-11-16 — BETA-043
+Hallazgo de origen: el panel mostraba actividad local del navegador y no permitía conocer el tráfico global agregado por servicio.
+Corrección: se añadió agregación central en Coordinator por buckets horarios de 24 horas, con deduplicación de requestId y registro best-effort dentro de la llamada ya existente. La consulta ADMIN es de solo lectura y está reservada al rol Desarrollador. La interfaz distingue expresamente el agregado global de la actividad local y declara las exclusiones del alcance.
+Cobertura: contrato global/local, límites y truncamiento de telemetría local, deduplicación, ventanas horarias, retención, autorización ADMIN y tolerancia a fallos de almacenamiento.
+Validación: ServiceTrafficAdminContract 20/20; ServiceMetricsTelemetry 10/10; Coordinador compartido 54/54; GitHub Actions Node.js 22 run 43807777744: 119 suites / 1,790 pruebas / 0 fallos. GitHub Pages run 43807776532: SUCCESS.
+Estado: COMPLETADO LOCALMENTE CON VALIDACIÓN DIFERIDA A BETA. La comprobación de deployments, roles reales y agregación entre instancias requiere entorno Beta. No se modificaron deployments ni datos externos.
+==========================================================
