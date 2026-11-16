@@ -8,8 +8,9 @@ const feedback=readFileSync(resolve(root,"JS/Services/feedback.js"),"utf8");
 function extract(name){
  const start=feedback.indexOf("function "+name+"(");
  assert.ok(start>=0,"No se encontró "+name);
- const next=feedback.indexOf("\nfunction ",start+10);
- return feedback.slice(start,next<0?feedback.length:next);
+ const end=feedback.indexOf("\n}",start)+2;
+ assert.ok(end>start,"No se pudo delimitar "+name);
+ return feedback.slice(start,end);
 }
 const columns={ID_vehiculo:3,Problema:4,Respuesta:5,anoSugerido:9};
 const actorCheck=new Function(extract("isVerifiedSuggestionActorKey_")+"\nreturn isVerifiedSuggestionActorKey_;")();
