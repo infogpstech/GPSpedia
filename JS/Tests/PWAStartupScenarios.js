@@ -52,6 +52,7 @@ function createWorkerHarness(options = {}) {
     };
     const context = {
         self: {
+            location: { origin: 'https://gpsepedia.test', href: 'https://gpsepedia.test/' },
             addEventListener: (name, callback) => { listeners[name] = callback; },
             skipWaiting: async () => { skipWaitingCalls += 1; },
             clients: { claim: async () => { claimCalls += 1; } }
@@ -78,7 +79,8 @@ function createWorkerHarness(options = {}) {
             error: (...args) => logs.push(['error', ...args])
         },
         Promise,
-        Boolean
+        Boolean,
+        URL
     };
     vm.runInNewContext(serviceWorkerSource, context);
     return {
