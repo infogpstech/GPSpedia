@@ -4916,3 +4916,11 @@ body.dark-mode #login-modal #login-error.login-session-ended {
     #inbox-modal-content .inbox-section-nav { flex:0 0 auto; }
     #inbox-modal-content .inbox-workspace-content { flex:1 1 0; }
 }
+
+/* GP-UX-INBOX-02: mantener el panel de contenido a toda altura en pantallas pequeñas. */
+@media (max-width:760px) {
+    #inbox-modal-content .inbox-workspace { flex-direction:column; }
+    #inbox-modal-content .inbox-section-nav { flex:0 0 auto; }
+    #inbox-modal-content .inbox-workspace-content { flex:1 1 0; }
+}
+#inbox-modal-content .inbox-folder-nav button { flex:0 1 auto; width:auto; }
