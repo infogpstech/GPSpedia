@@ -712,4 +712,44 @@ run("Una hoja de mensajes faltante se informa en lugar de mostrar conversaciones
         /falta la hoja de mensajes/);
     spreadsheet.sheets.set("InboxMessages", messagesSheet);
 });
+const mutationMatch = feedbackSource.match(/^function isSharedMutationAction_\(action\) \{[\s\S]*?^\}/m);
+const postMatch = feedbackSource.match(/^function doPost\(e\) \{[\s\S]*?^\}/m);
+assert.ok(mutationMatch && postMatch, "No se pudieron extraer los despachadores FEEDBACK.");
+const dispatchCalls = [];
+const trustedInboxActor = { userId:"U1", userName:"Ana Desarrolladora", role:"Desarrollador", epoch:1 };
+const dispatch = new Function(
+    "FEEDBACK_ACTION_PERMISSIONS", "FEEDBACK_PUBLIC_ACTIONS", "withSharedMutationLease_",
+    "withSharedSessionActor_", "doPostInternal_", "ContentService",
+    mutationMatch[0] + "\\n" + postMatch[0] + "\\nreturn doPost;"
+)(
+    { getInboxRecipients:null, getInboxConversations:null, getInboxMessages:null, createInboxConversation:null },
+    new Set(),
+    (service, operation, callback, options) => {
+        dispatchCalls.push({ service, operation, sessionToken:options && options.session && options.session.sessionToken });
+        return callback("coordinator-token", trustedInboxActor);
+    },
+    (event, actor) => {
+        const request = JSON.parse(event.postData.contents);
+        request.payload.__sharedSessionActor = actor;
+        event.postData.contents = JSON.stringify(request);
+        return event;
+    },
+    event => JSON.parse(event.postData.contents).payload,
+    { createTextOutput: value => ({ value, setMimeType() { return this; } }), MimeType:{TEXT:"text/plain"} }
+);
+for (const action of ["getInboxRecipients","getInboxConversations","getInboxMessages"]) {
+    dispatchCalls.length = 0;
+    const event = { postData:{contents:JSON.stringify({action,payload:{userId:"U1",sessionToken:"token-a"}})} };
+    const payload = dispatch(event);
+    assert.equal(dispatchCalls.length,1);
+    assert.deepEqual(dispatchCalls[0],{service:"FEEDBACK",operation:"sessionActivity",sessionToken:"token-a"});
+    assert.equal(payload.__sharedSessionActor.userId,"U1");
+    assert.equal(payload.__sharedSessionActor.epoch,1);
+}
+dispatchCalls.length = 0;
+dispatch({postData:{contents:JSON.stringify({action:"createInboxConversation",payload:{userId:"U1",sessionToken:"token-a"}})}});
+assert.equal(dispatchCalls[0].operation,"createInboxConversation");
+run("El dispatcher FEEDBACK entrega actor central a lecturas Inbox y lease específica a escrituras", () => {
+    assert.equal(dispatchCalls[0].service,"FEEDBACK");
+});
 console.log("InboxConversations: " + passed + "/" + passed + " PASS");
