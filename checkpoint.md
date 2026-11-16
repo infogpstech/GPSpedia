@@ -1238,5 +1238,20 @@ El usuario confirmó que el backlog pendiente también comprende la organizació
 - **CI final:** run `43791647009` SUCCESS — 113 suites / 1,710 pruebas / 0 fallos.
 - **GitHub Pages:** run `43791646615` SUCCESS.
 - BETA-026 queda completada localmente; la validación con latencia real, servicios desplegados y dispositivos Beta sigue pendiente. No se desplegaron servicios Apps Script.
-- **Siguiente tarea local:** BETA-032 — centralizar en la consola Developer los mensajes de éxito, error, progreso y confirmación. BETA-030 y BETA-031 permanecen reportadas como implementadas localmente, pendientes de revisión y validación Beta; el backlog no contiene BETA-027–029.
+- **Siguiente tarea local:** BETA-033 — implementar confirmaciones desde la consola Developer con respuestas normalizadas y rechazo de respuestas ambiguas. BETA-030 y BETA-031 permanecen reportadas como implementadas localmente, pendientes de revisión y validación Beta; el backlog no contiene BETA-027–029.
+- Rama base `GPSpedia2.2.5` permanece intacta.
+
+
+## Continuidad — BETA-032 consola central Developer (2026-11-16)
+
+- **Último commit de implementación/pruebas:** `5fad7d6bd63bf4255b8113ca1bfe942e2b27597f` — `feat: centralizar mensajes del panel Developer`.
+- La consola se mantiene en la parte superior del modal con la altura objetivo del 50% (contrato visual ya cubierto por `DeveloperPanelUX`).
+- Se agregó detección del estado abierto del modal Developer. Mientras está activo, `showGlobalError` y `showGlobalNotification` envían errores, éxitos y advertencias al registro central y retornan antes de crear toast/alertas paralelas.
+- Los diagnósticos extensos se conservan en cola si el registro aún no está inicializado y se vacían al abrir el panel.
+- La acción de copiar errores/advertencias ya no usa `alert()`; sus resultados se registran en la consola.
+- **Prueba específica:** `DeveloperConsoleRouting` 5/5 PASS.
+- **CI final:** run `43792062783` SUCCESS — 114 suites / 1,715 pruebas / 0 fallos.
+- **GitHub Pages:** run `43792061714` SUCCESS.
+- BETA-032 queda completada localmente; falta comprobar el flujo completo de operaciones en Beta y que no se dupliquen mensajes. No se desplegaron servicios Apps Script.
+- **Siguiente tarea local:** BETA-033 — implementar confirmaciones desde la consola, con respuestas normalizadas y rechazo de respuestas ambiguas.
 - Rama base `GPSpedia2.2.5` permanece intacta.

@@ -149,7 +149,14 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 - Respetar `prefers-reduced-motion` y validar en dispositivos reales.
 
 ### BETA-032 — Consola central
-**Estado: PARCIAL; PENDIENTE LOCAL.**
+**Estado: IMPLEMENTACIÓN LOCAL COMPLETADA; PENDIENTE BETA.**
+
+- La consola se mantiene en la parte superior y ocupa la franja objetivo del 50% del modal; el contrato visual existente se conserva.
+- Mientras el modal Developer está abierto, `showGlobalError` y `showGlobalNotification` enrutan errores, éxitos y advertencias al registro central, sin mostrar un toast/alerta paralelo.
+- Los diagnósticos extensos pendientes se incorporan al abrir la consola; las acciones de copiar registro informan sus resultados en la propia consola y ya no usan alertas nativas.
+- Se mantiene el registro accesible `role=log` con `aria-live`; los niveles se distinguen como información, advertencia y error.
+- `DeveloperConsoleRouting`: 5/5 PASS. CI run `43792062783`: SUCCESS — 114 suites, 1,715 pruebas aprobadas, 0 fallos. GitHub Pages run `43792061714`: SUCCESS.
+- Pendiente Beta: ejecutar operaciones Developer de éxito, error y progreso y comprobar que no aparezcan notificaciones duplicadas.
 
 - Mantener la consola en la parte superior y con la altura objetivo registrada del 50% del modal.
 - Centralizar mensajes de éxito, error, progreso y confirmación de las funciones Developer.
