@@ -5878,3 +5878,11 @@ textarea.rich-text-source[hidden] { display:none !important; }
 .rich-editor-toolbar-compact .rich-toolbar-icon-button[aria-label="Pegar texto"] {
     flex:0 0 27px;
 }
+
+
+/* GP-UX-RICH-EDITOR-FOCUS-03 — controles táctiles sin transferencia innecesaria de foco. */
+.rich-editor-toolbar-compact .rich-toolbar-icon-button,
+.rich-editor-toolbar-compact .rich-toolbar-menu-item {
+    touch-action:manipulation;
+    -webkit-tap-highlight-color:transparent;
+}
