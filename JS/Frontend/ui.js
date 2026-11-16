@@ -4549,6 +4549,12 @@ async function setInboxView_(view, options = {}) {
     const context = getUiSessionContext_();
     const nextView = view === "requests" && inboxCanSeeRequests_(context && context.role) ? "requests" : "conversations";
     inboxConversationCurrentView_ = nextView;
+    const searchToggle = document.getElementById("inbox-search-toggle");
+    if (searchToggle) searchToggle.hidden = nextView !== "conversations";
+    const pagePrevious = document.getElementById("inbox-page-previous");
+    const pageNext = document.getElementById("inbox-page-next");
+    if (pagePrevious) pagePrevious.disabled = true;
+    if (pageNext) pageNext.disabled = true;
     document.getElementById("inbox-modal-content")?.classList.remove("is-request-detail-open");
     const conversations = document.getElementById("inbox-conversations-view");
     const requests = document.getElementById("inbox-requests-view");
