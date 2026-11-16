@@ -5,7 +5,7 @@ Fecha de consolidación: 2026-11-16
 Repositorio: `infogpstech/GPSpedia`  
 Rama autorizada: `GPSpedia2.2.5_work`  
 Rama base protegida: `GPSpedia2.2.5`  
-HEAD de código y pruebas validado al consolidar: `c5b07dbea1256a6c91475712d80260983bed8715`
+HEAD de código y pruebas validado al consolidar: `c973bcd2ea3678a012502b8f9a4da5d059e1751e`
 
 Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_beta.md`, integrando sus pendientes por sector y orden de ejecución. El historial y la evidencia de trabajo anterior permanecen en `checkpoint.md` y en `Olds/Documentacion_Legacy/`. La única fuente normativa continúa siendo `NORMAS_DESAROLLO.md`.
 
@@ -29,7 +29,7 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 ## Bloque prioritario — Inbox, feed de catálogo, vistos recientes y aportes de usuarios (2026-11-16)
 
 **Estado:** IMPLEMENTACIÓN LOCAL COMPLETADA Y VALIDADA EN CI; VALIDACIÓN EN SPREADSHEET/BETA PENDIENTE.  
-**HEAD probado:** `c5b07dbea1256a6c91475712d80260983bed8715`.
+**HEAD probado:** `c973bcd2ea3678a012502b8f9a4da5d059e1751e`.
 
 ### P1 — Autocreación segura del esquema Inbox
 **Estado local: COMPLETADO.**
@@ -48,7 +48,7 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 ### P1 — Feed incremental del catálogo
 **Estado local: COMPLETADO.**
 
-- El timeout por intento se eleva de 2,000 a 5,000 ms, conservando los reintentos acotados existentes.
+- El timeout por intento se eleva de 2,000 a 5,000 ms, conservando los reintentos acotados existentes. El Service Worker se actualiza a caché v31 para invalidar recursos anteriores y entregar el `api-config.js` con la URL de servicio vigente.
 - Si falla transitoriamente el feed y hay un snapshot completo y cursor válido, se conserva el catálogo mostrado y se evita descargar/reconciliar todo el snapshot. El siguiente ciclo vuelve a intentar solo el delta.
 - La reconciliación completa queda reservada para caché/cursor inválido, reset o inconsistencias reales.
 
@@ -70,7 +70,7 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 
 - Se añade la pestaña «Aportes por usuario», separada de «Actividad de usuarios».
 - El backend cuenta cada slot de corte con tipo y colaborador asignado en `Cortes` (`colaboradorCorte1..3` y `tipoCorte1..3`), agrupa por nombre normalizado y muestra cortes aportados y vehículos distintos.
-- El ID de usuario solo se asocia cuando el nombre coincide de forma única con el registro `Users`; no se atribuye por coincidencias ambiguas. Los registros sin colaborador no se asignan arbitrariamente.
+- El ID de usuario solo se asocia cuando el nombre coincide de forma única con el registro `Users`; se deduplican las coincidencias de nombre/usuario que pertenecen al mismo ID. La agregación lee únicamente las columnas ID, tipo y colaborador necesarias, no el bloque completo de 32 columnas. Los registros sin colaborador no se asignan arbitrariamente.
 
 ### Validación Beta pendiente
 

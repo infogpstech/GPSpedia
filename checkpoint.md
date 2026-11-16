@@ -1,17 +1,17 @@
 # Continuidad vigente — GPSpedia (2026-11-16)
 
 **Rama de trabajo:** `GPSpedia2.2.5_work`  
-**Último HEAD de código y pruebas validado:** `c5b07dbea1256a6c91475712d80260983bed8715`  
+**Último HEAD de código y pruebas validado:** `c973bcd2ea3678a012502b8f9a4da5d059e1751e`  
 **Rama base protegida:** `GPSpedia2.2.5` — `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; sin modificaciones.  
 **PR #128:** abierto y en borrador; base y head corresponden a las ramas previstas.
 
 ## Validación local y CI
 
-- GitHub Actions Node.js 22: **SUCCESS — 126 suites / 1,864 pruebas / 0 fallos** (run `43818461461`).
-- GitHub Pages: **SUCCESS** (run `43818460507`).
+- GitHub Actions Node.js 22: **SUCCESS — 126 suites / 1,863 pruebas / 0 fallos** (run `43819335894`).
+- GitHub Pages: **SUCCESS** (run `43819335683`).
 - El bloque de acceso Developer/sesiones/PWA de la iteración anterior continúa cubierto por sus pruebas.
-- Esta iteración completa el bootstrap seguro del esquema Inbox, fallback incremental ante timeout transitorio, actualización optimista de «Vistos recientemente», layout del modelo/logo y pestaña de aportes por usuario.
-- La URL del servicio actualizada por el usuario en `api-config.js` se conserva; su correspondencia con el deployment Beta todavía requiere comprobación real.
+- Esta iteración completa el bootstrap seguro del esquema Inbox, fallback incremental ante timeout transitorio, actualización optimista de «Vistos recientemente», layout del modelo/logo, pestaña de aportes por usuario y caché PWA v31.
+- La URL del servicio actualizada por el usuario en `api-config.js` se conserva y se fuerza su actualización en clientes mediante caché PWA v31; su correspondencia con el deployment Beta todavía requiere comprobación real.
 
 ## Siguiente fase
 

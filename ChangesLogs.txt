@@ -995,3 +995,10 @@ HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
 - La URL de servicio actualizada por el usuario en api-config.js se conserva; confirmar el deployment Beta antes de pruebas reales.
 - Sin despliegue Apps Script ni cambios a secretos, ScriptProperties, Spreadsheet, permisos, Drive o datos productivos.
 ================================================================================
+
+
+2026-11-16 — GP-PWA / GP-ACTIVITY ajuste final
+- Service Worker cache v31 para invalidar el App Shell anterior y obtener la URL actualizada de api-config.js.
+- buildCutContributionSummary_ optimizado: lee solo IDs y bloques tipo/colaborador de cada uno de los tres slots; deduplica el mismo User ID cuando username/fullName coinciden tras normalización.
+- Suite ActivityDashboardContributions ahora prueba el cálculo real con datos simulados y verifica conteo por cortes/vehículos e identidad.
+- CI Node.js 22 run 43819335894: SUCCESS — 126 suites / 1,863 pruebas / 0 fallos. Pages run 43819335683: SUCCESS.

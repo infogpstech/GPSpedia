@@ -1385,3 +1385,11 @@ Validación:
 
 Estado: IMPLEMENTADO Y VALIDADO EN CI; DEPLOYMENT/SPREADSHEET BETA PENDIENTE. No se modificaron Apps Script desplegados, secretos, ScriptProperties, hojas, permisos, Drive ni datos productivos.
 ==========================================================
+
+
+AUDITORÍA COMPLEMENTARIA — 2026-11-16 — AUD-2026-11-16-06
+- Service Worker: incremento de caché v30 a v31 para evitar que navegadores con caché anterior sigan utilizando una copia vieja de api-config.js tras el cambio de URL de servicio.
+- Resumen de aportes: lectura optimizada a columnas específicas de ID/tipo/colaborador por slot, en lugar de cargar las 32 columnas de Cortes. Se deduplican IDs cuando nombre completo y username normalizan a la misma clave, evitando marcar como ambiguo al mismo usuario.
+- Prueba de agregación con datos simulados: Ana 3 cortes/2 vehículos y Luis 1 corte/1 vehículo; IDs asociados correctamente.
+- CI final: run 43819335894 SUCCESS — 126 suites / 1,863 pruebas / 0 fallos. Pages run 43819335683 SUCCESS.
+- Estado: IMPLEMENTADO Y VALIDADO EN CI; Beta sigue pendiente para comprobar Spreadsheet real, deployment de servicio, datos de aportes y dispositivos.

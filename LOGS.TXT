@@ -151,3 +151,11 @@ ADENDA — 2026-11-16 — INBOX SCHEMA / CATÁLOGO / VISTOS / APORTES
 - Pendiente Beta: verificar esquema y datos en copia aislada de Spreadsheet, usuarios reales de Inbox, conteos de aportes, URL de servicio, latencia del feed y comportamiento de carrusel/layout en dispositivos.
 - No se alteraron deployments Apps Script, secretos, ScriptProperties, hojas, permisos, Drive ni datos productivos.
 ================================================================================
+
+
+ADENDA 2026-11-16 — cierre de rendimiento y caché
+- Service Worker actualizado a gpsepedia-cache-v31; fuerza actualización de api-config.js y demás recursos core con la nueva URL de servicio configurada por el usuario.
+- El resumen de aportes consulta solo columnas relevantes de Cortes y deduplica coincidencias de identidad del mismo usuario.
+- Prueba agregada de conteos simulados por usuario: 6/6 PASS.
+- CI Node.js 22: 126 suites / 1,863 pruebas / 0 fallos. GitHub Pages: SUCCESS.
+- Beta aún debe confirmar la URL del deployment, datos reales de Inbox/aportes y rendimiento en navegador/dispositivos.
