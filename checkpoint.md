@@ -259,3 +259,10 @@ El checkpoint acumulativo anterior se conserva íntegro en `Checkpoint_Archive/c
 - `ChangesLogs.txt` no se modifica porque ya supera el umbral normativo de 180,000 caracteres; la trazabilidad queda en este checkpoint y en Auditoría.
 - CI previa del HEAD retomado: run `43974270269` SUCCESS. Se ejecutará nueva CI para el alcance global.
 - Validación visual real en escritorio, Android y PWA pendiente de Beta. No se afirma que se haya ejecutado en dispositivos.
+
+
+### Validación CI y cierre local — GP-UX-INBOX-DESKTOP-03 / GP-UX-PLATFORM-SCROLLBARS-01 — 2026-11-16
+- GitHub Actions Node.js 22 run `43975016921`: **SUCCESS — 130 suites, 1,947 pruebas aprobadas, 0 fallos**. Incluye sintaxis de módulos, contratos de Inbox, excepciones de scroll en `#modalDetalle`, sincronización del App Shell v54 y regresiones de servicios.
+- GitHub Pages run `43975016203`: **SUCCESS** (build, deploy y reporte de estado).
+- HEAD de trabajo confirmado: `1df72703df343be253fc994d20ba9a60dfc52ef4`; padre del commit de implementación: `4f5afa281f9b98ab886271ada71626ce12a0de6b`. Rama base protegida continúa en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- Estado: **COMPLETADA CON VALIDACIÓN DIFERIDA A BETA**. La validación visual en escritorio, Android y PWA instalada permanece pendiente; no se ejecutó inspección física de dispositivos.

@@ -1704,3 +1704,9 @@ ADENDA DE AUDITORÍA — GP-UX-INBOX-RICH-EDITOR-01 — 2026-11-16
 - Los detalles de corte, tutoriales, Relay y problemas/soluciones reutilizan `#modalDetalle` (tipos `corte`, `tutorial`, `relay` y `pys`). La excepción se aplica al modal y sus descendientes, ocultando solo la barra visual; no modifica `overflow`, dimensiones, eventos ni navegación.
 - Los demás scrollbars usan indicador fino, redondeado y translúcido, oculto en reposo y visible al pasar el puntero, enfocar o interactuar. Los carruseles conservan su barra oculta.
 - Contrato de regresión añadido a `JS/Tests/InboxUi.mjs`; App Shell actualizado de v53 a v54 para refrescar CSS en PWA.
+
+
+### Resultado de pruebas — GP-UX-PLATFORM-SCROLLBARS-01 — 2026-11-16
+- CI Node.js 22 run `43975016921`: 130 suites, 1,947 pruebas aprobadas, 0 fallos.
+- GitHub Pages run `43975016203`: build y deploy exitosos.
+- Las pruebas verifican el estilo global, el ocultamiento exclusivo de las barras dentro de `#modalDetalle`, la preservación de las reglas de desplazamiento y la actualización de caché PWA a v54.
