@@ -4550,7 +4550,9 @@ async function setInboxView_(view, options = {}) {
     const nextView = view === "requests" && inboxCanSeeRequests_(context && context.role) ? "requests" : "conversations";
     inboxConversationCurrentView_ = nextView;
     const searchToggle = document.getElementById("inbox-search-toggle");
+    const newMessageButton = document.getElementById("inbox-new-message");
     if (searchToggle) searchToggle.hidden = nextView !== "conversations";
+    if (newMessageButton) newMessageButton.hidden = nextView !== "conversations";
     const pagePrevious = document.getElementById("inbox-page-previous");
     const pageNext = document.getElementById("inbox-page-next");
     if (pagePrevious) pagePrevious.disabled = true;
