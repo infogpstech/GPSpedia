@@ -122,10 +122,14 @@ await check("HTTP 200 con estado backend error/degraded no se marca online", asy
     assert.equal(degraded.status, "error");
     assert.equal(offline.status, "unavailable");
 });
-await check("LEGACY está retirado del registro y no se consulta", async () => {
+await check("LEGACY está retirado del registro, documentación activa y red", async () => {
+    const healthDoc = read("Services/SERVICE_HEALTH.md");
     assert.equal(contracts.LEGACY, undefined);
     assert.equal(apiSource.includes("LEGACY"), false);
     assert.equal(apiSource.includes("logFrontend"), false);
+    assert.doesNotMatch(healthDoc, /\\| LEGACY \\|/);
+    assert.match(healthDoc, /LEGACY está retirado y no forma parte del inventario/);
+    assert.match(healthDoc, /no genera solicitudes/);
 });
 await check("Un servicio sin contrato configurado queda unknown sin consultar un endpoint", async () => {
     const checker = buildChecker({ UNVERIFIED: "https://unverified.invalid/exec" });
