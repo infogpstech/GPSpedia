@@ -4530,7 +4530,7 @@ td, th {
 }
  .detail-modal-title-text {
     flex: 1 1 260px;
-    min-width: 0;
+    min-width: min(260px, 100%);
     margin: 0;
     padding: 0;
     color: var(--gp-color-accent, var(--accent-color, #007bff));
@@ -4540,7 +4540,7 @@ td, th {
  .detail-modal-title-input {
     flex: 1 1 260px;
     width: 100%;
-    min-width: 0;
+    min-width: min(260px, 100%);
     padding: 8px 10px;
     border: 1px solid var(--gp-color-focus, #007bff);
     border-radius: 8px;
