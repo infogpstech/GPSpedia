@@ -121,7 +121,7 @@ function runSessionUiRoleInvalidationTests(sources) {
   assert(f.includes("window.location.replace('../index.html')"));
  });
  run("payload Developer acepta ID e id mediante el contexto autenticado común",()=>{
-  const helper=slice(ui,"function getDeveloperSessionPayload()","/**\\n * TAREA 2");
+  const helper=slice(ui,"function getDeveloperSessionPayload()","function getReplacedImageCapabilities_");
   const resolve=new Function("getUiSessionContext_",helper+"; return getDeveloperSessionPayload();");
   const legacy=resolve(()=>({userId:"legacy-user",sessionToken:"token-legacy",role:"desarrollador"}));
   assert(legacy.userId==="legacy-user"&&legacy.sessionToken==="token-legacy");
