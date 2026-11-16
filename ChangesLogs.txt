@@ -1166,3 +1166,5 @@ ADENDA — GP-UX-PYS-ADD-MODEL-CARD-01: se simplifica la prueba CSS/inline a com
 - service-worker.js y JS/Tests/ServiceWorkerCache.js: App Shell actualizado a v39.
 - Sin cambios en Apps Script, backend, permisos, datos persistentes ni relaciones.
 ================================================================================
+
+ADENDA — GP-UX-PYS-ADD-MODEL-CARD-01: prueba CSS independiente de formato/espaciado; valida selector y valores height/min-height de 120 px.

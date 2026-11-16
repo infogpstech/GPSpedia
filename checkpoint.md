@@ -1904,3 +1904,5 @@ Backlog y registro de cambios sincronizados con este estado. La rama base perman
 - Tarjeta PyS: se elimina el estilo inline que anulaba el alto fijo de `card-create-vehicle-assoc`; CSS define 140 × 120 px. Se agrega prueba explícita de ausencia de overrides.
 - Service Worker actualizado a `gpsepedia-cache-v39` para invalidar el App Shell anterior.
 - Validación CI: se ejecuta sobre el commit resultante. Las pruebas visuales en navegador/dispositivo y los servicios Apps Script reales permanecen diferidos a Beta.
+
+- Ajuste de robustez del contrato CSS: se comprueban por separado los selectores y las declaraciones de altura/mínima altura, sin depender de espacios o saltos de línea exactos.
