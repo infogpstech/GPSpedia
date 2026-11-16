@@ -813,7 +813,7 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - Pendiente diferido a Beta: inspección visual en Android/PWA instalada, viewport estrecho y escritorio; verificar que el logo se muestra completo, que las acciones quedan en la parte superior derecha, que el modelo alinea su base con la imagen y que las cuatro columnas de usuarios usan todo el ancho sin scroll horizontal. No se afirma haber realizado esa inspección real.
 
 ### GP-UX-INBOX-DESKTOP-02 — Scroll, compositor y barra enriquecida
-**Estado: EN PROGRESO — corrección local preparada; CI pendiente.**
+**Estado: EN PROGRESO — cambios publicados en rama; CI pendiente.**
 - En escritorio, el formulario de nuevo mensaje debe permitir desplazamiento vertical real y mantener Salir/Enviar accesibles.
 - Reducir la altura de la bandeja vacía para que no reserve un panel central innecesariamente grande.
 - Evitar que la lupa se recorte dentro del botón de búsqueda.
