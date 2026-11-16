@@ -1697,3 +1697,10 @@ ADENDA DE AUDITORÍA — GP-UX-INBOX-RICH-EDITOR-01 — 2026-11-16
 ### Ajuste visual de menús — GP-UX-RICH-FORMS-02 — 2026-11-16
 - Se separan las reglas de anclaje de los desplegables: categorías hacia la izquierda y viñetas/listas hacia la derecha. Se limita el cambio a la barra enriquecida de Inbox.
 - No se declara validación visual en dispositivos reales; queda pendiente de Beta.
+
+
+### Estilo global de barras de desplazamiento — GP-UX-PLATFORM-SCROLLBARS-01 — 2026-11-16
+- Alcance: todos los elementos desplazables de la plataforma y los contenedores de modales.
+- Los detalles de corte, tutoriales, Relay y problemas/soluciones reutilizan `#modalDetalle` (tipos `corte`, `tutorial`, `relay` y `pys`). La excepción se aplica al modal y sus descendientes, ocultando solo la barra visual; no modifica `overflow`, dimensiones, eventos ni navegación.
+- Los demás scrollbars usan indicador fino, redondeado y translúcido, oculto en reposo y visible al pasar el puntero, enfocar o interactuar. Los carruseles conservan su barra oculta.
+- Contrato de regresión añadido a `JS/Tests/InboxUi.mjs`; App Shell actualizado de v53 a v54 para refrescar CSS en PWA.

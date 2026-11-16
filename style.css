@@ -5758,3 +5758,51 @@ textarea.rich-text-source[hidden] { display:none !important; }
         grid-template-columns:repeat(4,minmax(0,1fr));
     }
 }
+
+
+/* GP-UX-PLATFORM-SCROLLBARS-01 — indicador global translúcido y autoocultable. */
+* {
+    scrollbar-width:thin !important;
+    scrollbar-color:transparent transparent !important;
+}
+*::-webkit-scrollbar {
+    width:7px;
+    height:7px;
+}
+*::-webkit-scrollbar-track {
+    background:transparent;
+}
+*::-webkit-scrollbar-thumb {
+    border:2px solid transparent;
+    border-radius:999px;
+    background-color:transparent;
+    background-clip:padding-box;
+    transition:background-color .18s ease;
+}
+*:hover {
+    scrollbar-color:color-mix(in srgb,var(--gp-color-accent,#1769aa) 48%,transparent) transparent !important;
+}
+*:hover::-webkit-scrollbar-thumb,
+*:focus-within::-webkit-scrollbar-thumb,
+*:active::-webkit-scrollbar-thumb {
+    background-color:color-mix(in srgb,var(--gp-color-accent,#1769aa) 48%,transparent);
+}
+/* Los carruseles conservan su navegación horizontal sin barra visible. */
+.carousel-track {
+    scrollbar-width:none !important;
+    scrollbar-color:transparent transparent !important;
+}
+.carousel-track::-webkit-scrollbar { display:none !important; }
+/* Los detalles de corte, tutorial, Relay y PyS comparten #modalDetalle.
+   Se oculta solo el indicador; overflow y desplazamiento permanecen intactos. */
+#modalDetalle,
+#modalDetalle * {
+    scrollbar-width:none !important;
+    scrollbar-color:transparent transparent !important;
+}
+#modalDetalle::-webkit-scrollbar,
+#modalDetalle *::-webkit-scrollbar {
+    display:none !important;
+    width:0 !important;
+    height:0 !important;
+}

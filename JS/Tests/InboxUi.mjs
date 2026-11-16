@@ -499,6 +499,23 @@ check("Los cambios programáticos del formulario independiente sincronizan el ed
     assert.ok(css.includes(".rich-text-visual-editor:empty::before"));
 });
 
+
+check("Las barras de desplazamiento de toda la plataforma usan un indicador translúcido autoocultable", () => {
+    const globalScrollbar = css.slice(css.lastIndexOf("GP-UX-PLATFORM-SCROLLBARS-01"));
+    assert.match(globalScrollbar, /\*\s*\{\s*scrollbar-width:thin !important;\s*scrollbar-color:transparent transparent !important;/s);
+    assert.match(globalScrollbar, /\*::-webkit-scrollbar\s*\{[^}]*width:7px;[^}]*height:7px/s);
+    assert.match(globalScrollbar, /\*::-webkit-scrollbar-thumb\s*\{[^}]*border-radius:999px;[^}]*background-color:transparent/s);
+    assert.match(globalScrollbar, /\*:hover::-webkit-scrollbar-thumb[\s\S]*?color-mix\(in srgb,var\(--gp-color-accent/);
+    assert.match(globalScrollbar, /\*:focus-within::-webkit-scrollbar-thumb/);
+});
+check("Los detalles de corte, tutoriales, Relay y PyS mantienen barras invisibles sin perder desplazamiento", () => {
+    const globalScrollbar = css.slice(css.lastIndexOf("GP-UX-PLATFORM-SCROLLBARS-01"));
+    assert.match(globalScrollbar, /#modalDetalle,\s*#modalDetalle \*\s*\{\s*scrollbar-width:none !important;/s);
+    assert.match(globalScrollbar, /#modalDetalle \*::-webkit-scrollbar\s*\{\s*display:none !important;/s);
+    assert.doesNotMatch(globalScrollbar, /overflow(?:-y|-x)?:/);
+    assert.match(ui, /modalDetalle\.dataset\.modalType\s*=\s*['"](?:corte|tutorial|relay|pys)['"]/);
+});
+
 let passed = 0;
 for (const item of cases) {
     try { item.fn(); passed++; console.log("PASS " + item.name); }

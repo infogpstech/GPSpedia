@@ -248,3 +248,14 @@ El checkpoint acumulativo anterior se conserva íntegro en `Checkpoint_Archive/c
 ### Ajuste de apertura de menús — GP-UX-RICH-FORMS-02 — 2026-11-16
 - Se corrige la orientación de los desplegables de la bandeja de entrada: el menú de categorías se ancla al borde derecho del botón para abrirse hacia la izquierda; el menú de viñetas y listas se ancla al borde izquierdo para abrirse hacia la derecha.
 - Ajuste CSS específico, sin cambiar el contenido ni el comportamiento de las opciones. Validación visual en dispositivo pendiente.
+
+
+### Continuación Inbox y navegación global — GP-UX-INBOX-DESKTOP-03 / GP-UX-PLATFORM-SCROLLBARS-01 — 2026-11-16
+- HEAD confirmado al retomar: `4f5afa281f9b98ab886271ada71626ce12a0de6b`; rama base protegida: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- La revisión del Inbox confirma: la lista lateral se oculta al abrir conversación/redacción y el detalle utiliza el ancho completo; Nuevo mensaje ocupa la zona de acciones superior, sin botón flotante + ni pestaña redundante de Solicitudes. El compositor aprovecha el área disponible, el asunto y búsqueda son compactos y el editor crece en altura. Los menús de categorías/plantillas y formato se posicionan sobre el contenido y se cierran al elegir, al abrir otra opción o al pulsar fuera.
+- Se aplica estilo de scrollbar global translúcido y autoocultable. Excepción: `#modalDetalle` y todos sus descendientes, correspondientes a detalle de corte, tutorial, Relay y PyS. Se oculta únicamente el indicador; se preservan los mecanismos de desplazamiento.
+- Archivos de esta extensión: `style.css`, `service-worker.js`, `JS/Tests/InboxUi.mjs`, `JS/Tests/ServiceWorkerCache.js`, `JS/Tests/OfflineBrandAssets.mjs`, `Auditoría.txt`.
+- App Shell actualizado a v54 para evitar CSS obsoleto en PWA.
+- `ChangesLogs.txt` no se modifica porque ya supera el umbral normativo de 180,000 caracteres; la trazabilidad queda en este checkpoint y en Auditoría.
+- CI previa del HEAD retomado: run `43974270269` SUCCESS. Se ejecutará nueva CI para el alcance global.
+- Validación visual real en escritorio, Android y PWA pendiente de Beta. No se afirma que se haya ejecutado en dispositivos.
