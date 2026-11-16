@@ -1272,3 +1272,11 @@ Se creó `Tareas_beta.md` con los IDs BETA-001 a BETA-052, criterios de aceptaci
 - **Prueba:** `CatalogDropdownRead.mjs` integrada en CI.
 - **CI:** run `43783436013` SUCCESS — 108 suites / 1,657 pruebas / 0 fallos.
 - **Pendiente Beta:** medir tiempo real de apertura/edición y verificar CATALOG desplegado. GP-BETA-02 sigue abierta hasta prueba funcional.
+
+
+### Adenda 2026-11-16 — GP-BETA-010/Inbox: no ocultar esquema parcial
+- **Causa corregida:** si faltaba una hoja de estado, el backend podía devolver Inbox vacío aun cuando existieran conversaciones; también podía ocultar la falta de InboxMessages.
+- **Corrección:** ahora se informa el esquema incompleto. La instalación completamente nueva (sin hojas de conversaciones ni estado) sigue devolviendo Inbox vacío.
+- **Cobertura:** InboxConversations.mjs prueba hojas incompletas y despacho FEEDBACK/sessionActivity con actor central para lecturas; mutaciones conservan lease específica.
+- **CI:** run `43783775316` SUCCESS — 108 suites / 1,660 pruebas / 0 fallos.
+- **Pendiente Beta:** inspeccionar hojas reales y respuesta de FEEDBACK; no se hizo reparación automática ni despliegue.
