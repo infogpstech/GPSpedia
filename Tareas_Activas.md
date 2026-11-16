@@ -1241,3 +1241,10 @@ Se creó `Tareas_beta.md` con los IDs BETA-001 a BETA-052, criterios de aceptaci
 - [x] Enrutar sesiones autenticadas por `FEEDBACK/sessionActivity` y mantener la ruta anónima `userId=0`.
 - [x] Añadir prueba de actor confiable, ausencia de lectura local Users/ActiveSessions y preservación del flujo anónimo.
 - [ ] Ejecutar CI integral y revisar otras acciones protegidas fuera de los routers compartidos.
+
+
+### GP-BETA-06 — adenda 2026-11-16: suggestYear
+- **Corregido en rama:** la ruta anónima `userId=0` se evalúa antes de clasificar `suggestYear` como mutación compartida. Antes quedaba inalcanzable y solicitaba lease/sesión.
+- Las sugerencias autenticadas conservan la lease específica `FEEDBACK/suggestYear` y el actor confiable central.
+- CI run `43782403026`: SUCCESS; 107 suites / 1,655 pruebas / 0 fallos.
+- **Pendiente Beta:** verificar sugerencia anónima, autenticada y aplicación efectiva del umbral. La revisión global de servicios sigue abierta; esta corrección no cierra GP-BETA-06 completo.
