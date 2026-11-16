@@ -173,7 +173,7 @@ check("Las notificaciones internas reflejan el total de conversaciones no leída
     assert.match(ui, /counts && counts\.unread/);
 });
 check("La lista y los mensajes existentes permanecen visibles durante la actualización", () => {
-    assert.match(ui, /if \(!inboxConversationItems_\.length && !list\.childElementCount\) list\.replaceChildren/);
+    assert.ok(ui.includes("else if (!inboxConversationItems_.length && !list.childElementCount) list.replaceChildren"));
     assert.match(ui, /if \(!options\.older && !options\.preserveScroll && !inboxConversationMessages_\.length\) renderInboxConversationDetail_/);
 });
 check("La actualización del historial conserva el orden de inserción aunque las fechas coincidan o retrocedan", () => {
