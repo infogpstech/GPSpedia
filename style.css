@@ -4525,19 +4525,24 @@ td, th {
     flex: 0 0 auto;
     width: auto !important;
     min-width: 0;
-    max-width: min(140px, 36vw);
+    max-width: none;
     object-fit: contain;
 }
- .detail-modal-title-text {
-    flex: 1 1 260px;
-    min-width: min(260px, 100%);
+.detail-modal-title-text {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 100%;
     margin: 0;
     padding: 0;
     color: var(--gp-color-accent, var(--accent-color, #007bff));
     font-size: clamp(1.25rem, 2.5vw, 1.8rem);
     overflow-wrap: anywhere;
 }
- .detail-modal-title-input {
+.detail-modal-title--stacked .detail-modal-title-text {
+    flex: 1 1 100%;
+    width: 100%;
+}
+.detail-modal-title-input {
     flex: 1 1 260px;
     width: 100%;
     min-width: min(260px, 100%);
@@ -4659,7 +4664,6 @@ td, th {
         grid-template-columns: minmax(0, 1fr);
         gap: 9px;
     }
-    .detail-modal-title-text,
     .detail-modal-title-input {
         flex-basis: 100%;
     }
