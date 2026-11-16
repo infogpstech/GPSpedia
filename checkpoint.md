@@ -1022,3 +1022,22 @@ Se amplió `AdminImageScanCoordinatorContract.mjs` para exigir que cada mutació
 3. Seguir con el modal de detalle de corte y medir llamadas redundantes de opciones/carga; conservar la edición autorizada de Jefe/Supervisor/Desarrollador.
 4. Revisar el resultado de GitHub Pages del HEAD más reciente. No confundirlo con deployment Apps Script.
 5. Mantener los despliegues y pruebas productivas fuera de esta iteración.
+
+
+## Continuidad — optimización de dropdowns del modal de Cortes (2026-11-16)
+
+**Código validado:** `d828852ed2f4a223cfcbe6256dbfdce438ecf533`  
+**CI servicios:** run `43783436013` SUCCESS — 108 suites / 1,657 pruebas / 0 fallos.  
+**GitHub Pages:** ejecución asociada en progreso al momento del registro.
+
+- Causa de latencia: `mostrarDetalleModal()` inicia `precargarDropdownOptions()` y el botón Editar espera esa promesa. `handleGetDropdownData()` leía los rangos completos de Cortes y Relay aunque solo necesitaba cinco columnas de Cortes y una de Relay.
+- Corrección: CATALOG lee un rango contiguo acotado que cubre las columnas requeridas de Cortes y una columna de Relay; mantiene la lectura de validación de categoría. No usa `getDataRange()` para esa acción.
+- Nueva suite `CatalogDropdownRead.mjs` verifica datos, unicidad, orden y rangos de lectura. CI: 108 suites / 1,657 pruebas / 0 fallos.
+- Pendiente medir la latencia real en Beta y comprobar la respuesta de CATALOG desplegado. No se desplegó el servicio ni se leyeron hojas reales.
+
+### Pendientes prioritarios
+1. Inbox: continuar correlación UI/API/FEEDBACK y verificar deployment real antes de atribuir el fallo a la lógica local.
+2. Logs: validar las dos rutas de borrado (ActividadUsuario y Logs) con el payload Developer normalizado y confirmar respuesta/contadores.
+3. Drive: validar auditoría y biblioteca de imágenes con tiempos reales, esquema y permisos Drive.
+4. Modal de Cortes: medir tiempo desde abrir detalle hasta controles editables; verificar que dropdowns se precarguen y la edición no espere IndexedDB opcional.
+5. Confirmar Pages para el último HEAD documental; no confundir Pages con despliegue Apps Script.
