@@ -4848,12 +4848,12 @@ function renderInboxReplyForm_(detail, item) {
     const form = inboxCreateNode_("form", "inbox-composer");
     const label = inboxCreateNode_("label", "", "Escribe un mensaje");
     label.htmlFor = "inbox-reply-body";
-    const textarea = inboxCreateNode_("textarea", "inbox-message-input");
-    textarea.id = "inbox-reply-body"; textarea.rows = 3; textarea.maxLength = 5000; textarea.required = true;
-    textarea.value = String(draft.body || "");
-    const toolbar = createInboxRichTextToolbar(textarea.id);
+    const { editor, source: textarea } = createInboxRichEditor_("inbox-reply-body", "inbox-reply-body-editor", draft.body, "Escribe un mensaje");
+    label.htmlFor = editor.id;
+    label.addEventListener("click", () => editor.focus());
+    const toolbar = createInboxRichTextToolbar(editor.id);
     const editorShell = inboxCreateNode_("div", "inbox-editor-shell");
-    editorShell.append(toolbar, textarea);
+    editorShell.append(toolbar, editor, textarea);
     form.addEventListener("click", event => {
         if (event.target.closest(".inbox-rich-text-toolbar")) textarea.dispatchEvent(new Event("input", { bubbles: true }));
     });
@@ -4872,8 +4872,9 @@ function renderInboxReplyForm_(detail, item) {
     });
     form.addEventListener("submit", async event => {
         event.preventDefault();
-        const body = textarea.value.trim();
-        if (!body) { status.textContent = "Escribe un mensaje antes de enviarlo."; return; }
+        const body = sanitizeHtmlContent(editor.innerHTML, "advanced").trim();
+        const hasVisibleContent = Boolean((editor.textContent || "").trim() || editor.querySelector("img"));
+        if (!hasVisibleContent || !body) { status.textContent = "Escribe un mensaje antes de enviarlo."; return; }
         if (typeof navigator !== "undefined" && navigator.onLine === false) { status.textContent = "Sin conexión. El borrador quedó guardado."; return; }
         const current = inboxReadDraft_(draftKind), idempotencyKey = current.idempotencyKey || inboxNewIdempotencyKey_();
         inboxSaveDraft_(draftKind, { ...current, body, idempotencyKey, lastAttemptBody: body });
@@ -4969,11 +4970,11 @@ async function openInboxNewConversationForm_() {
     categoryField.append(categoryLabel, category);
     const bodyLabel = inboxCreateNode_("label", "", "Mensaje");
     bodyLabel.htmlFor = "inbox-new-body";
-    const body = document.createElement("textarea");
-    body.id = "inbox-new-body"; body.rows = 6; body.maxLength = 5000; body.required = true;
-    body.className = "inbox-form-control inbox-message-input";
-    body.value = String(draft.body || "");
-    const toolbar = createInboxRichTextToolbar(body.id);
+    const { editor: bodyEditor, source: body } = createInboxRichEditor_("inbox-new-body", "inbox-new-body-editor", draft.body, "Escribe el mensaje");
+    body.classList.add("inbox-form-control");
+    bodyLabel.htmlFor = bodyEditor.id;
+    bodyLabel.addEventListener("click", () => bodyEditor.focus());
+    const toolbar = createInboxRichTextToolbar(bodyEditor.id);
     const composerOptions = inboxCreateNode_("div", "rich-toolbar-dropdown inbox-composer-options");
     composerOptions.dataset.richToolbarPersist = "true";
     composerOptions.dataset.richToolbarPosition = "start";
@@ -5004,7 +5005,7 @@ async function openInboxNewConversationForm_() {
     composerOptions.append(composerOptionsButton, composerOptionsMenu);
     toolbar.insertBefore(composerOptions, toolbar.firstChild);
     const editorShell = inboxCreateNode_("div", "inbox-editor-shell");
-    editorShell.append(toolbar, body);
+    editorShell.append(toolbar, bodyEditor, body);
     form.addEventListener("click", event => { if (event.target.closest(".inbox-rich-text-toolbar")) persist(); });
     form.addEventListener("change", event => { if (event.target.closest(".inbox-rich-text-toolbar")) persist(); });
     form.append(bodyLabel, editorShell);
@@ -5023,13 +5024,14 @@ async function openInboxNewConversationForm_() {
     [recipient,subject,category,body].forEach(element => { element.addEventListener("input", persist); element.addEventListener("change", persist); });
     template.addEventListener("change", () => {
         const selected = templates.find(item => item.id === template.value);
-        if (selected && selected.id) { subject.value = selected.subject; body.value = selected.body; category.value = "general"; }
+        if (selected && selected.id) { subject.value = selected.subject; body.value = sanitizeHtmlContent(selected.body, "advanced"); bodyEditor.innerHTML = body.value; category.value = "general"; }
         persist();
     });
     form.addEventListener("submit", async event => {
         event.preventDefault();
-        const recipientId = recipient.value, subjectValue = subject.value.trim(), bodyValue = body.value.trim();
-        if (!recipientId || !subjectValue || !bodyValue) { formStatus.textContent = "Completa destinatario, asunto y mensaje."; return; }
+        const recipientId = recipient.value, subjectValue = subject.value.trim(), bodyValue = sanitizeHtmlContent(bodyEditor.innerHTML, "advanced").trim();
+        const hasVisibleBody = Boolean((bodyEditor.textContent || "").trim() || bodyEditor.querySelector("img"));
+        if (!recipientId || !subjectValue || !hasVisibleBody || !bodyValue) { formStatus.textContent = "Completa destinatario, asunto y mensaje."; return; }
         if (typeof navigator !== "undefined" && navigator.onLine === false) { formStatus.textContent = "Sin conexión. El borrador quedó guardado."; return; }
         const current = inboxReadDraft_(draftKind), fingerprint = [recipientId,subjectValue,category.value,bodyValue].join("|");
         const idempotencyKey = current.idempotencyKey || inboxNewIdempotencyKey_();
@@ -9238,6 +9240,64 @@ export function renderInboxList(items) {
 }
 
 /* TAREA 1.7: BARRA DE ENRIQUECIMIENTO DE TEXTO COMPLETA PARA EL EDITOR DEL INBOX */
+function syncInboxRichEditor_(editor, source) {
+    const maxLength = Number(source.maxLength) || 5000;
+    if ((editor.textContent || "").length > maxLength) {
+        const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
+        let remaining = maxLength, node = null, cutNode = null, cutOffset = 0;
+        while ((node = walker.nextNode())) {
+            if (remaining >= node.nodeValue.length) remaining -= node.nodeValue.length;
+            else { cutNode = node; cutOffset = remaining; break; }
+        }
+        if (cutNode) {
+            const range = document.createRange();
+            range.setStart(cutNode, cutOffset);
+            range.setEnd(editor, editor.childNodes.length);
+            range.deleteContents();
+        }
+    }
+    source.value = sanitizeHtmlContent(editor.innerHTML, "advanced");
+    source.dispatchEvent(new Event("input", { bubbles: true }));
+}
+
+function createInboxRichEditor_(sourceId, editorId, initialHtml, labelText) {
+    const source = inboxCreateNode_("textarea", "inbox-message-source");
+    source.id = sourceId; source.maxLength = 5000; source.value = sanitizeHtmlContent(initialHtml || "", "advanced");
+    source.hidden = true; source.tabIndex = -1; source.setAttribute("aria-hidden", "true");
+    const editor = inboxCreateNode_("div", "inbox-message-input inbox-rich-editor");
+    editor.id = editorId; editor.setAttribute("contenteditable", "true");
+    editor.setAttribute("role", "textbox"); editor.setAttribute("aria-multiline", "true");
+    editor.setAttribute("aria-label", labelText || "Mensaje"); editor.setAttribute("aria-required", "true");
+    editor.setAttribute("spellcheck", "true"); editor.dataset.placeholder = labelText || "Escribe un mensaje";
+    editor.innerHTML = source.value;
+    editor.addEventListener("input", () => syncInboxRichEditor_(editor, source));
+    editor.addEventListener("paste", event => {
+        event.preventDefault();
+        const clipboard = event.clipboardData;
+        const html = clipboard && clipboard.getData("text/html");
+        const plain = clipboard && clipboard.getData("text/plain");
+        const safeHtml = html ? sanitizeHtmlContent(html, "advanced") : "";
+        const command = safeHtml ? "insertHTML" : "insertText";
+        const value = safeHtml || String(plain || "");
+        let inserted = false;
+        try { inserted = typeof document.execCommand === "function" && document.execCommand(command, false, value) === true; }
+        catch (_) { inserted = false; }
+        if (!inserted) {
+            const selection = window.getSelection?.();
+            if (selection && selection.rangeCount && editor.contains(selection.anchorNode)) {
+                const range = selection.getRangeAt(0);
+                range.deleteContents();
+                const fragment = safeHtml ? range.createContextualFragment(safeHtml) : document.createTextNode(value);
+                const last = fragment.lastChild;
+                range.insertNode(fragment);
+                if (last) { range.setStartAfter(last); range.collapse(true); selection.removeAllRanges(); selection.addRange(range); }
+            }
+        }
+        syncInboxRichEditor_(editor, source);
+    });
+    return { editor, source };
+}
+
 export function createInboxRichTextToolbar(targetId) {
     const toolbar = createRichTextToolbar(targetId, { forceAdvanced: true, compact: true });
     toolbar.classList.add("inbox-rich-text-toolbar");

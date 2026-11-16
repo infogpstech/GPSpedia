@@ -5524,3 +5524,46 @@ body.dark-mode #inbox-modal-content .inbox-editor-shell { background:#2b3036; }
     margin:4px 0 4px 12px;
 }
 @media (max-width:560px) { .detail-modal-divider { width:calc(100% + 22px); } }
+
+
+/* GP-UX-INBOX-RICH-EDITOR-01 — controles compactos y edición visual. */
+#inbox-modal-content .inbox-rich-text-toolbar { gap:1px; padding:2px; }
+#inbox-modal-content .inbox-rich-text-toolbar > .rich-toolbar-icon-button,
+#inbox-modal-content .inbox-rich-text-toolbar > .rich-toolbar-dropdown,
+#inbox-modal-content .inbox-rich-text-toolbar > .rich-toolbar-color-group {
+    flex:0 0 27px; width:27px; min-width:27px; max-width:27px;
+}
+#inbox-modal-content .inbox-rich-text-toolbar .rich-toolbar-icon-button {
+    width:27px; min-width:27px; max-width:27px; height:29px; min-height:29px; padding:0;
+}
+#inbox-modal-content .inbox-rich-text-toolbar .rich-toolbar-menu {
+    left:auto; right:0; width:max-content; min-width:150px;
+    max-width:calc(100vw - 24px); transform-origin:top right;
+}
+#inbox-modal-content .inbox-editor-shell .inbox-rich-editor {
+    display:block; width:100%; min-width:0; min-height:110px; margin:0; padding:10px;
+    overflow-wrap:anywhere; white-space:pre-wrap; color:var(--gp-color-text,var(--text-color,#222));
+    background:transparent; border:0; border-radius:0 0 9px 9px; outline:none;
+    resize:none; cursor:text;
+}
+#inbox-modal-content .inbox-editor-shell .inbox-rich-editor:empty::before {
+    content:attr(data-placeholder); color:var(--gp-color-muted,var(--text-muted,#777)); pointer-events:none;
+}
+#inbox-modal-content .inbox-editor-shell .inbox-message-source[hidden] { display:none !important; }
+#inbox-modal-content .inbox-editor-shell .inbox-rich-editor:focus-visible {
+    outline:2px solid var(--gp-color-focus,#005fcc); outline-offset:-3px;
+}
+#inbox-modal-content .inbox-rich-editor ul[data-gp-marker="hyphen"] { list-style-type:"– "; }
+#inbox-modal-content .inbox-rich-editor ul[data-gp-marker="arrow"] { list-style-type:"→ "; }
+#inbox-modal-content .inbox-rich-editor ul[data-gp-marker="check"] { list-style-type:"✓ "; }
+@media (max-width:420px) {
+    #inbox-modal-content .inbox-rich-text-toolbar { gap:0; padding-inline:1px; }
+    #inbox-modal-content .inbox-rich-text-toolbar > .rich-toolbar-icon-button,
+    #inbox-modal-content .inbox-rich-text-toolbar > .rich-toolbar-dropdown,
+    #inbox-modal-content .inbox-rich-text-toolbar > .rich-toolbar-color-group {
+        flex-basis:25px; width:25px; min-width:25px; max-width:25px;
+    }
+    #inbox-modal-content .inbox-rich-text-toolbar .rich-toolbar-icon-button {
+        width:25px; min-width:25px; max-width:25px; height:28px; min-height:28px;
+    }
+}

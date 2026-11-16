@@ -3,18 +3,20 @@ import { getRichTextMode } from './api-config.js';
 /* Utilidades compartidas para los editores de texto enriquecido de GPSpedia. */
 
 const SAFE_MARKERS = new Set(["hyphen", "arrow", "check", "bullet"]);
-const SAFE_FONT_VALUES = new Set([
-    "Arial, sans-serif",
-    "'Segoe UI', Roboto, sans-serif",
-    "'Courier New', monospace",
-    "Georgia, serif"
-]);
 const SAFE_FONTS = new Map([
     ["Arial", "Arial, sans-serif"],
     ["Segoe UI", "'Segoe UI', Roboto, sans-serif"],
     ["Courier New", "'Courier New', monospace"],
-    ["Georgia", "Georgia, serif"]
+    ["Georgia", "Georgia, serif"],
+    ["Times New Roman", "'Times New Roman', Times, serif"],
+    ["Verdana", "Verdana, Geneva, sans-serif"],
+    ["Tahoma", "Tahoma, Geneva, sans-serif"],
+    ["Trebuchet MS", "'Trebuchet MS', sans-serif"],
+    ["Palatino", "'Palatino Linotype', 'Book Antiqua', Palatino, serif"],
+    ["Garamond", "Garamond, serif"],
+    ["Impact", "Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif"]
 ]);
+const SAFE_FONT_VALUES = new Set(SAFE_FONTS.values());
 const SAFE_SIZES = new Set(["0.85em", "1em", "1.2em", "1.5em"]);
 const SAFE_NAMED_COLORS = new Set(["red", "blue", "green", "black", "white", "orange", "yellow", "gray", "grey", "purple", "teal", "navy"]);
 
@@ -89,10 +91,80 @@ function splitSelectionIntoListItems(selected) {
     return items.map(item => item || "<br>");
 }
 
+function isRichContentEditable_(element) {
+    return Boolean(element && (element.isContentEditable || element.getAttribute?.("contenteditable") === "true"));
+}
+
+function wrapRichEditorSelection_(editor, styleProperty, styleValue) {
+    const selection = window.getSelection?.();
+    if (!selection || !selection.rangeCount) return false;
+    const range = selection.getRangeAt(0);
+    if (!editor.contains(range.commonAncestorContainer)) return false;
+    const wrapper = document.createElement("span");
+    wrapper.style.setProperty(styleProperty, styleValue);
+    if (range.collapsed) {
+        const marker = document.createTextNode("\u200b");
+        wrapper.appendChild(marker);
+        range.insertNode(wrapper);
+        range.setStart(marker, 1);
+        range.collapse(true);
+    } else {
+        wrapper.appendChild(range.extractContents());
+        range.insertNode(wrapper);
+        range.setStartAfter(wrapper);
+        range.collapse(true);
+    }
+    selection.removeAllRanges();
+    selection.addRange(range);
+    editor.focus();
+    editor.dispatchEvent(new Event("input", { bubbles: true }));
+    return true;
+}
+
+function applyRichTextToContentEditable_(editor, format, extraValue) {
+    const commands = {
+        bold: ["bold", null], italic: ["italic", null], underline: ["underline", null],
+        strike: ["strikeThrough", null]
+    };
+    let command = commands[format];
+    if (format === "font" && SAFE_FONTS.has(extraValue)) command = ["fontName", SAFE_FONTS.get(extraValue)];
+    if (format === "size" && SAFE_SIZES.has(extraValue)) {
+        const sizeMap = { "0.85em":"2", "1em":"3", "1.2em":"4", "1.5em":"5" };
+        command = ["fontSize", sizeMap[extraValue]];
+    }
+    if (format === "ul") command = ["insertUnorderedList", null];
+    if (format === "ol") command = ["insertOrderedList", null];
+    if ((format === "font" && !SAFE_FONTS.has(extraValue)) || (format === "size" && !SAFE_SIZES.has(extraValue)) || !command) return false;
+
+    editor.focus();
+    let applied = false;
+    try {
+        applied = typeof document.execCommand === "function" &&
+            document.execCommand(command[0], false, command[1]) === true;
+    } catch (_) { applied = false; }
+    if (!applied && (format === "font" || format === "size")) {
+        const property = format === "font" ? "font-family" : "font-size";
+        const value = format === "font" ? SAFE_FONTS.get(extraValue) : extraValue;
+        applied = wrapRichEditorSelection_(editor, property, value);
+    }
+    if (format === "ul" && applied) {
+        const selection = window.getSelection?.();
+        const node = selection?.anchorNode?.nodeType === 1 ? selection.anchorNode : selection?.anchorNode?.parentElement;
+        const list = node?.closest?.("ul");
+        if (list && editor.contains(list)) list.setAttribute("data-gp-marker", SAFE_MARKERS.has(extraValue) ? extraValue : "bullet");
+    }
+    if (applied) editor.dispatchEvent(new Event("input", { bubbles: true }));
+    return applied;
+}
+
 export function applyRichTextFormat(targetId, format, extraValue = null, options = {}) {
     if (getRichTextMode() !== "advanced" && !options.forceAdvanced && format !== "bold") return;
     const textarea = document.getElementById(targetId);
     if (!textarea) return;
+    if (isRichContentEditable_(textarea)) {
+        applyRichTextToContentEditable_(textarea, format, extraValue);
+        return;
+    }
     attachListKeyboardBehavior(textarea);
 
     const start = textarea.selectionStart;
@@ -176,8 +248,17 @@ export function applyRichTextFormat(targetId, format, extraValue = null, options
 export function applyRichTextColor(targetId, color) {
     const textarea = document.getElementById(targetId);
     if (!textarea) return;
-    attachListKeyboardBehavior(textarea);
     const safeColor = /^#[0-9a-f]{3,8}$/i.test(String(color || "")) ? color : "#000000";
+    if (isRichContentEditable_(textarea)) {
+        textarea.focus();
+        let applied = false;
+        try { applied = typeof document.execCommand === "function" && document.execCommand("foreColor", false, safeColor) === true; }
+        catch (_) { applied = false; }
+        if (!applied) applied = wrapRichEditorSelection_(textarea, "color", safeColor);
+        if (applied) textarea.dispatchEvent(new Event("input", { bubbles: true }));
+        return;
+    }
+    attachListKeyboardBehavior(textarea);
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const selected = textarea.value.substring(start, end) || "texto";
@@ -189,7 +270,7 @@ export function applyRichTextColor(targetId, color) {
 
 function attachListKeyboardBehavior(textarea) {
     if (getRichTextMode() !== "advanced") return;
-    if (!textarea || textarea.dataset.richListKeyboardBound === "true") return;
+    if (!textarea || isRichContentEditable_(textarea) || textarea.dataset.richListKeyboardBound === "true") return;
     textarea.dataset.richListKeyboardBound = "true";
     textarea.addEventListener("keydown", event => {
         if (getRichTextMode() !== "advanced") return;
@@ -315,10 +396,9 @@ function createCompactRichTextToolbar_(targetId, forceAdvanced) {
         { label:"Encabezado", action:()=>applyRichTextFormat(targetId,"size","1.5em",{forceAdvanced}) }
     ]);
     addDropdown("fa-font", "Tipo de fuente", [
-        { label:"Arial", action:()=>applyRichTextFormat(targetId,"font","Arial",{forceAdvanced}) },
-        { label:"Segoe UI", action:()=>applyRichTextFormat(targetId,"font","Segoe UI",{forceAdvanced}) },
-        { label:"Monospace", action:()=>applyRichTextFormat(targetId,"font","Courier New",{forceAdvanced}) },
-        { label:"Georgia", action:()=>applyRichTextFormat(targetId,"font","Georgia",{forceAdvanced}) }
+        ...Array.from(SAFE_FONTS.keys()).map(font => ({
+            label:font, action:()=>applyRichTextFormat(targetId,"font",font,{forceAdvanced})
+        }))
     ]);
     addDropdown("fa-list-ul", "Listas y marcadores", [
         { label:"Viñetas", action:()=>applyRichTextFormat(targetId,"ul","bullet",{forceAdvanced}) },
@@ -386,7 +466,7 @@ export function createRichTextToolbar(targetId, options = {}) {
         const fontSelect = document.createElement("select");
         fontSelect.title = "Tipo de fuente";
         fontSelect.style.cssText = "height:28px; padding:2px 4px; border:1px solid var(--border-color, #ccc); border-radius:4px;";
-        fontSelect.innerHTML = '<option value="">Fuente</option><option value="Arial">Arial</option><option value="Segoe UI">Segoe UI</option><option value="Courier New">Monospace</option><option value="Georgia">Georgia</option>';
+        fontSelect.innerHTML = '<option value="">Fuente</option>' + Array.from(SAFE_FONTS.keys()).map(font => '<option value="' + font + '">' + font + '</option>').join("");
         fontSelect.addEventListener("change", event => {
             if (event.target.value) applyRichTextFormat(targetId, "font", event.target.value, { forceAdvanced });
             event.target.value = "";

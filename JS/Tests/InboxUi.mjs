@@ -366,10 +366,54 @@ check("La búsqueda expande el nombre del botón y lo contrae al cerrar", () => 
     assert.ok(css.includes('max-width:110px; margin-left:1px; opacity:1'));
 });
 check("La barra está integrada en el editor y su fondo cambia por tema", () => {
-    assert.ok(ui.includes("editorShell.append(toolbar, textarea)"));
+    assert.ok(ui.includes("editorShell.append(toolbar, editor, textarea)"));
+    assert.ok(ui.includes("editorShell.append(toolbar, bodyEditor, body)"));
     assert.ok(css.includes("background:#f1f3f5"));
     assert.ok(css.includes("body.dark-mode #inbox-modal-content .inbox-editor-shell { background:#2b3036; }"));
     assert.ok(css.includes("background:transparent; box-shadow:none; resize:vertical"));
+});
+
+
+check("El Inbox usa editores visuales contenteditable y conserva un campo fuente HTML saneado", () => {
+    assert.match(ui, /function createInboxRichEditor_\(/);
+    assert.match(ui, /editor\.setAttribute\("contenteditable", "true"\)/);
+    assert.match(ui, /editor\.setAttribute\("role", "textbox"\)/);
+    assert.match(ui, /source\.value = sanitizeHtmlContent\(editor\.innerHTML, "advanced"\)/);
+    assert.match(ui, /source\.hidden = true/);
+    assert.match(ui, /createInboxRichEditor_\("inbox-reply-body", "inbox-reply-body-editor"/);
+    assert.match(ui, /createInboxRichEditor_\("inbox-new-body", "inbox-new-body-editor"/);
+    assert.match(ui, /createInboxRichTextToolbar\(editor\.id\)/);
+    assert.match(ui, /createInboxRichTextToolbar\(bodyEditor\.id\)/);
+});
+check("La edición visual sanea el contenido pegado y mantiene el límite de 5,000 caracteres", () => {
+    assert.match(ui, /editor\.addEventListener\("paste"/);
+    assert.match(ui, /sanitizeHtmlContent\(html, "advanced"\)/);
+    assert.match(ui, /const maxLength = Number\(source\.maxLength\) \|\| 5000/);
+    assert.match(ui, /range\.setEnd\(editor, editor\.childNodes\.length\)/);
+});
+check("La barra aplica formato sobre la selección real del editor visual", () => {
+    assert.match(rich, /function isRichContentEditable_/);
+    assert.match(rich, /document\.execCommand\(command\[0\], false, command\[1\]\)/);
+    assert.match(rich, /document\.execCommand\("foreColor", false, safeColor\)/);
+    assert.match(rich, /\["insertUnorderedList", null\]/);
+    assert.match(rich, /editor\.dispatchEvent\(new Event\("input", \{ bubbles: true \}\)\)/);
+});
+check("Los menús de fuente y listas se despliegan hacia la izquierda del botón", () => {
+    const menuRule = css.slice(css.lastIndexOf("GP-UX-INBOX-RICH-EDITOR-01"));
+    assert.match(menuRule, /\.rich-toolbar-menu\s*\{[^}]*left:auto; right:0/s);
+    assert.match(menuRule, /max-width:calc\(100vw - 24px\)/);
+});
+check("La barra compacta reduce separación y ancho de iconos en PWA móvil", () => {
+    const toolbarRule = css.slice(css.lastIndexOf("GP-UX-INBOX-RICH-EDITOR-01"));
+    assert.match(toolbarRule, /\.inbox-rich-text-toolbar\s*\{\s*gap:1px; padding:2px/);
+    assert.match(toolbarRule, /flex:0 0 27px; width:27px/);
+    assert.match(toolbarRule, /flex-basis:25px; width:25px/);
+});
+check("Las fuentes nativas ampliadas están permitidas por el sanitizador y disponibles en el menú", () => {
+    for (const font of ["Times New Roman","Verdana","Tahoma","Trebuchet MS","Palatino","Garamond","Impact"]) {
+        assert.ok(rich.includes('["' + font + '"'));
+    }
+    assert.match(rich, /const SAFE_FONT_VALUES = new Set\(SAFE_FONTS\.values\(\)\)/);
 });
 
 let passed = 0;
