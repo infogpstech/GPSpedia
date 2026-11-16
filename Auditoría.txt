@@ -1148,3 +1148,24 @@ Validación:
 - La prueba no inspecciona las hojas reales del despliegue. Si Beta tiene un esquema parcial, ahora se mostrará un error explícito; la recuperación/migración del esquema requiere revisar los datos reales.
 - No se desplegó FEEDBACK ni se modificaron hojas externas.
 ================================================================================
+
+
+================================================================================
+AUD-2026-11-16-07 — Limpieza de Logs: auditoría end-to-end de despacho y actor central
+Severidad: Media — función Beta reportada sin éxito.
+Estado: CONTRATOS VERIFICADOS EN RAMA; CI APROBADO; REPRODUCCIÓN BETA PENDIENTE.
+
+Resultado de auditoría:
+- clearSensitiveLogs está mapeada a AUTH, incluida en isSharedMutationAction_, despachada con lease AUTH/clearSensitiveLogs y protegida por la política que escribe LOGS.
+- clearActivityLogs está mapeada a FEEDBACK, incluida en isSharedMutationAction_, despachada con lease FEEDBACK/clearActivityLogs, restringida a Desarrollador y protegida por la política que escribe ACTIVITY.
+- Ambas rutas reciben el actor confiable de Coordinator. La limpieza AUTH no vuelve a leer Users/ActiveSessions por acción; la autorización de FEEDBACK consume el actor central.
+- La interfaz usa getDeveloperSessionPayload(), ya normalizado mediante getUiSessionContext_() para admitir ID/id.
+
+Pruebas:
+- SensitiveLogsTrustedActor.mjs ahora construye los dispatchers reales de AUTH y FEEDBACK con Coordinator simulado y verifica servicio, operación, token, actor/epoch, mapeo de acción y recursos de escritura.
+- CI run 43783958890, commit fe9749c7f57f1a70f72850543e881266e90c0b9b: SUCCESS; 108 suites / 1,662 pruebas / 0 fallos.
+
+Límite:
+- No se reprodujo la limpieza contra hojas Logs/ActividadUsuario reales. Si Beta sigue fallando después de desplegar este código, capturar la respuesta estructurada y los contadores scannedCount/deletedCount/unclassifiedCount para localizar la causa restante.
+- No se desplegó AUTH ni FEEDBACK; no se modificaron datos externos.
+================================================================================
