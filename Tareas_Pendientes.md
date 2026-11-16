@@ -63,6 +63,13 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 - `getCatalogChanges` ahora reutiliza el mecanismo común de reintentos con timeout, backoff corto, cancelación y clasificación de errores HTTP/red.
 - Cobertura: `RichTextGlobalPreference` 9/9; `CatalogFeedRetry` 9/9.
 
+### P2 — Auditoría transversal de alineación de modales
+**Estado: PENDIENTE LOCAL.**
+
+- Revisar cabeceras, grupos de acciones y botones de cierre en todos los modales de `index.html` y en las subpáginas administrativas.
+- Detectar alineaciones centradas que contradigan la jerarquía del contenido; estandarizar grupos de acciones a izquierda/derecha según función, mantener el cierre en la esquina superior derecha y evitar reglas globales que rompan modales con formularios o contenido centrado deliberadamente.
+- Criterios de aceptación: inventario de modales revisados, CSS compartido en lugar de parches duplicados, disposición correcta en móvil/escritorio, foco visible/teclado y contratos Node.js. La inspección visual final requiere Beta.
+
 ### P2 — Caché opcional de validación y modales concretos
 **Estado: CORREGIDO LOCALMENTE; REVISIÓN VISUAL GENERAL PENDIENTE.**
 

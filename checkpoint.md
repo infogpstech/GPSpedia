@@ -1,4 +1,27 @@
-# Continuidad — correcciones PWA, IndexedDB y diagnóstico Coordinator (2026-11-15)
+# Continuidad vigente — GPSpedia (2026-11-16)
+
+**Rama de trabajo:** `GPSpedia2.2.5_work`  
+**HEAD de código validado:** `e4850ea35e5d84b0b2c07c60cb0a63f0f24c7982`  
+**Último commit documental antes de este resumen:** `8efb0f602fb56cbf51e4e7771f99fe3d8e77521d`  
+**Rama base:** `GPSpedia2.2.5` — `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; sin modificaciones.
+
+## Estado vigente
+
+- CI Node.js 22: **SUCCESS — 124 suites / 1,847 pruebas / 0 fallos** (run `43815317885`).
+- GitHub Pages: **SUCCESS** (run `43815317615`).
+- El acceso Developer, la recuperación de sesión heredada, el Service Worker cache-first y los reintentos de FEEDBACK están corregidos y validados localmente.
+- El usuario informó que actualizó el secreto de FEEDBACK en su deployment. La igualdad de propiedades y la operación real de Inbox/actividad/tráfico siguen pendientes de verificación Beta.
+- Desarrollador ya tenía `SESSION_LIMITS = Infinity`; la política se conserva y se cubre con pruebas.
+- La revisión transversal de alineación de los demás modales continúa **PENDIENTE LOCAL**; los cierres tutorial/relay, la barra de acciones de cortes y la ayuda de consola sí fueron corregidos.
+
+## Siguiente acción
+
+Realizar las pruebas Beta detalladas en `Tareas_Pendientes.md`, sin cambiar deployments o datos productivos desde esta iteración. Después completar la auditoría transversal de modales y repetir regresión local.
+
+---
+
+## Historial de checkpoints
+11-15)
 
 **Rama:** `GPSpedia2.2.5_work`  
 **HEAD de código validado:** `c982ade64442bcc35686d5a22207dd8c25153ee0`  
