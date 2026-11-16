@@ -109,7 +109,8 @@
         .dark-mode .user-table th {
             background-color: var(--gp-color-surface);
         }
-        .actions-cell { display:flex; flex-direction:row; align-items:center; justify-content:flex-start; flex-wrap:nowrap; gap:7px; min-width:92px; }
+        .actions-cell { display:flex; flex-direction:column; align-items:flex-start; gap:6px; min-width:92px; }
+        .user-primary-actions { display:flex; flex-direction:row; align-items:center; flex-wrap:nowrap; gap:7px; }
         .actions-cell .btn-sm { margin:0; }
         .actions-cell .user-icon-action { display:inline-flex; align-items:center; justify-content:center; flex:0 0 38px; width:38px; min-width:38px; height:38px; min-height:38px; padding:0; border-radius:9px; font-size:1rem; }
         .actions-cell .user-icon-action i { pointer-events:none; }
@@ -206,7 +207,8 @@
  .user-table th:nth-child(2), .user-table td:nth-child(2) { width: 31%; }
  .user-table th:nth-child(3), .user-table td:nth-child(3) { width: 17%; }
  .user-table th:nth-child(4), .user-table td:nth-child(4) { width: 29%; }
- .actions-cell { display:flex; flex-direction:row; align-items:center; justify-content:flex-start; flex-wrap:nowrap; gap:6px; min-width:0; }
+ .actions-cell { display:flex; flex-direction:column; align-items:flex-start; gap:6px; min-width:0; }
+ .user-primary-actions { display:flex; flex-direction:row; align-items:center; flex-wrap:nowrap; gap:6px; }
  .actions-cell .btn-sm { flex:0 0 38px; width:38px; min-width:38px; height:38px; min-height:38px; margin:0; padding:0; white-space:nowrap; line-height:1; }
  .actions-cell .user-session-action { flex:0 0 auto; width:auto; min-width:38px; padding:0 8px; font-size:.75rem; }
  .modal { padding: 12px; overflow-y: auto; }
@@ -463,7 +465,7 @@ async function fetchUsers(options = {}) {
     if (!sessionSnapshot || !sessionSnapshot.id || !sessionSnapshot.token) return;
     if (options.background !== true) {
         const cached = readUsersCache_();
-        if (cached && cached.users.length) {
+        if (cached && cached.users.length && !cached.stale) {
             allUsers = cached.users;
             renderUserTable();
         }
@@ -504,13 +506,16 @@ function renderUserTable() {
         const actionsCell = document.createElement('td');
         actionsCell.className = 'actions-cell';
 
+        const primaryActions = document.createElement('div');
+        primaryActions.className = 'user-primary-actions';
+
         const editButton = document.createElement('button');
         editButton.className = 'btn btn-warning btn-sm user-icon-action';
         editButton.innerHTML = '<i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>';
         editButton.title = 'Editar usuario';
         editButton.setAttribute('aria-label', 'Editar usuario ' + String(user.Nombre_Usuario || ''));
         editButton.addEventListener('click', () => openUserModal(user));
-        actionsCell.appendChild(editButton);
+        primaryActions.appendChild(editButton);
 
         if (String(user.ID) !== String(currentUser.ID)) {
             const deleteButton = document.createElement('button');
@@ -519,8 +524,10 @@ function renderUserTable() {
             deleteButton.title = 'Eliminar usuario';
             deleteButton.setAttribute('aria-label', 'Eliminar usuario ' + String(user.Nombre_Usuario || ''));
             deleteButton.addEventListener('click', (e) => deleteUser(user.ID, user.Nombre_Usuario, e.currentTarget));
-            actionsCell.appendChild(deleteButton);
+            primaryActions.appendChild(deleteButton);
         }
+
+        actionsCell.appendChild(primaryActions);
 
         const isDeveloper = String(currentUser.Privilegios || '').trim().toLowerCase() === 'desarrollador';
         if (isDeveloper && String(user.ID) !== String(currentUser.ID)) {
