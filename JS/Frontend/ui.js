@@ -4421,6 +4421,7 @@ function closeInboxSearch_() {
     if (toggle) {
         toggle.setAttribute("aria-expanded", "false");
         toggle.setAttribute("aria-label", "Mostrar búsqueda");
+        toggle.classList.remove("is-expanded");
     }
 }
 function bindInboxControls_() {
@@ -4487,6 +4488,7 @@ function bindInboxControls_() {
             const opening = !searchForm.classList.contains("is-open");
             searchToggle.setAttribute("aria-expanded", String(opening));
             searchToggle.setAttribute("aria-label", opening ? "Ocultar búsqueda" : "Mostrar búsqueda");
+            searchToggle.classList.toggle("is-expanded", opening);
             if (opening) {
                 searchForm.hidden = false;
                 searchForm.classList.remove("is-open");
@@ -4849,15 +4851,20 @@ function renderInboxReplyForm_(detail, item) {
     const textarea = inboxCreateNode_("textarea", "inbox-message-input");
     textarea.id = "inbox-reply-body"; textarea.rows = 3; textarea.maxLength = 5000; textarea.required = true;
     textarea.value = String(draft.body || "");
-    const toolbar = createRichTextToolbar(textarea.id, { forceAdvanced: true });
-    toolbar.classList.add("inbox-rich-text-toolbar");
-    toolbar.addEventListener("click", () => textarea.dispatchEvent(new Event("input", { bubbles: true })));
-    toolbar.addEventListener("change", () => textarea.dispatchEvent(new Event("input", { bubbles: true })));
+    const toolbar = createInboxRichTextToolbar(textarea.id);
+    const editorShell = inboxCreateNode_("div", "inbox-editor-shell");
+    editorShell.append(toolbar, textarea);
+    form.addEventListener("click", event => {
+        if (event.target.closest(".inbox-rich-text-toolbar")) textarea.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    form.addEventListener("change", event => {
+        if (event.target.closest(".inbox-rich-text-toolbar")) textarea.dispatchEvent(new Event("input", { bubbles: true }));
+    });
     const status = inboxCreateNode_("p", "inbox-form-status");
     status.setAttribute("role", "status"); status.setAttribute("aria-live", "polite");
     const send = inboxCreateNode_("button", "inbox-primary-button", "Enviar mensaje");
     send.type = "submit";
-    form.append(label, toolbar, textarea, status, send);
+    form.append(label, editorShell, status, send);
     textarea.addEventListener("input", () => {
         const current = inboxReadDraft_(draftKind), body = textarea.value;
         if (current.lastAttemptBody && current.lastAttemptBody !== body) current.idempotencyKey = "";
@@ -4947,7 +4954,6 @@ async function openInboxNewConversationForm_() {
     subject.type = "text"; subject.maxLength = 150; subject.required = true;
     subject.value = String(draft.subject || "");
 
-    const templateCategoryRow = inboxCreateNode_("div", "inbox-template-category-row");
     const templateField = inboxCreateNode_("div", "inbox-template-field");
     templateField.append(templateLabel, template);
     templateField.hidden = !isDeveloper;
@@ -4961,19 +4967,46 @@ async function openInboxNewConversationForm_() {
     });
     category.value = String(draft.category || "general");
     categoryField.append(categoryLabel, category);
-    templateCategoryRow.append(templateField, categoryField);
-    templateCategoryRow.classList.toggle("is-category-only", !isDeveloper);
-    form.appendChild(templateCategoryRow);
-
     const bodyLabel = inboxCreateNode_("label", "", "Mensaje");
     bodyLabel.htmlFor = "inbox-new-body";
     const body = document.createElement("textarea");
     body.id = "inbox-new-body"; body.rows = 6; body.maxLength = 5000; body.required = true;
     body.className = "inbox-form-control inbox-message-input";
     body.value = String(draft.body || "");
-    const toolbar = createRichTextToolbar(body.id, { forceAdvanced: true });
-    toolbar.classList.add("inbox-rich-text-toolbar");
-    form.append(bodyLabel, toolbar, body);
+    const toolbar = createInboxRichTextToolbar(body.id);
+    const composerOptions = inboxCreateNode_("div", "rich-toolbar-dropdown inbox-composer-options");
+    composerOptions.dataset.richToolbarPersist = "true";
+    const composerOptionsButton = inboxCreateNode_("button", "rich-toolbar-icon-button inbox-composer-options-toggle");
+    composerOptionsButton.type = "button"; composerOptionsButton.title = "Categoría y plantilla";
+    composerOptionsButton.setAttribute("aria-label", "Categoría y plantilla");
+    composerOptionsButton.setAttribute("aria-haspopup", "true"); composerOptionsButton.setAttribute("aria-expanded", "false");
+    composerOptionsButton.innerHTML = '<i class="fa-solid fa-sliders" aria-hidden="true"></i>';
+    composerOptionsButton.addEventListener("mousedown", event => event.preventDefault());
+    const composerOptionsMenu = inboxCreateNode_("div", "rich-toolbar-menu inbox-composer-options-menu");
+    composerOptionsMenu.hidden = true; composerOptionsMenu.setAttribute("role", "group");
+    composerOptionsButton.addEventListener("click", event => {
+        event.preventDefault();
+        const activeToolbar = composerOptions.closest(".inbox-rich-text-toolbar") || toolbar;
+        const opening = composerOptionsMenu.hidden;
+        activeToolbar.querySelectorAll(".rich-toolbar-dropdown.is-open").forEach(group => {
+            group.classList.remove("is-open");
+            group.querySelector(".rich-toolbar-icon-button")?.setAttribute("aria-expanded", "false");
+            const menu = group.querySelector(".rich-toolbar-menu");
+            if (menu) menu.hidden = true;
+        });
+        composerOptions.classList.toggle("is-open", opening);
+        composerOptionsButton.setAttribute("aria-expanded", String(opening));
+        composerOptionsMenu.hidden = !opening;
+    });
+    templateField.classList.add("inbox-composer-option"); categoryField.classList.add("inbox-composer-option");
+    composerOptionsMenu.append(templateField, categoryField);
+    composerOptions.append(composerOptionsButton, composerOptionsMenu);
+    toolbar.appendChild(composerOptions);
+    const editorShell = inboxCreateNode_("div", "inbox-editor-shell");
+    editorShell.append(toolbar, body);
+    form.addEventListener("click", event => { if (event.target.closest(".inbox-rich-text-toolbar")) persist(); });
+    form.addEventListener("change", event => { if (event.target.closest(".inbox-rich-text-toolbar")) persist(); });
+    form.append(bodyLabel, editorShell);
     if (draft.templateId) template.value = draft.templateId;
     const formStatus = inboxCreateNode_("p", "inbox-form-status");
     formStatus.setAttribute("role", "status"); formStatus.setAttribute("aria-live", "polite");
@@ -4987,8 +5020,6 @@ async function openInboxNewConversationForm_() {
         inboxSaveDraft_(draftKind, { ...current, recipientId: recipient.value, subject: subject.value, category: category.value, body: body.value, templateId: template.value });
     };
     [recipient,subject,category,body].forEach(element => { element.addEventListener("input", persist); element.addEventListener("change", persist); });
-    toolbar.addEventListener("click", persist);
-    toolbar.addEventListener("change", persist);
     template.addEventListener("change", () => {
         const selected = templates.find(item => item.id === template.value);
         if (selected && selected.id) { subject.value = selected.subject; body.value = selected.body; category.value = "general"; }
@@ -9207,12 +9238,8 @@ export function renderInboxList(items) {
 
 /* TAREA 1.7: BARRA DE ENRIQUECIMIENTO DE TEXTO COMPLETA PARA EL EDITOR DEL INBOX */
 export function createInboxRichTextToolbar(targetId) {
-    const toolbar = createRichTextToolbar(targetId);
-    toolbar.classList.add("inbox-rich-toolbar");
-    toolbar.style.marginBottom = "8px";
-    toolbar.style.padding = "6px 8px";
-    toolbar.style.border = "1px solid var(--border-color, #ccc)";
-    toolbar.style.borderRadius = "6px";
+    const toolbar = createRichTextToolbar(targetId, { forceAdvanced: true, compact: true });
+    toolbar.classList.add("inbox-rich-text-toolbar");
     return toolbar;
 }
 

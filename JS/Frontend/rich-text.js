@@ -245,9 +245,96 @@ function attachListKeyboardBehavior(textarea) {
     });
 }
 
+
+function createCompactRichTextToolbar_(targetId, forceAdvanced) {
+    const toolbar = document.createElement("div");
+    toolbar.className = "rich-editor-toolbar rich-editor-toolbar-compact";
+    toolbar.dataset.richTargetId = String(targetId);
+    toolbar.dataset.richTextMode = getRichTextMode();
+    toolbar.dataset.richTextForceAdvanced = String(forceAdvanced);
+    toolbar.dataset.richTextCompact = "true";
+    toolbar.setAttribute("role", "toolbar");
+    toolbar.setAttribute("aria-label", "Formato del mensaje");
+    const closeMenus = except => toolbar.querySelectorAll(".rich-toolbar-dropdown.is-open").forEach(group => {
+        if (group === except) return;
+        group.classList.remove("is-open");
+        group.querySelector(".rich-toolbar-icon-button")?.setAttribute("aria-expanded", "false");
+        const menu = group.querySelector(".rich-toolbar-menu");
+        if (menu) menu.hidden = true;
+    });
+    const makeIconButton = (icon, title, callback) => {
+        const button = document.createElement("button");
+        button.type = "button"; button.className = "rich-toolbar-icon-button";
+        button.title = title; button.setAttribute("aria-label", title);
+        button.innerHTML = '<i class="fa-solid ' + icon + '" aria-hidden="true"></i>';
+        button.addEventListener("mousedown", event => event.preventDefault());
+        button.addEventListener("click", event => { event.preventDefault(); closeMenus(); callback(); });
+        return button;
+    };
+    const addDropdown = (icon, title, items) => {
+        const group = document.createElement("div"); group.className = "rich-toolbar-dropdown";
+        const trigger = document.createElement("button");
+        trigger.type = "button"; trigger.className = "rich-toolbar-icon-button";
+        trigger.title = title; trigger.setAttribute("aria-label", title);
+        trigger.setAttribute("aria-haspopup", "menu"); trigger.setAttribute("aria-expanded", "false");
+        trigger.innerHTML = '<i class="fa-solid ' + icon + '" aria-hidden="true"></i>';
+        trigger.addEventListener("mousedown", event => event.preventDefault());
+        const menu = document.createElement("div"); menu.className = "rich-toolbar-menu";
+        menu.setAttribute("role", "menu"); menu.hidden = true;
+        items.forEach(item => {
+            const option = document.createElement("button");
+            option.type = "button"; option.className = "rich-toolbar-menu-item";
+            option.setAttribute("role", "menuitem"); option.textContent = item.label;
+            option.addEventListener("mousedown", event => event.preventDefault());
+            option.addEventListener("click", event => { event.preventDefault(); item.action(); closeMenus(); });
+            menu.appendChild(option);
+        });
+        trigger.addEventListener("click", event => {
+            event.preventDefault();
+            const opening = !group.classList.contains("is-open");
+            closeMenus(group); group.classList.toggle("is-open", opening);
+            trigger.setAttribute("aria-expanded", String(opening)); menu.hidden = !opening;
+        });
+        group.append(trigger, menu); toolbar.appendChild(group);
+    };
+    toolbar.appendChild(makeIconButton("fa-bold", "Negrita", () => applyRichTextFormat(targetId, "bold", null, { forceAdvanced })));
+    toolbar.appendChild(makeIconButton("fa-italic", "Cursiva", () => applyRichTextFormat(targetId, "italic", null, { forceAdvanced })));
+    toolbar.appendChild(makeIconButton("fa-underline", "Subrayado", () => applyRichTextFormat(targetId, "underline", null, { forceAdvanced })));
+    toolbar.appendChild(makeIconButton("fa-strikethrough", "Tachado", () => applyRichTextFormat(targetId, "strike", null, { forceAdvanced })));
+    const colorGroup = document.createElement("div"); colorGroup.className = "rich-toolbar-color-group";
+    const colorPicker = document.createElement("input"); colorPicker.type = "color";
+    colorPicker.className = "rich-toolbar-color-input"; colorPicker.title = "Color de texto";
+    colorPicker.setAttribute("aria-label", "Color de texto");
+    const colorButton = makeIconButton("fa-palette", "Color de texto", () => colorPicker.click());
+    colorPicker.addEventListener("input", event => applyRichTextColor(targetId, event.target.value));
+    colorGroup.append(colorButton, colorPicker); toolbar.appendChild(colorGroup);
+    addDropdown("fa-text-height", "Tamaño de texto", [
+        { label:"Pequeño", action:()=>applyRichTextFormat(targetId,"size","0.85em",{forceAdvanced}) },
+        { label:"Normal", action:()=>applyRichTextFormat(targetId,"size","1em",{forceAdvanced}) },
+        { label:"Grande", action:()=>applyRichTextFormat(targetId,"size","1.2em",{forceAdvanced}) },
+        { label:"Encabezado", action:()=>applyRichTextFormat(targetId,"size","1.5em",{forceAdvanced}) }
+    ]);
+    addDropdown("fa-font", "Tipo de fuente", [
+        { label:"Arial", action:()=>applyRichTextFormat(targetId,"font","Arial",{forceAdvanced}) },
+        { label:"Segoe UI", action:()=>applyRichTextFormat(targetId,"font","Segoe UI",{forceAdvanced}) },
+        { label:"Monospace", action:()=>applyRichTextFormat(targetId,"font","Courier New",{forceAdvanced}) },
+        { label:"Georgia", action:()=>applyRichTextFormat(targetId,"font","Georgia",{forceAdvanced}) }
+    ]);
+    addDropdown("fa-list-ul", "Listas y marcadores", [
+        { label:"Viñetas", action:()=>applyRichTextFormat(targetId,"ul","bullet",{forceAdvanced}) },
+        { label:"Guiones", action:()=>applyRichTextFormat(targetId,"ul","hyphen",{forceAdvanced}) },
+        { label:"Flechas", action:()=>applyRichTextFormat(targetId,"ul","arrow",{forceAdvanced}) },
+        { label:"Verificación", action:()=>applyRichTextFormat(targetId,"ul","check",{forceAdvanced}) },
+        { label:"Lista numerada", action:()=>applyRichTextFormat(targetId,"ol",null,{forceAdvanced}) }
+    ]);
+    toolbar.addEventListener("click", event => { if (!event.target.closest(".rich-toolbar-dropdown")) closeMenus(); });
+    return toolbar;
+}
+
 export function createRichTextToolbar(targetId, options = {}) {
-    const mode = getRichTextMode();
     const forceAdvanced = options.forceAdvanced === true;
+    if (options.compact === true) return createCompactRichTextToolbar_(targetId, forceAdvanced);
+    const mode = getRichTextMode();
     const isAdvanced = forceAdvanced || mode === "advanced";
     const toolbar = document.createElement("div");
     toolbar.className = "rich-editor-toolbar";
@@ -330,9 +417,12 @@ export function refreshRichTextToolbars(root = document) {
         const targetId = toolbar.dataset.richTargetId;
         if (!targetId || !toolbar.parentNode) return;
         const nextToolbar = createRichTextToolbar(targetId, {
-            forceAdvanced: toolbar.dataset.richTextForceAdvanced === "true"
+            forceAdvanced: toolbar.dataset.richTextForceAdvanced === "true",
+            compact: toolbar.dataset.richTextCompact === "true"
         });
         toolbar.classList.forEach(className => nextToolbar.classList.add(className));
+        Array.from(toolbar.children).filter(child => child.dataset.richToolbarPersist === "true")
+            .forEach(child => nextToolbar.appendChild(child));
         toolbar.replaceWith(nextToolbar);
         refreshed++;
     });

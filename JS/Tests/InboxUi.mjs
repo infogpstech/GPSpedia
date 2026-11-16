@@ -7,7 +7,7 @@ import { mergeInboxMessagePages } from "../Frontend/inboxPageCache.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const read = path => readFileSync(resolve(ROOT, path), "utf8");
-const ui = read("JS/Frontend/ui.js"), html = read("index.html"), css = read("style.css"), api = read("JS/Frontend/api-config.js");
+const ui = read("JS/Frontend/ui.js"), html = read("index.html"), css = read("style.css"), api = read("JS/Frontend/api-config.js"), rich = read("JS/Frontend/rich-text.js");
 const index = read("index.html"), users = read("HTML/users.html");
 const cases = [];
 function check(name, fn) { cases.push({ name, fn }); }
@@ -260,10 +260,13 @@ check("El compositor nuevo permite desplazamiento vertical y mantiene Salir/Envi
     assert.match(composeActionsLayout, /position:\s*sticky/);
     assert.match(ui, /formActions\.append\(makeCancelButton\(\), send\)/);
 });
-check("Plantilla y categoría comparten una fila inmediatamente antes del editor", () => {
-    assert.match(ui, /templateCategoryRow\.append\(templateField, categoryField\)/);
-    assert.match(ui, /form\.append\(bodyLabel, toolbar, body\)/);
-    assert.match(css, /\.inbox-template-category-row\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,1fr\)\)/s);
+check("Plantilla y categoría se apilan dentro del desplegable de opciones de la barra", () => {
+    assert.match(ui, /composerOptionsMenu\.append\(templateField, categoryField\)/);
+    assert.match(ui, /composerOptions\.dataset\.richToolbarPersist = "true"/);
+    assert.match(ui, /editorShell\.append\(toolbar, body\)/);
+    assert.match(ui, /form\.append\(bodyLabel, editorShell\)/);
+    assert.match(css, /\.inbox-composer-options-menu\s*\{[^}]*grid-template-columns:\s*minmax\(0,1fr\)/s);
+    assert.match(css, /\.inbox-composer-option\s*\{[^}]*flex-direction:\s*column/s);
 });
 check("La lista vacía reduce su altura y el botón de búsqueda conserva íntegro el icono", () => {
     assert.match(ui, /list\.classList\.toggle\("is-empty", isEmpty\)/);
@@ -334,3 +337,34 @@ for (const item of cases) {
 }
 console.log("InboxUi: " + passed + "/" + cases.length + " PASS");
 if (passed !== cases.length) process.exitCode = 1;
+
+
+check("La barra enriquecida del Inbox usa iconos uniformes y menús desplegables", () => {
+    assert.match(ui, /createRichTextToolbar\\(targetId, \\{ forceAdvanced: true, compact: true \\}\\)/);
+    assert.match(rich, /function createCompactRichTextToolbar_\\(/);
+    assert.match(rich, /className = "rich-toolbar-icon-button"/);
+    assert.match(rich, /aria-haspopup", "menu"/);
+    assert.match(rich, /fa-text-height/);
+    assert.match(rich, /fa-font/);
+    assert.match(rich, /fa-list-ul/);
+    assert.match(css, /\\.inbox-rich-text-toolbar > \\.rich-toolbar-dropdown[\\s\\S]*?flex:1 1 0/);
+    const compact = rich.slice(rich.indexOf("function createCompactRichTextToolbar_"), rich.indexOf("export function createRichTextToolbar"));
+    assert.doesNotMatch(compact, /createElement\\("select"\\)/);
+});
+check("Los controles personalizados sobreviven al refresco del toolbar", () => {
+    assert.match(rich, /compact: toolbar\\.dataset\\.richTextCompact === "true"/);
+    assert.match(rich, /child\\.dataset\\.richToolbarPersist === "true"/);
+    assert.match(ui, /composerOptions\\.closest\\("\\.inbox-rich-text-toolbar"\\)/);
+});
+check("La búsqueda expande el nombre del botón y lo contrae al cerrar", () => {
+    assert.match(ui, /searchToggle\\.classList\\.toggle\\("is-expanded", opening\\)/);
+    assert.match(ui, /toggle\\.classList\\.remove\\("is-expanded"\\)/);
+    assert.match(css, /#inbox-search-toggle\\[aria-expanded="true"\\][\\s\\S]*?background:var\\(--gp-color-accent/);
+    assert.match(css, /#inbox-search-toggle\\[aria-expanded="true"\\] span[\\s\\S]*?max-width:110px/);
+});
+check("La barra está integrada en el editor y su fondo cambia por tema", () => {
+    assert.match(ui, /editorShell\\.append\\(toolbar, textarea\\)/);
+    assert.match(css, /\\.inbox-editor-shell \\{[\\s\\S]*?background:#f1f3f5/);
+    assert.match(css, /body\\.dark-mode #inbox-modal-content \\.inbox-editor-shell \\{ background:#2b3036; \\}/);
+    assert.match(css, /\\.inbox-editor-shell \\.inbox-message-input \\{[\\s\\S]*?background:transparent/);
+});

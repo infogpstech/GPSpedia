@@ -174,3 +174,9 @@ testCase("el título tutorial se ajusta entre palabras y el cierre queda anclado
     assert.match(css, /\.tutorial-detail-title \{[\s\S]*?white-space: normal;[\s\S]*?overflow-wrap: normal;[\s\S]*?word-break: normal;[\s\S]*?hyphens: none/);
     assert.match(css, /\.tutorial-detail-toolbar > \.tutorial-detail-header-actions > \.tutorial-detail-close \{[\s\S]*?position: absolute !important;[\s\S]*?right: 0 !important/);
 });
+
+
+testCase("la línea azul llega al extremo del modal con márgenes simétricos y menos espacio vertical", () => {
+    assert.match(css, /\\.detail-modal-divider \\{[\\s\\S]*?width:calc\\(100% \\+ 18px\\);[\\s\\S]*?margin:7\\.5px 0 7\\.5px 12px/);
+    assert.match(css, /@media \\(max-width:560px\\)[\\s\\S]*?\\.detail-modal-divider \\{ width:calc\\(100% \\+ 22px\\); \\}/);
+});
