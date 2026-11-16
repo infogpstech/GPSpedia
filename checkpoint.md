@@ -1327,3 +1327,6 @@ El usuario confirmó que el backlog pendiente también comprende la organizació
 
 
 - CI de BETA-035 detectó expectativas heredadas en `DriveStorageAlerts.mjs` (título «Monitor de GDrive») y `DevToolsModalAccessibility.mjs` (leyenda larga de secciones). Se alinearon con «Uso de Drive» y «Secciones», sin alterar IDs ni comportamiento.
+
+
+- Último contrato heredado detectado por CI en `DevToolsModalAccessibility.mjs`: se actualizó el título de pestaña «Base de datos y respaldos» a «Datos y respaldos». No cambia la región accesible ni el contenido funcional.

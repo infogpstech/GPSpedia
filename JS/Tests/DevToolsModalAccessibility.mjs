@@ -160,7 +160,7 @@ test('Respaldos y Base de datos comparten una sola pestaña', () => {
     assert.ok(databasePanel.includes('id="backup-management-panel"'));
     assert.ok(databasePanel.includes('btn-admin-backup-db'));
     assert.ok(databasePanel.includes('btn-admin-restore-db'));
-    assert.match(databasePanel, /Base de datos y respaldos/);
+    assert.match(databasePanel, /Datos y respaldos/);
 });
 test('Migrar esquema y selector de limpieza conservan dimensiones compactas', () => {
     assert.match(ui, /migrateButton\.className = "btn btn-primary replaced-images-schema-migrate"/);

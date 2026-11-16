@@ -870,3 +870,9 @@ HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
 - JS/Tests/DriveStorageAlerts.mjs: valida el nuevo título compacto «Uso de Drive».
 - JS/Tests/DevToolsModalAccessibility.mjs: valida la leyenda compacta «Secciones».
 ================================================================================
+
+
+================================================================================
+2026-11-16 — ACTUALIZACIÓN FINAL DE TÍTULO EN TEST DE ACCESIBILIDAD BETA-035
+- JS/Tests/DevToolsModalAccessibility.mjs: espera el título compacto «Datos y respaldos».
+================================================================================
