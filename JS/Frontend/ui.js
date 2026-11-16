@@ -2466,10 +2466,13 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
         title.className = "detail-modal-title-text";
     }
 
-    // La imagen ocupa la columna izquierda; las acciones quedan arriba a la derecha
-    // y el nombre del modelo se alinea abajo, a la derecha del logotipo.
+    // El logo y el modelo comparten la cabecera; el divisor azul ocupa todo el ancho útil.
+    const headerDivider = document.createElement("div");
+    headerDivider.className = "detail-modal-divider";
+    headerDivider.setAttribute("aria-hidden", "true");
     headerDiv.insertBefore(titleContainer, savingIndicator);
     headerDiv.insertBefore(titleNode, savingIndicator);
+    headerDiv.insertBefore(headerDivider, savingIndicator);
 
     const subHeaderDiv = document.createElement('div');
     subHeaderDiv.className = "detail-modal-meta";
@@ -10628,15 +10631,14 @@ export function mostrarDetalleTutorialModal(item, inEditModeTutorial = false) {
     const userRole = getUiSessionContext_()?.role || null;
     const isDeveloper = userRole === "desarrollador";
     const headerDiv = document.createElement("div");
-    headerDiv.className = "detail-modal-toolbar";
-    headerDiv.style.marginBottom = "20px";
+    headerDiv.className = "detail-modal-toolbar tutorial-detail-toolbar";
     const title = document.createElement("h2");
+    title.className = "tutorial-detail-title";
     title.textContent = item.Tema || "Tutorial";
-    title.style.cssText = "color:#007bff; margin:0; flex:1;";
     headerDiv.appendChild(title);
 
     const controlsContainer = document.createElement("div");
-    controlsContainer.style.cssText = "display:flex; align-items:center; gap:8px;";
+    controlsContainer.className = "tutorial-detail-header-actions";
     if (isDeveloper) {
         if (inEditModeTutorial) {
             const resetBtn = document.createElement("button");
@@ -10666,8 +10668,7 @@ export function mostrarDetalleTutorialModal(item, inEditModeTutorial = false) {
     closeBtn.type = "button";
     closeBtn.setAttribute("aria-label", "Cerrar detalle del tutorial");
     closeBtn.innerHTML = "&times;";
-    closeBtn.className = "info-close-btn";
-    closeBtn.style.cssText = "position:static; margin-left:8px; flex:0 0 auto;";
+    closeBtn.className = "info-close-btn tutorial-detail-close";
     closeBtn.onclick = () => {
         if (window.history && window.history.state && window.history.state.modalOpen) window.history.back();
         else document.getElementById("modalDetalle").classList.remove("visible");
