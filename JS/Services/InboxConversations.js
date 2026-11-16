@@ -463,12 +463,16 @@ function handleGetInboxConversations(payload) {
     return withInboxConversationLock_(() => {
         const convSheet = inboxConversationSheet_(INBOX_CONVERSATIONS_SHEET_,INBOX_CONVERSATION_HEADERS_,false);
         const stateSheet = inboxConversationSheet_(INBOX_CONVERSATION_STATE_SHEET_,INBOX_STATE_HEADERS_,false);
-        if (!convSheet || !stateSheet) return {status:"success",data:[],counts:{received:0,unread:0,sent:0,archived:0},total:0,nextCursor:null,hasMore:false,pageSize};
+        if (!convSheet && !stateSheet) return {status:"success",data:[],counts:{received:0,unread:0,sent:0,archived:0},total:0,nextCursor:null,hasMore:false,pageSize};
+        if (!convSheet || !stateSheet) throw new Error("El esquema Inbox está incompleto: faltan las hojas de conversaciones o estado.");
         const conversations = inboxConversationRows_(convSheet,INBOX_CONVERSATION_HEADERS_.length);
         const stateRows = inboxConversationRows_(stateSheet,INBOX_STATE_HEADERS_.length);
         const flagsSheet = inboxConversationSheet_(INBOX_CONVERSATION_FLAGS_SHEET_,INBOX_FLAGS_HEADERS_,false);
         const flagRows = inboxConversationRows_(flagsSheet,INBOX_FLAGS_HEADERS_.length);
         const messageSheet = inboxConversationSheet_(INBOX_MESSAGES_SHEET_,INBOX_MESSAGE_HEADERS_,false);
+        if (!messageSheet && conversations.some(row => Number(row[16]) > 0)) {
+            throw new Error("El esquema Inbox está incompleto: falta la hoja de mensajes.");
+        }
         const messageRows = inboxConversationRows_(messageSheet,INBOX_MESSAGE_HEADERS_.length);
         const messagesByConversation = new Map();
         messageRows.forEach(message => {
@@ -500,6 +504,9 @@ function handleGetInboxConversations(payload) {
             const flag = flagsMap.get(String(row[0]) + "|" + actor.id) || [];
             if (inboxFlagIsTrue_(flag[3])) return null;
             const conversationMessages = messagesByConversation.get(String(row[0])) || [];
+            if (Number(row[16]) > 0 && conversationMessages.length === 0) {
+                throw new Error("La conversación tiene mensajes registrados, pero no se encontraron en la hoja InboxMessages.");
+            }
             const lastReadMessageId = String(state[3] || "");
             const readIndex = lastReadMessageId ? conversationMessages.findIndex(message => String(message[0]) === lastReadMessageId) : -1;
             if (lastReadMessageId && readIndex < 0) throw new Error("El marcador de lectura no pertenece al historial de la conversación.");
