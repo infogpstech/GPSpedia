@@ -14,7 +14,7 @@ function extract(source,name){
  return source.slice(start,next<0?source.length:next);
 }
 const normalizeUserId=value=>String(value??"").trim();
-const normalizeRoleName=value=>String(value||"").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").trim().toLowerCase();
+const normalizeRoleName=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();
 const actorGuard=new Function("normalizeUserId","normalizeRoleName",extract(auth,"requireSharedAuthActor_")+"\nreturn requireSharedAuthActor_;")(normalizeUserId,normalizeRoleName);
 let benchmarkCalls=0;
 const handler=new Function("requireSharedAuthActor_","benchmarkPasswordKdf_",extract(auth,"handleBenchmarkPasswordKdf_")+"\nreturn handleBenchmarkPasswordKdf_;")(
