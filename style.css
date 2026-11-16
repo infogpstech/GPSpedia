@@ -5865,3 +5865,16 @@ textarea.rich-text-source[hidden] { display:none !important; }
     width:0 !important;
     height:0 !important;
 }
+
+
+/* GP-UX-RICH-EDITOR-SELECTION-02 — conservar la selección sin mostrar el menú contextual del navegador. */
+.rich-text-visual-editor,
+#inbox-modal-content .inbox-rich-editor {
+    -webkit-touch-callout:none;
+    -webkit-user-select:text;
+    user-select:text;
+}
+.rich-editor-toolbar-compact .rich-toolbar-icon-button[aria-label="Copiar texto seleccionado"],
+.rich-editor-toolbar-compact .rich-toolbar-icon-button[aria-label="Pegar texto"] {
+    flex:0 0 27px;
+}
