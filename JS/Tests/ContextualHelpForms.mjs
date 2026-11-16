@@ -6,6 +6,7 @@ const root=resolve(dirname(fileURLToPath(import.meta.url)),"../..");
 const html=fs.readFileSync(resolve(root,"HTML/add_cortes.html"),"utf8");
 const helpCss=fs.readFileSync(resolve(root,"contextual-help.css"),"utf8");
 const index=fs.readFileSync(resolve(root,"index.html"),"utf8");
+const sw=fs.readFileSync(resolve(root,"service-worker.js"),"utf8");
 let passed=0;function testCase(name,fn){fn();passed++;console.log("PASS "+name);}
 testCase("Año, versión, tipo de corte y relay tienen ayudas breves asociadas",()=>{
  for(const [id,phrase] of [["help-ano-desde","rango continuo"],["help-versiones","nivel de equipamiento"],["help-tipo-corte","diagrama eléctrico"],["help-config-relay","esquema de conexión"]]){
@@ -105,4 +106,8 @@ testCase("la apertura y cierre de ayuda actualizan aria-describedby",()=>{
  assert.ok(html.includes("button.removeAttribute('aria-describedby')"));
  assert.ok(ui.includes('trigger.setAttribute("aria-describedby", panel.id)'));
  assert.ok(ui.includes('trigger.removeAttribute("aria-describedby")'));
+});
+
+testCase("la hoja compartida de ayudas forma parte del shell offline",()=>{
+ assert.ok(sw.includes("'./contextual-help.css'"));
 });
