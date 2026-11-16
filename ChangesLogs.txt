@@ -767,3 +767,11 @@ HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
 - CI run 43783775316: SUCCESS; 108 suites / 1,660 pruebas / 0 fallos.
 - La validación de CI usa Spreadsheet simulado; falta comprobar estructura y contenido de hojas en Beta. No se desplegó FEEDBACK.
 ================================================================================
+
+
+================================================================================
+2026-11-16 — CONTRATOS DE DESPACHO PARA LIMPIEZA DE LOGS
+- JS/Tests/SensitiveLogsTrustedActor.mjs: amplía pruebas con dispatchers AUTH y FEEDBACK, verificando que clearSensitiveLogs usa AUTH/clearSensitiveLogs y clearActivityLogs usa FEEDBACK/clearActivityLogs; ambos entregan actor central y conservan políticas de escritura LOGS/ACTIVITY y RBAC de Desarrollador.
+- CI run 43783958890: SUCCESS; 108 suites / 1,662 pruebas / 0 fallos.
+- La ruta estática y el contrato de actor están validados; falta reproducir contra las hojas reales en Beta. No se desplegaron AUTH/FEEDBACK.
+================================================================================
