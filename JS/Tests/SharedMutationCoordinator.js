@@ -829,7 +829,7 @@ function runSharedMutationCoordinatorTests() {
 
     test_("La telemetría global cuenta leases por servicio y deduplica reintentos de requestId", function() {
         const r = createRuntime_();
-        const requestId = "traffic-dedupe-0001";
+        const requestId = "traffic-dedupe-request-0001";
         const first = acquire_(r, "AUTH", "login", requestId);
         const retry = acquire_(r, "AUTH", "login", requestId);
         assert_(first.status === "success" && retry.status === "success" && first.token === retry.token,
@@ -847,9 +847,9 @@ function runSharedMutationCoordinatorTests() {
 
     test_("La telemetría separa ventanas de una hora, seis horas y veinticuatro horas", function() {
         const r = createRuntime_();
-        acquire_(r, "AUTH", "login", "traffic-window-1");
+        acquire_(r, "AUTH", "login", "traffic-window-request-0001");
         r.advance(2 * 60 * 60 * 1000);
-        acquire_(r, "FEEDBACK", "reportProblem", "traffic-window-2");
+        acquire_(r, "FEEDBACK", "reportProblem", "traffic-window-request-0002");
         const traffic = r.request("getServiceTraffic", "ADMIN", "getServiceTraffic");
         assert_(traffic.buckets.length === 24, "La respuesta debe contener 24 buckets horarios.");
         assert_(traffic.totals.lastHour.FEEDBACK === 1 && traffic.totals.lastHour.AUTH === 0,
@@ -870,9 +870,9 @@ function runSharedMutationCoordinatorTests() {
 
     test_("La retención elimina buckets fuera de 24 horas", function() {
         const r = createRuntime_();
-        acquire_(r, "AUTH", "login", "traffic-old");
+        acquire_(r, "AUTH", "login", "traffic-old-request-0001");
         r.advance(25 * 60 * 60 * 1000);
-        acquire_(r, "WRITE", "addOrUpdateCut", "traffic-new");
+        acquire_(r, "WRITE", "addOrUpdateCut", "traffic-new-request-0001");
         const traffic = r.request("getServiceTraffic", "ADMIN", "getServiceTraffic");
         assert_(traffic.buckets.length === 24, "La respuesta debe limitarse a 24 buckets.");
         assert_(traffic.totals.last24Hours.AUTH === 0 && traffic.totals.last24Hours.WRITE === 1,
@@ -888,7 +888,7 @@ function runSharedMutationCoordinatorTests() {
             if (String(key).startsWith("GPSpedia_SERVICE_TRAFFIC_HOUR_")) throw new Error("quota telemetry");
             return originalSet(key, value);
         };
-        const lease = acquire_(r, "AUTH", "login", "traffic-best-effort");
+        const lease = acquire_(r, "AUTH", "login", "traffic-best-effort-request-0001");
         assert_(lease.status === "success", "La operación debe continuar aunque falle la telemetría.");
     });
 
