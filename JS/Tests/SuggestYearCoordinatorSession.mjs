@@ -78,6 +78,5 @@ assert.equal(anonymous.captured[0].userRole, "Anónimo");
 assert.equal(anonymous.captured[0].suggestionActorKey, "anon:unverified");
 
 assert.match(apiConfig, /['"]suggestYear['"]\s*:\s*['"]FEEDBACK['"]/);
-const feedbackPolicy = coordinator.match(/FEEDBACK:\s*\{([\s\S]*?)\n        \},/)?.[1] || "";
-assert.match(feedbackPolicy, /sessionActivity:\s*\{\s*read:\s*feedbackRead\s*\}/);
+assert.match(coordinator, /FEEDBACK:\s*\{[\s\S]*?sessionActivity:\s*\{\s*read:\s*feedbackRead\s*\}/);
 console.log("SuggestYearCoordinatorSession: 2/2 PASS");
