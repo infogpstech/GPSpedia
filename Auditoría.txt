@@ -1634,3 +1634,10 @@ ADENDA DE CIERRE AUD-2026-11-16-11 — GP-UX-INBOX-DESKTOP-03 / GP-UX-CUT-MODAL-
 - CI run 43954136534 detectó el mismo valor obsoleto en OfflineBrandAssets.mjs; corregido para v50.
 - CI final run 43954319908: SUCCESS — 129 suites / 1,916 pruebas / 0 fallos. InboxUi 51/51; CutDetailModalLayout 15/15; ServiceWorkerCache 10/10; OfflineBrandAssets 4/4. La prueba AntiDebuggingPolicy se ejecutó dentro del grupo de integración.
 - GitHub Pages run 43954319151: SUCCESS. La rama base protegida permanece intacta. La inspección visual real en escritorio, Android y PWA se difiere a Beta.
+
+
+ADENDA FINAL DE CIERRE AUD-2026-11-16-11 — VALIDACIÓN DEL CONTRATO DE ZOOM
+- Se incorporó JS/Tests/BrowserZoomAccessibility.js al runner integral; se corrigió su fixture para leer las rutas reales y simular apertura/cierre del lightbox con viewport previo permitido o restringido.
+- GitHub Actions Node.js 22 run 43954793653: SUCCESS — 130 suites / 1,928 pruebas / 0 fallos. BrowserZoomAccessibility 12/12; AntiDebuggingPolicy 11/11; InboxUi 51/51; CutDetailModalLayout 15/15; ServiceWorkerCache 10/10; OfflineBrandAssets 4/4.
+- GitHub Pages run 43954793227: SUCCESS (build y deploy).
+- La rama de trabajo finaliza en 3eec55bdd28ebaebf49c57d008d63a1a767b38b0 antes de este registro; la rama base protegida no se modifica. La aceptación visual real queda pendiente de Beta.

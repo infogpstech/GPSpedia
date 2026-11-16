@@ -1340,3 +1340,5 @@ GP-UX-INBOX-DESKTOP-03 / GP-UX-CUT-MODAL-06 / GP-PWA-ZOOM-01 — 2026-11-16
 ================================================================================
 
 - Ajuste de contratos de caché: JS/Tests/ServiceWorkerCache.js y JS/Tests/OfflineBrandAssets.mjs esperan gpsepedia-cache-v50.
+
+- Se incorporó BrowserZoomAccessibility.js al runner integral; valida zoom de navegación restringido, zoom temporal en el lightbox y restauración del viewport previo. CI Node.js 22 run 43954793653: 130 suites / 1,928 pruebas / 0 fallos; GitHub Pages run 43954793227 SUCCESS.

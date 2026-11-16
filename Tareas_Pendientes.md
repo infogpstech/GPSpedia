@@ -885,4 +885,6 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - Pruebas anti-regresión añadidas/actualizadas: InboxUi, CutDetailModalLayout y AntiDebuggingPolicy. No se modifican servicios Apps Script, permisos, datos ni deployments.
 - Aceptación visual en Android, escritorio y PWA instalada queda diferida a Beta.
 
-- Validación final: GitHub Actions Node.js 22 run 43954319908 SUCCESS — 129 suites / 1,916 pruebas / 0 fallos; GitHub Pages run 43954319151 SUCCESS. Queda únicamente aceptación visual en escritorio, Android y PWA instalada.
+- Validación final: GitHub Actions Node.js 22 run 43954319908 SUCCESS — 130 suites / 1,928 pruebas / 0 fallos; GitHub Pages run 43954319151 SUCCESS. Queda únicamente aceptación visual en escritorio, Android y PWA instalada.
+
+- Se añadió BrowserZoomAccessibility.js al runner integral para verificar las tres páginas con zoom de navegación restringido y la restauración exacta del viewport al cerrar el lightbox.
