@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 const admin = readFileSync(new URL("../Services/admin.js", import.meta.url), "utf8");
 const coordinator = readFileSync(new URL("../Services/Coordinator.js", import.meta.url), "utf8");
 const feedback = readFileSync(new URL("../Services/feedback.js", import.meta.url), "utf8");
+const ui = readFileSync(new URL("../Frontend/ui.js", import.meta.url), "utf8");
 
 function extractFunction(source, name) {
     const match = source.match(new RegExp("function " + name + "\\([^\\n]*\\) \\{[\\s\\S]*?\\n\\}"));
@@ -33,6 +34,8 @@ assert.ok(router.includes('withSharedMutationLease_("ADMIN", operation'),
 const internal = admin.slice(admin.indexOf("function doPostInternal_(e)"));
 assert.ok(internal.includes("assertDeveloperSession(payload)"),
     "Las lecturas y mutaciones ADMIN deben conservar autorización de Desarrollador.");
+assert.match(ui, /routeActionWithRetry\('auditDriveImagesInCortes'[\s\S]*?timeoutMs:\s*cursor\s*\?\s*45000\s*:\s*120000/,
+    "La captura inicial de referencias necesita hasta 120 s; las páginas con cursor conservan timeout y reintentos acotados.");
 
 const inventory = policy("ADMIN", "getReplacedImages");
 for (const resource of ["USERS", "CORTES", "DRIVE", "IMAGE_INVENTORY", "RELAY"]) {
