@@ -1706,3 +1706,32 @@ Backlog y registro de cambios sincronizados con este estado. La rama base perman
 - La ejecución de Node.js y GitHub Actions aún no se ha confirmado para este conjunto de commits; no se declara como aprobada.
 - Pendiente: ejecutar la suite Inbox/regresión global, revisar el diff completo y comprobar visualmente el alto útil, el comportamiento de la lupa y la expansión de carpetas en escritorio/móvil.
 - No se desplegaron Apps Script ni se modificaron hojas, secretos, servicios externos o datos productivos.
+
+
+---
+
+## Continuidad — PWA Inbox y normalización de aportaciones (2026-11-16)
+
+**Rama autorizada:** `GPSpedia2.2.5_work`  
+**Rama base protegida:** `GPSpedia2.2.5` — no modificar.
+
+### GP-UX-INBOX-03
+- `index.html`: los botones «Nuevo mensaje» y «Buscar» se trasladaron a `#inbox-folder-nav`, junto a las carpetas de conversaciones; se mantienen sus IDs y manejadores.
+- `JS/Frontend/ui.js`: las acciones se ocultan cuando la vista cambia a solicitudes y vuelven a mostrarse en conversaciones.
+- `style.css`: en PWA/móvil la lista `#inbox-list` de solicitudes/reportes usa `flex:1 1 0`, scroll vertical propio y el detalle permanece oculto hasta seleccionar un elemento. Se elimina el límite de 38% introducido por una regla responsive posterior.
+- `JS/Tests/InboxUi.mjs`: se añadieron comprobaciones de altura de lista y ubicación de los botones.
+
+### GP-DASH-ATTR-01
+- `JS/Frontend/activityDashboard.js`: el frontend separa nombres con `<br>`, elimina markup/script y marcadores auxiliares, normaliza acentos, mayúsculas, puntuación y espacios, y presenta una única fila por nombre canónico con capitalización de palabras.
+- Las aportaciones compartidas se atribuyen a cada nombre detectado. Al consolidar alias se suman cortes y se conserva el máximo de vehículos observado, porque la respuesta agregada no contiene IDs de vehículos por aportador para calcular una unión exacta.
+- `JS/Tests/ActivityDashboardContributions.mjs`: regresiones de alias, acentos, separadores, HTML y renderizado como texto seguro.
+- No se modificó `JS/Services/feedback.js`, Apps Script, hojas ni datos persistentes.
+
+### PWA
+- `service-worker.js`: caché App Shell v35 e inclusión de `activityDashboard.js` en recursos esenciales.
+- `JS/Tests/ServiceWorkerCache.js`: expectativa v35 y cobertura del nuevo recurso.
+
+### Validación
+- Cambios aplicados en los archivos de frontend y pruebas.
+- Pendiente ejecutar en Node.js las suites InboxUi, ActivityDashboardContributions y ServiceWorkerCache, además de revisar el diff y comprobar el resultado visual PWA en un dispositivo.
+- No se ha realizado despliegue de Apps Script ni modificación de servicios/hojas externas.
