@@ -91,3 +91,8 @@ El checkpoint acumulativo anterior se conserva íntegro en `Checkpoint_Archive/c
 - Modal de corte: logo de imagen real ampliado a 69.12 px escritorio / 54.72 px móvil. El modelo permanece siempre en la misma línea; si no cabe completo, se trunca visualmente sin pasar debajo del logo.
 - Se actualizan InboxUi, CutDetailModalLayout, ServiceWorkerCache y OfflineBrandAssets; App Shell v44.
 - Validación local/CI pendiente de ejecución. Aceptación visual Android/PWA pendiente de Beta. No se tocaron Apps Script, deployments ni datos externos.
+
+
+### Ajuste de prueba posterior a CI — 2026-11-16
+- CI run 43923520450: 104 suites; 1,572 pruebas aprobaron; una suite falló por una expresión de CutDetailModalLayout que no toleraba el espacio en `max-width: 560px`.
+- Se corrigió el patrón de prueba para admitir espacios CSS sin alterar código visual. Reejecución de CI pendiente.

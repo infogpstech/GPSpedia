@@ -1485,3 +1485,8 @@ AUDITORÍA COMPLEMENTARIA — 2026-11-16 — AUD-2026-11-16-06
 ### Validación
 - Pruebas modificadas: InboxUi.mjs, CutDetailModalLayout.mjs, ServiceWorkerCache.js y OfflineBrandAssets.mjs.
 - Ejecución local/CI y comprobación visual en Android/PWA: pendientes; no se presentan como aprobadas.
+
+
+### Rectificación de prueba — AUD-2026-11-16-03
+- La primera CI posterior a la corrección visual ejecutó 104 suites: 1,572 pruebas aprobaron y falló la suite CutDetailModalLayout únicamente por un patrón de prueba que no admitía el espacio presente en `@media (max-width: 560px)`.
+- Se ajustó el patrón para tolerar espacios CSS. El fallo no indicó un defecto de layout; la ejecución posterior debe confirmar la suite completa.

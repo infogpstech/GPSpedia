@@ -139,7 +139,7 @@ testCase("en móvil/PWA las acciones permanecen en la misma fila, antes del cier
     assert.match(css, /\.detail-modal-header-actions \{[\s\S]*?flex-wrap: nowrap/);
     assert.match(css, /\.detail-modal-toolbar > \.info-close-btn \{[\s\S]*?right:0/);
     assert.doesNotMatch(css, /@media \(max-width:560px\) \{[\s\S]*?\.detail-modal-title \{\s*flex-basis:100%/);
-    assert.match(css, /@media \(max-width:560px\)[\s\S]*?\.detail-modal-header-actions \.share-modal-btn \{[\s\S]*?width: 32px;[\s\S]*?height: 32px/);
+    assert.match(css, /@media \(max-width:\s*560px\)[\s\S]*?\.detail-modal-header-actions \.share-modal-btn \{[\s\S]*?width:\s*32px;[\s\S]*?height:\s*32px/);
 });
 
 console.log("CutDetailModalLayout: " + passed + "/" + passed + " PASS");
