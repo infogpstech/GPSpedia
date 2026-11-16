@@ -68,6 +68,7 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 - Carpetas de conversaciones: Recibidos, Leídos, No leídos, Enviados y Archivados. Mostrar iconos compactos y expandir el nombre de la carpeta activa mediante animación; respetar movimiento reducido.
 - «Leídos» filtra conversaciones recibidas cuyo contador de mensajes no leídos sea cero. No cambia el contrato de lectura ni modifica datos al consultar.
 - Validar que el paginador compartido funcione tanto para conversaciones directas como para solicitudes históricas, en todas las secciones, sin duplicar controles ni mezclar cursores.
+- Invalidar el App Shell anterior mediante `gpsepedia-cache-v34` y comprobar que Service Worker sirve los archivos actualizados.
 
 ## Orden general de ejecución
 
