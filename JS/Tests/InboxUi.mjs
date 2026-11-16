@@ -526,9 +526,10 @@ check("Todas las barras de formularios usan la iconografía compacta del Inbox s
     assert.match(toolbar, /if \(isFull\)[\s\S]*?fa-italic[\s\S]*?fa-strikethrough/);
     assert.match(toolbar, /if \(hasLists\)[\s\S]*?fa-list-ul[\s\S]*?fa-list-ol/);
     assert.match(toolbar, /rich-toolbar-native-select/);
+    assert.doesNotMatch(toolbar, /rich-toolbar-dropdown|addDropdown/);
     assert.match(css, /\.rich-editor-toolbar-compact\s*\{[^}]*gap:1px/s);
     assert.match(css, /\.rich-editor-toolbar-compact \.rich-toolbar-icon-button/);
-    assert.match(css, /\.rich-editor-toolbar-compact \.rich-toolbar-menu-item/);
+    assert.match(css, /\.rich-editor-toolbar-compact \.rich-toolbar-native-select/);
     assert.match(ui, /createInboxRichTextToolbar\(editor\.id\)/);
 });
 
