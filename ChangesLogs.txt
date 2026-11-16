@@ -712,3 +712,5 @@ HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
 [2026-11-15] Auditoría ADMIN: detectadas tres mutaciones sin política Coordinator (`markReplacedImageInUse`, `applyCortesImageReconciliation`, `freezeIdentifierFormulas`). Añadidas políticas específicas de recursos/mantenimiento y prueba de cobertura integral. Validación CI/Beta pendiente.
 
 [2026-11-15] Corrección de cobertura Coordinator: políticas explícitas para ADMIN/auditIdentifiers y FEEDBACK/notifyDevelopersDriveCritical; ampliación de AdminImageScanCoordinatorContract para verificar lecturas ADMIN dedicadas y mutaciones FEEDBACK.
+
+[2026-11-15] ADMIN: coordinación explícita de `checkOperation`, `getAdminImageUploadStatus` y `previewCortesImageReconciliation`; el estado de imagen reserva el ledger porque su helper puede inicializarlo.
