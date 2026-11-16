@@ -2405,9 +2405,9 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
     closeBtn.setAttribute("aria-label", "Cerrar ventana");
     closeBtn.innerHTML = "&times;";
     closeBtn.onclick=async()=>{
+        if(inEditMode){const discarded=await exitModalEditMode(false,activeItem.id,false,navOptions);if(!discarded)return;}
         if (titleLayoutObserver) titleLayoutObserver.disconnect();
         if (titleLayoutResizeFallback) window.removeEventListener('resize', titleLayoutResizeFallback);
-        if(inEditMode){const discarded=await exitModalEditMode(false,activeItem.id,false,navOptions);if(!discarded)return;}
         stopModalDetailMedia_();
         if(modalNavStack.length>0){closeModalToPreviousContext_();return;}
         const searchInput=document.getElementById('searchInput'),isSearchActive=document.body.classList.contains('search-active');
