@@ -1367,3 +1367,44 @@ El usuario confirmó que el backlog pendiente también comprende la organizació
 - BETA-030 y BETA-031: IMPLEMENTACIÓN LOCAL COMPLETADA; VALIDACIÓN VISUAL BETA PENDIENTE.
 - Node.js CLI/GitHub Actions no se confirmaron en esta sesión. No se hizo inspección visual real ni despliegue.
 - Siguiente tarea local: GP-IMG-DATA-01 — completar la auditoría y los contratos del inventario/historial de imágenes; después GP-BETA-06, BETA-042, BETA-043 y BETA-051.
+
+
+## Continuidad — GP-IMG-DATA-01 conciliación Drive ↔ Cortes y ACL (2026-11-16)
+
+**Rama:** `GPSpedia2.2.5_work`  
+**HEAD de código probado:** `209fdefa9af1e35e0a5adf5bed3498ecb3a8d3a0`  
+**HEAD base protegida:** `GPSpedia2.2.5` — `d9acc68d889985c2e2f42fe3a02e502efc86ead1` (sin modificaciones).
+
+### Resultado
+- Se completó la clasificación ACL de cada imagen y su cadena de carpetas dentro de Cortes usando Drive API. Solo `anyone/reader` con `allowFileDiscovery=false` se acepta como acceso público por diseño; permisos indexables, públicos de escritura/comentario y estados no verificables no habilitan asignaciones.
+- Se completó el diagnóstico de referencias Cortes ausentes del inventario: archivo en papelera, fuera del árbol, ubicación ambigua, no disponible/no accesible y archivo dentro de Cortes que no apareció en la auditoría.
+- El reporte conserva un máximo de 200 detalles, pero transporta el total real y marca truncamiento. Se corrigió el resumen del dry-run y la validación de aplicación para que el total, no solo el arreglo visible, determine el bloqueo.
+- La aplicación exige respaldo de Spreadsheet de esta sesión Developer, privado, completo y con manifiesto/fingerprint coincidentes. Se verifica que la copia y el origen mantengan el mismo fingerprint antes de escribir. Se conserva auditoría de cada asignación, read-back, conteo posterior y rollback condicionado.
+- La UI mantiene el dry-run sin escrituras, guarda/reanuda el progreso por cuenta/auditoría/firma y muestra el total de referencias faltantes aunque el detalle esté truncado.
+- Se actualizó el contrato heredado de `DeveloperOperationMessages.mjs`: esperaba el texto anterior del resumen de conciliación, aunque la UI ya mostraba el mensaje equivalente «Sin cambios en Spreadsheet, Drive ni permisos». No se cambió el comportamiento para satisfacer una expectativa obsoleta.
+
+### Commits de esta continuación
+- `7dd48cd6406993175657430a97fc0190db1cdf0d` — resumen del dry-run con conteo íntegro.
+- `23bbfef36204134fbeb7c3453c64817d516fb41e` — prueba del límite de 200 y conteo total.
+- `4db3fa5ff02776c0c4de32d267a1c23a3af1dbc3` — bloqueo de aplicación con detalle truncado.
+- `3b7bceb5ed924571bc27bd09d9a41c6b82919cd8` — contrato UI para conteo/truncamiento.
+- `62095de3f994f55610a6979705e18725ff1d4224` — corrección de extracción del helper de pruebas.
+- `209fdefa9af1e35e0a5adf5bed3498ecb3a8d3a0` — actualización del contrato de mensajes Developer.
+- `3ff30adcacaa91fb7e6cf1d1fe844d9fc25546e8` — actualización del backlog operativo.
+
+### Validación local
+- GitHub Actions Node.js 22 run `43798680601`: **SUCCESS — 117 suites / 1,760 pruebas / 0 fallos**.
+- `CortesImageReconciliation`: 28/28 PASS.
+- `CortesImageReconciliationApply`: 15/15 PASS.
+- `CortesImageReconciliationUI`: 13/13 PASS.
+- `AdminImageScanCoordinatorContract`: 1/1 PASS.
+- `DeveloperOperationMessages`: 5/5 PASS.
+- Parsing/sintaxis de `JS/Services/admin.js` y `JS/Frontend/ui.js`: PASS en runtime de validación; el workflow también completó la comprobación de sintaxis.
+- No se ejecutó Node CLI manual desde esta sesión; el CI sí ejecutó las suites con Node.js 22.
+- Sin despliegues Apps Script ni cambios en Drive, ACL, Spreadsheet, ScriptProperties, secretos o datos externos.
+
+### Estado y siguiente tarea
+- GP-IMG-DATA-01: **COMPLETADA CON VALIDACIÓN DIFERIDA A BETA**.
+- Pendiente Beta: probar ACL heredadas y reales, Drive API habilitada, Spreadsheet/Drive de copia autorizada y el ciclo de respaldo/aprobación/aplicación/read-back/rollback en entorno aislado.
+- Siguiente tarea local: GP-BETA-06 — completar auditoría de acciones protegidas fuera de los routers compartidos. Después BETA-042, BETA-043 y BETA-051.
+- Las tareas de UX Developer BETA-021–026 y BETA-030–035 permanecen cerradas localmente; no reabrir GP-DEV-UX-01.
