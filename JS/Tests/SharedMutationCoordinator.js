@@ -26,7 +26,8 @@ function runSharedMutationCoordinatorTests() {
         const properties = {
             getProperty: key => Object.prototype.hasOwnProperty.call(store, key) ? store[key] : null,
             setProperty: (key, value) => { store[key] = String(value); return properties; },
-            deleteProperty: key => { delete store[key]; return properties; }
+            deleteProperty: key => { delete store[key]; return properties; },
+            getProperties: () => Object.assign({}, store)
         };
         const lock = { tryLock: () => true, releaseLock: () => {} };
         const lockService = { getScriptLock: () => lock };
@@ -823,6 +824,72 @@ function runSharedMutationCoordinatorTests() {
             requestId: r.uuid(), waitMs: 0, userId: "USR-1004",
             sessionToken: "session-token-0000000000000005"
         }), "expiró");
+    });
+
+
+    test_("La telemetría global cuenta leases por servicio y deduplica reintentos de requestId", function() {
+        const r = createRuntime_();
+        const requestId = "traffic-dedupe-0001";
+        const first = acquire_(r, "AUTH", "login", requestId);
+        const retry = acquire_(r, "AUTH", "login", requestId);
+        assert_(first.status === "success" && retry.status === "success" && first.token === retry.token,
+            "El reintento debe reutilizar la lease existente.");
+        const traffic = r.request("getServiceTraffic", "ADMIN", "getServiceTraffic");
+        assert_(traffic.status === "success" && traffic.scope === "coordinator_protected_operations",
+            "ADMIN debe obtener el agregado global coordinado.");
+        assert_(traffic.totals.last24Hours.AUTH === 1,
+            "Un requestId idempotente solo debe incrementar una vez.");
+        assert_(traffic.totals.last24Hours.ADMIN === 0,
+            "La consulta interna de telemetría no debe duplicar el conteo de la lease.");
+        assert_(!JSON.stringify(traffic).includes("sessionToken") && !JSON.stringify(traffic).includes("userId"),
+            "La telemetría no debe exponer datos de sesión o identidad.");
+    });
+
+    test_("La telemetría separa ventanas de una hora, seis horas y veinticuatro horas", function() {
+        const r = createRuntime_();
+        acquire_(r, "AUTH", "login", "traffic-window-1");
+        r.advance(2 * 60 * 60 * 1000);
+        acquire_(r, "FEEDBACK", "reportProblem", "traffic-window-2");
+        const traffic = r.request("getServiceTraffic", "ADMIN", "getServiceTraffic");
+        assert_(traffic.buckets.length === 24, "La respuesta debe contener 24 buckets horarios.");
+        assert_(traffic.totals.lastHour.FEEDBACK === 1 && traffic.totals.lastHour.AUTH === 0,
+            "La ventana de una hora debe excluir el bucket anterior.");
+        assert_(traffic.totals.last6Hours.AUTH === 1 && traffic.totals.last6Hours.FEEDBACK === 1,
+            "La ventana de seis horas debe agregar ambos servicios.");
+        assert_(traffic.totals.last24Hours.AUTH === 1 && traffic.totals.last24Hours.FEEDBACK === 1,
+            "La ventana de 24 horas debe conservar ambos eventos.");
+    });
+
+    test_("La consulta global de telemetría solo está disponible para ADMIN", function() {
+        const r = createRuntime_();
+        expectThrow_(() => r.request("getServiceTraffic", "WRITE", "getServiceTraffic"), "Solo ADMIN");
+        const policy = coordinatorPolicy_("ADMIN", "getServiceTraffic");
+        assert_(policy.readResources.includes("SERVICE_TRAFFIC") && policy.writeResources.length === 0,
+            "La consulta debe reservar solo lectura del recurso de telemetría.");
+    });
+
+    test_("La retención elimina buckets fuera de 24 horas", function() {
+        const r = createRuntime_();
+        acquire_(r, "AUTH", "login", "traffic-old");
+        r.advance(25 * 60 * 60 * 1000);
+        acquire_(r, "WRITE", "addOrUpdateCut", "traffic-new");
+        const traffic = r.request("getServiceTraffic", "ADMIN", "getServiceTraffic");
+        assert_(traffic.buckets.length === 24, "La respuesta debe limitarse a 24 buckets.");
+        assert_(traffic.totals.last24Hours.AUTH === 0 && traffic.totals.last24Hours.WRITE === 1,
+            "No debe incluirse tráfico de más de 24 horas.");
+        const keys = Object.keys(r.properties.getProperties()).filter(key => key.startsWith("GPSpedia_SERVICE_TRAFFIC_HOUR_"));
+        assert_(keys.length === 1, "Los buckets expirados deben eliminarse del almacenamiento.");
+    });
+
+    test_("Un fallo al guardar telemetría nunca bloquea la lease protegida", function() {
+        const r = createRuntime_();
+        const originalSet = r.properties.setProperty;
+        r.properties.setProperty = (key, value) => {
+            if (String(key).startsWith("GPSpedia_SERVICE_TRAFFIC_HOUR_")) throw new Error("quota telemetry");
+            return originalSet(key, value);
+        };
+        const lease = acquire_(r, "AUTH", "login", "traffic-best-effort");
+        assert_(lease.status === "success", "La operación debe continuar aunque falle la telemetría.");
     });
 
     const summary = { status: failed === 0 ? "PASS" : "FAIL", passed, failed, results };
