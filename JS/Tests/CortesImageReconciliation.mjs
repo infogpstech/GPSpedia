@@ -179,8 +179,8 @@ testCase("conserva el total real cuando el detalle de referencias faltantes se l
  ]));
  const DriveApp={getFileById:()=>({isTrashed:()=>false})};
  const find=new Function("SHEET_NAMES","DriveApp","getSingleParentFolderInsideCortes",
-  admin.slice(admin.indexOf("function findMissingCortesDriveReferences_"),admin.indexOf("\\n}\\n",admin.indexOf("function findMissingCortesDriveReferences_"))+2)+
-  "\\nreturn findMissingCortesDriveReferences_;")({CORTES:"Cortes"},DriveApp,()=>({}));
+  admin.slice(admin.indexOf("function findMissingCortesDriveReferences_"),admin.indexOf("\n}\n",admin.indexOf("function findMissingCortesDriveReferences_"))+2)+
+  "\nreturn findMissingCortesDriveReferences_;")({CORTES:"Cortes"},DriveApp,()=>({}));
  const result=find(refs,[],"root");
  assert.equal(result.verified,true);assert.equal(result.totalMissingReferences,205);
  assert.equal(result.missingReferences.length,200);assert.equal(result.truncated,true);
