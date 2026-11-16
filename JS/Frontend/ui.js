@@ -2419,7 +2419,7 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
 
     const subHeaderDiv = document.createElement('div');
     subHeaderDiv.className = "detail-modal-meta";
-    const subHeaderText = document.createElement('p');
+    const subHeaderText = document.createElement('div');
     subHeaderText.className = "detail-modal-meta-text";
 
     /* TAREA: NAVEGACIÓN ENTRE GENERACIONES BASADA EN CONTINUIDAD DE VERSIONES DE EQUIPAMIENTO */

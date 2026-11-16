@@ -26,6 +26,7 @@ testCase("el título y metadatos se separan del área de edición", () => {
     assert.match(detail, /titleContainer\.className = "detail-modal-title"/);
     assert.match(detail, /subHeaderDiv\.className = "detail-modal-meta"/);
     assert.match(detail, /subHeaderText\.className = "detail-modal-meta-text"/);
+    assert.match(detail, /const subHeaderText = document\.createElement\('div'\)/);
     assert.match(css, /\.detail-modal-title-text \{[\s\S]*?overflow-wrap: anywhere/);
 });
 
