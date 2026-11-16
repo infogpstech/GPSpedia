@@ -73,7 +73,8 @@ check("La interfaz incluye destinatario único y plantillas editables", () => {
     assert.match(ui, /body\.maxLength = 5000/);
 });
 check("La bandeja tiene carpetas, búsqueda y paginación", () => {
-    for (const folder of ["received", "read", "unread", "sent", "archived"]) assert.match(html, new RegExp('data-inbox-folder="' + folder + '"'));
+    for (const folder of ["received", "sent", "archived"]) assert.match(html, new RegExp('data-inbox-folder="' + folder + '"'));
+    assert.doesNotMatch(html, /data-inbox-folder="read"|data-inbox-folder="unread"/);
     assert.match(html, /id="inbox-conversation-search-form"/);
     assert.match(ui, /getInboxConversations\(context,[\s\S]*folder: inboxConversationFolder_/);
     assert.match(ui, /inboxConversationNextCursor_/);
