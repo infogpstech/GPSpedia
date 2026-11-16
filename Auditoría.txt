@@ -1641,3 +1641,9 @@ ADENDA FINAL DE CIERRE AUD-2026-11-16-11 — VALIDACIÓN DEL CONTRATO DE ZOOM
 - GitHub Actions Node.js 22 run 43954793653: SUCCESS — 130 suites / 1,928 pruebas / 0 fallos. BrowserZoomAccessibility 12/12; AntiDebuggingPolicy 11/11; InboxUi 51/51; CutDetailModalLayout 15/15; ServiceWorkerCache 10/10; OfflineBrandAssets 4/4.
 - GitHub Pages run 43954793227: SUCCESS (build y deploy).
 - La rama de trabajo finaliza en 3eec55bdd28ebaebf49c57d008d63a1a767b38b0 antes de este registro; la rama base protegida no se modifica. La aceptación visual real queda pendiente de Beta.
+
+
+ADENDA FINAL — AJUSTE DIMENSIONAL DE ACCIONES INBOX — 2026-11-16
+- La dimensión compartida de los botones Salir/Enviar se ajustó a 64 × 40 px para igualar el tamaño compacto de Salir; el texto «Enviar mensaje» puede ocupar dos líneas dentro del mismo alto.
+- CI final sobre el código actualizado: run 43955279344 SUCCESS — 130 suites / 1,928 pruebas / 0 fallos. InboxUi 51/51; CutDetailModalLayout 15/15; BrowserZoomAccessibility 12/12; AntiDebuggingPolicy 11/11; ServiceWorkerCache 10/10; OfflineBrandAssets 4/4.
+- GitHub Pages run 43955278378 SUCCESS. La inspección visual real de los controles y el lightbox permanece pendiente de Beta.

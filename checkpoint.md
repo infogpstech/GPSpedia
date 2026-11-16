@@ -189,12 +189,12 @@ El checkpoint acumulativo anterior se conserva íntegro en `Checkpoint_Archive/c
 
 ### Nueva revisión visual — Inbox, modal de corte y zoom — 2026-11-16
 - Rama confirmada antes de los cambios: GPSpedia2.2.5_work, HEAD 06a906855e5f4fd169f8daf2d88e273247bc8c75. Rama base protegida confirmada en d9acc68d889985c2e2f42fe3a02e502efc86ead1; no se modifica.
-- Inbox: Salir/Enviar fijados en una sola fila, orden preservado, dimensiones comunes 104 × 40 px.
+- Inbox: Salir/Enviar fijados en una sola fila, orden preservado, dimensiones comunes 64 × 40 px.
 - Toolbar móvil: opciones de categoría/plantilla movidas antes de Negrita; el orden se conserva tras reconstruir la barra y el menú se alinea al borde izquierdo con ancho máximo ligado al viewport.
 - Modal de corte: divisor azul pasa de 7.5 px a 4 px de separación vertical; nombre del modelo incorpora sombra de texto.
 - Zoom: viewport de navegación restringido en index.html, HTML/users.html y HTML/add_cortes.html. lightbox.js mantiene su excepción: habilita temporalmente maximum-scale 5/user-scalable yes y restaura el valor previo al cerrar.
 - App Shell actualizado a v50. Pruebas InboxUi, CutDetailModalLayout y AntiDebuggingPolicy reforzadas.
-- GitHub Actions Node.js 22 run 43954793653: SUCCESS — 130 suites / 1,928 pruebas / 0 fallos; InboxUi 51/51, CutDetailModalLayout 15/15, BrowserZoomAccessibility 12/12, AntiDebuggingPolicy 11/11, ServiceWorkerCache 10/10 y OfflineBrandAssets 4/4.
-- GitHub Pages run 43954793227: SUCCESS (build y deploy).
-- Commit de código y pruebas validado: 3eec55bdd28ebaebf49c57d008d63a1a767b38b0.
+- GitHub Actions Node.js 22 run 43955279344: SUCCESS — 130 suites / 1,928 pruebas / 0 fallos; InboxUi 51/51, CutDetailModalLayout 15/15, BrowserZoomAccessibility 12/12, AntiDebuggingPolicy 11/11, ServiceWorkerCache 10/10 y OfflineBrandAssets 4/4.
+- GitHub Pages run 43955278378: SUCCESS (build y deploy).
+- Commit de código y pruebas validado: faf64565578db58f3b494280ed76927b8a914064.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. La inspección visual en Android/escritorio/PWA queda diferida a Beta; no se desplegaron servicios Apps Script ni se modificaron datos externos.

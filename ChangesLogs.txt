@@ -1333,7 +1333,7 @@ CIERRE — GP-UX-INBOX-DESKTOP-02 / GP-UX-CUT-MODAL-05 — 2026-11-16
 ================================================================================
 GP-UX-INBOX-DESKTOP-03 / GP-UX-CUT-MODAL-06 / GP-PWA-ZOOM-01 — 2026-11-16
 - JS/Frontend/ui.js y rich-text.js: opciones de categoría/plantilla al inicio del toolbar, antes de Negrita; la posición inicial se conserva al reconstruir la barra.
-- style.css: acciones Salir/Enviar en una fila, ambas 104 × 40 px; menú anclado al borde izquierdo y limitado al viewport; divisor azul con 4 px verticales; sombra de texto al modelo.
+- style.css: acciones Salir/Enviar en una fila, ambas 64 × 40 px; menú anclado al borde izquierdo y limitado al viewport; divisor azul con 4 px verticales; sombra de texto al modelo.
 - index.html, HTML/users.html y HTML/add_cortes.html: viewport restringido para el zoom de navegación. El lightbox conserva la habilitación temporal y restauración del zoom.
 - service-worker.js: App Shell v50.
 - JS/Tests/InboxUi.mjs, CutDetailModalLayout.mjs y AntiDebuggingPolicy.mjs: contratos de regresión actualizados.
@@ -1342,3 +1342,5 @@ GP-UX-INBOX-DESKTOP-03 / GP-UX-CUT-MODAL-06 / GP-PWA-ZOOM-01 — 2026-11-16
 - Ajuste de contratos de caché: JS/Tests/ServiceWorkerCache.js y JS/Tests/OfflineBrandAssets.mjs esperan gpsepedia-cache-v50.
 
 - Se incorporó BrowserZoomAccessibility.js al runner integral; valida zoom de navegación restringido, zoom temporal en el lightbox y restauración del viewport previo. CI Node.js 22 run 43954793653: 130 suites / 1,928 pruebas / 0 fallos; GitHub Pages run 43954793227 SUCCESS.
+
+- Ajuste final de dimensiones del compositor: Salir y Enviar comparten 64 × 40 px; el texto de Enviar puede distribuirse en dos líneas. CI 43955279344: 130 suites / 1,928 pruebas / 0 fallos; Pages 43955278378 SUCCESS.

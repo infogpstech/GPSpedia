@@ -877,7 +877,7 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 
 **Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
 
-- Inbox: «Salir» y «Enviar mensaje» se muestran en una sola fila, con 104 × 40 px cada uno; «Enviar mensaje» queda a la derecha y conserva su color primario.
+- Inbox: «Salir» y «Enviar mensaje» se muestran en una sola fila, con 64 × 40 px cada uno; «Enviar mensaje» queda a la derecha y conserva su color primario.
 - Editor móvil: el botón de opciones de categoría/plantilla queda antes de Negrita; los demás controles conservan su secuencia. El menú se ancla a la izquierda y limita su ancho al viewport para evitar recortes.
 - Modal de corte: divisor azul con separación vertical reducida a 4 px arriba y abajo; el nombre del modelo recibe sombra de texto compatible con la del logotipo.
 - Zoom: index.html, HTML/users.html y HTML/add_cortes.html restringen el zoom nativo de navegación. El módulo lightbox.js habilita temporalmente el zoom hasta escala 5 y restaura el contenido original del viewport al cerrar. Las imágenes que ya usan lightbox conservan su flujo.
@@ -885,6 +885,6 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - Pruebas anti-regresión añadidas/actualizadas: InboxUi, CutDetailModalLayout y AntiDebuggingPolicy. No se modifican servicios Apps Script, permisos, datos ni deployments.
 - Aceptación visual en Android, escritorio y PWA instalada queda diferida a Beta.
 
-- Validación final: GitHub Actions Node.js 22 run 43954319908 SUCCESS — 130 suites / 1,928 pruebas / 0 fallos; GitHub Pages run 43954319151 SUCCESS. Queda únicamente aceptación visual en escritorio, Android y PWA instalada.
+- Validación final: GitHub Actions Node.js 22 run 43955279344 SUCCESS — 130 suites / 1,928 pruebas / 0 fallos; GitHub Pages run 43955278378 SUCCESS. Queda únicamente aceptación visual en escritorio, Android y PWA instalada.
 
 - Se añadió BrowserZoomAccessibility.js al runner integral para verificar las tres páginas con zoom de navegación restringido y la restauración exacta del viewport al cerrar el lightbox.
