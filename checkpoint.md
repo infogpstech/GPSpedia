@@ -929,3 +929,11 @@ Se amplió `AdminImageScanCoordinatorContract.mjs` para exigir que cada mutació
 - Se identificaron tres acciones adicionales que antes caían en `ADMIN/sessionActivity`: `checkOperation`, `getAdminImageUploadStatus` y `previewCortesImageReconciliation`.
 - Se añadieron políticas de lectura dedicadas; `getAdminImageUploadStatus` reserva escritura de `IMAGE_UPLOAD_LEDGER` porque `getOrCreateAdminImageUploadsSheet()` puede crear la hoja.
 - Prueba contractual ampliada para verificar sus recursos y clasificación. Pendiente publicar y ejecutar validaciones locales/CI.
+
+
+### Resultado de cobertura completa ADMIN — validación local
+- Las 41 acciones del `switch` ADMIN están clasificadas como `ping`, mutación compartida o lectura dedicada; no quedan acciones sin clasificación.
+- Contrato `AdminImageScanCoordinatorContract`: 1/1 PASS ejecutado sobre el contenido actual de la rama, incluyendo harness de rutas ADMIN/FEEDBACK y cobertura de políticas.
+- Sintaxis JavaScript: `Coordinator.js`, `admin.js`, `feedback.js` e `InboxConversations.js` PASS.
+- La lectura `getAdminImageUploadStatus` reserva `IMAGE_UPLOAD_LEDGER` en escritura porque su helper puede inicializar la hoja. `previewCortesImageReconciliation` y `checkOperation` reservan sus recursos de lectura para coordinarse con operaciones concurrentes.
+- CI integral GitHub Actions pendiente de reporte; validación Beta/runtime Apps Script pendiente. No se ha desplegado ni modificado datos externos.
