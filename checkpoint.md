@@ -78,7 +78,7 @@ El checkpoint acumulativo anterior se conserva íntegro en `Checkpoint_Archive/c
 
 
 ### Estado de validación y HEAD — GP-UX-CUT-MODAL-01 — 2026-11-16
-- HEAD remoto verificado de la rama de trabajo: 2e544048a7f8104133ce46380b0bcb0840def18d (docs(checkpoint): registrar segunda corrección del modal).
+- HEAD de código de la corrección verificado: 2bc026cf2647174e6fb0d747e270e6f55958cbc4 (test(pwa): comprobar versión y CSS del App Shell). La documentación de continuidad se sincronizó posteriormente en e1bca4865bf915e32c8bf971ea76df5306712d6b.
 - Compare GPSpedia2.2.5_work → HEAD: identical. Compare GPSpedia2.2.5 → d9acc68d889985c2e2f42fe3a02e502efc86ead1: identical; la rama base permanece intacta.
 - Comprobaciones estáticas reproducibles sobre el contenido GitHub: 10/10 PASS (cascada CSS, cuadrícula, acciones, cierre, App Shell v43 y pruebas asociadas).
 - Node.js y GitHub Actions: PENDIENTES DE CONFIRMACIÓN. No se recibió estado de checks; el entorno local no pudo clonar por falta de resolución de github.com. No se afirma ejecución de las suites.
