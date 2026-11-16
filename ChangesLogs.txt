@@ -707,3 +707,6 @@ HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
 - Creado Tareas_beta.md con hallazgos y criterios BETA-001…BETA-052.
 - Pendiente: validación Beta de feed/Service Worker/IndexedDB; auditoría completa de acciones Developer; UI global, consola y telemetría agregada.
 - Sin despliegue Apps Script ni cambios a secretos o datos productivos.
+
+
+[2026-11-15] Auditoría ADMIN: detectadas tres mutaciones sin política Coordinator (`markReplacedImageInUse`, `applyCortesImageReconciliation`, `freezeIdentifierFormulas`). Añadidas políticas específicas de recursos/mantenimiento y prueba de cobertura integral. Validación CI/Beta pendiente.

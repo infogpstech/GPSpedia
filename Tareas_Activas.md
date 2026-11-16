@@ -1219,3 +1219,7 @@ El trabajo local GP-INBOX-04B/04C/04D queda cubierto en backend y contratos. No 
 ## Hallazgos de pruebas Beta consolidados — 2026-11-15
 
 Se creó `Tareas_beta.md` con los IDs BETA-001 a BETA-052, criterios de aceptación, estados diferenciados y orden de ejecución. La prioridad inmediata es validar en Beta IndexedDB/feed/Service Worker y continuar con permisos ADMIN/Developer. Los paquetes de interfaz global, consola, telemetría y sesión permanecen pendientes o sujetos a validación de campo; no se duplican como tareas completadas.
+
+
+### AUD-BETA-06 — Acciones ADMIN rechazadas por políticas ausentes
+**Causa raíz confirmada y corregida en código:** la lista de mutaciones de `admin.js` contenía tres acciones que no existían en `coordinatorPolicy_('ADMIN', ...)`: `markReplacedImageInUse`, `applyCortesImageReconciliation` y `freezeIdentifierFormulas`. El Coordinator las rechazaba antes de llegar al handler. Se añadieron políticas específicas y una prueba de integridad que compara todas las mutaciones del dispatcher con la matriz de políticas. CI y Beta pendientes.

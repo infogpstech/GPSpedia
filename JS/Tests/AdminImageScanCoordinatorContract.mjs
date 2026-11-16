@@ -55,6 +55,18 @@ assert.ok(!migration.writeResources.includes("ACTIVE_SESSIONS"),
     "La inicialización no debe modificar la actividad de sesión.");
 assert.equal(migration.maintenance, false);
 
+// Toda mutación declarada por ADMIN debe tener una política explícita.
+// Evita que el router adquiera una lease cuyo par servicio/operación no exista.
+const adminMutationList = extractFunction(admin, "isSharedMutationAction_");
+const mutationNames = [...adminMutationList.matchAll(/"([^"]+)"/g)].map(match => match[1]);
+for (const action of mutationNames) {
+    const entry = policy("ADMIN", action);
+    assert.ok(entry, "Falta política explícita para ADMIN/" + action);
+}
+assert.equal(policy("ADMIN", "markReplacedImageInUse").writeResources.includes("IMAGE_INVENTORY"), true);
+assert.equal(policy("ADMIN", "applyCortesImageReconciliation").writeResources.includes("CORTES"), true);
+assert.equal(policy("ADMIN", "freezeIdentifierFormulas").maintenance, true);
+
 const routerHarness = new Function(
     extractFunction(admin, "isSharedMutationAction_") + "\n" +
     extractFunction(admin, "isSharedReadAction_") + "\n" +

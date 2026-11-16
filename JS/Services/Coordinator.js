@@ -109,7 +109,12 @@ function coordinatorPolicy_(service, operation) {
             saveUnusedImagesInventory: { read: [...identityRead, "CORTES"], write: ["DRIVE", "IMAGE_INVENTORY", "ACTIVITY"] },
             createCortesImageFolder: { read: identityRead, write: ["DRIVE", "ACTIVITY"] },
             moveReplacedImage: { read: identityRead, write: ["CORTES", "DRIVE", "IMAGE_INVENTORY", "ACTIVITY"] },
-            getReplacedImageDownloadUrl: { read: [...identityRead, "DRIVE"], write: ["ACTIVITY"] }
+            getReplacedImageDownloadUrl: { read: [...identityRead, "DRIVE"], write: ["ACTIVITY"] },
+            // Operaciones añadidas al dispatcher ADMIN: cada una debe tener una política explícita.
+            markReplacedImageInUse: { read: [...identityRead, "DRIVE", "IMAGE_INVENTORY"], write: ["IMAGE_INVENTORY", "ACTIVITY"] },
+            applyCortesImageReconciliation: { read: [...identityRead, "CORTES", "DRIVE", "IMAGE_AUDIT_STATE"], write: ["CORTES", "ACTIVITY"] },
+            // La congelación de fórmulas recorre varias hojas y requiere exclusión global.
+            freezeIdentifierFormulas: { maintenance: true }
         },
         FEEDBACK: {
             sessionActivity: { read: feedbackRead },

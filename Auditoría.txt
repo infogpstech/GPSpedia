@@ -989,3 +989,10 @@ Los handlers consumen el actor central y evitan reconsultar Users/ActiveSessions
 Los cambios reportados en checkpoint (consola 50%, pestañas horizontales, título animado, alerta Drive 80%, Legacy fuera del contrato) se consideran implementados localmente, sujetos a verificación visual/funcional Beta. Tráfico global agregado y centralización total de mensajes/confirmaciones siguen pendientes.
 
 **Workflows HEAD `cd38ad3e68414b9fc21e481eee9b4b7f36ac0192`:** regresión de servicios y GitHub Pages completados con conclusión success. No se ejecutaron pruebas contra servicios Apps Script productivos.
+
+
+### AUD-BETA-06 — Mutaciones ADMIN declaradas sin política Coordinator
+**Severidad:** Alta — causa raíz confirmada estáticamente.  
+**Hallazgo:** `admin.js/isSharedMutationAction_` declaraba `markReplacedImageInUse`, `applyCortesImageReconciliation` y `freezeIdentifierFormulas`, pero `Coordinator.js/coordinatorPolicy_('ADMIN')` no tenía entradas para ellas. La adquisición de lease fallaba con rechazo de operación no autorizada, antes de ejecutar el handler.
+**Corrección:** políticas explícitas de mínimo privilegio; mantenimiento exclusivo para congelación de fórmulas multhoja. Prueba de contrato ampliada para detectar cualquier mutación ADMIN futura sin política.
+**Estado:** cambio local preparado para CI; validar las tres funciones en Beta después de publicar los servicios autorizados.

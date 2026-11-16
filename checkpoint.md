@@ -894,3 +894,17 @@ En el código de esta rama, el historial local ya usa operaciones silenciosas an
 - La auditoría de ADMIN confirmó las restricciones de Desarrollador para funciones sensibles; las pruebas de campo para borrar logs, auditoría Drive e imágenes históricas siguen pendientes.
 - Próxima tarea: cerrar la auditoría de dispatcher/Coordinator y contratos de BETA-010…BETA-014; después iniciar la estandarización global de componentes de UI.
 - No se desplegó Apps Script ni se alteraron secretos, ScriptProperties, hojas, Drive o datos productivos.
+
+
+---
+
+## Auditoría de políticas ADMIN — 2026-11-15
+
+Se comparó automáticamente la lista de acciones que `admin.js` envía como mutaciones compartidas contra las entradas explícitas de `coordinatorPolicy_('ADMIN', ...)`. Se detectaron tres operaciones despachadas sin política: `markReplacedImageInUse`, `applyCortesImageReconciliation` y `freezeIdentifierFormulas`. El Coordinator rechazaba estas acciones aunque el handler y el control Desarrollador existieran.
+
+Se añadieron políticas de mínimo privilegio:
+- `markReplacedImageInUse`: lectura de identidad/Drive/inventario y escritura de IMAGE_INVENTORY/ACTIVITY.
+- `applyCortesImageReconciliation`: lectura de identidad/Cortes/Drive/estado de auditoría y escritura de Cortes/Actividad.
+- `freezeIdentifierFormulas`: mantenimiento exclusivo, por recorrer y modificar fórmulas de varias hojas.
+
+Se amplió `AdminImageScanCoordinatorContract.mjs` para exigir que cada mutación ADMIN declarada tenga política explícita y verificar los recursos de estas tres acciones. Pendiente CI posterior al commit y validación funcional Beta.
