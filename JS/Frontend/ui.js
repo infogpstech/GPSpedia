@@ -6894,13 +6894,13 @@ ${elapsedSec}s
 }
 
 function getDeveloperSessionPayload() {
-    const currentUser = getState().currentUser;
-    if (!currentUser || !currentUser.ID || !currentUser.SessionToken) {
+    const context = getUiSessionContext_();
+    if (!context) {
         throw new Error("No se encontró una sesión autenticada válida. Vuelve a iniciar sesión.");
     }
     return {
-        userId: currentUser.ID,
-        sessionToken: currentUser.SessionToken
+        userId: context.userId,
+        sessionToken: context.sessionToken
     };
 }
 
