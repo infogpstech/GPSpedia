@@ -1647,3 +1647,9 @@ ADENDA FINAL — AJUSTE DIMENSIONAL DE ACCIONES INBOX — 2026-11-16
 - La dimensión compartida de los botones Salir/Enviar se ajustó a 64 × 40 px para igualar el tamaño compacto de Salir; el texto «Enviar mensaje» puede ocupar dos líneas dentro del mismo alto.
 - CI final sobre el código actualizado: run 43955279344 SUCCESS — 130 suites / 1,928 pruebas / 0 fallos. InboxUi 51/51; CutDetailModalLayout 15/15; BrowserZoomAccessibility 12/12; AntiDebuggingPolicy 11/11; ServiceWorkerCache 10/10; OfflineBrandAssets 4/4.
 - GitHub Pages run 43955278378 SUCCESS. La inspección visual real de los controles y el lightbox permanece pendiente de Beta.
+
+
+ADENDA DE CLASIFICACIÓN AUD-2026-11-16-11
+- Ubicación: JS/Frontend/ui.js y JS/Frontend/rich-text.js (orden/persistencia del menú); style.css (acciones, desplegable, divisor y título); index.html, HTML/users.html y HTML/add_cortes.html (viewport); JS/Frontend/lightbox.js (excepción de zoom).
+- Severidad: baja, limitada a presentación y experiencia de uso. Impacto: acciones del compositor con distribución inadecuada, selector potencialmente recortado en móviles, espacio vertical excesivo en el encabezado y zoom de navegación disponible donde se pidió restringirlo. Sin impacto en autenticación, permisos, persistencia ni datos.
+- Criterio de cierre: contratos automáticos aprobados; la comprobación visual en dispositivos reales queda diferida a Beta.
