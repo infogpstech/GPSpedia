@@ -243,3 +243,8 @@ El checkpoint acumulativo anterior se conserva íntegro en `Checkpoint_Archive/c
 - <escape>GitHub Pages: SUCCESS</escape> — ejecución `43969110185`.
 - Las pruebas incluyen contratos de los tres perfiles, sanitización, sincronización de campos, límites, sintaxis de módulos y recuperación de `add_cortes`.
 - Estado: `COMPLETADA CON VALIDACIÓN DIFERIDA A BETA`. Falta inspección visual en dispositivos reales Android/PWA y escritorio para confirmar dimensiones, interacción táctil, selección de texto y presentación de listas. No se afirma que esa inspección física se haya ejecutado.
+
+
+### Ajuste de apertura de menús — GP-UX-RICH-FORMS-02 — 2026-11-16
+- Se corrige la orientación de los desplegables de la bandeja de entrada: el menú de categorías se ancla al borde derecho del botón para abrirse hacia la izquierda; el menú de viñetas y listas se ancla al borde izquierdo para abrirse hacia la derecha.
+- Ajuste CSS específico, sin cambiar el contenido ni el comportamiento de las opciones. Validación visual en dispositivo pendiente.
