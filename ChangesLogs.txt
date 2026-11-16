@@ -698,3 +698,12 @@ HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
 - GitHub Actions: **106 suites, 1,653 pruebas aprobadas, 0 fallos**. GitHub Pages: construcción/despliegue completado con éxito para este HEAD.
 
 **Pendiente de esta solicitud:** tráfico global agregado entre todas las plataformas (el gráfico actual sigue siendo local al navegador); centralización absoluta de todos los mensajes de acciones en la consola; confirmaciones interactivas y/n en la terminal; ayudas informativas para todas las descripciones; estandarización global de botones/campos/selectores y formato descriptivo sincronizado entre todos los usuarios. Estas tareas quedan abiertas y no se marcan como terminadas.
+
+
+[2026-11-15] HEAD cd38ad3e68414b9fc21e481eee9b4b7f36ac0192 — fix(offline): conservar aperturas IndexedDB bloqueadas.
+- Corregido falso rechazo por IDBOpenDBRequest.onblocked; timeout acotado conserva la apertura viva y evita duplicados.
+- Actualizadas pruebas de timeout, bloqueo y recuperación.
+- GitHub Actions service regression: success (43779358356); Pages deployment: success (43779357228).
+- Creado Tareas_beta.md con hallazgos y criterios BETA-001…BETA-052.
+- Pendiente: validación Beta de feed/Service Worker/IndexedDB; auditoría completa de acciones Developer; UI global, consola y telemetría agregada.
+- Sin despliegue Apps Script ni cambios a secretos o datos productivos.

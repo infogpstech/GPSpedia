@@ -1212,3 +1212,10 @@ El trabajo local GP-INBOX-04B/04C/04D queda cubierto en backend y contratos. No 
 - GitHub Actions: **106 suites, 1,653 pruebas aprobadas, 0 fallos**. GitHub Pages: construcción/despliegue completado con éxito para este HEAD.
 
 **Pendiente de esta solicitud:** tráfico global agregado entre todas las plataformas (el gráfico actual sigue siendo local al navegador); centralización absoluta de todos los mensajes de acciones en la consola; confirmaciones interactivas y/n en la terminal; ayudas informativas para todas las descripciones; estandarización global de botones/campos/selectores y formato descriptivo sincronizado entre todos los usuarios. Estas tareas quedan abiertas y no se marcan como terminadas.
+
+
+---
+
+## Hallazgos de pruebas Beta consolidados — 2026-11-15
+
+Se creó `Tareas_beta.md` con los IDs BETA-001 a BETA-052, criterios de aceptación, estados diferenciados y orden de ejecución. La prioridad inmediata es validar en Beta IndexedDB/feed/Service Worker y continuar con permisos ADMIN/Developer. Los paquetes de interfaz global, consola, telemetría y sesión permanecen pendientes o sujetos a validación de campo; no se duplican como tareas completadas.

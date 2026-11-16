@@ -876,3 +876,21 @@ Las pruebas automatizadas se actualizaron, pero su ejecución en GitHub Actions 
 ### Diagnóstico adicional de los errores Beta
 En el código de esta rama, el historial local ya usa operaciones silenciosas ante fallos de IndexedDB y `getCatalogChanges` realiza un GET directo. El FEEDBACK actual consulta el feed público del Coordinator mediante GET; el `doGet` actual del Coordinator atiende ese feed sin autenticación de servicio y solo expone eventos de catálogo ya publicados. Por tanto, la traza Beta que muestra `routeAction` para `getCatalogChanges` y el mensaje de autorización del Coordinator no coincide con el flujo de esta revisión. Es evidencia de un cliente o despliegue Apps Script desactualizado/mal apuntado; debe verificarse contra las versiones publicadas antes de atribuirlo al código de esta rama. No se modificaron secretos ni se retiraron controles del Coordinator.
 
+
+
+---
+
+## Continuidad posterior a corrección IndexedDB — 2026-11-15
+
+**HEAD:** `cd38ad3e68414b9fc21e481eee9b4b7f36ac0192`  
+**Commit:** `fix(offline): conservar aperturas IndexedDB bloqueadas`
+
+- `JS/Frontend/offline.js` ya no trata `IDBOpenDBRequest.onblocked` como rechazo terminal. Los consumidores esperan con timeout acotado y reutilizan la solicitud original.
+- `JS/Tests/IndexedDBTransactions.js` cubre timeout repetido, ausencia de apertura paralela y recuperación tras liberar el bloqueo.
+- GitHub Actions en este HEAD: `GPSpedia service regression tests` **success** (run 43779358356); `pages build and deployment` **success** (run 43779357228). Esta verificación confirma workflows completados, no una prueba en navegador Beta.
+- La rama base sigue protegida y sin cambios.
+- Se creó `Tareas_beta.md` con hallazgos BETA-001…BETA-052, criterios y prioridades.
+- El feed Beta sigue requiriendo comprobación de deployment: la traza de `routeAction/getCatalogChanges` no corresponde a la ruta GET pública identificada en el código actual.
+- La auditoría de ADMIN confirmó las restricciones de Desarrollador para funciones sensibles; las pruebas de campo para borrar logs, auditoría Drive e imágenes históricas siguen pendientes.
+- Próxima tarea: cerrar la auditoría de dispatcher/Coordinator y contratos de BETA-010…BETA-014; después iniciar la estandarización global de componentes de UI.
+- No se desplegó Apps Script ni se alteraron secretos, ScriptProperties, hojas, Drive o datos productivos.

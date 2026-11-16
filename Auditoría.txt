@@ -967,3 +967,25 @@ CI Node.js 22: 105 suites / 1,645 pruebas / 0 fallos. Pages build/deploy: SUCCES
 - GitHub Actions: **106 suites, 1,653 pruebas aprobadas, 0 fallos**. GitHub Pages: construcción/despliegue completado con éxito para este HEAD.
 
 **Pendiente de esta solicitud:** tráfico global agregado entre todas las plataformas (el gráfico actual sigue siendo local al navegador); centralización absoluta de todos los mensajes de acciones en la consola; confirmaciones interactivas y/n en la terminal; ayudas informativas para todas las descripciones; estandarización global de botones/campos/selectores y formato descriptivo sincronizado entre todos los usuarios. Estas tareas quedan abiertas y no se marcan como terminadas.
+
+
+---
+
+## Auditoría de hallazgos Beta — 2026-11-15
+
+### AUD-BETA-01 — Apertura IndexedDB bloqueada
+**Estado:** corregido en código y workflows aprobados en HEAD `cd38ad3e68414b9fc21e481eee9b4b7f36ac0192`. La solicitud `IDBOpenDBRequest` se conserva tras `onblocked`; timeout del consumidor no crea una segunda apertura. Pruebas de recuperación añadidas. Reproducción Android/PWA Beta pendiente.
+
+### AUD-BETA-02 — Feed de catálogo y Coordinator
+**Estado:** discrepancia entre traza Beta y código revisado. La ruta actual de lectura es GET pública; la traza indica una llamada `routeAction` autenticada. Verificar endpoint/deployment/Service Worker reales antes de modificar permisos o retirar autenticación.
+
+### AUD-BETA-03 — Acciones Developer
+La matriz y routers actuales restringen borrado de logs, auditoría y operaciones de imágenes históricas a Desarrollador. Falta completar la trazabilidad de cada acción desde UI hasta handler y validar en Beta. No se debe interpretar la ausencia de botón como control suficiente.
+
+### AUD-BETA-04 — Revalidación de sesión
+Los handlers consumen el actor central y evitan reconsultar Users/ActiveSessions. El Coordinator conserva token, expiración, epoch y revocación al adquirir lease. Esto no es una revalidación de privilegios desde hojas en cada acción; es la barrera central de sesión. Retirarla sin mecanismo equivalente sería una regresión de seguridad.
+
+### AUD-BETA-05 — UI, consola y telemetría
+Los cambios reportados en checkpoint (consola 50%, pestañas horizontales, título animado, alerta Drive 80%, Legacy fuera del contrato) se consideran implementados localmente, sujetos a verificación visual/funcional Beta. Tráfico global agregado y centralización total de mensajes/confirmaciones siguen pendientes.
+
+**Workflows HEAD `cd38ad3e68414b9fc21e481eee9b4b7f36ac0192`:** regresión de servicios y GitHub Pages completados con conclusión success. No se ejecutaron pruebas contra servicios Apps Script productivos.
