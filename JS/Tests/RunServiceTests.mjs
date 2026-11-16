@@ -192,6 +192,7 @@ runGroup('38','INTEGRATION',()=>{
  runCli('OVERLAY pila de menú y modales administrativos','JS/Tests/OverlayMenuModalHistory.js');
  runCli('AUTH, navegación, catálogo silencioso y miniaturas','JS/Tests/SessionStartupNavigation.mjs');
  runCli('AUG-148 accesibilidad y foco del modal de desarrollador','JS/Tests/DevToolsModalAccessibility.mjs');
+ runCli('BETA-021 sistema global de botones, campos y selectores','JS/Tests/GlobalControlSystem.mjs');
  runCli('CATALOG reintentos y cancelación','JS/Tests/CatalogRequestRetry.js');
  runCli('CATALOG escenarios de arranque PWA','JS/Tests/PWAStartupScenarios.js');
  runCli('AUG-IndexedDB apertura compartida, backoff y miniaturas opcionales','JS/Tests/IndexedDBTransactions.js');

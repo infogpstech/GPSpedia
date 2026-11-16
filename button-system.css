@@ -1,5 +1,4 @@
-/* Sistema compartido de botones GPSpedia.
-   Solo afecta elementos que declaran la clase .btn; no modifica inputs ni selects. */
+/* Sistema compartido de controles GPSpedia: botones, campos y selectores. */
 :root {
     --btn-radius: 0.5rem;
     --btn-primary-bg: #0b5ed7;
@@ -222,5 +221,178 @@ a.btn {
     }
     .btn-loading::after {
         animation-duration: 1.5s;
+    }
+}
+
+
+/* --------------------------------------------------------------------------
+   Controles de formulario compartidos
+   -------------------------------------------------------------------------- */
+body {
+    --gp-control-bg: var(--gp-color-surface, #ffffff);
+    --gp-control-text: var(--gp-color-text, #212529);
+    --gp-control-border: var(--gp-color-border-strong, #adb5bd);
+    --gp-control-placeholder: var(--gp-color-text-muted, #6c757d);
+    --gp-control-focus: var(--gp-color-focus, #005fcc);
+    --gp-control-disabled-bg: var(--gp-color-disabled-bg, #e9ecef);
+    --gp-control-disabled-text: var(--gp-color-text-disabled, #6c757d);
+    --gp-control-radius: 0.5rem;
+    --gp-control-min-height: 42px;
+    --gp-control-padding: 0.6rem 0.75rem;
+    --gp-control-font-size: 0.95rem;
+    --gp-control-focus-shadow: 0 0 0 3px rgba(13, 110, 253, 0.18);
+}
+
+body.dark-mode {
+    --gp-control-focus-shadow: 0 0 0 3px rgba(121, 184, 255, 0.24);
+}
+
+body input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="color"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="image"]),
+body select,
+body textarea {
+    min-width: 0;
+    max-width: 100%;
+    min-height: var(--gp-control-min-height);
+    padding: var(--gp-control-padding);
+    border: 1px solid var(--gp-control-border);
+    border-radius: var(--gp-control-radius);
+    background-color: var(--gp-control-bg);
+    color: var(--gp-control-text);
+    font-family: inherit;
+    font-size: var(--gp-control-font-size);
+    line-height: 1.35;
+    box-sizing: border-box;
+    transition: border-color 0.18s ease, background-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+}
+
+/* Igualar controles dentro de formularios y modales, donde existían reglas locales
+   con mayor especificidad que la base global. */
+body .form-group input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="color"]),
+body .form-group select,
+body .form-group textarea,
+body .info-modal-content input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="color"]),
+body .info-modal-content select,
+body .info-modal-content textarea,
+body .modal form input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="color"]),
+body .modal form select,
+body .modal form textarea,
+body #dev-tools-modal .dev-input,
+body #login-modal input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
+body #contact-form input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
+body #contact-form textarea,
+body #inbox-modal-content .inbox-search-row input,
+body #inbox-modal-content .inbox-form-control,
+body #inbox-modal-content .inbox-message-input,
+body .validation-input {
+    min-height: var(--gp-control-min-height);
+    border-color: var(--gp-control-border);
+    border-radius: var(--gp-control-radius);
+    background-color: var(--gp-control-bg);
+    color: var(--gp-control-text);
+    font-family: inherit;
+    font-size: var(--gp-control-font-size);
+}
+
+/* Áreas de texto conservan altura suficiente para redactar contenido técnico. */
+body textarea,
+body .form-group textarea,
+body .info-modal-content textarea,
+body .modal form textarea {
+    min-height: 84px;
+    resize: vertical;
+}
+
+/* Los campos especializados conservan su distribución y tamaño compacto. */
+body .rich-editor-toolbar select {
+    min-height: 32px;
+    padding: 4px 8px;
+    border-radius: 6px;
+}
+body #dev-tools-modal #clear-logs-option-select {
+    min-height: 38px;
+    height: 38px;
+    padding: 7px 10px;
+    font-size: 0.84rem;
+}
+body #inbox-modal-content .inbox-message-input {
+    min-height: 70px;
+    max-height: 180px;
+}
+body .replaced-images-toolbar > input,
+body .replaced-images-folder-toolbar select,
+body .replaced-images-folder-toolbar input {
+    min-height: 38px;
+}
+
+/* Foco visible y uniforme en todos los controles editables. */
+body input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="color"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="image"]):focus-visible,
+body select:focus-visible,
+body textarea:focus-visible,
+body .form-group input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):focus-visible,
+body .form-group select:focus-visible,
+body .form-group textarea:focus-visible,
+body .info-modal-content input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):focus-visible,
+body .info-modal-content select:focus-visible,
+body .info-modal-content textarea:focus-visible,
+body .modal form input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):focus-visible,
+body .modal form select:focus-visible,
+body .modal form textarea:focus-visible,
+body #dev-tools-modal .dev-input:focus-visible,
+body #inbox-modal-content .inbox-form-control:focus-visible,
+body #inbox-modal-content .inbox-message-input:focus-visible,
+body .validation-input:focus-visible {
+    outline: 2px solid var(--gp-control-focus);
+    outline-offset: 2px;
+    border-color: var(--gp-control-focus);
+    box-shadow: var(--gp-control-focus-shadow);
+}
+
+/* Deshabilitados, errores y texto auxiliar mantienen contraste por tema. */
+body input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]):disabled,
+body select:disabled,
+body textarea:disabled,
+body .form-group input:disabled,
+body .form-group select:disabled,
+body .form-group textarea:disabled,
+body .info-modal-content input:disabled,
+body .info-modal-content select:disabled,
+body .info-modal-content textarea:disabled,
+body .modal form input:disabled,
+body .modal form select:disabled,
+body .modal form textarea:disabled,
+body #dev-tools-modal .dev-input:disabled {
+    background-color: var(--gp-control-disabled-bg);
+    color: var(--gp-control-disabled-text);
+    border-color: var(--gp-control-border);
+    opacity: 0.72;
+    cursor: not-allowed;
+}
+
+body input[aria-invalid="true"],
+body select[aria-invalid="true"],
+body textarea[aria-invalid="true"],
+body .gp-control-error {
+    border-color: var(--gp-color-danger, #b02a37);
+}
+
+body input::placeholder,
+body textarea::placeholder {
+    color: var(--gp-control-placeholder);
+    opacity: 1;
+}
+
+@media (max-width: 600px) {
+    body input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="color"]),
+    body select,
+    body textarea {
+        font-size: 16px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body input,
+    body select,
+    body textarea {
+        transition: none;
     }
 }
