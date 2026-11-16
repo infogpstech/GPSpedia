@@ -41,7 +41,7 @@ assert.match(ui,/lastGlobalServiceTrafficFetchAt < 60000/);
 assert.match(ui,/renderGlobalServiceTrafficChart_/);
 assert.match(ui,/getServiceMetricsSnapshot\(\)/);
 assert.match(localMetrics,/export function createServiceMetricsStore/);
-assert.match(healthDoc,/operaciones protegidas/);
+assert.match(html,/operaciones protegidas/);
 assert.match(setupDoc,/telemetría global|SERVICE_TRAFFIC/i);
 assert.doesNotMatch(ui,/globalServiceTrafficData\s*=\s*getServiceMetricsSnapshot/);
 
