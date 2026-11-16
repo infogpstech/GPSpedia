@@ -1282,3 +1282,14 @@ Validación: PasswordKdfBenchmark 5/5; ActionDispatchContract 12/12; CI Node.js 
 Resultado de auditoría del alcance: no se identificaron otros handlers protegidos fuera de la coordinación compartida. Se conservaron las excepciones explícitas de validación de sesión, ping/health, lecturas públicas y suggestYear anónimo con rate limit y sin autoaplicación.
 Estado: CORREGIDO LOCALMENTE; validación de deployments/hojas aisladas pendiente de Beta.
 ==========================================================
+
+==========================================================
+AUDITORÍA — 2026-11-16 — AUD-2026-11-16-03
+Ubicación: JS/Frontend/youtubeUpload.js — envío del formulario de subida, antes de getVideoApprovalByOperation/initYouTubeUpload.
+Hallazgo: el cliente realizaba una llamada de red routeAction("validateSession") antes de iniciar el flujo de subida, aunque las acciones de consulta, inicialización y envío ya están protegidas por FEEDBACK/Coordinator y validan el actor central.
+Impacto: viaje de red adicional y latencia sin eliminar una condición de carrera: la sesión podía revocarse inmediatamente después de la prevalidación. No se encontró bypass de autorización.
+Severidad: BAJA (rendimiento/duplicación).
+Corrección: retirada de la prevalidación. Se conserva el snapshot de userId/sessionToken y se verifican cambios locales de sesión durante el flujo; backend continúa autorizando cada operación protegida con el actor central.
+Validación: VideoApprovalClientContract 10/10; CI Node.js 22 run 43799943070: 118 suites / 1,765 pruebas / 0 fallos. Revisión adicional: validateSession solo se conserva para restauración inicial y recuperación tras error de cambio de rol propio; no se encontraron llamadas cliente a touchSession.
+Estado: CORREGIDO LOCALMENTE; medición de latencia y deployments FEEDBACK/Coordinator pendientes de Beta.
+==========================================================
