@@ -22,7 +22,7 @@ import { thumbnailObjectUrls } from './imageObjectUrlCache.js';
 import { createInboxPageCache, mergeInboxMessagePages } from './inboxPageCache.js';
 import { loadPysData, getCachedPysData, getPysDataFreshness, invalidatePysDataCache } from './pys-data.js';
 import { captureModalViewState, restoreModalViewState, shouldRecordModalTransition, pushModalNavigationContext, popModalNavigationContext } from './modalNavigation.js';
-import { createRichTextToolbar, sanitizeHtmlContent, refreshRichTextToolbars, mountRichTextEditors } from './rich-text.js';
+import { createRichTextToolbar, sanitizeHtmlContent, refreshRichTextToolbars, mountRichTextEditors, positionRichTextMenu, stripRichTextDemoPlaceholder } from './rich-text.js';
 import { renderActivityLogs, renderActivityContributions } from './activityDashboard.js';
 import { getDriveStorageCriticalState } from './driveStorageAlerts.js';
 import { getOrCreateTermsDeviceId, getDeviceTermsAcceptance, saveDeviceTermsAcceptance } from './termsDeviceAcceptance.js';
@@ -4293,8 +4293,6 @@ const openInboxModal_ = setupModal('inbox-modal', async (options = {}) => {
     modal.setAttribute('aria-hidden', 'false');
     document.body.classList.add('inbox-open');
     bindInboxControls_();
-    const requestsTab = document.getElementById('inbox-requests-tab');
-    if (requestsTab) requestsTab.hidden = !inboxCanSeeRequests_(context.role);
     const sectionNav = document.getElementById('inbox-section-nav');
     if (sectionNav) sectionNav.querySelectorAll('[data-inbox-section]').forEach(button => { button.hidden = !inboxRoleCanSeeSection_(context.role, button.dataset.inboxSection); });
     const newMessageButton = document.getElementById('inbox-new-message');
@@ -4435,6 +4433,16 @@ function closeInboxSearch_() {
         toggle.classList.remove("is-expanded");
     }
 }
+
+function closeInboxRichToolbarMenus_(root) {
+    if (!root || typeof root.querySelectorAll !== "function") return;
+    root.querySelectorAll(".rich-toolbar-dropdown.is-open").forEach(group => {
+        group.classList.remove("is-open");
+        group.querySelector(".rich-toolbar-icon-button")?.setAttribute("aria-expanded", "false");
+        const menu = group.querySelector(".rich-toolbar-menu");
+        if (menu) menu.hidden = true;
+    });
+}
 function bindInboxControls_() {
     const sectionNav = document.getElementById("inbox-section-nav");
     if (sectionNav && sectionNav.dataset.bound !== "true") {
@@ -4492,6 +4500,14 @@ function bindInboxControls_() {
             closeInboxSearch_();
         });
         inboxContent.dataset.searchDismissBound = "true";
+    }
+
+    if (inboxContent && inboxContent.dataset.richMenuDismissBound !== "true") {
+        inboxContent.addEventListener("pointerdown", event => {
+            if (event.target.closest(".rich-toolbar-dropdown")) return;
+            closeInboxRichToolbarMenus_(inboxContent);
+        });
+        inboxContent.dataset.richMenuDismissBound = "true";
     }
     if (searchToggle && searchToggle.dataset.bound !== "true") {
         searchToggle.addEventListener("click", () => {
@@ -4573,7 +4589,7 @@ async function setInboxView_(view, options = {}) {
     const searchToggle = document.getElementById("inbox-search-toggle");
     const newMessageButton = document.getElementById("inbox-new-message");
     if (searchToggle) searchToggle.hidden = nextView !== "conversations";
-    if (newMessageButton) newMessageButton.hidden = nextView !== "conversations";
+    if (newMessageButton) newMessageButton.hidden = false;
     const pagePrevious = document.getElementById("inbox-page-previous");
     const pageNext = document.getElementById("inbox-page-next");
     if (pagePrevious) pagePrevious.disabled = true;
@@ -4907,6 +4923,7 @@ function renderInboxReplyForm_(detail, item) {
 async function openInboxNewConversationForm_() {
     const context = getUiSessionContext_();
     if (!context) return;
+    if (inboxConversationCurrentView_ !== "conversations") await setInboxSection_("general");
     const isDeveloper = context.role === "desarrollador";
     const draftKind = "new:direct", legacyDraftKind = isDeveloper ? "" : "new:consult";
     const detail = document.getElementById("inbox-conversation-detail");
@@ -4919,7 +4936,6 @@ async function openInboxNewConversationForm_() {
     detail.replaceChildren();
     const status = inboxCreateNode_("p", "inbox-form-status", "Cargando destinatarios…");
     status.setAttribute("role", "status"); status.setAttribute("aria-live", "polite");
-    detail.appendChild(inboxCreateNode_("h3", "inbox-new-title", "Nuevo mensaje"));
     detail.append(makeCancelButton(), status);
     let recipients = [];
     try {
@@ -4936,7 +4952,6 @@ async function openInboxNewConversationForm_() {
         inboxSetStatus_(status.textContent, true); return;
     }
     detail.replaceChildren();
-    const heading = inboxCreateNode_("h3", "inbox-new-title", "Nuevo mensaje");
     const form = inboxCreateNode_("form", "inbox-new-conversation-form");
     const addField = (labelText, id, control) => {
         const label = inboxCreateNode_("label", "", labelText); label.htmlFor = id;
@@ -4997,19 +5012,22 @@ async function openInboxNewConversationForm_() {
     composerOptionsButton.addEventListener("mousedown", event => event.preventDefault());
     const composerOptionsMenu = inboxCreateNode_("div", "rich-toolbar-menu inbox-composer-options-menu");
     composerOptionsMenu.hidden = true; composerOptionsMenu.setAttribute("role", "group");
+    const closeComposerOptions = () => {
+        composerOptions.classList.remove("is-open");
+        composerOptionsButton.setAttribute("aria-expanded", "false");
+        composerOptionsMenu.hidden = true;
+    };
     composerOptionsButton.addEventListener("click", event => {
         event.preventDefault();
         const activeToolbar = composerOptions.closest(".inbox-rich-text-toolbar") || toolbar;
         const opening = composerOptionsMenu.hidden;
-        activeToolbar.querySelectorAll(".rich-toolbar-dropdown.is-open").forEach(group => {
-            group.classList.remove("is-open");
-            group.querySelector(".rich-toolbar-icon-button")?.setAttribute("aria-expanded", "false");
-            const menu = group.querySelector(".rich-toolbar-menu");
-            if (menu) menu.hidden = true;
-        });
-        composerOptions.classList.toggle("is-open", opening);
-        composerOptionsButton.setAttribute("aria-expanded", String(opening));
-        composerOptionsMenu.hidden = !opening;
+        closeInboxRichToolbarMenus_(activeToolbar);
+        if (opening) {
+            composerOptions.classList.add("is-open");
+            composerOptionsButton.setAttribute("aria-expanded", "true");
+            composerOptionsMenu.hidden = false;
+            positionRichTextMenu(composerOptionsMenu, composerOptionsButton, "right");
+        } else closeComposerOptions();
     });
     templateField.classList.add("inbox-composer-option"); categoryField.classList.add("inbox-composer-option");
     composerOptionsMenu.append(templateField, categoryField);
@@ -5026,14 +5044,16 @@ async function openInboxNewConversationForm_() {
     const send = inboxCreateNode_("button", "inbox-primary-button", "Enviar mensaje");
     send.type = "submit";
     const formActions = inboxCreateNode_("div", "inbox-compose-actions"); formActions.append(makeCancelButton(), send);
-    form.append(formStatus, formActions); detail.append(heading, form);
+    form.append(formStatus, formActions); detail.append(form);
     const persist = () => {
         const current = inboxReadDraft_(draftKind), fingerprint = [recipient.value,subject.value,category.value,body.value].join("|");
         if (current.lastAttemptFingerprint && current.lastAttemptFingerprint !== fingerprint) current.idempotencyKey = "";
         inboxSaveDraft_(draftKind, { ...current, recipientId: recipient.value, subject: subject.value, category: category.value, body: body.value, templateId: template.value });
     };
     [recipient,subject,category,body].forEach(element => { element.addEventListener("input", persist); element.addEventListener("change", persist); });
+    category.addEventListener("change", closeComposerOptions);
     template.addEventListener("change", () => {
+        closeComposerOptions();
         const selected = templates.find(item => item.id === template.value);
         if (selected && selected.id) { subject.value = selected.subject; body.value = sanitizeHtmlContent(selected.body, "advanced"); bodyEditor.innerHTML = body.value; category.value = "general"; }
         persist();
@@ -9273,7 +9293,7 @@ function syncInboxRichEditor_(editor, source) {
 
 function createInboxRichEditor_(sourceId, editorId, initialHtml, labelText) {
     const source = inboxCreateNode_("textarea", "inbox-message-source");
-    source.id = sourceId; source.maxLength = 5000; source.value = sanitizeHtmlContent(initialHtml || "", "advanced");
+    source.id = sourceId; source.maxLength = 5000; source.value = sanitizeHtmlContent(stripRichTextDemoPlaceholder(initialHtml || ""), "advanced");
     source.hidden = true; source.tabIndex = -1; source.setAttribute("aria-hidden", "true");
     const editor = inboxCreateNode_("div", "inbox-message-input inbox-rich-editor");
     editor.id = editorId; editor.setAttribute("contenteditable", "true");
