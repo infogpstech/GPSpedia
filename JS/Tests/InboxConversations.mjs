@@ -345,27 +345,32 @@ run("El filtro de categoría limita resultados antes de paginar", () => {
     }),/categoría/);
 });
 run("La búsqueda global incluye recibidos, enviados, archivados y distintas categorías", () => {
-    const general = api.handleCreateInboxConversation({
-        ...actor("U1","token-a"),recipientId:"U3",subject:"Búsqueda global compartida",category:"general",
-        body:"Localizar este término en toda la bandeja.",idempotencyKey:"global-search-general-01"
+    const conversationSheet = spreadsheet.getSheetByName("InboxConversations");
+    const stateSheet = spreadsheet.getSheetByName("InboxConversationState");
+    const candidates = stateSheet.rows.slice(1).filter(row => String(row[1]) === "U1").slice(0,3);
+    assert.equal(candidates.length,3);
+    const backups = candidates.map((state,index) => {
+        const conversation = conversationSheet.rows.find(row => String(row[0]) === String(state[0]));
+        assert.ok(conversation);
+        const backup = { state, archived:state[4], conversation, subject:conversation[3], category:conversation[4], preview:conversation[15] };
+        conversation[3] = "Caso global " + index;
+        conversation[4] = index === 0 ? "general" : "acceso";
+        conversation[15] = "zxq-global-inbox-2026";
+        state[4] = index === 2;
+        return backup;
     });
-    const support = api.handleCreateInboxConversation({
-        ...actor("U1","token-a"),recipientId:"U3",subject:"Consulta técnica",category:"acceso",
-        body:"Búsqueda global compartida en soporte.",idempotencyKey:"global-search-support-01"
-    });
-    const archived = api.handleCreateInboxConversation({
-        ...actor("U1","token-a"),recipientId:"U3",subject:"Caso archivado",category:"acceso",
-        body:"Búsqueda global compartida en archivados.",idempotencyKey:"global-search-archived-01"
-    });
-    api.handleArchiveInboxConversation({ ...actor("U1","token-a"),conversationId:archived.conversationId,archived:true });
-    const result = api.handleGetInboxConversations({
-        ...actor("U1","token-a"),folder:"all",category:"all",query:"búsqueda global compartida",pageSize:50,cursor:"0"
-    });
-    const ids = new Set(result.data.map(item => item.conversationId));
-    assert.equal(result.total,3);
-    assert.ok(ids.has(general.conversationId));
-    assert.ok(ids.has(support.conversationId));
-    assert.ok(ids.has(archived.conversationId));
+    try {
+        const result = api.handleGetInboxConversations({
+            ...actor("U1","token-a"),folder:"all",category:"all",query:"zxq-global-inbox-2026",pageSize:50,cursor:"0"
+        });
+        const ids = new Set(result.data.map(item => item.conversationId));
+        assert.equal(result.total,3);
+        assert.deepEqual(ids,new Set(candidates.map(row => String(row[0]))));
+    } finally {
+        backups.forEach(({state,archived,conversation,subject,category,preview}) => {
+            state[4]=archived;conversation[3]=subject;conversation[4]=category;conversation[15]=preview;
+        });
+    }
 });
 run("El registro de auditoría no almacena el cuerpo del mensaje", () => {
     const audit = spreadsheet.getSheetByName("InboxConversationAudit");

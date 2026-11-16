@@ -1182,3 +1182,5 @@ ADENDA — PysModalNavigation: contador del resumen ajustado de 9/9 a 10/10 tras
 - service-worker.js: App Shell actualizado a gpsepedia-cache-v40; ServiceWorkerCache y OfflineBrandAssets sincronizados.
 - Sin despliegues Apps Script ni cambios en hojas/datos externos.
 ================================================================================
+
+ADENDA — GP-UX-INBOX-CACHE-SEARCH-01: prueba global ajustada para reutilizar temporalmente tres registros del fixture y restaurarlos en finally; evita activar el rate limit del test sin alterar el control de frecuencia.

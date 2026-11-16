@@ -1922,3 +1922,5 @@ Backlog y registro de cambios sincronizados con este estado. La rama base perman
 - **Pruebas:** se amplían `InboxUi.mjs` y `InboxConversations.mjs` para caché por contexto y búsqueda global en varias bandejas/categorías.
 - **PWA:** Service Worker actualizado a `gpsepedia-cache-v40` y contratos de caché/offline sincronizados.
 - **Validación:** CI Node.js 22 pendiente sobre el commit; integración real con usuarios/Spreadsheet y revisión visual quedan para Beta. No se desplegaron servicios Apps Script ni se alteraron datos externos.
+
+- CI run `43903840172` detectó que la prueba de búsqueda global añadía tres conversaciones y alcanzaba el límite de frecuencia simulado del fixture. Se reemplaza la creación adicional por cambios temporales/restaurados en tres filas ya existentes, sin debilitar la prueba de filtrado ni los límites del servicio.
