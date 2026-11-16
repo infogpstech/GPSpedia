@@ -1083,3 +1083,15 @@ Se amplió `AdminImageScanCoordinatorContract.mjs` para exigir que cada mutació
 - GP-BETA-04/05: auditoría Drive e historial optimizados; ejecución Beta pendiente.
 - GP-BETA-010/Inbox: esquema parcial ahora genera error explícito; inspección Beta pendiente.
 - GP-BETA-02: lectura de dropdowns reducida; medición Beta pendiente.
+
+
+## Continuidad — compatibilidad de sesión en VIN y cortes pendientes (2026-11-16)
+
+**Código validado:** `a431fd3c709954dc0b08fc2446c56caf10ff8b62`  
+**CI servicios:** run `43784270101` SUCCESS — 108 suites / 1,663 pruebas / 0 fallos.
+
+- La auditoría posterior encontró más accesos UI que dependían solo de `currentUser.ID`: registro de VIN, recuperación de operación pendiente, validación de propietario y envío/reintento de `addOrUpdateCut`.
+- Todos ahora resuelven userId/token mediante `getUiSessionContext_()`, compatible con ID/id. Se conserva el control que impide reintentar una operación pendiente bajo una cuenta distinta.
+- La suite UI impide reintroducir accesos ID-only.
+- Beta pendiente con sesión heredada, VIN y operación pendiente real. No se desplegaron AUTH/WRITE.
+
