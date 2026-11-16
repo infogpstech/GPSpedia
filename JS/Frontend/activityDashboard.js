@@ -46,7 +46,7 @@ export function normalizeContributionRows(contributions) {
             .replace(/<[^>]*>/g, " ")
             .replace(/\s*\[OP-[A-Za-z0-9_-]+\]/gi, " ")
             .replace(/\s*\([^)]*\)/g, " ");
-        return source.split(/[\r\n]+/).map(name => name
+        return source.split(/[\r\n,]+/).map(name => name
             .replace(/[\u0000-\u001f\u007f]/g, " ")
             .replace(/\s+/g, " ")
             .replace(/^[\s.,;:!?]+|[\s.,;:!?]+$/g, "")

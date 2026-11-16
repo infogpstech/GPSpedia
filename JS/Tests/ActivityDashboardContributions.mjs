@@ -53,4 +53,13 @@ const tbody=new FakeElement("tbody");tbody.ownerDocument=doc;
 renderActivityContributions(tbody,[{nombreUsuario:"pAbLo pEñA.<br>PABLO PENA",cortesAportados:2,vehiculosConAportes:1}],doc);
 assert.equal(tbody.children.length,1);
 assert.deepEqual(tbody.children[0].children.map(cell=>cell.textContent),["Pablo Peña","2","1"]);
-console.log("ActivityDashboardContributions: 14/14 PASS");
+
+const sharedContributors = normalizeContributionRows([
+ {nombreUsuario:"Pablo Peña, Byron Lopez",cortesAportados:2,vehiculosConAportes:1},
+ {nombreUsuario:"Byron Lopez, Pablo Peña",cortesAportados:3,vehiculosConAportes:2}
+]);
+assert.deepEqual(sharedContributors,[
+ {nombreUsuario:"Byron Lopez",cortesAportados:5,vehiculosConAportes:2},
+ {nombreUsuario:"Pablo Peña",cortesAportados:5,vehiculosConAportes:2}
+]);
+console.log("ActivityDashboardContributions: PASS (separadores multilínea y coma)");
