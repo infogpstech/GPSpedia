@@ -1178,3 +1178,18 @@ El usuario confirmó que el backlog pendiente también comprende la organizació
 - BETA-022 queda completada localmente; validación visual Beta pendiente.
 - **Siguiente tarea local:** BETA-023, unificar el formato de presentación del contenido descriptivo y su preferencia de configuración en todas las vistas.
 - No se modificó la rama base ni se desplegaron servicios Apps Script.
+
+
+## Continuidad — BETA-023 preferencia global de formato descriptivo (2026-11-16)
+
+- **Último commit de implementación/pruebas:** `4928ceb1ab89eeda6e1879279448164d1c1996fe` — `test: usar normalizador real en preferencia global`. La implementación quedó en la secuencia iniciada por `f1c35fb`, con correcciones de referencia y validación antes del cierre.
+- Se retiró la preferencia local como fuente de verdad. `getRichTextMode` consulta FEEDBACK; el servidor conserva el valor en `GPSpedia_RICH_TEXT_MODE_V1` de ScriptProperties, con `strict` como valor inicial.
+- Todos los roles autenticados pueden leer la preferencia. La escritura está restringida a Desarrollador mediante `FEEDBACK_ACTION_PERMISSIONS` y se coordina con el recurso `RICH_TEXT_CONFIG`.
+- La interfaz carga el modo global al iniciar/restaurar sesión; la caché del navegador solo conserva el último valor recibido. El selector Developer espera confirmación backend antes de actualizar la caché.
+- **Prueba específica:** `RichTextGlobalPreference` 9/9 PASS.
+- **CI final:** run `43789831187` SUCCESS — 111 suites / 1,691 pruebas / 0 fallos.
+- **GitHub Pages:** run `43789830673` SUCCESS.
+- CI intermedio detectó una referencia de constante y una expectativa incorrecta del mock; ambas se corrigieron y la ejecución final quedó verde.
+- BETA-023 queda completada localmente; la activación y validación del servicio FEEDBACK/Coordinator en Beta siguen pendientes. No se escribieron ScriptProperties reales ni se desplegaron servicios.
+- **Siguiente tarea local:** BETA-024, completar la política de textos breves y ayudas contextuales `ⓘ` bajo demanda, sin perder advertencias ni información necesaria.
+- Rama base `GPSpedia2.2.5` permanece intacta.

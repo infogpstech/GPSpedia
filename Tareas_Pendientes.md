@@ -67,7 +67,14 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 - Mantener etiquetas accesibles cuando se utilicen iconos.
 
 ### BETA-023 — Formato global de campos descriptivos
-**Estado: PENDIENTE LOCAL.**
+**Estado: IMPLEMENTACIÓN LOCAL COMPLETADA; PENDIENTE BETA.**
+
+- El modo estricto/avanzado se almacena como configuración global en ScriptProperties del servicio FEEDBACK; el valor predeterminado es estricto.
+- Todos los roles autenticados pueden consultar el modo; solo Desarrollador puede modificarlo. FEEDBACK valida el rol y Coordinator coordina la escritura del recurso de configuración.
+- El cliente obtiene el modo al iniciar sesión y mantiene solo una caché local; las barras de edición se actualizan tras recibir la configuración.
+- La preferencia dejó de presentarse como exclusiva del navegador. No se aplica ningún cambio local como si fuera una configuración global confirmada.
+- `RichTextGlobalPreference`: 9/9 PASS. CI run `43789831187`: SUCCESS — 111 suites, 1,691 pruebas, 0 fallos. GitHub Pages run `43789830673`: SUCCESS.
+- Pendiente Beta: desplegar FEEDBACK/Coordinator compatibles y validar lectura para todos los roles, rechazo de escritura no Developer, persistencia entre sesiones y actualización de barras.
 
 - Hacer que la preferencia de formato descriptivo sea uniforme en toda la plataforma.
 - Solo Desarrollador puede modificar la configuración; los demás roles consumen el formato vigente.
