@@ -1876,3 +1876,5 @@ Backlog y registro de cambios sincronizados con este estado. La rama base perman
 - Se corrigieron los escapes de las expresiones de prueba. Se vuelve a ejecutar CI sobre el nuevo commit; hasta obtener resultado se mantiene la validación local/CI sin aprobar.
 
 - Segundo CI run `43900956260`: la nueva comprobación del nombre del helper tenía un escape adicional; la implementación y las otras comprobaciones se cargaron, pero InboxUi quedó en 38/39. Se corrige el patrón del contrato y se repite CI.
+
+- Hallazgo adicional de CI anterior run `43897233001`: `ActivityDashboardContributions.mjs` completaba sus aserciones, pero su salida no contenía el resumen numérico `N/N PASS` requerido por `RunServiceTests.mjs`; por ello el runner la clasificaba como «no publicó resumen verificable». Se normaliza la salida de la suite a `1/1 PASS` sin cambiar su cobertura ni la lógica de aportaciones.

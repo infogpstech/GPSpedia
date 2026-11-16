@@ -1139,3 +1139,6 @@ ADENDA 2026-11-16 — GP-UX-INBOX-SEARCH-DISMISS-01
 - CI run 43900747098 detectó escapes incorrectos en la expresión regular de la nueva prueba InboxUi. Se corrige el contrato automatizado y se repite la validación; no se atribuye el fallo a la implementación funcional.
 
 ADENDA — CI run 43900956260: InboxUi 38/39 por escape adicional en el patrón que identifica closeInboxSearch_; corregido en la prueba, sin cambio de lógica funcional.
+
+ADENDA 2026-11-16 — GP-DASH-ATTR CI
+- ActivityDashboardContributions ya ejecutaba sus aserciones de coma y multilínea, pero el runner integral exigía una línea de resumen N/N PASS. Se normaliza la salida para hacer verificable la suite; sin cambios en lógica de datos.
