@@ -7050,7 +7050,7 @@ export async function openReplacedImagesModal() {
             listContainer.innerHTML = '<div class="replaced-images-empty"><i class="fa-solid fa-spinner fa-spin"></i> Consultando inventario e historial en Spreadsheet...</div>';
         }
         try {
-            const response = await routeAction('getReplacedImages', getDeveloperSessionPayload());
+            const response = await routeActionWithRetry('getReplacedImages', getDeveloperSessionPayload(), { timeoutMs: 120000, maxAttempts: 2, retryDelayMs: 500, shouldContinue: isCurrentRequest });
             if (!isCurrentRequest()) return;
             cachedReplaced = response && Array.isArray(response.data) ? response.data : [];
             const currentIds = new Set(cachedReplaced.map(item => String(item.id_reemplazo || "")));
