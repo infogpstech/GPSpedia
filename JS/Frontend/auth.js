@@ -280,6 +280,40 @@ function sameSession(a,b){
 function isCurrentSession(user){
  return sameSession(readStoredSession(),user);
 }
+function endSessionForReauthentication_(expectedSession = null) {
+    const storedSession = readStoredSession();
+    const activeSession = getState().currentUser;
+    if (!storedSession) return false;
+    if (expectedSession && !sameSession(storedSession, expectedSession)) return false;
+    // Una respuesta tardía de una sesión anterior nunca cierra la sesión nueva.
+    if (activeSession && !sameSession(activeSession, storedSession)) return false;
+    stopCatalogPolling_();
+    cancelCatalogLoad_();
+    logoutGeneration_ += 1;
+    if (sameSession(readStoredSession(), storedSession)) localStorage.removeItem(SESSION_KEY);
+    setState({
+        currentUser: null,
+        searchHistory: [],
+        viewedItems: [],
+        catalogLoadStatus: 'idle',
+        catalogLoadError: null
+    });
+    showLoginScreen('Sesión terminada');
+    return true;
+}
+
+function handleConfirmedSessionInvalidation_(event) {
+    const rejectedToken = String(event && event.detail && event.detail.sessionToken || '').trim();
+    const currentSession = readStoredSession();
+    if (!rejectedToken || !currentSession ||
+        String(currentSession.SessionToken || '') !== rejectedToken) return false;
+    return endSessionForReauthentication_(currentSession);
+}
+
+if (typeof window !== 'undefined') {
+    window.addEventListener('gpsepedia:session-invalid', handleConfirmedSessionInvalidation_);
+}
+
 // Caché de coordinación, no es autorización: AUTH y los servicios siguen validando cada operación.
 function getRecentValidation(user){
  const latest=readStoredSession();
@@ -702,9 +736,7 @@ export async function validateActiveSession(force = false) {
     if (!sameSession(memoryUser, user)) handleLoginSuccess(user, false);
     const expiration = getLocalSessionExpiry(user);
     if (expiration) {
-        logout(expiration === 'absolute_expiration'
-            ? 'Tu sesión alcanzó su vigencia máxima. Inicia sesión nuevamente.'
-            : 'Tu sesión expiró por inactividad. Inicia sesión nuevamente.', user);
+        endSessionForReauthentication_(user);
         return false;
     }
     if (typeof navigator !== 'undefined' && navigator.onLine === false) return null;
@@ -713,7 +745,7 @@ export async function validateActiveSession(force = false) {
         if (!isCurrentSession(user)) return false;
         if (result && result.valid === true) return true;
         if (result && result.valid === false) {
-            logout('Tu sesión ya no está vigente. Inicia sesión nuevamente.', user);
+            endSessionForReauthentication_(user);
             return false;
         }
         return null;
@@ -759,9 +791,7 @@ export async function checkSession() {
     user = latestSession;
     const localExpiration = getLocalSessionExpiry(user);
     if (localExpiration) {
-        logout(localExpiration === 'absolute_expiration'
-            ? 'Tu sesión alcanzó su vigencia máxima. Inicia sesión nuevamente.'
-            : 'Tu sesión expiró por inactividad. Inicia sesión nuevamente.', user);
+        endSessionForReauthentication_(user);
         return;
     }
     if (!isCurrentSession(user)) return;

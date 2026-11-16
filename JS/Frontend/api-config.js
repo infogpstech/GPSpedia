@@ -215,6 +215,25 @@ export async function routeAction(action, payload = {}, serviceOverride = null, 
                 result.details && typeof result.details.errorMessage === "string" ? result.details.errorMessage : "";
             const errorMessage = [String(result.message || "El servicio rechazó la operación."), detailMessage]
                 .filter(Boolean).join(": ");
+            const normalizedError = errorMessage.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+            const confirmedRevocation = /sesion/.test(normalizedError) &&
+                /(revocad[ao]|no existe o no es unica)/.test(normalizedError);
+            if (confirmedRevocation) {
+                const sessionToken = String(payload && (
+                    payload.sessionToken || payload.SessionToken ||
+                    payload.context && (payload.context.sessionToken || payload.context.SessionToken) ||
+                    payload.session && (payload.session.sessionToken || payload.session.SessionToken)
+                ) || "").trim();
+                if (sessionToken && typeof window !== "undefined" &&
+                    typeof CustomEvent === "function" && typeof window.dispatchEvent === "function") {
+                    window.dispatchEvent(new CustomEvent("gpsepedia:session-invalid", {
+                        detail: { sessionToken }
+                    }));
+                }
+                throw createRouteActionError_("Sesión terminada", {
+                    kind: "session", code: "SESSION_INVALID", httpStatus, details: result.details
+                });
+            }
             throw createRouteActionError_(errorMessage, {
                 kind: "application", code: String(result.code || "API_ERROR"), httpStatus, details: result.details
             });

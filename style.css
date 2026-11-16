@@ -4719,3 +4719,61 @@ td, th {
         transition: none;
     }
 }
+
+
+/* Alineación de acciones y cierre en las cabeceras de los modales de detalle. */
+.detail-modal-header-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-width: 0;
+}
+
+/* La ayuda acompaña al título de consola y copiar permanece al extremo derecho. */
+#dev-tools-modal .dev-console-shared .dev-card-heading {
+    justify-content: flex-start;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+}
+#dev-tools-modal .dev-console-shared .dev-card-heading > h4 {
+    flex: 0 0 auto;
+}
+#dev-tools-modal .dev-console-shared .dev-card-heading > .gp-help-trigger {
+    flex: 0 0 auto;
+    margin: 0;
+}
+#dev-tools-modal .dev-console-shared .dev-card-heading > #btn-copy-console-log {
+    margin-left: auto;
+}
+@media (max-width: 560px) {
+    #dev-tools-modal .dev-console-shared .dev-card-heading {
+        flex-direction: row;
+        align-items: center;
+    }
+}
+
+/* Sesión terminada: aviso suave e informativo, separado de los errores de acceso. */
+#login-modal #login-error:not(.login-session-ended) {
+    color: #d63344;
+    margin: 10px 0 0;
+}
+#login-modal #login-error.login-session-ended {
+    display: block;
+    margin: 14px 0 0;
+    padding: 10px 12px;
+    border: 1px solid #e7d58e;
+    border-radius: 8px;
+    background: #fff7d6;
+    color: #705719;
+    font-size: .92rem;
+    line-height: 1.4;
+    text-align: left;
+}
+body.dark-mode #login-modal #login-error.login-session-ended {
+    border-color: #79683e;
+    background: #3c331d;
+    color: #f0dfa9;
+}

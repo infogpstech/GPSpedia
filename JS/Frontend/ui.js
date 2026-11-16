@@ -2217,6 +2217,9 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
     savingIndicator.id = "modal-saving-indicator";
     savingIndicator.className = "detail-modal-saving-indicator";
     headerDiv.appendChild(savingIndicator);
+    const headerActions = document.createElement("div");
+    headerActions.className = "detail-modal-header-actions";
+    headerDiv.appendChild(headerActions);
 
     // Botón Compartir
     const shareBtn = document.createElement("button");
@@ -2283,7 +2286,7 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
             shareBtn.disabled = false;
         }
     };
-    headerDiv.appendChild(shareBtn);
+    headerActions.appendChild(shareBtn);
 
     const userRole = normalizeUiRole_(getUiSessionContext_()?.role || "");
     const canPrintOrEditVehicle = ["desarrollador", "jefe", "supervisor"].includes(userRole);
@@ -2297,7 +2300,7 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
         printBtn.className = "share-modal-btn";
         printBtn.title = "Imprimir / Exportar Ficha Técnica";
         printBtn.onclick = () => exportVehiclePrintSheet(activeItem);
-        headerDiv.appendChild(printBtn);
+        headerActions.appendChild(printBtn);
     }
 
     if (canPrintOrEditVehicle) {
@@ -2311,7 +2314,7 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
             resetBtn.title = "Descartar cambios";
             resetBtn.style.fontSize = "1.2em";
             resetBtn.onclick = () => exitModalEditMode(false, activeItem.id, false, navOptions);
-            headerDiv.appendChild(resetBtn);
+            headerActions.appendChild(resetBtn);
 
             // Botón Guardar (✅)
             const saveBtn = document.createElement("button");
@@ -2322,7 +2325,7 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
             saveBtn.title = "Guardar cambios y finalizar";
             saveBtn.style.fontSize = "1.2em";
             saveBtn.onclick = () => exitModalEditMode(true, activeItem.id, false, navOptions);
-            headerDiv.appendChild(saveBtn);
+            headerActions.appendChild(saveBtn);
         } else {
             // Botón de lápiz de Edición
             const editBtn = document.createElement("button");
@@ -2393,7 +2396,7 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
                     }
                 });
             };
-            headerDiv.appendChild(editBtn);
+            headerActions.appendChild(editBtn);
         }
     }
 
@@ -4004,11 +4007,15 @@ function resetSessionUi_() {
     closeSideMenu(true);
 
     document.querySelectorAll('.info-modal').forEach(modal => {
+        deactivateLegalModalFocus_(modal, false);
         modal.style.display = 'none';
     });
 
     const termsModal = document.getElementById('terms-modal');
-    if (termsModal) termsModal.style.display = 'none';
+    if (termsModal) {
+        deactivateLegalModalFocus_(termsModal, false);
+        termsModal.style.display = 'none';
+    }
 
     const detailModal = document.getElementById('modalDetalle');
     if (detailModal) {
@@ -9958,10 +9965,15 @@ export function showLoginScreen(reason = null) {
     document.getElementById('login-modal').style.display = 'flex';
 
     const loginError = document.getElementById('login-error');
+    const sessionEnded = reason === 'Sesión terminada';
+    loginError.classList.toggle('login-session-ended', sessionEnded);
+    loginError.setAttribute('role', sessionEnded ? 'status' : 'alert');
+    loginError.setAttribute('aria-live', sessionEnded ? 'polite' : 'assertive');
     if (reason) {
         loginError.textContent = reason;
         loginError.style.display = 'block';
     } else {
+        loginError.textContent = '';
         loginError.style.display = 'none';
     }
 
@@ -10431,7 +10443,8 @@ export function mostrarDetalleTutorialModal(item, inEditModeTutorial = false) {
     const userRole = getUiSessionContext_()?.role || null;
     const isDeveloper = userRole === "desarrollador";
     const headerDiv = document.createElement("div");
-    headerDiv.style.cssText = "display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:20px;";
+    headerDiv.className = "detail-modal-toolbar";
+    headerDiv.style.marginBottom = "20px";
     const title = document.createElement("h2");
     title.textContent = item.Tema || "Tutorial";
     title.style.cssText = "color:#007bff; margin:0; flex:1;";
@@ -10465,9 +10478,11 @@ export function mostrarDetalleTutorialModal(item, inEditModeTutorial = false) {
     }
 
     const closeBtn = document.createElement("button");
-    closeBtn.textContent = "Cerrar";
-    closeBtn.className = "backBtn";
-    closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin:0;";
+    closeBtn.type = "button";
+    closeBtn.setAttribute("aria-label", "Cerrar detalle del tutorial");
+    closeBtn.innerHTML = "&times;";
+    closeBtn.className = "info-close-btn";
+    closeBtn.style.cssText = "position:static; margin-left:8px; flex:0 0 auto;";
     closeBtn.onclick = () => {
         if (window.history && window.history.state && window.history.state.modalOpen) window.history.back();
         else document.getElementById("modalDetalle").classList.remove("visible");
@@ -10607,13 +10622,16 @@ function mostrarDetalleRelayModal(item) {
     cont.innerHTML = "";
 
     const headerDiv = document.createElement("div");
-    headerDiv.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;";
+    headerDiv.className = "detail-modal-toolbar";
+    headerDiv.style.marginBottom = "20px";
     const title = document.createElement("h2");
     title.textContent = item.configuracion;
     title.style.color = "#007bff";
     headerDiv.appendChild(title);
     const closeBtn = document.createElement("button");
-    closeBtn.textContent = "Cerrar";
+    closeBtn.type = "button";
+    closeBtn.setAttribute("aria-label", "Cerrar detalle del relay");
+    closeBtn.innerHTML = "&times;";
     closeBtn.onclick = () => {
         if (window.history && window.history.state && window.history.state.modalOpen) {
             window.history.back();
@@ -10621,8 +10639,8 @@ function mostrarDetalleRelayModal(item) {
             document.getElementById("modalDetalle").classList.remove("visible");
         }
     };
-    closeBtn.className = "backBtn";
-    closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin:0;";
+    closeBtn.className = "info-close-btn";
+    closeBtn.style.cssText = "position:static; margin-left:8px; flex:0 0 auto;";
     headerDiv.appendChild(closeBtn);
     cont.appendChild(headerDiv);
 
