@@ -1243,3 +1243,14 @@ ADENDA CORRECTIVA — GP-UX-CUT-MODAL-01 — 2026-11-16 (segunda corrección)
 - Commits de código: c7ba587, f4b4855, 6971db7, fd09b10 y 2bc026c (más la corrección de expresiones de prueba f4b4855).
 - Estado al registrar: implementación publicada en rama de trabajo; ejecución de CI y aceptación visual móvil/PWA pendientes. No se modificaron servicios Apps Script, deployments ni datos externos.
 ================================================================================
+
+
+================================================================================
+ADENDA — GP-UX-INBOX-FAB-01 Y GP-UX-CUT-MODAL-01 — 2026-11-16
+- Inbox: se corrigió la cascada móvil que aplicaba width:100% al botón Nuevo por incluirlo en el selector de acciones de carpeta. Ahora queda fuera de la rejilla, con 46 × 46 px, esquinas redondeadas, anclaje inferior derecho y separación de la paginación/safe-area.
+- Modal de detalle: la imagen real del logo aumenta un 20 % adicional respecto a la medida anterior (69.12 px escritorio / 54.72 px móvil); el nombre del modelo permanece en una sola línea y usa truncado visual si el espacio es insuficiente.
+- JS/Frontend/ui.js: se retiró el cálculo dinámico que apilaba el modelo debajo del logo.
+- Pruebas InboxUi.mjs y CutDetailModalLayout.mjs actualizadas para cubrir la cascada móvil, dimensiones del botón, imagen y título de una línea.
+- service-worker.js: App Shell actualizado de v43 a v44; pruebas de caché/offline sincronizadas. Se corrigió además una expectativa heredada v42 en ServiceWorkerCache.js que contradice la versión previamente verificada v43.
+- Pendiente: ejecutar suites locales/CI y aceptación visual Android/PWA. No se modificaron servicios Apps Script, deployments ni datos externos.
+================================================================================

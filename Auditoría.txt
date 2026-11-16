@@ -1464,3 +1464,24 @@ AUDITORÍA COMPLEMENTARIA — 2026-11-16 — AUD-2026-11-16-06
 - El conector de GitHub no devolvió estados de checks para los commits consultados y su función de consulta de runs solo expone ejecuciones asociadas a pull requests. Por ello, no se atribuye un resultado a GitHub Actions en esta adenda.
 - El intento de clonar la rama para ejecutar Node.js localmente no pudo completarse porque el entorno de ejecución no resolvió github.com. Las suites Node.js completas quedan pendientes de confirmación en CI; no se marcan como ejecutadas.
 - La rama de trabajo apunta al commit 2e544048a7f8104133ce46380b0bcb0840def18d; la comparación con ese SHA devuelve identical. La rama base sigue idéntica a su SHA verificado d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+
+
+## AUD-2026-11-16-03 — Botón Nuevo invade navegación del Inbox y logo/modelo en modal de corte
+
+**Severidad:** Media — solapamiento de controles en PWA y pérdida de jerarquía visual del encabezado.  
+**Estado:** CORRECCIÓN PREPARADA EN RAMA DE TRABAJO; pruebas automatizadas y aceptación visual pendientes.
+
+### Evidencia y causa raíz
+- En `style.css`, el selector móvil `#inbox-modal-content .inbox-folder-nav button` incluía el botón `#inbox-new-message` y le asignaba `width:100%`, `max-width:none` y layout de columna. La regla flotante anterior tenía menor especificidad y no podía conservar sus 58 × 58 px; el botón invadía el espacio de navegación/paginación.
+- La prueba InboxUi verificaba únicamente la presencia de `position:absolute`, pero no comprobaba que los selectores móviles posteriores no sobrescribieran ancho y dimensiones.
+- En el modal de corte, el algoritmo `updateTitleLayout` activaba `detail-modal-title--stacked` cuando el ancho combinado de logo y modelo superaba el contenedor, colocando el modelo debajo. El requisito actual exige una sola línea.
+
+### Corrección
+- Se excluyó el botón flotante de las reglas de distribución de la rejilla móvil y se añadió un selector específico de mayor especificidad: 46 × 46 px, forma cuadrada con esquinas redondeadas, alineado a la derecha y por encima de la paginación, respetando safe-area.
+- Se retiró el algoritmo que apilaba el nombre del modelo. El texto permanece en una línea y se trunca con ellipsis cuando el espacio disponible no permite mostrarlo completo.
+- La imagen real `.brand-logo-modal` aumenta de 57.6/45.6 px a 69.12/54.72 px; no se amplía un wrapper independiente.
+- Se actualizaron pruebas anti-regresión y App Shell v44.
+
+### Validación
+- Pruebas modificadas: InboxUi.mjs, CutDetailModalLayout.mjs, ServiceWorkerCache.js y OfflineBrandAssets.mjs.
+- Ejecución local/CI y comprobación visual en Android/PWA: pendientes; no se presentan como aprobadas.

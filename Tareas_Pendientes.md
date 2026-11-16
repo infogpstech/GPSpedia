@@ -772,3 +772,19 @@ No usar `reset --hard`, `clean`, force push ni comandos que descarten cambios. N
 **Estado: EN PROGRESO — segunda corrección publicada; CI pendiente.**
 
 La corrección anterior no resolvió el defecto en todos los estilos efectivos: una declaración flex posterior anulaba la cuadrícula y las pruebas no detectaban la cascada conflictiva. Se retiró el bloque legado, se fortaleció CutDetailModalLayout.mjs para rechazar overrides flex/order y se incrementó el App Shell a v43 con pruebas de caché actualizadas. Mantener el criterio: compartir, editar e imprimir en una sola fila, inmediatamente a la izquierda del cierre; logo +20 %; botones compactos sin ocultar acciones. Cerrar localmente solo después de CI aprobado. Aceptación visual en móvil/PWA real queda diferida a Beta.
+
+
+## ADENDA DE REQUISITOS VISUALES — 2026-11-16
+
+### GP-UX-INBOX-FAB-01 — Botón Nuevo independiente de la navegación
+**Estado: EN PROGRESO**
+- En móvil/PWA, «Nuevo mensaje» debe ser un botón flotante cuadrado, no una acción de ancho completo.
+- Debe quedar anclado abajo a la derecha, inmediatamente encima de la flecha de página siguiente, sin cubrir botones, paginación ni área segura del dispositivo.
+- La regla responsive de la rejilla de carpetas debe excluir explícitamente el botón flotante.
+- Prueba anti-regresión: comprobar dimensiones cuadradas, selector excluido de width:100%, posición y safe-area.
+
+### GP-UX-CUT-MODAL-02 — Imagen de marca ampliada y título en una sola línea
+**Estado: EN PROGRESO**
+- Aumentar un 20 % la imagen real del logo (no un contenedor): 69.12 px en escritorio y 54.72 px en móvil.
+- Mantener el nombre del modelo a la derecha del logo en la misma línea; si el ancho disponible no basta, truncar visualmente el texto sin colocarlo debajo.
+- Conservar el grid de acciones compartir/editar/imprimir y el botón de cierre sin alterar sus posiciones.

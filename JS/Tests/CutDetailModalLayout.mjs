@@ -70,16 +70,13 @@ testCase("el título y metadatos se separan del área de edición", () => {
     assert.match(css, /\.detail-modal-title-text \{[\s\S]*?overflow-wrap: anywhere/);
 });
 
-testCase("el logo aumenta 20% y el modelo solo baja si excede el modal", () => {
-    assert.match(css, /\.brand-logo-modal \{[\s\S]*?height: 57\.6px !important;[\s\S]*?max-height: 57\.6px !important/);
-    assert.match(css, /@media \(max-width: 600px\)[\s\S]*?\.brand-logo-modal \{\s*height: 45\.6px !important;\s*max-height: 45\.6px !important/);
-    assert.match(css, /\.detail-modal-title \.brand-logo-modal \{[\s\S]*?flex: 0 0 auto;[\s\S]*?max-width: none/);
-    assert.match(css, /\.detail-modal-title--stacked \.detail-modal-title-text \{[\s\S]*?flex: 1 1 100%/);
-    assert.match(detail, /const updateTitleLayout = \(\) =>/);
-    assert.match(detail, /const requiredWidth = logoImg\.getBoundingClientRect\(\)\.width \+ gap \+ naturalTitleWidth/);
-    assert.match(detail, /requiredWidth > titleContainer\.clientWidth \+ 1/);
-    assert.match(detail, /titleContainer\.classList\.toggle\('detail-modal-title--stacked', shouldStack\)/);
-    assert.match(detail, /new ResizeObserver\(updateTitleLayout\)/);
+testCase("la imagen del logo aumenta 20% y el modelo permanece en una sola línea", () => {
+    assert.match(css, /\.brand-logo-modal \{[\s\S]*?height: 69\.12px !important;[\s\S]*?max-height: 69\.12px !important/);
+    assert.match(css, /@media \(max-width: 600px\)[\s\S]*?\.brand-logo-modal \{\s*height: 54\.72px !important;\s*max-height: 54\.72px !important/);
+    assert.match(css, /\.detail-modal-title \{[\s\S]*?flex-wrap: nowrap;[\s\S]*?overflow: hidden/);
+    assert.match(css, /\.detail-modal-title-text \{[\s\S]*?white-space: nowrap;[\s\S]*?text-overflow: ellipsis/);
+    assert.doesNotMatch(css, /\.detail-modal-title--stacked \.detail-modal-title-text/);
+    assert.doesNotMatch(detail, /detail-modal-title--stacked|new ResizeObserver\(updateTitleLayout\)/);
 });
 
 testCase("los cinco campos de edición se agrupan en una rejilla con asociaciones accesibles", () => {

@@ -172,10 +172,12 @@ check("Las notificaciones internas reflejan el total de conversaciones no leída
     assert.match(html, /id="inbox-notification-count"/);
     assert.match(ui, /counts && counts\.unread/);
 });
-check("Nuevo mensaje flotante queda encima de la paginación y respeta el área segura móvil", () => {
-    assert.ok(css.includes("inbox-floating-new-message { position:absolute; right:18px; bottom:64px;"));
-    assert.ok(css.includes("bottom:calc(64px + env(safe-area-inset-bottom, 0px))"));
-    assert.ok(css.includes("width:58px; min-width:58px; height:58px; min-height:58px;"));
+check("Nuevo mensaje es un botón flotante cuadrado, separado de la rejilla y de la paginación", () => {
+    assert.match(css, /button:not\(\.inbox-floating-new-message\)/);
+    assert.match(css, /button\.inbox-floating-new-message\s*\{[\s\S]*?position:absolute[\s\S]*?right:14px[\s\S]*?width:46px[\s\S]*?height:46px[\s\S]*?border-radius:12px/);
+    assert.match(css, /button\.inbox-floating-new-message span\s*\{\s*display:none/);
+    assert.match(css, /bottom:calc\(48px \+ env\(safe-area-inset-bottom, 0px\)\)/);
+    assert.match(html, /id="inbox-page-next"/);
 });
 check("La lista y los mensajes existentes permanecen visibles durante la actualización", () => {
     assert.ok(ui.includes("else if (!inboxConversationItems_.length && !list.childElementCount) {"));

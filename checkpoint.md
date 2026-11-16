@@ -83,3 +83,11 @@ El checkpoint acumulativo anterior se conserva íntegro en `Checkpoint_Archive/c
 - Comprobaciones estáticas reproducibles sobre el contenido GitHub: 10/10 PASS (cascada CSS, cuadrícula, acciones, cierre, App Shell v43 y pruebas asociadas).
 - Node.js y GitHub Actions: PENDIENTES DE CONFIRMACIÓN. No se recibió estado de checks; el entorno local no pudo clonar por falta de resolución de github.com. No se afirma ejecución de las suites.
 - La tarea permanece EN PROGRESO hasta confirmar CI; inspección visual real en Android/PWA sigue pendiente de Beta.
+
+
+### Nueva corrección visual solicitada — Inbox y modal de corte — 2026-11-16
+- Causa raíz Inbox confirmada en `style.css`: las reglas móviles de `.inbox-folder-nav button` asignaban `width:100%` también al botón flotante Nuevo, anulando su tamaño fijo por cascada/especificidad.
+- Corrección: el botón queda excluido de la rejilla y usa 46 × 46 px, cuadrado con esquinas redondeadas, alineado a la derecha justo encima de la paginación; respeta safe-area móvil.
+- Modal de corte: logo de imagen real ampliado a 69.12 px escritorio / 54.72 px móvil. El modelo permanece siempre en la misma línea; si no cabe completo, se trunca visualmente sin pasar debajo del logo.
+- Se actualizan InboxUi, CutDetailModalLayout, ServiceWorkerCache y OfflineBrandAssets; App Shell v44.
+- Validación local/CI pendiente de ejecución. Aceptación visual Android/PWA pendiente de Beta. No se tocaron Apps Script, deployments ni datos externos.

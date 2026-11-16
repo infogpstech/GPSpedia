@@ -1024,15 +1024,15 @@ body.search-active .container {
 
 /* Comentario: Ajustes de tamaño según la nueva solicitud de diseño. */
 .brand-logo-modal {
-    height: 57.6px !important;
-    max-height: 57.6px !important;
+    height: 69.12px !important;
+    max-height: 69.12px !important;
     width: auto !important;
 }
 
 @media (max-width: 600px) {
     .brand-logo-modal {
-        height: 45.6px !important;
-        max-height: 45.6px !important;
+        height: 54.72px !important;
+        max-height: 54.72px !important;
     }
 }
 
@@ -4509,10 +4509,11 @@ td, th {
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    flex-wrap: wrap;
-    gap: 12px;
+    flex-wrap: nowrap;
+    gap: 10px;
     min-width: 0;
     max-width: 100%;
+    overflow: hidden;
     padding-bottom: 10px;
     margin-bottom: 0;
     border-bottom: 2px solid var(--gp-color-accent, #007bff);
@@ -4543,11 +4544,10 @@ td, th {
     padding: 0;
     color: var(--gp-color-accent, var(--accent-color, #007bff));
     font-size: clamp(1.25rem, 2.5vw, 1.8rem);
-    overflow-wrap: anywhere;
-}
-.detail-modal-title--stacked .detail-modal-title-text {
-    flex: 1 1 100%;
-    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    overflow-wrap: normal;
 }
 .detail-modal-title-input {
     flex: 1 1 260px;
@@ -5059,8 +5059,8 @@ body.dark-mode #login-modal #login-error.login-session-ended {
         gap:6px;
         width:100%;
     }
-    #inbox-modal-content .inbox-folder-nav button,
-    #inbox-modal-content .inbox-folder-nav .inbox-folder-action {
+    #inbox-modal-content .inbox-folder-nav button:not(.inbox-floating-new-message),
+    #inbox-modal-content .inbox-folder-nav .inbox-folder-action:not(.inbox-floating-new-message) {
         display:flex;
         flex:0 0 auto;
         flex-direction:column;
@@ -5114,3 +5114,27 @@ body.dark-mode #login-modal #login-error.login-session-ended {
 /* GP-UX-HOME-01 — separación compacta y uniforme entre carruseles del catálogo. */
 #contenido > .home-carousel-section { margin:12px 0 16px; }
 #contenido > .home-carousel-section > h4 { margin:0 0 10px; }
+
+
+/* GP-UX-INBOX-FAB-01 — el botón Nuevo es flotante, cuadrado y no forma parte de la rejilla de carpetas. */
+#inbox-modal-content .inbox-folder-nav button.inbox-floating-new-message {
+    position:absolute;
+    right:14px;
+    bottom:calc(48px + env(safe-area-inset-bottom, 0px));
+    z-index:7;
+    display:inline-flex;
+    flex:0 0 46px;
+    align-items:center;
+    justify-content:center;
+    width:46px;
+    min-width:46px;
+    max-width:46px;
+    height:46px;
+    min-height:46px;
+    padding:0;
+    border-radius:12px;
+    box-shadow:0 4px 14px rgba(0,0,0,.22);
+}
+#inbox-modal-content .inbox-folder-nav button.inbox-floating-new-message span {
+    display:none;
+}
