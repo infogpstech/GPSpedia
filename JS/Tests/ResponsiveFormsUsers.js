@@ -14,7 +14,7 @@ check('campos móviles legibles',()=>has(a,'input, select, textarea { min-width:
 check('tabla usa ancho disponible',()=>{has(u,'.table-scroll-container { overflow-x: visible; overflow-y: visible; }');has(u,'.user-table { width: 100%; min-width: 0; table-layout: fixed; }');});
 check('celdas permiten saltos',()=>has(u,'white-space: normal; overflow-wrap: anywhere;'));
 check('anchos de cuatro columnas',()=>{for(const v of ['width: 23%','width: 31%','width: 17%','width: 29%','width: 22%','width: 30%','width: 16%','width: 32%'])has(u,v);});
-check('acciones apiladas',()=>{has(u,'.actions-cell { display: flex; flex-direction: column;');has(u,'min-height: 40px;');});
+check('acciones horizontales compactas con iconos',()=>{has(u,'.actions-cell { display:flex; flex-direction:row;');has(u,'flex-wrap:nowrap;');has(u,'fa-pen-to-square');has(u,'fa-trash-can');has(u,'USERS_CACHE_TTL_MS = 5 * 60 * 1000');});
 check('modal limitado y con scroll',()=>{has(u,'max-height: calc(100dvh - 24px)');has(u,'overflow-y: auto; overscroll-behavior: contain;');has(u,'width: 100%; margin: 0 auto; padding: 16px;');});
 check('controles táctiles',()=>{has(u,'min-height: 44px; font-size: 16px;');has(u,'.modal-content form .btn { width: 100%; min-height: 44px;');});
 check('modal horizontal baja',()=>{has(u,'@media (max-height: 520px) and (orientation: landscape)');has(u,'max-height: calc(100dvh - 16px)');});
