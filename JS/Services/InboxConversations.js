@@ -418,7 +418,7 @@ function handleSendInboxMessage(payload) {
 }
 function handleGetInboxConversations(payload) {
     const actor = inboxConversationActor_(payload), folder = String(payload.folder || "received").trim().toLowerCase();
-    if (!["all","received","unread","sent","archived"].includes(folder)) throw new Error("La carpeta de Inbox no es válida.");
+    if (!["all","received","read","unread","sent","archived"].includes(folder)) throw new Error("La carpeta de Inbox no es válida.");
     const category = String(payload.category || "all").trim().toLowerCase();
     if (category !== "all" && !INBOX_CATEGORIES_.has(category)) throw new Error("La categoría de Inbox no es válida.");
     const query = String(payload.query || "").trim().slice(0,80).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
@@ -525,6 +525,7 @@ function handleGetInboxConversations(payload) {
             if (folder === "archived") return item.archived;
             if (item.archived) return false;
             if (folder === "received") return item.hasReceived;
+            if (folder === "read") return item.hasReceived && item.unreadCount === 0;
             if (folder === "unread") return item.unreadCount > 0;
             if (folder === "sent") return item.hasSent;
             return true;
