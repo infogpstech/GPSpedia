@@ -324,7 +324,14 @@
                                 <p class="dev-empty-state">Selecciona una tarjeta para consultar sus parámetros.</p>
                             </section>
                             <section class="dev-service-traffic-panel">
-                                <div class="dev-heading-with-help"><h4>Tráfico API</h4><button type="button" class="gp-help-trigger" aria-label="Ayuda sobre tráfico API" title="Ayuda" aria-controls="dev-help-traffic" aria-expanded="false"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button><span id="dev-help-traffic" class="gp-help-popover dev-heading-help-popover" role="tooltip" hidden>Muestra solicitudes API por minuto iniciadas desde este navegador durante los últimos 15 minutos. No representa el tráfico total ni las ejecuciones internas de Apps Script.</span></div>
+                                <div class="dev-heading-with-help"><h4>Tráfico global coordinado</h4><button type="button" class="gp-help-trigger" aria-label="Ayuda sobre tráfico global" title="Ayuda" aria-controls="dev-help-global-traffic" aria-expanded="false"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button><span id="dev-help-global-traffic" class="gp-help-popover dev-heading-help-popover" role="tooltip" hidden>Agregado central en Coordinator por servicio, en buckets horarios de las últimas 24 horas. Cuenta operaciones protegidas que obtuvieron una lease; excluye lecturas públicas no coordinadas, el feed público y sondeos de salud. No representa todas las solicitudes HTTP.</span></div>
+                                <div class="dev-service-traffic-actions"><button id="btn-refresh-global-service-traffic" type="button" class="btn btn-secondary">Actualizar</button></div>
+                                <div id="global-service-traffic-chart" class="dev-service-traffic-chart">
+                                    <p class="dev-empty-state">Aún no hay operaciones protegidas registradas por Coordinator.</p>
+                                </div>
+                            </section>
+                            <section class="dev-service-traffic-panel">
+                                <div class="dev-heading-with-help"><h4>Actividad de este navegador</h4><button type="button" class="gp-help-trigger" aria-label="Ayuda sobre actividad local" title="Ayuda" aria-controls="dev-help-traffic" aria-expanded="false"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button><span id="dev-help-traffic" class="gp-help-popover dev-heading-help-popover" role="tooltip" hidden>Muestra solicitudes API iniciadas desde este navegador durante los últimos 15 minutos. Es una métrica local de esta sesión, no un agregado global.</span></div>
                                 <div id="service-traffic-chart" class="dev-service-traffic-chart">
                                     <p class="dev-empty-state">Aún no se han observado solicitudes API en esta sesión.</p>
                                 </div>
