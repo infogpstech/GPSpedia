@@ -44,7 +44,8 @@ export function normalizeContributionRows(contributions) {
             .replace(/<\s*(script|style)\b[^>]*>[\s\S]*?<\/\s*\1\s*>/gi, " ")
             .replace(/<br\s*\/?\s*>/gi, "\n")
             .replace(/<[^>]*>/g, " ")
-            .replace(/\s*\[OP-[A-Za-z0-9_-]+\]/gi, " ");
+            .replace(/\s*\[OP-[A-Za-z0-9_-]+\]/gi, " ")
+            .replace(/\s*\([^)]*\)/g, " ");
         return source.split(/[\r\n]+/).map(name => name
             .replace(/[\u0000-\u001f\u007f]/g, " ")
             .replace(/\s+/g, " ")
@@ -58,6 +59,8 @@ export function normalizeContributionRows(contributions) {
         .replace(/[\p{P}\p{S}]+/gu, " ")
         .replace(/\s+/g, " ")
         .trim();
+    const isCommunityName = key => /^comunidad(?: internacional)? de tecnicos?$/.test(key);
+    const canonicalName = name => isCommunityName(normalizeKey(name)) ? "Comunidad de técnicos" : displayName(name);
     const displayName = value => value.toLocaleLowerCase("es")
         .replace(/(^|[\s'-])(\p{L})/gu, (_match, prefix, letter) => prefix + letter.toLocaleUpperCase("es"));
     entries.forEach(entry => {
@@ -65,7 +68,9 @@ export function normalizeContributionRows(contributions) {
         const namesByKey = new Map();
         parseNames(entry.nombreUsuario).forEach(name => {
             const key = normalizeKey(name);
-            if (key && !namesByKey.has(key)) namesByKey.set(key, { key, name: displayName(name) });
+            if (!key) return;
+            const canonicalKey = isCommunityName(key) ? "comunidad de tecnicos" : key;
+            if (!namesByKey.has(canonicalKey)) namesByKey.set(canonicalKey, { key: canonicalKey, name: canonicalName(name) });
         });
         const names = Array.from(namesByKey.values());
         const cuts = toCount(entry.cortesAportados);
