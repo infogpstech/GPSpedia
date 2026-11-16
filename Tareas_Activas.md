@@ -1231,3 +1231,5 @@ Se creó `Tareas_beta.md` con los IDs BETA-001 a BETA-052, criterios de aceptaci
 - [x] Publicar corrección y contrato de cobertura; prueba contractual local 1/1 PASS y sintaxis de Coordinator/admin/feedback/InboxConversations PASS.
 - [ ] Ejecutar CI integral en GitHub Actions; los checks del HEAD aún no reportan resultados.
 - [ ] Validación de la alerta y auditoría de IDs contra Spreadsheet/Drive real: diferida a Beta.
+
+- [x] Ampliar la auditoría a todas las acciones del dispatcher ADMIN: `checkOperation`, `getAdminImageUploadStatus` y `previewCortesImageReconciliation` pasan a lecturas dedicadas con recursos explícitos.
