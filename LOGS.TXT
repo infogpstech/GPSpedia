@@ -123,3 +123,17 @@ Registro asociado: `Tareas_Activas.md`, IDs GP-UX-02, GP-UX-03, GP-RBAC-02, GP-P
 CI Node.js 22 run 43759427935: SUCCESS, 102 suites, 1,558 pruebas, 0 fallos. IdentifierFormulaMigration 7/7; FeedbackFormulaIdAllocator 5/5; UserIdGenerator 6/6; PasswordHashMigration 18/18; LogoIdIntegrity 11/11; UsersAtomicMutations 15/15. La migración no se ejecutó en Spreadsheet real. No se desplegaron servicios Apps Script ni se modificaron datos productivos. Validación Beta pendiente en copia aislada.
 ================================================================================
 
+
+
+================================================================================
+ADENDA — 2026-11-16 — CIERRE LOCAL DE INCIDENCIAS DE ACCESO, PWA Y SESIÓN
+- Se correlacionó el rechazo general de FEEDBACK con un secreto de servicio distinto al requerido por Coordinator; el usuario informó que corrigió el valor privado en su deployment. No registrar el secreto.
+- Se corrigió la llamada de UI a ADMIN/getServiceTraffic para incluir la sesión; las políticas de rol existentes se conservan.
+- Se verificó que Desarrollador ya dispone de sesiones ilimitadas por SESSION_LIMITS=Infinity y que las políticas de Inbox/actividad/preferencia lo incluyen.
+- Service Worker v30 ahora clona antes de consumir, usa cache-first para App Shell/subpáginas y refresca en segundo plano.
+- getRichTextMode y getCatalogChanges incorporan límites/reintentos transitorios; validationCache se mantiene opcional y no bloquea el modal.
+- Una sesión que backend confirma revocada se limpia localmente y retorna al login con «Sesión terminada» en amarillo suave.
+- CI Node.js 22: 124 suites / 1,847 pruebas / 0 fallos. Pages: SUCCESS.
+- Pendiente Beta: probar los deployments FEEDBACK/Coordinator con usuario real, tráfico global ADMIN, sesión heredada 2.2.0 y navegación cache-first en dispositivos. La revisión global de alineación de otros modales permanece local pendiente.
+- Sin cambios a rama base, deployments Apps Script, secretos, ScriptProperties, Spreadsheet, Drive ni datos productivos.
+================================================================================

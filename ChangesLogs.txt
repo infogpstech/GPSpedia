@@ -963,3 +963,20 @@ HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
 - GitHub Actions Node.js 22 run 43807777744: SUCCESS — 119 suites / 1,790 pruebas / 0 fallos. GitHub Pages run 43807776532: SUCCESS.
 - Validación de deployments, tráfico entre instancias y roles reales queda pendiente de Beta. No se desplegaron Apps Script ni se modificaron propiedades, secretos o datos externos.
 ================================================================================
+
+
+================================================================================
+2026-11-16 — GP-DEV / GP-SEC / GP-PWA / GP-FEEDBACK: ACCESO DESARROLLADOR Y CONTINUIDAD
+- El usuario confirmó que actualizó el secreto FEEDBACK privado que no coincidía con el esperado por Coordinator. El repositorio no accedió ni modificó secretos.
+- JS/Frontend/ui.js: getServiceTraffic ahora envía userId/sessionToken desde getSessionPayload_(); la autorización Developer en ADMIN/Coordinator se conserva.
+- Se comprobó SESSION_LIMITS.desarrollador = Infinity; política sin cambios.
+- JS/Frontend/api-config.js: lectura getRichTextMode con timeout 6 s, máximo 2 intentos; getCatalogChanges con timeout/cancelación/reintentos transitorios.
+- JS/Frontend/offline.js: validationCache opcional silenciosa y con espera máxima de 2.5 s.
+- service-worker.js: cache v30, clonación segura de Response, App Shell y subpáginas cache-first con actualización en segundo plano.
+- JS/Frontend/auth.js / ui.js: token local antiguo se limpia solo ante respuesta backend confirmada y coincidente; se presenta login con aviso amarillo suave «Sesión terminada».
+- JS/Frontend/ui.js / style.css: acciones de cortes alineadas a la derecha; cierres estándar tutorial/relay; ayuda de consola junto al título.
+- Cobertura: DeveloperPrivilegeRouting 20/20, SessionInvalidationFlow 15/15, ServiceTrafficAdminContract 20/20, SessionStartupNavigation 17/17, RichTextGlobalPreference 9/9, CatalogFeedRetry 9/9, ServiceWorkerCache 9/9, PWAStartupScenarios 15/15, OptionalValidationCache 4/4, CutDetailModalLayout 8/8, VehicleModalRolePolicy 12/12.
+- CI Node.js 22 run 43815317885: SUCCESS — 124 suites / 1,847 pruebas / 0 fallos. GitHub Pages run 43815317615: SUCCESS.
+- Commits de implementación: 2e7a587, d8e72a7, 966f73d, 10d4579, e4850ea.
+- Validaciones con deployments FEEDBACK/Coordinator y dispositivos quedan pendientes de Beta; no se desplegaron Apps Script ni se modificaron secretos, ScriptProperties, hojas, Drive o datos productivos.
+================================================================================

@@ -1546,3 +1546,42 @@ El usuario confirmó que el backlog pendiente también comprende la organizació
 - Las validaciones reales de deployments, roles, métricas entre instancias, navegador y dispositivos quedan para Beta; no bloquean el cierre local.
 - La rama base protegida no fue modificada.
 - Siguiente fase: ejecutar únicamente las validaciones Beta previstas en `Tareas_Pendientes.md`; no se identificó otra implementación local pendiente dentro del conjunto actual de tareas.
+
+
+---
+
+# Continuidad — cierre local de autorización Developer, sesiones y PWA (2026-11-16)
+
+**Rama:** `GPSpedia2.2.5_work`  
+**HEAD de código validado:** `e4850ea35e5d84b0b2c07c60cb0a63f0f24c7982`  
+**Rama base protegida:** `GPSpedia2.2.5` — `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, intacta.  
+**PR:** #128, permanece abierto y en borrador.
+
+## Causas y correcciones
+
+- FEEDBACK/Coordinator: se confirmó que el secreto privado de FEEDBACK estaba desalineado respecto a lo esperado por Coordinator. El usuario informó que ya lo corrigió en el deployment. No se consultó ni modificó el valor desde el repositorio.
+- Tráfico global: la UI invocaba ADMIN `getServiceTraffic` con payload vacío. Ahora envía el contexto de la sesión activa; ADMIN/Coordinator mantienen la autorización Developer.
+- Sesiones: `SESSION_LIMITS.desarrollador = Infinity` ya existía y se comprobó mediante contrato; se conserva sin cambios. El flujo de respuesta confirmada de sesión revocada ahora elimina únicamente el token local coincidente y muestra login con «Sesión terminada» en amarillo suave. No se reintrodujeron prevalidaciones por acción.
+- Service Worker: caché v30, clonación segura de Response y caché cache-first/actualización en segundo plano para App Shell y subpáginas.
+- FEEDBACK/Performance: `getRichTextMode` tiene timeout acotado y un reintento transitorio; `getCatalogChanges` utiliza reintentos con cancelación; la caché opcional de validación de IndexedDB no bloquea el modal más de 2.5 s.
+- UI: alineación de acciones del modal de cortes; cierres estándar de tutorial y relay; ayuda junto al título de consola Developer.
+
+## Commits de la iteración
+
+- `2e7a58717b86acd6a47b2bb65c0c4d493dde457a` — caché PWA segura, reintentos de catálogo y caché opcional IndexedDB.
+- `d8e72a7f7c25999679b4f33d7a4504bba57800c5` — recuperación de sesión antigua y ajustes de modales.
+- `966f73dcc1270c8cd7fd783646b32e993fb5667e` — actor de sesión en tráfico global y contratos RBAC.
+- `10d45799f4059c505b31451dc2583b3e2470388a` — reintentos acotados de preferencia global y fixtures de pruebas.
+- `e4850ea35e5d84b0b2c07c60cb0a63f0f24c7982` — entorno de prueba PWA alineado con el scope de GitHub Pages.
+
+## Validación final
+
+- GitHub Actions Node.js 22 run `43815317885`: **SUCCESS — 124 suites / 1,847 pruebas / 0 fallos**.
+- GitHub Pages run `43815317615`: **SUCCESS**.
+- Suites relevantes: `DeveloperPrivilegeRouting` 20/20; `SessionInvalidationFlow` 15/15; `ServiceTrafficAdminContract` 20/20; `SessionStartupNavigation` 17/17; `RichTextGlobalPreference` 9/9; `CatalogFeedRetry` 9/9; `ServiceWorkerCache` 9/9; `PWAStartupScenarios` 15/15; `OptionalValidationCache` 4/4; `CutDetailModalLayout` 8/8; `VehicleModalRolePolicy` 12/12.
+- No se desplegaron Apps Script ni se modificaron secretos, ScriptProperties, Spreadsheet, Drive, ACL o datos productivos. La confirmación del secreto actualizado procede del usuario; la lectura/ejecución real de los servicios queda diferida a Beta.
+- La revisión visual general de todos los modales permanece pendiente; se completaron los componentes concretos especificados.
+ 
+## Siguiente fase
+
+Ejecutar las comprobaciones Beta enumeradas en `Tareas_Pendientes.md`. No se debe considerar probada la autorización real entre deployments ni el comportamiento en dispositivos solo por los tests Node.js.

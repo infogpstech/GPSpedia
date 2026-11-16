@@ -5,7 +5,7 @@ Fecha de consolidación: 2026-11-16
 Repositorio: `infogpstech/GPSpedia`  
 Rama autorizada: `GPSpedia2.2.5_work`  
 Rama base protegida: `GPSpedia2.2.5`  
-HEAD verificado al consolidar: `9a49b4da18ab96c823aa51046d86132cd0d16595`
+HEAD de código validado al consolidar: `e4850ea35e5d84b0b2c07c60cb0a63f0f24c7982`
 
 Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_beta.md`, integrando sus pendientes por sector y orden de ejecución. El historial y la evidencia de trabajo anterior permanecen en `checkpoint.md` y en `Olds/Documentacion_Legacy/`. La única fuente normativa continúa siendo `NORMAS_DESAROLLO.md`.
 
@@ -25,6 +25,61 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 3. Cerrar las revisiones locales pendientes de servicios, sesión, identificadores y telemetría.
 4. Ejecutar la regresión integral local una vez completadas las implementaciones vigentes.
 5. Realizar las validaciones Beta en el orden de dependencias indicado, sin simularlas ni bloquear el cierre local por falta de deployment.
+
+## Bloque prioritario — autorización Developer, sesiones, FEEDBACK y PWA (2026-11-16)
+
+**Estado general: IMPLEMENTACIÓN LOCAL COMPLETADA; VALIDACIÓN DE DEPLOYMENTS Y DISPOSITIVOS PENDIENTE DE BETA.**  
+**HEAD probado:** `e4850ea35e5d84b0b2c07c60cb0a63f0f24c7982`.
+
+### P1 — Acceso del rol Desarrollador y coordinador compartido
+**Estado: CORREGIDO LOCALMENTE; PENDIENTE BETA.**
+
+- Se confirmó que la matriz FEEDBACK ya admite las consultas de Inbox y la preferencia global, y que `getActivityLogs` incluye al rol Desarrollador. Coordinator ya declara las políticas de lectura requeridas. No se ampliaron permisos ni se retiraron verificaciones centrales.
+- El usuario confirmó que el secreto privado de FEEDBACK no coincidía con el esperado por Coordinator y que ya corrigió el valor en el deployment. No se leyeron, modificaron ni registraron secretos desde el repositorio.
+- Se corrigió una omisión independiente en la UI de tráfico global: `getServiceTraffic` se enviaba sin el contexto de sesión; ahora utiliza el `userId/sessionToken` de la sesión activa. ADMIN y Coordinator continúan validando al actor y el rol Desarrollador.
+- Se verificó que `SESSION_LIMITS.desarrollador = Infinity` ya estaba implementado y aplicado por el control de límites finitos. No fue necesario alterar la política; se incorporó cobertura de regresión.
+- Cobertura: `DeveloperPrivilegeRouting` 20/20; `ServiceTrafficAdminContract` 20/20; `VehicleModalRolePolicy` 12/12.
+
+### P1 — Recuperación de sesiones revocadas o heredadas
+**Estado: CORREGIDO LOCALMENTE; PENDIENTE BETA.**
+
+- Cuando un servicio protegido confirma que la sesión está revocada, no existe o dejó de ser única, el cliente identifica esa respuesta y notifica al módulo AUTH.
+- AUTH solo limpia el token local si coincide con el token rechazado. Una respuesta tardía de una sesión antigua no puede cerrar una sesión nueva. No se añade una consulta previa de sesión por botón ni se debilitan las barreras de token, expiración, epoch, revocación o RBAC de Coordinator.
+- El usuario regresa directamente al modal de inicio de sesión con el aviso informativo amarillo suave **«Sesión terminada»**. Se liberan también los modales legales de la sesión anterior para evitar que los términos oculten el inicio de sesión.
+- Cobertura: `SessionInvalidationFlow` 15/15; `SessionStartupNavigation` 17/17.
+
+### P2 — Caché PWA y navegación entre páginas
+**Estado: CORREGIDO LOCALMENTE; PENDIENTE BETA.**
+
+- `service-worker.js` subió a caché v30. La copia de la respuesta se crea antes de entregarla al consumidor, evitando reutilizar el cuerpo de `Response`.
+- El App Shell, `index.html`, `HTML/add_cortes.html`, `HTML/users.html` y recursos estáticos locales utilizan caché cache-first con actualización en segundo plano. Las páginas cacheadas se muestran sin esperar la red; los servicios externos no se interceptan como documentos o API.
+- El fallback de navegación sin conexión recupera `index.html`. No se eliminan bases de datos ni datos locales para forzar una actualización.
+- Cobertura: `ServiceWorkerCache` 9/9; `PWAStartupScenarios` 15/15.
+
+### P2 — FEEDBACK, preferencia global e incremental del catálogo
+**Estado: CORREGIDO LOCALMENTE; PENDIENTE BETA.**
+
+- `getRichTextMode` ahora tiene timeout por intento y un único reintento transitorio. Los rechazos de autorización y errores funcionales no se reintentan. La preferencia local previa sigue siendo el fallback visual.
+- `getCatalogChanges` ahora reutiliza el mecanismo común de reintentos con timeout, backoff corto, cancelación y clasificación de errores HTTP/red.
+- Cobertura: `RichTextGlobalPreference` 9/9; `CatalogFeedRetry` 9/9.
+
+### P2 — Caché opcional de validación y modales concretos
+**Estado: CORREGIDO LOCALMENTE; REVISIÓN VISUAL GENERAL PENDIENTE.**
+
+- Las lecturas/escrituras opcionales de `validationCache` son silenciosas y tienen espera máxima de 2.5 segundos; no deben mantener abierto el modal mientras IndexedDB continúa bloqueado.
+- En el modal de detalle de cortes, compartir/editar/imprimir quedan agrupados a la derecha antes del botón de cierre. Tutorial y relay usan el botón estándar de cierre. La ayuda de la consola Developer queda junto al título y el control de copiar permanece al extremo derecho.
+- La revisión integral de alineación de todos los demás modales se conserva como tarea local separada; no se da por completada con estos tres ajustes.
+- Cobertura: `OptionalValidationCache` 4/4; `CutDetailModalLayout` 8/8.
+
+### Validaciones pendientes en Beta
+
+1. Confirmar, sin mostrar valores, que FEEDBACK y Coordinator del mismo entorno usan el secreto correspondiente y probar Inbox, actividad y `getRichTextMode` con una cuenta Desarrollador real. El usuario informó que ya corrigió el secreto; esta sesión no verificó el deployment.
+2. Probar `getServiceTraffic` desde el panel Developer con el actor de sesión real y comprobar que el gráfico devuelve el agregado global.
+3. En navegador con caché antigua 2.2.0, reproducir la sesión revocada y confirmar que solo aparece el login con «Sesión terminada», sin quedarse en el modal de términos.
+4. Probar navegación repetida `index.html` ↔ `add_cortes.html` ↔ `users.html`, pestañas simultáneas, caché caliente/fría, offline/reconexión y actualización del Service Worker en Android/PWA y escritorio.
+5. Medir el tiempo real de FEEDBACK después de corregir la configuración y revisar IndexedDB bloqueado en el dispositivo que reportó el timeout.
+
+No desplegar Apps Script ni modificar ScriptProperties, permisos, hojas, Drive o datos productivos como parte de estas tareas.
 
 ---
 

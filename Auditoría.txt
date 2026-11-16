@@ -1312,3 +1312,40 @@ Cobertura: contrato global/local, límites y truncamiento de telemetría local, 
 Validación: ServiceTrafficAdminContract 20/20; ServiceMetricsTelemetry 10/10; Coordinador compartido 54/54; GitHub Actions Node.js 22 run 43807777744: 119 suites / 1,790 pruebas / 0 fallos. GitHub Pages run 43807776532: SUCCESS.
 Estado: COMPLETADO LOCALMENTE CON VALIDACIÓN DIFERIDA A BETA. La comprobación de deployments, roles reales y agregación entre instancias requiere entorno Beta. No se modificaron deployments ni datos externos.
 ==========================================================
+
+
+==========================================================
+AUDITORÍA — 2026-11-16 — AUD-2026-11-16-04
+Ubicación: JS/Frontend/ui.js, JS/Frontend/api-config.js, JS/Frontend/auth.js, JS/Frontend/offline.js, service-worker.js, JS/Services/Coordinator.js, JS/Services/feedback.js, JS/Services/admin.js.
+
+Hallazgos:
+1. La autorización fallida de FEEDBACK era consistente con un secreto de servicio distinto al esperado por Coordinator. El usuario confirmó que actualizó el valor privado del deployment. La igualdad real entre propiedades de deployments no se verificó desde el repositorio ni se expusieron secretos.
+2. La consulta de telemetría global ADMIN/getServiceTraffic se ejecutaba sin userId/sessionToken desde la UI, aunque el handler exige actor central Desarrollador.
+3. El Service Worker compartía la respuesta de red entre respondWith y cache.put; el cuerpo podía consumirse antes de clonar. Las navegaciones no priorizaban el App Shell cacheado.
+4. La consulta del feed incremental no utilizaba el reintento compartido. La lectura de preferencia global no tenía timeout propio.
+5. Las entradas de validación opcionales consultaban IndexedDB con el timeout global de apertura, pudiendo retrasar modales.
+6. La respuesta backend de sesión revocada/no existente no guiaba de forma consistente al usuario desde una caché local heredada al modal de login.
+
+Impacto:
+- Rechazo de módulos autorizados aunque el usuario tuviera perfil Desarrollador; la omisión del payload en tráfico global era un defecto adicional del cliente.
+- Fallos de clonación de Response y navegación con espera de red/parpadeo.
+- Errores transitorios del feed/preferencia y demoras opcionales asociadas a IndexedDB.
+- Sesiones locales obsoletas podían dejar al usuario atrapado en el estado legal anterior en vez de pedir credenciales.
+
+Correcciones:
+- El cliente de tráfico global ahora envía getSessionPayload_(); se conserva assertDeveloperSession y la validación central del actor.
+- Se verificó que SESSION_LIMITS mantiene desarrollador: Infinity y que FEEDBACK declara las rutas Inbox, actividad y lectura de preferencia según la matriz vigente. No se ampliaron privilegios.
+- El usuario actualizó el secreto de FEEDBACK en el deployment; no se cambió autenticación ni se registró ningún valor.
+- Service Worker v30: clonación segura, respuesta cache-first y refresco en segundo plano para App Shell y subpáginas.
+- getCatalogChanges: reintentos limitados, timeout y cancelación. getRichTextMode: dos intentos como máximo, con timeout de 6 s cada uno.
+- validationCache: lecturas/escrituras silenciosas con límite de 2.5 s, sin borrar IndexedDB ni iniciar aperturas paralelas.
+- Sesión confirmada inválida: se elimina solo el token local coincidente y se muestra el login con aviso amarillo suave. Se conservan las revocaciones y la validación RBAC en backend.
+- Se alinearon los botones y cierres de los modales especificados.
+
+Validación:
+- DeveloperPrivilegeRouting 20/20; SessionInvalidationFlow 15/15; ServiceTrafficAdminContract 20/20; SessionStartupNavigation 17/17; RichTextGlobalPreference 9/9; CatalogFeedRetry 9/9; ServiceWorkerCache 9/9; PWAStartupScenarios 15/15; OptionalValidationCache 4/4; CutDetailModalLayout 8/8; VehicleModalRolePolicy 12/12.
+- GitHub Actions Node.js 22 run 43815317885: SUCCESS — 124 suites / 1,847 pruebas / 0 fallos.
+- GitHub Pages run 43815317615: SUCCESS.
+
+Estado: CORREGIDO LOCALMENTE Y VALIDADO EN CI. PENDIENTE BETA: cotejar configuración privada FEEDBACK/Coordinator, probar Inbox/actividad/tráfico/preferencia desde usuarios reales, sesión revocada con caché 2.2.0 y navegación/cache en dispositivos. La alineación visual de otros modales no enumerados requiere una revisión adicional.
+==========================================================
