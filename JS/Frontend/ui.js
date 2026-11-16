@@ -5908,7 +5908,7 @@ ${elapsedSec}s
             });
 
             if (filteredTexts.length === 0) {
-                alert("No se encontraron errores ni advertencias críticas para copiar.");
+                log("No se encontraron errores ni advertencias críticas para copiar.");
                 return;
             }
 
@@ -5916,7 +5916,7 @@ ${elapsedSec}s
             navigator.clipboard.writeText(rawText).then(() => {
                 log("[SISTEMA] Registro filtrado de errores copiado al portapapeles.");
             }).catch(err => {
-                alert("No se pudo copiar el registro: " + err);
+                log("No se pudo copiar el registro: " + err, false, true);
             });
         };
     }
@@ -9811,8 +9811,20 @@ function logDeveloperDiagnostic_(message, level = 'warning') {
     if (developerDiagnosticQueue_.length > 80) developerDiagnosticQueue_.shift();
 }
 
+function isDeveloperConsoleVisible_() {
+    const modal = document.getElementById("dev-tools-modal");
+    const output = document.getElementById("dev-console-log");
+    return Boolean(modal && output &&
+        modal.getAttribute("aria-hidden") === "false" &&
+        modal.style.display !== "none");
+}
+
 export function showGlobalError(message) {
     const original = String(message || 'No se pudo completar la operación.');
+    if (isDeveloperConsoleVisible_()) {
+        logDeveloperDiagnostic_(original, 'error');
+        return;
+    }
     const concise = original.length > 110
         ? /AUTH|sesión|conexión|servidor/i.test(original)
             ? 'Conexión temporalmente no disponible.'
@@ -9840,6 +9852,11 @@ export function mostrarNotificacion(message, type = 'info') {
 
 export function showGlobalNotification(message, type = 'info') {
     const original = String(message || 'No se pudo completar la operación.');
+    if (isDeveloperConsoleVisible_()) {
+        const level = type === 'error' ? 'error' : type === 'warning' ? 'warning' : 'info';
+        logDeveloperDiagnostic_(original, level);
+        return;
+    }
     const concise = original.length > 110 ? 'Operación completada con observaciones.' : original;
     if (original.length > 110) {
         console.warn('[GPSpedia] ' + original);
