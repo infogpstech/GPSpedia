@@ -37,7 +37,7 @@ testCase("las explicaciones secundarias se ocultan en ayudas accesibles", () => 
 });
 
 testCase("las explicaciones técnicas se conservan bajo demanda", () => {
-    for (const phrase of ["No representa el tráfico total", "fórmula original", "lotes confirmados", "no mueve archivos", "no solo la carpeta Cortes", "no existan referencias activas", "carpeta principal Cortes"]) {
+    for (const phrase of ["No representa todas las solicitudes HTTP", "fórmula original", "lotes confirmados", "no mueve archivos", "no solo la carpeta Cortes", "no existan referencias activas", "carpeta principal Cortes"]) {
         assert.ok(developer.includes(phrase), phrase);
     }
 });
