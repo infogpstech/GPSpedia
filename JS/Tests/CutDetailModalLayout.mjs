@@ -70,7 +70,7 @@ testCase("el modal se adapta a móvil y respeta movimiento reducido", () => {
 testCase("el editor abre sin esperar a la carga de opciones y actualiza los selectores después", () => {
     assert.doesNotMatch(detail, /await precargarDropdownOptions\(\)/);
     assert.match(detail, /const dropdownOptionsReady = precargarDropdownOptions\(\)/);
-    assert.match(detail, /dropdownOptionsReady\.then\(\)/);
+    assert.match(detail, /dropdownOptionsReady\.then\(\(\)\s*=>/);
     assert.match(ui, /function populateModalDropdown_\(/);
     assert.match(ui, /function refreshModalEditDropdownOptions_\(/);
     for (const key of ["tipoDeCorte", "configRelay", "tipoDeEncendido", "categoria"]) {
