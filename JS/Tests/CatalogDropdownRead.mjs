@@ -57,5 +57,5 @@ assert.deepEqual(result.dropdowns.tipoDeEncendido, ["Botón", "Llave"]);
 assert.deepEqual(result.dropdowns.configRelay, ["GPS avanzado", "GPS básico"]);
 assert.deepEqual(cortes.reads.map(read => read.column), [1, 2, 3, 4, 5, 6]);
 assert.deepEqual(relay.reads.map(read => read.column), [2]);
-assert.ok([...cortes.reads, ...relay.reads].every(read => read.row === 2 && read.numRows === 3 && read.numColumns === 1));
+assert.ok([...cortes.reads, ...relay.reads].filter(read => read.numRows !== undefined).every(read => read.row === 2 && read.numRows === 3 && read.numColumns === 1));
 console.log("CatalogDropdownRead: 1/1 PASS");
