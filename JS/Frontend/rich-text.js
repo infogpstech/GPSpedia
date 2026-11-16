@@ -496,14 +496,6 @@ function createCompactRichTextToolbar_(targetId, forceAdvanced) {
         { label:"Lista numerada", action:()=>applyRichTextFormat(targetId,"ol",null,{forceAdvanced}) }
     ]);
     toolbar.addEventListener("click", event => { if (!event.target.closest(".rich-toolbar-dropdown")) closeMenus(); });
-    const dismissOutside = event => {
-        if (!toolbar.isConnected) {
-            document.removeEventListener("pointerdown", dismissOutside, true);
-            return;
-        }
-        if (!toolbar.contains(event.target)) closeMenus();
-    };
-    document.addEventListener("pointerdown", dismissOutside, true);
     return toolbar;
 }
 
