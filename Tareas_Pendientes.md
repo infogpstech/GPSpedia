@@ -722,7 +722,7 @@ No usar `reset --hard`, `clean`, force push ni comandos que descarten cambios. N
 
 
 ### GP-UX-INBOX-RBAC-01 / GP-UX-RELAY-HEADER-01 — Control visual por rol y encabezados
-**Prioridad: P1 · Estado: IMPLEMENTACIÓN FRONTEND COMMITED; VALIDACIÓN AUTOMÁTICA Y BETA PENDIENTES.**
+**Prioridad: P1 · Estado: IMPLEMENTACIÓN FRONTEND Y VALIDACIÓN AUTOMÁTICA COMPLETADAS; ACEPTACIÓN VISUAL BETA PENDIENTE.**
 - Aplicar la matriz de secciones Inbox indicada por el usuario para Desarrollador, Jefe, Supervisor, Técnico y Técnico Exterior.
 - Técnicos: mostrar General y sus reportes propios; consumir la acción existente getMyProblemReports, sin cambiar backend.
 - Jefe: General, Contáctanos y Reportes. Supervisor: General y Reportes. Desarrollador: todas las secciones.
@@ -730,3 +730,5 @@ No usar `reset --hard`, `clean`, force push ni comandos que descarten cambios. N
 - Nuevo mensaje flotante inferior derecho, etiquetas Nuevo/Buscar y control Salir en el compositor.
 - Alinear título Relay a la izquierda y X arriba a la derecha fuera del flujo del título.
 - Validación pendiente: ejecutar InboxUi, CutDetailModalLayout, regresión Node y revisar CI; después inspección visual Beta.
+
+- Cierre local 2026-11-16: GitHub Actions Node.js 22 **129 suites / 1,904 pruebas / 0 fallos** (run `43890221048`); InboxUi 38/38; CutDetailModalLayout 10/10; ServiceWorkerCache 9/9; OfflineBrandAssets 4/4. GitHub Pages build/deploy SUCCESS (run `43890220482`).

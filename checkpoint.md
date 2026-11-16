@@ -1,3 +1,33 @@
+# Cierre local — GP-UX-INBOX-RBAC-01 / GP-UX-RELAY-HEADER-01 (2026-11-16)
+
+**Rama de trabajo:** `GPSpedia2.2.5_work`  
+**HEAD de código validado:** `ed5eb2d1251cd216e18e2f8095ccd44cae0b368b`  
+**Rama base protegida:** `GPSpedia2.2.5` — sin modificaciones.  
+**PR #128:** permanece abierto en borrador.
+
+## Implementación completada
+- Inbox por rol: Desarrollador ve todas las secciones; Jefe ve General, Contáctanos y Reportes; Supervisor ve General y Reportes; Técnico y Técnico Exterior ven General y sus propios Reportes.
+- Técnicos consumen la acción existente `getMyProblemReports`, que ya filtra por la identidad autenticada y entrega el texto de respuesta/responsable. No se cambió backend ni Apps Script. La interfaz no muestra acciones administrativas a técnicos.
+- Las secciones ocultas se retiran del flujo visual. Nuevo mensaje se muestra como botón flotante; Nuevo y Buscar tienen etiquetas; Salir cancela el compositor, descarta el borrador y evita que una respuesta tardía de destinatarios reabra el formulario.
+- El modal Relay alinea el título a la izquierda y ancla el botón X en la esquina superior derecha, separado del contenedor del título.
+- Service Worker App Shell v37 y contratos de pruebas sincronizados.
+
+## Validación automatizada
+- GitHub Actions Node.js 22 run `43890221048`: **SUCCESS — 129 suites / 1,904 pruebas / 0 fallos**.
+- InboxUi: **38/38 PASS**.
+- CutDetailModalLayout: **10/10 PASS**.
+- ServiceWorkerCache: **9/9 PASS**.
+- OfflineBrandAssets: **4/4 PASS**.
+- El chequeo de sintaxis de los módulos JavaScript modificados aprobó en el workflow.
+- GitHub Pages build y deploy run `43890220482`: todos los jobs de build, deploy y reporte completados con **SUCCESS**.
+
+## Pendiente Beta
+- Confirmar visualmente la matriz con cuentas reales de cada rol y tamaños de pantalla.
+- Comprobar el botón flotante, las etiquetas, el flujo Nuevo/Salir y los encabezados de Relay en dispositivos objetivo.
+- Sin despliegues Apps Script ni cambios en hojas, secretos o datos productivos. La restricción de secciones es frontend, conforme al alcance solicitado; no sustituye autorización del backend.
+
+---
+
 # Continuidad — GP-UX-INBOX-RBAC-01 / GP-UX-RELAY-HEADER-01 (2026-11-16)
 
 **Rama:** `GPSpedia2.2.5_work`  

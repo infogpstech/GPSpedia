@@ -1116,3 +1116,11 @@ VALIDACIÓN LOCAL POSTERIOR — GP-UX-INBOX-03 / GP-DASH-ATTR-01
 - Modal Relay: título alineado a la izquierda y cierre X anclado a la esquina superior derecha.
 - Service Worker App Shell v37; pruebas InboxUi y CutDetailModalLayout ampliadas.
 - Sin cambios de backend, Apps Script, datos, secretos ni deployments. Validación automática y visual Beta pendientes.
+
+
+VALIDACIÓN FINAL — GP-UX-INBOX-RBAC-01 / GP-UX-RELAY-HEADER-01
+- CI Node.js 22 run 43890221048: SUCCESS — 129 suites / 1,904 pruebas aprobadas / 0 fallos.
+- InboxUi 38/38; CutDetailModalLayout 10/10; ServiceWorkerCache 9/9; OfflineBrandAssets 4/4 PASS.
+- GitHub Pages build/deploy run 43890220482: SUCCESS.
+- Se corrigieron durante la iteración las expectativas obsoletas de la prueba de RBAC y las referencias de caché v36; la ejecución final corresponde a App Shell v37.
+- Pendiente únicamente la aceptación visual Beta. Sin modificaciones backend, Apps Script ni datos productivos.
