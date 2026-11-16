@@ -4509,7 +4509,7 @@ function bindInboxControls_() {
         newMessage.addEventListener("click", openInboxNewConversationForm_);
         newMessage.dataset.bound = "true";
     }
-old conversation buttons    if (!inboxConnectivityBound_) {
+    if (!inboxConnectivityBound_) {
         window.addEventListener("online", () => {
             if (document.getElementById("inbox-modal")?.style.display !== "none") refreshInboxConversations_();
         });
