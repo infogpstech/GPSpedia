@@ -696,4 +696,20 @@ run("la alerta de cuota crea mensajes del sistema solo para desarrolladores y es
         ...actor("U1","token-a"), usagePercent: 79.9, alertDate: "20261115"
     }),/80/);
 });
+run("Una hoja de estado faltante no oculta silenciosamente conversaciones existentes", () => {
+    const stateSheet = spreadsheet.getSheetByName("InboxConversationState");
+    assert.ok(stateSheet);
+    spreadsheet.sheets.delete("InboxConversationState");
+    assert.throws(() => api.handleGetInboxConversations({ ...actor("U1","token-a"), folder:"received" }),
+        /esquema Inbox está incompleto/);
+    spreadsheet.sheets.set("InboxConversationState", stateSheet);
+});
+run("Una hoja de mensajes faltante se informa en lugar de mostrar conversaciones vacías", () => {
+    const messagesSheet = spreadsheet.getSheetByName("InboxMessages");
+    assert.ok(messagesSheet);
+    spreadsheet.sheets.delete("InboxMessages");
+    assert.throws(() => api.handleGetInboxConversations({ ...actor("U1","token-a"), folder:"received" }),
+        /falta la hoja de mensajes/);
+    spreadsheet.sheets.set("InboxMessages", messagesSheet);
+});
 console.log("InboxConversations: " + passed + "/" + passed + " PASS");
