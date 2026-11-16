@@ -94,8 +94,8 @@ assert.ok(driveAlert.writeResources.includes("FEEDBACK"),
     "La alerta de Drive crea conversaciones y mensajes en FEEDBACK.");
 
 const feedbackRouterHarness = new Function(
-    extractFunction(feedback, "isSharedMutationAction_") + "\\n" +
-    extractFunction(feedback, "doPost") + "\\n" +
+    extractFunction(feedback, "isSharedMutationAction_") + "\n" +
+    extractFunction(feedback, "doPost") + "\n" +
     `
     const calls = [];
     function withSharedMutationLease_(service, operation, callback) {
