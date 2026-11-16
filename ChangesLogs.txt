@@ -891,3 +891,10 @@ HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
 - BETA-035: implementación local completada; validación visual Beta pendiente.
 - Siguiente tarea del backlog: auditoría funcional end-to-end de Inbox (GP-INBOX).
 ================================================================================
+
+================================================================================
+2026-11-16 — AUDITORÍA Y ENDURECIMIENTO LOCAL DE INBOX
+- JS/Services/InboxConversations.js: se elimina la creación/inicialización automática de hojas; se validan las cuatro hojas requeridas, las preferencias opcionales y la integridad entre conversaciones, mensajes, estados y último mensaje.
+- JS/Tests/InboxConversations.mjs: el fixture prepara explícitamente el esquema; se añaden regresiones para hojas ausentes/vacías, tablas huérfanas, preferencias ausentes, datos de participantes dañados, contadores y estados incompletos.
+- No se modificaron deployments, hojas Spreadsheet reales, secretos ni datos externos.
+================================================================================
