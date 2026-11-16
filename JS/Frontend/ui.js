@@ -10910,8 +10910,8 @@ export function openAddVinModal(item) {
             isNewTrim = true;
         }
 
-        const { currentUser } = getState();
-        if (!currentUser || !currentUser.ID || !currentUser.SessionToken) {
+        const sessionContext = getUiSessionContext_();
+        if (!sessionContext) {
             warningEl.textContent = "Debes iniciar sesión nuevamente para registrar un VIN.";
             warningEl.style.display = "block";
             return;
@@ -10926,8 +10926,8 @@ export function openAddVinModal(item) {
                 vin: vinVal,
                 trimLevel: selectedTrim,
                 isNewTrim: isNewTrim,
-                userId: currentUser.ID,
-                sessionToken: currentUser.SessionToken
+                userId: sessionContext.userId,
+                sessionToken: sessionContext.sessionToken
             });
             if (res.status === 'success') {
                 if (res.vinCollection) {
@@ -11111,8 +11111,8 @@ function openAddCutForModelModal(item) {
 
     const applyPendingOperation = (operation) => {
         if (!isValidPendingOperation(operation)) return false;
-        const { currentUser } = getState();
-        if (!currentUser || !currentUser.ID || String(operation.userId) !== String(currentUser.ID)) return false;
+        const sessionContext = getUiSessionContext_();
+        if (!sessionContext || String(operation.userId) !== sessionContext.userId) return false;
         pendingOperation = operation;
         const savedCut = operation.cutData;
 
@@ -11195,8 +11195,8 @@ function openAddCutForModelModal(item) {
     const relayOptionsPromise = loadCutDropdownOptions();
 
     async function restorePendingOperation() {
-        const { currentUser } = getState();
-        const ownerId = String(currentUser && currentUser.ID || "").trim();
+        const sessionContext = getUiSessionContext_();
+        const ownerId = sessionContext ? sessionContext.userId : "";
         if (!ownerId) {
             pendingOperationCheckComplete = true;
             pendingOperationLoadFailed = true;
@@ -11272,9 +11272,8 @@ function openAddCutForModelModal(item) {
             }
         }
 
-        const { currentUser } = getState();
-        if (!currentUser) { showGlobalError("Debes estar conectado."); return; }
-        if (!currentUser.ID || !currentUser.SessionToken) {
+        const sessionContext = getUiSessionContext_();
+        if (!sessionContext) {
             showGlobalError("Tu sesión ha expirado. Inicia sesión nuevamente.");
             return;
         }
@@ -11308,7 +11307,7 @@ function openAddCutForModelModal(item) {
                 const operation = {
                     id: "OP-" + Date.now() + "-" + Math.random().toString(36).substring(2, 9).toUpperCase(),
                     vehicleId,
-                    userId: String(currentUser.ID),
+                    userId: sessionContext.userId,
                     cutData,
                     status: "processing",
                     createdAt: new Date().toISOString()
@@ -11335,15 +11334,14 @@ function openAddCutForModelModal(item) {
                 showPendingNotice("Operación guardada localmente. Se está enviando al servidor con una clave única de recuperación.");
             }
 
-            const latestUser = getState().currentUser;
-            const latestUserId = String(latestUser && latestUser.ID || "").trim();
-            if (!latestUserId || latestUserId !== String(pendingOperation.userId || "").trim() ||
-                !latestUser.SessionToken) {
+            const latestSessionContext = getUiSessionContext_();
+            const latestUserId = latestSessionContext ? latestSessionContext.userId : "";
+            if (!latestUserId || latestUserId !== String(pendingOperation.userId || "").trim()) {
                 throw new Error("La cuenta o sesión cambió. Inicia sesión con la cuenta propietaria para reintentar la operación pendiente.");
             }
             const result = await routeAction("addOrUpdateCut", {
-                userId: latestUser.ID,
-                sessionToken: latestUser.SessionToken,
+                userId: latestSessionContext.userId,
+                sessionToken: latestSessionContext.sessionToken,
                 vehicleId: item.id,
                 cutData: pendingOperation.cutData,
                 opId: pendingOperation.id
