@@ -96,6 +96,10 @@ function createSharedMutationClient_(dependencies) {
         return send_("publishCatalogChange", service, operation, { change: change });
     }
 
+    function getServiceTraffic() {
+        return send_("getServiceTraffic", "ADMIN", "getServiceTraffic", {});
+    }
+
     function getCatalogChanges(cursor, limit) {
         const url = String(properties.getProperty("GPSpedia_COORDINATOR_URL") || "").trim();
         if (!url.startsWith("https://script.google.com/macros/s/") || !url.endsWith("/exec")) {
@@ -142,6 +146,7 @@ function createSharedMutationClient_(dependencies) {
     }
 
     return { withLease: withLease, publishCatalogChange: publishCatalogChange, getCatalogChanges: getCatalogChanges,
+        getServiceTraffic: getServiceTraffic,
         registerSession: registerSession, syncUserSessions: syncUserSessions,
         revokeSession: revokeSession, revokeUserSessions: revokeUserSessions,
         validateSessionContext: validateSessionContext };
@@ -166,6 +171,16 @@ function publishSharedCatalogChange_(service, operation, change) {
         logger: function(message) { Logger.log(message); }
     });
     return client.publishCatalogChange(service, operation, change);
+}
+
+function getSharedServiceTraffic_() {
+    const client = createSharedMutationClient_({
+        properties: PropertiesService.getScriptProperties(),
+        fetch: function(url, options) { return UrlFetchApp.fetch(url, options); },
+        uuid: function() { return Utilities.getUuid(); },
+        logger: function(message) { Logger.log(message); }
+    });
+    return client.getServiceTraffic();
 }
 
 function getSharedCatalogChanges_(cursor, limit) {
