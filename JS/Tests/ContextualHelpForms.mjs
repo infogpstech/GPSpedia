@@ -4,6 +4,8 @@ import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 const root=resolve(dirname(fileURLToPath(import.meta.url)),"../..");
 const html=fs.readFileSync(resolve(root,"HTML/add_cortes.html"),"utf8");
+const helpCss=fs.readFileSync(resolve(root,"contextual-help.css"),"utf8");
+const index=fs.readFileSync(resolve(root,"index.html"),"utf8");
 let passed=0;function testCase(name,fn){fn();passed++;console.log("PASS "+name);}
 testCase("Año, versión, tipo de corte y relay tienen ayudas breves asociadas",()=>{
  for(const [id,phrase] of [["help-ano-desde","rango continuo"],["help-versiones","nivel de equipamiento"],["help-tipo-corte","diagrama eléctrico"],["help-config-relay","esquema de conexión"]]){
@@ -15,7 +17,7 @@ testCase("Las ayudas son botones accesibles y no alteran el envío del formulari
  assert.ok(html.includes("aria-label=\"Ayuda sobre el año\""));assert.ok(html.includes("aria-label=\"Ayuda sobre la configuración de relay\""));
 });
 testCase("El patrón contextual tiene foco visible, contraste por tema y estado oculto",()=>{
- assert.ok(html.includes(".gp-help-trigger:focus-visible"));assert.ok(html.includes("var(--gp-color-info-bg)"));assert.ok(html.includes(".gp-help-popover[hidden] { display: none; }"));
+ assert.ok(helpCss.includes(".gp-help-trigger:focus-visible"));assert.ok(helpCss.includes("var(--gp-color-info-bg)"));assert.ok(helpCss.includes(".gp-help-popover[hidden]"));
 });
 testCase("La ayuda se controla por pulsación, se cierra fuera y permite Escape",()=>{
  assert.ok(html.includes("document.addEventListener(\'click\', event =>"));assert.ok(html.includes("event.key === \'Escape\'"));assert.ok(html.includes("closeContextHelp(true)"));
@@ -23,7 +25,7 @@ testCase("La ayuda se controla por pulsación, se cierra fuera y permite Escape"
 testCase("la ayuda dinámica se cierra al pulsar fuera y anuncia el panel asociado",()=>{
  const ui=fs.readFileSync(resolve(root,"JS/Frontend/ui.js"),"utf8");
  assert.ok(ui.includes('document.addEventListener("click", event =>'));
- assert.ok(ui.includes('element.closest(".gp-context-help-panel")'));
+ assert.ok(ui.includes('element.closest(".gp-help-popover")'));
  assert.ok(ui.includes('trigger.setAttribute("aria-describedby", panel.id)'));
  assert.ok(ui.includes('closeContextualHelpPanels_(true)'));
  assert.ok(ui.includes('active.focus()'));
@@ -48,7 +50,7 @@ testCase("Los formularios dinámicos de sugerencias PYS incluyen ayudas asociada
  assert.match(ui,/function attachContextualHelp_\(root, fieldId, message\)/);
  for(const id of ["sug-tipo","sug-relay","sug-ubicacion","sug-color","sug-check-engine","sug-detalles","tut-tema","tut-como-identificarlo","tut-donde-encontrarlo","tut-desc"]){ assert.ok(ui.includes('attachContextualHelp_(content, "'+id+'"'),id); }
  assert.match(ui,/setAttribute\("role", "tooltip"\)/);assert.match(ui,/event.key !== "Escape"/);assert.match(ui,/active.focus\(\)/);
- assert.match(fs.readFileSync(resolve(root,"style.css"),"utf8"),/\.gp-context-help-trigger:focus-visible/);
+ assert.match(helpCss,/\.gp-help-trigger:focus-visible/);
 });
 
 testCase("el formulario de alta PYS explica alcance, modelos, título, evidencia y solución",()=>{
@@ -81,3 +83,26 @@ testCase("el formulario PYS registra cada ayuda una sola vez",()=>{
  assert.equal((body.match(/attachContextualHelp_\(content, \"pys-/g)||[]).length,8);
 });
 console.log("ContextualHelpForms: "+passed+"/"+passed+" PASS");
+
+testCase("index y alta de cortes comparten la misma hoja de ayudas",()=>{
+ assert.ok(index.includes('href="contextual-help.css"'));
+ assert.ok(html.includes('href="../contextual-help.css"'));
+ assert.ok(!ui.includes("gp-context-help-trigger")&&!ui.includes("gp-context-help-panel"));
+ assert.ok(!fs.readFileSync(resolve(root,"style.css"),"utf8").includes("gp-context-help"));
+});
+testCase("los botones de ayuda están fuera de las etiquetas de formulario",()=>{
+ for(const id of ["anoDesde","versionesAplicables","tipoCorte1","configRelay1"]){
+  const start=html.indexOf('for="'+id+'"');
+  assert.ok(start>=0,id);
+  const labelStart=html.lastIndexOf("<label",start);
+  const labelEnd=html.indexOf("</label>",labelStart);
+  assert.ok(labelEnd>start,id);
+  assert.doesNotMatch(html.slice(labelStart,labelEnd),/<button\\b/,id);
+ }
+});
+testCase("la apertura y cierre de ayuda actualizan aria-describedby",()=>{
+ assert.ok(html.includes("button.setAttribute('aria-describedby', panel.id)"));
+ assert.ok(html.includes("button.removeAttribute('aria-describedby')"));
+ assert.ok(ui.includes('trigger.setAttribute("aria-describedby", panel.id)'));
+ assert.ok(ui.includes('trigger.removeAttribute("aria-describedby")'));
+});

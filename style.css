@@ -4038,13 +4038,6 @@ img.gp-image-loaded {
 }
 
 /* Ayudas contextuales compactas para formularios técnicos y PYS. */
-.gp-help-label-row { display:flex; align-items:center; gap:6px; min-width:0; }
-.gp-help-label-row label { margin-bottom:6px; }
-.gp-context-help-trigger { display:inline-flex; flex:0 0 24px; align-items:center; justify-content:center; width:24px; height:24px; margin:0 0 5px; padding:0; border:0; border-radius:50%; background:transparent; color:var(--text-disabled); cursor:pointer; }
-.gp-context-help-trigger:hover, .gp-context-help-trigger[aria-expanded="true"] { color:var(--accent-color); background:var(--hover-bg,rgba(128,128,128,.12)); }
-.gp-context-help-trigger:focus-visible { outline:2px solid var(--accent-color); outline-offset:2px; }
-.gp-context-help-panel { display:block; margin:-2px 0 8px; padding:8px 10px; border:1px solid var(--border-color); border-left:3px solid var(--accent-color); border-radius:7px; background:var(--card-bg); color:var(--text-color); font-size:.8rem; line-height:1.45; }
-.gp-context-help-panel[hidden] { display:none; }
 
 /* Conciliación Drive ↔ Cortes: reporte compacto y revisable. */
 .audit-drive-reconciliation-panel { margin-top: 14px; padding: 12px; border: 1px solid var(--border-color); border-radius: 10px; background: var(--card-bg); }
@@ -4104,11 +4097,6 @@ img.gp-image-loaded {
 #btn-audit-drive-apply-reconciliation { margin-top: 12px; }
 
 
-.gp-help-label-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
-.gp-help-label-row > label { flex: 0 1 auto; min-width: 0; }
-.gp-context-help-trigger { flex: 0 0 24px; margin: 0; }
-.gp-context-help-panel { max-width: 100%; overflow-wrap: anywhere; }
-@media (max-width: 520px) { .gp-context-help-panel { font-size: .78rem; padding: 8px; } }
 
 
 /* Inbox histórico: navegación móvil de una sola vista y barra contextual de acciones. */

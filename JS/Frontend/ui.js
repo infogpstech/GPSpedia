@@ -10427,9 +10427,9 @@ function createSuggestionOperationId_() {
 let gpContextHelpGlobalListenersInstalled_ = false;
 
 function closeContextualHelpPanels_(restoreFocus) {
-    const active = document.querySelector('.gp-context-help-trigger[aria-expanded="true"]');
-    document.querySelectorAll('.gp-context-help-panel').forEach(panel => { panel.hidden = true; });
-    document.querySelectorAll('.gp-context-help-trigger').forEach(trigger => {
+    const active = document.querySelector('.gp-help-trigger[aria-expanded="true"]');
+    document.querySelectorAll('.gp-help-popover').forEach(panel => { panel.hidden = true; });
+    document.querySelectorAll('.gp-help-trigger').forEach(trigger => {
         trigger.setAttribute("aria-expanded", "false");
         trigger.removeAttribute("aria-describedby");
     });
@@ -10441,7 +10441,7 @@ function ensureContextualHelpGlobalListeners_() {
     gpContextHelpGlobalListenersInstalled_ = true;
     document.addEventListener("click", event => {
         const element = event.target instanceof Element ? event.target : null;
-        const trigger = element ? element.closest(".gp-context-help-trigger") : null;
+        const trigger = element ? element.closest(".gp-help-trigger") : null;
         if (trigger) {
             const wasExpanded = trigger.getAttribute("aria-expanded") === "true";
             closeContextualHelpPanels_(false);
@@ -10457,12 +10457,12 @@ function ensureContextualHelpGlobalListeners_() {
             }
             return;
         }
-        if (element && element.closest(".gp-context-help-panel")) return;
+        if (element && element.closest(".gp-help-popover")) return;
         closeContextualHelpPanels_(false);
     });
     document.addEventListener("keydown", event => {
         if (event.key !== "Escape") return;
-        if (!document.querySelector('.gp-context-help-trigger[aria-expanded="true"]')) return;
+        if (!document.querySelector('.gp-help-trigger[aria-expanded="true"]')) return;
         closeContextualHelpPanels_(true);
     });
 }
@@ -10477,14 +10477,14 @@ function attachContextualHelp_(root, fieldId, message) {
     row.className = "gp-help-label-row";
     const button = document.createElement("button");
     button.type = "button";
-    button.className = "gp-context-help-trigger";
+    button.className = "gp-help-trigger";
     button.setAttribute("aria-label", "Ayuda sobre " + label.textContent.trim());
     button.setAttribute("aria-expanded", "false");
     button.setAttribute("aria-controls", "context-help-" + fieldId);
     button.title = "Ayuda";
     button.innerHTML = '<i class="fa-solid fa-circle-info" aria-hidden="true"></i>';
     const panel = document.createElement("span");
-    panel.className = "gp-context-help-panel";
+    panel.className = "gp-help-popover";
     panel.id = "context-help-" + fieldId;
     panel.setAttribute("role", "tooltip");
     panel.hidden = true;
