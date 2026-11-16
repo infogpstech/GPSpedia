@@ -632,6 +632,10 @@ function doPost(e) {
     const payload = request.payload && typeof request.payload === "object" ? request.payload : {};
     const sessionOptions = { session: { sessionToken: payload.sessionToken } };
     if (!isSharedMutationAction_(action)) {
+        // Las sugerencias anónimas conservan la ruta pública; las autenticadas reciben actor del Coordinator.
+        if (action === "suggestYear" && String(payload.userId || "").trim() === "0") {
+            return doPostInternal_(withSharedSessionActor_(e, null));
+        }
         if (!Object.prototype.hasOwnProperty.call(FEEDBACK_ACTION_PERMISSIONS, action) || FEEDBACK_PUBLIC_ACTIONS.has(action)) {
             return doPostInternal_(withSharedSessionActor_(e, null));
         }
@@ -663,7 +667,7 @@ function doPost(e) {
 const FEEDBACK_ACTION_PERMISSIONS = Object.freeze({
     recordLike: null, reportProblem: null, addProblem: null, addSolution: null, addPrevention: null,
     addVehicleToProblem: null, removeVehicleFromProblem: ["Desarrollador"], updatePysItem: ["Desarrollador"],
-    updateTutorialItem: ["Desarrollador"], suggestCutChange: null, addTutorial: ["Desarrollador"],
+    updateTutorialItem: ["Desarrollador"], suggestCutChange: null, suggestYear: null, addTutorial: ["Desarrollador"],
     getFeedbackItems: ["Desarrollador", "Jefe", "Supervisor"], getMyProblemReports: null,
     replyToFeedback: ["Desarrollador", "Jefe", "Supervisor"],
     markAsResolved: ["Desarrollador", "Jefe", "Supervisor"],
