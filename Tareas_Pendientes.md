@@ -169,8 +169,8 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 - Las operaciones administrativas solicitan confirmación en la consola Developer y esperan la respuesta en el campo de terminal.
 - Se aceptan `y`, `si/sí`, `s` y `ok` como afirmativas; `n` y `no` como negativas, sin distinguir mayúsculas/minúsculas ni acentos.
 - Las respuestas vacías o ambiguas no resuelven la solicitud; la operación permanece suspendida. Escape, respuesta negativa o vencimiento de 120 segundos cancelan sin ejecutar.
-- Se eliminaron los cuadros nativos `confirm()` del flujo de operaciones administrativas cubierto.
-- Pruebas locales: `DeveloperConsoleConfirmation` 7/7 PASS. Pendiente comprobar interacción en navegador y operaciones reales en Beta.
+- Se eliminaron los cuadros nativos `confirm()` de las operaciones administrativas, auditorías, conciliación e historial de imágenes del panel Developer.
+- Pruebas locales: `DeveloperConsoleConfirmation` 8/8 PASS. Pendiente comprobar interacción en navegador y operaciones reales en Beta.
 
 ### BETA-034 — Mensajes de operaciones
 **Estado: PENDIENTE LOCAL; SIGUIENTE TAREA.**

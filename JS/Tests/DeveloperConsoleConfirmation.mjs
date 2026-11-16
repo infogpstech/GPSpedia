@@ -67,4 +67,14 @@ testCase("las operaciones administrativas ya no dependen de confirm() nativo", (
     assert.ok((block.match(/requestDeveloperConsoleConfirmation_\(/g) || []).length >= 10);
 });
 
+testCase("las acciones del historial y auditoría de imágenes usan la confirmación de consola", () => {
+    assert.match(ui, /window\.gpsepediaRequestDeveloperConsoleConfirmation = requestDeveloperConsoleConfirmation_/);
+    const start = ui.indexOf("const runBulkOperation = async");
+    const end = ui.indexOf("const reconciliationStatus", start);
+    const imageActions = ui.slice(start, end);
+    assert.ok(start >= 0 && end > start);
+    assert.match(imageActions, /gpsepediaRequestDeveloperConsoleConfirmation/);
+    assert.doesNotMatch(imageActions, /(?:window\.)?confirm\(/);
+});
+
 console.log("DeveloperConsoleConfirmation: " + passed + "/" + passed + " PASS");

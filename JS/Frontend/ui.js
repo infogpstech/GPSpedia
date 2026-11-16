@@ -5134,6 +5134,7 @@ function initAdminPanelListeners() {
         return;
     }
     window.adminListenersAttached = true;
+    window.gpsepediaRequestDeveloperConsoleConfirmation = requestDeveloperConsoleConfirmation_;
 
     let serviceHealthResults = {}, selectedServiceKey = null, isHealthScanRunning = false;
     function formatServiceCheckTime(value) {
@@ -7270,7 +7271,7 @@ export async function openReplacedImagesModal() {
     document.addEventListener("keydown", closeMenusKeyHandler);
 
     const runBulkOperation = async (button, busyLabel, items, confirmation, operation) => {
-        if (!items.length || !isCurrentRequest() || !confirm(confirmation)) return;
+        if (!items.length || !isCurrentRequest() || !window.gpsepediaRequestDeveloperConsoleConfirmation || !(await window.gpsepediaRequestDeveloperConsoleConfirmation(confirmation))) return;
         const original = button.innerHTML, failures = []; let succeeded = 0;
         button.disabled = true;
         button.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><span>' + busyLabel + '</span>';
@@ -7345,29 +7346,29 @@ export async function openReplacedImagesModal() {
             if (capabilities.canMove) addMenuAction("fa-folder-open", "Mover", "Moviendo...", async () => {
                 if (!folderSelect || !folderSelect.value) { alert("No hay una carpeta destino seleccionada."); return; }
                 const option = folderSelect.options[folderSelect.selectedIndex], targetName = option ? option.textContent : "la carpeta seleccionada";
-                if (!confirm("¿Mover \"" + (rep.nombre_archivo || "esta imagen") + "\" a \"" + targetName + "\"?")) return;
+                if (!window.gpsepediaRequestDeveloperConsoleConfirmation || !(await window.gpsepediaRequestDeveloperConsoleConfirmation("¿Mover \"" + (rep.nombre_archivo || "esta imagen") + "\" a \"" + targetName + "\"?"))) return;
                 const response = await routeAction("moveReplacedImage", { ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo, targetFolderId: folderSelect.value }); if (!isCurrentRequest()) return; mostrarNotificacion(response.message || "Imagen movida correctamente.", "success"); await loadData();
             });
             if (capabilities.canRecover) addMenuAction("fa-clock-rotate-left", "Restaurar al campo", "Restaurando...", async () => {
-                if (!confirm("¿Restaurar esta imagen al campo " + (rep.campo || "registrado") + "? La imagen actualmente activa pasará al historial.")) return;
+                if (!window.gpsepediaRequestDeveloperConsoleConfirmation || !(await window.gpsepediaRequestDeveloperConsoleConfirmation("¿Restaurar esta imagen al campo " + (rep.campo || "registrado") + "? La imagen actualmente activa pasará al historial."))) return;
                 const response = await routeAction("recoverReplacedImage", { ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo }); if (!isCurrentRequest()) return; mostrarNotificacion(response.message || "Imagen histórica restablecida.", "success"); await loadData();
             });
             if (capabilities.canRestoreFromTrash) addMenuAction("fa-trash-arrow-up", "Restaurar de papelera", "Restaurando...", async () => {
-                if (!confirm("¿Restaurar este archivo en Google Drive? No volverá a asociarse automáticamente a un campo del Spreadsheet.")) return;
+                if (!window.gpsepediaRequestDeveloperConsoleConfirmation || !(await window.gpsepediaRequestDeveloperConsoleConfirmation("¿Restaurar este archivo en Google Drive? No volverá a asociarse automáticamente a un campo del Spreadsheet."))) return;
                 const response = await routeAction("restoreReplacedImageFromTrash", { ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo }); if (!isCurrentRequest()) return; mostrarNotificacion(response.message || "Archivo restaurado desde papelera.", "success"); await loadData();
             });
             if (capabilities.canTrash) addMenuAction("fa-trash", "Enviar a papelera", "Enviando...", async () => {
                 const description = isUnused ? "¿Enviar esta imagen sin uso a la papelera de Google Drive?" : "¿Enviar esta imagen reemplazada a la papelera? La restauración histórica quedará suspendida mientras esté allí.";
-                if (!confirm(description + " El servidor volverá a validar las referencias y la ubicación.")) return;
+                if (!window.gpsepediaRequestDeveloperConsoleConfirmation || !(await window.gpsepediaRequestDeveloperConsoleConfirmation(description + " El servidor volverá a validar las referencias y la ubicación."))) return;
                 const response = await routeAction("deleteReplacedImage", { ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo }); if (!isCurrentRequest()) return; mostrarNotificacion(response.message || "Imagen enviada a papelera.", "success"); await loadData();
             }, true);
             if (capabilities.canPermanentlyDelete) addMenuAction("fa-trash-can", status === "eliminacion_pendiente" ? "Verificar eliminación" : "Eliminar definitivamente", "Eliminando...", async () => {
                 const warning = status === "eliminacion_pendiente" ? "¿Verificar y finalizar la eliminación definitiva de este archivo?" : "Esta acción es irreversible. ¿Eliminar definitivamente el archivo de Google Drive?";
-                if (!confirm(warning + " El servidor volverá a comprobar que no existan referencias activas.")) return;
+                if (!window.gpsepediaRequestDeveloperConsoleConfirmation || !(await window.gpsepediaRequestDeveloperConsoleConfirmation(warning + " El servidor volverá a comprobar que no existan referencias activas."))) return;
                 const response = await routeAction("permanentlyDeleteReplacedImage", { ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo }); if (!isCurrentRequest()) return; mostrarNotificacion(response.message || "Eliminación definitiva verificada.", "success"); await loadData();
             }, true);
             if (capabilities.canMarkInUse) addMenuAction("fa-shield-halved", "Marcar en uso", "Protegiendo...", async () => {
-                if (!confirm("¿Marcar esta imagen como en uso? Quedará protegida frente a la organización automática y las acciones de eliminación.")) return;
+                if (!window.gpsepediaRequestDeveloperConsoleConfirmation || !(await window.gpsepediaRequestDeveloperConsoleConfirmation("¿Marcar esta imagen como en uso? Quedará protegida frente a la organización automática y las acciones de eliminación."))) return;
                 const response = await routeAction("markReplacedImageInUse", { ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo }); if (!isCurrentRequest()) return; mostrarNotificacion(response.message || "Imagen marcada en uso.", "success"); await loadData();
             });
             menuButton.disabled = menuPanel.childElementCount === 0; if (menuButton.disabled) menuButton.title = "Sin acciones disponibles"; card.appendChild(cardToolbar);
@@ -7753,9 +7754,9 @@ export async function openAuditDriveModal() {
             updateControls();
             return;
         }
-        if (typeof window.confirm !== 'function' || !window.confirm(
+        if (!window.gpsepediaRequestDeveloperConsoleConfirmation || !(await window.gpsepediaRequestDeveloperConsoleConfirmation(
             '¿Registrar ' + unusedFiles.length + ' imágenes sin uso en la hoja «Imagenes_Reemplazadas» de Spreadsheet? Esta acción escribe un inventario, pero no mueve archivos ni cambia URLs o permisos.'
-        )) return;
+        ))) return;
 
         isRunning = true;
         isDriveAuditRunning = true;
@@ -7848,10 +7849,10 @@ export async function openAuditDriveModal() {
             !inventoryAuditId || !inventoryOperationId || !inventoryConfirmedFileIds.length ||
             isRunning || isDriveAuditRunning) return;
         const fileIds = Array.from(new Set(inventoryConfirmedFileIds));
-        if (typeof window.confirm !== 'function' || !window.confirm(
+        if (!window.gpsepediaRequestDeveloperConsoleConfirmation || !(await window.gpsepediaRequestDeveloperConsoleConfirmation(
             '¿Deseas mover ' + fileIds.length + ' imágenes confirmadas a «Imagenes_Sin_Uso»? ' +
             'Esta acción mueve archivos de Google Drive, pero no los elimina. Las ubicaciones marcadas como manuales se conservarán.'
-        )) return;
+        ))) return;
 
         isRunning = true; isDriveAuditRunning = true; updateControls();
         let movedCount = 0, alreadyOrganizedCount = 0, manualPreservedCount = 0;
@@ -8541,10 +8542,12 @@ export async function openAuditDriveModal() {
             if (reconciliationStatus) reconciliationStatus.textContent = "La selección ya no coincide con el reporte. Actualiza la simulación antes de aplicar.";
             return;
         }
-        const confirmed = window.confirm(
+        const confirmed = window.gpsepediaRequestDeveloperConsoleConfirmation
+            ? await window.gpsepediaRequestDeveloperConsoleConfirmation(
             "Se escribirán " + approved.length + " URL(s) en celdas vacías de la hoja Cortes. " +
             "Se volverán a validar los destinos y se comprobará cada escritura. No se cambiarán permisos ni se moverán archivos. ¿Deseas continuar?"
-        );
+        )
+            : false;
         if (!confirmed) return;
         isRunning = true;
         isDriveAuditRunning = true;

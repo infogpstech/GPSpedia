@@ -1261,7 +1261,7 @@ El usuario confirmó que el backlog pendiente también comprende la organizació
 
 - Se añadió `JS/Frontend/developerConsoleConfirmation.js` para normalizar respuestas afirmativas/negativas con un contrato explícito: `y`, `si/sí`, `s`, `ok`; `n`, `no`. Las entradas desconocidas o ambiguas se rechazan.
 - `JS/Frontend/ui.js`: las operaciones administrativas esperan una confirmación desde el campo de terminal de Developer; la entrada se intercepta antes de procesar comandos. Respuesta negativa, Escape o timeout de 120 s cancela la operación.
-- Las confirmaciones inválidas mantienen la solicitud pendiente y no autorizan acciones. Se reemplazaron las llamadas nativas `confirm()` del panel administrativo cubierto.
-- Prueba específica integrada en CI: `DeveloperConsoleConfirmation` (7 casos).
+- Las confirmaciones inválidas mantienen la solicitud pendiente y no autorizan acciones. Se reemplazaron las llamadas nativas `confirm()` de las operaciones administrativas, auditorías, conciliación e historial de imágenes del panel Developer.
+- Prueba específica integrada en CI: `DeveloperConsoleConfirmation` (8 casos).
 - Pendiente: ejecutar prueba visual/teclado en navegador Beta y comprobar acciones con permisos y servicios del entorno. No se desplegaron Apps Script ni se modificaron datos externos.
 - **Siguiente tarea local:** BETA-034 — unificar los mensajes de resultados de operaciones Developer y retirar notificaciones externas duplicadas.

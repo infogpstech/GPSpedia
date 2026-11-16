@@ -790,7 +790,7 @@ HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
 ================================================================================
 2026-11-16 — BETA-033 CONFIRMACIONES NORMALIZADAS EN CONSOLA DEVELOPER
 - JS/Frontend/developerConsoleConfirmation.js: normalización explícita de respuestas afirmativas y negativas; entradas ambiguas se rechazan.
-- JS/Frontend/ui.js: solicitudes pendientes en consola, entrada de respuestas antes del parser de comandos, cancelación por respuesta negativa/Escape y vencimiento de 120 segundos. Operaciones administrativas sustituyen confirm() nativo por confirmación en consola.
+- JS/Frontend/ui.js: solicitudes pendientes en consola, entrada de respuestas antes del parser de comandos, cancelación por respuesta negativa/Escape y vencimiento de 120 segundos. Operaciones administrativas, auditoría, conciliación e historial de imágenes sustituyen confirm() nativo por confirmación en consola.
 - JS/Tests/DeveloperConsoleConfirmation.mjs: cobertura de respuestas aceptadas/rechazadas, espera, timeout, Escape e integración con terminal.
 - JS/Tests/RunServiceTests.mjs: suite agregada al runner de CI.
 - Tareas_Pendientes.md y checkpoint.md: BETA-033 cerrada localmente con validación Beta diferida; BETA-034 pasa a siguiente tarea.
