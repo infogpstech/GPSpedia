@@ -614,6 +614,7 @@ run("Marcar como no leída crea un indicador privado, idempotente y reversible a
     const read = api.handleMarkInboxRead({ ...actor("U2","token-b"),conversationId:created.conversationId });
     assert.equal(read.unreadCount,0);
     assert.equal(api.handleGetInboxConversations({ ...actor("U2","token-b"),folder:"unread" }).data.some(row => row.conversationId === created.conversationId),false);
+    assert.equal(api.handleGetInboxConversations({ ...actor("U2","token-b"),folder:"read" }).data.some(row => row.conversationId === created.conversationId),true);
 });
 run("Marcar como no leída desde Archivados restaura la conversación a la bandeja no leída", () => {
     const created = api.handleCreateInboxConversation({
