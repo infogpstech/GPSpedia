@@ -21,8 +21,12 @@ function createSheet(columns, lastRow) {
                     return { getCriteriaValues: () => [[["Moto", "Auto", "Camioneta"]]] };
                 },
                 getValues() {
-                    const values = columns[column] || [];
-                    return values.slice(row - 2, row - 2 + numRows).map(value => [value]);
+                    return Array.from({ length: numRows }, (_, rowIndex) =>
+                        Array.from({ length: numColumns }, (_, columnOffset) => {
+                            const values = columns[column + columnOffset] || [];
+                            return values[row - 2 + rowIndex] ?? "";
+                        })
+                    );
                 }
             };
         }
@@ -55,7 +59,6 @@ assert.deepEqual(result.dropdowns.marca, ["Honda", "Toyota"]);
 assert.deepEqual(result.dropdowns.tipoDeCorte, ["Automática", "CVT", "Doble embrague", "Manual"]);
 assert.deepEqual(result.dropdowns.tipoDeEncendido, ["Botón", "Llave"]);
 assert.deepEqual(result.dropdowns.configRelay, ["GPS avanzado", "GPS básico"]);
-assert.deepEqual(cortes.reads.map(read => read.column), [1, 2, 3, 4, 5, 6]);
-assert.deepEqual(relay.reads.map(read => read.column), [2]);
-assert.ok([...cortes.reads, ...relay.reads].filter(read => read.numRows !== undefined).every(read => read.row === 2 && read.numRows === 3 && read.numColumns === 1));
+assert.deepEqual(cortes.reads.map(read => [read.row, read.column, read.numRows, read.numColumns]), [[2, 1, undefined, undefined], [2, 2, 3, 5]]);
+assert.deepEqual(relay.reads.map(read => [read.row, read.column, read.numRows, read.numColumns]), [[2, 2, 3, 1]]);
 console.log("CatalogDropdownRead: 1/1 PASS");
