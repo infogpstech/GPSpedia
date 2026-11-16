@@ -8245,9 +8245,19 @@ export async function openAuditDriveModal() {
         reconciliationCounts.replaceChildren();
         reconciliationResults.replaceChildren();
         const labels = {
-            matched: "Coincidencia exacta", already_linked: "Ya vinculada", historical: "Ya registrada en historial", orphaned: "Sin correspondencia",
+            matched: "Coincidencia exacta", already_linked: "Ya vinculada", historical: "Historial", orphaned: "Sin correspondencia",
             ambiguous: "Ambigua", occupied: "Destino ocupado", referenced_elsewhere: "Referenciada en otra ubicación",
-            access_restricted: "Acceso no público", unverifiable: "No verificable", invalid: "Archivo inválido"
+            access_restricted: "ACL no permitida", unverifiable: "No verificable", invalid: "Archivo inválido"
+        };
+        const accessLabels = {
+            public_link_viewer: "Enlace · lector", public_web_viewer: "Web · lector",
+            public_write: "Público · escritura", restricted: "Restringida", unverifiable: "No verificable"
+        };
+        const complianceLabels = {
+            compliant: "Cumple", too_broad: "Acceso demasiado amplio", unsafe_public: "Permiso público de escritura",
+            missing_public_access: "Falta acceso por enlace", unverifiable: "ACL no verificable",
+            public_not_required: "Pública sin referencia activa", public_too_broad_not_required: "Pública en web sin uso activo",
+            public_write_not_required: "Escritura pública sin uso activo", not_public: "Sin acceso público"
         };
         Object.keys(labels).forEach(key => {
             const count = Number(report.counts && report.counts[key]) || 0;
@@ -8257,6 +8267,13 @@ export async function openAuditDriveModal() {
             chip.textContent = labels[key] + ": " + count;
             reconciliationCounts.appendChild(chip);
         });
+        const missingCount = Number(report.missingReferenceCount || (report.missingReferences || []).length) || 0;
+        if (missingCount) {
+            const chip = document.createElement("span");
+            chip.className = "audit-reconciliation-count";
+            chip.textContent = "Referencias fuera del inventario: " + missingCount;
+            reconciliationCounts.appendChild(chip);
+        }
         const rows = [];
         (report.results || []).forEach(item => rows.push(item));
         (report.invalidFiles || []).forEach(item => rows.push({ ...item, status: "invalid" }));
@@ -8291,6 +8308,13 @@ export async function openAuditDriveModal() {
                 row.appendChild(approvalLabel);
             }
             if (detail.textContent) row.appendChild(detail);
+            if (item.accessClass) {
+                const acl = document.createElement("small");
+                acl.className = "audit-reconciliation-access";
+                acl.textContent = "ACL: " + (accessLabels[item.accessClass] || item.accessClass) +
+                    " · " + (complianceLabels[item.publicityCompliance] || item.publicityCompliance || "Sin clasificación");
+                row.appendChild(acl);
+            }
             if (item.reason) {
                 const reason = document.createElement("span");
                 reason.textContent = String(item.reason);
@@ -8308,6 +8332,38 @@ export async function openAuditDriveModal() {
             note.textContent = "Se muestran " + visibleRows.length + " de " + rows.length + " resultados. El reporte completo permanece en memoria durante esta sesión.";
             reconciliationResults.appendChild(note);
         }
+        const missingReferences = Array.isArray(report.missingReferences) ? report.missingReferences : [];
+        if (missingReferences.length) {
+            const section = document.createElement("section");
+            const heading = document.createElement("strong");
+            heading.textContent = "Referencias de Cortes sin archivo verificado";
+            section.appendChild(heading);
+            const missingLabels = {
+                trashed: "En papelera", outside_cortes_tree: "Fuera de Cortes",
+                ambiguous_location: "Ubicación ambigua", missing_from_audit: "No incluido en auditoría",
+                missing_or_unverifiable: "No disponible o sin acceso"
+            };
+            missingReferences.slice(0, 200).forEach(item => {
+                const line = document.createElement("p");
+                const locations = (item.locations || []).map(location =>
+                    "fila " + location.row + " · columna " + location.column).join("; ");
+                line.textContent = String(item.fileId || "") + " · " +
+                    (missingLabels[item.status] || item.status || "Sin estado") +
+                    (locations ? " · " + locations : "");
+                section.appendChild(line);
+            });
+            if (report.missingReferencesTruncated) {
+                const note = document.createElement("p");
+                note.textContent = "La lista está limitada a 200 referencias; total detectado: " + missingCount + ".";
+                section.appendChild(note);
+            }
+            reconciliationResults.appendChild(section);
+        }
+        if (report.missingReferenceCheckStatus !== "verified") {
+            const note = document.createElement("p");
+            note.textContent = "No se pudo verificar la correspondencia completa de referencias. La aplicación permanece bloqueada.";
+            reconciliationResults.appendChild(note);
+        }
         updateReconciliationApprovalControls_();
         if (report.rowIssues && report.rowIssues.length) {
             const issues = document.createElement("p");
@@ -8320,9 +8376,12 @@ export async function openAuditDriveModal() {
         if (!globalThis.crypto || !globalThis.crypto.subtle) {
             throw new Error("Este navegador no permite calcular la firma segura del inventario. Abre GPSpedia mediante HTTPS o un entorno seguro.");
         }
-        const payload = JSON.stringify(imageFiles.map(file => [
-            String(file.fileId || ""), String(file.fileName || ""), String(file.mimeType || "").toLowerCase()
-        ]).sort((left, right) => left[0].localeCompare(right[0])));
+        const payload = JSON.stringify({
+            aclPolicyVersion: "cortes-acl-link-reader-v1",
+            files: imageFiles.map(file => [
+                String(file.fileId || ""), String(file.fileName || ""), String(file.mimeType || "").toLowerCase()
+            ]).sort((left, right) => left[0].localeCompare(right[0]))
+        });
         const bytes = new TextEncoder().encode(payload);
         const digest = await globalThis.crypto.subtle.digest("SHA-256", bytes);
         return Array.from(new Uint8Array(digest))
@@ -8348,7 +8407,10 @@ export async function openAuditDriveModal() {
             const report = {
                 results: saved.results, invalidFiles: saved.invalidFiles, rowIssues: saved.rowIssues,
                 counts: saved.counts, manifestDigest: saved.sourceDigest, status: saved.status, applyAvailable: false,
-                referenceCheckStatus: saved.referenceCheckStatus
+                referenceCheckStatus: saved.referenceCheckStatus, missingReferences: saved.missingReferences || [],
+                missingReferenceCount: saved.missingReferenceCount || 0,
+                missingReferenceCheckStatus: saved.missingReferenceCheckStatus || "unverifiable",
+                missingReferencesTruncated: saved.missingReferencesTruncated === true
             };
             renderCortesReconciliationReport_(report);
             if (reconciliationStatus) {
@@ -8387,20 +8449,23 @@ export async function openAuditDriveModal() {
         updateControls();
         logDeveloperOperation_("[CONCILIACIÓN DRIVE] Iniciando simulación de " + imageFiles.length + " imágenes.", "info");
         const aggregate = {
-            results: [], invalidFiles: [], rowIssues: [], applyAvailable: false, counts: {
+            results: [], invalidFiles: [], rowIssues: [], missingReferences: [], missingReferenceCount: 0,
+            missingReferenceCheckStatus: "unverifiable", missingReferencesTruncated: false, applyAvailable: false, counts: {
                 matched: 0, already_linked: 0, orphaned: 0, ambiguous: 0, occupied: 0,
                 referenced_elsewhere: 0, historical: 0, access_restricted: 0, unverifiable: 0, invalid: 0
             }
         };
         let fileSignature = "";
-        let sourceDigest = "", referenceCheckStatus = "", nextBatchIndex = 0, revision = 0;
+        let sourceDigest = "", referenceCheckStatus = "", missingReferenceCheckStatus = "", nextBatchIndex = 0, revision = 0;
         let applyCapabilityKnown = false, resumedFromSavedState = false;
         const batchSize = 25;
         const totalBatches = Math.ceil(imageFiles.length / batchSize);
         const saveProgress = async status => {
             if (!isCurrentRequest()) return;
             const saved = await offline.saveCortesImageReconciliationState({
-                auditId, fileSignature, sourceDigest, referenceCheckStatus,
+                auditId, fileSignature, sourceDigest, referenceCheckStatus, missingReferenceCheckStatus,
+                missingReferences: aggregate.missingReferences, missingReferenceCount: aggregate.missingReferenceCount,
+                missingReferencesTruncated: aggregate.missingReferencesTruncated,
                 nextBatchIndex, revision, results: aggregate.results,
                 invalidFiles: aggregate.invalidFiles, rowIssues: aggregate.rowIssues,
                 counts: aggregate.counts, status
@@ -8418,6 +8483,11 @@ export async function openAuditDriveModal() {
                 aggregate.results = previous.results;
                 aggregate.invalidFiles = previous.invalidFiles;
                 aggregate.rowIssues = previous.rowIssues;
+                aggregate.missingReferences = previous.missingReferences || [];
+                aggregate.missingReferenceCount = Number(previous.missingReferenceCount || aggregate.missingReferences.length);
+                aggregate.missingReferenceCheckStatus = String(previous.missingReferenceCheckStatus || "unverifiable");
+                aggregate.missingReferencesTruncated = previous.missingReferencesTruncated === true;
+                missingReferenceCheckStatus = aggregate.missingReferenceCheckStatus;
                 Object.keys(aggregate.counts).forEach(key => {
                     aggregate.counts[key] = Math.max(0, Number(previous.counts[key]) || 0);
                 });
@@ -8449,7 +8519,8 @@ export async function openAuditDriveModal() {
                 if (!isCurrentRequest()) return;
                 if (!response || response.writePerformed !== false ||
                     !/^[a-f0-9]{64}$/i.test(String(response.manifestDigest || "")) ||
-                    !Array.isArray(response.results) || !Array.isArray(response.invalidFiles)) {
+                    !Array.isArray(response.results) || !Array.isArray(response.invalidFiles) ||
+                    !Array.isArray(response.missingReferences)) {
                     throw new Error("ADMIN devolvió un reporte de conciliación incompleto o no verificable.");
                 }
                 if (sourceDigest && sourceDigest !== response.manifestDigest) {
@@ -8460,6 +8531,15 @@ export async function openAuditDriveModal() {
                     throw new Error("El estado de verificación de referencias cambió entre lotes.");
                 }
                 referenceCheckStatus = String(response.referenceCheckStatus || "unavailable");
+                const batchMissingCheckStatus = String(response.missingReferenceCheckStatus || "unverifiable");
+                if (missingReferenceCheckStatus && missingReferenceCheckStatus !== batchMissingCheckStatus) {
+                    throw new Error("El estado de verificación de referencias faltantes cambió entre lotes.");
+                }
+                missingReferenceCheckStatus = batchMissingCheckStatus;
+                aggregate.missingReferences = response.missingReferences;
+                aggregate.missingReferenceCount = Number(response.missingReferenceCount || response.missingReferences.length);
+                aggregate.missingReferenceCheckStatus = batchMissingCheckStatus;
+                aggregate.missingReferencesTruncated = response.missingReferencesTruncated === true;
                 const supportsApply = Boolean(response.capabilities && response.capabilities.applyApprovedReconciliation === true);
                 if (!applyCapabilityKnown) {
                     aggregate.applyAvailable = supportsApply;
@@ -8500,7 +8580,8 @@ export async function openAuditDriveModal() {
                     throw new Error("No se pudo revalidar el manifiesto antes de consolidar el último lote guardado.");
                 }
                 if (sourceDigest !== verification.manifestDigest ||
-                    referenceCheckStatus !== String(verification.referenceCheckStatus || "unavailable")) {
+                    referenceCheckStatus !== String(verification.referenceCheckStatus || "unavailable") ||
+                    missingReferenceCheckStatus !== String(verification.missingReferenceCheckStatus || "unverifiable")) {
                     throw new Error("Los datos de Cortes o sus referencias cambiaron después del último lote guardado. Inicia una auditoría Drive nueva antes de consolidar.");
                 }
                 aggregate.applyAvailable = Boolean(verification.capabilities && verification.capabilities.applyApprovedReconciliation === true);
@@ -8533,12 +8614,16 @@ export async function openAuditDriveModal() {
             aggregate.manifestDigest = sourceDigest;
             aggregate.status = "complete";
             aggregate.referenceCheckStatus = referenceCheckStatus;
+            aggregate.missingReferenceCheckStatus = missingReferenceCheckStatus;
             await saveProgress("complete");
             if (!isCurrentRequest()) return;
             renderCortesReconciliationReport_(aggregate);
+            const aclWarnings = aggregate.results.filter(item =>
+                item.publicityCompliance && !["compliant", "not_public"].includes(item.publicityCompliance)).length;
             const reconciliationMessage = "Simulación terminada. " + aggregate.counts.matched +
-                " coincidencias exactas propuestas; referencias: " + referenceCheckStatus +
-                ". Progreso guardado localmente. No se modificó Spreadsheet, Drive ni permisos.";
+                " coincidencias exactas; " + aggregate.missingReferenceCount + " referencias fuera del inventario; " +
+                aclWarnings + " alertas ACL. Verificación de referencias: " + referenceCheckStatus +
+                ". Sin cambios en Spreadsheet, Drive ni permisos.";
             if (reconciliationStatus) reconciliationStatus.textContent = reconciliationMessage;
             logDeveloperOperation_("[CONCILIACIÓN DRIVE] " + reconciliationMessage,
                 aggregate.counts.invalid || aggregate.counts.unverifiable ? "warning" : "success");
@@ -8595,8 +8680,8 @@ export async function openAuditDriveModal() {
         }
         const confirmed = window.gpsepediaRequestDeveloperConsoleConfirmation
             ? await window.gpsepediaRequestDeveloperConsoleConfirmation(
-            "Se escribirán " + approved.length + " URL(s) en celdas vacías de la hoja Cortes. " +
-            "Se volverán a validar los destinos y se comprobará cada escritura. No se cambiarán permisos ni se moverán archivos. ¿Deseas continuar?"
+            "Se creará un respaldo completo, verificado y privado de la base de datos. Después se escribirán " +
+            approved.length + " URL(s) en celdas vacías de Cortes. Se volverán a validar los destinos; no se cambiarán permisos ni se moverán archivos. ¿Deseas continuar?"
         )
             : false;
         if (!confirmed) return;
@@ -8606,11 +8691,24 @@ export async function openAuditDriveModal() {
         updateReconciliationApprovalControls_();
         let applied = false;
         try {
+            const backupResponse = await routeActionWithRetry("backupDatabase", {
+                ...getDeveloperSessionPayload()
+            }, {
+                timeoutMs: 120000, maxAttempts: 1, retryDelayMs: 0,
+                shouldContinue: isCurrentRequest
+            });
+            if (!isCurrentRequest()) return;
+            const backupId = String(backupResponse && backupResponse.backupId || "");
+            if (!backupResponse || backupResponse.status !== "success" ||
+                !/^[a-zA-Z0-9_-]{20,}$/.test(backupId)) {
+                throw new Error("No se creó y verificó el respaldo privado. No se escribió ninguna URL.");
+            }
+            if (reconciliationStatus) reconciliationStatus.textContent = "Respaldo completo verificado. Aplicando asignaciones…";
             const response = await routeActionWithRetry("applyCortesImageReconciliation", {
-                ...getDeveloperSessionPayload(), confirmed: true, auditId,
+                ...getDeveloperSessionPayload(), confirmed: true, auditId, backupId,
                 manifestDigest: String(currentReconciliationReport.manifestDigest || ""), approved
             }, {
-                timeoutMs: 90000, maxAttempts: 1, retryDelayMs: 0,
+                timeoutMs: 180000, maxAttempts: 1, retryDelayMs: 0,
                 shouldContinue: isCurrentRequest
             });
             if (!isCurrentRequest()) return;
@@ -8618,9 +8716,11 @@ export async function openAuditDriveModal() {
                 response.rollbackConfirmed === true) {
                 applied = true;
                 if (reconciliationStatus) reconciliationStatus.textContent =
-                    "Aplicación verificada: " + response.appliedCount + " asignaciones. Celdas con imagen antes: " +
+                    "Aplicación verificada: " + response.appliedCount + " asignaciones. Respaldo: " +
+                    String(response.backupName || backupResponse.backupName || "verificado") + ". Celdas antes: " +
                     response.beforeCount + "; después: " + response.afterCount + ". Actualizando el preview…";
-                logDeveloperOperation_("[CONCILIACIÓN DRIVE] Aplicación verificada: " + response.appliedCount + " asignaciones.", "success");
+                logDeveloperOperation_("[CONCILIACIÓN DRIVE] Aplicación verificada: " + response.appliedCount +
+                    " asignaciones; respaldo " + String(response.backupName || backupResponse.backupName || "verificado") + ".", "success");
             } else {
                 if (response && response.status === "partial") currentReconciliationReport.status = "stale";
                 if (reconciliationStatus) reconciliationStatus.textContent =
