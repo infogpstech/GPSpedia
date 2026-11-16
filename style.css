@@ -4795,3 +4795,91 @@ body.dark-mode #login-modal #login-error.login-session-ended {
     background: #3c331d;
     color: #f0dfa9;
 }
+
+
+/* GP-UX-INBOX-01 — navegación lateral por bandejas y acciones compactas. */
+#inbox-modal-content .inbox-heading-block { display:flex; align-items:center; gap:10px; min-width:0; }
+#inbox-modal-content .inbox-menu-toggle,
+#inbox-modal-content .inbox-icon-action {
+    display:inline-flex; align-items:center; justify-content:center; flex:0 0 40px;
+    width:40px; min-width:40px; height:40px; min-height:40px; padding:0;
+    border:1px solid var(--gp-color-border,var(--border-color,#888)); border-radius:9px;
+    color:var(--gp-color-text,var(--text-color,#222)); background:var(--gp-color-button-bg,var(--button-bg,#eee));
+    cursor:pointer;
+}
+#inbox-modal-content .inbox-menu-toggle { color:var(--gp-color-accent,var(--accent-color,#1769aa)); }
+#inbox-modal-content .inbox-workspace {
+    flex:1 1 auto; min-height:0; min-width:0; display:grid;
+    grid-template-columns:190px minmax(0,1fr); gap:12px; overflow:hidden;
+    transition:grid-template-columns .18s ease;
+}
+#inbox-modal-content .inbox-section-nav {
+    min-width:0; min-height:0; display:flex; flex-direction:column; gap:5px; overflow:hidden;
+    padding:8px 6px; border:1px solid var(--gp-color-border,var(--border-color,#ddd)); border-radius:10px;
+    background:var(--gp-color-surface,var(--card-bg,#fff));
+}
+#inbox-modal-content .inbox-section-nav button {
+    display:flex; align-items:center; gap:11px; width:100%; min-width:0; min-height:42px;
+    padding:8px 10px; border:0; border-radius:8px; text-align:left; white-space:nowrap;
+    color:var(--gp-color-text,var(--text-color,#222)); background:transparent; font:inherit; cursor:pointer;
+}
+#inbox-modal-content .inbox-section-nav button i { width:20px; flex:0 0 20px; text-align:center; color:var(--gp-color-text-muted,var(--text-medium,#667085)); }
+#inbox-modal-content .inbox-section-nav button[aria-pressed="true"] {
+    color:var(--gp-color-accent,var(--accent-color,#1769aa)); background:color-mix(in srgb,var(--gp-color-accent,#1769aa) 12%,transparent); font-weight:700;
+}
+#inbox-modal-content .inbox-section-nav button[aria-pressed="true"] i { color:inherit; }
+#inbox-modal-content .inbox-workspace-content { min-width:0; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
+#inbox-modal-content .inbox-workspace.is-nav-collapsed { grid-template-columns:0 minmax(0,1fr); gap:0; }
+#inbox-modal-content .inbox-workspace.is-nav-collapsed .inbox-section-nav { visibility:hidden; padding:0; border:0; }
+#inbox-modal-content .inbox-requests-view { min-width:0; }
+#inbox-modal-content .inbox-requests-view .inbox-layout-wrapper { display:flex; gap:12px; }
+#inbox-modal-content .inbox-requests-view #inbox-list { flex:0 0 min(34%,340px); overflow:auto; }
+#inbox-modal-content .inbox-requests-view #inbox-detail { flex:1 1 0; min-width:0; overflow:auto; }
+#inbox-modal-content .inbox-action-toolbar button#inbox-delete-btn {
+    width:40px; min-width:40px; height:40px; min-height:40px; padding:0;
+    display:inline-flex; align-items:center; justify-content:center;
+}
+#inbox-modal-content .inbox-action-toolbar button#inbox-delete-btn i { margin:0; }
+@media (max-width:760px) {
+    #inbox-modal-content .inbox-modal-header { flex-direction:row; align-items:center; flex-wrap:nowrap; padding-right:44px; }
+    #inbox-modal-content .inbox-heading-block { flex:1 1 auto; width:auto; }
+    #inbox-modal-content .inbox-header-actions { display:flex; flex:0 0 auto; width:auto; gap:6px; }
+    #inbox-modal-content .inbox-header-actions button { width:40px; min-width:40px; height:40px; min-height:40px; padding:0; }
+    #inbox-modal-content .inbox-workspace { grid-template-columns: minmax(0,1fr); grid-template-rows:auto minmax(0,1fr); gap:8px; }
+    #inbox-modal-content .inbox-section-nav { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:3px; padding:5px; }
+    #inbox-modal-content .inbox-section-nav button { min-height:42px; flex-direction:column; justify-content:center; gap:3px; padding:4px 2px; font-size:.68rem; white-space:normal; text-align:center; }
+    #inbox-modal-content .inbox-section-nav button i { width:auto; flex:0 0 auto; font-size:1rem; }
+    #inbox-modal-content .inbox-workspace.is-nav-collapsed { grid-template-rows:0 minmax(0,1fr); }
+    #inbox-modal-content .inbox-workspace.is-nav-collapsed .inbox-section-nav { display:none; }
+    #inbox-modal-content .inbox-requests-view .inbox-layout-wrapper { flex-direction:column; }
+    #inbox-modal-content .inbox-requests-view #inbox-list { flex:0 0 38%; min-height:0; }
+    #inbox-modal-content .inbox-requests-view #inbox-detail { flex:1 1 0; }
+}
+@media (max-width:420px) {
+    #inbox-modal-content .inbox-modal-title { font-size:1.02rem !important; }
+    #inbox-modal-content .inbox-menu-toggle,
+    #inbox-modal-content .inbox-icon-action { flex-basis:36px; width:36px; min-width:36px; height:36px; min-height:36px; }
+    #inbox-modal-content .inbox-section-nav button { font-size:.62rem; }
+}
+/* GP-UX-CUT-MODAL-01 — acciones inmediatamente antes del control de cierre. */
+.detail-modal-toolbar {
+    position:relative;
+    display:flex;
+    align-items:flex-start;
+    justify-content:flex-end;
+    flex-wrap:nowrap;
+    gap:8px;
+    min-height:42px;
+    padding:0 46px 8px 0;
+}
+.detail-modal-saving-indicator { position:absolute; left:0; top:4px; margin:0; }
+.detail-modal-header-actions { margin-left:auto; flex:0 1 auto; flex-wrap:nowrap; justify-content:flex-end; }
+.detail-modal-toolbar > .info-close-btn {
+    position:absolute !important; top:0 !important; right:0 !important;
+    margin:0 !important; flex:0 0 38px; width:38px; min-width:38px; height:38px; min-height:38px;
+}
+@media (max-width:560px) {
+    .detail-modal-toolbar { gap:5px; padding-right:42px; }
+    .detail-modal-header-actions { gap:5px; }
+    .detail-modal-header-actions .share-modal-btn { min-width:34px; min-height:38px; }
+}
