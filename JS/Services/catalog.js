@@ -378,22 +378,28 @@ function handleGetDropdownData() {
             if (criteriaValues && typeof criteriaValues.getValues === "function") categorias = criteriaValues.getValues().flat().map(v=>String(v==null?"":v).trim()).filter(Boolean);
             else if (Array.isArray(criteriaValues)) categorias = criteriaValues.flat().map(v=>String(v==null?"":v).trim()).filter(Boolean);
         }
-        const readColumnValues = (sheet, column) => {
-            const lastRow = Number(sheet.getLastRow()) || 0;
-            if (lastRow < 2) return [];
-            return sheet.getRange(2, column, lastRow - 1, 1).getValues().map(row => row[0]);
-        };
         const uniqueSorted = values => Array.from(new Set(values
             .map(value => String(value == null ? "" : value).trim())
             .filter(Boolean))).sort((a,b)=>a.localeCompare(b));
-        const marcas = readColumnValues(cortesSheet, COLS_CORTES.marca);
+        const cortesColumns = [COLS_CORTES.marca, COLS_CORTES.tipoCorte1, COLS_CORTES.tipoCorte2,
+            COLS_CORTES.tipoCorte3, COLS_CORTES.tipoEncendido];
+        const firstCortesColumn = Math.min(...cortesColumns), lastCortesColumn = Math.max(...cortesColumns);
+        const cortesLastRow = Number(cortesSheet.getLastRow()) || 0;
+        const cortesRows = cortesLastRow >= 2
+            ? cortesSheet.getRange(2, firstCortesColumn, cortesLastRow - 1, lastCortesColumn - firstCortesColumn + 1).getValues()
+            : [];
+        const valuesForCortesColumn = column => cortesRows.map(row => row[column - firstCortesColumn]);
+        const marcas = valuesForCortesColumn(COLS_CORTES.marca);
         const tiposCorte = [
-            ...readColumnValues(cortesSheet, COLS_CORTES.tipoCorte1),
-            ...readColumnValues(cortesSheet, COLS_CORTES.tipoCorte2),
-            ...readColumnValues(cortesSheet, COLS_CORTES.tipoCorte3)
+            ...valuesForCortesColumn(COLS_CORTES.tipoCorte1),
+            ...valuesForCortesColumn(COLS_CORTES.tipoCorte2),
+            ...valuesForCortesColumn(COLS_CORTES.tipoCorte3)
         ];
-        const tiposEncendido = readColumnValues(cortesSheet, COLS_CORTES.tipoEncendido);
-        const configuracionesRelay = readColumnValues(relaySheet, COLS_RELAY.configuracion);
+        const tiposEncendido = valuesForCortesColumn(COLS_CORTES.tipoEncendido);
+        const relayLastRow = Number(relaySheet.getLastRow()) || 0;
+        const configuracionesRelay = relayLastRow >= 2
+            ? relaySheet.getRange(2, COLS_RELAY.configuracion, relayLastRow - 1, 1).getValues().map(row => row[0])
+            : [];
         return {status:"success",dropdowns:{
             categoria:categorias,
             marca:uniqueSorted(marcas),
