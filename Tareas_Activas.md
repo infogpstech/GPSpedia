@@ -1264,3 +1264,11 @@ Se creó `Tareas_beta.md` con los IDs BETA-001 a BETA-052, criterios de aceptaci
 - Lectura del historial: timeout acotado de 120 s y dos intentos seguros.
 - CI run `43783119482`: SUCCESS — 107 suites / 1,656 pruebas / 0 fallos.
 - **Pendiente Beta:** medir tiempos reales y confirmar consulta de historial/auditoría con Drive y Spreadsheet desplegados. GP-BETA-04 y GP-BETA-05 siguen ABIERTAS.
+
+
+### Adenda 2026-11-16 — GP-BETA-02: latencia al entrar en edición de Cortes
+- **Causa localizada:** el modal espera `precargarDropdownOptions()` antes de mostrar controles de edición; CATALOG leía rangos completos de Cortes y Relay para obtener solo seis columnas.
+- **Optimizado:** lectura de un rango contiguo con las cinco columnas necesarias de Cortes y una columna de Relay. Se conserva la validación de categoría.
+- **Prueba:** `CatalogDropdownRead.mjs` integrada en CI.
+- **CI:** run `43783436013` SUCCESS — 108 suites / 1,657 pruebas / 0 fallos.
+- **Pendiente Beta:** medir tiempo real de apertura/edición y verificar CATALOG desplegado. GP-BETA-02 sigue abierta hasta prueba funcional.
