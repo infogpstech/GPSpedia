@@ -758,3 +758,12 @@ HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
 - CI run 43783436013: SUCCESS; 108 suites / 1,657 pruebas / 0 fallos.
 - La medición real de latencia queda pendiente de Beta; no se desplegó CATALOG.
 ================================================================================
+
+
+================================================================================
+2026-11-16 — DIAGNÓSTICO EXPLÍCITO DE ESQUEMA INCOMPLETO EN INBOX
+- JS/Services/InboxConversations.js: handleGetInboxConversations ya no presenta una lista vacía si existe solo una de las hojas Conversations/State; informa esquema incompleto. También informa si faltan mensajes para conversaciones que registran mensajes.
+- JS/Tests/InboxConversations.mjs: agrega escenarios de hojas faltantes y prueba de despacho FEEDBACK para lecturas Inbox con actor central y lease específica para escritura.
+- CI run 43783775316: SUCCESS; 108 suites / 1,660 pruebas / 0 fallos.
+- La validación de CI usa Spreadsheet simulado; falta comprobar estructura y contenido de hojas en Beta. No se desplegó FEEDBACK.
+================================================================================
