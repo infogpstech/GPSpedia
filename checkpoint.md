@@ -1255,3 +1255,13 @@ El usuario confirmó que el backlog pendiente también comprende la organizació
 - BETA-032 queda completada localmente; falta comprobar el flujo completo de operaciones en Beta y que no se dupliquen mensajes. No se desplegaron servicios Apps Script.
 - **Siguiente tarea local:** BETA-033 — implementar confirmaciones desde la consola, con respuestas normalizadas y rechazo de respuestas ambiguas.
 - Rama base `GPSpedia2.2.5` permanece intacta.
+
+
+## Continuidad — BETA-033 confirmaciones desde consola Developer (2026-11-16)
+
+- Se añadió `JS/Frontend/developerConsoleConfirmation.js` para normalizar respuestas afirmativas/negativas con un contrato explícito: `y`, `si/sí`, `s`, `ok`; `n`, `no`. Las entradas desconocidas o ambiguas se rechazan.
+- `JS/Frontend/ui.js`: las operaciones administrativas esperan una confirmación desde el campo de terminal de Developer; la entrada se intercepta antes de procesar comandos. Respuesta negativa, Escape o timeout de 120 s cancela la operación.
+- Las confirmaciones inválidas mantienen la solicitud pendiente y no autorizan acciones. Se reemplazaron las llamadas nativas `confirm()` del panel administrativo cubierto.
+- Prueba específica integrada en CI: `DeveloperConsoleConfirmation` (7 casos).
+- Pendiente: ejecutar prueba visual/teclado en navegador Beta y comprobar acciones con permisos y servicios del entorno. No se desplegaron Apps Script ni se modificaron datos externos.
+- **Siguiente tarea local:** BETA-034 — unificar los mensajes de resultados de operaciones Developer y retirar notificaciones externas duplicadas.

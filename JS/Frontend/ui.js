@@ -26,6 +26,7 @@ import { createRichTextToolbar, sanitizeHtmlContent, refreshRichTextToolbars } f
 import { renderActivityLogs } from './activityDashboard.js';
 import { getDriveStorageCriticalState } from './driveStorageAlerts.js';
 import { getOrCreateTermsDeviceId, getDeviceTermsAcceptance, saveDeviceTermsAcceptance } from './termsDeviceAcceptance.js';
+import { parseDeveloperConsoleConfirmation } from './developerConsoleConfirmation.js';
 
 async function clearServiceWorkerRuntimeCache_(windowRef, timeoutMs = 5000) {
     if (!windowRef || !windowRef.navigator || !windowRef.navigator.serviceWorker) {
@@ -5064,6 +5065,58 @@ function initAdminPanelListeners() {
         consoleLog.scrollTop = consoleLog.scrollHeight;
     }
 
+    let pendingDeveloperConsoleConfirmation_ = null;
+    function finishDeveloperConsoleConfirmation_(confirmed, reason = "") {
+        const pending = pendingDeveloperConsoleConfirmation_;
+        if (!pending) return false;
+        pendingDeveloperConsoleConfirmation_ = null;
+        window.clearTimeout(pending.timeoutId);
+        const input = document.getElementById("dev-terminal-input");
+        if (input) {
+            input.placeholder = input.dataset.defaultPlaceholder || "Comando (dir, cd, mkdir, tree)...";
+            input.removeAttribute("aria-describedby");
+        }
+        const accepted = confirmed === true && isAdminPanelCurrent_();
+        if (accepted) log("[CONFIRMACIÓN] Respuesta afirmativa válida. Se autoriza continuar.");
+        else log("[CONFIRMACIÓN] " + (reason || "Operación cancelada. No se ejecutó."), true);
+        pending.resolve(accepted);
+        return true;
+    }
+    function requestDeveloperConsoleConfirmation_(message) {
+        if (!isAdminPanelCurrent_()) return Promise.resolve(false);
+        if (pendingDeveloperConsoleConfirmation_) {
+            log("[CONFIRMACIÓN] Ya existe una solicitud pendiente. Responde primero si o no.", true);
+            return Promise.resolve(false);
+        }
+        const input = document.getElementById("dev-terminal-input");
+        if (input && !input.dataset.defaultPlaceholder) {
+            input.dataset.defaultPlaceholder = input.placeholder || "Comando (dir, cd, mkdir, tree)...";
+        }
+        log("[CONFIRMACIÓN] " + String(message || "¿Deseas continuar?"), true);
+        log("Responde en la terminal: si / no (también y, s, n u ok).", true);
+        if (input) {
+            input.placeholder = "Respuesta: si / no";
+            input.setAttribute("aria-describedby", "dev-console-log");
+            input.focus();
+        }
+        return new Promise(resolve => {
+            const timeoutId = window.setTimeout(() => {
+                finishDeveloperConsoleConfirmation_(false, "Tiempo de espera agotado. La operación fue cancelada.");
+            }, 120000);
+            pendingDeveloperConsoleConfirmation_ = { resolve, timeoutId };
+        });
+    }
+    function consumeDeveloperConsoleConfirmation_(value) {
+        if (!pendingDeveloperConsoleConfirmation_) return false;
+        const parsed = parseDeveloperConsoleConfirmation(value);
+        if (parsed === null) {
+            log("[CONFIRMACIÓN] Respuesta no válida. Escribe si o no; la operación sigue suspendida.", false, true);
+            return true;
+        }
+        finishDeveloperConsoleConfirmation_(parsed, parsed ? "" : "Respuesta negativa. La operación fue cancelada.");
+        return true;
+    }
+
     window.gpsepediaDeveloperLog = (message, level = 'info') => {
         log(message, level === 'warning', level === 'error');
     };
@@ -5860,9 +5913,15 @@ ${elapsedSec}s
 
     if (termInput) {
         termInput.addEventListener('keydown', async (e) => {
+            if (e.key === 'Escape' && pendingDeveloperConsoleConfirmation_) {
+                e.preventDefault();
+                finishDeveloperConsoleConfirmation_(false, "Confirmación cancelada con Escape.");
+                return;
+            }
             if (e.key === 'Enter') {
                 const val = termInput.value;
                 termInput.value = '';
+                if (consumeDeveloperConsoleConfirmation_(val)) return;
                 await executeTerminalCommand(val);
             } else if (e.key === 'ArrowUp') {
                 if (commandHistory.length > 0 && commandHistoryIndex > 0) {
@@ -5886,6 +5945,7 @@ ${elapsedSec}s
             if (termInput && termInput.value) {
                 const val = termInput.value;
                 termInput.value = '';
+                if (consumeDeveloperConsoleConfirmation_(val)) return;
                 await executeTerminalCommand(val);
             }
         };
@@ -6068,7 +6128,7 @@ ${elapsedSec}s
         const confirmation = resourceType === 'spreadsheet'
             ? '¿Estás seguro de que deseas RESTAURAR la base de datos completa? Esto sobreescribirá la información actual de producción.'
             : '¿Estás seguro de que deseas RESTAURAR toda la estructura de Drive? Esto limpiará y sobreescribirá las imágenes actuales en producción.';
-        if (!confirm(confirmation)) return;
+        if (!(await requestDeveloperConsoleConfirmation_(confirmation))) return;
 
         setBackupResourceHint(resourceType === 'spreadsheet'
             ? 'Validando el respaldo de Spreadsheet antes de restaurar...'
@@ -6237,7 +6297,7 @@ ${elapsedSec}s
                 'Ya presentes: ' + plan.alreadyPresent + '\n' +
                 'Columna 43: VIN; columnas 44 y 45: reservadas y vacías.\n\n' +
                 'El servidor volverá a validar el estado actual y verificará el destino antes de limpiar el origen. ¿Deseas continuar?';
-            if (!confirm(confirmation)) return;
+            if (!(await requestDeveloperConsoleConfirmation_(confirmation))) return;
 
             vinMigrationRunning = true;
             updateVinMigrationControls();
@@ -6382,7 +6442,7 @@ ${elapsedSec}s
                 if (identifierAuditStatus) identifierAuditStatus.textContent = 'No hay un respaldo de Spreadsheet verificado o el enlace cambió. Genera un respaldo y vuelve a simular.';
                 return;
             }
-            if (!confirm('Se congelarán hasta 5 fórmulas ID por lote, conservando exactamente sus valores calculados. La fórmula original quedará respaldada en snapshots/manifiesto. ¿Confirmas este lote?')) return;
+            if (!(await requestDeveloperConsoleConfirmation_('Se congelarán hasta 5 fórmulas ID por lote, conservando exactamente sus valores calculados. La fórmula original quedará respaldada en snapshots/manifiesto. ¿Confirmas este lote?'))) return;
             idFreezeRunning = true;
             confirmIdFreezeButton.disabled = true;
             if (previewIdFreezeButton) previewIdFreezeButton.disabled = true;
@@ -6476,7 +6536,7 @@ ${elapsedSec}s
             }
             const confirmation = 'Se migrarán hasta ' + plan.wouldMigrate +
                 ' contraseñas plaintext a hash. No se mostrarán ni registrarán las contraseñas. ¿Confirmas este lote?';
-            if (!confirm(confirmation)) return;
+            if (!(await requestDeveloperConsoleConfirmation_(confirmation))) return;
             passwordMigrationRunning = true;
             confirmPasswordMigrationButton.disabled = true;
             if (previewPasswordMigrationButton) previewPasswordMigrationButton.disabled = true;
@@ -6638,24 +6698,24 @@ ${elapsedSec}s
     }
 
     document.getElementById('btn-admin-reorganize-db').onclick = async () => {
-        if (confirm("¿Deseas reorganizar y ordenar la base de datos alfabéticamente por Marca? Se generará automáticamente un respaldo preventivo.")) {
+        if (await requestDeveloperConsoleConfirmation_("¿Deseas reorganizar y ordenar la base de datos alfabéticamente por Marca? Se generará automáticamente un respaldo preventivo.")) {
             await runAction('reorganizeDatabase');
         }
     };
     document.getElementById('btn-admin-normalize-images').onclick = async () => {
-        const continueSaved = confirm("¿Deseas CONTINUAR desde el último punto de progreso guardado?\n\n- Presiona 'Aceptar' para continuar donde terminó.\n- Presiona 'Cancelar' para iniciar desde el principio (Fila 1).");
+        const continueSaved = await requestDeveloperConsoleConfirmation_("¿Deseas CONTINUAR desde el último punto de progreso guardado? Responde no para iniciar desde el principio (Fila 1).");
         await runAction('normalizeImages', { reset: !continueSaved });
     };
     const organizePrimaryImagesButton = document.getElementById('btn-admin-organize-primary-images');
     if (organizePrimaryImagesButton) {
         organizePrimaryImagesButton.onclick = async () => {
-            const continueSaved = confirm("¿Deseas CONTINUAR desde el último punto de progreso guardado?\n\n- Presiona 'Aceptar' para continuar donde terminó.\n- Presiona 'Cancelar' para iniciar desde el principio.");
-            if (!confirm("Esta operación moverá exclusivamente archivos referenciados por imagenVehiculo. No renombrará archivos, no duplicará imágenes, no modificará URL ni celdas de Spreadsheet y omitirá imágenes compartidas con otros campos. ¿Deseas continuar?")) return;
+            const continueSaved = await requestDeveloperConsoleConfirmation_("¿Deseas CONTINUAR desde el último punto de progreso guardado? Responde no para iniciar desde el principio.");
+            if (!(await requestDeveloperConsoleConfirmation_("Esta operación moverá exclusivamente archivos referenciados por imagenVehiculo. No renombrará archivos, no duplicará imágenes, no modificará URL ni celdas de Spreadsheet y omitirá imágenes compartidas con otros campos. ¿Deseas continuar?"))) return;
             await runAction('organizePrimaryVehicleImages', { reset: !continueSaved });
         };
     }
     document.getElementById('btn-admin-restore-trash').onclick = async () => {
-        if (confirm("¿Deseas INICIAR el saneamiento y recuperación exhaustiva de imágenes en la papelera?\n\nEsta operación analizará todas las hojas del Spreadsheet, identificará enlaces rotos de Drive y restaurará de la papelera cualquier imagen eliminada. Puede tomar unos minutos.")) {
+        if (await requestDeveloperConsoleConfirmation_("¿Deseas INICIAR el saneamiento y recuperación exhaustiva de imágenes en la papelera?\n\nEsta operación analizará todas las hojas del Spreadsheet, identificará enlaces rotos de Drive y restaurará de la papelera cualquier imagen eliminada. Puede tomar unos minutos.")) {
             await runAction('restoreAllTrashedImages');
         }
     };
@@ -6664,7 +6724,7 @@ ${elapsedSec}s
     const clearCacheBtn = document.getElementById('btn-admin-clear-client-cache');
     if (clearCacheBtn) {
         clearCacheBtn.onclick = async () => {
-            if (!confirm("¿Deseas limpiar los datos locales reconstruibles?\n\nSe eliminarán catálogo, historial, vehículos vistos, miniaturas, validaciones, caché PyS y respuestas temporales de red. Se conservarán sesión, preferencias, borradores y operaciones pendientes o inciertas, copias de edición, auditorías administrativas y recursos esenciales para uso offline.")) return;
+            if (!(await requestDeveloperConsoleConfirmation_("¿Deseas limpiar los datos locales reconstruibles?\n\nSe eliminarán catálogo, historial, vehículos vistos, miniaturas, validaciones, caché PyS y respuestas temporales de red. Se conservarán sesión, preferencias, borradores y operaciones pendientes o inciertas, copias de edición, auditorías administrativas y recursos esenciales para uso offline."))) return;
 
             clearCacheBtn.disabled = true;
             try {
@@ -6762,7 +6822,7 @@ ${elapsedSec}s
             const confirmation = "Se ejecutarán exclusivamente estas operaciones:\n\n" +
                 confirmationDetails.join("\n") +
                 "\n\nCada fuente se procesará por separado. ¿Deseas continuar?";
-            if (!confirm(confirmation)) return;
+            if (!(await requestDeveloperConsoleConfirmation_(confirmation))) return;
 
             const controls = [clearActivityCheckbox, clearSensitiveCheckbox, retentionSelect].filter(Boolean);
             clearSelectedLogsBtn.disabled = true;

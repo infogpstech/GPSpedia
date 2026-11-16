@@ -164,14 +164,16 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 - No ocultar errores ni eliminar estados accesibles.
 
 ### BETA-033 — Confirmaciones desde consola
-**Estado: PENDIENTE LOCAL.**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.**
 
-- Implementar solicitudes de confirmación en la consola con respuestas afirmativas/negativas.
-- Admitir equivalentes definidos (`y/n`, `si/no`, `s/n`, `ok`) y normalizar entradas.
-- Rechazar respuestas ambiguas y no ejecutar operaciones destructivas sin confirmación válida.
+- Las operaciones administrativas solicitan confirmación en la consola Developer y esperan la respuesta en el campo de terminal.
+- Se aceptan `y`, `si/sí`, `s` y `ok` como afirmativas; `n` y `no` como negativas, sin distinguir mayúsculas/minúsculas ni acentos.
+- Las respuestas vacías o ambiguas no resuelven la solicitud; la operación permanece suspendida. Escape, respuesta negativa o vencimiento de 120 segundos cancelan sin ejecutar.
+- Se eliminaron los cuadros nativos `confirm()` del flujo de operaciones administrativas cubierto.
+- Pruebas locales: `DeveloperConsoleConfirmation` 7/7 PASS. Pendiente comprobar interacción en navegador y operaciones reales en Beta.
 
 ### BETA-034 — Mensajes de operaciones
-**Estado: PENDIENTE LOCAL.**
+**Estado: PENDIENTE LOCAL; SIGUIENTE TAREA.**
 
 - Retirar mensajes externos duplicados al borrar, auditar u organizar imágenes.
 - Dirigir resultados a la consola y mantener errores y estados comprensibles.
