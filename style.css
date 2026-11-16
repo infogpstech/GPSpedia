@@ -5274,3 +5274,158 @@ body.dark-mode #login-modal #login-error.login-session-ended {
     #inbox-modal-content .inbox-template-category-row { gap:5px; }
     #inbox-modal-content .inbox-template-category-row select { padding:8px 6px; font-size:.82rem; }
 }
+
+
+/* GP-UX-CUT-MODAL-04 / GP-UX-TUTORIAL-MODAL-01 — jerarquía y espaciado de encabezados. */
+.detail-modal-toolbar {
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    column-gap: 8px;
+    row-gap: 0;
+    margin-bottom: 14px;
+}
+.detail-modal-title {
+    height: 138px;
+    max-width: 180px;
+    overflow: visible !important;
+    box-sizing: border-box;
+    padding: 8px;
+    border: 0;
+    align-items: center;
+    justify-content: center;
+}
+.detail-modal-title .brand-logo-modal {
+    height: 120px !important;
+    max-height: 120px !important;
+    max-width: 180px;
+    object-fit: contain;
+}
+.detail-modal-title-text {
+    font-size: 2rem;
+    line-height: 1.15;
+    padding: 0 0 8px;
+}
+.detail-modal-title-input { font-size: 1.5rem; }
+.detail-modal-divider {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    display: block;
+    width: auto;
+    height: 2px;
+    min-height: 2px;
+    margin: 10px 12px 0;
+    background: var(--gp-color-accent, #007bff);
+    border-radius: 2px;
+}
+.detail-modal-saving-indicator {
+    grid-column: 1 / -1;
+    grid-row: 4;
+}
+.detail-modal-header-actions { gap: 6px; }
+.detail-modal-header-actions .share-modal-btn {
+    flex: 0 0 40px;
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+    min-height: 40px;
+    padding: 4px;
+    font-size: 1.1rem;
+}
+.detail-modal-toolbar > .info-close-btn {
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+    min-height: 40px;
+}
+.relay-detail-toolbar .relay-detail-title {
+    font-size: 2rem;
+    line-height: 1.15;
+}
+@media (max-width: 560px) {
+    .detail-modal-toolbar {
+        grid-template-rows: 40px minmax(76px, 1fr) auto auto;
+        column-gap: 6px;
+        padding-right: 46px;
+        margin-bottom: 12px;
+    }
+    .detail-modal-title {
+        height: 118px;
+        max-width: 36vw;
+        padding: 6px;
+    }
+    .detail-modal-title .brand-logo-modal {
+        height: 104px !important;
+        max-height: 104px !important;
+        max-width: 36vw;
+    }
+    .detail-modal-title-text {
+        font-size: 2rem;
+        padding-bottom: 6px;
+    }
+    .detail-modal-header-actions { gap: 4px; }
+    .detail-modal-header-actions .share-modal-btn {
+        flex: 0 0 36px;
+        width: 36px;
+        min-width: 36px;
+        height: 36px;
+        min-height: 36px;
+        padding: 3px;
+        font-size: 1rem;
+    }
+    .detail-modal-toolbar > .info-close-btn {
+        width: 40px;
+        min-width: 40px;
+        height: 40px;
+        min-height: 40px;
+    }
+}
+.tutorial-detail-toolbar {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    width: 100%;
+    min-width: 0;
+    padding: 0 50px 10px 0;
+    margin: 0 0 20px;
+    border-bottom: 0;
+}
+.tutorial-detail-title {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    color: var(--gp-color-accent, #007bff);
+    font-size: 2rem;
+    line-height: 1.2;
+    text-align: left;
+    white-space: normal;
+    overflow-wrap: normal;
+    word-break: normal;
+    hyphens: none;
+}
+.tutorial-detail-header-actions {
+    position: static;
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    min-width: 0;
+    margin: 0;
+    padding: 0 0 0 4px;
+}
+.tutorial-detail-toolbar > .tutorial-detail-header-actions > .tutorial-detail-close {
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+    min-height: 40px;
+    margin: 0 !important;
+}
+@media (max-width: 560px) {
+    .tutorial-detail-toolbar { gap: 6px; padding-right: 46px; }
+    .tutorial-detail-title { font-size: 1.6rem; }
+    .tutorial-detail-header-actions { gap: 4px; }
+}
