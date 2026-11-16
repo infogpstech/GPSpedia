@@ -1710,3 +1710,13 @@ ADENDA DE AUDITORÍA — GP-UX-INBOX-RICH-EDITOR-01 — 2026-11-16
 - CI Node.js 22 run `43975016921`: 130 suites, 1,947 pruebas aprobadas, 0 fallos.
 - GitHub Pages run `43975016203`: build y deploy exitosos.
 - Las pruebas verifican el estilo global, el ocultamiento exclusivo de las barras dentro de `#modalDetalle`, la preservación de las reglas de desplazamiento y la actualización de caché PWA a v54.
+
+
+
+### Revisión e implementación de estilo común para barras enriquecidas — GP-UX-RICH-TOOLBARS-01 — 2026-11-16
+- Se inspeccionó el generador compartido `createRichTextToolbar()`, su refresco dinámico, la creación independiente de las barras Inbox y las reglas CSS asociadas.
+- Se confirmó que los formularios utilizan tres perfiles de herramientas. El cambio conserva las diferencias funcionales: básico (negrita/color), listas (negrita/color y listas) y avanzado. Inbox mantiene su generador y controles propios.
+- Los botones de texto de los formularios se sustituyen visualmente por iconos Font Awesome con `title` y `aria-label`. Se mantienen los selectores HTML nativos para tamaño, fuente y marcador, así como los mismos eventos y llamadas de formato; no se agregan comandos.
+- Se unifican superficie, borde, fondo, espaciado, tamaño de iconos y estilos de selectores con la barra Inbox. La barra puede envolver los controles en pantallas estrechas sin cambiar el orden ni ocultar opciones.
+- App Shell actualizado de v54 a v55; contratos de CI actualizados para la versión de caché.
+- Sin hallazgos funcionales adicionales en el alcance revisado. La validación de sintaxis, suite automatizada y visualización real se registra por separado en checkpoint tras CI.
