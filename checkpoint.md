@@ -1,3 +1,26 @@
+# Continuidad — GP-UX-INBOX-RBAC-01 / GP-UX-RELAY-HEADER-01 (2026-11-16)
+
+**Rama:** `GPSpedia2.2.5_work`  
+**Commit de implementación:** `d8324a67efd942d36ce3f477d2a305ca38af549f`  
+**Rama base protegida:** `GPSpedia2.2.5` — sin modificaciones.
+
+## Cambios de frontend
+- `JS/Frontend/ui.js`: matriz de visibilidad de secciones Inbox por rol. Desarrollador: General, Soporte, Contáctanos, Reportes y Aportaciones. Jefe: General, Contáctanos y Reportes. Supervisor: General y Reportes. Técnico y Técnico exterior: General y únicamente sus propios reportes.
+- Los técnicos consultan el endpoint ya existente `getMyProblemReports` desde el frontend; no se modificó Apps Script ni el servicio. El render vuelve a comprobar el propietario mediante `reportMetadata.userId` y no ofrece acciones administrativas de respuesta/resolución/eliminación.
+- `index.html` y `style.css`: Nuevo mensaje pasa a botón flotante inferior derecho; Nuevo y Buscar muestran etiquetas. Los elementos ocultos salen del flujo visual y no dejan espacios.
+- `JS/Frontend/ui.js`: el formulario de mensaje nuevo incluye Salir; cancelar descarta el borrador y evita que una carga de destinatarios tardía reabra el formulario.
+- `JS/Frontend/ui.js` y `style.css`: encabezado del modal Relay con título a la izquierda y botón X independiente en la esquina superior derecha.
+- `service-worker.js`: App Shell v37 para invalidar recursos frontend anteriores.
+- Pruebas ampliadas en `JS/Tests/InboxUi.mjs` y `JS/Tests/CutDetailModalLayout.mjs`.
+
+## Alcance y validación
+- Cambios limitados a frontend, CSS, HTML, pruebas y Service Worker. Sin modificaciones en `JS/Services`, Apps Script, hojas, secretos o datos productivos.
+- CI y pruebas locales pendientes de resultado tras el commit; no se declara validación aprobada todavía.
+- Pendiente de aceptación visual en dispositivos Beta: matriz por cada cuenta real, botón flotante en distintos tamaños, formularios Nuevo/Salir, y títulos/cierres de Relay.
+- La autorización backend existente no se modificó. La restricción por sección de Inbox es una política de presentación/consulta del frontend según el alcance solicitado, no una nueva frontera de seguridad del servicio.
+
+---
+
 # Actualización de continuidad — GP-UX-INBOX-04 (2026-11-16)
 
 **Rama de trabajo:** `GPSpedia2.2.5_work`  

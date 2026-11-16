@@ -1107,3 +1107,12 @@ VALIDACIÓN LOCAL POSTERIOR — GP-UX-INBOX-03 / GP-DASH-ATTR-01
 - JS/Tests/InboxUi.mjs: regresiones para la barra, retirada de filtros y representación accesible del estado leído/no leído.
 - Sin cambios en servicios Apps Script, contratos de backend, permisos ni datos de conversaciones.
 - GitHub Actions Node.js 22 run 43883547065: SUCCESS — 129 suites / 1,901 pruebas / 0 fallos. InboxUi: 36/36 PASS.
+
+
+2026-11-16 — GP-UX-INBOX-RBAC-01 / GP-UX-RELAY-HEADER-01
+- Frontend Inbox: matriz de secciones por rol; técnicos consultan exclusivamente reportes propios mediante getMyProblemReports existente y sin acciones administrativas.
+- Nuevo mensaje como botón flotante inferior derecho; etiquetas visibles para Nuevo y Buscar; acción Salir para cancelar y descartar el borrador.
+- CSS: controles ocultos dejan de reservar espacio y las carpetas se redistribuyen.
+- Modal Relay: título alineado a la izquierda y cierre X anclado a la esquina superior derecha.
+- Service Worker App Shell v37; pruebas InboxUi y CutDetailModalLayout ampliadas.
+- Sin cambios de backend, Apps Script, datos, secretos ni deployments. Validación automática y visual Beta pendientes.

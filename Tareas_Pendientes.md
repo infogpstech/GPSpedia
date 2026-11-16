@@ -719,3 +719,14 @@ No usar `reset --hard`, `clean`, force push ni comandos que descarten cambios. N
 - Validación local: ResponsiveFormsUsers **16/16 PASS**; ButtonWidthPolicy **5/5 PASS**; GitHub Actions Node.js 22 **SUCCESS — 128 suites / 1,897 pruebas / 0 fallos** (run `43879864027`). GitHub Pages build/deployment **SUCCESS** (run `43879862392`).
 - Se preservaron permisos, IDs, manejadores y comportamiento de resetUserSessions. No se modificaron servicios Apps Script, backend, datos ni deployments.
 - Pendiente Beta: inspección visual en dispositivos reales, especialmente anchuras pequeñas, nombres largos y rol Desarrollador; no bloquea el cierre local.
+
+
+### GP-UX-INBOX-RBAC-01 / GP-UX-RELAY-HEADER-01 — Control visual por rol y encabezados
+**Prioridad: P1 · Estado: IMPLEMENTACIÓN FRONTEND COMMITED; VALIDACIÓN AUTOMÁTICA Y BETA PENDIENTES.**
+- Aplicar la matriz de secciones Inbox indicada por el usuario para Desarrollador, Jefe, Supervisor, Técnico y Técnico Exterior.
+- Técnicos: mostrar General y sus reportes propios; consumir la acción existente getMyProblemReports, sin cambiar backend.
+- Jefe: General, Contáctanos y Reportes. Supervisor: General y Reportes. Desarrollador: todas las secciones.
+- Mantener ocultos y fuera del flujo los botones no autorizados, sin huecos.
+- Nuevo mensaje flotante inferior derecho, etiquetas Nuevo/Buscar y control Salir en el compositor.
+- Alinear título Relay a la izquierda y X arriba a la derecha fuera del flujo del título.
+- Validación pendiente: ejecutar InboxUi, CutDetailModalLayout, regresión Node y revisar CI; después inspección visual Beta.

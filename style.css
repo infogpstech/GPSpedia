@@ -5077,3 +5077,9 @@ body.dark-mode #login-modal #login-error.login-session-ended {
     #inbox-modal-content .inbox-folder-nav .inbox-folder-action { padding:4px 1px; }
     #inbox-modal-content .inbox-folder-nav button span { font-size:.58rem; }
 }
+
+
+/* GP-UX-RELAY-HEADER-01 — título a la izquierda y cierre independiente arriba a la derecha. */
+.relay-detail-toolbar { justify-content:flex-start !important; align-items:flex-start !important; flex-wrap:nowrap !important; padding:0 48px 8px 0 !important; margin:0 0 20px !important; }
+.relay-detail-toolbar .relay-detail-title { flex:1 1 auto; min-width:0; margin:0; padding:0; text-align:left; overflow-wrap:anywhere; }
+.relay-detail-toolbar > .info-close-btn { position:absolute !important; top:0 !important; right:0 !important; margin:0 !important; }
