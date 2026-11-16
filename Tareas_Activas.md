@@ -1305,3 +1305,16 @@ Se creó `Tareas_beta.md` con los IDs BETA-001 a BETA-052, criterios de aceptaci
 - [x] GitHub Pages run `43786801161`: build/deploy SUCCESS.
 - [ ] Validar lectura, orden, refresco y marcador de lectura en deployment/navegador Beta real.
 - No se desplegaron servicios Apps Script ni se modificaron datos productivos.
+
+
+## BETA-020 — unificación de botones de cierre (2026-11-16)
+
+- [x] Convertir cierres de modales estáticos y dinámicos en botones `type=button`.
+- [x] Aplicar nombre accesible, icono, tamaño 40×40 px, posición, hover y foco visible uniforme.
+- [x] Extender el patrón al panel de usuarios, Inbox y lightbox.
+- [x] Respetar `prefers-reduced-motion`.
+- [x] Integrar la regresión en `InboxUi.mjs` (el runner CI no descubre archivos independientes).
+- [x] CI run `43787361351`: 108 suites / 1,670 pruebas / 0 fallos; InboxUi 31/31.
+- [x] GitHub Pages run `43787360402`: build/deploy SUCCESS.
+- [ ] Validar tema claro/oscuro, móvil/escritorio, teclado, foco, lector de pantalla y navegación Atrás en Beta real.
+- BETA-021–026 quedan pendientes de implementación.

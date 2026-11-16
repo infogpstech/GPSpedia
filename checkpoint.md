@@ -1123,3 +1123,16 @@ Se amplió `AdminImageScanCoordinatorContract.mjs` para exigir que cada mutació
 - BETA-050/051: los routers protegidos pasan el actor central a los handlers; se evita repetir búsquedas Users/ActiveSessions, conservando expiración, epoch, revocación y RBAC.
 - CI run `43786801781`: 108 suites / 1,664 pruebas / 0 fallos. Pages run `43786801161`: SUCCESS.
 - No se ejecutaron llamadas HTTP contra deployments Beta ni se modificaron servicios, hojas, Drive o datos productivos. Mantener estas tareas abiertas hasta obtener evidencia de campo.
+
+
+## Continuidad — BETA-020 botones de cierre uniformes (2026-11-16)
+
+- Commit de implementación: `af0f5653ab63dcac15b40b3bc45a3df1f58f74cf`.
+- Se convirtieron los controles `.info-close-btn` y `.close-btn` en botones reales con `type=button` y `aria-label`, incluidos modales dinámicos, panel de usuarios, Inbox y lightbox.
+- Estilo común: 40×40 px, icono ×, posición superior derecha (salvo ubicación propia del lightbox), contraste por tema, hover, foco visible y movimiento reducido.
+- La primera prueba independiente no se ejecutó por el runner; se integró en `InboxUi.mjs`. El intento inicial falló por doble escape de regex (`43787293937`); corregido en commit `2d00b684c755329bb9443f1956658aaacfd0df70`.
+- CI final run `43787361351`: SUCCESS — 108 suites / 1,670 pruebas / 0 fallos; InboxUi 31/31.
+- GitHub Pages run `43787360402`: build/deploy SUCCESS.
+- BETA-020 queda implementada localmente, pendiente de validación visual y accesible en Beta real. BETA-021–026 siguen pendientes de implementación.
+
+**Siguiente paquete:** BETA-021 (sistema global de botones, campos y selectores), seguido de BETA-022–026. No desplegar Apps Script ni modificar datos productivos.

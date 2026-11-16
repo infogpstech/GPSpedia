@@ -95,3 +95,19 @@ Esta revisión confirma contratos y rutas del código versionado; **no sustituye
 **Evidencia local:** CI run `43786801781` SUCCESS — 108 suites / 1,664 pruebas / 0 fallos; `ActionDispatchContract` 12/12 y `AdminImageScanCoordinatorContract` PASS. GitHub Pages run `43786801161` SUCCESS.
 
 **Estado:** auditoría estática local revisada; BETA-010 a BETA-014 y BETA-050/051 no se cierran hasta comprobar deployment, roles reales, datos aislados y concurrencia en Beta.
+
+
+## Avance local — BETA-020 (2026-11-16)
+
+**Corrección local implementada; validación visual Beta pendiente.**
+
+- Los cierres de los modales principales de `index.html` y de los modales dinámicos de `ui.js` ahora son botones `type="button"`, con nombre accesible.
+- El panel `HTML/users.html` usa el mismo patrón.
+- Se unificaron icono de cierre, tamaño 40×40 px, posición superior derecha, borde, fondo, hover y foco visible; se conservó la ubicación especial del botón del lightbox.
+- Se añadió respeto a `prefers-reduced-motion`.
+- La regresión se integró en `InboxUi.mjs`, que sí ejecuta el runner CI. Se retiró el archivo de prueba independiente porque el runner no lo descubre automáticamente.
+- Primer intento de integración `c3c34fe`: CI detectó un error de escape en las expresiones regulares; se corrigió en `2d00b68`.
+- CI run `43787361351`: SUCCESS — 108 suites / 1,670 pruebas / 0 fallos; `InboxUi` 31/31 PASS; sintaxis PASS.
+- GitHub Pages run `43787360402`: build y deploy SUCCESS.
+
+**Pendiente:** verificar todos los modales en Beta con tema claro/oscuro, móvil/escritorio, teclado, foco, lectores de pantalla y navegación Atrás. BETA-021 a BETA-026 continúan abiertos; no se consideran resueltos por este cambio.
