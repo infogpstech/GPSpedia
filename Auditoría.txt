@@ -1726,3 +1726,10 @@ ADENDA DE AUDITORÍA — GP-UX-INBOX-RICH-EDITOR-01 — 2026-11-16
 - Durante la revisión del refresco dinámico se detectó que reutilizar el indicador dataset de la variante compacta podía hacer que `refreshRichTextToolbars()` reconstruyera una barra básica/de listas como avanzada.
 - Se retiró ese indicador de las barras estándar; la variante `compact: true` conserva su marca independiente. Se agregó un contrato para impedir que el refresco cambie el perfil ni amplíe herramientas.
 - Criterio: el modo original debe persistir después de reconstrucción dinámica, conservando las restricciones de formato y saneamiento.
+
+
+### Hallazgo y corrección — GP-UX-RICH-EDITOR-SELECTION-02 — 2026-11-16
+- Evidencia: `JS/Frontend/rich-text.js` aplicaba el color de texto desde eventos del selector nativo sin conservar una referencia persistente al rango seleccionado o al cursor. `applyRichTextColor()` enfocaba el editor después de abrir el selector; al perder el foco, la selección podía desaparecer. Los selectores nativos de fuente/tamaño tampoco guardaban el rango antes de abrirse. El problema afecta tanto a PWA como a escritorio porque ambas superficies usan el mismo módulo.
+- Impacto: color nuevo ignorado o aplicado al lugar incorrecto; formatos de selección no fiables al cambiar controles nativos. Severidad: media (edición de contenido).
+- Corrección: guardar/restaurar rangos por editor, capturar selección antes de interactuar con la barra, aplicar el color al confirmar el selector, corregir el caret en editor vacío y evitar retener editores dinámicos mediante listeners globales por instancia. Se bloquea el menú contextual web dentro del editor manteniendo `user-select:text` y se agregan accesos de copiar/pegar iconográficos.
+- Alcance: editor de formularios y editor Inbox; no se alteran perfiles de funciones, sanitización ni datos persistidos.
