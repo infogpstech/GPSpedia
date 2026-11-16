@@ -748,3 +748,13 @@ HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
 - CI run 43783119482: SUCCESS; 107 suites / 1,656 pruebas / 0 fallos.
 - Validación Beta pendiente; no se desplegó Apps Script ni se alteraron datos externos.
 ================================================================================
+
+
+================================================================================
+2026-11-16 — OPTIMIZACIÓN DE DROPDOWNS DEL MODAL DE DETALLE
+- JS/Services/catalog.js: handleGetDropdownData dejó de leer getDataRange() completo de Cortes y Relay. Lee en un solo rango contiguo las cinco columnas requeridas de Cortes y en un rango de una columna la configuración de Relay; mantiene la validación de categorías.
+- JS/Tests/CatalogDropdownRead.mjs: nuevo contrato con valores de ejemplo, deduplicación/orden y verificación de que no se lean rangos completos.
+- JS/Tests/RunServiceTests.mjs: integra la suite en CATALOG.
+- CI run 43783436013: SUCCESS; 108 suites / 1,657 pruebas / 0 fallos.
+- La medición real de latencia queda pendiente de Beta; no se desplegó CATALOG.
+================================================================================
