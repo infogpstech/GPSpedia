@@ -1141,3 +1141,13 @@ Se amplió `AdminImageScanCoordinatorContract.mjs` para exigir que cada mutació
 ## Aclaración de alcance UX — continuidad (2026-11-16)
 
 El usuario confirmó que el backlog pendiente también comprende la organización integral del modal Desarrollador, nuevos requerimientos visuales/estructurales, política para nombres largos, reducción de textos demasiado detallados y ayudas funcionales mediante ⓘ. Se incorporaron los criterios de aceptación a `Tareas_Activas.md` y `Tareas_beta.md`, dentro de BETA-021–026 y BETA-030–035. La política conserva los datos originales, evita desbordamientos y exige que ⓘ explique función, efecto y restricciones de forma breve. Sigue vigente la exclusión de ayudas ⓘ en el modal de detalles de vehículos. GP-DEV-UX-01 no se reabre: su alcance original permanece completado.
+
+
+## Consolidación del backlog operativo — 2026-11-16
+
+- Se creó `Tareas_Pendientes.md` como documento único de trabajo, agrupado por sectores y orden de ejecución.
+- Se integraron los pendientes de implementación local, auditoría, seguridad, UX/Developer, Inbox, ADMIN/Drive, catálogo/PWA, migraciones y validaciones Beta; se separaron explícitamente los estados locales y externos y se eliminaron duplicaciones evidentes.
+- `Tareas_Activas.md` y `Tareas_beta.md` dejan de ser documentos operativos y se retiran después de comprobar la consolidación. El historial de avances y evidencia permanece en este checkpoint y en los archivos archivados.
+- La primera tarea de implementación será BETA-021: sistema visual común de botones, campos y selectores, integrando los criterios de nombres largos, textos concisos, ayudas contextuales y organización Developer ya confirmados.
+- Rama de trabajo: `GPSpedia2.2.5_work`. Rama base `GPSpedia2.2.5` sin modificaciones.
+- No se realizaron despliegues Apps Script ni cambios en datos, propiedades, secretos o recursos productivos.
