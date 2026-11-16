@@ -67,6 +67,16 @@ testCase("el modal se adapta a móvil y respeta movimiento reducido", () => {
     assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?#modalDetalle/);
 });
 
+testCase("el editor abre sin esperar a la carga de opciones y actualiza los selectores después", () => {
+    assert.doesNotMatch(detail, /await precargarDropdownOptions\(\)/);
+    assert.match(detail, /const dropdownOptionsReady = precargarDropdownOptions\(\)/);
+    assert.match(detail, /dropdownOptionsReady\.then\(\)/);
+    assert.match(ui, /function populateModalDropdown_\(/);
+    assert.match(ui, /function refreshModalEditDropdownOptions_\(/);
+    for (const key of ["tipoDeCorte", "configRelay", "tipoDeEncendido", "categoria"]) {
+        assert.ok(ui.includes('dataset.dropdownKey = "' + key + '"'), key);
+    }
+});
 testCase("se preservan permisos y operaciones y no se añaden ayudas al detalle del vehículo", () => {
     assert.match(detail, /const canPrintOrEditVehicle = \["desarrollador", "jefe", "supervisor"\]\.includes\(userRole\)/);
     assert.match(detail, /saveFieldSilently\(activeItem\.id/);

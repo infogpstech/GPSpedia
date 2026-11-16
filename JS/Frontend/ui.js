@@ -254,6 +254,47 @@ async function precargarDropdownOptions() {
     return dropdownOptionsPromise;
 }
 
+function populateModalDropdown_(select, optionKey, currentValue) {
+    if (!select) return;
+    const available = dropdownOptions && Array.isArray(dropdownOptions[optionKey])
+        ? dropdownOptions[optionKey].map(value => String(value))
+        : [];
+    const current = String(currentValue ?? select.dataset.currentValue ?? "");
+    if (current && !available.includes(current)) available.unshift(current);
+    select.replaceChildren();
+
+    if (available.length === 0) {
+        const placeholder = document.createElement("option");
+        placeholder.value = current;
+        placeholder.textContent = dropdownOptionsPromise ? "Cargando opciones..." : "Opciones no disponibles";
+        placeholder.disabled = true;
+        placeholder.selected = true;
+        select.appendChild(placeholder);
+        select.disabled = true;
+        select.dataset.currentValue = current;
+        return;
+    }
+
+    available.forEach(value => {
+        const option = document.createElement("option");
+        option.value = value;
+        option.textContent = value;
+        option.selected = value === current;
+        select.appendChild(option);
+    });
+    select.disabled = false;
+    if (current) select.value = current;
+    select.dataset.currentValue = select.value;
+}
+
+function refreshModalEditDropdownOptions_() {
+    const detail = document.getElementById("detalleCompleto");
+    if (!detail || !inEditMode) return;
+    detail.querySelectorAll("select[data-dropdown-key]").forEach(select => {
+        populateModalDropdown_(select, select.dataset.dropdownKey, select.dataset.currentValue || select.value);
+    });
+}
+
 export function showSavingIndicator(status, message = "") {
     const indicator = document.getElementById("modal-saving-indicator");
     if (!indicator) return;
@@ -2323,9 +2364,8 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
                 inEditMode = true;
                 window.inEditMode = true;
 
-                // La lista de opciones se precarga desde que se abrió el detalle; reutilizar la promesa
-                // compartida evita solicitudes duplicadas al pulsar Editar.
-                await precargarDropdownOptions();
+                // Mostrar el editor sin esperar la red; completar los selectores al resolver la carga compartida.
+                const dropdownOptionsReady = precargarDropdownOptions();
                 if (!isCurrentUiSessionContext_(editSession)) {
                     inEditMode = false; window.inEditMode = false; clearInMemoryEditBackup_();
                     return;
@@ -2338,6 +2378,13 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
                         return false;
                     });
                 mostrarDetalleModal(editedItemBuffer, true, navOptions);
+                dropdownOptionsReady.then(() => {
+                    const currentModal = document.getElementById("modalDetalle");
+                    if (!isCurrentUiSessionContext_(editSession) || !inEditMode ||
+                        originalItemBackupVehicleId !== cleanVehicleId ||
+                        !currentModal || String(currentModal.dataset.vehicleId || "") !== cleanVehicleId) return;
+                    refreshModalEditDropdownOptions_();
+                });
                 pendingImagesPromise.then(pendingImagesLoaded => {
                     if (!pendingImagesLoaded && isCurrentUiSessionContext_(editSession) &&
                         inEditMode && originalItemBackupVehicleId === cleanVehicleId) {
@@ -2490,16 +2537,10 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
         encSelect.id = `detail-ignition-${activeItem.id}`;
         encLabel.htmlFor = encSelect.id;
         encSelect.className = "detail-edit-control";
-        if (dropdownOptions && dropdownOptions.tipoDeEncendido) {
-            dropdownOptions.tipoDeEncendido.forEach(itemOpt => {
-                const opt = document.createElement('option');
-                opt.value = itemOpt;
-                opt.textContent = itemOpt;
-                if (itemOpt === activeItem.tipoEncendido) opt.selected = true;
-                encSelect.appendChild(opt);
-            });
-        }
+        encSelect.dataset.dropdownKey = "tipoDeEncendido";
+        populateModalDropdown_(encSelect, "tipoDeEncendido", activeItem.tipoEncendido);
         encSelect.onchange = async () => {
+            encSelect.dataset.currentValue = encSelect.value;
             editedItemBuffer.tipoEncendido = encSelect.value;
             await saveFieldSilently(activeItem.id, 'tipoEncendido', encSelect.value);
         };
@@ -2552,16 +2593,10 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
         catSelect.id = `detail-category-${activeItem.id}`;
         catLabel.htmlFor = catSelect.id;
         catSelect.className = "detail-edit-control";
-        if (dropdownOptions && dropdownOptions.categoria) {
-            dropdownOptions.categoria.forEach(itemOpt => {
-                const opt = document.createElement('option');
-                opt.value = itemOpt;
-                opt.textContent = itemOpt;
-                if (itemOpt === activeItem.categoria) opt.selected = true;
-                catSelect.appendChild(opt);
-            });
-        }
+        catSelect.dataset.dropdownKey = "categoria";
+        populateModalDropdown_(catSelect, "categoria", activeItem.categoria);
         catSelect.onchange = async () => {
+            catSelect.dataset.currentValue = catSelect.value;
             editedItemBuffer.categoria = catSelect.value;
             await saveFieldSilently(activeItem.id, 'categoria', catSelect.value);
         };
@@ -3461,17 +3496,11 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
         typeLabel.textContent = `Tipo de Corte ${idx}:`;
         typeLabel.style.fontSize = "0.85em";
         const typeSelect = document.createElement('select');
-        typeSelect.style.cssText = "padding: 4px; border: 1px solid #007bff; border-radius: 4px;";
-        if (dropdownOptions && dropdownOptions.tipoDeCorte) {
-            dropdownOptions.tipoDeCorte.forEach(optVal => {
-                const opt = document.createElement('option');
-                opt.value = optVal;
-                opt.textContent = optVal;
-                if (optVal === cutData.tipo) opt.selected = true;
-                typeSelect.appendChild(opt);
-            });
-        }
+        typeSelect.className = "detail-edit-control";
+        typeSelect.dataset.dropdownKey = "tipoDeCorte";
+        populateModalDropdown_(typeSelect, "tipoDeCorte", cutData.tipo);
         typeSelect.onchange = async () => {
+            typeSelect.dataset.currentValue = typeSelect.value;
             editedItemBuffer[`tipoCorte${idx}`] = typeSelect.value;
             await saveFieldSilently(vehicleId, `tipoCorte${idx}`, typeSelect.value);
         };
@@ -3481,17 +3510,11 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
         configLabel.textContent = `Configuración de Relay ${idx}:`;
         configLabel.style.fontSize = "0.85em";
         const configSelect = document.createElement('select');
-        configSelect.style.cssText = "padding: 4px; border: 1px solid #007bff; border-radius: 4px;";
-        if (dropdownOptions && dropdownOptions.configRelay) {
-            dropdownOptions.configRelay.forEach(optVal => {
-                const opt = document.createElement('option');
-                opt.value = optVal;
-                opt.textContent = optVal;
-                if (optVal === cutData.configRelay) opt.selected = true;
-                configSelect.appendChild(opt);
-            });
-        }
+        configSelect.className = "detail-edit-control";
+        configSelect.dataset.dropdownKey = "configRelay";
+        populateModalDropdown_(configSelect, "configRelay", cutData.configRelay);
         configSelect.onchange = async () => {
+            configSelect.dataset.currentValue = configSelect.value;
             editedItemBuffer[`configRelay${idx}`] = configSelect.value;
             await saveFieldSilently(vehicleId, `configRelay${idx}`, configSelect.value);
         };
