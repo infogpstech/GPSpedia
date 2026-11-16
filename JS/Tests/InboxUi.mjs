@@ -542,3 +542,30 @@ for (const item of cases) {
 }
 console.log("InboxUi: " + passed + "/" + cases.length + " PASS");
 if (passed !== cases.length) process.exitCode = 1;
+
+
+check("Las barras preservan la selección/cursor al cambiar color, fuente o tamaño", () => {
+    assert.ok(rich.includes("richEditorSelectionRanges_"));
+    assert.ok(rich.includes("rememberRichTextSelection_"));
+    assert.ok(rich.includes("restoreRichTextSelection_"));
+    assert.ok(rich.includes('colorPicker.addEventListener("change"'));
+    assert.ok(rich.includes('sizeSelect.addEventListener("pointerdown"'));
+    assert.ok(rich.includes('fontSelect.addEventListener("pointerdown"'));
+    assert.ok(rich.includes('rememberRichTextSelection_(editor)'));
+    assert.ok(rich.includes('editor.focus({ preventScroll: true })'));
+});
+check("Todas las barras ofrecen copiar y pegar con iconografía y accesibilidad", () => {
+    assert.ok(rich.includes('makeButton("fa-copy", "Copiar texto seleccionado"'));
+    assert.ok(rich.includes('makeButton("fa-paste", "Pegar texto"'));
+    assert.ok(rich.includes('makeIconButton("fa-copy", "Copiar texto seleccionado"'));
+    assert.ok(rich.includes('makeIconButton("fa-paste", "Pegar texto"'));
+    assert.ok(rich.includes("navigator.clipboard?.writeText"));
+    assert.ok(rich.includes("navigator.clipboard?.readText"));
+    assert.ok(ui.includes("bindRichTextEditorSelection_"));
+});
+check("El editor bloquea el menú contextual del navegador sin deshabilitar selección", () => {
+    assert.ok(rich.includes('editor.addEventListener("contextmenu", event => event.preventDefault())'));
+    assert.match(css, /-webkit-touch-callout:none/);
+    assert.match(css, /-webkit-user-select:text/);
+    assert.match(css, /user-select:text/);
+});
