@@ -85,6 +85,19 @@ check("La interfaz incluye destinatario único y plantillas editables", () => {
     assert.match(ui, /welcome-technician/);
     assert.match(ui, /body\.maxLength = 5000/);
 });
+check("La lista de conversaciones usa caché por sesión, carpeta, categoría, búsqueda y cursor", () => {
+    assert.match(ui, /const inboxConversationPageCache_ = createInboxPageCache/);
+    assert.match(ui, /const cacheCursor = JSON\.stringify\(\[inboxConversationFolder_, inboxConversationCategory_, inboxConversationQuery_, cursor\]\)/);
+    assert.match(ui, /inboxConversationPageCache_\.get\(context, cacheCursor,[\s\S]*?allowStale: true/);
+    assert.match(ui, /inboxConversationPageCache_\.set\(context, cacheCursor, response/);
+    assert.match(ui, /setInboxSection_\('general', \{ preferCache: true \}\)/);
+    assert.match(ui, /options\.preferCache && cachedPage && !cachedPage\.stale/);
+    assert.match(ui, /inboxConversationPageCache_\.clear\(\)/);
+});
+check("La búsqueda de conversaciones abarca todas las bandejas y categorías", () => {
+    assert.match(ui, /folder: inboxConversationQuery_ \? "all" : inboxConversationFolder_/);
+    assert.match(ui, /category: inboxConversationQuery_ \? "all" : inboxConversationCategory_/);
+});
 check("La bandeja tiene carpetas, búsqueda y paginación", () => {
     for (const folder of ["received", "sent", "archived"]) assert.match(html, new RegExp('data-inbox-folder="' + folder + '"'));
     assert.doesNotMatch(html, /data-inbox-folder="read"|data-inbox-folder="unread"/);

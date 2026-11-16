@@ -522,6 +522,7 @@ function handleGetInboxConversations(payload) {
             ...(messagesByConversation.get(item.conversationId) || []).map(message => String(message[6] || ""))
         ].join(" ").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().includes(query);
         const filtered = summaries.filter(item => {
+            if (folder === "all" && query) return true;
             if (folder === "archived") return item.archived;
             if (item.archived) return false;
             if (folder === "received") return item.hasReceived;

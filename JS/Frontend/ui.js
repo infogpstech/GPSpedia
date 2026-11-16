@@ -3800,6 +3800,7 @@ let inboxPageCursorStack_ = [null];
 let inboxPageIndex_ = 0;
 const INBOX_PAGE_SIZE_ = 40;
 const inboxPageCache_ = createInboxPageCache({ ttlMs: 60000, maxEntries: 80 });
+const inboxConversationPageCache_ = createInboxPageCache({ ttlMs: 60000, maxEntries: 80 });
 
 function normalizeUiRole_(role) {
     const normalized = String(role || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
@@ -3844,7 +3845,9 @@ function getSessionPayload_() {
 }
 
 function invalidateInboxCache_(context = getUiSessionContext_()) {
-    return inboxPageCache_.invalidate(context);
+    const removed = inboxPageCache_.invalidate(context);
+    inboxConversationPageCache_.invalidate(context);
+    return removed;
 }
 
 let lastInboxCacheScope_ = inboxPageCache_.getScopeKey(getUiSessionContext_());
@@ -3855,6 +3858,7 @@ subscribe(() => {
     const nextScope = inboxPageCache_.getScopeKey(getUiSessionContext_());
     if (nextScope !== lastInboxCacheScope_) {
         inboxPageCache_.clear();
+        inboxConversationPageCache_.clear();
         inboxConversationMessageCache_.clear();
         lastInboxCacheScope_ = nextScope;
         inboxPageCursorStack_ = [null];
@@ -4318,7 +4322,7 @@ const openInboxModal_ = setupModal('inbox-modal', async (options = {}) => {
         initialFocus: modal.querySelector('#inbox-search-toggle'),
         returnFocus: options.returnFocus, allowEscape: true, close: closeInboxModal_
     });
-    await setInboxSection_('general');
+    await setInboxSection_('general', { preferCache: true });
     startInboxSync_();
 });
 
@@ -4552,7 +4556,7 @@ function bindInboxControls_() {
         inboxConnectivityBound_ = true;
     }
 }
-async function setInboxSection_(section) {
+async function setInboxSection_(section, options = {}) {
     closeInboxSearch_();
     const context = getUiSessionContext_();
     const allowed = ["general", "soporte", "contact", "reports", "contributions"];
@@ -4566,7 +4570,7 @@ async function setInboxSection_(section) {
     if (next === "general" || next === "soporte") {
         inboxRequestSection_ = "";
         inboxConversationCategory_ = next;
-        await setInboxView_("conversations", { reset: true });
+        await setInboxView_("conversations", { reset: true, preferCache: Boolean(options.preferCache) });
         return;
     }
     inboxRequestSection_ = next;
@@ -4596,7 +4600,7 @@ async function setInboxView_(view, options = {}) {
         stopInboxSync_();
         if (context) await loadAndRenderInbox({ context, reset: Boolean(options.reset) });
     } else {
-        await loadInboxConversations_({ reset: Boolean(options.reset) });
+        await loadInboxConversations_({ reset: Boolean(options.reset), preferCache: Boolean(options.preferCache) });
         startInboxSync_();
     }
 }
@@ -4609,15 +4613,11 @@ async function loadInboxConversations_(options = {}) {
     const cursor = inboxConversationPageStack_[inboxConversationPageIndex_] || 0;
     const generation = ++inboxConversationGeneration_;
     const previousScroll = list.scrollTop;
-    if (!inboxConversationItems_.length && !list.childElementCount) list.replaceChildren(inboxCreateNode_("p", "inbox-state-message", "Cargando conversaciones…"));
-    if (typeof navigator !== "undefined" && navigator.onLine === false) {
-        inboxSetStatus_("Sin conexión. Los borradores se conservarán en esta sesión.", true);
-        return;
-    }
-    try {
-        const response = await getInboxConversations(context, { cursor, pageSize: INBOX_CONVERSATION_PAGE_SIZE_, folder: inboxConversationFolder_, category: inboxConversationCategory_, query: inboxConversationQuery_ });
-        if (generation !== inboxConversationGeneration_ || !isCurrentUiSessionContext_(context)) return;
-        if (!response || response.status !== "success") throw new Error(response && response.message || "No se pudo cargar Inbox.");
+    const cacheCursor = JSON.stringify([inboxConversationFolder_, inboxConversationCategory_, inboxConversationQuery_, cursor]);
+    const cachedPage = inboxConversationPageCache_.get(context, cacheCursor, {
+        pageSize: INBOX_CONVERSATION_PAGE_SIZE_, allowStale: true
+    });
+    const applyPage = response => {
         inboxConversationItems_ = Array.isArray(response.data) ? response.data : [];
         inboxConversationCounts_ = response.counts || {};
         inboxConversationTotal_ = Number.isFinite(Number(response.total)) ? Math.max(0, Number(response.total)) : 0;
@@ -4631,11 +4631,38 @@ async function loadInboxConversations_(options = {}) {
             const refreshed = inboxConversationItems_.find(item => item.conversationId === inboxConversationSelectedId_);
             if (refreshed) inboxConversationSelected_ = refreshed;
         }
+    };
+    if (cachedPage) {
+        applyPage(cachedPage.value);
+        inboxSetStatus_("", false);
+    } else if (!inboxConversationItems_.length && !list.childElementCount) {
+        list.replaceChildren(inboxCreateNode_("p", "inbox-state-message", "Cargando conversaciones…"));
+    }
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
+        if (!cachedPage) inboxSetStatus_("Sin conexión. Los borradores se conservarán en esta sesión.", true);
+        return;
+    }
+    // Reabrir Inbox muestra primero la página reciente y evita una llamada remota
+    // mientras siga fresca; el sondeo periódico busca mensajes nuevos en segundo plano.
+    if (options.preferCache && cachedPage && !cachedPage.stale) return;
+    try {
+        const response = await getInboxConversations(context, {
+            cursor, pageSize: INBOX_CONVERSATION_PAGE_SIZE_,
+            folder: inboxConversationQuery_ ? "all" : inboxConversationFolder_,
+            category: inboxConversationQuery_ ? "all" : inboxConversationCategory_,
+            query: inboxConversationQuery_
+        });
+        if (generation !== inboxConversationGeneration_ || !isCurrentUiSessionContext_(context)) return;
+        if (!response || response.status !== "success") throw new Error(response && response.message || "No se pudo cargar Inbox.");
+        inboxConversationPageCache_.set(context, cacheCursor, response, INBOX_CONVERSATION_PAGE_SIZE_);
+        applyPage(response);
         inboxSetStatus_("", false);
     } catch (error) {
         if (generation !== inboxConversationGeneration_) return;
-        inboxSetStatus_(error && error.message ? error.message : "No se pudo cargar Inbox.", true);
-        if (!inboxConversationItems_.length) list.replaceChildren(inboxCreateNode_("p", "inbox-state-message is-error", "No se pudieron cargar las conversaciones."));
+        if (!cachedPage) {
+            inboxSetStatus_(error && error.message ? error.message : "No se pudo cargar Inbox.", true);
+            if (!inboxConversationItems_.length) list.replaceChildren(inboxCreateNode_("p", "inbox-state-message is-error", "No se pudieron cargar las conversaciones."));
+        }
     }
 }
 function renderInboxConversationList_() {

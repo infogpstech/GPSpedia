@@ -1172,3 +1172,13 @@ ADENDA — GP-UX-PYS-ADD-MODEL-CARD-01: prueba CSS independiente de formato/espa
 ADENDA — App Shell v39: se actualiza la expectativa de versión en OfflineBrandAssets.mjs para mantener alineadas las pruebas de marca/offline.
 
 ADENDA — PysModalNavigation: contador del resumen ajustado de 9/9 a 10/10 tras añadir la regresión de tarjeta Agregar Modelo.
+
+
+================================================================================
+2026-11-16 — GP-UX-INBOX-CACHE-SEARCH-01
+- JS/Frontend/ui.js: caché efímera de páginas de conversaciones aislada por sesión y clave de carpeta/categoría/consulta/cursor; apertura cache-first, refresco silencioso y preservación de datos ante fallo de red.
+- JS/Services/InboxConversations.js: la consulta global abarca recibidos, enviados, archivados y todas las categorías.
+- JS/Tests/InboxUi.mjs y InboxConversations.mjs: cobertura de caché por contexto y búsqueda global en varias bandejas/categorías.
+- service-worker.js: App Shell actualizado a gpsepedia-cache-v40; ServiceWorkerCache y OfflineBrandAssets sincronizados.
+- Sin despliegues Apps Script ni cambios en hojas/datos externos.
+================================================================================

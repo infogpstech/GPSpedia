@@ -344,6 +344,29 @@ run("El filtro de categoría limita resultados antes de paginar", () => {
         ...actor("U1","token-a"),category:"invalida"
     }),/categoría/);
 });
+run("La búsqueda global incluye recibidos, enviados, archivados y distintas categorías", () => {
+    const general = api.handleCreateInboxConversation({
+        ...actor("U1","token-a"),recipientId:"U3",subject:"Búsqueda global compartida",category:"general",
+        body:"Localizar este término en toda la bandeja.",idempotencyKey:"global-search-general-01"
+    });
+    const support = api.handleCreateInboxConversation({
+        ...actor("U1","token-a"),recipientId:"U3",subject:"Consulta técnica",category:"acceso",
+        body:"Búsqueda global compartida en soporte.",idempotencyKey:"global-search-support-01"
+    });
+    const archived = api.handleCreateInboxConversation({
+        ...actor("U1","token-a"),recipientId:"U3",subject:"Caso archivado",category:"acceso",
+        body:"Búsqueda global compartida en archivados.",idempotencyKey:"global-search-archived-01"
+    });
+    api.handleArchiveInboxConversation({ ...actor("U1","token-a"),conversationId:archived.conversationId,archived:true });
+    const result = api.handleGetInboxConversations({
+        ...actor("U1","token-a"),folder:"all",category:"all",query:"búsqueda global compartida",pageSize:50,cursor:"0"
+    });
+    const ids = new Set(result.data.map(item => item.conversationId));
+    assert.equal(result.total,3);
+    assert.ok(ids.has(general.conversationId));
+    assert.ok(ids.has(support.conversationId));
+    assert.ok(ids.has(archived.conversationId));
+});
 run("El registro de auditoría no almacena el cuerpo del mensaje", () => {
     const audit = spreadsheet.getSheetByName("InboxConversationAudit");
     assert.ok(audit.getLastRow() >= 4);

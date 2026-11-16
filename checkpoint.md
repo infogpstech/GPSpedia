@@ -1910,3 +1910,15 @@ Backlog y registro de cambios sincronizados con este estado. La rama base perman
 - El incremento de App Shell a v39 también requiere actualizar `OfflineBrandAssets.mjs`, que mantenía una expectativa fija v37. Se sincroniza el contrato para que la validación offline corresponda al recurso actual.
 
 - PysModalNavigation pasó la nueva comprobación funcional de altura, pero el resumen final permanecía fijo en 9 pruebas; se actualiza a 10 para que el runner no rechace el resultado correcto.
+
+
+---
+
+## Continuidad — caché de conversaciones y búsqueda global Inbox (2026-11-16)
+
+- **Caché:** se incorpora una caché efímera de páginas de conversaciones, aislada por usuario/rol/token, con clave compuesta por carpeta, categoría, consulta y cursor. Al reabrir Inbox se muestra inmediatamente la página reciente y se omite la llamada remota si sigue fresca; el sondeo periódico mantiene la actualización silenciosa. Las páginas stale se muestran mientras se refrescan.
+- **Integridad:** los cambios de sesión limpian la caché de conversaciones y mensajes. Las invalidaciones existentes también invalidan las páginas de conversaciones. Si falla un refresco y hay caché, se conserva la bandeja visible.
+- **Búsqueda global:** cuando hay consulta se solicita carpeta `all` y categoría `all`; el servicio incluye resultados recibidos, enviados, archivados y de distintas categorías, buscando asunto, participantes y contenido de mensajes. Sin consulta se conservan los filtros seleccionados.
+- **Pruebas:** se amplían `InboxUi.mjs` y `InboxConversations.mjs` para caché por contexto y búsqueda global en varias bandejas/categorías.
+- **PWA:** Service Worker actualizado a `gpsepedia-cache-v40` y contratos de caché/offline sincronizados.
+- **Validación:** CI Node.js 22 pendiente sobre el commit; integración real con usuarios/Spreadsheet y revisión visual quedan para Beta. No se desplegaron servicios Apps Script ni se alteraron datos externos.
