@@ -9,7 +9,6 @@ const index=fs.readFileSync(resolve(root,"index.html"),"utf8");
 const ui=fs.readFileSync(resolve(root,"JS/Frontend/ui.js"),"utf8");
 const uiSource=ui;
 const sw=fs.readFileSync(resolve(root,"service-worker.js"),"utf8");
-const sw=fs.readFileSync(resolve(root,"service-worker.js"),"utf8");
 let passed=0;function testCase(name,fn){fn();passed++;console.log("PASS "+name);}
 testCase("Año, versión, tipo de corte y relay tienen ayudas breves asociadas",()=>{
  for(const [id,phrase] of [["help-ano-desde","rango continuo"],["help-versiones","nivel de equipamiento"],["help-tipo-corte","diagrama eléctrico"],["help-config-relay","esquema de conexión"]]){
