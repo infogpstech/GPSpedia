@@ -1,0 +1,46 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, resolve } from "node:path";
+
+const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+const read = path => readFileSync(resolve(root, path), "utf8");
+const html = read("index.html");
+const main = read("JS/Frontend/main.js");
+const worker = read("service-worker.js");
+const icon = readFileSync(resolve(root, "Images/icon-v3-512x512.png"));
+
+let passed = 0;
+function test(name, fn) {
+    fn();
+    passed++;
+    console.log("PASS " + name);
+}
+
+test("el encabezado y el Splash claro usan el logo oficial local", () => {
+    assert.match(html, /class="app-logo"[^>]*src="Images\/icon-v3-512x512\.png"|src="Images\/icon-v3-512x512\.png"[^>]*class="app-logo"/);
+    assert.match(html, /id="splash-screen"[\s\S]*?src="Images\/icon-v3-512x512\.png"/);
+    assert.doesNotMatch(html, /drive\.google\.com\/thumbnail\?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8/);
+    assert.match(main, /const logoUrl = isDark \? 'Images\/Logo_TemaOscuro\.png' : 'Images\/icon-v3-512x512\.png'/);
+    assert.match(main, /const splashUrl = isDark \? 'Images\/Logo_TemaOscuro\.png' : 'Images\/icon-v3-512x512\.png'/);
+});
+
+test("el logo oscuro permanece asignado al Splash cuando el tema oscuro está activo", () => {
+    assert.match(main, /const splashUrl = isDark \? 'Images\/Logo_TemaOscuro\.png'/);
+    assert.ok(worker.includes("'./Images/Logo_TemaOscuro.png'"));
+});
+
+test("el favicon apunta al PNG oficial local con canal alfa", () => {
+    assert.match(html, /<link rel="icon" type="image\/png" sizes="512x512" href="Images\/icon-v3-512x512\.png">/);
+    assert.deepEqual(Array.from(icon.subarray(0, 8)), [137, 80, 78, 71, 13, 10, 26, 10]);
+    assert.equal(icon.toString("ascii", 12, 16), "IHDR");
+    assert.ok(icon[25] === 4 || icon[25] === 6, "el PNG del favicon debe tener canal alfa y no un fondo opaco");
+});
+
+test("el Service Worker precarga el logo claro y el logo oscuro para uso offline", () => {
+    assert.match(worker, /gpsepedia-cache-v33/);
+    assert.ok(worker.includes("'./Images/icon-v3-512x512.png'"));
+    assert.ok(worker.includes("'./Images/Logo_TemaOscuro.png'"));
+});
+
+console.log("OfflineBrandAssets: " + passed + "/" + passed + " PASS");
