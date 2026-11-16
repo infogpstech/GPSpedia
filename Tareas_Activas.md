@@ -1223,3 +1223,10 @@ Se creó `Tareas_beta.md` con los IDs BETA-001 a BETA-052, criterios de aceptaci
 
 ### AUD-BETA-06 — Acciones ADMIN rechazadas por políticas ausentes
 **Causa raíz confirmada y corregida en código:** la lista de mutaciones de `admin.js` contenía tres acciones que no existían en `coordinatorPolicy_('ADMIN', ...)`: `markReplacedImageInUse`, `applyCortesImageReconciliation` y `freezeIdentifierFormulas`. El Coordinator las rechazaba antes de llegar al handler. Se añadieron políticas específicas y una prueba de integridad que compara todas las mutaciones del dispatcher con la matriz de políticas. CI y Beta pendientes.
+
+
+## Auditoría de cobertura Coordinator — 2026-11-15
+- [x] Detectar política faltante para `ADMIN/auditIdentifiers` (lectura de Users, Cortes, Tutorial, Feedbacks/PyS, LogosMarca y Relay).
+- [x] Detectar política faltante para `FEEDBACK/notifyDevelopersDriveCritical` (lee destinatarios en Users y crea Inbox en FEEDBACK).
+- [ ] Publicar corrección y contrato de cobertura; ejecutar CI.
+- [ ] Validación de la alerta y auditoría de IDs contra Spreadsheet/Drive real: diferida a Beta.
