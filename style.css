@@ -1886,15 +1886,17 @@ body.dark-mode .modal form textarea:disabled {
 }
 .inbox-item-content {
     flex-grow: 1;
-    overflow: hidden;
+    min-width: 0;
+    overflow: visible;
 }
 .inbox-item-title {
     font-size: 0.8rem !important;
     display: block;
-    line-height: 1.1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    line-height: 1.25;
+    white-space: normal;
+    overflow: visible;
+    overflow-wrap: anywhere;
+    text-overflow: clip;
 }
 .inbox-item-type {
     font-size: 0.7rem !important;
@@ -3118,7 +3120,11 @@ body.dark-mode #dev-tools-modal .dev-tools-card {
     gap: 5px;
     padding: 6px 8px;
     font-size: 0.76rem;
-    white-space: nowrap;
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-align: center;
+    line-height: 1.2;
 }
 .replaced-image-action:disabled {
     opacity: 0.45;
@@ -4462,27 +4468,6 @@ button,
 
 td, th {
     overflow-wrap: anywhere;
-}
-
-.inbox-item-content {
-    min-width: 0;
-    overflow: visible;
-}
-
-.inbox-item-title {
-    line-height: 1.25;
-    white-space: normal;
-    overflow: visible;
-    overflow-wrap: anywhere;
-    text-overflow: clip;
-}
-
-.replaced-image-action {
-    min-width: 0;
-    white-space: normal;
-    overflow-wrap: anywhere;
-    text-align: center;
-    line-height: 1.2;
 }
 
 #dev-tools-modal .dev-tools-title {
