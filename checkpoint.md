@@ -1768,3 +1768,13 @@ Backlog y registro de cambios sincronizados con este estado. La rama base perman
 - Implementación y pruebas en curso; validar contrato responsive, sintaxis, CI y diff antes del cierre. No realizar despliegues.
 
 - CI inicial del commit `5c89746c6911086336fe58b5af777ad4aa6b99dc`: detectó dos expectativas de pruebas obsoletas (el contrato responsive consultaba iconos en el bloque CSS en vez del HTML y ButtonWidthPolicy fijaba 38 px). Se actualizan las pruebas para validar los selectores/medidas nuevos; no se identificó fallo de sintaxis ni de lógica de la acción.
+
+
+## Cierre local — GP-UX-USERS-02 (2026-11-16)
+
+- Estado: **COMPLETADA CON VALIDACIÓN DIFERIDA A BETA**.
+- `HTML/users.html`: las acciones Editar, Eliminar y Cerrar sesiones se presentan en un único grupo horizontal. Cerrar sesiones usa `fa-arrow-right-from-bracket`, título y `aria-label`; conserva la condición de rol Desarrollador y el manejador original `resetUserSessions`.
+- Responsive: botones de 34 × 36 px en móvil, separación de 3 px, tabla fija al ancho disponible y columna Acciones de 46 % (hasta 760 px) / 48 % (hasta 420 px). Texto de roles reducido.
+- Regresión: `ResponsiveFormsUsers` **16/16 PASS**; `ButtonWidthPolicy` **5/5 PASS**. GitHub Actions Node.js 22 run `43879864027`: **SUCCESS — 128 suites / 1,897 pruebas / 0 fallos**. GitHub Pages run `43879862392`: **SUCCESS**.
+- No se modificaron Apps Script, servicios, backend, autenticación, datos ni deployments. La revisión visual en móviles reales queda pendiente de Beta.
+- HEAD de código: `81a0852c7a549dc21c5d341dbad1767c535fafee`; rama base protegida `GPSpedia2.2.5` permanece en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.

@@ -1086,3 +1086,10 @@ VALIDACIÓN LOCAL POSTERIOR — GP-UX-INBOX-03 / GP-DASH-ATTR-01
 - Alcance exclusivamente visual/frontend; sin cambios de Apps Script, servicios ni backend.
 
 - Validación inicial: CI identificó expectativas antiguas en ResponsiveFormsUsers y ButtonWidthPolicy; se corrigen los contratos para inspeccionar el HTML y el nuevo ancho móvil de 34 px.
+
+
+2026-11-16 — CIERRE GP-UX-USERS-02
+- HTML/users.html: botones Editar, Eliminar y Cerrar sesiones agrupados en una fila horizontal; icono de salida accesible; medidas compactas y columnas móviles redistribuidas.
+- JS/Tests/ResponsiveFormsUsers.js: 16/16 PASS. ButtonWidthPolicy: 5/5 PASS.
+- GitHub Actions Node.js 22 run 43879864027: SUCCESS — 128 suites / 1,897 pruebas / 0 fallos. GitHub Pages run 43879862392: SUCCESS.
+- Validación visual en móviles reales pendiente de Beta. Sin cambios de Apps Script, servicios, backend o datos externos.

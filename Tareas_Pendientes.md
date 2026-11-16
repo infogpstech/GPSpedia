@@ -711,7 +711,11 @@ No usar `reset --hard`, `clean`, force push ni comandos que descarten cambios. N
 
 
 ### GP-UX-USERS-02 — Acciones de usuarios en una sola fila móvil
-**Estado: EN PROGRESO.**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
 - Alcance exclusivo: `HTML/users.html` y pruebas frontend relacionadas. No modificar Apps Script, servicios, autenticación ni comportamiento backend.
 - Criterios: icono de cierre de sesiones con nombre accesible; los tres botones del usuario se mantienen en una sola fila; compactar botones, separación y anchos de columna para evitar scroll horizontal; conservar condiciones de visibilidad y manejadores actuales.
 - Validación local: contrato responsive, sintaxis del módulo y revisión del diff. La inspección visual en dispositivos reales queda para Beta.
+- Implementación: icono de salida accesible, tres acciones en un mismo contenedor flex horizontal y compactación responsive (botones 34 × 36 px en móvil; columna Acciones 46–48 % según ancho).
+- Validación local: ResponsiveFormsUsers **16/16 PASS**; ButtonWidthPolicy **5/5 PASS**; GitHub Actions Node.js 22 **SUCCESS — 128 suites / 1,897 pruebas / 0 fallos** (run `43879864027`). GitHub Pages build/deployment **SUCCESS** (run `43879862392`).
+- Se preservaron permisos, IDs, manejadores y comportamiento de resetUserSessions. No se modificaron servicios Apps Script, backend, datos ni deployments.
+- Pendiente Beta: inspección visual en dispositivos reales, especialmente anchuras pequeñas, nombres largos y rol Desarrollador; no bloquea el cierre local.
