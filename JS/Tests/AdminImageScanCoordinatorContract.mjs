@@ -35,14 +35,14 @@ assert.ok(internal.includes("assertDeveloperSession(payload)"),
     "Las lecturas y mutaciones ADMIN deben conservar autorización de Desarrollador.");
 
 const inventory = policy("ADMIN", "getReplacedImages");
-for (const resource of ["USERS", "CORTES", "DRIVE", "IMAGE_INVENTORY"]) {
+for (const resource of ["USERS", "CORTES", "DRIVE", "IMAGE_INVENTORY", "RELAY"]) {
     assert.ok(inventory.readResources.includes(resource), "Inventario debe reservar lectura de " + resource);
 }
 assert.ok(inventory.readResources.includes("SESSION_CONTEXTS"));
 assert.ok(!inventory.writeResources.includes("ACTIVE_SESSIONS"),
     "Inventario no debe escribir LastActivityAt en cada lectura.");
 const scan = policy("ADMIN", "auditDriveImagesInCortes");
-for (const resource of ["CORTES", "DRIVE", "IMAGE_INVENTORY"]) {
+for (const resource of ["CORTES", "DRIVE", "IMAGE_INVENTORY", "RELAY"]) {
     assert.ok(scan.readResources.includes(resource), "Escáner debe reservar lectura de " + resource);
 }
 assert.ok(scan.readResources.includes("SESSION_CONTEXTS"));
@@ -90,7 +90,7 @@ assert.ok(uploadStatus.readResources.includes("DRIVE"));
 assert.ok(uploadStatus.writeResources.includes("IMAGE_UPLOAD_LEDGER"),
     "La consulta puede inicializar el ledger de imágenes y debe reservar su escritura.");
 const reconciliationPreview = policy("ADMIN", "previewCortesImageReconciliation");
-for (const resource of ["CORTES", "DRIVE", "IMAGE_INVENTORY", "IMAGE_AUDIT_STATE", "TUTORIAL", "FEEDBACK", "LOGOS"]) {
+for (const resource of ["CORTES", "DRIVE", "IMAGE_INVENTORY", "IMAGE_AUDIT_STATE", "TUTORIAL", "FEEDBACK", "LOGOS", "RELAY"]) {
     assert.ok(reconciliationPreview.readResources.includes(resource),
         "La vista previa debe reservar lectura de " + resource);
 }
