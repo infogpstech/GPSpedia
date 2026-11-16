@@ -595,14 +595,15 @@ function createSharedMutationCoordinator_(dependencies) {
         return withCoordinatorLock_(() => {
             const currentTime = now();
             const actor = authorizeSession_(userId, token, currentTime);
-            try { recordServiceTrafficEvent_("AUTH", currentTime); }
+            try { recordServiceTrafficEvent_("AUTH", currentTime, "validateSessionContext"); }
             catch (trafficError) { /* La telemetría nunca debe bloquear la restauración de sesión. */ }
             return { status: "success", valid: true, actor };
         });
     }
 
-    function recordServiceTrafficEvent_(service, capturedAt) {
+    function recordServiceTrafficEvent_(service, capturedAt, operation) {
         if (!SERVICE_TRAFFIC_SERVICES_.includes(service)) return false;
+        if (service === "ADMIN" && operation === "getServiceTraffic") return false;
         const bucketStart = Math.floor(Number(capturedAt) / SERVICE_TRAFFIC_BUCKET_MS_) * SERVICE_TRAFFIC_BUCKET_MS_;
         if (!Number.isSafeInteger(bucketStart) || bucketStart <= 0) return false;
         const key = SERVICE_TRAFFIC_BUCKET_PREFIX_ + bucketStart;
@@ -766,7 +767,7 @@ function createSharedMutationCoordinator_(dependencies) {
                                 existing.phase = "active";
                                 existing.expiresAt = currentTime + SHARED_MUTATION_LEASE_TTL_MS;
                                 saveLeases_(leases);
-                                try { recordServiceTrafficEvent_(service, currentTime); }
+                                try { recordServiceTrafficEvent_(service, currentTime, operation); }
                                 catch (trafficError) { /* Métrica best-effort: no afecta la lease. */ }
                                 return { kind: "success", token: existing.token, expiresAt: existing.expiresAt, actor: existing.actor || actor };
                             }
