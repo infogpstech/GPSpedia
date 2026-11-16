@@ -714,3 +714,5 @@ HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
 [2026-11-15] Corrección de cobertura Coordinator: políticas explícitas para ADMIN/auditIdentifiers y FEEDBACK/notifyDevelopersDriveCritical; ampliación de AdminImageScanCoordinatorContract para verificar lecturas ADMIN dedicadas y mutaciones FEEDBACK.
 
 [2026-11-15] ADMIN: coordinación explícita de `checkOperation`, `getAdminImageUploadStatus` y `previewCortesImageReconciliation`; el estado de imagen reserva el ledger porque su helper puede inicializarlo.
+
+[2026-11-15] FEEDBACK: `suggestYear` autenticado pasa por Coordinator/sessionActivity y consume actor confiable; las sugerencias anónimas userId=0 conservan el flujo público.
