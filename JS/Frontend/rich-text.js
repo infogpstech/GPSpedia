@@ -509,7 +509,6 @@ export function createRichTextToolbar(targetId, options = {}) {
     toolbar.dataset.richTargetId = String(targetId);
     toolbar.dataset.richTextMode = editorMode;
     toolbar.dataset.richTextForceAdvanced = String(isFull);
-    toolbar.dataset.richTextCompact = "true";
     toolbar.setAttribute("role", "toolbar");
     toolbar.setAttribute("aria-label", "Formato de texto");
     const makeButton = (icon, title, callback) => {
