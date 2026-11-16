@@ -83,6 +83,16 @@ run('getCatalogChanges es una lectura pública del journal y no exige actor/leas
   assert(inbox.includes('inboxAssertRecipientAllowed_(actor, recipient)'));
   assert(inbox.includes('const type = "direct"'));
  });
+ run('Las solicitudes de aprobación de YouTube solo son visibles para Desarrollador',()=>{
+  const start=feedback.indexOf('function handleGetFeedbackItems(');
+  const end=feedback.indexOf('\nfunction handleGetMyProblemReports',start);
+  assert(start>=0&&end>start,'No se encontró el lector de solicitudes del Inbox.');
+  const body=feedback.slice(start,end);
+  assert(body.includes('canSeeVideoApprovals=String(actor&&actor.role||"")==="Desarrollador"'));
+  assert(body.includes('mappedFeedback.filter(item=>canSeeVideoApprovals||item.type!=="video_approval")'));
+  assert(feedback.includes('approveVideo: ["Desarrollador"]'));
+  assert(feedback.includes('rejectVideo: ["Desarrollador"]'));
+ });
  run('InboxConversations mantiene una sola entrada Jefe en su lista de roles',()=>{assert(inbox.includes('new Set(["desarrollador","jefe","supervisor","tecnico","tecnico_exterior"])'));assert(!/INBOX_ACTIVE_ROLES_[^\\n]*gefe/.test(inbox));});
  run('Gestión de usuarios ofrece y muestra únicamente Jefe',()=>{assert(usersHtml.includes("availableRoles = ['Desarrollador', 'Jefe', 'Supervisor', 'Tecnico', 'Tecnico_exterior']"));assert(usersHtml.includes("return normalized === 'jefe' ? 'Jefe' : role"));assert(!usersHtml.toLowerCase().includes('gefe'));});
  run('Perfil frontend normaliza únicamente el rol canónico Jefe',()=>{assert(authClient.includes("if(role==='jefe')updated.Privilegios='Jefe'"));assert(!authClient.toLowerCase().includes('gefe'));});
