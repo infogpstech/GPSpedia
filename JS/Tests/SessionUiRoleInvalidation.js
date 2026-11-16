@@ -97,10 +97,10 @@ function runSessionUiRoleInvalidationTests(sources) {
   assert(f.includes("rejectVideo(item.id, userName, reason, userRole, getSessionPayload_())"));
   assert(f.includes("['desarrollador', 'jefe', 'supervisor'].includes(context.role)"));
  });
- run("Jefe puede acceder al Inbox y aprobar o rechazar según la matriz del backend",()=>{
+ run("Jefe puede consultar el Inbox pero no aprobar ni rechazar vídeos",()=>{
   const can=slice(ui,"function canApproveInboxVideo_(","function getUiSessionContext_");
-  assert(can.includes("['desarrollador', 'jefe', 'supervisor']"));
-  assert(can.includes("'jefe'"));
+  assert(can.includes("role) === 'desarrollador'"));
+  assert(!can.includes("'jefe'"));
   const policy=slice(feedback,"const FEEDBACK_ACTION_PERMISSIONS = Object.freeze(","\n);");
   assert(policy.includes("approveVideo: [\"Desarrollador\", \"Jefe\", \"Supervisor\"]"));
   assert(policy.includes("rejectVideo: [\"Desarrollador\", \"Jefe\", \"Supervisor\"]"));
