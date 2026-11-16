@@ -631,11 +631,12 @@ function doPost(e) {
     const action = String(request.action || "");
     const payload = request.payload && typeof request.payload === "object" ? request.payload : {};
     const sessionOptions = { session: { sessionToken: payload.sessionToken } };
+    // La ruta anónima debe evaluarse antes de clasificar suggestYear como mutación compartida.
+    // Las sugerencias autenticadas mantienen su lease específica sobre Cortes y Feedback.
+    if (action === "suggestYear" && String(payload.userId || "").trim() === "0") {
+        return doPostInternal_(withSharedSessionActor_(e, null));
+    }
     if (!isSharedMutationAction_(action)) {
-        // Las sugerencias anónimas conservan la ruta pública; las autenticadas reciben actor del Coordinator.
-        if (action === "suggestYear" && String(payload.userId || "").trim() === "0") {
-            return doPostInternal_(withSharedSessionActor_(e, null));
-        }
         if (!Object.prototype.hasOwnProperty.call(FEEDBACK_ACTION_PERMISSIONS, action) || FEEDBACK_PUBLIC_ACTIONS.has(action)) {
             return doPostInternal_(withSharedSessionActor_(e, null));
         }
