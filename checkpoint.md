@@ -1698,6 +1698,7 @@ Backlog y registro de cambios sincronizados con este estado. La rama base perman
 - `JS/Frontend/ui.js`: búsqueda activada desde la lupa; resultados por texto mediante el parámetro de consulta existente; eliminación del listener del filtro visual de categorías; paginador único que cambia de manejador según la vista actual y conserva los cursores opacos; indicador de páginas con total real.
 - `JS/Services/InboxConversations.js`: se añadió la carpeta `read`, definida como conversaciones recibidas con `unreadCount === 0`; no realiza escrituras ni altera el estado de lectura.
 - Pruebas actualizadas en `JS/Tests/InboxUi.mjs` y `JS/Tests/InboxConversations.mjs`.
+- `service-worker.js`: caché App Shell actualizada de `gpsepedia-cache-v33` a `gpsepedia-cache-v34`; `JS/Tests/ServiceWorkerCache.js` actualizado para exigir la nueva versión.
 
 ### Validación y estado
 - Inspección remota de los seis archivos afectados: los controles antiguos de categoría y paginación por conversación ya no aparecen en HTML/UI/estilos/servicio.
