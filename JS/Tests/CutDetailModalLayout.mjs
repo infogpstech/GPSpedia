@@ -12,14 +12,16 @@ const end = ui.indexOf("\nfunction ", start + 1);
 const detail = ui.slice(start, end > start ? end : undefined);
 
 
+
+
+let passed = 0;
+function testCase(name, fn) { fn(); passed++; console.log("PASS " + name); }
+
 testCase("la línea azul llega al extremo del modal con márgenes simétricos y menos espacio vertical", () => {
     assert.ok(css.includes("width:calc(100% + 18px)"));
     assert.ok(css.includes("margin:7.5px 0 7.5px 12px"));
     assert.ok(css.includes(".detail-modal-divider { width:calc(100% + 22px); }"));
 });
-
-let passed = 0;
-function testCase(name, fn) { fn(); passed++; console.log("PASS " + name); }
 
 testCase("el modal Relay coloca título a la izquierda y cierre arriba a la derecha", () => {
     const relayStart = ui.indexOf("function mostrarDetalleRelayModal");
