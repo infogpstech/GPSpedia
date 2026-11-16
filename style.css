@@ -5544,6 +5544,58 @@ body.dark-mode #inbox-modal-content .inbox-editor-shell { background:#2b3036; }
 }
 
 
+/* GP-UX-RICH-TOOLBARS-01 — presentación común basada en la barra del Inbox. */
+.rich-editor-toolbar-compact {
+    display:flex; flex-wrap:nowrap; align-items:center; gap:1px;
+    width:100%; min-width:0; box-sizing:border-box; margin:0 0 4px !important;
+    padding:2px; border:1px solid var(--gp-color-border,var(--border-color,#ddd));
+    border-radius:8px; background:var(--gp-color-surface,var(--card-bg,#fff));
+}
+.rich-editor-toolbar-compact > .rich-toolbar-icon-button,
+.rich-editor-toolbar-compact > .rich-toolbar-dropdown,
+.rich-editor-toolbar-compact > .rich-toolbar-color-group {
+    flex:0 0 27px; width:27px; min-width:27px; max-width:27px;
+}
+.rich-editor-toolbar-compact .rich-toolbar-icon-button {
+    display:inline-flex; align-items:center; justify-content:center;
+    width:27px; min-width:27px; max-width:27px; height:29px; min-height:29px;
+    padding:0; border:1px solid transparent; border-radius:6px;
+    color:var(--gp-color-text,var(--text-color,#333));
+    background:transparent; cursor:pointer;
+}
+.rich-editor-toolbar-compact .rich-toolbar-icon-button:hover,
+.rich-editor-toolbar-compact .rich-toolbar-dropdown.is-open > .rich-toolbar-icon-button {
+    border-color:var(--gp-color-border,var(--border-color,#ddd));
+    background:var(--gp-color-button-bg,var(--button-bg,#eee));
+}
+.rich-editor-toolbar-compact .rich-toolbar-color-group { position:relative; }
+.rich-editor-toolbar-compact .rich-toolbar-color-input {
+    position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;
+}
+.rich-editor-toolbar-compact .rich-toolbar-dropdown { position:relative; }
+.rich-editor-toolbar-compact .rich-toolbar-menu {
+    position:absolute; z-index:10000; top:calc(100% + 5px); left:0;
+    min-width:150px; max-width:calc(100vw - 24px); max-height:min(220px,calc(100dvh - 16px));
+    overflow:auto; padding:6px; border:1px solid var(--gp-color-border,var(--border-color,#bbb));
+    border-radius:8px; background:var(--gp-color-elevated,var(--modal-bg,#fff));
+    box-shadow:0 8px 24px rgba(0,0,0,.18);
+}
+.rich-editor-toolbar-compact .rich-toolbar-menu[hidden] { display:none !important; }
+.rich-editor-toolbar-compact .rich-toolbar-menu-item {
+    display:block; width:100%; min-height:32px; padding:6px 9px;
+    border:0; border-radius:5px; color:var(--gp-color-text,var(--text-color,#333));
+    background:transparent; text-align:left; white-space:nowrap; cursor:pointer;
+}
+.rich-editor-toolbar-compact .rich-toolbar-menu-item:hover {
+    background:var(--gp-color-button-bg,var(--button-bg,#eee));
+}
+@media (max-width:420px) {
+    .rich-editor-toolbar-compact { gap:1px; padding:2px; }
+    .rich-editor-toolbar-compact > .rich-toolbar-icon-button,
+    .rich-editor-toolbar-compact > .rich-toolbar-dropdown,
+    .rich-editor-toolbar-compact > .rich-toolbar-color-group { flex-basis:27px; width:27px; }
+}
+
 /* Editores visuales asociados a campos enriquecidos de formularios. */
 .rich-text-visual-editor {
     display:block; width:100%; min-width:0; box-sizing:border-box; padding:8px;
