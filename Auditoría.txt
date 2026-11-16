@@ -1532,3 +1532,30 @@ AUDITORÍA COMPLEMENTARIA — 2026-11-16 — AUD-2026-11-16-06
 - GitHub Pages run `43939460856`: **SUCCESS — build y deploy**.
 - El cambio preserva los handlers, permisos RBAC, IDs y contratos de usuarios; no modifica backend ni servicios Apps Script.
 - Aceptación visual real en Android/PWA y escritorio: pendiente de Beta. La captura `Images/tests/Modal_despues.png` se encuentra en el repositorio, pero el conector no permitió recuperar su contenido binario por su tamaño; la distribución se implementó según el esquema proporcionado por el usuario.
+
+================================================================================
+AUDITORÍA — 2026-11-16 — AUD-2026-11-16-07
+Ámbito: Inbox de escritorio, compositor de conversaciones, lista vacía y editor enriquecido.
+Severidad: Media — controles de envío/salida fuera del área visible y barra de búsqueda/formato incompleta.
+Estado: CORRECCIÓN IMPLEMENTADA; validación automatizada pendiente.
+
+Evidencia revisada:
+- Images/tests/modal_inbox_bandeja.png: formulario Nuevo mensaje continúa por debajo del panel visible; Salir/Enviar no quedan accesibles sin desplazamiento; los campos Plantilla y Categoría ocupan filas completas; la lista vacía deja un panel central sobredimensionado y el botón de lupa muestra contenido comprimido.
+- Images/tests/modal_inbox_reportes.png: el editor de respuesta muestra una barra de formato reducida.
+- JS/Frontend/ui.js: el formulario nuevo era un contenedor flex con flex:0 0 auto; el contenido podía exceder el panel padre con overflow:hidden. Plantilla y categoría se insertaban por separado. Los mensajes de conversación se representaban como texto plano aunque ya existe el sanitizador compartido.
+- style.css: el botón de búsqueda heredaba el span «Buscar» dentro de un ancho fijo de 38 px, recortando el contenido del botón.
+
+Corrección:
+- El formulario nuevo usa el espacio restante del panel, scroll vertical propio y acciones Salir/Enviar sticky al pie del formulario.
+- Plantilla y Categoría se agrupan en una cuadrícula de dos columnas encima del campo Mensaje; para roles sin plantilla, Categoría usa todo el ancho.
+- Se integra createRichTextToolbar en nuevo mensaje y respuesta, respetando el modo global de texto enriquecido. El contenido recibido se renderiza únicamente después de sanitizeHtmlContent.
+- La lista vacía reduce su altura y el panel se ajusta a su contenido.
+- La lupa conserva un botón cuadrado sin etiqueta recortada.
+- App Shell actualizado a gpsepedia-cache-v46; pruebas de caché/offline alineadas.
+
+Validación prevista:
+- InboxUi: scroll, acciones visibles, fila de selectores, toolbar, renderizado saneado, lista vacía y lupa.
+- ServiceWorkerCache / OfflineBrandAssets: versión v46.
+- Regresión completa Node.js y CI. La inspección visual en navegador real queda pendiente de Beta.
+No se modifican backend, Apps Script, permisos, servicios desplegados ni datos externos.
+================================================================================
