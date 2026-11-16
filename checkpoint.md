@@ -1209,3 +1209,18 @@ El usuario confirmó que el backlog pendiente también comprende la organizació
 - BETA-024 queda completada localmente; la comprobación visual y accesible en dispositivos reales sigue pendiente de Beta. No se desplegaron servicios Apps Script.
 - **Siguiente tarea local:** BETA-025, política de nombres largos, títulos y etiquetas sin modificar el valor original almacenado.
 - Rama base `GPSpedia2.2.5` permanece intacta.
+
+
+## Continuidad — BETA-025 nombres largos y desbordamientos (2026-11-16)
+
+- **Último commit de implementación/pruebas:** `472f998cdb50057396bcbcc4c02f3918fb449358` — `test: permitir propiedades flexibles en Inbox`.
+- Se eliminó la elipsis del título de Inbox y de las tarjetas/listas de problemas e imágenes; los textos se ajustan a varias líneas y los contenedores permiten crecer sin desbordar.
+- Se unificó el ajuste de títulos, etiquetas, botones y celdas; las pestañas compactas de Developer conservan su nombre completo accesible mediante texto y atributo `title`.
+- Los nombres de archivos y problemas siguen usando el valor íntegro. En la lista de asociación PYS se sustituyó interpolación HTML por nodos y `textContent`, evitando interpretar el nombre como marcado.
+- **Prueba específica:** `LongNameLayout` 7/7 PASS.
+- **CI final:** run `43790916325` SUCCESS — 112 suites / 1,702 pruebas / 0 fallos.
+- **GitHub Pages:** run `43790916506` SUCCESS.
+- Las ejecuciones intermedias detectaron contratos de prueba demasiado estrictos frente a reglas CSS ya existentes; se corrigieron y la ejecución final quedó verde.
+- BETA-025 queda completada localmente; validación con nombres reales en dispositivos Beta pendiente. No se alteraron nombres almacenados ni se desplegaron servicios Apps Script.
+- **Siguiente tarea local:** BETA-026, reorganizar el modal de detalle/corte sin agregar ayudas `ⓘ` al modal de detalles de vehículos, preservando sus acciones y permisos.
+- Rama base `GPSpedia2.2.5` permanece intacta.

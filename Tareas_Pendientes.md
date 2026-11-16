@@ -99,7 +99,13 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 - No añadir `ⓘ` indiscriminadamente. **No añadirlo al modal de detalles de vehículos.**
 
 ### BETA-025 — Títulos y nombres largos
-**Estado: PENDIENTE LOCAL.**
+**Estado: IMPLEMENTACIÓN LOCAL COMPLETADA; PENDIENTE BETA.**
+
+- Títulos, etiquetas, botones y celdas admiten ajuste de línea y ancho flexible; se eliminó el truncado visual de títulos del Inbox y nombres de archivos de imágenes.
+- Los nombres de problemas y archivos conservan el valor completo mediante `textContent`; no se recortan ni se modifican los datos almacenados. Se añadió el nombre completo como `title` contextual en el listado de archivos.
+- Se conservaron las etiquetas compactas de navegación Developer, con el nombre completo disponible en el atributo `title` y en el contenido accesible.
+- `LongNameLayout`: 7/7 PASS. CI run `43790916325`: SUCCESS — 112 suites, 1,702 pruebas aprobadas, 0 fallos. GitHub Pages run `43790916506`: SUCCESS.
+- Pendiente Beta: validar nombres extensos reales en móvil/escritorio, tablas, Inbox y biblioteca de imágenes.
 
 - Simplificar títulos, secciones, botones y etiquetas sin perder identificación.
 - Preservar íntegramente los nombres reales de registros, archivos, vehículos y otros datos.
