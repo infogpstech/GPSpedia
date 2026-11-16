@@ -19,7 +19,7 @@ import { shouldAutoOpenVehicleDetail } from './search-utils.js';
 import { buildVehicleShareUrl, shareVehicleLink } from './share-utils.js';
 import { pushNavigationState, replaceNavigationState, navigateBackToState, pickNavigationState, navigationHistoryStateKey } from './navigationHistory.js';
 import { thumbnailObjectUrls } from './imageObjectUrlCache.js';
-import { createInboxPageCache } from './inboxPageCache.js';
+import { createInboxPageCache, mergeInboxMessagePages } from './inboxPageCache.js';
 import { loadPysData, getCachedPysData, getPysDataFreshness, invalidatePysDataCache } from './pys-data.js';
 import { captureModalViewState, restoreModalViewState, shouldRecordModalTransition, pushModalNavigationContext, popModalNavigationContext } from './modalNavigation.js';
 import { createRichTextToolbar, sanitizeHtmlContent, refreshRichTextToolbars } from './rich-text.js';
@@ -4535,9 +4535,7 @@ async function loadInboxMessages_(conversationId, options = {}) {
         const incoming = Array.isArray(response.data) ? response.data : [];
         if (options.older) inboxConversationMessages_ = incoming.concat(inboxConversationMessages_);
         else if (options.preserveScroll && inboxConversationMessages_.length) {
-            const byId = new Map(inboxConversationMessages_.map(message => [message.messageId, message]));
-            incoming.forEach(message => byId.set(message.messageId, message));
-            inboxConversationMessages_ = Array.from(byId.values()).sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt));
+            inboxConversationMessages_ = mergeInboxMessagePages(inboxConversationMessages_, incoming);
         } else inboxConversationMessages_ = incoming;
         inboxConversationMessagesCursor_ = response.nextCursor === undefined ? null : response.nextCursor;
         inboxConversationMessagesHasMore_ = response.hasMore === true;

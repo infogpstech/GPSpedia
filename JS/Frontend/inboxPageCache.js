@@ -69,3 +69,29 @@ export function createInboxPageCache({ ttlMs = 60000, maxEntries = 80, now = () 
 
     return { getScopeKey, get, set, invalidate, clear, getStats };
 }
+
+/**
+ * Combina páginas de mensajes manteniendo el orden canónico de inserción del servidor.
+ * Las fechas no son una secuencia fiable: pueden coincidir o retroceder.
+ * Los IDs repetidos actualizan el mensaje existente sin mover su posición.
+ */
+export function mergeInboxMessagePages(existingMessages, incomingMessages) {
+    const merged = [];
+    const positions = new Map();
+    const upsert = message => {
+        const id = String(message && message.messageId || "").trim();
+        if (!id) {
+            merged.push(message);
+            return;
+        }
+        if (positions.has(id)) {
+            merged[positions.get(id)] = message;
+            return;
+        }
+        positions.set(id, merged.length);
+        merged.push(message);
+    };
+    (Array.isArray(existingMessages) ? existingMessages : []).forEach(upsert);
+    (Array.isArray(incomingMessages) ? incomingMessages : []).forEach(upsert);
+    return merged;
+}

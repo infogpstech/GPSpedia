@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { mergeInboxMessagePages } from "../Frontend/inboxPageCache.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const read = path => readFileSync(resolve(ROOT, path), "utf8");
@@ -93,6 +94,22 @@ check("Las notificaciones internas reflejan el total de conversaciones no leída
 check("La lista y los mensajes existentes permanecen visibles durante la actualización", () => {
     assert.match(ui, /if \(!inboxConversationItems_\.length && !list\.childElementCount\) list\.replaceChildren/);
     assert.match(ui, /if \(!options\.older && !options\.preserveScroll && !inboxConversationMessages_\.length\) renderInboxConversationDetail_/);
+});
+check("La actualización del historial conserva el orden de inserción aunque las fechas coincidan o retrocedan", () => {
+    const previous = [
+        { messageId: "message-0001", createdAt: "2026-11-15T12:00:00.000Z", body: "Primero" },
+        { messageId: "message-0002", createdAt: "2026-11-15T12:01:00.000Z", body: "Segundo" }
+    ];
+    const incoming = [
+        { messageId: "message-0002", createdAt: "2026-11-15T11:59:00.000Z", body: "Segundo actualizado" },
+        { messageId: "message-0003", createdAt: "2026-11-15T11:58:00.000Z", body: "Tercero" }
+    ];
+    const merged = mergeInboxMessagePages(previous, incoming);
+    assert.deepEqual(merged.map(message => message.messageId), ["message-0001", "message-0002", "message-0003"]);
+    assert.equal(merged[1].body, "Segundo actualizado");
+    assert.deepEqual(mergeInboxMessagePages(merged, incoming), merged);
+    assert.match(ui, /mergeInboxMessagePages\(inboxConversationMessages_, incoming\)/);
+    assert.doesNotMatch(ui, /inboxConversationMessages_ = Array\.from\(byId\.values\(\)\)\.sort/);
 });
 check("El historial reciente de mensajes se reutiliza por sesión y se limpia al cambiar de cuenta", () => {
     assert.match(ui, /const inboxConversationMessageCache_ = new Map\(\)/);
