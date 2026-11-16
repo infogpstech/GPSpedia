@@ -46,7 +46,7 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 - Mantener separado el control privilegiado de cierre de sesiones y sus permisos actuales.
 
 ### GP-UX-CUT-MODAL-01 — Posición de acciones del modal de detalle
-**Prioridad: P2 · Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA**
+**Prioridad: P2 · Estado: REABIERTA POR REGRESIÓN MÓVIL/PWA; corrección registrada en adenda del 2026-11-16**
 - Ubicar compartir, editar e imprimir en la esquina superior derecha del encabezado, inmediatamente a la izquierda del botón cerrar.
 - Evitar centrado vertical/horizontal en la cabecera y conservar tamaños táctiles, orden, accesibilidad y reglas RBAC.
 
@@ -751,3 +751,17 @@ No usar `reset --hard`, `clean`, force push ni comandos que descarten cambios. N
 - Adenda 2026-11-16: posición final del botón flotante Nuevo ajustada a 64 px sobre el pie/paginación y safe-area móvil; contrato InboxUi y App Shell v41 incorporados. CI pendiente de esta adenda.
 
 - Validación final posterior al ajuste del botón flotante: CI run 43907008784 SUCCESS — 129 suites / 1,900 pruebas / 0 fallos; GitHub Pages run 43907008756 SUCCESS. El espacio inferior del selector de secciones se redujo de 20 px a 6 px (70 %) y los carruseles mantienen separación uniforme.
+
+
+---
+
+## Adenda correctiva — GP-UX-CUT-MODAL-01 — 2026-11-16
+
+**Estado local:** CORRECCIÓN IMPLEMENTADA; CI PENDIENTE. **Beta visual:** PENDIENTE.
+
+- Corregir la regresión en móvil/PWA que desplazaba los botones compartir, editar e imprimir debajo del logo.
+- Mantener las tres acciones agrupadas en la parte superior derecha, inmediatamente a la izquierda del botón cerrar; el logo/modelo permanece en el área izquierda sin empujar ni envolver las acciones.
+- Ampliar el logo de marca un 20 % respecto a las dimensiones anteriores: escritorio 48 → 57.6 px; móvil 38 → 45.6 px.
+- Reducir moderadamente los botones: 34 × 34 px en escritorio y 32 × 32 px en móvil.
+- Invalidar el App Shell previo para que PWA reciba el CSS corregido.
+- Validar CutDetailModalLayout, ServiceWorkerCache y OfflineBrandAssets; en Beta comprobar viewport móvil estrecho, PWA instalada, orientación vertical/horizontal, roles con y sin permisos de editar/imprimir, y modelos cortos/largos.

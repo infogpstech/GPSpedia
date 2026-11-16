@@ -1410,3 +1410,25 @@ AUDITORÍA COMPLEMENTARIA — 2026-11-16 — AUD-2026-11-16-06
 - GitHub Actions Node.js 22 run 43906071405: SUCCESS — 129 suites / 1,899 pruebas / 0 fallos.
 - GitHub Pages run 43906069774: SUCCESS.
 - Pendiente Beta: inspección visual en dispositivos con diferentes proporciones de pantalla. No se modificaron datos ni servicios externos.
+
+
+## AUD-2026-11-16-02 — Acciones del modal de detalle desplazadas debajo del logo en móvil/PWA
+
+**Severidad:** Media — regresión visual y de acceso a acciones frecuentes.  
+**Estado:** CORREGIDO EN RAMA DE TRABAJO; CI y aceptación visual Beta pendientes.
+
+### Evidencia y causa
+- En `style.css`, el toolbar usaba flex-wrap y la media query hasta 560 px asignaba `flex-basis:100%` al título/logo.
+- Esa regla forzaba el bloque del logo/modelo a ocupar una fila completa y desplazaba compartir, editar e imprimir a una fila inferior.
+- El logo conservaba 48 px en escritorio y 38 px en móvil.
+
+### Corrección
+- Se cambió el encabezado a una cuadrícula de dos columnas: logo/modelo a la izquierda y acciones en una columna independiente a la derecha.
+- Las acciones no se envuelven y permanecen inmediatamente a la izquierda del botón cerrar.
+- Los botones se compactan a 34 px en escritorio y 32 px en móvil; el cierre mantiene su posición superior derecha.
+- Logo ampliado exactamente un 20 %: 48 → 57.6 px en escritorio y 38 → 45.6 px en móvil.
+- Se amplió CutDetailModalLayout y se incrementó el App Shell de v41 a v42 para invalidar CSS previo en PWA.
+
+### Validación
+- Pruebas locales y CI: pendientes de ejecución tras publicar este cambio.
+- Aceptación visual en navegador móvil/PWA real: pendiente de Beta; no se afirma como ejecutada.

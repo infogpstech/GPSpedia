@@ -30,8 +30,9 @@ testCase("la cabecera y acciones del modal se agrupan en una barra flexible", ()
     for (const label of ["Compartir vehículo", "Imprimir ficha técnica", "Activar modo edición", "Guardar cambios", "Descartar cambios"]) {
         assert.ok(detail.includes('setAttribute("aria-label", "' + label + '")'), label);
     }
-    assert.match(css, /\.detail-modal-toolbar \{[\s\S]*?display: flex;[\s\S]*?flex-wrap: wrap/);
-    assert.match(css, /\.detail-modal-header-actions \{[\s\S]*?justify-content: flex-end/);
+    assert.match(css, /\.detail-modal-toolbar \{[\s\S]*?display: grid;[\s\S]*?grid-template-columns: minmax\(0, 1fr\) auto/);
+    assert.match(css, /\.detail-modal-header-actions \{[\s\S]*?grid-column: 2;[\s\S]*?flex-wrap: nowrap/);
+    assert.match(css, /\.detail-modal-header-actions \.share-modal-btn \{[\s\S]*?width: 34px;[\s\S]*?height: 34px/);
     assert.match(css, /\.detail-modal-toolbar > \.info-close-btn[\s\S]*?right:0/);
     assert.match(detail, /headerDiv\.appendChild\(headerActions\)[\s\S]*?headerDiv\.appendChild\(closeBtn\)/);
 });
@@ -39,9 +40,9 @@ testCase("la cabecera y acciones del modal se agrupan en una barra flexible", ()
 testCase("el logo y el modelo ocupan la esquina superior izquierda sin desplazar las acciones", () => {
     assert.match(detail, /headerDiv\.insertBefore\(titleContainer, savingIndicator\)/);
     assert.doesNotMatch(detail, /cont\.appendChild\(titleContainer\)/);
-    assert.match(css, /\.detail-modal-toolbar \{[\s\S]*?flex-wrap:wrap/);
-    assert.match(css, /\.detail-modal-title \{[\s\S]*?flex:1 1 260px/);
-    assert.match(css, /\.detail-modal-header-actions \{[\s\S]*?margin-left:auto/);
+    assert.match(css, /\.detail-modal-toolbar \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) auto/);
+    assert.match(css, /\.detail-modal-title \{[\s\S]*?grid-column: 1;[\s\S]*?grid-row: 1/);
+    assert.match(css, /\.detail-modal-header-actions \{[\s\S]*?grid-column: 2;[\s\S]*?grid-row: 1/);
     assert.match(css, /\.detail-modal-toolbar > \.info-close-btn \{[\s\S]*?right:0/);
 });
 
@@ -60,9 +61,9 @@ testCase("el título y metadatos se separan del área de edición", () => {
     assert.match(css, /\.detail-modal-title-text \{[\s\S]*?overflow-wrap: anywhere/);
 });
 
-testCase("el logo conserva el tamaño de la rama base y el modelo solo baja si excede el modal", () => {
-    assert.match(css, /\.brand-logo-modal \{[\s\S]*?height: 48px !important;[\s\S]*?max-height: 48px !important/);
-    assert.match(css, /@media \(max-width: 600px\)[\s\S]*?\.brand-logo-modal \{\s*height: 38px !important;\s*max-height: 38px !important/);
+testCase("el logo aumenta 20% y el modelo solo baja si excede el modal", () => {
+    assert.match(css, /\.brand-logo-modal \{[\s\S]*?height: 57\.6px !important;[\s\S]*?max-height: 57\.6px !important/);
+    assert.match(css, /@media \(max-width: 600px\)[\s\S]*?\.brand-logo-modal \{\s*height: 45\.6px !important;\s*max-height: 45\.6px !important/);
     assert.match(css, /\.detail-modal-title \.brand-logo-modal \{[\s\S]*?flex: 0 0 auto;[\s\S]*?max-width: none/);
     assert.match(css, /\.detail-modal-title--stacked \.detail-modal-title-text \{[\s\S]*?flex: 1 1 100%/);
     assert.match(detail, /const updateTitleLayout = \(\) =>/);
@@ -124,6 +125,15 @@ testCase("se preservan permisos y operaciones y no se añaden ayudas al detalle 
     assert.match(detail, /saveFieldSilently\(activeItem\.id/);
     assert.match(detail, /exitModalEditMode\(true, activeItem\.id/);
     assert.doesNotMatch(detail, /gp-help-trigger|gp-help-popover|fa-circle-info/);
+});
+
+
+testCase("en móvil/PWA las acciones permanecen en la misma fila, antes del cierre, sin quedar debajo del logo", () => {
+    assert.match(css, /\.detail-modal-toolbar \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) auto/);
+    assert.match(css, /\.detail-modal-header-actions \{[\s\S]*?flex-wrap: nowrap/);
+    assert.match(css, /\.detail-modal-toolbar > \.info-close-btn \{[\s\S]*?right:0/);
+    assert.doesNotMatch(css, /@media \(max-width:560px\) \{[\s\S]*?\.detail-modal-title \{\s*flex-basis:100%/);
+    assert.match(css, /@media \(max-width:560px\)[\s\S]*?\.detail-modal-header-actions \.share-modal-btn \{[\s\S]*?width: 32px;[\s\S]*?height: 32px/);
 });
 
 console.log("CutDetailModalLayout: " + passed + "/" + passed + " PASS");
