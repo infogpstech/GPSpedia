@@ -462,9 +462,10 @@ check("Los formularios distinguen editores básicos, editores con listas y el In
 });
 check("Los campos básicos muestran negrita y color sin controles de listas ni tipografía adicional", () => {
     const toolbar = rich.slice(rich.indexOf("export function createRichTextToolbar("), rich.indexOf("export function refreshRichTextToolbars("));
-    assert.ok(toolbar.includes('createCompactRichTextToolbar_(targetId, isFull)'));
-    assert.ok(toolbar.includes('title !== "Negrita"'));
-    assert.ok(toolbar.includes('toolbar.dataset.richTextMode = editorMode'));
+    assert.ok(toolbar.includes('toolbar.className = "rich-editor-toolbar rich-editor-toolbar-compact"'));
+    assert.ok(toolbar.includes('makeButton("fa-bold", "Negrita"'));
+    assert.ok(toolbar.includes('colorPicker.type = "color"'));
+    assert.ok(toolbar.includes('rich-toolbar-native-select'));
     assert.ok(main.includes("createRichTextToolbar('contact-message', { mode: 'basic' })"));
     assert.ok(addCortes.includes("createRichTextToolbar(targetId, { mode: 'basic' })"));
 });
@@ -474,8 +475,8 @@ check("Tutoriales y problemas habilitan listas, marcadores elegibles y listas nu
     assert.ok(ui.includes("edit-pys-prev-textarea"));
     assert.ok(rich.includes('option value="arrow">→ Flecha'));
     assert.ok(rich.includes('option value="check">✓ Verificación'));
-    assert.ok(rich.includes('addDropdown("fa-list-ul", "Listas y marcadores"'));
-    assert.ok(rich.includes('title === "Listas y marcadores"'));
+    assert.ok(rich.includes('makeButton("fa-list-ul", "Lista no ordenada"'));
+    assert.ok(rich.includes('makeButton("fa-list-ol", "Lista ordenada"'));
 });
 check("Los campos enriquecidos se editan visualmente y sincronizan HTML saneado con el textarea fuente", () => {
     assert.ok(rich.includes("export function mountRichTextEditors("));
@@ -520,11 +521,11 @@ check("Los detalles de corte, tutoriales, Relay y PyS mantienen barras invisible
 
 check("Todas las barras de formularios usan la iconografía compacta del Inbox sin ampliar sus funciones", () => {
     const toolbar = rich.slice(rich.indexOf("export function createRichTextToolbar("), rich.indexOf("export function refreshRichTextToolbars("));
-    assert.match(toolbar, /createCompactRichTextToolbar_\(targetId, isFull\)/);
     assert.match(toolbar, /toolbar\.dataset\.richTextMode = editorMode/);
-    assert.match(toolbar, /editorMode !== "advanced" && title !== "Negrita"/);
-    assert.match(toolbar, /const keepListMenu = hasLists && title === "Listas y marcadores"/);
-    assert.match(toolbar, /if \(!isFull && !keepListMenu\) group\.remove\(\)/);
+    assert.match(toolbar, /makeButton\("fa-bold", "Negrita"/);
+    assert.match(toolbar, /if \(isFull\)[\s\S]*?fa-italic[\s\S]*?fa-strikethrough/);
+    assert.match(toolbar, /if \(hasLists\)[\s\S]*?fa-list-ul[\s\S]*?fa-list-ol/);
+    assert.match(toolbar, /rich-toolbar-native-select/);
     assert.match(css, /\.rich-editor-toolbar-compact\s*\{[^}]*gap:1px/s);
     assert.match(css, /\.rich-editor-toolbar-compact \.rich-toolbar-icon-button/);
     assert.match(css, /\.rich-editor-toolbar-compact \.rich-toolbar-menu-item/);
