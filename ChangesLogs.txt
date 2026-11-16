@@ -1298,3 +1298,6 @@ ADENDA — GP-UX-INBOX-DESKTOP-02
 - JS/Frontend/ui.js: Inbox solicita barra avanzada completa; formato aplicado actualiza borradores; contenido de mensajes se sanea en modo avanzado.
 - App Shell actualizado a v47 y pruebas de caché/offline alineadas.
 ================================================================================
+
+- JS/Tests/InboxUi.mjs: se corrigió el selector de la prueba de scroll para comprobar la regla desktop principal y no el override responsive posterior.
+- Validación estática: sintaxis 4/4; contratos visuales dirigidos 15/15. CI integral pendiente de confirmación.
