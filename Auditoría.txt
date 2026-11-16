@@ -1293,3 +1293,12 @@ Corrección: retirada de la prevalidación. Se conserva el snapshot de userId/se
 Validación: VideoApprovalClientContract 10/10; CI Node.js 22 run 43799943070: 118 suites / 1,765 pruebas / 0 fallos. Revisión adicional: validateSession solo se conserva para restauración inicial y recuperación tras error de cambio de rol propio; no se encontraron llamadas cliente a touchSession.
 Estado: CORREGIDO LOCALMENTE; medición de latencia y deployments FEEDBACK/Coordinator pendientes de Beta.
 ==========================================================
+
+==========================================================
+ADENDA DE CIERRE — 2026-11-16 — BETA-042
+Se completó la auditoría local posterior a la retirada inicial del servicio heredado.
+Alcance revisado: siete servicios Apps Script versionados, Frontend, HTML, API/action map, contratos de salud, pruebas y workflows. No se encontraron referencias ejecutables a logFrontend, SCRIPT_URL, remoteLog, endpoint Legacy o acción LEGACY.
+La única referencia activa de documentación se reorganizó como nota de servicio retirado en Services/SERVICE_HEALTH.md; LEGACY ya no figura en el inventario/tabla de contratos ni se consulta. Las referencias de Auditoría/checkpoint se conservan por trazabilidad.
+Validación: ServiceHealthContract 17/17, ActionDispatchContract 12/12; CI Node.js 22 run 43800322470: 118 suites / 1,765 pruebas / 0 fallos.
+Estado: COMPLETADO LOCALMENTE. Verificar la inexistencia de deployments externos y tráfico real queda pendiente de Beta; no se modificaron deployments ni datos externos.
+==========================================================
