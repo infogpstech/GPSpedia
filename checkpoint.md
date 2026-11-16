@@ -1924,3 +1924,5 @@ Backlog y registro de cambios sincronizados con este estado. La rama base perman
 - **Validación:** CI Node.js 22 pendiente sobre el commit; integración real con usuarios/Spreadsheet y revisión visual quedan para Beta. No se desplegaron servicios Apps Script ni se alteraron datos externos.
 
 - CI run `43903840172` detectó que la prueba de búsqueda global añadía tres conversaciones y alcanzaba el límite de frecuencia simulado del fixture. Se reemplaza la creación adicional por cambios temporales/restaurados en tres filas ya existentes, sin debilitar la prueba de filtrado ni los límites del servicio.
+
+- CI run `43904276401`: InboxUi detectó dos contratos antiguos que aún esperaban la firma previa de setInboxSection_ y el filtro fijo de categoría. Se sincronizan con la firma opcional de preferCache y la búsqueda global; la suite de servicio InboxConversations ya pasó.

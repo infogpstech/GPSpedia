@@ -1184,3 +1184,5 @@ ADENDA — PysModalNavigation: contador del resumen ajustado de 9/9 a 10/10 tras
 ================================================================================
 
 ADENDA — GP-UX-INBOX-CACHE-SEARCH-01: prueba global ajustada para reutilizar temporalmente tres registros del fixture y restaurarlos en finally; evita activar el rate limit del test sin alterar el control de frecuencia.
+
+ADENDA — GP-UX-INBOX-CACHE-SEARCH-01: contratos InboxUi sincronizados con setInboxSection_(section, options) y categoría global al buscar; corrección de expectativas obsoletas.

@@ -115,7 +115,7 @@ check("La búsqueda se cierra al usar otra acción, cambiar de pestaña o volver
         'button.id === "inbox-search-toggle"',
         "closeInboxSearch_();",
         'searchToggle.addEventListener("click"',
-        "async function setInboxSection_(section) {",
+        "async function setInboxSection_(section, options = {}) {",
         'if (nextView !== "conversations") closeInboxSearch_()',
         "form.hidden = true",
         'setAttribute("aria-expanded", "false")'
@@ -128,7 +128,7 @@ check("General y Soporte no muestran selector de categoría y conservan la búsq
     assert.match(ui, /searchToggle\.addEventListener\("click"/);
     assert.match(ui, /inboxConversationQuery_ = String\(input && input\.value/);
     assert.match(ui, /getInboxConversations\(context,[\s\S]*query: inboxConversationQuery_/);
-    assert.match(ui, /category: inboxConversationCategory_/);
+    assert.ok(ui.includes("category: inboxConversationQuery_ ? \"all\" : inboxConversationCategory_"));
 });
 check("Todas las secciones reutilizan un único paginador con flechas y numeración contextual", () => {
     assert.equal((html.match(/id="inbox-pagination"/g) || []).length, 1);
