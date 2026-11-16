@@ -3774,7 +3774,7 @@ function normalizeUiRole_(role) {
 }
 
 function canApproveInboxVideo_(role) {
-    return ['desarrollador', 'jefe', 'supervisor'].includes(normalizeUiRole_(role));
+    return normalizeUiRole_(role) === 'desarrollador';
 }
 
 function getUiSessionContext_(user = getState().currentUser) {
@@ -4282,6 +4282,10 @@ const openInboxModal_ = setupModal('inbox-modal', async (options = {}) => {
     if (requestsTab) requestsTab.hidden = !inboxCanSeeRequests_(context.role);
     const newMessageButton = document.getElementById('inbox-new-message');
     if (newMessageButton) newMessageButton.hidden = false;
+    const contributionsSection = document.getElementById('inbox-contributions-section');
+    if (contributionsSection) contributionsSection.hidden = context.role !== 'desarrollador';
+    const workspace = document.getElementById('inbox-workspace');
+    if (workspace) workspace.classList.remove('is-nav-collapsed');
     if (modal.dataset.inboxBackdropBound !== 'true') {
         modal.addEventListener('click', event => { if (event.target === modal) closeInboxModal_(); });
         modal.dataset.inboxBackdropBound = 'true';
@@ -4290,7 +4294,7 @@ const openInboxModal_ = setupModal('inbox-modal', async (options = {}) => {
         initialFocus: modal.querySelector('#inbox-conversation-search'),
         returnFocus: options.returnFocus, allowEscape: true, close: closeInboxModal_
     });
-    await setInboxView_('conversations', { reset: true });
+    await setInboxSection_('general');
     startInboxSync_();
 });
 
@@ -4323,6 +4327,8 @@ let inboxConversationDetailGeneration_ = 0;
 let inboxConversationSyncTimer_ = null;
 let inboxConversationSyncBusy_ = false;
 let inboxConversationCurrentView_ = "conversations";
+let inboxActiveSection_ = "general";
+let inboxRequestSection_ = "contact";
 let inboxConnectivityBound_ = false;
 const INBOX_CONVERSATION_PAGE_SIZE_ = 20;
 const INBOX_MESSAGE_PAGE_SIZE_ = 50;
@@ -4398,6 +4404,26 @@ function inboxUpdateUnreadBadge_(counts) {
     badge.setAttribute("aria-label", unread + " conversaciones sin leer");
 }
 function bindInboxControls_() {
+    const sectionNav = document.getElementById("inbox-section-nav");
+    if (sectionNav && sectionNav.dataset.bound !== "true") {
+        sectionNav.addEventListener("click", event => {
+            const button = event.target.closest("[data-inbox-section]");
+            if (!button || button.hidden) return;
+            setInboxSection_(button.dataset.inboxSection);
+        });
+        sectionNav.dataset.bound = "true";
+    }
+    const sidebarToggle = document.getElementById("inbox-sidebar-toggle");
+    if (sidebarToggle && sidebarToggle.dataset.bound !== "true") {
+        sidebarToggle.addEventListener("click", () => {
+            const workspace = document.getElementById("inbox-workspace");
+            if (!workspace) return;
+            const collapsed = workspace.classList.toggle("is-nav-collapsed");
+            sidebarToggle.setAttribute("aria-expanded", String(!collapsed));
+            sidebarToggle.setAttribute("aria-label", collapsed ? "Mostrar secciones" : "Ocultar secciones");
+        });
+        sidebarToggle.dataset.bound = "true";
+    }
     const viewTabs = document.getElementById("inbox-view-tabs");
     if (viewTabs && viewTabs.dataset.bound !== "true") {
         viewTabs.addEventListener("click", event => {
@@ -4490,6 +4516,28 @@ function bindInboxControls_() {
         });
         inboxConnectivityBound_ = true;
     }
+}
+async function setInboxSection_(section) {
+    const context = getUiSessionContext_();
+    const allowed = ["general", "soporte", "contact", "reports", "contributions"];
+    const next = allowed.includes(section) ? section : "general";
+    if (next === "contributions" && (!context || context.role !== "desarrollador")) return;
+    if (["contact", "reports", "contributions"].includes(next) && !inboxCanSeeRequests_(context && context.role)) return;
+    inboxActiveSection_ = next;
+    const nav = document.getElementById("inbox-section-nav");
+    if (nav) nav.querySelectorAll("[data-inbox-section]").forEach(button => {
+        button.setAttribute("aria-pressed", String(button.dataset.inboxSection === next));
+    });
+    if (next === "general" || next === "soporte") {
+        inboxRequestSection_ = "";
+        inboxConversationCategory_ = next;
+        const category = document.getElementById("inbox-category-filter");
+        if (category) category.value = next;
+        await setInboxView_("conversations", { reset: true });
+        return;
+    }
+    inboxRequestSection_ = next;
+    await setInboxView_("requests", { reset: true });
 }
 async function setInboxView_(view, options = {}) {
     const context = getUiSessionContext_();
@@ -8985,6 +9033,14 @@ export function renderInboxList(items) {
 
     listContainer.replaceChildren();
     document.getElementById('inbox-modal-content')?.classList.remove('is-request-detail-open');
+    const section = inboxRequestSection_;
+    const visibleItems = (Array.isArray(items) ? items : []).filter(item => {
+        if (section === 'reports') return item.type === 'problem_report' || Boolean(item.suggestionData);
+        if (section === 'contributions') return context.role === 'desarrollador' && item.type === 'video_approval';
+        if (section === 'contact') return item.type !== 'problem_report' && item.type !== 'video_approval' && !item.suggestionData;
+        return true;
+    });
+    items = visibleItems;
     if (!items.length) {
         const emptyMessage = document.createElement('p');
         emptyMessage.textContent = 'No hay mensajes.';
@@ -9114,7 +9170,7 @@ export function renderInboxDetail(item) {
 
     detailContainer.replaceChildren();
 
-    const mobileBack = makeElement('button', 'inbox-mobile-back', 'Volver a solicitudes');
+    const mobileBack = makeElement('button', 'inbox-mobile-back', 'Volver a la bandeja');
     mobileBack.type = 'button';
     mobileBack.addEventListener('click', () => {
         document.getElementById('inbox-modal-content')?.classList.remove('is-request-detail-open');
@@ -9285,7 +9341,9 @@ export function renderInboxDetail(item) {
         const deleteButton = makeElement('button', 'btn btn-danger');
         deleteButton.id = 'inbox-delete-btn';
         deleteButton.type = 'button';
-        deleteButton.append(makeIcon('fa-solid fa-trash'), document.createTextNode(' Borrar mensaje'));
+        deleteButton.append(makeIcon('fa-solid fa-trash-can'));
+        deleteButton.setAttribute('aria-label', 'Eliminar mensaje');
+        deleteButton.title = 'Eliminar mensaje';
         actionToolbar.appendChild(deleteButton);
         actions.append(toolbar, replyTextarea);
         detailContainer.appendChild(actions);
@@ -9395,7 +9453,8 @@ export function renderInboxDetail(item) {
             if (confirm("¿Estás seguro de que deseas eliminar permanentemente este mensaje del Inbox?")) {
                 try {
                     deleteBtn.disabled = true;
-                    deleteBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Eliminando...`;
+                    deleteBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>';
+                    deleteBtn.setAttribute('aria-label', 'Eliminando mensaje');
                     await deleteFeedbackItem(item.id, item.type, getSessionPayload_());
                     if (!isCurrentInboxDetail()) return;
                     invalidateInboxCache_(context);
@@ -9405,7 +9464,8 @@ export function renderInboxDetail(item) {
                     if (!isCurrentInboxDetail()) return;
                     showGlobalError(`Error al eliminar mensaje: ${error.message}`);
                     deleteBtn.disabled = false;
-                    deleteBtn.innerHTML = `<i class="fa-solid fa-trash"></i> Borrar Mensaje`;
+                    deleteBtn.innerHTML = '<i class="fa-solid fa-trash-can" aria-hidden="true"></i>';
+                    deleteBtn.setAttribute('aria-label', 'Eliminar mensaje');
                 }
             }
         });
