@@ -210,6 +210,7 @@ runGroup('38','INTEGRATION',()=>{
  runCli('CATALOG reintentos y cancelación','JS/Tests/CatalogRequestRetry.js');
   runCli('CATALOG feed incremental con reintentos acotados','JS/Tests/CatalogFeedRetry.mjs');
   runCli('PWA cache-first, App Shell y cuerpos independientes','JS/Tests/ServiceWorkerCache.js');
+ runCli('GP-PWA-BRAND-01 logos locales offline y favicon transparente','JS/Tests/OfflineBrandAssets.mjs');
  runCli('CATALOG escenarios de arranque PWA','JS/Tests/PWAStartupScenarios.js');
  runCli('AUG-IndexedDB apertura compartida, backoff y miniaturas opcionales','JS/Tests/IndexedDBTransactions.js');
   runCli('AUG cache opcional de validación sin bloquear modales','JS/Tests/OptionalValidationCache.mjs');
