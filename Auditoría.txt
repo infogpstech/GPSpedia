@@ -1169,3 +1169,23 @@ Límite:
 - No se reprodujo la limpieza contra hojas Logs/ActividadUsuario reales. Si Beta sigue fallando después de desplegar este código, capturar la respuesta estructurada y los contadores scannedCount/deletedCount/unclassifiedCount para localizar la causa restante.
 - No se desplegó AUTH ni FEEDBACK; no se modificaron datos externos.
 ================================================================================
+
+
+================================================================================
+AUD-2026-11-16-08 — UI: otras operaciones aún dependían de currentUser.ID exclusivo
+Severidad: Media — compatibilidad de sesiones heredadas en VIN y operaciones pendientes de corte.
+Estado: CORREGIDO EN RAMA; CI APROBADO; VALIDACIÓN BETA PENDIENTE.
+
+Causa:
+- Después de normalizar getDeveloperSessionPayload(), la auditoría de ui.js encontró rutas independientes que aún exigían currentUser.ID: registro de VIN, recuperación de operaciones pendientes de corte y envío/reintento de esas operaciones.
+- Una sesión heredada con currentUser.id podía ser reconocida por getUiSessionContext_(), pero esas rutas podían rechazarla o perder la asociación de la operación pendiente.
+
+Corrección:
+- VIN, applyPendingOperation, restorePendingOperation y el envío/reintento addOrUpdateCut ahora obtienen userId y sessionToken desde getUiSessionContext_().
+- La asociación del registro pendiente se compara contra el userId normalizado de la sesión actual; si cambia la cuenta, se conserva el bloqueo de seguridad y no se reintenta con otro usuario.
+- SessionUiRoleInvalidation.js comprueba que no queden accesos a currentUser.ID sin fallback ID/id y que el envío de operación pendiente use el contexto común.
+
+Validación:
+- CI run 43784270101, commit a431fd3c709954dc0b08fc2446c56caf10ff8b62: SUCCESS; 108 suites / 1,663 pruebas / 0 fallos.
+- Falta prueba Beta con sesión heredada y operación pendiente real. No se desplegó WRITE/AUTH ni se alteraron operaciones externas.
+================================================================================
