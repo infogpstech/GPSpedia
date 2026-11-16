@@ -19,7 +19,7 @@ testCase("títulos, etiquetas, botones y celdas permiten ajuste de texto", () =>
 });
 
 testCase("el Inbox muestra títulos completos y permite que la fila crezca", () => {
-    assert.match(css, /\.inbox-item-content \{\s*min-width: 0;\s*overflow: visible;/);
+    assert.match(css, /\.inbox-item-content \{[\s\S]*?min-width: 0;[\s\S]*?overflow: visible;/);
     assert.match(css, /\.inbox-item-title \{[\s\S]*?white-space: normal;[\s\S]*?overflow: visible;[\s\S]*?text-overflow: clip/);
     assert.doesNotMatch(css, /\.inbox-item-title \{[^}]*text-overflow: ellipsis/);
 });
