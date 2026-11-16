@@ -225,3 +225,9 @@ El checkpoint acumulativo anterior se conserva íntegro en `Checkpoint_Archive/c
 - CI run `43968040912` detectó un error sintáctico en el montaje de los campos dinámicos de alimentación y una expectativa histórica en `TutorialIntegrity.js`; ambos fueron corregidos en `0b2c151`.
 - CI run `43968323034` confirmó sintaxis válida y 1,650 pruebas aprobadas; quedó una única suite fallida porque `ServiceWorkerCache.js` aún esperaba App Shell v51. Se actualiza su contrato a v52 en este commit.
 - El resultado de CI completo se mantiene pendiente de la siguiente ejecución.
+
+
+### Actualización de contrato PWA — GP-UX-RICH-FORMS-01 — 2026-11-16
+- CI run `43968512704`: sintaxis y 1,660 pruebas aprobadas; una suite restante (`OfflineBrandAssets.mjs`) mantenía una expectativa de App Shell v51. Se actualiza el contrato a v52.
+- `ServiceWorkerCache.js` ya fue actualizado; se conserva la versión v52 como única versión vigente del App Shell.
+- Resultado CI completo pendiente de la siguiente ejecución.

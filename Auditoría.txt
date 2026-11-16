@@ -1678,3 +1678,7 @@ ADENDA DE AUDITORÍA — GP-UX-INBOX-RICH-EDITOR-01 — 2026-11-16
 
 ### Seguimiento de CI — GP-UX-RICH-FORMS-01 — 2026-11-16
 - Las primeras ejecuciones detectaron y permitieron corregir un ancla de inserción sintáctica y una expectativa de prueba obsoleta para el contrato de Tutorial. La ejecución posterior validó sintaxis y 1,650 pruebas; la única suite restante falló por conservar la expectativa del caché v51. Se actualiza el contrato de prueba a v52 y se espera la reejecución.
+
+
+### Seguimiento PWA — GP-UX-RICH-FORMS-01 — 2026-11-16
+- La reejecución superó sintaxis y 1,660 pruebas; la suite pendiente detectó otra expectativa histórica de App Shell v51 en OfflineBrandAssets. Se actualiza a v52.

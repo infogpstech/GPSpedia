@@ -1368,3 +1368,7 @@ GP-UX-INBOX-RICH-EDITOR-01 — 2026-11-16
 
 ### Corrección de CI — GP-UX-RICH-FORMS-01 — 2026-11-16
 - Se actualizó `JS/Tests/ServiceWorkerCache.js` para esperar la nueva versión `gpsepedia-cache-v52`; la implementación del Service Worker ya había sido incrementada correctamente.
+
+
+### Contrato PWA actualizado — GP-UX-RICH-FORMS-01 — 2026-11-16
+- Se actualizó `JS/Tests/OfflineBrandAssets.mjs` para validar `gpsepedia-cache-v52`, alineándolo con el App Shell actual.
