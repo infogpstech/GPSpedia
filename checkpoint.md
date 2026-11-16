@@ -177,3 +177,11 @@ El checkpoint acumulativo anterior se conserva íntegro en `Checkpoint_Archive/c
 - Pendiente repetir CI Node.js completa, validar CutDetailModalLayout y Pages; inspección visual escritorio/móvil/PWA queda para Beta.
 
 - CI run 43946591177: InboxUi 49/49 PASS; CutDetailModalLayout falló solo porque el nuevo test leía el último selector del divisor (media móvil) al buscar el ancho desktop. Se corrige el test para verificar ambos anchos por separado. No hay fallo de sintaxis en los módulos.
+
+
+### Cierre — GP-UX-INBOX-DESKTOP-02 / GP-UX-CUT-MODAL-05 — 2026-11-16
+- Implementación publicada en commits: 44464456e0b1bcbcc66a1b3f0fdd970587850ef7 (código y App Shell v49), e944a753ceb5a62585fa7bac3349f5f75ccec6ad (contratos Inbox), a952b3f1df0d51c07d462f712917e055b7c42e77 (registros/contrato sanitización), ba51ec1124315b0220415f40639650c628837f94 (contrato responsive divisor) y 6e430a6994ee435f209a25c1f8f88dea19eff16e (runner CutDetailModalLayout).
+- GitHub Actions Node.js 22 run 43946839054: **SUCCESS — 129 suites / 1,912 pruebas / 0 fallos**. InboxUi 49/49; CutDetailModalLayout 15/15; ServiceWorkerCache 10/10; OfflineBrandAssets 4/4. Parsing de módulos modificado aprobado.
+- GitHub Pages run 43946839204: **SUCCESS** (build y deploy).
+- Rama de trabajo verificada: HEAD 6e430a6994ee435f209a25c1f8f88dea19eff16e. Comparación: ahead 3760, behind 0. Rama base protegida GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Pendiente solo inspección visual real en escritorio, Android y PWA; no bloquea cierre local. No se desplegaron servicios Apps Script ni se modificaron datos externos.

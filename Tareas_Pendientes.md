@@ -857,3 +857,15 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - Estado EN PROGRESO hasta CI integral aprobada. Beta visual pendiente.
 
 - CI run 43946591177: InboxUi 49/49 PASS; el único fallo de CutDetailModalLayout era una prueba que seleccionaba por lastIndexOf la regla móvil y por ello no encontraba el ancho desktop. Corregir el contrato para comprobar las declaraciones desktop y móvil de forma independiente; la implementación CSS no presentó fallo de sintaxis.
+
+
+### Cierre local — GP-UX-INBOX-DESKTOP-02 / GP-UX-CUT-MODAL-05 — 2026-11-16
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
+- Barra enriquecida Inbox: una fila compacta con controles iconográficos de igual distribución; tamaño, fuente y listas mediante menús desplegables; categorías y plantillas apiladas en un menú adicional, sin selectores ocupando el ancho de la barra.
+- El menú de opciones extra sobrevive a la reconstrucción del toolbar al cambiar la preferencia global. La plantilla sigue oculta para roles sin permiso.
+- Buscar expande su etiqueta y resalta el botón mientras la búsqueda está abierta; se contrae al cerrar o cambiar de sección.
+- El editor integra visualmente la barra en el borde superior del campo y usa superficie gris suave en tema claro / gris oscuro aclarado en tema oscuro.
+- Divisor del modal de corte: margen simétrico de 12 px respecto a ambos bordes útiles, compensando el padding derecho reservado del encabezado (42 px escritorio / 46 px móvil); separación vertical de 7.5 px arriba y abajo.
+- GitHub Actions Node.js 22 run 43946839054: **SUCCESS — 129 suites / 1,912 pruebas / 0 fallos**. Específicas: InboxUi 49/49; CutDetailModalLayout 15/15; ServiceWorkerCache 10/10; OfflineBrandAssets 4/4. Sintaxis de módulos modificados aprobada.
+- GitHub Pages run 43946839204: **SUCCESS** (build y deploy).
+- Pendiente Beta: inspección visual en escritorio, Android y PWA instalada; comprobar anchuras reducidas, desplegables, selector de categorías/plantillas por rol, modo claro/oscuro, búsqueda y divisor en modelos cortos/largos. No se desplegaron servicios Apps Script ni se modificaron datos externos.

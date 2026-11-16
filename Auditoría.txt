@@ -1613,3 +1613,10 @@ ADENDA AUD-2026-11-16-10 — GP-UX-INBOX-DESKTOP-02 / GP-UX-CUT-MODAL-05
 - No se identificó fallo de lógica de negocio ni cambio en servicios. Repetir CI integral después de la corrección.
 
 ADENDA AUD-2026-11-16-10B: CI run 43946591177 confirmó InboxUi 49/49 PASS y detectó un falso negativo en CutDetailModalLayout: el test tomaba la última regla del divisor (media móvil) para comprobar el ancho de escritorio. Se corrige la selección del contrato; sin cambio funcional CSS.
+
+
+ADENDA DE CIERRE AUD-2026-11-16-10 — GP-UX-INBOX-DESKTOP-02 / GP-UX-CUT-MODAL-05
+- CI final: run 43946839054 SUCCESS, Node.js 22, 129 suites, 1,912 pruebas, 0 fallos. Contratos específicos: InboxUi 49/49; CutDetailModalLayout 15/15; ServiceWorkerCache 10/10; OfflineBrandAssets 4/4.
+- GitHub Pages run 43946839204 SUCCESS (build y deploy).
+- Los dos fallos intermedios fueron defectos de contratos de prueba y se corrigieron; la última ejecución aprobó la suite completa. No se alteró el sanitizador ni se redujeron controles.
+- La inspección visual real en escritorio, Android y PWA permanece diferida a Beta. No se desplegaron Apps Script ni se alteraron datos externos.

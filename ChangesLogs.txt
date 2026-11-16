@@ -1319,3 +1319,12 @@ GP-UX-INBOX-DESKTOP-02 / GP-UX-CUT-MODAL-05 — adenda 2026-11-16
 ================================================================================
 
 - Ajuste de prueba CutDetailModalLayout: evitar tomar la regla móvil como si fuera la regla base; verificar ambas declaraciones independientemente. CI 43946591177: InboxUi 49/49 PASS; suite integral aún pendiente.
+
+
+================================================================================
+CIERRE — GP-UX-INBOX-DESKTOP-02 / GP-UX-CUT-MODAL-05 — 2026-11-16
+- GitHub Actions Node.js 22 run 43946839054: SUCCESS — 129 suites / 1,912 pruebas / 0 fallos.
+- InboxUi 49/49; CutDetailModalLayout 15/15; ServiceWorkerCache 10/10; OfflineBrandAssets 4/4.
+- GitHub Pages run 43946839204: SUCCESS (build y deploy).
+- Cierre local aprobado; inspección visual escritorio/Android/PWA queda diferida a Beta.
+================================================================================
