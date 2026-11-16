@@ -1869,3 +1869,8 @@ Backlog y registro de cambios sincronizados con este estado. La rama base perman
 - **PWA:** Service Worker actualizado a `gpsepedia-cache-v38`; contrato `ServiceWorkerCache.js` sincronizado.
 - **Estado al iniciar:** rama `GPSpedia2.2.5_work`, HEAD `c1b15ba879f287d77a609f5ffc0d2d3f918a5f89`. No se modificó la rama base ni servicios Apps Script/datos externos.
 - **Validación:** pendiente de ejecutar CI Node.js 22 sobre el commit resultante; inspección visual de navegador real queda para Beta. No se declara aprobación anticipada.
+
+
+### Adenda de validación — GP-UX-INBOX-SEARCH-DISMISS-01
+- CI inicial run `43900747098` detectó una expresión regular mal escapada en el nuevo contrato de InboxUi; el fallo estaba en la prueba, no en la sintaxis de `ui.js` ni en la lógica funcional. La suite se detuvo antes de completar la validación de esta tarea.
+- Se corrigieron los escapes de las expresiones de prueba. Se vuelve a ejecutar CI sobre el nuevo commit; hasta obtener resultado se mantiene la validación local/CI sin aprobar.

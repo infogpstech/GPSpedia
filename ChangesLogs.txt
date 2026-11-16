@@ -1134,3 +1134,6 @@ VALIDACIÓN FINAL — GP-UX-INBOX-RBAC-01 / GP-UX-RELAY-HEADER-01
 - JS/Tests/ServiceWorkerCache.js: expectativa de versión sincronizada.
 - Sin cambios en servicios Apps Script, contratos backend, permisos, conversaciones ni datos externos.
 ================================================================================
+
+ADENDA 2026-11-16 — GP-UX-INBOX-SEARCH-DISMISS-01
+- CI run 43900747098 detectó escapes incorrectos en la expresión regular de la nueva prueba InboxUi. Se corrige el contrato automatizado y se repite la validación; no se atribuye el fallo a la implementación funcional.
