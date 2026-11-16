@@ -882,14 +882,15 @@ body.search-active .container {
     position: relative;
     display: flex;
     flex-direction: column;
+    gap: 12px;
     background: var(--modal-bg);
     color: var(--modal-text);
-    padding: 15px; /* Reducido para economizar espacio */
-    width: 90%;
-    max-width: 800px;
+    padding: 18px;
+    width: min(94vw, 920px);
+    max-width: 920px;
     border-radius: 15px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    max-height: calc(var(--app-height, 100%) * 0.9);
+    max-height: calc(var(--app-height, 100%) * 0.92);
     overflow-y: auto;
     scrollbar-width: none; /* Ocultar scrollbar */
     transform: scale(0.95);
@@ -4473,4 +4474,181 @@ td, th {
 #dev-tools-modal .dev-tools-title {
     white-space: normal;
     overflow-wrap: anywhere;
+}
+
+
+/* BETA-026: jerarquía y distribución del modal de detalle de corte. */
+.detail-modal-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-bottom: 0;
+}
+.detail-modal-saving-indicator {
+    margin-right: auto;
+    min-width: 0;
+    font-size: .85rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: opacity .3s;
+    opacity: 0;
+    color: var(--gp-color-accent, #007bff);
+}
+.detail-modal-title {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 12px;
+    min-width: 0;
+    max-width: 100%;
+    padding-bottom: 10px;
+    margin-bottom: 0;
+    border-bottom: 2px solid var(--gp-color-accent, #007bff);
+}
+.detail-modal-title-text {
+    flex: 1 1 240px;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    color: var(--gp-color-accent, var(--accent-color, #007bff));
+    font-size: clamp(1.25rem, 2.5vw, 1.8rem);
+    overflow-wrap: anywhere;
+}
+.detail-modal-title-input {
+    flex: 1 1 240px;
+    width: 100%;
+    min-width: 0;
+    padding: 8px 10px;
+    border: 1px solid var(--gp-color-focus, #007bff);
+    border-radius: 8px;
+    background: var(--gp-color-surface, var(--bg-color, #fff));
+    color: var(--gp-color-text, var(--text-color, #222));
+}
+.detail-modal-meta {
+    min-width: 0;
+    margin: 0 0 4px;
+}
+.detail-modal-meta-text {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    color: var(--gp-color-text-muted, var(--text-medium, #666));
+    font-size: .95rem;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+.detail-edit-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 14px;
+    min-width: 0;
+    margin-bottom: 12px;
+}
+.detail-edit-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+}
+.detail-edit-field--wide {
+    grid-column: 1 / -1;
+}
+.detail-edit-field label {
+    margin: 0;
+    font-size: .82rem;
+    font-weight: 650;
+    overflow-wrap: anywhere;
+}
+.detail-edit-control,
+.detail-edit-field select,
+.detail-edit-field input {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+.detail-edit-year-range {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-width: 0;
+}
+.detail-edit-year-input {
+    width: 100%;
+    max-width: 110px;
+    min-width: 0;
+}
+.detail-edit-note {
+    width: 100%;
+    min-height: 76px;
+    box-sizing: border-box;
+}
+.detail-edit-note-field .rich-editor-toolbar {
+    max-width: 100%;
+    flex-wrap: wrap;
+}
+.detail-vehicle-image {
+    width: auto;
+    max-width: 100%;
+    max-height: 200px;
+    object-fit: contain;
+    margin: 4px auto;
+}
+.detail-important-note {
+    margin: 4px 0;
+    padding: 10px 12px;
+    border-left: 4px solid var(--gp-color-danger, #cc0000);
+    border-radius: 8px;
+    background: var(--gp-color-danger-bg, #ffe0e0);
+    color: var(--gp-color-danger-text, #8a0000);
+    font-weight: 650;
+    overflow-wrap: anywhere;
+}
+.detail-recommended-cut {
+    min-width: 0;
+    margin: 4px 0 12px;
+    padding: 12px;
+    border: 1px solid var(--gp-color-border, var(--border-color, #ddd));
+    border-radius: 10px;
+    background: var(--gp-color-surface, var(--card-bg, #fff));
+}
+.detail-section-heading {
+    margin: 0 0 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--gp-color-border, var(--border-color, #ddd));
+}
+.detail-accordion-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+@media (max-width: 640px) {
+    #detalleCompleto {
+        width: calc(100vw - 16px);
+        max-width: none;
+        max-height: calc(var(--app-height, 100vh) - 16px);
+        padding: 14px;
+        border-radius: 12px;
+    }
+    .detail-edit-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 9px;
+    }
+    .detail-modal-title-text,
+    .detail-modal-title-input {
+        flex-basis: 100%;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    #modalDetalle,
+    #detalleCompleto {
+        transition: none;
+    }
 }

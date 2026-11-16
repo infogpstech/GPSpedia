@@ -2168,16 +2168,18 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
 
     // Tarea 1.6: Corrección y compactación de la cabecera del modal de detalle
     const headerDiv = document.createElement("div");
-    headerDiv.style.cssText = "display: flex; justify-content: flex-end; align-items: center; margin-bottom: 4px; gap: 8px;";
+    headerDiv.className = "detail-modal-toolbar";
 
     // Indicador visual de guardado/comunicación para modo edición
     const savingIndicator = document.createElement("div");
     savingIndicator.id = "modal-saving-indicator";
-    savingIndicator.style.cssText = "margin-right: auto; font-size: 0.85em; font-weight: bold; display: flex; align-items: center; gap: 6px; transition: opacity 0.3s; opacity: 0; color: #007bffd0;";
+    savingIndicator.className = "detail-modal-saving-indicator";
     headerDiv.appendChild(savingIndicator);
 
     // Botón Compartir
     const shareBtn = document.createElement("button");
+    shareBtn.type = "button";
+    shareBtn.setAttribute("aria-label", "Compartir vehículo");
     shareBtn.innerHTML = '<i class="fa-solid fa-share-nodes"></i>';
     shareBtn.className = "share-modal-btn";
     shareBtn.title = "Compartir este vehículo";
@@ -2247,6 +2249,8 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
     // Imprimir ficha técnica: Supervisor, Jefe y Desarrollador.
     if (canPrintOrEditVehicle) {
         const printBtn = document.createElement("button");
+        printBtn.type = "button";
+        printBtn.setAttribute("aria-label", "Imprimir ficha técnica");
         printBtn.innerHTML = '<i class="fa-solid fa-print"></i>';
         printBtn.className = "share-modal-btn";
         printBtn.title = "Imprimir / Exportar Ficha Técnica";
@@ -2258,6 +2262,8 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
         if (inEditMode) {
             // Botón Restablecer (↩️)
             const resetBtn = document.createElement("button");
+            resetBtn.type = "button";
+            resetBtn.setAttribute("aria-label", "Descartar cambios");
             resetBtn.innerHTML = '↩️';
             resetBtn.className = "share-modal-btn";
             resetBtn.title = "Descartar cambios";
@@ -2267,6 +2273,8 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
 
             // Botón Guardar (✅)
             const saveBtn = document.createElement("button");
+            saveBtn.type = "button";
+            saveBtn.setAttribute("aria-label", "Guardar cambios");
             saveBtn.innerHTML = '✅';
             saveBtn.className = "share-modal-btn";
             saveBtn.title = "Guardar cambios y finalizar";
@@ -2276,6 +2284,8 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
         } else {
             // Botón de lápiz de Edición
             const editBtn = document.createElement("button");
+            editBtn.type = "button";
+            editBtn.setAttribute("aria-label", "Activar modo edición");
             editBtn.innerHTML = '<i class="fa-solid fa-pencil"></i>';
             editBtn.className = "share-modal-btn";
             editBtn.title = "Activar modo edición";
@@ -2359,7 +2369,7 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
     // Comentario: Se ajusta el layout del encabezado para cumplir con el nuevo requisito (logo a la izquierda).
     // Se añade 'flex-wrap: wrap' para evitar scroll horizontal en móviles con logos anchos.
     const titleContainer = document.createElement("div");
-    titleContainer.style.cssText = "border-bottom: 2px solid #007bff; padding-bottom: 6px; margin-bottom: 10px; display: flex; align-items: center; justify-content: flex-start; gap: 10px; flex-wrap: wrap;";
+    titleContainer.className = "detail-modal-title";
 
     const logoUrl = getLogoUrlForMarca(activeItem.marca, activeItem.categoria);
     if (logoUrl) {
@@ -2390,7 +2400,8 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
         const input = document.createElement("input");
         input.type = "text";
         input.value = activeItem.modelo;
-        input.style.cssText = "font-size: 1.1em; width: 100%; border: 1px solid #007bff; border-radius: 4px; padding: 5px; background: var(--bg-color); color: var(--text-color);";
+        input.className = "detail-modal-title-input";
+        input.setAttribute("aria-label", "Modelo del vehículo");
         input.onblur = async () => {
             if (input.value.trim() && input.value.trim() !== editedItemBuffer.modelo) {
                 editedItemBuffer.modelo = input.value.trim();
@@ -2400,16 +2411,16 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
         titleContainer.appendChild(input);
     } else {
         title.textContent = `${activeItem.modelo}`;
-        title.style.cssText = "color: var(--accent-color); margin: 0; padding: 0; font-size: 1.8em;";
+        title.className = "detail-modal-title-text";
         titleContainer.appendChild(title);
     }
 
     cont.appendChild(titleContainer);
 
     const subHeaderDiv = document.createElement('div');
-    subHeaderDiv.style.marginBottom = '5px';
+    subHeaderDiv.className = "detail-modal-meta";
     const subHeaderText = document.createElement('p');
-    subHeaderText.style.cssText = "margin: 0; padding: 0; color: var(--text-medium); font-size: 1.1em;";
+    subHeaderText.className = "detail-modal-meta-text";
 
     /* TAREA: NAVEGACIÓN ENTRE GENERACIONES BASADA EN CONTINUIDAD DE VERSIONES DE EQUIPAMIENTO */
     const allCortes = (catalogData && catalogData.cortes) ? catalogData.cortes : [];
@@ -2445,17 +2456,26 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
     if (inEditMode) {
         // En modo edición mostramos controles de input
         const editHeaderWrapper = document.createElement('div');
-        editHeaderWrapper.style.cssText = "display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;";
+        editHeaderWrapper.className = "detail-edit-grid";
+        editHeaderWrapper.setAttribute("role", "group");
+        editHeaderWrapper.setAttribute("aria-label", "Datos del vehículo");
+        const appendEditField = (label, control, wide = false) => {
+            const field = document.createElement("div");
+            field.className = wide ? "detail-edit-field detail-edit-field--wide" : "detail-edit-field";
+            field.append(label, control);
+            editHeaderWrapper.appendChild(field);
+        };
 
         // 1. Versión de Equipamiento
         const versLabel = document.createElement('label');
-        versLabel.textContent = "Versiones aplicables:";
-        versLabel.style.fontSize = "0.85em";
+        versLabel.textContent = "Versiones aplicables";
         const versInput = document.createElement('input');
+        versInput.id = `detail-versions-${activeItem.id}`;
+        versLabel.htmlFor = versInput.id;
+        versInput.className = "detail-edit-control";
         versInput.type = "text";
         versInput.value = activeItem.versionesAplicables || "";
-        versInput.placeholder = "Equipamiento / Versiones";
-        versInput.style.cssText = "padding: 4px; border: 1px solid #007bff; border-radius: 4px;";
+        versInput.placeholder = "Equipamiento / versiones";
         versInput.onblur = async () => {
             if (versInput.value.trim() !== editedItemBuffer.versionesAplicables) {
                 editedItemBuffer.versionesAplicables = versInput.value.trim();
@@ -2465,10 +2485,11 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
 
         // 2. Tipo de Encendido
         const encLabel = document.createElement('label');
-        encLabel.textContent = "Tipo de Encendido:";
-        encLabel.style.fontSize = "0.85em";
+        encLabel.textContent = "Tipo de encendido";
         const encSelect = document.createElement('select');
-        encSelect.style.cssText = "padding: 4px; border: 1px solid #007bff; border-radius: 4px;";
+        encSelect.id = `detail-ignition-${activeItem.id}`;
+        encLabel.htmlFor = encSelect.id;
+        encSelect.className = "detail-edit-control";
         if (dropdownOptions && dropdownOptions.tipoDeEncendido) {
             dropdownOptions.tipoDeEncendido.forEach(itemOpt => {
                 const opt = document.createElement('option');
@@ -2485,14 +2506,18 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
 
         // 3. Rango de Años
         const yearLabel = document.createElement('label');
-        yearLabel.textContent = "Rango de Años (Desde - Hasta):";
-        yearLabel.style.fontSize = "0.85em";
+        yearLabel.textContent = "Rango de años";
         const yearsWrapper = document.createElement('div');
-        yearsWrapper.style.cssText = "display: flex; gap: 5px; align-items: center;";
+        yearsWrapper.className = "detail-edit-year-range";
+        yearsWrapper.setAttribute("role", "group");
+        yearsWrapper.setAttribute("aria-label", "Años desde y hasta");
         const inputDesde = document.createElement('input');
+        inputDesde.id = `detail-year-from-${activeItem.id}`;
+        yearLabel.htmlFor = inputDesde.id;
+        inputDesde.setAttribute("aria-label", "Año desde");
+        inputDesde.className = "detail-edit-year-input";
         inputDesde.type = "number";
         inputDesde.value = activeItem.anoDesde;
-        inputDesde.style.cssText = "width: 70px; padding: 4px; border: 1px solid #007bff; border-radius: 4px;";
         inputDesde.onblur = async () => {
             const val = parseInt(inputDesde.value, 10);
             if (val >= 1980 && val <= 2027 && val !== editedItemBuffer.anoDesde) {
@@ -2504,9 +2529,11 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
         const dash = document.createTextNode(" - ");
 
         const inputHasta = document.createElement('input');
+        inputHasta.id = `detail-year-to-${activeItem.id}`;
+        inputHasta.setAttribute("aria-label", "Año hasta");
+        inputHasta.className = "detail-edit-year-input";
         inputHasta.type = "number";
         inputHasta.value = activeItem.anoHasta || activeItem.anoDesde;
-        inputHasta.style.cssText = "width: 70px; padding: 4px; border: 1px solid #007bff; border-radius: 4px;";
         inputHasta.onblur = async () => {
             const val = parseInt(inputHasta.value, 10);
             if (val >= 1980 && val <= 2027 && val !== editedItemBuffer.anoHasta) {
@@ -2520,10 +2547,11 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
 
         // 4. Categoría
         const catLabel = document.createElement('label');
-        catLabel.textContent = "Categoría:";
-        catLabel.style.fontSize = "0.85em";
+        catLabel.textContent = "Categoría";
         const catSelect = document.createElement('select');
-        catSelect.style.cssText = "padding: 4px; border: 1px solid #007bff; border-radius: 4px;";
+        catSelect.id = `detail-category-${activeItem.id}`;
+        catLabel.htmlFor = catSelect.id;
+        catSelect.className = "detail-edit-control";
         if (dropdownOptions && dropdownOptions.categoria) {
             dropdownOptions.categoria.forEach(itemOpt => {
                 const opt = document.createElement('option');
@@ -2540,13 +2568,14 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
 
         // 5. VIN / Chasis
         const vinLabel = document.createElement('label');
-        vinLabel.textContent = "Colección de VINs / Chasis:";
-        vinLabel.style.fontSize = "0.85em";
+        vinLabel.textContent = "VIN / chasis";
         const vinInput = document.createElement('input');
+        vinInput.id = `detail-vin-${activeItem.id}`;
+        vinLabel.htmlFor = vinInput.id;
+        vinInput.className = "detail-edit-control";
         vinInput.type = "text";
         vinInput.value = activeItem.vin || "";
-        vinInput.placeholder = 'ej. ["1HGCM82633A", "2HGCM82633B"]';
-        vinInput.style.cssText = "padding: 4px; border: 1px solid #007bff; border-radius: 4px;";
+        vinInput.placeholder = 'Ej. ["1HGCM82633A", "2HGCM82633B"]';
         vinInput.onblur = async () => {
             const nextValue = vinInput.value.trim();
             if (nextValue !== String(editedItemBuffer.vin || "").trim()) {
@@ -2556,16 +2585,11 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
             }
         };
 
-        editHeaderWrapper.appendChild(versLabel);
-        editHeaderWrapper.appendChild(versInput);
-        editHeaderWrapper.appendChild(encLabel);
-        editHeaderWrapper.appendChild(encSelect);
-        editHeaderWrapper.appendChild(yearLabel);
-        editHeaderWrapper.appendChild(yearsWrapper);
-        editHeaderWrapper.appendChild(catLabel);
-        editHeaderWrapper.appendChild(catSelect);
-        editHeaderWrapper.appendChild(vinLabel);
-        editHeaderWrapper.appendChild(vinInput);
+        appendEditField(versLabel, versInput);
+        appendEditField(encLabel, encSelect);
+        appendEditField(yearLabel, yearsWrapper);
+        appendEditField(catLabel, catSelect);
+        appendEditField(vinLabel, vinInput, true);
 
         subHeaderText.appendChild(editHeaderWrapper);
     } else {
@@ -2695,7 +2719,7 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
     if (inEditMode || activeItem.imagenVehiculo) {
         const imgVehiculo = document.createElement("img");
         setOptimizedImage(imgVehiculo, activeItem.imagenVehiculo || null, IMG_SIZE_MEDIUM);
-        imgVehiculo.className = 'img-vehiculo-modal';
+        imgVehiculo.className = 'img-vehiculo-modal detail-vehicle-image';
         if (inEditMode) {
             convertImageToEditable(imgVehiculo, activeItem.id, 'imagenVehiculo');
         }
@@ -2715,25 +2739,26 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
 
     if (inEditMode) {
         const notaLabel = document.createElement('label');
-        notaLabel.textContent = "Nota Importante / Descripción:";
-        notaLabel.style.cssText = "display: block; font-weight: bold; margin-top: 10px; font-size: 0.85em;";
+        notaLabel.textContent = "Nota importante / descripción";
         const notaInput = document.createElement("textarea");
         notaInput.id = `edit-note-${activeItem.id}`;
+        notaLabel.htmlFor = notaInput.id;
+        notaInput.className = "detail-edit-note";
         notaInput.rows = 2;
         notaInput.value = activeItem.notaImportante || "";
-        notaInput.style.cssText = "width: 100%; padding: 6px; border: 1px solid #007bff; border-radius: 4px; background: var(--bg-color); color: var(--text-color); margin-bottom: 10px; box-sizing: border-box;";
         notaInput.onblur = async () => {
             if (notaInput.value.trim() !== editedItemBuffer.notaImportante) {
                 editedItemBuffer.notaImportante = notaInput.value.trim();
                 await saveFieldSilently(activeItem.id, 'notaImportante', notaInput.value.trim());
             }
         };
-        cont.appendChild(notaLabel);
-        cont.appendChild(createRichTextToolbar(notaInput.id));
-        cont.appendChild(notaInput);
+        const noteField = document.createElement("div");
+        noteField.className = "detail-edit-field detail-edit-field--wide detail-edit-note-field";
+        noteField.append(notaLabel, createRichTextToolbar(notaInput.id), notaInput);
+        cont.appendChild(noteField);
     } else if (activeItem.notaImportante) {
         const p = document.createElement("div");
-        p.style.cssText = "color:#cc0000; font-weight: bold; background: #ffe0e0; padding: 10px; border-radius: 5px; border-left: 4px solid #cc0000; margin: 5px 0;";
+        p.className = "detail-important-note";
         p.innerHTML = `⚠️ ${sanitizeHtmlContent(activeItem.notaImportante)}`;
         cont.appendChild(p);
     }
@@ -2759,11 +2784,13 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
     const recommendedCut = cortes.shift();
     if (recommendedCut) {
         const recommendedSection = document.createElement('div');
+        recommendedSection.className = "detail-recommended-cut";
         const title = document.createElement('h4');
+        title.className = "detail-section-heading";
         if (isNoRecomendadoValue(recommendedCut.tipo)) {
-            title.innerHTML = `Tipo de Corte`;
+            title.textContent = "Tipo de corte";
         } else {
-            title.innerHTML = `Corte Recomendado <span style="font-weight:normal; color: var(--text-medium);">(Votos: ${recommendedCut.util})</span>`;
+            title.textContent = `Corte recomendado · Votos: ${recommendedCut.util}`;
         }
         recommendedSection.appendChild(title);
         // El corte recomendado se carga de inmediato (isLazy = false)
@@ -2772,6 +2799,7 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
     }
 
     const accordionContainer = document.createElement('div');
+    accordionContainer.className = "detail-accordion-stack";
     cont.appendChild(accordionContainer);
 
     const otherSections = [
@@ -2811,7 +2839,9 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
     if (!window.inEditMode) {
         // TAREA 1.5 / 1.8: RECUPERACIÓN, AJUSTE Y REEJECUCIÓN DEL BOTÓN (+) EN EL MODAL DE DETALLE DEL VEHÍCULO
         const plusBtn = document.createElement("button");
+        plusBtn.type = "button";
         plusBtn.className = "btn-expand-plus";
+        plusBtn.setAttribute("aria-label", "Ampliar información del modelo");
         plusBtn.innerHTML = '<i class="fa-solid fa-plus"></i>';
         plusBtn.title = "Ampliar información del modelo";
         plusBtn.onclick = (e) => {
