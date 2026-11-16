@@ -930,3 +930,12 @@ HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
 - Pruebas específicas: SuggestYearCoordinatorSession 2/2; SuggestYearVoteThreshold 6/6; PasswordKdfBenchmark 5/5; ActionDispatchContract 12/12 PASS.
 - La validación con deployments AUTH/FEEDBACK/Coordinator y hojas aisladas queda pendiente de Beta. Sin invocaciones de deployments ni cambios en datos externos.
 ================================================================================
+
+================================================================================
+2026-11-16 — CIERRE LOCAL BETA-051: VALIDACIONES DUPLICADAS
+- JS/Frontend/youtubeUpload.js: se eliminó la llamada previa routeAction("validateSession") antes de consultar/crear la operación de vídeo. getVideoApprovalByOperation, initYouTubeUpload y submitVideoForApproval conservan la autorización de FEEDBACK/Coordinator.
+- Se mantiene la comprobación local de identidad y token durante la preparación de la subida. La validación de HTML/users.html queda solo como recuperación ante error de cambio de rol propio; la restauración inicial de sesión sigue siendo independiente.
+- Auditoría de módulos Frontend/HTML y servicios: no se encontraron llamadas de cliente a touchSession ni otros pre-chequeos de validateSession antes de acciones protegidas.
+- VideoApprovalClientContract: 10/10 PASS. CI Node.js 22 run 43799943070: SUCCESS — 118 suites / 1,765 pruebas / 0 fallos.
+- La validación con deployments FEEDBACK/Coordinator y medición de latencia real queda pendiente de Beta.
+================================================================================
