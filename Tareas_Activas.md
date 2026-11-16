@@ -1234,3 +1234,10 @@ Se creó `Tareas_beta.md` con los IDs BETA-001 a BETA-052, criterios de aceptaci
 - [ ] Validación de la alerta y auditoría de IDs contra Spreadsheet/Drive real: diferida a Beta.
 
 - [x] Ampliar la auditoría a todas las acciones del dispatcher ADMIN: `checkOperation`, `getAdminImageUploadStatus` y `previewCortesImageReconciliation` pasan a lecturas dedicadas con recursos explícitos.
+
+
+### GP-BETA-06 — revalidación redundante en suggestYear
+- [x] Detectar que `suggestYear` estaba fuera de `FEEDBACK_ACTION_PERMISSIONS` y omitía Coordinator para usuarios autenticados.
+- [x] Enrutar sesiones autenticadas por `FEEDBACK/sessionActivity` y mantener la ruta anónima `userId=0`.
+- [x] Añadir prueba de actor confiable, ausencia de lectura local Users/ActiveSessions y preservación del flujo anónimo.
+- [ ] Ejecutar CI integral y revisar otras acciones protegidas fuera de los routers compartidos.
