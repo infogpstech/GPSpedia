@@ -4375,3 +4375,69 @@ img.gp-image-loaded {
 @media (prefers-reduced-motion: reduce) {
     .info-close-btn { transition: none; }
 }
+
+
+/* BETA-022: acciones compactas por defecto; ancho completo solo en contextos
+   de formulario o navegación móvil que lo requieren. */
+#dev-tools-modal .dev-action-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+#dev-tools-modal .dev-action-row button {
+    flex: 0 1 auto;
+    width: auto;
+    min-width: 0;
+    max-width: 100%;
+}
+
+#dev-tools-modal .dev-action-full {
+    align-self: flex-start;
+    width: auto;
+    max-width: 100%;
+}
+
+.replaced-images-toolbar > button,
+.replaced-images-folder-toolbar button {
+    flex: 0 0 auto;
+    flex-basis: auto;
+    width: auto;
+    max-width: 100%;
+}
+
+.replaced-images-selection-actions .btn {
+    flex: 0 1 auto;
+    width: auto;
+    max-width: 100%;
+}
+
+#replaced-images-modal .replaced-images-view-switch button {
+    flex: 0 0 36px;
+}
+
+#inbox-modal-content .inbox-folder-nav button {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+}
+
+#inbox-modal-content .inbox-action-toolbar button {
+    flex: 0 1 auto;
+    width: auto;
+    max-width: 100%;
+}
+
+@media (max-width: 520px) {
+    #dev-tools-modal .dev-action-row {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    #dev-tools-modal .dev-action-row button {
+        flex: 0 0 auto;
+        width: 100%;
+    }
+}
