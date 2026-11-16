@@ -9085,7 +9085,7 @@ export function renderInboxList(items) {
     const visibleItems = (Array.isArray(items) ? items : []).filter(item => {
         if (section === 'reports') {
             if (item.type !== 'problem_report' && !item.suggestionData) return false;
-            if (ownReportsOnly) return Boolean(item.reportMetadata && String(item.reportMetadata.userId || '') === String(context.userId));
+            if (ownReportsOnly) return true; // getMyProblemReports ya filtra por la identidad autenticada.
             return true;
         }
         if (section === 'contributions') return context.role === 'desarrollador' && item.type === 'video_approval';
