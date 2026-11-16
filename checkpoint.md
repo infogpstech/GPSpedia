@@ -1265,3 +1265,9 @@ El usuario confirmó que el backlog pendiente también comprende la organizació
 - Prueba específica integrada en CI: `DeveloperConsoleConfirmation` (8 casos).
 - Pendiente: ejecutar prueba visual/teclado en navegador Beta y comprobar acciones con permisos y servicios del entorno. No se desplegaron Apps Script ni se modificaron datos externos.
 - **Siguiente tarea local:** BETA-034 — unificar los mensajes de resultados de operaciones Developer y retirar notificaciones externas duplicadas.
+
+
+### Ajuste de contratos de pruebas — BETA-033
+- CI del primer cambio BETA-033 detectó dos pruebas de regresión que exigían explícitamente `window.confirm()` en las acciones del historial de imágenes. La implementación nueva las trasladó a la confirmación central de consola, por lo que esas expectativas quedaron obsoletas.
+- Se actualizaron los contratos `AdminReplacedImagesIntegrity` y `ReplacedImagesLibraryUX` para exigir la confirmación central y rechazar la reintroducción del cuadro nativo.
+- La ejecución de regresión posterior debe confirmar que las dos suites y `DeveloperConsoleConfirmation` aprueban juntas.

@@ -796,3 +796,10 @@ HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
 - Tareas_Pendientes.md y checkpoint.md: BETA-033 cerrada localmente con validación Beta diferida; BETA-034 pasa a siguiente tarea.
 - Sin despliegues Apps Script ni cambios en datos externos.
 ================================================================================
+
+
+================================================================================
+2026-11-16 — ACTUALIZACIÓN DE CONTRATOS DE PRUEBA BETA-033
+- JS/Tests/AdminReplacedImagesIntegrity.mjs y JS/Tests/ReplacedImagesLibraryUX.mjs: las pruebas ahora exigen la confirmación central de consola para las acciones de inventario e historial de imágenes y prohíben depender de window.confirm().
+- Motivo: el cambio BETA-033 reemplazó intencionalmente el cuadro nativo por respuestas en la consola Developer.
+================================================================================

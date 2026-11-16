@@ -986,7 +986,8 @@ check("El escaneo y el guardado del inventario no mueven archivos automáticamen
     assert.ok(saveBlock.includes("resultsBySubmittedId.size !== submittedIds.size"));
     assert.equal(saveBlock.includes(": unusedFiles.map(item => String(item.fileId || ''))"),false);
     const explicitBlock=ui.slice(organizeStart,ui.indexOf("const updateControls",organizeStart));
-    assert.ok(explicitBlock.includes("window.confirm("));
+    assert.ok(explicitBlock.includes("window.gpsepediaRequestDeveloperConsoleConfirmation("));
+    assert.equal(explicitBlock.includes("window.confirm("), false);
     assert.ok(explicitBlock.includes("mode: 'organize'"));
     assert.ok(explicitBlock.includes("confirmed: true"));
     assert.ok(explicitBlock.includes("inventoryOperationId"));
