@@ -1124,3 +1124,27 @@ Validación:
 - CI run 43783436013, commit d828852ed2f4a223cfcbe6256dbfdce438ecf533: SUCCESS; 108 suites / 1,657 pruebas / 0 fallos.
 - Falta medir la latencia real en Beta; no se desplegó CATALOG ni se consultaron hojas reales.
 ================================================================================
+
+
+================================================================================
+AUD-2026-11-16-06 — Inbox: esquema parcial podía ocultar conversaciones como si no existieran
+Severidad: Media — disponibilidad y diagnóstico de mensajes.
+Estado: CORREGIDO EN RAMA; CI APROBADO; VALIDACIÓN BETA PENDIENTE.
+
+Causa:
+- handleGetInboxConversations() devolvía una lista vacía si faltaba cualquiera de las hojas InboxConversations o InboxConversationState.
+- Si existían conversaciones pero faltaba la hoja de estado, el servicio presentaba «sin conversaciones» en lugar de informar que el esquema estaba incompleto.
+- Si faltaba InboxMessages, la lectura podía producir resúmenes sin mensajes cuando las conversaciones registraban mensajes existentes.
+- No se había probado el despacho FEEDBACK de las lecturas Inbox junto con la inyección del actor central; los tests de handler no cubrían ese límite de router.
+
+Corrección:
+- Si ambas hojas principales no existen, Inbox sigue devolviendo lista vacía (instalación nueva).
+- Si solo existe una de Conversations/State, el servicio ahora rechaza con error explícito de esquema incompleto.
+- Si faltan mensajes pero las conversaciones registran mensajes, la consulta informa la hoja faltante en vez de presentar contenido vacío.
+- InboxConversations.mjs cubre hojas incompletas y prueba que getInboxRecipients/getInboxConversations/getInboxMessages usan FEEDBACK/sessionActivity con actor central, mientras createInboxConversation usa su lease de mutación específica.
+
+Validación:
+- CI run 43783775316, commit 110aae3f17575f0ff06b3ef61957db51a84cbecc: SUCCESS; 108 suites / 1,660 pruebas / 0 fallos.
+- La prueba no inspecciona las hojas reales del despliegue. Si Beta tiene un esquema parcial, ahora se mostrará un error explícito; la recuperación/migración del esquema requiere revisar los datos reales.
+- No se desplegó FEEDBACK ni se modificaron hojas externas.
+================================================================================
