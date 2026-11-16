@@ -5587,3 +5587,16 @@ textarea.rich-text-source[hidden] { display:none !important; }
 .rich-text-visual-editor ul[data-gp-marker="hyphen"] > li::before { content:"-"; }
 .rich-text-visual-editor ul[data-gp-marker="arrow"] > li::before { content:"→"; }
 .rich-text-visual-editor ul[data-gp-marker="check"] > li::before { content:"✓"; }
+
+
+/* GP-UX-RICH-FORMS-02 — dirección independiente de los menús de categorías y listas. */
+#inbox-modal-content .inbox-composer-options-menu {
+    left:auto;
+    right:0;
+    transform-origin:top right;
+}
+#inbox-modal-content .inbox-rich-text-toolbar .rich-toolbar-dropdown .rich-toolbar-menu {
+    left:0;
+    right:auto;
+    transform-origin:top left;
+}
