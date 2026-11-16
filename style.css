@@ -2770,6 +2770,15 @@ body.dark-mode #dev-tools-modal .dev-tools-modal-content {
     padding-bottom: 12px;
     border-bottom: 1px solid var(--border-color);
     letter-spacing: -0.02em;
+    transform-origin: left center;
+    animation: dev-tools-title-expand .28s cubic-bezier(.2,.75,.25,1) both;
+}
+@keyframes dev-tools-title-expand {
+    from { opacity: 0; transform: translateY(-4px) scaleX(.94); letter-spacing: -.045em; }
+    to { opacity: 1; transform: translateY(0) scaleX(1); letter-spacing: -.02em; }
+}
+@media (prefers-reduced-motion: reduce) {
+    #dev-tools-modal .dev-tools-title { animation: none; }
 }
 
 #dev-tools-modal .dev-tools-sidebar {
@@ -4215,9 +4224,9 @@ img.gp-image-loaded {
     min-height: 68vh;
 }
 #dev-tools-modal .dev-console-shared {
-    flex: 0 0 44%;
+    flex: 0 0 50%;
     min-height: 210px;
-    max-height: 48%;
+    max-height: 52%;
     display: flex;
     flex-direction: column;
 }
@@ -4330,9 +4339,9 @@ img.gp-image-loaded {
         min-height: 0;
     }
     #dev-tools-modal .dev-console-shared {
-        flex-basis: 43%;
+        flex-basis: 50%;
         min-height: 190px;
-        max-height: 47%;
+        max-height: 52%;
     }
     #dev-tools-modal .dev-tab-link {
         flex-basis: 40px;

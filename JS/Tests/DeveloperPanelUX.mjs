@@ -35,8 +35,12 @@ testCase("los botones Developer usan etiquetas breves y conservan nombre accesib
 
 testCase("la consola está sobre las pestañas y ocupa una franja de altura amplia",()=>{
  assert.ok(html.indexOf('class="dev-console-shared"') < html.indexOf('class="dev-tools-tabs"'));
- assert.match(css,/#dev-tools-modal \.dev-console-shared \{[\s\S]*?flex: 0 0 44%/);
+ assert.match(css,/#dev-tools-modal \.dev-console-shared \{[\s\S]*?flex: 0 0 50%/);
  assert.match(css,/#dev-tools-modal \.dev-console-output \{[\s\S]*?flex: 1 1 0/);
+});
+testCase("el título del panel tiene expansión animada y respeta movimiento reducido",()=>{
+ assert.match(css,/@keyframes dev-tools-title-expand/);
+ assert.match(css,/@media \(prefers-reduced-motion: reduce\)[\s\S]*?dev-tools-title \{ animation: none; \}/);
 });
 testCase("la navegación es horizontal, con icono compacto y expansión animada",()=>{
  assert.match(css,/#dev-tools-modal \.dev-tools-sidebar \{[\s\S]*?flex-direction: row/);
