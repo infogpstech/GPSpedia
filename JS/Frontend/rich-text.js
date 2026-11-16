@@ -502,51 +502,27 @@ function createCompactRichTextToolbar_(targetId, forceAdvanced) {
 export function createRichTextToolbar(targetId, options = {}) {
     const forceAdvanced = options.forceAdvanced === true;
     const editorMode = normalizeEditorMode_(options.mode) || (forceAdvanced ? "advanced" : (getRichTextMode() === "advanced" ? "advanced" : "basic"));
-    if (options.compact === true) return createCompactRichTextToolbar_(targetId, true);
-    const isFull = editorMode === "advanced", hasLists = editorMode === "lists" || isFull;
-    const toolbar = document.createElement("div");
-    toolbar.className = "rich-editor-toolbar"; toolbar.dataset.richTargetId = String(targetId);
-    toolbar.dataset.richTextMode = editorMode; toolbar.dataset.richTextForceAdvanced = String(isFull);
-    toolbar.style.cssText = "display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-bottom:4px;";
-    const makeButton = (label, title, callback) => {
-        const button = document.createElement("button");
-        button.type = "button"; button.className = "btn btn-secondary btn-sm"; button.title = title; button.textContent = label;
-        button.style.cssText = "padding:2px 8px; font-size:0.85rem; height:28px; min-width:28px;";
-        button.addEventListener("click", event => { event.preventDefault(); callback(); }); return button;
-    };
-    const applyOptions = { mode: editorMode, forceAdvanced: isFull };
-    toolbar.appendChild(makeButton("B", "Negrita", () => applyRichTextFormat(targetId, "bold", null, applyOptions)));
-    if (isFull) {
-        toolbar.appendChild(makeButton("I", "Cursiva", () => applyRichTextFormat(targetId, "italic", null, applyOptions)));
-        toolbar.appendChild(makeButton("U", "Subrayado", () => applyRichTextFormat(targetId, "underline", null, applyOptions)));
-        toolbar.appendChild(makeButton("S", "Tachado", () => applyRichTextFormat(targetId, "strike", null, applyOptions)));
-    }
-    const colorPicker = document.createElement("input");
-    colorPicker.type = "color"; colorPicker.title = "Color de texto"; colorPicker.setAttribute("aria-label", "Color de texto");
-    colorPicker.style.cssText = "width:28px; height:28px; padding:0; border:none; cursor:pointer; border-radius:4px;";
-    colorPicker.addEventListener("input", event => applyRichTextColor(targetId, event.target.value)); toolbar.appendChild(colorPicker);
-    if (isFull) {
-        const sizeSelect = document.createElement("select");
-        sizeSelect.title = "Tamaño de fuente"; sizeSelect.style.cssText = "height:28px; padding:2px 4px; border:1px solid var(--border-color, #ccc); border-radius:4px;";
-        sizeSelect.innerHTML = '<option value="">Tamaño</option><option value="0.85em">Pequeño</option><option value="1em">Normal</option><option value="1.2em">Grande</option><option value="1.5em">Encabezado</option>';
-        sizeSelect.addEventListener("change", event => { if (event.target.value) applyRichTextFormat(targetId, "size", event.target.value, applyOptions); event.target.value = ""; });
-        toolbar.appendChild(sizeSelect);
-        const fontSelect = document.createElement("select");
-        fontSelect.title = "Tipo de fuente"; fontSelect.style.cssText = "height:28px; padding:2px 4px; border:1px solid var(--border-color, #ccc); border-radius:4px;";
-        fontSelect.innerHTML = '<option value="">Fuente</option>' + Array.from(SAFE_FONTS.keys()).map(font => '<option value="' + font + '">' + font + '</option>').join("");
-        fontSelect.addEventListener("change", event => { if (event.target.value) applyRichTextFormat(targetId, "font", event.target.value, applyOptions); event.target.value = ""; });
-        toolbar.appendChild(fontSelect);
-    }
-    if (hasLists) {
-        const markerSelect = document.createElement("select");
-        markerSelect.title = "Marcador de lista no ordenada"; markerSelect.setAttribute("aria-label", "Marcador de lista no ordenada");
-        markerSelect.style.cssText = "height:28px; padding:2px 4px; border:1px solid var(--border-color, #ccc); border-radius:4px;";
-        markerSelect.innerHTML = '<option value="bullet">• Viñeta</option><option value="hyphen">- Guion</option><option value="arrow">→ Flecha</option><option value="check">✓ Verificación</option>';
-        toolbar.appendChild(markerSelect);
-        toolbar.appendChild(makeButton("• Lista", "Lista no ordenada", () => applyRichTextFormat(targetId, "ul", markerSelect.value, applyOptions)));
-        toolbar.appendChild(makeButton("1. Lista", "Lista ordenada", () => applyRichTextFormat(targetId, "ol", null, applyOptions)));
-    }
-    if (isFull) Promise.resolve().then(() => attachListKeyboardBehavior(resolveRichTextTarget_(targetId)));
+    const isFull = editorMode === "advanced";
+    const hasLists = editorMode === "lists" || isFull;
+
+    // Reutiliza la misma presentación iconográfica del Inbox sin ampliar las
+    // herramientas disponibles en cada perfil de formulario.
+    const toolbar = createCompactRichTextToolbar_(targetId, isFull);
+    toolbar.dataset.richTextMode = editorMode;
+    toolbar.dataset.richTextForceAdvanced = String(isFull);
+    toolbar.dataset.richTextCompact = "true";
+    toolbar.setAttribute("aria-label", "Formato de texto");
+
+    toolbar.querySelectorAll(":scope > .rich-toolbar-icon-button").forEach(button => {
+        const title = button.title;
+        if (editorMode !== "advanced" && title !== "Negrita") button.remove();
+    });
+    toolbar.querySelectorAll(":scope > .rich-toolbar-dropdown").forEach(group => {
+        const title = group.querySelector(":scope > .rich-toolbar-icon-button")?.title || "";
+        const keepListMenu = hasLists && title === "Listas y marcadores";
+        if (!isFull && !keepListMenu) group.remove();
+    });
+
     return toolbar;
 }
 
