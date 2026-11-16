@@ -2398,11 +2398,15 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
         }
     }
 
+    let titleLayoutObserver = null;
+    let titleLayoutResizeFallback = null;
     const closeBtn = document.createElement("button");
     closeBtn.type = "button";
     closeBtn.setAttribute("aria-label", "Cerrar ventana");
     closeBtn.innerHTML = "&times;";
     closeBtn.onclick=async()=>{
+        if (titleLayoutObserver) titleLayoutObserver.disconnect();
+        if (titleLayoutResizeFallback) window.removeEventListener('resize', titleLayoutResizeFallback);
         if(inEditMode){const discarded=await exitModalEditMode(false,activeItem.id,false,navOptions);if(!discarded)return;}
         stopModalDetailMedia_();
         if(modalNavStack.length>0){closeModalToPreviousContext_();return;}
@@ -2420,9 +2424,10 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
     const titleContainer = document.createElement("div");
     titleContainer.className = "detail-modal-title";
 
+    let logoImg = null;
     const logoUrl = getLogoUrlForMarca(activeItem.marca, activeItem.categoria);
     if (logoUrl) {
-        const logoImg = document.createElement("img");
+        logoImg = document.createElement("img");
         setOptimizedImage(logoImg, logoUrl, IMG_SIZE_SMALL);
         logoImg.alt = `Logo ${activeItem.marca}`;
         logoImg.className = 'brand-logo-modal';
@@ -2465,6 +2470,32 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
     }
 
     cont.appendChild(titleContainer);
+
+    // El modelo permanece junto al logo; solo pasa debajo cuando su ancho natural
+    // supera el espacio real disponible dentro del modal.
+    const updateTitleLayout = () => {
+        if (!logoImg || !titleContainer.isConnected || !title.isConnected) return;
+        const previousWhiteSpace = title.style.whiteSpace;
+        title.style.whiteSpace = 'nowrap';
+        const naturalTitleWidth = title.scrollWidth || title.getBoundingClientRect().width;
+        title.style.whiteSpace = previousWhiteSpace;
+        const titleStyles = window.getComputedStyle(titleContainer);
+        const gap = parseFloat(titleStyles.columnGap || titleStyles.gap || '0') || 0;
+        const requiredWidth = logoImg.getBoundingClientRect().width + gap + naturalTitleWidth;
+        const shouldStack = requiredWidth > titleContainer.clientWidth + 1;
+        titleContainer.classList.toggle('detail-modal-title--stacked', shouldStack);
+    };
+    if (logoImg && typeof ResizeObserver !== 'undefined') {
+        titleLayoutObserver = new ResizeObserver(updateTitleLayout);
+        titleLayoutObserver.observe(titleContainer);
+        titleLayoutObserver.observe(logoImg);
+        titleLayoutObserver.observe(title);
+    } else if (logoImg) {
+        titleLayoutResizeFallback = updateTitleLayout;
+        window.addEventListener('resize', titleLayoutResizeFallback, { passive: true });
+    }
+    if (typeof window.requestAnimationFrame === 'function') window.requestAnimationFrame(updateTitleLayout);
+    else updateTitleLayout();
 
     const subHeaderDiv = document.createElement('div');
     subHeaderDiv.className = "detail-modal-meta";
