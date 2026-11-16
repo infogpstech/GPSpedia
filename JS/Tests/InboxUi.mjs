@@ -180,7 +180,7 @@ check("Los wrappers de API conservan el contrato de Inbox", () => {
     }
 });
 check("La paginación conserva los cursores opacos de Inbox sin convertirlos a offsets", () => {
-    assert.match(ui, /inboxConversationPageStack_\.push\(inboxConversationNextCursor\)/);
+    assert.match(ui, /inboxConversationPageStack_\.push\(inboxConversationNextCursor_\)/);
     assert.doesNotMatch(ui, /inboxConversationPageStack_\.push\(Number\(inboxConversationNextCursor\)\)/);
 });
 check("El modal mantiene los controles de lectura para tecnologías de asistencia", () => {
