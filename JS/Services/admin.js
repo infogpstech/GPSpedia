@@ -3468,8 +3468,8 @@ function handlePreviewCortesImageReconciliation_(payload, logMessage, developerC
     const historicalDriveIds = collectReplacedImageHistoryIds_();
     const referenceScanVerified = Number(referenceSnapshot.unverifiableReferenceCount || 0) === 0;
     const requestedAuditId = String(payload && payload.auditId || "").trim();
-    let missingReferences = [], missingReferenceCheckStatus = "unverifiable";
-    let applyCapabilityAvailable = false;
+    let missingReferences = [], missingReferenceCount = 0, missingReferencesTruncated = false;
+    let missingReferenceCheckStatus = "unverifiable", applyCapabilityAvailable = false;
     if (/^[0-9a-f-]{36}$/i.test(requestedAuditId)) {
         try {
             const auditState = loadDriveAuditServerState_(requestedAuditId);
@@ -3482,7 +3482,9 @@ function handlePreviewCortesImageReconciliation_(payload, logMessage, developerC
                 const missingCheck = findMissingCortesDriveReferences_(referenceSnapshot.references, seenIds.fileIds, root.getId());
                 missingReferenceCheckStatus = missingCheck.verified ? "verified" : "unverifiable";
                 missingReferences = missingCheck.missingReferences || [];
-                applyCapabilityAvailable = missingCheck.verified && missingReferences.length === 0 && referenceScanVerified;
+                missingReferenceCount = Number(missingCheck.totalMissingReferences || missingReferences.length);
+                missingReferencesTruncated = missingCheck.truncated === true;
+                applyCapabilityAvailable = missingCheck.verified && missingReferenceCount === 0 && referenceScanVerified;
             }
         } catch (capabilityError) {
             missingReferenceCheckStatus = "unverifiable";
@@ -3494,13 +3496,14 @@ function handlePreviewCortesImageReconciliation_(payload, logMessage, developerC
     plan.invalidFiles.push.apply(plan.invalidFiles, invalid);
     plan.counts.invalid = plan.invalidFiles.length;
     plan.missingReferences = missingReferences;
-    plan.missingReferenceCount = missingReferences.length;
+    plan.missingReferenceCount = missingReferenceCount;
+    plan.missingReferencesTruncated = missingReferencesTruncated;
     plan.missingReferenceCheckStatus = missingReferenceCheckStatus;
     const sourceDigestPayload = JSON.stringify({
         targets: targetSnapshot.targets.map(target => [target.row, target.vehicleId, target.field, target.currentValue, target.hasFormula, target.baseName]),
         references: Array.from(referenceSnapshot.references.entries()).map(([id, locations]) => [id, locations]).sort((a,b)=>a[0].localeCompare(b[0])),
         unverifiableReferenceCount: Number(referenceSnapshot.unverifiableReferenceCount || 0),
-        missingReferenceCheckStatus,
+        missingReferenceCheckStatus, missingReferenceCount, missingReferencesTruncated,
         missingReferences: missingReferences.map(item => [item.fileId, item.status, item.locations]),
         sourceLastRow: targetSnapshot.sourceLastRow,
         rowIssues: targetSnapshot.rowIssues,
@@ -3577,6 +3580,7 @@ function handleApplyCortesImageReconciliation_(payload, logMessage, developerCon
             files: approvals.map(item => ({ fileId: String(item && item.fileId || "") }))
         }, logMessage, developerContext);
         if (preview.missingReferenceCheckStatus !== "verified" ||
+            Number(preview.missingReferenceCount || 0) > 0 ||
             !Array.isArray(preview.missingReferences) || preview.missingReferences.length) {
             throw new Error("La auditoría detectó referencias de Cortes sin archivo verificado. No se aplicó ninguna asignación.");
         }
