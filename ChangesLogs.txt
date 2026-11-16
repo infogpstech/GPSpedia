@@ -950,3 +950,16 @@ HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
 - ServiceHealthContract 17/17; ActionDispatchContract 12/12 PASS. CI Node.js 22 run 43800322470: SUCCESS — 118 suites / 1,765 pruebas / 0 fallos.
 - Pendiente Beta: confirmar que no existe deployment Legacy activo fuera del repositorio ni tráfico residual en navegadores reales.
 ================================================================================
+
+
+================================================================================
+2026-11-16 — CIERRE LOCAL BETA-043: TRÁFICO GLOBAL POR SERVICIO
+- JS/Services/Coordinator.js: conteo central por servicio en buckets horarios de 24 horas; deduplicación mediante requestId y escritura best-effort dentro de la lease existente.
+- JS/Services/SharedMutationClient.js y JS/Services/admin.js: consulta agregada de solo lectura, reservada al rol Desarrollador.
+- JS/Frontend/ui.js e index.html: gráfico global coordinado separado de la actividad local del navegador; se aclara que no representa todas las solicitudes HTTP.
+- Services/COORDINATOR_SETUP.md: documentación del alcance, retención, exclusiones y separación global/local.
+- Se incorporó ServiceTrafficAdminContract.mjs al runner y se corrigieron expectativas de pruebas obsoletas/fixtures.
+- ServiceTrafficAdminContract 20/20; ServiceMetricsTelemetry 10/10; Coordinador compartido 54/54 PASS.
+- GitHub Actions Node.js 22 run 43807777744: SUCCESS — 119 suites / 1,790 pruebas / 0 fallos. GitHub Pages run 43807776532: SUCCESS.
+- Validación de deployments, tráfico entre instancias y roles reales queda pendiente de Beta. No se desplegaron Apps Script ni se modificaron propiedades, secretos o datos externos.
+================================================================================
