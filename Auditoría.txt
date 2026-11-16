@@ -1469,7 +1469,7 @@ AUDITORÍA COMPLEMENTARIA — 2026-11-16 — AUD-2026-11-16-06
 ## AUD-2026-11-16-03 — Botón Nuevo invade navegación del Inbox y logo/modelo en modal de corte
 
 **Severidad:** Media — solapamiento de controles en PWA y pérdida de jerarquía visual del encabezado.  
-**Estado:** CORRECCIÓN PREPARADA EN RAMA DE TRABAJO; pruebas automatizadas y aceptación visual pendientes.
+**Estado:** COMPLETADA LOCALMENTE; aceptación visual en Android/PWA pendiente de Beta.
 
 ### Evidencia y causa raíz
 - En `style.css`, el selector móvil `#inbox-modal-content .inbox-folder-nav button` incluía el botón `#inbox-new-message` y le asignaba `width:100%`, `max-width:none` y layout de columna. La regla flotante anterior tenía menor especificidad y no podía conservar sus 58 × 58 px; el botón invadía el espacio de navegación/paginación.
@@ -1494,3 +1494,11 @@ AUDITORÍA COMPLEMENTARIA — 2026-11-16 — AUD-2026-11-16-06
 
 ### Ajuste de separación vertical del FAB — GP-UX-INBOX-FAB-01
 - Se mantiene el anclaje inferior con offset de 64 px más el área segura del dispositivo, para dejar margen suficiente sobre la fila de paginación. El ancho y alto fijos de 46 px y la exclusión de la rejilla no cambian.
+
+
+### Validación final — AUD-2026-11-16-03
+- GitHub Actions Node.js 22 run `43924038989`: **SUCCESS — 129 suites / 1,903 pruebas / 0 fallos**.
+- GitHub Pages run `43924038398`: **SUCCESS — build y deploy**.
+- La primera ejecución falló solo por el patrón de prueba de la media query; la expresión se corrigió para admitir espacios CSS y la segunda ejecución aprobó la suite completa.
+- La prueba InboxUi valida el selector que excluye el FAB de la rejilla, dimensiones 46 × 46 px, posición y safe-area. CutDetailModalLayout valida dimensiones del logo y título de una línea.
+- Validación visual real en Android/PWA instalada queda diferida a Beta; no se afirma como realizada.

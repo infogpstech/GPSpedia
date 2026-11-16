@@ -5,7 +5,7 @@ Fecha de consolidación: 2026-11-16
 Repositorio: `infogpstech/GPSpedia`  
 Rama autorizada: `GPSpedia2.2.5_work`  
 Rama base protegida: `GPSpedia2.2.5`  
-HEAD de código y pruebas validado al consolidar: `c973bcd2ea3678a012502b8f9a4da5d059e1751e`
+HEAD de código y pruebas validado en esta corrección: `95dd8205269849344b69b77e22898e4763096830`
 
 Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_beta.md`, integrando sus pendientes por sector y orden de ejecución. El historial y la evidencia de trabajo anterior permanecen en `checkpoint.md` y en `Olds/Documentacion_Legacy/`. La única fuente normativa continúa siendo `NORMAS_DESAROLLO.md`.
 
@@ -46,7 +46,7 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 - Mantener separado el control privilegiado de cierre de sesiones y sus permisos actuales.
 
 ### GP-UX-CUT-MODAL-01 — Posición de acciones del modal de detalle
-**Prioridad: P2 · Estado: REABIERTA POR REGRESIÓN MÓVIL/PWA; corrección registrada en adenda del 2026-11-16**
+**Prioridad: P2 · Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA (2026-11-16)**
 - Ubicar compartir, editar e imprimir en la esquina superior derecha del encabezado, inmediatamente a la izquierda del botón cerrar.
 - Evitar centrado vertical/horizontal en la cabecera y conservar tamaños táctiles, orden, accesibilidad y reglas RBAC.
 
@@ -777,14 +777,21 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 ## ADENDA DE REQUISITOS VISUALES — 2026-11-16
 
 ### GP-UX-INBOX-FAB-01 — Botón Nuevo independiente de la navegación
-**Estado: EN PROGRESO**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA**
 - En móvil/PWA, «Nuevo mensaje» debe ser un botón flotante cuadrado, no una acción de ancho completo.
 - Debe quedar anclado abajo a la derecha, inmediatamente encima de la flecha de página siguiente, sin cubrir botones, paginación ni área segura del dispositivo.
 - La regla responsive de la rejilla de carpetas debe excluir explícitamente el botón flotante.
 - Prueba anti-regresión: comprobar dimensiones cuadradas, selector excluido de width:100%, posición y safe-area.
 
 ### GP-UX-CUT-MODAL-02 — Imagen de marca ampliada y título en una sola línea
-**Estado: EN PROGRESO**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA**
 - Aumentar un 20 % la imagen real del logo (no un contenedor): 69.12 px en escritorio y 54.72 px en móvil.
 - Mantener el nombre del modelo a la derecha del logo en la misma línea; si el ancho disponible no basta, truncar visualmente el texto sin colocarlo debajo.
 - Conservar el grid de acciones compartir/editar/imprimir y el botón de cierre sin alterar sus posiciones.
+
+
+### Validación de cierre local — GP-UX-INBOX-FAB-01 / GP-UX-CUT-MODAL-02
+- GitHub Actions Node.js 22 run **43924038989: SUCCESS — 129 suites / 1,903 pruebas / 0 fallos**.
+- GitHub Pages run **43924038398: SUCCESS** (build, upload y deploy).
+- Código probado en el commit `95dd8205269849344b69b77e22898e4763096830`.
+- Se consideran completadas localmente con validación visual diferida a Beta: probar en Android/PWA instalada la posición del botón Nuevo, la no superposición con la paginación, el tamaño del logo y la permanencia del modelo en una sola línea.

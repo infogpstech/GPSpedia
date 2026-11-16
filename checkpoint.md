@@ -4,7 +4,7 @@
 **Repositorio:** `infogpstech/GPSpedia`  
 **Rama de trabajo:** `GPSpedia2.2.5_work`  
 **Rama base protegida:** `GPSpedia2.2.5` (sin modificaciones)  
-**Commit de código verificado:** `52a05fb9aca89cabc685d9e0fba5b1b011370a89`
+**Commit de código verificado:** `95dd8205269849344b69b77e22898e4763096830`
 
 ## Estado de esta iteración
 
@@ -99,3 +99,11 @@ El checkpoint acumulativo anterior se conserva íntegro en `Checkpoint_Archive/c
 
 
 - Ajuste final de posición FAB: offset inferior de 64 px más `safe-area-inset-bottom`, conservando el botón cuadrado de 46 px y evitando superponer la fila de paginación.
+
+
+### Cierre local — ajustes de Inbox y modal de corte — 2026-11-16
+- Código: commit `95dd8205269849344b69b77e22898e4763096830`; botón Nuevo flotante cuadrado 46 × 46 px, anclado abajo a la derecha con offset 64 px + safe-area, excluido de la rejilla de carpetas.
+- Modal de corte: imagen real del logo a 69.12 px escritorio / 54.72 px móvil; modelo siempre en la misma línea, con ellipsis si el ancho no alcanza.
+- GitHub Actions Node.js 22 run `43924038989`: **SUCCESS — 129 suites / 1,903 pruebas / 0 fallos**. Incluye sintaxis de módulos modificados y regresión de servicios.
+- GitHub Pages run `43924038398`: **SUCCESS — build y deploy**.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Falta únicamente comprobar visualmente en Android/PWA instalada las posiciones y proporciones finales. No se modificaron Apps Script, deployments de servicios ni datos externos.

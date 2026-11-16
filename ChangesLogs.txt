@@ -1264,3 +1264,14 @@ ADENDA DE PRUEBAS — 2026-11-16
 
 ADENDA DE POSICIÓN FINAL — GP-UX-INBOX-FAB-01
 - Se conserva el margen vertical de 64 px sobre el borde inferior del modal, ahora con safe-area incluida en el offset; el botón cuadrado de 46 px queda alineado a la derecha por encima de la navegación/paginación.
+
+
+================================================================================
+CIERRE LOCAL — GP-UX-INBOX-FAB-01 / GP-UX-CUT-MODAL-02 — 2026-11-16
+- Botón Nuevo: flotante cuadrado 46 × 46 px, a la derecha y sobre la paginación; excluido de la regla responsive que aplicaba ancho completo.
+- Modal de corte: logo real +20 % (69.12 px escritorio / 54.72 px móvil); nombre del modelo en una sola línea con truncado visual cuando sea necesario.
+- App Shell v44.
+- GitHub Actions Node.js 22 run 43924038989: SUCCESS — 129 suites / 1,903 pruebas / 0 fallos.
+- GitHub Pages run 43924038398: SUCCESS — build y deploy.
+- Aceptación visual Android/PWA instalada pendiente de Beta.
+================================================================================
