@@ -1045,6 +1045,7 @@ HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
 - JS/Frontend/ui.js: búsqueda por texto, retirada del filtro visual de categoría y reutilización del mismo paginador entre conversaciones y solicitudes históricas.
 - JS/Services/InboxConversations.js: nueva carpeta «read» para conversaciones recibidas sin mensajes pendientes de lectura.
 - JS/Tests/InboxUi.mjs y JS/Tests/InboxConversations.mjs: regresiones para controles, búsqueda, paginación compartida y carpeta de leídos.
+- service-worker.js: caché App Shell gpsepedia-cache-v34 para invalidar index.html, ui.js y style.css anteriores; JS/Tests/ServiceWorkerCache.js actualizado.
 - No se desplegaron servicios Apps Script ni se modificaron hojas, secretos o datos externos.
 - Validación automatizada y aceptación visual aún pendientes; no se declaran pruebas aprobadas en este registro.
 ================================================================================
