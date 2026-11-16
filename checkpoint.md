@@ -64,3 +64,13 @@ El checkpoint acumulativo anterior se conserva íntegro en `Checkpoint_Archive/c
 - App Shell actualizado de v41 a v42 para invalidar CSS previo en PWA.
 - Auditoría registrada como AUD-2026-11-16-02; pruebas CutDetailModalLayout, ServiceWorkerCache y OfflineBrandAssets actualizadas.
 - Estado: GitHub Actions Node.js run `43913616427` SUCCESS; aceptación visual en navegador móvil/PWA real pendiente de Beta. No se modificó Apps Script ni datos externos.
+
+
+
+### Reanudación y segunda corrección GP-UX-CUT-MODAL-01 — 2026-11-16
+- Rama de trabajo confirmada por lectura de los archivos en GPSpedia2.2.5_work; rama base GPSpedia2.2.5 no modificada.
+- Se confirmó que el bloque flex agregado después del grid prevalecía en la cascada CSS y era la causa de que las acciones pudieran bajar debajo del logo. La prueba previa no detectaba esa contradicción.
+- Cambios publicados: eliminación del override flex; test anti-regresión para detectar declaraciones flex/order posteriores; App Shell v43 y pruebas de caché actualizadas.
+- Commits de código de esta corrección: c7ba5876742f92e0025485376431b8c98fc03d06, f4b485530d5d7cdd76901f8fc5f357381e7f1cb8, 6971db7ae35cc0141d44a885edb865786ed50080, fd09b10109c49face04a9bf98892500066ce5b0c, 2bc026cf2647174e6fb0d747e270e6f55958cbc4.
+- Inspección estática: no queda regla display:flex para .detail-modal-toolbar; el bloque grid permanece; no queda order:2 para .detail-modal-header-actions.
+- Pendiente: ejecutar CI Node.js y comprobar el diff completo; aceptación visual en Android/navegador móvil/PWA instalada queda pendiente de Beta. No se modificaron deployments, Apps Script ni datos externos.
