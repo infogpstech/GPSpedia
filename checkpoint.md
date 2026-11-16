@@ -942,3 +942,10 @@ Se amplió `AdminImageScanCoordinatorContract.mjs` para exigir que cada mutació
 ### CI de la auditoría Coordinator — resultado
 - GitHub Actions `GPSpedia service regression tests`, run `43781271855`, commit `9370827c8d6ab8fb12ce8db80930c5e3b8bdbbb8`: **SUCCESS**, 106 suites, 1,653 pruebas, 0 fallos; sintaxis de módulos modificados PASS.
 - `pages build and deployment`, run `43781271945`: pendiente al momento de la consulta. No equivale a despliegue de Apps Script.
+
+
+## GP-BETA-06 — corrección de ruta suggestYear
+- Hallazgo: `suggestYear` no tenía entrada en `FEEDBACK_ACTION_PERMISSIONS`; las solicitudes autenticadas omitían Coordinator y revalidaban sesión/rol leyendo Users y ActiveSessions en `assertFeedbackSession`.
+- Corrección: `suggestYear: null` en la matriz autenticada; dispatcher coordina `FEEDBACK/sessionActivity`. Solo `userId=0` conserva ruta anónima sin lease.
+- Prueba nueva `SuggestYearCoordinatorSession.mjs`: verifica actor confiable, ausencia de acceso local a Users/ActiveSessions y anonimato. Integrada en `RunServiceTests.mjs`.
+- Pendiente: CI y revisión global de acciones protegidas que aún puedan omitir el Coordinator.
