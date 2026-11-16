@@ -7,6 +7,7 @@ const html=fs.readFileSync(resolve(root,"HTML/add_cortes.html"),"utf8");
 const helpCss=fs.readFileSync(resolve(root,"contextual-help.css"),"utf8");
 const index=fs.readFileSync(resolve(root,"index.html"),"utf8");
 const ui=fs.readFileSync(resolve(root,"JS/Frontend/ui.js"),"utf8");
+const uiSource=ui;
 const sw=fs.readFileSync(resolve(root,"service-worker.js"),"utf8");
 const sw=fs.readFileSync(resolve(root,"service-worker.js"),"utf8");
 let passed=0;function testCase(name,fn){fn();passed++;console.log("PASS "+name);}
