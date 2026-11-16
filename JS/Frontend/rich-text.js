@@ -20,6 +20,43 @@ const SAFE_FONT_VALUES = new Set(SAFE_FONTS.values());
 const SAFE_SIZES = new Set(["0.85em", "1em", "1.2em", "1.5em"]);
 const SAFE_NAMED_COLORS = new Set(["red", "blue", "green", "black", "white", "orange", "yellow", "gray", "grey", "purple", "teal", "navy"]);
 
+export function stripRichTextDemoPlaceholder(value) {
+    const source = String(value || "");
+    const text = source
+        .replace(/<br\\s*\\/?\\s*>/gi, " ")
+        .replace(/<\\/?(?:p|div|strong|b|span)[^>]*>/gi, "")
+        .replace(/<[^>]+>/g, "")
+        .replace(/&nbsp;|&#160;/gi, " ")
+        .replace(/\\u200b/g, "")
+        .replace(/\\s+/g, " ")
+        .trim();
+    return text.toLocaleLowerCase() === "texto en negrita" ? "" : source;
+}
+
+export function positionRichTextMenu(menu, anchor, align = "left") {
+    if (!menu || !anchor) return false;
+    const rect = typeof anchor.getBoundingClientRect === "function" ? anchor.getBoundingClientRect() : anchor;
+    const viewportWidth = Math.max(1, window.innerWidth || document.documentElement.clientWidth || 1);
+    const viewportHeight = Math.max(1, window.innerHeight || document.documentElement.clientHeight || 1);
+    menu.style.position = "fixed";
+    menu.style.left = "0px";
+    menu.style.right = "auto";
+    menu.style.top = "0px";
+    menu.style.bottom = "auto";
+    menu.style.maxWidth = Math.max(120, viewportWidth - 16) + "px";
+    const menuRect = menu.getBoundingClientRect();
+    const width = Math.min(menuRect.width || 150, viewportWidth - 16);
+    const height = Math.min(menuRect.height || 190, viewportHeight - 16);
+    const desiredLeft = align === "right" ? rect.right - width : rect.left;
+    const left = Math.max(8, Math.min(desiredLeft, viewportWidth - width - 8));
+    let top = rect.bottom + 5;
+    if (top + height > viewportHeight - 8) top = rect.top - height - 5;
+    top = Math.max(8, Math.min(top, viewportHeight - height - 8));
+    menu.style.left = left + "px";
+    menu.style.top = top + "px";
+    return true;
+}
+
 function splitSelectionIntoListItems(selected) {
     if (/<\/?(?:ul|ol|li)\b/i.test(selected)) {
         return [selected.replace(/\r\n?|\n/g, "<br>")];
@@ -119,7 +156,7 @@ export function syncRichTextEditorFromSource(sourceOrId) {
     const editor = document.getElementById(source.id + "-visual-editor");
     if (!editor) return false;
     const mode = normalizeEditorMode_(editor.dataset.richEditorMode) || "basic";
-    editor.innerHTML = sanitizeHtmlContent(source.value || "", mode);
+    editor.innerHTML = sanitizeHtmlContent(stripRichTextDemoPlaceholder(source.value || ""), mode);
     source.value = sanitizeHtmlContent(editor.innerHTML, mode);
     return true;
 }
@@ -149,7 +186,7 @@ export function mountRichTextEditors(root = document) {
         if (source.required) { editor.dataset.richRequired = "true"; editor.setAttribute("aria-required", "true"); }
         const maxLength = Number(source.maxLength);
         if (Number.isFinite(maxLength) && maxLength > 0) editor.dataset.maxLength = String(maxLength);
-        editor.innerHTML = sanitizeHtmlContent(source.value || "", mode);
+        editor.innerHTML = sanitizeHtmlContent(stripRichTextDemoPlaceholder(source.value || ""), mode);
         source.value = editor.innerHTML; source.dataset.richVisualMounted = "true"; source.dataset.richEditorMode = mode;
         source.hidden = true; source.tabIndex = -1; source.required = false;
         source.setAttribute("aria-hidden", "true"); source.classList.add("rich-text-source");
@@ -284,8 +321,9 @@ export function applyRichTextFormat(targetId, format, extraValue = null, options
         formatted = format === "ul" ? '<ul data-gp-marker="' + (SAFE_MARKERS.has(extraValue) ? extraValue : "bullet") + '">' + listItems + "</ul>" : "<ol>" + listItems + "</ol>";
         caretOffset = selected ? formatted.length : formatted.indexOf("<li>") + 4;
     } else if (format === "bold") {
-        const content = selected || "texto en negrita"; formatted = "<strong>" + content + "</strong>";
-        caretOffset = selected ? formatted.length : "<strong>".length + content.length;
+        if (!selected) return false;
+        const content = selected; formatted = "<strong>" + content + "</strong>";
+        caretOffset = formatted.length;
     } else return false;
     target.value = target.value.substring(0, start) + formatted + target.value.substring(end);
     const cursor = start + caretOffset; target.focus(); target.setSelectionRange(cursor, cursor);
@@ -309,7 +347,8 @@ export function applyRichTextColor(targetId, color) {
         target.dispatchEvent(new Event("input", { bubbles: true }));
         return true;
     }
-    const start = target.selectionStart, end = target.selectionEnd, selected = target.value.substring(start, end) || "texto";
+    const start = target.selectionStart, end = target.selectionEnd, selected = target.value.substring(start, end);
+    if (!selected) return false;
     const formatted = '<span style="color:' + safeColor + '">' + selected + "</span>";
     target.value = target.value.substring(0, start) + formatted + target.value.substring(end);
     target.focus(); target.setSelectionRange(start + formatted.length, start + formatted.length);
@@ -423,6 +462,7 @@ function createCompactRichTextToolbar_(targetId, forceAdvanced) {
             const opening = !group.classList.contains("is-open");
             closeMenus(group); group.classList.toggle("is-open", opening);
             trigger.setAttribute("aria-expanded", String(opening)); menu.hidden = !opening;
+            if (opening) positionRichTextMenu(menu, trigger, "left");
         });
         group.append(trigger, menu); toolbar.appendChild(group);
     };
@@ -456,6 +496,14 @@ function createCompactRichTextToolbar_(targetId, forceAdvanced) {
         { label:"Lista numerada", action:()=>applyRichTextFormat(targetId,"ol",null,{forceAdvanced}) }
     ]);
     toolbar.addEventListener("click", event => { if (!event.target.closest(".rich-toolbar-dropdown")) closeMenus(); });
+    const dismissOutside = event => {
+        if (!toolbar.isConnected) {
+            document.removeEventListener("pointerdown", dismissOutside, true);
+            return;
+        }
+        if (!toolbar.contains(event.target)) closeMenus();
+    };
+    document.addEventListener("pointerdown", dismissOutside, true);
     return toolbar;
 }
 
