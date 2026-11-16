@@ -172,6 +172,11 @@ check("Las notificaciones internas reflejan el total de conversaciones no leída
     assert.match(html, /id="inbox-notification-count"/);
     assert.match(ui, /counts && counts\.unread/);
 });
+check("Nuevo mensaje flotante queda encima de la paginación y respeta el área segura móvil", () => {
+    assert.ok(css.includes("inbox-floating-new-message { position:absolute; right:18px; bottom:64px;"));
+    assert.ok(css.includes("bottom:calc(64px + env(safe-area-inset-bottom, 0px))"));
+    assert.ok(css.includes("width:58px; min-width:58px; height:58px; min-height:58px;"));
+});
 check("La lista y los mensajes existentes permanecen visibles durante la actualización", () => {
     assert.ok(ui.includes("else if (!inboxConversationItems_.length && !list.childElementCount) {"));
     assert.match(ui, /if \(!options\.older && !options\.preserveScroll && !inboxConversationMessages_\.length\) renderInboxConversationDetail_/);

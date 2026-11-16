@@ -747,3 +747,5 @@ No usar `reset --hard`, `clean`, force push ni comandos que descarten cambios. N
 - **GP-UX-VIDEO-OWN-STATUS-01:** técnicos y técnicos exteriores consultan únicamente sus propios vídeos con estado y razón de rechazo en Solicitudes; acciones administrativas continúan reservadas a Desarrollador.
 - **Validación CI:** run 43906071405 SUCCESS — 129 suites / 1,899 pruebas / 0 fallos. Pages run 43906069774 SUCCESS.
 - **Beta pendiente:** revisión visual en dispositivos, usuarios reales y servicios Apps Script/Spreadsheet en entorno autorizado. Sin despliegues ni alteración de datos productivos.
+
+- Adenda 2026-11-16: posición final del botón flotante Nuevo ajustada a 64 px sobre el pie/paginación y safe-area móvil; contrato InboxUi y App Shell v41 incorporados. CI pendiente de esta adenda.

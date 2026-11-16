@@ -1213,3 +1213,5 @@ CIERRE DE ITERACIÓN GP-UX — 2026-11-16
 - GitHub Pages run 43906069774: SUCCESS.
 - Validación visual Beta y comprobación de Apps Script/Spreadsheet con datos reales pendientes. Sin despliegues ni cambios de datos externos.
 ================================================================================
+
+ADENDA — GP-UX-INBOX-03: botón flotante Nuevo se eleva sobre la paginación (bottom 64 px) y respeta safe-area móvil; App Shell v41 y pruebas offline sincronizadas.
