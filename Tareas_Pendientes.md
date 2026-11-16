@@ -58,6 +58,17 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 
 **Cierre local (2026-11-16):** Los cuatro bloques se implementaron y pasaron la suite GitHub Actions (126 suites, 1,864 pruebas, 0 fallos). La publicación GitHub Pages también terminó correctamente. Se difiere a Beta la revisión visual real en escritorio/móvil, la experiencia de retorno BFCache en navegadores/dispositivos objetivo y la verificación operativa de formularios/tickets con datos reales.
 
+### GP-UX-INBOX-02 — Lista, búsqueda y navegación uniforme del Inbox
+**Prioridad: P1 · Estado: IMPLEMENTACIÓN LOCAL APLICADA; pendiente de regresión automatizada y aceptación visual Beta.**
+
+- Ampliar el área útil vertical del modal: el espacio de trabajo debe ocupar la altura disponible y la lista de mensajes no debe quedar limitada a la mitad superior del panel.
+- Incorporar una lupa en la cabecera del Inbox; al activarla despliega/oculta la búsqueda con transición fluida. La consulta busca asunto, participantes, autor y contenido de mensajes.
+- Retirar el selector visual de categoría en General y Soporte. La sección continúa aplicando internamente su ámbito de datos y la búsqueda devuelve resultados dentro de esa sección.
+- Sustituir los paginadores separados por una única barra persistente y reutilizable en todas las secciones/vistas: flecha izquierda, indicador contextual «1/2», «2/2», «1/3», etc., y flecha derecha. Mantener cursores opacos y límites de permisos existentes.
+- Carpetas de conversaciones: Recibidos, Leídos, No leídos, Enviados y Archivados. Mostrar iconos compactos y expandir el nombre de la carpeta activa mediante animación; respetar movimiento reducido.
+- «Leídos» filtra conversaciones recibidas cuyo contador de mensajes no leídos sea cero. No cambia el contrato de lectura ni modifica datos al consultar.
+- Validar que el paginador compartido funcione tanto para conversaciones directas como para solicitudes históricas, en todas las secciones, sin duplicar controles ni mezclar cursores.
+
 ## Orden general de ejecución
 
 1. Corregir y completar las tareas locales de experiencia de usuario y Developer, comenzando por BETA-021.
