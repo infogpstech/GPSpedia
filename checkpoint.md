@@ -288,3 +288,18 @@ El checkpoint acumulativo anterior se conserva íntegro en `Checkpoint_Archive/c
 
 - Anti-regresión adicional: se detectó y corrigió que el indicador dataset reservado para la toolbar compacta podía hacer que el refresco dinámico reconstruyera barras básicas/de listas como avanzadas. Se retiró el indicador en barras estándar y se añadió una expectativa específica en InboxUi. Commits: 334b94f y 16002ee; registros de corrección: 0041c63 y 8c5cbb9.
 - La revisión estática final debe repetirse sobre este último ajuste; CI Node.js continúa sin estado consultable desde la integración.
+
+
+### GP-UX-RICH-EDITOR-SELECTION-02 — 2026-11-16
+- Solicitud: corregir el cambio de color/formato al perder foco, impedir que el menú contextual tape la barra y ofrecer copiar/pegar con iconos.
+- HEAD al iniciar: `35dc89e815dd676b412619134e4373b46107e05c`; comparación Git confirmó la rama `GPSpedia2.2.5_work` idéntica a ese SHA y 0 commits detrás/adelante. Rama base protegida sin cambios.
+- Causa localizada: el selector de color podía provocar blur y la función aplicaba formato usando la selección actual, que ya podía haberse perdido. Los selectores de fuente/tamaño tampoco preservaban rangos; el editor básico colocaba un marcador de caret sin comprobar adecuadamente el caso de editor vacío.
+- Cambios: `JS/Frontend/rich-text.js` almacena/restaura el rango/cursor, captura interacción antes de color/fuente/tamaño, aplica el color al evento `change` (una vez confirmado), preserva caret en editor vacío y libera la referencia activa al perder foco. Las dos variantes de barra (formularios e Inbox) incorporan copiar/pegar mediante iconos `fa-copy` / `fa-paste` y Clipboard API con fallback. `JS/Frontend/ui.js` enlaza el mismo seguimiento al editor Inbox.
+- Menú contextual: se previene `contextmenu` dentro de los editores y se desactiva el callout táctil nativo, sin deshabilitar selección de texto; se mantiene `user-select:text`.
+- Caché PWA: App Shell `gpsepedia-cache-v56`; contratos de ServiceWorkerCache y OfflineBrandAssets sincronizados.
+- Pruebas ampliadas: `JS/Tests/InboxUi.mjs` comprueba persistencia de selección, botones de portapapeles, bloqueo contextual y selección táctil.
+- Archivos: `JS/Frontend/rich-text.js`, `JS/Frontend/ui.js`, `style.css`, `service-worker.js`, `JS/Tests/InboxUi.mjs`, `JS/Tests/ServiceWorkerCache.js`, `JS/Tests/OfflineBrandAssets.mjs`, `Auditoría.txt` y este checkpoint. `ChangesLogs.txt` no se modifica porque supera el umbral de rotación indicado en las normas.
+- Commits secuenciales: `75f175e`, `b89c1aa`, `6b83300`, `47fe3f0`, `a9c6b32`, `e668cfc`, `010e516`, `17d94a7`, `b9f938f` (el commit final de registros se añadirá al cerrar).
+- Validación estática: parsing V8 aprobado para `rich-text.js`, `ui.js`, `InboxUi.mjs`, `ServiceWorkerCache.js` y `OfflineBrandAssets.mjs` tras retirar imports/export e `import.meta` únicamente para el chequeo; balance de llaves CSS aprobado; comprobaciones de handlers, persistencia de rango, iconos y versión v56 aprobadas.
+- Pendiente: ejecutar suites Node.js completas/CI y validación visual real de selección, menú contextual y clipboard en Android PWA y escritorio. La causa y el código compartido indican que el defecto también era posible en escritorio; no se afirma que se haya probado físicamente en ambos.
+- Estado: EN PROGRESO hasta completar revisión final, pruebas disponibles y verificar HEAD remoto.
