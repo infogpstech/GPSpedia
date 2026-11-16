@@ -71,8 +71,8 @@ check("Las aprobaciones de vídeo no ofrecen una eliminación genérica no sopor
 });
 check("Los mensajes del Inbox renderizan formato únicamente después del sanitizador compartido", () => {
     assert.match(ui, /messageBody\.innerHTML\s*=\s*sanitizeHtmlContent\(String\(message\.body \|\| ""\), "advanced"\)/);
-    assert.match(ui, /createInboxRichTextToolbar\(textarea\.id\)/);
-    assert.match(ui, /createInboxRichTextToolbar\(body\.id\)/);
+    assert.match(ui, /createInboxRichTextToolbar\(editor\.id\)/);
+    assert.match(ui, /createInboxRichTextToolbar\(bodyEditor\.id\)/);
     assert.match(ui, /sanitizeHtmlContent\(String\(message\.body \|\| ""\), "advanced"\)/);
     assert.match(ui, /form\.append\(label, editorShell, status, send\)/);
 });
@@ -86,7 +86,7 @@ check("La interfaz incluye destinatario único y plantillas editables", () => {
     assert.match(ui, /recipientId, subject: subjectValue/);
     assert.match(ui, /welcome-general/);
     assert.match(ui, /welcome-technician/);
-    assert.match(ui, /body\.maxLength = 5000/);
+    assert.match(ui, /source\.id = sourceId; source\.maxLength = 5000/);
 });
 check("La lista de conversaciones usa caché por sesión, carpeta, categoría, búsqueda y cursor", () => {
     for (const fragment of [
@@ -276,7 +276,7 @@ check("El botón de opciones queda antes de Negrita y su menú se ancla al borde
 check("Plantilla y categoría se apilan dentro del desplegable de opciones de la barra", () => {
     assert.match(ui, /composerOptionsMenu\.append\(templateField, categoryField\)/);
     assert.match(ui, /composerOptions\.dataset\.richToolbarPersist = "true"/);
-    assert.match(ui, /editorShell\.append\(toolbar, body\)/);
+    assert.match(ui, /editorShell\.append\(toolbar, bodyEditor, body\)/);
     assert.match(ui, /form\.append\(bodyLabel, editorShell\)/);
     assert.match(css, /\.inbox-composer-options-menu\s*\{[^}]*grid-template-columns:\s*minmax\(0,1fr\)/s);
     assert.match(css, /\.inbox-composer-option\s*\{[^}]*flex-direction:\s*column/s);
