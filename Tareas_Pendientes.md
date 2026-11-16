@@ -99,11 +99,23 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 - La carga de historial y vistos se desacopla para que una apertura lenta de IndexedDB no retrase ambos.
 - El render detecta cambios de IDs/orden/timestamps, no solo cambios en la cantidad de elementos; se actualiza incluso cuando el carrusel ya tiene 20 elementos.
 
-### P2 — Encabezado del detalle de cortes
-**Estado local: COMPLETADO.**
+### GP-UX-BRAND-01 — Encabezado del detalle de cortes
+**Prioridad: P2 · Estado: EN PROGRESO (revisión contra rama base solicitada el 2026-11-16).**
 
-- El logo de marca tiene `flex: 0 0 auto` y ancho máximo propio; no se comprime para acomodar el modelo.
-- El nombre del modelo se mantiene a la derecha mientras existe espacio horizontal y pasa debajo del logo cuando no cabe el ancho mínimo legible. El texto puede envolver palabras sin deformar el logo.
+- Mantener el nombre del modelo a la derecha del logo mientras su ancho natural quepa en el espacio disponible del modal.
+- Mover el nombre debajo del logo únicamente cuando su ancho natural, sumado al logo y al espacio entre ambos, exceda el ancho interno del modal; al apilarlo debe poder envolver texto sin desbordarse.
+- Restaurar el tamaño de logo de marca de la rama base protegida `GPSpedia2.2.5`: altura de 48 px en escritorio y 38 px hasta 600 px; no limitar adicionalmente su ancho con máximos que reduzcan logos panorámicos.
+- Validar con marcas/logos panorámicos y cuadrados, modelos cortos y largos, resize del modal y viewport móvil/escritorio.
+
+### GP-PWA-BRAND-01 — Logo local, Splash y favicon transparente
+**Prioridad: P1 · Estado: PENDIENTE.**
+
+- Sustituir las referencias remotas del logo principal del encabezado por el recurso oficial local para que se muestre sin conexión.
+- Mantener el logo de tema oscuro en el Splash cuando el tema oscuro esté activo; el recurso debe estar incluido en el App Shell offline.
+- Usar el logo oficial local en el Splash de tema claro para evitar dependencias externas durante el arranque.
+- Cambiar el favicon remoto por el PNG oficial transparente, sin fondo blanco; verificar el canal alfa real del archivo.
+- Incluir los recursos de marca necesarios en la precarga esencial del Service Worker y aumentar la versión del caché para invalidar el App Shell anterior.
+- No alterar los iconos PWA/manifest ni el diseño del login fuera del alcance solicitado.
 
 ### P2 — Pestaña de aportes en Panel de Actividad
 **Estado local: COMPLETADO.**
