@@ -4429,3 +4429,63 @@ img.gp-image-loaded {
         width: 100%;
     }
 }
+
+
+/* BETA-025: los nombres y títulos se muestran completos; el layout se adapta. */
+h1, h2, h3, h4, h5, h6,
+label,
+button,
+.btn,
+td,
+th,
+.vehicle-title,
+.overlay-text-primary,
+.inbox-item-title,
+.inbox-detail-title,
+.replaced-image-action,
+.dev-tools-title,
+.dev-tab-panel h3,
+.accordion-title {
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: normal;
+}
+
+h1, h2, h3, h4, h5, h6,
+label,
+button,
+.btn {
+    white-space: normal;
+    text-overflow: clip;
+}
+
+td, th {
+    overflow-wrap: anywhere;
+}
+
+.inbox-item-content {
+    min-width: 0;
+    overflow: visible;
+}
+
+.inbox-item-title {
+    line-height: 1.25;
+    white-space: normal;
+    overflow: visible;
+    overflow-wrap: anywhere;
+    text-overflow: clip;
+}
+
+.replaced-image-action {
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-align: center;
+    line-height: 1.2;
+}
+
+#dev-tools-modal .dev-tools-title {
+    white-space: normal;
+    overflow-wrap: anywhere;
+}

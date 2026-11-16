@@ -3173,7 +3173,7 @@ function createPysCard(item, originModal = null, vehicleToUnlink = null, onUnlin
     const statusColor = item.Se_soluciono === "x" ? "#28a745" : "#dc3545";
     const title = document.createElement("div");
     title.className = "overlay-text-primary";
-    title.style.cssText = "font-size: 0.85rem; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;";
+    title.style.cssText = "font-size: 0.85rem; font-weight: bold; min-width: 0; max-width: 100%; white-space: normal; overflow-wrap: anywhere; line-height: 1.25;";
     title.textContent = item.Problema || "Problema";
 
     const status = document.createElement("div");
@@ -7512,8 +7512,9 @@ export async function openAuditDriveModal() {
             const info = document.createElement('div');
             info.style.cssText = "min-width:0; flex:1;";
             const name = document.createElement('div');
-            name.style.cssText = "font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;";
+            name.style.cssText = "font-weight:600; min-width:0; max-width:100%; white-space:normal; overflow-wrap:anywhere; line-height:1.3;";
             name.textContent = file.fileName || 'Archivo sin nombre';
+            name.title = file.fileName || 'Archivo sin nombre';
             const details = document.createElement('div');
             details.style.cssText = "font-size:0.75rem; color:var(--text-disabled);";
             details.textContent = (file.folderPath || '') + ' | ' +
@@ -14152,10 +14153,13 @@ export async function openAssociateExistingProblemModal(vehicle, navOptions = {}
 
             const textDiv = document.createElement("div");
             textDiv.style.cssText = "display:flex; flex-direction:column; min-width:0; flex:1;";
-            textDiv.innerHTML = `
-                <strong style="font-size:0.9rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p.Problema}</strong>
-                <span style="font-size:0.75rem; color:${p.Se_soluciono === 'x' ? '#28a745' : '#dc3545'}; font-weight:600;">${p.Se_soluciono === 'x' ? 'Solucionado' : 'Sin solución'}</span>
-            `;
+            const problemName = document.createElement("strong");
+            problemName.style.cssText = "font-size:0.9rem; min-width:0; max-width:100%; white-space:normal; overflow-wrap:anywhere; line-height:1.25;";
+            problemName.textContent = p.Problema || "Problema";
+            const problemStatus = document.createElement("span");
+            problemStatus.style.cssText = `font-size:0.75rem; color:${p.Se_soluciono === 'x' ? '#28a745' : '#dc3545'}; font-weight:600;`;
+            problemStatus.textContent = p.Se_soluciono === 'x' ? 'Solucionado' : 'Sin solución';
+            textDiv.append(problemName, problemStatus);
             leftDiv.appendChild(textDiv);
 
             const addBtn = document.createElement("button");
