@@ -915,3 +915,40 @@ CI Node.js 22: 105 suites / 1,645 pruebas / 0 fallos. Pages build/deploy: SUCCES
 - Código publicado: `82e2ffe101f96e0ec0e43f801470f36accde8def`. Pruebas añadidas/actualizadas en `22920fdacec0b226c2898787d4bc9b7534120b3b`. No se desplegó Apps Script ni se modificaron ScriptProperties, secretos, hojas, Drive o datos productivos.
 
 **Pendiente:** ejecutar `IndexedDBTransactions.js`, `CatalogChangeFeed.mjs`, `ServiceWorkerCache.js`, sintaxis Node.js y suite integral en GitHub Actions. En Beta comprobar FEEDBACK `GET ?catalogFeed=1`, instalación del Service Worker v29 y comportamiento de IndexedDB en el navegador real.
+
+
+## Continuidad GPSpedia — iteración 2026-11-15 (HEAD 6a534617431d94f06f4a37c972bd3fcf12173de5)
+
+### GP-BETA-08/09 — IndexedDB, catálogo y recursos PWA
+
+**Estado de código: CORREGIDO Y VALIDADO EN CI. Validación Beta/despliegue Apps Script pendiente.**
+
+- Se corrigió la apertura de IndexedDB: timeout y evento `onblocked` ya no descartan el `IDBOpenDBRequest` activo ni permiten abrir solicitudes paralelas. Se conserva una única promesa de apertura, que puede resolverse después de liberar el bloqueo; solo un error definitivo activa backoff.
+- Se eliminó la ruta POST autenticada para el feed público. FEEDBACK expone `GET ?catalogFeed=1&cursor=&limit=` y el frontend consume esa ruta GET; FEEDBACK consulta el endpoint público de lectura del Coordinator. La ruta no requiere secreto de servicio ni identidad de usuario porque no ejecuta escrituras.
+- Service Worker actualizado de caché v28 a v29 para invalidar recursos antiguos. La consola reportada incluía `Timeout local`, texto que no existe en el `auth.js` de la rama recuperada; se registró como indicio de recursos PWA anteriores al código actual.
+- Pruebas añadidas: timeout con apertura tardía, recuperación tras `onblocked` sin segunda solicitud y contrato GET del feed. IndexedDB: 49/49; catálogo: 29/29.
+
+### GP-BETA-10 — autorización central y revalidaciones redundantes
+
+**Estado de código: CORREGIDO Y VALIDADO EN CI.**
+
+- Los routers AUTH, USERS, WRITE, ADMIN y FEEDBACK entregan al Coordinator el token de sesión sin confiar en `payload.userId` como identidad del solicitante. El Coordinator resuelve el usuario desde el índice privado token→usuario y entrega el actor confiable.
+- Los handlers protegidos de AUTH (aceptación de términos, cambio/restablecimiento de contraseña, gestión de usuarios/sesiones, purga de Logs y migración legacy de hashes) consumen el actor central y ya no vuelven a buscar la sesión ni a leer el rol del solicitante desde Users/ActiveSessions.
+- Se conserva la comprobación central de token, expiración, epoch y revocación. No se retiró la autenticación entre servicios ni el control RBAC de cada acción basado en el rol del actor confiable. Logout conserva la identificación del token únicamente para revocarlo/limpiarlo.
+- Se eliminó la revalidación de estado/rol del actor al localizar su fila para actualizar perfil o registrar aceptación de términos; la búsqueda de fila única se conserva como requisito de escritura, no como autenticación.
+- Se actualizaron los fixtures AUTH/USERS y las pruebas para comprobar actor central, protección de la última cuenta Desarrollador y ausencia de consultas duplicadas.
+
+### Validación automatizada
+
+- GitHub Actions `GPSpedia service regression tests`: **106 suites, 1,652 pruebas aprobadas, 0 fallos**; sintaxis JavaScript aprobada.
+- La rama base `GPSpedia2.2.5` permanece en `d9acc68d889985c2e2f42fe3a02e502efc86ead1` y no fue modificada.
+- La construcción/despliegue de GitHub Pages correspondiente al HEAD `6a534617431d94f06f4a37c972bd3fcf12173de5` todavía estaba en curso al registrar este checkpoint.
+- No se desplegó Apps Script ni se cambiaron ScriptProperties, secretos, permisos, hojas, Drive o datos productivos. La ruta GET FEEDBACK y la instalación efectiva del Service Worker v29 requieren validación en Beta.
+
+### Pendiente inmediato
+
+1. Validar en Beta la consulta FEEDBACK `GET ?catalogFeed=1` y la lectura pública del Coordinator con los deployments actuales.
+2. Confirmar en navegador Android/PWA que se instala el Service Worker v29 y desaparece el código antiguo que emitía `Timeout local`.
+3. Continuar con las tareas de interfaz pendientes: estandarización global de controles, modal Desarrollador compacto con navegación horizontal, consola única de 50% de altura y confirmaciones por comandos, ayudas informativas, monitor Drive/alerta al 80%, retiro de Legacy y telemetría de tráfico global.
+
+**Commits de implementación y pruebas de esta iteración:** `82e2ffe101f96e0ec0e43f801470f36accde8def`, `22920fdacec0b226c2898787d4bc9b7534120b3b`, `e58f9c1c2e11d9b3f914cef2926a2b34d4171ba0`, `83f8c64831d75465fbe69bc2ec71cad807b53ee6`, `74c384863412bdfc76a7bfd040bf9d2600986424`, `6455230d2533065c069938b4f5f37c55557a6a5c`, `392784aba8821cfaacffe3c16f4bfd1428f22121`, `451edefeb38cd5fd785b405e091e84eb40909101`, `99d9ca8dee54b8a7ab00a209d5adae2270c27a56`, `d12c3364f50c381dfe095d3c7d2298789b387bc0`, `6a534617431d94f06f4a37c972bd3fcf12173de5`.
