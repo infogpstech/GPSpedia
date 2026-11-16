@@ -1271,3 +1271,6 @@ El usuario confirmó que el backlog pendiente también comprende la organizació
 - CI del primer cambio BETA-033 detectó dos pruebas de regresión que exigían explícitamente `window.confirm()` en las acciones del historial de imágenes. La implementación nueva las trasladó a la confirmación central de consola, por lo que esas expectativas quedaron obsoletas.
 - Se actualizaron los contratos `AdminReplacedImagesIntegrity` y `ReplacedImagesLibraryUX` para exigir la confirmación central y rechazar la reintroducción del cuadro nativo.
 - La ejecución de regresión posterior debe confirmar que las dos suites y `DeveloperConsoleConfirmation` aprueban juntas.
+
+
+- CI posterior detectó una tercera expectativa heredada de `window.confirm()` en `DevToolsModalAccessibility.mjs`; se actualizó para verificar la confirmación de consola en la limpieza destructiva. El código JavaScript modificado ya pasó `node --check`; se repite la regresión completa tras alinear el contrato.

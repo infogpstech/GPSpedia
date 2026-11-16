@@ -171,6 +171,6 @@ test('Migrar esquema y selector de limpieza conservan dimensiones compactas', ()
 });
 test('las limpiezas destructivas mantienen confirmación explícita', () => {
     assert.match(ui, /const confirmation = "Se ejecutarán exclusivamente estas operaciones:/);
-    assert.match(ui, /if \(!confirm\(confirmation\)\) return/);
+    assert.match(ui, /if \(!\(await requestDeveloperConsoleConfirmation_\(confirmation\)\)\) return/);
 });
 console.log('DevToolsModalAccessibility: ' + passed + '/' + passed + ' PASS');
