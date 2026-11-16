@@ -729,9 +729,9 @@ run("Inbox crea todas las hojas requeridas faltantes y la inicialización es ide
     const saved=new Map(names.map(name=>[name,spreadsheet.getSheetByName(name)]));
     names.forEach(name=>spreadsheet.sheets.delete(name));
     try {
-        assert.equal(api.handleGetInboxConversations({ ...actor("U1","token-a"),folder:"received" }).status,"success");
+        assert.throws(() => api.handleGetInboxConversations({ ...actor("U1","token-a"),folder:"received" }),/historial contiene un mensaje sin conversación válida/);
         names.forEach(name=>assert.deepEqual(spreadsheet.getSheetByName(name).rows[0],inboxSchemaHeaders[name]));
-        api.handleGetInboxConversations({ ...actor("U1","token-a"),folder:"received" });
+        assert.doesNotThrow(() => api.handleGetInboxConversations({ ...actor("U1","token-a"),folder:"received" }));
     } finally {
         names.forEach(name=>spreadsheet.sheets.delete(name));
         saved.forEach((sheet,name)=>{if(sheet)spreadsheet.sheets.set(name,sheet);});
