@@ -522,6 +522,8 @@ check("Los detalles de corte, tutoriales, Relay y PyS mantienen barras invisible
 check("Todas las barras de formularios usan la iconografía compacta del Inbox sin ampliar sus funciones", () => {
     const toolbar = rich.slice(rich.indexOf("export function createRichTextToolbar("), rich.indexOf("export function refreshRichTextToolbars("));
     assert.match(toolbar, /toolbar\.dataset\.richTextMode = editorMode/);
+    assert.doesNotMatch(toolbar, /dataset\.richTextCompact = "true"/);
+    assert.match(rich, /compact: toolbar\.dataset\.richTextCompact === "true"/);
     assert.match(toolbar, /makeButton\("fa-bold", "Negrita"/);
     assert.match(toolbar, /if \(isFull\)[\s\S]*?fa-italic[\s\S]*?fa-strikethrough/);
     assert.match(toolbar, /if \(hasLists\)[\s\S]*?fa-list-ul[\s\S]*?fa-list-ol/);
