@@ -1287,3 +1287,10 @@ Se creó `Tareas_beta.md` con los IDs BETA-001 a BETA-052, criterios de aceptaci
 - Se confirmó lease específica por acción, mapeo de servicio, actor central, política de escritura y rol Desarrollador.
 - CI run `43783958890`: SUCCESS — 108 suites / 1,662 pruebas / 0 fallos.
 - **Pendiente Beta:** ejecutar la limpieza contra Logs y ActividadUsuario reales y comprobar contadores; no se desplegaron servicios.
+
+
+### Adenda 2026-11-16 — compatibilidad ID/id extendida a VIN y cortes pendientes
+- Se eliminaron dependencias ID-only de registro VIN y recuperación/envío/reintento de cortes pendientes; se usa el contexto común de sesión.
+- Se mantiene la protección de propietario: una operación pendiente no puede cambiar de cuenta.
+- CI run `43784270101`: SUCCESS — 108 suites / 1,663 pruebas / 0 fallos.
+- Pendiente Beta con sesiones heredadas y operaciones reales; no se desplegó AUTH/WRITE.
