@@ -1270,3 +1270,15 @@ Corrección: se conserva y propaga el total real y el indicador de truncamiento;
 Validación: CortesImageReconciliation 28/28, CortesImageReconciliationApply 15/15, CortesImageReconciliationUI 13/13, AdminImageScanCoordinatorContract 1/1 PASS; CI Node.js 22 run 43798680601, 117 suites / 1,760 pruebas / 0 fallos.
 Estado: CORREGIDO LOCALMENTE; validación de Drive/Spreadsheet real diferida a Beta. Sin cambios en datos o servicios externos.
 ==========================================================
+
+==========================================================
+AUDITORÍA — 2026-11-16 — AUD-2026-11-16-02
+Ubicación: JS/Services/Auth.js — handleBenchmarkPasswordKdf_ y doPost; JS/Services/Coordinator.js — coordinatorPolicy_.
+Hallazgo: benchmarkPasswordKdf era una acción protegida de solo lectura fuera de la ruta de lectura compartida. El handler consultaba localmente Users y ActiveSessions para comprobar sesión/rol, duplicando la validación central.
+Impacto: incumplimiento del contrato de actor central y lectura redundante por acción. No se encontró bypass de autorización: el handler sí comprobaba token y rol Desarrollador localmente.
+Severidad: MEDIA (consistencia del modelo de autorización y latencia), sin evidencia de exposición o escritura no autorizada.
+Corrección: clasificar benchmarkPasswordKdf como lectura compartida AUTH; política Coordinator lee SESSION_CONTEXTS y no añade escritura de actividad; el handler consume requireSharedAuthActor_ y no consulta hojas de usuarios/sesiones.
+Validación: PasswordKdfBenchmark 5/5; ActionDispatchContract 12/12; CI Node.js 22 run 43799503142: 118 suites / 1,765 pruebas / 0 fallos.
+Resultado de auditoría del alcance: no se identificaron otros handlers protegidos fuera de la coordinación compartida. Se conservaron las excepciones explícitas de validación de sesión, ping/health, lecturas públicas y suggestYear anónimo con rate limit y sin autoaplicación.
+Estado: CORREGIDO LOCALMENTE; validación de deployments/hojas aisladas pendiente de Beta.
+==========================================================
