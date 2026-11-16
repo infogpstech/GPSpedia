@@ -51,6 +51,8 @@ testCase("persiste y reanuda el preview por cuenta, auditoría, digest y lote co
  assert.ok(ui.includes("offline.clearCortesImageReconciliationState"));
  assert.ok(ui.includes("nextBatchIndex = batchIndex + 1"));
  assert.ok(ui.includes("previous.fileSignature === fileSignature"));
+ assert.ok(ui.includes('aclPolicyVersion: "cortes-acl-link-reader-v1"'));
+ assert.ok(ui.includes("missingReferenceCheckStatus"));
  assert.ok(ui.includes("Simulación parcial guardada"));
  assert.ok(off.includes("export async function saveCortesImageReconciliationState"));
  assert.ok(off.includes("export async function getCortesImageReconciliationState"));
@@ -84,6 +86,7 @@ testCase("el reporte usa texto seguro y no modifica datos productivos",()=>{
  assert.ok(ui.includes('const reconciliationMessage = "Simulación terminada. " + aggregate.counts.matched +'));
  assert.ok(ui.includes('logDeveloperOperation_("[CONCILIACIÓN DRIVE] " + reconciliationMessage'));
  assert.match(admin,/function handlePreviewCortesImageReconciliation_/);
+ assert.match(admin,/Drive\.Permissions\.list/);
  assert.match(admin,/plan\.writePerformed = false/);
  assert.match(api,/'previewCortesImageReconciliation': 'ADMIN'/);
 });
@@ -103,7 +106,17 @@ testCase("la aplicación requiere aprobación visible, confirmación y endpoint 
  assert.ok(ui.includes("report.applyAvailable === true"));
  assert.ok(ui.includes("response.capabilities && response.capabilities.applyApprovedReconciliation === true"));
  assert.ok(ui.includes("auditId, files: batch"));
- assert.ok(ui.includes("confirmed: true, auditId"));
+ assert.ok(ui.includes("confirmed: true, auditId, backupId"));
+ const backupIndex = ui.indexOf('routeActionWithRetry("backupDatabase"');
+ const applyIndex = ui.indexOf('routeActionWithRetry("applyCortesImageReconciliation"');
+ assert.ok(backupIndex >= 0 && backupIndex < applyIndex, "El respaldo debe completarse antes de la aplicación.");
+ assert.ok(ui.includes("Respaldo completo verificado. Aplicando asignaciones"));
+ assert.ok(ui.includes("respaldo completo, verificado y privado"));
+ assert.ok(admin.includes("function verifyImageReconciliationBackup_"));
+ assert.ok(admin.includes("function findMissingCortesDriveReferences_"));
+ assert.ok(admin.includes("function classifyCortesImageAcl_"));
+ assert.ok(ui.includes("Referencias de Cortes sin archivo verificado"));
+ assert.ok(ui.includes("publicityCompliance"));
  assert.ok(ui.includes("applyAvailable: false"));
  assert.ok(admin.includes("entry.cell.getValue()"));
 });
