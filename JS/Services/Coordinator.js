@@ -70,6 +70,7 @@ function coordinatorPolicy_(service, operation) {
             getReplacedImages: { read: ["USERS", "CORTES", "DRIVE", "IMAGE_INVENTORY", "TUTORIAL", "FEEDBACK", "LOGOS"] },
             getDriveStorage: { read: ["USERS", "DRIVE"] },
             getCortesImageFolders: { read: ["USERS", "DRIVE"] },
+            auditIdentifiers: { read: ["USERS", "CORTES", "TUTORIAL", "FEEDBACK", "LOGOS", "RELAY"] },
             auditDriveImagesInCortes: {
                 read: ["USERS", "CORTES", "DRIVE", "IMAGE_INVENTORY", "TUTORIAL", "FEEDBACK", "LOGOS"],
                 write: ["IMAGE_AUDIT_STATE"]
@@ -131,6 +132,7 @@ function coordinatorPolicy_(service, operation) {
             suggestYear: { read: feedbackRead, write: ["CORTES", ...feedbackWrite] },
             addTutorial: { read: [...feedbackRead, "TUTORIAL"], write: [...feedbackWrite, "TUTORIAL"] },
             sendContactForm: { write: ["FEEDBACK"] },
+            notifyDevelopersDriveCritical: { read: feedbackRead, write: ["FEEDBACK"] },
             replyToFeedback: { read: feedbackRead, write: feedbackWrite },
             markAsResolved: { read: feedbackRead, write: feedbackWrite },
             deleteFeedbackItem: { read: feedbackRead, write: feedbackWrite },
