@@ -23,6 +23,9 @@ function inboxConversationSheet_(name, headers, createIfMissing) {
     if (!sheet && !createIfMissing) return null;
     if (!sheet) sheet = ss.insertSheet(name);
     if (sheet.getLastRow() === 0) {
+        if (!createIfMissing) {
+            throw new Error("El esquema de " + name + " está vacío; no se modificó la hoja.");
+        }
         sheet.getRange(1, 1, 1, headers.length).setValues([headers.slice()]);
         SpreadsheetApp.flush();
     }
@@ -42,45 +45,40 @@ function ensureInboxConversationSheets_() {
         ["states", INBOX_CONVERSATION_STATE_SHEET_, INBOX_STATE_HEADERS_],
         ["audit", INBOX_CONVERSATION_AUDIT_SHEET_, INBOX_CONVERSATION_AUDIT_HEADERS_]
     ];
-    // Preflight: valida todos los esquemas existentes antes de crear o inicializar alguno.
-    specs.forEach(([, name, headers]) => {
-        const sheet = ss.getSheetByName(name);
-        if (!sheet || sheet.getLastRow() === 0) return;
-        const width = Number(sheet.getLastColumn()) || 0;
-        const actual = width === headers.length
-            ? sheet.getRange(1, 1, 1, headers.length).getValues()[0]
-                .map(value => String(value === null || value === undefined ? "" : value).trim())
-            : [];
-        if (width !== headers.length || headers.some((header, index) => actual[index] !== header)) {
-            throw new Error("El esquema de " + name + " no coincide con el contrato; no se modificó ninguna hoja.");
-        }
-    });
-    const created = [], initialized = [], result = {};
+    const existing = specs.map(([, name]) => ss.getSheetByName(name));
+    const existingCount = existing.filter(Boolean).length;
+    if (existingCount > 0 && existingCount < specs.length) {
+        throw new Error("El esquema Inbox está incompleto: faltan hojas requeridas; no se crearon ni renombraron hojas.");
+    }
+    if (existingCount === specs.length) {
+        const result = {};
+        specs.forEach(([key, name, headers], index) => {
+            const sheet = existing[index];
+            if (sheet.getLastRow() === 0) {
+                throw new Error("El esquema de " + name + " está vacío; no se modificó la hoja.");
+            }
+            const actualWidth = Number(sheet.getLastColumn()) || 0;
+            const actual = sheet.getRange(1, 1, 1, headers.length).getValues()[0]
+                .map(value => String(value === null || value === undefined ? "" : value).trim());
+            if (actualWidth !== headers.length || headers.some((header, column) => actual[column] !== header)) {
+                throw new Error("El esquema de " + name + " no coincide con el contrato; no se modificó ninguna hoja.");
+            }
+            result[key] = sheet;
+        });
+        return result;
+    }
+
+    const created = [], result = {};
     try {
         specs.forEach(([key, name, headers]) => {
-            let sheet = ss.getSheetByName(name);
-            if (!sheet) {
-                sheet = ss.insertSheet(name);
-                created.push(sheet);
-            }
-            if (sheet.getLastRow() === 0) {
-                sheet.getRange(1, 1, 1, headers.length).setValues([headers.slice()]);
-                initialized.push({ sheet, headers });
-            }
+            const sheet = ss.insertSheet(name);
+            created.push(sheet);
+            sheet.getRange(1, 1, 1, headers.length).setValues([headers.slice()]);
             result[key] = sheet;
         });
         SpreadsheetApp.flush();
         return result;
     } catch (error) {
-        initialized.slice().reverse().forEach(({ sheet, headers }) => {
-            try {
-                const range = sheet.getRange(1, 1, 1, headers.length);
-                if (typeof range.clearContent === "function") range.clearContent();
-                else range.setValues([headers.map(() => "")]);
-            } catch (rollbackError) {
-                console.error("No se pudo revertir el encabezado parcial de " + sheet.getName() + ":", rollbackError);
-            }
-        });
         created.slice().reverse().forEach(sheet => {
             try {
                 if (typeof ss.deleteSheet === "function" && sheet.getLastRow() <= 1) ss.deleteSheet(sheet);
@@ -463,7 +461,15 @@ function handleGetInboxConversations(payload) {
     return withInboxConversationLock_(() => {
         const convSheet = inboxConversationSheet_(INBOX_CONVERSATIONS_SHEET_,INBOX_CONVERSATION_HEADERS_,false);
         const stateSheet = inboxConversationSheet_(INBOX_CONVERSATION_STATE_SHEET_,INBOX_STATE_HEADERS_,false);
-        if (!convSheet && !stateSheet) return {status:"success",data:[],counts:{received:0,unread:0,sent:0,archived:0},total:0,nextCursor:null,hasMore:false,pageSize};
+        if (!convSheet && !stateSheet) {
+            const orphanedSheets = [
+                INBOX_MESSAGES_SHEET_, INBOX_CONVERSATION_FLAGS_SHEET_, INBOX_CONVERSATION_AUDIT_SHEET_
+            ].filter(name => getSpreadsheet().getSheetByName(name));
+            if (orphanedSheets.length) {
+                throw new Error("El esquema Inbox está incompleto: existen hojas dependientes sin conversaciones ni estado.");
+            }
+            return {status:"success",data:[],counts:{received:0,unread:0,sent:0,archived:0},total:0,nextCursor:null,hasMore:false,pageSize};
+        }
         if (!convSheet || !stateSheet) throw new Error("El esquema Inbox está incompleto: faltan las hojas de conversaciones o estado.");
         const conversations = inboxConversationRows_(convSheet,INBOX_CONVERSATION_HEADERS_.length);
         const stateRows = inboxConversationRows_(stateSheet,INBOX_STATE_HEADERS_.length);
@@ -496,10 +502,10 @@ function handleGetInboxConversations(payload) {
                 flagsMap.set(key,row);
             }
         });
-        const summaries = conversations.filter(row => {
-            try { return inboxParticipants_(row).some(user => user.id === actor.id); } catch (_) { return false; }
-        }).map(row => {
-            const participants = inboxParticipants_(row), other = participants.filter(user => user.id !== actor.id);
+        const summaries = conversations.map(row => {
+            const participants = inboxParticipants_(row);
+            if (!participants.some(user => user.id === actor.id)) return null;
+            const other = participants.filter(user => user.id !== actor.id);
             const state = stateMap.get(String(row[0]) + "|" + actor.id) || [];
             const flag = flagsMap.get(String(row[0]) + "|" + actor.id) || [];
             if (inboxFlagIsTrue_(flag[3])) return null;
