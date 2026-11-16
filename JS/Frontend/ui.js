@@ -4822,7 +4822,7 @@ function renderInboxConversationDetail_(options = {}) {
         const own = message.authorId === (getUiSessionContext_() || {}).userId;
         const bubble = inboxCreateNode_("article", "inbox-message-bubble" + (own ? " is-own" : ""));
         const messageBody = inboxCreateNode_("div", "inbox-message-body");
-        messageBody.innerHTML = sanitizeHtmlContent(String(message.body || ""));
+        messageBody.innerHTML = sanitizeHtmlContent(String(message.body || ""), "advanced");
         bubble.append(
             inboxCreateNode_("div", "inbox-message-meta", String(message.authorName || "Usuario") + " · " + inboxFormatDate_(message.createdAt)),
             messageBody
@@ -4846,9 +4846,10 @@ function renderInboxReplyForm_(detail, item) {
     const textarea = inboxCreateNode_("textarea", "inbox-message-input");
     textarea.id = "inbox-reply-body"; textarea.rows = 3; textarea.maxLength = 5000; textarea.required = true;
     textarea.value = String(draft.body || "");
-    const toolbar = createRichTextToolbar(textarea.id);
+    const toolbar = createRichTextToolbar(textarea.id, { forceAdvanced: true });
     toolbar.classList.add("inbox-rich-text-toolbar");
     toolbar.addEventListener("click", () => textarea.dispatchEvent(new Event("input", { bubbles: true })));
+    toolbar.addEventListener("change", () => textarea.dispatchEvent(new Event("input", { bubbles: true })));
     const status = inboxCreateNode_("p", "inbox-form-status");
     status.setAttribute("role", "status"); status.setAttribute("aria-live", "polite");
     const send = inboxCreateNode_("button", "inbox-primary-button", "Enviar mensaje");
@@ -4967,7 +4968,7 @@ async function openInboxNewConversationForm_() {
     body.id = "inbox-new-body"; body.rows = 6; body.maxLength = 5000; body.required = true;
     body.className = "inbox-form-control inbox-message-input";
     body.value = String(draft.body || "");
-    const toolbar = createRichTextToolbar(body.id);
+    const toolbar = createRichTextToolbar(body.id, { forceAdvanced: true });
     toolbar.classList.add("inbox-rich-text-toolbar");
     form.append(bodyLabel, toolbar, body);
     if (draft.templateId) template.value = draft.templateId;
@@ -4984,6 +4985,7 @@ async function openInboxNewConversationForm_() {
     };
     [recipient,subject,category,body].forEach(element => { element.addEventListener("input", persist); element.addEventListener("change", persist); });
     toolbar.addEventListener("click", persist);
+    toolbar.addEventListener("change", persist);
     template.addEventListener("change", () => {
         const selected = templates.find(item => item.id === template.value);
         if (selected && selected.id) { subject.value = selected.subject; body.value = selected.body; category.value = "general"; }
