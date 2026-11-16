@@ -236,3 +236,10 @@ El checkpoint acumulativo anterior se conserva íntegro en `Checkpoint_Archive/c
 ### Ajuste de compatibilidad con pruebas de recuperación — GP-UX-RICH-FORMS-01 — 2026-11-16
 - CI run `43968763296` validó 1,911 pruebas y sintaxis, pero la suite de recuperación de operaciones de `add_cortes` ejecuta el script en un contexto aislado sin imports de módulos. Se protegen las sincronizaciones auxiliares con comprobación de disponibilidad para conservar compatibilidad con ese entorno y no interferir con la recuperación.
 - La sincronización sigue activa en la página real, donde la función sí está importada.
+
+
+### Cierre de implementación y CI — GP-UX-RICH-FORMS-01 — 2026-11-16
+- <escape>CI: PASS</escape> — ejecución `43969111663`, commit `353531e167a9b5055fb503f260f79731b35ffbcc`: 130 suites, 1,941 pruebas aprobadas, 0 fallos.
+- <escape>GitHub Pages: SUCCESS</escape> — ejecución `43969110185`.
+- Las pruebas incluyen contratos de los tres perfiles, sanitización, sincronización de campos, límites, sintaxis de módulos y recuperación de `add_cortes`.
+- Estado: `COMPLETADA CON VALIDACIÓN DIFERIDA A BETA`. Falta inspección visual en dispositivos reales Android/PWA y escritorio para confirmar dimensiones, interacción táctil, selección de texto y presentación de listas. No se afirma que esa inspección física se haya ejecutado.

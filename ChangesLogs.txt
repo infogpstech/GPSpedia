@@ -1376,3 +1376,9 @@ GP-UX-INBOX-RICH-EDITOR-01 — 2026-11-16
 
 ### Compatibilidad del editor con recuperación offline — GP-UX-RICH-FORMS-01 — 2026-11-16
 - Las llamadas de sincronización del editor en `HTML/add_cortes.html` ahora comprueban que el módulo esté disponible antes de ejecutarse, evitando afectar el contexto aislado de pruebas de recuperación.
+
+
+### Cierre validado — GP-UX-RICH-FORMS-01 — 2026-11-16
+- CI `43969111663`: 130 suites / 1,941 pruebas / 0 fallos.
+- GitHub Pages `43969110185`: SUCCESS.
+- Implementación cerrada con validación diferida a Beta para inspección visual real en Android/PWA y escritorio.
