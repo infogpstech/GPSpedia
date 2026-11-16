@@ -367,7 +367,7 @@
         import '../JS/Frontend/lightbox.js';
         import { openYouTubeUploadModal } from '../JS/Frontend/youtubeUpload.js';
         import { createOverlayHistoryManager, overlayHistoryStateKey } from '../JS/Frontend/overlayHistory.js';
-        import { createRichTextToolbar, applyRichTextFormat, applyRichTextColor } from '../JS/Frontend/rich-text.js';
+        import { createRichTextToolbar, applyRichTextFormat, applyRichTextColor, mountRichTextEditors, syncRichTextEditorFromSource } from '../JS/Frontend/rich-text.js';
 
         // add_cortes.html funciona como página independiente y no carga main.js.
         // Inicializa el mismo gestor para que el modal YouTube participe en el historial.
@@ -515,6 +515,7 @@
                         document.getElementById('tipoCorte1').value = data.tipoCorte1 || '';
                         document.getElementById('configRelay1').value = data.configRelay1 || '';
                         document.getElementById('ubicacionCorte1').value = data.ubicacionCorte1 || '';
+                        syncRichTextEditorFromSource(document.getElementById('ubicacionCorte1'));
                         document.getElementById('colorCableCorte1').value = data.colorCableCorte1 || '';
                         if (document.getElementById('silentRegister')) document.getElementById('silentRegister').checked = !!data.silentRegister;
                         if (document.getElementById('testigoMotor')) document.getElementById('testigoMotor').checked = !!data.testigoMotor;
@@ -750,10 +751,11 @@
             richToolbarFields.forEach(targetId => {
                 const toolbar = document.getElementById(`${targetId}-rich-toolbar`);
                 if (toolbar && toolbar.dataset.richMounted !== 'true') {
-                    toolbar.appendChild(createRichTextToolbar(targetId));
+                    toolbar.appendChild(createRichTextToolbar(targetId, { mode: 'basic' }));
                     toolbar.dataset.richMounted = 'true';
                 }
             });
+            mountRichTextEditors(document);
 
             const btnBackToStage1 = document.getElementById('btn-back-to-stage1');
             if (btnBackToStage1) {
@@ -1162,6 +1164,7 @@
                 [document.getElementById('ubicacionCorte1'), document.getElementById('ubicacionCorte2'), document.getElementById('ubicacionCorte3')].filter(Boolean).forEach(textarea => {
                     if (checkbox && checkbox.checked) { if (!textarea.value.includes(testigoHTML)) textarea.value += testigoHTML; }
                     else if (textarea.value.includes(testigoHTML)) textarea.value = textarea.value.replace(testigoHTML, '');
+                    syncRichTextEditorFromSource(textarea);
                 });
                 let base64Veh = null;
                 const vehFileInput = document.getElementById('imagenVehiculo');

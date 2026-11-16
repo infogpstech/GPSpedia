@@ -8,13 +8,19 @@ import { mergeInboxMessagePages } from "../Frontend/inboxPageCache.js";
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const read = path => readFileSync(resolve(ROOT, path), "utf8");
 const ui = read("JS/Frontend/ui.js"), html = read("index.html"), css = read("style.css"), api = read("JS/Frontend/api-config.js"), rich = read("JS/Frontend/rich-text.js");
-const index = read("index.html"), users = read("HTML/users.html");
+const index = read("index.html"), users = read("HTML/users.html"), addCortes = read("HTML/add_cortes.html"), main = read("JS/Frontend/main.js");
 const cases = [];
 function check(name, fn) { cases.push({ name, fn }); }
 
 check("El módulo UI conserva sintaxis ECMAScript válida", () => {
     const result = spawnSync(process.execPath, ["--input-type=module", "--check"], { input: ui, encoding: "utf8" });
     assert.equal(result.status, 0, result.stderr || "ui.js no pasó el análisis sintáctico.");
+});
+check("Los módulos del editor enriquecido y del arranque mantienen sintaxis ECMAScript válida", () => {
+    for (const [name, source] of [["rich-text.js", rich], ["main.js", main]]) {
+        const result = spawnSync(process.execPath, ["--input-type=module", "--check"], { input: source, encoding: "utf8" });
+        assert.equal(result.status, 0, name + " no pasó el análisis sintáctico: " + (result.stderr || ""));
+    }
 });
 check("El Inbox es un diálogo modal accesible", () => {
     for (const section of ["general", "soporte", "contact", "reports", "contributions"]) assert.ok(html.includes('data-inbox-section="' + section + '"'));
@@ -414,6 +420,52 @@ check("Las fuentes nativas ampliadas están permitidas por el sanitizador y disp
         assert.ok(rich.includes('["' + font + '"'));
     }
     assert.match(rich, /const SAFE_FONT_VALUES = new Set\(SAFE_FONTS\.values\(\)\)/);
+});
+
+
+check("Los formularios distinguen editores básicos, editores con listas y el Inbox completo", () => {
+    assert.ok(ui.includes('mode: LIST_RICH_TEXT_FIELDS_.has(String(targetId)) ? "lists" : "basic"'));
+    assert.ok(rich.includes('mode === "basic" && format !== "bold"'));
+    assert.ok(rich.includes('mode === "lists" && !["bold", "ul", "ol"].includes(format)'));
+    assert.ok(ui.includes('createRichTextToolbar(targetId, { forceAdvanced: true, compact: true })'));
+});
+check("Los campos básicos muestran negrita y color sin controles de listas ni tipografía adicional", () => {
+    const toolbar = rich.slice(rich.indexOf("export function createRichTextToolbar("), rich.indexOf("export function refreshRichTextToolbars("));
+    assert.ok(toolbar.includes('makeButton("B", "Negrita"'));
+    assert.ok(toolbar.includes('colorPicker.type = "color"'));
+    assert.ok(main.includes("createRichTextToolbar('contact-message', { mode: 'basic' })"));
+    assert.ok(addCortes.includes("createRichTextToolbar(targetId, { mode: 'basic' })"));
+});
+check("Tutoriales y problemas habilitan listas, marcadores elegibles y listas numeradas", () => {
+    for (const id of ["tut-desc","pys-detalle","pys-solucion","pys-prevenir"]) assert.ok(ui.includes('data-rich-target="' + id + '"') || ui.includes('"' + id + '"'));
+    assert.ok(ui.includes("edit-tutorial-details-textarea"));
+    assert.ok(ui.includes("edit-pys-prev-textarea"));
+    assert.ok(rich.includes('option value="arrow">→ Flecha'));
+    assert.ok(rich.includes('option value="check">✓ Verificación'));
+    assert.ok(rich.includes('makeButton("• Lista", "Lista no ordenada"'));
+    assert.ok(rich.includes('makeButton("1. Lista", "Lista ordenada"'));
+});
+check("Los campos enriquecidos se editan visualmente y sincronizan HTML saneado con el textarea fuente", () => {
+    assert.ok(rich.includes("export function mountRichTextEditors("));
+    assert.ok(rich.includes('editor.setAttribute("contenteditable", "true")'));
+    assert.ok(rich.includes("source.hidden = true"));
+    assert.ok(rich.includes("source.value = sanitizeHtmlContent(editor.innerHTML, mode)"));
+    assert.ok(rich.includes('editor.addEventListener("blur"'));
+    assert.ok(rich.includes('editor.addEventListener("paste"'));
+    assert.ok(rich.includes("truncateRichEditor_(editor, limit)"));
+    assert.ok(rich.includes('source.dispatchEvent(new Event("input", { bubbles: true }))'));
+    assert.ok(rich.includes('form.addEventListener("submit"'));
+});
+check("El sanitizador mantiene listas solo en el modo de tutoriales y problemas y limita el modo básico", () => {
+    assert.ok(rich.includes('mode === "lists"'));
+    assert.ok(rich.includes('new Set(["B", "STRONG", "SPAN", "BR", "P", "DIV", "OL", "UL", "LI"])'));
+    assert.ok(rich.includes('new Set(["B", "STRONG", "SPAN", "BR", "P", "DIV"])'));
+    assert.ok(rich.includes('property === "color"'));
+});
+check("Los cambios programáticos del formulario independiente sincronizan el editor visible", () => {
+    assert.ok(addCortes.includes("mountRichTextEditors(document)"));
+    assert.ok(addCortes.includes("syncRichTextEditorFromSource(textarea)"));
+    assert.ok(css.includes(".rich-text-visual-editor:empty::before"));
 });
 
 let passed = 0;

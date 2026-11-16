@@ -22,7 +22,7 @@ import { thumbnailObjectUrls } from './imageObjectUrlCache.js';
 import { createInboxPageCache, mergeInboxMessagePages } from './inboxPageCache.js';
 import { loadPysData, getCachedPysData, getPysDataFreshness, invalidatePysDataCache } from './pys-data.js';
 import { captureModalViewState, restoreModalViewState, shouldRecordModalTransition, pushModalNavigationContext, popModalNavigationContext } from './modalNavigation.js';
-import { createRichTextToolbar, sanitizeHtmlContent, refreshRichTextToolbars } from './rich-text.js';
+import { createRichTextToolbar, sanitizeHtmlContent, refreshRichTextToolbars, mountRichTextEditors } from './rich-text.js';
 import { renderActivityLogs, renderActivityContributions } from './activityDashboard.js';
 import { getDriveStorageCriticalState } from './driveStorageAlerts.js';
 import { getOrCreateTermsDeviceId, getDeviceTermsAcceptance, saveDeviceTermsAcceptance } from './termsDeviceAcceptance.js';
@@ -79,16 +79,25 @@ async function clearServiceWorkerRuntimeCache_(windowRef, timeoutMs = 5000) {
         }
     });
 }
-export { createRichTextToolbar, sanitizeHtmlContent };
+export { createRichTextToolbar, sanitizeHtmlContent, mountRichTextEditors };
 
+const LIST_RICH_TEXT_FIELDS_ = new Set([
+    "tut-desc", "edit-tutorial-details-textarea",
+    "pys-detalle", "pys-solucion", "pys-prevenir",
+    "edit-pys-desc-textarea", "edit-pys-sol-textarea", "edit-pys-prev-textarea"
+]);
+function createFormRichTextToolbar_(targetId) {
+    return createRichTextToolbar(targetId, { mode: LIST_RICH_TEXT_FIELDS_.has(String(targetId)) ? "lists" : "basic" });
+}
 function mountRichTextToolbars(root) {
     if (!root || typeof root.querySelectorAll !== 'function') return;
     root.querySelectorAll('[data-rich-target]').forEach(container => {
         const targetId = container.getAttribute('data-rich-target');
         if (!targetId || container.dataset.richMounted === 'true') return;
-        container.appendChild(createRichTextToolbar(targetId));
+        container.appendChild(createFormRichTextToolbar_(targetId));
         container.dataset.richMounted = 'true';
     });
+    mountRichTextEditors(root);
 }
 
 const backSvg = '<svg style="width:20px;height:20px;margin-right:5px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
@@ -2799,8 +2808,9 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
         };
         const noteField = document.createElement("div");
         noteField.className = "detail-edit-field detail-edit-field--wide detail-edit-note-field";
-        noteField.append(notaLabel, createRichTextToolbar(notaInput.id), notaInput);
+        noteField.append(notaLabel, createFormRichTextToolbar_(notaInput.id), notaInput);
         cont.appendChild(noteField);
+        mountRichTextEditors(noteField);
     } else if (activeItem.notaImportante) {
         const p = document.createElement("div");
         p.className = "detail-important-note";
@@ -3565,12 +3575,13 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
         editCutsWrapper.appendChild(configLabel);
         editCutsWrapper.appendChild(configSelect);
         editCutsWrapper.appendChild(locLabel);
-        editCutsWrapper.appendChild(createRichTextToolbar(locInput.id));
+        editCutsWrapper.appendChild(createFormRichTextToolbar_(locInput.id));
         editCutsWrapper.appendChild(locInput);
         editCutsWrapper.appendChild(colorLabel);
         editCutsWrapper.appendChild(colorInput);
 
         container.appendChild(editCutsWrapper);
+        mountRichTextEditors(editCutsWrapper);
     } else {
         const contentP = document.createElement('div');
         if (isNoRecomendadoValue(cutData.tipo)) {
@@ -9777,8 +9788,9 @@ export function createAccordionSection(container, title, sec, isOpen = false, da
                 }
             };
             panel.appendChild(label);
-            panel.appendChild(createRichTextToolbar(aperturaTargetId));
+            panel.appendChild(createFormRichTextToolbar_(aperturaTargetId));
             panel.appendChild(textarea);
+            mountRichTextEditors(panel);
 
             const imgContainer = document.createElement('div');
             imgContainer.className = 'image-container-with-feedback';
@@ -9815,10 +9827,9 @@ export function createAccordionSection(container, title, sec, isOpen = false, da
                     }
                 };
                 panel.appendChild(fieldLabel);
-                panel.appendChild(createRichTextToolbar(cableTargetId));
+                panel.appendChild(createFormRichTextToolbar_(cableTargetId));
                 panel.appendChild(textarea);
-
-                const imgContainer = document.createElement('div');
+                mountRichTextEditors(panel); = document.createElement('div');
                 imgContainer.className = 'image-container-with-feedback';
                 imgContainer.style.marginTop = "5px";
                 imgContainer.style.marginBottom = "10px";
@@ -10786,7 +10797,7 @@ export function mostrarDetalleTutorialModal(item, inEditModeTutorial = false) {
         const encontrarInput = addField("Dónde encontrarlo", item.dondeEncontrarlo, { multiline: true });
         const detallesInput = addField("Detalles", item.Detalles || item.Descripcion, { multiline: true });
         detallesInput.id = "edit-tutorial-details-textarea";
-        const detailsToolbar = createRichTextToolbar("edit-tutorial-details-textarea");
+        const detailsToolbar = createFormRichTextToolbar_("edit-tutorial-details-textarea");
         form.insertBefore(detailsToolbar, detallesInput);
 
         const videoLabel = document.createElement("label");
@@ -10817,6 +10828,7 @@ export function mostrarDetalleTutorialModal(item, inEditModeTutorial = false) {
         });
         form.appendChild(uploadVideoBtn);
         cont.appendChild(form);
+        mountRichTextEditors(form);
 
         const saveBtn = controlsContainer.querySelector("#btn-save-tutorial-edit");
         if (saveBtn) {
@@ -12544,6 +12556,7 @@ export function openAddProblemModal(preAssociatedVehicle = null, navOptions = {}
             </div>
             <div class="form-group">
                 <label for="pys-prevenir">Prevención (opcional, máx. 700 caracteres)</label>
+                <div class="rich-editor-toolbar" data-rich-target="pys-prevenir"></div>
                 <textarea id="pys-prevenir" maxlength="700" rows="3" placeholder="Recomendación preventiva..."></textarea>
             </div>
 
@@ -13136,16 +13149,17 @@ export function openPysDetailModal(item,navOptions={},inEditModePys=false){
         form.appendChild(titleInput);
 
         form.appendChild(descLabel);
-        form.appendChild(createRichTextToolbar("edit-pys-desc-textarea"));
+        form.appendChild(createFormRichTextToolbar_("edit-pys-desc-textarea"));
         form.appendChild(descInput);
 
         form.appendChild(solLabel);
-        form.appendChild(createRichTextToolbar("edit-pys-sol-textarea"));
+        form.appendChild(createFormRichTextToolbar_("edit-pys-sol-textarea"));
         form.appendChild(solInput);
 
         form.appendChild(prevLabel);
-        form.appendChild(createRichTextToolbar("edit-pys-prev-textarea"));
+        form.appendChild(createFormRichTextToolbar_("edit-pys-prev-textarea"));
         form.appendChild(prevInput);
+        mountRichTextEditors(form);
 
         form.appendChild(videoLabel);
         form.appendChild(videoInput);

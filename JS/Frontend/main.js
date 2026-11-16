@@ -12,7 +12,7 @@ import * as ui from './ui.js';
 import * as navigation from './navigation.js';
 import './lightbox.js';
 import './clientInteractionPolicy.js';
-import { applyRichTextFormat, applyRichTextColor, createRichTextToolbar } from './rich-text.js';
+import { applyRichTextFormat, applyRichTextColor, createRichTextToolbar, mountRichTextEditors } from './rich-text.js';
 import { decodeSharedVehicleHash, resolveSharedVehicleById } from './share-utils.js';
 import { getCatalogStatusView } from './catalogStatus.js';
 import { createOverlayHistoryManager, selectTopmostOverlay, overlayHistoryStateKey } from './overlayHistory.js';
@@ -96,7 +96,8 @@ async function initializeApp() {
     installCatalogStatusBanner_();
     const contactToolbar = document.getElementById('contact-message-toolbar');
     if (contactToolbar && contactToolbar.dataset.richMounted !== 'true') {
-        contactToolbar.appendChild(createRichTextToolbar('contact-message'));
+        contactToolbar.appendChild(createRichTextToolbar('contact-message', { mode: 'basic' }));
+        mountRichTextEditors(contactToolbar.parentElement || document);
         contactToolbar.dataset.richMounted = 'true';
     }
 

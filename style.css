@@ -5567,3 +5567,23 @@ body.dark-mode #inbox-modal-content .inbox-editor-shell { background:#2b3036; }
         width:25px; min-width:25px; max-width:25px; height:28px; min-height:28px;
     }
 }
+
+
+/* Editores visuales asociados a campos enriquecidos de formularios. */
+.rich-text-visual-editor {
+    display:block; width:100%; min-width:0; box-sizing:border-box; padding:8px;
+    border:1px solid var(--border-color, #ccc); border-radius:4px;
+    color:var(--text-color, #222); background:var(--bg-color, #fff);
+    font:inherit; line-height:1.45; white-space:pre-wrap; overflow-wrap:anywhere; cursor:text;
+}
+.rich-text-visual-editor:empty::before { content:attr(data-placeholder); color:var(--text-muted, #777); pointer-events:none; }
+.rich-text-visual-editor:focus-visible { outline:2px solid var(--accent-color, #007bff); outline-offset:1px; }
+.rich-text-visual-editor[aria-invalid="true"] { border-color:#dc3545; box-shadow:0 0 0 1px rgba(220,53,69,.2); }
+textarea.rich-text-source[hidden] { display:none !important; }
+.rich-text-visual-editor ul[data-gp-marker] { list-style:none; padding-left:1.5em; }
+.rich-text-visual-editor ul[data-gp-marker] > li { position:relative; }
+.rich-text-visual-editor ul[data-gp-marker] > li::before { position:absolute; left:-1.25em; }
+.rich-text-visual-editor ul[data-gp-marker="bullet"] > li::before { content:"•"; }
+.rich-text-visual-editor ul[data-gp-marker="hyphen"] > li::before { content:"-"; }
+.rich-text-visual-editor ul[data-gp-marker="arrow"] > li::before { content:"→"; }
+.rich-text-visual-editor ul[data-gp-marker="check"] > li::before { content:"✓"; }

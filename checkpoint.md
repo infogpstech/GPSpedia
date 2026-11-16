@@ -209,3 +209,13 @@ El checkpoint acumulativo anterior se conserva íntegro en `Checkpoint_Archive/c
 - GitHub Pages run 43960362556: SUCCESS (build y deploy).
 - Commits: 948e615341c9b736d49cfe732dee968f258a5cd0 (implementación y pruebas), f2d2440acfcffe8e2a5437b77ea4f4756052f8c5 (contratos heredados).
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Falta inspección visual real de escritura/formato, menús y anchura en Android/PWA y escritorio. No se modificaron Apps Script, deployments ni datos externos.
+
+
+### Implementación — GP-UX-RICH-FORMS-01 — 2026-11-16
+- Rama autorizada: `GPSpedia2.2.5_work`. HEAD base de esta tarea: `5163bbf2e40f76e62edfb17951e3e3f73cfc36c1`.
+- Alcance: editor visual reutilizable para los textarea que ya disponen de barra enriquecida. Tres perfiles: básico (negrita/color), listas (negrita/color, marcadores y listas ordenadas) y completo (Inbox).
+- Se conserva el textarea original como fuente de datos oculta y sincronizada; el usuario escribe sobre una superficie `contenteditable` renderizada. Se conservan IDs/lecturas `.value`, eventos input/blur, límites, validación de requeridos y saneamiento de pegado.
+- Formularios revisados: cortes y suplementos, edición de detalle/cortes/apertura/alimentación/notas, sugerencias, contacto, tutoriales (campo Detalles) y problemas/soluciones (detalle, solución y prevención). No se añaden controles a inputs de una línea ni a campos tutoriales de texto plano.
+- Se agrega la barra de listas a Prevención PyS durante creación, para igualar la herramienta ya presente durante edición. Inbox permanece completo y aislado.
+- Archivos modificados: `JS/Frontend/rich-text.js`, `JS/Frontend/ui.js`, `JS/Frontend/main.js`, `HTML/add_cortes.html`, `style.css`, `service-worker.js`, `JS/Tests/InboxUi.mjs`, `Auditoría.txt`, `ChangesLogs.txt` y este checkpoint.
+- Estado al publicar: pruebas locales Node.js no disponibles en esta sesión; se incorporan contratos al runner CI. CI/Pages y validación visual Android/PWA quedan pendientes de resultados reales.
