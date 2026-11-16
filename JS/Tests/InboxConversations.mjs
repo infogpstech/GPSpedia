@@ -729,7 +729,7 @@ run("Inbox sin hojas requeridas falla explícitamente y no crea ni modifica hoja
     names.forEach(name => spreadsheet.sheets.delete(name));
     try {
         assert.throws(() => api.handleGetInboxConversations({ ...actor("U1","token-a"), folder:"received" }),
-            /no se crearán ni renombrarán hojas automáticamente/);
+            /no se crearán ni renombrarán hojas automáticamente/i);
         names.forEach(name => assert.equal(spreadsheet.getSheetByName(name),null));
     } finally {
         saved.forEach((sheet,name) => { if (sheet) spreadsheet.sheets.set(name,sheet); });
