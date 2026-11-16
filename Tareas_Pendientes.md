@@ -87,6 +87,10 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 - Mantener el cambio en frontend; no alterar Apps Script, hojas ni datos almacenados si la información agregada existente es suficiente.
 - Como el backend solo entrega conteos agregados y no IDs de vehículos por aportador, al consolidar alias se conserva el mayor conteo de vehículos observado para evitar sumar duplicados; validar esta limitación frente a los datos de Beta.
 - Validación local: ActivityDashboardContributions 9/9; regresión global 127 suites / 1,876 pruebas / 0 fallos. Revisar conteo de vehículos compartidos y muestras históricas en Beta.
+- Extensión solicitada: retirar cualquier contenido entre paréntesis de los nombres (p. ej. `(apert)`, `(corte)`) y consolidar el mismo técnico en una única aportación.
+- Normalizar variantes de `Comunidad de técnicos`, incluyendo `Comunidad Internacional de técnicos`, a un solo nombre canónico.
+- Los espacios de técnico vacíos en slots con tipo de corte registrado se contabilizan como `Comunidad de técnicos`; ajuste mínimo del agregador `buildCutContributionSummary_` en `JS/Services/feedback.js`, sin cambiar el contrato de respuesta ni persistir modificaciones.
+- Validación local ampliada: ActivityDashboardContributions 14/14; ServiceWorkerCache 9/9; OfflineBrandAssets 4/4; regresión global 127 suites / 1,881 pruebas / 0 fallos. Validación de datos históricos y conteos en Beta pendiente.
 
 ## Orden general de ejecución
 
