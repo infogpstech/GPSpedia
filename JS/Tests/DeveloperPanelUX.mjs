@@ -9,7 +9,8 @@ const panel=html.slice(html.indexOf('id="dev-panel-database"'),html.indexOf('id=
 let passed=0;function testCase(name,fn){fn();passed++;console.log("PASS "+name);}
 testCase("respaldos, restauración y base de datos comparten una sola pestaña",()=>{
  assert.ok(html.includes('id="dev-tab-database"'));
- assert.ok(panel.includes("Respaldos y restauración"));
+ assert.ok(panel.includes("Respaldos"));
+ assert.ok(panel.includes("Datos y respaldos"));
  assert.ok(panel.includes("Migración de VIN e idempotencia"));
  assert.ok(panel.includes("Organización de registros"));
  assert.ok(panel.includes("Limpieza de registros"));

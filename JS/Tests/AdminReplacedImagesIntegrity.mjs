@@ -997,7 +997,8 @@ check("El escaneo y el guardado del inventario no mueven archivos automáticamen
     assert.ok(ui.includes("getCursorPositionSignature"));
     assert.ok(ui.includes("audit-service-version"));
     assert.ok(ui.includes("Miniatura cargada en la sesión autorizada actual"));
-    assert.ok(html.includes("La lista detallada muestra únicamente imágenes"));
+    assert.ok(html.includes("La lista muestra imágenes históricas y sin uso detectado."));
+    assert.ok(html.includes("dev-help-audit-categories"));
     assert.ok(ui.includes("reconciliationUrl"));
 });
 check("ADMIN exige confirmación y correlación de operación antes de mover imágenes",()=>{

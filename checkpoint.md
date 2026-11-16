@@ -1317,3 +1317,7 @@ El usuario confirmó que el backlog pendiente también comprende la organizació
 
 
 - Ajuste preventivo de BETA-035: la prueba de ayudas contextuales consulta `contextual-help.css` para validar el foco visible (la regla compartida no está en `style.css`); las reglas de distribución propias del panel se verifican en `style.css`.
+
+
+### Contratos de UX actualizados — BETA-035
+- CI detectó expectativas textuales previas en `DeveloperPanelUX.mjs` y `AdminReplacedImagesIntegrity.mjs`. Se alinearon con los nombres compactos y la descripción resumida de categorías; la explicación completa sigue disponible en la ayuda contextual accesible.
