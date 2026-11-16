@@ -100,15 +100,20 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 - El render detecta cambios de IDs/orden/timestamps, no solo cambios en la cantidad de elementos; se actualiza incluso cuando el carrusel ya tiene 20 elementos.
 
 ### GP-UX-BRAND-01 — Encabezado del detalle de cortes
-**Prioridad: P2 · Estado: EN PROGRESO (revisión contra rama base solicitada el 2026-11-16).**
+**Prioridad: P2 · Estado: IMPLEMENTADA Y VALIDADA AUTOMÁTICAMENTE; aceptación visual Beta pendiente.**
 
 - Mantener el nombre del modelo a la derecha del logo mientras su ancho natural quepa en el espacio disponible del modal.
 - Mover el nombre debajo del logo únicamente cuando su ancho natural, sumado al logo y al espacio entre ambos, exceda el ancho interno del modal; al apilarlo debe poder envolver texto sin desbordarse.
 - Restaurar el tamaño de logo de marca de la rama base protegida `GPSpedia2.2.5`: altura de 48 px en escritorio y 38 px hasta 600 px; no limitar adicionalmente su ancho con máximos que reduzcan logos panorámicos.
 - Validar con marcas/logos panorámicos y cuadrados, modelos cortos y largos, resize del modal y viewport móvil/escritorio.
 
+**Cierre técnico 2026-11-16:** comparación directa con `GPSpedia2.2.5` confirmó las dimensiones originales del logo: 48 px en escritorio y 38 px hasta 600 px. Se eliminó el límite adicional de 140 px que comprimía logos panorámicos en la rama de trabajo. El nombre del modelo se mantiene a la derecha y solo se apila cuando la suma del ancho natural del modelo, logo y separación supera el ancho interno del contenedor; `ResizeObserver` recalcula el ajuste al cambiar el modal o su contenido.
+
+**Validación:** CutDetailModalLayout 9/9; regresión global 127 suites, 1,869 pruebas aprobadas, 0 fallos. La comparación de CSS se hizo contra la rama base protegida, sin modificarla.
+
+
 ### GP-PWA-BRAND-01 — Logo local, Splash y favicon transparente
-**Prioridad: P1 · Estado: PENDIENTE.**
+**Prioridad: P1 · Estado: IMPLEMENTADA Y VALIDADA AUTOMÁTICAMENTE; aceptación offline en dispositivos Beta pendiente.**
 
 - Sustituir las referencias remotas del logo principal del encabezado por el recurso oficial local para que se muestre sin conexión.
 - Mantener el logo de tema oscuro en el Splash cuando el tema oscuro esté activo; el recurso debe estar incluido en el App Shell offline.
@@ -116,6 +121,11 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 - Cambiar el favicon remoto por el PNG oficial transparente, sin fondo blanco; verificar el canal alfa real del archivo.
 - Incluir los recursos de marca necesarios en la precarga esencial del Service Worker y aumentar la versión del caché para invalidar el App Shell anterior.
 - No alterar los iconos PWA/manifest ni el diseño del login fuera del alcance solicitado.
+
+**Cierre técnico 2026-11-16:** encabezado y Splash de tema claro usan el recurso oficial local `Images/icon-v3-512x512.png`; Splash y encabezado conservan el logo oscuro cuando el tema oscuro está activo. El favicon apunta al mismo PNG local y la prueba inspecciona su IHDR para exigir canal alfa (PNG RGBA/grayscale-alpha), sin fondo opaco. El Service Worker pasó a `gpsepedia-cache-v33` y precarga ambos logos.
+
+**Validación:** OfflineBrandAssets 4/4; ServiceWorkerCache 9/9; regresión global 127 suites, 1,869 pruebas aprobadas, 0 fallos. La comprobación en navegador real sin conexión y la visualización del favicon quedan para Beta.
+
 
 ### P2 — Pestaña de aportes en Panel de Actividad
 **Estado local: COMPLETADO.**
