@@ -1490,3 +1490,7 @@ AUDITORÍA COMPLEMENTARIA — 2026-11-16 — AUD-2026-11-16-06
 ### Rectificación de prueba — AUD-2026-11-16-03
 - La primera CI posterior a la corrección visual ejecutó 104 suites: 1,572 pruebas aprobaron y falló la suite CutDetailModalLayout únicamente por un patrón de prueba que no admitía el espacio presente en `@media (max-width: 560px)`.
 - Se ajustó el patrón para tolerar espacios CSS. El fallo no indicó un defecto de layout; la ejecución posterior debe confirmar la suite completa.
+
+
+### Ajuste de separación vertical del FAB — GP-UX-INBOX-FAB-01
+- Se mantiene el anclaje inferior con offset de 64 px más el área segura del dispositivo, para dejar margen suficiente sobre la fila de paginación. El ancho y alto fijos de 46 px y la exclusión de la rejilla no cambian.

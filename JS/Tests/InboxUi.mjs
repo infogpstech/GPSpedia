@@ -176,7 +176,7 @@ check("Nuevo mensaje es un botón flotante cuadrado, separado de la rejilla y de
     assert.match(css, /button:not\(\.inbox-floating-new-message\)/);
     assert.match(css, /button\.inbox-floating-new-message\s*\{[\s\S]*?position:absolute[\s\S]*?right:14px[\s\S]*?width:46px[\s\S]*?height:46px[\s\S]*?border-radius:12px/);
     assert.match(css, /button\.inbox-floating-new-message span\s*\{\s*display:none/);
-    assert.match(css, /bottom:calc\(48px \+ env\(safe-area-inset-bottom, 0px\)\)/);
+    assert.match(css, /bottom:calc\(64px \+ env\(safe-area-inset-bottom, 0px\)\)/);
     assert.match(html, /id="inbox-page-next"/);
 });
 check("La lista y los mensajes existentes permanecen visibles durante la actualización", () => {

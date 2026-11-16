@@ -5120,7 +5120,7 @@ body.dark-mode #login-modal #login-error.login-session-ended {
 #inbox-modal-content .inbox-folder-nav button.inbox-floating-new-message {
     position:absolute;
     right:14px;
-    bottom:calc(48px + env(safe-area-inset-bottom, 0px));
+    bottom:calc(64px + env(safe-area-inset-bottom, 0px));
     z-index:7;
     display:inline-flex;
     flex:0 0 46px;

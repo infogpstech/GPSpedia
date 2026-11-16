@@ -96,3 +96,6 @@ El checkpoint acumulativo anterior se conserva íntegro en `Checkpoint_Archive/c
 ### Ajuste de prueba posterior a CI — 2026-11-16
 - CI run 43923520450: 104 suites; 1,572 pruebas aprobaron; una suite falló por una expresión de CutDetailModalLayout que no toleraba el espacio en `max-width: 560px`.
 - Se corrigió el patrón de prueba para admitir espacios CSS sin alterar código visual. Reejecución de CI pendiente.
+
+
+- Ajuste final de posición FAB: offset inferior de 64 px más `safe-area-inset-bottom`, conservando el botón cuadrado de 46 px y evitando superponer la fila de paginación.

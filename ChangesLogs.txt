@@ -1260,3 +1260,7 @@ ADENDA DE PRUEBAS — 2026-11-16
 - CI run 43923520450 ejecutó la regresión de servicios: 1,572 pruebas aprobaron y falló únicamente la suite CutDetailModalLayout por una expresión que exigía el formato exacto `max-width:560px`, mientras la hoja usa `max-width: 560px`.
 - Se flexibiliza la expresión de prueba para tolerar espacios alrededor de los valores CSS; no se modifica el comportamiento visual ni los estilos funcionales.
 - Se relanza la regresión con esta corrección puntual.
+
+
+ADENDA DE POSICIÓN FINAL — GP-UX-INBOX-FAB-01
+- Se conserva el margen vertical de 64 px sobre el borde inferior del modal, ahora con safe-area incluida en el offset; el botón cuadrado de 46 px queda alineado a la derecha por encima de la navegación/paginación.
