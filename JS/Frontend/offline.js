@@ -13,14 +13,10 @@ const DB_VERSION = 4; // Añade persistencia local del inventario administrativo
 let dbPromise = null;
 let dbRetryAfter = 0;
 let dbRetryError = null;
-let dbBlockedPromise = null;
-let dbBlockedError = null;
-let rejectDbBlocked = null;
 const DB_OPEN_RETRY_DELAY_MS = 15000;
 const DB_OPEN_TIMEOUT_MS = 10000;
 
-function waitForDatabaseOpen_(openingPromise, blockedPromise, options = {}) {
-    if (dbBlockedError) return Promise.reject(dbBlockedError);
+function waitForDatabaseOpen_(openingPromise, options = {}) {
     const requestedTimeout = Number(options && options.timeoutMs);
     const timeoutMs = Number.isFinite(requestedTimeout) && requestedTimeout > 0
         ? Math.min(30000, Math.max(100, Math.round(requestedTimeout))) : DB_OPEN_TIMEOUT_MS;
@@ -33,30 +29,25 @@ function waitForDatabaseOpen_(openingPromise, blockedPromise, options = {}) {
             reject(error);
         }, timeoutMs);
     });
-    const candidates = [openingPromise, timeoutPromise];
-    if (blockedPromise) candidates.push(blockedPromise);
-    return Promise.race(candidates).finally(() => { if (timeoutId !== null) clearTimeout(timeoutId); });
+    // "blocked" no es un fallo definitivo: la solicitud sigue activa y puede
+    // resolverse cuando otra pestaña cierre la conexión que impide la migración.
+    return Promise.race([openingPromise, timeoutPromise])
+        .finally(() => { if (timeoutId !== null) clearTimeout(timeoutId); });
 }
 
 /** Mantiene una sola apertura pendiente incluso si el consumidor agota su espera. */
 export async function initDB(options = {}) {
     const silent = options && options.silent === true;
-    if (dbPromise) return waitForDatabaseOpen_(dbPromise, dbBlockedPromise, options);
+    if (dbPromise) return waitForDatabaseOpen_(dbPromise, options);
     if (Date.now() < dbRetryAfter) return Promise.reject(dbRetryError || new Error('IndexedDB no está disponible temporalmente.'));
 
     let openingPromise;
-    const blockedPromise = new Promise((resolve, reject) => { rejectDbBlocked = reject; });
-    blockedPromise.catch(() => {});
-    dbBlockedPromise = blockedPromise;
     openingPromise = new Promise((resolve, reject) => {
         const fail = error => {
             const failure = new Error(error && error.message ? error.message : 'IndexedDB no pudo inicializarse.');
             failure.code = 'IDB_UNAVAILABLE';
             if (error && error.name) failure.name = error.name;
             if (dbPromise === openingPromise) dbPromise = null;
-            dbBlockedError = null;
-            dbBlockedPromise = null;
-            rejectDbBlocked = null;
             dbRetryError = failure;
             dbRetryAfter = Date.now() + DB_OPEN_RETRY_DELAY_MS;
             if (!silent) console.warn('IndexedDB no está disponible temporalmente; se reintentará más adelante:', failure.message);
@@ -66,13 +57,11 @@ export async function initDB(options = {}) {
             if (typeof indexedDB === 'undefined') throw new Error('IndexedDB no está disponible.');
             const request = indexedDB.open(DB_NAME, DB_VERSION);
             request.onerror = event => fail(event && event.target && event.target.error || request.error || new Error('IndexedDB open failed.'));
+            let wasBlocked = false;
             request.onblocked = () => {
-                if (dbBlockedError) return;
-                dbBlockedError = new Error('La actualización de IndexedDB está bloqueada por otra pestaña. Se conservará la apertura pendiente y se reutilizará cuando se libere.');
-                dbBlockedError.code = 'IDB_UNAVAILABLE';
-                dbBlockedError.name = 'IndexedDBBlockedError';
-                if (!silent) console.warn(dbBlockedError.message);
-                if (rejectDbBlocked) rejectDbBlocked(dbBlockedError);
+                if (wasBlocked) return;
+                wasBlocked = true;
+                if (!silent) console.warn('IndexedDB espera que otra pestaña cierre su conexión; se mantiene la misma solicitud de apertura.');
             };
             request.onupgradeneeded = event => {
                 const db = event.target.result;
@@ -92,9 +81,6 @@ export async function initDB(options = {}) {
                 };
                 dbRetryAfter = 0;
                 dbRetryError = null;
-                dbBlockedError = null;
-                dbBlockedPromise = null;
-                rejectDbBlocked = null;
                 dbPromise = readyPromise;
                 resolve(database);
             };
@@ -102,7 +88,7 @@ export async function initDB(options = {}) {
     });
     dbPromise = openingPromise;
     openingPromise.catch(() => { if (dbPromise === openingPromise) dbPromise = null; });
-    return waitForDatabaseOpen_(openingPromise, blockedPromise, options);
+    return waitForDatabaseOpen_(openingPromise, options);
 }
 /**
  * Ejecuta una operación y solo confirma el resultado después de que finalice

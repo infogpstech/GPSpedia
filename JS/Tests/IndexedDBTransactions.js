@@ -85,9 +85,9 @@ async function runIndexedDBTransactionTests() {
 
     const blockedHarness = createIndexedDBHarness({ blocked: true });
     const blockedOffline = await freshOffline(blockedHarness, 'blocked');
-    await testAsync('onblocked aplica backoff y evita reabrir IndexedDB en cada operación', async () => {
-        await assert.rejects(blockedOffline.initDB(), /bloqueada/);
-        await assert.rejects(blockedOffline.initDB(), /bloqueada/);
+    await testAsync('onblocked mantiene la solicitud activa, devuelve timeout acotado y no duplica aperturas', async () => {
+        await assert.rejects(blockedOffline.initDB({ timeoutMs: 100 }), /apertura de IndexedDB sigue pendiente/);
+        await assert.rejects(blockedOffline.initDB({ timeoutMs: 100 }), /apertura de IndexedDB sigue pendiente/);
         assert.equal(blockedHarness.openCount, 1);
     });
     const delayedHarness = createIndexedDBHarness({ openDelayMs: 125 });
@@ -98,12 +98,12 @@ async function runIndexedDBTransactionTests() {
         assert.ok(await delayedOffline.initDB({ timeoutMs: 100 }));
         assert.equal(delayedHarness.openCount, 1);
     });
-    const blockedRecoveryHarness = createIndexedDBHarness({ blocked: true, blockedThenSuccess: true, blockedDelay: 10 });
+    const blockedRecoveryHarness = createIndexedDBHarness({ blocked: true, blockedThenSuccess: true, blockedDelay: 150 });
     const blockedRecoveryOffline = await freshOffline(blockedRecoveryHarness, 'blocked-recovery');
-    await testAsync('una apertura bloqueada se reutiliza cuando la pestaña anterior libera la base', async () => {
-        await assert.rejects(blockedRecoveryOffline.initDB(), /bloqueada por otra pestaña/);
-        await new Promise(resolve => setTimeout(resolve, 20));
-        assert.ok(await blockedRecoveryOffline.initDB());
+    await testAsync('la misma apertura bloqueada se recupera después del timeout al liberar la pestaña anterior', async () => {
+        await assert.rejects(blockedRecoveryOffline.initDB({ timeoutMs: 100 }), /apertura de IndexedDB sigue pendiente/);
+        await new Promise(resolve => setTimeout(resolve, 70));
+        assert.ok(await blockedRecoveryOffline.initDB({ timeoutMs: 100 }));
         assert.equal(blockedRecoveryHarness.openCount, 1);
     });
 

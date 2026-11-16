@@ -852,3 +852,27 @@ No se desplegaron Apps Script, no se cambiaron ScriptProperties y no se alteraro
 - GitHub Actions: **106 suites, 1,653 pruebas aprobadas, 0 fallos**. GitHub Pages: construcción/despliegue completado con éxito para este HEAD.
 
 **Pendiente de esta solicitud:** tráfico global agregado entre todas las plataformas (el gráfico actual sigue siendo local al navegador); centralización absoluta de todos los mensajes de acciones en la consola; confirmaciones interactivas y/n en la terminal; ayudas informativas para todas las descripciones; estandarización global de botones/campos/selectores y formato descriptivo sincronizado entre todos los usuarios. Estas tareas quedan abiertas y no se marcan como terminadas.
+
+
+---
+
+## Corrección de apertura bloqueada de IndexedDB — 2026-11-15
+
+**Rama comprobada:** `GPSpedia2.2.5_work`  
+**HEAD anterior:** `c53d651de651074a8356fa5c51b15d8543c7a861`
+
+### Hallazgo y corrección
+La auditoría confirmó que `IDBOpenDBRequest.onblocked` no significa que la apertura haya fallado: el navegador conserva la solicitud pendiente y puede completar `onsuccess` cuando otra pestaña cierre su conexión. La implementación anterior rechazaba una promesa auxiliar al recibir `onblocked`; como esa promesa participaba en cada `Promise.race`, los consumidores posteriores fallaban inmediatamente aunque la solicitud original siguiera viva.
+
+Se retiró ese rechazo anticipado. Ahora cada consumidor tiene un timeout acotado, pero todos reutilizan la misma solicitud de apertura. Un timeout no cancela ni duplica la apertura; si la pestaña bloqueadora libera la base, la solicitud original se resuelve y las siguientes operaciones pueden continuar.
+
+### Archivos
+- `JS/Frontend/offline.js`: eliminación del rechazo artificial por `onblocked`; conservación del timeout y de la apertura única.
+- `JS/Tests/IndexedDBTransactions.js`: pruebas para timeout repetido sin abrir solicitudes paralelas y recuperación de la misma solicitud después de liberar la pestaña bloqueadora.
+
+### Validación
+Las pruebas automatizadas se actualizaron, pero su ejecución en GitHub Actions queda pendiente de la ejecución asociada a este commit. No se realizó despliegue de Apps Script ni se modificaron datos productivos.
+
+### Diagnóstico adicional de los errores Beta
+En el código de esta rama, el historial local ya usa operaciones silenciosas ante fallos de IndexedDB y `getCatalogChanges` realiza un GET directo. El FEEDBACK actual consulta el feed público del Coordinator mediante GET; el `doGet` actual del Coordinator atiende ese feed sin autenticación de servicio y solo expone eventos de catálogo ya publicados. Por tanto, la traza Beta que muestra `routeAction` para `getCatalogChanges` y el mensaje de autorización del Coordinator no coincide con el flujo de esta revisión. Es evidencia de un cliente o despliegue Apps Script desactualizado/mal apuntado; debe verificarse contra las versiones publicadas antes de atribuirlo al código de esta rama. No se modificaron secretos ni se retiraron controles del Coordinator.
+
