@@ -791,7 +791,9 @@ export async function checkSession() {
     user = latestSession;
     const localExpiration = getLocalSessionExpiry(user);
     if (localExpiration) {
-        endSessionForReauthentication_(user);
+        logout(localExpiration === 'absolute_expiration'
+            ? 'Tu sesión alcanzó su vigencia máxima. Inicia sesión nuevamente.'
+            : 'Tu sesión expiró por inactividad. Inicia sesión nuevamente.', user);
         return;
     }
     if (!isCurrentSession(user)) return;

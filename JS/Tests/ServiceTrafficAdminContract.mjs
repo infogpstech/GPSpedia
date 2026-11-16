@@ -36,7 +36,7 @@ assert.match(html,/Tráfico global coordinado/);
 assert.match(html,/id="service-traffic-chart"/);
 assert.match(html,/Actividad de este navegador/);
 assert.match(html,/No representa todas las solicitudes HTTP/);
-assert.match(ui,/routeActionWithRetry\("getServiceTraffic"/);
+assert.match(ui,/routeActionWithRetry\("getServiceTraffic",\s*getSessionPayload_\(\)/);
 assert.match(ui,/lastGlobalServiceTrafficFetchAt < 60000/);
 assert.match(ui,/renderGlobalServiceTrafficChart_/);
 assert.match(ui,/getServiceMetricsSnapshot\(\)/);

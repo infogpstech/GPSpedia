@@ -17,7 +17,8 @@ check("Compartir permanece visible para todos los roles con sesión",()=>{
  const start=ui.indexOf("// Botón Compartir"),end=ui.indexOf("// Imprimir ficha técnica",start);
  assert.ok(start>=0&&end>start);
  const block=ui.slice(start,end);
- assert.match(block,/headerDiv\.appendChild\(shareBtn\)/);
+ assert.match(block,/headerActions\.appendChild\(shareBtn\)/);
+  assert.match(ui,/headerDiv\.appendChild\(headerActions\)/);
  assert.doesNotMatch(block,/if\s*\(canPrintOrEditVehicle\)|if\s*\(userRole/);
 });
 check("Imprimir y editar detalles se limitan a Supervisor, Jefe y Desarrollador",()=>{

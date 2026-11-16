@@ -91,7 +91,7 @@ async function fetchAndCache_(request) {
 function offlineNavigationFallback_(request) {
  return caches.match(request, { ignoreSearch: true }).then(cached => {
   if (cached) return cached;
-  return caches.match(new URL('./index.html', self.location.href).href);
+  return caches.match('./index.html');
  });
 }
 

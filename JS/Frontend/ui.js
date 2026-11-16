@@ -5504,7 +5504,7 @@ function initAdminPanelListeners() {
         globalServiceTrafficError = null;
         renderGlobalServiceTrafficChart_();
         try {
-            const result = await routeActionWithRetry("getServiceTraffic", {}, { timeoutMs: 15000, maxAttempts: 2 });
+            const result = await routeActionWithRetry("getServiceTraffic", getSessionPayload_(), { timeoutMs: 15000, maxAttempts: 2 });
             if (!isAdminPanelCurrent_()) return;
             if (!result || result.status !== "success" || result.scope !== "coordinator_protected_operations") {
                 throw new Error(result && result.message ? result.message : "Respuesta de telemetría no válida.");
