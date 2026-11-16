@@ -1061,3 +1061,12 @@ HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
 - service-worker.js: versión gpsepedia-cache-v35 e inclusión de activityDashboard.js en el App Shell; JS/Tests/ServiceWorkerCache.js actualizado.
 - Sin cambios en servicios Apps Script, hojas, datos persistentes ni backend.
 ================================================================================
+
+
+VALIDACIÓN LOCAL POSTERIOR — GP-UX-INBOX-03 / GP-DASH-ATTR-01
+- GitHub Actions Node.js 22: SUCCESS; 127 suites, 1,876 pruebas aprobadas, 0 fallos (run 43874427811).
+- InboxUi: 35/35 PASS.
+- ActivityDashboardContributions: 9/9 PASS.
+- ServiceWorkerCache: 9/9 PASS.
+- GitHub Pages build/deployment: SUCCESS (run 43874428208).
+- Las validaciones visuales en PWA móvil y la revisión de conteos agregados con datos Beta quedan diferidas; no se ejecutó deployment Apps Script ni se modificaron datos externos.
