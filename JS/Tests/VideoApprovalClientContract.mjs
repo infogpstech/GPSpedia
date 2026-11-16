@@ -22,13 +22,17 @@ test("roles de aprobación y edición no se envían como autoridad del navegador
  assert.doesNotMatch(approve,/routeAction\("approveVideo", \{[^}]*userRole/);
  assert.doesNotMatch(reject,/routeAction\("rejectVideo", \{[^}]*userRole/);
 });
-test("YouTube usa ID/SessionToken canónicos y valida sesión antes de subir",()=>{
+test("YouTube usa ID/SessionToken canónicos sin prevalidación de red por acción",()=>{
  assert.match(upload,/userSnapshot\s*&&\s*userSnapshot\.ID/);
  assert.match(upload,/userSnapshot\s*&&\s*userSnapshot\.SessionToken/);
  assert.doesNotMatch(upload,/currentUser\s*&&\s*currentUser\.id\b/);
- const validate=upload.indexOf('routeAction("validateSession", { userId, sessionToken })');
+ assert.doesNotMatch(upload,/routeAction\(["']validateSession["']/);
+ const lookup=upload.indexOf('routeAction("getVideoApprovalByOperation"');
  const init=upload.indexOf('routeAction("initYouTubeUpload"'), submit=upload.indexOf('routeAction("submitVideoForApproval"');
- assert.ok(validate>=0&&init>validate&&submit>init);
+ assert.ok(lookup>=0&&init>lookup&&submit>init);
+ assert.match(feedback,/initYouTubeUpload: null/);
+ assert.match(feedback,/getVideoApprovalByOperation: null/);
+ assert.match(feedback,/submitVideoForApproval: null/);
 });
 test("opVideoId y videoId real permanecen separados",()=>{
  assert.match(upload,/let opVideoId = operationContext\.opVideoId/);
