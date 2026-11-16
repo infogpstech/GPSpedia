@@ -179,9 +179,8 @@
 <button id="inbox-conversation-refresh" class="inbox-secondary-button inbox-icon-action" type="button" aria-label="Actualizar bandeja" title="Actualizar"><i class="fa-solid fa-rotate" aria-hidden="true"></i></button>
             </div>
         </header>
-        <nav id="inbox-view-tabs" class="inbox-view-tabs" aria-label="Vistas de bandeja" hidden>
-            <button type="button" data-inbox-view="conversations" aria-pressed="true">Conversaciones</button>
-            <button type="button" id="inbox-requests-tab" data-inbox-view="requests" aria-pressed="false" hidden>Solicitudes</button>
+        <nav id="inbox-view-tabs" class="inbox-view-tabs" aria-label="Acciones de bandeja">
+            <button type="button" id="inbox-new-message" class="inbox-primary-button inbox-new-message-action" aria-label="Nuevo mensaje" title="Nuevo mensaje"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i><span>Nuevo mensaje</span></button>
         </nav>
         <div id="inbox-workspace" class="inbox-workspace">
           <nav id="inbox-section-nav" class="inbox-section-nav" aria-label="Carpetas de la bandeja">
@@ -198,7 +197,6 @@
                     <button type="button" data-inbox-folder="received" aria-pressed="true" aria-label="Recibidos" title="Recibidos"><i class="fa-solid fa-inbox" aria-hidden="true"></i><span>Recibidos</span></button>
                     <button type="button" data-inbox-folder="sent" aria-pressed="false" aria-label="Enviados" title="Enviados"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Enviados</span></button>
                     <button type="button" data-inbox-folder="archived" aria-pressed="false" aria-label="Archivados" title="Archivados"><i class="fa-solid fa-box-archive" aria-hidden="true"></i><span>Archivados</span></button>
-                    <button id="inbox-new-message" class="inbox-primary-button inbox-icon-action inbox-folder-action inbox-floating-new-message" type="button" aria-label="Nuevo mensaje" title="Nuevo mensaje" hidden><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i><span>Nuevo</span></button>
                     <button id="inbox-search-toggle" class="inbox-secondary-button inbox-icon-action inbox-folder-action" type="button" aria-label="Mostrar búsqueda" aria-controls="inbox-conversation-search-form" aria-expanded="false" title="Buscar"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><span>Buscar</span></button>
                 </nav>
                 <form id="inbox-conversation-search-form" class="inbox-search-form" role="search" hidden>
