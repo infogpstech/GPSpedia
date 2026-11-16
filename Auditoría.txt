@@ -1571,3 +1571,30 @@ ADENDA DE VALIDACIÓN — AUD-2026-11-16-07
 - La primera expresión de regresión para scroll tomaba la última regla CSS, que era una excepción responsive y no la regla desktop principal. Se corrigió para comenzar desde el bloque GP-UX-INBOX-DESKTOP-02 y verificar flex + overflow-y en la misma declaración.
 - Parseo sintáctico estático de cuatro archivos: 4/4 PASS. Comprobaciones estáticas dirigidas: 15/15 PASS.
 - La API de estado/checks de GitHub no devolvió ejecuciones para el HEAD consultado. CI Node.js integral y aceptación visual en escritorio real siguen pendientes; no se atribuyen como aprobadas.
+
+
+================================================================================
+AUDITORÍA — 2026-11-16 — AUD-2026-11-16-08
+Ámbito: encabezados del modal de corte y modal de tutoriales.
+Severidad: Media — divisor visual limitado al logo, sombra potencialmente recortada y título/cierre desalineados.
+Estado: IMPLEMENTACIÓN PUBLICADA; CI pendiente.
+
+Evidencia y causa:
+- style.css: el borde inferior estaba aplicado a .detail-modal-title, cuyo ancho máximo es 180 px; no podía cubrir el ancho útil del modal.
+- El mismo contenedor usaba overflow:hidden, capaz de recortar el drop-shadow del logotipo.
+- El modelo no tenía un separador independiente y su tipografía era menor que la jerarquía solicitada.
+- mostrarDetalleTutorialModal reutilizaba el grid del modal de corte, mantenía el cierre dentro de un grupo de controles y aplicaba estilos inline que no anclaban la X a la esquina derecha.
+- El título del tutorial carecía de reglas explícitas para impedir cortes internos de palabras.
+
+Corrección:
+- Divisor independiente en una fila completa del grid, con márgenes laterales y separación superior.
+- Contenedor de logo con overflow visible, padding para la sombra y gap explícito respecto al modelo.
+- Tipografía del modelo y encabezado Relay igualada a 2rem; acciones 40 × 40 px en escritorio y 36 × 36 px en móvil; cierre 40 × 40 px.
+- Encabezado de tutorial con clases propias, flex adaptable, word-break/overflow-wrap normales y cierre absoluto arriba a la derecha.
+- App Shell v48 y pruebas de layout/caché actualizadas.
+
+Validación:
+- CI Node.js y revisión del diff pendientes de confirmación.
+- Inspección visual en escritorio, Android y PWA instalada pendiente de Beta.
+- Sin cambios en permisos, handlers de negocio, Apps Script, deployments o datos externos.
+================================================================================
