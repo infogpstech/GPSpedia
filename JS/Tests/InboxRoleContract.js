@@ -54,8 +54,9 @@ run('getCatalogChanges es una lectura pública del journal y no exige actor/leas
   const open=sliceUi_('export async function openInbox()','');
   assert(open.includes("'tecnico'")&&open.includes("'tecnico_exterior'"));
   const modal=ui.slice(ui.indexOf("const openInboxModal_ = setupModal('inbox-modal'"),ui.indexOf("export async function openInbox()",ui.indexOf("const openInboxModal_")));
-  assert(modal.includes("requestsTab.hidden = !inboxCanSeeRequests_(context.role)"));
+  assert(!ui.includes("inbox-requests-tab"),'La pestaña redundante Solicitudes no debe mostrarse.');
   assert(modal.includes("if (newMessageButton) newMessageButton.hidden = false"));
+  assert(ui.includes('getElementById("inbox-new-message")'),'El control Nuevo mensaje debe conservar su enlace funcional.');
   assert(!ui.includes("inbox-consult-developer"));
   assert(feedback.includes('reportProblem: null')&&feedback.includes('case \'reportProblem\''),
    'El reporte de problema autenticado debe seguir siendo el canal de incidencias para soporte.');
@@ -69,7 +70,7 @@ run('getCatalogChanges es una lectura pública del journal y no exige actor/leas
   const formEnd=ui.indexOf("\nasync function toggleInboxConversationArchive_",formStart);
   const form=ui.slice(formStart,formEnd);
   assert(form.includes('const draftKind = "new:direct"'));
-  assert(form.includes('"Nuevo mensaje"'));
+  assert(!form.includes('"Nuevo mensaje"')&&!form.includes("inbox-new-title"),'El compositor no debe repetir un título redundante.');
   assert(form.includes("getInboxRecipients(context)"));
   assert(!form.includes("Consultar al desarrollador"));
   function sliceUi_(start,end){const i=ui.indexOf(start);assert(i>=0);const j=end?ui.indexOf(end,i+start.length):-1;return ui.slice(i,j>i?j:ui.length);}
