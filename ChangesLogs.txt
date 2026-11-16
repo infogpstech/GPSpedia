@@ -898,3 +898,11 @@ HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
 - JS/Tests/InboxConversations.mjs: el fixture prepara explícitamente el esquema; se añaden regresiones para hojas ausentes/vacías, tablas huérfanas, preferencias ausentes, datos de participantes dañados, contadores y estados incompletos.
 - No se modificaron deployments, hojas Spreadsheet reales, secretos ni datos externos.
 ================================================================================
+
+================================================================================
+2026-11-16 — CIERRE LOCAL BETA-030/31
+- Se verificó la barra horizontal Developer de cuatro secciones, iconos compactos, expansión de la pestaña activa, agrupación de herramientas y relaciones accesibles entre radios, etiquetas y paneles.
+- style.css: prefers-reduced-motion desactiva tanto la animación del título como las transiciones de expansión de la pestaña.
+- DeveloperPanelUX 7/7, DevToolsModalAccessibility 19/19 y DeveloperPanelCopy 6/6 PASS en runtime JavaScript aislado.
+- Inspección visual en dispositivos reales queda para Beta; permisos y confirmaciones destructivas no se modificaron.
+================================================================================
