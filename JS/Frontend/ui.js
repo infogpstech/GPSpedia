@@ -4625,13 +4625,18 @@ function renderInboxConversationList_() {
         button.dataset.conversationId = item.conversationId;
         button.setAttribute("aria-pressed", String(item.conversationId === inboxConversationSelectedId_));
         const names = Array.isArray(item.otherParticipants) ? item.otherParticipants.map(user => user && user.name).filter(Boolean).join(", ") : "";
+        const unreadCount = Math.max(0, Number(item.unreadCount) || 0);
+        const readState = inboxCreateNode_("span", "inbox-conversation-read-state " + (unreadCount > 0 ? "is-unread" : "is-read"));
+        readState.setAttribute("aria-label", unreadCount > 0 ? "Conversación sin leer" : "Conversación leída");
+        readState.title = unreadCount > 0 ? "Sin leer" : "Leída";
+        readState.appendChild(inboxCreateNode_("i", unreadCount > 0 ? "fa-solid fa-envelope" : "fa-solid fa-envelope-open"));
         button.append(
+            readState,
             inboxCreateNode_("strong", "inbox-conversation-item-title", names || "Conversación"),
             inboxCreateNode_("span", "inbox-conversation-item-subject", item.subject || "Sin asunto"),
             inboxCreateNode_("span", "inbox-conversation-item-preview", item.lastMessagePreview || "Sin mensajes"),
             inboxCreateNode_("span", "inbox-conversation-item-meta", [item.category || "general", inboxFormatDate_(item.lastMessageAt || item.updatedAt)].filter(Boolean).join(" · "))
         );
-        if (Number(item.unreadCount) > 0) button.appendChild(inboxCreateNode_("span", "inbox-conversation-unread", String(item.unreadCount)));
         button.addEventListener("click", () => selectInboxConversation_(item));
         list.appendChild(button);
     });
