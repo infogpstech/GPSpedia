@@ -47,7 +47,7 @@ function restoreRichTextSelection_(editor) {
     return Boolean(selection && selection.rangeCount && editor.contains(selection.getRangeAt(0).commonAncestorContainer));
 }
 
-function bindRichTextEditorSelection_(editor) {
+export function bindRichTextEditorSelection_(editor) {
     if (!isRichContentEditable_(editor) || editor.dataset.richSelectionBound === "true") return;
     editor.dataset.richSelectionBound = "true";
     const remember = () => rememberRichTextSelection_(editor);
