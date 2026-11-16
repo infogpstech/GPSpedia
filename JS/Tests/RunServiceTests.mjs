@@ -192,6 +192,8 @@ runGroup('38','INTEGRATION',()=>{
  runCli('AUG-150 errores HTTP, red, JSON y aplicación en ADMIN','JS/Tests/RouteActionErrors.mjs');
  runCli('AUG-152 conversaciones Inbox, participantes, idempotencia y auditoría','JS/Tests/InboxConversations.mjs');
  runCli('AUG-152 interfaz Inbox, accesibilidad, borradores y sincronización','JS/Tests/InboxUi.mjs');
+ runCli('Dashboard y aportes de cortes por usuario','JS/Tests/ActivityDashboardContributions.mjs');
+ runCli('Carrusel de vistos recientes optimista','JS/Tests/RecentlyViewedCarousel.mjs');
   runCli('AUG-116 caché de páginas y paginación de Inbox','JS/Tests/InboxCachePagination.js');
  runCli('OVERLAY pila de menú y modales administrativos','JS/Tests/OverlayMenuModalHistory.js');
  runCli('AUTH, navegación, catálogo silencioso y miniaturas','JS/Tests/SessionStartupNavigation.mjs');

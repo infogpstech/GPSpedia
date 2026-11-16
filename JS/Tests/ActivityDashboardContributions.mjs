@@ -1,0 +1,12 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+const root=resolve(dirname(fileURLToPath(import.meta.url)),"../..");
+const fb=readFileSync(resolve(root,"JS/Services/feedback.js"),"utf8"),dash=readFileSync(resolve(root,"JS/Frontend/activityDashboard.js"),"utf8");
+const ui=readFileSync(resolve(root,"JS/Frontend/ui.js"),"utf8"),html=readFileSync(resolve(root,"index.html"),"utf8");
+assert.match(fb,/function buildCutContributionSummary_/);assert.match(fb,/contributions:buildCutContributionSummary_\(\)/);
+assert.match(fb,/COLS_CORTES\["colaboradorCorte"\+slot\]/);assert.match(fb,/COLS_CORTES\["tipoCorte"\+slot\]/);
+assert.match(dash,/export function renderActivityContributions/);assert.match(ui,/renderActivityContributions\(contributionContainer/);
+assert.match(html,/data-activity-tab="contributions"/);assert.match(html,/id="activity-contributions"/);
+console.log("ActivityDashboardContributions: 7/7 PASS");

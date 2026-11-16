@@ -9,7 +9,7 @@ const helper = readFileSync(resolve(root, 'JS/Frontend/catalogRequest.js'), 'utf
 const fn = api.slice(api.indexOf('export async function getCatalogChanges('), api.indexOf('\n}', api.indexOf('export async function getCatalogChanges(')) + 2);
 assert.match(api, /import \{ runCatalogRequestWithRetry \} from '\.\/catalogRequest\.js'/);
 assert.match(fn, /runCatalogRequestWithRetry\(async signal =>/);
-assert.match(fn, /timeoutMs:\s*2000/);
+assert.match(fn, /timeoutMs:\s*5000/);
 assert.match(fn, /retries:\s*2/);
 assert.match(fn, /baseDelayMs:\s*200/);
 assert.match(fn, /signal\s*[,}]/);

@@ -1,0 +1,12 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+const root=resolve(dirname(fileURLToPath(import.meta.url)),"../..");
+const ui=readFileSync(resolve(root,"JS/Frontend/ui.js"),"utf8"),auth=readFileSync(resolve(root,"JS/Frontend/auth.js"),"utf8");
+const detail=ui.slice(ui.indexOf("export function mostrarDetalleModal("),ui.indexOf("\n    const { relay: datosRelay }",ui.indexOf("export function mostrarDetalleModal(")));
+assert.match(detail,/setState\(\{ viewedItems: nextViewed \}\)/);assert.match(detail,/offline\.saveViewedItem\(activeItem, ownerId\)\.catch/);assert.doesNotMatch(detail,/offline\.getViewedItems\(ownerId\)/);
+const load=auth.slice(auth.indexOf("function loadUserLocalActivity(user)"),auth.indexOf("\nfunction handleSessionStorageChange",auth.indexOf("function loadUserLocalActivity(user)")));
+assert.match(load,/offline\.getSearchHistory\(ownerId\)\.then/);assert.match(load,/offline\.getViewedItems\(ownerId\)\.then/);assert.doesNotMatch(load,/Promise\.all/);
+assert.match(ui,/viewedSignature/);assert.match(ui,/lastViewedSignature/);
+console.log("RecentlyViewedCarousel: 5/5 PASS");

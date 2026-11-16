@@ -591,7 +591,17 @@ export async function loadInitialData(forceRefresh = false, options = {}) {
                 }
             } catch (feedError) {
                 if (!isCurrentLoad()) return;
-                console.warn("No se pudo aplicar el feed incremental; se solicitará una reconciliación completa:", feedError);
+                const transientFeedFailure = feedError && (
+                    feedError.kind === "network" || feedError.kind === "abort" ||
+                    feedError.code === "CATALOG_FEED_NETWORK_ERROR" ||
+                    feedError.code === "REQUEST_ABORTED" ||
+                    feedError.name === "CatalogRequestTimeoutError"
+                );
+                if (transientFeedFailure && catalogLoaded &&
+                    offline.isCompleteCatalogSnapshot(cachedCatalog) && Number.isSafeInteger(cachedCursor)) {
+                    if (!silent) setState({ catalogLoadStatus: 'ready', catalogLoadError: null });
+                    return false;
+                }
                 requiresFullSnapshot = true;
                 cursorToPersist = null;
             }

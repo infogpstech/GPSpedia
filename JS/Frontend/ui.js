@@ -10142,8 +10142,8 @@ export function showApp(user) {
 }
 
 // Variable local para rastrear el estado previo de los carruseles de actividad y evitar bucles
-let lastHistoryCount = 0;
-let lastViewedCount = 0;
+let lastHistorySignature = '';
+let lastViewedSignature = '';
 
 // Suscribirse a cambios de estado para renderizar el catálogo cuando los datos lleguen
 subscribe((state) => {
@@ -10158,12 +10158,14 @@ subscribe((state) => {
         if (!isMainLevel || !cont) return;
 
         // Detectar si el historial o los vistos han cambiado para forzar refresco del catálogo
-        const historyChanged = (state.searchHistory?.length || 0) !== lastHistoryCount;
-        const viewedChanged = (state.viewedItems?.length || 0) !== lastViewedCount;
+        const historySignature = (state.searchHistory || []).map(entry => String(entry && entry.term || '')).join('|');
+        const viewedSignature = (state.viewedItems || []).map(entry => String(entry && entry.id || '') + ':' + String(entry && entry.timestamp || '')).join('|');
+        const historyChanged = historySignature !== lastHistorySignature;
+        const viewedChanged = viewedSignature !== lastViewedSignature;
 
         if (historyChanged || viewedChanged) {
-            lastHistoryCount = state.searchHistory?.length || 0;
-            lastViewedCount = state.viewedItems?.length || 0;
+            lastHistorySignature = historySignature;
+            lastViewedSignature = viewedSignature;
             mostrarCategorias();
             return;
         }

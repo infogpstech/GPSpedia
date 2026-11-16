@@ -410,3 +410,8 @@ await test('una apertura IndexedDB lenta no crea un falso error local ni bloquea
     assert.match(authSource, /source: "timeout", state: null/);
 });
 console.log('CatalogStartupIntegrity: ' + passed + '/' + passed + ' PASS');
+
+const authSource = readFileSync(resolve(root, "JS/Frontend/auth.js"), "utf8");
+assert.match(authSource, /transientFeedFailure/);
+assert.match(authSource, /offline\.isCompleteCatalogSnapshot\(cachedCatalog\) && Number\.isSafeInteger\(cachedCursor\)/);
+console.log("CatalogTransientFeedFallback: 2/2 PASS");
