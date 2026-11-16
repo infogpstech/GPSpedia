@@ -1165,3 +1165,16 @@ El usuario confirmó que el backlog pendiente también comprende la organizació
 - BETA-021 queda completada localmente con validación visual Beta pendiente. No se ejecutaron pruebas en navegador real ni se desplegaron Apps Script.
 - **Siguiente tarea local:** BETA-022, ajustar dimensiones de botones para evitar anchos completos o excesivos sin afectar etiquetas accesibles ni formularios que requieren ancho completo.
 - Rama base `GPSpedia2.2.5` permanece intacta.
+
+
+## Continuidad — BETA-022 dimensiones de botones (2026-11-16)
+
+- **Commit:** `8ac4f361a5c4ac798a20e50850448587c319b204` — `fix: ajustar ancho de botones por contexto`.
+- Las acciones Developer y las acciones de biblioteca de imágenes usan ancho automático en escritorio; en móvil las acciones Developer se apilan y ocupan el ancho disponible.
+- Se ajustaron botones de selección de imágenes y acciones Inbox para evitar expansión innecesaria; se preservó el ancho completo donde es funcional (formularios, navegación y `.btn-block`).
+- `DeveloperPanelUX`: 6/6 PASS; `ButtonWidthPolicy`: 5/5 PASS.
+- **CI:** run `43789193097` SUCCESS — 110 suites / 1,682 pruebas / 0 fallos.
+- **GitHub Pages:** run `43789192638` SUCCESS.
+- BETA-022 queda completada localmente; validación visual Beta pendiente.
+- **Siguiente tarea local:** BETA-023, unificar el formato de presentación del contenido descriptivo y su preferencia de configuración en todas las vistas.
+- No se modificó la rama base ni se desplegaron servicios Apps Script.

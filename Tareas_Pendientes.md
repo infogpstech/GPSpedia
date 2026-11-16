@@ -50,7 +50,16 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 - Incorporar el patrón común en las vistas alcanzadas por BETA-022–026 y BETA-030–035.
 
 ### BETA-022 — Dimensiones de botones
-**Estado: PENDIENTE LOCAL.**
+**Estado: IMPLEMENTACIÓN LOCAL COMPLETADA; PENDIENTE BETA.**
+
+- Commit: `8ac4f361a5c4ac798a20e50850448587c319b204`.
+- Las acciones del panel Developer ahora usan ancho automático y se ajustan en filas; en móvil se apilan a ancho completo.
+- Los botones de la biblioteca de imágenes y la barra de acciones Inbox ya no se expanden innecesariamente; los campos siguen usando el espacio disponible y las pestañas mantienen distribución uniforme.
+- Se conservaron los anchos completos de acciones de formulario, navegación y botones explícitamente `.btn-block`.
+- `DeveloperPanelUX`: 6/6 PASS. `ButtonWidthPolicy`: 5/5 PASS.
+- CI run `43789193097`: SUCCESS — 110 suites, 1,682 pruebas aprobadas, 0 fallos.
+- GitHub Pages run `43789192638`: SUCCESS.
+- Pendiente Beta: revisión visual de escritorio/móvil y pruebas de teclado/lectores de pantalla.
 
 - Evitar botones excesivamente anchos o de fila completa cuando no sea necesario.
 - Usar ancho automático y dimensiones consistentes según la función.
