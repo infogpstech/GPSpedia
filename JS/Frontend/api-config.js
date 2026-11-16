@@ -13,7 +13,7 @@ export const RICH_TEXT_MODES = Object.freeze({ STRICT: "strict", ADVANCED: "adva
 
 function normalizeRichTextMode_(value) {
     const mode = String(value || "").trim().toLowerCase();
-    return [RICH_TEXT_MODES.STRICT, RICH_TEXT_MODE_MODES.ADVANCED].includes(mode) ? mode : null;
+    return [RICH_TEXT_MODES.STRICT, RICH_TEXT_MODES.ADVANCED].includes(mode) ? mode : null;
 }
 
 export function getRichTextMode() {
