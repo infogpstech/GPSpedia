@@ -117,6 +117,9 @@ testCase("la aplicación requiere aprobación visible, confirmación y endpoint 
  assert.ok(admin.includes("function classifyCortesImageAcl_"));
  assert.ok(ui.includes("Referencias de Cortes sin archivo verificado"));
  assert.ok(ui.includes("publicityCompliance"));
+ assert.ok(ui.includes("La lista está limitada a 200 referencias; total detectado: "));
+ assert.match(admin,/missingReferenceCount \+\s*" referencias sin archivo verificado"/);
+ assert.match(admin,/missingReferencesTruncated \? " \(reporte limitado a 200\)" : ""/);
  assert.ok(ui.includes("applyAvailable: false"));
  assert.ok(admin.includes("entry.cell.getValue()"));
 });
