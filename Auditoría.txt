@@ -1261,3 +1261,12 @@ Validación local aislada:
 Límite:
 - BETA-030 y BETA-031 quedan completadas a nivel de implementación local. La inspección visual y de movimiento reducido en dispositivos reales queda para Beta. No se cambiaron permisos ni endpoints.
 ==========================================================
+
+==========================================================
+ADENDA — 2026-11-16 — GP-IMG-DATA-01
+Observación: el reporte de referencias faltantes limita el detalle a 200 elementos. La revisión verificó que el bloqueo de aplicación ya consideraba la existencia de elementos en ese arreglo, pero el resumen podía mostrar 200 aunque existieran más referencias.
+Impacto: información cuantitativa incompleta en reportes extensos; sin bypass de escritura reproducible en el estado previo porque el arreglo truncado seguía conteniendo referencias y bloqueaba la aplicación.
+Corrección: se conserva y propaga el total real y el indicador de truncamiento; el dry-run informa el total, la UI explica el límite y el handler de aplicación comprueba el total íntegro además del detalle.
+Validación: CortesImageReconciliation 28/28, CortesImageReconciliationApply 15/15, CortesImageReconciliationUI 13/13, AdminImageScanCoordinatorContract 1/1 PASS; CI Node.js 22 run 43798680601, 117 suites / 1,760 pruebas / 0 fallos.
+Estado: CORREGIDO LOCALMENTE; validación de Drive/Spreadsheet real diferida a Beta. Sin cambios en datos o servicios externos.
+==========================================================
