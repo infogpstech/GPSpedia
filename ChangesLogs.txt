@@ -1070,3 +1070,11 @@ VALIDACIÓN LOCAL POSTERIOR — GP-UX-INBOX-03 / GP-DASH-ATTR-01
 - ServiceWorkerCache: 9/9 PASS.
 - GitHub Pages build/deployment: SUCCESS (run 43874428208).
 - Las validaciones visuales en PWA móvil y la revisión de conteos agregados con datos Beta quedan diferidas; no se ejecutó deployment Apps Script ni se modificaron datos externos.
+
+
+2026-11-16 — GP-DASH-ATTR-02: roles de aportadores y comunidad
+- JS/Frontend/activityDashboard.js: elimina los calificadores entre paréntesis de los nombres y consolida los técnicos aunque el registro indique «apert» o «corte».
+- Normaliza «Comunidad Internacional de técnicos» y variantes equivalentes como «Comunidad de técnicos».
+- JS/Services/feedback.js: los slots con tipo de corte pero sin técnico asignado se incluyen en el agregado bajo «Comunidad de técnicos». El contrato de respuesta se mantiene sin cambios.
+- JS/Tests/ActivityDashboardContributions.mjs: cobertura de técnicos compartidos por rol y slots sin técnico.
+- service-worker.js: caché App Shell v36 para actualizar el normalizador frontend.
