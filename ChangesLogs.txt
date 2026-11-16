@@ -737,3 +737,14 @@ HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
 - CI run 43782723331: SUCCESS; 107 suites / 1,656 pruebas / 0 fallos.
 - GitHub Pages run 43782722962: pendiente al último chequeo. Validación Beta pendiente; no se desplegó Apps Script ni se alteraron datos externos.
 ================================================================================
+
+
+================================================================================
+2026-11-16 — OPTIMIZACIÓN DEL HISTORIAL DE IMÁGENES Y TIMEOUT DE AUDITORÍA DRIVE
+- JS/Services/admin.js: handleGetReplacedImages usa collectActiveDriveReferences(false). El historial solo necesita el indicador de existencia de referencias activas; se evita materializar ubicaciones completas por celda. Cualquier referencia activa continúa bloqueando operaciones destructivas.
+- JS/Frontend/ui.js: la lectura getReplacedImages usa routeActionWithRetry con timeout 120 s y dos intentos seguros; la captura inicial auditDriveImagesInCortes usa 120 s y mantiene 45 s/3 intentos para continuaciones con cursor.
+- JS/Tests/AdminImageScanCoordinatorContract.mjs: verifica lectura compacta, protección por referencia activa y timeouts/reintentos.
+- JS/Tests/AdminDriveAuditClientRetry.mjs: actualiza el contrato del timeout inicial.
+- CI run 43783119482: SUCCESS; 107 suites / 1,656 pruebas / 0 fallos.
+- Validación Beta pendiente; no se desplegó Apps Script ni se alteraron datos externos.
+================================================================================
