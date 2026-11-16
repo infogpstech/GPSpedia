@@ -908,3 +908,11 @@ Se añadieron políticas de mínimo privilegio:
 - `freezeIdentifierFormulas`: mantenimiento exclusivo, por recorrer y modificar fórmulas de varias hojas.
 
 Se amplió `AdminImageScanCoordinatorContract.mjs` para exigir que cada mutación ADMIN declarada tenga política explícita y verificar los recursos de estas tres acciones. Pendiente CI posterior al commit y validación funcional Beta.
+
+
+## Continuidad — cobertura adicional de políticas Coordinator (2026-11-15)
+- HEAD de partida verificado: `88ed80779162911dde16a77a808e0f2deae2c1e5` en `GPSpedia2.2.5_work`; la comparación GitHub confirmó que la rama estaba idéntica a ese commit.
+- Auditoría adicional encontró dos operaciones declaradas en routers pero sin política Coordinator: `ADMIN/auditIdentifiers` (lectura dedicada) y `FEEDBACK/notifyDevelopersDriveCritical` (mutación de Inbox).
+- `handleAuditIdentifiers` es lectura; examina Users, Cortes, Tutorial, Feedbacks/PyS, LogosMarca y Relay. La alerta Drive consulta Users y crea conversaciones/mensajes idempotentes en FEEDBACK.
+- Corrección preparada en `Coordinator.js` y prueba contractual ampliada para exigir cobertura de todas las lecturas ADMIN dedicadas y mutaciones FEEDBACK.
+- Pendiente: publicar los cambios, ejecutar CI y verificar rama/commit. No se ejecutaron pruebas remotas Apps Script ni se modificaron deployments o datos productivos.
