@@ -1009,3 +1009,9 @@ Los cambios reportados en checkpoint (consola 50%, pestañas horizontales, títu
 - Evidencia: el dispatcher ADMIN expone `previewCortesImageReconciliation`, `getAdminImageUploadStatus` y `checkOperation` como lecturas que antes adquirían solo `sessionActivity`, sin reservar los datos consultados. La vista previa recorre Cortes/Drive e inventarios; el estado de imagen lee Cortes/Drive y `AdminImageUploads`, cuyo helper puede crear el ledger; `checkOperation` consulta Cortes e idempotencia.
 - Impacto: posibilidad de snapshots inconsistentes frente a escrituras concurrentes; la consulta de estado puede crear el ledger sin reservar ese recurso. Severidad: media, integridad/concurrencia.
 - Corrección: incluirlas en las lecturas ADMIN dedicadas y asignar recursos de lectura/escritura mínimos. Ampliar el contrato para comprobar que todas las acciones ADMIN del dispatcher están clasificadas como mutación, lectura dedicada o ping.
+
+
+[2026-11-15] GP-BETA-06 — sugerencia de año sin Coordinator
+- Evidencia: `suggestYear` no figuraba en `FEEDBACK_ACTION_PERMISSIONS`. El dispatcher FEEDBACK enviaba acciones sin esa clave directamente a `doPostInternal_` con actor nulo. Para usuarios autenticados, `resolveSuggestionYearActor` caía al camino de compatibilidad de `assertFeedbackSession`, leyendo Users y ActiveSessions en cada sugerencia.
+- Impacto: revalidación redundante de perfil/sesión fuera del actor central, contraria al requisito de sesión central. La ruta anónima `userId=0` es legítima y debe mantenerse sin autenticación.
+- Corrección: declarar `suggestYear` como acción autenticada sin restricción adicional de rol, enviarla por `FEEDBACK/sessionActivity` y conservar una rama pública explícita únicamente para `userId=0`.
