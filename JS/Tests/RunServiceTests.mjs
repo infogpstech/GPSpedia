@@ -93,6 +93,7 @@ runGroup('33','FEEDBACK',()=>{
  runCli('AUG-087 caché PyS y aplicación incremental del feed','JS/Tests/PysDataCache.js');
  runCli('P2 asignador backend para IDs de hojas Feedbacks, ActividadUsuario y Contactanos','JS/Tests/FeedbackFormulaIdAllocator.mjs');
   runCli('FEEDBACK suggestYear usa actor central y conserva ruta anónima','JS/Tests/SuggestYearCoordinatorSession.mjs');
+  runCli('FEEDBACK suggestYear aplica el umbral de tres votos verificados','JS/Tests/SuggestYearVoteThreshold.mjs');
  runCli('P2 IDs canónicos e idempotencia de Tutorial','JS/Tests/TutorialIntegrity.js');
  runCli('PYS tarjetas relacionadas y navegación del modal','JS/Tests/PysModalNavigation.js');
  const lockService={getScriptLock:()=>({waitLock(){},releaseLock(){}})};
