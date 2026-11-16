@@ -1228,5 +1228,6 @@ Se creó `Tareas_beta.md` con los IDs BETA-001 a BETA-052, criterios de aceptaci
 ## Auditoría de cobertura Coordinator — 2026-11-15
 - [x] Detectar política faltante para `ADMIN/auditIdentifiers` (lectura de Users, Cortes, Tutorial, Feedbacks/PyS, LogosMarca y Relay).
 - [x] Detectar política faltante para `FEEDBACK/notifyDevelopersDriveCritical` (lee destinatarios en Users y crea Inbox en FEEDBACK).
-- [ ] Publicar corrección y contrato de cobertura; ejecutar CI.
+- [x] Publicar corrección y contrato de cobertura; prueba contractual local 1/1 PASS y sintaxis de Coordinator/admin/feedback/InboxConversations PASS.
+- [ ] Ejecutar CI integral en GitHub Actions; los checks del HEAD aún no reportan resultados.
 - [ ] Validación de la alerta y auditoría de IDs contra Spreadsheet/Drive real: diferida a Beta.
