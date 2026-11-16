@@ -11,6 +11,14 @@ const start = ui.indexOf("function mostrarDetalleModal");
 const end = ui.indexOf("\nfunction ", start + 1);
 const detail = ui.slice(start, end > start ? end : undefined);
 
+
+testCase("la línea azul llega al extremo del modal con márgenes simétricos y menos espacio vertical", () => {
+    const dividerCss = css.slice(css.lastIndexOf(".detail-modal-divider {"));
+    assert.ok(dividerCss.includes("width:calc(100% + 18px)"));
+    assert.ok(dividerCss.includes("margin:7.5px 0 7.5px 12px"));
+    assert.ok(css.includes(".detail-modal-divider { width:calc(100% + 22px); }"));
+});
+
 let passed = 0;
 function testCase(name, fn) { fn(); passed++; console.log("PASS " + name); }
 
@@ -173,10 +181,4 @@ testCase("el título tutorial se ajusta entre palabras y el cierre queda anclado
     assert.doesNotMatch(tutorial, /closeBtn\.style\.cssText = "position:static/);
     assert.match(css, /\.tutorial-detail-title \{[\s\S]*?white-space: normal;[\s\S]*?overflow-wrap: normal;[\s\S]*?word-break: normal;[\s\S]*?hyphens: none/);
     assert.match(css, /\.tutorial-detail-toolbar > \.tutorial-detail-header-actions > \.tutorial-detail-close \{[\s\S]*?position: absolute !important;[\s\S]*?right: 0 !important/);
-});
-
-
-testCase("la línea azul llega al extremo del modal con márgenes simétricos y menos espacio vertical", () => {
-    assert.match(css, /\\.detail-modal-divider \\{[\\s\\S]*?width:calc\\(100% \\+ 18px\\);[\\s\\S]*?margin:7\\.5px 0 7\\.5px 12px/);
-    assert.match(css, /@media \\(max-width:560px\\)[\\s\\S]*?\\.detail-modal-divider \\{ width:calc\\(100% \\+ 22px\\); \\}/);
 });

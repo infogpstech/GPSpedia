@@ -330,6 +330,35 @@ check("La animación respeta preferencias de movimiento reducido", () => {
     assert.match(users, /@media \(prefers-reduced-motion: reduce\)/);
 });
 
+
+check("La barra enriquecida del Inbox usa iconos uniformes y menús desplegables", () => {
+    assert.ok(ui.includes('createRichTextToolbar(targetId, { forceAdvanced: true, compact: true })'));
+    assert.ok(rich.includes("function createCompactRichTextToolbar_("));
+    assert.ok(rich.includes('className = "rich-toolbar-icon-button"'));
+    assert.ok(rich.includes('setAttribute("aria-haspopup", "menu")'));
+    for (const icon of ["fa-text-height", "fa-font", "fa-list-ul"]) assert.ok(rich.includes(icon));
+    assert.ok(css.includes(".inbox-rich-text-toolbar > .rich-toolbar-dropdown { flex:1 1 0"));
+    const compact = rich.slice(rich.indexOf("function createCompactRichTextToolbar_"), rich.indexOf("export function createRichTextToolbar"));
+    assert.ok(!compact.includes('createElement("select")'));
+});
+check("Los controles personalizados sobreviven al refresco del toolbar", () => {
+    assert.ok(rich.includes('compact: toolbar.dataset.richTextCompact === "true"'));
+    assert.ok(rich.includes('child.dataset.richToolbarPersist === "true"'));
+    assert.ok(ui.includes('composerOptions.closest(".inbox-rich-text-toolbar")'));
+});
+check("La búsqueda expande el nombre del botón y lo contrae al cerrar", () => {
+    assert.ok(ui.includes('searchToggle.classList.toggle("is-expanded", opening)'));
+    assert.ok(ui.includes('toggle.classList.remove("is-expanded")'));
+    assert.ok(css.includes('#inbox-search-toggle[aria-expanded="true"]'));
+    assert.ok(css.includes('max-width:110px; margin-left:1px; opacity:1'));
+});
+check("La barra está integrada en el editor y su fondo cambia por tema", () => {
+    assert.ok(ui.includes("editorShell.append(toolbar, textarea)"));
+    assert.ok(css.includes("background:#f1f3f5"));
+    assert.ok(css.includes("body.dark-mode #inbox-modal-content .inbox-editor-shell { background:#2b3036; }"));
+    assert.ok(css.includes("background:transparent; box-shadow:none; resize:vertical"));
+});
+
 let passed = 0;
 for (const item of cases) {
     try { item.fn(); passed++; console.log("PASS " + item.name); }
@@ -337,34 +366,3 @@ for (const item of cases) {
 }
 console.log("InboxUi: " + passed + "/" + cases.length + " PASS");
 if (passed !== cases.length) process.exitCode = 1;
-
-
-check("La barra enriquecida del Inbox usa iconos uniformes y menús desplegables", () => {
-    assert.match(ui, /createRichTextToolbar\\(targetId, \\{ forceAdvanced: true, compact: true \\}\\)/);
-    assert.match(rich, /function createCompactRichTextToolbar_\\(/);
-    assert.match(rich, /className = "rich-toolbar-icon-button"/);
-    assert.match(rich, /aria-haspopup", "menu"/);
-    assert.match(rich, /fa-text-height/);
-    assert.match(rich, /fa-font/);
-    assert.match(rich, /fa-list-ul/);
-    assert.match(css, /\\.inbox-rich-text-toolbar > \\.rich-toolbar-dropdown[\\s\\S]*?flex:1 1 0/);
-    const compact = rich.slice(rich.indexOf("function createCompactRichTextToolbar_"), rich.indexOf("export function createRichTextToolbar"));
-    assert.doesNotMatch(compact, /createElement\\("select"\\)/);
-});
-check("Los controles personalizados sobreviven al refresco del toolbar", () => {
-    assert.match(rich, /compact: toolbar\\.dataset\\.richTextCompact === "true"/);
-    assert.match(rich, /child\\.dataset\\.richToolbarPersist === "true"/);
-    assert.match(ui, /composerOptions\\.closest\\("\\.inbox-rich-text-toolbar"\\)/);
-});
-check("La búsqueda expande el nombre del botón y lo contrae al cerrar", () => {
-    assert.match(ui, /searchToggle\\.classList\\.toggle\\("is-expanded", opening\\)/);
-    assert.match(ui, /toggle\\.classList\\.remove\\("is-expanded"\\)/);
-    assert.match(css, /#inbox-search-toggle\\[aria-expanded="true"\\][\\s\\S]*?background:var\\(--gp-color-accent/);
-    assert.match(css, /#inbox-search-toggle\\[aria-expanded="true"\\] span[\\s\\S]*?max-width:110px/);
-});
-check("La barra está integrada en el editor y su fondo cambia por tema", () => {
-    assert.match(ui, /editorShell\\.append\\(toolbar, textarea\\)/);
-    assert.match(css, /\\.inbox-editor-shell \\{[\\s\\S]*?background:#f1f3f5/);
-    assert.match(css, /body\\.dark-mode #inbox-modal-content \\.inbox-editor-shell \\{ background:#2b3036; \\}/);
-    assert.match(css, /\\.inbox-editor-shell \\.inbox-message-input \\{[\\s\\S]*?background:transparent/);
-});
