@@ -87,6 +87,14 @@ El feed incremental del catálogo es una lectura pública y de solo lectura. La 
 - Si el error de servicio no autorizado aparece todavía al consultar getCatalogChanges, comprobar que el deployment Beta de Coordinator y el de FEEDBACK incluyen esta versión compatible. Un deployment antiguo puede seguir ejecutando el cliente POST/FEEDBACK anterior.
 - Para fallos de otras acciones FEEDBACK, cotejar de forma privada GPSpedia_COORDINATOR_URL y GPSpedia_COORDINATOR_SECRET del proyecto FEEDBACK con el deployment y GPSpedia_COORDINATOR_SECRET_FEEDBACK del coordinador del mismo entorno. No imprimir ni registrar valores.
 
+## Telemetría global de servicios
+
+Coordinator acumula conteos por servicio en buckets horarios de 24 horas dentro de ScriptProperties (`GPSpedia_SERVICE_TRAFFIC_HOUR_`). Registra únicamente operaciones protegidas que obtuvieron una lease; un reintento con el mismo `requestId` reutiliza la lease y no vuelve a incrementar el contador.
+
+El registro ocurre dentro de la solicitud ya existente a Coordinator, bajo su lock y como operación best-effort. No se añade una llamada de red independiente desde el navegador por cada acción. Si falla la escritura de telemetría, la operación protegida continúa. La consulta agregada `ADMIN/getServiceTraffic` es de solo lectura y está reservada al rol Desarrollador; no devuelve usuarios, tokens ni identificadores de sesión. La propia consulta no se contabiliza.
+
+El agregado global excluye lecturas públicas no coordinadas, el feed público del catálogo y sondeos de salud; por tanto, no representa todas las solicitudes HTTP. La interfaz presenta por separado esta métrica global y la actividad local del navegador, que se conserva en memoria durante una ventana de 15 minutos con un máximo de 600 eventos. Nunca se deben sumar ni intercambiar ambas fuentes como si tuvieran el mismo alcance.
+
 ## Política y recuperación
 
 La política de operaciones es deny-by-default. Si una acción mutadora no está registrada, se rechaza antes de ejecutar el handler. `migrateReplacedImagesSchema` tiene una política explícita limitada a `IMAGE_INVENTORY`; no reserva mantenimiento global. La actualización de `LastActivityAt` de ADMIN utiliza escritura cooperativa: dos leases ADMIN pueden coexistir cuando comparten únicamente esa actividad, pero cualquier lectura/escritura normal o mutación AUTH sobre `ACTIVE_SESSIONS` sigue generando conflicto. Si faltan URL/secreto, falla la llamada HTTP, la respuesta no es válida o el estado central está corrupto, la operación falla cerrada. `migrateCortesOperationIds` usa mantenimiento exclusivo tanto en simulación como en confirmación, porque ambas fases leen el mismo mapa de idempotencia. `migrateTimestamps` usa una lease de lectura/escritura por recursos; queda bloqueada por cualquier mantenimiento integral de ADMIN.
