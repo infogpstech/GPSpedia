@@ -997,3 +997,28 @@ Se amplió `AdminImageScanCoordinatorContract.mjs` para exigir que cada mutació
 3. Revisar duración y reanudación de `auditDriveImagesInCortes`, además del estado/esquema real de `Imagenes_Reemplazadas`.
 4. Investigar discrepancias de versión/deployment y caché entre assets servidos y rama; no deducir deployment a partir de GitHub Pages.
 5. Mantener despliegues Apps Script y pruebas productivas fuera de esta iteración.
+
+
+## Continuidad — optimización de historial y auditoría Drive (2026-11-16)
+
+**Código validado:** `6794022176044b25958de1aa77598c4c1bf0424a`  
+**CI servicios:** run `43783119482` SUCCESS — 107 suites / 1,656 pruebas / 0 fallos.  
+**GitHub Pages:** ejecución asociada pendiente al momento del registro.
+
+- `handleGetReplacedImages()` ya no materializa ubicaciones completas por cada referencia activa; usa `collectActiveDriveReferences(false)`. El consumidor solo necesita detectar si hay alguna referencia y el UI sigue bloqueando acciones destructivas cuando `active_reference_count > 0`.
+- La lectura del historial usa timeout acotado de 120 s y dos intentos de lectura segura.
+- El primer lote de `auditDriveImagesInCortes` dispone de 120 s para capturar referencias e historial; las continuaciones con cursor conservan 45 s y hasta tres intentos.
+- La suite de regresión detectó una aserción antigua que esperaba 45 s para la primera captura; se actualizó y el CI final pasó.
+- No se desplegó Apps Script ni se modificaron hojas, Drive, secretos o propiedades externas.
+
+### Estado Beta
+- GP-BETA-03 (borrado de Logs/ActividadUsuario), GP-BETA-04 (auditoría Drive), GP-BETA-05 (historial de imágenes) y GP-BETA-06 (suggestYear) siguen abiertos hasta validación Beta.
+- La incompatibilidad `ID/id` puede explicar fallos locales de múltiples acciones Developer; el costo del escaneo y el timeout inicial eran riesgos adicionales corregidos. No se afirma que sean las únicas causas posibles.
+- Inbox sigue sin causa raíz reproducida en el código de la rama: sus contratos de handler/rol/dispatch están cubiertos por pruebas, pero falta correlacionar el error de Beta y confirmar que FEEDBACK/InboxConversations esté desplegado con la misma versión.
+
+### Siguiente trabajo
+1. Auditar la interacción UI → API → FEEDBACK → InboxConversations para aislar el error Beta de lectura de conversaciones y mensajes.
+2. Añadir/ejecutar contratos de despacho FEEDBACK para las lecturas Inbox y verificar que actor central y sesión se adjunten sin reconsultas locales a Users/ActiveSessions.
+3. Seguir con el modal de detalle de corte y medir llamadas redundantes de opciones/carga; conservar la edición autorizada de Jefe/Supervisor/Desarrollador.
+4. Revisar el resultado de GitHub Pages del HEAD más reciente. No confundirlo con deployment Apps Script.
+5. Mantener los despliegues y pruebas productivas fuera de esta iteración.
