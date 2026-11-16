@@ -23,12 +23,12 @@ const SAFE_NAMED_COLORS = new Set(["red", "blue", "green", "black", "white", "or
 export function stripRichTextDemoPlaceholder(value) {
     const source = String(value || "");
     const text = source
-        .replace(/<br\\s*\\/?\\s*>/gi, " ")
-        .replace(/<\\/?(?:p|div|strong|b|span)[^>]*>/gi, "")
+        .replace(/<br\s*\/?\s*>/gi, " ")
+        .replace(/<\/?(?:p|div|strong|b|span)[^>]*>/gi, "")
         .replace(/<[^>]+>/g, "")
         .replace(/&nbsp;|&#160;/gi, " ")
-        .replace(/\\u200b/g, "")
-        .replace(/\\s+/g, " ")
+        .replace(/\u200b/g, "")
+        .replace(/\s+/g, " ")
         .trim();
     return text.toLocaleLowerCase() === "texto en negrita" ? "" : source;
 }
