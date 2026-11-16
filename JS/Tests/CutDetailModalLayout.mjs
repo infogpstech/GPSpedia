@@ -20,6 +20,9 @@ testCase("la cabecera y acciones del modal se agrupan en una barra flexible", ()
         assert.ok(detail.includes('setAttribute("aria-label", "' + label + '")'), label);
     }
     assert.match(css, /\.detail-modal-toolbar \{[\s\S]*?display: flex;[\s\S]*?flex-wrap: wrap/);
+    assert.match(css, /\.detail-modal-header-actions \{[\s\S]*?justify-content: flex-end/);
+    assert.match(css, /\.detail-modal-toolbar > \.info-close-btn[\s\S]*?right:0/);
+    assert.match(detail, /headerDiv\.appendChild\(headerActions\)[\s\S]*?headerDiv\.appendChild\(closeBtn\)/);
 });
 
 testCase("el título y metadatos se separan del área de edición", () => {
