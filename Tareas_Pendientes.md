@@ -173,13 +173,16 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 - Pruebas locales: `DeveloperConsoleConfirmation` 8/8 PASS. Pendiente comprobar interacción en navegador y operaciones reales en Beta.
 
 ### BETA-034 — Mensajes de operaciones
-**Estado: PENDIENTE LOCAL; SIGUIENTE TAREA.**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.**
 
-- Retirar mensajes externos duplicados al borrar, auditar u organizar imágenes.
-- Dirigir resultados a la consola y mantener errores y estados comprensibles.
+- Los resultados del gestor de imágenes, acciones individuales/masivas, inventario, organización, auditoría y conciliación se dirigen al registro central Developer.
+- Se retiraron `alert()` y `mostrarNotificacion()` de los flujos del gestor y auditoría para evitar avisos paralelos. Se conservan los estados contextuales en la vista.
+- Se registran inicio, lotes/progreso, resultado, errores y fallos parciales; cada archivo fallido conserva nombre y motivo.
+- La conciliación informa cantidades, referencias, escritura verificada y resultado de rollback. No se presenta una simulación como escritura.
+- Prueba específica: `DeveloperOperationMessages` 5/5 PASS. Pendiente comprobar operaciones y ausencia de duplicados en navegador Beta.
 
 ### BETA-035 — Textos del panel Desarrollador
-**Estado: PENDIENTE LOCAL.**
+**Estado: PENDIENTE LOCAL; SIGUIENTE TAREA.**
 
 - Aplicar títulos y etiquetas compactos.
 - Llevar explicaciones secundarias a ayudas `ⓘ` específicas y accesibles.

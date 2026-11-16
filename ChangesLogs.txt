@@ -810,3 +810,13 @@ HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
 - JS/Tests/DevToolsModalAccessibility.mjs: actualiza la expectativa de confirmación de limpieza destructiva al nuevo flujo de consola Developer.
 - Motivo: evitar que el test de accesibilidad exija el cuadro nativo retirado por BETA-033.
 ================================================================================
+
+
+================================================================================
+2026-11-16 — BETA-034 MENSAJES DE OPERACIONES DEVELOPER CENTRALIZADOS
+- JS/Frontend/ui.js: nuevo logDeveloperOperation_ para registrar mensajes del gestor de imágenes, inventario, organización, auditoría y conciliación en la consola Developer.
+- Se retiraron alert() y mostrarNotificacion() del gestor y auditoría; los estados de cada vista se mantienen. Se registran resultados, avance por lotes, errores y operaciones parciales.
+- JS/Tests/DeveloperOperationMessages.mjs: verifica enrutamiento central, ausencia de avisos externos y estados de auditoría/inventario/conciliación.
+- JS/Tests/RunServiceTests.mjs: integra la suite BETA-034.
+- Tareas_Pendientes.md y checkpoint.md actualizados; BETA-035 queda como siguiente tarea local.
+================================================================================

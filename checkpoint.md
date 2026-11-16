@@ -1274,3 +1274,21 @@ El usuario confirmó que el backlog pendiente también comprende la organizació
 
 
 - CI posterior detectó una tercera expectativa heredada de `window.confirm()` en `DevToolsModalAccessibility.mjs`; se actualizó para verificar la confirmación de consola en la limpieza destructiva. El código JavaScript modificado ya pasó `node --check`; se repite la regresión completa tras alinear el contrato.
+
+
+## Continuidad — cierre BETA-033 y BETA-034 (2026-11-16)
+
+### BETA-033 — Confirmaciones desde consola
+- Commits: `0f22266195433511b30b57d071d420e90340f0d0`, `1cf9ba3cf74d806d215796448abe362bacd35ea8`, `5f6d47d41cb1f30ca44fe678e93512e7187cc156`, `ac1250c93bbb4839824994facd5c3155b7ab913c`.
+- Se extendieron las confirmaciones centralizadas a acciones masivas e individuales del historial, auditoría e inventario Drive.
+- Se actualizaron contratos que exigían el cuadro nativo: `AdminReplacedImagesIntegrity`, `ReplacedImagesLibraryUX` y `DevToolsModalAccessibility`.
+- CI run `43793034169`: SUCCESS — 115 suites / 1,723 pruebas / 0 fallos. `DeveloperConsoleConfirmation`: 8/8 PASS. GitHub Pages run `43793033743`: pendiente de confirmar en este checkpoint.
+- La sintaxis de los módulos JavaScript modificados aprobó en CI.
+
+### BETA-034 — Mensajes centralizados de operaciones
+- Se añadió `logDeveloperOperation_`, que dirige mensajes al registro central Developer y usa consola del navegador como fallback sin generar alertas o toasts paralelos.
+- Gestor de imágenes: errores, resultados individuales/masivos, movimiento, restauración, borrado, descarga y creación de carpetas.
+- Auditoría Drive: inicio, progreso por lote, finalización/error; inventario y organización: confirmaciones, resultados y fallos parciales; conciliación: simulación, progreso, aplicación y rollback.
+- Se mantienen los estados detallados en cada vista y se evita duplicar avisos externos.
+- Prueba específica integrada en CI: `DeveloperOperationMessages` (5 casos). Pendiente ejecución de regresión y validación visual/operativa Beta.
+- **Siguiente tarea local:** BETA-035 — compactar textos y etiquetas del panel Developer y trasladar explicación secundaria a ayudas contextuales.

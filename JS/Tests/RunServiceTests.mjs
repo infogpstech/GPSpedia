@@ -199,6 +199,7 @@ runGroup('38','INTEGRATION',()=>{
  runCli('BETA-026 organización del modal de detalle de corte','JS/Tests/CutDetailModalLayout.mjs');
  runCli('BETA-032 enrutamiento central de mensajes Developer','JS/Tests/DeveloperConsoleRouting.mjs');
  runCli('BETA-033 confirmaciones normalizadas en consola Developer','JS/Tests/DeveloperConsoleConfirmation.mjs');
+ runCli('BETA-034 mensajes de operaciones Developer centralizados','JS/Tests/DeveloperOperationMessages.mjs');
  runCli('CATALOG reintentos y cancelación','JS/Tests/CatalogRequestRetry.js');
  runCli('CATALOG escenarios de arranque PWA','JS/Tests/PWAStartupScenarios.js');
  runCli('AUG-IndexedDB apertura compartida, backoff y miniaturas opcionales','JS/Tests/IndexedDBTransactions.js');

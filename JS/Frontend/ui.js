@@ -7049,6 +7049,20 @@ function getDeveloperSessionPayload() {
 /**
  * TAREA 2: Modal de Gestión y Consulta del Inventario e Historial de Imágenes
  */
+function logDeveloperOperation_(message, level = "info") {
+    const text = String(message || "");
+    if (!text) return;
+    const logger = typeof window !== "undefined" ? window.gpsepediaDeveloperLog : null;
+    if (typeof logger === "function") {
+        logger(text, level);
+        return;
+    }
+    if (typeof console !== "undefined") {
+        const method = level === "error" ? "error" : level === "warning" ? "warn" : "info";
+        console[method]("[GPSpedia Developer] " + text);
+    }
+}
+
 function getReplacedImageCapabilities_(rep, schemaReady, referenceCheckStatus, role) {
     const type = rep.tipo_registro || (rep.origen_registro === "auditoria_drive" ? "sin_uso_detectado" : "reemplazada");
     const isUnused = type === "sin_uso_detectado";
@@ -7228,7 +7242,7 @@ export async function openReplacedImagesModal() {
             await operation();
             if (!isCurrentRequest()) return;
         } catch (error) {
-            if (isCurrentRequest()) alert(error.message || String(error));
+            if (isCurrentRequest()) logDeveloperOperation_(error.message || String(error), "error");
         } finally {
             if (button.isConnected && isCurrentRequest()) {
                 button.disabled = false;
@@ -7287,8 +7301,14 @@ export async function openReplacedImagesModal() {
             selectedIds.clear(); failures.forEach(item => selectedIds.add(item.id));
             await loadData();
             if (!isCurrentRequest()) return;
-            if (failures.length) { mostrarNotificacion(succeeded + " procesadas; " + failures.length + " requieren revisión.", "warning"); if (selectionCount) selectionCount.title = failures.map(item => item.name + ": " + item.message).join("\n"); }
-            else { if (selectionCount) selectionCount.removeAttribute("title"); mostrarNotificacion(succeeded + " imágenes procesadas correctamente.", "success"); }
+            if (failures.length) {
+                failures.forEach(item => logDeveloperOperation_("[IMÁGENES] " + item.name + ": " + item.message, "error"));
+                logDeveloperOperation_("[IMÁGENES] " + succeeded + " procesadas; " + failures.length + " requieren revisión.", "warning");
+                if (selectionCount) selectionCount.title = failures.map(item => item.name + ": " + item.message).join("\n");
+            } else {
+                if (selectionCount) selectionCount.removeAttribute("title");
+                logDeveloperOperation_("[IMÁGENES] " + succeeded + " imágenes procesadas correctamente.", "success");
+            }
         } finally { if (button.isConnected && isCurrentRequest()) { button.disabled = false; button.innerHTML = original; updateSelectionToolbar(); } }
     };
 
@@ -7304,8 +7324,14 @@ export async function openReplacedImagesModal() {
                 migrateButton.textContent = schemaStatus === "not_initialized" ? "Inicializar historial" : "Migrar esquema";
                 migrateButton.onclick = async () => {
                     if (!isCurrentRequest()) return; migrateButton.disabled = true; migrateButton.textContent = "Verificando esquema...";
-                    try { await routeAction("migrateReplacedImagesSchema", getDeveloperSessionPayload()); if (!isCurrentRequest()) return; mostrarNotificacion("El esquema del historial fue verificado.", "success"); await loadData(); }
-                    catch (error) { if (isCurrentRequest()) alert(error.message || String(error)); }
+                    try {
+                        await routeAction("migrateReplacedImagesSchema", getDeveloperSessionPayload());
+                        if (!isCurrentRequest()) return;
+                        logDeveloperOperation_("[IMÁGENES] Esquema del historial verificado.", "success");
+                        await loadData();
+                    } catch (error) {
+                        if (isCurrentRequest()) logDeveloperOperation_("[IMÁGENES] " + (error.message || String(error)), "error");
+                    }
                     finally { if (migrateButton.isConnected && isCurrentRequest()) { migrateButton.disabled = false; migrateButton.textContent = schemaStatus === "not_initialized" ? "Inicializar historial" : "Migrar esquema"; } }
                 }; listContainer.appendChild(migrateButton);
             }
@@ -7341,35 +7367,35 @@ export async function openReplacedImagesModal() {
             };
             if (capabilities.canDownload) addMenuAction("fa-download", "Descargar", "Preparando...", async () => {
                 const response = await routeAction("getReplacedImageDownloadUrl", { ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo }); if (!isCurrentRequest()) return;
-                const anchor = document.createElement("a"); anchor.href = response.downloadUrl; anchor.rel = "noopener noreferrer"; anchor.download = response.fileName || rep.nombre_archivo || ""; document.body.appendChild(anchor); anchor.click(); anchor.remove(); mostrarNotificacion("Se abrió la descarga de " + (response.fileName || rep.nombre_archivo || "la imagen") + ".", "success");
+                const anchor = document.createElement("a"); anchor.href = response.downloadUrl; anchor.rel = "noopener noreferrer"; anchor.download = response.fileName || rep.nombre_archivo || ""; document.body.appendChild(anchor); anchor.click(); anchor.remove(); logDeveloperOperation_("[IMÁGENES] Descarga iniciada: " + (response.fileName || rep.nombre_archivo || "imagen") + ".", "success");
             });
             if (capabilities.canMove) addMenuAction("fa-folder-open", "Mover", "Moviendo...", async () => {
-                if (!folderSelect || !folderSelect.value) { alert("No hay una carpeta destino seleccionada."); return; }
+                if (!folderSelect || !folderSelect.value) { logDeveloperOperation_("[IMÁGENES] Selecciona una carpeta destino.", "warning"); return; }
                 const option = folderSelect.options[folderSelect.selectedIndex], targetName = option ? option.textContent : "la carpeta seleccionada";
                 if (!window.gpsepediaRequestDeveloperConsoleConfirmation || !(await window.gpsepediaRequestDeveloperConsoleConfirmation("¿Mover \"" + (rep.nombre_archivo || "esta imagen") + "\" a \"" + targetName + "\"?"))) return;
-                const response = await routeAction("moveReplacedImage", { ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo, targetFolderId: folderSelect.value }); if (!isCurrentRequest()) return; mostrarNotificacion(response.message || "Imagen movida correctamente.", "success"); await loadData();
+                const response = await routeAction("moveReplacedImage", { ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo, targetFolderId: folderSelect.value }); if (!isCurrentRequest()) return; logDeveloperOperation_("[IMÁGENES] " + (response.message || "Imagen movida correctamente."), "success"); await loadData();
             });
             if (capabilities.canRecover) addMenuAction("fa-clock-rotate-left", "Restaurar al campo", "Restaurando...", async () => {
                 if (!window.gpsepediaRequestDeveloperConsoleConfirmation || !(await window.gpsepediaRequestDeveloperConsoleConfirmation("¿Restaurar esta imagen al campo " + (rep.campo || "registrado") + "? La imagen actualmente activa pasará al historial."))) return;
-                const response = await routeAction("recoverReplacedImage", { ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo }); if (!isCurrentRequest()) return; mostrarNotificacion(response.message || "Imagen histórica restablecida.", "success"); await loadData();
+                const response = await routeAction("recoverReplacedImage", { ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo }); if (!isCurrentRequest()) return; logDeveloperOperation_("[IMÁGENES] " + (response.message || "Imagen histórica restablecida."), "success"); await loadData();
             });
             if (capabilities.canRestoreFromTrash) addMenuAction("fa-trash-arrow-up", "Restaurar de papelera", "Restaurando...", async () => {
                 if (!window.gpsepediaRequestDeveloperConsoleConfirmation || !(await window.gpsepediaRequestDeveloperConsoleConfirmation("¿Restaurar este archivo en Google Drive? No volverá a asociarse automáticamente a un campo del Spreadsheet."))) return;
-                const response = await routeAction("restoreReplacedImageFromTrash", { ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo }); if (!isCurrentRequest()) return; mostrarNotificacion(response.message || "Archivo restaurado desde papelera.", "success"); await loadData();
+                const response = await routeAction("restoreReplacedImageFromTrash", { ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo }); if (!isCurrentRequest()) return; logDeveloperOperation_("[IMÁGENES] " + (response.message || "Archivo restaurado desde papelera."), "success"); await loadData();
             });
             if (capabilities.canTrash) addMenuAction("fa-trash", "Enviar a papelera", "Enviando...", async () => {
                 const description = isUnused ? "¿Enviar esta imagen sin uso a la papelera de Google Drive?" : "¿Enviar esta imagen reemplazada a la papelera? La restauración histórica quedará suspendida mientras esté allí.";
                 if (!window.gpsepediaRequestDeveloperConsoleConfirmation || !(await window.gpsepediaRequestDeveloperConsoleConfirmation(description + " El servidor volverá a validar las referencias y la ubicación."))) return;
-                const response = await routeAction("deleteReplacedImage", { ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo }); if (!isCurrentRequest()) return; mostrarNotificacion(response.message || "Imagen enviada a papelera.", "success"); await loadData();
+                const response = await routeAction("deleteReplacedImage", { ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo }); if (!isCurrentRequest()) return; logDeveloperOperation_("[IMÁGENES] " + (response.message || "Imagen enviada a papelera."), "success"); await loadData();
             }, true);
             if (capabilities.canPermanentlyDelete) addMenuAction("fa-trash-can", status === "eliminacion_pendiente" ? "Verificar eliminación" : "Eliminar definitivamente", "Eliminando...", async () => {
                 const warning = status === "eliminacion_pendiente" ? "¿Verificar y finalizar la eliminación definitiva de este archivo?" : "Esta acción es irreversible. ¿Eliminar definitivamente el archivo de Google Drive?";
                 if (!window.gpsepediaRequestDeveloperConsoleConfirmation || !(await window.gpsepediaRequestDeveloperConsoleConfirmation(warning + " El servidor volverá a comprobar que no existan referencias activas."))) return;
-                const response = await routeAction("permanentlyDeleteReplacedImage", { ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo }); if (!isCurrentRequest()) return; mostrarNotificacion(response.message || "Eliminación definitiva verificada.", "success"); await loadData();
+                const response = await routeAction("permanentlyDeleteReplacedImage", { ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo }); if (!isCurrentRequest()) return; logDeveloperOperation_("[IMÁGENES] " + (response.message || "Eliminación definitiva verificada."), "success"); await loadData();
             }, true);
             if (capabilities.canMarkInUse) addMenuAction("fa-shield-halved", "Marcar en uso", "Protegiendo...", async () => {
                 if (!window.gpsepediaRequestDeveloperConsoleConfirmation || !(await window.gpsepediaRequestDeveloperConsoleConfirmation("¿Marcar esta imagen como en uso? Quedará protegida frente a la organización automática y las acciones de eliminación."))) return;
-                const response = await routeAction("markReplacedImageInUse", { ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo }); if (!isCurrentRequest()) return; mostrarNotificacion(response.message || "Imagen marcada en uso.", "success"); await loadData();
+                const response = await routeAction("markReplacedImageInUse", { ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo }); if (!isCurrentRequest()) return; logDeveloperOperation_("[IMÁGENES] " + (response.message || "Imagen marcada en uso."), "success"); await loadData();
             });
             menuButton.disabled = menuPanel.childElementCount === 0; if (menuButton.disabled) menuButton.title = "Sin acciones disponibles"; card.appendChild(cardToolbar);
             const previewButton = document.createElement("button"); previewButton.type = "button"; previewButton.className = currentView === "grid" ? "replaced-image-preview" : "replaced-image-list-thumb";
@@ -7444,14 +7470,14 @@ export async function openReplacedImagesModal() {
     if (selectAllCheckbox) selectAllCheckbox.onchange = () => { visibleItems.forEach(item => { const id = String(item.id_reemplazo || ""); if (selectAllCheckbox.checked) selectedIds.add(id); else selectedIds.delete(id); }); renderList(filterInput ? filterInput.value : ""); };
     if (clearSelectionButton) clearSelectionButton.onclick = () => { selectedIds.clear(); renderList(filterInput ? filterInput.value : ""); };
     if (folderSelect) folderSelect.onchange = updateSelectionToolbar;
-    if (bulkMoveButton) bulkMoveButton.onclick = () => { const items = getSelectedItems(); if (!folderSelect || !folderSelect.value) { alert("Selecciona una carpeta destino."); return; } const option = folderSelect.options[folderSelect.selectedIndex], targetName = option ? option.textContent : "la carpeta seleccionada"; void runBulkOperation(bulkMoveButton, "Moviendo...", items, "¿Mover " + items.length + " imágenes a " + targetName + "? El servidor validará cada archivo por separado.", async item => { await routeAction("moveReplacedImage", { ...getDeveloperSessionPayload(), id_reemplazo: item.id_reemplazo, targetFolderId: folderSelect.value }); }); };
+    if (bulkMoveButton) bulkMoveButton.onclick = () => { const items = getSelectedItems(); if (!folderSelect || !folderSelect.value) { logDeveloperOperation_("[IMÁGENES] Selecciona una carpeta destino.", "warning"); return; } const option = folderSelect.options[folderSelect.selectedIndex], targetName = option ? option.textContent : "la carpeta seleccionada"; void runBulkOperation(bulkMoveButton, "Moviendo...", items, "¿Mover " + items.length + " imágenes a " + targetName + "? El servidor validará cada archivo por separado.", async item => { await routeAction("moveReplacedImage", { ...getDeveloperSessionPayload(), id_reemplazo: item.id_reemplazo, targetFolderId: folderSelect.value }); }); };
     if (bulkTrashButton) bulkTrashButton.onclick = () => { const items = getSelectedItems(); void runBulkOperation(bulkTrashButton, "Enviando...", items, "¿Enviar " + items.length + " imágenes a la papelera de Google Drive? Cada archivo se volverá a validar antes del movimiento.", async item => { await routeAction("deleteReplacedImage", { ...getDeveloperSessionPayload(), id_reemplazo: item.id_reemplazo }); }); };
     if (bulkRestoreButton) bulkRestoreButton.onclick = () => { const items = getSelectedItems(); const allFromTrash = items.length > 0 && items.every(item => getReplacedImageCapabilities_(item, schemaReady, referenceCheckStatus, getUiSessionContext_()?.role).canRestoreFromTrash); const confirmation = allFromTrash ? "¿Restaurar " + items.length + " archivos desde la papelera de Drive? No se asociarán automáticamente a campos del Spreadsheet." : "¿Restaurar " + items.length + " imágenes históricas en sus campos? Las imágenes actualmente activas pasarán al historial."; void runBulkOperation(bulkRestoreButton, "Restaurando...", items, confirmation, async item => { const capabilities = getReplacedImageCapabilities_(item, schemaReady, referenceCheckStatus, getUiSessionContext_()?.role); const action = capabilities.canRestoreFromTrash ? "restoreReplacedImageFromTrash" : "recoverReplacedImage"; await routeAction(action, { ...getDeveloperSessionPayload(), id_reemplazo: item.id_reemplazo }); }); };
 
     if (createFolderBtn) createFolderBtn.onclick = async () => {
         const name = newFolderInput ? newFolderInput.value.trim() : '';
         if (!name) {
-            alert('Escribe el nombre de la nueva carpeta.');
+            logDeveloperOperation_("[IMÁGENES] Escribe el nombre de la nueva carpeta.", "warning");
             return;
         }
         await runButtonAction(createFolderBtn, 'Creando...', async () => {
@@ -7464,7 +7490,7 @@ export async function openReplacedImagesModal() {
             if (newFolderInput) newFolderInput.value = '';
             await loadFolders(response.folderId);
             if (!isCurrentRequest()) return;
-            mostrarNotificacion('Carpeta creada: ' + response.folderPath, 'success');
+            logDeveloperOperation_("[IMÁGENES] Carpeta creada: " + response.folderPath, "success");
         });
     };
 
@@ -7482,14 +7508,14 @@ export async function openAuditDriveModal() {
     if (!requestContext) return;
     const cleared = await processPendingDriveAuditClears_(requestContext.userId);
     if (cleared !== true) {
-        showGlobalError('No se pudo limpiar el estado de auditoría anterior. El historial no se abrirá para evitar mezclar cuentas.');
+        logDeveloperOperation_("[AUDITORÍA DRIVE] No se pudo limpiar el estado anterior. El historial no se abrirá para evitar mezclar cuentas.", "error");
         return;
     }
     if (typeof offline.hasPendingDriveAuditClear === 'function' &&
         offline.hasPendingDriveAuditClear(requestContext.userId)) {
         const ownerCleared = await offline.clearDriveAuditState(requestContext.userId);
         if (ownerCleared !== true) {
-            showGlobalError('La limpieza pendiente de esta cuenta no pudo completarse. El historial permanecerá bloqueado.');
+            logDeveloperOperation_("[AUDITORÍA DRIVE] La limpieza pendiente de esta cuenta no pudo completarse. El historial permanecerá bloqueado.", "error");
             return;
         }
     }
@@ -7751,6 +7777,7 @@ export async function openAuditDriveModal() {
             try { await persistState('complete'); }
             catch (error) { inventoryMessage += ' No se pudo guardar el estado local: ' + String(error && error.message || error); }
             updateSummary(inventoryMessage);
+            logDeveloperOperation_("[AUDITORÍA DRIVE] " + inventoryMessage, "info");
             updateControls();
             return;
         }
@@ -7777,6 +7804,7 @@ export async function openAuditDriveModal() {
                 inventoryStatus = 'error';
                 inventoryMessage = 'No existe un auditId de ADMIN verificable para registrar el inventario. No se escribió en Spreadsheet.';
                 updateSummary(inventoryMessage);
+                logDeveloperOperation_("[AUDITORÍA DRIVE] " + inventoryMessage, "error");
                 return;
             }
 
@@ -7837,6 +7865,8 @@ export async function openAuditDriveModal() {
                     storageError.message;
             }
             updateSummary(inventoryMessage + localPersistenceWarning);
+            logDeveloperOperation_("[AUDITORÍA DRIVE] " + inventoryMessage + localPersistenceWarning,
+                inventoryStatus === "error" ? "error" : (localPersistenceWarning ? "warning" : "success"));
         } finally {
             isRunning = false;
             isDriveAuditRunning = false;
@@ -7879,6 +7909,8 @@ export async function openAuditDriveModal() {
                     alreadyOrganizedCount + ' ya organizadas, ' + manualPreservedCount +
                     ' ubicaciones manuales conservadas, ' + failedCount + ' fallidas y ' + blockedCount + ' bloqueadas.';
                 await persistState('complete');
+                logDeveloperOperation_("[ORGANIZACIÓN DRIVE] Lote " + Math.ceil((offset + batch.length) / batchSize) +
+                    " de " + Math.ceil(fileIds.length / batchSize) + " guardado. " + inventoryMessage, "info");
             }
             const completed = movedCount + alreadyOrganizedCount + manualPreservedCount === fileIds.length &&
                 failedCount === 0 && blockedCount === 0 && loggingErrorCount === 0;
@@ -7897,6 +7929,8 @@ export async function openAuditDriveModal() {
                 try { await persistState('complete'); }
                 catch (storageError) { inventoryMessage += ' No se pudo guardar localmente el resultado: ' + storageError.message; }
                 updateSummary(inventoryMessage);
+                logDeveloperOperation_("[ORGANIZACIÓN DRIVE] " + inventoryMessage,
+                    inventoryStatus === "organized" ? "success" : "warning");
             }
             isRunning = false;
             isDriveAuditRunning = false;
@@ -7997,6 +8031,7 @@ export async function openAuditDriveModal() {
         isRunning = true;
         isDriveAuditRunning = true;
         updateControls();
+        logDeveloperOperation_(resume ? "[AUDITORÍA DRIVE] Reanudando desde el último lote confirmado." : "[AUDITORÍA DRIVE] Iniciando recorrido de Cortes.", "info");
 
         try {
             if (resume) {
@@ -8137,9 +8172,11 @@ export async function openAuditDriveModal() {
                 }
 
                 appendFiles(uniqueResponseFiles);
-                updateSummary(complete
+                const batchStatusMessage = complete
                     ? 'Recorrido del árbol finalizado. Verificando el inventario...'
-                    : 'Auditoría en progreso: ' + totalAnalyzed + ' archivos analizados; lote actual: ' + batchSize + '.');
+                    : 'Auditoría en progreso: ' + totalAnalyzed + ' archivos analizados; lote actual: ' + batchSize + '.';
+                updateSummary(batchStatusMessage);
+                logDeveloperOperation_("[AUDITORÍA DRIVE] " + batchStatusMessage, "info");
 
                 await persistState(complete ? 'complete' : 'running');
                 if (!isCurrentRequest()) return;
@@ -8156,6 +8193,8 @@ export async function openAuditDriveModal() {
             await persistState('complete');
             if (!isCurrentRequest()) return;
             updateSummary(inventoryMessage);
+            logDeveloperOperation_("[AUDITORÍA DRIVE] " + inventoryMessage,
+                errorCount || unverifiableReferences ? "warning" : "success");
         } catch (error) {
             if (!isCurrentRequest()) return;
             const errorMessage = error && error.message ? error.message : String(error);
@@ -8176,6 +8215,7 @@ export async function openAuditDriveModal() {
                 statusMessage += ' Además, no se pudo guardar el último estado local: ' + persistenceError.message;
             }
             updateSummary(statusMessage);
+            logDeveloperOperation_("[AUDITORÍA DRIVE] " + statusMessage, "error");
         } finally {
             isRunning = false;
             isDriveAuditRunning = false;
@@ -8329,10 +8369,12 @@ export async function openAuditDriveModal() {
         if (!imageFiles.length) {
             if (reconciliationPanel) reconciliationPanel.hidden = false;
             if (reconciliationStatus) reconciliationStatus.textContent = "La auditoría no encontró archivos de imagen para conciliar.";
+            logDeveloperOperation_("[CONCILIACIÓN DRIVE] No hay imágenes para conciliar.", "warning");
             return;
         }
         if (!auditId) {
             if (reconciliationStatus) reconciliationStatus.textContent = "No existe un identificador verificable de auditoría; inicia una auditoría nueva.";
+            logDeveloperOperation_("[CONCILIACIÓN DRIVE] No existe un identificador verificable de auditoría.", "error");
             return;
         }
         isReconciling = true;
@@ -8343,6 +8385,7 @@ export async function openAuditDriveModal() {
         if (reconciliationCounts) reconciliationCounts.replaceChildren();
         if (reconciliationStatus) reconciliationStatus.textContent = "Preparando simulación de " + imageFiles.length + " imágenes…";
         updateControls();
+        logDeveloperOperation_("[CONCILIACIÓN DRIVE] Iniciando simulación de " + imageFiles.length + " imágenes.", "info");
         const aggregate = {
             results: [], invalidFiles: [], rowIssues: [], applyAvailable: false, counts: {
                 matched: 0, already_linked: 0, orphaned: 0, ambiguous: 0, occupied: 0,
@@ -8433,9 +8476,10 @@ export async function openAuditDriveModal() {
                 nextBatchIndex = batchIndex + 1;
                 await saveProgress("running");
                 if (!isCurrentRequest()) return;
-                if (reconciliationStatus) reconciliationStatus.textContent =
-                    "Simulando lote " + nextBatchIndex + " de " + totalBatches + " · " +
+                const batchMessage = "Simulando lote " + nextBatchIndex + " de " + totalBatches + " · " +
                     Math.min(offset + batch.length, imageFiles.length) + " de " + imageFiles.length + " imágenes. Progreso guardado; sin escrituras.";
+                if (reconciliationStatus) reconciliationStatus.textContent = batchMessage;
+                logDeveloperOperation_("[CONCILIACIÓN DRIVE] " + batchMessage, "info");
             }
 
             // En una reanudación interrumpida después del último lote, obtener un handshake fresco
@@ -8492,8 +8536,12 @@ export async function openAuditDriveModal() {
             await saveProgress("complete");
             if (!isCurrentRequest()) return;
             renderCortesReconciliationReport_(aggregate);
-            if (reconciliationStatus) reconciliationStatus.textContent =
-                "Simulación terminada. " + aggregate.counts.matched + " coincidencias exactas propuestas; referencias: " + referenceCheckStatus + ". Progreso guardado localmente. No se modificó Spreadsheet, Drive ni permisos.";
+            const reconciliationMessage = "Simulación terminada. " + aggregate.counts.matched +
+                " coincidencias exactas propuestas; referencias: " + referenceCheckStatus +
+                ". Progreso guardado localmente. No se modificó Spreadsheet, Drive ni permisos.";
+            if (reconciliationStatus) reconciliationStatus.textContent = reconciliationMessage;
+            logDeveloperOperation_("[CONCILIACIÓN DRIVE] " + reconciliationMessage,
+                aggregate.counts.invalid || aggregate.counts.unverifiable ? "warning" : "success");
         } catch (error) {
             if (!isCurrentRequest()) return;
             let persistenceFailed = false;
@@ -8511,6 +8559,8 @@ export async function openAuditDriveModal() {
                     : "No se inició la simulación ni se guardó progreso local. ";
                 reconciliationStatus.textContent += String(error && error.message || error);
             }
+            logDeveloperOperation_("[CONCILIACIÓN DRIVE] " +
+                (reconciliationStatus ? reconciliationStatus.textContent : String(error && error.message || error)), "error");
         } finally {
             isReconciling = false;
             isRunning = false;
@@ -8527,6 +8577,7 @@ export async function openAuditDriveModal() {
         const checked = Array.from(reconciliationResults.querySelectorAll('input[data-reconciliation-approve="true"]:checked'));
         if (!checked.length || checked.length > 10) {
             if (reconciliationStatus) reconciliationStatus.textContent = "Selecciona entre 1 y 10 coincidencias exactas.";
+            logDeveloperOperation_("[CONCILIACIÓN DRIVE] Selecciona entre 1 y 10 coincidencias exactas.", "warning");
             return;
         }
         const byId = new Map((currentReconciliationReport.results || []).map(item => [String(item.fileId || ""), item]));
@@ -8569,18 +8620,21 @@ export async function openAuditDriveModal() {
                 if (reconciliationStatus) reconciliationStatus.textContent =
                     "Aplicación verificada: " + response.appliedCount + " asignaciones. Celdas con imagen antes: " +
                     response.beforeCount + "; después: " + response.afterCount + ". Actualizando el preview…";
+                logDeveloperOperation_("[CONCILIACIÓN DRIVE] Aplicación verificada: " + response.appliedCount + " asignaciones.", "success");
             } else {
                 if (response && response.status === "partial") currentReconciliationReport.status = "stale";
                 if (reconciliationStatus) reconciliationStatus.textContent =
                     (response && response.message ? response.message : "ADMIN no confirmó todas las asignaciones.") +
                     " Aplicadas: " + Number(response && response.appliedCount || 0) +
                     "; rollback confirmado: " + (response && response.rollbackConfirmed === true ? "sí" : "no") + ".";
+                logDeveloperOperation_("[CONCILIACIÓN DRIVE] " + reconciliationStatus.textContent, "warning");
             }
         } catch (error) {
             if (!isCurrentRequest()) return;
             if (reconciliationStatus) reconciliationStatus.textContent =
                 "No se pudo confirmar el resultado de la aplicación. No repitas la selección sin actualizar primero la simulación: " +
                 String(error && error.message || error);
+            logDeveloperOperation_("[CONCILIACIÓN DRIVE] " + reconciliationStatus.textContent, "error");
         } finally {
             isRunning = false;
             isDriveAuditRunning = false;
