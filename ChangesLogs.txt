@@ -1291,3 +1291,10 @@ CAMBIOS — 2026-11-16 — GP-UX-INBOX-DESKTOP-02
 - service-worker.js: App Shell v46.
 - JS/Tests/InboxUi.mjs, ServiceWorkerCache.js y OfflineBrandAssets.mjs: contratos de regresión actualizados.
 ================================================================================
+
+================================================================================
+ADENDA — GP-UX-INBOX-DESKTOP-02
+- JS/Frontend/rich-text.js: modo avanzado explícito por editor, preservación del modo/clases al refrescar la barra y sanitización con override opcional.
+- JS/Frontend/ui.js: Inbox solicita barra avanzada completa; formato aplicado actualiza borradores; contenido de mensajes se sanea en modo avanzado.
+- App Shell actualizado a v47 y pruebas de caché/offline alineadas.
+================================================================================
