@@ -787,7 +787,7 @@ run("Una hoja Inbox vacía se inicializa con sus encabezados", () => {
     const original=spreadsheet.getSheetByName("InboxConversationState"),empty=new FakeSheet("InboxConversationState");
     spreadsheet.sheets.set("InboxConversationState",empty);
     try {
-        api.handleGetInboxConversations({ ...actor("U1","token-a"),folder:"received" });
+        assert.throws(() => api.handleGetInboxConversations({ ...actor("U1","token-a"),folder:"received" }),/estado de los participantes está incompleto/);
         assert.deepEqual(empty.rows[0],inboxSchemaHeaders.InboxConversationState);
     } finally { spreadsheet.sheets.set("InboxConversationState",original); }
 });
