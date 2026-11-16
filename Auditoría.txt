@@ -1456,3 +1456,11 @@ AUDITORÍA COMPLEMENTARIA — 2026-11-16 — AUD-2026-11-16-06
 - Inspección estática posterior a la edición: 0 declaraciones display:flex para .detail-modal-toolbar, 1 declaración grid y 0 overrides order:2 para .detail-modal-header-actions.
 - Los archivos modificados están publicados en GPSpedia2.2.5_work. CI aún no se ha ejecutado en esta adenda.
 - Aceptación visual en Android, navegador móvil y PWA instalada: pendiente de Beta. No se afirma como realizada.
+
+
+
+### Resultado de revisión posterior — AUD-2026-11-16-02
+- Comprobaciones estáticas sobre los archivos publicados: PASS en ausencia de override flex, presencia de grid, acciones en columna 2/fila 1, cierre absoluto y coherencia de App Shell v43.
+- El conector de GitHub no devolvió estados de checks para los commits consultados y su función de consulta de runs solo expone ejecuciones asociadas a pull requests. Por ello, no se atribuye un resultado a GitHub Actions en esta adenda.
+- El intento de clonar la rama para ejecutar Node.js localmente no pudo completarse porque el entorno de ejecución no resolvió github.com. Las suites Node.js completas quedan pendientes de confirmación en CI; no se marcan como ejecutadas.
+- La rama de trabajo apunta al commit 2e544048a7f8104133ce46380b0bcb0840def18d; la comparación con ese SHA devuelve identical. La rama base sigue idéntica a su SHA verificado d9acc68d889985c2e2f42fe3a02e502efc86ead1.
