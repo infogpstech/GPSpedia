@@ -863,3 +863,10 @@ HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
 - index.html: conserva aria-label descriptivos completos para acciones de imágenes, manteniendo texto visible compacto. El botón de cierre mantiene su nombre accesible original.
 - JS/Tests/DeveloperPanelUX.mjs: actualiza expectativas para los nuevos títulos «Migración VIN» y «Orden de registros».
 ================================================================================
+
+
+================================================================================
+2026-11-16 — CONTRATOS DE MONITOR Y ACCESIBILIDAD BETA-035
+- JS/Tests/DriveStorageAlerts.mjs: valida el nuevo título compacto «Uso de Drive».
+- JS/Tests/DevToolsModalAccessibility.mjs: valida la leyenda compacta «Secciones».
+================================================================================

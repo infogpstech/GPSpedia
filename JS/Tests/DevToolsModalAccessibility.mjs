@@ -112,7 +112,7 @@ test('las cuatro opciones usan un único grupo nativo de radios con etiquetas as
     const tabsEnd = html.indexOf('<div class="dev-tools-panels">', tabsStart);
     const tabs = html.slice(tabsStart, tabsEnd);
     assert.ok(tabs.includes('<fieldset class="dev-tools-tab-options">'));
-    assert.ok(tabs.includes('<legend>Secciones del panel de desarrollador</legend>'));
+    assert.ok(tabs.includes('<legend>Secciones</legend>'));
     for (const id of ['diagnostics', 'database', 'images', 'system']) {
         assert.ok(tabs.includes('id="dev-tab-' + id + '" aria-controls="dev-panel-' + id + '"'));
         assert.ok(tabs.includes('for="dev-tab-' + id + '"'));
@@ -124,7 +124,7 @@ test('el grupo nativo tiene leyenda y queda separado del contenido de los panele
     const start = html.indexOf('<fieldset class="dev-tools-tab-options">');
     const end = html.indexOf('</fieldset>', start);
     const group = html.slice(start, end);
-    assert.ok(group.includes('<legend>Secciones del panel de desarrollador</legend>'));
+    assert.ok(group.includes('<legend>Secciones</legend>'));
     assert.ok(!group.includes('dev-tools-panels'));
     assert.ok(css.includes('#dev-tools-modal .dev-tools-tab-options'));
     assert.ok(css.includes('clip: rect(0, 0, 0, 0)'));

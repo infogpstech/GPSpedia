@@ -1324,3 +1324,6 @@ El usuario confirmó que el backlog pendiente también comprende la organizació
 
 
 - BETA-035 conserva el nombre accesible completo en los botones con etiqueta visual compacta. Se actualizaron las pruebas de UX para reflejar los títulos abreviados; el nombre del botón de cierre se mantiene sin cambios por accesibilidad.
+
+
+- CI de BETA-035 detectó expectativas heredadas en `DriveStorageAlerts.mjs` (título «Monitor de GDrive») y `DevToolsModalAccessibility.mjs` (leyenda larga de secciones). Se alinearon con «Uso de Drive» y «Secciones», sin alterar IDs ni comportamiento.

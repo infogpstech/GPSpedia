@@ -42,7 +42,7 @@ test("la alerta Inbox requiere desarrollador y usa actor de sistema", () => {
 });
 test("monitor destaca el porcentaje crítico y muestra consola primero", () => {
     assert.ok(index.indexOf('class="dev-console-shared"') < index.indexOf('class="dev-tools-tabs"'));
-    assert.ok(index.includes('Monitor de GDrive'));
+    assert.ok(index.includes('Uso de Drive'));
     assert.match(css,/#dev-tools-modal #drive-storage-percent\.is-critical[\s\S]*?color: #e02424/);
 });
 console.log("DriveStorageAlerts: " + passed + "/" + passed + " PASS");
