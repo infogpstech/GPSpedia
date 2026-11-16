@@ -1446,3 +1446,34 @@ El usuario confirmó que el backlog pendiente también comprende la organizació
 
 ### Siguiente tarea local
 **BETA-051 — Validaciones duplicadas.** Completar la revisión global de viajes de red y verificaciones repetidas, sin retirar autorización backend, actor central, RBAC, expiración, epoch ni revocación. Después continuar BETA-042 (auditoría de retirada Legacy) y BETA-043 (telemetría global). Las pruebas que dependan exclusivamente de despliegue quedan excluidas del recuento de tareas locales.
+
+
+## Continuidad — BETA-051 auditoría de validaciones duplicadas (2026-11-16)
+
+**Rama:** `GPSpedia2.2.5_work`  
+**HEAD de código validado:** `3ae8b0872e51ea264fa558b4332ae156bbf5f2b7`  
+**HEAD documental previo:** `6140c89babd14218f986737c3b45d076080084b4`  
+**Rama base protegida:** `GPSpedia2.2.5` — `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, intacta.
+
+### Resultado
+- Se revisaron módulos Frontend, HTML y servicios en busca de llamadas a `validateSession`, `touchSession`, validación de token/rol y actores centrales.
+- Hallazgo corregido: `youtubeUpload.js` hacía una llamada previa `validateSession` antes de operaciones FEEDBACK que ya validan la sesión con Coordinator. Se retiró ese viaje de red redundante.
+- Se mantienen los checks locales de que el snapshot de usuario/token no cambie durante la preparación de la subida. El servidor sigue autorizando `getVideoApprovalByOperation`, `initYouTubeUpload` y `submitVideoForApproval` mediante FEEDBACK/Coordinator.
+- Se conserva la validación `HTML/users.html` únicamente como recuperación cuando falla un cambio del rol propio; se conserva `validateSession` para restauración inicial. No se encontraron llamadas del cliente a `touchSession`.
+- AUTH valida sesión mediante el endpoint de restauración; el benchmark PBKDF2 ya utiliza el actor central desde GP-BETA-06. Las acciones protegidas restantes consumen actor de Coordinator; no se detectaron revalidaciones locales por handler.
+- No se modificó el flujo de autorización, RBAC, expiración, epoch ni revocación.
+
+### Commits relevantes
+- `7507c74333917bb26788a8fdb9e065d190c1df98` — retirada de prevalidación YouTube.
+- `3ae8b0872e51ea264fa558b4332ae156bbf5f2b7` — contrato de prueba actualizado.
+- `2bc12d088ecb93fcf35e4a00c5f006734e818d06` — backlog actualizado.
+- `f20df0618e6b100aadba9ac7c7b386d5190f6a9a` — changelog actualizado.
+- `6140c89babd14218f986737c3b45d076080084b4` — adenda de auditoría.
+
+### Validación
+- `VideoApprovalClientContract`: 10/10 PASS.
+- GitHub Actions Node.js 22 run `43799943070`: **SUCCESS — 118 suites / 1,765 pruebas / 0 fallos**.
+- No se ejecutaron deployments ni llamadas a YouTube/FEEDBACK reales. La medición de latencia y la validación de flujo remoto quedan para Beta.
+
+### Siguiente tarea local
+**BETA-042 — Auditoría de retirada del servicio Legacy.** Inventariar referencias residuales en código, UI, registros, contratos y workflows; no borrar datos históricos ni elementos de compatibilidad sin confirmar sus consumidores.
