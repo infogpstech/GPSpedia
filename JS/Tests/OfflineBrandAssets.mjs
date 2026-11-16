@@ -20,8 +20,10 @@ function test(name, fn) {
 test("el encabezado y el Splash claro usan el logo oficial local", () => {
     assert.match(html, /class="app-logo"[^>]*src="Images\/icon-v3-512x512\.png"|src="Images\/icon-v3-512x512\.png"[^>]*class="app-logo"/);
     assert.match(html, /id="splash-screen"[\s\S]*?src="Images\/icon-v3-512x512\.png"/);
-    const appLogoTag = html.match(/<img\b[^>]*class="app-logo"[^>]*>|<img\b[^>]*src="Images\/icon-v3-512x512\.png"[^>]*class="app-logo"[^>]*>/)?.[0] || "";
-    const splashMarkup = html.match(/<div id="splash-screen">([\s\S]*?)<\/div>/)?.[1] || "";
+    const appLogoTag = html.match(/<img[^>]+class="app-logo"[^>]*>/)?.[0] || "";
+    const splashStart = html.indexOf('<div id="splash-screen">');
+    const splashEnd = html.indexOf('</div>', splashStart);
+    const splashMarkup = html.slice(splashStart, splashEnd);
     assert.doesNotMatch(appLogoTag, /drive\.google\.com/);
     assert.doesNotMatch(splashMarkup, /drive\.google\.com/);
     assert.match(main, /const logoUrl = isDark \? 'Images\/Logo_TemaOscuro\.png' : 'Images\/icon-v3-512x512\.png'/);
