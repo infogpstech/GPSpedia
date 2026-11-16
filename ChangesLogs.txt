@@ -775,3 +775,13 @@ HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
 - CI run 43783958890: SUCCESS; 108 suites / 1,662 pruebas / 0 fallos.
 - La ruta estática y el contrato de actor están validados; falta reproducir contra las hojas reales en Beta. No se desplegaron AUTH/FEEDBACK.
 ================================================================================
+
+
+================================================================================
+2026-11-16 — NORMALIZACIÓN DE SESIÓN EN VIN Y OPERACIONES PENDIENTES DE CORTE
+- JS/Frontend/ui.js: registro de VIN, validación/recuperación de operaciones pendientes y envío/reintento addOrUpdateCut usan getUiSessionContext_() para resolver ID/id y token de sesión.
+- Si la cuenta activa no coincide con la propietaria de una operación pendiente, se mantiene el rechazo y no se envía la operación bajo otra identidad.
+- JS/Tests/SessionUiRoleInvalidation.js: contrato para impedir nuevas dependencias ID-only.
+- CI run 43784270101: SUCCESS; 108 suites / 1,663 pruebas / 0 fallos.
+- Validación Beta pendiente; no se desplegó WRITE/AUTH.
+================================================================================
