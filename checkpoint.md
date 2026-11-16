@@ -1321,3 +1321,6 @@ El usuario confirmó que el backlog pendiente también comprende la organizació
 
 ### Contratos de UX actualizados — BETA-035
 - CI detectó expectativas textuales previas en `DeveloperPanelUX.mjs` y `AdminReplacedImagesIntegrity.mjs`. Se alinearon con los nombres compactos y la descripción resumida de categorías; la explicación completa sigue disponible en la ayuda contextual accesible.
+
+
+- BETA-035 conserva el nombre accesible completo en los botones con etiqueta visual compacta. Se actualizaron las pruebas de UX para reflejar los títulos abreviados; el nombre del botón de cierre se mantiene sin cambios por accesibilidad.
