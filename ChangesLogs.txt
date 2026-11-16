@@ -827,3 +827,9 @@ HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
 - JS/Tests/CortesImageReconciliationUI.mjs: valida el mensaje de simulación compartido entre estado visual y consola Developer, en lugar de exigir su construcción inline.
 - Motivo: el texto se extrajo a reconciliationMessage para evitar divergencias entre canales de información.
 ================================================================================
+
+
+================================================================================
+2026-11-16 — CORRECCIÓN DE ESCAPES EN TEST DE CONCILIACIÓN
+- JS/Tests/CortesImageReconciliationUI.mjs: usa comprobaciones literales para el mensaje compartido y el registro central, evitando escapes dobles en regex.
+================================================================================

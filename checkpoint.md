@@ -1297,3 +1297,6 @@ El usuario confirmó que el backlog pendiente también comprende la organizació
 ### Ajuste de contrato de prueba — BETA-034
 - CI detectó una expectativa literal antigua en `CortesImageReconciliationUI.mjs`: el test exigía construir el texto directamente en `textContent`. BETA-034 extrae el mismo texto a `reconciliationMessage` para reutilizarlo en la consola central y el estado de vista.
 - Se actualizó el contrato para exigir tanto la variable compartida como su registro en la consola; el resultado funcional del mensaje se conserva.
+
+
+- La primera actualización del contrato de conciliación tenía escapes de regex dobles y no coincidía con el código fuente; se simplificó a comprobaciones literales del mensaje compartido y del registro central.
