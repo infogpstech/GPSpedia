@@ -1041,3 +1041,26 @@ Se amplió `AdminImageScanCoordinatorContract.mjs` para exigir que cada mutació
 3. Drive: validar auditoría y biblioteca de imágenes con tiempos reales, esquema y permisos Drive.
 4. Modal de Cortes: medir tiempo desde abrir detalle hasta controles editables; verificar que dropdowns se precarguen y la edición no espere IndexedDB opcional.
 5. Confirmar Pages para el último HEAD documental; no confundir Pages con despliegue Apps Script.
+
+
+## Continuidad — Inbox: lectura y diagnóstico de esquema (2026-11-16)
+
+**Código validado:** `110aae3f17575f0ff06b3ef61957db51a84cbecc`  
+**CI servicios:** run `43783775316` SUCCESS — 108 suites / 1,660 pruebas / 0 fallos.  
+**GitHub Pages:** ejecución asociada en progreso al momento del registro.
+
+- Causa corregida: la consulta de conversaciones devolvía lista vacía cuando faltaba una de las hojas Conversations/State, ocultando un esquema parcial como si no existieran mensajes.
+- Ahora ambas hojas ausentes significan Inbox nuevo y vacío; solo una ausente produce error explícito. También se informa si una conversación registra mensajes pero falta la hoja InboxMessages.
+- Se amplió `InboxConversations.mjs` con pruebas de hojas incompletas y despacho FEEDBACK: las lecturas Inbox reciben actor central mediante `sessionActivity`; las escrituras usan su lease específica. No se añadieron revalidaciones a Users/ActiveSessions.
+- CI usa Spreadsheet simulado. La estructura y datos reales de Beta siguen sin inspeccionar; no se ejecutó migración ni se modificaron hojas.
+
+### Estado Inbox
+- El contrato UI/API/FEEDBACK/Inbox está cubierto por las pruebas, y el despacho central de actor está validado.
+- Si Beta tiene una hoja parcial, el cliente ahora debe mostrar un error explícito en vez de un Inbox vacío. Para reparar, primero habrá que inspeccionar las hojas y preservar datos existentes; no crear/renombrar hojas automáticamente a ciegas.
+- Si el esquema está completo y el error persiste, el siguiente dato necesario es la respuesta real del servicio FEEDBACK para `getInboxConversations` o `getInboxMessages`, junto con la versión desplegada. No se puede deducir desde GitHub.
+
+### Siguiente trabajo
+1. Continuar auditoría de UI/API Inbox, revisar filtros de carpeta (received/sent/unread/archived) y lectura de mensajes.
+2. Seguir con limpieza de Logs, auditoría Drive e historial de imágenes; verificar los resultados en Beta cuando el despliegue autorizado esté disponible.
+3. Revisar latencia real de dropdowns y modal de edición de Cortes.
+4. Confirmar GitHub Pages del último HEAD documental; no confundirlo con Apps Script deployment.
