@@ -8,6 +8,7 @@ import { mergeInboxMessagePages } from "../Frontend/inboxPageCache.js";
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const read = path => readFileSync(resolve(ROOT, path), "utf8");
 const ui = read("JS/Frontend/ui.js"), html = read("index.html"), css = read("style.css"), api = read("JS/Frontend/api-config.js");
+const index = read("index.html"), users = read("HTML/users.html");
 const cases = [];
 function check(name, fn) { cases.push({ name, fn }); }
 
@@ -163,6 +164,44 @@ check("Las acciones y la consulta de tickets propios no añaden controles visibl
     assert.doesNotMatch(ui, /markInboxUnread|deleteInboxConversation|getMyProblemReports/);
     assert.doesNotMatch(html, /inbox-mark-unread|inbox-delete-conversation|inbox-my-tickets/);
 });
+check("Los modales principales no usan spans como controles de cierre", () => {
+    assert.doesNotMatch(index, /<span\\b[^>]*class=["'][^"']*info-close-btn/);
+    assert.doesNotMatch(ui, /<span\\b[^>]*class=["'][^"']*info-close-btn/);
+    assert.doesNotMatch(users, /<span\\b[^>]*class=["'][^"']*close-btn/);
+});
+check("Los cierres estáticos tienen type button y nombre accesible", () => {
+    const buttons = [...index.matchAll(/<button\\b[^>]*class=["'][^"']*info-close-btn[^"']*["'][^>]*>/g)].map(x => x[0]);
+    assert.ok(buttons.length >= 6);
+    for (const button of buttons) {
+        assert.match(button, /type=["']button["']/);
+        assert.match(button, /aria-label=["'][^"']+["']/);
+    }
+});
+check("Los cierres dinámicos se crean como botones no submit y tienen aria-label", () => {
+    assert.match(ui, /document\\.createElement\\('button'\\);\\s*closeBtn\\.type = 'button';\\s*closeBtn\\.className = 'info-close-btn';\\s*closeBtn\\.setAttribute\\('aria-label'/);
+    assert.match(ui, /closeBtn\\.type = "button";\\s*closeBtn\\.setAttribute\\("aria-label", "Cerrar ventana"\\)/);
+});
+check("Los botones de cierre comparten dimensiones, contraste, hover y foco visible", () => {
+    assert.match(css, /\\.info-close-btn\\s*\\{[\\s\\S]*?width:\\s*40px;[\\s\\S]*?height:\\s*40px;/);
+    assert.match(css, /\\.info-close-btn:hover:not\\(:disabled\\)/);
+    assert.match(css, /\\.info-close-btn:focus-visible/);
+    assert.match(css, /#inbox-modal-content \\.inbox-close-button \\{ top: 10px; right: 12px; \\}/);
+    assert.match(css, /#replaced-image-lightbox-close \\{ top: -14px; right: -14px; \\}/);
+});
+check("El panel de usuarios usa el mismo patrón de cierre accesible", () => {
+    const buttons = [...users.matchAll(/<button\\b[^>]*class=["'][^"']*close-btn[^"']*["'][^>]*>/g)].map(x => x[0]);
+    assert.equal(buttons.length, 3);
+    for (const button of buttons) {
+        assert.match(button, /type=["']button["']/);
+        assert.match(button, /aria-label=["'][^"']+["']/);
+    }
+    assert.match(users, /\\.close-btn:focus-visible/);
+});
+check("La animación respeta preferencias de movimiento reducido", () => {
+    assert.match(css, /@media \\(prefers-reduced-motion: reduce\\)\\s*\\{\\s*\\.info-close-btn \\{ transition: none; \\}/);
+    assert.match(users, /@media \\(prefers-reduced-motion: reduce\\)/);
+});
+
 let passed = 0;
 for (const item of cases) {
     try { item.fn(); passed++; console.log("PASS " + item.name); }
