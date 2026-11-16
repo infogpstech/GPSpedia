@@ -4478,12 +4478,18 @@ function bindInboxControls_() {
         searchToggle.addEventListener("click", () => {
             if (!searchForm) return;
             const opening = !searchForm.classList.contains("is-open");
-            searchForm.hidden = false;
-            searchForm.classList.toggle("is-open", opening);
             searchToggle.setAttribute("aria-expanded", String(opening));
             searchToggle.setAttribute("aria-label", opening ? "Ocultar búsqueda" : "Mostrar búsqueda");
-            if (opening) document.getElementById("inbox-conversation-search")?.focus();
-            else if (!inboxConversationQuery_) searchForm.hidden = true;
+            if (opening) {
+                searchForm.hidden = false;
+                searchForm.classList.remove("is-open");
+                window.requestAnimationFrame(() => {
+                    if (searchToggle.getAttribute("aria-expanded") === "true") searchForm.classList.add("is-open");
+                });
+                document.getElementById("inbox-conversation-search")?.focus();
+            } else {
+                searchForm.classList.remove("is-open");
+            }
         });
         searchToggle.dataset.bound = "true";
         searchToggle.setAttribute("aria-expanded", "false");
