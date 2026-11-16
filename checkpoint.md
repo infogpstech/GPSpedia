@@ -949,3 +949,26 @@ Se amplió `AdminImageScanCoordinatorContract.mjs` para exigir que cada mutació
 - Corrección: `suggestYear: null` en la matriz autenticada; dispatcher coordina `FEEDBACK/sessionActivity`. Solo `userId=0` conserva ruta anónima sin lease.
 - Prueba nueva `SuggestYearCoordinatorSession.mjs`: verifica actor confiable, ausencia de acceso local a Users/ActiveSessions y anonimato. Integrada en `RunServiceTests.mjs`.
 - Pendiente: CI y revisión global de acciones protegidas que aún puedan omitir el Coordinator.
+
+
+---
+
+## Continuidad — GP-BETA-06: corregir despacho de suggestYear (2026-11-16)
+
+**Código validado:** `0ba72b55c88297132035380998c6e70f8d4c1cb2`  
+**HEAD documental posterior:** `d0a90454d26185d769db124166264921a69810b7`  
+**CI de servicios:** run `43782403026` SUCCESS — 107 suites / 1,655 pruebas / 0 fallos; sintaxis PASS.  
+**GitHub Pages:** run `43782402510` pendiente al momento del registro.
+
+- Causa raíz: la excepción `userId=0` de `suggestYear` estaba dentro de la rama de acciones que no son mutaciones. Como `suggestYear` sí requiere una lease de mutación específica para proteger Cortes y Feedback, la ruta anónima era inalcanzable y solicitaba sesión.
+- Corrección: evaluar la ruta anónima antes de clasificar la acción. La sugerencia anónima continúa sin sesión/lease; la autenticada conserva `FEEDBACK/suggestYear` y recibe actor central.
+- Se corrigieron dos defectos de la prueba: expectativa incorrecta de `sessionActivity` en vez de `suggestYear`, y extracción de política FEEDBACK que asumía un orden de servicios incorrecto.
+- No se eliminaron controles de sesión, epoch, revocación ni autorización. No se desplegó Apps Script ni se modificaron ScriptProperties, secretos, hojas, Drive o datos externos.
+- Validación Beta pendiente para ambos caminos y para una aplicación real del umbral de sugerencias.
+
+### Siguiente trabajo
+1. Continuar auditoría end-to-end de GP-BETA-03 (limpieza de ActividadUsuario y Logs), GP-BETA-04 (auditoría Drive) y GP-BETA-05 (historial de imágenes).
+2. En GP-BETA-03, el código revisado declara rutas, permisos y políticas Coordinator para `clearActivityLogs` (solo Desarrollador) y `clearSensitiveLogs` (AUTH, solo Desarrollador); falta validar respuesta real de FEEDBACK/AUTH en Beta.
+3. En GP-BETA-04/05, revisar configuración y deployment de ADMIN, esquema real de `Imagenes_Reemplazadas`, acceso Drive y resultados de las rutas. No inferir que una prueba local demuestra acceso real.
+4. Completar auditoría de acciones de lectura FEEDBACK/Inbox y sus recursos coordinados. Mantener actor central y RBAC backend; no quitar revocación/expiración.
+5. Confirmar el resultado de Pages para el HEAD correspondiente. No realizar despliegues Apps Script ni cambios productivos.
