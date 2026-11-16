@@ -52,6 +52,16 @@ users.getRange(1, 1, 9, 9).setValues([
     ["U7","jefe","","Jefe","","","Fabio Jefe","",""],
     ["U8","tecnico_ext","","Tecnico_exterior","","","Gabriela Técnica exterior","",""]
 ]);
+const inboxSchemaHeaders = {
+    InboxConversations: ["conversationId","createdAt","updatedAt","subject","category","type","status","createdById","createdByName","createdByRole","participantsJson","createKey","createHash","lastMessageId","lastMessageAt","lastMessagePreview","messageCount"],
+    InboxMessages: ["messageId","conversationId","createdAt","authorId","authorName","authorRole","body","idempotencyKey","payloadHash"],
+    InboxConversationState: ["conversationId","userId","lastReadAt","lastReadMessageId","archived","hasSent","hasReceived","updatedAt","lastReceivedMessageId","lastSentMessageId"],
+    InboxConversationAudit: ["eventId","timestamp","actorId","actorName","action","conversationId","messageId","details"],
+    InboxConversationFlags: ["conversationId","userId","unreadOverride","deleted","updatedAt"]
+};
+Object.entries(inboxSchemaHeaders).forEach(([name,headers]) => {
+    spreadsheet.insertSheet(name).getRange(1,1,1,headers.length).setValues([headers]);
+});
 const tokens = new Map([["token-a","U1"],["token-b","U2"],["token-c","U3"],["token-d","U6"],["token-e","U7"],["token-f","U8"]]);
 function normalizeRole(value) {
     return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
@@ -713,14 +723,13 @@ run("Una hoja de mensajes faltante se informa en lugar de mostrar conversaciones
     spreadsheet.sheets.set("InboxMessages", messagesSheet);
 });
 
-run("Inbox sin hojas relacionadas se muestra vacío sin crear ni modificar hojas", () => {
+run("Inbox sin hojas requeridas falla explícitamente y no crea ni modifica hojas", () => {
     const names = ["InboxConversations","InboxMessages","InboxConversationState","InboxConversationFlags","InboxConversationAudit"];
     const saved = new Map(names.map(name => [name,spreadsheet.getSheetByName(name)]));
     names.forEach(name => spreadsheet.sheets.delete(name));
     try {
-        const result = api.handleGetInboxConversations({ ...actor("U1","token-a"), folder:"received" });
-        assert.equal(result.status,"success");
-        assert.equal(result.total,0);
+        assert.throws(() => api.handleGetInboxConversations({ ...actor("U1","token-a"), folder:"received" }),
+            /no se crearán ni renombrarán hojas automáticamente/);
         names.forEach(name => assert.equal(spreadsheet.getSheetByName(name),null));
     } finally {
         saved.forEach((sheet,name) => { if (sheet) spreadsheet.sheets.set(name,sheet); });
@@ -733,10 +742,60 @@ run("Las hojas dependientes huérfanas no se interpretan como un Inbox vacío", 
     spreadsheet.sheets.delete("InboxConversationState");
     try {
         assert.throws(() => api.handleGetInboxConversations({ ...actor("U1","token-a"), folder:"received" }),
-            /hojas dependientes/);
+            /esquema Inbox está incompleto/);
     } finally {
         spreadsheet.sheets.set("InboxConversations",conversations);
         spreadsheet.sheets.set("InboxConversationState",states);
+    }
+});
+run("La lectura no crea la hoja opcional de preferencias cuando falta", () => {
+    const flags = spreadsheet.getSheetByName("InboxConversationFlags");
+    assert.ok(flags);
+    spreadsheet.sheets.delete("InboxConversationFlags");
+    try {
+        const result = api.handleGetInboxConversations({ ...actor("U1","token-a"), folder:"received" });
+        assert.equal(result.status,"success");
+        assert.equal(spreadsheet.getSheetByName("InboxConversationFlags"),null);
+    } finally {
+        spreadsheet.sheets.set("InboxConversationFlags",flags);
+    }
+});
+run("Las acciones que requieren preferencias rechazan la hoja ausente sin crearla", () => {
+    const flags = spreadsheet.getSheetByName("InboxConversationFlags");
+    assert.ok(flags);
+    spreadsheet.sheets.delete("InboxConversationFlags");
+    try {
+        assert.throws(() => api.handleMarkInboxUnread({ ...actor("U1","token-a"),conversationId:first.conversationId }),
+            /falta la hoja de preferencias/);
+        assert.throws(() => api.handleDeleteInboxConversation({ ...actor("U1","token-a"),conversationId:first.conversationId }),
+            /falta la hoja de preferencias/);
+        assert.equal(spreadsheet.getSheetByName("InboxConversationFlags"),null);
+    } finally {
+        spreadsheet.sheets.set("InboxConversationFlags",flags);
+    }
+});
+run("La lectura detecta un contador de mensajes inconsistente", () => {
+    const conversations = spreadsheet.getSheetByName("InboxConversations");
+    const row = conversations.rows.find(item => String(item[0]) === first.conversationId);
+    const previous = row[16];
+    row[16] = Number(previous) + 1;
+    try {
+        assert.throws(() => api.handleGetInboxConversations({ ...actor("U1","token-a"), folder:"received" }),
+            /contador de mensajes no coincide/);
+    } finally {
+        row[16] = previous;
+    }
+});
+run("La lectura detecta estados ausentes para participantes", () => {
+    const states = spreadsheet.getSheetByName("InboxConversationState");
+    const index = states.rows.findIndex(row => String(row[0]) === first.conversationId && String(row[1]) === "U2");
+    assert.ok(index > 0);
+    const removed = states.rows.splice(index,1)[0];
+    try {
+        assert.throws(() => api.handleGetInboxConversations({ ...actor("U1","token-a"), folder:"received" }),
+            /estado de los participantes está incompleto/);
+    } finally {
+        states.rows.splice(index,0,removed);
     }
 });
 run("Una hoja Inbox vacía no se inicializa durante una lectura", () => {
@@ -745,7 +804,7 @@ run("Una hoja Inbox vacía no se inicializa durante una lectura", () => {
     const emptySheet = new FakeSheet("InboxConversationState");
     spreadsheet.sheets.set("InboxConversationState",emptySheet);
     try {
-        assert.throws(() => api.handleGetInboxConversations({ ...actor("U1","token-a"), folder:"received" }),/está vacío/);
+        assert.throws(() => api.handleGetInboxConversations({ ...actor("U1","token-a"), folder:"received" }),/está vacía/);
         assert.equal(emptySheet.getLastRow(),0);
     } finally {
         spreadsheet.sheets.set("InboxConversationState",stateSheet);
