@@ -1015,3 +1015,26 @@ Los cambios reportados en checkpoint (consola 50%, pestañas horizontales, títu
 - Evidencia: `suggestYear` no figuraba en `FEEDBACK_ACTION_PERMISSIONS`. El dispatcher FEEDBACK enviaba acciones sin esa clave directamente a `doPostInternal_` con actor nulo. Para usuarios autenticados, `resolveSuggestionYearActor` caía al camino de compatibilidad de `assertFeedbackSession`, leyendo Users y ActiveSessions en cada sugerencia.
 - Impacto: revalidación redundante de perfil/sesión fuera del actor central, contraria al requisito de sesión central. La ruta anónima `userId=0` es legítima y debe mantenerse sin autenticación.
 - Corrección: declarar `suggestYear` como acción autenticada sin restricción adicional de rol, enviarla por `FEEDBACK/sessionActivity` y conservar una rama pública explícita únicamente para `userId=0`.
+
+
+================================================================================
+AUD-2026-11-16-01 — FEEDBACK/suggestYear: ruta anónima inalcanzable por clasificación previa
+Severidad: Media — disponibilidad de sugerencias anónimas y consistencia del dispatcher.
+Estado: CORREGIDO EN RAMA DE TRABAJO; CI APROBADO; VALIDACIÓN BETA PENDIENTE.
+
+Evidencia y causa raíz:
+- FEEDBACK/isSharedMutationAction_ clasifica suggestYear como mutación compartida para reservar la lease específica FEEDBACK/suggestYear, que protege Cortes y Feedback.
+- La excepción de userId=0 estaba dentro de la rama !isSharedMutationAction_. Por tanto, nunca se ejecutaba para suggestYear: las solicitudes anónimas intentaban adquirir una lease/sesión y podían ser rechazadas.
+- La primera prueba de regresión también esperaba erróneamente sessionActivity para el actor autenticado, pese a que la operación requiere la lease específica suggestYear. Después se detectó que su extractor de política buscaba FEEDBACK antes de ADMIN, aunque la matriz actual declara ADMIN antes de FEEDBACK.
+
+Corrección:
+- La excepción explícita de userId=0 se evalúa antes de isSharedMutationAction_; mantiene la ruta anónima sin sesión ni lease.
+- Las sugerencias autenticadas conservan la lease FEEDBACK/suggestYear, el actor confiable de Coordinator y la protección de recursos CORTES/FEEDBACK.
+- Se corrigieron las aserciones para verificar la lease real y localizar la política FEEDBACK sin depender del orden de servicios.
+
+Validación:
+- GitHub Actions run 43782403026, commit 0ba72b55c88297132035380998c6e70f8d4c1cb2: SUCCESS; 107 suites, 1,655 pruebas aprobadas, 0 fallos; sintaxis PASS.
+- GitHub Pages run 43782402510: pendiente al último chequeo.
+- No se desplegó Apps Script ni se modificaron ScriptProperties, secretos, hojas, Drive o datos externos.
+- Falta validar en Beta una sugerencia anónima y otra autenticada, incluida la aplicación de rango cuando se alcanza el umbral.
+================================================================================
