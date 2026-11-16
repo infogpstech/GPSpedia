@@ -636,6 +636,14 @@ export function createRichTextToolbar(targetId, options = {}) {
     toolbar.dataset.richTextForceAdvanced = String(isFull);
     toolbar.setAttribute("role", "toolbar");
     toolbar.setAttribute("aria-label", "Formato de texto");
+    toolbar.addEventListener("pointerdown", event => {
+        rememberRichTextSelection_(targetId);
+        if (event.target.closest("button, [role='menuitem']") && event.pointerType !== "mouse") event.preventDefault();
+    }, true);
+    toolbar.addEventListener("mousedown", event => {
+        rememberRichTextSelection_(targetId);
+        if (event.target.closest("button, [role='menuitem']")) event.preventDefault();
+    }, true);
     const makeButton = (icon, title, callback) => {
         const button = document.createElement("button");
         button.type = "button"; button.className = "rich-toolbar-icon-button";
