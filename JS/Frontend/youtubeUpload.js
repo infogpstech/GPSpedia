@@ -567,8 +567,6 @@ export function openYouTubeUploadModal(options = {}) {
 
         try {
             if (!userId || !sessionToken) throw new Error("Debes iniciar sesión nuevamente antes de subir un vídeo.");
-            const validation = await routeAction("validateSession", { userId, sessionToken });
-            if (!validation || validation.valid !== true) throw new Error("La sesión no es válida o ha expirado. Inicia sesión nuevamente.");
             const latestUser = getState().currentUser;
             if (!latestUser || String(latestUser.ID || "").trim() !== userId || latestUser.SessionToken !== sessionToken) {
                 throw new Error("La sesión cambió durante la preparación de la subida. Vuelve a intentarlo.");
