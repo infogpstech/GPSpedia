@@ -939,3 +939,14 @@ HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
 - VideoApprovalClientContract: 10/10 PASS. CI Node.js 22 run 43799943070: SUCCESS — 118 suites / 1,765 pruebas / 0 fallos.
 - La validación con deployments FEEDBACK/Coordinator y medición de latencia real queda pendiente de Beta.
 ================================================================================
+
+================================================================================
+2026-11-16 — CIERRE LOCAL BETA-042: RETIRADA DEL SERVICIO LEGACY
+- Auditoría de servicios, Frontend, HTML, API/action map, pruebas, documentación activa y workflows: no hay endpoint, acción, ruta de UI ni consumidor activo LEGACY.
+- Se confirmó la retirada de logFrontend, SCRIPT_URL y remoteLog; los errores del navegador quedan en consola local.
+- API_ACTION_SERVICE_MAP y SERVICE_HEALTH_CONTRACTS mantienen únicamente los siete servicios vigentes.
+- Services/SERVICE_HEALTH.md retira LEGACY de la tabla de contratos y conserva una nota separada de servicio retirado, sin endpoint ni solicitudes.
+- Se preservan referencias históricas en Auditoría/checkpoint; no se eliminaron registros ni datos históricos.
+- ServiceHealthContract 17/17; ActionDispatchContract 12/12 PASS. CI Node.js 22 run 43800322470: SUCCESS — 118 suites / 1,765 pruebas / 0 fallos.
+- Pendiente Beta: confirmar que no existe deployment Legacy activo fuera del repositorio ni tráfico residual en navegadores reales.
+================================================================================
