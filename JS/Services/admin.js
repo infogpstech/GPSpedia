@@ -3527,8 +3527,8 @@ function handlePreviewCortesImageReconciliation_(payload, logMessage, developerC
     plan.writePerformed = false;
     logMessage && logMessage("Conciliación Drive ↔ Cortes",
         "Dry-run: " + plan.counts.matched + " coincidencias exactas, " + plan.counts.orphaned +
-        " huérfanas, " + plan.counts.ambiguous + " ambiguas, " + missingReferences.length +
-        " referencias sin archivo verificado; sin escrituras.");
+        " huérfanas, " + plan.counts.ambiguous + " ambiguas, " + missingReferenceCount +
+        " referencias sin archivo verificado" + (missingReferencesTruncated ? " (reporte limitado a 200)" : "") + "; sin escrituras.");
     return plan;
 }
 
