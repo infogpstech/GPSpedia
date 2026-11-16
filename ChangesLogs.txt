@@ -1168,3 +1168,5 @@ ADENDA — GP-UX-PYS-ADD-MODEL-CARD-01: se simplifica la prueba CSS/inline a com
 ================================================================================
 
 ADENDA — GP-UX-PYS-ADD-MODEL-CARD-01: prueba CSS independiente de formato/espaciado; valida selector y valores height/min-height de 120 px.
+
+ADENDA — App Shell v39: se actualiza la expectativa de versión en OfflineBrandAssets.mjs para mantener alineadas las pruebas de marca/offline.

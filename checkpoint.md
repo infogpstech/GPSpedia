@@ -1906,3 +1906,5 @@ Backlog y registro de cambios sincronizados con este estado. La rama base perman
 - Validación CI: se ejecuta sobre el commit resultante. Las pruebas visuales en navegador/dispositivo y los servicios Apps Script reales permanecen diferidos a Beta.
 
 - Ajuste de robustez del contrato CSS: se comprueban por separado los selectores y las declaraciones de altura/mínima altura, sin depender de espacios o saltos de línea exactos.
+
+- El incremento de App Shell a v39 también requiere actualizar `OfflineBrandAssets.mjs`, que mantenía una expectativa fija v37. Se sincroniza el contrato para que la validación offline corresponda al recurso actual.
