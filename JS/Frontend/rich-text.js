@@ -523,8 +523,14 @@ function createCompactRichTextToolbar_(targetId, forceAdvanced) {
     toolbar.dataset.richTextCompact = "true";
     toolbar.setAttribute("role", "toolbar");
     toolbar.setAttribute("aria-label", "Formato del mensaje");
-    toolbar.addEventListener("pointerdown", () => rememberRichTextSelection_(targetId), true);
-    toolbar.addEventListener("mousedown", () => rememberRichTextSelection_(targetId), true);
+    toolbar.addEventListener("pointerdown", event => {
+        rememberRichTextSelection_(targetId);
+        if (event.target.closest("button, [role='menuitem']") && event.pointerType !== "mouse") event.preventDefault();
+    }, true);
+    toolbar.addEventListener("mousedown", event => {
+        rememberRichTextSelection_(targetId);
+        if (event.target.closest("button, [role='menuitem']")) event.preventDefault();
+    }, true);
     const closeMenus = except => toolbar.querySelectorAll(".rich-toolbar-dropdown.is-open").forEach(group => {
         if (group === except) return;
         group.classList.remove("is-open");
@@ -537,6 +543,7 @@ function createCompactRichTextToolbar_(targetId, forceAdvanced) {
         button.type = "button"; button.className = "rich-toolbar-icon-button";
         button.title = title; button.setAttribute("aria-label", title);
         button.innerHTML = '<i class="fa-solid ' + icon + '" aria-hidden="true"></i>';
+        button.addEventListener("pointerdown", event => { if (event.pointerType !== "mouse") event.preventDefault(); });
         button.addEventListener("mousedown", event => event.preventDefault());
         button.addEventListener("click", event => { event.preventDefault(); closeMenus(); callback(); });
         return button;
@@ -548,6 +555,7 @@ function createCompactRichTextToolbar_(targetId, forceAdvanced) {
         trigger.title = title; trigger.setAttribute("aria-label", title);
         trigger.setAttribute("aria-haspopup", "menu"); trigger.setAttribute("aria-expanded", "false");
         trigger.innerHTML = '<i class="fa-solid ' + icon + '" aria-hidden="true"></i>';
+        trigger.addEventListener("pointerdown", event => { if (event.pointerType !== "mouse") event.preventDefault(); });
         trigger.addEventListener("mousedown", event => event.preventDefault());
         const menu = document.createElement("div"); menu.className = "rich-toolbar-menu";
         menu.setAttribute("role", "menu"); menu.hidden = true;
@@ -555,6 +563,7 @@ function createCompactRichTextToolbar_(targetId, forceAdvanced) {
             const option = document.createElement("button");
             option.type = "button"; option.className = "rich-toolbar-menu-item";
             option.setAttribute("role", "menuitem"); option.textContent = item.label;
+            option.addEventListener("pointerdown", event => { if (event.pointerType !== "mouse") event.preventDefault(); });
             option.addEventListener("mousedown", event => event.preventDefault());
             option.addEventListener("click", event => { event.preventDefault(); item.action(); closeMenus(); });
             menu.appendChild(option);
@@ -577,9 +586,19 @@ function createCompactRichTextToolbar_(targetId, forceAdvanced) {
     colorPicker.className = "rich-toolbar-color-input"; colorPicker.title = "Color de texto";
     colorPicker.setAttribute("aria-label", "Color de texto");
     const colorButton = makeIconButton("fa-palette", "Color de texto", () => colorPicker.click());
-    toolbar.addEventListener("pointerdown", () => rememberRichTextSelection_(targetId), true);
-    toolbar.addEventListener("mousedown", () => rememberRichTextSelection_(targetId), true);
-    colorPicker.addEventListener("change", event => applyRichTextColor(targetId, event.target.value));
+    toolbar.addEventListener("pointerdown", event => {
+        rememberRichTextSelection_(targetId);
+        if (event.target.closest("button, [role='menuitem']") && event.pointerType !== "mouse") event.preventDefault();
+    }, true);
+    toolbar.addEventListener("mousedown", event => {
+        rememberRichTextSelection_(targetId);
+        if (event.target.closest("button, [role='menuitem']")) event.preventDefault();
+    }, true);
+    colorPicker.addEventListener("pointerdown", () => rememberRichTextSelection_(targetId));
+    colorPicker.addEventListener("change", event => {
+        applyRichTextColor(targetId, event.target.value);
+        restoreRichTextSelection_(resolveRichTextTarget_(targetId));
+    });
     colorGroup.append(colorButton, colorPicker); toolbar.appendChild(colorGroup);
     addDropdown("fa-text-height", "Tamaño de texto", [
         { label:"Pequeño", action:()=>applyRichTextFormat(targetId,"size","0.85em",{forceAdvanced}) },
@@ -647,7 +666,7 @@ export function createRichTextToolbar(targetId, options = {}) {
         sizeSelect.innerHTML = '<option value="">Tamaño</option><option value="0.85em">Pequeño</option><option value="1em">Normal</option><option value="1.2em">Grande</option><option value="1.5em">Encabezado</option>';
         sizeSelect.addEventListener("pointerdown", () => rememberRichTextSelection_(targetId));
         sizeSelect.addEventListener("mousedown", () => rememberRichTextSelection_(targetId));
-        sizeSelect.addEventListener("change", event => { if (event.target.value) applyRichTextFormat(targetId, "size", event.target.value, applyOptions); event.target.value = ""; });
+        sizeSelect.addEventListener("change", event => { if (event.target.value) applyRichTextFormat(targetId, "size", event.target.value, applyOptions); event.target.value = ""; restoreRichTextSelection_(resolveRichTextTarget_(targetId)); });
         toolbar.appendChild(sizeSelect);
         const fontSelect = document.createElement("select");
         fontSelect.className = "rich-toolbar-native-select";
@@ -655,7 +674,7 @@ export function createRichTextToolbar(targetId, options = {}) {
         fontSelect.innerHTML = '<option value="">Fuente</option>' + Array.from(SAFE_FONTS.keys()).map(font => '<option value="' + font + '">' + font + '</option>').join("");
         fontSelect.addEventListener("pointerdown", () => rememberRichTextSelection_(targetId));
         fontSelect.addEventListener("mousedown", () => rememberRichTextSelection_(targetId));
-        fontSelect.addEventListener("change", event => { if (event.target.value) applyRichTextFormat(targetId, "font", event.target.value, applyOptions); event.target.value = ""; });
+        fontSelect.addEventListener("change", event => { if (event.target.value) applyRichTextFormat(targetId, "font", event.target.value, applyOptions); event.target.value = ""; restoreRichTextSelection_(resolveRichTextTarget_(targetId)); });
         toolbar.appendChild(fontSelect);
     }
     if (hasLists) {
