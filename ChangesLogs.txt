@@ -1386,3 +1386,14 @@ GP-UX-INBOX-RICH-EDITOR-01 — 2026-11-16
 
 ### GP-UX-RICH-FORMS-02 — 2026-11-16
 - `style.css`: el desplegable de categorías se abre hacia la izquierda y el de viñetas/listas hacia la derecha, con anclajes independientes.
+
+
+
+================================================================================
+GP-UX-RICH-TOOLBARS-01 — 2026-11-16
+- `JS/Frontend/rich-text.js`: las barras de texto enriquecido de formularios reutilizan la presentación iconográfica compacta del Inbox. Los botones de formato usan iconos Font Awesome con títulos y etiquetas accesibles; los selectores nativos de tamaño, fuente y marcador se conservan.
+- Se mantienen los perfiles existentes: básico (negrita/color), listas (negrita/color/listas) y avanzado. No se incorporan comandos ni opciones adicionales y el Inbox conserva su implementación independiente.
+- `style.css`: estilos comunes de superficie, bordes, espaciado, botones, selectores y color, responsivos para los formularios.
+- `service-worker.js`: App Shell actualizado a v55 para refrescar los estilos en PWA.
+- Contratos: `JS/Tests/InboxUi.mjs`, `JS/Tests/ServiceWorkerCache.js` y `JS/Tests/OfflineBrandAssets.mjs`.
+================================================================================
