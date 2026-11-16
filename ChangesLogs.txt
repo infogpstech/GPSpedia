@@ -906,3 +906,15 @@ HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
 - DeveloperPanelUX 7/7, DevToolsModalAccessibility 19/19 y DeveloperPanelCopy 6/6 PASS en runtime JavaScript aislado.
 - Inspección visual en dispositivos reales queda para Beta; permisos y confirmaciones destructivas no se modificaron.
 ================================================================================
+
+================================================================================
+2026-11-16 — CIERRE LOCAL GP-IMG-DATA-01: CONCILIACIÓN DRIVE ↔ CORTES
+- JS/Services/admin.js: clasificación ACL por archivo y cadena de carpetas; únicamente anyone/reader no indexable se acepta como público por diseño. Se identifican referencias faltantes, ubicaciones no autorizadas, papelera y estados no verificables.
+- Se conserva el total de referencias faltantes aunque el detalle visible se limite a 200; el resumen y la barrera de aplicación utilizan el conteo íntegro.
+- La aplicación exige respaldo completo, privado y asociado a la sesión Developer; verifica manifiesto y fingerprints del respaldo/origen. Se mantienen dry-run, digest, aprobación, read-back, registro de actividad y rollback condicionado.
+- JS/Frontend/ui.js y offline.js: persistencia/reanudación de la simulación, reporte ACL y referencias faltantes, estado de truncamiento y total real. El dry-run no escribe ni cambia permisos.
+- JS/Tests/CortesImageReconciliation.mjs: 28/28; CortesImageReconciliationApply.mjs: 15/15; CortesImageReconciliationUI.mjs: 13/13; AdminImageScanCoordinatorContract.mjs: 1/1 PASS.
+- CI Node.js 22 run 43798680601: SUCCESS — 117 suites / 1,760 pruebas / 0 fallos.
+- Se actualizó DeveloperOperationMessages.mjs para reflejar el texto vigente del resumen sin cambiar la operación.
+- Validación real de Drive API, ACL, Spreadsheet y ciclo de aplicación queda reservada a Beta. No se desplegaron Apps Script ni se modificaron datos externos.
+================================================================================
