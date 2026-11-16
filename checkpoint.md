@@ -107,3 +107,10 @@ El checkpoint acumulativo anterior se conserva íntegro en `Checkpoint_Archive/c
 - GitHub Actions Node.js 22 run `43924038989`: **SUCCESS — 129 suites / 1,903 pruebas / 0 fallos**. Incluye sintaxis de módulos modificados y regresión de servicios.
 - GitHub Pages run `43924038398`: **SUCCESS — build y deploy**.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Falta únicamente comprobar visualmente en Android/PWA instalada las posiciones y proporciones finales. No se modificaron Apps Script, deployments de servicios ni datos externos.
+
+
+### Nueva solicitud visual — modal de corte y tabla users.html — 2026-11-16
+- Rama verificada al iniciar esta tarea: `GPSpedia2.2.5_work`, HEAD `bb5dbd1fe8327110e80faaa47555bc4f0388fa1b`; commit de incorporación de capturas únicamente, sin cambios concurrentes en código respecto al checkpoint previo. Rama base `GPSpedia2.2.5`: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- Capturas localizadas en `Images/tests/`: `modal_antes.png`, `Modal_despues.png`, `modal_users_antes.jpeg`. Se pudo inspeccionar la captura anterior y la captura de usuarios; el conector no expuso los bytes de `Modal_despues.png` (archivo de 2,017,189 bytes). La distribución solicitada por el usuario en texto se usa como criterio explícito.
+- Alcance en implementación: encabezado de corte con logo grande a la izquierda, acciones en la fila superior derecha, modelo en la fila inferior derecha alineado a la base del logo; tabla de usuarios con encabezados cortos, distribución 100 % y rol sin cortes internos. Sin cambios de backend, RBAC ni handlers.
+- App Shell previsto v45 por cambios en CSS y HTML precargados.

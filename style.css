@@ -1024,15 +1024,18 @@ body.search-active .container {
 
 /* Comentario: Ajustes de tamaño según la nueva solicitud de diseño. */
 .brand-logo-modal {
-    height: 69.12px !important;
-    max-height: 69.12px !important;
+    height: 120px !important;
+    max-height: 120px !important;
     width: auto !important;
+    max-width: 180px;
+    object-fit: contain;
 }
 
 @media (max-width: 600px) {
     .brand-logo-modal {
-        height: 54.72px !important;
-        max-height: 54.72px !important;
+        height: 104px !important;
+        max-height: 104px !important;
+        max-width: 36vw;
     }
 }
 
@@ -4481,17 +4484,17 @@ td, th {
 .detail-modal-toolbar {
     position: relative;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-rows: auto auto;
-    align-items: start;
-    column-gap: 8px;
-    row-gap: 4px;
+    grid-template-columns: max-content minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    align-items: stretch;
+    column-gap: 10px;
+    row-gap: 0;
     padding-right: 42px;
     margin-bottom: 0;
 }
 .detail-modal-saving-indicator {
-    grid-column: 1;
-    grid-row: 2;
+    grid-column: 1 / -1;
+    grid-row: 3;
     margin-right: 0;
     min-width: 0;
     font-size: .85rem;
@@ -4505,19 +4508,20 @@ td, th {
 }
 .detail-modal-title {
     grid-column: 1;
-    grid-row: 1;
+    grid-row: 1 / span 2;
     display: flex;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: center;
     flex-wrap: nowrap;
-    gap: 10px;
     min-width: 0;
-    max-width: 100%;
+    max-width: 180px;
+    height: 122px;
     overflow: hidden;
-    padding-bottom: 10px;
-    margin-bottom: 0;
+    padding: 0;
+    margin: 0;
     border-bottom: 2px solid var(--gp-color-accent, #007bff);
 }
+.detail-modal-title:empty { display: none; }
 .activity-dashboard-tabs {
     display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 4px;
     border-bottom: 1px solid var(--border-color, #ccc);
@@ -4530,24 +4534,40 @@ td, th {
     border-bottom-color: var(--accent-color, #007bff); font-weight: 700;
 }
 .detail-modal-title .brand-logo-modal {
+    display: block;
     flex: 0 0 auto;
     width: auto !important;
+    height: 120px !important;
+    max-height: 120px !important;
     min-width: 0;
-    max-width: none;
+    max-width: 180px;
     object-fit: contain;
 }
 .detail-modal-title-text {
-    flex: 0 1 auto;
+    grid-column: 2;
+    grid-row: 2;
+    align-self: end;
     min-width: 0;
+    width: 100%;
     max-width: 100%;
     margin: 0;
-    padding: 0;
+    padding: 0 0 7px;
     color: var(--gp-color-accent, var(--accent-color, #007bff));
-    font-size: clamp(1.25rem, 2.5vw, 1.8rem);
+    font-size: clamp(1.05rem, 2.5vw, 1.8rem);
+    line-height: 1.15;
+    text-align: left;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     overflow-wrap: normal;
+}
+.detail-modal-title-input {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: end;
+    width: 100%;
+    min-width: 0;
+    margin: 0 0 6px;
 }
 .detail-modal-title-input {
     flex: 1 1 260px;
@@ -4755,10 +4775,11 @@ td, th {
     grid-column: 2;
     grid-row: 1;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: flex-end;
     flex-wrap: nowrap;
     gap: 6px;
+    width: 100%;
     min-width: 0;
     align-self: start;
 }
@@ -4901,21 +4922,53 @@ body.dark-mode #login-modal #login-error.login-session-ended {
 }
 @media (max-width: 560px) {
     .detail-modal-toolbar {
-        grid-template-columns: minmax(0, 1fr) auto;
-        column-gap: 5px;
-        row-gap: 4px;
-        padding-right: 42px;
+        grid-template-columns: minmax(0, 36vw) minmax(0, 1fr);
+        grid-template-rows: auto minmax(0, 1fr) auto;
+        column-gap: 6px;
+        row-gap: 0;
+        padding-right: 38px;
     }
-    .detail-modal-title { min-width: 0; }
-    .detail-modal-header-actions { gap: 5px; margin-left: 0; }
+    .detail-modal-title {
+        grid-column: 1;
+        grid-row: 1 / span 2;
+        width: 100%;
+        max-width: 36vw;
+        height: 106px;
+        min-width: 0;
+    }
+    .detail-modal-title .brand-logo-modal {
+        height: 104px !important;
+        max-height: 104px !important;
+        max-width: 36vw;
+    }
+    .detail-modal-title-text {
+        grid-column: 2;
+        grid-row: 2;
+        font-size: clamp(1rem, 4vw, 1.35rem);
+        padding-bottom: 6px;
+    }
+    .detail-modal-title-input {
+        grid-column: 2;
+        grid-row: 2;
+        min-width: 0;
+        padding: 7px 6px;
+        font-size: .9rem;
+    }
+    .detail-modal-header-actions { gap: 4px; margin-left: 0; }
     .detail-modal-header-actions .share-modal-btn {
-        flex-basis: 32px;
-        width: 32px;
-        min-width: 32px;
-        height: 32px;
-        min-height: 32px;
+        flex: 0 0 28px;
+        width: 28px;
+        min-width: 28px;
+        height: 28px;
+        min-height: 28px;
         padding: 2px;
-        font-size: .95rem;
+        font-size: .85rem;
+    }
+    .detail-modal-toolbar > .info-close-btn {
+        width: 34px;
+        min-width: 34px;
+        height: 34px;
+        min-height: 34px;
     }
 }
 

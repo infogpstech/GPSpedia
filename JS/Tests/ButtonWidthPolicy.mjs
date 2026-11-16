@@ -46,6 +46,7 @@ testCase("el ancho completo queda reservado a .btn-block y las acciones de usuar
     assert.match(index, /id="btn-accept-terms" class="btn btn-primary btn-block"/);
     assert.match(css, /@media \(max-width: 600px\)[\s\S]*?\.modal-actions button,[\s\S]*?width: 100%/);
     assert.match(users, /\.actions-cell \.btn-sm, \.actions-cell \.user-icon-action, \.actions-cell \.user-session-action \{\s*flex:0 0 34px; width:34px/);
+    assert.match(users, /@media \(max-width: 420px\)[\s\S]*?flex:0 0 28px; width:28px; min-width:28px; height:34px/);
 });
 
 console.log("ButtonWidthPolicy: " + passed + "/" + passed + " PASS");

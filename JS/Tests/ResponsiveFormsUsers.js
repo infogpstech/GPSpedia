@@ -11,9 +11,10 @@ check('tarjetas adaptables',()=>{has(a,'.match-card-header { flex-wrap: wrap; }'
 check('carga de imágenes adaptable',()=>{has(a,'.image-upload-group { flex-wrap: wrap; min-width: 0; }');has(a,'.image-upload-group > * { min-width: 0; max-width: 100%; }');});
 check('mensajes y acordeones adaptables',()=>{has(a,'.info-msg { align-items: flex-start; flex-wrap: wrap; }');has(a,'.accordion-header { align-items: flex-start; gap: 10px; }');});
 check('campos móviles legibles',()=>has(a,'input, select, textarea { min-width: 0; font-size: 16px; }'));
-check('tabla usa ancho disponible',()=>{has(u,'.table-scroll-container { overflow-x: visible; overflow-y: visible; }');has(u,'.user-table { width: 100%; min-width: 0; table-layout: fixed; }');});
-check('celdas permiten saltos',()=>has(u,'white-space: normal; overflow-wrap: anywhere;'));
-check('anchos de cuatro columnas',()=>{for(const v of ['width: 17%','width: 21%','width: 16%','width: 46%','width: 20%','width: 48%'])has(u,v);});
+check('tabla ocupa todo el ancho y no permite scroll horizontal',()=>{has(u,'overflow-x: hidden;');has(u,'width: 100%;');has(u,'table-layout: fixed;');assert.doesNotMatch(u,/width:\s*max-content/);});
+check('encabezados usan los nombres solicitados',()=>{has(users,'<th>Usuario</th>');has(users,'<th>Nombre</th>');has(users,'<th>Rol</th>');has(users,'<th>acciones</th>');assert.doesNotMatch(users,/<th>Nombre de Usuario<\/th>|<th>Nombre Completo<\/th>/);});
+check('rol conserva palabras completas sin saltos internos',()=>{has(u,'white-space: nowrap; overflow-wrap: normal; word-break: normal;');has(u,'font-size: .64rem; white-space: nowrap; overflow-wrap: normal; word-break: normal;');});
+check('anchos de cuatro columnas',()=>{for(const v of ['width: 18%','width: 20%','width: 25%','width: 37%','width: 16%','width: 31%'])has(u,v);});
 check('acciones horizontales compactas con iconos',()=>{has(u,'.actions-cell { display:flex; flex-direction:row;');has(u,'.user-primary-actions { display:flex; flex-direction:row;');has(u,'flex-wrap:nowrap;');has(users,'fa-pen-to-square');has(users,'fa-trash-can');has(users,'fa-arrow-right-from-bracket');has(users,"resetSessionsButton.setAttribute('aria-label'");has(u,'flex:0 0 34px; width:34px; min-width:34px; height:36px;');has(u,'.user-table td:nth-child(3) { font-size: .68rem;');has(users,'USERS_CACHE_TTL_MS = 5 * 60 * 1000');has(users,'!cached.stale');});
 check('modal limitado y con scroll',()=>{has(u,'max-height: calc(100dvh - 24px)');has(u,'overflow-y: auto; overscroll-behavior: contain;');has(u,'width: 100%; margin: 0 auto; padding: 16px;');});
 check('controles táctiles',()=>{has(u,'min-height: 44px; font-size: 16px;');has(u,'.modal-content form .btn { width: 100%; min-height: 44px;');});

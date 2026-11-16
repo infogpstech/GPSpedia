@@ -80,22 +80,26 @@
             padding-bottom: 10px;
             margin-bottom: 20px;
         }
-        /* Contenedor para scroll horizontal invisible */
+        /* La tabla utiliza todo el ancho disponible sin crear desplazamiento horizontal. */
         .table-scroll-container {
             width: 100%;
-            overflow-x: auto;
-            -ms-overflow-style: none;  /* IE y Edge */
-            scrollbar-width: none;  /* Firefox */
-        }
-        .table-scroll-container::-webkit-scrollbar {
-            display: none; /* Chrome, Safari y Opera */
+            max-width: 100%;
+            min-width: 0;
+            overflow-x: hidden;
+            overflow-y: visible;
         }
         .user-table {
-            width: max-content; /* Permite que la tabla tome su ancho natural */
-            min-width: 100%;   /* Pero al menos el 100% del contenedor */
+            width: 100%;
+            min-width: 100%;
+            max-width: 100%;
+            table-layout: fixed;
             border-collapse: collapse;
             margin-top: 20px;
         }
+        .user-table th:nth-child(1), .user-table td:nth-child(1) { width: 18%; }
+        .user-table th:nth-child(2), .user-table td:nth-child(2) { width: 20%; }
+        .user-table th:nth-child(3), .user-table td:nth-child(3) { width: 25%; }
+        .user-table th:nth-child(4), .user-table td:nth-child(4) { width: 37%; }
         .user-table th, .user-table td {
             padding: 8px 10px; /* Reducido para hacer la tabla más compacta */
             border-bottom: 1px solid var(--gp-color-border);
@@ -202,14 +206,15 @@
  .container { width: 100%; padding: 12px; margin: 8px auto; }
  .profile-section, .user-management-section { padding: 12px; }
  #profile-section > div { flex-wrap: wrap; gap: 8px; }
- .table-scroll-container { overflow-x: visible; overflow-y: visible; }
- .user-table { width: 100%; min-width: 0; table-layout: fixed; }
- .user-table th, .user-table td { padding: 6px 2px; font-size: .76rem; white-space: normal; overflow-wrap: anywhere; vertical-align: top; }
- .user-table td:nth-child(3) { font-size: .68rem; line-height: 1.15; }
- .user-table th:nth-child(1), .user-table td:nth-child(1) { width: 17%; }
- .user-table th:nth-child(2), .user-table td:nth-child(2) { width: 21%; }
- .user-table th:nth-child(3), .user-table td:nth-child(3) { width: 16%; }
- .user-table th:nth-child(4), .user-table td:nth-child(4) { width: 46%; }
+ .table-scroll-container { overflow-x: hidden; overflow-y: visible; }
+ .user-table { width: 100%; min-width: 100%; max-width: 100%; table-layout: fixed; }
+ .user-table th, .user-table td { padding: 6px 3px; font-size: .76rem; white-space: normal; overflow-wrap: anywhere; vertical-align: top; }
+ .user-table th { overflow-wrap: normal; word-break: normal; }
+ .user-table td:nth-child(3) { font-size: .68rem; line-height: 1.15; white-space: nowrap; overflow-wrap: normal; word-break: normal; }
+ .user-table th:nth-child(1), .user-table td:nth-child(1) { width: 18%; }
+ .user-table th:nth-child(2), .user-table td:nth-child(2) { width: 20%; }
+ .user-table th:nth-child(3), .user-table td:nth-child(3) { width: 25%; }
+ .user-table th:nth-child(4), .user-table td:nth-child(4) { width: 37%; }
  .actions-cell { display:flex; flex-direction:row; align-items:center; justify-content:flex-start; gap:3px; min-width:0; white-space:nowrap; }
  .user-primary-actions { display:flex; flex-direction:row; align-items:center; flex-wrap:nowrap; gap:3px; min-width:0; }
  .actions-cell .btn-sm, .actions-cell .user-icon-action, .actions-cell .user-session-action { flex:0 0 34px; width:34px; min-width:34px; height:36px; min-height:36px; margin:0; padding:0; white-space:nowrap; line-height:1; }
@@ -219,11 +224,15 @@
  .modal-content form .btn { width: 100%; min-height: 44px; white-space: normal; }
 }
 @media (max-width: 420px) {
- .user-table th, .user-table td { padding: 7px 3px; font-size: .76rem; }
+ .user-table th, .user-table td { padding: 6px 2px; font-size: .72rem; }
  .user-table th:nth-child(1), .user-table td:nth-child(1) { width: 16%; }
- .user-table th:nth-child(2), .user-table td:nth-child(2) { width: 20%; }
- .user-table th:nth-child(3), .user-table td:nth-child(3) { width: 16%; }
- .user-table th:nth-child(4), .user-table td:nth-child(4) { width: 48%; }
+ .user-table th:nth-child(2), .user-table td:nth-child(2) { width: 16%; }
+ .user-table th:nth-child(3), .user-table td:nth-child(3) { width: 31%; }
+ .user-table th:nth-child(4), .user-table td:nth-child(4) { width: 37%; }
+ .user-table td:nth-child(3) { font-size: .64rem; white-space: nowrap; overflow-wrap: normal; word-break: normal; }
+ .actions-cell { gap:2px; }
+ .user-primary-actions { gap:2px; }
+ .actions-cell .btn-sm, .actions-cell .user-icon-action, .actions-cell .user-session-action { flex:0 0 28px; width:28px; min-width:28px; height:34px; min-height:34px; }
  .modal-content { padding: 12px; }
 }
 @media (max-height: 520px) and (orientation: landscape) {
@@ -280,10 +289,10 @@
                 <table class="user-table">
                     <thead>
                         <tr>
-                            <th>Nombre de Usuario</th>
-                            <th>Nombre Completo</th>
+                            <th>Usuario</th>
+                            <th>Nombre</th>
                             <th>Rol</th>
-                            <th>Acciones</th>
+                            <th>acciones</th>
                         </tr>
                     </thead>
                     <tbody id="user-list-tbody">

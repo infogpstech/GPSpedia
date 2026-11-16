@@ -25,16 +25,17 @@ testCase("el modal Relay coloca título a la izquierda y cierre arriba a la dere
     assert.match(css, /\.relay-detail-toolbar > \.info-close-btn \{[\s\S]*?right:0/);
 });
 
-testCase("la cabecera y acciones del modal se agrupan en una barra flexible", () => {
+testCase("el encabezado separa logo, acciones superiores y modelo en la base derecha", () => {
     assert.match(detail, /headerDiv\.className = "detail-modal-toolbar"/);
     for (const label of ["Compartir vehículo", "Imprimir ficha técnica", "Activar modo edición", "Guardar cambios", "Descartar cambios"]) {
         assert.ok(detail.includes('setAttribute("aria-label", "' + label + '")'), label);
     }
-    assert.match(css, /\.detail-modal-toolbar \{[\s\S]*?display: grid;[\s\S]*?grid-template-columns: minmax\(0, 1fr\) auto/);
-    assert.match(css, /\.detail-modal-header-actions \{[\s\S]*?grid-column: 2;[\s\S]*?flex-wrap: nowrap/);
-    assert.match(css, /\.detail-modal-header-actions \.share-modal-btn \{[\s\S]*?width: 34px;[\s\S]*?height: 34px/);
+    assert.match(css, /\.detail-modal-toolbar \{[\s\S]*?grid-template-columns: max-content minmax\(0, 1fr\);[\s\S]*?grid-template-rows: auto minmax\(0, 1fr\) auto/);
+    assert.match(css, /\.detail-modal-title \{[\s\S]*?grid-column: 1;[\s\S]*?grid-row: 1 \/ span 2/);
+    assert.match(css, /\.detail-modal-header-actions \{[\s\S]*?grid-column: 2;[\s\S]*?grid-row: 1/);
+    assert.match(css, /\.detail-modal-title-text \{[\s\S]*?grid-column: 2;[\s\S]*?grid-row: 2;[\s\S]*?align-self: end/);
     assert.match(css, /\.detail-modal-toolbar > \.info-close-btn[\s\S]*?right:0/);
-    assert.match(detail, /headerDiv\.appendChild\(headerActions\)[\s\S]*?headerDiv\.appendChild\(closeBtn\)/);
+    assert.match(detail, /headerDiv\.insertBefore\(titleContainer, savingIndicator\)[\s\S]*?headerDiv\.insertBefore\(titleNode, savingIndicator\)/);
 });
 
 testCase("ninguna regla posterior puede sustituir la cuadrícula del encabezado por flex", () => {
@@ -46,13 +47,13 @@ testCase("ninguna regla posterior puede sustituir la cuadrícula del encabezado 
     assert.match(css, /\.detail-modal-toolbar\s*>\s*\.info-close-btn\s*\{[^}]*position:\s*absolute/);
 });
 
-testCase("el logo y el modelo ocupan la esquina superior izquierda sin desplazar las acciones", () => {
+testCase("la imagen queda a la izquierda y el modelo se alinea a su base debajo de las acciones", () => {
     assert.match(detail, /headerDiv\.insertBefore\(titleContainer, savingIndicator\)/);
-    assert.doesNotMatch(detail, /cont\.appendChild\(titleContainer\)/);
-    assert.match(css, /\.detail-modal-toolbar \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) auto/);
-    assert.match(css, /\.detail-modal-title \{[\s\S]*?grid-column: 1;[\s\S]*?grid-row: 1/);
+    assert.match(detail, /headerDiv\.insertBefore\(titleNode, savingIndicator\)/);
+    assert.doesNotMatch(detail, /titleContainer\.appendChild\(title\)|titleContainer\.appendChild\(input\)/);
+    assert.match(css, /\.detail-modal-title \{[\s\S]*?grid-column: 1;[\s\S]*?grid-row: 1 \/ span 2/);
+    assert.match(css, /\.detail-modal-title-text \{[\s\S]*?grid-column: 2;[\s\S]*?grid-row: 2;[\s\S]*?align-self: end/);
     assert.match(css, /\.detail-modal-header-actions \{[\s\S]*?grid-column: 2;[\s\S]*?grid-row: 1/);
-    assert.match(css, /\.detail-modal-toolbar > \.info-close-btn \{[\s\S]*?right:0/);
 });
 
 testCase("el catálogo reduce 70% el margen de la navegación y uniforma carruseles", () => {
@@ -62,21 +63,22 @@ testCase("el catálogo reduce 70% el margen de la navegación y uniforma carruse
     assert.match(css, /#contenido > \.home-carousel-section \{ margin:12px 0 16px; \}/);
 });
 
-testCase("el título y metadatos se separan del área de edición", () => {
+testCase("el modelo y el campo de edición son nodos independientes del contenedor del logo", () => {
     assert.match(detail, /titleContainer\.className = "detail-modal-title"/);
+    assert.match(detail, /let titleNode = title/);
+    assert.match(detail, /titleNode = input/);
+    assert.match(detail, /headerDiv\.insertBefore\(titleNode, savingIndicator\)/);
     assert.match(detail, /subHeaderDiv\.className = "detail-modal-meta"/);
     assert.match(detail, /subHeaderText\.className = "detail-modal-meta-text"/);
-    assert.match(detail, /const subHeaderText = document\.createElement\('div'\)/);
-    assert.match(css, /\.detail-modal-title-text \{[\s\S]*?overflow-wrap: anywhere/);
+    assert.match(css, /\.detail-modal-title-text \{[\s\S]*?white-space: nowrap;[\s\S]*?text-overflow: ellipsis/);
 });
 
-testCase("la imagen del logo aumenta 20% y el modelo permanece en una sola línea", () => {
-    assert.match(css, /\.brand-logo-modal \{[\s\S]*?height: 69\.12px !important;[\s\S]*?max-height: 69\.12px !important/);
-    assert.match(css, /@media \(max-width: 600px\)[\s\S]*?\.brand-logo-modal \{\s*height: 54\.72px !important;\s*max-height: 54\.72px !important/);
-    assert.match(css, /\.detail-modal-title \{[\s\S]*?flex-wrap: nowrap;[\s\S]*?overflow: hidden/);
-    assert.match(css, /\.detail-modal-title-text \{[\s\S]*?white-space: nowrap;[\s\S]*?text-overflow: ellipsis/);
-    assert.doesNotMatch(css, /\.detail-modal-title--stacked \.detail-modal-title-text/);
-    assert.doesNotMatch(detail, /detail-modal-title--stacked|new ResizeObserver\(updateTitleLayout\)/);
+testCase("el logotipo se amplía y el modelo queda alineado abajo a su derecha", () => {
+    assert.match(css, /\.brand-logo-modal \{[\s\S]*?height: 120px !important;[\s\S]*?max-height: 120px !important/);
+    assert.match(css, /@media \(max-width: 600px\)[\s\S]*?\.brand-logo-modal \{\s*height: 104px !important;\s*max-height: 104px !important/);
+    assert.match(css, /\.detail-modal-title \.brand-logo-modal \{[\s\S]*?height: 120px !important;[\s\S]*?object-fit: contain/);
+    assert.match(css, /@media \(max-width: 560px\)[\s\S]*?\.detail-modal-title \.brand-logo-modal \{[\s\S]*?height: 104px !important;[\s\S]*?max-height: 104px !important/);
+    assert.match(css, /\.detail-modal-title-text \{[\s\S]*?align-self: end;[\s\S]*?white-space: nowrap;[\s\S]*?text-overflow: ellipsis/);
 });
 
 testCase("los cinco campos de edición se agrupan en una rejilla con asociaciones accesibles", () => {
@@ -134,12 +136,11 @@ testCase("se preservan permisos y operaciones y no se añaden ayudas al detalle 
 });
 
 
-testCase("en móvil/PWA las acciones permanecen en la misma fila, antes del cierre, sin quedar debajo del logo", () => {
-    assert.match(css, /\.detail-modal-toolbar \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) auto/);
-    assert.match(css, /\.detail-modal-header-actions \{[\s\S]*?flex-wrap: nowrap/);
-    assert.match(css, /\.detail-modal-toolbar > \.info-close-btn \{[\s\S]*?right:0/);
-    assert.doesNotMatch(css, /@media \(max-width:560px\) \{[\s\S]*?\.detail-modal-title \{\s*flex-basis:100%/);
-    assert.match(css, /@media \(max-width:\s*560px\)[\s\S]*?\.detail-modal-header-actions \.share-modal-btn \{[\s\S]*?width:\s*32px;[\s\S]*?height:\s*32px/);
+testCase("en móvil/PWA las acciones permanecen arriba a la derecha y el modelo abajo junto al logo", () => {
+    assert.match(css, /@media \(max-width:\s*560px\)[\s\S]*?grid-template-columns: minmax\(0, 36vw\) minmax\(0, 1fr\)/);
+    assert.match(css, /@media \(max-width:\s*560px\)[\s\S]*?\.detail-modal-header-actions \.share-modal-btn \{[\s\S]*?width:\s*28px;[\s\S]*?height:\s*28px/);
+    assert.match(css, /\.detail-modal-toolbar > \.info-close-btn \{[\s\S]*?position:\s*absolute/);
+    assert.match(css, /\.detail-modal-title-text \{[\s\S]*?grid-row: 2;[\s\S]*?align-self: end/);
 });
 
 console.log("CutDetailModalLayout: " + passed + "/" + passed + " PASS");

@@ -2447,6 +2447,7 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
     }
 
     const title = document.createElement("h2");
+    let titleNode = title;
     if (inEditMode) {
         const input = document.createElement("input");
         input.type = "text";
@@ -2459,16 +2460,16 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
                 await saveFieldSilently(activeItem.id, 'modelo', input.value.trim());
             }
         };
-        titleContainer.appendChild(input);
+        titleNode = input;
     } else {
         title.textContent = `${activeItem.modelo}`;
         title.className = "detail-modal-title-text";
-        titleContainer.appendChild(title);
     }
 
+    // La imagen ocupa la columna izquierda; las acciones quedan arriba a la derecha
+    // y el nombre del modelo se alinea abajo, a la derecha del logotipo.
     headerDiv.insertBefore(titleContainer, savingIndicator);
-
-    // El logo y el modelo permanecen siempre en una sola línea; el texto se trunca visualmente si falta espacio.
+    headerDiv.insertBefore(titleNode, savingIndicator);
 
     const subHeaderDiv = document.createElement('div');
     subHeaderDiv.className = "detail-modal-meta";

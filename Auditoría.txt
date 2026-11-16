@@ -1502,3 +1502,24 @@ AUDITORÍA COMPLEMENTARIA — 2026-11-16 — AUD-2026-11-16-06
 - La primera ejecución falló solo por el patrón de prueba de la media query; la expresión se corrigió para admitir espacios CSS y la segunda ejecución aprobó la suite completa.
 - La prueba InboxUi valida el selector que excluye el FAB de la rejilla, dimensiones 46 × 46 px, posición y safe-area. CutDetailModalLayout valida dimensiones del logo y título de una línea.
 - Validación visual real en Android/PWA instalada queda diferida a Beta; no se afirma como realizada.
+
+
+## AUD-2026-11-16-04 — Distribución del modal de corte y tabla de usuarios
+
+**Severidad:** Media — jerarquía visual del encabezado y distribución incompleta de la tabla móvil.  
+**Estado:** IMPLEMENTACIÓN EN CURSO; validación automatizada pendiente.
+
+### Evidencia
+- Captura `Images/tests/modal_antes.png`: el modelo aparece inmediatamente a la derecha del logo y a media altura; la barra de acciones está en la misma franja superior. No corresponde a la nueva distribución solicitada.
+- Captura `Images/tests/modal_users_antes.jpeg`: los encabezados largos se parten en varias líneas, «Desarrollador» queda partido en «Desarrolla / dor» y la tabla no ocupa el ancho total disponible del panel.
+- `HTML/users.html`: `.user-table { width:max-content; min-width:100%; }` permitía que el ancho intrínseco de celdas dominara el layout; las reglas móviles reservaban solo 16 % para Rol y permitían `overflow-wrap:anywhere`.
+- `JS/Frontend/ui.js`: el logo y el texto del modelo eran hijos del mismo `.detail-modal-title`, forzando su alineación horizontal y centrada.
+
+### Criterio de corrección
+- Separar imagen y modelo como elementos de grid independientes: logo a la izquierda y ocupando las dos filas visuales; acciones en la parte superior derecha; nombre del modelo en la fila inferior derecha con `align-self:end`.
+- Encabezados compactos «Usuario», «Nombre», «Rol», «acciones»; tabla 100 % del contenedor, sin ancho intrínseco ni scroll horizontal.
+- Reservar el 31 % de la tabla móvil estrecha para Rol y 37 % para acciones; el rol debe usar `white-space:nowrap`, `overflow-wrap:normal` y `word-break:normal`.
+- Preservar botones, permisos, IDs, listeners, contratos y comportamiento backend.
+
+### Archivos afectados
+`style.css`, `JS/Frontend/ui.js`, `HTML/users.html`, pruebas de layout y caché/App Shell.

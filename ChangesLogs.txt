@@ -1275,3 +1275,11 @@ CIERRE LOCAL — GP-UX-INBOX-FAB-01 / GP-UX-CUT-MODAL-02 — 2026-11-16
 - GitHub Pages run 43924038398: SUCCESS — build y deploy.
 - Aceptación visual Android/PWA instalada pendiente de Beta.
 ================================================================================
+
+
+================================================================================
+CAMBIO EN PROGRESO — GP-UX-CUT-MODAL-03 / GP-UX-USERS-03 — 2026-11-16
+- Se reorganiza el encabezado del modal: logo independiente a la izquierda (120 px escritorio / 104 px móvil), acciones arriba a la derecha y modelo debajo de ellas, alineado a la base del logo.
+- users.html: encabezados Usuario / Nombre / Rol / acciones; tabla de ancho completo, columnas fijas, rol sin saltos dentro de palabra y sin desplazamiento horizontal. Acciones compactadas para viewport de 420 px o menos.
+- Pruebas de layout actualizadas y App Shell v45.
+================================================================================

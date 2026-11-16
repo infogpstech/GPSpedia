@@ -795,3 +795,10 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - GitHub Pages run **43924038398: SUCCESS** (build, upload y deploy).
 - Código probado en el commit `95dd8205269849344b69b77e22898e4763096830`.
 - Se consideran completadas localmente con validación visual diferida a Beta: probar en Android/PWA instalada la posición del botón Nuevo, la no superposición con la paginación, el tamaño del logo y la permanencia del modelo en una sola línea.
+
+
+## ADENDA — GP-UX-CUT-MODAL-03 / GP-UX-USERS-03 — 2026-11-16
+**Estado: EN PROGRESO.**
+- Modal de corte: separar el logotipo (columna izquierda, más grande) del nombre del modelo. El nombre queda a la derecha, debajo de la fila superior de acciones y alineado al borde inferior del logo. Compartir, imprimir, editar/guardar y cerrar permanecen en la parte superior derecha, sin cambiar RBAC ni handlers.
+- users.html: encabezados exactos «Usuario», «Nombre», «Rol» y «acciones». La tabla usa el 100 % del ancho de su contenedor, con columnas fijas y sin scroll horizontal. La columna Rol reserva ancho suficiente y no divide nombres de rol a mitad de palabra; los botones de acciones se compactan en pantallas muy estrechas.
+- Pruebas anti-regresión: CutDetailModalLayout, ResponsiveFormsUsers y ButtonWidthPolicy. App Shell actualizado a v45 porque style.css y HTML/users.html forman parte de la caché.
