@@ -135,3 +135,11 @@ El checkpoint acumulativo anterior se conserva íntegro en `Checkpoint_Archive/c
 - Estado actualizado: cambios publicados secuencialmente en GPSpedia2.2.5_work hasta HEAD be7a1a5548c7ef66712c6ceecee701fb264f82c9; CI no confirmada. No se modifican Apps Script, deployments, RBAC ni datos externos.
 
 - Adenda: la barra del Inbox se fuerza al modo avanzado sin cambiar la preferencia global. Se conserva al refrescar toolbars y el sanitizador recibe el modo avanzado explícito solo para mensajes de Inbox. App Shell v47.
+
+### Verificación de código — GP-UX-INBOX-DESKTOP-02 — 2026-11-16
+- HEAD publicado: `f5d0ace755803f3040303672fa00bf675a3e86ab`.
+- Parseo sintáctico estático de `JS/Frontend/ui.js`, `JS/Frontend/rich-text.js`, `service-worker.js` y `JS/Tests/InboxUi.mjs`: **4/4 PASS** mediante compilación del código transformado a contexto de función (sin ejecutar las suites Node).
+- Comprobaciones estáticas específicas de la corrección: **15/15 PASS** (barra avanzada, sanitización, persistencia de borradores, scroll, acciones sticky, fila de selectores, lista vacía, lupa y App Shell v47).
+- La prueba InboxUi se reforzó para comprobar la regla desktop efectiva y evitar que un override móvil posterior oculte la regla principal.
+- GitHub Actions / estado combinado del commit no devuelve checks todavía; la suite Node.js completa permanece **PENDIENTE DE CONFIRMACIÓN CI**. No se afirma ejecución integral ni inspección visual real.
+- Rama base: SHA `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin commits propios en esta iteración; la rama de trabajo continúa adelantada y sin commits detrás.
