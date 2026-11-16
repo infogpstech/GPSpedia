@@ -6,7 +6,7 @@
 
 import { setState, getState } from './state.js';
 import { routeAction, fetchCatalogData, getCatalogChanges, login as apiLogin, validateSession as apiValidateSession, completeLoginRequest } from './api-config.js';
-import { showLoginScreen, showApp, showGlobalError, performSilentSync } from './ui.js';
+import { showLoginScreen, showApp, showGlobalError, performSilentSync, loadRichTextModePreference } from './ui.js';
 import * as offline from './offline.js';
 import { loadPysData, applyPysCatalogChanges, getPysDataCursor, setPysDataCursor, getPysDataFreshness } from './pys-data.js';
 
@@ -399,6 +399,7 @@ function handleLoginSuccess(user, persist = true) {
     setState({ currentUser: user });
     const appReady = showApp(user) === true;
     loadUserLocalActivity(user);
+    if (appReady) loadRichTextModePreference(user);
     return appReady;
 }
 

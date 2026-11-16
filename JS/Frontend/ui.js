@@ -6,7 +6,7 @@ import { createPrintableQrDataUrl } from './printQr.js';
 // - Contain all functions that directly manipulate the DOM.
 // - Use document.createElement, not HTML strings.
 
-import { getFeedbackItems, getInboxRecipients, getInboxConversations, getInboxMessages, createInboxConversation, sendInboxMessage, markInboxRead, archiveInboxConversation, closeInboxConversation as apiCloseInboxConversation, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, clearSensitiveLogs, checkAllServicesHealth, bucketServiceMetrics, getServiceMetricsSnapshot, subscribeServiceMetrics, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange, approveVideo, rejectVideo, getRichTextMode, setRichTextMode, routeActionWithRetry } from './api-config.js';
+import { getFeedbackItems, getInboxRecipients, getInboxConversations, getInboxMessages, createInboxConversation, sendInboxMessage, markInboxRead, archiveInboxConversation, closeInboxConversation as apiCloseInboxConversation, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, clearSensitiveLogs, checkAllServicesHealth, bucketServiceMetrics, getServiceMetricsSnapshot, subscribeServiceMetrics, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange, approveVideo, rejectVideo, getRichTextMode, loadRichTextMode, setRichTextMode, routeActionWithRetry } from './api-config.js';
 import { getState, setState, subscribe } from './state.js';
 import * as offline from './offline.js';
 import { createEditBackupStore, getEditBackupFieldsToRestore } from './editBackupStore.js';
@@ -4871,26 +4871,52 @@ function closeInboxModal_() {
     deactivateLegalModalFocus_(modal, true);
 }
 
+export async function loadRichTextModePreference(user = getState().currentUser) {
+    const context = getUiSessionContext_(user);
+    if (!context) return getRichTextMode();
+    try {
+        const mode = await loadRichTextMode(context);
+        if (!isCurrentUiSessionContext_(context)) return getRichTextMode();
+        refreshRichTextToolbars();
+        const select = document.getElementById("rich-text-mode-select");
+        const status = document.getElementById("rich-text-mode-status");
+        if (select) select.value = mode;
+        if (status) status.textContent = mode === "advanced"
+            ? "Modo avanzado global activo."
+            : "Modo estricto global activo.";
+        return mode;
+    } catch (error) {
+        console.warn("No se pudo cargar la preferencia global de texto:", error && error.message ? error.message : error);
+        return getRichTextMode();
+    }
+}
+
 function initializeRichTextModeControl_() {
     const select = document.getElementById("rich-text-mode-select");
     const status = document.getElementById("rich-text-mode-status");
     if (!select) return;
 
+    const context = getUiSessionContext_();
     select.value = getRichTextMode();
+    select.disabled = !context || context.role !== "desarrollador";
     if (select.dataset.richModeBound !== "true") {
-        select.addEventListener("change", () => {
-            const context = getUiSessionContext_();
+        select.addEventListener("change", async () => {
+            const activeContext = getUiSessionContext_();
+            const requestedMode = select.value;
+            select.disabled = true;
+            if (status) status.textContent = "Guardando configuración global...";
             try {
-                const mode = setRichTextMode(select.value, context && context.role);
+                const mode = await setRichTextMode(requestedMode, activeContext && activeContext.role, activeContext);
                 refreshRichTextToolbars();
-                if (status) {
-                    status.textContent = mode === "advanced"
-                        ? "Modo avanzado guardado en este navegador. Las barras abiertas se actualizaron."
-                        : "Modo estricto guardado en este navegador. Las barras abiertas se actualizaron.";
-                }
+                if (status) status.textContent = mode === "advanced"
+                    ? "Modo avanzado global guardado."
+                    : "Modo estricto global guardado.";
             } catch (error) {
                 select.value = getRichTextMode();
-                if (status) status.textContent = error.message || "No se pudo cambiar el modo.";
+                if (status) status.textContent = error.message || "No se pudo cambiar el formato global.";
+            } finally {
+                const latestContext = getUiSessionContext_();
+                select.disabled = !latestContext || latestContext.role !== "desarrollador";
             }
         });
         select.dataset.richModeBound = "true";
@@ -4898,8 +4924,8 @@ function initializeRichTextModeControl_() {
 
     if (status) {
         status.textContent = select.value === "advanced"
-            ? "Modo avanzado activo en este navegador."
-            : "Modo estricto activo (predeterminado).";
+            ? "Modo avanzado global activo."
+            : "Modo estricto global activo.";
     }
 }
 

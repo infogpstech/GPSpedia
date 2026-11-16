@@ -600,7 +600,7 @@ function doGet(e) {
     if (e && e.parameter && e.parameter.debug === 'true') {
         const serviceState = {
             service: 'GPSpedia-Feedback',
-            version: '1.2.1',
+            version: '1.2.2',
             status: 'available',
             coordinatorConfigured: isFeedbackCoordinatorConfigured_()
         };
@@ -617,7 +617,7 @@ function doGet(e) {
 
 
 function isSharedMutationAction_(action) {
-    return ["recordLike","reportProblem","addProblem","addSolution","addPrevention","addVehicleToProblem","removeVehicleFromProblem","updatePysItem","updateTutorialItem","suggestCutChange","suggestYear","addTutorial","sendContactForm","replyToFeedback","markAsResolved","deleteFeedbackItem","clearActivityLogs","submitVideoForApproval","approveVideo","rejectVideo","createInboxConversation","sendInboxMessage","notifyDevelopersDriveCritical","markInboxRead","markInboxUnread","deleteInboxConversation","archiveInboxConversation","closeInboxConversation"].includes(action);
+    return ["recordLike","reportProblem","addProblem","addSolution","addPrevention","addVehicleToProblem","removeVehicleFromProblem","updatePysItem","updateTutorialItem","suggestCutChange","suggestYear","addTutorial","sendContactForm","replyToFeedback","markAsResolved","deleteFeedbackItem","clearActivityLogs","submitVideoForApproval","approveVideo","rejectVideo","createInboxConversation","sendInboxMessage","notifyDevelopersDriveCritical","markInboxRead","markInboxUnread","deleteInboxConversation","archiveInboxConversation","closeInboxConversation","setRichTextMode"].includes(action);
 }
 
 function doPost(e) {
@@ -665,6 +665,34 @@ function doPost(e) {
     }
 }
 
+const RICH_TEXT_MODE_PROPERTY_ = "GPSpedia_RICH_TEXT_MODE_V1";
+
+function normalizeRichTextMode_(value) {
+    const mode = String(value || "").trim().toLowerCase();
+    return mode === "strict" || mode === "advanced" ? mode : null;
+}
+
+function handleGetRichTextMode(payload) {
+    const actor = payload && payload.__feedbackActor;
+    if (!actor || !actor.userId) throw new Error("Se requiere una sesión activa para consultar el formato global.");
+    const mode = normalizeRichTextMode_(PropertiesService.getScriptProperties().getProperty(RICH_TEXT_MODE_PROPERTY_)) || "strict";
+    return { status: "success", mode };
+}
+
+function handleSetRichTextMode(payload) {
+    const actor = payload && payload.__feedbackActor;
+    if (!actor || normalizeFeedbackRole(actor.role) !== "desarrollador") {
+        throw new Error("Acceso denegado: solo un Desarrollador puede cambiar el formato global.");
+    }
+    const mode = normalizeRichTextMode_(payload && payload.mode);
+    if (!mode) throw new Error("Modo de texto enriquecido no válido.");
+    const properties = PropertiesService.getScriptProperties();
+    properties.setProperty(RICH_TEXT_MODE_PROPERTY_, mode);
+    const saved = normalizeRichTextMode_(properties.getProperty(RICH_TEXT_MODE_PROPERTY_));
+    if (saved !== mode) throw new Error("No se pudo confirmar el guardado del formato global.");
+    return { status: "success", mode: saved };
+}
+
 const FEEDBACK_ACTION_PERMISSIONS = Object.freeze({
     recordLike: null, reportProblem: null, addProblem: null, addSolution: null, addPrevention: null,
     addVehicleToProblem: null, removeVehicleFromProblem: ["Desarrollador"], updatePysItem: ["Desarrollador"],
@@ -676,6 +704,7 @@ const FEEDBACK_ACTION_PERMISSIONS = Object.freeze({
     getInboxRecipients: null, notifyDevelopersDriveCritical: ["Desarrollador"], getInboxConversations: null, getInboxMessages: null,
     createInboxConversation: null, sendInboxMessage: null, markInboxRead: null, markInboxUnread: null, deleteInboxConversation: null, archiveInboxConversation: null,
     closeInboxConversation: ["Desarrollador", "Jefe", "Supervisor"],
+    getRichTextMode: null, setRichTextMode: ["Desarrollador"],
     getActivityLogs: ["Desarrollador", "Jefe", "Supervisor"], clearActivityLogs: ["Desarrollador"],
     initYouTubeUpload: null, getVideoApprovalByOperation: null, submitVideoForApproval: null,
     approveVideo: ["Desarrollador", "Jefe", "Supervisor"], rejectVideo: ["Desarrollador", "Jefe", "Supervisor"]
@@ -706,6 +735,12 @@ function doPostInternal_(e) {
         payload = authorizeFeedbackAction_(action, payload);
 
         switch (action) {
+            case 'getRichTextMode':
+                response = handleGetRichTextMode(payload);
+                break;
+            case 'setRichTextMode':
+                response = handleSetRichTextMode(payload);
+                break;
             case 'recordLike':
                 response = handleRecordLike(payload);
                 break;

@@ -8,8 +8,13 @@ import { runCatalogRequestWithRetry } from './catalogRequest.js';
 import { createServiceMetricsStore } from './serviceMetrics.js';
 export { bucketServiceMetrics } from './serviceMetrics.js';
 
-export const RICH_TEXT_MODE_KEY = "gpsepedia_rich_text_mode";
+export const RICH_TEXT_MODE_KEY = "gpsepedia_rich_text_mode_cache";
 export const RICH_TEXT_MODES = Object.freeze({ STRICT: "strict", ADVANCED: "advanced" });
+
+function normalizeRichTextMode_(value) {
+    const mode = String(value || "").trim().toLowerCase();
+    return [RICH_TEXT_MODE_MODES.STRICT, RICH_TEXT_MODE_MODES.ADVANCED].includes(mode) ? mode : null;
+}
 
 export function getRichTextMode() {
     try {
@@ -21,21 +26,44 @@ export function getRichTextMode() {
     }
 }
 
-export function setRichTextMode(mode, actorRole) {
-    const normalizedRole = String(actorRole || "").trim().toLowerCase();
-    const normalizedMode = String(mode || "").trim().toLowerCase();
+function cacheRichTextMode_(mode) {
+    try { localStorage.setItem(RICH_TEXT_MODE_KEY, mode); } catch (error) {}
+}
+
+function getRichTextSession_(session) {
+    const source = session && typeof session === "object" ? session : {};
+    const userId = String(source.userId || source.ID || source.id || "").trim();
+    const sessionToken = String(source.sessionToken || source.SessionToken || "").trim();
+    if (!userId || !sessionToken) throw new Error("Se requiere una sesión activa para consultar la configuración global.");
+    return { userId, sessionToken };
+}
+
+export async function loadRichTextMode(session) {
+    const sessionPayload = getRichTextSession_(session);
+    const response = await routeAction("getRichTextMode", sessionPayload);
+    const mode = normalizeRichTextMode_(response && response.mode);
+    if (!response || response.status !== "success" || !mode) {
+        throw new Error("No se recibió una configuración global de texto válida.");
+    }
+    cacheRichTextMode_(mode);
+    return mode;
+}
+
+export async function setRichTextMode(mode, actorRole, session) {
+    const normalizedRole = String(actorRole || "").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").trim().toLowerCase();
+    const normalizedMode = normalizeRichTextMode_(mode);
     if (normalizedRole !== "desarrollador") {
         throw new Error("Solo un Desarrollador puede cambiar el modo de texto enriquecido.");
     }
-    if (![RICH_TEXT_MODES.STRICT, RICH_TEXT_MODES.ADVANCED].includes(normalizedMode)) {
-        throw new Error("Modo de texto enriquecido no válido.");
+    if (!normalizedMode) throw new Error("Modo de texto enriquecido no válido.");
+    const sessionPayload = getRichTextSession_(session);
+    const response = await routeAction("setRichTextMode", { ...sessionPayload, mode: normalizedMode });
+    const confirmedMode = normalizeRichTextMode_(response && response.mode);
+    if (!response || response.status !== "success" || confirmedMode !== normalizedMode) {
+        throw new Error("El servidor no confirmó el cambio de formato global.");
     }
-    try {
-        localStorage.setItem(RICH_TEXT_MODE_KEY, normalizedMode);
-        return normalizedMode;
-    } catch (error) {
-        throw new Error("No se pudo guardar la preferencia local de texto enriquecido.");
-    }
+    cacheRichTextMode_(confirmedMode);
+    return confirmedMode;
 }
 
 export const API_ENDPOINTS = {
@@ -59,7 +87,7 @@ export const ACTION_TO_SERVICE_MAP = {
     'getInboxRecipients': 'FEEDBACK', 'notifyDevelopersDriveCritical': 'FEEDBACK', 'getInboxConversations': 'FEEDBACK', 'getInboxMessages': 'FEEDBACK', 'createInboxConversation': 'FEEDBACK', 'sendInboxMessage': 'FEEDBACK', 'markInboxRead': 'FEEDBACK', 'markInboxUnread': 'FEEDBACK', 'deleteInboxConversation': 'FEEDBACK', 'archiveInboxConversation': 'FEEDBACK', 'closeInboxConversation': 'FEEDBACK',
     'initYouTubeUpload': 'FEEDBACK', 'getVideoApprovalByOperation': 'FEEDBACK', 'submitVideoForApproval': 'FEEDBACK', 'approveVideo': 'FEEDBACK', 'rejectVideo': 'FEEDBACK',
     'removeVehicleFromProblem': 'FEEDBACK', 'updatePysItem': 'FEEDBACK', 'updateTutorialItem': 'FEEDBACK',
-    'migrateTimestamps': 'UTILITIES',
+    'migrateTimestamps': 'UTILITIES', 'getRichTextMode': 'FEEDBACK', 'setRichTextMode': 'FEEDBACK',
     'ping': 'ADMIN', 'migrateCortesOperationIds': 'ADMIN', 'migrateIdentifiers': 'ADMIN', 'rollbackIdentifiers': 'ADMIN', 'reconcilePendingImageUploads': 'ADMIN',
     'backupDatabase': 'ADMIN', 'backupDrive': 'ADMIN', 'restoreDatabase': 'ADMIN', 'restoreDrive': 'ADMIN',
     'reorganizeDatabase': 'ADMIN', 'normalizeImages': 'ADMIN', 'organizePrimaryVehicleImages': 'ADMIN', 'restoreAllTrashedImages': 'ADMIN', 'addLogo': 'ADMIN', 'auditIdentifiers': 'ADMIN', 'freezeIdentifierFormulas': 'ADMIN', 'createSheet': 'ADMIN', 'addColumn': 'ADMIN', 'driveCommand': 'ADMIN',

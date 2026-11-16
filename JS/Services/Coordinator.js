@@ -122,6 +122,8 @@ function coordinatorPolicy_(service, operation) {
         },
         FEEDBACK: {
             sessionActivity: { read: feedbackRead },
+            getRichTextMode: { read: feedbackRead },
+            setRichTextMode: { read: feedbackRead, write: ["RICH_TEXT_CONFIG"] },
             recordLike: { read: feedbackRead, write: [...feedbackWrite, "CORTES"] },
             reportProblem: { read: feedbackRead, write: feedbackWrite },
             addProblem: { read: [...feedbackRead, "CORTES"], write: [...feedbackWrite, "DRIVE"] },

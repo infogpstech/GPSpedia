@@ -194,6 +194,7 @@ runGroup('38','INTEGRATION',()=>{
  runCli('AUG-148 accesibilidad y foco del modal de desarrollador','JS/Tests/DevToolsModalAccessibility.mjs');
  runCli('BETA-021 sistema global de botones, campos y selectores','JS/Tests/GlobalControlSystem.mjs');
  runCli('BETA-022 política de dimensiones y ancho de botones','JS/Tests/ButtonWidthPolicy.mjs');
+ runCli('BETA-023 preferencia global de formato descriptivo','JS/Tests/RichTextGlobalPreference.mjs');
  runCli('CATALOG reintentos y cancelación','JS/Tests/CatalogRequestRetry.js');
  runCli('CATALOG escenarios de arranque PWA','JS/Tests/PWAStartupScenarios.js');
  runCli('AUG-IndexedDB apertura compartida, backoff y miniaturas opcionales','JS/Tests/IndexedDBTransactions.js');
