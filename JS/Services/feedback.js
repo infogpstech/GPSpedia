@@ -2257,7 +2257,7 @@ function buildCutContributionSummary_() {
  userRows.forEach(row=>{
   const id=String(row[0]||"").trim(),username=String(row[1]||"").trim(),fullName=String(row[6]||username).trim();
   if(!id||!fullName||username.startsWith("__deleted__:"))return;
-  [fullName,username].forEach(name=>{const key=keyOf(name),ids=idsByName.get(key)||[];ids.push(id);idsByName.set(key,ids);});
+  [fullName,username].forEach(name=>{const key=keyOf(name),ids=idsByName.get(key)||[];if(!ids.includes(id))ids.push(id);idsByName.set(key,ids);});
  });
  const stats=new Map();
  for(let rowIndex=0;rowIndex<count;rowIndex++){
