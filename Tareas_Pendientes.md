@@ -765,3 +765,10 @@ No usar `reset --hard`, `clean`, force push ni comandos que descarten cambios. N
 - Reducir moderadamente los botones: 34 × 34 px en escritorio y 32 × 32 px en móvil.
 - Invalidar el App Shell previo para que PWA reciba el CSS corregido.
 - GitHub Actions Node.js run `43913616427`: SUCCESS; incluye la suite de regresión del repositorio. En Beta comprobar viewport móvil estrecho, PWA instalada, orientación vertical/horizontal, roles con y sin permisos de editar/imprimir, y modelos cortos/largos.
+
+
+
+### Reapertura — GP-UX-CUT-MODAL-01 — 2026-11-16
+**Estado: EN PROGRESO — segunda corrección publicada; CI pendiente.**
+
+La corrección anterior no resolvió el defecto en todos los estilos efectivos: una declaración flex posterior anulaba la cuadrícula y las pruebas no detectaban la cascada conflictiva. Se retiró el bloque legado, se fortaleció CutDetailModalLayout.mjs para rechazar overrides flex/order y se incrementó el App Shell a v43 con pruebas de caché actualizadas. Mantener el criterio: compartir, editar e imprimir en una sola fila, inmediatamente a la izquierda del cierre; logo +20 %; botones compactos sin ocultar acciones. Cerrar localmente solo después de CI aprobado. Aceptación visual en móvil/PWA real queda diferida a Beta.
