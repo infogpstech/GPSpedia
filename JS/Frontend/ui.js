@@ -4503,10 +4503,10 @@ function bindInboxControls_() {
     }
 
     if (inboxContent && inboxContent.dataset.richMenuDismissBound !== "true") {
-        inboxContent.addEventListener("pointerdown", event => {
-            if (event.target.closest(".rich-toolbar-dropdown")) return;
-            closeInboxRichToolbarMenus_(inboxContent);
-        });
+        document.addEventListener("pointerdown", event => {
+            if (event.target.closest("#inbox-modal-content .rich-toolbar-dropdown")) return;
+            closeInboxRichToolbarMenus_(document.getElementById("inbox-modal-content"));
+        }, true);
         inboxContent.dataset.richMenuDismissBound = "true";
     }
     if (searchToggle && searchToggle.dataset.bound !== "true") {
