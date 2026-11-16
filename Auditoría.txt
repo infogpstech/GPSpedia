@@ -1720,3 +1720,9 @@ ADENDA DE AUDITORÍA — GP-UX-INBOX-RICH-EDITOR-01 — 2026-11-16
 - Se unifican superficie, borde, fondo, espaciado, tamaño de iconos y estilos de selectores con la barra Inbox. La barra puede envolver los controles en pantallas estrechas sin cambiar el orden ni ocultar opciones.
 - App Shell actualizado de v54 a v55; contratos de CI actualizados para la versión de caché.
 - Sin hallazgos funcionales adicionales en el alcance revisado. La validación de sintaxis, suite automatizada y visualización real se registra por separado en checkpoint tras CI.
+
+
+### Corrección preventiva de reconstrucción dinámica — GP-UX-RICH-TOOLBARS-01 — 2026-11-16
+- Durante la revisión del refresco dinámico se detectó que reutilizar el indicador dataset de la variante compacta podía hacer que `refreshRichTextToolbars()` reconstruyera una barra básica/de listas como avanzada.
+- Se retiró ese indicador de las barras estándar; la variante `compact: true` conserva su marca independiente. Se agregó un contrato para impedir que el refresco cambie el perfil ni amplíe herramientas.
+- Criterio: el modo original debe persistir después de reconstrucción dinámica, conservando las restricciones de formato y saneamiento.
