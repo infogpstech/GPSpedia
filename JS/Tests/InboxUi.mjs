@@ -254,10 +254,8 @@ check("La paginación conserva los cursores opacos de Inbox sin convertirlos a o
     assert.doesNotMatch(ui, /inboxConversationPageStack_\.push\(Number\(inboxConversationNextCursor\)\)/);
 });
 check("El compositor nuevo permite desplazamiento vertical y mantiene Salir/Enviar accesibles", () => {
-    const composerLayout = css.slice(css.lastIndexOf("#inbox-modal-content .inbox-new-conversation-form {"));
-    assert.ok(composerLayout.length > 0);
-    assert.match(composerLayout, /flex:\s*1 1 0/);
-    assert.match(composerLayout, /overflow-y:\s*auto/);
+    const composerLayout = css.slice(css.indexOf("GP-UX-INBOX-DESKTOP-02"));
+    assert.match(composerLayout, /#inbox-modal-content \.inbox-new-conversation-form\s*\{[^}]*flex:\s*1 1 0;[^}]*overflow-y:\s*auto/s);
     const composeActionsLayout = css.slice(css.lastIndexOf("#inbox-modal-content .inbox-compose-actions {"));
     assert.match(composeActionsLayout, /position:\s*sticky/);
     assert.match(ui, /formActions\.append\(makeCancelButton\(\), send\)/);
