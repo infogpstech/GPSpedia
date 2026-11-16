@@ -204,13 +204,15 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 - Probar fechas iguales o no monotónicas, paginación y recuperación de caché en escritorio y móvil.
 
 ### GP-INBOX — Diagnóstico funcional end-to-end
-**Estado: PENDIENTE LOCAL DE AUDITORÍA; PENDIENTE BETA DE INTEGRACIÓN.**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.**
 
-- Revisar el flujo UI → wrapper API → dispatcher FEEDBACK → Coordinator → InboxConversations → Spreadsheet.
-- Confirmar filtros de carpeta (recibidos, enviados, no leídos y archivados), listado, carga de mensajes, lectura y paginación.
-- Mantener el orden de inserción del backend y la combinación estable de páginas en frontend.
-- Verificar el manejo explícito de hojas ausentes o esquema parcial; no convertir un esquema incompleto en Inbox vacío ni crear/renombrar hojas reales automáticamente.
-- Correlacionar cualquier error Beta con la respuesta real de FEEDBACK y la versión desplegada. No atribuirlo a código local sin evidencia.
+- Auditoría del recorrido UI → wrapper API → dispatcher FEEDBACK → Coordinator → InboxConversations → Spreadsheet.
+- Se revisaron carpetas, filtros, destinatarios, carga de mensajes, lectura, paginación, orden canónico, caché por sesión, roles, actor central e idempotencia.
+- Ningún handler crea o inicializa hojas automáticamente. Las cuatro hojas principales deben existir y coincidir con el contrato; las preferencias son opcionales para lectura y obligatorias para acciones que las modifican.
+- Se agregaron validaciones de integridad para IDs, referencias huérfanas, estados de participantes, contador y último mensaje. Los datos de participantes dañados ya no se ocultan silenciosamente.
+- Pruebas locales aisladas: InboxConversations 59/59, InboxUi 31/31, InboxRoleContract 20/20, InboxAuditTrail 15/15, InboxCachePagination 5/5 y paginación 4/4. Total: 134 comprobaciones PASS.
+- Se ejecutaron en runtime JavaScript con dependencias simuladas; Node.js CLI no se ejecutó y GitHub Actions no pudo confirmarse desde el conector.
+- Pendiente Beta: contrastar versiones y respuestas reales de FEEDBACK/Coordinator, esquema y datos Spreadsheet, roles de cuentas Beta y comportamiento en dispositivos. No se modificaron servicios desplegados ni datos externos.
 
 ### GP-RBAC-02 — Inbox para usuarios técnicos
 **Estado: CONTRATOS LOCALES COMPLETADOS; PENDIENTE BETA.**
