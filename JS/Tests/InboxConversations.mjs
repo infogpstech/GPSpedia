@@ -90,7 +90,7 @@ const LockService = {
 const SpreadsheetApp = { flush() {} };
 const api = new Function(
     "getSpreadsheet","LockService","SpreadsheetApp","Utilities","assertFeedbackSession","normalizeFeedbackRole",
-    source + "\nreturn { handleGetInboxRecipients, handleNotifyDevelopersDriveCritical, handleCreateInboxConversation, handleSendInboxMessage, handleGetInboxConversations, handleGetInboxMessages, handleMarkInboxRead, handleMarkInboxUnread, handleDeleteInboxConversation, handleArchiveInboxConversation, handleCloseInboxConversation, inboxCanStartConversationWith_ };"
+    source + "\nreturn { handleGetInboxRecipients, handleNotifyDevelopersDriveCritical, handleCreateInboxConversation, handleSendInboxMessage, handleGetInboxConversations, handleGetInboxMessages, handleMarkInboxRead, handleMarkInboxUnread, handleDeleteInboxConversation, handleArchiveInboxConversation, handleCloseInboxConversation, inboxCanStartConversationWith_, ensureInboxConversationSheets_ };"
 )(() => spreadsheet, LockService, SpreadsheetApp, Utilities, assertSession, normalizeRole);
 
 const actor = (id, token) => ({ userId: id, sessionToken: token });
@@ -808,7 +808,7 @@ run("Una columna faltante se inserta sin perder datos existentes", () => {
     sheet.getRange(2,1,1,headers.length).setValues([["M-keep","C-keep","2026-11-16","U1","Ana","Desarrollador","mensaje","key-keep","hash-keep"]]);
     sheet.rows[0].splice(7,1);sheet.rows[1].splice(7,1);
     try {
-        api.handleGetInboxConversations({ ...actor("U1","token-a"),folder:"received" });
+        api.ensureInboxConversationSheets_();
         assert.deepEqual(sheet.getRange(1,1,1,headers.length).getValues()[0],headers);
         const row=sheet.getRange(2,1,1,headers.length).getValues()[0];
         assert.equal(row[6],"mensaje");assert.equal(row[7],"key-keep");assert.equal(row[8],"hash-keep");
