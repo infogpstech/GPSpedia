@@ -6,6 +6,8 @@ const root=resolve(dirname(fileURLToPath(import.meta.url)),"../..");
 const html=fs.readFileSync(resolve(root,"HTML/add_cortes.html"),"utf8");
 const helpCss=fs.readFileSync(resolve(root,"contextual-help.css"),"utf8");
 const index=fs.readFileSync(resolve(root,"index.html"),"utf8");
+const ui=fs.readFileSync(resolve(root,"JS/Frontend/ui.js"),"utf8");
+const sw=fs.readFileSync(resolve(root,"service-worker.js"),"utf8");
 const sw=fs.readFileSync(resolve(root,"service-worker.js"),"utf8");
 let passed=0;function testCase(name,fn){fn();passed++;console.log("PASS "+name);}
 testCase("Año, versión, tipo de corte y relay tienen ayudas breves asociadas",()=>{
@@ -83,7 +85,6 @@ testCase("el formulario PYS registra cada ayuda una sola vez",()=>{
  const body=ui.slice(start,end);
  assert.equal((body.match(/attachContextualHelp_\(content, \"pys-/g)||[]).length,8);
 });
-console.log("ContextualHelpForms: "+passed+"/"+passed+" PASS");
 
 testCase("index y alta de cortes comparten la misma hoja de ayudas",()=>{
  assert.ok(index.includes('href="contextual-help.css"'));
@@ -98,7 +99,7 @@ testCase("los botones de ayuda están fuera de las etiquetas de formulario",()=>
   const labelStart=html.lastIndexOf("<label",start);
   const labelEnd=html.indexOf("</label>",labelStart);
   assert.ok(labelEnd>start,id);
-  assert.doesNotMatch(html.slice(labelStart,labelEnd),/<button\\b/,id);
+  assert.equal(html.slice(labelStart,labelEnd).includes("<button"),false,id);
  }
 });
 testCase("la apertura y cierre de ayuda actualizan aria-describedby",()=>{
@@ -111,3 +112,5 @@ testCase("la apertura y cierre de ayuda actualizan aria-describedby",()=>{
 testCase("la hoja compartida de ayudas forma parte del shell offline",()=>{
  assert.ok(sw.includes("'./contextual-help.css'"));
 });
+
+console.log("ContextualHelpForms: "+passed+"/"+passed+" PASS");
