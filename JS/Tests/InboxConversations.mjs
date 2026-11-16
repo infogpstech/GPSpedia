@@ -707,15 +707,14 @@ run("la alerta de cuota crea mensajes del sistema solo para desarrolladores y es
         ...actor("U1","token-a"), usagePercent: 79.9, alertDate: "20261115"
     }),/80/);
 });
-run("Una hoja de estado faltante se crea con encabezados contractuales", () => {
+run("Una hoja de estado faltante se crea y conserva el error de estados aún no migrados", () => {
     spreadsheet.sheets.delete("InboxConversationState");
-    const result = api.handleGetInboxConversations({ ...actor("U1","token-a"), folder:"received" });
-    assert.equal(result.status,"success");
+    assert.throws(() => api.handleGetInboxConversations({ ...actor("U1","token-a"), folder:"received" }),/estado de los participantes está incompleto/);
     assert.deepEqual(spreadsheet.getSheetByName("InboxConversationState").rows[0],inboxSchemaHeaders.InboxConversationState);
 });
-run("Una hoja de mensajes faltante se crea con encabezados contractuales", () => {
+run("Una hoja de mensajes faltante se crea y no se oculta la inconsistencia de datos", () => {
     spreadsheet.sheets.delete("InboxMessages");
-    api.handleGetInboxConversations({ ...actor("U1","token-a"), folder:"received" });
+    assert.throws(() => api.handleGetInboxConversations({ ...actor("U1","token-a"), folder:"received" }),/contador de mensajes no coincide/);
     assert.deepEqual(spreadsheet.getSheetByName("InboxMessages").rows[0],inboxSchemaHeaders.InboxMessages);
 });
 
@@ -732,18 +731,15 @@ run("Inbox crea todas las hojas requeridas faltantes y la inicialización es ide
         saved.forEach((sheet,name)=>{if(sheet)spreadsheet.sheets.set(name,sheet);});
     }
 });
-run("Las hojas dependientes huérfanas no se interpretan como un Inbox vacío", () => {
-    const conversations = spreadsheet.getSheetByName("InboxConversations");
-    const states = spreadsheet.getSheetByName("InboxConversationState");
-    spreadsheet.sheets.delete("InboxConversations");
-    spreadsheet.sheets.delete("InboxConversationState");
+run("Las hojas principales ausentes se crean sin renombrar ni borrar datos dependientes", () => {
+    const conversations=spreadsheet.getSheetByName("InboxConversations"),states=spreadsheet.getSheetByName("InboxConversationState");
+    spreadsheet.sheets.delete("InboxConversations");spreadsheet.sheets.delete("InboxConversationState");
     try {
-        assert.throws(() => api.handleGetInboxConversations({ ...actor("U1","token-a"), folder:"received" }),
-            /esquema Inbox está incompleto/);
-    } finally {
-        spreadsheet.sheets.set("InboxConversations",conversations);
-        spreadsheet.sheets.set("InboxConversationState",states);
-    }
+        const result=api.handleGetInboxConversations({ ...actor("U1","token-a"),folder:"received" });
+        assert.equal(result.status,"success");
+        assert.deepEqual(spreadsheet.getSheetByName("InboxConversations").rows[0],inboxSchemaHeaders.InboxConversations);
+        assert.deepEqual(spreadsheet.getSheetByName("InboxConversationState").rows[0],inboxSchemaHeaders.InboxConversationState);
+    } finally { spreadsheet.sheets.set("InboxConversations",conversations);spreadsheet.sheets.set("InboxConversationState",states); }
 });
 run("Inbox crea la hoja de preferencias faltante", () => {
     spreadsheet.sheets.delete("InboxConversationFlags");
