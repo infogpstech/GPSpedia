@@ -7909,7 +7909,7 @@ export async function openAuditDriveModal() {
                 const requestCursor = cursor ? JSON.parse(JSON.stringify(cursor)) : null;
                 const requestPayload = { ...getDeveloperSessionPayload(), cursor: requestCursor };
                 const response = await routeActionWithRetry('auditDriveImagesInCortes', requestPayload, {
-                    timeoutMs: 45000, maxAttempts: cursor ? 3 : 1, retryDelayMs: 500,
+                    timeoutMs: cursor ? 45000 : 120000, maxAttempts: cursor ? 3 : 1, retryDelayMs: 500,
                     shouldContinue: isCurrentRequest
                 });
                 if (!isCurrentRequest()) return;
