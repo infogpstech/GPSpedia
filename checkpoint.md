@@ -1683,3 +1683,25 @@ Los cuatro requerimientos GP-UX-INBOX-01, GP-PERF-PAGES-01, GP-UX-USERS-01 y GP-
 
 ### Documentos
 Backlog y registro de cambios sincronizados con este estado. La rama base permanece intacta.
+
+
+---
+
+## Continuidad — ajustes de lista y navegación Inbox (2026-11-16)
+
+**Rama:** `GPSpedia2.2.5_work`  
+**Rama base protegida:** `GPSpedia2.2.5` (sin modificaciones).
+
+### Cambios aplicados
+- `index.html`: lupa en la cabecera; búsqueda inicialmente plegada; selector de categoría retirado; carpetas con iconos (Recibidos, Leídos, No leídos, Enviados y Archivados); una sola barra de paginación persistente fuera de las vistas, con flechas ← / → y etiqueta contextual.
+- `style.css`: el espacio de trabajo ocupa la altura flexible del modal; la lista y el detalle disponen de scroll independiente; animación de apertura de búsqueda y expansión de la carpeta activa, con respeto a `prefers-reduced-motion`; ajuste móvil.
+- `JS/Frontend/ui.js`: búsqueda activada desde la lupa; resultados por texto mediante el parámetro de consulta existente; eliminación del listener del filtro visual de categorías; paginador único que cambia de manejador según la vista actual y conserva los cursores opacos; indicador de páginas con total real.
+- `JS/Services/InboxConversations.js`: se añadió la carpeta `read`, definida como conversaciones recibidas con `unreadCount === 0`; no realiza escrituras ni altera el estado de lectura.
+- Pruebas actualizadas en `JS/Tests/InboxUi.mjs` y `JS/Tests/InboxConversations.mjs`.
+
+### Validación y estado
+- Inspección remota de los seis archivos afectados: los controles antiguos de categoría y paginación por conversación ya no aparecen en HTML/UI/estilos/servicio.
+- Se añadieron regresiones de contrato para carpeta Leídos, búsqueda desplegable, barra única, flechas, etiqueta contextual y aprovechamiento vertical.
+- La ejecución de Node.js y GitHub Actions aún no se ha confirmado para este conjunto de commits; no se declara como aprobada.
+- Pendiente: ejecutar la suite Inbox/regresión global, revisar el diff completo y comprobar visualmente el alto útil, el comportamiento de la lupa y la expansión de carpetas en escritorio/móvil.
+- No se desplegaron Apps Script ni se modificaron hojas, secretos, servicios externos o datos productivos.
