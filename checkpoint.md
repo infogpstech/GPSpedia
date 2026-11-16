@@ -1735,3 +1735,12 @@ Backlog y registro de cambios sincronizados con este estado. La rama base perman
 - Cambios aplicados en los archivos de frontend y pruebas.
 - Pendiente ejecutar en Node.js las suites InboxUi, ActivityDashboardContributions y ServiceWorkerCache, además de revisar el diff y comprobar el resultado visual PWA en un dispositivo.
 - No se ha realizado despliegue de Apps Script ni modificación de servicios/hojas externas.
+
+
+### Cierre de validación local — GP-UX-INBOX-03 / GP-DASH-ATTR-01
+- GitHub Actions Node.js 22: **SUCCESS — 127 suites / 1,876 pruebas / 0 fallos** (run `43874427811`, commit `780b67be3c22efc86c245f770cb29724282cfae7`).
+- Pruebas focalizadas: `InboxUi.mjs` **35/35 PASS**; `ActivityDashboardContributions.mjs` **9/9 PASS**; `ServiceWorkerCache.js` **9/9 PASS**.
+- GitHub Pages: **SUCCESS** (run `43874428208`, commit `f92ec77eac701aa172b7846e70ec1fa40f249cf4`).
+- Durante la regresión se corrigieron una expectativa obsoleta del nombre de cursor en Inbox, la deduplicación de dos variantes del mismo colaborador dentro de una sola celda compartida y la expectativa de versión del Service Worker. La repetición posterior aprobó todas las suites.
+- Las dos tareas quedan **COMPLETADAS CON VALIDACIÓN DIFERIDA A BETA**. Pendiente visual PWA en móvil y verificación de conteos de aportadores/vehículos con registros reales; no se desplegó Apps Script ni se alteraron datos externos.
+- HEAD de rama de trabajo al registrar: `2b78d8337e01629a30c17f968238edbd971baa8d`. Rama base `GPSpedia2.2.5`: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin modificaciones.
