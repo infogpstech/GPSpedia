@@ -1280,3 +1280,10 @@ Se creó `Tareas_beta.md` con los IDs BETA-001 a BETA-052, criterios de aceptaci
 - **Cobertura:** InboxConversations.mjs prueba hojas incompletas y despacho FEEDBACK/sessionActivity con actor central para lecturas; mutaciones conservan lease específica.
 - **CI:** run `43783775316` SUCCESS — 108 suites / 1,660 pruebas / 0 fallos.
 - **Pendiente Beta:** inspeccionar hojas reales y respuesta de FEEDBACK; no se hizo reparación automática ni despliegue.
+
+
+### Adenda 2026-11-16 — GP-BETA-03: contrato de limpieza Logs verificado
+- Se auditaron y probaron ambos despachadores: `clearSensitiveLogs` (AUTH) y `clearActivityLogs` (FEEDBACK).
+- Se confirmó lease específica por acción, mapeo de servicio, actor central, política de escritura y rol Desarrollador.
+- CI run `43783958890`: SUCCESS — 108 suites / 1,662 pruebas / 0 fallos.
+- **Pendiente Beta:** ejecutar la limpieza contra Logs y ActividadUsuario reales y comprobar contadores; no se desplegaron servicios.
