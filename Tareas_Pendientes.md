@@ -875,7 +875,7 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 
 ## Revisión visual adicional — GP-UX-INBOX-DESKTOP-03 / GP-UX-CUT-MODAL-06 / GP-PWA-ZOOM-01 — 2026-11-16
 
-**Estado: IMPLEMENTACIÓN PUBLICADA; VALIDACIÓN AUTOMATIZADA PENDIENTE.**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
 
 - Inbox: «Salir» y «Enviar mensaje» se muestran en una sola fila, con 104 × 40 px cada uno; «Enviar mensaje» queda a la derecha y conserva su color primario.
 - Editor móvil: el botón de opciones de categoría/plantilla queda antes de Negrita; los demás controles conservan su secuencia. El menú se ancla a la izquierda y limita su ancho al viewport para evitar recortes.
@@ -884,3 +884,5 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - App Shell actualizado a gpsepedia-cache-v50.
 - Pruebas anti-regresión añadidas/actualizadas: InboxUi, CutDetailModalLayout y AntiDebuggingPolicy. No se modifican servicios Apps Script, permisos, datos ni deployments.
 - Aceptación visual en Android, escritorio y PWA instalada queda diferida a Beta.
+
+- Validación final: GitHub Actions Node.js 22 run 43954319908 SUCCESS — 129 suites / 1,916 pruebas / 0 fallos; GitHub Pages run 43954319151 SUCCESS. Queda únicamente aceptación visual en escritorio, Android y PWA instalada.

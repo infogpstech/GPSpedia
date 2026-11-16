@@ -1627,3 +1627,10 @@ ADENDA AUD-2026-11-16-11 — GP-UX-INBOX-DESKTOP-03 / GP-UX-CUT-MODAL-06 / GP-PW
 - La política de viewport de las tres páginas todavía conservaba zoom nativo sin restricción, aunque lightbox.js ya guardaba y restauraba el viewport y habilitaba zoom al abrir el visor.
 - Criterio correctivo: fila no envolvente con botones de tamaño idéntico; menú anclado a la izquierda y acotado al viewport; divisor a 4 px; sombra de texto; restricción del zoom solo en navegación y conservación de la excepción del lightbox.
 - No se modifican handlers, permisos, autenticación, servicios Apps Script ni datos.
+
+
+ADENDA DE CIERRE AUD-2026-11-16-11 — GP-UX-INBOX-DESKTOP-03 / GP-UX-CUT-MODAL-06 / GP-PWA-ZOOM-01
+- CI inicial run 43953924509 detectó contrato obsoleto que esperaba App Shell v49 en ServiceWorkerCache.js; corregido para v50.
+- CI run 43954136534 detectó el mismo valor obsoleto en OfflineBrandAssets.mjs; corregido para v50.
+- CI final run 43954319908: SUCCESS — 129 suites / 1,916 pruebas / 0 fallos. InboxUi 51/51; CutDetailModalLayout 15/15; ServiceWorkerCache 10/10; OfflineBrandAssets 4/4. La prueba AntiDebuggingPolicy se ejecutó dentro del grupo de integración.
+- GitHub Pages run 43954319151: SUCCESS. La rama base protegida permanece intacta. La inspección visual real en escritorio, Android y PWA se difiere a Beta.

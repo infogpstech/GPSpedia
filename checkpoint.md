@@ -194,4 +194,7 @@ El checkpoint acumulativo anterior se conserva íntegro en `Checkpoint_Archive/c
 - Modal de corte: divisor azul pasa de 7.5 px a 4 px de separación vertical; nombre del modelo incorpora sombra de texto.
 - Zoom: viewport de navegación restringido en index.html, HTML/users.html y HTML/add_cortes.html. lightbox.js mantiene su excepción: habilita temporalmente maximum-scale 5/user-scalable yes y restaura el valor previo al cerrar.
 - App Shell actualizado a v50. Pruebas InboxUi, CutDetailModalLayout y AntiDebuggingPolicy reforzadas.
-- Estado de validación y publicación: pendiente de comprobar en CI después del commit. La inspección visual en Android/escritorio/PWA queda diferida a Beta.
+- GitHub Actions Node.js 22 run 43954319908: SUCCESS — 129 suites / 1,916 pruebas / 0 fallos; InboxUi 51/51, CutDetailModalLayout 15/15, ServiceWorkerCache 10/10 y OfflineBrandAssets 4/4. La suite AntiDebuggingPolicy también se ejecutó dentro de la regresión integral.
+- GitHub Pages run 43954319151: SUCCESS (build y deploy).
+- Commit de código y pruebas validado: 56c2d06dfeee62d696f96942650aa2b054bd1d40.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. La inspección visual en Android/escritorio/PWA queda diferida a Beta; no se desplegaron servicios Apps Script ni se modificaron datos externos.

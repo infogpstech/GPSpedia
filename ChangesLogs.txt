@@ -1338,3 +1338,5 @@ GP-UX-INBOX-DESKTOP-03 / GP-UX-CUT-MODAL-06 / GP-PWA-ZOOM-01 — 2026-11-16
 - service-worker.js: App Shell v50.
 - JS/Tests/InboxUi.mjs, CutDetailModalLayout.mjs y AntiDebuggingPolicy.mjs: contratos de regresión actualizados.
 ================================================================================
+
+- Ajuste de contratos de caché: JS/Tests/ServiceWorkerCache.js y JS/Tests/OfflineBrandAssets.mjs esperan gpsepedia-cache-v50.
