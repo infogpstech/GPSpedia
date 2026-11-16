@@ -283,5 +283,10 @@ export function runPysVehicleRelationIntegrityTests({ feedback, ui }) {
         assert.equal(h.state.lockReleases, 2);
     });
 
+    test("la tarjeta Agregar Modelo se estira a la altura de las tarjetas relacionadas", () => {
+        assert.match(ui, /track\.style\.alignItems = "stretch"/);
+        assert.match(ui, /height: auto; min-height: 0; align-self: stretch/);
+    });
+
     return { status: failed === 0 ? "PASS" : "FAIL", passed, failed, results };
 }

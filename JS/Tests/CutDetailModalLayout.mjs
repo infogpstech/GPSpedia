@@ -36,6 +36,22 @@ testCase("la cabecera y acciones del modal se agrupan en una barra flexible", ()
     assert.match(detail, /headerDiv\.appendChild\(headerActions\)[\s\S]*?headerDiv\.appendChild\(closeBtn\)/);
 });
 
+testCase("el logo y el modelo ocupan la esquina superior izquierda sin desplazar las acciones", () => {
+    assert.match(detail, /headerDiv\.insertBefore\(titleContainer, savingIndicator\)/);
+    assert.doesNotMatch(detail, /cont\.appendChild\(titleContainer\)/);
+    assert.match(css, /\.detail-modal-toolbar \{[\s\S]*?flex-wrap:wrap/);
+    assert.match(css, /\.detail-modal-title \{[\s\S]*?flex:1 1 260px/);
+    assert.match(css, /\.detail-modal-header-actions \{[\s\S]*?margin-left:auto/);
+    assert.match(css, /\.detail-modal-toolbar > \.info-close-btn \{[\s\S]*?right:0/);
+});
+
+testCase("el catálogo reduce 70% el margen de la navegación y uniforma carruseles", () => {
+    assert.match(ui, /section\.className = 'home-carousel-section'/);
+    assert.match(ui, /title\.style\.margin = '12px 0 10px'/);
+    assert.match(css, /\.section-selector \{[\s\S]*?margin-bottom: 6px/);
+    assert.match(css, /#contenido > \.home-carousel-section \{ margin:12px 0 16px; \}/);
+});
+
 testCase("el título y metadatos se separan del área de edición", () => {
     assert.match(detail, /titleContainer\.className = "detail-modal-title"/);
     assert.match(detail, /subHeaderDiv\.className = "detail-modal-meta"/);

@@ -548,7 +548,7 @@ body.search-active .container {
 .section-selector {
     display: flex;
     justify-content: center;
-    margin-bottom: 20px;
+    margin-bottom: 6px;
     transition: all 0.35s ease-in-out;
     flex-wrap: wrap;
     gap: 10px;
@@ -4873,22 +4873,44 @@ body.dark-mode #login-modal #login-error.login-session-ended {
 .detail-modal-toolbar {
     position:relative;
     display:flex;
-    align-items:flex-start;
-    justify-content:flex-end;
-    flex-wrap:nowrap;
+    align-items:center;
+    justify-content:flex-start;
+    flex-wrap:wrap;
     gap:8px;
     min-height:42px;
     padding:0 46px 8px 0;
 }
-.detail-modal-saving-indicator { position:absolute; left:0; top:4px; margin:0; }
-.detail-modal-header-actions { margin-left:auto; flex:0 1 auto; flex-wrap:nowrap; justify-content:flex-end; }
+.detail-modal-title {
+    order:0;
+    flex:1 1 260px;
+    min-width:0;
+    width:auto;
+    max-width:100%;
+    padding:0;
+    margin:0;
+    border:0;
+}
+.detail-modal-saving-indicator {
+    position:static;
+    order:1;
+    flex:0 1 auto;
+    margin:0;
+}
+.detail-modal-header-actions {
+    order:2;
+    margin-left:auto;
+    flex:0 1 auto;
+    flex-wrap:nowrap;
+    justify-content:flex-end;
+}
 .detail-modal-toolbar > .info-close-btn {
     position:absolute !important; top:0 !important; right:0 !important;
     margin:0 !important; flex:0 0 38px; width:38px; min-width:38px; height:38px; min-height:38px;
 }
 @media (max-width:560px) {
     .detail-modal-toolbar { gap:5px; padding-right:42px; }
-    .detail-modal-header-actions { gap:5px; }
+    .detail-modal-title { flex-basis:100%; }
+    .detail-modal-header-actions { gap:5px; margin-left:0; }
     .detail-modal-header-actions .share-modal-btn { min-width:34px; min-height:38px; }
 }
 
@@ -5083,3 +5105,8 @@ body.dark-mode #login-modal #login-error.login-session-ended {
 .relay-detail-toolbar { justify-content:flex-start !important; align-items:flex-start !important; flex-wrap:nowrap !important; padding:0 48px 8px 0 !important; margin:0 0 20px !important; }
 .relay-detail-toolbar .relay-detail-title { flex:1 1 auto; min-width:0; margin:0; padding:0; text-align:left; overflow-wrap:anywhere; }
 .relay-detail-toolbar > .info-close-btn { position:absolute !important; top:0 !important; right:0 !important; margin:0 !important; }
+
+
+/* GP-UX-HOME-01 — separación compacta y uniforme entre carruseles del catálogo. */
+#contenido > .home-carousel-section { margin:12px 0 16px; }
+#contenido > .home-carousel-section > h4 { margin:0 0 10px; }

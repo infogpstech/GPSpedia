@@ -1141,9 +1141,10 @@ function crearCarrusel(titulo, items, cardGenerator) {
     if (!items || items.length === 0 || !cont) return;
 
     const section = document.createElement('div');
+    section.className = 'home-carousel-section';
     const title = document.createElement('h4');
     title.textContent = titulo;
-    title.style.marginTop = '40px';
+    title.style.margin = '12px 0 10px';
     section.appendChild(title);
 
     const carouselContainer = document.createElement('div');
@@ -2469,7 +2470,7 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
         titleContainer.appendChild(title);
     }
 
-    cont.appendChild(titleContainer);
+    headerDiv.insertBefore(titleContainer, savingIndicator);
 
     // El modelo permanece junto al logo; solo pasa debajo cuando su ancho natural
     // supera el espacio real disponible dentro del modal.
@@ -13165,6 +13166,7 @@ export function openPysDetailModal(item,navOptions={},inEditModePys=false){
         const track = document.createElement("div");
         track.className = "pys-models-track";
         track.style.cssText = "display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none;";
+        track.style.alignItems = "stretch";
 
         const renderTrackVehicles = (cortesList) => {
             track.innerHTML = "";
@@ -13246,7 +13248,7 @@ export function openPysDetailModal(item,navOptions={},inEditModePys=false){
             // Tarjeta «+ Agregar» al final del carrusel disponible para todos los usuarios (Estandarización visual sin bordes discontinuos)
             const addCard = document.createElement("div");
             addCard.className = "card card-create-vehicle-assoc";
-            addCard.style.cssText = "flex: 0 0 140px; height: 120px; padding: 10px; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); background: var(--card-bg, #fff); flex-shrink: 0;";
+            addCard.style.cssText = "flex: 0 0 140px; height: auto; min-height: 0; align-self: stretch; box-sizing: border-box; padding: 10px; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); background: var(--card-bg, #fff); flex-shrink: 0;";
             addCard.innerHTML = `<i class="fa-solid fa-plus" style="font-size: 1.8rem; margin-bottom: 8px; color: var(--accent-color, #007bff);"></i> <span style="font-size: 0.85rem; font-weight: 600; text-align: center;">Agregar Modelo</span>`;
             addCard.onclick = () => {
                 openSearchVehicleForPysAssociationModal(item.id_problem, (updatedList) => {
