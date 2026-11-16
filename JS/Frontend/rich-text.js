@@ -19,6 +19,86 @@ const SAFE_FONTS = new Map([
 const SAFE_FONT_VALUES = new Set(SAFE_FONTS.values());
 const SAFE_SIZES = new Set(["0.85em", "1em", "1.2em", "1.5em"]);
 const SAFE_NAMED_COLORS = new Set(["red", "blue", "green", "black", "white", "orange", "yellow", "gray", "grey", "purple", "teal", "navy"]);
+const richEditorSelectionRanges_ = new WeakMap();
+
+function rememberRichTextSelection_(targetOrId) {
+    const editor = typeof targetOrId === "string" ? resolveRichTextTarget_(targetOrId) : targetOrId;
+    if (!isRichContentEditable_(editor)) return false;
+    const selection = window.getSelection?.();
+    if (!selection || !selection.rangeCount) return false;
+    const range = selection.getRangeAt(0);
+    if (!editor.contains(range.commonAncestorContainer)) return false;
+    richEditorSelectionRanges_.set(editor, range.cloneRange());
+    return true;
+}
+
+function restoreRichTextSelection_(editor) {
+    if (!isRichContentEditable_(editor)) return false;
+    editor.focus({ preventScroll: true });
+    const saved = richEditorSelectionRanges_.get(editor);
+    if (saved && editor.contains(saved.commonAncestorContainer)) {
+        const selection = window.getSelection?.();
+        if (!selection) return false;
+        selection.removeAllRanges();
+        selection.addRange(saved.cloneRange());
+        return true;
+    }
+    const selection = window.getSelection?.();
+    return Boolean(selection && selection.rangeCount && editor.contains(selection.getRangeAt(0).commonAncestorContainer));
+}
+
+function bindRichTextEditorSelection_(editor) {
+    if (!isRichContentEditable_(editor) || editor.dataset.richSelectionBound === "true") return;
+    editor.dataset.richSelectionBound = "true";
+    const remember = () => rememberRichTextSelection_(editor);
+    ["keyup", "mouseup", "touchend", "input", "blur"].forEach(type => editor.addEventListener(type, remember));
+    document.addEventListener("selectionchange", remember);
+    editor.addEventListener("contextmenu", event => event.preventDefault());
+}
+
+function insertRichTextPlainText_(editor, value) {
+    if (!restoreRichTextSelection_(editor)) return false;
+    const selection = window.getSelection?.();
+    if (!selection || !selection.rangeCount) return false;
+    const range = selection.getRangeAt(0);
+    range.deleteContents();
+    const fragment = document.createDocumentFragment();
+    String(value || "").replace(/\r\n?/g, "\n").split("\n").forEach((line, index) => {
+        if (index) fragment.appendChild(document.createElement("br"));
+        if (line) fragment.appendChild(document.createTextNode(line));
+    });
+    const last = fragment.lastChild;
+    range.insertNode(fragment);
+    if (last) { range.setStartAfter(last); range.collapse(true); selection.removeAllRanges(); selection.addRange(range); }
+    rememberRichTextSelection_(editor);
+    editor.dispatchEvent(new Event("input", { bubbles: true }));
+    return true;
+}
+
+async function copyRichTextSelection_(targetId) {
+    const editor = resolveRichTextTarget_(targetId);
+    if (!restoreRichTextSelection_(editor)) return false;
+    const selection = window.getSelection?.();
+    if (!selection || !selection.rangeCount || selection.isCollapsed) return false;
+    const text = selection.getRangeAt(0).toString();
+    if (!text) return false;
+    try {
+        if (navigator.clipboard?.writeText) { await navigator.clipboard.writeText(text); return true; }
+    } catch (_) {}
+    try { return document.execCommand("copy") === true; } catch (_) { return false; }
+}
+
+async function pasteRichTextSelection_(targetId) {
+    const editor = resolveRichTextTarget_(targetId);
+    if (!restoreRichTextSelection_(editor)) return false;
+    try {
+        if (navigator.clipboard?.readText) {
+            const value = await navigator.clipboard.readText();
+            return insertRichTextPlainText_(editor, value);
+        }
+    } catch (_) {}
+    try { return document.execCommand("paste") === true; } catch (_) { return false; }
+}
 
 export function stripRichTextDemoPlaceholder(value) {
     const source = String(value || "");
@@ -198,6 +278,7 @@ export function mountRichTextEditors(root = document) {
             source.value = sanitizeHtmlContent(editor.innerHTML, mode);
             source.dispatchEvent(new Event("input", { bubbles: true })); editor.removeAttribute("aria-invalid");
         };
+        bindRichTextEditorSelection_(editor);
         editor.addEventListener("input", sync);
         editor.addEventListener("blur", () => { source.dispatchEvent(new Event("blur")); source.dispatchEvent(new Event("change", { bubbles: true })); });
         editor.addEventListener("paste", event => {
@@ -243,6 +324,7 @@ export function mountRichTextEditors(root = document) {
 }
 
 function wrapRichEditorSelection_(editor, styleProperty, styleValue) {
+    editor.focus({ preventScroll: true });
     const selection = window.getSelection?.();
     if (!selection || !selection.rangeCount) return false;
     const range = selection.getRangeAt(0);
@@ -263,12 +345,13 @@ function wrapRichEditorSelection_(editor, styleProperty, styleValue) {
     }
     selection.removeAllRanges();
     selection.addRange(range);
-    editor.focus();
+    rememberRichTextSelection_(editor);
     editor.dispatchEvent(new Event("input", { bubbles: true }));
     return true;
 }
 
 function applyRichTextToContentEditable_(editor, format, extraValue) {
+    restoreRichTextSelection_(editor);
     const commands = {
         bold: ["bold", null], italic: ["italic", null], underline: ["underline", null],
         strike: ["strikeThrough", null]
@@ -300,7 +383,10 @@ function applyRichTextToContentEditable_(editor, format, extraValue) {
         const list = node?.closest?.("ul");
         if (list && editor.contains(list)) list.setAttribute("data-gp-marker", SAFE_MARKERS.has(extraValue) ? extraValue : "bullet");
     }
-    if (applied) editor.dispatchEvent(new Event("input", { bubbles: true }));
+    if (applied) {
+        rememberRichTextSelection_(editor);
+        editor.dispatchEvent(new Event("input", { bubbles: true }));
+    }
     return applied;
 }
 
@@ -336,7 +422,7 @@ export function applyRichTextColor(targetId, color) {
     const safeColor = /^#[0-9a-f]{3,8}$/i.test(String(color || "")) ? color : "#000000";
     if (isRichContentEditable_(target)) {
         const mode = normalizeEditorMode_(target.dataset.richEditorMode);
-        target.focus();
+        restoreRichTextSelection_(target);
         if (mode === "basic" || mode === "lists") {
             return wrapRichEditorSelection_(target, "color", safeColor);
         }
@@ -344,6 +430,7 @@ export function applyRichTextColor(targetId, color) {
         try { applied = typeof document.execCommand === "function" && document.execCommand("foreColor", false, safeColor) === true; }
         catch (_) { applied = false; }
         if (!applied) return wrapRichEditorSelection_(target, "color", safeColor);
+        rememberRichTextSelection_(target);
         target.dispatchEvent(new Event("input", { bubbles: true }));
         return true;
     }
@@ -423,6 +510,8 @@ function createCompactRichTextToolbar_(targetId, forceAdvanced) {
     toolbar.dataset.richTextCompact = "true";
     toolbar.setAttribute("role", "toolbar");
     toolbar.setAttribute("aria-label", "Formato del mensaje");
+    toolbar.addEventListener("pointerdown", () => rememberRichTextSelection_(targetId), true);
+    toolbar.addEventListener("mousedown", () => rememberRichTextSelection_(targetId), true);
     const closeMenus = except => toolbar.querySelectorAll(".rich-toolbar-dropdown.is-open").forEach(group => {
         if (group === except) return;
         group.classList.remove("is-open");
@@ -475,7 +564,9 @@ function createCompactRichTextToolbar_(targetId, forceAdvanced) {
     colorPicker.className = "rich-toolbar-color-input"; colorPicker.title = "Color de texto";
     colorPicker.setAttribute("aria-label", "Color de texto");
     const colorButton = makeIconButton("fa-palette", "Color de texto", () => colorPicker.click());
-    colorPicker.addEventListener("input", event => applyRichTextColor(targetId, event.target.value));
+    toolbar.addEventListener("pointerdown", () => rememberRichTextSelection_(targetId), true);
+    toolbar.addEventListener("mousedown", () => rememberRichTextSelection_(targetId), true);
+    colorPicker.addEventListener("change", event => applyRichTextColor(targetId, event.target.value));
     colorGroup.append(colorButton, colorPicker); toolbar.appendChild(colorGroup);
     addDropdown("fa-text-height", "Tamaño de texto", [
         { label:"Pequeño", action:()=>applyRichTextFormat(targetId,"size","0.85em",{forceAdvanced}) },
@@ -495,6 +586,8 @@ function createCompactRichTextToolbar_(targetId, forceAdvanced) {
         { label:"Verificación", action:()=>applyRichTextFormat(targetId,"ul","check",{forceAdvanced}) },
         { label:"Lista numerada", action:()=>applyRichTextFormat(targetId,"ol",null,{forceAdvanced}) }
     ]);
+    toolbar.appendChild(makeIconButton("fa-copy", "Copiar texto seleccionado", () => copyRichTextSelection_(targetId)));
+    toolbar.appendChild(makeIconButton("fa-paste", "Pegar texto", () => pasteRichTextSelection_(targetId)));
     toolbar.addEventListener("click", event => { if (!event.target.closest(".rich-toolbar-dropdown")) closeMenus(); });
     return toolbar;
 }
@@ -539,12 +632,16 @@ export function createRichTextToolbar(targetId, options = {}) {
         sizeSelect.className = "rich-toolbar-native-select";
         sizeSelect.title = "Tamaño de fuente"; sizeSelect.setAttribute("aria-label", "Tamaño de fuente");
         sizeSelect.innerHTML = '<option value="">Tamaño</option><option value="0.85em">Pequeño</option><option value="1em">Normal</option><option value="1.2em">Grande</option><option value="1.5em">Encabezado</option>';
+        sizeSelect.addEventListener("pointerdown", () => rememberRichTextSelection_(targetId));
+        sizeSelect.addEventListener("mousedown", () => rememberRichTextSelection_(targetId));
         sizeSelect.addEventListener("change", event => { if (event.target.value) applyRichTextFormat(targetId, "size", event.target.value, applyOptions); event.target.value = ""; });
         toolbar.appendChild(sizeSelect);
         const fontSelect = document.createElement("select");
         fontSelect.className = "rich-toolbar-native-select";
         fontSelect.title = "Tipo de fuente"; fontSelect.setAttribute("aria-label", "Tipo de fuente");
         fontSelect.innerHTML = '<option value="">Fuente</option>' + Array.from(SAFE_FONTS.keys()).map(font => '<option value="' + font + '">' + font + '</option>').join("");
+        fontSelect.addEventListener("pointerdown", () => rememberRichTextSelection_(targetId));
+        fontSelect.addEventListener("mousedown", () => rememberRichTextSelection_(targetId));
         fontSelect.addEventListener("change", event => { if (event.target.value) applyRichTextFormat(targetId, "font", event.target.value, applyOptions); event.target.value = ""; });
         toolbar.appendChild(fontSelect);
     }
@@ -557,6 +654,8 @@ export function createRichTextToolbar(targetId, options = {}) {
         toolbar.appendChild(makeButton("fa-list-ul", "Lista no ordenada", () => applyRichTextFormat(targetId, "ul", markerSelect.value, applyOptions)));
         toolbar.appendChild(makeButton("fa-list-ol", "Lista ordenada", () => applyRichTextFormat(targetId, "ol", null, applyOptions)));
     }
+    toolbar.appendChild(makeButton("fa-copy", "Copiar texto seleccionado", () => copyRichTextSelection_(targetId)));
+    toolbar.appendChild(makeButton("fa-paste", "Pegar texto", () => pasteRichTextSelection_(targetId)));
     if (isFull) Promise.resolve().then(() => attachListKeyboardBehavior(resolveRichTextTarget_(targetId)));
     return toolbar;
 }
