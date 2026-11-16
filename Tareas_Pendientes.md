@@ -811,3 +811,14 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - GitHub Pages run `43939460856`: **SUCCESS** (build y deploy).
 - Código validado en commit `07eca822c4fd06b5ebeb605256f918069c96d798`.
 - Pendiente diferido a Beta: inspección visual en Android/PWA instalada, viewport estrecho y escritorio; verificar que el logo se muestra completo, que las acciones quedan en la parte superior derecha, que el modelo alinea su base con la imagen y que las cuatro columnas de usuarios usan todo el ancho sin scroll horizontal. No se afirma haber realizado esa inspección real.
+
+### GP-UX-INBOX-DESKTOP-02 — Scroll, compositor y barra enriquecida
+**Estado: EN PROGRESO — corrección local preparada; CI pendiente.**
+- En escritorio, el formulario de nuevo mensaje debe permitir desplazamiento vertical real y mantener Salir/Enviar accesibles.
+- Reducir la altura de la bandeja vacía para que no reserve un panel central innecesariamente grande.
+- Evitar que la lupa se recorte dentro del botón de búsqueda.
+- En Nuevo mensaje, Plantilla y Categoría comparten una fila de dos columnas inmediatamente encima del editor; si el rol no dispone de plantillas, Categoría ocupa el ancho completo.
+- Integrar la barra de texto enriquecido compartida tanto en nuevo mensaje como en respuestas, respetando el modo configurado y sanitizando el HTML al mostrar mensajes.
+- Mantener contratos, borradores, idempotencia, destinatarios, permisos y acciones actuales. No modificar backend ni servicios Apps Script.
+- Evidencia: Images/tests/modal_inbox_bandeja.png e Images/tests/modal_inbox_reportes.png.
+- App Shell v46; pruebas InboxUi, ServiceWorkerCache y OfflineBrandAssets actualizadas. CI y aceptación visual Beta pendientes.
