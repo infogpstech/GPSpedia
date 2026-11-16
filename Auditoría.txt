@@ -1003,3 +1003,9 @@ Los cambios reportados en checkpoint (consola 50%, pestañas horizontales, títu
 - Evidencia: `feedback.js:isSharedMutationAction_` declara `notifyDevelopersDriveCritical`, sin política Coordinator. El handler `InboxConversations.js:handleNotifyDevelopersDriveCritical` consulta Users y crea conversaciones/mensajes idempotentes en FEEDBACK.
 - Impacto: ambas acciones podían fallar antes de ejecutar el handler con “La acción no está habilitada en la política del coordinador.” Severidad: alta funcional; no hay evidencia de bypass de permisos.
 - Corrección: política de lectura ADMIN/auditIdentifiers y política FEEDBACK/notifyDevelopersDriveCritical con lectura USERS/SESSION_CONTEXTS y escritura FEEDBACK; contrato ampliado para cobertura integral.
+
+
+[2026-11-15] Auditoría de lecturas ADMIN y coordinación de recursos
+- Evidencia: el dispatcher ADMIN expone `previewCortesImageReconciliation`, `getAdminImageUploadStatus` y `checkOperation` como lecturas que antes adquirían solo `sessionActivity`, sin reservar los datos consultados. La vista previa recorre Cortes/Drive e inventarios; el estado de imagen lee Cortes/Drive y `AdminImageUploads`, cuyo helper puede crear el ledger; `checkOperation` consulta Cortes e idempotencia.
+- Impacto: posibilidad de snapshots inconsistentes frente a escrituras concurrentes; la consulta de estado puede crear el ledger sin reservar ese recurso. Severidad: media, integridad/concurrencia.
+- Corrección: incluirlas en las lecturas ADMIN dedicadas y asignar recursos de lectura/escritura mínimos. Ampliar el contrato para comprobar que todas las acciones ADMIN del dispatcher están clasificadas como mutación, lectura dedicada o ping.
