@@ -1188,3 +1188,5 @@ ADENDA — GP-UX-INBOX-CACHE-SEARCH-01: prueba global ajustada para reutilizar t
 ADENDA — GP-UX-INBOX-CACHE-SEARCH-01: contratos InboxUi sincronizados con setInboxSection_(section, options) y categoría global al buscar; corrección de expectativas obsoletas.
 
 ADENDA — GP-UX-INBOX-CACHE-SEARCH-01: pruebas heredadas de Inbox actualizadas para aceptar carpeta global durante búsqueda y carga inicial condicionada a ausencia de caché.
+
+ADENDA — GP-UX-INBOX-CACHE-SEARCH-01: expectativas heredadas de Inbox ajustadas al filtro global y al bloque else-if que conserva caché visible.

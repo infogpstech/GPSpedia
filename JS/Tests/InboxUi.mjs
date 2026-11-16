@@ -105,7 +105,7 @@ check("La bandeja tiene carpetas, búsqueda y paginación", () => {
     for (const folder of ["received", "sent", "archived"]) assert.match(html, new RegExp('data-inbox-folder="' + folder + '"'));
     assert.doesNotMatch(html, /data-inbox-folder="read"|data-inbox-folder="unread"/);
     assert.match(html, /id="inbox-conversation-search-form"/);
-    assert.match(ui, /getInboxConversations\(context,[\s\S]*folder: inboxConversationFolder_/);
+    assert.ok(ui.includes('folder: inboxConversationQuery_ ? "all" : inboxConversationFolder_'));
     assert.match(ui, /inboxConversationNextCursor_/);
 });
 check("La búsqueda se cierra al usar otra acción, cambiar de pestaña o volver a pulsar la lupa", () => {
@@ -173,7 +173,7 @@ check("Las notificaciones internas reflejan el total de conversaciones no leída
     assert.match(ui, /counts && counts\.unread/);
 });
 check("La lista y los mensajes existentes permanecen visibles durante la actualización", () => {
-    assert.ok(ui.includes("else if (!inboxConversationItems_.length && !list.childElementCount) list.replaceChildren"));
+    assert.ok(ui.includes("else if (!inboxConversationItems_.length && !list.childElementCount) {"));
     assert.match(ui, /if \(!options\.older && !options\.preserveScroll && !inboxConversationMessages_\.length\) renderInboxConversationDetail_/);
 });
 check("La actualización del historial conserva el orden de inserción aunque las fechas coincidan o retrocedan", () => {

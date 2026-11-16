@@ -1928,3 +1928,5 @@ Backlog y registro de cambios sincronizados con este estado. La rama base perman
 - CI run `43904276401`: InboxUi detectó dos contratos antiguos que aún esperaban la firma previa de setInboxSection_ y el filtro fijo de categoría. Se sincronizan con la firma opcional de preferCache y la búsqueda global; la suite de servicio InboxConversations ya pasó.
 
 - CI run `43904491110`: las nuevas pruebas de caché/búsqueda pasaron, pero dos contratos anteriores aún esperaban el filtro fijo por carpeta y el render inicial sin caché. Se actualizan para reflejar la búsqueda global y el fallback de carga cuando no hay caché.
+
+- CI run `43904988914`: la suite detectó dos aserciones heredadas que aún describían el loader anterior. Se ajustan a la solicitud global de carpeta durante búsqueda y al bloque condicional de carga solo cuando no hay caché.
