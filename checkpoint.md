@@ -1330,3 +1330,6 @@ El usuario confirmó que el backlog pendiente también comprende la organizació
 
 
 - Último contrato heredado detectado por CI en `DevToolsModalAccessibility.mjs`: se actualizó el título de pestaña «Base de datos y respaldos» a «Datos y respaldos». No cambia la región accesible ni el contenido funcional.
+
+
+- CI detectó la etiqueta anterior «Formato descriptivo global» en `RichTextGlobalPreference.mjs`; se actualizó a «Formato de texto». La preferencia y su alcance global permanecen sin cambios.

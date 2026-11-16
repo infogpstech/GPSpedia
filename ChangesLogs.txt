@@ -876,3 +876,9 @@ HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
 2026-11-16 — ACTUALIZACIÓN FINAL DE TÍTULO EN TEST DE ACCESIBILIDAD BETA-035
 - JS/Tests/DevToolsModalAccessibility.mjs: espera el título compacto «Datos y respaldos».
 ================================================================================
+
+
+================================================================================
+2026-11-16 — ACTUALIZACIÓN DE TEST BETA-023 POR ETIQUETA COMPACTA
+- JS/Tests/RichTextGlobalPreference.mjs: valida el título «Formato de texto»; la preferencia global mantiene su comportamiento.
+================================================================================

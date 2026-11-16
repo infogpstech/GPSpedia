@@ -110,7 +110,7 @@ testCase("la plataforma carga la preferencia global al iniciar sesión y refresc
     assert.match(ui, /await loadRichTextMode\(context\)/);
     assert.match(ui, /await setRichTextMode\(requestedMode, activeContext && activeContext\.role, activeContext\)/);
     assert.match(ui, /refreshRichTextToolbars\(\)/);
-    assert.match(html, /Formato descriptivo global/);
+    assert.match(html, /Formato de texto/);
     assert.doesNotMatch(html, /preferencia se guarda en este navegador/);
 });
 
