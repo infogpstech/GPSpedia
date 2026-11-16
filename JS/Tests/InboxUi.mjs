@@ -574,9 +574,9 @@ check("El editor bloquea el menú contextual del navegador sin deshabilitar sele
 check("Los controles táctiles de las barras conservan el foco del editor", () => {
     const compact = rich.slice(rich.indexOf("function createCompactRichTextToolbar_"), rich.indexOf("export function createRichTextToolbar"));
     const standard = rich.slice(rich.indexOf("export function createRichTextToolbar"), rich.indexOf("export function refreshRichTextToolbars"));
-    assert.match(compact, /pointerdown[\\s\\S]{0,300}preventDefault/);
-    assert.match(standard, /pointerdown[\\s\\S]{0,300}preventDefault/);
-    assert.match(rich, /colorPicker\.addEventListener\("change"[\\s\\S]{0,220}restoreRichTextSelection_/);
-    assert.match(rich, /sizeSelect\.addEventListener\("change"[\\s\\S]{0,240}restoreRichTextSelection_/);
-    assert.match(rich, /fontSelect\.addEventListener\("change"[\\s\\S]{0,240}restoreRichTextSelection_/);
+    assert.match(compact, /pointerdown[\s\S]{0,450}preventDefault/);
+    assert.match(standard, /pointerdown[\s\S]{0,450}preventDefault/);
+    assert.match(rich, /colorPicker\.addEventListener\("change"[\s\S]{0,450}restoreRichTextSelection_/);
+    assert.match(rich, /sizeSelect\.addEventListener\("change"[\s\S]{0,450}restoreRichTextSelection_/);
+    assert.match(rich, /fontSelect\.addEventListener\("change"[\s\S]{0,450}restoreRichTextSelection_/);
 });
