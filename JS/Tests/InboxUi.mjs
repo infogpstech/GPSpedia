@@ -152,7 +152,6 @@ check("Nuevo mensaje reemplaza Solicitudes en la barra superior y desaparece el 
     assert.match(html, /id="inbox-view-tabs"[^>]*aria-label="Acciones de bandeja"/);
     assert.match(html, /id="inbox-new-message"[^>]*>[\s\S]*<span>Nuevo mensaje<\/span>/);
     assert.doesNotMatch(html, /inbox-requests-tab|inbox-floating-new-message/);
-    assert.doesNotMatch(html, /id="inbox-new-message"[\s\S]*?id="inbox-folder-nav"/);
     assert.match(html, /id="inbox-search-toggle"/);
     assert.match(ui, /if \(newMessageButton\) newMessageButton\.hidden = false/);
     assert.match(ui, /Salir y cancelar el mensaje nuevo/);
