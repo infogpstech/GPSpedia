@@ -1908,3 +1908,5 @@ Backlog y registro de cambios sincronizados con este estado. La rama base perman
 - Ajuste de robustez del contrato CSS: se comprueban por separado los selectores y las declaraciones de altura/mínima altura, sin depender de espacios o saltos de línea exactos.
 
 - El incremento de App Shell a v39 también requiere actualizar `OfflineBrandAssets.mjs`, que mantenía una expectativa fija v37. Se sincroniza el contrato para que la validación offline corresponda al recurso actual.
+
+- PysModalNavigation pasó la nueva comprobación funcional de altura, pero el resumen final permanecía fijo en 9 pruebas; se actualiza a 10 para que el runner no rechace el resultado correcto.
