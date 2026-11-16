@@ -103,4 +103,92 @@ testCase("deduplica el mismo ID de Drive y devuelve conteos coherentes",()=>{
 });
 assert.match(admin,/function collectReplacedImageHistoryIds_\(/);
 assert.match(admin,/extractDriveFileIds\(row\[8\]\)/);
+
+testCase("solo anyone/reader por enlace y no indexable se considera público por diseño",()=>{
+ const drive={Permissions:{list:id=>({permissions:id==="file-1"?[{type:"anyone",role:"reader",allowFileDiscovery:false}]:[]})}};
+ const start=admin.indexOf("function getDrivePermissionsForImageResource_"),end=admin.indexOf("\n}\n",start)+2;
+ const classStart=admin.indexOf("function classifyCortesImageAcl_"),classEnd=admin.indexOf("\n}\n",classStart)+2;
+ const classify=new Function("Drive",admin.slice(start,end)+"\n"+admin.slice(classStart,classEnd)+"\nreturn classifyCortesImageAcl_;")(drive);
+ const result=classify([{resourceId:"file-1",resourceType:"file",resourceName:"active.png"}],new Map());
+ assert.equal(result.accessClass,"public_link_viewer");assert.equal(result.accessPublic,true);assert.equal(result.publicByDesign,true);
+});
+testCase("bloquea acceso web indexable y permisos públicos de escritura",()=>{
+ const make=permissions=>new Function("Drive",
+  admin.slice(admin.indexOf("function getDrivePermissionsForImageResource_"),admin.indexOf("\n}\n",admin.indexOf("function getDrivePermissionsForImageResource_"))+2)+"\n"+
+  admin.slice(admin.indexOf("function classifyCortesImageAcl_"),admin.indexOf("\n}\n",admin.indexOf("function classifyCortesImageAcl_"))+2)+
+  "\nreturn classifyCortesImageAcl_;")({Permissions:{list:()=>({permissions})}});
+ const web=make([{type:"anyone",role:"reader",allowFileDiscovery:true}])([{resourceId:"f",resourceType:"file"}],new Map());
+ const writer=make([{type:"anyone",role:"writer",allowFileDiscovery:false}])([{resourceId:"f",resourceType:"file"}],new Map());
+ assert.equal(web.accessClass,"public_web_viewer");assert.equal(web.accessPublic,false);
+ assert.equal(writer.accessClass,"public_write");assert.equal(writer.accessPublic,false);
+});
+testCase("hereda la clasificación pública de una carpeta superior",()=>{
+ const drive={Permissions:{list:id=>({permissions:id==="folder-cortes"?[{type:"anyone",role:"reader",allowFileDiscovery:false}]:[]})}};
+ const start=admin.indexOf("function getDrivePermissionsForImageResource_"),end=admin.indexOf("\n}\n",start)+2;
+ const classStart=admin.indexOf("function classifyCortesImageAcl_"),classEnd=admin.indexOf("\n}\n",classStart)+2;
+ const classify=new Function("Drive",admin.slice(start,end)+"\n"+admin.slice(classStart,classEnd)+"\nreturn classifyCortesImageAcl_;")(drive);
+ const result=classify([{resourceId:"file-1",resourceType:"file"},{resourceId:"folder-cortes",resourceType:"folder",resourceName:"Cortes"}],new Map());
+ assert.equal(result.accessClass,"public_link_viewer");assert.equal(result.accessSources[0].resourceType,"folder");
+});
+testCase("falla de Drive API, rol desconocido o allowFileDiscovery ausente se clasifican como no verificables",()=>{
+ const source=admin.slice(admin.indexOf("function getDrivePermissionsForImageResource_"),admin.indexOf("\n}\n",admin.indexOf("function getDrivePermissionsForImageResource_"))+2)+"\n"+
+  admin.slice(admin.indexOf("function classifyCortesImageAcl_"),admin.indexOf("\n}\n",admin.indexOf("function classifyCortesImageAcl_"))+2)+"\nreturn classifyCortesImageAcl_;";
+ const unavailable=new Function("Drive",source)(undefined);
+ assert.equal(unavailable([{resourceId:"f"}],new Map()).accessClass,"unverifiable");
+ const unknown=new Function("Drive",source)({Permissions:{list:()=>({permissions:[{type:"anyone",role:"manager"}]})}});
+ assert.equal(unknown([{resourceId:"f"}],new Map()).accessClass,"unverifiable");
+ const missingDiscovery=new Function("Drive",source)({Permissions:{list:()=>({permissions:[{type:"anyone",role:"reader"}]})}});
+ assert.equal(missingDiscovery([{resourceId:"f"}],new Map()).accessClass,"unverifiable");
+});
+testCase("sigue la paginación de ACL antes de clasificar",()=>{
+ let calls=0;
+ const drive={Permissions:{list:(id,options)=>{calls++;return options.pageToken
+  ? {permissions:[{type:"anyone",role:"reader",allowFileDiscovery:false}]}
+  : {permissions:[],nextPageToken:"next"};}}};
+ const start=admin.indexOf("function getDrivePermissionsForImageResource_"),end=admin.indexOf("\n}\n",start)+2;
+ const classStart=admin.indexOf("function classifyCortesImageAcl_"),classEnd=admin.indexOf("\n}\n",classStart)+2;
+ const classify=new Function("Drive",admin.slice(start,end)+"\n"+admin.slice(classStart,classEnd)+"\nreturn classifyCortesImageAcl_;")(drive);
+ const result=classify([{resourceId:"f"}],new Map());
+ assert.equal(calls,2);assert.equal(result.accessClass,"public_link_viewer");
+});
+testCase("identifica referencias de Cortes fuera del inventario, en papelera y no disponibles",()=>{
+ const start=admin.indexOf("function findMissingCortesDriveReferences_"),end=admin.indexOf("\n}\n",start)+2;
+ const files={
+  outside:{isTrashed:()=>false,location:"outside"},
+  trashed:{isTrashed:()=>true,location:"inside"},
+  inside:{isTrashed:()=>false,location:"inside"},
+  ambiguous:{isTrashed:()=>false,location:"ambiguous"}
+ };
+ const DriveApp={getFileById:id=>{if(id==="missing")throw new Error("not found or access denied");return files[id];}};
+ const parent=file=>{if(file.location==="outside")throw new Error("ubicación fuera del árbol Cortes");if(file.location==="ambiguous")throw new Error("no se pudo confirmar una única carpeta principal");return {};};
+ const find=new Function("SHEET_NAMES","DriveApp","getSingleParentFolderInsideCortes",admin.slice(start,end)+"\nreturn findMissingCortesDriveReferences_;")(
+  {CORTES:"Cortes"},DriveApp,parent);
+ const refs=new Map([
+  ["outside",[{sheet:"Cortes",row:3,column:9}]],["trashed",[{sheet:"Cortes",row:4,column:9}]],
+  ["inside",[{sheet:"Cortes",row:5,column:9}]],["ambiguous",[{sheet:"Cortes",row:6,column:9}]],
+  ["missing",[{sheet:"Cortes",row:7,column:9}]],["other-sheet",[{sheet:"Tutorial",row:8,column:3}]]
+ ]);
+ const result=find(refs,[], "root");
+ assert.equal(result.verified,true);assert.equal(result.totalMissingReferences,5);
+ assert.deepEqual(result.missingReferences.map(item=>item.status).sort(),
+  ["ambiguous_location","missing_from_audit","missing_or_unverifiable","outside_cortes_tree","trashed"].sort());
+});
+testCase("solo el acceso por enlace lector permite asignar y marca exposición innecesaria",()=>{
+ const active=planner([target("same")],[{...file(1,"same.png"),accessClass:"public_link_viewer"}],new Map());
+ assert.equal(active.results[0].status,"matched");assert.equal(active.results[0].publicityCompliance,"compliant");
+ const web=planner([target("same")],[{...file(1,"same.png"),accessClass:"public_web_viewer",accessPublic:false}],new Map());
+ assert.equal(web.results[0].status,"access_restricted");assert.equal(web.results[0].publicityCompliance,"too_broad");
+ const unused=planner([], [{...file(1,"orphan.png"),accessClass:"public_link_viewer"}],new Map());
+ assert.equal(unused.results[0].publicityRequirement,"not_required");
+ assert.equal(unused.results[0].publicityCompliance,"public_not_required");
+});
+testCase("detecta ACL no permitida en imágenes ya referenciadas",()=>{
+ const refs=new Map([[id(1),[{sheet:"Cortes",row:5,column:9}]]]);
+ const p=planner([], [{...file(1,"active.png"),accessPublic:false,accessClass:"restricted",accessReason:"sin permiso público"}],refs);
+ assert.equal(p.results[0].status,"access_restricted");
+ assert.equal(p.results[0].referenceStatus,"referenced_elsewhere");
+ assert.equal(p.results[0].publicityCompliance,"missing_public_access");
+});
+assert.match(admin,/Drive\.Permissions\.list/);
+
 console.log("CortesImageReconciliation: "+passed+"/"+passed+" PASS");
