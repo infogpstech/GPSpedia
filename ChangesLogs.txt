@@ -882,3 +882,12 @@ HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
 2026-11-16 — ACTUALIZACIÓN DE TEST BETA-023 POR ETIQUETA COMPACTA
 - JS/Tests/RichTextGlobalPreference.mjs: valida el título «Formato de texto»; la preferencia global mantiene su comportamiento.
 ================================================================================
+
+
+================================================================================
+2026-11-16 — CIERRE LOCAL BETA-035
+- CI run 43794520964: 117 suites / 1,734 pruebas / 0 fallos; DeveloperPanelCopy 6/6.
+- GitHub Pages run 43794520532: SUCCESS.
+- BETA-035: implementación local completada; validación visual Beta pendiente.
+- Siguiente tarea del backlog: auditoría funcional end-to-end de Inbox (GP-INBOX).
+================================================================================

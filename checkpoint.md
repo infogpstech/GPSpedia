@@ -1333,3 +1333,12 @@ El usuario confirmó que el backlog pendiente también comprende la organizació
 
 
 - CI detectó la etiqueta anterior «Formato descriptivo global» en `RichTextGlobalPreference.mjs`; se actualizó a «Formato de texto». La preferencia y su alcance global permanecen sin cambios.
+
+
+## Continuidad — BETA-035 cerrada localmente (2026-11-16)
+
+- Commits de implementación y ajuste de contratos: `b671aee706d4c3046d79af17f71b18c71cd45fe8`, `5cdae19234a81c4b1fdb5306807524ac3d226ecc`, `89eaadd3c3d20416b36c7066569c32f0cb31a772`, `9a86bb58447fd76c114091c27bbe3b71829c77df`, `c13743a640e9df8461610be5251f3da5d2896acd`, `0024fea857cb1355e21bdf63a4fefe15ab8af350`, `4595508fe7cc670312afcb07f4289503896b3884`.
+- CI run `43794520964`: SUCCESS — 117 suites / 1,734 pruebas / 0 fallos. `DeveloperPanelCopy`: 6/6 PASS. GitHub Pages run `43794520532`: SUCCESS.
+- Se actualizaron contratos de regresión para títulos compactos en Developer, monitor Drive, formato global, leyenda de pestañas y accesibilidad del cierre; se conservaron nombres accesibles completos en acciones de imágenes.
+- Pendiente: inspección visual real en navegador Beta (móvil/escritorio, teclado, lector de pantalla, tema claro/oscuro). No se desplegaron servicios Apps Script.
+- **Siguiente tarea local del backlog:** GP-INBOX — auditoría funcional end-to-end del flujo UI → API → FEEDBACK → Coordinator → InboxConversations → Spreadsheet.
