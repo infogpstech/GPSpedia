@@ -4887,3 +4887,24 @@ body.dark-mode #login-modal #login-error.login-session-ended {
     .detail-modal-header-actions { gap:5px; }
     .detail-modal-header-actions .share-modal-btn { min-width:34px; min-height:38px; }
 }
+
+
+/* GP-UX-INBOX-02 — aprovechar la altura del modal y unificar la navegación. */
+#inbox-modal-content.inbox-modal-content { height:min(900px,calc(100dvh - 24px)); max-height:calc(100dvh - 24px) !important; min-height:0; }
+#inbox-modal-content .inbox-workspace { flex:1 1 auto; min-height:0; display:flex; gap:10px; overflow:hidden; }
+#inbox-modal-content .inbox-workspace-content { flex:1 1 auto; min-width:0; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
+#inbox-modal-content .inbox-conversations-view,#inbox-modal-content .inbox-requests-view { flex:1 1 auto; min-height:0; height:100%; }
+#inbox-modal-content .inbox-conversation-sidebar { height:100%; }
+#inbox-modal-content .inbox-search-form { overflow:hidden; max-height:0; opacity:0; margin:0; transform:translateY(-6px); transition:max-height .24s ease,opacity .2s ease,transform .24s ease,margin .24s ease; }
+#inbox-modal-content .inbox-search-form.is-open { max-height:100px; opacity:1; margin-bottom:2px; transform:translateY(0); }
+#inbox-modal-content .inbox-folder-nav { align-items:stretch; }
+#inbox-modal-content .inbox-folder-nav button { display:inline-flex; align-items:center; justify-content:center; gap:0; min-width:38px; min-height:38px; padding:7px 10px; overflow:hidden; white-space:nowrap; transition:min-width .24s ease,padding .24s ease,background-color .2s ease,color .2s ease; }
+#inbox-modal-content .inbox-folder-nav button i { flex:0 0 auto; font-size:.95rem; }
+#inbox-modal-content .inbox-folder-nav button span { display:inline-block; max-width:0; margin-left:0; overflow:hidden; opacity:0; transform:translateX(-5px); transition:max-width .26s ease,margin-left .22s ease,opacity .2s ease,transform .22s ease; }
+#inbox-modal-content .inbox-folder-nav button[aria-pressed="true"] { gap:7px; min-width:max-content; }
+#inbox-modal-content .inbox-folder-nav button[aria-pressed="true"] span { max-width:110px; margin-left:1px; opacity:1; transform:translateX(0); }
+#inbox-modal-content .inbox-pagination { flex:0 0 auto; display:flex; align-items:center; justify-content:center; gap:14px; min-height:38px; padding-top:5px; }
+#inbox-modal-content .inbox-pagination button { width:38px; min-width:38px; height:34px; padding:0; font-size:1.25rem; line-height:1; }
+#inbox-modal-content #inbox-page-label { min-width:42px; text-align:center; font-variant-numeric:tabular-nums; font-size:.84rem; color:var(--gp-color-text-secondary,var(--text-color,#555)); }
+@media (max-width:760px) { #inbox-modal-content .inbox-workspace,#inbox-modal-content .inbox-workspace-content { min-height:0; } #inbox-modal-content .inbox-folder-nav { display:flex; flex-wrap:wrap; } #inbox-modal-content .inbox-pagination { padding-bottom:max(2px,env(safe-area-inset-bottom)); } }
+@media (prefers-reduced-motion:reduce) { #inbox-modal-content .inbox-search-form,#inbox-modal-content .inbox-folder-nav button,#inbox-modal-content .inbox-folder-nav button span { transition:none !important; } }
