@@ -260,6 +260,19 @@ check("El compositor nuevo permite desplazamiento vertical y mantiene Salir/Envi
     assert.match(composeActionsLayout, /position:\s*sticky/);
     assert.match(ui, /formActions\.append\(makeCancelButton\(\), send\)/);
 });
+check("Salir y Enviar mensaje permanecen juntos, con dimensiones iguales y Enviar a la derecha", () => {
+    assert.match(ui, /formActions\.append\(makeCancelButton\(\), send\)/);
+    assert.match(css, /\.inbox-compose-actions\s*\{[^}]*flex-wrap:\s*nowrap/s);
+    assert.match(css, /\.inbox-compose-actions > \.inbox-cancel-compose,[\s\S]*?\.inbox-compose-actions > \.inbox-primary-button\s*\{[\s\S]*?width:104px;[\s\S]*?height:40px/s);
+});
+check("El botón de opciones queda antes de Negrita y su menú se ancla al borde izquierdo", () => {
+    assert.match(ui, /composerOptions\.dataset\.richToolbarPosition = "start"/);
+    assert.match(ui, /toolbar\.insertBefore\(composerOptions, toolbar\.firstChild\)/);
+    assert.match(rich, /child\.dataset\.richToolbarPosition === "start"/);
+    assert.match(rich, /nextToolbar\.insertBefore\(child, nextToolbar\.firstChild\)/);
+    assert.match(css, /\.inbox-composer-options-menu\s*\{[^}]*left:0; right:auto/s);
+    assert.match(css, /\.inbox-composer-options-menu\s*\{[^}]*max-width:calc\(100vw - 24px\)/s);
+});
 check("Plantilla y categoría se apilan dentro del desplegable de opciones de la barra", () => {
     assert.match(ui, /composerOptionsMenu\.append\(templateField, categoryField\)/);
     assert.match(ui, /composerOptions\.dataset\.richToolbarPersist = "true"/);

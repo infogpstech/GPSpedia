@@ -422,7 +422,10 @@ export function refreshRichTextToolbars(root = document) {
         });
         toolbar.classList.forEach(className => nextToolbar.classList.add(className));
         Array.from(toolbar.children).filter(child => child.dataset.richToolbarPersist === "true")
-            .forEach(child => nextToolbar.appendChild(child));
+            .forEach(child => {
+                if (child.dataset.richToolbarPosition === "start") nextToolbar.insertBefore(child, nextToolbar.firstChild);
+                else nextToolbar.appendChild(child);
+            });
         toolbar.replaceWith(nextToolbar);
         refreshed++;
     });

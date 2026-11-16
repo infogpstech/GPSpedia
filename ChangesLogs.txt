@@ -1328,3 +1328,13 @@ CIERRE — GP-UX-INBOX-DESKTOP-02 / GP-UX-CUT-MODAL-05 — 2026-11-16
 - GitHub Pages run 43946839204: SUCCESS (build y deploy).
 - Cierre local aprobado; inspección visual escritorio/Android/PWA queda diferida a Beta.
 ================================================================================
+
+
+================================================================================
+GP-UX-INBOX-DESKTOP-03 / GP-UX-CUT-MODAL-06 / GP-PWA-ZOOM-01 — 2026-11-16
+- JS/Frontend/ui.js y rich-text.js: opciones de categoría/plantilla al inicio del toolbar, antes de Negrita; la posición inicial se conserva al reconstruir la barra.
+- style.css: acciones Salir/Enviar en una fila, ambas 104 × 40 px; menú anclado al borde izquierdo y limitado al viewport; divisor azul con 4 px verticales; sombra de texto al modelo.
+- index.html, HTML/users.html y HTML/add_cortes.html: viewport restringido para el zoom de navegación. El lightbox conserva la habilitación temporal y restauración del zoom.
+- service-worker.js: App Shell v50.
+- JS/Tests/InboxUi.mjs, CutDetailModalLayout.mjs y AntiDebuggingPolicy.mjs: contratos de regresión actualizados.
+================================================================================

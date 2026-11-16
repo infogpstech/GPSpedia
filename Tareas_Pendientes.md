@@ -813,7 +813,7 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - Pendiente diferido a Beta: inspección visual en Android/PWA instalada, viewport estrecho y escritorio; verificar que el logo se muestra completo, que las acciones quedan en la parte superior derecha, que el modelo alinea su base con la imagen y que las cuatro columnas de usuarios usan todo el ancho sin scroll horizontal. No se afirma haber realizado esa inspección real.
 
 ### GP-UX-INBOX-DESKTOP-02 — Scroll, compositor y barra enriquecida
-**Estado: EN PROGRESO — cambios publicados en rama; CI pendiente.**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA (2026-11-16).**
 - En escritorio, el formulario de nuevo mensaje debe permitir desplazamiento vertical real y mantener Salir/Enviar accesibles.
 - Reducir la altura de la bandeja vacía para que no reserve un panel central innecesariamente grande.
 - Evitar que la lupa se recorte dentro del botón de búsqueda.
@@ -831,7 +831,7 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 ---
 
 ## GP-UX-CUT-MODAL-04 / GP-UX-TUTORIAL-MODAL-01 — 2026-11-16
-**Estado: EN PROGRESO — implementación publicada; CI pendiente.**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA (2026-11-16).**
 
 - Modal de corte: divisor azul independiente debajo del conjunto logo/modelo, extendido por el ancho útil del modal con margen lateral y separación superior.
 - Permitir que el drop-shadow del logotipo se renderice sin recorte y conservar una separación mínima entre logo y modelo.
@@ -869,3 +869,18 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - GitHub Actions Node.js 22 run 43946839054: **SUCCESS — 129 suites / 1,912 pruebas / 0 fallos**. Específicas: InboxUi 49/49; CutDetailModalLayout 15/15; ServiceWorkerCache 10/10; OfflineBrandAssets 4/4. Sintaxis de módulos modificados aprobada.
 - GitHub Pages run 43946839204: **SUCCESS** (build y deploy).
 - Pendiente Beta: inspección visual en escritorio, Android y PWA instalada; comprobar anchuras reducidas, desplegables, selector de categorías/plantillas por rol, modo claro/oscuro, búsqueda y divisor en modelos cortos/largos. No se desplegaron servicios Apps Script ni se modificaron datos externos.
+
+
+---
+
+## Revisión visual adicional — GP-UX-INBOX-DESKTOP-03 / GP-UX-CUT-MODAL-06 / GP-PWA-ZOOM-01 — 2026-11-16
+
+**Estado: IMPLEMENTACIÓN PUBLICADA; VALIDACIÓN AUTOMATIZADA PENDIENTE.**
+
+- Inbox: «Salir» y «Enviar mensaje» se muestran en una sola fila, con 104 × 40 px cada uno; «Enviar mensaje» queda a la derecha y conserva su color primario.
+- Editor móvil: el botón de opciones de categoría/plantilla queda antes de Negrita; los demás controles conservan su secuencia. El menú se ancla a la izquierda y limita su ancho al viewport para evitar recortes.
+- Modal de corte: divisor azul con separación vertical reducida a 4 px arriba y abajo; el nombre del modelo recibe sombra de texto compatible con la del logotipo.
+- Zoom: index.html, HTML/users.html y HTML/add_cortes.html restringen el zoom nativo de navegación. El módulo lightbox.js habilita temporalmente el zoom hasta escala 5 y restaura el contenido original del viewport al cerrar. Las imágenes que ya usan lightbox conservan su flujo.
+- App Shell actualizado a gpsepedia-cache-v50.
+- Pruebas anti-regresión añadidas/actualizadas: InboxUi, CutDetailModalLayout y AntiDebuggingPolicy. No se modifican servicios Apps Script, permisos, datos ni deployments.
+- Aceptación visual en Android, escritorio y PWA instalada queda diferida a Beta.

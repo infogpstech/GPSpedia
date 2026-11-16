@@ -4976,6 +4976,7 @@ async function openInboxNewConversationForm_() {
     const toolbar = createInboxRichTextToolbar(body.id);
     const composerOptions = inboxCreateNode_("div", "rich-toolbar-dropdown inbox-composer-options");
     composerOptions.dataset.richToolbarPersist = "true";
+    composerOptions.dataset.richToolbarPosition = "start";
     const composerOptionsButton = inboxCreateNode_("button", "rich-toolbar-icon-button inbox-composer-options-toggle");
     composerOptionsButton.type = "button"; composerOptionsButton.title = "Categoría y plantilla";
     composerOptionsButton.setAttribute("aria-label", "Categoría y plantilla");
@@ -5001,7 +5002,7 @@ async function openInboxNewConversationForm_() {
     templateField.classList.add("inbox-composer-option"); categoryField.classList.add("inbox-composer-option");
     composerOptionsMenu.append(templateField, categoryField);
     composerOptions.append(composerOptionsButton, composerOptionsMenu);
-    toolbar.appendChild(composerOptions);
+    toolbar.insertBefore(composerOptions, toolbar.firstChild);
     const editorShell = inboxCreateNode_("div", "inbox-editor-shell");
     editorShell.append(toolbar, body);
     form.addEventListener("click", event => { if (event.target.closest(".inbox-rich-text-toolbar")) persist(); });

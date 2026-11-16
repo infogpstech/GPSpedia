@@ -19,7 +19,7 @@ function testCase(name, fn) { fn(); passed++; console.log("PASS " + name); }
 
 testCase("la línea azul llega al extremo del modal con márgenes simétricos y menos espacio vertical", () => {
     assert.ok(css.includes("width:calc(100% + 18px)"));
-    assert.ok(css.includes("margin:7.5px 0 7.5px 12px"));
+    assert.ok(css.includes("margin:4px 0 4px 12px"));
     assert.ok(css.includes(".detail-modal-divider { width:calc(100% + 22px); }"));
 });
 
@@ -163,6 +163,10 @@ testCase("el divisor azul ocupa el ancho del encabezado y la sombra del logo no 
     assert.match(css, /\.detail-modal-title \.brand-logo-modal \{[\s\S]*?object-fit: contain/);
 });
 
+testCase("el nombre del modelo recibe sombra sin modificar la imagen ni la jerarquía del encabezado", () => {
+    assert.match(css, /\.detail-modal-title-text\s*\{[\s\S]*?text-shadow:\s*0 2px 4px rgba\(0,0,0,\.22\)/);
+    assert.match(css, /\.detail-modal-title \.brand-logo-modal\s*\{[\s\S]*?object-fit: contain/);
+});
 testCase("modelo y acciones adoptan el tamaño reforzado del encabezado Relay", () => {
     assert.match(css, /\.detail-modal-title-text \{[\s\S]*?font-size: 2rem/);
     assert.match(css, /\.relay-detail-toolbar \.relay-detail-title \{[\s\S]*?font-size: 2rem/);

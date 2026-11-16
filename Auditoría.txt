@@ -1620,3 +1620,10 @@ ADENDA DE CIERRE AUD-2026-11-16-10 — GP-UX-INBOX-DESKTOP-02 / GP-UX-CUT-MODAL-
 - GitHub Pages run 43946839204 SUCCESS (build y deploy).
 - Los dos fallos intermedios fueron defectos de contratos de prueba y se corrigieron; la última ejecución aprobó la suite completa. No se alteró el sanitizador ni se redujeron controles.
 - La inspección visual real en escritorio, Android y PWA permanece diferida a Beta. No se desplegaron Apps Script ni se alteraron datos externos.
+
+
+ADENDA AUD-2026-11-16-11 — GP-UX-INBOX-DESKTOP-03 / GP-UX-CUT-MODAL-06 / GP-PWA-ZOOM-01
+- Evidencia en la rama de trabajo: el compositor permitía wrap de acciones y no definía dimensiones iguales para Salir/Enviar; el menú de categoría/plantilla se anclaba a la derecha mientras su botón se insertaba al final de la barra; el divisor mantenía 7.5 px verticales y el título del modelo carecía de sombra de texto.
+- La política de viewport de las tres páginas todavía conservaba zoom nativo sin restricción, aunque lightbox.js ya guardaba y restauraba el viewport y habilitaba zoom al abrir el visor.
+- Criterio correctivo: fila no envolvente con botones de tamaño idéntico; menú anclado a la izquierda y acotado al viewport; divisor a 4 px; sombra de texto; restricción del zoom solo en navegación y conservación de la excepción del lightbox.
+- No se modifican handlers, permisos, autenticación, servicios Apps Script ni datos.
