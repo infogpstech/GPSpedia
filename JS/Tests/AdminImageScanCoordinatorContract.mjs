@@ -25,6 +25,9 @@ assert.equal(mutation("auditDriveImagesInCortes"), true,
     "El escáner debe mantener auditoría administrativa y lease específica.");
 assert.equal(read("auditDriveImagesInCortes"), false);
 assert.equal(mutation("migrateReplacedImagesSchema"), true);
+assert.equal(mutation("backupDatabase"), true, "El respaldo debe pasar por la lease de mutación ADMIN.");
+assert.equal(policy("ADMIN", "backupDatabase").maintenance, true,
+    "La creación de respaldo debe reservar mantenimiento exclusivo.");
 
 const router = admin.slice(admin.indexOf("function doPost(e)"), admin.indexOf("const ADMIN_AUDIT_PROPERTY_PREFIX_"));
 assert.ok(router.includes("const operation = isSharedReadAction_(action) ? action : \"sessionActivity\""),
@@ -76,6 +79,8 @@ for (const action of mutationNames) {
 }
 assert.equal(policy("ADMIN", "markReplacedImageInUse").writeResources.includes("IMAGE_INVENTORY"), true);
 assert.equal(policy("ADMIN", "applyCortesImageReconciliation").writeResources.includes("CORTES"), true);
+assert.equal(policy("ADMIN", "applyCortesImageReconciliation").readResources.includes("DRIVE"), true,
+    "La aplicación debe reservar lectura de ACL y archivos Drive.");
 assert.equal(policy("ADMIN", "freezeIdentifierFormulas").maintenance, true);
 
 // Toda lectura ADMIN que solicita lease dedicada debe tener una política.
@@ -177,7 +182,7 @@ for (const action of ["getReplacedImages", "getDriveStorage", "getCortesImageFol
     assert.equal(routed.calls[0].operation, action,
         action + " debe adquirir su lease específica y no ADMIN/sessionActivity.");
 }
-for (const action of ["auditDriveImagesInCortes", "migrateReplacedImagesSchema"]) {
+for (const action of ["auditDriveImagesInCortes", "migrateReplacedImagesSchema", "backupDatabase"]) {
     const routed = routerHarness.send(action);
     assert.equal(routed.calls.length, 1);
     assert.equal(routed.calls[0].operation, action);
@@ -190,6 +195,9 @@ const ping = routerHarness.send("ping");
 assert.equal(ping.calls.length, 0, "ping no debe reservar una lease de escritura.");
 
 
+assert.match(admin,/function verifyImageReconciliationBackup_\(/);
+assert.match(admin,/function classifyCortesImageAcl_\(/);
+assert.match(admin,/function findMissingCortesDriveReferences_\(/);
 const adminCaseNames = [...admin.matchAll(/case\s+['"]([^'"]+)['"]\s*:/g)].map(match => match[1]);
 for (const action of adminCaseNames) {
     assert.ok(action === "ping" || mutation(action) || read(action),
