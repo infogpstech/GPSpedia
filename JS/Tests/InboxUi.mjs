@@ -158,6 +158,22 @@ check("El diseño responde a móvil, teclado y movimiento reducido", () => {
     assert.match(css, /:focus-visible/);
     assert.match(css, /prefers-reduced-motion/);
 });
+check("Reportes y solicitudes usan toda la altura disponible de la lista en PWA móvil", () => {
+    assert.match(css, /\.inbox-requests-view #inbox-list\s*\{[^}]*flex:\s*1 1 0 !important/s);
+    assert.match(css, /\.inbox-requests-view #inbox-list\s*\{[^}]*overflow-y:\s*auto/s);
+    assert.match(css, /\.inbox-requests-view #inbox-detail\s*\{[^}]*display:\s*none/s);
+    assert.match(css, /\.is-request-detail-open \.inbox-requests-view #inbox-list\s*\{\s*display:\s*none/s);
+});
+check("Crear y buscar comparten la barra de iconos de las carpetas", () => {
+    const folderStart = html.indexOf('id="inbox-folder-nav"');
+    const folderEnd = html.indexOf("</nav>", folderStart);
+    const folderMarkup = html.slice(folderStart, folderEnd);
+    assert.ok(folderStart >= 0 && folderEnd > folderStart);
+    assert.match(folderMarkup, /id="inbox-new-message"/);
+    assert.match(folderMarkup, /id="inbox-search-toggle"/);
+    assert.doesNotMatch(html.slice(html.indexOf('class="inbox-header-actions"'), folderStart), /inbox-new-message|inbox-search-toggle/);
+    assert.match(ui, /if \(newMessageButton\) newMessageButton\.hidden = nextView !== "conversations"/);
+});
 check("Los wrappers de API conservan el contrato de Inbox", () => {
     for (const name of ["getInboxRecipients","getInboxConversations","getInboxMessages","createInboxConversation","sendInboxMessage","markInboxRead","archiveInboxConversation","closeInboxConversation"]) {
         assert.match(api, new RegExp("export async function " + name + "\\("));
