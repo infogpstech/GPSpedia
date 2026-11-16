@@ -1199,3 +1199,5 @@ ADENDA — GP-UX-INBOX-CACHE-SEARCH-01: expectativas heredadas de Inbox ajustada
 - JS/Tests/InboxRoleContract.js: contrato de visibilidad por propietario, estado y razón.
 - Se mantienen las acciones de aprobación/rechazo exclusivas de Desarrollador y la vista global de aprobaciones restringida.
 ================================================================================
+
+ADENDA — GP-UX-VIDEO-OWN-STATUS-01: contrato de InboxUi ajustado para verificar que técnicos solo renderizan problem_report y video_approval de su endpoint propio.

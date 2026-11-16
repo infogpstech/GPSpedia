@@ -40,7 +40,7 @@ check("La matriz de secciones Inbox coincide con los permisos de cada rol", () =
 });
 check("Técnicos consultan reportes propios y no reciben acciones administrativas", () => {
     assert.match(ui, /routeAction\('getMyProblemReports'/);
-    assert.match(ui, /if \(ownReportsOnly\) return true/);
+    assert.ok(ui.includes("if (ownReportsOnly) return item.type === 'problem_report' || item.type === 'video_approval'"));
     assert.match(ui, /inboxCanManageRequests_\(userRole\)/);
 });
 check("Las solicitudes históricas siguen separadas y conservan sus contenedores", () => {

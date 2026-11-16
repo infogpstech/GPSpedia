@@ -1941,3 +1941,5 @@ Backlog y registro de cambios sincronizados con este estado. La rama base perman
 - Los reportes de problemas propios mantienen su filtro y cursor; los vídeos usan un cursor interno `video:<id>` para no romper la paginación combinada.
 - El listado general de solicitudes de vídeo continúa reservado a Desarrollador; las acciones approve/reject mantienen RBAC exclusivo.
 - Validación CI pendiente sobre el commit; no se modificaron deployments ni datos externos.
+
+- CI run `43905873559`: el contrato de Inbox aún esperaba que técnicos recibieran cualquier elemento del endpoint propio. Se actualiza para exigir explícitamente solo reportes propios y vídeos propios; la prueba RBAC de propiedad/razón se ejecutó sin reportar fallos.
