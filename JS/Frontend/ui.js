@@ -9829,7 +9829,9 @@ export function createAccordionSection(container, title, sec, isOpen = false, da
                 panel.appendChild(fieldLabel);
                 panel.appendChild(createFormRichTextToolbar_(cableTargetId));
                 panel.appendChild(textarea);
-                mountRichTextEditors(panel); = document.createElement('div');
+                mountRichTextEditors(panel);
+
+                const imgContainer = document.createElement('div');
                 imgContainer.className = 'image-container-with-feedback';
                 imgContainer.style.marginTop = "5px";
                 imgContainer.style.marginBottom = "10px";
