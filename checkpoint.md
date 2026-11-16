@@ -1930,3 +1930,14 @@ Backlog y registro de cambios sincronizados con este estado. La rama base perman
 - CI run `43904491110`: las nuevas pruebas de caché/búsqueda pasaron, pero dos contratos anteriores aún esperaban el filtro fijo por carpeta y el render inicial sin caché. Se actualizan para reflejar la búsqueda global y el fallback de carga cuando no hay caché.
 
 - CI run `43904988914`: la suite detectó dos aserciones heredadas que aún describían el loader anterior. Se ajustan a la solicitud global de carpeta durante búsqueda y al bloque condicional de carga solo cuando no hay caché.
+
+
+---
+
+## Continuidad — estado de vídeos propios en Solicitudes (2026-11-16)
+
+- Técnicos y técnicos exteriores reciben, dentro de «Solicitudes», únicamente sus propios registros `video_approval`, identificados por `createdByUserId` del registro y comparado con el actor autenticado.
+- El estado aprobado/rechazado/pendiente se conserva; si está rechazado se muestra explícitamente `rejectionReason` como «Motivo del rechazo». Se evita mostrar el texto de rechazo duplicado como una respuesta genérica.
+- Los reportes de problemas propios mantienen su filtro y cursor; los vídeos usan un cursor interno `video:<id>` para no romper la paginación combinada.
+- El listado general de solicitudes de vídeo continúa reservado a Desarrollador; las acciones approve/reject mantienen RBAC exclusivo.
+- Validación CI pendiente sobre el commit; no se modificaron deployments ni datos externos.

@@ -9136,8 +9136,8 @@ export function renderInboxList(items) {
     const ownReportsOnly = ['tecnico', 'tecnico_exterior'].includes(normalizeUiRole_(context.role));
     const visibleItems = (Array.isArray(items) ? items : []).filter(item => {
         if (section === 'reports') {
+            if (ownReportsOnly) return item.type === 'problem_report' || item.type === 'video_approval';
             if (item.type !== 'problem_report' && !item.suggestionData) return false;
-            if (ownReportsOnly) return true; // getMyProblemReports ya filtra por la identidad autenticada.
             return true;
         }
         if (section === 'contributions') return context.role === 'desarrollador' && item.type === 'video_approval';
@@ -9389,6 +9389,12 @@ export function renderInboxDetail(item) {
         detailContainer.appendChild(panel);
     }
 
+    if (isVideoItem && item.approvalStatus === 'rejected' && item.rejectionReason) {
+        const rejectionPanel = makePanel('0 0 12px 0');
+        appendLabeledValue(rejectionPanel, 'Motivo del rechazo', item.rejectionReason, 'margin:0;');
+        detailContainer.appendChild(rejectionPanel);
+    }
+
     const messagePanel = makeElement('div', 'inbox-message-content');
     messagePanel.style.cssText = 'background:var(--card-bg, #fdfdfd); padding:10px; border-radius:6px; border:1px solid var(--border-color, #eee); margin-bottom:12px;';
     const messageBody = makeElement('div');
@@ -9396,7 +9402,7 @@ export function renderInboxDetail(item) {
     messagePanel.appendChild(messageBody);
     detailContainer.appendChild(messagePanel);
 
-    if (item.reply) {
+    if (item.reply && !isVideoItem) {
         const replyPanel = makeElement('div', 'inbox-reply-content');
         replyPanel.style.cssText = 'background:var(--card-bg, #fdfdfd); padding:10px; border-radius:6px; border:1px solid var(--border-color, #eee); margin-bottom:12px;';
         replyPanel.append(makeElement('strong', '', 'Respuesta de ' + String(item.responder || 'Admin') + ':'));

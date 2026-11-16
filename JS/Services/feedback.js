@@ -2093,7 +2093,7 @@ function mapInboxFeedbackRow_(row, reportMetadataColumn) {
   let metadata={};try{metadata=normalizeInboxVideoMetadata_(videoMeta.metadata,contentType);}catch(error){}
   const title=normalizeInboxStoredText_(videoMeta.title,INBOX_VIDEO_TITLE_MAX_LENGTH,"Vídeo sin título"),description=normalizeInboxStoredText_(videoMeta.description,INBOX_VIDEO_DESCRIPTION_MAX_LENGTH,"");
   const status=["pending","approved","rejected"].includes(String(videoMeta.status||""))?String(videoMeta.status):"pending";
-  return{type:"video_approval",id:normalizeInboxStoredText_(row[COLS_FEEDBACKS.ID-1],120,""),subject:"[Aprobación de Vídeo] "+title,content:description||"Sin descripción",videoUrl,videoId:videoUrl?videoId:"",contentType,metadata,user:rowUserName,vehicleId:rowVehicleId,approvalStatus:status,reply:normalizeInboxStoredText_(row[COLS_FEEDBACKS.Respuesta-1],5000,""),isResolved:row[COLS_FEEDBACKS["Se resolvio"]-1]===true,responder:normalizeInboxStoredText_(row[COLS_FEEDBACKS.Responde-1],INBOX_VIDEO_USER_MAX_LENGTH,"Admin")};
+  return{type:"video_approval",id:normalizeInboxStoredText_(row[COLS_FEEDBACKS.ID-1],120,""),subject:"[Aprobación de Vídeo] "+title,content:description||"Sin descripción",videoUrl,videoId:videoUrl?videoId:"",contentType,metadata,user:rowUserName,vehicleId:rowVehicleId,approvalStatus:status,rejectionReason:normalizeInboxStoredText_(videoMeta.rejectReason,500,""),reply:normalizeInboxStoredText_(row[COLS_FEEDBACKS.Respuesta-1],5000,""),isResolved:row[COLS_FEEDBACKS["Se resolvio"]-1]===true,responder:normalizeInboxStoredText_(row[COLS_FEEDBACKS.Responde-1],INBOX_VIDEO_USER_MAX_LENGTH,"Admin")};
  }
  const suggestionData=parseCutSuggestionRecord(rawContent,rowVehicleId,rowUserName),isResolved=row[COLS_FEEDBACKS["Se resolvio"]-1]===true;
  if(suggestionData)suggestionData.status=isResolved?"resuelta":"pendiente_revision";
@@ -2147,37 +2147,51 @@ function handleGetFeedbackItems(payload) {
 
 function handleGetMyProblemReports(payload) {
     const actor = getFeedbackActor_(payload,null);
+    const isTechnician = ["tecnico","tecnico_exterior"].includes(normalizeFeedbackRole(actor.role));
     const source = payload && typeof payload === "object" ? payload : {};
     const cursor = source.cursor === undefined || source.cursor === null ? "" : String(source.cursor).trim();
-    if (cursor.length > 120 || /[\r\n]/.test(cursor)) throw new Error("El cursor de tickets no es válido.");
+    if (cursor.length > 120 || cursor.includes("\r") || cursor.includes("\n")) throw new Error("El cursor de tickets no es válido.");
     const requestedSize = Number(source.pageSize);
     const pageSize = Number.isFinite(requestedSize) ? Math.max(1,Math.min(100,Math.floor(requestedSize))) : 40;
     const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
     if (!sheet || sheet.getLastRow() < 2) return {status:"success",data:[],nextCursor:null,hasMore:false,pageSize,total:0};
     const metadataColumn = getReportMetadataColumn(sheet);
-    if (!metadataColumn) return {status:"success",data:[],nextCursor:null,hasMore:false,pageSize,total:0};
-    const width = Math.max(metadataColumn,9);
+    const width = Math.max(metadataColumn || 0,9);
     const rows = sheet.getRange(2,1,sheet.getLastRow()-1,width).getValues().reverse();
     const ownedReports = [];
     rows.forEach(row => {
+        const rawContent = String(row[COLS_FEEDBACKS.Problema-1] || "");
+        let videoData = null;
+        try { videoData = JSON.parse(rawContent); } catch (error) {}
+        if (videoData && videoData.subType === "video_approval") {
+            if (isTechnician && String(videoData.createdByUserId || "").trim() === actor.userId) {
+                const item = mapInboxFeedbackRow_(row,metadataColumn);
+                item._cursor = "video:" + item.id;
+                ownedReports.push(item);
+            }
+            return;
+        }
+        if (!metadataColumn) return;
         const vehicleId = normalizeInboxStoredText_(row[COLS_FEEDBACKS.ID_vehiculo-1],120,"");
         const rawMetadata = String(row[metadataColumn-1] || "");
         let storedMetadata = null;
         try { storedMetadata = JSON.parse(rawMetadata); } catch (error) {}
         if (!storedMetadata || String(storedMetadata.userId || "").trim() !== actor.userId) return;
         if (!parseReportMetadata(rawMetadata,vehicleId)) return;
-        ownedReports.push(mapInboxFeedbackRow_(row,metadataColumn));
+        const item = mapInboxFeedbackRow_(row,metadataColumn);
+        item._cursor = item.reportMetadata && item.reportMetadata.reportId ? item.reportMetadata.reportId : "";
+        ownedReports.push(item);
     });
+    const itemCursor = item => String(item && item._cursor || item && item.reportMetadata && item.reportMetadata.reportId || "");
     let startIndex = 0;
     if (cursor) {
-        const anchorIndex = ownedReports.findIndex(item => item.reportMetadata && item.reportMetadata.reportId === cursor);
+        const anchorIndex = ownedReports.findIndex(item => itemCursor(item) === cursor);
         if (anchorIndex < 0) throw new Error("El cursor de tickets ya no es válido para esta cuenta.");
         startIndex = anchorIndex + 1;
     }
     const data = ownedReports.slice(startIndex,startIndex+pageSize);
     const hasMore = startIndex + data.length < ownedReports.length;
-    const nextCursor = hasMore && data.length && data[data.length-1].reportMetadata
-        ? data[data.length-1].reportMetadata.reportId : null;
+    const nextCursor = hasMore && data.length ? itemCursor(data[data.length-1]) || null : null;
     return {status:"success",data,nextCursor,hasMore,pageSize,total:ownedReports.length};
 }
 

@@ -93,6 +93,20 @@ run('getCatalogChanges es una lectura pública del journal y no exige actor/leas
   assert(feedback.includes('approveVideo: ["Desarrollador"]'));
   assert(feedback.includes('rejectVideo: ["Desarrollador"]'));
  });
+  run('Técnicos y técnicos exteriores ven únicamente sus vídeos y el motivo de rechazo',()=>{
+   const start=feedback.indexOf('function handleGetMyProblemReports(payload)');
+   const end=feedback.indexOf('\nfunction ensureInboxAuditSheet_()',start);
+   assert(start>=0&&end>start,'No se encontró el lector de solicitudes propias.');
+   const body=feedback.slice(start,end);
+   assert(body.includes('["tecnico","tecnico_exterior"].includes(normalizeFeedbackRole(actor.role))'));
+   assert(body.includes('videoData.subType === "video_approval"'));
+   assert(body.includes('String(videoData.createdByUserId || "").trim() === actor.userId'));
+   assert(body.includes('item._cursor = "video:" + item.id'));
+   assert(feedback.includes('rejectionReason:normalizeInboxStoredText_(videoMeta.rejectReason,500,"")'));
+   assert(ui.includes("item.type === 'problem_report' || item.type === 'video_approval'"));
+   assert(ui.includes("appendLabeledValue(rejectionPanel, 'Motivo del rechazo', item.rejectionReason"));
+   assert(ui.includes("if (item.reply && !isVideoItem)"));
+  });
  run('InboxConversations mantiene una sola entrada Jefe en su lista de roles',()=>{assert(inbox.includes('new Set(["desarrollador","jefe","supervisor","tecnico","tecnico_exterior"])'));assert(!/INBOX_ACTIVE_ROLES_[^\\n]*gefe/.test(inbox));});
  run('Gestión de usuarios ofrece y muestra únicamente Jefe',()=>{assert(usersHtml.includes("availableRoles = ['Desarrollador', 'Jefe', 'Supervisor', 'Tecnico', 'Tecnico_exterior']"));assert(usersHtml.includes("return normalized === 'jefe' ? 'Jefe' : role"));assert(!usersHtml.toLowerCase().includes('gefe'));});
  run('Perfil frontend normaliza únicamente el rol canónico Jefe',()=>{assert(authClient.includes("if(role==='jefe')updated.Privilegios='Jefe'"));assert(!authClient.toLowerCase().includes('gefe'));});

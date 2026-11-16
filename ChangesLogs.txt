@@ -1190,3 +1190,12 @@ ADENDA — GP-UX-INBOX-CACHE-SEARCH-01: contratos InboxUi sincronizados con setI
 ADENDA — GP-UX-INBOX-CACHE-SEARCH-01: pruebas heredadas de Inbox actualizadas para aceptar carpeta global durante búsqueda y carga inicial condicionada a ausencia de caché.
 
 ADENDA — GP-UX-INBOX-CACHE-SEARCH-01: expectativas heredadas de Inbox ajustadas al filtro global y al bloque else-if que conserva caché visible.
+
+
+================================================================================
+2026-11-16 — GP-UX-VIDEO-OWN-STATUS-01
+- JS/Services/feedback.js: getMyProblemReports incorpora únicamente los registros de vídeo cuyo createdByUserId coincide con el actor técnico autenticado; incluye estado y motivo de rechazo, preserva cursor combinado.
+- JS/Frontend/ui.js: la sección Solicitudes muestra vídeos propios a técnicos/técnicos_exteriores y expone «Motivo del rechazo» cuando corresponde.
+- JS/Tests/InboxRoleContract.js: contrato de visibilidad por propietario, estado y razón.
+- Se mantienen las acciones de aprobación/rechazo exclusivas de Desarrollador y la vista global de aprobaciones restringida.
+================================================================================
