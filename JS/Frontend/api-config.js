@@ -728,7 +728,7 @@ export async function getCatalogChanges(cursor = 0, limit = 50, sessionPayload =
                 return current;
             }, {
                 signal: options && options.signal ? options.signal : undefined,
-                timeoutMs: 2000,
+                timeoutMs: 5000,
                 retries: 2,
                 baseDelayMs: 200
             });

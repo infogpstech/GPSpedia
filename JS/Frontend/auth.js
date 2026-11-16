@@ -399,12 +399,25 @@ async function validateSessionCoordinated(user, force = false){
 function loadUserLocalActivity(user) {
     const ownerId = String(user && (user.ID || user.id) || '').trim();
     if (!ownerId || ownerId === '0') { setState({ searchHistory: [], viewedItems: [] }); return; }
-    Promise.all([offline.getSearchHistory(ownerId), offline.getViewedItems(ownerId)]).then(([history, viewed]) => {
+    const isOwnerCurrent = () => {
         const activeUser = getState().currentUser;
-        const activeOwnerId = String(activeUser && (activeUser.ID || activeUser.id) || '').trim();
-        if (!isCurrentSession(user) || activeOwnerId !== ownerId) return;
-        setState({ searchHistory: history || [], viewedItems: viewed || [] });
-    }).catch(error => console.warn("Error asíncrono cargando historial/vistos:", error));
+        return isCurrentSession(user) && String(activeUser && (activeUser.ID || activeUser.id) || '').trim() === ownerId;
+    };
+    offline.getSearchHistory(ownerId).then(history => {
+        if (isOwnerCurrent()) setState({ searchHistory: history || [] });
+    }).catch(error => console.warn("No se pudo cargar el historial de búsqueda local:", error));
+    offline.getViewedItems(ownerId).then(viewed => {
+        if (!isOwnerCurrent()) return;
+        const merged = new Map();
+        (Array.isArray(viewed) ? viewed : []).forEach(entry => merged.set(String(entry.id), entry));
+        (Array.isArray(getState().viewedItems) ? getState().viewedItems : []).forEach(entry => {
+            const key = String(entry && entry.id || "");
+            if (!key) return;
+            const stored = merged.get(key);
+            if (!stored || Number(entry.timestamp) >= Number(stored.timestamp)) merged.set(key, entry);
+        });
+        setState({ viewedItems: Array.from(merged.values()).sort((x,y) => Number(y.timestamp)-Number(x.timestamp)).slice(0,20) });
+    }).catch(error => console.warn("No se pudo cargar Vistos Recientemente desde IndexedDB:", error));
 }
 
 function handleSessionStorageChange(event){

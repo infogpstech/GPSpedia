@@ -23,7 +23,7 @@ import { createInboxPageCache, mergeInboxMessagePages } from './inboxPageCache.j
 import { loadPysData, getCachedPysData, getPysDataFreshness, invalidatePysDataCache } from './pys-data.js';
 import { captureModalViewState, restoreModalViewState, shouldRecordModalTransition, pushModalNavigationContext, popModalNavigationContext } from './modalNavigation.js';
 import { createRichTextToolbar, sanitizeHtmlContent, refreshRichTextToolbars } from './rich-text.js';
-import { renderActivityLogs } from './activityDashboard.js';
+import { renderActivityLogs, renderActivityContributions } from './activityDashboard.js';
 import { getDriveStorageCriticalState } from './driveStorageAlerts.js';
 import { getOrCreateTermsDeviceId, getDeviceTermsAcceptance, saveDeviceTermsAcceptance } from './termsDeviceAcceptance.js';
 import { parseDeveloperConsoleConfirmation } from './developerConsoleConfirmation.js';
@@ -2186,14 +2186,12 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
     if (!dropdownOptions && !dropdownOptionsPromise) precargarDropdownOptions().catch(() => {});
     const ownerId = String(currentUser && (currentUser.ID || currentUser.id) || '').trim();
     if (ownerId && ownerId !== '0') {
-        offline.saveViewedItem(activeItem, ownerId).then(() => {
-            const activeUser = getState().currentUser;
-            if (String(activeUser && (activeUser.ID || activeUser.id) || '').trim() !== ownerId) return;
-            offline.getViewedItems(ownerId).then(viewed => {
-                const latestUser = getState().currentUser;
-                if (String(latestUser && (latestUser.ID || latestUser.id) || '').trim() === ownerId) setState({ viewedItems: viewed });
-            });
-        });
+        const currentViewed = Array.isArray(getState().viewedItems) ? getState().viewedItems : [];
+        const nextViewed = [{ id: String(activeItem.id), timestamp: Date.now(), data: activeItem },
+            ...currentViewed.filter(entry => String(entry && entry.id) !== String(activeItem.id))].slice(0, 20);
+        setState({ viewedItems: nextViewed });
+        offline.saveViewedItem(activeItem, ownerId).catch(error =>
+            console.warn("No se pudo persistir el historial de vistos; se conserva la vista en memoria:", error));
     }
 
     const { relay: datosRelay } = catalogData;
@@ -4231,21 +4229,37 @@ function setupModal(modalId, openFn) {
 const openDashboardModal_ = setupModal('dashboard-modal', async () => {
     const requestContext = getUiSessionContext_();
     if (!requestContext) return;
-
     const modal = document.getElementById('dashboard-modal');
     modal.style.display = 'flex';
     const logContainer = document.getElementById('activity-logs');
-    logContainer.innerHTML = '<tr><td colspan="4">Cargando actividad...</td></tr>';
-
+    const contributionContainer = document.getElementById('activity-contributions');
+    if (logContainer && !logContainer.children.length) logContainer.innerHTML = '<tr><td colspan="4">Cargando actividad...</td></tr>';
+    if (contributionContainer && !contributionContainer.children.length) contributionContainer.innerHTML = '<tr><td colspan="3">Cargando aportes...</td></tr>';
+    const tabs = modal.querySelectorAll('[data-activity-tab]');
+    tabs.forEach(button => {
+        if (button.dataset.listenerSet === 'true') return;
+        button.dataset.listenerSet = 'true';
+        button.addEventListener('click', () => {
+            const selected = button.dataset.activityTab;
+            tabs.forEach(tab => {
+                const active = tab === button;
+                tab.classList.toggle('active', active);
+                tab.setAttribute('aria-selected', active ? 'true' : 'false');
+            });
+            modal.querySelectorAll('[data-activity-panel]').forEach(panel => { panel.hidden = panel.dataset.activityPanel !== selected; });
+        });
+    });
     try {
         const result = await getActivityLogs(getSessionPayload_());
         if (!isCurrentUiSessionContext_(requestContext)) return;
         if (result.status === 'success') {
-            renderActivityLogs(logContainer, result.data);
+            if (logContainer) renderActivityLogs(logContainer, result.data);
+            if (contributionContainer) renderActivityContributions(contributionContainer, result.contributions || []);
         }
     } catch (error) {
         if (!isCurrentUiSessionContext_(requestContext)) return;
-        logContainer.innerHTML = '<tr><td colspan="4" style="color:red;">Error al cargar actividad</td></tr>';
+        if (logContainer) logContainer.innerHTML = '<tr><td colspan="4" style="color:red;">Error al cargar actividad</td></tr>';
+        if (contributionContainer) contributionContainer.innerHTML = '<tr><td colspan="3" style="color:red;">Error al cargar aportes</td></tr>';
     }
 });
 

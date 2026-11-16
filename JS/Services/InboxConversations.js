@@ -17,28 +17,40 @@ function withInboxConversationLock_(callback) {
     lock.waitLock(10000);
     try { return callback(); } finally { lock.releaseLock(); }
 }
-function inboxConversationSheet_(name, headers, required = true) {
-    const sheet = getSpreadsheet().getSheetByName(name);
-    if (!sheet) {
-        if (!required) return null;
-        const labels = {
-            [INBOX_CONVERSATIONS_SHEET_]: "conversaciones",
-            [INBOX_MESSAGES_SHEET_]: "mensajes",
-            [INBOX_CONVERSATION_STATE_SHEET_]: "estado",
-            [INBOX_CONVERSATION_AUDIT_SHEET_]: "auditoría",
-            [INBOX_CONVERSATION_FLAGS_SHEET_]: "preferencias"
-        };
-        throw new Error("El esquema Inbox está incompleto: falta la hoja de " +
-            (labels[name] || name) + " (" + name + "). No se creará automáticamente.");
-    }
+function findOrCreateInboxSheet_(name) {
+    const spreadsheet = getSpreadsheet();
+    return spreadsheet.getSheetByName(name) || spreadsheet.insertSheet(name);
+}
+function inboxConversationSheet_(name, headers) {
+    const sheet = findOrCreateInboxSheet_(name);
     if (sheet.getLastRow() === 0) {
-        throw new Error("La hoja " + name + " está vacía; debe contener sus encabezados. No se inicializará automáticamente.");
+        sheet.getRange(1, 1, 1, headers.length).setValues([headers.slice()]);
+        return sheet;
     }
-    const actualWidth = Number(sheet.getLastColumn()) || 0;
-    const actual = sheet.getRange(1, 1, 1, headers.length).getValues()[0]
-        .map(value => String(value === null || value === undefined ? "" : value).trim());
-    if (actualWidth !== headers.length || headers.some((header, index) => actual[index] !== header)) {
-        throw new Error("El esquema de " + name + " no coincide con el contrato; no se modificó la hoja.");
+    const width = Number(sheet.getLastColumn()) || 0;
+    const actual = width ? sheet.getRange(1, 1, 1, width).getValues()[0]
+        .map(value => String(value == null ? "" : value).trim()) : [];
+    const seen = new Set();
+    actual.forEach(value => {
+        if (!value) return;
+        if (seen.has(value)) throw new Error("La hoja " + name + " contiene encabezados duplicados; no se modificó.");
+        seen.add(value);
+    });
+    headers.forEach((header, index) => {
+        if (actual[index] === header) return;
+        if (!actual[index]) {
+            sheet.getRange(1, index + 1).setValue(header);
+            actual[index] = header;
+        } else {
+            sheet.insertColumnBefore(index + 1);
+            actual.splice(index, 0, header);
+            sheet.getRange(1, index + 1).setValue(header);
+        }
+    });
+    const verified = sheet.getRange(1, 1, 1, headers.length).getValues()[0]
+        .map(value => String(value == null ? "" : value).trim());
+    if (headers.some((header, index) => verified[index] !== header)) {
+        throw new Error("No se pudo completar de forma segura el esquema de " + name + ".");
     }
     return sheet;
 }
@@ -47,28 +59,11 @@ function ensureInboxConversationSheets_() {
         ["conversations", INBOX_CONVERSATIONS_SHEET_, INBOX_CONVERSATION_HEADERS_],
         ["messages", INBOX_MESSAGES_SHEET_, INBOX_MESSAGE_HEADERS_],
         ["states", INBOX_CONVERSATION_STATE_SHEET_, INBOX_STATE_HEADERS_],
-        ["audit", INBOX_CONVERSATION_AUDIT_SHEET_, INBOX_CONVERSATION_AUDIT_HEADERS_]
+        ["audit", INBOX_CONVERSATION_AUDIT_SHEET_, INBOX_CONVERSATION_AUDIT_HEADERS_],
+        ["flags", INBOX_CONVERSATION_FLAGS_SHEET_, INBOX_FLAGS_HEADERS_]
     ];
-    const missing = specs.filter(([, name]) => !getSpreadsheet().getSheetByName(name));
-    if (missing.length) {
-        const labels = {
-            conversations: "conversaciones (" + INBOX_CONVERSATIONS_SHEET_ + ")",
-            messages: "mensajes (" + INBOX_MESSAGES_SHEET_ + ")",
-            states: "estado (" + INBOX_CONVERSATION_STATE_SHEET_ + ")",
-            audit: "auditoría (" + INBOX_CONVERSATION_AUDIT_SHEET_ + ")"
-        };
-        const descriptions = missing.map(([key]) => labels[key]);
-        const detail = descriptions.length === 1
-            ? "falta la hoja de " + descriptions[0]
-            : "faltan las hojas de " + descriptions.join(", ");
-        throw new Error("El esquema Inbox está incompleto: " + detail +
-            ". No se crearán ni renombrarán hojas automáticamente.");
-    }
     const result = {};
-    specs.forEach(([key, name, headers]) => {
-        result[key] = inboxConversationSheet_(name, headers, true);
-    });
-    result.flags = inboxConversationSheet_(INBOX_CONVERSATION_FLAGS_SHEET_, INBOX_FLAGS_HEADERS_, false);
+    specs.forEach(([key, name, headers]) => { result[key] = inboxConversationSheet_(name, headers); });
     return result;
 }
 function inboxConversationRows_(sheet, width) {

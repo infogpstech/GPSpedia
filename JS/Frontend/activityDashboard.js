@@ -20,3 +20,27 @@ export function renderActivityLogs(container, logs, doc = container && container
     });
     return container;
 }
+
+/** Renderiza el resumen de cortes aportados por usuario como texto plano. */
+export function renderActivityContributions(container, contributions, doc = container && container.ownerDocument) {
+    if (!container || typeof container.replaceChildren !== "function" || !doc || typeof doc.createElement !== "function") {
+        throw new TypeError("Se requiere un contenedor DOM y un documento válido.");
+    }
+    container.replaceChildren();
+    const entries = Array.isArray(contributions) ? contributions : [];
+    entries.forEach(entry => {
+        const row = doc.createElement("tr");
+        [entry && entry.nombreUsuario, entry && entry.cortesAportados, entry && entry.vehiculosConAportes].forEach(value => {
+            const cell = doc.createElement("td");
+            cell.textContent = value == null ? "" : String(value);
+            row.appendChild(cell);
+        });
+        container.appendChild(row);
+    });
+    if (!entries.length) {
+        const row = doc.createElement("tr"), cell = doc.createElement("td");
+        cell.colSpan = 3; cell.textContent = "Todavía no hay cortes atribuidos a usuarios.";
+        row.appendChild(cell); container.appendChild(row);
+    }
+    return container;
+}

@@ -2238,6 +2238,34 @@ function handleMarkAsResolved(payload) {
 
 
 
+function buildCutContributionSummary_() {
+ const sheet=getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+ if(!sheet||sheet.getLastRow()<2)return[];
+ const rows=sheet.getRange(2,1,sheet.getLastRow()-1,COLS_CORTES.colaboradorCorte3).getValues();
+ const usersSheet=getSpreadsheet().getSheetByName("Users");
+ const userRows=usersSheet&&usersSheet.getLastRow()>1?usersSheet.getRange(2,1,usersSheet.getLastRow()-1,Math.max(8,usersSheet.getLastColumn())).getValues():[];
+ const cleanName=value=>String(value||"").replace(/\s*\[OP-[A-Za-z0-9_-]+\]/gi,"").trim();
+ const keyOf=value=>cleanName(value).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+ const idsByName=new Map();
+ userRows.forEach(row=>{
+  const id=String(row[0]||"").trim(),username=String(row[1]||"").trim(),fullName=String(row[6]||username).trim();
+  if(!id||!fullName||username.startsWith("__deleted__:"))return;
+  [fullName,username].forEach(name=>{const key=keyOf(name),ids=idsByName.get(key)||[];ids.push(id);idsByName.set(key,ids);});
+ });
+ const stats=new Map();
+ rows.forEach(row=>{
+  const vehicleId=String(row[COLS_CORTES.id-1]||"").trim();
+  for(let slot=1;slot<=3;slot++){
+   const type=String(row[COLS_CORTES["tipoCorte"+slot]-1]||"").trim(),name=cleanName(row[COLS_CORTES["colaboradorCorte"+slot]-1]),key=keyOf(name);
+   if(!type||!key)continue;
+   let entry=stats.get(key);
+   if(!entry){const ids=idsByName.get(key)||[];entry={userId:ids.length===1?ids[0]:"",nombreUsuario:name,cortesAportados:0,_vehicles:new Set()};stats.set(key,entry);}
+   entry.cortesAportados++;if(vehicleId)entry._vehicles.add(vehicleId);
+  }
+ });
+ return Array.from(stats.values()).map(entry=>({userId:entry.userId,nombreUsuario:entry.nombreUsuario,cortesAportados:entry.cortesAportados,vehiculosConAportes:entry._vehicles.size}))
+  .sort((x,y)=>y.cortesAportados-x.cortesAportados||x.nombreUsuario.localeCompare(y.nombreUsuario,"es"));
+}
 function handleGetActivityLogs(payload) {
  const pageSize=100;
  const readLatestRows=(sheet,columnCount)=>{if(!sheet)return[];const lastRow=sheet.getLastRow();if(lastRow<=1)return[];const startRow=Math.max(2,lastRow-pageSize+1),rowCount=lastRow-startRow+1;return sheet.getRange(startRow,1,rowCount,columnCount).getValues();};
@@ -2246,17 +2274,15 @@ function handleGetActivityLogs(payload) {
  const activitySheet=getSafeSheet(SHEET_NAMES.ACTIVIDAD_USUARIO);
  readLatestRows(activitySheet,COLS_ACTIVIDAD_USUARIO.detalle).forEach(row=>addEntry({
   id:row[COLS_ACTIVIDAD_USUARIO.id-1],timestamp:row[COLS_ACTIVIDAD_USUARIO.timestamp-1],idUsuario:row[COLS_ACTIVIDAD_USUARIO.idUsuario-1],
-  nombreUsuario:row[COLS_ACTIVIDAD_USUARIO.nombreUsuario-1],tipoActividad:row[COLS_ACTIVIDAD_USUARIO.tipoActividad-1],
-  idElementoAsociado:row[COLS_ACTIVIDAD_USUARIO.idElementoAsociado-1],detalle:row[COLS_ACTIVIDAD_USUARIO.detalle-1]
+  nombreUsuario:row[COLS_ACTIVIDAD_USUARIO.nombreUsuario-1],tipoActividad:row[COLS_ACTIVIDAD_USUARIO.tipoActividad-1],idElementoAsociado:row[COLS_ACTIVIDAD_USUARIO.idElementoAsociado-1],detalle:row[COLS_ACTIVIDAD_USUARIO.detalle-1]
  }));
  const auditSheet=getSpreadsheet().getSheetByName(INBOX_AUDIT_SHEET_NAME);
  readLatestRows(auditSheet,INBOX_AUDIT_HEADERS.length).forEach(row=>addEntry({
   id:row[0],timestamp:row[1],idUsuario:row[2],nombreUsuario:row[3],tipoActividad:"inbox_"+String(row[4]||""),idElementoAsociado:row[6],detalle:row[7]
  }));
- result.sort((a,b)=>(b._sortTime-a._sortTime)||(a._sequence-b._sequence));
- return{status:"success",data:result.slice(0,pageSize).map(({_sortTime,_sequence,...entry})=>entry)};
+ result.sort((x,y)=>(y._sortTime-x._sortTime)||(x._sequence-y._sequence));
+ return{status:"success",data:result.slice(0,pageSize).map(({_sortTime,_sequence,...entry})=>entry),contributions:buildCutContributionSummary_()};
 }
-
 
 /* TAREA 9 (2.3): ALMACENAMIENTO Y GESTIÓN INDEPENDIENTE DE SUGERENCIAS EN FEEDBACKS */
 function buildCutSuggestionRequestFingerprint_(request) {
