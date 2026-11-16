@@ -69,9 +69,11 @@ check("Las aprobaciones de vídeo no ofrecen una eliminación genérica no sopor
     assert.ok(start >= 0 && end > start);
     assert.doesNotMatch(ui.slice(start, end), /inbox-delete-btn/);
 });
-check("Los mensajes y nombres se insertan como texto, no como HTML", () => {
-    assert.match(ui, /inboxCreateNode_\("p", "inbox-message-body", message\.body \|\| ""\)/);
-    assert.doesNotMatch(ui, /innerHTML\s*=\s*[^;]*(message\.body|body\.value)/);
+check("Los mensajes del Inbox renderizan formato únicamente después del sanitizador compartido", () => {
+    assert.match(ui, /messageBody\.innerHTML\s*=\s*sanitizeHtmlContent\(String\(message\.body \|\| ""\)\)/);
+    assert.match(ui, /createRichTextToolbar\(textarea\.id\)/);
+    assert.match(ui, /createRichTextToolbar\(body\.id\)/);
+    assert.match(ui, /form\.append\(label, toolbar, textarea, status, send\)/);
 });
 check("Los borradores se recuperan por usuario y se limpian al cambiar de sesión", () => {
     assert.match(ui, /sessionStorage\.getItem/);
@@ -249,6 +251,22 @@ check("Los wrappers de API conservan el contrato de Inbox", () => {
 check("La paginación conserva los cursores opacos de Inbox sin convertirlos a offsets", () => {
     assert.match(ui, /inboxConversationPageStack_\.push\(inboxConversationNextCursor_\)/);
     assert.doesNotMatch(ui, /inboxConversationPageStack_\.push\(Number\(inboxConversationNextCursor\)\)/);
+});
+check("El compositor nuevo permite desplazamiento vertical y mantiene Salir/Enviar accesibles", () => {
+    assert.match(css, /\.inbox-new-conversation-form\s*\{[^}]*flex:\s*1 1 0/s);
+    assert.match(css, /\.inbox-new-conversation-form\s*\{[^}]*overflow-y:\s*auto/s);
+    assert.match(css, /\.inbox-compose-actions\s*\{[^}]*position:\s*sticky/s);
+    assert.match(ui, /formActions\.append\(makeCancelButton\(\), send\)/);
+});
+check("Plantilla y categoría comparten una fila inmediatamente antes del editor", () => {
+    assert.match(ui, /templateCategoryRow\.append\(templateField, categoryField\)/);
+    assert.match(ui, /form\.append\(bodyLabel, toolbar, body\)/);
+    assert.match(css, /\.inbox-template-category-row\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,1fr\)\)/s);
+});
+check("La lista vacía reduce su altura y el botón de búsqueda conserva íntegro el icono", () => {
+    assert.match(ui, /list\.classList\.toggle\("is-empty", isEmpty\)/);
+    assert.match(css, /\.inbox-conversation-list\.is-empty\s*\{[^}]*max-height:\s*48px/s);
+    assert.match(css, /#inbox-search-toggle span\s*\{\s*display:\s*none/s);
 });
 check("El modal mantiene los controles de lectura para tecnologías de asistencia", () => {
     assert.match(html, /id="inbox-conversation-list"[^>]*aria-live="polite"/);
