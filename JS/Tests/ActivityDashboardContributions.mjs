@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { normalizeContributionRows, renderActivityContributions } from "../Frontend/activityDashboard.js";
 const root=resolve(dirname(fileURLToPath(import.meta.url)),"../..");
 const fb=readFileSync(resolve(root,"JS/Services/feedback.js"),"utf8");
 const dash=readFileSync(resolve(root,"JS/Frontend/activityDashboard.js"),"utf8");
@@ -21,4 +22,26 @@ assert.match(dash,/export function renderActivityContributions/);
 assert.match(ui,/renderActivityContributions\(contributionContainer/);
 assert.match(html,/data-activity-tab="contributions"/);
 assert.match(html,/id="activity-contributions"/);
-console.log("ActivityDashboardContributions: 6/6 PASS");
+const normalized=normalizeContributionRows([
+ {nombreUsuario:"Pablo Peña.<br>PABLO PENA <br> María López",cortesAportados:2,vehiculosConAportes:1},
+ {nombreUsuario:"pablo pena .",cortesAportados:3,vehiculosConAportes:2},
+ {nombreUsuario:"MÁRIA   LÓPEZ.",cortesAportados:1,vehiculosConAportes:1},
+ {nombreUsuario:"<b>JOSE</b> <i>GARCIA</i>",cortesAportados:1,vehiculosConAportes:1},
+ {nombreUsuario:"Pablo Peña.<br><script>alert('x')</script>",cortesAportados:1,vehiculosConAportes:1}
+]);
+assert.deepEqual(normalized,[
+ {nombreUsuario:"Pablo Peña",cortesAportados:6,vehiculosConAportes:2},
+ {nombreUsuario:"María López",cortesAportados:3,vehiculosConAportes:1},
+ {nombreUsuario:"Jose Garcia",cortesAportados:1,vehiculosConAportes:1}
+]);
+class FakeElement {
+ constructor(tag){this.tagName=tag;this.children=[];this.textContent="";this.ownerDocument=null;}
+ appendChild(child){this.children.push(child);return child;}
+ replaceChildren(){this.children=[];}
+}
+const doc={createElement(tag){const node=new FakeElement(tag);node.ownerDocument=doc;return node;}};
+const tbody=new FakeElement("tbody");tbody.ownerDocument=doc;
+renderActivityContributions(tbody,[{nombreUsuario:"pAbLo pEñA.<br>PABLO PENA",cortesAportados:2,vehiculosConAportes:1}],doc);
+assert.equal(tbody.children.length,1);
+assert.deepEqual(tbody.children[0].children.map(cell=>cell.textContent),["Pablo Peña","2","1"]);
+console.log("ActivityDashboardContributions: 9/9 PASS");
