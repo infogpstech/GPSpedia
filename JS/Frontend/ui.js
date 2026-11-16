@@ -4969,7 +4969,6 @@ async function openInboxNewConversationForm_() {
     body.value = String(draft.body || "");
     const toolbar = createRichTextToolbar(body.id);
     toolbar.classList.add("inbox-rich-text-toolbar");
-    const formActions = inboxCreateNode_("div", "inbox-compose-actions");
     form.append(bodyLabel, toolbar, body);
     if (draft.templateId) template.value = draft.templateId;
     const formStatus = inboxCreateNode_("p", "inbox-form-status");
