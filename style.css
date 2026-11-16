@@ -4706,3 +4706,16 @@ td, th {
         flex-basis: 100%;
     }
 }
+
+ 
+/* BETA-031: desactivar también la expansión de navegación con movimiento reducido. */
+@media (prefers-reduced-motion: reduce) {
+    #dev-tools-modal .dev-tools-title {
+        animation: none;
+    }
+
+    #dev-tools-modal .dev-tab-link,
+    #dev-tools-modal .dev-tab-link span {
+        transition: none;
+    }
+}
