@@ -683,3 +683,18 @@ HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
 3. Continuar con las tareas de interfaz pendientes: estandarización global de controles, modal Desarrollador compacto con navegación horizontal, consola única de 50% de altura y confirmaciones por comandos, ayudas informativas, monitor Drive/alerta al 80%, retiro de Legacy y telemetría de tráfico global.
 
 **Commits de implementación y pruebas de esta iteración:** `82e2ffe101f96e0ec0e43f801470f36accde8def`, `22920fdacec0b226c2898787d4bc9b7534120b3b`, `e58f9c1c2e11d9b3f914cef2926a2b34d4171ba0`, `83f8c64831d75465fbe69bc2ec71cad807b53ee6`, `74c384863412bdfc76a7bfd040bf9d2600986424`, `6455230d2533065c069938b4f5f37c55557a6a5c`, `392784aba8821cfaacffe3c16f4bfd1428f22121`, `451edefeb38cd5fd785b405e091e84eb40909101`, `99d9ca8dee54b8a7ab00a209d5adae2270c27a56`, `d12c3364f50c381dfe095d3c7d2298789b387bc0`, `6a534617431d94f06f4a37c972bd3fcf12173de5`.
+
+
+## Avance de interfaz del panel Desarrollador — 2026-11-15
+
+**HEAD de código:** `79b128968961cf701f99db08302e2e8f3f91e797`. **Estado:** validado por GitHub Actions y GitHub Pages.
+
+- Consola superior ampliada del 44% al 50% de la altura disponible del modal; se conserva el scroll interno y la navegación horizontal.
+- Se agregó expansión animada del título con respeto a `prefers-reduced-motion`.
+- Se acortó la etiqueta del campo de respaldo a «Ingresa el enlace del respaldo».
+- Se verificó que las pestañas ya estaban en una barra horizontal de iconos, expandiendo el nombre de la pestaña activa. Los botones `dev-action-full` ya tienen ancho automático y no ocupan toda la fila.
+- Se verificó que el Monitor de GDrive ya pinta en rojo el porcentaje crítico, calcula el umbral del 80% y genera alerta en consola e Inbox para cuentas Desarrollador. No fue necesario duplicar esa función.
+- Se verificó que LEGACY ya no figura en `SERVICE_HEALTH_CONTRACTS` ni en las consultas de salud; la prueba `ServiceHealthContract` lo confirma.
+- GitHub Actions: **106 suites, 1,653 pruebas aprobadas, 0 fallos**. GitHub Pages: construcción/despliegue completado con éxito para este HEAD.
+
+**Pendiente de esta solicitud:** tráfico global agregado entre todas las plataformas (el gráfico actual sigue siendo local al navegador); centralización absoluta de todos los mensajes de acciones en la consola; confirmaciones interactivas y/n en la terminal; ayudas informativas para todas las descripciones; estandarización global de botones/campos/selectores y formato descriptivo sincronizado entre todos los usuarios. Estas tareas quedan abiertas y no se marcan como terminadas.
