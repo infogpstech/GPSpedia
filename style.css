@@ -4924,3 +4924,63 @@ body.dark-mode #login-modal #login-error.login-session-ended {
     #inbox-modal-content .inbox-workspace-content { flex:1 1 0; }
 }
 #inbox-modal-content .inbox-folder-nav button { flex:0 1 auto; width:auto; }
+
+
+/* GP-UX-INBOX-03 — las listas de solicitudes/reportes ocupan el panel móvil completo. */
+#inbox-modal-content .inbox-folder-nav .inbox-folder-action {
+    flex:0 0 38px;
+    width:38px;
+    min-width:38px;
+    min-height:38px;
+    padding:7px;
+}
+#inbox-modal-content .inbox-folder-nav .inbox-folder-action i {
+    width:auto;
+    flex:0 0 auto;
+    margin:0;
+}
+@media (max-width:760px) {
+    #inbox-modal-content .inbox-requests-view .inbox-layout-wrapper {
+        display:flex;
+        flex-direction:column;
+        flex:1 1 0;
+        width:100%;
+        height:100%;
+        min-height:0;
+        overflow:hidden;
+    }
+    #inbox-modal-content .inbox-requests-view #inbox-list {
+        display:block;
+        flex:1 1 0 !important;
+        width:100%;
+        height:100%;
+        min-height:0;
+        overflow-y:auto;
+        overflow-x:hidden;
+        overscroll-behavior:contain;
+    }
+    #inbox-modal-content .inbox-requests-view #inbox-detail {
+        display:none;
+        flex:1 1 0;
+        width:100%;
+        min-height:0;
+        overflow:auto;
+    }
+    #inbox-modal-content.is-request-detail-open .inbox-requests-view #inbox-list { display:none; }
+    #inbox-modal-content.is-request-detail-open .inbox-requests-view #inbox-detail {
+        display:flex;
+        flex-direction:column;
+    }
+    #inbox-modal-content .inbox-folder-nav {
+        display:grid;
+        grid-template-columns:repeat(7,minmax(0,1fr));
+        align-items:stretch;
+    }
+    #inbox-modal-content .inbox-folder-nav .inbox-folder-action {
+        justify-self:center;
+        width:100%;
+        min-width:0;
+        max-width:42px;
+        padding:6px 2px;
+    }
+}
