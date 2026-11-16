@@ -888,3 +888,17 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - Validación final: GitHub Actions Node.js 22 run 43955279344 SUCCESS — 130 suites / 1,928 pruebas / 0 fallos; GitHub Pages run 43955278378 SUCCESS. Queda únicamente aceptación visual en escritorio, Android y PWA instalada.
 
 - Se añadió BrowserZoomAccessibility.js al runner integral para verificar las tres páginas con zoom de navegación restringido y la restauración exacta del viewport al cerrar el lightbox.
+
+
+---
+
+## GP-UX-INBOX-RICH-EDITOR-01 — Barra compacta y edición visual — 2026-11-16
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
+- Reducir la separación entre iconos y el ancho de los controles para que la barra completa quepa en el viewport de móvil/PWA.
+- Abrir hacia la izquierda los menús desplegables de listas, marcadores, tamaño y familias de fuentes; limitar el ancho al viewport.
+- Reemplazar el área de texto literal por un editor visual contenteditable: negrita, cursiva, subrayado, tachado, color, tamaño, fuentes y listas deben verse aplicados mientras se escribe. Mantener el HTML saneado como contenido persistido/enviado; sanitizar también el contenido pegado.
+- Añadir Times New Roman, Verdana, Tahoma, Trebuchet MS, Palatino, Garamond e Impact a la lista permitida de familias nativas.
+- App Shell v51; contratos InboxUi, ServiceWorkerCache y OfflineBrandAssets actualizados.
+- CI Node.js 22 run 43960366613: **SUCCESS — 130 suites / 1,934 pruebas / 0 fallos**. InboxUi 57/57; CutDetailModalLayout 15/15; ServiceWorkerCache 10/10; OfflineBrandAssets 4/4.
+- GitHub Pages run 43960362556: **SUCCESS**.
+- Pendiente de Beta: probar en Android/PWA instalada y escritorio la edición real, conservación del cursor al aplicar formato, pegado, listas, menús hacia la izquierda, tema claro/oscuro y viewport estrecho.

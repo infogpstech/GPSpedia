@@ -1653,3 +1653,15 @@ ADENDA DE CLASIFICACIÓN AUD-2026-11-16-11
 - Ubicación: JS/Frontend/ui.js y JS/Frontend/rich-text.js (orden/persistencia del menú); style.css (acciones, desplegable, divisor y título); index.html, HTML/users.html y HTML/add_cortes.html (viewport); JS/Frontend/lightbox.js (excepción de zoom).
 - Severidad: baja, limitada a presentación y experiencia de uso. Impacto: acciones del compositor con distribución inadecuada, selector potencialmente recortado en móviles, espacio vertical excesivo en el encabezado y zoom de navegación disponible donde se pidió restringirlo. Sin impacto en autenticación, permisos, persistencia ni datos.
 - Criterio de cierre: contratos automáticos aprobados; la comprobación visual en dispositivos reales queda diferida a Beta.
+
+
+================================================================================
+ADENDA DE AUDITORÍA — GP-UX-INBOX-RICH-EDITOR-01 — 2026-11-16
+- Ubicación: JS/Frontend/ui.js, JS/Frontend/rich-text.js y style.css.
+- Evidencia: los compositores nuevo y respuesta usaban textarea; applyRichTextFormat/applyRichTextColor insertaban etiquetas HTML directamente en textarea.value, por lo que el markup era visible durante la escritura y no se aplicaba como formato visual.
+- Impacto: experiencia de edición confusa; además, el ancho y la separación flexible de los controles podían sacar el icono de listas del viewport móvil, y los menús se anclaban al lado derecho.
+- Severidad: baja, presentación/edición. No se identificó impacto en permisos, autenticación o datos.
+- Corrección: editor contenteditable para ambos compositores; textarea oculto conserva el HTML saneado que usan borradores/envíos; pegado HTML saneado y límite de 5,000 caracteres; toolbar compactada a controles de 27 px (25 px hasta 420 px), gap de 1 px (0 px en viewport estrecho), menús alineados a la derecha del botón para desplegar hacia la izquierda; siete familias nativas añadidas a whitelist y menú.
+- Una primera CI detectó tres expectativas antiguas en InboxUi sobre textarea como editor visible; se actualizaron para exigir contenteditable y el campo fuente saneado. La regresión final pasó: run 43960366613, 130 suites / 1,934 pruebas / 0 fallos. GitHub Pages run 43960362556 SUCCESS.
+- Criterio de cierre: pruebas locales aprobadas; aceptación visual y de interacción real en Android/PWA/escritorio diferida a Beta.
+================================================================================

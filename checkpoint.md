@@ -198,3 +198,14 @@ El checkpoint acumulativo anterior se conserva íntegro en `Checkpoint_Archive/c
 - GitHub Pages run 43955278378: SUCCESS (build y deploy).
 - Commit de código y pruebas validado: faf64565578db58f3b494280ed76927b8a914064.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. La inspección visual en Android/escritorio/PWA queda diferida a Beta; no se desplegaron servicios Apps Script ni se modificaron datos externos.
+
+
+### Revisión adicional — barra y editor visual del Inbox — 2026-11-16
+- Solicitud: reducir separación y ancho entre iconos de la barra enriquecida móvil/PWA; desplegar listas y fuentes hacia la izquierda del botón; evitar mostrar etiquetas HTML mientras se escribe; ampliar familias tipográficas nativas.
+- Causa del editor anterior: el compositor utilizaba textarea y las funciones de formato insertaban markup HTML como texto. Se sustituyó la superficie visible por un editor contenteditable y se conserva un textarea oculto como fuente canónica con HTML saneado para borradores y envío.
+- Archivos de implementación: JS/Frontend/rich-text.js, JS/Frontend/ui.js, style.css y service-worker.js (App Shell v51). Contratos: JS/Tests/InboxUi.mjs, ServiceWorkerCache.js y OfflineBrandAssets.mjs.
+- Fuentes añadidas: Times New Roman, Verdana, Tahoma, Trebuchet MS, Palatino, Garamond e Impact, además de las existentes.
+- CI Node.js 22 run 43960366613: SUCCESS — 130 suites / 1,934 pruebas / 0 fallos. InboxUi 57/57; CutDetailModalLayout 15/15; ServiceWorkerCache 10/10; OfflineBrandAssets 4/4.
+- GitHub Pages run 43960362556: SUCCESS (build y deploy).
+- Commits: 948e615341c9b736d49cfe732dee968f258a5cd0 (implementación y pruebas), f2d2440acfcffe8e2a5437b77ea4f4756052f8c5 (contratos heredados).
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Falta inspección visual real de escritura/formato, menús y anchura en Android/PWA y escritorio. No se modificaron Apps Script, deployments ni datos externos.

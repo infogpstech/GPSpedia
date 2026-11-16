@@ -1344,3 +1344,15 @@ GP-UX-INBOX-DESKTOP-03 / GP-UX-CUT-MODAL-06 / GP-PWA-ZOOM-01 — 2026-11-16
 - Se incorporó BrowserZoomAccessibility.js al runner integral para validar zoom de navegación restringido, zoom temporal en el lightbox y restauración del viewport previo.
 
 - Ajuste final de dimensiones del compositor: Salir y Enviar comparten 64 × 40 px; el texto de Enviar puede distribuirse en dos líneas.
+
+
+================================================================================
+GP-UX-INBOX-RICH-EDITOR-01 — 2026-11-16
+- JS/Frontend/ui.js: los compositores de mensaje nuevo y respuesta usan una superficie contenteditable visible y un textarea oculto con HTML saneado como fuente canónica para borradores y envíos. El contenido inicial y las plantillas se muestran ya renderizados; se sanea también el HTML pegado y se conserva el límite de 5,000 caracteres.
+- JS/Frontend/rich-text.js: formato aplicado sobre selección real del editor visual; lista de fuentes nativas ampliada con Times New Roman, Verdana, Tahoma, Trebuchet MS, Palatino, Garamond e Impact; whitelist del sanitizador sincronizada.
+- style.css: toolbar con separación mínima y botones de ancho fijo para evitar overflow en PWA; menús de formato alineados al borde derecho del botón para desplegar hacia la izquierda; estilos de superficie contenteditable y marcadores de lista.
+- service-worker.js: App Shell actualizado a gpsepedia-cache-v51. JS/Tests/ServiceWorkerCache.js y OfflineBrandAssets.mjs sincronizados.
+- JS/Tests/InboxUi.mjs: contratos del editor visual, saneamiento, límite de texto, menús, espaciado y fuentes ampliadas.
+- Commits: 948e615341c9b736d49cfe732dee968f258a5cd0 y f2d2440acfcffe8e2a5437b77ea4f4756052f8c5.
+- Validación local: GitHub Actions Node.js 22 run 43960366613 SUCCESS (130 suites / 1,934 pruebas / 0 fallos); GitHub Pages run 43960362556 SUCCESS.
+================================================================================
