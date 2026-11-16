@@ -5777,3 +5777,9 @@ textarea.rich-text-source[hidden] { display:none !important; }
 @media (prefers-reduced-motion:reduce) {
     #inbox-modal-content .inbox-section-nav button { transition:none !important; }
 }
+
+@media (max-width:760px) {
+    #inbox-modal-content .inbox-folder-nav {
+        grid-template-columns:repeat(4,minmax(0,1fr));
+    }
+}
