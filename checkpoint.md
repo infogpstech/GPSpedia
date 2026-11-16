@@ -1766,3 +1766,5 @@ Backlog y registro de cambios sincronizados con este estado. La rama base perman
 - Causa localizada: `.actions-cell` se configuraba como columna y el botón «Cerrar sesiones» se añadía fuera del grupo principal; además, Acciones recibía solo 29–32 % del ancho móvil.
 - Estado de inicio: rama `GPSpedia2.2.5_work`, HEAD `034a95347f7c55de2dce3655afa1bbd37839b398`; base `GPSpedia2.2.5` en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
 - Implementación y pruebas en curso; validar contrato responsive, sintaxis, CI y diff antes del cierre. No realizar despliegues.
+
+- CI inicial del commit `5c89746c6911086336fe58b5af777ad4aa6b99dc`: detectó dos expectativas de pruebas obsoletas (el contrato responsive consultaba iconos en el bloque CSS en vez del HTML y ButtonWidthPolicy fijaba 38 px). Se actualizan las pruebas para validar los selectores/medidas nuevos; no se identificó fallo de sintaxis ni de lógica de la acción.

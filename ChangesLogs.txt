@@ -1084,3 +1084,5 @@ VALIDACIÓN LOCAL POSTERIOR — GP-UX-INBOX-03 / GP-DASH-ATTR-01
 - HTML/users.html: acciones Editar, Eliminar y Cerrar sesiones pasan a un grupo horizontal; el cierre de sesiones usa icono de salida y etiqueta accesible. Se compactan botones y anchos de columnas móviles sin cambiar permisos ni manejadores.
 - JS/Tests/ResponsiveFormsUsers.js y JS/Tests/RunServiceTests.mjs: regresión responsive añadida al runner integral.
 - Alcance exclusivamente visual/frontend; sin cambios de Apps Script, servicios ni backend.
+
+- Validación inicial: CI identificó expectativas antiguas en ResponsiveFormsUsers y ButtonWidthPolicy; se corrigen los contratos para inspeccionar el HTML y el nuevo ancho móvil de 34 px.
