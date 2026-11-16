@@ -708,3 +708,10 @@ git rev-parse HEAD
 ```
 
 No usar `reset --hard`, `clean`, force push ni comandos que descarten cambios. No ejecutar pruebas destructivas o migraciones en producción. La rama base `GPSpedia2.2.5` permanece protegida e intacta.
+
+
+### GP-UX-USERS-02 — Acciones de usuarios en una sola fila móvil
+**Estado: EN PROGRESO.**
+- Alcance exclusivo: `HTML/users.html` y pruebas frontend relacionadas. No modificar Apps Script, servicios, autenticación ni comportamiento backend.
+- Criterios: icono de cierre de sesiones con nombre accesible; los tres botones del usuario se mantienen en una sola fila; compactar botones, separación y anchos de columna para evitar scroll horizontal; conservar condiciones de visibilidad y manejadores actuales.
+- Validación local: contrato responsive, sintaxis del módulo y revisión del diff. La inspección visual en dispositivos reales queda para Beta.

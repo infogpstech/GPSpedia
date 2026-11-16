@@ -1757,3 +1757,12 @@ Backlog y registro de cambios sincronizados con este estado. La rama base perman
 - Service Worker actualizado a `gpsepedia-cache-v36` para refrescar el módulo frontend.
 - Validación GitHub Actions Node.js 22: **127 suites / 1,881 pruebas / 0 fallos**; ActivityDashboardContributions 14/14, ServiceWorkerCache 9/9, OfflineBrandAssets 4/4. Run `43876854218`.
 - No se ha ejecutado deployment de Apps Script ni validación con hojas reales; comprobar los registros históricos y el total de vehículos en Beta.
+
+
+## Continuidad — GP-UX-USERS-02 (2026-11-16)
+
+- Requerimiento: en la tabla de `HTML/users.html`, mostrar Editar, Eliminar y Cerrar sesiones en una sola fila móvil; icono de salida accesible y columnas/espacios compactos.
+- Alcance: frontend y pruebas de contrato únicamente. No modificar servicios Apps Script ni backend.
+- Causa localizada: `.actions-cell` se configuraba como columna y el botón «Cerrar sesiones» se añadía fuera del grupo principal; además, Acciones recibía solo 29–32 % del ancho móvil.
+- Estado de inicio: rama `GPSpedia2.2.5_work`, HEAD `034a95347f7c55de2dce3655afa1bbd37839b398`; base `GPSpedia2.2.5` en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- Implementación y pruebas en curso; validar contrato responsive, sintaxis, CI y diff antes del cierre. No realizar despliegues.
