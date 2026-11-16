@@ -321,3 +321,10 @@ El checkpoint acumulativo anterior se conserva íntegro en `Checkpoint_Archive/c
 - Cambio: ambas barras capturan pointerdown, conservan el rango y previenen el comportamiento de foco táctil en botones y opciones; se conserva click para ejecutar las acciones. Selectores nativos de fuente/tamaño y diálogo de color restauran foco/rango al editor tras confirmar/cerrar. CSS touch-action y tap highlight añadidos.
 - Cache PWA v57 y pruebas de contrato sincronizadas. Archivos: rich-text.js, style.css, service-worker.js, JS/Tests/InboxUi.mjs, JS/Tests/ServiceWorkerCache.js, JS/Tests/OfflineBrandAssets.mjs, Auditoría.txt y checkpoint.md.
 - Pendiente validación real Android/PWA y escritorio. No se declara resuelto visualmente hasta probar en dispositivo.
+
+
+### Cierre de revisión estática — GP-UX-RICH-EDITOR-FOCUS-03
+- Se detectó y corrigió una omisión durante la primera pasada: la barra estándar no había recibido el listener táctil de captura; ahora tanto la variante compacta (Inbox) como la estándar previenen el foco táctil de botones/opciones y conservan el click.
+- Contrato de regresión ajustado para verificar ambos bloques y el retorno de foco de selectores. Parsing V8 aprobado para rich-text.js, InboxUi.mjs, ServiceWorkerCache.js y OfflineBrandAssets.mjs; balance CSS y caché v57 sincronizada.
+- HEAD de la rama de trabajo confirmado después de los cambios: comparar el SHA remoto actual al cerrar esta nota. Suite integral Node y prueba física en Android/desktop continúan pendientes; no se declara que el teclado ya esté confirmado como persistente en hardware real.
+- La rama base GPSpedia2.2.5 permanece sin cambios.
