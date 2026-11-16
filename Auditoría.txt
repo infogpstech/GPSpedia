@@ -1102,3 +1102,25 @@ Validación:
 - Falta comprobar tiempos reales, tamaño de snapshot y respuesta de Drive en Beta. No se afirma que 120 s elimine todo posible timeout.
 - No se desplegó Apps Script ni se modificaron hojas, Drive o datos externos.
 ================================================================================
+
+
+================================================================================
+AUD-2026-11-16-05 — CATALOG/getDropdownData: lectura completa innecesaria retrasa la edición de Cortes
+Severidad: Media — latencia de entrada al modo edición del modal de detalle.
+Estado: OPTIMIZADO EN RAMA; CI APROBADO; VALIDACIÓN BETA PENDIENTE.
+
+Causa:
+- mostrarDetalleModal() inicia precargarDropdownOptions() en segundo plano y el botón Editar espera esa promesa antes de renderizar los controles de edición.
+- handleGetDropdownData() usaba getDataRange().getValues() para leer todas las columnas de Cortes y Relay, aunque solo necesita marca, tres columnas de tipo de corte, tipo de encendido y configuración de Relay, además de la validación de categoría.
+- El volumen de lectura innecesario retrasaba la promesa de dropdowns y, por tanto, la entrada al modo edición.
+
+Corrección:
+- CATALOG ahora calcula el rango mínimo que cubre las cinco columnas necesarias de Cortes y lo lee en una sola operación; Relay se consulta con un rango de una columna.
+- Se eliminó la lectura getDataRange() completa de ambas hojas para este handler.
+- Se añadió CatalogDropdownRead.mjs con fixture que verifica valores, orden, unicidad, rangos acotados y ausencia de getDataRange().
+- Se integró la prueba en RunServiceTests.mjs.
+
+Validación:
+- CI run 43783436013, commit d828852ed2f4a223cfcbe6256dbfdce438ecf533: SUCCESS; 108 suites / 1,657 pruebas / 0 fallos.
+- Falta medir la latencia real en Beta; no se desplegó CATALOG ni se consultaron hojas reales.
+================================================================================
