@@ -1733,3 +1733,11 @@ ADENDA DE AUDITORÍA — GP-UX-INBOX-RICH-EDITOR-01 — 2026-11-16
 - Impacto: color nuevo ignorado o aplicado al lugar incorrecto; formatos de selección no fiables al cambiar controles nativos. Severidad: media (edición de contenido).
 - Corrección: guardar/restaurar rangos por editor, capturar selección antes de interactuar con la barra, aplicar el color al confirmar el selector, corregir el caret en editor vacío y evitar retener editores dinámicos mediante listeners globales por instancia. Se bloquea el menú contextual web dentro del editor manteniendo `user-select:text` y se agregan accesos de copiar/pegar iconográficos.
 - Alcance: editor de formularios y editor Inbox; no se alteran perfiles de funciones, sanitización ni datos persistidos.
+
+
+### Seguimiento — GP-UX-RICH-EDITOR-FOCUS-03 — 2026-11-16
+- Reporte de Beta: el teclado virtual seguía ocultándose al tocar opciones de la barra, aunque el rango de edición se restauraba.
+- Causa adicional: las barras evitaban el foco de los botones con mousedown, pero no con pointerdown/touch. En Android, el primer evento de puntero táctil puede transferir foco antes de que ocurra el click.
+- Corrección: capturar pointerdown en ambas variantes de barra, guardar selección y cancelar la acción predeterminada solo para botones/opciones táctiles; conservar el click para ejecutar el formato. Los selectores nativos conservan su comportamiento, pero devuelven el foco al editor al confirmar tamaño/fuente. El selector de color restaura el foco al cerrar su diálogo.
+- CSS de interacción táctil añadido y App Shell actualizado a gpsepedia-cache-v57. Contratos de caché sincronizados.
+- Pendiente: prueba real en Android/PWA para confirmar que el teclado permanece abierto al aplicar negrita, listas, fuente, tamaño y color; validar también escritorio. El selector de color nativo puede ocultar el teclado mientras el diálogo del sistema está abierto, pero debe devolver el foco al editor al cerrarse.
