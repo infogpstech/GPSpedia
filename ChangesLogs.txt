@@ -1099,3 +1099,11 @@ VALIDACIÓN LOCAL POSTERIOR — GP-UX-INBOX-03 / GP-DASH-ATTR-01
 - JS/Tests/CutDetailContributorFallback.mjs: regresión para el fallback comunitario y su alcance de presentación.
 - JS/Tests/RunServiceTests.mjs: incorpora la regresión al runner integral.
 - Sin modificaciones de datos históricos, contratos ni servicios Apps Script.
+
+2026-11-16 — GP-UX-INBOX-04: navegación móvil y estado de lectura
+- index.html: se retiran las carpetas independientes «Leídos» y «No leídos»; Recibidos conserva la vista conjunta. Se mantienen Enviados, Archivados, Nuevo mensaje y Buscar.
+- JS/Frontend/ui.js: cada conversación muestra a la izquierda un icono accesible de sobre cerrado/abierto según unreadCount; se elimina el contador visual duplicado.
+- style.css: la barra móvil pasa a una cuadrícula de cinco columnas iguales; todos los controles, incluido Buscar y Nuevo mensaje, comparten dimensiones y gap uniforme. Se evita que el nombre de la carpeta activa expanda su botón sobre los contiguos.
+- JS/Tests/InboxUi.mjs: regresiones para la barra, retirada de filtros y representación accesible del estado leído/no leído.
+- Sin cambios en servicios Apps Script, contratos de backend, permisos ni datos de conversaciones.
+- GitHub Actions Node.js 22 run 43883547065: SUCCESS — 129 suites / 1,901 pruebas / 0 fallos. InboxUi: 36/36 PASS.
