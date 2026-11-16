@@ -1155,3 +1155,14 @@ ADENDA 2026-11-16 — GP-DASH-ATTR CI
 ADENDA — GP-UX-INBOX-SEARCH-DISMISS-01: la prueba de contrato se simplifica a comprobaciones de fragmentos literales para evitar errores de escape regex en Node 22.
 
 ADENDA — GP-UX-PYS-ADD-MODEL-CARD-01: se simplifica la prueba CSS/inline a comprobaciones literales después de detectar escapes dobles en la primera ejecución CI.
+
+
+================================================================================
+2026-11-16 — GP-UX-INBOX-SEARCH-DISMISS-01 / GP-DASH-ATTR-01 / GP-UX-PYS-ADD-MODEL-CARD-01
+- JS/Frontend/ui.js: cierre de búsqueda al cambiar de acción/sección; retirada de height:auto, min-height:0 y align-self:stretch en tarjeta Agregar Modelo.
+- JS/Tests/InboxUi.mjs: contrato del cierre de búsqueda con comprobaciones literales.
+- JS/Tests/ActivityDashboardContributions.mjs: resumen 1/1 PASS reconocido por runner; cobertura existente separa nombres por coma y multilínea.
+- JS/Tests/PysModalNavigation.js: cobertura de tamaño fijo de tarjeta Agregar Modelo y ausencia de overrides.
+- service-worker.js y JS/Tests/ServiceWorkerCache.js: App Shell actualizado a v39.
+- Sin cambios en Apps Script, backend, permisos, datos persistentes ni relaciones.
+================================================================================

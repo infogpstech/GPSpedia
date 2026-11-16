@@ -1893,3 +1893,14 @@ Backlog y registro de cambios sincronizados con este estado. La rama base perman
 - Tercer ajuste de contrato: se sustituyeron expresiones regulares innecesariamente complejas por verificaciones de fragmentos literales; la prueba anterior se parseaba, pero la expresión escapada se compilaba incorrectamente en Node 22. Se vuelve a ejecutar la suite.
 
 - CI run `43901604085` confirmó el cambio funcional de tarjeta, pero la nueva prueba Pys tenía expresiones regulares sobreescapadas. Se sustituyen por comprobaciones literales explícitas y se repite la suite.
+
+
+---
+
+## Continuidad — correcciones Inbox, aportes y tarjeta PyS (2026-11-16)
+
+- Inbox: el cierre centralizado de búsqueda está en `JS/Frontend/ui.js`; el contrato se expresa mediante comprobaciones literales para evitar fallos de parsing por escapes en regex.
+- Aportes: `normalizeContributionRows` separa colaboradores por coma y saltos de línea; se conserva la prueba de los dos órdenes «Pablo Peña, Byron Lopez» y «Byron Lopez, Pablo Peña». El test emite ahora resumen `1/1 PASS` reconocido por el runner integral.
+- Tarjeta PyS: se elimina el estilo inline que anulaba el alto fijo de `card-create-vehicle-assoc`; CSS define 140 × 120 px. Se agrega prueba explícita de ausencia de overrides.
+- Service Worker actualizado a `gpsepedia-cache-v39` para invalidar el App Shell anterior.
+- Validación CI: se ejecuta sobre el commit resultante. Las pruebas visuales en navegador/dispositivo y los servicios Apps Script reales permanecen diferidos a Beta.
