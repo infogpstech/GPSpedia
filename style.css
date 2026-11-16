@@ -4984,3 +4984,86 @@ body.dark-mode #login-modal #login-error.login-session-ended {
         padding:6px 2px;
     }
 }
+
+/* GP-UX-INBOX-04 — barra móvil uniforme y estado de lectura por conversación. */
+#inbox-modal-content .inbox-conversation-item {
+    grid-template-columns:22px minmax(0,1fr);
+    align-items:start;
+    column-gap:8px;
+}
+#inbox-modal-content .inbox-conversation-read-state {
+    grid-column:1;
+    grid-row:1 / span 4;
+    align-self:center;
+    justify-self:center;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:20px;
+    min-width:20px;
+    color:var(--gp-color-text-muted,var(--text-medium,#777));
+    font-size:.95rem;
+}
+#inbox-modal-content .inbox-conversation-read-state.is-unread {
+    color:var(--gp-color-accent,#1769aa);
+}
+#inbox-modal-content .inbox-conversation-item-title,
+#inbox-modal-content .inbox-conversation-item-subject,
+#inbox-modal-content .inbox-conversation-item-preview,
+#inbox-modal-content .inbox-conversation-item-meta {
+    grid-column:2;
+}
+#inbox-modal-content .inbox-conversation-item-meta { grid-column:2; }
+
+@media (max-width:760px) {
+    #inbox-modal-content .inbox-folder-nav {
+        display:grid;
+        grid-template-columns:repeat(5,minmax(0,1fr));
+        align-items:stretch;
+        gap:6px;
+        width:100%;
+    }
+    #inbox-modal-content .inbox-folder-nav button,
+    #inbox-modal-content .inbox-folder-nav .inbox-folder-action {
+        display:flex;
+        flex:0 0 auto;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        gap:4px;
+        width:100%;
+        min-width:0;
+        max-width:none;
+        min-height:42px;
+        padding:5px 2px;
+        white-space:normal;
+        text-align:center;
+    }
+    #inbox-modal-content .inbox-folder-nav button[aria-pressed="true"] {
+        min-width:0;
+        gap:4px;
+    }
+    #inbox-modal-content .inbox-folder-nav button i {
+        flex:0 0 auto;
+        margin:0;
+        font-size:.95rem;
+    }
+    #inbox-modal-content .inbox-folder-nav button span,
+    #inbox-modal-content .inbox-folder-nav button[aria-pressed="true"] span {
+        display:block;
+        max-width:100%;
+        margin:0;
+        overflow:visible;
+        opacity:1;
+        transform:none;
+        font-size:.66rem;
+        line-height:1.1;
+        overflow-wrap:anywhere;
+    }
+}
+@media (max-width:420px) {
+    #inbox-modal-content .inbox-folder-nav { gap:4px; }
+    #inbox-modal-content .inbox-folder-nav button,
+    #inbox-modal-content .inbox-folder-nav .inbox-folder-action { padding:4px 1px; }
+    #inbox-modal-content .inbox-folder-nav button span { font-size:.58rem; }
+}
