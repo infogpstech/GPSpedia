@@ -826,3 +826,17 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - Adenda: el Inbox usa la barra avanzada completa independientemente de la preferencia simplificada global; el resto de los editores conserva la configuración del usuario. La sanitización avanzada se aplica solo al contenido de Inbox. App Shell v47.
 
 - Adenda de validación: sintaxis estática 4/4 y verificaciones específicas 15/15 PASS. La suite Node.js integral no se marca aprobada porque GitHub no ha devuelto un estado de CI para el HEAD actual.
+
+
+---
+
+## GP-UX-CUT-MODAL-04 / GP-UX-TUTORIAL-MODAL-01 — 2026-11-16
+**Estado: EN PROGRESO — implementación publicada; CI pendiente.**
+
+- Modal de corte: divisor azul independiente debajo del conjunto logo/modelo, extendido por el ancho útil del modal con margen lateral y separación superior.
+- Permitir que el drop-shadow del logotipo se renderice sin recorte y conservar una separación mínima entre logo y modelo.
+- Aumentar el tamaño del nombre del modelo y de los botones cerrar, compartir, editar e imprimir, alineándolos con el estándar reforzado del encabezado Relay.
+- Modal de tutoriales: título con salto únicamente entre palabras y botón de cierre anclado a la esquina superior derecha.
+- Preservar handlers, permisos, navegación y datos. No modificar servicios Apps Script ni deployments.
+- App Shell v48; pruebas CutDetailModalLayout, ServiceWorkerCache y OfflineBrandAssets actualizadas.
+- CI automatizada y aceptación visual Beta pendientes de evidencia.
