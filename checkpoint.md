@@ -1355,3 +1355,15 @@ El usuario confirmó que el backlog pendiente también comprende la organizació
 - No se desplegaron servicios Apps Script ni se modificaron hojas, secretos o datos externos. La integración real queda para Beta y no bloquea el cierre local.
 - GP-INBOX pasa a **COMPLETADA CON VALIDACIÓN DIFERIDA**.
 - **Siguiente tarea local:** revisar la implementación y los contratos pendientes de BETA-030 y BETA-031; después continuar con GP-IMG-DATA-01, GP-BETA-06, BETA-042, BETA-043 y BETA-051.
+
+ 
+## Continuidad — revisión BETA-030/031 (2026-11-16)
+
+- Se verificó la barra horizontal Developer de cuatro opciones, los iconos compactos, la expansión de la etiqueta activa, la agrupación del modal y la relación de radios/labels/paneles.
+- No se detectaron IDs duplicados dentro del modal. Respaldos y Base de datos permanecen agrupados; las confirmaciones destructivas y restricciones de rol no se modificaron.
+- Hallazgo BETA-031: la expansión de la pestaña activa no respetaba prefers-reduced-motion. Se corrigió en style.css y se añadió regresión en JS/Tests/DeveloperPanelUX.mjs.
+- Commits: CSS 49ff02ed8d350e31b270029cc6d7893c1707e922; prueba 344b0f5eb65826e283e36df5b19dc0814849c4de.
+- Pruebas aisladas: DeveloperPanelUX 7/7, DevToolsModalAccessibility 19/19 y DeveloperPanelCopy 6/6 PASS.
+- BETA-030 y BETA-031: IMPLEMENTACIÓN LOCAL COMPLETADA; VALIDACIÓN VISUAL BETA PENDIENTE.
+- Node.js CLI/GitHub Actions no se confirmaron en esta sesión. No se hizo inspección visual real ni despliegue.
+- Siguiente tarea local: GP-IMG-DATA-01 — completar la auditoría y los contratos del inventario/historial de imágenes; después GP-BETA-06, BETA-042, BETA-043 y BETA-051.
