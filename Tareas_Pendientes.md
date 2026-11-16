@@ -821,4 +821,6 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - Integrar la barra de texto enriquecido compartida tanto en nuevo mensaje como en respuestas, respetando el modo configurado y sanitizando el HTML al mostrar mensajes.
 - Mantener contratos, borradores, idempotencia, destinatarios, permisos y acciones actuales. No modificar backend ni servicios Apps Script.
 - Evidencia: Images/tests/modal_inbox_bandeja.png e Images/tests/modal_inbox_reportes.png.
-- App Shell v46; pruebas InboxUi, ServiceWorkerCache y OfflineBrandAssets actualizadas. CI y aceptación visual Beta pendientes.
+- App Shell v47; toolbar avanzada forzada solo en Inbox, sanitización avanzada específica y pruebas InboxUi, ServiceWorkerCache y OfflineBrandAssets actualizadas. CI y aceptación visual Beta pendientes.
+
+- Adenda: el Inbox usa la barra avanzada completa independientemente de la preferencia simplificada global; el resto de los editores conserva la configuración del usuario. La sanitización avanzada se aplica solo al contenido de Inbox. App Shell v47.
