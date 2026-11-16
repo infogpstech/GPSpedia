@@ -313,3 +313,11 @@ El checkpoint acumulativo anterior se conserva íntegro en `Checkpoint_Archive/c
 - Git confirma HEAD 18e9926d46bb6befe5dfb3d195847e07d6d29b3d en GPSpedia2.2.5_work; comparación contra GPSpedia2.2.5: 3,834 commits adelantada, 0 detrás; SHA de base d9acc68d889985c2e2f42fe3a02e502efc86ead1 sin cambios.
 - Aún pendiente: suite integral Node.js/CI cuando el workflow esté disponible y validación visual real en escritorio y Android/PWA (cambio sucesivo de colores con texto previo, formato de selección, menús contextuales y portapapeles).
 - Estado: EN PROGRESO hasta disponer de las pruebas completas; el código está publicado únicamente en la rama de trabajo.
+
+
+### GP-UX-RICH-EDITOR-FOCUS-03 — 2026-11-16
+- Reporte: el teclado virtual se oculta al tocar opciones de la barra y solo vuelve al tocar el área de escritura.
+- Causa: el código anterior solo prevenía el foco en mousedown; Android entrega pointerdown/touch antes, permitiendo que los botones tomen foco y cierren el teclado.
+- Cambio: ambas barras capturan pointerdown, conservan el rango y previenen el comportamiento de foco táctil en botones y opciones; se conserva click para ejecutar las acciones. Selectores nativos de fuente/tamaño y diálogo de color restauran foco/rango al editor tras confirmar/cerrar. CSS touch-action y tap highlight añadidos.
+- Cache PWA v57 y pruebas de contrato sincronizadas. Archivos: rich-text.js, style.css, service-worker.js, JS/Tests/InboxUi.mjs, JS/Tests/ServiceWorkerCache.js, JS/Tests/OfflineBrandAssets.mjs, Auditoría.txt y checkpoint.md.
+- Pendiente validación real Android/PWA y escritorio. No se declara resuelto visualmente hasta probar en dispositivo.
