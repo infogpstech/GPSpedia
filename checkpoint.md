@@ -143,3 +143,19 @@ El checkpoint acumulativo anterior se conserva íntegro en `Checkpoint_Archive/c
 - La prueba InboxUi se reforzó para comprobar la regla desktop efectiva y evitar que un override móvil posterior oculte la regla principal.
 - GitHub Actions / estado combinado del commit no devuelve checks todavía; la suite Node.js completa permanece **PENDIENTE DE CONFIRMACIÓN CI**. No se afirma ejecución integral ni inspección visual real.
 - Rama base: SHA `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin commits propios en esta iteración; la rama de trabajo continúa adelantada y sin commits detrás.
+
+
+---
+
+### Nueva corrección visual — modal de corte y tutoriales — 2026-11-16
+- Rama de trabajo GPSpedia2.2.5_work; HEAD de partida documentado f5d0ace755803f3040303672fa00bf675a3e86ab. Rama base protegida GPSpedia2.2.5, SHA conocido d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Causas localizadas: divisor azul limitado al contenedor de logo de 180 px; overflow hidden podía recortar la sombra; título del tutorial compartía el grid del corte y el cierre permanecía en flujo normal.
+- Cambios publicados en commits secuenciales de la rama autorizada:
+  - 9319435b22e9259db8a35b72a70bdfee730e0456 — ui.js.
+  - 8f943abe9c85e4b8e624d9cf2f588fe92f135252 — style.css.
+  - 2d09f94b2c3fa76daf83c76ed5ab12195135421b — CutDetailModalLayout.
+  - 47eedb8cd1ea9bb73b9a7c41515a2ea622670dbd — App Shell v48.
+  - 982979c995826006bf502f6e1a7d0d8490615535 — ServiceWorkerCache.
+  - b1e169b5cd341ffea98fb563b6ddb86ee190e2bd — OfflineBrandAssets.
+- Implementación: divisor en fila completa con margen lateral; logo con overflow visible y padding; modelo/Relay a 2rem; acciones 40 px escritorio / 36 px móvil y cierre 40 px; tutorial con encabezado flex propio, ajuste de palabras y cierre absoluto a la derecha.
+- Estado: implementación publicada; revisión del diff y CI pendientes. Inspección visual Android/PWA y escritorio pendiente de Beta. No se modifican Apps Script, deployments ni datos externos.
