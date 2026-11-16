@@ -916,3 +916,10 @@ Se amplió `AdminImageScanCoordinatorContract.mjs` para exigir que cada mutació
 - `handleAuditIdentifiers` es lectura; examina Users, Cortes, Tutorial, Feedbacks/PyS, LogosMarca y Relay. La alerta Drive consulta Users y crea conversaciones/mensajes idempotentes en FEEDBACK.
 - Corrección preparada en `Coordinator.js` y prueba contractual ampliada para exigir cobertura de todas las lecturas ADMIN dedicadas y mutaciones FEEDBACK.
 - Pendiente: publicar los cambios, ejecutar CI y verificar rama/commit. No se ejecutaron pruebas remotas Apps Script ni se modificaron deployments o datos productivos.
+
+
+### Actualización de validación local — cobertura Coordinator
+- Publicación en `GPSpedia2.2.5_work`: políticas Coordinator, contrato y registros actualizados. Último commit de prueba: `30c8b20420995895823551fa1946c95b36001517`.
+- Cobertura comprobada: 33 mutaciones ADMIN, 4 lecturas ADMIN dedicadas y 28 mutaciones FEEDBACK; sin políticas faltantes.
+- `AdminImageScanCoordinatorContract`: 1/1 PASS ejecutado sobre los archivos recuperados de la rama. Sintaxis de `Coordinator.js`, `admin.js`, `feedback.js` e `InboxConversations.js`: PASS.
+- Pendiente: suite integral CI de GitHub Actions y validación remota Beta. La comprobación local no equivale a ejecución en runtime Apps Script.
