@@ -1232,3 +1232,14 @@ ADENDA CORRECTIVA — GP-UX-CUT-MODAL-01 — 2026-11-16
 - Causa corregida: flex-basis:100% aplicado al título en móvil junto con flex-wrap del toolbar.
 - GitHub Actions Node.js run 43913616427: SUCCESS. La aceptación visual en navegador móvil/PWA real permanece pendiente de Beta.
 ================================================================================
+
+
+================================================================================
+ADENDA CORRECTIVA — GP-UX-CUT-MODAL-01 — 2026-11-16 (segunda corrección)
+- Causa de la persistencia: un bloque CSS legado ubicado después de la cuadrícula volvía a declarar .detail-modal-toolbar como display:flex con flex-wrap y cambiaba el orden de las acciones. La prueba anterior verificaba la presencia de grid, pero no detectaba la regla posterior que prevalecía.
+- style.css: retirado el override flex conflictivo; se conserva la cuadrícula de dos columnas, las acciones en la columna derecha y el botón cerrar absoluto en la esquina superior derecha. Se mantienen botones 34 px escritorio/32 px móvil y logo +20 %.
+- JS/Tests/CutDetailModalLayout.mjs: nueva regresión que rechaza cualquier override flex/order posterior.
+- service-worker.js: App Shell actualizado de v42 a v43. JS/Tests/OfflineBrandAssets.mjs y JS/Tests/ServiceWorkerCache.js verifican la versión y la inclusión de style.css.
+- Commits de código: c7ba587, f4b4855, 6971db7, fd09b10 y 2bc026c (más la corrección de expresiones de prueba f4b4855).
+- Estado al registrar: implementación publicada en rama de trabajo; ejecución de CI y aceptación visual móvil/PWA pendientes. No se modificaron servicios Apps Script, deployments ni datos externos.
+================================================================================
