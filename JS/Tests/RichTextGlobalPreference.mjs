@@ -77,10 +77,11 @@ testCase("el backend mantiene la preferencia global en ScriptProperties y valida
     const values = new Map();
     const properties = { getProperty(key) { return values.has(key) ? values.get(key) : null; },
         setProperty(key, value) { values.set(key, String(value)); } };
+    const normalizerSource = extract(feedback, "function normalizeFeedbackRole(role)", "function findUniqueRowsByExactValue_");
+    const normalizeRole = new Function(normalizerSource + "\nreturn normalizeFeedbackRole;")();
     const runtime = new Function("PropertiesService", "normalizeFeedbackRole",
         feedback.slice(start, end) + "\nreturn { handleGetRichTextMode, handleSetRichTextMode, RICH_TEXT_MODE_PROPERTY_ };")(
-        { getScriptProperties: () => properties },
-        role => String(role || "").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").trim().toLowerCase()
+        { getScriptProperties: () => properties }, normalizeRole
     );
     assert.equal(runtime.handleGetRichTextMode({ __feedbackActor: { userId: "u1", role: "Técnico" } }).mode, "strict");
     assert.throws(() => runtime.handleGetRichTextMode({}), /sesión activa/);
