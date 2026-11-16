@@ -10,7 +10,7 @@ function runInboxRoleContractTests(sources) {
  run('Sesión toma Privilegios como campo canónico y no admite el alias retirado',()=>{const c=session({ID:'U1',SessionToken:'S1',Privilegios:'Jefe',Rol:'Tecnico'});assert(c.role==='jefe');const legacy=session({ID:'U1',SessionToken:'S1',Privilegios:'Gefe'});assert(legacy.role==='gefe');});
  run('Sesión normaliza el rol',()=>{assert(session({ID:'U1',SessionToken:'S1',Privilegios:' DESARROLLADOR '}).role==='desarrollador');});
  run('Campo Rol no concede acceso sin Privilegios',()=>{const c=session({ID:'U1',SessionToken:'S1',Rol:'Desarrollador'});assert(c&&c.role==='');});
- run('UI permite solo Desarrollador, Jefe y Supervisor',()=>{['Desarrollador','Jefe','Supervisor'].forEach(r=>assert(canApprove(r)));['Tecnico','Tecnico_exterior','Anónimo','Gefe',''].forEach(r=>assert(!canApprove(r)));});
+ run('UI permite únicamente Desarrollador',()=>{['Desarrollador'].forEach(r=>assert(canApprove(r)));['Jefe','Supervisor','Tecnico','Tecnico_exterior','Anónimo','Gefe',''].forEach(r=>assert(!canApprove(r)));});
  run('Detalle Inbox usa el rol normalizado del contexto',()=>{const s=ui.indexOf('export function renderInboxDetail(');assert(s>=0);const marks=["\nexport function ","\nfunction "].map(x=>ui.indexOf(x,s+20)).filter(x=>x>=0);const body=ui.slice(s,marks.length?Math.min(...marks):ui.length);assert(body.includes('const userRole = context.role'));assert(body.includes('canApproveInboxVideo_(userRole)'));assert(!/currentUser\.(?:Rol|Privilegios)/.test(body));});
  run('el diagnóstico de salud conserva el indicador de coordinador de FEEDBACK sin interpretar coincidencia de secretos',()=>{
   assert(api.includes('(serviceKey === "AUTH" || serviceKey === "FEEDBACK")'));
@@ -18,7 +18,7 @@ function runInboxRoleContractTests(sources) {
   assert(ui.includes('sin verificar coincidencia remota'));
   assert(ui.includes('__gpsepediaFeedbackCoordinatorWarningLogged'));
  });
- run('Backend mantiene RBAC para aprobación y rechazo',()=>{const s=feedback.indexOf('const FEEDBACK_ACTION_PERMISSIONS = Object.freeze(');assert(s>=0);const e=feedback.indexOf(');',s)+2;const policy=feedback.slice(s,e);assert(policy.includes('approveVideo: ["Desarrollador", "Jefe", "Supervisor"]'));assert(policy.includes('rejectVideo: ["Desarrollador", "Jefe", "Supervisor"]'));});
+ run('Backend mantiene RBAC para aprobación y rechazo',()=>{const s=feedback.indexOf('const FEEDBACK_ACTION_PERMISSIONS = Object.freeze(');assert(s>=0);const e=feedback.indexOf(');',s)+2;const policy=feedback.slice(s,e);assert(policy.includes('approveVideo: ["Desarrollador"]'));assert(policy.includes('rejectVideo: ["Desarrollador"]'));});
  run('Las acciones de no leído y ocultación son autenticadas, coordinadas y privadas',()=>{
   assert(feedback.includes('markInboxUnread: null')&&feedback.includes('deleteInboxConversation: null'),'Las acciones nuevas deben exigir actor autenticado.');
   assert(feedback.includes('handleMarkInboxUnread(payload)')&&feedback.includes('handleDeleteInboxConversation(payload)'),'FEEDBACK debe despachar ambas acciones.');
