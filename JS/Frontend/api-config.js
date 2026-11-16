@@ -13,7 +13,7 @@ export const RICH_TEXT_MODES = Object.freeze({ STRICT: "strict", ADVANCED: "adva
 
 function normalizeRichTextMode_(value) {
     const mode = String(value || "").trim().toLowerCase();
-    return [RICH_TEXT_MODE_MODES.STRICT, RICH_TEXT_MODE_MODES.ADVANCED].includes(mode) ? mode : null;
+    return [RICH_TEXT_MODES.STRICT, RICH_TEXT_MODE_MODES.ADVANCED].includes(mode) ? mode : null;
 }
 
 export function getRichTextMode() {
@@ -50,7 +50,7 @@ export async function loadRichTextMode(session) {
 }
 
 export async function setRichTextMode(mode, actorRole, session) {
-    const normalizedRole = String(actorRole || "").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").trim().toLowerCase();
+    const normalizedRole = String(actorRole || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
     const normalizedMode = normalizeRichTextMode_(mode);
     if (normalizedRole !== "desarrollador") {
         throw new Error("Solo un Desarrollador puede cambiar el modo de texto enriquecido.");
