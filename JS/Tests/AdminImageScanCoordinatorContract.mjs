@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 
 const admin = readFileSync(new URL("../Services/admin.js", import.meta.url), "utf8");
 const coordinator = readFileSync(new URL("../Services/Coordinator.js", import.meta.url), "utf8");
+const feedback = readFileSync(new URL("../Services/feedback.js", import.meta.url), "utf8");
 
 function extractFunction(source, name) {
     const match = source.match(new RegExp("function " + name + "\\([^\\n]*\\) \\{[\\s\\S]*?\\n\\}"));
@@ -14,6 +15,8 @@ const mutation = new Function(extractFunction(admin, "isSharedMutationAction_") 
 const read = new Function(extractFunction(admin, "isSharedReadAction_") +
     "\nreturn isSharedReadAction_;")();
 const policy = new Function(coordinator + "\nreturn coordinatorPolicy_;")();
+const feedbackMutation = new Function(extractFunction(feedback, "isSharedMutationAction_") +
+    "\nreturn isSharedMutationAction_;")();
 
 for (const action of ["getReplacedImages", "getDriveStorage", "getCortesImageFolders"]) {
     assert.equal(read(action), true, action + " debe usar una lease de lectura específica.");
@@ -66,6 +69,32 @@ for (const action of mutationNames) {
 assert.equal(policy("ADMIN", "markReplacedImageInUse").writeResources.includes("IMAGE_INVENTORY"), true);
 assert.equal(policy("ADMIN", "applyCortesImageReconciliation").writeResources.includes("CORTES"), true);
 assert.equal(policy("ADMIN", "freezeIdentifierFormulas").maintenance, true);
+
+// Toda lectura ADMIN que solicita lease dedicada debe tener una política.
+for (const action of ["getReplacedImages", "getDriveStorage", "getCortesImageFolders", "auditIdentifiers"]) {
+    assert.equal(read(action), true, action + " debe usar una lease de lectura.");
+    assert.ok(policy("ADMIN", action), "Falta política explícita para ADMIN/" + action);
+}
+const identifierAudit = policy("ADMIN", "auditIdentifiers");
+for (const resource of ["USERS", "CORTES", "TUTORIAL", "FEEDBACK", "LOGOS", "RELAY"]) {
+    assert.ok(identifierAudit.readResources.includes(resource),
+        "La auditoría de IDs debe reservar lectura de " + resource);
+}
+assert.deepEqual(identifierAudit.writeResources, [],
+    "La auditoría de identificadores es estrictamente de solo lectura.");
+
+// Toda mutación declarada por FEEDBACK debe tener política explícita en Coordinator.
+const feedbackMutationList = extractFunction(feedback, "isSharedMutationAction_");
+const feedbackMutationNames = [...feedbackMutationList.matchAll(/"([^"]+)"/g)].map(match => match[1]);
+for (const action of feedbackMutationNames) {
+    assert.ok(policy("FEEDBACK", action), "Falta política explícita para FEEDBACK/" + action);
+}
+const driveAlert = policy("FEEDBACK", "notifyDevelopersDriveCritical");
+assert.ok(driveAlert.readResources.includes("USERS"),
+    "La alerta de Drive consulta los destinatarios en USERS.");
+assert.ok(driveAlert.writeResources.includes("FEEDBACK"),
+    "La alerta de Drive crea conversaciones y mensajes en FEEDBACK.");
+
 
 const routerHarness = new Function(
     extractFunction(admin, "isSharedMutationAction_") + "\n" +
