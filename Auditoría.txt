@@ -1189,3 +1189,45 @@ Validación:
 - CI run 43784270101, commit a431fd3c709954dc0b08fc2446c56caf10ff8b62: SUCCESS; 108 suites / 1,663 pruebas / 0 fallos.
 - Falta prueba Beta con sesión heredada y operación pendiente real. No se desplegó WRITE/AUTH ni se alteraron operaciones externas.
 ================================================================================
+
+==========================================================
+AUD-2026-11-16-09 — Inbox: esquema parcial, lecturas y consistencia del historial
+Severidad: Media
+Estado: CORREGIDO EN RAMA; PRUEBAS LOCALES AISLADAS APROBADAS; VALIDACIÓN BETA PENDIENTE.
+
+Ubicación:
+- JS/Services/InboxConversations.js — inboxConversationSheet_(), ensureInboxConversationSheets_(), handleGetInboxConversations() y handleGetInboxMessages().
+
+Evidencia:
+- La lectura podía inicializar encabezados en hojas existentes vacías, aunque el llamador solicitara solo lectura.
+- El inicializador anterior podía completar automáticamente un esquema parcial creando hojas faltantes.
+- La lectura de conversaciones descartaba silenciosamente filas cuyo participantsJson no podía interpretarse.
+- No se comprobaban de forma completa las relaciones entre identificadores, contador de mensajes, último mensaje y estados de los participantes.
+
+Impacto:
+- Una consulta podía modificar Spreadsheet.
+- La reparación automática podía ocultar la causa de un esquema incompleto.
+- Conversaciones dañadas podían desaparecer de la bandeja y los historiales inconsistentes podían mostrarse como parciales.
+
+Corrección:
+- Ningún handler crea ni inicializa hojas automáticamente. Las cuatro hojas principales deben existir con encabezados válidos; una ausencia, hoja vacía o contrato distinto produce error explícito. La hoja de preferencias es opcional para lectura, pero las acciones que la necesitan la exigen sin crearla.
+- La lectura no presenta como vacío un esquema ausente o parcial y no modifica hojas.
+- Los errores de participantsJson se propagan.
+- Se validan IDs de conversación/mensaje, referencias huérfanas, estados duplicados o ausentes, contador de mensajes y referencia al último mensaje antes de devolver el listado o el historial.
+- Las mutaciones conservan el actor central, la jerarquía de destinatarios, el lock y la idempotencia existentes.
+
+Validación local aislada:
+- InboxConversations.mjs: 59/59 PASS.
+- InboxUi.mjs: 31/31 PASS.
+- InboxRoleContract.js: 20/20 PASS.
+- InboxAuditTrail.js: 15/15 PASS.
+- InboxCachePagination.js: 5/5 PASS.
+- Paginación Inbox: 4/4 PASS.
+- Total: 134 comprobaciones aprobadas en runtime JavaScript aislado, con dependencias simuladas.
+- Node.js CLI no se ejecutó. El contenedor no pudo clonar GitHub; la sintaxis de UI se comprobó mediante compilación en runtime JavaScript después de retirar import/export.
+- GitHub Actions no pudo confirmarse: el estado combinado no devolvió checks y el conector no expone el listado de ejecuciones push.
+
+Límites:
+- No se consultaron deployments FEEDBACK/Coordinator ni hojas Spreadsheet reales.
+- La verificación en servicios desplegados, cuentas Beta y dispositivos reales queda reservada a Beta. No se hicieron escrituras ni migraciones externas.
+==========================================================
