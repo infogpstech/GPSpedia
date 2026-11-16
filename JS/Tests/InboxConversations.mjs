@@ -741,8 +741,7 @@ run("Las hojas principales ausentes se crean sin renombrar ni borrar datos depen
     const conversations=spreadsheet.getSheetByName("InboxConversations"),states=spreadsheet.getSheetByName("InboxConversationState");
     spreadsheet.sheets.delete("InboxConversations");spreadsheet.sheets.delete("InboxConversationState");
     try {
-        const result=api.handleGetInboxConversations({ ...actor("U1","token-a"),folder:"received" });
-        assert.equal(result.status,"success");
+        assert.throws(() => api.handleGetInboxConversations({ ...actor("U1","token-a"),folder:"received" }),/historial contiene un mensaje sin conversación válida/);
         assert.deepEqual(spreadsheet.getSheetByName("InboxConversations").rows[0],inboxSchemaHeaders.InboxConversations);
         assert.deepEqual(spreadsheet.getSheetByName("InboxConversationState").rows[0],inboxSchemaHeaders.InboxConversationState);
     } finally { spreadsheet.sheets.set("InboxConversations",conversations);spreadsheet.sheets.set("InboxConversationState",states); }
