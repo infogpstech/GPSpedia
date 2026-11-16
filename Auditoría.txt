@@ -1432,3 +1432,27 @@ AUDITORÍA COMPLEMENTARIA — 2026-11-16 — AUD-2026-11-16-06
 ### Validación
 - GitHub Actions Node.js run `43913616427`: **SUCCESS**. La suite de regresión del repositorio terminó correctamente.
 - Aceptación visual en navegador móvil/PWA real: pendiente de Beta; no se afirma como ejecutada.
+
+
+
+## ADENDA DE REGRESIÓN — AUD-2026-11-16-02 — 2026-11-16 (segunda revisión)
+
+**Severidad:** Media — persistencia del desplazamiento de acciones en móvil/PWA.  
+**Estado:** CORRECCIÓN LOCAL PUBLICADA; CI y aceptación visual Beta pendientes.
+
+### Causa raíz adicional confirmada
+- style.css contenía una segunda declaración de .detail-modal-toolbar después de la cuadrícula: display:flex, flex-wrap:wrap y padding de layout flex.
+- El mismo bloque asignaba order:2 y margin-left:auto a .detail-modal-header-actions.
+- Al estar después de las reglas grid, la cascada CSS anulaba el layout previsto. La media query móvil volvía a declarar columnas grid, pero no restablecía display:grid; por ello el encabezado seguía siendo flex.
+- JS/Tests/CutDetailModalLayout.mjs solo buscaba que existiera una regla grid y no comprobaba la ausencia de overrides posteriores. La prueba podía pasar aunque el navegador aplicara flex.
+
+### Corrección aplicada
+- Se eliminó el bloque flex legado, preservando la cuadrícula original de dos columnas y la posición absoluta del cierre.
+- Se conservaron las dimensiones: logo 57.6 px escritorio / 45.6 px móvil (+20 %); acciones 34 px escritorio / 32 px móvil.
+- Se reforzó CutDetailModalLayout.mjs para fallar si aparece una declaración flex en el toolbar o order:2 en las acciones.
+- App Shell actualizado de v42 a v43; OfflineBrandAssets.mjs y ServiceWorkerCache.js verifican v43 y la inclusión de style.css.
+
+### Validación
+- Inspección estática posterior a la edición: 0 declaraciones display:flex para .detail-modal-toolbar, 1 declaración grid y 0 overrides order:2 para .detail-modal-header-actions.
+- Los archivos modificados están publicados en GPSpedia2.2.5_work. CI aún no se ha ejecutado en esta adenda.
+- Aceptación visual en Android, navegador móvil y PWA instalada: pendiente de Beta. No se afirma como realizada.
