@@ -38,12 +38,12 @@ testCase("la cabecera y acciones del modal se agrupan en una barra flexible", ()
 });
 
 testCase("ninguna regla posterior puede sustituir la cuadrícula del encabezado por flex", () => {
-    assert.doesNotMatch(css, /\\.detail-modal-toolbar\\s*\\{[^}]*display\\s*:\\s*flex/);
-    assert.doesNotMatch(css, /\\.detail-modal-header-actions\\s*\\{[^}]*order\\s*:\\s*2/);
-    assert.match(css, /\\.detail-modal-toolbar\\s*\\{[^}]*display\\s*:\\s*grid/);
-    assert.match(css, /\\.detail-modal-header-actions\\s*\\{[^}]*grid-column\\s*:\\s*2/);
-    assert.match(css, /\\.detail-modal-header-actions\\s*\\{[^}]*grid-row\\s*:\\s*1/);
-    assert.match(css, /\\.detail-modal-toolbar\\s*>\\s*\\.info-close-btn\\s*\\{[^}]*position:\\s*absolute/);
+    assert.doesNotMatch(css, /\.detail-modal-toolbar\s*\{[^}]*display\s*:\s*flex/);
+    assert.doesNotMatch(css, /\.detail-modal-header-actions\s*\{[^}]*order\s*:\s*2/);
+    assert.match(css, /\.detail-modal-toolbar\s*\{[^}]*display\s*:\s*grid/);
+    assert.match(css, /\.detail-modal-header-actions\s*\{[^}]*grid-column\s*:\s*2/);
+    assert.match(css, /\.detail-modal-header-actions\s*\{[^}]*grid-row\s*:\s*1/);
+    assert.match(css, /\.detail-modal-toolbar\s*>\s*\.info-close-btn\s*\{[^}]*position:\s*absolute/);
 });
 
 testCase("el logo y el modelo ocupan la esquina superior izquierda sin desplazar las acciones", () => {
