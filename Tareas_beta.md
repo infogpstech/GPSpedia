@@ -79,3 +79,19 @@ Este registro reúne los hallazgos informados durante las pruebas Beta. La imple
 - Las pruebas Node.js y GitHub Actions no sustituyen pruebas en navegador, Android/PWA ni despliegues Apps Script.
 - No ejecutar despliegues productivos, modificar ScriptProperties, secretos, hojas, permisos ni datos de Drive sin autorización documentada.
 - Mantener la rama base protegida sin cambios.
+
+
+## Auditoría estática adicional — BETA-010 a BETA-014 y BETA-050/051 (2026-11-16)
+
+Esta revisión confirma contratos y rutas del código versionado; **no sustituye** la prueba HTTP ni la medición en el deployment Beta.
+
+- **BETA-010 — borrado de logs:** `clearActivityLogs` pasa por FEEDBACK con permiso Desarrollador; `clearSensitiveLogs` pasa por AUTH y consume el actor central con rol Desarrollador. Los handlers no deben aceptar un rol enviado por el navegador.
+- **BETA-011 — auditoría de carpeta/Drive:** `auditDriveImagesInCortes` está declarada como mutación ADMIN con política propia y escritura limitada a `IMAGE_AUDIT_STATE`; mantiene control Desarrollador.
+- **BETA-012 — imágenes históricas:** `getReplacedImages` usa lectura ADMIN dedicada y reserva recursos de referencia; no concede permisos de recuperación, movimiento ni eliminación.
+- **BETA-013 — concurrencia:** `getReplacedImages`, `getDriveStorage` y `getCortesImageFolders` tienen leases de lectura específicas. El escáner conserva lease propia para su estado reanudable. El contrato `AdminImageScanCoordinatorContract.mjs` comprueba aislamiento de políticas y rutas. Sigue pendiente medir latencia/contención con solicitudes concurrentes en Beta.
+- **BETA-014 — matriz general:** `ActionDispatchContract.js` comprueba mapa, endpoint, dispatcher y handler; `VehicleModalRolePolicy.mjs`, `AdminImageScanCoordinatorContract.mjs` y contratos ADMIN verifican restricciones de rol. La aceptación final requiere llamadas HTTP positivas/negativas en Beta.
+- **BETA-050/051 — sesión y revalidación:** FEEDBACK, ADMIN, WRITE y USERS entregan actor confiable del Coordinator a los handlers protegidos. Los handlers reutilizan ese actor; no consultan de nuevo Users/ActiveSessions cuando el contexto central está presente. AUTH/Coordinator conserva expiración, epoch, revocación y cambio de rol. No se debe retirar esa barrera central ni el RBAC por acción.
+
+**Evidencia local:** CI run `43786801781` SUCCESS — 108 suites / 1,664 pruebas / 0 fallos; `ActionDispatchContract` 12/12 y `AdminImageScanCoordinatorContract` PASS. GitHub Pages run `43786801161` SUCCESS.
+
+**Estado:** auditoría estática local revisada; BETA-010 a BETA-014 y BETA-050/051 no se cierran hasta comprobar deployment, roles reales, datos aislados y concurrencia en Beta.

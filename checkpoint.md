@@ -1111,3 +1111,15 @@ Se amplió `AdminImageScanCoordinatorContract.mjs` para exigir que cada mutació
 - No se desplegaron Apps Script ni se modificaron Spreadsheet, Drive, secretos o datos productivos. La comprobación real de lectura de mensajes sigue pendiente en Beta.
 
 **Siguiente trabajo:** completar la auditoría local de BETA-010 a BETA-014 y continuar con BETA-020 a BETA-026. La validación externa requiere deployments y cuentas Beta; no se marcará como aprobada sin evidencia.
+
+
+## Auditoría local de permisos y coordinación ADMIN/FEEDBACK (2026-11-16)
+
+- Se revisaron las rutas de borrado de logs, auditoría Drive, historial de imágenes, leases de lectura/escritura y matriz de acciones protegidas.
+- BETA-010: FEEDBACK/clearActivityLogs y AUTH/clearSensitiveLogs requieren actor Desarrollador.
+- BETA-011/012: auditoría Drive e historial usan rutas ADMIN protegidas y políticas explícitas; la lectura del historial no habilita mutaciones.
+- BETA-013: las lecturas ADMIN tienen leases dedicadas; el escáner conserva lease propia para IMAGE_AUDIT_STATE. La latencia/concurrencia real sigue sin medirse en Beta.
+- BETA-014: mapa, dispatcher y handlers están cubiertos por ActionDispatchContract; matriz de roles por VehicleModalRolePolicy y contratos ADMIN.
+- BETA-050/051: los routers protegidos pasan el actor central a los handlers; se evita repetir búsquedas Users/ActiveSessions, conservando expiración, epoch, revocación y RBAC.
+- CI run `43786801781`: 108 suites / 1,664 pruebas / 0 fallos. Pages run `43786801161`: SUCCESS.
+- No se ejecutaron llamadas HTTP contra deployments Beta ni se modificaron servicios, hojas, Drive o datos productivos. Mantener estas tareas abiertas hasta obtener evidencia de campo.
