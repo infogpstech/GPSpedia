@@ -708,14 +708,20 @@ run("la alerta de cuota crea mensajes del sistema solo para desarrolladores y es
     }),/80/);
 });
 run("Una hoja de estado faltante se crea y conserva el error de estados aún no migrados", () => {
+    const original=spreadsheet.getSheetByName("InboxConversationState");
     spreadsheet.sheets.delete("InboxConversationState");
-    assert.throws(() => api.handleGetInboxConversations({ ...actor("U1","token-a"), folder:"received" }),/estado de los participantes está incompleto/);
-    assert.deepEqual(spreadsheet.getSheetByName("InboxConversationState").rows[0],inboxSchemaHeaders.InboxConversationState);
+    try {
+        assert.throws(() => api.handleGetInboxConversations({ ...actor("U1","token-a"), folder:"received" }),/estado de los participantes está incompleto/);
+        assert.deepEqual(spreadsheet.getSheetByName("InboxConversationState").rows[0],inboxSchemaHeaders.InboxConversationState);
+    } finally { spreadsheet.sheets.set("InboxConversationState",original); }
 });
 run("Una hoja de mensajes faltante se crea y no se oculta la inconsistencia de datos", () => {
+    const original=spreadsheet.getSheetByName("InboxMessages");
     spreadsheet.sheets.delete("InboxMessages");
-    assert.throws(() => api.handleGetInboxConversations({ ...actor("U1","token-a"), folder:"received" }),/contador de mensajes no coincide/);
-    assert.deepEqual(spreadsheet.getSheetByName("InboxMessages").rows[0],inboxSchemaHeaders.InboxMessages);
+    try {
+        assert.throws(() => api.handleGetInboxConversations({ ...actor("U1","token-a"), folder:"received" }),/contador de mensajes no coincide/);
+        assert.deepEqual(spreadsheet.getSheetByName("InboxMessages").rows[0],inboxSchemaHeaders.InboxMessages);
+    } finally { spreadsheet.sheets.set("InboxMessages",original); }
 });
 
 run("Inbox crea todas las hojas requeridas faltantes y la inicialización es idempotente", () => {

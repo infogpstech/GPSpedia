@@ -1,7 +1,7 @@
 function runActivityLogsBoundedReadTests(sources){
  const source=String(sources.feedback||""),out=[];let passed=0,failed=0;
  const assert=(x,m)=>{if(!x)throw Error(m||"assert");},eq=(a,b)=>{if(a!==b)throw Error("Expected "+b+" got "+a);},run=(name,fn)=>{try{fn();passed++;out.push({name,status:"PASS"});}catch(e){failed++;out.push({name,status:"FAIL",message:String(e.message||e)});}};
- const s=source.indexOf("function buildCutContributionSummary_()"),e=source.indexOf("\n\n\n/* TAREA 9",s),fn=source.slice(s,e);assert(s>=0&&e>s);
+ const s=source.indexOf("function buildCutContributionSummary_()"),e=source.indexOf("\n\n/* TAREA 9",s),fn=source.slice(s,e);assert(s>=0&&e>s);
  const make=(a,b)=>{const calls=[],sheet=(name,rows)=>({getLastRow:()=>rows.length,getRange:(r,c,n,w)=>({getValues:()=>{calls.push({name,r,n,w});return rows.slice(r-1,r-1+n).map(x=>x.slice(c-1,c-1+w));}}),getDataRange:()=>{throw Error("unbounded");}}),as=sheet("activity",a),bs=sheet("audit",b);
  const api=new Function("getSafeSheet","getSpreadsheet","SHEET_NAMES","COLS_ACTIVIDAD_USUARIO","INBOX_AUDIT_SHEET_NAME","INBOX_AUDIT_HEADERS",fn+"\nreturn handleGetActivityLogs;")(n=>n==="ActividadUsuario"?as:null,()=>({getSheetByName:n=>n==="InboxAuditLog"?bs:null}),{ACTIVIDAD_USUARIO:"ActividadUsuario"},{id:1,timestamp:2,idUsuario:3,nombreUsuario:4,tipoActividad:5,idElementoAsociado:6,detalle:7},"InboxAuditLog",["eventId","timestamp","actorId","actorName","action","itemType","itemId","details"]);return{api,calls};};
  const a=(id,t)=>[id,t,"U","User","like","V","D"],b=(id,t)=>[id,t,"A","Admin","delete","problem_report",id,"E"];
