@@ -177,6 +177,7 @@
             </div>
             <div class="inbox-header-actions">
                 <button id="inbox-new-message" class="inbox-primary-button inbox-icon-action" type="button" aria-label="Nuevo mensaje" title="Nuevo mensaje" hidden><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i></button>
+                <button id="inbox-search-toggle" class="inbox-secondary-button inbox-icon-action" type="button" aria-label="Mostrar búsqueda" title="Buscar"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i></button>
                 <button id="inbox-conversation-refresh" class="inbox-secondary-button inbox-icon-action" type="button" aria-label="Actualizar bandeja" title="Actualizar"><i class="fa-solid fa-rotate" aria-hidden="true"></i></button>
             </div>
         </header>
@@ -196,36 +197,21 @@
         <section id="inbox-conversations-view" class="inbox-conversations-view">
             <aside class="inbox-conversation-sidebar" aria-label="Lista de conversaciones">
                 <nav id="inbox-folder-nav" class="inbox-folder-nav" aria-label="Carpetas de conversaciones">
-                    <button type="button" data-inbox-folder="received" aria-pressed="true">Recibidos</button>
-                    <button type="button" data-inbox-folder="unread" aria-pressed="false">No leídos</button>
-                    <button type="button" data-inbox-folder="sent" aria-pressed="false">Enviados</button>
-                    <button type="button" data-inbox-folder="archived" aria-pressed="false">Archivados</button>
+                    <button type="button" data-inbox-folder="received" aria-pressed="true" aria-label="Recibidos" title="Recibidos"><i class="fa-solid fa-inbox" aria-hidden="true"></i><span>Recibidos</span></button>
+                    <button type="button" data-inbox-folder="read" aria-pressed="false" aria-label="Leídos" title="Leídos"><i class="fa-solid fa-envelope-open" aria-hidden="true"></i><span>Leídos</span></button>
+                    <button type="button" data-inbox-folder="unread" aria-pressed="false" aria-label="No leídos" title="No leídos"><i class="fa-solid fa-envelope" aria-hidden="true"></i><span>No leídos</span></button>
+                    <button type="button" data-inbox-folder="sent" aria-pressed="false" aria-label="Enviados" title="Enviados"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Enviados</span></button>
+                    <button type="button" data-inbox-folder="archived" aria-pressed="false" aria-label="Archivados" title="Archivados"><i class="fa-solid fa-box-archive" aria-hidden="true"></i><span>Archivados</span></button>
                 </nav>
-                <form id="inbox-conversation-search-form" class="inbox-search-form" role="search">
+                <form id="inbox-conversation-search-form" class="inbox-search-form" role="search" hidden>
                     <label for="inbox-conversation-search">Buscar conversaciones</label>
                     <div class="inbox-search-row">
                         <input id="inbox-conversation-search" type="search" maxlength="80" autocomplete="off" placeholder="Asunto, persona o mensaje">
-                        <button class="inbox-secondary-button" type="submit">Buscar</button>
+                        <button class="inbox-secondary-button" type="submit" aria-label="Ejecutar búsqueda"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i></button>
                     </div>
                 </form>
-                <div class="inbox-filter-row">
-                    <label for="inbox-category-filter">Categoría</label>
-                    <select id="inbox-category-filter" class="inbox-form-control">
-                        <option value="all">Todas las categorías</option>
-                        <option value="general">General</option>
-                        <option value="soporte">Soporte</option>
-                        <option value="acceso">Acceso</option>
-                        <option value="contenido">Contenido</option>
-                        <option value="instalacion">Instalación</option>
-                        <option value="otro">Otro</option>
-                    </select>
-                </div>
                 <div id="inbox-conversation-list" class="inbox-conversation-list" aria-live="polite" aria-relevant="additions text"></div>
-                <nav class="inbox-pagination" aria-label="Paginación de conversaciones">
-                    <button id="inbox-conversation-previous" class="inbox-secondary-button" type="button" disabled>Anterior</button>
-                    <span id="inbox-conversation-page-label" aria-live="polite">Página 1</span>
-                    <button id="inbox-conversation-next" class="inbox-secondary-button" type="button" disabled>Siguiente</button>
-                </nav>
+
             </aside>
             <section id="inbox-conversation-detail" class="inbox-conversation-detail" aria-label="Detalle de conversación" aria-live="polite">
                 <p class="inbox-state-message">Selecciona una conversación para consultar sus mensajes.</p>
@@ -239,6 +225,11 @@
         </section>
           </div>
         </div>
+        <nav id="inbox-pagination" class="inbox-pagination" aria-label="Paginación de la bandeja">
+            <button id="inbox-page-previous" class="inbox-secondary-button" type="button" aria-label="Página anterior" disabled>←</button>
+            <span id="inbox-page-label" aria-live="polite">1/1</span>
+            <button id="inbox-page-next" class="inbox-secondary-button" type="button" aria-label="Página siguiente" disabled>→</button>
+        </nav>
         <p id="inbox-conversation-status" class="inbox-status" role="status" aria-live="polite"></p>
     </section>
 </div>
