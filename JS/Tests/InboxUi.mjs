@@ -17,6 +17,10 @@ check("El módulo UI conserva sintaxis ECMAScript válida", () => {
     assert.equal(result.status, 0, result.stderr || "ui.js no pasó el análisis sintáctico.");
 });
 check("El Inbox es un diálogo modal accesible", () => {
+    for (const section of ["general", "soporte", "contact", "reports", "contributions"]) assert.ok(html.includes('data-inbox-section="' + section + '"'));
+    assert.match(ui, /function setInboxSection_\(/);
+    assert.match(ui, /context.role !== "desarrollador"/);
+    assert.match(ui, /item.type === "video_approval"/);
     assert.match(html, /id="inbox-modal-content"[^>]*role="dialog"[^>]*aria-modal="true"/);
     assert.match(html, /aria-labelledby="inbox-modal-title"/);
     assert.match(html, /aria-label="Cerrar bandeja de entrada"/);
