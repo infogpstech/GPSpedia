@@ -120,6 +120,16 @@ function runSessionUiRoleInvalidationTests(sources) {
   assert(f.includes("window.state.setState({ currentUser: null })"));
   assert(f.includes("window.location.replace('../index.html')"));
  });
+ run("payload Developer acepta ID e id mediante el contexto autenticado común",()=>{
+  const helper=slice(ui,"function getDeveloperSessionPayload()","/**\\n * TAREA 2");
+  const resolve=new Function("getUiSessionContext_",helper+"; return getDeveloperSessionPayload();");
+  const legacy=resolve(()=>({userId:"legacy-user",sessionToken:"token-legacy",role:"desarrollador"}));
+  assert(legacy.userId==="legacy-user"&&legacy.sessionToken==="token-legacy");
+  const canonical=resolve(()=>({userId:"canonical-user",sessionToken:"token-canonical",role:"desarrollador"}));
+  assert(canonical.userId==="canonical-user"&&canonical.sessionToken==="token-canonical");
+  let rejected=false;try{resolve(()=>null);}catch(error){rejected=/sesión autenticada válida/.test(error.message);}
+  assert(rejected,"Debe rechazar sesiones sin contexto o token.");
+ });
  run("AUTH conserva la validación de inicio/restauración y el backend protege las operaciones; los paneles no revalidan",()=>{
   const f=slice(auth,"export async function validateActiveSession(","export async function checkSession");
   assert(f.includes("result.valid === false")&&f.includes("logout('Tu sesión ya no está vigente. Inicia sesión nuevamente.', user)"));
