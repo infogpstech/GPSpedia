@@ -44,6 +44,11 @@ testCase("el título del panel tiene expansión animada y respeta movimiento red
  assert.match(css,/@keyframes dev-tools-title-expand/);
  assert.match(css,/@media \(prefers-reduced-motion: reduce\)[\s\S]*?dev-tools-title \{ animation: none; \}/);
 });
+testCase("la expansión de la pestaña activa desactiva transiciones con movimiento reducido",()=>{
+ const reducedMotion = css.slice(css.lastIndexOf("@media (prefers-reduced-motion: reduce)"));
+ assert.match(reducedMotion, /#dev-tools-modal \.dev-tab-link,\s*#dev-tools-modal \.dev-tab-link span\s*\{\s*transition: none;/);
+ assert.match(reducedMotion, /#dev-tools-modal \.dev-tools-title\s*\{\s*animation: none;/);
+});
 testCase("la navegación es horizontal, con icono compacto y expansión animada",()=>{
  assert.match(css,/#dev-tools-modal \.dev-tools-sidebar \{[\s\S]*?flex-direction: row/);
  assert.match(css,/#dev-tools-modal \.dev-tab-link \{[\s\S]*?flex-basis: 42px/);
