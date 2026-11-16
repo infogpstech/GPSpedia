@@ -1,7 +1,7 @@
 // ============================================================================
 // GPSPEDIA-ADMIN SERVICE (DESACOPLADO Y EXCLUSIVO PARA DESARROLLADOR/ADMIN)
 // ============================================================================
-// COMPONENT VERSION: 2.7.0
+// COMPONENT VERSION: 2.7.1
 
 // Variables globales para el diagnóstico y seguimiento de errores y estado
 var currentStage = "Inicialización";
@@ -209,6 +209,9 @@ function isBackupUrlForResource(backupUrl, expectedPrefix) {
 function getVinMigrationBackupCacheKey(userId) {
     return "VIN_MIGRATION_BACKUP_" + String(userId || "").trim();
 }
+function getImageReconciliationBackupCacheKey(userId) {
+    return "CORTES_IMAGE_RECONCILIATION_BACKUP_" + String(userId || "").trim();
+}
 function verifyVinMigrationBackup(backupId, developerContext) {
     const cleanBackupId = String(backupId || "").trim();
     const userId = String(developerContext && developerContext.userId || "").trim();
@@ -227,6 +230,60 @@ function verifyVinMigrationBackup(backupId, developerContext) {
         throw new Error("El respaldo no contiene una hoja «Cortes» compatible con la migración VIN.");
     }
     return { backupId: cleanBackupId, backupName: backupFile.getName() };
+}
+
+function verifyImageReconciliationBackup_(backupId, developerContext) {
+    const cleanBackupId = String(backupId || "").trim();
+    const userId = String(developerContext && developerContext.userId || "").trim();
+    if (!userId || !/^[a-zA-Z0-9_-]{20,}$/.test(cleanBackupId)) {
+        throw new Error("La conciliación requiere el ID de un respaldo de Spreadsheet válido.");
+    }
+    if (cleanBackupId === String(SPREADSHEET_ID)) throw new Error("La Spreadsheet operativa no puede utilizarse como respaldo.");
+    const cache = CacheService.getScriptCache();
+    const cachedRecord = cache.get(getImageReconciliationBackupCacheKey(userId));
+    if (!cachedRecord) throw new Error("No existe un respaldo verificado para esta sesión. Genera un respaldo antes de aplicar.");
+    let record;
+    try { record = JSON.parse(cachedRecord); }
+    catch (error) { throw new Error("El registro temporal del respaldo no es válido. Genera un respaldo nuevo."); }
+    if (!record || record.backupId !== cleanBackupId || record.sourceSpreadsheetId !== String(SPREADSHEET_ID) ||
+        !/^[a-f0-9]{64}$/i.test(String(record.fingerprint || ""))) {
+        throw new Error("El respaldo no fue generado y verificado por esta sesión de Desarrollador.");
+    }
+    const backupFile = DriveApp.getFileById(cleanBackupId);
+    let backupAccess;
+    try { backupAccess = backupFile.getSharingAccess(); }
+    catch (error) { throw new Error("No se pudo verificar la ACL del respaldo."); }
+    if (backupFile.isTrashed() || backupFile.getMimeType() !== "application/vnd.google-apps.spreadsheet" ||
+        backupFile.getName() !== record.backupName || !isDirectChildOfDriveRoot(backupFile) ||
+        backupAccess !== DriveApp.Access.PRIVATE) {
+        throw new Error("El respaldo no está disponible, no es privado o no coincide con el archivo verificado.");
+    }
+    let manifest;
+    try { manifest = JSON.parse(String(backupFile.getDescription() || "")); }
+    catch (error) { throw new Error("El manifiesto del respaldo no es válido."); }
+    if (manifest.kind !== ADMIN_RESTORE_DB_MANIFEST_DESCRIPTION_ || manifest.version !== 2 ||
+        manifest.status !== "complete" || manifest.sourceSpreadsheetId !== String(SPREADSHEET_ID) ||
+        manifest.createdAt !== record.createdAt || manifest.fingerprint !== record.fingerprint ||
+        Number(manifest.sheetCount) !== Number(record.sheetCount)) {
+        throw new Error("El manifiesto del respaldo no coincide con la copia completa verificada.");
+    }
+    const backupSpreadsheet = SpreadsheetApp.openById(cleanBackupId);
+    if (backupSpreadsheet.getId() !== cleanBackupId || !backupSpreadsheet.getSheetByName(SHEET_NAMES.CORTES)) {
+        throw new Error("El respaldo no contiene una hoja Cortes válida.");
+    }
+    const backupManifest = adminRestoreValidateDatabaseSchema_(backupSpreadsheet);
+    if (backupManifest.fingerprint !== record.fingerprint || backupManifest.sheetCount !== Number(record.sheetCount) ||
+        backupManifest.rowCount !== Number(record.rowCount) || backupManifest.cellCount !== Number(record.cellCount) ||
+        backupManifest.formulaCount !== Number(record.formulaCount)) {
+        throw new Error("El contenido del respaldo cambió después de su verificación.");
+    }
+    const currentManifest = adminRestoreValidateDatabaseSchema_(getSpreadsheet());
+    if (currentManifest.fingerprint !== record.fingerprint || currentManifest.sheetCount !== Number(record.sheetCount) ||
+        currentManifest.rowCount !== Number(record.rowCount) || currentManifest.cellCount !== Number(record.cellCount) ||
+        currentManifest.formulaCount !== Number(record.formulaCount)) {
+        throw new Error("La base de datos cambió después del respaldo. Genera un respaldo nuevo antes de aplicar.");
+    }
+    return { backupId: cleanBackupId, backupName: record.backupName, fingerprint: record.fingerprint, createdAt: record.createdAt };
 }
 
 function collectActiveDriveReferences(includeLocations = true) {
@@ -844,7 +901,7 @@ function clearAdminState(action) {
 // ROUTER PRINCIPAL (doGet y doPost)
 // ============================================================================
 /* TAREA 1.1: RECUPERACIÓN DE LA COMUNICACIÓN CON EL MICROSERVICIO DE ADMINISTRACIÓN */
-const ADMIN_SERVICE_VERSION = "2.6.2";
+const ADMIN_SERVICE_VERSION = "2.7.1";
 function doGet(e) {
     if (e && e.parameter && e.parameter.debug === 'true') {
         const serviceState = {
@@ -1696,6 +1753,21 @@ function handleBackupDatabase(payload, logMessage, developerContext) {
             throw new Error("No se pudo confirmar el estado completo del manifiesto DB.");
         }
         if (!developerContext || !developerContext.userId) throw new Error("No se pudo asociar el respaldo verificado con la sesión de desarrollador.");
+        if (backupFile.getSharingAccess() !== DriveApp.Access.PRIVATE) {
+            throw new Error("El respaldo no es privado; no se registrará como copia válida para conciliación.");
+        }
+        const imageBackupRecord = {
+            backupId, backupName, sourceSpreadsheetId: ss.getId(), createdAt: runId,
+            fingerprint: copiedManifest.fingerprint, sheetCount: copiedManifest.sheetCount,
+            rowCount: copiedManifest.rowCount, cellCount: copiedManifest.cellCount,
+            formulaCount: copiedManifest.formulaCount
+        };
+        const imageBackupRecordJson = JSON.stringify(imageBackupRecord);
+        const imageBackupCacheKey = getImageReconciliationBackupCacheKey(developerContext.userId);
+        CacheService.getScriptCache().put(imageBackupCacheKey, imageBackupRecordJson, 21600);
+        if (CacheService.getScriptCache().get(imageBackupCacheKey) !== imageBackupRecordJson) {
+            throw new Error("No se pudo asociar el respaldo completo con la sesión para conciliación.");
+        }
         CacheService.getScriptCache().put(getVinMigrationBackupCacheKey(developerContext.userId), backupId, 21600);
         logMessage("Respaldo", `Recurso de respaldo de base de datos creado, comparado y verificado. ID: ${backupId}`);
         return { status: "success", backupId, backupUrl, timestamp: runId,
@@ -3273,9 +3345,14 @@ function buildCortesImageReconciliationPlan_(targets, driveFiles, activeReferenc
                     reason: "La búsqueda de referencias del Spreadsheet no pudo verificarse por completo." });
                 return;
             }
-            if (file.accessPublic !== true) {
-                results.push({ status: "access_restricted", fileId, fileName: file.fileName, target,
-                    reason: "El archivo no tiene acceso público verificado; no se modificaron sus permisos." });
+            const accessClass = String(file.accessClass || (file.accessPublic === true ? "public_link_viewer" : "restricted"));
+            if (file.accessPublic !== true || accessClass !== "public_link_viewer") {
+                results.push({ status: accessClass === "unverifiable" ? "unverifiable" : "access_restricted",
+                    fileId, fileName: file.fileName, target, accessClass,
+                    accessReason: String(file.accessReason || ""),
+                    reason: accessClass === "unverifiable"
+                        ? "La ACL del archivo no pudo verificarse; no se propuso una URL."
+                        : "La imagen no tiene acceso público por enlace y solo lectura; no se modificaron sus permisos." });
                 return;
             }
             if (locations.length) {
@@ -3293,6 +3370,40 @@ function buildCortesImageReconciliationPlan_(targets, driveFiles, activeReferenc
                 note: "Propuesta por nombre canónico exacto; requiere validar acceso al archivo y aprobar antes de escribir." });
             usedTargetKeys.add(targetKey);
         });
+    });
+    const accessById = new Map(driveFiles.filter(file => file && file.fileId).map(file => [String(file.fileId), file]));
+    results.forEach(item => {
+        const file = accessById.get(String(item.fileId || ""));
+        if (!file) return;
+        const accessClass = String(file.accessClass || (file.accessPublic === true ? "public_link_viewer" : "restricted"));
+        const accessReason = String(file.accessReason || "");
+        const locations = Array.isArray(item.locations) ? item.locations : [];
+        const referenceActive = locations.length > 0 || ["already_linked", "referenced_elsewhere"].includes(item.status);
+        const required = referenceActive || item.status === "matched" ||
+            (item.status === "access_restricted" && !!item.target);
+        const requirementUnknown = item.status === "unverifiable" && !item.target && !locations.length;
+        let publicityCompliance = "not_public";
+        if (requirementUnknown) publicityCompliance = "unverifiable";
+        else if (required) {
+            if (accessClass === "public_link_viewer" && file.accessPublic === true) publicityCompliance = "compliant";
+            else if (accessClass === "public_web_viewer") publicityCompliance = "too_broad";
+            else if (accessClass === "public_write") publicityCompliance = "unsafe_public";
+            else if (accessClass === "unverifiable") publicityCompliance = "unverifiable";
+            else publicityCompliance = "missing_public_access";
+        } else if (accessClass === "public_link_viewer") publicityCompliance = "public_not_required";
+        else if (accessClass === "public_web_viewer") publicityCompliance = "public_too_broad_not_required";
+        else if (accessClass === "public_write") publicityCompliance = "public_write_not_required";
+        else if (accessClass === "unverifiable") publicityCompliance = "unverifiable";
+        item.accessClass = accessClass;
+        item.accessReason = accessReason;
+        item.publicityRequirement = requirementUnknown ? "unknown" : required ? "required" : "not_required";
+        item.publicityCompliance = publicityCompliance;
+        if (required && publicityCompliance !== "compliant" &&
+            ["already_linked", "referenced_elsewhere"].includes(item.status)) {
+            item.referenceStatus = item.status;
+            item.status = publicityCompliance === "unverifiable" ? "unverifiable" : "access_restricted";
+            item.reason = "La imagen tiene una referencia activa, pero su ACL no cumple la política pública por enlace y solo lectura. " + accessReason;
+        }
     });
     const counts = { matched: 0, already_linked: 0, orphaned: 0, ambiguous: 0, occupied: 0, referenced_elsewhere: 0, historical: 0, access_restricted: 0, unverifiable: 0, invalid: invalidFiles.length };
     results.forEach(item => { counts[item.status] = (counts[item.status] || 0) + 1; });
@@ -3325,7 +3436,7 @@ function handlePreviewCortesImageReconciliation_(payload, logMessage, developerC
     if (!ownerId) throw new Error("La conciliación requiere una sesión Desarrollador verificada.");
     const submitted = Array.isArray(payload && payload.files) ? payload.files : [];
     if (!submitted.length || submitted.length > 25) throw new Error("Envía entre 1 y 25 archivos por lote.");
-    const root = getCortesRootFolder(), membershipCache = new Map([[String(DRIVE_FOLDER_ID), true]]);
+    const root = getCortesRootFolder(), permissionCache = new Map();
     const files = [], invalid = [];
     const seen = new Set();
     submitted.forEach(entry => {
@@ -3341,23 +3452,13 @@ function handlePreviewCortesImageReconciliation_(payload, logMessage, developerC
             if (file.isTrashed()) throw new Error("El archivo está en papelera.");
             const mimeType = String(file.getMimeType() || "").toLowerCase();
             if (!mimeType.startsWith("image/")) throw new Error("El archivo no es una imagen.");
-            const parents = file.getParents();
-            let parentCount = 0, insideCount = 0, outsideCount = 0, folderPath = "";
-            while (parents.hasNext()) {
-                const parent = parents.next();
-                parentCount++;
-                if (isFolderInsideCortes(parent, root.getId(), membershipCache)) {
-                    insideCount++;
-                    if (!folderPath) folderPath = getFolderPathInsideCortes(parent, root.getId());
-                } else outsideCount++;
-            }
-            if (!parentCount || !insideCount || outsideCount) throw new Error("El archivo no pertenece exclusivamente al árbol autorizado «Cortes».");
-            let accessPublic = false;
-            try {
-                const access = file.getSharingAccess();
-                accessPublic = access === DriveApp.Access.ANYONE || access === DriveApp.Access.ANYONE_WITH_LINK;
-            } catch (accessError) { accessPublic = false; }
-            files.push({ fileId, fileName: String(file.getName() || ""), mimeType, folderPath, accessPublic });
+            const fileName = String(file.getName() || "");
+            const parent = getSingleParentFolderInsideCortes(file, root.getId());
+            const folderPath = getFolderPathInsideCortes(parent, root.getId());
+            const folderChain = getCortesFolderChain_(parent, root.getId());
+            const aclResources = [{ resourceId: fileId, resourceType: "file", resourceName: fileName }].concat(folderChain);
+            const acl = classifyCortesImageAcl_(aclResources, permissionCache);
+            files.push({ fileId, fileName, mimeType, folderPath, ...acl });
         } catch (error) {
             invalid.push({ fileId, fileName: String(entry && entry.fileName || ""), reason: String(error && error.message || error) });
         }
@@ -3366,20 +3467,51 @@ function handlePreviewCortesImageReconciliation_(payload, logMessage, developerC
     const referenceSnapshot = collectActiveDriveReferences(true);
     const historicalDriveIds = collectReplacedImageHistoryIds_();
     const referenceScanVerified = Number(referenceSnapshot.unverifiableReferenceCount || 0) === 0;
+    const requestedAuditId = String(payload && payload.auditId || "").trim();
+    let missingReferences = [], missingReferenceCheckStatus = "unverifiable";
+    let applyCapabilityAvailable = false;
+    if (/^[0-9a-f-]{36}$/i.test(requestedAuditId)) {
+        try {
+            const auditState = loadDriveAuditServerState_(requestedAuditId);
+            const auditValid = auditState.ownerId === ownerId && auditState.status === "complete" &&
+                auditState.scanVersion === ADMIN_SERVICE_VERSION && auditState.imageMetadataVersion === 1 &&
+                Number.isFinite(Number(auditState.completedAt)) && Date.now() - Number(auditState.completedAt) <= 21600000 &&
+                getLatestDriveAuditIdForUser_(ownerId) === requestedAuditId;
+            if (auditValid) {
+                const seenIds = loadDriveAuditSeenIds_(requestedAuditId, Number(auditState.pageCount));
+                const missingCheck = findMissingCortesDriveReferences_(referenceSnapshot.references, seenIds.fileIds, root.getId());
+                missingReferenceCheckStatus = missingCheck.verified ? "verified" : "unverifiable";
+                missingReferences = missingCheck.missingReferences || [];
+                applyCapabilityAvailable = missingCheck.verified && missingReferences.length === 0 && referenceScanVerified;
+            }
+        } catch (capabilityError) {
+            missingReferenceCheckStatus = "unverifiable";
+            missingReferences = [];
+            applyCapabilityAvailable = false;
+        }
+    }
     const plan = buildCortesImageReconciliationPlan_(targetSnapshot.targets, files, referenceSnapshot.references, referenceScanVerified, historicalDriveIds);
     plan.invalidFiles.push.apply(plan.invalidFiles, invalid);
     plan.counts.invalid = plan.invalidFiles.length;
+    plan.missingReferences = missingReferences;
+    plan.missingReferenceCount = missingReferences.length;
+    plan.missingReferenceCheckStatus = missingReferenceCheckStatus;
     const sourceDigestPayload = JSON.stringify({
         targets: targetSnapshot.targets.map(target => [target.row, target.vehicleId, target.field, target.currentValue, target.hasFormula, target.baseName]),
         references: Array.from(referenceSnapshot.references.entries()).map(([id, locations]) => [id, locations]).sort((a,b)=>a[0].localeCompare(b[0])),
         unverifiableReferenceCount: Number(referenceSnapshot.unverifiableReferenceCount || 0),
+        missingReferenceCheckStatus,
+        missingReferences: missingReferences.map(item => [item.fileId, item.status, item.locations]),
         sourceLastRow: targetSnapshot.sourceLastRow,
         rowIssues: targetSnapshot.rowIssues,
         historicalDriveIds: Array.from(historicalDriveIds).sort()
     });
     const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, sourceDigestPayload)
         .map(value => ("0" + ((value + 256) % 256).toString(16)).slice(-2)).join("");
-    const batchDigestPayload = JSON.stringify(files.map(file => [file.fileId, file.fileName, file.mimeType, file.accessPublic]).sort((a,b)=>a[0].localeCompare(b[0])));
+    const batchDigestPayload = JSON.stringify(files.map(file => [
+        file.fileId, file.fileName, file.mimeType, file.accessClass, file.accessPublic,
+        file.accessSources.map(source => [source.resourceType, source.resourceId, source.role, source.allowFileDiscovery])
+    ]).sort((a,b)=>a[0].localeCompare(b[0])));
     const batchDigest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, batchDigestPayload)
         .map(value => ("0" + ((value + 256) % 256).toString(16)).slice(-2)).join("");
     plan.referenceCheckStatus = referenceScanVerified ? "verified" : "unverifiable";
@@ -3388,25 +3520,14 @@ function handlePreviewCortesImageReconciliation_(payload, logMessage, developerC
     plan.historicalReferenceCount = historicalDriveIds.size;
     plan.manifestDigest = digest;
     plan.batchDigest = batchDigest;
-    let applyCapabilityAvailable = false;
-    const requestedAuditId = String(payload && payload.auditId || "").trim();
-    if (requestedAuditId) {
-        try {
-            const auditState = loadDriveAuditServerState_(requestedAuditId);
-            applyCapabilityAvailable = auditState.ownerId === ownerId && auditState.status === "complete" &&
-                auditState.scanVersion === ADMIN_SERVICE_VERSION && auditState.imageMetadataVersion === 1 &&
-                Number.isFinite(Number(auditState.completedAt)) && Date.now() - Number(auditState.completedAt) <= 21600000 &&
-                getLatestDriveAuditIdForUser_(ownerId) === requestedAuditId;
-        } catch (capabilityError) { applyCapabilityAvailable = false; }
-    }
     plan.capabilities = { applyApprovedReconciliation: applyCapabilityAvailable };
     plan.writePerformed = false;
     logMessage && logMessage("Conciliación Drive ↔ Cortes",
         "Dry-run: " + plan.counts.matched + " coincidencias exactas, " + plan.counts.orphaned +
-        " huérfanas, " + plan.counts.ambiguous + " ambiguas; sin escrituras.");
+        " huérfanas, " + plan.counts.ambiguous + " ambiguas, " + missingReferences.length +
+        " referencias sin archivo verificado; sin escrituras.");
     return plan;
 }
-
 
 function countCortesImageCells_(sheet) {
     const fields = ["imagenVehiculo", "imgCorte1", "imgCorte2", "imgCorte3", "imgApertura", "imgCableAlimen", "imgCableAlimen2", "imgCableAlimen3"];
@@ -3427,9 +3548,12 @@ function handleApplyCortesImageReconciliation_(payload, logMessage, developerCon
     if (!approvals.length || approvals.length > 10) throw new Error("La operación debe contener entre 1 y 10 propuestas aprobadas.");
     const auditId = String(payload.auditId || "").trim();
     if (!/^[0-9a-f-]{36}$/i.test(auditId)) throw new Error("La aplicación requiere el identificador de la auditoría Drive vigente.");
+    const backupId = String(payload.backupId || "").trim();
+    if (!/^[a-zA-Z0-9_-]{20,}$/.test(backupId)) throw new Error("La conciliación requiere un respaldo completo y verificado antes de escribir.");
     const lock = LockService.getScriptLock();
     try { lock.waitLock(30000); } catch (error) { throw new Error("No se pudo bloquear la aplicación de imágenes. Intenta nuevamente."); }
     try {
+        const verifiedBackup = verifyImageReconciliationBackup_(backupId, developerContext);
         const auditState = loadDriveAuditServerState_(auditId);
         if (auditState.ownerId !== ownerId || auditState.status !== "complete" ||
             auditState.scanVersion !== ADMIN_SERVICE_VERSION || auditState.imageMetadataVersion !== 1 ||
@@ -3449,8 +3573,13 @@ function handleApplyCortesImageReconciliation_(payload, logMessage, developerCon
             throw new Error("Una o más propuestas tienen nombres canónicos duplicados en el inventario Drive completo. No se aplicó ninguna asignación.");
         }
         const preview = handlePreviewCortesImageReconciliation_({
+            auditId,
             files: approvals.map(item => ({ fileId: String(item && item.fileId || "") }))
         }, logMessage, developerContext);
+        if (preview.missingReferenceCheckStatus !== "verified" ||
+            !Array.isArray(preview.missingReferences) || preview.missingReferences.length) {
+            throw new Error("La auditoría detectó referencias de Cortes sin archivo verificado. No se aplicó ninguna asignación.");
+        }
         const manifest = buildCortesImageReconciliationApprovalManifest_(preview, approvals, payload.manifestDigest);
         const auditMetadataById = new Map(metadata.map(item => [item.fileId, item]));
         manifest.forEach(item => {
@@ -3479,16 +3608,20 @@ function handleApplyCortesImageReconciliation_(payload, logMessage, developerCon
                 entry.cell.setValue(item.proposedUrl);
                 SpreadsheetApp.flush();
                 if (String(entry.cell.getValue() || "") !== item.proposedUrl || String(entry.cell.getFormula() || "")) throw new Error("La verificación read-back falló en " + item.row + ":" + item.column + ".");
-                const details = JSON.stringify({ row: item.row, column: item.column, field: item.field, vehicleId: item.vehicleId, manifestDigest: item.manifestDigest, operation: "apply" });
+                const details = JSON.stringify({ row: item.row, column: item.column, field: item.field, vehicleId: item.vehicleId,
+                    manifestDigest: item.manifestDigest, backupId: verifiedBackup.backupId, backupFingerprint: verifiedBackup.fingerprint, operation: "apply" });
                 if (!recordImageAdministrationActivity(developerContext, "cortes_image_reconciliation_applied", item.fileId, details)) throw new Error("No se pudo registrar la asignación " + item.fileId + " en ActividadUsuario.");
                 if (logMessage) logMessage("Reconciliación", "URL verificada en Cortes, fila " + item.row + ", campo " + item.field + ".");
             });
             const afterCount = countCortesImageCells_(sheet);
             if (afterCount !== beforeCount + manifest.length) throw new Error("El conteo de celdas de imagen no coincide con las asignaciones confirmadas.");
+            try { CacheService.getScriptCache().remove(getImageReconciliationBackupCacheKey(ownerId)); }
+            catch (cacheError) { logMessage && logMessage("Reconciliación", "No se pudo limpiar el vínculo temporal del respaldo; el fingerprint impedirá reutilizarlo.", 0, 0, true); }
             return { status: "success", writePerformed: true, processed: manifest.length, total: manifest.length,
                 appliedCount: manifest.length, failedCount: 0, beforeCount, afterCount, rollbackConfirmed: true,
+                backupId: verifiedBackup.backupId, backupName: verifiedBackup.backupName,
                 appliedVehicleIds: Array.from(new Set(manifest.map(item => String(item.vehicleId || "").trim()).filter(Boolean))),
-                manifestDigest: preview.manifestDigest, message: "Se aplicaron y verificaron todas las propuestas aprobadas." };
+                manifestDigest: preview.manifestDigest, message: "Se aplicaron y verificaron las propuestas aprobadas con respaldo completo." };
         } catch (applyError) {
             const rollbackErrors = [], rolledBack = [];
             for (let index = attempted.length - 1; index >= 0; index--) {
@@ -3517,7 +3650,7 @@ function handleApplyCortesImageReconciliation_(payload, logMessage, developerCon
                 status: rollbackConfirmed ? "warning" : "partial", writePerformed: attempted.length > 0,
                 processed: attempted.length, total: manifest.length, appliedCount: remaining,
                 rolledBackCount: rolledBack.length, failedCount: 1, beforeCount, afterCount,
-                rollbackConfirmed, partial: !rollbackConfirmed,
+                rollbackConfirmed, partial: !rollbackConfirmed, backupId: verifiedBackup.backupId,
                 message: String(applyError && applyError.message || applyError), rollbackErrors: rollbackErrors.slice(0, 10)
             };
         }
@@ -8993,6 +9126,162 @@ function getSingleParentFolderInsideCortes(resource, rootFolderId) {
     }
     return validParents[0];
 }
+function getCortesFolderChain_(folder, rootFolderId) {
+    const chain = [], visited = new Set();
+    let current = folder;
+    while (current) {
+        const resourceId = String(current.getId() || "").trim();
+        if (!resourceId || visited.has(resourceId)) throw new Error("Se detectó una jerarquía de carpetas inválida o cíclica en «Cortes».");
+        visited.add(resourceId);
+        chain.unshift({ resourceId, resourceType: "folder", resourceName: String(current.getName() || "") });
+        if (resourceId === String(rootFolderId)) return chain;
+        current = getSingleParentFolderInsideCortes(current, rootFolderId);
+    }
+    throw new Error("No se pudo reconstruir la cadena de carpetas de «Cortes».");
+}
+
+/** ACL detallada: DriveApp no expone el rol del permiso "anyone". */
+function getDrivePermissionsForImageResource_(resourceId, permissionCache) {
+    const id = String(resourceId || "").trim();
+    if (!id) return { verified: false, permissions: [], reason: "Recurso Drive sin ID." };
+    const cache = permissionCache instanceof Map ? permissionCache : null;
+    if (cache && cache.has(id)) return cache.get(id);
+    let result;
+    try {
+        if (typeof Drive === "undefined" || !Drive || !Drive.Permissions ||
+            typeof Drive.Permissions.list !== "function") {
+            throw new Error("El servicio avanzado Drive API no está habilitado; no se puede verificar el rol ni los permisos heredados.");
+        }
+        const permissions = [], seenTokens = new Set();
+        let pageToken = "", pages = 0;
+        do {
+            const options = { pageSize: 100, supportsAllDrives: true,
+                fields: "nextPageToken,permissions(id,type,role,allowFileDiscovery)" };
+            if (pageToken) options.pageToken = pageToken;
+            const page = Drive.Permissions.list(id, options);
+            if (!page || (page.permissions !== undefined && !Array.isArray(page.permissions))) {
+                throw new Error("Drive API devolvió una lista de permisos inválida.");
+            }
+            (page.permissions || []).forEach(permission => permissions.push(permission));
+            const nextToken = String(page.nextPageToken || "");
+            if (!nextToken) { pageToken = ""; break; }
+            if (seenTokens.has(nextToken)) throw new Error("La paginación de permisos Drive devolvió un cursor repetido.");
+            seenTokens.add(nextToken);
+            pageToken = nextToken;
+            pages++;
+            if (pages >= 20 && pageToken) throw new Error("La ACL supera el límite seguro de páginas de permisos.");
+        } while (pageToken);
+        result = { verified: true, permissions };
+    } catch (error) {
+        result = { verified: false, permissions: [], reason: String(error && error.message || error) };
+    }
+    if (cache) cache.set(id, result);
+    return result;
+}
+
+/**
+ * Política de publicación: solo "anyone/reader" con allowFileDiscovery=false
+ * (enlace, no indexable) se considera público por diseño para imágenes activas.
+ */
+function classifyCortesImageAcl_(resources, permissionCache) {
+    if (!Array.isArray(resources) || !resources.length) {
+        return { verified: false, accessClass: "unverifiable", accessPublic: false, publicByDesign: false,
+            accessSources: [], accessReason: "No se recibió la cadena de recursos Drive que debe auditarse." };
+    }
+    const publicSources = [];
+    for (let index = 0; index < resources.length; index++) {
+        const resource = resources[index] || {};
+        const resourceId = String(resource.resourceId || "").trim();
+        if (!resourceId) {
+            return { verified: false, accessClass: "unverifiable", accessPublic: false, publicByDesign: false,
+                accessSources: [], accessReason: "La cadena ACL contiene un recurso sin ID." };
+        }
+        const snapshot = getDrivePermissionsForImageResource_(resourceId, permissionCache);
+        if (!snapshot.verified) {
+            return { verified: false, accessClass: "unverifiable", accessPublic: false, publicByDesign: false,
+                accessSources: [], accessReason: "No se pudo verificar la ACL de " +
+                    String(resource.resourceType || "recurso") + " «" + String(resource.resourceName || resourceId) +
+                    "»: " + String(snapshot.reason || "error de Drive API") };
+        }
+        for (let permissionIndex = 0; permissionIndex < snapshot.permissions.length; permissionIndex++) {
+            const permission = snapshot.permissions[permissionIndex] || {};
+            if (String(permission.type || "").toLowerCase() !== "anyone") continue;
+            const role = String(permission.role || "").toLowerCase();
+            const source = { resourceId, resourceType: String(resource.resourceType || "resource"),
+                resourceName: String(resource.resourceName || resourceId), role,
+                allowFileDiscovery: permission.allowFileDiscovery };
+            if (role === "reader") {
+                if (typeof permission.allowFileDiscovery !== "boolean") {
+                    return { verified: false, accessClass: "unverifiable", accessPublic: false, publicByDesign: false,
+                        accessSources: [], accessReason: "Drive API no devolvió allowFileDiscovery para un permiso público de lectura." };
+                }
+                source.accessClass = permission.allowFileDiscovery ? "public_web_viewer" : "public_link_viewer";
+                publicSources.push(source);
+            } else if (["writer", "commenter", "owner", "organizer", "fileorganizer"].includes(role)) {
+                source.accessClass = "public_write";
+                publicSources.push(source);
+            } else {
+                return { verified: false, accessClass: "unverifiable", accessPublic: false, publicByDesign: false,
+                    accessSources: [], accessReason: "Drive API devolvió un rol público no reconocido: " + role + "." };
+            }
+        }
+    }
+    const classes = publicSources.map(source => source.accessClass);
+    let accessClass = "restricted", accessReason = "No se detectaron permisos públicos «anyone» en el archivo ni en sus carpetas superiores.";
+    if (classes.includes("public_write")) {
+        accessClass = "public_write";
+        accessReason = "Se detectó acceso público con permisos de escritura o comentarios en el archivo o en una carpeta superior.";
+    } else if (classes.includes("public_web_viewer")) {
+        accessClass = "public_web_viewer";
+        accessReason = "El archivo es descubrible públicamente en la web; excede el acceso por enlace previsto.";
+    } else if (classes.includes("public_link_viewer")) {
+        accessClass = "public_link_viewer";
+        accessReason = "Acceso público por enlace y solo lectura; cumple la política prevista para imágenes activas de Cortes.";
+    }
+    return { verified: true, accessClass, accessPublic: accessClass === "public_link_viewer",
+        publicByDesign: accessClass === "public_link_viewer", accessSources: publicSources, accessReason };
+}
+
+function findMissingCortesDriveReferences_(references, seenFileIds, rootFolderId) {
+    if (!(references instanceof Map) || !Array.isArray(seenFileIds)) {
+        return { verified: false, missingReferences: [], totalMissingReferences: 0, truncated: false };
+    }
+    const seen = new Set(seenFileIds.map(id => String(id || "").trim()));
+    const missingReferences = [];
+    references.forEach((locations, fileId) => {
+        const cortesLocations = (Array.isArray(locations) ? locations : [])
+            .filter(location => location && location.sheet === SHEET_NAMES.CORTES);
+        if (!cortesLocations.length || seen.has(String(fileId))) return;
+        let status = "missing_or_unverifiable";
+        let reason = "La referencia no aparece en el inventario Cortes y no se pudo confirmar su ubicación en Drive.";
+        try {
+            const file = DriveApp.getFileById(String(fileId));
+            if (file.isTrashed()) {
+                status = "trashed";
+                reason = "La referencia apunta a un archivo que está en la papelera de Drive.";
+            } else {
+                try {
+                    getSingleParentFolderInsideCortes(file, rootFolderId);
+                    status = "missing_from_audit";
+                    reason = "El archivo existe dentro de Cortes, pero no aparece en el inventario completo. Repite la auditoría.";
+                } catch (locationError) {
+                    const message = String(locationError && locationError.message || locationError);
+                    status = message.indexOf("fuera del árbol") >= 0 ? "outside_cortes_tree" : "ambiguous_location";
+                    reason = status === "outside_cortes_tree"
+                        ? "El archivo existe, pero está fuera del árbol autorizado Cortes."
+                        : "No se pudo confirmar una única carpeta principal dentro de Cortes.";
+                }
+            }
+        } catch (fileError) {
+            status = "missing_or_unverifiable";
+            reason = "La referencia no se pudo resolver en Drive; puede estar eliminada o no ser accesible para esta sesión.";
+        }
+        missingReferences.push({ fileId: String(fileId), status, locations: cortesLocations, reason });
+    });
+    return { verified: true, missingReferences: missingReferences.slice(0, 200),
+        totalMissingReferences: missingReferences.length, truncated: missingReferences.length > 200 };
+}
+
 
 
 /**
