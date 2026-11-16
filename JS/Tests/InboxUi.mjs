@@ -71,8 +71,9 @@ check("Las aprobaciones de vídeo no ofrecen una eliminación genérica no sopor
 });
 check("Los mensajes del Inbox renderizan formato únicamente después del sanitizador compartido", () => {
     assert.match(ui, /messageBody\.innerHTML\s*=\s*sanitizeHtmlContent\(String\(message\.body \|\| ""\)\)/);
-    assert.match(ui, /createRichTextToolbar\(textarea\.id\)/);
-    assert.match(ui, /createRichTextToolbar\(body\.id\)/);
+    assert.match(ui, /createRichTextToolbar\(textarea\.id, \{ forceAdvanced: true \}\)/);
+    assert.match(ui, /createRichTextToolbar\(body\.id, \{ forceAdvanced: true \}\)/);
+    assert.match(ui, /sanitizeHtmlContent\(String\(message\.body \|\| ""\), "advanced"\)/);
     assert.match(ui, /form\.append\(label, toolbar, textarea, status, send\)/);
 });
 check("Los borradores se recuperan por usuario y se limpian al cambiar de sesión", () => {
