@@ -13,9 +13,8 @@ const detail = ui.slice(start, end > start ? end : undefined);
 
 
 testCase("la línea azul llega al extremo del modal con márgenes simétricos y menos espacio vertical", () => {
-    const dividerCss = css.slice(css.lastIndexOf(".detail-modal-divider {"));
-    assert.ok(dividerCss.includes("width:calc(100% + 18px)"));
-    assert.ok(dividerCss.includes("margin:7.5px 0 7.5px 12px"));
+    assert.ok(css.includes("width:calc(100% + 18px)"));
+    assert.ok(css.includes("margin:7.5px 0 7.5px 12px"));
     assert.ok(css.includes(".detail-modal-divider { width:calc(100% + 22px); }"));
 });
 

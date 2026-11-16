@@ -855,3 +855,5 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - CI run 43946240367 detectó una expresión regular inválida en una prueba nueva; corregida en e944a753ceb5a62585fa7bac3349f5f75ccec6ad.
 - CI run 43946386787 avanzó hasta InboxUi y detectó un contrato heredado que esperaba la estructura anterior de toolbar/sanitización; actualizar a la estructura compacta actual y mantener la comprobación de sanitización explícita en modo avanzado.
 - Estado EN PROGRESO hasta CI integral aprobada. Beta visual pendiente.
+
+- CI run 43946591177: InboxUi 49/49 PASS; el único fallo de CutDetailModalLayout era una prueba que seleccionaba por lastIndexOf la regla móvil y por ello no encontraba el ancho desktop. Corregir el contrato para comprobar las declaraciones desktop y móvil de forma independiente; la implementación CSS no presentó fallo de sintaxis.

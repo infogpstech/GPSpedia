@@ -175,3 +175,5 @@ El checkpoint acumulativo anterior se conserva íntegro en `Checkpoint_Archive/c
 - Run 43946386787: 48/49 InboxUi PASS; el único fallo fue un contrato previo que esperaba createRichTextToolbar directo y el formulario sin wrapper. Se actualiza para comprobar createInboxRichTextToolbar, editorShell y sanitización avanzada explícita.
 - Las suites específicas de nueva barra, persistencia de controles extra, búsqueda expandible y fondos por tema pasaron en ese run.
 - Pendiente repetir CI Node.js completa, validar CutDetailModalLayout y Pages; inspección visual escritorio/móvil/PWA queda para Beta.
+
+- CI run 43946591177: InboxUi 49/49 PASS; CutDetailModalLayout falló solo porque el nuevo test leía el último selector del divisor (media móvil) al buscar el ancho desktop. Se corrige el test para verificar ambos anchos por separado. No hay fallo de sintaxis en los módulos.

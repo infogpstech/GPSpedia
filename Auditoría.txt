@@ -1611,3 +1611,5 @@ ADENDA AUD-2026-11-16-10 — GP-UX-INBOX-DESKTOP-02 / GP-UX-CUT-MODAL-05
 - Evidencia: GitHub Actions run 43946240367 falló por sintaxis de regex en la nueva prueba InboxUi; corregida en e944a753ceb5a62585fa7bac3349f5f75ccec6ad.
 - Evidencia: run 43946386787 alcanzó InboxUi (48/49 PASS); el fallo restante era un contrato obsoleto que esperaba el toolbar anterior y una llamada al sanitizador sin modo explícito. La implementación mantiene sanitización avanzada; se actualiza el contrato para reflejar wrapper compacto y editor integrado.
 - No se identificó fallo de lógica de negocio ni cambio en servicios. Repetir CI integral después de la corrección.
+
+ADENDA AUD-2026-11-16-10B: CI run 43946591177 confirmó InboxUi 49/49 PASS y detectó un falso negativo en CutDetailModalLayout: el test tomaba la última regla del divisor (media móvil) para comprobar el ancho de escritorio. Se corrige la selección del contrato; sin cambio funcional CSS.

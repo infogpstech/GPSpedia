@@ -1317,3 +1317,5 @@ GP-UX-INBOX-DESKTOP-02 / GP-UX-CUT-MODAL-05 — adenda 2026-11-16
 - Se actualizó el contrato InboxUi de renderizado sanitizado para reflejar el toolbar compacto del Inbox y el wrapper visual del editor; se conserva la exigencia de sanitización explícita en modo avanzado.
 - Se corrigieron dos defectos de las pruebas introducidas/obsoletas encontrados por GitHub Actions; no se cambió el sanitizador ni se relajó su contrato.
 ================================================================================
+
+- Ajuste de prueba CutDetailModalLayout: evitar tomar la regla móvil como si fuera la regla base; verificar ambas declaraciones independientemente. CI 43946591177: InboxUi 49/49 PASS; suite integral aún pendiente.
