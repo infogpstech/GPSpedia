@@ -182,11 +182,13 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 - Prueba específica: `DeveloperOperationMessages` 5/5 PASS. Pendiente comprobar operaciones y ausencia de duplicados en navegador Beta.
 
 ### BETA-035 — Textos del panel Desarrollador
-**Estado: PENDIENTE LOCAL; SIGUIENTE TAREA.**
+**Estado: IMPLEMENTACIÓN LOCAL; VALIDACIÓN CI PENDIENTE.**
 
-- Aplicar títulos y etiquetas compactos.
-- Llevar explicaciones secundarias a ayudas `ⓘ` específicas y accesibles.
-- Aplicar la política común de nombres largos y textos breves.
+- Se compactaron títulos, secciones, etiquetas y acciones sin cambiar sus IDs ni funciones.
+- Las explicaciones secundarias se movieron a ayudas contextuales `ⓘ` con botones accesibles, estado expandido, panel asociado, cierre por Escape y estilos responsive.
+- Se conservaron visibles estados operativos y advertencias esenciales; el modal de detalle de vehículos no recibió ayudas nuevas.
+- Se incluyeron los modales auxiliares de biblioteca y auditoría de imágenes.
+- Prueba específica: `DeveloperPanelCopy` (6 casos), pendiente de CI y validación visual Beta.
 
 **Alcance UX confirmado:** la organización integral del modal Desarrollador, la política de nombres largos, los textos concisos y las ayudas `ⓘ` se implementan dentro de BETA-021–026 y BETA-030–035. No abrir tareas paralelas ni reabrir GP-DEV-UX-01, cuyo alcance original está completado.
 

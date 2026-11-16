@@ -4652,3 +4652,57 @@ td, th {
         transition: none;
     }
 }
+
+
+/* BETA-035: títulos compactos y ayudas contextuales del panel Developer. */
+.dev-heading-with-help {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-width: 0;
+    margin-bottom: 6px;
+}
+.dev-heading-with-help > h2,
+.dev-heading-with-help > h3,
+.dev-heading-with-help > h4,
+.dev-heading-with-help > strong,
+.dev-heading-with-help > p {
+    min-width: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    overflow-wrap: anywhere;
+}
+.dev-heading-with-help > h2,
+.dev-heading-with-help > h3,
+.dev-heading-with-help > h4,
+.dev-heading-with-help > strong {
+    flex: 0 1 auto;
+}
+.dev-heading-help-popover {
+    flex: 1 1 100%;
+    margin: 2px 0 8px;
+}
+.dev-audit-scope-row {
+    align-items: flex-start;
+    margin: 4px 0 10px;
+}
+.dev-audit-scope-row > p {
+    flex: 1 1 300px;
+    line-height: 1.4;
+}
+#dev-tools-modal .dev-panel-heading > p {
+    margin: 4px 0 0;
+    font-size: .88rem;
+}
+#dev-tools-modal .dev-card > p:not([role="status"]) {
+    line-height: 1.4;
+}
+@media (max-width: 560px) {
+    .dev-heading-with-help {
+        align-items: flex-start;
+    }
+    .dev-heading-help-popover {
+        flex-basis: 100%;
+    }
+}

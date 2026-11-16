@@ -1300,3 +1300,17 @@ El usuario confirmó que el backlog pendiente también comprende la organizació
 
 
 - La primera actualización del contrato de conciliación tenía escapes de regex dobles y no coincidía con el código fuente; se simplificó a comprobaciones literales del mensaje compartido y del registro central.
+
+
+## Continuidad — BETA-034 y BETA-035 (2026-11-16)
+
+### BETA-034 — Mensajes centralizados
+- Commit de implementación: `08155faddd3c0e47e68d82c38c3cac3e4d03ed01`; ajustes de contrato: `eb2685f8471f58d811c501d25f9a3a8f3d654353`, `1f38b73c34247d9dc56fb88111d442678bc8e64f`.
+- CI run `43793590851`: SUCCESS — 116 suites / 1,728 pruebas / 0 fallos. `DeveloperOperationMessages`: 5/5 PASS. GitHub Pages run `43793590112`: SUCCESS.
+- Se mantiene pendiente la validación visual/operativa en navegador Beta.
+
+### BETA-035 — Textos compactos y ayudas contextuales
+- `index.html`: títulos y acciones breves; explicaciones secundarias trasladadas a botones `ⓘ` accesibles en panel Developer, biblioteca y auditoría.
+- `style.css`: filas de encabezado con ayuda y ajuste responsive.
+- Se preservan IDs y acciones; se mantiene sin cambios el modal de detalle de vehículos.
+- Suite `DeveloperPanelCopy` (6 casos) agregada al runner; pendiente CI y validación visual.

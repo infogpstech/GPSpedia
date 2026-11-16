@@ -833,3 +833,13 @@ HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
 2026-11-16 — CORRECCIÓN DE ESCAPES EN TEST DE CONCILIACIÓN
 - JS/Tests/CortesImageReconciliationUI.mjs: usa comprobaciones literales para el mensaje compartido y el registro central, evitando escapes dobles en regex.
 ================================================================================
+
+
+================================================================================
+2026-11-16 — BETA-035 TEXTOS COMPACTOS Y AYUDAS CONTEXTUALES
+- index.html: títulos, secciones, etiquetas y acciones del panel Developer simplificados; explicaciones secundarias trasladadas a ayudas ⓘ accesibles.
+- Biblioteca y auditoría Drive: descripciones compactas y alcance detallado bajo demanda.
+- style.css: encabezados con ayuda y comportamiento responsive.
+- JS/Tests/DeveloperPanelCopy.mjs: valida brevedad, accesibilidad de ayudas, conservación de estados y exclusión del modal de detalles de vehículos.
+- JS/Tests/RunServiceTests.mjs: suite BETA-035 integrada.
+================================================================================
