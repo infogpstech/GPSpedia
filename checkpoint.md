@@ -1889,3 +1889,5 @@ Backlog y registro de cambios sincronizados con este estado. La rama base perman
 - **Prueba:** `PysModalNavigation.js` verifica que no vuelvan los overrides y que CSS mantenga las dimensiones 140 × 120 px.
 - **PWA:** App Shell actualizado a `gpsepedia-cache-v39`.
 - **Estado:** implementación publicada en la rama de trabajo; pendiente CI sobre el commit y aceptación visual en navegador/Beta.
+
+- Tercer ajuste de contrato: se sustituyeron expresiones regulares innecesariamente complejas por verificaciones de fragmentos literales; la prueba anterior se parseaba, pero la expresión escapada se compilaba incorrectamente en Node 22. Se vuelve a ejecutar la suite.
