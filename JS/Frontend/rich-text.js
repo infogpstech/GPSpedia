@@ -503,6 +503,7 @@ export function createRichTextToolbar(targetId, options = {}) {
     const forceAdvanced = options.forceAdvanced === true;
     const editorMode = normalizeEditorMode_(options.mode) || (forceAdvanced ? "advanced" : (getRichTextMode() === "advanced" ? "advanced" : "basic"));
     const isFull = editorMode === "advanced", hasLists = editorMode === "lists" || isFull;
+    if (options.compact === true) return createCompactRichTextToolbar_(targetId, true);
     const toolbar = document.createElement("div");
     toolbar.className = "rich-editor-toolbar rich-editor-toolbar-compact";
     toolbar.dataset.richTargetId = String(targetId);
