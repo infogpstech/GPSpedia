@@ -93,7 +93,7 @@ Coordinator acumula conteos por servicio en buckets horarios de 24 horas dentro 
 
 El registro ocurre dentro de la solicitud ya existente a Coordinator, bajo su lock y como operación best-effort. No se añade una llamada de red independiente desde el navegador por cada acción. Si falla la escritura de telemetría, la operación protegida continúa. La consulta agregada `ADMIN/getServiceTraffic` es de solo lectura y está reservada al rol Desarrollador; no devuelve usuarios, tokens ni identificadores de sesión. La propia consulta no se contabiliza.
 
-El agregado global excluye lecturas públicas no coordinadas, el feed público del catálogo y sondeos de salud; por tanto, no representa todas las solicitudes HTTP. La interfaz presenta por separado esta métrica global y la actividad local del navegador, que se conserva en memoria durante una ventana de 15 minutos con un máximo de 600 eventos. Nunca se deben sumar ni intercambiar ambas fuentes como si tuvieran el mismo alcance.
+El agregado global excluye lecturas públicas no coordinadas, el feed público del catálogo y sondeos de salud; por tanto, no representa todas las solicitudes HTTP. La interfaz Developer utiliza únicamente el agregado global de Coordinator; se retiró el panel y el almacén de métricas locales del navegador. Los detalles por servicio muestran los conteos globales de 1, 6 y 24 horas. La métrica conserva el alcance limitado a operaciones protegidas con lease: no debe interpretarse como total de solicitudes HTTP ni un cero como ausencia de actividad, especialmente para lecturas públicas de CATALOG y otras rutas no coordinadas.
 
 ## Política y recuperación
 
