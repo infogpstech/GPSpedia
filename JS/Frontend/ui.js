@@ -25,7 +25,7 @@ import { captureModalViewState, restoreModalViewState, shouldRecordModalTransiti
 import { createRichTextToolbar, sanitizeHtmlContent, refreshRichTextToolbars, mountRichTextEditors, positionRichTextMenu, stripRichTextDemoPlaceholder, bindRichTextEditorSelection_ } from './rich-text.js';
 import { renderActivityLogs, renderActivityContributions } from './activityDashboard.js';
 import { getDriveStorageCriticalState } from './driveStorageAlerts.js';
-import { getOrCreateTermsDeviceId, getDeviceTermsAcceptance, saveDeviceTermsAcceptance } from './termsDeviceAcceptance.js';
+import { getOrCreateTermsDeviceId, getDeviceTermsAcceptance, getDeviceTermsSyncStatus, saveDeviceTermsAcceptance } from './termsDeviceAcceptance.js';
 import { parseDeveloperConsoleConfirmation } from './developerConsoleConfirmation.js';
 
 async function clearServiceWorkerRuntimeCache_(windowRef, timeoutMs = 5000) {
@@ -10290,6 +10290,85 @@ export function showLoginScreen(reason = null) {
 }
 
 
+const termsAcceptanceSyncInFlight_ = new Map();
+let termsAcceptanceOnlineRetryBound_ = false;
+
+function isCurrentTermsSyncSession_(userId, sessionToken) {
+    try {
+        const stored = JSON.parse(localStorage.getItem('gpsepedia_session') || 'null');
+        const active = getState().currentUser;
+        return Boolean(stored && active &&
+            String(stored.ID || stored.id || '') === userId && stored.SessionToken === sessionToken &&
+            String(active.ID || active.id || '') === userId && active.SessionToken === sessionToken);
+    } catch (error) {
+        return false;
+    }
+}
+
+function syncPendingTermsAcceptance_(user, deviceId) {
+    const userId = String(user && (user.ID || user.id) || '').trim();
+    const sessionToken = user && user.SessionToken;
+    if (!userId || typeof sessionToken !== 'string' || !sessionToken ||
+        getDeviceTermsSyncStatus(localStorage, userId, deviceId, TERMS_CURRENT_VERSION) !== 'pending') {
+        return Promise.resolve(false);
+    }
+    const requestKey = userId + '|' + deviceId + '|' + TERMS_CURRENT_VERSION + '|' + sessionToken;
+    if (termsAcceptanceSyncInFlight_.has(requestKey)) return termsAcceptanceSyncInFlight_.get(requestKey);
+
+    const request = (async () => {
+        try {
+            if (!isCurrentTermsSyncSession_(userId, sessionToken)) return false;
+            const result = await routeAction('acceptTerms', {
+                userId, sessionToken, version: TERMS_CURRENT_VERSION, deviceId
+            });
+            const confirmed = result && result.termsAcceptance;
+            if (!result || result.status !== 'success' || result.accepted !== true ||
+                !confirmed || confirmed.status !== 'accepted' || confirmed.version !== TERMS_CURRENT_VERSION ||
+                !Number.isFinite(Date.parse(confirmed.acceptedAt))) {
+                throw new Error('AUTH no confirmó la aceptación.');
+            }
+            if (!isCurrentTermsSyncSession_(userId, sessionToken)) return false;
+
+            const stored = JSON.parse(localStorage.getItem('gpsepedia_session') || 'null');
+            if (!stored || String(stored.ID || stored.id || '') !== userId || stored.SessionToken !== sessionToken) return false;
+            const synced = saveDeviceTermsAcceptance(localStorage, userId, deviceId, confirmed);
+            stored.TermsAcceptance = synced;
+            localStorage.setItem('gpsepedia_session', JSON.stringify(stored));
+            const active = getState().currentUser;
+            if (active && String(active.ID || active.id || '') === userId && active.SessionToken === sessionToken) {
+                const updatedUser = { ...active, TermsAcceptance: synced };
+                user.TermsAcceptance = synced;
+                setState({ currentUser: updatedUser });
+            }
+            return true;
+        } catch (error) {
+            console.warn('La aceptación local permanece guardada; la sincronización remota se reintentará cuando haya conexión.',
+                error && error.name ? error.name : 'TermsSyncError');
+            return false;
+        }
+    })();
+    termsAcceptanceSyncInFlight_.set(requestKey, request);
+    request.finally(() => {
+        if (termsAcceptanceSyncInFlight_.get(requestKey) === request) termsAcceptanceSyncInFlight_.delete(requestKey);
+    });
+    return request;
+}
+
+function ensureTermsAcceptanceOnlineRetry_() {
+    if (termsAcceptanceOnlineRetryBound_ || typeof window === 'undefined' || !window.addEventListener) return;
+    termsAcceptanceOnlineRetryBound_ = true;
+    window.addEventListener('online', () => {
+        const active = getState().currentUser;
+        if (!active) return;
+        try {
+            const deviceId = getOrCreateTermsDeviceId(localStorage, window.crypto);
+            syncPendingTermsAcceptance_(active, deviceId);
+        } catch (error) {
+            console.warn('No se pudo preparar el reintento de aceptación de términos.', error && error.name ? error.name : 'TermsStorageError');
+        }
+    });
+}
+
 function renderTermsGate_(user) {
     const container = document.querySelector('.container'), footer = document.querySelector('.footer');
     const modal = document.getElementById('terms-modal'), button = document.getElementById('btn-accept-terms');
@@ -10330,42 +10409,39 @@ function renderTermsGate_(user) {
     container.style.display = 'none'; footer.style.display = 'none'; modal.style.display = 'flex';
     button.disabled = false;
     activateLegalModalFocus_(modal, { initialFocus: button, allowEscape: false });
-    button.onclick = async () => {
-        button.disabled = true; if (errorMessage) errorMessage.textContent = '';
+    button.onclick = () => {
+        button.disabled = true;
+        if (errorMessage) errorMessage.textContent = '';
         try {
             const sessionToken = user && user.SessionToken;
             if (!userId || typeof sessionToken !== 'string' || !sessionToken) {
                 throw new Error('No se pudo identificar la sesión activa. Inicia sesión nuevamente.');
             }
-            const result = await routeAction('acceptTerms', {
-                userId, sessionToken, version: TERMS_CURRENT_VERSION, deviceId
-            });
-            const confirmed = result && result.termsAcceptance;
-            if (!result || result.status !== 'success' || result.accepted !== true ||
-                !confirmed || confirmed.status !== 'accepted' || confirmed.version !== TERMS_CURRENT_VERSION ||
-                !Number.isFinite(Date.parse(confirmed.acceptedAt))) {
-                throw new Error('El servidor no confirmó el registro de aceptación. El catálogo permanece bloqueado.');
-            }
             const stored = JSON.parse(localStorage.getItem('gpsepedia_session') || 'null');
-            if (!stored || String(stored.ID || stored.id || '') !== userId || stored.SessionToken !== sessionToken) {
+            if (!stored || String(stored.ID || stored.id || '') !== userId || stored.SessionToken !== sessionToken ||
+                !isCurrentTermsSyncSession_(userId, sessionToken)) {
                 throw new Error('La sesión local cambió durante la aceptación. Inicia sesión nuevamente.');
             }
 
-            saveDeviceTermsAcceptance(localStorage, userId, deviceId, confirmed);
-            stored.TermsAcceptance = confirmed;
-            localStorage.setItem('gpsepedia_session', JSON.stringify(stored));
-            user.TermsAcceptance = confirmed; setState({ currentUser: user });
-            // Reanudar el renderizado completo de la app después de aceptar el aviso.
-            // showApp vuelve a pasar por renderTermsGate_ (que ya reconoce la aceptación local)
-            // y termina de pintar saludo, navegación y controles según el rol.
+            const localAcceptance = {
+                version: TERMS_CURRENT_VERSION,
+                acceptedAt: new Date().toISOString(),
+                status: 'accepted'
+            };
+            const saved = saveDeviceTermsAcceptance(localStorage, userId, deviceId, localAcceptance, { syncStatus: 'pending' });
+            user.TermsAcceptance = saved;
+            setState({ currentUser: user });
+
+            // La aceptación local habilita la aplicación inmediatamente. AUTH se sincroniza
+            // después, sin retener el modal ni bloquear la carga del catálogo.
             if (showApp(user) !== true) {
                 throw new Error('No se pudo completar la apertura de la aplicación después de aceptar el aviso.');
             }
-            if (typeof window.auth?.loadInitialData === 'function') window.auth.loadInitialData();
         } catch (error) {
-            const message = error && error.message ? error.message : 'No se pudo registrar la aceptación.';
-            if (errorMessage) errorMessage.textContent = message.length > 110 ? 'No se pudo registrar la aceptación.' : message;
-            showGlobalError(message); button.disabled = false;
+            const message = error && error.message ? error.message : 'No se pudo guardar la aceptación local.';
+            if (errorMessage) errorMessage.textContent = message.length > 110 ? 'No se pudo guardar la aceptación local.' : message;
+            showGlobalError(message);
+            button.disabled = false;
         }
     };
     return false;
@@ -10381,16 +10457,41 @@ export function showApp(user) {
         lastShownAppContext = appContext;
     }
 
-    const splash = document.getElementById('splash-screen');
-    splash.style.opacity = '0';
-    setTimeout(() => {
-        splash.style.display = 'none';
-    }, 500);
-
     document.getElementById('login-modal').style.display = 'none';
+    const fadeSplash = () => {
+        const splash = document.getElementById('splash-screen');
+        if (!splash) return;
+        splash.style.opacity = '0';
+        setTimeout(() => { splash.style.display = 'none'; }, 500);
+    };
 
-    // AUTH confirma la aceptación individual; localStorage solo conserva una copia de sesión.
-    if (!renderTermsGate_(user)) return;
+    // El catálogo solo puede arrancar después de que la puerta de términos confirme
+    // una aceptación local vigente para este usuario y dispositivo.
+    if (!renderTermsGate_(user)) {
+        fadeSplash();
+        return false;
+    }
+
+    ensureTermsAcceptanceOnlineRetry_();
+    try {
+        const deviceId = getOrCreateTermsDeviceId(localStorage, window.crypto);
+        syncPendingTermsAcceptance_(user, deviceId);
+    } catch (error) {
+        console.warn('No se pudo comprobar la sincronización pendiente de términos.', error && error.name ? error.name : 'TermsStorageError');
+    }
+
+    // Iniciar cache-first antes de comenzar el desvanecimiento del Splash. La promesa
+    // no se espera: el tiempo visual existente se aprovecha sin prolongar la pantalla.
+    try {
+        const startCatalogLoad = window.auth && window.auth.loadInitialData;
+        if (typeof startCatalogLoad === 'function') {
+            Promise.resolve(startCatalogLoad()).catch(error =>
+                console.warn('No se pudo iniciar la carga del catálogo:', error && error.name ? error.name : 'CatalogStartupError'));
+        }
+    } catch (error) {
+        console.warn('No se pudo iniciar la carga del catálogo:', error && error.name ? error.name : 'CatalogStartupError');
+    }
+    fadeSplash();
 
     const displayName = String(user && (user.Nombre_Completo || user.Nombre_Usuario || user.username || user.ID || user.id) || 'Usuario').trim();
     const menuUsername = document.getElementById('menu-username');
@@ -10399,29 +10500,19 @@ export function showApp(user) {
     if (welcomeMsg) { welcomeMsg.textContent = `Hola, ${displayName || 'Usuario'}`; welcomeMsg.style.display = 'block'; }
 
     const devToolsBtn = document.getElementById('dev-tools-btn');
-    // La visibilidad del acceso privilegiado usa el mismo contexto autenticado
-    // (ID, token y rol) que valida openDevTools; evita mostrar un botón inoperable.
     const userRole = appContext ? appContext.role : '';
-    if (devToolsBtn) {
-        devToolsBtn.style.display = userRole === 'desarrollador' ? 'flex' : 'none';
-    }
+    if (devToolsBtn) devToolsBtn.style.display = userRole === 'desarrollador' ? 'flex' : 'none';
 
     const inboxBtn = document.getElementById('inbox-btn');
-    if (inboxBtn) {
-        inboxBtn.style.display = ['desarrollador', 'jefe', 'supervisor', 'tecnico', 'tecnico_exterior'].includes(userRole) ? 'flex' : 'none';
-    }
+    if (inboxBtn) inboxBtn.style.display = ['desarrollador', 'jefe', 'supervisor', 'tecnico', 'tecnico_exterior'].includes(userRole) ? 'flex' : 'none';
 
     const dashboardBtn = document.getElementById('dashboard-btn');
-    if (dashboardBtn) {
-        dashboardBtn.style.display = ['desarrollador', 'jefe', 'supervisor'].includes(userRole) ? 'flex' : 'none';
-    }
+    if (dashboardBtn) dashboardBtn.style.display = ['desarrollador', 'jefe', 'supervisor'].includes(userRole) ? 'flex' : 'none';
 
-    // Protección de renderizado: No mostrar el catálogo si los datos no están listos.
     const { catalogData } = getState();
     if (catalogData && Array.isArray(catalogData.cortes) && catalogData.cortes.length > 0) {
         mostrarCategorias();
     } else {
-        // Mostrar estado de carga si los datos aún no están listos
         const cont = document.getElementById("contenido");
         if (cont) {
             cont.innerHTML = `
