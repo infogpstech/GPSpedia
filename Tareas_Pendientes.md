@@ -1060,9 +1060,16 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 
 
 ### GP-INBOX-THREAD-TOOLBAR-01 — Organización de la bandeja de conversación
-**Prioridad: P2 · Estado: PENDIENTE**
+**Prioridad: P2 · Estado: EN PROGRESO**
 - Reorganizar botones y elementos del hilo con controles iconográficos autodesplegables.
 - Preservar acciones, destinatarios, borradores, estados leído/no leído, permisos y navegación móvil/escritorio.
+
+#### Implementación en curso — 2026-11-17
+- El encabezado del hilo se reorganiza en una toolbar semántica; los botones mantienen iconos visibles y las etiquetas se expanden/contraen mediante un control accesible con `aria-expanded`.
+- Volver, archivar/restaurar y cerrar caso conservan handlers, estados y reglas de rol; el cierre solo aparece para desarrollador, jefe y supervisor.
+- Los nombres de participantes y categoría permanecen en el encabezado. Se agregan iconos al control de mensajes anteriores, cancelar y enviar, sin cambiar cursores, borradores ni claves de idempotencia.
+- Pruebas InboxUi ampliadas para la toolbar, permisos, accesibilidad, movimiento reducido, navegación móvil y preservación del flujo de mensajes. Validación CI pendiente.
+
 
 ### GP-INBOX-CACHE-BANDS-01 — Caché de Reportes, Mensajes y Aportaciones
 **Prioridad: P1 · Estado: COMPLETADA CON VALIDACIÓN DIFERIDA**

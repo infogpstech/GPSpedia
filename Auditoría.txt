@@ -18,3 +18,13 @@ undefined
 - Decisión: conservar paginación por cursor para no ocultar registros históricos ni cargar conjuntos ilimitados; limitar todos los endpoints a 50 y ocultar el paginador si no existe navegación real. Mantenerlo visible cuando se requiera volver o avanzar.
 - Criterio: páginas acotadas, sin cursor convertido a offset en conversaciones/mensajes, controles accesibles y navegación histórica intacta.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — AUDITORÍA GP-INBOX-THREAD-TOOLBAR-01
+- Ubicación: JS/Frontend/ui.js, renderInboxConversationDetail_. Evidencia: el encabezado era un flex plano con Volver, Archivar/Restaurar y Cerrar caso como botones textuales; no tenía agrupación semántica, iconografía ni control para expandir etiquetas.
+- Ubicación: style.css, reglas #inbox-modal-content .inbox-thread-header y .inbox-mobile-back. La cabecera no tenía distribución de acciones adaptable; el botón Volver solo aparece en móvil.
+- Dependencias que deben preservarse: toggleInboxConversationArchive_ actualiza archivo privado y caché; closeSelectedInboxConversation_ valida estado abierto y rol desarrollador/jefe/supervisor; volver restaura foco en la conversación seleccionada; participantes/categoría provienen del resumen del hilo.
+- Ubicación: renderInboxReplyForm_ y openInboxNewConversationForm_. El envío usa borradores por usuario/conversación y claves idempotentes; la carga de mensajes anteriores usa cursor opaco. La reorganización visual no debe alterar estos contratos.
+- Alcance seguro: reorganización del header y botones de composición mediante iconos/labels; no modificar endpoints, permisos, estados de lectura, destinatarios, persistencia de borradores ni navegación de la lista.
+================================================================================

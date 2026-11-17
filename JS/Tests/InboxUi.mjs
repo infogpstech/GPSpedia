@@ -171,6 +171,40 @@ check("Nuevo mensaje reemplaza Solicitudes en la barra superior y desaparece el 
     assert.match(css, /inbox-folder-nav button\[hidden\][\s\S]*?display:none !important/);
     assert.match(css, /grid-template-columns:\s*repeat\(4,\s*minmax\(0,1fr\)\)/);
 });
+check("El encabezado de conversación agrupa acciones iconográficas en una toolbar autodesplegable", () => {
+    const thread = ui.slice(ui.indexOf("function renderInboxConversationDetail_"), ui.indexOf("function renderInboxReplyForm_"));
+    assert.match(thread, /toolbar\.setAttribute\("role", "toolbar"\)/);
+    assert.match(thread, /toolbarActions\.setAttribute\("role", "group"\)/);
+    assert.match(thread, /inbox-thread-toolbar-toggle/);
+    assert.match(thread, /aria-expanded/);
+    assert.match(thread, /setThreadToolbarExpanded/);
+    assert.match(thread, /inbox-thread-action-label/);
+    assert.match(thread, /header\.append\(titleBlock, toolbar\)/);
+    assert.match(thread, /toggleInboxConversationArchive_\(item\)/);
+    assert.match(thread, /closeSelectedInboxConversation_\(item\)/);
+    assert.match(thread, /\["desarrollador","jefe","supervisor"\]\.includes\(normalizeUiRole_\(context\.role\)\)/);
+    assert.match(thread, /item\.otherParticipants/);
+    assert.match(thread, /item\.category/);
+    assert.match(thread, /Volver a conversaciones/);
+    assert.match(css, /\.inbox-thread-toolbar\.is-expanded \.inbox-thread-action-label/);
+    assert.match(css, /\.inbox-thread-toolbar-toggle\[aria-expanded="true"\]/);
+    assert.match(css, /\.inbox-thread-toolbar \.inbox-mobile-back \{ display:none; \}/);
+    assert.match(css, /@media \(max-width:760px\)[\s\S]*?\.inbox-thread-toolbar \.inbox-mobile-back \{ display:inline-flex/);
+    assert.match(css, /@media \(max-width:760px\)[\s\S]*?\.inbox-thread-toolbar \{ width:100%/);
+    assert.match(css, /@media \(prefers-reduced-motion:reduce\)[\s\S]*?transition:none !important/);
+});
+check("El hilo conserva carga de mensajes anteriores, envío, borradores e idempotencia", () => {
+    const thread = ui.slice(ui.indexOf("function renderInboxConversationDetail_"), ui.indexOf("async function openInboxNewConversationForm_"));
+    assert.match(thread, /loadInboxMessages_\(item\.conversationId, \{ older: true, markRead: false \}\)/);
+    assert.match(thread, /sendInboxMessage\(/);
+    assert.match(thread, /inboxReadDraft_\(draftKind\)/);
+    assert.match(thread, /inboxSaveDraft_\(draftKind/);
+    assert.match(thread, /inboxClearDraft_\(draftKind\)/);
+    assert.match(thread, /idempotencyKey/);
+    assert.match(thread, /fa-paper-plane/);
+    assert.match(thread, /fa-clock-rotate-left/);
+    assert.match(thread, /inboxConversationMessageCache_\.invalidate\(context, item\.conversationId\)/);
+});
 check("Cada conversación muestra a la izquierda un icono accesible de leído o no leído", () => {
     assert.match(ui, /const unreadCount = Math\.max\(0, Number\(item\.unreadCount\) \|\| 0\)/);
     assert.match(ui, /inbox-conversation-read-state/);

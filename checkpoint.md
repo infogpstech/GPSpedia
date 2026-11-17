@@ -41,3 +41,10 @@ undefined
 - Pendiente Beta: inspección visual de la navegación en navegador/PWA y dispositivos táctiles; no se consultaron hojas productivas.
 - Rama base GPSpedia2.2.5 verificada sin cambios: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 - Siguiente tarea P2: GP-INBOX-THREAD-TOOLBAR-01 — organizar botones y elementos del hilo con controles iconográficos autodesplegables, preservando destinatarios, borradores, permisos, lectura y navegación.
+
+
+### Continuidad — GP-INBOX-THREAD-TOOLBAR-01 — 2026-11-17
+- HEAD de inicio: f880e9a8424f01fd7c01da9b32d459d595a8f2cd, rama GPSpedia2.2.5_work; base GPSpedia2.2.5 sin cambios.
+- Auditoría: renderInboxConversationDetail_ tenía un header flex plano sin toolbar ni iconografía. Volver, archivar/restaurar y cerrar caso ya tenían handlers y permisos; el flujo de respuestas y nuevos mensajes depende de borradores e idempotencia; los mensajes anteriores usan cursor opaco.
+- Implementación: toolbar semántica con iconos siempre visibles y etiquetas expandibles, aria-expanded/aria-controls/aria-label, layout móvil; iconos añadidos a mensajes anteriores, cancelar y enviar. Se conservan handlers y contratos.
+- Pruebas InboxUi ampliadas. CI pendiente; no marcar tarea completada hasta validar.

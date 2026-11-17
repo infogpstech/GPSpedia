@@ -4863,32 +4863,86 @@ function renderInboxConversationDetail_(options = {}) {
     if (options.error) { detail.appendChild(inboxCreateNode_("p", "inbox-state-message is-error", "No se pudo cargar esta conversación.")); return; }
     const item = inboxConversationSelected_;
     const header = inboxCreateNode_("header", "inbox-thread-header");
-    const back = inboxCreateNode_("button", "inbox-mobile-back", "Volver a conversaciones");
-    back.type = "button";
-    back.addEventListener("click", () => {
-        document.getElementById("inbox-modal-content")?.classList.remove("is-detail-open");
-        const target = Array.from(document.getElementById("inbox-conversation-list")?.querySelectorAll("[data-conversation-id]") || [])
-            .find(element => element.dataset.conversationId === item.conversationId);
-        if (target) target.focus();
-    });
     const titleBlock = inboxCreateNode_("div", "inbox-thread-title-block");
     titleBlock.append(
         inboxCreateNode_("h3", "", item.subject || "Conversación"),
         inboxCreateNode_("p", "inbox-thread-participants", (item.otherParticipants || []).map(user => user && user.name).filter(Boolean).join(", ") || "Participante"),
         inboxCreateNode_("span", "inbox-thread-category", item.category || "general")
     );
-    const archive = inboxCreateNode_("button", "inbox-thread-archive", item.archived ? "Restaurar" : "Archivar");
-    archive.type = "button";
+
+    const toolbar = inboxCreateNode_("div", "inbox-thread-toolbar");
+    toolbar.setAttribute("role", "toolbar");
+    toolbar.setAttribute("aria-label", "Acciones de conversación");
+    const toolbarActions = inboxCreateNode_("div", "inbox-thread-toolbar-actions");
+    toolbarActions.id = "inbox-thread-toolbar-actions";
+    toolbarActions.setAttribute("role", "group");
+    const makeThreadAction = (className, iconClass, label, accessibleLabel = label) => {
+        const button = inboxCreateNode_("button", className);
+        button.type = "button";
+        button.setAttribute("aria-label", accessibleLabel);
+        button.title = accessibleLabel;
+        const icon = inboxCreateNode_("i", iconClass);
+        icon.setAttribute("aria-hidden", "true");
+        const text = inboxCreateNode_("span", "inbox-thread-action-label", label);
+        text.setAttribute("aria-hidden", "true");
+        button.append(icon, text);
+        return button;
+    };
+
+    const back = makeThreadAction("inbox-mobile-back inbox-thread-toolbar-action", "fa-solid fa-arrow-left", "Volver", "Volver a conversaciones");
+    back.addEventListener("click", () => {
+        document.getElementById("inbox-modal-content")?.classList.remove("is-detail-open");
+        const target = Array.from(document.getElementById("inbox-conversation-list")?.querySelectorAll("[data-conversation-id]") || [])
+            .find(element => element.dataset.conversationId === item.conversationId);
+        if (target) target.focus();
+    });
+    toolbarActions.appendChild(back);
+
+    const archiveLabel = item.archived ? "Restaurar" : "Archivar";
+    const archive = makeThreadAction(
+        "inbox-thread-archive inbox-thread-toolbar-action",
+        item.archived ? "fa-solid fa-box-open" : "fa-solid fa-box-archive",
+        archiveLabel,
+        archiveLabel + " conversación"
+    );
     archive.addEventListener("click", () => toggleInboxConversationArchive_(item));
-    header.append(back, titleBlock, archive);
+    toolbarActions.appendChild(archive);
+
     const context = getUiSessionContext_();
     if (item.status === "open" && context &&
         ["desarrollador","jefe","supervisor"].includes(normalizeUiRole_(context.role))) {
-        const close = inboxCreateNode_("button", "inbox-thread-archive inbox-thread-close", "Cerrar caso");
-        close.type = "button";
+        const close = makeThreadAction(
+            "inbox-thread-archive inbox-thread-close inbox-thread-toolbar-action",
+            "fa-solid fa-circle-check",
+            "Cerrar caso",
+            "Cerrar caso"
+        );
         close.addEventListener("click", () => closeSelectedInboxConversation_(item));
-        header.appendChild(close);
+        toolbarActions.appendChild(close);
     }
+
+    const toolbarToggle = inboxCreateNode_("button", "inbox-thread-toolbar-toggle");
+    toolbarToggle.type = "button";
+    toolbarToggle.setAttribute("aria-controls", toolbarActions.id);
+    toolbarToggle.setAttribute("aria-expanded", "false");
+    toolbarToggle.setAttribute("aria-label", "Expandir etiquetas de acciones");
+    toolbarToggle.title = "Expandir etiquetas de acciones";
+    const toolbarToggleIcon = inboxCreateNode_("i", "fa-solid fa-angles-right");
+    toolbarToggleIcon.setAttribute("aria-hidden", "true");
+    toolbarToggle.appendChild(toolbarToggleIcon);
+    const setThreadToolbarExpanded = expanded => {
+        const isExpanded = Boolean(expanded);
+        toolbar.classList.toggle("is-expanded", isExpanded);
+        toolbarToggle.setAttribute("aria-expanded", String(isExpanded));
+        toolbarToggle.setAttribute("aria-label", isExpanded ? "Contraer etiquetas de acciones" : "Expandir etiquetas de acciones");
+        toolbarToggle.title = isExpanded ? "Contraer acciones" : "Expandir acciones";
+        toolbarToggleIcon.className = isExpanded ? "fa-solid fa-angles-left" : "fa-solid fa-angles-right";
+    };
+    toolbarToggle.addEventListener("click", () => {
+        setThreadToolbarExpanded(toolbarToggle.getAttribute("aria-expanded") !== "true");
+    });
+    toolbar.append(toolbarActions, toolbarToggle);
+    header.append(titleBlock, toolbar);
     detail.appendChild(header);
     const messages = inboxCreateNode_("div", "inbox-thread-messages");
     messages.id = "inbox-conversation-messages";
@@ -4896,8 +4950,14 @@ function renderInboxConversationDetail_(options = {}) {
     messages.setAttribute("aria-live", "polite");
     messages.setAttribute("aria-relevant", "additions text");
     if (inboxConversationMessagesHasMore_) {
-        const older = inboxCreateNode_("button", "inbox-load-older", "Cargar mensajes anteriores");
+        const older = inboxCreateNode_("button", "inbox-load-older");
         older.type = "button";
+        older.setAttribute("aria-label", "Cargar mensajes anteriores");
+        older.append(
+            inboxCreateNode_("i", "fa-solid fa-clock-rotate-left"),
+            inboxCreateNode_("span", "", "Mensajes anteriores")
+        );
+        older.querySelector("i").setAttribute("aria-hidden", "true");
         older.addEventListener("click", () => loadInboxMessages_(item.conversationId, { older: true, markRead: false }));
         messages.appendChild(older);
     }
@@ -4941,8 +5001,10 @@ function renderInboxReplyForm_(detail, item) {
     });
     const status = inboxCreateNode_("p", "inbox-form-status");
     status.setAttribute("role", "status"); status.setAttribute("aria-live", "polite");
-    const send = inboxCreateNode_("button", "inbox-primary-button", "Enviar mensaje");
+    const send = inboxCreateNode_("button", "inbox-primary-button inbox-thread-send-button");
     send.type = "submit";
+    send.append(inboxCreateNode_("i", "fa-solid fa-paper-plane"), inboxCreateNode_("span", "", "Enviar mensaje"));
+    send.querySelector("i").setAttribute("aria-hidden", "true");
     form.append(label, editorShell, status, send);
     textarea.addEventListener("input", () => {
         const current = inboxReadDraft_(draftKind), body = textarea.value;
@@ -4984,7 +5046,15 @@ async function openInboxNewConversationForm_() {
     if (!detail) return;
     let cancelled = false;
     const cancelNewMessage = () => { cancelled = true; inboxClearDraft_(draftKind); if (legacyDraftKind) inboxClearDraft_(legacyDraftKind); inboxConversationSelectedId_ = ""; inboxConversationSelected_ = null; inboxConversationMessages_ = []; document.getElementById("inbox-modal-content")?.classList.remove("is-detail-open"); detail.replaceChildren(inboxCreateNode_("p", "inbox-state-message", "Selecciona una conversación para consultar sus mensajes.")); };
-    const makeCancelButton = () => { const button = inboxCreateNode_("button", "inbox-secondary-button inbox-cancel-compose", "Salir"); button.type = "button"; button.setAttribute("aria-label", "Salir y cancelar el mensaje nuevo"); button.addEventListener("click", cancelNewMessage); return button; };
+    const makeCancelButton = () => {
+        const button = inboxCreateNode_("button", "inbox-secondary-button inbox-cancel-compose");
+        button.type = "button";
+        button.setAttribute("aria-label", "Salir y cancelar el mensaje nuevo");
+        button.append(inboxCreateNode_("i", "fa-solid fa-arrow-left"), inboxCreateNode_("span", "", "Salir"));
+        button.querySelector("i").setAttribute("aria-hidden", "true");
+        button.addEventListener("click", cancelNewMessage);
+        return button;
+    };
     inboxConversationSelectedId_ = ""; inboxConversationSelected_ = null; inboxConversationMessages_ = [];
     document.getElementById("inbox-modal-content")?.classList.add("is-detail-open");
     detail.replaceChildren();
@@ -5095,8 +5165,10 @@ async function openInboxNewConversationForm_() {
     if (draft.templateId) template.value = draft.templateId;
     const formStatus = inboxCreateNode_("p", "inbox-form-status");
     formStatus.setAttribute("role", "status"); formStatus.setAttribute("aria-live", "polite");
-    const send = inboxCreateNode_("button", "inbox-primary-button", "Enviar mensaje");
+    const send = inboxCreateNode_("button", "inbox-primary-button inbox-thread-send-button");
     send.type = "submit";
+    send.append(inboxCreateNode_("i", "fa-solid fa-paper-plane"), inboxCreateNode_("span", "", "Enviar mensaje"));
+    send.querySelector("i").setAttribute("aria-hidden", "true");
     const formActions = inboxCreateNode_("div", "inbox-compose-actions"); formActions.append(makeCancelButton(), send);
     form.append(formStatus, formActions); detail.append(form);
     const persist = () => {

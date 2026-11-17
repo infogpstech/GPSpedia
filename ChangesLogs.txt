@@ -38,3 +38,12 @@ undefined
 - index.html/style.css: paginador oculto inicialmente y regla explícita para respetar hidden frente a display:flex.
 - JS/Tests/InboxUi.mjs y InboxConversations.mjs: contratos para límites de página y navegación condicional.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — IMPLEMENTACIÓN GP-INBOX-THREAD-TOOLBAR-01
+- JS/Frontend/ui.js: encabezado del hilo convertido en toolbar semántica con acciones iconográficas de volver, archivar/restaurar y cerrar caso; control accesible expande/contrae etiquetas y conserva los handlers existentes.
+- JS/Frontend/ui.js: control de mensajes anteriores, cancelar y enviar ahora incluyen iconos y etiquetas; se preservan el cursor histórico, los borradores y la idempotencia de envío.
+- style.css: toolbar compacta, etiquetas animadas, estados focus/expanded, adaptación móvil y soporte de movimiento reducido mediante la regla global existente.
+- JS/Tests/InboxUi.mjs: contratos para acciones, permisos, accesibilidad, participantes/categoría, carga histórica, envío y borradores.
+================================================================================
