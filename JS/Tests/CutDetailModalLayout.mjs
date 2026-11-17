@@ -59,6 +59,13 @@ testCase("el encabezado separa logo, acciones superiores y modelo en la base der
     assert.match(detail, /headerDiv\.insertBefore\(titleContainer, savingIndicator\)[\s\S]*?headerDiv\.insertBefore\(titleNode, savingIndicator\)/);
 });
 
+testCase("el encabezado de corte no hereda sangría derecha y fija el cierre al extremo del modal", () => {
+    assert.ok(css.includes('#modalDetalle[data-modal-type="corte"] .detail-modal-toolbar {\n    padding-right:0 !important;'));
+    assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-header-actions\s*\{[^}]*justify-content:flex-end/s);
+    assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-header-actions\s*\{[^}]*width:100%/s);
+    assert.ok(detail.includes("headerActions.appendChild(closeBtn)"));
+});
+
 testCase("ninguna regla posterior puede sustituir la cuadrícula del encabezado por flex", () => {
     assert.doesNotMatch(css, /\.detail-modal-toolbar\s*\{[^}]*display\s*:\s*flex/);
     assert.doesNotMatch(css, /\.detail-modal-header-actions\s*\{[^}]*order\s*:\s*2/);
