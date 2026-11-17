@@ -564,7 +564,9 @@ async function initializeApp() {
                 return;
             }
             // En el detalle de corte, Atrás siempre cierra la ficha.
-            if(!closeDetailOnBack && ui.restoreModalNavigationContext())return;
+            if (!closeDetailOnBack) {
+                if (ui.restoreModalNavigationContext()) return;
+            }
             modalDetalle.classList.remove('visible');ui.clearModalNavStack();
 
             // Restaurar foco a la barra de búsqueda si estamos en modo búsqueda

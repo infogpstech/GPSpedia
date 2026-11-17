@@ -498,3 +498,7 @@ Se implementó el ajuste de encabezados solicitado. Archivos de código: `JS/Fro
 - Tutoriales mantienen su encabezado como estándar de título izquierdo/cierre derecho. Se reforzó la reserva horizontal de títulos en modales informativos.
 - YouTube usa un botón de cierre real y etiqueta accesible. Se añadieron roles/nombres ARIA a los diálogos tocados.
 - Estado de validación: pendiente de CI; no se ha realizado prueba visual de navegador ni Beta. No se desplegó ningún servicio.
+
+
+### Revisión de CI — primer intento de GP-UX-MODAL-HEADERS-02
+La comprobación sintáctica aprobó. Dos contratos heredados fallaron por expectativas estáticas que requerían la inserción temprana del botón Compartir y una llamada literal a restoreModalNavigationContext. Se ajustó la implementación para registrar Compartir inicialmente y moverlo al final tras crear Imprimir/Editar (conservando el orden visual), y se mantuvo explícita la restauración para tipos de detalle distintos de corte. No se identificó fallo de ejecución de la interfaz; las suites afectadas se vuelven a ejecutar en el siguiente CI.

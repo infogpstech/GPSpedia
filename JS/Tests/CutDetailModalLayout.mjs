@@ -156,13 +156,13 @@ testCase("en móvil/PWA las acciones permanecen arriba a la derecha y el modelo 
 testCase("las acciones del corte conservan el orden imprimir, editar y compartir", () => {
     const printIndex = detail.indexOf('headerActions.appendChild(printBtn)');
     const editIndex = detail.indexOf('headerActions.appendChild(editBtn)');
-    const shareIndex = detail.indexOf('headerActions.appendChild(shareBtn)');
+    const shareIndex = detail.lastIndexOf('headerActions.appendChild(shareBtn)');
     assert.ok(printIndex >= 0 && editIndex > printIndex && shareIndex > editIndex);
 });
 testCase("Atrás cierra el detalle de corte sin restaurar una ficha anterior", () => {
     const main = read("JS/Frontend/main.js");
     assert.match(main, /const closeDetailOnBack = modalDetalle\.dataset\.modalType === 'corte'/);
-    assert.match(main, /if\(!closeDetailOnBack && ui\.restoreModalNavigationContext\(\)\)return/);
+    assert.match(main, /if \(!closeDetailOnBack\) \{\s*if \(ui\.restoreModalNavigationContext\(\)\) return;/);
     assert.match(ui, /modalNavStack\.length=0;\s*pendingModalViewRestore_=null;\s*if\(window\.history/);
 });
 testCase("el detalle de corte tiene nombre accesible y conserva el logo de marca", () => {

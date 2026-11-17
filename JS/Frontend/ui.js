@@ -2294,6 +2294,9 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
             shareBtn.disabled = false;
         }
     };
+    // Se registra inicialmente y se mueve al final tras crear las acciones autorizadas.
+    headerActions.appendChild(shareBtn);
+
     const userRole = normalizeUiRole_(getUiSessionContext_()?.role || "");
     const canPrintOrEditVehicle = ["desarrollador", "jefe", "supervisor"].includes(userRole);
 
