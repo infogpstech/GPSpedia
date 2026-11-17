@@ -70,7 +70,9 @@ export function bindRichTextEditorSelection_(editor) {
 }
 
 const richEditorPendingFormats_ = new WeakMap();
-const richEditorCompositionRanges_ = new WeakMap();
+const richEditorTypingAnchors_ = new WeakMap();
+const richEditorComposing_ = new WeakSet();
+const RICH_TEXT_CARET_SENTINEL_ = "\u200B";
 function getRichTextPendingFormats_(editor) {
  let state=richEditorPendingFormats_.get(editor);
  if(!state){state={bold:false,italic:false,underline:false,strike:false,color:null,fontFamily:null,fontSize:null};richEditorPendingFormats_.set(editor,state);}
@@ -79,78 +81,78 @@ function getRichTextPendingFormats_(editor) {
 function hasRichTextPendingFormats_(state){return Boolean(state&&(state.bold||state.italic||state.underline||state.strike||state.color||state.fontFamily||state.fontSize));}
 function getRichTextSavedRange_(editor){
  if(!isRichContentEditable_(editor))return null;
- const selection=window.getSelection?.();
- if(selection?.rangeCount){const current=selection.getRangeAt(0);if(current.commonAncestorContainer===editor||editor.contains(current.commonAncestorContainer)){richEditorSelectionRanges_.set(editor,current.cloneRange());return current.cloneRange();}}
+ const selection=window.getSelection?.(),current=selection?.rangeCount?selection.getRangeAt(0):null;
+ const inside=Boolean(current&&(current.commonAncestorContainer===editor||editor.contains(current.commonAncestorContainer)));
+ if(document.activeElement===editor&&inside){richEditorSelectionRanges_.set(editor,current.cloneRange());return current.cloneRange();}
  const saved=richEditorSelectionRanges_.get(editor);
- return saved&&(saved.commonAncestorContainer===editor||editor.contains(saved.commonAncestorContainer))?saved.cloneRange():null;
+ if(saved&&(saved.commonAncestorContainer===editor||editor.contains(saved.commonAncestorContainer)))return saved.cloneRange();
+ return inside?current.cloneRange():null;
 }
 function wrapRichTextNodeWithFormats_(node,state){
  let result=node;
  if(state.color||state.fontFamily||state.fontSize){const styled=document.createElement("span");if(state.color)styled.style.color=state.color;if(state.fontFamily)styled.style.fontFamily=state.fontFamily;if(state.fontSize)styled.style.fontSize=state.fontSize;styled.appendChild(result);result=styled;}
- [["bold","strong"],["italic","em"],["underline","u"],["strike","s"]].forEach(([key,tag])=>{if(!state[key])return;const element=document.createElement(tag);element.appendChild(result);result=element;});
+ [["bold","strong"],["italic","em"],["underline","u"],["strike","s"]].forEach(([key,tag])=>{if(state[key]){const element=document.createElement(tag);element.appendChild(result);result=element;}});
  return result;
 }
-function applyRichTextPendingFormatsToRange_(range,state){
- if(!range||!state||range.collapsed||!hasRichTextPendingFormats_(state))return false;
- const content=range.extractContents(),wrapper=wrapRichTextNodeWithFormats_(content,state);
- range.insertNode(wrapper);range.setStartAfter(wrapper);range.collapse(true);return true;
+function createRichTextTypingAnchor_(editor,range,state){
+ if(!range||!range.collapsed||!hasRichTextPendingFormats_(state))return false;
+ const previous=richEditorTypingAnchors_.get(editor);
+ if(previous?.root?.isConnected){
+  if(previous.sentinel?.data===RICH_TEXT_CARET_SENTINEL_&&previous.root.contains(range.startContainer)){range.selectNode(previous.root);range.collapse(false);previous.root.remove();}
+  else if(previous.sentinel?.data?.includes(RICH_TEXT_CARET_SENTINEL_))previous.sentinel.deleteData(previous.sentinel.data.indexOf(RICH_TEXT_CARET_SENTINEL_),1);
+ }
+ richEditorTypingAnchors_.delete(editor);
+ const sentinel=document.createTextNode(RICH_TEXT_CARET_SENTINEL_),root=wrapRichTextNodeWithFormats_(sentinel,state);
+ range.insertNode(root);
+ const caret=document.createRange();caret.setStart(sentinel,1);caret.collapse(true);
+ const selection=window.getSelection?.();if(!selection)return false;
+ selection.removeAllRanges();selection.addRange(caret);
+ richEditorTypingAnchors_.set(editor,{root,sentinel});richEditorSelectionRanges_.set(editor,caret.cloneRange());
+ return true;
 }
-function insertRichTextWithPendingFormats_(editor,value){
- const state=getRichTextPendingFormats_(editor);if(!hasRichTextPendingFormats_(state))return false;
- const selection=window.getSelection?.(),range=getRichTextSavedRange_(editor);if(!selection||!range)return false;
- range.deleteContents();const fragment=document.createDocumentFragment();let last=null;
- String(value||"").replace(/\r\n?/g,"\n").split("\n").forEach((line,index)=>{if(index){last=document.createElement("br");fragment.appendChild(last);}if(!line)return;last=wrapRichTextNodeWithFormats_(document.createTextNode(line),state);fragment.appendChild(last);});
- if(!last){last=document.createElement("br");fragment.appendChild(last);}
- range.insertNode(fragment);range.setStartAfter(last);range.collapse(true);selection.removeAllRanges();selection.addRange(range);
- richEditorSelectionRanges_.set(editor,range.cloneRange());editor.dispatchEvent(new Event("input",{bubbles:true}));return true;
-}
-function insertRichTextPendingBreak_(editor){
- const selection=window.getSelection?.(),range=getRichTextSavedRange_(editor);if(!selection||!range)return false;
- range.deleteContents();const lineBreak=document.createElement("br");range.insertNode(lineBreak);range.setStartAfter(lineBreak);range.collapse(true);
- selection.removeAllRanges();selection.addRange(range);richEditorSelectionRanges_.set(editor,range.cloneRange());editor.dispatchEvent(new Event("input",{bubbles:true}));return true;
+function cleanRichTextTypingSentinel_(editor){
+ const anchor=richEditorTypingAnchors_.get(editor);
+ if(!anchor?.sentinel?.isConnected){richEditorTypingAnchors_.delete(editor);return false;}
+ const node=anchor.sentinel,position=node.data.indexOf(RICH_TEXT_CARET_SENTINEL_);
+ if(position<0){richEditorTypingAnchors_.delete(editor);return false;}
+ const selection=window.getSelection?.();let range=null;
+ if(selection?.rangeCount){const current=selection.getRangeAt(0);if(current.startContainer===node){
+  range=document.createRange();range.setStart(node,Math.max(0,current.startOffset-(current.startOffset>position?1:0)));
+  if(current.endContainer===node)range.setEnd(node,Math.max(0,current.endOffset-(current.endOffset>position?1:0)));else range.setEnd(current.endContainer,current.endOffset);
+ }}
+ node.deleteData(position,1);
+ if(range){selection.removeAllRanges();selection.addRange(range);richEditorSelectionRanges_.set(editor,range.cloneRange());}
+ richEditorTypingAnchors_.delete(editor);return true;
 }
 function applyRichTextInlineFormat_(editor,format,value=null){
  let range=getRichTextSavedRange_(editor);if(!range)return false;
- const state=getRichTextPendingFormats_(editor);
- const tagByFormat={bold:"strong",italic:"em",underline:"u",strike:"s"};
+ const state=getRichTextPendingFormats_(editor),tags={bold:"strong",italic:"em",underline:"u",strike:"s"};
  if(range.collapsed){
   if(["bold","italic","underline","strike"].includes(format))state[format]=!state[format];
-  else if(format==="color")state.color=value;
-  else if(format==="font")state.fontFamily=SAFE_FONTS.get(value);
-  else if(format==="size")state.fontSize=value;
-  richEditorSelectionRanges_.set(editor,range.cloneRange());return true;
+  else if(format==="color")state.color=value;else if(format==="font")state.fontFamily=SAFE_FONTS.get(value);else if(format==="size")state.fontSize=value;
+  richEditorSelectionRanges_.set(editor,range.cloneRange());return createRichTextTypingAnchor_(editor,range,state);
  }
- if(tagByFormat[format]){
-  let node=range.startContainer;
-  if(node.nodeType===1&&node===editor)node=node.childNodes[range.startOffset]||node.lastChild||node;
-  const element=node.nodeType===1?node:node.parentElement;
-  const selector={bold:"strong,b",italic:"em,i",underline:"u",strike:"s,strike"}[format];
-  const existing=element?.closest?.(selector);
-  const active=Boolean(existing&&editor.contains(existing));
+ if(tags[format]){
+  let node=range.startContainer;if(node.nodeType===1&&node===editor)node=node.childNodes[range.startOffset]||node.lastChild||node;
+  const element=node.nodeType===1?node:node.parentElement,selector={bold:"strong,b",italic:"em,i",underline:"u",strike:"s,strike"}[format];
+  const existing=element?.closest?.(selector),active=Boolean(existing&&editor.contains(existing));
   const command={bold:"bold",italic:"italic",underline:"underline",strike:"strikeThrough"}[format];
-  restoreRichTextSelection_(editor);
-  let applied=false;
-  try{applied=typeof document.execCommand==="function"&&document.execCommand(command,false,null)===true;}catch(_){applied=false;}
-  if(applied){
-   state[format]=!active;rememberRichTextSelection_(editor);editor.dispatchEvent(new Event("input",{bubbles:true}));return true;
-  }
+  restoreRichTextSelection_(editor);let applied=false;
+  try{applied=typeof document.execCommand==="function"&&document.execCommand(command,false,null)===true;}catch(_){}
+  if(applied){state[format]=!active;range=getRichTextSavedRange_(editor);if(range?.collapsed)createRichTextTypingAnchor_(editor,range,state);rememberRichTextSelection_(editor);editor.dispatchEvent(new Event("input",{bubbles:true}));return true;}
   if(active){state[format]=false;return false;}
-  range=getRichTextSavedRange_(editor);if(!range)return false;
-  state[format]=true;
-  const wrapper=document.createElement(tagByFormat[format]);wrapper.appendChild(range.extractContents());range.insertNode(wrapper);
-  range.setStartAfter(wrapper);range.collapse(true);
+  range=getRichTextSavedRange_(editor);if(!range)return false;state[format]=true;
+  const wrapper=document.createElement(tags[format]);wrapper.appendChild(range.extractContents());range.insertNode(wrapper);range.setStartAfter(wrapper);range.collapse(true);
  }else{
-  const property=format==="color"?"color":format==="font"?"font-family":"font-size";
-  const safeValue=format==="color"?value:format==="font"?SAFE_FONTS.get(value):value;
+  const property=format==="color"?"color":format==="font"?"font-family":"font-size",safeValue=format==="color"?value:format==="font"?SAFE_FONTS.get(value):value;
   if(!["color","font","size"].includes(format)||!safeValue)return false;
   if(format==="color")state.color=value;else if(format==="font")state.fontFamily=safeValue;else state.fontSize=safeValue;
-  const wrapper=document.createElement("span");wrapper.style.setProperty(property,safeValue);
-  wrapper.appendChild(range.extractContents());range.insertNode(wrapper);range.setStartAfter(wrapper);range.collapse(true);
+  const wrapper=document.createElement("span");wrapper.style.setProperty(property,safeValue);wrapper.appendChild(range.extractContents());range.insertNode(wrapper);range.setStartAfter(wrapper);range.collapse(true);
  }
  const selection=window.getSelection?.();selection?.removeAllRanges();selection?.addRange(range);
- richEditorSelectionRanges_.set(editor,range.cloneRange());editor.dispatchEvent(new Event("input",{bubbles:true}));return true;
+ richEditorSelectionRanges_.set(editor,range.cloneRange());createRichTextTypingAnchor_(editor,range,state);
+ editor.dispatchEvent(new Event("input",{bubbles:true}));return true;
 }
-
 function insertRichTextPlainText_(editor, value) {
     if (!restoreRichTextSelection_(editor)) return false;
     const selection = window.getSelection?.();
@@ -374,33 +376,16 @@ export function mountRichTextEditors(root = document) {
             source.dispatchEvent(new Event("input", { bubbles: true })); editor.removeAttribute("aria-invalid");
         };
         bindRichTextEditorSelection_(editor);
-        editor.addEventListener("beforeinput", event => {
-            const state = getRichTextPendingFormats_(editor);
-            if (!hasRichTextPendingFormats_(state) || !event.cancelable) return;
-            if (["insertText", "insertReplacementText"].includes(event.inputType) && typeof event.data === "string") {
-                event.preventDefault(); insertRichTextWithPendingFormats_(editor, event.data);
-            } else if (event.inputType === "insertParagraph" || event.inputType === "insertLineBreak") {
-                event.preventDefault(); insertRichTextPendingBreak_(editor);
-            }
-        });
-        editor.addEventListener("compositionstart", () => {
-            const range = getRichTextSavedRange_(editor);
-            if (range) richEditorCompositionRanges_.set(editor, range.cloneRange());
-        });
+        editor.addEventListener("compositionstart", () => richEditorComposing_.add(editor));
         editor.addEventListener("compositionend", () => {
-            const startRange = richEditorCompositionRanges_.get(editor), state = getRichTextPendingFormats_(editor), selection = window.getSelection?.();
-            if (!startRange || !selection?.rangeCount || !hasRichTextPendingFormats_(state)) return;
-            try {
-                const inserted = document.createRange(), endRange = selection.getRangeAt(0);
-                inserted.setStart(startRange.startContainer, startRange.startOffset); inserted.setEnd(endRange.endContainer, endRange.endOffset);
-                if (applyRichTextPendingFormatsToRange_(inserted, state)) {
-                    inserted.collapse(false); selection.removeAllRanges(); selection.addRange(inserted);
-                    richEditorSelectionRanges_.set(editor, inserted.cloneRange()); editor.dispatchEvent(new Event("input", { bubbles: true }));
-                }
-            } catch (_) {}
-            richEditorCompositionRanges_.delete(editor);
+            richEditorComposing_.delete(editor);
+            cleanRichTextTypingSentinel_(editor);
+            sync();
         });
-        editor.addEventListener("input", sync);
+        editor.addEventListener("input", () => {
+            if (!richEditorComposing_.has(editor)) cleanRichTextTypingSentinel_(editor);
+            sync();
+        });
         editor.addEventListener("blur", () => { source.dispatchEvent(new Event("blur")); source.dispatchEvent(new Event("change", { bubbles: true })); });
         editor.addEventListener("paste", event => {
             event.preventDefault();
@@ -438,7 +423,7 @@ export function mountRichTextEditors(root = document) {
             form.addEventListener("reset", () => Promise.resolve().then(() => {
                 form.querySelectorAll("textarea[data-rich-visual-mounted='true']").forEach(sourceField => {
                     const editorField = document.getElementById(sourceField.id + "-visual-editor");
-                    if (editorField) { richEditorPendingFormats_.delete(editorField); richEditorSelectionRanges_.delete(editorField); richEditorCompositionRanges_.delete(editorField); }
+                    if (editorField) { richEditorPendingFormats_.delete(editorField); richEditorSelectionRanges_.delete(editorField); const anchor=richEditorTypingAnchors_.get(editorField); if(anchor?.sentinel?.data?.includes(RICH_TEXT_CARET_SENTINEL_))anchor.sentinel.deleteData(anchor.sentinel.data.indexOf(RICH_TEXT_CARET_SENTINEL_),1); richEditorTypingAnchors_.delete(editorField); richEditorComposing_.delete(editorField); }
                     syncRichTextEditorFromSource(sourceField);
                 });
             }));
