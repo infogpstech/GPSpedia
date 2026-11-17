@@ -1761,5 +1761,5 @@ ADENDA DE AUDITORÍA — GP-UX-INBOX-RICH-EDITOR-01 — 2026-11-16
 - Evidencia reproducida por reporte Beta: el color se aplicaba a selección existente, pero el texto nuevo quedaba con formato normal.
 - Origen: inserción de texto manual condicionada a `beforeinput.cancelable` y reconstrucción de rangos de composición. La ruta no cubría de forma fiable todas las variantes de IME/autocorrección; el rango actual podía desplazar al último rango guardado tras abrir el selector.
 - Corrección en `JS/Frontend/rich-text.js`: ancla DOM con centinela de ancho cero y wrappers semánticos/estilos permitidos; se deja la inserción a la edición nativa del navegador y se retira la interceptación `beforeinput`. El centinela se elimina al terminar entrada/composición y no se persiste. Se prioriza el rango guardado cuando el editor no está activo.
-- Regresión: contrato InboxUi exige la estrategia de ancla, cobertura de composición y ausencia de inserción manual; caché PWA y pruebas sincronizadas a v59.
+- Regresión: contrato InboxUi exige la estrategia de ancla, cobertura de composición y ausencia de inserción manual; caché PWA y pruebas sincronizadas a v60.
 - Validación: parsing y comprobaciones estáticas dirigidas aprobadas. Suite Node completa y pruebas físicas con Gboard/IME, autocorrección y escritorio no ejecutadas; quedan pendientes de Beta.
