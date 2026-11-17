@@ -1741,3 +1741,11 @@ ADENDA DE AUDITORÍA — GP-UX-INBOX-RICH-EDITOR-01 — 2026-11-16
 - Corrección: capturar pointerdown en ambas variantes de barra, guardar selección y cancelar la acción predeterminada solo para botones/opciones táctiles; conservar el click para ejecutar el formato. Los selectores nativos conservan su comportamiento, pero devuelven el foco al editor al confirmar tamaño/fuente. El selector de color restaura el foco al cerrar su diálogo.
 - CSS de interacción táctil añadido y App Shell actualizado a gpsepedia-cache-v57. Contratos de caché sincronizados.
 - Pendiente: prueba real en Android/PWA para confirmar que el teclado permanece abierto al aplicar negrita, listas, fuente, tamaño y color; validar también escritorio. El selector de color nativo puede ocultar el teclado mientras el diálogo del sistema está abierto, pero debe devolver el foco al editor al cerrarse.
+
+
+### Corrección de formato persistente sin foco — GP-UX-RICH-EDITOR-FORMAT-04 — 2026-11-16
+- Evidencia: color, fuente, tamaño y estilos inline dependían del foco y de los comandos de formato del navegador. Al abrir controles nativos en Android PWA el editor perdía foco y el siguiente texto podía quedar sin el estilo seleccionado.
+- Corrección: cada editor mantiene estado independiente de negrita, cursiva, subrayado, tachado, color, fuente y tamaño. Los cambios de formato con cursor no fuerzan el foco; beforeinput inserta nodos con etiquetas/estilos permitidos. Las selecciones existentes se envuelven directamente. Se contemplan saltos de línea y composición IME cuando el navegador entrega un rango válido.
+- No se insertan etiquetas abiertas ni marcadores visibles. El contenido enviado conserva HTML válido y pasa por el sanitizador existente; el estado temporal se descarta al reiniciar el formulario.
+- Alcance: editor compartido de formularios e Inbox. Los comandos de listas mantienen su implementación. No se modifica backend ni formato persistido.
+- Pendiente de Beta: escritura real con teclado Android/IME, autocorrección, selección y cambio de estilos en Android PWA y escritorio.
