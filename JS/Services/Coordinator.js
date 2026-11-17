@@ -52,6 +52,7 @@ function coordinatorPolicy_(service, operation) {
             updateUser: { write: [...identityWrite, "SESSION_CONTEXTS"] },
             logout: { write: [...identityWrite, "SESSION_CONTEXTS"] },
             migrateLegacyPasswords: { write: identityWrite },
+            getServiceTraffic: { read: ["SERVICE_TRAFFIC"] },
             migrateLegacyRoleRevocationMarkersToSharedState: { write: ["USERS", "LOGS", "SESSION_CONTEXTS"] }
         },
         USERS: {
