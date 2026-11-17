@@ -940,54 +940,29 @@ function createSharedMutationCoordinator_(dependencies) {
     }
 
     function publishCatalogChange_(service, operation, payload) {
-        const allowed = CATALOG_CHANGE_ALLOWED_WRITERS_[service];
-        if (!allowed || !allowed.has(operation)) throw new Error("La operación no puede publicar cambios del catálogo.");
-        const source = payload.change && typeof payload.change === "object" ? payload.change : {};
-        let collection = String(source.collection || "").trim().toLowerCase();
-        let recordId = String(source.recordId || "").trim();
-        let changeOperation = String(source.operation || "").trim().toLowerCase();
-        let snapshot = source.snapshot === undefined ? null : source.snapshot;
-        if (changeOperation === "reset") {
-            collection = "*"; recordId = "*"; snapshot = null;
-        } else {
-            if (!CATALOG_CHANGE_COLLECTIONS_.has(collection)) throw new Error("La colección del cambio de catálogo no es válida.");
-            if (!recordId || recordId.length > 160) throw new Error("El ID del registro de catálogo no es válido.");
-            if (changeOperation === "upsert") {
-                if (!snapshot || typeof snapshot !== "object" || Array.isArray(snapshot)) throw new Error("El cambio upsert requiere un snapshot de registro.");
-            } else if (changeOperation === "delete") {
-                snapshot = null;
-            } else {
-                throw new Error("La operación del cambio de catálogo no es válida.");
-            }
-        }
-        const event = { collection, recordId, operation: changeOperation, snapshot, createdAt: new Date(now()).toISOString(), sourceService: service, sourceOperation: operation };
-        let serialized = JSON.stringify(event);
-        let resetRequired = false;
-        if (serialized.length > CATALOG_CHANGE_MAX_EVENT_LENGTH_) {
-            event.collection = "*"; event.recordId = "*"; event.operation = "reset"; event.snapshot = null;
-            serialized = JSON.stringify(event); resetRequired = true;
-        }
-        return withCoordinatorLock_(() => {
-            const revisions = catalogChangeRevisions_();
-            const storedRevision = Number(properties.getProperty(CATALOG_CHANGE_REVISION_PROPERTY_) || 0);
-            const currentRevision = Math.max(Number.isSafeInteger(storedRevision) ? storedRevision : 0, revisions.length ? revisions[revisions.length - 1] : 0);
-            const revision = currentRevision + 1;
-            properties.setProperty(CATALOG_CHANGE_EVENT_PREFIX_ + revision, JSON.stringify({ revision, ...event, resetRequired }));
-            properties.setProperty(CATALOG_CHANGE_REVISION_PROPERTY_, String(revision));
-            const after = catalogChangeRevisions_();
-            while (after.length > CATALOG_CHANGE_MAX_EVENTS_) {
-                const oldest = after.shift();
-                properties.deleteProperty(CATALOG_CHANGE_EVENT_PREFIX_ + oldest);
-            }
-            return { status: "success", revision, resetRequired };
+        const result = publishCatalogChanges_(service, operation, {
+            requestId: payload && payload.requestId,
+            changes: [payload && payload.change]
         });
+        return {
+            status: "success",
+            revision: result.lastRevision,
+            resetRequired: result.resetRequired,
+            duplicate: result.duplicate === true,
+            recoveredPartial: result.recoveredPartial === true
+        };
     }
 
     function publishCatalogChanges_(service, operation, payload) {
         const allowed = CATALOG_CHANGE_ALLOWED_WRITERS_[service];
         if (!allowed || !allowed.has(operation)) throw new Error("La operación no puede publicar cambios del catálogo.");
-        const changes = payload && Array.isArray(payload.changes) ? payload.changes : [];
+        const sourcePayload = payload && typeof payload === "object" ? payload : {};
+        const changes = Array.isArray(sourcePayload.changes) ? sourcePayload.changes : [];
         if (!changes.length || changes.length > 50) throw new Error("El lote de cambios del catálogo debe contener entre 1 y 50 registros.");
+        const requestId = String(sourcePayload.requestId || "").trim();
+        if (requestId && !/^[A-Za-z0-9_-]{8,128}$/.test(requestId)) {
+            throw new Error("El identificador de la publicación del catálogo no es válido.");
+        }
         const events = changes.map(sourceValue => {
             const source = sourceValue && typeof sourceValue === "object" && !Array.isArray(sourceValue) ? sourceValue : {};
             let collection = String(source.collection || "").trim().toLowerCase();
@@ -1016,19 +991,80 @@ function createSharedMutationCoordinator_(dependencies) {
             }
             return { event, resetRequired };
         });
+
         return withCoordinatorLock_(() => {
             const revisions = catalogChangeRevisions_();
             const storedRevision = Number(properties.getProperty(CATALOG_CHANGE_REVISION_PROPERTY_) || 0);
             let currentRevision = Math.max(Number.isSafeInteger(storedRevision) ? storedRevision : 0,
                 revisions.length ? revisions[revisions.length - 1] : 0);
+
+            // UrlFetch puede perder la respuesta después de que el evento quedó guardado.
+            // requestId hace idempotentes tanto el reintento de un evento como el lote.
+            if (requestId) {
+                const existing = [];
+                revisions.forEach(revision => {
+                    const raw = properties.getProperty(CATALOG_CHANGE_EVENT_PREFIX_ + revision);
+                    if (!raw) return;
+                    try {
+                        const event = JSON.parse(raw);
+                        if (event && event.sourceRequestId === requestId) existing.push(event);
+                    } catch (error) { /* Un evento corrupto ya fuerza reset al leer el feed. */ }
+                });
+                const recovered = existing.find(event => event.recoveredPartial === true);
+                if (recovered) {
+                    return { status: "success", count: changes.length, firstRevision: recovered.revision,
+                        lastRevision: recovered.revision, resetRequired: true, duplicate: true, recoveredPartial: true };
+                }
+                if (existing.length) {
+                    const expectedCount = changes.length;
+                    const batchCount = Number(existing[0].batchCount || 1);
+                    const indexes = new Set(existing.map(event => Number(event.batchIndex)));
+                    const complete = batchCount === expectedCount && existing.length === expectedCount &&
+                        Array.from({ length: expectedCount }, (_, index) => indexes.has(index)).every(Boolean);
+                    if (complete) {
+                        const foundRevisions = existing.map(event => Number(event.revision));
+                        return { status: "success", count: expectedCount,
+                            firstRevision: Math.min.apply(null, foundRevisions),
+                            lastRevision: Math.max.apply(null, foundRevisions),
+                            resetRequired: existing.some(event => event.resetRequired === true || event.operation === "reset"),
+                            duplicate: true, recoveredPartial: false };
+                    }
+
+                    // Un lote parcialmente persistido no se completa con snapshots antiguos:
+                    // se publica reset para que el consumidor lea el estado actual completo.
+                    if (!Number.isSafeInteger(currentRevision + 1)) throw new Error("La revisión del catálogo alcanzó su límite seguro.");
+                    currentRevision++;
+                    const resetEvent = {
+                        revision: currentRevision, collection: "*", recordId: "*", operation: "reset", snapshot: null,
+                        createdAt: new Date(now()).toISOString(), sourceService: service, sourceOperation: operation,
+                        sourceRequestId: requestId, batchIndex: -1, batchCount: expectedCount,
+                        recoveredPartial: true, resetRequired: true
+                    };
+                    properties.setProperty(CATALOG_CHANGE_EVENT_PREFIX_ + currentRevision, JSON.stringify(resetEvent));
+                    properties.setProperty(CATALOG_CHANGE_REVISION_PROPERTY_, String(currentRevision));
+                    const recoveredEvents = catalogChangeRevisions_();
+                    while (recoveredEvents.length > CATALOG_CHANGE_MAX_EVENTS_) {
+                        const oldest = recoveredEvents.shift();
+                        properties.deleteProperty(CATALOG_CHANGE_EVENT_PREFIX_ + oldest);
+                    }
+                    return { status: "success", count: expectedCount, firstRevision: currentRevision,
+                        lastRevision: currentRevision, resetRequired: true, duplicate: true, recoveredPartial: true };
+                }
+            }
+
             if (!Number.isSafeInteger(currentRevision + events.length)) {
                 throw new Error("La revisión del catálogo alcanzó su límite seguro.");
             }
             const firstRevision = currentRevision + 1;
-            events.forEach(item => {
+            events.forEach((item, index) => {
                 currentRevision++;
-                properties.setProperty(CATALOG_CHANGE_EVENT_PREFIX_ + currentRevision,
-                    JSON.stringify({ revision: currentRevision, ...item.event, resetRequired: item.resetRequired }));
+                const storedEvent = Object.assign({}, item.event, { revision: currentRevision, resetRequired: item.resetRequired });
+                if (requestId) {
+                    storedEvent.sourceRequestId = requestId;
+                    storedEvent.batchIndex = index;
+                    storedEvent.batchCount = events.length;
+                }
+                properties.setProperty(CATALOG_CHANGE_EVENT_PREFIX_ + currentRevision, JSON.stringify(storedEvent));
             });
             properties.setProperty(CATALOG_CHANGE_REVISION_PROPERTY_, String(currentRevision));
             const after = catalogChangeRevisions_();
@@ -1038,7 +1074,8 @@ function createSharedMutationCoordinator_(dependencies) {
             }
             return {
                 status: "success", count: events.length, firstRevision, lastRevision: currentRevision,
-                resetRequired: events.some(item => item.resetRequired || item.event.operation === "reset")
+                resetRequired: events.some(item => item.resetRequired || item.event.operation === "reset"),
+                duplicate: false, recoveredPartial: false
             };
         });
     }
