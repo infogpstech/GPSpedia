@@ -329,25 +329,24 @@ check("El botón de opciones queda antes de Negrita y su menú de categorías se
     assert.match(css, /\.inbox-composer-options-menu\s*\{[^}]*max-width:calc\(100vw - 24px\)/s);
 });
 check("Plantilla y categoría comparten el ancho del desplegable en dos columnas", () => {
-    assert.match(ui, /composerOptionsMenu\\.append\\(templateField, categoryField\\)/);
-    assert.match(ui, /composerOptionsMenu\\.classList\\.toggle\\("is-category-only", !isDeveloper\\)/);
-    assert.match(ui, /composerOptions\\.dataset\\.richToolbarPersist = "true"/);
+    assert.ok(ui.includes("composerOptionsMenu.append(templateField, categoryField)"));
+    assert.ok(ui.includes('composerOptionsMenu.classList.toggle("is-category-only", !isDeveloper)'));
+    assert.ok(ui.includes('composerOptions.dataset.richToolbarPersist = "true"'));
     const menuRule = css.slice(css.lastIndexOf("#inbox-modal-content .inbox-composer-options-menu {"));
-    assert.match(menuRule, /grid-template-columns:repeat\\(2,minmax\\(0,1fr\\)\\)/);
-    assert.match(css, /\\.inbox-composer-options-menu\\.is-category-only\\s*\\{[^}]*grid-template-columns:minmax\\(0,1fr\\)/s);
-    assert.match(css, /\\.inbox-composer-option\\s*\\{[^}]*flex-direction:\\s*column/s);
+    assert.ok(menuRule.includes("grid-template-columns:repeat(2,minmax(0,1fr))"));
+    assert.ok(css.includes(".inbox-composer-options-menu.is-category-only { grid-template-columns:minmax(0,1fr); }"));
+    assert.ok(menuRule.includes("flex-direction:column"));
 });
 check("La lista vacía reduce su altura y los botones de búsqueda no recortan el icono", () => {
-    assert.match(ui, /list\\.classList\\.toggle\\("is-empty", isEmpty\\)/);
-    assert.match(css, /\\.inbox-conversation-list\\.is-empty\\s*\\{[^}]*max-height:\\s*48px/s);
-    assert.match(css, /\\.inbox-conversation-sidebar\\.is-empty\\s*\\{[^}]*align-self:start/s);
+    assert.ok(ui.includes('list.classList.toggle("is-empty", isEmpty)'));
+    const emptyListRule = css.slice(css.lastIndexOf(".inbox-conversation-list.is-empty {"));
+    const emptySidebarRule = css.slice(css.lastIndexOf(".inbox-conversation-sidebar.is-empty {"));
+    assert.ok(emptyListRule.includes("max-height:48px;"));
+    assert.ok(emptySidebarRule.includes("align-self:start;"));
     const toggleRule = css.slice(css.lastIndexOf("#inbox-modal-content .inbox-folder-nav #inbox-search-toggle {"));
-    assert.match(toggleRule, /flex:0 0 40px/);
-    assert.match(toggleRule, /width:40px/);
-    assert.match(toggleRule, /overflow:visible/);
+    assert.ok(toggleRule.includes("flex:0 0 40px")&&toggleRule.includes("width:40px")&&toggleRule.includes("overflow:visible"));
     const submitRule = css.slice(css.lastIndexOf("#inbox-modal-content .inbox-search-row button {"));
-    assert.match(submitRule, /width:40px/);
-    assert.match(submitRule, /min-width:40px/);
+    assert.ok(submitRule.includes("width:40px")&&submitRule.includes("min-width:40px"));
 });
 check("El modal mantiene los controles de lectura para tecnologías de asistencia", () => {
     assert.match(html, /id="inbox-conversation-list"[^>]*aria-live="polite"/);
