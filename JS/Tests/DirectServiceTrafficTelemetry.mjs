@@ -7,7 +7,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const services = [
     { name: "AUTH", path: "JS/Services/Auth.js", actions: ["validateSession"], end: "function doGet(e)" },
     { name: "WRITE", path: "JS/Services/write.js", actions: ["checkVehicle", "getSuggestion", "checkVinDuplicate"], end: "function doGet(e)" },
-    { name: "FEEDBACK", path: "JS/Services/feedback.js", actions: ["getPysData", "sendContactForm"], end: "function doGet(e)" },
+    { name: "FEEDBACK", path: "JS/Services/feedback.js", actions: ["getPysData"], end: "function doGet(e)" },
 ];
 const base = 1_800_000_000_000;
 const secret = "direct-service-secret-".padEnd(48, "x");
