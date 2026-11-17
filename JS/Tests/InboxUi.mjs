@@ -483,7 +483,7 @@ check("Los campos enriquecidos se editan visualmente y sincronizan HTML saneado 
     assert.ok(rich.includes("export function mountRichTextEditors("));
     assert.ok(rich.includes('editor.setAttribute("contenteditable", "true")'));
     assert.ok(rich.includes("source.hidden = true"));
-    assert.ok(rich.includes("source.value = sanitizeHtmlContent(editor.innerHTML, mode)"));
+    assert.ok(rich.includes('source.value = sanitizeHtmlContent(editor.innerHTML.replace(RICH_TEXT_CARET_SENTINEL_, ""), mode)'));
     assert.ok(rich.includes('editor.addEventListener("blur"'));
     assert.ok(rich.includes('editor.addEventListener("paste"'));
     assert.ok(rich.includes("truncateRichEditor_(editor, limit)"));
@@ -585,7 +585,7 @@ check("Las barras estándar de detalles usan un icono con menú de listas, nunca
     assert.ok(toolbar.includes('setAttribute("aria-haspopup", "menu")'));
     assert.ok(toolbar.includes('setAttribute("aria-expanded", String(opening))'));
     assert.ok(!toolbar.includes("rich-toolbar-marker-select"));
-    assert.ok(!toolbar.includes('createElement("select")') || toolbar.includes('sizeSelect') && toolbar.includes('fontSelect'));
+    assert.equal(toolbar.split('document.createElement("select")').length - 1, 2, "solo se conservan los selectores de tamaño y fuente");
 });
 
 check("El formulario de tutorial permite pegar un enlace validado o iniciar la subida directa", () => {
@@ -604,6 +604,7 @@ check("La búsqueda de vehículos mantiene visibles los resultados con el teclad
     assert.ok(association.includes("window.visualViewport"));
     assert.ok(association.includes("updateViewportLayout"));
     assert.ok(association.includes("keepSearchResultsVisible"));
+    assert.ok(association.includes("input.dispatchEvent(new Event(\"input\", { bubbles: true }))"), "la llegada del catálogo debe refrescar resultados sin perder el foco");
     assert.ok(association.includes('resultsContainer.scrollIntoView({ block: "nearest"'));
     assert.ok(association.includes('input.scrollIntoView({ block: "center"'));
 });
