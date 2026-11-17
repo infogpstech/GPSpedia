@@ -12991,7 +12991,7 @@ export function openSearchVehicleForPysAssociationModal(problemId, onAssociated,
                 </span>
             `;
             detailsButton.setAttribute("aria-label", `Ver información de ${v.marca} ${v.modelo}`);
-            detailsButton.onclick = () => {
+            const openVehicleDetails = () => {
                 openConfirmVehicleForPysModal(v, confirmedVehicle => {
                     newlySelectedIds.add(String(confirmedVehicle.id));
                     input.value = "";
@@ -12999,6 +12999,14 @@ export function openSearchVehicleForPysAssociationModal(problemId, onAssociated,
                     renderSelectedChips();
                     input.focus({ preventScroll: true });
                 });
+            };
+            detailsButton.onclick = event => {
+                event.stopPropagation();
+                openVehicleDetails();
+            };
+            itemDiv.onclick = event => {
+                if (event.target.closest(".pys-association-result-add")) return;
+                openVehicleDetails();
             };
 
             const addBtn = document.createElement("button");
