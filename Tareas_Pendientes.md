@@ -1489,3 +1489,7 @@ No se han desplegado proyectos Apps Script ni configurado secretos remotos. La f
 - Corregido: AUTH procesa cualquier cantidad de tokens únicos en lotes de cinco; cada lote debe confirmarse en WRITE y FEEDBACK antes de continuar. Coordinator solo recibe una revocación al final. Un fallo parcial detiene el flujo y permite reintentar idempotentemente.
 - La invalidación reutiliza GPSpedia_COORDINATOR_SECRET; no requiere una credencial adicional. Solo deben configurarse en AUTH GPSpedia_WRITE_URL y GPSpedia_FEEDBACK_URL con los endpoints /exec vigentes. Se mantiene pendiente de Beta configurar URLs si aún no existen, desplegar los tres servicios y probar revocaciones reales.
 - Prueba focalizada actualizada para 13 sesiones Developer; CI posterior a esta corrección pendiente de confirmación.
+### Validación final de la corrección P3.1c — 2026-11-17
+- CI 44151856103 SUCCESS: sintaxis aprobada, 144 suites / 2,109 pruebas / 0 fallos. SessionActorCacheLifetime 4/4; SessionActorCacheInvalidation 1/1 con loteo de 13 sesiones Developer y uso del secreto Coordinator existente.
+- Health read-only 44151856097 SUCCESS: 7/7 servicios disponibles. No valida el código Apps Script nuevo porque no se desplegó.
+- P3.1c: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Pendiente Beta: configurar GPSpedia_WRITE_URL y GPSpedia_FEEDBACK_URL en AUTH, desplegar AUTH/WRITE/FEEDBACK y probar logout, revocaciones multi-sesión, cambios de rol, eliminación, recuperación de contraseña y fallo parcial/reintento.
