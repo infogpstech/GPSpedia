@@ -46,8 +46,8 @@ function runVideoApprovalSessionTests() {
         expect_(()=>authorizeFeedbackAction_("updateTutorialItem",actorPayload("Tecnico")),"sesión no autorizada");
     });
     run_("el helper de FEEDBACK no consulta Users ni ActiveSessions",()=>{
-        const start=String(assertFeedbackSession).indexOf("function assertFeedbackSession");
-        assert_(start>=0);
+        const helper=String(assertFeedbackSession);
+        assert_(!/getSpreadsheet|ActiveSessions|Users|findUniqueRowsByExactValue_/.test(helper));
     });
     return{status:failed===0?"PASS":"FAIL",passed,failed,results};
 }

@@ -33,12 +33,12 @@ check("El backend autoriza la edición según el rol vigente, sin confiar en el 
  assert.match(admin,/displayRole=role==="desarrollador"\?"Desarrollador":role==="jefe"\?"Jefe":"Supervisor"/);
 });
 check("El backend consume el actor central y permite editar solo a Supervisor, Jefe y Desarrollador",()=>{
- const start=admin.indexOf("function getAdminSessionContext_("),end=admin.indexOf("\\nfunction assertDeveloperSession",start);
+ const start=admin.indexOf("function getAdminSessionContext_("),end=admin.indexOf("\nfunction assertDeveloperSession",start);
  assert.ok(start>=0&&end>start);
  const helper=admin.slice(start,end);
  const api=new Function(helper+
-  '\\nfunction assertDeveloperSession(payload){return getAdminSessionContext_(payload,["desarrollador"]);}'+
-  '\\nfunction assertModalEditSession(payload){return getAdminSessionContext_(payload,["desarrollador","jefe","supervisor"]);}'+
+  '\nfunction assertDeveloperSession(payload){return getAdminSessionContext_(payload,["desarrollador"]);}'+
+  '\nfunction assertModalEditSession(payload){return getAdminSessionContext_(payload,["desarrollador","jefe","supervisor"]);}'+
   '\\nreturn {assertDeveloperSession,assertModalEditSession};')();
  const actor=(role,userId="U1",epoch=1)=>({userId,role:role.toLowerCase(),fullName:"Test User",epoch});
  for(const role of ["Desarrollador","Jefe","Supervisor"]){
