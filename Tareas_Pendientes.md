@@ -1209,7 +1209,7 @@ Después: abrir Developer → Auditoría de Cortes en escritorio y PWA móvil; c
 - CATALOG: cuatro POST directos (getCatalogData, getDropdownData, getSuggestion y getNavigationData) se cuentan localmente en buckets horarios de 24 h mediante ScriptProperties y tryLock(0).
 - AUTH: validateSession se cuenta localmente; login, benchmark PBKDF2 y operaciones protegidas permanecen en Coordinator.
 - WRITE: checkVehicle, getSuggestion y checkVinDuplicate se cuentan localmente; las mutaciones protegidas permanecen en Coordinator.
-- FEEDBACK: getPysData, sendContactForm y suggestYear anónimo (userId 0) se cuentan localmente; suggestYear autenticado y getCatalogChanges permanecen en Coordinator.
+- FEEDBACK: getPysData y suggestYear anónimo (userId 0) se cuentan localmente; sendContactForm, suggestYear autenticado y getCatalogChanges permanecen en Coordinator.
 - USERS: getUsers, createUser y updateProfile pasan por Coordinator; no requiere contador local.
 - UTILITIES: migrateTimestamps obtiene una lease UTILITIES dentro del handler y ya se cuenta en Coordinator; se retiró el contador directo para evitar doble conteo.
 - ADMIN: operaciones protegidas se cuentan en Coordinator; ping se excluye intencionalmente como sondeo.
