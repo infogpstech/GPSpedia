@@ -1869,10 +1869,14 @@ function handleReportProblem(payload) {
     if (reportContext) { reportContext.category = ticketCategory; reportContext.subject = ticketSubject; }
     const imageAttachment=validateReportImageAttachment_(payload.imageAttachment);
     if(imageAttachment&&!reportContext) throw new Error("El adjunto requiere un identificador de reporte individual válido.");
-    const lock=LockService.getScriptLock(); acquireFeedbackScriptLock_(lock);
+    const lock=LockService.getScriptLock();
+    let lockAcquired=false;
     let generatedReportId="",duplicateReport=false,uploadedImage=null,resolvedImageUrl="";
     let pendingSheet=null,pendingRowNumber=0,pendingMetadataColumn=0,pendingExistingMetadata=null;
     try {
+        // La transferencia Drive ocurre antes del bloqueo breve de escritura en Sheets.
+        if(imageAttachment) uploadedImage=saveReportImageAttachment_(imageAttachment,reportContext.reportId);
+        acquireFeedbackScriptLock_(lock); lockAcquired=true;
         const sheet=getSafeSheet(SHEET_NAMES.FEEDBACKS); pendingSheet=sheet;
         const metadataColumn=reportContext?ensureReportMetadataColumn(sheet):0; pendingMetadataColumn=metadataColumn;
         if(reportContext) {
@@ -1892,8 +1896,9 @@ function handleReportProblem(payload) {
                     if(oldImage) {
                         if(oldImage.imageSha256!==imageAttachment.sha256) throw new Error("El reporte ya tiene una imagen distinta asociada; no se reemplazó.");
                         resolvedImageUrl=oldImage.imageUrl;
+                        trashReportImageUpload_(uploadedImage); uploadedImage=null;
                     } else {
-                        uploadedImage=saveReportImageAttachment_(imageAttachment,reportContext.reportId);
+                        if(!uploadedImage) throw new Error("No se pudo preparar la imagen del reporte.");
                         pendingExistingMetadata={rowIndex:existing.rowIndex,column:metadataColumn,value:JSON.stringify(existing.metadata)};
                         sheet.getRange(existing.rowIndex,metadataColumn).setValue(JSON.stringify(Object.assign({},existing.metadata,uploadedImage.metadata)));
                         SpreadsheetApp.flush(); resolvedImageUrl=uploadedImage.metadata.imageUrl;
@@ -1908,7 +1913,7 @@ function handleReportProblem(payload) {
             const FORMULA_ROW=2,lastCol=reportContext?Math.max(sheet.getLastColumn(),metadataColumn,8):(sheet.getLastColumn()||8);
             if(lastRow>=FORMULA_ROW) copyRowPresentationOnly_(sheet,FORMULA_ROW,newRowNumber,lastCol);
             sheet.getRange(newRowNumber,COLS_FEEDBACKS.ID).setValue(getNextFormulaBasedId_(sheet,COLS_FEEDBACKS.ID));
-            if(imageAttachment) uploadedImage=saveReportImageAttachment_(imageAttachment,reportContext.reportId);
+            if(imageAttachment && !uploadedImage) throw new Error("No se pudo preparar la imagen del reporte.");
             sheet.getRange(newRowNumber,COLS_FEEDBACKS.Usuario,1,3).setValues([[userName,vehicleId,normalizedProblemText]]);
             if(reportContext) {
                 const metadata={reportId:reportContext.reportId,userId:String(userId),vehicleId:String(vehicleId),
@@ -1937,7 +1942,7 @@ function handleReportProblem(payload) {
             } catch(rollbackError) { console.error("No se pudo revertir completamente la fila del reporte:",rollbackError); }
         }
         throw error;
-    } finally { lock.releaseLock(); }
+    } finally { if(lockAcquired) lock.releaseLock(); }
     if(!duplicateReport) logUserActivity(userId,userName,"report_problem",vehicleId,normalizedProblemText);
     return {status:"success",message:duplicateReport?"El reporte ya estaba registrado; se devolvió el identificador existente.":"Problema reportado.",
         reportId:generatedReportId,category:ticketCategory,subject:ticketSubject,alreadyReported:duplicateReport,imageAttached:Boolean(resolvedImageUrl),imageUrl:resolvedImageUrl};
@@ -2634,10 +2639,12 @@ function handleSuggestCutChange(payload) {
     const legacyRequestFingerprint = buildLegacyCutSuggestionRequestFingerprint_(
         normalizedDetails, normalizedProposedValues, legacyImageDataUrl
     );
+    // La imagen se carga a Drive antes de adquirir el bloqueo de la hoja.
+    let uploadedImage = normalizedImage ? saveSuggestionImageAttachment_(normalizedImage, normalizedVehicleId, normalizedCorteIndex) : null;
     const lock = LockService.getScriptLock();
-    acquireFeedbackScriptLock_(lock);
-    let uploadedImage = null, pendingSheet = null, pendingRowNumber = 0, rowCommitted = false, result = null;
+    let lockAcquired = false, pendingSheet = null, pendingRowNumber = 0, rowCommitted = false, result = null;
     try {
+        acquireFeedbackScriptLock_(lock); lockAcquired = true;
         const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
         if (!sheet) throw new Error("Hoja Feedbacks no encontrada.");
         pendingSheet = sheet;
@@ -2651,6 +2658,7 @@ function handleSuggestCutChange(payload) {
                 String(record.userId || "") === normalizedUserId &&
                 String(record.requestFingerprint || "") === requestFingerprint;
             if (!sameOperation) throw new Error("El identificador de operación ya pertenece a una solicitud distinta; no se creó otra sugerencia.");
+            trashReportImageUpload_(uploadedImage); uploadedImage = null;
             return buildCutSuggestionReplayResponse_(existingByOperation, normalizedReportId);
         }
         // Compatibilidad con clientes anteriores y formularios reabiertos después de perder la respuesta.
@@ -2660,6 +2668,7 @@ function handleSuggestCutChange(payload) {
             if (storedFingerprint !== requestFingerprint && storedFingerprint !== legacyRequestFingerprint) {
                 throw new Error("El reporte ya tiene una sugerencia con datos distintos; no se creó otra sugerencia.");
             }
+            trashReportImageUpload_(uploadedImage); uploadedImage = null;
             return buildCutSuggestionReplayResponse_(existingByRequest, normalizedReportId);
         }
         const createdAt = new Date().toISOString();
@@ -2668,7 +2677,6 @@ function handleSuggestCutChange(payload) {
         const FORMULA_ROW = 2, lastCol = sheet.getLastColumn() || 8;
         if (lastRow >= FORMULA_ROW) copyRowPresentationOnly_(sheet, FORMULA_ROW, newRowNumber, lastCol);
         sheet.getRange(newRowNumber, COLS_FEEDBACKS.ID).setValue(getNextFormulaBasedId_(sheet, COLS_FEEDBACKS.ID));
-        if (normalizedImage) uploadedImage = saveSuggestionImageAttachment_(normalizedImage, normalizedVehicleId, normalizedCorteIndex);
         const imageMetadata = uploadedImage ? uploadedImage.metadata : null;
         const suggestionRecord = {
             subType: "suggestion_cut", schemaVersion: 3,
@@ -2712,12 +2720,12 @@ function handleSuggestCutChange(payload) {
                 console.error("No se pudo confirmar la reversión de la fila de sugerencia:", rollbackError);
             }
         }
-        if (!rowCommitted && uploadedImage && rollbackConfirmed) trashReportImageUpload_(uploadedImage);
+        if (!rowCommitted && uploadedImage && (!pendingSheet || !pendingRowNumber || rollbackConfirmed)) trashReportImageUpload_(uploadedImage);
         else if (!rowCommitted && uploadedImage && !rollbackConfirmed) {
             console.error("La imagen de sugerencia se conserva para reconciliación porque el estado de la fila no pudo verificarse.");
         }
         throw error;
-    } finally { lock.releaseLock(); }
+    } finally { if (lockAcquired) lock.releaseLock(); }
     logUserActivity(userId, userName, "suggest_cut_change", normalizedVehicleId, JSON.stringify(result.suggestionData));
     return result;
 }
