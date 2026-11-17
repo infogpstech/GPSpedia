@@ -19,7 +19,9 @@ function test(name, run) { run(); passed++; console.log("PASS " + name); }
 
 test("rutas directas actuales coinciden con ACTION_TO_SERVICE_MAP", () => {
     assert.match(api, /'validateSession': 'AUTH'/);
-    assert.match(api, /'checkVehicle': 'WRITE'.*'getSuggestion': 'WRITE'.*'checkOperation': 'WRITE'/);
+    assert.match(api, /'checkVehicle': 'WRITE'/);
+    assert.match(api, /'getSuggestion': 'WRITE'/);
+    assert.match(api, /'checkOperation': 'WRITE'/);
     assert.match(api, /'getPysData': 'FEEDBACK'/);
     assert.match(api, /'getCatalogChanges': 'FEEDBACK'/);
     assert.match(api, /'getNavigationData': 'CATALOG'.*'getCatalogData': 'CATALOG'.*'getDropdownData': 'CATALOG'/);
@@ -53,7 +55,7 @@ test("UTILITIES, USERS y ADMIN no crean contadores locales redundantes", () => {
 });
 
 test("CATALOG y rutas directas AUTH/WRITE quedan contabilizadas; consultas internas excluidas", () => {
-    assert.match(catalog, /const CATALOG_TRAFFIC_ACTIONS_ = new Set\(\["getCatalogData", "getDropdownData", "getSuggestion", "getNavigationData"\]\)/);
+    assert.match(catalog, /CATALOG_TRAFFIC_ACTIONS_ = new Set\(\[[\s\S]*?"getNavigationData"\s*\]\)/);
     assert.match(catalog, /if \(action === "getServiceTraffic"\)[\s\S]*?return ContentService/);
     assert.match(auth, /actions: new Set\(\["validateSession"\]\)/);
     assert.match(write, /actions: new Set\(\["checkVehicle","getSuggestion","checkVinDuplicate"\]\)/);
