@@ -562,12 +562,15 @@ check("El editor bloquea el menú contextual del navegador sin deshabilitar sele
 });
 
 
-check("El formato pendiente se conserva al perder foco y se aplica a texto y composición", () => {
+check("El formato pendiente se conserva mediante anclas nativas compatibles con IME y autocorrección", () => {
     const compact = rich.slice(rich.indexOf("function createCompactRichTextToolbar_"), rich.indexOf("export function createRichTextToolbar"));
     const standard = rich.slice(rich.indexOf("export function createRichTextToolbar"), rich.indexOf("export function refreshRichTextToolbars"));
     assert.ok(compact.includes("pointerdown") && compact.includes("preventDefault"));
     assert.ok(standard.includes("pointerdown") && standard.includes("preventDefault"));
-    for (const fragment of ["const richEditorPendingFormats_ = new WeakMap()", 'editor.addEventListener("beforeinput"', "insertRichTextWithPendingFormats_", "applyRichTextInlineFormat_", "compositionstart", "compositionend"]) assert.ok(rich.includes(fragment), fragment);
+    for (const fragment of ["const richEditorPendingFormats_ = new WeakMap()", "const richEditorTypingAnchors_ = new WeakMap()", "RICH_TEXT_CARET_SENTINEL_", "createRichTextTypingAnchor_", "cleanRichTextTypingSentinel_", "compositionstart", "compositionend"]) assert.ok(rich.includes(fragment), fragment);
+    assert.doesNotMatch(rich, /editor\\.addEventListener\\(["']beforeinput/);
+    assert.doesNotMatch(rich, /insertRichTextWithPendingFormats_|applyRichTextPendingFormatsToRange_/);
+    assert.match(rich, /document\\.activeElement===editor&&inside/);
     assert.ok(!rich.includes("restoreRichTextSelection_(resolveRichTextTarget_(targetId))"));
     for (const tagPair of ['["bold","strong"]','["italic","em"]','["underline","u"]','["strike","s"]']) assert.ok(rich.includes(tagPair), tagPair);
 });
