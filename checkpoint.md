@@ -525,3 +525,8 @@ La comprobación sintáctica aprobó. Dos contratos heredados fallaron por expec
 ### Ajuste de regresión Inbox — 2026-11-17
 - La suite reportó 1 fallo de aserción por contaminación del fixture (la prueba nueva añadió 2 mensajes antes de una verificación histórica que esperaba 7). La prueba de privacidad se movió al final y ahora comprueba inclusión/exclusión y lectura no autorizada sin asumir el total de la bandeja.
 - Reejecutar CI del nuevo HEAD. Pages build del commit anterior SUCCESS; health read-only del commit anterior SUCCESS.
+
+
+### Segundo ajuste de regresión Inbox — 2026-11-17
+- La prueba nueva fue movida al final, pero la consulta global de bandeja de U3 encontró un contador inconsistente en un registro de fixture heredada (uuid-00000029). Se eliminó la dependencia de esa consulta global y se añadieron denegaciones cruzadas de U3/U5 sobre conversaciones privadas ajenas.
+- La lógica de servicio no se modificó. Pendiente reejecutar CI del HEAD nuevo.

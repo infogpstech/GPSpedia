@@ -389,3 +389,11 @@ undefined
 - La prueba ahora verifica participantes individuales y que un destinatario no pueda listar ni abrir la conversación privada del otro. Se conservó intacto el límite/contador de las pruebas históricas.
 - Reejecutar CI integral y Pages tras este ajuste.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — AISLAMIENTO DE PRIVACIDAD Inbox FRENTE A DATOS LEGACY
+- La consulta de la bandeja completa durante la prueba nueva inspeccionaba todas las conversaciones visibles del usuario de prueba y expuso un contador inconsistente en una fixture legacy (uuid-00000029). El test no debe depender de reconciliar historiales ajenos para probar privacidad.
+- Se sustituyó esa consulta por intentos cruzados de lectura: U5 no puede abrir el hilo U1→U3 y U3 no puede abrir el hilo U1→U5. Los registros de participantes se verifican directamente y cada conversación contiene un solo destinatario.
+- Sin cambios al handler de producción ni al esquema de datos; volver a ejecutar suite completa.
+================================================================================

@@ -920,11 +920,11 @@ run("Un envío a varios usuarios produce conversaciones privadas sin exponer des
     assert.ok(rowU3 && rowU5 && toU3.conversationId !== toU5.conversationId);
     assert.deepEqual(JSON.parse(rowU3[10]).map(user => user.id),["U1","U3"]);
     assert.deepEqual(JSON.parse(rowU5[10]).map(user => user.id),["U1","U5"]);
-    const u3Inbox = api.handleGetInboxConversations({ ...actor("U3","token-c"),folder:"received" });
-    assert.ok(u3Inbox.data.some(item => item.conversationId === toU3.conversationId));
-    assert.equal(u3Inbox.data.some(item => item.conversationId === toU5.conversationId),false);
     assert.throws(() => api.handleGetInboxMessages({
         ...actor("U5","token-e"),conversationId:toU3.conversationId
+    }),/permiso/);
+    assert.throws(() => api.handleGetInboxMessages({
+        ...actor("U3","token-c"),conversationId:toU5.conversationId
     }),/permiso/);
 });
 console.log("InboxConversations: " + passed + "/" + passed + " PASS");

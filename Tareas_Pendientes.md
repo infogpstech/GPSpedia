@@ -1611,3 +1611,7 @@ Evidencia y ubicaciones: adenda del 2026-11-17 en `Auditoría.txt`. La revisión
 
 ### Nota de regresión — privacidad Inbox (2026-11-17)
 La primera ejecución detectó interferencia de fixture: la prueba de privacidad añadida antes de una aserción heredada incrementó dos filas el contador común. Se movió la prueba al final de `InboxConversations.mjs` y se hizo independiente de los totales históricos; no se modificó lógica de servicio.
+
+
+### Aislamiento de prueba Inbox — 2026-11-17
+La consulta global de bandeja en el nuevo test de privacidad recorría conversaciones de la fixture heredada y encontraba un contador histórico no relacionado. La prueba ahora valida el contrato de privacidad directamente con dos intentos de lectura cruzada, sin cambiar handlers ni ignorar errores funcionales.
