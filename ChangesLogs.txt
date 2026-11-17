@@ -307,3 +307,10 @@ undefined
 - Se reutiliza GPSpedia_COORDINATOR_SECRET, credencial servicio-a-servicio existente; se elimina la nueva propiedad GPSpedia_SESSION_CACHE_INVALIDATION_SECRET. AUTH conserva únicamente la configuración de URLs GPSpedia_WRITE_URL y GPSpedia_FEEDBACK_URL.
 - No se modificaron deployments ni propiedades productivas. Validación CI del HEAD con esta corrección pendiente de confirmación.
 ================================================================================
+================================================================================
+2026-11-17 — P3.1c — validación de la corrección de sesiones ilimitadas
+- CI 44151856103 SUCCESS: 144 suites, 2,109 pruebas aprobadas, 0 fallos; sintaxis aprobada. SessionActorCacheLifetime 4/4 y SessionActorCacheInvalidation 1/1.
+- Health remoto 44151856097 SUCCESS: 7/7 servicios disponibles mediante GET de solo lectura; no valida la nueva implementación Apps Script sin desplegar.
+- Se confirma la compatibilidad entre Auth.js y su copia de pruebas JS/Tests/Auth.js, normalizando únicamente el ID de Spreadsheet aislado.
+- P3.1c queda COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegaron servicios ni se modificaron propiedades o datos externos.
+================================================================================
