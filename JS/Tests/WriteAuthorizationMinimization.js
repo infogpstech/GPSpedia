@@ -102,7 +102,8 @@ function runWriteAuthorizationMinimizationTests(sources) {
  run("Registro silencioso se procesa en WRITE y solo lo puede ejecutar Desarrollador",()=>{
   assert(add.includes("const serviceOverride = null")&&add.includes("silent: silentVal"));
   const start=write.indexOf("function handleAddOrUpdateCutLockedUnsafe_"),end=write.indexOf("\nfunction ",start+10),handler=write.slice(start,end<0?write.length:end);
-  const wrapper=extract(write,"handleAddOrUpdateCutLocked");
+  const wrapperStart=write.indexOf("function handleAddOrUpdateCutLocked("),wrapperEnd=write.indexOf("\\nfunction handleAddOrUpdateCutLockedUnsafe_",wrapperStart),wrapper=write.slice(wrapperStart,wrapperEnd);
+  assert(wrapperStart>=0&&wrapperEnd>wrapperStart);
   assert(wrapper.includes('getAuthenticatedCollaborator(payload, payload && payload.silent === true ? ["desarrollador"] : undefined)'));
   assert(!handler.includes("getAuthenticatedCollaborator("),"La identidad del colaborador no debe resolverse dos veces.");
   assert(/'addOrUpdateCut':\s*'WRITE'/.test(api));
@@ -118,7 +119,10 @@ function runWriteAuthorizationMinimizationTests(sources) {
  });
  run("Controles existentes addOrUpdateCut, addVinToVehicle y freezeCortesIds siguen autenticados",()=>{
   for(const name of ["handleAddOrUpdateCutLocked","handleAddVinToVehicleLocked","handleFreezeCortesIds"]){
-   const fn=extract(write,name);assert(fn.includes("getAuthenticatedCollaborator")||fn.includes("assertDeveloperForIdMaintenance"),"Falta protección en "+name);
+   let fn;
+   if(name==="handleAddOrUpdateCutLocked"){const start=write.indexOf("function handleAddOrUpdateCutLocked("),end=write.indexOf("\\nfunction handleAddOrUpdateCutLockedUnsafe_",start);fn=write.slice(start,end);}
+   else fn=extract(write,name);
+   assert(fn.includes("getAuthenticatedCollaborator")||fn.includes("assertDeveloperForIdMaintenance"),"Falta protección en "+name);
   }
  });
  return {status:failed?"FAIL":"PASS",passed,failed,results};
