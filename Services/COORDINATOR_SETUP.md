@@ -97,7 +97,7 @@ Para completar rutas POST que no pasan por Coordinator, cada servicio con rutas 
 - CATALOG: getCatalogData, getDropdownData, getSuggestion y getNavigationData.
 - AUTH: validateSession.
 - WRITE: checkVehicle, getSuggestion y checkVinDuplicate.
-- FEEDBACK: getPysData y suggestYear anónimo (userId 0). sendContactForm, suggestYear autenticado y getCatalogChanges mantienen el conteo Coordinator.
+- FEEDBACK: getPysData, getCatalogChanges y suggestYear anónimo (userId 0). sendContactForm y suggestYear autenticado mantienen el conteo Coordinator.
 - UTILITIES: migrateTimestamps obtiene una lease de Coordinator dentro de su handler; no tiene contador local para evitar doble conteo.
 - USERS: las acciones actuales conocidas (getUsers, createUser y updateProfile) pasan por Coordinator.
 - ADMIN: las operaciones pasan por Coordinator; ping se excluye intencionalmente como sondeo.
