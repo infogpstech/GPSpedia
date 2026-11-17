@@ -64,14 +64,14 @@ La revisión de código debe concentrarse en el diff y sus efectos. Si aparece u
 
 Detener la parte afectada del trabajo cuando ocurra cualquiera de estas condiciones:
 
-- repositorio, rama o HEAD no coinciden con lo autorizado o no pueden verificarse;
+- repositorio o rama no coinciden con lo autorizado, o existe evidencia de divergencia/conflicto real. La imposibilidad inicial de consultar/verificar el SHA mediante una herramienta o endpoint NO constituye por sí sola un bloqueo: se debe resolver usando métodos alternativos y continuar el trabajo;
 - falta un requisito, archivo, permiso o dato indispensable;
 - hay cambios concurrentes o conflictos cuyo origen no está claro;
 - una prueba crítica falla o existe riesgo de corrupción, pérdida de datos, exposición o bypass de seguridad;
 - una operación parcial deja el estado del repositorio o del sistema incierto.
 
 Al bloquearse:
-1. No improvisar, ocultar el fallo ni continuar sobre supuestos.
+1. No improvisar, ocultar el fallo ni continuar sobre supuestos. Antes de declarar un bloqueo, agotar las vías razonables para resolverlo y continuar con las partes independientes.
 2. Conservar intactos los cambios y evidencias existentes.
 3. Determinar qué se completó, qué falló y qué permanece sin verificar.
 4. Registrar el bloqueo en el checkpoint cuando afecte la continuidad; incluir causa, impacto, estado actual y acción concreta para reanudar.
@@ -81,7 +81,7 @@ Los hallazgos críticos de seguridad o integridad no se posponen sin autorizaci�
 
 ## 7. Recuperación ante errores o interrupciones
 
-- Antes de recuperar, consultar el HEAD, el estado/diff disponible y el último commit verificable. No asumir que una operación fallida no produjo cambios.
+- Antes de recuperar, consultar el HEAD, el estado/diff disponible y el último commit verificable. Si una herramienta no permite leer el SHA, resolverlo mediante otra vía disponible (por ejemplo, consulta de refs, comparación de commits, historial reciente, lectura de commit/ref o clon/fetch autorizado); no asumir que una operación fallida no produjo cambios.
 - Preservar cambios válidos no publicados. No borrar trabajo para volver a un estado limpio sin identificar primero qué se perdería.
 - Si una edición quedó parcial, comparar con el estado previo y completar o revertir únicamente el fragmento afectado.
 - Si falla una escritura o publicación, consultar el estado remoto antes de reintentar para evitar duplicados.
@@ -107,7 +107,7 @@ Solo registrar un hallazgo si existe evidencia. Si no hay hallazgos, no inventar
 - Trabajar en `GPSpedia2.2.5_work`; no escribir ni fusionar en `GPSpedia2.2.5` sin autorización expresa.
 - Agrupar los cambios de una misma tarea lógica en un solo commit siempre que la herramienta de publicación lo permita. No crear commits intermedios por archivo o por etapa.
 - Si la integración disponible solo permite guardar un archivo por operación y cada operación genera su propio commit, se permite publicar los archivos de forma secuencial; verificar el resultado de cada operación y no reescribir el historial para simular una agrupación.
-- Antes de publicar, verificar HEAD y rama; crear el commit sobre el HEAD confirmado y actualizar únicamente la rama autorizada mediante una operación condicionada al SHA esperado.
+- Antes de publicar, verificar HEAD y rama; crear el commit sobre el HEAD confirmado y actualizar únicamente la rama autorizada mediante una operación condicionada al SHA esperado. Si falla la consulta inicial del SHA, cambiar de método y resolver la referencia; no abandonar la tarea por esa limitación de herramienta. Si tras agotar las vías disponibles el SHA sigue sin poder confirmarse, continuar análisis, auditoría, preparación y pruebas que no impliquen escritura/publicación, dejando explícitamente pendiente solo la publicación segura; nunca inventar un SHA ni publicar sobre una referencia supuesta.
 - No forzar actualizaciones ni reescribir historial. Si el SHA esperado no coincide, detenerse, consultar el estado y reconciliar.
 - Después de publicar, verificar SHA, padre, archivos incluidos y HEAD remoto. Confirmar que la rama base permanece intacta.
 - No marcar la tarea como completada hasta que las verificaciones aplicables y la publicación hayan sido comprobadas.
@@ -203,3 +203,17 @@ Estos requisitos son obligatorios para las correcciones de rendimiento y experie
 - Modal de corte: abrir, modificar y guardar campos con respuesta ágil y sin validaciones interactivas repetidas.
 - Operaciones ADMIN/FEEDBACK: borrado de logs, auditoría de carpeta e imágenes históricas funcionan para los roles previstos; roles no autorizados siguen rechazados por backend.
 - Registrar tiempos medidos, rol de prueba, navegador/dispositivo, estado de caché y respuesta del servicio. No considerar un error de configuración de deployment como fallo de lógica local ni marcar una validación Beta sin evidencia.
+
+
+## 14. Resolución obligatoria de problemas de consulta del SHA
+
+La falta de lectura o verificación del SHA mediante una herramienta concreta no es una razón válida para detener la tarea ni para declarar bloqueada la continuidad. Es una incidencia técnica que el agente debe resolver y después continuar con el trabajo.
+
+- No confundir un fallo de la herramienta, respuesta incompleta, endpoint filtrado, búsqueda sin resultados o ausencia de un campo SHA con una divergencia real del repositorio.
+- Reintentar de forma razonada y utilizar las vías alternativas disponibles: consultar la referencia de la rama, obtener el commit asociado, comparar la rama de trabajo con la base o con el último SHA documental, revisar el historial reciente, leer el commit por su SHA, o utilizar un clon/fetch autorizado cuando esté disponible.
+- Contrastar la información entre fuentes cuando sea posible. Registrar qué método permitió confirmar la referencia y distinguir el HEAD actual del último SHA mencionado en checkpoint, auditorías o changelog.
+- Una vez resuelta la consulta, actualizar la continuidad con el HEAD real y ejecutar la siguiente tarea pendiente; no volver a solicitar al usuario que resuelva una limitación técnica que corresponde al agente.
+- Si, después de agotar las alternativas realmente disponibles, no se puede confirmar el HEAD, no se debe inventar ni asumir un SHA, ni publicar cambios sobre una referencia incierta. Sin embargo, se debe continuar todo el trabajo independiente que sea seguro: lectura, auditoría, análisis, preparación de cambios fuera de la rama, pruebas aisladas y resolución de otros pendientes. La única parte que puede quedar temporalmente sin ejecutar es la escritura/publicación que requiera necesariamente el SHA confirmado.
+- Solo detener una operación concreta cuando exista un riesgo real de sobrescribir trabajo concurrente, modificar la rama equivocada, perder datos o publicar sobre una referencia no confirmada. Documentar el método alternativo intentado, el resultado y el siguiente paso técnico concreto; no presentar la limitación de una herramienta como bloqueo general del proyecto.
+
+Esta sección complementa y prevalece sobre cualquier interpretación de las secciones 2, 6, 7 y 9 que pudiera convertir una consulta inicial fallida del SHA en motivo para detener toda la tarea. Se mantienen íntegros los controles de publicación segura, comparación del SHA esperado y protección de la rama base.
