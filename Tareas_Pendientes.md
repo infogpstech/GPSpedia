@@ -1399,3 +1399,13 @@ No se han desplegado proyectos Apps Script ni configurado secretos remotos. La f
 - No eliminar la telemetría ni sus fuentes para simplificar servicios. Optimizar su costo para que sea best-effort, no bloquee operaciones y no agregue viajes de red ni esperas a cada acción.
 - Criterios de regresión: RemoteServiceHealth, ServiceHealthContract, DirectServiceTrafficTelemetry, DirectTrafficRoutingCoverage, ServiceTrafficBatch, ServiceTrafficAggregation, CatalogTrafficTelemetry, ServiceMetricsTelemetry, ActivityDashboardContributions, ActivityDashboardInsights, ActivityLogsBoundedRead y ActivityLogRetention.
 - El monitoreo remoto debe permanecer de solo lectura; no desplegar servicios ni modificar datos externos como parte de estas pruebas.
+
+
+### GP-PERF-SIMPLIFY-01 / P1.2b — cierre — 2026-11-17
+- Estado: **COMPLETADA CON VALIDACIÓN DIFERIDA A BETA**.
+- WRITE libera el ScriptLock durante las cinco rutas de trabajo Drive de `addOrUpdateCut`; creación de carpetas, transferencia y vínculo del ledger ocurren fuera del lock global. La adquisición inicial usa `tryLock(0)` para evitar esperas de hasta 30 s.
+- El actor/rol se resuelve una sola vez. Los slots con operaciones `pending` se reservan al seleccionar nuevos cortes. El ID de vehículo nuevo y el `opId` quedan asignados antes de cargar; ante fallo de readquisición o fase posterior, se conserva el `opId` pendiente para recuperación y no se revierte una fila con datos concurrentes.
+- La compatibilidad heredada sin `opId` mantiene el flujo serializado. No se modificó la matriz RBAC.
+- CI `44135220800`: SUCCESS — 139 suites / 2,027 pruebas / 0 fallos. Prueba focalizada WRITE Drive: 1/1 PASS. Health remoto read-only `44135220571`: SUCCESS; Pages `44135219018`: SUCCESS.
+- Beta pendiente: Drive/OAuth real, concurrencia de usuarios y recuperación con deployment. No se desplegó Apps Script ni se alteraron datos externos.
+- Siguiente: **P1.3 — simplificación de FEEDBACK**.

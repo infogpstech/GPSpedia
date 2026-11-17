@@ -271,3 +271,14 @@ undefined
 - P1.2a: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Pruebas reales de Drive/OAuth/concurrencia quedan pendientes del deployment autorizado; no se desplegó Apps Script ni se modificaron datos externos.
 - Siguiente: P1.2b, mover carga Drive de addOrUpdateCut fuera del ScriptLock prolongado, preservando asignación de ID e idempotencia.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — GP-PERF-SIMPLIFY-01 / P1.2b — CARGAS DRIVE DE CORTES FUERA DEL LOCK
+- JS/Services/write.js: la adquisición del ScriptLock de addOrUpdateCut pasa a tryLock(0), fail-fast. Se libera el lock para las cinco rutas de trabajo Drive (resolución/creación de carpeta, carga de imágenes y vínculo del ledger), y se readquiere sin espera; usa shortLedgerLock para el ledger.
+- La selección de slot excluye reservas pendientes de Idempotencia del mismo vehículo. El actor/rol se obtiene una sola vez, incluido el rol Desarrollador para registro silencioso. Si no se puede readquirir el lock o falla una fase posterior, se conserva el opId pendiente para recuperación, evitando rollback de snapshots que pudieran sobrescribir escrituras concurrentes. La ruta sin opId conserva compatibilidad serializada.
+- Pruebas: JS/Tests/WriteDriveOutsideLock.mjs; ajustes a CutPayloadValidation.js y WriteAuthorizationMinimization.js; integración en RunServiceTests.mjs.
+- CI 44135220800 SUCCESS: 139 suites, 2,027 pruebas aprobadas, 0 fallos. Health remoto 44135220571 SUCCESS (solo lectura); GitHub Pages 44135219018 SUCCESS.
+- No se desplegaron proyectos Apps Script ni se modificaron datos externos. Validación real Drive/OAuth y concurrencia queda para Beta. Monitoreo de servicios y dashboard de actividad se mantienen intactos.
+- Siguiente: P1.3, simplificación de FEEDBACK.
+================================================================================
