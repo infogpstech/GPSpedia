@@ -1022,6 +1022,12 @@ check("La organización revalida referencias e historial por archivo y protege u
     const organize=fnSource(admin,"handleOrganizeUnusedImagesBatch");
     const save=fnSource(admin,"handleSaveUnusedImagesInventory");
     assert.ok(organize.includes("const currentRows = sheet.getDataRange().getValues()"));
+    const fileLoop = organize.indexOf("fileIds.forEach(fileId => {");
+    const batchSnapshot = organize.indexOf("const currentRows = sheet.getDataRange().getValues()");
+    assert.ok(batchSnapshot >= 0 && batchSnapshot < fileLoop, "La lectura inicial del inventario debe ejecutarse una vez por lote, fuera del bucle.");
+    assert.equal((organize.match(/const currentRows = sheet\.getDataRange\(\)\.getValues\(\)/g) || []).length, 1);
+    assert.ok(organize.indexOf("const latestRowsBeforeMove = sheet.getDataRange().getValues()") > fileLoop,
+        "La revalidación completa inmediatamente anterior al movimiento debe conservarse por archivo.");
     assert.ok(organize.includes("const references = collectActiveDriveReferences(false)"));
     assert.ok(organize.includes("const latestRowsBeforeMove = sheet.getDataRange().getValues()"));
     assert.ok(organize.includes("latestIdentityAmbiguous || latestHistoryConflict || latestInventoryMatches.length !== 1"));
