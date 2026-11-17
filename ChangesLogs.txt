@@ -1400,3 +1400,6 @@ GP-UX-RICH-TOOLBARS-01 — 2026-11-16
 
 
 - Corrección de preservación de perfiles: las barras estándar ya no declaran el indicador reservado a la variante compacta preexistente. Se amplió InboxUi para comprobar que el refresco dinámico no convierte perfiles básico/listas en avanzado.
+
+
+[2026-11-16] GP-UX-RICH-EDITOR-FORMAT-04 — Se publica estado de formato pendiente independiente por editor para conservar color, fuente, tamaño, negrita, cursiva, subrayado y tachado al perder foco. Inserción de texto formateado con beforeinput, soporte de saltos de línea y composición IME, selección existente envuelta directamente y limpieza del estado al reiniciar formulario. App Shell v58. Parsing ECMAScript y contratos estáticos dirigidos aprobados; suite Node completa, CI y prueba Beta de navegador/dispositivo no ejecutadas.
