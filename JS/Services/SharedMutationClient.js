@@ -265,7 +265,8 @@ function validateSharedSessionContext_(userId, sessionToken) {
 
 
 
-const SHARED_SESSION_ACTOR_CACHE_TTL_SECONDS_ = 15;
+// El contexto de usuario/rol se sincroniza al iniciar sesión; CacheService admite hasta 6 h.
+const SHARED_SESSION_ACTOR_CACHE_TTL_SECONDS_ = 21600;
 function getCachedSharedSessionActor_(userId, sessionToken, dependencies) {
     const id = String(userId || "").trim(), token = String(sessionToken || "");
     if (!id || !token) throw new Error("La sesión requiere userId y sessionToken.");
@@ -297,7 +298,7 @@ function getCachedSharedSessionActor_(userId, sessionToken, dependencies) {
     }
     if (cache && typeof cache.put === "function") {
         try {
-            const ttl = Math.max(1, Math.min(60, Number(deps.ttlSeconds) || SHARED_SESSION_ACTOR_CACHE_TTL_SECONDS_));
+            const ttl = Math.max(1, Math.min(21600, Number(deps.ttlSeconds) || SHARED_SESSION_ACTOR_CACHE_TTL_SECONDS_));
             cache.put(cacheKey, JSON.stringify(actor), ttl);
         } catch (cacheError) { /* La indisponibilidad de caché no bloquea el aporte. */ }
     }
