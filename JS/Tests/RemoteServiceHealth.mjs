@@ -15,7 +15,7 @@ function parseObject(name) {
     const match = source.match(new RegExp("export const " + name + " = (?:Object\\.freeze\\()?\\{([\\s\\S]*?)\\n\\}\\)?;"));
     if (!match) throw new Error("No se encontró " + name + " en el commit objetivo.");
     const values = {};
-    for (const line of match[1].split(/\\r?\\n/)) {
+    for (const line of match[1].split(/\r?\n/)) {
         const item = line.match(/^\\s*([A-Z]+):\\s*"([^"]+)"\\s*,?\\s*$/);
         if (item) values[item[1]] = item[2];
     }
