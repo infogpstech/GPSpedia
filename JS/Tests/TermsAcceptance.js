@@ -137,7 +137,7 @@ test('la aceptación local habilita la app inmediatamente y AUTH se sincroniza e
     assert.match(uiSource, /setTimeout\(\(\) => \{ splash\.style\.display = 'none'; \}, 500\)/);
     assert.ok(uiSource.includes("welcomeMsg.textContent = `Hola, ${displayName || 'Usuario'}`"));
     assert.ok(uiSource.includes('function getUiSessionContext_(user = getState().currentUser)'));
-    assert.match(frontendAuthSource, /const appReady = handleLoginSuccess\(result\.user\)/);
+    assert.match(frontendAuthSource, /handleLoginSuccess\(result\.user\);/);
     assert.doesNotMatch(frontendAuthSource, /if \(appReady\) loadInitialData\(\)/);
     assert.doesNotMatch(frontendAuthSource, /if \(handleLoginSuccess\(user, false\)\) loadInitialData\(\)/);
     assert.match(frontendAuthSource, /export async function loadInitialData\([^)]*\)/);
