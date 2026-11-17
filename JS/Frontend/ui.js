@@ -5132,6 +5132,7 @@ async function openInboxNewConversationForm_() {
     composerOptionsButton.addEventListener("mousedown", event => event.preventDefault());
     const composerOptionsMenu = inboxCreateNode_("div", "rich-toolbar-menu inbox-composer-options-menu");
     composerOptionsMenu.hidden = true; composerOptionsMenu.setAttribute("role", "group");
+    // Desktop shares the row; roles without template access use the full category width.
     composerOptionsMenu.classList.toggle("is-category-only", !isDeveloper);
     const closeComposerOptions = () => {
         composerOptions.classList.remove("is-open");
