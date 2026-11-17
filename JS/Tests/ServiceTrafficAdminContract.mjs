@@ -57,4 +57,4 @@ assert.match(html,/operaciones protegidas/);
 assert.match(setupDoc,/telemetría global|SERVICE_TRAFFIC/i);
 assert.match(healthDoc,/2,000 ms/);
 
-console.log("ServiceTrafficAdminContract: 33/33 PASS");
+console.log("ServiceTrafficAdminContract: 32/32 PASS");
