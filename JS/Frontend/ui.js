@@ -13571,7 +13571,17 @@ export function openAddTutorialModal() {
                 <div class="rich-editor-toolbar" data-rich-target="tut-desc"></div>
                 <textarea id="tut-desc" maxlength="700" rows="4" placeholder="Detalles del tutorial..."></textarea>
             </div>
-            <button type="submit" class="btn btn-primary" style="margin-top:10px;">Agregar Tutorial</button>
+            <div class="form-group">
+                <label for="tut-video-url">Enlace de YouTube (opcional)</label>
+                <input type="url" id="tut-video-url" inputmode="url" autocomplete="url" placeholder="https://www.youtube.com/watch?v=..." style="width:100%; box-sizing:border-box;">
+                <small style="color:var(--text-disabled);">Pega un enlace de YouTube normal, corto, Shorts o directo.</small>
+            </div>
+            <div class="form-group" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:6px;">
+                <button type="submit" id="tut-save-btn" class="btn btn-primary" style="flex:1;">Guardar Tutorial</button>
+                <button type="button" id="tut-upload-video-btn" class="btn btn-secondary" style="flex:1;">
+                    <i class="fa-solid fa-upload" aria-hidden="true"></i> Subir archivo de vídeo
+                </button>
+            </div>
         </form>
     `;
 
@@ -13580,61 +13590,111 @@ export function openAddTutorialModal() {
     attachContextualHelp_(content, "tut-como-identificarlo", "Describe señales visibles o características para reconocer el componente antes de intervenir.");
     attachContextualHelp_(content, "tut-donde-encontrarlo", "Indica su ubicación dentro del vehículo y las referencias de acceso.");
     attachContextualHelp_(content, "tut-desc", "Resume el procedimiento, las precauciones y los puntos que requieren atención.");
+    attachContextualHelp_(content, "tut-video-url", "Pega el enlace del vídeo de YouTube que ya está publicado. Si deseas transferir un archivo desde aquí, usa Subir archivo de vídeo.");
     modal.appendChild(content);
     document.body.appendChild(modal);
     content.querySelector(".info-close-btn").onclick = () => modal.remove();
 
     const form = content.querySelector("#add-tutorial-form");
-    form.onsubmit = async event => {
-        event.preventDefault();
+    const submitBtn = content.querySelector("#tut-save-btn");
+    const uploadBtn = content.querySelector("#tut-upload-video-btn");
+    const videoUrlInput = content.querySelector("#tut-video-url");
+    let isSaving = false;
+
+    const saveTutorial = async ({ openUploader = false } = {}) => {
+        if (isSaving) return;
         if (getUiSessionContext_()?.role !== "desarrollador") {
             showGlobalError("La sesión ya no tiene permisos para registrar tutoriales.");
             return;
         }
-        const submitBtn = form.querySelector('button[type="submit"]');
+
         const tema = content.querySelector("#tut-tema").value.trim();
         const comoIdentificarlo = content.querySelector("#tut-como-identificarlo").value.trim();
         const dondeEncontrarlo = content.querySelector("#tut-donde-encontrarlo").value.trim();
         const detalles = content.querySelector("#tut-desc").value.trim();
+        const rawVideoUrl = videoUrlInput.value.trim();
+        const videoId = rawVideoUrl ? getValidatedYouTubeVideoId(rawVideoUrl) : null;
+
         if (!tema || tema.length > 30 || comoIdentificarlo.length > 700 ||
             dondeEncontrarlo.length > 700 || detalles.length > 700) {
             showGlobalError("Revisa el tema y los límites de caracteres de los campos.");
             return;
         }
+        if (rawVideoUrl && !videoId) {
+            showGlobalError("Introduce un enlace válido de YouTube.");
+            videoUrlInput.focus();
+            return;
+        }
+        if (openUploader && rawVideoUrl) {
+            showGlobalError("Usa el enlace de YouTube o la subida directa del archivo, no ambas opciones.");
+            videoUrlInput.focus();
+            return;
+        }
 
+        isSaving = true;
         submitBtn.disabled = true;
-        submitBtn.innerText = "Guardando...";
+        uploadBtn.disabled = true;
+        submitBtn.innerText = openUploader ? "Registrando tutorial..." : "Guardando...";
+        uploadBtn.innerText = openUploader ? "Preparando subida..." : "Subir archivo de vídeo";
+
         try {
             const operationId = Array.from(crypto.getRandomValues(new Uint8Array(16)))
                 .map(value => value.toString(16).padStart(2, "0")).join("");
             const payload = {
                 operationId, tema, comoIdentificarlo, dondeEncontrarlo, detalles,
-                videoUrl: "", ...getSessionPayload_()
+                videoUrl: videoId ? "https://www.youtube.com/watch?v=" + videoId : "",
+                ...getSessionPayload_()
             };
             const created = await addTutorial(payload);
             if (!created || created.status !== "success" || !created.referenceId) {
                 throw new Error("El servidor no confirmó el destino del tutorial.");
             }
+
             modal.remove();
-            const res = await routeAction("getCatalogData");
-            if (res && res.data) setState({ catalogData: res.data });
-            openYouTubeUploadModal({
-                initialTitle: tema,
-                initialDescription: detalles,
-                contentType: "tutorial",
-                referenceId: created.referenceId,
-                metadata: { tutorialId: created.referenceId, tema },
-                onSuccess: async () => {
-                    const fresh = await routeAction("getCatalogData");
-                    if (fresh && fresh.data) setState({ catalogData: fresh.data });
-                }
-            });
+            try {
+                const res = await routeAction("getCatalogData");
+                if (res && res.data) setState({ catalogData: res.data });
+            } catch (refreshError) {
+                console.warn("El tutorial se registró, pero no se pudo actualizar el catálogo en pantalla:", refreshError);
+            }
+
+            if (openUploader) {
+                openYouTubeUploadModal({
+                    initialTitle: tema,
+                    initialDescription: detalles,
+                    contentType: "tutorial",
+                    referenceId: created.referenceId,
+                    metadata: { tutorialId: created.referenceId, tema },
+                    onSuccess: async () => {
+                        try {
+                            const fresh = await routeAction("getCatalogData");
+                            if (fresh && fresh.data) setState({ catalogData: fresh.data });
+                        } catch (refreshError) {
+                            console.warn("El vídeo se envió, pero no se pudo actualizar el catálogo en pantalla:", refreshError);
+                        }
+                    }
+                });
+            } else {
+                mostrarNotificacion(videoId ? "Tutorial registrado con enlace de YouTube." : "Tutorial registrado correctamente.", "success");
+            }
         } catch (err) {
             console.error(err);
             showGlobalError("Error al registrar tutorial: " + err.message);
+            isSaving = false;
             submitBtn.disabled = false;
-            submitBtn.innerText = "Agregar Tutorial";
+            uploadBtn.disabled = false;
+            submitBtn.innerText = "Guardar Tutorial";
+            uploadBtn.innerHTML = '<i class="fa-solid fa-upload" aria-hidden="true"></i> Subir archivo de vídeo';
         }
+    };
+
+    form.onsubmit = event => {
+        event.preventDefault();
+        saveTutorial({ openUploader: false });
+    };
+    uploadBtn.onclick = () => {
+        if (!form.reportValidity()) return;
+        saveTutorial({ openUploader: true });
     };
 }
 window.applyRichFormat = function(targetId, format) {
