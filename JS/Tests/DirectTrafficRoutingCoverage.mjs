@@ -29,7 +29,9 @@ test("rutas directas actuales coinciden con ACTION_TO_SERVICE_MAP", () => {
 
 test("add_cortes procesa aportes y consultas de cortes directamente en WRITE", () => {
     assert.match(addCortes, /const serviceOverride = null/);
-    assert.match(api, /'addOrUpdateCut': 'WRITE'.*'addSupplementaryInfo': 'WRITE'.*'checkOperation': 'WRITE'/);
+    assert.match(api, /'addOrUpdateCut': 'WRITE'/);
+    assert.match(api, /'addSupplementaryInfo': 'WRITE'/);
+    assert.match(api, /'checkOperation': 'WRITE'/);
     assert.match(write, /getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken\)/);
     assert.doesNotMatch(write, /withSharedMutationLease_\("WRITE", action/);
     assert.match(admin, /"ACTION_MOVED_TO_WRITE"/);

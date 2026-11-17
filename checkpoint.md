@@ -264,3 +264,12 @@ undefined
 - **Estado P1.1a:** implementación realizada; validación automatizada pendiente de nueva ejecución.
 - **Siguiente:** volver a ejecutar CI; si pasa, cerrar P1.1a. Después continuar P1.1b: investigar la fuente confiable de identidad/rol y simplificar mutaciones de cortes ADMIN/WRITE sin confiar en datos manipulables del navegador.
 - HEAD confirmado antes de esta corrección: `2aad7e5f6a191b13b04b2047bdd8e9f2d22f1743`; rama `GPSpedia2.2.5_work`. No se desplegaron Apps Script ni se ejecutó Beta.
+
+
+### Continuidad GP-PERF-SIMPLIFY-01 — 2026-11-17 (actualización tras CI)
+- **P1.1a COMPLETADA:** `checkOperation` en WRITE quedó sin lease ni revalidación por acción. CI `44123644616`: SUCCESS — 138 suites, 2,021 pruebas aprobadas, 0 fallos.
+- **P1.1b IMPLEMENTACIÓN REALIZADA; VALIDACIÓN PENDIENTE:** aportes de cortes e información suplementaria usan WRITE como servicio propietario; el formulario ya no envía las operaciones de cortes a ADMIN. ADMIN rechaza las rutas heredadas `checkOperation`, `addOrUpdateCut` y `addSupplementaryInfo` antes de Coordinator. La opción de registro silencioso conserva permiso exclusivo de Desarrollador en WRITE. La asignación de ID se mantiene dentro de WRITE.
+- WRITE usa actor de sesión confiable en caché local por 15 segundos. En una acción con caché vigente solo comprueba localmente el rol; Coordinator se consulta al crear/renovar esa caché, no por cada aporte. La revocación remota puede tardar como máximo el TTL de la caché (15 s) en reflejarse en una solicitud directa; la restauración/validación de sesión de la aplicación sigue siendo independiente. Este límite queda explícito para revisión en P3.
+- CI `44125814255`: FAIL — sintaxis aprobada; 78 suites, 1,028 pruebas aprobadas y 3 suites fallidas. Los tres fallos corresponden a contratos de prueba desactualizados: dos aserciones sobre el flujo silencioso/extractor de función, una expectativa antigua de `sessionOptions` en WRITE y una expresión regular que asumía un orden incorrecto de las claves del mapa. Se corrigen los contratos sin cambiar el comportamiento funcional.
+- **Siguiente:** volver a ejecutar CI. Si pasa, cerrar P1.1b; continuar P1.2: sacar cargas Drive de los locks de 30 s y reducir el bloqueo de escrituras independientes.
+- No se desplegaron servicios Apps Script ni se ejecutó Beta. No se han medido latencias reales.

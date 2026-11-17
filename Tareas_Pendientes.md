@@ -1336,3 +1336,11 @@ No se han desplegado proyectos Apps Script ni configurado secretos remotos. La f
 - Se ajusta la prueba para inspeccionar directamente el bloque del router que despacha acciones no compartidas; se conservan las aserciones de no lease/no Coordinator para `checkOperation`.
 - Estado P1.1a: IMPLEMENTADA; VALIDACIÓN PENDIENTE.
 - Siguiente: nueva regresión CI. Luego P1.1b: origen de actor/rol y simplificación de mutaciones WRITE/ADMIN.
+
+
+### GP-PERF-SIMPLIFY-01 — estado actualizado 2026-11-17
+- P0: COMPLETADA (auditoría estática).
+- P1.1a: COMPLETADA. CI `44123644616`: 138 suites / 2,021 pruebas / 0 fallos.
+- P1.1b: implementación realizada, validación pendiente. Cortes y aportes suplementarios se enrutan a WRITE; ADMIN rechaza las rutas heredadas. Registro silencioso conserva permiso Desarrollador. WRITE utiliza actor confiable cacheado localmente por 15 s; la revocación remota puede tardar hasta ese TTL en una solicitud directa.
+- CI `44125814255`: FAIL por 3 suites de contratos desactualizados (expectativas de ruta/actor, `sessionOptions` ya retirado de WRITE y orden de claves del mapa). Sintaxis aprobada; 1,028 pruebas aprobadas, 3 suites fallidas.
+- Siguiente: corregir contratos y ejecutar regresión. Luego P1.2: retirar cargas Drive de locks prolongados y evitar serializar operaciones independientes.

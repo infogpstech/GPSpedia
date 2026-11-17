@@ -128,3 +128,10 @@ Cada fase debe actualizar el backlog y checkpoint. Agrupar cambios por tarea ló
 - CI `44120994810`: 133 suites; 1,925 pruebas aprobadas; 1 suite fallida. El fallo se limita al extractor genérico usado por `WriteAuthorizationMinimization` para leer `doPost` (mensaje: `Función incompleta: doPost`). Sintaxis aprobada.
 - La prueba se corrige para inspeccionar el bloque exacto del router, sin cambiar `write.js` ni relajar sus controles. Nueva regresión pendiente.
 - Siguiente: cerrar P1.1a tras CI aprobado; continuar P1.1b con auditoría del origen confiable del colaborador y rol antes de retirar Coordinator de mutaciones.
+
+
+### Avance P1.1b — 2026-11-17
+- Cortes y aportes suplementarios se enrutan a WRITE; ADMIN rechaza las antiguas rutas antes de invocar Coordinator. Registro silencioso conserva el permiso exclusivo de Desarrollador. WRITE mantiene la asignación de ID en el servicio propietario.
+- Se añadió caché local del actor confiable por 15 segundos: las acciones con caché vigente no llaman a Coordinator ni adquieren/liberan leases. Al expirar, se valida una vez el contexto central y se renueva. El TTL limita a 15 s la propagación de una revocación remota en solicitudes directas; no se presenta como invalidación instantánea y se revisará en P3.
+- CI 44125814255: 78 suites / 1,028 pruebas aprobadas / 3 suites fallidas por contratos desactualizados. Sintaxis aprobada. Corrección de expectativas pendiente; no se marca P1.1b como completada.
+- Siguiente: nueva regresión; después P1.2 para separar cargas Drive de locks prolongados.

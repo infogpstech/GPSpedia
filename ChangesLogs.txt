@@ -215,3 +215,14 @@ undefined
 - La ruta de servicio inspeccionada confirma que checkOperation pasa por despacho directo sin lease. Se cambia únicamente la prueba para inspeccionar el bloque del router por delimitadores concretos, evitando el extractor genérico.
 - Estado: nueva regresión pendiente; P1.1a no se declara completada. Siguiente: ejecutar CI y luego continuar P1.1b (actor/rol confiable y mutaciones de cortes).
 ================================================================================
+
+
+================================================================================
+2026-11-17 — GP-PERF-SIMPLIFY-01 / P1.1a — VALIDACIÓN COMPLETADA
+- CI 44123644616 SUCCESS: 138 suites, 2,021 pruebas aprobadas, 0 fallos. P1.1a se cierra: WRITE/checkOperation consulta estado sin lease ni revalidación de sesión.
+
+2026-11-17 — GP-PERF-SIMPLIFY-01 / P1.1b — IMPLEMENTACIÓN Y AJUSTE DE CONTRATOS
+- Commit cf5d7ef6535658733349ac6827778de04ca93a67: rutas de cortes y aportes suplementarios dirigidas a WRITE; ADMIN rechaza rutas heredadas; registro silencioso requiere rol Desarrollador en WRITE; actor de sesión confiable se conserva en caché local por 15 s para evitar lease acquire/release por cada aporte.
+- CI 44125814255 FAIL: sintaxis aprobada; 78 suites, 1,028 pruebas aprobadas y 3 fallidas. Fallos de contratos desactualizados: extractor/expectativas de registro silencioso, expectativa antigua de sessionOptions en WRITE y regex de orden del mapa API. Se corrigen únicamente las pruebas.
+- Revocación remota en una solicitud directa puede reflejarse con un retraso máximo del TTL local de 15 s; revisar y validar el comportamiento de sesión en P3. No se desplegaron Apps Script ni se ejecutó Beta.
+================================================================================
