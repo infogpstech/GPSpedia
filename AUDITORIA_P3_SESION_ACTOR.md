@@ -67,3 +67,8 @@ P3.1b debe decidir si se requiere precargar el actor en cada servicio durante lo
 - Se eliminó la necesidad de una credencial nueva. La acción interna reutiliza GPSpedia_COORDINATOR_SECRET, el secreto servicio-a-servicio ya empleado por los tres proyectos. AUTH solo necesita las propiedades GPSpedia_WRITE_URL y GPSpedia_FEEDBACK_URL con endpoints /exec vigentes. WRITE/FEEDBACK verifican el mismo secreto de Coordinator que ya usan para comunicarse con él.
 - La regresión ahora cubre 13 sesiones de una cuenta Developer, lotes de servicio, orden de operaciones y revocación central única después de completar todos los lotes.
 - No se desplegaron proyectos Apps Script ni se modificaron ScriptProperties o datos externos. La configuración/despliegue y validación de campo siguen pendientes de Beta.
+### Validación posterior a la corrección de lotes — 2026-11-17
+- CI 44151856103: SUCCESS — sintaxis aprobada; 144 suites, 2,109 pruebas aprobadas y 0 fallos. SessionActorCacheLifetime 4/4; SessionActorCacheInvalidation 1/1, incluyendo 13 tokens Developer y reutilización de GPSpedia_COORDINATOR_SECRET.
+- Health read-only 44151856097: SUCCESS — 7/7 servicios disponibles mediante GET. Esta comprobación consulta deployments actuales y no valida la implementación Apps Script nueva, que sigue sin desplegar.
+- El diff desde el HEAD anterior contiene únicamente los archivos de P3.1c y sus pruebas/registros. La comparación de Auth.js con JS/Tests/Auth.js, normalizando solo SPREADSHEET_ID de prueba, no presenta diferencias.
+- P3.1c queda COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. La prueba de Pages del mismo HEAD aún estaba en curso al registrar esta adenda.
