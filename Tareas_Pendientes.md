@@ -1040,7 +1040,7 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - Rediseñar la biblioteca de imágenes con barra de funciones iconográfica y organizada, sin alterar las protecciones de archivos ni acciones destructivas.
 
 ### GP-INBOX-LIST-NAV-01 — Simplificación de listas y navegación del Inbox
-**Prioridad: P2 · Estado: EN PROGRESO**
+**Prioridad: P2 · Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA**
 - Revisar límite de conversaciones/mensajes y decidir con evidencia si se conserva paginación interna o se elimina navegación redundante por botones.
 - Evitar descargas ilimitadas y conservar accesibilidad y rendimiento.
 
@@ -1048,7 +1048,15 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - Decisión basada en los contratos existentes: conservar paginación por cursor; retirar el paginador visual cuando no hay página anterior ni siguiente. Eliminarlo por completo haría inaccesibles conversaciones y reportes históricos o exigiría descargar listas sin límite.
 - Tamaños frontend: 20 conversaciones, 40 reportes/mensajes de solicitudes y 50 mensajes por conversación. Se unifican en 50 los topes máximos de backend para `getFeedbackItems`, `getMyProblemReports` y `getInboxMessages`; `getInboxConversations` ya tenía tope 50.
 - El paginador compartido comienza oculto, se muestra únicamente si existe otra página, y su nombre accesible identifica conversaciones, reportes, aportaciones o mensajes. Se conserva la navegación por cursor y el acceso a historial.
-- Pruebas añadidas a InboxUi e InboxConversations para visibilidad condicional, límites por página y cursores. Validación CI pendiente.
+- Pruebas añadidas a InboxUi e InboxConversations para visibilidad condicional, límites por página y cursores.
+
+#### Cierre verificado — GP-INBOX-LIST-NAV-01 — 2026-11-17
+- GitHub Actions service regression run 44083370659 SUCCESS: 133 suites, 1,989 pruebas aprobadas, 0 fallos. InboxConversations 62/62; InboxUi 81/81. Syntax check de los módulos modificados aprobado.
+- GitHub Pages run 44083370222 SUCCESS para el commit cadbcadef7ca09ad47a1b676262900398cd2cca6.
+- Los endpoints de reportes, tickets propios y mensajes limitan a 50; conversaciones ya limitaba a 50. El cliente conserva páginas menores (40 solicitudes, 20 conversaciones, 50 mensajes).
+- Se conserva la paginación cursor-based para no perder acceso al historial; se oculta cuando no existe navegación real. No se descargan listas completas.
+- Pendiente Beta: comprobación visual en navegador/PWA de ocultación/visibilidad del paginador, cambio de carpetas y navegación con teclado/táctil. No se ejecutaron consultas contra hojas productivas.
+- Estado local: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
 
 
 ### GP-INBOX-THREAD-TOOLBAR-01 — Organización de la bandeja de conversación

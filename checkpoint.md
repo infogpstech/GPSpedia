@@ -30,3 +30,14 @@ undefined
 - Auditoría: UI ya solicitaba páginas acotadas (20 conversaciones, 40 solicitudes, 50 mensajes); el backend permitía hasta 100 en reportes/tickets y mensajes. El paginador compartido permanecía visible aunque la respuesta no tuviera página siguiente ni anterior.
 - Decisión: conservar paginación por cursor para acceso al historial y limitar a 50 los endpoints backend que aún aceptaban 100; ocultar controles cuando no exista navegación efectiva. No se sustituyen cursores por offsets ni se descarga la lista completa.
 - Implementación y pruebas añadidas en ui.js, index.html, style.css, feedback.js, InboxConversations.js, InboxUi.mjs e InboxConversations.mjs. CI pendiente; no marcar tarea completada hasta revisar ejecución.
+
+
+### Cierre verificado — GP-INBOX-LIST-NAV-01 — 2026-11-17
+- Commit de implementación: cadbcadef7ca09ad47a1b676262900398cd2cca6.
+- GitHub Actions run 44083370659 SUCCESS: 133 suites, 1,989 pruebas aprobadas, 0 fallos; InboxConversations 62/62; InboxUi 81/81; comprobación sintáctica aprobada.
+- GitHub Pages run 44083370222 SUCCESS para el mismo HEAD.
+- Límites máximos de backend uniformados a 50 para reportes, tickets propios y mensajes; conversaciones ya tenía límite 50. Tamaños de cliente: 40 solicitudes, 20 conversaciones y 50 mensajes.
+- Paginación cursor-based conservada por acceso al historial; paginador compartido oculto si no hay página anterior/siguiente y con aria-label contextual.
+- Pendiente Beta: inspección visual de la navegación en navegador/PWA y dispositivos táctiles; no se consultaron hojas productivas.
+- Rama base GPSpedia2.2.5 verificada sin cambios: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Siguiente tarea P2: GP-INBOX-THREAD-TOOLBAR-01 — organizar botones y elementos del hilo con controles iconográficos autodesplegables, preservando destinatarios, borradores, permisos, lectura y navegación.
