@@ -18,7 +18,6 @@ const WRITE_SERVICE_URL = "https://script.google.com/macros/s/AKfycbxvf5jWXXy5px
 const CATALOG_SERVICE_URL = "https://script.google.com/macros/s/AKfycbzcBNC_sFFcdKxwBZFXfQHZsfpCGiZeKpQ8BjiTWn50qdVSfZRraHjELXBFY2tF8qc/exec";
 const AUTH_SERVICE_URL = "https://script.google.com/macros/s/AKfycbyDFlZmMOQJ59XSry0JPJTIlOW84CpJT7su57NKPNqSLuz20TMMleLY2A75eAGx1Vyb/exec";
 const FEEDBACK_SERVICE_URL = "https://script.google.com/macros/s/AKfycbwkhwYKESftySytMZNN5gjJAN-FkxJW_EplQMmJOHEDBvs8rIufMeplDNMf8COUH6aYUg/exec";
-const UTILITIES_SERVICE_URL = "https://script.google.com/macros/s/AKfycbybdK2X19erOie1lrdcy6WoHd0Jy1_IUFTjZWg9NcXkpfg-80S-l8hebKwLUjaoTVLb/exec";
 const CATALOG_TRAFFIC_SECRET_PROPERTY_ = "GPSpedia_CATALOG_TRAFFIC_SECRET";
 const LOGOS_MARCA_ID_COUNTER_PROPERTY = "LOGOS_MARCA_ID_COUNTER";
 
@@ -8861,8 +8860,7 @@ function getDirectServiceTrafficBatch_() {
         { service: "CATALOG", url: CATALOG_SERVICE_URL, scope: "catalog_post_requests" },
         { service: "AUTH", url: AUTH_SERVICE_URL, scope: "direct_post_requests" },
         { service: "WRITE", url: WRITE_SERVICE_URL, scope: "direct_post_requests" },
-        { service: "FEEDBACK", url: FEEDBACK_SERVICE_URL, scope: "direct_post_requests" },
-        { service: "UTILITIES", url: UTILITIES_SERVICE_URL, scope: "direct_post_requests" }
+        { service: "FEEDBACK", url: FEEDBACK_SERVICE_URL, scope: "direct_post_requests" }
     ];
     const results = {};
     let properties;
@@ -8945,7 +8943,7 @@ function mergeDirectServiceTraffic_(coordinatorResult, directResults) {
     const sources = {
         coordinator: { available: true, scope: "protected_operations" }
     };
-    const services = ["CATALOG", "AUTH", "WRITE", "FEEDBACK", "UTILITIES"];
+    const services = ["CATALOG", "AUTH", "WRITE", "FEEDBACK"];
     services.forEach(service => {
         const directResult = directResults && directResults[service];
         const expectedScope = service === "CATALOG" ? "catalog_post_requests" : "direct_post_requests";
