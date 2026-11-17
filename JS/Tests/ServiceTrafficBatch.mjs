@@ -44,7 +44,6 @@ function build(fetchAll, fetchOne, propertyOptions = {}) {
         'const AUTH_SERVICE_URL = "' + urls.AUTH + '";' +
         'const WRITE_SERVICE_URL = "' + urls.WRITE + '";' +
         'const FEEDBACK_SERVICE_URL = "' + urls.FEEDBACK + '";' +
-        'const UTILITIES_SERVICE_URL = "' + urls.UTILITIES + '";' +
         source + "\nreturn getDirectServiceTrafficBatch_;"
     );
     return factory(PropertiesService, UrlFetchApp);
