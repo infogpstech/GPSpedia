@@ -161,3 +161,9 @@ Cada fase debe actualizar el backlog y checkpoint. Agrupar cambios por tarea ló
 - La telemetría directa FEEDBACK permanece best-effort con tryLock(0); el dashboard y el workflow remoto de salud siguen activos.
 - CI 44140231970: 140 suites / 2,028 pruebas / 0 fallos. Health read-only 44140232048: 7/7. Pages 44140229137: SUCCESS.
 - P1.3 COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Siguiente: P2.1 auditoría de cargas de imágenes y videos, preservando autor/fecha, RBAC, idempotencia y telemetría.
+
+
+### Auditoría P2.1 — imágenes y videos — 2026-11-17
+- Auditoría registrada en `AUDITORIA_P2_CARGAS_ARCHIVOS.md`. WRITE ya ejecuta las cargas de cortes/suplementarios fuera del lock. FEEDBACK mantiene Drive dentro del lock en reportes, sugerencias de corte y altas PyS.
+- YouTube transfiere directamente desde el navegador con resumable upload y checkpoints IndexedDB; mantener este diseño. Tutoriales usan aprobación de video separada. Herramientas ADMIN de organización/conciliación se reservan para P4.
+- P2.1 COMPLETADA. Siguiente P2.2a: mover carga de adjuntos de reportes y sugerencias fuera del lock, conservando la asociación de archivo y el registro.
