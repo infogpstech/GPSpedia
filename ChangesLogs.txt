@@ -1422,3 +1422,5 @@ GP-UX-PYS-TUTORIAL-ASSOCIATION-06 — 2026-11-16
 ### GP-UX-PYS-VIDEO-CREATE-01 — 2026-11-16
 - El formulario de alta PyS incorpora enlace de YouTube y subida directa. Los enlaces usan la acción existente `submitVideoForApproval`; los archivos usan `openYouTubeUploadModal`. `addProblem` conserva `videoUrl: ""`. Sin cambios en servicios backend.
 - App Shell v63 y contratos de regresión/caché actualizados.
+
+- Revisión de compatibilidad: se conserva el permiso colaborativo existente para registrar problemas; la nueva función no añade restricciones de rol.
