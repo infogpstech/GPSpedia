@@ -20,7 +20,7 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 
 ## Nuevo bloque prioritario — Inbox, caché de navegación y controles visuales (2026-11-16)
 
-**Estado general: EN PROGRESO.** Requisitos incorporados desde la solicitud del usuario. No se consideran implementados por su sola inclusión en este backlog.
+**Estado general: IMPLEMENTACIÓN LOCAL COMPLETADA; validaciones visuales y operativas diferidas a Beta.** Los requisitos de este bloque tienen implementación y regresión local registradas en sus respectivas adendas.
 
 ### GP-UX-INBOX-01 — Rediseño de la bandeja de entrada
 **Prioridad: P1 · Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA**
@@ -96,11 +96,11 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 
 ## Orden general de ejecución
 
-1. Corregir y completar las tareas locales de experiencia de usuario y Developer, comenzando por BETA-021.
-2. Completar la auditoría funcional local de Inbox y de las operaciones administrativas que aún presenten fallos o carezcan de cobertura.
-3. Cerrar las revisiones locales pendientes de servicios, sesión, identificadores y telemetría. GP-DEV-TRAFFIC-GLOBAL-02 ya completó su cobertura local y queda con validación diferida a Beta.
-4. Ejecutar la regresión integral local una vez completadas las implementaciones vigentes. Última evidencia: 138 suites / 2,043 pruebas / 0 fallos (Actions 44106829275).
-5. Realizar las validaciones Beta en el orden de dependencias indicado, sin simularlas ni bloquear el cierre local por falta de deployment.
+1. **Implementación local:** las tareas de experiencia de usuario, Inbox, Developer, servicios, sesión, identificadores y telemetría registradas en este backlog tienen cierres locales o estados de validación diferida a Beta documentados. No quedan tareas locales abiertas en el bloque consolidado.
+2. **Regresión integral local:** completada en el HEAD de código f6375b86e6908e9e9152e9c63b216b3d274ce1fe: 145 suites / 2,123 pruebas / 0 fallos (Actions 44166031280). Pages y health read-only también aprobados.
+3. **Siguiente etapa:** validaciones Beta reales en el orden de dependencias de cada bloque: navegador/PWA y responsive; servicios Apps Script y ScriptProperties; OAuth/Drive/YouTube/Spreadsheet; roles, sesiones/revocación, concurrencia y mediciones. Cada bloque conserva sus comandos seguros de sincronización antes de probar.
+4. No desplegar Apps Script, cambiar ScriptProperties ni modificar hojas/Drive productivos sin autorización expresa. No simular validaciones externas ni marcar como aprobadas pruebas sin evidencia.
+5. Después de completar la validación Beta y resolver defectos reproducibles, se podrá abrir una nueva etapa de planificación basada en resultados.
 
 ## Bloque prioritario — Inbox, feed de catálogo, vistos recientes y aportes de usuarios (2026-11-16)
 
