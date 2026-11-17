@@ -98,8 +98,8 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 
 1. Corregir y completar las tareas locales de experiencia de usuario y Developer, comenzando por BETA-021.
 2. Completar la auditoría funcional local de Inbox y de las operaciones administrativas que aún presenten fallos o carezcan de cobertura.
-3. Cerrar las revisiones locales pendientes de servicios, sesión, identificadores y telemetría; continuar con GP-DEV-TRAFFIC-GLOBAL-02 hasta definir la cobertura global de CATALOG/rutas no coordinadas sin penalizar las solicitudes.
-4. Ejecutar la regresión integral local una vez completadas las implementaciones vigentes.
+3. Cerrar las revisiones locales pendientes de servicios, sesión, identificadores y telemetría. GP-DEV-TRAFFIC-GLOBAL-02 ya completó su cobertura local y queda con validación diferida a Beta.
+4. Ejecutar la regresión integral local una vez completadas las implementaciones vigentes. Última evidencia: 138 suites / 2,043 pruebas / 0 fallos (Actions 44106829275).
 5. Realizar las validaciones Beta en el orden de dependencias indicado, sin simularlas ni bloquear el cierre local por falta de deployment.
 
 ## Bloque prioritario — Inbox, feed de catálogo, vistos recientes y aportes de usuarios (2026-11-16)
@@ -1197,7 +1197,7 @@ Después: abrir Developer → Auditoría de Cortes en escritorio y PWA móvil; c
 - Procedimiento reproducible: workflow `.github/workflows/deployed-service-health.yml` fija TARGET_COMMIT; `JS/Tests/RemoteServiceHealth.mjs` obtiene el inventario desde ese SHA y consulta los siete endpoints en paralelo con timeout de 8 s, sin efectos de escritura.
 
 ### GP-DEV-TRAFFIC-GLOBAL-02 — Agregado global de tráfico por servicio
-**Prioridad: P1 · Estado: EN PROGRESO (contadores directos implementados y regresión completa aprobada; auditoría final de cobertura y validación Beta pendientes).**
+**Prioridad: P1 · Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA (2026-11-17).**
 
 **Objetivo**
 - Sustituir las métricas locales del navegador por un agregado global coherente y etiquetado por fuente, sin una llamada de red por acción ni bloqueos que degraden lecturas.
@@ -1228,7 +1228,33 @@ Después: abrir Developer → Auditoría de Cortes en escritorio y PWA móvil; c
 - SensitiveLogsTrustedActor y PasswordKdfBenchmark: los harnesses de AUTH deben inyectar dependencias de telemetría como stubs; las operaciones protegidas no se cuentan como rutas directas.
 - Regresión completa: ejecutar todas las suites y corregir cada fallo reproducible; no reducir suites, desactivar casos ni alterar aserciones para lograr verde.
 - Health remoto: GET ?debug=true a los siete servicios; validar HTTP, JSON, identidad, estado, versión y ausencia de campos sensibles. Esperado: 7/7 con latencias registradas; no POST ni escrituras.
-- Beta: configurar los cuatro secretos en los proyectos Beta, desplegar Apps Script y medir p50/p95 y eventos omitidos. Aún no se han desplegado proyectos Apps Script ni configurado secretos remotos.
+**Preparación y ejecución Beta (pendiente; no simular ni marcar como aprobada)**
+
+Antes de iniciar cualquier prueba Beta, desde la raíz del clon autorizado:
+
+```bash
+set -e
+test "$(basename "$(git rev-parse --show-toplevel)")" = "GPSpedia"
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work"
+test -z "$(git status --porcelain)" || { echo "Hay cambios locales; detener sin descartarlos."; exit 1; }
+git remote get-url origin | grep -q 'infogpstech/GPSpedia'
+git fetch origin GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git rev-parse HEAD
+```
+
+1. Usar únicamente los proyectos Apps Script y datos aislados del entorno Beta; nunca producción.
+2. Medir latencia p50/p95 de las rutas directas antes del despliegue con el mismo volumen y patrón de solicitudes que se usará después.
+3. Generar cuatro secretos aleatorios distintos, de al menos 32 caracteres, fuera del repositorio. Guardar cada valor únicamente en Script Properties del servicio correspondiente y de ADMIN: `GPSpedia_AUTH_TRAFFIC_SECRET`, `GPSpedia_CATALOG_TRAFFIC_SECRET`, `GPSpedia_WRITE_TRAFFIC_SECRET` y `GPSpedia_FEEDBACK_TRAFFIC_SECRET`. No imprimirlos ni registrarlos.
+4. Desplegar a Beta los proyectos Apps Script actualizados de AUTH, CATALOG, WRITE, FEEDBACK y ADMIN. Confirmar que Coordinator esté en la versión Beta compatible con los servicios; no modificar deployments productivos.
+5. Ejecutar GET `?debug=true` a los siete servicios y confirmar identidad/versión antes de probar acciones.
+6. Ejecutar acciones Beta representativas: AUTH/validateSession; CATALOG/getCatalogData, getDropdownData, getNavigationData; WRITE/checkVehicle, getSuggestion, checkVinDuplicate; FEEDBACK/getPysData y getCatalogChanges, además de suggestYear anónimo. Verificar que sendContactForm y suggestYear autenticado sigan atribuyéndose a Coordinator.
+7. En modo silentRegister, validar checkOperation/addOrUpdateCut/addSupplementaryInfo a través de ADMIN y comprobar que Coordinator los contabiliza una sola vez.
+8. Consultar el dashboard Developer y verificar fuentes disponibles, ventanas 1/6/24 h, conteos por servicio, ausencia de doble conteo y estado parcial si una fuente falla.
+9. Medir p50/p95 después del despliegue, tasa de eventos omitidos por tryLock(0), errores de PropertiesService y consistencia aproximada frente al volumen de pruebas. Confirmar que la contención no añade esperas ni altera las respuestas.
+10. Si una fuente falla, conservar el agregado Coordinator y marcar esa fuente como parcial; corregir y repetir la prueba completa afectada.
+
+No se han desplegado proyectos Apps Script ni configurado secretos remotos. La falta de acceso de despliegue no impide el cierre local; las pruebas anteriores permanecen PENDIENTES DE DESPLIEGUE / VALIDACIÓN BETA.
 
 **Auditoría de rutas y decisiones contra doble conteo**
 - AUTH validateSession: directa; las acciones protegidas y benchmark obtienen lease.
