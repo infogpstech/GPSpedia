@@ -95,6 +95,9 @@ function createSharedMutationClient_(dependencies) {
     function publishCatalogChange(service, operation, change) {
         return send_("publishCatalogChange", service, operation, { change: change });
     }
+    function publishCatalogChanges(service, operation, changes) {
+        return send_("publishCatalogChanges", service, operation, { changes: changes });
+    }
 
     function getServiceTraffic() {
         return send_("getServiceTraffic", "ADMIN", "getServiceTraffic", {});
@@ -192,7 +195,8 @@ function createSharedMutationClient_(dependencies) {
         return send_("validateSessionContext", "AUTH", "validateSessionContext", { userId, sessionToken });
     }
 
-    return { withLease: withLease, publishCatalogChange: publishCatalogChange, getCatalogChanges: getCatalogChanges,
+    return { withLease: withLease, publishCatalogChange: publishCatalogChange,
+        publishCatalogChanges: publishCatalogChanges, getCatalogChanges: getCatalogChanges,
         getServiceTraffic: getServiceTraffic,
         registerSession: registerSession, syncUserSessions: syncUserSessions,
         revokeSession: revokeSession, revokeUserSessions: revokeUserSessions,
@@ -219,6 +223,16 @@ function publishSharedCatalogChange_(service, operation, change) {
         logger: function(message) { Logger.log(message); }
     });
     return client.publishCatalogChange(service, operation, change);
+}
+
+function publishSharedCatalogChanges_(service, operation, changes) {
+    const client = createSharedMutationClient_({
+        properties: PropertiesService.getScriptProperties(),
+        fetch: function(url, options) { return UrlFetchApp.fetch(url, options); },
+        uuid: function() { return Utilities.getUuid(); },
+        logger: function(message) { Logger.log(message); }
+    });
+    return client.publishCatalogChanges(service, operation, changes);
 }
 
 function getSharedServiceTraffic_() {
