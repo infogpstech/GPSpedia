@@ -5,6 +5,7 @@ const admin = readFileSync(new URL("../Services/admin.js", import.meta.url), "ut
 const coordinator = readFileSync(new URL("../Services/Coordinator.js", import.meta.url), "utf8");
 const feedback = readFileSync(new URL("../Services/feedback.js", import.meta.url), "utf8");
 const ui = readFileSync(new URL("../Frontend/ui.js", import.meta.url), "utf8");
+const sharedClient = readFileSync(new URL("../Services/SharedMutationClient.js", import.meta.url), "utf8");
 
 function extractFunction(source, name) {
     const match = source.match(new RegExp("function " + name + "\\([^\\n]*\\) \\{[\\s\\S]*?\\n\\}"));
@@ -93,6 +94,16 @@ assert.ok(serviceTraffic.readResources.includes("SERVICE_TRAFFIC"));
 assert.deepEqual(serviceTraffic.writeResources, []);
 assert.equal(read("getServiceTraffic"), true);
 assert.equal(mutation("getServiceTraffic"), false);
+
+const batchPublisher = extractFunction(admin, "publishAdminCortesCatalogChanges_");
+assert.match(batchPublisher, /publishSharedCatalogChanges_\("ADMIN", action, changes\.slice\(offset, offset \+ 50\)\)/);
+assert.doesNotMatch(batchPublisher, /changes\.forEach\(change => publishSharedCatalogChange_/);
+assert.match(sharedClient, /function publishCatalogChanges\(service, operation, changes\)/);
+assert.match(sharedClient, /action === "publishCatalogChanges"[\s\S]*?uuid\(\)/);
+assert.match(sharedClient, /function publishSharedCatalogChanges_\(service, operation, changes\)/);
+assert.match(coordinator, /if \(action === "publishCatalogChanges"\) return publishCatalogChanges_\(service, operation, payload\)/);
+assert.match(coordinator, /changes\.length > 50/);
+
 
 const identifierAudit = policy("ADMIN", "auditIdentifiers");
 for (const resource of ["USERS", "CORTES", "TUTORIAL", "FEEDBACK", "LOGOS", "RELAY"]) {
