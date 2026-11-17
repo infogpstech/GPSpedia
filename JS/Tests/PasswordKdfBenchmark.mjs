@@ -45,7 +45,7 @@ test("el router AUTH usa el actor cacheado y no adquiere lease para el benchmark
  const internal=event=>{const body=JSON.parse(event.postData.contents);return {content:JSON.stringify(handler(body.payload))};};
  const content={createTextOutput:value=>({content:value,setMimeType(){return this;}}),MimeType:{TEXT:"text"}};
  const doPost=new Function("isSharedMutationAction_","withSharedSessionActor_","getCachedSharedSessionActor_","doPostInternal_","ContentService","DIRECT_SERVICE_TRAFFIC_CONFIG_","readDirectServiceTraffic_","recordDirectServiceTraffic_",
-  extract(auth,"isSharedMutationAction_")+"\\n"+route+"\\nreturn doPost;")(
+  extract(auth,"isSharedMutationAction_")+"\n"+route+"\nreturn doPost;")(
    mutation,withActor,cachedActor,internal,content,{actions:new Set()},()=>({status:"unavailable"}),()=>false);
  const response=doPost({postData:{contents:JSON.stringify({action:"benchmarkPasswordKdf",payload:{userId:"U1",sessionToken:"session-token"}})}});
  assert.equal(JSON.parse(response.content).status,"success");
