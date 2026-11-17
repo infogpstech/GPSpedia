@@ -120,3 +120,14 @@ undefined
 - GitHub Pages 44103742319 SUCCESS. No deployment Apps Script ni cambios de Script Properties.
 - Se actualizaron Tareas_Pendientes.md y checkpoint.md con la evidencia y las siguientes tareas.
 ================================================================================
+
+================================================================================
+2026-11-17 — GP-DEV-TRAFFIC-GLOBAL-02 — COBERTURA DE FEEDBACK PÚBLICO Y AUDITORÍA DE ROUTING
+- Se detectó que FEEDBACK/getCatalogChanges está declarado en FEEDBACK_PUBLIC_ACTIONS y no obtiene lease Coordinator. Se agregó al contador directo local; getPysData ya se contaba. sendContactForm continúa coordinado; suggestYear anónimo directo y autenticado coordinado.
+- Se amplió DirectServiceTrafficTelemetry para verificar ambas acciones FEEDBACK.
+- Se agregó JS/Tests/DirectTrafficRoutingCoverage.mjs (6/6) y se integró al runner completo. Verifica el mapa de acciones, el ruteo compatibilidad silentRegister→ADMIN y la clasificación de rutas coordinadas/directas.
+- Documentación corregida en Tareas_Pendientes.md, Services/COORDINATOR_SETUP.md y Services/CATALOG_TRAFFIC_DESIGN.md.
+- CI 44106829275 SUCCESS: 138 suites / 2043 pruebas / 0 fallos.
+- Health remoto 44106826657 SUCCESS: 7/7; ADMIN 2147 ms, AUTH 1798 ms, CATALOG 1033 ms, FEEDBACK 1032 ms, USERS 1038 ms, UTILITIES 1426 ms, WRITE 1223 ms.
+- GitHub Pages 44106826874 SUCCESS. No deployment Apps Script ni configuración de secretos remotos.
+================================================================================
