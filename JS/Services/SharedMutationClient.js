@@ -143,12 +143,12 @@ function createSharedMutationClient_(dependencies) {
             throw new Error("La invalidación de caché requiere un usuario y tokens de sesión válidos.");
         }
         if (!tokens.length) return { status: "success", invalidated: 0 };
-        const secret = String(properties.getProperty("GPSpedia_SESSION_CACHE_INVALIDATION_SECRET") || "");
+        const secret = String(properties.getProperty("GPSpedia_COORDINATOR_SECRET") || "");
         const endpoints = [
             ["WRITE", String(properties.getProperty("GPSpedia_WRITE_URL") || "").trim()],
             ["FEEDBACK", String(properties.getProperty("GPSpedia_FEEDBACK_URL") || "").trim()]
         ];
-        if (secret.length < 32) throw new Error("Falta configurar el secreto interno de invalidación de sesión en AUTH.");
+        if (secret.length < 32) throw new Error("Falta configurar el secreto compartido de Coordinator en AUTH.");
         endpoints.forEach(([service, url]) => {
             if (!url.startsWith("https://script.google.com/macros/s/") || !url.endsWith("/exec")) {
                 throw new Error("Falta configurar la URL de invalidación de " + service + " en AUTH.");
@@ -326,7 +326,7 @@ function handleSharedSessionActorCacheInvalidation_(payload, dependencies) {
     const properties = deps.properties || PropertiesService.getScriptProperties();
     const cache = deps.cache || CacheService.getScriptCache();
     const expected = String(deps.secret !== undefined ? deps.secret :
-        properties.getProperty("GPSpedia_SESSION_CACHE_INVALIDATION_SECRET") || "");
+        properties.getProperty("GPSpedia_COORDINATOR_SECRET") || "");
     const supplied = String(source.secret || "");
     let difference = expected.length ^ supplied.length;
     for (let i = 0; i < Math.max(expected.length, supplied.length); i++) {
