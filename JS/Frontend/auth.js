@@ -834,7 +834,7 @@ export async function checkSession() {
         showLoginScreen("La sesión no contiene un rol válido. Inicia sesión nuevamente.");
         return;
     }
-    if (handleLoginSuccess(user, false)) loadInitialData();
+    handleLoginSuccess(user, false);
 }
 
 export async function login(username, password) {
