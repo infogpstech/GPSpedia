@@ -899,6 +899,81 @@ function runSharedMutationCoordinatorTests() {
             "La telemetría no debe exponer datos de sesión o identidad.");
     });
 
+    test_("La publicación por lotes conserva orden de revisiones y reintentos idempotentes", function() {
+        const r = createRuntime_();
+        const changes = [
+            { collection: "cortes", recordId: "VEH-1", operation: "upsert", snapshot: { id: "VEH-1", nombre: "Uno" } },
+            { collection: "cortes", recordId: "VEH-2", operation: "delete" }
+        ];
+        const requestId = "catalog-batch-request-0001";
+        const first = r.request("publishCatalogChanges", "ADMIN", "normalizeImages", { requestId, changes });
+        assert_(first.status === "success" && first.count === 2 && first.firstRevision === 1 && first.lastRevision === 2,
+            "El lote debe publicar dos revisiones consecutivas en una operación.");
+        const retry = r.request("publishCatalogChanges", "ADMIN", "normalizeImages", { requestId, changes });
+        assert_(retry.status === "success" && retry.duplicate === true && retry.lastRevision === 2,
+            "Repetir requestId debe devolver la publicación existente sin crear revisiones nuevas.");
+        const feed = r.coordinator.getPublicCatalogChanges({ cursor: 0, limit: 50 });
+        assert_(feed.changes.length === 2 && feed.changes[0].recordId === "VEH-1" &&
+            feed.changes[1].recordId === "VEH-2" && feed.currentRevision === 2,
+            "El feed debe conservar el orden y no duplicar eventos.");
+        const single = r.request("publishCatalogChange", "ADMIN", "updateVehicleField", {
+            requestId: "catalog-single-request-0001",
+            change: { collection: "cortes", recordId: "VEH-3", operation: "upsert", snapshot: { id: "VEH-3" } }
+        });
+        assert_(single.status === "success" && single.revision === 3,
+            "La publicación individual debe conservar su contrato anterior.");
+    });
+
+    test_("Un lote inválido se rechaza completo y un lote parcial recupera con reset", function() {
+        const r = createRuntime_();
+        const valid = { collection: "cortes", recordId: "VEH-1", operation: "upsert", snapshot: { id: "VEH-1" } };
+        expectThrow_(() => r.request("publishCatalogChanges", "ADMIN", "normalizeImages", {
+            requestId: "catalog-invalid-request-0001",
+            changes: [valid, { collection: "unknown", recordId: "VEH-2", operation: "delete" }]
+        }), "colección");
+        assert_(r.coordinator.getPublicCatalogChanges({ cursor: 0, limit: 50 }).changes.length === 0,
+            "Un elemento inválido no debe dejar eventos parciales.");
+
+        const requestId = "catalog-partial-request-0001";
+        r.properties.setProperty("GPSpedia_CATALOG_CHANGE_REVISION", "1");
+        r.properties.setProperty("GPSpedia_CATALOG_CHANGE_EVENT_1", JSON.stringify({
+            revision: 1, collection: "cortes", recordId: "VEH-1", operation: "upsert",
+            snapshot: { id: "VEH-1" }, sourceRequestId: requestId, batchIndex: 0, batchCount: 2
+        }));
+        const recovered = r.request("publishCatalogChanges", "ADMIN", "normalizeImages", {
+            requestId,
+            changes: [valid, { collection: "cortes", recordId: "VEH-2", operation: "delete" }]
+        });
+        assert_(recovered.status === "success" && recovered.recoveredPartial === true && recovered.resetRequired === true,
+            "Un lote parcialmente persistido debe recuperarse con un evento reset, no con snapshots potencialmente antiguos.");
+        const feed = r.coordinator.getPublicCatalogChanges({ cursor: 1, limit: 50 });
+        assert_(feed.changes.length === 1 && feed.changes[0].operation === "reset",
+            "El feed debe ordenar una reconstrucción completa después de un lote parcial.");
+    });
+
+    test_("El cliente reutiliza requestId cuando se pierde la primera respuesta de publicación", function() {
+        const r = createRuntime_();
+        r.properties.setProperty("GPSpedia_COORDINATOR_URL", "https://script.google.com/macros/s/TEST_DEPLOYMENT/exec");
+        r.properties.setProperty("GPSpedia_COORDINATOR_SECRET", r.secrets.ADMIN);
+        let calls = 0;
+        const client = createSharedMutationClient_({
+            properties: r.properties, uuid: r.uuid, logger: function() {},
+            fetch: function(url, options) {
+                calls++;
+                const result = r.coordinator.handleRequest(JSON.parse(options.payload));
+                if (calls === 1) throw new Error("simulated lost response");
+                return { getResponseCode: () => 200, getContentText: () => JSON.stringify(result) };
+            }
+        });
+        const response = client.publishCatalogChanges("ADMIN", "normalizeImages", [
+            { collection: "cortes", recordId: "VEH-4", operation: "upsert", snapshot: { id: "VEH-4" } },
+            { collection: "cortes", recordId: "VEH-5", operation: "delete" }
+        ]);
+        const feed = r.coordinator.getPublicCatalogChanges({ cursor: 0, limit: 50 });
+        assert_(calls === 2 && response.duplicate === true && feed.changes.length === 2 && feed.currentRevision === 2,
+            "La respuesta perdida debe recuperarse con el mismo requestId sin duplicar el lote.");
+    });
+
     test_("El feed público del catálogo se cuenta dentro del lock existente y sin lease adicional", function() {
         const r = createRuntime_();
         const response = r.coordinator.getPublicCatalogChanges({ cursor: 0, limit: 50 });
