@@ -148,3 +148,12 @@ undefined
 - CI: 44113573112 SUCCESS — 138 suites / 2,031 pruebas / 0 fallos.
 - Implementación principal: 62d12ceabab119b48d75fba244ac23f2d5656ed2. HEAD de cierre local: 368582c4ed3619862dda2f52a686edbea4434f1f.
 - Validación Beta pendiente; no se desplegaron proyectos Apps Script.
+
+
+2026-11-17 — GP-UX-INBOX-DESKTOP-02 — Ajuste final de compositor y búsqueda
+- Se conservaron el scroll del formulario con acciones Salir/Enviar accesibles y la lista vacía compacta, ya presentes en la implementación actual.
+- Se estabilizó el ancho del botón de búsqueda en 40 px para evitar recortes; el botón de envío de búsqueda también reserva 40 px.
+- Plantilla y Categoría comparten ahora una fila de dos columnas en el menú de opciones; si el rol no puede usar plantillas, Categoría ocupa el ancho completo.
+- Se eliminó CSS obsoleto y se ajustó el espacio de columnas en viewport estrecho.
+- App Shell v69. CI run 44115093952: SUCCESS — 138 suites / 2,031 pruebas / 0 fallos; InboxUi 83/83. Health remoto read-only 44115094092: SUCCESS. GitHub Pages se ejecuta automáticamente; validación visual Beta pendiente.
+- Commit UI principal: fc3c36db21a853b5ff5fe091b9e4593c7b22bec0. App Shell: cd263b6a16e883f490483e0f3f0ed97def2e9987. HEAD funcional y de pruebas: bba4b430166b4783c4b613c06f6532036ba8b0a7.

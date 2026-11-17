@@ -172,3 +172,18 @@ undefined
 **Regresión:** GitHub Actions `44113573112` SUCCESS — 138 suites, 2,031 pruebas aprobadas, 0 fallos. Se actualizaron los contratos para probar el actor central y la ausencia de consultas locales de autenticación.
 
 **Pendiente:** pruebas funcionales Beta después del despliegue autorizado. No se desplegaron proyectos Apps Script ni se modificaron datos externos.
+
+
+## 2026-11-17 — Revisión de regresión visual Inbox de escritorio (GP-UX-INBOX-DESKTOP-02)
+
+**Alcance:** formulario Nuevo mensaje, lista vacía de conversaciones, controles de búsqueda y selector de plantilla/categoría.
+
+**Resultado de auditoría:** el formulario ya utilizaba scroll vertical y mantenía las acciones Salir/Enviar accesibles mediante acciones sticky. La lista vacía ya estaba limitada a 48 px y el panel lateral se ajustaba a su contenido. Estas soluciones se conservaron. La lupa disponía de reglas duplicadas de anchura; se retiró la regla antigua de 38 px y se fijó una base estable de 40 px tanto para el botón de expansión como para el botón de búsqueda.
+
+**Defecto pendiente encontrado:** el menú de opciones del compositor mantenía Plantilla y Categoría en una sola columna, aunque la solicitud vigente pedía compartir el espacio horizontal. Se cambió a dos columnas de ancho equivalente, con ancho adaptable al viewport. Para roles sin permiso de plantilla, se aplica una sola columna para que Categoría use todo el ancho. Se retiró CSS obsoleto de `.inbox-template-category-row` que no correspondía al DOM vigente.
+
+**Caché:** se incrementó App Shell de `gpsepedia-cache-v68` a `gpsepedia-cache-v69` y se actualizaron los contratos de ServiceWorkerCache, PasswordRecovery y OfflineBrandAssets.
+
+**Regresión:** GitHub Actions `44115093952` SUCCESS — 138 suites, 2,031 pruebas aprobadas, 0 fallos; InboxUi 83/83 PASS. Workflow de salud remota de solo lectura `44115094092` SUCCESS. La publicación estática de GitHub Pages se ejecuta automáticamente por la configuración del repositorio; no se desplegaron servicios Apps Script.
+
+**Pendiente:** inspección visual en escritorio, Android y PWA instalada. No se declara realizada la validación visual Beta.

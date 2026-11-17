@@ -1287,3 +1287,16 @@ No se han desplegado proyectos Apps Script ni configurado secretos remotos. La f
 - Health remoto 44098664894 SUCCESS: 7/7, con latencias ADMIN 1,741 ms, AUTH 1,660 ms, CATALOG 1,204 ms, FEEDBACK 1,598 ms, USERS 1,048 ms, UTILITIES 1,155 ms y WRITE 1,404 ms.
 - CI 44101392771: 93 suites, 1,378 aprobadas; fallos detectados: paridad de copia AUTH y una aserción de endpoint Utilities en el test nuevo. Se corrigió el fixture AUTH y se retiró el contador Utilities al comprobar que ya obtiene lease Coordinator.
 - Última regresión para el HEAD anterior a las correcciones: 44101675660 estaba en progreso al momento de la actualización. Se debe verificar su resultado y volver a ejecutar en el HEAD actual.
+
+
+### Reapertura puntual — GP-UX-INBOX-DESKTOP-02 — 2026-11-17
+**Estado: IMPLEMENTACIÓN LOCAL Y CI COMPLETADAS; VALIDACIÓN VISUAL BETA PENDIENTE.**
+
+- La revisión del código confirmó que el desplazamiento vertical del formulario y las acciones Salir/Enviar fijas ya estaban implementados; se conserva esa solución.
+- La bandeja vacía ya limitaba la altura de la lista a 48 px y el panel lateral se ajustaba al contenido; se conserva esa compactación.
+- Se reforzó el botón de búsqueda con ancho/flex base de 40 px y el botón de envío de búsqueda con ancho mínimo de 40 px, evitando que el icono se comprima o recorte.
+- Se detectó que Plantilla y Categoría seguían apiladas en el menú de opciones, en contra de la solicitud más reciente. Ahora comparten una cuadrícula de dos columnas con el mismo ancho; para roles sin permiso de plantilla, Categoría ocupa una sola columna completa.
+- En pantallas estrechas se reduce el espacio entre columnas y el padding de los selectores. Se eliminó CSS obsoleto de `.inbox-template-category-row` que ya no correspondía al DOM actual.
+- App Shell actualizado a `gpsepedia-cache-v69`; se sincronizaron los contratos ServiceWorkerCache, PasswordRecovery y OfflineBrandAssets.
+- GitHub Actions `44115093952`: SUCCESS — 138 suites, 2,031 pruebas aprobadas, 0 fallos. InboxUi: 83/83 PASS. Health remoto: workflow automático de solo lectura SUCCESS. GitHub Pages: build/deploy automático en curso al registrar esta adenda.
+- No se desplegaron servicios Apps Script ni se ejecutaron pruebas funcionales Beta. La inspección visual real en escritorio, móvil y PWA queda pendiente de Beta.

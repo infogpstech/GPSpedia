@@ -196,3 +196,13 @@ undefined
 - Estado: implementación local y regresión completadas; validación funcional Beta pendiente. No se desplegaron proyectos Apps Script ni se realizaron cambios en servicios remotos.
 - Los workflows de salud remota son automáticos y de solo lectura (GET diagnóstico); no sustituyen las pruebas funcionales Beta.
 - Siguiente paso local: revisar la solicitud visual reciente del Inbox de escritorio contra el código vigente, aunque las tareas GP-UX-INBOX-DESKTOP y de toolbar figuran cerradas en el backlog; reabrir únicamente los defectos que sigan reproducibles. Mantener diferidas las pruebas funcionales Beta.
+
+
+## Continuidad — 2026-11-17 — GP-UX-INBOX-DESKTOP-02
+
+- HEAD al cierre local: `bba4b430166b4783c4b613c06f6532036ba8b0a7` en `GPSpedia2.2.5_work`.
+- Auditoría del Inbox: scroll del compositor y acciones Salir/Enviar ya funcionaban; lista vacía ya compacta. Se reforzó el ancho de los botones de búsqueda y se corrigió el único incumplimiento restante: Plantilla/Categoría ahora comparten dos columnas iguales; roles sin permiso de plantilla muestran Categoría a ancho completo.
+- App Shell incrementado a v69 y contratos de caché actualizados.
+- CI `44115093952`: SUCCESS — 138 suites, 2,031 pruebas, 0 fallos; InboxUi 83/83. Health remoto read-only `44115094092`: SUCCESS.
+- GitHub Pages ejecuta su build/deploy automáticamente al recibir cambios. No se desplegaron proyectos Apps Script ni se realizaron pruebas funcionales Beta.
+- Pendiente: inspección visual Beta en escritorio, Android y PWA instalada. Las pruebas funcionales de despliegue permanecen diferidas.
