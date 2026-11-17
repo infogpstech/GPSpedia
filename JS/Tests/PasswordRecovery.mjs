@@ -8,6 +8,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const authSource = readFileSync(resolve(root, "JS/Services/Auth.js"), "utf8");
 const coordinatorSource = readFileSync(resolve(root, "JS/Services/Coordinator.js"), "utf8");
 const apiSource = readFileSync(resolve(root, "JS/Frontend/api-config.js"), "utf8");
+const frontendAuthSource = readFileSync(resolve(root, "JS/Frontend/auth.js"), "utf8");
 const mainSource = readFileSync(resolve(root, "JS/Frontend/main.js"), "utf8");
 const htmlSource = readFileSync(resolve(root, "index.html"), "utf8");
 const workerSource = readFileSync(resolve(root, "service-worker.js"), "utf8");
@@ -226,6 +227,10 @@ assert.ok(authSource.includes("case 'completePasswordRecovery':"));
 assert.ok(coordinatorSource.includes('requestPasswordRecovery: { write: ["PASSWORD_RECOVERY"], trackActivity: false }'));
 assert.ok(apiSource.includes("'requestPasswordRecovery': 'AUTH'"));
 assert.ok(apiSource.includes("'completePasswordRecovery': 'AUTH'"));
+const loginBoundary = frontendAuthSource.indexOf("\nexport async function login(");
+const recoveryExports = frontendAuthSource.indexOf("export async function requestPasswordRecovery(");
+assert.ok(loginBoundary >= 0 && recoveryExports > loginBoundary, "Los exports de recuperación deben quedar fuera del bloque de extracción de checkSession.");
+
 assert.ok(mainSource.includes("passwordRecoveryRequestForm.addEventListener('submit'"));
 assert.ok(mainSource.includes("passwordRecoveryCompleteForm.addEventListener('submit'"));
 assert.ok(htmlSource.includes('id="password-recovery-request-form"'));

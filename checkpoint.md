@@ -493,3 +493,8 @@ Estado: **EN PROGRESO** hasta ejecutar la suite Node.js completa disponible; la 
 - El primer run del commit a8c4a087e10cadf9264ce92cf328ac2032d5321b aprobó sintaxis y 1,829 pruebas, pero falló SessionRestoreOnValidationFailure por una extracción de fuente que usa el export login como delimitador.
 - Se identificó que los nuevos exports de recuperación estaban insertados antes de login y quedaban dentro del bloque de checkSession extraído por el harness. Se reubican al final de auth.js; no era un fallo de lógica de sesión.
 - La suite completa debe repetirse después del commit correctivo. GP-AUTH-PASSWORD-RECOVERY-01 permanece EN PROGRESO hasta CI verde.
+
+
+### Validación posterior al ajuste de exports
+- Los exports de recuperación se movieron al final de JS/Frontend/auth.js para que el extractor de checkSession mantenga su límite. Se añade una aserción explícita en PasswordRecovery.mjs.
+- Se requiere una nueva ejecución de GitHub Actions sobre este commit, ya que el workflow de servicios no se activó automáticamente con el commit anterior que solo tocó frontend y documentación.

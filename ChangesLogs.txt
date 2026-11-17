@@ -1526,3 +1526,10 @@ GP-UX-PYS-TUTORIAL-ASSOCIATION-06 — 2026-11-16
 - GitHub Actions detectó que SessionRestoreOnValidationFailure.mjs delimita checkSession hasta el export de login. La inserción de los dos nuevos exports antes de login extendió el bloque extraído y produjo un SyntaxError en el harness, sin indicar un fallo de ejecución de la aplicación.
 - Se reubican requestPasswordRecovery y completePasswordRecovery al final del módulo para preservar los límites de extracción usados por las pruebas de sesión. No cambia el comportamiento ni el contrato de API.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — CONTRATO DE EXTRACCIÓN DE AUTH EN PRUEBAS
+- Se amplía PasswordRecovery.mjs para comprobar que los exports de recuperación permanecen después del límite de login usado por SessionRestoreOnValidationFailure.mjs.
+- El ajuste activa nuevamente la suite de servicios tras la corrección de ubicación de exports publicada en b965db4241bdc2325b72e618c418a95995d35208.
+================================================================================
