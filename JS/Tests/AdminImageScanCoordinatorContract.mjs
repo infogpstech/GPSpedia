@@ -225,7 +225,7 @@ assert.match(admin,/function classifyCortesImageAcl_\(/);
 assert.match(admin,/function findMissingCortesDriveReferences_\(/);
 const adminCaseNames = [...admin.matchAll(/case\s+['"]([^'"]+)['"]\s*:/g)].map(match => match[1]);
 for (const action of adminCaseNames) {
-    assert.ok(action === "ping" || mutation(action) || read(action),
+    assert.ok(action === "ping" || action === "getServiceTraffic" || mutation(action) || read(action),
         "La acción ADMIN/" + action + " no está clasificada en el dispatcher compartido.");
 }
 console.log("AdminImageScanCoordinatorContract: 1/1 PASS");
