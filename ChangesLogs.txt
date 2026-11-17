@@ -47,3 +47,11 @@ undefined
 - style.css: toolbar compacta, etiquetas animadas, estados focus/expanded, adaptación móvil y soporte de movimiento reducido mediante la regla global existente.
 - JS/Tests/InboxUi.mjs: contratos para acciones, permisos, accesibilidad, participantes/categoría, carga histórica, envío y borradores.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — IMPLEMENTACIÓN GP-UX-SESSION-ENDED-01
+- style.css: #login-modal #login-error.login-session-ended cambia text-align de left a center. La regla de errores de acceso no se modifica.
+- JS/Tests/SessionUiRoleInvalidation.js: nuevo contrato para verificar centrado exclusivo del aviso y preservación de role/aria-live.
+- JS/Tests/RunServiceTests.mjs: entrega style.css a la suite SessionUiRoleInvalidation.
+================================================================================

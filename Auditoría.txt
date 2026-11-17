@@ -28,3 +28,12 @@ undefined
 - Ubicación: renderInboxReplyForm_ y openInboxNewConversationForm_. El envío usa borradores por usuario/conversación y claves idempotentes; la carga de mensajes anteriores usa cursor opaco. La reorganización visual no debe alterar estos contratos.
 - Alcance seguro: reorganización del header y botones de composición mediante iconos/labels; no modificar endpoints, permisos, estados de lectura, destinatarios, persistencia de borradores ni navegación de la lista.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — AUDITORÍA GP-UX-SESSION-ENDED-01
+- Ubicación: style.css, #login-modal #login-error.login-session-ended. Evidencia: la burbuja específica para «Sesión terminada» aplicaba `text-align: left`, contrario al requerimiento de centrar el texto.
+- Ubicación: style.css, #login-modal #login-error:not(.login-session-ended). Los errores de acceso usan una regla separada y no deben heredar el centrado.
+- Ubicación: JS/Frontend/ui.js, showLoginScreen. La clase se aplica solo cuando reason === 'Sesión terminada'; el aviso usa role=status y aria-live=polite, mientras los errores normales conservan role=alert y aria-live=assertive.
+- Alcance: cambiar únicamente alineación del aviso específico y agregar contrato anti-regresión; no modificar geometría, márgenes, colores, display ni responsive.
+================================================================================

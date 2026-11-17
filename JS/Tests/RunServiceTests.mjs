@@ -170,7 +170,7 @@ runGroup('36','AUTH',()=>{
   auth,testAuth,client:read('JS/Frontend/auth.js')
  }));
  recordResult('UI invalidación de sesión y rol/AUG-042',loadFunction('JS/Tests/SessionUiRoleInvalidation.js','runSessionUiRoleInvalidationTests')({
-  ui:read('JS/Frontend/ui.js'),auth:read('JS/Frontend/auth.js'),users:html,authService:auth,main:read('JS/Frontend/main.js'),feedback:read('JS/Services/feedback.js')
+  ui:read('JS/Frontend/ui.js'),auth:read('JS/Frontend/auth.js'),users:html,authService:auth,main:read('JS/Frontend/main.js'),feedback:read('JS/Services/feedback.js'),css:read('style.css')
  }));
 });
 runGroup('37','USERS',()=>{

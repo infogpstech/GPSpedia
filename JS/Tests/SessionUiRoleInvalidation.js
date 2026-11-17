@@ -1,6 +1,6 @@
 // AUG-042 — invalidación de sesión, estado privilegiado y contrato de rol del cliente.
 function runSessionUiRoleInvalidationTests(sources) {
- const ui=String(sources.ui||""),auth=String(sources.auth||""),users=String(sources.users||""),authService=String(sources.authService||""),main=String(sources.main||""),feedback=String(sources.feedback||"");
+ const ui=String(sources.ui||""),auth=String(sources.auth||""),users=String(sources.users||""),authService=String(sources.authService||""),main=String(sources.main||""),feedback=String(sources.feedback||""),css=String(sources.css||"");
  const results=[];let passed=0,failed=0;
  const assert=(v,m)=>{if(!v)throw Error(m||"Aserción fallida");};
  const run=(name,fn)=>{try{fn();passed++;results.push({name,status:"PASS"});}catch(e){failed++;results.push({name,status:"FAIL",message:String(e.message||e)});}};
@@ -17,6 +17,16 @@ function runSessionUiRoleInvalidationTests(sources) {
   const f=slice(ui,"export function showLoginScreen(","function renderTermsGate_");
   assert(f.indexOf("resetSessionUi_()")>=0&&f.indexOf("resetSessionUi_()")<f.indexOf("setState("));
   assert(f.includes("currentUser: null"));
+ });
+ run("El aviso de sesión terminada centra solo su texto y no altera los errores de acceso",()=>{
+  const endedRule=slice(css,"#login-modal #login-error.login-session-ended {","}");
+  const accessRule=slice(css,"#login-modal #login-error:not(.login-session-ended) {","}");
+  const screen=slice(ui,"export function showLoginScreen(","function renderTermsGate_");
+  assert(/text-align:\s*center/.test(endedRule),"El aviso de sesión terminada debe centrar su texto.");
+  assert(!/text-align:\s*center/.test(accessRule),"Los errores de acceso deben conservar su alineación original.");
+  assert(screen.includes("loginError.classList.toggle('login-session-ended', sessionEnded)"));
+  assert(screen.includes("loginError.setAttribute('role', sessionEnded ? 'status' : 'alert')"));
+  assert(screen.includes("loginError.setAttribute('aria-live', sessionEnded ? 'polite' : 'assertive')"));
  });
  run("resetSessionUi limpia modales, buffers, cachés y vistas sensibles",()=>{
   const f=slice(ui,"function resetSessionUi_()","export function showLoginScreen");

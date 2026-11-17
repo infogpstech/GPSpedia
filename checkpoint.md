@@ -58,3 +58,10 @@ undefined
 - Pendiente Beta: validación visual y de interacción en navegador/PWA, teclado y táctil; no se ejecutaron acciones reales de archivo/cierre.
 - Rama base GPSpedia2.2.5 verificada sin cambios: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 - Siguiente tarea pendiente de este bloque: GP-UX-SESSION-ENDED-01 — centrar el texto de sesión terminada dentro de la burbuja de aviso, sin alterar errores de acceso ni diseño responsive.
+
+
+### Continuidad — GP-UX-SESSION-ENDED-01 — 2026-11-17
+- HEAD de inicio: 318785d1d3d36cb4dd8559ef467799c25e09c1c2, rama GPSpedia2.2.5_work; rama base sin cambios.
+- Auditoría: el CSS de la burbuja `.login-session-ended` alineaba a la izquierda; los errores normales usan una regla separada. showLoginScreen asigna clase, role y aria-live diferenciados.
+- Implementación: cambiar solo text-align del aviso a center y ampliar SessionUiRoleInvalidation para proteger alineación y accesibilidad de ambos tipos de mensaje.
+- Validación CI pendiente.

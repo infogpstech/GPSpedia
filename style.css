@@ -4881,7 +4881,7 @@ td, th {
     color: #705719;
     font-size: .92rem;
     line-height: 1.4;
-    text-align: left;
+    text-align: center;
 }
 body.dark-mode #login-modal #login-error.login-session-ended {
     border-color: #79683e;
