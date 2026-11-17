@@ -1305,8 +1305,8 @@ No se han desplegado proyectos Apps Script ni configurado secretos remotos. La f
 ---
 
 ## GP-PERF-SIMPLIFY-01 — Simplificación de seguridad operativa y optimización global
-**Prioridad: P0/P1 — REQUISITO NUEVO REGISTRADO (2026-11-17).**
-**Estado: PENDIENTE DE AUDITORÍA E IMPLEMENTACIÓN.**
+**Prioridad: P0/P1 — REQUISITO REGISTRADO (2026-11-17).**
+**Estado: P0 COMPLETADA; P1 EN PROGRESO.**
 
 **Objetivo:** retirar validaciones transaccionales, llamadas entre servicios y revalidaciones por acción que añaden latencia sin aportar valor funcional. La plataforma debe ejecutar las funciones en el menor tiempo posible.
 
@@ -1323,5 +1323,9 @@ No se han desplegado proyectos Apps Script ni configurado secretos remotos. La f
 6. **P5 — Validación:** pruebas locales de permisos por rol, aportes, archivos, revocación, cuenta eliminada y bloqueo de login; medir llamadas/latencias cuando sea posible. No desplegar Apps Script ni ejecutar Beta sin autorización.
 
 **Criterios de aceptación:** rutas ordinarias sin lease ni llamada de autenticación a Coordinator; permisos por rol preservados; aportes y cargas con el mínimo de pasos; excepciones de sesión funcionando; regresión local aprobada. No afirmar mejoras de latencia sin mediciones.
+
+**P0 completada (2026-11-17):** auditoría estática de Coordinator, SharedMutationClient, WRITE, ADMIN y FEEDBACK. Informe: `AUDITORIA_P0_LATENCIA_VALIDACIONES.md`. Se confirmaron dos viajes HTTP por lease (acquire/release), revalidación central de sesión por adquisición, rutas ADMIN→WRITE con validación anidada y locks de hasta 30 s que pueden cubrir cargas Drive. No se midieron latencias reales ni se ejecutaron servicios.
+
+**Siguiente sub-tarea activa:** P1.1 — simplificar WRITE/ADMIN para cortes y retirar Coordinator de `checkOperation`. Después P1.2 — acortar locks que cubren Drive; P1.3 — simplificar FEEDBACK. P2 cargas de archivos continúa después.
 
 **Documento de ejecución:** `PLAN_SIMPLIFICACION_SEGURIDAD_RENDIMIENTO.md`.
