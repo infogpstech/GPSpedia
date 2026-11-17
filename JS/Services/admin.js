@@ -10718,12 +10718,16 @@ function handleOrganizeUnusedImagesBatch(payload, logMessage, developerContext) 
             } catch (error) { return "Ubicación no verificable dentro de Cortes"; }
         };
 
+        // Los IDs del lote ya están deduplicados y el ScriptLock protege el inventario
+        // ADMIN durante la operación. Reutilizar esta lectura para resolver identidades;
+        // la relectura completa inmediatamente anterior a cada movimiento se conserva.
+        const currentRows = sheet.getDataRange().getValues();
+        const duplicateIds = getDuplicateReplacedImageIds_(currentRows);
+
         fileIds.forEach(fileId => {
             let record = null, file = null, sourceFolder = null, sourcePath = "";
             let rowIndex = 0, recordId = "", row = [];
             try {
-                const currentRows = sheet.getDataRange().getValues();
-                const duplicateIds = getDuplicateReplacedImageIds_(currentRows);
                 const inventoryMatches = [];
                 let historyConflict = "", ambiguousIdentity = false;
 
