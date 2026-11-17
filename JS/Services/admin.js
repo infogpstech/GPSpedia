@@ -1608,7 +1608,11 @@ function publishAdminCortesCatalogChanges_(action, references) {
             if (!ids.length) throw new Error("La reconciliación no devolvió IDs de vehículos modificados.");
             const changes = ids.map(id => buildAdminCortesCatalogChange_(id));
             if (changes.length !== ids.length) throw new Error("No se pudieron verificar todos los registros modificados.");
-            changes.forEach(change => publishSharedCatalogChange_("ADMIN", action, change));
+            // El Coordinator asigna las revisiones en una sola sección crítica; agrupar
+            // evita un viaje de red por vehículo sin perder el orden de los snapshots.
+            for (let offset = 0; offset < changes.length; offset += 50) {
+                publishSharedCatalogChanges_("ADMIN", action, changes.slice(offset, offset + 50));
+            }
         } catch (catalogPublishError) {
             publishSharedCatalogChange_("ADMIN", action, { operation: "reset" });
         }
