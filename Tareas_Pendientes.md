@@ -1060,7 +1060,7 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 
 
 ### GP-INBOX-THREAD-TOOLBAR-01 — Organización de la bandeja de conversación
-**Prioridad: P2 · Estado: EN PROGRESO**
+**Prioridad: P2 · Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA**
 - Reorganizar botones y elementos del hilo con controles iconográficos autodesplegables.
 - Preservar acciones, destinatarios, borradores, estados leído/no leído, permisos y navegación móvil/escritorio.
 
@@ -1068,7 +1068,15 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - El encabezado del hilo se reorganiza en una toolbar semántica; los botones mantienen iconos visibles y las etiquetas se expanden/contraen mediante un control accesible con `aria-expanded`.
 - Volver, archivar/restaurar y cerrar caso conservan handlers, estados y reglas de rol; el cierre solo aparece para desarrollador, jefe y supervisor.
 - Los nombres de participantes y categoría permanecen en el encabezado. Se agregan iconos al control de mensajes anteriores, cancelar y enviar, sin cambiar cursores, borradores ni claves de idempotencia.
-- Pruebas InboxUi ampliadas para la toolbar, permisos, accesibilidad, movimiento reducido, navegación móvil y preservación del flujo de mensajes. Validación CI pendiente.
+- Pruebas InboxUi ampliadas para la toolbar, permisos, accesibilidad, movimiento reducido, navegación móvil y preservación del flujo de mensajes.
+
+#### Cierre verificado — GP-INBOX-THREAD-TOOLBAR-01 — 2026-11-17
+- GitHub Actions service regression run 44084350666 SUCCESS: 133 suites, 1,991 pruebas aprobadas, 0 fallos. InboxUi 83/83; comprobación sintáctica de los módulos modificados aprobada.
+- GitHub Pages run 44084349391 SUCCESS para el commit bec864d7756b2b2c46f7449a75fbf9b79eaf8023.
+- Toolbar semántica con iconos siempre visibles, etiquetas expandibles/contraíbles, aria-label/aria-expanded/aria-controls, y controles compactos responsive. Volver se mantiene solo en móvil.
+- Archivar/restaurar y cerrar caso conservan handlers; el cierre sigue limitado a desarrollador, jefe y supervisor. Se preservan participantes/categoría, cursor de mensajes, borradores e idempotencia.
+- Pendiente Beta: revisar visualmente la expansión, foco/teclado, distribución en móviles PWA y estados de acciones. No se ejecutaron acciones reales de archivo/cierre.
+- Estado local: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
 
 
 ### GP-INBOX-CACHE-BANDS-01 — Caché de Reportes, Mensajes y Aportaciones

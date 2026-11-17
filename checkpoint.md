@@ -48,3 +48,13 @@ undefined
 - Auditoría: renderInboxConversationDetail_ tenía un header flex plano sin toolbar ni iconografía. Volver, archivar/restaurar y cerrar caso ya tenían handlers y permisos; el flujo de respuestas y nuevos mensajes depende de borradores e idempotencia; los mensajes anteriores usan cursor opaco.
 - Implementación: toolbar semántica con iconos siempre visibles y etiquetas expandibles, aria-expanded/aria-controls/aria-label, layout móvil; iconos añadidos a mensajes anteriores, cancelar y enviar. Se conservan handlers y contratos.
 - Pruebas InboxUi ampliadas. CI pendiente; no marcar tarea completada hasta validar.
+
+
+### Cierre verificado — GP-INBOX-THREAD-TOOLBAR-01 — 2026-11-17
+- Commit de implementación: bec864d7756b2b2c46f7449a75fbf9b79eaf8023.
+- GitHub Actions run 44084350666 SUCCESS: 133 suites, 1,991 pruebas aprobadas, 0 fallos; InboxUi 83/83; comprobación sintáctica aprobada.
+- GitHub Pages run 44084349391 SUCCESS para el mismo HEAD.
+- Toolbar del hilo con iconos persistentes y etiquetas desplegables, botones de volver/archivar/restaurar/cerrar y controles iconográficos para mensajes anteriores, cancelar y enviar. Se conservan permisos, foco de retorno, participantes, categoría, borradores, idempotencia, cursor histórico y estado de lectura.
+- Pendiente Beta: validación visual y de interacción en navegador/PWA, teclado y táctil; no se ejecutaron acciones reales de archivo/cierre.
+- Rama base GPSpedia2.2.5 verificada sin cambios: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Siguiente tarea pendiente de este bloque: GP-UX-SESSION-ENDED-01 — centrar el texto de sesión terminada dentro de la burbuja de aviso, sin alterar errores de acceso ni diseño responsive.
