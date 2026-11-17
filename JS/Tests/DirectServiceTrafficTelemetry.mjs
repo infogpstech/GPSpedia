@@ -102,7 +102,11 @@ for (const service of services) {
         const doPostStart = source.indexOf("function doPost(e)");
         const doPostEnd = source.indexOf("\nfunction ", doPostStart + 15);
         const doPost = source.slice(doPostStart, doPostEnd > doPostStart ? doPostEnd : source.length);
-        assert.ok(doPost.includes('action === "getServiceTraffic"'));
+        if (service.name === "UTILITIES") {
+            assert.ok(doPost.includes('body&&body.action==="getServiceTraffic"'));
+        } else {
+            assert.ok(doPost.includes('action === "getServiceTraffic"'));
+        }
         assert.ok(doPost.includes("recordDirectServiceTraffic_()"));
         assert.ok(doPost.includes("DIRECT_SERVICE_TRAFFIC_CONFIG_.actions.has"));
     });
