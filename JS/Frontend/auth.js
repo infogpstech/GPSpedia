@@ -39,6 +39,35 @@ async function getCatalogFeedHead_(user, signal) {
     return revision;
 }
 
+function createPysRefreshTask_() {
+    let pending = null;
+    return function refreshPys() {
+        if (!pending) {
+            try {
+                pending = Promise.resolve(loadPysData({ refresh: true })).then(
+                    data => ({ ok: true, data }),
+                    error => ({ ok: false, error })
+                );
+            } catch (error) {
+                pending = Promise.resolve({ ok: false, error });
+            }
+        }
+        return pending;
+    };
+}
+
+async function refreshPysAndSyncCursor_(refreshPys, cursor) {
+    const result = await refreshPys();
+    const freshness = getPysDataFreshness();
+    if (!result || result.ok !== true || !freshness.hasCache || freshness.stale || freshness.error) {
+        const error = result && result.error || freshness.error;
+        if (error) console.warn("PyS no pudo actualizarse; el catálogo continuará disponible:", error && error.message ? error.message : error);
+        return false;
+    }
+    if (!Number.isSafeInteger(cursor) || cursor < 0) return false;
+    return setPysDataCursor(cursor);
+}
+
 async function fetchCatalogDelta_(cursor, user, signal) {
     const userId = String(user && (user.ID || user.id) || "").trim();
     const sessionToken = String(user && user.SessionToken || "").trim();
@@ -559,6 +588,7 @@ export async function loadInitialData(forceRefresh = false, options = {}) {
         let snapshotToApply = null;
         let cursorToPersist = null;
         let requiresFullSnapshot = !catalogLoaded || !Number.isSafeInteger(cachedCursor);
+        const refreshPys = createPysRefreshTask_();
 
         if (!requiresFullSnapshot) {
             try {
@@ -569,10 +599,12 @@ export async function loadInitialData(forceRefresh = false, options = {}) {
                     cursorToPersist = delta.cursor;
                 } else if (delta.changes.length === 0) {
                     const pysFreshness = getPysDataFreshness();
-                    if (!pysFreshness.hasCache || pysFreshness.updatedAt <= 0 || getPysDataCursor() !== cachedCursor) {
-                        await loadPysData({ refresh: true });
+                    if (!pysFreshness.hasCache || pysFreshness.updatedAt <= 0 ||
+                        getPysDataCursor() !== cachedCursor || pysFreshness.error) {
+                        await refreshPysAndSyncCursor_(refreshPys, delta.cursor);
+                    } else {
+                        setPysDataCursor(delta.cursor);
                     }
-                    setPysDataCursor(delta.cursor);
                     if (delta.cursor > cachedCursor) await offline.saveCatalogCursor(delta.cursor);
                     if (!isCurrentLoad()) return;
                     markCatalogSync_();
@@ -606,6 +638,9 @@ export async function loadInitialData(forceRefresh = false, options = {}) {
                 cursorToPersist = null;
             }
         } else {
+            // PyS es independiente del cursor y del snapshot del catálogo; iniciar
+            // su lectura ahora evita encadenar tres viajes de red en el primer arranque.
+            refreshPys();
             try {
                 cursorToPersist = await getCatalogFeedHead_(currentUser, loadController.signal);
             } catch (headError) {
@@ -616,6 +651,9 @@ export async function loadInitialData(forceRefresh = false, options = {}) {
         }
 
         if (requiresFullSnapshot) {
+            // También cubre reset del feed o caché inconsistente: la misma promesa
+            // evita duplicar la lectura si ya comenzó junto al cursor inicial.
+            refreshPys();
             const apiResponse = await fetchCatalogData({ signal: loadController.signal, timeoutMs: 8000, retries: 2, baseDelayMs: 400 });
             if (!isCurrentLoad()) return;
             const rawCatalogData = apiResponse && apiResponse.data;
@@ -646,14 +684,21 @@ export async function loadInitialData(forceRefresh = false, options = {}) {
         // Aplicar sus eventos antes de confirmar el cursor evita perder cambios si falla la caché.
         const pysFreshness = getPysDataFreshness();
         const pysCacheAligned = pysFreshness.hasCache && pysFreshness.updatedAt > 0 &&
-            Number.isSafeInteger(getPysDataCursor()) && getPysDataCursor() === cachedCursor;
+            Number.isSafeInteger(getPysDataCursor()) && getPysDataCursor() === cachedCursor && !pysFreshness.error;
         if (requiresFullSnapshot || !pysCacheAligned) {
-            await loadPysData({ refresh: true });
+            await refreshPysAndSyncCursor_(refreshPys, cursorToPersist);
         } else if (pysDeltaChanges.length) {
             const pysResult = applyPysCatalogChanges(pysDeltaChanges, cursorToPersist);
-            if (!pysResult || pysResult.needsRefresh) await loadPysData({ refresh: true });
+            if (!pysResult || pysResult.needsRefresh) {
+                await refreshPysAndSyncCursor_(refreshPys, cursorToPersist);
+            } else if (Number.isSafeInteger(cursorToPersist) && !getPysDataFreshness().error) {
+                // applyPysCatalogChanges escribe el cursor cuando hay cambios;
+                // los deletes idempotentes también deben avanzar la revisión.
+                setPysDataCursor(cursorToPersist);
+            }
+        } else if (Number.isSafeInteger(cursorToPersist) && !getPysDataFreshness().error) {
+            setPysDataCursor(cursorToPersist);
         }
-        setPysDataCursor(cursorToPersist);
 
         // La caché local es secundaria: una indisponibilidad de IndexedDB no debe
         // descartar el catálogo remoto que ya se procesó correctamente en memoria.
