@@ -1501,3 +1501,8 @@ No se han desplegado proyectos Apps Script ni configurado secretos remotos. La f
 - P4.2: al abrir el compositor Inbox desde Solicitudes, no esperar la carga remota de conversaciones; cargar destinatarios de inmediato y refrescar la lista aparte.
 - P4.3: revisar locks globales de ADMIN para auditoría/organización Drive; no modificar hasta diseñar reservas breves y preservar referencias, idempotencia y rollback.
 - No modificar telemetría, dashboard ni health checks. No desplegar servicios ni tocar datos externos.
+### P4 — estado actualizado — 2026-11-17
+- P4.1 COMPLETADA: arranque PyS en paralelo, error aislado y cursor solo con datos frescos. Pruebas 5/5, CatalogStartupIntegrity 25/25, PysDataCache 18/18.
+- P4.2 COMPLETADA: nuevo mensaje desde Solicitudes carga destinatarios sin esperar conversaciones; la lista queda en segundo plano y el sondeo solo inicia si la vista/contexto siguen vigentes. InboxUi 84/84.
+- P4.3 PENDIENTE DE DISEÑO: desacoplar ScriptLock de recorridos/movimientos Drive de ADMIN mediante reserva atómica por auditoría/operación, commit breve, expiración y recuperación. No cambiar locks hasta cubrir duplicados concurrentes, retry, rollback y consistencia del inventario.
+- CI 44154032505 SUCCESS: 145 suites / 2,117 pruebas / 0 fallos. Health read-only 7/7; Pages build SUCCESS. No deployment Apps Script.
