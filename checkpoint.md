@@ -403,3 +403,11 @@ undefined
 - Observación de salud: USERS alcanzó 8,489 ms en esta muestra; disponible, pero debe vigilarse.
 - Límite: la caché es por proyecto Apps Script; un primer acceso/cache miss o vencimiento aún consulta Coordinator. No se afirma que la validación sea estrictamente solo en login.
 - **P3.1a COMPLETADA. P3.1b pendiente:** evaluar precarga del actor desde login en los servicios o aceptar el contexto cacheado 6 h, sin añadir complejidad de seguridad innecesaria. Mantener monitoreo y dashboard.
+
+
+### Continuidad — P3.1b evaluada; P3.1c pendiente — 2026-11-17
+- HEAD de inicio de esta continuación: bd002d42cbe8cf84f5482185a39848154a0668e8 (rama `GPSpedia2.2.5_work`). Base `GPSpedia2.2.5` verificada en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- P3.1b: se descarta precarga AUTH→todos los servicios porque CacheService es aislado por proyecto y exigiría llamadas/contratos adicionales durante login. Se conserva TTL 6 h para cache hits sin red; cache miss/expiración todavía consulta Coordinator.
+- Hallazgo ALTO: logout remoto, eliminación de cuenta y cambio de rol revocan el contexto de Coordinator, pero no invalidan entradas de actor ya almacenadas en CacheService de WRITE/FEEDBACK. Riesgo de autorización obsoleta hasta 6 h. Detalle y evidencia en `AUDITORIA_P3_SESION_ACTOR.md`.
+- P3.1b COMPLETADA (evaluación/decisión), pero P3.1 global NO está cerrada. **Siguiente tarea P3.1c:** implementar invalidación dirigida de cachés de actor en WRITE/FEEDBACK para las tres excepciones, sin revalidar cada acción. Añadir pruebas locales de propagación, fallos parciales y aislamiento por token.
+- En esta continuación solo se actualizaron registros; no se modificó código de servicios, no se ejecutó Node.js/CLI y no se desplegó Apps Script. Las pruebas CI históricas 143 suites/2,108 PASS pertenecen a P3.1a, no validan esta adenda.
