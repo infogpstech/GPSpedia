@@ -422,3 +422,9 @@ undefined
 - Pruebas focalizadas: SessionActorCacheInvalidation 23/23 PASS; SessionActorCacheLifetime 4/4 PASS. CI 44149804570: SUCCESS — 144 suites / 2,131 pruebas / 0 fallos. Health read-only 44149804587: SUCCESS; no valida el nuevo código de Apps Script porque no se desplegó.
 - No se desplegaron proyectos Apps Script ni se modificaron ScriptProperties, hojas, Drive o datos externos. Pendiente Beta: configurar propiedades, desplegar AUTH/WRITE/FEEDBACK y probar logout, revocación de todas las sesiones, eliminación/cambio de rol, recuperación ante fallo parcial y reintento.
 - La rama base GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+### Continuidad — corrección adicional P3.1c — 2026-11-17
+- En la revisión del cierre se detectó que Desarrollador tiene sesiones ilimitadas (SESSION_LIMITS.desarrollador = Infinity) y que la primera implementación rechazaba más de cinco tokens.
+- Corrección publicada: AUTH procesa los tokens en lotes de cinco y solo revoca en Coordinator después de recibir confirmación de ambos servicios para todos los lotes. Fallos parciales detienen la revocación central; los reintentos son idempotentes.
+- Se reutiliza GPSpedia_COORDINATOR_SECRET, ya compartido por AUTH/WRITE/FEEDBACK; se elimina la necesidad de crear GPSpedia_SESSION_CACHE_INVALIDATION_SECRET. AUTH requiere GPSpedia_WRITE_URL y GPSpedia_FEEDBACK_URL con los endpoints /exec vigentes.
+- Prueba ampliada a 13 sesiones Developer. El primer CI posterior a la ampliación detectó que el runner exige resumen numérico; se corrigió el formato del test. CI del HEAD más reciente pendiente de confirmar.
+- No se desplegaron Apps Script ni se modificaron propiedades o datos externos. Rama base sigue en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
