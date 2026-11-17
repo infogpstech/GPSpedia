@@ -65,7 +65,8 @@ export function runYouTubeUploadXssIntegrityTests({ upload, ui, cortes }) {
 
     test("los puntos de entrada de Corte, PyS y Tutorial pasan datos como opciones y no como HTML", () => {
         assert.match(ui, /initialTitle:\s*meta\.title,[\s\S]*?initialDescription:\s*meta\.description/);
-        assert.match(ui, /initialTitle:\s*payload\.titulo,[\s\S]*?initialDescription:\s*payload\.descripcion/);
+        assert.match(ui, /initialTitle:\s*content\.querySelector\("#pys-titulo"\)\.value\.trim\(\),[\s\S]*?initialDescription:\s*content\.querySelector\("#pys-detalle"\)\.value\.trim\(\)/);
+        assert.match(ui, /initialTitle:\s*item\.Problema \|\| "Problema técnico",[\s\S]*?initialDescription:\s*item\.Descripcion \|\| item\.Solucion \|\| ""/);
         assert.match(ui, /initialTitle:\s*item\.Tema[\s\S]*?initialDescription:\s*item\.Detalles/);
         assert.match(cortes, /initialTitle:\s*initTitle,[\s\S]*?initialDescription:\s*initDesc/);
         assert.doesNotMatch(ui, /innerHTML\s*=\s*`[^\`]*\$\{(?:meta\.title|payload\.descripcion|item\.Detalles)/);
