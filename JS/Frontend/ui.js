@@ -5594,7 +5594,7 @@ function initAdminPanelListeners() {
             return;
         }
         const globalTrafficAvailable = Boolean(globalServiceTrafficData && !globalServiceTrafficError &&
-            globalServiceTrafficData.scope === "coordinator_protected_operations" &&
+            globalServiceTrafficData.scope === "global_service_traffic" &&
             globalServiceTrafficData.totals);
         const serviceTotals = globalTrafficAvailable ? globalServiceTrafficData.totals : {};
         const serviceCount = period => globalTrafficAvailable
@@ -5631,7 +5631,13 @@ function initAdminPanelListeners() {
         detail.appendChild(metrics);
         const note = document.createElement("p");
         note.className = "dev-service-note";
-        note.textContent = "El estado confirma la respuesta del endpoint y su contrato de identidad; no demuestra por sí solo que las dependencias internas de Google Sheets o Drive estén disponibles. El tráfico procede del agregado global de Coordinator y cuenta únicamente operaciones protegidas que obtuvieron una lease; no incluye lecturas públicas/no coordinadas, feed público ni sondeos de salud." + (globalServiceTrafficError ? " No fue posible actualizar el agregado global." : "");
+        const catalogSource = globalServiceTrafficData && globalServiceTrafficData.sources && globalServiceTrafficData.sources.CATALOG;
+        const catalogCoverageNote = selectedServiceKey === "CATALOG"
+            ? (catalogSource && catalogSource.directRequestsAvailable
+                ? " Las lecturas directas CATALOG se cuentan con un contador best-effort no bloqueante y pueden subcontarse."
+                : " Solo se cuentan las consultas del feed público coordinadas; las lecturas directas CATALOG aún no están configuradas.")
+            : "";
+        note.textContent = "El estado confirma la respuesta del endpoint y su contrato de identidad; no demuestra por sí solo que las dependencias internas de Google Sheets o Drive estén disponibles. El tráfico combina operaciones protegidas registradas por Coordinator con lecturas directas CATALOG cuando el contador está configurado. No representa todas las solicitudes HTTP y excluye sondeos de salud." + catalogCoverageNote + (globalServiceTrafficError ? " No fue posible actualizar el agregado global." : "");
         detail.appendChild(note);
         const dependencies = document.createElement("div");
         dependencies.className = "dev-service-dependencies";
@@ -5688,13 +5694,13 @@ function initAdminPanelListeners() {
             return;
         }
         const data = globalServiceTrafficData;
-        if (!data || data.scope !== "coordinator_protected_operations" ||
+        if (!data || data.scope !== "global_service_traffic" ||
             !Array.isArray(data.services) || !Array.isArray(data.buckets) || !data.totals) {
             const empty = document.createElement("p");
             empty.className = "dev-empty-state";
             empty.textContent = globalServiceTrafficLoading
                 ? "Consultando el agregado global..."
-                : "Aún no hay operaciones protegidas registradas por Coordinator.";
+                : "Aún no hay solicitudes instrumentadas registradas para el periodo.";
             container.appendChild(empty);
             return;
         }
@@ -5730,7 +5736,7 @@ function initAdminPanelListeners() {
         svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
         svg.setAttribute("class", "dev-service-traffic-svg");
         svg.setAttribute("role", "img");
-        svg.setAttribute("aria-label", "Operaciones protegidas globales registradas por Coordinator, agrupadas por hora durante las últimas 24 horas.");
+        svg.setAttribute("aria-label", "Tráfico global instrumentado por servicio, agrupado por hora durante las últimas 24 horas.");
         [0, Math.ceil(maxValue / 2), maxValue].filter((value, index, values) => values.indexOf(value) === index).forEach(value => {
             const y = top + plotHeight - (value / maxValue) * plotHeight;
             const line = document.createElementNS(ns, "line");
@@ -5789,7 +5795,7 @@ function initAdminPanelListeners() {
         try {
             const result = await routeActionWithRetry("getServiceTraffic", getSessionPayload_(), { timeoutMs: 15000, maxAttempts: 2 });
             if (!isAdminPanelCurrent_()) return;
-            if (!result || result.status !== "success" || result.scope !== "coordinator_protected_operations") {
+            if (!result || result.status !== "success" || result.scope !== "global_service_traffic") {
                 throw new Error(result && result.message ? result.message : "Respuesta de telemetría no válida.");
             }
             globalServiceTrafficData = result;
