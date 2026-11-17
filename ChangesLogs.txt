@@ -1424,3 +1424,12 @@ GP-UX-PYS-TUTORIAL-ASSOCIATION-06 — 2026-11-16
 - App Shell v63 y contratos de regresión/caché actualizados.
 
 - Revisión de compatibilidad: se conserva el permiso colaborativo existente para registrar problemas; la nueva función no añade restricciones de rol.
+
+
+### GP-DASH-INSIGHTS-01 / GP-TERMS-ASYNC-01 / GP-PWA-SPLASH-PRELOAD-01 — registro de solicitudes — 2026-11-16
+- Se registran tres tareas nuevas en Tareas_Pendientes.md: rediseño del dashboard de actividad/contribuciones con indicadores y gráficas; aceptación local inmediata de términos con registro remoto asíncrono; y precarga del catálogo durante el tiempo de visualización actual del Splash sin prolongarlo ni alterar su diseño.
+- Análisis inicial del dashboard: UI actual con dos tablas (actividad y aportaciones); servicio FEEDBACK getActivityLogs devuelve hasta 100 eventos recientes y el agregado de contribuciones existente. Fuentes de datos a validar: Cortes, FeedbackLikes, Feedbacks, FeedbackYearApplications y ActividadUsuario.
+- Análisis inicial de términos: el flujo UI espera la respuesta de acceptTerms antes de guardar localmente; AUTH ya devuelve alreadyAccepted para solicitudes repetidas del mismo dispositivo/versión. Se evaluará persistencia local inmediata y sincronización remota en segundo plano sin alterar la autorización central.
+- Análisis inicial de Splash: showApp comienza el desvanecimiento antes de que AUTH inicie loadInitialData. La mejora debe iniciar la carga antes del desvanecimiento actual, respetar la aceptación de términos y conservar la política cache-first.
+- contadorBusqueda existe en el esquema de Cortes, pero no se identificó un escritor activo en los módulos revisados; no se considera todavía una fuente confirmada para ranking de búsquedas.
+- No se realizaron cambios de código ni de servicios, no se desplegó Apps Script y no se alteraron datos externos. Las tareas quedan PENDIENTES LOCAL y subordinadas a los pendientes locales prioritarios existentes.
