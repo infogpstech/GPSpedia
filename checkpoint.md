@@ -74,3 +74,13 @@ undefined
 - GitHub Pages run 44085021849 SUCCESS para el mismo commit.
 - Rama base GPSpedia2.2.5 verificada sin cambios.
 - Siguiente tarea pendiente del bloque: GP-AUTH-PASSWORD-RECOVERY-01 — auditar implementación de recuperación, seguridad de tokens, límites, expiración y experiencia de usuario antes de cerrar.
+
+
+### Continuidad — BETA-003 — 2026-11-17
+- Reconciliación de continuidad: GP-AUTH-PASSWORD-RECOVERY-01 ya consta como COMPLETADA CON VALIDACIÓN DIFERIDA A BETA en Tareas_Pendientes.md; CI run 44073987141 y Pages run 44073810188 están registrados. La referencia del checkpoint anterior que la señalaba como siguiente tarea estaba desactualizada.
+- Tarea actual: BETA-003 — recursos obsoletos/Service Worker. Auditoría local detectó un escape incorrecto en la expresión regular de extensiones de isCacheableRequest_; el fallback no reconocía recursos estáticos same-origin solicitados con destination vacío ni recursos estáticos del CDN permitido.
+- Corrección publicada en service-worker.js: patrón de extensión corregido y CACHE_NAME incrementado a gpsepedia-cache-v68. Prueba añadida en JS/Tests/ServiceWorkerCache.js para JSON local y fuente woff2 CDN.
+- Commits de implementación: d04c87a13d6d4083f67f6be6a7a688234f9e0404 y afdf35c8414fc103a7233d4e9b792b85673590f4.
+- Validación local aislada: Node.js --check de los fragmentos de política y prueba, más 4 escenarios de política PASS. No se pudo consultar la ejecución completa de GitHub Actions mediante las acciones disponibles; no se afirma CI aprobada.
+- Pendiente: verificar suite completa/Actions; en Beta comparar recursos servidos, actualización/activación de v68 y comportamiento online/offline en navegador/PWA. No se modificaron deployments ni datos externos.
+- Rama base GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
