@@ -5,8 +5,9 @@ const auth = readFileSync("JS/Frontend/auth.js", "utf8");
 
 function extractFunction(source, name) {
     const marker = "function " + name + "(";
-    const start = source.indexOf(marker);
+    let start = source.indexOf(marker);
     assert.ok(start >= 0, "No se encontró " + name);
+    if (source.slice(start - 6, start) === "async ") start -= 6;
     const brace = source.indexOf("{", start);
     let depth = 0, quote = "", escaped = false, lineComment = false, blockComment = false;
     for (let i = brace; i < source.length; i++) {
