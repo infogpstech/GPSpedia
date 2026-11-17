@@ -199,3 +199,8 @@ Cada fase debe actualizar el backlog y checkpoint. Agrupar cambios por tarea ló
 - P4.3 reserva para revisión detallada las herramientas ADMIN de auditoría/organización Drive que mantienen ScriptLock global durante recorridos, verificaciones y movimientos externos.
 - Se conservan sin cambios los caminos ya paralelos de IndexedDB/CacheStorage, telemetría, dashboard y health read-only.
 - Siguiente: implementar P4.1 con regresión de concurrencia, errores aislados y cursor PyS.
+### Progreso P4 — 2026-11-17
+- P4.1 COMPLETADA: lectura PyS paralela al cursor/snapshot inicial; errores aislados; cursor condicionado a freshness. Pruebas 5/5, CatalogStartupIntegrity 25/25, PysDataCache 18/18.
+- P4.2 COMPLETADA: el compositor Inbox no espera la carga remota de conversaciones al abrirse desde Solicitudes; la lista se actualiza en segundo plano y el sondeo respeta el contexto/modal. InboxUi 84/84.
+- P4.3 EN AUDITORÍA: no retirar ScriptLock global sin reserva atómica breve por auditId/operationId. El lock actual protege reintentos idempotentes, inventario y rollback Drive. Diseñar claim/commit con recuperación de reservas y pruebas concurrentes antes de modificar ADMIN.
+- CI 44154032505 SUCCESS: 145 suites, 2,117 pruebas, 0 fallos. Health read-only 7/7; Pages build SUCCESS. Sin despliegues Apps Script ni cambios en datos externos.
