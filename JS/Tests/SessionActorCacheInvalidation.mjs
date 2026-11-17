@@ -37,7 +37,8 @@ assert.equal(removed.length, 0);
 
 const accepted = api.handleSharedSessionActorCacheInvalidation_(
     { secret, userId: "U-1", sessionTokens: ["token-A", "token-A", "token-B"] },
-    { secret, cache: { remove: value => removed.push(value) } }
+    { properties: { getProperty: name => name === "GPSpedia_COORDINATOR_SECRET" ? secret : "" },
+        cache: { remove: value => removed.push(value) } }
 );
 assert.deepEqual(accepted, { status: "success", invalidated: 2 });
 assert.equal(removed.length, 2, "La invalidación elimina claves exactas y deduplica tokens.");
@@ -114,5 +115,7 @@ assert.equal(authSource.includes("revokeSharedUserSessionContexts_(targetUserId,
 assert.equal(authSource.includes("revokeSharedUserSessionContexts_(targetId, getActiveSessionTokensForUserUnderLock_(sessionsSheet, targetId))"), true);
 assert.match(authSource, /function getActiveSessionTokensForUserUnderLock_/);
 assert.doesNotMatch(apiConfigSource, /__invalidateSessionActorCache/);
+assert.match(source, /GPSpedia_COORDINATOR_SECRET/);
+assert.doesNotMatch(source, /GPSpedia_SESSION_CACHE_INVALIDATION_SECRET/);
 
 console.log("SessionActorCacheInvalidation: 1/1 PASS — claves compatibles, autenticación interna, aislamiento por token, flujos AUTH y fallo parcial");
