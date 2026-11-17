@@ -59,3 +59,9 @@ Las funciones ADMIN de auditoría, conciliación, movimiento, restauración y or
 - La transferencia YouTube sigue siendo directa/resumable y sus checkpoints funcionan.
 - No se eliminan ni degradan el monitoreo de servicios ni las fuentes de actividad del dashboard.
 - CI completa aprobada. Validación real Drive/OAuth y sesiones permanece diferida a Beta.
+
+
+## Seguimiento P2.2a — cierre
+- `handleReportProblem` y `handleSuggestCutChange` ahora cargan imágenes antes del lock. El lock protege únicamente la consulta/confirmación de duplicados y la persistencia de filas/metadata.
+- Regresión `P2FeedbackImageUploadLocks.mjs` 1/1 PASS; CI 141 suites / 2,029 pruebas / 0 fallos; health remoto 7/7; Pages SUCCESS.
+- P2.2b pendiente: `handleAddProblem` (PyS) aún crea el archivo Drive dentro del ScriptLock y mantiene un ledger de operaciones. La siguiente refactorización debe evitar agregar capas de transacción y reducir ese lock al mínimo, preservando reintento básico e IDs.

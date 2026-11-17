@@ -167,3 +167,9 @@ Cada fase debe actualizar el backlog y checkpoint. Agrupar cambios por tarea ló
 - Auditoría registrada en `AUDITORIA_P2_CARGAS_ARCHIVOS.md`. WRITE ya ejecuta las cargas de cortes/suplementarios fuera del lock. FEEDBACK mantiene Drive dentro del lock en reportes, sugerencias de corte y altas PyS.
 - YouTube transfiere directamente desde el navegador con resumable upload y checkpoints IndexedDB; mantener este diseño. Tutoriales usan aprobación de video separada. Herramientas ADMIN de organización/conciliación se reservan para P4.
 - P2.1 COMPLETADA. Siguiente P2.2a: mover carga de adjuntos de reportes y sugerencias fuera del lock, conservando la asociación de archivo y el registro.
+
+
+### Cierre P2.2a — 2026-11-17
+- Reportes individuales y sugerencias de cambio cargan imagen antes del lock de escritura. La persistencia conserva asociación, autor y metadata; si la reversión no se confirma, el archivo se conserva.
+- CI 44141910133: 141 suites / 2,029 pruebas / 0 fallos. Health read-only 44141910250: 7/7. Pages 44141907494: SUCCESS.
+- P2.2a COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Siguiente: P2.2b simplificar carga de imagen PyS fuera del lock sin añadir validaciones transaccionales.
