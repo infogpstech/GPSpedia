@@ -27,13 +27,12 @@ test("rutas directas actuales coinciden con ACTION_TO_SERVICE_MAP", () => {
     assert.match(api, /'getNavigationData': 'CATALOG'.*'getCatalogData': 'CATALOG'.*'getDropdownData': 'CATALOG'/);
 });
 
-test("compatibilidad de add_cortes con ADMIN mantiene lease compartida", () => {
-    assert.match(addCortes, /import \{ routeAction \} from '\.\.\/JS\/Frontend\/api-config\.js'/);
-    assert.match(addCortes, /const serviceOverride = silentVal \? 'ADMIN' : null/);
-    assert.match(admin, /function isSharedReadAction_\(action\)[\s\S]*?"checkOperation"/);
-    assert.match(admin, /function isSharedMutationAction_\(action\)[\s\S]*?"addOrUpdateCut","addSupplementaryInfo"/);
-    assert.match(admin, /withSharedMutationLease_\("ADMIN", operation/);
-    assert.match(admin, /withSharedMutationLease_\("ADMIN", action/);
+test("add_cortes procesa aportes y consultas de cortes directamente en WRITE", () => {
+    assert.match(addCortes, /const serviceOverride = null/);
+    assert.match(api, /'addOrUpdateCut': 'WRITE'.*'addSupplementaryInfo': 'WRITE'.*'checkOperation': 'WRITE'/);
+    assert.match(write, /getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken\)/);
+    assert.doesNotMatch(write, /withSharedMutationLease_\("WRITE", action/);
+    assert.match(admin, /"ACTION_MOVED_TO_WRITE"/);
 });
 
 test("FEEDBACK cuenta sus lecturas públicas directas sin duplicar mutaciones coordinadas", () => {
@@ -66,7 +65,7 @@ test("CATALOG y rutas directas AUTH/WRITE quedan contabilizadas; consultas inter
 test("sondeos health quedan fuera de la telemetría de tráfico de usuario", () => {
     assert.match(admin, /if \(action === "ping"\) return doPostInternal_\(withSharedSessionActor_\(e, null\)\)/);
     assert.doesNotMatch(admin, /"ping"[^\]]*DIRECT_SERVICE_TRAFFIC/);
-    assert.match(api, /SERVICE_COMPATIBILITY_ACTIONS = \{[\s\S]*?CATALOG: \['getSuggestion'\][\s\S]*?ADMIN: \['checkOperation', 'addOrUpdateCut', 'addSupplementaryInfo'\]/);
+    assert.match(api, /SERVICE_COMPATIBILITY_ACTIONS = \{[\s\S]*?CATALOG: \['getSuggestion'\][\s\S]*?ADMIN: \[\]/);
 });
 
 console.log("DirectTrafficRoutingCoverage: " + passed + "/6 PASS");

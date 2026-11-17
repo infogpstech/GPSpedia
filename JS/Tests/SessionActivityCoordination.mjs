@@ -6,9 +6,10 @@ const root=resolve(dirname(fileURLToPath(import.meta.url)),"../..");
 const read=path=>fs.readFileSync(resolve(root,path),"utf8");
 const api=read("JS/Frontend/api-config.js"),write=read("JS/Services/write.js"),users=read("JS/Services/users.js"),admin=read("JS/Services/admin.js"),feedback=read("JS/Services/feedback.js"),auth=read("JS/Services/Auth.js"),coordinator=read("JS/Services/Coordinator.js"),client=read("JS/Services/SharedMutationClient.js"),utilities=read("JS/Services/Utilities.js");
 let passed=0;function testCase(name,fn){fn();passed++;console.log("PASS "+name);}
-testCase("WRITE consulta checkOperation sin lease y mantiene coordinación solo en mutaciones restantes",()=>{
+testCase("WRITE consulta checkOperation sin lease y usa actor cacheado para mutaciones",()=>{
  assert.match(write,/if \(!isSharedMutationAction_\(action\)\) \{[\s\S]*?doPostInternal_\(withSharedSessionActor_\(e, null\)\)/);
- assert.match(write,/return withSharedMutationLease_\("WRITE", action/);
+ assert.match(write,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken\)/);
+ assert.doesNotMatch(write,/withSharedMutationLease_\("WRITE", action/);
  assert.doesNotMatch(write,/touchSessionActivityIfDue_|getSessionExpirationStatus_/);
  ["handleAddOrUpdateCutLocked","handleAddVinToVehicleLocked","assertDeveloperForIdMaintenance"].forEach(name=>{
   const i=write.indexOf("function "+name);assert.ok(i>=0,name);

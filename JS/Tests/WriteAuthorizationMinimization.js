@@ -80,14 +80,13 @@ function runWriteAuthorizationMinimizationTests(sources) {
    ()=>({getSheetByName:()=>({})}),{CORTES:"Cortes"},()=>{calls++;return 42;});
   assert(fn({userId:"U1",sessionToken:"valid",role:"Tecnico"}).vehicleId===42&&calls===1&&locked===1&&released===1);
  });
- run("checkOperation consulta estado sin lease ni revalidación de sesión y no devuelve rowData",()=>{
+ run("checkOperation consulta estado sin lease y las mutaciones usan actor cacheado",()=>{
   const fn=extract(write,"handleCheckOperation");
-  const branchStart=write.indexOf("if (!isSharedMutationAction_(action))");
-  const branchEnd=write.indexOf("const nestedToken",branchStart);
-  const branch=branchStart>=0&&branchEnd>branchStart?write.slice(branchStart,branchEnd):"";
+  const start=write.indexOf("function doPost(e)"),end=write.indexOf("\nfunction doPostInternal_",start),router=write.slice(start,end);
   assert(!fn.includes("getAuthenticatedCollaborator(payload)"));
-  assert(!branch.includes("withSharedMutationLease_"));
-  assert(branch.includes("doPostInternal_(withSharedSessionActor_(e, null))"));
+  assert(router.includes("getCachedSharedSessionActor_(payload.userId, payload.sessionToken)"));
+  assert(!router.includes("withSharedMutationLease_"));
+  assert(router.includes("doPostInternal_(withSharedSessionActor_(e, null))"));
   assert(!fn.includes("rowData")&&!fn.includes("rowValues:"));
   assert(fn.includes("operationHash")&&fn.includes("vehicleId")&&fn.includes("timestamp"));
  });
@@ -99,17 +98,16 @@ function runWriteAuthorizationMinimizationTests(sources) {
   assert(stage.includes("userId: state.userId, sessionToken: state.sessionToken"));
   assert(stage.indexOf("userId: state.userId")<stage.indexOf("routeAction('addSupplementaryInfo'"));
  });
- run("Registro silencioso conserva ADMIN y la autorización servidor",()=>{
+ run("Registro silencioso se procesa en WRITE y solo lo puede ejecutar Desarrollador",()=>{
   const stage=add.slice(add.indexOf("async function handleStage3Submit"),add.indexOf("\n        // --- UI & UTILITY HELPERS"));
-  assert(stage.includes("const serviceOverride = silentVal ? 'ADMIN' : null"));
-  assert(stage.includes("sessionToken: state.sessionToken"));
-  const dispatch=admin.slice(admin.indexOf("function doPostInternal_"),admin.indexOf("\nfunction ",admin.indexOf("function doPostInternal_")+20));
-  assert(dispatch.includes("assertDeveloperSession(payload)")&&dispatch.indexOf("assertDeveloperSession(payload)")<dispatch.indexOf("switch (action)"));
+  assert(stage.includes("const serviceOverride = null")&&stage.includes("silent: silentVal"));
+  const handler=extract(write,"handleAddOrUpdateCutLockedUnsafe_");
+  assert(handler.includes('getAuthenticatedCollaborator(payload, payload.silent === true ? ["desarrollador"] : undefined)'));
+  assert(/'addOrUpdateCut':\s*'WRITE'/.test(api));
  });
- run("ADMIN solicita el ID a WRITE con credenciales de sesión, sin rol cliente",()=>{
-  const fn=extract(admin,"requestNextVehicleIdFromWriteService");
-  assert(fn.includes("userId: payload && payload.userId")&&fn.includes("sessionToken: payload && payload.sessionToken"));
-  assert(!fn.includes("role:")&&!fn.includes("userRole"));
+ run("WRITE asigna IDs desde el servicio propietario",()=>{
+  const handler=extract(write,"handleAddOrUpdateCutLockedUnsafe_");
+  assert(handler.includes("getNextCortesVehicleIdLocked"));
  });
  run("Router canónico mantiene acciones sensibles en WRITE",()=>{
   assert(/'addSupplementaryInfo':\s*'WRITE'/.test(api));

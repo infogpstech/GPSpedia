@@ -102,13 +102,12 @@ export const ACTION_TO_SERVICE_MAP = {
 };
 
 /**
- * Rutas directas históricas conservadas por compatibilidad. No son el destino
- * canónico de routeAction: los clientes actuales usan ACTION_TO_SERVICE_MAP.
- * ADMIN exige sesión Desarrollador antes de despachar estas tres acciones.
+ * Rutas directas históricas conservadas por compatibilidad. Las operaciones
+ * de cortes se procesan en WRITE y ya no se aceptan en el router ADMIN.
  */
 export const SERVICE_COMPATIBILITY_ACTIONS = {
     CATALOG: ['getSuggestion'],
-    ADMIN: ['checkOperation', 'addOrUpdateCut', 'addSupplementaryInfo']
+    ADMIN: []
 };
 
 /** No hay acciones externas o servicios heredados habilitados. */

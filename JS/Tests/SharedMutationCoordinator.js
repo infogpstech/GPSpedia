@@ -966,6 +966,27 @@ function runSharedMutationCoordinatorTests() {
         assert_(lease.status === "success", "La operación debe continuar aunque falle la telemetría.");
     });
 
+    test_("El actor se consulta una vez y las acciones siguientes usan caché local", function() {
+        const store = new Map(); let validations = 0, storedTtl = 0;
+        const cache = { get: key => store.has(key) ? store.get(key) : null, put: (key, value, ttl) => { store.set(key, value); storedTtl = ttl; }, remove: key => store.delete(key) };
+        const deps = { cache, validate: userId => { validations++; return { status: "success", valid: true, actor: { userId, role: "tecnico", epoch: 7 } }; }, keyFor: (userId, token) => userId + ":" + token, ttlSeconds: 15 };
+        const first = getCachedSharedSessionActor_("U-1", "token-1", deps), second = getCachedSharedSessionActor_("U-1", "token-1", deps);
+        assert_(first.role === "tecnico" && second.userId === "U-1" && validations === 1 && storedTtl === 15);
+    });
+    test_("La caché separa usuarios y tokens diferentes", function() {
+        const store = new Map(), cache = { get: key => store.get(key) || null, put: (key, value) => store.set(key, value), remove: key => store.delete(key) };
+        let validations = 0;
+        const deps = { cache, keyFor: (userId, token) => userId + ":" + token, validate: userId => { validations++; return { status: "success", valid: true, actor: { userId, role: "jefe", epoch: 2 } }; } };
+        getCachedSharedSessionActor_("U-1", "token-1", deps); getCachedSharedSessionActor_("U-2", "token-1", deps); getCachedSharedSessionActor_("U-1", "token-2", deps);
+        assert_(validations === 3);
+    });
+    test_("La caché rechaza sesiones revocadas y actores de otra identidad", function() {
+        const store = new Map(), cache = { get: key => store.get(key) || null, put: (key, value) => store.set(key, value), remove: key => store.delete(key) };
+        expectThrow_(() => getCachedSharedSessionActor_("U-1", "token-1", { cache, keyFor: () => "revoked", validate: () => ({ status: "success", valid: false }) }), "revocada");
+        expectThrow_(() => getCachedSharedSessionActor_("U-1", "token-2", { cache, keyFor: () => "wrong", validate: () => ({ status: "success", valid: true, actor: { userId: "U-2", role: "tecnico", epoch: 1 } }) }), "revocada");
+        assert_(store.size === 0);
+    });
+
     const summary = { status: failed === 0 ? "PASS" : "FAIL", passed, failed, results };
     return summary;
 }

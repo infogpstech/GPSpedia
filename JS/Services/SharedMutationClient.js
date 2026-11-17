@@ -264,6 +264,46 @@ function validateSharedSessionContext_(userId, sessionToken) {
 }
 
 
+
+const SHARED_SESSION_ACTOR_CACHE_TTL_SECONDS_ = 15;
+function getCachedSharedSessionActor_(userId, sessionToken, dependencies) {
+    const id = String(userId || "").trim(), token = String(sessionToken || "");
+    if (!id || !token) throw new Error("La sesión requiere userId y sessionToken.");
+    const deps = dependencies && typeof dependencies === "object" ? dependencies : {};
+    const cache = Object.prototype.hasOwnProperty.call(deps, "cache") ? deps.cache : CacheService.getScriptCache();
+    const validate = typeof deps.validate === "function" ? deps.validate : validateSharedSessionContext_;
+    const keyFor = typeof deps.keyFor === "function" ? deps.keyFor : function(ownerId, value) {
+        const bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, ownerId + "\\n" + value, Utilities.Charset.UTF_8);
+        return "GPSpedia_SHARED_SESSION_ACTOR_V1_" + bytes.map(byte => ((Number(byte) + 256) % 256).toString(16).padStart(2, "0")).join("");
+    };
+    const cacheKey = keyFor(id, token);
+    const validActor = actor => actor && typeof actor === "object" && actor.userId === id &&
+        typeof actor.role === "string" &&
+        ["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"].includes(actor.role.trim().toLowerCase()) &&
+        Number.isSafeInteger(actor.epoch) && actor.epoch > 0;
+    if (cache && typeof cache.get === "function") {
+        try {
+            const cached = cache.get(cacheKey);
+            if (cached) {
+                const actor = JSON.parse(cached);
+                if (validActor(actor)) return actor;
+                if (typeof cache.remove === "function") cache.remove(cacheKey);
+            }
+        } catch (cacheError) { /* La caché es opcional; se valida por el canal normal. */ }
+    }
+    const result = validate(id, token), actor = result && result.actor;
+    if (!result || result.status !== "success" || result.valid !== true || !validActor(actor)) {
+        throw new Error(result && result.message ? result.message : "La sesión fue revocada o no es válida.");
+    }
+    if (cache && typeof cache.put === "function") {
+        try {
+            const ttl = Math.max(1, Math.min(60, Number(deps.ttlSeconds) || SHARED_SESSION_ACTOR_CACHE_TTL_SECONDS_));
+            cache.put(cacheKey, JSON.stringify(actor), ttl);
+        } catch (cacheError) { /* La indisponibilidad de caché no bloquea el aporte. */ }
+    }
+    return actor;
+}
+
 function syncSharedUserSessionContexts_(userId, role, fullName, sessions) {
     const client = createSharedMutationClient_({
         properties: PropertiesService.getScriptProperties(),

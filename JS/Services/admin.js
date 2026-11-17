@@ -882,6 +882,12 @@ function doPost(e) {
     if (!request || typeof request !== "object") return doPostInternal_(e);
     const action = String(request.action || "");
     const payload = request.payload && typeof request.payload === "object" ? request.payload : {};
+    if (["checkOperation", "addOrUpdateCut", "addSupplementaryInfo"].includes(action)) {
+        return ContentService.createTextOutput(JSON.stringify({
+            status: "error", code: "ACTION_MOVED_TO_WRITE",
+            message: "Esta operación ahora se procesa directamente en WRITE."
+        })).setMimeType(ContentService.MimeType.TEXT);
+    }
     const sessionOptions = { session: { sessionToken: payload.sessionToken } };
     if (!isSharedMutationAction_(action)) {
         if (action === "ping") return doPostInternal_(withSharedSessionActor_(e, null));

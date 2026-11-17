@@ -267,11 +267,8 @@ function isSharedMutationAction_(action) {
 
 function doPost(e) {
     let request;
-    try {
-        request = JSON.parse(e && e.postData && e.postData.contents || "{}");
-    } catch (error) {
-        return doPostInternal_(e);
-    }
+    try { request = JSON.parse(e && e.postData && e.postData.contents || "{}"); }
+    catch (error) { return doPostInternal_(e); }
     if (!request || typeof request !== "object") return doPostInternal_(e);
     const action = String(request.action || "");
     if (action === "getServiceTraffic") {
@@ -280,21 +277,16 @@ function doPost(e) {
     }
     if (DIRECT_SERVICE_TRAFFIC_CONFIG_.actions.has(action)) recordDirectServiceTraffic_();
     const payload = request.payload && typeof request.payload === "object" ? request.payload : {};
-    const sessionOptions = { session: { sessionToken: payload.sessionToken } };
     if (!isSharedMutationAction_(action)) {
-        // Consultar el estado de una operación no modifica datos ni requiere lease.
         return doPostInternal_(withSharedSessionActor_(e, null));
     }
-
-    const nestedToken = String(payload.__sharedMutationToken || "").trim();
     try {
-        return withSharedMutationLease_("WRITE", action, function(token, actor) {
-            return doPostInternal_(withSharedSessionActor_(e, actor));
-        }, Object.assign(sessionOptions, nestedToken ? { nestedToken: nestedToken } : {}));
+        const actor = getCachedSharedSessionActor_(payload.userId, payload.sessionToken);
+        return doPostInternal_(withSharedSessionActor_(e, actor));
     } catch (error) {
         return ContentService.createTextOutput(JSON.stringify({
             status: "error",
-            message: error && error.message ? error.message : "La operación fue rechazada por el coordinador compartido."
+            message: error && error.message ? error.message : "La sesión no pudo ser confirmada."
         })).setMimeType(ContentService.MimeType.TEXT);
     }
 }
@@ -971,7 +963,7 @@ function handleAddOrUpdateCutLockedUnsafe_(payload) {
         throw new Error("Los datos del corte son requeridos.");
     }
 
-    const colaboradorName = getAuthenticatedCollaborator(payload);
+    const colaboradorName = getAuthenticatedCollaborator(payload, payload.silent === true ? ["desarrollador"] : undefined);
     let opId = payload.opId || null;
     // Compatibilidad con operaciones antiguas: solo se extrae el opId del campo heredado.
     // El nombre de colaborador enviado por el cliente nunca se utiliza como identidad.
