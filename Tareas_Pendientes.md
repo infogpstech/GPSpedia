@@ -1391,3 +1391,11 @@ No se han desplegado proyectos Apps Script ni configurado secretos remotos. La f
 - Dependencias: ID nuevo, slot de corte, `opId`/huella, rollback de fila y contador, y recuperación de operaciones pendientes. Se debe evitar que dos aportes simultáneos reserven el mismo slot o que una carga fallida deje el registro sin recuperación.
 - Reutilizar el cargador con ledger lock breve de P1.2a. Separar transferencia Drive de la persistencia sin introducir autenticación entre servicios, leases o verificaciones ceremoniales.
 - Siguiente: implementar y probar fases de preparación/carga, reserva breve de ID/slot e integración final; pruebas locales de concurrencia, reintento idempotente, rollback y recuperación. No desplegar Apps Script ni ejecutar Beta.
+
+
+### Requisito transversal — monitoreo de servicios y dashboard de actividad — 2026-11-17
+- Estado: **OBLIGATORIO — PRESERVAR EN TODAS LAS TAREAS**.
+- Mantener el workflow de salud de servicios, documentación de monitoreo, dashboard de actividad, recolección de tráfico/operaciones y métricas existentes.
+- No eliminar la telemetría ni sus fuentes para simplificar servicios. Optimizar su costo para que sea best-effort, no bloquee operaciones y no agregue viajes de red ni esperas a cada acción.
+- Criterios de regresión: RemoteServiceHealth, ServiceHealthContract, DirectServiceTrafficTelemetry, DirectTrafficRoutingCoverage, ServiceTrafficBatch, ServiceTrafficAggregation, CatalogTrafficTelemetry, ServiceMetricsTelemetry, ActivityDashboardContributions, ActivityDashboardInsights, ActivityLogsBoundedRead y ActivityLogRetention.
+- El monitoreo remoto debe permanecer de solo lectura; no desplegar servicios ni modificar datos externos como parte de estas pruebas.
