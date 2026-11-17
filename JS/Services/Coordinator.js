@@ -71,7 +71,6 @@ function coordinatorPolicy_(service, operation) {
         },
         ADMIN: {
             sessionActivity: { read: ["SESSION_CONTEXTS"] },
-            getServiceTraffic: { read: ["SERVICE_TRAFFIC"] },
             // Las acciones ADMIN leen el contexto central; no escriben LastActivityAt por cada solicitud.
             getReplacedImages: { read: ["USERS", "CORTES", "DRIVE", "IMAGE_INVENTORY", "TUTORIAL", "FEEDBACK", "LOGOS", "RELAY"] },
             getDriveStorage: { read: ["USERS", "DRIVE"] },
