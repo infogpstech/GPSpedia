@@ -1196,10 +1196,11 @@ Después: abrir Developer → Auditoría de Cortes en escritorio y PWA móvil; c
 - Procedimiento reproducible: workflow `.github/workflows/deployed-service-health.yml` fija TARGET_COMMIT; `JS/Tests/RemoteServiceHealth.mjs` obtiene el inventario desde ese SHA y consulta los siete endpoints en paralelo con timeout de 8 s, sin efectos de escritura.
 
 ### GP-DEV-TRAFFIC-GLOBAL-02 — Sustituir telemetría local por tráfico global coordinado
-**Prioridad: P1 · Estado: PENDIENTE DE AUDITORÍA.**
+**Prioridad: P1 · Estado: EN PROGRESO (AUDITORÍA INICIAL COMPLETADA).**
 - Revisar BETA-043 y el comportamiento actual de `JS/Frontend/serviceMetrics.js`, `JS/Frontend/api-config.js`, `JS/Services/Coordinator.js` y panel Developer.
 - Objetivo acordado: el panel debe mostrar el agregado global producido por Coordinator para todos los deployments/servicios, no presentar el buffer local del navegador como la métrica principal ni duplicar ambas fuentes como si fueran equivalentes.
-- Auditar cobertura: qué solicitudes incrementan buckets, qué servicios/despliegues reportan, operaciones excluidas (lecturas públicas, feed, health), idempotencia, concurrencia, ventanas, retención, fallos best-effort y tamaño/cupo de ScriptProperties.
+- Auditoría inicial completada: Coordinator cuenta operaciones con lease y validateSessionContext, pero Catalog y rutas públicas/no coordinadas de otros servicios quedan fuera. La UI sigue mostrando métricas locales de 15 minutos en un panel separado y en el detalle por servicio.
+- Antes de implementar, resolver cómo registrar también solicitudes no coordinadas sin añadir una llamada de red por acción ni bloquear lecturas con locks globales. Definir claramente si el alcance será tráfico total o solo operaciones protegidas.
 - Preservar autenticación y autorización de Desarrollador en ADMIN/Coordinator; no exponer identidad, tokens ni datos de sesión. La consulta debe ser de solo lectura y no contabilizarse a sí misma.
 - Criterios esperados: gráfica global coherente entre sesiones y deployments; datos ausentes/excluidos claramente etiquetados; sin doble conteo por reintentos; telemetría nunca bloquea operaciones; errores de consulta no reemplazan datos globales por métricas locales.
 - Añadir pruebas de contrato, agregación, concurrencia/idempotencia y UI. No desplegar Apps Script ni modificar ScriptProperties/datos externos durante la fase local.
