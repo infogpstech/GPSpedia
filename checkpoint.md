@@ -428,3 +428,8 @@ undefined
 - Se reutiliza GPSpedia_COORDINATOR_SECRET, ya compartido por AUTH/WRITE/FEEDBACK; se elimina la necesidad de crear GPSpedia_SESSION_CACHE_INVALIDATION_SECRET. AUTH requiere GPSpedia_WRITE_URL y GPSpedia_FEEDBACK_URL con los endpoints /exec vigentes.
 - Prueba ampliada a 13 sesiones Developer. El primer CI posterior a la ampliación detectó que el runner exige resumen numérico; se corrigió el formato del test. CI del HEAD más reciente pendiente de confirmar.
 - No se desplegaron Apps Script ni se modificaron propiedades o datos externos. Rama base sigue en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+### Cierre validado — P3.1c y corrección de sesiones ilimitadas — 2026-11-17
+- CI del HEAD de código 718e0100bc040609d790ce94b0f2de0cbf2c0ef5: run 44151856103 SUCCESS; sintaxis aprobada, 144 suites, 2,109 pruebas y 0 fallos. SessionActorCacheLifetime 4/4 y SessionActorCacheInvalidation 1/1.
+- Health read-only 44151856097 SUCCESS: 7/7 servicios disponibles. No se desplegó Apps Script y el health check no valida la nueva acción interna.
+- Se corrigió el caso de cuentas Developer con sesiones ilimitadas: invalidación en lotes de cinco, confirmación de WRITE/FEEDBACK para cada lote y revocación central única al final. Se reutiliza GPSpedia_COORDINATOR_SECRET.
+- La rama base GPSpedia2.2.5 sigue en d9acc68d889985c2e2f42fe3a02e502efc86ead1. Siguiente fase local: verificación técnica integral del conjunto de mejoras; las validaciones que requieren deployment, ScriptProperties o datos reales permanecen en Beta.
