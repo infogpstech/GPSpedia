@@ -1044,7 +1044,7 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - Preservar acciones, destinatarios, borradores, estados leído/no leído, permisos y navegación móvil/escritorio.
 
 ### GP-INBOX-CACHE-BANDS-01 — Caché de Reportes, Mensajes y Aportaciones
-**Prioridad: P1 · Estado: EN PROGRESO**
+**Prioridad: P1 · Estado: COMPLETADA CON VALIDACIÓN DIFERIDA**
 - Evitar recargas completas al cambiar de bandeja, asunto o categoría cuando exista respuesta local válida.
 - Aislar caché por identidad/rol/token y por categoría, consulta, cursor y filtros; refrescar en segundo plano conservando el contenido.
 - Definir TTL, invalidación tras mutaciones, límites de memoria y descarte de respuestas tardías entre sesiones.
@@ -1094,3 +1094,24 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - GitHub Actions run 44076449777 SUCCESS: 133 suites, 1,981 pruebas aprobadas, 0 fallos; AdminReplacedImagesIntegrity 55/55 y ReplacedImagesLibraryUX 14/14.
 - GitHub Pages run 44076449201 SUCCESS para HEAD 003500bb5e0649b1149c850f7dfa126cd068f8aa.
 - Beta pendiente: ejecutar auditoría completa con el volumen real de Cortes/Drive, confirmar que la captura termina dentro del nuevo presupuesto, revisar cursor y clasificación. No se realizaron movimientos ni eliminaciones reales.
+
+
+#### Cierre local — GP-INBOX-CACHE-BANDS-01 — 2026-11-17
+- Commits: b3749410b0cf2876bcc1cbd7450f77dfc637835c (implementación) y 1c50922170308843581f9ba55c72bdee7a6e73a9 (ajuste del contrato UI).
+- GitHub Actions run 44079875552 SUCCESS: 133 suites, 1,986 pruebas, 0 fallos. Sintaxis de los módulos modificados aprobada; InboxUi 80/80; InboxConversations 61/61; caché 5/5; paginación 4/4; contratos UI 10/10.
+- GitHub Pages run 44079874261 SUCCESS para 1c50922170308843581f9ba55c72bdee7a6e73a9.
+- Caché en memoria únicamente: TTL 60 s, LRU 80 páginas para bandejas y 40 para mensajes; identidad completa userId/rol/token, filtro y cursor. Respuestas tardías descartadas por generación/contexto.
+- Validación Beta pendiente: desplegar FEEDBACK actualizado (incluye lastMessageId), probar cuentas/roles distintos, cache-hit dentro de TTL, refresh al vencer, invalidación de mutaciones, nuevos mensajes, cambio de cuenta y offline. No se ejecutó deployment ni se consultaron datos productivos.
+
+#### Pruebas Beta pendientes — sincronización segura (ejecutar antes de probar)
+```bash
+set -euo pipefail
+test "$(basename "$(git rev-parse --show-toplevel)")" = "GPSpedia"
+case "$(git remote get-url origin)" in https://github.com/infogpstech/GPSpedia|https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia|git@github.com:infogpstech/GPSpedia.git) ;; *) echo 'Repositorio remoto incorrecto'; exit 1 ;; esac
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work"
+if [ -n "$(git status --porcelain)" ]; then echo 'Hay cambios locales sin guardar; no se sincroniza.'; exit 1; fi
+git fetch origin GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git rev-parse HEAD
+```
+Después de la sincronización: desplegar FEEDBACK en el proyecto Beta autorizado; comprobar Reportes/Aportaciones/tickets propios por rol; cambiar entre filtros con caché fresca y confirmar que no se repite la lectura; esperar más de 60 s y confirmar refresh sin vaciar el contenido; reabrir conversaciones y comprobar que los mensajes frescos se reutilizan; enviar/archivar/cerrar/marcar leído y comprobar invalidación; recibir un mensaje nuevo y comprobar que lastMessageId obliga a actualizar; cambiar de cuenta y comprobar aislamiento; repetir offline con contenido cacheado. Registrar cuenta/rol, navegador, tiempos, solicitudes de red y versión desplegada.

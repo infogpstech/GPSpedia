@@ -1,16 +1,8 @@
 undefined
 
 ================================================================================
-2026-11-17 — IMPLEMENTACIÓN GP-INBOX-CACHE-BANDS-01 (EN VALIDACIÓN)
-- JS/Frontend/inboxPageCache.js: añade filterKey a las claves e invalidación por filtro; mantiene TTL, LRU, memoria efímera y aislamiento por identidad/rol/token.
-- JS/Frontend/ui.js: Reportes/Aportaciones/tickets propios cacheados por sección; listas de conversaciones cacheadas por carpeta/categoría/búsqueda/cursor; mensajes cacheados por sesión/conversación/cursor. Las páginas frescas se reutilizan; las vencidas se muestran durante el refresh en segundo plano; sondeo/manual fuerzan refresh.
-- JS/Services/InboxConversations.js: incluye lastMessageId en el resumen autorizado de conversación para detectar si la página de mensajes local sigue siendo actual.
-- Mutaciones de mensaje, lectura, archivo y cierre invalidan las cachés afectadas; el cambio de sesión limpia las tres cachés.
-- JS/Tests/InboxCachePagination.js, InboxUi.mjs e InboxConversations.mjs: contratos de filtros, aislamiento, cache-first, invalidación y latest message.
-================================================================================
-
-
-================================================================================
-2026-11-17 — AJUSTE DE CONTRATO InboxUi
-- La prueba de visibilidad durante actualización se actualiza para reflejar que el estado de carga solo se muestra cuando no hay una página cacheada. El contenido fresco o stale permanece visible durante el refresh.
+2026-11-17 — CIERRE GP-INBOX-CACHE-BANDS-01
+- Se registra el cierre local de caché de bandejas y mensajes tras CI verde: 133 suites / 1,986 pruebas, 0 fallos; InboxUi 80/80, InboxConversations 61/61, caché 5/5, paginación 4/4, contratos UI 10/10.
+- GitHub Pages run 44079874261 SUCCESS para commit 1c50922170308843581f9ba55c72bdee7a6e73a9.
+- Pendiente Beta: despliegue FEEDBACK y validación de campo con cuentas/roles, refresh, invalidación, mensaje nuevo, cambio de cuenta y offline. Sin despliegue ni acceso a datos productivos en esta iteración.
 ================================================================================
