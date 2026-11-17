@@ -417,13 +417,15 @@ function collectCortesImageReferences(includeLocations = true) {
     const groups = [];
     imageColumns.forEach(item => {
         const last = groups[groups.length - 1];
-        if (last && item.column <= last.start + last.width) {
+        const gap = last ? item.column - (last.start + last.width) : Infinity;
+        // Combina campos próximos para reducir llamadas de SpreadsheetApp sin leer la hoja completa.
+        if (last && gap <= 8) {
             last.width = Math.max(last.width, item.column - last.start + 1);
             last.items.push(item);
         } else groups.push({ start: item.column, width: 1, items: [item] });
     });
 
-    const maxRowChunkSize = 500, minRowChunkSize = 50, targetChunkMs = 1500, captureBudgetMs = 12000;
+    const maxRowChunkSize = 500, minRowChunkSize = 50, targetChunkMs = 1500, captureBudgetMs = 30000;
     let rowChunkSize = maxRowChunkSize, rangesRead = 0, chunksRead = 0, rowsRead = 0;
     let displayReadMs = 0, rawReadMs = 0, formulaReadMs = 0, richTextReadMs = 0;
     let referenceParseMs = 0, maxChunkElapsedMs = 0, adaptiveChunkChanges = 0, smallestAdaptiveRowChunkSize = maxRowChunkSize;

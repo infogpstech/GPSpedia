@@ -590,25 +590,31 @@
         <button type="button" class="info-close-btn" id="close-replaced-images-modal" aria-label="Cerrar biblioteca de imágenes">&times;</button>
         <div class="dev-heading-with-help"><h2 id="replaced-images-title"><i class="fa-solid fa-images"></i> Biblioteca</h2><button type="button" class="gp-help-trigger" aria-label="Ayuda sobre biblioteca de imágenes" title="Ayuda" aria-controls="dev-help-library" aria-expanded="false"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button><span id="dev-help-library" class="gp-help-popover dev-heading-help-popover" role="tooltip" hidden>Incluye el historial de imágenes reemplazadas y los archivos sin uso detectado. Las acciones se habilitan solo después de validar que no existan referencias activas.</span></div>
         <p class="replaced-images-description">Historial y archivos sin uso detectado.</p>
-        <div class="replaced-images-toolbar">
-            <input type="text" id="filter-replaced-images-input" placeholder="Buscar por nombre, ubicación o ID..." class="dev-input" aria-label="Buscar imágenes">
-            <button type="button" id="btn-refresh-replaced-images" class="btn btn-secondary replaced-images-icon-button" aria-label="Actualizar biblioteca" title="Actualizar"><i class="fa-solid fa-arrows-rotate"></i></button>
-            <div class="replaced-images-view-switch" role="group" aria-label="Vista de imágenes">
-                <button type="button" id="btn-replaced-view-grid" class="btn btn-secondary" aria-label="Vista de cuadrícula" aria-pressed="true" title="Cuadrícula"><i class="fa-solid fa-grip"></i></button>
-                <button type="button" id="btn-replaced-view-list" class="btn btn-secondary" aria-label="Vista de lista" aria-pressed="false" title="Lista"><i class="fa-solid fa-list"></i></button>
+        <div class="replaced-images-toolbar" role="toolbar" aria-label="Herramientas de biblioteca">
+            <div class="replaced-images-search">
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                <input type="text" id="filter-replaced-images-input" placeholder="Buscar por nombre, ubicación o ID..." class="dev-input" aria-label="Buscar imágenes">
+            </div>
+            <div class="replaced-images-toolbar-actions">
+                <button type="button" id="btn-refresh-replaced-images" class="btn btn-secondary replaced-images-icon-button" aria-label="Actualizar biblioteca" title="Actualizar"><i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i></button>
+                <button type="button" id="btn-replaced-folders-toggle" class="btn btn-secondary replaced-images-icon-button" aria-label="Mostrar herramientas de carpetas" title="Organizar carpetas" aria-expanded="false" aria-controls="replaced-images-folder-toolbar"><i class="fa-solid fa-folder-tree" aria-hidden="true"></i></button>
+                <div class="replaced-images-view-switch" role="group" aria-label="Vista de imágenes">
+                    <button type="button" id="btn-replaced-view-grid" class="btn btn-secondary" aria-label="Vista de cuadrícula" aria-pressed="true" title="Cuadrícula"><i class="fa-solid fa-grip" aria-hidden="true"></i></button>
+                    <button type="button" id="btn-replaced-view-list" class="btn btn-secondary" aria-label="Vista de lista" aria-pressed="false" title="Lista"><i class="fa-solid fa-list" aria-hidden="true"></i></button>
+                </div>
             </div>
         </div>
-        <div class="replaced-images-selection-toolbar" id="replaced-images-selection-toolbar">
+        <div class="replaced-images-selection-toolbar" id="replaced-images-selection-toolbar" role="toolbar" aria-label="Acciones de selección">
             <label class="replaced-images-select-all"><input type="checkbox" id="replaced-images-select-all" aria-label="Seleccionar todas las imágenes visibles"><span>Seleccionar visibles</span></label>
             <span id="replaced-images-selection-count" class="replaced-images-selection-count" aria-live="polite">0 seleccionadas</span>
             <div class="replaced-images-selection-actions">
-                <button type="button" id="btn-replaced-bulk-move" class="btn btn-secondary" hidden disabled><i class="fa-solid fa-folder-open" aria-hidden="true"></i> Mover</button>
-                <button type="button" id="btn-replaced-bulk-restore" class="btn btn-primary" hidden disabled><i class="fa-solid fa-rotate-left" aria-hidden="true"></i> Restaurar</button>
-                <button type="button" id="btn-replaced-bulk-trash" class="btn btn-danger" hidden disabled><i class="fa-solid fa-trash" aria-hidden="true"></i> Papelera</button>
-                <button type="button" id="btn-replaced-clear-selection" class="btn btn-secondary" hidden><i class="fa-solid fa-xmark" aria-hidden="true"></i> Cancelar</button>
+                <button type="button" id="btn-replaced-bulk-move" class="btn btn-secondary replaced-images-icon-button" aria-label="Mover seleccionadas" title="Mover" hidden disabled><i class="fa-solid fa-folder-open" aria-hidden="true"></i></button>
+                <button type="button" id="btn-replaced-bulk-restore" class="btn btn-primary replaced-images-icon-button" aria-label="Restaurar seleccionadas" title="Restaurar" hidden disabled><i class="fa-solid fa-rotate-left" aria-hidden="true"></i></button>
+                <button type="button" id="btn-replaced-bulk-trash" class="btn btn-danger replaced-images-icon-button" aria-label="Enviar seleccionadas a papelera" title="Papelera" hidden disabled><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
+                <button type="button" id="btn-replaced-clear-selection" class="btn btn-secondary replaced-images-icon-button" aria-label="Limpiar selección" title="Limpiar selección" hidden><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
             </div>
         </div>
-        <div class="replaced-images-folder-toolbar">
+        <div class="replaced-images-folder-toolbar" id="replaced-images-folder-toolbar" role="toolbar" aria-label="Organización de carpetas" hidden>
             <label for="replaced-images-target-folder">Destino:</label>
             <select id="replaced-images-target-folder" class="dev-input"><option value="">Cargando carpetas...</option></select>
             <input type="text" id="replaced-images-new-folder-name" class="dev-input" placeholder="Nueva carpeta" aria-label="Nombre de nueva carpeta">

@@ -115,3 +115,12 @@ Resultado: implementación local cerrada con validación diferida a Beta. No se 
 - La primera CI falló solo por el límite de extracción de checkSession; los exports se reubicaron al final del módulo y se agregó contrato anti-regresión.
 - Estado local cerrado con validación diferida a Beta. Falta desplegar AUTH y confirmar scope MailApp, entrega real y revocación efectiva. Ningún deployment o dato externo fue modificado.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — GP-DEV-IMAGE-AUDIT-LIBRARY-UX-01 — AUDITORÍA INICIAL
+- collectCortesImageReferences usa grupos de columnas estrictamente contiguas; cuando los ocho campos están separados, multiplica llamadas a SpreadsheetApp. El límite temporal fijo de 12s produce excepción antes de storeAuditDriveReferenceSnapshot, por lo que no hay cursor de continuación.
+- Hallazgo adicional: ADMIN_SERVICE_VERSION está en 2.7.1 y ui.js compara serviceVersion con 2.6.1. La interfaz rechaza la respuesta y no conserva el cursor antes de actualizar el estado local.
+- El diseño actual de Biblioteca distribuye búsqueda, selección y carpetas en tres filas sin una barra de herramientas compacta; los controles masivos muestran texto aunque pueden conservar acciones con iconos y etiquetas accesibles.
+- Criterio de seguridad: no persistir ni clasificar un snapshot incompleto como completo. La corrección prioriza reducir lecturas, ampliar el presupuesto de captura y mantener el rechazo de datos parciales.
+================================================================================

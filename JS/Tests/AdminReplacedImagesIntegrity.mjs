@@ -479,8 +479,9 @@ check("La captura de Cortes lee solo los ocho campos de imagen y conserva fórmu
     assert.equal(result.unverifiableReferenceCount,1);
     assert.equal(result.metrics.columns,8);
     assert.equal(result.metrics.cells,16);
-    assert.equal(result.metrics.ranges,5);
-    assert.equal(calls.reduce((sum,item)=>sum+item.numCols,0),8);
+    assert.equal(result.metrics.ranges,1);
+    assert.equal(calls.reduce((sum,item)=>sum+item.numCols,0),17);
+    assert.equal(calls.length,1);
     assert.ok(calls.every(item=>item.row===2&&item.numRows===2&&item.col>0));
     assert.equal(result.references.get(FILE_C)[0].row,2);
     assert.equal(result.references.get(FILE_C)[0].column,7);
@@ -516,10 +517,11 @@ check("La captura de Cortes limita memoria por bloques y conserva filas posterio
     assert.equal(result.metrics.minRowChunkSize,50);
     assert.equal(result.metrics.maxRowChunkSize,500);
     assert.equal(result.metrics.finalRowChunkSize,500);
-    assert.equal(result.metrics.captureBudgetMs,12000);
+    assert.equal(result.metrics.captureBudgetMs,30000);
     assert.equal(result.metrics.targetChunkMs,1500);
-    assert.equal(result.metrics.chunks,16);
-    assert.equal(calls.length,16);
+    assert.equal(result.metrics.chunks,2);
+    assert.equal(result.metrics.ranges,2);
+    assert.equal(calls.length,2);
     assert.ok(calls.every(item=>item.numRows<=500));
     for(const metric of ["displayReadMs","rawReadMs","formulaReadMs","richTextReadMs","referenceParseMs","maxChunkElapsedMs","adaptiveChunkChanges"]) {
         assert.ok(Number.isFinite(result.metrics[metric]),"Métrica ausente o inválida: "+metric);
@@ -560,7 +562,7 @@ check("La captura detiene un lote que excede el presupuesto y nunca devuelve un 
         getLastRow:()=>502,
         getRange(_row,_col,numRows,numCols){
             const values=()=>Array.from({length:numRows},()=>Array(numCols).fill(""));
-            const slow=()=>{clock+=4000;return values();};
+            const slow=()=>{clock+=8000;return values();};
             return {getDisplayValues:slow,getValues:slow,getFormulas:slow,getRichTextValues:slow};
         }
     };
@@ -803,6 +805,11 @@ check("La limpieza de estados expirados elimina también páginas, respuestas y 
     assert.equal(h.cache.has("audit-response"),false);
     assert.equal([...h.cache.keys()].some(item=>item.startsWith("gp_audit_refs_"+AUDIT_ID)),false);
 });
+check("La UI acepta la versión semántica publicada por ADMIN sin fijar una versión obsoleta",()=>{
+    assert.ok(admin.includes('const ADMIN_SERVICE_VERSION = "2.7.1"'));
+    assert.ok(ui.includes("!/^[0-9]+\\.[0-9]+\\.[0-9]+$/.test(String(response.serviceVersion || ''))"));
+    assert.equal(ui.includes("!== '2.6.1'"),false);
+});
 check("El cursor de auditoría se firma por contenido y rechaza una pila vacía o alterada",()=>{
     const h=auditHarness();
     const cursor={stack:[{folderId:"folder-id-0000000000000001",fileToken:"token-a",filesDone:false}],
@@ -817,7 +824,7 @@ check("El cursor de auditoría se firma por contenido y rechaza una pila vacía 
     assert.ok(auditSource.includes("contadores alterados"));
     assert.ok(auditSource.includes("return JSON.parse(cachedResponse)"));
     assert.notEqual(fingerprint,h.getDriveAuditCursorFingerprint_({...cursor,stack:[{folderId:"folder-id-0000000000000002",fileToken:"token-b",filesDone:false}]}));
-    assert.notEqual(fingerprint,h.getDriveAuditCursorFingerprint_({...cursor,scanVersion:"2.6.2"}));
+    assert.notEqual(fingerprint,h.getDriveAuditCursorFingerprint_({...cursor,scanVersion:"2.7.2"}));
     assert.throws(()=>h.getDriveAuditCursorFingerprint_({...cursor,stack:[]}),/Cursor de auditoría inválido/);
 });
 check("El estado de auditoría se conserva en servidor y queda vinculado a su propietario",()=>{

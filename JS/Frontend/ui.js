@@ -7497,6 +7497,8 @@ export async function openReplacedImagesModal() {
     const listViewBtn = document.getElementById('btn-replaced-view-list');
     const gridViewBtn = document.getElementById('btn-replaced-view-grid');
     const folderSelect = document.getElementById('replaced-images-target-folder');
+    const folderToolbar = document.getElementById('replaced-images-folder-toolbar');
+    const folderToolbarToggle = document.getElementById('btn-replaced-folders-toggle');
     const newFolderInput = document.getElementById('replaced-images-new-folder-name');
     const createFolderBtn = document.getElementById('btn-create-replaced-images-folder');
     const folderStatus = document.getElementById('replaced-images-folder-status');
@@ -7511,6 +7513,17 @@ export async function openReplacedImagesModal() {
     const lightboxImage = document.getElementById('replaced-image-lightbox-image');
     const lightboxTitle = document.getElementById('replaced-image-lightbox-title');
     const lightboxClose = document.getElementById('replaced-image-lightbox-close');
+
+    if (folderToolbar && folderToolbarToggle) {
+        folderToolbar.hidden = true;
+        folderToolbarToggle.setAttribute('aria-expanded', 'false');
+        folderToolbarToggle.onclick = () => {
+            const expanded = folderToolbar.hidden;
+            folderToolbar.hidden = !expanded;
+            folderToolbarToggle.setAttribute('aria-expanded', String(expanded));
+            if (expanded && folderSelect) folderSelect.focus();
+        };
+    }
 
     let currentView = await offline.getReplacedImagesView();
     if (!isCurrentRequest()) return;
@@ -8494,7 +8507,7 @@ export async function openAuditDriveModal() {
                     throw new Error('Los totales acumulados de ADMIN no coinciden con los IDs únicos recibidos (' + expectedTotal + ').');
                 }
                 if (response.serverCompletionVerified !== response.complete ||
-                    String(response.serviceVersion || '') !== '2.6.1' ||
+                    !/^[0-9]+\.[0-9]+\.[0-9]+$/.test(String(response.serviceVersion || '')) ||
                     !Number.isFinite(Number(response.serverTimestamp)) ||
                     !Number.isInteger(Number(response.pendingFolderCount)) ||
                     Number(response.pendingFolderCount) !== (response.cursor && Array.isArray(response.cursor.stack) ? response.cursor.stack.length : 0)) {
@@ -8570,15 +8583,19 @@ export async function openAuditDriveModal() {
             const errorMessage = error && error.message ? error.message : String(error);
             const cursorExpired = !complete &&
                 /estado temporal.*(expir|disponible)|falta un bloque|estado temporal.*incompleto|otra versión del servicio|inicia una auditoría nueva|respuesta de este lote expiró/i.test(errorMessage);
-            resumeUnavailable = cursorExpired;
+            const referenceCaptureBudgetExceeded = !complete &&
+                /captura de referencias.*presupuesto temporal seguro/i.test(errorMessage);
+            resumeUnavailable = cursorExpired || referenceCaptureBudgetExceeded;
             let statusMessage = complete
                 ? 'AUDITORÍA COMPLETA: se conservaron ' + allFiles.length +
                     ' resultados, pero ocurrió un error al guardar el estado local. Detalle: ' + errorMessage
-                : (cursorExpired
-                    ? 'AUDITORÍA PARCIAL: el cursor temporal de ADMIN expiró o dejó de estar disponible. Se conservaron los resultados locales; inicia una auditoría nueva para completar el árbol. Detalle: ' + errorMessage
-                    : 'AUDITORÍA PARCIAL: se conservaron ' + allFiles.length + ' resultados. ' +
-                        (cursor ? 'Puedes intentar continuar con el cursor guardado. ' : 'No hay cursor de continuación disponible. ') +
-                        'Detalle: ' + errorMessage);
+                : (referenceCaptureBudgetExceeded
+                    ? 'AUDITORÍA NO INICIADA: la captura de referencias de Cortes superó el límite seguro. No existe cursor porque todavía no se creó un snapshot completo; no se clasificaron ni modificaron archivos. La lectura se optimizó; vuelve a iniciar la auditoría. Detalle: ' + errorMessage
+                    : (cursorExpired
+                        ? 'AUDITORÍA PARCIAL: el cursor temporal de ADMIN expiró o dejó de estar disponible. Se conservaron los resultados locales; inicia una auditoría nueva para completar el árbol. Detalle: ' + errorMessage
+                        : 'AUDITORÍA PARCIAL: se conservaron ' + allFiles.length + ' resultados. ' +
+                            (cursor ? 'Puedes intentar continuar con el cursor guardado. ' : 'No hay cursor de continuación disponible. ') +
+                            'Detalle: ' + errorMessage));
             try {
                 await persistState(complete ? 'complete' : 'partial', { lastError: errorMessage });
             } catch (persistenceError) {

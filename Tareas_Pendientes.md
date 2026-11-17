@@ -1028,7 +1028,7 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - Preservar acciones, permisos, confirmaciones, estados y navegación existentes.
 
 ### GP-DEV-IMAGE-AUDIT-LIBRARY-UX-01 — Continuidad de auditoría y biblioteca de imágenes
-**Prioridad: P1/P2 · Estado: PENDIENTE**
+**Prioridad: P1/P2 · Estado: EN PROGRESO**
 - Corregir «No hay cursor de continuación disponibles» y el rechazo por presupuesto seguro excedido.
 - Conservar snapshots parciales recuperables y cursores válidos; permitir reanudar sin duplicar ni perder progreso y no presentar una auditoría parcial como completa.
 - Rediseñar la biblioteca de imágenes con barra de funciones iconográfica y organizada, sin alterar las protecciones de archivos ni acciones destructivas.
@@ -1068,3 +1068,11 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - PasswordRecovery: 10/10 PASS; Coordinador/concurrencia: 57/57 PASS; SessionRestoreOnValidationFailure: 15/15 PASS; suite completa sin fallos.
 - GitHub Pages: SUCCESS, run 44073810188 para b965db4241bdc2325b72e618c418a95995d35208 (commit de corrección de límites de extracción AUTH).
 - Pendiente externo: implementar el código en el deployment AUTH, autorizar MailApp/script.send_mail, verificar envío/recepción real, configuración del secreto y revocación de sesiones en entorno Beta. No se afirma que el correo ya funcione en producción.
+
+
+#### Auditoría inicial — GP-DEV-IMAGE-AUDIT-LIBRARY-UX-01
+- Causa 1: collectCortesImageReferences agrupa solo columnas contiguas; las ocho columnas reales pueden producir hasta ocho grupos y multiplicar las llamadas getRange/getDisplayValues/getValues/getFormulas/getRichTextValues. El presupuesto fijo de 12 segundos lanza excepción antes de crear y guardar el snapshot completo.
+- Causa 2: ADMIN_SERVICE_VERSION es 2.7.1, pero ui.js exige literalmente 2.6.1. La interfaz rechaza una respuesta válida antes de conservar su cursor; esto explica el mensaje engañoso «No hay cursor de continuación disponible» incluso cuando el servidor puede haberlo devuelto.
+- La captura falla de forma cerrada y no debe guardar snapshots parciales como si fueran completos; se optimizará el número de lecturas y se ampliará el presupuesto seguro, conservando la validación íntegra del snapshot.
+- La biblioteca separa búsqueda/vistas, selección y carpetas en filas poco cohesionadas. Se agruparán acciones con iconografía, nombres accesibles y un panel de carpetas desplegable.
+- No se ejecutaron movimientos, eliminaciones ni escrituras de inventario durante esta auditoría.

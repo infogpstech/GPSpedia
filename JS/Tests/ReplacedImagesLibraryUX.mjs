@@ -74,4 +74,17 @@ testCase("La interfaz no incluye eliminación definitiva en acciones masivas",()
  assert.ok(html.includes('id="btn-replaced-bulk-trash"'));
  assert.equal(html.includes('id="btn-replaced-bulk-permanent-delete"'),false);
 });
+testCase("La biblioteca agrupa búsqueda, vistas y acciones en una barra accesible",()=>{
+ assert.match(html,/role="toolbar" aria-label="Herramientas de biblioteca"/);
+ assert.match(html,/id="btn-replaced-folders-toggle"/);
+ assert.match(html,/aria-controls="replaced-images-folder-toolbar"/);
+ assert.match(html,/id="replaced-images-folder-toolbar" role="toolbar"/);
+ assert.match(ui,/folderToolbarToggle\.onclick =/);
+ assert.match(ui,/setAttribute\('aria-expanded', String\(expanded\)\)/);
+ assert.match(css,/replaced-images-toolbar-actions/);
+});
+testCase("Las acciones por lote usan iconos compactos con nombre accesible",()=>{
+ ["Mover seleccionadas","Restaurar seleccionadas","Enviar seleccionadas a papelera","Limpiar selección"].forEach(label=>assert.ok(html.includes('aria-label="'+label+'"'),label));
+ assert.match(html,/replaced-images-icon-button/);
+});
 console.log("ReplacedImagesLibraryUX: "+passed+"/"+passed+" PASS");

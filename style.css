@@ -5950,3 +5950,46 @@ textarea.rich-text-source[hidden] { display:none !important; }
 #login-modal #password-recovery-panel [hidden] {
     display: none !important;
 }
+
+
+/* Biblioteca: barra compacta de búsqueda, vistas y organización contextual. */
+#replaced-images-modal .replaced-images-toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+}
+#replaced-images-modal .replaced-images-search { position: relative; min-width: 0; }
+#replaced-images-modal .replaced-images-search > i {
+    position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+    color: var(--text-disabled); pointer-events: none;
+}
+#replaced-images-modal .replaced-images-search > input {
+    width: 100%; min-width: 0; height: 38px; padding-left: 34px;
+}
+#replaced-images-modal .replaced-images-toolbar-actions {
+    display: inline-flex; align-items: center; gap: 6px;
+}
+#replaced-images-modal .replaced-images-icon-button {
+    width: 38px; min-width: 38px; height: 38px; min-height: 38px; padding: 0;
+}
+#replaced-images-modal .replaced-images-icon-button[hidden],
+#replaced-images-modal .replaced-images-folder-toolbar[hidden] { display: none !important; }
+#replaced-images-modal #btn-replaced-folders-toggle[aria-expanded="true"] {
+    border-color: var(--accent-color); color: var(--accent-color);
+    background: var(--hover-bg, rgba(128,128,128,.10));
+}
+#replaced-images-modal .replaced-images-selection-toolbar { min-height: 46px; }
+#replaced-images-modal .replaced-images-selection-actions { gap: 6px; }
+#replaced-images-modal .replaced-images-folder-toolbar {
+    display: grid; grid-template-columns: auto minmax(140px,1fr) minmax(140px,1fr) auto;
+    align-items: center; padding: 10px; margin: 0 0 8px;
+    border: 1px solid var(--border-color); border-radius: 9px;
+    background: var(--hover-bg, rgba(128,128,128,.05));
+}
+@media (max-width: 680px) {
+    #replaced-images-modal .replaced-images-toolbar { grid-template-columns: minmax(0,1fr); }
+    #replaced-images-modal .replaced-images-toolbar-actions { justify-content: flex-end; }
+    #replaced-images-modal .replaced-images-folder-toolbar { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
+    #replaced-images-modal .replaced-images-folder-toolbar label { grid-column: 1 / -1; }
+}

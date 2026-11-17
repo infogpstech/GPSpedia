@@ -507,3 +507,9 @@ Estado: **EN PROGRESO** hasta ejecutar la suite Node.js completa disponible; la 
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Pendiente despliegue autorizado del servicio AUTH, scope MailApp/script.send_mail, correo real y revocación de sesiones en entorno Beta.
 - Rama base sin modificaciones: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 - Siguiente auditoría: GP-DEV-IMAGE-AUDIT-LIBRARY-UX-01 (continuidad de captura de referencias, snapshot y diseño de biblioteca). Después seguir con caché del Inbox.
+
+
+### Continuidad — GP-DEV-IMAGE-AUDIT-LIBRARY-UX-01 — auditoría 2026-11-17
+- Siguiente tarea iniciada tras cerrar GP-AUTH-PASSWORD-RECOVERY-01.
+- Hallazgos: lectura de Cortes en múltiples grupos de columnas con presupuesto de 12s; el snapshot se guarda solo después de completar la captura. UI exige ADMIN 2.6.1 aunque el servicio publica 2.7.1, por lo que descarta respuestas/cursor válidos.
+- Plan: agrupar ventanas de columnas con separación acotada, ampliar el presupuesto sin permitir snapshots parciales, validar versiones semánticas en UI, aclarar error de captura sin cursor y rediseñar la barra de biblioteca.
