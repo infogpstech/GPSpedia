@@ -1471,7 +1471,7 @@
                 else if (slot === 2) { payload.cableAlimen2 = cableAlimenVal; payload.imgCableAlimen2 = imgCableAlimenVal; }
                 else if (slot === 3) { payload.cableAlimen3 = cableAlimenVal; payload.imgCableAlimen3 = imgCableAlimenVal; }
                 const silentVal = document.getElementById('silentRegister') ? document.getElementById('silentRegister').checked : false;
-                const serviceOverride = silentVal ? 'ADMIN' : null;
+                const serviceOverride = null;
                 const writeResult = await routeAction('addSupplementaryInfo', payload, serviceOverride);
                 if (!writeResult || writeResult.status !== 'success' ||
                     String(writeResult.vehicleId == null ? '' : writeResult.vehicleId).trim() !== String(state.selectedVehicleId).trim()) {
