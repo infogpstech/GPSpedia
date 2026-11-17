@@ -125,7 +125,7 @@ await run('el catálogo cache-first inicia después del gate de términos y ante
     const showStart = uiSource.indexOf('export function showApp(user)');
     const gate = uiSource.indexOf('if (!renderTermsGate_(user))', showStart);
     const catalog = uiSource.indexOf('startCatalogLoad()', showStart);
-    const fade = uiSource.indexOf('fadeSplash();', catalogStart);
+    const fade = uiSource.indexOf('fadeSplash();', catalog);
     assert.ok(showStart >= 0 && gate > showStart && catalog > gate && fade > catalog,
         'No debe iniciarse el catálogo antes de aceptar términos ni esperar al Splash para comenzar.');
     assert.match(uiSource, /setTimeout\(\(\) => \{ splash\.style\.display = 'none'; \}, 500\)/);
