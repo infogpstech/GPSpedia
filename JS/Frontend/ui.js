@@ -12813,10 +12813,19 @@ export function openSearchVehicleForPysAssociationModal(problemId, onAssociated,
     modal.id = "pys-add-vehicle-modal";
     modal.className = "info-modal visible";
     modal.style.zIndex = "2400";
+    modal.style.overflowY = "auto";
+    modal.style.alignItems = "flex-start";
+    modal.style.boxSizing = "border-box";
+    modal.style.paddingTop = "max(12px, env(safe-area-inset-top))";
+    modal.style.paddingBottom = "max(12px, env(safe-area-inset-bottom))";
 
     const content = document.createElement("div");
     content.className = "info-modal-content";
     content.style.maxWidth = "520px";
+    content.style.maxHeight = "calc(100dvh - 24px)";
+    content.style.overflowY = "auto";
+    content.style.overscrollBehavior = "contain";
+    content.style.boxSizing = "border-box";
 
     content.innerHTML = `
         <button type="button" class="info-close-btn" aria-label="Cerrar ventana">&times;</button>
@@ -12846,7 +12855,21 @@ export function openSearchVehicleForPysAssociationModal(problemId, onAssociated,
     modal.appendChild(content);
     document.body.appendChild(modal);
 
-    const closeModal = () => modal.remove();
+    const viewport = window.visualViewport || null;
+    const updateViewportLayout = () => {
+        const availableHeight = viewport && Number.isFinite(viewport.height) ? viewport.height : window.innerHeight;
+        content.style.maxHeight = Math.max(160, availableHeight - 24) + "px";
+    };
+    const closeModal = () => {
+        viewport?.removeEventListener("resize", updateViewportLayout);
+        viewport?.removeEventListener("scroll", updateViewportLayout);
+        window.removeEventListener("resize", updateViewportLayout);
+        modal.remove();
+    };
+    viewport?.addEventListener("resize", updateViewportLayout);
+    viewport?.addEventListener("scroll", updateViewportLayout);
+    window.addEventListener("resize", updateViewportLayout, { passive: true });
+    updateViewportLayout();
     content.querySelector(".info-close-btn").onclick = closeModal;
     content.querySelector("#btn-close-assoc").onclick = closeModal;
 
@@ -12854,6 +12877,25 @@ export function openSearchVehicleForPysAssociationModal(problemId, onAssociated,
     const resultsContainer = content.querySelector("#assoc-search-results");
     const selectedContainer = content.querySelector("#assoc-selected-models-container");
     const saveBtn = content.querySelector("#btn-save-assoc");
+    resultsContainer.style.maxHeight = "min(30dvh, 220px)";
+    resultsContainer.style.minHeight = "48px";
+    resultsContainer.style.overflowY = "auto";
+    resultsContainer.style.overscrollBehavior = "contain";
+
+    const keepSearchResultsVisible = () => {
+        updateViewportLayout();
+        requestAnimationFrame(() => {
+            if (modal.isConnected && resultsContainer.childElementCount) {
+                resultsContainer.scrollIntoView({ block: "nearest", behavior: "smooth" });
+            }
+        });
+    };
+    input.addEventListener("focus", () => {
+        updateViewportLayout();
+        requestAnimationFrame(() => {
+            if (modal.isConnected) input.scrollIntoView({ block: "center", behavior: "smooth" });
+        });
+    });
 
     const alreadySet = new Set((alreadyAssociatedIds || []).map(String));
     const newlySelectedIds = new Set();
@@ -12897,56 +12939,87 @@ export function openSearchVehicleForPysAssociationModal(problemId, onAssociated,
 
     input.oninput = () => {
         const query = input.value.toLowerCase().trim();
-        resultsContainer.innerHTML = '';
+        resultsContainer.innerHTML = "";
         if (!query) return;
 
         const { catalogData } = getState();
         const cortes = (catalogData && catalogData.cortes) ? catalogData.cortes : [];
 
-        // Excluir vehículos ya asociados previamente y los que ya estén seleccionados en esta tanda
+        // Excluir vehículos ya asociados previamente y los que ya estén seleccionados en esta tanda.
         const matches = cortes.filter(c => {
             const cId = String(c.id);
             if (alreadySet.has(cId) || newlySelectedIds.has(cId)) return false;
-            return `${c.marca} ${c.modelo} ${c.versionesAplicables || ''} ${c.tipoEncendido || ''}`.toLowerCase().includes(query);
+            return `${c.marca} ${c.modelo} ${c.versionesAplicables || ""} ${c.tipoEncendido || ""}`.toLowerCase().includes(query);
         }).slice(0, 10);
 
         if (matches.length === 0) {
-            resultsContainer.innerHTML = '<div style="padding: 10px; color: var(--text-disabled); font-size: 0.85em; text-align: center;">No se encontraron vehículos disponibles.</div>';
+            const empty = document.createElement("div");
+            empty.style.cssText = "padding:10px; color:var(--text-disabled); font-size:0.85em; text-align:center;";
+            empty.textContent = "No se encontraron vehículos disponibles.";
+            resultsContainer.appendChild(empty);
+            keepSearchResultsVisible();
             return;
         }
 
         matches.forEach(v => {
             const itemDiv = document.createElement("div");
-            itemDiv.style.cssText = "padding: 6px 8px; border-bottom: 1px solid var(--border-color); cursor: pointer; font-size: 0.85em; display: flex; align-items: center; gap: 8px; width: 100%; box-sizing: border-box; border-radius: 4px; transition: background 0.15s ease;";
-            itemDiv.onmouseenter = () => itemDiv.style.background = "rgba(0, 123, 255, 0.08)";
-            itemDiv.onmouseleave = () => itemDiv.style.background = "transparent";
+            itemDiv.style.cssText = "display:flex; align-items:center; gap:8px; width:100%; box-sizing:border-box; padding:6px 8px; border-bottom:1px solid var(--border-color); border-radius:4px; transition:background 0.15s ease;";
+            itemDiv.onmouseenter = () => { itemDiv.style.background = "rgba(0, 123, 255, 0.08)"; };
+            itemDiv.onmouseleave = () => { itemDiv.style.background = "transparent"; };
 
-            const versionOrIgnition = (v.versionesAplicables && v.versionesAplicables.trim()) ? v.versionesAplicables.trim() : (v.tipoEncendido || '-');
-            const yearRange = (v.anoHasta && String(v.anoHasta) !== String(v.anoDesde)) ? `${v.anoDesde} - ${v.anoHasta}` : `${v.anoDesde}`;
+            const versionOrIgnition = (v.versionesAplicables && v.versionesAplicables.trim())
+                ? v.versionesAplicables.trim() : (v.tipoEncendido || "-");
+            const yearRange = (v.anoHasta && String(v.anoHasta) !== String(v.anoDesde))
+                ? `${v.anoDesde} - ${v.anoHasta}` : `${v.anoDesde}`;
 
-            itemDiv.innerHTML = `
-                <img src="${getImageUrl(v.imagenVehiculo, IMG_SIZE_SMALL)}" style="width:36px; height:36px; min-width:36px; max-width:36px; margin:0; object-fit:cover; border-radius:4px; flex-shrink:0;">
-                <span style="flex:1; margin:0; line-height:1.2; display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+            const detailsButton = document.createElement("button");
+            detailsButton.type = "button";
+            detailsButton.className = "pys-association-result-details";
+            detailsButton.style.cssText = "display:flex; align-items:center; gap:8px; flex:1; min-width:0; padding:0; border:0; background:transparent; color:inherit; text-align:left; cursor:pointer;";
+            detailsButton.innerHTML = `
+                <img src="${getImageUrl(v.imagenVehiculo, IMG_SIZE_SMALL)}" alt="" style="width:36px; height:36px; min-width:36px; max-width:36px; margin:0; object-fit:cover; border-radius:4px; flex-shrink:0;">
+                <span style="flex:1; min-width:0; margin:0; line-height:1.2; display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
                     <strong>${v.marca} ${v.modelo}</strong>
                     <span style="color:var(--text-disabled); font-size:0.9em;">|</span>
                     <span style="color:var(--accent-color, #007bff); font-weight:600;">${versionOrIgnition}</span>
                     <span style="color:var(--text-disabled); font-size:0.9em;">|</span>
                     <span>${yearRange}</span>
                 </span>
-                <i class="fa-solid fa-plus-circle" style="color: var(--accent-color, #007bff); font-size: 1.1rem;"></i>
             `;
-
-            itemDiv.onclick = () => {
-                // Abrir confirmación previa (idéntico al flujo de creación de problemas)
-                openConfirmVehicleForPysModal(v, (confirmedVehicle) => {
+            detailsButton.setAttribute("aria-label", `Ver información de ${v.marca} ${v.modelo}`);
+            detailsButton.onclick = () => {
+                openConfirmVehicleForPysModal(v, confirmedVehicle => {
                     newlySelectedIds.add(String(confirmedVehicle.id));
-                    input.value = '';
-                    resultsContainer.innerHTML = '';
+                    input.value = "";
+                    resultsContainer.innerHTML = "";
                     renderSelectedChips();
+                    input.focus({ preventScroll: true });
                 });
             };
+
+            const addBtn = document.createElement("button");
+            addBtn.type = "button";
+            addBtn.className = "btn btn-primary btn-sm pys-association-result-add";
+            addBtn.title = "Agregar directamente";
+            addBtn.setAttribute("aria-label", `Agregar ${v.marca} ${v.modelo} directamente`);
+            addBtn.style.cssText = "width:36px; height:36px; min-width:36px; padding:0; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;";
+            addBtn.innerHTML = '<i class="fa-solid fa-plus" aria-hidden="true"></i>';
+            addBtn.addEventListener("pointerdown", event => { if (event.pointerType !== "mouse") event.preventDefault(); });
+            addBtn.addEventListener("mousedown", event => event.preventDefault());
+            addBtn.onclick = event => {
+                event.preventDefault();
+                event.stopPropagation();
+                newlySelectedIds.add(String(v.id));
+                input.value = "";
+                resultsContainer.innerHTML = "";
+                renderSelectedChips();
+                input.focus({ preventScroll: true });
+            };
+
+            itemDiv.append(detailsButton, addBtn);
             resultsContainer.appendChild(itemDiv);
         });
+        keepSearchResultsVisible();
     };
 
     saveBtn.onclick = async () => {
