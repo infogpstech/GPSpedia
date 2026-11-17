@@ -36,10 +36,15 @@ function runUsersAtomicMutationTests(usersSource, authSource, coordinatorSource)
             "La búsqueda de Users solo se permite para localizar el registro destino de updateProfile.");
         assert(profileHandler.includes("userRowIndex") && !profileHandler.includes("findUniqueUserRow_"),
             "La actualización de perfil debe reutilizar la fila destino ya localizada.");
-        assert(dispatcher.includes('withSharedMutationLease_("USERS", "sessionActivity"'),
-            "getUsers debe adquirir una lease de actividad.");
-        assert(String(coordinatorSource || "").includes('sessionActivity: { read: identityRead }'),
-            "USERS debe validar el actor leyendo el contexto central.");
+        assert(dispatcher.includes('getCachedSharedSessionActor_(payload.userId, payload.sessionToken)'),
+            "getUsers debe reutilizar el actor cacheado.");
+        assert(!dispatcher.includes('withSharedMutationLease_("USERS", "sessionActivity"'),
+            "getUsers no debe adquirir una lease ni registrar actividad por cada lectura.");
+        const usersPolicyStart = String(coordinatorSource || "").indexOf("USERS:");
+        const usersPolicyEnd = String(coordinatorSource || "").indexOf("UTILITIES:", usersPolicyStart);
+        const usersPolicy = String(coordinatorSource || "").slice(usersPolicyStart, usersPolicyEnd);
+        assert(usersPolicyStart >= 0 && !usersPolicy.includes("sessionActivity"),
+            "Coordinator no debe exponer una lease USERS de actividad para lecturas ordinarias.");
     });
 
 
