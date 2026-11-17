@@ -1197,7 +1197,7 @@ Después: abrir Developer → Auditoría de Cortes en escritorio y PWA móvil; c
 - Procedimiento reproducible: workflow `.github/workflows/deployed-service-health.yml` fija TARGET_COMMIT; `JS/Tests/RemoteServiceHealth.mjs` obtiene el inventario desde ese SHA y consulta los siete endpoints en paralelo con timeout de 8 s, sin efectos de escritura.
 
 ### GP-DEV-TRAFFIC-GLOBAL-02 — Agregado global de tráfico por servicio
-**Prioridad: P1 · Estado: EN PROGRESO (Coordinator + CATALOG implementados en fuente; cobertura de rutas directas restantes y CI en verificación).**
+**Prioridad: P1 · Estado: EN PROGRESO (contadores directos y agregado multiproveedor implementados en fuente; regresión integral en verificación y despliegue Beta pendiente).**
 
 **Objetivo**
 - Sustituir las métricas locales del navegador por un agregado global coherente y etiquetado por fuente, sin una llamada de red por acción ni bloqueos que degraden lecturas.
@@ -1205,29 +1205,43 @@ Después: abrir Developer → Auditoría de Cortes en escritorio y PWA móvil; c
 
 **Implementación comprobada en la rama**
 - Frontend: dashboard Developer consulta Coordinator y elimina el panel de métricas locales del navegador. Los detalles muestran ventanas 1 h, 6 h y 24 h; refresco remoto condicionado a visibilidad y con intervalo mínimo de 60 s.
-- Coordinator: registra operaciones protegidas con lease y el feed público dentro del lock que ya protege la lectura; sin llamada de red ni lock adicional.
-- CATALOG: cuatro POST directos (getCatalogData, getDropdownData, getSuggestion, getNavigationData) se cuentan localmente en buckets horarios de 24 h mediante ScriptProperties y tryLock(0). La telemetría es best-effort; si el lock está ocupado o PropertiesService falla, la lectura debe continuar sin espera.
-- ADMIN: combina los buckets Coordinator y CATALOG cuando se consulta el panel. El contador CATALOG requiere el secreto GPSpedia_CATALOG_TRAFFIC_SECRET en Script Properties de ADMIN y CATALOG; si falta, conserva Coordinator y marca CATALOG directo como parcial/no disponible.
-- Seguridad: el endpoint interno CATALOG/getServiceTraffic valida secreto servidor-a-servidor, excluye su propia petición y no devuelve usuario, sesión ni payload.
-- Se corrigió un defecto real en catalog.js: releaseLock se ejecutaba incluso cuando tryLock(0) no adquiría el lock. Ahora solo se libera si la adquisición fue exitosa.
-- Se ajustó el diagnóstico remoto: máximo dos probes simultáneos, hasta tres intentos ante errores transitorios; se conservan los siete contratos y todas las comprobaciones. No se omiten servicios ni se rebajan criterios.
+- Coordinator: registra operaciones protegidas con lease y el feed público dentro del lock ya existente; sin llamada de red ni lock adicional.
+- CATALOG: cuatro POST directos (getCatalogData, getDropdownData, getSuggestion y getNavigationData) se cuentan localmente en buckets horarios de 24 h mediante ScriptProperties y tryLock(0).
+- AUTH: validateSession se cuenta localmente; login, benchmark PBKDF2 y operaciones protegidas permanecen en Coordinator.
+- WRITE: checkVehicle, getSuggestion y checkVinDuplicate se cuentan localmente; las mutaciones protegidas permanecen en Coordinator.
+- FEEDBACK: getPysData, sendContactForm y suggestYear anónimo (userId 0) se cuentan localmente; suggestYear autenticado y getCatalogChanges permanecen en Coordinator.
+- USERS: getUsers, createUser y updateProfile pasan por Coordinator; no requiere contador local.
+- UTILITIES: migrateTimestamps obtiene una lease UTILITIES dentro del handler y ya se cuenta en Coordinator; se retiró el contador directo para evitar doble conteo.
+- ADMIN: operaciones protegidas se cuentan en Coordinator; ping se excluye intencionalmente como sondeo.
+- Los contadores directos usan ScriptProperties, buckets horarios 24 h y tryLock(0). Si hay contención o falla PropertiesService, se omite solo la métrica y continúa el handler. El endpoint interno getServiceTraffic se excluye del conteo.
+- ADMIN consulta los cuatro endpoints directos (CATALOG, AUTH, WRITE y FEEDBACK) en una sola operación UrlFetchApp.fetchAll; si el lote falla, reintenta endpoints individualmente. Un fallo o secreto faltante en una fuente no invalida las demás ni el agregado Coordinator.
+- Los secretos son distintos por servicio: GPSpedia_CATALOG_TRAFFIC_SECRET, GPSpedia_AUTH_TRAFFIC_SECRET, GPSpedia_WRITE_TRAFFIC_SECRET y GPSpedia_FEEDBACK_TRAFFIC_SECRET. Cada valor debe configurarse en Script Properties del servicio correspondiente y en ADMIN. No crear secreto para USERS, UTILITIES ni ADMIN.
+- Se corrigió el lock de CATALOG: releaseLock solo ocurre si tryLock(0) adquirió el lock. La misma regla se aplica a los contadores directos AUTH/WRITE/FEEDBACK.
+- Se sincronizó JS/Tests/Auth.js con el dispatcher y helper de AUTH, preservando su Spreadsheet ID aislado.
 
 **Pruebas y resultados esperados**
-- CatalogTrafficTelemetry: lock libre/ocupado, no espera, liberación solo si adquirido, retención y ventanas 1/6/24 h, secretos y tolerancia a fallos. Esperado: todas las aserciones aprobadas; la contención no cambia la respuesta CATALOG.
-- SharedMutationCoordinator: feed público se cuenta dentro del lock existente; FEEDBACK conserva su identidad. Esperado: no lease adicional ni doble conteo.
-- ServiceTrafficAggregation: suma CATALOG directo + feed Coordinator por bucket, no modifica los otros servicios, entradas inválidas ignoradas y ausencia de secreto identificada como parcial. Esperado: agregados y metadatos coherentes.
-- ServiceTrafficAdminContract / DeveloperPanelCopy: autorización Developer, consulta de solo lectura, intervalos, textos de cobertura y ausencia de métricas locales. Esperado: contratos completos.
-- Regresión completa: ejecutar todas las suites y corregir cada fallo reproducible; no reducir el número de pruebas, desactivar casos ni alterar aserciones para lograr verde.
-- Health remoto: GET ?debug=true a los siete servicios; validar HTTP, JSON, identidad, estado, versión y ausencia de campos sensibles. Esperado: 7/7, con latencias registradas. No POST ni escrituras.
-- Beta: desplegar fuentes Apps Script en entorno Beta, configurar el secreto fuera del repositorio y medir p50/p95 y porcentaje de eventos omitidos. No se ha desplegado Apps Script ni configurado el secreto remoto.
+- CatalogTrafficTelemetry: lock libre/ocupado, no espera, liberación correcta, buckets, retención, secretos y errores best-effort.
+- DirectServiceTrafficTelemetry: AUTH/WRITE/FEEDBACK; seis casos por servicio (18/18): acciones directas auditadas, buckets, secretos, lock ocupado sin release, y fallos PropertiesService.
+- ServiceTrafficAggregation: 5 casos: suma Coordinator+CATALOG y fuentes directas, preservación de otros servicios, fuentes parciales, entradas inválidas y no mutación de datos.
+- ServiceTrafficBatch: 5 casos: fetchAll agrupado, secreto faltante, fallback individual, error de una fuente y fallo de PropertiesService.
+- ServiceTrafficAdminContract: rol Developer, consulta de solo lectura, exclusión de auto-conteo, fuentes directas y rutas, UI y ausencia de métricas locales.
+- SensitiveLogsTrustedActor y PasswordKdfBenchmark: los harnesses de AUTH deben inyectar dependencias de telemetría como stubs; las operaciones protegidas no se cuentan como rutas directas.
+- Regresión completa: ejecutar todas las suites y corregir cada fallo reproducible; no reducir suites, desactivar casos ni alterar aserciones para lograr verde.
+- Health remoto: GET ?debug=true a los siete servicios; validar HTTP, JSON, identidad, estado, versión y ausencia de campos sensibles. Esperado: 7/7 con latencias registradas; no POST ni escrituras.
+- Beta: configurar los cuatro secretos en los proyectos Beta, desplegar Apps Script y medir p50/p95 y eventos omitidos. Aún no se han desplegado proyectos Apps Script ni configurado secretos remotos.
 
-**Brecha pendiente tras esta iteración**
-- AUTH tiene rutas directas/fallback como validateSession; WRITE mantiene checkVehicle/getSuggestion/checkVinDuplicate directas; USERS tiene rutas fuera de createUser/updateProfile/getUsers; FEEDBACK tiene lecturas públicas como getPysData/sendContactForm y otras rutas; UTILITIES ejecuta migrateTimestamps fuera del wrapper Coordinator. ADMIN/ping se excluye intencionalmente.
-- Auditar llamadas reales y clasificar rutas por tipo (públicas, protegidas, health, internas) antes de instrumentarlas. Evitar doble conteo de operaciones que ya generan evento Coordinator.
-- No declarar el agregado como total universal HTTP: por ahora cubre operaciones protegidas Coordinator, feed y cuatro acciones directas CATALOG.
+**Auditoría de rutas y decisiones contra doble conteo**
+- AUTH validateSession: directa; las acciones protegidas y benchmark obtienen lease.
+- WRITE checkVehicle/getSuggestion/checkVinDuplicate: directas; las mutaciones protegidas obtienen lease.
+- FEEDBACK getPysData/sendContactForm/suggestYear anónimo: directas; otras acciones protegidas o feed incremental obtienen lease.
+- UTILITIES migrateTimestamps: ya obtiene lease en su handler, por lo que no se instrumenta localmente.
+- USERS: las acciones conocidas pasan por Coordinator.
+- ADMIN: ping es health; las demás acciones pasan por Coordinator.
+- CATALOG: cuatro acciones directas; feed incremental contado por Coordinator.
+- El agregado no representa solicitudes HTTP externas/legacy no mapeadas ni health probes; contadores locales pueden subcontar por contención. No sacrificar latencia o disponibilidad para aumentar artificialmente el conteo.
 
-**Evidencia reciente**
-- Health remoto 44098448554 SUCCESS: 7/7. ADMIN 2,383 ms; AUTH 3,559 ms; resto 994–1,901 ms.
-- Regresión 44098448712: 112 suites, 1,674 pruebas aprobadas y una suite fallida en DeveloperPanelCopy por diferencia de texto de ayuda; se corrigió el texto en el commit siguiente y se está repitiendo la suite completa.
-- Regresión 44098309252: 85 suites, 1,174 aprobadas y una suite fallida en el mismo contrato de texto; corregida posteriormente.
-- La prueba de lock ocupado detectó que se liberaba un lock no adquirido; corregido y vuelto a someter a CI. No se cerrará hasta que la regresión completa actual quede aprobada.
+**Evidencia anterior**
+- CI 44099217828 SUCCESS: 135 suites, 1,998 pruebas aprobadas, 0 fallos (antes de ampliar los contadores directos a AUTH/WRITE/FEEDBACK).
+- Health remoto 44098664894 SUCCESS: 7/7, con latencias ADMIN 1,741 ms, AUTH 1,660 ms, CATALOG 1,204 ms, FEEDBACK 1,598 ms, USERS 1,048 ms, UTILITIES 1,155 ms y WRITE 1,404 ms.
+- CI 44101392771: 93 suites, 1,378 aprobadas; fallos detectados: paridad de copia AUTH y una aserción de endpoint Utilities en el test nuevo. Se corrigió el fixture AUTH y se retiró el contador Utilities al comprobar que ya obtiene lease Coordinator.
+- Última regresión para el HEAD anterior a las correcciones: 44101675660 estaba en progreso al momento de la actualización. Se debe verificar su resultado y volver a ejecutar en el HEAD actual.
