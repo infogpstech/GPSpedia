@@ -188,6 +188,7 @@ runGroup('38','INTEGRATION',()=>{
  runCli('BETA-043 contrato de telemetría global coordinada','JS/Tests/ServiceTrafficAdminContract.mjs');
  runCli('BETA-043 agregación global Coordinator + CATALOG','JS/Tests/ServiceTrafficAggregation.mjs');
  runCli('BETA-043 telemetría directa AUTH WRITE FEEDBACK UTILITIES','JS/Tests/DirectServiceTrafficTelemetry.mjs');
+ runCli('BETA-043 consulta agrupada de telemetría directa y fallos parciales','JS/Tests/ServiceTrafficBatch.mjs');
  runCli('AUG-025 retiro de métricas locales y uso de Coordinator','JS/Tests/ServiceMetricsTelemetry.mjs');
  runCli('AUG-026 integridad, estados y recuperación del historial de imágenes','JS/Tests/AdminReplacedImagesIntegrity.mjs');
  runCli('AUG-031 persistencia incremental, migración y aislamiento de auditorías IndexedDB','JS/Tests/AdminDriveAuditIndexedDB.mjs');
