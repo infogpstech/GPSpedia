@@ -104,6 +104,8 @@ function createHarness(options = {}) {
         ${extract('fetchCatalogDelta_')}
         ${extract('normalizeCatalogData')}
         ${extract('processCatalogData')}
+        ${extract('createPysRefreshTask_')}
+        ${extract('refreshPysAndSyncCursor_')}
         ${extract('loadInitialData')}
         return { loadInitialData, cancelCatalogLoad_, fetchCatalogDelta_ };
     `;
@@ -122,7 +124,7 @@ function createHarness(options = {}) {
         () => ({ changed: false, needsRefresh: false }),
         () => options.pysCursor === undefined ? options.cacheCursor : options.pysCursor,
         () => true,
-        () => ({ hasCache: options.pysCacheAvailable !== false, updatedAt: options.pysUpdatedAt === undefined ? 1 : options.pysUpdatedAt }),
+        () => ({ hasCache: options.pysCacheAvailable !== false, updatedAt: options.pysUpdatedAt === undefined ? 1 : options.pysUpdatedAt, stale: false, error: null }),
         async data => { setState({ catalogData: data }); return true; },
         { log() {}, warn: (...args) => warnings.push(args), error() {} },
         AbortController,
