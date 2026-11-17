@@ -37,7 +37,7 @@ Registro vigente posterior a la rotación del 2026-11-16. La evidencia históric
 
 - Parsing V8 aprobado para `termsDeviceAcceptance.js`, `ui.js`, `auth.js`, `TermsAcceptance.js`, `TermsModalAccessibility.mjs` y `PWAStartupScenarios.js`.
 - La lógica real de `TermsAsyncSync.mjs` se ejecutó en un harness aislado: 5/5 escenarios aprobados (aislamiento por usuario/dispositivo/versión, reintento tras fallo de red, deduplicación concurrente, descarte de respuesta de sesión anterior y reintento online).
-- Los contratos nuevos quedaron integrados en el runner general. La suite Node.js completa y CI no se declaran aprobadas: no hay un resultado de ejecución disponible para los commits de esta iteración.
+- Los contratos nuevos quedaron integrados en el runner general. La suite Node.js completa y CI no se declaran aprobadas. Se intentó un checkout superficial de la rama para ejecutar el runner, pero el entorno no resolvió por DNS el host `github.com`.
 - Validación Beta pendiente: navegador real, Android/PWA, offline/red lenta, cambio/logout de sesión durante la petición, persistencia AUTH en el deployment autorizado, caché caliente/fría e IndexedDB lento/no disponible.
 
 ### Estado
