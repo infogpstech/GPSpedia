@@ -933,6 +933,14 @@ function runSharedMutationCoordinatorTests() {
         }), "colección");
         assert_(r.coordinator.getPublicCatalogChanges({ cursor: 0, limit: 50 }).changes.length === 0,
             "Un elemento inválido no debe dejar eventos parciales.");
+        const tooMany = Array.from({ length: 51 }, (_, index) => ({
+            collection: "cortes", recordId: "VEH-" + index, operation: "delete"
+        }));
+        expectThrow_(() => r.request("publishCatalogChanges", "ADMIN", "normalizeImages", {
+            requestId: "catalog-too-many-request-0001", changes: tooMany
+        }), "1 y 50");
+        assert_(r.coordinator.getPublicCatalogChanges({ cursor: 0, limit: 50 }).changes.length === 0,
+            "Un lote que excede el límite no debe publicar ningún evento.");
 
         const requestId = "catalog-partial-request-0001";
         r.properties.setProperty("GPSpedia_CATALOG_CHANGE_REVISION", "1");
