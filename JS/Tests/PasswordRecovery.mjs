@@ -145,7 +145,7 @@ function makeHandlerHarness(options = {}) {
     const handlers = new Function(
         "SpreadsheetApp","SPREADSHEET_ID","SHEET_NAMES","COLS_USERS","LockService",
         "getPasswordRecoveryManager_","isActiveAuthUserRecord","normalizeUserId","MailApp","logToSheet",
-        "normalizePassword","createPasswordHash","revokeSharedUserSessionContexts_","revokeAllUserSessionsUnderLock_",
+        "normalizePassword","createPasswordHash","revokeSharedUserSessionContexts_","getActiveSessionTokensForUserUnderLock_","revokeAllUserSessionsUnderLock_",
         "writePasswordHashAndVerifyUnderLock_","clearUserSessionPointerUnderLock_","deleteRevokedSessionRowsUnderLock_",
         "hasPendingRoleRevocation_","roleRevocationPropertyKey_","PropertiesService",
         requestSource + "\n" + completeSource + "\nreturn {handleRequestPasswordRecovery,handleCompletePasswordRecovery};"
@@ -159,7 +159,7 @@ function makeHandlerHarness(options = {}) {
         {sendEmail:message=>{if(options.mailFailure)throw new Error("mail unavailable");sent.push(message);}},
         (...args)=>logs.push(args), value=>String(value||"").trim(),
         password=>"pbkdf2-sha256$12000$"+"a".repeat(32)+"$"+hash(password),
-        userId=>revocations.push(userId),
+        userId=>revocations.push(userId), ()=>["old-session"],
         ()=>({rows:[{rowIndex:2,token:"old-session"}],revokedSessions:1,pendingRows:[],pendingLoginRequests:false}),
         (sheet,rowIndex,passwordHash)=>{users[rowIndex-1][2]=passwordHash;},
         (sheet,rowIndex)=>{users[rowIndex-1][7]="";return{pending:false,error:null};},
