@@ -512,3 +512,11 @@ La comprobación sintáctica aprobó. Dos contratos heredados fallaron por expec
 - Se reconcilió la nomenclatura P4.3: P4.3a inventario por lote; P4.3b CacheService por lotes; P4.3c publicación CATALOG por lotes; P4.3d decisión de conservar ScriptLock. El diseño alternativo claim/commit queda diferido hasta que mediciones reales justifiquen reabrirlo. No se modificó el lock ni la lógica de ADMIN.
 - Las menciones antiguas de P1.2 EN PROGRESO quedan supersedidas por los cierres posteriores P1.2a/P1.2b y P1.3. BETA-003 y los encabezados de modales cuentan con regresión local aprobada; sus validaciones de navegador/servicios reales siguen en Beta.
 - No quedan tareas de implementación local abiertas en el plan consolidado. Continúan pendientes las validaciones Beta y cualquier deployment Apps Script requiere autorización y entorno Beta. No se desplegaron servicios ni se modificaron ScriptProperties, hojas, Drive o datos externos.
+
+
+### GP-UX-INBOX-PRIVATE-MULTI-RECIPIENT-01 / GP-UX-MODAL-HEADER-TIGHTEN-03 — 2026-11-17
+- Inbox: selector de varios destinatarios; cada destinatario recibe un hilo privado independiente con el remitente, sin exponer los demás receptores. La entrega es secuencial, con idempotencia individual y avance persistido para recuperarse de fallos parciales.
+- Barras enriquecidas: listener global de pointerdown cierra menús de listas y opciones al pulsar fuera, incluidos modos básicos y completos.
+- Detalle de corte: botones en una sola fila al extremo derecho y junto al cierre; contenedor del logo sin padding interno; alto del contenedor reducido 138→129 px escritorio y 118→111 px móvil, conservando imágenes de logo 120/104 px; margen del divisor y separación con metadatos reducidos a aproximadamente la mitad; nombre del modelo elevado de forma independiente, sin cambiar tamaño ni sombra.
+- PyS: encabezado de título azul normalizado y botón de cierre accesible.
+- Pendiente: confirmar CI y GitHub Pages del commit de estos cambios; no hay despliegue Apps Script ni cambios de datos externos.

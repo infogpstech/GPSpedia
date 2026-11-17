@@ -19,8 +19,20 @@ function testCase(name, fn) { fn(); passed++; console.log("PASS " + name); }
 
 testCase("la línea azul llega al extremo del modal con márgenes simétricos y menos espacio vertical", () => {
     assert.ok(css.includes("width:calc(100% + 18px)"));
-    assert.ok(css.includes("margin:2px 0 4px 12px"));
+    assert.ok(css.includes("margin:1px 0 2px 6px"));
     assert.ok(css.includes(".detail-modal-divider { width:calc(100% + 22px); }"));
+});
+
+testCase("Problemas y Soluciones comparte el título azul y el cierre accesible de los demás modales", () => {
+    const pysStart = ui.indexOf("export function openPysDetailModal");
+    const pysEnd = ui.indexOf("/* TAREA 12", pysStart);
+    const pys = ui.slice(pysStart, pysEnd > pysStart ? pysEnd : undefined);
+    assert.ok(pys.includes('headerDiv.className = "tutorial-detail-toolbar pys-detail-toolbar"'));
+    assert.ok(pys.includes('title.className = "tutorial-detail-title pys-detail-title"'));
+    assert.ok(pys.includes('setAttribute("aria-labelledby", title.id)'));
+    assert.ok(pys.includes('closeBtn.className = "info-close-btn tutorial-detail-close"'));
+    assert.ok(css.includes(".tutorial-detail-title {") && css.includes("color: var(--gp-color-accent, #007bff)"));
+    assert.ok(css.includes(".pys-detail-toolbar { margin:0 0 7px; padding-bottom:0; }"));
 });
 
 testCase("el modal Relay coloca título a la izquierda y cierre arriba a la derecha", () => {
@@ -43,7 +55,7 @@ testCase("el encabezado separa logo, acciones superiores y modelo en la base der
     assert.match(css, /\.detail-modal-title \{[\s\S]*?grid-column: 1;[\s\S]*?grid-row: 1 \/ span 2/);
     assert.match(css, /\.detail-modal-header-actions \{[\s\S]*?grid-column: 2;[\s\S]*?grid-row: 1/);
     assert.match(css, /\.detail-modal-title-text \{[\s\S]*?grid-column: 2;[\s\S]*?grid-row: 2;[\s\S]*?align-self: end/);
-    assert.match(css, /\.detail-modal-toolbar > \.info-close-btn[\s\S]*?right:0/);
+    assert.ok(detail.includes("headerActions.appendChild(closeBtn)"));
     assert.match(detail, /headerDiv\.insertBefore\(titleContainer, savingIndicator\)[\s\S]*?headerDiv\.insertBefore\(titleNode, savingIndicator\)/);
 });
 
@@ -53,7 +65,7 @@ testCase("ninguna regla posterior puede sustituir la cuadrícula del encabezado 
     assert.match(css, /\.detail-modal-toolbar\s*\{[^}]*display\s*:\s*grid/);
     assert.match(css, /\.detail-modal-header-actions\s*\{[^}]*grid-column\s*:\s*2/);
     assert.match(css, /\.detail-modal-header-actions\s*\{[^}]*grid-row\s*:\s*1/);
-    assert.match(css, /\.detail-modal-toolbar\s*>\s*\.info-close-btn\s*\{[^}]*position:\s*absolute/);
+    assert.ok(css.includes("#modalDetalle[data-modal-type=\"corte\"] .detail-modal-header-actions > .info-close-btn") && css.includes("position:static !important"));
 });
 
 testCase("la imagen queda a la izquierda y el modelo se alinea a su base debajo de las acciones", () => {
@@ -148,7 +160,7 @@ testCase("se preservan permisos y operaciones y no se añaden ayudas al detalle 
 testCase("en móvil/PWA las acciones permanecen arriba a la derecha y el modelo abajo junto al logo", () => {
     assert.match(css, /@media \(max-width:\s*560px\)[\s\S]*?grid-template-columns: minmax\(0, 36vw\) minmax\(0, 1fr\)/);
     assert.match(css, /@media \(max-width:\s*560px\)[\s\S]*?\.detail-modal-header-actions \.share-modal-btn \{[\s\S]*?width:\s*28px;[\s\S]*?height:\s*28px/);
-    assert.match(css, /\.detail-modal-toolbar > \.info-close-btn \{[\s\S]*?position:\s*absolute/);
+    assert.ok(css.includes("#modalDetalle[data-modal-type=\"corte\"] .detail-modal-header-actions > .info-close-btn") && css.includes("position:static !important"));
     assert.match(css, /\.detail-modal-title-text \{[\s\S]*?grid-row: 2;[\s\S]*?align-self: end/);
 });
 
@@ -169,8 +181,8 @@ testCase("el detalle de corte tiene nombre accesible y conserva el logo de marca
     assert.match(detail, /setAttribute\("aria-labelledby", title\.id\)/);
     assert.match(detail, /titleContainer\.appendChild\(logoImg\)/);
     assert.match(css, /\.detail-modal-title \.brand-logo-modal \{[\s\S]*?height: 120px !important;[\s\S]*?max-height: 120px !important/);
-    assert.match(css, /\.detail-modal-title-text \{[\s\S]*?transform: translateY\(-4px\)/);
-    assert.match(css, /\.detail-modal-divider \{[\s\S]*?margin:2px 0 4px 12px/);
+    assert.ok(css.includes("#modalDetalle[data-modal-type=\"corte\"] .detail-modal-title-text { transform:translateY(-6px); }"));
+    assert.ok(css.includes("#modalDetalle[data-modal-type=\"corte\"] .detail-modal-divider { margin:1px 0 2px 6px; }"));
 });
 
 console.log("CutDetailModalLayout: " + passed + "/" + passed + " PASS");
@@ -179,8 +191,8 @@ console.log("CutDetailModalLayout: " + passed + "/" + passed + " PASS");
 testCase("el divisor azul ocupa el ancho del encabezado y la sombra del logo no se recorta", () => {
     assert.match(detail, /headerDivider\.className = "detail-modal-divider"/);
     assert.match(detail, /headerDiv\.insertBefore\(headerDivider, savingIndicator\)/);
-    assert.match(css, /\.detail-modal-divider \{[\s\S]*?grid-column: 1 \/ -1;[\s\S]*?grid-row: 3;[\s\S]*?margin: 10px 12px 0/);
-    assert.match(css, /\.detail-modal-title \{[\s\S]*?overflow: visible !important;[\s\S]*?padding: 8px;[\s\S]*?border: 0/);
+    assert.ok(css.includes("#modalDetalle[data-modal-type=\"corte\"] .detail-modal-divider { margin:1px 0 2px 6px; }"));
+    assert.ok(css.includes("#modalDetalle[data-modal-type=\"corte\"] .detail-modal-title {") && css.includes("height:129px; padding:0 !important;"));
     assert.match(css, /\.detail-modal-title \.brand-logo-modal \{[\s\S]*?object-fit: contain/);
 });
 
@@ -192,7 +204,7 @@ testCase("modelo y acciones adoptan el tamaño reforzado del encabezado Relay", 
     assert.match(css, /\.detail-modal-title-text \{[\s\S]*?font-size: 2rem/);
     assert.match(css, /\.relay-detail-toolbar \.relay-detail-title \{[\s\S]*?font-size: 2rem/);
     assert.match(css, /\.detail-modal-header-actions \.share-modal-btn \{[\s\S]*?width: 40px;[\s\S]*?height: 40px/);
-    assert.match(css, /\.detail-modal-toolbar > \.info-close-btn \{[\s\S]*?width: 40px;[\s\S]*?height: 40px/);
+    assert.ok(css.includes("#modalDetalle[data-modal-type=\"corte\"] .detail-modal-header-actions > .info-close-btn") && css.includes("height:40px; min-height:40px"));
     assert.match(css, /@media \(max-width: 560px\)[\s\S]*?\.detail-modal-header-actions \.share-modal-btn \{[\s\S]*?width: 36px;[\s\S]*?height: 36px/);
 });
 

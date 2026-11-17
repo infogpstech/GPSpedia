@@ -2426,8 +2426,8 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
         else{document.getElementById("modalDetalle").classList.remove("visible");if(isSearchActive&&searchInput)setTimeout(()=>searchInput.focus(),300);}
     };
     closeBtn.className = "info-close-btn";
-    closeBtn.style.cssText = "position: static; margin-left: auto;";
-    headerDiv.appendChild(closeBtn);
+    closeBtn.style.cssText = "position: static; margin: 0;";
+    headerActions.appendChild(closeBtn);
     cont.appendChild(headerDiv);
 
     // Comentario: Se ajusta el layout del encabezado para cumplir con el nuevo requisito (logo a la izquierda).
@@ -5118,16 +5118,79 @@ async function openInboxNewConversationForm_() {
         control.id = id; control.classList.add("inbox-form-control");
         form.append(label, control); return control;
     };
-    const recipient = addField("Destinatario", "inbox-new-recipient", document.createElement("select"));
-    recipient.required = true;
-    recipients.forEach(user => {
-        const option = inboxCreateNode_("option", "", user.name + " · " + user.role);
-        option.value = user.id; recipient.appendChild(option);
-    });
     const currentDraft = inboxReadDraft_(draftKind);
     const legacyDraft = legacyDraftKind ? inboxReadDraft_(legacyDraftKind) : {};
     const draft = Object.keys(currentDraft).length ? currentDraft : legacyDraft;
-    if (draft.recipientId && recipients.some(user => user.id === draft.recipientId)) recipient.value = draft.recipientId;
+    const savedRecipientIds = Array.isArray(draft.recipientIds) && draft.recipientIds.length
+        ? draft.recipientIds : (draft.recipientId ? [draft.recipientId] : []);
+    const selectedRecipientIds = new Set(savedRecipientIds.map(value => String(value)).filter(id => recipients.some(user => user.id === id)));
+    const recipientField = inboxCreateNode_("div", "inbox-recipient-field");
+    const recipientLabel = inboxCreateNode_("label", "", "Destinatarios");
+    recipientLabel.htmlFor = "inbox-recipient-picker-toggle";
+    const recipientPicker = inboxCreateNode_("div", "inbox-recipient-picker rich-toolbar-dropdown");
+    const recipientPickerButton = inboxCreateNode_("button", "inbox-recipient-picker-toggle rich-toolbar-icon-button");
+    recipientPickerButton.type = "button";
+    recipientPickerButton.id = "inbox-recipient-picker-toggle";
+    recipientPickerButton.setAttribute("aria-label", "Seleccionar destinatarios");
+    recipientPickerButton.setAttribute("aria-haspopup", "true");
+    recipientPickerButton.setAttribute("aria-expanded", "false");
+    recipientPickerButton.setAttribute("aria-controls", "inbox-recipient-picker-menu");
+    const recipientPickerMenu = inboxCreateNode_("div", "inbox-recipient-picker-menu rich-toolbar-menu");
+    recipientPickerMenu.id = "inbox-recipient-picker-menu";
+    recipientPickerMenu.setAttribute("role", "group");
+    recipientPickerMenu.setAttribute("aria-label", "Destinatarios disponibles");
+    recipientPickerMenu.hidden = true;
+    const recipientCheckboxes = [];
+    const getSelectedRecipientIds = () => recipients.filter(user => selectedRecipientIds.has(user.id)).map(user => user.id);
+    const updateRecipientPickerLabel = () => {
+        const selected = recipients.filter(user => selectedRecipientIds.has(user.id));
+        recipientPickerButton.textContent = !selected.length ? "Seleccionar destinatarios" :
+            selected.length === 1 ? selected[0].name + " seleccionado" :
+            selected.length + " destinatarios seleccionados";
+        recipientPickerButton.title = selected.map(user => user.name).join(", ");
+        recipientPickerButton.setAttribute("aria-label", selected.length
+            ? selected.length + " destinatarios seleccionados" : "Seleccionar destinatarios");
+    };
+    recipients.forEach((user, index) => {
+        const option = inboxCreateNode_("label", "inbox-recipient-option");
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.name = "inbox-recipient-ids";
+        checkbox.value = user.id;
+        checkbox.checked = selectedRecipientIds.has(user.id);
+        checkbox.id = "inbox-recipient-option-" + index;
+        const name = inboxCreateNode_("span", "inbox-recipient-option-name", user.name);
+        const role = inboxCreateNode_("small", "inbox-recipient-option-role", user.role);
+        option.htmlFor = checkbox.id;
+        option.append(checkbox, name, role);
+        recipientPickerMenu.appendChild(option);
+        recipientCheckboxes.push(checkbox);
+        checkbox.addEventListener("change", () => {
+            if (checkbox.checked) selectedRecipientIds.add(user.id);
+            else selectedRecipientIds.delete(user.id);
+            updateRecipientPickerLabel();
+            persist();
+        });
+    });
+    const closeRecipientPicker = () => {
+        recipientPicker.classList.remove("is-open");
+        recipientPickerButton.setAttribute("aria-expanded", "false");
+        recipientPickerMenu.hidden = true;
+    };
+    recipientPickerButton.addEventListener("click", event => {
+        event.preventDefault();
+        const opening = recipientPickerMenu.hidden;
+        closeInboxRichToolbarMenus_(document.getElementById("inbox-modal-content") || detail);
+        if (opening) {
+            recipientPicker.classList.add("is-open");
+            recipientPickerButton.setAttribute("aria-expanded", "true");
+            recipientPickerMenu.hidden = false;
+        } else closeRecipientPicker();
+    });
+    recipientPicker.append(recipientPickerButton, recipientPickerMenu);
+    recipientField.append(recipientLabel, recipientPicker);
+    form.appendChild(recipientField);
+    updateRecipientPickerLabel();
     const templateLabel = inboxCreateNode_("label", "", "Plantilla editable");
     templateLabel.htmlFor = "inbox-welcome-template";
     const template = document.createElement("select"); template.id = "inbox-welcome-template"; template.className = "inbox-form-control";
@@ -5183,7 +5246,7 @@ async function openInboxNewConversationForm_() {
         event.preventDefault();
         const activeToolbar = composerOptions.closest(".inbox-rich-text-toolbar") || toolbar;
         const opening = composerOptionsMenu.hidden;
-        closeInboxRichToolbarMenus_(activeToolbar);
+        closeInboxRichToolbarMenus_(document.getElementById("inbox-modal-content") || activeToolbar);
         if (opening) {
             composerOptions.classList.add("is-open");
             composerOptionsButton.setAttribute("aria-expanded", "true");
@@ -5210,11 +5273,16 @@ async function openInboxNewConversationForm_() {
     const formActions = inboxCreateNode_("div", "inbox-compose-actions"); formActions.append(makeCancelButton(), send);
     form.append(formStatus, formActions); detail.append(form);
     const persist = () => {
-        const current = inboxReadDraft_(draftKind), fingerprint = [recipient.value,subject.value,category.value,body.value].join("|");
-        if (current.lastAttemptFingerprint && current.lastAttemptFingerprint !== fingerprint) current.idempotencyKey = "";
-        inboxSaveDraft_(draftKind, { ...current, recipientId: recipient.value, subject: subject.value, category: category.value, body: body.value, templateId: template.value });
+        const current = inboxReadDraft_(draftKind), recipientIds = getSelectedRecipientIds();
+        const fingerprint = [recipientIds.join(","),subject.value,category.value,body.value].join("|");
+        if (current.lastAttemptFingerprint && current.lastAttemptFingerprint !== fingerprint &&
+            !(Array.isArray(current.sentRecipientIds) && current.sentRecipientIds.length)) current.idempotencyKey = "";
+        inboxSaveDraft_(draftKind, {
+            ...current, recipientIds, recipientId: recipientIds[0] || "",
+            subject: subject.value, category: category.value, body: body.value, templateId: template.value
+        });
     };
-    [recipient,subject,category,body].forEach(element => { element.addEventListener("input", persist); element.addEventListener("change", persist); });
+    [subject,category,body].forEach(element => { element.addEventListener("input", persist); element.addEventListener("change", persist); });
     category.addEventListener("change", closeComposerOptions);
     template.addEventListener("change", () => {
         closeComposerOptions();
@@ -5222,34 +5290,97 @@ async function openInboxNewConversationForm_() {
         if (selected && selected.id) { subject.value = selected.subject; body.value = sanitizeHtmlContent(selected.body, "advanced"); bodyEditor.innerHTML = body.value; category.value = "general"; }
         persist();
     });
+    const sentRecipientIds = new Set(Array.isArray(draft.sentRecipientIds) ? draft.sentRecipientIds.map(String) : []);
+    const lockComposerForPartialSend = () => {
+        recipientCheckboxes.forEach(checkbox => { checkbox.disabled = true; });
+        recipientPickerButton.disabled = true;
+        subject.disabled = true;
+        category.disabled = true;
+        template.disabled = true;
+        composerOptionsButton.disabled = true;
+        bodyEditor.setAttribute("contenteditable", "false");
+        bodyEditor.setAttribute("aria-disabled", "true");
+        form.classList.add("is-partial-send-locked");
+        closeRecipientPicker();
+        closeComposerOptions();
+    };
+    if (sentRecipientIds.size) {
+        lockComposerForPartialSend();
+        formStatus.textContent = "El envío quedó parcial. Reintenta para completar los destinatarios sin modificar el mensaje.";
+    }
     form.addEventListener("submit", async event => {
         event.preventDefault();
-        const recipientId = recipient.value, subjectValue = subject.value.trim(), bodyValue = sanitizeHtmlContent(bodyEditor.innerHTML, "advanced").trim();
+        const recipientIds = getSelectedRecipientIds();
+        const subjectValue = subject.value.trim(), bodyValue = sanitizeHtmlContent(bodyEditor.innerHTML, "advanced").trim();
         const hasVisibleBody = Boolean((bodyEditor.textContent || "").trim() || bodyEditor.querySelector("img"));
-        if (!recipientId || !subjectValue || !hasVisibleBody || !bodyValue) { formStatus.textContent = "Completa destinatario, asunto y mensaje."; return; }
-        if (typeof navigator !== "undefined" && navigator.onLine === false) { formStatus.textContent = "Sin conexión. El borrador quedó guardado."; return; }
-        const current = inboxReadDraft_(draftKind), fingerprint = [recipientId,subjectValue,category.value,bodyValue].join("|");
+        if (!recipientIds.length || !subjectValue || !hasVisibleBody || !bodyValue) {
+            formStatus.textContent = "Selecciona al menos un destinatario y completa asunto y mensaje.";
+            return;
+        }
+        if (typeof navigator !== "undefined" && navigator.onLine === false) {
+            formStatus.textContent = "Sin conexión. El borrador quedó guardado.";
+            return;
+        }
+        const current = inboxReadDraft_(draftKind);
+        const fingerprint = [recipientIds.join(","),subjectValue,category.value,bodyValue].join("|");
+        const alreadySent = new Set(Array.isArray(current.sentRecipientIds) ? current.sentRecipientIds.map(String) : []);
+        if (alreadySent.size && current.lastAttemptFingerprint && current.lastAttemptFingerprint !== fingerprint) {
+            formStatus.textContent = "El envío ya comenzó para parte de los destinatarios. Completa el reintento sin modificar el contenido.";
+            return;
+        }
         const idempotencyKey = current.idempotencyKey || inboxNewIdempotencyKey_();
-        inboxSaveDraft_(draftKind, { ...current, recipientId, subject: subjectValue, category: category.value, body: bodyValue, idempotencyKey, lastAttemptFingerprint: fingerprint });
-        send.disabled = true; formStatus.textContent = "Enviando…";
+        const batchDraft = {
+            ...current, recipientIds, recipientId: recipientIds[0], subject: subjectValue,
+            category: category.value, body: bodyValue, idempotencyKey,
+            lastAttemptFingerprint: fingerprint, sentRecipientIds: Array.from(alreadySent)
+        };
+        inboxSaveDraft_(draftKind, batchDraft);
+        send.disabled = true;
+        formStatus.textContent = "Preparando envío privado…";
+        let firstResult = null;
+        const firstRecipientId = recipientIds[0];
+        const delivered = new Set(alreadySent);
         try {
-            const result = await createInboxConversation({ ...(context || {}), recipientId, subject: subjectValue, category: category.value, body: bodyValue, idempotencyKey });
-            if (!result || result.status !== "success" || !result.conversationId) throw new Error(result && result.message || "No se pudo crear la conversación.");
-            inboxClearDraft_(draftKind); if (legacyDraftKind) inboxClearDraft_(legacyDraftKind);
+            // Cada conversación se crea de forma individual y secuencial para respetar el lock breve de Inbox.
+            for (const [index, recipientId] of recipientIds.entries()) {
+                const safeRecipientId = String(recipientId).replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 60);
+                const recipientIdempotencyKey = (idempotencyKey + "_" + (index + 1) + "_" + safeRecipientId).slice(0, 100);
+                formStatus.textContent = "Enviando " + (index + 1) + " de " + recipientIds.length + "…";
+                const result = await createInboxConversation({
+                    ...(context || {}), recipientId, subject: subjectValue,
+                    category: category.value, body: bodyValue, idempotencyKey: recipientIdempotencyKey
+                });
+                if (!result || result.status !== "success" || !result.conversationId) {
+                    throw new Error(result && result.message || "No se pudo completar el envío a " + recipientId + ".");
+                }
+                delivered.add(recipientId);
+                if (!firstResult) firstResult = result;
+                batchDraft.sentRecipientIds = Array.from(delivered);
+                inboxSaveDraft_(draftKind, { ...batchDraft, batchLocked: delivered.size > 0 });
+                if (delivered.size > 0) lockComposerForPartialSend();
+            }
             invalidateInboxConversationListCache_(context);
             inboxConversationFolder_ = "sent"; inboxConversationPageStack_ = [0]; inboxConversationPageIndex_ = 0;
             document.getElementById("inbox-folder-nav")?.querySelectorAll("[data-inbox-folder]").forEach(button =>
                 button.setAttribute("aria-pressed", String(button.dataset.inboxFolder === "sent")));
             await loadInboxConversations_({ reset: true });
-            const created = inboxConversationItems_.find(item => item.conversationId === result.conversationId) || {
-                conversationId: result.conversationId, subject: subjectValue, category: category.value,
-                otherParticipants: recipients.filter(user => user.id === recipientId).map(user => ({ id: user.id, name: user.name, role: user.role })),
+            const created = inboxConversationItems_.find(item => item.conversationId === firstResult.conversationId) || {
+                conversationId: firstResult.conversationId, subject: subjectValue, category: category.value,
+                otherParticipants: recipients.filter(user => user.id === firstRecipientId).map(user => ({ id: user.id, name: user.name, role: user.role })),
                 unreadCount: 0, archived: false, status: "open"
             };
             await selectInboxConversation_(created);
-            inboxSetStatus_("Mensaje enviado.", false);
+            inboxClearDraft_(draftKind);
+            if (legacyDraftKind) inboxClearDraft_(legacyDraftKind);
+            inboxSetStatus_("Mensaje enviado a " + recipientIds.length + " destinatarios mediante conversaciones privadas.", false);
         } catch (error) {
-            formStatus.textContent = error && error.message ? error.message : "No se pudo enviar. El borrador se conservó.";
+            batchDraft.sentRecipientIds = Array.from(delivered);
+            inboxSaveDraft_(draftKind, { ...batchDraft, batchLocked: delivered.size > 0 });
+            if (delivered.size > 0) lockComposerForPartialSend();
+            const errorMessage = error && error.message ? error.message : "No se pudo completar el envío. El borrador se conservó.";
+            formStatus.textContent = delivered.size
+                ? "Envío parcial: " + delivered.size + " de " + recipientIds.length + " destinatarios. " + errorMessage + " Reintenta para completar sin duplicar mensajes."
+                : errorMessage;
             inboxSetStatus_(formStatus.textContent, true);
         } finally { send.disabled = false; }
     });
@@ -13469,19 +13600,25 @@ export function openPysDetailModal(item,navOptions={},inEditModePys=false){
     const isDeveloper = userRole === 'desarrollador';
 
     const headerDiv = document.createElement("div");
-    headerDiv.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;";
+    headerDiv.className = "tutorial-detail-toolbar pys-detail-toolbar";
 
     const titleContainer = document.createElement("div");
-    titleContainer.style.cssText = "display: flex; align-items: center; gap: 8px; flex: 1;";
+    titleContainer.className = "pys-detail-title-container";
 
     const title = document.createElement("h2");
+    title.className = "tutorial-detail-title pys-detail-title";
+    title.id = "modal-pys-detail-title";
     title.textContent = item.Problema || "Problema técnico";
-    title.style.cssText = "margin: 0; font-size: 1.5rem; font-weight: bold; color: var(--text-color, #222);";
     titleContainer.appendChild(title);
     headerDiv.appendChild(titleContainer);
 
     const controlsContainer = document.createElement("div");
-    controlsContainer.style.cssText = "display: flex; align-items: center; gap: 8px;";
+    controlsContainer.className = "tutorial-detail-header-actions pys-detail-header-actions";
+    if (modalDetalle) {
+        modalDetalle.setAttribute("role", "dialog");
+        modalDetalle.setAttribute("aria-modal", "true");
+        modalDetalle.setAttribute("aria-labelledby", title.id);
+    }
 
     if (isDeveloper) {
         if (inEditModePys) {
@@ -13532,9 +13669,10 @@ export function openPysDetailModal(item,navOptions={},inEditModePys=false){
     };
 
     const closeBtn = document.createElement("button");
+    closeBtn.type = "button";
+    closeBtn.setAttribute("aria-label", "Cerrar problema y solución");
     closeBtn.innerHTML = "&times;";
-    closeBtn.className = "info-close-btn";
-    closeBtn.style.cssText = "position: static; font-size: 1.8em; padding: 0 4px;";
+    closeBtn.className = "info-close-btn tutorial-detail-close";
     closeBtn.onclick = closePysModal;
     controlsContainer.appendChild(closeBtn);
 

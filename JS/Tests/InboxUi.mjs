@@ -506,6 +506,22 @@ check("Al abrir una conversación o redactar, la lista lateral se oculta y el de
     assert.match(css, /#inbox-modal-content\.is-detail-open \.inbox-conversations-view\s*\{[^}]*grid-template-columns:minmax\(0,1fr\)/s);
     assert.match(css, /#inbox-modal-content\.is-detail-open \.inbox-mobile-back\s*\{[^}]*display:inline-flex/s);
 });
+check("El compositor permite varios destinatarios con conversaciones separadas y privadas", () => {
+    assert.ok(ui.includes("const selectedRecipientIds = new Set(savedRecipientIds"));
+    assert.ok(ui.includes('checkbox.name = "inbox-recipient-ids"'));
+    assert.ok(ui.includes("for (const [index, recipientId] of recipientIds.entries())"));
+    assert.ok(ui.includes("idempotencyKey: recipientIdempotencyKey"));
+    assert.ok(ui.includes("Mensaje enviado a "));
+    assert.ok(css.includes(".inbox-recipient-picker-menu[hidden]"));
+    assert.equal(ui.includes('createInboxConversation({ ...(context || {}), recipientIds:'), false);
+});
+check("Los menús enriquecidos cierran al pulsar fuera tanto en barras básicas como completas", () => {
+    assert.ok(rich.includes("function bindRichToolbarOutsideDismiss_()"));
+    assert.ok(rich.includes('document.addEventListener("pointerdown"'));
+    assert.ok(rich.includes('target.closest(".rich-toolbar-dropdown")'));
+    assert.ok(rich.includes('document.querySelectorAll(".rich-toolbar-dropdown.is-open")'));
+    assert.ok(rich.includes("bindRichToolbarOutsideDismiss_();"));
+});
 check("El compositor aprovecha la altura, elimina el título redundante y compacta el asunto", () => {
     assert.doesNotMatch(ui, /inbox-new-title|Nuevo mensaje\"\)/);
     assert.match(css, /\.inbox-new-conversation-form \.inbox-editor-shell\s*\{[^}]*min-height:260px/s);

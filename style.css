@@ -6117,3 +6117,64 @@ textarea.rich-text-source[hidden] { display:none !important; }
     .detail-modal-divider { margin-top: 2px; }
     .detail-modal-header-actions { padding-right: 42px; }
 }
+
+
+/* GP-UX-INBOX-PRIVATE-MULTI-RECIPIENT-01 — selector táctil accesible para destinatarios independientes. */
+#inbox-modal-content .inbox-recipient-field { position:relative; min-width:0; }
+#inbox-modal-content .inbox-recipient-picker { position:relative; display:block; width:100%; min-width:0; }
+#inbox-modal-content .inbox-recipient-picker-toggle {
+    display:flex; align-items:center; justify-content:space-between; width:100%;
+    min-width:0; min-height:38px; padding:7px 10px; border:1px solid var(--gp-color-border,var(--border-color,#bbb));
+    border-radius:8px; color:var(--gp-color-text,var(--text-color,#333));
+    background:var(--gp-color-elevated,var(--modal-bg,#fff)); text-align:left;
+}
+#inbox-modal-content .inbox-recipient-picker-toggle::after { content:"▾"; flex:0 0 auto; margin-left:10px; }
+#inbox-modal-content .inbox-recipient-picker-menu {
+    position:absolute; z-index:10010; top:calc(100% + 4px); left:0; right:0;
+    max-height:min(240px,calc(100dvh - 32px)); overflow:auto; padding:6px;
+    border:1px solid var(--gp-color-border,var(--border-color,#bbb)); border-radius:9px;
+    background:var(--gp-color-elevated,var(--modal-bg,#fff)); box-shadow:0 8px 24px rgba(0,0,0,.18);
+}
+#inbox-modal-content .inbox-recipient-picker-menu[hidden] { display:none !important; }
+#inbox-modal-content .inbox-recipient-option {
+    display:grid; grid-template-columns:20px minmax(0,1fr) auto; align-items:center; gap:8px;
+    min-height:38px; margin:0; padding:5px 7px; border-radius:6px; cursor:pointer;
+}
+#inbox-modal-content .inbox-recipient-option:hover { background:var(--gp-color-button-bg,var(--button-bg,#eee)); }
+#inbox-modal-content .inbox-recipient-option input { width:16px; height:16px; margin:0; }
+#inbox-modal-content .inbox-recipient-option-name { min-width:0; overflow-wrap:anywhere; }
+#inbox-modal-content .inbox-recipient-option-role { color:var(--gp-color-text-muted,var(--text-muted,#777)); font-size:.76rem; }
+#inbox-modal-content .inbox-new-conversation-form.is-partial-send-locked .inbox-editor-shell .inbox-rich-editor {
+    opacity:.85; cursor:not-allowed;
+}
+
+/* GP-UX-MODAL-HEADER-TIGHTEN-03 — acciones junto al cierre y compactación medida del encabezado. */
+#modalDetalle[data-modal-type="corte"] .detail-modal-header-actions {
+    padding-right:0 !important; margin-left:0; justify-content:flex-end;
+}
+#modalDetalle[data-modal-type="corte"] .detail-modal-header-actions > .info-close-btn {
+    position:static !important; flex:0 0 40px; width:40px; min-width:40px;
+    height:40px; min-height:40px; margin:0 !important; padding:0 4px;
+}
+#modalDetalle[data-modal-type="corte"] .detail-modal-title {
+    height:129px; padding:0 !important;
+}
+#modalDetalle[data-modal-type="corte"] .detail-modal-title-text { transform:translateY(-6px); }
+#modalDetalle[data-modal-type="corte"] .detail-modal-divider { margin:1px 0 2px 6px; }
+#modalDetalle[data-modal-type="corte"] .detail-modal-toolbar { margin-bottom:7px; }
+#modalDetalle[data-modal-type="corte"] .detail-modal-meta { margin-top:-6px; }
+@media (max-width:560px) {
+    #modalDetalle[data-modal-type="corte"] .detail-modal-title { height:111px; padding:0 !important; }
+    #modalDetalle[data-modal-type="corte"] .detail-modal-toolbar {
+        grid-template-rows:40px minmax(71px,1fr) auto auto;
+        margin-bottom:6px;
+    }
+    #modalDetalle[data-modal-type="corte"] .detail-modal-divider { margin-top:1px; margin-bottom:2px; }
+    #modalDetalle[data-modal-type="corte"] .detail-modal-header-actions > .info-close-btn {
+        flex-basis:40px; width:40px; min-width:40px; height:40px; min-height:40px;
+    }
+}
+
+/* GP-UX-PYS-MODAL-HEADER-01 — PyS comparte jerarquía, color y cierre de tutoriales. */
+.pys-detail-toolbar { margin:0 0 7px; padding-bottom:0; }
+.pys-detail-title-container { display:flex; flex:1 1 auto; align-items:center; min-width:0; }

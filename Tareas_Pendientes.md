@@ -1593,3 +1593,17 @@ Evidencia y ubicaciones: adenda del 2026-11-17 en `Auditoría.txt`. La revisión
 - **GP-UX-MODAL-HEADERS-02:** implementación y contratos locales validados en el CI del HEAD actual; la comprobación visual en navegador/dispositivo real permanece en Beta.
 - **Regresión actual:** Actions `44170476002` SUCCESS — 145 suites, 2,127 pruebas aprobadas, 0 fallos. GitHub Pages `44170474862` SUCCESS. Health remoto `44170475959` SUCCESS, únicamente diagnóstico GET de solo lectura.
 - **Estado de continuidad:** no quedan tareas de implementación local abiertas en el plan consolidado. Permanecen las validaciones Beta enumeradas en este backlog. No se desplegaron Apps Script ni se modificaron ScriptProperties, secretos, hojas, Drive o datos externos.
+
+
+---
+
+## GP-UX-INBOX-PRIVATE-MULTI-RECIPIENT-01 / GP-UX-MODAL-HEADER-TIGHTEN-03 — 2026-11-17
+
+**Alcance implementado localmente en `GPSpedia2.2.5_work`:**
+- Inbox permite marcar varios destinatarios en un selector desplegable táctil. La aplicación realiza una alta de conversación por cada destinatario, cada hilo contiene solo al remitente y a ese destinatario. No se usa CC visible ni una conversación grupal que revele a los demás receptores.
+- El envío secuencial conserva el bloqueo de escritura compartido, con clave idempotente individual por usuario, seguimiento del progreso en el borrador y reintento seguro. Tras una entrega parcial se bloquean los campos para impedir cambiar el contenido antes de completar.
+- Los menús de la barra enriquecida (completa/básica y menús de listas) se cierran al pulsar fuera de la lista/opción abierta.
+- Encabezado del detalle de corte: controles en una sola fila, al extremo derecho y junto al botón de cierre; padding interno del contenedor del logo eliminado; separaciones verticales alrededor del divisor reducidas aproximadamente a la mitad; modelo ligeramente elevado sin alterar tamaño, sombra ni dimensiones declaradas del logo.
+- Modal PyS usa título azul y jerarquía/cierre accesible alineados con los demás modales.
+
+**Verificación:** se agregaron pruebas para la privacidad de participantes, selector múltiple, envío secuencial idempotente, cierre exterior de menús y encabezados Corte/PyS. Esperar los workflows del commit para registrar los resultados exactos. No se desplegarán Apps Script ni se modificará datos externos.

@@ -370,3 +370,14 @@ undefined
 - Las notas históricas de P1.2 EN PROGRESO quedan supersedidas por sus cierres P1.2a/P1.2b y P1.3.
 - No quedan tareas de implementación local abiertas en el plan consolidado. Las validaciones visuales, navegador/PWA y servicios externos siguen diferidas a Beta. No se desplegaron Apps Script ni se modificaron datos externos.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — GP-UX-INBOX-PRIVATE-MULTI-RECIPIENT-01 / GP-UX-MODAL-HEADER-TIGHTEN-03
+- El compositor Inbox permite seleccionar varios destinatarios. Cada selección se entrega mediante una conversación directa independiente (remitente + un destinatario); no se crea un hilo con lista visible de copiados.
+- El envío múltiple se procesa secuencialmente para respetar el bloqueo breve de escritura existente. Cada conversación usa una clave idempotente propia derivada de la clave del lote; el progreso se guarda en el borrador y un reintento reproduce las operaciones de forma segura sin duplicarlas. Si ya hubo entrega parcial, el contenido se bloquea hasta completar el reintento.
+- Los menús de las barras enriquecidas cierran al pulsar fuera del desplegable en modos completos y básicos.
+- Detalle de corte: Imprimir/Editar/Compartir y Cerrar quedan en una misma fila, alineados al extremo derecho. Se elimina el padding interno del contenedor del logo, se reduce a la mitad el espacio vertical calculado del encabezado/divisor y se eleva ligeramente el modelo sin cambiar fuente, sombras o dimensiones del logo.
+- PyS adopta el encabezado azul común, alineación y cierre accesible.
+- Se añadieron contratos Inbox UI/backend y regresión de encabezados de corte/PyS; pendientes de confirmar en Actions.
+================================================================================

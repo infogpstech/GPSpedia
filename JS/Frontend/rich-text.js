@@ -322,6 +322,23 @@ function isRichContentEditable_(element) {
 }
 
 
+let richToolbarOutsideDismissBound_ = false;
+function bindRichToolbarOutsideDismiss_() {
+    if (richToolbarOutsideDismissBound_ || typeof document === "undefined") return;
+    richToolbarOutsideDismissBound_ = true;
+    document.addEventListener("pointerdown", event => {
+        const target = event.target;
+        const activeDropdown = target && typeof target.closest === "function" ? target.closest(".rich-toolbar-dropdown") : null;
+        document.querySelectorAll(".rich-toolbar-dropdown.is-open").forEach(group => {
+            if (activeDropdown && group.contains(target)) return;
+            group.classList.remove("is-open");
+            group.querySelector(".rich-toolbar-icon-button")?.setAttribute("aria-expanded", "false");
+            const menu = group.querySelector(".rich-toolbar-menu");
+            if (menu) menu.hidden = true;
+        });
+    }, true);
+}
+
 function normalizeEditorMode_(mode) { return ["basic", "lists", "advanced"].includes(mode) ? mode : null; }
 function resolveRichTextTarget_(targetId) {
     const direct = document.getElementById(targetId);
@@ -699,6 +716,7 @@ function createCompactRichTextToolbar_(targetId, forceAdvanced) {
 }
 
 export function createRichTextToolbar(targetId, options = {}) {
+    bindRichToolbarOutsideDismiss_();
     const forceAdvanced = options.forceAdvanced === true;
     const editorMode = normalizeEditorMode_(options.mode) || (forceAdvanced ? "advanced" : (getRichTextMode() === "advanced" ? "advanced" : "basic"));
     const isFull = editorMode === "advanced", hasLists = editorMode === "lists" || isFull;
