@@ -513,3 +513,8 @@ Estado: **EN PROGRESO** hasta ejecutar la suite Node.js completa disponible; la 
 - Siguiente tarea iniciada tras cerrar GP-AUTH-PASSWORD-RECOVERY-01.
 - Hallazgos: lectura de Cortes en múltiples grupos de columnas con presupuesto de 12s; el snapshot se guarda solo después de completar la captura. UI exige ADMIN 2.6.1 aunque el servicio publica 2.7.1, por lo que descarta respuestas/cursor válidos.
 - Plan: agrupar ventanas de columnas con separación acotada, ampliar el presupuesto sin permitir snapshots parciales, validar versiones semánticas en UI, aclarar error de captura sin cursor y rediseñar la barra de biblioteca.
+
+
+### Adenda CI — App Shell v67
+- La ejecución del commit 17943b11060ff42e3f40bccc44b3d5bfbfa89895 falló por una aserción estática antigua en PasswordRecovery.mjs que esperaba v66. Los escenarios funcionales de recuperación pasaron antes de esa aserción.
+- Se sincroniza el contrato de prueba con v67; auditoría/biblioteca siguen EN PROGRESO hasta CI verde.

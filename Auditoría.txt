@@ -124,3 +124,10 @@ Resultado: implementación local cerrada con validación diferida a Beta. No se 
 - El diseño actual de Biblioteca distribuye búsqueda, selección y carpetas en tres filas sin una barra de herramientas compacta; los controles masivos muestran texto aunque pueden conservar acciones con iconos y etiquetas accesibles.
 - Criterio de seguridad: no persistir ni clasificar un snapshot incompleto como completo. La corrección prioriza reducir lecturas, ampliar el presupuesto de captura y mantener el rechazo de datos parciales.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — AJUSTE DE CONTRATO DE PRUEBA APP SHELL
+- CI identificó que PasswordRecovery.mjs todavía esperaba el cache key v66 tras el incremento a v67. Los escenarios de lógica de recuperación habían pasado; el fallo fue únicamente la aserción estática del service worker.
+- Se sincroniza la expectativa con v67 antes de repetir la suite.
+================================================================================

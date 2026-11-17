@@ -1550,3 +1550,10 @@ GP-UX-PYS-TUTORIAL-ASSOCIATION-06 — 2026-11-16
 - Se identificó desajuste de contrato: backend ADMIN 2.7.1 vs frontend que exige 2.6.1.
 - Se inicia optimización de rangos, corrección de versionado de respuesta, mensaje claro cuando no existe cursor y reorganización de la Biblioteca con barra iconográfica accesible.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — SINCRONIZACIÓN DE PRUEBA TRAS App Shell v67
+- CI del commit 17943b11060ff42e3f40bccc44b3d5bfbfa89895 alcanzó los escenarios funcionales de PasswordRecovery, pero el archivo de prueba mantenía una aserción estática de gpsepedia-cache-v66.
+- Se actualiza la aserción a gpsepedia-cache-v67, coherente con el cambio de App Shell. No cambia el comportamiento de producción.
+================================================================================
