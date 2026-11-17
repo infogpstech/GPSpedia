@@ -538,8 +538,11 @@ function runWriteDriveWorkOutsideScriptLock_(lock, state, opId, operation) {
 
 function handleAddOrUpdateCut(payload) {
     const lock = LockService.getScriptLock();
-    try { lock.waitLock(30000); }
-    catch (error) { throw new Error("No se pudo obtener el bloqueo para registrar el corte. Por favor reintente en unos instantes."); }
+    if (!lock.tryLock(0)) {
+        const busyError = new Error("WRITE está ocupado con otra escritura. Conserva el mismo opId y reintenta en unos instantes.");
+        busyError.code = "WRITE_BUSY";
+        throw busyError;
+    }
     const lockState = { releasedForDrive: false };
     try { return handleAddOrUpdateCutLocked(payload, lock, lockState); }
     finally { if (lock.hasLock()) lock.releaseLock(); }

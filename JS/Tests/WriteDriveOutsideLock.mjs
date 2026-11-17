@@ -56,4 +56,6 @@ const locked=extract("handleAddOrUpdateCutLocked","handleAddOrUpdateCutLockedUns
 assert.ok(locked.includes('getAuthenticatedCollaborator(payload, payload && payload.silent === true ? ["desarrollador"] : undefined)'));
 assert.ok(locked.includes("lockState && lockState.releasedForDrive"));
 assert.ok(source.includes("if (lock.hasLock()) lock.releaseLock()"));
+assert.match(source,/function handleAddOrUpdateCut\(payload\)\s*\{[\\s\\S]{0,240}lock\\.tryLock\\(0\\)/);
+assert.doesNotMatch(source,/function handleAddOrUpdateCut\\(payload\\)\\s*\\{[\\s\\S]{0,160}waitLock\\(30000\\)/);
 console.log("WRITE Drive fuera del ScriptLock y reserva de slots: 7/7 PASS");
