@@ -318,7 +318,7 @@ function getNextFormulaBasedId_(sheet, idColumn) {
     const alreadyHeld = typeof lock.hasLock === "function" && lock.hasLock();
     let acquired = false;
     try {
-        if (!alreadyHeld) { lock.waitLock(15000); acquired = true; }
+        if (!alreadyHeld) { acquireFeedbackScriptLock_(lock); acquired = true; }
         const pattern = getFormulaBasedIdPattern_(sheet, idColumn);
         const lastRow = sheet.getLastRow(), lastColumn = Math.max(sheet.getLastColumn(), idColumn);
         const rows = lastRow > 1 ? sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues() : [];
@@ -506,7 +506,12 @@ function buildFeedbackCortesCatalogChange_(reference) {
 
 function publishFeedbackCortesCatalogChange_(action, reference) {
     const lock = LockService.getScriptLock();
-    lock.waitLock(15000);
+    try { acquireFeedbackScriptLock_(lock); }
+    catch (lockError) {
+        try { publishSharedCatalogChange_("FEEDBACK", action, { operation: "reset" }); }
+        catch (publishError) { console.error(publishError); }
+        return;
+    }
     try {
         try {
             const change = buildFeedbackCortesCatalogChange_(reference);
@@ -519,6 +524,20 @@ function publishFeedbackCortesCatalogChange_(action, reference) {
     }
 }
 
+
+function acquireFeedbackScriptLock_(lock) {
+    const message = "FEEDBACK está procesando otra escritura. Conserva el identificador de operación y vuelve a intentar.";
+    if (lock && typeof lock.tryLock === "function") {
+        if (!lock.tryLock(0)) throw new Error(message);
+        return true;
+    }
+    // Compatibilidad exclusiva con dobles de prueba antiguos; en Apps Script se usa tryLock(0).
+    if (lock && typeof lock.waitLock === "function") {
+        lock.waitLock(0);
+        return true;
+    }
+    throw new Error(message);
+}
 
 const DIRECT_SERVICE_TRAFFIC_CONFIG_ = Object.freeze({
     service: "FEEDBACK",
@@ -1182,7 +1201,7 @@ function movePrimaryVehicleImageToCanonicalFolder(sheet, rowNumber, vehicleRow) 
 
 function handleSuggestYear(payload) {
     const lock = LockService.getScriptLock();
-    lock.waitLock(15000);
+    acquireFeedbackScriptLock_(lock);
     try {
         return handleSuggestYearLocked(payload);
     } finally {
@@ -1699,7 +1718,7 @@ function handleRecordLike(payload) {
     if (!vehicleId || !userId || !userName || !Number.isInteger(corteIndex) || corteIndex < 1 || corteIndex > 3) throw new Error("Faltan datos verificados para registrar el like.");
     const actorKey = "user:" + userId;
     const lock = LockService.getScriptLock();
-    lock.waitLock(15000);
+    acquireFeedbackScriptLock_(lock);
     try {
         const cuts = getSafeSheet(SHEET_NAMES.CORTES);
         if (!cuts) throw new Error("Hoja Cortes no encontrada.");
@@ -1850,7 +1869,7 @@ function handleReportProblem(payload) {
     if (reportContext) { reportContext.category = ticketCategory; reportContext.subject = ticketSubject; }
     const imageAttachment=validateReportImageAttachment_(payload.imageAttachment);
     if(imageAttachment&&!reportContext) throw new Error("El adjunto requiere un identificador de reporte individual válido.");
-    const lock=LockService.getScriptLock(); lock.waitLock(10000);
+    const lock=LockService.getScriptLock(); acquireFeedbackScriptLock_(lock);
     let generatedReportId="",duplicateReport=false,uploadedImage=null,resolvedImageUrl="";
     let pendingSheet=null,pendingRowNumber=0,pendingMetadataColumn=0,pendingExistingMetadata=null;
     try {
@@ -1934,7 +1953,7 @@ function enforceFeedbackRateLimit_(scope, limit, windowSeconds) {
 }
 function handleSendContactForm(payload) {
     const lock = LockService.getScriptLock();
-    lock.waitLock(15000);
+    acquireFeedbackScriptLock_(lock);
     try {
     const name = String(payload && payload.name || "").trim();
     const email = String(payload && payload.email || "").trim();
@@ -2616,7 +2635,7 @@ function handleSuggestCutChange(payload) {
         normalizedDetails, normalizedProposedValues, legacyImageDataUrl
     );
     const lock = LockService.getScriptLock();
-    lock.waitLock(10000);
+    acquireFeedbackScriptLock_(lock);
     let uploadedImage = null, pendingSheet = null, pendingRowNumber = 0, rowCommitted = false, result = null;
     try {
         const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
@@ -2931,7 +2950,12 @@ function buildPysCatalogChange_(reference) {
 
 function publishPysCatalogChange_(action, reference) {
     const lock = LockService.getScriptLock();
-    lock.waitLock(15000);
+    try { acquireFeedbackScriptLock_(lock); }
+    catch (lockError) {
+        try { publishSharedCatalogChange_("FEEDBACK", action, { operation: "reset" }); }
+        catch (publishError) { console.error(publishError); }
+        return;
+    }
     try {
         try {
             const change = buildPysCatalogChange_(reference);
@@ -2993,7 +3017,7 @@ function getPysYouTubeVideoId_(value){
 function getCanonicalPysYouTubeUrl_(value){const id=getPysYouTubeVideoId_(value);return id?"https://www.youtube.com/watch?v="+id:"";}
 
 function handleAddProblem(source) {
- source=source||{};const opId=String(source.opId||"").trim();if(!/^[A-Za-z0-9_-]{20,80}$/.test(opId))throw new Error("El identificador de operación PyS es obligatorio y debe ser válido.");const titulo=normalizePysField_(source.titulo,"El título",PYS_TITLE_MAX_LENGTH,true,false),descripcion=normalizePysField_(source.descripcion,"La descripción",PYS_DESCRIPTION_MAX_LENGTH,true,true),sinSolucion=source.sinSolucion;if(typeof sinSolucion!=="boolean")throw new Error("El indicador «Sin solución» debe ser booleano.");const solucion=normalizePysField_(source.solucion===undefined&&sinSolucion?"":source.solucion,"La solución",PYS_SOLUTION_MAX_LENGTH,!sinSolucion,true),prevenir=normalizePysField_(source.prevenir===undefined?"":source.prevenir,"La prevención",PYS_SOLUTION_MAX_LENGTH,false,true),userId=String(source.userId||"").trim(),userName=String(source.userName||"").trim(),videoUrl=source.videoUrl===undefined?"":source.videoUrl;if(typeof videoUrl!=="string")throw new Error("La URL de YouTube debe ser texto.");if(videoUrl.trim()){if(!getPysYouTubeVideoId_(videoUrl))throw new Error("La URL de YouTube no tiene un host, ruta o ID permitido.");throw new Error("El vídeo debe cargarse mediante el flujo de aprobación de YouTube; no se aceptan enlaces directos.");}if(!userId||!userName)throw new Error("La sesión verificada no proporcionó un colaborador válido.");const image=validatePysImageDataUrl_(source.imgBase64),requestedModels=source.alcance==="especifico"&&Array.isArray(source.modelosAsociados)?parseModelosAsociados(source.modelosAsociados):[];let models=requestedModels;const p={titulo,descripcion,sinSolucion,solucion,prevenir,userId,userName,alcance:source.alcance,modelosAsociados:[]};const lock=LockService.getScriptLock();lock.waitLock(15000);let sheet=null,opsSheet=null,op=null,file=null,url="",fileId="",problemId="";
+ source=source||{};const opId=String(source.opId||"").trim();if(!/^[A-Za-z0-9_-]{20,80}$/.test(opId))throw new Error("El identificador de operación PyS es obligatorio y debe ser válido.");const titulo=normalizePysField_(source.titulo,"El título",PYS_TITLE_MAX_LENGTH,true,false),descripcion=normalizePysField_(source.descripcion,"La descripción",PYS_DESCRIPTION_MAX_LENGTH,true,true),sinSolucion=source.sinSolucion;if(typeof sinSolucion!=="boolean")throw new Error("El indicador «Sin solución» debe ser booleano.");const solucion=normalizePysField_(source.solucion===undefined&&sinSolucion?"":source.solucion,"La solución",PYS_SOLUTION_MAX_LENGTH,!sinSolucion,true),prevenir=normalizePysField_(source.prevenir===undefined?"":source.prevenir,"La prevención",PYS_SOLUTION_MAX_LENGTH,false,true),userId=String(source.userId||"").trim(),userName=String(source.userName||"").trim(),videoUrl=source.videoUrl===undefined?"":source.videoUrl;if(typeof videoUrl!=="string")throw new Error("La URL de YouTube debe ser texto.");if(videoUrl.trim()){if(!getPysYouTubeVideoId_(videoUrl))throw new Error("La URL de YouTube no tiene un host, ruta o ID permitido.");throw new Error("El vídeo debe cargarse mediante el flujo de aprobación de YouTube; no se aceptan enlaces directos.");}if(!userId||!userName)throw new Error("La sesión verificada no proporcionó un colaborador válido.");const image=validatePysImageDataUrl_(source.imgBase64),requestedModels=source.alcance==="especifico"&&Array.isArray(source.modelosAsociados)?parseModelosAsociados(source.modelosAsociados):[];let models=requestedModels;const p={titulo,descripcion,sinSolucion,solucion,prevenir,userId,userName,alcance:source.alcance,modelosAsociados:[]};const lock=LockService.getScriptLock();acquireFeedbackScriptLock_(lock);let sheet=null,opsSheet=null,op=null,file=null,url="",fileId="",problemId="";
 try{models=requestedModels.map(findUniqueCortesVehicleForPys_);p.modelosAsociados=models;const hash=buildPysPayloadHash_(p,image,models);sheet=getPysSheet_(true);validatePysRecords_(sheet);opsSheet=getPysOperationsSheet_();const ops=readPysOperations_(opsSheet);op=ops.find(x=>x.opId===opId)||null;if(op){if(op.payloadHash!==hash)throw new Error("El identificador de operación ya pertenece a otro contenido PyS; no se creó otro problema.");if(op.status==="RECOVERY_REQUIRED")throw new Error("La operación PyS requiere recuperación manual; no se creó otro problema.");problemId=op.problemId;const existing=findPysRowsById_(sheet,problemId);if(existing.length>1)throw new Error("El ID del problema aparece más de una vez; se detuvo la recuperación.");if(existing.length===1){const storedUrl=normalizePysImageReference_(existing[0].row[6]),expected=buildPysExpectedRow_(problemId,p,storedUrl,models);if(!storedUrl||!pysRowMatchesPayload_(existing[0].row,expected))throw new Error("El registro PyS existente no coincide con la operación; requiere revisión.");if(op.status!=="LINKED")op=writePysOperation_(opsSheet,op.rowNumber,Object.assign({},op,{status:"LINKED",imageUrl:storedUrl,updatedAt:new Date().toISOString()}));return{status:"success",message:"Problema registrado correctamente.",problemId,recovered:true};}if(op.status==="LINKED")throw new Error("La operación PyS figura vinculada, pero no existe su registro; requiere revisión.");fileId=op.imageFileId;url=op.imageUrl;}else{problemId=getPysNextId_(sheet,ops);op=writePysOperation_(opsSheet,0,{opId,payloadHash:hash,problemId,status:"PENDING",imageFileId:"",imageUrl:"",createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});}
 const folder=getPysImagesFolder_().folder;if(fileId){if(op.status!=="UPLOAD_PENDING")throw new Error("La operación PyS contiene una referencia de imagen inesperada; requiere revisión.");try{file=verifyPendingPysImageFile_(op,image,folder);}catch(e){try{writePysOperation_(opsSheet,op.rowNumber,Object.assign({},op,{status:"RECOVERY_REQUIRED",updatedAt:new Date().toISOString()}));}catch(ledgerError){}throw e;}}else{if(op.status!=="PENDING")throw new Error("El estado de la operación PyS no permite reintentar automáticamente.");file=folder.createFile(Utilities.newBlob(image.bytes,image.mimeType,problemId+"_"+Date.now()+"."+image.extension));if(!file)throw new Error("Drive no confirmó la creación de la imagen.");fileId=String(file.getId()||"").trim();if(!/^[A-Za-z0-9_-]{10,110}$/.test(fileId))throw new Error("Drive no devolvió un identificador válido para la imagen.");url="https://drive.google.com/file/d/"+fileId+"/view";file.setDescription(["GPSpedia PyS — UPLOAD_PENDING","problemId="+problemId,"fileId="+fileId,"mimeType="+image.mimeType,"sizeBytes="+image.sizeBytes].join("\n"));assertPysImageFolderPermissions_(file,folder);op=writePysOperation_(opsSheet,op.rowNumber,Object.assign({},op,{status:"UPLOAD_PENDING",imageFileId:fileId,imageUrl:url,updatedAt:new Date().toISOString()}));}
 const expected=buildPysExpectedRow_(problemId,p,url,models);sheet.appendRow(expected);SpreadsheetApp.flush();const stored=findPysRowsById_(sheet,problemId);if(stored.length!==1||!pysRowMatchesPayload_(stored[0].row,expected))throw new Error("No se pudo confirmar una única fila PyS con los datos enviados.");op=writePysOperation_(opsSheet,op.rowNumber,Object.assign({},op,{status:"LINKED",imageFileId:fileId,imageUrl:url,updatedAt:new Date().toISOString()}));try{file.setDescription(["GPSpedia PyS — LINKED","problemId="+problemId,"fileId="+fileId,"mimeType="+image.mimeType,"sizeBytes="+image.sizeBytes].join("\n"));}catch(metadataError){console.warn("No se pudo actualizar el estado auxiliar de la imagen PyS:",metadataError);}try{logUserActivity(userId,userName,"add_problem",problemId,titulo);}catch(logError){console.error("No se pudo registrar la actividad de alta PyS:",logError);}return{status:"success",message:"Problema registrado correctamente.",problemId};
@@ -3006,7 +3030,7 @@ function withPysMutationLock_(callback) {
     const alreadyHeld = typeof lock.hasLock === "function" && lock.hasLock();
     let acquired = false;
     try {
-        if (!alreadyHeld) { lock.waitLock(15000); acquired = true; }
+        if (!alreadyHeld) { acquireFeedbackScriptLock_(lock); acquired = true; }
         return callback();
     } finally {
         if (acquired) lock.releaseLock();
@@ -3159,7 +3183,12 @@ function buildTutorialCatalogChange_(reference) {
 
 function publishTutorialCatalogChange_(action, reference) {
     const lock = LockService.getScriptLock();
-    lock.waitLock(15000);
+    try { acquireFeedbackScriptLock_(lock); }
+    catch (lockError) {
+        try { publishSharedCatalogChange_("FEEDBACK", action, { operation: "reset" }); }
+        catch (publishError) { console.error(publishError); }
+        return;
+    }
     try {
         try {
             const change = buildTutorialCatalogChange_(reference);
@@ -3217,7 +3246,7 @@ function handleAddTutorial(payload) {
 
     const tutorialId = "tut-" + operationId;
     const lock = LockService.getScriptLock();
-    lock.waitLock(15000);
+    acquireFeedbackScriptLock_(lock);
     try {
         const sheet = getTutorialSheet_(true);
         const existingId = sheet.getDataRange().getValues().slice(1)
@@ -3933,11 +3962,13 @@ function handleRejectVideoUnlocked_(payload) {
  */
 function withVideoApprovalMutationLock_(callback) {
     const lock = LockService.getScriptLock();
-    lock.waitLock(15000);
+    const alreadyHeld = typeof lock.hasLock === "function" && lock.hasLock();
+    let acquired = false;
     try {
+        if (!alreadyHeld) { acquireFeedbackScriptLock_(lock); acquired = true; }
         return callback();
     } finally {
-        lock.releaseLock();
+        if (acquired) lock.releaseLock();
     }
 }
 
@@ -4008,7 +4039,7 @@ function handleUpdateTutorialItem(payload) {
     if (!Object.keys(updates).length) throw new Error("No se recibieron campos editables del tutorial.");
 
     const lock = LockService.getScriptLock();
-    lock.waitLock(15000);
+    acquireFeedbackScriptLock_(lock);
     try {
         const sheet = getTutorialSheet_(false);
         if (!sheet) throw new Error("Hoja Tutorial no encontrada.");

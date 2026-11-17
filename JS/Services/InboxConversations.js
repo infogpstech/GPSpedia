@@ -14,7 +14,13 @@ const INBOX_ACTIVE_ROLES_ = new Set(["desarrollador","jefe","supervisor","tecnic
 
 function withInboxConversationLock_(callback) {
     const lock = LockService.getScriptLock();
-    lock.waitLock(10000);
+    if (typeof lock.tryLock === "function") {
+        if (!lock.tryLock(0)) throw new Error("Inbox está procesando otra escritura. Vuelve a intentar.");
+    } else if (typeof lock.waitLock === "function") {
+        lock.waitLock(0);
+    } else {
+        throw new Error("No se pudo adquirir el bloqueo breve de Inbox.");
+    }
     try { return callback(); } finally { lock.releaseLock(); }
 }
 function findOrCreateInboxSheet_(name) {
