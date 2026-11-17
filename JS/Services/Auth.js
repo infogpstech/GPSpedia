@@ -2433,7 +2433,7 @@ function handleResetUserPassword(payload) {
         }
 
         const newHash = createPasswordHash(newPassword);
-        revokeSharedUserSessionContexts_(targetId);
+        revokeSharedUserSessionContexts_(targetId, getActiveSessionTokensForUserUnderLock_(sessionsSheet, targetId));
         const revocation = revokeAllUserSessionsUnderLock_(sessionsSheet, targetId);
         revokedSessions = revocation.revokedSessions;
         if (revocation.pendingRows.length || revocation.pendingLoginRequests) {
