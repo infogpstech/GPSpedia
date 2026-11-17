@@ -99,6 +99,13 @@ function event(request = { method: 'GET', mode: 'cors', destination: 'script', u
  };
 }
 
+test('todos los recursos esenciales del precache existen en el repositorio', async () => {
+ const match = source.match(/const CORE_ASSETS=(\[[^\]]*\]);/);
+ assert.ok(match, 'CORE_ASSETS debe estar declarado');
+ const assets = JSON.parse(match[1].replaceAll("'", '"'));
+ const missing = assets.filter(asset => !fs.existsSync(new URL('../../' + asset.replace(/^\.\//, ''), import.meta.url)));
+ assert.deepEqual(missing, [], 'el precache no debe apuntar a archivos inexistentes');
+});
 test('precache conserva el App Shell, las páginas auxiliares y el grafo JS', async () => {
  const h = harness(), e = event();
  h.listeners.install(e);
