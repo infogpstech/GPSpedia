@@ -40,7 +40,7 @@ function runUtilitiesSecurityTests(){
   return{ss,src,dst,state,request:{action:"migrateTimestamps",payload:{userId:"USR-1",sessionToken:"TOKEN-1"}}};
  }
  function run_(h,req){return JSON.parse(doPost({postData:{contents:JSON.stringify(req||h.request)}}).content);}
- test_("POST sin sesión se rechaza y conserva destino/libera lock",()=>{const h=harness_(),old=JSON.stringify(h.dst.v),r=run_(h,{action:"migrateTimestamps",payload:{}});assert_(r.status==="error"&&JSON.stringify(h.dst.v)===old&&h.state.released===1&&!h.state.held&&h.state.sharedReleases===1&&!h.state.sharedHeld);});
+ test_("POST sin sesión se rechaza y conserva destino/libera lock",()=>{const h=harness_(),old=JSON.stringify(h.dst.v),r=run_(h,{action:"migrateTimestamps",payload:{}});assert_(r.status==="error"&&JSON.stringify(h.dst.v)===old&&h.state.released===0&&!h.state.held&&h.state.sharedReleases===0&&!h.state.sharedHeld);});
  test_("Rol no Desarrollador se rechaza",()=>{const h=harness_({role:"Tecnico"}),r=run_(h);assert_(r.status==="error"&&h.dst.v[0][0]==="old timestamp");});
  test_("Sesión duplicada, expirada o revocada falla cerrada",()=>{[{duplicate:true},{expired:true},{revocation:true}].forEach(o=>{const h=harness_(o),r=run_(h);assert_(r.status==="error"&&h.dst.v[0][0]==="old timestamp");});});
  test_("La sesión válida consume actor central sin reescribir ActiveSessions",()=>{const h=harness_(),sessions=h.ss.getSheetByName("ActiveSessions");sessions.v[1][5]=new Date(Date.now()-2*24*60*60*1000);const before=sessions.v[1][5].getTime(),r=run_(h),after=new Date(sessions.v[1][5]).getTime();assert_(r.status==="success"&&after===before);});

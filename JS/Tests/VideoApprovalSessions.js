@@ -16,7 +16,8 @@ function runVideoApprovalSessionTests() {
         expect_(()=>assertFeedbackSession({userId:"user-1",sessionToken:"token-1"},null),"contexto de sesión compartido");
     });
     run_("rechaza identidad solicitada distinta al actor",()=>{
-        expect_(()=>assertFeedbackSession(actorPayload("Desarrollador","user-2"),null),"sesión no autorizada");
+        const payload=actorPayload("Desarrollador");payload.userId="user-2";
+        expect_(()=>assertFeedbackSession(payload,null),"sesión no autorizada");
     });
     run_("rechaza actor con epoch inválido",()=>{
         expect_(()=>assertFeedbackSession(actorPayload("Desarrollador","user-1",0),null),"contexto de sesión compartido");

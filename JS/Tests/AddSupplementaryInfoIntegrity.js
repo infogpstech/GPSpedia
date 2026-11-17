@@ -51,7 +51,7 @@ function runAddSupplementaryInfoIntegrityTests(sources) {
  run_("UI no calcula slot desde item posiblemente obsoleto",function(){assert_(!String(sources.ui||"").includes("if (!item.cableAlimen)")&&String(sources.ui||"").includes("El servidor asigna el primer par"));});
 
  const authStart=String(sources.write).indexOf("function getAuthenticatedCollaborator(");
- const authEnd=String(sources.write).indexOf("\n}",authStart)+2;
+ const authEnd=String(sources.write).indexOf(String.fromCharCode(10)+"}",authStart)+2;
  const authSource=String(sources.write).slice(authStart,authEnd<0?undefined:authEnd);
  const getAuth=new Function(authSource+";return getAuthenticatedCollaborator;")();
  const allowedSupplementaryRoles=["desarrollador","jefe","supervisor","tecnico","tecnico_exterior"];
