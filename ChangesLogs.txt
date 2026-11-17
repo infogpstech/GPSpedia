@@ -82,3 +82,14 @@ undefined
 - Evidencia de regresión del corte: run 44017363224 SUCCESS, 132 suites / 1965 pruebas / 0 fallos.
 - No se modificaron fuentes de servicios Apps Script, deployments, ScriptProperties ni datos externos.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — GP-DEV-TRAFFIC-GLOBAL-02 — PRESENTACIÓN GLOBAL EN DASHBOARD
+- JS/Frontend/ui.js: el detalle por servicio ahora lee los totales globales de Coordinator (1 h, 6 h y 24 h); se retiró el gráfico local y sus suscripciones/refrescos.
+- index.html: se retiró el panel «Actividad de este navegador» y se aclaró el alcance de la métrica global.
+- JS/Frontend/api-config.js: se retiró la captura y exportación de métricas locales de routeAction y del feed de catálogo.
+- Se eliminó JS/Frontend/serviceMetrics.js; se actualizaron ServiceTrafficAdminContract.mjs, ServiceMetricsTelemetry.mjs, RouteActionErrors.mjs y RunServiceTests.mjs para el nuevo contrato.
+- Services/COORDINATOR_SETUP.md actualizado para documentar que el dashboard usa solo Coordinator.
+- No se modificó código de Coordinator ni de los servicios Apps Script. No se alteraron propiedades ni datos remotos.
+================================================================================
