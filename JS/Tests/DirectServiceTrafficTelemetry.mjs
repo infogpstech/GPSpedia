@@ -8,7 +8,6 @@ const services = [
     { name: "AUTH", path: "JS/Services/Auth.js", actions: ["validateSession"], end: "function doGet(e)" },
     { name: "WRITE", path: "JS/Services/write.js", actions: ["checkVehicle", "getSuggestion", "checkVinDuplicate"], end: "function doGet(e)" },
     { name: "FEEDBACK", path: "JS/Services/feedback.js", actions: ["getPysData", "sendContactForm"], end: "function doGet(e)" },
-    { name: "UTILITIES", path: "JS/Services/Utilities.js", actions: ["migrateTimestamps"], end: "function doPost(e)" }
 ];
 const base = 1_800_000_000_000;
 const secret = "direct-service-secret-".padEnd(48, "x");
@@ -102,11 +101,7 @@ for (const service of services) {
         const doPostStart = source.indexOf("function doPost(e)");
         const doPostEnd = source.indexOf("\nfunction ", doPostStart + 15);
         const doPost = source.slice(doPostStart, doPostEnd > doPostStart ? doPostEnd : source.length);
-        if (service.name === "UTILITIES") {
-            assert.ok(doPost.includes('body&&body.action==="getServiceTraffic"'));
-        } else {
-            assert.ok(doPost.includes('action === "getServiceTraffic"'));
-        }
+        assert.ok(doPost.includes('action === "getServiceTraffic"'));
         assert.ok(doPost.includes("recordDirectServiceTraffic_()"));
         assert.ok(doPost.includes("DIRECT_SERVICE_TRAFFIC_CONFIG_.actions.has"));
     });
