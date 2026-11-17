@@ -28,7 +28,7 @@ assert.match(shared,/send_\("getServiceTraffic", "ADMIN", "getServiceTraffic", \
 
 assert.match(html,/id="global-service-traffic-chart"/);
 assert.match(html,/Tráfico global coordinado/);
-assert.doesNotMatch(html,/service-traffic-chart|Actividad de este navegador/);
+assert.doesNotMatch(html,/id="service-traffic-chart"|Actividad de este navegador/);
 assert.match(html,/Un cero no significa necesariamente que el servicio no recibió solicitudes/);
 assert.match(ui,/routeActionWithRetry\("getServiceTraffic",\s*getSessionPayload_\(\)/);
 assert.match(ui,/lastGlobalServiceTrafficFetchAt < 60000/);
