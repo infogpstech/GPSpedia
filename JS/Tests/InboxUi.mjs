@@ -297,7 +297,24 @@ check("Nuevo mensaje está en la barra superior y Buscar permanece junto a las c
     assert.match(actionMarkup, /id="inbox-new-message"/);
     assert.doesNotMatch(actionMarkup, /inbox-requests-tab|data-inbox-view="requests"/);
     assert.match(ui, /if \(newMessageButton\) newMessageButton\.hidden = false/);
-    assert.match(ui, /if \(inboxConversationCurrentView_ !== "conversations"\) await setInboxSection_\("general"\)/);
+    assert.match(ui, /if \(inboxConversationCurrentView_ !== "conversations"\) \{[\s\S]*?await setInboxSection_\("general", \{ backgroundLoad: true \}\)/);
+});
+check("El compositor no espera la carga remota de conversaciones al cambiar desde Solicitudes", () => {
+    const sectionStart = ui.indexOf("async function setInboxSection_");
+    const viewStart = ui.indexOf("async function setInboxView_", sectionStart);
+    const conversationsStart = ui.indexOf("async function loadInboxConversations_", viewStart);
+    const section = ui.slice(sectionStart, viewStart);
+    const view = ui.slice(viewStart, conversationsStart);
+    const composeStart = ui.indexOf("async function openInboxNewConversationForm_");
+    const composeEnd = ui.indexOf("\nfunction ", composeStart + 10);
+    const compose = ui.slice(composeStart, composeEnd);
+    assert.match(section, /backgroundLoad: options\.backgroundLoad === true/);
+    assert.match(view, /if \(options\.backgroundLoad === true\)/);
+    assert.match(view, /Promise\.resolve\(loadInboxConversations_\(loadOptions\)\)/);
+    assert.match(view, /\.finally\(\(\) => \{/);
+    assert.ok(view.indexOf("Promise.resolve(loadInboxConversations_") < view.indexOf("startInboxSync_"));
+    assert.ok(compose.indexOf('await setInboxSection_("general", { backgroundLoad: true })') <
+        compose.indexOf("await getInboxRecipients(context)"));
 });
 check("Los wrappers de API conservan el contrato de Inbox", () => {
     for (const name of ["getInboxRecipients","getInboxConversations","getInboxMessages","createInboxConversation","sendInboxMessage","markInboxRead","archiveInboxConversation","closeInboxConversation"]) {
