@@ -139,7 +139,9 @@ function createSharedMutationClient_(dependencies) {
         const id = String(userId || "").trim();
         const tokens = Array.from(new Set((Array.isArray(sessionTokens) ? sessionTokens : [])
             .map(token => String(token || "")).filter(Boolean)));
-        if (!id || tokens.length > 5) throw new Error("La invalidación de caché requiere un usuario y hasta cinco tokens de sesión.");
+        if (!id || id.length > 128 || tokens.some(token => token.length > 200)) {
+            throw new Error("La invalidación de caché requiere un usuario y tokens de sesión válidos.");
+        }
         if (!tokens.length) return { status: "success", invalidated: 0 };
         const secret = String(properties.getProperty("GPSpedia_SESSION_CACHE_INVALIDATION_SECRET") || "");
         const endpoints = [
@@ -151,24 +153,31 @@ function createSharedMutationClient_(dependencies) {
             if (!url.startsWith("https://script.google.com/macros/s/") || !url.endsWith("/exec")) {
                 throw new Error("Falta configurar la URL de invalidación de " + service + " en AUTH.");
             }
-            let response;
-            try {
-                response = fetch(url, {
-                    method: "post", contentType: "application/json", muteHttpExceptions: true, followRedirects: true,
-                    payload: JSON.stringify({ action: "__invalidateSessionActorCache",
-                        payload: { secret, userId: id, sessionTokens: tokens } })
-                });
-            } catch (error) {
-                throw new Error("No se pudo invalidar la caché de sesión en " + service + ".");
-            }
-            let result;
-            try { result = JSON.parse(response.getContentText()); } catch (error) { result = null; }
-            const status = response.getResponseCode();
-            if (status < 200 || status >= 300 || !result || result.status !== "success" ||
-                result.invalidated !== tokens.length) {
-                throw new Error("No se pudo confirmar la invalidación de caché en " + service + ".");
-            }
         });
+        // WRITE/FEEDBACK reciben lotes pequeños; las cuentas Developer pueden
+        // mantener sesiones ilimitadas y no deben quedar parcialmente revocadas.
+        for (let offset = 0; offset < tokens.length; offset += 5) {
+            const batch = tokens.slice(offset, offset + 5);
+            endpoints.forEach(([service, url]) => {
+                let response;
+                try {
+                    response = fetch(url, {
+                        method: "post", contentType: "application/json", muteHttpExceptions: true, followRedirects: true,
+                        payload: JSON.stringify({ action: "__invalidateSessionActorCache",
+                            payload: { secret, userId: id, sessionTokens: batch } })
+                    });
+                } catch (error) {
+                    throw new Error("No se pudo invalidar la caché de sesión en " + service + ".");
+                }
+                let result;
+                try { result = JSON.parse(response.getContentText()); } catch (error) { result = null; }
+                const status = response.getResponseCode();
+                if (status < 200 || status >= 300 || !result || result.status !== "success" ||
+                    result.invalidated !== batch.length) {
+                    throw new Error("No se pudo confirmar la invalidación de caché en " + service + ".");
+                }
+            });
+        }
         return { status: "success", invalidated: tokens.length };
     }
     function revokeSession(userId, sessionToken) {
