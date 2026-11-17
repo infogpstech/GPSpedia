@@ -13676,7 +13676,48 @@ export function openAddTutorialModal() {
     const submitBtn = content.querySelector("#tut-save-btn");
     const uploadBtn = content.querySelector("#tut-upload-video-btn");
     const videoUrlInput = content.querySelector("#tut-video-url");
+    const tutorialTextFields = [
+        content.querySelector("#tut-tema"),
+        content.querySelector("#tut-como-identificarlo"),
+        content.querySelector("#tut-donde-encontrarlo"),
+        content.querySelector("#tut-desc")
+    ];
     let isSaving = false;
+    let tutorialOperationId = "";
+    let createdTutorialId = "";
+    let pendingApprovalVideoId = "";
+
+    const refreshTutorialCatalog = async () => {
+        try {
+            const fresh = await routeAction("getCatalogData");
+            if (fresh && fresh.data) setState({ catalogData: fresh.data });
+        } catch (refreshError) {
+            console.warn("El tutorial se registró, pero no se pudo actualizar el catálogo en pantalla:", refreshError);
+        }
+    };
+    const createOperationId = () => {
+        if (!window.crypto || typeof window.crypto.getRandomValues !== "function") {
+            throw new Error("Este navegador no permite generar un identificador seguro para el registro.");
+        }
+        const bytes = new Uint8Array(16);
+        window.crypto.getRandomValues(bytes);
+        return Array.from(bytes, value => value.toString(16).padStart(2, "0")).join("");
+    };
+    const getTutorialVideoApprovalOperationId = referenceId => {
+        const storageKey = "gpsepedia_tutorial_video_approval_" + encodeURIComponent(String(referenceId)) +
+            "_" + encodeURIComponent(String(pendingApprovalVideoId));
+        let opVideoId = "";
+        try {
+            opVideoId = String(sessionStorage.getItem(storageKey) || "");
+            if (!/^[A-Za-z0-9_-]{20,80}$/.test(opVideoId)) {
+                opVideoId = createOperationId();
+                sessionStorage.setItem(storageKey, opVideoId);
+            }
+        } catch (storageError) {
+            throw new Error("No se pudo conservar el identificador de aprobación. No se envió el enlace para evitar solicitudes duplicadas.");
+        }
+        return { opVideoId, storageKey };
+    };
 
     const saveTutorial = async ({ openUploader = false } = {}) => {
         if (isSaving) return;
@@ -13692,8 +13733,8 @@ export function openAddTutorialModal() {
         const rawVideoUrl = videoUrlInput.value.trim();
         const videoId = rawVideoUrl ? getValidatedYouTubeVideoId(rawVideoUrl) : null;
 
-        if (!tema || tema.length > 30 || comoIdentificarlo.length > 700 ||
-            dondeEncontrarlo.length > 700 || detalles.length > 700) {
+        if (!createdTutorialId && (!tema || tema.length > 30 || comoIdentificarlo.length > 700 ||
+            dondeEncontrarlo.length > 700 || detalles.length > 700)) {
             showGlobalError("Revisa el tema y los límites de caracteres de los campos.");
             return;
         }
@@ -13707,6 +13748,11 @@ export function openAddTutorialModal() {
             videoUrlInput.focus();
             return;
         }
+        if (pendingApprovalVideoId && videoId !== pendingApprovalVideoId) {
+            showGlobalError("La solicitud anterior aún no se ha confirmado. Reintenta con el mismo enlace para evitar solicitudes duplicadas.");
+            videoUrlInput.value = "https://www.youtube.com/watch?v=" + pendingApprovalVideoId;
+            return;
+        }
 
         isSaving = true;
         submitBtn.disabled = true;
@@ -13715,53 +13761,76 @@ export function openAddTutorialModal() {
         uploadBtn.innerText = openUploader ? "Preparando subida..." : "Subir archivo de vídeo";
 
         try {
-            const operationId = Array.from(crypto.getRandomValues(new Uint8Array(16)))
-                .map(value => value.toString(16).padStart(2, "0")).join("");
-            const payload = {
-                operationId, tema, comoIdentificarlo, dondeEncontrarlo, detalles,
-                videoUrl: videoId ? "https://www.youtube.com/watch?v=" + videoId : "",
-                ...getSessionPayload_()
-            };
-            const created = await addTutorial(payload);
-            if (!created || created.status !== "success" || !created.referenceId) {
-                throw new Error("El servidor no confirmó el destino del tutorial.");
-            }
-
-            modal.remove();
-            try {
-                const res = await routeAction("getCatalogData");
-                if (res && res.data) setState({ catalogData: res.data });
-            } catch (refreshError) {
-                console.warn("El tutorial se registró, pero no se pudo actualizar el catálogo en pantalla:", refreshError);
+            if (!createdTutorialId) {
+                if (!tutorialOperationId) tutorialOperationId = createOperationId();
+                const payload = {
+                    operationId: tutorialOperationId, tema, comoIdentificarlo, dondeEncontrarlo, detalles,
+                    videoUrl: "", ...getSessionPayload_()
+                };
+                const created = await addTutorial(payload);
+                if (!created || created.status !== "success" || !created.referenceId) {
+                    throw new Error("El servidor no confirmó el destino del tutorial.");
+                }
+                createdTutorialId = String(created.referenceId);
+                tutorialTextFields.forEach(field => { field.disabled = true; });
             }
 
             if (openUploader) {
+                modal.remove();
                 openYouTubeUploadModal({
                     initialTitle: tema,
                     initialDescription: detalles,
                     contentType: "tutorial",
-                    referenceId: created.referenceId,
-                    metadata: { tutorialId: created.referenceId, tema },
-                    onSuccess: async () => {
-                        try {
-                            const fresh = await routeAction("getCatalogData");
-                            if (fresh && fresh.data) setState({ catalogData: fresh.data });
-                        } catch (refreshError) {
-                            console.warn("El vídeo se envió, pero no se pudo actualizar el catálogo en pantalla:", refreshError);
-                        }
-                    }
+                    referenceId: createdTutorialId,
+                    metadata: { tutorialId: createdTutorialId, tema },
+                    onSuccess: refreshTutorialCatalog
                 });
-            } else {
-                mostrarNotificacion(videoId ? "Tutorial registrado con enlace de YouTube." : "Tutorial registrado correctamente.", "success");
+                await refreshTutorialCatalog();
+                return;
             }
+
+            if (videoId) {
+                pendingApprovalVideoId = videoId;
+                const operation = getTutorialVideoApprovalOperationId(createdTutorialId);
+                const canonicalVideoUrl = "https://www.youtube.com/watch?v=" + videoId;
+                const approval = await routeAction("submitVideoForApproval", {
+                    opVideoId: operation.opVideoId,
+                    title: tema,
+                    description: detalles,
+                    contentType: "tutorial",
+                    referenceId: createdTutorialId,
+                    metadata: { tutorialId: createdTutorialId, tema },
+                    videoId,
+                    videoUrl: canonicalVideoUrl,
+                    ...getSessionPayload_()
+                });
+                if (!approval || approval.status !== "success" ||
+                    approval.videoUrl !== canonicalVideoUrl || approval.opVideoId !== operation.opVideoId) {
+                    throw new Error("El servicio no confirmó la solicitud de aprobación del enlace.");
+                }
+                try { sessionStorage.removeItem(operation.storageKey); } catch (storageError) {}
+            }
+
+            modal.remove();
+            await refreshTutorialCatalog();
+            mostrarNotificacion(
+                videoId
+                    ? "Tutorial registrado. El enlace de YouTube fue enviado a aprobación y aparecerá después de aprobarse."
+                    : "Tutorial registrado correctamente.",
+                "success"
+            );
         } catch (err) {
             console.error(err);
             showGlobalError("Error al registrar tutorial: " + err.message);
             isSaving = false;
             submitBtn.disabled = false;
             uploadBtn.disabled = false;
-            submitBtn.innerText = "Guardar Tutorial";
+            submitBtn.innerText = createdTutorialId ? "Reintentar / Guardar" : "Guardar Tutorial";
             uploadBtn.innerHTML = '<i class="fa-solid fa-upload" aria-hidden="true"></i> Subir archivo de vídeo';
+            if (pendingApprovalVideoId) {
+                videoUrlInput.value = "https://www.youtube.com/watch?v=" + pendingApprovalVideoId;
+                videoUrlInput.disabled = true;
+            }
         }
     };
 
@@ -13773,6 +13842,7 @@ export function openAddTutorialModal() {
         if (!form.reportValidity()) return;
         saveTutorial({ openUploader: true });
     };
+
 }
 window.applyRichFormat = function(targetId, format) {
     const textarea = document.getElementById(targetId);
