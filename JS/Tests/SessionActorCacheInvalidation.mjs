@@ -105,4 +105,4 @@ assert.equal(authSource.includes("revokeSharedUserSessionContexts_(targetId, get
 assert.match(authSource, /function getActiveSessionTokensForUserUnderLock_/);
 assert.doesNotMatch(apiConfigSource, /__invalidateSessionActorCache/);
 
-console.log("SessionActorCacheInvalidation: PASS — claves compatibles, autenticación interna, aislamiento por token, flujos AUTH y fallo parcial");
+console.log("SessionActorCacheInvalidation: 23/23 PASS — claves compatibles, autenticación interna, aislamiento por token, flujos AUTH y fallo parcial");
