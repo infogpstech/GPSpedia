@@ -688,6 +688,10 @@ function doPost(e) {
     }
     if (!request || typeof request !== "object") return doPostInternal_(e);
     const action = String(request.action || "");
+    if (action === "__invalidateSessionActorCache") {
+        const invalidation = handleSharedSessionActorCacheInvalidation_(request.payload);
+        return ContentService.createTextOutput(JSON.stringify(invalidation)).setMimeType(ContentService.MimeType.JSON);
+    }
     if (action === "getServiceTraffic") {
         const traffic = readDirectServiceTraffic_(request.payload && request.payload.secret);
         return ContentService.createTextOutput(JSON.stringify(traffic)).setMimeType(ContentService.MimeType.TEXT);
