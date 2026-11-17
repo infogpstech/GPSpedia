@@ -637,9 +637,23 @@ function auditHarness() {
         deleteProperty: key => properties.delete(key)
     }) };
     const cacheTtl = new Map();
-    let failPutKey = "", evictPageOnManifest = false;
+    let failPutKey = "", evictPageOnManifest = false, getAllCalls = 0, putAllCalls = 0;
     const CacheService = { getScriptCache: () => ({
         get: key => cache.has(key) ? cache.get(key) : null,
+        getAll: keys => {
+            getAllCalls++;
+            const values = {};
+            keys.forEach(key => { if (cache.has(key)) values[key] = cache.get(key); });
+            return values;
+        },
+        putAll: (values, ttl) => {
+            putAllCalls++;
+            Object.entries(values).forEach(([key, value]) => {
+                if (failPutKey === key) throw new Error("simulated cache write failure");
+                cache.set(key, String(value));
+                if (ttl !== undefined) cacheTtl.set(key, ttl);
+            });
+        },
         put: (key, value, ttl) => {
             if (failPutKey === key) throw new Error("simulated cache write failure");
             cache.set(key, String(value));
@@ -673,6 +687,8 @@ function auditHarness() {
         "\nreturn {cleanupExpiredDriveAuditServerStates_,clearExpiredDriveAuditCacheState_,getDriveAuditServerStateKey_,getDriveAuditPageResultCacheKey_,hashDriveAuditValue_,getDriveAuditCursorFingerprint_,normalizeDriveAuditFileIds_,hashDriveAuditFileIds_,saveDriveAuditServerState_,loadDriveAuditServerState_,getDriveAuditSeenPageCacheKey_,storeDriveAuditSeenPage_,loadDriveAuditSeenIds_,getDuplicateDriveImageRows_,getReplacedImageReconciliationUrl_,buildVerifiedDriveVisualizationUrl_,storeDriveAuditPageResults_,loadDriveAuditUnusedFileIds_,getLatestDriveAuditIdForUser_,validateCompletedDriveAudit_,getDriveAuditReferenceSnapshotConfig_,validateAuditDriveReferenceSnapshot_,removeAuditDriveReferenceSnapshotCache_,storeAuditDriveReferenceSnapshot,loadAuditDriveReferenceSnapshot,refreshAuditDriveReferenceSnapshot_,clearAuditDriveReferenceSnapshot};")(
             PropertiesService,CacheService,Utilities,extractDriveFileIds);
     return { ...api, properties, cache, cacheTtl,
+        get getAllCalls() { return getAllCalls; },
+        get putAllCalls() { return putAllCalls; },
         setFailPutKey: key => { failPutKey = String(key || ""); },
         setEvictPageOnManifest: value => { evictPageOnManifest = value === true; } };
 }
@@ -859,6 +875,19 @@ check("La deduplicación global del servidor conserva IDs únicos entre páginas
     assert.equal(h.getDriveAuditSeenPageCacheKey_(AUDIT_ID,0),h.getDriveAuditPageResultCacheKey_(AUDIT_ID,0));
     assert.equal(h.cache.size,2);
     assert.throws(()=>h.loadDriveAuditSeenIds_(AUDIT_ID,3),/Falta una página/);
+});
+check("La deduplicación global renueva páginas CacheService en lotes de hasta 100",()=>{
+    const h=auditHarness();
+    const idFor = value => "drive-file-" + String(value).padStart(20, "0");
+    for (let page = 0; page < 205; page++) {
+        h.storeDriveAuditSeenPage_(AUDIT_ID, page, [idFor(page)], [idFor(page + 1000)]);
+    }
+    const result = h.loadDriveAuditSeenIds_(AUDIT_ID, 205);
+    assert.equal(result.fileIds.length, 205);
+    assert.equal(result.folderIds.length, 205);
+    assert.equal(h.getAllCalls, 6, "Tres lotes requieren una lectura y una verificación cada uno.");
+    assert.equal(h.putAllCalls, 3);
+    assert.equal(h.cacheTtl.get(h.getDriveAuditSeenPageCacheKey_(AUDIT_ID, 204)), 21600);
 });
 check("Una página de caché incompleta no sobrescribe los IDs del inventario",()=>{
     const h=auditHarness(), key=h.getDriveAuditSeenPageCacheKey_(AUDIT_ID,0);
