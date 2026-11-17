@@ -19,4 +19,4 @@ assert.match(ui,/Operaciones globales \(24 h\)/);
 assert.match(html,/Tráfico global coordinado/);
 assert.doesNotMatch(html,/Actividad de este navegador|id="service-traffic-chart"/);
 
-console.log("ServiceMetricsTelemetry: local telemetry retired; Coordinator is the dashboard source");
+console.log("ServiceMetricsTelemetry: 1/1 PASS");
