@@ -433,3 +433,10 @@ undefined
 - Health read-only 44151856097 SUCCESS: 7/7 servicios disponibles. No se desplegó Apps Script y el health check no valida la nueva acción interna.
 - Se corrigió el caso de cuentas Developer con sesiones ilimitadas: invalidación en lotes de cinco, confirmación de WRITE/FEEDBACK para cada lote y revocación central única al final. Se reutiliza GPSpedia_COORDINATOR_SECRET.
 - La rama base GPSpedia2.2.5 sigue en d9acc68d889985c2e2f42fe3a02e502efc86ead1. Siguiente fase local: verificación técnica integral del conjunto de mejoras; las validaciones que requieren deployment, ScriptProperties o datos reales permanecen en Beta.
+### Continuidad — inicio P4 de GP-PERF-SIMPLIFY-01 — 2026-11-17
+- P3.1c quedó cerrada localmente y validada por CI; despliegues Apps Script y pruebas de campo siguen diferidos a Beta.
+- Siguiente fase del plan: P4, optimización general de plataforma. Auditoría inicial en AUDITORIA_P4_OPTIMIZACION_PLATAFORMA.md.
+- P4.1 activa: lectura de PyS en paralelo con el snapshot/cursor inicial de catálogo; aislar fallos PyS y no alinear su cursor si los datos no quedaron frescos.
+- P4.2: compositor Inbox desde Solicitudes no debe esperar la lectura de conversaciones para cargar destinatarios.
+- P4.3: auditar locks globales en herramientas ADMIN de auditoría/organización Drive. Preservar verificaciones de referencias y rollback.
+- Mantener telemetría, dashboard y health read-only. Sin deployments ni modificaciones de Spreadsheet/Drive productivos.
