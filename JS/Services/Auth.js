@@ -663,10 +663,6 @@ function isSharedMutationAction_(action) {
     return ["login","touchSession","acceptTerms","requestPasswordRecovery","completePasswordRecovery","changePassword","resetUserPassword","resetUserSessions","clearSensitiveLogs","deleteUser","updateUser","logout","migrateLegacyPasswords"].includes(action);
 }
 
-function isSharedReadAction_(action) {
-    return ["benchmarkPasswordKdf"].includes(action);
-}
-
 function syncAuthSheetActivityFromActor_(userId, sessionToken, actor) {
     if (!actor || !actor.userId || actor.userId !== normalizeUserId(userId) ||
         !sessionToken || !Number.isFinite(Number(actor.lastActivityAt))) {
@@ -709,9 +705,22 @@ function doPost(e) {
         return ContentService.createTextOutput(JSON.stringify(traffic)).setMimeType(ContentService.MimeType.TEXT);
     }
     if (DIRECT_SERVICE_TRAFFIC_CONFIG_.actions.has(action)) recordDirectServiceTraffic_();
-    if (!isSharedMutationAction_(action) && !isSharedReadAction_(action)) return doPostInternal_(withSharedSessionActor_(e, null));
-
     const payload = request.payload && typeof request.payload === "object" ? request.payload : {};
+    if (action === "benchmarkPasswordKdf") {
+        try {
+            // El benchmark solo calcula con una cadena fija: el actor cacheado basta;
+            // no requiere lease ni actualización de actividad en Coordinator.
+            const actor = getCachedSharedSessionActor_(payload.userId, payload.sessionToken);
+            return doPostInternal_(withSharedSessionActor_(e, actor));
+        } catch (error) {
+            return ContentService.createTextOutput(JSON.stringify({
+                status: "error",
+                message: error && error.message ? error.message : "No se pudo recuperar el contexto de sesión."
+            })).setMimeType(ContentService.MimeType.TEXT);
+        }
+    }
+    if (!isSharedMutationAction_(action)) return doPostInternal_(withSharedSessionActor_(e, null));
+
     const nestedToken = String(payload.__sharedMutationToken || "").trim();
     const sessionOptions = payload.sessionToken && action !== "logout"
         ? { session: { sessionToken: payload.sessionToken } } : undefined;
