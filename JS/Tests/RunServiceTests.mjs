@@ -151,6 +151,7 @@ runGroup('35','UTILITIES',()=>{
 });
 runGroup('36','AUTH',()=>{
  runCli('AUTH aceptación de términos por usuario y dispositivo','JS/Tests/TermsAcceptance.js');
+  runCli('AUTH aceptación local y sincronización asíncrona por sesión/dispositivo','JS/Tests/TermsAsyncSync.mjs');
  runCli('AUTH purga de Logs usando actor confiable sin revalidación por acción','JS/Tests/SensitiveLogsTrustedActor.mjs');
  runCli('AUTH restauración de sesión sin revalidación redundante','JS/Tests/SessionRestoreOnValidationFailure.mjs');
   runCli('AUTH recuperación accesible de sesiones revocadas/legacy','JS/Tests/SessionInvalidationFlow.mjs');
