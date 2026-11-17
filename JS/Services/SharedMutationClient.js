@@ -306,7 +306,7 @@ function validateSharedSessionContext_(userId, sessionToken) {
 
 function getSharedSessionActorCacheKey_(userId, sessionToken) {
     const bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,
-        String(userId || "").trim() + "\n" + String(sessionToken || ""), Utilities.Charset.UTF_8);
+        String(userId || "").trim() + "\\n" + String(sessionToken || ""), Utilities.Charset.UTF_8);
     return "GPSpedia_SHARED_SESSION_ACTOR_V1_" +
         bytes.map(byte => ((Number(byte) + 256) % 256).toString(16).padStart(2, "0")).join("");
 }
