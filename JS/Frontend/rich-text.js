@@ -69,6 +69,53 @@ export function bindRichTextEditorSelection_(editor) {
     editor.addEventListener("contextmenu", event => event.preventDefault());
 }
 
+const richEditorPendingFormats_ = new WeakMap();
+const richEditorCompositionRanges_ = new WeakMap();
+function getRichTextPendingFormats_(editor) {
+ let state=richEditorPendingFormats_.get(editor);
+ if(!state){state={bold:false,italic:false,underline:false,strike:false,color:null,fontFamily:null,fontSize:null};richEditorPendingFormats_.set(editor,state);}
+ return state;
+}
+function hasRichTextPendingFormats_(state){return Boolean(state&&(state.bold||state.italic||state.underline||state.strike||state.color||state.fontFamily||state.fontSize));}
+function getRichTextSavedRange_(editor){
+ if(!isRichContentEditable_(editor))return null;
+ const selection=window.getSelection?.();
+ if(selection?.rangeCount){const current=selection.getRangeAt(0);if(current.commonAncestorContainer===editor||editor.contains(current.commonAncestorContainer)){richEditorSelectionRanges_.set(editor,current.cloneRange());return current.cloneRange();}}
+ const saved=richEditorSelectionRanges_.get(editor);
+ return saved&&(saved.commonAncestorContainer===editor||editor.contains(saved.commonAncestorContainer))?saved.cloneRange():null;
+}
+function wrapRichTextNodeWithFormats_(node,state){
+ let result=node;
+ if(state.color||state.fontFamily||state.fontSize){const styled=document.createElement("span");if(state.color)styled.style.color=state.color;if(state.fontFamily)styled.style.fontFamily=state.fontFamily;if(state.fontSize)styled.style.fontSize=state.fontSize;styled.appendChild(result);result=styled;}
+ [["bold","strong"],["italic","em"],["underline","u"],["strike","s"]].forEach(([key,tag])=>{if(!state[key])return;const element=document.createElement(tag);element.appendChild(result);result=element;});
+ return result;
+}
+function applyRichTextPendingFormatsToRange_(range,state){
+ if(!range||!state||range.collapsed||!hasRichTextPendingFormats_(state))return false;
+ const content=range.extractContents(),wrapper=wrapRichTextNodeWithFormats_(content,state);
+ range.insertNode(wrapper);range.setStartAfter(wrapper);range.collapse(true);return true;
+}
+function insertRichTextWithPendingFormats_(editor,value){
+ const state=getRichTextPendingFormats_(editor);if(!hasRichTextPendingFormats_(state))return false;
+ const selection=window.getSelection?.(),range=getRichTextSavedRange_(editor);if(!selection||!range)return false;
+ range.deleteContents();const fragment=document.createDocumentFragment();let last=null;
+ String(value||"").replace(/\r\n?/g,"\n").split("\n").forEach((line,index)=>{if(index){last=document.createElement("br");fragment.appendChild(last);}if(!line)return;last=wrapRichTextNodeWithFormats_(document.createTextNode(line),state);fragment.appendChild(last);});
+ if(!last){last=document.createElement("br");fragment.appendChild(last);}
+ range.insertNode(fragment);range.setStartAfter(last);range.collapse(true);selection.removeAllRanges();selection.addRange(range);
+ richEditorSelectionRanges_.set(editor,range.cloneRange());editor.dispatchEvent(new Event("input",{bubbles:true}));return true;
+}
+function insertRichTextPendingBreak_(editor){
+ const selection=window.getSelection?.(),range=getRichTextSavedRange_(editor);if(!selection||!range)return false;
+ range.deleteContents();const lineBreak=document.createElement("br");range.insertNode(lineBreak);range.setStartAfter(lineBreak);range.collapse(true);
+ selection.removeAllRanges();selection.addRange(range);richEditorSelectionRanges_.set(editor,range.cloneRange());editor.dispatchEvent(new Event("input",{bubbles:true}));return true;
+}
+function applyRichTextInlineFormat_(editor,format,value=null){
+ const range=getRichTextSavedRange_(editor);if(!range)return false;const state=getRichTextPendingFormats_(editor);
+ if(range.collapsed){if(["bold","italic","underline","strike"].includes(format))state[format]=!state[format];else if(format==="color")state.color=value;else if(format==="font")state.fontFamily=SAFE_FONTS.get(value);else if(format==="size")state.fontSize=value;richEditorSelectionRanges_.set(editor,range.cloneRange());return true;}
+ if(["bold","italic","underline","strike"].includes(format))state[format]=true;else if(format==="color")state.color=value;else if(format==="font")state.fontFamily=SAFE_FONTS.get(value);else if(format==="size")state.fontSize=value;
+ const content=range.extractContents(),wrapper=wrapRichTextNodeWithFormats_(content,state);range.insertNode(wrapper);range.setStartAfter(wrapper);range.collapse(true);
+ const selection=window.getSelection?.();selection?.removeAllRanges();selection?.addRange(range);richEditorSelectionRanges_.set(editor,range.cloneRange());editor.dispatchEvent(new Event("input",{bubbles:true}));return true;
+}
 function insertRichTextPlainText_(editor, value) {
     if (!restoreRichTextSelection_(editor)) return false;
     const selection = window.getSelection?.();
@@ -292,6 +339,32 @@ export function mountRichTextEditors(root = document) {
             source.dispatchEvent(new Event("input", { bubbles: true })); editor.removeAttribute("aria-invalid");
         };
         bindRichTextEditorSelection_(editor);
+        editor.addEventListener("beforeinput", event => {
+            const state = getRichTextPendingFormats_(editor);
+            if (!hasRichTextPendingFormats_(state)) return;
+            if (["insertText", "insertReplacementText"].includes(event.inputType) && typeof event.data === "string") {
+                event.preventDefault(); insertRichTextWithPendingFormats_(editor, event.data);
+            } else if (event.inputType === "insertParagraph" || event.inputType === "insertLineBreak") {
+                event.preventDefault(); insertRichTextPendingBreak_(editor);
+            }
+        });
+        editor.addEventListener("compositionstart", () => {
+            const range = getRichTextSavedRange_(editor);
+            if (range) richEditorCompositionRanges_.set(editor, range.cloneRange());
+        });
+        editor.addEventListener("compositionend", () => {
+            const startRange = richEditorCompositionRanges_.get(editor), state = getRichTextPendingFormats_(editor), selection = window.getSelection?.();
+            if (!startRange || !selection?.rangeCount || !hasRichTextPendingFormats_(state)) return;
+            try {
+                const inserted = document.createRange(), endRange = selection.getRangeAt(0);
+                inserted.setStart(startRange.startContainer, startRange.startOffset); inserted.setEnd(endRange.endContainer, endRange.endOffset);
+                if (applyRichTextPendingFormatsToRange_(inserted, state)) {
+                    inserted.collapse(false); selection.removeAllRanges(); selection.addRange(inserted);
+                    richEditorSelectionRanges_.set(editor, inserted.cloneRange()); editor.dispatchEvent(new Event("input", { bubbles: true }));
+                }
+            } catch (_) {}
+            richEditorCompositionRanges_.delete(editor);
+        });
         editor.addEventListener("input", sync);
         editor.addEventListener("blur", () => { source.dispatchEvent(new Event("blur")); source.dispatchEvent(new Event("change", { bubbles: true })); });
         editor.addEventListener("paste", event => {
@@ -328,7 +401,11 @@ export function mountRichTextEditors(root = document) {
                 invalid.scrollIntoView?.({ block: "center", behavior: "smooth" });
             }, true);
             form.addEventListener("reset", () => Promise.resolve().then(() => {
-                form.querySelectorAll("textarea[data-rich-visual-mounted='true']").forEach(syncRichTextEditorFromSource);
+                form.querySelectorAll("textarea[data-rich-visual-mounted='true']").forEach(sourceField => {
+                    const editorField = document.getElementById(sourceField.id + "-visual-editor");
+                    if (editorField) { richEditorPendingFormats_.delete(editorField); richEditorSelectionRanges_.delete(editorField); richEditorCompositionRanges_.delete(editorField); }
+                    syncRichTextEditorFromSource(sourceField);
+                });
             }));
         }
         mounted++;
@@ -364,45 +441,23 @@ function wrapRichEditorSelection_(editor, styleProperty, styleValue) {
 }
 
 function applyRichTextToContentEditable_(editor, format, extraValue) {
+    if (["bold", "italic", "underline", "strike"].includes(format)) return applyRichTextInlineFormat_(editor, format);
+    if (format === "font" && SAFE_FONTS.has(extraValue)) return applyRichTextInlineFormat_(editor, "font", extraValue);
+    if (format === "size" && SAFE_SIZES.has(extraValue)) return applyRichTextInlineFormat_(editor, "size", extraValue);
+    if (format !== "ul" && format !== "ol") return false;
     restoreRichTextSelection_(editor);
-    const commands = {
-        bold: ["bold", null], italic: ["italic", null], underline: ["underline", null],
-        strike: ["strikeThrough", null]
-    };
-    let command = commands[format];
-    if (format === "font" && SAFE_FONTS.has(extraValue)) command = ["fontName", SAFE_FONTS.get(extraValue)];
-    if (format === "size" && SAFE_SIZES.has(extraValue)) {
-        const sizeMap = { "0.85em":"2", "1em":"3", "1.2em":"4", "1.5em":"5" };
-        command = ["fontSize", sizeMap[extraValue]];
-    }
-    if (format === "ul") command = ["insertUnorderedList", null];
-    if (format === "ol") command = ["insertOrderedList", null];
-    if ((format === "font" && !SAFE_FONTS.has(extraValue)) || (format === "size" && !SAFE_SIZES.has(extraValue)) || !command) return false;
-
-    editor.focus();
+    const command = format === "ul" ? "insertUnorderedList" : "insertOrderedList";
     let applied = false;
-    try {
-        applied = typeof document.execCommand === "function" &&
-            document.execCommand(command[0], false, command[1]) === true;
-    } catch (_) { applied = false; }
-    if (!applied && (format === "font" || format === "size")) {
-        const property = format === "font" ? "font-family" : "font-size";
-        const value = format === "font" ? SAFE_FONTS.get(extraValue) : extraValue;
-        applied = wrapRichEditorSelection_(editor, property, value);
-    }
+    try { applied = typeof document.execCommand === "function" && document.execCommand(command, false, null) === true; } catch (_) { applied = false; }
     if (format === "ul" && applied) {
         const selection = window.getSelection?.();
         const node = selection?.anchorNode?.nodeType === 1 ? selection.anchorNode : selection?.anchorNode?.parentElement;
         const list = node?.closest?.("ul");
         if (list && editor.contains(list)) list.setAttribute("data-gp-marker", SAFE_MARKERS.has(extraValue) ? extraValue : "bullet");
     }
-    if (applied) {
-        rememberRichTextSelection_(editor);
-        editor.dispatchEvent(new Event("input", { bubbles: true }));
-    }
+    if (applied) { rememberRichTextSelection_(editor); editor.dispatchEvent(new Event("input", { bubbles: true })); }
     return applied;
 }
-
 export function applyRichTextFormat(targetId, format, extraValue = null, options = {}) {
     const target = resolveRichTextTarget_(targetId);
     if (!target) return false;
@@ -433,20 +488,7 @@ export function applyRichTextColor(targetId, color) {
     const target = resolveRichTextTarget_(targetId);
     if (!target) return false;
     const safeColor = /^#[0-9a-f]{3,8}$/i.test(String(color || "")) ? color : "#000000";
-    if (isRichContentEditable_(target)) {
-        const mode = normalizeEditorMode_(target.dataset.richEditorMode);
-        restoreRichTextSelection_(target);
-        if (mode === "basic" || mode === "lists") {
-            return wrapRichEditorSelection_(target, "color", safeColor);
-        }
-        let applied = false;
-        try { applied = typeof document.execCommand === "function" && document.execCommand("foreColor", false, safeColor) === true; }
-        catch (_) { applied = false; }
-        if (!applied) return wrapRichEditorSelection_(target, "color", safeColor);
-        rememberRichTextSelection_(target);
-        target.dispatchEvent(new Event("input", { bubbles: true }));
-        return true;
-    }
+    if (isRichContentEditable_(target)) return applyRichTextInlineFormat_(target, "color", safeColor);
     const start = target.selectionStart, end = target.selectionEnd, selected = target.value.substring(start, end);
     if (!selected) return false;
     const formatted = '<span style="color:' + safeColor + '">' + selected + "</span>";
@@ -597,7 +639,7 @@ function createCompactRichTextToolbar_(targetId, forceAdvanced) {
     colorPicker.addEventListener("pointerdown", () => rememberRichTextSelection_(targetId));
     colorPicker.addEventListener("change", event => {
         applyRichTextColor(targetId, event.target.value);
-        restoreRichTextSelection_(resolveRichTextTarget_(targetId));
+        
     });
     colorGroup.append(colorButton, colorPicker); toolbar.appendChild(colorGroup);
     addDropdown("fa-text-height", "Tamaño de texto", [
@@ -674,7 +716,7 @@ export function createRichTextToolbar(targetId, options = {}) {
         sizeSelect.innerHTML = '<option value="">Tamaño</option><option value="0.85em">Pequeño</option><option value="1em">Normal</option><option value="1.2em">Grande</option><option value="1.5em">Encabezado</option>';
         sizeSelect.addEventListener("pointerdown", () => rememberRichTextSelection_(targetId));
         sizeSelect.addEventListener("mousedown", () => rememberRichTextSelection_(targetId));
-        sizeSelect.addEventListener("change", event => { if (event.target.value) applyRichTextFormat(targetId, "size", event.target.value, applyOptions); event.target.value = ""; restoreRichTextSelection_(resolveRichTextTarget_(targetId)); });
+        sizeSelect.addEventListener("change", event => { if (event.target.value) applyRichTextFormat(targetId, "size", event.target.value, applyOptions); event.target.value = "";  });
         toolbar.appendChild(sizeSelect);
         const fontSelect = document.createElement("select");
         fontSelect.className = "rich-toolbar-native-select";
@@ -682,7 +724,7 @@ export function createRichTextToolbar(targetId, options = {}) {
         fontSelect.innerHTML = '<option value="">Fuente</option>' + Array.from(SAFE_FONTS.keys()).map(font => '<option value="' + font + '">' + font + '</option>').join("");
         fontSelect.addEventListener("pointerdown", () => rememberRichTextSelection_(targetId));
         fontSelect.addEventListener("mousedown", () => rememberRichTextSelection_(targetId));
-        fontSelect.addEventListener("change", event => { if (event.target.value) applyRichTextFormat(targetId, "font", event.target.value, applyOptions); event.target.value = ""; restoreRichTextSelection_(resolveRichTextTarget_(targetId)); });
+        fontSelect.addEventListener("change", event => { if (event.target.value) applyRichTextFormat(targetId, "font", event.target.value, applyOptions); event.target.value = "";  });
         toolbar.appendChild(fontSelect);
     }
     if (hasLists) {
