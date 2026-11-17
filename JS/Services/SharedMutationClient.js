@@ -17,7 +17,11 @@ function createSharedMutationClient_(dependencies) {
             throw new Error("La coordinación compartida no está configurada en este servicio; la operación fue rechazada por seguridad.");
         }
 
-        const payload = Object.assign({}, extraPayload || {}, {
+        const publishRequest = action === "publishCatalogChange" || action === "publishCatalogChanges";
+        const requestId = publishRequest
+            ? String(extraPayload && extraPayload.requestId || uuid() || "").trim()
+            : "";
+        const payload = Object.assign({}, extraPayload || {}, requestId ? { requestId: requestId } : {}, {
             service: service,
             operation: operation,
             secret: secret
