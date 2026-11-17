@@ -126,7 +126,7 @@ test('el catálogo permanece bloqueado hasta aceptación local y la carga inicia
     const showStart = ui.indexOf('export function showApp(user)');
     const gate = ui.indexOf('if (!renderTermsGate_(user))', showStart);
     const catalog = ui.indexOf('startCatalogLoad()', showStart);
-    const fade = ui.indexOf('fadeSplash()', showStart);
+    const fade = ui.indexOf('fadeSplash();', catalog);
     assert.ok(showStart >= 0 && gate > showStart && catalog > gate && fade > catalog);
     assert.match(ui, /syncPendingTermsAcceptance_\(user, deviceId\)/);
     assert.doesNotMatch(auth, /if \(appReady\) loadInitialData\(\)/);
