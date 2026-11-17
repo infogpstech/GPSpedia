@@ -20,7 +20,6 @@ let benchmarkCalls=0;
 const handler=new Function("requireSharedAuthActor_","benchmarkPasswordKdf_",extract(auth,"handleBenchmarkPasswordKdf_")+"\nreturn handleBenchmarkPasswordKdf_;")(
  actorGuard,()=>{benchmarkCalls++;return [{iterations:1000,durationMs:4},{iterations:12000,durationMs:25}];});
 const mutation=new Function(extract(auth,"isSharedMutationAction_")+"\nreturn isSharedMutationAction_;")();
-const sharedRead=new Function(extract(auth,"isSharedReadAction_")+"\nreturn isSharedReadAction_;")();
 const policy=new Function(extract(coordinator,"coordinatorPolicy_")+"\nreturn coordinatorPolicy_;")();
 let passed=0;function test(name,fn){fn();passed++;console.log("PASS "+name);}
 const actor={userId:"U1",role:"Desarrollador",epoch:3,fullName:"Usuario verificado"};
@@ -35,30 +34,26 @@ test("rechaza contexto ausente, rol no autorizado o epoch inválido antes de eje
  assert.throws(()=>handler({userId:"U1",__sharedSessionActor:{...actor,epoch:0}}),/contexto central/);
  assert.equal(benchmarkCalls,1);
 });
-test("el router AUTH reserva una lease de lectura específica para el benchmark",()=>{
+test("el router AUTH usa el actor cacheado y no adquiere lease para el benchmark",()=>{
  assert.equal(mutation("benchmarkPasswordKdf"),false);
- assert.equal(sharedRead("benchmarkPasswordKdf"),true);
- assert.match(auth,/if \(!isSharedMutationAction_\(action\) && !isSharedReadAction_\(action\)\)/);
+ assert.doesNotMatch(auth,/function isSharedReadAction_\\(/);
  assert.match(api,/'benchmarkPasswordKdf': 'AUTH'/);
  const route=extract(auth,"doPost");
  const calls=[];
- const withLease=(service,operation,callback,options)=>{calls.push({service,operation,options});return callback("central-token",actor);};
  const withActor=(event,trusted)=>{const body=JSON.parse(event.postData.contents);body.payload.__sharedSessionActor=trusted;return {postData:{contents:JSON.stringify(body)}};};
+ const cachedActor=(userId,token)=>{calls.push({userId,token});return actor;};
  const internal=event=>{const body=JSON.parse(event.postData.contents);return {content:JSON.stringify(handler(body.payload))};};
  const content={createTextOutput:value=>({content:value,setMimeType(){return this;}}),MimeType:{TEXT:"text"}};
- const doPost=new Function("isSharedMutationAction_","isSharedReadAction_","withSharedSessionActor_","withSharedMutationLease_","doPostInternal_","ContentService","DIRECT_SERVICE_TRAFFIC_CONFIG_","readDirectServiceTraffic_","recordDirectServiceTraffic_",
-  extract(auth,"isSharedMutationAction_")+"\n"+extract(auth,"isSharedReadAction_")+"\n"+route+"\nreturn doPost;")(
-   mutation,sharedRead,withActor,withLease,internal,content,{actions:new Set()},()=>({status:"unavailable"}),()=>false);
+ const doPost=new Function("isSharedMutationAction_","withSharedSessionActor_","getCachedSharedSessionActor_","doPostInternal_","ContentService","DIRECT_SERVICE_TRAFFIC_CONFIG_","readDirectServiceTraffic_","recordDirectServiceTraffic_",
+  extract(auth,"isSharedMutationAction_")+"\\n"+route+"\\nreturn doPost;")(
+   mutation,withActor,cachedActor,internal,content,{actions:new Set()},()=>({status:"unavailable"}),()=>false);
  const response=doPost({postData:{contents:JSON.stringify({action:"benchmarkPasswordKdf",payload:{userId:"U1",sessionToken:"session-token"}})}});
  assert.equal(JSON.parse(response.content).status,"success");
- assert.deepEqual(calls.map(call=>[call.service,call.operation]),[["AUTH","benchmarkPasswordKdf"]]);
- assert.equal(calls[0].options.session.sessionToken,"session-token");
+ assert.deepEqual(calls,[{userId:"U1",token:"session-token"}]);
+ assert.equal(benchmarkCalls,1);
 });
-test("Coordinator define el benchmark como lectura de SESSION_CONTEXTS sin escritura ni actividad adicional",()=>{
- const result=policy("AUTH","benchmarkPasswordKdf");
- assert.ok(result.readResources.includes("SESSION_CONTEXTS"));
- assert.deepEqual(result.writeResources,[]);
- assert.equal(result.maintenance,false);
+test("Coordinator ya no declara una política para una acción que no lo consulta",()=>{
+ assert.equal(policy("AUTH","benchmarkPasswordKdf"),null);
 });
 test("el benchmark usa una cadena fija y no accede a contraseñas ni hojas de usuarios",()=>{
  const source=extract(auth,"benchmarkPasswordKdf_");
