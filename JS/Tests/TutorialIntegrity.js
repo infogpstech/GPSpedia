@@ -272,7 +272,8 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
 
     test("UI limita el alta a Desarrollador, envía todos los campos y conserva ID para aprobación", () => {
         assert.match(ui, /getUiSessionContext_\(\)\?\.role === "desarrollador"/);
-        assert.match(ui, /operationId, tema, comoIdentificarlo, dondeEncontrarlo, detalles/);
+        assert.match(ui, /operationId:\s*tutorialOperationId/);
+        assert.match(ui, /tema, comoIdentificarlo, dondeEncontrarlo, detalles/);
         assert.match(ui, /referenceId: created\.referenceId/);
         assert.match(ui, /referenceId: item\.ID \|\| item\.Tema/);
         assert.match(ui, /Colaborador/);

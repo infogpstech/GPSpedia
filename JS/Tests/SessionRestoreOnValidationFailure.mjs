@@ -51,7 +51,7 @@ async function buildCheckSession(validation, options = {}) {
         { navigator: { onLine: options.offline !== true } },
         async () => { calls.validations++; if (validation instanceof Error) throw validation; return validation; },
         (candidate, result) => ({ ...candidate, SessionValidatedAt: Date.now() }),
-        (candidate, persist) => calls.restored.push({ candidate, persist }),
+        (candidate, persist) => { calls.restored.push({ candidate, persist }); calls.loaded++; },
         async () => { calls.loaded++; },
         message => calls.warnings.push(message),
         (message, candidate) => calls.loggedOut.push({ message, candidate }),

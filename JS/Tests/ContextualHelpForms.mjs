@@ -83,7 +83,8 @@ testCase("el formulario PYS registra cada ayuda una sola vez",()=>{
  const start=ui.indexOf("export function openAddProblemModal");
  const end=ui.indexOf("export function openSearchVehicleForPysAssociationModal",start);
  const body=ui.slice(start,end);
- assert.equal((body.match(/attachContextualHelp_\(content, \"pys-/g)||[]).length,8);
+ assert.equal((body.match(/attachContextualHelp_\(content, \"pys-/g)||[]).length,9);
+ assert.ok(body.includes('attachContextualHelp_(content, "pys-video-url"'));
 });
 
 testCase("index y alta de cortes comparten la misma hoja de ayudas",()=>{

@@ -399,9 +399,9 @@ check("La edición visual sanea el contenido pegado y mantiene el límite de 5,0
 });
 check("La barra aplica formato sobre la selección real del editor visual", () => {
     assert.match(rich, /function isRichContentEditable_/);
-    assert.match(rich, /document\.execCommand\(command\[0\], false, command\[1\]\)/);
-    assert.match(rich, /document\.execCommand\("foreColor", false, safeColor\)/);
-    assert.match(rich, /\["insertUnorderedList", null\]/);
+    assert.match(rich, /document\.execCommand\(command, false, null\)/);
+    assert.match(rich, /wrapper\.style\.setProperty\(property, safeValue\)/);
+    assert.match(rich, /const command = format === "ul" \? "insertUnorderedList" : "insertOrderedList"/);
     assert.match(rich, /editor\.dispatchEvent\(new Event\("input", \{ bubbles: true \}\)\)/);
 });
 check("Los menús flotan sobre el editor: listas hacia la derecha y categorías hacia la izquierda", () => {
