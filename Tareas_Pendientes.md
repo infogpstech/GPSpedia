@@ -1197,7 +1197,7 @@ Después: abrir Developer → Auditoría de Cortes en escritorio y PWA móvil; c
 - Procedimiento reproducible: workflow `.github/workflows/deployed-service-health.yml` fija TARGET_COMMIT; `JS/Tests/RemoteServiceHealth.mjs` obtiene el inventario desde ese SHA y consulta los siete endpoints en paralelo con timeout de 8 s, sin efectos de escritura.
 
 ### GP-DEV-TRAFFIC-GLOBAL-02 — Agregado global de tráfico por servicio
-**Prioridad: P1 · Estado: EN PROGRESO (contadores directos y agregado multiproveedor implementados en fuente; regresión integral en verificación y despliegue Beta pendiente).**
+**Prioridad: P1 · Estado: EN PROGRESO (contadores directos implementados y regresión completa aprobada; auditoría final de cobertura y validación Beta pendientes).**
 
 **Objetivo**
 - Sustituir las métricas locales del navegador por un agregado global coherente y etiquetado por fuente, sin una llamada de red por acción ni bloqueos que degraden lecturas.
@@ -1222,9 +1222,9 @@ Después: abrir Developer → Auditoría de Cortes en escritorio y PWA móvil; c
 **Pruebas y resultados esperados**
 - CatalogTrafficTelemetry: lock libre/ocupado, no espera, liberación correcta, buckets, retención, secretos y errores best-effort.
 - DirectServiceTrafficTelemetry: AUTH/WRITE/FEEDBACK; seis casos por servicio (18/18): acciones directas auditadas, buckets, secretos, lock ocupado sin release, y fallos PropertiesService.
-- ServiceTrafficAggregation: 5 casos: suma Coordinator+CATALOG y fuentes directas, preservación de otros servicios, fuentes parciales, entradas inválidas y no mutación de datos.
+- ServiceTrafficAggregation: 6/6 casos: suma Coordinator+CATALOG y fuentes directas, preservación de otros servicios, fuentes parciales, entradas inválidas y no mutación de datos.
 - ServiceTrafficBatch: 5 casos: fetchAll agrupado, secreto faltante, fallback individual, error de una fuente y fallo de PropertiesService.
-- ServiceTrafficAdminContract: rol Developer, consulta de solo lectura, exclusión de auto-conteo, fuentes directas y rutas, UI y ausencia de métricas locales.
+- ServiceTrafficAdminContract: 33/33; rol Developer, consulta de solo lectura, exclusión de auto-conteo, fuentes directas y rutas, UI y ausencia de métricas locales.
 - SensitiveLogsTrustedActor y PasswordKdfBenchmark: los harnesses de AUTH deben inyectar dependencias de telemetría como stubs; las operaciones protegidas no se cuentan como rutas directas.
 - Regresión completa: ejecutar todas las suites y corregir cada fallo reproducible; no reducir suites, desactivar casos ni alterar aserciones para lograr verde.
 - Health remoto: GET ?debug=true a los siete servicios; validar HTTP, JSON, identidad, estado, versión y ausencia de campos sensibles. Esperado: 7/7 con latencias registradas; no POST ni escrituras.
@@ -1239,6 +1239,11 @@ Después: abrir Developer → Auditoría de Cortes en escritorio y PWA móvil; c
 - ADMIN: ping es health; las demás acciones pasan por Coordinator.
 - CATALOG: cuatro acciones directas; feed incremental contado por Coordinator.
 - El agregado no representa solicitudes HTTP externas/legacy no mapeadas ni health probes; contadores locales pueden subcontar por contención. No sacrificar latencia o disponibilidad para aumentar artificialmente el conteo.
+
+**Evidencia más reciente**
+- CI 44103742508 SUCCESS: 137 suites, 2,037 pruebas aprobadas, 0 fallos. CatalogTrafficTelemetry 8/8; ServiceTrafficAdminContract 33/33; ServiceTrafficAggregation 6/6; DirectServiceTrafficTelemetry 18/18; ServiceTrafficBatch 5/5.
+- Health remoto 44103742755 SUCCESS: 7/7. Latencias: ADMIN 1,745 ms; AUTH 1,392 ms; CATALOG 935 ms; FEEDBACK 1,873 ms; USERS 985 ms; UTILITIES 3,057 ms; WRITE 1,839 ms. Solo GET diagnóstico.
+- GitHub Pages 44103742319 SUCCESS. No se desplegaron Apps Script ni configuraron secretos remotos.
 
 **Evidencia anterior**
 - CI 44099217828 SUCCESS: 135 suites, 1,998 pruebas aprobadas, 0 fallos (antes de ampliar los contadores directos a AUTH/WRITE/FEEDBACK).
