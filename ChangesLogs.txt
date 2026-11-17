@@ -1433,3 +1433,17 @@ GP-UX-PYS-TUTORIAL-ASSOCIATION-06 — 2026-11-16
 - Análisis inicial de Splash: showApp comienza el desvanecimiento antes de que AUTH inicie loadInitialData. La mejora debe iniciar la carga antes del desvanecimiento actual, respetar la aceptación de términos y conservar la política cache-first.
 - contadorBusqueda existe en el esquema de Cortes, pero no se identificó un escritor activo en los módulos revisados; no se considera todavía una fuente confirmada para ranking de búsquedas.
 - No se realizaron cambios de código ni de servicios, no se desplegó Apps Script y no se alteraron datos externos. Las tareas quedan PENDIENTES LOCAL y subordinadas a los pendientes locales prioritarios existentes.
+
+
+================================================================================
+2026-11-16 — GP-TERMS-ASYNC-01 / GP-PWA-SPLASH-PRELOAD-01 — IMPLEMENTACIÓN LOCAL
+- `JS/Frontend/termsDeviceAcceptance.js`: persistencia local de aceptación con estado de sincronización pendiente/confirmada, manteniendo la clave por usuario y dispositivo y la validación de versión.
+- `JS/Frontend/ui.js`: el botón de aceptación guarda primero localmente y cierra el aviso sin esperar la red. La sincronización AUTH se ejecuta en segundo plano, comprueba que usuario/token sigan vigentes, descarta respuestas tardías y reintenta al recuperar conexión o al abrir la aplicación.
+- `JS/Frontend/ui.js`: el gate de términos se evalúa antes de iniciar la carga del catálogo. Con aceptación vigente, `loadInitialData()` comienza antes del desvanecimiento actual del Splash; no se espera la promesa ni se modifica la duración de 500 ms.
+- `JS/Frontend/auth.js`: retiradas llamadas redundantes a `loadInitialData()` después de `showApp()`; el inicio de catálogo queda centralizado para evitar cargas duplicadas.
+- Pruebas: nueva `JS/Tests/TermsAsyncSync.mjs` (5 escenarios: aislamiento por usuario/dispositivo/versión, fallo y reintento, concurrencia/idempotencia, respuesta tardía tras cambio de sesión y reintento online), integrada en `RunServiceTests.mjs`. Se amplían `TermsAcceptance.js`, `TermsModalAccessibility.mjs` y `PWAStartupScenarios.js` (16 escenarios).
+- Validación ejecutada: parsing V8 de los módulos y contratos modificados aprobado; ejecución aislada del código de `TermsAsyncSync.mjs` con 5/5 escenarios aprobados. No se ejecutó la suite Node.js completa ni se dispone de resultado CI confirmado para esta iteración.
+- No se modificaron servicios Apps Script, deployments, endpoints, secretos, datos externos, HTML ni CSS. No se realizó validación de navegador real; offline/latencia, PWA y persistencia AUTH quedan pendientes de Beta.
+- La auditoría acumulativa alcanzó 179,631 caracteres Unicode. Se rotó sin pérdida en `Auditoría_Archive/Auditoría_2026-11-16_parte_001.txt` y `parte_002.txt`; `Auditoría_Archive/manifest.md` registra blobs, longitudes y reconstrucción exacta. `Auditoría.txt` inicia el registro activo posterior a la rotación.
+- Estado: implementación local aplicada; suite general Node.js/CI pendiente. GP-DASH-INSIGHTS-01 permanece PENDIENTE LOCAL. La auditoría transversal P2 de modales fue confirmada como verificada en Beta por el usuario y se cierra en el backlog.
+================================================================================
