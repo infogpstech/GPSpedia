@@ -538,3 +538,13 @@ La segunda ejecución del CI encontró que U5 carece de token simulado; el recha
 
 ### Reconciliación de regresión CSS — 2026-11-17
 La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modales por un selector de texto demasiado amplio. Se acotó al bloque global de scrollbars sin modificar estilos de runtime.
+
+
+### Cierre verificado UX Inbox y encabezados — 2026-11-17
+- HEAD validado: `33700c6b15f0b77feebc706e8ac4e298bb62155f`; rama base `GPSpedia2.2.5` continúa en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- CI 44196032087 SUCCESS: 145 suites; 2,131 pruebas aprobadas; 0 fallos. InboxConversations 63/63 y InboxUi 86/86 PASS.
+- Health read-only 44196031955 SUCCESS. Pages 44196029692 SUCCESS: commit publicado en GitHub Pages.
+- Inbox permite selección múltiple y envía conversaciones independientes; cada participante ve únicamente su propio hilo con el remitente. Se agregó prueba de acceso cruzado.
+- Las barras completas/básicas cierran menús al pulsar fuera. PyS adopta título azul y cierre accesible. Detalle de corte agrupa acciones con X a la derecha, quita padding del contenedor del logo y reduce separación vertical del divisor/metadatos; el modelo sube sin cambiar tipografía/sombras.
+- El resultado de las primeras ejecuciones identificó y corrigió fixtures de prueba y el alcance excesivo de un test CSS; no fue necesario modificar el backend ni la política de permisos.
+- No se desplegó Apps Script, no se cambiaron ScriptProperties, hojas, Drive ni datos externos. Validación visual real queda en Beta.

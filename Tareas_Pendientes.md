@@ -1623,3 +1623,15 @@ La segunda ejecución de regresión detectó que U5 no tenía token simulado; la
 
 ### Alcance de prueba scrollbars — 2026-11-17
 La comprobación de los modales tomaba todo el CSS posterior al bloque de scrollbars e incluía el nuevo menú de destinatarios con `overflow:auto`. Se acotó al bloque de política global; no se cambió la regla funcional de scroll de ningún modal ni menú.
+
+
+### Cierre de implementación UX Inbox/Modales — 2026-11-17
+<badge>CI aprobado</badge>
+
+- Commit de implementación: `5e9cdd732d12cc4ff29076a0a597323702af02ac`; commits siguientes corrigen exclusivamente pruebas y alcance de regresión.
+- HEAD validado: `33700c6b15f0b77feebc706e8ac4e298bb62155f`.
+- CI 44196032087 SUCCESS — 145 suites, 2,131 pruebas aprobadas, 0 fallos. InboxConversations 63/63; InboxUi 86/86.
+- GitHub Pages 44196029692 SUCCESS y health GET-only 44196031955 SUCCESS.
+- El envío múltiple se hace mediante hilos privados por destinatario, no con CC ni conversación grupal. Los tests verifican separación y rechazo de lectura cruzada.
+- Encabezado de cortes, PyS, espaciado del logo/divisor y cierre de menús quedan cubiertos por contratos locales. Falta únicamente validación visual en dispositivo/navegador durante Beta.
+- No se desplegó Apps Script ni se tocaron datos externos.

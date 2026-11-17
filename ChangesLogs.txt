@@ -412,3 +412,14 @@ undefined
 - Se acotó la inspección al bloque de política global de scrollbars, hasta GP-UX-RICH-EDITOR-SELECTION-02. Se mantiene el contrato de que #modalDetalle y sus descendientes oculten únicamente el indicador de scrollbar y no alteren overflow del modal.
 - No se modificó CSS runtime ni se retiró overflow:auto de menús que necesitan desplazamiento.
 ================================================================================
+
+================================================================================
+2026-11-17 — CIERRE GP-UX-INBOX-PRIVATE-MULTI-RECIPIENT-01 / GP-UX-MODAL-HEADER-TIGHTEN-03
+- HEAD de implementación y regresión: 33700c6b15f0b77feebc706e8ac4e298bb62155f.
+- CI 44196032087 SUCCESS: 145 suites; 2,131 pruebas aprobadas; 0 fallos. La suite InboxConversations pasó 63/63 y InboxUi 86/86.
+- Health read-only 44196031955 SUCCESS (sondas GET de solo lectura); GitHub Pages 44196029692 SUCCESS, con despliegue de commit 33700c6b15f0b77feebc706e8ac4e298bb62155f.
+- Inbox multirecipiente: un mensaje se crea como conversaciones directas independientes; cada conversación solo incluye al remitente y al receptor. Se verifica que U2/U3 no pueden abrir hilos privados ajenos; no se usa copia visible ni conversación grupal.
+- Los menús de las barras enriquecidas se cierran al pulsar fuera. PyS comparte título azul y cierre accesible.
+- Detalle de corte: acciones y cierre en una fila alineada a la derecha; padding interno del div del logo a cero; alturas/espaciado vertical compactados; el modelo se eleva sin cambiar fuente ni sombras.
+- Se corrigieron únicamente fixtures/alcance de pruebas durante la estabilización; no se modificaron servicios backend ni datos externos. No se desplegó Apps Script ni se accedió a producción.
+================================================================================
