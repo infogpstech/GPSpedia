@@ -841,7 +841,7 @@ export async function login(username, password) {
     try {
         const result = await apiLogin(username, password);
         if (result && result.user) {
-            const appReady = handleLoginSuccess(result.user);
+            handleLoginSuccess(result.user);
             completeLoginRequest(username, result.loginRequestId);
             
         } else {
