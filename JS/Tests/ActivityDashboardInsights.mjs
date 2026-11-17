@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { renderActivityInsights } from "../Frontend/activityDashboard.js";
+import { renderActivityInsights, renderActivityLogs } from "../Frontend/activityDashboard.js";
 const root=resolve(dirname(fileURLToPath(import.meta.url)),"../..");
 const feedback=readFileSync(resolve(root,"JS/Services/feedback.js"),"utf8");
 const ui=readFileSync(resolve(root,"JS/Frontend/ui.js"),"utf8"),html=readFileSync(resolve(root,"index.html"),"utf8"),css=readFileSync(resolve(root,"style.css"),"utf8");
@@ -32,4 +32,8 @@ const doc={createElement:tag=>new FakeElement(tag)},container=doc.createElement(
 renderActivityInsights(container,{summary:{vehicles:2,cuts:2,usefulVotes:9,notUseful:1},topUseful:[{brand:"<img onerror=alert(1)>",model:"Hilux",cutType:"Corte",usefulVotes:9}],years:{confirmations:1,suggestions:1,applied:1,verified:3,anonymous:1}},[],doc);
 const collect=node=>[node.textContent,...node.children.flatMap(collect)].join(" ");
 assert.ok(collect(container).includes("<img onerror=alert(1)>"));assert.equal(container.children.length,4);assert.equal(container.children[0].children.length,5);
+const logContainer=doc.createElement("tbody");
+renderActivityLogs(logContainer,[{timestamp:"2026-11-17T10:00:00Z",nombreUsuario:"Técnico",tipoActividad:"like",detalle:"Valoración enviada",idElementoAsociado:"VEH-01"}],doc);
+assert.match(logContainer.children[0].children[3].textContent,/Referencia: VEH-01/);
+
 console.log("1/1 PASS — GP-DASH-INSIGHTS-01 agregación, ranking, años, ventana acotada y render seguro");

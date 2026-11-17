@@ -17,7 +17,9 @@ export function renderActivityLogs(container, logs, doc = container && container
         const rawType = toPlainText(entry.tipoActividad);
         const labels = {like:"Valoración útil",suggest_year:"Aporte sobre años",suggest_year_range_review:"Revisión de rango de años",add_cut:"Nuevo corte agregado",update_cut:"Corte actualizado",add_tutorial:"Tutorial agregado"};
         const friendlyType = labels[rawType] || (rawType.startsWith("inbox_") ? "Actividad de Inbox" : rawType.replace(/[_-]+/g," "));
-        const values = [timestampText, toPlainText(entry.nombreUsuario), friendlyType, toPlainText(entry.detalle)];
+        const detailText = toPlainText(entry.detalle), relatedId = toPlainText(entry.idElementoAsociado);
+        const relatedText = relatedId ? (detailText ? detailText + " · Referencia: " + relatedId : "Referencia: " + relatedId) : detailText;
+        const values = [timestampText, toPlainText(entry.nombreUsuario), friendlyType, relatedText];
         values.forEach(value => { const cell = doc.createElement("td"); cell.textContent = value; row.appendChild(cell); });
         container.appendChild(row);
     });
