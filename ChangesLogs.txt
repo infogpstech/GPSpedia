@@ -1533,3 +1533,12 @@ GP-UX-PYS-TUTORIAL-ASSOCIATION-06 — 2026-11-16
 - Se amplía PasswordRecovery.mjs para comprobar que los exports de recuperación permanecen después del límite de login usado por SessionRestoreOnValidationFailure.mjs.
 - El ajuste activa nuevamente la suite de servicios tras la corrección de ubicación de exports publicada en b965db4241bdc2325b72e618c418a95995d35208.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — CIERRE LOCAL GP-AUTH-PASSWORD-RECOVERY-01
+- Corrección de compatibilidad: exports de recuperación movidos al final de JS/Frontend/auth.js; SessionRestoreOnValidationFailure.mjs vuelve a pasar. Se añadió guardia en PasswordRecovery.mjs.
+- CI service-tests run 44073987141 SUCCESS: PasswordRecovery 10/10, SharedMutationCoordinator 57/57, SessionRestoreOnValidationFailure 15/15 y suite completa verde.
+- GitHub Pages run 44073810188 SUCCESS para el commit b965db4241bdc2325b72e618c418a95995d35208.
+- GP-AUTH-PASSWORD-RECOVERY-01: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Envío MailApp, scope y revocación en deployment siguen pendientes de validación externa.
+================================================================================

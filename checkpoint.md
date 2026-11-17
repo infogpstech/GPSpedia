@@ -498,3 +498,12 @@ Estado: **EN PROGRESO** hasta ejecutar la suite Node.js completa disponible; la 
 ### Validación posterior al ajuste de exports
 - Los exports de recuperación se movieron al final de JS/Frontend/auth.js para que el extractor de checkSession mantenga su límite. Se añade una aserción explícita en PasswordRecovery.mjs.
 - Se requiere una nueva ejecución de GitHub Actions sobre este commit, ya que el workflow de servicios no se activó automáticamente con el commit anterior que solo tocó frontend y documentación.
+
+
+### Cierre verificado — GP-AUTH-PASSWORD-RECOVERY-01 — 2026-11-17
+- HEAD de implementación/pruebas: 06c9e1f0ea3e0468ea5a6d66c6e57bdd157a79df. Commits: a8c4a087e10cadf9264ce92cf328ac2032d5321b (flujo), b965db4241bdc2325b72e618c418a95995d35208 (límites de extracción AUTH), 06c9e1f0ea3e0468ea5a6d66c6e57bdd157a79df (contrato de regresión).
+- GitHub Actions service-tests run 44073987141 SUCCESS; PasswordRecovery 10/10, coordinador 57/57 y SessionRestoreOnValidationFailure 15/15. Suite completa sin fallos.
+- GitHub Pages run 44073810188 SUCCESS en el commit b965db4241bdc2325b72e618c418a95995d35208.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Pendiente despliegue autorizado del servicio AUTH, scope MailApp/script.send_mail, correo real y revocación de sesiones en entorno Beta.
+- Rama base sin modificaciones: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Siguiente auditoría: GP-DEV-IMAGE-AUDIT-LIBRARY-UX-01 (continuidad de captura de referencias, snapshot y diseño de biblioteca). Después seguir con caché del Inbox.

@@ -1016,7 +1016,7 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - Beta pendiente: login tras el bloqueo temporal por intentos fallidos mientras se consulta el árbol de imágenes, con medición de duración y respuesta.
 
 ### GP-AUTH-PASSWORD-RECOVERY-01 — Recuperación de contraseña
-**Prioridad: P1 · Estado: EN PROGRESO**
+**Prioridad: P1 · Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA**
 - Auditar el enlace «¿Olvidaste tu contraseña?» y los contratos AUTH/USERS.
 - Implementar recuperación segura por correo registrado, con verificación de titularidad, código de un solo uso, expiración, límites de intentos y respuesta que no permita enumerar cuentas.
 - Mantener hashes con salt, rendimiento de login, revocación de sesiones y actor central. No enviar contraseñas/códigos a logs ni permitir restablecer cuentas ajenas.
@@ -1061,3 +1061,10 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - Respuesta genérica para cuentas existentes/inexistentes. La finalización vuelve a comprobar usuario, correo y estado activo, actualiza PBKDF2-SHA256 con salt y revoca sesiones anteriores.
 - Frontend de dos pasos integrado al modal de acceso; App Shell v66. Pruebas añadidas; cierre local pendiente de ejecutar la suite Node.js/CI.
 - MailApp/script.send_mail, propiedades y entrega real de correo, y revocación en el deployment actualizado quedan PENDIENTES DE DESPLIEGUE / VALIDACIÓN BETA.
+
+
+#### Cierre de validación — GP-AUTH-PASSWORD-RECOVERY-01
+- GitHub Actions service-tests: SUCCESS, run 44073987141, HEAD 06c9e1f0ea3e0468ea5a6d66c6e57bdd157a79df.
+- PasswordRecovery: 10/10 PASS; Coordinador/concurrencia: 57/57 PASS; SessionRestoreOnValidationFailure: 15/15 PASS; suite completa sin fallos.
+- GitHub Pages: SUCCESS, run 44073810188 para b965db4241bdc2325b72e618c418a95995d35208 (commit de corrección de límites de extracción AUTH).
+- Pendiente externo: implementar el código en el deployment AUTH, autorizar MailApp/script.send_mail, verificar envío/recepción real, configuración del secreto y revocación de sesiones en entorno Beta. No se afirma que el correo ya funcione en producción.
