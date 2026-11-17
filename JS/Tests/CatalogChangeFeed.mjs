@@ -144,7 +144,8 @@ test("recordLike publica un snapshot completo y ordenado de Cortes sin helpers e
     assert.ok(feedbackSource.includes("normalizeFeedbackCatalogImageId_"));
     assert.ok(feedbackSource.includes("normalizeFeedbackCatalogYouTubeUrl_"));
     assert.ok(!feedbackSource.includes("mapRowToObject(row, COLS_CORTES)"));
-    assert.match(feedbackSource,/function publishFeedbackCortesCatalogChange_\(action, reference\)[\s\S]*?getScriptLock\(\)[\s\S]*?waitLock\(15000\)[\s\S]*?publishSharedCatalogChange_\("FEEDBACK", action, change\)/);
+    assert.match(feedbackSource,/function publishFeedbackCortesCatalogChange_\(action, reference\)[\s\S]*?getScriptLock\(\)[\s\S]*?acquireFeedbackScriptLock_\(lock\)[\s\S]*?publishSharedCatalogChange_\("FEEDBACK", action, change\)/);
+    assert.match(feedbackSource,/catch \(lockError\)[\s\S]*?publishSharedCatalogChange_\("FEEDBACK", action, \{ operation: "reset" \}\)/);
 });
 test("altas y ediciones de Tutoriales publican upsert exacto tras verificar fila e ID", () => {
     assert.match(feedbackSource,/function buildTutorialCatalogChange_\(reference\)[\s\S]*?findTutorialRow_\(sheet, reference, true\)[\s\S]*?collection: "tutoriales"[\s\S]*?operation: "upsert"/);

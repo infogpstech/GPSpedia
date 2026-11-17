@@ -26,12 +26,12 @@ function harness(initial,config=null){
  const props={};let held=false,waits=0,releases=0;
  const ss={sheets:[initial],getSheetByName(name){return this.sheets.find(s=>s.name===name)||null;}};
  if(config)ss.sheets.push(config);
- const lock={hasLock:()=>held,waitLock(){held=true;waits++;},releaseLock(){held=false;releases++;}};
+ const lock={hasLock:()=>held,tryLock(ms){assert.equal(ms,0);held=true;waits++;return true;},releaseLock(){held=false;releases++;}};
  const PropertiesService={getScriptProperties:()=>({getProperty:key=>props[key]??null,setProperty:(key,value)=>{props[key]=String(value);}})};
  const code=[
   'const IDENTIFIER_SEQUENCE_CONFIG_SHEET="__IdentifierSequenceConfig__";',
   'const IDENTIFIER_SEQUENCE_CONFIG_HEADERS=["sheet","column","header","prefix","padding","formula","updatedAt"];',
-  extract("parseFeedbackIdFormula_"),extract("getFormulaBasedIdPattern_"),extract("getNextFormulaBasedId_"),
+  extract("acquireFeedbackScriptLock_"),extract("parseFeedbackIdFormula_"),extract("getFormulaBasedIdPattern_"),extract("getNextFormulaBasedId_"),
   "return {parseFeedbackIdFormula_,getFormulaBasedIdPattern_,getNextFormulaBasedId_};"
  ].join("\n");
  const api=new Function("getSpreadsheet","LockService","PropertiesService",code)(()=>ss,{getScriptLock:()=>lock},PropertiesService);
