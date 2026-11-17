@@ -4584,7 +4584,11 @@ async function setInboxSection_(section, options = {}) {
     if (next === "general" || next === "soporte") {
         inboxRequestSection_ = "";
         inboxConversationCategory_ = next;
-        await setInboxView_("conversations", { reset: true, preferCache: Boolean(options.preferCache) });
+        await setInboxView_("conversations", {
+            reset: true,
+            preferCache: Boolean(options.preferCache),
+            backgroundLoad: options.backgroundLoad === true
+        });
         return;
     }
     inboxRequestSection_ = next;
@@ -4616,7 +4620,22 @@ async function setInboxView_(view, options = {}) {
         stopInboxSync_();
         if (context) await loadAndRenderInbox({ context, reset: Boolean(options.reset) });
     } else {
-        await loadInboxConversations_({ reset: Boolean(options.reset), preferCache: Boolean(options.preferCache) });
+        const loadOptions = { reset: Boolean(options.reset), preferCache: Boolean(options.preferCache) };
+        if (options.backgroundLoad === true) {
+            // El compositor solo necesita destinatarios; la lista se pinta desde caché
+            // y se actualiza en segundo plano sin retrasar la apertura del formulario.
+            Promise.resolve(loadInboxConversations_(loadOptions))
+                .catch(error => console.warn("No se pudo actualizar Inbox en segundo plano:", error && error.message ? error.message : error))
+                .finally(() => {
+                    const modal = document.getElementById("inbox-modal");
+                    if (context && isCurrentUiSessionContext_(context) &&
+                        inboxConversationCurrentView_ === "conversations" && modal && modal.style.display !== "none") {
+                        startInboxSync_();
+                    }
+                });
+            return;
+        }
+        await loadInboxConversations_(loadOptions);
         startInboxSync_();
     }
 }
@@ -5035,7 +5054,9 @@ function renderInboxReplyForm_(detail, item) {
 async function openInboxNewConversationForm_() {
     const context = getUiSessionContext_();
     if (!context) return;
-    if (inboxConversationCurrentView_ !== "conversations") await setInboxSection_("general");
+    if (inboxConversationCurrentView_ !== "conversations") {
+        await setInboxSection_("general", { backgroundLoad: true });
+    }
     const isDeveloper = context.role === "desarrollador";
     const draftKind = "new:direct", legacyDraftKind = isDeveloper ? "" : "new:consult";
     const detail = document.getElementById("inbox-conversation-detail");
