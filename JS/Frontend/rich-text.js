@@ -334,7 +334,7 @@ export function syncRichTextEditorFromSource(sourceOrId) {
     if (!editor) return false;
     const mode = normalizeEditorMode_(editor.dataset.richEditorMode) || "basic";
     editor.innerHTML = sanitizeHtmlContent(stripRichTextDemoPlaceholder(source.value || ""), mode);
-    source.value = sanitizeHtmlContent(editor.innerHTML, mode);
+    source.value = sanitizeHtmlContent(editor.innerHTML.replace(RICH_TEXT_CARET_SENTINEL_, ""), mode);
     return true;
 }
 export function mountRichTextEditors(root = document) {
