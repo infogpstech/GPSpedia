@@ -52,7 +52,8 @@ test("UTILITIES, USERS y ADMIN no crean contadores locales redundantes", () => {
     assert.match(utilities, /withSharedMutationLease_\("UTILITIES","migrateTimestamps"/);
     assert.doesNotMatch(utilities, /DIRECT_SERVICE_TRAFFIC_CONFIG_/);
     assert.match(users, /withSharedMutationLease_\("USERS", action/);
-    assert.match(users, /withSharedMutationLease_\("USERS", "sessionActivity"/);
+    assert.match(users, /getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken\)/);
+    assert.doesNotMatch(users, /withSharedMutationLease_\("USERS", "sessionActivity"/);
     assert.doesNotMatch(users, /DIRECT_SERVICE_TRAFFIC_CONFIG_/);
     assert.match(admin, /withSharedMutationLease_\("ADMIN", action/);
     assert.doesNotMatch(admin, /DIRECT_SERVICE_TRAFFIC_CONFIG_/);
