@@ -46,7 +46,7 @@ function createClient(events, failService = "") {
     const properties = {
         getProperty(name) {
             return ({
-                GPSpedia_SESSION_CACHE_INVALIDATION_SECRET: secret,
+                GPSpedia_COORDINATOR_SECRET: secret,
                 GPSpedia_WRITE_URL: "https://script.google.com/macros/s/WRITE/exec",
                 GPSpedia_FEEDBACK_URL: "https://script.google.com/macros/s/FEEDBACK/exec",
                 GPSpedia_COORDINATOR_URL: "https://script.google.com/macros/s/COORDINATOR/exec",
