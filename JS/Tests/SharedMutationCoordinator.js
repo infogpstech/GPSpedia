@@ -899,6 +899,26 @@ function runSharedMutationCoordinatorTests() {
             "La telemetría no debe exponer datos de sesión o identidad.");
     });
 
+    test_("El feed público del catálogo se cuenta dentro del lock existente y sin lease adicional", function() {
+        const r = createRuntime_();
+        const response = r.coordinator.getPublicCatalogChanges({ cursor: 0, limit: 50 });
+        assert_(response.status === "success", "El feed público debe conservar su contrato.");
+        const traffic = r.request("getServiceTraffic", "ADMIN", "getServiceTraffic");
+        assert_(traffic.totals.last24Hours.CATALOG === 1,
+            "Una consulta pública válida del feed debe contabilizarse como CATALOG.");
+        assert_(traffic.totals.last24Hours.ADMIN === 0,
+            "La consulta de telemetría no debe contar como tráfico ADMIN.");
+    });
+
+    test_("El feed solicitado por FEEDBACK conserva la clasificación de ese servicio", function() {
+        const r = createRuntime_();
+        const response = r.request("getCatalogChanges", "FEEDBACK", "getCatalogChanges", { cursor: 0, limit: 50 });
+        assert_(response.status === "success", "FEEDBACK debe conservar el contrato del feed.");
+        const traffic = r.request("getServiceTraffic", "ADMIN", "getServiceTraffic");
+        assert_(traffic.totals.last24Hours.FEEDBACK === 1,
+            "El feed interno debe atribuirse al servicio autenticado FEEDBACK.");
+    });
+
     test_("La telemetría separa ventanas de una hora, seis horas y veinticuatro horas", function() {
         const r = createRuntime_();
         acquire_(r, "AUTH", "login", "traffic-window-request-0001");
