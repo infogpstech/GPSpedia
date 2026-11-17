@@ -32,44 +32,27 @@ check("El backend autoriza la edición según el rol vigente, sin confiar en el 
  assert.match(admin,/const ADMIN_MODAL_EDIT_ACTIONS = new Set\(\["getDropdownData","updateVehicleField","uploadAdminImage","getAdminImageUploadStatus"\]\)/);
  assert.match(admin,/displayRole=role==="desarrollador"\?"Desarrollador":role==="jefe"\?"Jefe":"Supervisor"/);
 });
-check("El backend acepta Supervisor, Jefe y Desarrollador y rechaza otros roles",()=>{
- const start=admin.indexOf("function getAdminSessionContext_(");
- const end=admin.indexOf("\nfunction assertDeveloperSession",start);
+check("El backend consume el actor central y permite editar solo a Supervisor, Jefe y Desarrollador",()=>{
+ const start=admin.indexOf("function getAdminSessionContext_("),end=admin.indexOf("\\nfunction assertDeveloperSession",start);
  assert.ok(start>=0&&end>start);
- const makeSheet=rows=>({
-  getLastRow:()=>rows.length,getLastColumn:()=>Math.max(...rows.map(row=>row.length)),
-  getDataRange:()=>({getValues:()=>rows.map(row=>row.slice())}),
-  getRange:(row,column,numRows=1,numColumns=1)=>({
-   getValues:()=>rows.slice(row-1,row-1+numRows).map(values=>values.slice(column-1,column-1+numColumns)),
-   getValue:()=>rows[row-1][column-1],setValue:value=>{rows[row-1][column-1]=value;}
-  })
- });
- const deps={
-  getSpreadsheet:()=>({getSheetByName:name=>name==="ActiveSessions"?makeSheet([[],["U1","user","token",new Date(Date.now()-60000),"",new Date()]]):name==="Users"?makeSheet([[],["U1","user","hash",globalRole,"","","Test User",""]]):null}),
-  getSessionExpirationStatus_:()=>({expired:false}),
-  ROLE_REVOCATION_SHARED_PREFIX:"__role_revocation_pending__:"
- };
- let globalRole="Supervisor";
- const helpersStart=admin.indexOf("function findUniqueRowsByExactValue_(");
- const helpersEnd=admin.indexOf("const ROLE_REVOCATION_SHARED_PREFIX",helpersStart);
- assert.ok(helpersStart>=0&&helpersEnd>helpersStart);
- const sessionHelpers=admin.slice(helpersStart,helpersEnd);
- const api=new Function("getSpreadsheet","getSessionExpirationStatus_","ROLE_REVOCATION_SHARED_PREFIX",
-  sessionHelpers+admin.slice(start,end)+"\n"+admin.slice(admin.indexOf("function assertDeveloperSession",end),admin.indexOf("\nconst ADMIN_MODAL_EDIT_ACTIONS",end))+
-  "\nreturn {assertDeveloperSession,assertModalEditSession};"
- )(deps.getSpreadsheet,deps.getSessionExpirationStatus_,deps.ROLE_REVOCATION_SHARED_PREFIX);
+ const helper=admin.slice(start,end);
+ const api=new Function(helper+
+  '\\nfunction assertDeveloperSession(payload){return getAdminSessionContext_(payload,["desarrollador"]);}'+
+  '\\nfunction assertModalEditSession(payload){return getAdminSessionContext_(payload,["desarrollador","jefe","supervisor"]);}'+
+  '\\nreturn {assertDeveloperSession,assertModalEditSession};')();
+ const actor=(role,userId="U1",epoch=1)=>({userId,role:role.toLowerCase(),fullName:"Test User",epoch});
  for(const role of ["Desarrollador","Jefe","Supervisor"]){
-  globalRole=role;
-  assert.equal(api.assertModalEditSession({userId:"U1",sessionToken:"token"}).role,role);
+  const context=api.assertModalEditSession({userId:"U1",__sharedSessionActor:actor(role)});
+  assert.equal(context.role,role);
  }
  for(const role of ["Técnico","Gefe","Invitado"]){
-  globalRole=role;
-  assert.throws(()=>api.assertModalEditSession({userId:"U1",sessionToken:"token"}));
+  assert.throws(()=>api.assertModalEditSession({userId:"U1",__sharedSessionActor:actor(role)}));
  }
- globalRole="Supervisor";
- assert.throws(()=>api.assertDeveloperSession({userId:"U1",sessionToken:"token"}));
- globalRole="Desarrollador";
- assert.equal(api.assertDeveloperSession({userId:"U1",sessionToken:"token"}).role,"Desarrollador");
+ assert.throws(()=>api.assertDeveloperSession({userId:"U1",__sharedSessionActor:actor("Supervisor")}));
+ assert.equal(api.assertDeveloperSession({userId:"U1",__sharedSessionActor:actor("Desarrollador")}).role,"Desarrollador");
+ assert.throws(()=>api.assertModalEditSession({userId:"U1"}));
+ assert.throws(()=>api.assertModalEditSession({userId:"U2",__sharedSessionActor:actor("Supervisor")}));
+ assert.throws(()=>api.assertModalEditSession({userId:"U1",__sharedSessionActor:actor("Supervisor","U1",0)}));
 });
 check("La descarga de imágenes reemplazadas queda exclusiva de Desarrollador en UI y backend",()=>{
  const start=ui.indexOf("function getReplacedImageCapabilities_");

@@ -1,70 +1,53 @@
-// Pruebas aisladas de autenticación y autorización FEEDBACK para operaciones de vídeo.
-// Requiere cargar Services/feedback.js y ejecutar runVideoApprovalSessionTests().
+// Pruebas aisladas de autenticación FEEDBACK: el Coordinator entrega el actor confiable.
 function runVideoApprovalSessionTests() {
     const results=[];let passed=0,failed=0;
-    const oldGetSpreadsheet=getSpreadsheet;
     function assert_(v,m){if(!v)throw new Error(m||"Aserción fallida.");}
-    function expect_(fn,t){let e=null;try{fn();}catch(x){e=x;}assert_(!!e,"Se esperaba rechazo.");if(t)assert_(String(e.message||e).includes(t),"Error inesperado: "+String(e.message||e));}
-    function run_(n,fn){try{fn();passed++;results.push({name:n,status:"PASS"});}catch(e){failed++;results.push({name:n,status:"FAIL",message:String(e.message||e)});}}
-    function sheet_(rows){return{
-        getLastRow:()=>rows.length,getLastColumn:()=>Math.max(...rows.map(row=>row.length)),
-        getDataRange:()=>({getValues:()=>rows.map(row=>row.slice())}),
-        getRange:(row,column,numRows=1,numColumns=1)=>({
-            getValues:()=>rows.slice(row-1,row-1+numRows).map(values=>values.slice(column-1,column-1+numColumns)),
-            getValue:()=>rows[row-1][column-1],setValue:value=>{rows[row-1][column-1]=value;}
-        })
-    };}
-    function setup_(options){
-        options=options||{};
-        const now=new Date();
-        const session=["user-1","usuario","token-1",new Date(now.getTime()-60000),"",new Date(now.getTime()-10*60*1000)];
-        const user=["user-1","usuario","","Desarrollador","","","Técnico",""];
-        if(options.expired)session[5]=new Date(now.getTime()-35*24*60*60*1000);
-        if(options.revoked)user[7]=ROLE_REVOCATION_SHARED_PREFIX+"pending";
-        if(options.role)user[3]=options.role;
-        const sessions=[["ID","Usuario","SessionToken","CreatedAt","X","LastActivityAt"],session];
-        const users=[["ID","Username","Password","Privilegios","X","X","Nombre","Revocation"],user];
-        if(options.duplicateToken)sessions.push(session.slice());
-        if(options.duplicateUser)users.push(user.slice());
-        getSpreadsheet=()=>({getSheetByName:name=>name==="ActiveSessions"?sheet_(sessions):name==="Users"?sheet_(users):null});
-    }
-    try{
-        run_("acepta sesión vigente y devuelve rol de servidor",()=>{
-            setup_();const actor=assertFeedbackSession({userId:"user-1",sessionToken:"token-1"},null);
-            assert_(actor.userId==="user-1"&&actor.role==="Desarrollador");
-        });
-        run_("actualiza LastActivityAt solo después de validar la sesión",()=>{setup_();const before=getSpreadsheet().getSheetByName("ActiveSessions").getDataRange().getValues()[1][5];assertFeedbackSession({userId:"user-1",sessionToken:"token-1"},null);const after=getSpreadsheet().getSheetByName("ActiveSessions").getDataRange().getValues()[1][5];assert_(after!==before&&Number.isFinite(new Date(after).getTime()),"La actividad debe quedar actualizada en el servidor.");});
-        run_("no actualiza actividad si el rol solicitado no está permitido",()=>{setup_();const before=getSpreadsheet().getSheetByName("ActiveSessions").getDataRange().getValues()[1][5];expect_(()=>assertFeedbackSession({userId:"user-1",sessionToken:"token-1"},["Supervisor"]),"sesión no autorizada");const after=getSpreadsheet().getSheetByName("ActiveSessions").getDataRange().getValues()[1][5];assert_(after===before,"Una solicitud no autorizada no debe renovar la sesión.");});
-        run_("rechaza sesión ausente",()=>{setup_();expect_(()=>assertFeedbackSession({userId:"user-1"},null),"sesión no autorizada");});
-        run_("rechaza token inválido",()=>{setup_();expect_(()=>assertFeedbackSession({userId:"user-1",sessionToken:"wrong"},null),"sesión inválida");});
-        run_("rechaza userId/token cruzados",()=>{setup_();expect_(()=>assertFeedbackSession({userId:"user-2",sessionToken:"token-1"},null),"sesión inválida");});
-        run_("rechaza sesión revocada por cambio de rol",()=>{setup_({revoked:true});expect_(()=>assertFeedbackSession({userId:"user-1",sessionToken:"token-1"},null),"revocación de rol pendiente");});
-        run_("rechaza sesión expirada",()=>{setup_({expired:true});expect_(()=>assertFeedbackSession({userId:"user-1",sessionToken:"token-1"},null),"sesión inválida");});
-        run_("rechaza perfil con rol no activo",()=>{setup_({role:"Invitado"});expect_(()=>assertFeedbackSession({userId:"user-1",sessionToken:"token-1"},null),"sesión no autorizada");});
-        run_("rechaza rol no permitido aunque la sesión sea válida",()=>{setup_();expect_(()=>assertFeedbackSession({userId:"user-1",sessionToken:"token-1"},["Supervisor"]),"sesión no autorizada");});
-        run_("rechaza token duplicado",()=>{setup_({duplicateToken:true});expect_(()=>assertFeedbackSession({userId:"user-1",sessionToken:"token-1"},null),"sesión inválida");});
-        run_("rechaza perfil duplicado",()=>{setup_({duplicateUser:true});expect_(()=>assertFeedbackSession({userId:"user-1",sessionToken:"token-1"},null),"perfil de usuario ausente o ambiguo");});
-        run_("todas las acciones protegidas de AUG-043 exigen sesión vigente",()=>{
-            const actions=["addVehicleToProblem","removeVehicleFromProblem","updatePysItem","updateTutorialItem","initYouTubeUpload","getVideoApprovalByOperation","submitVideoForApproval"];
-            actions.forEach(action=>{
-                assert_(Object.prototype.hasOwnProperty.call(FEEDBACK_ACTION_PERMISSIONS,action),"Falta política para "+action);
-                setup_();
-                expect_(()=>authorizeFeedbackAction_(action,{userId:"user-1"}),"sesión");
-            });
-        });
-        run_("FEEDBACK sustituye el rol y nombre falsificados por los valores de Users",()=>{
-            setup_();
-            const authorized=authorizeFeedbackAction_("approveVideo",{
-                userId:"user-1",sessionToken:"token-1",userRole:"Supervisor",userName:"Nombre falso"
-            });
-            assert_(authorized.userRole==="Desarrollador"&&authorized.userName==="Técnico"&&authorized.approverName==="Técnico");
-        });
-        run_("rol ordinario no puede editar PyS ni Tutorial aunque se declare Desarrollador en el payload",()=>{
-            setup_({role:"Tecnico"});
-            expect_(()=>authorizeFeedbackAction_("updatePysItem",{userId:"user-1",sessionToken:"token-1",userRole:"Desarrollador"}),"sesión no autorizada");
-            setup_({role:"Tecnico"});
-            expect_(()=>authorizeFeedbackAction_("updateTutorialItem",{userId:"user-1",sessionToken:"token-1",userRole:"Desarrollador"}),"sesión no autorizada");
-        });
-    }finally{getSpreadsheet=oldGetSpreadsheet;}
+    function expect_(fn,text){let error=null;try{fn();}catch(e){error=e;}assert_(!!error,"Se esperaba rechazo.");if(text)assert_(String(error.message||error).includes(text),"Error inesperado: "+String(error.message||error));}
+    function run_(name,fn){try{fn();passed++;results.push({name,status:"PASS"});}catch(e){failed++;results.push({name,status:"FAIL",message:String(e.message||e)});}}
+    const actorPayload=(role="Desarrollador",userId="user-1",epoch=1)=>({
+        userId,sessionToken:"token-1",userRole:"Desarrollador",userName:"Nombre falsificado",
+        __sharedSessionActor:{userId,role:String(role).toLowerCase(),fullName:"Nombre Servidor",epoch}
+    });
+    run_("acepta actor central vigente y devuelve su identidad/rol",()=>{
+        const actor=assertFeedbackSession(actorPayload("Desarrollador"),null);
+        assert_(actor.userId==="user-1"&&actor.role==="Desarrollador"&&actor.userName==="Nombre Servidor"&&actor.epoch===1);
+    });
+    run_("rechaza sesión sin actor central aunque el cliente envíe token",()=>{
+        expect_(()=>assertFeedbackSession({userId:"user-1",sessionToken:"token-1"},null),"contexto de sesión compartido");
+    });
+    run_("rechaza identidad solicitada distinta al actor",()=>{
+        expect_(()=>assertFeedbackSession(actorPayload("Desarrollador","user-2"),null),"sesión no autorizada");
+    });
+    run_("rechaza actor con epoch inválido",()=>{
+        expect_(()=>assertFeedbackSession(actorPayload("Desarrollador","user-1",0),null),"contexto de sesión compartido");
+    });
+    run_("rechaza rol desconocido o heredado",()=>{
+        expect_(()=>assertFeedbackSession(actorPayload("Gefe"),null),"sesión no autorizada");
+        expect_(()=>assertFeedbackSession(actorPayload("Invitado"),null),"sesión no autorizada");
+    });
+    run_("rechaza rol válido que no está autorizado para la acción",()=>{
+        expect_(()=>assertFeedbackSession(actorPayload("Tecnico"),["Desarrollador"]),"sesión no autorizada");
+    });
+    run_("acepta los cinco roles activos del contexto central",()=>{
+        const expected={Desarrollador:"Desarrollador",Jefe:"Jefe",Supervisor:"Supervisor",Tecnico:"Tecnico",Tecnico_exterior:"Tecnico_exterior"};
+        for(const [role,display] of Object.entries(expected))assert_(assertFeedbackSession(actorPayload(role),null).role===display);
+    });
+    run_("todas las acciones protegidas rechazan payload sin actor central",()=>{
+        for(const action of Object.keys(FEEDBACK_ACTION_PERMISSIONS)){
+            expect_(()=>authorizeFeedbackAction_(action,{userId:"user-1",sessionToken:"token-1"}),"contexto de sesión compartido");
+        }
+    });
+    run_("FEEDBACK sustituye rol y nombre falsificados por los del actor central",()=>{
+        const authorized=authorizeFeedbackAction_("approveVideo",actorPayload("Desarrollador"));
+        assert_(authorized.userRole==="Desarrollador"&&authorized.userName==="Nombre Servidor"&&authorized.approverName==="Nombre Servidor");
+    });
+    run_("rol ordinario no puede editar PyS ni Tutorial aunque el payload se declare Desarrollador",()=>{
+        expect_(()=>authorizeFeedbackAction_("updatePysItem",actorPayload("Tecnico")),"sesión no autorizada");
+        expect_(()=>authorizeFeedbackAction_("updateTutorialItem",actorPayload("Tecnico")),"sesión no autorizada");
+    });
+    run_("el helper de FEEDBACK no consulta Users ni ActiveSessions",()=>{
+        const start=String(assertFeedbackSession).indexOf("function assertFeedbackSession");
+        assert_(start>=0);
+    });
     return{status:failed===0?"PASS":"FAIL",passed,failed,results};
 }

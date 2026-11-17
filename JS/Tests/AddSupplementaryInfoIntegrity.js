@@ -50,45 +50,40 @@ function runAddSupplementaryInfoIntegrityTests(sources) {
  run_("Coordinador cubre Cortes, Drive y ledger",function(){assert_(String(sources.coordinator||"").includes('addSupplementaryInfo: { read: identityRead, write: ["CORTES", "DRIVE", "IMAGE_UPLOAD_LEDGER"] }'));});
  run_("UI no calcula slot desde item posiblemente obsoleto",function(){assert_(!String(sources.ui||"").includes("if (!item.cableAlimen)")&&String(sources.ui||"").includes("El servidor asigna el primer par"));});
 
- const helperStart=String(sources.write).indexOf("function findUniqueRowsByExactValue_(");
  const authStart=String(sources.write).indexOf("function getAuthenticatedCollaborator(");
- const authEnd=String(sources.write).indexOf("\n// ============================================================================",authStart);
- const authSource=String(sources.write).slice(helperStart,authEnd);
- const authNames={ACTIVE_SESSIONS:"ActiveSessions",USERS:"Users"};
- const authColsSessions={ActiveSessions:3,ID_Usuario:1};
- const authColsUsers={ID:1,Nombre_Usuario:2,Privilegios:4,Nombre_Completo:7,SessionToken:8};
- function authHarness(role,options){
-  options=options||{};
-  const now=new Date().toISOString();
-  const session=["user-1","tecnico","token-1",options.expired?"expired":now,"",now];
-  const user=["user-1",options.deleted?"__deleted__:tecnico":"tecnico","",role||"Tecnico","","","Nombre Servidor",options.revoked?"__role_revocation_pending__:pending":"token-1",""];
-  const rows={ActiveSessions:[["userId","username","token","createdAt","logs","lastActivityAt"],session],Users:[["id","username","password","role","phone","email","fullName","session","terms"],user]};
-  if(options.duplicate)rows.ActiveSessions.push(session.slice());
-  const sheets={getSheetByName:name=>rows[name]?{
-   getLastRow:()=>rows[name].length,getLastColumn:()=>Math.max(...rows[name].map(row=>row.length)),
-   getDataRange:()=>({getValues:()=>rows[name].map(row=>row.slice())}),
-   getRange:(row,column,numRows=1,numColumns=1)=>({
-    getValues:()=>rows[name].slice(row-1,row-1+numRows).map(values=>values.slice(column-1,column-1+numColumns)),
-    getValue:()=>rows[name][row-1][column-1],setValue:value=>{rows[name][row-1][column-1]=value;}
-   })
-  }:null};
-  const getAuth=new Function("getSpreadsheet","SHEET_NAMES","COLS_ACTIVE_SESSIONS","COLS_USERS","ROLE_REVOCATION_SHARED_PREFIX","getSessionExpirationStatus_",authSource+";return getAuthenticatedCollaborator;")(
-   ()=>sheets,authNames,{ActiveSessions:3,ID_Usuario:1,LastActivityAt:6},{ID:1,Nombre_Usuario:2,Privilegios:4,Nombre_Completo:7,SessionToken:8},"__role_revocation_pending__:",row=>({expired:row[3]==="expired"}));
-  return {getAuth,rows};
- }
+ const authEnd=String(sources.write).indexOf("\\nfunction ",authStart+10);
+ const authSource=String(sources.write).slice(authStart,authEnd<0?undefined:authEnd);
+ const getAuth=new Function(authSource+";return getAuthenticatedCollaborator;")();
  const allowedSupplementaryRoles=["desarrollador","jefe","supervisor","tecnico","tecnico_exterior"];
- run_("WRITE exige sesión y rechaza payload sin token",function(){const h=authHarness("Tecnico");let rejected=false;try{h.getAuth({userId:"user-1"},allowedSupplementaryRoles);}catch(e){rejected=/sesión válida/.test(e.message);}assert_(rejected);});
- run_("WRITE rechaza token inválido o cruzado",function(){const h=authHarness("Tecnico");let rejected=false;try{h.getAuth({userId:"user-1",sessionToken:"otro"},allowedSupplementaryRoles);}catch(e){rejected=/sesión inválida/.test(e.message);}assert_(rejected);});
- run_("WRITE rechaza sesión duplicada o expirada",function(){[{"duplicate":true},{"expired":true}].forEach(options=>{const h=authHarness("Tecnico",options);let rejected=false;try{h.getAuth({userId:"user-1",sessionToken:"token-1"},allowedSupplementaryRoles);}catch(e){rejected=/sesión inválida/.test(e.message);}assert_(rejected);});});
- run_("WRITE rechaza sesión con revocación de rol pendiente",function(){const h=authHarness("Tecnico",{revoked:true});let rejected=false;try{h.getAuth({userId:"user-1",sessionToken:"token-1"},allowedSupplementaryRoles);}catch(e){rejected=/revocación de rol/.test(e.message);}assert_(rejected);});
- run_("WRITE rechaza roles fuera de la política suplementaria",function(){const h=authHarness("Lector");let rejected=false;try{h.getAuth({userId:"user-1",sessionToken:"token-1"},allowedSupplementaryRoles);}catch(e){rejected=/rol válido/.test(e.message)||/no puede agregar información suplementaria/.test(e.message);}assert_(rejected);});
- run_("WRITE acepta cada rol operativo permitido",function(){allowedSupplementaryRoles.forEach(role=>{const h=authHarness(role);assert_(h.getAuth({userId:"user-1",sessionToken:"token-1"},allowedSupplementaryRoles)==="Nombre Servidor");});});
- run_("WRITE actualiza LastActivityAt tras autenticar una operación protegida",function(){const h=authHarness("Tecnico");h.rows.ActiveSessions[1][5]="2020-01-01T00:00:00.000Z";const before=h.rows.ActiveSessions[1][5];assert_(h.getAuth({userId:"user-1",sessionToken:"token-1"},allowedSupplementaryRoles)==="Nombre Servidor");const after=h.rows.ActiveSessions[1][5];assert_(after!==before&&Number.isFinite(new Date(after).getTime()));});
- run_("WRITE no actualiza actividad cuando el rol no está autorizado",function(){const h=authHarness("Tecnico");h.rows.ActiveSessions[1][5]="2020-01-01T00:00:00.000Z";const before=h.rows.ActiveSessions[1][5];let rejected=false;try{h.getAuth({userId:"user-1",sessionToken:"token-1"},["desarrollador"]);}catch(e){rejected=true;}assert_(rejected&&h.rows.ActiveSessions[1][5]===before);});
-
- run_("WRITE rechaza el rol heredado Gefe",function(){const h=authHarness("Gefe");let rejected=false;try{h.getAuth({userId:"user-1",sessionToken:"token-1"},allowedSupplementaryRoles);}catch(e){rejected=/rol válido/.test(e.message);}assert_(rejected);});
- run_("WRITE deriva el actor del perfil y no del payload",function(){const h=authHarness("Tecnico");assert_(h.getAuth({userId:"user-1",sessionToken:"token-1",colaborador:"Administrador Falso"},allowedSupplementaryRoles)==="Nombre Servidor");});
- run_("WRITE bloquea cuentas eliminadas aunque conserven token",function(){const h=authHarness("Tecnico",{deleted:true});let rejected=false;try{h.getAuth({userId:"user-1",sessionToken:"token-1"},allowedSupplementaryRoles);}catch(e){rejected=/cuenta no está activa/.test(e.message);}assert_(rejected);});
+ const payloadFor=(role,extra={})=>({userId:"user-1",sessionToken:"token-1",colaborador:"Nombre falso",userRole:"Desarrollador",
+  __sharedSessionActor:{userId:"user-1",role:String(role).toLowerCase(),fullName:"Nombre Servidor",epoch:1},...extra});
+ run_("WRITE exige actor compartido y rechaza payload sin actor",function(){
+  let rejected=false;try{getAuth({userId:"user-1",sessionToken:"token-1"},allowedSupplementaryRoles);}catch(e){rejected=/contexto de sesión compartido/.test(e.message);}
+  assert_(rejected);
+ });
+ run_("WRITE rechaza identidad solicitada distinta al actor",function(){
+  let rejected=false;try{getAuth(payloadFor("Tecnico",{userId:"user-2"}),allowedSupplementaryRoles);}catch(e){rejected=/contexto compartido/.test(e.message);}
+  assert_(rejected);
+ });
+ run_("WRITE rechaza actor con epoch inválido o rol desconocido",function(){
+  for(const actor of [{userId:"user-1",role:"tecnico",fullName:"Nombre",epoch:0},{userId:"user-1",role:"Gefe",fullName:"Nombre",epoch:1}]){
+   let rejected=false;try{getAuth({userId:"user-1",__sharedSessionActor:actor},allowedSupplementaryRoles);}catch(_){rejected=true;}
+   assert_(rejected);
+  }
+ });
+ run_("WRITE rechaza roles fuera de la política suplementaria",function(){
+  let rejected=false;try{getAuth(payloadFor("lector"),allowedSupplementaryRoles);}catch(e){rejected=/contexto compartido/.test(e.message);}
+  assert_(rejected);
+ });
+ run_("WRITE acepta los cinco roles operativos del actor central",function(){
+  allowedSupplementaryRoles.forEach(role=>assert_(getAuth(payloadFor(role),allowedSupplementaryRoles)==="Nombre Servidor"));
+ });
+ run_("WRITE no confía en colaborador ni rol falsificados por el cliente",function(){
+  assert_(getAuth(payloadFor("Tecnico"),allowedSupplementaryRoles)==="Nombre Servidor");
+ });
+ run_("WRITE helper no consulta Users ni ActiveSessions",function(){
+  assert_(!/getSpreadsheet|ActiveSessions|Users|findUniqueRowsByExactValue_|getSessionExpirationStatus_|touchSessionActivityIfDue_/.test(authSource));
+ });
  run_("Handler suplementario autentica una sola vez dentro del lock y registra actor servidor",function(){const p=String(sources.write).indexOf("function handleAddSupplementaryInfo(payload)"),q=String(sources.write).indexOf("function handleAddSupplementaryInfoLocked(payload)",p),end=String(sources.write).indexOf("\nfunction ",q+10),outer=String(sources.write).slice(p,q),inner=String(sources.write).slice(q,end>0?end:undefined);assert_(!outer.includes("getAuthenticatedCollaborator(")&&outer.indexOf("waitLock")<outer.indexOf("handleAddSupplementaryInfoLocked(payload)"));assert_(inner.includes("const actorName = getAuthenticatedCollaborator(payload, SUPPLEMENTARY_INFO_ALLOWED_ROLES_)")&&inner.includes("Logger.log(\"Información suplementaria guardada por \"+actorName"));});
 
  return {passed:passed,failed:failed,results:results};

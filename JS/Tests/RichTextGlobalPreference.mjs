@@ -82,7 +82,7 @@ testCase("el backend mantiene la preferencia global en ScriptProperties y valida
     const values = new Map();
     const properties = { getProperty(key) { return values.has(key) ? values.get(key) : null; },
         setProperty(key, value) { values.set(key, String(value)); } };
-    const normalizerSource = extract(feedback, "function normalizeFeedbackRole(role)", "function findUniqueRowsByExactValue_");
+    const normalizerSource = extract(feedback, "function normalizeFeedbackRole(role)", "function getFeedbackActor_");
     const normalizeRole = new Function(normalizerSource + "\nreturn normalizeFeedbackRole;")();
     const runtime = new Function("PropertiesService", "normalizeFeedbackRole",
         feedback.slice(start, end) + "\nreturn { handleGetRichTextMode, handleSetRichTextMode, RICH_TEXT_MODE_PROPERTY_ };")(

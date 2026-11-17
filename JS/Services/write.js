@@ -148,7 +148,7 @@ function getAuthenticatedCollaborator(payload, allowedRoles) {
  const trusted = payload && payload.__sharedSessionActor;
  if (!trusted || typeof trusted.userId !== "string" || typeof trusted.role !== "string" || !Number.isSafeInteger(trusted.epoch) || trusted.epoch < 1) throw new Error("Acceso no autorizado: falta el contexto de sesión compartido.");
  const id = trusted.userId.trim(), requested = String(payload.userId || id).trim(), role = trusted.role.trim().toLowerCase(), name = String(trusted.fullName || "").trim();
- if (!id || requested !== id || !name || !["desarrollador","jefe","supervisor","tecnico","tecnico_exterior"].includes(role)) throw new Error("Acceso no autorizado: el contexto compartido no es válido.");
+ if (!id || requested !== id || !name || ['desarrollador','jefe','supervisor','tecnico','tecnico_exterior'].includes(role) !== true) throw new Error("Acceso no autorizado: el contexto compartido no es válido.");
  if (Array.isArray(allowedRoles) && !allowedRoles.includes(role)) throw new Error("Acceso no autorizado: tu rol no puede realizar esta operación.");
  return name;
 }

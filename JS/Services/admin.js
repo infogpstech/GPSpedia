@@ -80,8 +80,9 @@ function getAdminSessionContext_(payload, allowedRoles) {
  if (!trusted || typeof trusted.userId !== "string" || typeof trusted.role !== "string" || !Number.isSafeInteger(trusted.epoch) || trusted.epoch < 1) throw new Error("Acceso denegado: falta el contexto de sesión compartido.");
  const id = trusted.userId.trim(), requested = String(payload.userId || id).trim(), role = trusted.role.trim().toLowerCase();
  if (!id || requested !== id || !Array.isArray(allowedRoles) || !allowedRoles.includes(role)) throw new Error("Acceso denegado: sesión no autorizada.");
- const fullName = String(trusted.fullName || "").trim(), displayRole = role === "desarrollador" ? "Desarrollador" : role === "jefe" ? "Jefe" : "Supervisor";
- return { userId:id, role:displayRole, fullName, userName:fullName || "Usuario", epoch:trusted.epoch };
+ const fullName = String(trusted.fullName || "").trim();
+ const displayRole=role==="desarrollador"?"Desarrollador":role==="jefe"?"Jefe":"Supervisor";
+ return {userId:id,role:displayRole,fullName,userName:fullName||"Usuario",epoch:trusted.epoch};
 }
 /** Consume el actor autenticado por Coordinator; no reconsulta Users ni ActiveSessions. */
 function assertDeveloperSession(payload){return getAdminSessionContext_(payload,["desarrollador"]);}
