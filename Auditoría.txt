@@ -37,3 +37,15 @@ undefined
 - Ubicación: JS/Frontend/ui.js, showLoginScreen. La clase se aplica solo cuando reason === 'Sesión terminada'; el aviso usa role=status y aria-live=polite, mientras los errores normales conservan role=alert y aria-live=assertive.
 - Alcance: cambiar únicamente alineación del aviso específico y agregar contrato anti-regresión; no modificar geometría, márgenes, colores, display ni responsive.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — AUDITORÍA BETA-003 — RECURSOS ESTÁTICOS DEL SERVICE WORKER
+- Ubicación: service-worker.js, función isCacheableRequest_. Evidencia: la expresión regular del fallback por extensión contenía dos barras invertidas antes del punto; probada como regex, no reconoce rutas normales como /data/catalog.json, /main.js ni /font.woff2.
+- Impacto: las solicitudes same-origin con destination vacío y los recursos estáticos del CDN permitido dependen de la comprobación por extensión; podían quedar fuera de Cache Storage y degradar disponibilidad offline de esos recursos. Los recursos servidos como document/script/style/font dentro del mismo origen siguen cubiertos por su rama explícita.
+- Severidad: MEDIA (degradación acotada de caché/offline; no altera autorización ni datos).
+- Corrección aplicada: patrón de extensión con escape literal de punto; incremento de CACHE_NAME a gpsepedia-cache-v68 para activar instalación de la versión corregida y retiro del caché anterior según el ciclo existente.
+- Prueba añadida: JS/Tests/ServiceWorkerCache.js cubre JSON same-origin solicitado con destination vacío y fuente woff2 del CDN autorizado.
+- Validación ejecutada: Node.js --check de los fragmentos modificados y cuatro escenarios aislados de política (JSON local, fuente CDN, endpoint Apps Script no cacheable y POST no cacheable): 4/4 PASS. No se pudo consultar desde el conector la ejecución completa de GitHub Actions; no se declara aprobada.
+- Pendiente Beta: comparar recursos efectivamente servidos con la rama, confirmar instalación/activación de v68, reemplazo del caché anterior y comportamiento online/offline en navegador/PWA sin borrar IndexedDB ni datos locales.
+================================================================================
