@@ -291,3 +291,12 @@ undefined
 - Se confirmó que las revocaciones de Coordinator no invalidan las cachés locales de actor de WRITE/FEEDBACK. La ventana de autorización obsoleta puede alcanzar 6 h después de logout remoto, eliminación o cambio de rol. Hallazgo ALTO y evidencia registrados en AUDITORIA_P3_SESION_ACTOR.md.
 - P3.1b completada como evaluación. P3.1 global continúa EN PROGRESO; siguiente P3.1c: invalidación dirigida de caché y pruebas locales. No hubo cambios de código, pruebas ejecutadas, despliegues ni modificaciones de datos externos en esta adenda.
 ================================================================================
+
+================================================================================
+2026-11-17 — P3.1c: invalidación dirigida de caché de actor
+- SharedMutationClient.js agrega invalidación de claves de sesión por token en WRITE y FEEDBACK antes de revocar sesiones en Coordinator; se preserva el formato de clave existente y el TTL de 6 h.
+- Auth.js aplica invalidación en logout individual y en revocaciones por usuario, enumerando tokens activos de ActiveSessions. write.js y feedback.js aceptan la acción interna solo con secreto compartido; no se expone al frontend.
+- Se añadieron SessionActorCacheInvalidation.mjs, su registro en RunServiceTests.mjs y adaptaciones de harnesses AUTH/PasswordRecovery. Las operaciones de usuario siguen sin consultar Coordinator por acción.
+- Validación local CI 44149804570 SUCCESS: 144 suites / 2,131 pruebas / 0 fallos. Health read-only 44149804587 SUCCESS; no valida el nuevo código desplegado.
+- No se desplegaron Apps Script ni se modificaron propiedades, hojas, Drive o datos externos. Pendiente Beta: configurar el secreto compartido y URLs en ScriptProperties, desplegar AUTH/WRITE/FEEDBACK y validar revocaciones reales/fallos parciales.
+================================================================================
