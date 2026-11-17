@@ -12582,8 +12582,21 @@ export function openAddProblemModal(preAssociatedVehicle = null, navOptions = {}
                 <div class="rich-editor-toolbar" data-rich-target="pys-prevenir"></div>
                 <textarea id="pys-prevenir" maxlength="700" rows="3" placeholder="Recomendación preventiva..."></textarea>
             </div>
+            <div class="form-group">
+                <label for="pys-video-url">Enlace de vídeo de YouTube (opcional)</label>
+                <input type="url" id="pys-video-url" inputmode="url" autocomplete="url"
+                    placeholder="https://www.youtube.com/watch?v=..." maxlength="500">
+                <small style="display:block;color:var(--text-disabled);font-size:0.78rem;margin-top:4px;">
+                    El enlace se enviará a aprobación y el vídeo solo aparecerá en GPSpedia después de aprobarse.
+                </small>
+            </div>
 
-            <button type="submit" class="btn btn-primary" style="margin-top:10px;">Agregar</button>
+            <div class="modal-btn-compact-container" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+                <button type="button" id="pys-upload-video-btn" class="btn btn-secondary" style="flex:1;min-width:160px;">
+                    <i class="fa-solid fa-upload" aria-hidden="true"></i> Subir archivo a YouTube
+                </button>
+                <button type="submit" class="btn btn-primary" style="flex:1;min-width:120px;">Agregar</button>
+            </div>
         </form>
     `;
 
@@ -12691,118 +12704,215 @@ export function openAddProblemModal(preAssociatedVehicle = null, navOptions = {}
     };
 
     const form = content.querySelector("#add-pys-form");
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const uploadBtn = content.querySelector("#pys-upload-video-btn");
+    const videoUrlInput = content.querySelector("#pys-video-url");
     let pendingPysOperationId = "";
     let pendingPysOperationSignature = "";
-    form.onsubmit = async (e) => {
-        e.preventDefault();
+    let createdProblemId = "";
+    let pendingApprovalVideoId = "";
+    let isSaving = false;
 
-        const { currentUser } = getState();
-        if (!currentUser) {
-            showGlobalError("Debes estar conectado.");
+    const refreshPysAfterVideo_ = async () => {
+        invalidatePysDataCache();
+        try { await loadPysData(); } catch (refreshError) {
+            console.warn("El problema se registró, pero no se pudo actualizar la lista PyS:", refreshError);
+        }
+    };
+    const createPysOperationId_ = () => {
+        if (!window.crypto || typeof window.crypto.getRandomValues !== "function") {
+            throw new Error("Este navegador no permite generar un identificador seguro para la solicitud.");
+        }
+        const bytes = new Uint8Array(16);
+        window.crypto.getRandomValues(bytes);
+        return Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
+    };
+    const getPysVideoApprovalOperation_ = (referenceId, videoId) => {
+        const storageKey = "gpsepedia_pys_video_approval_" + encodeURIComponent(String(referenceId)) +
+            "_" + encodeURIComponent(String(videoId));
+        let opVideoId = "";
+        try {
+            opVideoId = String(sessionStorage.getItem(storageKey) || "");
+            if (!/^[A-Za-z0-9_-]{20,80}$/.test(opVideoId)) {
+                opVideoId = createPysOperationId_();
+                sessionStorage.setItem(storageKey, opVideoId);
+            }
+        } catch (storageError) {
+            throw new Error("No se pudo conservar el identificador de aprobación. No se envió el enlace para evitar solicitudes duplicadas.");
+        }
+        return { opVideoId, storageKey };
+    };
+
+    const saveProblem = async ({ openUploader = false } = {}) => {
+        if (isSaving) return;
+        if (getUiSessionContext_()?.role !== "desarrollador") {
+            showGlobalError("La sesión ya no tiene permisos para registrar problemas.");
             return;
         }
 
-        const submitBtn = form.querySelector('button[type="submit"]');
-        const fileInput = content.querySelector("#pys-img-file");
-        const selectedFile = fileInput.files && fileInput.files[0];
+        const rawVideoUrl = videoUrlInput.value.trim();
+        const videoId = rawVideoUrl ? getValidatedYouTubeVideoId(rawVideoUrl) : null;
+        if (rawVideoUrl && !videoId) {
+            showGlobalError("Introduce un enlace válido de YouTube.");
+            videoUrlInput.focus();
+            return;
+        }
+        if (openUploader && rawVideoUrl) {
+            showGlobalError("Usa el enlace de YouTube o la subida directa del archivo, no ambas opciones.");
+            videoUrlInput.focus();
+            return;
+        }
+        if (pendingApprovalVideoId && videoId !== pendingApprovalVideoId) {
+            showGlobalError("La solicitud anterior aún no se ha confirmado. Reintenta con el mismo enlace para evitar solicitudes duplicadas.");
+            videoUrlInput.value = "https://www.youtube.com/watch?v=" + pendingApprovalVideoId;
+            return;
+        }
+
+        if (!createdProblemId && !form.reportValidity()) return;
+        isSaving = true;
         submitBtn.disabled = true;
-        submitBtn.textContent = "Guardando...";
+        uploadBtn.disabled = true;
+        submitBtn.textContent = openUploader ? "Preparando subida..." : (createdProblemId ? "Reintentando aprobación..." : "Guardando...");
+        uploadBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Procesando...';
 
-        let completed = false;
         try {
-            if (!selectedFile) throw new Error("Debes seleccionar una imagen para el problema.");
-            const allowedMimeTypes = ["image/jpeg", "image/png", "image/webp"];
-            if (!allowedMimeTypes.includes(String(selectedFile.type || "").toLowerCase())) {
-                throw new Error("La imagen debe estar en formato JPEG, PNG o WebP.");
-            }
-            if (!Number.isFinite(selectedFile.size) || selectedFile.size < 1 || selectedFile.size > 3 * 1024 * 1024) {
-                throw new Error("La imagen debe tener un tamaño máximo de 3 MB.");
-            }
+            if (!createdProblemId) {
+                const { currentUser } = getState();
+                if (!currentUser) throw new Error("Debes estar conectado.");
 
-            const imgBase64 = await new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = event => {
-                    const result = event && event.target ? event.target.result : null;
-                    if (typeof result !== "string" ||
-                        !result.startsWith("data:" + selectedFile.type.toLowerCase() + ";base64,")) {
-                        reject(new Error("La lectura no devolvió una imagen válida del tipo seleccionado."));
-                        return;
-                    }
-                    resolve(result);
-                };
-                reader.onerror = () => reject(reader.error || new Error("No se pudo leer la imagen seleccionada."));
-                reader.onabort = () => reject(new Error("La lectura de la imagen fue cancelada. Selecciona el archivo nuevamente."));
-                try {
-                    reader.readAsDataURL(selectedFile);
-                } catch (error) {
-                    reject(error);
+                const fileInput = content.querySelector("#pys-img-file");
+                const selectedFile = fileInput.files && fileInput.files[0];
+                if (!selectedFile) throw new Error("Debes seleccionar una imagen para el problema.");
+                const allowedMimeTypes = ["image/jpeg", "image/png", "image/webp"];
+                if (!allowedMimeTypes.includes(String(selectedFile.type || "").toLowerCase())) {
+                    throw new Error("La imagen debe estar en formato JPEG, PNG o WebP.");
                 }
-            });
-
-            const payload = {
-                titulo: content.querySelector("#pys-titulo").value.trim(),
-                descripcion: content.querySelector("#pys-detalle").value.trim(),
-                sinSolucion: chkSinSolucion.checked,
-                solucion: txtSolucion.value.trim(),
-                prevenir: content.querySelector("#pys-prevenir").value.trim(),
-                videoUrl: "",
-                ...getSessionPayload_(),
-                alcance: alcanceSelect.value,
-                modelosAsociados: Array.from(selectedVehicleIds),
-                imgBase64
-            };
-
-            const operationSignaturePayload = Object.fromEntries(
-                Object.entries(payload).filter(([key]) => !/token/i.test(key))
-            );
-            const operationSignature = JSON.stringify(operationSignaturePayload);
-            if (!pendingPysOperationId || pendingPysOperationSignature !== operationSignature) {
-                if (!window.crypto || typeof window.crypto.getRandomValues !== "function") {
-                    throw new Error("Este navegador no permite generar un identificador seguro para el registro. Actualiza el navegador e inténtalo nuevamente.");
+                if (!Number.isFinite(selectedFile.size) || selectedFile.size < 1 || selectedFile.size > 3 * 1024 * 1024) {
+                    throw new Error("La imagen debe tener un tamaño máximo de 3 MB.");
                 }
-                const randomBytes = new Uint8Array(16);
-                window.crypto.getRandomValues(randomBytes);
-                pendingPysOperationId = Array.from(randomBytes, byte => byte.toString(16).padStart(2, "0")).join("");
-                pendingPysOperationSignature = operationSignature;
-            }
-            payload.opId = pendingPysOperationId;
 
-            const created = await routeAction("addProblem", payload);
-            if (!created || created.status !== "success" || !created.problemId) {
-                throw new Error("El servidor no confirmó el ID del problema ni la vinculación de su imagen.");
-            }
-
-            completed = true;
-            invalidatePysDataCache();
-            modal.remove();
-            renderPysSection();
-            if (confirm("El problema se registró sin vídeo. ¿Deseas subir ahora un vídeo para enviarlo a aprobación?")) {
-                openYouTubeUploadModal({
-                    initialTitle: payload.titulo,
-                    initialDescription: payload.descripcion,
-                    contentType: "pys",
-                    referenceId: created.problemId,
-                    metadata: { alcance: payload.alcance, modelosAsociados: payload.modelosAsociados },
-                    onSuccess: async () => {
-                        invalidatePysDataCache();
-                        await loadPysData();
-                    }
+                const imgBase64 = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = event => {
+                        const result = event && event.target ? event.target.result : null;
+                        if (typeof result !== "string" ||
+                            !result.startsWith("data:" + selectedFile.type.toLowerCase() + ";base64,")) {
+                            reject(new Error("La lectura no devolvió una imagen válida del tipo seleccionado."));
+                            return;
+                        }
+                        resolve(result);
+                    };
+                    reader.onerror = () => reject(reader.error || new Error("No se pudo leer la imagen seleccionada."));
+                    reader.onabort = () => reject(new Error("La lectura de la imagen fue cancelada. Selecciona el archivo nuevamente."));
+                    try { reader.readAsDataURL(selectedFile); } catch (error) { reject(error); }
                 });
+
+                const payload = {
+                    titulo: content.querySelector("#pys-titulo").value.trim(),
+                    descripcion: content.querySelector("#pys-detalle").value.trim(),
+                    sinSolucion: chkSinSolucion.checked,
+                    solucion: txtSolucion.value.trim(),
+                    prevenir: content.querySelector("#pys-prevenir").value.trim(),
+                    videoUrl: "",
+                    ...getSessionPayload_(),
+                    alcance: alcanceSelect.value,
+                    modelosAsociados: Array.from(selectedVehicleIds),
+                    imgBase64
+                };
+
+                const operationSignaturePayload = Object.fromEntries(
+                    Object.entries(payload).filter(([key]) => !/token/i.test(key))
+                );
+                const operationSignature = JSON.stringify(operationSignaturePayload);
+                if (!pendingPysOperationId || pendingPysOperationSignature !== operationSignature) {
+                    pendingPysOperationId = createPysOperationId_();
+                    pendingPysOperationSignature = operationSignature;
+                }
+                payload.opId = pendingPysOperationId;
+
+                const created = await routeAction("addProblem", payload);
+                if (!created || created.status !== "success" || !created.problemId) {
+                    throw new Error("El servidor no confirmó el ID del problema ni la vinculación de su imagen.");
+                }
+                createdProblemId = String(created.problemId);
+                [alcanceSelect, searchVehicleInput, content.querySelector("#pys-titulo"),
+                    content.querySelector("#pys-img-file"), content.querySelector("#pys-detalle"),
+                    chkSinSolucion, txtSolucion, content.querySelector("#pys-prevenir")]
+                    .forEach(field => { if (field) field.disabled = true; });
+                videoUrlInput.dataset.problemCreated = "true";
             }
+
+            if (openUploader) {
+                modal.remove();
+                openYouTubeUploadModal({
+                    initialTitle: content.querySelector("#pys-titulo").value.trim(),
+                    initialDescription: content.querySelector("#pys-detalle").value.trim(),
+                    contentType: "pys",
+                    referenceId: createdProblemId,
+                    metadata: { alcance: alcanceSelect.value, modelosAsociados: Array.from(selectedVehicleIds) },
+                    onSuccess: refreshPysAfterVideo_
+                });
+                invalidatePysDataCache();
+                await loadPysData().catch(() => {});
+                if (preAssociatedVehicle && preAssociatedVehicle.id) {
+                    const panel = document.getElementById("detalleCompleto");
+                    if (panel) renderPosiblesProblemasAccordion(panel, preAssociatedVehicle, navOptions);
+                }
+                return;
+            }
+
+            if (videoId) {
+                pendingApprovalVideoId = videoId;
+                const operation = getPysVideoApprovalOperation_(createdProblemId, videoId);
+                const canonicalVideoUrl = "https://www.youtube.com/watch?v=" + videoId;
+                const approval = await routeAction("submitVideoForApproval", {
+                    opVideoId: operation.opVideoId,
+                    title: content.querySelector("#pys-titulo").value.trim(),
+                    description: content.querySelector("#pys-detalle").value.trim(),
+                    contentType: "pys",
+                    referenceId: createdProblemId,
+                    metadata: { alcance: alcanceSelect.value, modelosAsociados: Array.from(selectedVehicleIds) },
+                    videoId,
+                    videoUrl: canonicalVideoUrl,
+                    ...getSessionPayload_()
+                });
+                if (!approval || approval.status !== "success" ||
+                    approval.videoUrl !== canonicalVideoUrl || approval.opVideoId !== operation.opVideoId) {
+                    throw new Error("El servicio no confirmó la solicitud de aprobación del enlace.");
+                }
+                try { sessionStorage.removeItem(operation.storageKey); } catch (storageError) {}
+            }
+
+            modal.remove();
+            invalidatePysDataCache();
+            renderPysSection();
             if (preAssociatedVehicle && preAssociatedVehicle.id) {
                 const panel = document.getElementById("detalleCompleto");
                 if (panel) renderPosiblesProblemasAccordion(panel, preAssociatedVehicle, navOptions);
             }
+            mostrarNotificacion(
+                videoId
+                    ? "Problema registrado. El enlace de YouTube fue enviado a aprobación y aparecerá después de aprobarse."
+                    : "Problema registrado correctamente.",
+                "success"
+            );
         } catch (err) {
             console.error(err);
-            showGlobalError("Error al registrar problema: " + err.message);
+            showGlobalError("Error al registrar problema: " + String(err && err.message || err));
         } finally {
-            if (!completed) {
-                submitBtn.disabled = false;
-                submitBtn.textContent = "Agregar";
-            }
+            isSaving = false;
+            submitBtn.disabled = false;
+            uploadBtn.disabled = false;
+            submitBtn.textContent = createdProblemId ? "Reintentar / Finalizar" : "Agregar";
+            uploadBtn.innerHTML = '<i class="fa-solid fa-upload" aria-hidden="true"></i> Subir archivo a YouTube';
         }
     };
+
+    form.onsubmit = event => {
+        event.preventDefault();
+        saveProblem({ openUploader: false });
+    };
+    uploadBtn.onclick = () => saveProblem({ openUploader: true });
 }
 
 export function openSearchVehicleForPysAssociationModal(problemId, onAssociated, alreadyAssociatedIds = []) {
