@@ -36,7 +36,7 @@ test("rechaza contexto ausente, rol no autorizado o epoch inválido antes de eje
 });
 test("el router AUTH usa el actor cacheado y no adquiere lease para el benchmark",()=>{
  assert.equal(mutation("benchmarkPasswordKdf"),false);
- assert.doesNotMatch(auth,/function isSharedReadAction_\\(/);
+ assert.equal(auth.includes("function isSharedReadAction_("),false);
  assert.match(api,/'benchmarkPasswordKdf': 'AUTH'/);
  const route=extract(auth,"doPost");
  const calls=[];
