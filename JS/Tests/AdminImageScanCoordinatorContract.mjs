@@ -117,47 +117,49 @@ for (const resource of ["CORTES", "DRIVE", "IMAGE_INVENTORY", "IMAGE_AUDIT_STATE
 }
 
 
-// Toda mutación declarada por FEEDBACK debe tener política explícita en Coordinator.
-const feedbackMutationList = extractFunction(feedback, "isSharedMutationAction_");
-const feedbackMutationNames = [...feedbackMutationList.matchAll(/"([^"]+)"/g)].map(match => match[1]);
-for (const action of feedbackMutationNames) {
-    assert.ok(policy("FEEDBACK", action), "Falta política explícita para FEEDBACK/" + action);
-}
-const driveAlert = policy("FEEDBACK", "notifyDevelopersDriveCritical");
-assert.ok(driveAlert.readResources.includes("USERS"),
-    "La alerta de Drive consulta los destinatarios en USERS.");
-assert.ok(driveAlert.writeResources.includes("FEEDBACK"),
-    "La alerta de Drive crea conversaciones y mensajes en FEEDBACK.");
+// FEEDBACK ya no reserva recursos Coordinator por cada acción: el rol se consume del actor cacheado.
+const feedbackPermissionsStart = feedback.indexOf("const FEEDBACK_ACTION_PERMISSIONS = Object.freeze(");
+const feedbackPermissionsEnd = feedback.indexOf("});", feedbackPermissionsStart) + 3;
+const feedbackPermissions = feedback.slice(feedbackPermissionsStart, feedbackPermissionsEnd);
+assert.ok(feedbackPermissions.includes('notifyDevelopersDriveCritical: ["Desarrollador"]'));
+const feedbackRouter = feedback.slice(feedback.indexOf("function doPost(e)"), feedback.indexOf("\\nconst RICH_TEXT_MODE_PROPERTY_"));
+assert.ok(feedbackRouter.includes("getCachedSharedSessionActor_(payload.userId, payload.sessionToken)"));
+assert.ok(!feedbackRouter.includes("withSharedMutationLease_"));
+assert.ok(feedback.includes('actions: new Set(["recordLike","reportProblem"'));
 
 const feedbackRouterHarness = new Function(
-    extractFunction(feedback, "isSharedMutationAction_") + "\n" +
-    extractFunction(feedback, "doPost") + "\n" +
+    extractFunction(feedback, "doPost") + "\\n" +
     `
-    const calls = [];
-    function withSharedMutationLease_(service, operation, callback) {
-        calls.push({ service, operation });
-        return callback("coordinated-token", { userId: "developer", role: "Desarrollador" });
+    const actorCalls = [];
+    function getCachedSharedSessionActor_(userId, sessionToken) {
+        actorCalls.push({userId, sessionToken});
+        return {userId, role:"desarrollador", fullName:"Ana", epoch:1};
     }
-    function withSharedSessionActor_(event, actor) { return event; }
+    function withSharedSessionActor_(event, actor) {
+        const request = JSON.parse(event.postData.contents);
+        request.payload.__sharedSessionActor = actor;
+        event.postData.contents = JSON.stringify(request);
+        return event;
+    }
     function doPostInternal_(event) { return JSON.parse(event.postData.contents); }
-    const DIRECT_SERVICE_TRAFFIC_CONFIG_ = { actions: new Set() };
-    function readDirectServiceTraffic_() { return { status: "unavailable" }; }
+    const FEEDBACK_ACTION_PERMISSIONS = {notifyDevelopersDriveCritical:["Desarrollador"]};
+    const FEEDBACK_PUBLIC_ACTIONS = new Set();
+    const DIRECT_SERVICE_TRAFFIC_CONFIG_ = {actions:new Set(["notifyDevelopersDriveCritical"])};
+    function readDirectServiceTraffic_() { return {status:"unavailable"}; }
     function recordDirectServiceTraffic_() { return false; }
-    const ContentService = { createTextOutput: value => ({ value, setMimeType() { return this; } }), MimeType: { TEXT: "text/plain" } };
+    const ContentService = {createTextOutput:value=>({value,setMimeType(){return this;}}),MimeType:{TEXT:"text/plain"}};
     return {
-        calls,
+        actorCalls,
         send(action) {
-            calls.length = 0;
-            const event = { postData: { contents: JSON.stringify({ action, payload: { sessionToken: "test-session" } }) } };
-            return { result: doPost(event), calls: calls.slice() };
+            actorCalls.length=0;
+            const event={postData:{contents:JSON.stringify({action,payload:{userId:"developer",sessionToken:"test-session"}})}};
+            return {result:doPost(event),actorCalls:actorCalls.slice()};
         }
     };
     `
 )();
 const driveAlertRoute = feedbackRouterHarness.send("notifyDevelopersDriveCritical");
-assert.equal(driveAlertRoute.calls.length, 1);
-assert.equal(driveAlertRoute.calls[0].service, "FEEDBACK");
-assert.equal(driveAlertRoute.calls[0].operation, "notifyDevelopersDriveCritical");
+assert.deepEqual(driveAlertRoute.actorCalls,[{userId:"developer",sessionToken:"test-session"}]);
 
 
 
