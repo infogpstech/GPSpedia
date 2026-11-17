@@ -469,3 +469,13 @@ undefined
 - No se midieron latencias reales; se reportan solo las reducciones de llamadas calculadas y probadas en P4.
 - Pendiente Beta: despliegues Apps Script, ScriptProperties, OAuth/Drive/YouTube/Spreadsheet, pruebas de sesión/revocación y concurrencia multiusuario, navegador/PWA y mediciones reales. Procedimiento seguro de sincronización y checklist registrados en Tareas_Pendientes.md.
 - No se desplegaron Apps Script ni se modificaron datos/propiedades productivas.
+
+
+### Reconciliación de continuidad — 2026-11-17 (sesión posterior)
+- Rama verificada: `GPSpedia2.2.5_work`; HEAD previo a esta actualización: `f7567b088559ca1484b72a3aaada61fa55a34827` (commit `GPSpedia backlog: reconcile local completion and Beta-only next phase`). Rama base `GPSpedia2.2.5`: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin cambios en esta sesión.
+- Se leyó íntegramente `NORMAS_DESAROLLO.md`; README, contexto operativo, checkpoint y backlog consolidado fueron consultados. `Tareas_Activas.md` no existe en esta rama; `Tareas_Pendientes.md` declara que sustituye los registros operativos anteriores.
+- El último commit actualiza el backlog para reflejar el cierre local de las tareas registradas y el paso a validaciones Beta. No se identificó una tarea local de implementación pendiente que pueda iniciarse sin abrir un alcance nuevo.
+- Verificación del HEAD previo: GitHub Actions service regression `44166858145` SUCCESS (Node.js syntax check y 145 suites / 2,123 pruebas / 0 fallos); health read-only `44166858224` SUCCESS (7/7 servicios disponibles; no valida código Apps Script no desplegado); GitHub Pages `44166857432` SUCCESS.
+- La validación combinada de estado del commit no reportó checks de status asociados (0 statuses); los tres workflows anteriores sí finalizaron correctamente en el mismo HEAD.
+- Siguiente etapa autorizable: validaciones Beta descritas al final de `Tareas_Pendientes.md`: despliegues Apps Script en entorno Beta, propiedades de configuración, OAuth/Drive/YouTube/Spreadsheet, sesiones/revocación, concurrencia multiusuario y navegador/PWA. No se ejecutan aquí porque requieren despliegues/credenciales/entorno Beta y autorización expresa; no se alteró producción ni se simularon esas pruebas.
+- No se modificó código de aplicación en esta sesión. Esta entrada sincroniza el checkpoint con el HEAD y la evidencia real de GitHub.
