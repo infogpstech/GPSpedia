@@ -8944,6 +8944,11 @@ function mergeDirectServiceTraffic_(coordinatorResult, directResults) {
         coordinator: { available: true, scope: "protected_operations" }
     };
     const services = ["CATALOG", "AUTH", "WRITE", "FEEDBACK"];
+    const bucketsByStart = new Map();
+    result.buckets.forEach(bucket => {
+        const startAt = Number(bucket && bucket.startAt);
+        if (Number.isSafeInteger(startAt)) bucketsByStart.set(startAt, bucket);
+    });
     services.forEach(service => {
         const directResult = directResults && directResults[service];
         const expectedScope = service === "CATALOG" ? "catalog_post_requests" : "direct_post_requests";
@@ -8959,10 +8964,17 @@ function mergeDirectServiceTraffic_(coordinatorResult, directResults) {
                     directBuckets.set(startAt, count);
                 }
             });
-            result.buckets.forEach(bucket => {
-                const startAt = Number(bucket.startAt);
-                bucket.counts[service] = Math.max(0, Number(bucket.counts[service]) || 0) +
-                    (directBuckets.get(startAt) || 0);
+            directBuckets.forEach((count, startAt) => {
+                let bucket = bucketsByStart.get(startAt);
+                if (!bucket) {
+                    const counts = {};
+                    Object.keys(result.totals.last24Hours || {}).forEach(name => { counts[name] = 0; });
+                    bucket = { startAt, counts };
+                    result.buckets.push(bucket);
+                    bucketsByStart.set(startAt, bucket);
+                }
+                if (!bucket.counts || typeof bucket.counts !== "object") bucket.counts = {};
+                bucket.counts[service] = Math.max(0, Number(bucket.counts[service]) || 0) + count;
             });
             ["lastHour", "last6Hours", "last24Hours"].forEach(period => {
                 result.totals[period][service] = Math.max(0, Number(result.totals[period][service]) || 0) +
@@ -8980,6 +8992,7 @@ function mergeDirectServiceTraffic_(coordinatorResult, directResults) {
         };
         if (service === "CATALOG") sources[service].feedRequests = "coordinator";
     });
+    result.buckets.sort((left, right) => Number(left.startAt) - Number(right.startAt));
     result.scope = "global_service_traffic";
     result.sources = sources;
     result.coverage = {
