@@ -388,3 +388,13 @@ Estado: **EN PROGRESO** hasta ejecutar la suite Node.js completa disponible; la 
 
 - Ajuste de robustez posterior: si el alta del problema ya fue confirmada pero falla la confirmación de la solicitud de vídeo, el formulario informa que el problema ya existe y permite reintentar con el mismo enlace; no vuelve a ejecutar `addProblem`. Se retiró un atributo DOM temporal que no tenía consumidor. Commit UI: `47653fe97571d283e62e44ac86cdfe83663996e0`.
 - Revalidación estática tras el ajuste: parsing V8 aprobado en los cinco archivos de código/prueba; 17/17 comprobaciones dirigidas aprobadas. El HEAD verificado antes de este apunte documental era `47653fe97571d283e62e44ac86cdfe83663996e0`.
+
+
+### Registro de nuevas solicitudes — 2026-11-16
+- Rama verificada: GPSpedia2.2.5_work; HEAD antes de registrar: db0c529a279e8b657557163c255d8dfe79143af3. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1; comparación: 3,918 commits ahead, 0 behind.
+- Se registran en Tareas_Pendientes.md tres bloques: GP-DASH-INSIGHTS-01 (dashboard de contribuciones/indicadores), GP-TERMS-ASYNC-01 (aceptación local inmediata y sincronización remota asíncrona) y GP-PWA-SPLASH-PRELOAD-01 (iniciar carga del catálogo antes del desvanecimiento existente del Splash).
+- Diagnóstico inicial: el dashboard actual solo muestra tablas de actividad y aportaciones; renderActivityLogs imprime valores crudos en cuatro celdas y no hay gráficas. FEEDBACK getActivityLogs devuelve los últimos 100 eventos y el resumen existente de colaboradores. Cortes contiene contadores de utilidad/búsqueda; FeedbackLikes, Feedbacks y FeedbackYearApplications son fuentes existentes para investigar agregaciones. No se encontró todavía un escritor activo de contadorBusqueda; no se presentará el ranking de búsquedas como fiable hasta confirmarlo.
+- renderTermsGate_ espera actualmente a acceptTerms antes de guardar la caché local y cerrar el modal. AUTH handleAcceptTerms ya es idempotente para la misma versión/dispositivo y devuelve alreadyAccepted; se evaluará reutilizarlo sin cambiar el servicio.
+- showApp inicia el desvanecimiento del Splash antes de que el flujo de AUTH invoque loadInitialData; se debe invertir el orden de inicio sin cambiar CSS, diseño ni duración, y sin cargar catálogo antes de aceptar términos.
+- No se modificó código de aplicación, servicios, deployments ni datos externos durante este análisis. La auditoría Auditoría.txt no se amplió porque ya supera 180,000 caracteres; la evidencia de esta solicitud queda en backlog, ChangesLogs y checkpoint.
+- Orden normativo: resolver primero los pendientes locales previos que siguen en el backlog; las tres solicitudes nuevas quedan registradas como PENDIENTE LOCAL. La rama base permanece intacta.
