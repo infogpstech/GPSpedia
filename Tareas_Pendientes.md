@@ -1300,3 +1300,28 @@ No se han desplegado proyectos Apps Script ni configurado secretos remotos. La f
 - App Shell actualizado a `gpsepedia-cache-v69`; se sincronizaron los contratos ServiceWorkerCache, PasswordRecovery y OfflineBrandAssets.
 - GitHub Actions `44115093952`: SUCCESS — 138 suites, 2,031 pruebas aprobadas, 0 fallos. InboxUi: 83/83 PASS. Health remoto: workflow automático de solo lectura SUCCESS. GitHub Pages: build/deploy automático en curso al registrar esta adenda.
 - No se desplegaron servicios Apps Script ni se ejecutaron pruebas funcionales Beta. La inspección visual real en escritorio, móvil y PWA queda pendiente de Beta.
+
+
+---
+
+## GP-PERF-SIMPLIFY-01 — Simplificación de seguridad operativa y optimización global
+**Prioridad: P0/P1 — REQUISITO NUEVO REGISTRADO (2026-11-17).**
+**Estado: PENDIENTE DE AUDITORÍA E IMPLEMENTACIÓN.**
+
+**Objetivo:** retirar validaciones transaccionales, llamadas entre servicios y revalidaciones por acción que añaden latencia sin aportar valor funcional. La plataforma debe ejecutar las funciones en el menor tiempo posible.
+
+**Requisito:** login con contraseña hasheada usando el esquema actual; el rol asignado determina las capacidades. Para cada acción solo se comprueba el permiso sencillo del rol, sin viajes de red ni validaciones transaccionales. Los aportes (cortes, tutoriales, videos, imágenes y demás) deben registrar directamente el contenido, fecha del servidor y colaborador autenticado. No se requiere que un servicio pida permiso a otro ni que Coordinator valide la legitimidad de cada transacción.
+
+**Excepciones obligatorias:** (1) cierre remoto de sesión y limpieza/invalidez de caché del usuario; (2) al eliminar una cuenta, invalidar sesiones y evitar nuevos accesos; (3) bloqueo temporal después de varios intentos fallidos de login. Mantener la matriz de roles. No cambiar el hash actual.
+
+**Plan y orden:**
+1. **P0 — Inventario:** mapear Coordinator, SharedMutationClient, leases, locks, consultas de identidad, reintentos y llamadas de red por acción; trazar WRITE/FEEDBACK/ADMIN y flujos de carga.
+2. **P1 — Aportes:** retirar Coordinator/leases/revalidaciones de las escrituras ordinarias; guardar datos, fecha y colaborador en el servicio dueño del registro.
+3. **P2 — Archivos:** simplificar cargas de imágenes, tutoriales y videos a recepción, almacenamiento y registro; evitar bloqueos durante la carga.
+4. **P3 — Sesión:** conservar logout remoto, invalidación al borrar cuenta y bloqueo temporal de login; eliminar comprobaciones por acción y actividad redundante.
+5. **P4 — Plataforma:** reducir llamadas duplicadas, cascadas, escrituras auxiliares, esperas y sincronizaciones que bloqueen módulos independientes.
+6. **P5 — Validación:** pruebas locales de permisos por rol, aportes, archivos, revocación, cuenta eliminada y bloqueo de login; medir llamadas/latencias cuando sea posible. No desplegar Apps Script ni ejecutar Beta sin autorización.
+
+**Criterios de aceptación:** rutas ordinarias sin lease ni llamada de autenticación a Coordinator; permisos por rol preservados; aportes y cargas con el mínimo de pasos; excepciones de sesión funcionando; regresión local aprobada. No afirmar mejoras de latencia sin mediciones.
+
+**Documento de ejecución:** `PLAN_SIMPLIFICACION_SEGURIDAD_RENDIMIENTO.md`.
