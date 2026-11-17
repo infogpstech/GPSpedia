@@ -1,11 +1,11 @@
 # GPSpedia — Tareas pendientes
 
 **Documento operativo único del backlog.**  
-Fecha de consolidación: 2026-11-16  
+Fecha de consolidación: 2026-11-17  
 Repositorio: `infogpstech/GPSpedia`  
 Rama autorizada: `GPSpedia2.2.5_work`  
 Rama base protegida: `GPSpedia2.2.5`  
-HEAD de código validado: `070c414d135f3c79dae4392eaebb4a8ea2d6527b`; documentación y registros actualizados en la rama autorizada.
+HEAD de código validado: `f6375b86e6908e9e9152e9c63b216b3d274ce1fe`; documentación y registros actualizados en la rama autorizada.
 
 Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_beta.md`, integrando sus pendientes por sector y orden de ejecución. El historial y la evidencia de trabajo anterior permanecen en `checkpoint.md` y en `Olds/Documentacion_Legacy/`. La única fuente normativa continúa siendo `NORMAS_DESAROLLO.md`.
 
