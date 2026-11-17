@@ -2,7 +2,7 @@ name: GPSpedia deployed service health (read-only)
 on:
   push:
     branches:
-      - GPSpedia2.2.5_work
+      - health-probe-20261117
   workflow_dispatch:
 permissions:
   contents: read
