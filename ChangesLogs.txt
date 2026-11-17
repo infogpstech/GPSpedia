@@ -72,3 +72,13 @@ undefined
 - No se dispone de evidencia consultable de GitHub Actions para los commits recientes; no se registra CI como aprobada.
 - Pendiente Beta: confirmar recursos servidos, instalación/activación de gpsepedia-cache-v68, retiro de caché anterior y funcionamiento offline en navegador/PWA.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — REGISTRO DE VERIFICACIÓN GP-SERVICE-HEALTH-REMOTE-01
+- Se incorporó JS/Tests/RemoteServiceHealth.mjs y el workflow .github/workflows/deployed-service-health.yml para consultar de forma reproducible los siete endpoints con GET ?debug=true usando el inventario del commit objetivo 301c7b3a5840549819b2b6126d548df44af07da2.
+- El comprobador valida HTTP, JSON, identidad, estado, versión y ausencia de campos sensibles; no envía POST ni credenciales y no realiza escrituras.
+- Evidencia remota: Actions run 44090225564 SUCCESS, 7/7 disponibles. ADMIN reportó 2442 ms, por encima del umbral lento.
+- Evidencia de regresión del corte: run 44017363224 SUCCESS, 132 suites / 1965 pruebas / 0 fallos.
+- No se modificaron fuentes de servicios Apps Script, deployments, ScriptProperties ni datos externos.
+================================================================================
