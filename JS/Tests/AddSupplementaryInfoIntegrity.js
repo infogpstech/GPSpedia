@@ -96,7 +96,7 @@ function runAddSupplementaryInfoIntegrityTests(sources) {
   const p=String(sources.write).indexOf("function handleAddSupplementaryInfo(payload)"),q=String(sources.write).indexOf("function handleAddSupplementaryInfoLocked",p),end=String(sources.write).indexOf(String.fromCharCode(10)+"function ",q+10),outer=String(sources.write).slice(p,q),inner=String(sources.write).slice(q,end>0?end:undefined);
   assert_(outer.indexOf("getAuthenticatedCollaborator")<outer.indexOf("prepareSupplementaryImageUploads_"));
   assert_(outer.indexOf("prepareSupplementaryImageUploads_")<outer.indexOf("waitLock(5000)"));
-  assert_(inner.includes("buildSupplementaryInfoPlan_")&&inner.includes("persistSupplementaryInfoValues_")&&inner.includes("guardada por \"+actorName"));
+  assert_(inner.includes("buildSupplementaryInfoPlan_")&&inner.includes("persistSupplementaryInfoValues_")&&inner.includes("Logger.log(")&&inner.includes("actorName"));
   assert_(!/uploadImageToDrive|findOrCreateVehicleFolder|DriveApp/.test(inner));
  });
 

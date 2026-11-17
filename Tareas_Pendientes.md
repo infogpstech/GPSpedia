@@ -1360,3 +1360,9 @@ No se han desplegado proyectos Apps Script ni configurado secretos remotos. La f
 - El ledger de imágenes usa locks breves para reservar/finalizar cada token; la creación/verificación de archivos y actualización de metadatos Drive ocurren fuera de esos locks. Una marca upload_in_progress impide que dos solicitudes simultáneas con el mismo token creen archivos duplicados. Las cargas de operaciones distintas pueden avanzar en paralelo.
 - Se actualizan pruebas de integridad y autorización para el nuevo flujo. CI pendiente; no cerrar P1.2a hasta aprobación.
 - Siguiente: CI de regresión. Luego P1.2b: sacar cargas Drive de addOrUpdateCut y conservar asignación de ID/idempotencia.
+
+
+### Seguimiento P1.2a — CI inicial y corrección de contrato — 2026-11-17
+- CI `44130490277`: FAIL — sintaxis aprobada; 131 suites, 1,868 pruebas aprobadas y 1 suite fallida. Único fallo: aserción de texto del test AddSupplementaryInfoIntegrity, que asumía espacios exactos en el log del actor. No se detectó otro fallo de lógica en las suites ejecutadas.
+- Corrección localizada de la prueba: verificar el log y el uso de actorName sin depender del formato exacto de concatenación. Nueva regresión pendiente.
+- P1.2a sigue EN PROGRESO hasta que CI apruebe.

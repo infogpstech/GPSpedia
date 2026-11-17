@@ -246,3 +246,11 @@ undefined
 - Se añadió lock corto para resolver/crear la carpeta del vehículo y evitar carpetas equivalentes en concurrencia; se libera antes de la carga.
 - Se actualizaron contratos AddSupplementaryInfoIntegrity y WriteAuthorizationMinimization. Validación CI aún pendiente; no se registran resultados de pruebas en esta entrada.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — GP-PERF-SIMPLIFY-01 / P1.2a — AJUSTE DE CONTRATO TRAS CI
+- CI 44130490277: sintaxis aprobada; 131 suites, 1,868 pruebas aprobadas y 1 suite fallida. El único fallo fue una aserción de texto en AddSupplementaryInfoIntegrity que esperaba una cadena con espacios exactos en el log del actor.
+- Se corrige la aserción para comprobar el registro del actor sin acoplarse al espaciado de concatenación. No se modifica el código del servicio por este fallo.
+- Nueva regresión pendiente. P1.2a no se declara completada.
+================================================================================

@@ -149,3 +149,8 @@ Cada fase debe actualizar el backlog y checkpoint. Agrupar cambios por tarea ló
 - El ledger de imágenes usa secciones críticas cortas para reservar/finalizar; creación/verificación de archivos y metadatos Drive fuera del lock. La reserva temporal upload_in_progress evita duplicar el mismo token concurrente. La carpeta del vehículo se resuelve bajo lock corto independiente.
 - Los contratos de integridad/autorización fueron actualizados. CI pendiente: P1.2a sigue en progreso hasta que la regresión se ejecute y apruebe.
 - Siguiente: P1.2b, separar cargas Drive de addOrUpdateCut del bloqueo prolongado, preservando ID e idempotencia.
+
+
+### Seguimiento de validación P1.2a — 2026-11-17
+- CI `44130490277`: sintaxis aprobada; 131 suites, 1,868 pruebas aprobadas y 1 suite fallida por una aserción del test AddSupplementaryInfoIntegrity que esperaba espacios exactos en una cadena de log.
+- Se ajustó únicamente la aserción para comprobar la presencia del log y el actor sin depender del espaciado. Nueva regresión pendiente; P1.2a sigue en validación.

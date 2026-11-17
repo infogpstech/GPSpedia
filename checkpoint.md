@@ -293,3 +293,9 @@ undefined
 - Estado P1.2a: implementación realizada; pruebas automatizadas pendientes de CI. No marcar como completada hasta revisar el resultado y corregir cualquier fallo.
 - HEAD base confirmado antes de publicar: af913330419d66c8942663ff43d9398e9a1e9039, rama GPSpedia2.2.5_work. No se desplegaron servicios Apps Script ni se ejecutó Beta; no hay mediciones reales de latencia.
 - Siguiente: ejecutar CI; después P1.2b, separar las cargas Drive de addOrUpdateCut del bloqueo prolongado, conservando ID e idempotencia.
+
+
+### Seguimiento CI P1.2a — 2026-11-17
+- CI `44130490277` sobre commit `a5d82fadc9bc3e4d120381f4ce85d8d027c42c30`: sintaxis aprobada; 131 suites, 1,868 pruebas aprobadas y 1 suite fallida. La falla está en una aserción del contrato AddSupplementaryInfoIntegrity que buscaba una cadena de log con espacios exactos; la implementación y las demás aserciones de la suite pasaron.
+- Se ajusta únicamente esa aserción para comprobar la presencia del registro del actor sin depender del espaciado de la concatenación. Nueva regresión pendiente; P1.2a continúa en validación.
+- Próximo paso: publicar la corrección del contrato, ejecutar CI y resolver cualquier fallo funcional real antes de continuar P1.2b.
