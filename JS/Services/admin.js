@@ -869,7 +869,7 @@ function isSharedMutationAction_(action) {
 // Consultas largas de inventario/Drive obtienen una lease propia de lectura.
 // No se registran como mutaciones ni generan eventos administrativos de escritura.
 function isSharedReadAction_(action) {
-    return ["getReplacedImages", "getDriveStorage", "getCortesImageFolders", "auditIdentifiers", "getAdminImageUploadStatus", "previewCortesImageReconciliation", "getServiceTraffic"].includes(action);
+    return ["getReplacedImages", "getDriveStorage", "getCortesImageFolders", "auditIdentifiers", "getAdminImageUploadStatus", "previewCortesImageReconciliation"].includes(action);
 }
 
 function doPost(e) {
@@ -887,6 +887,19 @@ function doPost(e) {
             status: "error", code: "ACTION_MOVED_TO_WRITE",
             message: "Esta operación ahora se procesa directamente en WRITE."
         })).setMimeType(ContentService.MimeType.TEXT);
+    }
+    if (action === "getServiceTraffic") {
+        try {
+            // La telemetría ya consulta Coordinator para recuperar métricas; validar
+            // el rol con actor cacheado evita una lease/llamada redundante por refresco.
+            const actor = getCachedSharedSessionActor_(payload.userId, payload.sessionToken);
+            return doPostInternal_(withSharedSessionActor_(e, actor));
+        } catch (error) {
+            return ContentService.createTextOutput(JSON.stringify({
+                status: "error",
+                message: error && error.message ? error.message : "No se pudo recuperar el contexto de sesión."
+            })).setMimeType(ContentService.MimeType.TEXT);
+        }
     }
     const sessionOptions = { session: { sessionToken: payload.sessionToken } };
     if (!isSharedMutationAction_(action)) {
