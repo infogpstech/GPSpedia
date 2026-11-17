@@ -624,6 +624,24 @@ check("El botón más agrega el modelo directamente y el resto de la tarjeta abr
     assert.ok(association.includes('event.target.closest(".pys-association-result-add")'));
 });
 
+
+check("El alta PyS admite enlace YouTube o subida directa sin enviar videoUrl a addProblem", () => {
+    const pys = ui.slice(ui.indexOf("function openAddProblemModal("), ui.indexOf("export function openSearchVehicleForPysAssociationModal"));
+    assert.ok(pys.includes('id="pys-video-url"'));
+    assert.ok(pys.includes('id="pys-upload-video-btn"'));
+    assert.ok(pys.includes("getValidatedYouTubeVideoId(rawVideoUrl)"));
+    assert.ok(pys.includes('videoUrl: ""'), "addProblem debe seguir recibiendo videoUrl vacío");
+    assert.ok(pys.includes('routeAction("addProblem", payload)'));
+    assert.ok(pys.includes('routeAction("submitVideoForApproval"'));
+    assert.ok(pys.includes('contentType: "pys"'));
+    assert.ok(pys.includes("getPysVideoApprovalOperation_"));
+    assert.ok(pys.includes('openYouTubeUploadModal({'));
+    assert.ok(pys.includes("if (!createdProblemId)"), "un reintento de aprobación no debe duplicar el problema");
+    assert.ok(pys.includes("if (isSaving) return"), "el envío debe impedir dobles clics concurrentes");
+    assert.ok(pys.includes("sessionStorage.setItem(storageKey, opVideoId)"), "el ID de aprobación debe persistir para reintentos idempotentes");
+    assert.ok(!pys.includes("El problema se registró sin vídeo. ¿Deseas subir ahora"), "la subida ya no debe depender de un confirm posterior");
+});
+
 let passed = 0;
 for (const item of cases) {
     try { item.fn(); passed++; console.log("PASS " + item.name); }
