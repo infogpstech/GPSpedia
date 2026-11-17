@@ -145,3 +145,20 @@ undefined
 ### Estado final del workflow Pages — 2026-11-17
 - Pages build/deployment run 44093577511 terminó CANCELLED antes de completar el build/deploy. No se confirma publicación de GitHub Pages para el HEAD actual. No se ejecutó un deployment Apps Script.
 - La verificación remota de salud 44093578170 sí terminó SUCCESS, solo GET de diagnóstico; no equivale a despliegue.
+
+
+### Checkpoint — cobertura directa de tráfico y regresión completa — 2026-11-17
+- Rama de trabajo: GPSpedia2.2.5_work. HEAD de código validado: 3ccd3f45a8a382d48718ec8fd52cda42648e0286. Última actualización documental de esta continuidad: d5ee53020044f1f36b92af72d0a0653f2cf4bdb5. Rama base protegida GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin cambios.
+- GP-DEV-TRAFFIC-GLOBAL-02 amplió la cobertura de rutas directas sin una llamada de red por operación:
+  - CATALOG: getCatalogData, getDropdownData, getSuggestion y getNavigationData.
+  - AUTH: validateSession.
+  - WRITE: checkVehicle, getSuggestion y checkVinDuplicate.
+  - FEEDBACK: getPysData y suggestYear anónimo (userId 0). Las acciones FEEDBACK protegidas, incluido sendContactForm y suggestYear autenticado, se cuentan por Coordinator.
+  - UTILITIES/migrateTimestamps, USERS y operaciones ADMIN conocidas se cuentan por Coordinator; no se instrumentan de nuevo.
+- Los contadores directos usan ScriptProperties, buckets horarios 24 h y tryLock(0), sin esperar. Un fallo de lock/PropertiesService omite solo la telemetría. ADMIN consulta las cuatro fuentes directas en un fetchAll agrupado, con fallback individual; fallos parciales no borran el agregado Coordinator. Secretos requeridos solo para AUTH, CATALOG, WRITE y FEEDBACK, cada uno en su proyecto y ADMIN.
+- Pruebas focalizadas en Actions 44103742508: CatalogTrafficTelemetry 8/8; ServiceTrafficAdminContract 33/33; ServiceTrafficAggregation 6/6; DirectServiceTrafficTelemetry 18/18; ServiceTrafficBatch 5/5. Regresión completa: 137 suites, 2,037 pruebas aprobadas, 0 fallos de suite.
+- Health remoto Actions 44103742755 SUCCESS: 7/7 servicios; ADMIN 1,745 ms, AUTH 1,392 ms, CATALOG 935 ms, FEEDBACK 1,873 ms, USERS 985 ms, UTILITIES 3,057 ms, WRITE 1,839 ms. Solo GET ?debug=true, sin POST ni escrituras. UTILITIES debe vigilarse por latencia.
+- GitHub Pages run 44103742319 SUCCESS para el HEAD 3ccd3f45a8a382d48718ec8fd52cda42648e0286.
+- Se corrigió Services/COORDINATOR_SETUP.md para que describa correctamente la cobertura: UTILITIES se cuenta por Coordinator, no tiene endpoint/secret directo. No se han desplegado proyectos Apps Script ni configurado Script Properties/secretos remotos.
+- Próximo paso: auditar ACTION_TO_SERVICE_MAP y el consumo frontend restante para identificar cualquier ruta directa/legacy no cubierta; comprobar que no se dupliquen acciones coordinadas ni health probes. Después, revisar si la cobertura requerida está suficientemente definida y preparar el despliegue Beta de los cuatro proyectos instrumentados, con secretos generados/configurados fuera del repositorio y mediciones p50/p95, lock contention y diferencia de conteos. No afirmar tráfico HTTP universal.
+- Regla de validación mantenida: no reducir suites, no desactivar pruebas ni cambiar aserciones solo para conseguir verde. Ante fallos, inspeccionar logs, aislar causa, corregir el código real y repetir la suite completa.
