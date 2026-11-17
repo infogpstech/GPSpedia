@@ -12967,7 +12967,7 @@ export function openSearchVehicleForPysAssociationModal(problemId, onAssociated,
 
         matches.forEach(v => {
             const itemDiv = document.createElement("div");
-            itemDiv.style.cssText = "display:flex; align-items:center; gap:8px; width:100%; box-sizing:border-box; padding:6px 8px; border-bottom:1px solid var(--border-color); border-radius:4px; transition:background 0.15s ease;";
+            itemDiv.style.cssText = "display:flex; align-items:center; gap:8px; width:100%; box-sizing:border-box; padding:6px 8px; border-bottom:1px solid var(--border-color); border-radius:4px; transition:background 0.15s ease; cursor:pointer;";
             itemDiv.onmouseenter = () => { itemDiv.style.background = "rgba(0, 123, 255, 0.08)"; };
             itemDiv.onmouseleave = () => { itemDiv.style.background = "transparent"; };
 
