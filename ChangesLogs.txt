@@ -262,3 +262,12 @@ undefined
 - JS/Tests/WriteAuthorizationContracts.js: se actualiza la regresión para exigir una sola autenticación antes de preparar imágenes y antes de waitLock(5000), y ninguna autenticación dentro del handler bloqueado. No se modifica write.js ni se relaja la autorización.
 - P1.2a continúa EN PROGRESO hasta nueva CI aprobada. Siguiente: validar P1.2a y luego P1.2b.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — GP-PERF-SIMPLIFY-01 / P1.2a — CIERRE LOCAL
+- CI 44131693251 SUCCESS: sintaxis aprobada; 138 suites, 2,026 pruebas aprobadas y 0 fallos.
+- La regresión AUG-039 verifica autenticación única del actor antes de preflight/carga y antes del lock final; el handler bajo lock no reautentica. Se confirma el contrato de preparación de imágenes Drive fuera del lock de persistencia.
+- P1.2a: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Pruebas reales de Drive/OAuth/concurrencia quedan pendientes del deployment autorizado; no se desplegó Apps Script ni se modificaron datos externos.
+- Siguiente: P1.2b, mover carga Drive de addOrUpdateCut fuera del ScriptLock prolongado, preservando asignación de ID e idempotencia.
+================================================================================

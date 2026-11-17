@@ -1374,3 +1374,12 @@ No se han desplegado proyectos Apps Script ni configurado secretos remotos. La f
 - Corrección aplicada al contrato: exige una única autenticación del actor compartido antes de preflight/carga de imágenes y antes del lock final; el handler bajo lock no vuelve a autenticar.
 - No se cambia la lógica del servicio ni se debilita la autorización. Nueva CI pendiente.
 - Siguiente: validar P1.2a; después ejecutar P1.2b para sacar las cargas Drive de `addOrUpdateCut` del lock prolongado, preservando asignación de ID e idempotencia.
+
+
+### GP-PERF-SIMPLIFY-01 / P1.2a — cierre — 2026-11-17
+- Estado: **COMPLETADA CON VALIDACIÓN DIFERIDA**.
+- CI `44131693251`: SUCCESS — sintaxis aprobada, 138 suites, 2,026 pruebas aprobadas, 0 fallos.
+- `addSupplementaryInfo` autentica una vez el actor compartido antes de preparar/cargar imágenes; Drive y las operaciones de metadatos se ejecutan fuera del lock final. El lock de persistencia espera como máximo 5 s y relee/recalcula el estado antes de escribir. El ledger usa reservas y finalizaciones breves para impedir duplicados del mismo token sin serializar cargas independientes.
+- Se corrigió el contrato AUG-039 para reflejar este flujo, sin modificar la autorización ni el servicio.
+- Pendiente Beta: validar Drive/OAuth y concurrencia real en deployment. No impide el cierre local.
+- Siguiente: **P1.2b**, separar cargas Drive de `addOrUpdateCut` del bloqueo prolongado, conservando ID e idempotencia.

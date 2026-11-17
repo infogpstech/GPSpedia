@@ -308,3 +308,11 @@ undefined
 - Corrección localizada del contrato: comprobar autenticación única antes de preparar imágenes y antes de `waitLock(5000)`, y ausencia de autenticación dentro de `handleAddSupplementaryInfoLocked`. No se modifica el servicio ni se relaja la autorización.
 - **P1.2a: EN PROGRESO — validación pendiente de nueva CI.** Siguiente: ejecutar regresión completa; si aprueba, cerrar P1.2a y comenzar P1.2b (cargas Drive de addOrUpdateCut fuera del lock prolongado, preservando ID e idempotencia).
 - No se desplegaron Apps Script, no se ejecutó Beta ni se modificaron datos/propiedades externas.
+
+
+### Cierre local GP-PERF-SIMPLIFY-01 / P1.2a — 2026-11-17
+- Commit de corrección contractual: `f6729973f07fda50e39e4e25a06d764e63c069f5`.
+- CI `44131693251`: **SUCCESS** — sintaxis aprobada; 138 suites, 2,026 pruebas aprobadas, 0 fallos. La regresión AUG-039 confirma que addSupplementaryInfo autentica una vez al actor compartido antes del preflight/carga y del lock final, sin reautenticar dentro del bloque protegido.
+- **P1.2a: COMPLETADA CON VALIDACIÓN DIFERIDA.** Carga y preparación de imágenes Drive fuera del lock final; reserva/finalización del ledger con secciones críticas breves; lock final de 5 s limitado a releer, recalcular y persistir. La prueba local de concurrencia/contrato pasó en CI.
+- Validación Beta pendiente: comportamiento real de Drive, permisos OAuth, simultaneidad de solicitudes y visualización final en el deployment. No se desplegaron Apps Script ni se modificaron recursos externos.
+- **Siguiente: P1.2b** — separar las cargas Drive de `addOrUpdateCut` del ScriptLock prolongado, preservando asignación de ID, referencias de imágenes, idempotencia y recuperación ante fallos.
