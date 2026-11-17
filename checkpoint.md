@@ -403,7 +403,7 @@ Estado: **EN PROGRESO** hasta ejecutar la suite Node.js completa disponible; la 
 ## Continuidad — GP-TERMS-ASYNC-01 / GP-PWA-SPLASH-PRELOAD-01 — 2026-11-16
 
 - Repositorio: `infogpstech/GPSpedia`; rama autorizada: `GPSpedia2.2.5_work`; rama base protegida: `GPSpedia2.2.5`.
-- HEAD verificado antes de esta actualización del checkpoint: `add9b93843b1fad948e5abbadb5b0e271b1a9e4d`. La base se mantiene sin modificaciones.
+- HEAD verificado antes de esta actualización del checkpoint: `71e496732c4d9b57c59270d74a9f0ab6dfb606c1`. La base se mantiene sin modificaciones.
 - Auditoría normativa realizada antes de editar: `NORMAS_DESAROLLO.md` leído; checkpoint, backlog y fuentes relevantes consultados. Hallazgos registrados en el nuevo `Auditoría.txt` activo.
 - **GP-TERMS-ASYNC-01:** `termsDeviceAcceptance.js` almacena aceptación local con estado `pending/synced`; `ui.js` cierra el aviso inmediatamente después de persistirla y sincroniza AUTH en segundo plano. El reintento ocurre al reconectar o al volver a abrir la aplicación. Las respuestas tardías solo se aplican si usuario y token siguen siendo los mismos. AUTH/Apps Script no se modificó.
 - **GP-PWA-SPLASH-PRELOAD-01:** `showApp()` verifica primero la aceptación local y, si es válida, inicia `loadInitialData()` antes del fade existente. La promesa no se espera y el fade conserva sus 500 ms. Se retiraron llamadas redundantes desde AUTH para evitar doble carga. No se cambiaron HTML/CSS ni el Service Worker.
