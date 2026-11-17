@@ -192,3 +192,10 @@ Cada fase debe actualizar el backlog y checkpoint. Agrupar cambios por tarea ló
 - TTL de actor WRITE/FEEDBACK ampliado de 15 s a 21,600 s (6 h). Un cache hit no consulta Coordinator. El perfil local de `checkSession()` ya se restaura sin viaje de red a AUTH.
 - CI 44146072996: 143 suites / 2,108 pruebas / 0 fallos. Health read-only 44146072983: 7/7. Pages 44146072924: SUCCESS.
 - P3.1a COMPLETADA. P3.1b pendiente: evaluar precarga de contexto al login para eliminar también el primer fetch/cache miss por servicio; no introducir seguridad compleja.
+### Inicio P4 — optimización general de la plataforma — 2026-11-17
+- Auditoría inicial registrada en AUDITORIA_P4_OPTIMIZACION_PLATAFORMA.md.
+- P4.1 detecta una cascada evitable en el primer arranque: cursor de FEEDBACK → snapshot CATALOG → PyS FEEDBACK. La lectura PyS es independiente y puede comenzar en paralelo; además, su error no debe marcar stale un catálogo ya procesado ni alinear un cursor con datos obsoletos.
+- P4.2 detecta que el compositor Inbox espera la carga remota de conversaciones al cambiar desde Solicitudes, aunque solo necesita getInboxRecipients.
+- P4.3 reserva para revisión detallada las herramientas ADMIN de auditoría/organización Drive que mantienen ScriptLock global durante recorridos, verificaciones y movimientos externos.
+- Se conservan sin cambios los caminos ya paralelos de IndexedDB/CacheStorage, telemetría, dashboard y health read-only.
+- Siguiente: implementar P4.1 con regresión de concurrencia, errores aislados y cursor PyS.
