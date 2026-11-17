@@ -514,12 +514,35 @@ function publishCortesCatalogChange_(action, reference) {
 // ============================================================================
 
 /* TAREA 3 (4.2, 4.4, B31): REGISTRO Y ACTUALIZACIÓN DE CORTES E IDEMPOTENCIA CON REPARACIÓN */
+function runWriteDriveWorkOutsideScriptLock_(lock, state, opId, operation) {
+    if (!String(opId || "").trim() || !lock || typeof lock.hasLock !== "function" || !lock.hasLock()) {
+        return operation();
+    }
+    lock.releaseLock();
+    state.releasedForDrive = true;
+    let result, operationError = null;
+    try { result = operation(); }
+    catch (error) { operationError = error; }
+
+    let reacquired = false;
+    try { reacquired = lock.tryLock(0); } catch (lockError) { reacquired = false; }
+    if (!reacquired) {
+        const pendingError = new Error("La carga terminó o quedó pendiente, pero otra operación está usando WRITE. Conserva el mismo opId y reintenta para completar el registro.");
+        pendingError.code = "WRITE_LOCK_REACQUIRE_PENDING";
+        if (operationError) pendingError.cause = operationError;
+        throw pendingError;
+    }
+    if (operationError) throw operationError;
+    return result;
+}
+
 function handleAddOrUpdateCut(payload) {
     const lock = LockService.getScriptLock();
     try { lock.waitLock(30000); }
     catch (error) { throw new Error("No se pudo obtener el bloqueo para registrar el corte. Por favor reintente en unos instantes."); }
-    try { return handleAddOrUpdateCutLocked(payload); }
-    finally { lock.releaseLock(); }
+    const lockState = { releasedForDrive: false };
+    try { return handleAddOrUpdateCutLocked(payload, lock, lockState); }
+    finally { if (lock.hasLock()) lock.releaseLock(); }
 }
 
 
@@ -736,13 +759,22 @@ function computeCutOperationFingerprint_(payload) {
     return digest.map(byte => ((Number(byte) + 256) % 256).toString(16).padStart(2, "0")).join("");
 }
 
-function findNextAvailableCutSlot_(rowValues) {
+function findNextAvailableCutSlot_(rowValues, vehicleId) {
     if (!Array.isArray(rowValues)) throw new Error("No se pudo verificar la disponibilidad de los espacios de corte.");
+    const reservedSlots = new Set();
+    if (vehicleId) {
+        const entries = readIdempotenciaEntries_(getIdempotenciaSheet(), false).entries;
+        entries.forEach(entry => {
+            if (entry.status === "pending" && String(entry.vehicleId) === String(vehicleId)) {
+                reservedSlots.add(Number(entry.slotIndex));
+            }
+        });
+    }
     for (let slot = 1; slot <= 3; slot++) {
         const column = COLS_CORTES['tipoCorte' + slot];
         if (!column) throw new Error("La estructura de columnas de cortes no es válida.");
         const value = rowValues[column - 1];
-        if (value === null || value === undefined || String(value).trim() === "") return slot;
+        if ((value === null || value === undefined || String(value).trim() === "") && !reservedSlots.has(slot)) return slot;
     }
     return null;
 }
@@ -885,8 +917,8 @@ function getAddCutPayloadValidationOptions_(sheet, relaySheet) {
     const configRelay = unique(relayRows.map(row => row[1]));
     return { categoria: categories, tipoDeCorte: tipoDeCorte, tipoEncendido: tipoEncendido, configRelay: configRelay };
 }
-function handleAddOrUpdateCutLocked(payload) {
-    getAuthenticatedCollaborator(payload);
+function handleAddOrUpdateCutLocked(payload, lock, lockState) {
+    const collaboratorName = getAuthenticatedCollaborator(payload, payload && payload.silent === true ? ["desarrollador"] : undefined);
     const ss = getSpreadsheet();
     const sheet = ss.getSheetByName(SHEET_NAMES.CORTES);
     const relaySheet = ss.getSheetByName("Relay");
@@ -915,8 +947,13 @@ function handleAddOrUpdateCutLocked(payload) {
         if (opRowIndex) opRowValues = idempotencySheetBefore.getRange(opRowIndex, 1, 1, idempotencySheetBefore.getLastColumn()).getValues()[0];
     }
     try {
-        return handleAddOrUpdateCutLockedUnsafe_(validatedPayload);
+        return handleAddOrUpdateCutLockedUnsafe_(validatedPayload, lock, lockState, collaboratorName);
     } catch (error) {
+        if ((lockState && lockState.releasedForDrive) || (lock && !lock.hasLock())) {
+            // Tras una carga fuera del lock puede haber otras escrituras válidas en la misma fila.
+            // Se conserva el opId pending para que el siguiente intento complete solo los campos faltantes.
+            throw error;
+        }
         const rollbackErrors = [];
         try {
             if (existingRowIndex && existingRowValues) {
@@ -956,14 +993,14 @@ function handleAddOrUpdateCutLocked(payload) {
     }
 }
 
-function handleAddOrUpdateCutLockedUnsafe_(payload) {
+function handleAddOrUpdateCutLockedUnsafe_(payload, lock, lockState, collaboratorName) {
     payload = payload && typeof payload === 'object' ? payload : {};
     const { vehicleData, cutData, vehicleId } = payload;
     if (!cutData) {
         throw new Error("Los datos del corte son requeridos.");
     }
 
-    const colaboradorName = getAuthenticatedCollaborator(payload, payload.silent === true ? ["desarrollador"] : undefined);
+    const colaboradorName = String(collaboratorName || "").trim();
     let opId = payload.opId || null;
     // Compatibilidad con operaciones antiguas: solo se extrae el opId del campo heredado.
     // El nombre de colaborador enviado por el cliente nunca se utiliza como identidad.
@@ -1019,9 +1056,11 @@ function handleAddOrUpdateCutLockedUnsafe_(payload) {
             if (vehicleData && vehicleData.imagenVehiculo) {
                 const currentImg = rowObj.imagenVehiculo;
                 if (!checkFileIdValid(currentImg)) {
-                    const folder = findOrCreateVehicleFolder(mergeVehicleFolderInfo(rowObj, vehicleData));
-const filename = buildCanonicalImageBaseName(rowObj, "imagenVehiculo", "_repaired");
-                    const newUrl = uploadImageToDrive(vehicleData.imagenVehiculo, filename, folder, buildImageUploadOperationKey(opId, rowObj.id, "imagenVehiculo"));
+                    const filename = buildCanonicalImageBaseName(rowObj, "imagenVehiculo", "_repaired");
+                    const newUrl = runWriteDriveWorkOutsideScriptLock_(lock, lockState, opId, () => {
+                        const folder = findOrCreateVehicleFolder(mergeVehicleFolderInfo(rowObj, vehicleData));
+                        return uploadImageToDrive(vehicleData.imagenVehiculo, filename, folder, buildImageUploadOperationKey(opId, rowObj.id, "imagenVehiculo"), { shortLedgerLock: true });
+                    });
                     sheet.getRange(rowIndex, COLS_CORTES.imagenVehiculo).setValue(newUrl);
                 }
             }
@@ -1030,9 +1069,11 @@ const filename = buildCanonicalImageBaseName(rowObj, "imagenVehiculo", "_repaire
             if (cutData && cutData.imgCorte1 && cutData.tipoCorte1 !== 'No recomendado') {
                 const currentCorteImg = rowObj[`imgCorte${slotIndex}`];
                 if (!checkFileIdValid(currentCorteImg)) {
-                    const folder = findOrCreateVehicleFolder(mergeVehicleFolderInfo(rowObj, vehicleData));
-const filename = buildCanonicalImageBaseName(rowObj, "imgCorte" + slotIndex, "_repaired");
-                    const newCorteImgUrl = uploadImageToDrive(cutData.imgCorte1, filename, folder, buildImageUploadOperationKey(opId, rowObj.id, "imgCorte" + slotIndex));
+                    const filename = buildCanonicalImageBaseName(rowObj, "imgCorte" + slotIndex, "_repaired");
+                    const newCorteImgUrl = runWriteDriveWorkOutsideScriptLock_(lock, lockState, opId, () => {
+                        const folder = findOrCreateVehicleFolder(mergeVehicleFolderInfo(rowObj, vehicleData));
+                        return uploadImageToDrive(cutData.imgCorte1, filename, folder, buildImageUploadOperationKey(opId, rowObj.id, "imgCorte" + slotIndex), { shortLedgerLock: true });
+                    });
                     sheet.getRange(rowIndex, COLS_CORTES[`imgCorte${slotIndex}`]).setValue(newCorteImgUrl);
                 }
             }
@@ -1099,8 +1140,8 @@ const filename = buildCanonicalImageBaseName(rowObj, "imgCorte" + slotIndex, "_r
                 sheet.getRange(rowIndex, COLS_CORTES.timestamp).setValue(match.timestamp);
             }
             SpreadsheetApp.flush();
-            markImageUploadLinked(sheet.getRange(rowIndex, COLS_CORTES.imagenVehiculo).getValue());
-            markImageUploadLinked(sheet.getRange(rowIndex, COLS_CORTES["imgCorte" + slotIndex]).getValue());
+            runWriteDriveWorkOutsideScriptLock_(lock, lockState, opId, () => markImageUploadLinked(sheet.getRange(rowIndex, COLS_CORTES.imagenVehiculo).getValue(), { shortLedgerLock: true }));
+            runWriteDriveWorkOutsideScriptLock_(lock, lockState, opId, () => markImageUploadLinked(sheet.getRange(rowIndex, COLS_CORTES["imgCorte" + slotIndex]).getValue(), { shortLedgerLock: true }));
             if (opId && rowObj.id) {
                 recordOpId(opId, rowObj.id, slotIndex, match.timestamp || rowObj.timestamp, "completed", operationHash);
             }
@@ -1146,7 +1187,7 @@ const filename = buildCanonicalImageBaseName(rowObj, "imgCorte" + slotIndex, "_r
             }
         }
 
-        const cutSlotIndex = findNextAvailableCutSlot_(rowValues);
+        const cutSlotIndex = findNextAvailableCutSlot_(rowValues, vehicleId);
         if (cutSlotIndex === null) throw new Error("No hay espacios disponibles para más cortes.");
         savedSlotIndex = cutSlotIndex;
 
@@ -1154,9 +1195,11 @@ const filename = buildCanonicalImageBaseName(rowObj, "imgCorte" + slotIndex, "_r
 
         let imageUrl = '';
         if (cutData.imgCorte1) {
-            const folder = findOrCreateVehicleFolder(vehicleInfo);
-const filename = buildCanonicalImageBaseName(vehicleInfo, "imgCorte" + cutSlotIndex);
-            imageUrl = uploadImageToDrive(cutData.imgCorte1, filename, folder, buildImageUploadOperationKey(opId, vehicleId, "imgCorte" + cutSlotIndex));
+            const filename = buildCanonicalImageBaseName(vehicleInfo, "imgCorte" + cutSlotIndex);
+            imageUrl = runWriteDriveWorkOutsideScriptLock_(lock, lockState, opId, () => {
+                const folder = findOrCreateVehicleFolder(vehicleInfo);
+                return uploadImageToDrive(cutData.imgCorte1, filename, folder, buildImageUploadOperationKey(opId, vehicleId, "imgCorte" + cutSlotIndex), { shortLedgerLock: true });
+            });
         }
 
         sheet.getRange(rowIndex, COLS_CORTES[`tipoCorte${cutSlotIndex}`]).setValue(cutData.tipoCorte1);
@@ -1171,7 +1214,7 @@ const filename = buildCanonicalImageBaseName(vehicleInfo, "imgCorte" + cutSlotIn
         }
         sheet.getRange(rowIndex, COLS_CORTES.timestamp).setValue(formattedDate);
         SpreadsheetApp.flush();
-        markImageUploadLinked(sheet.getRange(rowIndex, COLS_CORTES["imgCorte" + cutSlotIndex]).getValue());
+        runWriteDriveWorkOutsideScriptLock_(lock, lockState, opId, () => markImageUploadLinked(sheet.getRange(rowIndex, COLS_CORTES["imgCorte" + cutSlotIndex]).getValue(), { shortLedgerLock: true }));
         if (opId) recordOpId(opId, vehicleId, cutSlotIndex, formattedDate, "completed", operationHash);
 
         newId = vehicleId;
@@ -1240,18 +1283,24 @@ const filename = buildCanonicalImageBaseName(vehicleInfo, "imgCorte" + cutSlotIn
         }
         anioParaFolder = anoDesde;
 
-        // Subir imágenes y obtener URLs...
-        const folder = findOrCreateVehicleFolder(Object.assign({}, vehicleData, { anoDesde: anoDesde, anoHasta: anoHasta }));
-        let vehiculoImageUrl = '';
-        if (vehicleData.imagenVehiculo) {
-const filename = buildCanonicalImageBaseName(Object.assign({}, vehicleData, { anoDesde: anoDesde, anoHasta: anoHasta }), "imagenVehiculo");
-            vehiculoImageUrl = uploadImageToDrive(vehicleData.imagenVehiculo, filename, folder, buildImageUploadOperationKey(opId, newId, "imagenVehiculo"));
-        }
-        let corteImageUrl = '';
-        if (cutData.imgCorte1) {
-const filename = buildCanonicalImageBaseName(Object.assign({}, vehicleData, { anoDesde: anoDesde, anoHasta: anoHasta }), "imgCorte1");
-            corteImageUrl = uploadImageToDrive(cutData.imgCorte1, filename, folder, buildImageUploadOperationKey(opId, newId, "imgCorte1"));
-        }
+        // Drive se procesa fuera del ScriptLock; el ID y el opId ya quedaron reservados.
+        const preparedImages = runWriteDriveWorkOutsideScriptLock_(lock, lockState, opId, () => {
+            const folderInfo = Object.assign({}, vehicleData, { anoDesde: anoDesde, anoHasta: anoHasta });
+            const folder = findOrCreateVehicleFolder(folderInfo);
+            let vehicleImage = '';
+            let cutImage = '';
+            if (vehicleData.imagenVehiculo) {
+                const filename = buildCanonicalImageBaseName(folderInfo, "imagenVehiculo");
+                vehicleImage = uploadImageToDrive(vehicleData.imagenVehiculo, filename, folder, buildImageUploadOperationKey(opId, newId, "imagenVehiculo"), { shortLedgerLock: true });
+            }
+            if (cutData.imgCorte1) {
+                const filename = buildCanonicalImageBaseName(folderInfo, "imgCorte1");
+                cutImage = uploadImageToDrive(cutData.imgCorte1, filename, folder, buildImageUploadOperationKey(opId, newId, "imgCorte1"), { shortLedgerLock: true });
+            }
+            return { vehicleImage: vehicleImage, cutImage: cutImage };
+        });
+        const vehiculoImageUrl = preparedImages.vehicleImage;
+        const corteImageUrl = preparedImages.cutImage;
 
         // 4. Escribir los nuevos datos en las celdas específicas usando múltiples `setValue` para claridad.
         // Esto es más legible que crear un array gigante y previene errores de índice.
@@ -1274,8 +1323,8 @@ const filename = buildCanonicalImageBaseName(Object.assign({}, vehicleData, { an
         sheet.getRange(rowIndex, COLS_CORTES.imgCorte1).setValue(corteImageUrl);
         sheet.getRange(rowIndex, COLS_CORTES.colaboradorCorte1).setValue(colaboradorName);
         SpreadsheetApp.flush();
-        markImageUploadLinked(vehiculoImageUrl);
-        markImageUploadLinked(corteImageUrl);
+        runWriteDriveWorkOutsideScriptLock_(lock, lockState, opId, () => markImageUploadLinked(vehiculoImageUrl, { shortLedgerLock: true }));
+        runWriteDriveWorkOutsideScriptLock_(lock, lockState, opId, () => markImageUploadLinked(corteImageUrl, { shortLedgerLock: true }));
         if (opId) recordOpId(opId, newId, 1, formattedDate, "completed", operationHash);
     }
 

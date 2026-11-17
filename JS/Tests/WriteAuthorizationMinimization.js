@@ -102,7 +102,9 @@ function runWriteAuthorizationMinimizationTests(sources) {
  run("Registro silencioso se procesa en WRITE y solo lo puede ejecutar Desarrollador",()=>{
   assert(add.includes("const serviceOverride = null")&&add.includes("silent: silentVal"));
   const start=write.indexOf("function handleAddOrUpdateCutLockedUnsafe_"),end=write.indexOf("\nfunction ",start+10),handler=write.slice(start,end<0?write.length:end);
-  assert(handler.includes('getAuthenticatedCollaborator(payload, payload.silent === true ? ["desarrollador"] : undefined)'));
+  const wrapper=extract(write,"handleAddOrUpdateCutLocked");
+  assert(wrapper.includes('getAuthenticatedCollaborator(payload, payload && payload.silent === true ? ["desarrollador"] : undefined)'));
+  assert(!handler.includes("getAuthenticatedCollaborator("),"La identidad del colaborador no debe resolverse dos veces.");
   assert(/'addOrUpdateCut':\s*'WRITE'/.test(api));
  });
  run("WRITE asigna IDs desde el servicio propietario",()=>{
