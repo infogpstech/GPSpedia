@@ -7,3 +7,10 @@ undefined
 - style.css: barra compacta, animación de expansión, ajuste móvil y soporte prefers-reduced-motion.
 - CortesImageReconciliationUI.mjs: prueba de estructura, accesibilidad, preservación de IDs y movimiento reducido.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — AJUSTE DE ESTILOS GP-DEV-CUT-AUDIT-TOOLBAR-01
+- La primera ejecución CI detectó dos contratos CSS globales: no introducir overflow en la región revisada de barras invisibles y mantener el bloque reduced-motion de Developer como el último bloque de ese tipo.
+- Se sustituyó overflow:hidden por clip-path para ocultar etiquetas en estado compacto y se integró reduced-motion en el bloque existente de Developer. No se alteran reglas de scroll de los modales de detalle.
+================================================================================
