@@ -117,4 +117,4 @@ assert.ok(feedback.slice(anonymousStart, anonymousEnd).includes("recordDirectSer
 assert.ok(!services.find(item => item.name === "FEEDBACK").actions.includes("suggestYear"),
     "suggestYear autenticado ya se cuenta en Coordinator y no debe duplicarse.");
 
-console.log("DirectServiceTrafficTelemetry: " + passed + "/25 PASS");
+console.log("DirectServiceTrafficTelemetry: " + passed + "/" + passed + " PASS");
