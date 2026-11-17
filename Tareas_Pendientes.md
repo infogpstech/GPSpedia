@@ -1506,3 +1506,7 @@ No se han desplegado proyectos Apps Script ni configurado secretos remotos. La f
 - P4.2 COMPLETADA: nuevo mensaje desde Solicitudes carga destinatarios sin esperar conversaciones; la lista queda en segundo plano y el sondeo solo inicia si la vista/contexto siguen vigentes. InboxUi 84/84.
 - P4.3 PENDIENTE DE DISEÑO: desacoplar ScriptLock de recorridos/movimientos Drive de ADMIN mediante reserva atómica por auditoría/operación, commit breve, expiración y recuperación. No cambiar locks hasta cubrir duplicados concurrentes, retry, rollback y consistencia del inventario.
 - CI 44154032505 SUCCESS: 145 suites / 2,117 pruebas / 0 fallos. Health read-only 7/7; Pages build SUCCESS. No deployment Apps Script.
+### P4.3a completada; P4.3b pendiente — ADMIN Drive — 2026-11-17
+- P4.3a: currentRows y duplicateIds se calculan una vez por lote en handleOrganizeUnusedImagesBatch. Se conserva latestRowsBeforeMove por archivo y todas las revalidaciones/rollback. En 20 archivos se evitan hasta 19 lecturas completas iniciales y 19 scans de duplicados.
+- Pruebas AdminReplacedImagesIntegrity 55/55; CI 44154558840 SUCCESS: 145 suites / 2,117 pruebas / 0 fallos; health read-only 7/7.
+- P4.3b sigue pendiente: claim/reserva atómica breve y commit por auditId/operationId; recuperación de expiración y pruebas de duplicados concurrentes, fallo entre Drive/Spreadsheet y rollback. No retirar ScriptLock ni cambiarlo por tryLock/UserLock hasta cerrar ese diseño.
