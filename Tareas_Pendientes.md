@@ -991,3 +991,10 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 ### Reconciliación de tareas anteriores — 2026-11-17
 - GP-UX-CUT-MODAL-01: segunda corrección local cerrada. CI run 44006857813 ejecutó CutDetailModalLayout 15/15 PASS dentro de 132 suites / 1,964 pruebas / 0 fallos. Se conserva únicamente validación visual Android/PWA/escritorio pendiente de Beta.
 - GP-PWA-SPLASH-PRELOAD-01: se actualiza su estado operativo, antes EN PROGRESO por una nota histórica, a COMPLETADA CON VALIDACIÓN DIFERIDA A BETA; evidencia PWAStartupScenarios 16/16 PASS y suite CI integral aprobada.
+
+
+### Adenda final de publicación PWA y feed de actividad — 2026-11-17
+- El feed de Actividad reciente muestra también la referencia asociada (ID de vehículo/elemento) junto con fecha, usuario, acción y descripción; el valor se inserta como texto plano.
+- App Shell actualizado a v65 para invalidar el CSS/HTML del dashboard y el módulo de actividad en PWA instalada. Contratos ServiceWorkerCache y OfflineBrandAssets actualizados.
+- CI del commit 21b584638223a23f4dd61da601795d009c76d91e: 132 suites / 1,964 pruebas / 0 fallos; GP-DASH-INSIGHTS-01 1/1, ServiceWorkerCache 10/10, OfflineBrandAssets 4/4 PASS.
+- GitHub Pages run 44007452731: build, upload y deploy SUCCESS.

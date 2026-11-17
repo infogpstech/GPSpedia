@@ -435,3 +435,12 @@ Estado: **EN PROGRESO** hasta ejecutar la suite Node.js completa disponible; la 
 ## Reconciliación adicional de backlog — 2026-11-17
 - GP-UX-CUT-MODAL-01: la segunda corrección queda COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. CI run 44006857813 incluye CutDetailModalLayout 15/15 PASS; la suite total fue 132/1,964/0. La aceptación visual en Android/PWA y escritorio sigue pendiente.
 - GP-PWA-SPLASH-PRELOAD-01: se corrige el estado activo del backlog que aún decía EN PROGRESO pese a contar con PWAStartupScenarios 16/16 PASS y CI integral aprobado. Queda COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
+
+
+## Publicación PWA y validación de feed — 2026-11-17
+- Se añadió al feed reciente la referencia asociada del evento (ID de vehículo/elemento), sin interpolación HTML; la prueba específica confirma el texto de referencia.
+- Se incrementó App Shell de v64 a v65 porque el CSS, HTML y módulo del dashboard se sirven desde caché PWA. Se actualizaron contratos ServiceWorkerCache y OfflineBrandAssets.
+- Commit de código: 21b584638223a23f4dd61da601795d009c76d91e.
+- CI: run 44007454034 SUCCESS, 132 suites / 1,964 pruebas / 0 fallos; GP-DASH-INSIGHTS-01 1/1, ServiceWorkerCache 10/10, OfflineBrandAssets 4/4; sintaxis V8 PASS.
+- GitHub Pages run 44007452731: build, upload y deploy SUCCESS.
+- Las pruebas reales de interfaz Android/PWA, escritorio, tema y accesibilidad continúan reservadas a Beta.
