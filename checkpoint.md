@@ -479,3 +479,13 @@ undefined
 - La validación combinada de estado del commit no reportó checks de status asociados (0 statuses); los tres workflows anteriores sí finalizaron correctamente en el mismo HEAD.
 - Siguiente etapa autorizable: validaciones Beta descritas al final de `Tareas_Pendientes.md`: despliegues Apps Script en entorno Beta, propiedades de configuración, OAuth/Drive/YouTube/Spreadsheet, sesiones/revocación, concurrencia multiusuario y navegador/PWA. No se ejecutan aquí porque requieren despliegues/credenciales/entorno Beta y autorización expresa; no se alteró producción ni se simularon esas pruebas.
 - No se modificó código de aplicación en esta sesión. Esta entrada sincroniza el checkpoint con el HEAD y la evidencia real de GitHub.
+
+
+### Auditoría de encabezados de modales — 2026-11-17
+- Rama verificada: GPSpedia2.2.5_work; HEAD al iniciar auditoría: 5d261217a10e2c2bb3aa8c19af2e7e1a9d61f9e2. Rama base GPSpedia2.2.5 verificada en d9acc68d889985c2e2f42fe3a02e502efc86ead1; no se modifica.
+- Se inspeccionaron los modales de index.html, HTML/users.html, los modales dinámicos de JS/Frontend/ui.js y JS/Frontend/youtubeUpload.js, además de las reglas compartidas de style.css.
+- Hallazgos: no hay estructura común de encabezado; la mayoría usa cierre absoluto sin reserva general para títulos largos; roles/nombres accesibles faltan en varios diálogos estáticos y dinámicos; el cierre YouTube es un span no operable nativamente por teclado; hay jerarquías h1/h2/h3 inconsistentes. El detalle de cortes tiene una cabecera especializada con pruebas de layout que deben preservarse.
+- La auditoría fue estática. No se ejecutó navegador, no se confirmó una superposición visual real y no se realizaron pruebas Beta.
+- Evidencia detallada agregada a Auditoría.txt y Tareas_Pendientes.md. Estado: auditoría completada; corrección local de encabezados pendiente.
+- Siguiente paso: implementar contrato de encabezado accesible por familias, mantener excepciones justificadas, corregir cierre YouTube y añadir pruebas de contrato para todos los diálogos.
+- Se mantiene la instrucción del usuario: completar todas las tareas de implementación antes de iniciar Beta. No se desplegaron servicios ni se modificaron datos externos.

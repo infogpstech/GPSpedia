@@ -1547,3 +1547,24 @@ git rev-parse HEAD
 - Probar dos aportes/cargas independientes simultáneos; comprobar que no se bloqueen entre sí y que los reintentos no dupliquen registros/archivos.
 - Validar en navegador/PWA escritorio y móvil el catálogo cache-first, Inbox, modales y controles responsive. Registrar navegador/dispositivo, rol, estado de caché, tiempos medidos y respuestas.
 - No modificar hojas, Drive, ScriptProperties ni datos productivos. Las pruebas Beta quedan pendientes hasta disponer de deployment/credenciales y autorización del entorno.
+
+
+---
+
+## Adenda — Auditoría de encabezados de modales — 2026-11-17
+
+**Estado: AUDITORÍA ESTÁTICA COMPLETADA; CORRECCIÓN LOCAL PENDIENTE.**
+
+Se revisaron los modales de `index.html`, `HTML/users.html`, los generados por `JS/Frontend/ui.js` y `JS/Frontend/youtubeUpload.js`, además de las reglas generales de `style.css`. La auditoría encontró:
+
+- No existe una estructura compartida de encabezado. La mayoría de los cierres se posicionan de forma absoluta sin una reserva común para títulos largos; Inbox y Developer tienen excepciones específicas. Se identifica riesgo de colisión en pantallas estrechas, pendiente de confirmar visualmente.
+- La semántica accesible de diálogo y el vínculo entre título y diálogo faltan en varias ventanas estáticas y dinámicas.
+- El modal de carga YouTube utiliza un `span` como cierre en lugar de un botón accesible por teclado.
+- Los títulos principales usan niveles distintos (h1/h2/h3) y algunos modales reutilizan clases visuales de otros componentes sin compartir su estructura.
+- El detalle de cortes tiene una cabecera propia y pruebas de layout existentes; debe preservarse su disposición y no forzarse dentro de una plantilla genérica sin adaptar sus acciones.
+
+Evidencia y ubicaciones: adenda del 2026-11-17 en `Auditoría.txt`. La revisión fue estática; no se afirma inspección en navegador ni aceptación visual.
+
+**Siguiente tarea local:** implementar un contrato reutilizable de encabezado por familias de modales, preservar las excepciones justificadas, corregir el cierre YouTube, normalizar roles/nombres accesibles y jerarquía de títulos, y agregar pruebas de contrato para ventanas estáticas y dinámicas. La tarea de alineación integral no debe considerarse cerrada por los ajustes anteriores.
+
+**Orden de ejecución:** completar todas las tareas de implementación del plan antes de iniciar cualquier prueba Beta. Se permiten y requieren pruebas locales; no desplegar servicios ni iniciar validaciones Beta durante esta fase.

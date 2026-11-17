@@ -187,3 +187,29 @@ undefined
 **Regresión:** GitHub Actions `44115093952` SUCCESS — 138 suites, 2,031 pruebas aprobadas, 0 fallos; InboxUi 83/83 PASS. Workflow de salud remota de solo lectura `44115094092` SUCCESS. La publicación estática de GitHub Pages se ejecuta automáticamente por la configuración del repositorio; no se desplegaron servicios Apps Script.
 
 **Pendiente:** inspección visual en escritorio, Android y PWA instalada. No se declara realizada la validación visual Beta.
+
+
+================================================================================
+2026-11-17 — AUDITORÍA ESTÁTICA DE ENCABEZADOS DE MODALES
+
+Alcance revisado: encabezados y controles de cierre de los modales declarados en index.html y HTML/users.html, modales creados dinámicamente por JS/Frontend/ui.js y JS/Frontend/youtubeUpload.js, y reglas compartidas de style.css. HTML/add_cortes.html se revisó para distinguir sus encabezados de etapas de formulario de los modales reales; su flujo abre el modal dinámico de YouTube.
+
+Hallazgos:
+1. SEVERIDAD MEDIA — No existe un contrato visual compartido de encabezado. La mayoría de .info-modal-content coloca .info-close-btn en posición absoluta (style.css, reglas de .info-close-btn), mientras el título permanece como hermano independiente. Inbox reserva espacio mediante su header y padding-right; Developer reserva espacio en .dev-tools-title. La mayoría de los modales informativos y dinámicos no reserva explícitamente el área del cierre. En títulos largos y viewports estrechos existe riesgo de colisión/compresión; es un riesgo estático, no una superposición visual confirmada en navegador.
+2. SEVERIDAD MEDIA — La semántica de diálogo no es uniforme. Inbox usa role=dialog en el panel interior y aria-labelledby; términos, Developer, Biblioteca y Auditoría declaran role/aria en el overlay; Dashboard, Sobre Nosotros, Contáctanos, FAQ, Registro de cambios, instalación iOS y los tres modales de HTML/users.html no declaran un nombre accesible de diálogo de forma explícita. La mayoría de los modales dinámicos de ui.js tampoco asignan role=dialog/aria-modal/aria-labelledby al panel. #modalDetalle se construye dinámicamente sin nombre/rol de diálogo explícito.
+3. SEVERIDAD MEDIA — El cierre del modal de carga YouTube usa <span class="info-close-btn"> en vez de un button. No tiene semántica de botón ni activación nativa por teclado; es un defecto verificable en fuente.
+4. SEVERIDAD BAJA — La jerarquía de títulos principales varía: About Us usa varios h1; la instalación iOS y el modal de confirmación de reporte usan h3 como título principal; el modal de información de relay usa h3. Otros usan h2. Esto dificulta una navegación uniforme por encabezados.
+5. SEVERIDAD BAJA — Dashboard reutiliza .inbox-modal-title para su título sin compartir el encabezado Inbox; las ventanas de Biblioteca y Auditoría reutilizan dev-heading-with-help para el título/ayuda, pero no una estructura común con el botón de cierre. Se identifican acoplamientos visuales y variantes aisladas.
+6. EXCEPCIÓN CON COBERTURA — El detalle de cortes utiliza .detail-modal-toolbar, título/logotipo y .detail-modal-header-actions con el cierre integrado en el grupo. CutDetailModalLayout.mjs verifica la cuadrícula y la posición de acciones. Los detalles de tutorial siguen una estructura similar; el detalle de relay usa una colocación absoluta independiente.
+7. ALCANCE — Los lightboxes de imagen no tienen un encabezado textual porque su contenido es la imagen ampliada; el lightbox de biblioteca dispone de aria-label y botón de cierre. No se clasifican como encabezados de contenido faltantes. Los títulos de etapas de HTML/add_cortes.html son encabezados del formulario, no diálogos.
+
+Inventario de superficies revisadas:
+- index.html: login/recuperación, Inbox, Dashboard, Developer, Biblioteca, lightbox de Biblioteca, Auditoría Drive, aviso de términos, acuerdo de términos, Sobre Nosotros, Contáctanos, FAQ, Registro de cambios e instalación iOS.
+- HTML/users.html: crear/editar usuario, editar nombre y cambiar contraseña.
+- ui.js: detalle de corte/tutorial/relay y modales de reporte, sugerencia, ampliación, VIN, corte, apertura, alimentación, video, problema, asociación de vehículos, confirmación y tutorial.
+- youtubeUpload.js: modal de carga de video.
+
+Límites de validación: auditoría estática de HTML/CSS/JS en la rama GPSpedia2.2.5_work. No se ejecutó navegador ni se afirma haber medido superposiciones visuales en escritorio/móvil. No se modificó código de aplicación ni se ejecutaron pruebas Beta.
+
+Siguiente trabajo local recomendado: definir un contrato de encabezado reutilizable (título, área de acciones y cierre accesible), aplicarlo por familias sin romper modales especiales (login, términos, Inbox, Developer y detalle), corregir el cierre YouTube a button y normalizar nombres/roles/jerarquía de títulos. Añadir contratos automatizados para todos los diálogos estáticos y dinámicos y ejecutar regresión local antes de cerrar.
+================================================================================
