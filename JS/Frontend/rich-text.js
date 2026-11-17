@@ -99,7 +99,7 @@ function createRichTextTypingAnchor_(editor,range,state){
  const previous=richEditorTypingAnchors_.get(editor);
  if(previous?.root?.isConnected){
   if(previous.sentinel?.data===RICH_TEXT_CARET_SENTINEL_&&previous.root.contains(range.startContainer)){range.selectNode(previous.root);range.collapse(false);previous.root.remove();}
-  else if(previous.sentinel?.data?.includes(RICH_TEXT_CARET_SENTINEL_))previous.sentinel.deleteData(previous.sentinel.data.indexOf(RICH_TEXT_CARET_SENTINEL_),1);
+  else if(previous.sentinel?.data?.includes(RICH_TEXT_CARET_SENTINEL_)){previous.sentinel.deleteData(previous.sentinel.data.indexOf(RICH_TEXT_CARET_SENTINEL_),1);if(!previous.root.textContent)previous.root.remove();}
  }
  richEditorTypingAnchors_.delete(editor);
  const sentinel=document.createTextNode(RICH_TEXT_CARET_SENTINEL_),root=wrapRichTextNodeWithFormats_(sentinel,state);
