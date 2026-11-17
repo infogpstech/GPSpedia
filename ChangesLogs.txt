@@ -347,3 +347,13 @@ undefined
 - P4.3d: ScriptLock revisado y conservado por seguridad; los leases Coordinator ya coordinan los conflictos de recursos.
 - CI 44156469990 SUCCESS: 145 suites / 2,123 pruebas / 0 fallos. Health read-only 7/7 y Pages build SUCCESS.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — GP-PERF-SIMPLIFY-01 — P5 verificación local
+- JS/Services/Coordinator.js: se retiró la política AUTH/benchmarkPasswordKdf que ya no tiene consumidor; se conservó la política ADMIN/getServiceTraffic para la lectura interna de métricas.
+- JS/Tests/Auth.js y JS/Tests/users.js: fixtures aislados sincronizados con Auth.js y users.js, conservando el ID de Spreadsheet de prueba.
+- JS/Tests/PasswordKdfBenchmark.mjs: contrato actualizado para actor cacheado y ausencia de lease Coordinator para el benchmark.
+- JS/Tests/DirectTrafficRoutingCoverage.mjs: contrato USERS actualizado para lectura con actor cacheado sin lease sessionActivity.
+- JS/Tests/AdminImageScanCoordinatorContract.mjs: distingue la ruta ADMIN con actor cacheado de la lectura SERVICE_TRAFFIC interna; conserva contratos de permisos, leases de operaciones de mantenimiento y publicación CATALOG por lotes.
+================================================================================
