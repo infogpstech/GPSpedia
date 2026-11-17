@@ -101,6 +101,8 @@ assert.match(feedbackSource, /action === "__invalidateSessionActorCache"[\s\S]*?
 assert.match(authSource, /function handleLogout[\s\S]*?revokeSharedSessionContext_/);
 assert.equal(authSource.includes("revokeSharedUserSessionContexts_(userId, getActiveSessionTokensForUserUnderLock_(sessionsSheet, userId))"), true);
 assert.equal(authSource.includes("revokeSharedUserSessionContexts_(targetUserId, getActiveSessionTokensForUserUnderLock_(sessionsSheet, targetUserId))"), true);
+assert.equal(authSource.includes("revokeSharedUserSessionContexts_(targetId, getActiveSessionTokensForUserUnderLock_(sessionsSheet, targetId))"), true);
+assert.match(authSource, /function getActiveSessionTokensForUserUnderLock_/);
 assert.doesNotMatch(apiConfigSource, /__invalidateSessionActorCache/);
 
 console.log("SessionActorCacheInvalidation: PASS — claves compatibles, autenticación interna, aislamiento por token, flujos AUTH y fallo parcial");
