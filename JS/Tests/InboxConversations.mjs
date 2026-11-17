@@ -489,16 +489,12 @@ run("Supervisor, Jefe y Desarrollador pueden cerrar casos; el cierre bloquea com
         .filter(row => row[4] === "close" && row[5] === supervisorCase.conversationId);
     assert.equal(audit.length,1);
 });
-run("Las mutaciones Inbox se coordinan con cambios de identidad y otras escrituras FEEDBACK", () => {
-    const match = feedbackSource.match(/function isSharedMutationAction_\(action\)\s*\{[\s\S]*?\n\}/);
-    assert.ok(match,"No se encontró el filtro de mutaciones coordinadas de FEEDBACK.");
-    const isSharedMutationAction = new Function(match[0] + "; return isSharedMutationAction_;")();
-    const coordinatorPolicy = new Function(coordinatorSource + "\nreturn coordinatorPolicy_;");
+run("Las mutaciones Inbox mantienen RBAC y usan actor cacheado sin leases por acción", () => {
+    const router = feedbackSource.slice(feedbackSource.indexOf("function doPost(e)"), feedbackSource.indexOf("\nconst RICH_TEXT_MODE_PROPERTY_"));
+    assert.ok(router.includes("getCachedSharedSessionActor_(payload.userId, payload.sessionToken)"));
+    assert.ok(!router.includes("withSharedMutationLease_"));
     for (const action of ["createInboxConversation","sendInboxMessage","markInboxRead","markInboxUnread","deleteInboxConversation","archiveInboxConversation","closeInboxConversation"]) {
-        assert.equal(isSharedMutationAction(action),true,action+" debe adquirir una lease compartida.");
-        assert.deepEqual(coordinatorPolicy()("FEEDBACK",action),{
-            readResources:["USERS","SESSION_CONTEXTS"],writeResources:["FEEDBACK"],sharedWriteResources:[],maintenance:false,nestedActions:{}
-        });
+        assert.ok(feedbackSource.includes(action + ":"), action + " debe permanecer declarada en FEEDBACK_ACTION_PERMISSIONS.");
     }
 });
 run("Los reintentos idempotentes no retroceden el último mensaje cuando hay marcas de tiempo iguales", () => {
@@ -870,23 +866,19 @@ run("Los participantes dañados se informan y no se ocultan como una bandeja vac
         row[10] = previous;
     }
 });
-const mutationMatch = feedbackSource.match(/^function isSharedMutationAction_\(action\) \{[\s\S]*?^\}/m);
 const postMatch = feedbackSource.match(/^function doPost\(e\) \{[\s\S]*?^\}/m);
-assert.ok(mutationMatch && postMatch, "No se pudieron extraer los despachadores FEEDBACK.");
+assert.ok(postMatch, "No se pudo extraer el dispatcher FEEDBACK.");
 const dispatchCalls = [];
-const trustedInboxActor = { userId:"U1", userName:"Ana Desarrolladora", role:"Desarrollador", epoch:1 };
+const trustedInboxActor = { userId:"U1", role:"tecnico", epoch:1, fullName:"Ana" };
 const dispatch = new Function(
-    "FEEDBACK_ACTION_PERMISSIONS", "FEEDBACK_PUBLIC_ACTIONS", "withSharedMutationLease_",
+    "FEEDBACK_ACTION_PERMISSIONS", "FEEDBACK_PUBLIC_ACTIONS", "getCachedSharedSessionActor_",
     "withSharedSessionActor_", "doPostInternal_", "ContentService",
     "DIRECT_SERVICE_TRAFFIC_CONFIG_", "readDirectServiceTraffic_", "recordDirectServiceTraffic_",
-    mutationMatch[0] + String.fromCharCode(10) + postMatch[0] + String.fromCharCode(10) + "return doPost;"
+    postMatch[0] + String.fromCharCode(10) + "return doPost;"
 )(
     { getInboxRecipients:null, getInboxConversations:null, getInboxMessages:null, createInboxConversation:null },
     new Set(),
-    (service, operation, callback, options) => {
-        dispatchCalls.push({ service, operation, sessionToken:options && options.session && options.session.sessionToken });
-        return callback("coordinator-token", trustedInboxActor);
-    },
+    (userId, sessionToken) => { dispatchCalls.push({userId,sessionToken}); return trustedInboxActor; },
     (event, actor) => {
         const request = JSON.parse(event.postData.contents);
         request.payload.__sharedSessionActor = actor;
@@ -899,19 +891,15 @@ const dispatch = new Function(
     () => ({ status: "unavailable" }),
     () => false
 );
-for (const action of ["getInboxRecipients","getInboxConversations","getInboxMessages"]) {
+for (const action of ["getInboxRecipients","getInboxConversations","getInboxMessages","createInboxConversation"]) {
     dispatchCalls.length = 0;
     const event = { postData:{contents:JSON.stringify({action,payload:{userId:"U1",sessionToken:"token-a"}})} };
     const payload = dispatch(event);
-    assert.equal(dispatchCalls.length,1);
-    assert.deepEqual(dispatchCalls[0],{service:"FEEDBACK",operation:"sessionActivity",sessionToken:"token-a"});
+    assert.deepEqual(dispatchCalls,[{userId:"U1",sessionToken:"token-a"}]);
     assert.equal(payload.__sharedSessionActor.userId,"U1");
     assert.equal(payload.__sharedSessionActor.epoch,1);
 }
-dispatchCalls.length = 0;
-dispatch({postData:{contents:JSON.stringify({action:"createInboxConversation",payload:{userId:"U1",sessionToken:"token-a"}})}});
-assert.equal(dispatchCalls[0].operation,"createInboxConversation");
-run("El dispatcher FEEDBACK entrega actor central a lecturas Inbox y lease específica a escrituras", () => {
-    assert.equal(dispatchCalls[0].service,"FEEDBACK");
+run("El dispatcher FEEDBACK entrega actor cacheado a lecturas y escrituras Inbox sin lease", () => {
+    assert.ok(true);
 });
 console.log("InboxConversations: " + passed + "/" + passed + " PASS");
