@@ -135,10 +135,48 @@ function createSharedMutationClient_(dependencies) {
     function syncUserSessions(userId, role, fullName, sessions) {
         return send_("syncUserSessions", "AUTH", "syncUserSessions", { userId, role, fullName, sessions });
     }
+    function invalidateSessionActorCaches(userId, sessionTokens) {
+        const id = String(userId || "").trim();
+        const tokens = Array.from(new Set((Array.isArray(sessionTokens) ? sessionTokens : [])
+            .map(token => String(token || "")).filter(Boolean)));
+        if (!id || tokens.length > 5) throw new Error("La invalidación de caché requiere un usuario y hasta cinco tokens de sesión.");
+        if (!tokens.length) return { status: "success", invalidated: 0 };
+        const secret = String(properties.getProperty("GPSpedia_SESSION_CACHE_INVALIDATION_SECRET") || "");
+        const endpoints = [
+            ["WRITE", String(properties.getProperty("GPSpedia_WRITE_URL") || "").trim()],
+            ["FEEDBACK", String(properties.getProperty("GPSpedia_FEEDBACK_URL") || "").trim()]
+        ];
+        if (secret.length < 32) throw new Error("Falta configurar el secreto interno de invalidación de sesión en AUTH.");
+        endpoints.forEach(([service, url]) => {
+            if (!url.startsWith("https://script.google.com/macros/s/") || !url.endsWith("/exec")) {
+                throw new Error("Falta configurar la URL de invalidación de " + service + " en AUTH.");
+            }
+            let response;
+            try {
+                response = fetch(url, {
+                    method: "post", contentType: "application/json", muteHttpExceptions: true,
+                    payload: JSON.stringify({ action: "__invalidateSessionActorCache",
+                        payload: { secret, userId: id, sessionTokens: tokens } })
+                });
+            } catch (error) {
+                throw new Error("No se pudo invalidar la caché de sesión en " + service + ".");
+            }
+            let result;
+            try { result = JSON.parse(response.getContentText()); } catch (error) { result = null; }
+            const status = response.getResponseCode();
+            if (status < 200 || status >= 300 || !result || result.status !== "success" ||
+                result.invalidated !== tokens.length) {
+                throw new Error("No se pudo confirmar la invalidación de caché en " + service + ".");
+            }
+        });
+        return { status: "success", invalidated: tokens.length };
+    }
     function revokeSession(userId, sessionToken) {
+        invalidateSessionActorCaches(userId, [sessionToken]);
         return send_("revokeSession", "AUTH", "revokeSession", { userId, sessionToken });
     }
-    function revokeUserSessions(userId) {
+    function revokeUserSessions(userId, sessionTokens) {
+        invalidateSessionActorCaches(userId, sessionTokens);
         return send_("revokeUserSessions", "AUTH", "revokeUserSessions", { userId });
     }
     function validateSessionContext(userId, sessionToken) {
@@ -149,6 +187,7 @@ function createSharedMutationClient_(dependencies) {
         getServiceTraffic: getServiceTraffic,
         registerSession: registerSession, syncUserSessions: syncUserSessions,
         revokeSession: revokeSession, revokeUserSessions: revokeUserSessions,
+        invalidateSessionActorCaches: invalidateSessionActorCaches,
         validateSessionContext: validateSessionContext };
 }
 
@@ -214,14 +253,14 @@ function revokeSharedSessionContext_(userId, sessionToken) {
     return client.revokeSession(userId, sessionToken);
 }
 
-function revokeSharedUserSessionContexts_(userId) {
+function revokeSharedUserSessionContexts_(userId, sessionTokens) {
     const client = createSharedMutationClient_({
         properties: PropertiesService.getScriptProperties(),
         fetch: function(url, options) { return UrlFetchApp.fetch(url, options); },
         uuid: function() { return Utilities.getUuid(); },
         logger: function(message) { Logger.log(message); }
     });
-    return client.revokeUserSessions(userId);
+    return client.revokeUserSessions(userId, sessionTokens);
 }
 
 
@@ -265,6 +304,39 @@ function validateSharedSessionContext_(userId, sessionToken) {
 
 
 
+function getSharedSessionActorCacheKey_(userId, sessionToken) {
+    const bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,
+        String(userId || "").trim() + "\n" + String(sessionToken || ""), Utilities.Charset.UTF_8);
+    return "GPSpedia_SHARED_SESSION_ACTOR_V1_" +
+        bytes.map(byte => ((Number(byte) + 256) % 256).toString(16).padStart(2, "0")).join("");
+}
+
+function handleSharedSessionActorCacheInvalidation_(payload, dependencies) {
+    const source = payload && typeof payload === "object" ? payload : {};
+    const deps = dependencies && typeof dependencies === "object" ? dependencies : {};
+    const properties = deps.properties || PropertiesService.getScriptProperties();
+    const cache = deps.cache || CacheService.getScriptCache();
+    const expected = String(deps.secret !== undefined ? deps.secret :
+        properties.getProperty("GPSpedia_SESSION_CACHE_INVALIDATION_SECRET") || "");
+    const supplied = String(source.secret || "");
+    let difference = expected.length ^ supplied.length;
+    for (let i = 0; i < Math.max(expected.length, supplied.length); i++) {
+        difference |= (expected.charCodeAt(i) || 0) ^ (supplied.charCodeAt(i) || 0);
+    }
+    if (expected.length < 32 || difference !== 0) {
+        return { status: "error", message: "Solicitud interna no autorizada." };
+    }
+    const userId = String(source.userId || "").trim();
+    const tokens = Array.isArray(source.sessionTokens) ? source.sessionTokens : [];
+    if (!userId || userId.length > 128 || !tokens.length || tokens.length > 5 ||
+        tokens.some(token => typeof token !== "string" || !token || token.length > 200)) {
+        return { status: "error", message: "Datos de invalidación no válidos." };
+    }
+    const uniqueTokens = Array.from(new Set(tokens));
+    uniqueTokens.forEach(token => cache.remove(getSharedSessionActorCacheKey_(userId, token)));
+    return { status: "success", invalidated: uniqueTokens.length };
+}
+
 // El contexto de usuario/rol se sincroniza al iniciar sesión; CacheService admite hasta 6 h.
 const SHARED_SESSION_ACTOR_CACHE_TTL_SECONDS_ = 21600;
 function getCachedSharedSessionActor_(userId, sessionToken, dependencies) {
@@ -273,10 +345,7 @@ function getCachedSharedSessionActor_(userId, sessionToken, dependencies) {
     const deps = dependencies && typeof dependencies === "object" ? dependencies : {};
     const cache = Object.prototype.hasOwnProperty.call(deps, "cache") ? deps.cache : CacheService.getScriptCache();
     const validate = typeof deps.validate === "function" ? deps.validate : validateSharedSessionContext_;
-    const keyFor = typeof deps.keyFor === "function" ? deps.keyFor : function(ownerId, value) {
-        const bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, ownerId + "\\n" + value, Utilities.Charset.UTF_8);
-        return "GPSpedia_SHARED_SESSION_ACTOR_V1_" + bytes.map(byte => ((Number(byte) + 256) % 256).toString(16).padStart(2, "0")).join("");
-    };
+    const keyFor = typeof deps.keyFor === "function" ? deps.keyFor : getSharedSessionActorCacheKey_;
     const cacheKey = keyFor(id, token);
     const validActor = actor => actor && typeof actor === "object" && actor.userId === id &&
         typeof actor.role === "string" &&
