@@ -95,6 +95,14 @@ test("el feed público no exige actor ni secreto interno de FEEDBACK", () => {
     assert.match(coordinatorSource,/function doGet\(e\)/);
     assert.match(apiSource,/'getCatalogChanges': 'FEEDBACK'/);
 });
+test("ADMIN agrupa los cambios de catálogo y el cliente agrega requestId para reintentos", () => {
+    assert.match(adminSource,/for \(let offset = 0; offset < changes\.length; offset \+= 50\)[\s\S]*?publishSharedCatalogChanges_/);
+    assert.match(clientSource,/action === "publishCatalogChanges"[\s\S]*?uuid\(\)/);
+    assert.match(clientSource,/function publishCatalogChanges\(service, operation, changes\)/);
+    assert.match(coordinatorSource,/function publishCatalogChanges_\(service, operation, payload\)/);
+    assert.match(coordinatorSource,/sourceRequestId/);
+    assert.match(coordinatorSource,/recoveredPartial/);
+});
 test("el navegador consume el feed público por GET y evita el POST autenticado", () => {
     const feedClient = apiSource.slice(apiSource.indexOf("export async function getCatalogChanges"));
     assert.ok(feedClient.includes('method: "GET"'));
@@ -183,7 +191,8 @@ test("reconciliación confirmada publica un upsert por vehículo único y reserv
     assert.ok(adminSource.includes("function publishAdminCortesCatalogChanges_(action, references)"));
     assert.ok(adminSource.includes("publishAdminCortesCatalogChanges_(catalogAction, vehicleIds)"));
     assert.ok(adminSource.includes("const changes = ids.map(id => buildAdminCortesCatalogChange_(id))"));
-    assert.ok(adminSource.includes('changes.forEach(change => publishSharedCatalogChange_("ADMIN", action, change))'));
+    assert.ok(adminSource.includes('publishSharedCatalogChanges_("ADMIN", action, changes.slice(offset, offset + 50))'));
+    assert.ok(!adminSource.includes('changes.forEach(change => publishSharedCatalogChange_("ADMIN", action, change))'));
     assert.ok(adminSource.includes('publishSharedCatalogChange_("ADMIN", action, { operation: "reset" })'));
 });
 test("operaciones ADMIN Drive/ledger-only no publican resets; operaciones que reescriben filas conservan reset", () => {
