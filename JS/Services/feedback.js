@@ -3089,11 +3089,12 @@ function handleAddProblem(source) {
 
     const lock = LockService.getScriptLock();
     let lockAcquired = false, sheet = null, opsSheet = null, op = null;
+    let models = requestedModels;
     let file = preparedFile, fileId = "", url = "", problemId = "";
     try {
         acquireFeedbackScriptLock_(lock);
         lockAcquired = true;
-        const models = requestedModels.map(findUniqueCortesVehicleForPys_);
+        models = requestedModels.map(findUniqueCortesVehicleForPys_);
         p.modelosAsociados = models;
         const hash = buildPysPayloadHash_(p, image, models);
         sheet = getPysSheet_(true);
