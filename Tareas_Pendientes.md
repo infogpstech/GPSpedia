@@ -1474,3 +1474,13 @@ No se han desplegado proyectos Apps Script ni configurado secretos remotos. La f
 - Se conserva TTL local de 21,600 s: cache hit sin red ni validación por acción; cache miss inicial/expiración todavía consulta Coordinator. No se presenta como verificación estrictamente limitada al login.
 - La revisión detectó que logout, eliminación de cuenta y cambio de rol revocan en Coordinator, pero no limpian las cachés de actor de WRITE/FEEDBACK. La ventana obsoleta puede alcanzar 6 h; hallazgo ALTO registrado en `AUDITORIA_P3_SESION_ACTOR.md`.
 - **P3.1b COMPLETADA como evaluación/decisión. P3.1 global permanece EN PROGRESO. Siguiente P3.1c:** implementar invalidación dirigida de las cachés de actor en WRITE/FEEDBACK para las excepciones de sesión, sin Coordinator por acción. Pruebas locales de logout remoto, eliminación, cambio de rol, fallos parciales y aislamiento por token. No desplegar Apps Script ni modificar datos productivos.
+
+
+### Cierre P3.1c — invalidación dirigida de caché de actor — 2026-11-17
+- **Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
+- AUTH envía una acción interna autenticada a WRITE y FEEDBACK para eliminar las claves de caché correspondientes a los tokens revocados. Se conserva exactamente el formato anterior de la clave y el TTL de 6 h para las acciones ordinarias.
+- Logout invalida un token. Las revocaciones por usuario (cambio de rol, reset de sesiones, eliminación de cuenta y cambio/restablecimiento de contraseña) recogen los tokens activos de ActiveSessions y limpian ambos servicios antes de revocar Coordinator.
+- Si WRITE o FEEDBACK no confirma la limpieza, AUTH detiene la revocación central y devuelve error recuperable; no continúa dejando una sesión central revocada con una caché antigua todavía autorizando.
+- La acción interna requiere GPSpedia_SESSION_CACHE_INVALIDATION_SECRET en AUTH, WRITE y FEEDBACK (mismo valor, mínimo 32 caracteres). AUTH requiere además GPSpedia_WRITE_URL y GPSpedia_FEEDBACK_URL con los endpoints /exec actuales. No guardar secretos en el repositorio.
+- Pruebas: SessionActorCacheInvalidation 23/23; SessionActorCacheLifetime 4/4. CI 44149804570 SUCCESS: 144 suites / 2,131 pruebas / 0 fallos. Health remoto 44149804587 SUCCESS (solo diagnóstico GET; no valida el código nuevo).
+- No se desplegaron Apps Script ni se tocaron propiedades, hojas, Drive o datos productivos. Pendiente Beta: configurar propiedades, desplegar AUTH/WRITE/FEEDBACK y probar revocación real, fallo parcial, reintento y que los cache hits ordinarios sigan sin viajes a Coordinator.
