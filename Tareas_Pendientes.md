@@ -1607,3 +1607,7 @@ Evidencia y ubicaciones: adenda del 2026-11-17 en `Auditoría.txt`. La revisión
 - Modal PyS usa título azul y jerarquía/cierre accesible alineados con los demás modales.
 
 **Verificación:** se agregaron pruebas para la privacidad de participantes, selector múltiple, envío secuencial idempotente, cierre exterior de menús y encabezados Corte/PyS. Esperar los workflows del commit para registrar los resultados exactos. No se desplegarán Apps Script ni se modificará datos externos.
+
+
+### Nota de regresión — privacidad Inbox (2026-11-17)
+La primera ejecución detectó interferencia de fixture: la prueba de privacidad añadida antes de una aserción heredada incrementó dos filas el contador común. Se movió la prueba al final de `InboxConversations.mjs` y se hizo independiente de los totales históricos; no se modificó lógica de servicio.

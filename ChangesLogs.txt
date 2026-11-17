@@ -381,3 +381,11 @@ undefined
 - PyS adopta el encabezado azul común, alineación y cierre accesible.
 - Se añadieron contratos Inbox UI/backend y regresión de encabezados de corte/PyS; pendientes de confirmar en Actions.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — AJUSTE DE AISLAMIENTO DE PRUEBAS Inbox PRIVACY
+- La primera regresión del commit 5e9cdd7 detectó que la nueva fixture de privacidad se insertó antes de una aserción histórica que valida el contador total de mensajes (9 frente a 7). La lógica de Inbox no falló; se aisló la prueba nueva al final de la suite para no alterar el fixture compartido de los contratos preexistentes.
+- La prueba ahora verifica participantes individuales y que un destinatario no pueda listar ni abrir la conversación privada del otro. Se conservó intacto el límite/contador de las pruebas históricas.
+- Reejecutar CI integral y Pages tras este ajuste.
+================================================================================

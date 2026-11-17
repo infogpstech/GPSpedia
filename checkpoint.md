@@ -520,3 +520,8 @@ La comprobación sintáctica aprobó. Dos contratos heredados fallaron por expec
 - Detalle de corte: botones en una sola fila al extremo derecho y junto al cierre; contenedor del logo sin padding interno; alto del contenedor reducido 138→129 px escritorio y 118→111 px móvil, conservando imágenes de logo 120/104 px; margen del divisor y separación con metadatos reducidos a aproximadamente la mitad; nombre del modelo elevado de forma independiente, sin cambiar tamaño ni sombra.
 - PyS: encabezado de título azul normalizado y botón de cierre accesible.
 - Pendiente: confirmar CI y GitHub Pages del commit de estos cambios; no hay despliegue Apps Script ni cambios de datos externos.
+
+
+### Ajuste de regresión Inbox — 2026-11-17
+- La suite reportó 1 fallo de aserción por contaminación del fixture (la prueba nueva añadió 2 mensajes antes de una verificación histórica que esperaba 7). La prueba de privacidad se movió al final y ahora comprueba inclusión/exclusión y lectura no autorizada sin asumir el total de la bandeja.
+- Reejecutar CI del nuevo HEAD. Pages build del commit anterior SUCCESS; health read-only del commit anterior SUCCESS.

@@ -140,25 +140,6 @@ run("Rechaza difusión y destinatarios múltiples", () => {
         subject:"Difusión",category:"general",body:"No debe enviarse.",idempotencyKey:"create-broadcast-01"
     }),/no se permite difusión/);
 });
-run("Un envío a varios usuarios produce conversaciones privadas sin exponer destinatarios", () => {
-    const toU3 = api.handleCreateInboxConversation({
-        ...actor("U1","token-a"),recipientId:"U3",subject:"Aviso general",category:"general",
-        body:"Este aviso se entrega de forma individual.",idempotencyKey:"private-multi-u3-01"
-    });
-    const toU5 = api.handleCreateInboxConversation({
-        ...actor("U1","token-a"),recipientId:"U5",subject:"Aviso general",category:"general",
-        body:"Este aviso se entrega de forma individual.",idempotencyKey:"private-multi-u5-01"
-    });
-    const rows = spreadsheet.getSheetByName("InboxConversations").rows;
-    const rowU3 = rows.find(row => row[0] === toU3.conversationId);
-    const rowU5 = rows.find(row => row[0] === toU5.conversationId);
-    assert.ok(rowU3 && rowU5 && toU3.conversationId !== toU5.conversationId);
-    assert.deepEqual(JSON.parse(rowU3[10]).map(user => user.id),["U1","U3"]);
-    assert.deepEqual(JSON.parse(rowU5[10]).map(user => user.id),["U1","U5"]);
-    const u3Inbox = api.handleGetInboxConversations({ ...actor("U3","token-c"),folder:"received" });
-    assert.deepEqual(u3Inbox.data.map(item => item.conversationId),[toU3.conversationId]);
-    assert.equal(JSON.stringify(u3Inbox.data).includes(toU5.conversationId),false);
-});
 run("Rechaza tipos de mensaje y adjuntos no soportados", () => {
     assert.throws(() => api.handleCreateInboxConversation({
         ...actor("U1","token-a"),recipientId:"U2",subject:"Imagen",category:"general",body:"No es texto.",
@@ -920,5 +901,30 @@ for (const action of ["getInboxRecipients","getInboxConversations","getInboxMess
 }
 run("El dispatcher FEEDBACK entrega actor cacheado a lecturas y escrituras Inbox sin lease", () => {
     assert.ok(true);
+});
+run("Un envío a varios usuarios produce conversaciones privadas sin exponer destinatarios", () => {
+    // La verificación se ejecuta al final para no alterar los contadores de los contratos históricos.
+    const messageSheet = spreadsheet.getSheetByName("InboxMessages");
+    messageSheet.rows.slice(1).forEach(row => { row[2] = "2000-01-01T00:00:00.000Z"; });
+    const toU3 = api.handleCreateInboxConversation({
+        ...actor("U1","token-a"),recipientId:"U3",subject:"Aviso general",category:"general",
+        body:"Este aviso se entrega de forma individual.",idempotencyKey:"private-multi-u3-01"
+    });
+    const toU5 = api.handleCreateInboxConversation({
+        ...actor("U1","token-a"),recipientId:"U5",subject:"Aviso general",category:"general",
+        body:"Este aviso se entrega de forma individual.",idempotencyKey:"private-multi-u5-01"
+    });
+    const rows = spreadsheet.getSheetByName("InboxConversations").rows;
+    const rowU3 = rows.find(row => row[0] === toU3.conversationId);
+    const rowU5 = rows.find(row => row[0] === toU5.conversationId);
+    assert.ok(rowU3 && rowU5 && toU3.conversationId !== toU5.conversationId);
+    assert.deepEqual(JSON.parse(rowU3[10]).map(user => user.id),["U1","U3"]);
+    assert.deepEqual(JSON.parse(rowU5[10]).map(user => user.id),["U1","U5"]);
+    const u3Inbox = api.handleGetInboxConversations({ ...actor("U3","token-c"),folder:"received" });
+    assert.ok(u3Inbox.data.some(item => item.conversationId === toU3.conversationId));
+    assert.equal(u3Inbox.data.some(item => item.conversationId === toU5.conversationId),false);
+    assert.throws(() => api.handleGetInboxMessages({
+        ...actor("U5","token-e"),conversationId:toU3.conversationId
+    }),/permiso/);
 });
 console.log("InboxConversations: " + passed + "/" + passed + " PASS");
