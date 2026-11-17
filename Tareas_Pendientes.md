@@ -943,6 +943,8 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - Preferir no modificar AUTH; cualquier cambio de servicio se justificará solo si las pruebas demuestran que el contrato actual no admite el registro idempotente en segundo plano.
 - Pruebas: cierre inmediato, caché por usuario/dispositivo/versión, red lenta/offline, reintento, respuesta tardía, cambio/logout de sesión, versión nueva de términos y ausencia de solicitudes duplicadas.
 
+**Adenda de implementación local — 2026-11-16:** `termsDeviceAcceptance.js` persiste el consentimiento local con estado `pending/synced`; `ui.js` cierra el aviso y continúa sin esperar AUTH, sincroniza en segundo plano y reintenta al recuperar conexión o al abrir la app. Se conserva aislamiento usuario/dispositivo/versión y se descartan respuestas tardías de otra sesión. AUTH no fue modificado. La suite específica `TermsAsyncSync.mjs` cubre 5 escenarios y se integró al runner general. Parsing aprobado; falta ejecutar la suite Node.js completa/CI.
+
 ### GP-PWA-SPLASH-PRELOAD-01 — Iniciar la carga del catálogo detrás del Splash existente
 **Prioridad: P1 · Estado: EN PROGRESO — IMPLEMENTACIÓN LOCAL APLICADA; pendiente de suite Node.js/CI.**
 
@@ -953,6 +955,8 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - Mantener la pantalla de carga del catálogo únicamente cuando realmente no haya datos disponibles después del Splash; si la caché es válida, mostrarla al terminar el desvanecimiento.
 - No modificar la pantalla Splash ni el Service Worker salvo que la revisión de dependencias demuestre que un recurso nuevo debe incorporarse al App Shell.
 - Pruebas: sesión restaurada con caché caliente, primer arranque sin caché, IndexedDB lento/no disponible, términos pendientes/aceptados, aceptación local inmediata, navegación y concurrencia de cargas; comprobar que la duración del Splash no aumente.
+
+**Adenda de implementación local — 2026-11-16:** `showApp()` inicia `loadInitialData()` después de comprobar la aceptación local y antes del fade existente. Se retiraron las llamadas redundantes de AUTH para evitar doble carga. No se modificaron HTML/CSS ni la duración del Splash (500 ms). El test de arranque PWA se amplió a 16 escenarios; parsing aprobado, suite Node.js completa/CI pendiente.
 
 ### Orden de ejecución y dependencias
 1. Completar la suite Node.js/CI de GP-TERMS-ASYNC-01 y GP-PWA-SPLASH-PRELOAD-01; corregir cualquier fallo local antes de cerrar esas implementaciones. La validación con servicios desplegados y dispositivos reales queda diferida a Beta.
