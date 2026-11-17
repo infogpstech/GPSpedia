@@ -115,3 +115,14 @@ undefined
 - Hallazgo de cobertura: Catalog (lecturas públicas y endpoints de catálogo) no llama Coordinator; otros servicios tienen rutas no coordinadas para acciones públicas/no protegidas; ADMIN ping también se excluye. Por tanto, el global actual es un subconjunto de operaciones protegidas, no tráfico HTTP total de las siete plataformas.
 - No se modificó código productivo ni se desplegó Apps Script. No se ejecutaron escrituras reales de telemetría.
 - Siguiente paso inmediato: auditar todos los caminos doPost por servicio y evaluar un mecanismo de contabilización central para rutas coordinadas y no coordinadas, sin sumar un viaje de red por cada solicitud ni introducir contención en lecturas. Después, definir el alcance exacto y los contratos de prueba antes de retirar el buffer local del panel.
+
+
+### Adenda — GP-DEV-TRAFFIC-GLOBAL-02 — avance de implementación — 2026-11-17
+- Rama: GPSpedia2.2.5_work. Último HEAD antes de esta adenda: edc6f08a72e87c4aa551f6c5e3a8d6e1aaee9b68. La rama base GPSpedia2.2.5 permanece protegida e intacta.
+- Implementación: dashboard Developer utiliza solo el agregado global de Coordinator; se retiró el panel local de navegador y las métricas locales del detalle por servicio. Los detalles muestran conteos globales de 1 h, 6 h y 24 h.
+- Archivos: JS/Frontend/ui.js, JS/Frontend/api-config.js, index.html, JS/Tests/ServiceTrafficAdminContract.mjs, JS/Tests/ServiceMetricsTelemetry.mjs, JS/Tests/RouteActionErrors.mjs, JS/Tests/RunServiceTests.mjs, Services/COORDINATOR_SETUP.md. Eliminado JS/Frontend/serviceMetrics.js.
+- Validaciones específicas: Actions 44093181593 — sintaxis aprobada; ServiceTrafficAdminContract 20/20; ServiceMetricsTelemetry 1/1; RouteActionErrors 12/12. DeveloperPanelCopy también pasó tras conservar la nota «No representa todas las solicitudes HTTP».
+- Regresión total de ese run: 107 suites, 1592 pruebas PASS y 2 suites fallidas no introducidas por este cambio: AUTH PasswordRecovery falla por expectativa de worker cache key gpsepedia-cache-v67; INTEGRATION ServiceWorkerCache falla en política CDN woff2. Registrar para seguimiento separado, no atribuir a telemetría.
+- Health workflow 44093181611 SUCCESS (solo GET diagnóstico). Pages run 44093181449 seguía pending; no declarar despliegue completado. No se tocó Apps Script ni ScriptProperties.
+- Alcance pendiente: Coordinator solo cuenta operaciones protegidas con lease y algunas validaciones; CATALOG y otras rutas públicas/no coordinadas quedan fuera. La interfaz lo etiqueta claramente. La cobertura total de HTTP no está completada.
+- Próximo paso: auditar las opciones de instrumentación de CATALOG/rutas no coordinadas y su coste real. Priorizar no añadir un viaje de red por cada acción ni bloquear lecturas públicas; definir una solución medible que conserve la autenticación de servicio y el carácter best-effort. Después, añadir pruebas de contrato/concurrencia y volver a validar.
