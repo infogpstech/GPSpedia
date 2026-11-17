@@ -217,3 +217,23 @@ La falta de lectura o verificación del SHA mediante una herramienta concreta no
 - Solo detener una operación concreta cuando exista un riesgo real de sobrescribir trabajo concurrente, modificar la rama equivocada, perder datos o publicar sobre una referencia no confirmada. Documentar el método alternativo intentado, el resultado y el siguiente paso técnico concreto; no presentar la limitación de una herramienta como bloqueo general del proyecto.
 
 Esta sección complementa y prevalece sobre cualquier interpretación de las secciones 2, 6, 7 y 9 que pudiera convertir una consulta inicial fallida del SHA en motivo para detener toda la tarea. Se mantienen íntegros los controles de publicación segura, comparación del SHA esperado y protección de la rama base.
+
+
+## 15. Requisito expreso del usuario: simplicidad operativa y prioridad de rendimiento
+
+Este requisito, registrado el 2026-11-17, modifica el criterio de las secciones 1, 3, 5 y 13.3 cuando se trate de operaciones ordinarias. Prevalece sobre los controles transaccionales y revalidaciones por acción descritos en esas secciones.
+
+- GPSpedia debe priorizar la fluidez y el menor tiempo de respuesta posible en todas sus funciones.
+- La política ordinaria de acceso es inicio de sesión con contraseña almacenada mediante el hash actual y capacidades determinadas por el rol asignado. No introducir mecanismos adicionales de autenticación ni elevar el coste del hash.
+- Cada acción conserva únicamente la comprobación sencilla de que el rol de la sesión tiene permiso para esa capacidad. Esa comprobación no debe requerir llamadas de red, autorizaciones entre servicios, revalidaciones de identidad, leases ni transacciones.
+- Los aportes y registros (cortes, tutoriales, videos, imágenes, PyS y otros) deben procesarse directamente: recibir la información, almacenar el recurso si existe, registrar la fecha del servidor y el colaborador autenticado, y devolver el resultado.
+- Retirar verificaciones transaccionales, llamadas repetidas a Coordinator, consultas redundantes a Users/ActiveSessions/SESSION_CONTEXTS, locks globales, esperas y reintentos que no sean indispensables para completar correctamente la operación.
+- No mantener una operación bloqueada mientras se procesa una carga de archivo ni serializar acciones independientes.
+- Se conservan exclusivamente estas protecciones de sesión solicitadas: cierre remoto de sesión y limpieza/invalidez de caché del usuario; invalidación de sesiones e imposibilidad de volver a ingresar al eliminar una cuenta; bloqueo temporal de login después de varios intentos fallidos.
+- Se permiten comprobaciones funcionales mínimas necesarias para procesar correctamente los datos y manejar límites técnicos del almacenamiento/transporte. No añadir validaciones ceremoniales ni verificaciones duplicadas.
+- No cambiar la matriz de capacidades por rol ni conceder permisos nuevos. La simplificación es de arquitectura y rendimiento, no una ampliación de privilegios.
+- No cambiar el hash actual de contraseñas como parte de esta iniciativa.
+- Las métricas y telemetría no deben añadir viajes de red, esperas o escrituras que degraden las acciones de usuario.
+- El alcance es toda la plataforma, no solo los formularios de aportes. Priorizar en este orden: inventario de latencia y llamadas; escrituras/aportes; cargas de archivos; sesión y excepciones conservadas; optimización general; regresión local.
+
+Este requisito sustituye expresamente el criterio anterior de mantener revalidación central, leases, epoch/expiración por cada operación ordinaria. La sesión se establece en login; las excepciones de revocación remota y eliminación de cuenta se implementan mediante el mecanismo de sesión correspondiente, sin convertirlas en validaciones transaccionales de cada acción.
