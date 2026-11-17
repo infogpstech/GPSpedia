@@ -126,3 +126,11 @@ undefined
 - Health workflow 44093181611 SUCCESS (solo GET diagnóstico). Pages run 44093181449 seguía pending; no declarar despliegue completado. No se tocó Apps Script ni ScriptProperties.
 - Alcance pendiente: Coordinator solo cuenta operaciones protegidas con lease y algunas validaciones; CATALOG y otras rutas públicas/no coordinadas quedan fuera. La interfaz lo etiqueta claramente. La cobertura total de HTTP no está completada.
 - Próximo paso: auditar las opciones de instrumentación de CATALOG/rutas no coordinadas y su coste real. Priorizar no añadir un viaje de red por cada acción ni bloquear lecturas públicas; definir una solución medible que conserve la autenticación de servicio y el carácter best-effort. Después, añadir pruebas de contrato/concurrencia y volver a validar.
+
+
+### Confirmación de CI en HEAD de continuidad — 2026-11-17
+- HEAD validado antes de esta adenda: bfcd39a4334d3b21b42293a2f82887e7a8b38b90; rama base GPSpedia2.2.5 sigue en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Actions 44093578203: sintaxis aprobada; ServiceTrafficAdminContract 20/20, ServiceMetricsTelemetry 1/1, RouteActionErrors 12/12 y DeveloperPanelCopy aprobada. Global: 107 suites, 1592 PASS, 2 fallos preexistentes/no relacionados (AUTH PasswordRecovery cache key gpsepedia-cache-v67 y ServiceWorkerCache CDN woff2).
+- Actions 44093578170: health remoto 7/7 SUCCESS, solo GET ?debug=true. No se desplegaron Apps Script.
+- Pages build/deployment 44093577511: build aún en progreso al registrar este checkpoint; no afirmar despliegue completado hasta que concluya.
+- Continuidad: tarea GP-DEV-TRAFFIC-GLOBAL-02 sigue EN PROGRESO porque la métrica global cuenta operaciones protegidas con lease, no todas las solicitudes HTTP; falta resolver cobertura CATALOG/lecturas públicas sin introducir latencia o bloqueo inaceptables.
