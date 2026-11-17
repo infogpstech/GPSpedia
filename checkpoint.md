@@ -398,3 +398,20 @@ Estado: **EN PROGRESO** hasta ejecutar la suite Node.js completa disponible; la 
 - showApp inicia el desvanecimiento del Splash antes de que el flujo de AUTH invoque loadInitialData; se debe invertir el orden de inicio sin cambiar CSS, diseño ni duración, y sin cargar catálogo antes de aceptar términos.
 - No se modificó código de aplicación, servicios, deployments ni datos externos durante este análisis. La auditoría Auditoría.txt no se amplió porque ya supera 180,000 caracteres; la evidencia de esta solicitud queda en backlog, ChangesLogs y checkpoint.
 - Orden normativo: resolver primero los pendientes locales previos que siguen en el backlog; las tres solicitudes nuevas quedan registradas como PENDIENTE LOCAL. La rama base permanece intacta.
+
+
+## Continuidad — GP-TERMS-ASYNC-01 / GP-PWA-SPLASH-PRELOAD-01 — 2026-11-16
+
+- Repositorio: `infogpstech/GPSpedia`; rama autorizada: `GPSpedia2.2.5_work`; rama base protegida: `GPSpedia2.2.5`.
+- HEAD verificado antes de esta actualización del checkpoint: `63812150a55984683b92083304a456a843d01389`. La base se mantiene sin modificaciones.
+- Auditoría normativa realizada antes de editar: `NORMAS_DESAROLLO.md` leído; checkpoint, backlog y fuentes relevantes consultados. Hallazgos registrados en el nuevo `Auditoría.txt` activo.
+- **GP-TERMS-ASYNC-01:** `termsDeviceAcceptance.js` almacena aceptación local con estado `pending/synced`; `ui.js` cierra el aviso inmediatamente después de persistirla y sincroniza AUTH en segundo plano. El reintento ocurre al reconectar o al volver a abrir la aplicación. Las respuestas tardías solo se aplican si usuario y token siguen siendo los mismos. AUTH/Apps Script no se modificó.
+- **GP-PWA-SPLASH-PRELOAD-01:** `showApp()` verifica primero la aceptación local y, si es válida, inicia `loadInitialData()` antes del fade existente. La promesa no se espera y el fade conserva sus 500 ms. Se retiraron llamadas redundantes desde AUTH para evitar doble carga. No se cambiaron HTML/CSS ni el Service Worker.
+- Archivos de código: `JS/Frontend/termsDeviceAcceptance.js`, `JS/Frontend/ui.js`, `JS/Frontend/auth.js`.
+- Pruebas añadidas/actualizadas: `JS/Tests/TermsAsyncSync.mjs` (integrada en `RunServiceTests.mjs`), `TermsAcceptance.js`, `TermsModalAccessibility.mjs`, `PWAStartupScenarios.js`. Parsing V8 de los módulos/contratos modificados aprobado. El harness aislado ejecutó 5/5 escenarios de sincronización. La suite Node.js completa y CI aún no están confirmadas; no declarar cierre local hasta ejecutarlas.
+- Beta pendiente: navegador real y Android/PWA, offline/red lenta, sesión cambiada durante la petición, aceptación y sincronización remota en deployment autorizado, caché caliente/fría e IndexedDB lento/no disponible.
+- **GP-DASH-INSIGHTS-01:** permanece PENDIENTE LOCAL; comenzar tras completar regresión local/CI de términos y Splash y auditar fuentes/contrato FEEDBACK.
+- Reconciliación de backlog: auditoría transversal P2 de alineación de modales confirmada por el usuario como verificada en Beta; se marca COMPLETADA. GP-UX-INBOX-02 tiene regresión local/CI aprobada (run 43906071405: 129 suites/1,899; run 43907008784: 129 suites/1,900); solo conserva aceptación visual Beta pendiente.
+- Rotación normativa: `Auditoría.txt` original (179,631 caracteres Unicode, blob `307ad6db2907c36ddbd949c64ea1d624dea86164`) archivado sin pérdida en dos partes; manifiesto `Auditoría_Archive/manifest.md` contiene blobs y longitudes y verifica reconstrucción exacta. `Auditoría.txt` activo contiene los hallazgos de esta implementación.
+- No se modificaron servicios, deployments, endpoints, secretos ni datos externos. No se alteró la rama base.
+- **Siguiente acción:** ejecutar `node --experimental-default-type=module JS/Tests/RunServiceTests.mjs` en un checkout disponible de la rama autorizada y revisar el diff completo; corregir fallos locales antes de continuar con GP-DASH-INSIGHTS-01.
