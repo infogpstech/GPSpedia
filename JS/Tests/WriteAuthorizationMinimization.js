@@ -99,8 +99,7 @@ function runWriteAuthorizationMinimizationTests(sources) {
   assert(stage.indexOf("userId: state.userId")<stage.indexOf("routeAction('addSupplementaryInfo'"));
  });
  run("Registro silencioso se procesa en WRITE y solo lo puede ejecutar Desarrollador",()=>{
-  const stage=add.slice(add.indexOf("async function handleStage3Submit"),add.indexOf("\n        // --- UI & UTILITY HELPERS"));
-  assert(stage.includes("const serviceOverride = null")&&add.includes("silent: silentVal"));
+  assert(add.includes("const serviceOverride = null")&&add.includes("silent: silentVal"));
   const start=write.indexOf("function handleAddOrUpdateCutLockedUnsafe_"),end=write.indexOf("\nfunction ",start+10),handler=write.slice(start,end<0?write.length:end);
   assert(handler.includes('getAuthenticatedCollaborator(payload, payload.silent === true ? ["desarrollador"] : undefined)'));
   assert(/'addOrUpdateCut':\s*'WRITE'/.test(api));

@@ -863,13 +863,13 @@ function doGet(e) {
 
 
 function isSharedMutationAction_(action) {
-    return ["backupDatabase","backupDrive","restoreDatabase","restoreDrive","reorganizeDatabase","normalizeImages","organizePrimaryVehicleImages","restoreAllTrashedImages","addLogo","updateVehicleField","uploadAdminImage","migrateCortesOperationIds","migrateIdentifiers","rollbackIdentifiers","freezeIdentifierFormulas","reconcilePendingImageUploads","addOrUpdateCut","addSupplementaryInfo","createSheet","addColumn","driveCommand","recoverReplacedImage","deleteReplacedImage","restoreReplacedImageFromTrash","permanentlyDeleteReplacedImage","markReplacedImageInUse","saveUnusedImagesInventory","applyCortesImageReconciliation","createCortesImageFolder","moveReplacedImage","getReplacedImageDownloadUrl","migrateReplacedImagesSchema","auditDriveImagesInCortes"].includes(action);
+    return ["backupDatabase","backupDrive","restoreDatabase","restoreDrive","reorganizeDatabase","normalizeImages","organizePrimaryVehicleImages","restoreAllTrashedImages","addLogo","updateVehicleField","uploadAdminImage","migrateCortesOperationIds","migrateIdentifiers","rollbackIdentifiers","freezeIdentifierFormulas","reconcilePendingImageUploads","createSheet","addColumn","driveCommand","recoverReplacedImage","deleteReplacedImage","restoreReplacedImageFromTrash","permanentlyDeleteReplacedImage","markReplacedImageInUse","saveUnusedImagesInventory","applyCortesImageReconciliation","createCortesImageFolder","moveReplacedImage","getReplacedImageDownloadUrl","migrateReplacedImagesSchema","auditDriveImagesInCortes"].includes(action);
 }
 
 // Consultas largas de inventario/Drive obtienen una lease propia de lectura.
 // No se registran como mutaciones ni generan eventos administrativos de escritura.
 function isSharedReadAction_(action) {
-    return ["getReplacedImages", "getDriveStorage", "getCortesImageFolders", "auditIdentifiers", "checkOperation", "getAdminImageUploadStatus", "previewCortesImageReconciliation", "getServiceTraffic"].includes(action);
+    return ["getReplacedImages", "getDriveStorage", "getCortesImageFolders", "auditIdentifiers", "getAdminImageUploadStatus", "previewCortesImageReconciliation", "getServiceTraffic"].includes(action);
 }
 
 function doPost(e) {
@@ -1271,23 +1271,11 @@ function doPostInternal_(e) {
             case 'rollbackIdentifiers':
                 response = handleRollbackIdentifiers_(payload);
                 break;
-            // Compatibilidad directa histórica; el mapa canónico dirige esta acción a WRITE.
-            case 'checkOperation':
-                response = handleCheckOperation(payload);
-                break;
             case 'migrateCortesOperationIds':
                 response = handleMigrateCortesOperationIds(payload, logMessage, developerContext);
                 break;
             case 'reconcilePendingImageUploads':
                 response = handleReconcilePendingImageUploads(payload, logMessage);
-                break;
-            // Compatibilidad directa histórica; requiere sesión Desarrollador en doPostInternal_.
-            case 'addOrUpdateCut':
-                response = handleAddOrUpdateCut(payload, logMessage, developerContext);
-                break;
-            // Compatibilidad directa histórica; requiere sesión Desarrollador en doPostInternal_.
-            case 'addSupplementaryInfo':
-                response = handleAddSupplementaryInfo(payload, logMessage);
                 break;
             case 'createSheet':
                 response = handleCreateSheet(payload, logMessage);
