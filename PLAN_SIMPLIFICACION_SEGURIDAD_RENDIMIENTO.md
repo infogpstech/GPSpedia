@@ -204,3 +204,9 @@ Cada fase debe actualizar el backlog y checkpoint. Agrupar cambios por tarea ló
 - P4.2 COMPLETADA: el compositor Inbox no espera la carga remota de conversaciones al abrirse desde Solicitudes; la lista se actualiza en segundo plano y el sondeo respeta el contexto/modal. InboxUi 84/84.
 - P4.3 EN AUDITORÍA: no retirar ScriptLock global sin reserva atómica breve por auditId/operationId. El lock actual protege reintentos idempotentes, inventario y rollback Drive. Diseñar claim/commit con recuperación de reservas y pruebas concurrentes antes de modificar ADMIN.
 - CI 44154032505 SUCCESS: 145 suites, 2,117 pruebas, 0 fallos. Health read-only 7/7; Pages build SUCCESS. Sin despliegues Apps Script ni cambios en datos externos.
+### P4.3a — optimización segura del inventario ADMIN — 2026-11-17
+- Completada: handleOrganizeUnusedImagesBatch reutiliza una sola lectura inicial del inventario y una sola detección de IDs duplicados para todo el lote.
+- Se mantiene la relectura completa final por archivo antes de mover, junto con revalidación de referencias, ubicación, read-back y rollback.
+- Un lote de 20 archivos elimina hasta 19 lecturas completas iniciales y 19 recalculaciones de duplicados; no se modifica el ScriptLock.
+- AdminReplacedImagesIntegrity 55/55 PASS. CI 44154558840 SUCCESS: 145 suites / 2,117 pruebas / 0 fallos; health 7/7.
+- P4.3b pendiente: reserva/claim por auditId/operationId y commit breve para desacoplar el lock global de Drive sin romper idempotencia.
