@@ -274,7 +274,8 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
         assert.match(ui, /getUiSessionContext_\(\)\?\.role === "desarrollador"/);
         assert.match(ui, /operationId:\s*tutorialOperationId/);
         assert.match(ui, /tema, comoIdentificarlo, dondeEncontrarlo, detalles/);
-        assert.match(ui, /referenceId: created\.referenceId/);
+        assert.match(ui, /createdTutorialId = String\(created\.referenceId\)/);
+        assert.match(ui, /referenceId: createdTutorialId/);
         assert.match(ui, /referenceId: item\.ID \|\| item\.Tema/);
         assert.match(ui, /Colaborador/);
         assert.match(ui, /tutorialId: item\.ID \|\| ""/);

@@ -400,7 +400,7 @@ check("La edición visual sanea el contenido pegado y mantiene el límite de 5,0
 check("La barra aplica formato sobre la selección real del editor visual", () => {
     assert.match(rich, /function isRichContentEditable_/);
     assert.match(rich, /document\.execCommand\(command, false, null\)/);
-    assert.match(rich, /wrapper\.style\.setProperty\(property, safeValue\)/);
+    assert.match(rich, /wrapper\.style\.setProperty\(property,\s*safeValue\)/);
     assert.match(rich, /const command = format === "ul" \? "insertUnorderedList" : "insertOrderedList"/);
     assert.match(rich, /editor\.dispatchEvent\(new Event\("input", \{ bubbles: true \}\)\)/);
 });
