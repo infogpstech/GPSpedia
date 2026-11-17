@@ -10005,17 +10005,38 @@ function storeDriveAuditSeenPage_(auditId, pageIndex, fileIds, folderIds, fileMe
 function loadDriveAuditSeenIds_(auditId, pageCount) {
     if (!Number.isInteger(pageCount) || pageCount < 0) throw new Error("Cantidad de páginas de deduplicación inválida.");
     const cache = CacheService.getScriptCache(), files = new Set(), folders = new Set();
-    for (let page = 0; page < pageCount; page++) {
-        const key = getDriveAuditSeenPageCacheKey_(auditId, page), raw = cache.get(key);
-        if (raw === null) throw new Error("Falta una página de IDs procesados; inicia una auditoría nueva para evitar duplicados.");
-        let values;
-        try { values = JSON.parse(raw); } catch (error) { throw new Error("Una página de IDs procesados está corrupta."); }
-        if (!values || typeof values !== "object" || !Array.isArray(values.files) || !Array.isArray(values.folders) || !Array.isArray(values.unused)) throw new Error("Una página de IDs procesados tiene una estructura inválida.");
-        normalizeDriveAuditFileIds_(values.files).forEach(id => files.add(id));
-        normalizeDriveAuditFileIds_(values.folders).forEach(id => folders.add(id));
-        normalizeDriveAuditFileIds_(values.unused);
-        cache.put(key, raw, getDriveAuditReferenceSnapshotConfig_().ttlSeconds);
-        if (cache.get(key) !== raw) throw new Error("No se pudo renovar la retención de una página de auditoría.");
+    const batchSize = 100, ttl = getDriveAuditReferenceSnapshotConfig_().ttlSeconds;
+    for (let offset = 0; offset < pageCount; offset += batchSize) {
+        const keys = [];
+        for (let page = offset; page < Math.min(pageCount, offset + batchSize); page++) {
+            keys.push(getDriveAuditSeenPageCacheKey_(auditId, page));
+        }
+        const stored = cache.getAll(keys), refresh = {};
+        keys.forEach(key => {
+            const raw = stored && stored[key];
+            if (raw === null || raw === undefined) {
+                throw new Error("Falta una página de IDs procesados; inicia una auditoría nueva para evitar duplicados.");
+            }
+            let values;
+            try { values = JSON.parse(raw); } catch (error) { throw new Error("Una página de IDs procesados está corrupta."); }
+            if (!values || typeof values !== "object" || !Array.isArray(values.files) ||
+                !Array.isArray(values.folders) || !Array.isArray(values.unused)) {
+                throw new Error("Una página de IDs procesados tiene una estructura inválida.");
+            }
+            normalizeDriveAuditFileIds_(values.files).forEach(id => files.add(id));
+            normalizeDriveAuditFileIds_(values.folders).forEach(id => folders.add(id));
+            normalizeDriveAuditFileIds_(values.unused);
+            refresh[key] = raw;
+        });
+        // CacheService limita getAll/putAll a lotes pequeños; renovar y verificar
+        // por grupos evita tres llamadas de red por cada página histórica.
+        cache.putAll(refresh, ttl);
+        const verified = cache.getAll(keys);
+        keys.forEach(key => {
+            if (!verified || verified[key] !== refresh[key]) {
+                throw new Error("No se pudo renovar la retención de una página de auditoría.");
+            }
+        });
     }
     return { fileIds: Array.from(files).sort(), folderIds: Array.from(folders).sort() };
 }
