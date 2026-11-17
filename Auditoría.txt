@@ -120,3 +120,17 @@ undefined
 - GitHub Pages run 44099217192 estaba en progreso al registrar esta adenda; no declarar resultado hasta comprobarlo. No se desplegaron proyectos Apps Script ni se modificaron Script Properties.
 - Brecha restante: rutas directas no coordinadas identificadas en AUTH (validateSession/fallback), WRITE (checkVehicle/getSuggestion/checkVinDuplicate), USERS (rutas fuera de createUser/updateProfile/getUsers), FEEDBACK (rutas públicas), UTILITIES (migrateTimestamps). Debe auditarse el consumo real en api-config/frontend antes de instrumentarlas, evitando doble conteo y health probes. CATALOG ya cubre cuatro POST directos; Coordinator cubre operaciones protegidas y feed.
 ================================================================================
+
+================================================================================
+2026-11-17 — GP-DEV-TRAFFIC-GLOBAL-02 — COBERTURA DIRECTA MULTISERVICIO Y REGRESIÓN
+- HEAD de código validado: 3ccd3f45a8a382d48718ec8fd52cda42648e0286. Rama base GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Cobertura directa local best-effort: AUTH validateSession; WRITE checkVehicle/getSuggestion/checkVinDuplicate; FEEDBACK getPysData y suggestYear anónimo (userId 0); CATALOG getCatalogData/getDropdownData/getSuggestion/getNavigationData. UTILITIES/migrateTimestamps, USERS y operaciones ADMIN se cuentan por Coordinator; no se duplican.
+- Contadores directos: buckets horarios de 24 h en ScriptProperties y tryLock(0), sin espera. La contención o fallo de PropertiesService omite únicamente el evento. ADMIN lee CATALOG/AUTH/WRITE/FEEDBACK mediante fetchAll agrupado y fallback individual. Fuentes parciales no invalidan el agregado Coordinator.
+- CI 44103742508 SUCCESS: 137 suites, 2037 pruebas aprobadas, 0 fallos. Pruebas específicas: CatalogTrafficTelemetry 8/8; ServiceTrafficAdminContract 33/33; ServiceTrafficAggregation 6/6; DirectServiceTrafficTelemetry 18/18; ServiceTrafficBatch 5/5.
+- Health remoto 44103742755 SUCCESS: 7/7 mediante GET ?debug=true. Latencias: ADMIN 1745 ms, AUTH 1392 ms, CATALOG 935 ms, FEEDBACK 1873 ms, USERS 985 ms, UTILITIES 3057 ms, WRITE 1839 ms. UTILITIES requiere seguimiento de latencia.
+- GitHub Pages run 44103742319 SUCCESS para SHA 3ccd3f45a8a382d48718ec8fd52cda42648e0286.
+- Services/COORDINATOR_SETUP.md corregido para documentar que UTILITIES se cuenta mediante Coordinator y no requiere secreto directo.
+- No se desplegaron proyectos Apps Script ni se modificaron Script Properties. Configuración Beta pendiente: cuatro secretos distintos (AUTH, CATALOG, WRITE, FEEDBACK), mismos valores en el servicio correspondiente y ADMIN.
+- Siguiente auditoría: recorrer ACTION_TO_SERVICE_MAP, dispatchers y llamadas frontend para detectar rutas legacy/directas fuera de la matriz; excluir probes y rutas ya coordinadas. Después, preparar despliegue Beta y mediciones p50/p95, contención y omisiones sin rebajar pruebas.
+- Política: no reducir suites, no desactivar pruebas ni relajar aserciones para conseguir verde.
+================================================================================
