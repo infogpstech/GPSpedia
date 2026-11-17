@@ -55,3 +55,11 @@ undefined
 - JS/Tests/SessionUiRoleInvalidation.js: nuevo contrato para verificar centrado exclusivo del aviso y preservación de role/aria-live.
 - JS/Tests/RunServiceTests.mjs: entrega style.css a la suite SessionUiRoleInvalidation.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — CORRECCIÓN LOCAL BETA-003 — SERVICE WORKER
+- service-worker.js: corregido el escape del patrón que identifica recursos estáticos por extensión y actualizado CACHE_NAME de gpsepedia-cache-v67 a gpsepedia-cache-v68.
+- JS/Tests/ServiceWorkerCache.js: añadida regresión para solicitudes fetch same-origin de JSON con destination vacío y fuentes woff2 del CDN permitido; las aserciones de versión esperan v68.
+- Validación local aislada: sintaxis de fragmentos y cuatro escenarios de política Node.js aprobados. La suite completa/Actions y la verificación en navegador/PWA permanecen sin confirmar.
+================================================================================
