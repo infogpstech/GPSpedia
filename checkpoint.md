@@ -338,3 +338,12 @@ El checkpoint acumulativo anterior se conserva íntegro en `Checkpoint_Archive/c
 - La publicación de checkpoint y ChangesLogs se completa en esta continuación. Estado: EN PROGRESO hasta ejecutar la suite Node disponible; no bloqueado por la validación física Beta.
 
 - Adenda de revisión: beforeinput solo intercepta eventos cancelables para evitar duplicar inserciones IME. Los formatos booleanos sobre una selección conservan alternancia; el estado pendiente gobierna únicamente la escritura posterior. Parsing de rich-text.js aprobado tras este ajuste; no se ejecutó la suite Node completa.
+
+
+### GP-UX-RICH-EDITOR-FORMAT-05 — ancla nativa de escritura — 2026-11-16
+- Reporte de Beta: el color sí se aplicaba al texto seleccionado, pero no al texto nuevo después de elegir color. Esto confirma que el estado temporal no estaba alcanzando de forma fiable las inserciones del navegador.
+- Causa técnica revisada: el enfoque anterior interceptaba `beforeinput` cancelable e intentaba reconstruir texto manualmente; Gboard/IME, autocorrección y reemplazos pueden usar secuencias de composición no cancelables o rangos distintos. Además, `getRichTextSavedRange_` podía preferir un rango transitorio aunque el editor ya no tuviera el foco.
+- Cambio: se retiró la inserción manual basada en `beforeinput` y el formateo posterior a `compositionend`. El formato pendiente ahora se materializa como un ancla DOM interna e invisible en el punto de inserción (nodos semánticos y span saneable); el navegador inserta texto/composición/autocorrección de forma nativa dentro de esa estructura. Se limpia el carácter centinela de ancho cero después de la entrada y al reiniciar el formulario. La última selección guardada tiene prioridad mientras el foco está en la barra/selector.
+- Aplicación común a formularios e Inbox mediante `JS/Frontend/rich-text.js`. Contrato `JS/Tests/InboxUi.mjs` actualizado para exigir anclas nativas y ausencia de interceptación manual. App Shell PWA actualizado a v59 y contratos de caché sincronizados.
+- Parsing V8 de rich-text.js, InboxUi.mjs, ServiceWorkerCache.js, OfflineBrandAssets.mjs y service-worker.js aprobado; verificaciones estáticas dirigidas aprobadas. No se ejecutó la suite Node.js completa ni CI. Android PWA/Gboard, autocorrección, composición y escritorio siguen pendientes de Beta real.
+- Estado: **COMPLETADA CON VALIDACIÓN DIFERIDA** para implementación y validación estática local; interacción real queda diferida a Beta. No se modificó backend ni rama base.
