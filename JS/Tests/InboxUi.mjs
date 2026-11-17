@@ -593,7 +593,10 @@ check("El formulario de tutorial permite pegar un enlace validado o iniciar la s
     assert.ok(tutorial.includes('id="tut-video-url"'));
     assert.ok(tutorial.includes('id="tut-upload-video-btn"'));
     assert.ok(tutorial.includes("getValidatedYouTubeVideoId(rawVideoUrl)"));
-    assert.ok(tutorial.includes('videoUrl: videoId ? "https://www.youtube.com/watch?v=" + videoId : ""'));
+    assert.ok(tutorial.includes('videoUrl: "", ...getSessionPayload_()'), "addTutorial debe seguir recibiendo videoUrl vacío");
+    assert.ok(tutorial.includes('routeAction("submitVideoForApproval"'));
+    assert.ok(tutorial.includes('videoUrl: canonicalVideoUrl'));
+    assert.ok(tutorial.includes("getTutorialVideoApprovalOperationId"));
     assert.ok(tutorial.includes('openYouTubeUploadModal({'));
     assert.ok(tutorial.includes('contentType: "tutorial"'));
     assert.ok(tutorial.includes("created.referenceId"));
