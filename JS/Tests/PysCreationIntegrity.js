@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import vm from "node:vm";
+import { pathToFileURL } from "node:url";
 
 const extract = (source,start,end) => {
     const i=source.indexOf(start), j=source.indexOf(end,i+start.length);
@@ -433,8 +434,10 @@ export function runPysCreationIntegrityTests({feedback,ui}){
     return {status:failed?"FAIL":"PASS",passed,failed,results};
 }
 
-const feedback=fs.readFileSync("Services/feedback.js","utf8");
-const ui=fs.readFileSync("ui.js","utf8");
-const result=runPysCreationIntegrityTests({feedback,ui});
-console.log(JSON.stringify(result,null,2));
-if(result.status!=="PASS")process.exitCode=1;
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+    const feedback=fs.readFileSync(new URL("../Services/feedback.js",import.meta.url),"utf8");
+    const ui=fs.readFileSync(new URL("../Frontend/ui.js",import.meta.url),"utf8");
+    const result=runPysCreationIntegrityTests({feedback,ui});
+    console.log(JSON.stringify(result,null,2));
+    if(result.status!=="PASS")process.exitCode=1;
+}
