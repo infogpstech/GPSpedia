@@ -1366,3 +1366,11 @@ No se han desplegado proyectos Apps Script ni configurado secretos remotos. La f
 - CI `44130490277`: FAIL — sintaxis aprobada; 131 suites, 1,868 pruebas aprobadas y 1 suite fallida. Único fallo: aserción de texto del test AddSupplementaryInfoIntegrity, que asumía espacios exactos en el log del actor. No se detectó otro fallo de lógica en las suites ejecutadas.
 - Corrección localizada de la prueba: verificar el log y el uso de actorName sin depender del formato exacto de concatenación. Nueva regresión pendiente.
 - P1.2a sigue EN PROGRESO hasta que CI apruebe.
+
+
+### Adenda GP-PERF-SIMPLIFY-01 / P1.2a — 2026-11-17
+- Estado: **EN PROGRESO — validación pendiente**.
+- CI `44130802404`: sintaxis aprobada; 136 suites, 2,003 pruebas aprobadas y una suite fallida. El fallo es una expectativa obsoleta de `WriteAuthorizationContracts.js` que requería autenticación dentro del lock, en contradicción con el flujo vigente.
+- Corrección aplicada al contrato: exige una única autenticación del actor compartido antes de preflight/carga de imágenes y antes del lock final; el handler bajo lock no vuelve a autenticar.
+- No se cambia la lógica del servicio ni se debilita la autorización. Nueva CI pendiente.
+- Siguiente: validar P1.2a; después ejecutar P1.2b para sacar las cargas Drive de `addOrUpdateCut` del lock prolongado, preservando asignación de ID e idempotencia.

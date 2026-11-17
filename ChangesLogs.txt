@@ -254,3 +254,11 @@ undefined
 - Se corrige la aserción para comprobar el registro del actor sin acoplarse al espaciado de concatenación. No se modifica el código del servicio por este fallo.
 - Nueva regresión pendiente. P1.2a no se declara completada.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — GP-PERF-SIMPLIFY-01 / P1.2a — CORRECCIÓN DE CONTRATO AUG-039
+- CI 44130802404: sintaxis aprobada; 136 suites, 2,003 pruebas aprobadas y 1 suite fallida. El fallo exigía autenticación de addSupplementaryInfo dentro del lock, expectativa heredada incompatible con la implementación que autentica al actor antes de la carga y mantiene bajo lock solo la persistencia final.
+- JS/Tests/WriteAuthorizationContracts.js: se actualiza la regresión para exigir una sola autenticación antes de preparar imágenes y antes de waitLock(5000), y ninguna autenticación dentro del handler bloqueado. No se modifica write.js ni se relaja la autorización.
+- P1.2a continúa EN PROGRESO hasta nueva CI aprobada. Siguiente: validar P1.2a y luego P1.2b.
+================================================================================

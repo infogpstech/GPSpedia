@@ -299,3 +299,12 @@ undefined
 - CI `44130490277` sobre commit `a5d82fadc9bc3e4d120381f4ce85d8d027c42c30`: sintaxis aprobada; 131 suites, 1,868 pruebas aprobadas y 1 suite fallida. La falla está en una aserción del contrato AddSupplementaryInfoIntegrity que buscaba una cadena de log con espacios exactos; la implementación y las demás aserciones de la suite pasaron.
 - Se ajusta únicamente esa aserción para comprobar la presencia del registro del actor sin depender del espaciado de la concatenación. Nueva regresión pendiente; P1.2a continúa en validación.
 - Próximo paso: publicar la corrección del contrato, ejecutar CI y resolver cualquier fallo funcional real antes de continuar P1.2b.
+
+
+### GP-PERF-SIMPLIFY-01 — seguimiento P1.2a / CI y corrección de contrato — 2026-11-17
+- HEAD verificado al iniciar: `2efaeb68d670ec1eb42dc6a7cc47c5cb2e48e0b0`; rama `GPSpedia2.2.5_work`. Rama base: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin modificaciones.
+- CI `44130802404`: sintaxis aprobada; 136 suites, 2,003 pruebas aprobadas y 1 suite fallida. Único fallo: contrato WRITE/AUG-039 que todavía exigía autenticar addSupplementaryInfo dentro del lock.
+- La implementación vigente autentica una sola vez al actor compartido antes de preflight/carga y antes del lock final; el bloque protegido solo relee, recalcula y persiste. La expectativa anterior contradice el diseño P1.2a y prolongaría el bloqueo innecesariamente.
+- Corrección localizada del contrato: comprobar autenticación única antes de preparar imágenes y antes de `waitLock(5000)`, y ausencia de autenticación dentro de `handleAddSupplementaryInfoLocked`. No se modifica el servicio ni se relaja la autorización.
+- **P1.2a: EN PROGRESO — validación pendiente de nueva CI.** Siguiente: ejecutar regresión completa; si aprueba, cerrar P1.2a y comenzar P1.2b (cargas Drive de addOrUpdateCut fuera del lock prolongado, preservando ID e idempotencia).
+- No se desplegaron Apps Script, no se ejecutó Beta ni se modificaron datos/propiedades externas.
