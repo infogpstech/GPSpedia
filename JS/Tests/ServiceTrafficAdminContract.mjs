@@ -30,7 +30,7 @@ assert.match(writeService,/actions: new Set\(\["checkVehicle","getSuggestion","c
 assert.match(feedbackService,/actions: new Set\(\["getPysData","sendContactForm"\]\)/);
 assert.match(feedbackService,/if \(action === "suggestYear" && String\(payload\.userId \|\| ""\)\.trim\(\) === "0"\) \{\s*recordDirectServiceTraffic_\(\);/);
 assert.doesNotMatch(admin,/UTILITIES_SERVICE_URL|service: "UTILITIES", url:/);
-assert.match(coordinator,/UTILITIES:\s*\{\s*migrateTimestamps: \{ read: \["SESSION_CONTEXTS", "CORTES", "DRIVE"\], write: \["UTILITIES"\] \} \}/);
+assert.match(coordinator,/UTILITIES:\s*\{\s*migrateTimestamps:\s*\{\s*read:\s*\["SESSION_CONTEXTS",\s*"CORTES",\s*"DRIVE"\],\s*write:\s*\["UTILITIES"\]\s*\}/);
 
 assert.match(admin,/getSharedServiceTraffic_\(\)/);
 assert.match(coordinator,/getServiceTraffic: \{ read: \["SERVICE_TRAFFIC"\] \}/);
