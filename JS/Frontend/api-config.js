@@ -5,8 +5,6 @@
 
 // 1. CONFIGURACIÓN
 import { runCatalogRequestWithRetry } from './catalogRequest.js';
-import { createServiceMetricsStore } from './serviceMetrics.js';
-export { bucketServiceMetrics } from './serviceMetrics.js';
 
 export const RICH_TEXT_MODE_KEY = "gpsepedia_rich_text_mode_cache";
 export const RICH_TEXT_MODES = Object.freeze({ STRICT: "strict", ADVANCED: "advanced" });
@@ -116,18 +114,6 @@ export const SERVICE_COMPATIBILITY_ACTIONS = {
 /** No hay acciones externas o servicios heredados habilitados. */
 export const EXTERNAL_ACTIONS = {
 };
-
-const serviceMetricsStore = createServiceMetricsStore();
-function recordServiceMetric(event) {
-    try { serviceMetricsStore.record(event); }
-    catch (error) { console.error("No se pudo registrar la métrica local:", error); }
-}
-export function getServiceMetricsSnapshot() {
-    return serviceMetricsStore.getSnapshot();
-}
-export function subscribeServiceMetrics(listener) {
-    return serviceMetricsStore.subscribe(listener);
-}
 
 function createRouteActionError_(message, options = {}) {
     const source = options && typeof options === "object" ? options : {};
@@ -246,12 +232,7 @@ export async function routeAction(action, payload = {}, serviceOverride = null, 
         }
         outcome = "success";
         return result;
-    } finally {
-        try {
-            recordServiceMetric({ service, action, timestamp: requestStartedAt,
-                durationMs: Date.now() - requestStartedAt, outcome, httpStatus });
-        } catch (metricError) { console.error("No se pudo registrar la métrica local:", metricError); }
-    }
+    } finally {}
 }
 
 export async function routeActionWithRetry(action, payload = {}, options = {}) {
@@ -704,7 +685,6 @@ export async function getCatalogChanges(cursor = 0, limit = 50, sessionPayload =
     const normalizedCursor = Number(cursor), normalizedLimit = Number(limit);
     if (!Number.isSafeInteger(normalizedCursor) || normalizedCursor < 0) throw new TypeError("El cursor del catálogo no es válido.");
     if (!Number.isInteger(normalizedLimit) || normalizedLimit < 1 || normalizedLimit > 50) throw new TypeError("El límite del feed debe estar entre 1 y 50.");
-    const requestStartedAt = Date.now();
     let outcome = "network_error", httpStatus = null;
     const query = "?catalogFeed=1&cursor=" + encodeURIComponent(normalizedCursor) + "&limit=" + encodeURIComponent(normalizedLimit);
     try {
@@ -764,7 +744,5 @@ export async function getCatalogChanges(cursor = 0, limit = 50, sessionPayload =
         if (!result || typeof result !== "object" || Array.isArray(result) || result.status !== "success") throw createRouteActionError_(result && typeof result.message === "string" ? result.message : "El feed público del catálogo no está disponible.", { kind: "application", code: "CATALOG_FEED_REJECTED", httpStatus });
         outcome = "success";
         return result;
-    } finally {
-        recordServiceMetric({ service: "FEEDBACK", action: "getCatalogChanges", timestamp: requestStartedAt, durationMs: Date.now() - requestStartedAt, outcome, httpStatus });
-    }
+    } finally {}
 }
