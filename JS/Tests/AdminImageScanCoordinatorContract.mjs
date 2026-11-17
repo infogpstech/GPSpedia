@@ -91,9 +91,12 @@ for (const action of ["getReplacedImages", "getDriveStorage", "getCortesImageFol
 }
 const serviceTrafficRouter = admin.slice(admin.indexOf("function doPost(e)"), admin.indexOf("const ADMIN_AUDIT_PROPERTY_PREFIX_"));
 assert.match(serviceTrafficRouter, /if \(action === "getServiceTraffic"\)[\s\S]*?getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken\)/);
-assert.equal(read("getServiceTraffic"), false, "La telemetría usa el actor cacheado y no debe adquirir lease de lectura.");
+const serviceTraffic = policy("ADMIN", "getServiceTraffic");
+assert.ok(serviceTraffic.readResources.includes("SERVICE_TRAFFIC"),
+    "La consulta agregada conserva su lectura específica de telemetría en Coordinator.");
+assert.deepEqual(serviceTraffic.writeResources, []);
+assert.equal(read("getServiceTraffic"), false, "ADMIN valida con actor cacheado y no adquiere una lease adicional.");
 assert.equal(mutation("getServiceTraffic"), false);
-assert.equal(policy("ADMIN", "getServiceTraffic"), null, "No debe quedar una política Coordinator sin consumidor.");
 
 const batchPublisher = extractFunction(admin, "publishAdminCortesCatalogChanges_");
 assert.match(batchPublisher, /publishSharedCatalogChanges_\("ADMIN", action, changes\.slice\(offset, offset \+ 50\)\)/);
