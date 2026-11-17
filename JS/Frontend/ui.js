@@ -6,7 +6,7 @@ import { createPrintableQrDataUrl } from './printQr.js';
 // - Contain all functions that directly manipulate the DOM.
 // - Use document.createElement, not HTML strings.
 
-import { getFeedbackItems, getInboxRecipients, getInboxConversations, getInboxMessages, createInboxConversation, sendInboxMessage, markInboxRead, archiveInboxConversation, closeInboxConversation as apiCloseInboxConversation, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, clearSensitiveLogs, checkAllServicesHealth, bucketServiceMetrics, getServiceMetricsSnapshot, subscribeServiceMetrics, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange, approveVideo, rejectVideo, getRichTextMode, loadRichTextMode, setRichTextMode, routeActionWithRetry } from './api-config.js';
+import { getFeedbackItems, getInboxRecipients, getInboxConversations, getInboxMessages, createInboxConversation, sendInboxMessage, markInboxRead, archiveInboxConversation, closeInboxConversation as apiCloseInboxConversation, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, clearSensitiveLogs, checkAllServicesHealth, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange, approveVideo, rejectVideo, getRichTextMode, loadRichTextMode, setRichTextMode, routeActionWithRetry } from './api-config.js';
 import { getState, setState, subscribe } from './state.js';
 import * as offline from './offline.js';
 import { createEditBackupStore, getEditBackupFieldsToRestore } from './editBackupStore.js';
@@ -4014,13 +4014,9 @@ function resetSessionUi_() {
     adminPanelGeneration_ += 1;
     replacedImagesModalGeneration_ += 1;
     auditDriveModalGeneration_ += 1;
-    if (typeof window.adminServiceMetricsUnsubscribe === 'function') {
-        try { window.adminServiceMetricsUnsubscribe(); } catch (error) {}
-    }
-    window.adminServiceMetricsUnsubscribe = null;
-    if (window.adminServiceMetricsRefreshInterval) {
-        clearInterval(window.adminServiceMetricsRefreshInterval);
-        window.adminServiceMetricsRefreshInterval = null;
+    if (window.adminGlobalServiceTrafficRefreshInterval) {
+        clearInterval(window.adminGlobalServiceTrafficRefreshInterval);
+        window.adminGlobalServiceTrafficRefreshInterval = null;
     }
     window.adminListenersAttached = false;
     window.triggerAdminPanelPing = null;
@@ -5597,12 +5593,13 @@ function initAdminPanelListeners() {
             detail.appendChild(empty);
             return;
         }
-        const metricSnapshot = getServiceMetricsSnapshot();
-        const events = metricSnapshot.events.filter(event => event.service === selectedServiceKey);
-        const successful = events.filter(event => event.outcome === "success").length;
-        const failed = events.length - successful;
-        const average = events.length ? Math.round(events.reduce((sum, event) => sum + event.durationMs, 0) / events.length) : null;
-        const lastEvent = events.length ? events[events.length - 1] : null;
+        const globalTrafficAvailable = Boolean(globalServiceTrafficData && !globalServiceTrafficError &&
+            globalServiceTrafficData.scope === "coordinator_protected_operations" &&
+            globalServiceTrafficData.totals);
+        const serviceTotals = globalTrafficAvailable ? globalServiceTrafficData.totals : {};
+        const serviceCount = period => globalTrafficAvailable
+            ? String(Math.max(0, Number(serviceTotals[period] && serviceTotals[period][selectedServiceKey]) || 0))
+            : "No disponible";
         const metadata = item.metadata || {};
         const heading = document.createElement("div");
         heading.className = "dev-service-detail-heading";
@@ -5627,15 +5624,14 @@ function initAdminPanelListeners() {
             createServiceMetric("Última comprobación", formatServiceCheckTime(item.checkedAt)),
             createServiceMetric("Última respuesta válida", formatServiceCheckTime(item.lastSuccessfulAt)),
             createServiceMetric("Latencia del diagnóstico", Number.isFinite(item.latency) ? `${Math.round(item.latency)} ms` : "No disponible"),
-            createServiceMetric("Solicitudes iniciadas (15 min)", String(events.length)),
-            createServiceMetric("Solicitudes correctas", String(successful)),
-            createServiceMetric("Solicitudes con error", String(failed)),
-            createServiceMetric("Tiempo medio observado", average === null ? "No disponible" : `${average} ms`)
+            createServiceMetric("Operaciones globales (1 h)", serviceCount("lastHour")),
+            createServiceMetric("Operaciones globales (6 h)", serviceCount("last6Hours")),
+            createServiceMetric("Operaciones globales (24 h)", serviceCount("last24Hours"))
         );
         detail.appendChild(metrics);
         const note = document.createElement("p");
         note.className = "dev-service-note";
-        note.textContent = "El estado confirma la respuesta del endpoint y su contrato de identidad; no demuestra por sí solo que las dependencias internas de Google Sheets o Drive estén disponibles. La telemetría agrupa solicitudes por hora de inicio y corresponde únicamente a esta sesión." + (metricSnapshot.truncated ? " La muestra de eventos está truncada por el límite de retención." : "");
+        note.textContent = "El estado confirma la respuesta del endpoint y su contrato de identidad; no demuestra por sí solo que las dependencias internas de Google Sheets o Drive estén disponibles. El tráfico procede del agregado global de Coordinator y cuenta únicamente operaciones protegidas que obtuvieron una lease; no incluye lecturas públicas/no coordinadas, feed público ni sondeos de salud." + (globalServiceTrafficError ? " No fue posible actualizar el agregado global." : "");
         detail.appendChild(note);
         const dependencies = document.createElement("div");
         dependencies.className = "dev-service-dependencies";
@@ -5679,78 +5675,6 @@ function initAdminPanelListeners() {
             last.textContent = `Última acción observada: ${lastEvent.action}.`;
             detail.appendChild(last);
         }
-    }
-    function renderServiceTrafficChart() {
-        const container = document.getElementById("service-traffic-chart");
-        if (!container) return;
-        container.replaceChildren();
-        const snapshot = getServiceMetricsSnapshot();
-        if (!snapshot.events.length) {
-            const empty = document.createElement("p");
-            empty.className = "dev-empty-state";
-            empty.textContent = "Aún no se han observado solicitudes API en esta sesión.";
-            container.appendChild(empty);
-            return;
-        }
-        const keys = Object.keys(serviceHealthResults);
-        const bucketed = bucketServiceMetrics(snapshot, keys);
-        const { bucketCount, bucketSize, startAt, series } = bucketed;
-        const maxValue = Math.max(1, ...series.flatMap(item => item.counts));
-        const width = 920, height = 270, left = 48, right = 18, top = 18, bottom = 42;
-        const plotWidth = width - left - right, plotHeight = height - top - bottom;
-        const ns = "http://www.w3.org/2000/svg";
-        const svg = document.createElementNS(ns, "svg");
-        svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
-        svg.setAttribute("class", "dev-service-traffic-svg");
-        svg.setAttribute("role", "img");
-        svg.setAttribute("aria-label", "Solicitudes iniciadas por minuto desde este navegador en una ventana móvil exacta de quince minutos.");
-        [0, Math.ceil(maxValue / 2), maxValue].filter((v, i, arr) => arr.indexOf(v) === i).forEach(value => {
-            const y = top + plotHeight - (value / maxValue) * plotHeight;
-            const line = document.createElementNS(ns, "line");
-            line.setAttribute("x1", left); line.setAttribute("x2", width - right);
-            line.setAttribute("y1", y); line.setAttribute("y2", y);
-            line.setAttribute("class", "dev-service-traffic-gridline");
-            svg.appendChild(line);
-            const label = document.createElementNS(ns, "text");
-            label.setAttribute("x", left - 10); label.setAttribute("y", y + 4);
-            label.setAttribute("text-anchor", "end"); label.setAttribute("class", "dev-service-traffic-axis");
-            label.textContent = String(value); svg.appendChild(label);
-        });
-        [0, 3, 6, 9, 12, 14].forEach(index => {
-            const x = left + (index / (bucketCount - 1)) * plotWidth;
-            const label = document.createElementNS(ns, "text");
-            label.setAttribute("x", x); label.setAttribute("y", height - 12);
-            label.setAttribute("text-anchor", "middle"); label.setAttribute("class", "dev-service-traffic-axis");
-            label.textContent = new Date(startAt + index * bucketSize).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-            svg.appendChild(label);
-        });
-        series.forEach((item, index) => {
-            const points = item.counts.map((count, bucket) => {
-                const x = left + (bucket / (bucketCount - 1)) * plotWidth;
-                const y = top + plotHeight - (count / maxValue) * plotHeight;
-                return `${x},${y}`;
-            }).join(" ");
-            const line = document.createElementNS(ns, "polyline");
-            line.setAttribute("points", points);
-            line.setAttribute("class", `dev-service-traffic-line dev-service-color-${index % 8}`);
-            svg.appendChild(line);
-        });
-        container.appendChild(svg);
-        const legend = document.createElement("div");
-        legend.className = "dev-service-traffic-legend";
-        series.forEach((item, index) => {
-            const entry = document.createElement("span");
-            entry.className = `dev-service-traffic-legend-item dev-service-color-${index % 8}`;
-            entry.textContent = item.service;
-            legend.appendChild(entry);
-        });
-        container.appendChild(legend);
-        const note = document.createElement("p");
-        note.className = "dev-service-note";
-        note.textContent = snapshot.truncated
-            ? `Muestra truncada: se alcanzó el límite de ${snapshot.eventLimit} eventos dentro de la ventana. Los conteos son parciales.`
-            : "Serie agrupada por inicio de solicitud; ventana móvil exacta de quince minutos.";
-        container.appendChild(note);
     }
     function renderGlobalServiceTrafficChart_() {
         const container = document.getElementById("global-service-traffic-chart");
@@ -5870,11 +5794,15 @@ function initAdminPanelListeners() {
             }
             globalServiceTrafficData = result;
             globalServiceTrafficError = null;
+            if (selectedServiceKey) renderServiceDetail();
         } catch (error) {
             globalServiceTrafficError = error && error.message ? error.message : "Error de consulta.";
         } finally {
             globalServiceTrafficLoading = false;
-            if (isAdminPanelCurrent_()) renderGlobalServiceTrafficChart_();
+            if (isAdminPanelCurrent_()) {
+                renderGlobalServiceTrafficChart_();
+                if (selectedServiceKey) renderServiceDetail();
+            }
         }
     }
 
@@ -5883,7 +5811,6 @@ function initAdminPanelListeners() {
         renderServiceCards();
         renderServiceDetail();
         renderGlobalServiceTrafficChart_();
-        renderServiceTrafficChart();
     }
     async function runServicesHealthScan() {
         if (isHealthScanRunning) return;
@@ -5912,15 +5839,8 @@ function initAdminPanelListeners() {
     if (scanBtn) scanBtn.onclick = () => runServicesHealthScan();
     const globalTrafficRefreshBtn = document.getElementById("btn-refresh-global-service-traffic");
     if (globalTrafficRefreshBtn) globalTrafficRefreshBtn.onclick = () => loadGlobalServiceTraffic_(true);
-    if (!window.adminServiceMetricsUnsubscribe) {
-        window.adminServiceMetricsUnsubscribe = subscribeServiceMetrics(() => {
-            if (!isAdminPanelCurrent_() || !isServiceDiagnosticsVisible_()) return;
-            renderServiceTrafficChart();
-            if (selectedServiceKey) renderServiceDetail();
-        });
-    }
-    function isServiceDiagnosticsVisible_() {
-        const container = document.getElementById("service-traffic-chart");
+    function isGlobalServiceTrafficVisible_() {
+        const container = document.getElementById("global-service-traffic-chart");
         if (!container || !container.isConnected) return false;
         try {
             let current = container;
@@ -5934,11 +5854,9 @@ function initAdminPanelListeners() {
             return false;
         }
     }
-    if (!window.adminServiceMetricsRefreshInterval) {
-        window.adminServiceMetricsRefreshInterval = window.setInterval(() => {
-            if (!isAdminPanelCurrent_() || !isServiceDiagnosticsVisible_()) return;
-            renderServiceTrafficChart();
-            if (selectedServiceKey) renderServiceDetail();
+    if (!window.adminGlobalServiceTrafficRefreshInterval) {
+        window.adminGlobalServiceTrafficRefreshInterval = window.setInterval(() => {
+            if (!isAdminPanelCurrent_() || !isGlobalServiceTrafficVisible_()) return;
             if (Date.now() - lastGlobalServiceTrafficFetchAt >= 60000) loadGlobalServiceTraffic_();
         }, 15000);
     }
