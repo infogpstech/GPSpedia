@@ -1467,3 +1467,10 @@ No se han desplegado proyectos Apps Script ni configurado secretos remotos. La f
 - Observación de salud: USERS alcanzó 8,489 ms en esta muestra; disponible, pero debe vigilarse.
 - Límite: la caché es por proyecto Apps Script; un primer acceso/cache miss o vencimiento aún consulta Coordinator. No se afirma que la validación sea estrictamente solo en login.
 - **P3.1a COMPLETADA. P3.1b pendiente:** evaluar precarga del actor desde login en los servicios o aceptar el contexto cacheado 6 h, sin añadir complejidad de seguridad innecesaria. Mantener monitoreo y dashboard.
+
+
+### P3.1b — decisión sobre propagación del actor — 2026-11-17
+- Se evaluó precargar el actor desde AUTH a cada proyecto Apps Script. Las cachés son aisladas por proyecto; hacerlo durante login requiere nuevas llamadas y contratos entre servicios. Se descarta esa ampliación por coste y complejidad.
+- Se conserva TTL local de 21,600 s: cache hit sin red ni validación por acción; cache miss inicial/expiración todavía consulta Coordinator. No se presenta como verificación estrictamente limitada al login.
+- La revisión detectó que logout, eliminación de cuenta y cambio de rol revocan en Coordinator, pero no limpian las cachés de actor de WRITE/FEEDBACK. La ventana obsoleta puede alcanzar 6 h; hallazgo ALTO registrado en `AUDITORIA_P3_SESION_ACTOR.md`.
+- **P3.1b COMPLETADA como evaluación/decisión. P3.1 global permanece EN PROGRESO. Siguiente P3.1c:** implementar invalidación dirigida de las cachés de actor en WRITE/FEEDBACK para las excepciones de sesión, sin Coordinator por acción. Pruebas locales de logout remoto, eliminación, cambio de rol, fallos parciales y aislamiento por token. No desplegar Apps Script ni modificar datos productivos.
