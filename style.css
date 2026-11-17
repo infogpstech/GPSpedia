@@ -6149,8 +6149,11 @@ textarea.rich-text-source[hidden] { display:none !important; }
 }
 
 /* GP-UX-MODAL-HEADER-TIGHTEN-03 — acciones junto al cierre y compactación medida del encabezado. */
+#modalDetalle[data-modal-type="corte"] .detail-modal-toolbar {
+    padding-right:0 !important;
+}
 #modalDetalle[data-modal-type="corte"] .detail-modal-header-actions {
-    padding-right:0 !important; margin-left:0; justify-content:flex-end;
+    width:100%; padding-right:0 !important; margin-left:0; justify-content:flex-end;
 }
 #modalDetalle[data-modal-type="corte"] .detail-modal-header-actions > .info-close-btn {
     position:static !important; flex:0 0 40px; width:40px; min-width:40px;
