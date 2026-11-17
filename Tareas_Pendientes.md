@@ -561,7 +561,7 @@ No desplegar Apps Script ni modificar ScriptProperties, permisos, hojas, Drive o
 - Comparar recursos servidos con la versión de la rama.
 - Verificar actualización y caché de Service Worker sin borrar datos locales ni usar `deleteDatabase` como solución.
 - Auditoría local 2026-11-17: el patrón de extensiones tenía un escape incorrecto en `service-worker.js`, por lo que no reconocía recursos estáticos atendidos por solicitudes `fetch` sin `destination` ni recursos estáticos del CDN permitido. Se corrigió y se incrementó `gpsepedia-cache-v67` a `gpsepedia-cache-v68`.
-- `JS/Tests/ServiceWorkerCache.js` incorpora regresión para JSON local y fuentes CDN. Comprobaciones Node.js aisladas de sintaxis y política: 4/4 escenarios PASS. El harness Node.js aislado de política/caché aprobó 4/4 escenarios y `node --check` de los fragmentos modificados pasó. El conector no expone las ejecuciones push de Actions (el estado combinado no devolvió checks), por lo que no se afirma CI aprobada. Comparación de recursos servidos y actualización en navegador/PWA siguen pendientes de Beta.
+- `JS/Tests/ServiceWorkerCache.js` incorpora regresión para JSON local y fuentes CDN. `node --check` de los fragmentos modificados y harness Node.js aislado de política/caché: 4/4 escenarios PASS (JSON local, fuente CDN, endpoint Apps Script excluido y POST excluido). El conector no expone las ejecuciones push de Actions (el estado combinado no devolvió checks), por lo que no se afirma CI aprobada. Comparación de recursos servidos y actualización en navegador/PWA siguen pendientes de Beta.
 
 ### BETA-004 — Catálogo remoto ante fallo local
 **Estado: IMPLEMENTACIÓN LOCAL COMPLETADA; PENDIENTE BETA.**
