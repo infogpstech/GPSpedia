@@ -411,3 +411,14 @@ undefined
 - Hallazgo ALTO: logout remoto, eliminación de cuenta y cambio de rol revocan el contexto de Coordinator, pero no invalidan entradas de actor ya almacenadas en CacheService de WRITE/FEEDBACK. Riesgo de autorización obsoleta hasta 6 h. Detalle y evidencia en `AUDITORIA_P3_SESION_ACTOR.md`.
 - P3.1b COMPLETADA (evaluación/decisión), pero P3.1 global NO está cerrada. **Siguiente tarea P3.1c:** implementar invalidación dirigida de cachés de actor en WRITE/FEEDBACK para las tres excepciones, sin revalidar cada acción. Añadir pruebas locales de propagación, fallos parciales y aislamiento por token.
 - En esta continuación solo se actualizaron registros; no se modificó código de servicios, no se ejecutó Node.js/CLI y no se desplegó Apps Script. Las pruebas CI históricas 143 suites/2,108 PASS pertenecen a P3.1a, no validan esta adenda.
+
+
+### Cierre P3.1c — invalidación dirigida de caché de actor — 2026-11-17
+- **Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
+- AUTH invalida primero las claves exactas de sesión en WRITE y FEEDBACK mediante una acción interna servidor-a-servidor. El actor cacheado conserva el mismo formato de clave y TTL de 21,600 s para operaciones ordinarias.
+- Logout invalida el token individual. Las revocaciones de usuario (cambio de rol, reset remoto, eliminación y cambios/restablecimientos de contraseña) enumeran los tokens activos de ActiveSessions y limpian ambos servicios antes de revocar el contexto en Coordinator.
+- WRITE y FEEDBACK aceptan la acción interna solo con GPSpedia_SESSION_CACHE_INVALIDATION_SECRET; no se expuso en api-config.js ni se agregó una ruta de navegador. Si uno de los dos servicios no confirma la limpieza, AUTH no continúa con la revocación central; la operación queda reintentable.
+- Configuración requerida para Beta, sin secretos en Git: AUTH debe tener GPSpedia_SESSION_CACHE_INVALIDATION_SECRET, GPSpedia_WRITE_URL y GPSpedia_FEEDBACK_URL; WRITE y FEEDBACK deben tener el mismo GPSpedia_SESSION_CACHE_INVALIDATION_SECRET de AUTH. Las URL deben ser los endpoints /exec vigentes.
+- Pruebas focalizadas: SessionActorCacheInvalidation 23/23 PASS; SessionActorCacheLifetime 4/4 PASS. CI 44149804570: SUCCESS — 144 suites / 2,131 pruebas / 0 fallos. Health read-only 44149804587: SUCCESS; no valida el nuevo código de Apps Script porque no se desplegó.
+- No se desplegaron proyectos Apps Script ni se modificaron ScriptProperties, hojas, Drive o datos externos. Pendiente Beta: configurar propiedades, desplegar AUTH/WRITE/FEEDBACK y probar logout, revocación de todas las sesiones, eliminación/cambio de rol, recuperación ante fallo parcial y reintento.
+- La rama base GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
