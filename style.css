@@ -5890,7 +5890,7 @@ textarea.rich-text-source[hidden] { display:none !important; }
 
 /* GP-DASH-INSIGHTS-01 — tablero adaptable, jerarquía visual y tablas legibles. */
 #dashboard-modal .info-modal-content { width:min(96vw,1100px); max-width:1100px !important; }
-#dashboard-modal .activity-dashboard-tabs { gap:4px; overflow-x:auto; flex-wrap:nowrap; }
+#dashboard-modal .activity-dashboard-tabs { gap:4px; flex-wrap:wrap; }
 #dashboard-modal .activity-dashboard-tabs button { white-space:nowrap; flex:0 0 auto; }
 #dashboard-modal [data-activity-panel] { min-width:0; }
 .activity-insights { display:grid; gap:14px; padding:12px 0; color:var(--text-color,inherit); }
@@ -5903,7 +5903,7 @@ textarea.rich-text-source[hidden] { display:none !important; }
 .activity-insight-heading { margin:0 0 12px; font-size:1rem; }
 .activity-insight-bar-row { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(55px,1fr) 34px; align-items:center; gap:8px; margin:10px 0; }
 .activity-insight-bar-label { min-width:0; overflow-wrap:anywhere; font-size:.88rem; }
-.activity-insight-bar-track { height:9px; overflow:hidden; border-radius:99px; background:var(--border-color,#d6dce3); }
+.activity-insight-bar-track { height:9px; border-radius:99px; background:var(--border-color,#d6dce3); clip-path:inset(0 round 99px); }
 .activity-insight-bar { display:block; height:100%; border-radius:inherit; background:var(--gp-color-accent,#2878b9); }
 .activity-insight-bar-value { text-align:right; font-variant-numeric:tabular-nums; }
 .activity-insight-year-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; }
