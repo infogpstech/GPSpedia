@@ -4092,7 +4092,7 @@ function resetSessionUi_() {
         'audit-drive-results-container', 'audit-drive-summary',
         'replaced-images-folder-status', 'selected-logo-file-name',
         'vin-migration-status', 'vin-recalculate-status', 'vin-diagnostic-status',
-        'service-health-detail', 'service-traffic-chart', 'global-service-traffic-chart'
+        'service-health-detail', 'global-service-traffic-chart'
     ];
     transientAdminIds.forEach(id => {
         const element = document.getElementById(id);
