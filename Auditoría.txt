@@ -49,3 +49,13 @@ undefined
 - Validación ejecutada: Node.js --check de los fragmentos modificados y cuatro escenarios aislados de política (JSON local, fuente CDN, endpoint Apps Script no cacheable y POST no cacheable): 4/4 PASS. No se pudo consultar desde el conector la ejecución completa de GitHub Actions; no se declara aprobada.
 - Pendiente Beta: comparar recursos efectivamente servidos con la rama, confirmar instalación/activación de v68, reemplazo del caché anterior y comportamiento online/offline en navegador/PWA sin borrar IndexedDB ni datos locales.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — ADENDA DE VALIDACIÓN LOCAL BETA-003
+- Se ejecutó Node.js --check sobre los fragmentos de política de caché y de la prueba de regresión: PASS.
+- Harness aislado de comportamiento: 4/4 PASS (JSON same-origin con destination vacío; fuente woff2 del CDN permitido; endpoint Apps Script excluido; POST excluido).
+- El test de repositorio ServiceWorkerCache.js quedó actualizado para ejecutar los dos casos positivos en la suite general.
+- El conector GitHub disponible no permitió consultar ejecuciones push de Actions; combined status devolvió una lista vacía y fetch_commit_workflow_runs solo expone ejecuciones disparadas por pull request. CI no se declara aprobada.
+- Resultado: implementación local cerrada; verificación de recursos realmente servidos y ciclo de actualización en navegador/PWA diferidos a Beta.
+================================================================================
