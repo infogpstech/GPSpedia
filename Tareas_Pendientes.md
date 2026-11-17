@@ -1241,9 +1241,10 @@ Después: abrir Developer → Auditoría de Cortes en escritorio y PWA móvil; c
 - El agregado no representa solicitudes HTTP externas/legacy no mapeadas ni health probes; contadores locales pueden subcontar por contención. No sacrificar latencia o disponibilidad para aumentar artificialmente el conteo.
 
 **Evidencia más reciente**
-- CI 44103742508 SUCCESS: 137 suites, 2,037 pruebas aprobadas, 0 fallos. CatalogTrafficTelemetry 8/8; ServiceTrafficAdminContract 33/33; ServiceTrafficAggregation 6/6; DirectServiceTrafficTelemetry 18/18; ServiceTrafficBatch 5/5.
-- Health remoto 44103742755 SUCCESS: 7/7. Latencias: ADMIN 1,745 ms; AUTH 1,392 ms; CATALOG 935 ms; FEEDBACK 1,873 ms; USERS 985 ms; UTILITIES 3,057 ms; WRITE 1,839 ms. Solo GET diagnóstico.
-- GitHub Pages 44103742319 SUCCESS. No se desplegaron Apps Script ni configuraron secretos remotos.
+- CI 44106829275 SUCCESS: 138 suites, 2,043 pruebas aprobadas, 0 fallos. CatalogTrafficTelemetry 8/8; ServiceTrafficAdminContract 33/33; ServiceTrafficAggregation 6/6; DirectServiceTrafficTelemetry 18/18; ServiceTrafficBatch 5/5; DirectTrafficRoutingCoverage 6/6.
+- Health remoto 44106826657 SUCCESS: 7/7. Latencias: ADMIN 2,147 ms; AUTH 1,798 ms; CATALOG 1,033 ms; FEEDBACK 1,032 ms; USERS 1,038 ms; UTILITIES 1,426 ms; WRITE 1,223 ms. Solo GET diagnóstico.
+- GitHub Pages 44106826874 SUCCESS. No se desplegaron Apps Script ni configuraron secretos remotos.
+- Auditoría de rutas encontró y corrigió la omisión FEEDBACK/getCatalogChanges: es pública y no obtiene lease Coordinator, por lo que ahora se incluye en el contador directo junto con getPysData. El contrato de routing verifica también el modo silentRegister→ADMIN y sus leases coordinadas.
 
 **Evidencia anterior**
 - CI 44099217828 SUCCESS: 135 suites, 1,998 pruebas aprobadas, 0 fallos (antes de ampliar los contadores directos a AUTH/WRITE/FEEDBACK).
