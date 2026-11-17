@@ -322,3 +322,10 @@ undefined
 - P4.3 reserva revisión de ScriptLock global durante auditoría y organización Drive de ADMIN.
 - Telemetría, dashboard, salud de servicios y feed incremental se conservan.
 ================================================================================
+================================================================================
+2026-11-17 — GP-PERF-SIMPLIFY-01 — P4.1 y P4.2
+- P4.1: PyS inicia en paralelo al cursor y snapshot inicial del catálogo; se comparte una sola promesa, se aíslan errores y solo se avanza el cursor con datos frescos.
+- P4.2: al abrir nuevo mensaje desde Solicitudes, la carga de conversaciones se ejecuta en segundo plano; destinatarios se solicitan inmediatamente. El sondeo se inicia al finalizar solo si el contexto sigue vigente.
+- P4.3: auditoría detallada confirma que el ScriptLock ADMIN protege reintentos idempotentes y operaciones Drive/Spreadsheet. Se requiere claim/commit atómico breve antes de liberar trabajo externo; no se modificó admin.js.
+- CI 44154032505 SUCCESS: 145 suites, 2,117 pruebas aprobadas, 0 fallos. Health read-only 7/7 y Pages build SUCCESS.
+================================================================================
