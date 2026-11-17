@@ -138,11 +138,9 @@ export async function routeAction(action, payload = {}, serviceOverride = null, 
     if (!service) throw new Error(`Acción no definida: ${action}`);
     const targetUrl = API_ENDPOINTS[service];
     if (!targetUrl) throw new Error(`Servicio no configurado: ${service}`);
-    const requestStartedAt = Date.now();
-    let outcome = "network_error", httpStatus = null;
+    let httpStatus = null;
+    let response;
     try {
-        let response;
-        try {
             response = await fetch(targetUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain' },
@@ -153,7 +151,6 @@ export async function routeAction(action, payload = {}, serviceOverride = null, 
         } catch (fetchError) {
             const aborted = Boolean(requestOptions && requestOptions.signal && requestOptions.signal.aborted) ||
                 Boolean(fetchError && fetchError.name === "AbortError");
-            outcome = "network_error";
             throw createRouteActionError_(
                 aborted ? "La solicitud fue cancelada o agotó el tiempo de espera." :
                     "No se recibió respuesta del servidor: " + String(fetchError && fetchError.message || "fallo de conexión."),
@@ -164,13 +161,11 @@ export async function routeAction(action, payload = {}, serviceOverride = null, 
         httpStatus = Number.isInteger(receivedStatus) && receivedStatus >= 100 && receivedStatus <= 599
             ? receivedStatus : null;
         if (!response || httpStatus === null) {
-            outcome = "network_error";
             throw createRouteActionError_("No se recibió una respuesta HTTP válida del servidor.", {
                 kind: "network", code: "NO_HTTP_RESPONSE", httpStatus: null
             });
         }
         if (!response.ok) {
-            outcome = "http_error";
             const statusText = String(response.statusText || "").trim();
             throw createRouteActionError_(
                 "Error HTTP " + httpStatus + (statusText ? ": " + statusText : "."),
@@ -181,7 +176,6 @@ export async function routeAction(action, payload = {}, serviceOverride = null, 
         try {
             text = await response.text();
         } catch (readError) {
-            outcome = "invalid_response";
             throw createRouteActionError_("No se pudo leer el cuerpo de la respuesta del servidor.", {
                 kind: "invalid_response", code: "RESPONSE_READ_ERROR", httpStatus, cause: readError
             });
@@ -190,19 +184,16 @@ export async function routeAction(action, payload = {}, serviceOverride = null, 
         try {
             result = JSON.parse(text);
         } catch (parseError) {
-            outcome = "invalid_response";
             throw createRouteActionError_("La respuesta del servidor no tiene un formato JSON válido.", {
                 kind: "invalid_response", code: "INVALID_JSON", httpStatus, cause: parseError
             });
         }
         if (!result || typeof result !== "object" || Array.isArray(result)) {
-            outcome = "invalid_response";
             throw createRouteActionError_("La respuesta del servidor no contiene un objeto válido.", {
                 kind: "invalid_response", code: "INVALID_RESPONSE", httpStatus
             });
         }
         if (result.status === 'error') {
-            outcome = "api_error";
             const detailMessage = typeof result.details === "string" ? result.details :
                 result.details && typeof result.details.errorMessage === "string" ? result.details.errorMessage : "";
             const errorMessage = [String(result.message || "El servicio rechazó la operación."), detailMessage]
@@ -230,9 +221,7 @@ export async function routeAction(action, payload = {}, serviceOverride = null, 
                 kind: "application", code: String(result.code || "API_ERROR"), httpStatus, details: result.details
             });
         }
-        outcome = "success";
         return result;
-    } finally {}
 }
 
 export async function routeActionWithRetry(action, payload = {}, options = {}) {
