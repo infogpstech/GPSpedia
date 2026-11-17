@@ -983,6 +983,66 @@ function createSharedMutationCoordinator_(dependencies) {
         });
     }
 
+    function publishCatalogChanges_(service, operation, payload) {
+        const allowed = CATALOG_CHANGE_ALLOWED_WRITERS_[service];
+        if (!allowed || !allowed.has(operation)) throw new Error("La operación no puede publicar cambios del catálogo.");
+        const changes = payload && Array.isArray(payload.changes) ? payload.changes : [];
+        if (!changes.length || changes.length > 50) throw new Error("El lote de cambios del catálogo debe contener entre 1 y 50 registros.");
+        const events = changes.map(sourceValue => {
+            const source = sourceValue && typeof sourceValue === "object" && !Array.isArray(sourceValue) ? sourceValue : {};
+            let collection = String(source.collection || "").trim().toLowerCase();
+            let recordId = String(source.recordId || "").trim();
+            let changeOperation = String(source.operation || "").trim().toLowerCase();
+            let snapshot = source.snapshot === undefined ? null : source.snapshot;
+            if (changeOperation === "reset") {
+                collection = "*"; recordId = "*"; snapshot = null;
+            } else {
+                if (!CATALOG_CHANGE_COLLECTIONS_.has(collection)) throw new Error("La colección del cambio de catálogo no es válida.");
+                if (!recordId || recordId.length > 160) throw new Error("El ID del registro de catálogo no es válido.");
+                if (changeOperation === "upsert") {
+                    if (!snapshot || typeof snapshot !== "object" || Array.isArray(snapshot)) throw new Error("El cambio upsert requiere un snapshot de registro.");
+                } else if (changeOperation === "delete") {
+                    snapshot = null;
+                } else {
+                    throw new Error("La operación del cambio de catálogo no es válida.");
+                }
+            }
+            const event = { collection, recordId, operation: changeOperation, snapshot,
+                createdAt: new Date(now()).toISOString(), sourceService: service, sourceOperation: operation };
+            let serialized = JSON.stringify(event), resetRequired = false;
+            if (serialized.length > CATALOG_CHANGE_MAX_EVENT_LENGTH_) {
+                event.collection = "*"; event.recordId = "*"; event.operation = "reset"; event.snapshot = null;
+                serialized = JSON.stringify(event); resetRequired = true;
+            }
+            return { event, resetRequired };
+        });
+        return withCoordinatorLock_(() => {
+            const revisions = catalogChangeRevisions_();
+            const storedRevision = Number(properties.getProperty(CATALOG_CHANGE_REVISION_PROPERTY_) || 0);
+            let currentRevision = Math.max(Number.isSafeInteger(storedRevision) ? storedRevision : 0,
+                revisions.length ? revisions[revisions.length - 1] : 0);
+            if (!Number.isSafeInteger(currentRevision + events.length)) {
+                throw new Error("La revisión del catálogo alcanzó su límite seguro.");
+            }
+            const firstRevision = currentRevision + 1;
+            events.forEach(item => {
+                currentRevision++;
+                properties.setProperty(CATALOG_CHANGE_EVENT_PREFIX_ + currentRevision,
+                    JSON.stringify({ revision: currentRevision, ...item.event, resetRequired: item.resetRequired }));
+            });
+            properties.setProperty(CATALOG_CHANGE_REVISION_PROPERTY_, String(currentRevision));
+            const after = catalogChangeRevisions_();
+            while (after.length > CATALOG_CHANGE_MAX_EVENTS_) {
+                const oldest = after.shift();
+                properties.deleteProperty(CATALOG_CHANGE_EVENT_PREFIX_ + oldest);
+            }
+            return {
+                status: "success", count: events.length, firstRevision, lastRevision: currentRevision,
+                resetRequired: events.some(item => item.resetRequired || item.event.operation === "reset")
+            };
+        });
+    }
+
     function getCatalogChanges_(service, operation, payload) {
         if (!((service === "FEEDBACK" || service === "PUBLIC") && operation === "getCatalogChanges")) {
             throw new Error("La consulta incremental no está habilitada para este origen.");
@@ -1035,6 +1095,7 @@ function createSharedMutationCoordinator_(dependencies) {
         if (action === "release") return release_(service, operation, payload);
         if (action === "validate") return validate_(service, operation, payload);
         if (action === "publishCatalogChange") return publishCatalogChange_(service, operation, payload);
+        if (action === "publishCatalogChanges") return publishCatalogChanges_(service, operation, payload);
         if (action === "getCatalogChanges") return getCatalogChanges_(service, operation, payload);
         if (action === "registerSession") return registerSession_(service, operation, payload);
         if (action === "syncUserSessions") return syncUserSessions_(service, operation, payload);
