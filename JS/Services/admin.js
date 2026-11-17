@@ -15,6 +15,8 @@ let spreadsheet = null;
 
 
 const WRITE_SERVICE_URL = "https://script.google.com/macros/s/AKfycbxvf5jWXXy5pxQZgCqgKmlfBWfAwxIyhjQG39fs9dFKM4ub-NkWzA2-0-8PXBJsHVnsdg/exec";
+const CATALOG_SERVICE_URL = "https://script.google.com/macros/s/AKfycbzcBNC_sFFcdKxwBZFXfQHZsfpCGiZeKpQ8BjiTWn50qdVSfZRraHjELXBFY2tF8qc/exec";
+const CATALOG_TRAFFIC_SECRET_PROPERTY_ = "GPSpedia_CATALOG_TRAFFIC_SECRET";
 const LOGOS_MARCA_ID_COUNTER_PROPERTY = "LOGOS_MARCA_ID_COUNTER";
 
 /** WRITE es la autoridad única para asignar y estabilizar IDs de Cortes. */
@@ -8851,16 +8853,84 @@ function recordReplacedImage(data) {
  * Handler: Consultar imágenes reemplazadas
  */
 
+function getCatalogServiceTraffic_() {
+    try {
+        const secret = String(PropertiesService.getScriptProperties().getProperty(CATALOG_TRAFFIC_SECRET_PROPERTY_) || "");
+        if (secret.length < 32) return { status: "unavailable", reason: "not_configured" };
+        const response = UrlFetchApp.fetch(CATALOG_SERVICE_URL, {
+            method: "post",
+            contentType: "text/plain",
+            payload: JSON.stringify({ action: "getServiceTraffic", payload: { secret: secret } }),
+            muteHttpExceptions: true,
+            followRedirects: true
+        });
+        const httpStatus = response.getResponseCode();
+        if (httpStatus < 200 || httpStatus >= 300) return { status: "unavailable", reason: "request_failed" };
+        const result = JSON.parse(response.getContentText() || "{}");
+        if (!result || result.status !== "success" || result.scope !== "catalog_post_requests" ||
+            !Array.isArray(result.buckets) || !result.totals) {
+            return { status: "unavailable", reason: "invalid_response" };
+        }
+        return result;
+    } catch (error) {
+        return { status: "unavailable", reason: "request_failed" };
+    }
+}
+
+function mergeCatalogServiceTraffic_(coordinatorResult, catalogResult) {
+    const result = JSON.parse(JSON.stringify(coordinatorResult));
+    const directAvailable = Boolean(catalogResult && catalogResult.status === "success");
+    const catalogBuckets = new Map();
+    if (directAvailable) {
+        catalogResult.buckets.forEach(bucket => {
+            const startAt = Number(bucket && bucket.startAt);
+            const count = Number(bucket && bucket.count);
+            if (Number.isSafeInteger(startAt) && Number.isSafeInteger(count) && count >= 0) {
+                catalogBuckets.set(startAt, count);
+            }
+        });
+        result.buckets.forEach(bucket => {
+            const startAt = Number(bucket.startAt);
+            bucket.counts.CATALOG = Math.max(0, Number(bucket.counts.CATALOG) || 0) + (catalogBuckets.get(startAt) || 0);
+        });
+        ["lastHour", "last6Hours", "last24Hours"].forEach(period => {
+            result.totals[period].CATALOG = Math.max(0, Number(result.totals[period].CATALOG) || 0) +
+                Math.max(0, Number(catalogResult.totals[period]) || 0);
+        });
+    }
+    result.scope = "global_service_traffic";
+    result.sources = {
+        coordinator: { available: true, scope: "protected_operations" },
+        CATALOG: {
+            available: true,
+            feedRequests: "coordinator",
+            directRequestsAvailable: directAvailable,
+            directRequestScope: directAvailable ? catalogResult.scope : null,
+            accuracy: directAvailable ? catalogResult.accuracy : "partial",
+            mayUndercount: directAvailable ? catalogResult.mayUndercount === true : true,
+            reason: directAvailable ? null : String(catalogResult && catalogResult.reason || "unavailable")
+        }
+    };
+    result.coverage = {
+        description: "Agregado combinado: operaciones protegidas de Coordinator y solicitudes directas de lectura CATALOG cuando el contador local está configurado.",
+        excludes: ["sondeos de salud", "solicitudes HTTP que no atraviesan las rutas instrumentadas"]
+    };
+    result.excluded = result.coverage.excludes.slice();
+    return result;
+}
+
 function handleGetServiceTraffic_(payload, logMessage, developerContext) {
     if (!developerContext || String(developerContext.role || "").toLowerCase() !== "desarrollador") {
         throw new Error("Acceso denegado: la telemetría global está reservada a Desarrollador.");
     }
-    const result = getSharedServiceTraffic_();
-    if (!result || result.status !== "success" || !Array.isArray(result.buckets) || !result.totals) {
+    const coordinatorResult = getSharedServiceTraffic_();
+    if (!coordinatorResult || coordinatorResult.status !== "success" ||
+        !Array.isArray(coordinatorResult.buckets) || !coordinatorResult.totals) {
         throw new Error("No se pudo recuperar la telemetría global del coordinador.");
     }
+    const result = mergeCatalogServiceTraffic_(coordinatorResult, getCatalogServiceTraffic_());
     if (typeof logMessage === "function") {
-        logMessage("Telemetría global", "Se recuperaron métricas agregadas de operaciones protegidas.", 1, 1);
+        logMessage("Telemetría global", "Se recuperaron métricas agregadas de Coordinator y CATALOG.", 1, 1);
     }
     return result;
 }
