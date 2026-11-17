@@ -450,3 +450,11 @@ undefined
 - En lote máximo de 20: hasta 19 lecturas completas iniciales y 19 scans de duplicados menos. AdminReplacedImagesIntegrity 55/55 PASS.
 - CI 44154558840 SUCCESS: 145 suites, 2,117 pruebas y 0 fallos. Health read-only 7/7.
 - P4.3b: diseñar claim/commit atómico breve por auditId/operationId para liberar el ScriptLock global durante Drive sin perder reintentos idempotentes, unicidad de inventario ni rollback. El lock actual permanece.
+### P4 cerrada en el alcance seguro — 2026-11-17
+- P4.1: arranque PyS paralelo; error aislado y cursor condicionado a freshness.
+- P4.2: compositor Inbox carga destinatarios sin esperar la lista de conversaciones; la lista y su sondeo continúan en segundo plano.
+- P4.3a: currentRows y duplicateIds una vez por lote; se conserva revalidación final por archivo.
+- P4.3b: CacheService.getAll/putAll por grupos de 100; 205 páginas verificadas con 9 llamadas.
+- P4.3c: publicación CATALOG de ADMIN por lotes de 50; requestId idempotente y reset de recuperación si el lote quedó parcial.
+- P4.3d: ScriptLock se conserva deliberadamente. Coordinator ya coordina recursos compartidos; no hay evidencia de que el lock local bloquee módulos independientes. Reabrir con medición, no por suposición.
+- CI 44156469990 SUCCESS: 145 suites, 2,123 pruebas, 0 fallos. Health 7/7; Pages build SUCCESS.
