@@ -878,6 +878,7 @@ const trustedInboxActor = { userId:"U1", userName:"Ana Desarrolladora", role:"De
 const dispatch = new Function(
     "FEEDBACK_ACTION_PERMISSIONS", "FEEDBACK_PUBLIC_ACTIONS", "withSharedMutationLease_",
     "withSharedSessionActor_", "doPostInternal_", "ContentService",
+    "DIRECT_SERVICE_TRAFFIC_CONFIG_", "readDirectServiceTraffic_", "recordDirectServiceTraffic_",
     mutationMatch[0] + String.fromCharCode(10) + postMatch[0] + String.fromCharCode(10) + "return doPost;"
 )(
     { getInboxRecipients:null, getInboxConversations:null, getInboxMessages:null, createInboxConversation:null },
@@ -893,7 +894,10 @@ const dispatch = new Function(
         return event;
     },
     event => JSON.parse(event.postData.contents).payload,
-    { createTextOutput: value => ({ value, setMimeType() { return this; } }), MimeType:{TEXT:"text/plain"} }
+    { createTextOutput: value => ({ value, setMimeType() { return this; } }), MimeType:{TEXT:"text/plain"} },
+    { actions: new Set() },
+    () => ({ status: "unavailable" }),
+    () => false
 );
 for (const action of ["getInboxRecipients","getInboxConversations","getInboxMessages"]) {
     dispatchCalls.length = 0;
