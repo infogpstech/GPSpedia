@@ -27,7 +27,7 @@ const writeService = read("JS/Services/write.js");
 const feedbackService = read("JS/Services/feedback.js");
 assert.match(authService,/actions: new Set\(\["validateSession"\]\)/);
 assert.match(writeService,/actions: new Set\(\["checkVehicle","getSuggestion","checkVinDuplicate"\]\)/);
-assert.match(feedbackService,/actions: new Set\(\["getPysData"\]\)/);
+assert.match(feedbackService,/actions: new Set\(\["getPysData", "getCatalogChanges"\]\)/);
 assert.match(feedbackService,/sendContactForm.*withSharedMutationLease_|withSharedMutationLease_.*sendContactForm/s);
 assert.match(feedbackService,/if \(action === "suggestYear" && String\(payload\.userId \|\| ""\)\.trim\(\) === "0"\) \{\s*recordDirectServiceTraffic_\(\);/);
 assert.doesNotMatch(admin,/UTILITIES_SERVICE_URL|service: "UTILITIES", url:/);
