@@ -568,7 +568,7 @@ check("El formato pendiente se conserva mediante anclas nativas compatibles con 
     const standard = rich.slice(rich.indexOf("export function createRichTextToolbar"), rich.indexOf("export function refreshRichTextToolbars"));
     assert.ok(compact.includes("pointerdown") && compact.includes("preventDefault"));
     assert.ok(standard.includes("pointerdown") && standard.includes("preventDefault"));
-    for (const fragment of ["const richEditorPendingFormats_ = new WeakMap()", "const richEditorTypingAnchors_ = new WeakMap()", "RICH_TEXT_CARET_SENTINEL_", "createRichTextTypingAnchor_", "cleanRichTextTypingSentinel_", "compositionstart", "compositionend"]) assert.ok(rich.includes(fragment), fragment);
+    for (const fragment of ["const richEditorPendingFormats_ = new WeakMap()", "const richEditorTypingAnchors_ = new WeakMap()", "RICH_TEXT_CARET_SENTINEL_", "createRichTextTypingAnchor_", "cleanRichTextTypingSentinel_", "restoreRichTextPendingFormatAtCaret_", "compositionstart", "compositionend"]) assert.ok(rich.includes(fragment), fragment);
     assert.doesNotMatch(rich, /editor\.addEventListener\(["']beforeinput/);
     assert.doesNotMatch(rich, /insertRichTextWithPendingFormats_|applyRichTextPendingFormatsToRange_/);
     assert.match(rich, /document\.activeElement===editor&&inside/);
