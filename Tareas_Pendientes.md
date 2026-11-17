@@ -773,7 +773,7 @@ No usar `reset --hard`, `clean`, force push ni comandos que descarten cambios. N
 
 
 ### Reapertura — GP-UX-CUT-MODAL-01 — 2026-11-16
-**Estado: EN PROGRESO — segunda corrección publicada; CI pendiente.**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
 
 La corrección anterior no resolvió el defecto en todos los estilos efectivos: una declaración flex posterior anulaba la cuadrícula y las pruebas no detectaban la cascada conflictiva. Se retiró el bloque legado, se fortaleció CutDetailModalLayout.mjs para rechazar overrides flex/order y se incrementó el App Shell a v43 con pruebas de caché actualizadas. Mantener el criterio: compartir, editar e imprimir en una sola fila, inmediatamente a la izquierda del cierre; logo +20 %; botones compactos sin ocultar acciones. Cerrar localmente solo después de CI aprobado. Aceptación visual en móvil/PWA real queda diferida a Beta.
 
@@ -946,7 +946,7 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 **Adenda de implementación local — 2026-11-16:** `termsDeviceAcceptance.js` persiste el consentimiento local con estado `pending/synced`; `ui.js` cierra el aviso y continúa sin esperar AUTH, sincroniza en segundo plano y reintenta al recuperar conexión o al abrir la app. Se conserva aislamiento usuario/dispositivo/versión y se descartan respuestas tardías de otra sesión. AUTH no fue modificado. La suite específica `TermsAsyncSync.mjs` cubre 5 escenarios y se integró al runner general; `TermsAcceptance.js` ejecutó 19/19 en harness V8 aislado. Parsing aprobado; falta ejecutar la suite Node.js completa/CI.
 
 ### GP-PWA-SPLASH-PRELOAD-01 — Iniciar la carga del catálogo detrás del Splash existente
-**Prioridad: P1 · Estado: EN PROGRESO — IMPLEMENTACIÓN LOCAL APLICADA; pendiente de suite Node.js/CI.**
+**Prioridad: P1 · Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
 
 - Iniciar la preparación/carga del catálogo antes de comenzar el desvanecimiento actual del Splash, de modo que la carga aproveche el tiempo que la pantalla ya permanece visible.
 - No modificar diseño, HTML, CSS, animación ni duración del Splash; no esperar a que termine el catálogo para ocultarlo ni añadir tiempo artificial.
@@ -986,3 +986,8 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - Rama de trabajo: GPSpedia2.2.5_work. HEAD de código verificado: ff848cf620fcf582e8d6b1821c270147fb73ba9d.
 - Commits de implementación dashboard: b26948fd5eee717ea965baafc9c320033a3658dc; ajuste de contrato CSS: 334ffd80d905958f16e61058404c669d644d8369; corrección de desempate de prueba: b4612e2c5cbf0af36c5857dce52f0c2515020be7; optimización de lecturas Spreadsheet: ff848cf620fcf582e8d6b1821c270147fb73ba9d.
 - La rama base GPSpedia2.2.5 conserva HEAD d9acc68d889985c2e2f42fe3a02e502efc86ead1. No se modificaron servicios desplegados ni datos externos.
+
+
+### Reconciliación de tareas anteriores — 2026-11-17
+- GP-UX-CUT-MODAL-01: segunda corrección local cerrada. CI run 44006857813 ejecutó CutDetailModalLayout 15/15 PASS dentro de 132 suites / 1,964 pruebas / 0 fallos. Se conserva únicamente validación visual Android/PWA/escritorio pendiente de Beta.
+- GP-PWA-SPLASH-PRELOAD-01: se actualiza su estado operativo, antes EN PROGRESO por una nota histórica, a COMPLETADA CON VALIDACIÓN DIFERIDA A BETA; evidencia PWAStartupScenarios 16/16 PASS y suite CI integral aprobada.

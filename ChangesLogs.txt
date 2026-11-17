@@ -1468,3 +1468,10 @@ GP-UX-PYS-TUTORIAL-ASSOCIATION-06 — 2026-11-16
 - TermsAcceptance 19/19 PASS; TermsAsyncSync 5/5 PASS; PWAStartupScenarios 16/16 PASS.
 - Estado actualizado a COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. La validación de navegador, Android/PWA, servicios AUTH remotos, conectividad real e IndexedDB real permanece pendiente de Beta; no se simuló ni se marcó como ejecutada.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — RECONCILIACIÓN GP-UX-CUT-MODAL-01 / GP-PWA-SPLASH-PRELOAD-01
+- GP-UX-CUT-MODAL-01: la segunda corrección de la cuadrícula del encabezado de detalle queda validada localmente por CutDetailModalLayout 15/15 PASS en CI run 44006857813. Solo permanece pendiente la inspección visual real en Beta.
+- GP-PWA-SPLASH-PRELOAD-01: se sincroniza el estado del backlog con la evidencia existente: PWAStartupScenarios 16/16 PASS y suite integral CI aprobada. Validación real de Android/PWA y caché/IndexedDB permanece diferida a Beta.
+================================================================================

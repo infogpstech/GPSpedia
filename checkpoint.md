@@ -430,3 +430,8 @@ Estado: **EN PROGRESO** hasta ejecutar la suite Node.js completa disponible; la 
 - Despliegue GitHub Pages es parte del flujo Beta autorizado por el usuario; no se requiere solicitar autorización adicional por cada ejecución. No se modificó configuración productiva de Pages.
 - Auditoría.txt actualizado con hallazgos de dashboard y fuentes métricas. ChangesLogs.txt y Tareas_Pendientes.md sincronizados con evidencia y límites.
 - Siguiente acción: verificar resultado final de Pages run 44006857769, HEAD remoto, commit documental y rama base; después continuar con el siguiente pendiente del backlog conforme a dependencias. No reconstruir historial anterior.
+
+
+## Reconciliación adicional de backlog — 2026-11-17
+- GP-UX-CUT-MODAL-01: la segunda corrección queda COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. CI run 44006857813 incluye CutDetailModalLayout 15/15 PASS; la suite total fue 132/1,964/0. La aceptación visual en Android/PWA y escritorio sigue pendiente.
+- GP-PWA-SPLASH-PRELOAD-01: se corrige el estado activo del backlog que aún decía EN PROGRESO pese a contar con PWAStartupScenarios 16/16 PASS y CI integral aprobado. Queda COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
