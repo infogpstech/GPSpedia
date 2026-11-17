@@ -89,15 +89,26 @@ El feed incremental del catálogo es una lectura pública y de solo lectura. La 
 
 ## Telemetría global de servicios
 
-Coordinator acumula conteos por servicio en buckets horarios de 24 horas dentro de ScriptProperties (`GPSpedia_SERVICE_TRAFFIC_HOUR_`). Registra únicamente operaciones protegidas que obtuvieron una lease; un reintento con el mismo `requestId` reutiliza la lease y no vuelve a incrementar el contador.
+Coordinator acumula conteos por servicio en buckets horarios de 24 horas dentro de ScriptProperties (GPSpedia_SERVICE_TRAFFIC_HOUR_). Registra operaciones protegidas que obtuvieron una lease y lecturas del feed incremental dentro del lock ya existente. Un reintento que reutiliza la misma lease no vuelve a incrementar el contador. El registro es best-effort: si falla, la operación protegida continúa.
 
-El registro ocurre dentro de la solicitud ya existente a Coordinator, bajo su lock y como operación best-effort. No se añade una llamada de red independiente desde el navegador por cada acción. Si falla la escritura de telemetría, la operación protegida continúa. La consulta agregada `ADMIN/getServiceTraffic` es de solo lectura y está reservada al rol Desarrollador; no devuelve usuarios, tokens ni identificadores de sesión. La propia consulta no se contabiliza.
+Para completar rutas POST que no pasan por Coordinator, cada servicio con rutas directas instrumentadas mantiene un contador local de ScriptProperties con buckets horarios de 24 horas y LockService.getScriptLock().tryLock(0). No espera por el lock: si hay contención o falla PropertiesService, omite únicamente el evento y continúa el handler. No se envía una llamada de red desde el navegador por cada acción.
 
-El agregado combina dos fuentes para CATALOG: (1) operaciones protegidas y el feed público contabilizados por Coordinator; (2) lecturas POST directas de CATALOG contabilizadas localmente en ScriptProperties con buckets horarios best-effort. Las acciones directas instrumentadas son getCatalogData, getDropdownData, getSuggestion y getNavigationData. El endpoint interno getServiceTraffic no se cuenta a sí mismo. El contador local usa tryLock(0): si el lock está ocupado o PropertiesService falla, omite solo el evento y nunca espera ni debe alterar la respuesta de catálogo. La consulta interna ADMIN→CATALOG se realiza al refrescar el panel, no por cada acción de usuario.
+**Rutas directas instrumentadas:**
+- CATALOG: getCatalogData, getDropdownData, getSuggestion y getNavigationData.
+- AUTH: validateSession.
+- WRITE: checkVehicle, getSuggestion y checkVinDuplicate.
+- FEEDBACK: getPysData, sendContactForm y suggestYear anónimo (userId 0). suggestYear autenticado y getCatalogChanges mantienen el conteo Coordinator.
+- UTILITIES: migrateTimestamps.
+- USERS: las acciones actuales conocidas (getUsers, createUser y updateProfile) pasan por Coordinator.
+- ADMIN: las operaciones pasan por Coordinator; ping se excluye como sondeo.
 
-Para habilitar el contador directo, generar un secreto aleatorio de al menos 32 caracteres (por ejemplo, localmente con `openssl rand -hex 32`) y guardar el mismo valor como Script Property `GPSpedia_CATALOG_TRAFFIC_SECRET` en los proyectos Apps Script CATALOG y ADMIN del mismo entorno. No guardar el valor en el repositorio, navegador, logs ni documentación. Sin esta propiedad en ambos proyectos, el dashboard conserva el conteo de Coordinator y marca la fuente directa CATALOG como parcial/no disponible; nunca interpreta la ausencia como cero confirmado.
+ADMIN consulta los contadores directos en una sola operación agrupada con UrlFetchApp.fetchAll al refrescar el panel Developer. Si fetchAll falla globalmente, intenta los endpoints por separado; el fallo de una fuente no invalida las demás ni el agregado Coordinator. La consulta se ejecuta como máximo según el intervalo del panel (60 s), no por cada acción del usuario. El endpoint interno getServiceTraffic no se cuenta a sí mismo.
 
-La interfaz Developer utiliza únicamente el agregado global; se retiró el panel y el almacén de métricas locales del navegador. Los detalles por servicio muestran conteos de 1, 6 y 24 horas. El agregado aún no representa todas las solicitudes HTTP: otras rutas públicas/no coordinadas (incluido el servicio UTILITIES) y sondeos de salud quedan excluidos. Un cero no demuestra ausencia de solicitudes.
+**Configuración de secretos en Beta:** generar un secreto aleatorio distinto por servicio (mínimo 32 caracteres; por ejemplo, localmente con openssl rand -hex 32). Guardar el mismo valor para cada servicio en dos lugares: la Script Property con nombre GPSpedia_<SERVICIO>_TRAFFIC_SECRET dentro del proyecto Apps Script de ese servicio y en el proyecto ADMIN. Servicios instrumentados: AUTH, CATALOG, WRITE, FEEDBACK y UTILITIES. No crear secreto para USERS (sus rutas conocidas ya pasan por Coordinator) ni ADMIN (el contador es central). No guardar valores en el repositorio, navegador, logs ni documentación.
+
+Si falta un secreto, un endpoint falla o la respuesta no cumple el contrato, el dashboard conserva Coordinator y marca únicamente esa fuente directa como parcial/no disponible; nunca interpreta ausencia como cero confirmado. La consulta ADMIN/getServiceTraffic es de solo lectura, está reservada a Desarrollador y no devuelve usuarios, tokens ni identificadores de sesión. La propia consulta y los health probes no se cuentan.
+
+La interfaz Developer utiliza únicamente el agregado global y no mantiene un segundo contador local del navegador. Los detalles por servicio muestran conteos de 1, 6 y 24 horas. El agregado cubre las rutas instrumentadas descritas; no representa todas las solicitudes HTTP externas o rutas antiguas/no instrumentadas. Un cero no demuestra ausencia de solicitudes.
 
 ## Política y recuperación
 
