@@ -1929,17 +1929,22 @@ function handleReportProblem(payload) {
             uploadedImage=null;
         }
     } catch(error) {
-        trashReportImageUpload_(uploadedImage);
+        let rollbackConfirmed = true;
         if(pendingSheet&&pendingExistingMetadata) {
             try { pendingSheet.getRange(pendingExistingMetadata.rowIndex,pendingExistingMetadata.column).setValue(pendingExistingMetadata.value); SpreadsheetApp.flush(); }
-            catch(rollbackError) { console.error("No se pudo restaurar metadata previa del reporte:",rollbackError); }
+            catch(rollbackError) { rollbackConfirmed = false; console.error("No se pudo restaurar metadata previa del reporte:",rollbackError); }
         }
         if(pendingSheet&&pendingRowNumber) {
             try {
                 pendingSheet.getRange(pendingRowNumber,COLS_FEEDBACKS.Usuario,1,3).clearContent();
                 if(pendingMetadataColumn) pendingSheet.getRange(pendingRowNumber,pendingMetadataColumn).clearContent();
                 SpreadsheetApp.flush();
-            } catch(rollbackError) { console.error("No se pudo revertir completamente la fila del reporte:",rollbackError); }
+            } catch(rollbackError) { rollbackConfirmed = false; console.error("No se pudo revertir completamente la fila del reporte:",rollbackError); }
+        }
+        if(uploadedImage && (!pendingSheet || (!pendingExistingMetadata && !pendingRowNumber) || rollbackConfirmed)) {
+            trashReportImageUpload_(uploadedImage);
+        } else if(uploadedImage) {
+            console.error("La imagen del reporte se conserva porque no se pudo confirmar la reversión de su referencia.");
         }
         throw error;
     } finally { if(lockAcquired) lock.releaseLock(); }
