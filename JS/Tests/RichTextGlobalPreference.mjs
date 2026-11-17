@@ -101,7 +101,10 @@ testCase("FEEDBACK declara permisos y despacho para lectura de todos los roles y
     assert.match(feedback, /getRichTextMode:\s*null,\s*setRichTextMode:\s*\["Desarrollador"\]/);
     assert.match(feedback, /case 'getRichTextMode':[\s\S]*?handleGetRichTextMode\(payload\)/);
     assert.match(feedback, /case 'setRichTextMode':[\s\S]*?handleSetRichTextMode\(payload\)/);
-    assert.match(feedback, /"setRichTextMode"\]\s*\.includes\(action\)/);
+    const router=feedback.slice(feedback.indexOf("function doPost(e)"),feedback.indexOf("\\nconst RICH_TEXT_MODE_PROPERTY_"));
+    assert.match(feedback,/actions: new Set\([\s\S]*?"setRichTextMode"/);
+    assert.match(router,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken\)/);
+    assert.doesNotMatch(router,/withSharedMutationLease_/);
 });
 
 testCase("Coordinator protege el recurso de configuración global con actor autenticado", () => {
