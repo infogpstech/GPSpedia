@@ -131,7 +131,7 @@ test('la aceptación local habilita la app inmediatamente y AUTH se sincroniza e
     assert.match(uiSource, /if \(!isCurrentTermsSyncSession_\(userId, sessionToken\)\) return false;/);
     const showStart = uiSource.indexOf('export function showApp(user)');
     const catalogStart = uiSource.indexOf('startCatalogLoad()', showStart);
-    const fadeStart = uiSource.indexOf('fadeSplash()', showStart);
+    const fadeStart = uiSource.indexOf('fadeSplash();', catalogStart);
     assert.ok(showStart >= 0 && catalogStart > showStart && fadeStart > catalogStart,
         'La carga cache-first debe iniciarse antes del desvanecimiento del Splash.');
     assert.match(uiSource, /setTimeout\(\(\) => \{ splash\.style\.display = 'none'; \}, 500\)/);
