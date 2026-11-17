@@ -444,3 +444,15 @@ Estado: **EN PROGRESO** hasta ejecutar la suite Node.js completa disponible; la 
 - CI: run 44007454034 SUCCESS, 132 suites / 1,964 pruebas / 0 fallos; GP-DASH-INSIGHTS-01 1/1, ServiceWorkerCache 10/10, OfflineBrandAssets 4/4; sintaxis V8 PASS.
 - GitHub Pages run 44007452731: build, upload y deploy SUCCESS.
 - Las pruebas reales de interfaz Android/PWA, escritorio, tema y accesibilidad continúan reservadas a Beta.
+
+
+## Verificación integral y cierre de iteración — 2026-11-17
+- HEAD de rama verificado antes de esta adenda: 0484a2470070a303256ecbf6c6205ad396c81dcd. Rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1; comparación de rama de trabajo: ahead, 0 behind.
+- Última ejecución de regresión para el código y los registros: GitHub Actions run 44007607666 SUCCESS — 132 suites / 1,964 pruebas / 0 fallos; prueba de dashboard 1/1, ServiceWorkerCache 10/10 y OfflineBrandAssets 4/4; parsing V8 aprobado.
+- GitHub Pages run 44007607153: build SUCCESS, report-build-status SUCCESS y deploy SUCCESS.
+- App Shell en v65; los recursos del dashboard y estilos se invalidan correctamente en la caché PWA.
+- Revisión del diff desde el HEAD inicial de esta iteración: cambios acotados a dashboard, agregación FEEDBACK, estilos/HTML, prueba de regresión, contratos de Service Worker y registros. Sin cambios en AUTH, roles, permisos, datos históricos, endpoints externos ni deployments Apps Script.
+- GP-DASH-INSIGHTS-01, GP-TERMS-ASYNC-01 y GP-PWA-SPLASH-PRELOAD-01: COMPLETADAS CON VALIDACIÓN DIFERIDA A BETA. GP-UX-CUT-MODAL-01: regresión local aprobada; aceptación visual Beta pendiente.
+- No quedan tareas locales abiertas identificadas en el backlog activo; permanecen pruebas de campo/Beta (navegador real, Android/PWA, temas, viewports, aceptación remota AUTH, IndexedDB y datos Spreadsheet reales).
+- La autorización del usuario confirma que GitHub Pages puede desplegarse como parte del flujo Beta sin solicitar autorización por cada commit. La rama base no fue modificada.
+- Continuidad: continuar con la siguiente fase de verificación Beta de las tareas cerradas, no abrir nuevas mejoras hasta completar la verificación integral prevista por NORMAS_DESAROLLO.md.
