@@ -1510,3 +1510,11 @@ No se han desplegado proyectos Apps Script ni configurado secretos remotos. La f
 - P4.3a: currentRows y duplicateIds se calculan una vez por lote en handleOrganizeUnusedImagesBatch. Se conserva latestRowsBeforeMove por archivo y todas las revalidaciones/rollback. En 20 archivos se evitan hasta 19 lecturas completas iniciales y 19 scans de duplicados.
 - Pruebas AdminReplacedImagesIntegrity 55/55; CI 44154558840 SUCCESS: 145 suites / 2,117 pruebas / 0 fallos; health read-only 7/7.
 - P4.3b sigue pendiente: claim/reserva atómica breve y commit por auditId/operationId; recuperación de expiración y pruebas de duplicados concurrentes, fallo entre Drive/Spreadsheet y rollback. No retirar ScriptLock ni cambiarlo por tryLock/UserLock hasta cerrar ese diseño.
+### P4 — optimizaciones seguras completadas — 2026-11-17
+- P4.1: PyS en paralelo con cursor/snapshot; errores aislados; cursor solo con datos frescos.
+- P4.2: compositor Inbox no espera conversaciones; carga remota en segundo plano.
+- P4.3a: inventario y duplicados una vez por lote; relectura final de seguridad conservada.
+- P4.3b: CacheService getAll/putAll en lotes de 100; 205 páginas: 9 llamadas frente a 615.
+- P4.3c: publicación CATALOG por lotes de 50 con requestId idempotente y reset ante persistencia parcial; 20 cambios: 1 viaje de red frente a 20.
+- P4.3d: alcance ScriptLock revisado y conservado por ahora. Los leases Coordinator ya protegen conflictos de recursos; no se justificó retirar la protección local sin medición.
+- CI 44156469990 SUCCESS: 145 suites / 2,123 pruebas / 0 fallos; health 7/7; Pages build SUCCESS.
