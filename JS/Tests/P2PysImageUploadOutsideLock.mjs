@@ -7,7 +7,7 @@ const ui=readFileSync(new URL("../Frontend/ui.js",import.meta.url),"utf8");
 const a=runPysCreationIntegrityTests({feedback,ui});
 const b=runPysImageStorageRecoveryTests({feedback,ui});
 for(const [name,result] of [["PysCreationIntegrity",a],["PysImageStorageRecovery",b]]){
- console.log(name+": "+result.passed+"/"+result.passed+" PASS");
+ console.log(name+": "+result.passed+"/"+(result.passed+result.failed)+" PASS");
  for(const item of result.results||[])if(item.status!=="PASS")console.error(name,item.name,item.message);
 }
 assert.equal(a.failed,0,"PysCreationIntegrity tiene fallos");

@@ -57,7 +57,7 @@ function makeSheet(rows,name,state,options){
 }
 
 function buildHarness(feedback,ui,options={}){
-    const state={pysRows:(options.pysRows||[]).map(r=>r.slice()),opsRows:(options.opsRows||[]).map(r=>r.slice()),pysSheet:null,opsSheet:null,files:{},createdFiles:0,fileCreated:false,flushCount:0,lockWaits:0,lockReleases:0,trashed:0,folder:null};
+    const state={pysRows:(options.pysRows||[]).map(r=>r.slice()),opsRows:(options.opsRows||[]).map(r=>r.slice()),pysSheet:null,opsSheet:null,files:{},createdFiles:0,fileCreated:false,fileCreatedWhileLocked:false,lockHeld:Boolean(options.lockAlreadyHeld),flushCount:0,lockWaits:0,lockReleases:0,trashed:0,folder:null};
     if(options.pysRows)state.pysSheet=makeSheet(state.pysRows,"pys",state,options);
     if(options.opsRows)state.opsSheet=makeSheet(state.opsRows,"PysOperations",state,options);
     const driveRoot={getId:()=>"drive-root"};
@@ -66,7 +66,7 @@ function buildHarness(feedback,ui,options={}){
         getId:()=>"pys-folder-id-000000000000",getName:()=>"Problemas y Soluciones",getParents:()=>iterator([cortes]),
         getSharingAccess:()=>"PRIVATE",getSharingPermission:()=>"VIEW",
         createFile(blob){
-            state.createdFiles++;state.fileCreated=true;
+            state.createdFiles++;state.fileCreated=true;state.fileCreatedWhileLocked=state.lockHeld;
             const id="FILEID000000000000"+String(state.createdFiles).padStart(4,"0");
             const file={id,blob,description:"",trashed:false,
                 getId(){return id;},getMimeType(){return blob.mimeType;},getSize(){return blob.bytes.length;},
@@ -88,7 +88,7 @@ function buildHarness(feedback,ui,options={}){
             computeDigest:(algorithm,value)=>Array.from(crypto.createHash("sha256").update(Buffer.isBuffer(value)?value:Array.isArray(value)?Buffer.from(value):String(value)).digest())
         },
         DriveApp:{getFileById:id=>state.files[id]||null},
-        LockService:{getScriptLock:()=>({hasLock:()=>Boolean(options.lockAlreadyHeld),waitLock:()=>{state.lockWaits++;},releaseLock:()=>{state.lockReleases++;}})},
+        LockService:{getScriptLock:()=>({hasLock:()=>Boolean(options.lockAlreadyHeld),waitLock:()=>{state.lockWaits++;state.lockHeld=true;},releaseLock:()=>{state.lockReleases++;state.lockHeld=false;}})},
         SpreadsheetApp:{flush:()=>{state.flushCount++;if(options.failFlushAt===state.flushCount)throw new Error("Spreadsheet flush failed");}},
         getSafeSheet:name=>name==="pys"?state.pysSheet:name==="PysOperations"?state.opsSheet:null,
         getSpreadsheet:()=>({insertSheet:name=>{
@@ -179,6 +179,11 @@ export function runPysCreationIntegrityTests({feedback,ui}){
     test("una operación diferente recibe el siguiente ID",()=>{
         const h=buildHarness(feedback,ui);const a=h.api.add(h.validPayload(OP_A));const b=h.api.add(h.validPayload(OP_B,{titulo:"Otra falla"}));
         assert.equal(a.problemId,"isue-001");assert.equal(b.problemId,"isue-002");
+    });
+    test("la transferencia de imagen PyS ocurre fuera del ScriptLock",()=>{
+        const h=buildHarness(feedback,ui);h.api.add(h.validPayload());
+        assert.equal(h.state.fileCreatedWhileLocked,false);
+        assert.equal(h.state.lockWaits,1);assert.equal(h.state.lockReleases,1);
     });
     test("serializa altas independientes y libera el lock en cada operación",()=>{
         const h=buildHarness(feedback,ui);const a=h.api.add(h.validPayload(OP_A));const b=h.api.add(h.validPayload(OP_B,{titulo:"Otra falla"}));
