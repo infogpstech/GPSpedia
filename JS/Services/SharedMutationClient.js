@@ -154,7 +154,7 @@ function createSharedMutationClient_(dependencies) {
             let response;
             try {
                 response = fetch(url, {
-                    method: "post", contentType: "application/json", muteHttpExceptions: true,
+                    method: "post", contentType: "application/json", muteHttpExceptions: true, followRedirects: true,
                     payload: JSON.stringify({ action: "__invalidateSessionActorCache",
                         payload: { secret, userId: id, sessionTokens: tokens } })
                 });
