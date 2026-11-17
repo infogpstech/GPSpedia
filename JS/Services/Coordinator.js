@@ -963,7 +963,7 @@ function createSharedMutationCoordinator_(dependencies) {
         if (requestId && !/^[A-Za-z0-9_-]{8,128}$/.test(requestId)) {
             throw new Error("El identificador de la publicación del catálogo no es válido.");
         }
-        const events = changes.map(sourceValue => {
+        const events = changes.map((sourceValue, index) => {
             const source = sourceValue && typeof sourceValue === "object" && !Array.isArray(sourceValue) ? sourceValue : {};
             let collection = String(source.collection || "").trim().toLowerCase();
             let recordId = String(source.recordId || "").trim();
@@ -984,6 +984,11 @@ function createSharedMutationCoordinator_(dependencies) {
             }
             const event = { collection, recordId, operation: changeOperation, snapshot,
                 createdAt: new Date(now()).toISOString(), sourceService: service, sourceOperation: operation };
+            if (requestId) {
+                event.sourceRequestId = requestId;
+                event.batchIndex = index;
+                event.batchCount = changes.length;
+            }
             let serialized = JSON.stringify(event), resetRequired = false;
             if (serialized.length > CATALOG_CHANGE_MAX_EVENT_LENGTH_) {
                 event.collection = "*"; event.recordId = "*"; event.operation = "reset"; event.snapshot = null;
@@ -1059,11 +1064,6 @@ function createSharedMutationCoordinator_(dependencies) {
             events.forEach((item, index) => {
                 currentRevision++;
                 const storedEvent = Object.assign({}, item.event, { revision: currentRevision, resetRequired: item.resetRequired });
-                if (requestId) {
-                    storedEvent.sourceRequestId = requestId;
-                    storedEvent.batchIndex = index;
-                    storedEvent.batchCount = events.length;
-                }
                 properties.setProperty(CATALOG_CHANGE_EVENT_PREFIX_ + currentRevision, JSON.stringify(storedEvent));
             });
             properties.setProperty(CATALOG_CHANGE_REVISION_PROPERTY_, String(currentRevision));
