@@ -105,3 +105,13 @@ undefined
 - Efectos automáticos de push: run 44090225648 en HEAD posterior tuvo 2 suites fallidas (AUTH recuperación de contraseña e INTEGRATION CDN woff2), fuera del corte; Pages run 44090225354 SUCCESS. No confundir con la regresión del corte. No se desplegaron Apps Script.
 - Archivos añadidos previamente: JS/Tests/RemoteServiceHealth.mjs y .github/workflows/deployed-service-health.yml.
 - Siguiente tarea iniciada: GP-DEV-TRAFFIC-GLOBAL-02 — auditar y ajustar el panel Developer para usar el agregado global de Coordinator como fuente principal en lugar de métricas locales del navegador. Primeros hallazgos: Coordinator ya define buckets horarios globales de 24 h y ADMIN/getServiceTraffic; api-config.js todavía registra cada solicitud en createServiceMetricsStore local (ventana 15 min, máximo 600 eventos). Debe inspeccionarse la UI y cobertura antes de implementar.
+
+
+### Adenda de auditoría — GP-DEV-TRAFFIC-GLOBAL-02 — 2026-11-17
+- Estado de continuidad: rama GPSpedia2.2.5_work; último HEAD tras registrar verificación y auditoría: cf76263dc2c3b35e52aa09f5ca24661a5ac0a41b.
+- Auditoría inicial de frontend/backend completada. ui.js usa getServiceMetricsSnapshot() tanto para métricas por servicio como para el gráfico «Actividad de este navegador»; index.html mantiene además el panel «Tráfico global coordinado».
+- api-config.js captura routeAction y getCatalogChanges en un almacén local de 15 minutos/600 eventos. Esta información es exclusiva de la sesión/navegador y no representa tráfico de otros clientes.
+- Coordinator ya agrega buckets horarios de 24 horas en ScriptProperties, consulta protegida ADMIN/getServiceTraffic y excluye su propia consulta. El registro se hace al adquirir lease y para validateSessionContext, como best-effort.
+- Hallazgo de cobertura: Catalog (lecturas públicas y endpoints de catálogo) no llama Coordinator; otros servicios tienen rutas no coordinadas para acciones públicas/no protegidas; ADMIN ping también se excluye. Por tanto, el global actual es un subconjunto de operaciones protegidas, no tráfico HTTP total de las siete plataformas.
+- No se modificó código productivo ni se desplegó Apps Script. No se ejecutaron escrituras reales de telemetría.
+- Siguiente paso inmediato: auditar todos los caminos doPost por servicio y evaluar un mecanismo de contabilización central para rutas coordinadas y no coordinadas, sin sumar un viaje de red por cada solicitud ni introducir contención en lecturas. Después, definir el alcance exacto y los contratos de prueba antes de retirar el buffer local del panel.
