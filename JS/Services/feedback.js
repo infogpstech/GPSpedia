@@ -3063,10 +3063,36 @@ function handleAddProblem(source) {
     const preflightSheet = getPysSheet_(true);
     validatePysRecords_(preflightSheet);
     const preflightOpsSheet = getPysOperationsSheet_();
-    readPysOperations_(preflightOpsSheet);
+    const preflightOps = readPysOperations_(preflightOpsSheet);
+    let models = requestedModels.map(findUniqueCortesVehicleForPys_);
+    p.modelosAsociados = models;
+    const hash = buildPysPayloadHash_(p, image, models);
+    const preflightOp = preflightOps.find(item => item.opId === opId) || null;
+    let preflightExisting = null;
+    if (preflightOp) {
+        if (preflightOp.payloadHash !== hash) throw new Error("El identificador de operación ya pertenece a otro contenido PyS; no se creó otro problema.");
+        if (preflightOp.status === "RECOVERY_REQUIRED") throw new Error("La operación PyS requiere recuperación manual; no se creó otro problema.");
+        const rows = findPysRowsById_(preflightSheet, preflightOp.problemId);
+        if (rows.length > 1) throw new Error("El ID del problema aparece más de una vez; se detuvo la recuperación.");
+        if (rows.length === 1) {
+            const storedUrl = normalizePysImageReference_(rows[0].row[6]);
+            const expected = buildPysExpectedRow_(preflightOp.problemId, p, storedUrl, models);
+            if (!storedUrl || !pysRowMatchesPayload_(rows[0].row, expected)) {
+                throw new Error("El registro PyS existente no coincide con la operación; requiere revisión.");
+            }
+            preflightExisting = rows[0];
+        } else if (preflightOp.status === "LINKED") {
+            throw new Error("La operación PyS figura vinculada, pero no existe su registro; requiere revisión.");
+        }
+        if (preflightOp.imageFileId && preflightOp.status !== "UPLOAD_PENDING") {
+            throw new Error("La operación PyS contiene una referencia de imagen inesperada; requiere revisión.");
+        }
+    }
+    const needsUpload = !preflightOp || (!preflightOp.imageFileId && !preflightExisting);
     const folder = getPysImagesFolder_().folder;
     let preparedFile = null, preparedFileId = "", preparedUrl = "";
     try {
+        if (needsUpload) {
         const fileName = "pys_" + opId + "_" + Date.now() + "." + image.extension;
         preparedFile = folder.createFile(Utilities.newBlob(image.bytes, image.mimeType, fileName));
         if (!preparedFile) throw new Error("Drive no confirmó la creación de la imagen.");
@@ -3080,6 +3106,7 @@ function handleAddProblem(source) {
             "mimeType=" + image.mimeType, "sizeBytes=" + image.sizeBytes
         ].join("\n"));
         assertPysImageFolderPermissions_(preparedFile, folder);
+        }
     } catch (uploadError) {
         if (preparedFile) {
             try { preparedFile.setTrashed(true); } catch (cleanupError) {}
@@ -3089,14 +3116,10 @@ function handleAddProblem(source) {
 
     const lock = LockService.getScriptLock();
     let lockAcquired = false, sheet = null, opsSheet = null, op = null;
-    let models = requestedModels;
     let file = preparedFile, fileId = "", url = "", problemId = "";
     try {
         acquireFeedbackScriptLock_(lock);
         lockAcquired = true;
-        models = requestedModels.map(findUniqueCortesVehicleForPys_);
-        p.modelosAsociados = models;
-        const hash = buildPysPayloadHash_(p, image, models);
         sheet = getPysSheet_(true);
         validatePysRecords_(sheet);
         opsSheet = getPysOperationsSheet_();
@@ -3119,19 +3142,19 @@ function handleAddProblem(source) {
                     op = writePysOperation_(opsSheet, op.rowNumber,
                         Object.assign({}, op, { status: "LINKED", imageUrl: storedUrl, updatedAt: new Date().toISOString() }));
                 }
-                try { preparedFile.setTrashed(true); } catch (cleanupError) {}
+                if (preparedFile) { try { preparedFile.setTrashed(true); } catch (cleanupError) {} }
                 file = null;
                 return { status: "success", message: "Problema registrado correctamente.", problemId, recovered: true };
             }
             if (op.status === "LINKED") {
-                try { preparedFile.setTrashed(true); } catch (cleanupError) {}
+                if (preparedFile) { try { preparedFile.setTrashed(true); } catch (cleanupError) {} }
                 file = null;
                 throw new Error("La operación PyS figura vinculada, pero no existe su registro; requiere revisión.");
             }
 
             if (op.imageFileId) {
                 if (op.status !== "UPLOAD_PENDING") {
-                    try { preparedFile.setTrashed(true); } catch (cleanupError) {}
+                    if (preparedFile) { try { preparedFile.setTrashed(true); } catch (cleanupError) {} }
                     file = null;
                     throw new Error("La operación PyS contiene una referencia de imagen inesperada; requiere revisión.");
                 }
@@ -3140,7 +3163,7 @@ function handleAddProblem(source) {
                 try {
                     file = verifyPendingPysImageFile_(op, image, folder);
                 } catch (verifyError) {
-                    try { preparedFile.setTrashed(true); } catch (cleanupError) {}
+                    if (preparedFile) { try { preparedFile.setTrashed(true); } catch (cleanupError) {} }
                     file = null;
                     try {
                         writePysOperation_(opsSheet, op.rowNumber,
@@ -3148,7 +3171,7 @@ function handleAddProblem(source) {
                     } catch (ledgerError) {}
                     throw verifyError;
                 }
-                try { preparedFile.setTrashed(true); } catch (cleanupError) {}
+                if (preparedFile) { try { preparedFile.setTrashed(true); } catch (cleanupError) {} }
             } else {
                 if (op.status !== "PENDING") {
                     try { preparedFile.setTrashed(true); } catch (cleanupError) {}
