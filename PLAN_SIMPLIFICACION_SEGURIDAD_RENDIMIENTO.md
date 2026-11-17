@@ -173,3 +173,10 @@ Cada fase debe actualizar el backlog y checkpoint. Agrupar cambios por tarea ló
 - Reportes individuales y sugerencias de cambio cargan imagen antes del lock de escritura. La persistencia conserva asociación, autor y metadata; si la reversión no se confirma, el archivo se conserva.
 - CI 44141910133: 141 suites / 2,029 pruebas / 0 fallos. Health read-only 44141910250: 7/7. Pages 44141907494: SUCCESS.
 - P2.2a COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Siguiente: P2.2b simplificar carga de imagen PyS fuera del lock sin añadir validaciones transaccionales.
+
+
+### Cierre P2.2b — 2026-11-17
+- PyS prepara y transfiere la imagen antes del ScriptLock. La sección crítica queda en asignación de ID, ledger/fila y confirmación; se conserva el ledger existente y los reintentos `UPLOAD_PENDING`.
+- Reintentos ya vinculados no vuelven a subir imagen; transferencias redundantes concurrentes se descartan tras revalidar el `opId` bajo lock.
+- CI 44144972128: 142 suites / 2,104 pruebas / 0 fallos. Health read-only 44144972115: 7/7. Pages 44144970560: SUCCESS.
+- P2.2b COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Siguiente P2.3: contrato del flujo YouTube resumable directo, conservando IndexedDB y aprobación.

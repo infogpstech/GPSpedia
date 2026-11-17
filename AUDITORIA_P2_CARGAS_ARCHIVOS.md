@@ -65,3 +65,10 @@ Las funciones ADMIN de auditoría, conciliación, movimiento, restauración y or
 - `handleReportProblem` y `handleSuggestCutChange` ahora cargan imágenes antes del lock. El lock protege únicamente la consulta/confirmación de duplicados y la persistencia de filas/metadata.
 - Regresión `P2FeedbackImageUploadLocks.mjs` 1/1 PASS; CI 141 suites / 2,029 pruebas / 0 fallos; health remoto 7/7; Pages SUCCESS.
 - P2.2b pendiente: `handleAddProblem` (PyS) aún crea el archivo Drive dentro del ScriptLock y mantiene un ledger de operaciones. La siguiente refactorización debe evitar agregar capas de transacción y reducir ese lock al mínimo, preservando reintento básico e IDs.
+
+
+## Seguimiento P2.2b — cierre
+- `handleAddProblem` ahora realiza preflight, prepara y carga la imagen fuera del ScriptLock. La persistencia y la asociación usan el ledger existente bajo un tramo breve.
+- Los reintentos vinculados no suben otra imagen; `UPLOAD_PENDING` reutiliza el archivo. No se añadieron estados nuevos ni capas transaccionales.
+- PyS tests 53/53 + 22/22; CI 142 suites / 2,104 pruebas / 0 fallos; health 7/7; Pages SUCCESS.
+- P2.2b completada localmente; Beta Drive/OAuth y concurrencia real pendientes.
