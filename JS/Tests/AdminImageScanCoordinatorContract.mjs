@@ -140,6 +140,9 @@ const feedbackRouterHarness = new Function(
     }
     function withSharedSessionActor_(event, actor) { return event; }
     function doPostInternal_(event) { return JSON.parse(event.postData.contents); }
+    const DIRECT_SERVICE_TRAFFIC_CONFIG_ = { actions: new Set() };
+    function readDirectServiceTraffic_() { return { status: "unavailable" }; }
+    function recordDirectServiceTraffic_() { return false; }
     const ContentService = { createTextOutput: value => ({ value, setMimeType() { return this; } }), MimeType: { TEXT: "text/plain" } };
     return {
         calls,
