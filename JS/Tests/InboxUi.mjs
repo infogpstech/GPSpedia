@@ -619,7 +619,9 @@ check("El botón más agrega el modelo directamente y el resto de la tarjeta abr
     assert.ok(association.includes("event.stopPropagation()"));
     assert.ok(association.includes("newlySelectedIds.add(String(v.id))"));
     assert.ok(association.includes("openConfirmVehicleForPysModal(v, confirmedVehicle"));
-    assert.ok(!association.includes("itemDiv.onclick = () =>"));
+    assert.ok(association.includes("itemDiv.onclick = event =>"));
+    assert.ok(association.includes("detailsButton.onclick = event =>"));
+    assert.ok(association.includes('event.target.closest(".pys-association-result-add")'));
 });
 
 let passed = 0;
