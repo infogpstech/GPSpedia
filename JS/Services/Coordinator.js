@@ -52,7 +52,6 @@ function coordinatorPolicy_(service, operation) {
             updateUser: { write: [...identityWrite, "SESSION_CONTEXTS"] },
             logout: { write: [...identityWrite, "SESSION_CONTEXTS"] },
             migrateLegacyPasswords: { write: identityWrite },
-            getServiceTraffic: { read: ["SERVICE_TRAFFIC"] },
             migrateLegacyRoleRevocationMarkersToSharedState: { write: ["USERS", "LOGS", "SESSION_CONTEXTS"] }
         },
         USERS: {
@@ -72,6 +71,7 @@ function coordinatorPolicy_(service, operation) {
         },
         ADMIN: {
             sessionActivity: { read: ["SESSION_CONTEXTS"] },
+            getServiceTraffic: { read: ["SERVICE_TRAFFIC"] },
             // Las acciones ADMIN leen el contexto central; no escriben LastActivityAt por cada solicitud.
             getReplacedImages: { read: ["USERS", "CORTES", "DRIVE", "IMAGE_INVENTORY", "TUTORIAL", "FEEDBACK", "LOGOS", "RELAY"] },
             getDriveStorage: { read: ["USERS", "DRIVE"] },
