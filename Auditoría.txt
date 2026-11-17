@@ -43,3 +43,23 @@ Registro vigente posterior a la rotación del 2026-11-16. La evidencia históric
 ### Estado
 
 Implementación local aplicada; validación local completa de la suite general pendiente. No se ha desplegado ni probado el servicio remoto en esta iteración.
+
+
+================================================================================
+2026-11-17 — AUDITORÍA GP-DASH-INSIGHTS-01
+1. El Panel de Actividad no ofrecía indicadores ni jerarquía de información (severidad media, UX/observabilidad).
+   - Evidencia inicial: el modal solo contenía tablas de ActividadUsuario y aportaciones; los eventos se mostraban con códigos crudos y el diseño no daba lectura rápida de contribuciones.
+   - Corrección: resumen con KPIs, ranking de cortes por valoraciones útiles, clasificación separada de respuestas «no útil»/«no funciona», agregados de años, principales colaboradores y pestaña de actividad reciente con etiquetas comprensibles.
+   - Validación: JS/Tests/ActivityDashboardInsights.mjs 1/1 PASS; CI run 44006857813, 132 suites/1,964 pruebas/0 fallos.
+
+2. Riesgo de lectura excesiva de columnas de Cortes al calcular indicadores (severidad media, rendimiento).
+   - Hallazgo durante revisión del primer diseño: una lectura de ancho completo habría incluido columnas de imágenes y datos que no participan en los indicadores.
+   - Corrección antes del cierre: buildActivityDashboardInsights_() lee únicamente ID/marca/modelo y las seis columnas de tipo/contador de corte; no trae columnas de imágenes. Feedbacks y FeedbackYearApplications se limitan a los últimos 500 registros y la actividad a los últimos 100.
+   - Validación: prueba de agregación con hojas simuladas y suite CI completa aprobadas.
+
+3. contadorBusqueda no es una fuente histórica fiable para popularidad (severidad baja, limitación de datos).
+   - Evidencia: existe la columna en el esquema Cortes, pero no se identificó un escritor activo que la incremente.
+   - Decisión: no mostrar ranking de consultas ni añadir escrituras por cada pulsación/selección en esta tarea. Cualquier instrumentación futura requiere evaluar coste de Spreadsheet, latencia y deduplicación.
+
+Resultado: implementación local cerrada con validación diferida a Beta. No se modificaron datos históricos, permisos, servicios desplegados ni rama base.
+================================================================================

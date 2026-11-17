@@ -415,3 +415,18 @@ Estado: **EN PROGRESO** hasta ejecutar la suite Node.js completa disponible; la 
 - Rotación normativa: `Auditoría.txt` original (179,631 caracteres Unicode, blob `307ad6db2907c36ddbd949c64ea1d624dea86164`) archivado sin pérdida en dos partes; manifiesto `Auditoría_Archive/manifest.md` contiene blobs y longitudes y verifica reconstrucción exacta. `Auditoría.txt` activo contiene los hallazgos de esta implementación.
 - No se modificaron servicios, deployments, endpoints, secretos ni datos externos. No se alteró la rama base.
 - **Siguiente acción:** ejecutar `node --experimental-default-type=module JS/Tests/RunServiceTests.mjs` en un checkout disponible de la rama autorizada y revisar el diff completo; corregir fallos locales antes de continuar con GP-DASH-INSIGHTS-01.
+
+
+## Continuidad — cierre local GP-DASH-INSIGHTS-01 / GP-TERMS-ASYNC-01 / GP-PWA-SPLASH-PRELOAD-01 — 2026-11-17
+
+- Repositorio infogpstech/GPSpedia; rama autorizada GPSpedia2.2.5_work. HEAD de código verificado: ff848cf620fcf582e8d6b1821c270147fb73ba9d. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin modificaciones.
+- GP-DASH-INSIGHTS-01 implementada: nueva vista Resumen con tarjetas KPI, rankings útiles/no útiles, resumen de años, principales colaboradores y pestañas de aportes/actividad reciente. FEEDBACK getActivityLogs agrega indicadores con lecturas acotadas: columnas mínimas de Cortes, últimos 500 Feedbacks y últimas 500 FeedbackYearApplications; actividad reciente mantiene límite 100. Se conserva RBAC Desarrollador/Jefe/Supervisor.
+- El ranking de búsquedas no se muestra porque no existe evidencia de un escritor activo fiable de contadorBusqueda. No se incorporó instrumentación adicional ni escrituras por búsqueda.
+- Renderizado seguro con DOM APIs/textContent; se mejoró la legibilidad de acciones y tablas. CSS responsive para tarjetas y rankings; no se añadieron librerías externas.
+- Prueba nueva JS/Tests/ActivityDashboardInsights.mjs cubre agregación, desempate estable, ranking, respuestas negativas, confirmaciones/sugerencias, clasificación de actores, aplicaciones completadas, lectura acotada y XSS. CI final run 44006857813: 132 suites / 1,964 pruebas / 0 fallos; test específico GP-DASH-INSIGHTS-01 1/1 PASS. La sintaxis V8 de módulos JS del workflow también aprobó.
+- GP-TERMS-ASYNC-01: 19/19 TermsAcceptance y 5/5 TermsAsyncSync PASS; regresión integral aprobada.
+- GP-PWA-SPLASH-PRELOAD-01: 16/16 PWAStartupScenarios PASS; regresión integral aprobada.
+- Los tres requerimientos quedan COMPLETADOS CON VALIDACIÓN DIFERIDA A BETA. Beta pendiente: visual real en Android/PWA y escritorio; tema claro/oscuro, teclado/accesibilidad y viewports; aceptación/sincronización remota AUTH; primer arranque/cache caliente/fría/IndexedDB real.
+- Despliegue GitHub Pages es parte del flujo Beta autorizado por el usuario; no se requiere solicitar autorización adicional por cada ejecución. No se modificó configuración productiva de Pages.
+- Auditoría.txt actualizado con hallazgos de dashboard y fuentes métricas. ChangesLogs.txt y Tareas_Pendientes.md sincronizados con evidencia y límites.
+- Siguiente acción: verificar resultado final de Pages run 44006857769, HEAD remoto, commit documental y rama base; después continuar con el siguiente pendiente del backlog conforme a dependencias. No reconstruir historial anterior.

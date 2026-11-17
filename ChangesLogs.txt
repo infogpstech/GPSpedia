@@ -1447,3 +1447,24 @@ GP-UX-PYS-TUTORIAL-ASSOCIATION-06 — 2026-11-16
 - La auditoría acumulativa alcanzó 179,631 caracteres Unicode. Se rotó sin pérdida en `Auditoría_Archive/Auditoría_2026-11-16_parte_001.txt` y `parte_002.txt`; `Auditoría_Archive/manifest.md` registra blobs, longitudes y reconstrucción exacta. `Auditoría.txt` inicia el registro activo posterior a la rotación.
 - Estado: implementación local aplicada; suite general Node.js/CI pendiente. GP-DASH-INSIGHTS-01 permanece PENDIENTE LOCAL. La auditoría transversal P2 de modales fue confirmada como verificada en Beta por el usuario y se cierra en el backlog.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — GP-DASH-INSIGHTS-01 — DASHBOARD DE APORTACIONES E INDICADORES
+- JS/Frontend/activityDashboard.js: render seguro del resumen, KPIs, rankings, métricas de años y principales colaboradores; etiquetas más comprensibles para tipos de actividad.
+- JS/Frontend/ui.js: integración del resumen al abrir Panel de Actividad; conserva la protección de contexto de sesión y roles existentes.
+- index.html: nueva pestaña Resumen; se conservan Aportes y Actividad reciente.
+- style.css: tarjetas, barras CSS sin dependencias externas, layout adaptable, tablas con anchos controlados y ajuste de texto largo.
+- JS/Services/feedback.js: getActivityLogs incorpora buildActivityDashboardInsights_(); reutiliza la autorización existente y las fuentes Cortes, Feedbacks y FeedbackYearApplications. Cortes se lee por columnas específicas (sin traer columnas de imágenes); Feedbacks y aplicaciones se limitan a los últimos 500 registros; feed sigue limitado a 100 eventos.
+- Clasificación separada de valoraciones útiles, «no útil» y «no funciona»; confirmaciones/sugerencias/aplicaciones de años y aportes verificados/anónimos según suggestionActorKey. No se muestra ranking de búsquedas porque contadorBusqueda no tiene escritor fiable confirmado.
+- Prueba nueva JS/Tests/ActivityDashboardInsights.mjs integrada al runner; verifica agregación, rankings, respuestas negativas, años, ventana de lectura y render seguro ante XSS.
+- Validación CI final run 44006857813: 132 suites, 1,964 pruebas aprobadas, 0 fallos; dashboard 1/1 PASS; sintaxis V8 PASS. GitHub Pages build/deploy run 44006857769 se encontraba en proceso al preparar esta adenda; se verificará antes de declarar el despliegue final.
+- No se modificaron datos históricos, endpoints, permisos, deployments Apps Script ni rama base. Validación visual con navegador real y datos Beta pendiente.
+================================================================================
+
+================================================================================
+2026-11-17 — CIERRE LOCAL GP-TERMS-ASYNC-01 / GP-PWA-SPLASH-PRELOAD-01
+- Se ejecutó la suite Node.js/CI integral tras las correcciones de contratos: 132 suites / 1,964 pruebas / 0 fallos (run 44006857813).
+- TermsAcceptance 19/19 PASS; TermsAsyncSync 5/5 PASS; PWAStartupScenarios 16/16 PASS.
+- Estado actualizado a COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. La validación de navegador, Android/PWA, servicios AUTH remotos, conectividad real e IndexedDB real permanece pendiente de Beta; no se simuló ni se marcó como ejecutada.
+================================================================================

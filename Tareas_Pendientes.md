@@ -912,10 +912,10 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 
 ## Nuevas solicitudes — Panel de actividad, aceptación de términos y precarga del catálogo (2026-11-16)
 
-**Estado global: EN PROGRESO.** GP-TERMS-ASYNC-01 y GP-PWA-SPLASH-PRELOAD-01 tienen implementación local aplicada y requieren completar la suite automatizada; GP-DASH-INSIGHTS-01 sigue pendiente local. La auditoría transversal P2 de modales fue verificada en Beta y está cerrada. No se modifica la rama base ni se despliegan servicios.
+**Estado global: IMPLEMENTACIONES LOCALES COMPLETADAS CON VALIDACIÓN DIFERIDA A BETA.** GP-DASH-INSIGHTS-01, GP-TERMS-ASYNC-01 y GP-PWA-SPLASH-PRELOAD-01 tienen implementación y regresión local/CI aprobadas. La auditoría transversal P2 de modales fue verificada en Beta y está cerrada. No se modifica la rama base ni se despliegan servicios.
 
 ### GP-DASH-INSIGHTS-01 — Dashboard de aportaciones e indicadores de actividad
-**Prioridad: P1 · Estado: PENDIENTE LOCAL.**
+**Prioridad: P1 · Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
 
 - Rediseñar el Panel de Actividad para que sea un tablero de contribuciones y calidad de la información vehicular, no una tabla de texto sin jerarquía.
 - Incorporar indicadores resumidos y gráficas legibles: aportaciones por usuario, cortes aportados, vehículos cubiertos, valoraciones de utilidad, confirmaciones/sugerencias de años y actividad reciente.
@@ -933,7 +933,7 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 **Impacto backend preliminar:** las contribuciones y algunos contadores ya están disponibles. Para un desglose histórico fiable de likes, respuestas de utilidad y años, probablemente se requiera ampliar el servicio fuente JS/Services/feedback.js (FEEDBACK), reutilizando getActivityLogs; no implica crear otro servicio ni modificar datos productivos. El ranking de búsquedas no puede darse por válido hasta confirmar quién escribe contadorBusqueda; si no hay escritor, instrumentarlo requeriría una escritura adicional por selección de modelo, con impacto medible en latencia/Spreadsheet y protección contra duplicados.
 
 ### GP-TERMS-ASYNC-01 — Aceptación local inmediata y registro remoto en segundo plano
-**Prioridad: P1 · Estado: EN PROGRESO — IMPLEMENTACIÓN LOCAL APLICADA; pendiente de suite Node.js/CI.**
+**Prioridad: P1 · Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
 
 - Al pulsar «Aceptar», guardar inmediatamente una aceptación local vinculada a usuario, dispositivo y versión de términos; cerrar el aviso sin esperar la red y continuar con el catálogo.
 - Enviar acceptTerms en segundo plano, conservar el registro remoto y reintentar silenciosamente cuando corresponda si hay un fallo transitorio.
@@ -962,3 +962,27 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 1. Completar la suite Node.js/CI de GP-TERMS-ASYNC-01 y GP-PWA-SPLASH-PRELOAD-01; corregir cualquier fallo local antes de cerrar esas implementaciones. La validación con servicios desplegados y dispositivos reales queda diferida a Beta.
 2. Implementar GP-DASH-INSIGHTS-01 después de confirmar el contrato y las fuentes de datos; decidir y documentar qué agregados se pueden obtener sin backend y cuáles requieren extender FEEDBACK.
 3. Mantener como validaciones Beta pendientes únicamente las pruebas reales aún no ejecutadas. GP-UX-INBOX-02 ya tiene regresión local/CI aprobada y conserva solo su aceptación visual Beta; la auditoría transversal P2 de modales está verificada en Beta y cerrada.
+
+
+### Cierre local y preparación Beta — 2026-11-17
+
+**GP-DASH-INSIGHTS-01 — COMPLETADA CON VALIDACIÓN DIFERIDA A BETA**
+- Se sustituyó la vista inicial de dos tablas por un resumen con indicadores de vehículos, cortes, valoraciones útiles, respuestas «no útil» y «no funciona»; ranking de cortes con valoraciones útiles y vehículos con respuestas negativas; resumen de confirmaciones/sugerencias/aplicaciones de años y aportes verificados/anónimos; y principales colaboradores.
+- El historial de actividad conserva su pestaña, con etiquetas de acción más legibles. Las tablas fijan el layout, evitan romper encabezados internamente y permiten ajustar textos largos en pantallas estrechas.
+- FEEDBACK reutiliza getActivityLogs y su autorización existente. La agregación lee de Cortes solo las columnas necesarias, limita Feedbacks y FeedbackYearApplications a sus últimos 500 registros y conserva el feed de actividad limitado a 100 eventos. No se modifican datos históricos ni se crea un endpoint nuevo.
+- Los contadores de utilidad proceden de Cortes.utilCorte1/2/3; los casos no útiles/no funcionales se clasifican a partir de las respuestas registradas en Feedbacks y se muestran separados. Las confirmaciones, sugerencias y aplicaciones se distinguen según los campos y estados existentes.
+- No se presenta ranking de modelos consultados: no se identificó un escritor activo fiable para contadorBusqueda. La instrumentación por apertura/selección se mantiene fuera de este alcance para no añadir escrituras de Spreadsheet sin medir su coste.
+- Renderizado con textContent y DOM APIs; sin interpolación de datos históricos en HTML ni dependencias de gráficas externas.
+- Prueba específica GP-DASH-INSIGHTS-01: agregación, ranking, clasificación de años, ventana de lectura y XSS aprobados. CI final run 44006857813: 132 suites, 1,964 pruebas aprobadas, 0 fallos. Sintaxis V8 aprobada.
+- Beta pendiente: contraste visual en escritorio y Android/PWA, tema claro/oscuro, tamaños estrechos, accesibilidad/teclado, datos reales de Feedbacks y Apps Script desplegado. Estas validaciones no bloquean el cierre local.
+
+**GP-TERMS-ASYNC-01 — COMPLETADA CON VALIDACIÓN DIFERIDA A BETA**
+- Implementación local ya descrita en la adenda anterior; suite CI final aprobada. Pruebas específicas TermsAcceptance 19/19 y TermsAsyncSync 5/5 PASS. Se conserva pendiente la prueba real de sincronización remota y escenarios de dispositivo/navegador en Beta.
+
+**GP-PWA-SPLASH-PRELOAD-01 — COMPLETADA CON VALIDACIÓN DIFERIDA A BETA**
+- Implementación local ya descrita en la adenda anterior; PWAStartupScenarios 16/16 PASS y suite CI final aprobada. Pruebas de primer arranque, caché caliente, sincronización e IndexedDB real quedan para Beta.
+
+**Evidencia común**
+- Rama de trabajo: GPSpedia2.2.5_work. HEAD de código verificado: ff848cf620fcf582e8d6b1821c270147fb73ba9d.
+- Commits de implementación dashboard: b26948fd5eee717ea965baafc9c320033a3658dc; ajuste de contrato CSS: 334ffd80d905958f16e61058404c669d644d8369; corrección de desempate de prueba: b4612e2c5cbf0af36c5857dce52f0c2515020be7; optimización de lecturas Spreadsheet: ff848cf620fcf582e8d6b1821c270147fb73ba9d.
+- La rama base GPSpedia2.2.5 conserva HEAD d9acc68d889985c2e2f42fe3a02e502efc86ead1. No se modificaron servicios desplegados ni datos externos.
