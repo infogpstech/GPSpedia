@@ -20,3 +20,11 @@ undefined
 2026-11-17 — AJUSTE DE PRUEBA GP-DEV-CUT-AUDIT-TOOLBAR-01
 - CI confirmó DeveloperPanelUX 7/7 e InboxUi 80/80. CortesImageReconciliationUI falló por escapes de regex perdidos al generar la prueba; se reemplazan por comprobaciones de cadenas y del último bloque reduced-motion, sin cambios de producción.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — CIERRE GP-DEV-CUT-AUDIT-TOOLBAR-01
+- Toolbar iconográfica compacta y expandible aprobada por CI: 133 suites / 1,987 pruebas, 0 fallos. CortesImageReconciliationUI 14/14; DeveloperPanelUX 7/7; InboxUi 80/80; AdminReplacedImagesIntegrity 55/55.
+- GitHub Pages run 44081111776 SUCCESS. No se cambió lógica de ADMIN/Drive, permisos ni confirmaciones.
+- Estado: COMPLETADA CON VALIDACIÓN VISUAL DIFERIDA A BETA. Pendiente revisar en navegador/PWA la expansión, teclado, estados de acciones y movimiento reducido.
+================================================================================

@@ -1023,7 +1023,7 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - Pruebas de expiración, reutilización, identidad, concurrencia, abuso y compatibilidad. Envío real de correo y scopes del deployment pendientes de Beta.
 
 ### GP-DEV-CUT-AUDIT-TOOLBAR-01 — Barra de herramientas del panel de auditoría de cortes
-**Prioridad: P2 · Estado: EN PROGRESO**
+**Prioridad: P2 · Estado: COMPLETADA CON VALIDACIÓN VISUAL DIFERIDA A BETA**
 - Reorganizar los controles en una barra compacta iconográfica, autodesplegable y accesible, coherente con el patrón del Inbox.
 - Preservar acciones, permisos, confirmaciones, estados y navegación existentes.
 
@@ -1121,3 +1121,23 @@ git pull --ff-only origin GPSpedia2.2.5_work
 git rev-parse HEAD
 ```
 Después de la sincronización: desplegar FEEDBACK en el proyecto Beta autorizado; comprobar Reportes/Aportaciones/tickets propios por rol; cambiar entre filtros con caché fresca y confirmar que no se repite la lectura; esperar más de 60 s y confirmar refresh sin vaciar el contenido; reabrir conversaciones y comprobar que los mensajes frescos se reutilizan; enviar/archivar/cerrar/marcar leído y comprobar invalidación; recibir un mensaje nuevo y comprobar que lastMessageId obliga a actualizar; cambiar de cuenta y comprobar aislamiento; repetir offline con contenido cacheado. Registrar cuenta/rol, navegador, tiempos, solicitudes de red y versión desplegada.
+
+
+#### Cierre local — GP-DEV-CUT-AUDIT-TOOLBAR-01 — 2026-11-17
+- Commits: 5c4024f57e491c841092cb5cd2dd325df5c97c89 (toolbar), 699ac6d7ae4112128eb339b9f76b8050dc6ae679 (contratos CSS), fe1ee909fad6adc47bbdca3293e45dad73a5fabb (tests).
+- CI run 44081112777 SUCCESS: 133 suites, 1,987 pruebas, 0 fallos. CortesImageReconciliationUI 14/14; DeveloperPanelUX 7/7; InboxUi 80/80; AdminReplacedImagesIntegrity 55/55.
+- GitHub Pages run 44081111776 SUCCESS para fe1ee909fad6adc47bbdca3293e45dad73a5fabb.
+- Se conservaron los cinco IDs, handlers, permisos, confirmaciones, hidden/disabled y updateControls. La barra compacta/expandible solo modifica presentación; reduced-motion y scroll global validados por CI.
+
+#### Pruebas Beta pendientes — sincronización segura (ejecutar antes de probar)
+```bash
+set -euo pipefail
+test "$(basename "$(git rev-parse --show-toplevel)")" = "GPSpedia"
+case "$(git remote get-url origin)" in https://github.com/infogpstech/GPSpedia|https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia|git@github.com:infogpstech/GPSpedia.git) ;; *) echo 'Repositorio remoto incorrecto'; exit 1 ;; esac
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work"
+if [ -n "$(git status --porcelain)" ]; then echo 'Hay cambios locales sin guardar; no se sincroniza.'; exit 1; fi
+git fetch origin GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git rev-parse HEAD
+```
+Después: abrir Developer → Auditoría de Cortes en escritorio y PWA móvil; comprobar barra compacta, expansión/contracción por clic y teclado, nombres accesibles, ausencia de desbordamiento, y visibilidad/disabled de continuar, registrar, organizar y conciliar en estados parcial/completo; verificar confirmaciones sin ejecutar operaciones destructivas; repetir con prefers-reduced-motion activo.
