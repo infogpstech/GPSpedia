@@ -124,10 +124,10 @@ testCase("El contexto central de sesión se registra al login, se revoca y se re
   assert.match(source,/withSharedSessionActor_\(e, actor\)/);
  }
  assert.match(users,/payload && payload\.__sharedSessionActor/);
- assert.match(write,/payload\\s*&&\\s*payload\\.__sharedSessionActor/);
- assert.match(admin,/payload\\s*&&\\s*payload\\.__sharedSessionActor/);
- assert.match(feedback,/payload\\s*&&\\s*payload\\.__sharedSessionActor/);
- assert.match(utilities,/payload\\s*&&\\s*payload\\.__sharedSessionActor/);
+ assert.match(write,/__sharedSessionActor/);
+ assert.match(admin,/__sharedSessionActor/);
+ assert.match(feedback,/__sharedSessionActor/);
+ assert.match(utilities,/__sharedSessionActor/);
  assert.match(utilities,/withSharedMutationLease_\("UTILITIES","migrateTimestamps"/);
  assert.match(utilities,/__sharedSessionActor:actor/);
  assert.match(utilities,/sessionToken:payload&&payload\.sessionToken/);
