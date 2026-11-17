@@ -151,6 +151,9 @@ function createDispatchHarness(source, service, extraBindings = {}) {
         },
         doPostInternal_(event) { return JSON.parse(event.postData.contents).payload; },
         ContentService: { createTextOutput: value => ({ value, setMimeType() { return this; } }), MimeType:{TEXT:"text/plain"} },
+        DIRECT_SERVICE_TRAFFIC_CONFIG_: { actions: new Set() },
+        readDirectServiceTraffic_: () => ({ status: "unavailable" }),
+        recordDirectServiceTraffic_: () => false,
         ...extraBindings
     };
     const names = Object.keys(bindings);
