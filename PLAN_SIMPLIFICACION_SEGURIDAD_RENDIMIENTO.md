@@ -2,7 +2,7 @@
 
 **Fecha:** 2026-11-17  
 **Rama:** `GPSpedia2.2.5_work`  
-**Estado:** REQUISITO REGISTRADO — PLAN PENDIENTE DE EJECUCIÓN  
+**Estado:** P0–P5 COMPLETADAS LOCALMENTE; validaciones de integración diferidas a Beta  
 **Objetivo:** que las funciones de GPSpedia respondan con la menor latencia posible, eliminando validaciones y coordinaciones redundantes que no aporten valor funcional al alcance de la plataforma.
 
 ## 1. Requisito funcional aprobado
@@ -94,6 +94,7 @@ La autorización por rol se resuelve con el rol asociado a la sesión iniciada. 
 **Criterio de salida:** las funciones habituales no ejecutan pasos de seguridad/transacción innecesarios ni esperan operaciones no relacionadas.
 
 ### P5 — Pruebas locales y verificación de aceptación
+**Estado: COMPLETADA LOCALMENTE (2026-11-17); validaciones de integración diferidas a Beta.**
 - Pruebas de contrato que demuestren que las rutas ordinarias ya no llaman a Coordinator ni adquieren leases.
 - Pruebas de rol: cada capacidad sigue limitada a los roles definidos en la matriz vigente.
 - Pruebas de creación/edición de cortes, aportes, imágenes, tutoriales y videos con el flujo simplificado.
@@ -107,11 +108,11 @@ La autorización por rol se resuelve con el rol asociado a la sesión iniciada. 
 ## 4. Orden de trabajo y entregables
 
 1. **P0 COMPLETADA:** auditoría estática y mapa de llamadas publicados en `AUDITORIA_P0_LATENCIA_VALIDACIONES.md`.
-2. **P1 EN PROGRESO:** comenzar por P1.1 (WRITE/ADMIN cortes y `checkOperation`), luego P1.2 (locks de escritura) y P1.3 (FEEDBACK).
-3. Implementar P2 y validar cargas de archivos.
-4. Implementar P3 y verificar las tres excepciones de sesión.
-5. Ejecutar P4 sobre el resto de la plataforma.
-6. Ejecutar P5 y registrar resultados reales.
+2. **P1 COMPLETADA LOCALMENTE:** escrituras ordinarias y FEEDBACK simplificados; Beta pendiente.
+3. **P2 COMPLETADA LOCALMENTE:** cargas desacopladas de locks y YouTube resumable directo; Beta OAuth/Drive/YouTube pendiente.
+4. **P3 COMPLETADA LOCALMENTE:** logout, invalidación de caché, revocación y bloqueo temporal cubiertos por pruebas; despliegue/propiedades Beta pendientes.
+5. **P4 COMPLETADA:** arranque paralelo, Inbox sin espera, optimizaciones ADMIN seguras y publicación CATALOG por lotes.
+6. **P5 COMPLETADA LOCALMENTE:** 145 suites, 2,123 pruebas, 0 fallos; health read-only 7/7 y Pages build SUCCESS. Beta pendiente según backlog.
 
 Cada fase debe actualizar el backlog y checkpoint. Agrupar cambios por tarea lógica y no modificar la rama base `GPSpedia2.2.5`.
 
@@ -217,3 +218,13 @@ Cada fase debe actualizar el backlog y checkpoint. Agrupar cambios por tarea ló
 - P4.3c: cambios CATALOG de ADMIN agrupados en lotes de 50, revisiones consecutivas en una sección crítica, requestId idempotente y recuperación con reset ante persistencia parcial. 20 cambios pasan de 20 viajes de red a 1.
 - P4.3d: ScriptLock revisado y conservado. Las operaciones ya comparten leases de Coordinator por recurso; no hay evidencia de que el lock local bloquee módulos independientes. No sustituirlo por tryLock/UserLock sin medición y pruebas.
 - CI 44156469990 SUCCESS: 145 suites / 2,123 pruebas / 0 fallos. Health read-only 7/7; Pages build SUCCESS.
+
+
+### Cierre P5 — verificación local integral — 2026-11-17
+- **Estado: COMPLETADA LOCALMENTE.** GitHub Actions run 44166031280: 145 suites, 2,123 pruebas aprobadas, 0 fallos.
+- Health read-only run 44166031201: 7/7 servicios disponibles. Este resultado solo confirma disponibilidad de los deployments actuales; no valida el código Apps Script recién modificado.
+- GitHub Pages run 44166030514: SUCCESS.
+- La regresión cubre contratos de rutas sin lease ordinaria, RBAC, escrituras/aportes, cargas de archivos, sesiones/revocación, bloqueo de login, concurrencia/idempotencia y regresiones de interfaz.
+- Durante P5 se sincronizaron los fixtures aislados de AUTH/USERS con sus fuentes; se actualizaron contratos obsoletos de AUTH/USERS/ADMIN y se retiró una política Coordinator de AUTH para el benchmark que ya consume actor cacheado. La lectura interna SERVICE_TRAFFIC de Coordinator se conserva; ADMIN no adquiere una lease adicional para esa acción.
+- No se midieron latencias reales. Las mejoras cuantificadas en llamadas/pasos se limitan a las métricas documentadas en P4; no se extrapolan a tiempo de respuesta.
+- Las pruebas con navegador real, Apps Script actualizado, ScriptProperties, OAuth, Spreadsheet/Drive/YouTube y concurrencia multiusuario quedan pendientes de Beta en Tareas_Pendientes.md.
