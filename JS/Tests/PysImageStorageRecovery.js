@@ -118,6 +118,7 @@ function buildHarness(feedback, options = {}) {
         getSafeSheet: name => name === "PysOperations" ? state.operationsSheet : sheet,
         getSpreadsheet: () => ({ insertSheet: name => { if (name === "PysOperations") { state.operationsSheet = operationsSheet; return operationsSheet; } return sheet; } }),
         logUserActivity: () => {},
+        findUniqueCortesVehicleForPys_: value => value,
         state
     };
 

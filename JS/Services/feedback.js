@@ -3084,7 +3084,7 @@ function handleAddProblem(source) {
         } else if (preflightOp.status === "LINKED") {
             throw new Error("La operación PyS figura vinculada, pero no existe su registro; requiere revisión.");
         }
-        if (preflightOp.imageFileId && preflightOp.status !== "UPLOAD_PENDING") {
+        if (preflightOp.imageFileId && preflightOp.status !== "UPLOAD_PENDING" && !preflightExisting) {
             throw new Error("La operación PyS contiene una referencia de imagen inesperada; requiere revisión.");
         }
     }

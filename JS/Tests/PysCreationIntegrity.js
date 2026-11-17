@@ -242,7 +242,7 @@ export function runPysCreationIntegrityTests({feedback,ui}){
     });
     test("libera el lock después de un fallo de validación de esquema",()=>{
         const h=buildHarness(feedback,ui,{pysRows:[["incorrecto"]]});
-        assert.throws(()=>h.api.add(h.validPayload()));assert.equal(h.state.lockWaits,1);assert.equal(h.state.lockReleases,1);
+        assert.throws(()=>h.api.add(h.validPayload()));assert.equal(h.state.lockWaits,0);assert.equal(h.state.lockReleases,0,"El esquema se valida antes de cargar la imagen o adquirir el lock.");
     });
     test("acepta exactamente los límites de título, descripción, solución y prevención",()=>{
         const h=buildHarness(feedback,ui);
