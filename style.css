@@ -5274,10 +5274,6 @@ body.dark-mode #login-modal #login-error.login-session-ended {
 @media (max-width:760px) {
     #inbox-modal-content .inbox-new-conversation-form { flex:1 1 0; }
 }
-@media (max-width:420px) {
-    #inbox-modal-content .inbox-composer-options-menu { gap:5px; }
-    #inbox-modal-content .inbox-composer-option select { padding:6px 5px; font-size:.82rem; }
-}
 
 
 /* GP-UX-CUT-MODAL-04 / GP-UX-TUTORIAL-MODAL-01 — jerarquía y espaciado de encabezados. */
@@ -5515,6 +5511,8 @@ body.dark-mode #inbox-modal-content .inbox-editor-shell { background:#2b3036; }
 @media (max-width:420px) {
     #inbox-modal-content .inbox-rich-text-toolbar { gap:2px; padding-inline:2px; }
     #inbox-modal-content .inbox-rich-text-toolbar .rich-toolbar-icon-button { height:30px; min-height:30px; }
+    #inbox-modal-content .inbox-composer-options-menu { gap:5px; }
+    #inbox-modal-content .inbox-composer-option select { padding:6px 5px; font-size:.82rem; }
 }
 #inbox-modal-content .inbox-editor-shell .inbox-message-input:focus-visible {
     outline:2px solid var(--gp-color-focus,#005fcc); outline-offset:-3px;
