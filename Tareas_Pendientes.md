@@ -1003,3 +1003,53 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - La política ADMIN/getCortesImageFolders declara únicamente DRIVE; el actor y su rol continúan validándose mediante el contexto central al adquirir la lease.
 - Se evita reservar SESSION_CONTEXTS para esta operación de lectura prolongada. Las demás políticas AUTH/ADMIN no cambian.
 - Regresión aislada: PASS; validación remota y CI pendientes.
+
+---
+
+## Solicitudes post revisión — 2026-11-16
+
+### GP-AUTH-LOGIN-DRIVE-LOCK-01 — Login independiente de la lectura prolongada de carpetas Drive
+**Prioridad: P1 · Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA**
+- Corregir el bloqueo cruzado entre ADMIN/getCortesImageFolders y AUTH/login.
+- La lectura conserva su lease sobre DRIVE y la autenticación central del actor; no reserva USERS ni SESSION_CONTEXTS durante la enumeración.
+- Prueba aislada: 55/55 PASS. CI run 44016976600 SUCCESS en el commit de implementación 43d045c4fb822b72060c15e18a9232cb36c3284b. La prueba nueva se añadió en c61deecd y se ejecutó localmente.
+- Beta pendiente: login tras el bloqueo temporal por intentos fallidos mientras se consulta el árbol de imágenes, con medición de duración y respuesta.
+
+### GP-AUTH-PASSWORD-RECOVERY-01 — Recuperación de contraseña
+**Prioridad: P1 · Estado: PENDIENTE**
+- Auditar el enlace «¿Olvidaste tu contraseña?» y los contratos AUTH/USERS.
+- Implementar recuperación segura por correo registrado, con verificación de titularidad, código de un solo uso, expiración, límites de intentos y respuesta que no permita enumerar cuentas.
+- Mantener hashes con salt, rendimiento de login, revocación de sesiones y actor central. No enviar contraseñas/códigos a logs ni permitir restablecer cuentas ajenas.
+- Pruebas de expiración, reutilización, identidad, concurrencia, abuso y compatibilidad. Envío real de correo y scopes del deployment pendientes de Beta.
+
+### GP-DEV-CUT-AUDIT-TOOLBAR-01 — Barra de herramientas del panel de auditoría de cortes
+**Prioridad: P2 · Estado: PENDIENTE**
+- Reorganizar los controles en una barra compacta iconográfica, autodesplegable y accesible, coherente con el patrón del Inbox.
+- Preservar acciones, permisos, confirmaciones, estados y navegación existentes.
+
+### GP-DEV-IMAGE-AUDIT-LIBRARY-UX-01 — Continuidad de auditoría y biblioteca de imágenes
+**Prioridad: P1/P2 · Estado: PENDIENTE**
+- Corregir «No hay cursor de continuación disponibles» y el rechazo por presupuesto seguro excedido.
+- Conservar snapshots parciales recuperables y cursores válidos; permitir reanudar sin duplicar ni perder progreso y no presentar una auditoría parcial como completa.
+- Rediseñar la biblioteca de imágenes con barra de funciones iconográfica y organizada, sin alterar las protecciones de archivos ni acciones destructivas.
+
+### GP-INBOX-LIST-NAV-01 — Simplificación de listas y navegación del Inbox
+**Prioridad: P2 · Estado: PENDIENTE**
+- Revisar límite de conversaciones/mensajes y decidir con evidencia si se conserva paginación interna o se elimina navegación redundante por botones.
+- Evitar descargas ilimitadas y conservar accesibilidad y rendimiento.
+
+### GP-INBOX-THREAD-TOOLBAR-01 — Organización de la bandeja de conversación
+**Prioridad: P2 · Estado: PENDIENTE**
+- Reorganizar botones y elementos del hilo con controles iconográficos autodesplegables.
+- Preservar acciones, destinatarios, borradores, estados leído/no leído, permisos y navegación móvil/escritorio.
+
+### GP-INBOX-CACHE-BANDS-01 — Caché de Reportes, Mensajes y Aportaciones
+**Prioridad: P1 · Estado: PENDIENTE**
+- Evitar recargas completas al cambiar de bandeja, asunto o categoría cuando exista respuesta local válida.
+- Aislar caché por identidad/rol/token y por categoría, consulta, cursor y filtros; refrescar en segundo plano conservando el contenido.
+- Definir TTL, invalidación tras mutaciones, límites de memoria y descarte de respuestas tardías entre sesiones.
+
+### GP-UX-SESSION-ENDED-01 — Centrado del aviso de sesión terminada
+**Prioridad: P3 · Estado: PENDIENTE**
+- Centrar el texto «Sesión terminada» dentro de la burbuja/aviso, sin desplazar los errores de acceso ni alterar el diseño responsive.
+- Añadir contrato DOM/visual anti-regresión.

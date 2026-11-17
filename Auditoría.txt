@@ -77,3 +77,13 @@ Resultado: implementación local cerrada con validación diferida a Beta. No se 
 - La regresión ahora exige que getCortesImageFolders lea DRIVE, no reserve USERS ni SESSION_CONTEXTS y permita AUTH/login en paralelo.
 - Resultado de regresión aislada: PASS; total reportado por el harness en esta ejecución. No equivale a prueba del deployment Apps Script/Drive.
 ================================================================================
+
+
+================================================================================
+2026-11-16 — GP-AUTH-PASSWORD-RECOVERY-01 — AUDITORÍA INICIAL
+- index.html contiene el enlace #forgot-password-link, pero JS/Frontend/main.js no registra un listener y JS/Frontend/auth.js no exporta una acción de recuperación. El enlace no inicia ningún flujo.
+- AUTH solo expone changePassword (requiere sesión vigente y contraseña actual) y resetUserPassword (exclusivo de Desarrollador para otra cuenta). Ninguna acción permite autoservicio sin sesión.
+- Users dispone de la columna Correo_Electronico; no se encontró implementación MailApp/GmailApp/sendEmail en los servicios revisados ni un contrato de recuperación en Coordinator/API routing.
+- La solución requiere un flujo nuevo con correo registrado, código de un solo uso, expiración, rate limit, digest protegido, respuesta no enumerable y revocación de sesiones al completar. Debe verificarse el scope de correo en el deployment AUTH antes de Beta.
+- No se modifica aún el servicio AUTH ni se altera el esquema/datos de usuarios durante esta auditoría.
+================================================================================

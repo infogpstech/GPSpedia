@@ -466,3 +466,13 @@ Estado: **EN PROGRESO** hasta ejecutar la suite Node.js completa disponible; la 
 ### Publicación complementaria de prueba — GP-AUTH-LOGIN-DRIVE-LOCK-01
 - La verificación de árbol detectó que el primer commit no incluía el nuevo contrato de regresión. Se añade en un commit complementario sin reescribir el historial.
 - La prueba versionada se ejecutó en harness aislado: 55/55 PASS, 0 fallos. CI del primer commit estaba en ejecución; se verificará también el nuevo HEAD.
+
+
+---
+
+## Continuidad — auditoría de solicitudes post revisión — 2026-11-16
+
+- HEAD al inicio de esta actualización documental: c61deecd11239cc2f36760d05d409c9ed12863d9. Rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin cambios.
+- Se registran formalmente las ocho solicitudes en Tareas_Pendientes.md. GP-AUTH-LOGIN-DRIVE-LOCK-01 queda COMPLETADA CON VALIDACIÓN DIFERIDA A BETA; las otras siete permanecen PENDIENTES.
+- GP-AUTH-PASSWORD-RECOVERY-01 auditada: el enlace olvidé contraseña no tiene listener; AUTH carece de acción de recuperación sin sesión; solo existen cambio con contraseña actual y restablecimiento administrativo. No se encontró servicio de correo en las fuentes inspeccionadas.
+- Siguiente tarea: diseñar e implementar recuperación mediante correo registrado con código temporal de un solo uso, digest protegido, límites de intentos, respuesta no enumerable y revocación de sesiones; revisar API routing, Coordinator y scopes del deployment AUTH.

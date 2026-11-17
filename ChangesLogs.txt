@@ -1500,3 +1500,11 @@ GP-UX-PYS-TUTORIAL-ASSOCIATION-06 — 2026-11-16
 - Se detectó en la verificación de publicación que la prueba de regresión no había quedado incluida en el primer árbol del commit. Se incorpora ahora explícitamente en JS/Tests/SharedMutationCoordinator.js.
 - Regresión aislada reejecutada contra Coordinator.js, SharedMutationClient.js y la prueba versionada: 55/55 PASS, 0 fallos.
 ================================================================================
+
+
+================================================================================
+2026-11-16 — REGISTRO DE OCHO SOLICITUDES POST REVISIÓN
+- Se registran GP-AUTH-LOGIN-DRIVE-LOCK-01, GP-AUTH-PASSWORD-RECOVERY-01, GP-DEV-CUT-AUDIT-TOOLBAR-01, GP-DEV-IMAGE-AUDIT-LIBRARY-UX-01, GP-INBOX-LIST-NAV-01, GP-INBOX-THREAD-TOOLBAR-01, GP-INBOX-CACHE-BANDS-01 y GP-UX-SESSION-ENDED-01 en Tareas_Pendientes.md.
+- GP-AUTH-LOGIN-DRIVE-LOCK-01 se cierra localmente: coordinador mantiene DRIVE y elimina reservas redundantes USERS/SESSION_CONTEXTS para getCortesImageFolders; prueba aislada 55/55 PASS; CI run 44016976600 SUCCESS en el commit de implementación. Beta real pendiente.
+- Auditoría inicial GP-AUTH-PASSWORD-RECOVERY-01: enlace de login sin listener; no existe acción de recuperación en AUTH/API/Coordinator ni integración de envío de correo en los servicios inspeccionados. Se registra el diseño de seguridad requerido; no se cambia todavía AUTH.
+================================================================================
