@@ -140,3 +140,8 @@ undefined
 - HEAD de la rama antes de esta actualización: d349f1601d2cb3161cb6917a83f603c932dad8de.
 - Se reconcilió BETA-043 con el estado actual: el panel local ya no existe; el dashboard usa únicamente Coordinator. Se mantiene visible la limitación de cobertura y la tarea GP-DEV-TRAFFIC-GLOBAL-02 queda en el punto 3 del orden general de ejecución, dentro del bloque de servicios/sesión/identificadores/telemetría.
 - Siguiente acción concreta: evaluar instrumentación de CATALOG y rutas públicas/no coordinadas sin añadir un viaje de red por petición ni bloquear lecturas; medir impacto y probar alternativas localmente antes de modificar el backend.
+
+
+### Estado final del workflow Pages — 2026-11-17
+- Pages build/deployment run 44093577511 terminó CANCELLED antes de completar el build/deploy. No se confirma publicación de GitHub Pages para el HEAD actual. No se ejecutó un deployment Apps Script.
+- La verificación remota de salud 44093578170 sí terminó SUCCESS, solo GET de diagnóstico; no equivale a despliegue.
