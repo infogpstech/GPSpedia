@@ -110,12 +110,47 @@ function insertRichTextPendingBreak_(editor){
  selection.removeAllRanges();selection.addRange(range);richEditorSelectionRanges_.set(editor,range.cloneRange());editor.dispatchEvent(new Event("input",{bubbles:true}));return true;
 }
 function applyRichTextInlineFormat_(editor,format,value=null){
- const range=getRichTextSavedRange_(editor);if(!range)return false;const state=getRichTextPendingFormats_(editor);
- if(range.collapsed){if(["bold","italic","underline","strike"].includes(format))state[format]=!state[format];else if(format==="color")state.color=value;else if(format==="font")state.fontFamily=SAFE_FONTS.get(value);else if(format==="size")state.fontSize=value;richEditorSelectionRanges_.set(editor,range.cloneRange());return true;}
- if(["bold","italic","underline","strike"].includes(format))state[format]=true;else if(format==="color")state.color=value;else if(format==="font")state.fontFamily=SAFE_FONTS.get(value);else if(format==="size")state.fontSize=value;
- const content=range.extractContents(),wrapper=wrapRichTextNodeWithFormats_(content,state);range.insertNode(wrapper);range.setStartAfter(wrapper);range.collapse(true);
- const selection=window.getSelection?.();selection?.removeAllRanges();selection?.addRange(range);richEditorSelectionRanges_.set(editor,range.cloneRange());editor.dispatchEvent(new Event("input",{bubbles:true}));return true;
+ let range=getRichTextSavedRange_(editor);if(!range)return false;
+ const state=getRichTextPendingFormats_(editor);
+ const tagByFormat={bold:"strong",italic:"em",underline:"u",strike:"s"};
+ if(range.collapsed){
+  if(["bold","italic","underline","strike"].includes(format))state[format]=!state[format];
+  else if(format==="color")state.color=value;
+  else if(format==="font")state.fontFamily=SAFE_FONTS.get(value);
+  else if(format==="size")state.fontSize=value;
+  richEditorSelectionRanges_.set(editor,range.cloneRange());return true;
+ }
+ if(tagByFormat[format]){
+  let node=range.startContainer;
+  if(node.nodeType===1&&node===editor)node=node.childNodes[range.startOffset]||node.lastChild||node;
+  const element=node.nodeType===1?node:node.parentElement;
+  const selector={bold:"strong,b",italic:"em,i",underline:"u",strike:"s,strike"}[format];
+  const existing=element?.closest?.(selector);
+  const active=Boolean(existing&&editor.contains(existing));
+  const command={bold:"bold",italic:"italic",underline:"underline",strike:"strikeThrough"}[format];
+  restoreRichTextSelection_(editor);
+  let applied=false;
+  try{applied=typeof document.execCommand==="function"&&document.execCommand(command,false,null)===true;}catch(_){applied=false;}
+  if(applied){
+   state[format]=!active;rememberRichTextSelection_(editor);editor.dispatchEvent(new Event("input",{bubbles:true}));return true;
+  }
+  if(active){state[format]=false;return false;}
+  range=getRichTextSavedRange_(editor);if(!range)return false;
+  state[format]=true;
+  const wrapper=document.createElement(tagByFormat[format]);wrapper.appendChild(range.extractContents());range.insertNode(wrapper);
+  range.setStartAfter(wrapper);range.collapse(true);
+ }else{
+  const property=format==="color"?"color":format==="font"?"font-family":"font-size";
+  const safeValue=format==="color"?value:format==="font"?SAFE_FONTS.get(value):value;
+  if(!["color","font","size"].includes(format)||!safeValue)return false;
+  if(format==="color")state.color=value;else if(format==="font")state.fontFamily=safeValue;else state.fontSize=safeValue;
+  const wrapper=document.createElement("span");wrapper.style.setProperty(property,safeValue);
+  wrapper.appendChild(range.extractContents());range.insertNode(wrapper);range.setStartAfter(wrapper);range.collapse(true);
+ }
+ const selection=window.getSelection?.();selection?.removeAllRanges();selection?.addRange(range);
+ richEditorSelectionRanges_.set(editor,range.cloneRange());editor.dispatchEvent(new Event("input",{bubbles:true}));return true;
 }
+
 function insertRichTextPlainText_(editor, value) {
     if (!restoreRichTextSelection_(editor)) return false;
     const selection = window.getSelection?.();
@@ -341,7 +376,7 @@ export function mountRichTextEditors(root = document) {
         bindRichTextEditorSelection_(editor);
         editor.addEventListener("beforeinput", event => {
             const state = getRichTextPendingFormats_(editor);
-            if (!hasRichTextPendingFormats_(state)) return;
+            if (!hasRichTextPendingFormats_(state) || !event.cancelable) return;
             if (["insertText", "insertReplacementText"].includes(event.inputType) && typeof event.data === "string") {
                 event.preventDefault(); insertRichTextWithPendingFormats_(editor, event.data);
             } else if (event.inputType === "insertParagraph" || event.inputType === "insertLineBreak") {
