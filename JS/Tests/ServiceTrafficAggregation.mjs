@@ -81,12 +81,14 @@ test("combina contadores directos de AUTH, WRITE y FEEDBACK con operaciones Coor
         };
     }
     const result = mergeDirectServiceTraffic_(coordinator, directResults);
-    for (const service of ["AUTH", "WRITE", "FEEDBACK", "UTILITIES"]) {
+    for (const service of ["AUTH", "WRITE", "FEEDBACK"]) {
         assert.equal(result.totals.last24Hours[service], coordinator.totals.last24Hours[service] + 9);
         assert.equal(result.buckets[0].counts[service], coordinator.buckets[0].counts[service] + 9);
         assert.equal(result.sources[service].directRequestsAvailable, true);
         assert.equal(result.sources[service].accuracy, "best_effort_nonblocking");
     }
+    assert.equal(result.totals.last24Hours.UTILITIES, coordinator.totals.last24Hours.UTILITIES, "UTILITIES no debe sumarse dos veces: migrateTimestamps ya obtiene lease Coordinator.");
+    assert.equal(result.sources.UTILITIES, undefined);
     assert.equal(result.totals.last24Hours.USERS, 1, "USERS conserva solo su fuente Coordinator porque sus acciones conocidas ya pasan por lease.");
     assert.equal(result.sources.coordinator.available, true);
 });
