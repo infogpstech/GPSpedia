@@ -40,6 +40,8 @@ function coordinatorPolicy_(service, operation) {
     const policies = {
         AUTH: {
             login: { write: [...identityWrite, "SESSION_CONTEXTS"] },
+            requestPasswordRecovery: { write: ["PASSWORD_RECOVERY"], trackActivity: false },
+            completePasswordRecovery: { write: [...identityWrite, "SESSION_CONTEXTS", "PASSWORD_RECOVERY"], trackActivity: false },
             acceptTerms: { read: ["SESSION_CONTEXTS"], write: ["USERS"], trackActivity: false },
             touchSession: { read: ["SESSION_CONTEXTS"], write: ["ACTIVE_SESSIONS"] },
             changePassword: { write: [...identityWrite, "SESSION_CONTEXTS"] },
@@ -171,7 +173,7 @@ function coordinatorPolicy_(service, operation) {
     // La enumeración prolongada de Drive ya autentica al actor central al adquirir
     // la lease. No debe reservar USERS ni SESSION_CONTEXTS durante el recorrido:
     // el login escribe ambos recursos y debe poder continuar en paralelo.
-    if ((service === "AUTH" || (service === "ADMIN" && operation !== "getCortesImageFolders")) &&
+    if (((service === "AUTH" && operation !== "requestPasswordRecovery") || (service === "ADMIN" && operation !== "getCortesImageFolders")) &&
         !readResources.includes("SESSION_CONTEXTS") && !writeResources.includes("SESSION_CONTEXTS")) {
         readResources.push("SESSION_CONTEXTS");
     }

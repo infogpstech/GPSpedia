@@ -837,6 +837,18 @@ export async function checkSession() {
     handleLoginSuccess(user, false);
 }
 
+export async function requestPasswordRecovery(username, email) {
+    const result = await routeAction("requestPasswordRecovery", { username, email });
+    if (!result || result.status !== "success") throw new Error("No se pudo procesar la solicitud de recuperación.");
+    return result;
+}
+
+export async function completePasswordRecovery(username, email, code, newPassword) {
+    const result = await routeAction("completePasswordRecovery", { username, email, code, newPassword });
+    if (!result || result.status !== "success") throw new Error(result && result.message || "No se pudo actualizar la contraseña.");
+    return result;
+}
+
 export async function login(username, password) {
     try {
         const result = await apiLogin(username, password);

@@ -656,6 +656,41 @@ function runSharedMutationCoordinatorTests() {
         expectThrow_(() => acquire_(r, "ADMIN", "unknownImageAction"), "política");
     });
 
+    test_("AUTH/requestPasswordRecovery no requiere sesión ni bloquea el login", function() {
+        const policy = coordinatorPolicy_("AUTH", "requestPasswordRecovery");
+        assert_(policy.writeResources.includes("PASSWORD_RECOVERY"), "La solicitud debe reservar el estado temporal.");
+        assert_(!policy.readResources.includes("SESSION_CONTEXTS") && !policy.writeResources.includes("SESSION_CONTEXTS"),
+            "La solicitud no debe exigir ni reservar una sesión autenticada.");
+        assert_(!policy.writeResources.includes("ACTIVE_SESSIONS"), "Solicitar código no debe modificar ni bloquear sesiones.");
+        const r = createRuntime_();
+        const recovery = acquire_(r, "AUTH", "requestPasswordRecovery");
+        const login = acquire_(r, "AUTH", "login");
+        assert_(recovery.status === "success" && login.status === "success", "Login debe coexistir con la solicitud de recuperación.");
+        const duplicate = acquire_(r, "AUTH", "requestPasswordRecovery");
+        assert_(duplicate.status === "error" && duplicate.code === "busy", "Las solicitudes simultáneas deben serializarse.");
+        release_(r, "AUTH", "login", login.token);
+        release_(r, "AUTH", "requestPasswordRecovery", recovery.token);
+    });
+
+    test_("AUTH/completePasswordRecovery protege identidad y consumo del código", function() {
+        const policy = coordinatorPolicy_("AUTH", "completePasswordRecovery");
+        ["USERS","ACTIVE_SESSIONS","LOGS","SESSION_CONTEXTS","PASSWORD_RECOVERY"].forEach(resource =>
+            assert_(policy.writeResources.includes(resource), "La finalización debe reservar " + resource + "."));
+        const r = createRuntime_();
+        const completion = acquire_(r, "AUTH", "completePasswordRecovery");
+        assert_(completion.status === "success", "La recuperación debe adquirir lease sin sesión previa.");
+        const login = acquire_(r, "AUTH", "login");
+        assert_(login.status === "error" && login.code === "busy", "Login debe serializarse con revocación y cambio de contraseña.");
+        const profile = acquire_(r, "USERS", "updateProfile");
+        assert_(profile.status === "error" && profile.code === "busy", "El perfil no debe competir con la recuperación.");
+        const request = acquire_(r, "AUTH", "requestPasswordRecovery");
+        assert_(request.status === "error" && request.code === "busy", "No debe reemplazarse el código durante su consumo.");
+        release_(r, "AUTH", "completePasswordRecovery", completion.token);
+        const loginAfter = acquire_(r, "AUTH", "login");
+        assert_(loginAfter.status === "success", "Login debe continuar tras la recuperación.");
+        release_(r, "AUTH", "login", loginAfter.token);
+    });
+
     test_("ADMIN/getCortesImageFolders no bloquea el login durante la enumeración de Drive", function() {
         const r = createRuntime_();
         const policy = coordinatorPolicy_("ADMIN", "getCortesImageFolders");

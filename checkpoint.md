@@ -476,3 +476,14 @@ Estado: **EN PROGRESO** hasta ejecutar la suite Node.js completa disponible; la 
 - Se registran formalmente las ocho solicitudes en Tareas_Pendientes.md. GP-AUTH-LOGIN-DRIVE-LOCK-01 queda COMPLETADA CON VALIDACIÓN DIFERIDA A BETA; las otras siete permanecen PENDIENTES.
 - GP-AUTH-PASSWORD-RECOVERY-01 auditada: el enlace olvidé contraseña no tiene listener; AUTH carece de acción de recuperación sin sesión; solo existen cambio con contraseña actual y restablecimiento administrativo. No se encontró servicio de correo en las fuentes inspeccionadas.
 - Siguiente tarea: diseñar e implementar recuperación mediante correo registrado con código temporal de un solo uso, digest protegido, límites de intentos, respuesta no enumerable y revocación de sesiones; revisar API routing, Coordinator y scopes del deployment AUTH.
+
+
+---
+
+## Continuidad — GP-AUTH-PASSWORD-RECOVERY-01 — 2026-11-17
+- HEAD de partida verificado: 301c7b3a5840549819b2b6126d548df44af07da2. Rama autorizada GPSpedia2.2.5_work; base GPSpedia2.2.5 verificada en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Normas vigentes, README, contexto operativo, checkpoint, backlog y registros activos consultados.
+- Implementación preparada: recuperación por usuario+correo registrado, código temporal de un solo uso, HMAC en CacheService, 10 minutos, 5 intentos, 3 solicitudes/hora y respuesta no enumerable.
+- La solicitud usa una lease PASSWORD_RECOVERY independiente y no bloquea login. La finalización coordina USERS, ACTIVE_SESSIONS, LOGS, SESSION_CONTEXTS y PASSWORD_RECOVERY; cambia PBKDF2-SHA256 y revoca sesiones anteriores.
+- Frontend de dos pasos en el modal de login; App Shell v66. JS/Tests/Auth.js mantiene paridad con Auth.js salvo ID de Spreadsheet aislado.
+- Estado EN PROGRESO hasta ejecutar PasswordRecovery.mjs, suite Node.js/CI y revisar el diff final. Beta pendiente: deployment AUTH, scope MailApp, recepción de correo, propiedades y revocación real.

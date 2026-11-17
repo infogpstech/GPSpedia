@@ -91,6 +91,8 @@ La confidencialidad y la integridad no dependen de ocultar el frontend: cada ope
 
 Al cerrar sesión se invalida el token correspondiente. Los cambios de rol, restablecimientos de contraseña, eliminación de cuenta y revocaciones globales invalidan el contexto antes de completar la modificación, evitando que una sesión anterior pueda recuperar privilegios. La restauración inicial puede migrar sesiones previas todavía válidas; los tokens ya revocados no se vuelven a registrar.
 
+La recuperación autoservicio utiliza el correo registrado, un código temporal de un solo uso con intentos y solicitudes limitados, y revoca las sesiones anteriores al actualizar la contraseña. La respuesta inicial no confirma si una cuenta existe; los códigos y contraseñas no se escriben en logs. El envío de correo y los permisos OAuth del servicio se validan en el deployment Beta.
+
 Las restricciones visuales solo añaden fricción y nunca sustituyen la autorización del servidor. Los endpoints y recursos públicos deben tratarse como públicos. El código versionado no demuestra que el deployment de Apps Script haya sido actualizado; la publicación y los permisos externos se verifican por separado.
 
 ### Accesibilidad y Mejoras Visuales Recientes

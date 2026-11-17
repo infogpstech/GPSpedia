@@ -113,6 +113,103 @@ async function initializeApp() {
             btn.classList.remove('btn-loading');
         });
     });
+    const forgotPasswordLink = document.getElementById('forgot-password-link');
+    const passwordRecoveryPanel = document.getElementById('password-recovery-panel');
+    const passwordRecoveryRequestForm = document.getElementById('password-recovery-request-form');
+    const passwordRecoveryCompleteForm = document.getElementById('password-recovery-complete-form');
+    const passwordRecoveryStatus = document.getElementById('password-recovery-status');
+    const passwordRecoveryBack = document.getElementById('password-recovery-back');
+    const loginForm = document.getElementById('login-form');
+
+    const setPasswordRecoveryStatus = (message, state = 'info') => {
+        if (!passwordRecoveryStatus) return;
+        passwordRecoveryStatus.textContent = String(message || '');
+        passwordRecoveryStatus.dataset.state = state;
+    };
+
+    if (forgotPasswordLink && passwordRecoveryPanel && passwordRecoveryRequestForm &&
+        passwordRecoveryCompleteForm && passwordRecoveryBack && loginForm) {
+        forgotPasswordLink.addEventListener('click', event => {
+            event.preventDefault();
+            loginForm.hidden = true;
+            forgotPasswordLink.hidden = true;
+            passwordRecoveryPanel.hidden = false;
+            const usernameInput = document.getElementById('password-recovery-username');
+            const loginUsername = document.getElementById('username');
+            if (usernameInput && loginUsername && !usernameInput.value) usernameInput.value = loginUsername.value;
+            setPasswordRecoveryStatus('', 'info');
+            passwordRecoveryRequestForm.hidden = false;
+            passwordRecoveryCompleteForm.hidden = true;
+            passwordRecoveryBack.hidden = false;
+        });
+
+        passwordRecoveryRequestForm.addEventListener('submit', async event => {
+            event.preventDefault();
+            const submit = passwordRecoveryRequestForm.querySelector('button[type="submit"]');
+            const username = String(document.getElementById('password-recovery-username').value || '').trim();
+            const email = String(document.getElementById('password-recovery-email').value || '').trim();
+            if (submit) submit.disabled = true;
+            setPasswordRecoveryStatus('Procesando la solicitud...', 'info');
+            try {
+                const result = await auth.requestPasswordRecovery(username, email);
+                document.getElementById('password-recovery-complete-username').value = username;
+                document.getElementById('password-recovery-complete-email').value = email;
+                passwordRecoveryRequestForm.hidden = true;
+                passwordRecoveryCompleteForm.hidden = false;
+                setPasswordRecoveryStatus(result.message || 'Si los datos corresponden a una cuenta activa, recibirás un código.', 'success');
+                document.getElementById('password-recovery-code').focus();
+            } catch (error) {
+                setPasswordRecoveryStatus(error && error.message || 'No se pudo procesar la solicitud. Inténtalo nuevamente.', 'error');
+            } finally {
+                if (submit) submit.disabled = false;
+            }
+        });
+
+        passwordRecoveryCompleteForm.addEventListener('submit', async event => {
+            event.preventDefault();
+            const submit = passwordRecoveryCompleteForm.querySelector('button[type="submit"]');
+            const username = document.getElementById('password-recovery-complete-username').value;
+            const email = document.getElementById('password-recovery-complete-email').value;
+            const code = document.getElementById('password-recovery-code').value;
+            const newPassword = document.getElementById('password-recovery-new-password').value;
+            const confirmation = document.getElementById('password-recovery-confirm-password').value;
+            if (newPassword !== confirmation) {
+                setPasswordRecoveryStatus('Las contraseñas no coinciden.', 'error');
+                return;
+            }
+            if (newPassword.trim().length < 8 || newPassword.trim().length > 256) {
+                setPasswordRecoveryStatus('La contraseña debe tener entre 8 y 256 caracteres.', 'error');
+                return;
+            }
+            if (submit) submit.disabled = true;
+            setPasswordRecoveryStatus('Verificando el código y actualizando la contraseña...', 'info');
+            try {
+                const result = await auth.completePasswordRecovery(username, email, code, newPassword);
+                passwordRecoveryCompleteForm.hidden = true;
+                passwordRecoveryRequestForm.hidden = true;
+                passwordRecoveryBack.hidden = false;
+                setPasswordRecoveryStatus(result.message || 'La contraseña se actualizó. Inicia sesión nuevamente.', 'success');
+                passwordRecoveryBack.focus();
+            } catch (error) {
+                setPasswordRecoveryStatus(error && error.message || 'No se pudo actualizar la contraseña. Verifica el código e inténtalo nuevamente.', 'error');
+            } finally {
+                if (submit) submit.disabled = false;
+            }
+        });
+
+        passwordRecoveryBack.addEventListener('click', () => {
+            passwordRecoveryRequestForm.reset();
+            passwordRecoveryCompleteForm.reset();
+            passwordRecoveryRequestForm.hidden = false;
+            passwordRecoveryCompleteForm.hidden = true;
+            passwordRecoveryPanel.hidden = true;
+            loginForm.hidden = false;
+            forgotPasswordLink.hidden = false;
+            setPasswordRecoveryStatus('', 'info');
+            document.getElementById('username').focus();
+        });
+    }
+
 
     const searchInput = document.getElementById('searchInput');
     const clearSearchBtn = document.getElementById('clear-search-btn');

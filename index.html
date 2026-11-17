@@ -80,7 +80,41 @@
                 <small style="color: var(--text-disabled);">v2.2.5</small>
             </div>
         </form>
-        <a href="#" id="forgot-password-link" style="color: var(--accent-color); text-decoration: none; margin-top: 15px; display: inline-block;">¿Olvidaste tu contraseña?</a>
+        <a href="#" id="forgot-password-link" style="color: var(--accent-color); text-decoration: none; margin-top: 15px; display: inline-block;" aria-controls="password-recovery-panel">¿Olvidaste tu contraseña?</a>
+
+        <section id="password-recovery-panel" hidden aria-labelledby="password-recovery-title">
+            <h2 id="password-recovery-title">Recuperar contraseña</h2>
+            <p id="password-recovery-status" class="password-recovery-status" role="status" aria-live="polite"></p>
+            <form id="password-recovery-request-form">
+                <div class="form-group">
+                    <label for="password-recovery-username">Usuario</label>
+                    <input type="text" id="password-recovery-username" name="username" required maxlength="80" autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label for="password-recovery-email">Correo electrónico registrado</label>
+                    <input type="email" id="password-recovery-email" name="email" required maxlength="254" autocomplete="email">
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Enviar código</button>
+            </form>
+            <form id="password-recovery-complete-form" hidden>
+                <input type="hidden" id="password-recovery-complete-username" name="username">
+                <input type="hidden" id="password-recovery-complete-email" name="email">
+                <div class="form-group">
+                    <label for="password-recovery-code">Código de recuperación</label>
+                    <input type="text" id="password-recovery-code" name="code" required minlength="12" maxlength="14" inputmode="text" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false">
+                </div>
+                <div class="form-group">
+                    <label for="password-recovery-new-password">Nueva contraseña</label>
+                    <input type="password" id="password-recovery-new-password" name="newPassword" required minlength="8" maxlength="256" autocomplete="new-password">
+                </div>
+                <div class="form-group">
+                    <label for="password-recovery-confirm-password">Confirmar nueva contraseña</label>
+                    <input type="password" id="password-recovery-confirm-password" name="confirmPassword" required minlength="8" maxlength="256" autocomplete="new-password">
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Actualizar contraseña</button>
+            </form>
+            <button type="button" id="password-recovery-back" class="btn btn-secondary btn-block" style="margin-top: 12px;">Volver a iniciar sesión</button>
+        </section>
 
         <div class="footer-links" style="margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; justify-content: center; text-align: center;">
             <a id="login-about-link" style="font-size: 0.8em; cursor: pointer;">Sobre Nosotros</a>

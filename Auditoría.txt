@@ -87,3 +87,14 @@ Resultado: implementación local cerrada con validación diferida a Beta. No se 
 - La solución requiere un flujo nuevo con correo registrado, código de un solo uso, expiración, rate limit, digest protegido, respuesta no enumerable y revocación de sesiones al completar. Debe verificarse el scope de correo en el deployment AUTH antes de Beta.
 - No se modifica aún el servicio AUTH ni se altera el esquema/datos de usuarios durante esta auditoría.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — GP-AUTH-PASSWORD-RECOVERY-01 — AUDITORÍA E IMPLEMENTACIÓN
+- Hallazgo confirmado: index.html contenía #forgot-password-link sin listener; AUTH no tenía acciones de recuperación sin sesión ni integración MailApp.
+- AUTH: se añadieron requestPasswordRecovery y completePasswordRecovery. La solicitud mantiene PASSWORD_RECOVERY aislado y no reserva USERS/ACTIVE_SESSIONS/SESSION_CONTEXTS, para no bloquear login. La cuenta se busca por usuario+correo y la fila se revalida antes de emitir el código.
+- Seguridad: código aleatorio de 12 hex, HMAC con secreto de ScriptProperties, CacheService temporal, 10 minutos, 5 intentos, 3 solicitudes/hora por username/email/userId, un desafío por cuenta, invalidación al fallar el envío y consumo de un solo uso. Respuesta igual para cuenta existente/no existente. No se registran contraseñas, códigos ni correos.
+- Finalización: revalida cuenta activa, usuario y correo bajo ScriptLock; consume el código antes de modificar identidad, revoca contexto central, sesiones/tokens y referencias de sesión, y almacena PBKDF2-SHA256 con salt vigente. No crea sesión nueva.
+- Se preservan AUTH/USERS y el coste de login. No se añade operación al inicio de sesión.
+- Beta pendiente: scope MailApp/script.send_mail, propiedades del secreto/coordinador, entrega real y revocación en deployment AUTH actualizado. No se desplegó Apps Script ni se modificaron Spreadsheet, Drive o datos externos.
+================================================================================

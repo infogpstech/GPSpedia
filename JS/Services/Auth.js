@@ -552,7 +552,7 @@ function doGet(e) {
 
 
 function isSharedMutationAction_(action) {
-    return ["login","touchSession","acceptTerms","changePassword","resetUserPassword","resetUserSessions","clearSensitiveLogs","deleteUser","updateUser","logout","migrateLegacyPasswords"].includes(action);
+    return ["login","touchSession","acceptTerms","requestPasswordRecovery","completePasswordRecovery","changePassword","resetUserPassword","resetUserSessions","clearSensitiveLogs","deleteUser","updateUser","logout","migrateLegacyPasswords"].includes(action);
 }
 
 function isSharedReadAction_(action) {
@@ -635,6 +635,12 @@ function doPostInternal_(e) {
                 break;
             case 'touchSession':
                 response = handleTouchSession(request.payload);
+                break;
+            case 'requestPasswordRecovery':
+                response = handleRequestPasswordRecovery(request.payload);
+                break;
+            case 'completePasswordRecovery':
+                response = handleCompletePasswordRecovery(request.payload);
                 break;
             case 'changePassword':
                 response = handleChangePassword(request.payload);
@@ -2051,6 +2057,146 @@ function clearUserSessionPointerUnderLock_(usersSheet, rowIndex) {
     }
     return { pending: false, error: cleanupError };
 }
+
+
+// Recuperación autoservicio. CacheService conserva únicamente digests y estados temporales.
+function createPasswordRecoveryManager_(dependencies) {
+    const deps=dependencies||{},get=deps.get,put=deps.put,remove=deps.remove;
+    const now=typeof deps.now==="function"?deps.now:()=>Date.now(),hash=deps.hash,createCode=deps.createCode,createId=deps.createId;
+    const challengeTtlSeconds=Number(deps.challengeTtlSeconds)>0?Number(deps.challengeTtlSeconds):600;
+    const rateWindowSeconds=Number(deps.rateWindowSeconds)>0?Number(deps.rateWindowSeconds):3600;
+    const maxRequests=Number(deps.maxRequests)>0?Number(deps.maxRequests):3,maxAttempts=Number(deps.maxAttempts)>0?Number(deps.maxAttempts):5;
+    if(![get,put,remove,hash,createCode,createId].every(value=>typeof value==="function"))throw new Error("Dependencias incompletas para recuperación de contraseña.");
+    function normalize_(value){return String(value||"").trim().toLowerCase();}
+    function readJson_(key){const raw=get(key);if(!raw)return null;try{const value=JSON.parse(raw);return value&&typeof value==="object"&&!Array.isArray(value)?value:null;}catch(error){return null;}}
+    function writeJson_(key,value,ttl){const serialized=JSON.stringify(value);put(key,serialized,Math.max(1,Math.min(21600,Math.ceil(Number(ttl)||1))));if(get(key)!==serialized)throw new Error("No se pudo confirmar el almacenamiento temporal de recuperación.");}
+    function challengeKey_(id){return "GPSpedia_PASSWORD_RECOVERY_V1_"+hash("challenge:"+String(id||""));}
+    function rateKey_(kind,value){return "GPSpedia_PASSWORD_RECOVERY_RATE_V1_"+hash(kind+":"+normalize_(value));}
+    function reserveRequest(username,email,userId){
+        const current=Number(now()),identities=[["username",normalize_(username)],["email",normalize_(email)],["user",String(userId||"").trim()]].filter(item=>item[1]);
+        if(!Number.isFinite(current)||identities.length<2)return false;
+        const records=identities.map(([kind,value])=>{
+            const key=rateKey_(kind,value),previous=readJson_(key);
+            const valid=previous&&Number.isFinite(Number(previous.windowStartedAt))&&current>=Number(previous.windowStartedAt)&&current-Number(previous.windowStartedAt)<rateWindowSeconds*1000;
+            return {key,state:valid?{windowStartedAt:Number(previous.windowStartedAt),count:Math.max(0,Number(previous.count)||0)}:{windowStartedAt:current,count:0}};
+        });
+        if(records.some(item=>item.state.count>=maxRequests))return false;
+        records.forEach(item=>{item.state.count++;writeJson_(item.key,item.state,rateWindowSeconds);});
+        return true;
+    }
+    function issue(userId,email){
+        const id=String(userId||"").trim(),normalizedEmail=normalize_(email);if(!id||!normalizedEmail)return null;
+        const code=String(createCode()||"").trim().toUpperCase();if(!/^[A-F0-9]{12}$/.test(code))throw new Error("No se pudo generar un código de recuperación válido.");
+        const challengeId=String(createId()||"").trim();if(!challengeId)throw new Error("No se pudo generar el identificador de recuperación.");
+        const current=Number(now()),challenge={id:challengeId,userId:id,emailDigest:hash("email:"+normalizedEmail),codeDigest:hash("code:"+code),attempts:0,status:"issued",createdAt:current,expiresAt:current+challengeTtlSeconds*1000};
+        writeJson_(challengeKey_(id),challenge,challengeTtlSeconds);return {code,challengeId,expiresAt:challenge.expiresAt};
+    }
+    function verify(userId,email,code){
+        const id=String(userId||"").trim(),normalizedEmail=normalize_(email),key=challengeKey_(id),challenge=readJson_(key),current=Number(now());
+        if(!challenge||challenge.userId!==id||challenge.status!=="issued"||!Number.isFinite(Number(challenge.expiresAt))||Number(challenge.expiresAt)<=current||
+            !constantTimeEquals(String(challenge.emailDigest||""),String(hash("email:"+normalizedEmail)))){
+            if(challenge&&Number(challenge.expiresAt)<=current)remove(key);return {valid:false};
+        }
+        const supplied=String(code||"").replace(/[\s-]/g,"").toUpperCase();
+        const matches=/^[A-F0-9]{12}$/.test(supplied)&&constantTimeEquals(String(challenge.codeDigest||""),String(hash("code:"+supplied)));
+        if(!matches){challenge.attempts=Math.max(0,Number(challenge.attempts)||0)+1;if(challenge.attempts>=maxAttempts)challenge.status="locked";
+            const remaining=Math.ceil((Number(challenge.expiresAt)-current)/1000);if(remaining>0)writeJson_(key,challenge,remaining);else remove(key);
+            return {valid:false,locked:challenge.status==="locked"};}
+        challenge.status="processing";challenge.processingAt=current;
+        const remaining=Math.ceil((Number(challenge.expiresAt)-current)/1000);if(remaining<=0){remove(key);return {valid:false};}
+        writeJson_(key,challenge,remaining);return {valid:true,challengeId:challenge.id};
+    }
+    function finish(userId,challengeId){
+        const key=challengeKey_(userId),challenge=readJson_(key);
+        if(!challenge||challenge.id!==String(challengeId||"")||challenge.status!=="processing")return false;
+        remove(key);return !get(key);
+    }
+    function invalidate(userId,challengeId){
+        const key=challengeKey_(userId),challenge=readJson_(key);
+        if(!challenge||(challengeId&&challenge.id!==String(challengeId)))return false;
+        remove(key);return !get(key);
+    }
+    return {reserveRequest,issue,verify,consume:finish,fail:finish,invalidate};
+}
+
+function getPasswordRecoveryManager_(){
+    const properties=PropertiesService.getScriptProperties();
+    let secret=String(properties.getProperty("GPSpedia_PASSWORD_RECOVERY_SECRET_V1")||"");
+    if(!secret){secret=Utilities.getUuid()+Utilities.getUuid();properties.setProperty("GPSpedia_PASSWORD_RECOVERY_SECRET_V1",secret);
+        if(String(properties.getProperty("GPSpedia_PASSWORD_RECOVERY_SECRET_V1")||"")!==secret)throw new Error("No se pudo inicializar la protección de recuperación.");}
+    const cache=CacheService.getScriptCache();
+    const hash=value=>digestToHex(Utilities.computeHmacSha256Signature(String(value||""),secret,Utilities.Charset.UTF_8));
+    return createPasswordRecoveryManager_({get:key=>cache.get(key),put:(key,value,ttl)=>cache.put(key,value,ttl),remove:key=>cache.remove(key),
+        now:()=>Date.now(),hash,createCode:()=>Utilities.getUuid().replace(/-/g,"").slice(0,12).toUpperCase(),createId:()=>Utilities.getUuid()});
+}
+
+function handleRequestPasswordRecovery(payload){
+    const generic={status:"success",message:"Si los datos corresponden a una cuenta activa y a su correo registrado, recibirás un código de recuperación."};
+    const username=String(payload&&payload.username||"").trim().toLowerCase(),email=String(payload&&payload.email||"").trim().toLowerCase();
+    if(!username||!email||username.length>80||email.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return generic;
+    const lock=LockService.getScriptLock();let acquired=false,manager=null,delivery=null,userId="";
+    try{
+        const ss=SpreadsheetApp.openById(SPREADSHEET_ID),usersSheet=ss.getSheetByName(SHEET_NAMES.USERS);if(!usersSheet)return generic;
+        const matches=usersSheet.getDataRange().getValues().slice(1).map((row,index)=>({row,rowIndex:index+2}))
+            .filter(item=>isActiveAuthUserRecord(item.row)&&String(item.row[COLS_USERS.Nombre_Usuario-1]||"").trim().toLowerCase()===username&&
+                String(item.row[COLS_USERS.Correo_Electronico-1]||"").trim().toLowerCase()===email);
+        lock.waitLock(10000);acquired=true;manager=getPasswordRecoveryManager_();
+        userId=matches.length===1?normalizeUserId(matches[0].row[COLS_USERS.ID-1]):"";
+        if(!manager.reserveRequest(username,email,userId)||matches.length!==1||!userId)return generic;
+        const currentRow=usersSheet.getRange(matches[0].rowIndex,1,1,COLS_USERS.TermsAcceptance).getValues()[0];
+        if(!isActiveAuthUserRecord(currentRow)||normalizeUserId(currentRow[COLS_USERS.ID-1])!==userId||
+            String(currentRow[COLS_USERS.Nombre_Usuario-1]||"").trim().toLowerCase()!==username||
+            String(currentRow[COLS_USERS.Correo_Electronico-1]||"").trim().toLowerCase()!==email)return generic;
+        const issued=manager.issue(userId,email);if(issued)delivery={email,code:issued.code,challengeId:issued.challengeId,userId};
+    }catch(error){return generic;}finally{if(acquired)lock.releaseLock();}
+    if(delivery){
+        try{MailApp.sendEmail({to:delivery.email,subject:"Recuperación de contraseña de GPSpedia",
+            body:"Se solicitó recuperar la contraseña de tu cuenta de GPSpedia.\n\nCódigo de recuperación: "+delivery.code+
+                "\n\nEl código vence en 10 minutos y solo puede utilizarse una vez. Si no solicitaste este cambio, ignora este mensaje."});}
+        catch(error){
+            let cleanupAcquired=false;
+            try{lock.waitLock(10000);cleanupAcquired=true;if(!manager)manager=getPasswordRecoveryManager_();manager.invalidate(delivery.userId,delivery.challengeId);}
+            catch(cleanupError){/* El TTL mantiene limitado el desafío no invalidado. */}
+            finally{if(cleanupAcquired)lock.releaseLock();}
+        }
+    }
+    return generic;
+}
+
+function handleCompletePasswordRecovery(payload){
+    const invalid={status:"error",message:"El código no es válido o expiró, o los datos de recuperación no coinciden."};
+    const username=String(payload&&payload.username||"").trim().toLowerCase(),email=String(payload&&payload.email||"").trim().toLowerCase();
+    const code=String(payload&&payload.code||"").replace(/[\s-]/g,"").toUpperCase(),newPassword=normalizePassword(payload&&payload.newPassword);
+    if(!username||!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||!/^[A-F0-9]{12}$/.test(code))return invalid;
+    if(newPassword.length<8||newPassword.length>256)return {status:"error",message:"La contraseña nueva debe tener entre 8 y 256 caracteres."};
+    const lock=LockService.getScriptLock();let acquired=false,userId="";
+    try{
+        lock.waitLock(10000);acquired=true;
+        const ss=SpreadsheetApp.openById(SPREADSHEET_ID),usersSheet=ss.getSheetByName(SHEET_NAMES.USERS),sessionsSheet=ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
+        if(!usersSheet||!sessionsSheet)throw new Error("No se encontraron las hojas Users y ActiveSessions.");
+        const matches=usersSheet.getDataRange().getValues().slice(1).map((row,index)=>({row,rowIndex:index+2}))
+            .filter(item=>isActiveAuthUserRecord(item.row)&&String(item.row[COLS_USERS.Nombre_Usuario-1]||"").trim().toLowerCase()===username&&
+                String(item.row[COLS_USERS.Correo_Electronico-1]||"").trim().toLowerCase()===email);
+        if(matches.length!==1)return invalid;
+        userId=normalizeUserId(matches[0].row[COLS_USERS.ID-1]);if(!userId)return invalid;
+        const manager=getPasswordRecoveryManager_(),verification=manager.verify(userId,email,code);
+        if(!verification.valid)return invalid;
+        if(!manager.consume(userId,verification.challengeId))throw new Error("No se pudo consumir el código de recuperación. Solicita uno nuevo.");
+        const newHash=createPasswordHash(newPassword);revokeSharedUserSessionContexts_(userId);
+        const revocation=revokeAllUserSessionsUnderLock_(sessionsSheet,userId);
+        if(revocation.pendingRows.length||revocation.pendingLoginRequests)throw new Error("No se pudo confirmar la revocación de todas las sesiones. Solicita un nuevo código e inténtalo nuevamente.");
+        writePasswordHashAndVerifyUnderLock_(usersSheet,matches[0].rowIndex,newHash);
+        const pointer=clearUserSessionPointerUnderLock_(usersSheet,matches[0].rowIndex),deletion=deleteRevokedSessionRowsUnderLock_(sessionsSheet,revocation.rows);
+        const cleanupPending=Boolean(pointer.pending||deletion.cleanupPending);
+        if(!cleanupPending&&hasPendingRoleRevocation_(userId))PropertiesService.getScriptProperties().deleteProperty(roleRevocationPropertyKey_(userId));
+        SpreadsheetApp.flush();
+        try{logToSheet("INFO","User password recovered; all session tokens were invalidated.",{userId,revokedSessions:revocation.revokedSessions,cleanupPending});}catch(logError){}
+        return {status:"success",message:cleanupPending?
+            "La contraseña se actualizó y las sesiones fueron invalidadas. La limpieza de algunas referencias quedó pendiente.":
+            "La contraseña se actualizó correctamente. Todas las sesiones fueron cerradas; inicia sesión nuevamente.",cleanupPending};
+    }finally{if(acquired)lock.releaseLock();}
+}
+
 
 function handleChangePassword(payload) {
     const actor = requireSharedAuthActor_(payload, ["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"], "cambiar contraseña");

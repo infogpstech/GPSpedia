@@ -1016,7 +1016,7 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - Beta pendiente: login tras el bloqueo temporal por intentos fallidos mientras se consulta el árbol de imágenes, con medición de duración y respuesta.
 
 ### GP-AUTH-PASSWORD-RECOVERY-01 — Recuperación de contraseña
-**Prioridad: P1 · Estado: PENDIENTE**
+**Prioridad: P1 · Estado: EN PROGRESO**
 - Auditar el enlace «¿Olvidaste tu contraseña?» y los contratos AUTH/USERS.
 - Implementar recuperación segura por correo registrado, con verificación de titularidad, código de un solo uso, expiración, límites de intentos y respuesta que no permita enumerar cuentas.
 - Mantener hashes con salt, rendimiento de login, revocación de sesiones y actor central. No enviar contraseñas/códigos a logs ni permitir restablecer cuentas ajenas.
@@ -1053,3 +1053,11 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 **Prioridad: P3 · Estado: PENDIENTE**
 - Centrar el texto «Sesión terminada» dentro de la burbuja/aviso, sin desplazar los errores de acceso ni alterar el diseño responsive.
 - Añadir contrato DOM/visual anti-regresión.
+
+
+#### Implementación en curso — GP-AUTH-PASSWORD-RECOVERY-01
+- AUTH: requestPasswordRecovery usa PASSWORD_RECOVERY independiente y no reserva SESSION_CONTEXTS/ACTIVE_SESSIONS; completePasswordRecovery protege USERS, ACTIVE_SESSIONS, LOGS, SESSION_CONTEXTS y PASSWORD_RECOVERY.
+- Código aleatorio de 12 caracteres hexadecimales; solo se conserva HMAC en CacheService. Vigencia 10 minutos, 5 intentos y 3 solicitudes/hora por usuario/correo/cuenta; un desafío vigente por cuenta.
+- Respuesta genérica para cuentas existentes/inexistentes. La finalización vuelve a comprobar usuario, correo y estado activo, actualiza PBKDF2-SHA256 con salt y revoca sesiones anteriores.
+- Frontend de dos pasos integrado al modal de acceso; App Shell v66. Pruebas añadidas; cierre local pendiente de ejecutar la suite Node.js/CI.
+- MailApp/script.send_mail, propiedades y entrega real de correo, y revocación en el deployment actualizado quedan PENDIENTES DE DESPLIEGUE / VALIDACIÓN BETA.

@@ -1508,3 +1508,14 @@ GP-UX-PYS-TUTORIAL-ASSOCIATION-06 — 2026-11-16
 - GP-AUTH-LOGIN-DRIVE-LOCK-01 se cierra localmente: coordinador mantiene DRIVE y elimina reservas redundantes USERS/SESSION_CONTEXTS para getCortesImageFolders; prueba aislada 55/55 PASS; CI run 44016976600 SUCCESS en el commit de implementación. Beta real pendiente.
 - Auditoría inicial GP-AUTH-PASSWORD-RECOVERY-01: enlace de login sin listener; no existe acción de recuperación en AUTH/API/Coordinator ni integración de envío de correo en los servicios inspeccionados. Se registra el diseño de seguridad requerido; no se cambia todavía AUTH.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — GP-AUTH-PASSWORD-RECOVERY-01
+- JS/Services/Auth.js: allowlist/dispatch de requestPasswordRecovery y completePasswordRecovery; manager de desafíos y límites HMAC/CacheService; envío MailApp fuera de ScriptLock; actualización PBKDF2 y revocación de sesiones/contextos.
+- JS/Services/Coordinator.js: lease PASSWORD_RECOVERY aislada para solicitud sin sesión y lease de finalización que serializa identidad, sesiones, logs y consumo del código.
+- JS/Frontend/api-config.js, auth.js, main.js, index.html: ruteo y flujo de dos pasos dentro del modal de acceso.
+- style.css: estilos del panel y estados de recuperación. service-worker.js: App Shell v65 → v66; contratos de caché sincronizados.
+- Pruebas añadidas: PasswordRecovery.mjs, SharedMutationCoordinator.js y runner AUTH.
+- No se modificaron endpoints, deployments, ScriptProperties remotos, Spreadsheet, Drive ni datos externos. La entrega de correo y scopes se reservan a Beta.
+================================================================================
