@@ -203,6 +203,7 @@ runGroup('38','INTEGRATION',()=>{
  runCli('AUG-152 conversaciones Inbox, participantes, idempotencia y auditoría','JS/Tests/InboxConversations.mjs');
  runCli('GP-PERF FEEDBACK e Inbox sem esperas prolongadas','JS/Tests/FeedbackLockFastFail.mjs');
  runCli('P2.2a FEEDBACK adjuntos Drive fuera del lock y telemetría preservada','JS/Tests/P2FeedbackImageUploadLocks.mjs');
+ runCli('P2.2b PyS imagen fuera del lock y recuperación','JS/Tests/P2PysImageUploadOutsideLock.mjs');
  runCli('AUG-152 interfaz Inbox, accesibilidad, borradores y sincronización','JS/Tests/InboxUi.mjs');
  runCli('Dashboard y aportes de cortes por usuario','JS/Tests/ActivityDashboardContributions.mjs');
  runCli('GP-DASH-INSIGHTS-01 indicadores, rankings y render seguro','JS/Tests/ActivityDashboardInsights.mjs');
