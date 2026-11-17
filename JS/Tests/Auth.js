@@ -914,7 +914,6 @@ function getActiveSessionTokensForUserUnderLock_(sheet, userId) {
         }
         tokens.push(token);
     });
-    if (tokens.length > 5) throw new Error("La cuenta supera el límite de sesiones admitido para invalidación.");
     return tokens;
 }
 
