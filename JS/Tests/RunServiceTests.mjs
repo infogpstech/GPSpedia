@@ -94,6 +94,7 @@ runGroup('32','ADMIN',()=>{
 runGroup('33','FEEDBACK',()=>{
  const feedback=read('JS/Services/feedback.js');
  runCli('AUG-087 caché PyS y aplicación incremental del feed','JS/Tests/PysDataCache.js');
+ runCli('P4.1 arranque paralelo de catálogo y PyS','JS/Tests/CatalogStartupParallelism.mjs');
  runCli('P2 asignador backend para IDs de hojas Feedbacks, ActividadUsuario y Contactanos','JS/Tests/FeedbackFormulaIdAllocator.mjs');
   runCli('FEEDBACK suggestYear usa actor central y conserva ruta anónima','JS/Tests/SuggestYearCoordinatorSession.mjs');
   runCli('FEEDBACK suggestYear aplica el umbral de tres votos verificados','JS/Tests/SuggestYearVoteThreshold.mjs');
