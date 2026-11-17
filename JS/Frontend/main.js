@@ -548,15 +548,23 @@ async function initializeApp() {
                 }
             }
 
+            const closeDetailOnBack = modalDetalle.dataset.modalType === 'corte';
             if(window.inEditMode){
                 const vehicleId=modalDetalle.dataset.vehicleId||null;
                 Promise.resolve(ui.exitModalEditMode(false,vehicleId,true)).then(discarded=>{
                     if(!discarded)return;
-                    if(!ui.restoreModalNavigationContext()){modalDetalle.classList.remove('visible');ui.clearModalNavStack();}
+                    if (closeDetailOnBack) {
+                        modalDetalle.classList.remove('visible');
+                        ui.clearModalNavStack();
+                    } else if(!ui.restoreModalNavigationContext()) {
+                        modalDetalle.classList.remove('visible');
+                        ui.clearModalNavStack();
+                    }
                 });
                 return;
             }
-            if(ui.restoreModalNavigationContext())return;
+            // En el detalle de corte, Atrás siempre cierra la ficha.
+            if(!closeDetailOnBack && ui.restoreModalNavigationContext())return;
             modalDetalle.classList.remove('visible');ui.clearModalNavStack();
 
             // Restaurar foco a la barra de búsqueda si estamos en modo búsqueda

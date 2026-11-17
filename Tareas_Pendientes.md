@@ -1568,3 +1568,14 @@ Evidencia y ubicaciones: adenda del 2026-11-17 en `Auditoría.txt`. La revisión
 **Siguiente tarea local:** implementar un contrato reutilizable de encabezado por familias de modales, preservar las excepciones justificadas, corregir el cierre YouTube, normalizar roles/nombres accesibles y jerarquía de títulos, y agregar pruebas de contrato para ventanas estáticas y dinámicas. La tarea de alineación integral no debe considerarse cerrada por los ajustes anteriores.
 
 **Orden de ejecución:** completar todas las tareas de implementación del plan antes de iniciar cualquier prueba Beta. Se permiten y requieren pruebas locales; no desplegar servicios ni iniciar validaciones Beta durante esta fase.
+
+
+## GP-UX-MODAL-HEADERS-02 — Implementación de encabezados (2026-11-17)
+**Estado:** IMPLEMENTACIÓN REALIZADA; VALIDACIÓN LOCAL/CI PENDIENTE.
+- Usar el encabezado del detalle de tutorial como referencia: título a la izquierda y cierre a la derecha.
+- Mantener la excepción del detalle de corte: logotipo de marca en esquina superior izquierda con sus dimensiones actuales y sombras; modelo con tipografía/sombra actuales, ligeramente elevado; línea azul más próxima al conjunto.
+- Orden de acciones del corte: Imprimir → Editar → Compartir.
+- Atrás del navegador/gesto cierra el detalle de corte y limpia la pila de fichas, sin restaurar otra ficha.
+- Cierre YouTube como botón accesible; roles y nombres ARIA en los diálogos afectados.
+- Pruebas de contrato añadidas/actualizadas: CutDetailModalLayout y YouTubeUploadOverlayLifecycle.
+- No ejecutar despliegues ni Beta en esta fase. Validar mediante CI y pruebas locales disponibles; la comprobación visual real queda para Beta.

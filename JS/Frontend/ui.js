@@ -2294,8 +2294,6 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
             shareBtn.disabled = false;
         }
     };
-    headerActions.appendChild(shareBtn);
-
     const userRole = normalizeUiRole_(getUiSessionContext_()?.role || "");
     const canPrintOrEditVehicle = ["desarrollador", "jefe", "supervisor"].includes(userRole);
 
@@ -2408,6 +2406,9 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
         }
     }
 
+    // Orden estable: imprimir, editar y compartir.
+    headerActions.appendChild(shareBtn);
+
     const closeBtn = document.createElement("button");
     closeBtn.type = "button";
     closeBtn.setAttribute("aria-label", "Cerrar ventana");
@@ -2415,10 +2416,11 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
     closeBtn.onclick=async()=>{
         if(inEditMode){const discarded=await exitModalEditMode(false,activeItem.id,false,navOptions);if(!discarded)return;}
         stopModalDetailMedia_();
-        if(modalNavStack.length>0){closeModalToPreviousContext_();return;}
         const searchInput=document.getElementById('searchInput'),isSearchActive=document.body.classList.contains('search-active');
+        modalNavStack.length=0;
+        pendingModalViewRestore_=null;
         if(window.history&&window.history.state&&window.history.state.modalOpen)window.history.back();
-        else{document.getElementById("modalDetalle").classList.remove("visible");modalNavStack.length=0;if(isSearchActive&&searchInput)setTimeout(()=>searchInput.focus(),300);}
+        else{document.getElementById("modalDetalle").classList.remove("visible");if(isSearchActive&&searchInput)setTimeout(()=>searchInput.focus(),300);}
     };
     closeBtn.className = "info-close-btn";
     closeBtn.style.cssText = "position: static; margin-left: auto;";
@@ -2473,6 +2475,20 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
     } else {
         title.textContent = `${activeItem.modelo}`;
         title.className = "detail-modal-title-text";
+    }
+
+    // El diálogo se etiqueta con el título visible; en edición el campo conserva su etiqueta propia.
+    if (modalDetalle) {
+        modalDetalle.setAttribute("role", "dialog");
+        modalDetalle.setAttribute("aria-modal", "true");
+        if (inEditMode) {
+            modalDetalle.setAttribute("aria-label", "Editar modelo de vehículo");
+            modalDetalle.removeAttribute("aria-labelledby");
+        } else {
+            title.id = "modal-detalle-title";
+            modalDetalle.setAttribute("aria-labelledby", title.id);
+            modalDetalle.removeAttribute("aria-label");
+        }
     }
 
     // El logo y el modelo comparten la cabecera; el divisor azul ocupa todo el ancho útil.
@@ -11129,6 +11145,10 @@ export function mostrarDetalleTutorialModal(item, inEditModeTutorial = false) {
     }
 
     const modalDetalle = document.getElementById("modalDetalle");
+    title.id = "modal-detalle-title";
+    modalDetalle.setAttribute("role", "dialog");
+    modalDetalle.setAttribute("aria-modal", "true");
+    modalDetalle.setAttribute("aria-labelledby", title.id);
     modalDetalle.dataset.modalType = "tutorial";
     modalDetalle.classList.add("visible");
 }
@@ -11183,6 +11203,10 @@ function mostrarDetalleRelayModal(item) {
     });
 
     const modalDetalle = document.getElementById("modalDetalle");
+    title.id = "modal-detalle-title";
+    modalDetalle.setAttribute("role", "dialog");
+    modalDetalle.setAttribute("aria-modal", "true");
+    modalDetalle.setAttribute("aria-labelledby", title.id);
     modalDetalle.dataset.modalType = 'relay';
     modalDetalle.classList.add("visible");
 }

@@ -350,14 +350,17 @@ export function openYouTubeUploadModal(options = {}) {
     const modal = document.createElement("div");
     modal.id = "youtube-upload-modal";
     modal.className = "info-modal visible";
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-modal", "true");
+    modal.setAttribute("aria-labelledby", "yt-upload-modal-title");
     modal.style.zIndex = "2500";
 
     const content = document.createElement("div");
     content.className = "info-modal-content";
     content.style.maxWidth = "550px";
     content.innerHTML = `
-        <span class="info-close-btn" id="yt-modal-close-btn">&times;</span>
-        <h2 style="display:flex; align-items:center; gap:8px;"><i class="fa-brands fa-youtube" style="color:#ff0000;"></i> Subir Vídeo a YouTube</h2>
+        <button type="button" class="info-close-btn" id="yt-modal-close-btn" aria-label="Cerrar carga de vídeo">&times;</button>
+        <h2 id="yt-upload-modal-title" style="display:flex; align-items:center; gap:8px; text-align:left; padding-right:48px;"><i class="fa-brands fa-youtube" style="color:#ff0000;"></i> Subir Vídeo a YouTube</h2>
         <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:12px;">El vídeo se subirá como «No listado» y requerirá aprobación previa antes de publicarse en GPSpedia.</p>
         <form id="yt-upload-form" style="display:flex; flex-direction:column; gap:12px;">
             <div class="form-group">

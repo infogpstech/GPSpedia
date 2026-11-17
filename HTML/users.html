@@ -147,6 +147,7 @@
             border-color: rgba(255,255,255,0.1);
         }
         .modal-content { position: relative; }
+        .modal-content > h2:first-of-type { text-align:left; padding-right:48px; }
         .close-btn {
             appearance: none;
             position: absolute;
@@ -304,7 +305,7 @@
     </div>
 
     <!-- User Modal (for Create/Edit) -->
-    <div id="user-modal" class="modal">
+    <div id="user-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="user-modal-title">
         <div class="modal-content">
             <button type="button" class="close-btn" aria-label="Cerrar ventana">&times;</button>
             <h2 id="user-modal-title"></h2>
@@ -332,10 +333,10 @@
     </div>
 
     <!-- Edit Name Modal -->
-    <div id="name-modal" class="modal">
+    <div id="name-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="name-modal-title">
         <div class="modal-content">
             <button type="button" class="close-btn" aria-label="Cerrar ventana">&times;</button>
-            <h2>Editar Nombre</h2>
+            <h2 id="name-modal-title">Editar Nombre</h2>
             <form id="name-form">
                 <div class="form-group">
                     <label for="new-fullname">Nombre Completo</label>
@@ -347,10 +348,10 @@
     </div>
 
     <!-- Change Password Modal -->
-    <div id="password-modal" class="modal">
+    <div id="password-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="password-modal-title">
         <div class="modal-content">
             <button type="button" class="close-btn" aria-label="Cerrar ventana">&times;</button>
-            <h2>Cambiar Contraseña</h2>
+            <h2 id="password-modal-title">Cambiar Contraseña</h2>
             <form id="password-form">
                 <div class="form-group">
                     <label for="current-password">Contraseña Actual</label>

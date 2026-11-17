@@ -265,10 +265,10 @@
 </div>
 
 <!-- ========= MODAL DE DASHBOARD ========= -->
-<div id="dashboard-modal" class="info-modal">
+<div id="dashboard-modal" class="info-modal" role="dialog" aria-modal="true" aria-labelledby="dashboard-modal-title">
     <div class="info-modal-content" style="max-width: 900px;">
         <button type="button" class="info-close-btn" aria-label="Cerrar ventana">&times;</button>
-        <h2 class="inbox-modal-title"><i class="fa-solid fa-chart-line"></i> Panel de Actividad</h2>
+        <h2 id="dashboard-modal-title" class="inbox-modal-title"><i class="fa-solid fa-chart-line"></i> Panel de Actividad</h2>
         <div class="activity-dashboard-tabs" role="tablist" aria-label="Vistas del panel de actividad">
             <button type="button" class="active" data-activity-tab="insights" role="tab" aria-selected="true" aria-controls="activity-panel-insights">Resumen</button>
             <button type="button" data-activity-tab="contributions" role="tab" aria-selected="false" aria-controls="activity-panel-contributions">Aportes</button>
@@ -896,10 +896,10 @@
 
 <!-- ========= MODALES DE INFORMACIÓN ========= -->
 <!-- TAREA 2 (B02): ACTUALIZACIÓN DE CONTENIDO Y ESTILOS DE MODALES INFORMATIVOS (SOBRE NOSOTROS Y TÉRMINOS) -->
-<div id="about-us-modal" class="info-modal">
+<div id="about-us-modal" class="info-modal" role="dialog" aria-modal="true" aria-labelledby="about-us-title">
   <div class="info-modal-content">
     <button type="button" class="info-close-btn" aria-label="Cerrar ventana">&times;</button>
-    <h1>Sobre Nosotros</h1>
+    <h2 id="about-us-title">Sobre Nosotros</h2>
     <p>GPSpedia es una plataforma especializada en la consulta técnica y estandarizada de información vehicular, diseñada para técnicos, instaladores y profesionales que trabajan con sistemas de rastreo, seguridad y control vehicular.</p>
     <p>Nuestro objetivo es facilitar el acceso rápido y organizado a información técnica de utilidad práctica, ayudando a reducir errores durante los procesos de instalación y optimizando los tiempos de trabajo mediante una base de conocimiento estructurada, visual y en constante evolución.</p>
     <p>La información técnica disponible en GPSpedia ha sido recopilada a partir de diversas fuentes públicas, documentación disponible en Internet, publicaciones técnicas, experiencias de campo y aportes realizados por profesionales del sector.</p>
@@ -927,10 +927,10 @@
   </div>
 </div>
 
-<div id="contact-modal" class="info-modal">
+<div id="contact-modal" class="info-modal" role="dialog" aria-modal="true" aria-labelledby="contact-modal-title">
   <div class="info-modal-content">
     <button type="button" class="info-close-btn" aria-label="Cerrar ventana">&times;</button>
-    <h2>Contáctanos</h2>
+    <h2 id="contact-modal-title">Contáctanos</h2>
     <p>Si tienes sugerencias, problemas con la plataforma o necesitas soporte técnico, por favor utiliza este formulario. Tu feedback es importante para nosotros.</p>
     <form id="contact-form">
       <div class="form-group">
@@ -952,10 +952,10 @@
   </div>
 </div>
 
-<div id="faq-modal" class="info-modal">
+<div id="faq-modal" class="info-modal" role="dialog" aria-modal="true" aria-labelledby="faq-modal-title">
   <div class="info-modal-content">
     <button type="button" class="info-close-btn" aria-label="Cerrar ventana">&times;</button>
-    <h2>Preguntas Frecuentes (FAQ)</h2>
+    <h2 id="faq-modal-title">Preguntas Frecuentes (FAQ)</h2>
     <div class="accordion">
       <div class="accordion-item"><div class="accordion-header">¿GPSpedia es un sistema de rastreo GPS?<i class="fas fa-chevron-down"></i></div><div class="accordion-content"><p>No. GPSpedia no rastrea vehículos ni gestiona dispositivos. Es una plataforma informativa y de consulta técnica.</p></div></div>
       <div class="accordion-item"><div class="accordion-header">¿La información tiene derechos de autor?<i class="fas fa-chevron-down"></i></div><div class="accordion-content"><p>La información técnica presentada es una compilación de datos de libre acceso y conocimiento práctico, organizada con fines educativos y profesionales. GPSpedia no reclama autoría exclusiva sobre dicha información.</p></div></div>
@@ -969,10 +969,10 @@
   </div>
 </div>
 
-<div id="changelog-modal" class="info-modal">
+<div id="changelog-modal" class="info-modal" role="dialog" aria-modal="true" aria-labelledby="changelog-modal-title">
   <div class="info-modal-content">
     <button type="button" class="info-close-btn" aria-label="Cerrar ventana">&times;</button>
-    <h2 style="margin-bottom: 15px;"><i class="fa-solid fa-history"></i> Registro de Cambios</h2>
+    <h2 id="changelog-modal-title" style="margin-bottom: 15px;"><i class="fa-solid fa-history"></i> Registro de Cambios</h2>
     <p style="margin-bottom: 25px; color: var(--text-disabled, #777); font-size: 0.9em; line-height: 1.4;">Descubre la evolución y mejoras incorporadas en la plataforma de forma cronológica.</p>
 
     <div class="changelog-list" style="display: flex; flex-direction: column; gap: 20px;">
@@ -1122,11 +1122,11 @@
 </div>
 
 <!-- ========= MODAL DE INSTALACIÓN PARA iOS ========= -->
-<div id="ios-install-modal" class="info-modal" style="display: none; z-index: 2100;">
+<div id="ios-install-modal" class="info-modal" style="display: none; z-index: 2100;" role="dialog" aria-modal="true" aria-labelledby="ios-install-title">
     <div class="info-modal-content" style="max-width: 400px; padding: 20px; border-radius: 15px; text-align: center;">
         <button type="button" class="info-close-btn" id="ios-install-close" aria-label="Cerrar ventana">&times;</button>
         <img src="https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=w256" alt="Logo de GPSpedia" style="max-width: 80px; margin-bottom: 15px; filter: drop-shadow(0px 4px 10px rgba(0,0,0,0.15));">
-        <h3 style="margin-top: 0; margin-bottom: 10px; color: var(--accent-color);">Instala GPSpedia en tu iPhone o iPad</h3>
+        <h3 id="ios-install-title" style="margin-top: 0; margin-bottom: 10px; color: var(--accent-color);">Instala GPSpedia en tu iPhone o iPad</h3>
         <p style="font-size: 0.95em; color: var(--text-color); margin-bottom: 20px; line-height: 1.5;">Instala esta aplicación en tu dispositivo para acceder de forma rápida y usarla offline en cualquier momento.</p>
 
         <div style="text-align: left; background: var(--bg-color); padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid var(--border-color);">

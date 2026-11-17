@@ -357,3 +357,6 @@ undefined
 - JS/Tests/DirectTrafficRoutingCoverage.mjs: contrato USERS actualizado para lectura con actor cacheado sin lease sessionActivity.
 - JS/Tests/AdminImageScanCoordinatorContract.mjs: distingue la ruta ADMIN con actor cacheado de la lectura SERVICE_TRAFFIC interna; conserva contratos de permisos, leases de operaciones de mantenimiento y publicación CATALOG por lotes.
 ================================================================================
+
+
+[2026-11-17] UX — Normalización de encabezados de modales: títulos alineados a la izquierda con espacio reservado para el cierre a la derecha; detalle de corte con acciones en orden Imprimir/Editar/Compartir, divisor azul más cercano al logo/modelo y nombre del modelo ligeramente elevado sin alterar el tamaño del logo ni las sombras; retroceso cierra el detalle de corte; cierre YouTube convertido en botón accesible. Se añadieron roles y nombres ARIA a los diálogos afectados.

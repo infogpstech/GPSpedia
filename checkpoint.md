@@ -489,3 +489,12 @@ undefined
 - Evidencia detallada agregada a Auditoría.txt y Tareas_Pendientes.md. Estado: auditoría completada; corrección local de encabezados pendiente.
 - Siguiente paso: implementar contrato de encabezado accesible por familias, mantener excepciones justificadas, corregir cierre YouTube y añadir pruebas de contrato para todos los diálogos.
 - Se mantiene la instrucción del usuario: completar todas las tareas de implementación antes de iniciar Beta. No se desplegaron servicios ni se modificaron datos externos.
+
+
+## Continuidad — GP-UX-MODAL-HEADERS-02 (2026-11-17)
+Se implementó el ajuste de encabezados solicitado. Archivos de código: `JS/Frontend/ui.js`, `JS/Frontend/main.js`, `style.css`, `index.html`, `JS/Frontend/youtubeUpload.js`, `HTML/users.html`. Pruebas de contrato actualizadas en `JS/Tests/CutDetailModalLayout.mjs` y `JS/Tests/YouTubeUploadOverlayLifecycle.js`.
+- Detalle de corte: logo conservado (120 px escritorio / 104 px móvil), modelo elevado ligeramente y divisor azul acercado; acciones en orden Imprimir, Editar, Compartir; cierre a la derecha.
+- Atrás/gesto en detalle de corte: cierra la ficha y limpia la pila en lugar de restaurar una ficha previa; conserva el comportamiento de retroceso de otros tipos de detalle.
+- Tutoriales mantienen su encabezado como estándar de título izquierdo/cierre derecho. Se reforzó la reserva horizontal de títulos en modales informativos.
+- YouTube usa un botón de cierre real y etiqueta accesible. Se añadieron roles/nombres ARIA a los diálogos tocados.
+- Estado de validación: pendiente de CI; no se ha realizado prueba visual de navegador ni Beta. No se desplegó ningún servicio.

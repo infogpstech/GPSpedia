@@ -213,3 +213,7 @@ Límites de validación: auditoría estática de HTML/CSS/JS en la rama GPSpedia
 
 Siguiente trabajo local recomendado: definir un contrato de encabezado reutilizable (título, área de acciones y cierre accesible), aplicarlo por familias sin romper modales especiales (login, términos, Inbox, Developer y detalle), corregir el cierre YouTube a button y normalizar nombres/roles/jerarquía de títulos. Añadir contratos automatizados para todos los diálogos estáticos y dinámicos y ejecutar regresión local antes de cerrar.
 ================================================================================
+
+
+2026-11-17 — CORRECCIÓN DE ENCABEZADOS DE MODALES
+Se corrigió el orden de acciones del detalle de corte (Imprimir, Editar, Compartir), se reservó espacio para el cierre a la derecha y se acercó la línea azul al logotipo/modelo. El logotipo conserva dimensiones actuales (120 px escritorio / 104 px móvil); el modelo mantiene tipografía/sombra con un desplazamiento vertical leve. El retroceso del historial para el detalle de corte ahora cierra la ficha en lugar de restaurar otra ficha apilada. Se añadieron nombres accesibles a los detalles dinámicos de corte/tutorial/relay, a diálogos informativos estáticos seleccionados y al modal YouTube; el cierre YouTube pasó de span a button. Pendiente validar suites y comprobar visualmente en navegador real durante Beta.

@@ -4594,6 +4594,7 @@ td, th {
     max-width: 100%;
     margin: 0;
     padding: 0 0 7px;
+    transform: translateY(-4px);
     color: var(--gp-color-accent, var(--accent-color, #007bff));
     font-size: clamp(1.05rem, 2.5vw, 1.8rem);
     line-height: 1.15;
@@ -5521,7 +5522,7 @@ body.dark-mode #inbox-modal-content .inbox-editor-shell { background:#2b3036; }
 /* GP-UX-CUT-MODAL-05 — línea azul centrada respecto al ancho real del modal. */
 .detail-modal-divider {
     width:calc(100% + 18px); height:2px; min-height:2px; justify-self:start;
-    margin:4px 0 4px 12px;
+    margin:2px 0 4px 12px;
 }
 @media (max-width:560px) { .detail-modal-divider { width:calc(100% + 22px); } }
 
@@ -6101,3 +6102,18 @@ textarea.rich-text-source[hidden] { display:none !important; }
     }
 }
 
+
+
+/* GP-UX-MODAL-HEADERS-02 — títulos a la izquierda y cierre reservado a la derecha. */
+.info-modal-content > h1:first-of-type,
+.info-modal-content > h2:first-of-type,
+.info-modal-content > h3:first-of-type {
+    text-align: left;
+    padding-right: 48px;
+}
+.detail-modal-header-actions { padding-right: 48px; }
+@media (max-width: 560px) {
+    .detail-modal-title-text { transform: translateY(-3px); }
+    .detail-modal-divider { margin-top: 2px; }
+    .detail-modal-header-actions { padding-right: 42px; }
+}

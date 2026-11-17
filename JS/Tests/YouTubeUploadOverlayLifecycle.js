@@ -49,4 +49,12 @@ test("la instancia expone el estado de transferencia para proteger el XHR", () =
     assert.match(modalSource, /modal\.__youtubeUploadIsUploading = \(\) => isUploading;/);
 });
 
-console.log("YouTubeUploadOverlayLifecycle:", passed + "/8 PASS");
+
+test("el cierre de YouTube es un botón accesible y el diálogo tiene nombre", () => {
+    assert.match(modalSource, /modal\.setAttribute\("role", "dialog"\)/);
+    assert.match(modalSource, /modal\.setAttribute\("aria-labelledby", "yt-upload-modal-title"\)/);
+    assert.match(modalSource, /<button type="button" class="info-close-btn" id="yt-modal-close-btn" aria-label="Cerrar carga de vídeo">/);
+    assert.doesNotMatch(modalSource, /<span class="info-close-btn" id="yt-modal-close-btn"/);
+});
+
+console.log("YouTubeUploadOverlayLifecycle:", passed + "/9 PASS");
