@@ -179,3 +179,13 @@ undefined
 - No se modificó lógica de servicios. No se ejecutaron Apps Script/Beta ni se midieron latencias reales.
 - Siguiente tarea: GP-PERF-SIMPLIFY-01 / P1.1 — simplificar WRITE/ADMIN cortes y eliminar Coordinator de checkOperation; después P1.2 locks y P1.3 FEEDBACK.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — GP-PERF-SIMPLIFY-01 / P1.1a — CAMBIO PARCIAL IMPLEMENTADO
+- Tarea: simplificar consulta de estado de aportes WRITE/checkOperation. Estado: IMPLEMENTACIÓN REALIZADA; VALIDACIÓN PENDIENTE.
+- JS/Services/write.js: checkOperation deja de adquirir lease, llamar a Coordinator y revalidar sesión. Se conserva la consulta del estado por opId y la respuesta compacta.
+- JS/Tests/WriteAuthorizationMinimization.js: actualizado el contrato para exigir ruta directa sin lease.
+- Pendiente: ejecutar pruebas locales; después continuar P1.1b (mutaciones de cortes WRITE/ADMIN y asignación de ID).
+- No se desplegaron servicios Apps Script ni se ejecutaron pruebas Beta/productivas.
+================================================================================

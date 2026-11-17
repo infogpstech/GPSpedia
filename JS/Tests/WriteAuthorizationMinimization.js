@@ -80,9 +80,13 @@ function runWriteAuthorizationMinimizationTests(sources) {
    ()=>({getSheetByName:()=>({})}),{CORTES:"Cortes"},()=>{calls++;return 42;});
   assert(fn({userId:"U1",sessionToken:"valid",role:"Tecnico"}).vehicleId===42&&calls===1&&locked===1&&released===1);
  });
- run("checkOperation está autenticado y no devuelve rowData",()=>{
+ run("checkOperation consulta estado sin lease ni revalidación de sesión y no devuelve rowData",()=>{
   const fn=extract(write,"handleCheckOperation");
-  assert(fn.indexOf("getAuthenticatedCollaborator(payload)")<fn.indexOf("findRowByOpId"));
+  const router=extract(write,"doPost");
+  const branch=router.slice(router.indexOf("if (!isSharedMutationAction_(action))"),router.indexOf("const nestedToken"));
+  assert(!fn.includes("getAuthenticatedCollaborator(payload)"));
+  assert(!branch.includes("withSharedMutationLease_"));
+  assert(branch.includes("doPostInternal_(withSharedSessionActor_(e, null))"));
   assert(!fn.includes("rowData")&&!fn.includes("rowValues:"));
   assert(fn.includes("operationHash")&&fn.includes("vehicleId")&&fn.includes("timestamp"));
  });

@@ -1306,7 +1306,7 @@ No se han desplegado proyectos Apps Script ni configurado secretos remotos. La f
 
 ## GP-PERF-SIMPLIFY-01 — Simplificación de seguridad operativa y optimización global
 **Prioridad: P0/P1 — REQUISITO REGISTRADO (2026-11-17).**
-**Estado: P0 COMPLETADA; P1 EN PROGRESO.**
+**Estado: P0 COMPLETADA; P1 EN PROGRESO — P1.1a implementada, validación pendiente.**
 
 **Objetivo:** retirar validaciones transaccionales, llamadas entre servicios y revalidaciones por acción que añaden latencia sin aportar valor funcional. La plataforma debe ejecutar las funciones en el menor tiempo posible.
 

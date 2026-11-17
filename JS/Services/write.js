@@ -282,17 +282,8 @@ function doPost(e) {
     const payload = request.payload && typeof request.payload === "object" ? request.payload : {};
     const sessionOptions = { session: { sessionToken: payload.sessionToken } };
     if (!isSharedMutationAction_(action)) {
-        if (action !== "checkOperation") return doPostInternal_(withSharedSessionActor_(e, null));
-        try {
-            return withSharedMutationLease_("WRITE", "sessionActivity", function(token, actor) {
-                return doPostInternal_(withSharedSessionActor_(e, actor));
-            }, sessionOptions);
-        } catch (error) {
-            return ContentService.createTextOutput(JSON.stringify({
-                status: "error",
-                message: error && error.message ? error.message : "La operación fue rechazada por el coordinador compartido."
-            })).setMimeType(ContentService.MimeType.TEXT);
-        }
+        // Consultar el estado de una operación no modifica datos ni requiere lease.
+        return doPostInternal_(withSharedSessionActor_(e, null));
     }
 
     const nestedToken = String(payload.__sharedMutationToken || "").trim();
@@ -2626,7 +2617,6 @@ function findRowByOpId(sheet, opId) {
 }
 
 function handleCheckOperation(payload) {
-    getAuthenticatedCollaborator(payload);
     const { opId } = payload || {};
     if (!opId) throw new Error("ID de operación requerido.");
 

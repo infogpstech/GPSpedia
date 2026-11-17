@@ -232,3 +232,13 @@ undefined
 - **Siguiente fase después de P1:** P2 — imágenes, tutoriales y videos; después P3 — excepciones de sesión; P4 optimización general; P5 pruebas locales.
 - **Commit de esta actualización documental:** registrará P0 COMPLETADA, P1 EN PROGRESO, subtarea siguiente P1.1 y pruebas pendientes.
 - Rama autorizada: `GPSpedia2.2.5_work`; no modificar `GPSpedia2.2.5`.
+
+
+### Avance parcial — GP-PERF-SIMPLIFY-01 / P1.1a — 2026-11-17
+- **Tarea ejecutada:** P1.1a — retirar la coordinación transaccional de la consulta `WRITE/checkOperation`.
+- **Cambio realizado:** `JS/Services/write.js` ya despacha `checkOperation` directamente, sin adquirir/liberar lease ni llamar a Coordinator; `handleCheckOperation` ya no exige el actor central para una consulta de estado. Se conserva la respuesta compacta sin datos completos de fila.
+- **Prueba actualizada:** `JS/Tests/WriteAuthorizationMinimization.js` ahora exige ausencia de lease y revalidación en esa ruta.
+- **Estado:** IMPLEMENTACIÓN PARCIAL; VALIDACIÓN PENDIENTE. No marcar P1.1a como completada hasta ejecutar la prueba.
+- **Pendiente de P1:** mutaciones de cortes WRITE/ADMIN, identidad simple de colaborador/rol, locks largos y FEEDBACK.
+- **Siguiente sub-tarea:** P1.1b — simplificar `addOrUpdateCut`/ADMIN y la asignación de ID. Después ejecutar pruebas locales de P1.1a y continuar P1.2/P1.3.
+- No se desplegaron Apps Script ni se ejecutaron pruebas Beta/productivas.

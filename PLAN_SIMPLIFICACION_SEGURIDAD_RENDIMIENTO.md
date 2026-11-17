@@ -52,9 +52,11 @@ La autorización por rol se resuelve con el rol asociado a la sesión iniciada. 
 **Criterio de salida:** mapa de llamadas y lista priorizada de validaciones redundantes con archivos, funciones y dependencias identificadas.
 
 ### P1 — Simplificar el flujo de aportes y escrituras ordinarias
-**Estado: EN PROGRESO — P1.1 pendiente de implementación.**
+**Estado: EN PROGRESO — P1.1a implementada; validación pendiente. P1.1b pendiente.**
 **Prioridad máxima de implementación.**
 - Retirar del flujo normal de WRITE/FEEDBACK las adquisiciones de lease/transaction y viajes de red a Coordinator que solo autentiquen, autoricen o verifiquen la legitimidad de la operación.
+- **Avance P1.1a:** `WRITE/checkOperation` consulta el estado directamente, sin lease ni llamada a Coordinator. Prueba de contrato actualizada; ejecución pendiente.
+- **Siguiente P1.1b:** mutaciones `addOrUpdateCut` y `addSupplementaryInfo`, incluido el flujo ADMIN heredado y la asignación de ID.
 - Evitar que ADMIN actúe como intermediario para registrar una operación ordinaria si puede ejecutarse directamente en el servicio responsable.
 - Registrar el aporte con los datos recibidos, fecha del servidor y colaborador de la sesión.
 - Mantener el chequeo simple del rol permitido para la acción, sin consultar otro servicio.
