@@ -328,3 +328,11 @@ El checkpoint acumulativo anterior se conserva íntegro en `Checkpoint_Archive/c
 - Contrato de regresión ajustado para verificar ambos bloques y el retorno de foco de selectores. Parsing V8 aprobado para rich-text.js, InboxUi.mjs, ServiceWorkerCache.js y OfflineBrandAssets.mjs; balance CSS y caché v57 sincronizada.
 - HEAD de la rama de trabajo confirmado después de los cambios: comparar el SHA remoto actual al cerrar esta nota. Suite integral Node y prueba física en Android/desktop continúan pendientes; no se declara que el teclado ya esté confirmado como persistente en hardware real.
 - La rama base GPSpedia2.2.5 permanece sin cambios.
+
+
+### Revisión de implementación — GP-UX-RICH-EDITOR-FORMAT-04 — 2026-11-16
+- Publicación parcial verificada en GPSpedia2.2.5_work: módulo rich-text.js, contrato InboxUi.mjs, contratos de caché y Service Worker v58, más Auditoría.txt.
+- Se mantiene estado independiente de formato por editor para negrita, cursiva, subrayado, tachado, color, fuente y tamaño. El cursor no requiere que los controles devuelvan el foco al editor; el siguiente texto se inserta con los nodos de formato correspondientes. La composición IME tiene tratamiento de rango de respaldo.
+- Validación estática local: parsing ECMAScript aprobado para rich-text.js, InboxUi.mjs, ServiceWorkerCache.js (modo async), OfflineBrandAssets.mjs y service-worker.js; contratos estáticos dirigidos y sincronización de caché v58 aprobados.
+- No se ejecutó la suite Node.js completa ni pruebas de interacción con navegador/dispositivo desde esta sesión. No se declara CI aprobada. La validación real con Gboard/IME, autocorrección, cambio de estilos y escritorio queda pendiente de Beta.
+- La publicación de checkpoint y ChangesLogs se completa en esta continuación. Estado: EN PROGRESO hasta ejecutar la suite Node disponible; no bloqueado por la validación física Beta.
