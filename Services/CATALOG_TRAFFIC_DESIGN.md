@@ -32,7 +32,7 @@ El endpoint getServiceTraffic de cada servicio es interno, protegido con un secr
 - **AUTH:** validateSession.
 - **WRITE:** checkVehicle, getSuggestion y checkVinDuplicate.
 - **FEEDBACK:** getPysData, sendContactForm y suggestYear anónimo (userId 0). suggestYear autenticado y getCatalogChanges se cuentan mediante Coordinator.
-- **UTILITIES:** migrateTimestamps.
+- **UTILITIES:** migrateTimestamps ya obtiene una lease UTILITIES dentro de su handler y se cuenta mediante Coordinator; no lleva contador local.
 - **USERS:** getUsers, createUser y updateProfile pasan por Coordinator; no se añade contador local.
 - **ADMIN:** operaciones pasan por Coordinator; ping se excluye como sondeo.
 
@@ -56,14 +56,14 @@ Generar un secreto aleatorio distinto por servicio (por ejemplo openssl rand -he
 - GPSpedia_CATALOG_TRAFFIC_SECRET
 - GPSpedia_WRITE_TRAFFIC_SECRET
 - GPSpedia_FEEDBACK_TRAFFIC_SECRET
-- GPSpedia_UTILITIES_TRAFFIC_SECRET
+- (sin secreto para UTILITIES; usa Coordinator)
 
 No crear secreto para USERS ni ADMIN. Nunca guardar valores en el repositorio, navegador, logs o documentación. Desplegar los proyectos Apps Script actualizados solo en entorno Beta autorizado.
 
 ## Pruebas locales
 
 - CatalogTrafficTelemetry: lock libre/ocupado, no espera, liberación correcta, buckets, retención, secretos y errores best-effort.
-- DirectServiceTrafficTelemetry: AUTH/WRITE/FEEDBACK/UTILITIES; acciones directas, buckets, secretos, lock ocupado y fallos de PropertiesService.
+- DirectServiceTrafficTelemetry: AUTH/WRITE/FEEDBACK; acciones directas, buckets, secretos, lock ocupado y fallos de PropertiesService.
 - ServiceTrafficAggregation: suma de Coordinator y contadores locales por servicio, conservación de otras métricas, entradas inválidas y fuentes parciales.
 - ServiceTrafficBatch: fetchAll, fallback por endpoint, secreto faltante, error individual y fallo de PropertiesService.
 - ServiceTrafficAdminContract: rol Developer, consulta de solo lectura, fuentes, rutas instrumentadas, UI y exclusión de métricas locales.
@@ -79,4 +79,4 @@ No crear secreto para USERS ni ADMIN. Nunca guardar valores en el repositorio, n
 5. Verificar ADMIN, acceso exclusivo a Desarrollador, respuesta parcial por fuente y que el contador no añade esperas.
 6. No declarar tráfico HTTP universal: rutas externas/legacy no instrumentadas y health probes permanecen excluidas.
 
-**Límite de exactitud:** el agregado combina operaciones Coordinator y rutas directas conocidas instrumentadas en AUTH, CATALOG, WRITE, FEEDBACK y UTILITIES. USERS y ADMIN se miden mediante Coordinator. Puede subcontar cuando tryLock(0) no está disponible y no incluye solicitudes externas o rutas no mapeadas. La disponibilidad y latencia de los servicios tienen prioridad sobre el conteo.
+**Límite de exactitud:** el agregado combina operaciones Coordinator y rutas directas conocidas instrumentadas en AUTH, CATALOG, WRITE y FEEDBACK; UTILITIES se cuenta mediante lease Coordinator. USERS y ADMIN se miden mediante Coordinator. Puede subcontar cuando tryLock(0) no está disponible y no incluye solicitudes externas o rutas no mapeadas. La disponibilidad y latencia de los servicios tienen prioridad sobre el conteo.
