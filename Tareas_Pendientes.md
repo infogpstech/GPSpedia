@@ -1493,3 +1493,11 @@ No se han desplegado proyectos Apps Script ni configurado secretos remotos. La f
 - CI 44151856103 SUCCESS: sintaxis aprobada, 144 suites / 2,109 pruebas / 0 fallos. SessionActorCacheLifetime 4/4; SessionActorCacheInvalidation 1/1 con loteo de 13 sesiones Developer y uso del secreto Coordinator existente.
 - Health read-only 44151856097 SUCCESS: 7/7 servicios disponibles. No valida el código Apps Script nuevo porque no se desplegó.
 - P3.1c: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Pendiente Beta: configurar GPSpedia_WRITE_URL y GPSpedia_FEEDBACK_URL en AUTH, desplegar AUTH/WRITE/FEEDBACK y probar logout, revocaciones multi-sesión, cambios de rol, eliminación, recuperación de contraseña y fallo parcial/reintento.
+## GP-PERF-SIMPLIFY-01 — P4 Optimización general — 2026-11-17
+**Estado: AUDITORÍA INICIAL COMPLETADA; P4.1 EN PROGRESO.**
+
+- Informe: AUDITORIA_P4_OPTIMIZACION_PLATAFORMA.md.
+- P4.1: iniciar la lectura PyS en paralelo con cursor/snapshot inicial del catálogo; aislar fallos PyS y no marcar como fresco un cursor cuando la lectura devuelve datos obsoletos. Mantener el feed incremental.
+- P4.2: al abrir el compositor Inbox desde Solicitudes, no esperar la carga remota de conversaciones; cargar destinatarios de inmediato y refrescar la lista aparte.
+- P4.3: revisar locks globales de ADMIN para auditoría/organización Drive; no modificar hasta diseñar reservas breves y preservar referencias, idempotencia y rollback.
+- No modificar telemetría, dashboard ni health checks. No desplegar servicios ni tocar datos externos.
