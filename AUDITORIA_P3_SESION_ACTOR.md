@@ -45,3 +45,18 @@ P3.1b debe decidir si se requiere precargar el actor en cada servicio durante lo
 - Severidad: **ALTA** por ventana de autorización obsoleta que contradice las excepciones de revocación exigidas. Evidencia: `SharedMutationClient.js` (`getCachedSharedSessionActor_` y clave por token), `write.js` dispatcher, `feedback.js` dispatcher y `Auth.js` (`handleLogout` y llamadas de revocación).
 - Decisión P3.1b: no introducir JWT/HMAC ni precargas de red a todos los servicios. Mantener temporalmente el TTL de 6 h para operaciones ordinarias, pero **no cerrar P3.1 completo** hasta implementar invalidación dirigida de las cachés de los servicios en las tres excepciones (logout remoto, eliminación de cuenta y cambio/revocación de rol), sin volver a consultar Coordinator en cada acción.
 - Siguiente: P3.1c, diseñar e implementar invalidación dirigida de caché con autenticación servicio-a-servicio ya disponible, pruebas de propagación, fallos parciales y aislamiento por token. No desplegar servicios ni tocar datos productivos en esta fase.
+
+
+## Adenda P3.1c — implementación de invalidación dirigida
+
+**Commit de implementación/pruebas:** fb52a48685889b30744761f13782eca9c4ae0a1f (rama GPSpedia2.2.5_work).
+
+- SharedMutationClient.js conserva la función de clave de caché anterior (userId + "\\n" + sessionToken) y añade la operación de invalidación interna. No cambia el TTL de 21,600 s ni el camino ordinario de cache hit.
+- AUTH solicita la eliminación de la clave exacta en WRITE y FEEDBACK antes de llamar a revokeSession o revokeUserSessions. Para revocaciones por usuario, obtiene los tokens activos de ActiveSessions; rechaza tokens duplicados y más de cinco sesiones.
+- WRITE y FEEDBACK interceptan __invalidateSessionActorCache antes del dispatcher de acciones de usuario. El handler exige el secreto compartido GPSpedia_SESSION_CACHE_INVALIDATION_SECRET, compara el secreto en tiempo constante y elimina solo las claves del usuario/token recibidos. La acción no está registrada en api-config.js.
+- La propagación falla cerrada: si falta configuración, un endpoint no responde o no confirma el número de tokens, AUTH no ejecuta después la revocación de Coordinator. Si un servicio ya limpió su caché y el segundo falla, el reintento vuelve a limpiar de forma idempotente antes de revocar.
+- Se extendieron las pruebas focalizadas y los harnesses de AUTH (PasswordRecovery, LastDeveloperProtection y copia aislada JS/Tests/Auth.js).
+- Validación: SessionActorCacheInvalidation 23/23 PASS; SessionActorCacheLifetime 4/4 PASS; GitHub Actions 44149804570 SUCCESS — 144 suites, 2,131 pruebas, 0 fallos. Workflow de salud 44149804587 SUCCESS, solo GET sobre deployments existentes.
+- Configuración Beta pendiente: en AUTH, definir GPSpedia_SESSION_CACHE_INVALIDATION_SECRET (valor aleatorio compartido de al menos 32 caracteres), GPSpedia_WRITE_URL y GPSpedia_FEEDBACK_URL; en WRITE y FEEDBACK, definir el mismo GPSpedia_SESSION_CACHE_INVALIDATION_SECRET. Usar los endpoints /exec vigentes. No se guardan valores secretos en Git.
+- Validación Beta pendiente: desplegar las tres fuentes y comprobar logout individual, cierre remoto de todas las sesiones, eliminación/cambio de rol, cambio/restablecimiento de contraseña, fallo parcial y reintento. También verificar que los cache hits ordinarios no llaman a Coordinator.
+- Estado: P3.1c COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. P3.1 no requiere más cambios locales para invalidación; la configuración y comprobación remotas quedan para Beta.
