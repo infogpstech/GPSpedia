@@ -206,3 +206,15 @@ undefined
 - CI `44115093952`: SUCCESS — 138 suites, 2,031 pruebas, 0 fallos; InboxUi 83/83. Health remoto read-only `44115094092`: SUCCESS.
 - GitHub Pages ejecuta su build/deploy automáticamente al recibir cambios. No se desplegaron proyectos Apps Script ni se realizaron pruebas funcionales Beta.
 - Pendiente: inspección visual Beta en escritorio, Android y PWA instalada. Las pruebas funcionales de despliegue permanecen diferidas.
+
+
+### Nuevo requisito prioritario — GP-PERF-SIMPLIFY-01 — 2026-11-17
+- El usuario redefine el criterio de arquitectura: GPSpedia debe priorizar fluidez y velocidad; no desea validaciones transaccionales, leases, autorizaciones entre servicios ni revalidaciones de identidad por acción ordinaria.
+- Acceso ordinario: login con contraseña hasheada mediante el esquema actual; el rol asignado determina las capacidades. Cada acción conserva solo la comprobación sencilla del permiso del rol, sin viajes de red ni transacciones.
+- Cortes, tutoriales, videos, imágenes y demás aportes deben procesarse directamente: contenido + fecha del servidor + colaborador autenticado. No hacer que un servicio pida permiso a otro ni que Coordinator valide cada transacción.
+- Únicas excepciones solicitadas: cierre remoto de sesión y limpieza/invalidez de caché; invalidación de sesión al borrar una cuenta para impedir nuevos accesos; bloqueo temporal tras varios intentos fallidos de login. No cambiar el hash actual ni la matriz de roles.
+- Se añadió la sección 15 a NORMAS_DESAROLLO.md, que prevalece sobre el criterio anterior de leases/revalidación por acción de la sección 13.3 para operaciones ordinarias.
+- Plan detallado registrado en PLAN_SIMPLIFICACION_SEGURIDAD_RENDIMIENTO.md y tarea GP-PERF-SIMPLIFY-01 añadida al backlog.
+- Orden: P0 inventario de llamadas/latencia; P1 simplificar escrituras/aportes; P2 cargas de archivos; P3 excepciones de sesión; P4 optimización global; P5 pruebas locales y mediciones.
+- Estado: requisito y plan registrados; todavía no se han modificado servicios ni se afirma mejora de rendimiento. Siguiente acción: ejecutar P0, auditar Coordinator/SharedMutationClient y rutas WRITE/FEEDBACK/ADMIN, y luego implementar P1/P2. No desplegar Apps Script ni ejecutar Beta sin autorización.
+- HEAD al registrar este requisito: 4e3ef463298fd8e3d75a87c46feea8a67a9e1f25; rama autorizada GPSpedia2.2.5_work. Rama base GPSpedia2.2.5 no se modifica.
