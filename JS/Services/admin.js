@@ -8876,7 +8876,13 @@ function getDirectServiceTrafficBatch_() {
     const requests = [];
     const requestSpecs = [];
     specs.forEach(spec => {
-        const secret = String(properties.getProperty("GPSpedia_" + spec.service + "_TRAFFIC_SECRET") || "");
+        let secret = "";
+        try {
+            secret = String(properties.getProperty("GPSpedia_" + spec.service + "_TRAFFIC_SECRET") || "");
+        } catch (error) {
+            results[spec.service] = { status: "unavailable", reason: "properties_unavailable" };
+            return;
+        }
         if (secret.length < 32) {
             results[spec.service] = { status: "unavailable", reason: "not_configured" };
             return;
@@ -8913,8 +8919,14 @@ function getDirectServiceTrafficBatch_() {
             const httpStatus = response.getResponseCode();
             if (httpStatus < 200 || httpStatus >= 300) throw new Error("request_failed");
             const result = JSON.parse(response.getContentText() || "{}");
+            const validTotals = result && result.totals &&
+                ["lastHour", "last6Hours", "last24Hours"].every(period =>
+                    Number.isSafeInteger(Number(result.totals[period])) && Number(result.totals[period]) >= 0);
+            const validBuckets = result && Array.isArray(result.buckets) && result.buckets.every(bucket =>
+                bucket && Number.isSafeInteger(Number(bucket.startAt)) &&
+                Number.isSafeInteger(Number(bucket.count)) && Number(bucket.count) >= 0);
             if (!result || result.status !== "success" || result.service !== spec.service ||
-                result.scope !== spec.scope || !Array.isArray(result.buckets) || !result.totals) {
+                result.scope !== spec.scope || !validBuckets || !validTotals) {
                 throw new Error("invalid_response");
             }
             results[spec.service] = result;
@@ -8936,8 +8948,10 @@ function mergeDirectServiceTraffic_(coordinatorResult, directResults) {
     const services = ["CATALOG", "AUTH", "WRITE", "FEEDBACK", "UTILITIES"];
     services.forEach(service => {
         const directResult = directResults && directResults[service];
+        const expectedScope = service === "CATALOG" ? "catalog_post_requests" : "direct_post_requests";
         const directAvailable = Boolean(directResult && directResult.status === "success" &&
-            directResult.service === service && Array.isArray(directResult.buckets) && directResult.totals);
+            directResult.service === service && directResult.scope === expectedScope &&
+            Array.isArray(directResult.buckets) && directResult.totals);
         const directBuckets = new Map();
         if (directAvailable) {
             directResult.buckets.forEach(bucket => {
@@ -8993,7 +9007,7 @@ function handleGetServiceTraffic_(payload, logMessage, developerContext) {
     }
     const result = mergeDirectServiceTraffic_(coordinatorResult, getDirectServiceTrafficBatch_());
     if (typeof logMessage === "function") {
-        logMessage("Telemetría global", "Se recuperaron métricas agregadas de Coordinator y CATALOG.", 1, 1);
+        logMessage("Telemetría global", "Se recuperaron métricas agregadas de Coordinator y fuentes directas instrumentadas.", 1, 1);
     }
     return result;
 }
