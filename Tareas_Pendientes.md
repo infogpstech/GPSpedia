@@ -1233,7 +1233,7 @@ Después: abrir Developer → Auditoría de Cortes en escritorio y PWA móvil; c
 **Auditoría de rutas y decisiones contra doble conteo**
 - AUTH validateSession: directa; las acciones protegidas y benchmark obtienen lease.
 - WRITE checkVehicle/getSuggestion/checkVinDuplicate: directas; las mutaciones protegidas obtienen lease.
-- FEEDBACK getPysData/sendContactForm/suggestYear anónimo: directas; otras acciones protegidas o feed incremental obtienen lease.
+- FEEDBACK getPysData/suggestYear anónimo: directas; sendContactForm, otras acciones protegidas y feed incremental obtienen lease.
 - UTILITIES migrateTimestamps: ya obtiene lease en su handler, por lo que no se instrumenta localmente.
 - USERS: las acciones conocidas pasan por Coordinator.
 - ADMIN: ping es health; las demás acciones pasan por Coordinator.
