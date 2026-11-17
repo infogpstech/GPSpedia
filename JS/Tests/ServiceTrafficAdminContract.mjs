@@ -29,7 +29,7 @@ assert.match(authService,/actions: new Set\(\["validateSession"\]\)/);
 assert.match(writeService,/actions: new Set\(\["checkVehicle","getSuggestion","checkVinDuplicate"\]\)/);
 assert.match(feedbackService,/actions: new Set\(\["recordLike","reportProblem"/);
 assert.match(feedbackService,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken\)/);
-assert.doesNotMatch(feedbackService.slice(feedbackService.indexOf("function doPost(e)"),feedbackService.indexOf("\\nconst RICH_TEXT_MODE_PROPERTY_")),/withSharedMutationLease_/);
+assert.doesNotMatch(feedbackService.slice(feedbackService.indexOf("function doPost(e)"),feedbackService.indexOf("\nconst RICH_TEXT_MODE_PROPERTY_")),/withSharedMutationLease_/);
 assert.match(feedbackService,/anonymousSuggestion/);
 assert.match(feedbackService,/actions: new Set\([\s\S]*?"suggestYear"[\s\S]*?"sendContactForm"/);
 assert.doesNotMatch(admin,/UTILITIES_SERVICE_URL|service: "UTILITIES", url:/);
