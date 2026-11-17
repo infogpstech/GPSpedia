@@ -7,7 +7,7 @@ import { mergeInboxMessagePages } from "../Frontend/inboxPageCache.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const read = path => readFileSync(resolve(ROOT, path), "utf8");
-const ui = read("JS/Frontend/ui.js"), html = read("index.html"), css = read("style.css"), api = read("JS/Frontend/api-config.js"), rich = read("JS/Frontend/rich-text.js");
+const ui = read("JS/Frontend/ui.js"), html = read("index.html"), css = read("style.css"), api = read("JS/Frontend/api-config.js"), rich = read("JS/Frontend/rich-text.js"), feedback = read("JS/Services/feedback.js");
 const index = read("index.html"), users = read("HTML/users.html"), addCortes = read("HTML/add_cortes.html"), main = read("JS/Frontend/main.js");
 const cases = [];
 function check(name, fn) { cases.push({ name, fn }); }
@@ -638,6 +638,9 @@ check("El alta PyS admite enlace YouTube o subida directa sin enviar videoUrl a 
     assert.ok(pys.includes('openYouTubeUploadModal({'));
     assert.ok(pys.includes("if (!createdProblemId)"), "un reintento de aprobación no debe duplicar el problema");
     assert.ok(pys.includes("if (isSaving) return"), "el envío debe impedir dobles clics concurrentes");
+    assert.ok(!pys.includes('if (getUiSessionContext_()?.role !== "desarrollador")'), "no debe introducir una restricción de rol ajena al flujo PyS");
+    assert.ok(feedback.includes('if (videoData.contentType === "pys")'), "el servicio ya admite el destino PyS");
+    assert.ok(feedback.includes('throw new Error("El vídeo debe cargarse mediante el flujo de aprobación de YouTube; no se aceptan enlaces directos.")'), "el alta debe conservar videoUrl vacío y usar aprobación");
     assert.ok(pys.includes("sessionStorage.setItem(storageKey, opVideoId)"), "el ID de aprobación debe persistir para reintentos idempotentes");
     assert.ok(!pys.includes("El problema se registró sin vídeo. ¿Deseas subir ahora"), "la subida ya no debe depender de un confirm posterior");
 });
