@@ -1405,3 +1405,13 @@ GP-UX-RICH-TOOLBARS-01 — 2026-11-16
 [2026-11-16] GP-UX-RICH-EDITOR-FORMAT-04 — Se publica estado de formato pendiente independiente por editor para conservar color, fuente, tamaño, negrita, cursiva, subrayado y tachado al perder foco. Inserción de texto formateado con beforeinput, soporte de saltos de línea y composición IME, selección existente envuelta directamente y limpieza del estado al reiniciar formulario. App Shell v58. Parsing ECMAScript y contratos estáticos dirigidos aprobados; suite Node completa, CI y prueba Beta de navegador/dispositivo no ejecutadas.
 
 [Adenda GP-UX-RICH-EDITOR-FORMAT-04] Se preserva la alternancia de estilos sobre texto seleccionado y se limita la inserción manual a beforeinput cancelable; composición IME no cancelable se procesa al terminar para evitar duplicados. Parsing posterior aprobado; pruebas Node completas y Beta pendientes.
+
+================================================================================
+GP-UX-PYS-TUTORIAL-ASSOCIATION-06 — 2026-11-16
+- JS/Frontend/rich-text.js: sustituido el selector de marcador de listas de las barras estándar por un botón con icono y menú desplegable accesible. Se conservan viñetas, guiones, flechas, verificación y lista numerada; menú orientado a la izquierda.
+- JS/Frontend/ui.js: agregado campo de enlace de YouTube validado y botón para abrir la subida de archivo desde el formulario de tutoriales. Los enlaces pegados usan submitVideoForApproval; addTutorial conserva videoUrl vacío por el contrato vigente de Apps Script. El flujo de subida binaria existente se mantiene.
+- JS/Frontend/ui.js: el modal de asociación de modelos adapta su altura al teclado/visualViewport, muestra resultados al completar la carga asíncrona del catálogo y separa el botón + (agregado directo) del botón de detalle (abre la información del vehículo).
+- JS/Tests/InboxUi.mjs: contratos para icono de listas, enlace/subida de tutorial, visibilidad de resultados y selección directa por +.
+- service-worker.js, JS/Tests/ServiceWorkerCache.js y JS/Tests/OfflineBrandAssets.mjs: caché App Shell actualizada a v62.
+- No se modificó JS/Services/feedback.js ni otro servicio/deployment Apps Script.
+================================================================================
