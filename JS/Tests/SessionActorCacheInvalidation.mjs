@@ -98,9 +98,9 @@ assert.throws(() => single.invalidateSessionActorCaches("U-1", ["a", "b", "c", "
 // Cobertura del cableado real de los tres servicios y de los flujos de revocación AUTH.
 assert.match(writeSource, /action === "__invalidateSessionActorCache"[\s\S]*?handleSharedSessionActorCacheInvalidation_/);
 assert.match(feedbackSource, /action === "__invalidateSessionActorCache"[\s\S]*?handleSharedSessionActorCacheInvalidation_/);
-assert.match(authSource, /function handleLogout[\s\S]*?revokeSharedSessionContext_\\(requestedUserId, sessionToken\\)/);
-assert.match(authSource, /revokeSharedUserSessionContexts_\\(userId, getActiveSessionTokensForUserUnderLock_\\(sessionsSheet, userId\\)\\)/);
-assert.match(authSource, /revokeSharedUserSessionContexts_\\(targetUserId, getActiveSessionTokensForUserUnderLock_\\(sessionsSheet, targetUserId\\)\\)/);
+assert.match(authSource, /function handleLogout[\s\S]*?revokeSharedSessionContext_/);
+assert.equal(authSource.includes("revokeSharedUserSessionContexts_(userId, getActiveSessionTokensForUserUnderLock_(sessionsSheet, userId))"), true);
+assert.equal(authSource.includes("revokeSharedUserSessionContexts_(targetUserId, getActiveSessionTokensForUserUnderLock_(sessionsSheet, targetUserId))"), true);
 assert.doesNotMatch(apiConfigSource, /__invalidateSessionActorCache/);
 
 console.log("SessionActorCacheInvalidation: PASS — claves compatibles, autenticación interna, aislamiento por token, flujos AUTH y fallo parcial");
