@@ -487,3 +487,9 @@ Estado: **EN PROGRESO** hasta ejecutar la suite Node.js completa disponible; la 
 - La solicitud usa una lease PASSWORD_RECOVERY independiente y no bloquea login. La finalización coordina USERS, ACTIVE_SESSIONS, LOGS, SESSION_CONTEXTS y PASSWORD_RECOVERY; cambia PBKDF2-SHA256 y revoca sesiones anteriores.
 - Frontend de dos pasos en el modal de login; App Shell v66. JS/Tests/Auth.js mantiene paridad con Auth.js salvo ID de Spreadsheet aislado.
 - Estado EN PROGRESO hasta ejecutar PasswordRecovery.mjs, suite Node.js/CI y revisar el diff final. Beta pendiente: deployment AUTH, scope MailApp, recepción de correo, propiedades y revocación real.
+
+
+### Adenda de CI — reubicación de exports AUTH — 2026-11-17
+- El primer run del commit a8c4a087e10cadf9264ce92cf328ac2032d5321b aprobó sintaxis y 1,829 pruebas, pero falló SessionRestoreOnValidationFailure por una extracción de fuente que usa el export login como delimitador.
+- Se identificó que los nuevos exports de recuperación estaban insertados antes de login y quedaban dentro del bloque de checkSession extraído por el harness. Se reubican al final de auth.js; no era un fallo de lógica de sesión.
+- La suite completa debe repetirse después del commit correctivo. GP-AUTH-PASSWORD-RECOVERY-01 permanece EN PROGRESO hasta CI verde.

@@ -98,3 +98,10 @@ Resultado: implementación local cerrada con validación diferida a Beta. No se 
 - Se preservan AUTH/USERS y el coste de login. No se añade operación al inicio de sesión.
 - Beta pendiente: scope MailApp/script.send_mail, propiedades del secreto/coordinador, entrega real y revocación en deployment AUTH actualizado. No se desplegó Apps Script ni se modificaron Spreadsheet, Drive o datos externos.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — ANÁLISIS DEL FALLO CI AUTH
+- El fallo de SessionRestoreOnValidationFailure.mjs fue un SyntaxError del harness: su función extract() toma checkSession hasta el literal de export async function login; los nuevos exports añadidos delante de login quedaron dentro del código evaluado por AsyncFunction.
+- La corrección consiste en reubicar los dos exports de recuperación al final del módulo, preservando intacto el bloque de restauración de sesión. No se modifica el flujo de sesión ni la lógica de validación.
+================================================================================

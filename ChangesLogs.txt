@@ -1519,3 +1519,10 @@ GP-UX-PYS-TUTORIAL-ASSOCIATION-06 — 2026-11-16
 - Pruebas añadidas: PasswordRecovery.mjs, SharedMutationCoordinator.js y runner AUTH.
 - No se modificaron endpoints, deployments, ScriptProperties remotos, Spreadsheet, Drive ni datos externos. La entrega de correo y scopes se reservan a Beta.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — AJUSTE DE COMPATIBILIDAD DE TESTS AUTH
+- GitHub Actions detectó que SessionRestoreOnValidationFailure.mjs delimita checkSession hasta el export de login. La inserción de los dos nuevos exports antes de login extendió el bloque extraído y produjo un SyntaxError en el harness, sin indicar un fallo de ejecución de la aplicación.
+- Se reubican requestPasswordRecovery y completePasswordRecovery al final del módulo para preservar los límites de extracción usados por las pruebas de sesión. No cambia el comportamiento ni el contrato de API.
+================================================================================
