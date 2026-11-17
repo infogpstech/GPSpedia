@@ -298,7 +298,7 @@ export function runPysCreationIntegrityTests({feedback,ui}){
     });
     test("edición y alta de aprobación usan el validador estricto del backend",()=>{
         assert.match(feedback,/function handleUpdatePysItem\(payload\)[\s\S]*?getPysYouTubeVideoId_\(requested\)/);
-        assert.match(feedback,/function handleSubmitVideoForApproval\(payload\)[\s\S]*?getPysYouTubeVideoId_\(videoUrl\)/);
+        assert.match(feedback,/function handleSubmitVideoForApproval\(payload\)[\s\S]*?normalizeInboxVideoUrl_\(videoUrl,actualVideoId\)/);
         assert.match(ui,/export function getValidatedYouTubeVideoId\(value\)/);
     });
     test("UI anuncia y aplica los mismos límites de campo",()=>{
@@ -368,7 +368,7 @@ export function runPysCreationIntegrityTests({feedback,ui}){
         const h=buildHarness(feedback,ui,{pysRows:rows});
         assert.throws(()=>h.api.addSolution({problemId:"isue-001",solucion:"Solución nueva",userId:"u",userName:"T"}),/estado inconsistente/);
         assert.equal(h.state.pysRows[1][3],"x");assert.equal(h.state.pysRows[1][4],"");
-        assert.equal(h.state.lockWaits,1);assert.equal(h.state.lockReleases,1);
+        assert.equal(h.state.lockWaits,0);assert.equal(h.state.lockReleases,0);
     });
     test("no vuelve a adquirir ni libera un ScriptLock que ya posee la envoltura externa",()=>{
         const rows=[HEADERS.slice(),["isue-001","Falla","Detalle","","","","","","Técnico",""]];

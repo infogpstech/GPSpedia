@@ -26,7 +26,7 @@ const iterator = values => {
 };
 
 function buildHarness(feedback, options = {}) {
-    const state = { rows: options.initialRows ? [HEADER.slice(), ...options.initialRows.map(row => row.slice())] : [], operationRows: [], operationsSheet: null, flushCount: 0,
+    const state = { rows: options.initialRows ? [HEADER.slice(), ...options.initialRows.map(row => row.slice())] : [], operationRows: [], operationsSheet: null, flushCount: 0, rowAppended:false,
         createdBlob: null, trashed: false, description: "", setSharingCalls: 0, fileCreated: false };
     const driveRoot = { getId: () => "drive-root" };
     const wrongParent = { getId: () => "other-parent" };
@@ -85,7 +85,7 @@ function buildHarness(feedback, options = {}) {
             getDisplayValues: () => { if(options.failReferenceScan&&row>=2&&numCols>1)throw new Error("Spreadsheet read failed"); return Array.from({length:numRows},(_,r)=>Array.from({length:numCols},(_,c)=>{const v=(state.rows[row-1+r]||[])[col-1+c]??"";return v==null?"":String(v);})); }
         }),
         getDataRange: () => ({ getDisplayValues: () => { if(options.failDataRange)throw new Error("Spreadsheet data range unavailable");return state.rows.map(row=>row.map(v=>v==null?"":String(v))); } }),
-        appendRow: row => { if(options.failAppend)throw new Error("Spreadsheet append failed");state.rows.push(row.slice()); }
+        appendRow: row => { if(options.failAppend)throw new Error("Spreadsheet append failed");state.rows.push(row.slice());state.rowAppended=true; }
     };
     const operationsSheet = {
         getLastRow: () => state.operationRows.reduce((last,row,i)=>row&&row.some(v=>v!==""&&v!==null&&v!==undefined)?i+1:last,0),
