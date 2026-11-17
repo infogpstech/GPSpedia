@@ -1306,7 +1306,7 @@ No se han desplegado proyectos Apps Script ni configurado secretos remotos. La f
 
 ## GP-PERF-SIMPLIFY-01 — Simplificación de seguridad operativa y optimización global
 **Prioridad: P0/P1 — REQUISITO REGISTRADO (2026-11-17).**
-**Estado: P0 COMPLETADA; P1 EN PROGRESO — P1.1a implementada, validación pendiente.**
+**Estado: P0–P5 COMPLETADAS LOCALMENTE; validaciones de integración diferidas a Beta.**
 
 **Objetivo:** retirar validaciones transaccionales, llamadas entre servicios y revalidaciones por acción que añaden latencia sin aportar valor funcional. La plataforma debe ejecutar las funciones en el menor tiempo posible.
 
@@ -1326,7 +1326,7 @@ No se han desplegado proyectos Apps Script ni configurado secretos remotos. La f
 
 **P0 completada (2026-11-17):** auditoría estática de Coordinator, SharedMutationClient, WRITE, ADMIN y FEEDBACK. Informe: `AUDITORIA_P0_LATENCIA_VALIDACIONES.md`. Se confirmaron dos viajes HTTP por lease (acquire/release), revalidación central de sesión por adquisición, rutas ADMIN→WRITE con validación anidada y locks de hasta 30 s que pueden cubrir cargas Drive. No se midieron latencias reales ni se ejecutaron servicios.
 
-**Siguiente sub-tarea activa:** P1.1 — simplificar WRITE/ADMIN para cortes y retirar Coordinator de `checkOperation`. Después P1.2 — acortar locks que cubren Drive; P1.3 — simplificar FEEDBACK. P2 cargas de archivos continúa después.
+**Estado de fases:** P1, P2, P3 y P4 completadas localmente; P5 cerrada con regresión integral aprobada. Las pruebas externas y de campo permanecen en Beta.
 
 **Documento de ejecución:** `PLAN_SIMPLIFICACION_SEGURIDAD_RENDIMIENTO.md`.
 
@@ -1518,3 +1518,32 @@ No se han desplegado proyectos Apps Script ni configurado secretos remotos. La f
 - P4.3c: publicación CATALOG por lotes de 50 con requestId idempotente y reset ante persistencia parcial; 20 cambios: 1 viaje de red frente a 20.
 - P4.3d: alcance ScriptLock revisado y conservado por ahora. Los leases Coordinator ya protegen conflictos de recursos; no se justificó retirar la protección local sin medición.
 - CI 44156469990 SUCCESS: 145 suites / 2,123 pruebas / 0 fallos; health 7/7; Pages build SUCCESS.
+
+
+### GP-PERF-SIMPLIFY-01 — cierre P5 local — 2026-11-17
+- **Estado: COMPLETADA LOCALMENTE.** GitHub Actions run 44166031280: 145 suites, 2,123 pruebas aprobadas, 0 fallos.
+- Health read-only 44166031201: 7/7 servicios disponibles. No valida el código Apps Script no desplegado.
+- Pages build run 44166030514: SUCCESS.
+- La cobertura integral incluye RBAC, rutas ordinarias, escrituras/aportes, cargas, logout y revocación/cachés, cuenta eliminada, bloqueo temporal de login, concurrencia/idempotencia y regresión de UI.
+- P5 detectó y corrigió fixtures AUTH/USERS desactualizados y expectativas de tests que todavía exigían leases redundantes para consultas que ya consumen actor cacheado. No se redujeron permisos ni se cambió el algoritmo/los parámetros del hash.
+- Sin mediciones de latencia real. Se conservan únicamente cifras de reducción de llamadas ya documentadas en P4.
+
+### Validación Beta — pendiente de despliegue y autorización
+```bash
+# Ejecutar desde el repositorio local antes de cualquier prueba Beta.
+test "$(basename "$(git rev-parse --show-toplevel)")" = "GPSpedia" || { echo "Repositorio incorrecto" >&2; exit 1; }
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta" >&2; exit 1; }
+test -z "$(git status --porcelain)" || { echo "Hay cambios locales sin guardar; no se sincroniza" >&2; exit 1; }
+git fetch origin
+git pull --ff-only origin GPSpedia2.2.5_work
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "La rama cambió" >&2; exit 1; }
+git rev-parse HEAD
+```
+- Desplegar únicamente en el entorno Beta autorizado los proyectos Apps Script modificados; no usar producción.
+- Configurar en AUTH las propiedades GPSpedia_WRITE_URL y GPSpedia_FEEDBACK_URL con endpoints /exec de Beta; mantener GPSpedia_COORDINATOR_SECRET coherente entre AUTH, WRITE, FEEDBACK y Coordinator. No guardar secretos en Git.
+- Validar con usuarios de prueba por rol: lectura, creación/edición de cortes, aportes suplementarios, imágenes, adjuntos FEEDBACK, PyS y aprobación de videos; comprobar autor y fecha del servidor.
+- Probar logout individual, reset remoto de sesiones, cambio de rol, eliminación de cuenta, cambio/restablecimiento de contraseña, fallo parcial de invalidación y reintento. Verificar que no se restaure acceso desde caché.
+- Probar bloqueo temporal tras cinco intentos fallidos y expiración del bloqueo.
+- Probar dos aportes/cargas independientes simultáneos; comprobar que no se bloqueen entre sí y que los reintentos no dupliquen registros/archivos.
+- Validar en navegador/PWA escritorio y móvil el catálogo cache-first, Inbox, modales y controles responsive. Registrar navegador/dispositivo, rol, estado de caché, tiempos medidos y respuestas.
+- No modificar hojas, Drive, ScriptProperties ni datos productivos. Las pruebas Beta quedan pendientes hasta disponer de deployment/credenciales y autorización del entorno.
