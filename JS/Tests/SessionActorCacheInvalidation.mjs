@@ -2,6 +2,10 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 
 const source = fs.readFileSync("JS/Services/SharedMutationClient.js", "utf8");
+const authSource = fs.readFileSync("JS/Services/Auth.js", "utf8");
+const writeSource = fs.readFileSync("JS/Services/write.js", "utf8");
+const feedbackSource = fs.readFileSync("JS/Services/feedback.js", "utf8");
+const apiConfigSource = fs.readFileSync("JS/Frontend/api-config.js", "utf8");
 const removed = [];
 const digest = () => [1, 2, 3, 4];
 const api = new Function("Utilities", "PropertiesService", "CacheService",
@@ -14,8 +18,15 @@ const api = new Function("Utilities", "PropertiesService", "CacheService",
 { getScriptCache: () => ({ remove: key => removed.push(key) }) });
 
 const secret = "session-cache-invalidation-secret-40";
-const key = api.getSharedSessionActorCacheKey_("U-1", "token-A");
+let digestInput = "";
+const originalDigest = digest;
+const keyApi = new Function("Utilities", source + "\nreturn getSharedSessionActorCacheKey_;")({
+    DigestAlgorithm: { SHA_256: "SHA_256" }, Charset: { UTF_8: "UTF_8" },
+    computeDigest: (algorithm, input) => { digestInput = input; return originalDigest(); }
+});
+const key = keyApi("U-1", "token-A");
 assert.match(key, /^GPSpedia_SHARED_SESSION_ACTOR_V1_/);
+assert.equal(digestInput, "U-1\\\\n" + "token-A", "La clave conserva el separador histórico para invalidar entradas ya creadas.");
 
 const denied = api.handleSharedSessionActorCacheInvalidation_(
     { secret: "wrong", userId: "U-1", sessionTokens: ["token-A"] },
@@ -84,4 +95,12 @@ assert.deepEqual(partialEvents.map(event => event.service), ["WRITE", "FEEDBACK"
 assert.throws(() => single.invalidateSessionActorCaches("U-1", ["a", "b", "c", "d", "e", "f"]),
     /hasta cinco tokens/);
 
-console.log("SessionActorCacheInvalidation: 12/12 PASS — autenticación interna, aislamiento por token, orden de invalidación y fallo parcial");
+// Cobertura del cableado real de los tres servicios y de los flujos de revocación AUTH.
+assert.match(writeSource, /action === "__invalidateSessionActorCache"[\\s\\S]*?handleSharedSessionActorCacheInvalidation_/);
+assert.match(feedbackSource, /action === "__invalidateSessionActorCache"[\\s\\S]*?handleSharedSessionActorCacheInvalidation_/);
+assert.match(authSource, /function handleLogout[\\s\\S]*?revokeSharedSessionContext_\\(requestedUserId, sessionToken\\)/);
+assert.match(authSource, /revokeSharedUserSessionContexts_\\(userId, getActiveSessionTokensForUserUnderLock_\\(sessionsSheet, userId\\)\\)/);
+assert.match(authSource, /revokeSharedUserSessionContexts_\\(targetUserId, getActiveSessionTokensForUserUnderLock_\\(sessionsSheet, targetUserId\\)\\)/);
+assert.doesNotMatch(apiConfigSource, /__invalidateSessionActorCache/);
+
+console.log("SessionActorCacheInvalidation: PASS — claves compatibles, autenticación interna, aislamiento por token, flujos AUTH y fallo parcial");
