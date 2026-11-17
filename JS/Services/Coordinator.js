@@ -992,6 +992,12 @@ function createSharedMutationCoordinator_(dependencies) {
         if (!Number.isSafeInteger(cursor) || cursor < 0) throw new Error("El cursor del catálogo no es válido.");
         if (!Number.isInteger(requestedLimit) || requestedLimit < 1 || requestedLimit > 50) throw new Error("El límite de cambios debe estar entre 1 y 50.");
         return withCoordinatorLock_(() => {
+            // La lectura pública del feed ya está dentro del lock del coordinador:
+            // se contabiliza aquí sin otro viaje de red ni un bloqueo adicional.
+            try {
+                const trafficService = service === "PUBLIC" ? "CATALOG" : service;
+                recordServiceTrafficEvent_(trafficService, now(), operation);
+            } catch (trafficError) { /* Telemetría best-effort: nunca bloquea el feed. */ }
             const revisions = catalogChangeRevisions_();
             const storedRevision = Number(properties.getProperty(CATALOG_CHANGE_REVISION_PROPERTY_) || 0);
             const currentRevision = Math.max(Number.isSafeInteger(storedRevision) ? storedRevision : 0, revisions.length ? revisions[revisions.length - 1] : 0);
