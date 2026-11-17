@@ -85,3 +85,15 @@ undefined
 - Decisión técnica pendiente antes de implementación: definir captura global de llamadas no coordinadas sin introducir una solicitud adicional por operación ni serializar lecturas públicas bajo el lock de mutaciones. Evaluar instrumentación best-effort de los endpoints y límites de Apps Script/ScriptProperties, manteniendo autenticación del servicio y exclusión de la consulta de telemetría.
 - Alcance seguro de la siguiente fase: reemplazar la presentación local como métrica principal solo cuando el backend global tenga cobertura definida y etiquetas fieles; preservar diagnósticos de salud y métricas de latencia de health scan. No desplegar Apps Script ni escribir ScriptProperties reales en esta fase.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — REVISIÓN POSTIMPLEMENTACIÓN GP-DEV-TRAFFIC-GLOBAL-02
+- Diff afectado: api-config.js, ui.js, index.html, pruebas de telemetría/ruta y documentación de Coordinator.
+- Confirmado: no quedan importaciones/consumidores de serviceMetrics.js; el archivo fue retirado. El dashboard y los detalles consumen globalServiceTrafficData; el refresco periódico se mantiene condicionado a que el panel global esté visible y conserva el intervalo de 60 s para consulta remota.
+- Confirmado: la consulta sigue pasando por routeActionWithRetry("getServiceTraffic", getSessionPayload_()), el handler ADMIN existente y el scope coordinator_protected_operations; no se cambió la autorización ni el contrato backend.
+- Limitación confirmada: el contador de Coordinator se incrementa en operaciones con lease/validación prevista; CATALOG y lecturas públicas/no coordinadas no producen eventos. La UI y COORDINATOR_SETUP.md advierten que el agregado no representa todas las solicitudes HTTP y que un cero no implica ausencia de tráfico.
+- Validación de cambio: Actions 44093181593 ejecutó sintaxis aprobada y pruebas específicas ServiceTrafficAdminContract 20/20, ServiceMetricsTelemetry 1/1, RouteActionErrors 12/12. Regresión global: 107 suites, 1592 PASS, dos suites fallidas fuera del cambio (AUTH PasswordRecovery y ServiceWorkerCache CDN woff2).
+- Diagnóstico remoto read-only 44093181611 SUCCESS. No se modificaron deployments Apps Script ni ScriptProperties. Pages run 44093181449 seguía pendiente al momento del registro.
+- Criterio: implementación local del dashboard verificada; cobertura de tráfico HTTP total queda pendiente de decisión/diseño y no se presenta como resuelta.
+================================================================================
