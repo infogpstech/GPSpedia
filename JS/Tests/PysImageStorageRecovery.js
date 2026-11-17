@@ -77,11 +77,11 @@ function buildHarness(feedback, options = {}) {
     state.file = file;
 
     const sheet = {
-        getLastRow: () => { if (options.failReferenceScan && state.fileCreated) throw new Error("Spreadsheet read failed"); return state.rows.reduce((last,row,i)=>row&&row.some(v=>v!==""&&v!==null&&v!==undefined)?i+1:last,0); },
+        getLastRow: () => { if (options.failReferenceScan && state.fileCreated && state.rowAppended) throw new Error("Spreadsheet read failed"); return state.rows.reduce((last,row,i)=>row&&row.some(v=>v!==""&&v!==null&&v!==undefined)?i+1:last,0); },
         getLastColumn: () => state.rows.reduce((max,row)=>Math.max(max,row?row.reduce((last,v,i)=>v!==""&&v!==null&&v!==undefined?i+1:last,0):0),0),
         getRange: (row,col,numRows=1,numCols=1) => ({
             setValues: values => { for(let r=0;r<values.length;r++){const target=state.rows[row-1+r]||(state.rows[row-1+r]=[]);for(let c=0;c<values[r].length;c++)target[col-1+c]=values[r][c];} },
-            getValues: () => { if(options.failReferenceScan&&row>=2&&numCols>1)throw new Error("Spreadsheet read failed"); return Array.from({length:numRows},(_,r)=>Array.from({length:numCols},(_,c)=>(state.rows[row-1+r]||[])[col-1+c]??"")); },
+            getValues: () => { if(options.failReferenceScan&&state.fileCreated&&state.rowAppended&&row>=2&&numCols>1)throw new Error("Spreadsheet read failed"); return Array.from({length:numRows},(_,r)=>Array.from({length:numCols},(_,c)=>(state.rows[row-1+r]||[])[col-1+c]??"")); },
             getDisplayValues: () => { if(options.failReferenceScan&&row>=2&&numCols>1)throw new Error("Spreadsheet read failed"); return Array.from({length:numRows},(_,r)=>Array.from({length:numCols},(_,c)=>{const v=(state.rows[row-1+r]||[])[col-1+c]??"";return v==null?"":String(v);})); }
         }),
         getDataRange: () => ({ getDisplayValues: () => { if(options.failDataRange)throw new Error("Spreadsheet data range unavailable");return state.rows.map(row=>row.map(v=>v==null?"":String(v))); } }),
