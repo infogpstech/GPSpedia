@@ -1182,3 +1182,24 @@ git pull --ff-only origin GPSpedia2.2.5_work
 git rev-parse HEAD
 ```
 Después: abrir Developer → Auditoría de Cortes en escritorio y PWA móvil; comprobar barra compacta, expansión/contracción por clic y teclado, nombres accesibles, ausencia de desbordamiento, y visibilidad/disabled de continuar, registrar, organizar y conciliar en estados parcial/completo; verificar confirmaciones sin ejecutar operaciones destructivas; repetir con prefers-reduced-motion activo.
+
+
+### Adenda — Verificación remota de los siete servicios — 2026-11-17
+**Estado: DISPONIBILIDAD REMOTA VERIFICADA; PRUEBAS FUNCIONALES DIFERIDAS A BETA.**
+- Corte funcional solicitado: `301c7b3a5840549819b2b6126d548df44af07da2`. Se excluyó `a8c4a087e10cadf9264ce92cf328ac2032d5321b` y sus cambios posteriores, incluida recuperación de contraseña.
+- Regresión automatizada del corte: Actions run `44017363224` SUCCESS — 132 suites, 1,965 pruebas aprobadas, 0 fallos; sintaxis aprobada; Coordinador compartido 55/55.
+- Diagnóstico remoto: Actions run `44090225564` SUCCESS — 7/7 endpoints disponibles usando exclusivamente GET `?debug=true`, con configuración y contratos leídos desde el SHA de corte. Se comprobó HTTP correcto, JSON objeto, identidad exacta, estado available/online, versión no vacía y ausencia de campos sensibles.
+- Versiones/latencias: AUTH 2.2.5 (1596 ms), CATALOG 2.4.0 (1097 ms), WRITE 2.3.1 (1477 ms), USERS 2.4.2 (1046 ms), FEEDBACK 1.2.2 (1683 ms), UTILITIES 1.5.0 (1092 ms), ADMIN 2.7.1 (2442 ms). ADMIN superó el umbral de 2,000 ms y requiere seguimiento; la disponibilidad no se considera fallida por ello.
+- Alcance de la prueba: no se enviaron POST, credenciales ni escrituras. No valida operaciones autenticadas, permisos efectivos de usuario, hojas/Drive ni integridad funcional de dependencias.
+- Discrepancia documental pendiente: `Services/SERVICE_HEALTH.md` indica FEEDBACK 1.2.1 y ADMIN 2.6.0; los endpoints reportaron 1.2.2 y 2.7.1 respectivamente. Debe reconciliarse la semántica de versión de FEEDBACK (componente 2.3.0 frente a versión del endpoint 1.2.2) antes de actualizar el contrato.
+- Efecto colateral del push del harness: regression run `44090225648` sobre HEAD posterior registró 107 suites, 1,601 PASS y 2 suites fallidas (AUTH recuperación de contraseña e INTEGRATION CDN woff2); no corresponde al corte solicitado. Pages run `44090225354` SUCCESS. No se modificaron deployments Apps Script.
+- Procedimiento reproducible: workflow `.github/workflows/deployed-service-health.yml` fija TARGET_COMMIT; `JS/Tests/RemoteServiceHealth.mjs` obtiene el inventario desde ese SHA y consulta los siete endpoints en paralelo con timeout de 8 s, sin efectos de escritura.
+
+### GP-DEV-TRAFFIC-GLOBAL-02 — Sustituir telemetría local por tráfico global coordinado
+**Prioridad: P1 · Estado: PENDIENTE DE AUDITORÍA.**
+- Revisar BETA-043 y el comportamiento actual de `JS/Frontend/serviceMetrics.js`, `JS/Frontend/api-config.js`, `JS/Services/Coordinator.js` y panel Developer.
+- Objetivo acordado: el panel debe mostrar el agregado global producido por Coordinator para todos los deployments/servicios, no presentar el buffer local del navegador como la métrica principal ni duplicar ambas fuentes como si fueran equivalentes.
+- Auditar cobertura: qué solicitudes incrementan buckets, qué servicios/despliegues reportan, operaciones excluidas (lecturas públicas, feed, health), idempotencia, concurrencia, ventanas, retención, fallos best-effort y tamaño/cupo de ScriptProperties.
+- Preservar autenticación y autorización de Desarrollador en ADMIN/Coordinator; no exponer identidad, tokens ni datos de sesión. La consulta debe ser de solo lectura y no contabilizarse a sí misma.
+- Criterios esperados: gráfica global coherente entre sesiones y deployments; datos ausentes/excluidos claramente etiquetados; sin doble conteo por reintentos; telemetría nunca bloquea operaciones; errores de consulta no reemplazan datos globales por métricas locales.
+- Añadir pruebas de contrato, agregación, concurrencia/idempotencia y UI. No desplegar Apps Script ni modificar ScriptProperties/datos externos durante la fase local.
