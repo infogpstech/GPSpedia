@@ -15,8 +15,8 @@ function parseObject(name) {
     const match = source.match(new RegExp("export const " + name + " = (?:Object\\.freeze\\()?\\{([\\s\\S]*?)\\n\\}\\)?;"));
     if (!match) throw new Error("No se encontró " + name + " en el commit objetivo.");
     const values = {};
-    for (const line of match[1].split(/\\r?\\n/)) {
-        const item = line.match(/^\\s*([A-Z]+):\\s*"([^"]+)"\\s*,?\\s*$/);
+    for (const line of match[1].split(/\r?\n/)) {
+            const item = line.match(/^\s*([A-Z]+):\s*"([^"]+)"\s*,?\s*$/);
         if (item) values[item[1]] = item[2];
     }
     return values;
@@ -26,7 +26,7 @@ const endpoints = parseObject("API_ENDPOINTS");
 const identities = parseObject("SERVICE_HEALTH_CONTRACTS");
 const keys = Object.keys(identities).sort();
 if (keys.length !== 7 || keys.join(",") !== Object.keys(endpoints).sort().join(",")) {
-    throw new Error("El inventario de endpoints y contratos no coincide con los siete servicios versionados.");
+    throw new Error("Inventario inválido. Endpoints=[" + Object.keys(endpoints).sort().join(",") + "]; contratos=[" + keys.join(",") + "].");
 }
 
 const forbidden = /secret|token|password|spreadsheet.?id|drive.?folder.?id|sheets.?accessed|cache.?key|stack|exception/i;
