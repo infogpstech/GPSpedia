@@ -93,10 +93,12 @@ const CATALOG_TRAFFIC_ACTIONS_ = new Set([
 
 function recordCatalogTraffic_(capturedAt) {
     let lock = null;
+    let lockAcquired = false;
     try {
         lock = LockService.getScriptLock();
         // No esperar por el lock: si hay contención se omite la métrica y la lectura continúa.
-        if (!lock.tryLock(0)) return false;
+        lockAcquired = lock.tryLock(0);
+        if (!lockAcquired) return false;
         const properties = PropertiesService.getScriptProperties();
         const currentTime = Number(capturedAt) || Date.now();
         const bucketStart = Math.floor(currentTime / CATALOG_TRAFFIC_BUCKET_MS_) * CATALOG_TRAFFIC_BUCKET_MS_;
@@ -131,7 +133,8 @@ function recordCatalogTraffic_(capturedAt) {
     } catch (error) {
         return false;
     } finally {
-        if (lock) {
+        // Apps Script solo permite liberar un lock adquirido por esta ejecución.
+        if (lock && lockAcquired) {
             try { lock.releaseLock(); } catch (releaseError) {}
         }
     }
