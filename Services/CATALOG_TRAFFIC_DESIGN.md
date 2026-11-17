@@ -11,7 +11,7 @@ El panel Developer combina dos fuentes sin enviar una llamada de red por cada ac
 
 1. **Coordinator:** cuenta operaciones protegidas que obtienen una lease y lecturas del feed incremental. Mantiene buckets horarios de 24 horas.
 2. **Contadores locales por servicio:** cada servicio cuenta solo las rutas POST que su router ejecuta directamente, sin lease Coordinator. Usa ScriptProperties y tryLock(0), sin esperar por lock.
-3. **ADMIN:** al refrescar el panel consulta los cinco endpoints de telemetría directa en una operación agrupada UrlFetchApp.fetchAll; si el lote falla globalmente, intenta cada endpoint por separado. Combina buckets con Coordinator y marca las fuentes parciales/no disponibles.
+3. **ADMIN:** al refrescar el panel consulta los cuatro endpoints de telemetría directa en una operación agrupada UrlFetchApp.fetchAll; si el lote falla globalmente, intenta cada endpoint por separado. Combina buckets con Coordinator y marca las fuentes parciales/no disponibles.
 4. **Frontend:** consulta el agregado cuando el panel Developer está visible, con intervalo mínimo de 60 segundos. No almacena métricas locales del navegador ni las presenta como globales.
 
 El endpoint getServiceTraffic de cada servicio es interno, protegido con un secreto servidor-a-servidor y no se contabiliza a sí mismo. La consulta ADMIN está reservada al rol Desarrollador y Coordinator excluye su propia operación de telemetría.
@@ -56,9 +56,7 @@ Generar un secreto aleatorio distinto por servicio (por ejemplo openssl rand -he
 - GPSpedia_CATALOG_TRAFFIC_SECRET
 - GPSpedia_WRITE_TRAFFIC_SECRET
 - GPSpedia_FEEDBACK_TRAFFIC_SECRET
-- (sin secreto para UTILITIES; usa Coordinator)
-
-No crear secreto para USERS ni ADMIN. Nunca guardar valores en el repositorio, navegador, logs o documentación. Desplegar los proyectos Apps Script actualizados solo en entorno Beta autorizado.
+No crear secreto para USERS, UTILITIES ni ADMIN: sus acciones conocidas ya pasan por Coordinator o usan el agregado central. Nunca guardar valores en el repositorio, navegador, logs o documentación. Desplegar los proyectos Apps Script actualizados solo en entorno Beta autorizado.
 
 ## Pruebas locales
 
