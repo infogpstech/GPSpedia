@@ -9,6 +9,7 @@ const serviceWorkerSource = fs.readFileSync(new URL('../../service-worker.js', i
 const currentCacheName = serviceWorkerSource.match(/const CACHE_NAME\s*=\s*['\"]([^'\"]+)['\"]/ )?.[1];
 assert.ok(currentCacheName, 'debe declarar el nombre del caché actual');
 const mainSource = fs.readFileSync(new URL('../Frontend/main.js', import.meta.url), 'utf8');
+const uiSource = fs.readFileSync(new URL('../Frontend/ui.js', import.meta.url), 'utf8');
 let passed = 0;
 
 async function run(name, test) {
@@ -120,6 +121,17 @@ await run('main.js define la comprobación de visibilidad del lightbox antes de 
     assert.match(mainSource.slice(definition, call), /classList\.contains\('visible'\)/);
 });
 
+await run('el catálogo cache-first inicia después del gate de términos y antes del fade actual del Splash', async () => {
+    const showStart = uiSource.indexOf('export function showApp(user)');
+    const gate = uiSource.indexOf('if (!renderTermsGate_(user))', showStart);
+    const catalog = uiSource.indexOf('startCatalogLoad()', showStart);
+    const fade = uiSource.indexOf('fadeSplash()', showStart);
+    assert.ok(showStart >= 0 && gate > showStart && catalog > gate && fade > catalog,
+        'No debe iniciarse el catálogo antes de aceptar términos ni esperar al Splash para comenzar.');
+    assert.match(uiSource, /setTimeout\(\(\) => \{ splash\.style\.display = 'none'; \}, 500\)/);
+    assert.match(uiSource, /saveDeviceTermsAcceptance\(localStorage, userId, deviceId, localAcceptance, \{ syncStatus: 'pending' \}\)/);
+    assert.match(uiSource, /window\.auth && window\.auth\.loadInitialData/);
+});
 await run('el gesto nativo no se intercepta y no existe recarga manual en la interfaz', async () => {
     const html = fs.readFileSync(new URL('../../index.html', import.meta.url), 'utf8');
     assert.doesNotMatch(html, /side-menu-refresh-link|Recargar aplicación/);
