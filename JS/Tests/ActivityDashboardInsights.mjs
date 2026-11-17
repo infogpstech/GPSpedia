@@ -23,7 +23,7 @@ const ss={getSheetByName:name=>name==="Cortes"?sheet(cuts):name==="Feedbacks"?sh
 const cols={id:1,marca:3,modelo:4,tipoCorte1:12,utilCorte1:17,tipoCorte2:19,utilCorte2:24,tipoCorte3:26,utilCorte3:31,timestamp:37};
 const insights=new Function("getSpreadsheet","SHEET_NAMES","COLS_CORTES","COLS_FEEDBACKS",helper+";return buildActivityDashboardInsights_;")(()=>ss,{CORTES:"Cortes",FEEDBACKS:"Feedbacks"},cols,{ID:1,Usuario:2,ID_vehiculo:3,Problema:4,Respuesta:5,anoSugerido:9})();
 assert.deepEqual(insights.summary,{vehicles:2,cuts:2,usefulVotes:9,notUseful:1,notWorking:1});
-assert.equal(insights.topUseful[0].brand,"Toyota");assert.equal(insights.topNegative[0].model,"L200");
+assert.equal(insights.topUseful[0].brand,"Toyota");assert.deepEqual(insights.topNegative.map(row=>row.model),["Hilux","L200"]);
 assert.deepEqual(insights.years,{confirmations:1,suggestions:1,verified:3,anonymous:1,applied:1});
 assert.equal(insights.windowLimited,false);
 assert.match(ui,/renderActivityInsights\(insightContainer/);assert.match(html,/id="activity-insights"/);assert.match(html,/data-activity-tab="insights"/);assert.match(css,/GP-DASH-INSIGHTS-01/);
