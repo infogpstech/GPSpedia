@@ -92,3 +92,16 @@ undefined
 - El estado de GitHub Actions no pudo verificarse con las acciones disponibles: combined status vacío y el endpoint de workflow runs filtra ejecuciones de pull request. No se afirma suite completa ni CI aprobadas.
 - Estado: IMPLEMENTACIÓN LOCAL COMPLETADA; PENDIENTE BETA. Falta comparar recursos servidos, verificar activación de gpsepedia-cache-v68, reemplazo de caché anterior y navegación online/offline en navegador/PWA. No borrar IndexedDB ni datos locales.
 - La referencia del checkpoint a GP-AUTH-PASSWORD-RECOVERY-01 quedó reconciliada: el backlog y CI anteriores acreditan su cierre local con validación diferida.
+
+
+### Cierre de verificación remota — GP-SERVICE-HEALTH-REMOTE-01 — 2026-11-17
+- Repositorio: infogpstech/GPSpedia; rama autorizada GPSpedia2.2.5_work. HEAD antes de registrar: e73d6a51e2721f87048ac3e68a1a3617180a5ccb. Rama base GPSpedia2.2.5 protegida; no modificar.
+- Corte funcional exacto: 301c7b3a5840549819b2b6126d548df44af07da2. Se excluyeron a8c4a087e10cadf9264ce92cf328ac2032d5321b y todos los cambios posteriores.
+- Regresión sobre el corte: Actions 44017363224 SUCCESS, 132 suites, 1965 pruebas, 0 fallos; sintaxis aprobada y Coordinador compartido 55/55.
+- Diagnóstico remoto: Actions 44090225564 SUCCESS, 7/7 endpoints con GET ?debug=true. Versiones/latencias: AUTH 2.2.5/1596 ms; CATALOG 2.4.0/1097 ms; WRITE 2.3.1/1477 ms; USERS 2.4.2/1046 ms; FEEDBACK 1.2.2/1683 ms; UTILITIES 1.5.0/1092 ms; ADMIN 2.7.1/2442 ms. ADMIN queda señalado por latencia >=2000 ms.
+- Comprobaciones: inventario exacto de siete servicios; HTTP correcto; JSON objeto; identidad contractual; estado available/online; versión no vacía; ausencia de campos sensibles. Solo GET, sin sesión, POST, escritura ni cambio remoto.
+- Resultado y límite: disponibilidad 7/7 confirmada; no demuestra funciones autenticadas ni dependencias Sheets/Drive. La prueba funcional completa permanece diferida a Beta.
+- Documentación pendiente: Services/SERVICE_HEALTH.md registra FEEDBACK 1.2.1 y ADMIN 2.6.0; endpoints reportan 1.2.2 y 2.7.1. FEEDBACK fuente contiene COMPONENT VERSION 2.3.0; reconciliar etiquetas antes de corregir la tabla.
+- Efectos automáticos de push: run 44090225648 en HEAD posterior tuvo 2 suites fallidas (AUTH recuperación de contraseña e INTEGRATION CDN woff2), fuera del corte; Pages run 44090225354 SUCCESS. No confundir con la regresión del corte. No se desplegaron Apps Script.
+- Archivos añadidos previamente: JS/Tests/RemoteServiceHealth.mjs y .github/workflows/deployed-service-health.yml.
+- Siguiente tarea iniciada: GP-DEV-TRAFFIC-GLOBAL-02 — auditar y ajustar el panel Developer para usar el agregado global de Coordinator como fuente principal en lugar de métricas locales del navegador. Primeros hallazgos: Coordinator ya define buckets horarios globales de 24 h y ADMIN/getServiceTraffic; api-config.js todavía registra cada solicitud en createServiceMetricsStore local (ventana 15 min, máximo 600 eventos). Debe inspeccionarse la UI y cobertura antes de implementar.
