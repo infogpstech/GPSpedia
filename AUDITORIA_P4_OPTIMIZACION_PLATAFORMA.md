@@ -96,3 +96,9 @@ Evidencia en JS/Services/admin.js:
 - CI 44154032505 SUCCESS: 145 suites, 2,117 pruebas aprobadas, 0 fallos. P4.1: 5/5; CatalogStartupIntegrity: 25/25; InboxUi: 84/84.
 - Health read-only 44154032506 SUCCESS: 7/7 servicios disponibles.
 - Pages build 44154032544 SUCCESS. Esto no implica despliegue de Apps Script ni prueba de cambios en Drive/Spreadsheet.
+### P4.3a — lectura del inventario reutilizada por lote — COMPLETADA
+- En handleOrganizeUnusedImagesBatch, currentRows y duplicateIds se calculan una sola vez antes del bucle fileIds. El lote ya llega deduplicado y el ScriptLock mantiene estable el inventario ADMIN durante la operación.
+- Se conserva latestRowsBeforeMove como lectura completa por archivo inmediatamente antes del movimiento, además de la revalidación de referencias activas, ubicación Drive, read-back y rollback. No se debilitó la protección frente a cambios externos/manuales.
+- Para un lote máximo de 20 imágenes, se eliminan hasta 19 lecturas completas iniciales del inventario y 19 recalculaciones de IDs duplicados; se conserva la lectura final de seguridad por archivo.
+- AdminReplacedImagesIntegrity 55/55 PASS; CI 44154558840 SUCCESS: 145 suites, 2,117 pruebas, 0 fallos. Health read-only 44154558782 SUCCESS: 7/7 servicios.
+- P4.3b sigue pendiente: diseñar y probar reserva atómica breve por auditId/operationId antes de reducir el alcance del ScriptLock global. No se cambió el lock.
