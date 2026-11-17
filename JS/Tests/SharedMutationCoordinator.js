@@ -656,6 +656,25 @@ function runSharedMutationCoordinatorTests() {
         expectThrow_(() => acquire_(r, "ADMIN", "unknownImageAction"), "política");
     });
 
+    test_("ADMIN/getCortesImageFolders no bloquea el login durante la enumeración de Drive", function() {
+        const r = createRuntime_();
+        const policy = coordinatorPolicy_("ADMIN", "getCortesImageFolders");
+        assert_(policy.readResources.includes("DRIVE"), "La consulta debe conservar la protección de lectura del árbol Drive.");
+        assert_(!policy.readResources.includes("USERS") && !policy.readResources.includes("SESSION_CONTEXTS"),
+            "La enumeración de Drive no debe reservar recursos de identidad ya validados por el actor central.");
+        const folders = acquire_(r, "ADMIN", "getCortesImageFolders");
+        assert_(folders.status === "success", "La consulta de carpetas debe obtener su lease.");
+        const login = acquire_(r, "AUTH", "login");
+        assert_(login.status === "success",
+            "El login debe poder crear la sesión mientras una consulta de carpetas Drive permanece activa.");
+        release_(r, "AUTH", "login", login.token);
+        release_(r, "ADMIN", "getCortesImageFolders", folders.token);
+        const competingDriveWrite = acquire_(r, "ADMIN", "createCortesImageFolder");
+        assert_(competingDriveWrite.status === "success",
+            "La liberación de la lectura debe dejar disponible el recurso Drive para nuevas operaciones.");
+        release_(r, "ADMIN", "createCortesImageFolder", competingDriveWrite.token);
+    });
+
     test_("ADMIN separa lecturas de inventario y escáner de la lease genérica", function() {
         const r = createRuntime_();
         const sessionActivity = acquire_(r, "ADMIN", "sessionActivity");

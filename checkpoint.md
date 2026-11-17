@@ -461,3 +461,8 @@ Estado: **EN PROGRESO** hasta ejecutar la suite Node.js completa disponible; la 
 ### Adenda — GP-AUTH-LOGIN-DRIVE-LOCK-01
 - La primera regresión identificó dos recursos que bloqueaban AUTH/login: USERS (lectura explícita) y SESSION_CONTEXTS (lectura implícita). La corrección final elimina ambos de la lease específica de getCortesImageFolders, conserva DRIVE y utiliza el actor central autenticado.
 - La prueba aislada del coordinador se ejecutó nuevamente después de corregir ambos recursos. La verificación de Google Drive/Apps Script desplegado y la prueba Beta tras el vencimiento del bloqueo de intentos continúan pendientes.
+
+
+### Publicación complementaria de prueba — GP-AUTH-LOGIN-DRIVE-LOCK-01
+- La verificación de árbol detectó que el primer commit no incluía el nuevo contrato de regresión. Se añade en un commit complementario sin reescribir el historial.
+- La prueba versionada se ejecutó en harness aislado: 55/55 PASS, 0 fallos. CI del primer commit estaba en ejecución; se verificará también el nuevo HEAD.

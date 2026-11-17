@@ -1493,3 +1493,10 @@ GP-UX-PYS-TUTORIAL-ASSOCIATION-06 — 2026-11-16
 - La política conserva DRIVE como lectura exclusiva frente a las escrituras correspondientes. La política implícita de SESSION_CONTEXTS se mantiene para las demás operaciones ADMIN y para AUTH.
 - La regresión aislada del coordinador se ejecutó después de la corrección; los resultados detallados se conservan en la respuesta de la herramienta de pruebas de esta sesión. CI y validación remota pendientes.
 ================================================================================
+
+
+================================================================================
+2026-11-16 — ADENDA DE PRUEBA GP-AUTH-LOGIN-DRIVE-LOCK-01
+- Se detectó en la verificación de publicación que la prueba de regresión no había quedado incluida en el primer árbol del commit. Se incorpora ahora explícitamente en JS/Tests/SharedMutationCoordinator.js.
+- Regresión aislada reejecutada contra Coordinator.js, SharedMutationClient.js y la prueba versionada: 55/55 PASS, 0 fallos.
+================================================================================
