@@ -12835,7 +12835,6 @@ export function openAddProblemModal(preAssociatedVehicle = null, navOptions = {}
                     content.querySelector("#pys-img-file"), content.querySelector("#pys-detalle"),
                     chkSinSolucion, txtSolucion, content.querySelector("#pys-prevenir")]
                     .forEach(field => { if (field) field.disabled = true; });
-                videoUrlInput.dataset.problemCreated = "true";
             }
 
             if (openUploader) {
@@ -12894,7 +12893,10 @@ export function openAddProblemModal(preAssociatedVehicle = null, navOptions = {}
             );
         } catch (err) {
             console.error(err);
-            showGlobalError("Error al registrar problema: " + String(err && err.message || err));
+            const detail = String(err && err.message || err);
+            showGlobalError(createdProblemId
+                ? "El problema ya se registró, pero no se pudo confirmar el envío del vídeo. Reintenta con el mismo enlace. Detalle: " + detail
+                : "Error al registrar problema: " + detail);
         } finally {
             isSaving = false;
             submitBtn.disabled = false;
