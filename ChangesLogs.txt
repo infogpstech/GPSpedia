@@ -189,3 +189,12 @@ undefined
 - Pendiente: ejecutar pruebas locales; después continuar P1.1b (mutaciones de cortes WRITE/ADMIN y asignación de ID).
 - No se desplegaron servicios Apps Script ni se ejecutaron pruebas Beta/productivas.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — GP-PERF-SIMPLIFY-01 / P1.1a — AJUSTE DE CONTRATOS TRAS CI FALLIDO
+- CI 44120322612 falló en CheckOperationSecurity, SessionActivityCoordination y DirectTrafficRoutingCoverage porque aún exigían que checkOperation autenticara y adquiriera lease.
+- La sintaxis de los módulos modificados pasó. Se actualizaron los tres contratos para el nuevo comportamiento de lectura directa sin Coordinator; las mutaciones WRITE restantes siguen sin cambios.
+- Estado: P1.1a pendiente de nueva regresión; P1.1b pendiente.
+- Siguiente: confirmar nuevo CI y cerrar P1.1a solo si las pruebas pasan; después P1.1b.
+================================================================================

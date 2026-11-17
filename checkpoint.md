@@ -242,3 +242,10 @@ undefined
 - **Pendiente de P1:** mutaciones de cortes WRITE/ADMIN, identidad simple de colaborador/rol, locks largos y FEEDBACK.
 - **Siguiente sub-tarea:** P1.1b — simplificar `addOrUpdateCut`/ADMIN y la asignación de ID. Después ejecutar pruebas locales de P1.1a y continuar P1.2/P1.3.
 - No se desplegaron Apps Script ni se ejecutaron pruebas Beta/productivas.
+
+
+### Corrección de regresión — GP-PERF-SIMPLIFY-01 / P1.1a — 2026-11-17
+- GitHub Actions regresión `44120322612`: FAIL en tres grupos de suite por expectativas antiguas que exigían autenticación/lease para `checkOperation` (CheckOperationSecurity, SessionActivityCoordination y DirectTrafficRoutingCoverage). La comprobación de sintaxis sí pasó.
+- Corrección en curso: actualizar esos contratos para el requisito nuevo: `checkOperation` es lectura de estado, no exige actor central ni Coordinator; las mutaciones restantes de WRITE conservan temporalmente el flujo anterior hasta P1.1b.
+- **Estado:** P1.1a IMPLEMENTADA; VALIDACIÓN FALLIDA EN PRIMER CI, CONTRATOS ACTUALIZADOS EN ESTE COMMIT; nueva regresión pendiente.
+- **Siguiente:** revisar el resultado del nuevo CI; si pasa, cerrar P1.1a y continuar P1.1b (mutaciones de cortes WRITE/ADMIN). Si falla, corregir las expectativas restantes antes de avanzar.

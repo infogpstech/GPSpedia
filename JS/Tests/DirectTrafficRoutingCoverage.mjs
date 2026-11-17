@@ -59,7 +59,8 @@ test("CATALOG y rutas directas AUTH/WRITE quedan contabilizadas; consultas inter
     assert.match(catalog, /if \(action === "getServiceTraffic"\)[\s\S]*?return ContentService/);
     assert.match(auth, /actions: new Set\(\["validateSession"\]\)/);
     assert.match(write, /actions: new Set\(\["checkVehicle","getSuggestion","checkVinDuplicate"\]\)/);
-    assert.match(write, /if \(action !== "checkOperation"\) return doPostInternal_/);
+    assert.match(write, /if \(!isSharedMutationAction_\(action\)\) \{[\s\S]*?doPostInternal_\(withSharedSessionActor_\(e, null\)\)/);
+    assert.doesNotMatch(write, /if \(action !== "checkOperation"\)/);
 });
 
 test("sondeos health quedan fuera de la telemetría de tráfico de usuario", () => {
