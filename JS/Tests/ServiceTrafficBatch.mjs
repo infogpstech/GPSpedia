@@ -14,7 +14,6 @@ const urls = {
     AUTH: "https://auth.example/exec",
     WRITE: "https://write.example/exec",
     FEEDBACK: "https://feedback.example/exec",
-    UTILITIES: "https://utilities.example/exec"
 };
 const services = Object.keys(urls);
 const secrets = Object.fromEntries(services.map(service => ["GPSpedia_" + service + "_TRAFFIC_SECRET", (service + "-secret-").padEnd(48, "x")]));
@@ -53,11 +52,11 @@ function build(fetchAll, fetchOne, propertyOptions = {}) {
 let passed = 0;
 function test(name, run) { run(); passed++; console.log("PASS " + name); }
 
-test("consulta cinco fuentes directas en un único fetchAll y conserva sus contratos", () => {
+test("consulta cuatro fuentes directas en un único fetchAll y conserva sus contratos", () => {
     let batchCalls = 0;
     const fn = build(requests => {
         batchCalls++;
-        assert.equal(requests.length, 5);
+        assert.equal(requests.length, 4);
         return requests.map(request => {
             const service = services.find(name => request.url === urls[name]);
             const body = JSON.parse(request.payload);
@@ -82,7 +81,7 @@ test("una fuente sin secreto queda parcial sin impedir consultar las otras", () 
         return requests.map(request => response(services.find(name => request.url === urls[name])));
     }, null, { missing: ["GPSpedia_WRITE_TRAFFIC_SECRET"] });
     const result = fn();
-    assert.equal(requested.length, 4);
+    assert.equal(requested.length, 3);
     assert.equal(result.WRITE.status, "unavailable");
     assert.equal(result.WRITE.reason, "not_configured");
     assert.equal(result.AUTH.status, "success");
@@ -97,7 +96,7 @@ test("si fetchAll falla, reintenta cada endpoint de forma aislada", () => {
         return response(service);
     });
     const result = fn();
-    assert.equal(calls.length, 5);
+    assert.equal(calls.length, 4);
     for (const service of services) assert.equal(result[service].status, "success");
 });
 
@@ -112,7 +111,6 @@ test("una respuesta inválida de una fuente no invalida los otros servicios", ()
     assert.equal(result.CATALOG.status, "unavailable");
     assert.equal(result.CATALOG.reason, "request_failed");
     assert.equal(result.AUTH.status, "success");
-    assert.equal(result.UTILITIES.status, "success");
 });
 
 test("un fallo de lectura de ScriptProperties conserva una salida parcial por fuente", () => {
