@@ -168,3 +168,14 @@ undefined
 - Orden de ejecución: P0 inventario; P1 escrituras/aportes; P2 cargas de archivos; P3 sesión; P4 optimización global; P5 pruebas locales y mediciones.
 - Este commit registra el requisito y el plan; no contiene cambios funcionales ni afirma mejoras de rendimiento.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — GP-PERF-SIMPLIFY-01 / P0 — AUDITORÍA COMPLETADA
+- Tarea ejecutada: P0 inventario y mapa de latencia. Estado: COMPLETADA (auditoría estática).
+- Archivos de código inspeccionados: JS/Services/Coordinator.js, SharedMutationClient.js, write.js, admin.js y feedback.js.
+- Hallazgos: cada lease hace HTTP acquire + release; Coordinator revalida sesión en acquire y puede actualizar actividad; ADMIN→WRITE añade validación anidada; WRITE checkOperation contacta Coordinator; ADMIN mantiene locks de hasta 30 s que pueden incluir cargas Drive; FEEDBACK tutorial usa lock local de hasta 15 s.
+- Nuevo informe: AUDITORIA_P0_LATENCIA_VALIDACIONES.md. Plan actualizado: P0 COMPLETADA, P1 EN PROGRESO.
+- No se modificó lógica de servicios. No se ejecutaron Apps Script/Beta ni se midieron latencias reales.
+- Siguiente tarea: GP-PERF-SIMPLIFY-01 / P1.1 — simplificar WRITE/ADMIN cortes y eliminar Coordinator de checkOperation; después P1.2 locks y P1.3 FEEDBACK.
+================================================================================
