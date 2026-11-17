@@ -175,7 +175,8 @@ export function runSuggestionImageSecurityTests({ feedback, ui }) {
     });
     test("handler propaga fallos de Drive y no confirma una sugerencia con imagen faltante", () => {
         assert.ok(handlerBlock.includes("saveSuggestionImageAttachment_(normalizedImage"));
-        assert.ok(handlerBlock.indexOf("saveSuggestionImageAttachment_(normalizedImage") < handlerBlock.indexOf("sheet.getRange(newRowNumber, COLS_FEEDBACKS.Usuario"));
+        assert.ok(handlerBlock.indexOf("saveSuggestionImageAttachment_(normalizedImage") < handlerBlock.indexOf("acquireFeedbackScriptLock_(lock)"));
+        assert.ok(handlerBlock.indexOf("acquireFeedbackScriptLock_(lock)") < handlerBlock.indexOf("sheet.getRange(newRowNumber, COLS_FEEDBACKS.Usuario"));
         assert.ok(handlerBlock.includes("throw error;"));
         assert.ok(!/catch\s*\(\s*e\s*\)\s*\{\s*console\.error\("Error subiendo imagen/.test(handlerBlock));
         assert.ok(handlerBlock.includes("imageAttached: Boolean(imageMetadata)"));
@@ -186,7 +187,7 @@ export function runSuggestionImageSecurityTests({ feedback, ui }) {
         assert.ok(handlerBlock.includes("String(storedProblem || \"\") !== problemDesc"));
     });
     test("handler retira el archivo huérfano si no se confirma la fila", () => {
-        assert.ok(handlerBlock.includes("if (!rowCommitted) trashReportImageUpload_(uploadedImage)"));
+        assert.ok(handlerBlock.includes("if (!rowCommitted && uploadedImage && (!pendingSheet || !pendingRowNumber || rollbackConfirmed)) trashReportImageUpload_(uploadedImage)"));
         assert.ok(handlerBlock.indexOf("rowCommitted = true") < handlerBlock.lastIndexOf("uploadedImage = null"));
     });
     test("handler devuelve metadatos MIME, tamaño, hash e ID de Drive", () => {

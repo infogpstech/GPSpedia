@@ -21,6 +21,7 @@ export function runSuggestionConcurrencyTests({ feedback, ui }) {
     const schemaBlock = section(feedback, "const FEEDBACK_REPORT_TEXT_MAX_LENGTH", "function parseCutSuggestionRecord(");
     const helperBlock = section(feedback, "function buildCutSuggestionRequestFingerprint_(", "function validateCutSuggestionReportContext_(");
     const handlerBlock = section(feedback, "function handleSuggestCutChange(", "\nfunction parseModelosAsociados(");
+    const lockHelperBlock = section(feedback, "function acquireFeedbackScriptLock_(lock)", "\nconst DIRECT_SERVICE_TRAFFIC_CONFIG_");
     const cols = { Usuario: 2, ID_vehiculo: 3, Problema: 4, "Se resolvio": 5 };
     const utilities = {
         DigestAlgorithm: { SHA_256: "SHA_256" },
@@ -119,16 +120,16 @@ export function runSuggestionConcurrencyTests({ feedback, ui }) {
         assert.ok(lockAt >= 0 && tryAt > lockAt && lastRowAt > tryAt);
         assert.ok(copyAt > lastRowAt && writeAt > copyAt && flushAt > writeAt && finallyAt > flushAt);
     });
-    test("el archivo se carga después de comprobar duplicados y bajo el mismo lock", () => {
-        const lockAt = handlerBlock.indexOf("lock.waitLock(10000)");
+    test("la imagen se carga antes del lock y la comprobación de duplicados", () => {
+        const uploadAt = handlerBlock.indexOf("saveSuggestionImageAttachment_(normalizedImage");
+        const lockAt = handlerBlock.indexOf("acquireFeedbackScriptLock_(lock)");
         const duplicateAt = handlerBlock.indexOf("findCutSuggestionByOperation_");
-        const uploadAt = handlerBlock.indexOf("saveSuggestionImageAttachment_");
-        const finallyAt = handlerBlock.indexOf("finally { lock.releaseLock(); }");
-        assert.ok(lockAt < duplicateAt && duplicateAt < uploadAt && uploadAt < finallyAt);
+        assert.ok(uploadAt >= 0 && uploadAt < lockAt && lockAt < duplicateAt);
+        assert.ok(handlerBlock.includes("if (lockAcquired) lock.releaseLock()"));
     });
     test("la reversión se confirma antes de enviar a papelera la imagen", () => {
         const rollbackAt = handlerBlock.indexOf("rollbackConfirmed = cleared && statusCleared");
-        const trashAt = handlerBlock.indexOf("if (!rowCommitted && uploadedImage && rollbackConfirmed)");
+        const trashAt = handlerBlock.indexOf("if (!rowCommitted && uploadedImage && (!pendingSheet || !pendingRowNumber || rollbackConfirmed))");
         assert.ok(rollbackAt >= 0 && trashAt > rollbackAt);
         assert.ok(handlerBlock.includes("La imagen de sugerencia se conserva para reconciliación"));
     });
@@ -195,7 +196,7 @@ export function runSuggestionConcurrencyTests({ feedback, ui }) {
             "FEEDBACK_REPORT_TEXT_MAX_LENGTH", "normalizeSuggestionImageAttachment_", "validateCutSuggestionReportContext_",
             "LockService", "getSafeSheet", "SHEET_NAMES", "COLS_FEEDBACKS", "SpreadsheetApp",
             "saveSuggestionImageAttachment_", "trashReportImageUpload_", "logUserActivity", "console", "Utilities",
-            helperBlock + "\n" + handlerBlock + "\nreturn handleSuggestCutChange;"
+            lockHelperBlock + "\n" + helperBlock + "\n" + handlerBlock + "\nreturn handleSuggestCutChange;"
         );
         const handler = factory(
             schema.normalizeSuggestionProposedValues,
