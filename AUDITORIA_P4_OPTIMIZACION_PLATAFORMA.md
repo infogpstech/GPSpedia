@@ -102,3 +102,23 @@ Evidencia en JS/Services/admin.js:
 - Para un lote máximo de 20 imágenes, se eliminan hasta 19 lecturas completas iniciales del inventario y 19 recalculaciones de IDs duplicados; se conserva la lectura final de seguridad por archivo.
 - AdminReplacedImagesIntegrity 55/55 PASS; CI 44154558840 SUCCESS: 145 suites, 2,117 pruebas, 0 fallos. Health read-only 44154558782 SUCCESS: 7/7 servicios.
 - P4.3b sigue pendiente: diseñar y probar reserva atómica breve por auditId/operationId antes de reducir el alcance del ScriptLock global. No se cambió el lock.
+### P4.3b — deduplicación de auditoría Drive por lotes CacheService — COMPLETADA
+- loadDriveAuditSeenIds_ ahora utiliza CacheService.getAll/putAll en grupos de hasta 100 páginas, y verifica la renovación con getAll.
+- Se conserva la validación de cada página, normalización de IDs, unión global de archivos/carpetas y error explícito si falta o se corrompe una página.
+- Para 205 páginas, el test confirma 3 lotes y 9 llamadas CacheService (6 getAll + 3 putAll), frente a 615 llamadas individuales que requería el ciclo get/put/get por página.
+- AdminReplacedImagesIntegrity 56/56 PASS.
+
+### P4.3c — publicación de cambios CATALOG en lotes — COMPLETADA
+- ADMIN agrupa los cambios de catálogo en lotes de hasta 50; el Coordinator valida el lote completo y asigna revisiones consecutivas dentro de una sola sección crítica.
+- SharedMutationClient genera un requestId y lo reutiliza durante los reintentos. Coordinator reconoce lotes completos ya publicados; si detecta persistencia parcial, agrega un evento reset para que el consumidor reconstruya el snapshot actual y no aplique snapshots antiguos fuera de orden.
+- publishCatalogChange conserva el contrato individual; internamente usa la misma ruta de publicación por lotes.
+- Para 20 registros modificados, ADMIN pasa de 20 viajes de red al Coordinator a 1 (95% menos); lotes mayores se dividen en grupos de 50.
+- CatalogChangeFeed 30/30 PASS; SharedMutationCoordinator 65/65 PASS; AdminImageScanCoordinatorContract 1/1 PASS.
+
+### P4.3d — alcance de ScriptLock — revisado; sin cambio de código
+- El ScriptLock de ADMIN es local al proyecto Apps Script. Las operaciones de auditoría/inventario ya mantienen leases de Coordinator con recursos explícitos: auditoría lee CORTES/DRIVE/IMAGE_INVENTORY y escribe IMAGE_AUDIT_STATE; inventario/organización lee CORTES y escribe DRIVE/IMAGE_INVENTORY/ACTIVITY. Los conflictos entre operaciones que comparten recursos ya se coordinan transversalmente; los módulos independientes (AUTH/Inbox/FEEDBACK) no comparten ese ScriptLock.
+- Retirar el lock local sin auditar todas las rutas internas/directas podría dejar sin protección el estado en ScriptProperties o el inventario. Sustituirlo por tryLock(0) solo cambia espera por error; UserLock depende de la identidad de ejecución del deployment, aún no verificada.
+- Decisión: mantener el lock mientras no exista evidencia de contención entre acciones ADMIN que no comparten recursos. Las mejoras P4.3a-c reducen lecturas y viajes de red sin debilitar exclusión, idempotencia ni rollback. Reabrir solo con métricas de contención y una matriz completa de acciones/políticas.
+
+## Resultado P4
+P4.1, P4.2 y P4.3a-c completadas y probadas. La única línea diferida (P4.3d) se mantiene deliberadamente sin cambio por falta de evidencia de bloqueo independiente y por el riesgo de retirar protección redundante sin demostrarlo.
