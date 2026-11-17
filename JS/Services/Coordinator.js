@@ -52,7 +52,6 @@ function coordinatorPolicy_(service, operation) {
             updateUser: { write: [...identityWrite, "SESSION_CONTEXTS"] },
             logout: { write: [...identityWrite, "SESSION_CONTEXTS"] },
             migrateLegacyPasswords: { write: identityWrite },
-            benchmarkPasswordKdf: { read: ["SESSION_CONTEXTS"], trackActivity: false },
             migrateLegacyRoleRevocationMarkersToSharedState: { write: ["USERS", "LOGS", "SESSION_CONTEXTS"] }
         },
         USERS: {
