@@ -1329,3 +1329,10 @@ No se han desplegado proyectos Apps Script ni configurado secretos remotos. La f
 **Siguiente sub-tarea activa:** P1.1 — simplificar WRITE/ADMIN para cortes y retirar Coordinator de `checkOperation`. Después P1.2 — acortar locks que cubren Drive; P1.3 — simplificar FEEDBACK. P2 cargas de archivos continúa después.
 
 **Documento de ejecución:** `PLAN_SIMPLIFICACION_SEGURIDAD_RENDIMIENTO.md`.
+
+
+### Seguimiento GP-PERF-SIMPLIFY-01 / P1.1a — 2026-11-17
+- CI `44120994810`: FAIL — sintaxis aprobada; 133 suites, 1,925 pruebas aprobadas, 1 suite fallida. La falla está en el extractor de `doPost` del contrato `WriteAuthorizationMinimization`, no en una aserción de comportamiento del servicio.
+- Se ajusta la prueba para inspeccionar directamente el bloque del router que despacha acciones no compartidas; se conservan las aserciones de no lease/no Coordinator para `checkOperation`.
+- Estado P1.1a: IMPLEMENTADA; VALIDACIÓN PENDIENTE.
+- Siguiente: nueva regresión CI. Luego P1.1b: origen de actor/rol y simplificación de mutaciones WRITE/ADMIN.

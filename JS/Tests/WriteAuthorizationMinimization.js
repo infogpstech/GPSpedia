@@ -82,8 +82,9 @@ function runWriteAuthorizationMinimizationTests(sources) {
  });
  run("checkOperation consulta estado sin lease ni revalidación de sesión y no devuelve rowData",()=>{
   const fn=extract(write,"handleCheckOperation");
-  const router=extract(write,"doPost");
-  const branch=router.slice(router.indexOf("if (!isSharedMutationAction_(action))"),router.indexOf("const nestedToken"));
+  const branchStart=write.indexOf("if (!isSharedMutationAction_(action))");
+  const branchEnd=write.indexOf("const nestedToken",branchStart);
+  const branch=branchStart>=0&&branchEnd>branchStart?write.slice(branchStart,branchEnd):"";
   assert(!fn.includes("getAuthenticatedCollaborator(payload)"));
   assert(!branch.includes("withSharedMutationLease_"));
   assert(branch.includes("doPostInternal_(withSharedSessionActor_(e, null))"));

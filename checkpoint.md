@@ -256,3 +256,11 @@ undefined
 - Se corrigió la aserción para permitir el acceso de lectura a Cortes y seguir prohibiendo actor central, token, Users/ActiveSessions y consultas de sesión dentro del handler.
 - Estado P1.1a: implementación pendiente de regresión aprobada.
 - Siguiente: ejecutar CI de este commit; si pasa, cerrar P1.1a y continuar P1.1b (mutaciones ordinarias de cortes).
+
+
+### Seguimiento CI — GP-PERF-SIMPLIFY-01 / P1.1a — 2026-11-17
+- Run `44120994810` terminó en FAIL: sintaxis aprobada; 133 suites, 1,925 pruebas aprobadas y 1 suite fallida. El único fallo es `WriteAuthorizationMinimization`: su extractor de funciones informa `Función incompleta: doPost` al intentar analizar la función router; la inspección directa confirma que el bloque de ruta existe y despacha `checkOperation` sin lease. No es un fallo funcional del servicio ni se marca como aprobado.
+- Corrección aplicada al contrato: la prueba localiza directamente el bloque entre `if (!isSharedMutationAction_(action))` y `const nestedToken`, evitando el extractor genérico que falla con `doPost`; mantiene las aserciones sobre ausencia de lease y ruta directa.
+- **Estado P1.1a:** implementación realizada; validación automatizada pendiente de nueva ejecución.
+- **Siguiente:** volver a ejecutar CI; si pasa, cerrar P1.1a. Después continuar P1.1b: investigar la fuente confiable de identidad/rol y simplificar mutaciones de cortes ADMIN/WRITE sin confiar en datos manipulables del navegador.
+- HEAD confirmado antes de esta corrección: `2aad7e5f6a191b13b04b2047bdd8e9f2d22f1743`; rama `GPSpedia2.2.5_work`. No se desplegaron Apps Script ni se ejecutó Beta.

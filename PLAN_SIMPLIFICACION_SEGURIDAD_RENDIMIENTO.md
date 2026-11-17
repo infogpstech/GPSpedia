@@ -52,7 +52,7 @@ La autorización por rol se resuelve con el rol asociado a la sesión iniciada. 
 **Criterio de salida:** mapa de llamadas y lista priorizada de validaciones redundantes con archivos, funciones y dependencias identificadas.
 
 ### P1 — Simplificar el flujo de aportes y escrituras ordinarias
-**Estado: EN PROGRESO — P1.1a implementada; validación pendiente. P1.1b pendiente.**
+**Estado: EN PROGRESO — P1.1a implementada; CI `44120994810` detectó un fallo en el extractor del contrato de prueba (`doPost`); corrección de prueba aplicada y nueva validación pendiente. P1.1b pendiente.**
 **Prioridad máxima de implementación.**
 - Retirar del flujo normal de WRITE/FEEDBACK las adquisiciones de lease/transaction y viajes de red a Coordinator que solo autentiquen, autoricen o verifiquen la legitimidad de la operación.
 - **Avance P1.1a:** `WRITE/checkOperation` consulta el estado directamente, sin lease ni llamada a Coordinator. Prueba de contrato actualizada; ejecución pendiente.
@@ -122,3 +122,9 @@ Cada fase debe actualizar el backlog y checkpoint. Agrupar cambios por tarea ló
 - No retirar la matriz de roles ni conceder privilegios nuevos.
 - No reemplazar validaciones redundantes por nuevas capas de validación con otro nombre.
 - No afirmar mejoras de tiempo sin mediciones. Se debe informar el número de llamadas eliminado y las latencias medidas cuando sea posible.
+
+
+### Seguimiento de P1.1a — 2026-11-17
+- CI `44120994810`: 133 suites; 1,925 pruebas aprobadas; 1 suite fallida. El fallo se limita al extractor genérico usado por `WriteAuthorizationMinimization` para leer `doPost` (mensaje: `Función incompleta: doPost`). Sintaxis aprobada.
+- La prueba se corrige para inspeccionar el bloque exacto del router, sin cambiar `write.js` ni relajar sus controles. Nueva regresión pendiente.
+- Siguiente: cerrar P1.1a tras CI aprobado; continuar P1.1b con auditoría del origen confiable del colaborador y rol antes de retirar Coordinator de mutaciones.

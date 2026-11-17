@@ -207,3 +207,11 @@ undefined
 - Estado: nueva regresión pendiente; P1.1a no se declara completada todavía.
 - Siguiente: comprobar CI; después P1.1b.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — GP-PERF-SIMPLIFY-01 / P1.1a — CORRECCIÓN DEL EXTRACTOR DE PRUEBA
+- CI 44120994810: sintaxis aprobada; 133 suites, 1,925 pruebas aprobadas; 1 suite fallida por `Función incompleta: doPost` en el extractor del contrato WriteAuthorizationMinimization.
+- La ruta de servicio inspeccionada confirma que checkOperation pasa por despacho directo sin lease. Se cambia únicamente la prueba para inspeccionar el bloque del router por delimitadores concretos, evitando el extractor genérico.
+- Estado: nueva regresión pendiente; P1.1a no se declara completada. Siguiente: ejecutar CI y luego continuar P1.1b (actor/rol confiable y mutaciones de cortes).
+================================================================================
