@@ -759,14 +759,60 @@ export function createRichTextToolbar(targetId, options = {}) {
         fontSelect.addEventListener("change", event => { if (event.target.value) applyRichTextFormat(targetId, "font", event.target.value, applyOptions); event.target.value = "";  });
         toolbar.appendChild(fontSelect);
     }
+    const closeMenus = except => toolbar.querySelectorAll(".rich-toolbar-dropdown.is-open").forEach(group => {
+        if (group === except) return;
+        group.classList.remove("is-open");
+        group.querySelector(".rich-toolbar-icon-button")?.setAttribute("aria-expanded", "false");
+        const menu = group.querySelector(".rich-toolbar-menu");
+        if (menu) menu.hidden = true;
+    });
+    const addDropdown = (icon, title, items) => {
+        const group = document.createElement("div");
+        group.className = "rich-toolbar-dropdown";
+        const trigger = makeButton(icon, title, () => {
+            const opening = !group.classList.contains("is-open");
+            closeMenus(group);
+            group.classList.toggle("is-open", opening);
+            trigger.setAttribute("aria-haspopup", "menu");
+            trigger.setAttribute("aria-expanded", String(opening));
+            menu.hidden = !opening;
+            if (opening) positionRichTextMenu(menu, trigger, "left");
+        });
+        trigger.setAttribute("aria-haspopup", "menu");
+        trigger.setAttribute("aria-expanded", "false");
+        const menu = document.createElement("div");
+        menu.className = "rich-toolbar-menu";
+        menu.setAttribute("role", "menu");
+        menu.hidden = true;
+        items.forEach(item => {
+            const option = document.createElement("button");
+            option.type = "button";
+            option.className = "rich-toolbar-menu-item";
+            option.setAttribute("role", "menuitem");
+            option.textContent = item.label;
+            option.addEventListener("pointerdown", event => { if (event.pointerType !== "mouse") event.preventDefault(); });
+            option.addEventListener("mousedown", event => event.preventDefault());
+            option.addEventListener("click", event => {
+                event.preventDefault();
+                closeMenus();
+                item.action();
+            });
+            menu.appendChild(option);
+        });
+        group.append(trigger, menu);
+        toolbar.appendChild(group);
+    };
     if (hasLists) {
-        const markerSelect = document.createElement("select");
-        markerSelect.className = "rich-toolbar-native-select rich-toolbar-marker-select";
-        markerSelect.title = "Marcador de lista no ordenada"; markerSelect.setAttribute("aria-label", "Marcador de lista no ordenada");
-        markerSelect.innerHTML = '<option value="bullet">• Viñeta</option><option value="hyphen">- Guion</option><option value="arrow">→ Flecha</option><option value="check">✓ Verificación</option>';
-        toolbar.appendChild(markerSelect);
-        toolbar.appendChild(makeButton("fa-list-ul", "Lista no ordenada", () => applyRichTextFormat(targetId, "ul", markerSelect.value, applyOptions)));
-        toolbar.appendChild(makeButton("fa-list-ol", "Lista ordenada", () => applyRichTextFormat(targetId, "ol", null, applyOptions)));
+        addDropdown("fa-list-ul", "Listas y marcadores", [
+            { label: "Viñetas", action: () => applyRichTextFormat(targetId, "ul", "bullet", applyOptions) },
+            { label: "Guiones", action: () => applyRichTextFormat(targetId, "ul", "hyphen", applyOptions) },
+            { label: "Flechas", action: () => applyRichTextFormat(targetId, "ul", "arrow", applyOptions) },
+            { label: "Verificación", action: () => applyRichTextFormat(targetId, "ul", "check", applyOptions) },
+            { label: "Lista numerada", action: () => applyRichTextFormat(targetId, "ol", null, applyOptions) }
+        ]);
+        toolbar.addEventListener("click", event => {
+            if (!event.target.closest(".rich-toolbar-dropdown")) closeMenus();
+        });
     }
     toolbar.appendChild(makeButton("fa-copy", "Copiar texto seleccionado", () => copyRichTextSelection_(targetId)));
     toolbar.appendChild(makeButton("fa-paste", "Pegar texto", () => pasteRichTextSelection_(targetId)));
