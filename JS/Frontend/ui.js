@@ -12929,7 +12929,11 @@ export function openSearchVehicleForPysAssociationModal(problemId, onAssociated,
         if (!catalogData || !Array.isArray(catalogData.cortes) || catalogData.cortes.length === 0) {
             try {
                 const res = await routeAction('getCatalogData');
-                if (res && res.data) setState({ catalogData: res.data });
+                if (res && res.data) {
+                    setState({ catalogData: res.data });
+                    // Si el usuario escribió mientras llegaba el catálogo, actualizar resultados sin exigir cerrar el teclado.
+                    if (input.value.trim()) input.dispatchEvent(new Event("input", { bubbles: true }));
+                }
             } catch (err) {
                 console.warn("Error cargando catálogo para asociación:", err);
             }
