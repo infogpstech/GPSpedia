@@ -249,3 +249,10 @@ undefined
 - Corrección en curso: actualizar esos contratos para el requisito nuevo: `checkOperation` es lectura de estado, no exige actor central ni Coordinator; las mutaciones restantes de WRITE conservan temporalmente el flujo anterior hasta P1.1b.
 - **Estado:** P1.1a IMPLEMENTADA; VALIDACIÓN FALLIDA EN PRIMER CI, CONTRATOS ACTUALIZADOS EN ESTE COMMIT; nueva regresión pendiente.
 - **Siguiente:** revisar el resultado del nuevo CI; si pasa, cerrar P1.1a y continuar P1.1b (mutaciones de cortes WRITE/ADMIN). Si falla, corregir las expectativas restantes antes de avanzar.
+
+
+### Ajuste de prueba P1.1a — 2026-11-17
+- CI `44120776071`: sintaxis aprobada y 132 suites/1,917 pruebas aprobadas; quedó un único fallo en la nueva prueba `CheckOperationSecurity`. La aserción excluía `getSpreadsheet()`, aunque la consulta debe leer la hoja Cortes; el requisito es eliminar la revalidación de sesión, no la lectura necesaria del registro.
+- Se corrigió la aserción para permitir el acceso de lectura a Cortes y seguir prohibiendo actor central, token, Users/ActiveSessions y consultas de sesión dentro del handler.
+- Estado P1.1a: implementación pendiente de regresión aprobada.
+- Siguiente: ejecutar CI de este commit; si pasa, cerrar P1.1a y continuar P1.1b (mutaciones ordinarias de cortes).

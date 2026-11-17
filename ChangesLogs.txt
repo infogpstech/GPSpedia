@@ -198,3 +198,12 @@ undefined
 - Estado: P1.1a pendiente de nueva regresión; P1.1b pendiente.
 - Siguiente: confirmar nuevo CI y cerrar P1.1a solo si las pruebas pasan; después P1.1b.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — GP-PERF-SIMPLIFY-01 / P1.1a — CORRECCIÓN LOCALIZADA DE PRUEBA
+- CI 44120776071: 132 suites; 1,917 pruebas aprobadas; 1 fallo en CheckOperationSecurity por una aserción demasiado amplia que prohibía getSpreadsheet, necesario para leer el estado de Cortes.
+- Se corrigió la prueba: permite la lectura del registro y sigue comprobando que no se revalida sesión ni se consulta Users/ActiveSessions/SESSION_CONTEXTS.
+- Estado: nueva regresión pendiente; P1.1a no se declara completada todavía.
+- Siguiente: comprobar CI; después P1.1b.
+================================================================================
