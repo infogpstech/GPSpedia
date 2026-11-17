@@ -1026,7 +1026,7 @@ function createSharedMutationCoordinator_(dependencies) {
                         return { status: "success", count: expectedCount,
                             firstRevision: Math.min.apply(null, foundRevisions),
                             lastRevision: Math.max.apply(null, foundRevisions),
-                            resetRequired: existing.some(event => event.resetRequired === true || event.operation === "reset"),
+                            resetRequired: existing.some(event => event.resetRequired === true),
                             duplicate: true, recoveredPartial: false };
                     }
 
@@ -1074,7 +1074,7 @@ function createSharedMutationCoordinator_(dependencies) {
             }
             return {
                 status: "success", count: events.length, firstRevision, lastRevision: currentRevision,
-                resetRequired: events.some(item => item.resetRequired || item.event.operation === "reset"),
+                resetRequired: events.some(item => item.resetRequired),
                 duplicate: false, recoveredPartial: false
             };
         });
