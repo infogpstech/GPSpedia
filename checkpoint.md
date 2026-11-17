@@ -349,3 +349,13 @@ El checkpoint acumulativo anterior se conserva íntegro en `Checkpoint_Archive/c
 - 
 - Refuerzo adicional tras revisión de foco: al recuperar el cursor mediante toque/clic dentro del editor, se vuelve a materializar el formato pendiente en la nueva posición colapsada. Esto evita depender de que el navegador mantenga el caret anterior tras cerrar el selector. Contrato InboxUi actualizado y App Shell v61.
 Estado: **EN PROGRESO** hasta ejecutar la suite Node.js completa disponible; la validación física de interacción queda diferida a Beta. No se modificó backend ni rama base.
+
+### GP-UX-PYS-TUTORIAL-ASSOCIATION-06 — mejoras de UI — 2026-11-16
+- Alcance: sustituir el selector de marcadores por un icono/menú en las barras estándar; incorporar enlace YouTube y acceso a subida directa en el formulario de tutoriales; mantener visibles los resultados de asociación con teclado virtual; separar detalle y acción del botón +.
+- rich-text.js: la barra estándar reemplaza el selector nativo de marcador por el icono fa-list-ul con menú accesible de viñetas, guiones, flechas, verificación y lista numerada. El menú se posiciona hacia la izquierda. Se conservan selectores de tamaño y fuente.
+- ui.js: el formulario de tutorial incorpora enlace YouTube validado y botón «Subir archivo de vídeo». addTutorial sigue enviando videoUrl vacío porque Apps Script rechaza enlaces directos en esa acción. Los enlaces pegados se envían mediante submitVideoForApproval, con ID de operación persistido en sessionStorage para reintentos; los archivos continúan por openYouTubeUploadModal y el flujo de aprobación existente.
+- Asociación PyS: el modal adapta su alto al visualViewport, desplaza el panel de resultados a la zona visible y vuelve a ejecutar la búsqueda cuando termina de cargarse el catálogo. El área de información abre el modal de detalle; el botón + agrega directamente al conjunto provisional.
+- Pruebas de regresión ampliadas en JS/Tests/InboxUi.mjs. App Shell y contratos de caché actualizados a v62.
+- Validación local: parsing V8 de rich-text.js, ui.js, InboxUi.mjs, service-worker.js, ServiceWorkerCache.js, OfflineBrandAssets.mjs y feedback.js aprobado; 15 comprobaciones estáticas dirigidas aprobadas. JS/Services/feedback.js solo se inspeccionó para confirmar el contrato; su SHA permaneció intacto y no fue modificado.
+- Suite Node.js InboxUi.mjs no ejecutada: el entorno no pudo clonar el repositorio por fallo de resolución DNS de github.com. CI sin estados reportados. Pruebas visuales Android/PWA y escritorio pendientes de Beta.
+- Estado: EN PROGRESO hasta ejecutar la suite Node disponible y verificar los cambios en navegador real. No se modificaron servicios Apps Script, deployments, datos productivos ni la rama base.
