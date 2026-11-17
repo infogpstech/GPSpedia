@@ -1772,3 +1772,10 @@ ADENDA DE AUDITORÍA — GP-UX-INBOX-RICH-EDITOR-01 — 2026-11-16
 - Validación: parsing V8 y 15 comprobaciones estáticas dirigidas aprobadas. La suite Node no pudo ejecutarse porque el entorno de trabajo no resolvió github.com al intentar obtener el checkout. Validación de interacción en Android/PWA y escritorio pendiente de Beta.
 
 - Adenda: el contenedor de cada resultado también abre el modal de información cuando se pulsa cualquier zona distinta del botón +; el botón de detalle detiene propagación para evitar doble apertura y el botón + detiene propagación para seleccionar directamente. Contrato estático final aprobado.
+
+
+### Corrección de alta PyS con vídeo — GP-UX-PYS-VIDEO-CREATE-01 — 2026-11-16
+- Evidencia: `openAddProblemModal()` no presentaba campo para enlace de YouTube ni acción de subida; tras registrar el problema solo ofrecía un `confirm()` para abrir el cargador. El flujo de aprobación ya existe en `submitVideoForApproval` y el cargador genérico `openYouTubeUploadModal`.
+- Corrección frontend: se añadió campo URL opcional validado, acción de subida directa y envío de enlaces mediante `submitVideoForApproval` con `contentType: "pys"`. `addProblem` sigue recibiendo `videoUrl: ""`, respetando el rechazo explícito del servicio a enlaces directos. La subida usa el cargador y la sesión de aprobación existentes.
+- Se conserva el identificador de aprobación en sessionStorage para reintentos; el alta del problema se ejecuta una sola vez y no se duplica si falla la aprobación. No se modificó ningún archivo de `JS/Services/`, deployment ni dato externo.
+- Contrato de regresión incorporado en `JS/Tests/InboxUi.mjs`; App Shell actualizado a v63 y contratos offline sincronizados.
