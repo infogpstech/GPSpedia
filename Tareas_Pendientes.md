@@ -1383,3 +1383,11 @@ No se han desplegado proyectos Apps Script ni configurado secretos remotos. La f
 - Se corrigió el contrato AUG-039 para reflejar este flujo, sin modificar la autorización ni el servicio.
 - Pendiente Beta: validar Drive/OAuth y concurrencia real en deployment. No impide el cierre local.
 - Siguiente: **P1.2b**, separar cargas Drive de `addOrUpdateCut` del bloqueo prolongado, conservando ID e idempotencia.
+
+
+### GP-PERF-SIMPLIFY-01 / P1.2b — auditoría inicial — 2026-11-17
+- Estado: **EN PROGRESO — análisis de dependencias completado; implementación pendiente**.
+- `handleAddOrUpdateCut` mantiene un lock de hasta 30 s mientras ejecuta cinco posibles cargas Drive dentro de `handleAddOrUpdateCutLockedUnsafe_` (reparación de imágenes existentes, imagen del corte en vehículo existente y dos imágenes en vehículo nuevo).
+- Dependencias: ID nuevo, slot de corte, `opId`/huella, rollback de fila y contador, y recuperación de operaciones pendientes. Se debe evitar que dos aportes simultáneos reserven el mismo slot o que una carga fallida deje el registro sin recuperación.
+- Reutilizar el cargador con ledger lock breve de P1.2a. Separar transferencia Drive de la persistencia sin introducir autenticación entre servicios, leases o verificaciones ceremoniales.
+- Siguiente: implementar y probar fases de preparación/carga, reserva breve de ID/slot e integración final; pruebas locales de concurrencia, reintento idempotente, rollback y recuperación. No desplegar Apps Script ni ejecutar Beta.
