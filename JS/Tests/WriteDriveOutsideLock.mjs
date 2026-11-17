@@ -58,4 +58,4 @@ assert.ok(locked.includes("lockState && lockState.releasedForDrive"));
 assert.ok(source.includes("if (lock.hasLock()) lock.releaseLock()"));
 assert.match(source,/function handleAddOrUpdateCut\(payload\)\s*\{[\s\S]{0,240}lock\.tryLock\(0\)/);
 assert.doesNotMatch(source,/function handleAddOrUpdateCut\(payload\)\s*\{[\s\S]{0,160}waitLock\(30000\)/);
-console.log("WRITE Drive fuera del ScriptLock y reserva de slots: PASS");
+console.log("1/1 PASS — WRITE Drive fuera del ScriptLock y reserva de slots");
