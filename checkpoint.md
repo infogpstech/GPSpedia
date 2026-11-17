@@ -440,3 +440,8 @@ undefined
 - P4.2: compositor Inbox desde Solicitudes no debe esperar la lectura de conversaciones para cargar destinatarios.
 - P4.3: auditar locks globales en herramientas ADMIN de auditoría/organización Drive. Preservar verificaciones de referencias y rollback.
 - Mantener telemetría, dashboard y health read-only. Sin deployments ni modificaciones de Spreadsheet/Drive productivos.
+### Continuidad P4 — P4.1 y P4.2 cerradas; P4.3 siguiente — 2026-11-17
+- P4.1: completada y validada. PyS se inicia en paralelo al cursor/snapshot inicial; los fallos no contaminan el estado del catálogo y el cursor no avanza con datos stale.
+- P4.2: completada y validada. El compositor Inbox desde Solicitudes carga destinatarios sin esperar la lectura remota de conversaciones; lista y sondeo continúan en segundo plano con guardas de contexto.
+- P4.3: siguiente. Auditar y diseñar reserva atómica breve para ADMIN Drive. El ScriptLock actual protege cursores idempotentes, inventoryOperationId, movimientos y rollback; no retirarlo ni sustituirlo por tryLock/UserLock sin pruebas concurrentes.
+- CI 44154032505 SUCCESS: 145 suites, 2,117 pruebas, 0 fallos. Health read-only 7/7. Pages build SUCCESS. No Apps Script desplegado ni datos productivos modificados.
