@@ -157,3 +157,14 @@ undefined
 - Se eliminó CSS obsoleto y se ajustó el espacio de columnas en viewport estrecho.
 - App Shell v69. CI run 44115093952: SUCCESS — 138 suites / 2,031 pruebas / 0 fallos; InboxUi 83/83. Health remoto read-only 44115094092: SUCCESS. GitHub Pages se ejecuta automáticamente; validación visual Beta pendiente.
 - Commit UI principal: fc3c36db21a853b5ff5fe091b9e4593c7b22bec0. App Shell: cd263b6a16e883f490483e0f3f0ed97def2e9987. HEAD funcional y de pruebas: bba4b430166b4783c4b613c06f6532036ba8b0a7.
+
+
+================================================================================
+2026-11-17 — GP-PERF-SIMPLIFY-01 — REQUISITO Y PLAN DE OPTIMIZACIÓN
+- Se registra el requisito de priorizar fluidez y baja latencia en toda GPSpedia, retirando validaciones transaccionales, leases, autorizaciones entre servicios y revalidaciones de identidad por acción ordinaria.
+- Se conserva el login con el hash actual y los permisos definidos por rol. Las operaciones de aporte deben registrar directamente el contenido, la fecha del servidor y el colaborador autenticado.
+- Excepciones conservadas: cierre remoto de sesión/limpieza de caché, invalidación de sesiones al eliminar una cuenta y bloqueo temporal por intentos fallidos de login.
+- Se incorpora sección 15 en NORMAS_DESAROLLO.md, tarea GP-PERF-SIMPLIFY-01 en Tareas_Pendientes.md y plan detallado PLAN_SIMPLIFICACION_SEGURIDAD_RENDIMIENTO.md.
+- Orden de ejecución: P0 inventario; P1 escrituras/aportes; P2 cargas de archivos; P3 sesión; P4 optimización global; P5 pruebas locales y mediciones.
+- Este commit registra el requisito y el plan; no contiene cambios funcionales ni afirma mejoras de rendimiento.
+================================================================================
