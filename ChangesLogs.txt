@@ -107,3 +107,16 @@ undefined
 - Health remoto 44098664894: 7/7 servicios disponibles con GET ?debug=true, sin POST ni escrituras.
 - No se desplegaron proyectos Apps Script ni se configuraron secretos remotos.
 ================================================================================
+
+================================================================================
+2026-11-17 — GP-DEV-TRAFFIC-GLOBAL-02 — CONTADORES DIRECTOS Y VALIDACIÓN FINAL
+- Se amplió la instrumentación best-effort a AUTH validateSession; WRITE checkVehicle/getSuggestion/checkVinDuplicate; FEEDBACK getPysData y suggestYear anónimo. CATALOG conserva cuatro rutas directas. UTILITIES/migrateTimestamps, USERS y ADMIN se contabilizan mediante Coordinator para evitar doble conteo.
+- Contadores directos en ScriptProperties con buckets horarios de 24 h y tryLock(0); si el lock no se adquiere o PropertiesService falla, se omite el evento sin bloquear el handler.
+- ADMIN consulta las cuatro fuentes directas en una operación fetchAll y conserva el agregado Coordinator si una fuente falla; fallback individual por endpoint ante fallo global de fetchAll.
+- Se agregaron JS/Tests/DirectServiceTrafficTelemetry.mjs y JS/Tests/ServiceTrafficBatch.mjs; se amplió JS/Tests/ServiceTrafficAggregation.mjs y ServiceTrafficAdminContract.mjs; se integraron al runner completo.
+- Se corrigió Services/COORDINATOR_SETUP.md: UTILITIES se cuenta por Coordinator y no tiene contador/secret directo.
+- CI 44103742508: 137 suites / 2037 pruebas / 0 fallos. Casos focalizados: CatalogTrafficTelemetry 8/8, ServiceTrafficAdminContract 33/33, ServiceTrafficAggregation 6/6, DirectServiceTrafficTelemetry 18/18 y ServiceTrafficBatch 5/5.
+- Health remoto 44103742755: 7/7; latencias ADMIN 1745 ms, AUTH 1392 ms, CATALOG 935 ms, FEEDBACK 1873 ms, USERS 985 ms, UTILITIES 3057 ms y WRITE 1839 ms.
+- GitHub Pages 44103742319 SUCCESS. No deployment Apps Script ni cambios de Script Properties.
+- Se actualizaron Tareas_Pendientes.md y checkpoint.md con la evidencia y las siguientes tareas.
+================================================================================
