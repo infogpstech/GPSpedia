@@ -31,7 +31,7 @@ El endpoint getServiceTraffic de cada servicio es interno, protegido con un secr
 - **CATALOG:** getCatalogData, getDropdownData, getSuggestion y getNavigationData.
 - **AUTH:** validateSession.
 - **WRITE:** checkVehicle, getSuggestion y checkVinDuplicate.
-- **FEEDBACK:** getPysData y suggestYear anónimo (userId 0) son directos. sendContactForm, suggestYear autenticado y getCatalogChanges se cuentan mediante Coordinator.
+- **FEEDBACK:** getPysData, getCatalogChanges y suggestYear anónimo (userId 0) son directos. sendContactForm y suggestYear autenticado se cuentan mediante Coordinator.
 - **UTILITIES:** migrateTimestamps ya obtiene una lease UTILITIES dentro de su handler y se cuenta mediante Coordinator; no lleva contador local.
 - **USERS:** getUsers, createUser y updateProfile pasan por Coordinator; no se añade contador local.
 - **ADMIN:** operaciones pasan por Coordinator; ping se excluye como sondeo.
