@@ -75,7 +75,7 @@ function coordinatorPolicy_(service, operation) {
             // Las acciones ADMIN leen el contexto central; no escriben LastActivityAt por cada solicitud.
             getReplacedImages: { read: ["USERS", "CORTES", "DRIVE", "IMAGE_INVENTORY", "TUTORIAL", "FEEDBACK", "LOGOS", "RELAY"] },
             getDriveStorage: { read: ["USERS", "DRIVE"] },
-            getCortesImageFolders: { read: ["USERS", "DRIVE"] },
+            getCortesImageFolders: { read: ["DRIVE"] },
             auditIdentifiers: { read: ["USERS", "CORTES", "TUTORIAL", "FEEDBACK", "LOGOS", "RELAY"] },
             checkOperation: { read: [...identityRead, "CORTES", "IDEMPOTENCIA"] },
             getAdminImageUploadStatus: { read: [...identityRead, "CORTES", "DRIVE"], write: ["IMAGE_UPLOAD_LEDGER"] },
@@ -168,7 +168,10 @@ function coordinatorPolicy_(service, operation) {
     const readResources = (policy.read || []).slice();
     const writeResources = (policy.write || []).slice();
     const sharedWriteResources = (policy.sharedWrite || []).slice();
-    if ((service === "ADMIN" || service === "AUTH") &&
+    // La enumeración prolongada de Drive ya autentica al actor central al adquirir
+    // la lease. No debe reservar USERS ni SESSION_CONTEXTS durante el recorrido:
+    // el login escribe ambos recursos y debe poder continuar en paralelo.
+    if ((service === "AUTH" || (service === "ADMIN" && operation !== "getCortesImageFolders")) &&
         !readResources.includes("SESSION_CONTEXTS") && !writeResources.includes("SESSION_CONTEXTS")) {
         readResources.push("SESSION_CONTEXTS");
     }

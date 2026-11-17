@@ -998,3 +998,8 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - App Shell actualizado a v65 para invalidar el CSS/HTML del dashboard y el módulo de actividad en PWA instalada. Contratos ServiceWorkerCache y OfflineBrandAssets actualizados.
 - CI del commit 21b584638223a23f4dd61da601795d009c76d91e: 132 suites / 1,964 pruebas / 0 fallos; GP-DASH-INSIGHTS-01 1/1, ServiceWorkerCache 10/10, OfflineBrandAssets 4/4 PASS.
 - GitHub Pages run 44007452731: build, upload y deploy SUCCESS.
+
+### Adenda de implementación — GP-AUTH-LOGIN-DRIVE-LOCK-01
+- La política ADMIN/getCortesImageFolders declara únicamente DRIVE; el actor y su rol continúan validándose mediante el contexto central al adquirir la lease.
+- Se evita reservar SESSION_CONTEXTS para esta operación de lectura prolongada. Las demás políticas AUTH/ADMIN no cambian.
+- Regresión aislada: PASS; validación remota y CI pendientes.

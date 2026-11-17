@@ -1485,3 +1485,11 @@ GP-UX-PYS-TUTORIAL-ASSOCIATION-06 — 2026-11-16
 - Validación CI run 44007454034: 132 suites / 1,964 pruebas / 0 fallos; prueba dashboard 1/1, ServiceWorkerCache 10/10, OfflineBrandAssets 4/4 PASS.
 - GitHub Pages run 44007452731: build, upload y deploy SUCCESS.
 ================================================================================
+
+
+================================================================================
+2026-11-16 — AJUSTE DE POLÍTICA Y REGRESIÓN GP-AUTH-LOGIN-DRIVE-LOCK-01
+- La primera ejecución de la nueva prueba detectó que USERS también estaba declarado como recurso de lectura de getCortesImageFolders; el login escribe USERS además de SESSION_CONTEXTS. Se eliminó esa dependencia redundante porque la autorización ya procede del actor central validado por el coordinador.
+- La política conserva DRIVE como lectura exclusiva frente a las escrituras correspondientes. La política implícita de SESSION_CONTEXTS se mantiene para las demás operaciones ADMIN y para AUTH.
+- La regresión aislada del coordinador se ejecutó después de la corrección; los resultados detallados se conservan en la respuesta de la herramienta de pruebas de esta sesión. CI y validación remota pendientes.
+================================================================================

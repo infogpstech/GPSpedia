@@ -456,3 +456,8 @@ Estado: **EN PROGRESO** hasta ejecutar la suite Node.js completa disponible; la 
 - No quedan tareas locales abiertas identificadas en el backlog activo; permanecen pruebas de campo/Beta (navegador real, Android/PWA, temas, viewports, aceptación remota AUTH, IndexedDB y datos Spreadsheet reales).
 - La autorización del usuario confirma que GitHub Pages puede desplegarse como parte del flujo Beta sin solicitar autorización por cada commit. La rama base no fue modificada.
 - Continuidad: continuar con la siguiente fase de verificación Beta de las tareas cerradas, no abrir nuevas mejoras hasta completar la verificación integral prevista por NORMAS_DESAROLLO.md.
+
+
+### Adenda — GP-AUTH-LOGIN-DRIVE-LOCK-01
+- La primera regresión identificó dos recursos que bloqueaban AUTH/login: USERS (lectura explícita) y SESSION_CONTEXTS (lectura implícita). La corrección final elimina ambos de la lease específica de getCortesImageFolders, conserva DRIVE y utiliza el actor central autenticado.
+- La prueba aislada del coordinador se ejecutó nuevamente después de corregir ambos recursos. La verificación de Google Drive/Apps Script desplegado y la prueba Beta tras el vencimiento del bloqueo de intentos continúan pendientes.

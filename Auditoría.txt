@@ -68,3 +68,12 @@ Resultado: implementación local cerrada con validación diferida a Beta. No se 
 ### Adenda — actualización de recursos PWA
 - La modificación de index.html/style.css y el módulo del dashboard afecta recursos incluidos en CORE_ASSETS. Se incrementó CACHE_NAME a gpsepedia-cache-v65 para evitar que instalaciones PWA mantengan la versión anterior.
 - ServiceWorkerCache 10/10 y OfflineBrandAssets 4/4 PASS; GitHub Pages build/deploy SUCCESS.
+
+
+================================================================================
+2026-11-16 — ADENDA GP-AUTH-LOGIN-DRIVE-LOCK-01
+- La primera prueba dirigida reprodujo un segundo conflicto: además de SESSION_CONTEXTS, la política explícita de getCortesImageFolders reservaba USERS. AUTH/login escribe ambos recursos, por lo que retirar solo la reserva implícita no era suficiente.
+- Corrección acotada: la consulta de carpetas declara únicamente DRIVE como recurso de negocio; el usuario/rol se valida desde el actor confiable central al adquirir la lease. Se conserva la lease DRIVE, por lo que las mutaciones de carpetas siguen excluidas durante el recorrido.
+- La regresión ahora exige que getCortesImageFolders lea DRIVE, no reserve USERS ni SESSION_CONTEXTS y permita AUTH/login en paralelo.
+- Resultado de regresión aislada: PASS; total reportado por el harness en esta ejecución. No equivale a prueba del deployment Apps Script/Drive.
+================================================================================
