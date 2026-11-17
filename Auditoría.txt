@@ -97,3 +97,12 @@ undefined
 - Diagnóstico remoto read-only 44093181611 SUCCESS. No se modificaron deployments Apps Script ni ScriptProperties. Pages run 44093181449 seguía pendiente al momento del registro.
 - Criterio: implementación local del dashboard verificada; cobertura de tráfico HTTP total queda pendiente de decisión/diseño y no se presenta como resuelta.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — CONFIRMACIÓN FINAL DE REGRESIÓN GP-DEV-TRAFFIC-GLOBAL-02
+- HEAD validado: bfcd39a4334d3b21b42293a2f82887e7a8b38b90.
+- Actions run 44093578203: comprobación sintáctica aprobada; ServiceTrafficAdminContract 20/20; ServiceMetricsTelemetry 1/1; RouteActionErrors 12/12. La suite DeveloperPanelCopy pasó.
+- Regresión general: 107 suites, 1592 PASS y 2 suites fallidas. AUTH PasswordRecovery falla por expectativa de worker cache key gpsepedia-cache-v67; INTEGRATION ServiceWorkerCache falla en política CDN woff2. Ambas fallas ya se habían observado antes de esta modificación y no afectan los archivos modificados en esta tarea.
+- Health run 44093578170 SUCCESS; consultas de solo lectura. Pages build run 44093577511 continuaba en progreso al registrar esta adenda.
+================================================================================
