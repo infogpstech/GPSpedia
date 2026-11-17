@@ -1,8 +1,9 @@
 undefined
 
 ================================================================================
-2026-11-17 — CIERRE GP-INBOX-CACHE-BANDS-01
-- Se registra el cierre local de caché de bandejas y mensajes tras CI verde: 133 suites / 1,986 pruebas, 0 fallos; InboxUi 80/80, InboxConversations 61/61, caché 5/5, paginación 4/4, contratos UI 10/10.
-- GitHub Pages run 44079874261 SUCCESS para commit 1c50922170308843581f9ba55c72bdee7a6e73a9.
-- Pendiente Beta: despliegue FEEDBACK y validación de campo con cuentas/roles, refresh, invalidación, mensaje nuevo, cambio de cuenta y offline. Sin despliegue ni acceso a datos productivos en esta iteración.
+2026-11-17 — IMPLEMENTACIÓN GP-DEV-CUT-AUDIT-TOOLBAR-01 (EN VALIDACIÓN)
+- index.html: los cinco controles de auditoría se agrupan en #audit-drive-toolbar con role=toolbar, toggle accesible y etiquetas iconográficas. Se conservan IDs, hidden y disabled.
+- ui.js: el toggle expande/contrae las etiquetas, actualiza aria-expanded/aria-label y enlaza el listener una sola vez; el modal abre en modo compacto.
+- style.css: barra compacta, animación de expansión, ajuste móvil y soporte prefers-reduced-motion.
+- CortesImageReconciliationUI.mjs: prueba de estructura, accesibilidad, preservación de IDs y movimiento reducido.
 ================================================================================

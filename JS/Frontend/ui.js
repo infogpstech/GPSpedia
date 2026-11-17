@@ -7972,6 +7972,24 @@ export async function openAuditDriveModal() {
     const reconciliationCounts = document.getElementById('audit-drive-reconciliation-counts');
     const reconciliationResults = document.getElementById('audit-drive-reconciliation-results');
     const applyReconciliationButton = document.getElementById('btn-audit-drive-apply-reconciliation');
+    const auditToolbar = document.getElementById('audit-drive-toolbar');
+    const auditToolbarToggle = document.getElementById('btn-audit-drive-toolbar-toggle');
+    const setAuditToolbarExpanded = expanded => {
+        if (!auditToolbar || !auditToolbarToggle) return;
+        auditToolbar.classList.toggle('is-expanded', Boolean(expanded));
+        auditToolbarToggle.setAttribute('aria-expanded', String(Boolean(expanded)));
+        auditToolbarToggle.setAttribute('aria-label', expanded ? 'Contraer etiquetas de acciones' : 'Expandir etiquetas de acciones');
+        auditToolbarToggle.title = expanded ? 'Contraer acciones' : 'Expandir acciones';
+    };
+    if (auditToolbar && auditToolbarToggle) {
+        setAuditToolbarExpanded(false);
+        if (auditToolbarToggle.dataset.bound !== 'true') {
+            auditToolbarToggle.addEventListener('click', () => {
+                setAuditToolbarExpanded(auditToolbarToggle.getAttribute('aria-expanded') !== 'true');
+            });
+            auditToolbarToggle.dataset.bound = 'true';
+        }
+    }
     let currentReconciliationReport = null;
     if (!summaryEl || !container) return;
     if (closeBtn) closeBtn.onclick = () => {

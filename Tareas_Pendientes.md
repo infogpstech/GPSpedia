@@ -1023,9 +1023,15 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - Pruebas de expiración, reutilización, identidad, concurrencia, abuso y compatibilidad. Envío real de correo y scopes del deployment pendientes de Beta.
 
 ### GP-DEV-CUT-AUDIT-TOOLBAR-01 — Barra de herramientas del panel de auditoría de cortes
-**Prioridad: P2 · Estado: PENDIENTE**
+**Prioridad: P2 · Estado: EN PROGRESO**
 - Reorganizar los controles en una barra compacta iconográfica, autodesplegable y accesible, coherente con el patrón del Inbox.
 - Preservar acciones, permisos, confirmaciones, estados y navegación existentes.
+
+#### Implementación en curso — 2026-11-17
+- Se agrupan los cinco controles existentes en una barra semántica `role=toolbar` con iconos, etiquetas accesibles y un botón de expansión/contracción.
+- La vista compacta muestra iconos; la expansión anima el ancho y las etiquetas. En móvil los controles se distribuyen en varias filas sin salir del viewport.
+- Se conservan los IDs, handlers, condiciones `hidden`/`disabled`, confirmaciones y la lógica de `updateControls()`. El estado de expansión se reinicia al abrir el modal y el listener se enlaza una sola vez.
+- Se respeta `prefers-reduced-motion`. Pruebas estáticas añadidas a CortesImageReconciliationUI; CI pendiente.
 
 ### GP-DEV-IMAGE-AUDIT-LIBRARY-UX-01 — Continuidad de auditoría y biblioteca de imágenes
 **Prioridad: P1/P2 · Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA**

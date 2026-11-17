@@ -123,6 +123,24 @@ testCase("la aplicación requiere aprobación visible, confirmación y endpoint 
  assert.ok(ui.includes("applyAvailable: false"));
  assert.ok(admin.includes("entry.cell.getValue()"));
 });
+testCase("las acciones de auditoría forman una barra iconográfica expandible y accesible",()=>{
+ assert.ok(html.includes('id="audit-drive-toolbar" class="audit-drive-toolbar" role="toolbar"'));
+ assert.ok(html.includes('id="btn-audit-drive-toolbar-toggle"'));
+ assert.ok(html.includes('aria-controls="audit-drive-toolbar-actions"'));
+ assert.ok(html.includes('aria-expanded="false"'));
+ for(const id of ["btn-audit-drive-start","btn-audit-drive-resume","btn-audit-drive-organize","btn-audit-drive-save-inventory","btn-audit-drive-reconcile"]) {
+  assert.ok(html.includes('id="'+id+'"'),id);
+  const start=html.indexOf('id="'+id+'"');
+  const button=html.slice(start,html.indexOf("</button>",start));
+  assert.ok(button.includes('aria-label="'),id+" accessible name");
+  assert.ok(button.includes('class="audit-drive-action-label"'),id+" label");
+ }
+ assert.ok(ui.includes("setAuditToolbarExpanded(false)"));
+ assert.ok(ui.includes("auditToolbarToggle.dataset.bound !== 'true'"));
+ assert.ok(ui.includes("auditToolbarToggle.setAttribute('aria-expanded', String(Boolean(expanded)))"));
+ assert.match(css,/.audit-drive-toolbar.is-expanded[sS]*?.audit-drive-action-label/);
+ assert.match(css,/@media (prefers-reduced-motion: reduce)[sS]*?.audit-drive-action-labels*{s*transition: none !important;/);
+});
 testCase("el reporte es responsive y accesible",()=>{
  assert.match(html,/aria-live="polite"/);
  assert.match(css,/\.audit-drive-reconciliation-panel\[hidden\]/);

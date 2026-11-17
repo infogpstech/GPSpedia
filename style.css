@@ -5993,3 +5993,93 @@ textarea.rich-text-source[hidden] { display:none !important; }
     #replaced-images-modal .replaced-images-folder-toolbar { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
     #replaced-images-modal .replaced-images-folder-toolbar label { grid-column: 1 / -1; }
 }
+
+
+/* GP-DEV-CUT-AUDIT-TOOLBAR-01: acciones compactas y etiquetas expandibles. */
+#audit-drive-modal .audit-drive-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    width: 100%;
+    min-width: 0;
+    margin: 0 0 10px;
+    padding: 7px;
+    border: 1px solid var(--gp-color-border,var(--border-color,#ddd));
+    border-radius: 10px;
+    background: var(--gp-color-surface,var(--card-bg,#fff));
+}
+#audit-drive-modal .audit-drive-toolbar-toggle,
+#audit-drive-modal .audit-drive-toolbar-actions > .audit-drive-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 40px;
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+    min-height: 40px;
+    padding: 0;
+    gap: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    transition: width .2s ease, flex-basis .2s ease, padding .2s ease, background-color .18s ease;
+}
+#audit-drive-modal .audit-drive-toolbar-toggle i {
+    transition: transform .2s ease;
+}
+#audit-drive-modal .audit-drive-toolbar-actions {
+    display: flex;
+    align-items: center;
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+    min-width: 0;
+    gap: 6px;
+}
+#audit-drive-modal .audit-drive-toolbar-actions > .audit-drive-action[hidden] {
+    display: none !important;
+}
+#audit-drive-modal .audit-drive-action-label {
+    display: inline-block;
+    max-width: 0;
+    margin-inline-start: 0;
+    overflow: hidden;
+    opacity: 0;
+    white-space: nowrap;
+    transition: max-width .2s ease, margin-inline-start .2s ease, opacity .16s ease;
+}
+#audit-drive-modal .audit-drive-toolbar.is-expanded .audit-drive-toolbar-toggle i {
+    transform: rotate(180deg);
+}
+#audit-drive-modal .audit-drive-toolbar.is-expanded .audit-drive-toolbar-actions > .audit-drive-action {
+    flex: 0 1 auto;
+    width: auto;
+    min-width: 40px;
+    padding-inline: 11px;
+    gap: 7px;
+}
+#audit-drive-modal .audit-drive-toolbar.is-expanded .audit-drive-action-label {
+    max-width: 260px;
+    margin-inline-start: 1px;
+    opacity: 1;
+}
+#audit-drive-modal .audit-drive-toolbar-toggle[aria-expanded="true"] {
+    color: var(--gp-color-accent,var(--accent-color,#1769aa));
+    border-color: var(--gp-color-accent,var(--accent-color,#1769aa));
+}
+@media (max-width: 600px) {
+    #audit-drive-modal .audit-drive-toolbar { align-items: flex-start; }
+    #audit-drive-modal .audit-drive-toolbar-actions { gap: 5px; }
+    #audit-drive-modal .audit-drive-toolbar.is-expanded .audit-drive-toolbar-actions > .audit-drive-action {
+        flex: 1 1 auto;
+        justify-content: flex-start;
+        max-width: 100%;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    #audit-drive-modal .audit-drive-toolbar-toggle,
+    #audit-drive-modal .audit-drive-toolbar-toggle i,
+    #audit-drive-modal .audit-drive-toolbar-actions > .audit-drive-action,
+    #audit-drive-modal .audit-drive-action-label {
+        transition: none !important;
+    }
+}

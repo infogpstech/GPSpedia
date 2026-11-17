@@ -643,12 +643,17 @@
         <div class="dev-heading-with-help dev-audit-scope-row">
             <p id="audit-drive-results-scope" style="font-size:0.85em; color:var(--text-disabled); margin:0;">Resumen de todas las categorías. La lista muestra imágenes históricas y sin uso detectado.</p>
             <button type="button" class="gp-help-trigger" aria-label="Ayuda sobre categorías del resumen" title="Ayuda" aria-controls="dev-help-audit-categories" aria-expanded="false"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button><span id="dev-help-audit-categories" class="gp-help-popover dev-heading-help-popover" role="tooltip" hidden>Descubiertos: archivos únicos con ID válido. Analizados: archivos cuya clasificación se intentó, incluidos errores. Pendientes: carpetas aún por recorrer. Errores: IDs o metadatos que no pudieron leerse. Las miniaturas se verifican con la sesión autorizada. Los duplicados se omiten y contabilizan por separado.</span></div>
-        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
-            <button type="button" id="btn-audit-drive-start" class="btn btn-primary"><i class="fa-solid fa-rotate"></i> Iniciar nueva auditoría</button>
-            <button type="button" id="btn-audit-drive-resume" class="btn btn-secondary" hidden disabled><i class="fa-solid fa-play"></i> Continuar auditoría</button>
-            <button type="button" id="btn-audit-drive-organize" class="btn btn-secondary" hidden disabled><i class="fa-solid fa-folder-open"></i> Organizar imágenes confirmadas</button>
-            <button type="button" id="btn-audit-drive-save-inventory" class="btn btn-secondary" hidden disabled><i class="fa-solid fa-clipboard-check"></i> Registrar inventario sin uso</button>
-            <button type="button" id="btn-audit-drive-reconcile" class="btn btn-secondary" hidden disabled><i class="fa-solid fa-link"></i> Simular conciliación con Cortes</button>
+        <div id="audit-drive-toolbar" class="audit-drive-toolbar" role="toolbar" aria-label="Herramientas de auditoría de Cortes" aria-orientation="horizontal">
+            <button type="button" id="btn-audit-drive-toolbar-toggle" class="btn btn-secondary audit-drive-toolbar-toggle" aria-label="Expandir etiquetas de acciones" title="Expandir acciones" aria-expanded="false" aria-controls="audit-drive-toolbar-actions">
+                <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+            </button>
+            <div id="audit-drive-toolbar-actions" class="audit-drive-toolbar-actions">
+                <button type="button" id="btn-audit-drive-start" class="btn btn-primary audit-drive-action" aria-label="Iniciar nueva auditoría" title="Iniciar nueva auditoría"><i class="fa-solid fa-rotate" aria-hidden="true"></i><span class="audit-drive-action-label" aria-hidden="true">Iniciar nueva auditoría</span></button>
+                <button type="button" id="btn-audit-drive-resume" class="btn btn-secondary audit-drive-action" aria-label="Continuar auditoría" title="Continuar auditoría" hidden disabled><i class="fa-solid fa-play" aria-hidden="true"></i><span class="audit-drive-action-label" aria-hidden="true">Continuar auditoría</span></button>
+                <button type="button" id="btn-audit-drive-organize" class="btn btn-secondary audit-drive-action" aria-label="Organizar imágenes confirmadas" title="Organizar imágenes confirmadas" hidden disabled><i class="fa-solid fa-folder-open" aria-hidden="true"></i><span class="audit-drive-action-label" aria-hidden="true">Organizar imágenes confirmadas</span></button>
+                <button type="button" id="btn-audit-drive-save-inventory" class="btn btn-secondary audit-drive-action" aria-label="Registrar inventario sin uso" title="Registrar inventario sin uso" hidden disabled><i class="fa-solid fa-clipboard-check" aria-hidden="true"></i><span class="audit-drive-action-label" aria-hidden="true">Registrar inventario sin uso</span></button>
+                <button type="button" id="btn-audit-drive-reconcile" class="btn btn-secondary audit-drive-action" aria-label="Simular conciliación con Cortes" title="Simular conciliación con Cortes" hidden disabled><i class="fa-solid fa-link" aria-hidden="true"></i><span class="audit-drive-action-label" aria-hidden="true">Simular conciliación con Cortes</span></button>
+            </div>
         </div>
         <div id="audit-drive-summary" style="margin-bottom: 10px; font-size: 0.85rem; font-weight: 600;"></div>
         <div id="audit-drive-results-container" style="max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 5px;">
