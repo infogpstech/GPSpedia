@@ -361,3 +361,12 @@ Estado: **EN PROGRESO** hasta ejecutar la suite Node.js completa disponible; la 
 - Estado: EN PROGRESO hasta ejecutar la suite Node disponible y verificar los cambios en navegador real. No se modificaron servicios Apps Script, deployments, datos productivos ni la rama base.
 
 - Adenda de comportamiento: toda la fila del resultado, salvo el botón +, abre el modal de información del vehículo; el botón + detiene la propagación y agrega directamente. Contrato actualizado. Validación estática final: 16/16 comprobaciones aprobadas; la suite Node y Beta continúan pendientes.
+
+
+### GP-UX-PYS-VIDEO-CREATE-01 — alta de problema con enlace o subida de vídeo — 2026-11-16
+- Se verificó la rama `GPSpedia2.2.5_work`; HEAD al iniciar esta corrección: `ecd4122f39ec7d5c589c7aeea69485d0d272fae0`. Rama base `GPSpedia2.2.5`: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin modificaciones.
+- `JS/Frontend/ui.js`: el formulario PyS ahora incluye URL opcional de YouTube validada y botón «Subir archivo a YouTube». El alta inicial sigue llamando `addProblem` con `videoUrl: ""`; el enlace se tramita por `submitVideoForApproval` (`contentType: "pys"`) y el archivo por `openYouTubeUploadModal`. Se conserva la clave de idempotencia de aprobación, se evita el doble envío y los reintentos no vuelven a crear el problema.
+- Restricción cumplida: no se modificaron `JS/Services/*`, servicios Apps Script, deployments, endpoints ni datos externos.
+- Archivos de soporte: `service-worker.js` actualizado a App Shell v63; contratos `JS/Tests/InboxUi.mjs`, `JS/Tests/ServiceWorkerCache.js` y `JS/Tests/OfflineBrandAssets.mjs` sincronizados; esta auditoría y `ChangesLogs.txt` registran la tarea.
+- Commits secuenciales: consultar los SHA publicados al cierre de esta sección. Validación Node.js/CI y navegador real todavía no ejecutadas en esta sesión; la validación real de OAuth, subida a YouTube y aprobación remota queda reservada a Beta.
+- Estado: **EN PROGRESO** hasta ejecutar las pruebas locales disponibles y verificar los commits y el diff remoto. No se afirma que el flujo externo haya sido probado.
