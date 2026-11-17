@@ -23,7 +23,7 @@ import { createInboxPageCache, mergeInboxMessagePages } from './inboxPageCache.j
 import { loadPysData, getCachedPysData, getPysDataFreshness, invalidatePysDataCache } from './pys-data.js';
 import { captureModalViewState, restoreModalViewState, shouldRecordModalTransition, pushModalNavigationContext, popModalNavigationContext } from './modalNavigation.js';
 import { createRichTextToolbar, sanitizeHtmlContent, refreshRichTextToolbars, mountRichTextEditors, positionRichTextMenu, stripRichTextDemoPlaceholder, bindRichTextEditorSelection_ } from './rich-text.js';
-import { renderActivityLogs, renderActivityContributions } from './activityDashboard.js';
+import { renderActivityLogs, renderActivityContributions, renderActivityInsights } from './activityDashboard.js';
 import { getDriveStorageCriticalState } from './driveStorageAlerts.js';
 import { getOrCreateTermsDeviceId, getDeviceTermsAcceptance, getDeviceTermsSyncStatus, saveDeviceTermsAcceptance } from './termsDeviceAcceptance.js';
 import { parseDeveloperConsoleConfirmation } from './developerConsoleConfirmation.js';
@@ -4248,8 +4248,10 @@ const openDashboardModal_ = setupModal('dashboard-modal', async () => {
     modal.style.display = 'flex';
     const logContainer = document.getElementById('activity-logs');
     const contributionContainer = document.getElementById('activity-contributions');
+    const insightContainer = document.getElementById('activity-insights');
     if (logContainer && !logContainer.children.length) logContainer.innerHTML = '<tr><td colspan="4">Cargando actividad...</td></tr>';
     if (contributionContainer && !contributionContainer.children.length) contributionContainer.innerHTML = '<tr><td colspan="3">Cargando aportes...</td></tr>';
+    if (insightContainer && !insightContainer.children.length) insightContainer.textContent = 'Preparando indicadores...';
     const tabs = modal.querySelectorAll('[data-activity-tab]');
     tabs.forEach(button => {
         if (button.dataset.listenerSet === 'true') return;
@@ -4270,11 +4272,13 @@ const openDashboardModal_ = setupModal('dashboard-modal', async () => {
         if (result.status === 'success') {
             if (logContainer) renderActivityLogs(logContainer, result.data);
             if (contributionContainer) renderActivityContributions(contributionContainer, result.contributions || []);
+            if (insightContainer) renderActivityInsights(insightContainer, result.insights || {}, result.contributions || []);
         }
     } catch (error) {
         if (!isCurrentUiSessionContext_(requestContext)) return;
         if (logContainer) logContainer.innerHTML = '<tr><td colspan="4" style="color:red;">Error al cargar actividad</td></tr>';
         if (contributionContainer) contributionContainer.innerHTML = '<tr><td colspan="3" style="color:red;">Error al cargar aportes</td></tr>';
+        if (insightContainer) insightContainer.textContent = 'No se pudieron cargar los indicadores. Intenta abrir el panel nuevamente.';
     }
 });
 

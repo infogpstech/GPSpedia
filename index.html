@@ -236,12 +236,16 @@
         <button type="button" class="info-close-btn" aria-label="Cerrar ventana">&times;</button>
         <h2 class="inbox-modal-title"><i class="fa-solid fa-chart-line"></i> Panel de Actividad</h2>
         <div class="activity-dashboard-tabs" role="tablist" aria-label="Vistas del panel de actividad">
-            <button type="button" class="active" data-activity-tab="logs" role="tab" aria-selected="true" aria-controls="activity-panel-logs">Actividad de usuarios</button>
-            <button type="button" data-activity-tab="contributions" role="tab" aria-selected="false" aria-controls="activity-panel-contributions">Aportes por usuario</button>
+            <button type="button" class="active" data-activity-tab="insights" role="tab" aria-selected="true" aria-controls="activity-panel-insights">Resumen</button>
+            <button type="button" data-activity-tab="contributions" role="tab" aria-selected="false" aria-controls="activity-panel-contributions">Aportes</button>
+            <button type="button" data-activity-tab="logs" role="tab" aria-selected="false" aria-controls="activity-panel-logs">Actividad reciente</button>
         </div>
-        <section id="activity-panel-logs" data-activity-panel="logs" role="tabpanel">
+        <section id="activity-panel-insights" data-activity-panel="insights" role="tabpanel">
+            <div id="activity-insights" class="activity-insights" aria-live="polite">Preparando indicadores...</div>
+        </section>
+        <section id="activity-panel-logs" data-activity-panel="logs" role="tabpanel" hidden>
             <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;margin-top:15px;">
-                <thead><tr style="border-bottom:2px solid #eee;text-align:left;"><th style="padding:10px;">Fecha</th><th style="padding:10px;">Usuario</th><th style="padding:10px;">Actividad</th><th style="padding:10px;">Detalle</th></tr></thead>
+                <thead><tr style="border-bottom:2px solid #eee;text-align:left;"><th style="padding:10px;">Fecha</th><th style="padding:10px;">Usuario</th><th style="padding:10px;">Acción</th><th style="padding:10px;">Descripción</th></tr></thead>
                 <tbody id="activity-logs"></tbody>
             </table></div>
         </section>

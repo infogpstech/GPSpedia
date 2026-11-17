@@ -2293,6 +2293,48 @@ function buildCutContributionSummary_() {
   .sort((x,y)=>y.cortesAportados-x.cortesAportados||x.nombreUsuario.localeCompare(y.nombreUsuario,"es"));
 }
 
+function buildActivityDashboardInsights_() {
+ const ss=getSpreadsheet(),cuts=ss.getSheetByName(SHEET_NAMES.CORTES);
+ const summary={vehicles:0,cuts:0,usefulVotes:0,notUseful:0,notWorking:0},usefulByCut=new Map(),vehicleNames=new Map();
+ if(cuts&&cuts.getLastRow()>1){
+  const count=cuts.getLastRow()-1,rows=cuts.getRange(2,1,count,Math.max(COLS_CORTES.timestamp,42)).getValues();summary.vehicles=rows.length;
+  rows.forEach(row=>{
+   const vehicleId=String(row[COLS_CORTES.id-1]||"").trim(),brand=String(row[COLS_CORTES.marca-1]||"").trim(),model=String(row[COLS_CORTES.modelo-1]||"").trim();
+   if(vehicleId)vehicleNames.set(vehicleId,{brand,model});
+   for(let index=1;index<=3;index++){
+    const type=String(row[COLS_CORTES["tipoCorte"+index]-1]||"").trim();if(!type)continue;summary.cuts++;
+    const votes=Number(row[COLS_CORTES["utilCorte"+index]-1]),countVotes=Number.isSafeInteger(votes)&&votes>0?votes:0;summary.usefulVotes+=countVotes;
+    if(countVotes){const key=[brand,model,type].join("|"),entry=usefulByCut.get(key)||{brand,model,cutType:type,usefulVotes:0};entry.usefulVotes+=countVotes;usefulByCut.set(key,entry);}
+   }
+  });
+ }
+ const feedback=ss.getSheetByName(SHEET_NAMES.FEEDBACKS),feedbackWindow=500;let feedbackRows=[],actorColumn=0,windowLimited=false;
+ if(feedback&&feedback.getLastRow()>1){
+  const lastColumn=Math.max(9,Math.min(20,feedback.getLastColumn()||9)),headers=feedback.getRange(1,1,1,lastColumn).getValues()[0];
+  actorColumn=headers.findIndex(value=>String(value||"").trim()==="suggestionActorKey")+1;
+  const lastRow=feedback.getLastRow(),startRow=Math.max(2,lastRow-feedbackWindow+1),rowCount=lastRow-startRow+1;
+  feedbackRows=feedback.getRange(startRow,1,rowCount,Math.max(9,actorColumn)).getValues();windowLimited=lastRow-1>feedbackWindow;
+ }
+ const negativeByVehicle=new Map(),years={confirmations:0,suggestions:0,verified:0,anonymous:0,applied:0};
+ feedbackRows.forEach(row=>{
+  const problem=String(row[COLS_FEEDBACKS.Problema-1]||""),answer=String(row[COLS_FEEDBACKS.Respuesta-1]||""),vehicleId=String(row[COLS_FEEDBACKS.ID_vehiculo-1]||"").trim();
+  const isYear=String(row[COLS_FEEDBACKS.anoSugerido-1]||"").trim()!==""&&Number.isFinite(Number(row[COLS_FEEDBACKS.anoSugerido-1]));
+  if(isYear){
+   if(/Confirmación de funcionamiento|Modelo sin generaciones recientes registradas/.test(problem)&&/confirmó que se trata de una generación más reciente|funciona para el año/i.test(answer))years.confirmations++;
+   if(/Sugerencia de ampliar rango/.test(problem))years.suggestions++;
+   if(actorColumn){const actor=String(row[actorColumn-1]||"").trim();if(/^user:[A-Za-z0-9_.-]{1,100}$/.test(actor))years.verified++;else if(actor==="anon:unverified")years.anonymous++;}
+  }
+  if(/Reporte de información no funcional|Modelo sin generaciones recientes registradas/.test(problem)&&/no fue útil|no funciona/i.test(answer)){
+   const key=vehicleId||"sin-id",vehicle=vehicleNames.get(key)||{},entry=negativeByVehicle.get(key)||{brand:vehicle.brand||"",model:vehicle.model||("Vehículo "+(vehicleId||"sin ID")),cutType:"",reports:0,notUseful:0,notWorking:0};
+   entry.reports++;if(/no fue útil/i.test(answer)){entry.notUseful++;summary.notUseful++;}if(/no funciona/i.test(answer)){entry.notWorking++;summary.notWorking++;}negativeByVehicle.set(key,entry);
+  }
+ });
+ const applications=ss.getSheetByName("FeedbackYearApplications");
+ if(applications&&applications.getLastRow()>1){const last=applications.getLastRow(),start=Math.max(2,last-feedbackWindow+1),rows=applications.getRange(start,1,last-start+1,12).getValues();years.applied=rows.filter(row=>String(row[8]||"").trim()==="completed").length;}
+ return{summary,topUseful:Array.from(usefulByCut.values()).sort((a,b)=>b.usefulVotes-a.usefulVotes||a.brand.localeCompare(b.brand,"es")).slice(0,5),
+  topNegative:Array.from(negativeByVehicle.values()).sort((a,b)=>b.reports-a.reports||a.model.localeCompare(b.model,"es")).slice(0,5),years,feedbackWindow,windowLimited};
+}
+
 function handleGetActivityLogs(payload) {
  const pageSize=100;
  const readLatestRows=(sheet,columnCount)=>{if(!sheet)return[];const lastRow=sheet.getLastRow();if(lastRow<=1)return[];const startRow=Math.max(2,lastRow-pageSize+1),rowCount=lastRow-startRow+1;return sheet.getRange(startRow,1,rowCount,columnCount).getValues();};
@@ -2308,7 +2350,7 @@ function handleGetActivityLogs(payload) {
   id:row[0],timestamp:row[1],idUsuario:row[2],nombreUsuario:row[3],tipoActividad:"inbox_"+String(row[4]||""),idElementoAsociado:row[6],detalle:row[7]
  }));
  result.sort((x,y)=>(y._sortTime-x._sortTime)||(x._sequence-y._sequence));
- return{status:"success",data:result.slice(0,pageSize).map(({_sortTime,_sequence,...entry})=>entry),contributions:buildCutContributionSummary_()};
+ return{status:"success",data:result.slice(0,pageSize).map(({_sortTime,_sequence,...entry})=>entry),contributions:buildCutContributionSummary_(),insights:buildActivityDashboardInsights_()};
 }
 
 /* TAREA 9 (2.3): ALMACENAMIENTO Y GESTIÓN INDEPENDIENTE DE SUGERENCIAS EN FEEDBACKS */
