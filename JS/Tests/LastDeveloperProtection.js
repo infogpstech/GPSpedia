@@ -39,6 +39,8 @@ function runLastDeveloperProtectionTests(sources) {
             getSessionExpirationStatus_:()=>({expired:false}),assertRequesterRoleRevocationClear_:()=>{},
             hasPendingRoleRevocation_:()=>false,revokePendingLoginRequestsForUserUnderLock_:()=>({pending:false}),
             revokeSharedUserSessionContexts_:id=>{revokedSharedUsers.push(String(id));return{revokedSessions:0};},
+            getActiveSessionTokensForUserUnderLock_:(sheet,id)=>sheet.getDataRange().getValues().slice(1)
+                .filter(row=>String(row[0]||"")===String(id)).map(row=>String(row[2]||"")).filter(Boolean),
             roleRevocationPropertyKey_:id=>'role:'+id,
             parseSharedRoleRevocationMarker_:value=>{const raw=String(value||'');if(!raw.startsWith('__role_revocation_pending__:'))return null;try{return JSON.parse(raw.slice('__role_revocation_pending__:'.length));}catch(_){return{invalid:true};}},
             parseRoleRevocationMarker_:raw=>{try{return JSON.parse(raw);}catch(_){return{invalid:true};}},
