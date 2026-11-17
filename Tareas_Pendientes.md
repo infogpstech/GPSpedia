@@ -1196,17 +1196,38 @@ Después: abrir Developer → Auditoría de Cortes en escritorio y PWA móvil; c
 - Efecto colateral del push del harness: regression run `44090225648` sobre HEAD posterior registró 107 suites, 1,601 PASS y 2 suites fallidas (AUTH recuperación de contraseña e INTEGRATION CDN woff2); no corresponde al corte solicitado. Pages run `44090225354` SUCCESS. No se modificaron deployments Apps Script.
 - Procedimiento reproducible: workflow `.github/workflows/deployed-service-health.yml` fija TARGET_COMMIT; `JS/Tests/RemoteServiceHealth.mjs` obtiene el inventario desde ese SHA y consulta los siete endpoints en paralelo con timeout de 8 s, sin efectos de escritura.
 
-### GP-DEV-TRAFFIC-GLOBAL-02 — Sustituir telemetría local por tráfico global coordinado
-**Prioridad: P1 · Estado: EN PROGRESO (PRESENTACIÓN GLOBAL IMPLEMENTADA; COBERTURA BACKEND INCOMPLETA).**
-- Revisar BETA-043 y el comportamiento actual de `JS/Frontend/serviceMetrics.js`, `JS/Frontend/api-config.js`, `JS/Services/Coordinator.js` y panel Developer.
-- Objetivo acordado: el panel debe mostrar el agregado global producido por Coordinator para todos los deployments/servicios, no presentar el buffer local del navegador como la métrica principal ni duplicar ambas fuentes como si fueran equivalentes.
-- Auditoría inicial completada: Coordinator cuenta operaciones con lease y validateSessionContext, pero Catalog y rutas públicas/no coordinadas de otros servicios quedan fuera. La UI sigue mostrando métricas locales de 15 minutos en un panel separado y en el detalle por servicio.
-- Antes de implementar, resolver cómo registrar también solicitudes no coordinadas sin añadir una llamada de red por acción ni bloquear lecturas con locks globales. Definir claramente si el alcance será tráfico total o solo operaciones protegidas.
-- Implementación de interfaz realizada: se eliminó el panel local «Actividad de este navegador», el detalle por servicio dejó de mostrar métricas de la sesión y ahora presenta conteos de Coordinator para 1 h, 6 h y 24 h. Se retiraron `serviceMetrics.js` y sus llamadas/exportaciones del frontend.
-- El gráfico global sigue representando `coordinator_protected_operations`, no todas las solicitudes HTTP. La UI advierte que lecturas públicas/no coordinadas (incluido CATALOG), feed público y health probes no se cuentan y que un cero no prueba ausencia de tráfico.
-- Pruebas de alcance aprobadas en Actions run `44093181593`: ServiceTrafficAdminContract 20/20, ServiceMetricsTelemetry 1/1 (retirada local), RouteActionErrors 12/12 y sintaxis aprobada. La regresión completa tuvo 107 suites, 1592 PASS y 2 fallos ajenos a este cambio: AUTH PasswordRecovery (worker cache key gpsepedia-cache-v67) e INTEGRATION ServiceWorkerCache (política CDN woff2). Se requiere seguimiento independiente de esos fallos.
-- Diagnóstico remoto read-only run `44093181611` SUCCESS. GitHub Pages run `44093577511` terminó CANCELLED; no hay despliegue Pages confirmado para este HEAD.
-- Pendiente para cerrar alcance total: definir una estrategia de baja latencia para contabilizar CATALOG y rutas públicas/no coordinadas. No introducir una llamada de red adicional por cada acción ni serializar lecturas públicas bajo el lock sin medir y justificar su impacto.
-- Preservar autenticación y autorización de Desarrollador en ADMIN/Coordinator; no exponer identidad, tokens ni datos de sesión. La consulta debe ser de solo lectura y no contabilizarse a sí misma.
-- Criterios esperados: gráfica global coherente entre sesiones y deployments; datos ausentes/excluidos claramente etiquetados; sin doble conteo por reintentos; telemetría nunca bloquea operaciones; errores de consulta no reemplazan datos globales por métricas locales.
-- Añadir pruebas de contrato, agregación, concurrencia/idempotencia y UI. No desplegar Apps Script ni modificar ScriptProperties/datos externos durante la fase local.
+### GP-DEV-TRAFFIC-GLOBAL-02 — Agregado global de tráfico por servicio
+**Prioridad: P1 · Estado: EN PROGRESO (Coordinator + CATALOG implementados en fuente; cobertura de rutas directas restantes y CI en verificación).**
+
+**Objetivo**
+- Sustituir las métricas locales del navegador por un agregado global coherente y etiquetado por fuente, sin una llamada de red por acción ni bloqueos que degraden lecturas.
+- Mantener autenticación Developer, no exponer datos personales, no contar la propia consulta de telemetría y no presentar un cero parcial como ausencia de tráfico.
+
+**Implementación comprobada en la rama**
+- Frontend: dashboard Developer consulta Coordinator y elimina el panel de métricas locales del navegador. Los detalles muestran ventanas 1 h, 6 h y 24 h; refresco remoto condicionado a visibilidad y con intervalo mínimo de 60 s.
+- Coordinator: registra operaciones protegidas con lease y el feed público dentro del lock que ya protege la lectura; sin llamada de red ni lock adicional.
+- CATALOG: cuatro POST directos (getCatalogData, getDropdownData, getSuggestion, getNavigationData) se cuentan localmente en buckets horarios de 24 h mediante ScriptProperties y tryLock(0). La telemetría es best-effort; si el lock está ocupado o PropertiesService falla, la lectura debe continuar sin espera.
+- ADMIN: combina los buckets Coordinator y CATALOG cuando se consulta el panel. El contador CATALOG requiere el secreto GPSpedia_CATALOG_TRAFFIC_SECRET en Script Properties de ADMIN y CATALOG; si falta, conserva Coordinator y marca CATALOG directo como parcial/no disponible.
+- Seguridad: el endpoint interno CATALOG/getServiceTraffic valida secreto servidor-a-servidor, excluye su propia petición y no devuelve usuario, sesión ni payload.
+- Se corrigió un defecto real en catalog.js: releaseLock se ejecutaba incluso cuando tryLock(0) no adquiría el lock. Ahora solo se libera si la adquisición fue exitosa.
+- Se ajustó el diagnóstico remoto: máximo dos probes simultáneos, hasta tres intentos ante errores transitorios; se conservan los siete contratos y todas las comprobaciones. No se omiten servicios ni se rebajan criterios.
+
+**Pruebas y resultados esperados**
+- CatalogTrafficTelemetry: lock libre/ocupado, no espera, liberación solo si adquirido, retención y ventanas 1/6/24 h, secretos y tolerancia a fallos. Esperado: todas las aserciones aprobadas; la contención no cambia la respuesta CATALOG.
+- SharedMutationCoordinator: feed público se cuenta dentro del lock existente; FEEDBACK conserva su identidad. Esperado: no lease adicional ni doble conteo.
+- ServiceTrafficAggregation: suma CATALOG directo + feed Coordinator por bucket, no modifica los otros servicios, entradas inválidas ignoradas y ausencia de secreto identificada como parcial. Esperado: agregados y metadatos coherentes.
+- ServiceTrafficAdminContract / DeveloperPanelCopy: autorización Developer, consulta de solo lectura, intervalos, textos de cobertura y ausencia de métricas locales. Esperado: contratos completos.
+- Regresión completa: ejecutar todas las suites y corregir cada fallo reproducible; no reducir el número de pruebas, desactivar casos ni alterar aserciones para lograr verde.
+- Health remoto: GET ?debug=true a los siete servicios; validar HTTP, JSON, identidad, estado, versión y ausencia de campos sensibles. Esperado: 7/7, con latencias registradas. No POST ni escrituras.
+- Beta: desplegar fuentes Apps Script en entorno Beta, configurar el secreto fuera del repositorio y medir p50/p95 y porcentaje de eventos omitidos. No se ha desplegado Apps Script ni configurado el secreto remoto.
+
+**Brecha pendiente tras esta iteración**
+- AUTH tiene rutas directas/fallback como validateSession; WRITE mantiene checkVehicle/getSuggestion/checkVinDuplicate directas; USERS tiene rutas fuera de createUser/updateProfile/getUsers; FEEDBACK tiene lecturas públicas como getPysData/sendContactForm y otras rutas; UTILITIES ejecuta migrateTimestamps fuera del wrapper Coordinator. ADMIN/ping se excluye intencionalmente.
+- Auditar llamadas reales y clasificar rutas por tipo (públicas, protegidas, health, internas) antes de instrumentarlas. Evitar doble conteo de operaciones que ya generan evento Coordinator.
+- No declarar el agregado como total universal HTTP: por ahora cubre operaciones protegidas Coordinator, feed y cuatro acciones directas CATALOG.
+
+**Evidencia reciente**
+- Health remoto 44098448554 SUCCESS: 7/7. ADMIN 2,383 ms; AUTH 3,559 ms; resto 994–1,901 ms.
+- Regresión 44098448712: 112 suites, 1,674 pruebas aprobadas y una suite fallida en DeveloperPanelCopy por diferencia de texto de ayuda; se corrigió el texto en el commit siguiente y se está repitiendo la suite completa.
+- Regresión 44098309252: 85 suites, 1,174 aprobadas y una suite fallida en el mismo contrato de texto; corregida posteriormente.
+- La prueba de lock ocupado detectó que se liberaba un lock no adquirido; corregido y vuelto a someter a CI. No se cerrará hasta que la regresión completa actual quede aprobada.
