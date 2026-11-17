@@ -59,7 +59,7 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 **Cierre local (2026-11-16):** Los cuatro bloques se implementaron y pasaron la suite GitHub Actions (126 suites, 1,864 pruebas, 0 fallos). La publicación GitHub Pages también terminó correctamente. Se difiere a Beta la revisión visual real en escritorio/móvil, la experiencia de retorno BFCache en navegadores/dispositivos objetivo y la verificación operativa de formularios/tickets con datos reales.
 
 ### GP-UX-INBOX-02 — Lista, búsqueda y navegación uniforme del Inbox
-**Prioridad: P1 · Estado: IMPLEMENTACIÓN LOCAL APLICADA; pendiente de regresión automatizada y aceptación visual Beta.**
+**Prioridad: P1 · Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
 
 - Ampliar el área útil vertical del modal: el espacio de trabajo debe ocupar la altura disponible y la lista de mensajes no debe quedar limitada a la mitad superior del panel.
 - Incorporar una lupa en la cabecera del Inbox; al activarla despliega/oculta la búsqueda con transición fluida. La consulta busca asunto, participantes, autor y contenido de mensajes.
@@ -69,6 +69,8 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 - «Leídos» filtra conversaciones recibidas cuyo contador de mensajes no leídos sea cero. No cambia el contrato de lectura ni modifica datos al consultar.
 - Validar que el paginador compartido funcione tanto para conversaciones directas como para solicitudes históricas, en todas las secciones, sin duplicar controles ni mezclar cursores.
 - Invalidar el App Shell anterior mediante `gpsepedia-cache-v34` y comprobar que Service Worker sirve los archivos actualizados.
+
+- Cierre local reconciliado: CI run 43906071405 aprobó 129 suites / 1,899 pruebas / 0 fallos; la corrección posterior del botón flotante quedó cubierta por CI run 43907008784 (129 suites / 1,900 pruebas / 0 fallos) y Pages SUCCESS. Solo permanece la aceptación visual en dispositivos Beta.
 
 ### GP-UX-INBOX-03 — Altura completa de listas y barra de acciones en PWA
 **Prioridad: P1 · Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
@@ -232,7 +234,9 @@ No desplegar Apps Script ni modificar secretos, ScriptProperties, permisos, hoja
 - Cobertura: `RichTextGlobalPreference` 9/9; `CatalogFeedRetry` 9/9.
 
 ### P2 — Auditoría transversal de alineación de modales
-**Estado: PENDIENTE LOCAL.**
+**Estado: COMPLETADA.**
+
+- Confirmación del usuario en esta sesión: la tarea fue verificada en Beta. No queda pendiente de implementación ni de validación Beta.
 
 - Revisar cabeceras, grupos de acciones y botones de cierre en todos los modales de `index.html` y en las subpáginas administrativas.
 - Detectar alineaciones centradas que contradigan la jerarquía del contenido; estandarizar grupos de acciones a izquierda/derecha según función, mantener el cierre en la esquina superior derecha y evitar reglas globales que rompan modales con formularios o contenido centrado deliberadamente.
@@ -908,7 +912,7 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 
 ## Nuevas solicitudes — Panel de actividad, aceptación de términos y precarga del catálogo (2026-11-16)
 
-**Estado global: PENDIENTE LOCAL.** Análisis inicial del código completado; implementación ordenada después de cerrar los pendientes locales prioritarios ya registrados en este backlog. No se modifica la rama base ni se despliegan servicios.
+**Estado global: EN PROGRESO.** GP-TERMS-ASYNC-01 y GP-PWA-SPLASH-PRELOAD-01 tienen implementación local aplicada y requieren completar la suite automatizada; GP-DASH-INSIGHTS-01 sigue pendiente local. La auditoría transversal P2 de modales fue verificada en Beta y está cerrada. No se modifica la rama base ni se despliegan servicios.
 
 ### GP-DASH-INSIGHTS-01 — Dashboard de aportaciones e indicadores de actividad
 **Prioridad: P1 · Estado: PENDIENTE LOCAL.**
@@ -929,7 +933,7 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 **Impacto backend preliminar:** las contribuciones y algunos contadores ya están disponibles. Para un desglose histórico fiable de likes, respuestas de utilidad y años, probablemente se requiera ampliar el servicio fuente JS/Services/feedback.js (FEEDBACK), reutilizando getActivityLogs; no implica crear otro servicio ni modificar datos productivos. El ranking de búsquedas no puede darse por válido hasta confirmar quién escribe contadorBusqueda; si no hay escritor, instrumentarlo requeriría una escritura adicional por selección de modelo, con impacto medible en latencia/Spreadsheet y protección contra duplicados.
 
 ### GP-TERMS-ASYNC-01 — Aceptación local inmediata y registro remoto en segundo plano
-**Prioridad: P1 · Estado: PENDIENTE LOCAL.**
+**Prioridad: P1 · Estado: EN PROGRESO — IMPLEMENTACIÓN LOCAL APLICADA; pendiente de suite Node.js/CI.**
 
 - Al pulsar «Aceptar», guardar inmediatamente una aceptación local vinculada a usuario, dispositivo y versión de términos; cerrar el aviso sin esperar la red y continuar con el catálogo.
 - Enviar acceptTerms en segundo plano, conservar el registro remoto y reintentar silenciosamente cuando corresponda si hay un fallo transitorio.
@@ -940,7 +944,7 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - Pruebas: cierre inmediato, caché por usuario/dispositivo/versión, red lenta/offline, reintento, respuesta tardía, cambio/logout de sesión, versión nueva de términos y ausencia de solicitudes duplicadas.
 
 ### GP-PWA-SPLASH-PRELOAD-01 — Iniciar la carga del catálogo detrás del Splash existente
-**Prioridad: P1 · Estado: PENDIENTE LOCAL.**
+**Prioridad: P1 · Estado: EN PROGRESO — IMPLEMENTACIÓN LOCAL APLICADA; pendiente de suite Node.js/CI.**
 
 - Iniciar la preparación/carga del catálogo antes de comenzar el desvanecimiento actual del Splash, de modo que la carga aproveche el tiempo que la pantalla ya permanece visible.
 - No modificar diseño, HTML, CSS, animación ni duración del Splash; no esperar a que termine el catálogo para ocultarlo ni añadir tiempo artificial.
@@ -951,7 +955,6 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - Pruebas: sesión restaurada con caché caliente, primer arranque sin caché, IndexedDB lento/no disponible, términos pendientes/aceptados, aceptación local inmediata, navegación y concurrencia de cargas; comprobar que la duración del Splash no aumente.
 
 ### Orden de ejecución y dependencias
-1. Cerrar los pendientes locales prioritarios que ya figuran en este backlog (regresión automatizada de GP-UX-INBOX-02 y auditoría transversal P2 de alineación de modales).
-2. Implementar GP-TERMS-ASYNC-01 y GP-PWA-SPLASH-PRELOAD-01 como una misma línea de arranque/autenticación, manteniendo separadas sus pruebas.
-3. Implementar GP-DASH-INSIGHTS-01 después de confirmar el contrato y las fuentes de datos; decidir y documentar qué agregados se pueden obtener sin backend y cuáles requieren extender FEEDBACK.
-4. Validar localmente; las pruebas con Spreadsheet/deployments, OAuth y dispositivos reales quedan diferenciadas como validación Beta.
+1. Completar la suite Node.js/CI de GP-TERMS-ASYNC-01 y GP-PWA-SPLASH-PRELOAD-01; corregir cualquier fallo local antes de cerrar esas implementaciones. La validación con servicios desplegados y dispositivos reales queda diferida a Beta.
+2. Implementar GP-DASH-INSIGHTS-01 después de confirmar el contrato y las fuentes de datos; decidir y documentar qué agregados se pueden obtener sin backend y cuáles requieren extender FEEDBACK.
+3. Mantener como validaciones Beta pendientes únicamente las pruebas reales aún no ejecutadas. GP-UX-INBOX-02 ya tiene regresión local/CI aprobada y conserva solo su aceptación visual Beta; la auditoría transversal P2 de modales está verificada en Beta y cerrada.
