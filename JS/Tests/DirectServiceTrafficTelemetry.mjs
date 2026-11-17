@@ -7,7 +7,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const services = [
     { name: "AUTH", path: "JS/Services/Auth.js", actions: ["validateSession"], end: "function doGet(e)" },
     { name: "WRITE", path: "JS/Services/write.js", actions: ["checkVehicle", "getSuggestion", "checkVinDuplicate"], end: "function doGet(e)" },
-    { name: "FEEDBACK", path: "JS/Services/feedback.js", actions: ["getPysData"], end: "function doGet(e)" },
+    { name: "FEEDBACK", path: "JS/Services/feedback.js", actions: ["getPysData", "getCatalogChanges"], end: "function doGet(e)" },
 ];
 const base = 1_800_000_000_000;
 const secret = "direct-service-secret-".padEnd(48, "x");
@@ -113,6 +113,7 @@ const anonymousEnd = feedback.indexOf("\n    }", anonymousStart);
 assert.ok(anonymousStart >= 0 && anonymousEnd > anonymousStart);
 assert.ok(feedback.slice(anonymousStart, anonymousEnd).includes("recordDirectServiceTraffic_()"),
     "FEEDBACK debe contar suggestYear anónimo, que no obtiene lease Coordinator.");
+assert.match(feedback,/const FEEDBACK_PUBLIC_ACTIONS = new Set\(\["getPysData", "sendContactForm", "getCatalogChanges"\]\)/);
 assert.ok(!services.find(item => item.name === "FEEDBACK").actions.includes("suggestYear"),
     "suggestYear autenticado ya se cuenta en Coordinator y no debe duplicarse.");
 
