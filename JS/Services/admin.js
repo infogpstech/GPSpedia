@@ -8985,7 +8985,7 @@ function mergeDirectServiceTraffic_(coordinatorResult, directResults) {
     result.scope = "global_service_traffic";
     result.sources = sources;
     result.coverage = {
-        description: "Agregado combinado: operaciones protegidas de Coordinator y rutas directas instrumentadas por servicio con contadores locales best-effort.",
+        description: "Agregado combinado: operaciones protegidas de Coordinator, solicitudes directas de lectura CATALOG y rutas directas instrumentadas en AUTH, WRITE, FEEDBACK y UTILITIES con contadores locales best-effort.",
         excludes: ["sondeos de salud", "solicitudes HTTP que no atraviesan las rutas instrumentadas"]
     };
     result.excluded = result.coverage.excludes.slice();
