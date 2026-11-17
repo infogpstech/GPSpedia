@@ -337,3 +337,13 @@ undefined
 - AdminReplacedImagesIntegrity 55/55 PASS; CI 44154558840 SUCCESS: 145 suites / 2,117 pruebas / 0 fallos; health read-only 7/7.
 - El ScriptLock global no se redujo: P4.3b requiere reserva/commit atómico y pruebas concurrentes.
 ================================================================================
+================================================================================
+2026-11-17 — GP-PERF-SIMPLIFY-01 — cierre P4
+- P4.1: PyS paralelo al snapshot inicial; error aislado y cursor solo con datos frescos.
+- P4.2: Inbox compositor no espera la lista de conversaciones; carga en segundo plano con guardas de contexto.
+- P4.3a: inventario y duplicados una vez por lote; verificación final por archivo intacta.
+- P4.3b: CacheService.getAll/putAll por lotes de 100; 205 páginas pasan de 615 llamadas a 9.
+- P4.3c: Coordinator publica lotes CATALOG de hasta 50 con requestId idempotente; 20 cambios pasan de 20 viajes a 1.
+- P4.3d: ScriptLock revisado y conservado por seguridad; los leases Coordinator ya coordinan los conflictos de recursos.
+- CI 44156469990 SUCCESS: 145 suites / 2,123 pruebas / 0 fallos. Health read-only 7/7 y Pages build SUCCESS.
+================================================================================
