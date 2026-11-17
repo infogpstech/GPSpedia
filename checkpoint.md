@@ -534,3 +534,7 @@ La comprobación sintáctica aprobó. Dos contratos heredados fallaron por expec
 
 ### Ajuste de fixture de sesión de privacidad Inbox — 2026-11-17
 La segunda ejecución del CI encontró que U5 carece de token simulado; el rechazo ocurrió antes del control de participante. Los intentos cruzados ahora utilizan U2/token-b y U3/token-c, ambos válidos y no participantes. Pendiente nuevo CI.
+
+
+### Reconciliación de regresión CSS — 2026-11-17
+La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modales por un selector de texto demasiado amplio. Se acotó al bloque global de scrollbars sin modificar estilos de runtime.

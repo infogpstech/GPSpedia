@@ -1619,3 +1619,7 @@ La consulta global de bandeja en el nuevo test de privacidad recorría conversac
 
 ### Ajuste final del fixture de sesión de privacidad Inbox — 2026-11-17
 La segunda ejecución de regresión detectó que U5 no tenía token simulado; la prueba verificaba autenticación, no el aislamiento entre participantes. Se reemplazó por actores válidos U2/token-b y U3/token-c que siguen siendo ajenos a cada conversación. No se cambió la lógica de Inbox.
+
+
+### Alcance de prueba scrollbars — 2026-11-17
+La comprobación de los modales tomaba todo el CSS posterior al bloque de scrollbars e incluía el nuevo menú de destinatarios con `overflow:auto`. Se acotó al bloque de política global; no se cambió la regla funcional de scroll de ningún modal ni menú.

@@ -601,7 +601,9 @@ check("Las barras de desplazamiento de toda la plataforma usan un indicador tran
     assert.match(globalScrollbar, /\*:focus-within::-webkit-scrollbar-thumb/);
 });
 check("Los detalles de corte, tutoriales, Relay y PyS mantienen barras invisibles sin perder desplazamiento", () => {
-    const globalScrollbar = css.slice(css.lastIndexOf("GP-UX-PLATFORM-SCROLLBARS-01"));
+    const globalScrollbarStart = css.lastIndexOf("GP-UX-PLATFORM-SCROLLBARS-01");
+    const globalScrollbarEnd = css.indexOf("GP-UX-RICH-EDITOR-SELECTION-02", globalScrollbarStart);
+    const globalScrollbar = css.slice(globalScrollbarStart, globalScrollbarEnd > globalScrollbarStart ? globalScrollbarEnd : undefined);
     assert.match(globalScrollbar, /#modalDetalle,\s*#modalDetalle \*\s*\{\s*scrollbar-width:none !important;/s);
     assert.match(globalScrollbar, /#modalDetalle \*::-webkit-scrollbar\s*\{\s*display:none !important;/s);
     assert.doesNotMatch(globalScrollbar, /overflow(?:-y|-x)?:/);

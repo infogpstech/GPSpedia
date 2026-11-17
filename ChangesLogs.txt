@@ -404,3 +404,11 @@ undefined
 - La ejecución anterior falló porque el test usaba U5, cuenta que no tiene sessionToken simulado en el mapa de sesiones de InboxConversations.mjs; la petición era rechazada por autenticación antes de evaluar participantes.
 - Los intentos de lectura cruzada usan ahora U2/token-b y U3/token-c, ambos actores autenticados del fixture. Se mantiene la aserción de que ninguno es participante del hilo privado correspondiente.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — ALCANCE DE PRUEBA CSS DE SCROLLBARS
+- La regresión antigua tomaba desde GP-UX-PLATFORM-SCROLLBARS-01 hasta el final de style.css; con los nuevos componentes, ese rango incluía dropdowns ajenos al modal con overflow:auto (en particular el selector multirrecipientes Inbox).
+- Se acotó la inspección al bloque de política global de scrollbars, hasta GP-UX-RICH-EDITOR-SELECTION-02. Se mantiene el contrato de que #modalDetalle y sus descendientes oculten únicamente el indicador de scrollbar y no alteren overflow del modal.
+- No se modificó CSS runtime ni se retiró overflow:auto de menús que necesitan desplazamiento.
+================================================================================
