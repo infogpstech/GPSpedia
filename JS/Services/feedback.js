@@ -3089,7 +3089,7 @@ function handleAddProblem(source) {
         }
     }
     const needsUpload = !preflightOp || (!preflightOp.imageFileId && !preflightExisting);
-    const folder = getPysImagesFolder_().folder;
+    const folder = needsUpload || (preflightOp && preflightOp.imageFileId) ? getPysImagesFolder_().folder : null;
     let preparedFile = null, preparedFileId = "", preparedUrl = "";
     try {
         if (needsUpload) {
