@@ -37,12 +37,15 @@ test("add_cortes procesa aportes y consultas de cortes directamente en WRITE", (
     assert.match(admin, /"ACTION_MOVED_TO_WRITE"/);
 });
 
-test("FEEDBACK cuenta sus lecturas públicas directas sin duplicar mutaciones coordinadas", () => {
-    assert.match(feedback, /actions: new Set\(\["getPysData", "getCatalogChanges"\]\)/);
+test("FEEDBACK cuenta todas las acciones con telemetría directa y usa actor cacheado", () => {
+    assert.match(feedback, /actions: new Set\(\["recordLike","reportProblem"/);
     assert.match(feedback, /const FEEDBACK_PUBLIC_ACTIONS = new Set\(\["getPysData", "sendContactForm", "getCatalogChanges"\]\)/);
-    assert.match(feedback, /if \(action === "suggestYear" && String\(payload\.userId \|\| ""\)\.trim\(\) === "0"\) \{\s*recordDirectServiceTraffic_\(\);/);
-    assert.match(feedback, /"sendContactForm"/);
-    assert.match(feedback, /function isSharedMutationAction_\(action\)[\s\S]*?"sendContactForm"/);
+    const start=feedback.indexOf("function doPost(e)"),end=feedback.indexOf("\\nconst RICH_TEXT_MODE_PROPERTY_",start),router=feedback.slice(start,end);
+    assert.ok(start>=0&&end>start);
+    assert.match(router,/DIRECT_SERVICE_TRAFFIC_CONFIG_\.actions\.has\(action\)/);
+    assert.match(router,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken\)/);
+    assert.doesNotMatch(router,/withSharedMutationLease_/);
+    assert.doesNotMatch(feedback,/function isSharedMutationAction_\(action\)/);
 });
 
 test("UTILITIES, USERS y ADMIN no crean contadores locales redundantes", () => {

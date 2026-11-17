@@ -10,10 +10,13 @@ function createRuntime() {
     const trustedActor = {
         userId: "USR-42", role: "Tecnico", epoch: 8, fullName: "Nombre verificado"
     };
-    const withLease = (service, operation, callback, options) => {
-        calls.push({ service, operation, options });
-        return callback("coordinator-token", trustedActor);
+    const actorLookups = [];
+    const getCachedActor = (userId, sessionToken) => {
+        actorLookups.push({ userId, sessionToken });
+        if (sessionToken !== "valid-session" || userId !== "USR-42") throw new Error("Sesión inválida.");
+        return trustedActor;
     };
+    let trafficCalls = 0;
     const withActor = (event, actor) => {
         const request = JSON.parse(event.postData.contents);
         const payload = { ...(request.payload || {}) };
@@ -29,7 +32,7 @@ function createRuntime() {
             return { content, setMimeType() { return this; } };
         }
     };
-    const api = new Function("withSharedMutationLease_", "withSharedSessionActor_", "ContentService", `
+    const api = new Function("getCachedSharedSessionActor_", "withSharedSessionActor_", "recordDirectServiceTraffic_", "ContentService", `
         const captured = [];
         ${feedback}
         function handleSuggestYear(payload) {
@@ -40,8 +43,8 @@ function createRuntime() {
             throw new Error("Revalidación local inesperada de Users/ActiveSessions.");
         }
         return { doPost, captured, FEEDBACK_ACTION_PERMISSIONS };
-    `)(withLease, withActor, contentService);
-    return { ...api, calls };
+    `)(getCachedActor, withActor, () => { trafficCalls++; }, contentService);
+    return { ...api, calls: actorLookups, get trafficCalls() { return trafficCalls; } };
 }
 
 function post(runtime, payload) {
@@ -57,7 +60,9 @@ const authResult = post(authenticated, {
     userName: "Nombre falsificado", userRole: "Desarrollador", vehicleId: "VEH-1", year: 2025
 });
 assert.equal(authResult.status, "success");
-assert.deepEqual(authenticated.calls.map(call => [call.service, call.operation]), [["FEEDBACK", "suggestYear"]]);
+assert.deepEqual(authenticated.calls.map(call => [call.userId, call.sessionToken]), [["USR-42", "valid-session"]]);
+assert.equal(authenticated.trafficCalls,1,"La solicitud autenticada se cuenta una vez en la telemetría local.");
+assert.doesNotMatch(feedback.slice(feedback.indexOf("function doPost(e)"),feedback.indexOf("\\nconst RICH_TEXT_MODE_PROPERTY_")),/withSharedMutationLease_/);
 assert.equal(authenticated.captured.length, 1);
 assert.equal(authenticated.captured[0].userId, "USR-42");
 assert.equal(authenticated.captured[0].userName, "Nombre verificado");
@@ -71,6 +76,7 @@ const anonymousResult = post(anonymous, {
 });
 assert.equal(anonymousResult.status, "success");
 assert.equal(anonymous.calls.length, 0, "La sugerencia anónima no debe exigir sesión ni lease.");
+assert.equal(anonymous.trafficCalls,1,"La solicitud anónima se cuenta una vez en la telemetría local.");
 assert.equal(anonymous.captured.length, 1);
 assert.equal(anonymous.captured[0].userId, "0");
 assert.equal(anonymous.captured[0].userName, "Anónimo");
@@ -78,5 +84,6 @@ assert.equal(anonymous.captured[0].userRole, "Anónimo");
 assert.equal(anonymous.captured[0].suggestionActorKey, "anon:unverified");
 
 assert.match(apiConfig, /['"]suggestYear['"]\s*:\s*['"]FEEDBACK['"]/);
-assert.match(coordinator, /FEEDBACK:\s*\{[\s\S]*?sessionActivity:\s*\{\s*read:\s*feedbackRead\s*\}/);
+assert.match(feedback,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken\)/);
+assert.doesNotMatch(feedback.slice(feedback.indexOf("function doPost(e)"),feedback.indexOf("\\nconst RICH_TEXT_MODE_PROPERTY_")),/withSharedMutationLease_/);
 console.log("SuggestYearCoordinatorSession: 2/2 PASS");

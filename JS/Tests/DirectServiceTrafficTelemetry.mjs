@@ -7,7 +7,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const services = [
     { name: "AUTH", path: "JS/Services/Auth.js", actions: ["validateSession"], end: "function doGet(e)" },
     { name: "WRITE", path: "JS/Services/write.js", actions: ["checkVehicle", "getSuggestion", "checkVinDuplicate"], end: "function doGet(e)" },
-    { name: "FEEDBACK", path: "JS/Services/feedback.js", actions: ["getPysData", "getCatalogChanges"], end: "function doGet(e)" },
+    { name: "FEEDBACK", path: "JS/Services/feedback.js", actions: ["recordLike", "reportProblem", "addProblem", "addSolution", "addPrevention", "addVehicleToProblem", "removeVehicleFromProblem", "updatePysItem", "updateTutorialItem", "suggestCutChange", "suggestYear", "addTutorial", "getFeedbackItems", "getMyProblemReports", "replyToFeedback", "markAsResolved", "deleteFeedbackItem", "getInboxRecipients", "notifyDevelopersDriveCritical", "getInboxConversations", "getInboxMessages", "createInboxConversation", "sendInboxMessage", "markInboxRead", "markInboxUnread", "deleteInboxConversation", "archiveInboxConversation", "closeInboxConversation", "getRichTextMode", "setRichTextMode", "getActivityLogs", "clearActivityLogs", "initYouTubeUpload", "getVideoApprovalByOperation", "submitVideoForApproval", "approveVideo", "rejectVideo", "getPysData", "sendContactForm", "getCatalogChanges"], end: "function doGet(e)" },
 ];
 const base = 1_800_000_000_000;
 const secret = "direct-service-secret-".padEnd(48, "x");
@@ -108,13 +108,17 @@ for (const service of services) {
 }
 
 const feedback = readFileSync(resolve(root, "JS/Services/feedback.js"), "utf8");
-const anonymousStart = feedback.indexOf('if (action === "suggestYear" && String(payload.userId || "").trim() === "0")');
-const anonymousEnd = feedback.indexOf("\n    }", anonymousStart);
-assert.ok(anonymousStart >= 0 && anonymousEnd > anonymousStart);
-assert.ok(feedback.slice(anonymousStart, anonymousEnd).includes("recordDirectServiceTraffic_()"),
-    "FEEDBACK debe contar suggestYear anónimo, que no obtiene lease Coordinator.");
+const routerStart = feedback.indexOf("function doPost(e)");
+const routerEnd = feedback.indexOf("\nconst RICH_TEXT_MODE_PROPERTY_", routerStart);
+const router = feedback.slice(routerStart, routerEnd);
+assert.ok(routerStart >= 0 && routerEnd > routerStart);
+assert.match(router,/if \(DIRECT_SERVICE_TRAFFIC_CONFIG_\.actions\.has\(action\)\) recordDirectServiceTraffic_\(\)/);
+assert.equal((router.match(/recordDirectServiceTraffic_\(/g)||[]).length,1,"Cada acción FEEDBACK se cuenta una sola vez.");
+assert.match(router,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken\)/);
+assert.doesNotMatch(router,/withSharedMutationLease_/);
+assert.match(router,/anonymousSuggestion/);
 assert.match(feedback,/const FEEDBACK_PUBLIC_ACTIONS = new Set\(\["getPysData", "sendContactForm", "getCatalogChanges"\]\)/);
-assert.ok(!services.find(item => item.name === "FEEDBACK").actions.includes("suggestYear"),
-    "suggestYear autenticado ya se cuenta en Coordinator y no debe duplicarse.");
+assert.ok(services.find(item => item.name === "FEEDBACK").actions.includes("suggestYear"),
+    "FEEDBACK debe contar tanto sugerencias autenticadas como anónimas.");
 
 console.log("DirectServiceTrafficTelemetry: " + passed + "/" + passed + " PASS");

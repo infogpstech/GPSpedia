@@ -35,9 +35,12 @@ testCase("ADMIN exige actor central y coordina lecturas y mutaciones",()=>{
  assert.match(admin,/const developerContext = action === 'ping' \? null : \(ADMIN_MODAL_EDIT_ACTIONS\.has\(action\) \? assertModalEditSession\(payload\) : assertDeveloperSession\(payload\)\)/);
 });
 
-testCase("FEEDBACK coordina operaciones protegidas y deja públicas solo las rutas declaradas",()=>{
- assert.match(feedback,/return withSharedMutationLease_\("FEEDBACK", "sessionActivity"/);
- assert.match(feedback,/return withSharedMutationLease_\("FEEDBACK", action/);
+testCase("FEEDBACK usa actor cacheado sin leases por acción y conserva sus rutas públicas",()=>{
+ const start=feedback.indexOf("function doPost(e)"),end=feedback.indexOf("\\nconst RICH_TEXT_MODE_PROPERTY_",start),router=feedback.slice(start,end);
+ assert.ok(start>=0&&end>start);
+ assert.match(router,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken\)/);
+ assert.doesNotMatch(router,/withSharedMutationLease_/);
+ assert.match(router,/DIRECT_SERVICE_TRAFFIC_CONFIG_\.actions\.has\(action\)/);
  assert.doesNotMatch(feedback,/touchSessionActivityIfDue_|getSessionExpirationStatus_/);
  assert.match(feedback,/new Set\(\["getPysData", "sendContactForm", "getCatalogChanges"\]\)/);
  assert.doesNotMatch(feedback,/getCatalogChanges:\s*null/);
@@ -121,10 +124,12 @@ testCase("El contexto central de sesión se registra al login, se revoca y se re
  assert.match(client,/options && options\.session/);
  assert.match(client,/function withSharedSessionActor_\(/);
  assert.match(client,/delete payload\.__feedbackActor/);
- for(const source of [users,admin,feedback]){
+ for(const source of [users,admin]){
   assert.match(source,/sessionOptions = \{ session: \{ sessionToken: payload\.sessionToken \} \}/);
   assert.match(source,/withSharedSessionActor_\(e, actor\)/);
  }
+ assert.match(feedback,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken\)/);
+ assert.match(feedback,/withSharedSessionActor_\(e, actor\)/);
  assert.match(write,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken\)/);
  assert.match(write,/withSharedSessionActor_\(e, actor\)/);
  assert.match(users,/payload && payload\.__sharedSessionActor/);
