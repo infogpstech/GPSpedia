@@ -36,10 +36,10 @@ function runWriteAuthorizationMinimizationTests(sources) {
   assert(inner.includes("getAuthenticatedCollaborator(payload, SUPPLEMENTARY_INFO_ALLOWED_ROLES_)"));
   assert(inner.indexOf("getAuthenticatedCollaborator")<inner.indexOf("getSpreadsheet()"));
  });
- run("WRITE declara contratos locales idénticos a AUTH para Users y ActiveSessions",()=>{
-  assert(write.includes("const COLS_USERS = Object.freeze({")&&write.includes("Privilegios: 4")&&write.includes("Nombre_Completo: 7")&&write.includes("SessionToken: 8"));
-  assert(write.includes("const COLS_ACTIVE_SESSIONS = Object.freeze({")&&write.includes("ID_Usuario: 1")&&write.includes("ActiveSessions: 3")&&write.includes("LastActivityAt: 6"));
-  assert(write.includes('const ROLE_REVOCATION_SHARED_PREFIX = "__role_revocation_pending__:'));
+ run("WRITE no duplica los esquemas ni la autenticación local de AUTH",()=>{
+  assert(!write.includes("COLS_USERS")&&!write.includes("COLS_ACTIVE_SESSIONS"));
+  assert(!write.includes("ROLE_REVOCATION_SHARED_PREFIX"));
+  assert(!write.includes("findUniqueRowsByExactValue_")&&!write.includes("getSessionExpirationStatus_"));
  });
  run("WRITE consume identidad/rol del actor central sin consultar hojas de sesión",()=>{
   const helper=extract(write,"getAuthenticatedCollaborator");
