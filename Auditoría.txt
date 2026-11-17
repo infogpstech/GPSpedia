@@ -145,3 +145,13 @@ undefined
 - Health 44106826657 SUCCESS 7/7; Pages 44106826874 SUCCESS. No deployment Apps Script ni cambios de Script Properties.
 - La matriz conocida de rutas actuales queda cubierta en fuente; Beta debe confirmar los endpoints y secretos reales. El conteo sigue siendo best-effort y no universal para clientes externos/legacy.
 ================================================================================
+
+================================================================================
+2026-11-17 — CIERRE LOCAL GP-DEV-TRAFFIC-GLOBAL-02
+- Estado local: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
+- Hallazgo final: FEEDBACK/getCatalogChanges era una acción pública sin lease Coordinator; se incluyó en el contador directo. Las demás rutas directas conocidas se clasificaron y probaron; silentRegister→ADMIN usa leases compartidas para checkOperation, addOrUpdateCut y addSupplementaryInfo.
+- CI final 44107762436 SUCCESS: 138 suites / 2043 pruebas / 0 fallos. DirectTrafficRoutingCoverage 6/6, DirectServiceTrafficTelemetry 18/18, ServiceTrafficBatch 5/5, ServiceTrafficAggregation 6/6, ServiceTrafficAdminContract 33/33, CatalogTrafficTelemetry 8/8.
+- Health remoto 44107762702 SUCCESS: 7/7 con GET diagnóstico.
+- HEAD rama trabajo b0e0e21b715103970804a81044f8846609032c49; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Apps Script/ScriptProperties/secretos no desplegados ni modificados. Beta pendiente por acceso operativo; no impide el cierre local.
+================================================================================
