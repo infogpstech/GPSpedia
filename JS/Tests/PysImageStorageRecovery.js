@@ -84,7 +84,7 @@ function buildHarness(feedback, options = {}) {
             getValues: () => { if(options.failReferenceScan&&state.fileCreated&&state.writeAttempted&&row>=2&&numCols>1)throw new Error("Spreadsheet read failed"); return Array.from({length:numRows},(_,r)=>Array.from({length:numCols},(_,c)=>(state.rows[row-1+r]||[])[col-1+c]??"")); },
             getDisplayValues: () => { if(options.failReferenceScan&&row>=2&&numCols>1)throw new Error("Spreadsheet read failed"); return Array.from({length:numRows},(_,r)=>Array.from({length:numCols},(_,c)=>{const v=(state.rows[row-1+r]||[])[col-1+c]??"";return v==null?"":String(v);})); }
         }),
-        getDataRange: () => ({ getDisplayValues: () => { if(options.failDataRange)throw new Error("Spreadsheet data range unavailable");return state.rows.map(row=>row.map(v=>v==null?"":String(v))); } }),
+        getDataRange: () => ({ getDisplayValues: () => { if(options.failReferenceScan&&state.fileCreated&&state.writeAttempted)throw new Error("Spreadsheet read failed"); if(options.failDataRange)throw new Error("Spreadsheet data range unavailable");return state.rows.map(row=>row.map(v=>v==null?"":String(v))); } }),
         appendRow: row => { state.writeAttempted=true; if(options.failAppend)throw new Error("Spreadsheet append failed");state.rows.push(row.slice());state.rowAppended=true; }
     };
     const operationsSheet = {
