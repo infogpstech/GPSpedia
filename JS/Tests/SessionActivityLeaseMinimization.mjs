@@ -19,8 +19,8 @@ function functionBlock(source, name, nextName) {
 const adminDoPost = functionBlock(admin, "doPost", "doPostInternal_");
 const usersDoPost = functionBlock(users, "doPost", "doPostInternal_");
 const authDoPost = functionBlock(auth, "doPost", "doPostInternal_");
-const writeDoPost = functionBlock(write, "doPost", "doGet");
-const feedbackDoPost = functionBlock(feedback, "doPost", "doGet");
+const writeDoPost = functionBlock(write, "doPost", "doPostInternal_");
+const feedbackDoPost = functionBlock(feedback, "doPost", "doPostInternal_");
 const adminReadPolicy = functionBlock(admin, "isSharedReadAction_", "doPost");
 const authMutationPolicy = functionBlock(auth, "isSharedMutationAction_", "syncAuthSheetActivityFromActor_");
 const usersMutationPolicy = functionBlock(users, "isSharedMutationAction_", "doPost");
