@@ -530,3 +530,7 @@ La comprobación sintáctica aprobó. Dos contratos heredados fallaron por expec
 ### Segundo ajuste de regresión Inbox — 2026-11-17
 - La prueba nueva fue movida al final, pero la consulta global de bandeja de U3 encontró un contador inconsistente en un registro de fixture heredada (uuid-00000029). Se eliminó la dependencia de esa consulta global y se añadieron denegaciones cruzadas de U3/U5 sobre conversaciones privadas ajenas.
 - La lógica de servicio no se modificó. Pendiente reejecutar CI del HEAD nuevo.
+
+
+### Ajuste de fixture de sesión de privacidad Inbox — 2026-11-17
+La segunda ejecución del CI encontró que U5 carece de token simulado; el rechazo ocurrió antes del control de participante. Los intentos cruzados ahora utilizan U2/token-b y U3/token-c, ambos válidos y no participantes. Pendiente nuevo CI.

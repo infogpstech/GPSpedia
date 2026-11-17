@@ -1615,3 +1615,7 @@ La primera ejecución detectó interferencia de fixture: la prueba de privacidad
 
 ### Aislamiento de prueba Inbox — 2026-11-17
 La consulta global de bandeja en el nuevo test de privacidad recorría conversaciones de la fixture heredada y encontraba un contador histórico no relacionado. La prueba ahora valida el contrato de privacidad directamente con dos intentos de lectura cruzada, sin cambiar handlers ni ignorar errores funcionales.
+
+
+### Ajuste final del fixture de sesión de privacidad Inbox — 2026-11-17
+La segunda ejecución de regresión detectó que U5 no tenía token simulado; la prueba verificaba autenticación, no el aislamiento entre participantes. Se reemplazó por actores válidos U2/token-b y U3/token-c que siguen siendo ajenos a cada conversación. No se cambió la lógica de Inbox.
