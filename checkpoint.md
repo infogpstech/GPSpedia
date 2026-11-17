@@ -84,3 +84,11 @@ undefined
 - Validación local aislada: Node.js --check de los fragmentos de política y prueba, más 4 escenarios de política PASS. No se pudo consultar la ejecución completa de GitHub Actions mediante las acciones disponibles; no se afirma CI aprobada.
 - Pendiente: verificar suite completa/Actions; en Beta comparar recursos servidos, actualización/activación de v68 y comportamiento online/offline en navegador/PWA. No se modificaron deployments ni datos externos.
 - Rama base GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+
+
+### Cierre de implementación local — BETA-003 — 2026-11-17
+- La corrección local del Service Worker y su prueba de regresión quedaron publicadas en d04c87a13d6d4083f67f6be6a7a688234f9e0404 y afdf35c8414fc103a7233d4e9b792b85673590f4.
+- Node.js --check de los fragmentos modificados: PASS. Harness aislado de política/caché: 4/4 PASS (JSON local, fuente CDN, exclusión Apps Script y exclusión POST).
+- El estado de GitHub Actions no pudo verificarse con las acciones disponibles: combined status vacío y el endpoint de workflow runs filtra ejecuciones de pull request. No se afirma suite completa ni CI aprobadas.
+- Estado: IMPLEMENTACIÓN LOCAL COMPLETADA; PENDIENTE BETA. Falta comparar recursos servidos, verificar activación de gpsepedia-cache-v68, reemplazo de caché anterior y navegación online/offline en navegador/PWA. No borrar IndexedDB ni datos locales.
+- La referencia del checkpoint a GP-AUTH-PASSWORD-RECOVERY-01 quedó reconciliada: el backlog y CI anteriores acreditan su cierre local con validación diferida.
