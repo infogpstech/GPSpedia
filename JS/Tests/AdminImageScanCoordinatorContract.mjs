@@ -85,15 +85,15 @@ assert.equal(policy("ADMIN", "applyCortesImageReconciliation").readResources.inc
 assert.equal(policy("ADMIN", "freezeIdentifierFormulas").maintenance, true);
 
 // Toda lectura ADMIN que solicita lease dedicada debe tener una política.
-for (const action of ["getReplacedImages", "getDriveStorage", "getCortesImageFolders", "auditIdentifiers", "getAdminImageUploadStatus", "previewCortesImageReconciliation", "getServiceTraffic"]) {
+for (const action of ["getReplacedImages", "getDriveStorage", "getCortesImageFolders", "auditIdentifiers", "getAdminImageUploadStatus", "previewCortesImageReconciliation"]) {
     assert.equal(read(action), true, action + " debe usar una lease de lectura.");
     assert.ok(policy("ADMIN", action), "Falta política explícita para ADMIN/" + action);
 }
-const serviceTraffic = policy("ADMIN", "getServiceTraffic");
-assert.ok(serviceTraffic.readResources.includes("SERVICE_TRAFFIC"));
-assert.deepEqual(serviceTraffic.writeResources, []);
-assert.equal(read("getServiceTraffic"), true);
+const serviceTrafficRouter = admin.slice(admin.indexOf("function doPost(e)"), admin.indexOf("const ADMIN_AUDIT_PROPERTY_PREFIX_"));
+assert.match(serviceTrafficRouter, /if \(action === "getServiceTraffic"\)[\s\S]*?getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken\)/);
+assert.equal(read("getServiceTraffic"), false, "La telemetría usa el actor cacheado y no debe adquirir lease de lectura.");
 assert.equal(mutation("getServiceTraffic"), false);
+assert.equal(policy("ADMIN", "getServiceTraffic"), null, "No debe quedar una política Coordinator sin consumidor.");
 
 const batchPublisher = extractFunction(admin, "publishAdminCortesCatalogChanges_");
 assert.match(batchPublisher, /publishSharedCatalogChanges_\("ADMIN", action, changes\.slice\(offset, offset \+ 50\)\)/);
