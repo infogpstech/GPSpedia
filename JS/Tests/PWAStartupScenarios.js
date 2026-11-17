@@ -169,9 +169,10 @@ await run('primera instalación precarga el App Shell y el grafo de módulos', a
     await Promise.all(event.waits);
     const assets = worker.cacheData.get(currentCacheName);
     assert.ok(assets, 'debe crear el caché de la versión actual');
-    for (const asset of ['./index.html', './JS/Frontend/main.js', './JS/Frontend/clientInteractionPolicy.js', './JS/Frontend/auth.js', './JS/Frontend/offline.js', './JS/Frontend/api-config.js', './JS/Frontend/serviceMetrics.js', './JS/Frontend/VinDifferentialEngine.js', './JS/Frontend/catalogRequest.js', './JS/Frontend/share-utils.js', './Images/Logo_TemaOscuro.png', './Images/tracklink_logo.png']) {
+    for (const asset of ['./index.html', './JS/Frontend/main.js', './JS/Frontend/clientInteractionPolicy.js', './JS/Frontend/auth.js', './JS/Frontend/offline.js', './JS/Frontend/api-config.js', './JS/Frontend/VinDifferentialEngine.js', './JS/Frontend/catalogRequest.js', './JS/Frontend/share-utils.js', './Images/Logo_TemaOscuro.png', './Images/tracklink_logo.png']) {
         assert.ok(assets.has(asset), 'falta ' + asset);
     }
+    assert.equal(assets.has('./JS/Frontend/serviceMetrics.js'), false, 'el módulo de métricas locales retirado no debe volver al App Shell');
     assert.equal(worker.skipWaitingCalls, 1);
 });
 
