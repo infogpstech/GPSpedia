@@ -300,3 +300,10 @@ undefined
 - Validación local CI 44149804570 SUCCESS: 144 suites / 2,131 pruebas / 0 fallos. Health read-only 44149804587 SUCCESS; no valida el nuevo código desplegado.
 - No se desplegaron Apps Script ni se modificaron propiedades, hojas, Drive o datos externos. Pendiente Beta: configurar el secreto compartido y URLs en ScriptProperties, desplegar AUTH/WRITE/FEEDBACK y validar revocaciones reales/fallos parciales.
 ================================================================================
+================================================================================
+2026-11-17 — P3.1c — corrección de sesiones ilimitadas y reutilización de secreto
+- AUTH ya no impone un máximo de cinco sesiones al enumerar tokens activos. La invalidación se divide en lotes de cinco para WRITE y FEEDBACK; la revocación central se ejecuta una sola vez después de confirmar todos los lotes.
+- La regresión cubre 13 tokens de una cuenta Developer, orden de lotes, confirmaciones por servicio y detención ante fallos parciales.
+- Se reutiliza GPSpedia_COORDINATOR_SECRET, credencial servicio-a-servicio existente; se elimina la nueva propiedad GPSpedia_SESSION_CACHE_INVALIDATION_SECRET. AUTH conserva únicamente la configuración de URLs GPSpedia_WRITE_URL y GPSpedia_FEEDBACK_URL.
+- No se modificaron deployments ni propiedades productivas. Validación CI del HEAD con esta corrección pendiente de confirmación.
+================================================================================
