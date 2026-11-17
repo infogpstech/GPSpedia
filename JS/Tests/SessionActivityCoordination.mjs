@@ -47,7 +47,7 @@ testCase("Los servicios protegidos exigen el actor central y no revalidan Users/
  const specs=[[admin,"getAdminSessionContext_"],[feedback,"assertFeedbackSession"],[write,"getAuthenticatedCollaborator"],[utilities,"assertUtilitiesDeveloperSession_"]];
  for(const [source,name] of specs){
   const start=source.indexOf("function "+name+"(");assert.ok(start>=0,name);
-  const next=source.indexOf("\nfunction ",start+10),body=source.slice(start,next<0?source.length:next);
+  const next=name==="getAdminSessionContext_"?source.indexOf("/** Consume el actor autenticado por Coordinator",start):source.indexOf("\nfunction ",start+10),body=source.slice(start,next<0?source.length:next);
   assert.match(body,/__sharedSessionActor/,name+" debe exigir actor central");
   assert.doesNotMatch(body,/getSpreadsheet|ActiveSessions|Users|findUniqueRowsByExactValue_|getSessionExpirationStatus_|touchSessionActivityIfDue_/,name+" conserva revalidación local por hojas");
  }

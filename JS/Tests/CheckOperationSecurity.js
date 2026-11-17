@@ -6,7 +6,11 @@ function runCheckOperationSecurityTests(sources) {
  function make(auth,lookup,map){return new Function("getAuthenticatedCollaborator","getSpreadsheet","findRowByOpId","mapRowToObject","SHEET_NAMES","COLS_CORTES",ex(w,"handleCheckOperation")+";return handleCheckOperation;")(auth,()=>({getSheetByName:()=>({})}),lookup,map,{CORTES:"Cortes"},{});}
  run("handler compila",()=>a(typeof make(()=>true,()=>null,()=>({}))==="function"));
  run("anónimo rechazado antes del lookup",()=>{let n=0,bad=false;try{make(()=>{throw Error("no");},()=>{n++;},()=>({}))({opId:"OP-1-X"});}catch(_){bad=true;}a(bad&&n===0);});
- run("helper valida token único, ActiveSessions, expiración y Users",()=>{const h=ex(w,"getAuthenticatedCollaborator");for(const p of [/tokenMatches\.length\s*!==\s*1/,/ActiveSessions/,/COLS_ACTIVE_SESSIONS/,/getSessionExpirationStatus_/,/\.expired/,/COLS_USERS\.ID/,/userMatches\.length\s*!==\s*1/,/ROLE_REVOCATION_SHARED_PREFIX/,/tecnico/])a(p.test(h),"Falta "+p);});
+ run("helper consume actor central sin consultar hojas de sesión",()=>{
+ const h=ex(w,"getAuthenticatedCollaborator");
+ for(const p of [/__sharedSessionActor/,/Number\.isSafeInteger\(trusted\.epoch\)/,/trusted\.fullName/,/trusted\.role/])a(p.test(h),"Falta "+p);
+ a(!/getSpreadsheet|ActiveSessions|Users|findUniqueRowsByExactValue_|getSessionExpirationStatus_|touchSessionActivityIfDue_/.test(h),"El helper conserva una revalidación local.");
+});
  run("sesión válida consulta operación",()=>{let who,id;const fn=make(p=>who=p,(s,x)=>(id=x,{status:"completed",rowValues:[]}),()=>({id:"V-42",timestamp:"t"})),p={userId:"a",sessionToken:"s",opId:"OP-1-X"},r=fn(p);a(who===p&&id===p.opId&&r.exists&&r.vehicleId==="V-42");});
  run("otro usuario autenticado consulta operación compartida",()=>{let who;const r=make(p=>who=p.userId,()=>({status:"completed",rowValues:[]}),()=>({id:"V-42",timestamp:"t"}))({userId:"b",sessionToken:"s",opId:"OP-1-X"});a(who==="b"&&r.exists);});
  run("opId inexistente",()=>{const r=make(()=>true,()=>null,()=>({}))({userId:"a",sessionToken:"s",opId:"OP-1-X"});a(JSON.stringify(r)===JSON.stringify({status:"success",exists:false,pending:false}));});
