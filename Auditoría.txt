@@ -134,3 +134,14 @@ undefined
 - Siguiente auditoría: recorrer ACTION_TO_SERVICE_MAP, dispatchers y llamadas frontend para detectar rutas legacy/directas fuera de la matriz; excluir probes y rutas ya coordinadas. Después, preparar despliegue Beta y mediciones p50/p95, contención y omisiones sin rebajar pruebas.
 - Política: no reducir suites, no desactivar pruebas ni relajar aserciones para conseguir verde.
 ================================================================================
+
+================================================================================
+2026-11-17 — GP-DEV-TRAFFIC-GLOBAL-02 — AUDITORÍA FINAL DE ROUTING
+- Se recorrieron ACTION_TO_SERVICE_MAP, los dispatchers de AUTH/WRITE/FEEDBACK/CATALOG/USERS/UTILITIES/ADMIN y los callers actuales del frontend y HTML/add_cortes.html.
+- Hallazgo: FEEDBACK/getCatalogChanges está clasificado como FEEDBACK_PUBLIC_ACTIONS y no pasa por Coordinator; se agregó a DIRECT_SERVICE_TRAFFIC_CONFIG_.actions junto con getPysData. sendContactForm es una mutación coordinada; suggestYear anónimo se cuenta localmente y autenticado por Coordinator.
+- Compatibilidad add_cortes: silentRegister enruta checkOperation/addOrUpdateCut/addSupplementaryInfo a ADMIN; checkOperation obtiene lease de lectura y las mutaciones obtienen lease compartida. No duplicar conteos locales.
+- UTILITIES/migrateTimestamps obtiene lease Coordinator dentro de migrateTimestamps; USERS usa lease en getUsers y mutaciones; ADMIN usa lease para acciones salvo ping; ping se excluye como health.
+- Test DirectTrafficRoutingCoverage.mjs 6/6; DirectServiceTrafficTelemetry 18/18; CI 44106829275 SUCCESS, 138 suites / 2043 pruebas / 0 fallos.
+- Health 44106826657 SUCCESS 7/7; Pages 44106826874 SUCCESS. No deployment Apps Script ni cambios de Script Properties.
+- La matriz conocida de rutas actuales queda cubierta en fuente; Beta debe confirmar los endpoints y secretos reales. El conteo sigue siendo best-effort y no universal para clientes externos/legacy.
+================================================================================
