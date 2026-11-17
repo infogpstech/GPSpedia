@@ -26,7 +26,7 @@ const keyApi = new Function("Utilities", source + "\nreturn getSharedSessionActo
 });
 const key = keyApi("U-1", "token-A");
 assert.match(key, /^GPSpedia_SHARED_SESSION_ACTOR_V1_/);
-assert.equal(digestInput, "U-1\\\\n" + "token-A", "La clave conserva el separador histórico para invalidar entradas ya creadas.");
+assert.equal(digestInput, "U-1\\n" + "token-A", "La clave conserva el separador histórico para invalidar entradas ya creadas.");
 
 const denied = api.handleSharedSessionActorCacheInvalidation_(
     { secret: "wrong", userId: "U-1", sessionTokens: ["token-A"] },
