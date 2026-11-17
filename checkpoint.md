@@ -458,3 +458,14 @@ undefined
 - P4.3c: publicación CATALOG de ADMIN por lotes de 50; requestId idempotente y reset de recuperación si el lote quedó parcial.
 - P4.3d: ScriptLock se conserva deliberadamente. Coordinator ya coordina recursos compartidos; no hay evidencia de que el lock local bloquee módulos independientes. Reabrir con medición, no por suposición.
 - CI 44156469990 SUCCESS: 145 suites, 2,123 pruebas, 0 fallos. Health 7/7; Pages build SUCCESS.
+
+
+### Cierre P5 — verificación técnica integral — 2026-11-17
+- HEAD de código verificado: f6375b86e6908e9e9152e9c63b216b3d274ce1fe; rama GPSpedia2.2.5_work. Base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin cambios.
+- P0–P5 de GP-PERF-SIMPLIFY-01 completadas localmente. CI run 44166031280: 145 suites, 2,123 pruebas aprobadas, 0 fallos.
+- Health read-only run 44166031201: 7/7 servicios disponibles. Pages build run 44166030514: SUCCESS.
+- P5 corrigió fixtures aislados AUTH/USERS y contratos obsoletos de benchmark AUTH y consultas de tráfico ADMIN. Se retiró la política Coordinator no consumida de AUTH/benchmarkPasswordKdf; se conserva la lectura interna SERVICE_TRAFFIC del Coordinator sin lease adicional desde ADMIN.
+- Cobertura de la regresión: RBAC, escrituras/aportes, cargas, sesiones/revocación, cuenta eliminada, bloqueo temporal, concurrencia/idempotencia y UI. No se modificó el hash ni sus parámetros.
+- No se midieron latencias reales; se reportan solo las reducciones de llamadas calculadas y probadas en P4.
+- Pendiente Beta: despliegues Apps Script, ScriptProperties, OAuth/Drive/YouTube/Spreadsheet, pruebas de sesión/revocación y concurrencia multiusuario, navegador/PWA y mediciones reales. Procedimiento seguro de sincronización y checklist registrados en Tareas_Pendientes.md.
+- No se desplegaron Apps Script ni se modificaron datos/propiedades productivas.
