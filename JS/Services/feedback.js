@@ -588,7 +588,7 @@ const DIRECT_SERVICE_TRAFFIC_CONFIG_ = Object.freeze({
     service: "FEEDBACK",
     bucketPrefix: "GPSpedia_FEEDBACK_DIRECT_TRAFFIC_HOUR_V1_",
     secretProperty: "GPSpedia_FEEDBACK_TRAFFIC_SECRET",
-    actions: new Set(["getPysData"])
+    actions: new Set(["getPysData", "getCatalogChanges"])
 });
 const DIRECT_SERVICE_TRAFFIC_BUCKET_MS_ = 60 * 60 * 1000;
 const DIRECT_SERVICE_TRAFFIC_WINDOW_MS_ = 24 * 60 * 60 * 1000;
