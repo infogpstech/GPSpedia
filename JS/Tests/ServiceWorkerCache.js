@@ -6,7 +6,7 @@ const source = fs.readFileSync(new URL('../../service-worker.js', import.meta.ur
 const cases = [];
 const test = (name, run) => cases.push({ name, run });
 test('App Shell incrementa versión e incluye la hoja de estilos corregida', async () => {
- assert.match(source, /gpsepedia-cache-v67/);
+ assert.match(source, /gpsepedia-cache-v68/);
  assert.ok(source.includes("'./style.css'"));
 });
 
@@ -110,7 +110,7 @@ test('precache conserva el App Shell, las páginas auxiliares y el grafo JS', as
   './JS/Frontend/VinDifferentialEngine.js', './JS/Frontend/catalogRequest.js',
   './style.css', './button-system.css'
  ]) assert.ok(h.assets.includes(path), path);
- assert.match(source, /gpsepedia-cache-v67/);
+ assert.match(source, /gpsepedia-cache-v68/);
  assert.ok(h.assets.includes('./Images/icon-v3-512x512.png'));
  assert.ok(h.assets.includes('./Images/Logo_TemaOscuro.png'));
  assert.equal(h.skip, 1);
@@ -158,6 +158,28 @@ test('la respuesta original y la copia de caché tienen cuerpos independientes',
  assert.ok(cached);
  assert.equal(await cached.text(), 'fresh JS');
 });
+test('recursos estáticos por extensión se cachean también en fetch y CDN', async () => {
+ const localUrl = 'https://infogpstech.github.io/GPSpedia/data/catalog.json';
+ const local = harness(), localEvent = event({
+  method: 'GET', mode: 'cors', destination: '', url: localUrl
+ });
+ local.listeners.fetch(localEvent);
+ assert.ok(localEvent.response, 'el JSON local debe pasar la política de caché');
+ await localEvent.response;
+ await Promise.all(localEvent.waits);
+ assert.ok(local.cacheEntries.has(localUrl), 'el JSON local debe quedar cacheado');
+
+ const cdnUrl = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/webfonts/fa-solid-900.woff2';
+ const cdn = harness(), cdnEvent = event({
+  method: 'GET', mode: 'cors', destination: 'font', url: cdnUrl
+ });
+ cdn.listeners.fetch(cdnEvent);
+ assert.ok(cdnEvent.response, 'la fuente estática del CDN permitido debe pasar la política');
+ await cdnEvent.response;
+ await Promise.all(cdnEvent.waits);
+ assert.ok(cdn.cacheEntries.has(cdnUrl), 'la fuente del CDN debe quedar cacheada');
+});
+
 test('una petición al microservicio externo no se intercepta ni almacena', async () => {
  const h = harness(), e = event({
   method: 'GET', mode: 'cors', destination: '',
