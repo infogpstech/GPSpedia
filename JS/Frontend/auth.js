@@ -786,7 +786,7 @@ function restoreSessionAfterValidationUnavailable_(user, error = null) {
     if (error) console.warn('La sesión se conserva mientras AUTH recupera disponibilidad:', error && error.message ? error.message : error);
     // La sesión local no se borra. showApp vuelve a aplicar el bloqueo de términos
     // usando la aceptación ya registrada; las operaciones protegidas siguen validándose en servidor.
-    if (handleLoginSuccess(user, false)) loadInitialData();
+    handleLoginSuccess(user, false);
     return true;
 }
 
@@ -843,7 +843,7 @@ export async function login(username, password) {
         if (result && result.user) {
             const appReady = handleLoginSuccess(result.user);
             completeLoginRequest(username, result.loginRequestId);
-            if (appReady) loadInitialData(); // Espera la aceptación de términos antes de cargar el catálogo
+            
         } else {
             throw new Error("Respuesta de login inválida.");
         }
