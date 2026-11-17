@@ -59,3 +59,14 @@ undefined
 - El conector GitHub disponible no permitió consultar ejecuciones push de Actions; combined status devolvió una lista vacía y fetch_commit_workflow_runs solo expone ejecuciones disparadas por pull request. CI no se declara aprobada.
 - Resultado: implementación local cerrada; verificación de recursos realmente servidos y ciclo de actualización en navegador/PWA diferidos a Beta.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — AUDITORÍA GP-SERVICE-HEALTH-REMOTE-01
+- Corte auditado: 301c7b3a5840549819b2b6126d548df44af07da2; inventario leído de JS/Frontend/api-config.js en ese SHA.
+- Procedimiento: GET ?debug=true a los siete endpoints configurados; sin POST, credenciales, escrituras ni cambios en deployments. Se validaron HTTP, JSON objeto, identidad, estado, versión y ausencia de campos sensibles.
+- Evidencia: Actions run 44090225564 SUCCESS, 7/7 servicios. Latencias: AUTH 1596 ms, CATALOG 1097 ms, WRITE 1477 ms, USERS 1046 ms, FEEDBACK 1683 ms, UTILITIES 1092 ms, ADMIN 2442 ms.
+- Hallazgo MEDIA: ADMIN supera el umbral de latencia lenta de 2000 ms (2442 ms en la última muestra). No implica indisponibilidad; requiere seguimiento con muestras adicionales.
+- Hallazgo BAJO/documental: Services/SERVICE_HEALTH.md mantiene FEEDBACK 1.2.1 y ADMIN 2.6.0, mientras los endpoints informan 1.2.2 y 2.7.1. FEEDBACK tiene además COMPONENT VERSION 2.3.0 en fuente; aclarar que son identificadores distintos antes de cambiar la tabla.
+- Límite: la respuesta de salud no prueba Sheets/Drive, operaciones autenticadas, permisos ni escrituras. No se ejecutaron pruebas funcionales destructivas ni se tocaron datos.
+================================================================================
