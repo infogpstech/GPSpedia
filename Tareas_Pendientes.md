@@ -5,7 +5,7 @@ Fecha de consolidación: 2026-11-16
 Repositorio: `infogpstech/GPSpedia`  
 Rama autorizada: `GPSpedia2.2.5_work`  
 Rama base protegida: `GPSpedia2.2.5`  
-HEAD de código validado: `070c414d135f3c79dae4392eaebb4a8ea2d6527b`; HEAD documental actual: `25546bc93eeb08ca1a59147f6439b5529e89084a`
+HEAD de código validado: `070c414d135f3c79dae4392eaebb4a8ea2d6527b`; HEAD documental actual: `5fbd10d615fb2c3fb0c9f7640a990c8444dcc6a2`
 
 Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_beta.md`, integrando sus pendientes por sector y orden de ejecución. El historial y la evidencia de trabajo anterior permanecen en `checkpoint.md` y en `Olds/Documentacion_Legacy/`. La única fuente normativa continúa siendo `NORMAS_DESAROLLO.md`.
 
@@ -1267,9 +1267,9 @@ No se han desplegado proyectos Apps Script ni configurado secretos remotos. La f
 - El agregado no representa solicitudes HTTP externas/legacy no mapeadas ni health probes; contadores locales pueden subcontar por contención. No sacrificar latencia o disponibilidad para aumentar artificialmente el conteo.
 
 **Evidencia más reciente**
-- CI 44107762436 SUCCESS: 138 suites, 2,043 pruebas aprobadas, 0 fallos. CatalogTrafficTelemetry 8/8; ServiceTrafficAdminContract 33/33; ServiceTrafficAggregation 6/6; DirectServiceTrafficTelemetry 18/18; ServiceTrafficBatch 5/5; DirectTrafficRoutingCoverage 6/6.
-- Health remoto 44107762702 SUCCESS: 7/7. Latencias: ADMIN 1,961 ms; AUTH 1,765 ms; CATALOG 1,094 ms; FEEDBACK 1,448 ms; USERS 902 ms; UTILITIES 1,273 ms; WRITE 1,446 ms. Solo GET diagnóstico.
-- GitHub Pages 44106826874 SUCCESS para el SHA de código 070c414d135f3c79dae4392eaebb4a8ea2d6527b; las actualizaciones posteriores fueron documentales. El run 44107760796 fue cancelado por pushes documentales consecutivos. No se desplegaron Apps Script ni configuraron secretos remotos.
+- CI 44108077952 SUCCESS: 138 suites, 2,043 pruebas aprobadas, 0 fallos. CatalogTrafficTelemetry 8/8; ServiceTrafficAdminContract 33/33; ServiceTrafficAggregation 6/6; DirectServiceTrafficTelemetry 18/18; ServiceTrafficBatch 5/5; DirectTrafficRoutingCoverage 6/6.
+- Health remoto 44108077796 SUCCESS: 7/7. Latencias: ADMIN 2,208 ms (vigilar); AUTH 1,870 ms; CATALOG 1,092 ms; FEEDBACK 1,441 ms; USERS 930 ms; UTILITIES 1,233 ms; WRITE 1,555 ms. Solo GET diagnóstico.
+- GitHub Pages 44108077095 SUCCESS para el HEAD 5fbd10d615fb2c3fb0c9f7640a990c8444dcc6a2. No se desplegaron Apps Script ni configuraron secretos remotos.
 - Auditoría de rutas encontró y corrigió la omisión FEEDBACK/getCatalogChanges: es pública y no obtiene lease Coordinator, por lo que ahora se incluye en el contador directo junto con getPysData. El contrato de routing verifica también el modo silentRegister→ADMIN y sus leases coordinadas.
 
 **Evidencia anterior**
