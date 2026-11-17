@@ -5894,7 +5894,7 @@ textarea.rich-text-source[hidden] { display:none !important; }
 #dashboard-modal .activity-dashboard-tabs button { white-space:nowrap; flex:0 0 auto; }
 #dashboard-modal [data-activity-panel] { min-width:0; }
 .activity-insights { display:grid; gap:14px; padding:12px 0; color:var(--text-color,inherit); }
-.activity-insight-metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
+.activity-insight-metrics { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px; }
 .activity-insight-metric,.activity-insight-card { min-width:0; padding:14px; border:1px solid var(--border-color,#d6dce3); border-radius:12px; background:var(--card-bg,var(--surface-color,transparent)); }
 .activity-insight-metric { display:flex; flex-direction:column; gap:6px; }
 .activity-insight-label,.activity-insight-note,.activity-insight-empty { color:var(--text-muted,#737b86); font-size:.88rem; }

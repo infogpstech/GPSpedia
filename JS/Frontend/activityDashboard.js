@@ -129,7 +129,7 @@ export function renderActivityInsights(container,insights,contributions,doc=cont
  if(!container||typeof container.replaceChildren!=="function"||!doc||typeof doc.createElement!=="function")throw new TypeError("Se requiere un contenedor DOM y un documento válido.");
  container.replaceChildren();const data=insights&&typeof insights==="object"?insights:{},summary=data.summary||{};
  const grid=doc.createElement("div");grid.className="activity-insight-metrics";
- [["Vehículos",summary.vehicles],["Cortes registrados",summary.cuts],["Valoraciones útiles",summary.usefulVotes],["Respuestas no útiles",summary.notUseful]].forEach(([label,value])=>{
+ [["Vehículos",summary.vehicles],["Cortes registrados",summary.cuts],["Valoraciones útiles",summary.usefulVotes],["No útil",summary.notUseful],["No funciona",summary.notWorking]].forEach(([label,value])=>{
   const card=doc.createElement("article");card.className="activity-insight-metric";
   dashboardNode(card,"span",label,"activity-insight-label",doc);
   dashboardNode(card,"strong",Number(value)||0,"activity-insight-value",doc);grid.appendChild(card);

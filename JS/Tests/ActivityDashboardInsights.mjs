@@ -31,5 +31,5 @@ class FakeElement{constructor(tag){this.tagName=tag;this.children=[];this.classN
 const doc={createElement:tag=>new FakeElement(tag)},container=doc.createElement("div");
 renderActivityInsights(container,{summary:{vehicles:2,cuts:2,usefulVotes:9,notUseful:1},topUseful:[{brand:"<img onerror=alert(1)>",model:"Hilux",cutType:"Corte",usefulVotes:9}],years:{confirmations:1,suggestions:1,applied:1,verified:3,anonymous:1}},[],doc);
 const collect=node=>[node.textContent,...node.children.flatMap(collect)].join(" ");
-assert.ok(collect(container).includes("<img onerror=alert(1)>"));assert.equal(container.children.length,4);assert.equal(container.children[0].children.length,4);
+assert.ok(collect(container).includes("<img onerror=alert(1)>"));assert.equal(container.children.length,4);assert.equal(container.children[0].children.length,5);
 console.log("1/1 PASS — GP-DASH-INSIGHTS-01 agregación, ranking, años, ventana acotada y render seguro");

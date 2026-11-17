@@ -2297,16 +2297,22 @@ function buildActivityDashboardInsights_() {
  const ss=getSpreadsheet(),cuts=ss.getSheetByName(SHEET_NAMES.CORTES);
  const summary={vehicles:0,cuts:0,usefulVotes:0,notUseful:0,notWorking:0},usefulByCut=new Map(),vehicleNames=new Map();
  if(cuts&&cuts.getLastRow()>1){
-  const count=cuts.getLastRow()-1,rows=cuts.getRange(2,1,count,Math.max(COLS_CORTES.timestamp,42)).getValues();summary.vehicles=rows.length;
-  rows.forEach(row=>{
-   const vehicleId=String(row[COLS_CORTES.id-1]||"").trim(),brand=String(row[COLS_CORTES.marca-1]||"").trim(),model=String(row[COLS_CORTES.modelo-1]||"").trim();
-   if(vehicleId)vehicleNames.set(vehicleId,{brand,model});
-   for(let index=1;index<=3;index++){
-    const type=String(row[COLS_CORTES["tipoCorte"+index]-1]||"").trim();if(!type)continue;summary.cuts++;
-    const votes=Number(row[COLS_CORTES["utilCorte"+index]-1]),countVotes=Number.isSafeInteger(votes)&&votes>0?votes:0;summary.usefulVotes+=countVotes;
+  const count=cuts.getLastRow()-1,baseRows=cuts.getRange(2,1,count,4).getValues();
+  const typeColumns=[COLS_CORTES.tipoCorte1,COLS_CORTES.tipoCorte2,COLS_CORTES.tipoCorte3];
+  const voteColumns=[COLS_CORTES.utilCorte1,COLS_CORTES.utilCorte2,COLS_CORTES.utilCorte3];
+  const typeValues=typeColumns.map(column=>cuts.getRange(2,column,count,1).getValues());
+  const voteValues=voteColumns.map(column=>cuts.getRange(2,column,count,1).getValues());
+  const vehicleIds=new Set();
+  baseRows.forEach((base,index)=>{
+   const vehicleId=String(base[COLS_CORTES.id-1]||"").trim(),brand=String(base[COLS_CORTES.marca-1]||"").trim(),model=String(base[COLS_CORTES.modelo-1]||"").trim();
+   if(vehicleId){vehicleIds.add(vehicleId);vehicleNames.set(vehicleId,{brand,model});}
+   for(let slot=0;slot<3;slot++){
+    const type=String(typeValues[slot][index][0]||"").trim();if(!type)continue;summary.cuts++;
+    const votes=Number(voteValues[slot][index][0]),countVotes=Number.isSafeInteger(votes)&&votes>0?votes:0;summary.usefulVotes+=countVotes;
     if(countVotes){const key=[brand,model,type].join("|"),entry=usefulByCut.get(key)||{brand,model,cutType:type,usefulVotes:0};entry.usefulVotes+=countVotes;usefulByCut.set(key,entry);}
    }
   });
+  summary.vehicles=vehicleIds.size;
  }
  const feedback=ss.getSheetByName(SHEET_NAMES.FEEDBACKS),feedbackWindow=500;let feedbackRows=[],actorColumn=0,windowLimited=false;
  if(feedback&&feedback.getLastRow()>1){
