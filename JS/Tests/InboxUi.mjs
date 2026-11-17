@@ -94,15 +94,15 @@ check("La interfaz incluye destinatario único y plantillas editables", () => {
     assert.match(ui, /welcome-technician/);
     assert.match(ui, /source\.id = sourceId; source\.maxLength = 5000/);
 });
-check("La lista de conversaciones usa caché por sesión, carpeta, categoría, búsqueda y cursor", () => {
+check("La lista de conversaciones reutiliza caché fresca y separa filtros", () => {
     for (const fragment of [
         "const inboxConversationPageCache_ = createInboxPageCache",
-        "const cacheCursor = JSON.stringify([inboxConversationFolder_, inboxConversationCategory_, inboxConversationQuery_, cursor])",
+        "const cacheCursor = cursor",
+        "const cacheFilterKey = JSON.stringify([inboxConversationFolder_, inboxConversationCategory_, inboxConversationQuery_])",
         "inboxConversationPageCache_.get(context, cacheCursor,",
-        "pageSize: INBOX_CONVERSATION_PAGE_SIZE_, allowStale: true",
+        "filterKey: cacheFilterKey, allowStale: true",
         "inboxConversationPageCache_.set(context, cacheCursor, response,",
-        "await setInboxSection_('general', { preferCache: true });",
-        "options.preferCache && cachedPage && !cachedPage.stale",
+        "cachedPage && !cachedPage.stale && options.forceRefresh !== true",
         "inboxConversationPageCache_.clear()"
     ]) assert.ok(ui.includes(fragment), "Falta contrato de caché Inbox: " + fragment);
 });
@@ -203,12 +203,14 @@ check("La actualización del historial conserva el orden de inserción aunque la
     assert.match(ui, /mergeInboxMessagePages\(inboxConversationMessages_, incoming\)/);
     assert.doesNotMatch(ui, /inboxConversationMessages_ = Array\.from\(byId\.values\(\)\)\.sort/);
 });
-check("El historial reciente de mensajes se reutiliza por sesión y se limpia al cambiar de cuenta", () => {
-    assert.match(ui, /const inboxConversationMessageCache_ = new Map\(\)/);
-    assert.match(ui, /INBOX_MESSAGE_CACHE_TTL_MS_ = 60000/);
+check("El historial reciente de mensajes se reutiliza con aislamiento de sesión y conversación", () => {
+    assert.match(ui, /const inboxConversationMessageCache_ = createInboxPageCache\(\{ ttlMs: 60000, maxEntries: 40 \}\)/);
     assert.match(ui, /inboxConversationMessageCache_\.clear\(\)/);
-    assert.match(ui, /inboxConversationMessageCache_\.set\(conversationId/);
-    assert.match(ui, /const cacheIsFresh = Boolean\(cached && Date\.now\(\) - cached\.savedAt <= INBOX_MESSAGE_CACHE_TTL_MS_\)/);
+    assert.match(ui, /inboxConversationMessageCache_\.get\(context, cursor,[\s\S]*?filterKey: conversationId/);
+    assert.match(ui, /inboxConversationMessageCache_\.set\(context, cursor,[\s\S]*?INBOX_MESSAGE_PAGE_SIZE_, conversationId\)/);
+    assert.match(ui, /cachedIsFresh && options\.forceRefresh !== true/);
+    assert.match(ui, /expectedLatestMessageId: item\.lastMessageId/);
+    assert.match(ui, /inboxConversationMessageCache_\.invalidate\(context, item\.conversationId\)/);
 });
 check("La sincronización está acotada por intervalo y tamaño de página", () => {
     assert.match(ui, /INBOX_CONVERSATION_PAGE_SIZE_ = 20/);

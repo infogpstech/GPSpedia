@@ -3788,6 +3788,7 @@ let inboxPageIndex_ = 0;
 const INBOX_PAGE_SIZE_ = 40;
 const inboxPageCache_ = createInboxPageCache({ ttlMs: 60000, maxEntries: 80 });
 const inboxConversationPageCache_ = createInboxPageCache({ ttlMs: 60000, maxEntries: 80 });
+const inboxConversationMessageCache_ = createInboxPageCache({ ttlMs: 60000, maxEntries: 40 });
 
 function normalizeUiRole_(role) {
     const normalized = String(role || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
@@ -3834,13 +3835,15 @@ function getSessionPayload_() {
 function invalidateInboxCache_(context = getUiSessionContext_()) {
     const removed = inboxPageCache_.invalidate(context);
     inboxConversationPageCache_.invalidate(context);
+    inboxConversationMessageCache_.invalidate(context);
     return removed;
 }
 
+function invalidateInboxConversationListCache_(context = getUiSessionContext_()) {
+    return inboxConversationPageCache_.invalidate(context);
+}
+
 let lastInboxCacheScope_ = inboxPageCache_.getScopeKey(getUiSessionContext_());
-const inboxConversationMessageCache_ = new Map();
-const INBOX_MESSAGE_CACHE_TTL_MS_ = 60000;
-const INBOX_MESSAGE_CACHE_MAX_ENTRIES_ = 40;
 subscribe(() => {
     const nextScope = inboxPageCache_.getScopeKey(getUiSessionContext_());
     if (nextScope !== lastInboxCacheScope_) {
@@ -4622,9 +4625,10 @@ async function loadInboxConversations_(options = {}) {
     const cursor = inboxConversationPageStack_[inboxConversationPageIndex_] || 0;
     const generation = ++inboxConversationGeneration_;
     const previousScroll = list.scrollTop;
-    const cacheCursor = JSON.stringify([inboxConversationFolder_, inboxConversationCategory_, inboxConversationQuery_, cursor]);
+    const cacheCursor = cursor;
+    const cacheFilterKey = JSON.stringify([inboxConversationFolder_, inboxConversationCategory_, inboxConversationQuery_]);
     const cachedPage = inboxConversationPageCache_.get(context, cacheCursor, {
-        pageSize: INBOX_CONVERSATION_PAGE_SIZE_, allowStale: true
+        pageSize: INBOX_CONVERSATION_PAGE_SIZE_, filterKey: cacheFilterKey, allowStale: true
     });
     const applyPage = response => {
         inboxConversationItems_ = Array.isArray(response.data) ? response.data : [];
@@ -4653,7 +4657,7 @@ async function loadInboxConversations_(options = {}) {
     }
     // Reabrir Inbox muestra primero la página reciente y evita una llamada remota
     // mientras siga fresca; el sondeo periódico busca mensajes nuevos en segundo plano.
-    if (options.preferCache && cachedPage && !cachedPage.stale) return;
+    if (cachedPage && !cachedPage.stale && options.forceRefresh !== true) return;
     try {
         const response = await getInboxConversations(context, {
             cursor, pageSize: INBOX_CONVERSATION_PAGE_SIZE_,
@@ -4663,7 +4667,7 @@ async function loadInboxConversations_(options = {}) {
         });
         if (generation !== inboxConversationGeneration_ || !isCurrentUiSessionContext_(context)) return;
         if (!response || response.status !== "success") throw new Error(response && response.message || "No se pudo cargar Inbox.");
-        inboxConversationPageCache_.set(context, cacheCursor, response, INBOX_CONVERSATION_PAGE_SIZE_);
+        inboxConversationPageCache_.set(context, cacheCursor, response, INBOX_CONVERSATION_PAGE_SIZE_, cacheFilterKey);
         applyPage(response);
         inboxSetStatus_("", false);
     } catch (error) {
@@ -4737,14 +4741,14 @@ function renderInboxConversationPagination_() {
 async function selectInboxConversation_(item) {
     inboxConversationSelectedId_ = String(item.conversationId || "");
     inboxConversationSelected_ = item;
-    const cached = inboxConversationMessageCache_.get(inboxConversationSelectedId_);
-    const cacheIsFresh = Boolean(cached && Date.now() - cached.savedAt <= INBOX_MESSAGE_CACHE_TTL_MS_);
-    inboxConversationMessages_ = cacheIsFresh ? cached.messages.slice() : [];
-    inboxConversationMessagesCursor_ = cacheIsFresh ? cached.cursor : null;
-    inboxConversationMessagesHasMore_ = cacheIsFresh && cached.hasMore === true;
+    inboxConversationMessages_ = [];
+    inboxConversationMessagesCursor_ = null;
+    inboxConversationMessagesHasMore_ = false;
     document.getElementById("inbox-modal-content")?.classList.add("is-detail-open");
     renderInboxConversationDetail_();
-    await loadInboxMessages_(inboxConversationSelectedId_, { reset: true, markRead: true, preserveScroll: cacheIsFresh });
+    await loadInboxMessages_(inboxConversationSelectedId_, {
+        reset: true, markRead: true, expectedLatestMessageId: item.lastMessageId || ""
+    });
 }
 async function loadInboxMessages_(conversationId, options = {}) {
     const context = getUiSessionContext_();
@@ -4755,34 +4759,30 @@ async function loadInboxMessages_(conversationId, options = {}) {
     const previousScroll = before ? before.scrollTop : 0;
     const previousHeight = before ? before.scrollHeight : 0;
     const wasAtBottom = before ? before.scrollHeight - before.scrollTop - before.clientHeight < 48 : true;
-    if (!options.older && !options.preserveScroll && !inboxConversationMessages_.length) renderInboxConversationDetail_({ loading: true });
-    if (typeof navigator !== "undefined" && navigator.onLine === false) {
-        inboxSetStatus_("Sin conexión. El borrador del mensaje se conserva.", true);
-        return;
+    const cursor = options.older ? inboxConversationMessagesCursor_ : "0";
+    const cachedPage = inboxConversationMessageCache_.get(context, cursor, {
+        pageSize: INBOX_MESSAGE_PAGE_SIZE_, filterKey: conversationId, allowStale: true
+    });
+    const cachedMessages = cachedPage && Array.isArray(cachedPage.value.data) ? cachedPage.value.data : [];
+    const cachedLatestMatches = !options.expectedLatestMessageId ||
+        String(cachedMessages[cachedMessages.length - 1]?.messageId || "") === String(options.expectedLatestMessageId);
+    const cachedIsFresh = Boolean(cachedPage && !cachedPage.stale && cachedLatestMatches);
+    if (!options.older && !options.preserveScroll && !inboxConversationMessages_.length && !cachedPage) {
+        renderInboxConversationDetail_({ loading: true });
     }
-    try {
-        const cursor = options.older ? inboxConversationMessagesCursor_ : 0;
-        const response = await getInboxMessages(conversationId, context, { cursor, pageSize: INBOX_MESSAGE_PAGE_SIZE_ });
-        if (generation !== inboxConversationDetailGeneration_ || !isCurrentUiSessionContext_(context) || inboxConversationSelectedId_ !== conversationId) return;
-        if (!response || response.status !== "success") throw new Error(response && response.message || "No se pudo cargar el historial.");
-        const incoming = Array.isArray(response.data) ? response.data : [];
+
+    const applyMessagePage = (page, fromCache = false) => {
+        const incoming = Array.isArray(page && page.data) ? page.data : [];
         if (options.older) inboxConversationMessages_ = incoming.concat(inboxConversationMessages_);
         else if (options.preserveScroll && inboxConversationMessages_.length) {
             inboxConversationMessages_ = mergeInboxMessagePages(inboxConversationMessages_, incoming);
-        } else inboxConversationMessages_ = incoming;
-        inboxConversationMessagesCursor_ = response.nextCursor === undefined ? null : response.nextCursor;
-        inboxConversationMessagesHasMore_ = response.hasMore === true;
-        if (!options.older) {
-            inboxConversationMessageCache_.delete(conversationId);
-            inboxConversationMessageCache_.set(conversationId, {
-                messages: inboxConversationMessages_.slice(-INBOX_MESSAGE_PAGE_SIZE_),
-                cursor: inboxConversationMessagesCursor_,
-                hasMore: inboxConversationMessagesHasMore_,
-                savedAt: Date.now()
-            });
-            while (inboxConversationMessageCache_.size > INBOX_MESSAGE_CACHE_MAX_ENTRIES_) {
-                inboxConversationMessageCache_.delete(inboxConversationMessageCache_.keys().next().value);
-            }
+        } else inboxConversationMessages_ = incoming.slice();
+        inboxConversationMessagesCursor_ = page && page.nextCursor !== undefined ? page.nextCursor : null;
+        inboxConversationMessagesHasMore_ = Boolean(page && page.hasMore === true);
+        if (!fromCache) {
+            inboxConversationMessageCache_.set(context, cursor, {
+                data: incoming, nextCursor: inboxConversationMessagesCursor_, hasMore: inboxConversationMessagesHasMore_
+            }, INBOX_MESSAGE_PAGE_SIZE_, conversationId);
         }
         renderInboxConversationDetail_();
         const messageList = document.getElementById("inbox-conversation-messages");
@@ -4791,14 +4791,46 @@ async function loadInboxMessages_(conversationId, options = {}) {
             else if (options.preserveScroll && !wasAtBottom) messageList.scrollTop = previousScroll;
             else messageList.scrollTop = messageList.scrollHeight;
         }
+    };
+
+    if (cachedPage && (!options.older || cachedIsFresh) && (!options.older || options.forceRefresh !== true)) {
+        applyMessagePage(cachedPage.value, true);
+    }
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
+        inboxSetStatus_("Sin conexión. Se conserva el contenido disponible y el borrador del mensaje.", true);
+        if (!cachedPage && !inboxConversationMessages_.length) renderInboxConversationDetail_({ error: true });
+        return;
+    }
+    if (cachedIsFresh && options.forceRefresh !== true) {
         if (options.markRead !== false && inboxConversationMessages_.length) {
             const latest = inboxConversationMessages_[inboxConversationMessages_.length - 1];
             await markInboxRead(conversationId, latest.messageId, context);
-            if (generation === inboxConversationDetailGeneration_) await loadInboxConversations_({ preserveScroll: true });
+            if (generation === inboxConversationDetailGeneration_ && isCurrentUiSessionContext_(context)) {
+                invalidateInboxConversationListCache_(context);
+                await loadInboxConversations_({ preserveScroll: true, forceRefresh: true });
+            }
+        }
+        inboxSetStatus_("", false);
+        return;
+    }
+    try {
+        const response = await getInboxMessages(conversationId, context, { cursor, pageSize: INBOX_MESSAGE_PAGE_SIZE_ });
+        if (generation !== inboxConversationDetailGeneration_ || !isCurrentUiSessionContext_(context) || inboxConversationSelectedId_ !== conversationId) return;
+        if (!response || response.status !== "success" || !Array.isArray(response.data)) {
+            throw new Error(response && response.message || "No se pudo cargar el historial.");
+        }
+        applyMessagePage(response, false);
+        if (options.markRead !== false && inboxConversationMessages_.length) {
+            const latest = inboxConversationMessages_[inboxConversationMessages_.length - 1];
+            await markInboxRead(conversationId, latest.messageId, context);
+            if (generation === inboxConversationDetailGeneration_ && isCurrentUiSessionContext_(context)) {
+                invalidateInboxConversationListCache_(context);
+                await loadInboxConversations_({ preserveScroll: true, forceRefresh: true });
+            }
         }
         inboxSetStatus_("", false);
     } catch (error) {
-        if (generation !== inboxConversationDetailGeneration_) return;
+        if (generation !== inboxConversationDetailGeneration_ || !isCurrentUiSessionContext_(context)) return;
         inboxSetStatus_(error && error.message ? error.message : "No se pudo cargar el historial.", true);
         if (!inboxConversationMessages_.length) renderInboxConversationDetail_({ error: true });
     }
@@ -4915,7 +4947,9 @@ function renderInboxReplyForm_(detail, item) {
             if (!result || result.status !== "success") throw new Error(result && result.message || "No se pudo enviar el mensaje.");
             inboxClearDraft_(draftKind);
             status.textContent = "Mensaje enviado.";
-            await loadInboxMessages_(item.conversationId, { reset: true, markRead: true });
+            invalidateInboxConversationListCache_(context);
+            inboxConversationMessageCache_.invalidate(context, item.conversationId);
+            await loadInboxMessages_(item.conversationId, { reset: true, markRead: true, forceRefresh: true });
             await loadInboxConversations_({ preserveScroll: true });
         } catch (error) {
             status.textContent = error && error.message ? error.message : "No se pudo enviar. El borrador se conservó.";
@@ -5075,7 +5109,9 @@ async function openInboxNewConversationForm_() {
         try {
             const result = await createInboxConversation({ ...(context || {}), recipientId, subject: subjectValue, category: category.value, body: bodyValue, idempotencyKey });
             if (!result || result.status !== "success" || !result.conversationId) throw new Error(result && result.message || "No se pudo crear la conversación.");
-            inboxClearDraft_(draftKind); if (legacyDraftKind) inboxClearDraft_(legacyDraftKind); inboxConversationFolder_ = "sent"; inboxConversationPageStack_ = [0]; inboxConversationPageIndex_ = 0;
+            inboxClearDraft_(draftKind); if (legacyDraftKind) inboxClearDraft_(legacyDraftKind);
+            invalidateInboxConversationListCache_(context);
+            inboxConversationFolder_ = "sent"; inboxConversationPageStack_ = [0]; inboxConversationPageIndex_ = 0;
             document.getElementById("inbox-folder-nav")?.querySelectorAll("[data-inbox-folder]").forEach(button =>
                 button.setAttribute("aria-pressed", String(button.dataset.inboxFolder === "sent")));
             await loadInboxConversations_({ reset: true });
@@ -5099,7 +5135,8 @@ async function toggleInboxConversationArchive_(item) {
         const response = await archiveInboxConversation(item.conversationId, !item.archived, context);
         if (!response || response.status !== "success") throw new Error(response && response.message || "No se pudo actualizar el archivo.");
         inboxConversationSelected_ = { ...item, archived: !item.archived };
-        await loadInboxConversations_({ reset: true, preserveScroll: true });
+        invalidateInboxConversationListCache_(context);
+        await loadInboxConversations_({ reset: true, preserveScroll: true, forceRefresh: true });
         const shouldClearSelection = (inboxConversationFolder_ !== "archived" && inboxConversationSelected_.archived) ||
             (inboxConversationFolder_ === "archived" && !inboxConversationSelected_.archived);
         if (shouldClearSelection) {
@@ -5120,7 +5157,8 @@ async function closeSelectedInboxConversation_(item) {
         if (!response || response.status !== "success" || response.closed !== true) {
             throw new Error(response && response.message || "No se pudo cerrar el caso.");
         }
-        await loadInboxConversations_({ reset: true, preserveScroll: true });
+        invalidateInboxConversationListCache_(context);
+        await loadInboxConversations_({ reset: true, preserveScroll: true, forceRefresh: true });
         inboxConversationSelected_ = { ...item, status: "closed" };
         renderInboxConversationDetail_();
         inboxSetStatus_("Caso cerrado. Ya no admite más comentarios.", false);
@@ -5132,8 +5170,11 @@ async function refreshInboxConversations_() {
     if (inboxConversationSyncBusy_ || inboxConversationCurrentView_ !== "conversations") return;
     inboxConversationSyncBusy_ = true;
     try {
-        await loadInboxConversations_({ preserveScroll: true });
-        if (inboxConversationSelectedId_) await loadInboxMessages_(inboxConversationSelectedId_, { preserveScroll: true, markRead: true });
+        await loadInboxConversations_({ preserveScroll: true, forceRefresh: true });
+        if (inboxConversationSelectedId_) await loadInboxMessages_(inboxConversationSelectedId_, {
+            preserveScroll: true, markRead: true, forceRefresh: true,
+            expectedLatestMessageId: inboxConversationSelected_ && inboxConversationSelected_.lastMessageId || ""
+        });
     } finally { inboxConversationSyncBusy_ = false; }
 }
 function startInboxSync_() {
@@ -15192,7 +15233,10 @@ export async function loadAndRenderInbox(options = {}) {
     const listContainer = document.getElementById('inbox-list');
     if (!listContainer) return;
 
-    const cached = ownReportsOnly ? null : inboxPageCache_.get(requestContext, cursor, { pageSize: INBOX_PAGE_SIZE_, allowStale: true });
+    const cacheFilterKey = JSON.stringify([inboxRequestSection_, ownReportsOnly ? "owned-reports" : "all-visible"]);
+    const cached = inboxPageCache_.get(requestContext, cursor, {
+        pageSize: INBOX_PAGE_SIZE_, filterKey: cacheFilterKey, allowStale: true
+    });
     if (cached) {
         renderInboxList(cached.value.data);
         renderInboxPagination_(cached.value, requestContext, generation);
@@ -15210,7 +15254,7 @@ export async function loadAndRenderInbox(options = {}) {
         if (!result || result.status !== 'success' || !Array.isArray(result.data)) {
             throw new Error(result && result.message ? result.message : 'El servidor devolvió una página de Inbox inválida.');
         }
-        if (!ownReportsOnly) inboxPageCache_.set(requestContext, cursor, result, INBOX_PAGE_SIZE_);
+        inboxPageCache_.set(requestContext, cursor, result, INBOX_PAGE_SIZE_, cacheFilterKey);
         renderInboxList(result.data);
         renderInboxPagination_(result, requestContext, generation);
     } catch (error) {

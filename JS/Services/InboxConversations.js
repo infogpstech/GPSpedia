@@ -503,7 +503,7 @@ function handleGetInboxConversations(payload) {
                 conversationId,subject:String(row[3] || ""),category:String(row[4] || "general"),
                 type:String(row[5] || "direct"),status:String(row[6] || "open"),createdAt:String(row[1] || ""),
                 updatedAt:String(row[2] || ""),createdById:String(row[7] || ""),lastMessageAt:String(row[14] || ""),
-                lastMessagePreview:String(row[15] || ""),messageCount:expectedMessageCount,
+                lastMessageId:String(row[13] || ""),lastMessagePreview:String(row[15] || ""),messageCount:expectedMessageCount,
                 lastMessageAuthorName:String(lastMessage ? lastMessage[4] || "" : ""),
                 lastMessageAuthorId:String(lastMessage ? lastMessage[3] || "" : ""),
                 otherParticipants:other.map(user => ({id:user.id,name:String(user.name || ""),role:String(user.role || "")})),

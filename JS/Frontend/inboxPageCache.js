@@ -16,16 +16,23 @@ export function createInboxPageCache({ ttlMs = 60000, maxEntries = 80, now = () 
         return JSON.stringify([userId, role, sessionToken]);
     }
 
-    function buildKey(identity, cursor, pageSize) {
+    function normalizeFilterKey(filterKey) {
+        if (filterKey === undefined || filterKey === null || filterKey === "") return "";
+        if (typeof filterKey === "string") return filterKey;
+        try { return JSON.stringify(filterKey); } catch (error) { return ""; }
+    }
+
+    function buildKey(identity, cursor, pageSize, filterKey) {
         const scope = getScopeKey(identity);
         if (!scope) return "";
         const normalizedCursor = cursor === null || cursor === undefined || cursor === "" ? "0" : String(cursor);
         const normalizedSize = Number.isInteger(Number(pageSize)) ? Math.max(1, Math.min(100, Number(pageSize))) : 40;
-        return scope + "::" + normalizedSize + "::" + normalizedCursor;
+        const normalizedFilter = normalizeFilterKey(filterKey);
+        return scope + "::" + encodeURIComponent(normalizedFilter) + "::" + normalizedSize + "::" + normalizedCursor;
     }
 
     function get(identity, cursor, options = {}) {
-        const key = buildKey(identity, cursor, options.pageSize);
+        const key = buildKey(identity, cursor, options.pageSize, options.filterKey);
         if (!key) return null;
         const entry = entries.get(key);
         if (!entry) return null;
@@ -36,8 +43,8 @@ export function createInboxPageCache({ ttlMs = 60000, maxEntries = 80, now = () 
         return { value: entry.value, stale };
     }
 
-    function set(identity, cursor, value, pageSize = 40) {
-        const key = buildKey(identity, cursor, pageSize);
+    function set(identity, cursor, value, pageSize = 40, filterKey = "") {
+        const key = buildKey(identity, cursor, pageSize, filterKey);
         if (!key || !value || !Array.isArray(value.data)) return false;
         entries.delete(key);
         entries.set(key, { value, savedAt: now() });
@@ -45,10 +52,11 @@ export function createInboxPageCache({ ttlMs = 60000, maxEntries = 80, now = () 
         return true;
     }
 
-    function invalidate(identity) {
+    function invalidate(identity, filterKey) {
         const scope = getScopeKey(identity);
         if (!scope) return false;
-        const prefix = scope + "::";
+        const normalizedFilter = normalizeFilterKey(filterKey);
+        const prefix = scope + "::" + (arguments.length > 1 ? encodeURIComponent(normalizedFilter) + "::" : "");
         let removed = 0;
         for (const key of entries.keys()) {
             if (key.startsWith(prefix)) {

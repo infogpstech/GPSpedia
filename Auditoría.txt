@@ -142,3 +142,15 @@ Resultado: implementación local cerrada con validación diferida a Beta. No se 
 - Pages run 44076449201 SUCCESS. Rama base verificada sin cambios.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Falta ejecutar auditoría real sobre el inventario de Drive y confirmar tiempos, cursor y clasificación; no se realizaron operaciones destructivas.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — AUDITORÍA GP-INBOX-CACHE-BANDS-01
+- Ubicación: JS/Frontend/ui.js — loadAndRenderInbox. Evidencia: inboxPageCache_ omitía la sección/filtro en la clave y deshabilitaba el cache para getMyProblemReports; Reportes, Aportaciones y tickets propios podían repetir lecturas o compartir páginas sin partición explícita por vista.
+- Ubicación: JS/Frontend/ui.js — loadInboxConversations_. Evidencia: inboxConversationPageCache_ ya estaba aislada por sesión y combinaba carpeta/categoría/búsqueda/cursor, pero solo evitaba la red en la apertura inicial con preferCache; al cambiar de carpeta/categoría consultaba de nuevo aun con una página fresca.
+- Ubicación: JS/Frontend/ui.js — selectInboxConversation_/loadInboxMessages_. Evidencia: inboxConversationMessageCache_ era un Map indexado únicamente por conversationId. Aunque un listener borraba el Map al cambiar de sesión, la clave no expresaba userId/rol/token ni cursor; además la selección siempre ejecutaba getInboxMessages incluso si se había renderizado contenido fresco del Map.
+- Ubicación: JS/Frontend/ui.js — send/archive/close/read. Evidencia: el envío no invalidaba el cache del hilo y el archivo/cierre no invalidaban explícitamente la página de conversaciones; el estado leído se actualizaba con una consulta adicional sin invalidación explícita de la página local.
+- Impacto: lecturas FEEDBACK redundantes y refresco de vistas con contenido ya disponible; riesgo de mostrar datos obsoletos entre mutaciones. La limpieza por cambio de sesión mitigaba el aislamiento anterior, pero no sustituía una clave de caché ligada a la identidad completa.
+- Severidad: P1 rendimiento/consistencia de UI; no se encontró evidencia de que la caché persistiera datos o tokens fuera de memoria.
+- Criterio de corrección: claves separadas por identidad, filtro, cursor y tamaño; TTL/LRU acotados; cache-first para páginas frescas; refresh forzado en sondeo/manual/online; invalidación por mutación; descarte de respuestas tardías; no persistir mensajes.
+================================================================================

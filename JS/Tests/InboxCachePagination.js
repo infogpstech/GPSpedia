@@ -22,6 +22,10 @@ function runInboxCacheTests() {
         assert.equal(cache.get({ ...alice, userId: "U2" }, null), null);
         assert.equal(cache.get({ ...alice, role: "gefe" }, null), null);
         assert.equal(cache.get({ ...alice, sessionToken: "token-b" }, null), null);
+        assert.equal(cache.set(alice, null, page, 40, "reports"), true);
+        assert.equal(cache.get(alice, null, { pageSize: 40, filterKey: "reports" }).value, page);
+        assert.equal(cache.get(alice, null, { pageSize: 40, filterKey: "contributions" }), null);
+        assert.equal(cache.get(alice, "40", { pageSize: 40, filterKey: "reports" }), null);
     });
     run("Expira por TTL y permite fallback stale solo si se solicita", () => {
         now += 51;
@@ -36,6 +40,11 @@ function runInboxCacheTests() {
         assert.equal(cache.invalidate(alice), 1);
         assert.equal(cache.get(alice, "40"), null);
         assert.equal(cache.get(other, null).value, page);
+        cache.set(alice, "0", page, 40, "reports");
+        cache.set(alice, "0", page, 40, "messages");
+        assert.equal(cache.invalidate(alice, "reports"), 1);
+        assert.equal(cache.get(alice, "0", { pageSize: 40, filterKey: "reports" }), null);
+        assert.equal(cache.get(alice, "0", { pageSize: 40, filterKey: "messages" }).value, page);
     });
     run("Limita el número de páginas retenidas", () => {
         cache.clear();
@@ -127,7 +136,12 @@ const checks = [
     ["La caché no utiliza almacenamiento persistente", !/localStorage|sessionStorage|indexedDB/.test(fs.readFileSync(resolve(root, "JS/Frontend/inboxPageCache.js"), "utf8"))],
     ["La UI no conserva el caché global anterior", !/inboxCacheData/.test(ui)],
     ["La UI invalida la caché tras las cinco mutaciones", (ui.match(/invalidateInboxCache_\(/g) || []).length >= 6],
-    ["La UI incorpora navegación de páginas", /inbox-page-next/.test(ui) && /inbox-page-previous/.test(ui)]
+    ["La UI incorpora navegación de páginas", /inbox-page-next/.test(ui) && /inbox-page-previous/.test(ui)],
+    ["La caché distingue reportes, aportaciones y tickets propios", /cacheFilterKey\s*=\s*JSON\.stringify\(\[inboxRequestSection_, ownReportsOnly/.test(ui)],
+    ["La ruta de tickets propios también guarda páginas", /inboxPageCache_\.set\(requestContext, cursor, result, INBOX_PAGE_SIZE_, cacheFilterKey\)/.test(ui)],
+    ["Las listas de conversaciones reutilizan caché fresca", /cachedPage && !cachedPage\.stale && options\.forceRefresh !== true/.test(ui)],
+    ["Los mensajes se aíslan por sesión, conversación y cursor", /inboxConversationMessageCache_\.get\(context, cursor,[\s\S]*?filterKey: conversationId/.test(ui)],
+    ["El sondeo y las mutaciones fuerzan la actualización correspondiente", /forceRefresh: true/.test(ui) && /inboxConversationMessageCache_\.invalidate\(context, item\.conversationId\)/.test(ui)]
 ];
 checks.forEach(([name, condition]) => {
     if (!condition) throw new Error("FAIL " + name);

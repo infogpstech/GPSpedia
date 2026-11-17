@@ -1044,10 +1044,18 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - Preservar acciones, destinatarios, borradores, estados leído/no leído, permisos y navegación móvil/escritorio.
 
 ### GP-INBOX-CACHE-BANDS-01 — Caché de Reportes, Mensajes y Aportaciones
-**Prioridad: P1 · Estado: PENDIENTE**
+**Prioridad: P1 · Estado: EN PROGRESO**
 - Evitar recargas completas al cambiar de bandeja, asunto o categoría cuando exista respuesta local válida.
 - Aislar caché por identidad/rol/token y por categoría, consulta, cursor y filtros; refrescar en segundo plano conservando el contenido.
 - Definir TTL, invalidación tras mutaciones, límites de memoria y descarte de respuestas tardías entre sesiones.
+
+#### Implementación en curso — 2026-11-17
+- La caché de páginas ahora admite una clave de filtro independiente del cursor y pageSize, manteniendo aislamiento por userId, rol y token de sesión.
+- Reportes, aportaciones y tickets propios usan caché por sección; se elimina la excepción que impedía cachear getMyProblemReports.
+- Conversaciones: el filtro de carpeta/categoría/búsqueda se almacena separado del cursor. Las páginas frescas se reutilizan al cambiar de bandeja; las vencidas se muestran mientras se refrescan en segundo plano. Sondeo, visibilidad, conexión y refresco explícito fuerzan actualización.
+- Mensajes: sustituida la caché Map por la caché efímera común, con identidad/rol/token, conversación, cursor y TTL de 60 s; límite de 40 páginas. La selección reutiliza páginas frescas y valida lastMessageId frente al resumen de conversación.
+- Las mutaciones invalidan las páginas afectadas; el cambio de sesión limpia todas las cachés. Se mantiene el descarte de respuestas tardías mediante generaciones y comprobación del contexto.
+- Pruebas actualizadas: InboxCachePagination, InboxUi e InboxConversations. Validación local/CI pendiente.
 
 ### GP-UX-SESSION-ENDED-01 — Centrado del aviso de sesión terminada
 **Prioridad: P3 · Estado: PENDIENTE**

@@ -205,6 +205,8 @@ run("El destinatario solo ve sus conversaciones y el contador unread inicial", (
     const result = api.handleGetInboxConversations({ ...actor("U2","token-b"),folder:"received" });
     assert.equal(result.data.length,1);
     assert.equal(result.data[0].conversationId,first.conversationId);
+    const latestMessage = api.handleGetInboxMessages({ ...actor("U2","token-b"), conversationId:first.conversationId });
+    assert.equal(result.data[0].lastMessageId,latestMessage.data[latestMessage.data.length - 1].messageId);
     assert.equal(result.data[0].unreadCount,1);
     assert.equal(result.counts.unread,1);
 });
