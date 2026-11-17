@@ -535,15 +535,6 @@ check("Todas las barras de formularios usan la iconografía compacta del Inbox s
     assert.match(ui, /createInboxRichTextToolbar\(editor\.id\)/);
 });
 
-let passed = 0;
-for (const item of cases) {
-    try { item.fn(); passed++; console.log("PASS " + item.name); }
-    catch (error) { console.error("FAIL " + item.name + ": " + (error && error.message || error)); }
-}
-console.log("InboxUi: " + passed + "/" + cases.length + " PASS");
-if (passed !== cases.length) process.exitCode = 1;
-
-
 check("Las barras preservan la selección/cursor al cambiar color, fuente o tamaño", () => {
     assert.ok(rich.includes("richEditorSelectionRanges_"));
     assert.ok(rich.includes("rememberRichTextSelection_"));
@@ -571,12 +562,22 @@ check("El editor bloquea el menú contextual del navegador sin deshabilitar sele
 });
 
 
-check("Los controles táctiles de las barras conservan el foco del editor", () => {
+check("El formato pendiente se conserva al perder foco y se aplica a texto y composición", () => {
     const compact = rich.slice(rich.indexOf("function createCompactRichTextToolbar_"), rich.indexOf("export function createRichTextToolbar"));
     const standard = rich.slice(rich.indexOf("export function createRichTextToolbar"), rich.indexOf("export function refreshRichTextToolbars"));
-    assert.match(compact, /pointerdown[\s\S]{0,450}preventDefault/);
-    assert.match(standard, /pointerdown[\s\S]{0,450}preventDefault/);
-    assert.match(rich, /colorPicker\.addEventListener\("change"[\s\S]{0,450}restoreRichTextSelection_/);
-    assert.match(rich, /sizeSelect\.addEventListener\("change"[\s\S]{0,450}restoreRichTextSelection_/);
-    assert.match(rich, /fontSelect\.addEventListener\("change"[\s\S]{0,450}restoreRichTextSelection_/);
+    assert.ok(compact.includes("pointerdown") && compact.includes("preventDefault"));
+    assert.ok(standard.includes("pointerdown") && standard.includes("preventDefault"));
+    for (const fragment of ["const richEditorPendingFormats_ = new WeakMap()", 'editor.addEventListener("beforeinput"', "insertRichTextWithPendingFormats_", "applyRichTextInlineFormat_", "compositionstart", "compositionend"]) assert.ok(rich.includes(fragment), fragment);
+    assert.ok(!rich.includes("restoreRichTextSelection_(resolveRichTextTarget_(targetId))"));
+    for (const tagPair of ['["bold","strong"]','["italic","em"]','["underline","u"]','["strike","s"]']) assert.ok(rich.includes(tagPair), tagPair);
 });
+
+let passed = 0;
+for (const item of cases) {
+    try { item.fn(); passed++; console.log("PASS " + item.name); }
+    catch (error) { console.error("FAIL " + item.name + ": " + (error && error.message || error)); }
+}
+console.log("InboxUi: " + passed + "/" + cases.length + " PASS");
+if (passed !== cases.length) process.exitCode = 1;
+
+
