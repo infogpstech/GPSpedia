@@ -53,10 +53,15 @@ export function bindRichTextEditorSelection_(editor) {
     if (!isRichContentEditable_(editor) || editor.dataset.richSelectionBound === "true") return;
     editor.dataset.richSelectionBound = "true";
     const remember = () => rememberRichTextSelection_(editor);
-    ["keyup", "mouseup", "touchend", "input"].forEach(type => editor.addEventListener(type, remember));
+    ["keyup", "input"].forEach(type => editor.addEventListener(type, remember));
+    ["mouseup", "touchend"].forEach(type => editor.addEventListener(type, () => {
+        remember();
+        restoreRichTextPendingFormatAtCaret_(editor);
+    }));
     editor.addEventListener("focus", () => {
         richActiveEditorRef_ = typeof WeakRef === "function" ? new WeakRef(editor) : { deref: () => editor };
         remember();
+        restoreRichTextPendingFormatAtCaret_(editor);
     });
     editor.addEventListener("blur", () => {
         remember();
@@ -109,6 +114,13 @@ function createRichTextTypingAnchor_(editor,range,state){
  selection.removeAllRanges();selection.addRange(caret);
  richEditorTypingAnchors_.set(editor,{root,sentinel});richEditorSelectionRanges_.set(editor,caret.cloneRange());
  return true;
+}
+function restoreRichTextPendingFormatAtCaret_(editor){
+ const state=richEditorPendingFormats_.get(editor),selection=window.getSelection?.();
+ if(!hasRichTextPendingFormats_(state)||!selection?.rangeCount)return false;
+ const range=selection.getRangeAt(0);
+ if(!range.collapsed||(range.commonAncestorContainer!==editor&&!editor.contains(range.commonAncestorContainer)))return false;
+ return createRichTextTypingAnchor_(editor,range.cloneRange(),state);
 }
 function cleanRichTextTypingSentinel_(editor){
  const anchor=richEditorTypingAnchors_.get(editor);
