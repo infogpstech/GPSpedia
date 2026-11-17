@@ -1025,6 +1025,7 @@ function createSharedMutationCoordinator_(dependencies) {
                     const batchCount = Number(existing[0].batchCount || 1);
                     const indexes = new Set(existing.map(event => Number(event.batchIndex)));
                     const complete = batchCount === expectedCount && existing.length === expectedCount &&
+                        existing.every(event => Number(event.batchCount || 1) === expectedCount) &&
                         Array.from({ length: expectedCount }, (_, index) => indexes.has(index)).every(Boolean);
                     if (complete) {
                         const foundRevisions = existing.map(event => Number(event.revision));
