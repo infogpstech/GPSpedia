@@ -210,3 +210,10 @@ Cada fase debe actualizar el backlog y checkpoint. Agrupar cambios por tarea ló
 - Un lote de 20 archivos elimina hasta 19 lecturas completas iniciales y 19 recalculaciones de duplicados; no se modifica el ScriptLock.
 - AdminReplacedImagesIntegrity 55/55 PASS. CI 44154558840 SUCCESS: 145 suites / 2,117 pruebas / 0 fallos; health 7/7.
 - P4.3b pendiente: reserva/claim por auditId/operationId y commit breve para desacoplar el lock global de Drive sin romper idempotencia.
+### Cierre P4 — 2026-11-17
+- P4.1, P4.2 y P4.3a-c COMPLETADAS.
+- P4.3a: snapshot inicial del inventario y detección de duplicados una vez por lote; relectura final de seguridad por archivo conservada.
+- P4.3b: deduplicación Drive renovada con getAll/putAll en lotes de 100; 205 páginas requieren 9 llamadas CacheService en vez de 615.
+- P4.3c: cambios CATALOG de ADMIN agrupados en lotes de 50, revisiones consecutivas en una sección crítica, requestId idempotente y recuperación con reset ante persistencia parcial. 20 cambios pasan de 20 viajes de red a 1.
+- P4.3d: ScriptLock revisado y conservado. Las operaciones ya comparten leases de Coordinator por recurso; no hay evidencia de que el lock local bloquee módulos independientes. No sustituirlo por tryLock/UserLock sin medición y pruebas.
+- CI 44156469990 SUCCESS: 145 suites / 2,123 pruebas / 0 fallos. Health read-only 7/7; Pages build SUCCESS.
