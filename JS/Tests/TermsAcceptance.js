@@ -149,7 +149,7 @@ test('UI no usa el indicador local antiguo y valida la versión del markup', () 
 test('UI conserva el bloqueo si no puede identificar sesión/dispositivo o persistir aceptación local', () => {
     assert.match(uiSource, /El catálogo permanecerá bloqueado/);
     assert.match(uiSource, /No se pudo guardar la aceptación local/);
-    assert.match(uiSource, /saveDeviceTermsAcceptance\\(localStorage, userId, deviceId, localAcceptance/);
-    assert.match(uiSource, /window.addEventListener\\('online'/);
+    assert.match(uiSource, /saveDeviceTermsAcceptance\(localStorage, userId, deviceId, localAcceptance/);
+    assert.match(uiSource, /window.addEventListener\('online'/);
 });
 console.log('TermsAcceptance: ' + passed + '/19 PASS');
