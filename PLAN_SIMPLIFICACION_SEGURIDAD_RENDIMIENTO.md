@@ -186,3 +186,9 @@ Cada fase debe actualizar el backlog y checkpoint. Agrupar cambios por tarea ló
 - Transferencia directa navegador → YouTube; bloques 8 MiB y checkpoints IndexedDB. Apps Script inicializa la sesión y registra/aprueba el video, no retransmite contenido.
 - Pruebas: persistencia 14/14; checkpoint recovery 2/2; cancelación 6/6; completed recovery 6/6; draft recovery 3/3; overlay 8/8; XSS 5/5; cliente 12/12; precondiciones 8/8.
 - P2 completada localmente; Beta OAuth/Drive/YouTube pendiente. Siguiente P3.1: revisar el TTL de 15 s del actor cacheado y el requisito de validar usuario/rol solo al login.
+
+
+### P3.1a — caché de actor de sesión — 2026-11-17
+- TTL de actor WRITE/FEEDBACK ampliado de 15 s a 21,600 s (6 h). Un cache hit no consulta Coordinator. El perfil local de `checkSession()` ya se restaura sin viaje de red a AUTH.
+- CI 44146072996: 143 suites / 2,108 pruebas / 0 fallos. Health read-only 44146072983: 7/7. Pages 44146072924: SUCCESS.
+- P3.1a COMPLETADA. P3.1b pendiente: evaluar precarga de contexto al login para eliminar también el primer fetch/cache miss por servicio; no introducir seguridad compleja.
