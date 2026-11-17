@@ -56,7 +56,6 @@ function coordinatorPolicy_(service, operation) {
             migrateLegacyRoleRevocationMarkersToSharedState: { write: ["USERS", "LOGS", "SESSION_CONTEXTS"] }
         },
         USERS: {
-            sessionActivity: { read: identityRead },
             createUser: { read: identityRead, write: ["USERS"] },
             updateProfile: { read: identityRead, write: ["USERS"] }
         },
