@@ -7,12 +7,10 @@ const routeMatch = apiSource.match(/export async function routeAction\([\s\S]*?\
 assert.ok(helperMatch, "No se encontró createRouteActionError_.");
 assert.ok(routeMatch, "No se encontró routeAction.");
 const routeSource = routeMatch[0].replace("export async function", "async function");
-const metrics = [];
 function buildRouteAction(fetchImpl) {
-    metrics.length = 0;
-    return new Function("ACTION_TO_SERVICE_MAP","API_ENDPOINTS","recordServiceMetric","fetch",
+    return new Function("ACTION_TO_SERVICE_MAP","API_ENDPOINTS","fetch",
         helperMatch[0] + "\n" + routeSource + "\nreturn routeAction;")(
-        { testAction:"TEST" }, { TEST:"https://test.invalid/exec" }, event=>metrics.push(event), fetchImpl
+        { testAction:"TEST" }, { TEST:"https://test.invalid/exec" }, fetchImpl
     );
 }
 function response(status, body, ok = status >= 200 && status < 300) {
@@ -30,8 +28,6 @@ async function expectError(fetchImpl,options,expected){
         if(expected.messageIncludes)assert.ok(error.message.includes(expected.messageIncludes));
         return true;
     });
-    assert.equal(metrics.length,1);assert.equal(metrics[0].outcome,expected.outcome);
-    assert.equal(metrics[0].httpStatus,expected.httpStatus);
 }
 await check("Propaga HTTP 401/403/404/500 sin sustituir el código",async()=>{
     for(const status of [401,403,404,500])await expectError(async()=>response(status,"",false),{},{
@@ -73,10 +69,10 @@ await check("No ejecuta touchSession previo y envía una sola petición al servi
     assert.equal(calls,1);assert.equal(requestedUrl,"https://test.invalid/exec");
     assert.doesNotMatch(routeSource,/ensureSessionTouched_|touchSession/);
 });
-await check("Devuelve intacta una respuesta válida y registra éxito",async()=>{
+await check("Devuelve intacta una respuesta válida sin registrar métricas locales",async()=>{
     const action=buildRouteAction(async()=>response(200,JSON.stringify({status:"success",value:7})));
     assert.deepEqual(await action("testAction",{}),{status:"success",value:7});
-    assert.equal(metrics[0].outcome,"success");assert.equal(metrics[0].httpStatus,200);
+    assert.doesNotMatch(routeSource,/recordServiceMetric|serviceMetrics/);
 });
 await check("La consola ADMIN diferencia HTTP, red, timeout y aplicación",async()=>{
     assert.ok(uiSource.includes("function describeAdminActionError_(error)"));
