@@ -273,3 +273,12 @@ undefined
 - CI `44125814255`: FAIL — sintaxis aprobada; 78 suites, 1,028 pruebas aprobadas y 3 suites fallidas. Los tres fallos corresponden a contratos de prueba desactualizados: dos aserciones sobre el flujo silencioso/extractor de función, una expectativa antigua de `sessionOptions` en WRITE y una expresión regular que asumía un orden incorrecto de las claves del mapa. Se corrigen los contratos sin cambiar el comportamiento funcional.
 - **Siguiente:** volver a ejecutar CI. Si pasa, cerrar P1.1b; continuar P1.2: sacar cargas Drive de los locks de 30 s y reducir el bloqueo de escrituras independientes.
 - No se desplegaron servicios Apps Script ni se ejecutó Beta. No se han medido latencias reales.
+
+
+### Cierre P1.1b e inicio P1.2 — 2026-11-17
+- **P1.1a COMPLETADA:** `checkOperation` en WRITE consulta estado sin lease ni revalidación central por acción. CI `44123644616`: SUCCESS, 138 suites, 2,021 pruebas, 0 fallos.
+- **P1.1b COMPLETADA:** aportes de cortes e información suplementaria usan WRITE; ADMIN rechaza las antiguas rutas; registro silencioso conserva rol Desarrollador; actor confiable local cacheado 15 segundos. CI `44126830985`: SUCCESS, 138 suites, 2,024 pruebas, 0 fallos.
+- La caché local evita Coordinator/lease por acción. Una revocación remota puede tardar hasta 15 segundos en reflejarse en una solicitud directa; la validación/restauración de sesión de la aplicación se mantiene. No se debe describir como invalidación instantánea.
+- **P1.2 EN PROGRESO.** Siguiente sub-tarea P1.2a: mover carga de imágenes de `addSupplementaryInfo` fuera del ScriptLock de 30 s; dejar bajo lock solo lectura final, combinación y escritura de columnas suplementarias. Después P1.2b: separar cargas de imágenes de `addOrUpdateCut`, conservando asignación de ID e idempotencia sin mantener el lock durante Drive.
+- CI intermedios fallidos `44125814255`, `44126144877` y `44126524619` quedaron corregidos por commits posteriores; no representan el estado final. El CI final `44126830985` pasó.
+- No se ejecutaron pruebas Beta ni despliegues manuales de Apps Script. No se han medido latencias reales.

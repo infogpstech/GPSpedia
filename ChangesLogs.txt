@@ -226,3 +226,13 @@ undefined
 - CI 44125814255 FAIL: sintaxis aprobada; 78 suites, 1,028 pruebas aprobadas y 3 fallidas. Fallos de contratos desactualizados: extractor/expectativas de registro silencioso, expectativa antigua de sessionOptions en WRITE y regex de orden del mapa API. Se corrigen únicamente las pruebas.
 - Revocación remota en una solicitud directa puede reflejarse con un retraso máximo del TTL local de 15 s; revisar y validar el comportamiento de sesión en P3. No se desplegaron Apps Script ni se ejecutó Beta.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — GP-PERF-SIMPLIFY-01 / P1.1b — VALIDACIÓN FINAL
+- CI 44126830985 SUCCESS: sintaxis aprobada; 138 suites, 2,024 pruebas aprobadas, 0 fallos.
+- Se confirma el enrutamiento de addOrUpdateCut, addSupplementaryInfo y checkOperation hacia WRITE; ADMIN rechaza las rutas heredadas y ya no las publica en su dispatcher. Registro silencioso exige rol Desarrollador desde el actor confiable.
+- Actor confiable de WRITE cacheado localmente 15 s para evitar Coordinator y leases por cada mutación. Límite de propagación de revocación directa: hasta 15 s.
+- P1.1a y P1.1b cerradas. P1.2 iniciada: separar cargas Drive de locks prolongados. Siguiente P1.2a: addSupplementaryInfo.
+- No se ejecutaron pruebas Beta ni despliegues manuales de Apps Script; no se midieron latencias reales.
+================================================================================

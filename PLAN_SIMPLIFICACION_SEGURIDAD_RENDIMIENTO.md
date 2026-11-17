@@ -135,3 +135,10 @@ Cada fase debe actualizar el backlog y checkpoint. Agrupar cambios por tarea ló
 - Se añadió caché local del actor confiable por 15 segundos: las acciones con caché vigente no llaman a Coordinator ni adquieren/liberan leases. Al expirar, se valida una vez el contexto central y se renueva. El TTL limita a 15 s la propagación de una revocación remota en solicitudes directas; no se presenta como invalidación instantánea y se revisará en P3.
 - CI 44125814255: 78 suites / 1,028 pruebas aprobadas / 3 suites fallidas por contratos desactualizados. Sintaxis aprobada. Corrección de expectativas pendiente; no se marca P1.1b como completada.
 - Siguiente: nueva regresión; después P1.2 para separar cargas Drive de locks prolongados.
+
+
+### Estado validado P1.1 y P1.2 — 2026-11-17
+- P1.1a y P1.1b: COMPLETADAS. CI final `44126830985`: 138 suites, 2,024 pruebas, 0 fallos.
+- Los aportes de cortes y suplementarios se atienden en WRITE, sin lease acquire/release por acción; ADMIN rechaza las rutas antiguas. Registro silencioso solo para Desarrollador.
+- El actor confiable se almacena en caché local por 15 s. Una revocación central puede tardar hasta 15 s en reflejarse en una solicitud directa; se mantiene la comprobación de sesión al restaurar/validar la sesión de aplicación.
+- P1.2 EN PROGRESO: P1.2a separar carga Drive de `addSupplementaryInfo` del ScriptLock de 30 s; P1.2b separar cargas de `addOrUpdateCut` del bloqueo principal sin perder asignación de ID e idempotencia.

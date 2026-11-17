@@ -1344,3 +1344,12 @@ No se han desplegado proyectos Apps Script ni configurado secretos remotos. La f
 - P1.1b: implementación realizada, validación pendiente. Cortes y aportes suplementarios se enrutan a WRITE; ADMIN rechaza las rutas heredadas. Registro silencioso conserva permiso Desarrollador. WRITE utiliza actor confiable cacheado localmente por 15 s; la revocación remota puede tardar hasta ese TTL en una solicitud directa.
 - CI `44125814255`: FAIL por 3 suites de contratos desactualizados (expectativas de ruta/actor, `sessionOptions` ya retirado de WRITE y orden de claves del mapa). Sintaxis aprobada; 1,028 pruebas aprobadas, 3 suites fallidas.
 - Siguiente: corregir contratos y ejecutar regresión. Luego P1.2: retirar cargas Drive de locks prolongados y evitar serializar operaciones independientes.
+
+
+### GP-PERF-SIMPLIFY-01 — cierre P1.1 / avance P1.2 (2026-11-17)
+- P1.1a: COMPLETADA — CI 44123644616, 138 suites / 2,021 pruebas / 0 fallos.
+- P1.1b: COMPLETADA — CI 44126830985, 138 suites / 2,024 pruebas / 0 fallos. WRITE atiende cortes y aportes suplementarios; ADMIN rechaza las rutas antiguas; registro silencioso solo Desarrollador; actor local en caché por 15 s.
+- P1.2: EN PROGRESO.
+  - P1.2a: pendiente — carga Drive de información suplementaria fuera del ScriptLock de 30 s.
+  - P1.2b: pendiente — carga Drive del registro principal de cortes fuera del ScriptLock, conservando ID e idempotencia.
+- Siguiente inmediata: P1.2a. No Beta ni despliegue manual de Apps Script.
