@@ -93,3 +93,17 @@ undefined
 - Services/COORDINATOR_SETUP.md actualizado para documentar que el dashboard usa solo Coordinator.
 - No se modificó código de Coordinator ni de los servicios Apps Script. No se alteraron propiedades ni datos remotos.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — GP-DEV-TRAFFIC-GLOBAL-02 — CORRECCIONES Y VALIDACIÓN DE CATALOG
+- JS/Services/catalog.js: el contador best-effort ahora libera el ScriptLock solo cuando tryLock(0) fue adquirido; la contención omite la métrica sin llamar releaseLock ni afectar la lectura.
+- JS/Tests/ServiceTrafficAggregation.mjs: nueva regresión de tres casos para suma Coordinator+CATALOG, conservación de otros servicios, estado parcial y datos inválidos; incorporada a JS/Tests/RunServiceTests.mjs.
+- JS/Tests/RemoteServiceHealth.mjs: probes limitados a dos en paralelo y reintentos acotados ante fallos transitorios, conservando las validaciones originales para los siete servicios.
+- index.html: título y ayuda del panel de tráfico global mantienen textos explícitos sobre el alcance parcial y la interpretación de cero eventos.
+- Services/COORDINATOR_SETUP.md y Services/CATALOG_TRAFFIC_DESIGN.md: documentan el agregado combinado, secreto de Script Properties requerido en ADMIN/CATALOG, rutas contadas y limitaciones.
+- Tareas_Pendientes.md: actualizado GP-DEV-TRAFFIC-GLOBAL-02 con implementación, pruebas, evidencias y brechas de rutas directas.
+- Validación GitHub Actions 44099217828: 135 suites / 1998 pruebas / 0 fallos; pruebas específicas CATALOG 8/8, contrato ADMIN 20/20, agregación 3/3, DeveloperPanelCopy 6/6 y coordinador 59/59.
+- Health remoto 44098664894: 7/7 servicios disponibles con GET ?debug=true, sin POST ni escrituras.
+- No se desplegaron proyectos Apps Script ni se configuraron secretos remotos.
+================================================================================
