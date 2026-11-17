@@ -52,7 +52,7 @@ La autorización por rol se resuelve con el rol asociado a la sesión iniciada. 
 **Criterio de salida:** mapa de llamadas y lista priorizada de validaciones redundantes con archivos, funciones y dependencias identificadas.
 
 ### P1 — Simplificar el flujo de aportes y escrituras ordinarias
-**Estado: EN PROGRESO — P1.1a implementada; CI `44120994810` detectó un fallo en el extractor del contrato de prueba (`doPost`); corrección de prueba aplicada y nueva validación pendiente. P1.1b pendiente.**
+**Estado: P1 COMPLETADA localmente (P1.1, P1.2 y P1.3); validación Beta pendiente.**
 **Prioridad máxima de implementación.**
 - Retirar del flujo normal de WRITE/FEEDBACK las adquisiciones de lease/transaction y viajes de red a Coordinator que solo autentiquen, autoricen o verifiquen la legitimidad de la operación.
 - **Avance P1.1a:** `WRITE/checkOperation` consulta el estado directamente, sin lease ni llamada a Coordinator. Prueba de contrato actualizada; ejecución pendiente.
@@ -154,3 +154,10 @@ Cada fase debe actualizar el backlog y checkpoint. Agrupar cambios por tarea ló
 ### Seguimiento de validación P1.2a — 2026-11-17
 - CI `44130490277`: sintaxis aprobada; 131 suites, 1,868 pruebas aprobadas y 1 suite fallida por una aserción del test AddSupplementaryInfoIntegrity que esperaba espacios exactos en una cadena de log.
 - Se ajustó únicamente la aserción para comprobar la presencia del log y el actor sin depender del espaciado. Nueva regresión pendiente; P1.2a sigue en validación.
+
+
+### Cierre P1.3 — 2026-11-17
+- FEEDBACK utiliza actor confiable cacheado y permisos locales por rol; elimina leases y revalidaciones Coordinator por acción. Inbox y bloqueos FEEDBACK usan adquisición inmediata sin esperas prolongadas.
+- La telemetría directa FEEDBACK permanece best-effort con tryLock(0); el dashboard y el workflow remoto de salud siguen activos.
+- CI 44140231970: 140 suites / 2,028 pruebas / 0 fallos. Health read-only 44140232048: 7/7. Pages 44140229137: SUCCESS.
+- P1.3 COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Siguiente: P2.1 auditoría de cargas de imágenes y videos, preservando autor/fecha, RBAC, idempotencia y telemetría.
