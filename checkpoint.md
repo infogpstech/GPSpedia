@@ -370,3 +370,8 @@ Estado: **EN PROGRESO** hasta ejecutar la suite Node.js completa disponible; la 
 - Archivos de soporte: `service-worker.js` actualizado a App Shell v63; contratos `JS/Tests/InboxUi.mjs`, `JS/Tests/ServiceWorkerCache.js` y `JS/Tests/OfflineBrandAssets.mjs` sincronizados; esta auditoría y `ChangesLogs.txt` registran la tarea.
 - Commits secuenciales: consultar los SHA publicados al cierre de esta sección. Validación Node.js/CI y navegador real todavía no ejecutadas en esta sesión; la validación real de OAuth, subida a YouTube y aprobación remota queda reservada a Beta.
 - Estado: **EN PROGRESO** hasta ejecutar las pruebas locales disponibles y verificar los commits y el diff remoto. No se afirma que el flujo externo haya sido probado.
+
+
+- Adenda de revisión: se confirmó en el contrato existente que `addProblem` permite el alta colaborativa; se retiró una guarda de Desarrollador que habría restringido indebidamente el formulario. La prueba de regresión comprueba la preservación de los permisos y la compatibilidad de `contentType: "pys"`.
+- Revisión de `JS/Services/feedback.js` únicamente de lectura: `handleAddProblem` rechaza enlaces directos y `getVideoApprovalTarget_` ya reconoce PyS. Se reutilizan esas funciones sin editar backend.
+- `Auditoría.txt` queda sin esta adenda porque ya está en 179,631 caracteres y añadirla superaría el umbral de rotación de 180,000; el hallazgo inicial ya está registrado y esta corrección de alcance queda documentada aquí y en `ChangesLogs.txt`.
