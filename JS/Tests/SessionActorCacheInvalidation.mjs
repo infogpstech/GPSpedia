@@ -92,8 +92,18 @@ assert.throws(() => createClient(partialEvents, "FEEDBACK").revokeSession("U-1",
     /No se pudo confirmar la invalidación de caché en FEEDBACK/);
 assert.deepEqual(partialEvents.map(event => event.service), ["WRITE", "FEEDBACK"],
     "Si falla un servicio, AUTH no solicita todavía la revocación central.");
-assert.throws(() => single.invalidateSessionActorCaches("U-1", ["a", "b", "c", "d", "e", "f"]),
-    /hasta cinco tokens/);
+const unlimitedEvents = [];
+const unlimitedTokens = Array.from({ length: 13 }, (_, index) => "developer-token-" + index);
+createClient(unlimitedEvents).revokeUserSessions("DEV-1", unlimitedTokens);
+assert.deepEqual(unlimitedEvents.map(event => event.service),
+    ["WRITE", "FEEDBACK", "WRITE", "FEEDBACK", "WRITE", "FEEDBACK", "COORDINATOR"]);
+assert.deepEqual(unlimitedEvents.filter(event => event.service !== "COORDINATOR")
+    .map(event => event.payload.sessionTokens.length), [5, 5, 5, 5, 3, 3]);
+assert.equal(unlimitedEvents.filter(event => event.service === "COORDINATOR").length, 1,
+    "Coordinator revoca una sola vez y solo después de limpiar todos los lotes.");
+assert.equal(authSource.includes("tokens.length > 5"), false,
+    "AUTH debe enumerar todas las sesiones activas, incluso las cuentas Developer ilimitadas.");
+assert.match(authSource, /'desarrollador': Infinity/);
 
 // Cobertura del cableado real de los tres servicios y de los flujos de revocación AUTH.
 assert.match(writeSource, /action === "__invalidateSessionActorCache"[\s\S]*?handleSharedSessionActorCacheInvalidation_/);
@@ -105,4 +115,4 @@ assert.equal(authSource.includes("revokeSharedUserSessionContexts_(targetId, get
 assert.match(authSource, /function getActiveSessionTokensForUserUnderLock_/);
 assert.doesNotMatch(apiConfigSource, /__invalidateSessionActorCache/);
 
-console.log("SessionActorCacheInvalidation: 23/23 PASS — claves compatibles, autenticación interna, aislamiento por token, flujos AUTH y fallo parcial");
+console.log("SessionActorCacheInvalidation: PASS — claves compatibles, autenticación interna, aislamiento por token, flujos AUTH y fallo parcial");
