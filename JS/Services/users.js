@@ -238,13 +238,14 @@ function doPost(e) {
     if (!isSharedMutationAction_(action)) {
         if (action !== "getUsers") return doPostInternal_(withSharedSessionActor_(e, null));
         try {
-            return withSharedMutationLease_("USERS", "sessionActivity", function(token, actor) {
-                return doPostInternal_(withSharedSessionActor_(e, actor));
-            }, sessionOptions);
+            // getUsers es una lectura: reutiliza el actor local y no adquiere una lease
+            // de actividad en Coordinator en cada apertura de la pantalla.
+            const actor = getCachedSharedSessionActor_(payload.userId, payload.sessionToken);
+            return doPostInternal_(withSharedSessionActor_(e, actor));
         } catch (error) {
             return ContentService.createTextOutput(JSON.stringify({
                 status: "error",
-                message: error && error.message ? error.message : "La operación fue rechazada por el coordinador compartido."
+                message: error && error.message ? error.message : "No se pudo recuperar el contexto de sesión."
             })).setMimeType(ContentService.MimeType.TEXT);
         }
     }
