@@ -106,3 +106,17 @@ undefined
 - Regresión general: 107 suites, 1592 PASS y 2 suites fallidas. AUTH PasswordRecovery falla por expectativa de worker cache key gpsepedia-cache-v67; INTEGRATION ServiceWorkerCache falla en política CDN woff2. Ambas fallas ya se habían observado antes de esta modificación y no afectan los archivos modificados en esta tarea.
 - Health run 44093578170 SUCCESS; consultas de solo lectura. Pages build run 44093577511 continuaba en progreso al registrar esta adenda.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — AUDITORÍA Y CORRECCIÓN GP-DEV-TRAFFIC-GLOBAL-02 / CATALOG
+- HEAD de validación: 4efa14f861f8b3ce6be6954c6f78298725d76f6b. Rama base GPSpedia2.2.5 verificada en d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin modificaciones.
+- Hallazgo reproducible: JS/Services/catalog.js llamaba releaseLock() aunque tryLock(0) hubiera devuelto false. La suite CatalogTrafficTelemetry lo detectó (esperado releases=0, observado 1). Se añadió lockAcquired y solo se libera cuando la ejecución adquirió el lock. No se relajó ni eliminó la prueba.
+- Contratos de UI: DeveloperPanelCopy y ServiceTrafficAdminContract exigían textos explícitos sobre alcance y conteo cero. Se ajustó el texto real de index.html para conservar la advertencia y el título acordado; las pruebas se mantuvieron.
+- Se añadió JS/Tests/ServiceTrafficAggregation.mjs (3 casos) para comprobar suma de buckets Coordinator+CATALOG, preservación de otros servicios, estado parcial si el secreto/contador directo no está disponible, entradas inválidas y no mutación del resultado original. Se incorporó al runner completo.
+- Se actualizó JS/Tests/RemoteServiceHealth.mjs: máximo dos consultas simultáneas y hasta tres intentos ante fallos transitorios de red/HTTP 429/5xx, con timeout de 12 s por intento. Se conservan los siete endpoints, contratos y validaciones de seguridad; no se omiten servicios ni se reducen comprobaciones. En ejecución 44098664894: 7/7 PASS; latencias ADMIN 1741 ms, AUTH 1660 ms, CATALOG 1204 ms, FEEDBACK 1598 ms, USERS 1048 ms, UTILITIES 1155 ms y WRITE 1404 ms.
+- CI completo 44099217828 SUCCESS: 135 suites, 1998 pruebas aprobadas, 0 fallos. CatalogTrafficTelemetry 8/8; ServiceTrafficAdminContract 20/20; ServiceTrafficAggregation 3/3; DeveloperPanelCopy 6/6; coordinador compartido 59/59.
+- CI previo 44098448712 falló por diferencia de texto DeveloperPanelCopy; corregido en index.html y re-ejecutado. No se modificó ni debilitó ninguna aserción.
+- GitHub Pages run 44099217192 estaba en progreso al registrar esta adenda; no declarar resultado hasta comprobarlo. No se desplegaron proyectos Apps Script ni se modificaron Script Properties.
+- Brecha restante: rutas directas no coordinadas identificadas en AUTH (validateSession/fallback), WRITE (checkVehicle/getSuggestion/checkVinDuplicate), USERS (rutas fuera de createUser/updateProfile/getUsers), FEEDBACK (rutas públicas), UTILITIES (migrateTimestamps). Debe auditarse el consumo real en api-config/frontend antes de instrumentarlas, evitando doble conteo y health probes. CATALOG ya cubre cuatro POST directos; Coordinator cubre operaciones protegidas y feed.
+================================================================================
