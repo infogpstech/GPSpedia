@@ -142,3 +142,10 @@ Cada fase debe actualizar el backlog y checkpoint. Agrupar cambios por tarea ló
 - Los aportes de cortes y suplementarios se atienden en WRITE, sin lease acquire/release por acción; ADMIN rechaza las rutas antiguas. Registro silencioso solo para Desarrollador.
 - El actor confiable se almacena en caché local por 15 s. Una revocación central puede tardar hasta 15 s en reflejarse en una solicitud directa; se mantiene la comprobación de sesión al restaurar/validar la sesión de aplicación.
 - P1.2 EN PROGRESO: P1.2a separar carga Drive de `addSupplementaryInfo` del ScriptLock de 30 s; P1.2b separar cargas de `addOrUpdateCut` del bloqueo principal sin perder asignación de ID e idempotencia.
+
+
+### P1.2a — implementación en validación — 2026-11-17
+- addSupplementaryInfo ya no mantiene el ScriptLock durante la carga de imágenes a Drive. La preparación y carga se realizan antes del lock final; bajo lock se relee la fila, se recalcula el slot y se persisten los campos suplementarios.
+- El ledger de imágenes usa secciones críticas cortas para reservar/finalizar; creación/verificación de archivos y metadatos Drive fuera del lock. La reserva temporal upload_in_progress evita duplicar el mismo token concurrente. La carpeta del vehículo se resuelve bajo lock corto independiente.
+- Los contratos de integridad/autorización fueron actualizados. CI pendiente: P1.2a sigue en progreso hasta que la regresión se ejecute y apruebe.
+- Siguiente: P1.2b, separar cargas Drive de addOrUpdateCut del bloqueo prolongado, preservando ID e idempotencia.

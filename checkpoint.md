@@ -282,3 +282,14 @@ undefined
 - **P1.2 EN PROGRESO.** Siguiente sub-tarea P1.2a: mover carga de imágenes de `addSupplementaryInfo` fuera del ScriptLock de 30 s; dejar bajo lock solo lectura final, combinación y escritura de columnas suplementarias. Después P1.2b: separar cargas de imágenes de `addOrUpdateCut`, conservando asignación de ID e idempotencia sin mantener el lock durante Drive.
 - CI intermedios fallidos `44125814255`, `44126144877` y `44126524619` quedaron corregidos por commits posteriores; no representan el estado final. El CI final `44126830985` pasó.
 - No se ejecutaron pruebas Beta ni despliegues manuales de Apps Script. No se han medido latencias reales.
+
+
+### P1.2a — implementación preparada, validación pendiente — 2026-11-17
+- Se refactorizó WRITE/addSupplementaryInfo para que la autenticación local del actor y la lectura de preflight ocurran antes del bloqueo final. Si hay imágenes, la resolución de carpeta y las cargas a Drive se realizan antes de adquirir el lock de persistencia.
+- El bloque final usa ScriptLock con espera máxima de 5 s, vuelve a localizar el vehículo por ID, relee la fila y recalcula el plan para respetar cambios concurrentes; solo combina y persiste las columnas suplementarias. La carga de Drive y el marcado posterior del ledger quedan fuera de ese bloqueo.
+- Para conservar idempotencia del ledger al retirar el lock global, la ruta nueva reserva y finaliza cada registro del ledger en secciones críticas breves; el archivo Drive se crea/verifica fuera del lock. Una marca temporal upload_in_progress impide que dos solicitudes simultáneas con el mismo token creen archivos duplicados. La actualización de referencias/estado linked también separa lectura y Drive del guardado breve del ledger.
+- La creación/recuperación de la carpeta del vehículo conserva un lock corto independiente para evitar carpetas equivalentes duplicadas; se libera antes de cargar archivos.
+- Se actualizaron contratos de AddSupplementaryInfoIntegrity y WriteAuthorizationMinimization para comprobar el orden de autenticación, carga, lock final y ausencia de Drive dentro del bloque de persistencia.
+- Estado P1.2a: implementación realizada; pruebas automatizadas pendientes de CI. No marcar como completada hasta revisar el resultado y corregir cualquier fallo.
+- HEAD base confirmado antes de publicar: af913330419d66c8942663ff43d9398e9a1e9039, rama GPSpedia2.2.5_work. No se desplegaron servicios Apps Script ni se ejecutó Beta; no hay mediciones reales de latencia.
+- Siguiente: ejecutar CI; después P1.2b, separar las cargas Drive de addOrUpdateCut del bloqueo prolongado, conservando ID e idempotencia.

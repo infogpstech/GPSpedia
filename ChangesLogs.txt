@@ -236,3 +236,13 @@ undefined
 - P1.1a y P1.1b cerradas. P1.2 iniciada: separar cargas Drive de locks prolongados. Siguiente P1.2a: addSupplementaryInfo.
 - No se ejecutaron pruebas Beta ni despliegues manuales de Apps Script; no se midieron latencias reales.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — GP-PERF-SIMPLIFY-01 / P1.2a — REFACTORIZACIÓN DE INFORMACIÓN SUPLEMENTARIA
+- WRITE/addSupplementaryInfo autentica el actor antes de iniciar la carga; realiza preflight y carga de imágenes a Drive antes del lock final.
+- El lock final se limita a localizar/releer el vehículo, recalcular el plan y persistir las columnas suplementarias. La espera del lock se redujo de 30 s a 5 s.
+- Se añadieron rutas de ledger con secciones críticas breves para reserva y finalización; la creación/verificación del archivo y los cambios de metadatos Drive se ejecutan fuera del lock. Se usa upload_in_progress para evitar duplicar una misma carga concurrente. El vínculo de imágenes al ledger se confirma después de persistir la fila.
+- Se añadió lock corto para resolver/crear la carpeta del vehículo y evitar carpetas equivalentes en concurrencia; se libera antes de la carga.
+- Se actualizaron contratos AddSupplementaryInfoIntegrity y WriteAuthorizationMinimization. Validación CI aún pendiente; no se registran resultados de pruebas en esta entrada.
+================================================================================

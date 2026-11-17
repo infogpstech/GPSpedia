@@ -19,22 +19,23 @@ function runWriteAuthorizationMinimizationTests(sources) {
   }
   throw Error("Función incompleta: "+name);
  }
- run("handleAddSupplementaryInfo adquiere lock y delega autenticación antes de mutar",()=>{
-  let acquired=0,released=0,delegated=false,rejected=false;
-  const fn=new Function("LockService","handleAddSupplementaryInfoLocked",
+ run("handleAddSupplementaryInfo autentica primero y delega persistencia bajo lock corto",()=>{
+  let acquired=0,released=0,delegated=false,rejected=false,authCalls=0;
+  const fn=new Function("getAuthenticatedCollaborator","SUPPLEMENTARY_INFO_ALLOWED_ROLES_","getSpreadsheet","hasSupplementaryValue_","SHEET_NAMES","LockService","handleAddSupplementaryInfoLocked","createSupplementaryInfoError_",
    extract(write,"handleAddSupplementaryInfo")+";return handleAddSupplementaryInfo;")(
-   {getScriptLock:()=>({waitLock(){acquired++;},releaseLock(){released++;}})},
-   ()=>{delegated=true;throw Error("unauthorized");});
+   ()=>{authCalls++;return "Nombre servidor";},["tecnico"],()=>({getSheetByName:()=>({})}),()=>false,{CORTES:"Cortes"},
+   {getScriptLock:()=>({waitLock(ms){assert(ms===5000);acquired++;},releaseLock(){released++;}})},
+   ()=>{delegated=true;throw Error("persistencia");},(code,message)=>{const error=Error(message);error.code=code;return error;});
   try{fn({vehicleId:"V1"});}catch(_){rejected=true;}
-  assert(rejected&&delegated&&acquired===1&&released===1);
+  assert(rejected&&delegated&&authCalls===1&&acquired===1&&released===1);
  });
- run("La mutación suplementaria valida una sola vez después de adquirir el lock",()=>{
+ run("La mutación suplementaria carga imágenes antes del lock y recalcula bajo lock",()=>{
   const outer=extract(write,"handleAddSupplementaryInfo"),inner=extract(write,"handleAddSupplementaryInfoLocked");
-  assert(!outer.includes("getAuthenticatedCollaborator("));
-  assert(outer.indexOf("waitLock")<outer.indexOf("handleAddSupplementaryInfoLocked(payload)"));
+  assert(outer.indexOf("getAuthenticatedCollaborator")<outer.indexOf("prepareSupplementaryImageUploads_"));
+  assert(outer.indexOf("prepareSupplementaryImageUploads_")<outer.indexOf("waitLock(5000)"));
   assert(outer.includes("finally")&&outer.includes("releaseLock"));
-  assert(inner.includes("getAuthenticatedCollaborator(payload, SUPPLEMENTARY_INFO_ALLOWED_ROLES_)"));
-  assert(inner.indexOf("getAuthenticatedCollaborator")<inner.indexOf("getSpreadsheet()"));
+  assert(inner.includes("buildSupplementaryInfoPlan_")&&inner.includes("persistSupplementaryInfoValues_"));
+  assert(!/uploadImageToDrive|findOrCreateVehicleFolder|DriveApp/.test(inner));
  });
  run("WRITE no duplica los esquemas ni la autenticación local de AUTH",()=>{
   assert(!write.includes("COLS_USERS")&&!write.includes("COLS_ACTIVE_SESSIONS"));

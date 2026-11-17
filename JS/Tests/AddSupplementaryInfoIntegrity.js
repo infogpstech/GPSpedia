@@ -45,7 +45,15 @@ function runAddSupplementaryInfoIntegrityTests(sources) {
   });
   run_(label+" persistencia verificada",function(){let values=Array(10).fill("");const range={setValues:function(v){values=v[0].slice();},getValues:function(){return[values.slice()];}};runtime.persist({getRange:function(){return range;}},2,Array(10).fill(""),["A"].concat(Array(9).fill("")));assert_(values[0]==="A");});
   run_(label+" rollback ante fallo de escritura",function(){let values=["old"].concat(Array(9).fill("")),calls=0;const range={setValues:function(v){calls++;values=v[0].slice();if(calls===1)throw Error("write");},getValues:function(){return[values.slice()];}};try{runtime.persist({getRange:function(){return range;}},2,["old"].concat(Array(9).fill("")),["new"].concat(Array(9).fill("")));throw Error("Debió fallar");}catch(e){assert_(e.code==="SUPPLEMENTARY_PERSISTENCE_FAILED"&&values[0]==="old"&&calls===2);}});
-  run_(label+" ScriptLock se libera en finally",function(){const p=source.indexOf("function handleAddSupplementaryInfo(payload"),q=source.indexOf("function handleAddSupplementaryInfoLocked",p),block=source.slice(p,q);assert_(block.includes("waitLock(30000)")&&block.includes("finally")&&block.includes("releaseLock"));});
+  run_(label+" el lock solo cubre la persistencia final",function(){
+   const p=source.indexOf("function handleAddSupplementaryInfo(payload"),q=source.indexOf("function handleAddSupplementaryInfoLocked",p),block=source.slice(p,q);
+   if(label==="WRITE"){
+    assert_(block.includes("waitLock(5000)")&&block.includes("finally")&&block.includes("releaseLock"));
+    assert_(block.indexOf("prepareSupplementaryImageUploads_")<block.indexOf("waitLock(5000)"));
+    const locked=source.slice(q,source.indexOf(String.fromCharCode(10)+"function ",q+10));
+    assert_(!/uploadImageToDrive|findOrCreateVehicleFolder|DriveApp/.test(locked));
+   }else assert_(block.includes("waitLock(30000)")&&block.includes("finally")&&block.includes("releaseLock"));
+  });
  });
  run_("Coordinador cubre Cortes, Drive y ledger",function(){assert_(String(sources.coordinator||"").includes('addSupplementaryInfo: { read: identityRead, write: ["CORTES", "DRIVE", "IMAGE_UPLOAD_LEDGER"] }'));});
  run_("UI no calcula slot desde item posiblemente obsoleto",function(){assert_(!String(sources.ui||"").includes("if (!item.cableAlimen)")&&String(sources.ui||"").includes("El servidor asigna el primer par"));});
@@ -84,7 +92,23 @@ function runAddSupplementaryInfoIntegrityTests(sources) {
  run_("WRITE helper no consulta Users ni ActiveSessions",function(){
   assert_(!/getSpreadsheet|ActiveSessions|Users|findUniqueRowsByExactValue_|getSessionExpirationStatus_|touchSessionActivityIfDue_/.test(authSource));
  });
- run_("Handler suplementario autentica una sola vez dentro del lock y registra actor servidor",function(){const p=String(sources.write).indexOf("function handleAddSupplementaryInfo(payload)"),q=String(sources.write).indexOf("function handleAddSupplementaryInfoLocked(payload)",p),end=String(sources.write).indexOf("\nfunction ",q+10),outer=String(sources.write).slice(p,q),inner=String(sources.write).slice(q,end>0?end:undefined);assert_(!outer.includes("getAuthenticatedCollaborator(")&&outer.indexOf("waitLock")<outer.indexOf("handleAddSupplementaryInfoLocked(payload)"));assert_(inner.includes("const actorName = getAuthenticatedCollaborator(payload, SUPPLEMENTARY_INFO_ALLOWED_ROLES_)")&&inner.includes("Logger.log(\"Información suplementaria guardada por \"+actorName"));});
+ run_("Handler suplementario autentica antes de cargar y bloquea solo la persistencia final",function(){
+  const p=String(sources.write).indexOf("function handleAddSupplementaryInfo(payload)"),q=String(sources.write).indexOf("function handleAddSupplementaryInfoLocked",p),end=String(sources.write).indexOf(String.fromCharCode(10)+"function ",q+10),outer=String(sources.write).slice(p,q),inner=String(sources.write).slice(q,end>0?end:undefined);
+  assert_(outer.indexOf("getAuthenticatedCollaborator")<outer.indexOf("prepareSupplementaryImageUploads_"));
+  assert_(outer.indexOf("prepareSupplementaryImageUploads_")<outer.indexOf("waitLock(5000)"));
+  assert_(inner.includes("buildSupplementaryInfoPlan_")&&inner.includes("persistSupplementaryInfoValues_")&&inner.includes("guardada por \"+actorName"));
+  assert_(!/uploadImageToDrive|findOrCreateVehicleFolder|DriveApp/.test(inner));
+ });
+
+ run_("WRITE ledger de imagen usa secciones críticas breves",function(){
+  const upload=String(sources.write).slice(String(sources.write).indexOf("function uploadImageToDriveWithShortLedgerLocks_"),String(sources.write).indexOf("function uploadImageToDrive("));
+  assert_(upload.includes("withImageUploadLedgerLock_")&&upload.includes("upload_in_progress"));
+  assert_(upload.indexOf("withImageUploadLedgerLock_")<upload.indexOf("folder.createFile"));
+  assert_(upload.lastIndexOf("withImageUploadLedgerLock_")>upload.indexOf("folder.createFile"));
+  const linked=String(sources.write).slice(String(sources.write).indexOf("function markImageUploadLinkedWithShortLedgerLock_"),String(sources.write).indexOf("function markImageUploadLinked(imageUrl"));
+  assert_(linked.indexOf("getImageUploadReferences_")<linked.indexOf("withImageUploadLedgerLock_"));
+  assert_(linked.indexOf("withImageUploadLedgerLock_")<linked.indexOf("file.setDescription"));
+ });
 
  return {passed:passed,failed:failed,results:results};
 }

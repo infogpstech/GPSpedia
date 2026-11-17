@@ -1374,36 +1374,118 @@ function persistSupplementaryInfoValues_(sheet,row,original,updated){
  catch(e){let rollback="";try{range.setValues([original]);SpreadsheetApp.flush();}catch(r){rollback=" La reversión automática también falló: "+String(r&&r.message||r);}throw createSupplementaryInfoError_("SUPPLEMENTARY_PERSISTENCE_FAILED","No se pudo confirmar la escritura de la información suplementaria."+rollback);}
 }
 const SUPPLEMENTARY_INFO_ALLOWED_ROLES_ = Object.freeze(["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"]);
-function handleAddSupplementaryInfo(payload){
- const lock=LockService.getScriptLock();try{lock.waitLock(30000);}catch(e){throw createSupplementaryInfoError_("SUPPLEMENTARY_LOCK_FAILED","No se pudo bloquear el registro de información suplementaria. Intente nuevamente.");}
- try{return handleAddSupplementaryInfoLocked(payload);}finally{lock.releaseLock();}
+function readSupplementaryVehicleSnapshot_(sheet, vehicleId) {
+    if (!sheet || sheet.getLastRow() < 2) throw createSupplementaryInfoError_("VEHICLE_NOT_FOUND", "El vehículo indicado no existe en el registro.");
+    if (sheet.getLastColumn() < COLS_CORTES.imgCableAlimen3) throw createSupplementaryInfoError_("SUPPLEMENTARY_SCHEMA_INVALID", "La hoja Cortes no contiene todas las columnas de información suplementaria.");
+    const ids = sheet.getRange(2, COLS_CORTES.id, sheet.getLastRow() - 1, 1).getValues().flat();
+    const matches = [];
+    ids.forEach((id, index) => { if (String(id == null ? "" : id).trim() === String(vehicleId).trim()) matches.push(index + 2); });
+    if (!matches.length) throw createSupplementaryInfoError_("VEHICLE_NOT_FOUND", "El vehículo indicado no existe en el registro.");
+    if (matches.length > 1) throw createSupplementaryInfoError_("VEHICLE_ID_AMBIGUOUS", "El ID del vehículo aparece más de una vez. No se realizó ninguna modificación.");
+    const rowIndex = matches[0];
+    const rowValues = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getValues()[0];
+    return { rowIndex, rowValues, vehicle: mapRowToObject(rowValues, COLS_CORTES) };
 }
-function handleAddSupplementaryInfoLocked(payload){
- const actorName = getAuthenticatedCollaborator(payload, SUPPLEMENTARY_INFO_ALLOWED_ROLES_);
- if(!payload||typeof payload!=="object"||!String(payload.vehicleId||"").trim())throw createSupplementaryInfoError_("SUPPLEMENTARY_INVALID_VEHICLE_ID","El ID del vehículo es requerido para agregar información suplementaria.");
- 
- const sheet=getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
- if(!sheet||sheet.getLastRow()<2)throw createSupplementaryInfoError_("VEHICLE_NOT_FOUND","El vehículo indicado no existe en el registro.");
- if(sheet.getLastColumn()<COLS_CORTES.imgCableAlimen3)throw createSupplementaryInfoError_("SUPPLEMENTARY_SCHEMA_INVALID","La hoja Cortes no contiene todas las columnas de información suplementaria.");
- const ids=sheet.getRange(2,COLS_CORTES.id,sheet.getLastRow()-1,1).getValues().flat(),matches=[];
- ids.forEach((id,i)=>{if(String(id==null?"":id).trim()===String(payload.vehicleId).trim())matches.push(i+2);});
- if(!matches.length)throw createSupplementaryInfoError_("VEHICLE_NOT_FOUND","El vehículo indicado no existe en el registro.");
- if(matches.length>1)throw createSupplementaryInfoError_("VEHICLE_ID_AMBIGUOUS","El ID del vehículo aparece más de una vez. No se realizó ninguna modificación.");
- const row=matches[0],rowValues=sheet.getRange(row,1,1,sheet.getLastColumn()).getValues()[0],vehicle=mapRowToObject(rowValues,COLS_CORTES);
- const plan=buildSupplementaryInfoPlan_(payload,vehicle),original=rowValues.slice(COLS_CORTES.apertura-1,COLS_CORTES.imgCableAlimen3),updated=original.slice(),index=field=>COLS_CORTES[field]-COLS_CORTES.apertura;
- Object.keys(plan.updates).forEach(field=>{if(field.indexOf("img")!==0)updated[index(field)]=plan.updates[field];});
- const imageFields=["imgApertura","imgCableAlimen","imgCableAlimen2","imgCableAlimen3"],images=imageFields.filter(field=>hasSupplementaryValue_(plan.updates[field]));
- try{
-  const folder=images.length?findOrCreateVehicleFolder(vehicle):null;
-  images.forEach(field=>{const url=uploadImageToDrive(plan.updates[field],buildCanonicalImageBaseName(vehicle,field),folder,buildImageUploadOperationKey(payload.opId,payload.vehicleId,field));if(!url)throw Error("La carga de imagen no devolvió una URL válida.");updated[index(field)]=url;});
-  const ti=index("timestamp");if(!hasSupplementaryValue_(String(updated[ti]||""))){const date=new Date();updated[ti]=hasSupplementaryValue_(payload.timestamp)?payload.timestamp:Utilities.formatDate(date,"GMT-6","dd/MM/yyyy");}
-  persistSupplementaryInfoValues_(sheet,row,original,updated);
- }catch(e){if(e&&e.code)throw e;throw createSupplementaryInfoError_("SUPPLEMENTARY_PERSISTENCE_FAILED","No se pudo guardar la información suplementaria: "+String(e&&e.message||e));}
- images.forEach(field=>{try{markImageUploadLinked(updated[index(field)]);}catch(e){Logger.log("La imagen se guardó, pero no se confirmó su vínculo en el ledger: "+String(e&&e.message||e));}});
- 
- Logger.log("Información suplementaria guardada por "+actorName+" para el vehículo "+String(payload.vehicleId)+".");
- return {status:"success",message:"Información suplementaria agregada exitosamente.",vehicleId:String(payload.vehicleId),slotIndex:plan.slotIndex,apertureSaved:plan.apertureRequested};
+
+function findOrCreateSupplementaryVehicleFolder_(vehicle) {
+    const lock = LockService.getScriptLock();
+    try { lock.waitLock(5000); }
+    catch (error) { throw createSupplementaryInfoError_("SUPPLEMENTARY_FOLDER_LOCK_FAILED", "No se pudo preparar la carpeta de imágenes. Intente nuevamente."); }
+    try { return findOrCreateVehicleFolder(vehicle); }
+    finally { lock.releaseLock(); }
 }
+
+function prepareSupplementaryImageUploads_(payload, vehicle, plan) {
+    const preparedPayload = Object.assign({}, payload);
+    const uploadedUrls = [];
+    const imageFields = Object.keys(plan.updates).filter(field => field.indexOf("img") === 0 && hasSupplementaryValue_(plan.updates[field]));
+    if (!imageFields.length) return { payload: preparedPayload, uploadedUrls };
+
+    const folder = findOrCreateSupplementaryVehicleFolder_(vehicle);
+    if (hasSupplementaryValue_(plan.updates.imgApertura)) {
+        const field = "imgApertura";
+        const url = uploadImageToDrive(plan.updates[field], buildCanonicalImageBaseName(vehicle, field), folder,
+            buildImageUploadOperationKey(payload.opId, payload.vehicleId, field), { shortLedgerLock: true });
+        if (!url) throw createSupplementaryInfoError_("SUPPLEMENTARY_IMAGE_UPLOAD_FAILED", "La carga de la imagen de apertura no devolvió una URL válida.");
+        preparedPayload.imgApertura = url;
+        uploadedUrls.push(url);
+    }
+
+    const cableImageField = imageFields.find(field => field.indexOf("imgCableAlimen") === 0);
+    if (cableImageField) {
+        const cableTextField = ["cableAlimen", "cableAlimen2", "cableAlimen3"].find(field => hasSupplementaryValue_(plan.updates[field]));
+        const cableText = cableTextField ? plan.updates[cableTextField] : "";
+        const field = "imgCableAlimen";
+        const url = uploadImageToDrive(plan.updates[cableImageField], buildCanonicalImageBaseName(vehicle, field), folder,
+            buildImageUploadOperationKey(payload.opId, payload.vehicleId, field), { shortLedgerLock: true });
+        if (!url) throw createSupplementaryInfoError_("SUPPLEMENTARY_IMAGE_UPLOAD_FAILED", "La carga de la imagen de alimentación no devolvió una URL válida.");
+        ["cableAlimen", "cableAlimen2", "cableAlimen3", "imgCableAlimen", "imgCableAlimen2", "imgCableAlimen3"].forEach(key => delete preparedPayload[key]);
+        if (hasSupplementaryValue_(cableText)) preparedPayload.cableAlimen = cableText;
+        preparedPayload.imgCableAlimen = url;
+        uploadedUrls.push(url);
+    }
+    return { payload: preparedPayload, uploadedUrls };
+}
+
+function handleAddSupplementaryInfo(payload) {
+    const actorName = getAuthenticatedCollaborator(payload, SUPPLEMENTARY_INFO_ALLOWED_ROLES_);
+    if (!payload || typeof payload !== "object" || !String(payload.vehicleId || "").trim()) {
+        throw createSupplementaryInfoError_("SUPPLEMENTARY_INVALID_VEHICLE_ID", "El ID del vehículo es requerido para agregar información suplementaria.");
+    }
+
+    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+    let preparedPayload = Object.assign({}, payload);
+    let uploadedUrls = [];
+    const hasImages = ["imgApertura", "imgCableAlimen", "imgCableAlimen2", "imgCableAlimen3"]
+        .some(field => hasSupplementaryValue_(payload[field]));
+
+    if (hasImages) {
+        const snapshot = readSupplementaryVehicleSnapshot_(sheet, payload.vehicleId);
+        const preflightPlan = buildSupplementaryInfoPlan_(preparedPayload, snapshot.vehicle);
+        const prepared = prepareSupplementaryImageUploads_(preparedPayload, snapshot.vehicle, preflightPlan);
+        preparedPayload = prepared.payload;
+        uploadedUrls = prepared.uploadedUrls;
+    }
+
+    const lock = LockService.getScriptLock();
+    try { lock.waitLock(5000); }
+    catch (error) {
+        throw createSupplementaryInfoError_("SUPPLEMENTARY_LOCK_FAILED", "No se pudo bloquear brevemente el registro para guardar la información. Intente nuevamente.");
+    }
+
+    let result;
+    try { result = handleAddSupplementaryInfoLocked(preparedPayload, actorName, sheet); }
+    finally { lock.releaseLock(); }
+
+    uploadedUrls.forEach(url => {
+        try { markImageUploadLinked(url, { shortLedgerLock: true }); }
+        catch (error) { Logger.log("La imagen se guardó, pero no se confirmó su vínculo en el ledger: " + String(error && error.message || error)); }
+    });
+    return result;
+}
+
+function handleAddSupplementaryInfoLocked(payload, actorName, sheet) {
+    const snapshot = readSupplementaryVehicleSnapshot_(sheet, payload.vehicleId);
+    const plan = buildSupplementaryInfoPlan_(payload, snapshot.vehicle);
+    const original = snapshot.rowValues.slice(COLS_CORTES.apertura - 1, COLS_CORTES.imgCableAlimen3);
+    const updated = original.slice();
+    const index = field => COLS_CORTES[field] - COLS_CORTES.apertura;
+    Object.keys(plan.updates).forEach(field => { updated[index(field)] = plan.updates[field]; });
+    const timestampIndex = index("timestamp");
+    if (!hasSupplementaryValue_(String(updated[timestampIndex] || ""))) {
+        const date = new Date();
+        updated[timestampIndex] = hasSupplementaryValue_(payload.timestamp) ? payload.timestamp : Utilities.formatDate(date, "GMT-6", "dd/MM/yyyy");
+    }
+    try { persistSupplementaryInfoValues_(sheet, snapshot.rowIndex, original, updated); }
+    catch (error) {
+        if (error && error.code) throw error;
+        throw createSupplementaryInfoError_("SUPPLEMENTARY_PERSISTENCE_FAILED", "No se pudo guardar la información suplementaria: " + String(error && error.message || error));
+    }
+    Logger.log("Información suplementaria guardada por " + actorName + " para el vehículo " + String(payload.vehicleId) + ".");
+    return { status: "success", message: "Información suplementaria agregada exitosamente.", vehicleId: String(payload.vehicleId),
+        slotIndex: plan.slotIndex, apertureSaved: plan.apertureRequested };
+}
+
 function handleGetSuggestion(payload) {
     const { term, field, brand } = payload;
     if (!term || !field) {
@@ -1907,7 +1989,81 @@ function getImageUploadReferences_(fileId) {
     return references;
 }
 
-function markImageUploadLinked(imageUrl) {
+function markImageUploadLinkedWithShortLedgerLock_(imageUrl) {
+    const fileId = getImageUploadFileId_(imageUrl);
+    if (!fileId) return false;
+    try {
+        const file = DriveApp.getFileById(fileId);
+        const metadata = parseImageUploadDescription_(file.getDescription());
+        if (!metadata || metadata.v !== "2" || !metadata.token || !metadata.operationKey ||
+            !metadata.folderId || !metadata.mimeType || !metadata.contentHash || !metadata.sizeBytes) return false;
+        const expected = {
+            token: String(metadata.token), operationKey: String(metadata.operationKey),
+            folderId: String(metadata.folderId), mimeType: String(metadata.mimeType),
+            sizeBytes: Number(metadata.sizeBytes), contentHash: String(metadata.contentHash)
+        };
+        const folder = DriveApp.getFolderById(expected.folderId);
+        verifyImageUploadFile_(file, folder, expected);
+        const references = getImageUploadReferences_(fileId);
+        if (!references.length) return false;
+
+        const savedValues = withImageUploadLedgerLock_(() => {
+            const ledger = getOrCreateImageUploadLedgerSheet_();
+            let record = findImageUploadLedgerRecord_(ledger, expected.token);
+            if (!record) {
+                const timestamp = new Date().toISOString();
+                record = {
+                    rowIndex: 0,
+                    values: [expected.token, expected.operationKey, expected.folderId, expected.mimeType,
+                        expected.sizeBytes, expected.contentHash, fileId,
+                        "https://drive.google.com/uc?export=view&id=" + fileId, "pending",
+                        "", "", "", "[]", metadata.name || file.getName(), timestamp, timestamp,
+                        "Registro reconstruido desde metadatos Drive v2."]
+                };
+            }
+            const values = record.values;
+            if (String(values[6] || "").trim() && String(values[6]).trim() !== fileId) {
+                throw new Error("El token de carga ya está asociado a otro fileId en ImageUploadLedger.");
+            }
+            if (String(values[1]) !== expected.operationKey || String(values[2]) !== expected.folderId ||
+                String(values[3]) !== expected.mimeType || Number(values[4]) !== expected.sizeBytes ||
+                String(values[5]) !== expected.contentHash) {
+                throw new Error("Los metadatos Drive no coinciden con ImageUploadLedger.");
+            }
+            values[6] = fileId;
+            values[7] = "https://drive.google.com/uc?export=view&id=" + fileId;
+            values[8] = "linked";
+            values[9] = SHEET_NAMES.CORTES;
+            values[10] = references[0].row;
+            values[11] = references.map(item => item.field).join(",");
+            values[12] = JSON.stringify(references);
+            values[14] = values[14] || new Date().toISOString();
+            values[15] = new Date().toISOString();
+            values[16] = "";
+            saveImageUploadLedgerRecord_(ledger, record);
+            return values.slice();
+        });
+
+        try {
+            const originalName = String(savedValues[13] || "");
+            if (originalName && file.getName() !== originalName) file.setName(originalName);
+            const linkedDescription = buildImageUploadDescription_({ ...expected, fileName: String(savedValues[13] || "") }, "linked", JSON.stringify(references));
+            file.setDescription(linkedDescription);
+            if (String(file.getDescription() || "") !== linkedDescription) {
+                Logger.log("ImageUploadLedger quedó linked, pero Drive no confirmó la descripción final para " + fileId + ".");
+            }
+        } catch (descriptionError) {
+            Logger.log("ImageUploadLedger quedó linked; no se pudo actualizar la descripción Drive: " + descriptionError.message);
+        }
+        return true;
+    } catch (error) {
+        Logger.log("No se pudo reconciliar la carga de imagen " + fileId + ": " + error.message);
+        return false;
+    }
+}
+
+function markImageUploadLinked(imageUrl, options) {
+    if (options && options.shortLedgerLock === true) return markImageUploadLinkedWithShortLedgerLock_(imageUrl);
     const fileId = getImageUploadFileId_(imageUrl);
     if (!fileId) return false;
     try {
@@ -1988,7 +2144,163 @@ function markImageUploadLinked(imageUrl) {
     }
 }
 
-function uploadImageToDrive(imageData, filename, folder, operationKey) {
+function withImageUploadLedgerLock_(callback) {
+    const lock = LockService.getScriptLock();
+    try { lock.waitLock(5000); }
+    catch (error) { throw new Error("El ledger de imágenes está ocupado; la carga puede reintentarse."); }
+    try { return callback(); }
+    finally { lock.releaseLock(); }
+}
+
+function uploadImageToDriveWithShortLedgerLocks_(imageData, filename, folder, operationKey) {
+    if (!imageData) return "";
+    if (!folder || typeof folder.getId !== "function") throw new Error("No se encontró una carpeta válida para guardar la imagen.");
+    let blob, mimeType = "";
+    if (/^https?:\\/\\//i.test(String(imageData))) {
+        const response = UrlFetchApp.fetch(String(imageData), { muteHttpExceptions: true });
+        const status = response.getResponseCode();
+        if (status < 200 || status >= 300) throw new Error("No se pudo descargar la imagen de origen. HTTP " + status + ".");
+        blob = response.getBlob();
+        mimeType = String(blob.getContentType() || "").split(";")[0].trim().toLowerCase();
+    } else if (typeof imageData === "string" && imageData.startsWith("data:image/")) {
+        const parts = imageData.match(/^data:(image\\/[a-zA-Z0-9.+-]+);base64,([\\s\\S]+)$/i);
+        if (!parts) throw new Error("Los datos Base64 de la imagen tienen un formato inválido.");
+        mimeType = String(parts[1] || "").toLowerCase();
+        const decoded = Utilities.base64Decode(parts[2]);
+        if (!decoded || !decoded.length) throw new Error("La imagen recibida está vacía.");
+        blob = Utilities.newBlob(decoded, mimeType);
+    } else {
+        throw new Error("El formato de imagen recibido no es compatible.");
+    }
+    const bytes = blob.getBytes();
+    if (!bytes || !bytes.length) throw new Error("La imagen recibida está vacía.");
+    if (!mimeType.startsWith("image/")) throw new Error("El MIME recibido no corresponde a una imagen.");
+    if (bytes.length > IMAGE_UPLOAD_MAX_BYTES) throw new Error("La imagen supera el límite de 10 MB por archivo.");
+
+    const contentHash = calculateImageUploadContentHash_(bytes);
+    let stableOperationKey = String(operationKey || "").trim();
+    if (!stableOperationKey) stableOperationKey = "legacy|" + folder.getId() + "|" + String(filename || "") + "|" + contentHash;
+    else if (stableOperationKey.startsWith("legacy|")) stableOperationKey += "|" + contentHash;
+    const extension = getExtensionFromMimeType(mimeType);
+    const originalFilename = String(filename || "imagen") + extension;
+    const token = buildImageUploadToken(stableOperationKey, blob, folder, mimeType);
+    const temporaryFilename = "__GPSpediaUpload_" + token + extension;
+    const expected = { token, operationKey: stableOperationKey, folderId: String(folder.getId()), mimeType, sizeBytes: bytes.length, contentHash };
+
+    let record = withImageUploadLedgerLock_(() => {
+        const ledger = getOrCreateImageUploadLedgerSheet_();
+        let current = findImageUploadLedgerRecord_(ledger, token);
+        if (current) {
+            const values = current.values;
+            if (String(values[1]) !== expected.operationKey || String(values[2]) !== expected.folderId ||
+                String(values[3]) !== expected.mimeType || Number(values[4]) !== expected.sizeBytes ||
+                String(values[5]) !== expected.contentHash) {
+                throw new Error("El token ya está registrado con otra operación, carpeta, MIME, tamaño o contenido.");
+            }
+            if (String(values[8]) === "requires_review") throw new Error("La carga tiene estado requires_review; no se reutilizó el archivo.");
+            if (!String(values[6] || "").trim()) {
+                const updatedAt = new Date(values[15] || values[14] || 0).getTime();
+                const inProgress = String(values[16] || "") === "upload_in_progress";
+                if (inProgress && Number.isFinite(updatedAt) && Date.now() - updatedAt < 120000) {
+                    throw new Error("Esta misma imagen ya se está cargando. Espera un momento antes de reintentar.");
+                }
+                values[16] = "upload_in_progress";
+                values[15] = new Date().toISOString();
+                saveImageUploadLedgerRecord_(ledger, current);
+            }
+            return current;
+        }
+        if (!stableOperationKey.startsWith("legacy|")) {
+            const previous = findImageUploadLedgerOperationKey_(ledger, stableOperationKey);
+            if (previous.some(item => String(item.values[0]) !== token)) {
+                throw new Error("El opId/campo ya está asociado a otro contenido; no se creó un segundo archivo.");
+            }
+        }
+        const timestamp = new Date().toISOString();
+        current = {
+            rowIndex: 0,
+            values: [token, stableOperationKey, expected.folderId, mimeType, bytes.length, contentHash,
+                "", "", "pending", "", "", "", "[]", originalFilename, timestamp, timestamp, "upload_in_progress"]
+        };
+        return saveImageUploadLedgerRecord_(ledger, current);
+    });
+
+    let file = null;
+    try {
+        if (String(record.values[6] || "").trim()) {
+            try { file = DriveApp.getFileById(String(record.values[6]).trim()); }
+            catch (lookupError) { file = null; }
+            if (!file) {
+                file = findExistingImageUpload(folder, temporaryFilename, expected, token);
+                if (!file) {
+                    withImageUploadLedgerLock_(() => {
+                        const ledger = getOrCreateImageUploadLedgerSheet_();
+                        const latest = findImageUploadLedgerRecord_(ledger, token);
+                        if (latest) {
+                            latest.values[8] = "file_missing";
+                            latest.values[16] = "El ID registrado no está disponible y no se encontró el token en la carpeta.";
+                            latest.values[15] = new Date().toISOString();
+                            saveImageUploadLedgerRecord_(ledger, latest);
+                        }
+                    });
+                    throw new Error("El archivo de esta operación no está disponible; se conservó el registro para reconciliación.");
+                }
+            } else verifyImageUploadFile_(file, folder, expected);
+        } else file = findExistingImageUpload(folder, temporaryFilename, expected, token);
+
+        if (!file) {
+            blob.setName(temporaryFilename);
+            file = folder.createFile(blob);
+        }
+        verifyImageUploadFile_(file, folder, expected);
+        const url = "https://drive.google.com/uc?export=view&id=" + file.getId();
+        const references = String(record.values[12] || "[]");
+        const state = String(record.values[8]) === "linked" ? "linked" : "pending";
+        const description = buildImageUploadDescription_({
+            operationKey: stableOperationKey, token, folderId: expected.folderId,
+            mimeType, sizeBytes: bytes.length, contentHash, fileName: originalFilename
+        }, state, references);
+        file.setDescription(description);
+        if (String(file.getDescription() || "") !== description) {
+            throw new Error("Drive no confirmó por lectura posterior los metadatos de la carga; el registro pending se conservó.");
+        }
+
+        withImageUploadLedgerLock_(() => {
+            const ledger = getOrCreateImageUploadLedgerSheet_();
+            const latest = findImageUploadLedgerRecord_(ledger, token);
+            if (!latest) throw new Error("La reserva de imagen desapareció del ledger.");
+            if (String(latest.values[6] || "").trim() && String(latest.values[6]).trim() !== file.getId()) {
+                throw new Error("El token de carga ya está asociado a otro fileId.");
+            }
+            latest.values[6] = file.getId();
+            latest.values[7] = url;
+            if (String(latest.values[8]) !== "linked") latest.values[8] = "pending";
+            latest.values[13] = originalFilename;
+            latest.values[15] = new Date().toISOString();
+            latest.values[16] = "";
+            saveImageUploadLedgerRecord_(ledger, latest);
+        });
+        return url;
+    } catch (error) {
+        try {
+            withImageUploadLedgerLock_(() => {
+                const ledger = getOrCreateImageUploadLedgerSheet_();
+                const latest = findImageUploadLedgerRecord_(ledger, token);
+                if (latest && String(latest.values[8]) !== "file_missing") {
+                    latest.values[16] = String(error && error.message || error).slice(0, 500);
+                    latest.values[15] = new Date().toISOString();
+                    saveImageUploadLedgerRecord_(ledger, latest);
+                }
+            });
+        } catch (ledgerError) {
+            Logger.log("No se pudo registrar el error de carga en el ledger: " + String(ledgerError && ledgerError.message || ledgerError));
+        }
+        throw error;
+    }
+}
+
+function uploadImageToDrive(imageData, filename, folder, operationKey, options) {
+    if (options && options.shortLedgerLock === true) return uploadImageToDriveWithShortLedgerLocks_(imageData, filename, folder, operationKey);
     if (!imageData) return "";
     if (!folder || typeof folder.getId !== "function") throw new Error("No se encontró una carpeta válida para guardar la imagen.");
 

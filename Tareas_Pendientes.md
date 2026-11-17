@@ -1353,3 +1353,10 @@ No se han desplegado proyectos Apps Script ni configurado secretos remotos. La f
   - P1.2a: pendiente — carga Drive de información suplementaria fuera del ScriptLock de 30 s.
   - P1.2b: pendiente — carga Drive del registro principal de cortes fuera del ScriptLock, conservando ID e idempotencia.
 - Siguiente inmediata: P1.2a. No Beta ni despliegue manual de Apps Script.
+
+
+### GP-PERF-SIMPLIFY-01 — P1.2a — 2026-11-17
+- Implementación realizada; validación pendiente: WRITE/addSupplementaryInfo prepara y carga imágenes a Drive antes del lock final. Bajo el lock (5 s de espera máxima) vuelve a leer el vehículo, recalcula el plan y persiste únicamente la información suplementaria.
+- El ledger de imágenes usa locks breves para reservar/finalizar cada token; la creación/verificación de archivos y actualización de metadatos Drive ocurren fuera de esos locks. Una marca upload_in_progress impide que dos solicitudes simultáneas con el mismo token creen archivos duplicados. Las cargas de operaciones distintas pueden avanzar en paralelo.
+- Se actualizan pruebas de integridad y autorización para el nuevo flujo. CI pendiente; no cerrar P1.2a hasta aprobación.
+- Siguiente: CI de regresión. Luego P1.2b: sacar cargas Drive de addOrUpdateCut y conservar asignación de ID/idempotencia.
