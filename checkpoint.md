@@ -359,3 +359,5 @@ Estado: **EN PROGRESO** hasta ejecutar la suite Node.js completa disponible; la 
 - Validación local: parsing V8 de rich-text.js, ui.js, InboxUi.mjs, service-worker.js, ServiceWorkerCache.js, OfflineBrandAssets.mjs y feedback.js aprobado; 15 comprobaciones estáticas dirigidas aprobadas. JS/Services/feedback.js solo se inspeccionó para confirmar el contrato; su SHA permaneció intacto y no fue modificado.
 - Suite Node.js InboxUi.mjs no ejecutada: el entorno no pudo clonar el repositorio por fallo de resolución DNS de github.com. CI sin estados reportados. Pruebas visuales Android/PWA y escritorio pendientes de Beta.
 - Estado: EN PROGRESO hasta ejecutar la suite Node disponible y verificar los cambios en navegador real. No se modificaron servicios Apps Script, deployments, datos productivos ni la rama base.
+
+- Adenda de comportamiento: toda la fila del resultado, salvo el botón +, abre el modal de información del vehículo; el botón + detiene la propagación y agrega directamente. Contrato actualizado. Validación estática final: 16/16 comprobaciones aprobadas; la suite Node y Beta continúan pendientes.
