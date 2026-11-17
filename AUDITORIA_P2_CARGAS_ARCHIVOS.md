@@ -72,3 +72,9 @@ Las funciones ADMIN de auditoría, conciliación, movimiento, restauración y or
 - Los reintentos vinculados no suben otra imagen; `UPLOAD_PENDING` reutiliza el archivo. No se añadieron estados nuevos ni capas transaccionales.
 - PyS tests 53/53 + 22/22; CI 142 suites / 2,104 pruebas / 0 fallos; health 7/7; Pages SUCCESS.
 - P2.2b completada localmente; Beta Drive/OAuth y concurrencia real pendientes.
+
+
+## Cierre P2.3 — YouTube resumable
+- Flujo directo navegador→YouTube conservado; 8 MiB por bloque y checkpoints IndexedDB. Apps Script solo inicializa la sesión y registra/aprueba el video.
+- Las pruebas focalizadas de persistencia, recuperación, cancelación, borradores, overlay, XSS y cliente aprobaron: 14/14, 2/2, 6/6, 6/6, 3/3, 8/8, 5/5 y 12/12; precondiciones server-side 8/8.
+- No fue necesario modificar el flujo. P2 cerrada localmente; validación externa Beta pendiente.

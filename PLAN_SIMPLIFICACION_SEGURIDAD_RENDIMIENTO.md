@@ -180,3 +180,9 @@ Cada fase debe actualizar el backlog y checkpoint. Agrupar cambios por tarea ló
 - Reintentos ya vinculados no vuelven a subir imagen; transferencias redundantes concurrentes se descartan tras revalidar el `opId` bajo lock.
 - CI 44144972128: 142 suites / 2,104 pruebas / 0 fallos. Health read-only 44144972115: 7/7. Pages 44144970560: SUCCESS.
 - P2.2b COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Siguiente P2.3: contrato del flujo YouTube resumable directo, conservando IndexedDB y aprobación.
+
+
+### Cierre P2.3 — YouTube resumable — 2026-11-17
+- Transferencia directa navegador → YouTube; bloques 8 MiB y checkpoints IndexedDB. Apps Script inicializa la sesión y registra/aprueba el video, no retransmite contenido.
+- Pruebas: persistencia 14/14; checkpoint recovery 2/2; cancelación 6/6; completed recovery 6/6; draft recovery 3/3; overlay 8/8; XSS 5/5; cliente 12/12; precondiciones 8/8.
+- P2 completada localmente; Beta OAuth/Drive/YouTube pendiente. Siguiente P3.1: revisar el TTL de 15 s del actor cacheado y el requisito de validar usuario/rol solo al login.
