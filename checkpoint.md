@@ -6,3 +6,7 @@ undefined
 - Hallazgos: caché de solicitudes históricas no particionaba explícitamente por sección y excluía tickets propios; listas de conversaciones consultaban red aun con caché fresca al cambiar filtros; historial de mensajes guardaba Map por conversationId y volvía a consultar al seleccionar, aunque hubiera contenido fresco. Las mutaciones de conversación no invalidaban consistentemente sus páginas.
 - Implementación preparada en blobs GitHub: inboxPageCache.js amplía claves con filterKey; ui.js cachea Reportes/Aportaciones/tickets propios, páginas de conversación y páginas de mensajes con TTL 60s, LRU acotado, identidad completa y filtros/cursor; conserva contenido durante refresh y fuerza sondeo/manual/online. InboxConversations.js expone lastMessageId para validar la frescura del hilo.
 - Tests preparados: InboxCachePagination.js, InboxUi.mjs e InboxConversations.mjs. Pendiente publicar el conjunto, ejecutar pruebas Node/CI, corregir regresiones y registrar el SHA final.
+
+
+### Adenda CI — GP-INBOX-CACHE-BANDS-01
+- CI run 44079638767 sobre b3749410b0cf2876bcc1cbd7450f77dfc637835c: sintaxis de los módulos aprobada; InboxConversations 61/61; InboxUi 79/80. Único fallo: contrato estático antiguo que esperaba mostrar loading sin comprobar si existía caché. Se ajustó la expectativa a la condición cache-aware; repetir suite completa.

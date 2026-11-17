@@ -185,7 +185,7 @@ check("Nuevo mensaje es una acción de la barra superior y no existe un botón f
 });
 check("La lista y los mensajes existentes permanecen visibles durante la actualización", () => {
     assert.ok(ui.includes("else if (!inboxConversationItems_.length && !list.childElementCount) {"));
-    assert.match(ui, /if \(!options\.older && !options\.preserveScroll && !inboxConversationMessages_\.length\) renderInboxConversationDetail_/);
+    assert.match(ui, /if \(!options\.older && !options\.preserveScroll && !inboxConversationMessages_\.length && !cachedPage\)\s*\{\s*renderInboxConversationDetail_/);
 });
 check("La actualización del historial conserva el orden de inserción aunque las fechas coincidan o retrocedan", () => {
     const previous = [

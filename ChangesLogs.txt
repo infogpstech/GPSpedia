@@ -8,3 +8,9 @@ undefined
 - Mutaciones de mensaje, lectura, archivo y cierre invalidan las cachés afectadas; el cambio de sesión limpia las tres cachés.
 - JS/Tests/InboxCachePagination.js, InboxUi.mjs e InboxConversations.mjs: contratos de filtros, aislamiento, cache-first, invalidación y latest message.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — AJUSTE DE CONTRATO InboxUi
+- La prueba de visibilidad durante actualización se actualiza para reflejar que el estado de carga solo se muestra cuando no hay una página cacheada. El contenido fresco o stale permanece visible durante el refresh.
+================================================================================
