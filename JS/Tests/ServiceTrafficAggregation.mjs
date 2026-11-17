@@ -69,10 +69,10 @@ test("si el contador directo CATALOG no está configurado conserva Coordinator y
     assert.ok(result.coverage.description.includes("solicitudes directas de lectura CATALOG"));
 });
 
-test("combina contadores directos de AUTH, WRITE, FEEDBACK y UTILITIES con operaciones Coordinator", () => {
+test("combina contadores directos de AUTH, WRITE y FEEDBACK con operaciones Coordinator", () => {
     const coordinator = coordinatorFixture();
     const directResults = {};
-    for (const service of ["AUTH", "WRITE", "FEEDBACK", "UTILITIES"]) {
+    for (const service of ["AUTH", "WRITE", "FEEDBACK"]) {
         directResults[service] = {
             status: "success", service, scope: "direct_post_requests",
             accuracy: "best_effort_nonblocking", mayUndercount: true,
@@ -93,7 +93,7 @@ test("combina contadores directos de AUTH, WRITE, FEEDBACK y UTILITIES con opera
 
 test("la falta de configuración de cada fuente directa conserva su agregado Coordinator y declara cobertura parcial", () => {
     const coordinator = coordinatorFixture();
-    const unavailable = Object.fromEntries(["CATALOG", "AUTH", "WRITE", "FEEDBACK", "UTILITIES"]
+    const unavailable = Object.fromEntries(["CATALOG", "AUTH", "WRITE", "FEEDBACK"]
         .map(service => [service, { status: "unavailable", reason: "not_configured" }]));
     const result = mergeDirectServiceTraffic_(coordinator, unavailable);
     for (const service of Object.keys(unavailable)) {
