@@ -524,7 +524,7 @@ const DIRECT_SERVICE_TRAFFIC_CONFIG_ = Object.freeze({
     service: "FEEDBACK",
     bucketPrefix: "GPSpedia_FEEDBACK_DIRECT_TRAFFIC_HOUR_V1_",
     secretProperty: "GPSpedia_FEEDBACK_TRAFFIC_SECRET",
-    actions: new Set(["getPysData", "getCatalogChanges"])
+    actions: new Set(["recordLike","reportProblem","addProblem","addSolution","addPrevention","addVehicleToProblem","removeVehicleFromProblem","updatePysItem","updateTutorialItem","suggestCutChange","suggestYear","addTutorial","getFeedbackItems","getMyProblemReports","replyToFeedback","markAsResolved","deleteFeedbackItem","getInboxRecipients","notifyDevelopersDriveCritical","getInboxConversations","getInboxMessages","createInboxConversation","sendInboxMessage","markInboxRead","markInboxUnread","deleteInboxConversation","archiveInboxConversation","closeInboxConversation","getRichTextMode","setRichTextMode","getActivityLogs","clearActivityLogs","initYouTubeUpload","getVideoApprovalByOperation","submitVideoForApproval","approveVideo","rejectVideo","getPysData","sendContactForm","getCatalogChanges"])
 });
 const DIRECT_SERVICE_TRAFFIC_BUCKET_MS_ = 60 * 60 * 1000;
 const DIRECT_SERVICE_TRAFFIC_WINDOW_MS_ = 24 * 60 * 60 * 1000;
@@ -660,10 +660,6 @@ function doGet(e) {
 }
 
 
-function isSharedMutationAction_(action) {
-    return ["recordLike","reportProblem","addProblem","addSolution","addPrevention","addVehicleToProblem","removeVehicleFromProblem","updatePysItem","updateTutorialItem","suggestCutChange","suggestYear","addTutorial","sendContactForm","replyToFeedback","markAsResolved","deleteFeedbackItem","clearActivityLogs","submitVideoForApproval","approveVideo","rejectVideo","createInboxConversation","sendInboxMessage","notifyDevelopersDriveCritical","markInboxRead","markInboxUnread","deleteInboxConversation","archiveInboxConversation","closeInboxConversation","setRichTextMode"].includes(action);
-}
-
 function doPost(e) {
     let request;
     try {
@@ -679,38 +675,22 @@ function doPost(e) {
     }
     if (DIRECT_SERVICE_TRAFFIC_CONFIG_.actions.has(action)) recordDirectServiceTraffic_();
     const payload = request.payload && typeof request.payload === "object" ? request.payload : {};
-    const sessionOptions = { session: { sessionToken: payload.sessionToken } };
-    // La ruta anónima debe evaluarse antes de clasificar suggestYear como mutación compartida.
-    // Las sugerencias autenticadas mantienen su lease específica sobre Cortes y Feedback.
-    if (action === "suggestYear" && String(payload.userId || "").trim() === "0") {
-        recordDirectServiceTraffic_();
+    const anonymousSuggestion = action === "suggestYear" && String(payload.userId || "").trim() === "0";
+    const isPublic = FEEDBACK_PUBLIC_ACTIONS.has(action);
+    const isDeclared = Object.prototype.hasOwnProperty.call(FEEDBACK_ACTION_PERMISSIONS, action);
+
+    // FEEDBACK usa el actor confiable en caché local; no adquiere leases ni hace viajes
+    // a Coordinator por cada acción. Las rutas públicas/anónimas siguen sin requerir sesión.
+    if (isPublic || anonymousSuggestion || !isDeclared) {
         return doPostInternal_(withSharedSessionActor_(e, null));
     }
-    if (!isSharedMutationAction_(action)) {
-        if (!Object.prototype.hasOwnProperty.call(FEEDBACK_ACTION_PERMISSIONS, action) || FEEDBACK_PUBLIC_ACTIONS.has(action)) {
-            return doPostInternal_(withSharedSessionActor_(e, null));
-        }
-        try {
-            return withSharedMutationLease_("FEEDBACK", "sessionActivity", function(token, actor) {
-                return doPostInternal_(withSharedSessionActor_(e, actor));
-            }, sessionOptions);
-        } catch (error) {
-            return ContentService.createTextOutput(JSON.stringify({
-                status: "error",
-                message: error && error.message ? error.message : "La operación fue rechazada por el coordinador compartido."
-            })).setMimeType(ContentService.MimeType.TEXT);
-        }
-    }
-
-    const nestedToken = String(payload.__sharedMutationToken || "").trim();
     try {
-        return withSharedMutationLease_("FEEDBACK", action, function(token, actor) {
-            return doPostInternal_(withSharedSessionActor_(e, actor));
-        }, Object.assign(sessionOptions, nestedToken ? { nestedToken: nestedToken } : {}));
+        const actor = getCachedSharedSessionActor_(payload.userId, payload.sessionToken);
+        return doPostInternal_(withSharedSessionActor_(e, actor));
     } catch (error) {
         return ContentService.createTextOutput(JSON.stringify({
             status: "error",
-            message: error && error.message ? error.message : "La operación fue rechazada por el coordinador compartido."
+            message: error && error.message ? error.message : "La sesión no pudo ser confirmada."
         })).setMimeType(ContentService.MimeType.TEXT);
     }
 }
