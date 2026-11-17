@@ -146,8 +146,10 @@ test('UI no usa el indicador local antiguo y valida la versión del markup', () 
     assert.doesNotMatch(uiSource, /gpsepedia_terms_accepted/);
     assert.match(htmlSource, /data-terms-version="2026-07"/); assert.match(htmlSource, /id="terms-error"/);
 });
-test('UI conserva el bloqueo ante errores de backend o caché local', () => {
-    assert.match(uiSource, /El catálogo permanece bloqueado/);
-    assert.match(uiSource, /localStorage\.setItem\('gpsepedia_session'/);
+test('UI conserva el bloqueo si no puede identificar sesión/dispositivo o persistir aceptación local', () => {
+    assert.match(uiSource, /El catálogo permanecerá bloqueado/);
+    assert.match(uiSource, /No se pudo guardar la aceptación local/);
+    assert.match(uiSource, /saveDeviceTermsAcceptance\\(localStorage, userId, deviceId, localAcceptance/);
+    assert.match(uiSource, /window.addEventListener\\('online'/);
 });
 console.log('TermsAcceptance: ' + passed + '/19 PASS');
