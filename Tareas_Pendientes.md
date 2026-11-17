@@ -1094,14 +1094,17 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - Pruebas actualizadas: InboxCachePagination, InboxUi e InboxConversations. Validación local/CI pendiente.
 
 ### GP-UX-SESSION-ENDED-01 — Centrado del aviso de sesión terminada
-**Prioridad: P3 · Estado: EN PROGRESO**
+**Prioridad: P3 · Estado: COMPLETADA**
 - Centrar el texto «Sesión terminada» dentro de la burbuja/aviso, sin desplazar los errores de acceso ni alterar el diseño responsive.
 - Añadir contrato DOM/visual anti-regresión.
 
-#### Implementación en curso — 2026-11-17
-- Se centra `text-align` únicamente en `.login-session-ended`; los errores de acceso conservan la regla independiente.
-- Se amplía el contrato `SessionUiRoleInvalidation` para comprobar alineación del aviso y mantener `role=status`/`aria-live=polite` frente a `role=alert`/`assertive` para errores normales.
-- Validación CI pendiente.
+#### Cierre verificado — 2026-11-17
+- style.css centra el texto solo para la clase login-session-ended; la regla de errores de acceso permanece separada y sin cambios.
+- La suite UI invalidación de sesión y rol/AUG-042 aprobó 18/18; incluye verificación de alineación exclusiva y de role/aria-live.
+- GitHub Actions run 44085022792 SUCCESS: 133 suites, 1,992 pruebas aprobadas, 0 fallos.
+- GitHub Pages run 44085021849 SUCCESS para c7bd8d36a0456ffa778fc57ca08b74d7a22dba28.
+- No se modificaron márgenes, colores, dimensiones ni reglas responsive; validación visual de dispositivo real queda opcional para Beta.
+
 
 
 

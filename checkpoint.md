@@ -65,3 +65,12 @@ undefined
 - Auditoría: el CSS de la burbuja `.login-session-ended` alineaba a la izquierda; los errores normales usan una regla separada. showLoginScreen asigna clase, role y aria-live diferenciados.
 - Implementación: cambiar solo text-align del aviso a center y ampliar SessionUiRoleInvalidation para proteger alineación y accesibilidad de ambos tipos de mensaje.
 - Validación CI pendiente.
+
+
+### Cierre verificado — GP-UX-SESSION-ENDED-01 — 2026-11-17
+- Commit de implementación: c7bd8d36a0456ffa778fc57ca08b74d7a22dba28.
+- Cambio limitado a text-align:center en #login-modal #login-error.login-session-ended; los errores de acceso no se modificaron.
+- GitHub Actions run 44085022792 SUCCESS: 133 suites, 1,992 pruebas aprobadas, 0 fallos; UI invalidación de sesión y rol/AUG-042 18/18.
+- GitHub Pages run 44085021849 SUCCESS para el mismo commit.
+- Rama base GPSpedia2.2.5 verificada sin cambios.
+- Siguiente tarea pendiente del bloque: GP-AUTH-PASSWORD-RECOVERY-01 — auditar implementación de recuperación, seguridad de tokens, límites, expiración y experiencia de usuario antes de cerrar.
