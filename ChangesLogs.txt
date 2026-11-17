@@ -28,3 +28,13 @@ undefined
 - GitHub Pages run 44081111776 SUCCESS. No se cambió lógica de ADMIN/Drive, permisos ni confirmaciones.
 - Estado: COMPLETADA CON VALIDACIÓN VISUAL DIFERIDA A BETA. Pendiente revisar en navegador/PWA la expansión, teclado, estados de acciones y movimiento reducido.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — IMPLEMENTACIÓN GP-INBOX-LIST-NAV-01
+- JS/Services/feedback.js: topes máximos de getFeedbackItems y getMyProblemReports reducidos de 100 a 50 elementos por página.
+- JS/Services/InboxConversations.js: tope máximo de getInboxMessages reducido de 100 a 50; el endpoint de conversaciones ya limitaba a 50.
+- JS/Frontend/ui.js: paginador compartido oculto cuando no existe página anterior ni siguiente; aria-label contextual para conversaciones, reportes, aportaciones y mensajes. Se oculta durante la carga de una página sin caché para evitar controles obsoletos.
+- index.html/style.css: paginador oculto inicialmente y regla explícita para respetar hidden frente a display:flex.
+- JS/Tests/InboxUi.mjs y InboxConversations.mjs: contratos para límites de página y navegación condicional.
+================================================================================

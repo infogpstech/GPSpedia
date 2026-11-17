@@ -2118,7 +2118,7 @@ function handleGetFeedbackItems(payload) {
  const offset=Number(rawCursor);
  if(!Number.isSafeInteger(offset)||offset<0)throw new Error("El cursor de Inbox no es válido.");
  const requestedSize=Number(source.pageSize);
- const pageSize=Number.isFinite(requestedSize)?Math.max(1,Math.min(100,Math.floor(requestedSize))):40;
+ const pageSize=Number.isFinite(requestedSize)?Math.max(1,Math.min(50,Math.floor(requestedSize))):40;
  const feedbackSheet=getSafeSheet(SHEET_NAMES.FEEDBACKS),contactSheet=getSafeSheet(SHEET_NAMES.CONTACTANOS);
  const feedbackCount=feedbackSheet?Math.max(0,feedbackSheet.getLastRow()-1):0;
  const contactCount=contactSheet?Math.max(0,contactSheet.getLastRow()-1):0;
@@ -2152,7 +2152,7 @@ function handleGetMyProblemReports(payload) {
     const cursor = source.cursor === undefined || source.cursor === null ? "" : String(source.cursor).trim();
     if (cursor.length > 120 || cursor.includes("\r") || cursor.includes("\n")) throw new Error("El cursor de tickets no es válido.");
     const requestedSize = Number(source.pageSize);
-    const pageSize = Number.isFinite(requestedSize) ? Math.max(1,Math.min(100,Math.floor(requestedSize))) : 40;
+    const pageSize = Number.isFinite(requestedSize) ? Math.max(1,Math.min(50,Math.floor(requestedSize))) : 40;
     const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
     if (!sheet || sheet.getLastRow() < 2) return {status:"success",data:[],nextCursor:null,hasMore:false,pageSize,total:0};
     const metadataColumn = getReportMetadataColumn(sheet);

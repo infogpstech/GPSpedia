@@ -8,3 +8,13 @@ undefined
 - Alcance seguro: cambio de presentación únicamente; no se toca ADMIN, la secuencia de auditoría, la persistencia, las operaciones Drive ni la conciliación.
 - Criterios: barra semántica accesible, iconos siempre visibles, etiquetas desplegables con animación, móvil responsive, movimiento reducido sin transición y listeners idempotentes.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — AUDITORÍA GP-INBOX-LIST-NAV-01
+- Evidencia frontend: JS/Frontend/ui.js mantiene límites explícitos de 40 registros para solicitudes, 20 conversaciones y 50 mensajes por conversación. La navegación usa cursores opacos y páginas independientes; no descarga el historial completo.
+- Evidencia backend: JS/Services/InboxConversations.js limita conversaciones a 50 y mensajes a 100; JS/Services/feedback.js limita reportes y tickets propios a 100. Los topes de backend no eran uniformes y podían superar el tamaño previsto por el cliente.
+- Evidencia UI: index.html declara un único #inbox-pagination compartido por ambas vistas; ui.js lo renderiza siempre, incluso cuando el servidor confirma una sola página, dejando flechas deshabilitadas redundantes.
+- Decisión: conservar paginación por cursor para no ocultar registros históricos ni cargar conjuntos ilimitados; limitar todos los endpoints a 50 y ocultar el paginador si no existe navegación real. Mantenerlo visible cuando se requiera volver o avanzar.
+- Criterio: páginas acotadas, sin cursor convertido a offset en conversaciones/mensajes, controles accesibles y navegación histórica intacta.
+================================================================================

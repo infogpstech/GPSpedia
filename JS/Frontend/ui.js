@@ -3869,8 +3869,14 @@ function renderInboxPagination_(page, context, generation) {
     const pageCount = Number.isFinite(Number(page.total))
         ? Math.max(1, Math.ceil(Number(page.total) / INBOX_PAGE_SIZE_))
         : currentPage + (page.hasMore === true ? 1 : 0);
-    previous.disabled = inboxPageIndex_ <= 0;
-    next.disabled = page.hasMore !== true || !page.nextCursor;
+    const canGoPrevious = inboxPageIndex_ > 0;
+    const canGoNext = page.hasMore === true && Boolean(page.nextCursor);
+    navigation.hidden = !canGoPrevious && !canGoNext;
+    navigation.setAttribute("aria-label",
+        inboxRequestSection_ === "reports" ? "Paginación de reportes" :
+        (inboxRequestSection_ === "contributions" ? "Paginación de aportaciones" : "Paginación de mensajes"));
+    previous.disabled = !canGoPrevious;
+    next.disabled = !canGoNext;
     label.textContent = currentPage + "/" + pageCount;
     previous.onclick = () => {
         if (generation !== inboxViewGeneration_ || !isCurrentUiSessionContext_(context) || inboxPageIndex_ <= 0) return;
@@ -4597,6 +4603,8 @@ async function setInboxView_(view, options = {}) {
     const newMessageButton = document.getElementById("inbox-new-message");
     if (searchToggle) searchToggle.hidden = nextView !== "conversations";
     if (newMessageButton) newMessageButton.hidden = false;
+    const pagination = document.getElementById("inbox-pagination");
+    if (pagination) pagination.hidden = true;
     const pagePrevious = document.getElementById("inbox-page-previous");
     const pageNext = document.getElementById("inbox-page-next");
     if (pagePrevious) pagePrevious.disabled = true;
@@ -4630,6 +4638,10 @@ async function loadInboxConversations_(options = {}) {
     const cachedPage = inboxConversationPageCache_.get(context, cacheCursor, {
         pageSize: INBOX_CONVERSATION_PAGE_SIZE_, filterKey: cacheFilterKey, allowStale: true
     });
+    if (!cachedPage) {
+        const navigation = document.getElementById("inbox-pagination");
+        if (navigation) navigation.hidden = true;
+    }
     const applyPage = response => {
         inboxConversationItems_ = Array.isArray(response.data) ? response.data : [];
         inboxConversationCounts_ = response.counts || {};
@@ -4722,8 +4734,12 @@ function renderInboxConversationPagination_() {
     const pageCount = inboxConversationTotal_ > 0
         ? Math.max(1, Math.ceil(inboxConversationTotal_ / INBOX_CONVERSATION_PAGE_SIZE_))
         : currentPage + (inboxConversationHasMore_ ? 1 : 0);
-    previous.disabled = inboxConversationPageIndex_ <= 0;
-    next.disabled = !inboxConversationHasMore_ || inboxConversationNextCursor_ === null;
+    const canGoPrevious = inboxConversationPageIndex_ > 0;
+    const canGoNext = inboxConversationHasMore_ && inboxConversationNextCursor_ !== null;
+    navigation.hidden = !canGoPrevious && !canGoNext;
+    navigation.setAttribute("aria-label", "Paginación de conversaciones");
+    previous.disabled = !canGoPrevious;
+    next.disabled = !canGoNext;
     label.textContent = currentPage + "/" + pageCount;
     previous.onclick = () => {
         if (inboxConversationCurrentView_ !== "conversations" || inboxConversationPageIndex_ <= 0) return;
@@ -15255,6 +15271,10 @@ export async function loadAndRenderInbox(options = {}) {
     const cached = inboxPageCache_.get(requestContext, cursor, {
         pageSize: INBOX_PAGE_SIZE_, filterKey: cacheFilterKey, allowStale: true
     });
+    if (!cached) {
+        const pagination = document.getElementById("inbox-pagination");
+        if (pagination) pagination.hidden = true;
+    }
     if (cached) {
         renderInboxList(cached.value.data);
         renderInboxPagination_(cached.value, requestContext, generation);

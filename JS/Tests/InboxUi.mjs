@@ -7,7 +7,7 @@ import { mergeInboxMessagePages } from "../Frontend/inboxPageCache.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const read = path => readFileSync(resolve(ROOT, path), "utf8");
-const ui = read("JS/Frontend/ui.js"), html = read("index.html"), css = read("style.css"), api = read("JS/Frontend/api-config.js"), rich = read("JS/Frontend/rich-text.js"), feedback = read("JS/Services/feedback.js");
+const ui = read("JS/Frontend/ui.js"), html = read("index.html"), css = read("style.css"), api = read("JS/Frontend/api-config.js"), rich = read("JS/Frontend/rich-text.js"), feedback = read("JS/Services/feedback.js"), inboxService = read("JS/Services/InboxConversations.js");
 const index = read("index.html"), users = read("HTML/users.html"), addCortes = read("HTML/add_cortes.html"), main = read("JS/Frontend/main.js");
 const cases = [];
 function check(name, fn) { cases.push({ name, fn }); }
@@ -139,14 +139,27 @@ check("General y Soporte no muestran selector de categoría y conservan la búsq
     assert.match(ui, /getInboxConversations\(context,[\s\S]*query: inboxConversationQuery_/);
     assert.ok(ui.includes("category: inboxConversationQuery_ ? \"all\" : inboxConversationCategory_"));
 });
-check("Todas las secciones reutilizan un único paginador con flechas y numeración contextual", () => {
+check("El paginador compartido solo aparece cuando existe otra página y mantiene contexto accesible", () => {
     assert.equal((html.match(/id="inbox-pagination"/g) || []).length, 1);
+    assert.match(html, /id="inbox-pagination"[^>]*hidden/);
     assert.match(html, /id="inbox-page-previous"[^>]*>←</);
     assert.match(html, /id="inbox-page-next"[^>]*>→</);
     assert.match(html, /id="inbox-page-label"[^>]*>1\/1</);
-    assert.match(ui, /document\.getElementById\("inbox-pagination"\)/);
+    assert.match(ui, /navigation\.hidden = !canGoPrevious && !canGoNext/);
+    assert.match(ui, /navigation\.setAttribute\("aria-label", "Paginación de conversaciones"\)/);
+    assert.match(ui, /inboxRequestSection_ === "reports" \? "Paginación de reportes"/);
+    assert.match(ui, /if \(pagination\) pagination\.hidden = true/);
+    assert.match(css, /\.inbox-pagination\[hidden\] \{ display:none !important; \}/);
     assert.match(ui, /label\.textContent = currentPage \+ "\/" \+ pageCount/);
     assert.doesNotMatch(html, /inbox-conversation-previous|inbox-conversation-next|inbox-category-filter/);
+});
+check("El Inbox limita cada respuesta paginada y conserva cursor para acceder al historial", () => {
+    assert.match(ui, /const INBOX_PAGE_SIZE_ = 40/);
+    assert.match(ui, /const INBOX_CONVERSATION_PAGE_SIZE_ = 20/);
+    assert.match(ui, /const INBOX_MESSAGE_PAGE_SIZE_ = 50/);
+    assert.equal((feedback.match(/Math\.min\(50,Math\.floor\(requestedSize\)\)/g) || []).length, 2);
+    assert.match(inboxService, /Math\.min\(50,Math\.floor\(requestedSize\)\)/);
+    assert.match(inboxService, /const hasMore = startIndex > 0/);
 });
 check("Nuevo mensaje reemplaza Solicitudes en la barra superior y desaparece el botón flotante", () => {
     assert.match(html, /id="inbox-view-tabs"[^>]*aria-label="Acciones de bandeja"/);

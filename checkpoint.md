@@ -23,3 +23,10 @@ undefined
 - Estado: COMPLETADA CON VALIDACIÓN VISUAL DIFERIDA A BETA. No se ejecutaron acciones reales de organización/conciliación.
 - Rama base GPSpedia2.2.5 sigue en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 - Siguiente tarea P2: GP-INBOX-LIST-NAV-01 — revisar límites y simplificar navegación de listas del Inbox sin descargas ilimitadas.
+
+
+### Continuidad — GP-INBOX-LIST-NAV-01 — 2026-11-17
+- HEAD de inicio: 5aae2351871ca819cee1166c3cdb72837f5037d2, rama GPSpedia2.2.5_work. Rama base GPSpedia2.2.5 verificada en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Auditoría: UI ya solicitaba páginas acotadas (20 conversaciones, 40 solicitudes, 50 mensajes); el backend permitía hasta 100 en reportes/tickets y mensajes. El paginador compartido permanecía visible aunque la respuesta no tuviera página siguiente ni anterior.
+- Decisión: conservar paginación por cursor para acceso al historial y limitar a 50 los endpoints backend que aún aceptaban 100; ocultar controles cuando no exista navegación efectiva. No se sustituyen cursores por offsets ni se descarga la lista completa.
+- Implementación y pruebas añadidas en ui.js, index.html, style.css, feedback.js, InboxConversations.js, InboxUi.mjs e InboxConversations.mjs. CI pendiente; no marcar tarea completada hasta revisar ejecución.

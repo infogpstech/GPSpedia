@@ -296,6 +296,18 @@ run("Archivo y restauración son estados privados por participante", () => {
     api.handleArchiveInboxConversation({ ...actor("U1","token-a"),conversationId:first.conversationId,archived:false });
     assert.equal(api.handleGetInboxConversations({ ...actor("U1","token-a"),folder:"all" }).total,1);
 });
+run("Los endpoints de conversaciones y mensajes limitan las páginas a 50 elementos", () => {
+    const conversations = api.handleGetInboxConversations({
+        ...actor("U1","token-a"),folder:"all",pageSize:999,cursor:"0"
+    });
+    assert.equal(conversations.pageSize,50);
+    assert.ok(conversations.data.length <= 50);
+    const messages = api.handleGetInboxMessages({
+        ...actor("U1","token-a"),conversationId:first.conversationId,pageSize:999,cursor:"0"
+    });
+    assert.equal(messages.pageSize,50);
+    assert.ok(messages.data.length <= 50);
+});
 run("Búsqueda y paginación respetan carpeta y cursor", () => {
     api.handleCreateInboxConversation({
         ...actor("U1","token-a"),recipientId:"U3",subject:"Consulta de relay",category:"soporte",

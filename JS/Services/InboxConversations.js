@@ -562,7 +562,7 @@ function handleGetInboxMessages(payload) {
     if (cursorRaw !== "0" && !/^[A-Za-z0-9_-]{8,100}$/.test(cursorRaw)) throw new Error("El cursor no es válido.");
     const anchorMessageId = cursorRaw === "0" ? "" : cursorRaw;
     const requestedSize = Number(payload.pageSize);
-    const pageSize = Number.isFinite(requestedSize) ? Math.max(1,Math.min(100,Math.floor(requestedSize))) : 50;
+    const pageSize = Number.isFinite(requestedSize) ? Math.max(1,Math.min(50,Math.floor(requestedSize))) : 50;
     return withInboxConversationLock_(() => {
         const sheets = ensureInboxConversationSheets_();
         const found = inboxFindConversation_(inboxConversationRows_(sheets.conversations,INBOX_CONVERSATION_HEADERS_.length),conversationId);

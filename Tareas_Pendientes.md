@@ -1040,9 +1040,16 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - Rediseñar la biblioteca de imágenes con barra de funciones iconográfica y organizada, sin alterar las protecciones de archivos ni acciones destructivas.
 
 ### GP-INBOX-LIST-NAV-01 — Simplificación de listas y navegación del Inbox
-**Prioridad: P2 · Estado: PENDIENTE**
+**Prioridad: P2 · Estado: EN PROGRESO**
 - Revisar límite de conversaciones/mensajes y decidir con evidencia si se conserva paginación interna o se elimina navegación redundante por botones.
 - Evitar descargas ilimitadas y conservar accesibilidad y rendimiento.
+
+#### Implementación en curso — 2026-11-17
+- Decisión basada en los contratos existentes: conservar paginación por cursor; retirar el paginador visual cuando no hay página anterior ni siguiente. Eliminarlo por completo haría inaccesibles conversaciones y reportes históricos o exigiría descargar listas sin límite.
+- Tamaños frontend: 20 conversaciones, 40 reportes/mensajes de solicitudes y 50 mensajes por conversación. Se unifican en 50 los topes máximos de backend para `getFeedbackItems`, `getMyProblemReports` y `getInboxMessages`; `getInboxConversations` ya tenía tope 50.
+- El paginador compartido comienza oculto, se muestra únicamente si existe otra página, y su nombre accesible identifica conversaciones, reportes, aportaciones o mensajes. Se conserva la navegación por cursor y el acceso a historial.
+- Pruebas añadidas a InboxUi e InboxConversations para visibilidad condicional, límites por página y cursores. Validación CI pendiente.
+
 
 ### GP-INBOX-THREAD-TOOLBAR-01 — Organización de la bandeja de conversación
 **Prioridad: P2 · Estado: PENDIENTE**
