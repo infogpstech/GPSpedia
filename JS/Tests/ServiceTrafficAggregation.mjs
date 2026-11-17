@@ -93,6 +93,28 @@ test("combina contadores directos de AUTH, WRITE y FEEDBACK con operaciones Coor
     assert.equal(result.sources.coordinator.available, true);
 });
 
+test("conserva buckets directos que cruzan el límite de hora respecto a Coordinator", () => {
+    const coordinator = coordinatorFixture();
+    const nextHour = coordinator.buckets[0].startAt + 60 * 60 * 1000;
+    const directResults = {};
+    for (const service of ["AUTH", "WRITE", "FEEDBACK"]) {
+        directResults[service] = {
+            status: "success", service, scope: "direct_post_requests",
+            accuracy: "best_effort_nonblocking", mayUndercount: true,
+            buckets: [{ startAt: nextHour, count: 3 }],
+            totals: Object.fromEntries(periods.map(period => [period, 3]))
+        };
+    }
+    const result = mergeDirectServiceTraffic_(coordinator, directResults);
+    assert.equal(result.buckets.length, 2);
+    assert.equal(result.buckets[0].startAt, coordinator.buckets[0].startAt);
+    assert.equal(result.buckets[1].startAt, nextHour);
+    for (const service of ["AUTH", "WRITE", "FEEDBACK"]) {
+        assert.equal(result.buckets[1].counts[service], 3);
+        assert.equal(result.buckets[0].counts[service], coordinator.buckets[0].counts[service]);
+    }
+});
+
 test("la falta de configuración de cada fuente directa conserva su agregado Coordinator y declara cobertura parcial", () => {
     const coordinator = coordinatorFixture();
     const unavailable = Object.fromEntries(["CATALOG", "AUTH", "WRITE", "FEEDBACK"]
@@ -118,4 +140,4 @@ test("ignora buckets CATALOG inválidos sin contaminar conteos y mantiene explí
     assert.ok(result.coverage.excludes.includes("solicitudes HTTP que no atraviesan las rutas instrumentadas"));
 });
 
-console.log("ServiceTrafficAggregation: " + passed + "/5 PASS");
+console.log("ServiceTrafficAggregation: " + passed + "/6 PASS");
