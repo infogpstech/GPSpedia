@@ -1579,3 +1579,17 @@ Evidencia y ubicaciones: adenda del 2026-11-17 en `Auditoría.txt`. La revisión
 - Cierre YouTube como botón accesible; roles y nombres ARIA en los diálogos afectados.
 - Pruebas de contrato añadidas/actualizadas: CutDetailModalLayout y YouTubeUploadOverlayLifecycle.
 - No ejecutar despliegues ni Beta en esta fase. Validar mediante CI y pruebas locales disponibles; la comprobación visual real queda para Beta.
+
+
+---
+
+## Adenda de continuidad y reconciliación — 2026-11-17
+
+- **HEAD comprobado:** `f5d2391aa7e271d487d0d730284f56f0fb3064e7` en `GPSpedia2.2.5_work`. La rama base `GPSpedia2.2.5` permanece en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- **P1.2:** las notas antiguas que la muestran EN PROGRESO quedan supersedidas por los cierres posteriores de P1.2a y P1.2b. P1.3 también consta cerrada. No son tareas locales abiertas.
+- **P4.3 — nomenclatura reconciliada:** P4.3a corresponde a la lectura del inventario una vez por lote; P4.3b corresponde a la optimización CacheService.getAll/putAll; P4.3c corresponde a la publicación CATALOG por lotes; P4.3d corresponde a la revisión del alcance del ScriptLock.
+- La propuesta inicial de claim/reserva/commit para liberar el ScriptLock durante operaciones Drive no se implementó. La revisión posterior decidió conservar el lock porque no había mediciones que demostraran contención perjudicial entre acciones ADMIN independientes y porque retirar protección sin cubrir el estado interno podía afectar la idempotencia y el rollback. Esa propuesta queda **DIFERIDA A MEDICIÓN**, no como tarea local activa. Solo reabrirla si métricas Beta demuestran contención real y una nueva auditoría acredita un diseño seguro; no sustituir el lock por tryLock/UserLock por suposición.
+- **BETA-003:** la corrección local de la política de caché del Service Worker queda cubierta por la regresión integral del HEAD actual. La activación/actualización real de la caché y la navegación online/offline siguen siendo validaciones Beta.
+- **GP-UX-MODAL-HEADERS-02:** implementación y contratos locales validados en el CI del HEAD actual; la comprobación visual en navegador/dispositivo real permanece en Beta.
+- **Regresión actual:** Actions `44170476002` SUCCESS — 145 suites, 2,127 pruebas aprobadas, 0 fallos. GitHub Pages `44170474862` SUCCESS. Health remoto `44170475959` SUCCESS, únicamente diagnóstico GET de solo lectura.
+- **Estado de continuidad:** no quedan tareas de implementación local abiertas en el plan consolidado. Permanecen las validaciones Beta enumeradas en este backlog. No se desplegaron Apps Script ni se modificaron ScriptProperties, secretos, hojas, Drive o datos externos.

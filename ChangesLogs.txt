@@ -360,3 +360,13 @@ undefined
 
 
 [2026-11-17] UX — Normalización de encabezados de modales: títulos alineados a la izquierda con espacio reservado para el cierre a la derecha; detalle de corte con acciones en orden Imprimir/Editar/Compartir, divisor azul más cercano al logo/modelo y nombre del modelo ligeramente elevado sin alterar el tamaño del logo ni las sombras; retroceso cierra el detalle de corte; cierre YouTube convertido en botón accesible. Se añadieron roles y nombres ARIA a los diálogos afectados.
+
+
+================================================================================
+2026-11-17 — CIERRE GP-UX-MODAL-HEADERS-02 Y RECONCILIACIÓN DE CONTINUIDAD
+- Se registró el cierre de la implementación de encabezados de modales y navegación Atrás del detalle de corte.
+- Validación GitHub Actions 44170476002 SUCCESS: 145 suites, 2,127 pruebas aprobadas, 0 fallos; job 134347901920. GitHub Pages 44170474862 SUCCESS. Health read-only 44170475959 SUCCESS.
+- Se aclaró la nomenclatura P4.3: inventario por lote (a), CacheService por lotes (b), publicación CATALOG por lotes (c) y revisión/retención del ScriptLock (d). La propuesta inicial claim/commit se difiere hasta disponer de mediciones que justifiquen reabrirla; no se cambió admin.js ni se debilitó el lock.
+- Las notas históricas de P1.2 EN PROGRESO quedan supersedidas por sus cierres P1.2a/P1.2b y P1.3.
+- No quedan tareas de implementación local abiertas en el plan consolidado. Las validaciones visuales, navegador/PWA y servicios externos siguen diferidas a Beta. No se desplegaron Apps Script ni se modificaron datos externos.
+================================================================================

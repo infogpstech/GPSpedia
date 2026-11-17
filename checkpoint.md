@@ -502,3 +502,13 @@ Se implementó el ajuste de encabezados solicitado. Archivos de código: `JS/Fro
 
 ### Revisión de CI — primer intento de GP-UX-MODAL-HEADERS-02
 La comprobación sintáctica aprobó. Dos contratos heredados fallaron por expectativas estáticas que requerían la inserción temprana del botón Compartir y una llamada literal a restoreModalNavigationContext. Se ajustó la implementación para registrar Compartir inicialmente y moverlo al final tras crear Imprimir/Editar (conservando el orden visual), y se mantuvo explícita la restauración para tipos de detalle distintos de corte. No se identificó fallo de ejecución de la interfaz; las suites afectadas se vuelven a ejecutar en el siguiente CI.
+
+
+### Cierre y reconciliación de continuidad — 2026-11-17
+- HEAD confirmado en `GPSpedia2.2.5_work`: `f5d2391aa7e271d487d0d730284f56f0fb3064e7`; commit padre `2dcee7a9569aa31672a7e0f007ceafe84681b275`. Rama base `GPSpedia2.2.5`: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin cambios.
+- GP-UX-MODAL-HEADERS-02: implementación publicada y regresión integral aprobada. Se conserva el orden Imprimir/Editar/Compartir, logo/dimensiones/sombras, divisor y título ajustados, cierre del detalle de corte mediante Atrás, y semántica accesible de los diálogos afectados.
+- GitHub Actions run `44170476002`, job `134347901920`: SUCCESS; 145 suites, 2,127 pruebas aprobadas, 0 fallos. El log confirma el resumen completo de la regresión y la comprobación sintáctica.
+- GitHub Pages run `44170474862`: SUCCESS para el HEAD actual. Health read-only run `44170475959`: SUCCESS; solo GET de diagnóstico, no valida funciones Apps Script no desplegadas.
+- Se reconcilió la nomenclatura P4.3: P4.3a inventario por lote; P4.3b CacheService por lotes; P4.3c publicación CATALOG por lotes; P4.3d decisión de conservar ScriptLock. El diseño alternativo claim/commit queda diferido hasta que mediciones reales justifiquen reabrirlo. No se modificó el lock ni la lógica de ADMIN.
+- Las menciones antiguas de P1.2 EN PROGRESO quedan supersedidas por los cierres posteriores P1.2a/P1.2b y P1.3. BETA-003 y los encabezados de modales cuentan con regresión local aprobada; sus validaciones de navegador/servicios reales siguen en Beta.
+- No quedan tareas de implementación local abiertas en el plan consolidado. Continúan pendientes las validaciones Beta y cualquier deployment Apps Script requiere autorización y entorno Beta. No se desplegaron servicios ni se modificaron ScriptProperties, hojas, Drive o datos externos.
