@@ -23,20 +23,25 @@ function runUsersAtomicMutationTests(usersSource, authSource, coordinatorSource)
         const end = candidates.length ? Math.min.apply(null, candidates) : text.length;
         return text.slice(start, end);
     };
-    run("USERS integra LastActivityAt dentro de la autenticación backend", function() {
+    run("USERS consume el actor central y solo localiza la fila destino al actualizar perfil", function() {
         const verifier = extract(source, "getVerifiedSession");
         const profileHandler = extract(source, "handleUpdateProfile");
         const dispatcher = extract(source, "doPost");
-        assert(verifier.includes("touchSessionActivityIfDue_(sessionsSheet,sessionMatch.rowIndex,sessionMatch.row,COLS_ACTIVE_SESSIONS.LastActivityAt)"),
-            "getVerifiedSession debe actualizar LastActivityAt con intervalo tras validar al usuario.");
-        assert(source.includes("5*60*1000"), "La escritura de actividad debe estar limitada a intervalos.");
-        assert(verifier.includes("userRowIndex: userRows[0].rowIndex"), "La sesión verificada debe devolver la fila del usuario ya localizada.");
-        assert(profileHandler.includes("userRowIndex") && !profileHandler.includes("findUniqueUserRow_"), "La actualización de perfil debe reutilizar la fila autenticada sin repetir la búsqueda por ID.");
+        assert(verifier.includes("__sharedSessionActor"), "getVerifiedSession debe exigir el actor central.");
+        assert(!verifier.includes("touchSessionActivityIfDue_") && !verifier.includes("getSessionExpirationStatus_"),
+            "getVerifiedSession no debe revalidar expiración ni escribir actividad en ActiveSessions.");
+        assert(!verifier.includes("sessionsSheet") && !verifier.includes("COLS_ACTIVE_SESSIONS"),
+            "getVerifiedSession no debe consultar ActiveSessions.");
+        assert(verifier.includes("if (requireUserRow === true)") && verifier.includes("findUniqueRowsByExactValue_"),
+            "La búsqueda de Users solo se permite para localizar el registro destino de updateProfile.");
+        assert(profileHandler.includes("userRowIndex") && !profileHandler.includes("findUniqueUserRow_"),
+            "La actualización de perfil debe reutilizar la fila destino ya localizada.");
         assert(dispatcher.includes('withSharedMutationLease_("USERS", "sessionActivity"'),
             "getUsers debe adquirir una lease de actividad.");
         assert(String(coordinatorSource || "").includes('sessionActivity: { read: identityRead }'),
-            "USERS debe validar la actividad leyendo el contexto central sin reservar escrituras en ActiveSessions.");
+            "USERS debe validar el actor leyendo el contexto central.");
     });
+
 
     const names = [
         "normalizePassword", "normalizeUsername_", "parseUserIdSequenceFormula_", "getUserIdSequencePattern_", "generateNextUserId_", "findNextUserRow_",

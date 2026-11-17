@@ -6,52 +6,62 @@ const root=resolve(dirname(fileURLToPath(import.meta.url)),"../..");
 const read=path=>fs.readFileSync(resolve(root,path),"utf8");
 const api=read("JS/Frontend/api-config.js"),write=read("JS/Services/write.js"),users=read("JS/Services/users.js"),admin=read("JS/Services/admin.js"),feedback=read("JS/Services/feedback.js"),auth=read("JS/Services/Auth.js"),coordinator=read("JS/Services/Coordinator.js"),client=read("JS/Services/SharedMutationClient.js"),utilities=read("JS/Services/Utilities.js");
 let passed=0;function testCase(name,fn){fn();passed++;console.log("PASS "+name);}
-testCase("WRITE coordina las operaciones protegidas y actualiza actividad dentro de la sesión validada",()=>{
- assert.match(write,/function isSharedMutationAction_\(action\)\s*\{\s*return \["addOrUpdateCut","addSupplementaryInfo","addVinToVehicle","allocateVehicleId","freezeCortesIds"\]/);
- assert.match(write,/if \(action !== "checkOperation"\) return doPostInternal_\(withSharedSessionActor_\(e, null\)\);\s*try \{\s*return withSharedMutationLease_\("WRITE", "sessionActivity"/);
- assert.match(write,/touchSessionActivityIfDue_\(sh,sessionMatch\.rowIndex,sessionMatch\.row,COLS_ACTIVE_SESSIONS\.LastActivityAt\)/);
+testCase("WRITE coordina las operaciones protegidas y consume el actor central",()=>{
+ assert.match(write,/if \(action !== "checkOperation"\) return doPostInternal_\(withSharedSessionActor_\(e, null\)\)/);
+ assert.match(write,/return withSharedMutationLease_\("WRITE", action/);
+ assert.doesNotMatch(write,/touchSessionActivityIfDue_|getSessionExpirationStatus_/);
  ["handleCheckOperation","handleAddOrUpdateCutLocked","handleAddVinToVehicleLocked","assertDeveloperForIdMaintenance"].forEach(name=>{
   const i=write.indexOf("function "+name);assert.ok(i>=0,name);
-  const j=write.indexOf("\nfunction ",i+10);assert.match(write.slice(i,j<0?undefined:j),/getAuthenticatedCollaborator\(/,name+" debe autenticar y tocar actividad");
+  const j=write.indexOf("\nfunction ",i+10);assert.match(write.slice(i,j<0?undefined:j),/getAuthenticatedCollaborator\(/,name+" debe consumir el actor central");
  });
 });
-testCase("USERS coordina lecturas y mutaciones y actualiza LastActivityAt al verificar sesión",()=>{
- assert.match(users,/if \(action !== "getUsers"\) return doPostInternal_\(withSharedSessionActor_\(e, null\)\);\s*try \{\s*return withSharedMutationLease_\("USERS", "sessionActivity"/);
+
+testCase("USERS coordina lecturas y mutaciones y consume el actor central",()=>{
+ assert.match(users,/if \(action !== "getUsers"\) return doPostInternal_\(withSharedSessionActor_\(e, null\)\)/);
  assert.match(users,/function isSharedMutationAction_\(action\)\s*\{\s*return \["createUser","updateProfile"\]/);
- assert.match(users,/touchSessionActivityIfDue_\(sessionsSheet,sessionMatch\.rowIndex,sessionMatch\.row,COLS_ACTIVE_SESSIONS\.LastActivityAt\)/);
+ assert.doesNotMatch(users,/touchSessionActivityIfDue_|getSessionExpirationStatus_/);
  ["handleGetUsers","handleCreateUser","handleUpdateProfile"].forEach(name=>{
   const i=users.indexOf("function "+name);assert.ok(i>=0,name);
-  const j=users.indexOf("\nfunction ",i+10);assert.match(users.slice(i,j<0?undefined:j),/getVerifiedSession\(/,name+" debe validar la sesión dentro de la operación");
+  const j=users.indexOf("\nfunction ",i+10);assert.match(users.slice(i,j<0?undefined:j),/getVerifiedSession\(/,name+" debe consumir el actor central");
  });
 });
-testCase("ADMIN exige sesión y coordina tanto lecturas como mutaciones protegidas",()=>{
- assert.match(admin,/if \(!isSharedMutationAction_\(action\)\) \{\s*if \(action === "ping"\) return doPostInternal_\(withSharedSessionActor_\(e, null\)\);\s*const operation = isSharedReadAction_\(action\) \? action : "sessionActivity";\s*try \{\s*return withSharedMutationLease_\("ADMIN", operation/);
+
+testCase("ADMIN exige actor central y coordina lecturas y mutaciones",()=>{
+ assert.match(admin,/if \(!isSharedMutationAction_\(action\)\) \{/);
  assert.match(admin,/return withSharedMutationLease_\("ADMIN", action/);
- assert.match(admin,/touchSessionActivityIfDue_\(sh,sessionMatch\.rowIndex,sessionMatch\.row,6\)/);
+ assert.doesNotMatch(admin,/touchSessionActivityIfDue_|getSessionExpirationStatus_/);
  assert.match(admin,/const developerContext = action === 'ping' \? null : \(ADMIN_MODAL_EDIT_ACTIONS\.has\(action\) \? assertModalEditSession\(payload\) : assertDeveloperSession\(payload\)\)/);
 });
+
 testCase("FEEDBACK coordina operaciones protegidas y deja públicas solo las rutas declaradas",()=>{
  assert.match(feedback,/return withSharedMutationLease_\("FEEDBACK", "sessionActivity"/);
  assert.match(feedback,/return withSharedMutationLease_\("FEEDBACK", action/);
- assert.match(feedback,/touchSessionActivityIfDue_\(sh,sessionMatch\.rowIndex,sessionMatch\.row,6\)/);
+ assert.doesNotMatch(feedback,/touchSessionActivityIfDue_|getSessionExpirationStatus_/);
  assert.match(feedback,/new Set\(\["getPysData", "sendContactForm", "getCatalogChanges"\]\)/);
  assert.doesNotMatch(feedback,/getCatalogChanges:\s*null/);
  assert.match(client,/catalogFeed=1/);
  assert.match(feedback,/const actor = assertFeedbackSession\(source, FEEDBACK_ACTION_PERMISSIONS\[action\]\)/);
 });
-testCase("Los servicios localizan token y perfil por fila exacta y reducen escrituras de actividad",()=>{
- const specs=[[feedback,"assertFeedbackSession"],[users,"getVerifiedSession"],[admin,"getAdminSessionContext_"],[write,"getAuthenticatedCollaborator"]];
+
+testCase("Los servicios protegidos exigen el actor central y no revalidan Users/ActiveSessions",()=>{
+ const specs=[[admin,"getAdminSessionContext_"],[feedback,"assertFeedbackSession"],[write,"getAuthenticatedCollaborator"],[utilities,"assertUtilitiesDeveloperSession_"]];
  for(const [source,name] of specs){
   const start=source.indexOf("function "+name+"(");assert.ok(start>=0,name);
-  const end=source.indexOf("\nfunction ",start+10),body=source.slice(start,end<0?source.length:end);
-  assert.match(body,/findUniqueRowsByExactValue_\(/,name+" no usa búsqueda directa");
-  assert.equal(body.includes("getDataRange()"),false,name+" todavía recorre la hoja completa");
-  assert.match(source,/function findUniqueRowsByExactValue_\(/);
-  assert.match(source,/createTextFinder\(/);
-  assert.match(source,/function touchSessionActivityIfDue_\(/);
-  assert.match(source,/5\*60\*1000/);
+  const next=source.indexOf("\nfunction ",start+10),body=source.slice(start,next<0?source.length:next);
+  assert.match(body,/__sharedSessionActor/,name+" debe exigir actor central");
+  assert.doesNotMatch(body,/getSpreadsheet|ActiveSessions|Users|findUniqueRowsByExactValue_|getSessionExpirationStatus_|touchSessionActivityIfDue_/,name+" conserva revalidación local por hojas");
  }
+ const start=users.indexOf("function getVerifiedSession("),next=users.indexOf("\nfunction ",start+10),userBody=users.slice(start,next<0?users.length:next);
+ const body=userBody.slice(userBody.indexOf("{")+1);
+ assert.match(body,/__sharedSessionActor/);
+ assert.match(body,/if \(requireUserRow === true\)/);
+ assert.doesNotMatch(body,/ActiveSessions|getSessionExpirationStatus_|touchSessionActivityIfDue_|sessionToken/);
+ assert.match(coordinator,/function authorizeSession_\(userId, token, currentTime\)/);
+ assert.match(coordinator,/readAuthContext_\(userId\)/);
+ assert.match(coordinator,/context\.revokedBefore/);
+ assert.match(coordinator,/absoluteExpiry|idleExpiry/);
 });
+
 testCase("AUTH usa el actor central y no repite verificaciones de usuario/rol en cada handler",()=>{
  assert.equal(auth.includes("touchProtectedAuthRequestSession_"),false);
  const dispatchStart=auth.indexOf("function doPostInternal_(");

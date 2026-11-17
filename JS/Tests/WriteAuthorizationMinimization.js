@@ -41,13 +41,15 @@ function runWriteAuthorizationMinimizationTests(sources) {
   assert(write.includes("const COLS_ACTIVE_SESSIONS = Object.freeze({")&&write.includes("ID_Usuario: 1")&&write.includes("ActiveSessions: 3")&&write.includes("LastActivityAt: 6"));
   assert(write.includes('const ROLE_REVOCATION_SHARED_PREFIX = "__role_revocation_pending__:'));
  });
- run("El perfil servidor determina nombre y rol; no se confía en colaborador enviado",()=>{
+ run("WRITE consume identidad/rol del actor central sin consultar hojas de sesión",()=>{
   const helper=extract(write,"getAuthenticatedCollaborator");
-  assert(helper.includes("tokenMatches.length!==1")&&helper.includes("ID_Usuario")&&helper.includes("getSessionExpirationStatus_"));
-  assert(helper.includes("userMatches.length!==1")&&helper.includes("ROLE_REVOCATION_SHARED_PREFIX"));
-  assert(helper.includes("COLS_USERS.Privilegios")&&helper.includes("COLS_USERS.Nombre_Completo"));
+  assert(helper.includes("__sharedSessionActor"));
+  assert(helper.includes("Number.isSafeInteger(trusted.epoch)"));
+  assert(helper.includes("trusted.fullName")&&helper.includes("trusted.role"));
+  assert(!/getSpreadsheet|ActiveSessions|Users|findUniqueRowsByExactValue_|getSessionExpirationStatus_|touchSessionActivityIfDue_/.test(helper));
   assert(!helper.includes("payload.colaborador"));
  });
+
  run("allocateVehicleId valida sesión y rol Desarrollador una vez dentro del lock",()=>{
   const handler=extract(write,"handleAllocateVehicleId"),auth=extract(write,"assertDeveloperForIdMaintenance");
   assert(handler.indexOf("waitLock")<handler.indexOf("assertDeveloperForIdMaintenance(payload)"));

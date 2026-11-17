@@ -319,60 +319,21 @@ function findUniqueRowsByExactValue_(sheet,column,value,minWidth=1,trimCell=fals
             return (trimCell ? actual.trim() : actual) === expected;
         });
 }
-function touchSessionActivityIfDue_(sheet,rowIndex,row,activityColumn) {
-    const now = new Date(), raw = row[activityColumn-1] === null || row[activityColumn-1] === undefined || String(row[activityColumn-1]).trim() === "" ? row[3] : row[activityColumn-1];
-    const last = raw instanceof Date ? new Date(raw.getTime()) : new Date(raw);
-    if (Number.isNaN(last.getTime()) || now.getTime()-last.getTime() < 5*60*1000) return false;
-    const token = String(row[2] || ""), currentToken = String(sheet.getRange(rowIndex,3).getValue() || "");
-    if (!token || currentToken !== token) return false;
-    sheet.getRange(rowIndex,activityColumn).setValue(now.toISOString());
-    return true;
-}
 
-function getSessionExpirationStatus_(row,now=new Date()){const created=parseSessionDate_(row[COLS_ACTIVE_SESSIONS.date-1]),raw=row[COLS_ACTIVE_SESSIONS.LastActivityAt-1],activity=raw===null||raw===undefined||String(raw).trim()===''?created:parseSessionDate_(raw);if(!created||!activity)return{expired:true,reason:'invalid_timestamp'};if(now.getTime()>=addCalendarMonthsUTC_(created,3).getTime())return{expired:true,reason:'absolute_expiration'};if(now.getTime()>=addCalendarMonthsUTC_(activity,1).getTime())return{expired:true,reason:'inactivity_expiration'};return{expired:false};}
-function getVerifiedSession(sessionToken, payload, requireUserRow) {
+function getVerifiedSession(_sessionToken, payload, requireUserRow) {
     const trustedActor = payload && payload.__sharedSessionActor;
-    if (trustedActor && typeof trustedActor.userId === "string" &&
-        typeof trustedActor.role === "string" && Number.isSafeInteger(trustedActor.epoch) && trustedActor.epoch > 0) {
-        const userId = trustedActor.userId.trim();
-        const requestedUserId = String(payload.userId || userId).trim();
-        const normalizedRole = trustedActor.role.trim().toLowerCase();
-        const displayRoles = {
-            desarrollador: "Desarrollador", jefe: "Jefe", supervisor: "Supervisor",
-            tecnico: "Tecnico", tecnico_exterior: "Tecnico_exterior"
-        };
-        if (!userId || requestedUserId !== userId || !displayRoles[normalizedRole]) {
-            throw new Error("Acceso no autorizado: el contexto compartido no coincide con la identidad solicitada.");
-        }
-        let userRowIndex = null;
-        if (requireUserRow === true) {
-            const usersSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.USERS);
-            const userRows = findUniqueRowsByExactValue_(usersSheet, COLS_USERS.ID, userId, 9, true);
-            if (userRows.length !== 1) {
-                throw new Error("No se encontró una fila única para actualizar el perfil autenticado.");
-            }
-            userRowIndex = userRows[0].rowIndex;
-        }
-        return { userId, role: displayRoles[normalizedRole], userRowIndex, epoch: trustedActor.epoch };
+    if (!trustedActor || typeof trustedActor.userId !== "string" || typeof trustedActor.role !== "string" || !Number.isSafeInteger(trustedActor.epoch) || trustedActor.epoch < 1) throw new Error("Acceso no autorizado: falta el contexto de sesión compartido.");
+    const userId = trustedActor.userId.trim(), requestedUserId = String(payload.userId || userId).trim(), normalizedRole = trustedActor.role.trim().toLowerCase();
+    const displayRoles = {desarrollador:"Desarrollador",jefe:"Jefe",supervisor:"Supervisor",tecnico:"Tecnico",tecnico_exterior:"Tecnico_exterior"};
+    if (!userId || requestedUserId !== userId || !displayRoles[normalizedRole]) throw new Error("Acceso no autorizado: el contexto compartido no coincide con la identidad solicitada.");
+    let userRowIndex = null;
+    if (requireUserRow === true) {
+        const usersSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.USERS);
+        const userRows = findUniqueRowsByExactValue_(usersSheet, COLS_USERS.ID, userId, 9, true);
+        if (userRows.length !== 1) throw new Error("No se encontró una fila única para actualizar el perfil autenticado.");
+        userRowIndex = userRows[0].rowIndex;
     }
-    if (!sessionToken) throw new Error("Acceso no autorizado: Se requiere token de sesión.");
-    const ss = getSpreadsheet(), sessionsSheet = ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
-    if (!sessionsSheet) throw new Error("Acceso no autorizado: Sesión no autorizada.");
-    const matches = findUniqueRowsByExactValue_(sessionsSheet,COLS_ACTIVE_SESSIONS.ActiveSessions,sessionToken,6,false);
-    if (matches.length !== 1) throw new Error("Acceso no autorizado: Sesión inválida, duplicada o expirada.");
-    const sessionMatch=matches[0],expiration=getSessionExpirationStatus_(sessionMatch.row,new Date());
-    if(expiration.expired)throw new Error('Acceso no autorizado: Sesión expirada por '+expiration.reason+'.');
-    const userId = String(sessionMatch.row[COLS_ACTIVE_SESSIONS.ID_Usuario-1] ?? '').trim();
-    if (!userId) throw new Error("Acceso no autorizado: Identidad de sesión inválida.");
-    const usersSheet = ss.getSheetByName(SHEET_NAMES.USERS);
-    if (!usersSheet) throw new Error("Hoja de usuarios no encontrada.");
-    const userRows = findUniqueRowsByExactValue_(usersSheet,COLS_USERS.ID,userId,9,true);
-    if (userRows.length !== 1 || !isActiveUserRecord(userRows[0].row)) throw new Error("Acceso no autorizado: Usuario inexistente o desactivado.");
-    if (hasPendingRoleRevocationForUser_(userRows[0].row)) throw new Error("Acceso no autorizado: existe una revocación de rol pendiente. Inicia sesión nuevamente cuando finalice.");
-    const rawRole = String(userRows[0].row[COLS_USERS.Privilegios-1] || '').trim();
-    const role = rawRole;
-    touchSessionActivityIfDue_(sessionsSheet,sessionMatch.rowIndex,sessionMatch.row,COLS_ACTIVE_SESSIONS.LastActivityAt);
-    return { userId, role, userRowIndex: userRows[0].rowIndex };
+    return {userId,role:displayRoles[normalizedRole],userRowIndex,epoch:trustedActor.epoch};
 }
 
 // ============================================================================

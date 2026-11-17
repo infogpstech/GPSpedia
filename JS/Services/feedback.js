@@ -8,7 +8,6 @@
 // ============================================================================
 const SPREADSHEET_ID = "1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3fteXYt3Os"; // <-- ACTUALIZADO A DB V2.0
 const DRIVE_FOLDER_ID = "1-8QqhS-wtEFFwyBG8CmnEOp5i8rxSM-2";
-const ROLE_REVOCATION_SHARED_PREFIX = "__role_revocation_pending__:";
 let spreadsheet = null;
 
 function getSpreadsheet() {
@@ -32,89 +31,26 @@ function getSafeSheet(name) {
 }
 
 
-/**
- * Verifica la sesión contra ActiveSessions y obtiene el privilegio desde Users.
- * No utiliza el rol, nombre ni ID de actor enviados como datos de autorización por el navegador.
- */
+/** El dispatcher adjunta el actor autenticado por Coordinator; este helper no consulta hojas de sesión. */
 function normalizeFeedbackRole(role) {
     const normalized = Array.from(String(role || "").normalize("NFD"))
         .filter(character => { const code = character.charCodeAt(0); return code < 768 || code > 879; }).join("");
     const roleName = normalized.trim().toLowerCase();
     return roleName;
 }
-function findUniqueRowsByExactValue_(sheet,column,value,minWidth=1,trimCell=false) {
-    if (!sheet || !value) return [];
-    const lastRow = Number(sheet.getLastRow ? sheet.getLastRow() : 0);
-    if (lastRow < 2) return [];
-    const expected = String(value), range = sheet.getRange(2,column,lastRow-1,1);
-    let rowNumbers = [];
-    if (range && typeof range.createTextFinder === "function") {
-        const finder = range.createTextFinder(expected);
-        if (finder && typeof finder.matchCase === "function") finder.matchCase(true);
-        if (finder && typeof finder.matchEntireCell === "function") finder.matchEntireCell(!trimCell);
-        const matches = finder && typeof finder.findAll === "function" ? finder.findAll() || [] : [];
-        rowNumbers = matches.map(cell => cell.getRow());
-    } else {
-        const values = range.getValues();
-        for (let i=0;i<values.length;i++) {
-            const actual = String(values[i][0] === null || values[i][0] === undefined ? "" : values[i][0]);
-            if ((trimCell ? actual.trim() : actual) === expected) rowNumbers.push(i+2);
-        }
-    }
-    const lastColumn = Number(sheet.getLastColumn ? sheet.getLastColumn() : 0);
-    const width = Math.max(Number(minWidth)||1,lastColumn||1);
-    return rowNumbers.map(rowIndex => ({rowIndex,row:sheet.getRange(rowIndex,1,1,width).getValues()[0]}))
-        .filter(item => {
-            const actual = String(item.row[column-1] === null || item.row[column-1] === undefined ? "" : item.row[column-1]);
-            return (trimCell ? actual.trim() : actual) === expected;
-        });
-}
-function touchSessionActivityIfDue_(sheet,rowIndex,row,activityColumn) {
-    const now = new Date(), raw = row[activityColumn-1] === null || row[activityColumn-1] === undefined || String(row[activityColumn-1]).trim() === "" ? row[3] : row[activityColumn-1];
-    const last = raw instanceof Date ? new Date(raw.getTime()) : new Date(raw);
-    if (Number.isNaN(last.getTime()) || now.getTime()-last.getTime() < 5*60*1000) return false;
-    const token = String(row[2] || ""), currentToken = String(sheet.getRange(rowIndex,3).getValue() || "");
-    if (!token || currentToken !== token) return false;
-    sheet.getRange(rowIndex,activityColumn).setValue(now.toISOString());
-    return true;
-}
 
 function getFeedbackActor_(payload,allowedRoles) {
     return payload && payload.__feedbackActor ? payload.__feedbackActor : assertFeedbackSession(payload,allowedRoles);
 }
 
-function getSessionExpirationStatus_(row,now=new Date()){
- if(!row)return{expired:true,reason:'missing_session'};
- const parse=v=>{if(v===null||v===undefined||String(v).trim()==='')return null;const d=v instanceof Date?new Date(v.getTime()):new Date(v);return Number.isNaN(d.getTime())?null:d;};
- const add=(date,n)=>{const d=new Date(date.getTime()),day=d.getUTCDate();d.setUTCDate(1);d.setUTCMonth(d.getUTCMonth()+n);const last=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,0)).getUTCDate();d.setUTCDate(Math.min(day,last));return d;};
- const created=parse(row[3]),raw=row[5],activity=raw===null||raw===undefined||String(raw).trim()===''?created:parse(raw);
- if(!created||!activity)return{expired:true,reason:'invalid_timestamp'};
- if(now.getTime()>=add(created,3).getTime())return{expired:true,reason:'absolute_expiration'};
- if(now.getTime()>=add(activity,1).getTime())return{expired:true,reason:'inactivity_expiration'};
- return{expired:false};
-}
-function assertFeedbackSession(payload,allowedRoles){
- const trusted=payload&&payload.__sharedSessionActor;
- if(trusted&&typeof trusted.userId==="string"&&typeof trusted.role==="string"&&Number.isSafeInteger(trusted.epoch)&&trusted.epoch>0){
-  const id=trusted.userId.trim(),requested=String(payload.userId||id).trim(),normalized=normalizeFeedbackRole(trusted.role);
-  const displayRoles={desarrollador:"Desarrollador",jefe:"Jefe",supervisor:"Supervisor",tecnico:"Tecnico",tecnico_exterior:"Tecnico_exterior"};
-  if(!id||requested!==id||!displayRoles[normalized])throw new Error("Acceso denegado: sesión no autorizada.");
-  if(Array.isArray(allowedRoles)&&!allowedRoles.some(x=>normalizeFeedbackRole(x)===normalized))throw new Error("Acceso denegado: sesión no autorizada.");
-  const userName=String(trusted.fullName||"").trim()||"Usuario";
-  return{userId:id,role:displayRoles[normalized],userName,epoch:trusted.epoch};
- }
- const id=String(payload&&payload.userId||"").trim(),token=String(payload&&payload.sessionToken||"");if(!id||!token.trim())throw new Error("Acceso denegado: sesión no autorizada.");
- const ss=getSpreadsheet(),sh=ss.getSheetByName("ActiveSessions"),uh=ss.getSheetByName("Users");if(!sh||!uh)throw new Error("Acceso denegado: sesión no autorizada.");
- const tokenMatches=findUniqueRowsByExactValue_(sh,3,token,6,false);
- if(tokenMatches.length!==1||String(tokenMatches[0].row[2]||"")!==token||String(tokenMatches[0].row[0]||"").trim()!==id||getSessionExpirationStatus_(tokenMatches[0].row,new Date()).expired)throw new Error("Acceso denegado: sesión inválida, duplicada, cruzada o expirada.");
- const sessionMatch=tokenMatches[0];
- const userMatches=findUniqueRowsByExactValue_(uh,1,id,8,true);if(userMatches.length!==1)throw new Error("Acceso denegado: perfil de usuario ausente o ambiguo.");
- const u=userMatches[0].row;if(String(u[7]||'').startsWith(ROLE_REVOCATION_SHARED_PREFIX))throw new Error("Acceso no autorizado: existe una revocación de rol pendiente. Inicia sesión nuevamente cuando finalice.");
- const role=String(u[3]||"").trim(),username=String(u[1]||"").trim(),normalized=normalizeFeedbackRole(role),active=['desarrollador','jefe','supervisor','tecnico','tecnico_exterior'];
- if(!username||username.toLowerCase().startsWith('__deleted__:')||!active.includes(normalized))throw new Error("Acceso denegado: sesión no autorizada.");
- if(Array.isArray(allowedRoles)&&!allowedRoles.some(x=>normalizeFeedbackRole(x)===normalized))throw new Error("Acceso denegado: sesión no autorizada.");
- touchSessionActivityIfDue_(sh,sessionMatch.rowIndex,sessionMatch.row,6);
- return{userId:id,role,userName:String(u[6]||u[1]||"Usuario")};
+function assertFeedbackSession(payload, allowedRoles) {
+ const trusted = payload && payload.__sharedSessionActor;
+ if (!trusted || typeof trusted.userId !== "string" || typeof trusted.role !== "string" || !Number.isSafeInteger(trusted.epoch) || trusted.epoch < 1) throw new Error("Acceso denegado: falta el contexto de sesión compartido.");
+ const id = trusted.userId.trim(), requested = String(payload.userId || id).trim(), normalized = normalizeFeedbackRole(trusted.role);
+ const displayRoles = {desarrollador:"Desarrollador",jefe:"Jefe",supervisor:"Supervisor",tecnico:"Tecnico",tecnico_exterior:"Tecnico_exterior"};
+ if (!id || requested !== id || !displayRoles[normalized]) throw new Error("Acceso denegado: sesión no autorizada.");
+ if (Array.isArray(allowedRoles) && !allowedRoles.some(role => normalizeFeedbackRole(role) === normalized)) throw new Error("Acceso denegado: sesión no autorizada.");
+ return {userId:id,role:displayRoles[normalized],userName:String(trusted.fullName || "").trim() || "Usuario",epoch:trusted.epoch};
 }
 
 /** Identidad de aportantes de validación de año; el identificador anónimo es seudónimo, no identidad civil. */

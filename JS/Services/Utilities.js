@@ -1,10 +1,10 @@
 // GPSPEDIA UTILITIES — protected and recoverable migrations
 // VERSION: 1.5.0 | OUTPUT: Hoja 1 (columna A)
-// AUTH: active developer session verified from Users/ActiveSessions.
+// AUTH: Coordinator validates token, expiry, revocation and role; this service consumes its trusted actor.
 // Mutations acquire a shared lease before the local ScriptLock; see COORDINATOR_SETUP.md.
 const SPREADSHEET_ID="1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3fteXYt3Os";
 const SHEET_NAMES={SOURCE:"Cortes",TARGET:"Hoja 1",STAGING:"__utilities_timestamps_staging__",BACKUP:"__utilities_timestamps_backup__"};
-const SOURCE_COLS={imagenVehiculo:9},ROLE_REVOCATION_SHARED_PREFIX="__role_revocation_pending__:";
+const SOURCE_COLS={imagenVehiculo:9};
 function doGet(){return ContentService.createTextOutput(JSON.stringify({status:"available",service:"GPSpedia-Utilities",version:"1.5.0"})).setMimeType(ContentService.MimeType.JSON);}
 function doPost(e){
  let response;
@@ -17,38 +17,12 @@ function doPost(e){
  }catch(error){response={status:"error",message:"No se pudo ejecutar la migración de utilidades.",details:String(error&&error.message?error.message:error)};}
  return ContentService.createTextOutput(JSON.stringify(response)).setMimeType(ContentService.MimeType.JSON);
 }
-function assertUtilitiesDeveloperSession_(payload,ss){
- const trusted=payload&&payload.__sharedSessionActor;
- if(trusted&&typeof trusted.userId==="string"&&typeof trusted.role==="string"&&Number.isSafeInteger(trusted.epoch)&&trusted.epoch>0){
-  const userId=trusted.userId.trim(),requested=String(payload.userId||userId).trim();
-  if(!userId||requested!==userId||trusted.role.trim().toLowerCase()!=="desarrollador")throw new Error("Acceso denegado: acción reservada a Desarrollador.");
-  return{userId,role:"Desarrollador",epoch:trusted.epoch};
- }
- const userId=String(payload&&payload.userId||"").trim(),token=String(payload&&payload.sessionToken||"").trim();
- if(!userId||!token)throw new Error("Acceso denegado: se requiere una sesión activa de Desarrollador.");
- const sh=ss.getSheetByName("ActiveSessions"),uh=ss.getSheetByName("Users");
- if(!sh||!uh)throw new Error("Acceso denegado: no se pudo verificar la sesión.");
- const sessionRows=sh.getDataRange().getValues();
- const sessions=sessionRows.slice(1).map((row,index)=>({row,rowIndex:index+2})).filter(item=>String(item.row[2]||"").trim()===token);
- if(sessions.length!==1||String(sessions[0].row[0]||"").trim()!==userId||getUtilitiesSessionExpiration_(sessions[0].row,new Date()).expired)throw new Error("Acceso denegado: sesión inválida, duplicada, cruzada o expirada.");
- const sessionMatch=sessions[0];
- const users=uh.getDataRange().getValues().slice(1).filter(r=>String(r[0]||"").trim()===userId);
- if(users.length!==1)throw new Error("Acceso denegado: perfil ausente o ambiguo.");
- const u=users[0],username=String(u[1]||"").trim();
- if(!username||username.startsWith("__deleted__:"))throw new Error("Acceso denegado: cuenta inactiva.");
- if(String(u[7]||"").startsWith(ROLE_REVOCATION_SHARED_PREFIX))throw new Error("Acceso denegado: existe una revocación de rol pendiente.");
- const role=String(u[3]||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();
- if(role!=="desarrollador")throw new Error("Acceso denegado: acción reservada a Desarrollador.");
- sh.getRange(sessionMatch.rowIndex,6).setValue(new Date().toISOString());
- return{userId,role:"Desarrollador"};
-}
-function getUtilitiesSessionExpiration_(row,now){
- const parse=v=>{if(v==null||String(v).trim()==="")return null;const d=v instanceof Date?new Date(v.getTime()):new Date(v);return Number.isNaN(d.getTime())?null:d;};
- const add=(date,n)=>{const d=new Date(date.getTime()),day=d.getUTCDate();d.setUTCDate(1);d.setUTCMonth(d.getUTCMonth()+n);const last=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,0)).getUTCDate();d.setUTCDate(Math.min(day,last));return d;};
- const created=parse(row&&row[3]),activity=parse(row&&(row[5]||row[3]));
- if(!created||!activity)return{expired:true};
- if(now>=add(created,3)||now>=add(activity,1))return{expired:true};
- return{expired:false};
+function assertUtilitiesDeveloperSession_(payload, _spreadsheet) {
+ const trusted = payload && payload.__sharedSessionActor;
+ if (!trusted || typeof trusted.userId !== "string" || typeof trusted.role !== "string" || !Number.isSafeInteger(trusted.epoch) || trusted.epoch < 1) throw new Error("Acceso denegado: falta el contexto de sesión compartido.");
+ const userId = trusted.userId.trim(), requested = String(payload.userId || userId).trim();
+ if (!userId || requested !== userId || trusted.role.trim().toLowerCase() !== "desarrollador") throw new Error("Acceso denegado: acción reservada a Desarrollador.");
+ return {userId,role:"Desarrollador",epoch:trusted.epoch};
 }
 function migrateTimestamps(payload){
  const session={userId:payload&&payload.userId,sessionToken:payload&&payload.sessionToken};

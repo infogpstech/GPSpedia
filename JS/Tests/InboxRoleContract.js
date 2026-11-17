@@ -32,7 +32,13 @@ function runInboxRoleContractTests(sources) {
   const actorAttach=feedback.indexOf('__feedbackActor: actor',authorized);
   assert(authorized>=0&&actorAttach>authorized,'El actor confiable debe sobrescribir cualquier campo enviado por el cliente.');
  });
- run('FEEDBACK actualiza LastActivityAt con intervalo y después de autorizar al actor',()=>{const start=feedback.indexOf('function assertFeedbackSession');const touch=feedback.indexOf('touchSessionActivityIfDue_(sh,sessionMatch.rowIndex,sessionMatch.row,6)',start);const allowed=feedback.indexOf('if(Array.isArray(allowedRoles)',start);assert(touch>allowed,'La actividad no debe actualizarse antes de validar el rol solicitado.');assert(feedback.includes('5*60*1000'));});
+ run('FEEDBACK consume exclusivamente el actor central sin consultar hojas de sesión',()=>{
+  const body=extract(feedback,'assertFeedbackSession');
+  assert(body.includes('__sharedSessionActor'),'FEEDBACK debe exigir actor compartido.');
+  assert(!/ActiveSessions|Users|findUniqueRowsByExactValue_|touchSessionActivityIfDue_|getSessionExpirationStatus_/.test(body),
+   'FEEDBACK conserva una revalidación local de usuario/sesión.');
+ });
+
 run('getCatalogChanges es una lectura pública del journal y no exige actor/lease FEEDBACK',()=>{const start=feedback.indexOf('function handleGetCatalogChanges(');const end=feedback.indexOf('\nfunction ',start+10);const body=feedback.slice(start,end<0?feedback.length:end);assert(!body.includes('getFeedbackActor_('));assert(!body.includes('assertFeedbackSession('));assert(feedback.includes('FEEDBACK_PUBLIC_ACTIONS = new Set(["getPysData", "sendContactForm", "getCatalogChanges"])'));});
  run('FEEDBACK expone solo un booleano seguro para diagnosticar la configuración local del coordinador',()=>{
   const helper=extract(feedback,'isFeedbackCoordinatorConfigured_');
