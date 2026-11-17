@@ -70,3 +70,29 @@ Evidencia en JS/Services/admin.js:
 - Auditoría estática de fuentes y contratos. No se ejecutaron servicios Apps Script, Spreadsheet ni Drive.
 - No se midieron latencias reales ni se atribuyen ahorros numéricos.
 - Las validaciones de OAuth, concurrencia multiusuario y deployments quedan para Beta.
+## Estado de ejecución — 2026-11-17
+
+### P4.1 completada
+- Se inició loadPysData una sola vez y en paralelo antes de solicitar el cursor inicial y la instantánea CATALOG. La fábrica de promesa comparte la petición y evita duplicados.
+- Los errores de PyS quedan localizados: no marcan como error/stale un catálogo que ya se procesó. El cursor PyS solo avanza cuando la carga confirma datos frescos y existe una revisión válida.
+- La ruta delta conserva sus cursores. Una caché PyS con error no se considera alineada aunque el cursor coincida.
+- Pruebas: CatalogStartupParallelism 5/5; CatalogStartupIntegrity 25/25; PysDataCache 18/18.
+
+### P4.2 completada
+- Al abrir el compositor desde Solicitudes, setInboxView inicia loadInboxConversations en segundo plano, renderiza caché si existe y devuelve sin esperar la red. El formulario solicita getInboxRecipients de inmediato.
+- El sondeo periódico se inicia cuando termina la carga de conversaciones y solo si el mismo contexto de sesión sigue activo, el modal continúa abierto y la vista sigue siendo Conversaciones.
+- Si el usuario cierra el modal o cambia de vista mientras la lectura sigue pendiente, el callback no inicia un sondeo fuera de contexto.
+- InboxUi 84/84 PASS.
+
+### P4.3 — auditoría detallada; implementación no autorizada aún por falta de diseño seguro
+- handleAuditDriveImagesInCortes usa lastRequestFingerprint, expectedCursorFingerprint y lastResponseCacheKey para reanudar/reproducir de forma idempotente un lote. El ScriptLock evita que dos solicitudes con el mismo cursor procesen y sobrescriban la misma página simultáneamente.
+- handleSaveUnusedImagesInventory crea inventoryOperationId y inventorySubmissionDigest, marca processing, revalida referencias, lee el inventario completo y registra resultados de todos los archivos antes de guardar el resumen. El lock evita que reintentos simultáneos dupliquen filas o resultados.
+- handleOrganizeUnusedImagesBatch procesa hasta 20 archivos y combina revalidación, movimientos Drive, read-back, persistencia y rollback. Retirar el lock sin una reserva por archivo puede permitir movimientos dobles o estados divergentes.
+- Cambiar waitLock(30000) por tryLock(0) solo convertiría esperas en errores rápidos; no permite que operaciones ADMIN independientes progresen. Cambiar a UserLock tampoco es seguro sin confirmar la identidad de ejecución del deployment.
+- Diseño requerido: claim/reserva atómica breve bajo ScriptLock por auditId/operationId + fingerprint; trabajo externo fuera del lock; commit/release breve bajo lock; expiración/recuperación de reservas; pruebas de duplicados concurrentes, reintento tras fallo entre Drive y Spreadsheet, rollback y ausencia de filas dobles.
+- No se modificó admin.js en P4.3. Se preserva integridad hasta contar con ese contrato y pruebas.
+
+### Validación CI y de servicios
+- CI 44154032505 SUCCESS: 145 suites, 2,117 pruebas aprobadas, 0 fallos. P4.1: 5/5; CatalogStartupIntegrity: 25/25; InboxUi: 84/84.
+- Health read-only 44154032506 SUCCESS: 7/7 servicios disponibles.
+- Pages build 44154032544 SUCCESS. Esto no implica despliegue de Apps Script ni prueba de cambios en Drive/Spreadsheet.
