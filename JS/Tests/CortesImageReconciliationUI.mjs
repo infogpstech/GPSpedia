@@ -138,8 +138,11 @@ testCase("las acciones de auditoría forman una barra iconográfica expandible y
  assert.ok(ui.includes("setAuditToolbarExpanded(false)"));
  assert.ok(ui.includes("auditToolbarToggle.dataset.bound !== 'true'"));
  assert.ok(ui.includes("auditToolbarToggle.setAttribute('aria-expanded', String(Boolean(expanded)))"));
- assert.match(css,/.audit-drive-toolbar.is-expanded[sS]*?.audit-drive-action-label/);
- assert.match(css,/@media (prefers-reduced-motion: reduce)[sS]*?.audit-drive-action-labels*{s*transition: none !important;/);
+ assert.ok(css.includes(".audit-drive-toolbar.is-expanded .audit-drive-action-label"));
+ const reducedMotion=css.slice(css.lastIndexOf("@media (prefers-reduced-motion: reduce)"));
+ assert.ok(reducedMotion.includes("#dev-tools-modal .dev-tab-link"));
+ assert.ok(reducedMotion.includes("#audit-drive-modal .audit-drive-action-label"));
+ assert.ok(reducedMotion.includes("transition: none !important;"));
 });
 testCase("el reporte es responsive y accesible",()=>{
  assert.match(html,/aria-live="polite"/);

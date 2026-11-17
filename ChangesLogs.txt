@@ -14,3 +14,9 @@ undefined
 - La primera ejecución CI detectó dos contratos CSS globales: no introducir overflow en la región revisada de barras invisibles y mantener el bloque reduced-motion de Developer como el último bloque de ese tipo.
 - Se sustituyó overflow:hidden por clip-path para ocultar etiquetas en estado compacto y se integró reduced-motion en el bloque existente de Developer. No se alteran reglas de scroll de los modales de detalle.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — AJUSTE DE PRUEBA GP-DEV-CUT-AUDIT-TOOLBAR-01
+- CI confirmó DeveloperPanelUX 7/7 e InboxUi 80/80. CortesImageReconciliationUI falló por escapes de regex perdidos al generar la prueba; se reemplazan por comprobaciones de cadenas y del último bloque reduced-motion, sin cambios de producción.
+================================================================================
