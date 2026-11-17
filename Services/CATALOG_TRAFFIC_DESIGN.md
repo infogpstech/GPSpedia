@@ -1,70 +1,82 @@
-# Cobertura de tráfico global — Coordinator y CATALOG
+# Cobertura de tráfico global — Coordinator y contadores directos
 
 **Tarea:** GP-DEV-TRAFFIC-GLOBAL-02  
 **Fecha de actualización:** 2026-11-17  
-**Estado:** instrumentación local de CATALOG implementada; validación integral y cobertura de rutas directas restantes en curso.  
-**Alcance:** fuentes de la rama de trabajo. No implica que los proyectos Apps Script desplegados tengan este código ni que sus Script Properties estén configuradas.
+**Estado:** contadores directos implementados en fuente para rutas no coordinadas; regresión y revisión de cobertura en curso.  
+**Alcance:** código fuente de la rama de trabajo. No implica que los proyectos Apps Script desplegados tengan este código ni que sus Script Properties estén configuradas.
 
-## Arquitectura verificada
+## Arquitectura
 
-El panel Developer combina fuentes sin enviar una llamada de red por cada acción del usuario:
+El panel Developer combina dos fuentes sin enviar una llamada de red por cada acción del usuario:
 
-1. **Coordinator:** cuenta operaciones protegidas que obtienen una lease y ciertos contextos/feeds de lectura. Mantiene buckets horarios de 24 horas y la consulta ADMIN/getServiceTraffic es de solo lectura y exclusiva de Desarrollador.
-2. **CATALOG directo:** cuenta localmente las acciones POST getCatalogData, getDropdownData, getSuggestion y getNavigationData. Guarda buckets horarios en ScriptProperties. No usa Coordinator en cada lectura.
-3. **ADMIN:** durante la consulta del panel, obtiene el agregado Coordinator y hace una consulta servidor-a-servidor a CATALOG. Combina ambos conteos y devuelve metadatos de fuente, precisión y posibles subcuentas.
-4. **Frontend:** consulta el agregado cuando el panel Developer está visible, con intervalo mínimo de 60 segundos. No almacena un segundo contador local de navegador ni lo presenta como global.
+1. **Coordinator:** cuenta operaciones protegidas que obtienen una lease y lecturas del feed incremental. Mantiene buckets horarios de 24 horas.
+2. **Contadores locales por servicio:** cada servicio cuenta solo las rutas POST que su router ejecuta directamente, sin lease Coordinator. Usa ScriptProperties y tryLock(0), sin esperar por lock.
+3. **ADMIN:** al refrescar el panel consulta los cinco endpoints de telemetría directa en una operación agrupada UrlFetchApp.fetchAll; si el lote falla globalmente, intenta cada endpoint por separado. Combina buckets con Coordinator y marca las fuentes parciales/no disponibles.
+4. **Frontend:** consulta el agregado cuando el panel Developer está visible, con intervalo mínimo de 60 segundos. No almacena métricas locales del navegador ni las presenta como globales.
 
-El feed público Coordinator.doGet?catalogFeed=1 se cuenta dentro del lock ya existente del Coordinator, sin una llamada adicional ni un segundo lock. El feed conserva la identidad de servicio que lo solicita; el origen público se atribuye a CATALOG.
+El endpoint getServiceTraffic de cada servicio es interno, protegido con un secreto servidor-a-servidor y no se contabiliza a sí mismo. La consulta ADMIN está reservada al rol Desarrollador y Coordinator excluye su propia operación de telemetría.
 
 ## Alternativas evaluadas
 
 | Alternativa | Ventaja | Coste/riesgo | Decisión |
 |---|---|---|---|
-| Enviar cada lectura CATALOG al Coordinator | Agregado central | Un viaje de red por cada lectura y dependencia/latencia extra | Rechazada |
-| Mantener lock global durante la lectura de Spreadsheet | Conteo central | Serializa lecturas y puede degradar el catálogo | Rechazada |
-| CacheService como contador de 24 h | Escritura ligera | TTL máximo, desalojos y ausencia de garantía de ventana | Rechazada |
-| ScriptProperties + tryLock(0) local por servicio | Sin viaje de red por acción; no espera por lock | Puede subcontar en contención; coste de PropertiesService en la petición que obtiene el lock | Elegida para CATALOG; medir en Beta |
-| Envío agrupado desde navegador | Reduce llamadas si se agrupa | Pérdida al cerrar, retrasos, duplicados y cobertura solo de clientes cooperantes | Rechazada como fuente autoritativa |
+| Enviar cada acción directa al Coordinator | Agregado central | Un viaje de red por acción y dependencia/latencia extra | Rechazada |
+| Mantener lock global durante lecturas de Spreadsheet | Conteo central | Serializa lecturas y puede degradar catálogo | Rechazada |
+| CacheService como contador de 24 h | Escritura ligera | TTL, desalojos y ausencia de garantía de ventana | Rechazada |
+| ScriptProperties + tryLock(0) local | Sin viaje de red por acción; no espera lock | Puede subcontar en contención; escritura local síncrona | Elegida como best-effort; medir en Beta |
+| Envío agrupado desde navegador | Reduce llamadas si se agrupa | Pérdida al cerrar, retrasos, duplicados y solo clientes cooperantes | Rechazada como fuente autoritativa |
 
-## Implementación local de CATALOG
+## Rutas instrumentadas
 
-- JS/Services/catalog.js define buckets horarios de 24 h con prefijo GPSpedia_CATALOG_TRAFFIC_HOUR_V1_.
-- El contador usa LockService.getScriptLock().tryLock(0). Si no obtiene el lock, omite solo la métrica; no espera ni altera la acción de catálogo.
-- La liberación del lock está condicionada a que esta ejecución lo haya adquirido. Se corrigió un defecto detectado por la prueba de contención: antes se intentaba liberar también cuando tryLock(0) devolvía false.
-- Los errores de LockService/PropertiesService son best-effort y no deben bloquear la respuesta de catálogo.
-- getServiceTraffic es un endpoint interno ADMIN→CATALOG; no se cuenta a sí mismo. Valida un secreto de servidor y no devuelve identidad, sesión ni payloads.
-- El secreto GPSpedia_CATALOG_TRAFFIC_SECRET debe existir con el mismo valor aleatorio (mínimo 32 caracteres) en Script Properties de los proyectos CATALOG y ADMIN del mismo entorno. Generarlo localmente (por ejemplo openssl rand -hex 32); no guardar ni compartir el valor en código, repositorio, navegador o logs.
-- Sin el secreto o con el endpoint remoto no disponible, ADMIN conserva los datos de Coordinator y declara el contador directo CATALOG como parcial/no disponible. No lo transforma en cero confirmado.
-- JS/Services/admin.js combina los buckets por hora, mantiene los demás servicios sin cambios y etiqueta best_effort_nonblocking / mayUndercount.
-- El panel y su ayuda describen que el agregado no representa todas las solicitudes HTTP.
+- **CATALOG:** getCatalogData, getDropdownData, getSuggestion y getNavigationData.
+- **AUTH:** validateSession.
+- **WRITE:** checkVehicle, getSuggestion y checkVinDuplicate.
+- **FEEDBACK:** getPysData, sendContactForm y suggestYear anónimo (userId 0). suggestYear autenticado y getCatalogChanges se cuentan mediante Coordinator.
+- **UTILITIES:** migrateTimestamps.
+- **USERS:** getUsers, createUser y updateProfile pasan por Coordinator; no se añade contador local.
+- **ADMIN:** operaciones pasan por Coordinator; ping se excluye como sondeo.
 
-## Hallazgo adicional de cobertura pendiente
+La auditoría de routers y ACTION_TO_SERVICE_MAP confirmó que las acciones anteriores son rutas directas conocidas; las demás operaciones protegidas usan Coordinator. No contar dos veces una operación que ya adquiere lease.
 
-La auditoría de los routers confirma que todavía existen rutas POST que pueden entrar directamente al handler sin pasar por una lease/contador Coordinator:
-- AUTH: validateSession y cualquier fallback no clasificado como operación compartida.
-- WRITE: checkVehicle, getSuggestion y checkVinDuplicate; checkOperation sí pasa por Coordinator.
-- USERS: acciones distintas de createUser, updateProfile y getUsers.
-- FEEDBACK: getPysData, sendContactForm, getCatalogChanges y otras rutas públicas/no coordinadas; el feed se registra en Coordinator cuando llega al endpoint compartido.
-- UTILITIES: migrateTimestamps se ejecuta en su propio doPost y no pasa actualmente por el wrapper compartido.
-- ADMIN: ping se excluye intencionalmente; las demás operaciones pasan por el wrapper compartido.
+## Contrato del contador local
 
-Esta lista es una auditoría de rutas y no implica que todas deban instrumentarse automáticamente: antes hay que revisar llamadas reales, frecuencia, autenticación y si la ruta es un health probe o una consulta administrativa. No se deben contar dos veces las rutas que ya generan evento en Coordinator.
+- Prefijo de bucket propio por servicio, retención de 24 horas y ventanas 1/6/24 h.
+- tryLock(0) nunca espera. Si no se adquiere el lock, se omite el evento y no se llama releaseLock.
+- Solo liberar el lock si la ejecución lo adquirió.
+- Fallos de LockService/PropertiesService son best-effort y no cambian el status/cuerpo del handler.
+- No guardar URL, payload, userId, token, sesión ni datos de hojas.
+- Endpoint interno getServiceTraffic valida secreto aleatorio de al menos 32 caracteres con comparación de longitud constante; no expone el secreto.
+- ADMIN realiza consultas directas agrupadas solo al refrescar el panel, no por cada operación de usuario.
+- Una fuente que no tenga secreto o no responda se marca parcial/no disponible sin borrar ni reemplazar los conteos Coordinator.
 
-## Pruebas locales requeridas y evidencias
+## Configuración Beta pendiente
 
-- CatalogTrafficTelemetry.mjs: lock disponible/ocupado, timeout cero, liberación correcta, buckets/retención 24 h, ventanas 1/6/24 h, secretos, errores best-effort y ausencia de datos sensibles.
-- SharedMutationCoordinator.js: feed público contado bajo el lock existente y atribución FEEDBACK conservada.
-- ServiceTrafficAggregation.mjs: suma por bucket, conservación de otros servicios, estado parcial si falta contador directo, entradas inválidas y no mutación de la respuesta de Coordinator.
-- ServiceTrafficAdminContract.mjs: contrato ADMIN/Coordinator, autorización Developer, UI, intervalos y separación de métricas locales.
-- Regresión completa, sintaxis y health remoto read-only deben ejecutarse después de las correcciones. Un fallo se investiga por su traza y se vuelve a probar; no se reducen suites ni aserciones.
+Generar un secreto aleatorio distinto por servicio (por ejemplo openssl rand -hex 32) y configurar el mismo valor en Script Properties del servicio correspondiente y en ADMIN:
+- GPSpedia_AUTH_TRAFFIC_SECRET
+- GPSpedia_CATALOG_TRAFFIC_SECRET
+- GPSpedia_WRITE_TRAFFIC_SECRET
+- GPSpedia_FEEDBACK_TRAFFIC_SECRET
+- GPSpedia_UTILITIES_TRAFFIC_SECRET
 
-## Validación Beta pendiente
+No crear secreto para USERS ni ADMIN. Nunca guardar valores en el repositorio, navegador, logs o documentación. Desplegar los proyectos Apps Script actualizados solo en entorno Beta autorizado.
 
-1. Configurar el secreto de CATALOG/ADMIN en los proyectos Beta sin exponerlo.
-2. Desplegar los proyectos Apps Script actualizados en el entorno Beta autorizado.
-3. Medir p50/p95 de getCatalogData, getDropdownData, getSuggestion y getNavigationData con volúmenes comparables antes/después.
+## Pruebas locales
+
+- CatalogTrafficTelemetry: lock libre/ocupado, no espera, liberación correcta, buckets, retención, secretos y errores best-effort.
+- DirectServiceTrafficTelemetry: AUTH/WRITE/FEEDBACK/UTILITIES; acciones directas, buckets, secretos, lock ocupado y fallos de PropertiesService.
+- ServiceTrafficAggregation: suma de Coordinator y contadores locales por servicio, conservación de otras métricas, entradas inválidas y fuentes parciales.
+- ServiceTrafficBatch: fetchAll, fallback por endpoint, secreto faltante, error individual y fallo de PropertiesService.
+- ServiceTrafficAdminContract: rol Developer, consulta de solo lectura, fuentes, rutas instrumentadas, UI y exclusión de métricas locales.
+- SharedMutationCoordinator: feed público contado bajo el lock existente y atribución FEEDBACK conservada.
+- Regresión completa, sintaxis y health remoto read-only; no reducir suites ni relajar aserciones.
+
+## Medición Beta pendiente
+
+1. Configurar los cinco secretos en los proyectos Beta.
+2. Desplegar los servicios Apps Script actualizados.
+3. Medir p50/p95 de las rutas directas instrumentadas antes/después.
 4. Medir eventos omitidos por lock, fallos de PropertiesService y discrepancia frente a una referencia temporal independiente.
-5. Verificar el agregado ADMIN, sus metadatos de fuente, acceso exclusivo a Desarrollador y comportamiento cuando CATALOG no responde.
-6. No declarar tráfico HTTP total mientras existan rutas directas no instrumentadas o health probes excluidos.
+5. Verificar ADMIN, acceso exclusivo a Desarrollador, respuesta parcial por fuente y que el contador no añade esperas.
+6. No declarar tráfico HTTP universal: rutas externas/legacy no instrumentadas y health probes permanecen excluidas.
 
-**Límite de exactitud:** el agregado actual combina operaciones Coordinator y cuatro acciones directas CATALOG. Es global entre fuentes instrumentadas, no una captura universal de HTTP. El contador CATALOG es best-effort y puede subcontar. No debe sacrificarse la latencia ni la disponibilidad de las lecturas para aumentar artificialmente el conteo.
+**Límite de exactitud:** el agregado combina operaciones Coordinator y rutas directas conocidas instrumentadas en AUTH, CATALOG, WRITE, FEEDBACK y UTILITIES. USERS y ADMIN se miden mediante Coordinator. Puede subcontar cuando tryLock(0) no está disponible y no incluye solicitudes externas o rutas no mapeadas. La disponibilidad y latencia de los servicios tienen prioridad sobre el conteo.
