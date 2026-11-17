@@ -452,6 +452,7 @@ check("Los editores eliminan el texto de demostración heredado sin reemplazar e
     assert.match(rich, /sanitizeHtmlContent\(stripRichTextDemoPlaceholder\(source\.value \|\| ""\), mode\)/);
     assert.match(ui, /sanitizeHtmlContent\(stripRichTextDemoPlaceholder\(initialHtml \|\| ""\), "advanced"\)/);
     assert.doesNotMatch(rich, /selected \|\| "texto en negrita"/);
+    assert.ok(rich.includes('editor.innerHTML.replace(RICH_TEXT_CARET_SENTINEL_, "")'), "el centinela interno no debe persistirse");
 });
 
 check("Los formularios distinguen editores básicos, editores con listas y el Inbox completo", () => {
