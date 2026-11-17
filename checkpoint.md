@@ -445,3 +445,8 @@ undefined
 - P4.2: completada y validada. El compositor Inbox desde Solicitudes carga destinatarios sin esperar la lectura remota de conversaciones; lista y sondeo continúan en segundo plano con guardas de contexto.
 - P4.3: siguiente. Auditar y diseñar reserva atómica breve para ADMIN Drive. El ScriptLock actual protege cursores idempotentes, inventoryOperationId, movimientos y rollback; no retirarlo ni sustituirlo por tryLock/UserLock sin pruebas concurrentes.
 - CI 44154032505 SUCCESS: 145 suites, 2,117 pruebas, 0 fallos. Health read-only 7/7. Pages build SUCCESS. No Apps Script desplegado ni datos productivos modificados.
+### P4.3a cerrada; P4.3b siguiente — 2026-11-17
+- handleOrganizeUnusedImagesBatch ahora reutiliza currentRows y duplicateIds una vez por lote; conserva la lectura latestRowsBeforeMove por archivo y todas las comprobaciones finales antes de mover.
+- En lote máximo de 20: hasta 19 lecturas completas iniciales y 19 scans de duplicados menos. AdminReplacedImagesIntegrity 55/55 PASS.
+- CI 44154558840 SUCCESS: 145 suites, 2,117 pruebas y 0 fallos. Health read-only 7/7.
+- P4.3b: diseñar claim/commit atómico breve por auditId/operationId para liberar el ScriptLock global durante Drive sin perder reintentos idempotentes, unicidad de inventario ni rollback. El lock actual permanece.
