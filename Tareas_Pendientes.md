@@ -98,7 +98,7 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 
 1. Corregir y completar las tareas locales de experiencia de usuario y Developer, comenzando por BETA-021.
 2. Completar la auditoría funcional local de Inbox y de las operaciones administrativas que aún presenten fallos o carezcan de cobertura.
-3. Cerrar las revisiones locales pendientes de servicios, sesión, identificadores y telemetría.
+3. Cerrar las revisiones locales pendientes de servicios, sesión, identificadores y telemetría; continuar con GP-DEV-TRAFFIC-GLOBAL-02 hasta definir la cobertura global de CATALOG/rutas no coordinadas sin penalizar las solicitudes.
 4. Ejecutar la regresión integral local una vez completadas las implementaciones vigentes.
 5. Realizar las validaciones Beta en el orden de dependencias indicado, sin simularlas ni bloquear el cierre local por falta de deployment.
 
@@ -674,7 +674,8 @@ No desplegar Apps Script ni modificar ScriptProperties, permisos, hojas, Drive o
 - Coordinator agrega en ScriptProperties buckets horarios de 24 horas por servicio. Solo cuenta operaciones protegidas que obtuvieron lease; los reintentos con el mismo `requestId` no duplican el conteo.
 - El registro se realiza dentro de la solicitud existente a Coordinator, bajo lock y como best-effort; no añade una llamada de red independiente por acción ni bloquea la operación si falla la telemetría.
 - `ADMIN/getServiceTraffic` es de solo lectura y queda reservado al rol Desarrollador. Devuelve agregados sin identidad ni datos de sesión; excluye la propia consulta, lecturas públicas no coordinadas, feed público y sondeos de salud.
-- La UI separa el agregado global de la actividad local del navegador (15 minutos, máximo 600 eventos). La ayuda aclara que el agregado global no representa todas las solicitudes HTTP.
+- Estado histórico de BETA-043: la UI separaba el agregado global de la actividad local del navegador (15 minutos, máximo 600 eventos). La ayuda aclaraba que el agregado global no representa todas las solicitudes HTTP.
+- Adenda 2026-11-17 / GP-DEV-TRAFFIC-GLOBAL-02: se retiró el panel local y el dashboard usa solo Coordinator; el detalle muestra conteos globales de 1 h, 6 h y 24 h. La cobertura sigue limitada a operaciones protegidas con lease; CATALOG y otras rutas públicas/no coordinadas no se cuentan. Ver la tarea de seguimiento al final del registro.
 - Pruebas: `ServiceTrafficAdminContract` 20/20; `ServiceMetricsTelemetry` 10/10; Coordinador compartido 54/54. GitHub Actions Node.js 22 run `43807777744`: SUCCESS — 119 suites / 1,790 pruebas / 0 fallos.
 - GitHub Pages run `43807776532`: SUCCESS.
 - Pendiente Beta: validar la agregación entre deployments reales, permisos de Desarrollador y evolución de los buckets con tráfico de la plataforma. No se desplegaron Apps Script ni se modificaron ScriptProperties o datos externos.
