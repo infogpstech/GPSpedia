@@ -53,6 +53,7 @@ function test(name, run) {
 
 test("el contador intenta el lock con timeout cero, incrementa y libera", () => {
     const h = createHarness();
+    h.store.set("GPSpedia_CATALOG_TRAFFIC_SECRET", secret);
     assert.equal(h.recordCatalogTraffic_(base), true);
     assert.deepEqual(h.calls.tryLock, [0]);
     assert.equal(h.calls.releases, 1);
@@ -74,6 +75,7 @@ test("el lock ocupado omite solo la métrica y no espera ni escribe", () => {
 
 test("la retención conserva 24 buckets horarios y elimina los vencidos al abrir hora", () => {
     const h = createHarness();
+    h.store.set("GPSpedia_CATALOG_TRAFFIC_SECRET", secret);
     assert.equal(h.recordCatalogTraffic_(base - 25 * bucketMs), true);
     assert.equal(h.recordCatalogTraffic_(base), true);
     const result = h.readCatalogTraffic_(secret, base);
@@ -84,6 +86,7 @@ test("la retención conserva 24 buckets horarios y elimina los vencidos al abrir
 
 test("las ventanas de una hora, seis horas y veinticuatro horas se calculan por bucket", () => {
     const h = createHarness();
+    h.store.set("GPSpedia_CATALOG_TRAFFIC_SECRET", secret);
     h.recordCatalogTraffic_(base - 2 * bucketMs);
     h.recordCatalogTraffic_(base);
     const result = h.readCatalogTraffic_(secret, base);
