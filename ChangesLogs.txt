@@ -1557,3 +1557,14 @@ GP-UX-PYS-TUTORIAL-ASSOCIATION-06 — 2026-11-16
 - CI del commit 17943b11060ff42e3f40bccc44b3d5bfbfa89895 alcanzó los escenarios funcionales de PasswordRecovery, pero el archivo de prueba mantenía una aserción estática de gpsepedia-cache-v66.
 - Se actualiza la aserción a gpsepedia-cache-v67, coherente con el cambio de App Shell. No cambia el comportamiento de producción.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — CIERRE LOCAL GP-DEV-IMAGE-AUDIT-LIBRARY-UX-01
+- admin.js: agrupación de ventanas de columnas próximas y presupuesto de captura de referencias 30s, manteniendo el rechazo fail-closed de snapshots incompletos.
+- ui.js: validación de versión semántica para evitar el desfase 2.7.1/2.6.1; mensaje específico si la captura supera el presupuesto y no existe cursor.
+- index.html/style.css/ui.js: toolbar de biblioteca con iconografía, vistas, búsqueda, refresco, panel de carpetas desplegable y acciones masivas compactas.
+- App Shell v66 → v67; pruebas ServiceWorkerCache y OfflineBrandAssets sincronizadas.
+- CI run 44076449777 SUCCESS: 133 suites, 1,981 pruebas, 0 fallos. AdminReplacedImagesIntegrity 55/55 y ReplacedImagesLibraryUX 14/14.
+- Pages run 44076449201 SUCCESS. Beta pendiente para validar el volumen real de Drive y el recorrido completo; no se movieron ni eliminaron imágenes.
+================================================================================

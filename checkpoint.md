@@ -518,3 +518,12 @@ Estado: **EN PROGRESO** hasta ejecutar la suite Node.js completa disponible; la 
 ### Adenda CI — App Shell v67
 - La ejecución del commit 17943b11060ff42e3f40bccc44b3d5bfbfa89895 falló por una aserción estática antigua en PasswordRecovery.mjs que esperaba v66. Los escenarios funcionales de recuperación pasaron antes de esa aserción.
 - Se sincroniza el contrato de prueba con v67; auditoría/biblioteca siguen EN PROGRESO hasta CI verde.
+
+
+### Cierre verificado — GP-DEV-IMAGE-AUDIT-LIBRARY-UX-01 — 2026-11-17
+- Commits de implementación: 17943b11060ff42e3f40bccc44b3d5bfbfa89895; sincronización de prueba App Shell: 003500bb5e0649b1149c850f7dfa126cd068f8aa.
+- GitHub Actions run 44076449777 SUCCESS: 133 suites, 1,981 pruebas, 0 fallos. AdminReplacedImagesIntegrity 55/55; ReplacedImagesLibraryUX 14/14.
+- GitHub Pages run 44076449201 SUCCESS para 003500bb5e0649b1149c850f7dfa126cd068f8aa.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Pendiente correr auditoría real sobre el inventario completo de Cortes/Drive para confirmar duración, continuidad y clasificación; no se ejecutaron acciones destructivas.
+- Rama base GPSpedia2.2.5 continúa en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Siguiente tarea P1: GP-INBOX-CACHE-BANDS-01 — auditar caché de Reportes, Mensajes y Aportaciones; después continuar organización de Inbox.

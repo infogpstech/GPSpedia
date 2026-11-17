@@ -131,3 +131,14 @@ Resultado: implementación local cerrada con validación diferida a Beta. No se 
 - CI identificó que PasswordRecovery.mjs todavía esperaba el cache key v66 tras el incremento a v67. Los escenarios de lógica de recuperación habían pasado; el fallo fue únicamente la aserción estática del service worker.
 - Se sincroniza la expectativa con v67 antes de repetir la suite.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — CIERRE LOCAL GP-DEV-IMAGE-AUDIT-LIBRARY-UX-01
+- Se redujeron las llamadas de lectura agrupando columnas cercanas con gap máximo de 8; se amplió el presupuesto seguro de captura de 12s a 30s y se conserva la prohibición de guardar snapshots parciales.
+- Se corrigió el contrato de versión: ADMIN publica 2.7.1; UI valida semver en lugar de exigir 2.6.1. Se mejoró el mensaje para distinguir una captura que no inició de una auditoría parcial con cursor.
+- Biblioteca: toolbar accesible de búsqueda/vistas/actualización, panel de carpetas desplegable y acciones masivas compactas con iconografía.
+- CI run 44076449777 SUCCESS: 133 suites, 1,981 pruebas, 0 fallos; AdminReplacedImagesIntegrity 55/55; ReplacedImagesLibraryUX 14/14.
+- Pages run 44076449201 SUCCESS. Rama base verificada sin cambios.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Falta ejecutar auditoría real sobre el inventario de Drive y confirmar tiempos, cursor y clasificación; no se realizaron operaciones destructivas.
+================================================================================

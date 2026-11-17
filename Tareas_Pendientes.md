@@ -1028,7 +1028,7 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - Preservar acciones, permisos, confirmaciones, estados y navegación existentes.
 
 ### GP-DEV-IMAGE-AUDIT-LIBRARY-UX-01 — Continuidad de auditoría y biblioteca de imágenes
-**Prioridad: P1/P2 · Estado: EN PROGRESO**
+**Prioridad: P1/P2 · Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA**
 - Corregir «No hay cursor de continuación disponibles» y el rechazo por presupuesto seguro excedido.
 - Conservar snapshots parciales recuperables y cursores válidos; permitir reanudar sin duplicar ni perder progreso y no presentar una auditoría parcial como completa.
 - Rediseñar la biblioteca de imágenes con barra de funciones iconográfica y organizada, sin alterar las protecciones de archivos ni acciones destructivas.
@@ -1076,3 +1076,13 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - La captura falla de forma cerrada y no debe guardar snapshots parciales como si fueran completos; se optimizará el número de lecturas y se ampliará el presupuesto seguro, conservando la validación íntegra del snapshot.
 - La biblioteca separa búsqueda/vistas, selección y carpetas en filas poco cohesionadas. Se agruparán acciones con iconografía, nombres accesibles y un panel de carpetas desplegable.
 - No se ejecutaron movimientos, eliminaciones ni escrituras de inventario durante esta auditoría.
+
+
+#### Cierre local — GP-DEV-IMAGE-AUDIT-LIBRARY-UX-01
+- collectCortesImageReferences agrupa columnas de imagen cercanas en ventanas con gaps máximos de 8 columnas, reduciendo llamadas de lectura sin procesar los campos intermedios como referencias.
+- Presupuesto de captura ampliado de 12s a 30s; se mantiene fail-closed: si la captura completa supera el límite, no se almacena ni se clasifica un snapshot parcial.
+- ui.js acepta versiones semánticas del servicio ADMIN y no fija 2.6.1. El error de presupuesto distingue auditoría no iniciada y ausencia de cursor; no sugiere reanudar una captura que nunca creó snapshot.
+- Biblioteca rediseñada con barra accesible, búsqueda, refresco, vistas, botón desplegable de carpetas y acciones masivas compactas con iconos.
+- GitHub Actions run 44076449777 SUCCESS: 133 suites, 1,981 pruebas aprobadas, 0 fallos; AdminReplacedImagesIntegrity 55/55 y ReplacedImagesLibraryUX 14/14.
+- GitHub Pages run 44076449201 SUCCESS para HEAD 003500bb5e0649b1149c850f7dfa126cd068f8aa.
+- Beta pendiente: ejecutar auditoría completa con el volumen real de Cortes/Drive, confirmar que la captura termina dentro del nuevo presupuesto, revisar cursor y clasificación. No se realizaron movimientos ni eliminaciones reales.
