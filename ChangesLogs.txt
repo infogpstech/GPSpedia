@@ -282,3 +282,12 @@ undefined
 - No se desplegaron proyectos Apps Script ni se modificaron datos externos. Validación real Drive/OAuth y concurrencia queda para Beta. Monitoreo de servicios y dashboard de actividad se mantienen intactos.
 - Siguiente: P1.3, simplificación de FEEDBACK.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — P3.1b: decisión de caché de actor y hallazgo de revocación
+- Se documentó la decisión de no precargar el actor desde AUTH a cada proyecto Apps Script: CacheService es aislado por proyecto y la precarga exigiría viajes de red/contratos adicionales durante login.
+- Se conserva TTL de 21,600 s para cache hits sin red; cache miss/expiración todavía consulta Coordinator.
+- Se confirmó que las revocaciones de Coordinator no invalidan las cachés locales de actor de WRITE/FEEDBACK. La ventana de autorización obsoleta puede alcanzar 6 h después de logout remoto, eliminación o cambio de rol. Hallazgo ALTO y evidencia registrados en AUDITORIA_P3_SESION_ACTOR.md.
+- P3.1b completada como evaluación. P3.1 global continúa EN PROGRESO; siguiente P3.1c: invalidación dirigida de caché y pruebas locales. No hubo cambios de código, pruebas ejecutadas, despliegues ni modificaciones de datos externos en esta adenda.
+================================================================================
