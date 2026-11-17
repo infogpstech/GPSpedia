@@ -27,9 +27,11 @@ const writeService = read("JS/Services/write.js");
 const feedbackService = read("JS/Services/feedback.js");
 assert.match(authService,/actions: new Set\(\["validateSession"\]\)/);
 assert.match(writeService,/actions: new Set\(\["checkVehicle","getSuggestion","checkVinDuplicate"\]\)/);
-assert.match(feedbackService,/actions: new Set\(\["getPysData", "getCatalogChanges"\]\)/);
-assert.match(feedbackService,/sendContactForm.*withSharedMutationLease_|withSharedMutationLease_.*sendContactForm/s);
-assert.match(feedbackService,/if \(action === "suggestYear" && String\(payload\.userId \|\| ""\)\.trim\(\) === "0"\) \{\s*recordDirectServiceTraffic_\(\);/);
+assert.match(feedbackService,/actions: new Set\(\["recordLike","reportProblem"/);
+assert.match(feedbackService,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken\)/);
+assert.doesNotMatch(feedbackService.slice(feedbackService.indexOf("function doPost(e)"),feedbackService.indexOf("\\nconst RICH_TEXT_MODE_PROPERTY_")),/withSharedMutationLease_/);
+assert.match(feedbackService,/anonymousSuggestion/);
+assert.match(feedbackService,/actions: new Set\([\s\S]*?"suggestYear"[\s\S]*?"sendContactForm"/);
 assert.doesNotMatch(admin,/UTILITIES_SERVICE_URL|service: "UTILITIES", url:/);
 assert.match(coordinator,/UTILITIES:\s*\{\s*migrateTimestamps:\s*\{\s*read:\s*\["SESSION_CONTEXTS",\s*"CORTES",\s*"DRIVE"\],\s*write:\s*\["UTILITIES"\]\s*\}/);
 

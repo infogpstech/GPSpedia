@@ -134,14 +134,19 @@ function extractTopLevelFunction(source, name) {
     return match[0];
 }
 function createDispatchHarness(source, service, extraBindings = {}) {
-    const mutation = extractTopLevelFunction(source, "isSharedMutationAction_");
+    const mutation = service === "FEEDBACK" ? "" : extractTopLevelFunction(source, "isSharedMutationAction_");
     const post = extractTopLevelFunction(source, "doPost");
-    const calls = [];
-    const actor = { userId:"DEV-1", role:"Desarrollador", fullName:"Ana", epoch:7 };
+    const calls = [], actorLookups = [];
+    const actor = { userId:"DEV-1", role:"desarrollador", fullName:"Ana", epoch:7 };
     const bindings = {
         withSharedMutationLease_(requestedService, operation, callback, options) {
             calls.push({ service:requestedService, operation, sessionToken:options && options.session && options.session.sessionToken });
             return callback("coordinator-token", actor);
+        },
+        getCachedSharedSessionActor_(userId, sessionToken) {
+            actorLookups.push({ userId, sessionToken });
+            if (userId !== actor.userId || sessionToken !== "trusted-session") throw new Error("Sesión inválida.");
+            return actor;
         },
         withSharedSessionActor_(event, trustedActor) {
             const request = JSON.parse(event.postData.contents);
@@ -160,7 +165,7 @@ function createDispatchHarness(source, service, extraBindings = {}) {
     const values = Object.values(bindings);
     const dispatcher = new Function(...names, mutation + String.fromCharCode(10) + post +
         String.fromCharCode(10) + "return doPost;")(...values);
-    return { calls, send(action) {
+    return { calls, actorLookups, send(action) {
         calls.length = 0;
         const event = { postData:{contents:JSON.stringify({action,payload:{userId:"DEV-1",sessionToken:"trusted-session"}})} };
         return dispatcher(event);
@@ -176,18 +181,19 @@ test("la limpieza de Logs usa la lease AUTH específica y el actor central", () 
     const policy = new Function(coordinator + String.fromCharCode(10) + "return coordinatorPolicy_;")();
     assert.ok(policy("AUTH","clearSensitiveLogs").writeResources.includes("LOGS"));
 });
-test("la limpieza de ActividadUsuario usa la lease FEEDBACK específica y RBAC Desarrollador", () => {
+test("la limpieza de ActividadUsuario usa actor cacheado y RBAC Desarrollador sin lease", () => {
     assert.match(apiConfig, /['"]clearActivityLogs['"]\s*:\s*['"]FEEDBACK['"]/);
     const harness = createDispatchHarness(feedback,"FEEDBACK",{
         FEEDBACK_ACTION_PERMISSIONS:{clearActivityLogs:["Desarrollador"]},
         FEEDBACK_PUBLIC_ACTIONS:new Set()
     });
     const payload = harness.send("clearActivityLogs");
-    assert.deepEqual(harness.calls,[{service:"FEEDBACK",operation:"clearActivityLogs",sessionToken:"trusted-session"}]);
+    assert.deepEqual(harness.calls,[]);
+    assert.deepEqual(harness.actorLookups,[{userId:"DEV-1",sessionToken:"trusted-session"}]);
     assert.equal(payload.__sharedSessionActor.userId,"DEV-1");
     assert.equal(payload.__sharedSessionActor.epoch,7);
     assert.match(feedback,/clearActivityLogs:\s*\["Desarrollador"\]/);
-    const policy = new Function(coordinator + String.fromCharCode(10) + "return coordinatorPolicy_;")();
-    assert.ok(policy("FEEDBACK","clearActivityLogs").writeResources.includes("ACTIVITY"));
+    assert.match(feedback,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken\)/);
+    assert.doesNotMatch(feedback.slice(feedback.indexOf("function doPost(e)"),feedback.indexOf("\\nconst RICH_TEXT_MODE_PROPERTY_")),/withSharedMutationLease_/);
 });
 console.log("SensitiveLogsTrustedActor: " + passed + "/" + passed + " PASS");

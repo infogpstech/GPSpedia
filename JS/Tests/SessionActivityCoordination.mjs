@@ -36,7 +36,7 @@ testCase("ADMIN exige actor central y coordina lecturas y mutaciones",()=>{
 });
 
 testCase("FEEDBACK usa actor cacheado sin leases por acción y conserva sus rutas públicas",()=>{
- const start=feedback.indexOf("function doPost(e)"),end=feedback.indexOf("\\nconst RICH_TEXT_MODE_PROPERTY_",start),router=feedback.slice(start,end);
+ const start=feedback.indexOf("function doPost(e)"),end=feedback.indexOf("\nconst RICH_TEXT_MODE_PROPERTY_",start),router=feedback.slice(start,end);
  assert.ok(start>=0&&end>start);
  assert.match(router,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken\)/);
  assert.doesNotMatch(router,/withSharedMutationLease_/);
