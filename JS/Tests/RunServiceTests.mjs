@@ -201,6 +201,7 @@ runGroup('38','INTEGRATION',()=>{
  runCli('AUG-156 coordinación de inventario, escáner y migración de historial','JS/Tests/AdminImageScanCoordinatorContract.mjs');
  runCli('AUG-150 errores HTTP, red, JSON y aplicación en ADMIN','JS/Tests/RouteActionErrors.mjs');
  runCli('AUG-152 conversaciones Inbox, participantes, idempotencia y auditoría','JS/Tests/InboxConversations.mjs');
+ runCli('GP-PERF FEEDBACK e Inbox sem esperas prolongadas','JS/Tests/FeedbackLockFastFail.mjs');
  runCli('AUG-152 interfaz Inbox, accesibilidad, borradores y sincronización','JS/Tests/InboxUi.mjs');
  runCli('Dashboard y aportes de cortes por usuario','JS/Tests/ActivityDashboardContributions.mjs');
  runCli('GP-DASH-INSIGHTS-01 indicadores, rankings y render seguro','JS/Tests/ActivityDashboardInsights.mjs');
