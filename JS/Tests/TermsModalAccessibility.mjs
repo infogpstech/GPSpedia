@@ -1,7 +1,7 @@
 import { readFileSync, existsSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { createOverlayHistoryManager, overlayHistoryStateKey } from '../Frontend/overlayHistory.js';
-import { getOrCreateTermsDeviceId, getDeviceTermsAcceptance, saveDeviceTermsAcceptance } from '../Frontend/termsDeviceAcceptance.js';
+import { getOrCreateTermsDeviceId, getDeviceTermsAcceptance, getDeviceTermsSyncStatus, saveDeviceTermsAcceptance } from '../Frontend/termsDeviceAcceptance.js';
 
 const root = new URL('../../', import.meta.url);
 const read = path => readFileSync(new URL(path, root), 'utf8');
@@ -102,7 +102,11 @@ test('el aviso se recuerda por usuario y dispositivo, incluso después de cerrar
     const storage = createStorage();
     const deviceA = getOrCreateTermsDeviceId(storage, { randomUUID: () => '11111111-1111-4111-8111-111111111111' });
     const acceptance = { version: '2026-07', acceptedAt: '2026-11-14T12:00:00.000Z', status: 'accepted' };
+    saveDeviceTermsAcceptance(storage, 'USR-0001', deviceA, acceptance, { syncStatus: 'pending' });
+    assert.equal(getDeviceTermsSyncStatus(storage, 'USR-0001', deviceA, '2026-07'), 'pending');
+    assert.deepEqual(getDeviceTermsAcceptance(storage, 'USR-0001', deviceA, '2026-07'), acceptance);
     saveDeviceTermsAcceptance(storage, 'USR-0001', deviceA, acceptance);
+    assert.equal(getDeviceTermsSyncStatus(storage, 'USR-0001', deviceA, '2026-07'), 'synced');
     storage.setItem('gpsepedia_session', '{"SessionToken":"old"}');
     storage.removeItem('gpsepedia_session');
     assert.equal(getOrCreateTermsDeviceId(storage, { randomUUID: () => 'ffffffff-ffff-4fff-8fff-ffffffffffff' }), deviceA);
@@ -115,12 +119,18 @@ test('el aviso se recuerda por usuario y dispositivo, incluso después de cerrar
     assert.notEqual(deviceB, deviceA);
     assert.equal(getDeviceTermsAcceptance(newDeviceStorage, 'USR-0001', deviceB, '2026-07'), null);
 });
-test('el aviso bloquea el catálogo hasta confirmar la aceptación del dispositivo', () => {
-    assert.match(ui, /if \(!renderTermsGate_\(user\)\) return;/);
+test('el catálogo permanece bloqueado hasta aceptación local y la carga inicia antes del Splash', () => {
+    assert.match(ui, /if \(!renderTermsGate_\(user\)\) \{/);
     assert.match(ui, /getOrCreateTermsDeviceId\(localStorage, window\.crypto\)/);
-    assert.match(ui, /saveDeviceTermsAcceptance\(localStorage, userId, deviceId, confirmed\)/);
-    assert.match(auth, /if \(appReady\) loadInitialData\(\)/);
-    assert.match(auth, /if \(handleLoginSuccess\(user, false\)\) loadInitialData\(\)/);
+    assert.match(ui, /saveDeviceTermsAcceptance\(localStorage, userId, deviceId, localAcceptance, \{ syncStatus: 'pending' \}\)/);
+    const showStart = ui.indexOf('export function showApp(user)');
+    const gate = ui.indexOf('if (!renderTermsGate_(user))', showStart);
+    const catalog = ui.indexOf('startCatalogLoad()', showStart);
+    const fade = ui.indexOf('fadeSplash()', showStart);
+    assert.ok(showStart >= 0 && gate > showStart && catalog > gate && fade > catalog);
+    assert.match(ui, /syncPendingTermsAcceptance_\(user, deviceId\)/);
+    assert.doesNotMatch(auth, /if \(appReady\) loadInitialData\(\)/);
+    assert.doesNotMatch(auth, /if \(handleLoginSuccess\(user, false\)\) loadInitialData\(\)/);
 });
 test('AUTH registra la aceptación por dispositivo sin escribir la columna de aceptación de la sesión', () => {
     const start = serviceAuth.indexOf('function handleAcceptTerms(payload) {');
