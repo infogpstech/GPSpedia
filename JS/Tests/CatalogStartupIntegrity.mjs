@@ -29,7 +29,7 @@ function createHarness(options = {}) {
         catalogData: { cortes: [], tutoriales: [], relay: [], logos: [], sortedCategories: [] }
     };
     const errors = [], warnings = [], patches = [];
-    let cacheIndex = 0, saveCalls = 0, pysCalls = 0, fetchCalls = 0, savedCursor = null, cursorWrites = 0;
+    let cacheIndex = 0, saveCalls = 0, pysCalls = 0, pysCursorWrites = 0, fetchCalls = 0, savedCursor = null, cursorWrites = 0;
     let releaseCatalogPersistence = null;
     const delayedCatalogPersistence = options.delayCatalogPersistence
         ? new Promise(resolve => { releaseCatalogPersistence = resolve; }) : null;
@@ -120,10 +120,10 @@ function createHarness(options = {}) {
         () => state,
         setState,
         message => errors.push(message),
-        async () => { pysCalls++; },
+        async () => { pysCalls++; if (options.pysError) throw options.pysError; },
         () => ({ changed: false, needsRefresh: false }),
         () => options.pysCursor === undefined ? options.cacheCursor : options.pysCursor,
-        () => true,
+        () => { pysCursorWrites++; return true; },
         () => ({ hasCache: options.pysCacheAvailable !== false, updatedAt: options.pysUpdatedAt === undefined ? 1 : options.pysUpdatedAt, stale: false, error: null }),
         async data => { setState({ catalogData: data }); return true; },
         { log() {}, warn: (...args) => warnings.push(args), error() {} },
@@ -143,6 +143,7 @@ function createHarness(options = {}) {
         get savedCursor() { return savedCursor; },
         get cursorWrites() { return cursorWrites; },
         get pysCalls() { return pysCalls; },
+        get pysCursorWrites() { return pysCursorWrites; },
         get cacheReads() { return cacheIndex; },
         get offlineFallbackSaved() { return offline.fallbackSaved; },
         releaseCatalogPersistence() { if (releaseCatalogPersistence) releaseCatalogPersistence(); }
@@ -164,6 +165,14 @@ await test('procesa respuesta de red válida y confirma ready después de actual
     assert.deepEqual(h.state.catalogData.sortedCategories, ['pickup']);
     assert.equal(h.saveCalls, 1);
     assert.equal(h.errors.length, 0);
+});
+await test('un fallo independiente de PyS no marca error en el catálogo ni adelanta su cursor', async () => {
+    const h = createHarness({ pysError: new Error('FEEDBACK temporalmente no disponible') });
+    await h.load();
+    assert.equal(h.state.catalogLoadStatus, 'ready');
+    assert.equal(h.errors.length, 0);
+    assert.equal(h.pysCalls, 1);
+    assert.equal(h.pysCursorWrites, 0);
 });
 await test('recupera el catálogo desde CacheStorage cuando IndexedDB no responde', async () => {
     const fallback = { snapshot: snapshot([{ id: 'C-FALLBACK', marca: 'Honda', categoria: 'pickup' }]), cursor: 9 };
