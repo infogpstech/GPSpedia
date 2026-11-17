@@ -1,0 +1,20 @@
+import assert from "node:assert/strict";
+import { readFileSync, existsSync } from "node:fs";
+const feedback=readFileSync(new URL("../Services/feedback.js",import.meta.url),"utf8");
+function extract(source,start,end){const i=source.indexOf(start),j=source.indexOf(end,i+start.length);assert.ok(i>=0&&j>i,"No se encontró "+start);return source.slice(i,j);}
+const report=extract(feedback,"function handleReportProblem(payload)","function enforceFeedbackRateLimit_");
+const suggestion=extract(feedback,"function handleSuggestCutChange(payload)","function parseModelosAsociados");
+assert.ok(report.indexOf("saveReportImageAttachment_")<report.indexOf("acquireFeedbackScriptLock_(lock)"),"El adjunto de reporte debe cargarse antes del lock.");
+assert.ok(report.indexOf("acquireFeedbackScriptLock_(lock)")<report.indexOf("getSafeSheet(SHEET_NAMES.FEEDBACKS)"),"La escritura de reporte debe comenzar bajo lock.");
+assert.ok(report.includes("if(lockAcquired) lock.releaseLock()"),"El lock de reporte solo se libera si fue adquirido.");
+assert.ok(report.includes("La imagen del reporte se conserva porque no se pudo confirmar la reversión"),"No borrar la imagen si la referencia pudo quedar persistida.");
+assert.ok(suggestion.indexOf("saveSuggestionImageAttachment_(normalizedImage")<suggestion.indexOf("acquireFeedbackScriptLock_(lock)"),"La imagen de sugerencia debe cargarse antes del lock.");
+assert.ok(suggestion.indexOf("acquireFeedbackScriptLock_(lock)")<suggestion.indexOf("findCutSuggestionByOperation_"),"La comprobación/escritura de la sugerencia debe quedar en la sección breve.");
+assert.ok(suggestion.includes("if (lockAcquired) lock.releaseLock()"));
+assert.ok(suggestion.includes("(!pendingSheet || !pendingRowNumber || rollbackConfirmed)"),"La limpieza solo borra imágenes cuando la fila no existe o la reversión se confirmó.");
+const router=extract(feedback,"function doPost(e)","const RICH_TEXT_MODE_PROPERTY_");
+assert.equal((router.match(/recordDirectServiceTraffic_\(\)/g)||[]).length,1,"FEEDBACK debe conservar un único punto de conteo best-effort.");
+assert.match(feedback,/lockAcquired = lock\.tryLock\(0\)/,"La telemetría no debe esperar por el lock.");
+assert.ok(existsSync(new URL("../../.github/workflows/deployed-service-health.yml",import.meta.url)),"El workflow de salud no debe desaparecer.");
+assert.ok(existsSync(new URL("../Frontend/activityDashboard.js",import.meta.url)),"El dashboard de actividad debe conservarse.");
+console.log("P2FeedbackImageUploadLocks: 1/1 PASS — adjuntos fuera del lock; telemetría y dashboard preservados");
