@@ -116,20 +116,30 @@ test('API dirige acceptTerms a AUTH sin enviar una llamada touchSession adiciona
     assert.match(uiSource, /routeAction\('acceptTerms',[\s\S]*?deviceId/);
     assert.doesNotMatch(uiSource, /routeAction\('touchSession'/);
 });
-test('el catálogo espera la aceptación y el renderizado completo se reanuda al confirmar el aviso', () => {
-    assert.match(uiSource, /if \(!renderTermsGate_\(user\)\) return;/);
-    const acceptedAt = uiSource.indexOf('saveDeviceTermsAcceptance(localStorage, userId, deviceId, confirmed)');
-    const resumeAt = uiSource.indexOf('showApp(user) !== true', acceptedAt);
-    const loadAt = uiSource.indexOf('window.auth?.loadInitialData', resumeAt);
-    assert.ok(acceptedAt >= 0 && resumeAt > acceptedAt && loadAt > resumeAt,
-        'Tras persistir la aceptación debe reanudarse showApp antes de cargar el catálogo.');
+test('la aceptación local habilita la app inmediatamente y AUTH se sincroniza en segundo plano', () => {
+    const localSaveAt = uiSource.indexOf("saveDeviceTermsAcceptance(localStorage, userId, deviceId, localAcceptance, { syncStatus: 'pending' })");
+    const resumeAt = uiSource.indexOf('showApp(user) !== true', localSaveAt);
+    const syncStart = uiSource.indexOf('function syncPendingTermsAcceptance_(user, deviceId)');
+    const remoteAt = uiSource.indexOf("routeAction('acceptTerms'", syncStart);
+    assert.ok(localSaveAt >= 0 && resumeAt > localSaveAt, 'La aceptación local debe guardarse antes de reanudar la aplicación.');
+    assert.ok(syncStart > 0 && remoteAt > syncStart, 'La llamada AUTH debe pertenecer al sincronizador en segundo plano.');
+    const clickStart = uiSource.indexOf('button.onclick = () => {', uiSource.indexOf('function renderTermsGate_'));
+    const clickEnd = uiSource.indexOf('    };', clickStart);
+    assert.doesNotMatch(uiSource.slice(clickStart, clickEnd), /await routeAction\('acceptTerms'/,
+        'El botón no debe esperar la respuesta remota.');
+    assert.match(uiSource, /getDeviceTermsSyncStatus\(localStorage, userId, deviceId, TERMS_CURRENT_VERSION\) !== 'pending'/);
+    assert.match(uiSource, /if \(!isCurrentTermsSyncSession_\(userId, sessionToken\)\) return false;/);
+    const showStart = uiSource.indexOf('export function showApp(user)');
+    const catalogStart = uiSource.indexOf('startCatalogLoad()', showStart);
+    const fadeStart = uiSource.indexOf('fadeSplash()', showStart);
+    assert.ok(showStart >= 0 && catalogStart > showStart && fadeStart > catalogStart,
+        'La carga cache-first debe iniciarse antes del desvanecimiento del Splash.');
+    assert.match(uiSource, /setTimeout\(\(\) => \{ splash\.style\.display = 'none'; \}, 500\)/);
     assert.ok(uiSource.includes("welcomeMsg.textContent = `Hola, ${displayName || 'Usuario'}`"));
     assert.ok(uiSource.includes('function getUiSessionContext_(user = getState().currentUser)'));
-    assert.ok(uiSource.includes("const userId = String(user.ID || user.id || '').trim()"));
-    assert.ok(uiSource.includes("const sessionToken = String(user.SessionToken || '').trim()"));
-    assert.ok(uiSource.includes("const userRole = appContext ? appContext.role : ''"));
     assert.match(frontendAuthSource, /const appReady = handleLoginSuccess\(result\.user\)/);
-    assert.match(frontendAuthSource, /if \(appReady\) loadInitialData\(\)/);
+    assert.doesNotMatch(frontendAuthSource, /if \(appReady\) loadInitialData\(\)/);
+    assert.doesNotMatch(frontendAuthSource, /if \(handleLoginSuccess\(user, false\)\) loadInitialData\(\)/);
     assert.match(frontendAuthSource, /export async function loadInitialData\([^)]*\)/);
 });
 test('UI no usa el indicador local antiguo y valida la versión del markup', () => {
