@@ -329,3 +329,11 @@ undefined
 - P4.3: auditoría detallada confirma que el ScriptLock ADMIN protege reintentos idempotentes y operaciones Drive/Spreadsheet. Se requiere claim/commit atómico breve antes de liberar trabajo externo; no se modificó admin.js.
 - CI 44154032505 SUCCESS: 145 suites, 2,117 pruebas aprobadas, 0 fallos. Health read-only 7/7 y Pages build SUCCESS.
 ================================================================================
+================================================================================
+2026-11-17 — GP-PERF-SIMPLIFY-01 — P4.3a inventario ADMIN
+- handleOrganizeUnusedImagesBatch lee el inventario completo y calcula duplicateIds una vez por lote, fuera del bucle por archivo.
+- Se conserva latestRowsBeforeMove por archivo, la doble revalidación de referencias activas, la comprobación de ubicación, read-back y rollback.
+- En un lote de 20 archivos se evitan hasta 19 lecturas completas iniciales y 19 recalculaciones de duplicados.
+- AdminReplacedImagesIntegrity 55/55 PASS; CI 44154558840 SUCCESS: 145 suites / 2,117 pruebas / 0 fallos; health read-only 7/7.
+- El ScriptLock global no se redujo: P4.3b requiere reserva/commit atómico y pruebas concurrentes.
+================================================================================
