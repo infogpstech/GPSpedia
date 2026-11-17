@@ -183,3 +183,16 @@ undefined
 - La auditoría descubrió y corrigió la omisión de FEEDBACK/getCatalogChanges, acción pública que no obtiene lease. La prueba DirectTrafficRoutingCoverage fija el comportamiento de add_cortes en silentRegister y sus leases ADMIN.
 - No se desplegaron Apps Script ni se configuraron Script Properties/secretos remotos. La validación Beta sigue pendiente y no bloquea el cierre local conforme a NORMAS_DESAROLLO.md.
 - Siguiente etapa: despliegue y validación Beta de AUTH, CATALOG, WRITE, FEEDBACK y ADMIN, con cuatro secretos aleatorios distintos guardados fuera del repositorio, verificación de Coordinator compatible, prueba de siete endpoints, conteos, latencia p50/p95 y contención. Requiere acceso operativo a Google Apps Script/Script Properties; no hay una integración de Apps Script disponible en esta sesión.
+
+
+## Continuidad — 2026-11-17 — BETA-050
+
+- Repositorio: `infogpstech/GPSpedia`.
+- Rama de trabajo: `GPSpedia2.2.5_work`; rama base `GPSpedia2.2.5` intacta.
+- HEAD de cierre local: `368582c4ed3619862dda2f52a686edbea4434f1f`.
+- Tarea: eliminar rutas de autenticación duplicada en ADMIN, FEEDBACK, WRITE, USERS y UTILITIES. Los helpers protegidos requieren ahora el actor central de Coordinator; no consultan Users/ActiveSessions como fallback.
+- USERS conserva una búsqueda de fila solo para ubicar el registro de destino en updateProfile. AUTH mantiene su ruta de login/restauración. Coordinator conserva token, epoch, expiración, revocación y RBAC por operación.
+- CI `44113573112`: SUCCESS — 138 suites, 2,031 pruebas aprobadas, 0 fallos.
+- Estado: implementación local y regresión completadas; validación funcional Beta pendiente. No se desplegaron proyectos Apps Script ni se realizaron cambios en servicios remotos.
+- Los workflows de salud remota son automáticos y de solo lectura (GET diagnóstico); no sustituyen las pruebas funcionales Beta.
+- Siguiente paso local: revisar la solicitud visual reciente del Inbox de escritorio contra el código vigente, aunque las tareas GP-UX-INBOX-DESKTOP y de toolbar figuran cerradas en el backlog; reabrir únicamente los defectos que sigan reproducibles. Mantener diferidas las pruebas funcionales Beta.

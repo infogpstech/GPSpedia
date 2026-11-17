@@ -155,3 +155,20 @@ undefined
 - HEAD rama trabajo b0e0e21b715103970804a81044f8846609032c49; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
 - Apps Script/ScriptProperties/secretos no desplegados ni modificados. Beta pendiente por acceso operativo; no impide el cierre local.
 ================================================================================
+
+
+## 2026-11-17 — BETA-050: auditoría de autorización por actor central
+
+**Alcance:** revisión de rutas protegidas de ADMIN, FEEDBACK, WRITE, USERS y UTILITIES, incluyendo consumidores de `getAdminSessionContext_`, `assertFeedbackSession`, `getAuthenticatedCollaborator`, `getVerifiedSession` y `assertUtilitiesDeveloperSession_`.
+
+**Hallazgo raíz:** los despachadores principales ya obtenían el actor confiable de Coordinator, pero los helpers conservaban una ruta de compatibilidad que, cuando el actor no estaba adjunto, volvía a consultar `Users` y/o `ActiveSessions`. Esto duplicaba la autenticación y mantenía una segunda fuente de autorización dentro de los servicios.
+
+**Corrección aplicada:** los cinco helpers exigen ahora el actor de Coordinator (`userId`, `role`, `epoch`) y fallan cerrados si falta o no coincide. Se retiraron los fallbacks y auxiliares locales de búsqueda de token, expiración y escritura de actividad. WRITE también eliminó los esquemas locales de Users/ActiveSessions que ya no utiliza.
+
+**Accesos de datos conservados:** USERS puede localizar la fila de Users para actualizar el perfil cuando `requireUserRow === true`; esa consulta identifica el destino de la escritura, no vuelve a autenticar al usuario. Las lecturas de datos necesarias para responder `getUsers`, las operaciones administrativas sobre registros y las rutas de restauración de AUTH se mantienen.
+
+**Seguridad conservada:** Coordinator continúa comprobando token, epoch, expiración, revocación y RBAC por operación. La validación de usuario/rol en AUTH permanece en login/restauración explícita y no se invoca como paso previo de cada acción.
+
+**Regresión:** GitHub Actions `44113573112` SUCCESS — 138 suites, 2,031 pruebas aprobadas, 0 fallos. Se actualizaron los contratos para probar el actor central y la ausencia de consultas locales de autenticación.
+
+**Pendiente:** pruebas funcionales Beta después del despliegue autorizado. No se desplegaron proyectos Apps Script ni se modificaron datos externos.

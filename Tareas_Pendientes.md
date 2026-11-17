@@ -593,10 +593,20 @@ No desplegar Apps Script ni modificar ScriptProperties, permisos, hojas, Drive o
 - Conservar token, expiración, epoch, revocación y RBAC backend. El estado local nunca autoriza una operación.
 
 ### BETA-050 — Revalidación de usuario/rol
-**Estado: ACTOR CENTRAL Y CONTRATOS LOCALES COMPLETADOS; PENDIENTE BETA.**
+**Estado: IMPLEMENTACIÓN LOCAL Y REGRESIÓN COMPLETADAS; VALIDACIÓN BETA PENDIENTE.**
 
 - Confirmar que los handlers reutilizan el actor confiable y no consultan Users/ActiveSessions en cada acción.
 - No retirar la barrera central de token, expiración, epoch, revocación ni autorización por rol.
+
+**Adenda de auditoría y corrección raíz — 2026-11-17**
+
+- La auditoría detectó rutas de compatibilidad que, si faltaba el actor adjunto por Coordinator, volvían a consultar localmente las hojas `Users` y/o `ActiveSessions` para autorizar una acción. Estaban en `admin.js`, `feedback.js`, `write.js`, `users.js` y `Utilities.js`.
+- Se eliminaron esos fallbacks y sus auxiliares de búsqueda/expiración/actividad. Los helpers protegidos ahora exigen `payload.__sharedSessionActor` con identidad, rol y epoch válidos; si falta, rechazan la acción sin realizar otra autenticación local.
+- WRITE retiró los esquemas de columnas de Users/ActiveSessions que solo existían para esa verificación duplicada.
+- USERS conserva una lectura puntual de la fila de Users únicamente cuando `updateProfile` necesita localizar el registro que modificará; no se usa para revalidar la sesión o el rol. Las lecturas de Users para construir la respuesta de `getUsers` son acceso funcional a datos, no autenticación.
+- Se mantiene intacta la autorización central de Coordinator: token, epoch, expiración, revocación y RBAC por operación. AUTH conserva la validación explícita para login/restauración de sesión; no se convierte en una prevalidación de cada acción.
+- Pruebas CI `44113573112`: SUCCESS — 138 suites, 2,031 pruebas aprobadas, 0 fallos. Se actualizaron los contratos de WRITE, ADMIN, FEEDBACK, USERS y UTILITIES para simular el actor emitido por Coordinator.
+- No se desplegaron proyectos Apps Script ni se ejecutaron pruebas funcionales Beta. La validación remota Beta continúa pendiente.
 
 ### BETA-051 — Validaciones duplicadas
 **Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**

@@ -139,3 +139,12 @@ undefined
 - Auditoría.txt: añadido cierre local y hallazgo FEEDBACK/getCatalogChanges.
 - CI final 44107762436: 138 suites / 2043 pruebas / 0 fallos. Health remoto 44107762702: 7/7. No Apps Script deployments ni Script Properties modificadas.
 ================================================================================
+
+
+2026-11-17 — BETA-050 — Eliminación de revalidación local por servicio
+- ADMIN, FEEDBACK, WRITE, USERS y UTILITIES consumen exclusivamente el actor confiable de Coordinator en sus helpers de autorización; los fallbacks locales a Users/ActiveSessions fueron retirados.
+- WRITE eliminó esquemas de columnas de autenticación que quedaron sin uso. USERS conserva la búsqueda de fila solo como localización del destino para updateProfile.
+- Se mantiene Coordinator como barrera central de token, epoch, expiración, revocación y RBAC. AUTH mantiene login/restauración explícita, sin prevalidación por acción.
+- CI: 44113573112 SUCCESS — 138 suites / 2,031 pruebas / 0 fallos.
+- Implementación principal: 62d12ceabab119b48d75fba244ac23f2d5656ed2. HEAD de cierre local: 368582c4ed3619862dda2f52a686edbea4434f1f.
+- Validación Beta pendiente; no se desplegaron proyectos Apps Script.
