@@ -336,3 +336,5 @@ El checkpoint acumulativo anterior se conserva íntegro en `Checkpoint_Archive/c
 - Validación estática local: parsing ECMAScript aprobado para rich-text.js, InboxUi.mjs, ServiceWorkerCache.js (modo async), OfflineBrandAssets.mjs y service-worker.js; contratos estáticos dirigidos y sincronización de caché v58 aprobados.
 - No se ejecutó la suite Node.js completa ni pruebas de interacción con navegador/dispositivo desde esta sesión. No se declara CI aprobada. La validación real con Gboard/IME, autocorrección, cambio de estilos y escritorio queda pendiente de Beta.
 - La publicación de checkpoint y ChangesLogs se completa en esta continuación. Estado: EN PROGRESO hasta ejecutar la suite Node disponible; no bloqueado por la validación física Beta.
+
+- Adenda de revisión: beforeinput solo intercepta eventos cancelables para evitar duplicar inserciones IME. Los formatos booleanos sobre una selección conservan alternancia; el estado pendiente gobierna únicamente la escritura posterior. Parsing de rich-text.js aprobado tras este ajuste; no se ejecutó la suite Node completa.
