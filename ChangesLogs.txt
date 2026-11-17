@@ -1403,3 +1403,5 @@ GP-UX-RICH-TOOLBARS-01 — 2026-11-16
 
 
 [2026-11-16] GP-UX-RICH-EDITOR-FORMAT-04 — Se publica estado de formato pendiente independiente por editor para conservar color, fuente, tamaño, negrita, cursiva, subrayado y tachado al perder foco. Inserción de texto formateado con beforeinput, soporte de saltos de línea y composición IME, selección existente envuelta directamente y limpieza del estado al reiniciar formulario. App Shell v58. Parsing ECMAScript y contratos estáticos dirigidos aprobados; suite Node completa, CI y prueba Beta de navegador/dispositivo no ejecutadas.
+
+[Adenda GP-UX-RICH-EDITOR-FORMAT-04] Se preserva la alternancia de estilos sobre texto seleccionado y se limita la inserción manual a beforeinput cancelable; composición IME no cancelable se procesa al terminar para evitar duplicados. Parsing posterior aprobado; pruebas Node completas y Beta pendientes.
