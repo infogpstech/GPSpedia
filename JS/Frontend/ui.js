@@ -12609,6 +12609,7 @@ export function openAddProblemModal(preAssociatedVehicle = null, navOptions = {}
     attachContextualHelp_(content, "pys-sin-solucion", "Activa esta opción si todavía no existe una solución confirmada.");
     attachContextualHelp_(content, "pys-solucion", "Explica los pasos correctivos que ya fueron comprobados.");
     attachContextualHelp_(content, "pys-prevenir", "Añade recomendaciones para evitar que la falla vuelva a presentarse.");
+    attachContextualHelp_(content, "pys-video-url", "Pega un enlace de YouTube ya publicado; el vídeo se enviará a aprobación. Para transferir un archivo, usa el botón de subida directa.");
     modal.appendChild(content);
     document.body.appendChild(modal);
 
@@ -12745,11 +12746,6 @@ export function openAddProblemModal(preAssociatedVehicle = null, navOptions = {}
 
     const saveProblem = async ({ openUploader = false } = {}) => {
         if (isSaving) return;
-        if (getUiSessionContext_()?.role !== "desarrollador") {
-            showGlobalError("La sesión ya no tiene permisos para registrar problemas.");
-            return;
-        }
-
         const rawVideoUrl = videoUrlInput.value.trim();
         const videoId = rawVideoUrl ? getValidatedYouTubeVideoId(rawVideoUrl) : null;
         if (rawVideoUrl && !videoId) {
