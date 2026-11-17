@@ -474,10 +474,10 @@ check("Tutoriales y problemas habilitan listas, marcadores elegibles y listas nu
     for (const id of ["tut-desc","pys-detalle","pys-solucion","pys-prevenir"]) assert.ok(ui.includes('data-rich-target="' + id + '"') || ui.includes('"' + id + '"'));
     assert.ok(ui.includes("edit-tutorial-details-textarea"));
     assert.ok(ui.includes("edit-pys-prev-textarea"));
-    assert.ok(rich.includes('option value="arrow">→ Flecha'));
-    assert.ok(rich.includes('option value="check">✓ Verificación'));
-    assert.ok(rich.includes('makeButton("fa-list-ul", "Lista no ordenada"'));
-    assert.ok(rich.includes('makeButton("fa-list-ol", "Lista ordenada"'));
+    assert.ok(rich.includes('addDropdown("fa-list-ul", "Listas y marcadores"'));
+    for (const label of ["Viñetas", "Guiones", "Flechas", "Verificación", "Lista numerada"]) assert.ok(rich.includes('label: "' + label + '"'));
+    assert.ok(rich.includes('applyRichTextFormat(targetId, "ul", "bullet", applyOptions)'));
+    assert.ok(rich.includes('applyRichTextFormat(targetId, "ol", null, applyOptions)'));
 });
 check("Los campos enriquecidos se editan visualmente y sincronizan HTML saneado con el textarea fuente", () => {
     assert.ok(rich.includes("export function mountRichTextEditors("));
@@ -527,9 +527,11 @@ check("Todas las barras de formularios usan la iconografía compacta del Inbox s
     assert.match(rich, /compact: toolbar\.dataset\.richTextCompact === "true"/);
     assert.match(toolbar, /makeButton\("fa-bold", "Negrita"/);
     assert.match(toolbar, /if \(isFull\)[\s\S]*?fa-italic[\s\S]*?fa-strikethrough/);
-    assert.match(toolbar, /if \(hasLists\)[\s\S]*?fa-list-ul[\s\S]*?fa-list-ol/);
+    assert.match(toolbar, /if \(hasLists\)[\s\S]*?addDropdown\("fa-list-ul"/);
+    assert.match(toolbar, /rich-toolbar-menu-item/);
+    assert.match(toolbar, /positionRichTextMenu\(menu, trigger, "left"\)/);
     assert.match(toolbar, /rich-toolbar-native-select/);
-    assert.doesNotMatch(toolbar, /rich-toolbar-dropdown|addDropdown/);
+    assert.doesNotMatch(toolbar, /rich-toolbar-marker-select|Marcador de lista no ordenada/);
     assert.match(css, /\.rich-editor-toolbar-compact\s*\{[^}]*gap:1px/s);
     assert.match(css, /\.rich-editor-toolbar-compact \.rich-toolbar-icon-button/);
     assert.match(css, /\.rich-editor-toolbar-compact \.rich-toolbar-native-select/);
@@ -574,6 +576,46 @@ check("El formato pendiente se conserva mediante anclas nativas compatibles con 
     assert.match(rich, /document\.activeElement===editor&&inside/);
     assert.ok(!rich.includes("restoreRichTextSelection_(resolveRichTextTarget_(targetId))"));
     for (const tagPair of ['["bold","strong"]','["italic","em"]','["underline","u"]','["strike","s"]']) assert.ok(rich.includes(tagPair), tagPair);
+});
+
+
+check("Las barras estándar de detalles usan un icono con menú de listas, nunca un selector de marcador", () => {
+    const toolbar = rich.slice(rich.indexOf("export function createRichTextToolbar("), rich.indexOf("export function refreshRichTextToolbars("));
+    assert.ok(toolbar.includes('addDropdown("fa-list-ul", "Listas y marcadores"'));
+    assert.ok(toolbar.includes('setAttribute("aria-haspopup", "menu")'));
+    assert.ok(toolbar.includes('setAttribute("aria-expanded", String(opening))'));
+    assert.ok(!toolbar.includes("rich-toolbar-marker-select"));
+    assert.ok(!toolbar.includes('createElement("select")') || toolbar.includes('sizeSelect') && toolbar.includes('fontSelect'));
+});
+
+check("El formulario de tutorial permite pegar un enlace validado o iniciar la subida directa", () => {
+    const tutorial = ui.slice(ui.indexOf("export function openAddTutorialModal"), ui.indexOf("window.applyRichFormat = function"));
+    assert.ok(tutorial.includes('id="tut-video-url"'));
+    assert.ok(tutorial.includes('id="tut-upload-video-btn"'));
+    assert.ok(tutorial.includes("getValidatedYouTubeVideoId(rawVideoUrl)"));
+    assert.ok(tutorial.includes('videoUrl: videoId ? "https://www.youtube.com/watch?v=" + videoId : ""'));
+    assert.ok(tutorial.includes('openYouTubeUploadModal({'));
+    assert.ok(tutorial.includes('contentType: "tutorial"'));
+    assert.ok(tutorial.includes("created.referenceId"));
+});
+
+check("La búsqueda de vehículos mantiene visibles los resultados con el teclado y adapta el modal al viewport", () => {
+    const association = ui.slice(ui.indexOf("export function openSearchVehicleForPysAssociationModal"), ui.indexOf("/* TAREA 11 (12.2): MODAL EXCLUSIVO"));
+    assert.ok(association.includes("window.visualViewport"));
+    assert.ok(association.includes("updateViewportLayout"));
+    assert.ok(association.includes("keepSearchResultsVisible"));
+    assert.ok(association.includes('resultsContainer.scrollIntoView({ block: "nearest"'));
+    assert.ok(association.includes('input.scrollIntoView({ block: "center"'));
+});
+
+check("El botón más agrega el modelo directamente y el resto de la tarjeta abre su ficha", () => {
+    const association = ui.slice(ui.indexOf("export function openSearchVehicleForPysAssociationModal"), ui.indexOf("/* TAREA 11 (12.2): MODAL EXCLUSIVO"));
+    assert.ok(association.includes("pys-association-result-details"));
+    assert.ok(association.includes("pys-association-result-add"));
+    assert.ok(association.includes("event.stopPropagation()"));
+    assert.ok(association.includes("newlySelectedIds.add(String(v.id))"));
+    assert.ok(association.includes("openConfirmVehicleForPysModal(v, confirmedVehicle"));
+    assert.ok(!association.includes("itemDiv.onclick = () =>"));
 });
 
 let passed = 0;
