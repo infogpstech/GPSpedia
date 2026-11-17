@@ -328,18 +328,26 @@ check("El botón de opciones queda antes de Negrita y su menú de categorías se
     assert.match(rich, /nextToolbar\.insertBefore\(child, nextToolbar\.firstChild\)/);
     assert.match(css, /\.inbox-composer-options-menu\s*\{[^}]*max-width:calc\(100vw - 24px\)/s);
 });
-check("Plantilla y categoría se apilan dentro del desplegable de opciones de la barra", () => {
-    assert.match(ui, /composerOptionsMenu\.append\(templateField, categoryField\)/);
-    assert.match(ui, /composerOptions\.dataset\.richToolbarPersist = "true"/);
-    assert.match(ui, /editorShell\.append\(toolbar, bodyEditor, body\)/);
-    assert.match(ui, /form\.append\(bodyLabel, editorShell\)/);
-    assert.match(css, /\.inbox-composer-options-menu\s*\{[^}]*grid-template-columns:\s*minmax\(0,1fr\)/s);
-    assert.match(css, /\.inbox-composer-option\s*\{[^}]*flex-direction:\s*column/s);
+check("Plantilla y categoría comparten el ancho del desplegable en dos columnas", () => {
+    assert.match(ui, /composerOptionsMenu\\.append\\(templateField, categoryField\\)/);
+    assert.match(ui, /composerOptionsMenu\\.classList\\.toggle\\("is-category-only", !isDeveloper\\)/);
+    assert.match(ui, /composerOptions\\.dataset\\.richToolbarPersist = "true"/);
+    const menuRule = css.slice(css.lastIndexOf("#inbox-modal-content .inbox-composer-options-menu {"));
+    assert.match(menuRule, /grid-template-columns:repeat\\(2,minmax\\(0,1fr\\)\\)/);
+    assert.match(css, /\\.inbox-composer-options-menu\\.is-category-only\\s*\\{[^}]*grid-template-columns:minmax\\(0,1fr\\)/s);
+    assert.match(css, /\\.inbox-composer-option\\s*\\{[^}]*flex-direction:\\s*column/s);
 });
-check("La lista vacía reduce su altura y el botón de búsqueda conserva íntegro el icono", () => {
-    assert.match(ui, /list\.classList\.toggle\("is-empty", isEmpty\)/);
-    assert.match(css, /\.inbox-conversation-list\.is-empty\s*\{[^}]*max-height:\s*48px/s);
-    assert.match(css, /#inbox-search-toggle span\s*\{\s*display:\s*none/s);
+check("La lista vacía reduce su altura y los botones de búsqueda no recortan el icono", () => {
+    assert.match(ui, /list\\.classList\\.toggle\\("is-empty", isEmpty\\)/);
+    assert.match(css, /\\.inbox-conversation-list\\.is-empty\\s*\\{[^}]*max-height:\\s*48px/s);
+    assert.match(css, /\\.inbox-conversation-sidebar\\.is-empty\\s*\\{[^}]*align-self:start/s);
+    const toggleRule = css.slice(css.lastIndexOf("#inbox-modal-content .inbox-folder-nav #inbox-search-toggle {"));
+    assert.match(toggleRule, /flex:0 0 40px/);
+    assert.match(toggleRule, /width:40px/);
+    assert.match(toggleRule, /overflow:visible/);
+    const submitRule = css.slice(css.lastIndexOf("#inbox-modal-content .inbox-search-row button {"));
+    assert.match(submitRule, /width:40px/);
+    assert.match(submitRule, /min-width:40px/);
 });
 check("El modal mantiene los controles de lectura para tecnologías de asistencia", () => {
     assert.match(html, /id="inbox-conversation-list"[^>]*aria-live="polite"/);
