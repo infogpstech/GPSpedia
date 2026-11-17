@@ -46,9 +46,9 @@ test("el router AUTH reserva una lease de lectura específica para el benchmark"
  const withActor=(event,trusted)=>{const body=JSON.parse(event.postData.contents);body.payload.__sharedSessionActor=trusted;return {postData:{contents:JSON.stringify(body)}};};
  const internal=event=>{const body=JSON.parse(event.postData.contents);return {content:JSON.stringify(handler(body.payload))};};
  const content={createTextOutput:value=>({content:value,setMimeType(){return this;}}),MimeType:{TEXT:"text"}};
- const doPost=new Function("isSharedMutationAction_","isSharedReadAction_","withSharedSessionActor_","withSharedMutationLease_","doPostInternal_","ContentService",
+ const doPost=new Function("isSharedMutationAction_","isSharedReadAction_","withSharedSessionActor_","withSharedMutationLease_","doPostInternal_","ContentService","DIRECT_SERVICE_TRAFFIC_CONFIG_","readDirectServiceTraffic_","recordDirectServiceTraffic_",
   extract(auth,"isSharedMutationAction_")+"\n"+extract(auth,"isSharedReadAction_")+"\n"+route+"\nreturn doPost;")(
-   mutation,sharedRead,withActor,withLease,internal,content);
+   mutation,sharedRead,withActor,withLease,internal,content,{actions:new Set()},()=>({status:"unavailable"}),()=>false);
  const response=doPost({postData:{contents:JSON.stringify({action:"benchmarkPasswordKdf",payload:{userId:"U1",sessionToken:"session-token"}})}});
  assert.equal(JSON.parse(response.content).status,"success");
  assert.deepEqual(calls.map(call=>[call.service,call.operation]),[["AUTH","benchmarkPasswordKdf"]]);
