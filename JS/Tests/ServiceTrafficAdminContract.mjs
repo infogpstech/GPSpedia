@@ -22,16 +22,15 @@ assert.match(admin,/function mergeDirectServiceTraffic_\(coordinatorResult, dire
 assert.match(admin, /\{ service: "AUTH", url: AUTH_SERVICE_URL, scope: "direct_post_requests" \}/);
 assert.match(admin, /\{ service: "WRITE", url: WRITE_SERVICE_URL, scope: "direct_post_requests" \}/);
 assert.match(admin, /\{ service: "FEEDBACK", url: FEEDBACK_SERVICE_URL, scope: "direct_post_requests" \}/);
-assert.match(admin, /\{ service: "UTILITIES", url: UTILITIES_SERVICE_URL, scope: "direct_post_requests" \}/);
 const authService = read("JS/Services/Auth.js");
 const writeService = read("JS/Services/write.js");
 const feedbackService = read("JS/Services/feedback.js");
-const utilitiesService = read("JS/Services/Utilities.js");
 assert.match(authService,/actions: new Set\(\["validateSession"\]\)/);
 assert.match(writeService,/actions: new Set\(\["checkVehicle","getSuggestion","checkVinDuplicate"\]\)/);
 assert.match(feedbackService,/actions: new Set\(\["getPysData","sendContactForm"\]\)/);
-assert.match(utilitiesService,/actions: new Set\(\["migrateTimestamps"\]\)/);
 assert.match(feedbackService,/if \(action === "suggestYear" && String\(payload\.userId \|\| ""\)\.trim\(\) === "0"\) \{\s*recordDirectServiceTraffic_\(\);/);
+assert.doesNotMatch(admin,/UTILITIES_SERVICE_URL|service: "UTILITIES", url:/);
+assert.match(coordinator,/UTILITIES:\s*\{\s*migrateTimestamps: \{ read: \["SESSION_CONTEXTS", "CORTES", "DRIVE"\], write: \["UTILITIES"\] \} \}/);
 
 assert.match(admin,/getSharedServiceTraffic_\(\)/);
 assert.match(coordinator,/getServiceTraffic: \{ read: \["SERVICE_TRAFFIC"\] \}/);
@@ -58,4 +57,4 @@ assert.match(html,/operaciones protegidas/);
 assert.match(setupDoc,/telemetría global|SERVICE_TRAFFIC/i);
 assert.match(healthDoc,/2,000 ms/);
 
-console.log("ServiceTrafficAdminContract: 32/32 PASS");
+console.log("ServiceTrafficAdminContract: 33/33 PASS");
