@@ -1,4 +1,4 @@
-const CACHE_NAME='gpsepedia-cache-v67';
+const CACHE_NAME='gpsepedia-cache-v68';
 const CORE_ASSETS=['./','./index.html','./HTML/add_cortes.html','./HTML/users.html','./JS/Frontend/main.js','./JS/Frontend/clientInteractionPolicy.js','./JS/Frontend/auth.js','./JS/Frontend/ui.js','./JS/Frontend/activityDashboard.js','./JS/Frontend/termsDeviceAcceptance.js','./JS/Frontend/rich-text.js','./JS/Frontend/state.js','./JS/Frontend/navigation.js','./JS/Frontend/offline.js','./JS/Frontend/lightbox.js','./JS/Frontend/api-config.js','./JS/Frontend/serviceMetrics.js','./JS/Frontend/VinDifferentialEngine.js','./JS/Frontend/search-utils.js','./JS/Frontend/share-utils.js','./JS/Frontend/catalogStatus.js','./JS/Frontend/catalogRequest.js','./JS/Frontend/pys-data.js','./JS/Frontend/validationSubmission.js','./JS/Frontend/likeState.js','./JS/Frontend/youtubeUpload.js','./JS/Frontend/imageObjectUrlCache.js','./JS/Frontend/thumbnailCompressionQueue.js','./JS/Frontend/modalNavigation.js','./style.css','./contextual-help.css','./button-system.css','./manifest.json','./Images/Logo_TemaOscuro.png','./Images/icon-v3-512x512.png','./Images/tracklink_logo.png'];
 const OPTIONAL_ASSETS=['./Images/icon-v3-192x192.png','./Images/icon-v3-512x512.png','./Images/icon-pwa-192x192.png','./Images/icon-pwa-512x512.png'];
 function isQuotaExceeded(error){return Boolean(error&&(error.name==='QuotaExceededError'||error.code===22));}
@@ -55,7 +55,7 @@ function isCacheableRequest_(request) {
   if (request.mode === 'navigate' || request.destination === 'document' ||
       request.destination === 'script' || request.destination === 'style' ||
       request.destination === 'font') return true;
-  return /\\.(?:html?|mjs|js|css|json|webmanifest|woff2?|ttf|otf|svg|png|jpe?g|webp|gif|ico)$/i.test(url.pathname);
+  return /\.(?:html?|mjs|js|css|json|webmanifest|woff2?|ttf|otf|svg|png|jpe?g|webp|gif|ico)$/i.test(url.pathname);
  }
  // Solo se permite almacenamiento externo para recursos estáticos del CDN de iconos.
  return url.hostname === 'cdnjs.cloudflare.com' &&
