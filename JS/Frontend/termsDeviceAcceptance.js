@@ -69,7 +69,7 @@ export function getDeviceTermsSyncStatus(storage, userId, deviceId, version) {
         !String(userId || '').trim() || !isValidTermsDeviceId_(deviceId)) return 'synced';
     let raw = '';
     try { raw = storage.getItem(termsAcceptanceStorageKey_(userId, deviceId)) || ''; }
-    catch (error) { return 'synced'; }
+    catch (error) { return 'pending'; }
     if (!raw) return 'synced';
     let record;
     try { record = JSON.parse(raw); } catch (error) { return 'synced'; }
@@ -103,29 +103,6 @@ export function saveDeviceTermsAcceptance(storage, userId, deviceId, acceptance,
     const confirmed = getDeviceTermsAcceptance(storage, userId, deviceId, normalized.version);
     if (!confirmed || confirmed.acceptedAt !== normalized.acceptedAt ||
         getDeviceTermsSyncStatus(storage, userId, deviceId, normalized.version) !== normalized.syncStatus) {
-        throw new Error('No se pudo confirmar la aceptación guardada en este dispositivo.');
-    }
-    return confirmed;
-}
-    if (!storage || typeof storage.setItem !== 'function' ||
-        !String(userId || '').trim() || !isValidTermsDeviceId_(deviceId) ||
-        !acceptance || acceptance.status !== 'accepted' ||
-        typeof acceptance.version !== 'string' || !acceptance.version.trim() ||
-        typeof acceptance.acceptedAt !== 'string' || !Number.isFinite(Date.parse(acceptance.acceptedAt))) {
-        throw new Error('No se pudo validar el registro de aceptación de este dispositivo.');
-    }
-    const normalized = {
-        version: acceptance.version,
-        acceptedAt: acceptance.acceptedAt,
-        status: 'accepted'
-    };
-    try {
-        storage.setItem(termsAcceptanceStorageKey_(userId, deviceId), JSON.stringify(normalized));
-    } catch (error) {
-        throw new Error('No se pudo guardar la aceptación en este dispositivo.');
-    }
-    const confirmed = getDeviceTermsAcceptance(storage, userId, deviceId, normalized.version);
-    if (!confirmed || confirmed.acceptedAt !== normalized.acceptedAt) {
         throw new Error('No se pudo confirmar la aceptación guardada en este dispositivo.');
     }
     return confirmed;
