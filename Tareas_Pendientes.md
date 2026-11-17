@@ -902,3 +902,56 @@ La corrección anterior no resolvió el defecto en todos los estilos efectivos: 
 - CI Node.js 22 run 43960366613: **SUCCESS — 130 suites / 1,934 pruebas / 0 fallos**. InboxUi 57/57; CutDetailModalLayout 15/15; ServiceWorkerCache 10/10; OfflineBrandAssets 4/4.
 - GitHub Pages run 43960362556: **SUCCESS**.
 - Pendiente de Beta: probar en Android/PWA instalada y escritorio la edición real, conservación del cursor al aplicar formato, pegado, listas, menús hacia la izquierda, tema claro/oscuro y viewport estrecho.
+
+
+---
+
+## Nuevas solicitudes — Panel de actividad, aceptación de términos y precarga del catálogo (2026-11-16)
+
+**Estado global: PENDIENTE LOCAL.** Análisis inicial del código completado; implementación ordenada después de cerrar los pendientes locales prioritarios ya registrados en este backlog. No se modifica la rama base ni se despliegan servicios.
+
+### GP-DASH-INSIGHTS-01 — Dashboard de aportaciones e indicadores de actividad
+**Prioridad: P1 · Estado: PENDIENTE LOCAL.**
+
+- Rediseñar el Panel de Actividad para que sea un tablero de contribuciones y calidad de la información vehicular, no una tabla de texto sin jerarquía.
+- Incorporar indicadores resumidos y gráficas legibles: aportaciones por usuario, cortes aportados, vehículos cubiertos, valoraciones de utilidad, confirmaciones/sugerencias de años y actividad reciente.
+- Presentar un feed reciente con etiquetas comprensibles para cada tipo de evento, usuario, fecha y vehículo/corte relacionado; no exponer textos técnicos crudos como única descripción.
+- Incorporar ranking de cortes/modelos con más valoraciones «útil» y un apartado separado para los casos «no útil» o «no funciona», sin confundir reportes de problemas con votos de utilidad.
+- Desglosar confirmaciones de años, sugerencias de ampliación/reducción y aplicaciones de cambios de rango, diferenciando aportes verificados y anónimos cuando el esquema lo permita.
+- Mostrar modelos más consultados únicamente si existe una fuente histórica fiable. El campo Cortes.contadorBusqueda está definido en el esquema, pero en la revisión inicial no se encontró un escritor activo que lo incremente; verificar si hay datos históricos utilizables antes de presentarlo como métrica. Si no existe registro fiable, proponer instrumentación de selección/apertura de modelo (nunca cada pulsación de búsqueda) y explicar su coste antes de incorporarla.
+- Corregir tablas/columnas que parten palabras: encabezados sin ruptura interna, anchos y layout controlados, texto largo con ajuste entre palabras y presentación móvil adaptativa.
+- Reutilizar el resumen existente buildCutContributionSummary_, el endpoint FEEDBACK getActivityLogs y las fuentes actuales Cortes, FeedbackLikes, Feedbacks, FeedbackYearApplications y ActividadUsuario. Validar el significado real de cada columna antes de agregarla.
+- Preferir cálculo frontend para los indicadores que ya están completos en el snapshot del catálogo. Para datos que solo existen en Spreadsheet, evaluar extender la respuesta de lectura getActivityLogs en FEEDBACK, con agregaciones acotadas y sin datos personales innecesarios. No crear otro servicio si la acción existente basta.
+- Mantener la autorización actual de getActivityLogs (Desarrollador, Jefe y Supervisor). No ampliar roles ni modificar datos históricos.
+- Gráficas sin dependencias externas nuevas; incluir estados vacíos, error, carga, accesibilidad y tema claro/oscuro.
+- Pruebas: agregación con datos simulados, deduplicación, casos positivos/negativos, años, ranking, límites de lectura, permisos, XSS, responsive y regresión del dashboard.
+
+**Impacto backend preliminar:** las contribuciones y algunos contadores ya están disponibles. Para un desglose histórico fiable de likes, respuestas de utilidad y años, probablemente se requiera ampliar el servicio fuente JS/Services/feedback.js (FEEDBACK), reutilizando getActivityLogs; no implica crear otro servicio ni modificar datos productivos. El ranking de búsquedas no puede darse por válido hasta confirmar quién escribe contadorBusqueda; si no hay escritor, instrumentarlo requeriría una escritura adicional por selección de modelo, con impacto medible en latencia/Spreadsheet y protección contra duplicados.
+
+### GP-TERMS-ASYNC-01 — Aceptación local inmediata y registro remoto en segundo plano
+**Prioridad: P1 · Estado: PENDIENTE LOCAL.**
+
+- Al pulsar «Aceptar», guardar inmediatamente una aceptación local vinculada a usuario, dispositivo y versión de términos; cerrar el aviso sin esperar la red y continuar con el catálogo.
+- Enviar acceptTerms en segundo plano, conservar el registro remoto y reintentar silenciosamente cuando corresponda si hay un fallo transitorio.
+- Reutilizar la idempotencia ya existente en JS/Services/Auth.js (alreadyAccepted); evitar duplicar escrituras o generar registros de otro usuario/dispositivo.
+- Aislar reintentos por identidad y token de sesión; una respuesta tardía de una sesión anterior no puede modificar la sesión actual. No aceptar términos para otra identidad ni debilitar validación central/RBAC.
+- No bloquear la interfaz por fallo de red al registrar una aceptación ya realizada por el usuario. Conservar un estado local pendiente y no mostrar un falso mensaje de confirmación remota.
+- Preferir no modificar AUTH; cualquier cambio de servicio se justificará solo si las pruebas demuestran que el contrato actual no admite el registro idempotente en segundo plano.
+- Pruebas: cierre inmediato, caché por usuario/dispositivo/versión, red lenta/offline, reintento, respuesta tardía, cambio/logout de sesión, versión nueva de términos y ausencia de solicitudes duplicadas.
+
+### GP-PWA-SPLASH-PRELOAD-01 — Iniciar la carga del catálogo detrás del Splash existente
+**Prioridad: P1 · Estado: PENDIENTE LOCAL.**
+
+- Iniciar la preparación/carga del catálogo antes de comenzar el desvanecimiento actual del Splash, de modo que la carga aproveche el tiempo que la pantalla ya permanece visible.
+- No modificar diseño, HTML, CSS, animación ni duración del Splash; no esperar a que termine el catálogo para ocultarlo ni añadir tiempo artificial.
+- Respetar el bloqueo de términos: no iniciar lectura del catálogo protegido para una sesión que todavía no aceptó la versión vigente. Después de aceptar, iniciar inmediatamente la carga sin esperar la confirmación remota de acceptTerms.
+- Conservar cache-first: snapshot completo local inmediato, deltas cuando cursor válido, snapshot completo solo cuando sea necesario; evitar solicitudes duplicadas y no bloquear por IndexedDB lento.
+- Mantener la pantalla de carga del catálogo únicamente cuando realmente no haya datos disponibles después del Splash; si la caché es válida, mostrarla al terminar el desvanecimiento.
+- No modificar la pantalla Splash ni el Service Worker salvo que la revisión de dependencias demuestre que un recurso nuevo debe incorporarse al App Shell.
+- Pruebas: sesión restaurada con caché caliente, primer arranque sin caché, IndexedDB lento/no disponible, términos pendientes/aceptados, aceptación local inmediata, navegación y concurrencia de cargas; comprobar que la duración del Splash no aumente.
+
+### Orden de ejecución y dependencias
+1. Cerrar los pendientes locales prioritarios que ya figuran en este backlog (regresión automatizada de GP-UX-INBOX-02 y auditoría transversal P2 de alineación de modales).
+2. Implementar GP-TERMS-ASYNC-01 y GP-PWA-SPLASH-PRELOAD-01 como una misma línea de arranque/autenticación, manteniendo separadas sus pruebas.
+3. Implementar GP-DASH-INSIGHTS-01 después de confirmar el contrato y las fuentes de datos; decidir y documentar qué agregados se pueden obtener sin backend y cuáles requieren extender FEEDBACK.
+4. Validar localmente; las pruebas con Spreadsheet/deployments, OAuth y dispositivos reales quedan diferenciadas como validación Beta.
