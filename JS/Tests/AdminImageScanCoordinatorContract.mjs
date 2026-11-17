@@ -122,13 +122,13 @@ const feedbackPermissionsStart = feedback.indexOf("const FEEDBACK_ACTION_PERMISS
 const feedbackPermissionsEnd = feedback.indexOf("});", feedbackPermissionsStart) + 3;
 const feedbackPermissions = feedback.slice(feedbackPermissionsStart, feedbackPermissionsEnd);
 assert.ok(feedbackPermissions.includes('notifyDevelopersDriveCritical: ["Desarrollador"]'));
-const feedbackRouter = feedback.slice(feedback.indexOf("function doPost(e)"), feedback.indexOf("\\nconst RICH_TEXT_MODE_PROPERTY_"));
+const feedbackRouter = feedback.slice(feedback.indexOf("function doPost(e)"), feedback.indexOf("\nconst RICH_TEXT_MODE_PROPERTY_"));
 assert.ok(feedbackRouter.includes("getCachedSharedSessionActor_(payload.userId, payload.sessionToken)"));
 assert.ok(!feedbackRouter.includes("withSharedMutationLease_"));
 assert.ok(feedback.includes('actions: new Set(["recordLike","reportProblem"'));
 
 const feedbackRouterHarness = new Function(
-    extractFunction(feedback, "doPost") + "\\n" +
+    extractFunction(feedback, "doPost") + "\n" +
     `
     const actorCalls = [];
     function getCachedSharedSessionActor_(userId, sessionToken) {
