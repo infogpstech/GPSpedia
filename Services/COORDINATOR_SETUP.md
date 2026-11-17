@@ -97,14 +97,14 @@ Para completar rutas POST que no pasan por Coordinator, cada servicio con rutas 
 - CATALOG: getCatalogData, getDropdownData, getSuggestion y getNavigationData.
 - AUTH: validateSession.
 - WRITE: checkVehicle, getSuggestion y checkVinDuplicate.
-- FEEDBACK: getPysData y suggestYear anónimo (userId 0) son directos. sendContactForm, suggestYear autenticado y getCatalogChanges mantienen el conteo Coordinator.
-- UTILITIES: migrateTimestamps.
+- FEEDBACK: getPysData y suggestYear anónimo (userId 0). sendContactForm, suggestYear autenticado y getCatalogChanges mantienen el conteo Coordinator.
+- UTILITIES: migrateTimestamps obtiene una lease de Coordinator dentro de su handler; no tiene contador local para evitar doble conteo.
 - USERS: las acciones actuales conocidas (getUsers, createUser y updateProfile) pasan por Coordinator.
-- ADMIN: las operaciones pasan por Coordinator; ping se excluye como sondeo.
+- ADMIN: las operaciones pasan por Coordinator; ping se excluye intencionalmente como sondeo.
 
-ADMIN consulta los contadores directos en una sola operación agrupada con UrlFetchApp.fetchAll al refrescar el panel Developer. Si fetchAll falla globalmente, intenta los endpoints por separado; el fallo de una fuente no invalida las demás ni el agregado Coordinator. La consulta se ejecuta como máximo según el intervalo del panel (60 s), no por cada acción del usuario. El endpoint interno getServiceTraffic no se cuenta a sí mismo.
+ADMIN consulta los cuatro contadores directos (CATALOG, AUTH, WRITE y FEEDBACK) en una sola operación agrupada con UrlFetchApp.fetchAll al refrescar el panel Developer. Si fetchAll falla globalmente, intenta los endpoints por separado; el fallo de una fuente no invalida las demás ni el agregado Coordinator. La consulta se ejecuta según el intervalo del panel (60 s), no por cada acción del usuario. El endpoint interno getServiceTraffic no se cuenta a sí mismo.
 
-**Configuración de secretos en Beta:** generar un secreto aleatorio distinto por servicio (mínimo 32 caracteres; por ejemplo, localmente con openssl rand -hex 32). Guardar el mismo valor para cada servicio en dos lugares: la Script Property con nombre GPSpedia_<SERVICIO>_TRAFFIC_SECRET dentro del proyecto Apps Script de ese servicio y en el proyecto ADMIN. Servicios instrumentados: AUTH, CATALOG, WRITE y FEEDBACK. UTILITIES no necesita secreto porque migrateTimestamps ya obtiene lease Coordinator. No crear secreto para USERS ni UTILITIES (sus acciones conocidas pasan por Coordinator), ni ADMIN (el contador es central). No guardar valores en el repositorio, navegador, logs ni documentación.
+**Configuración de secretos en Beta:** generar un secreto aleatorio distinto por servicio (mínimo 32 caracteres; por ejemplo, localmente con openssl rand -hex 32). Guardar el mismo valor para cada servicio en dos lugares: la Script Property con nombre GPSpedia_<SERVICIO>_TRAFFIC_SECRET dentro del proyecto Apps Script de ese servicio y en el proyecto ADMIN. Servicios instrumentados: AUTH, CATALOG, WRITE y FEEDBACK. UTILITIES no necesita secreto porque migrateTimestamps ya se cuenta en Coordinator. No crear secreto para USERS ni ADMIN (sus acciones conocidas se cuentan mediante Coordinator). No guardar valores en el repositorio, navegador, logs ni documentación.
 
 Si falta un secreto, un endpoint falla o la respuesta no cumple el contrato, el dashboard conserva Coordinator y marca únicamente esa fuente directa como parcial/no disponible; nunca interpreta ausencia como cero confirmado. La consulta ADMIN/getServiceTraffic es de solo lectura, está reservada a Desarrollador y no devuelve usuarios, tokens ni identificadores de sesión. La propia consulta y los health probes no se cuentan.
 
