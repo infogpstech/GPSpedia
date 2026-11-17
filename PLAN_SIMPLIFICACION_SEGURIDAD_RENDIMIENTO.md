@@ -40,7 +40,9 @@ La autorización por rol se resuelve con el rol asociado a la sesión iniciada. 
 ## 3. Plan de ejecución priorizado
 
 ### P0 — Inventario y mapa de latencia
-**Objetivo:** identificar con evidencia dónde se consume tiempo y qué controles se ejecutan en cada flujo.
+**Estado: COMPLETADA (auditoría estática, 2026-11-17).** Informe: `AUDITORIA_P0_LATENCIA_VALIDACIONES.md`.
+**Hallazgos confirmados:** dos llamadas Coordinator por lease; revalidación de sesión y posible actualización de actividad por adquisición; rutas ADMIN/WRITE anidadas; locks de hasta 30 s que pueden cubrir cargas Drive. Sin medición de latencia real.
+**Objetivo: identificar con evidencia dónde se consume tiempo y qué controles se ejecutan en cada flujo.
 - Auditar Coordinator, SharedMutationClient y los helpers de autenticación/autorización de AUTH, USERS, ADMIN, WRITE, FEEDBACK, CATALOG y UTILITIES.
 - Inventariar todas las acciones que adquieren leases, llaman a Coordinator, consultan Users/ActiveSessions/SESSION_CONTEXTS, usan locks o realizan reintentos.
 - Trazar los flujos de crear/editar cortes, subir imágenes, subir tutoriales/videos, aportes PyS, Inbox y operaciones de lectura.
@@ -50,6 +52,7 @@ La autorización por rol se resuelve con el rol asociado a la sesión iniciada. 
 **Criterio de salida:** mapa de llamadas y lista priorizada de validaciones redundantes con archivos, funciones y dependencias identificadas.
 
 ### P1 — Simplificar el flujo de aportes y escrituras ordinarias
+**Estado: EN PROGRESO — P1.1 pendiente de implementación.**
 **Prioridad máxima de implementación.**
 - Retirar del flujo normal de WRITE/FEEDBACK las adquisiciones de lease/transaction y viajes de red a Coordinator que solo autentiquen, autoricen o verifiquen la legitimidad de la operación.
 - Evitar que ADMIN actúe como intermediario para registrar una operación ordinaria si puede ejecutarse directamente en el servicio responsable.
@@ -101,8 +104,8 @@ La autorización por rol se resuelve con el rol asociado a la sesión iniciada. 
 
 ## 4. Orden de trabajo y entregables
 
-1. Completar P0 y publicar el mapa de llamadas.
-2. Implementar P1 y validar cortes/aportes.
+1. **P0 COMPLETADA:** auditoría estática y mapa de llamadas publicados en `AUDITORIA_P0_LATENCIA_VALIDACIONES.md`.
+2. **P1 EN PROGRESO:** comenzar por P1.1 (WRITE/ADMIN cortes y `checkOperation`), luego P1.2 (locks de escritura) y P1.3 (FEEDBACK).
 3. Implementar P2 y validar cargas de archivos.
 4. Implementar P3 y verificar las tres excepciones de sesión.
 5. Ejecutar P4 sobre el resto de la plataforma.
