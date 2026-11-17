@@ -218,3 +218,17 @@ undefined
 - Orden: P0 inventario de llamadas/latencia; P1 simplificar escrituras/aportes; P2 cargas de archivos; P3 excepciones de sesión; P4 optimización global; P5 pruebas locales y mediciones.
 - Estado: requisito y plan registrados; todavía no se han modificado servicios ni se afirma mejora de rendimiento. Siguiente acción: ejecutar P0, auditar Coordinator/SharedMutationClient y rutas WRITE/FEEDBACK/ADMIN, y luego implementar P1/P2. No desplegar Apps Script ni ejecutar Beta sin autorización.
 - HEAD al registrar este requisito: 4e3ef463298fd8e3d75a87c46feea8a67a9e1f25; rama autorizada GPSpedia2.2.5_work. Rama base GPSpedia2.2.5 no se modifica.
+
+
+## Continuidad de ejecución — GP-PERF-SIMPLIFY-01 — 2026-11-17
+
+- **Tarea:** GP-PERF-SIMPLIFY-01 — simplificación de seguridad operativa y optimización global.
+- **Subtarea P0 — Inventario y mapa de latencia: COMPLETADA.** Se inspeccionaron Coordinator, SharedMutationClient, WRITE, ADMIN y FEEDBACK en el HEAD confirmado `632ae83b63474654a9966cd947a80f34d4619e48`.
+- **Resultado P0:** se confirmó que `withLease()` hace una llamada HTTP de adquisición y otra de liberación; la adquisición llama `authorizeSession_()`, que relee el contexto, verifica token/revocación/expiración y puede escribir LastActivityAt. El cliente espera hasta 12 s y Coordinator acepta esperas de hasta 15 s. ADMIN/WRITE tiene además flujo anidado (ADMIN lease + llamada WRITE + validación de lease en Coordinator). WRITE `checkOperation` también usa Coordinator. ADMIN mantiene ScriptLock de hasta 30 s en el registro de cortes e información suplementaria; la operación suplementaria sube imágenes a Drive mientras mantiene el lock. FEEDBACK tutorial usa ScriptLock de hasta 15 s.
+- **Informe:** `AUDITORIA_P0_LATENCIA_VALIDACIONES.md`.
+- **Pruebas:** no ejecutadas; P0 fue auditoría estática. No se midieron latencias reales ni se desplegaron servicios Apps Script/Beta.
+- **Estado de la tarea global:** EN PROGRESO. P0 COMPLETADA; P1 pendiente de completar.
+- **Subtarea siguiente y activa:** P1.1 — simplificar rutas WRITE/ADMIN de creación/edición de cortes y eliminar Coordinator de `checkOperation`, conservando la asignación correcta de colaborador y los permisos de rol. Luego P1.2 — retirar locks largos durante cargas Drive; P1.3 — simplificar aportes FEEDBACK.
+- **Siguiente fase después de P1:** P2 — imágenes, tutoriales y videos; después P3 — excepciones de sesión; P4 optimización general; P5 pruebas locales.
+- **Commit de esta actualización documental:** registrará P0 COMPLETADA, P1 EN PROGRESO, subtarea siguiente P1.1 y pruebas pendientes.
+- Rama autorizada: `GPSpedia2.2.5_work`; no modificar `GPSpedia2.2.5`.
