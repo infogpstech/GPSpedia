@@ -1415,3 +1415,5 @@ GP-UX-PYS-TUTORIAL-ASSOCIATION-06 — 2026-11-16
 - service-worker.js, JS/Tests/ServiceWorkerCache.js y JS/Tests/OfflineBrandAssets.mjs: caché App Shell actualizada a v62.
 - No se modificó JS/Services/feedback.js ni otro servicio/deployment Apps Script.
 ================================================================================
+
+[Adenda GP-UX-PYS-TUTORIAL-ASSOCIATION-06] La fila completa del resultado abre la información del vehículo excepto el botón +, que agrega directamente a la selección provisional. El botón de detalle detiene la propagación para impedir aperturas duplicadas.
