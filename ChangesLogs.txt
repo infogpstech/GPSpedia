@@ -1417,3 +1417,8 @@ GP-UX-PYS-TUTORIAL-ASSOCIATION-06 — 2026-11-16
 ================================================================================
 
 [Adenda GP-UX-PYS-TUTORIAL-ASSOCIATION-06] La fila completa del resultado abre la información del vehículo excepto el botón +, que agrega directamente a la selección provisional. El botón de detalle detiene la propagación para impedir aperturas duplicadas.
+
+
+### GP-UX-PYS-VIDEO-CREATE-01 — 2026-11-16
+- El formulario de alta PyS incorpora enlace de YouTube y subida directa. Los enlaces usan la acción existente `submitVideoForApproval`; los archivos usan `openYouTubeUploadModal`. `addProblem` conserva `videoUrl: ""`. Sin cambios en servicios backend.
+- App Shell v63 y contratos de regresión/caché actualizados.
