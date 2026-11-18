@@ -301,3 +301,10 @@ Adenda de validación final GP-PWA-RECENT-VIEWS-02: al subir CACHE_NAME a v70 ta
 [2026-11-18] Aislamiento adicional de «Vistos recientemente»
 - Se detectó que `loadUserLocalActivity` fusionaba los registros del propietario consultado con el estado en memoria previo. En cambios de cuenta esto podía mantener temporalmente vistos de la sesión anterior.
 - Corrección: vaciar `viewedItems` al comenzar la carga de actividad local y reemplazarlo únicamente por el resultado IndexedDB filtrado por el propietario actual. No se consulta el historial remoto.
+[2026-11-18] — GP-PWA-RECENT-VIEWS-03 — reconciliación de contrato de limpieza
+- Se confirmó el HEAD previo de la rama mediante `fetch_commit` usando la referencia `GPSpedia2.2.5_work`: `6f9df2a3da7cf3b4649e94a3ed827c5fcafde0fb`. El commit era documental y modificaba únicamente `checkpoint.md`.
+- La cadena de commits posterior a `9a3e139f0a0763894f804a44447f0d21f07c832c` incluye correcciones de aislamiento de memoria entre cuentas (`b0040aee`), pruebas y documentación.
+- Hallazgo: `RecentlyViewedCarousel.mjs` conservaba expectativas antiguas que prohibían limpiar `viewedItems`, contrarias al requisito consolidado y a la implementación vigente. Se corrigió el contrato: la limpieza manual vacía los almacenes reconstruibles del dispositivo, incluidos los vistos locales, sin llamar a FEEDBACK ni borrar ACTIVITY remoto.
+- Commit de corrección de prueba: `dae20bf50f8a40a669ce02ed7668ac8e0e19a086`.
+- Verificación estática cruzada de nueve contratos: 9 PASS. No se ejecutó Node.js ni la suite completa en un clon local; CI posterior al commit aún no disponible mediante la consulta de workflows expuesta. No declarar regresión integral aprobada.
+- Sin despliegues Apps Script, cambios de hojas, Drive, ScriptProperties ni datos externos.
