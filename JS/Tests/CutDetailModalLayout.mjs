@@ -122,8 +122,11 @@ testCase("el tamaño del logo se conserva y móvil usa ancho natural con gap de 
     const cutHeader = css.slice(css.indexOf("GP-UX-MODAL-HEADER-TIGHTEN-03"));
     assert.match(cutHeader, /\.detail-modal-title \{[\s\S]*?height:60px;[\s\S]*?min-height:60px;/);
     assert.match(mobileLogoRules, /justify-content:flex-start/);
-    assert.match(mobileLogoRules, /\.detail-modal-title \{[\\s\\S]*?grid-row:1 \/ span 2;[\s\S]*?align-self:end;/);
-    assert.match(cutHeader, /\.detail-modal-title \{[\s\S]*?align-items:flex-start/);
+    const mobileLogoContainerStart = mobileLogoRules.indexOf('#modalDetalle[data-modal-type="corte"] .detail-modal-title {');
+    const mobileLogoContainerEnd = mobileLogoRules.indexOf("}", mobileLogoContainerStart);
+    const mobileLogoContainer = mobileLogoRules.slice(mobileLogoContainerStart, mobileLogoContainerEnd);
+    assert.ok(mobileLogoContainer.includes("grid-row:1 / span 2;") && mobileLogoContainer.includes("align-self:end;"));
+    assert.match(cutHeader, /\.detail-modal-title \{[\s\S]*?grid-row:1 \/ span 2;[\s\S]*?align-self:end;[\s\S]*?align-items:flex-start/);
     assert.match(mobileLogoRules, /object-position:left top/);
     assert.match(mobileLogoRules, /\.detail-modal-title-text \{[\s\S]*?height:auto;[\s\S]*?min-height:0;[\s\S]*?display:flex;[\s\S]*?align-items:flex-start;[\s\S]*?align-self:flex-start;[\s\S]*?margin:6px 0 0 !important;[\s\S]*?transform:none !important/);
 });
