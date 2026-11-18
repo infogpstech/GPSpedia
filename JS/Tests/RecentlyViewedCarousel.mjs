@@ -51,4 +51,4 @@ assert.match(detail, /recordVehicleView\(String\(activeItem\.id\), \{[\s\S]*?uti
 assert.doesNotMatch(detail, /await\s+recordVehicleView/);
 assert.doesNotMatch(load, /recordVehicleView|routeAction|getActivityLogs/);
 
-console.log("RecentlyViewedCarousel: contract PASS");
+console.log("1/1 PASS — RecentlyViewedCarousel contract");
