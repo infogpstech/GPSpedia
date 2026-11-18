@@ -2502,6 +2502,22 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
     headerDiv.insertBefore(titleNode, savingIndicator);
     headerDiv.insertBefore(headerDivider, savingIndicator);
 
+    // Si el nombre no cabe junto al logo, se coloca en una fila propia debajo de este.
+    // Se mide el ancho natural del texto frente al espacio disponible junto al logotipo.
+    if (!inEditMode && logoImg && typeof ResizeObserver === "function") {
+        modalDetalle?._detailTitleResizeObserver?.disconnect?.();
+        const updateDetailTitleLayout = () => {
+            const availableInlineWidth = headerDiv.clientWidth - titleContainer.offsetWidth - 10;
+            const titleNeedsOwnRow = titleNode.scrollWidth > Math.max(0, availableInlineWidth) + 2;
+            headerDiv.classList.toggle("has-long-model-title", titleNeedsOwnRow);
+        };
+        const titleLayoutObserver = new ResizeObserver(updateDetailTitleLayout);
+        titleLayoutObserver.observe(headerDiv);
+        titleLayoutObserver.observe(titleContainer);
+        modalDetalle._detailTitleResizeObserver = titleLayoutObserver;
+        updateDetailTitleLayout();
+    }
+
     const subHeaderDiv = document.createElement('div');
     subHeaderDiv.className = "detail-modal-meta";
     const subHeaderText = document.createElement('div');
