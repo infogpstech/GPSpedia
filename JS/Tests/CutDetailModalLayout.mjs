@@ -111,7 +111,7 @@ testCase("el tamaño del logo se conserva y móvil usa ancho natural con gap de 
     assert.match(mobileLogoRules, /justify-content:flex-start/);
     assert.match(cutHeader, /\.detail-modal-title \{[\s\S]*?align-items:flex-start/);
     assert.match(mobileLogoRules, /object-position:left bottom/);
-    assert.match(mobileLogoRules, /\.detail-modal-title-text \{[\s\S]*?height:auto;[\s\S]*?min-height:0;[\s\S]*?display:flex;[\s\S]*?align-items:flex-end;[\s\S]*?align-self:flex-end;[\s\S]*?transform:none !important/);
+    assert.match(mobileLogoRules, /\.detail-modal-title-text \{[\s\S]*?height:auto;[\s\S]*?min-height:0;[\s\S]*?display:flex;[\s\S]*?align-items:flex-start;[\s\S]*?align-self:flex-start;[\s\S]*?margin:6px 0 0 !important;[\s\S]*?transform:none !important/);
 });
 
 testCase("los cinco campos de edición se agrupan en una rejilla con asociaciones accesibles", () => {
