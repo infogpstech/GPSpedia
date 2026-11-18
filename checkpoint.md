@@ -566,3 +566,5 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 ### Continuidad — expulsión automática y revocación de cachés
 - La implementación ahora invalida las cachés de cada token excedente y revoca su contexto central antes de limpiar ActiveSessions. Se mantiene idempotencia: un reintento puede completar tokens parcialmente revocados.
 - La limpieza de sesiones antiguas no se realiza si falla la invalidación de WRITE/FEEDBACK o la revocación de Coordinator.
+
+- Los bloques del contexto se dimensionan en bytes UTF-8 (7,000 por bloque), no en caracteres, para respetar el límite por propiedad también con nombres Unicode.
