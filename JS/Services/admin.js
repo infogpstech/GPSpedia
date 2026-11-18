@@ -14,10 +14,10 @@ const DRIVE_FOLDER_ID = '1-8QqhS-wtEFFwyBG8CmnEOp5i8rxSM-2';
 let spreadsheet = null;
 
 
-const WRITE_SERVICE_URL = "https://script.google.com/macros/s/AKfycbxvf5jWXXy5pxQZgCqgKmlfBWfAwxIyhjQG39fs9dFKM4ub-NkWzA2-0-8PXBJsHVnsdg/exec";
-const CATALOG_SERVICE_URL = "https://script.google.com/macros/s/AKfycbzcBNC_sFFcdKxwBZFXfQHZsfpCGiZeKpQ8BjiTWn50qdVSfZRraHjELXBFY2tF8qc/exec";
-const AUTH_SERVICE_URL = "https://script.google.com/macros/s/AKfycbyDFlZmMOQJ59XSry0JPJTIlOW84CpJT7su57NKPNqSLuz20TMMleLY2A75eAGx1Vyb/exec";
-const FEEDBACK_SERVICE_URL = "https://script.google.com/macros/s/AKfycbwkhwYKESftySytMZNN5gjJAN-FkxJW_EplQMmJOHEDBvs8rIufMeplDNMf8COUH6aYUg/exec";
+const WRITE_SERVICE_URL = "https://script.google.com/macros/s/AKfycbxRmefmJ28iCIUJxVZ_1yHkPK9qDZORz3vkwAfe4gk6prIPIx3dO1yhG46mTjbU1a2J1A/exec";
+const CATALOG_SERVICE_URL = "https://script.google.com/macros/s/AKfycbyarvVEHx8ox-E8BmUK1jcQqQufblj50zv4svILFj2g7Js81FtMtVu8KT0Fj2klvp39/exec";
+const AUTH_SERVICE_URL = "https://script.google.com/macros/s/AKfycbxnKeNxMEPbDl4mMhzl2XihiPoFMaRh0TljFk_C31WwtlMCfpNOE7PUuwPYQBZaTOgb/exec";
+const FEEDBACK_SERVICE_URL = "https://script.google.com/macros/s/AKfycbzHV29RS2af0sOzSynh3BWDSJl-6ZFl1Pd7jREUJbNQtmza3Q1ldm8k8DcslhbZXpAGRA/exec";
 const CATALOG_TRAFFIC_SECRET_PROPERTY_ = "GPSpedia_CATALOG_TRAFFIC_SECRET";
 const LOGOS_MARCA_ID_COUNTER_PROPERTY = "LOGOS_MARCA_ID_COUNTER";
 
