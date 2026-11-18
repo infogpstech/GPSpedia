@@ -101,7 +101,7 @@ testCase("el modelo y el campo de edición son nodos independientes del contened
     assert.match(css, /\.detail-modal-title-text \{[\s\S]*?white-space: nowrap;[\s\S]*?text-overflow: ellipsis/);
 });
 
-testCase("el tamaño de logo de navegador se conserva y móvil usa 64px con gap uniforme de 6px", () => {
+testCase("el tamaño de logo de navegador se conserva y móvil usa 50px con gap uniforme de 6px", () => {
     assert.match(css, /\.detail-modal-title \.brand-logo-modal \{[\s\S]*?height: 120px !important;[\s\S]*?max-height: 120px !important/);
     const mobileLogoRules = css.slice(css.indexOf("GP-UX-DETAIL-LOGO-MOBILE-02"));
     assert.match(mobileLogoRules, /grid-template-columns:max-content minmax\(0,1fr\)/);
