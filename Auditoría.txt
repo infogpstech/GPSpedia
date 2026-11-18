@@ -277,3 +277,6 @@ Adenda de cierre GP-UX-CUT-MODAL-HEADER-GRID-02: la primera regresión detectó 
 - La suite detectó durante el desarrollo la actualización necesaria de la expectativa de DB_VERSION del test de migración legado; se corrigió sin cambiar la lógica del historial administrativo.
 - Pendiente: comprobar instalación/actualización PWA y recuperación con IndexedDB bloqueado o concurrencia real de pestañas en dispositivos Beta. No se modificaron servicios Apps Script ni datos externos.
 ================================================================================
+
+
+Adenda de validación final GP-PWA-RECENT-VIEWS-02: al subir CACHE_NAME a v70 también se actualizaron las expectativas históricas en PasswordRecovery.mjs, OfflineBrandAssets.mjs y ServiceWorkerCache.js. La primera regresión con v70 identificó únicamente esas aserciones de versión obsoletas; se alinearon al nuevo identificador. Ejecución final: Actions 44240071252 SUCCESS, 145 suites / 2,153 pruebas / 0 fallos, node --check PASS. Health GET-only 44240071231 SUCCESS. Build de GitHub Pages para el SHA de código f9b054e1a7a63986d0d63b3be3953ad868d31db6 aún pendiente al registrar esta adenda.
