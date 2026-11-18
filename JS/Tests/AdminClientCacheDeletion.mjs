@@ -84,14 +84,13 @@ await check("IndexedDB limpia solo almacenes reconstruibles y espera transaction
     const promise = clear();
     assert.deepEqual(await promise, {
         status: "success",
-        stores: ["catalog","searchHistory","thumbnails","validationCache"],
-        viewedItemsCleared: false,
-        otherUsersViewedItemsPreserved: true
+        stores: ["catalog","searchHistory","viewedItems","thumbnails","validationCache"],
+        viewedItemsCleared: true
     });
     assert.deepEqual(h.calls.transactions, [{
-        names: ["catalog","searchHistory","thumbnails","validationCache"], mode: "readwrite"
+        names: ["catalog","searchHistory","viewedItems","thumbnails","validationCache"], mode: "readwrite"
     }]);
-    assert.deepEqual(h.calls.cleared, ["catalog","searchHistory","thumbnails","validationCache"]);
+    assert.deepEqual(h.calls.cleared, ["catalog","searchHistory","viewedItems","thumbnails","validationCache"]);
     assert.equal(h.calls.cleared.includes("adminLocalState"), false);
 });
 
@@ -107,7 +106,7 @@ await check("Un fallo transaccional no se presenta como limpieza confirmada", as
 await check("Un almacén ausente se omite sin borrar ni recrear estado administrativo", async () => {
     const h = createDatabase({ stores: ["adminLocalState"] });
     const clear = clearRebuildableClientCacheFactory(async () => h.database, normalizeOwner);
-    assert.deepEqual(await clear(), { status: "success", stores: [], viewedItemsCleared: false, otherUsersViewedItemsPreserved: true });
+    assert.deepEqual(await clear(), { status: "success", stores: [], viewedItemsCleared: false });
     assert.equal(h.calls.transactions.length, 0);
     assert.equal(h.calls.cleared.length, 0);
 });
@@ -216,18 +215,14 @@ await check("El mensaje del Service Worker elimina respuestas dinámicas y conse
     assert.deepEqual(entries.get("gpsepedia-cache-v21").map(item=>item.url),[coreUrl,mainUrl]);
     assert.equal(cacheCalls.includes("unrelated-cache"),false);
 });
-await check("La limpieza por usuario elimina solo sus vistos y conserva los de otras cuentas", async () => {
-    const h = createDatabase({ viewedRecords: [
-        { id: "user-A::V-1", ownerId: "user-A" },
-        { id: "user-B::V-2", ownerId: "user-B" }
-    ]});
+await check("La limpieza local elimina todos los vistos de IndexedDB sin borrar actividad remota", async () => {
+    const h = createDatabase({ viewedRecords: [{ id: "A::V-1", ownerId: "A" }, { id: "B::V-2", ownerId: "B" }] });
     const clear = clearRebuildableClientCacheFactory(async () => h.database, normalizeOwner);
-    const result = await clear("user-A");
+    const result = await clear();
     assert.equal(result.status, "success");
     assert.equal(result.viewedItemsCleared, true);
-    assert.deepEqual(h.calls.deleted, ["user-A::V-1"]);
-    assert.deepEqual(h.viewedRecords.map(record => record.ownerId), ["user-B"]);
-    assert.equal(result.otherUsersViewedItemsPreserved, true);
+    assert.deepEqual(h.calls.cleared, ["catalog","searchHistory","viewedItems","thumbnails","validationCache"]);
+    assert.deepEqual(h.calls.deleted, []);
 });
 
 console.log("AdminClientCacheDeletion: " + passed + "/" + passed + " PASS");
