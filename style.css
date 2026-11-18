@@ -6349,3 +6349,28 @@ textarea.rich-text-source[hidden] { display:none !important; }
         min-height:40px;
     }
 }
+
+
+/* GP-UX-CUT-MODEL-TITLE-FIT-01 — el nombre completo pasa debajo del logo solo si no cabe a su lado. */
+#modalDetalle[data-modal-type="corte"] .detail-modal-toolbar[data-model-title-layout="below-logo"] .detail-modal-title-text,
+#modalDetalle[data-modal-type="corte"] .detail-modal-toolbar[data-model-title-layout="below-logo"] .detail-modal-title-input {
+    grid-column:1 / -1;
+    grid-row:3;
+    min-width:0;
+    max-width:100%;
+    width:100%;
+}
+#modalDetalle[data-modal-type="corte"] .detail-modal-toolbar[data-model-title-layout="below-logo"] .detail-modal-title-text {
+    white-space:normal;
+    overflow:visible;
+    text-overflow:clip;
+    overflow-wrap:normal;
+    word-break:normal;
+}
+#modalDetalle[data-modal-type="corte"] .detail-modal-toolbar[data-model-title-layout="below-logo"] .detail-modal-divider {
+    grid-row:4;
+}
+#modalDetalle[data-modal-type="corte"] .detail-modal-toolbar[data-model-title-layout="below-logo"] .detail-modal-saving-indicator {
+    grid-row:5;
+}
+
