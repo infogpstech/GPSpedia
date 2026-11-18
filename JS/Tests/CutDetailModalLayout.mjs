@@ -210,10 +210,10 @@ testCase("el detalle de corte tiene nombre accesible y conserva el logo de marca
     assert.match(detail, /setAttribute\("aria-labelledby", title\.id\)/);
     assert.match(detail, /titleContainer\.appendChild\(logoImg\)/);
     assert.match(css, /\.detail-modal-title \.brand-logo-modal \{[\s\S]*?height: 120px !important;[\s\S]*?max-height: 120px !important/);
-    assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-title-text \{[\s\S]*?grid-column:2;[\s\S]*?grid-row:1 \/ span 2;[\s\S]*?align-self:flex-start;[\s\S]*?margin-top:6px;[\s\S]*?transform:none/);
-    assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-title-input \{[\s\S]*?grid-column:2;[\s\S]*?grid-row:1 \/ span 2;[\s\S]*?align-self:flex-start;[\s\S]*?margin-top:6px/);
+    assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-title-text \{[\s\S]*?grid-column:2;[\s\S]*?grid-row:2;[\s\S]*?align-self:flex-start;[\s\S]*?margin-top:6px;[\s\S]*?transform:none/);
+    assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-title-input \{[\s\S]*?grid-column:2;[\s\S]*?grid-row:2;[\s\S]*?align-self:flex-start;[\s\S]*?margin-top:6px/);
     const mobileCutHeader = css.slice(css.indexOf("GP-UX-DETAIL-LOGO-MOBILE-02"));
-    assert.match(mobileCutHeader, /\.detail-modal-title-input \{[\s\S]*?grid-column:2;[\s\S]*?grid-row:1 \/ span 2;[\s\S]*?align-self:flex-start;[\s\S]*?margin-top:6px/);
+    assert.match(mobileCutHeader, /\.detail-modal-title-input \{[\s\S]*?grid-column:2;[\s\S]*?grid-row:2;[\s\S]*?align-self:flex-start;[\s\S]*?margin-top:6px/);
     assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-divider \{[\s\S]*?grid-row:3;[\s\S]*?width:auto !important;[\s\S]*?margin:1px 6px 2px !important/);
 });
 
