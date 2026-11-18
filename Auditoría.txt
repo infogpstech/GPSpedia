@@ -296,3 +296,8 @@ Adenda de validación final GP-PWA-RECENT-VIEWS-02: al subir CACHE_NAME a v70 ta
 - Se amplía el evento autenticado para registrar `utilCorte1`, `utilCorte2` y `utilCorte3` como valores numéricos no negativos junto al ID del vehículo.
 - Se rectifica la limpieza selectiva anterior: la limpieza local vacía normalmente `viewedItems` junto con los demás almacenes reconstruibles. Es exclusiva de IndexedDB; no invoca endpoints ni elimina actividad del servidor.
 - Se conserva el aislamiento por cuenta mediante claves compuestas e índice `ownerId`; cada lectura local filtra al usuario activo. El carrusel no consulta ni reconstruye historial remoto.
+
+
+[2026-11-18] Aislamiento adicional de «Vistos recientemente»
+- Se detectó que `loadUserLocalActivity` fusionaba los registros del propietario consultado con el estado en memoria previo. En cambios de cuenta esto podía mantener temporalmente vistos de la sesión anterior.
+- Corrección: vaciar `viewedItems` al comenzar la carga de actividad local y reemplazarlo únicamente por el resultado IndexedDB filtrado por el propietario actual. No se consulta el historial remoto.
