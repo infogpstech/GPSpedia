@@ -6217,6 +6217,11 @@ textarea.rich-text-source[hidden] { display:none !important; }
     justify-self:stretch;
     text-align:left;
     transform:none;
+    white-space:normal;
+    overflow:visible;
+    text-overflow:clip;
+    overflow-wrap:normal;
+    word-break:normal;
 }
 #modalDetalle[data-modal-type="corte"] .detail-modal-title-input {
     grid-column:2;
