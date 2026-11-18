@@ -720,3 +720,10 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - También se registró `BETA-SERVICES-HEALTH-01` con el resultado read-only y sus límites.
 - Pendiente: ejecutar pruebas funcionales de AUTH/USERS/WRITE/FEEDBACK/Inbox y operaciones protegidas en el entorno Beta aislado, con cuentas y datos de prueba autorizados; comprobar permisos/secretos y escrituras controladas. No ejecutar operaciones de negocio sobre datos productivos.
 - Estado de esta etapa: disponibilidad remota comprobada; regresión local aprobada; validación funcional Beta parcialmente pendiente.
+
+
+### Nuevo hallazgo de validación Beta — BETA-CUT-MODAL-HEADER-LONG-MODEL-01 (2026-11-18)
+- El usuario reporta que el salto de línea correcto de un nombre de modelo largo en la cabecera del modal de detalle de corte hace que el logo suba en vez de empujar hacia abajo el divisor azul y los elementos inferiores.
+- El desplazamiento puede dejar los botones de edición e impresión ocultos o parcialmente cubiertos por el logo. En móvil horizontal, el logo puede quedar por encima del nombre del modelo.
+- Registrado en `lista_beta_parte2.txt` con reproducción, resultado esperado y pruebas pendientes para escritorio, móvil vertical/horizontal, títulos cortos/largos, visibilidad de acciones y ausencia de scroll horizontal.
+- Estado: REPORTADO POR EL USUARIO · PENDIENTE DE REPRODUCCIÓN, DIAGNÓSTICO Y VALIDACIÓN VISUAL BETA. No se modificó código de producción.
