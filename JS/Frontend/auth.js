@@ -427,7 +427,9 @@ async function validateSessionCoordinated(user, force = false){
 }
 function loadUserLocalActivity(user) {
     const ownerId = String(user && (user.ID || user.id) || '').trim();
-    if (!ownerId || ownerId === '0') { setState({ searchHistory: [], viewedItems: [] }); return; }
+    // Nunca conservar en memoria el carrusel de la sesión/cuenta anterior mientras carga el propietario actual.
+    setState({ searchHistory: [], viewedItems: [] });
+    if (!ownerId || ownerId === '0') return;
     const isOwnerCurrent = () => {
         const activeUser = getState().currentUser;
         return isCurrentSession(user) && String(activeUser && (activeUser.ID || activeUser.id) || '').trim() === ownerId;
@@ -450,15 +452,8 @@ function loadUserLocalActivity(user) {
                 }
                 return;
             }
-            const merged = new Map();
-            (Array.isArray(result.items) ? result.items : []).forEach(entry => merged.set(String(entry.id), entry));
-            (Array.isArray(getState().viewedItems) ? getState().viewedItems : []).forEach(entry => {
-                const key = String(entry && entry.id || "");
-                if (!key) return;
-                const stored = merged.get(key);
-                if (!stored || Number(entry.timestamp) >= Number(stored.timestamp)) merged.set(key, entry);
-            });
-            setState({ viewedItems: Array.from(merged.values()).sort((x,y) => Number(y.timestamp)-Number(x.timestamp)).slice(0,20) });
+            // La fuente del carrusel es únicamente el historial local filtrado por ownerId.
+            setState({ viewedItems: Array.isArray(result.items) ? result.items.slice(0, 20) : [] });
         }).catch(error => {
             if (!isOwnerCurrent()) return;
             if (attempt < retryDelays.length) {
