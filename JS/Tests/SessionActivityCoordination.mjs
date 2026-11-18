@@ -149,7 +149,7 @@ testCase("AUTH aplica límites por rol y revoca la sesión más antigua sin bloq
  assert.match(auth,/const SESSION_LIMITS = \{\s*'desarrollador': Infinity,\s*'jefe': 5,\s*'supervisor': 3,\s*'tecnico': 1,\s*'tecnico_exterior': 1\s*\}/);
  assert.match(auth,/\.sort\(\(a, b\) => a\.createdAt - b\.createdAt \|\| a\.rowIndex - b\.rowIndex\)/);
  assert.match(auth,/getOldestSessionsToRevoke_\(activeRows, token, sessionLimit\)/);
- assert.match(auth,/activeRows\.filter\(row => row\.token !== token\)/);
+ assert.match(auth,/activeRows\.filter\(row => row\.token !== currentToken\)/);
  assert.doesNotMatch(auth,/rows\.length > 5/);
  assert.doesNotMatch(auth,/LOGIN_LIMIT_EXCEEDED|SESSION_LIMIT_EXCEEDED/);
 
