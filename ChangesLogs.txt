@@ -423,3 +423,12 @@ undefined
 - Detalle de corte: acciones y cierre en una fila alineada a la derecha; padding interno del div del logo a cero; alturas/espaciado vertical compactados; el modelo se eleva sin cambiar fuente ni sombras.
 - Se corrigieron únicamente fixtures/alcance de pruebas durante la estabilización; no se modificaron servicios backend ni datos externos. No se desplegó Apps Script ni se accedió a producción.
 ================================================================================
+
+
+================================================================================
+2026-11-17 — INICIO GP-AUTH-ROLE-SESSION-LIMITS-01
+- Requisitos registrados: Desarrollador ilimitado; Jefe 5; Supervisor 3; Técnico 1; Técnico externo 1. El exceso no bloquea login; se revoca la sesión activa más antigua.
+- AUTH y su espejo de pruebas actualizan la matriz de límites, eliminan el tope fijo de cinco sesiones compartidas y seleccionan excedentes por fecha de creación.
+- Se agrega contrato de regresión de política por rol y selección de la sesión más antigua.
+- Implementación local en progreso; validación automatizada pendiente. No se desplegó Apps Script ni se modificaron hojas, propiedades o datos externos.
+================================================================================

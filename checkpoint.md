@@ -548,3 +548,10 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - Las barras completas/básicas cierran menús al pulsar fuera. PyS adopta título azul y cierre accesible. Detalle de corte agrupa acciones con X a la derecha, quita padding del contenedor del logo y reduce separación vertical del divisor/metadatos; el modelo sube sin cambiar tipografía/sombras.
 - El resultado de las primeras ejecuciones identificó y corrigió fixtures de prueba y el alcance excesivo de un test CSS; no fue necesario modificar el backend ni la política de permisos.
 - No se desplegó Apps Script, no se cambiaron ScriptProperties, hojas, Drive ni datos externos. Validación visual real queda en Beta.
+
+
+### Inicio — GP-AUTH-ROLE-SESSION-LIMITS-01 — 2026-11-17
+- Requisito: Desarrollador ilimitado; Jefe 5; Supervisor 3; Técnico 1; Técnico externo 1. El exceso no rechaza el login: registra la nueva sesión y revoca la más antigua por timestamp de creación.
+- HEAD de inicio: e27ebd0dede46db8847ac2c595cdcf688c302060 en GPSpedia2.2.5_work; base protegida GPSpedia2.2.5 no se modifica.
+- Auditoría encontró límites incorrectos para Jefe/Técnico, un tope fijo de cinco en la sincronización AUTH de sesiones compartidas y selección de sesión antigua por índice de fila.
+- Implementación local iniciada en AUTH, espejo de pruebas y contrato SessionActivityCoordination. No se despliega Apps Script ni se modifican datos externos.

@@ -1635,3 +1635,32 @@ La comprobación de los modales tomaba todo el CSS posterior al bloque de scroll
 - El envío múltiple se hace mediante hilos privados por destinatario, no con CC ni conversación grupal. Los tests verifican separación y rechazo de lectura cruzada.
 - Encabezado de cortes, PyS, espaciado del logo/divisor y cierre de menús quedan cubiertos por contratos locales. Falta únicamente validación visual en dispositivo/navegador durante Beta.
 - No se desplegó Apps Script ni se tocaron datos externos.
+
+
+## GP-AUTH-ROLE-SESSION-LIMITS-01 — Límites de sesiones activas por rol
+**Prioridad: P1 · Estado: EN PROGRESO (implementación local). · Fecha: 2026-11-17**
+
+### Requisitos confirmados
+- Desarrollador: sin límite de sesiones activas.
+- Jefe: máximo 5 sesiones activas.
+- Supervisor: máximo 3 sesiones activas.
+- Técnico y Técnico externo: máximo 1 sesión activa cada uno.
+- Cada inicio de sesión válido registra una sesión individual asociada a la cuenta y su token/dispositivo.
+- Superar el máximo nunca bloquea el login: se crea la nueva sesión y se revoca la sesión activa más antigua hasta quedar dentro del límite.
+- La antigüedad se determina por la fecha/hora de creación registrada, no por la posición accidental de la fila.
+- La revocación debe propagarse al contexto central y a las cachés de sesión sin debilitar token, epoch, expiración, RBAC ni recuperación idempotente.
+- No introducir consultas adicionales por acción ni viajes de red innecesarios en el flujo de login.
+- No desplegar Apps Script ni modificar ScriptProperties, hojas o datos productivos. Las validaciones de deployments y multi-dispositivo real se reservan a Beta.
+
+### Auditoría inicial
+- AUTH tenía valores divergentes: Jefe 3 en lugar de 5 y Técnico 2 en lugar de 1; Supervisor 3 y Técnico externo 1 ya coincidían.
+- Desarrollador ya usaba Infinity, pero la sincronización compartida de AUTH imponía un tope fijo de cinco y podía bloquear el login al superarlo.
+- La selección de la sesión a cerrar se basaba en el número de fila, no en el timestamp de creación.
+- Coordinator no aplica un tope de cantidad al recibir la lista de sesiones; mantiene validaciones de tokens, expiración y revocación.
+
+### Implementación iniciada
+- Se actualizan los límites por rol en AUTH y su espejo de pruebas.
+- Se elimina el tope fijo de cinco sesiones en la sincronización compartida.
+- La selección de sesiones excedentes pasa a ordenar por fecha real de creación y usa la fila solo como desempate.
+- Se añade contrato automatizado para los límites, la selección de la más antigua y la ausencia de bloqueo por exceso.
+- Pendiente: revisar el almacenamiento del contexto compartido para garantizar que Desarrollador no encuentre límites indirectos de capacidad; ampliar pruebas de recuperación/concurrencia y ejecutar regresión completa.

@@ -38,9 +38,9 @@ const COLS_ACTIVE_SESSIONS = {
 
 const SESSION_LIMITS = {
     'desarrollador': Infinity,
-    'jefe': 3,
+    'jefe': 5,
     'supervisor': 3,
-    'tecnico': 2,
+    'tecnico': 1,
     'tecnico_exterior': 1
 };
 
@@ -1016,8 +1016,13 @@ function createOrRecoverLoginSessionUnderLock_(userSheet, sessionsSheet, userRow
         const rowToken = String(row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || '');
         if (rowToken) tokenCounts.set(rowToken, (tokenCounts.get(rowToken) || 0) + 1);
         if (normalizeUserId(row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]) !== normalizeUserId(userId) || !rowToken) continue;
-        const session = { rowIndex: i + 1, token: rowToken };
-        if (getSessionExpirationStatus_(row, nowForSessionLimit).expired) expiredRows.push(session);
+        const expiration = getSessionExpirationStatus_(row, nowForSessionLimit);
+        const session = {
+            rowIndex: i + 1,
+            token: rowToken,
+            createdAt: expiration.createdAt ? expiration.createdAt.getTime() : 0
+        };
+        if (expiration.expired) expiredRows.push(session);
         else activeRows.push(session);
     }
     const sessionCount = activeRows.length;
@@ -1027,7 +1032,7 @@ function createOrRecoverLoginSessionUnderLock_(userSheet, sessionsSheet, userRow
     if (Number.isFinite(sessionLimit) && activeRows.length > sessionLimit) {
         const excess = activeRows.length - sessionLimit;
         const oldestActive = activeRows.filter(row => row.token !== token)
-            .sort((a, b) => a.rowIndex - b.rowIndex).slice(0, excess);
+            .sort((a, b) => a.createdAt - b.createdAt || a.rowIndex - b.rowIndex).slice(0, excess);
         if (oldestActive.length !== excess) throw new Error('No se pudo identificar la cantidad de sesiones que deben revocarse.');
         candidates.push(...oldestActive);
     }
@@ -1085,7 +1090,6 @@ function syncSharedSessionContextsForUser_(userId, role, fullName, currentSessio
             .map((row, index) => ({ row, rowIndex: index + 2 }))
             .filter(item => normalizeUserId(item.row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]) === normalizedId &&
                 String(item.row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || "").trim());
-        if (rows.length > 5) throw new Error("La cuenta supera el límite seguro de sesiones compartidas.");
 
         const sessions = [], malformedTokens = [];
         rows.forEach(item => {

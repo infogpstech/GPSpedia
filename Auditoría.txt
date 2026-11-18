@@ -217,3 +217,9 @@ Siguiente trabajo local recomendado: definir un contrato de encabezado reutiliza
 
 2026-11-17 — CORRECCIÓN DE ENCABEZADOS DE MODALES
 Se corrigió el orden de acciones del detalle de corte (Imprimir, Editar, Compartir), se reservó espacio para el cierre a la derecha y se acercó la línea azul al logotipo/modelo. El logotipo conserva dimensiones actuales (120 px escritorio / 104 px móvil); el modelo mantiene tipografía/sombra con un desplazamiento vertical leve. El retroceso del historial para el detalle de corte ahora cierra la ficha en lugar de restaurar otra ficha apilada. Se añadieron nombres accesibles a los detalles dinámicos de corte/tutorial/relay, a diálogos informativos estáticos seleccionados y al modal YouTube; el cierre YouTube pasó de span a button. Pendiente validar suites y comprobar visualmente en navegador real durante Beta.
+
+
+================================================================================
+2026-11-17 — H-AUTH-SESSION-001 — Límites por rol y sesión más antigua
+AUTH tenía una política divergente: Jefe 3 en lugar de 5 y Técnico 2 en lugar de 1. Aunque Desarrollador usaba Infinity, syncSharedSessionContextsForUser_ rechazaba cuentas con más de cinco sesiones activas, creando un límite indirecto capaz de impedir nuevos logins. La selección de sesiones excedentes se basaba en índice de fila y no en timestamp de creación. Impacto: política de roles incorrecta, bloqueo potencial de Desarrollador y posibilidad de cerrar una sesión distinta de la más antigua si las filas se reordenan. Severidad: ALTA para el control de sesiones. Corrección: límites exactos por rol, eliminar el tope fijo, seleccionar excedentes por fecha de creación y conservar la nueva sesión. Validar límites, concurrencia, idempotencia, propagación a Coordinator y cachés. No se modificaron deployments ni datos externos.
+================================================================================
