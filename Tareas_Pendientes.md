@@ -1695,3 +1695,10 @@ La comprobación de los modales tomaba todo el CSS posterior al bloque de scroll
 - Logo alineado arriba; modelo debajo de las acciones, alineado a la izquierda y al extremo inferior de la misma altura visual del logo. Acciones imprimir, editar, compartir y cerrar conservan su orden, alineación derecha y posición.
 - Eliminar únicamente las filas/alturas vacías del encabezado. La línea azul debe conservar sus márgenes actuales y la información posterior su separación actual. No modificar el padding exterior compartido si eso desplaza las acciones.
 - Validar contrato CSS, regresión de CutDetailModalLayout y revisión del diff. Aceptación visual en navegador móvil/escritorio queda pendiente de Beta.
+
+
+### Adenda — GP-UX-CUT-MODAL-HEADER-GRID-02 — ajuste visual solicitado
+- La revisión posterior detectó que el modelo quedaba demasiado próximo a las acciones, los botones conservaban relleno horizontal excesivo y el divisor azul desbordaba hacia la derecha.
+- Requisitos adicionales: separar acciones y modelo 6 px; conservar el contenedor del logo exactamente a la altura de la imagen, sin padding vertical y con imagen width:auto; reducir ligeramente el padding horizontal de editar/imprimir/compartir; divisor con márgenes laterales simétricos de 6 px y sin ancho superior al área disponible.
+- Implementación publicada en style.css y contrato actualizado en JS/Tests/CutDetailModalLayout.mjs. Estado: EN PROGRESO hasta ejecutar la regresión automatizada y revisar el resultado.
+- Se mantienen las dimensiones existentes del logo (120 px escritorio / 60 px móvil), la cuadrícula 2x2, el orden de acciones y el overflow-x limitado al modal de corte.
