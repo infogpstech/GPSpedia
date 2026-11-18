@@ -70,7 +70,10 @@ export async function initDB(options = {}) {
                 const viewedStore = db.objectStoreNames.contains('viewedItems')
                     ? request.transaction.objectStore('viewedItems')
                     : db.createObjectStore('viewedItems', { keyPath: 'id' });
-                if (!viewedStore.indexNames.contains('ownerId')) viewedStore.createIndex('ownerId', 'ownerId', { unique: false });
+                if (viewedStore.indexNames && typeof viewedStore.createIndex === 'function' &&
+                    !viewedStore.indexNames.contains('ownerId')) {
+                    viewedStore.createIndex('ownerId', 'ownerId', { unique: false });
+                }
                 if (!db.objectStoreNames.contains('thumbnails')) db.createObjectStore('thumbnails');
                 if (!db.objectStoreNames.contains('validationCache')) db.createObjectStore('validationCache', { keyPath: 'vehicleId' });
                 if (!db.objectStoreNames.contains('adminLocalState')) db.createObjectStore('adminLocalState', { keyPath: 'key' });
@@ -1322,7 +1325,8 @@ export async function saveViewedItem(item, ownerId) {
     const entry = { id: buildOwnerScopedKey(owner, itemId), ownerId: owner, itemId, timestamp: Date.now(), data: item };
     const result = await performOp('viewedItems', 'readwrite', store => store.put(entry), { silent: true });
     if (result !== null) {
-        const records = await performOp('viewedItems', 'readonly', store => store.index('ownerId').getAll(owner), { silent: true });
+        const records = await performOp('viewedItems', 'readonly', store =>
+            typeof store.index === 'function' ? store.index('ownerId').getAll(owner) : store.getAll(), { silent: true });
         if (Array.isArray(records)) await pruneViewedItems_(owner, records);
     }
     cacheItemImages(item).catch(err => console.warn("Error precargando imágenes de visto recientemente:", err));
@@ -1336,7 +1340,8 @@ export async function cacheItemImages(item) {
 export async function getViewedItemsResult(ownerId, limit = 20) {
     const owner = normalizeLocalOwnerId(ownerId);
     if (!owner) return { available: true, items: [] };
-    const all = await performOp('viewedItems', 'readonly', store => store.index('ownerId').getAll(owner), { silent: true });
+    const all = await performOp('viewedItems', 'readonly', store =>
+        typeof store.index === 'function' ? store.index('ownerId').getAll(owner) : store.getAll(), { silent: true });
     if (all === null) return { available: false, items: [] };
     const safeLimit = Number.isFinite(Number(limit)) ? Math.max(0, Math.min(20, Math.floor(Number(limit)))) : 20;
     const valid = all.filter(entry => entry && entry.ownerId === owner && entry.itemId !== undefined &&
