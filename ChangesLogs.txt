@@ -548,3 +548,13 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - `JS/Tests/CutDetailModalLayout.mjs`: aserciones separan posición del contenedor, imagen y nombre del modelo.
 - CI `44331015148` SUCCESS: 146 suites, 2,154 pruebas, 0 fallos; `CutDetailModalLayout` 27/27; sintaxis PASS. Inspección visual Beta pendiente.
 ================================================================================
+
+================================================================================
+2026-11-18 — Corrección del logo en títulos largos y render independiente de Vistos Recientemente
+- style.css: se elimina la reserva artificial de la segunda fila del logo en el estado below-logo. El título completo pasa a la fila 3; divisor e indicador quedan en filas 4 y 5. La altura de las filas del logo no cambia, por lo que el crecimiento se produce debajo.
+- JS/Frontend/ui.js: el carrusel de vistos recibe un ancla estable y se actualiza de forma independiente cuando IndexedDB entrega el historial; ya no se ejecuta `mostrarCategorias()` para reconstruir el catálogo por un cambio en `viewedItems`.
+- service-worker.js: CACHE_NAME actualizado a gpsepedia-cache-v73 para invalidar recursos cache-first.
+- Pruebas: CutDetailModalLayout 28/28; RecentlyViewedCarousel 1/1; ServiceWorkerCache 12/12; OfflineBrandAssets 4/4; regresión 146 suites / 2,155 pruebas / 0 fallos. PasswordRecovery ajusta su contrato de versión de caché.
+- CI `44394961438` SUCCESS; Pages `44394961041` SUCCESS; health read-only `44394961427` SUCCESS.
+- No se modificaron servicios Apps Script, hojas, Drive ni actividad histórica del servidor. Pendiente Beta: inspección visual real y medición de carga simultánea en PWA/dispositivo.
+================================================================================
