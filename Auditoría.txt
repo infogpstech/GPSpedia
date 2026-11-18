@@ -325,3 +325,12 @@ Adenda de validación final GP-PWA-RECENT-VIEWS-02: al subir CACHE_NAME a v70 ta
 - Prueba de regresión actualizada: `CutDetailModalLayout` comprueba la alineación inferior del título en ambas variantes. CI `44328013474`: 146 suites, 2,154 pruebas aprobadas, 0 fallos; `CutDetailModalLayout` 27/27; sintaxis PASS.
 - No se realizó inspección visual en navegador/dispositivo real; queda pendiente de Beta.
 ================================================================================
+
+================================================================================
+2026-11-18 — Hallazgos y correcciones de posición del logo / carga de Vistos Recientemente
+- Modal de corte: la fila de reserva `minmax(30px, auto)` (26 px móvil) ampliaba la segunda fila dentro del área combinada que ocupa `.detail-modal-title` (filas 1–2) y cuyo contenedor usa `align-self:end`. Al crecer esa área, el logo se desplazaba hacia arriba. Se elimina la reserva; el nombre ocupa la fila 3 y el divisor/indicador pasan a filas 4/5, de modo que crece únicamente el contenido inferior.
+- Catálogo/carrusel: el suscriptor de `viewedItems` invocaba `mostrarCategorias()`, vaciando y reconstruyendo toda la vista cuando terminaba la lectura de IndexedDB. Esto hacía que la llegada tardía del historial provocara un segundo render completo del catálogo. Se introduce un punto de inserción estable y se actualiza solo el carrusel de vistos.
+- Alcance de la corrección: no se modifica el aislamiento por `ownerId`, el origen IndexedDB, la telemetría mínima ni el historial ACTIVITY remoto.
+- Validación: CI `44394961438` SUCCESS (146 suites, 2,155 pruebas, 0 fallos); CutDetailModalLayout 28/28; RecentlyViewedCarousel 1/1; ServiceWorkerCache 12/12; OfflineBrandAssets 4/4. Pages `44394961041` SUCCESS; health GET-only `44394961427` SUCCESS.
+- La comprobación visual real en navegador/dispositivo y la medición de arranque PWA/caché siguen pendientes de Beta.
+================================================================================
