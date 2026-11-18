@@ -6192,6 +6192,7 @@ textarea.rich-text-source[hidden] { display:none !important; }
     margin:0 !important;
     padding:0 !important;
     object-fit:contain;
+    object-position:left bottom;
 }
 #modalDetalle[data-modal-type="corte"] .detail-modal-header-actions {
     grid-column:2;
