@@ -52,9 +52,9 @@ testCase("el encabezado separa logo, acciones superiores y modelo en la base der
         assert.ok(detail.includes('setAttribute("aria-label", "' + label + '")'), label);
     }
     assert.match(css, /\.detail-modal-toolbar \{[\s\S]*?grid-template-columns: max-content minmax\(0, 1fr\);[\s\S]*?grid-template-rows: auto minmax\(0, 1fr\) auto/);
-    assert.match(css, /\.detail-modal-title \{[\s\S]*?grid-column: 1;[\s\S]*?grid-row: 1 \/ span 2/);
+    assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-title \{[\s\S]*?grid-row:1;/);
     assert.match(css, /\.detail-modal-header-actions \{[\s\S]*?grid-column: 2;[\s\S]*?grid-row: 1/);
-    assert.match(css, /\.detail-modal-title-text \{[\s\S]*?grid-column: 2;[\s\S]*?grid-row: 2;[\s\S]*?align-self: end/);
+    assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-title-text \{[\s\S]*?grid-row:1;/);
     assert.ok(detail.includes("headerActions.appendChild(closeBtn)"));
     assert.match(detail, /headerDiv\.insertBefore\(titleContainer, savingIndicator\)[\s\S]*?headerDiv\.insertBefore\(titleNode, savingIndicator\)/);
 });
@@ -79,8 +79,8 @@ testCase("la imagen queda a la izquierda y el modelo se alinea a su base debajo 
     assert.match(detail, /headerDiv\.insertBefore\(titleContainer, savingIndicator\)/);
     assert.match(detail, /headerDiv\.insertBefore\(titleNode, savingIndicator\)/);
     assert.doesNotMatch(detail, /titleContainer\.appendChild\(title\)|titleContainer\.appendChild\(input\)/);
-    assert.match(css, /\.detail-modal-title \{[\s\S]*?grid-column: 1;[\s\S]*?grid-row: 1 \/ span 2/);
-    assert.match(css, /\.detail-modal-title-text \{[\s\S]*?grid-column: 2;[\s\S]*?grid-row: 2;[\s\S]*?align-self: end/);
+    assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-title \{[\s\S]*?grid-row:1;/);
+    assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-title-text \{[\s\S]*?grid-row:1;/);
     assert.match(css, /\.detail-modal-header-actions \{[\s\S]*?grid-column: 2;[\s\S]*?grid-row: 1/);
 });
 
@@ -172,7 +172,7 @@ testCase("en móvil/PWA las acciones permanecen arriba a la derecha y el modelo 
     assert.match(css, /@media \(max-width:\s*560px\)[\s\S]*?grid-template-columns: minmax\(0, 36vw\) minmax\(0, 1fr\)/);
     assert.match(css, /@media \(max-width:\s*560px\)[\s\S]*?\.detail-modal-header-actions \.share-modal-btn \{[\s\S]*?width:\s*28px;[\s\S]*?height:\s*28px/);
     assert.ok(css.includes("#modalDetalle[data-modal-type=\"corte\"] .detail-modal-header-actions > .info-close-btn") && css.includes("position:static !important"));
-    assert.match(css, /\.detail-modal-title-text \{[\s\S]*?grid-row: 2;[\s\S]*?align-self: end/);
+    assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-title-text \{[\s\S]*?grid-row:1;/);
 });
 
 
@@ -196,14 +196,14 @@ testCase("el detalle de corte tiene nombre accesible y conserva el logo de marca
     assert.ok(css.includes("#modalDetalle[data-modal-type=\"corte\"] .detail-modal-divider { margin:1px 0 2px 6px; }"));
 });
 
-console.log("CutDetailModalLayout: " + passed + "/" + passed + " PASS");
+
 
 
 testCase("el divisor azul ocupa el ancho del encabezado y la sombra del logo no se recorta", () => {
     assert.match(detail, /headerDivider\.className = "detail-modal-divider"/);
     assert.match(detail, /headerDiv\.insertBefore\(headerDivider, savingIndicator\)/);
     assert.ok(css.includes("#modalDetalle[data-modal-type=\"corte\"] .detail-modal-divider { margin:1px 0 2px 6px; }"));
-    assert.ok(css.includes("#modalDetalle[data-modal-type=\"corte\"] .detail-modal-title {") && css.includes("height:129px; padding:0 !important;"));
+    assert.ok(css.includes("#modalDetalle[data-modal-type=\"corte\"] .detail-modal-title {") && css.includes("height:120px; min-height:120px; padding:0 !important;"));
     assert.match(css, /\.detail-modal-title \.brand-logo-modal \{[\s\S]*?object-fit: contain/);
 });
 
@@ -231,3 +231,20 @@ testCase("el título tutorial se ajusta entre palabras y el cierre queda anclado
     assert.match(css, /\.tutorial-detail-title \{[\s\S]*?white-space: normal;[\s\S]*?overflow-wrap: normal;[\s\S]*?word-break: normal;[\s\S]*?hyphens: none/);
     assert.match(css, /\.tutorial-detail-toolbar > \.tutorial-detail-header-actions > \.tutorial-detail-close \{[\s\S]*?position: absolute !important;[\s\S]*?right: 0 !important/);
 });
+
+testCase("el encabezado elimina las filas vacías y alinea logo, modelo y divisor sin mover las acciones", () => {
+    const cutHeader = css.slice(css.indexOf("GP-UX-MODAL-HEADER-TIGHTEN-03"));
+    assert.match(cutHeader, /\.detail-modal-toolbar \{[\s\S]*?grid-template-rows:auto auto auto/);
+    assert.match(cutHeader, /\.detail-modal-title \{[\s\S]*?grid-row:1;[\s\S]*?height:120px; min-height:120px;[\s\S]*?align-items:flex-start;[\s\S]*?justify-content:flex-start/);
+    assert.match(cutHeader, /\.detail-modal-title-text \{[\s\S]*?grid-row:1/);
+    assert.match(cutHeader, /\.detail-modal-header-actions \{[\s\S]*?justify-content:flex-end/);
+    assert.match(cutHeader, /\.detail-modal-divider \{[\s\S]*?grid-row:2;[\s\S]*?margin:1px 0 2px 6px/);
+    assert.match(cutHeader, /\.detail-modal-saving-indicator \{ grid-row:3; \}/);
+    assert.match(cutHeader, /height:60px; min-height:60px; padding:0 !important;[\s\S]*?align-items:flex-start/);
+    assert.match(cutHeader, /grid-template-rows:auto auto auto;[\s\S]*?margin-bottom:6px/);
+    assert.ok(css.includes("#detalleCompleto {") && css.includes("gap: 12px;"));
+    assert.ok(css.includes("#modalDetalle[data-modal-type=\"corte\"] .detail-modal-toolbar { margin-bottom:7px; }"));
+    assert.ok(css.includes("#modalDetalle[data-modal-type=\"corte\"] .detail-modal-meta { margin-top:-6px; }"));
+});
+
+console.log("CutDetailModalLayout: " + passed + "/" + passed + " PASS");

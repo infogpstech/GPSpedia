@@ -450,3 +450,9 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - SessionActivityCoordination 11/11 PASS; sintaxis PASS; health read-only PASS. Regresión global: 119 suites, 1,769 pruebas aprobadas y 1 fallo ajeno (BETA-026 CSS del encabezado móvil).
 - Implementación local cerrada con validación multi-dispositivo diferida a Beta. No se desplegó Apps Script ni se modificaron datos externos.
 ================================================================================
+
+================================================================================
+2026-11-17 — AJUSTE GP-UX-CUT-MODAL-HEADER-POSITION-01
+- style.css: se elimina la fila flexible vacía del encabezado de cortes; logo y modelo comparten la fila superior, el logo queda alineado al inicio y el modelo al extremo inferior. Se conservan las dimensiones del logo (120 px escritorio / 60 px móvil), el tamaño/orden/alineación de acciones y los márgenes de divisor y metadatos.
+- JS/Tests/CutDetailModalLayout.mjs: se amplía el contrato para verificar la fila única, la posición superior del logo, el divisor inmediato y la preservación de espaciados existentes.
+================================================================================

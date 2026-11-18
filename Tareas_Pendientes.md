@@ -1685,3 +1685,11 @@ La comprobación de los modales tomaba todo el CSS posterior al bloque de scroll
 - Workflow de sintaxis: PASS. Health de servicios desplegados (solo lectura): PASS.
 - Regresión global: 119 suites, 1,769 pruebas aprobadas y 1 suite fallida ajena a esta tarea: `BETA-026` (aserción del CSS del encabezado móvil de detalle de corte). La tarea de sesiones no produjo fallos en sus pruebas específicas.
 - No se desplegó Apps Script ni se modificaron propiedades, hojas o datos productivos. La prueba real de varios dispositivos queda para Beta, conforme al alcance acordado.
+
+### GP-UX-CUT-MODAL-HEADER-POSITION-01 — Logo, modelo y divisor en el encabezado
+**Prioridad: P2 · Estado: EN PROGRESO.**
+- El conjunto logo de marca, nombre del modelo y línea azul debe comenzar en la esquina superior izquierda del área de contenido del modal.
+- Conservar tamaño, propiedades de imagen y alineación horizontal actuales del logo; no modificar tamaños tipográficos ni dimensiones de botones.
+- Logo alineado arriba; modelo debajo de las acciones, alineado a la izquierda y al extremo inferior de la misma altura visual del logo. Acciones imprimir, editar, compartir y cerrar conservan su orden, alineación derecha y posición.
+- Eliminar únicamente las filas/alturas vacías del encabezado. La línea azul debe conservar sus márgenes actuales y la información posterior su separación actual. No modificar el padding exterior compartido si eso desplaza las acciones.
+- Validar contrato CSS, regresión de CutDetailModalLayout y revisión del diff. Aceptación visual en navegador móvil/escritorio queda pendiente de Beta.

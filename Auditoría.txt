@@ -234,3 +234,11 @@ Adenda: el límite de 7,000 para cada bloque se mide en bytes UTF-8, evitando qu
 
 
 Cierre de H-AUTH-SESSION-001 — 2026-11-18: corrección local aplicada. La selección por rol/timestamp, la invalidación previa de cachés y el almacenamiento segmentado quedan cubiertos por pruebas específicas. Resultado: SessionActivityCoordination 11/11 PASS; regresión Coordinator con 100 sesiones sin fallo reportado; sintaxis PASS; health read-only PASS. La suite global registra 1 fallo no relacionado (BETA-026, test CSS del modal de detalle). No hubo despliegue ni cambios productivos. Validación real en dispositivos queda para Beta.
+
+================================================================================
+2026-11-17 — AUDITORÍA GP-UX-CUT-MODAL-HEADER-POSITION-01
+- Evidencia en style.css: #detalleCompleto conserva padding exterior (18 px escritorio / 14 px móvil) y gap de 12 px entre sus hijos; se mantiene para no desplazar los botones ni alterar el espaciado de la información posterior.
+- Causa directa: la cuadrícula del encabezado reservaba una fila flexible vacía entre acciones y divisor; .detail-modal-title ocupaba las filas 1–2 con altura 129 px (111 px móvil), mientras el logo conservaba 120 px (60 px móvil) y se alineaba al centro/borde inferior. En móvil quedaban hasta 51 px vacíos por encima del logo.
+- Efecto adicional: la fila flexible y el alto fijo del contenedor prolongaban el encabezado y dejaban espacio no requerido debajo del logo/modelo. El divisor ya tenía margen explícito y el contenido posterior tenía gap/márgenes propios; esos valores no deben cambiarse.
+- Criterio de corrección: una sola fila superior compartida por logo, acciones y modelo; logo alineado arriba y modelo al fondo de la misma fila; divisor en la fila inmediata siguiente; eliminar únicamente la fila flexible vacía y conservar tamaños, orden, alineación horizontal de acciones y márgenes de divisor/contenido.
+================================================================================

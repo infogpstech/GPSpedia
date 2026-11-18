@@ -575,3 +575,11 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - Coordinator ahora persiste sesiones en bloques versionados UTF-8, mantiene compatibilidad de lectura con el formato anterior y no impone un máximo funcional de cinco.
 - SessionActivityCoordination: 11/11 PASS; escenario Coordinator de 100 sesiones incluido en la regresión sin fallos reportados. Sintaxis y health GET-only: PASS.
 - La regresión general tiene un único fallo ajeno al alcance: BETA-026 (aserción de CSS del modal de detalle, relacionada con el encabezado móvil de 60px). No se desplegó Apps Script ni se tocaron datos externos. Validación multi-dispositivo real queda en Beta.
+
+## GP-UX-CUT-MODAL-HEADER-POSITION-01 — continuidad (2026-11-17)
+- Rama: GPSpedia2.2.5_work. HEAD confirmado antes de esta tarea: 1bd7562b31427e2ef48a15b34ec8cdd0ff370d7e. Rama base protegida: GPSpedia2.2.5; no modificar.
+- Solicitud: quitar espacio vacío sobre el logo y debajo de la línea azul sin cambiar tamaño/propiedades del logo, tipografía, orden ni posición de botones; modelo debajo de las acciones y alineado a la izquierda; conservar distancia divisor/contenido.
+- Diagnóstico: el encabezado tenía una fila flexible vacía entre acciones y divisor. El contenedor del logo abarcaba dos filas y medía 129 px escritorio / 111 px móvil; la imagen mide 120 px / 60 px y se alineaba centrada o al borde inferior. La regla móvil dejaba hasta 51 px por encima de la imagen. #detalleCompleto también tiene padding exterior y gap de 12 px compartidos; se conservan para no desplazar las acciones ni alterar la distancia con el contenido.
+- Cambio preparado: hacer que logo, acciones y modelo compartan la fila superior; logo arriba, modelo abajo, divisor en la siguiente fila; quitar solo la fila flexible vacía. Mantener los márgenes existentes de divisor, toolbar y metadatos.
+- Archivos: style.css, JS/Tests/CutDetailModalLayout.mjs, Tareas_Pendientes.md, Auditoría.txt, ChangesLogs.txt y este checkpoint.
+- Validaciones pendientes de ejecutar después de publicar: CutDetailModalLayout, regresión global y CI; inspección visual real en Beta móvil/escritorio. No se desplegarán servicios Apps Script ni se tocarán datos externos.
