@@ -290,3 +290,9 @@ Adenda de validación final GP-PWA-RECENT-VIEWS-02: al subir CACHE_NAME a v70 ta
 - El carrusel mantiene lectura exclusiva de IndexedDB y no espera ni consulta el servidor. Validación CI pendiente.
 
 - Validación local automatizada (Actions 44296180571, SHA 9a3e139f0a0763894f804a44447f0d21f07c832c): 146 suites, 2,174 pruebas aprobadas, 0 fallos; RecentlyViewedCarousel 21/21; RecentlyViewedActivityTelemetry 12/12; AdminClientCacheDeletion 9/9; sintaxis PASS. Pages 44296179354 SUCCESS; health 44296180705 SUCCESS solo lectura. La acción FEEDBACK de registro de vistas no se desplegó ni se probó contra hojas/servicio real; validación reservada a Beta.
+
+
+[2026-11-18] GP-PWA-RECENT-VIEWS-03 — Adenda de corrección
+- Se amplía el evento autenticado para registrar `utilCorte1`, `utilCorte2` y `utilCorte3` como valores numéricos no negativos junto al ID del vehículo.
+- Se rectifica la limpieza selectiva anterior: la limpieza local vacía normalmente `viewedItems` junto con los demás almacenes reconstruibles. Es exclusiva de IndexedDB; no invoca endpoints ni elimina actividad del servidor.
+- Se conserva el aislamiento por cuenta mediante claves compuestas e índice `ownerId`; cada lectura local filtra al usuario activo. El carrusel no consulta ni reconstruye historial remoto.
