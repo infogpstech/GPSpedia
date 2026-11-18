@@ -440,3 +440,13 @@ Adenda GP-AUTH-ROLE-SESSION-LIMITS-01: Coordinator elimina los tres topes intern
 Adenda GP-AUTH-ROLE-SESSION-LIMITS-01: la expulsión automática invalida primero cachés WRITE/FEEDBACK y el contexto de Coordinator por cada token excedente; solo después borra el token local. Se preserva la recuperación idempotente ante fallos parciales.
 
 Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000 bytes) para evitar superar el máximo por propiedad con datos Unicode.
+
+
+================================================================================
+2026-11-18 — CIERRE DE IMPLEMENTACIÓN GP-AUTH-ROLE-SESSION-LIMITS-01
+- Matriz aplicada: Desarrollador ilimitado; Jefe 5; Supervisor 3; Técnico 1; Técnico externo 1.
+- Al superar el límite se crea la nueva sesión, se revocan los tokens más antiguos por timestamp, se invalidan cachés de WRITE/FEEDBACK y luego se limpian los registros anteriores.
+- Coordinator elimina topes fijos de cinco y guarda contexto en bloques versionados UTF-8. Prueba aislada cubre 100 sesiones Desarrollador.
+- SessionActivityCoordination 11/11 PASS; sintaxis PASS; health read-only PASS. Regresión global: 119 suites, 1,769 pruebas aprobadas y 1 fallo ajeno (BETA-026 CSS del encabezado móvil).
+- Implementación local cerrada con validación multi-dispositivo diferida a Beta. No se desplegó Apps Script ni se modificaron datos externos.
+================================================================================
