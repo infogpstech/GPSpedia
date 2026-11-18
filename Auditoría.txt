@@ -264,3 +264,16 @@ Cierre de H-AUTH-SESSION-001 — 2026-11-18: corrección local aplicada. La sele
 
 
 Adenda de cierre GP-UX-CUT-MODAL-HEADER-GRID-02: la primera regresión detectó una aserción heredada que exigía align-items/align-self flex-end en el título móvil. Se actualizó el contrato para exigir la nueva separación de 6 px y alineación inicial, sin cambiar el comportamiento de producción. Reejecución: CutDetailModalLayout 27/27 PASS; regresión global 145 suites / 2,143 pruebas / 0 fallos; sintaxis PASS (Actions 44229400787). La validación visual en navegador real sigue diferida a Beta.
+
+
+================================================================================
+2026-11-18 — HALLAZGO P2: CARGA INTERMITENTE DE «VISTOS RECIENTEMENTE»
+- Ubicaciones: JS/Frontend/offline.js (DB_VERSION, onupgradeneeded, saveViewedItem/getViewedItems); JS/Frontend/auth.js (loadUserLocalActivity); JS/Tests/RecentlyViewedCarousel.mjs; JS/Tests/IndexedDBTransactions.js.
+- Evidencia: getViewedItems consultaba store.getAll() sin acotar por cuenta, recorría registros acumulados de todos los usuarios y convertía el fallo de performOp (null) en [] indistinguible de un historial realmente vacío. loadUserLocalActivity hacía una sola lectura y no reintentaba.
+- Impacto: el coste de lectura crecía con el historial global y un fallo/timeout transitorio de IndexedDB dejaba el carrusel vacío hasta una nueva sesión. Severidad P2 (fiabilidad y rendimiento; no afecta la integridad del catálogo).
+- Corrección: DB_VERSION 5 incorpora índice ownerId; lecturas limitadas al propietario; depuración de registros antiguos para conservar 20 por cuenta; getViewedItemsResult distingue disponibilidad de lista vacía; auth reintenta de forma no bloqueante y valida propietario/sesión antes de aplicar resultados. El catálogo y el render inicial no esperan por esta persistencia opcional.
+- PWA: CACHE_NAME incrementado de v69 a v70 para actualizar los módulos cache-first.
+- Regresión: RecentlyViewedCarousel 13/13 PASS; IndexedDB transaction tests 51/51 PASS; regresión global 145 suites / 2,153 pruebas / 0 fallos; node --check PASS (Actions 44239861437, SHA 0c3e6fc191d86801793150eb5aac46217ba4845d).
+- La suite detectó durante el desarrollo la actualización necesaria de la expectativa de DB_VERSION del test de migración legado; se corrigió sin cambiar la lógica del historial administrativo.
+- Pendiente: comprobar instalación/actualización PWA y recuperación con IndexedDB bloqueado o concurrencia real de pestañas en dispositivos Beta. No se modificaron servicios Apps Script ni datos externos.
+================================================================================
