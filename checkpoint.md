@@ -568,3 +568,10 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - La limpieza de sesiones antiguas no se realiza si falla la invalidación de WRITE/FEEDBACK o la revocación de Coordinator.
 
 - Los bloques del contexto se dimensionan en bytes UTF-8 (7,000 por bloque), no en caracteres, para respetar el límite por propiedad también con nombres Unicode.
+
+
+### Cierre local — GP-AUTH-ROLE-SESSION-LIMITS-01 — 2026-11-18
+- Límites por rol aplicados y sesión más antigua seleccionada por timestamp; se invalida primero su caché en WRITE/FEEDBACK y su token central antes de retirar el registro local.
+- Coordinator ahora persiste sesiones en bloques versionados UTF-8, mantiene compatibilidad de lectura con el formato anterior y no impone un máximo funcional de cinco.
+- SessionActivityCoordination: 11/11 PASS; escenario Coordinator de 100 sesiones incluido en la regresión sin fallos reportados. Sintaxis y health GET-only: PASS.
+- La regresión general tiene un único fallo ajeno al alcance: BETA-026 (aserción de CSS del modal de detalle, relacionada con el encabezado móvil de 60px). No se desplegó Apps Script ni se tocaron datos externos. Validación multi-dispositivo real queda en Beta.
