@@ -177,7 +177,7 @@ await check('Recupera estado legado de DB_VERSION 4 sin borrar datos antes de co
         inventoryConfirmedFileIds: [A], updatedAt: 1700000000000, batches: 2,
         totalAnalyzed: 2, totalDiscovered: 2, status: 'partial'
     });
-    assert.equal(h.DB_VERSION, 4);
+    assert.equal(h.DB_VERSION, 5);
     const restored = await h.getDriveAuditState(owner);
     assert.deepEqual(restored.files.map(file => file.fileId), [A, B]);
     assert.equal(restored.auditId, 'AUDIT-LEGACY');
