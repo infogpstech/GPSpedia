@@ -68,9 +68,10 @@ export async function initDB(options = {}) {
                 if (!db.objectStoreNames.contains('catalog')) db.createObjectStore('catalog');
                 if (!db.objectStoreNames.contains('searchHistory')) db.createObjectStore('searchHistory', { keyPath: 'term' });
                 const viewedStore = db.objectStoreNames.contains('viewedItems')
-                    ? request.transaction.objectStore('viewedItems')
+                    ? (request.transaction && typeof request.transaction.objectStore === 'function'
+                        ? request.transaction.objectStore('viewedItems') : null)
                     : db.createObjectStore('viewedItems', { keyPath: 'id' });
-                if (viewedStore.indexNames && typeof viewedStore.createIndex === 'function' &&
+                if (viewedStore && viewedStore.indexNames && typeof viewedStore.createIndex === 'function' &&
                     !viewedStore.indexNames.contains('ownerId')) {
                     viewedStore.createIndex('ownerId', 'ownerId', { unique: false });
                 }
