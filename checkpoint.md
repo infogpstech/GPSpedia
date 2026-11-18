@@ -618,3 +618,13 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - GitHub Actions 44229400782 SUCCESS: health de servicios desplegados, solo lectura.
 - Estado local: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Pendiente inspección visual real del modal en móvil y escritorio; no se afirma que dicha inspección haya sido realizada.
 - Rama base GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+
+
+### GP-PWA-RECENT-VIEWS-02 — corrección de carga intermitente (2026-11-18)
+- Rama autorizada: GPSpedia2.2.5_work. HEAD al preparar el cierre documental: consultar ref remoto; rama base protegida GPSpedia2.2.5 sin modificaciones.
+- Diagnóstico confirmado: la consulta del historial hacía getAll() sobre todo el objectStore viewedItems (todas las cuentas y registros históricos); la escritura no limitaba el tamaño persistido. Además, getViewedItems transformaba errores de performOp en [] y loadUserLocalActivity no reintentaba, de modo que un fallo temporal se confundía con historial vacío durante el resto de la sesión.
+- Implementación: offline.js eleva DB_VERSION a 5 y agrega índice ownerId; lectura por propietario; retención de 20 vistos por cuenta; nueva API getViewedItemsResult distingue disponibilidad de lista vacía. auth.js reintenta de forma progresiva y no bloqueante (1.5 s, 5 s, 15 s), conserva el estado en memoria y valida la sesión/propietario antes de aplicar una respuesta tardía. El render y la carga del catálogo no esperan por IndexedDB.
+- Aislamiento: al cambiar directamente de propietario se limpia la actividad local anterior. No se modifica el catálogo ni la lógica de permisos.
+- PWA: CACHE_NAME actualizado a gpsepedia-cache-v70 para invalidar los módulos cache-first.
+- Pruebas en SHA 0c3e6fc191d86801793150eb5aac46217ba4845d: RecentlyViewedCarousel 13/13 PASS; IndexedDB transaction tests 51/51 PASS; 145 suites / 2,153 pruebas / 0 fallos; node --check PASS. Se actualizó la expectativa de esquema en AdminDriveAuditIndexedDB para DB_VERSION 5, conservando el escenario de lectura de datos heredados de v4.
+- Estado local: COMPLETADA CON VALIDACIÓN DIFERIDA. Falta comprobar actualización del Service Worker y recuperación multi-pestaña/dispositivo en Beta; no se desplegaron servicios Apps Script ni se modificaron hojas, Drive o datos externos.
