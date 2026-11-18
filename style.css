@@ -6211,7 +6211,7 @@ textarea.rich-text-source[hidden] { display:none !important; }
     grid-row:2;
     min-width:0;
     max-width:100%;
-    align-self:flex-start;
+    align-self:end;
     margin-top:6px;
     justify-self:stretch;
     text-align:left;
@@ -6222,7 +6222,7 @@ textarea.rich-text-source[hidden] { display:none !important; }
     grid-row:2;
     min-width:0;
     max-width:100%;
-    align-self:flex-start;
+    align-self:end;
     margin-top:6px;
     margin-bottom:0;
 }
@@ -6309,7 +6309,7 @@ textarea.rich-text-source[hidden] { display:none !important; }
         max-width:100%;
         display:flex;
         align-items:flex-start;
-        align-self:flex-start;
+        align-self:end;
         box-sizing:border-box;
         padding:0 !important;
         margin:6px 0 0 !important;
@@ -6321,7 +6321,7 @@ textarea.rich-text-source[hidden] { display:none !important; }
         grid-row:2;
         min-width:0;
         max-width:100%;
-        align-self:flex-start;
+        align-self:end;
         margin-top:6px;
         margin-bottom:0;
     }
