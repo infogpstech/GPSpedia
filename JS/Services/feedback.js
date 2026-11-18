@@ -2411,9 +2411,15 @@ function handleRecordVehicleView(payload) {
     const vehicleId = String(payload && payload.vehicleId !== undefined ? payload.vehicleId : "").trim();
     if (!vehicleId || vehicleId.length > 128) throw new Error("El ID del vehículo no es válido.");
     const actor = getFeedbackActor_(payload, null);
-    // Solo se registra ID asociado y tipo de evento; el actor y la fecha proceden del backend.
-    // No se acepta ni almacena el objeto del vehículo, imágenes, detalles o historial local.
-    logUserActivity(actor.userId, actor.userName, "view_vehicle", vehicleId, "");
+    const utilityCounters = {};
+    ["utilCorte1", "utilCorte2", "utilCorte3"].forEach(field => {
+        const rawValue = payload && payload[field];
+        if (rawValue === undefined || rawValue === null || String(rawValue).trim() === "") return;
+        const numericValue = Number(rawValue);
+        if (Number.isFinite(numericValue) && numericValue >= 0) utilityCounters[field] = numericValue;
+    });
+    // Solo se persisten el ID y los tres contadores solicitados; actor/fecha son confiables del backend.
+    logUserActivity(actor.userId, actor.userName, "view_vehicle", vehicleId, JSON.stringify(utilityCounters));
     return { status: "success" };
 }
 
