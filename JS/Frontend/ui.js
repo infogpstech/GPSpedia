@@ -2204,7 +2204,11 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
             console.warn("No se pudo persistir el historial de vistos; se conserva la vista en memoria:", error));
         // Telemetría mínima y silenciosa: nunca bloquea la apertura ni alimenta el carrusel.
         try {
-            recordVehicleView(String(activeItem.id), getSessionPayload_()).catch(() => {});
+            recordVehicleView(String(activeItem.id), {
+                utilCorte1: activeItem.utilCorte1,
+                utilCorte2: activeItem.utilCorte2,
+                utilCorte3: activeItem.utilCorte3
+            }, getSessionPayload_()).catch(() => {});
         } catch (telemetryError) {}
     }
 
@@ -7325,18 +7329,16 @@ ${elapsedSec}s
     const clearCacheBtn = document.getElementById('btn-admin-clear-client-cache');
     if (clearCacheBtn) {
         clearCacheBtn.onclick = async () => {
-            if (!(await requestDeveloperConsoleConfirmation_("¿Deseas limpiar los datos locales reconstruibles?\n\nSe eliminarán catálogo, historial de búsqueda, miniaturas, validaciones, caché PyS y respuestas temporales de red. También se eliminarán los vehículos vistos de la cuenta activa; los historiales de otras cuentas se conservarán. Se conservarán sesión, preferencias, borradores y operaciones pendientes o inciertas, copias de edición, auditorías administrativas y recursos esenciales para uso offline."))) return;
+            if (!(await requestDeveloperConsoleConfirmation_("¿Deseas limpiar los datos locales reconstruibles?\n\nSe eliminarán catálogo, historial de búsqueda, vehículos vistos, miniaturas, validaciones, caché PyS y respuestas temporales de red de este dispositivo. Esta acción no elimina la actividad estadística ya registrada en el servidor. Se conservarán sesión, preferencias, borradores y operaciones pendientes o inciertas, copias de edición, auditorías administrativas y recursos esenciales para uso offline."))) return;
 
             clearCacheBtn.disabled = true;
             try {
                 log("[SISTEMA] Limpiando datos reconstruibles; las operaciones recuperables se conservarán.");
-                const activeCacheUser = getState().currentUser;
-                const viewedOwnerId = String(activeCacheUser && (activeCacheUser.ID || activeCacheUser.id) || "").trim();
-                const indexedDbResult = await offline.clearRebuildableClientCache(viewedOwnerId);
+                const indexedDbResult = await offline.clearRebuildableClientCache();
                 const indexedDbSucceeded = indexedDbResult && indexedDbResult.status === "success";
                 if (indexedDbSucceeded) {
-                    if (viewedOwnerId && indexedDbResult.viewedItemsCleared) setState({ viewedItems: [] });
-                    log("[EXITO] IndexedDB: almacenes reconstruibles limpiados (" + indexedDbResult.stores.join(", ") + "). Historiales de otras cuentas preservados; adminLocalState conservado.");
+                    if (indexedDbResult.viewedItemsCleared) setState({ viewedItems: [] });
+                    log("[EXITO] IndexedDB: almacenes reconstruibles limpiados (" + indexedDbResult.stores.join(", ") + "). La actividad estadística remota no se modifica; adminLocalState conservado.");
                 } else {
                     log("[ERROR] IndexedDB: " + String(indexedDbResult && indexedDbResult.message || "No se confirmó la limpieza."), false, true);
                 }
