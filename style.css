@@ -6181,3 +6181,35 @@ textarea.rich-text-source[hidden] { display:none !important; }
 /* GP-UX-PYS-MODAL-HEADER-01 — PyS comparte jerarquía, color y cierre de tutoriales. */
 .pys-detail-toolbar { margin:0 0 7px; padding-bottom:0; }
 .pys-detail-title-container { display:flex; flex:1 1 auto; align-items:center; min-width:0; }
+
+/* GP-UX-DETAIL-LOGO-MOBILE-01 — tamaño móvil uniforme sin alterar la escala de navegador. */
+@media (max-width:560px) {
+    #modalDetalle .detail-modal-toolbar {
+        grid-template-columns:max-content minmax(0,1fr);
+    }
+    #modalDetalle .detail-modal-title {
+        width:max-content;
+        max-width:none;
+        height:106px;
+        min-height:106px;
+        padding:0 !important;
+        margin:0 !important;
+        box-sizing:border-box;
+        align-items:center;
+        justify-content:center;
+        overflow:visible !important;
+    }
+    #modalDetalle .detail-modal-title .brand-logo-modal {
+        display:block;
+        width:auto !important;
+        height:104px !important;
+        min-height:104px !important;
+        max-height:104px !important;
+        max-width:none !important;
+        margin:0 !important;
+        padding:0 !important;
+        object-fit:contain;
+        object-position:center;
+        flex:0 0 auto;
+    }
+}
