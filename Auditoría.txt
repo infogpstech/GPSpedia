@@ -229,3 +229,5 @@ Adenda H-AUTH-SESSION-001: Coordinator mantenía tres límites adicionales de ci
 
 
 Adenda H-AUTH-SESSION-001: se detectó que una expulsión local seguida solo de sincronización central dejaría una ventana en la que WRITE/FEEDBACK podrían reutilizar un actor cacheado hasta 6 horas. La expulsión ahora usa revokeSharedSessionContext_ para invalidar primero ambas cachés y revocar el token central; después elimina la fila local. Un fallo deja la limpieza pendiente y permite reintentar.
+
+Adenda: el límite de 7,000 para cada bloque se mide en bytes UTF-8, evitando que caracteres multibyte excedan el máximo por propiedad de Apps Script.
