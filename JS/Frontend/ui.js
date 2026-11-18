@@ -2510,6 +2510,47 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
     headerDiv.insertBefore(titleNode, savingIndicator);
     headerDiv.insertBefore(headerDivider, savingIndicator);
 
+    // Reubicar el nombre completo debajo del logo solo cuando no cabe en la columna derecha.
+    const updateCutModelTitleLayout = () => {
+        if (!headerDiv.isConnected || !titleNode.isConnected) return;
+        const titleValue = titleNode.tagName === "INPUT" ? titleNode.value : titleNode.textContent;
+        const titleStyle = window.getComputedStyle(titleNode);
+        const measure = document.createElement("span");
+        measure.textContent = titleValue || "";
+        measure.style.cssText = "position:absolute;visibility:hidden;white-space:nowrap;width:max-content;max-width:none;pointer-events:none;";
+        measure.style.font = titleStyle.font;
+        measure.style.letterSpacing = titleStyle.letterSpacing;
+        measure.style.textTransform = titleStyle.textTransform;
+        headerDiv.appendChild(measure);
+        const naturalTitleWidth = measure.getBoundingClientRect().width;
+        measure.remove();
+
+        const toolbarStyle = window.getComputedStyle(headerDiv);
+        const columnGap = Number.parseFloat(toolbarStyle.columnGap) || 0;
+        const availableTitleWidth = Math.max(0,
+            headerDiv.clientWidth - titleContainer.getBoundingClientRect().width - columnGap
+        );
+        if (naturalTitleWidth > availableTitleWidth + 0.5) {
+            headerDiv.setAttribute("data-model-title-layout", "below-logo");
+        } else {
+            headerDiv.removeAttribute("data-model-title-layout");
+        }
+    };
+
+    if (modalDetalle && modalDetalle._detailModalTitleLayoutObserver) {
+        modalDetalle._detailModalTitleLayoutObserver.disconnect();
+        modalDetalle._detailModalTitleLayoutObserver = null;
+    }
+    if (typeof ResizeObserver === "function") {
+        const titleLayoutObserver = new ResizeObserver(updateCutModelTitleLayout);
+        titleLayoutObserver.observe(headerDiv);
+        if (modalDetalle) modalDetalle._detailModalTitleLayoutObserver = titleLayoutObserver;
+    }
+    if (titleNode.tagName === "INPUT") {
+        titleNode.addEventListener("input", updateCutModelTitleLayout);
+    }
+    updateCutModelTitleLayout();
+
     const subHeaderDiv = document.createElement('div');
     subHeaderDiv.className = "detail-modal-meta";
     const subHeaderText = document.createElement('div');
