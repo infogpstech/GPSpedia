@@ -51,7 +51,7 @@ testCase("el encabezado separa logo, acciones superiores y modelo en la base der
         assert.ok(detail.includes('setAttribute("aria-label", "' + label + '")'), label);
     }
     assert.match(css, /\.detail-modal-toolbar \{[\s\S]*?grid-template-columns: max-content minmax\(0, 1fr\);[\s\S]*?grid-template-rows: auto minmax\(0, 1fr\) auto/);
-    assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-title \{[\s\S]*?grid-column:1;[\s\S]*?grid-row:1 \/ span 2;[\\s\\S]*?align-self:end;/);
+    assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-title \{[\s\S]*?grid-column:1;[\s\S]*?grid-row:1 \/ span 2;[\s\S]*?align-self:end;/);
     assert.match(css, /\.detail-modal-header-actions \{[\s\S]*?grid-column: 2;[\s\S]*?grid-row: 1/);
     assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-title-text \{[\s\S]*?grid-column:2;[\s\S]*?grid-row:2;/);
     assert.ok(detail.includes("headerActions.appendChild(closeBtn)"));
@@ -122,7 +122,7 @@ testCase("el tamaño del logo se conserva y móvil usa ancho natural con gap de 
     const cutHeader = css.slice(css.indexOf("GP-UX-MODAL-HEADER-TIGHTEN-03"));
     assert.match(cutHeader, /\.detail-modal-title \{[\s\S]*?height:60px;[\s\S]*?min-height:60px;/);
     assert.match(mobileLogoRules, /justify-content:flex-start/);
-    assert.match(mobileLogoRules, /\.detail-modal-title \{[\\s\\S]*?grid-row:1 \/ span 2;[\\s\\S]*?align-self:end;/);
+    assert.match(mobileLogoRules, /\.detail-modal-title \{[\\s\\S]*?grid-row:1 \/ span 2;[\s\S]*?align-self:end;/);
     assert.match(cutHeader, /\.detail-modal-title \{[\s\S]*?align-items:flex-start/);
     assert.match(mobileLogoRules, /object-position:left top/);
     assert.match(mobileLogoRules, /\.detail-modal-title-text \{[\s\S]*?height:auto;[\s\S]*?min-height:0;[\s\S]*?display:flex;[\s\S]*?align-items:flex-start;[\s\S]*?align-self:flex-start;[\s\S]*?margin:6px 0 0 !important;[\s\S]*?transform:none !important/);
