@@ -28,4 +28,7 @@ assert.match(offline,/transaction\.objectStore\(name\)\.clear\(\)/);
 assert.doesNotMatch(offline,/otherUsersViewedItemsPreserved/);
 const ls=auth.indexOf("function loadUserLocalActivity"), le=auth.indexOf("\nfunction handleSessionStorageChange",ls);
 assert.doesNotMatch(auth.slice(ls,le),/routeAction|recordVehicleView|getActivityLogs/);
+assert.match(auth.slice(ls,le),/setState\(\{ searchHistory: \[\], viewedItems: \[\] \}\)/);
+assert.match(auth.slice(ls,le),/setState\(\{ viewedItems: Array\.isArray\(result\.items\) \? result\.items\.slice\(0, 20\) : \[\] \}\)/);
+assert.doesNotMatch(auth.slice(ls,le),/new Map\(\)|getState\(\)\.viewedItems/);
 console.log("RecentlyViewedActivityTelemetry: 12/12 PASS");
