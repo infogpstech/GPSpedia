@@ -2212,14 +2212,14 @@ function uploadImageToDriveWithShortLedgerLocks_(imageData, filename, folder, op
     if (!imageData) return "";
     if (!folder || typeof folder.getId !== "function") throw new Error("No se encontró una carpeta válida para guardar la imagen.");
     let blob, mimeType = "";
-    if (/^https?:\\/\\//i.test(String(imageData))) {
+    if (/^https?:\/\//i.test(String(imageData))) {
         const response = UrlFetchApp.fetch(String(imageData), { muteHttpExceptions: true });
         const status = response.getResponseCode();
         if (status < 200 || status >= 300) throw new Error("No se pudo descargar la imagen de origen. HTTP " + status + ".");
         blob = response.getBlob();
         mimeType = String(blob.getContentType() || "").split(";")[0].trim().toLowerCase();
     } else if (typeof imageData === "string" && imageData.startsWith("data:image/")) {
-        const parts = imageData.match(/^data:(image\\/[a-zA-Z0-9.+-]+);base64,([\\s\\S]+)$/i);
+        const parts = imageData.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,([\s\S]+)$/i);
         if (!parts) throw new Error("Los datos Base64 de la imagen tienen un formato inválido.");
         mimeType = String(parts[1] || "").toLowerCase();
         const decoded = Utilities.base64Decode(parts[2]);
@@ -3094,14 +3094,14 @@ function getExistingEntities(sheet) {
 
 function parseEquipmentVersions(rawStr) {
   if (!rawStr) return [];
-  return String(rawStr).split(/[,/\\;]+/).map(v => v.trim()).filter(Boolean);
+  return String(rawStr).split(/[,\/\\;]+/).map(v => v.trim()).filter(Boolean);
 }
 
 function countEquipmentVersions(versionesStr) {
   if (!versionesStr) return 1;
   const str = String(versionesStr).trim();
   if (!str) return 1;
-  const parts = str.split(/[,/\\;]+/).map(p => p.trim()).filter(Boolean);
+  const parts = str.split(/[,\/\\;]+/).map(p => p.trim()).filter(Boolean);
   const count = parts.length;
   if (count <= 1) return 1;
   if (count === 2) return 2;
@@ -3140,7 +3140,7 @@ function parseVinCollection(rawVin) {
         if (!Array.isArray(parsed)) throw new Error("El formato JSON de VIN debe ser un array.");
         return normalizeVinCollectionArray_(parsed, "Colección VIN JSON");
     }
-    const values = text.split(/[,/\\;]+/)
+    const values = text.split(/[,\/\\;]+/)
         .map(value => normalizeVinCollectionValue_(value, "Colección VIN heredada"))
         .filter(Boolean);
     if (values.length > 3) throw new Error("La colección VIN heredada supera el máximo de tres identificadores.");
