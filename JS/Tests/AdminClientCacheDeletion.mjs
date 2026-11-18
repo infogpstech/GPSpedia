@@ -216,8 +216,6 @@ await check("El mensaje del Service Worker elimina respuestas dinámicas y conse
     assert.deepEqual(entries.get("gpsepedia-cache-v21").map(item=>item.url),[coreUrl,mainUrl]);
     assert.equal(cacheCalls.includes("unrelated-cache"),false);
 });
-console.log("AdminClientCacheDeletion: " + passed + "/" + passed + " PASS");
-
 await check("La limpieza por usuario elimina solo sus vistos y conserva los de otras cuentas", async () => {
     const h = createDatabase({ viewedRecords: [
         { id: "user-A::V-1", ownerId: "user-A" },
@@ -231,3 +229,5 @@ await check("La limpieza por usuario elimina solo sus vistos y conserva los de o
     assert.deepEqual(h.viewedRecords.map(record => record.ownerId), ["user-B"]);
     assert.equal(result.otherUsersViewedItemsPreserved, true);
 });
+
+console.log("AdminClientCacheDeletion: " + passed + "/" + passed + " PASS");
