@@ -194,7 +194,7 @@ testCase("el detalle de corte tiene nombre accesible y conserva el logo de marca
     assert.match(detail, /setAttribute\("aria-labelledby", title\.id\)/);
     assert.match(detail, /titleContainer\.appendChild\(logoImg\)/);
     assert.match(css, /\.detail-modal-title \.brand-logo-modal \{[\s\S]*?height: 120px !important;[\s\S]*?max-height: 120px !important/);
-    assert.ok(css.includes("#modalDetalle[data-modal-type=\"corte\"] .detail-modal-title-text { transform:translateY(-6px); }"));
+    assert.ok(css.includes("#modalDetalle[data-modal-type=\"corte\"] .detail-modal-title-text {\n    grid-row:1;\n    transform:translateY(-6px);\n}"));
     assert.ok(css.includes("#modalDetalle[data-modal-type=\"corte\"] .detail-modal-divider { margin:1px 0 2px 6px; }"));
 });
 
