@@ -1638,7 +1638,7 @@ La comprobación de los modales tomaba todo el CSS posterior al bloque de scroll
 
 
 ## GP-AUTH-ROLE-SESSION-LIMITS-01 — Límites de sesiones activas por rol
-**Prioridad: P1 · Estado: EN PROGRESO (implementación local). · Fecha: 2026-11-17**
+**Prioridad: P1 · Estado: COMPLETADA CON VALIDACIÓN DIFERIDA · Cierre de implementación local: 2026-11-18**
 
 ### Requisitos confirmados
 - Desarrollador: sin límite de sesiones activas.
@@ -1678,3 +1678,10 @@ La comprobación de los modales tomaba todo el CSS posterior al bloque de scroll
 - Si falla una invalidación, la operación se conserva recuperable mediante el mismo requestId y no se retira la sesión anterior dejando cachés antiguas con acceso.
 
 - El tamaño de cada bloque se calcula en bytes UTF-8 para mantenerse por debajo del límite de tamaño de propiedad de Apps Script, incluso con nombres Unicode.
+
+### Verificación y alcance de cierre
+- `SessionActivityCoordination.mjs`: 11/11 PASS, incluidos límites por rol, conservación del nuevo login, expulsión por timestamp e invalidación previa de cachés.
+- La regresión de Coordinator incorpora escenario de 100 sesiones Desarrollador, lectura de una sesión en el último bloque y limpieza de bloques al revocar todas las sesiones; la suite no reportó fallos en este escenario.
+- Workflow de sintaxis: PASS. Health de servicios desplegados (solo lectura): PASS.
+- Regresión global: 119 suites, 1,769 pruebas aprobadas y 1 suite fallida ajena a esta tarea: `BETA-026` (aserción del CSS del encabezado móvil de detalle de corte). La tarea de sesiones no produjo fallos en sus pruebas específicas.
+- No se desplegó Apps Script ni se modificaron propiedades, hojas o datos productivos. La prueba real de varios dispositivos queda para Beta, conforme al alcance acordado.
