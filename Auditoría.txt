@@ -242,3 +242,12 @@ Cierre de H-AUTH-SESSION-001 — 2026-11-18: corrección local aplicada. La sele
 - Efecto adicional: la fila flexible y el alto fijo del contenedor prolongaban el encabezado y dejaban espacio no requerido debajo del logo/modelo. El divisor ya tenía margen explícito y el contenido posterior tenía gap/márgenes propios; esos valores no deben cambiarse.
 - Criterio de corrección: una sola fila superior compartida por logo, acciones y modelo; logo alineado arriba y modelo al fondo de la misma fila; divisor en la fila inmediata siguiente; eliminar únicamente la fila flexible vacía y conservar tamaños, orden, alineación horizontal de acciones y márgenes de divisor/contenido.
 ================================================================================
+
+================================================================================
+2026-11-18 — ADENDA GP-UX-CUT-MODAL-HEADER-POSITION-01 / DESBORDAMIENTO MÓVIL
+- Evidencia: style.css contenía una regla móvil previa que fijaba la primera columna en 36vw y una regla posterior que la cambiaba a max-content. El contenedor del logo móvil tenía width:max-content y la imagen width:auto/max-width:none, por lo que logos anchos podían ampliar el ancho intrínseco de la cuadrícula. Las acciones conservan botones de ancho fijo y flex-wrap:nowrap.
+- Causa del desplazamiento: #modalDetalle usa overflow:auto y #detalleCompleto también mantiene su propio scroll vertical; ninguno limitaba explícitamente overflow-x en el detalle de corte. El desbordamiento de la cuadrícula podía convertirse en desplazamiento horizontal del modal.
+- Se verificó que #detalleCompleto usa box-sizing:border-box globalmente; el width calc(100vw - 16px) más padding móvil no añade ancho exterior y no es la causa primaria.
+- Corrección: cuadrícula 2x2 explícita; primera columna max-content y logo width:auto con altura preservada; segunda columna minmax(0,1fr); el logo ocupa filas 1-2, acciones fila 1, modelo fila 2 y divisor fila 3. overflow-x:hidden y overscroll-behavior-x:none se limitan al modal de corte y su contenedor interior. No se modifican tamaños ni orden de botones.
+- Validación de navegador/dispositivos no disponible en el entorno de CI; queda diferida a Beta. No afirmar ausencia de desplazamiento visual sin esa inspección.
+================================================================================

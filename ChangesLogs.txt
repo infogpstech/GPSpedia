@@ -456,3 +456,9 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - style.css: se elimina la fila flexible vacía del encabezado de cortes; logo y modelo comparten la fila superior, el logo queda alineado al inicio y el modelo al extremo inferior. Se conservan las dimensiones del logo (120 px escritorio / 60 px móvil), el tamaño/orden/alineación de acciones y los márgenes de divisor y metadatos.
 - JS/Tests/CutDetailModalLayout.mjs: se amplía el contrato para verificar la fila única, la posición superior del logo, el divisor inmediato y la preservación de espaciados existentes.
 ================================================================================
+
+================================================================================
+2026-11-18 — AJUSTE GP-UX-CUT-MODAL-HEADER-GRID-02
+- style.css: consolidación del encabezado en cuadrícula 2x2; primera columna max-content ligada al ancho natural del logo, segunda columna flexible; acciones/modelo en filas separadas; divisor y guardado en filas propias. Se limita el scroll horizontal únicamente al modal de cortes.
+- JS/Tests/CutDetailModalLayout.mjs: contrato actualizado para verificar columnas, filas, ancho natural de logo y ausencia de scroll horizontal en el modal de corte.
+================================================================================
