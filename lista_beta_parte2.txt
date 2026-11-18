@@ -2123,3 +2123,50 @@ git rev-parse HEAD
 7. Revisar que no aparece scroll horizontal y que no se alteran el logo, el tamaño natural de su primera columna, ni la posición de las acciones.
 
 **Criterio de cierre:** PASS únicamente cuando el título largo empuje hacia abajo los elementos inferiores sin mover el logo hacia arriba, no exista superposición con las acciones y la distribución sea correcta en escritorio y en ambas orientaciones móviles. No se ha modificado código de producción como parte de este registro.
+
+================================================================================
+2026-11-18 — NUEVOS HALLAZGOS DE PRUEBAS BETA: ADMIN / SALUD / TELEMETRÍA / LIMPIEZA
+
+### BETA-ADMIN-HEALTH-EVENTS-01 — Error al escanear la salud de los servidores: `events is not defined`
+**Estado: REPORTADO POR EL USUARIO · PENDIENTE DE REPRODUCCIÓN Y CORRECCIÓN.**
+- Al ejecutar el escaneo de salud desde la consola aparece repetidamente:
+  `[SALUD ERROR] Fallo al escanear servicios: events is not defined`
+- El error se observó a las 5:20:56 p.m. y 5:21:08 p.m.
+- Investigar el flujo de escaneo, el ámbito y la inicialización de `events`, y la gestión de errores por servicio.
+- Criterio de cierre: el escaneo termina sin ReferenceError, informa el resultado de cada servicio y no oculta fallos parciales.
+
+### BETA-ADMIN-GLOBAL-TRAFFIC-01 — Fallo al recuperar el agregado global de tráfico
+**Estado: REPORTADO POR EL USUARIO · PENDIENTE DE DIAGNÓSTICO.**
+- Al consultar el tráfico global, ADMIN muestra: `No fue posible recuperar el agregado global; Respuesta de telemetría no válida`.
+- Revisar el contrato de respuesta del agregado, la validación/normalización del payload, errores HTTP, autenticación y compatibilidad entre ADMIN y los servicios que aportan telemetría.
+- Criterio de cierre: el agregado global se recupera y valida con datos coherentes; si algún servicio falla, se informa el estado parcial sin presentar datos inválidos como válidos.
+
+### BETA-ADMIN-SERVICE-TELEMETRY-02 — Información de salud y tráfico incompleta para los servicios
+**Estado: REPORTADO POR EL USUARIO · PENDIENTE DE DIAGNÓSTICO.**
+- En el panel solo se muestra información de salud de CATALOG.
+- No aparece información de los demás servicios.
+- Tampoco aparece el tráfico en el navegador móvil ni el tráfico global.
+- Investigar el mapeo de endpoints, consultas por servicio, propiedades de telemetría, respuesta agregada, renderizado del panel y diferencias de comportamiento entre escritorio y navegador móvil.
+- No asumir que los endpoints están averiados solo por la ausencia de datos en la interfaz: contrastar respuesta remota, permisos/secreto, contrato y renderizado.
+- Criterio de cierre: se muestran salud y tráfico de todos los servicios instrumentados con datos disponibles; los servicios sin telemetría deben identificarse claramente y no confundirse con cero tráfico o servicio caído.
+
+### BETA-ADMIN-LOGS-CLEAR-FEEDBACK-01 — Mensaje de éxito ambiguo al borrar logs y actividad de usuario
+**Estado: REPORTE DE EXPERIENCIA DE USUARIO · PENDIENTE DE AJUSTE/VALIDACIÓN.**
+- Al solicitar borrar logs y actividad de usuario, la interfaz comunica éxito y a continuación indica que no había actividades que borrar.
+- El mensaje puede interpretarse como si se hubiera borrado información cuando en realidad no existían registros.
+- Ajustar el resultado para distinguir claramente entre eliminación efectuada, operación completada sin registros que eliminar y error. No alterar ni borrar datos históricos adicionales.
+- Criterio de cierre: el mensaje refleja exactamente el resultado real de la operación.
+
+### BETA-ADMIN-LOG-RETENTION-UI-01 — Selector de retención de logs sin estilo y fuera del viewport
+**Estado: REPORTE VISUAL/RESPONSIVE · PENDIENTE DE CORRECCIÓN.**
+- En el selector de eliminación de logs (conservar los últimos 7 días o eliminar todos), el control aparece sin estilo definido, ocupa demasiado espacio y se desborda del viewport.
+- Revisar el componente y sus estilos en escritorio y móvil; limitar ancho/alto, adaptar el control al espacio disponible y asegurar que las opciones sean legibles y utilizables.
+- Mantener las dos opciones y su semántica exacta: conservar logs de los últimos 7 días o eliminar todos.
+- Criterio de cierre: selector integrado visualmente con ADMIN, compacto, accesible y sin desbordamiento horizontal/vertical del viewport.
+
+### BETA-AUDIT-CUT-UNUSED-IMAGES-PASS-01 — Auditoría de carpeta de cortes: detección de imágenes sin uso
+**Estado: PASS REPORTADO POR EL USUARIO.**
+- El usuario confirma que la auditoría de la carpeta de cortes para detectar imágenes sin uso está funcionando.
+- Registrar como prueba Beta satisfactoria según la observación del usuario.
+- No ampliar el alcance ni declarar validaciones adicionales no realizadas.
+================================================================================
