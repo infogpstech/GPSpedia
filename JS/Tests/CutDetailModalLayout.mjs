@@ -111,7 +111,7 @@ testCase("el tamaño del logo se conserva y móvil usa ancho natural con gap de 
     assert.match(mobileLogoRules, /justify-content:flex-start/);
     assert.match(cutHeader, /\.detail-modal-title \{[\s\S]*?align-items:flex-start/);
     assert.match(mobileLogoRules, /object-position:left bottom/);
-    assert.match(mobileLogoRules, /\.detail-modal-title-text \{[\s\S]*?height:auto;[\s\S]*?min-height:0;[\s\S]*?display:flex;[\s\S]*?align-items:flex-start;[\s\S]*?align-self:flex-start;[\s\S]*?margin:6px 0 0 !important;[\s\S]*?transform:none !important/);
+    assert.match(mobileLogoRules, /\.detail-modal-title-text \{[\s\S]*?height:auto;[\s\S]*?min-height:0;[\s\S]*?display:flex;[\s\S]*?align-items:flex-start;[\s\S]*?align-self:end;[\s\S]*?margin:6px 0 0 !important;[\s\S]*?transform:none !important/);
 });
 
 testCase("los cinco campos de edición se agrupan en una rejilla con asociaciones accesibles", () => {
@@ -193,7 +193,7 @@ testCase("el detalle de corte tiene nombre accesible y conserva el logo de marca
     assert.match(detail, /setAttribute\("aria-labelledby", title\.id\)/);
     assert.match(detail, /titleContainer\.appendChild\(logoImg\)/);
     assert.match(css, /\.detail-modal-title \.brand-logo-modal \{[\s\S]*?height: 120px !important;[\s\S]*?max-height: 120px !important/);
-    assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-title-text \{[\s\S]*?grid-column:2;[\s\S]*?grid-row:2;[\s\S]*?align-self:flex-start;[\s\S]*?margin-top:6px;[\s\S]*?transform:none/);
+    assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-title-text \{[\s\S]*?grid-column:2;[\s\S]*?grid-row:2;[\s\S]*?align-self:end;[\s\S]*?margin-top:6px;[\s\S]*?transform:none/);
     assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-divider \{[\s\S]*?grid-row:3;[\s\S]*?width:auto !important;[\s\S]*?margin:1px 6px 2px !important/);
 });
 
@@ -263,7 +263,7 @@ testCase("el detalle de corte no permite desplazamiento horizontal y el logo con
 
 testCase("el modelo queda separado de las acciones y los botones reducen su relleno horizontal", () => {
     const cutHeader = css.slice(css.indexOf("GP-UX-MODAL-HEADER-TIGHTEN-03"));
-    assert.match(cutHeader, /\.detail-modal-title-text \{[\s\S]*?align-self:flex-start;[\s\S]*?margin-top:6px;[\s\S]*?transform:none/);
+    assert.match(cutHeader, /\.detail-modal-title-text \{[\s\S]*?align-self:end;[\s\S]*?margin-top:6px;[\s\S]*?transform:none/);
     assert.match(cutHeader, /\.detail-modal-header-actions \.share-modal-btn \{\s*padding:3px 2px;/);
     const mobileHeader = css.slice(css.indexOf("GP-UX-DETAIL-LOGO-MOBILE-02"));
     assert.match(mobileHeader, /\.detail-modal-title-text \{[\s\S]*?margin:6px 0 0 !important/);
