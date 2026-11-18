@@ -1700,5 +1700,7 @@ La comprobación de los modales tomaba todo el CSS posterior al bloque de scroll
 ### Adenda — GP-UX-CUT-MODAL-HEADER-GRID-02 — ajuste visual solicitado
 - La revisión posterior detectó que el modelo quedaba demasiado próximo a las acciones, los botones conservaban relleno horizontal excesivo y el divisor azul desbordaba hacia la derecha.
 - Requisitos adicionales: separar acciones y modelo 6 px; conservar el contenedor del logo exactamente a la altura de la imagen, sin padding vertical y con imagen width:auto; reducir ligeramente el padding horizontal de editar/imprimir/compartir; divisor con márgenes laterales simétricos de 6 px y sin ancho superior al área disponible.
-- Implementación publicada en style.css y contrato actualizado en JS/Tests/CutDetailModalLayout.mjs. Estado: EN PROGRESO hasta ejecutar la regresión automatizada y revisar el resultado.
+- Implementación publicada en style.css y contrato actualizado en JS/Tests/CutDetailModalLayout.mjs. Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. La regresión local automatizada aprobó; solo resta inspección visual real en móvil y escritorio.
 - Se mantienen las dimensiones existentes del logo (120 px escritorio / 60 px móvil), la cuadrícula 2x2, el orden de acciones y el overflow-x limitado al modal de corte.
+
+- Cierre local: CutDetailModalLayout 27/27 PASS; regresión global 145 suites, 2,143 pruebas, 0 fallos; sintaxis de módulos modificados PASS. Actions run 44229400787 SUCCESS. Health read-only run 44229400782 SUCCESS.
