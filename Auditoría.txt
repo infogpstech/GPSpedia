@@ -317,3 +317,11 @@ Adenda de validación final GP-PWA-RECENT-VIEWS-02: al subir CACHE_NAME a v70 ta
 - Hallazgo de test PWA: `RecentlyViewedCarousel.mjs` aún esperaba la antigua firma de `recordVehicleView(id, session)`, mientras el contrato actual incluye un objeto con `utilCorte1`, `utilCorte2`, `utilCorte3` y el payload de sesión. Se corrigió la expectativa; además, el runner requiere resumen numérico y el test ahora informa 1/1 PASS.
 - CI final `44310667618`: 146 suites, 2,154 pruebas aprobadas, 0 fallos; RecentlyViewedActivityTelemetry 12/12; AdminClientCacheDeletion 9/9; CutDetailModalLayout 27/27; sintaxis PASS. Pages `44310666058` SUCCESS; health read-only `44310667649` SUCCESS.
 ================================================================================
+================================================================================
+2026-11-18 — Rectificación GP-UX-CUT-MODAL-HEADER-POSITION-01
+- Se reexaminó el CSS efectivo tras el reporte de que el logo no había cambiado visualmente. La explicación anterior que atribuía el problema a centrado vertical del contenedor era incorrecta: la regla específica de corte ya establecía `align-items:flex-start` y `justify-content:flex-start`; `object-position:left bottom` por sí sola no corregía la posición relativa del nombre.
+- Causa comprobada: el título del modelo y el campo de edición estaban anclados al inicio de la segunda fila mediante `align-self:flex-start`, tanto en escritorio como en móvil. El logo ocupa la primera columna y abarca las dos filas; el título no descendía hasta el extremo inferior de ese espacio.
+- Corrección: `align-self:end` para el título y el campo de edición en escritorio y móvil. Se conservan dimensiones del logo, `width:auto`, `max-content`, gap, acciones, divisor y overflow.
+- Prueba de regresión actualizada: `CutDetailModalLayout` comprueba la alineación inferior del título en ambas variantes. CI `44328013474`: 146 suites, 2,154 pruebas aprobadas, 0 fallos; `CutDetailModalLayout` 27/27; sintaxis PASS.
+- No se realizó inspección visual en navegador/dispositivo real; queda pendiente de Beta.
+================================================================================
