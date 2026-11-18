@@ -251,3 +251,13 @@ Cierre de H-AUTH-SESSION-001 — 2026-11-18: corrección local aplicada. La sele
 - Corrección: cuadrícula 2x2 explícita; primera columna max-content y logo width:auto con altura preservada; segunda columna minmax(0,1fr); el logo ocupa filas 1-2, acciones fila 1, modelo fila 2 y divisor fila 3. overflow-x:hidden y overscroll-behavior-x:none se limitan al modal de corte y su contenedor interior. No se modifican tamaños ni orden de botones.
 - Validación de navegador/dispositivos no disponible en el entorno de CI; queda diferida a Beta. No afirmar ausencia de desplazamiento visual sin esa inspección.
 ================================================================================
+
+
+================================================================================
+2026-11-18 — ADENDA GP-UX-CUT-MODAL-HEADER-GRID-02 / ESPACIADO Y DIVISOR
+- Evidencia: style.css contenía .detail-modal-divider con width:calc(100% + 18px) y una regla móvil width:calc(100% + 22px), mientras el selector específico del modal de corte aplicaba margen izquierdo de 6 px y no reservaba margen derecho. El divisor podía exceder el ancho disponible.
+- Evidencia adicional: el título del modelo se desplazaba con transform y sin margen superior propio; las acciones y el modelo compartían filas contiguas sin separación perceptible. Los botones share-modal-btn recibían padding horizontal de 3–4 px según la cascada.
+- Impacto: desalineación visual y riesgo de desbordamiento horizontal de la línea azul en el modal de detalle.
+- Corrección: el divisor específico de corte usa width:auto, justify-self:stretch y márgenes laterales simétricos de 6 px; el modelo recibe separación superior de 6 px; los botones reducen ligeramente su padding horizontal. Se preservan el ancho natural del logo, padding cero del contenedor y alturas 120/60 px.
+- Prueba de regresión ampliada en JS/Tests/CutDetailModalLayout.mjs. La ejecución automatizada aún no está verificada; no se declara PASS.
+================================================================================
