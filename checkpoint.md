@@ -659,3 +659,12 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - `auth.js` ya no fusiona los vistos recuperados del propietario actual con el estado anterior en memoria. Limpia el carrusel al comenzar la carga y lo reemplaza exclusivamente con los registros locales filtrados por `ownerId`.
 - La persistencia local mantiene clave compuesta usuario/vehículo; no se usa la actividad remota para reconstruir vistos.
 - La limpieza de caché local vacía el almacén `viewedItems` y no modifica registros ACTIVITY del servidor.
+
+
+### Continuidad — GP-PWA-RECENT-VIEWS-03 — reconciliación de pruebas (2026-11-18)
+- Se resolvió la consulta del HEAD usando `fetch_commit` con la referencia de rama `GPSpedia2.2.5_work`; HEAD anterior: `6f9df2a3da7cf3b4649e94a3ed827c5fcafde0fb`. El último commit previo era documental (`checkpoint.md` solamente).
+- Se revisó la cadena reciente: `b0040aee` corrige contaminación de `viewedItems` en memoria al cambiar de cuenta; la hidratación ahora limpia el estado anterior y lo reemplaza por el resultado IndexedDB filtrado por `ownerId`.
+- Se detectó que `RecentlyViewedCarousel.mjs` conservaba aserciones incompatibles con el requisito definitivo de limpieza total local. Corregido para verificar que `viewedItems` sí se limpia junto con los almacenes reconstruibles, sin llamadas a FEEDBACK/ACTIVITY.
+- Commit de la prueba: `dae20bf50f8a40a669ce02ed7668ac8e0e19a086`.
+- Nueve verificaciones estáticas de contrato pasaron. La suite Node completa y CI posterior al cambio siguen pendientes de evidencia; no se marca como regresión integral aprobada.
+- Se mantiene pendiente la validación Beta del servicio FEEDBACK y de la PWA instalada. No se desplegaron servicios Apps Script ni se modificaron datos externos.
