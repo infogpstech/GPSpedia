@@ -517,3 +517,11 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - Commit: `dae20bf50f8a40a669ce02ed7668ac8e0e19a086`.
 - Verificación estática de contratos: 9/9 PASS. Ejecución de Node/CI pendiente de evidencia.
 ================================================================================
+
+================================================================================
+2026-11-18 — Corrección de contrato PWA y alineación inferior del logo
+- `JS/Tests/RecentlyViewedCarousel.mjs`: se alinea la aserción de telemetría con el payload actual de contadores de utilidad y se añade resumen numérico compatible con el runner.
+- `style.css`: el logo de marca del modal de detalle de corte adopta `object-position:left bottom` en la regla específica de escritorio; se conservan dimensiones y ancho automático. La regla móvil ya utilizaba esa posición.
+- `JS/Tests/CutDetailModalLayout.mjs`: se agrega comprobación explícita de la alineación inferior del logo en escritorio; se mantiene el contrato móvil.
+- Validación CI `44310667618`: 146 suites / 2,154 pruebas / 0 fallos; RecentlyViewedActivityTelemetry 12/12, AdminClientCacheDeletion 9/9, CutDetailModalLayout 27/27 y sintaxis PASS. Pages `44310666058` SUCCESS; health read-only `44310667649` SUCCESS.
+================================================================================
