@@ -108,7 +108,9 @@ testCase("el tamaño de logo de navegador se conserva y móvil usa 50px con gap 
     assert.match(mobileLogoRules, /column-gap:6px/);
     assert.match(mobileLogoRules, /height:50px !important;[\s\S]*?max-height:50px !important;[\s\S]*?max-width:none !important;[\s\S]*?width:auto !important;[\s\S]*?object-fit:contain/);
     assert.match(mobileLogoRules, /justify-content:flex-start/);
-    assert.match(mobileLogoRules, /\.detail-modal-title-text \{[\s\S]*?align-self:center;[\s\S]*?transform:none !important/);
+    assert.match(mobileLogoRules, /align-items:flex-end/);
+    assert.match(mobileLogoRules, /object-position:left bottom/);
+    assert.match(mobileLogoRules, /\.detail-modal-title-text \{[\s\S]*?align-self:flex-end;[\s\S]*?transform:none !important/);
 });
 
 testCase("los cinco campos de edición se agrupan en una rejilla con asociaciones accesibles", () => {
