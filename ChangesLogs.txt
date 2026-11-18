@@ -540,3 +540,11 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - JS/Tests/CutDetailModalLayout.mjs: contratos actualizados para la posición compartida del logo y el modelo.
 - CI 44329759542 SUCCESS: 146 suites, 2,154 pruebas aprobadas, 0 fallos; sintaxis PASS. Inspección visual en navegador/dispositivos reales pendiente de Beta.
 ================================================================================
+
+================================================================================
+2026-11-18 — Rectificación final: contenedor del logo en dos filas
+- `style.css`: `.detail-modal-title` ocupa las dos filas y se alinea al fondo del espacio combinado mediante `align-self:end`; la imagen sigue alineada arriba dentro del contenedor. El nombre y el campo de edición permanecen en la segunda fila, alineados al inicio.
+- Aplicado en escritorio y móvil; dimensiones, ancho automático, max-content, gap, acciones y divisor conservados.
+- `JS/Tests/CutDetailModalLayout.mjs`: aserciones separan posición del contenedor, imagen y nombre del modelo.
+- CI `44331015148` SUCCESS: 146 suites, 2,154 pruebas, 0 fallos; `CutDetailModalLayout` 27/27; sintaxis PASS. Inspección visual Beta pendiente.
+================================================================================
