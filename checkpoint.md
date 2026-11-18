@@ -688,3 +688,11 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - JS/Tests/CutDetailModalLayout.mjs: expectativas actualizadas para la ubicación conjunta del logo y el modelo en escritorio y móvil.
 - CI 44329759542 SUCCESS: 146 suites, 2,154 pruebas aprobadas, 0 fallos; comprobación sintáctica PASS. Validación visual real en navegador/dispositivos queda pendiente de Beta.
 - Commits de implementación: CSS 43dd523e16fbab68865a98ed6688cd0a89cc8dad; pruebas 7793b9561ceb1d89e4c4aa77a58ccdf3d8dd7b79. No se modificaron servicios desplegados ni datos externos.
+
+### Rectificación final: contenedor del logo en dos filas — 2026-11-18
+- Se corrige la interpretación de la instrucción: `.detail-modal-title` conserva `grid-column:1` y `grid-row:1 / span 2`, pero el propio contenedor se desplaza al fondo del espacio combinado mediante `align-self:end`. La imagen permanece alineada arriba dentro del contenedor (`align-items:flex-start`, `object-position:left top`).
+- El nombre del modelo y el campo de edición permanecen en la segunda fila de la segunda columna (`grid-row:2`, `align-self:flex-start`), con margen superior de 6 px. No se altera su posición anterior.
+- Aplicado en escritorio y móvil; se conservan width:auto, max-content, 120 px/60 px, gap, acciones, divisor y límites horizontales.
+- `JS/Tests/CutDetailModalLayout.mjs`: contratos separados para el contenedor de dos filas, su alineación inferior, la imagen interna y el título en segunda fila.
+- CI `44331015148` SUCCESS: 146 suites, 2,154 pruebas aprobadas, 0 fallos; `CutDetailModalLayout` 27/27; sintaxis PASS. Inspección visual real en navegador/dispositivos sigue pendiente de Beta.
+- HEAD de implementación y pruebas: `547ba48b56873805c7b2169c774b134224e4a36a`. Rama base sin modificar.
