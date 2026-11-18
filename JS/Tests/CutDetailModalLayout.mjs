@@ -75,14 +75,27 @@ testCase("ninguna regla posterior puede sustituir la cuadrícula del encabezado 
 });
 
 testCase("el contenedor del logo ocupa dos filas y se alinea abajo junto al nombre del modelo", () => {
-    assert.match(detail, /headerDiv\.insertBefore\(titleContainer, savingIndicator\)/);
-    assert.match(detail, /headerDiv\.insertBefore\(titleNode, savingIndicator\)/);
-    assert.doesNotMatch(detail, /titleContainer\.appendChild\(title\)|titleContainer\.appendChild\(input\)/);
-    assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-title \{[\s\S]*?grid-column:1;[\s\S]*?grid-row:1 \/ span 2;[\s\S]*?align-self:end;/);
-    assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-title-text \{[\s\S]*?grid-column:2;[\s\S]*?grid-row:1 \/ span 2;/);
-    assert.match(css, /\.detail-modal-header-actions \{[\s\S]*?grid-column: 2;[\s\S]*?grid-row: 1/);
+    assert.match(detail, /headerDiv\\.insertBefore\\(titleContainer, savingIndicator\\)/);
+    assert.match(detail, /headerDiv\\.insertBefore\\(titleNode, savingIndicator\\)/);
+    assert.doesNotMatch(detail, /titleContainer\\.appendChild\\(title\\)|titleContainer\\.appendChild\\(input\\)/);
+    const logoStart = css.indexOf('#modalDetalle[data-modal-type="corte"] .detail-modal-title {');
+    const logoEnd = css.indexOf("}", logoStart);
+    const logoRule = css.slice(logoStart, logoEnd);
+    assert.ok(logoRule.includes("grid-row:1 / span 2;"));
+    assert.ok(logoRule.includes("align-self:end;"));
+    const modelStart = css.indexOf('#modalDetalle[data-modal-type="corte"] .detail-modal-title-text {');
+    const modelEnd = css.indexOf("}", modelStart);
+    const modelRule = css.slice(modelStart, modelEnd);
+    assert.ok(modelRule.includes("grid-column:2;"));
+    assert.ok(modelRule.includes("grid-row:2;"));
+    const mobileStart = css.indexOf("GP-UX-DETAIL-LOGO-MOBILE-02");
+    const mobileRuleStart = css.indexOf('#modalDetalle[data-modal-type="corte"] .detail-modal-title {', mobileStart);
+    const mobileRuleEnd = css.indexOf("}", mobileRuleStart);
+    const mobileRule = css.slice(mobileRuleStart, mobileRuleEnd);
+    assert.ok(mobileRule.includes("grid-row:1 / span 2;"));
+    assert.ok(mobileRule.includes("align-self:end;"));
+    assert.match(css, /\\.detail-modal-header-actions \\{[\\s\\S]*?grid-column: 2;[\\s\\S]*?grid-row: 1/);
 });
-
 testCase("el catálogo reduce 70% el margen de la navegación y uniforma carruseles", () => {
     assert.match(ui, /section\.className = 'home-carousel-section'/);
     assert.match(ui, /title\.style\.margin = '12px 0 10px'/);
