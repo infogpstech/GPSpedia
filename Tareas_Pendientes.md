@@ -1734,3 +1734,12 @@ La comprobación de los modales tomaba todo el CSS posterior al bloque de scroll
 ### Adenda de aislamiento de sesión local — 2026-11-18
 - Al iniciar/cambiar de sesión, `loadUserLocalActivity` vacía inmediatamente el carrusel en memoria y lo reconstruye exclusivamente con `getViewedItemsResult(ownerId)`. Se elimina la fusión con el estado en memoria de una sesión anterior, evitando que una cuenta herede vistos de otra.
 - IndexedDB guarda cada entrada con propietario y clave compuesta usuario/vehículo; las consultas y la poda están limitadas al `ownerId` autenticado.
+
+
+### GP-PWA-RECENT-VIEWS-03 — corrección de contrato de limpieza (2026-11-18)
+**Estado: CORRECCIÓN DE PRUEBA APLICADA; EJECUCIÓN NODE/CI PENDIENTE.**
+- Se alineó `JS/Tests/RecentlyViewedCarousel.mjs` con el requisito vigente: borrar caché local elimina `viewedItems` de IndexedDB junto con los demás almacenes reconstruibles del dispositivo.
+- El aislamiento entre cuentas se mantiene en la escritura/lectura mediante `ownerId` y clave compuesta. La limpieza local no llama a FEEDBACK ni elimina actividad histórica ACTIVITY del servidor.
+- Se verifica que el estado del carrusel en memoria se vacíe tras una limpieza IndexedDB confirmada.
+- Commit: `dae20bf50f8a40a669ce02ed7668ac8e0e19a086`. Nueve comprobaciones estáticas de contrato PASS; falta ejecutar la suite Node/CI y conservar evidencia.
+- La validación de FEEDBACK desplegado y PWA instalada continúa reservada a Beta.
