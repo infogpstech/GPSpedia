@@ -903,6 +903,18 @@ function findSessionRowsByTokenUnderLock_(sheet, token) {
     return matches;
 }
 
+function getOldestSessionsToRevoke_(activeRows, currentToken, sessionLimit) {
+    if (!Number.isFinite(sessionLimit) || activeRows.length <= sessionLimit) return [];
+    const excess = activeRows.length - sessionLimit;
+    const oldestActive = activeRows.filter(row => row.token !== currentToken)
+        .sort((a, b) => a.createdAt - b.createdAt || a.rowIndex - b.rowIndex)
+        .slice(0, excess);
+    if (oldestActive.length !== excess) {
+        throw new Error('No se pudo identificar la cantidad de sesiones que deben revocarse.');
+    }
+    return oldestActive;
+}
+
 function getActiveSessionTokensForUserUnderLock_(sheet, userId) {
     if (!sheet) throw new Error("No se encontró ActiveSessions para invalidar las cachés de sesión.");
     const normalizedId = normalizeUserId(userId);
@@ -1029,13 +1041,7 @@ function createOrRecoverLoginSessionUnderLock_(userSheet, sessionsSheet, userRow
     let cleanupPending = false;
     let oldestSession = null;
     const candidates = [...expiredRows];
-    if (Number.isFinite(sessionLimit) && activeRows.length > sessionLimit) {
-        const excess = activeRows.length - sessionLimit;
-        const oldestActive = activeRows.filter(row => row.token !== token)
-            .sort((a, b) => a.createdAt - b.createdAt || a.rowIndex - b.rowIndex).slice(0, excess);
-        if (oldestActive.length !== excess) throw new Error('No se pudo identificar la cantidad de sesiones que deben revocarse.');
-        candidates.push(...oldestActive);
-    }
+    candidates.push(...getOldestSessionsToRevoke_(activeRows, token, sessionLimit));
     candidates.forEach(row => {
         if (tokenCounts.get(row.token) > 1) throw new Error('Existe un token de sesión duplicado; no se modificó la sesión antigua.');
     });

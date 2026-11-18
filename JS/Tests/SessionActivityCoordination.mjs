@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import vm from "node:vm";
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
@@ -163,6 +164,28 @@ testCase("Coordinator no limita por cinco y almacena sesiones en bloques recuper
  assert.match(coordinator,/function saveAuthContext_\(context\)/);
  assert.match(coordinator,/SHARED_AUTH_SESSION_CHUNK_LENGTH_/);
  assert.match(coordinator,/context\.sessionChunkCount/);
+});
+
+
+testCase("La selección de sesiones excedentes respeta los límites y siempre conserva el login nuevo",()=>{
+ const start=auth.indexOf("function getOldestSessionsToRevoke_(");
+ const end=auth.indexOf("\\n}",start)+2;
+ assert.ok(start>=0&&end>start,"Debe existir el selector puro de sesiones antiguas.");
+ const select=vm.runInNewContext("("+auth.slice(start,end)+")");
+ for(const [role,limit] of [["tecnico",1],["tecnico_exterior",1],["supervisor",3],["jefe",5]]){
+  const rows=Array.from({length:limit+2},(_,index)=>({
+   token:index===limit+1?"current-login":"old-"+index,
+   rowIndex:300-index,
+   createdAt:1700000000000+index*1000
+  }));
+  const selected=select(rows,"current-login",limit);
+  assert.deepEqual(selected.map(row=>row.token),["old-0","old-1"],role+" debe expulsar solo el exceso más antiguo.");
+ }
+ const developerRows=Array.from({length:100},(_,index)=>({
+  token:"developer-"+index,rowIndex:100-index,createdAt:1700000000000+index
+ }));
+ assert.deepEqual(select(developerRows,"developer-99",Infinity),[],
+  "Desarrollador no debe expulsar sesiones por cantidad.");
 });
 
 console.log("SessionActivityCoordination: "+passed+"/"+passed+" PASS");
