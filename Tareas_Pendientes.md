@@ -1729,3 +1729,8 @@ La comprobación de los modales tomaba todo el CSS posterior al bloque de scroll
 - IndexedDB mantiene claves compuestas por propietario/vehículo y las lecturas del carrusel filtran por `ownerId`; el historial remoto no reconstruye el carrusel.
 - La limpieza local incluye `viewedItems` entre los almacenes reconstruibles y ejecuta `clear()` en la transacción IndexedDB. Elimina el historial local del dispositivo, sin llamar a FEEDBACK ni borrar actividad estadística remota.
 - Regresión local pendiente de ejecución; despliegue/validación del servicio FEEDBACK reservado a Beta.
+
+
+### Adenda de aislamiento de sesión local — 2026-11-18
+- Al iniciar/cambiar de sesión, `loadUserLocalActivity` vacía inmediatamente el carrusel en memoria y lo reconstruye exclusivamente con `getViewedItemsResult(ownerId)`. Se elimina la fusión con el estado en memoria de una sesión anterior, evitando que una cuenta herede vistos de otra.
+- IndexedDB guarda cada entrada con propietario y clave compuesta usuario/vehículo; las consultas y la poda están limitadas al `ownerId` autenticado.
