@@ -308,3 +308,12 @@ Adenda de validación final GP-PWA-RECENT-VIEWS-02: al subir CACHE_NAME a v70 ta
 - Commit de corrección de prueba: `dae20bf50f8a40a669ce02ed7668ac8e0e19a086`.
 - Verificación estática cruzada de nueve contratos: 9 PASS. No se ejecutó Node.js ni la suite completa en un clon local; CI posterior al commit aún no disponible mediante la consulta de workflows expuesta. No declarar regresión integral aprobada.
 - Sin despliegues Apps Script, cambios de hojas, Drive, ScriptProperties ni datos externos.
+
+================================================================================
+2026-11-18 — GP-UX-CUT-BRAND-LOGO-BOTTOM-01 / GP-PWA-RECENT-VIEWS-03
+- Hallazgo UX: en el encabezado del modal de detalle de corte, la regla heredada `.detail-modal-title` centraba sus elementos con `align-items:center` y `justify-content:center`; el contenido interno de la imagen mantenía el posicionamiento predeterminado centrado. En escritorio, el logo no quedaba visualmente apoyado en el borde inferior del espacio reservado.
+- Corrección: regla específica del logo bajo `#modalDetalle[data-modal-type="corte"]` fija `object-position:left bottom`. No se cambian dimensiones, ancho natural, contenedor, grid, acciones ni estructura móvil; el móvil ya tenía el mismo posicionamiento inferior.
+- Regresión: `CutDetailModalLayout` ahora verifica explícitamente la propiedad para escritorio y conserva la comprobación móvil. CI `44310667618`: 27/27 PASS.
+- Hallazgo de test PWA: `RecentlyViewedCarousel.mjs` aún esperaba la antigua firma de `recordVehicleView(id, session)`, mientras el contrato actual incluye un objeto con `utilCorte1`, `utilCorte2`, `utilCorte3` y el payload de sesión. Se corrigió la expectativa; además, el runner requiere resumen numérico y el test ahora informa 1/1 PASS.
+- CI final `44310667618`: 146 suites, 2,154 pruebas aprobadas, 0 fallos; RecentlyViewedActivityTelemetry 12/12; AdminClientCacheDeletion 9/9; CutDetailModalLayout 27/27; sintaxis PASS. Pages `44310666058` SUCCESS; health read-only `44310667649` SUCCESS.
+================================================================================
