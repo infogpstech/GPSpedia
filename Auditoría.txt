@@ -288,3 +288,5 @@ Adenda de validación final GP-PWA-RECENT-VIEWS-02: al subir CACHE_NAME a v70 ta
 - Impacto: pérdida del historial local de otras cuentas y falta de recolección estadística acotada.
 - Corrección: excluir viewedItems del borrado genérico; limpiar solo entradas de la cuenta activa mediante ownerId; agregar acción autenticada recordVehicleView que registra ID asociado, tipo, fecha e identidad validada, sin payload del vehículo ni detalles.
 - El carrusel mantiene lectura exclusiva de IndexedDB y no espera ni consulta el servidor. Validación CI pendiente.
+
+- Validación local automatizada (Actions 44296180571, SHA 9a3e139f0a0763894f804a44447f0d21f07c832c): 146 suites, 2,174 pruebas aprobadas, 0 fallos; RecentlyViewedCarousel 21/21; RecentlyViewedActivityTelemetry 12/12; AdminClientCacheDeletion 9/9; sintaxis PASS. Pages 44296179354 SUCCESS; health 44296180705 SUCCESS solo lectura. La acción FEEDBACK de registro de vistas no se desplegó ni se probó contra hojas/servicio real; validación reservada a Beta.

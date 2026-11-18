@@ -643,4 +643,6 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - Requisito: carrusel exclusivamente local (IndexedDB/miniaturas); servidor recibe solo eventos estadísticos de visualización, sin servir historial ni imágenes. Telemetría silenciosa, no bloqueante y autenticada.
 - Se detectó que la limpieza genérica de IndexedDB incluía viewedItems y ejecutaba clear(), eliminando registros locales de otras cuentas del mismo navegador.
 - Cambios preparados: limpieza selectiva por ownerId; nueva acción FEEDBACK recordVehicleView que registra solo ID de vehículo, tipo de evento y actor/fecha verificados; carrusel sin consulta remota; caché PWA v71.
-- Pruebas automatizadas añadidas/actualizadas. Pendiente CI, SHA y revisión final; no se desplegaron Apps Script ni se modificaron hojas/datos externos. La validación remota de la acción queda pendiente de Beta.
+- CI final: Actions 44296180571 SUCCESS en SHA 9a3e139f0a0763894f804a44447f0d21f07c832c; 146 suites, 2,174 pruebas, 0 fallos; RecentlyViewedCarousel 21/21, RecentlyViewedActivityTelemetry 12/12, AdminClientCacheDeletion 9/9 y sintaxis PASS.
+- Pages build/deploy 44296179354 SUCCESS en el mismo SHA; health 44296180705 SUCCESS, solo lectura. La acción FEEDBACK nueva no se invocó contra Apps Script ni hojas reales; validación remota pendiente de Beta. La rama base permanece intacta.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.

@@ -1719,4 +1719,6 @@ La comprobación de los modales tomaba todo el CSS posterior al bloque de scroll
 - El servidor recibe únicamente el evento de visualización y el ID del vehículo; actor y fecha proceden de la sesión autenticada y del backend. No se envía el objeto del vehículo, imágenes, campos de utilidad ni el historial completo. La escritura es silenciosa y no bloquea el modal ni el carrusel.
 - La limpieza de caché desde la aplicación elimina solo los registros de la cuenta activa mediante el índice ownerId y conserva historiales de otras cuentas del mismo navegador. Sin usuario activo, no elimina historiales de vistos.
 - El carrusel continúa cargando desde IndexedDB y miniaturas locales. La acción de telemetría no devuelve datos de historial ni se consulta durante la carga.
-- Implementación preparada; pendiente CI y revisión final del diff. Estado: EN PROGRESO.
+- CI en SHA 9a3e139f0a0763894f804a44447f0d21f07c832c: 146 suites, 2,174 pruebas, 0 fallos; RecentlyViewedCarousel 21/21, RecentlyViewedActivityTelemetry 12/12 y AdminClientCacheDeletion 9/9. Sintaxis de módulos modificados PASS.
+- GitHub Pages build/deploy 44296179354 SUCCESS; health de servicios 44296180705 SUCCESS (solo lectura). La nueva acción FEEDBACK no se invocó contra el deployment: queda pendiente de despliegue/validación Beta.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
