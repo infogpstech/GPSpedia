@@ -592,3 +592,11 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - Diagnóstico: coexistían reglas móviles con columna 36vw y max-content; los logos anchos podían aumentar el ancho intrínseco de la cuadrícula. #modalDetalle y #detalleCompleto no limitaban overflow-x, aunque ambos participaban en el scroll. El ancho móvil de #detalleCompleto ya usa box-sizing:border-box global y no explica por sí solo el desplazamiento.
 - Implementación: consolidar la cuadrícula de cortes, establecer filas/columnas explícitas y overflow-x:hidden en el modal y el contenedor de detalle. Se preservan alturas de logo (120 px escritorio / 60 px móvil), propiedades object-fit, dimensiones y orden de botones, márgenes de divisor/metadatos.
 - Validaciones pendientes: suite BETA-026 tras actualizar contrato CSS; regresión completa CI; inspección visual en Beta móvil/escritorio. No desplegar Apps Script ni tocar datos externos.
+
+### Cierre local — GP-UX-CUT-MODAL-HEADER-GRID-02 — 2026-11-18
+- Commit de implementación: 3a1450c6296af715d76fa9ef039d404af36a49d3. Rama GPSpedia2.2.5_work verificada; GPSpedia2.2.5 permanece intacta en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Cabecera 2x2 implementada: logo columna 1, filas 1-2; acciones columna 2, fila 1; modelo columna 2, fila 2; divisor fila 3. Primera columna max-content e imagen width:auto. Altura del logo conservada: 120 px escritorio / 60 px móvil. Orden y tamaños de acciones intactos.
+- Causa del scroll horizontal: desbordamiento intrínseco de la columna max-content del logo ancho con acciones nowrap, sin límites overflow-x en los dos contenedores desplazables. Se limita overflow-x en el modal de corte y #detalleCompleto.
+- CutDetailModalLayout: 26/26 PASS. Regresión global CI: 145 suites, 2,142 pruebas aprobadas, 0 fallos. Verificación sintáctica PASS. GitHub Pages build/deploy SUCCESS; health remoto GET-only SUCCESS.
+- Validación visual en navegador móvil/escritorio real queda diferida a Beta. No se desplegaron servicios Apps Script ni se modificaron datos externos.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.

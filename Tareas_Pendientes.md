@@ -1687,7 +1687,7 @@ La comprobación de los modales tomaba todo el CSS posterior al bloque de scroll
 - No se desplegó Apps Script ni se modificaron propiedades, hojas o datos productivos. La prueba real de varios dispositivos queda para Beta, conforme al alcance acordado.
 
 ### GP-UX-CUT-MODAL-HEADER-POSITION-01 — Logo, modelo y divisor en el encabezado
-**Prioridad: P2 · Estado: EN PROGRESO.**
+**Prioridad: P2 · Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.**
 - El conjunto logo de marca, nombre del modelo y línea azul debe comenzar en la esquina superior izquierda del área de contenido del modal.
 - La cabecera usa una cuadrícula 2x2: logo en la primera columna ocupando ambas filas; acciones en la primera fila de la segunda columna; modelo en la segunda fila de la segunda columna. La primera columna usa max-content y la imagen width:auto para seguir el ancho natural del logo.
 - El modal de detalle no debe permitir desplazamiento horizontal en móvil; limitar overflow-x sin cambiar tamaños ni orden de botones.
