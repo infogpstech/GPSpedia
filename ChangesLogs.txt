@@ -438,3 +438,5 @@ Adenda GP-AUTH-ROLE-SESSION-LIMITS-01: Coordinator elimina los tres topes intern
 
 
 Adenda GP-AUTH-ROLE-SESSION-LIMITS-01: la expulsión automática invalida primero cachés WRITE/FEEDBACK y el contexto de Coordinator por cada token excedente; solo después borra el token local. Se preserva la recuperación idempotente ante fallos parciales.
+
+Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000 bytes) para evitar superar el máximo por propiedad con datos Unicode.
