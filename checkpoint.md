@@ -561,3 +561,8 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - Coordinator mantenía tres topes fijos de cinco sesiones en lectura, registro individual y sincronización masiva. Además, guardaba el array completo en una sola propiedad de ScriptProperties, limitada a 8,000 caracteres por la aplicación.
 - Se amplía el diseño para guardar sesiones en bloques versionados y mantener en la propiedad principal solo metadatos/índice. La escritura de bloques precede al cambio de índice; generaciones anteriores se limpian después de publicar el nuevo contexto.
 - Se agrega regresión aislada para 100 sesiones y lectura de una sesión ubicada en el último bloque. No se modifican servicios desplegados ni propiedades reales.
+
+
+### Continuidad — expulsión automática y revocación de cachés
+- La implementación ahora invalida las cachés de cada token excedente y revoca su contexto central antes de limpiar ActiveSessions. Se mantiene idempotencia: un reintento puede completar tokens parcialmente revocados.
+- La limpieza de sesiones antiguas no se realiza si falla la invalidación de WRITE/FEEDBACK o la revocación de Coordinator.

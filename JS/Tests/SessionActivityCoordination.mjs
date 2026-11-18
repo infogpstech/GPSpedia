@@ -151,6 +151,10 @@ testCase("AUTH aplica límites por rol y revoca la sesión más antigua sin bloq
  assert.match(auth,/activeRows\.filter\(row => row\.token !== token\)/);
  assert.doesNotMatch(auth,/rows\.length > 5/);
  assert.doesNotMatch(auth,/LOGIN_LIMIT_EXCEEDED|SESSION_LIMIT_EXCEEDED/);
+
+ assert.ok(auth.indexOf("candidates.forEach(row => revokeSharedSessionContext_(userId, row.token))") <
+     auth.indexOf("sessionsSheet.getRange(row.rowIndex, COLS_ACTIVE_SESSIONS.ActiveSessions).clearContent()", auth.indexOf("function createOrRecoverLoginSessionUnderLock_")),
+     "Las cachés y el contexto central deben revocarse antes de eliminar la sesión antigua.");
 });
 
 testCase("Coordinator no limita por cinco y almacena sesiones en bloques recuperables",()=>{

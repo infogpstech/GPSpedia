@@ -226,3 +226,6 @@ AUTH tenía una política divergente: Jefe 3 en lugar de 5 y Técnico 2 en lugar
 
 
 Adenda H-AUTH-SESSION-001: Coordinator mantenía tres límites adicionales de cinco sesiones (context.sessions.length > 5, context.sessions.length >= 5 e inputSessions.length > 5) y un límite de tamaño de 8,000 caracteres al guardar todas las sesiones en una sola propiedad. La corrección segmenta el contexto en bloques versionados y publica el índice al final. La cuota total de ScriptProperties sigue siendo una restricción propia de Apps Script, no un límite funcional configurado por GPSpedia.
+
+
+Adenda H-AUTH-SESSION-001: se detectó que una expulsión local seguida solo de sincronización central dejaría una ventana en la que WRITE/FEEDBACK podrían reutilizar un actor cacheado hasta 6 horas. La expulsión ahora usa revokeSharedSessionContext_ para invalidar primero ambas cachés y revocar el token central; después elimina la fila local. Un fallo deja la limpieza pendiente y permite reintentar.

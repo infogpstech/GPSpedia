@@ -1671,3 +1671,8 @@ La comprobación de los modales tomaba todo el CSS posterior al bloque de scroll
 - Se elimina el límite artificial de cinco y se segmenta la lista en bloques versionados de hasta 7,000 caracteres. El índice se publica al final para conservar el contexto anterior si falla la escritura de un bloque; generaciones anteriores se limpian después de publicar.
 - Se añade prueba aislada con 100 sesiones Desarrollador, lectura/autorización desde el último bloque y limpieza al revocar todas las sesiones.
 - La capacidad física global de ScriptProperties sigue sujeta a las cuotas de Apps Script; GPSpedia no establece un máximo funcional de sesiones.
+
+
+### Seguridad de la expulsión automática
+- Antes de eliminar los tokens excedentes de ActiveSessions, AUTH invalida sus cachés en WRITE/FEEDBACK y revoca cada token en Coordinator. Después limpia las filas y sincroniza el conjunto restante.
+- Si falla una invalidación, la operación se conserva recuperable mediante el mismo requestId y no se retira la sesión anterior dejando cachés antiguas con acceso.

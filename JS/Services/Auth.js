@@ -1039,6 +1039,9 @@ function createOrRecoverLoginSessionUnderLock_(userSheet, sessionsSheet, userRow
     candidates.forEach(row => {
         if (tokenCounts.get(row.token) > 1) throw new Error('Existe un token de sesión duplicado; no se modificó la sesión antigua.');
     });
+    // Primero se invalidan las cachés de los dispositivos anteriores y su contexto central.
+    // Solo después se retiran sus tokens de ActiveSessions; así no pueden revalidarse desde una caché obsoleta.
+    candidates.forEach(row => revokeSharedSessionContext_(userId, row.token));
     for (const row of candidates.sort((a, b) => b.rowIndex - a.rowIndex)) {
         try {
             sessionsSheet.getRange(row.rowIndex, COLS_ACTIVE_SESSIONS.ActiveSessions).clearContent();

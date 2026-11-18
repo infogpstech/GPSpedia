@@ -435,3 +435,6 @@ undefined
 
 
 Adenda GP-AUTH-ROLE-SESSION-LIMITS-01: Coordinator elimina los tres topes internos de cinco sesiones y segmenta el contexto compartido en bloques versionados para evitar el límite de tamaño por propiedad. Se añade prueba aislada con 100 sesiones, autenticación de una sesión del último bloque y limpieza tras revocación global. Pendiente ejecutar CI y revisar el diff completo.
+
+
+Adenda GP-AUTH-ROLE-SESSION-LIMITS-01: la expulsión automática invalida primero cachés WRITE/FEEDBACK y el contexto de Coordinator por cada token excedente; solo después borra el token local. Se preserva la recuperación idempotente ante fallos parciales.
