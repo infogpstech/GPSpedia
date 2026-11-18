@@ -235,7 +235,7 @@ assert.ok(mainSource.includes("passwordRecoveryRequestForm.addEventListener('sub
 assert.ok(mainSource.includes("passwordRecoveryCompleteForm.addEventListener('submit'"));
 assert.ok(htmlSource.includes('id="password-recovery-request-form"'));
 assert.ok(htmlSource.includes('id="password-recovery-complete-form"'));
-assert.ok(workerSource.includes("gpsepedia-cache-v69"));
+assert.ok(workerSource.includes("gpsepedia-cache-v70"));
 assert.ok(coordinatorTests.includes("AUTH/requestPasswordRecovery no requiere sesión"));
 assert.ok(coordinatorTests.includes("AUTH/completePasswordRecovery protege identidad"));
 
