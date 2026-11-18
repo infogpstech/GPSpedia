@@ -6182,34 +6182,43 @@ textarea.rich-text-source[hidden] { display:none !important; }
 .pys-detail-toolbar { margin:0 0 7px; padding-bottom:0; }
 .pys-detail-title-container { display:flex; flex:1 1 auto; align-items:center; min-width:0; }
 
-/* GP-UX-DETAIL-LOGO-MOBILE-01 — tamaño móvil uniforme sin alterar la escala de navegador. */
+/* GP-UX-DETAIL-LOGO-MOBILE-02 — logo de 64px y modelo contiguo, ambos alineados a la izquierda.
+   La separación entre imagen y modelo se controla en column-gap: 6px. */
 @media (max-width:560px) {
     #modalDetalle .detail-modal-toolbar {
         grid-template-columns:max-content minmax(0,1fr);
+        column-gap:6px;
     }
     #modalDetalle .detail-modal-title {
         width:max-content;
         max-width:none;
-        height:106px;
-        min-height:106px;
+        height:72px;
+        min-height:72px;
         padding:0 !important;
         margin:0 !important;
         box-sizing:border-box;
         align-items:center;
-        justify-content:center;
+        justify-content:flex-start;
         overflow:visible !important;
     }
     #modalDetalle .detail-modal-title .brand-logo-modal {
         display:block;
         width:auto !important;
-        height:104px !important;
-        min-height:104px !important;
-        max-height:104px !important;
+        height:64px !important;
+        min-height:64px !important;
+        max-height:64px !important;
         max-width:none !important;
         margin:0 !important;
         padding:0 !important;
         object-fit:contain;
-        object-position:center;
+        object-position:left center;
         flex:0 0 auto;
+    }
+    #modalDetalle .detail-modal-title-text {
+        align-self:center;
+        padding:0 !important;
+        margin:0 !important;
+        transform:none !important;
+        text-align:left;
     }
 }
