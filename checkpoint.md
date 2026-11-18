@@ -653,3 +653,9 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - El carrusel sigue siendo exclusivamente local: IndexedDB usa claves compuestas usuario/vehículo y consulta solo el índice del propietario activo.
 - La limpieza local vacía `viewedItems` junto con los almacenes reconstruibles. No llama a la API de actividad ni elimina el historial estadístico del servidor.
 - Caché PWA v72. Pruebas locales pendientes de ejecución; servicio FEEDBACK desplegado y dashboard pendientes de Beta. No se desplegó Apps Script ni se modificaron hojas/datos externos.
+
+
+### Corrección adicional de aislamiento entre sesiones (2026-11-18)
+- `auth.js` ya no fusiona los vistos recuperados del propietario actual con el estado anterior en memoria. Limpia el carrusel al comenzar la carga y lo reemplaza exclusivamente con los registros locales filtrados por `ownerId`.
+- La persistencia local mantiene clave compuesta usuario/vehículo; no se usa la actividad remota para reconstruir vistos.
+- La limpieza de caché local vacía el almacén `viewedItems` y no modifica registros ACTIVITY del servidor.
