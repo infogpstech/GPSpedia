@@ -206,6 +206,7 @@ testCase("el divisor azul ocupa el ancho del encabezado y la sombra del logo no 
     assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-divider \{[\s\S]*?grid-row:3;[\s\S]*?width:auto !important;[\s\S]*?margin:1px 6px 2px !important/);
     assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-title \{[\s\S]*?height:120px;[\s\S]*?min-height:120px;[\s\S]*?padding:0 !important/);
     assert.match(css, /\.detail-modal-title \.brand-logo-modal \{[\s\S]*?object-fit: contain/);
+    assert.match(css, /#modalDetalle\\[data-modal-type="corte"\\] \.detail-modal-title \.brand-logo-modal \\{[\\s\\S]*?object-fit:contain;[\\s\\S]*?object-position:left bottom;/);
 });
 
 testCase("el nombre del modelo recibe sombra sin modificar la imagen ni la jerarquía del encabezado", () => {
