@@ -758,7 +758,7 @@ const FEEDBACK_ACTION_PERMISSIONS = Object.freeze({
     createInboxConversation: null, sendInboxMessage: null, markInboxRead: null, markInboxUnread: null, deleteInboxConversation: null, archiveInboxConversation: null,
     closeInboxConversation: ["Desarrollador", "Jefe", "Supervisor"],
     getRichTextMode: null, setRichTextMode: ["Desarrollador"],
-    getActivityLogs: ["Desarrollador", "Jefe", "Supervisor"], clearActivityLogs: ["Desarrollador"],
+    getActivityLogs: ["Desarrollador", "Jefe", "Supervisor"], recordVehicleView: null, clearActivityLogs: ["Desarrollador"],
     initYouTubeUpload: null, getVideoApprovalByOperation: null, submitVideoForApproval: null,
     approveVideo: ["Desarrollador"], rejectVideo: ["Desarrollador"]
 });
@@ -851,6 +851,9 @@ function doPostInternal_(e) {
                 break;
             case 'markAsResolved':
                 response = handleMarkAsResolved(payload);
+                break;
+            case 'recordVehicleView':
+                response = handleRecordVehicleView(payload);
                 break;
             case 'getActivityLogs':
                 response = handleGetActivityLogs(payload);
@@ -2402,6 +2405,16 @@ function buildActivityDashboardInsights_() {
  if(applications&&applications.getLastRow()>1){const last=applications.getLastRow(),start=Math.max(2,last-feedbackWindow+1),rows=applications.getRange(start,1,last-start+1,12).getValues();years.applied=rows.filter(row=>String(row[8]||"").trim()==="completed").length;}
  return{summary,topUseful:Array.from(usefulByCut.values()).sort((a,b)=>b.usefulVotes-a.usefulVotes||a.brand.localeCompare(b.brand,"es")).slice(0,5),
   topNegative:Array.from(negativeByVehicle.values()).sort((a,b)=>b.reports-a.reports||a.model.localeCompare(b.model,"es")).slice(0,5),years,feedbackWindow,windowLimited};
+}
+
+function handleRecordVehicleView(payload) {
+    const vehicleId = String(payload && payload.vehicleId !== undefined ? payload.vehicleId : "").trim();
+    if (!vehicleId || vehicleId.length > 128) throw new Error("El ID del vehículo no es válido.");
+    const actor = getFeedbackActor_(payload, null);
+    // Solo se registra ID asociado y tipo de evento; el actor y la fecha proceden del backend.
+    // No se acepta ni almacena el objeto del vehículo, imágenes, detalles o historial local.
+    logUserActivity(actor.userId, actor.userName, "view_vehicle", vehicleId, "");
+    return { status: "success" };
 }
 
 function handleGetActivityLogs(payload) {

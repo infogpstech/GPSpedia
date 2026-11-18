@@ -35,3 +35,15 @@ assert.match(ui, /viewedSignature/);
 assert.match(ui, /lastViewedSignature/);
 
 console.log("RecentlyViewedCarousel: 13/13 PASS");
+
+const cacheStoresStart = offline.indexOf("const REBUILDABLE_CLIENT_CACHE_STORES");
+const cacheStoresEnd = offline.indexOf("]);", cacheStoresStart) + 3;
+const cacheStores = offline.slice(cacheStoresStart, cacheStoresEnd);
+assert.doesNotMatch(cacheStores, /viewedItems/, "el borrado genérico no debe vaciar historiales de todas las cuentas");
+assert.match(offline, /clearRebuildableClientCache\(ownerId = null\)/);
+assert.match(offline, /store\.index\('ownerId'\)\.getAll\(owner\)/);
+assert.match(ui, /clearRebuildableClientCache\(viewedOwnerId\)/);
+assert.match(ui, /if \(viewedOwnerId && indexedDbResult\.viewedItemsCleared\) setState\(\{ viewedItems: \[\] \}\)/);
+assert.match(detail, /recordVehicleView\(String\(activeItem\.id\), getSessionPayload_\(\)\)\.catch/);
+assert.doesNotMatch(detail, /await\s+recordVehicleView/);
+assert.doesNotMatch(load, /recordVehicleView|routeAction|getActivityLogs/);

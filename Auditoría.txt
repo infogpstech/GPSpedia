@@ -280,3 +280,11 @@ Adenda de cierre GP-UX-CUT-MODAL-HEADER-GRID-02: la primera regresión detectó 
 
 
 Adenda de validación final GP-PWA-RECENT-VIEWS-02: al subir CACHE_NAME a v70 también se actualizaron las expectativas históricas en PasswordRecovery.mjs, OfflineBrandAssets.mjs y ServiceWorkerCache.js. La primera regresión con v70 identificó únicamente esas aserciones de versión obsoletas; se alinearon al nuevo identificador. Ejecución final: Actions 44240071252 SUCCESS, 145 suites / 2,153 pruebas / 0 fallos, node --check PASS. Health GET-only 44240071231 SUCCESS. Build de GitHub Pages para el SHA de código f9b054e1a7a63986d0d63b3be3953ad868d31db6 aún pendiente al registrar esta adenda.
+
+
+[2026-11-18] GP-PWA-RECENT-VIEWS-03 — Hallazgo P2: limpieza global del historial local y ausencia de telemetría mínima
+- Evidencia: JS/Frontend/offline.js incluía viewedItems en REBUILDABLE_CLIENT_CACHE_STORES y ejecutaba store.clear(); la limpieza administrativa eliminaba historiales de todas las cuentas locales del navegador.
+- Evidencia adicional: el evento de visualización no tenía una acción FEEDBACK dedicada, por lo que no existía un contrato explícito que separara telemetría remota del historial IndexedDB.
+- Impacto: pérdida del historial local de otras cuentas y falta de recolección estadística acotada.
+- Corrección: excluir viewedItems del borrado genérico; limpiar solo entradas de la cuenta activa mediante ownerId; agregar acción autenticada recordVehicleView que registra ID asociado, tipo, fecha e identidad validada, sin payload del vehículo ni detalles.
+- El carrusel mantiene lectura exclusiva de IndexedDB y no espera ni consulta el servidor. Validación CI pendiente.

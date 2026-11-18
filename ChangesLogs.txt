@@ -488,3 +488,11 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - service-worker.js: CACHE_NAME actualizado a gpsepedia-cache-v70; JS/Tests/ServiceWorkerCache.js alineado con la nueva versión.
 - Validación en SHA 0c3e6fc191d86801793150eb5aac46217ba4845d: RecentlyViewedCarousel 13/13 PASS; IndexedDB 51/51 PASS; regresión 145 suites / 2,153 pruebas / 0 fallos; sintaxis PASS. CI final con CACHE_NAME v70: Actions 44240071252 SUCCESS (145 suites / 2,153 pruebas / 0 fallos; sintaxis PASS). Health GET-only 44240071231 SUCCESS. GitHub Pages pendiente de finalizar para el SHA de código f9b054e1a7a63986d0d63b3be3953ad868d31db6.
 ================================================================================
+
+
+[2026-11-18] GP-PWA-RECENT-VIEWS-03
+- offline.js: la limpieza del caché ya no borra globalmente viewedItems; elimina únicamente registros de la cuenta activa mediante ownerId.
+- ui.js: mantiene la actualización optimista y persistencia local; envía en segundo plano un evento remoto mínimo con el ID del vehículo y sesión, sin esperar respuesta.
+- api-config.js, feedback.js y Coordinator.js: agregan la acción autenticada recordVehicleView, con escritura acotada a ACTIVITY y sin devolver historial.
+- service-worker.js: caché PWA actualizado a v71; contratos de pruebas alineados.
+- Se añade cobertura automatizada de separación entre telemetría y carrusel.

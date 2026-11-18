@@ -133,6 +133,7 @@ function coordinatorPolicy_(service, operation) {
             getRichTextMode: { read: feedbackRead },
             setRichTextMode: { read: feedbackRead, write: ["RICH_TEXT_CONFIG"] },
             recordLike: { read: feedbackRead, write: [...feedbackWrite, "CORTES"] },
+            recordVehicleView: { read: feedbackRead, write: ["ACTIVITY"] },
             reportProblem: { read: feedbackRead, write: feedbackWrite },
             addProblem: { read: [...feedbackRead, "CORTES"], write: [...feedbackWrite, "DRIVE"] },
             addSolution: { read: feedbackRead, write: feedbackWrite },

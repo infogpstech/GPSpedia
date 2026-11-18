@@ -1712,3 +1712,11 @@ La comprobación de los modales tomaba todo el CSS posterior al bloque de scroll
 - Se mantienen las dimensiones existentes del logo (120 px escritorio / 60 px móvil), la cuadrícula 2x2, el orden de acciones y el overflow-x limitado al modal de corte.
 
 - Cierre local: CutDetailModalLayout 27/27 PASS; regresión global 145 suites, 2,143 pruebas, 0 fallos; sintaxis de módulos modificados PASS. Actions run 44229400787 SUCCESS. Health read-only run 44229400782 SUCCESS.
+
+
+### Adenda GP-PWA-RECENT-VIEWS-03 — telemetría mínima y limpieza aislada (2026-11-18)
+- El carrusel se alimenta exclusivamente del historial IndexedDB del usuario y dispositivo actuales. No consulta ni reconstruye datos desde el servidor.
+- El servidor recibe únicamente el evento de visualización y el ID del vehículo; actor y fecha proceden de la sesión autenticada y del backend. No se envía el objeto del vehículo, imágenes, campos de utilidad ni el historial completo. La escritura es silenciosa y no bloquea el modal ni el carrusel.
+- La limpieza de caché desde la aplicación elimina solo los registros de la cuenta activa mediante el índice ownerId y conserva historiales de otras cuentas del mismo navegador. Sin usuario activo, no elimina historiales de vistos.
+- El carrusel continúa cargando desde IndexedDB y miniaturas locales. La acción de telemetría no devuelve datos de historial ni se consulta durante la carga.
+- Implementación preparada; pendiente CI y revisión final del diff. Estado: EN PROGRESO.

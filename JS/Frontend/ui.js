@@ -6,7 +6,7 @@ import { createPrintableQrDataUrl } from './printQr.js';
 // - Contain all functions that directly manipulate the DOM.
 // - Use document.createElement, not HTML strings.
 
-import { getFeedbackItems, getInboxRecipients, getInboxConversations, getInboxMessages, createInboxConversation, sendInboxMessage, markInboxRead, archiveInboxConversation, closeInboxConversation as apiCloseInboxConversation, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, clearSensitiveLogs, checkAllServicesHealth, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange, approveVideo, rejectVideo, getRichTextMode, loadRichTextMode, setRichTextMode, routeActionWithRetry } from './api-config.js';
+import { getFeedbackItems, getInboxRecipients, getInboxConversations, getInboxMessages, createInboxConversation, sendInboxMessage, markInboxRead, archiveInboxConversation, closeInboxConversation as apiCloseInboxConversation, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, clearSensitiveLogs, checkAllServicesHealth, getActivityLogs, recordVehicleView, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange, approveVideo, rejectVideo, getRichTextMode, loadRichTextMode, setRichTextMode, routeActionWithRetry } from './api-config.js';
 import { getState, setState, subscribe } from './state.js';
 import * as offline from './offline.js';
 import { createEditBackupStore, getEditBackupFieldsToRestore } from './editBackupStore.js';
@@ -2202,6 +2202,10 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
         setState({ viewedItems: nextViewed });
         offline.saveViewedItem(activeItem, ownerId).catch(error =>
             console.warn("No se pudo persistir el historial de vistos; se conserva la vista en memoria:", error));
+        // Telemetría mínima y silenciosa: nunca bloquea la apertura ni alimenta el carrusel.
+        try {
+            recordVehicleView(String(activeItem.id), getSessionPayload_()).catch(() => {});
+        } catch (telemetryError) {}
     }
 
     const { relay: datosRelay } = catalogData;
@@ -7321,15 +7325,18 @@ ${elapsedSec}s
     const clearCacheBtn = document.getElementById('btn-admin-clear-client-cache');
     if (clearCacheBtn) {
         clearCacheBtn.onclick = async () => {
-            if (!(await requestDeveloperConsoleConfirmation_("¿Deseas limpiar los datos locales reconstruibles?\n\nSe eliminarán catálogo, historial, vehículos vistos, miniaturas, validaciones, caché PyS y respuestas temporales de red. Se conservarán sesión, preferencias, borradores y operaciones pendientes o inciertas, copias de edición, auditorías administrativas y recursos esenciales para uso offline."))) return;
+            if (!(await requestDeveloperConsoleConfirmation_("¿Deseas limpiar los datos locales reconstruibles?\n\nSe eliminarán catálogo, historial de búsqueda, miniaturas, validaciones, caché PyS y respuestas temporales de red. También se eliminarán los vehículos vistos de la cuenta activa; los historiales de otras cuentas se conservarán. Se conservarán sesión, preferencias, borradores y operaciones pendientes o inciertas, copias de edición, auditorías administrativas y recursos esenciales para uso offline."))) return;
 
             clearCacheBtn.disabled = true;
             try {
                 log("[SISTEMA] Limpiando datos reconstruibles; las operaciones recuperables se conservarán.");
-                const indexedDbResult = await offline.clearRebuildableClientCache();
+                const activeCacheUser = getState().currentUser;
+                const viewedOwnerId = String(activeCacheUser && (activeCacheUser.ID || activeCacheUser.id) || "").trim();
+                const indexedDbResult = await offline.clearRebuildableClientCache(viewedOwnerId);
                 const indexedDbSucceeded = indexedDbResult && indexedDbResult.status === "success";
                 if (indexedDbSucceeded) {
-                    log("[EXITO] IndexedDB: almacenes reconstruibles limpiados (" + indexedDbResult.stores.join(", ") + "). adminLocalState conservado.");
+                    if (viewedOwnerId && indexedDbResult.viewedItemsCleared) setState({ viewedItems: [] });
+                    log("[EXITO] IndexedDB: almacenes reconstruibles limpiados (" + indexedDbResult.stores.join(", ") + "). Historiales de otras cuentas preservados; adminLocalState conservado.");
                 } else {
                     log("[ERROR] IndexedDB: " + String(indexedDbResult && indexedDbResult.message || "No se confirmó la limpieza."), false, true);
                 }

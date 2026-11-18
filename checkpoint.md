@@ -636,3 +636,11 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - Health de servicios (solo lectura) 44240071231 SUCCESS. No se desplegó Apps Script ni se modificaron hojas, ScriptProperties, Drive o datos externos.
 - Service Worker CACHE_NAME v70 y sus expectativas automatizadas quedaron alineados. El workflow de GitHub Pages del SHA de código fue cancelado por commits documentales posteriores; comprobar el workflow más reciente de la rama antes de afirmar publicación.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. Pendiente Beta: actualización efectiva de PWA instalada, historial real con 20 elementos, bloqueo/liberación de IndexedDB y varias pestañas/dispositivos. No se debe interpretar un fallo de IndexedDB como historial vacío ni bloquear el catálogo.
+
+
+### Continuidad — GP-PWA-RECENT-VIEWS-03 — 2026-11-18
+- Rama: GPSpedia2.2.5_work; HEAD de partida confirmado 878e205837863828567b57d192b3979a2e32d60a. La rama base protegida no se modifica.
+- Requisito: carrusel exclusivamente local (IndexedDB/miniaturas); servidor recibe solo eventos estadísticos de visualización, sin servir historial ni imágenes. Telemetría silenciosa, no bloqueante y autenticada.
+- Se detectó que la limpieza genérica de IndexedDB incluía viewedItems y ejecutaba clear(), eliminando registros locales de otras cuentas del mismo navegador.
+- Cambios preparados: limpieza selectiva por ownerId; nueva acción FEEDBACK recordVehicleView que registra solo ID de vehículo, tipo de evento y actor/fecha verificados; carrusel sin consulta remota; caché PWA v71.
+- Pruebas automatizadas añadidas/actualizadas. Pendiente CI, SHA y revisión final; no se desplegaron Apps Script ni se modificaron hojas/datos externos. La validación remota de la acción queda pendiente de Beta.
