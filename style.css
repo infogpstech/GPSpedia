@@ -6197,7 +6197,7 @@ textarea.rich-text-source[hidden] { display:none !important; }
         padding:0 !important;
         margin:0 !important;
         box-sizing:border-box;
-        align-items:center;
+        align-items:flex-end;
         justify-content:flex-start;
         overflow:visible !important;
     }
@@ -6211,11 +6211,11 @@ textarea.rich-text-source[hidden] { display:none !important; }
         margin:0 !important;
         padding:0 !important;
         object-fit:contain;
-        object-position:left center;
+        object-position:left bottom;
         flex:0 0 auto;
     }
     #modalDetalle .detail-modal-title-text {
-        align-self:center;
+        align-self:flex-end;
         padding:0 !important;
         margin:0 !important;
         transform:none !important;
