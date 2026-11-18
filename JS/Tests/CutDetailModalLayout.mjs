@@ -284,15 +284,20 @@ testCase("el detalle de corte no permite desplazamiento horizontal y el logo con
 });
 
 
-testCase("el nombre del modelo puede saltar de línea entre palabras sin cortar palabras ni desbordar el viewport", () => {
-    const cutTitleStart = css.indexOf('#modalDetalle[data-modal-type="corte"] .detail-modal-title-text {');
-    const cutTitleRule = css.slice(cutTitleStart, css.indexOf("}", cutTitleStart));
-    assert.match(cutTitleRule, /white-space:normal;/);
-    assert.match(cutTitleRule, /overflow-wrap:normal;/);
-    assert.match(cutTitleRule, /word-break:normal;/);
-    assert.match(cutTitleRule, /overflow:visible;/);
-    assert.match(cutTitleRule, /text-overflow:clip;/);
-    assert.match(cutTitleRule, /grid-column:2;[\s\S]*?grid-row:2;/);
+testCase("el nombre completo pasa debajo del logo solo cuando no cabe junto a él", () => {
+    assert.match(detail, /const updateCutModelTitleLayout = \(\) =>/);
+    assert.match(detail, /naturalTitleWidth > availableTitleWidth \+ 0\.5/);
+    assert.match(detail, /data-model-title-layout", "below-logo"/);
+    assert.match(detail, /new ResizeObserver\(updateCutModelTitleLayout\)/);
+    const fallbackStart = css.indexOf('data-model-title-layout="below-logo"');
+    const fallbackCss = css.slice(fallbackStart - 180, fallbackStart + 1400);
+    assert.match(fallbackCss, /grid-column:1 \/ -1;[\s\S]*?grid-row:3;/);
+    assert.match(fallbackCss, /white-space:normal;[\s\S]*?overflow-wrap:normal;[\s\S]*?word-break:normal;/);
+    assert.match(fallbackCss, /detail-modal-divider \{[\s\S]*?grid-row:4;/);
+    assert.match(fallbackCss, /detail-modal-saving-indicator \{[\s\S]*?grid-row:5;/);
+    const normalTitleStart = css.indexOf('#modalDetalle[data-modal-type="corte"] .detail-modal-title-text {');
+    const normalTitleRule = css.slice(normalTitleStart, css.indexOf("}", normalTitleStart));
+    assert.match(normalTitleRule, /grid-column:2;[\s\S]*?grid-row:2;/);
 });
 
 testCase("el modelo conserva su posición superior junto al logo y los botones reducen su relleno horizontal", () => {
