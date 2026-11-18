@@ -668,3 +668,10 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - Commit de la prueba: `dae20bf50f8a40a669ce02ed7668ac8e0e19a086`.
 - Nueve verificaciones estáticas de contrato pasaron. La suite Node completa y CI posterior al cambio siguen pendientes de evidencia; no se marca como regresión integral aprobada.
 - Se mantiene pendiente la validación Beta del servicio FEEDBACK y de la PWA instalada. No se desplegaron servicios Apps Script ni se modificaron datos externos.
+
+### Cierre — GP-PWA-RECENT-VIEWS-03 y GP-UX-CUT-BRAND-LOGO-BOTTOM-01 — 2026-11-18
+- Rama de trabajo: `GPSpedia2.2.5_work`. HEAD de código validado: `37d3cfb9f1681ab69623959fa5897a9dd89ae498`; rama base protegida `GPSpedia2.2.5` verificada sin cambios en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- GP-PWA-RECENT-VIEWS-03: corregido el test heredado que esperaba una firma obsoleta de telemetría y se agregó resumen numérico para el runner. Se conserva el comportamiento de producción; no se cambió el envío remoto ni la política de limpieza/aislamiento.
+- Tarea adicional GP-UX-CUT-BRAND-LOGO-BOTTOM-01: `style.css` fija `object-position:left bottom` en el logo del modal de corte. Se conservan width:auto, max-content, grid, 120 px escritorio / 60 px móvil, acciones y límites horizontales. `CutDetailModalLayout.mjs` cubre la propiedad en escritorio y móvil.
+- CI `44310667618` SUCCESS: 146 suites, 2,154 pruebas aprobadas, 0 fallos; RecentlyViewedActivityTelemetry 12/12, AdminClientCacheDeletion 9/9, CutDetailModalLayout 27/27; sintaxis PASS. Pages `44310666058` SUCCESS. Health `44310667649` SUCCESS, solo GET de diagnóstico.
+- Estados: ambas tareas COMPLETADAS CON VALIDACIÓN DIFERIDA. Pendiente Beta: inspección visual en móvil/escritorio, comportamiento PWA/IndexedDB real y validación de FEEDBACK desplegado. No se desplegó Apps Script ni se modificaron datos externos.
