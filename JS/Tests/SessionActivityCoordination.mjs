@@ -169,7 +169,7 @@ testCase("Coordinator no limita por cinco y almacena sesiones en bloques recuper
 
 testCase("La selección de sesiones excedentes respeta los límites y siempre conserva el login nuevo",()=>{
  const start=auth.indexOf("function getOldestSessionsToRevoke_(");
- const end=auth.indexOf("\\n}",start)+2;
+ const end=auth.indexOf("\n}",start)+2;
  assert.ok(start>=0&&end>start,"Debe existir el selector puro de sesiones antiguas.");
  const select=vm.runInNewContext("("+auth.slice(start,end)+")");
  for(const [role,limit] of [["tecnico",1],["tecnico_exterior",1],["supervisor",3],["jefe",5]]){
