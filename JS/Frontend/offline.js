@@ -8,7 +8,7 @@ import { thumbnailCompressionQueue } from './thumbnailCompressionQueue.js';
 import { getAdminImageUploadPendingKey, getLegacyAdminImageUploadPendingKey, getQuarantinedAdminImageUploadPendingKey, createAdminImageUploadPendingSnapshot, isAdminImageUploadPendingOwnedBy } from './adminImageUploadIsolation.js';
 
 const DB_NAME = 'GPSpedia_DB';
-const DB_VERSION = 4; // Añade persistencia local del inventario administrativo.
+const DB_VERSION = 5; // Añade índice por cuenta para recuperar vistos recientes sin escanear toda la base.
 
 let dbPromise = null;
 let dbRetryAfter = 0;
@@ -67,7 +67,10 @@ export async function initDB(options = {}) {
                 const db = event.target.result;
                 if (!db.objectStoreNames.contains('catalog')) db.createObjectStore('catalog');
                 if (!db.objectStoreNames.contains('searchHistory')) db.createObjectStore('searchHistory', { keyPath: 'term' });
-                if (!db.objectStoreNames.contains('viewedItems')) db.createObjectStore('viewedItems', { keyPath: 'id' });
+                const viewedStore = db.objectStoreNames.contains('viewedItems')
+                    ? request.transaction.objectStore('viewedItems')
+                    : db.createObjectStore('viewedItems', { keyPath: 'id' });
+                if (!viewedStore.indexNames.contains('ownerId')) viewedStore.createIndex('ownerId', 'ownerId', { unique: false });
                 if (!db.objectStoreNames.contains('thumbnails')) db.createObjectStore('thumbnails');
                 if (!db.objectStoreNames.contains('validationCache')) db.createObjectStore('validationCache', { keyPath: 'vehicleId' });
                 if (!db.objectStoreNames.contains('adminLocalState')) db.createObjectStore('adminLocalState', { keyPath: 'key' });
@@ -1290,12 +1293,38 @@ export async function getValidationResponse(vehicleId, ownerId) {
     const entry = await performOp('validationCache', 'readonly', store => store.get(buildOwnerScopedKey(owner, recordId)), { silent: true, timeoutMs: 2500 });
     return entry && entry.ownerId === owner && entry.recordId === recordId ? entry : null;
 }
+async function pruneViewedItems_(ownerId, records) {
+    const owner = normalizeLocalOwnerId(ownerId);
+    if (!owner || !Array.isArray(records) || records.length <= 20) return true;
+    const obsolete = records.slice().sort((a, b) => Number(b && b.timestamp || 0) - Number(a && a.timestamp || 0)).slice(20);
+    if (!obsolete.length) return true;
+    let database;
+    try { database = await initDB({ silent: true }); } catch (error) { return false; }
+    return new Promise(resolve => {
+        let transaction;
+        try {
+            transaction = database.transaction(['viewedItems'], 'readwrite');
+            const store = transaction.objectStore('viewedItems');
+            obsolete.forEach(entry => {
+                if (entry && entry.id !== undefined && entry.ownerId === owner) store.delete(entry.id);
+            });
+            transaction.oncomplete = () => resolve(true);
+            transaction.onerror = () => resolve(false);
+            transaction.onabort = () => resolve(false);
+        } catch (error) { resolve(false); }
+    });
+}
+
 export async function saveViewedItem(item, ownerId) {
     const owner = normalizeLocalOwnerId(ownerId);
     if (!owner || !item || item.id === undefined || item.id === null) return null;
     const itemId = String(item.id);
     const entry = { id: buildOwnerScopedKey(owner, itemId), ownerId: owner, itemId, timestamp: Date.now(), data: item };
     const result = await performOp('viewedItems', 'readwrite', store => store.put(entry), { silent: true });
+    if (result !== null) {
+        const records = await performOp('viewedItems', 'readonly', store => store.index('ownerId').getAll(owner), { silent: true });
+        if (Array.isArray(records)) await pruneViewedItems_(owner, records);
+    }
     cacheItemImages(item).catch(err => console.warn("Error precargando imágenes de visto recientemente:", err));
     return result;
 }
@@ -1304,13 +1333,24 @@ export async function cacheItemImages(item) {
     const fieldsToCache=[item.imagenVehiculo,item.imgCorte1,item.imgCorte2,item.imgCorte3,item.imgApertura,item.imgCableAlimen,item.imgCableAlimen2,item.imgCableAlimen3,item.imagenRelay,item.imagen,item.Imagen];
     for (const field of fieldsToCache) if(field&&typeof field==='string'&&!field.startsWith('blob:')&&!field.includes('placehold.co')) compressAndStoreThumbnail(field,field,300).catch(()=>{});
 }
-export async function getViewedItems(ownerId, limit = 20) {
+export async function getViewedItemsResult(ownerId, limit = 20) {
     const owner = normalizeLocalOwnerId(ownerId);
-    if (!owner) return [];
-    const all = await performOp('viewedItems','readonly',store=>store.getAll(), { silent: true });
-    if (!all) return [];
-    return all.filter(entry=>entry&&entry.ownerId===owner&&entry.data).sort((a,b)=>b.timestamp-a.timestamp)
-        .slice(0,limit).map(entry=>({id:entry.itemId,timestamp:entry.timestamp,data:entry.data}));
+    if (!owner) return { available: true, items: [] };
+    const all = await performOp('viewedItems', 'readonly', store => store.index('ownerId').getAll(owner), { silent: true });
+    if (all === null) return { available: false, items: [] };
+    const safeLimit = Number.isFinite(Number(limit)) ? Math.max(0, Math.min(20, Math.floor(Number(limit)))) : 20;
+    const valid = all.filter(entry => entry && entry.ownerId === owner && entry.itemId !== undefined &&
+        entry.data && typeof entry.data === 'object' && !Array.isArray(entry.data))
+        .sort((a, b) => Number(b.timestamp || 0) - Number(a.timestamp || 0));
+    if (valid.length > 20) pruneViewedItems_(owner, valid).catch(() => {});
+    return {
+        available: true,
+        items: valid.slice(0, safeLimit).map(entry => ({ id: String(entry.itemId), timestamp: Number(entry.timestamp) || 0, data: entry.data }))
+    };
+}
+export async function getViewedItems(ownerId, limit = 20) {
+    const result = await getViewedItemsResult(ownerId, limit);
+    return result.items;
 }
 
 // --- THUMBNAIL CACHE & COMPRESSION ---
