@@ -106,7 +106,9 @@ testCase("el tamaño de logo de navegador se conserva y móvil usa 50px con gap 
     const mobileLogoRules = css.slice(css.indexOf("GP-UX-DETAIL-LOGO-MOBILE-02"));
     assert.match(mobileLogoRules, /grid-template-columns:max-content minmax\(0,1fr\)/);
     assert.match(mobileLogoRules, /column-gap:6px/);
-    assert.match(mobileLogoRules, /height:60px;[\s\S]*?min-height:60px;[\s\S]*?height:60px !important;[\s\S]*?min-height:60px !important;[\s\S]*?max-height:60px !important;[\s\S]*?max-width:none !important;[\s\S]*?width:auto !important;[\s\S]*?object-fit:contain/);
+    assert.match(mobileLogoRules, /\.detail-modal-title \.brand-logo-modal \{[\s\S]*?height:60px !important;[\s\S]*?min-height:60px !important;[\s\S]*?max-height:60px !important;[\s\S]*?max-width:none !important;[\s\S]*?width:auto !important;[\s\S]*?object-fit:contain/);
+    const cutHeader = css.slice(css.indexOf("GP-UX-MODAL-HEADER-TIGHTEN-03"));
+    assert.match(cutHeader, /\.detail-modal-title \{[\s\S]*?height:60px; min-height:60px;/);
     assert.match(mobileLogoRules, /justify-content:flex-start/);
     assert.match(mobileLogoRules, /align-items:flex-end/);
     assert.match(mobileLogoRules, /object-position:left bottom/);

@@ -583,3 +583,5 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - Cambio preparado: hacer que logo, acciones y modelo compartan la fila superior; logo arriba, modelo abajo, divisor en la siguiente fila; quitar solo la fila flexible vacía. Mantener los márgenes existentes de divisor, toolbar y metadatos.
 - Archivos: style.css, JS/Tests/CutDetailModalLayout.mjs, Tareas_Pendientes.md, Auditoría.txt, ChangesLogs.txt y este checkpoint.
 - Validaciones pendientes de ejecutar después de publicar: CutDetailModalLayout, regresión global y CI; inspección visual real en Beta móvil/escritorio. No se desplegarán servicios Apps Script ni se tocarán datos externos.
+
+- CI inicial del commit abbd405b7f17ae2d0e15b2a7185a884f6a312e50: sintaxis aprobada; la regresión se detuvo en BETA-026 por una aserción CSS antigua que agrupaba en una misma regla la altura del contenedor y las propiedades de la imagen móvil. Las propiedades reales del logo no cambiaron; se separa la comprobación del contenedor (60 px) de la imagen (60 px con sus !important/object-fit actuales) y se repite CI.
