@@ -1145,7 +1145,7 @@ export function getLogoUrlForMarca(marca, categoria) {
     return bestMatch ? bestMatch.urlLogo : (potentialMatches.length > 0 ? potentialMatches[0].urlLogo : null);
 }
 
-function crearCarrusel(titulo, items, cardGenerator) {
+function crearCarrusel(titulo, items, cardGenerator, options = {}) {
     const cont = document.getElementById("contenido");
     if (!items || items.length === 0 || !cont) return;
 
@@ -1207,11 +1207,37 @@ function crearCarrusel(titulo, items, cardGenerator) {
     }
 
     section.appendChild(carouselContainer);
-    cont.appendChild(section);
+    if (options && options.kind) section.dataset.carouselKind = String(options.kind);
+    const before = options && options.before;
+    if (before && before.parentNode === cont) cont.insertBefore(section, before);
+    else cont.appendChild(section);
+    return section;
+}
+
+function renderRecentlyViewedCarousel() {
+    const cont = document.getElementById("contenido");
+    if (!cont) return;
+    const anchor = cont.querySelector("[data-recently-viewed-anchor]");
+    if (!anchor) return;
+
+    const previous = cont.querySelector('[data-carousel-kind="recently-viewed"]');
+    if (previous) previous.remove();
+
+    const viewedItems = getState().viewedItems;
+    if (!Array.isArray(viewedItems) || viewedItems.length === 0) return;
+
+    const viewedCortes = viewedItems
+        .filter(entry => entry && entry.data && typeof entry.data === "object")
+        .map(entry => entry.data);
+    if (!viewedCortes.length) return;
+
+    crearCarrusel("Vistos Recientemente", viewedCortes, item => {
+        return crearCardVehiculo(item, true);
+    }, { kind: "recently-viewed", before: anchor.nextSibling });
 }
 
 export function mostrarCategorias() {
-    const { catalogData, searchHistory, viewedItems } = getState();
+    const { catalogData, searchHistory } = getState();
     const { cortes, sortedCategories } = catalogData;
 
     if (document.getElementById("searchInput").value.trim()) return;
@@ -1244,13 +1270,12 @@ export function mostrarCategorias() {
         cont.appendChild(historySection);
     }
 
-    // 2. Mostrar Vistos Recientemente
-    if (viewedItems && viewedItems.length > 0) {
-        const viewedCortes = viewedItems.map(v => v.data);
-        crearCarrusel('Vistos Recientemente', viewedCortes, item => {
-            return crearCardVehiculo(item, true); // true para no mostrar badge en esta sección
-        });
-    }
+    // Punto de inserción estable: el historial de vistos se actualiza sin reconstruir el catálogo.
+    const viewedAnchor = document.createElement("div");
+    viewedAnchor.hidden = true;
+    viewedAnchor.dataset.recentlyViewedAnchor = "true";
+    cont.appendChild(viewedAnchor);
+    renderRecentlyViewedCarousel();
 
     mostrarUltimosAgregados();
 
@@ -10863,16 +10888,25 @@ subscribe((state) => {
         const historyChanged = historySignature !== lastHistorySignature;
         const viewedChanged = viewedSignature !== lastViewedSignature;
 
-        if (historyChanged || viewedChanged) {
+        if (historyChanged) {
             lastHistorySignature = historySignature;
             lastViewedSignature = viewedSignature;
             mostrarCategorias();
             return;
         }
 
-        // Solo renderizar si el contenedor tiene el mensaje de carga o está vacío o contiene errores previos
+        if (viewedChanged) {
+            lastViewedSignature = viewedSignature;
+            // El carrusel se hidrata de forma independiente; nunca se reconstruyen las categorías.
+            renderRecentlyViewedCarousel();
+        }
+
+        // Solo renderizar si el contenedor tiene el mensaje de carga o está vacío o contiene errores previos.
+        // En ese caso, mostrarCategorias incorpora el estado de vistos más reciente.
         if (cont.querySelector('.loading-data-container') || cont.innerHTML.trim() === "" || cont.querySelector('.error-message')) {
-             mostrarCategorias();
+            lastHistorySignature = historySignature;
+            lastViewedSignature = viewedSignature;
+            mostrarCategorias();
         }
     }
 });
