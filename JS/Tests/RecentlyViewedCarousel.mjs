@@ -34,7 +34,7 @@ assert.match(offline, /pruneViewedItems_\(owner, records\)/);
 assert.match(ui, /viewedSignature/);
 assert.match(ui, /lastViewedSignature/);
 
-console.log("RecentlyViewedCarousel: 13/13 PASS");
+
 
 const cacheStoresStart = offline.indexOf("const REBUILDABLE_CLIENT_CACHE_STORES");
 const cacheStoresEnd = offline.indexOf("]);", cacheStoresStart) + 3;
@@ -47,3 +47,5 @@ assert.match(ui, /if \(viewedOwnerId && indexedDbResult\.viewedItemsCleared\) se
 assert.match(detail, /recordVehicleView\(String\(activeItem\.id\), getSessionPayload_\(\)\)\.catch/);
 assert.doesNotMatch(detail, /await\s+recordVehicleView/);
 assert.doesNotMatch(load, /recordVehicleView|routeAction|getActivityLogs/);
+
+console.log("RecentlyViewedCarousel: 21/21 PASS");

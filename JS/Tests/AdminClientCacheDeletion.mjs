@@ -12,12 +12,13 @@ const clearServiceWorkerRuntimeCache_ = new Function(
     uiSource.slice(cacheHelperStart, cacheHelperEnd) + "\nreturn clearServiceWorkerRuntimeCache_;"
 )();
 
-const clearStoresMatch = offlineSource.match(/const REBUILDABLE_CLIENT_CACHE_STORES = Object\.freeze\([\s\S]*?\);\s*\/\*\*[\s\S]*?export async function clearRebuildableClientCache\(\) \{[\s\S]*?\n\}/);
+const clearStoresMatch = offlineSource.match(/const REBUILDABLE_CLIENT_CACHE_STORES = Object\.freeze\([\s\S]*?\);\s*\/\*\*[\s\S]*?export async function clearRebuildableClientCache\(ownerId = null\) \{[\s\S]*?\n\}/);
 assert.ok(clearStoresMatch, "No se encontró clearRebuildableClientCache.");
-const clearRebuildableClientCache = new Function("initDB",
+const clearRebuildableClientCacheFactory = new Function("initDB", "normalizeLocalOwnerId",
     clearStoresMatch[0].replace("export async function", "async function") +
     "\nreturn clearRebuildableClientCache;"
 );
+const normalizeOwner = value => String(value || "").trim();
 
 let passed = 0;
 async function check(name, fn) {
@@ -26,8 +27,9 @@ async function check(name, fn) {
     console.log("PASS " + name);
 }
 function createDatabase(options = {}) {
-    const calls = { transactions: [], cleared: [] };
+    const calls = { transactions: [], cleared: [], deleted: [] };
     const available = options.stores || ["catalog","searchHistory","viewedItems","thumbnails","validationCache","adminLocalState"];
+    const viewedRecords = (options.viewedRecords || []).map(record => ({ ...record }));
     const database = {
         objectStoreNames: { contains: name => available.includes(name) },
         transaction(names, mode) {
@@ -35,21 +37,39 @@ function createDatabase(options = {}) {
             const tx = {
                 error: options.error ? { message: options.error } : null,
                 objectStore(name) {
-                    return { clear() {
-                        if (options.throwOnClear === name) throw new Error("clear failed: " + name);
-                        calls.cleared.push(name);
-                    }};
+                    return {
+                        clear() {
+                            if (options.throwOnClear === name) throw new Error("clear failed: " + name);
+                            calls.cleared.push(name);
+                        },
+                        index(indexName) {
+                            assert.equal(indexName, "ownerId");
+                            return { getAll(owner) {
+                                const request = {};
+                                Promise.resolve().then(() => {
+                                    request.result = viewedRecords.filter(record => record.ownerId === owner);
+                                    if (request.onsuccess) request.onsuccess();
+                                });
+                                return request;
+                            }};
+                        },
+                        delete(id) {
+                            calls.deleted.push(id);
+                            const index = viewedRecords.findIndex(record => record.id === id);
+                            if (index >= 0) viewedRecords.splice(index, 1);
+                        }
+                    };
                 },
                 abort() { this.aborted = true; }
             };
-            Promise.resolve().then(() => {
+            Promise.resolve().then(() => Promise.resolve().then(() => {
                 if (options.error) { if (tx.onerror) tx.onerror(); }
                 else if (tx.oncomplete) tx.oncomplete();
-            });
+            }));
             return tx;
         }
     };
-    return { database, calls };
+    return { database, calls, viewedRecords };
 }
 class FakeMessageChannel {
     constructor() {
@@ -60,22 +80,24 @@ class FakeMessageChannel {
 
 await check("IndexedDB limpia solo almacenes reconstruibles y espera transaction.oncomplete", async () => {
     const h = createDatabase();
-    const clear = clearRebuildableClientCache(async () => h.database);
+    const clear = clearRebuildableClientCacheFactory(async () => h.database, normalizeOwner);
     const promise = clear();
     assert.deepEqual(await promise, {
         status: "success",
-        stores: ["catalog","searchHistory","viewedItems","thumbnails","validationCache"]
+        stores: ["catalog","searchHistory","thumbnails","validationCache"],
+        viewedItemsCleared: false,
+        otherUsersViewedItemsPreserved: true
     });
     assert.deepEqual(h.calls.transactions, [{
-        names: ["catalog","searchHistory","viewedItems","thumbnails","validationCache"], mode: "readwrite"
+        names: ["catalog","searchHistory","thumbnails","validationCache"], mode: "readwrite"
     }]);
-    assert.deepEqual(h.calls.cleared, ["catalog","searchHistory","viewedItems","thumbnails","validationCache"]);
+    assert.deepEqual(h.calls.cleared, ["catalog","searchHistory","thumbnails","validationCache"]);
     assert.equal(h.calls.cleared.includes("adminLocalState"), false);
 });
 
 await check("Un fallo transaccional no se presenta como limpieza confirmada", async () => {
     const h = createDatabase({ error: "simulated transaction failure" });
-    const clear = clearRebuildableClientCache(async () => h.database);
+    const clear = clearRebuildableClientCacheFactory(async () => h.database, normalizeOwner);
     const result = await clear();
     assert.equal(result.status, "error");
     assert.match(result.message, /simulated transaction failure/);
@@ -84,8 +106,8 @@ await check("Un fallo transaccional no se presenta como limpieza confirmada", as
 
 await check("Un almacén ausente se omite sin borrar ni recrear estado administrativo", async () => {
     const h = createDatabase({ stores: ["adminLocalState"] });
-    const clear = clearRebuildableClientCache(async () => h.database);
-    assert.deepEqual(await clear(), { status: "success", stores: [] });
+    const clear = clearRebuildableClientCacheFactory(async () => h.database, normalizeOwner);
+    assert.deepEqual(await clear(), { status: "success", stores: [], viewedItemsCleared: false, otherUsersViewedItemsPreserved: true });
     assert.equal(h.calls.transactions.length, 0);
     assert.equal(h.calls.cleared.length, 0);
 });
@@ -120,7 +142,7 @@ await check("El handler limpia solo cachés conocidas y preserva sesión y opera
     const end = uiSource.indexOf("// Ejecutar únicamente las limpiezas seleccionadas", start);
     assert.ok(start >= 0 && end > start);
     const handler = uiSource.slice(start, end);
-    assert.ok(handler.includes("await offline.clearRebuildableClientCache()"));
+    assert.ok(handler.includes("await offline.clearRebuildableClientCache(viewedOwnerId)"));
     for (const key of ["gpsepedia_catalog_cache","gpsepedia_pys_cache","gpsepedia_pys_cache_updated_at"]) {
         assert.ok(handler.includes('"' + key + '"'), "Falta caché reconstruible " + key);
     }
@@ -195,3 +217,17 @@ await check("El mensaje del Service Worker elimina respuestas dinámicas y conse
     assert.equal(cacheCalls.includes("unrelated-cache"),false);
 });
 console.log("AdminClientCacheDeletion: " + passed + "/" + passed + " PASS");
+
+await check("La limpieza por usuario elimina solo sus vistos y conserva los de otras cuentas", async () => {
+    const h = createDatabase({ viewedRecords: [
+        { id: "user-A::V-1", ownerId: "user-A" },
+        { id: "user-B::V-2", ownerId: "user-B" }
+    ]});
+    const clear = clearRebuildableClientCacheFactory(async () => h.database, normalizeOwner);
+    const result = await clear("user-A");
+    assert.equal(result.status, "success");
+    assert.equal(result.viewedItemsCleared, true);
+    assert.deepEqual(h.calls.deleted, ["user-A::V-1"]);
+    assert.deepEqual(h.viewedRecords.map(record => record.ownerId), ["user-B"]);
+    assert.equal(result.otherUsersViewedItemsPreserved, true);
+});
