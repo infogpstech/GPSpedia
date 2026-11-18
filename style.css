@@ -6171,14 +6171,14 @@ textarea.rich-text-source[hidden] { display:none !important; }
 }
 #modalDetalle[data-modal-type="corte"] .detail-modal-title {
     grid-column:1;
-    grid-row:1 / span 2;
+    grid-row:2;
     width:max-content;
     max-width:none;
     min-width:0;
     height:120px;
     min-height:120px;
     padding:0 !important;
-    margin:0 !important;
+    margin:6px 0 0 !important;
     align-items:flex-start;
     justify-content:flex-start;
     overflow:visible !important;
@@ -6192,7 +6192,7 @@ textarea.rich-text-source[hidden] { display:none !important; }
     margin:0 !important;
     padding:0 !important;
     object-fit:contain;
-    object-position:left bottom;
+    object-position:left top;
 }
 #modalDetalle[data-modal-type="corte"] .detail-modal-header-actions {
     grid-column:2;
@@ -6211,7 +6211,7 @@ textarea.rich-text-source[hidden] { display:none !important; }
     grid-row:2;
     min-width:0;
     max-width:100%;
-    align-self:end;
+    align-self:flex-start;
     margin-top:6px;
     justify-self:stretch;
     text-align:left;
@@ -6222,7 +6222,7 @@ textarea.rich-text-source[hidden] { display:none !important; }
     grid-row:2;
     min-width:0;
     max-width:100%;
-    align-self:end;
+    align-self:flex-start;
     margin-top:6px;
     margin-bottom:0;
 }
@@ -6266,13 +6266,13 @@ textarea.rich-text-source[hidden] { display:none !important; }
     }
     #modalDetalle[data-modal-type="corte"] .detail-modal-title {
         grid-column:1;
-        grid-row:1 / span 2;
+        grid-row:2;
         width:max-content;
         max-width:none;
         height:60px;
         min-height:60px;
         padding:0 !important;
-        margin:0 !important;
+        margin:6px 0 0 !important;
         align-items:flex-start;
         justify-content:flex-start;
         overflow:visible !important;
@@ -6287,7 +6287,7 @@ textarea.rich-text-source[hidden] { display:none !important; }
         margin:0 !important;
         padding:0 !important;
         object-fit:contain;
-        object-position:left bottom;
+        object-position:left top;
         flex:0 0 auto;
     }
     #modalDetalle[data-modal-type="corte"] .detail-modal-header-actions {
@@ -6309,7 +6309,7 @@ textarea.rich-text-source[hidden] { display:none !important; }
         max-width:100%;
         display:flex;
         align-items:flex-start;
-        align-self:end;
+        align-self:flex-start;
         box-sizing:border-box;
         padding:0 !important;
         margin:6px 0 0 !important;
@@ -6321,7 +6321,7 @@ textarea.rich-text-source[hidden] { display:none !important; }
         grid-row:2;
         min-width:0;
         max-width:100%;
-        align-self:end;
+        align-self:flex-start;
         margin-top:6px;
         margin-bottom:0;
     }
