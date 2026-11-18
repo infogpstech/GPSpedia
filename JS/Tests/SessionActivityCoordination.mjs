@@ -142,7 +142,7 @@ testCase("El contexto central de sesión se registra al login, se revoca y se re
  assert.match(utilities,/sessionToken:payload&&payload\.sessionToken/);
 });
 
-console.log("SessionActivityCoordination: "+passed+"/"+passed+" PASS");
+
 
 testCase("AUTH aplica límites por rol y revoca la sesión más antigua sin bloquear el nuevo login",()=>{
  assert.match(auth,/const SESSION_LIMITS = \{\s*'desarrollador': Infinity,\s*'jefe': 5,\s*'supervisor': 3,\s*'tecnico': 1,\s*'tecnico_exterior': 1\s*\}/);
@@ -160,3 +160,5 @@ testCase("Coordinator no limita por cinco y almacena sesiones en bloques recuper
  assert.match(coordinator,/SHARED_AUTH_SESSION_CHUNK_LENGTH_/);
  assert.match(coordinator,/context\.sessionChunkCount/);
 });
+
+console.log("SessionActivityCoordination: "+passed+"/"+passed+" PASS");
