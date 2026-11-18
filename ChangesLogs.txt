@@ -565,3 +565,11 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - `lista_beta_parte2.txt`: se añadieron los hallazgos BETA-INBOX-PREVIEW-HTML-01 (vista previa muestra etiquetas HTML literales; detalle conserva formato) y BETA-SERVICES-HEALTH-01 (comprobación read-only de siete servicios).
 - En HEAD `d01019af19e026aabd1ac69ec63cc2fd29c5aa1c`: health Actions 44418836521 SUCCESS, 7/7 servicios disponibles por GET ?debug=true; regresión Actions 44418836654 SUCCESS, 146 suites / 2,155 pruebas / 0 fallos.
 - No se ejecutaron POST, escrituras de negocio ni cambios de propiedades/hojas. Las pruebas funcionales con sesión y datos Beta permanecen pendientes.
+
+
+================================================================================
+2026-11-18 — REGISTRO BETA BETA-CUT-MODAL-HEADER-LONG-MODEL-01
+- `lista_beta_parte2.txt`: se documenta que un nombre de modelo largo salta correctamente de línea, pero el crecimiento desplaza el logo hacia arriba en lugar de empujar hacia abajo el divisor azul; el logo puede cubrir los botones de edición e impresión y quedar por encima del título en móvil horizontal.
+- Se especifican el comportamiento esperado y los casos de reproducción/regresión para escritorio, móvil vertical/horizontal, nombres cortos/largos, visibilidad de acciones y ausencia de scroll horizontal.
+- `checkpoint.md`: se agrega la continuidad del hallazgo. No se modificó CSS ni código de producción; queda pendiente reproducción, diagnóstico y validación visual Beta.
+================================================================================
