@@ -139,6 +139,7 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 - Se confirmó que getViewedItems escaneaba el objectStore completo de todas las cuentas y que un error temporal de IndexedDB se convertía en una lista vacía sin reintento.
 - Implementados índice por ownerId, consulta aislada por cuenta, retención de 20 elementos, resultado explícito de disponibilidad y reintentos progresivos en segundo plano con protección de sesión.
 - Regresión: RecentlyViewedCarousel 13/13; IndexedDB 51/51; 145 suites / 2,153 pruebas / 0 fallos; node --check PASS (Actions 44239861437).
+- Verificación final incluyendo CACHE_NAME v70 y contratos de versión: Actions 44240071252 SUCCESS (145 suites / 2,153 pruebas / 0 fallos; sintaxis PASS); health GET-only 44240071231 SUCCESS. Build Pages del HEAD de código `f9b054e1a7a63986d0d63b3be3953ad868d31db6` pendiente de finalizar.
 - CACHE_NAME sube a v70 para refrescar módulos cache-first. Pendiente Beta: actualización efectiva del Service Worker y recuperación con pestañas/dispositivos reales.
 
 
