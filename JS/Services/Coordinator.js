@@ -435,6 +435,8 @@ function createSharedMutationCoordinator_(dependencies) {
         });
         if (currentChunk.length) chunks.push(currentChunk);
 
+        const previousGeneration = context.sessionGeneration;
+        const previousChunkCount = context.sessionChunkCount;
         const generation = uuid();
         const prefix = authSessionChunkPrefix_(context.userId, generation);
         chunks.forEach((chunk, index) => properties.setProperty(prefix + index, JSON.stringify(chunk)));
@@ -450,11 +452,13 @@ function createSharedMutationCoordinator_(dependencies) {
         }
         properties.setProperty(authContextKey_(context.userId), serialized);
 
-        const userPrefix = SHARED_AUTH_SESSION_CHUNK_PREFIX_ + encodeURIComponent(String(context.userId)) + "_";
-        const allProperties = properties.getProperties();
-        Object.keys(allProperties).forEach(key => {
-            if (key.startsWith(userPrefix) && !key.startsWith(prefix)) properties.deleteProperty(key);
-        });
+        if (previousGeneration && Number.isSafeInteger(previousChunkCount) && previousChunkCount > 0) {
+            const previousPrefix = authSessionChunkPrefix_(context.userId, previousGeneration);
+            for (let index = 0; index < previousChunkCount; index++) {
+                try { properties.deleteProperty(previousPrefix + index); }
+                catch (cleanupError) { /* La nueva generación ya está publicada; limpiar una generación vieja es best-effort. */ }
+            }
+        }
     }
 
     function registerSession_(service, operation, payload) {
