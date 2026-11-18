@@ -101,12 +101,13 @@ testCase("el modelo y el campo de edición son nodos independientes del contened
     assert.match(css, /\.detail-modal-title-text \{[\s\S]*?white-space: nowrap;[\s\S]*?text-overflow: ellipsis/);
 });
 
-testCase("el logotipo se amplía y el modelo queda alineado abajo a su derecha", () => {
-    assert.match(css, /\.brand-logo-modal \{[\s\S]*?height: 120px !important;[\s\S]*?max-height: 120px !important/);
-    assert.match(css, /@media \(max-width: 600px\)[\s\S]*?\.brand-logo-modal \{\s*height: 104px !important;\s*max-height: 104px !important/);
-    assert.match(css, /\.detail-modal-title \.brand-logo-modal \{[\s\S]*?height: 120px !important;[\s\S]*?object-fit: contain/);
-    assert.match(css, /@media \(max-width: 560px\)[\s\S]*?\.detail-modal-title \.brand-logo-modal \{[\s\S]*?height: 104px !important;[\s\S]*?max-height: 104px !important/);
-    assert.match(css, /\.detail-modal-title-text \{[\s\S]*?align-self: end;[\s\S]*?white-space: nowrap;[\s\S]*?text-overflow: ellipsis/);
+testCase("el tamaño de logo en navegador se conserva y móvil usa altura uniforme con ancho automático", () => {
+    assert.match(css, /\.detail-modal-title \.brand-logo-modal \{[\s\S]*?height: 120px !important;[\s\S]*?max-height: 120px !important/);
+    const mobileLogoRules = css.slice(css.indexOf("GP-UX-DETAIL-LOGO-MOBILE-01"));
+    assert.match(mobileLogoRules, /grid-template-columns:max-content minmax\(0,1fr\)/);
+    assert.match(mobileLogoRules, /height:104px !important;[\s\S]*?max-height:104px !important;[\s\S]*?max-width:none !important;[\s\S]*?width:auto !important;[\s\S]*?object-fit:contain/);
+    assert.match(mobileLogoRules, /padding:0 !important;[\s\S]*?margin:0 !important/);
+    assert.match(css, /\.detail-modal-title-text \{[\s\S]*?align-self: end/);
 });
 
 testCase("los cinco campos de edición se agrupan en una rejilla con asociaciones accesibles", () => {
