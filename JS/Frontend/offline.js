@@ -165,7 +165,7 @@ const REBUILDABLE_CLIENT_CACHE_STORES = Object.freeze([
  * Vacía únicamente datos reconstruibles del cliente. Conserva adminLocalState,
  * donde pueden existir auditorías y operaciones administrativas recuperables.
  */
-export async function clearRebuildableClientCache() {
+export async function clearRebuildableClientCache(ownerId = null) {
     let database;
     try {
         database = await initDB();
