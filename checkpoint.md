@@ -706,3 +706,17 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - Validación: Actions `44394961438` SUCCESS, 146 suites / 2,155 pruebas / 0 fallos; CutDetailModalLayout 28/28; RecentlyViewedCarousel 1/1; ServiceWorkerCache 12/12; OfflineBrandAssets 4/4; sintaxis PASS. Pages `44394961041` SUCCESS; health GET-only `44394961427` SUCCESS.
 - Pendiente Beta: comprobar visualmente en móvil/escritorio que el logo no se mueve y el título empuja los elementos inferiores; medir carga en frío/caliente y PWA instalada con catálogo cacheado, historial local y IndexedDB lento/bloqueado. No se afirma validación visual real.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
+
+
+### Continuidad — validación inicial de deployments y hallazgo Inbox — 2026-11-18
+- Rama autorizada: `GPSpedia2.2.5_work`; HEAD de partida `6c82a9f6ee255f86f9cdfc7986c0545644bea411`. Rama base `GPSpedia2.2.5` verificada en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin modificaciones.
+- El usuario informó que desplegó los servicios y actualizó `JS/Frontend/api-config.js` y las URL de CATALOG/AUTH/WRITE/FEEDBACK en `JS/Services/admin.js`.
+- Se ejecutó CI en el HEAD de partida: Actions `44418444614` SUCCESS, 146 suites, 2,155 pruebas aprobadas y 0 fallos.
+- La primera ejecución de salud `44418444553` dio 7/7, pero se detectó que el workflow fijaba un SHA histórico `301c7b3a...`; por ello no se consideró evidencia válida de las URL recién configuradas.
+- Se corrigió `.github/workflows/deployed-service-health.yml` para tomar `${{ github.sha }}` y comprobar las URL del commit que dispara la ejecución.
+- En el nuevo HEAD `d01019af19e026aabd1ac69ec63cc2fd29c5aa1c`, health Actions `44418836521` SUCCESS: 7/7 servicios disponibles mediante GET `?debug=true`, sin POST ni escrituras: ADMIN v2.7.1 (1862 ms), AUTH v2.2.5 (1589 ms), CATALOG v2.4.0 (995 ms), FEEDBACK v1.2.2 (1414 ms), USERS v2.4.2 (873 ms), UTILITIES v1.5.0 (1022 ms), WRITE v2.3.1 (1131 ms).
+- Regresión Actions `44418836654` SUCCESS: 146 suites, 2,155 pruebas aprobadas, 0 fallos. No equivale a pruebas funcionales con sesión ni a mutaciones de negocio.
+- Se agregó a `lista_beta_parte2.txt` el hallazgo `BETA-INBOX-PREVIEW-HTML-01`: el usuario reporta que la vista previa del Inbox muestra etiquetas HTML literales, mientras el detalle renderiza correctamente colores y formatos. Queda pendiente reproducción, corrección y regresión Beta; no se modificó el código del Inbox.
+- También se registró `BETA-SERVICES-HEALTH-01` con el resultado read-only y sus límites.
+- Pendiente: ejecutar pruebas funcionales de AUTH/USERS/WRITE/FEEDBACK/Inbox y operaciones protegidas en el entorno Beta aislado, con cuentas y datos de prueba autorizados; comprobar permisos/secretos y escrituras controladas. No ejecutar operaciones de negocio sobre datos productivos.
+- Estado de esta etapa: disponibilidad remota comprobada; regresión local aprobada; validación funcional Beta parcialmente pendiente.

@@ -558,3 +558,10 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - CI `44394961438` SUCCESS; Pages `44394961041` SUCCESS; health read-only `44394961427` SUCCESS.
 - No se modificaron servicios Apps Script, hojas, Drive ni actividad histórica del servidor. Pendiente Beta: inspección visual real y medición de carga simultánea en PWA/dispositivo.
 ================================================================================
+
+
+[2026-11-18] Pruebas Beta — despliegues Apps Script y hallazgo de vista previa Inbox
+- Se corrigió `.github/workflows/deployed-service-health.yml`: el SHA de origen ahora es `${{ github.sha }}`, evitando validar endpoints históricos al cambiar api-config.js.
+- `lista_beta_parte2.txt`: se añadieron los hallazgos BETA-INBOX-PREVIEW-HTML-01 (vista previa muestra etiquetas HTML literales; detalle conserva formato) y BETA-SERVICES-HEALTH-01 (comprobación read-only de siete servicios).
+- En HEAD `d01019af19e026aabd1ac69ec63cc2fd29c5aa1c`: health Actions 44418836521 SUCCESS, 7/7 servicios disponibles por GET ?debug=true; regresión Actions 44418836654 SUCCESS, 146 suites / 2,155 pruebas / 0 fallos.
+- No se ejecutaron POST, escrituras de negocio ni cambios de propiedades/hojas. Las pruebas funcionales con sesión y datos Beta permanecen pendientes.
