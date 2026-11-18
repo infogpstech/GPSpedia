@@ -51,7 +51,7 @@ testCase("el encabezado separa logo, acciones superiores y modelo en la base der
         assert.ok(detail.includes('setAttribute("aria-label", "' + label + '")'), label);
     }
     assert.match(css, /\.detail-modal-toolbar \{[\s\S]*?grid-template-columns: max-content minmax\(0, 1fr\);[\s\S]*?grid-template-rows: auto minmax\(0, 1fr\) auto/);
-    assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-title \{[\s\S]*?grid-column:1;[\s\S]*?grid-row:1 \/ span 2;/);
+    assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-title \{[\s\S]*?grid-column:1;[\s\S]*?grid-row:1 \/ span 2;[\\s\\S]*?align-self:end;/);
     assert.match(css, /\.detail-modal-header-actions \{[\s\S]*?grid-column: 2;[\s\S]*?grid-row: 1/);
     assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-title-text \{[\s\S]*?grid-column:2;[\s\S]*?grid-row:1 \/ span 2;/);
     assert.ok(detail.includes("headerActions.appendChild(closeBtn)"));
@@ -74,7 +74,7 @@ testCase("ninguna regla posterior puede sustituir la cuadrícula del encabezado 
     assert.ok(css.includes("#modalDetalle[data-modal-type=\"corte\"] .detail-modal-header-actions > .info-close-btn") && css.includes("position:static !important"));
 });
 
-testCase("el logo y el nombre del modelo comparten la segunda fila debajo de las acciones", () => {
+testCase("el contenedor del logo ocupa dos filas y se alinea abajo junto al nombre del modelo", () => {
     assert.match(detail, /headerDiv\.insertBefore\(titleContainer, savingIndicator\)/);
     assert.match(detail, /headerDiv\.insertBefore\(titleNode, savingIndicator\)/);
     assert.doesNotMatch(detail, /titleContainer\.appendChild\(title\)|titleContainer\.appendChild\(input\)/);
