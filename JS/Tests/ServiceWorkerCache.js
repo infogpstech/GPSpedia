@@ -6,7 +6,7 @@ const source = fs.readFileSync(new URL('../../service-worker.js', import.meta.ur
 const cases = [];
 const test = (name, run) => cases.push({ name, run });
 test('App Shell incrementa versión e incluye la hoja de estilos corregida', async () => {
- assert.match(source, /gpsepedia-cache-v69/);
+ assert.match(source, /gpsepedia-cache-v70/);
  assert.ok(source.includes("'./style.css'"));
 });
 
@@ -117,7 +117,7 @@ test('precache conserva el App Shell, las páginas auxiliares y el grafo JS', as
   './JS/Frontend/VinDifferentialEngine.js', './JS/Frontend/catalogRequest.js',
   './style.css', './button-system.css'
  ]) assert.ok(h.assets.includes(path), path);
- assert.match(source, /gpsepedia-cache-v69/);
+ assert.match(source, /gpsepedia-cache-v70/);
  assert.ok(h.assets.includes('./Images/icon-v3-512x512.png'));
  assert.ok(h.assets.includes('./Images/Logo_TemaOscuro.png'));
  assert.equal(h.skip, 1);
