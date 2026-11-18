@@ -111,6 +111,9 @@ testCase("el modelo y el campo de edición son nodos independientes del contened
     assert.match(detail, /subHeaderDiv\.className = "detail-modal-meta"/);
     assert.match(detail, /subHeaderText\.className = "detail-modal-meta-text"/);
     assert.match(css, /\.detail-modal-title-text \{[\s\S]*?white-space: nowrap;[\s\S]*?text-overflow: ellipsis/);
+    const cutTitleStart = css.indexOf('#modalDetalle[data-modal-type="corte"] .detail-modal-title-text {');
+    const cutTitleRule = css.slice(cutTitleStart, css.indexOf("}", cutTitleStart));
+    assert.match(cutTitleRule, /white-space:normal;[\s\S]*?overflow:visible;[\s\S]*?text-overflow:clip;[\s\S]*?overflow-wrap:normal;[\s\S]*?word-break:normal;/);
 });
 
 testCase("el tamaño del logo se conserva y móvil usa ancho natural con gap de 6px", () => {
@@ -280,6 +283,17 @@ testCase("el detalle de corte no permite desplazamiento horizontal y el logo con
     assert.match(css, /@media \(max-width:560px\)[\s\S]*?max-width:none !important;[\s\S]*?object-fit:contain/);
 });
 
+
+testCase("el nombre del modelo puede saltar de línea entre palabras sin cortar palabras ni desbordar el viewport", () => {
+    const cutTitleStart = css.indexOf('#modalDetalle[data-modal-type="corte"] .detail-modal-title-text {');
+    const cutTitleRule = css.slice(cutTitleStart, css.indexOf("}", cutTitleStart));
+    assert.match(cutTitleRule, /white-space:normal;/);
+    assert.match(cutTitleRule, /overflow-wrap:normal;/);
+    assert.match(cutTitleRule, /word-break:normal;/);
+    assert.match(cutTitleRule, /overflow:visible;/);
+    assert.match(cutTitleRule, /text-overflow:clip;/);
+    assert.match(cutTitleRule, /grid-column:2;[\s\S]*?grid-row:2;/);
+});
 
 testCase("el modelo conserva su posición superior junto al logo y los botones reducen su relleno horizontal", () => {
     const cutHeader = css.slice(css.indexOf("GP-UX-MODAL-HEADER-TIGHTEN-03"));
