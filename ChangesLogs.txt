@@ -496,3 +496,12 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - api-config.js, feedback.js y Coordinator.js: agregan la acción autenticada recordVehicleView, con escritura acotada a ACTIVITY y sin devolver historial.
 - service-worker.js: caché PWA actualizado a v71; contratos de pruebas alineados.
 - Se añade cobertura automatizada de separación entre telemetría y carrusel.
+
+
+================================================================================
+2026-11-18 — GP-PWA-RECENT-VIEWS-03 — contadores y limpieza local
+- ui.js/api-config.js: el evento no bloqueante incorpora utilCorte1, utilCorte2 y utilCorte3.
+- feedback.js: valida los tres contadores y los registra en el detalle del evento ACTIVITY; actor y fecha siguen siendo del backend.
+- offline.js: viewedItems forma parte de los almacenes reconstruibles; la limpieza local ejecuta clear() sin solicitudes ni eliminaciones remotas.
+- Se actualizan contratos de telemetría/limpieza y la caché PWA a v72.
+================================================================================
