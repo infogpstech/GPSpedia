@@ -39,13 +39,16 @@ assert.match(ui, /lastViewedSignature/);
 const cacheStoresStart = offline.indexOf("const REBUILDABLE_CLIENT_CACHE_STORES");
 const cacheStoresEnd = offline.indexOf("]);", cacheStoresStart) + 3;
 const cacheStores = offline.slice(cacheStoresStart, cacheStoresEnd);
-assert.doesNotMatch(cacheStores, /viewedItems/, "el borrado genérico no debe vaciar historiales de todas las cuentas");
+// La limpieza manual de caché vacía todos los datos reconstruibles del dispositivo,
+// incluidos los vistos locales de cualquier propietario, pero no toca la actividad remota.
+assert.match(cacheStores, /viewedItems/);
 assert.match(offline, /clearRebuildableClientCache\(ownerId = null\)/);
-assert.match(offline, /store\.index\('ownerId'\)\.getAll\(owner\)/);
-assert.match(ui, /clearRebuildableClientCache\(viewedOwnerId\)/);
-assert.match(ui, /if \(viewedOwnerId && indexedDbResult\.viewedItemsCleared\) setState\(\{ viewedItems: \[\] \}\)/);
+assert.match(offline, /transaction\.objectStore\(name\)\.clear\(\)/);
+assert.match(ui, /offline\.clearRebuildableClientCache\(\)/);
+assert.match(ui, /if \(indexedDbResult\.viewedItemsCleared\) setState\(\{ viewedItems: \[\] \}\)/);
+assert.doesNotMatch(ui.slice(ui.indexOf("const clearCacheBtn"), ui.indexOf("const storageResults")), /recordVehicleView|routeAction|getActivityLogs/);
 assert.match(detail, /recordVehicleView\(String\(activeItem\.id\), getSessionPayload_\(\)\)\.catch/);
 assert.doesNotMatch(detail, /await\s+recordVehicleView/);
 assert.doesNotMatch(load, /recordVehicleView|routeAction|getActivityLogs/);
 
-console.log("RecentlyViewedCarousel: 21/21 PASS");
+console.log("RecentlyViewedCarousel: contract PASS");
