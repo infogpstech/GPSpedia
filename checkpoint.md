@@ -600,3 +600,12 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - CutDetailModalLayout: 26/26 PASS. Regresión global CI: 145 suites, 2,142 pruebas aprobadas, 0 fallos. Verificación sintáctica PASS. GitHub Pages build/deploy SUCCESS; health remoto GET-only SUCCESS.
 - Validación visual en navegador móvil/escritorio real queda diferida a Beta. No se desplegaron servicios Apps Script ni se modificaron datos externos.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+
+### Continuidad — GP-UX-CUT-MODAL-HEADER-GRID-02 — 2026-11-18
+- Rama: GPSpedia2.2.5_work. Rama base GPSpedia2.2.5 verificada sin cambios en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Los commits de implementación de esta adenda son c75a3700294eb6160f0616c30f111c1d2923c1fa (style.css) y 7e4490bac58163a3cffe2092fe7f7563a3f2441e (JS/Tests/CutDetailModalLayout.mjs).
+- Hallazgos corregidos: falta de separación vertical entre acciones y modelo; padding horizontal algo excesivo en los botones; divisor azul con width calc superior al contenedor y margen asimétrico.
+- El logo conserva width:auto, contenedor sin padding vertical y alturas 120 px escritorio / 60 px móvil. Se mantiene cuadrícula 2x2, primera columna max-content, overflow-x limitado al modal de corte y orden de botones.
+- Registros actualizados: Tareas_Pendientes.md, Auditoría.txt y ChangesLogs.txt.
+- Pendiente: ejecutar CutDetailModalLayout.mjs y la regresión aplicable en CI; revisar el diff final. Validación visual real en móvil/escritorio queda diferida a Beta. No se afirma que la prueba automatizada haya sido ejecutada ni aprobada.
