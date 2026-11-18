@@ -261,3 +261,6 @@ Cierre de H-AUTH-SESSION-001 — 2026-11-18: corrección local aplicada. La sele
 - Corrección: el divisor específico de corte usa width:auto, justify-self:stretch y márgenes laterales simétricos de 6 px; el modelo recibe separación superior de 6 px; los botones reducen ligeramente su padding horizontal. Se preservan el ancho natural del logo, padding cero del contenedor y alturas 120/60 px.
 - Prueba de regresión ampliada en JS/Tests/CutDetailModalLayout.mjs. La ejecución automatizada aún no está verificada; no se declara PASS.
 ================================================================================
+
+
+Adenda de cierre GP-UX-CUT-MODAL-HEADER-GRID-02: la primera regresión detectó una aserción heredada que exigía align-items/align-self flex-end en el título móvil. Se actualizó el contrato para exigir la nueva separación de 6 px y alineación inicial, sin cambiar el comportamiento de producción. Reejecución: CutDetailModalLayout 27/27 PASS; regresión global 145 suites / 2,143 pruebas / 0 fallos; sintaxis PASS (Actions 44229400787). La validación visual en navegador real sigue diferida a Beta.
