@@ -727,3 +727,13 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - El desplazamiento puede dejar los botones de edición e impresión ocultos o parcialmente cubiertos por el logo. En móvil horizontal, el logo puede quedar por encima del nombre del modelo.
 - Registrado en `lista_beta_parte2.txt` con reproducción, resultado esperado y pruebas pendientes para escritorio, móvil vertical/horizontal, títulos cortos/largos, visibilidad de acciones y ausencia de scroll horizontal.
 - Estado: REPORTADO POR EL USUARIO · PENDIENTE DE REPRODUCCIÓN, DIAGNÓSTICO Y VALIDACIÓN VISUAL BETA. No se modificó código de producción.
+
+
+### Continuidad Beta — Hallazgos adicionales del panel ADMIN (2026-11-18)
+- Se registraron en `lista_beta_parte2.txt` los identificadores: BETA-ADMIN-HEALTH-EVENTS-01, BETA-ADMIN-GLOBAL-TRAFFIC-01, BETA-ADMIN-SERVICE-TELEMETRY-02, BETA-ADMIN-LOGS-CLEAR-FEEDBACK-01, BETA-ADMIN-LOG-RETENTION-UI-01, BETA-AUDIT-CUT-UNUSED-IMAGES-PASS-01.
+- Escaneo de salud: la consola reporta `events is not defined` de forma repetida; pendiente rastrear referencia/ámbito e inicialización de `events`.
+- Tráfico global: el panel informa `No fue posible recuperar el agregado global; Respuesta de telemetría no válida`; pendiente contrastar contrato, payload, autenticación y normalización.
+- Panel de servicios: el usuario solo visualiza salud de CATALOG; faltan datos de salud/tráfico de los otros servicios, y tráfico en navegador móvil y agregado global. Pendiente separar fallos de endpoint/telemetría de fallos de renderizado.
+- Limpieza: el mensaje de éxito al borrar logs/actividad no distingue claramente el caso sin registros que eliminar. Selector de retención (últimos 7 días / eliminar todos) sin estilo, demasiado grande y desbordado del viewport.
+- PASS reportado por el usuario: auditoría de carpeta de cortes para detectar imágenes sin uso funciona. No se atribuyen pruebas adicionales.
+- Estado: hallazgos reportados, aún no reproducidos ni corregidos. No se modificó código de producción en esta actualización documental.
