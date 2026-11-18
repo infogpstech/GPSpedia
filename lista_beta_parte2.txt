@@ -2040,3 +2040,57 @@ CRITERIOS DE CIERRE
 7. Ensayar rollback solo si las huellas coinciden y dentro de la copia Beta. Documentar cualquier conflicto antes de continuar.
 8. Relay permanece excluido hasta confirmar su formato y un escritor backend real. No inventar IDs ni alterar referencias de producción.
 
+
+
+================================================================================
+## HALLAZGOS DE VALIDACIÓN BETA — 2026-11-18
+
+### BETA-INBOX-PREVIEW-HTML-01 — La vista previa del Inbox muestra etiquetas HTML como texto plano
+
+**Estado: REPORTADO POR EL USUARIO · PENDIENTE DE REPRODUCCIÓN Y CORRECCIÓN.**
+
+**Comportamiento observado:**
+- Cuando llega un mensaje nuevo, la bandeja muestra una vista previa de parte del contenido.
+- En esa vista previa se muestran literalmente etiquetas HTML junto con el texto, en lugar de presentar un extracto legible.
+- Al abrir el mensaje, el contenido se carga correctamente y presenta los colores y formatos enriquecidos esperados.
+
+**Resultado esperado:**
+- La vista previa de la bandeja debe mostrar un extracto de texto legible, sin etiquetas HTML visibles.
+- El detalle del mensaje debe conservar el renderizado enriquecido permitido (colores y formatos).
+- La extracción/normalización del texto de vista previa no debe ejecutar HTML ni permitir XSS; debe preservar caracteres acentuados, entidades y saltos de línea de forma razonable.
+
+**Pruebas de reproducción y regresión pendientes:**
+1. Recibir o crear en el entorno Beta un mensaje con texto plano y otro con formato enriquecido (negrita, color, listas, enlaces y saltos de línea).
+2. Comprobar la vista previa antes de abrir el mensaje, después de recargar el Inbox y al volver desde el detalle.
+3. Confirmar que la vista previa no contiene cadenas de etiquetas como `<p>`, `<span>`, `<strong>` o atributos de estilo; debe mostrar únicamente el extracto legible.
+4. Abrir el mensaje y confirmar que el detalle mantiene el formato enriquecido admitido.
+5. Probar contenido hostil controlado (por ejemplo, etiquetas `script`, atributos `onerror` y enlaces con protocolos no permitidos). La vista previa debe ser texto inerte y el detalle debe aplicar la sanitización vigente.
+6. Verificar mensajes antiguos, contenido vacío, entidades HTML, emojis, caracteres Unicode y contenido extenso truncado.
+7. Registrar navegador/dispositivo, rol de la cuenta de prueba, mensaje de prueba no sensible y resultado de cada caso.
+
+**Criterio de cierre:** PASS únicamente cuando la vista previa sea legible y segura, el detalle conserve su formato y las pruebas de seguridad/regresión no detecten ejecución ni alteraciones del contenido. No se ha modificado código del Inbox en este registro.
+
+### BETA-SERVICES-HEALTH-01 — Verificación de disponibilidad de los siete servicios desplegados
+
+**Estado: PASS EN COMPROBACIÓN REMOTA READ-ONLY; VALIDACIÓN FUNCIONAL DE OPERACIONES PENDIENTE.**
+
+- En el commit `6c82a9f6ee255f86f9cdfc7986c0545644bea411`, el workflow de salud informó 7/7 servicios disponibles: ADMIN, AUTH, CATALOG, FEEDBACK, USERS, UTILITIES y WRITE.
+- La comprobación ejecutó únicamente GET `?debug=true`; no realizó POST, escrituras, cambios de propiedades, modificaciones de hojas ni operaciones de negocio.
+- Se detectó que el workflow utilizaba un SHA histórico fijo (`301c7b3a...`) para obtener las URL. Se corrigió para tomar `${{ github.sha }}`, de modo que cada ejecución compruebe las URL del commit que la dispara.
+- La nueva ejecución del workflow, posterior a esta corrección, debe confirmar las URL actualmente configuradas en `JS/Frontend/api-config.js`. No interpretar la ejecución anterior como prueba de esas URL nuevas.
+- La disponibilidad/identidad de los endpoints no demuestra que las propiedades secretas, permisos, lectura/escritura de datos, autenticación ni flujos funcionales estén correctos. Esas pruebas requieren casos Beta aislados y evidencia específica.
+
+**Preflight obligatorio antes de ejecutar las pruebas Beta:**
+
+```bash
+ROOT="$(git rev-parse --show-toplevel)" || exit 1
+cd "$ROOT" || exit 1
+test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || { echo "Remoto incorrecto"; exit 1; }
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; fi
+git fetch origin GPSpedia2.2.5_work || exit 1
+git pull --ff-only origin GPSpedia2.2.5_work || exit 1
+git rev-parse HEAD
+```
+================================================================================
