@@ -470,3 +470,11 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - Se conserva la cuadrícula 2x2, logo con width:auto y contenedor sin padding vertical, alturas de imagen de 120 px en escritorio y 60 px en móvil, además del orden y alineación de controles.
 - JS/Tests/CutDetailModalLayout.mjs: se actualizan contratos para separación, padding de botones y límites simétricos del divisor. Pruebas automatizadas pendientes de ejecución.
 ================================================================================
+
+
+================================================================================
+2026-11-18 — CIERRE LOCAL GP-UX-CUT-MODAL-HEADER-GRID-02 / AJUSTE DE ESPACIADO
+- Se corrigió una aserción heredada del test móvil que todavía exigía la alineación inferior anterior del modelo.
+- CutDetailModalLayout: 27/27 PASS. Regresión global: 145 suites, 2,143 pruebas aprobadas, 0 fallos. Sintaxis de módulos modificados: PASS. Actions run 44229400787 SUCCESS.
+- Health read-only run 44229400782 SUCCESS. Inspección visual en navegador/dispositivos reales pendiente de Beta.
+================================================================================
