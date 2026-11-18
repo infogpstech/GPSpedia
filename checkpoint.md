@@ -609,3 +609,12 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - El logo conserva width:auto, contenedor sin padding vertical y alturas 120 px escritorio / 60 px móvil. Se mantiene cuadrícula 2x2, primera columna max-content, overflow-x limitado al modal de corte y orden de botones.
 - Registros actualizados: Tareas_Pendientes.md, Auditoría.txt y ChangesLogs.txt.
 - Pendiente: ejecutar CutDetailModalLayout.mjs y la regresión aplicable en CI; revisar el diff final. Validación visual real en móvil/escritorio queda diferida a Beta. No se afirma que la prueba automatizada haya sido ejecutada ni aprobada.
+
+
+### Cierre local — GP-UX-CUT-MODAL-HEADER-GRID-02 — 2026-11-18
+- Corrección de test: una aserción móvil heredada seguía exigiendo align-items:flex-end y align-self:flex-end. Se actualizó para comprobar align-items:flex-start, align-self:flex-start y margen superior de 6 px.
+- Commit de corrección de contrato: d331c39cd12c7de59e6554a4c4e7caa77ceb794e.
+- GitHub Actions 44229400787 SUCCESS: 145 suites, 2,143 pruebas aprobadas, 0 fallos; CutDetailModalLayout 27/27 PASS; sintaxis de módulos modificados PASS.
+- GitHub Actions 44229400782 SUCCESS: health de servicios desplegados, solo lectura.
+- Estado local: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Pendiente inspección visual real del modal en móvil y escritorio; no se afirma que dicha inspección haya sido realizada.
+- Rama base GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
