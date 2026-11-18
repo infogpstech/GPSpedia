@@ -2094,3 +2094,32 @@ git pull --ff-only origin GPSpedia2.2.5_work || exit 1
 git rev-parse HEAD
 ```
 ================================================================================
+
+
+### BETA-CUT-MODAL-HEADER-LONG-MODEL-01 — El nombre largo del modelo desplaza el logo y oculta acciones del modal de detalle de corte
+
+**Estado: REPORTADO POR EL USUARIO · PENDIENTE DE REPRODUCCIÓN, DIAGNÓSTICO Y VALIDACIÓN VISUAL BETA.**
+
+**Comportamiento observado:**
+- En la cabecera del modal de detalle de corte, cuando el nombre del modelo es demasiado largo, el texto realiza un salto de línea. Ese salto es correcto y debe conservarse.
+- Al crecer el nombre a una segunda línea, el logo se desplaza hacia arriba en lugar de permitir que el contenido inferior de la cabecera crezca y empuje hacia abajo el divisor azul.
+- Como consecuencia, el logo puede superponerse a los botones de edición e impresión, dejándolos ocultos o parcialmente cubiertos.
+- En un dispositivo móvil girado a orientación horizontal, el logo puede quedar visualmente más arriba que el nombre del modelo, rompiendo la alineación de la cabecera.
+
+**Resultado esperado:**
+- El nombre completo del modelo debe poder saltar de línea sin recortarse ni alterar indebidamente la posición del logo.
+- El crecimiento vertical del título debe ampliar el espacio de la cabecera y empujar hacia abajo la línea/divisor azul y los elementos inferiores; no debe provocar que el logo suba ni que invada la zona de acciones.
+- Los botones de edición e impresión deben permanecer visibles, accesibles y sin superposición con el logo en todos los tamaños.
+- En móvil, tanto en orientación vertical como horizontal, el logo y el nombre deben conservar la relación y alineación previstas en el diseño.
+- Deben preservarse las dimensiones y el ancho automático del logo, la distribución de las columnas, el orden/alineación de las acciones y la ausencia de desplazamiento horizontal no deseado del modal.
+
+**Pruebas de reproducción y regresión pendientes:**
+1. Abrir un corte cuyo nombre de modelo sea suficientemente largo para ocupar dos o más líneas.
+2. Comprobar en escritorio y móvil que el salto de línea se mantiene completo y que el logo no se desplaza hacia arriba.
+3. Verificar que el divisor azul baja junto con el crecimiento de la cabecera y que no invade ni queda detrás del logo.
+4. Confirmar que los botones de edición e impresión permanecen completamente visibles y utilizables.
+5. Repetir en móvil en orientación vertical y horizontal, incluyendo anchos intermedios y cambios de orientación con el modal abierto.
+6. Probar nombres cortos para confirmar que no queda espacio vertical adicional cuando el título no necesita saltar de línea.
+7. Revisar que no aparece scroll horizontal y que no se alteran el logo, el tamaño natural de su primera columna, ni la posición de las acciones.
+
+**Criterio de cierre:** PASS únicamente cuando el título largo empuje hacia abajo los elementos inferiores sin mover el logo hacia arriba, no exista superposición con las acciones y la distribución sea correcta en escritorio y en ambas orientaciones móviles. No se ha modificado código de producción como parte de este registro.
