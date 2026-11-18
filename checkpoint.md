@@ -675,3 +675,9 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - Tarea adicional GP-UX-CUT-BRAND-LOGO-BOTTOM-01: `style.css` fija `object-position:left bottom` en el logo del modal de corte. Se conservan width:auto, max-content, grid, 120 px escritorio / 60 px móvil, acciones y límites horizontales. `CutDetailModalLayout.mjs` cubre la propiedad en escritorio y móvil.
 - CI `44310667618` SUCCESS: 146 suites, 2,154 pruebas aprobadas, 0 fallos; RecentlyViewedActivityTelemetry 12/12, AdminClientCacheDeletion 9/9, CutDetailModalLayout 27/27; sintaxis PASS. Pages `44310666058` SUCCESS. Health `44310667649` SUCCESS, solo GET de diagnóstico.
 - Estados: ambas tareas COMPLETADAS CON VALIDACIÓN DIFERIDA. Pendiente Beta: inspección visual en móvil/escritorio, comportamiento PWA/IndexedDB real y validación de FEEDBACK desplegado. No se desplegó Apps Script ni se modificaron datos externos.
+### Corrección efectiva del encabezado del modal de corte — 2026-11-18
+- Se rectifica el diagnóstico anterior de GP-UX-CUT-BRAND-LOGO-BOTTOM-01: `object-position:left bottom` ya estaba aplicado, y el contenedor específico del logo ya tenía `align-items:flex-start`; el desplazamiento visible provenía del título del modelo anclado al inicio de la segunda fila.
+- `style.css`: el título y el campo de edición usan ahora `align-self:end` en escritorio y móvil, para alinear la base del modelo con la base visual del logo sin cambiar dimensiones ni distribución horizontal.
+- `JS/Tests/CutDetailModalLayout.mjs`: contrato actualizado para exigir alineación inferior del modelo en ambas variantes.
+- CI `44328013474` SUCCESS: 146 suites, 2,154 pruebas aprobadas, 0 fallos; CutDetailModalLayout 27/27; sintaxis PASS.
+- Pendiente únicamente aceptación visual en navegador y dispositivos reales durante Beta. No se desplegaron servicios ni se modificaron datos externos.
