@@ -681,3 +681,10 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - `JS/Tests/CutDetailModalLayout.mjs`: contrato actualizado para exigir alineación inferior del modelo en ambas variantes.
 - CI `44328013474` SUCCESS: 146 suites, 2,154 pruebas aprobadas, 0 fallos; CutDetailModalLayout 27/27; sintaxis PASS.
 - Pendiente únicamente aceptación visual en navegador y dispositivos reales durante Beta. No se desplegaron servicios ni se modificaron datos externos.
+
+### Rectificación de posición del logo y nombre del modelo — 2026-11-18
+- Se revierte únicamente la alineación inferior introducida en la corrección anterior: .detail-modal-title-text y .detail-modal-title-input vuelven a align-self:flex-start en escritorio y móvil, recuperando la posición anterior al commit de alineación inferior.
+- style.css: el contenedor del logo deja de abarcar las filas 1 y 2 y pasa a la fila 2, junto al nombre del modelo. Ambos comienzan con margen superior de 6 px; el logo usa object-position:left top. Se conservan width:auto, columna max-content, alturas 120 px/60 px, gap, acciones, divisor y límites horizontales.
+- JS/Tests/CutDetailModalLayout.mjs: expectativas actualizadas para la ubicación conjunta del logo y el modelo en escritorio y móvil.
+- CI 44329759542 SUCCESS: 146 suites, 2,154 pruebas aprobadas, 0 fallos; comprobación sintáctica PASS. Validación visual real en navegador/dispositivos queda pendiente de Beta.
+- Commits de implementación: CSS 43dd523e16fbab68865a98ed6688cd0a89cc8dad; pruebas 7793b9561ceb1d89e4c4aa77a58ccdf3d8dd7b79. No se modificaron servicios desplegados ni datos externos.
