@@ -6182,7 +6182,7 @@ textarea.rich-text-source[hidden] { display:none !important; }
 .pys-detail-toolbar { margin:0 0 7px; padding-bottom:0; }
 .pys-detail-title-container { display:flex; flex:1 1 auto; align-items:center; min-width:0; }
 
-/* GP-UX-DETAIL-LOGO-MOBILE-02 — logo de 64px y modelo contiguo, ambos alineados a la izquierda.
+/* GP-UX-DETAIL-LOGO-MOBILE-02 — logo de 50px y modelo contiguo, ambos alineados a la izquierda.
    La separación entre imagen y modelo se controla en column-gap: 6px. */
 @media (max-width:560px) {
     #modalDetalle .detail-modal-toolbar {
@@ -6204,9 +6204,9 @@ textarea.rich-text-source[hidden] { display:none !important; }
     #modalDetalle .detail-modal-title .brand-logo-modal {
         display:block;
         width:auto !important;
-        height:64px !important;
-        min-height:64px !important;
-        max-height:64px !important;
+        height:50px !important;
+        min-height:50px !important;
+        max-height:50px !important;
         max-width:none !important;
         margin:0 !important;
         padding:0 !important;
