@@ -158,14 +158,14 @@ async function performOp(storeName, mode, callback, options = {}) {
 
 
 const REBUILDABLE_CLIENT_CACHE_STORES = Object.freeze([
-    'catalog', 'searchHistory', 'thumbnails', 'validationCache'
+    'catalog', 'searchHistory', 'viewedItems', 'thumbnails', 'validationCache'
 ]);
 
 /**
  * Vacía únicamente datos reconstruibles del cliente. Conserva adminLocalState,
  * donde pueden existir auditorías y operaciones administrativas recuperables.
  */
-export async function clearRebuildableClientCache(ownerId = null) {
+export async function clearRebuildableClientCache() {
     let database;
     try {
         database = await initDB();
@@ -173,68 +173,24 @@ export async function clearRebuildableClientCache(ownerId = null) {
     } catch (error) {
         return { status: 'error', stores: [], message: error && error.message ? error.message : 'No se pudo abrir GPSpedia_DB.' };
     }
-
-    const owner = normalizeLocalOwnerId(ownerId);
     const stores = REBUILDABLE_CLIENT_CACHE_STORES.filter(name =>
         database.objectStoreNames && typeof database.objectStoreNames.contains === 'function' &&
         database.objectStoreNames.contains(name)
     );
-    const hasViewedItemsStore = Boolean(owner && database.objectStoreNames &&
-        typeof database.objectStoreNames.contains === 'function' &&
-        database.objectStoreNames.contains('viewedItems'));
-    if (hasViewedItemsStore) stores.push('viewedItems');
-    if (!stores.length) return { status: 'success', stores: [], viewedItemsCleared: false, otherUsersViewedItemsPreserved: true };
-
+    if (!stores.length) return { status: 'success', stores: [], viewedItemsCleared: false };
     return new Promise(resolve => {
         let transaction;
         let settled = false;
-        let viewedItemsCleared = false;
-        const finish = result => {
-            if (settled) return;
-            settled = true;
-            resolve(result);
-        };
+        const finish = result => { if (settled) return; settled = true; resolve(result); };
         try {
             transaction = database.transaction(stores, 'readwrite');
-            transaction.oncomplete = () => finish({
-                status: 'success',
-                stores: stores.filter(name => name !== 'viewedItems' || viewedItemsCleared),
-                viewedItemsCleared,
-                otherUsersViewedItemsPreserved: true
-            });
-            transaction.onerror = () => finish({
-                status: 'error', stores: [],
-                message: transaction.error && transaction.error.message ? transaction.error.message : 'Falló la transacción de limpieza IndexedDB.'
-            });
-            transaction.onabort = () => finish({
-                status: 'error', stores: [],
-                message: transaction.error && transaction.error.message ? transaction.error.message : 'La transacción de limpieza IndexedDB fue cancelada.'
-            });
-            stores.forEach(name => {
-                const store = transaction.objectStore(name);
-                if (name !== 'viewedItems') {
-                    store.clear();
-                    return;
-                }
-                // Consultar solo el índice de la cuenta activa; nunca vaciar viewedItems globalmente.
-                const request = store.index('ownerId').getAll(owner);
-                request.onsuccess = () => {
-                    const records = Array.isArray(request.result) ? request.result : [];
-                    records.forEach(entry => {
-                        if (entry && entry.ownerId === owner && entry.id !== undefined) store.delete(entry.id);
-                    });
-                    viewedItemsCleared = true;
-                };
-                request.onerror = () => {
-                    try { transaction.abort(); } catch (abortError) {}
-                };
-            });
+            transaction.oncomplete = () => finish({ status: 'success', stores, viewedItemsCleared: stores.includes('viewedItems') });
+            transaction.onerror = () => finish({ status: 'error', stores: [], message: transaction.error && transaction.error.message ? transaction.error.message : 'Falló la transacción de limpieza IndexedDB.' });
+            transaction.onabort = () => finish({ status: 'error', stores: [], message: transaction.error && transaction.error.message ? transaction.error.message : 'La transacción de limpieza IndexedDB fue cancelada.' });
+            stores.forEach(name => transaction.objectStore(name).clear());
         } catch (error) {
             try { if (transaction) transaction.abort(); } catch (abortError) {}
-            finish({
-                status: 'error', stores: [],
-                message: error && error.message ? error.message : 'No se pudieron limpiar los almacenes IndexedDB.'
-            });
+            finish({ status: 'error', stores: [], message: error && error.message ? error.message : 'No se pudieron limpiar los almacenes IndexedDB.' });
         }
     });
 }
