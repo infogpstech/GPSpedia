@@ -857,6 +857,11 @@ function runSharedMutationCoordinatorTests() {
         const prefix = "GPSpedia_AUTH_SESSIONS_V1_" + encodeURIComponent(userId) + "_";
         const chunkKeys = Object.keys(r.properties.getProperties()).filter(key => key.startsWith(prefix));
         assert_(chunkKeys.length > 1, "El contexto debe repartirse en varios bloques.");
+        chunkKeys.forEach(function(key) {
+            const rawChunk = r.properties.getProperty(key);
+            const utf8Length = encodeURIComponent(rawChunk).replace(/%[0-9A-F]{2}/g, "x").length;
+            assert_(utf8Length <= 7000, "Cada bloque debe respetar el tamaño máximo en bytes UTF-8.");
+        });
         const lease = r.request("acquire", "FEEDBACK", "reportProblem", {
             requestId: r.uuid(), waitMs: 0, sessionToken: sessions[99].token
         });
