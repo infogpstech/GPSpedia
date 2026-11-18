@@ -696,3 +696,13 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - `JS/Tests/CutDetailModalLayout.mjs`: contratos separados para el contenedor de dos filas, su alineación inferior, la imagen interna y el título en segunda fila.
 - CI `44331015148` SUCCESS: 146 suites, 2,154 pruebas aprobadas, 0 fallos; `CutDetailModalLayout` 27/27; sintaxis PASS. Inspección visual real en navegador/dispositivos sigue pendiente de Beta.
 - HEAD de implementación y pruebas: `547ba48b56873805c7b2169c774b134224e4a36a`. Rama base sin modificar.
+
+### Corrección de filas del logo y carga paralela de Vistos Recientemente — 2026-11-18
+- HEAD verificado: `ff0394073a3e5a4fa14cc513cfae8c1c33de3e24`; rama `GPSpedia2.2.5_work`. Base protegida `GPSpedia2.2.5`: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin cambios.
+- Modal de corte: se retiró `minmax(30px, auto)` / `minmax(26px, auto)` de la segunda fila. La causa era que esa fila formaba parte del área de dos filas del contenedor del logo, alineado al final; al crecer la fila, el logo subía. Ahora solo el título se coloca en la fila 3 y empuja hacia abajo el divisor (fila 4) y el indicador (fila 5), sin alterar la altura de las filas del logo.
+- Vistos Recientemente: la lectura de IndexedDB ya era asíncrona y concurrente con el inicio cache-first del catálogo. La demora visible adicional provenía de que el suscriptor reconstruía todas las categorías con `mostrarCategorias()` cuando llegaba `viewedItems`. Se agregó un ancla estable y una función que actualiza exclusivamente el carrusel; el catálogo no se vuelve a vaciar ni renderizar por ese cambio.
+- Se conserva el historial local aislado por `ownerId`; el carrusel no consulta el servidor y la telemetría sigue siendo independiente y no bloqueante. No se modifica ACTIVITY ni se despliegan Apps Script.
+- Archivos de producción: `style.css`, `JS/Frontend/ui.js`, `service-worker.js` (CACHE_NAME v73). Contratos: `CutDetailModalLayout.mjs`, `RecentlyViewedCarousel.mjs`, `ServiceWorkerCache.js`, `OfflineBrandAssets.mjs`, `PasswordRecovery.mjs`.
+- Validación: Actions `44394961438` SUCCESS, 146 suites / 2,155 pruebas / 0 fallos; CutDetailModalLayout 28/28; RecentlyViewedCarousel 1/1; ServiceWorkerCache 12/12; OfflineBrandAssets 4/4; sintaxis PASS. Pages `44394961041` SUCCESS; health GET-only `44394961427` SUCCESS.
+- Pendiente Beta: comprobar visualmente en móvil/escritorio que el logo no se mueve y el título empuja los elementos inferiores; medir carga en frío/caliente y PWA instalada con catálogo cacheado, historial local y IndexedDB lento/bloqueado. No se afirma validación visual real.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
