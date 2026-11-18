@@ -646,3 +646,10 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - CI final: Actions 44296180571 SUCCESS en SHA 9a3e139f0a0763894f804a44447f0d21f07c832c; 146 suites, 2,174 pruebas, 0 fallos; RecentlyViewedCarousel 21/21, RecentlyViewedActivityTelemetry 12/12, AdminClientCacheDeletion 9/9 y sintaxis PASS.
 - Pages build/deploy 44296179354 SUCCESS en el mismo SHA; health 44296180705 SUCCESS, solo lectura. La acción FEEDBACK nueva no se invocó contra Apps Script ni hojas reales; validación remota pendiente de Beta. La rama base permanece intacta.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+
+### Adenda de continuidad — GP-PWA-RECENT-VIEWS-03 (2026-11-18)
+- La telemetría de visualización incluye ID del vehículo y valores numéricos válidos de `utilCorte1`, `utilCorte2`, `utilCorte3`; FEEDBACK valida sesión y valores y guarda el detalle mínimo en ACTIVITY.
+- El carrusel sigue siendo exclusivamente local: IndexedDB usa claves compuestas usuario/vehículo y consulta solo el índice del propietario activo.
+- La limpieza local vacía `viewedItems` junto con los almacenes reconstruibles. No llama a la API de actividad ni elimina el historial estadístico del servidor.
+- Caché PWA v72. Pruebas locales pendientes de ejecución; servicio FEEDBACK desplegado y dashboard pendientes de Beta. No se desplegó Apps Script ni se modificaron hojas/datos externos.
