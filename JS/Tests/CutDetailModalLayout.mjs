@@ -293,8 +293,10 @@ testCase("el nombre completo pasa debajo del logo solo cuando no cabe junto a é
     const fallbackCss = css.slice(fallbackStart - 180, fallbackStart + 1400);
     assert.match(fallbackCss, /grid-column:1 \/ -1;[\s\S]*?grid-row:3;/);
     assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-toolbar \{[\s\S]*?grid-template-rows:auto auto auto auto;/);
-    assert.match(fallbackCss, /grid-template-rows:auto minmax\(30px, auto\) auto auto auto;/);
-    assert.match(css.slice(css.indexOf("GP-UX-CUT-MODEL-TITLE-FIT-01")), /max-width:560px[\s\S]*?grid-template-rows:auto minmax\(26px, auto\) auto auto auto;/);
+    assert.doesNotMatch(fallbackCss, /grid-template-rows|minmax\(/);
+    assert.match(fallbackCss, /grid-column:1 \/ -1;[\s\S]*?grid-row:3;/);
+    assert.match(fallbackCss, /detail-modal-divider \{[\s\S]*?grid-row:4;/);
+    assert.match(fallbackCss, /detail-modal-saving-indicator \{[\s\S]*?grid-row:5;/);
     assert.match(fallbackCss, /white-space:normal;[\s\S]*?overflow-wrap:normal;[\s\S]*?word-break:normal;/);
     assert.match(fallbackCss, /detail-modal-divider \{[\s\S]*?grid-row:4;/);
     assert.match(fallbackCss, /detail-modal-saving-indicator \{[\s\S]*?grid-row:5;/);
