@@ -15,7 +15,7 @@ const ui = read("JS/Frontend/ui.js");
 const limits = auth.match(/const SESSION_LIMITS = \{[\s\S]*?\};/);
 assert.ok(limits, "Debe existir una política central de sesiones.");
 assert.match(limits[0], /'desarrollador': Infinity/);
-assert.match(auth, /if \(Number\.isFinite\(sessionLimit\) && activeRows\.length > sessionLimit\)/);
+assert.match(auth, /getOldestSessionsToRevoke_\(activeRows, token, sessionLimit\)/);
 
 for (const action of ["getInboxRecipients", "getInboxConversations", "getInboxMessages"]) {
     assert.match(feedback, new RegExp(action + ": null"));
