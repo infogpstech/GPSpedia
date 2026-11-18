@@ -510,3 +510,10 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 2026-11-18 — Aislamiento de vistos entre sesiones
 - auth.js: al iniciar/cambiar sesión, limpia el carrusel en memoria y lo repuebla solo desde IndexedDB con el ownerId actual; elimina la fusión con datos de la sesión previa.
 - RecentlyViewedActivityTelemetry.mjs: añade aserciones contra contaminación de memoria entre cuentas.
+================================================================================
+2026-11-18 — GP-PWA-RECENT-VIEWS-03 — alineación de prueba de limpieza local
+- Se corrigió `JS/Tests/RecentlyViewedCarousel.mjs`: ahora exige que la limpieza de caché incluya `viewedItems`, limpie el estado en memoria y no invoque rutas de actividad remota.
+- Se conserva el aislamiento por propietario en las lecturas de IndexedDB; borrar la caché local elimina los vistos del dispositivo, pero no los registros estadísticos ACTIVITY del servidor.
+- Commit: `dae20bf50f8a40a669ce02ed7668ac8e0e19a086`.
+- Verificación estática de contratos: 9/9 PASS. Ejecución de Node/CI pendiente de evidencia.
+================================================================================
