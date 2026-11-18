@@ -179,12 +179,12 @@ testCase("La selección de sesiones excedentes respeta los límites y siempre co
    createdAt:1700000000000+index*1000
   }));
   const selected=select(rows,"current-login",limit);
-  assert.deepEqual(selected.map(row=>row.token),["old-0","old-1"],role+" debe expulsar solo el exceso más antiguo.");
+  assert.deepEqual(Array.from(selected,row=>row.token),["old-0","old-1"],role+" debe expulsar solo el exceso más antiguo.");
  }
  const developerRows=Array.from({length:100},(_,index)=>({
   token:"developer-"+index,rowIndex:100-index,createdAt:1700000000000+index
  }));
- assert.deepEqual(select(developerRows,"developer-99",Infinity),[],
+ assert.equal(select(developerRows,"developer-99",Infinity).length,0,
   "Desarrollador no debe expulsar sesiones por cantidad.");
 });
 
