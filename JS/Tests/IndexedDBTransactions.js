@@ -14,9 +14,10 @@ async function testAsync(name, fn) {
 
 function createIndexedDBHarness(options = {}) {
  const stores=new Map(),connections=[],transactionQueue=[];let openCount=0,transactionCount=0,activeTransaction=null,activeTransactions=0,maxActiveTransactions=0;
+ const createStoreDefinition=record=>({indexNames:{contains:name=>record.indexes.has(name)},createIndex(name,keyPath){record.indexes.set(name,keyPath);return{};}});
  const activateNext=()=>{if(activeTransaction||!transactionQueue.length)return;activeTransaction=transactionQueue.shift();queueMicrotask(()=>activeTransaction&&activeTransaction.activate());};
  const release=tx=>{if(activeTransaction!==tx)return;activeTransactions--;activeTransaction=null;activateNext();};
- const database={objectStoreNames:{contains:name=>stores.has(name)},createObjectStore(name,config={}){stores.set(name,{values:new Map(),keyPath:config.keyPath||null});return{};},close(){this.closed=true;},
+ const database={objectStoreNames:{contains:name=>stores.has(name)},createObjectStore(name,config={}){const record={values:new Map(),keyPath:config.keyPath||null,indexes:new Map()};stores.set(name,record);return createStoreDefinition(record);},close(){this.closed=true;},
  transaction(names,mode){
   transactionCount++;const behavior=options.transactions&&options.transactions[transactionCount-1]||'complete';
   let aborted=false,finished=false,activated=false,processing=false,pendingRequests=0,completionScheduled=false;const requestQueue=[],undoActions=[];let tx;
@@ -26,6 +27,9 @@ function createIndexedDBHarness(options = {}) {
   const abortTransaction=()=>{if(aborted||finished)return;aborted=true;for(let index=undoActions.length-1;index>=0;index--)undoActions[index]();undoActions.length=0;pendingRequests-=requestQueue.length;requestQueue.length=0;if(tx.onabort)tx.onabort();settle();};
   tx={error:behavior==='quota'?new DOMException('Quota exceeded','QuotaExceededError'):null,
    objectStore(name){const record=stores.get(name);return{
+    index(indexName){const keyPath=record.indexes.get(indexName);if(!keyPath)throw new Error('Index not found: '+indexName);return{
+     getAll(query){const request={};return enqueue(request,()=>{request.result=[...record.values.values()].filter(value=>value&&value[keyPath]===query);if(request.onsuccess)request.onsuccess();});}
+    };},
     put(value,key){const request={};return enqueue(request,()=>{if(behavior==='quota'||(name==='thumbnails'&&options.quotaFailures>0)){if(options.quotaFailures>0)options.quotaFailures--;request.error=behavior==='quota'?tx.error:new DOMException('Quota exceeded','QuotaExceededError');tx.error=request.error;if(request.onerror)request.onerror();if(tx.onerror)tx.onerror();abortTransaction();return;}const resolvedKey=key===undefined?value[record.keyPath]:key;const hadPrevious=record.values.has(resolvedKey),previousValue=record.values.get(resolvedKey);undoActions.push(()=>{if(hadPrevious)record.values.set(resolvedKey,previousValue);else record.values.delete(resolvedKey);});record.values.set(resolvedKey,structuredClone(value));request.result=resolvedKey;if(request.onsuccess)request.onsuccess();if(behavior==='abort')queueMicrotask(()=>{tx.error=new DOMException('Aborted','AbortError');abortTransaction();});});},
     get(key){const request={};return enqueue(request,()=>{if(behavior==='get-error'){request.error=new DOMException('Read failed','UnknownError');tx.error=request.error;if(request.onerror)request.onerror();if(tx.onerror)tx.onerror();abortTransaction();return;}request.result=record.values.get(key);if(request.onsuccess)request.onsuccess();});},
     getAll(){const request={};return enqueue(request,()=>{request.result=[...record.values.values()];if(request.onsuccess)request.onsuccess();});},
@@ -147,6 +151,26 @@ async function runIndexedDBTransactionTests() {
         assert.equal(viewedA.length, 1); assert.equal(viewedA[0].id, 'V-1'); assert.equal(viewedA[0].data.marca, 'Toyota');
         assert.equal(viewedB.length, 1); assert.equal(viewedB[0].data.marca, 'Honda');
         assert.deepEqual(await scopedOffline.getViewedItems(''), []);
+    });
+    await testAsync('vistos recientes consulta el índice de cuenta y conserva solo los 20 últimos', async () => {
+        const api = await freshOffline(createIndexedDBHarness(), 'viewed-index-retention');
+        for (let index = 0; index < 25; index++) {
+            await api.saveViewedItem({ id: 'REC-' + index, marca: 'Toyota' }, 'user-recent');
+            await new Promise(resolve => setTimeout(resolve, 2));
+        }
+        await api.saveViewedItem({ id: 'OTHER-1', marca: 'Honda' }, 'other-user');
+        const result = await api.getViewedItemsResult('user-recent');
+        assert.equal(result.available, true);
+        assert.equal(result.items.length, 20);
+        assert.equal(result.items[0].id, 'REC-24');
+        assert.equal(result.items[19].id, 'REC-5');
+        assert.equal((await api.getViewedItems('user-recent')).length, 20);
+        assert.equal((await api.getViewedItems('other-user')).length, 1);
+    });
+    await testAsync('vistos distingue un historial vacío de un fallo temporal de IndexedDB', async () => {
+        const api = await freshOffline(createIndexedDBHarness({ openError: true }), 'viewed-storage-status');
+        assert.deepEqual(await api.getViewedItemsResult('user-a'), { available: false, items: [] });
+        assert.deepEqual(await api.getViewedItems('user-a'), []);
     });
     await testAsync('validationCache aislado por cuenta', async () => {
         await scopedOffline.saveValidationResponse('V-2', 'correct', 'user-a');
