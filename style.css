@@ -6209,7 +6209,7 @@ textarea.rich-text-source[hidden] { display:none !important; }
 }
 #modalDetalle[data-modal-type="corte"] .detail-modal-title-text {
     grid-column:2;
-    grid-row:1 / span 2;
+    grid-row:2;
     min-width:0;
     max-width:100%;
     align-self:flex-start;
