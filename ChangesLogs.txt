@@ -505,3 +505,8 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - offline.js: viewedItems forma parte de los almacenes reconstruibles; la limpieza local ejecuta clear() sin solicitudes ni eliminaciones remotas.
 - Se actualizan contratos de telemetría/limpieza y la caché PWA a v72.
 ================================================================================
+
+
+2026-11-18 — Aislamiento de vistos entre sesiones
+- auth.js: al iniciar/cambiar sesión, limpia el carrusel en memoria y lo repuebla solo desde IndexedDB con el ownerId actual; elimina la fusión con datos de la sesión previa.
+- RecentlyViewedActivityTelemetry.mjs: añade aserciones contra contaminación de memoria entre cuentas.
