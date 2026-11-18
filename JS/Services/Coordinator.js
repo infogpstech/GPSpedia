@@ -18,6 +18,8 @@ const CATALOG_CHANGE_COLLECTIONS_ = new Set(["cortes", "pys", "tutoriales", "log
 const SHARED_AUTH_CONTEXT_PREFIX_ = "GPSpedia_AUTH_CONTEXT_V1_";
 const SHARED_AUTH_TOKEN_INDEX_PREFIX_ = "GPSpedia_AUTH_TOKEN_V1_";
 const SHARED_AUTH_CONTEXT_MAX_LENGTH_ = 8000;
+const SHARED_AUTH_SESSION_CHUNK_PREFIX_ = "GPSpedia_AUTH_SESSIONS_V1_";
+const SHARED_AUTH_SESSION_CHUNK_LENGTH_ = 7000;
 const SHARED_AUTH_IDLE_MONTHS_ = 1;
 const SHARED_AUTH_ABSOLUTE_MONTHS_ = 3;
 const SHARED_AUTH_TOUCH_INTERVAL_MS_ = 5 * 60 * 1000;
@@ -367,6 +369,10 @@ function createSharedMutationCoordinator_(dependencies) {
         return SHARED_AUTH_TOKEN_INDEX_PREFIX_ + encodeURIComponent(String(token));
     }
 
+    function authSessionChunkPrefix_(userId, generation) {
+        return SHARED_AUTH_SESSION_CHUNK_PREFIX_ + encodeURIComponent(String(userId)) + "_" + generation + "_";
+    }
+
     function readAuthContext_(userId) {
         const raw = properties.getProperty(authContextKey_(userId));
         if (!raw) return null;
@@ -376,8 +382,27 @@ function createSharedMutationCoordinator_(dependencies) {
         if (!context || typeof context !== "object" || Array.isArray(context) ||
             context.schemaVersion !== 1 || context.userId !== String(userId) ||
             !Number.isSafeInteger(context.epoch) || context.epoch < 1 ||
-            (context.revokedBefore !== undefined && (!Number.isFinite(context.revokedBefore) || context.revokedBefore < 0)) ||
-            !Array.isArray(context.sessions) || context.sessions.length > 5) {
+            (context.revokedBefore !== undefined && (!Number.isFinite(context.revokedBefore) || context.revokedBefore < 0))) {
+            throw new Error("El contexto compartido de sesión tiene un esquema inválido; el acceso permanece denegado.");
+        }
+        if (context.sessionStorageVersion === 2) {
+            if (typeof context.sessionGeneration !== "string" || !context.sessionGeneration ||
+                !Number.isSafeInteger(context.sessionChunkCount) || context.sessionChunkCount < 0) {
+                throw new Error("El índice de sesiones compartidas está dañado; el acceso permanece denegado.");
+            }
+            const prefix = authSessionChunkPrefix_(userId, context.sessionGeneration);
+            context.sessions = [];
+            for (let index = 0; index < context.sessionChunkCount; index++) {
+                const chunkRaw = properties.getProperty(prefix + index);
+                if (!chunkRaw) throw new Error("Falta un bloque del contexto compartido; el acceso permanece denegado.");
+                let chunk;
+                try { chunk = JSON.parse(chunkRaw); }
+                catch (error) { throw new Error("Un bloque del contexto compartido está dañado; el acceso permanece denegado."); }
+                if (!Array.isArray(chunk)) throw new Error("Un bloque del contexto compartido tiene un formato inválido; el acceso permanece denegado.");
+                context.sessions.push(...chunk);
+            }
+        }
+        if (!Array.isArray(context.sessions)) {
             throw new Error("El contexto compartido de sesión tiene un esquema inválido; el acceso permanece denegado.");
         }
         context.sessions.forEach(session => {
@@ -394,11 +419,42 @@ function createSharedMutationCoordinator_(dependencies) {
     }
 
     function saveAuthContext_(context) {
-        const serialized = JSON.stringify(context);
+        const sessions = Array.isArray(context.sessions) ? context.sessions : [];
+        const chunks = [];
+        let currentChunk = [];
+        sessions.forEach(session => {
+            const candidate = currentChunk.concat([session]);
+            if (JSON.stringify(candidate).length > SHARED_AUTH_SESSION_CHUNK_LENGTH_) {
+                if (!currentChunk.length) throw new Error("Una sesión individual supera el tamaño de bloque permitido.");
+                chunks.push(currentChunk);
+                currentChunk = [session];
+                if (JSON.stringify(currentChunk).length > SHARED_AUTH_SESSION_CHUNK_LENGTH_) {
+                    throw new Error("Una sesión individual supera el tamaño de bloque permitido.");
+                }
+            } else currentChunk = candidate;
+        });
+        if (currentChunk.length) chunks.push(currentChunk);
+
+        const generation = uuid();
+        const prefix = authSessionChunkPrefix_(context.userId, generation);
+        chunks.forEach((chunk, index) => properties.setProperty(prefix + index, JSON.stringify(chunk)));
+
+        const metadata = Object.assign({}, context);
+        delete metadata.sessions;
+        metadata.sessionStorageVersion = 2;
+        metadata.sessionGeneration = generation;
+        metadata.sessionChunkCount = chunks.length;
+        const serialized = JSON.stringify(metadata);
         if (serialized.length > SHARED_AUTH_CONTEXT_MAX_LENGTH_) {
-            throw new Error("El contexto compartido de sesión superó el tamaño permitido; no se concedió acceso.");
+            throw new Error("Los metadatos del contexto compartido superaron el tamaño permitido.");
         }
         properties.setProperty(authContextKey_(context.userId), serialized);
+
+        const userPrefix = SHARED_AUTH_SESSION_CHUNK_PREFIX_ + encodeURIComponent(String(context.userId)) + "_";
+        const allProperties = properties.getProperties();
+        Object.keys(allProperties).forEach(key => {
+            if (key.startsWith(userPrefix) && !key.startsWith(prefix)) properties.deleteProperty(key);
+        });
     }
 
     function registerSession_(service, operation, payload) {
@@ -449,9 +505,6 @@ function createSharedMutationCoordinator_(dependencies) {
                 properties.setProperty(authTokenIndexKey_(token), userId);
                 saveAuthContext_(context);
                 return { status: "success", registered: true, recovered: true, epoch: context.epoch };
-            }
-            if (context.sessions.length >= 5) {
-                throw new Error("El contexto compartido alcanzó el límite seguro de sesiones activas.");
             }
             context.sessions.push({ token, role, fullName, createdAt, lastActivityAt });
             properties.setProperty(authTokenIndexKey_(token), userId);
@@ -522,7 +575,7 @@ function createSharedMutationCoordinator_(dependencies) {
         const inputSessions = payload.sessions;
         if (!userId || userId.length > 128 ||
             !["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"].includes(role) ||
-            fullName.length > 120 || !Array.isArray(inputSessions) || inputSessions.length > 5) {
+            fullName.length > 120 || !Array.isArray(inputSessions)) {
             throw new Error("La sincronización de sesiones contiene datos inválidos.");
         }
         return withCoordinatorLock_(() => {

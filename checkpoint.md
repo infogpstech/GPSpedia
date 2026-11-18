@@ -555,3 +555,9 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - HEAD de inicio: e27ebd0dede46db8847ac2c595cdcf688c302060 en GPSpedia2.2.5_work; base protegida GPSpedia2.2.5 no se modifica.
 - Auditoría encontró límites incorrectos para Jefe/Técnico, un tope fijo de cinco en la sincronización AUTH de sesiones compartidas y selección de sesión antigua por índice de fila.
 - Implementación local iniciada en AUTH, espejo de pruebas y contrato SessionActivityCoordination. No se despliega Apps Script ni se modifican datos externos.
+
+
+### Hallazgo ampliado — GP-AUTH-ROLE-SESSION-LIMITS-01 — 2026-11-17
+- Coordinator mantenía tres topes fijos de cinco sesiones en lectura, registro individual y sincronización masiva. Además, guardaba el array completo en una sola propiedad de ScriptProperties, limitada a 8,000 caracteres por la aplicación.
+- Se amplía el diseño para guardar sesiones en bloques versionados y mantener en la propiedad principal solo metadatos/índice. La escritura de bloques precede al cambio de índice; generaciones anteriores se limpian después de publicar el nuevo contexto.
+- Se agrega regresión aislada para 100 sesiones y lectura de una sesión ubicada en el último bloque. No se modifican servicios desplegados ni propiedades reales.

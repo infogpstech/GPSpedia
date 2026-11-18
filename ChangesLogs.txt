@@ -432,3 +432,6 @@ undefined
 - Se agrega contrato de regresión de política por rol y selección de la sesión más antigua.
 - Implementación local en progreso; validación automatizada pendiente. No se desplegó Apps Script ni se modificaron hojas, propiedades o datos externos.
 ================================================================================
+
+
+Adenda GP-AUTH-ROLE-SESSION-LIMITS-01: Coordinator elimina los tres topes internos de cinco sesiones y segmenta el contexto compartido en bloques versionados para evitar el límite de tamaño por propiedad. Se añade prueba aislada con 100 sesiones, autenticación de una sesión del último bloque y limpieza tras revocación global. Pendiente ejecutar CI y revisar el diff completo.

@@ -840,6 +840,34 @@ function runSharedMutationCoordinatorTests() {
         }), "revocada");
     });
 
+
+    test_("Desarrollador puede sincronizar más de cinco sesiones y el contexto segmentado las conserva", function() {
+        const r = createRuntime_();
+        const userId = "USR-UNLIMITED-1";
+        const createdAt = 1700000000000;
+        const sessions = Array.from({ length: 100 }, function(_, index) {
+            return { token: "session-token-unlimited-" + String(index).padStart(4, "0"),
+                createdAt: createdAt, lastActivityAt: createdAt };
+        });
+        const synced = r.request("syncUserSessions", "AUTH", "syncUserSessions", {
+            userId: userId, role: "desarrollador", fullName: "Developer", sessions: sessions
+        });
+        assert_(synced.status === "success" && synced.synced === 100 && synced.acceptedTokens.length === 100,
+            "Coordinator debe aceptar y sincronizar las 100 sesiones sin un tope artificial.");
+        const prefix = "GPSpedia_AUTH_SESSIONS_V1_" + encodeURIComponent(userId) + "_";
+        const chunkKeys = Object.keys(r.properties.getProperties()).filter(key => key.startsWith(prefix));
+        assert_(chunkKeys.length > 1, "El contexto debe repartirse en varios bloques.");
+        const lease = r.request("acquire", "FEEDBACK", "reportProblem", {
+            requestId: r.uuid(), waitMs: 0, sessionToken: sessions[99].token
+        });
+        assert_(lease.status === "success" && lease.actor.userId === userId,
+            "Una sesión del último bloque debe poder autenticarse.");
+        release_(r, "FEEDBACK", "reportProblem", lease.token);
+        r.request("revokeUserSessions", "AUTH", "revokeUserSessions", { userId: userId });
+        assert_(Object.keys(r.properties.getProperties()).filter(key => key.startsWith(prefix)).length === 0,
+            "La revocación global debe limpiar todos los bloques.");
+    });
+
     test_("El epoch de revocación impide volver a registrar tokens anteriores al reset", function() {
         const r = createRuntime_();
         const userId = "USR-1007", oldToken = "session-token-0000000000000009";

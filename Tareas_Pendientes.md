@@ -1664,3 +1664,10 @@ La comprobación de los modales tomaba todo el CSS posterior al bloque de scroll
 - La selección de sesiones excedentes pasa a ordenar por fecha real de creación y usa la fila solo como desempate.
 - Se añade contrato automatizado para los límites, la selección de la más antigua y la ausencia de bloqueo por exceso.
 - Pendiente: revisar el almacenamiento del contexto compartido para garantizar que Desarrollador no encuentre límites indirectos de capacidad; ampliar pruebas de recuperación/concurrencia y ejecutar regresión completa.
+
+
+### Ampliación de GP-AUTH-ROLE-SESSION-LIMITS-01 — capacidad del contexto compartido
+- Coordinator mantenía tres topes fijos de cinco sesiones: lectura de contexto, registro individual y sincronización masiva. También guardaba la lista completa en una sola propiedad con máximo de 8,000 caracteres.
+- Se elimina el límite artificial de cinco y se segmenta la lista en bloques versionados de hasta 7,000 caracteres. El índice se publica al final para conservar el contexto anterior si falla la escritura de un bloque; generaciones anteriores se limpian después de publicar.
+- Se añade prueba aislada con 100 sesiones Desarrollador, lectura/autorización desde el último bloque y limpieza al revocar todas las sesiones.
+- La capacidad física global de ScriptProperties sigue sujeta a las cuotas de Apps Script; GPSpedia no establece un máximo funcional de sesiones.

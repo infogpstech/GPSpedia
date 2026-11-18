@@ -152,3 +152,11 @@ testCase("AUTH aplica límites por rol y revoca la sesión más antigua sin bloq
  assert.doesNotMatch(auth,/rows\.length > 5/);
  assert.doesNotMatch(auth,/LOGIN_LIMIT_EXCEEDED|SESSION_LIMIT_EXCEEDED/);
 });
+
+testCase("Coordinator no limita por cinco y almacena sesiones en bloques recuperables",()=>{
+ assert.doesNotMatch(coordinator,/context\.sessions\.length > 5|context\.sessions\.length >= 5|inputSessions\.length > 5/);
+ assert.match(coordinator,/function authSessionChunkPrefix_\(userId, generation\)/);
+ assert.match(coordinator,/function saveAuthContext_\(context\)/);
+ assert.match(coordinator,/SHARED_AUTH_SESSION_CHUNK_LENGTH_/);
+ assert.match(coordinator,/context\.sessionChunkCount/);
+});
