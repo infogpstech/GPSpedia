@@ -573,3 +573,13 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - Se especifican el comportamiento esperado y los casos de reproducción/regresión para escritorio, móvil vertical/horizontal, nombres cortos/largos, visibilidad de acciones y ausencia de scroll horizontal.
 - `checkpoint.md`: se agrega la continuidad del hallazgo. No se modificó CSS ni código de producción; queda pendiente reproducción, diagnóstico y validación visual Beta.
 ================================================================================
+
+
+================================================================================
+2026-11-18 — Hallazgos Beta adicionales ADMIN / telemetría / limpieza
+- `lista_beta_parte2.txt`: añadidos BETA-ADMIN-HEALTH-EVENTS-01, BETA-ADMIN-GLOBAL-TRAFFIC-01, BETA-ADMIN-SERVICE-TELEMETRY-02, BETA-ADMIN-LOGS-CLEAR-FEEDBACK-01, BETA-ADMIN-LOG-RETENTION-UI-01, BETA-AUDIT-CUT-UNUSED-IMAGES-PASS-01.
+- Se documentan el ReferenceError `events is not defined` en el escaneo de salud; la respuesta de telemetría global inválida; la ausencia de información de salud/tráfico para servicios distintos de CATALOG y la falta de tráfico global/móvil.
+- Se registra la ambigüedad del mensaje al limpiar logs/actividad cuando no hay registros, y el selector de retención (7 días / eliminar todos) demasiado grande y fuera del viewport.
+- Se registra como PASS reportado por el usuario la auditoría de imágenes sin uso en la carpeta de cortes.
+- `checkpoint.md` actualizado para continuidad. No se modificó código de producción; los hallazgos funcionales/visuales siguen pendientes de reproducción y corrección.
+================================================================================
