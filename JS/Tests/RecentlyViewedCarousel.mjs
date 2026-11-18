@@ -47,7 +47,7 @@ assert.match(offline, /transaction\.objectStore\(name\)\.clear\(\)/);
 assert.match(ui, /offline\.clearRebuildableClientCache\(\)/);
 assert.match(ui, /if \(indexedDbResult\.viewedItemsCleared\) setState\(\{ viewedItems: \[\] \}\)/);
 assert.doesNotMatch(ui.slice(ui.indexOf("const clearCacheBtn"), ui.indexOf("const storageResults")), /recordVehicleView|routeAction|getActivityLogs/);
-assert.match(detail, /recordVehicleView\(String\(activeItem\.id\), getSessionPayload_\(\)\)\.catch/);
+assert.match(detail, /recordVehicleView\(String\(activeItem\.id\), \{[\s\S]*?utilCorte1:[\s\S]*?utilCorte2:[\s\S]*?utilCorte3:[\s\S]*?\}, getSessionPayload_\(\)\)\.catch/);
 assert.doesNotMatch(detail, /await\s+recordVehicleView/);
 assert.doesNotMatch(load, /recordVehicleView|routeAction|getActivityLogs/);
 
