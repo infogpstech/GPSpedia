@@ -135,6 +135,13 @@ Este documento sustituye los registros operativos `Tareas_Activas.md` y `Tareas_
 - La carga de historial y vistos se desacopla para que una apertura lenta de IndexedDB no retrase ambos.
 - El render detecta cambios de IDs/orden/timestamps, no solo cambios en la cantidad de elementos; se actualiza incluso cuando el carrusel ya tiene 20 elementos.
 
+**Adenda correctiva GP-PWA-RECENT-VIEWS-02 (2026-11-18) — Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.**
+- Se confirmó que getViewedItems escaneaba el objectStore completo de todas las cuentas y que un error temporal de IndexedDB se convertía en una lista vacía sin reintento.
+- Implementados índice por ownerId, consulta aislada por cuenta, retención de 20 elementos, resultado explícito de disponibilidad y reintentos progresivos en segundo plano con protección de sesión.
+- Regresión: RecentlyViewedCarousel 13/13; IndexedDB 51/51; 145 suites / 2,153 pruebas / 0 fallos; node --check PASS (Actions 44239861437).
+- CACHE_NAME sube a v70 para refrescar módulos cache-first. Pendiente Beta: actualización efectiva del Service Worker y recuperación con pestañas/dispositivos reales.
+
+
 ### GP-UX-BRAND-01 — Encabezado del detalle de cortes
 **Prioridad: P2 · Estado: IMPLEMENTADA Y VALIDADA AUTOMÁTICAMENTE; aceptación visual Beta pendiente.**
 
