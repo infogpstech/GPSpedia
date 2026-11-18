@@ -6352,6 +6352,10 @@ textarea.rich-text-source[hidden] { display:none !important; }
 
 
 /* GP-UX-CUT-MODEL-TITLE-FIT-01 — el nombre completo pasa debajo del logo solo si no cabe a su lado. */
+#modalDetalle[data-modal-type="corte"] .detail-modal-toolbar[data-model-title-layout="below-logo"] {
+    /* Mantiene la segunda fila reservada: el logo conserva su anclaje vertical original. */
+    grid-template-rows:auto minmax(30px, auto) auto auto auto;
+}
 #modalDetalle[data-modal-type="corte"] .detail-modal-toolbar[data-model-title-layout="below-logo"] .detail-modal-title-text,
 #modalDetalle[data-modal-type="corte"] .detail-modal-toolbar[data-model-title-layout="below-logo"] .detail-modal-title-input {
     grid-column:1 / -1;
@@ -6373,4 +6377,8 @@ textarea.rich-text-source[hidden] { display:none !important; }
 #modalDetalle[data-modal-type="corte"] .detail-modal-toolbar[data-model-title-layout="below-logo"] .detail-modal-saving-indicator {
     grid-row:5;
 }
-
+@media (max-width:560px) {
+    #modalDetalle[data-modal-type="corte"] .detail-modal-toolbar[data-model-title-layout="below-logo"] {
+        grid-template-rows:auto minmax(26px, auto) auto auto auto;
+    }
+}
