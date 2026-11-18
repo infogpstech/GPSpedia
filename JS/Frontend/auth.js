@@ -435,18 +435,40 @@ function loadUserLocalActivity(user) {
     offline.getSearchHistory(ownerId).then(history => {
         if (isOwnerCurrent()) setState({ searchHistory: history || [] });
     }).catch(error => console.warn("No se pudo cargar el historial de búsqueda local:", error));
-    offline.getViewedItems(ownerId).then(viewed => {
-        if (!isOwnerCurrent()) return;
-        const merged = new Map();
-        (Array.isArray(viewed) ? viewed : []).forEach(entry => merged.set(String(entry.id), entry));
-        (Array.isArray(getState().viewedItems) ? getState().viewedItems : []).forEach(entry => {
-            const key = String(entry && entry.id || "");
-            if (!key) return;
-            const stored = merged.get(key);
-            if (!stored || Number(entry.timestamp) >= Number(stored.timestamp)) merged.set(key, entry);
+
+    // El historial es opcional: un fallo temporal de IndexedDB no equivale a una lista vacía.
+    // Se reintenta en segundo plano y cada respuesta tardía vuelve a comprobar la sesión/propietario.
+    const retryDelays = [1500, 5000, 15000];
+    const loadViewedItems = attempt => {
+        offline.getViewedItemsResult(ownerId).then(result => {
+            if (!isOwnerCurrent()) return;
+            if (!result || result.available !== true) {
+                if (attempt < retryDelays.length) {
+                    setTimeout(() => { if (isOwnerCurrent()) loadViewedItems(attempt + 1); }, retryDelays[attempt]);
+                } else {
+                    console.warn("No se pudo recuperar Vistos Recientemente; se conserva el estado en memoria.");
+                }
+                return;
+            }
+            const merged = new Map();
+            (Array.isArray(result.items) ? result.items : []).forEach(entry => merged.set(String(entry.id), entry));
+            (Array.isArray(getState().viewedItems) ? getState().viewedItems : []).forEach(entry => {
+                const key = String(entry && entry.id || "");
+                if (!key) return;
+                const stored = merged.get(key);
+                if (!stored || Number(entry.timestamp) >= Number(stored.timestamp)) merged.set(key, entry);
+            });
+            setState({ viewedItems: Array.from(merged.values()).sort((x,y) => Number(y.timestamp)-Number(x.timestamp)).slice(0,20) });
+        }).catch(error => {
+            if (!isOwnerCurrent()) return;
+            if (attempt < retryDelays.length) {
+                setTimeout(() => { if (isOwnerCurrent()) loadViewedItems(attempt + 1); }, retryDelays[attempt]);
+            } else {
+                console.warn("No se pudo recuperar Vistos Recientemente desde IndexedDB:", error);
+            }
         });
-        setState({ viewedItems: Array.from(merged.values()).sort((x,y) => Number(y.timestamp)-Number(x.timestamp)).slice(0,20) });
-    }).catch(error => console.warn("No se pudo cargar Vistos Recientemente desde IndexedDB:", error));
+    };
+    loadViewedItems(0);
 }
 
 function handleSessionStorageChange(event){
@@ -472,7 +494,12 @@ function handleLoginSuccess(user, persist = true) {
     cancelCatalogLoad_();
     logoutGeneration_ += 1;
     if (persist) localStorage.setItem(SESSION_KEY, JSON.stringify(user));
-    setState({ currentUser: user });
+    const previousOwnerId = String(getState().currentUser && (getState().currentUser.ID || getState().currentUser.id) || '').trim();
+    const nextOwnerId = String(user && (user.ID || user.id) || '').trim();
+    setState({
+        currentUser: user,
+        ...(previousOwnerId && previousOwnerId !== nextOwnerId ? { searchHistory: [], viewedItems: [] } : {})
+    });
     const appReady = showApp(user) === true;
     loadUserLocalActivity(user);
     if (appReady) loadRichTextModePreference(user);
