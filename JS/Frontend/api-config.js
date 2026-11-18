@@ -369,10 +369,16 @@ export async function getActivityLogs(sessionPayload = {}) {
     return await routeAction('getActivityLogs', sessionPayload);
 }
 
-export async function recordVehicleView(vehicleId, sessionPayload = {}) {
+export async function recordVehicleView(vehicleId, utilityCounters = {}, sessionPayload = {}) {
     const normalizedVehicleId = String(vehicleId === null || vehicleId === undefined ? "" : vehicleId).trim();
     if (!normalizedVehicleId) return { status: "ignored" };
-    return await routeAction("recordVehicleView", { ...sessionPayload, vehicleId: normalizedVehicleId });
+    const source = utilityCounters && typeof utilityCounters === "object" ? utilityCounters : {};
+    const payload = {};
+    ["utilCorte1", "utilCorte2", "utilCorte3"].forEach(field => {
+        const value = source[field];
+        if (value !== undefined && value !== null && String(value).trim() !== "") payload[field] = value;
+    });
+    return await routeAction("recordVehicleView", { ...sessionPayload, vehicleId: normalizedVehicleId, ...payload });
 }
 
 export async function recordLike(vehicleId, corteIndex, sessionPayload = {}) {
