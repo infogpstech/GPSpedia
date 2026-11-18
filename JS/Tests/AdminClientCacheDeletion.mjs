@@ -141,7 +141,7 @@ await check("El handler limpia solo cachés conocidas y preserva sesión y opera
     const end = uiSource.indexOf("// Ejecutar únicamente las limpiezas seleccionadas", start);
     assert.ok(start >= 0 && end > start);
     const handler = uiSource.slice(start, end);
-    assert.ok(handler.includes("await offline.clearRebuildableClientCache(viewedOwnerId)"));
+    assert.ok(handler.includes("await offline.clearRebuildableClientCache()"));
     for (const key of ["gpsepedia_catalog_cache","gpsepedia_pys_cache","gpsepedia_pys_cache_updated_at"]) {
         assert.ok(handler.includes('"' + key + '"'), "Falta caché reconstruible " + key);
     }
