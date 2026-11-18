@@ -532,3 +532,11 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - `JS/Tests/CutDetailModalLayout.mjs`: se actualizan las aserciones de alineación para escritorio y móvil.
 - CI `44328013474` SUCCESS: 146 suites, 2,154 pruebas, 0 fallos; `CutDetailModalLayout` 27/27; sintaxis PASS. Inspección visual real pendiente de Beta.
 ================================================================================
+
+================================================================================
+2026-11-18 — Rectificación de posición del logo y nombre del modelo
+- style.css: el nombre del modelo y el campo de edición vuelven a align-self:flex-start en escritorio y móvil, restaurando su posición previa al cambio de alineación inferior. El contenedor del logo se mueve a la fila 2, junto al nombre; se alinea arriba con margen superior de 6 px y object-position:left top.
+- Se conservan ancho automático del logo, columna max-content, alturas de 120 px en escritorio y 60 px en móvil, gap, acciones, divisor y restricciones de overflow.
+- JS/Tests/CutDetailModalLayout.mjs: contratos actualizados para la posición compartida del logo y el modelo.
+- CI 44329759542 SUCCESS: 146 suites, 2,154 pruebas aprobadas, 0 fallos; sintaxis PASS. Inspección visual en navegador/dispositivos reales pendiente de Beta.
+================================================================================
