@@ -19,7 +19,7 @@ const SHARED_AUTH_CONTEXT_PREFIX_ = "GPSpedia_AUTH_CONTEXT_V1_";
 const SHARED_AUTH_TOKEN_INDEX_PREFIX_ = "GPSpedia_AUTH_TOKEN_V1_";
 const SHARED_AUTH_CONTEXT_MAX_LENGTH_ = 8000;
 const SHARED_AUTH_SESSION_CHUNK_PREFIX_ = "GPSpedia_AUTH_SESSIONS_V1_";
-const SHARED_AUTH_SESSION_CHUNK_LENGTH_ = 7000;
+const SHARED_AUTH_SESSION_CHUNK_LENGTH_ = 7000; // bytes UTF-8; below the Apps Script per-property limit.
 const SHARED_AUTH_IDLE_MONTHS_ = 1;
 const SHARED_AUTH_ABSOLUTE_MONTHS_ = 3;
 const SHARED_AUTH_TOUCH_INTERVAL_MS_ = 5 * 60 * 1000;
@@ -418,17 +418,21 @@ function createSharedMutationCoordinator_(dependencies) {
         return context;
     }
 
+    function sharedAuthUtf8Length_(value) {
+        return encodeURIComponent(String(value)).replace(/%[0-9A-F]{2}/g, "x").length;
+    }
+
     function saveAuthContext_(context) {
         const sessions = Array.isArray(context.sessions) ? context.sessions : [];
         const chunks = [];
         let currentChunk = [];
         sessions.forEach(session => {
             const candidate = currentChunk.concat([session]);
-            if (JSON.stringify(candidate).length > SHARED_AUTH_SESSION_CHUNK_LENGTH_) {
+            if (sharedAuthUtf8Length_(JSON.stringify(candidate)) > SHARED_AUTH_SESSION_CHUNK_LENGTH_) {
                 if (!currentChunk.length) throw new Error("Una sesión individual supera el tamaño de bloque permitido.");
                 chunks.push(currentChunk);
                 currentChunk = [session];
-                if (JSON.stringify(currentChunk).length > SHARED_AUTH_SESSION_CHUNK_LENGTH_) {
+                if (sharedAuthUtf8Length_(JSON.stringify(currentChunk)) > SHARED_AUTH_SESSION_CHUNK_LENGTH_) {
                     throw new Error("Una sesión individual supera el tamaño de bloque permitido.");
                 }
             } else currentChunk = candidate;
