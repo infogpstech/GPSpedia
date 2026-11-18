@@ -106,7 +106,7 @@ testCase("el tamaño de logo de navegador se conserva y móvil usa 50px con gap 
     const mobileLogoRules = css.slice(css.indexOf("GP-UX-DETAIL-LOGO-MOBILE-02"));
     assert.match(mobileLogoRules, /grid-template-columns:max-content minmax\(0,1fr\)/);
     assert.match(mobileLogoRules, /column-gap:6px/);
-    assert.match(mobileLogoRules, /height:64px !important;[\s\S]*?max-height:64px !important;[\s\S]*?max-width:none !important;[\s\S]*?width:auto !important;[\s\S]*?object-fit:contain/);
+    assert.match(mobileLogoRules, /height:50px !important;[\s\S]*?max-height:50px !important;[\s\S]*?max-width:none !important;[\s\S]*?width:auto !important;[\s\S]*?object-fit:contain/);
     assert.match(mobileLogoRules, /justify-content:flex-start/);
     assert.match(mobileLogoRules, /\.detail-modal-title-text \{[\s\S]*?align-self:center;[\s\S]*?transform:none !important/);
 });
