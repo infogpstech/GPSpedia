@@ -1722,3 +1722,10 @@ La comprobación de los modales tomaba todo el CSS posterior al bloque de scroll
 - CI en SHA 9a3e139f0a0763894f804a44447f0d21f07c832c: 146 suites, 2,174 pruebas, 0 fallos; RecentlyViewedCarousel 21/21, RecentlyViewedActivityTelemetry 12/12 y AdminClientCacheDeletion 9/9. Sintaxis de módulos modificados PASS.
 - GitHub Pages build/deploy 44296179354 SUCCESS; health de servicios 44296180705 SUCCESS (solo lectura). La nueva acción FEEDBACK no se invocó contra el deployment: queda pendiente de despliegue/validación Beta.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+
+### Adenda GP-PWA-RECENT-VIEWS-03 — contadores y limpieza local (2026-11-18)
+- El evento remoto de visualización registra el ID del vehículo y los valores numéricos válidos de `utilCorte1`, `utilCorte2` y `utilCorte3`; actor y fecha siguen siendo determinados por backend.
+- IndexedDB mantiene claves compuestas por propietario/vehículo y las lecturas del carrusel filtran por `ownerId`; el historial remoto no reconstruye el carrusel.
+- La limpieza local incluye `viewedItems` entre los almacenes reconstruibles y ejecuta `clear()` en la transacción IndexedDB. Elimina el historial local del dispositivo, sin llamar a FEEDBACK ni borrar actividad estadística remota.
+- Regresión local pendiente de ejecución; despliegue/validación del servicio FEEDBACK reservado a Beta.
