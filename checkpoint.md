@@ -628,3 +628,11 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - PWA: CACHE_NAME actualizado a gpsepedia-cache-v70 para invalidar los módulos cache-first.
 - Pruebas en SHA 0c3e6fc191d86801793150eb5aac46217ba4845d: RecentlyViewedCarousel 13/13 PASS; IndexedDB transaction tests 51/51 PASS; 145 suites / 2,153 pruebas / 0 fallos; node --check PASS. Se actualizó la expectativa de esquema en AdminDriveAuditIndexedDB para DB_VERSION 5, conservando el escenario de lectura de datos heredados de v4.
 - Estado local: COMPLETADA CON VALIDACIÓN DIFERIDA. Falta comprobar actualización del Service Worker y recuperación multi-pestaña/dispositivo en Beta; no se desplegaron servicios Apps Script ni se modificaron hojas, Drive o datos externos.
+
+
+### Cierre y verificación final — GP-PWA-RECENT-VIEWS-02 — 2026-11-18
+- Código funcional validado en SHA f9b054e1a7a63986d0d63b3be3953ad868d31db6; la rama de trabajo incluye después solo actualizaciones documentales en Tareas_Pendientes.md, Auditoría.txt, ChangesLogs.txt y este checkpoint.
+- GitHub Actions 44240071252 SUCCESS: 145 suites, 2,153 pruebas aprobadas, 0 fallos; RecentlyViewedCarousel 13/13 PASS; IndexedDB transaction tests 51/51 PASS; sintaxis de módulos modificados PASS.
+- Health de servicios (solo lectura) 44240071231 SUCCESS. No se desplegó Apps Script ni se modificaron hojas, ScriptProperties, Drive o datos externos.
+- Service Worker CACHE_NAME v70 y sus expectativas automatizadas quedaron alineados. El workflow de GitHub Pages del SHA de código fue cancelado por commits documentales posteriores; comprobar el workflow más reciente de la rama antes de afirmar publicación.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. Pendiente Beta: actualización efectiva de PWA instalada, historial real con 20 elementos, bloqueo/liberación de IndexedDB y varias pestañas/dispositivos. No se debe interpretar un fallo de IndexedDB como historial vacío ni bloquear el catálogo.
