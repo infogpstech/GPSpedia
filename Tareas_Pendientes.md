@@ -1743,3 +1743,14 @@ La comprobación de los modales tomaba todo el CSS posterior al bloque de scroll
 - Se verifica que el estado del carrusel en memoria se vacíe tras una limpieza IndexedDB confirmada.
 - Commit: `dae20bf50f8a40a669ce02ed7668ac8e0e19a086`. Nueve comprobaciones estáticas de contrato PASS; falta ejecutar la suite Node/CI y conservar evidencia.
 - La validación de FEEDBACK desplegado y PWA instalada continúa reservada a Beta.
+
+---
+
+## Cierre local — GP-PWA-RECENT-VIEWS-03 / GP-UX-CUT-BRAND-LOGO-BOTTOM-01 — 2026-11-18
+
+- **GP-PWA-RECENT-VIEWS-03 — Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.** Se corrigió el contrato heredado de `RecentlyViewedCarousel.mjs`: ahora comprueba la firma vigente de `recordVehicleView`, incluidos los tres contadores de utilidad y el payload de sesión. El resumen del test publica un resultado numérico que el runner puede verificar.
+- CI GitHub Actions `44310667618` SUCCESS en HEAD `37d3cfb9f1681ab69623959fa5897a9dd89ae498`: 146 suites, 2,154 pruebas aprobadas, 0 fallos. `RecentlyViewedActivityTelemetry` 12/12; `AdminClientCacheDeletion` 9/9; contrato `RecentlyViewedCarousel` 1/1; `CutDetailModalLayout` 27/27; sintaxis de módulos modificados PASS.
+- Se confirma el contrato local: carrusel aislado por ownerId; cambio de cuenta limpia la memoria anterior; limpieza manual vacía los almacenes reconstruibles locales y el carrusel en memoria, sin invocar rutas de actividad ni borrar ACTIVITY remoto. La validación de FEEDBACK desplegado, IndexedDB real en navegador y PWA instalada queda diferida a Beta.
+- **Tarea adicional GP-UX-CUT-BRAND-LOGO-BOTTOM-01 — Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.** El logo de marca del modal de detalle de corte se alinea al borde inferior mediante `object-position:left bottom`, manteniendo width:auto, max-content, alturas actuales (120 px escritorio / 60 px móvil), cuadrícula, acciones y comportamiento de overflow horizontal.
+- Contrato visual ampliado para comprobar alineación inferior de escritorio y móvil. CI `44310667618` aprobó `CutDetailModalLayout` 27/27. La aceptación visual real en navegador/dispositivos queda pendiente de Beta.
+- No se desplegaron Apps Script ni se modificaron hojas, ScriptProperties, Drive o datos externos.
