@@ -63,9 +63,11 @@ assert.match(admin,/coordinatorResult\.scope === "coordinator_protected_operatio
 assert.match(coordinator,/SERVICE_TRAFFIC_BUCKET_MS_ = 60 \* 60 \* 1000/);
 assert.match(coordinator,/SERVICE_TRAFFIC_WINDOW_MS_ = 24 \* 60 \* 60 \* 1000/);
 assert.match(coordinator,/recordServiceTrafficEvent_\(service, currentTime, operation\)/);
-assert.match(coordinator,/SHARED_MUTATION_COORDINATOR_VERSION = "1\.4\.4"/);
+assert.match(coordinator,/SHARED_MUTATION_COORDINATOR_VERSION = "1\.4\.5"/);
 assert.match(coordinator,/function validateSessionContext_\(service, operation, payload\)/);
 assert.match(coordinator,/SHARED_MUTATION_PROTOCOL_VERSION = 1/);
+assert.match(coordinator,/SHARED_MUTATION_SUPPORTED_PROTOCOL_VERSIONS_ = Object\.freeze\(\[1\]\)/);
+assert.match(coordinator,/SHARED_MUTATION_LEGACY_PROTOCOL_VERSION_ = 1/);
 assert.match(coordinator,/request.protocolVersion === undefined/);
 assert.match(shared,/SHARED_MUTATION_CLIENT_PROTOCOL_VERSION = 1/);
 assert.match(shared,/protocolVersion: SHARED_MUTATION_CLIENT_PROTOCOL_VERSION/);
