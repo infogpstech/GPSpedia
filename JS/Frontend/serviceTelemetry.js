@@ -57,14 +57,6 @@ export function recordBrowserServiceTraffic(input = {}) {
     hourlyBuckets.set(key, bucket);
     trimExpiredBuckets_(timestamp);
 
-    try {
-        if (typeof window !== "undefined" && typeof window.dispatchEvent === "function" &&
-            typeof CustomEvent === "function") {
-            window.dispatchEvent(new CustomEvent("gpsepedia:service-traffic-updated", {
-                detail: { service, timestamp }
-            }));
-        }
-    } catch (error) {}
     return event;
 }
 
