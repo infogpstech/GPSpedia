@@ -663,10 +663,13 @@ function countEquipmentVersionsForAdmin(rawVersions) {
     return Math.max(1, Math.min(3, versions.length));
 }
 
-function findVinDuplicateForAdmin(sheet, vinPrefix, currentVehicleId) {
+function findVinDuplicateForAdmin(sheet, vinPrefix, currentVehicleId, vinColumnIndexOverride) {
     const lastRow = sheet && sheet.getLastRow();
     if (!sheet || !vinPrefix || lastRow < 2) return null;
-    const vinColumnIndex = getVinColumnIndex(sheet);
+    const suppliedVinColumnIndex = Number(vinColumnIndexOverride);
+    const vinColumnIndex = Number.isSafeInteger(suppliedVinColumnIndex) && suppliedVinColumnIndex > 0
+        ? suppliedVinColumnIndex
+        : getVinColumnIndex(sheet);
     if (!vinColumnIndex) throw new Error("La hoja «Cortes» no contiene el encabezado «VIN».");
 
     const rowCount = lastRow - 1;
@@ -702,7 +705,7 @@ function prepareVinCollectionForAdmin(sheet, rowValues, vehicleId, vinColumnInde
     if (!vinPrefix) return null;
     const existing = parseVinCollectionForAdmin(rowValues[vinColumnIndex - 1]);
     if (existing.includes(vinPrefix)) return null;
-    const duplicate = findVinDuplicateForAdmin(sheet, vinPrefix, vehicleId);
+    const duplicate = findVinDuplicateForAdmin(sheet, vinPrefix, vehicleId, vinColumnIndex);
     if (duplicate) throw new Error("VIN ya está registrado para: " + duplicate.modelName);
     const maxAllowed = countEquipmentVersionsForAdmin(versionsOverride || rowValues[COLS_CORTES.versionesAplicables - 1]);
     const update = addVinToAvailableSlot(existing, vinPrefix, maxAllowed);
@@ -5710,10 +5713,10 @@ function handleAddLogo(payload, logMessage) {
     }
 }
 
-function prepareAdminVinCollectionEdit_(sheet, rowValues, vehicleId, rawValue) {
+function prepareAdminVinCollectionEdit_(sheet, rowValues, vehicleId, rawValue, vinColumnIndex) {
     if (typeof rawValue !== "string" && !Array.isArray(rawValue)) throw new Error("La colección VIN debe enviarse como texto o arreglo.");
     const collection = parseVinCollectionForAdmin(rawValue);
-    const existing = parseVinCollectionForAdmin(rowValues[getVinColumnIndex(sheet) - 1]);
+    const existing = parseVinCollectionForAdmin(rowValues[vinColumnIndex - 1]);
     const versionParts = String(rowValues[COLS_CORTES.versionesAplicables - 1] || "").split(/[,/\\;]+/).map(value => value.trim()).filter(Boolean);
     if (versionParts.length > 3) throw new Error("El vehículo contiene más de tres versiones; revisa su configuración antes de editar la colección VIN.");
     const maxAllowed = Math.max(1, versionParts.length);
@@ -5739,7 +5742,7 @@ function handleUpdateVehicleVinCollection_(vehicleId, rawValue, logMessage, expe
         if (lastRow < 2) throw new Error("No se encontraron vehículos registrados.");
         const actualRow = findUniqueAdminVehicleRow_(sheet, String(vehicleId == null ? "" : vehicleId).trim());
         const rowValues = sheet.getRange(actualRow, 1, 1, sheet.getLastColumn()).getValues()[0];
-        const serialized = prepareAdminVinCollectionEdit_(sheet, rowValues, vehicleId, rawValue);
+        const serialized = prepareAdminVinCollectionEdit_(sheet, rowValues, vehicleId, rawValue, vinColumnIndex);
         const previousValue = sheet.getRange(actualRow, vinColumnIndex).getValue();
         if (enforceExpectedCurrentValue === true) assertAdminModalExpectedValue_(previousValue, expectedCurrentValue, "vin");
         let attempted = false;
@@ -6980,7 +6983,7 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
         }
 
         if (vinPrefix && !vehicleId) {
-            const duplicate = findVinDuplicateForAdmin(sheet, vinPrefix, null);
+            const duplicate = findVinDuplicateForAdmin(sheet, vinPrefix, null, vinColumnIndex);
             if (duplicate) throw new Error("VIN ya está registrado para: " + duplicate.modelName);
         }
 

@@ -987,3 +987,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-19] Cierre de lectura acotada para duplicados VIN ADMIN: CI 44595220751 SUCCESS (167 suites, 2,331 pruebas, 0 fallos); AdminVinDuplicateBoundedRead 8/8 y AdminEntityLookupBoundedRead 7/7. Health read-only 44595220797 y GitHub Pages 44595218915 SUCCESS. Diff revisado; no se desplegó ADMIN ni se modificaron datos productivos.
+
+
+[2026-11-19] ADMIN: findVinDuplicateForAdmin y preparación/edición de colecciones VIN reutilizan vinColumnIndex ya resuelto; se evita volver a leer encabezados dentro del mismo flujo y se conserva fallback compatible. AdminVinDuplicateBoundedRead ampliada; CI pendiente.

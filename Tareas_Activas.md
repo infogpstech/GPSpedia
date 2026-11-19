@@ -487,3 +487,9 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Añadir AdminVinDuplicateBoundedRead.mjs al runner.
 - [x] CI 44595220751 SUCCESS: 167 suites, 2,331 pruebas aprobadas, 0 fallos; `AdminVinDuplicateBoundedRead` 8/8 y `AdminEntityLookupBoundedRead` 7/7. Sintaxis JavaScript aprobada. Health read-only 44595220797 SUCCESS; GitHub Pages 44595218915 SUCCESS. Diff revisado.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó ADMIN ni se modificaron datos externos.
+
+### ADMIN — reutilización del índice de columna VIN (2026-11-19)
+- [x] Reutilizar el índice VIN ya resuelto por el handler y los editores; evitar lecturas repetidas de encabezados.
+- [x] Mantener fallback compatible cuando no se proporciona un índice.
+- [x] Ampliar AdminVinDuplicateBoundedRead.mjs para cubrir override y fallback.
+- [ ] CI integral y revisión del diff pendientes. No se despliega ADMIN ni se modifican datos externos.
