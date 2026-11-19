@@ -1005,3 +1005,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-19] ADMIN: se elimina la duplicación de findUniqueCortesVehicleRow_ que sobrescribía la versión optimizada; el localizador conserva una única implementación que consulta primero la columna ID y luego la fila coincidente. Se amplía AdminUniqueVehicleRowBoundedRead para detectar declaraciones duplicadas.
+
+
+[2026-11-19] WRITE: se prepara el preflight autenticado/validado antes de adquirir ScriptLock y se acotan las lecturas de listas oficiales a columnas necesarias de Cortes y Relay. Se añaden/ajustan contratos y prueba aislada de no interferencia.

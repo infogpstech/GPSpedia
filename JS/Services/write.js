@@ -549,7 +549,19 @@ function runWriteDriveWorkOutsideScriptLock_(lock, state, opId, operation) {
     return result;
 }
 
+function prepareAddOrUpdateCutRequest_(payload) {
+    // La identidad y las listas oficiales se preparan sin retener el ScriptLock global de WRITE.
+    const collaboratorName = getAuthenticatedCollaborator(payload, payload && payload.silent === true ? ["desarrollador"] : undefined);
+    const ss = getSpreadsheet();
+    const sheet = ss.getSheetByName(SHEET_NAMES.CORTES);
+    const relaySheet = ss.getSheetByName("Relay");
+    const options = getAddCutPayloadValidationOptions_(sheet, relaySheet);
+    const validatedPayload = validateAddOrUpdateCutPayload_(payload, options);
+    return { collaboratorName: collaboratorName, spreadsheet: ss, sheet: sheet, validatedPayload: validatedPayload };
+}
+
 function handleAddOrUpdateCut(payload) {
+    const preparedRequest = prepareAddOrUpdateCutRequest_(payload);
     const lock = LockService.getScriptLock();
     if (!lock.tryLock(0)) {
         const busyError = new Error("WRITE está ocupado con otra escritura. Conserva el mismo opId y reintenta en unos instantes.");
@@ -558,7 +570,7 @@ function handleAddOrUpdateCut(payload) {
     }
     const lockState = { releasedForDrive: false };
     try {
-        const result = handleAddOrUpdateCutLocked(payload, lock, lockState);
+        const result = handleAddOrUpdateCutLocked(preparedRequest, lock, lockState);
         if (result && result.status === "success" && result.vehicleId) {
             try { result.catalogVersion = nextWriteCatalogVersionLocked_(result.vehicleId); }
             catch (versionError) {
@@ -930,7 +942,14 @@ function validateAddOrUpdateCutPayload_(payload, options) {
 function getAddCutPayloadValidationOptions_(sheet, relaySheet) {
     if (!sheet || !relaySheet) throw new Error("No están disponibles las hojas necesarias para validar las listas oficiales de WRITE.");
     const lastRow = sheet.getLastRow(), lastColumn = sheet.getLastColumn();
-    const rows = lastRow > 1 ? sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues() : [];
+    const firstColumn = COLS_CORTES.categoria;
+    const lastRequiredColumn = Math.min(lastColumn, Math.max(COLS_CORTES.tipoEncendido, COLS_CORTES.tipoCorte1, COLS_CORTES.tipoCorte2, COLS_CORTES.tipoCorte3));
+    const readWidth = Math.max(0, lastRequiredColumn - firstColumn + 1);
+    const rows = lastRow > 1 && readWidth > 0 ? sheet.getRange(2, firstColumn, lastRow - 1, readWidth).getValues() : [];
+    const valueAt = (row, column) => {
+        const offset = column - firstColumn;
+        return offset >= 0 && offset < row.length ? row[offset] : undefined;
+    };
     const unique = values => Array.from(new Set(values.map(value => String(value == null ? "" : value).trim()).filter(Boolean)));
     let categories = [];
     const rule = sheet.getRange(2, COLS_CORTES.categoria).getDataValidation();
@@ -939,21 +958,19 @@ function getAddCutPayloadValidationOptions_(sheet, relaySheet) {
         if (criteria && typeof criteria.getValues === "function") categories = unique(criteria.getValues().flat());
         else if (Array.isArray(criteria)) categories = unique(criteria.flat());
     }
-    if (!categories.length) categories = unique(rows.map(row => row[COLS_CORTES.categoria - 1]));
-    const tipoDeCorte = unique(rows.flatMap(row => [row[COLS_CORTES.tipoCorte1 - 1], row[COLS_CORTES.tipoCorte2 - 1], row[COLS_CORTES.tipoCorte3 - 1]]));
-    const tipoEncendido = unique(rows.map(row => row[COLS_CORTES.tipoEncendido - 1]));
+    if (!categories.length) categories = unique(rows.map(row => valueAt(row, COLS_CORTES.categoria)));
+    const tipoDeCorte = unique(rows.flatMap(row => [valueAt(row, COLS_CORTES.tipoCorte1), valueAt(row, COLS_CORTES.tipoCorte2), valueAt(row, COLS_CORTES.tipoCorte3)]));
+    const tipoEncendido = unique(rows.map(row => valueAt(row, COLS_CORTES.tipoEncendido)));
     const relayLastRow = relaySheet.getLastRow();
-    const relayRows = relayLastRow > 1 ? relaySheet.getRange(2, 1, relayLastRow - 1, Math.max(2, relaySheet.getLastColumn())).getValues() : [];
-    const configRelay = unique(relayRows.map(row => row[1]));
+    const relayRows = relayLastRow > 1 ? relaySheet.getRange(2, 2, relayLastRow - 1, 1).getValues() : [];
+    const configRelay = unique(relayRows.map(row => row[0]));
     return { categoria: categories, tipoDeCorte: tipoDeCorte, tipoEncendido: tipoEncendido, configRelay: configRelay };
 }
-function handleAddOrUpdateCutLocked(payload, lock, lockState) {
-    const collaboratorName = getAuthenticatedCollaborator(payload, payload && payload.silent === true ? ["desarrollador"] : undefined);
-    const ss = getSpreadsheet();
-    const sheet = ss.getSheetByName(SHEET_NAMES.CORTES);
-    const relaySheet = ss.getSheetByName("Relay");
-    const options = getAddCutPayloadValidationOptions_(sheet, relaySheet);
-    const validatedPayload = validateAddOrUpdateCutPayload_(payload, options);
+function handleAddOrUpdateCutLocked(preparedRequest, lock, lockState) {
+    const collaboratorName = preparedRequest.collaboratorName;
+    const ss = preparedRequest.spreadsheet;
+    const sheet = preparedRequest.sheet;
+    const validatedPayload = preparedRequest.validatedPayload;
     const vehicleId = validatedPayload.vehicleId;
     const lastRowBefore = sheet.getLastRow();
     let existingRowIndex = null, existingRowValues = null, existingRowFormulas = null;

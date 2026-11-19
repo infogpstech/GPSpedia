@@ -504,3 +504,10 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] CI 44614041417 SUCCESS: 168 suites, 2,347 pruebas aprobadas, 0 fallos; AdminUniqueVehicleRowBoundedRead 13/13 y sintaxis JavaScript aprobada.
 - [x] Health read-only 44614041045 SUCCESS. GitHub Pages 44613910857 SUCCESS sobre el commit funcional anterior (b9bc06d).
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó ADMIN ni se modificaron datos externos.
+
+### WRITE — preflight de registro de cortes fuera del ScriptLock (2026-11-19)
+- [x] Confirmar que la ruta canónica addOrUpdateCut pertenece a WRITE; el handler homónimo de ADMIN rechaza la acción heredada y no es el flujo ejecutado.
+- [x] Mover autenticación contextual, lectura de listas oficiales y validación del payload antes de adquirir el ScriptLock global de WRITE.
+- [x] Reducir la lectura de listas de Cortes a columnas 2–26 y la de Relay a su columna de configuración.
+- [x] Añadir prueba determinista para orden preflight→lock, validación y rangos leídos.
+- [ ] CI integral y revisión del diff pendientes.

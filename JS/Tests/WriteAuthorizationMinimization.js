@@ -103,11 +103,13 @@ function runWriteAuthorizationMinimizationTests(sources) {
  run("Registro silencioso se procesa en WRITE y solo lo puede ejecutar Desarrollador",()=>{
   assert(add.includes("const serviceOverride = null")&&add.includes("silent: silentVal"));
   const start=write.indexOf("function handleAddOrUpdateCutLockedUnsafe_"),end=write.indexOf("\nfunction ",start+10),handler=write.slice(start,end<0?write.length:end);
-  const wrapperStart=write.indexOf("function handleAddOrUpdateCutLocked("),wrapperEnd=write.indexOf("\nfunction handleAddOrUpdateCutLockedUnsafe_",wrapperStart),wrapper=write.slice(wrapperStart,wrapperEnd);
-  assert(wrapperStart>=0&&wrapperEnd>wrapperStart);
-  assert(wrapper.includes('getAuthenticatedCollaborator(payload, payload && payload.silent === true ? ["desarrollador"] : undefined)'));
-  assert(!handler.includes("getAuthenticatedCollaborator("),"La identidad del colaborador no debe resolverse dos veces.");
-  assert(/'addOrUpdateCut':\s*'WRITE'/.test(api));
+   const preflight=extract(write,"prepareAddOrUpdateCutRequest_"),outer=extract(write,"handleAddOrUpdateCut"),locked=extract(write,"handleAddOrUpdateCutLocked");
+   assert(preflight.includes('getAuthenticatedCollaborator(payload, payload && payload.silent === true ? ["desarrollador"] : undefined)'));
+   assert(preflight.includes("getAddCutPayloadValidationOptions_")&&preflight.includes("validateAddOrUpdateCutPayload_"));
+   assert(outer.indexOf("prepareAddOrUpdateCutRequest_(payload)")<outer.indexOf("lock.tryLock(0)"),"El preflight debe ejecutarse antes del lock.");
+   assert(!locked.includes("getAuthenticatedCollaborator(")&&!locked.includes("validateAddOrUpdateCutPayload_"),"No debe repetir autenticación ni validación bajo el lock.");
+   assert(!handler.includes("getAuthenticatedCollaborator("),"La identidad del colaborador no debe resolverse dos veces.");
+   assert(/'addOrUpdateCut':\s*'WRITE'/.test(api));
  });
  run("WRITE asigna IDs desde el servicio propietario",()=>{
   const start=write.indexOf("function handleAddOrUpdateCutLockedUnsafe_"),end=write.indexOf("\nfunction ",start+10),handler=write.slice(start,end<0?write.length:end);
