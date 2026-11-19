@@ -195,8 +195,9 @@ function createSharedMutationClient_(dependencies) {
         invalidateSessionActorCaches(userId, sessionTokens);
         return send_("revokeUserSessions", "AUTH", "revokeUserSessions", { userId });
     }
-    function validateSessionContext(userId, sessionToken) {
-        return send_("validateSessionContext", "AUTH", "validateSessionContext", { userId, sessionToken });
+    function validateSessionContext(userId, sessionToken, service) {
+        const caller = String(service || "AUTH").trim().toUpperCase();
+        return send_("validateSessionContext", caller, "validateSessionContext", { userId, sessionToken });
     }
 
     return { withLease: withLease, publishCatalogChange: publishCatalogChange,
@@ -319,14 +320,14 @@ function withSharedSessionActor_(event, actor) {
 }
 
 
-function validateSharedSessionContext_(userId, sessionToken) {
+function validateSharedSessionContext_(userId, sessionToken, service) {
     const client = createSharedMutationClient_({
         properties: PropertiesService.getScriptProperties(),
         fetch: function(url, options) { return UrlFetchApp.fetch(url, options); },
         uuid: function() { return Utilities.getUuid(); },
         logger: function(message) { Logger.log(message); }
     });
-    return client.validateSessionContext(userId, sessionToken);
+    return client.validateSessionContext(userId, sessionToken, service);
 }
 
 
@@ -371,7 +372,8 @@ function getCachedSharedSessionActor_(userId, sessionToken, dependencies) {
     if (!id || !token) throw new Error("La sesión requiere userId y sessionToken.");
     const deps = dependencies && typeof dependencies === "object" ? dependencies : {};
     const cache = Object.prototype.hasOwnProperty.call(deps, "cache") ? deps.cache : CacheService.getScriptCache();
-    const validate = typeof deps.validate === "function" ? deps.validate : validateSharedSessionContext_;
+    const validate = typeof deps.validate === "function" ? deps.validate :
+        (actorUserId, actorToken) => validateSharedSessionContext_(actorUserId, actorToken, deps.service || "AUTH");
     const keyFor = typeof deps.keyFor === "function" ? deps.keyFor : getSharedSessionActorCacheKey_;
     const cacheKey = keyFor(id, token);
     const validActor = actor => actor && typeof actor === "object" && actor.userId === id &&
