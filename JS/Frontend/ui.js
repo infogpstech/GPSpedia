@@ -8227,6 +8227,11 @@ export async function openAuditDriveModal() {
     const organizeButton = document.getElementById('btn-audit-drive-organize');
     const saveInventoryButton = document.getElementById('btn-audit-drive-save-inventory');
     const reconcileButton = document.getElementById('btn-audit-drive-reconcile');
+    const organizerPreviewButton = document.getElementById('btn-audit-drive-organizer-preview');
+    const organizerPreviewPanel = document.getElementById('audit-drive-organizer-panel');
+    const organizerPreviewStatus = document.getElementById('audit-drive-organizer-status');
+    const organizerPreviewCounts = document.getElementById('audit-drive-organizer-counts');
+    const organizerPreviewResults = document.getElementById('audit-drive-organizer-results');
     const reconciliationPanel = document.getElementById('audit-drive-reconciliation-panel');
     const reconciliationStatus = document.getElementById('audit-drive-reconciliation-status');
     const reconciliationCounts = document.getElementById('audit-drive-reconciliation-counts');
@@ -8251,6 +8256,7 @@ export async function openAuditDriveModal() {
         }
     }
     let currentReconciliationReport = null;
+    let isOrganizerPreviewRunning = false;
     if (!summaryEl || !container) return;
     if (closeBtn) closeBtn.onclick = () => {
         const historyManager = window.overlayHistory;
@@ -8760,6 +8766,11 @@ export async function openAuditDriveModal() {
         if (reconcileButton) {
             reconcileButton.hidden = !complete;
             reconcileButton.disabled = isRunning || isDriveAuditRunning || isReconciling || !complete;
+        }
+        if (organizerPreviewButton) {
+            organizerPreviewButton.hidden = !complete;
+            organizerPreviewButton.disabled = isRunning || isDriveAuditRunning || isReconciling ||
+                isOrganizerPreviewRunning || !complete || !auditId;
         }
         updateReconciliationApprovalControls_();
     };
@@ -9456,9 +9467,126 @@ export async function openAuditDriveModal() {
         }
     };
 
+
+    const runCortesImageOrganizerPreview = async () => {
+        if (!isCurrentRequest() || !complete || !auditId || isOrganizerPreviewRunning ||
+            isRunning || isDriveAuditRunning || isReconciling) return;
+        isOrganizerPreviewRunning = true;
+        isRunning = true;
+        isDriveAuditRunning = true;
+        if (organizerPreviewPanel) organizerPreviewPanel.hidden = false;
+        if (organizerPreviewStatus) organizerPreviewStatus.textContent = "Validando auditoría e iniciando preview de destinos…";
+        if (organizerPreviewCounts) organizerPreviewCounts.replaceChildren();
+        if (organizerPreviewResults) organizerPreviewResults.replaceChildren();
+        updateControls();
+        appendAuditConsole("Iniciando preview del organizador de Cortes y LogosMarca. Operación de solo lectura.", "info");
+        const allResults = [];
+        let offset = 0, digest = "", totalTargets = null, pageNumber = 0;
+        try {
+            do {
+                if (!isCurrentRequest()) return;
+                const response = await routeActionWithRetry("previewCortesImageOrganizer", {
+                    ...getDeveloperSessionPayload(), auditId, offset, limit: 25
+                }, {
+                    timeoutMs: 60000, maxAttempts: 2, retryDelayMs: 700,
+                    shouldContinue: isCurrentRequest
+                });
+                if (!isCurrentRequest()) return;
+                if (!response || response.status !== "success" || response.writePerformed !== false ||
+                    response.canApply !== false || !/^[a-f0-9]{64}$/i.test(String(response.manifestDigest || "")) ||
+                    !Array.isArray(response.results) || !Number.isInteger(Number(response.nextOffset)) &&
+                    response.nextOffset !== null) {
+                    throw new Error(response && response.message ? response.message : "ADMIN devolvió un manifiesto incompleto o no verificable.");
+                }
+                if (digest && digest !== response.manifestDigest) {
+                    throw new Error("El manifiesto cambió entre páginas. No se combinaron resultados; ejecuta una auditoría nueva.");
+                }
+                digest = response.manifestDigest;
+                if (totalTargets === null) totalTargets = Number(response.totalTargets) || 0;
+                if (Number(response.totalTargets) !== totalTargets || Number(response.offset) !== offset) {
+                    throw new Error("La paginación del manifiesto no coincide con el cursor solicitado.");
+                }
+                allResults.push(...response.results);
+                pageNumber++;
+                appendAuditConsole("Preview del organizador: página " + pageNumber + ", " +
+                    response.pageSummary.ready + " listos, " + response.pageSummary.alreadyCorrect +
+                    " correctos y " + response.pageSummary.blocked + " bloqueados.", "progress");
+                offset = response.nextOffset === null ? totalTargets : Number(response.nextOffset);
+                if (response.complete !== (response.nextOffset === null)) {
+                    throw new Error("ADMIN devolvió un indicador de finalización inconsistente.");
+                }
+                if (organizerPreviewStatus) organizerPreviewStatus.textContent =
+                    "Inspeccionando destinos: " + Math.min(offset, totalTargets) + " de " + totalTargets + "…";
+                if (response.nextOffset === null) break;
+                if (pageNumber > Math.ceil(totalTargets / 25) + 1) throw new Error("La paginación excedió el número esperado de páginas.");
+            } while (true);
+
+            const counts = { ready: 0, already_correct: 0, blocked: 0 };
+            allResults.forEach(item => {
+                if (Object.prototype.hasOwnProperty.call(counts, item.status)) counts[item.status]++;
+            });
+            if (allResults.length !== totalTargets) {
+                throw new Error("El manifiesto terminó con " + allResults.length + " destinos de " + totalTargets + " esperados.");
+            }
+            if (organizerPreviewCounts) {
+                const summary = document.createElement("p");
+                summary.textContent = "Manifiesto " + digest + " · " + totalTargets + " destinos · " +
+                    counts.ready + " listos · " + counts.already_correct + " ya correctos · " +
+                    counts.blocked + " bloqueados · referencias: " +
+                    (allResults.some(item => item.status === "blocked" && (item.reasons || []).includes("active_sheet_references_unverifiable"))
+                        ? "no verificables" : "verificadas o sin alertas individuales") + ".";
+                organizerPreviewCounts.appendChild(summary);
+            }
+            if (organizerPreviewResults) {
+                const visible = allResults.slice(0, 500);
+                visible.forEach(item => {
+                    const row = document.createElement("article");
+                    row.className = "audit-drive-result-row";
+                    const heading = document.createElement("strong");
+                    heading.textContent = (item.sheetName || "Cortes") + " · fila " + item.row + " · " + item.field +
+                        " · " + (item.status || "sin estado");
+                    const detail = document.createElement("p");
+                    detail.textContent = "Archivo: " + (item.currentName || item.fileId || "No verificado") +
+                        " · actual: " + (item.currentFolderPath || "No verificada") +
+                        " · destino: " + (item.targetFolderPath || "No disponible") +
+                        (item.targetName ? " · nombre propuesto: " + item.targetName : "");
+                    row.append(heading, detail);
+                    if (Array.isArray(item.reasons) && item.reasons.length) {
+                        const reason = document.createElement("p");
+                        reason.textContent = "Bloqueos: " + item.reasons.join("; ");
+                        row.appendChild(reason);
+                    }
+                    organizerPreviewResults.appendChild(row);
+                });
+                if (allResults.length > visible.length) {
+                    const note = document.createElement("p");
+                    note.textContent = "Se muestran " + visible.length + " de " + allResults.length +
+                        " destinos. El manifiesto completo fue recorrido y su digest se conserva en esta sesión.";
+                    organizerPreviewResults.appendChild(note);
+                }
+            }
+            const message = "Preview completo: " + counts.ready + " destinos listos, " +
+                counts.already_correct + " ya organizados y " + counts.blocked + " bloqueados. " +
+                "Digest: " + digest + ". No se modificó Drive ni Spreadsheet; la aplicación permanece deshabilitada.";
+            if (organizerPreviewStatus) organizerPreviewStatus.textContent = message;
+            appendAuditConsole(message, counts.blocked ? "warning" : "success");
+        } catch (error) {
+            if (!isCurrentRequest()) return;
+            const message = "Preview incompleto; no se debe aplicar ningún cambio. " + String(error && error.message || error);
+            if (organizerPreviewStatus) organizerPreviewStatus.textContent = message;
+            appendAuditConsole(message, "error");
+        } finally {
+            isOrganizerPreviewRunning = false;
+            isRunning = false;
+            isDriveAuditRunning = false;
+            if (isCurrentRequest()) updateControls();
+        }
+    };
+
     if (saveInventoryButton) saveInventoryButton.onclick = () => saveUnusedInventory();
     if (organizeButton) organizeButton.onclick = () => organizeUnusedImages();
     if (reconcileButton) reconcileButton.onclick = () => runCortesReconciliation();
+    if (organizerPreviewButton) organizerPreviewButton.onclick = () => runCortesImageOrganizerPreview();
     if (applyReconciliationButton) applyReconciliationButton.onclick = async () => {
         if (!isCurrentRequest() || !currentReconciliationReport || currentReconciliationReport.status !== "complete") return;
         const checked = Array.from(reconciliationResults.querySelectorAll('input[data-reconciliation-approve="true"]:checked'));
