@@ -55,8 +55,8 @@ check("Combina fuentes directas sin perder el agregado Coordinator", () => {
     assert.equal(result.totals.lastHour.USERS, 0);
     assert.equal(result.buckets[0].counts.AUTH, 3);
     assert.equal(result.buckets[0].counts.CATALOG, 4);
-    assert.equal(result.sources.ADMIN.coordinatorAvailable, true);
-    assert.equal(result.sources.UTILITIES.accuracy, "coordinator_only");
+    assert.ok(result.services.includes("ADMIN"));
+    assert.equal(result.sources.UTILITIES, undefined);
 });
 check("No acepta agregados sin identidad/scope o sin los siete servicios", () => {
     assert.throws(() => normalizeCoordinatorServiceTraffic_(Object.assign({}, coordinator, { scope: "other" })));
@@ -82,7 +82,10 @@ check("No mezcla una respuesta directa con scope o conteos inválidos", () => {
     };
     const partial = mergeDirectServiceTraffic_(coordinator, malformed);
     assert.equal(partial.status, "success");
-    assert.equal(partial.totals.lastHour.AUTH, 0);
-    assert.equal(partial.sources.AUTH.directRequestsAvailable, false);
+    assert.equal(partial.totals.lastHour.AUTH, 3);
+    assert.equal(partial.buckets[0].counts.AUTH, 0);
+    assert.equal(partial.sources.AUTH.directRequestsAvailable, true);
+    assert.equal(partial.sources.AUTH.accuracy, "partial");
+    assert.equal(partial.sources.AUTH.reason, "invalid_buckets_ignored");
 });
 console.log("ServiceTrafficAggregatorContract: " + passed + "/" + passed + " PASS");
