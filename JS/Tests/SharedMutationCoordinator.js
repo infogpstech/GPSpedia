@@ -965,7 +965,7 @@ function runSharedMutationCoordinatorTests() {
         assert_(traffic.status === "success" && traffic.scope === "global_service_traffic",
             "Un servicio sin configuración directa no debe romper la consulta global.");
         assert_(traffic.sources.AUTH.directRequestsAvailable === false &&
-            traffic.sources.AUTH.reason === "not_configured",
+            traffic.sources.AUTH.reason === "fetch_unavailable",
             "La fuente sin respuesta debe declararse parcial.");
         assert_(traffic.totals.last24Hours.AUTH === 0,
             "Una fuente no disponible no debe inventar conteos.");
