@@ -35,4 +35,4 @@ assert.throws(()=>fn(malformed,"200","OP-BAD"),/ID inválido/,"Debe conservar la
 assert.throws(()=>fn(null,"200","OP-NULL"),/No se encontró la hoja/);
 assert.throws(()=>fn({getLastRow:()=>1},"200","OP-EMPTY"),/aparece en 0 filas/);
 assert.ok(!code.includes("getDataRange"),"No debe cargar filas completas para localizar ID");
-console.log("AdminUniqueVehicleRowBoundedRead: 9/9 PASS — columna ID, lectura de fila única y detección de corrupción/duplicados");
+console.log("AdminUniqueVehicleRowBoundedRead: 13/13 PASS — columna ID, lectura de fila única y detección de corrupción/duplicados");
