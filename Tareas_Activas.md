@@ -81,11 +81,12 @@ Normativa: NORMAS_DESAROLLO.md
 **REGRESIÓN INTEGRAL LOCAL COMPLETADA; VALIDACIÓN BETA PENDIENTE**
 - [x] Regresión integral CI run 44532907478: 152 suites, 2,224 pruebas aprobadas, 0 fallos; LogoIdIntegrity 13/13 PASS.
 - [x] Health run 44532907375 SUCCESS y Pages run 44532906078 SUCCESS.
+- [x] Preparación de entrada a Beta: comandos seguros de verificación de repositorio/rama/árbol limpio, fetch y pull --ff-only ubicados al inicio de lista_beta_parte1.txt.
 - [ ] Beta: requiere autorización para desplegar los proyectos Apps Script del entorno aislado y ejecutar auditoría Drive/Spreadsheet de solo lectura; no aplicar movimientos ni renombrados.
 
 - Ejecutar las pruebas locales pertinentes de cada fase y una regresión integral de contratos, sintaxis, permisos, sesiones, revocaciones, caché remota, cuentas, telemetría y flujos administrativos.
 - Registrar por separado lo aprobado localmente y lo que exige deployment, credenciales, navegador/dispositivo real, Drive o Spreadsheet.
-- Abrir la fase Beta únicamente después de cerrar las implementaciones locales; preparar primero los comandos seguros de sincronización exigidos por NORMAS_DESAROLLO.md.
+- Abrir la fase Beta únicamente después de cerrar las implementaciones locales; los comandos seguros de sincronización ya están al inicio de lista_beta_parte1.txt; ejecutarlos antes de cualquier prueba Beta.
 
 **Criterio de avance:** cerrar cada tarea con diff revisado, pruebas locales reproducibles y commit verificado en `GPSpedia2.2.5_work`. Si aparece un hallazgo crítico de seguridad/integridad, atenderlo antes de avanzar. La rama base `GPSpedia2.2.5` permanece protegida e intacta.
 

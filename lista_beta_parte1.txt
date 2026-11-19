@@ -1,4 +1,42 @@
 GPSpedia — Lista de funcionalidades para la etapa Beta
+
+## PREPARACIÓN OBLIGATORIA ANTES DE CUALQUIER PRUEBA BETA
+
+Ejecutar desde la raíz del clon local. La secuencia verifica repositorio y rama, exige un árbol limpio, obtiene los cambios remotos y sincroniza exclusivamente mediante fast-forward. Si existen cambios locales, se detiene sin descartarlos.
+
+```bash
+set -euo pipefail
+EXPECTED_REPO="infogpstech/GPSpedia"
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in
+  "https://github.com/${EXPECTED_REPO}"|"https://github.com/${EXPECTED_REPO}.git"|"git@github.com:${EXPECTED_REPO}"|"git@github.com:${EXPECTED_REPO}.git") ;;
+  *) echo "ERROR: origin no apunta a ${EXPECTED_REPO}." >&2; exit 1 ;;
+esac
+
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH" || {
+  echo "ERROR: la rama activa no es $EXPECTED_BRANCH." >&2
+  exit 1
+}
+
+if [ -n "$(git status --porcelain)" ]; then
+  echo "ERROR: hay cambios locales sin guardar; no se sincroniza ni descarta nada." >&2
+  git status --short
+  exit 1
+fi
+
+git fetch origin "$EXPECTED_BRANCH"
+git pull --ff-only origin "$EXPECTED_BRANCH"
+
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH"
+test -z "$(git status --porcelain)"
+echo "HEAD sincronizado: $(git rev-parse HEAD)"
+git status --short --branch
+```
+
+**Seguridad:** no sustituir esta secuencia por `reset --hard`, `clean`, `force` ni operaciones que descarten cambios locales. Si el fast-forward no es posible, detener la sincronización y revisar la divergencia.
+
 Fecha de elaboración: 2026-11-09
 Estado: PLANIFICACIÓN; no autoriza implementación anticipada.
 
@@ -691,21 +729,6 @@ No desplegar a producción, no usar carpetas/hojas productivas y no modificar AC
 
 ================================================================================
 AUG-084 — ESQUEMA, UNICIDAD E IDEMPOTENCIA DE ALTAS PyS
-================================================================================
-
-PREPARACIÓN OBLIGATORIA ANTES DE CUALQUIER PRUEBA BETA
-
-```bash
-set -e
-test -z "$(git status --porcelain)" || { echo "Working tree no limpio"; exit 1; }
-git remote get-url origin
-git fetch origin
-git switch GPSpedia2.2.5_work
-git pull --ff-only origin GPSpedia2.2.5_work
-git status --short
-git rev-parse HEAD
-```
-
 Ejecutar exclusivamente en una copia aislada del proyecto Apps Script, una copia aislada de la hoja de cálculo y una carpeta Drive de prueba. No conectar datos de producción ni desplegar a producción.
 
 1. Ejecutar `JS/Tests/PysCreationIntegrity.js` y `JS/Tests/PysImageStorageRecovery.js` con los comandos de `JS/Tests/README.md`. Ambos deben terminar sin fallos.

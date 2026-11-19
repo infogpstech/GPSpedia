@@ -820,3 +820,12 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - JS/Tests/AdminImageScanCoordinatorContract.mjs: comprueba que el destino de LogosMarca coincide con el constructor canónico y bloquea categorías ambiguas.
 - JS/Tests/LogoIdIntegrity.mjs: actualiza el contrato del alta y el harness para la nueva dependencia compartida.
 ================================================================================
+
+
+================================================================================
+2026-11-19 — PREPARACIÓN SEGURA DE LA ENTRADA A BETA
+- lista_beta_parte1.txt: trasladada al inicio la secuencia de sincronización y reforzada para validar el remoto infogpstech/GPSpedia, la rama GPSpedia2.2.5_work y el árbol limpio antes de fetch/pull --ff-only.
+- La secuencia se detiene ante cambios locales, remoto incorrecto, rama distinta o divergencia; muestra el HEAD final y no utiliza reset, clean, force ni comandos destructivos.
+- lista_beta.txt: índice actualizado para indicar que los comandos deben ejecutarse antes de cualquier prueba Beta.
+- Tareas_Activas.md y checkpoint.md: preparación documental registrada como completada. No se desplegó Apps Script ni se accedió a secretos, ScriptProperties, Drive o Spreadsheet.
+================================================================================

@@ -1,6 +1,8 @@
 GPSpedia — Índice de la lista de validación Beta
 Normativa única: NORMAS_DESAROLLO.md.
 
+La parte 1 comienza con la secuencia obligatoria de comprobación de repositorio, rama, árbol limpio y sincronización fast-forward. Ejecutarla antes de cualquier prueba Beta.
+
 La lista se conserva en el orden original:
 1. lista_beta_parte1.txt — introducción, BETA-01 a BETA-10 y validaciones hasta AUG-097.
 2. lista_beta_parte2.txt — índice de la continuación desde AUG-098; contiene los enlaces y el orden de sus dos segmentos.

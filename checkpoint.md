@@ -988,3 +988,12 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - CI final 44532907478 SUCCESS: 152 suites, 2,224 pruebas, 0 fallos; LogoIdIntegrity 13/13. Health 44532907375 SUCCESS; Pages 44532906078 SUCCESS.
 - Fase 5 queda cerrada localmente, incluida coherencia de alta de logos. Fase 7: regresión integral local aprobada; siguiente paso es Beta de solo lectura con autorización. No se desplegó Apps Script ni se modificaron Drive, Spreadsheet, ScriptProperties o secretos.
 ================================================================================
+
+
+================================================================================
+2026-11-19 — PREPARACIÓN DE SINCRONIZACIÓN SEGURA PARA BETA
+- HEAD de inicio verificado: 3e93acc87d9c0465abd443d46a73d52ccbc2cb2f en GPSpedia2.2.5_work; rama base GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- lista_beta_parte1.txt comienza ahora con comandos copiables que comprueban remoto/repositorio, rama autorizada y árbol limpio; luego ejecutan git fetch y git pull --ff-only y muestran el HEAD final.
+- La secuencia se detiene si hay cambios locales o si el fast-forward no es posible; no descarta cambios ni utiliza reset --hard, clean o force. lista_beta.txt apunta explícitamente a esta preparación.
+- Preparación documental completada. La ejecución de sincronización, deployments Apps Script y pruebas contra servicios/Drive/Spreadsheet quedan pendientes de autorización del entorno Beta.
+================================================================================
