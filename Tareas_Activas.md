@@ -305,7 +305,7 @@ Aplicar la estructura objetivo después de validar el dry-run:
 - [x] Reserva atómica de operación/vehículo/slot para el flujo con `opId`: ledger `pending` reserva el slot antes de liberar el lock. La reserva idempotente del ID central para altas nuevas sigue pendiente.
 - [x] Mover las operaciones de carpetas/carga/reparación Drive fuera del lock para operaciones con `opId`; la llamada ADMIN→WRITE de asignación de ID continúa pendiente.
 - [x] Re-adquirir con `tryLock(0)` y revalidar reserva, fila, slot, opId y operationHash antes de aplicar las URLs; el `finally` solo libera el lock si sigue en posesión de la ejecución.
-- [ ] Preservar ledger de imágenes, recuperación de respuesta perdida, idempotencia, verificación de escritura y compensación/revisión ante fallos.
+- [x] Preservar ledger de imágenes, recuperación de respuesta perdida, idempotencia, verificación de escritura y compensación/revisión ante fallos; regresiones integrales aprobadas en CI 44592625381.
 - [x] Añadir prueba determinista `AdminDriveLockIsolation.mjs` (9/9), conectarla al runner y validar recuperación/error de Drive y fallo de readquisición; quedan pendientes pruebas de extremo a extremo para asignación de ID y concurrencia real Beta.
 - [x] Ejecutar regresión integral: 158 suites, 2,260 pruebas aprobadas, 0 fallos; health read-only SUCCESS. Revisión funcional del helper y su `finally` completada.
 - Beta: concurrencia real y comportamiento de Drive/Spreadsheet pendientes de autorización; no desplegar ni tocar datos reales en esta fase.
@@ -338,15 +338,15 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 
 ## Avance de implementación — GP-PERF-ADMIN-CUT-LOCK-01 (2026-11-19)
 - [x] Primer ajuste de reserva: `findNextAvailableCutSlot_` ahora excluye los slots del mismo vehículo que ya estén registrados como `pending` en Idempotencia. Esto permite reservar el destino antes de liberar el lock para Drive.
-- [ ] Ejecutar la prueba local `AdminCutSlotReservation.mjs` y CI; no marcar el subpaso como validado hasta comprobar resultados.
+- [x] `AdminCutSlotReservation.mjs` y CI: 5/5 PASS en la regresión 44592625381.
 - [ ] Continuar con la separación del flujo en reserva breve, WRITE/Drive fuera del lock y revalidación/persistencia breve. El handler aún conserva el lock global durante el resto del proceso; esta modificación por sí sola NO cierra la tarea.
 - [ ] Añadir recuperación segura y pruebas de no interferencia entre auditoría, Inbox, health, login y registro de cortes. No se ha confirmado el mapa de proyectos Apps Script desplegados; el repositorio no contiene manifiestos `.clasp.json` ni `appsscript.json` que permitan asociar cada fuente a un Script ID.
 
 ### Avance adicional — asignador central de IDs WRITE (2026-11-19)
 - [x] Sustituir la espera de hasta 30 segundos en `handleAllocateVehicleId` por adquisición inmediata `tryLock(0)`. Si WRITE está ocupado, responde con `WRITE_BUSY` para permitir reintento, sin quedar esperando y reteniendo la ejecución.
-- [ ] Ejecutar prueba determinista y CI antes de marcar validado.
+- [x] Pruebas deterministas/CI del asignador: `WriteIdAllocatorNonBlocking` 5/5 y `AdminVehicleIdOutsideLock` 4/4 PASS en 44592625381.
 - [ ] Reducir la sección crítica del asignador: actualmente verifica IDs existentes en la hoja completa; evaluar contador + reconciliación segura sin perder detección de duplicados o IDs manuales.
-- [ ] Resolver publicación del catálogo: `publishCortesCatalogChange_` mantiene ScriptLock durante la llamada a Coordinator; separar snapshot/orden de publicación sin permitir eventos obsoletos.
+- [x] Publicación del catálogo aislada del ScriptLock local, con secuencia monotónica y protección contra eventos obsoletos; `WriteCatalogPublicationIsolation` 9/9 PASS en 44592625381.
 
 - [x] Ajuste del contrato de pruebas AUG-039 para reflejar el nuevo comportamiento del asignador: adquisición inmediata `tryLock(0)`, validación de rol dentro de la sección crítica y liberación solo tras adquirirlo. El primer CI detectó esta expectativa antigua; se actualiza la prueba, no se revierte la corrección.
 
@@ -452,7 +452,7 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Mover confirmación final de nombre/estado Drive fuera del lock; revalidar que la URL activa siga siendo la nueva antes de completar el ledger.
 - [x] Si no se puede readquirir el lock, conservar ledger/archivo en estado pendiente y solicitar reintento con el mismo `opId`; `finally` libera solo si conserva el lock.
 - [x] CI `44571281616` SUCCESS: 162 suites, 2,289 pruebas aprobadas, 0 fallos; `AdminImageUploadDriveIsolation` 9/9 y `AdminVehicleFolderSyncOutsideLock` 7/7. Health read-only `44571281679` SUCCESS.
-- [ ] Aislar la rama de recuperación `status === linked` (lectura/verificación Drive e historial) y las operaciones Drive de compensación del `catch`; actualmente aún se ejecutan bajo ScriptLock.
+- [x] Aislar recuperación `status === linked` y compensación Drive del `catch`; ambas rutas ejecutan I/O Drive fuera del ScriptLock y revalidan el ledger al readquirir.
 
 ### ADMIN — recuperación de reemplazos ya vinculados fuera del ScriptLock (2026-11-19)
 - [x] Mover lookup, comprobación de papelera e integridad de archivos de operaciones `linked` fuera del ScriptLock.
@@ -460,7 +460,8 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Mover actualización final de metadata Drive fuera del lock y revalidar ledger antes de confirmarla.
 - [x] Añadir `AdminImageUploadLinkedRecoveryIsolation.mjs` al runner.
 - [x] CI `44572041539` SUCCESS: 163 suites, 2,294 pruebas aprobadas, 0 fallos; `AdminImageUploadLinkedRecoveryIsolation` 5/5 y compensación in-modal 9/9. Health read-only `44572041605` SUCCESS.
-- [ ] Aislar las operaciones Drive de compensación del catch: reserva opId y metadata Drive fuera del ScriptLock implementadas; falta aprobar CI y revisión. Se preserva el orden historial→ledger.
+- [x] Aislar la compensación Drive del catch: reserva opId como `requires_review`, metadata Drive fuera del ScriptLock y revalidación del ledger; orden historial→ledger preservado.
 - [x] Aislar también el fallback de metadata Drive cuando falla la escritura final del ledger.
 - [x] Añadir regresión AdminImageUploadCompensationIsolation.mjs al runner.
-- [ ] CI integral, revisión del diff y comprobación del commit pendientes; validación real Drive/Spreadsheet queda para Beta autorizada.
+- [x] CI 44592625381 SUCCESS: 164 suites, 2,304 pruebas aprobadas, 0 fallos; regresión `AdminImageUploadCompensationIsolation` 10/10 y sintaxis JavaScript aprobada. Health read-only 44592625568 SUCCESS; GitHub Pages 44592624258 SUCCESS. Diff revisado y commits verificados.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Pendiente deployment autorizado y prueba real Drive/Spreadsheet; no se modificaron datos productivos.

@@ -962,3 +962,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 [2026-11-19] Ajuste de prueba: el escenario de fallo de readquisición debe comenzar con ScriptLock adquirido, liberarlo durante Drive y simular tryLock(0) fallido; no debe iniciar sin lock, porque el helper ejecuta directamente cuando no es propietario.
 
 [2026-11-19] Ajuste de orden: se conserva la actualización/verificación del historial antes de reservar el ledger; la reserva precede a todo trabajo Drive fuera del lock.
+
+
+[2026-11-19] Cierre local de compensación ADMIN: CI 44592625381 SUCCESS (164 suites, 2,304 pruebas, 0 fallos); AdminImageUploadCompensationIsolation 10/10. Health read-only 44592625568 y GitHub Pages 44592624258 SUCCESS. Diff revisado; deployment y validación real Drive/Spreadsheet diferidos a Beta autorizada. HEAD de implementación cab6da36207b2768b77de7cc52ea5c6554424c58.
