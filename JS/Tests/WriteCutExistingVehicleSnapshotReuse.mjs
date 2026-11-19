@@ -6,14 +6,14 @@ function extract(name, nextName) {
     const start = source.indexOf("function " + name + "(");
     assert.ok(start >= 0, "No se encontró " + name);
     const end = nextName
-        ? source.indexOf("\\nfunction " + nextName + "(", start + 10)
-        : source.indexOf("\\nfunction ", start + 10);
+        ? source.indexOf("\nfunction " + nextName + "(", start + 10)
+        : source.indexOf("\nfunction ", start + 10);
     assert.ok(end > start, "No se encontró el límite de " + name);
     return source.slice(start, end);
 }
 
 const helperCode = extract("getPreparedExistingVehicleRow_", "handleAddOrUpdateCutLockedUnsafe_");
-const resolveRow = new Function("COLS_CORTES", helperCode + "\\nreturn getPreparedExistingVehicleRow_;")({ id: 1 });
+const resolveRow = new Function("COLS_CORTES", helperCode + "\nreturn getPreparedExistingVehicleRow_;")({ id: 1 });
 let passed = 0;
 function test(name, fn) { fn(); passed++; }
 
