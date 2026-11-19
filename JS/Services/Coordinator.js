@@ -822,14 +822,19 @@ function createSharedMutationCoordinator_(dependencies) {
                     result.scope !== spec.scope || !Array.isArray(result.buckets) || !validTotals) {
                     throw new Error("invalid_response");
                 }
-                const validBuckets = result.buckets.filter(bucket => bucket &&
-                    Number.isSafeInteger(bucket.startAt) && bucket.startAt > 0 &&
-                    Number.isSafeInteger(bucket.count) && bucket.count >= 0);
+                const validBuckets = [];
+                const seenBuckets = new Set();
+                result.buckets.forEach(bucket => {
+                    if (!bucket || !Number.isSafeInteger(bucket.startAt) || bucket.startAt <= 0 ||
+                        !Number.isSafeInteger(bucket.count) || bucket.count < 0 || seenBuckets.has(bucket.startAt)) return;
+                    seenBuckets.add(bucket.startAt);
+                    validBuckets.push(bucket);
+                });
+                const hasInvalidBuckets = validBuckets.length !== result.buckets.length;
                 results[spec.service] = Object.assign({}, result, {
                     buckets: validBuckets,
-                    accuracy: validBuckets.length === result.buckets.length
-                        ? String(result.accuracy || "best_effort_nonblocking") : "partial",
-                    reason: validBuckets.length === result.buckets.length ? null : "invalid_buckets_ignored"
+                    accuracy: hasInvalidBuckets ? "partial" : String(result.accuracy || "best_effort_nonblocking"),
+                    reason: hasInvalidBuckets ? "invalid_or_duplicate_buckets_ignored" : null
                 });
             } catch (error) {
                 results[spec.service] = {
