@@ -623,3 +623,14 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Añadir AdminIdempotenciaSheetLookupFastPath.mjs al runner: 6/6 PASS.
 - [x] CI 44631635536 SUCCESS: 182 suites, 2,440 pruebas aprobadas, 0 fallos; sintaxis JavaScript aprobada.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó ADMIN ni se modificaron Sheets/Drive productivos. GP-PERF-ADMIN-CUT-LOCK-01 continúa EN PROGRESO.
+
+
+### ADMIN — reutilización del snapshot idempotente por operación (2026-11-19)
+- [x] Crear una sola lectura integral validada del ledger Idempotencia al inicio de la sección crítica de `handleAddOrUpdateCut`.
+- [x] Compartir el snapshot con `findRowByOpId`, `recordOpId` y las revalidaciones posteriores a Drive; verificar el `opId` dirigido contra la hoja antes de confiar en la entrada cacheada.
+- [x] Rechazar cambios en presencia/ausencia, fila, vehicleId, slot, operationHash o retroceso de estado completed; actualizar el snapshot tras cada escritura verificada.
+- [x] Mantener detección integral de opIds duplicados al construir el snapshot y transición monotónica pending → completed.
+- [x] Prueba `AdminIdempotencySnapshotReuse.mjs`: 10/10 PASS; contrato legacy actualizado. Regresión CI `44632610105` SUCCESS: 183 suites, 2,450 pruebas aprobadas, 0 fallos; sintaxis JS aprobada.
+- [x] Health read-only `44632610206` SUCCESS. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
+- Commits de implementación y refinamiento: `748d9f5c868571607d90a3fe805283112f74e276`, `4c3d24824ad38c96f38488b54cd390dba4089536`, `f96d988a4c3b42a1064c6ea4ecadfc4caa47e1d6`; pruebas/contratos: `70d676d5e0d5720e32eae004c825934bc466bc89` y commits posteriores hasta `e2af8eeeacce492749b9c9e0ace43d2ec3d3205f`.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. `GP-PERF-ADMIN-CUT-LOCK-01` continúa EN PROGRESO.
