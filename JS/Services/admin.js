@@ -3114,15 +3114,34 @@ function sanitizeForNomenclature(text) {
 }
 
 
-function buildCanonicalImageBaseName(vehicleInfo, fieldName, extraSuffix) {
+function buildCanonicalImageBaseName(vehicleInfo, fieldName) {
     const info = vehicleInfo || {};
-    const suffixes = { imagenVehiculo: "", imgCorte1: "_corte1", imgCorte2: "_corte2", imgCorte3: "_corte3",
-        imgApertura: "_apert", imgCableAlimen: "_alimen", imgCableAlimen2: "_alimen2", imgCableAlimen3: "_alimen3" };
-    if (!Object.prototype.hasOwnProperty.call(suffixes, fieldName)) throw new Error("El campo de imagen no tiene una nomenclatura canónica definida.");
-    const parts = [sanitizeForNomenclature(info.modelo), sanitizeForNomenclature(info.versionesAplicables),
-        sanitizeForNomenclature(info.tipoEncendido), sanitizeForNomenclature(info.anoDesde || "XXXX")].filter(Boolean);
-    if (!parts.length) throw new Error("No hay metadatos suficientes para construir el nombre canónico de la imagen.");
-    return (parts.join("_") + suffixes[fieldName] + String(extraSuffix || "")).toLowerCase();
+    const fixedCodes = {
+        imagenVehiculo: "imagenVehiculo",
+        imgApertura: "apert",
+        imgCableAlimen: "alim1",
+        imgCableAlimen2: "alim2",
+        imgCableAlimen3: "alim3"
+    };
+    let functionCode = fixedCodes[fieldName] || "";
+    const cutMatch = String(fieldName || "").match(/^imgCorte([123])$/);
+    if (cutMatch) {
+        const types = [info.tipoCorte1, info.tipoCorte2, info.tipoCorte3];
+        functionCode = getCorteFunctionSuffix_(types, Number(cutMatch[1]));
+        if (!functionCode) throw new Error("El tipo de corte no permite asignar un código funcional inequívoco.");
+    }
+    if (!functionCode) throw new Error("El campo de imagen no tiene una nomenclatura funcional definida.");
+    const versionOrIgnition = String(info.versionesAplicables || info.tipoEncendido || "").trim();
+    if (/[\/,]/.test(versionOrIgnition)) throw new Error("La versión o el tipo de encendido contiene varias opciones; requiere revisión.");
+    const model = normalizeOrganizerFilePart_(info.modelo);
+    const version = normalizeOrganizerFilePart_(versionOrIgnition);
+    const start = String(info.anoDesde === null || info.anoDesde === undefined ? "" : info.anoDesde).trim();
+    const end = String(info.anoHasta === null || info.anoHasta === undefined ? "" : info.anoHasta).trim();
+    if (!model || !version || !/^\d{4}$/.test(start) || !/^\d{4}$/.test(end)) {
+        throw new Error("Faltan modelo, versión/encendido o rango de años válido para construir el nombre canónico.");
+    }
+    if (Number(start) > Number(end)) throw new Error("El rango de años está invertido; no se generó un nombre canónico.");
+    return [model, version, start, end, functionCode].join("_");
 }
 function getCanonicalImageExtension(file) {
     const name = String(file && file.getName ? file.getName() : "");
@@ -3167,6 +3186,19 @@ function mapCorteTypeToFunctionCode_(value) {
     if (["bomba", "bombacombustible", "fuelpump"].some(token => normalized.includes(token))) matches.push("bomba");
     if (["boton", "pulsador", "button", "btn"].some(token => normalized.includes(token))) matches.push("btn");
     return matches.length === 1 ? matches[0] : "";
+}
+
+function getCorteFunctionSuffix_(typeValues, slotIndex) {
+    const types = Array.isArray(typeValues) ? typeValues : [];
+    const slot = Number(slotIndex);
+    if (!Number.isInteger(slot) || slot < 1 || slot > 3) return "";
+    const code = mapCorteTypeToFunctionCode_(types[slot - 1]);
+    if (!code) return "";
+    let ordinal = 0;
+    for (let index = 0; index < slot; index++) {
+        if (mapCorteTypeToFunctionCode_(types[index]) === code) ordinal++;
+    }
+    return code + ordinal;
 }
 
 /**
@@ -3257,7 +3289,7 @@ function buildCortesImageOrganizerTargets_(cortesValues, cortesFormulas, logosVa
         const folderSegments = [category, brand, model, versionSegment, start && end ? start + "-" + end : ""].filter(Boolean);
         const targetFolderPath = folderSegments.length === 5 ? "Cortes/" + folderSegments.join("/") : "";
         const nameParts = [normalizeOrganizerFilePart_(rawModel), normalizeOrganizerFilePart_(versionOrIgnition), start, end];
-        const cutCounters = Object.create(null);
+        const cutTypes = cutFields.map(item => cell(row, item.typeField));
 
         const pushImage = (field, code, extraReasons, sourceValue) => {
             const rawUrl = String(sourceValue || "").trim();
@@ -3276,18 +3308,14 @@ function buildCortesImageOrganizerTargets_(cortesValues, cortesFormulas, logosVa
         };
 
         fixedFields.forEach(item => pushImage(item.field, item.code, [], cell(row, item.field)));
-        cutFields.forEach(item => {
+        cutFields.forEach((item, index) => {
             const rawUrl = String(cell(row, item.field) || "").trim();
             if (!rawUrl) return;
-            const code = mapCorteTypeToFunctionCode_(cell(row, item.typeField));
-            if (!code) {
+            const suffix = getCorteFunctionSuffix_(cutTypes, index + 1);
+            if (!suffix) {
                 pushImage(item.field, "", ["unrecognized_cut_type:" + item.typeField], rawUrl);
                 return;
             }
-            cutCounters[code] = (cutCounters[code] || 0) + 1;
-            // Cada recurso de una misma función recibe numeración explícita y estable.
-            // Ejemplos: ign1..ign3, bomba1..bomba3 y btn1..btn3.
-            const suffix = code + cutCounters[code];
             pushImage(item.field, suffix, [], rawUrl);
         });
     });
@@ -3374,12 +3402,7 @@ function buildCortesImageReconciliationTargets_() {
             rowIssues.push({ row: r + 1, vehicleId, reason: "El ID de vehículo está duplicado; no se proponen destinos para esta fila." });
             continue;
         }
-        const vehicleInfo = {
-            modelo: row[COLS_CORTES.modelo - 1],
-            versionesAplicables: row[COLS_CORTES.versionesAplicables - 1],
-            tipoEncendido: row[COLS_CORTES.tipoEncendido - 1],
-            anoDesde: row[COLS_CORTES.anoDesde - 1]
-        };
+        const vehicleInfo = mapRowToObject(row, COLS_CORTES);
         fields.forEach(field => {
             try {
                 const baseName = buildCanonicalImageBaseName(vehicleInfo, field);
@@ -5491,19 +5514,51 @@ function getNextLogoIdLocked_(sheet) {
 /**
  * Registro de logotipos con ID numérico asignado por el backend, sin fórmulas de fila.
  */
+function resolveLogoCategoryFromCortesRows_(cortesValues, brandName) {
+    const rows = Array.isArray(cortesValues) ? cortesValues : [];
+    const brandKey = normalizeOrganizerSegment_(brandName).toLowerCase();
+    if (!brandKey) throw new Error("La marca del logotipo no es válida.");
+    const categories = new Set();
+    rows.slice(1).forEach(row => {
+        const rowBrand = normalizeOrganizerSegment_(row && row[COLS_CORTES.marca - 1]).toLowerCase();
+        const category = normalizeOrganizerSegment_(row && row[COLS_CORTES.categoria - 1]);
+        if (rowBrand === brandKey && category) categories.add(category);
+    });
+    if (categories.size !== 1) throw new Error(categories.size
+        ? "La marca aparece en varias categorías; no se puede asignar una carpeta única."
+        : "La marca no tiene una categoría única registrada en Cortes.");
+    return Array.from(categories)[0];
+}
+
 function handleAddLogo(payload, logMessage) {
     const { nombreMarca, fileData, filename, mimeType } = payload;
     if (!nombreMarca || !fileData || !filename || !mimeType) throw new Error("Datos de logotipo incompletos.");
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.LOGOS_MARCA);
     if (!sheet) throw new Error("No se encontró la hoja LogosMarca.");
-
-    logMessage("Registro Logo", `Iniciando registro de logotipo para la marca: ${nombreMarca}`);
+    const cortesSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+    if (!cortesSheet) throw new Error("No se encontró la hoja Cortes para resolver la categoría de la marca.");
+    const brandKey = normalizeOrganizerSegment_(nombreMarca).toLowerCase();
+    const existingLogos = sheet.getDataRange().getValues();
+    if (existingLogos.slice(1).some(row => normalizeOrganizerSegment_(row && row[1]).toLowerCase() === brandKey)) {
+        throw new Error("La marca ya tiene un registro de logotipo; no se creó una fila duplicada.");
+    }
+    const category = resolveLogoCategoryFromCortesRows_(cortesSheet.getDataRange().getValues(), nombreMarca);
+    const extension = getCanonicalImageExtension({ getName: () => filename, getMimeType: () => mimeType });
+    const logoBaseName = normalizeOrganizerFilePart_(nombreMarca).toLowerCase();
+    if (!extension || !logoBaseName) throw new Error("No se pudo construir el nombre canónico del logotipo conservando su extensión.");
+    const canonicalFilename = logoBaseName + "_logo" + extension;
+    logMessage("Registro Logo", "Iniciando registro de logotipo para la marca: " + nombreMarca);
     const rootFolder = getCortesRootFolder();
-    const logosFolder = findOrCreateSubFolder(rootFolder, "Logos");
-    logMessage("Registro Logo", `Subiendo logotipo '${filename}' de tipo '${mimeType}'...`);
+    const categoryFolder = findOrCreateSubFolder(rootFolder, category);
+    const brandFolderName = normalizeOrganizerSegment_(nombreMarca);
+    const brandFolder = findOrCreateSubFolder(categoryFolder, brandFolderName);
+    if (hasDriveFilenameConflictInFolder(brandFolder, canonicalFilename)) {
+        throw new Error("Ya existe un archivo con el nombre canónico del logotipo; no se sobrescribió.");
+    }
+    logMessage("Registro Logo", "Subiendo logotipo '" + canonicalFilename + "' de tipo '" + mimeType + "'...");
     const decodedData = Utilities.base64Decode(fileData);
-    const blob = Utilities.newBlob(decodedData, mimeType, filename);
-    const file = logosFolder.createFile(blob);
+    const blob = Utilities.newBlob(decodedData, mimeType, canonicalFilename);
+    const file = brandFolder.createFile(blob);
     const logoUrl = `https://drive.google.com/uc?export=view&id=${file.getId()}`;
 
     const markRecovery = reason => {
@@ -6575,7 +6630,7 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
                     const currentImg = rowObj.imagenVehiculo;
                     if (!checkFileIdValid(currentImg)) {
                         const folder = findOrCreateVehicleFolder(mergeVehicleFolderInfo(rowObj, vehicleData));
-const filename = buildCanonicalImageBaseName(rowObj, "imagenVehiculo", "_repaired");
+const filename = buildCanonicalImageBaseName(rowObj, "imagenVehiculo");
                         const newUrl = uploadImageToDrive(vehicleData.imagenVehiculo, filename, folder, buildImageUploadOperationKey(opId, rowObj.id, "imagenVehiculo"));
                         sheet.getRange(rowIndex, COLS_CORTES.imagenVehiculo).setValue(newUrl);
                     }
@@ -6586,7 +6641,7 @@ const filename = buildCanonicalImageBaseName(rowObj, "imagenVehiculo", "_repaire
                     const currentCorteImg = rowObj[`imgCorte${slotIndex}`];
                     if (!checkFileIdValid(currentCorteImg)) {
                         const folder = findOrCreateVehicleFolder(mergeVehicleFolderInfo(rowObj, vehicleData));
-const filename = buildCanonicalImageBaseName(rowObj, "imgCorte" + slotIndex, "_repaired");
+const filename = buildCanonicalImageBaseName(rowObj, "imgCorte" + slotIndex);
                         const newCorteImgUrl = uploadImageToDrive(cutData.imgCorte1, filename, folder, buildImageUploadOperationKey(opId, rowObj.id, "imgCorte" + slotIndex));
                         sheet.getRange(rowIndex, COLS_CORTES[`imgCorte${slotIndex}`]).setValue(newCorteImgUrl);
                     }
@@ -6703,7 +6758,9 @@ const filename = buildCanonicalImageBaseName(rowObj, "imgCorte" + slotIndex, "_r
         let imageUrl = '';
         if (cutData.imgCorte1) {
             const folder = findOrCreateVehicleFolder(vehicleInfo);
-const filename = buildCanonicalImageBaseName(vehicleInfo, "imgCorte" + cutSlotIndex);
+            const cutImageInfo = Object.assign({}, vehicleInfo);
+            cutImageInfo["tipoCorte" + cutSlotIndex] = cutData.tipoCorte1;
+            const filename = buildCanonicalImageBaseName(cutImageInfo, "imgCorte" + cutSlotIndex);
             imageUrl = uploadImageToDrive(cutData.imgCorte1, filename, folder, buildImageUploadOperationKey(opId, vehicleId, "imgCorte" + cutSlotIndex));
         }
 
@@ -6789,15 +6846,18 @@ const filename = buildCanonicalImageBaseName(vehicleInfo, "imgCorte" + cutSlotIn
         anioParaFolder = anoDesde;
 
         // Subir imágenes y obtener URLs...
-        const folder = findOrCreateVehicleFolder(Object.assign({}, vehicleData, { anoDesde: anoDesde, anoHasta: anoHasta }));
+        const canonicalVehicleInfo = Object.assign({}, vehicleData, {
+            anoDesde: anoDesde, anoHasta: anoHasta, tipoCorte1: cutData.tipoCorte1
+        });
+        const folder = findOrCreateVehicleFolder(canonicalVehicleInfo);
         let vehiculoImageUrl = '';
         if (vehicleData.imagenVehiculo) {
-const filename = buildCanonicalImageBaseName(Object.assign({}, vehicleData, { anoDesde: anoDesde, anoHasta: anoHasta }), "imagenVehiculo");
+            const filename = buildCanonicalImageBaseName(canonicalVehicleInfo, "imagenVehiculo");
             vehiculoImageUrl = uploadImageToDrive(vehicleData.imagenVehiculo, filename, folder, buildImageUploadOperationKey(opId, newId, "imagenVehiculo"));
         }
         let corteImageUrl = '';
         if (cutData.imgCorte1) {
-const filename = buildCanonicalImageBaseName(Object.assign({}, vehicleData, { anoDesde: anoDesde, anoHasta: anoHasta }), "imgCorte1");
+            const filename = buildCanonicalImageBaseName(canonicalVehicleInfo, "imgCorte1");
             corteImageUrl = uploadImageToDrive(cutData.imgCorte1, filename, folder, buildImageUploadOperationKey(opId, newId, "imgCorte1"));
         }
 

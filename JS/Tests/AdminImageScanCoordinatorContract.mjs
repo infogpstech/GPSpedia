@@ -309,6 +309,71 @@ numberedCutCodes.forEach(({ type, code }) => {
     assert.deepEqual(names, [1, 2, 3].map(slot => "Hilux_SRV_2020_2025_" + code + slot));
 });
 
+const canonicalNameBuilder = new Function(
+    extractFunction(admin, "normalizeOrganizerFilePart_") +
+    extractFunction(admin, "mapCorteTypeToFunctionCode_") +
+    extractFunction(admin, "getCorteFunctionSuffix_") +
+    extractFunction(admin, "buildCanonicalImageBaseName") +
+    "\nreturn buildCanonicalImageBaseName;"
+)();
+const canonicalVehicle = {
+    modelo: "Hilux SRV", versionesAplicables: "SRV", tipoEncendido: "Llave",
+    anoDesde: 2020, anoHasta: 2025,
+    tipoCorte1: "Ignición", tipoCorte2: "Bomba de combustible", tipoCorte3: "Ignición"
+};
+assert.equal(canonicalNameBuilder(canonicalVehicle, "imgCorte1"), "Hilux_SRV_2020_2025_ign1");
+assert.equal(canonicalNameBuilder(canonicalVehicle, "imgCorte2"), "Hilux_SRV_2020_2025_bomba1");
+assert.equal(canonicalNameBuilder(canonicalVehicle, "imgCorte3"), "Hilux_SRV_2020_2025_ign2");
+assert.equal(canonicalNameBuilder(canonicalVehicle, "imgCableAlimen"), "Hilux_SRV_2020_2025_alim1");
+assert.equal(canonicalNameBuilder(canonicalVehicle, "imgCableAlimen2"), "Hilux_SRV_2020_2025_alim2");
+assert.equal(canonicalNameBuilder(canonicalVehicle, "imgCableAlimen3"), "Hilux_SRV_2020_2025_alim3");
+assert.equal(canonicalNameBuilder(canonicalVehicle, "imgApertura"), "Hilux_SRV_2020_2025_apert");
+assert.equal(canonicalNameBuilder(canonicalVehicle, "imagenVehiculo"), "Hilux_SRV_2020_2025_imagenVehiculo");
+assert.throws(() => canonicalNameBuilder({ ...canonicalVehicle, tipoCorte1: "Corte especial" }, "imgCorte1"));
+assert.throws(() => canonicalNameBuilder({ ...canonicalVehicle, anoHasta: "" }, "imagenVehiculo"));
+assert.throws(() => canonicalNameBuilder({ ...canonicalVehicle, anoDesde: 2026 }, "imagenVehiculo"));
+
+const mixedCutRow = makeOrganizerRow();
+setOrganizerCell(mixedCutRow, "tipoCorte1", "Ignición");
+setOrganizerCell(mixedCutRow, "tipoCorte2", "Bomba de combustible");
+setOrganizerCell(mixedCutRow, "tipoCorte3", "Ignición");
+[1, 2, 3].forEach(slot => setOrganizerCell(mixedCutRow, "imgCorte" + slot,
+    "https://drive.google.com/file/d/" + ("MIXED" + slot).padEnd(22, "X") + "/view"));
+const mixedCutPlan = organizerBuilder([Array(organizerColumnCount).fill("header"), mixedCutRow], [], [], []);
+assert.deepEqual(mixedCutPlan.targets.filter(target => /^imgCorte[123]$/.test(target.field))
+    .map(target => target.targetBaseName), [
+        "Hilux_SRV_2020_2025_ign1",
+        "Hilux_SRV_2020_2025_bomba1",
+        "Hilux_SRV_2020_2025_ign2"
+    ]);
+
+const logoCategoryResolver = new Function("COLS_CORTES",
+    extractFunction(admin, "normalizeOrganizerSegment_") +
+    extractFunction(admin, "resolveLogoCategoryFromCortesRows_") +
+    "\nreturn resolveLogoCategoryFromCortesRows_;"
+)({ categoria: 2, marca: 3 });
+const logoRowsUnique = [
+    ["id", "categoria", "marca"],
+    ["1", "Camion pesado", "Toyota"],
+    ["2", "Camion pesado", "Toyota"]
+];
+assert.equal(logoCategoryResolver(logoRowsUnique, "Toyota"), "Camion_pesado");
+assert.throws(() => logoCategoryResolver([
+    ["id", "categoria", "marca"], ["1", "Camion pesado", "Toyota"], ["2", "Autobus", "Toyota"]
+], "Toyota"));
+assert.throws(() => logoCategoryResolver(logoRowsUnique, "Marca inexistente"));
+const logoHandlerSource = extractFunction(admin, "handleAddLogo");
+assert.match(logoHandlerSource, /resolveLogoCategoryFromCortesRows_/);
+assert.match(logoHandlerSource, /findOrCreateSubFolder\\(rootFolder, category\\)/);
+assert.match(logoHandlerSource, /findOrCreateSubFolder\\(categoryFolder, brandFolderName\\)/);
+assert.doesNotMatch(logoHandlerSource, /findOrCreateSubFolder\\(rootFolder, "Logos"\\)/);
+assert.match(logoHandlerSource, /canonicalFilename/);
+assert.match(logoHandlerSource, /hasDriveFilenameConflictInFolder/);
+const uploadHandlerSource = extractFunction(admin, "handleUploadAdminImage");
+assert.match(uploadHandlerSource, /buildCanonicalImageBaseName\\(mapRowToObject\\(rowValues, COLS_CORTES\\), fieldName\\)/);
+assert.match(admin, /cutImageInfo\\["tipoCorte" \\+ cutSlotIndex\\] = cutData\\.tipoCorte1/);
+assert.match(admin, /canonicalVehicleInfo.*tipoCorte1: cutData\\.tipoCorte1/);
+
 const logoTarget = organizerFixture.targets.find(target => target.sheetName === "LogosMarca");
 assert.equal(logoTarget.targetFolderPath, "Cortes/Camion_pesado/Toyota");
 assert.equal(logoTarget.targetBaseName, "toyota_logo");
