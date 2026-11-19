@@ -370,3 +370,14 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - No se desplegó Apps Script ni se modificaron Sheets/Drive productivos. La validación de integración y concurrencia queda diferida a Beta autorizada.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 - Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de las lecturas restantes de Sheets dentro de `handleAddOrUpdateCut`, priorizando una reducción demostrable sin mover reservas ni escrituras atómicas fuera del ScriptLock.
+
+
+## Cierre — reducir lecturas remotas en búsqueda de VIN ADMIN (2026-11-19)
+- `findVinDuplicateForAdmin` ahora combina ID, marca, modelo y años en una lectura contigua calculada desde `COLS_CORTES` (columnas 1–7 en el esquema actual); la colección VIN se sigue leyendo en una columna independiente y dirigida.
+- Se reducen las llamadas de lectura de tres a dos por búsqueda, sin ampliar a `getLastColumn()`, sin cambiar la exclusión del vehículo actual y conservando la detección del primer duplicado y el nombre/años del vehículo coincidente.
+- La prueba `AdminVinDuplicateBoundedRead.mjs` verifica ambas rutas (índice VIN proporcionado y resolución de encabezado), los rangos exactos y el comportamiento de duplicados: 11/11 PASS. Contrato integral WRITE/ADMIN VIN: 12/12 PASS.
+- Una ejecución inicial falló porque el extractor de funciones de `VinAuthoritativeValidation.js` no termina de reconocer comentarios `//` añadidos dentro de la función; se convirtió la nota en comentario de bloque, sin cambiar la lógica. La regresión final aprobó.
+- CI `44640492213` SUCCESS sobre HEAD `ec0ce297b42e093dcb12f211fce1cc90845e8c5b`: 193 suites, 2,527 pruebas aprobadas, 0 fallos; sintaxis JavaScript aprobada. Health read-only `44640492202` SUCCESS.
+- No se desplegó Apps Script ni se modificaron Sheets/Drive productivos; la integración/concurrencia real queda para Beta autorizada.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+- Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` revisando las lecturas restantes dentro de `handleAddOrUpdateCut`, priorizando llamadas remotas repetidas y manteniendo las reservas, revalidaciones y escrituras atómicas bajo el ScriptLock.
