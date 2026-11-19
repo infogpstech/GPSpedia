@@ -123,3 +123,4 @@ Ajuste de compatibilidad detectado por CatalogChangeFeed: cuando una publicació
 ## Corrección — carpeta Drive suplementaria
 `findOrCreateSupplementaryVehicleFolder_` mantenía el ScriptLock global de WRITE mientras ejecutaba consultas/creación de carpetas Drive. Se sustituyó por una lease específica Coordinator `ensureSupplementaryVehicleFolder` sobre `DRIVE_FOLDER`, separada del recurso `CORTES`. Esto permite que una mutación de Cortes avance mientras se prepara la carpeta; solo las preparaciones de carpeta que comparten ese recurso se coordinan. No se ha desplegado.
 
+Validación CI del commit `82a35b6216f50e584423b8c2f2dfd0a954def565`: regresión 157 suites / 2,251 pruebas / 0 fallos; health de servicios en solo lectura SUCCESS. Las pruebas de reserva de slots, asignador no bloqueante, publicación versionada sin lock, lease de carpeta Drive y Coordinator pasaron. No equivale a prueba de concurrencia real en Apps Script/Drive ni autoriza despliegue.

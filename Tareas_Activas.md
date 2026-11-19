@@ -378,5 +378,5 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Retirar el ScriptLock global de WRITE alrededor de `findOrCreateVehicleFolder`.
 - [x] Coordinar solo la operación de carpeta mediante lease Coordinator `ensureSupplementaryVehicleFolder` sobre el recurso `DRIVE_FOLDER`; no comparte recurso con mutaciones `CORTES`.
 - [x] Añadir prueba de lease anidada que demuestra que la mutación de Cortes puede avanzar mientras se prepara una carpeta.
-- [ ] Ejecutar CI antes de marcar validado.
+- [x] CI completado: 157 suites, 2,251 pruebas aprobadas, 0 fallos; health read-only SUCCESS. GitHub Pages sigue en ejecución.
 
