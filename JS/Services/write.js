@@ -597,24 +597,55 @@ function getNextCortesVehicleIdLocked(sheet) {
     const lastRow = sheet.getLastRow();
     const lastColumn = sheet.getLastColumn();
     if (lastRow > 1) {
-        const rows = sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues();
-        const formulas = sheet.getRange(2, COLS_CORTES.id, lastRow - 1, 1).getFormulas();
-        rows.forEach((row, index) => {
-            const rawId = row[COLS_CORTES.id - 1];
-            const hasData = row.slice(1).some(value => value !== "" && value !== null && value !== undefined);
+        const idRange = sheet.getRange(2, COLS_CORTES.id, lastRow - 1, 1);
+        const idValues = idRange.getValues();
+        const idFormulas = idRange.getFormulas();
+        const candidateOffsets = [];
+        for (let offset = 0; offset < idValues.length; offset++) {
+            const rawId = idValues[offset][0];
             const hasId = rawId !== "" && rawId !== null && rawId !== undefined;
-            if (!hasData && formulas[index][0]) return;
-            if (!hasData && !hasId) return;
-            if (!hasId) throw new Error(`La fila ${index + 2} contiene datos, pero no tiene ID.`);
+            if (!hasId || (idFormulas[offset] && idFormulas[offset][0])) candidateOffsets.push(offset);
+        }
+
+        const hasDataByOffset = new Map();
+        let cursor = 0;
+        while (cursor < candidateOffsets.length) {
+            const firstOffset = candidateOffsets[cursor];
+            let lastOffset = firstOffset;
+            cursor++;
+            while (cursor < candidateOffsets.length && candidateOffsets[cursor] === lastOffset + 1) {
+                lastOffset = candidateOffsets[cursor];
+                cursor++;
+            }
+            const rowCount = lastOffset - firstOffset + 1;
+            let dataRows = [];
+            if (lastColumn > 1) {
+                dataRows = sheet.getRange(firstOffset + 2, 2, rowCount, lastColumn - 1).getValues();
+            }
+            for (let offset = firstOffset; offset <= lastOffset; offset++) {
+                const rowData = dataRows[offset - firstOffset] || [];
+                const hasData = rowData.some(value => value !== "" && value !== null && value !== undefined);
+                hasDataByOffset.set(offset, hasData);
+            }
+        }
+
+        for (let offset = 0; offset < idValues.length; offset++) {
+            const rawId = idValues[offset][0];
+            const hasId = rawId !== "" && rawId !== null && rawId !== undefined;
+            const hasFormula = !!(idFormulas[offset] && idFormulas[offset][0]);
+            const hasData = hasDataByOffset.get(offset) === true;
+            if (!hasData && hasFormula) continue;
+            if (!hasData && !hasId) continue;
+            if (!hasId) throw new Error("La fila " + (offset + 2) + " contiene datos, pero no tiene ID.");
 
             const id = typeof rawId === "number" ? rawId : Number(String(rawId).trim());
             if (!Number.isSafeInteger(id) || id < 1) {
-                throw new Error(`El ID de la fila ${index + 2} no es un entero numérico positivo seguro.`);
+                throw new Error("El ID de la fila " + (offset + 2) + " no es un entero numérico positivo seguro.");
             }
-            if (seenIds.has(id)) throw new Error(`Se detectó el ID duplicado ${id} en «Cortes»; no se asignó otro ID.`);
+            if (seenIds.has(id)) throw new Error("Se detectó el ID duplicado " + id + " en «Cortes»; no se asignó otro ID.");
             seenIds.add(id);
             maxSheetId = Math.max(maxSheetId, id);
-        });
+        }
     }
 
     const properties = PropertiesService.getScriptProperties();
@@ -628,8 +659,6 @@ function getNextCortesVehicleIdLocked(sheet) {
     properties.setProperty(CORTES_ID_COUNTER_PROPERTY, String(nextId));
     return nextId;
 }
-
-/** Endpoint autenticado para que ADMIN solicite un ID al asignador central. */
 function handleAllocateVehicleId(payload) {
     const lock = LockService.getScriptLock();
     let lockAcquired = false;
