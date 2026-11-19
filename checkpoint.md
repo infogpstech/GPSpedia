@@ -149,3 +149,14 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Prueba `AdminExistingVehicleLookupPreflight.mjs`: 7/7 PASS. CI `44629836237` SUCCESS: 181 suites, 2,434 pruebas aprobadas, 0 fallos. Health read-only `44629836299` SUCCESS.
 - Commits: código `570840a859c78521c6e6e8f066d5c77077d14ada`; prueba `fc21c17e368296620dd6321172346f3c833bcd67`; runner `22a05a7274153984d65e03806ed055f8988c0c01`.
 - `GP-PERF-ADMIN-CUT-LOCK-01` sigue EN PROGRESO: la reserva, lectura de fila objetivo, selección de slot, validación de VIN y escrituras críticas siguen protegidas; quedan más operaciones de Sheets por separar sin debilitar atomicidad. No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+## Continuidad — acceso rápido al ledger Idempotencia ADMIN (2026-11-19)
+- `findOrCreateIdempotenciaSheet` ahora devuelve directamente la hoja primaria o fallback cuando sus encabezados A:F están completos y son compatibles; solo ejecuta `initializeIdempotenciaSheet` cuando se requiere reparar/crear la estructura.
+- La validación integral de las filas no se eliminó: los callsites de recuperación y registro siguen ejecutando `readIdempotenciaEntries_`. Se conserva el rechazo de encabezados inseguros y la reparación de encabezados faltantes.
+- Prueba `AdminIdempotenciaSheetLookupFastPath.mjs`: 6/6 PASS; runner integrado.
+- CI `44631635536` SUCCESS: 182 suites, 2,440 pruebas aprobadas, 0 fallos; `node --check JS/Services/admin.js` aprobado.
+- Commits: código `b963f2d4e3c8e1242e014b624e4cd684035a7005`; prueba `4d72437e24abd9c2d1db02251c5bd35e8f768f46`; runner `11afd89eb34c84e601a81bea016c2583440cdcae`.
+- Registros: tareas `c0e9a092837c9acb02aaa009314a6962b7397d7b`; changelog `6ba7b05df01a8debd992fb64449a799a28056054`.
+- No se desplegó Apps Script ni se modificaron Sheets/Drive productivos. Pendiente validación real en Beta autorizada.
+- Siguiente implementación: reutilizar un snapshot validado del ledger Idempotencia durante una operación ADMIN, evitando que `findRowByOpId` y `recordOpId` repitan lecturas completas; conservar comprobación dirigida del `opId`, detección de duplicados, asociación vehículo/slot/hash y transición monotónica pending→completed. Mantener recuperación y reserva dentro del ScriptLock hasta demostrar una alternativa atómica.
