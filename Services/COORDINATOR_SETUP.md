@@ -4,7 +4,7 @@
 
 - `JS/Services/Coordinator.js`: servicio Apps Script independiente. Mantiene las leases en ScriptProperties y no accede a Spreadsheet ni Drive.
 - `JS/Services/SharedMutationClient.js`: cliente servidor-a-servidor que debe incluirse en cada proyecto AUTH, USERS, WRITE, ADMIN, FEEDBACK y UTILITIES.
-- Los routers de esos servicios delegan las acciones mutadoras al coordinador antes de ejecutar sus handlers. Los locks locales existentes se conservan.
+- AUTH, USERS y UTILITIES conservan los flujos coordinados que aún están registrados. WRITE, FEEDBACK y ADMIN usan actor cacheado para acciones ordinarias y procesan sus operaciones sin leases por acción; los bloqueos locales indispensables se mantienen.
 - ADMIN ya no declara `ACTIVE_SESSIONS` como `sharedWriteResources` ni adquiere leases para acciones ordinarias. Usa el actor de sesión cacheado y conserva la matriz RBAC/auditoría; logout y eliminación de cuenta invalidan su caché mediante el endpoint interno autenticado.
 - FEEDBACK usa el actor cacheado para lecturas y mutaciones autenticadas; no adquiere `FEEDBACK/sessionActivity` ni leases por acción. `recordLike` conserva sus escrituras funcionales en Cortes, Feedback y Activity sin bloquear una operación con viajes a Coordinator.
 
@@ -48,7 +48,7 @@ En el proyecto Apps Script de cada servicio, incluir `JS/Services/SharedMutation
 
 AUTH coordina login, touchSession, acceptTerms, cambio/restablecimiento de contraseña, revocaciones, actualización de roles y limpieza de Logs. validateSession es una lectura de solo verificación: comprueba token, identidad, estado, expiración y aceptación de términos sin modificar hojas ni adquirir una lease; por eso no depende del coordinador y puede confirmar una sesión aunque el coordinador esté temporalmente indisponible. touchSession sí modifica ActiveSessions y continúa coordinado.
 
-UTILITIES coordina `migrateTimestamps`: reserva lectura de Users, ActiveSessions, Cortes y Drive, y escritura del recurso lógico UTILITIES (Hoja 1 y sus hojas temporales). Adquiere la lease compartida antes del ScriptLock local. Así se serializa con cambios de identidad, mutaciones de Cortes/Drive y las operaciones ADMIN de mantenimiento integral. No hay consumidor de `migrateTimestamps` en la interfaz versionada; la acción permanece en ACTION_TO_SERVICE_MAP para ejecución operativa/manual o clientes externos autorizados.
+UTILITIES coordina `migrateTimestamps`: reserva lectura de Users, ActiveSessions, Cortes y Drive, y escritura del recurso lógico UTILITIES (Hoja 1 y sus hojas temporales). Adquiere la lease compartida antes del ScriptLock local. Así se serializa con cambios de identidad y la migración operativa de Cortes/Drive; ADMIN ya no participa en leases de mantenimiento por acción. No hay consumidor de `migrateTimestamps` en la interfaz versionada; la acción permanece en ACTION_TO_SERVICE_MAP para ejecución operativa/manual o clientes externos autorizados.
 
 AUTH/USERS/UTILITIES de prueba deben apuntar a un coordinador de prueba independiente y utilizar secretos distintos de producción. Nunca conectar un servicio de prueba al coordinador productivo ni viceversa.
 
@@ -88,7 +88,7 @@ Coordinator 1.4.3 y SharedMutationClient declaran `protocolVersion: 1` en cada p
 
 ## Agregación central de telemetría (Coordinator 1.4.5)
 
-La consulta ADMIN `getServiceTraffic` devuelve el agregado final de siete servicios activos. Coordinator obtiene las operaciones protegidas de sus buckets y consulta CATALOG, AUTH, USERS, WRITE y FEEDBACK mediante `fetchAll`, sin mantener el lock de ScriptProperties durante las llamadas externas.
+La consulta ADMIN `getServiceTraffic` devuelve el agregado final de siete servicios activos. Coordinator obtiene los buckets disponibles y consulta CATALOG, AUTH, USERS, WRITE y FEEDBACK mediante `fetchAll`, sin mantener el lock de ScriptProperties durante las llamadas externas. El bucket ADMIN ya no representa acciones ordinarias porque estas no adquieren leases.
 
 - Cada fuente conserva su propio endpoint y responde con scope, totales y buckets; Coordinator valida identidad, scope y valores antes de agregarlos.
 - Una fuente ausente o con error se declara parcial sin descartar el agregado central ni las demás fuentes.
@@ -160,7 +160,7 @@ Para completar rutas POST que no pasan por Coordinator, cada servicio con rutas 
 
 ADMIN consulta los cinco contadores directos (CATALOG, AUTH, WRITE, FEEDBACK y USERS) en una sola operación agrupada con UrlFetchApp.fetchAll al refrescar el panel Developer. Si fetchAll falla globalmente, intenta los endpoints por separado; el fallo de una fuente no invalida las demás ni el agregado Coordinator. La consulta se ejecuta según el intervalo del panel (60 s), no por cada acción del usuario. El endpoint interno getServiceTraffic no se cuenta a sí mismo.
 
-**Configuración de secretos en Beta:** generar un secreto aleatorio distinto por servicio (mínimo 32 caracteres; por ejemplo, localmente con openssl rand -hex 32). Guardar el mismo valor para cada servicio en dos lugares: la Script Property con nombre GPSpedia_<SERVICIO>_TRAFFIC_SECRET dentro del proyecto Apps Script de ese servicio y en el proyecto ADMIN. Servicios instrumentados: AUTH, CATALOG, WRITE, FEEDBACK y USERS. Para USERS la propiedad exacta es `GPSpedia_USERS_TRAFFIC_SECRET`; se configura en el proyecto USERS y en ADMIN con el mismo valor aleatorio. UTILITIES no necesita secreto porque migrateTimestamps ya se cuenta en Coordinator. ADMIN no necesita secreto directo porque sus operaciones protegidas se cuentan mediante Coordinator. No guardar valores en el repositorio, navegador, logs ni documentación.
+**Configuración de secretos en Beta:** generar un secreto aleatorio distinto por servicio (mínimo 32 caracteres; por ejemplo, localmente con openssl rand -hex 32). Guardar el mismo valor para cada servicio en dos lugares: la Script Property con nombre GPSpedia_<SERVICIO>_TRAFFIC_SECRET dentro del proyecto Apps Script de ese servicio y en el proyecto ADMIN. Servicios instrumentados: AUTH, CATALOG, WRITE, FEEDBACK y USERS. Para USERS la propiedad exacta es `GPSpedia_USERS_TRAFFIC_SECRET`; se configura en el proyecto USERS y en ADMIN con el mismo valor aleatorio. UTILITIES no necesita secreto porque migrateTimestamps ya se cuenta en Coordinator. ADMIN no necesita secreto directo de tráfico: sus acciones ordinarias ya no generan contadores por lease y no se añade una escritura por acción debido a la sección 15. No guardar valores en el repositorio, navegador, logs ni documentación.
 
 Si falta un secreto, un endpoint falla o la respuesta no cumple el contrato, el dashboard conserva Coordinator y marca únicamente esa fuente directa como parcial/no disponible; nunca interpreta ausencia como cero confirmado. La consulta ADMIN/getServiceTraffic es de solo lectura, está reservada a Desarrollador y no devuelve usuarios, tokens ni identificadores de sesión. La propia consulta y los health probes no se cuentan.
 

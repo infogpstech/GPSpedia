@@ -355,7 +355,7 @@ undefined
 - JS/Tests/Auth.js y JS/Tests/users.js: fixtures aislados sincronizados con Auth.js y users.js, conservando el ID de Spreadsheet de prueba.
 - JS/Tests/PasswordKdfBenchmark.mjs: contrato actualizado para actor cacheado y ausencia de lease Coordinator para el benchmark.
 - JS/Tests/DirectTrafficRoutingCoverage.mjs: contrato USERS actualizado para lectura con actor cacheado sin lease sessionActivity.
-- JS/Tests/AdminImageScanCoordinatorContract.mjs: distingue la ruta ADMIN con actor cacheado de la lectura SERVICE_TRAFFIC interna; conserva contratos de permisos, leases de operaciones de mantenimiento y publicación CATALOG por lotes.
+- JS/Tests/AdminImageScanCoordinatorContract.mjs: distingue la ruta ADMIN con actor cacheado de la lectura SERVICE_TRAFFIC interna; conserva contratos de permisos, metadatos de recursos y bloqueos locales indispensables del inventario, además de publicación CATALOG por lotes.
 ================================================================================
 
 

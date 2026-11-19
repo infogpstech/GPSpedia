@@ -241,8 +241,8 @@ Aplicar la estructura objetivo después de validar el dry-run:
 
 
 ## Adenda 2026-11-19 — ADMIN: simplificación de sesión completada
-- El router ADMIN todavía envolvía lecturas y mutaciones ordinarias en leases del Coordinator, en contradicción directa con la sección 15 de NORMAS_DESAROLLO.md.
-- Corrección preparada: ADMIN usa el actor de sesión cacheado; las llamadas internas ADMIN→WRITE transmiten userId/sessionToken para que WRITE valide su propio actor cacheado. Se mantienen RBAC y auditoría de mutaciones.
+- Hallazgo corregido: el router ADMIN adquiría leases del Coordinator para lecturas y mutaciones ordinarias, en contradicción con la sección 15 de NORMAS_DESAROLLO.md.
+- Corrección aplicada: ADMIN usa el actor de sesión cacheado; las llamadas internas ADMIN→WRITE transmiten userId/sessionToken para que WRITE valide su propio actor cacheado. Se mantienen RBAC y auditoría de mutaciones.
 - La tarea queda **COMPLETADA LOCALMENTE**: no hay leases ni llamadas de autorización a Coordinator en el router ADMIN; RBAC y auditoría se mantienen; ADMIN→WRITE usa credenciales de sesión y validación de actor cacheado en WRITE. La invalidación remota de caché incluye ADMIN.
 
 - CI run 44535834471 detectó contratos históricos que aún exigían token/lease ADMIN; se alinearon las pruebas con actor cacheado y se retiraron políticas ADMIN de lease obsoletas.
