@@ -73,3 +73,13 @@ Aplicar la estructura objetivo después de validar el dry-run:
 - [ ] Integrar previewCortesImageOrganizer en ui.js y presentar resultados paginados en el modal/consola. El frontend aún no invoca esta acción.
 - [ ] Desplegar ADMIN actualizado, generar una auditoría Drive nueva (las auditorías antiguas no tienen folderPath en caché) y validar resultados reales. No aplicar cambios.
 - [ ] Mantener bloqueada la aplicación de movimientos/renombrados hasta terminar la UI, revisar el manifiesto real y probar rollback.
+
+
+## Actualización 2026-11-19 — UI conectada
+- [x] Botón «Previsualizar organización» y panel de resultados agregados al modal de auditoría.
+- [x] ui.js recorre las páginas del endpoint, valida digest estable, offset, total, finalización y banderas writePerformed:false/canApply:false; presenta conteos y detalles por archivo.
+- [x] No se habilita ninguna mutación desde la UI.
+- CI HEAD bb3f3a1fcf47d328f1ab51a4ab5dc3a93e2e3807: 146 suites, 2,157 pruebas aprobadas, 0 fallos; health y Pages SUCCESS.
+- [ ] Desplegar ADMIN actualizado y ejecutar una auditoría Drive nueva para persistir folderPath en el inventario.
+- [ ] Ejecutar el preview real y revisar rutas, nombres, extensiones, referencias y conflictos. Mantener la aplicación bloqueada.
+- [ ] Corregir cualquier discrepancia real antes de implementar la aplicación segura por lotes y rollback.
