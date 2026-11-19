@@ -893,7 +893,7 @@ function doPost(e) {
         try {
             // La telemetría ya consulta Coordinator para recuperar métricas; validar
             // el rol con actor cacheado evita una lease/llamada redundante por refresco.
-            const actor = getCachedSharedSessionActor_(payload.userId, payload.sessionToken);
+            const actor = getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "ADMIN" });
             return doPostInternal_(withSharedSessionActor_(e, actor));
         } catch (error) {
             return ContentService.createTextOutput(JSON.stringify({
