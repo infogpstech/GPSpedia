@@ -691,3 +691,13 @@ Corrección: las altas usan normalizeOrganizerSegment_ en todos los segmentos, e
 Validación: AdminImageScanCoordinatorContract 1/1; CI run 44524858005 SUCCESS, 152 suites y 2,224 pruebas aprobadas, 0 fallos; health y Pages SUCCESS.
 Severidad: media (consistencia de almacenamiento). Estado: CORREGIDO LOCALMENTE; validación de rutas reales pendiente de Beta.
 ================================================================================
+
+ 
+================================================================================
+2026-11-19 — ADENDA AL HALLAZGO DE RUTAS: VALIDACIÓN ESTRICTA DE AÑOS
+Ubicación: JS/Services/admin.js, getVehicleYearFolderName.
+Evidencia adicional: la primera versión de la alineación usaba una expresión regular con escape duplicado y no reconocía años numéricos válidos; la prueba contractual lo detectó antes de cerrar.
+Corrección: expresión regular exacta para cuatro dígitos en ambos campos; no se aceptan conversiones parciales, campos faltantes ni rangos invertidos. Año único: AAAA-AAAA.
+Validación: prueba dinámica de rutas 5/5 PASS; CI run 44525492921 SUCCESS, 152 suites y 2,224 pruebas, 0 fallos; health SUCCESS.
+Estado: CORREGIDO LOCALMENTE.
+================================================================================

@@ -785,3 +785,11 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - JS/Tests/AdminImageScanCoordinatorContract.mjs: prueba de ruta completa de alta y rechazo de rango invertido.
 - No se desplegó Apps Script ni se modificaron archivos/celdas productivas.
 ================================================================================
+
+ 
+================================================================================
+2026-11-19 — VALIDACIÓN ESTRICTA DE AÑOS EN CARPETAS
+- JS/Services/admin.js: getVehicleYearFolderName valida ambos años con cuatro dígitos exactos; devuelve AAAA-AAAA y rechaza datos incompletos, parciales o invertidos.
+- JS/Tests/AdminImageScanCoordinatorContract.mjs: casos de año único, rango válido, dato parcial, dato faltante y rango invertido.
+- Validación CI posterior: 152 suites, 2,224 pruebas aprobadas, 0 fallos.
+================================================================================

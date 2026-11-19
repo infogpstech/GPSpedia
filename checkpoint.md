@@ -941,3 +941,13 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - No se desplegó Apps Script ni se modificaron datos Drive/Spreadsheet. No se movieron, renombraron ni eliminaron archivos.
 - Siguiente: completar auditoría local de consistencia del inventario y del registro de altas; después ejecutar verificación integral y preparar Beta con comandos de sincronización seguros. Aplicación masiva sigue deshabilitada.
 ================================================================================
+
+ 
+================================================================================
+2026-11-19 — ADENDA: VALIDACIÓN ESTRICTA DEL RANGO DE AÑOS
+- HEAD de implementación: 147077eb487f2555a7480eb4706b432836f4f330.
+- Se endureció getVehicleYearFolderName para aceptar únicamente cuatro dígitos exactos en anoDesde y anoHasta; se rechazan valores parciales, campos vacíos y rangos invertidos. Los años iguales se representan como AAAA-AAAA.
+- Prueba dinámica de ruta completa, año único, año inválido, año faltante y rango invertido: 5/5 PASS.
+- CI run 44525492921 SUCCESS: 152 suites, 2,224 pruebas, 0 fallos. Health run 44525493007 SUCCESS. Pages run 44525492332 en curso al registrar.
+- La ejecución previa 44525337604 falló por una expresión regular generada con escape duplicado; se corrigió y la ejecución posterior aprobó. No quedó fallo reproducible en el HEAD actual.
+================================================================================

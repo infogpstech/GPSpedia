@@ -204,3 +204,9 @@ Aplicar la estructura objetivo después de validar el dry-run:
 - [x] Prueba contractual: alta genera exactamente `Cortes/Camion_pesado/Toyota/Hilux_SRV/SRV/2020-2025`, igual al destino del organizador.
 - CI HEAD `0766fda94d9171c772e0052bff26d65f26deef14`: 152 suites, 2,224 pruebas aprobadas, 0 fallos; health y Pages SUCCESS.
 - [ ] Beta: validar rutas actuales y destinos propuestos con inventario real; cualquier carpeta equivalente duplicada debe continuar bloqueando la operación.
+
+ 
+## Adenda 2026-11-19 — validación estricta de años en rutas canónicas
+- [x] `getVehicleYearFolderName` ahora acepta únicamente `anoDesde` y `anoHasta` con cuatro dígitos exactos; no interpreta parcialmente valores como `2020abc`.
+- [x] Los años faltantes, formatos inválidos y rangos invertidos no producen rutas; un año único requiere el mismo año en ambos campos y genera `AAAA-AAAA`.
+- Pruebas dinámicas de rutas: 5/5 PASS. CI run 44525492921 SUCCESS: 152 suites, 2,224 pruebas, 0 fallos; health run 44525493007 SUCCESS. Pages run 44525492332 en curso al registrar.
