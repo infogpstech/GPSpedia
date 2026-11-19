@@ -91,7 +91,7 @@ for (const action of ["getReplacedImages", "getDriveStorage", "getCortesImageFol
     assert.ok(policy("ADMIN", action), "Falta política explícita para ADMIN/" + action);
 }
 const serviceTrafficRouter = admin.slice(admin.indexOf("function doPost(e)"), admin.indexOf("const ADMIN_AUDIT_PROPERTY_PREFIX_"));
-assert.match(serviceTrafficRouter, /if \(action === "getServiceTraffic"\)[\s\S]*?getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken\)/);
+assert.match(serviceTrafficRouter, /if \(action === "getServiceTraffic"\)[\s\S]*?getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "ADMIN" \}\)/);
 const serviceTraffic = policy("ADMIN", "getServiceTraffic");
 assert.ok(serviceTraffic.readResources.includes("SERVICE_TRAFFIC"),
     "La consulta agregada conserva su lectura específica de telemetría en Coordinator.");
@@ -138,7 +138,7 @@ const feedbackPermissionsEnd = feedback.indexOf("});", feedbackPermissionsStart)
 const feedbackPermissions = feedback.slice(feedbackPermissionsStart, feedbackPermissionsEnd);
 assert.ok(feedbackPermissions.includes('notifyDevelopersDriveCritical: ["Desarrollador"]'));
 const feedbackRouter = feedback.slice(feedback.indexOf("function doPost(e)"), feedback.indexOf("\nconst RICH_TEXT_MODE_PROPERTY_"));
-assert.ok(feedbackRouter.includes("getCachedSharedSessionActor_(payload.userId, payload.sessionToken)"));
+assert.ok(feedbackRouter.includes('getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "FEEDBACK" })'));
 assert.ok(!feedbackRouter.includes("withSharedMutationLease_"));
 assert.ok(feedback.includes('actions: new Set(["recordLike","reportProblem"'));
 
