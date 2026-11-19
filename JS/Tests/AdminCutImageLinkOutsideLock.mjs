@@ -18,7 +18,7 @@ const build=new Function("runAdminDriveWorkOutsideScriptLock_","getImageUploadFi
 let held=true,driveRan=false,key="";
 const lock={hasLock:()=>held,releaseLock:()=>{assert.equal(held,true);held=false;},tryLock:n=>{assert.equal(n,0);held=true;return true;}};
 const fake=(l,k,work,revalidate)=>{key=k;l.releaseLock();const result=work();assert.equal(l.hasLock(),false);l.tryLock(0);return revalidate(result);};
-const fn=build(fake,v=>String(v).match(/id=([^&]+)/)?.[1]||"",url=>{assert.equal(held,false);driveRan=true;return true;},()=>({}),{CORTES:"Cortes"},()=>({status:"completed",vehicleId:"42",slotIndex:2,operationHash:"hash"}));
+const fn=build(fake,v=>String(v).match(/id=([^&]+)/)?.[1]||"",url=>{assert.equal(held,false);driveRan=true;return true;},()=>({getSheetByName:()=>({})}),{CORTES:"Cortes"},()=>({status:"completed",vehicleId:"42",slotIndex:2,operationHash:"hash"}));
 assert.deepEqual(fn(lock,"OP-1","42",2,"hash",["https://drive.google.com/uc?export=view&id=a","https://drive.google.com/uc?export=view&id=a","https://drive.google.com/uc?export=view&id=b"]),[true,true]);
 assert.equal(key,"OP-1");assert.equal(driveRan,true);assert.equal(held,true);
 held=true;driveRan=false;

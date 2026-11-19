@@ -37,4 +37,4 @@ Continuar GP-PERF-ADMIN-CUT-LOCK-01. Prioridad restante: pruebas de no interfere
 - Las validaciones reales de Drive/Spreadsheet, concurrencia y deployments quedan para Beta autorizada.
 
 
-2026-11-19 — Siguiente subpaso P0: separar la sincronización markImageUploadLinked (Drive + ImageUploadLedger) del ScriptLock en handleAddOrUpdateCut; regresión añadida, CI pendiente.
+2026-11-19 — Siguiente subpaso P0: separar la sincronización markImageUploadLinked (Drive + ImageUploadLedger) del ScriptLock en handleAddOrUpdateCut; regresión añadida, CI pendiente. CI inicial detectó únicamente un mock incompleto de Spreadsheet en la prueba nueva; se ajusta getSheetByName sin cambiar la implementación.

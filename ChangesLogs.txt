@@ -968,3 +968,5 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-19] ADMIN: se mueve la vinculación post-commit de imágenes de handleAddOrUpdateCut fuera del ScriptLock. La operación queda completed antes de Drive; al readquirir se revalidan opId, vehículo, slot y huella. Las solicitudes legacy usan clave estable por fileId. Se añade AdminCutImageLinkOutsideLock.mjs; CI pendiente.
+
+[2026-11-19] Ajuste del fixture AdminCutImageLinkOutsideLock: el mock de Spreadsheet expone getSheetByName para que la prueba alcance la revalidación del ledger; sin cambio funcional.
