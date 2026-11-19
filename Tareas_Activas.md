@@ -459,4 +459,5 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Revalidar fila/vehículo y ledger `opId` (estado, URL, campo y huella) antes de recuperar historial.
 - [x] Mover actualización final de metadata Drive fuera del lock y revalidar ledger antes de confirmarla.
 - [x] Añadir `AdminImageUploadLinkedRecoveryIsolation.mjs` al runner.
-- [ ] CI y revisión de rutas de error pendientes.
+- [x] CI `44572041539` SUCCESS: 163 suites, 2,294 pruebas aprobadas, 0 fallos; `AdminImageUploadLinkedRecoveryIsolation` 5/5 y compensación in-modal 9/9. Health read-only `44572041605` SUCCESS.
+- [ ] Aislar las operaciones Drive de compensación del `catch`; todavía se ejecutan bajo ScriptLock.
