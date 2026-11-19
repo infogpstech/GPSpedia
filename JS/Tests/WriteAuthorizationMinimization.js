@@ -103,7 +103,8 @@ function runWriteAuthorizationMinimizationTests(sources) {
  run("Registro silencioso se procesa en WRITE y solo lo puede ejecutar Desarrollador",()=>{
   assert(add.includes("const serviceOverride = null")&&add.includes("silent: silentVal"));
   const start=write.indexOf("function handleAddOrUpdateCutLockedUnsafe_"),end=write.indexOf("\nfunction ",start+10),handler=write.slice(start,end<0?write.length:end);
-   const preflight=extract(write,"prepareAddOrUpdateCutRequest_"),outer=extract(write,"handleAddOrUpdateCut"),locked=extract(write,"handleAddOrUpdateCutLocked");
+   const preflightStart=write.indexOf("function prepareAddOrUpdateCutRequest_"),preflightEnd=write.indexOf("\nfunction handleAddOrUpdateCut(payload)",preflightStart),preflight=write.slice(preflightStart,preflightEnd);
+   const outer=extract(write,"handleAddOrUpdateCut"),locked=extract(write,"handleAddOrUpdateCutLocked");
    assert(preflight.includes('getAuthenticatedCollaborator(payload, payload && payload.silent === true ? ["desarrollador"] : undefined)'));
    assert(preflight.includes("getAddCutPayloadValidationOptions_")&&preflight.includes("validateAddOrUpdateCutPayload_"));
    assert(outer.indexOf("prepareAddOrUpdateCutRequest_(payload)")<outer.indexOf("lock.tryLock(0)"),"El preflight debe ejecutarse antes del lock.");
@@ -123,7 +124,7 @@ function runWriteAuthorizationMinimizationTests(sources) {
  run("Controles existentes addOrUpdateCut, addVinToVehicle y freezeCortesIds siguen autenticados",()=>{
   for(const name of ["handleAddOrUpdateCutLocked","handleAddVinToVehicleLocked","handleFreezeCortesIds"]){
    let fn;
-   if(name==="handleAddOrUpdateCutLocked"){fn=extract(write,"prepareAddOrUpdateCutRequest_");}
+   if(name==="handleAddOrUpdateCutLocked"){const start=write.indexOf("function prepareAddOrUpdateCutRequest_"),end=write.indexOf("\nfunction handleAddOrUpdateCut(payload)",start);fn=write.slice(start,end);}
    else fn=extract(write,name);
    assert(fn.includes("getAuthenticatedCollaborator")||fn.includes("assertDeveloperForIdMaintenance"),"Falta protección en "+name);
   }

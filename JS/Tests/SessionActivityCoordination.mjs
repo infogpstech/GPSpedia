@@ -12,7 +12,12 @@ testCase("WRITE consulta checkOperation sin lease y usa actor cacheado para muta
  assert.match(write,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "WRITE" \}\)/);
  assert.doesNotMatch(write,/withSharedMutationLease_\("WRITE", action/);
  assert.doesNotMatch(write,/touchSessionActivityIfDue_|getSessionExpirationStatus_/);
- ["handleAddOrUpdateCutLocked","handleAddVinToVehicleLocked","assertDeveloperForIdMaintenance"].forEach(name=>{
+ const preflightStart=write.indexOf("function prepareAddOrUpdateCutRequest_"),preflightEnd=write.indexOf("\nfunction handleAddOrUpdateCut(payload)",preflightStart);
+ assert.ok(preflightStart>=0&&preflightEnd>preflightStart,"Falta el preflight autenticado de addOrUpdateCut");
+ assert.match(write.slice(preflightStart,preflightEnd),/getAuthenticatedCollaborator\(/,"addOrUpdateCut debe consumir el actor central antes del lock");
+ const lockedStart=write.indexOf("function handleAddOrUpdateCutLocked("),lockedEnd=write.indexOf("\nfunction handleAddOrUpdateCutLockedUnsafe_",lockedStart);
+ assert.doesNotMatch(write.slice(lockedStart,lockedEnd),/getAuthenticatedCollaborator\(/,"La persistencia no debe retener la validación de actor bajo el lock");
+ ["handleAddVinToVehicleLocked","assertDeveloperForIdMaintenance"].forEach(name=>{
   const i=write.indexOf("function "+name);assert.ok(i>=0,name);
   const j=write.indexOf("\nfunction ",i+10);assert.match(write.slice(i,j<0?undefined:j),/getAuthenticatedCollaborator\(/,name+" debe consumir el actor central");
  });
