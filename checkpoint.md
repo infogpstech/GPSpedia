@@ -1141,7 +1141,7 @@ ACTUALIZACIÓN DE CONTINUIDAD — 2026-11-19
 - `publishCortesCatalogChange_` ya no mantiene el ScriptLock durante la petición HTTP al Coordinator.
 - WRITE reserva una versión global monotónica mientras conserva el lock de mutación; se incluye en el evento del catálogo.
 - Coordinator acepta versiones nuevas y convierte versiones atrasadas en evento reset, evitando que una respuesta lenta sobrescriba snapshots más recientes. Publicaciones legacy sin versión se convierten en reset.
-- La versión se adjunta a addOrUpdateCut, addSupplementaryInfo y addVinToVehicle. Pruebas deterministas agregadas a SharedMutationCoordinator.
+- La versión se adjunta a addOrUpdateCut, addSupplementaryInfo y addVinToVehicle. Pruebas deterministas agregadas a SharedMutationCoordinator y WriteCatalogPublicationIsolation.mjs. CI pendiente.
 - No se ha desplegado WRITE ni Coordinator; la compatibilidad de despliegues se validará en CI estático y seguirá pendiente de despliegue autorizado.
 ================================================================================
 

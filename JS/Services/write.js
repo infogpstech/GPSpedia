@@ -503,7 +503,7 @@ const WRITE_CATALOG_VERSION_PROPERTY_ = "GPSpedia_WRITE_CATALOG_VERSION_V1";
 
 function nextWriteCatalogVersionLocked_(reference) {
     const vehicleId = String(reference === null || reference === undefined ? "" : reference).trim();
-    if (!/^[1-9]\\d{0,14}$/.test(vehicleId)) throw new Error("No se puede versionar un cambio de catálogo sin un ID de vehículo válido.");
+    if (!/^[1-9]\d{0,14}$/.test(vehicleId)) throw new Error("No se puede versionar un cambio de catálogo sin un ID de vehículo válido.");
     const properties = PropertiesService.getScriptProperties();
     const current = Number(properties.getProperty(WRITE_CATALOG_VERSION_PROPERTY_) || 0);
     if (!Number.isSafeInteger(current) || current < 0 || current >= Number.MAX_SAFE_INTEGER) {

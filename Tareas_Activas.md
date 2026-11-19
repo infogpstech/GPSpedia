@@ -360,5 +360,5 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Se elimina el ScriptLock global de la llamada HTTP a Coordinator: el snapshot se lee y se publica sin mantener ese lock.
 - [x] WRITE asigna una secuencia global monotónica dentro de la sección crítica de cada mutación de Cortes (registro de corte, información suplementaria y VIN).
 - [x] Coordinator compara la secuencia bajo su propio lock; si una publicación llega atrasada, emite `reset` en vez de aplicar el snapshot obsoleto. Las publicaciones legacy sin versión también se convierten en reset.
-- [ ] Ejecutar pruebas Coordinator y regresión completa. La secuencia y publicación siguen pendientes de verificación CI.
+- [x] Añadir pruebas Coordinator para publicaciones fuera de orden/legacy y prueba WRITE para secuencia monotónica/publicación sin ScriptLock. Pendiente CI.
 

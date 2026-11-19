@@ -896,3 +896,4 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 2026-11-19 — WRITE/Catalog: eliminado ScriptLock local durante la publicación HTTP a Coordinator. Añadida secuencia de origen y protección anti-regresión en Coordinator; publicaciones atrasadas/legacy provocan reset en vez de aplicar snapshot obsoleto. Pendiente CI.
 
+2026-11-19 — Añadida prueba WriteCatalogPublicationIsolation.mjs para verificar secuencia de origen y que la publicación HTTP no toma el ScriptLock; corregida validación numérica del ID de vehículo.

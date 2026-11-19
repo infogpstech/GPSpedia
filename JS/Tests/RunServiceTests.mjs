@@ -73,6 +73,7 @@ runGroup('32','ADMIN',()=>{
   runCli('WRITE cargas Drive fuera del ScriptLock y reserva de slots','JS/Tests/WriteDriveOutsideLock.mjs');
   runCli('ADMIN reserva slots de corte ocupados por operaciones pending','JS/Tests/AdminCutSlotReservation.mjs');
   runCli('WRITE asignación de IDs no espera el ScriptLock global','JS/Tests/WriteIdAllocatorNonBlocking.mjs');
+  runCli('WRITE publicación del catálogo fuera del ScriptLock global','JS/Tests/WriteCatalogPublicationIsolation.mjs');
   runCli('RBAC y sesiones ilimitadas del rol Desarrollador','JS/Tests/DeveloperPrivilegeRouting.mjs');
  runCli('P4 protección de medios sin bloquear texto ni controles','JS/Tests/ClientInteractionPolicy.mjs');
  recordResult('ADMIN compensación de reemplazos in-modal/AUG-038',loadFunction('JS/Tests/AdminImageReplacementCompensation.js','runAdminImageReplacementCompensationTests')(read('JS/Frontend/ui.js'),a));
