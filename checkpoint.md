@@ -360,3 +360,13 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Se mantienen flush, asignación y lectura de confirmación del ID central, reserva pending antes de Drive y completed tras las escrituras.
 - Prueba nueva `AdminNewVehicleSingleRowClear.mjs` integrada en `RunServiceTests.mjs`.
 - CI pendiente. No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+## Cierre — limpieza de fila única en alta de vehículo nuevo ADMIN (2026-11-19)
+- La rama de vehículo nuevo ahora limpia la fila completa, desde la columna 1 hasta `lastColumn`, con una sola llamada `clearContent()`; la copia de formato/validación sigue ocurriendo antes de limpiar.
+- Se conserva el orden de `flush()`, asignación y lectura de confirmación del ID central, reserva idempotente `pending` antes de Drive y estado `completed` después de las escrituras/flush.
+- Prueba `AdminNewVehicleSingleRowClear.mjs`: integrada en `RunServiceTests.mjs`; sus siete aserciones cubren limpieza única, orden de operaciones y preservación de la reserva idempotente.
+- CI regresión `44640068663` SUCCESS sobre HEAD `4f99a114e00d178181e30a093dd40f4c50453a07`; pasos de verificación de rama, sintaxis de módulos modificados y suites aisladas completados. Health read-only `44640068448` SUCCESS.
+- No se desplegó Apps Script ni se modificaron Sheets/Drive productivos. La validación de integración y concurrencia queda diferida a Beta autorizada.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+- Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de las lecturas restantes de Sheets dentro de `handleAddOrUpdateCut`, priorizando una reducción demostrable sin mover reservas ni escrituras atómicas fuera del ScriptLock.
