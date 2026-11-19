@@ -441,6 +441,6 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Acortar la sección crítica de `handleUpdateVehicleField`: validar/escribir/verificar el campo en Cortes y capturar la instantánea confirmada.
 - [x] Ejecutar movimiento/renombrado de imagen principal después de liberar ScriptLock; fallos de Drive se devuelven como advertencia sin revertir el metadato guardado.
 - [x] Cambiar la adquisición a `tryLock(0)` para evitar esperas de 30 s; añadir `AdminVehicleFolderSyncOutsideLock.mjs` al runner.
-- [ ] CI y revisión de concurrencia pendientes.
+- [x] CI `44570179580` SUCCESS: 161 suites, 2,280 pruebas aprobadas, 0 fallos; `AdminVehicleFolderSyncOutsideLock` 7/7, `WRITE/ADMIN VIN` 12/12 y `ADMIN edición modal/RBAC` 9/9. Health read-only `44570179476` SUCCESS.
 
 - CI inicial del cambio de sincronización Drive: 2 contratos antiguos no encontraron el cierre del handler por un salto de línea extra entre la función y `ADMIN_IMAGE_UPLOAD_SHEET_NAME`. Se conserva el delimitador esperado por los tests de extracción; sin cambio funcional.
