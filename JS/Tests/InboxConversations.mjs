@@ -90,7 +90,7 @@ const LockService = {
 const SpreadsheetApp = { flush() {} };
 const api = new Function(
     "getSpreadsheet","LockService","SpreadsheetApp","Utilities","assertFeedbackSession","normalizeFeedbackRole",
-    source + "\nreturn { handleGetInboxRecipients, handleNotifyDevelopersDriveCritical, handleCreateInboxConversation, handleSendInboxMessage, handleGetInboxConversations, handleGetInboxMessages, handleMarkInboxRead, handleMarkInboxUnread, handleDeleteInboxConversation, handleArchiveInboxConversation, handleCloseInboxConversation, inboxCanStartConversationWith_, ensureInboxConversationSheets_ };"
+    source + "\nreturn { handleGetInboxRecipients, handleNotifyDevelopersDriveCritical, handleCreateInboxConversation, handleSendInboxMessage, handleGetInboxConversations, handleGetInboxMessages, handleMarkInboxRead, handleMarkInboxUnread, handleDeleteInboxConversation, handleArchiveInboxConversation, handleCloseInboxConversation, inboxCanStartConversationWith_, ensureInboxConversationSheets_, inboxPlainTextPreview_ };"
 )(() => spreadsheet, LockService, SpreadsheetApp, Utilities, assertSession, normalizeRole);
 
 const actor = (id, token) => ({ userId: id, sessionToken: token });
@@ -926,5 +926,28 @@ run("Un envío a varios usuarios produce conversaciones privadas sin exponer des
     assert.throws(() => api.handleGetInboxMessages({
         ...actor("U3","token-c"),conversationId:toU5.conversationId
     }),/permiso/);
+});
+run("El preview elimina etiquetas HTML, contenido script/style y decodifica entidades", () => {
+    const preview = api.inboxPlainTextPreview_("<p>Hola&nbsp;<strong>Bruno</strong></p><script>alert(1)</script><style>.x{color:red}</style><br>Bienvenido &amp; gracias &#33;", 180);
+    assert.equal(preview, "Hola Bruno Bienvenido & gracias !");
+    assert.doesNotMatch(preview, /<[^>]*>|alert\(1\)|color:red/);
+});
+run("La lectura de conversaciones normaliza también previews históricos guardados como HTML", () => {
+    const created = api.handleCreateInboxConversation({
+        ...actor("U1","token-a"), recipientId:"U5", subject:"Formato enriquecido", category:"general",
+        body:"<p>Texto <strong>legible</strong> &amp; seguro</p><script>alert(1)</script>",
+        idempotencyKey:"html-preview-legacy-01"
+    });
+    const result = api.handleGetInboxConversations({ ...actor("U1","token-a"), folder:"sent", query:"legible" });
+    const item = result.data.find(entry => entry.conversationId === created.conversationId);
+    assert.ok(item);
+    assert.equal(item.lastMessagePreview, "Texto legible & seguro");
+    assert.doesNotMatch(item.lastMessagePreview, /<[^>]*>|alert\(1\)/);
+});
+run("El preview aplica el límite de longitud sin modificar el mensaje completo", () => {
+    const preview = api.inboxPlainTextPreview_("<p>" + "x".repeat(220) + "</p>", 180);
+    assert.equal(preview.length, 180);
+    const messages = api.handleGetInboxMessages({ ...actor("U1","token-a"), conversationId:first.conversationId });
+    assert.equal(messages.data[0].body, "Hola Bruno, bienvenido a GPSpedia.");
 });
 console.log("InboxConversations: " + passed + "/" + passed + " PASS");
