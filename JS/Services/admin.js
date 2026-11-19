@@ -3189,24 +3189,25 @@ function mapCorteTypeToFunctionCode_(value) {
 }
 
 function getCorteFunctionSuffix_(typeValues, imageValues, slotIndex) {
-
     const types = Array.isArray(typeValues) ? typeValues : [];
+    const images = Array.isArray(imageValues) ? imageValues : [];
     const slot = Number(slotIndex);
     if (!Number.isInteger(slot) || slot < 1 || slot > 3) return "";
     const code = mapCorteTypeToFunctionCode_(types[slot - 1]);
     if (!code) return "";
-    let ordinal = 0;
-    for (let index = 0; index < slot; index++) {
-        if (mapCorteTypeToFunctionCode_(types[index]) === code) ordinal++;
+
+    // La numeración representa recursos realmente registrados, no solo posiciones tipadas.
+    // El slot actual cuenta como el siguiente recurso; los anteriores vacíos no consumen ordinal.
+    let ordinal = 1;
+    for (let index = 0; index < slot - 1; index++) {
+        if (!String(images[index] || "").trim()) continue;
+        const previousCode = mapCorteTypeToFunctionCode_(types[index]);
+        if (!previousCode) return "";
+        if (previousCode === code) ordinal++;
     }
     return code + ordinal;
 }
 
-/**
- * Constructor puro de destinos para el organizador de Cortes.
- * Solo transforma matrices ya leídas; no accede a Drive/Spreadsheet ni realiza escrituras.
- * La inspección de existencia, referencias cruzadas y conflictos se completa en el endpoint dry-run.
- */
 function buildCortesImageOrganizerTargets_(cortesValues, cortesFormulas, logosValues, logosFormulas) {
     const rows = Array.isArray(cortesValues) ? cortesValues : [];
     const rowFormulas = Array.isArray(cortesFormulas) ? cortesFormulas : [];
