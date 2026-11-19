@@ -588,3 +588,40 @@ Riesgo residual:
 - Falta ejecutar la regresión Node integral y validar el panel en navegador móvil real en la etapa autorizada posterior.
 ================================================================================
 
+
+================================================================================
+2026-11-19 — AUDITORÍA BETA-ADMIN-SERVICE-TELEMETRY-02
+- UI: checkAllServicesHealth recorre las siete claves activas de API_ENDPOINTS; el inventario no contiene LEGACY. renderServiceCards, selección de detalle y gráficas filtran explícitamente LEGACY.
+- ui.js declara events y lastEvent a partir de getBrowserServiceTrafficSnapshot, eliminando la referencia indefinida.
+- serviceTelemetry.js agrupa por servicio en memoria durante la sesión actual; detecta móvil/tableta/escritorio y conserva conteos, resultados, latencia y acciones sin payloads ni identidad de usuario.
+- Se recuperan dos visualizaciones distintas: agregado global de los servicios y gráfica local del navegador para el servicio seleccionado.
+- admin.js exige Coordinator con scope esperado, los siete servicios y conteos no negativos por periodo/bucket. Fuentes directas inválidas quedan parciales y no contaminan ni anulan el resto.
+- CATALOGO/AUTH/WRITE/USERS/FEEDBACK disponen de contadores directos según su instrumentación; UTILITIES y ADMIN se contabilizan mediante Coordinator para evitar doble conteo.
+- No se han probado despliegues ni tráfico real de navegador móvil. La métrica local solo representa la sesión/navegador actual, no el total de clientes móviles.
+================================================================================
+
+================================================================================
+2026-11-19 — AUDITORÍA DE AUTORIZACIÓN DEL COORDINADOR / INBOX
+- Causa de código: SharedMutationClient.validateSessionContext fijaba la identidad de servicio AUTH, aunque usaba las propiedades locales del proyecto consumidor. Como los secretos son distintos por servicio, FEEDBACK presentaba su secreto como AUTH y Coordinator devolvía «Servicio no autorizado para el coordinador compartido».
+- El problema afectaba también el primer llenado de caché local de actor en USERS, WRITE y ADMIN. AUTH sí utilizaba identidad coincidente.
+- Corrección: parámetro de servicio explícito en el cliente y en getCachedSharedSessionActor_; Coordinator permite validación de sesión para los seis servicios autorizados por authenticate_. Las acciones de alta, sincronización y revocación siguen limitadas a AUTH.
+- Pruebas aisladas: 68/68 en SharedMutationCoordinator; el test confirma cada secreto de servicio y rechaza CATALOG.
+- Límite: no se consultaron ScriptProperties ni deployments. Si el error persiste tras la futura publicación, verificar que cada secreto local coincida con GPSpedia_COORDINATOR_SECRET_<SERVICIO> en Coordinator del mismo entorno.
+================================================================================
+
+================================================================================
+2026-11-19 — AUDITORÍA Y CORRECCIÓN DE PREVIEW INBOX
+- El backend almacenaba en lastMessagePreview los primeros 180 caracteres del body HTML, y la UI lo insertaba con textContent: seguro frente a XSS, pero mostraba etiquetas literales en la lista.
+- Nuevo helper de texto plano elimina etiquetas y bloques script/style, decodifica entidades y limita longitud. Se aplica a nuevos resúmenes y a filas históricas al leerlas.
+- El cuerpo completo conserva su ruta actual de sanitización avanzada; no se debilita el sanitizador ni se modifica el contenido persistido.
+- InboxConversations: 66/66 PASS, incluyendo HTML, entidades, script/style, histórico, longitud y preservación del body.
+================================================================================
+
+================================================================================
+2026-11-19 — AUDITORÍA DE ARQUITECTURA Y CONFIGURACIÓN
+- Coordinator es un proyecto independiente y su contrato HTTP ya separa la implementación central de los consumidores. Un cambio exclusivamente interno del Coordinator debe requerir actualizar solo ese deployment mientras el contrato sea compatible.
+- SharedMutationClient se copia en AUTH, USERS, WRITE, ADMIN, FEEDBACK y UTILITIES. Contiene transporte, leases, feed, sesiones y además llamadas directas de invalidación a WRITE/FEEDBACK. Esta mezcla aumenta el alcance de cambios de cliente.
+- La invalidación remota se ejecuta antes de la revocación central; no cambiar el orden sin idempotencia, recuperación y confirmación de resultados parciales.
+- Configuración identificada: URL/secreto de Coordinator por consumidor; seis secretos por servicio en Coordinator; URLs y cinco secretos directos de telemetría en ADMIN; secretos directos de telemetría en servicios fuente; URLs duplicadas en frontend/ADMIN.
+- Diseño detallado y matriz de aceptación en Services/SERVICE_ARCHITECTURE_PLAN.md. No se consultaron valores ni se cambiaron secretos, permisos o deployments.
+================================================================================
