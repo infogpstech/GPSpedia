@@ -554,3 +554,37 @@ Alcance: inspección estática de JS/Services/admin.js y sus contratos. No se ej
 - Cobertura añadida: pruebas dinámicas para tres slots de cada tipo de corte, tres alimentaciones y apertura. CI pendiente al registrar esta adenda.
 - Límite: no se inspeccionaron datos productivos ni se movieron/renombraron archivos; el preview real sigue pendiente de despliegue ADMIN y nueva auditoría Drive.
 ================================================================================
+
+
+================================================================================
+2026-11-19 — AUDITORÍA Y CORRECCIÓN DE TELEMETRÍA ADMIN
+================================================================================
+Alcance: inspección estática de JS/Frontend/api-config.js, ui.js, serviceTelemetry.js, JS/Services/admin.js, Coordinator.js, users.js, SharedMutationClient.js, service-worker.js y contratos de pruebas.
+
+Hallazgos confirmados:
+1. El detalle de servicio en ui.js utilizaba events y lastEvent sin declararlos en el ámbito de renderServiceDetail; seleccionar un servicio podía producir ReferenceError.
+2. La UI no mantenía un registro local por servicio ni mostraba una gráfica de tráfico local del navegador; el gráfico disponible era solo el agregado global.
+3. El agregado ADMIN aceptaba la estructura de Coordinator sin validar estrictamente la identidad de los siete servicios, periodos y conteos; un shape incompleto podía romper la combinación.
+4. Las rutas directas getUsers no pasaban por lease Coordinator y, por tanto, no contribuían al tráfico global de USERS.
+5. El Service Worker no incluía el nuevo módulo local de telemetría en CORE_ASSETS.
+
+Correcciones:
+- events/lastEvent se obtienen de un snapshot local declarado; se añade gráfica local por servicio, métricas de éxito/error/latencia y clasificación de dispositivo móvil/tableta/escritorio.
+- La telemetría del navegador se mantiene en memoria, limita su historial, no persiste, no transmite datos ni conserva payloads, credenciales o identificadores de usuario. Las llamadas routeAction y getCatalogChanges quedan contabilizadas.
+- ADMIN valida scope, siete servicios exactos, tres mapas de totales y buckets. Los errores de fuentes directas se aíslan; se conservan los conteos Coordinator y se marcan como parciales los datos directos inválidos.
+- USERS registra getUsers mediante ScriptProperties con lock no bloqueante tryLock(0), contador horario de 24 h y endpoint interno protegido por GPSpedia_USERS_TRAFFIC_SECRET. El endpoint no cuenta su propia consulta.
+- ADMIN consulta cinco fuentes directas en un solo fetchAll; UTILITIES y ADMIN siguen contabilizados por Coordinator, sin duplicar leases.
+- Se añade serviceTelemetry.js al App Shell PWA y se incrementa CACHE_NAME a v74.
+
+Validación:
+- Sintaxis PASS para admin.js, users.js, api-config.js, ui.js, serviceTelemetry.js y service-worker.js.
+- 24/24 comprobaciones aisladas PASS: paridad de fixture USERS; contador USERS no bloqueante; telemetría móvil; agregación de siete servicios; fuentes directas parciales; validación que rechaza LEGACY; dos gráficas; precache PWA.
+- Suites Node añadidas/actualizadas en RunServiceTests.mjs; la ejecución completa del runner y CI no pudo acreditarse con las herramientas disponibles en esta sesión.
+- No se realizaron despliegues ni se tocaron ScriptProperties, Drive o Spreadsheet. La configuración GPSpedia_USERS_TRAFFIC_SECRET se difiere a Beta después de cerrar todas las implementaciones locales.
+
+Riesgo residual:
+- La telemetría directa es best-effort y puede subcontar si tryLock(0) no obtiene el lock o si falta un secreto. El dashboard conserva el agregado Coordinator y no interpreta la ausencia de fuente como cero confirmado.
+- El gráfico local representa únicamente las solicitudes observadas en el navegador/sesión actual; no es un agregado de todos los dispositivos móviles de usuarios.
+- Falta ejecutar la regresión Node integral y validar el panel en navegador móvil real en la etapa autorizada posterior.
+================================================================================
+
