@@ -325,3 +325,15 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 ### Segunda nota de CI — snapshot post-Drive de vehículo existente
 - La segunda ejecución falló por el escape duplicado del operador `||` en el patrón regex de la prueba, no por la lógica funcional.
 - El patrón se reescribe para reconocer el fallback condicionado correctamente. Nueva regresión pendiente.
+
+
+## Cierre — reutilización de snapshot post-Drive en ADMIN (2026-11-19)
+- Implementación: `12f1c9d92f5f3eddd8a255ead0db5dc7af71284d`; correcciones de prueba: `f27092ddc40d4ba3e3f13aba0cf5c6e02f4fe8f3`, `c9101a81a8574e9133bb8d4335d837eed3f3e4d9`.
+- En la rama de vehículo existente, `findRowByOpId` obtiene y devuelve la fila completa después de Drive tras comprobar unicidad. Se reutiliza `verified.rowValues` para preparar VIN; la lectura integral adicional queda como fallback únicamente si no hay snapshot/opId.
+- Se preservan las comprobaciones de rowIndex, vehicleId, slotIndex, operationHash y slot vacío. No se reutiliza el snapshot anterior a Drive.
+- Prueba `AdminExistingVehiclePostDriveSnapshotReuse`: 9/9 PASS.
+- CI regresión `44639307547` SUCCESS: 191 suites, 2,513 pruebas aprobadas, 0 fallos.
+- Health read-only `44639307367` SUCCESS; Pages `44639306388` SUCCESS.
+- Las dos primeras CI fallaron por aserciones demasiado estrictas/escapadas en el test; la tercera aprobó. No se cambió la lógica funcional por esos fallos.
+- No se desplegó Apps Script ni se modificaron datos productivos.
+- Siguiente tarea: revisar si el preflight de VIN y la revalidación post-Drive hacen consultas duplicadas a la columna VIN que puedan combinarse sin omitir detección de duplicados concurrentes.

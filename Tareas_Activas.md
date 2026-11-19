@@ -730,5 +730,8 @@ Siguiente paso: continuar GP-PERF-ADMIN-CUT-LOCK-01 inspeccionando las escritura
 - [x] Mantener lectura de fallback si no existe opId.
 - [x] Añadir `AdminExistingVehiclePostDriveSnapshotReuse.mjs` al runner.
 - CI inicial `44638854344`: la implementación pasó sintaxis, pero falló una aserción de prueba que prohibía incluso la lectura fallback para ausencia de opId. Se ajustó el contrato del test para exigir que esa lectura exista solo detrás de `verifiedRowValues ||`.
-- CI `44638854344` y repetición `44639065649`: ambas fallaron únicamente en la aserción de prueba del fallback por un escape incorrecto del patrón regex; la implementación y sintaxis pasaron. Se corrige el patrón literal para la siguiente ejecución.
-- Estado: implementación publicada; regresión pendiente. No se desplegó Apps Script ni se modificaron datos productivos.
+- CI iniciales `44638854344` y `44639065649`: fallaron solo por aserciones del test (primero el fallback válido, después el escape regex); implementación funcional sin cambios.
+- [x] CI final `44639307547` SUCCESS: 191 suites, 2,513 pruebas aprobadas, 0 fallos; `AdminExistingVehiclePostDriveSnapshotReuse` 9/9 PASS.
+- [x] Health read-only `44639307367` SUCCESS.
+- [x] Pages `44639306388` SUCCESS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó Apps Script ni se modificaron datos productivos.
