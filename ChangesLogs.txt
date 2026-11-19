@@ -978,3 +978,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-19] ADMIN: getExistingEntities lee únicamente las columnas marca, modelo y versionesAplicables, con índices relativos para columnas no contiguas; se reduce el volumen leído durante altas. Se añade AdminEntityLookupBoundedRead.mjs; CI pendiente.
+
+
+[2026-11-19] Cierre de lectura acotada de entidades ADMIN: CI 44594845526 SUCCESS (166 suites, 2,323 pruebas, 0 fallos); AdminEntityLookupBoundedRead 7/7. Health read-only 44594846847 y GitHub Pages 44594844590 SUCCESS. Diff revisado; no se desplegó ADMIN ni se modificaron datos productivos.

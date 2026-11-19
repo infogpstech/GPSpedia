@@ -478,4 +478,5 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Reducir getExistingEntities a las columnas marca/modelo/versiones; evita cargar todas las columnas de Cortes durante el alta.
 - [x] Conservar deduplicación y compatibilidad con columnas no contiguas.
 - [x] Añadir AdminEntityLookupBoundedRead.mjs al runner.
-- [ ] CI integral y revisión del diff pendientes. No se despliega ADMIN ni se modifican datos externos.
+- [x] CI 44594845526 SUCCESS: 166 suites, 2,323 pruebas aprobadas, 0 fallos; `AdminEntityLookupBoundedRead` 7/7 y sintaxis JavaScript aprobada. Health read-only 44594846847 SUCCESS; GitHub Pages 44594844590 SUCCESS. Diff revisado.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó ADMIN ni se modificaron datos externos.
