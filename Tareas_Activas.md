@@ -706,4 +706,5 @@ Siguiente paso: continuar GP-PERF-ADMIN-CUT-LOCK-01 inspeccionando las escritura
 - [x] Reutilizar la lectura completa de fila para validar `COLS_CORTES.id` antes de mapear o escribir.
 - [x] Mantener la búsqueda de fila candidata fuera del lock y confirmar bajo lock que la fila aún contiene el ID esperado.
 - [x] Actualizar `AdminExistingVehicleLookupPreflight.mjs` y añadir `AdminExistingVehicleSnapshotRevalidation.mjs` al runner.
-- Estado: IMPLEMENTACIÓN PUBLICADA; regresión y health pendientes de CI. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
+- CI inicial `44636808060`: la prueba detectó que su conteo incluía una segunda lectura legítima posterior a Drive (necesaria para preparar VIN). La aserción se limita ahora al tramo previo a Drive, que es el que debe tener una única lectura de fila. La lógica funcional conserva la relectura posterior. Regresión corregida pendiente.
+- Estado: IMPLEMENTACIÓN PUBLICADA; CI en corrección. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.

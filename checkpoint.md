@@ -258,3 +258,9 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - La búsqueda de fila candidata sigue fuera del lock; el snapshot bajo lock es la fuente de identidad antes de mapear y escribir.
 - Pruebas actualizadas: `AdminExistingVehicleLookupPreflight.mjs`; nueva `AdminExistingVehicleSnapshotRevalidation.mjs`.
 - CI pendiente. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
+
+
+### Nota de CI — snapshot de vehicleId en ADMIN
+- La primera ejecución detectó una aserción excesiva: contaba también la lectura posterior a Drive usada para preparar VIN.
+- Se acotó la prueba al tramo anterior a Drive. La lectura posterior se conserva porque cumple una función distinta.
+- Repetición de regresión pendiente.

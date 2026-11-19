@@ -1085,3 +1085,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-19] ADMIN: revalidación de vehículo existente reutiliza el snapshot de fila. Se elimina una llamada individual `getValue()` para leer el ID; la lectura integral de fila bajo ScriptLock ahora valida `rowValues[COLS_CORTES.id - 1]` antes de mapear y operar. Se conserva el preflight de búsqueda fuera del lock y la revalidación protegida. Se actualiza AdminExistingVehicleLookupPreflight y se añade AdminExistingVehicleSnapshotRevalidation.
+
+
+[2026-11-19 · corrección de prueba] La primera regresión de AdminExistingVehicleSnapshotRevalidation falló porque el test contaba dos lecturas de fila de toda la rama: la lectura inicial de identidad y una lectura posterior a Drive necesaria para preparar VIN. La prueba se acotó al tramo previo a Drive, donde se elimina el getValue redundante. No se retiró la lectura posterior funcional.

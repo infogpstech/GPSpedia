@@ -17,8 +17,10 @@ assert.ok(rowRead >= 0 && rowRead < idCheck && idCheck < objectMap,
     "La fila debe leerse una vez, validar el ID desde ese snapshot y después mapearla");
 assert.doesNotMatch(branch, /getRange\(rowIndex,\s*COLS_CORTES\.id\)\.getValue\(\)/,
     "No debe existir lectura individual de la celda ID");
-assert.equal((branch.match(/getRange\(rowIndex, 1, 1, sheet\.getLastColumn\(\)\)\.getValues\(\)\[0\]/g) || []).length, 1,
-    "Debe existir una sola lectura integral de la fila en esta preparación");
+const preDrive = branch.slice(0, branch.indexOf("runAdminDriveWorkOutsideScriptLock_"));
+assert.ok(preDrive.length > 0, "No se encontró el inicio del trabajo Drive");
+assert.equal((preDrive.match(/getRange\(rowIndex, 1, 1, sheet\.getLastColumn\(\)\)\.getValues\(\)\[0\]/g) || []).length, 1,
+    "Antes de Drive debe existir una sola lectura integral de fila para revalidar la identidad");
 const validateSnapshotId = (rowValues, expectedId) =>
     String(rowValues[0]) === String(expectedId);
 assert.equal(validateSnapshotId(["123", "Toyota"], 123), true, "Debe aceptar ID numérico/string equivalente");
