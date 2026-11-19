@@ -5851,6 +5851,11 @@ function initAdminPanelListeners() {
         const serviceCount = period => globalTrafficAvailable
             ? String(Math.max(0, Number(serviceTotals[period] && serviceTotals[period][selectedServiceKey]) || 0))
             : "No disponible";
+        const trafficSource = globalTrafficAvailable && globalServiceTrafficData.sources
+            ? globalServiceTrafficData.sources[selectedServiceKey] : null;
+        const trafficCoverageLabel = trafficSource
+            ? (trafficSource.directRequestsAvailable ? "Coordinator + directo" : "Coordinator; directo parcial/no disponible")
+            : "Coordinator";
         const metadata = item.metadata || {};
         const heading = document.createElement("div");
         heading.className = "dev-service-detail-heading";
@@ -5878,6 +5883,7 @@ function initAdminPanelListeners() {
             createServiceMetric("Operaciones globales (1 h)", serviceCount("lastHour")),
             createServiceMetric("Operaciones globales (6 h)", serviceCount("last6Hours")),
             createServiceMetric("Operaciones globales (24 h)", serviceCount("last24Hours")),
+            createServiceMetric("Cobertura de tráfico global", trafficCoverageLabel),
             createServiceMetric("Solicitudes de este navegador (24 h)", String(localTraffic?.metrics?.requests || 0)),
             createServiceMetric("Respuestas correctas (24 h)", String(localTraffic?.metrics?.successes || 0)),
             createServiceMetric("Errores observados (24 h)", String(localTraffic?.metrics?.errors || 0)),
