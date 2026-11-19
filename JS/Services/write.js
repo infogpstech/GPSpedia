@@ -1467,11 +1467,9 @@ function readSupplementaryVehicleSnapshot_(sheet, vehicleId) {
 }
 
 function findOrCreateSupplementaryVehicleFolder_(vehicle) {
-    const lock = LockService.getScriptLock();
-    try { lock.waitLock(5000); }
-    catch (error) { throw createSupplementaryInfoError_("SUPPLEMENTARY_FOLDER_LOCK_FAILED", "No se pudo preparar la carpeta de imágenes. Intente nuevamente."); }
-    try { return findOrCreateVehicleFolder(vehicle); }
-    finally { lock.releaseLock(); }
+    return withSharedMutationLease_("WRITE", "ensureSupplementaryVehicleFolder", function() {
+        return findOrCreateVehicleFolder(vehicle);
+    });
 }
 
 function prepareSupplementaryImageUploads_(payload, vehicle, plan) {
