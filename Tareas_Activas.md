@@ -602,6 +602,6 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 ### GP-PERF-ADMIN-CUT-LOCK-01 — preflight idempotente (2026-11-19)
 - [x] Validar el `operationHash` y calcular la huella SHA-256 antes de solicitar un `vehicleId` a WRITE y antes de adquirir el `ScriptLock` ADMIN.
 - [x] Conservar la extracción compatible del `opId` legacy y la búsqueda/revalidación dentro de la sección crítica.
-- [x] Añadir `AdminCutPreflightBeforeAllocation.mjs` al runner: 5/5 PASS.
-- [x] CI `44627738079` SUCCESS: 178 suites, 2,409 pruebas aprobadas, 0 fallos; sintaxis JS aprobada. Health read-only `44627738183` SUCCESS.
+- [x] Añadir `AdminCutPreflightBeforeAllocation.mjs` al runner: 7/7 PASS; cubre hash, asignación fuera del lock, extracción VIN y timestamp precomputados, y revalidación idempotente.
+- [x] CI `44627981794` SUCCESS: 178 suites, 2,411 pruebas aprobadas, 0 fallos; sintaxis JS aprobada. Health read-only `44627981620` SUCCESS.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA como subactividad; GP-PERF-ADMIN-CUT-LOCK-01 continúa EN PROGRESO.
