@@ -7092,7 +7092,7 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
                 buildImageUploadOperationKey(opId, vehicleId, "imgCorte" + cutSlotIndex));
         }, function(url) {
             if (opId) {
-                const verified = findRowByOpId(sheet, opId);
+                const verified = findRowByOpId(sheet, opId, idempotencyEntriesSnapshot);
                 if (!verified || verified.rowIndex !== rowIndex || verified.slotIndex !== cutSlotIndex ||
                     verified.vehicleId !== String(vehicleId) || verified.operationHash !== operationHash ||
                     String(verified.rowValues[COLS_CORTES["tipoCorte" + cutSlotIndex] - 1] || "").trim()) {
@@ -7194,7 +7194,7 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
             return { vehicleImageUrl, cutImageUrl };
         }, function(images) {
             if (opId) {
-                const verified = findRowByOpId(sheet, opId);
+                const verified = findRowByOpId(sheet, opId, idempotencyEntriesSnapshot);
                 if (!verified || verified.rowIndex !== rowIndex || verified.vehicleId !== String(newId) ||
                     verified.slotIndex !== 1 || verified.operationHash !== operationHash ||
                     Number(sheet.getRange(rowIndex, COLS_CORTES.id).getValue()) !== Number(newId)) {
