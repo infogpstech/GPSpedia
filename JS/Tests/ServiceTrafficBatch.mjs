@@ -14,6 +14,7 @@ const urls = {
     AUTH: "https://auth.example/exec",
     WRITE: "https://write.example/exec",
     FEEDBACK: "https://feedback.example/exec",
+    USERS: "https://users.example/exec",
 };
 const services = Object.keys(urls);
 const secrets = Object.fromEntries(services.map(service => ["GPSpedia_" + service + "_TRAFFIC_SECRET", (service + "-secret-").padEnd(48, "x")]));
@@ -44,6 +45,7 @@ function build(fetchAll, fetchOne, propertyOptions = {}) {
         'const AUTH_SERVICE_URL = "' + urls.AUTH + '";' +
         'const WRITE_SERVICE_URL = "' + urls.WRITE + '";' +
         'const FEEDBACK_SERVICE_URL = "' + urls.FEEDBACK + '";' +
+        'const USERS_SERVICE_URL = "' + urls.USERS + '";' +
         source + "\nreturn getDirectServiceTrafficBatch_;"
     );
     return factory(PropertiesService, UrlFetchApp);
@@ -55,7 +57,7 @@ test("consulta cuatro fuentes directas en un único fetchAll y conserva sus cont
     let batchCalls = 0;
     const fn = build(requests => {
         batchCalls++;
-        assert.equal(requests.length, 4);
+        assert.equal(requests.length, 5);
         return requests.map(request => {
             const service = services.find(name => request.url === urls[name]);
             const body = JSON.parse(request.payload);
@@ -80,7 +82,7 @@ test("una fuente sin secreto queda parcial sin impedir consultar las otras", () 
         return requests.map(request => response(services.find(name => request.url === urls[name])));
     }, null, { missing: ["GPSpedia_WRITE_TRAFFIC_SECRET"] });
     const result = fn();
-    assert.equal(requested.length, 3);
+    assert.equal(requested.length, 4);
     assert.equal(result.WRITE.status, "unavailable");
     assert.equal(result.WRITE.reason, "not_configured");
     assert.equal(result.AUTH.status, "success");
@@ -95,7 +97,7 @@ test("si fetchAll falla, reintenta cada endpoint de forma aislada", () => {
         return response(service);
     });
     const result = fn();
-    assert.equal(calls.length, 4);
+    assert.equal(calls.length, 5);
     for (const service of services) assert.equal(result[service].status, "success");
 });
 
