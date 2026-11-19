@@ -710,7 +710,7 @@ function doPost(e) {
         try {
             // El benchmark solo calcula con una cadena fija: el actor cacheado basta;
             // no requiere lease ni actualización de actividad en Coordinator.
-            const actor = getCachedSharedSessionActor_(payload.userId, payload.sessionToken);
+            const actor = getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "AUTH" });
             return doPostInternal_(withSharedSessionActor_(e, actor));
         } catch (error) {
             return ContentService.createTextOutput(JSON.stringify({
