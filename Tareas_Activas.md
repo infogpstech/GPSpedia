@@ -586,3 +586,13 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] CI 44625164726 SUCCESS: 176 suites, 2,398 pruebas aprobadas, 0 fallos; `WriteEntityLookupBoundedRead` 8/8 y sintaxis JavaScript aprobada.
 - [x] Health read-only 44625164725 SUCCESS; diff revisado: únicamente lectura acotada, deduplicación y pruebas/registros de esta tarea.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó WRITE ni se modificaron Sheets/Drive productivos.
+
+
+### WRITE — reutilización de fila localizada en registro de cortes (2026-11-19)
+- [x] Reutilizar la fila y el índice únicos ya obtenidos por `handleAddOrUpdateCutLocked`; eliminar la segunda lectura de la columna ID y la segunda lectura de la fila completa en la ruta de vehículo existente.
+- [x] Añadir fallback de lectura dirigida de una sola fila si el ancho del esquema cambia antes de consumir la instantánea; comprobar que el ID siga correspondiendo al vehículo solicitado.
+- [x] Añadir `WriteCutExistingVehicleSnapshotReuse.mjs` (4/4 PASS) y actualizar el contrato `WriteIdempotencySnapshotReuse.mjs`.
+- [x] CI `44626945883` SUCCESS: 177 suites, 2,404 pruebas aprobadas, 0 fallos; sintaxis JavaScript aprobada.
+- [x] Health read-only `44626945680` SUCCESS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó WRITE ni se modificaron Sheets/Drive productivos.
+- Commits de implementación/pruebas: `a227e098`, `b7f83510`, `28aaecd6`, `0f739479`, `5a612e06`, `a7717124`.
