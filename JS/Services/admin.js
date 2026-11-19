@@ -8584,7 +8584,30 @@ function recordOpId(opId, vehicleId, slotIndex, timestamp, status, operationHash
     return verified;
 }
 
-function findUniqueCortesVehicleRow_(sheet,vehicleId,opId){if(!sheet)throw Error("No se encontró la hoja Cortes para recuperar el opId "+opId+".");const id=normalizeIdempotenciaVehicleId_(vehicleId,"Recuperación "+opId),data=sheet.getDataRange().getValues(),matches=[];for(let r=1;r<data.length;r++){const v=data[r][COLS_CORTES.id-1];if(isBlankIdempotenciaValue_(v))continue;if(normalizeIdempotenciaVehicleId_(v,"Cortes fila "+(r+1))===id)matches.push({rowIndex:r+1,rowValues:data[r]});}if(matches.length!==1)throw Error("No se puede recuperar el opId "+opId+": vehicleId "+id+" aparece en "+matches.length+" filas de Cortes; se requiere exactamente una. No se modificó.");return matches[0];}
+function findUniqueCortesVehicleRow_(sheet, vehicleId, opId) {
+    if (!sheet) throw new Error("No se encontró la hoja Cortes para recuperar el opId " + opId + ".");
+    const id = normalizeIdempotenciaVehicleId_(vehicleId, "Recuperación " + opId);
+    const lastRow = sheet.getLastRow();
+    const idRows = lastRow > 1
+        ? sheet.getRange(2, COLS_CORTES.id, lastRow - 1, 1).getValues()
+        : [];
+    const matches = [];
+    for (let offset = 0; offset < idRows.length; offset++) {
+        const value = idRows[offset][0];
+        if (isBlankIdempotenciaValue_(value)) continue;
+        const rowIndex = offset + 2;
+        if (normalizeIdempotenciaVehicleId_(value, "Cortes fila " + rowIndex) === id) {
+            matches.push(rowIndex);
+        }
+    }
+    if (matches.length !== 1) {
+        throw new Error("No se puede recuperar el opId " + opId + ": vehicleId " + id +
+            " aparece en " + matches.length + " filas de Cortes; se requiere exactamente una. No se modificó.");
+    }
+    const rowIndex = matches[0];
+    const rowValues = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getValues()[0];
+    return { rowIndex: rowIndex, rowValues: rowValues };
+}
 function findUniqueCortesVehicleRow_(cortesSheet, vehicleId, opId) {
     if (!cortesSheet) throw new Error("No se encontró la hoja Cortes para recuperar el opId " + opId + ".");
     const cleanVehicleId = normalizeIdempotenciaVehicleId_(vehicleId, "Recuperación " + opId);

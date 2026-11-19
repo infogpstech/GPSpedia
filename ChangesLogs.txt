@@ -996,3 +996,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-19] Cierre de reutilización del índice VIN ADMIN: CI 44596161669 SUCCESS (167 suites, 2,334 pruebas, 0 fallos); AdminVinDuplicateBoundedRead 11/11. Health read-only 44596161551 y GitHub Pages 44596160331 SUCCESS. Se conserva fallback para llamadas legacy sin índice; diff revisado.
+
+
+[2026-11-19] ADMIN: findUniqueCortesVehicleRow_ deja de usar getDataRange completo; valida la columna ID, conserva detección de duplicados/corrupción y lee la fila completa solo para la coincidencia única. Se añade AdminUniqueVehicleRowBoundedRead.mjs; CI pendiente.
