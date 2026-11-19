@@ -625,3 +625,14 @@ Riesgo residual:
 - Configuración identificada: URL/secreto de Coordinator por consumidor; seis secretos por servicio en Coordinator; URLs y cinco secretos directos de telemetría en ADMIN; secretos directos de telemetría en servicios fuente; URLs duplicadas en frontend/ADMIN.
 - Diseño detallado y matriz de aceptación en Services/SERVICE_ARCHITECTURE_PLAN.md. No se consultaron valores ni se cambiaron secretos, permisos o deployments.
 ================================================================================
+
+================================================================================
+2026-11-19 — AUDITORÍA DE INVALIDACIÓN REMOTA Y DESACOPLAMIENTO
+- Se eliminó del cliente la dependencia directa de GPSpedia_WRITE_URL y GPSpedia_FEEDBACK_URL y el envío de secretos ajenos desde AUTH.
+- Nuevo flujo local: AUTH → Coordinator (AUTH secret) → WRITE/FEEDBACK (secretos individuales del Coordinator). Los endpoints internos existentes siguen validando el secreto local de su servicio y ejecutando CacheService.remove por usuario/token.
+- Coordinator valida previamente ambas URLs y secretos; no inicia ninguna llamada si falta una configuración. Lotes de 25 recibidos, subdivididos en lotes de 5 según contrato remoto.
+- Una respuesta parcial o timeout no se interpreta como éxito. La operación puede repetirse: borrar una clave ya ausente es idempotente. La revocación central sigue ejecutándose solo después de confirmar ambos destinos.
+- La acción nueva está limitada a AUTH; no se modifican las políticas de RBAC, actor confiable, leases ni acciones de registro/sincronización/revocación.
+- Pruebas aisladas: 74/74 PASS; cubren éxito, dos destinos, lotes, fallo parcial, reintento, revocación individual y global, compatibilidad de protocolo y rechazo de servicios no autorizados.
+- Requisito de configuración pendiente para cada entorno: GPSpedia_SERVICE_URL_WRITE y GPSpedia_SERVICE_URL_FEEDBACK en Coordinator. No se cambió ScriptProperties ni se desplegó.
+================================================================================
