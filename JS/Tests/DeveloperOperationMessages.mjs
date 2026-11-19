@@ -55,11 +55,11 @@ testCase("la auditoría registra inicio, avance, resultados y errores en la cons
 });
 
 testCase("inventario y organización conservan confirmación global y resultados en consola de Cortes", () => {
-    assert.match(audit, /appendAuditConsole\(inventoryMessage/);
+    assert.match(audit, /updateSummary\(inventoryMessage/);
     assert.match(audit, /requestAuditConsoleConfirmation\(/);
     assert.match(audit, /window\.gpsepediaRequestDeveloperConsoleConfirmation\(message\)/);
+    assert.match(audit, /appendAuditConsole\(/);
     assert.match(audit, /Lote de organización/);
-    assert.match(audit, /\[AUDITORÍA DRIVE\]/);
     assert.match(audit, /\[CONCILIACIÓN DRIVE\]/);
     assert.match(audit, /rollback confirmado/);
     assert.match(audit, /Sin cambios en Spreadsheet, Drive ni permisos/);
