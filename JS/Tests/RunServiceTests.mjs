@@ -77,6 +77,7 @@ runGroup('32','ADMIN',()=>{
   runCli('WRITE carpetas suplementarias usan lease Drive independiente','JS/Tests/WriteSupplementaryFolderLease.mjs');
   runCli('ADMIN libera ScriptLock durante trabajo Drive con revalidación','JS/Tests/AdminDriveLockIsolation.mjs');
   runCli('ADMIN asigna ID WRITE antes de tomar el ScriptLock','JS/Tests/AdminVehicleIdOutsideLock.mjs');
+  runCli('ADMIN sincroniza carpeta de imagen después de liberar ScriptLock','JS/Tests/AdminVehicleFolderSyncOutsideLock.mjs');
   runCli('ADMIN inventario Drive no bloquea cortes ni login','JS/Tests/AdminInventoryLockIsolation.mjs');
   runCli('RBAC y sesiones ilimitadas del rol Desarrollador','JS/Tests/DeveloperPrivilegeRouting.mjs');
  runCli('P4 protección de medios sin bloquear texto ni controles','JS/Tests/ClientInteractionPolicy.mjs');

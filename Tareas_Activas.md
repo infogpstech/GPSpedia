@@ -436,3 +436,9 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 ### Ajuste de regresión del inventario ADMIN (2026-11-19)
 - [x] Actualizar `AdminReplacedImagesIntegrity`: el contrato exigía `ScriptLock` dentro del handler, contradiciendo el nuevo aislamiento por lease `IMAGE_INVENTORY`.
 - [x] Regresión `44568472342` SUCCESS: 160 suites, 2,273 pruebas aprobadas, 0 fallos. Contratos `SessionActivityCoordination` 11/11, `DirectTrafficRoutingCoverage` 6/6, `AdminReplacedImagesIntegrity` 56/56 y `AdminSheetActionsContract` 9/9.
+
+### ADMIN — edición de metadatos sin bloquear durante sincronización Drive (2026-11-19)
+- [x] Acortar la sección crítica de `handleUpdateVehicleField`: validar/escribir/verificar el campo en Cortes y capturar la instantánea confirmada.
+- [x] Ejecutar movimiento/renombrado de imagen principal después de liberar ScriptLock; fallos de Drive se devuelven como advertencia sin revertir el metadato guardado.
+- [x] Cambiar la adquisición a `tryLock(0)` para evitar esperas de 30 s; añadir `AdminVehicleFolderSyncOutsideLock.mjs` al runner.
+- [ ] CI y revisión de concurrencia pendientes.

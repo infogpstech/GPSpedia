@@ -5849,7 +5849,14 @@ function handleUpdateVehicleField(payload, logMessage) {
     }
 
     const lock = LockService.getScriptLock();
-    try { lock.waitLock(30000); } catch (error) { throw new Error("No se pudo obtener el bloqueo para editar el vehículo. Intenta nuevamente."); }
+    if (!lock.tryLock(0)) {
+        const busyError = new Error("ADMIN está actualizando el catálogo. Reintenta la edición en unos instantes.");
+        busyError.code = "ADMIN_BUSY";
+        throw busyError;
+    }
+
+    let folderSyncVehicleInfo = null;
+    let response;
     try {
         const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
         if (!sheet) throw new Error("No se encontró la hoja «Cortes».");
@@ -5881,29 +5888,40 @@ function handleUpdateVehicleField(payload, logMessage) {
         }
 
         logMessage("Edición In-Modal", "Actualizando campo '" + fieldName + "' para el vehículo ID: " + cleanVehicleId + "...");
-        let folderSyncWarning = false;
         const folderMetadataFields = new Set(["categoria", "marca", "modelo", "versionesAplicables", "tipoEncendido", "anoDesde", "anoHasta"]);
         if (folderMetadataFields.has(fieldName)) {
-            try {
-                const updatedValues = sheet.getRange(actualRow, 1, 1, sheet.getLastColumn()).getValues()[0];
-                const syncResult = movePrimaryVehicleImageToCanonicalFolder(sheet, actualRow, mapRowToObject(updatedValues, COLS_CORTES), null, logMessage);
-                folderSyncWarning = Boolean(syncResult && syncResult.warning);
-                if (folderSyncWarning && syncResult.reason) logMessage("Edición In-Modal", "El metadato se guardó, pero la imagen principal no se movió: " + syncResult.reason, 0, 0, true);
-            } catch (syncError) {
-                folderSyncWarning = true;
-                logMessage("Edición In-Modal", "El campo se guardó, pero no se pudo sincronizar la carpeta de imagenVehiculo: " + syncError.message, 0, 0, true, true);
-            }
+            // Capturar el estado confirmado. La sincronización de Drive se ejecuta
+            // después de liberar el ScriptLock para no bloquear otras funciones ADMIN.
+            const updatedValues = sheet.getRange(actualRow, 1, 1, sheet.getLastColumn()).getValues()[0];
+            folderSyncVehicleInfo = { sheet, row: actualRow, vehicle: mapRowToObject(updatedValues, COLS_CORTES) };
         }
         logMessage("Edición In-Modal", "Campo '" + fieldName + "' actualizado y verificado para el vehículo ID: " + cleanVehicleId + ".");
-        return {
+        response = {
             status: "success",
-            folderSyncWarning: folderSyncWarning,
+            folderSyncWarning: false,
             message: "El campo '" + fieldName + "' fue guardado y verificado en el registro de la fila " + actualRow + "."
         };
     } finally {
-        lock.releaseLock();
+        if (lock.hasLock()) lock.releaseLock();
     }
+
+    if (folderSyncVehicleInfo) {
+        try {
+            const syncResult = movePrimaryVehicleImageToCanonicalFolder(
+                folderSyncVehicleInfo.sheet, folderSyncVehicleInfo.row, folderSyncVehicleInfo.vehicle, null, logMessage
+            );
+            response.folderSyncWarning = Boolean(syncResult && syncResult.warning);
+            if (response.folderSyncWarning && syncResult.reason) {
+                logMessage("Edición In-Modal", "El metadato se guardó, pero la imagen principal no se movió: " + syncResult.reason, 0, 0, true);
+            }
+        } catch (syncError) {
+            response.folderSyncWarning = true;
+            logMessage("Edición In-Modal", "El campo se guardó, pero no se pudo sincronizar la carpeta de imagenVehiculo: " + syncError.message, 0, 0, true, true);
+        }
+    }
+    return response;
 }
+
 const ADMIN_IMAGE_UPLOAD_SHEET_NAME = "AdminImageUploads";
 const ADMIN_IMAGE_UPLOAD_HEADERS = [
     "opId", "vehicleId", "fieldName", "urlAnterior", "urlNueva", "archivoDriveId",
