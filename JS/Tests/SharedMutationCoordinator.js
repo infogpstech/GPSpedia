@@ -1183,7 +1183,7 @@ function runSharedMutationCoordinatorTests() {
         const r = createRuntime_(null, function(url, options) {
             const request = JSON.parse(options.payload);
             calls.push({ url, request });
-            const target = url.includes("WRITE") ? "WRITE" : "FEEDBACK";
+            const target = url.includes("WRITE") ? "WRITE" : url.includes("FEEDBACK") ? "FEEDBACK" : "ADMIN";
             assert_(request.action === "__invalidateSessionActorCache", "Debe usar el endpoint interno de invalidación.");
             assert_(request.payload.secret === r.secrets[target], "Debe usar el secreto propio de " + target + ".");
             return {
@@ -1193,6 +1193,7 @@ function runSharedMutationCoordinatorTests() {
         });
         r.properties.setProperty("GPSpedia_SERVICE_URL_WRITE", "https://script.google.com/macros/s/WRITE/exec");
         r.properties.setProperty("GPSpedia_SERVICE_URL_FEEDBACK", "https://script.google.com/macros/s/FEEDBACK/exec");
+        r.properties.setProperty("GPSpedia_SERVICE_URL_ADMIN", "https://script.google.com/macros/s/ADMIN/exec");
         const tokens = Array.from({ length: 7 }, (_, index) => "session-token-cache-" + String(index).padStart(4, "0"));
         const result = r.request("invalidateSessionActorCaches", "AUTH", "invalidateSessionActorCaches", {
             userId: "USR-CACHE-1", sessionTokens: tokens
@@ -1209,7 +1210,7 @@ function runSharedMutationCoordinatorTests() {
         const calls = [];
         const r = createRuntime_(null, function(url, options) {
             const request = JSON.parse(options.payload);
-            const target = url.includes("WRITE") ? "WRITE" : "FEEDBACK";
+            const target = url.includes("WRITE") ? "WRITE" : url.includes("FEEDBACK") ? "FEEDBACK" : "ADMIN";
             calls.push(target);
             const invalidated = request.payload.sessionTokens.length;
             if (target === "FEEDBACK" && failFeedback) {
@@ -1219,6 +1220,7 @@ function runSharedMutationCoordinatorTests() {
         });
         r.properties.setProperty("GPSpedia_SERVICE_URL_WRITE", "https://script.google.com/macros/s/WRITE/exec");
         r.properties.setProperty("GPSpedia_SERVICE_URL_FEEDBACK", "https://script.google.com/macros/s/FEEDBACK/exec");
+        r.properties.setProperty("GPSpedia_SERVICE_URL_ADMIN", "https://script.google.com/macros/s/ADMIN/exec");
         const payload = { userId: "USR-CACHE-2", sessionTokens: ["session-token-cache-retry-0001"] };
         expectThrow_(() => r.request("invalidateSessionActorCaches", "AUTH", "invalidateSessionActorCaches", payload), "FEEDBACK");
         assert_(calls.join(",") === "WRITE,FEEDBACK", "La primera ejecución debe detectar el fallo parcial.");
