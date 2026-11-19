@@ -379,3 +379,15 @@ Adenda de validación final GP-PWA-RECENT-VIEWS-02: al subir CACHE_NAME a v70 ta
 
 **Nota:** actualización documental basada en reportes y requisitos del usuario. No se inspeccionó ni modificó código, Spreadsheet, Drive o permisos; no se presenta como defecto reproducido ni como capacidad implementada.
 ================================================================================
+
+================================================================================
+2026-11-18 — REQUISITOS BETA: CONSOLA DE AUDITORÍA Y ORGANIZACIÓN AUTOMÁTICA
+================================================================================
+- BETA-ADMIN-CUT-IMAGE-AUDIT-CONSOLE-01: revisar el flujo de confirmación de registro de imágenes detectadas, actualmente solicitado desde la consola del desarrollador. Centralizar en la consola de cortes del modal la salida de lotes, conteos, carpetas, resultados, coincidencias y errores; sustituir los indicadores independientes. Requisito pendiente.
+- BETA-ADMIN-CUT-IMAGE-ORGANIZER-AUDIT-01: auditar lectura de hojas Cortes y Logos, reglas de ruta/nombre y operaciones sobre archivos. En diagnóstico no mover ni renombrar archivos.
+- BETA-ADMIN-CUT-IMAGE-ORGANIZER-STRUCTURE-01: procesar filas de Cortes y Logos y validar estructura Cortes/categoría/marca/modelo/versión o encendido/rango de años/imagen. El logo queda en el directorio de marca. Ejemplo: Cortes/Autobus/Hyundai/hyundai_logo.png/County/llave/2020-2026/archivos.
+- BETA-ADMIN-CUT-IMAGE-ORGANIZER-REGISTRATION-CONSISTENCY-01: revisar que alta de corte, nuevo modelo y nuevo logo apliquen las mismas reglas.
+- BETA-ADMIN-CUT-IMAGE-ORGANIZER-NAMING-01: formato Modelo_versión-o-encendido_año-o-rango_función.extensión; preservar extensión original, evitar colisiones y actualizar referencias. Ejemplos Hilux_srv_2020_2025_imagenVehiculo.png, _ign1.jpg, _bomba1.jpg, _btn.jpg y _ign2.jpg.
+- BETA-ADMIN-CUT-IMAGE-FUNCTION-CODES-01: ign=ignición, bomba=bomba de combustible, btn=señal al botón, apert=apertura, alim=alimentación, alim2=alimentación 2, shock=señal al ahogador. Sufijos numéricos distinguen varias imágenes de una función.
+- Estado: requisitos pendientes de auditoría técnica/implementación. No se afirma que la organización actual cumpla o incumpla; no se ejecutaron operaciones en Drive/Spreadsheet.
+================================================================================
