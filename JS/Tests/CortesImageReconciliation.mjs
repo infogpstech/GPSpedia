@@ -61,6 +61,11 @@ testCase("protege registros que requieren revisión o están en uso",()=>{
 testCase("excluye registros confirmados como eliminados",()=>{
     assert.equal(collectedHistory.has(historyIds[4]),false);
 });
+testCase("permite asociar una imagen inventariada como sin uso si coincide con un destino",()=>{
+    const candidate={...file(7,"same.png"),fileId:historyIds[0]};
+    const p=planner([target("same")],[candidate],new Map(),true,collectedHistory);
+    assert.equal(p.results[0].status,"matched");
+});
 
 const id=n=>"drive-file-id-000000000000000"+n;
 const target=(baseName,extra={})=>({row:2,vehicleId:"V-001",field:"imagenVehiculo",column:9,baseName,currentValue:"",...extra});
