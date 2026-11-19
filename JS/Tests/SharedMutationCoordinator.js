@@ -1287,6 +1287,12 @@ function runSharedMutationCoordinatorTests() {
         const r = createRuntime_();
         const legacy = r.request("getServiceTraffic", "ADMIN", "getServiceTraffic");
         assert_(legacy.status === "success", "Los clientes sin protocolVersion deben conservar el contrato v1.");
+        const explicitV1 = r.coordinator.handleRequest({
+            protocolVersion: 1,
+            action: "getServiceTraffic",
+            payload: { service: "ADMIN", operation: "getServiceTraffic", secret: r.secrets.ADMIN }
+        });
+        assert_(explicitV1.status === "success", "Los clientes actuales deben conservar v1 aunque cambie la versión interna de Coordinator.");
         expectThrow_(() => r.coordinator.handleRequest({
             protocolVersion: 99,
             action: "getServiceTraffic",
