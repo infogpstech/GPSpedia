@@ -77,7 +77,7 @@ function coordinatorPolicy_(service, operation) {
             freezeCortesIds: { read: identityRead, write: ["CORTES"] }
         },
         ADMIN: {
-            sessionActivity: { read: ["SESSION_CONTEXTS"] },
+            // getServiceTraffic es una consulta específica; las acciones ordinarias ADMIN usan actor cacheado.
             getServiceTraffic: { read: ["SERVICE_TRAFFIC"] },
             // Las acciones ADMIN leen el contexto central; no escriben LastActivityAt por cada solicitud.
             getReplacedImages: { read: ["USERS", "CORTES", "DRIVE", "IMAGE_INVENTORY", "TUTORIAL", "FEEDBACK", "LOGOS", "RELAY"] },
@@ -98,8 +98,7 @@ function coordinatorPolicy_(service, operation) {
             restoreDatabase: { maintenance: true },
             restoreDrive: { read: identityRead, write: ["DRIVE"] },
             reorganizeDatabase: {
-                maintenance: true,
-                nestedActions: { WRITE: ["freezeCortesIds"] }
+                maintenance: true
             },
             normalizeImages: { read: identityRead, write: ["CORTES", "DRIVE"] },
             organizePrimaryVehicleImages: { read: identityRead, write: ["CORTES", "DRIVE"] },
@@ -113,8 +112,7 @@ function coordinatorPolicy_(service, operation) {
             reconcilePendingImageUploads: { maintenance: true },
             addOrUpdateCut: {
                 read: identityRead,
-                write: ["CORTES", "DRIVE", "IDEMPOTENCIA", "IMAGE_UPLOAD_LEDGER"],
-                nestedActions: { WRITE: ["allocateVehicleId"] }
+                write: ["CORTES", "DRIVE", "IDEMPOTENCIA", "IMAGE_UPLOAD_LEDGER"]
             },
             addSupplementaryInfo: { read: identityRead, write: ["CORTES", "DRIVE", "IMAGE_UPLOAD_LEDGER"] },
             createSheet: { maintenance: true },

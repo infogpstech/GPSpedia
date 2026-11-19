@@ -838,3 +838,5 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - JS/Tests/SessionActivityLeaseMinimization.mjs: contrato ampliado para exigir ausencia de leases en ADMIN y autenticación independiente de WRITE.
 - No se desplegó Apps Script ni se ejecutaron operaciones sobre servicios remotos, Drive o Spreadsheet.
 ================================================================================
+
+- CI run 44535834471: sintaxis ADMIN aprobada; contratos históricos de token ADMIN→WRITE y leases ADMIN requirieron actualización. Se alinearon pruebas y política Coordinator; nueva ejecución pendiente.

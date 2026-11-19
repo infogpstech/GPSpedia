@@ -1006,3 +1006,5 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - Cambio preparado: ADMIN obtiene actor cacheado y conserva RBAC/auditoría; llamadas ADMIN→WRITE dejan de requerir token de lease y WRITE valida su actor cacheado con userId/sessionToken.
 - Pendiente: pruebas de contrato/regresión, revisión del diff, CI y publicación verificada. No se realizó deployment ni acceso a Drive/Spreadsheet/ScriptProperties.
 ================================================================================
+
+- CI run 44535834471: sintaxis aprobada; regresión falló por tres contratos de arquitectura anterior. Corrección de contratos y política Coordinator en curso; no se ignoraron los fallos.

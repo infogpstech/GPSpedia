@@ -244,3 +244,5 @@ Aplicar la estructura objetivo después de validar el dry-run:
 - El router ADMIN todavía envolvía lecturas y mutaciones ordinarias en leases del Coordinator, en contradicción directa con la sección 15 de NORMAS_DESAROLLO.md.
 - Corrección preparada: ADMIN usa el actor de sesión cacheado; las llamadas internas ADMIN→WRITE transmiten userId/sessionToken para que WRITE valide su propio actor cacheado. Se mantienen RBAC y auditoría de mutaciones.
 - La tarea permanece **EN PROGRESO** hasta aprobar las pruebas locales de contrato/regresión y revisar el diff publicado. No desplegar Apps Script ni invocar servicios remotos.
+
+- CI run 44535834471 detectó contratos históricos que aún exigían token/lease ADMIN; se alinearon las pruebas con actor cacheado y se retiraron políticas ADMIN de lease obsoletas.

@@ -29,11 +29,13 @@ testCase("USERS coordina lecturas y mutaciones y consume el actor central",()=>{
  });
 });
 
-testCase("ADMIN exige actor central y coordina lecturas y mutaciones",()=>{
- assert.match(admin,/if \(!isSharedMutationAction_\(action\)\) \{/);
- assert.match(admin,/return withSharedMutationLease_\("ADMIN", action/);
+testCase("ADMIN exige actor central cacheado y no coordina acciones ordinarias",()=>{
+ const start=admin.indexOf("function doPost(e)"),end=admin.indexOf("\\nfunction doPostInternal_",start),router=admin.slice(start,end);
+ assert.match(router,/getCachedSharedSessionActor_\\(payload\\.userId, payload\\.sessionToken, \\{ service: "ADMIN" \\}\\)/);
+ assert.doesNotMatch(router,/withSharedMutationLease_|sessionActivity|nestedToken|__sharedMutationToken/);
+ assert.doesNotMatch(admin,/withSharedMutationLease_/);
  assert.doesNotMatch(admin,/touchSessionActivityIfDue_|getSessionExpirationStatus_/);
- assert.match(admin,/const developerContext = action === 'ping' \? null : \(ADMIN_MODAL_EDIT_ACTIONS\.has\(action\) \? assertModalEditSession\(payload\) : assertDeveloperSession\(payload\)\)/);
+ assert.match(admin,/const developerContext = action === 'ping' \\? null : \\(ADMIN_MODAL_EDIT_ACTIONS\\.has\\(action\\) \\? assertModalEditSession\\(payload\\) : assertDeveloperSession\\(payload\\)\\)/);
 });
 
 testCase("FEEDBACK usa actor cacheado sin leases por acción y conserva sus rutas públicas",()=>{
@@ -93,7 +95,7 @@ testCase("AUTH usa el actor central y no repite verificaciones de usuario/rol en
  assert.equal(api.includes("touchSessionBeforeAction"),false);
  assert.match(auth,/const sessionOptions = payload\.sessionToken && action !== "logout"\s*\? \{ session: \{ sessionToken: payload\.sessionToken \} \}/);
 });
-testCase("Coordinator usa SESSION_CONTEXTS como barrera lógica y conserva las operaciones ADMIN→WRITE declaradas",()=>{
+testCase("Coordinator conserva telemetría protegida y elimina leases ADMIN obsoletas",()=>{
  assert.match(coordinator,/ADMIN:\s*\{\s*sessionActivity:\s*\{ read: \["SESSION_CONTEXTS"\] \}/);
  assert.match(coordinator,/migrateReplacedImagesSchema:\s*\{ read: \["USERS"\], write: \["IMAGE_INVENTORY"\] \}/);
  assert.match(coordinator,/readResources\.push\("SESSION_CONTEXTS"\)/);
