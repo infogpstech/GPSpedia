@@ -219,3 +219,14 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - La primera CI del commit `c7ac5e081a7ce63a064ce1a5919375ad976fd159` aprobó sintaxis y health read-only, pero la suite falló en una aserción de la prueba nueva que inspeccionaba todo el handler y contaba otra ruta Drive no relacionada.
 - La prueba se limita ahora al bloque de recuperación idempotente; se ajustó también la indentación del bloque condicional. No se modificó el comportamiento funcional adicional.
 - Repetición de regresión pendiente.
+
+
+## Cierre — fast path de imágenes en recuperación ADMIN (2026-11-19)
+- Commit funcional y de prueba: c7ac5e081a7ce63a064ce1a5919375ad976fd159; corrección de aserción y formato: 24a5b061ca258a53003e2fe2d889f178cb2dde03.
+- La detección previa de imágenes evita el ciclo runAdminDriveWorkOutsideScriptLock_ cuando no falta ninguna imagen, conservando el lock y evitando una reconsulta de la fila/ledger. Si falta una imagen, se conserva Drive fuera del lock y la revalidación idempotente.
+- Prueba AdminRecoveryImageRepairFastPath: 6/6 PASS.
+- CI 44635382990 SUCCESS: 187 suites, 2476 pruebas aprobadas, 0 fallos; sintaxis JavaScript aprobada.
+- Health read-only 44635382893 SUCCESS.
+- Pages 44635380904 estaba QUEUED al momento del registro; no se declara como aprobado.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
+- Siguiente actividad: continuar la reducción de lecturas individuales/costos de revalidación restantes en recuperación ADMIN, sin sacar del lock las escrituras o reservas que requieran atomicidad.
