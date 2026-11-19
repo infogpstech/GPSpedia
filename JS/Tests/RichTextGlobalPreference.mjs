@@ -103,7 +103,7 @@ testCase("FEEDBACK declara permisos y despacho para lectura de todos los roles y
     assert.match(feedback, /case 'setRichTextMode':[\s\S]*?handleSetRichTextMode\(payload\)/);
     const router=feedback.slice(feedback.indexOf("function doPost(e)"),feedback.indexOf("\nconst RICH_TEXT_MODE_PROPERTY_"));
     assert.match(feedback,/actions: new Set\([\s\S]*?"setRichTextMode"/);
-    assert.match(router,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken\)/);
+    assert.match(router,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken,\s*\{\s*service:\s*"FEEDBACK"\s*\}\)/);
     assert.doesNotMatch(router,/withSharedMutationLease_/);
 });
 
