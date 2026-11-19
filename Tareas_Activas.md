@@ -31,7 +31,7 @@ Aplicar la estructura objetivo después de validar el dry-run:
 - Vehículos: Cortes/<categoría>/<marca>/<modelo>/<versión-o-encendido>/<año-inicio-año-fin>/
 - Logo: <marca>_logo.<extensión> en el primer nivel de la carpeta de marca.
 - Nombres: <modelo>_<versión-o-encendido>_<año-inicio>_<año-fin>_<función>.<extensión>.
-- Códigos: ign1/ign2 para señales de ignición múltiples; bomba1 para corte de bomba; btn para botón; apert para apertura; alim, alim2 y shock para alimentación/señal al ahogador; imagenVehiculo para imagen principal.
+- Códigos funcionales obligatorios: ign1..ign3, bomba1..bomba3 y btn1..btn3, numerados por función real derivada de tipoCorte1/2/3; alim1..alim3 para imgCableAlimen/2/3; apert para imgApertura; imagenVehiculo para la imagen principal. Los tipos desconocidos o ambiguos bloquean el destino. La extensión original se conserva.
 - Resolver colisiones sin sobrescribir y sin enviar archivos o carpetas a papelera.
 
 ### P1 — BETA-ADMIN-CUT-IMAGE-ORGANIZER-REGISTRATION-CONSISTENCY-01
@@ -83,3 +83,10 @@ Aplicar la estructura objetivo después de validar el dry-run:
 - [ ] Desplegar ADMIN actualizado y ejecutar una auditoría Drive nueva para persistir folderPath en el inventario.
 - [ ] Ejecutar el preview real y revisar rutas, nombres, extensiones, referencias y conflictos. Mantener la aplicación bloqueada.
 - [ ] Corregir cualquier discrepancia real antes de implementar la aplicación segura por lotes y rollback.
+
+
+## Corrección de nomenclatura funcional — 2026-11-18
+- [x] ADMIN: numeración explícita por función para ign1..ign3, bomba1..bomba3 y btn1..btn3, derivada de los valores reales de tipoCorte1/2/3.
+- [x] ADMIN: alimentación uniforme alim1..alim3 para imgCableAlimen, imgCableAlimen2 e imgCableAlimen3; apertura permanece apert.
+- [x] Pruebas dinámicas ampliadas para las tres posiciones de cada tipo de corte y los tres campos de alimentación.
+- [ ] Desplegar ADMIN actualizado, generar una auditoría Drive nueva y ejecutar el preview de solo lectura para validar nombres/rutas/extensiones/referencias reales. No aplicar movimientos ni renombrados.
