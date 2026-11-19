@@ -480,3 +480,9 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Añadir AdminEntityLookupBoundedRead.mjs al runner.
 - [x] CI 44594845526 SUCCESS: 166 suites, 2,323 pruebas aprobadas, 0 fallos; `AdminEntityLookupBoundedRead` 7/7 y sintaxis JavaScript aprobada. Health read-only 44594846847 SUCCESS; GitHub Pages 44594844590 SUCCESS. Diff revisado.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó ADMIN ni se modificaron datos externos.
+
+### ADMIN — lectura acotada para detección de duplicados VIN (2026-11-19)
+- [x] Sustituir lectura de toda la fila por rangos de ID/marca/modelo, años y VIN.
+- [x] Conservar exclusión del vehículo actual, normalización de VIN y formato del nombre del duplicado.
+- [x] Añadir AdminVinDuplicateBoundedRead.mjs al runner.
+- [ ] CI integral y revisión del diff pendientes. No se despliega ADMIN ni se modifican datos externos.

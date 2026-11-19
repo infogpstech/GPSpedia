@@ -664,19 +664,35 @@ function countEquipmentVersionsForAdmin(rawVersions) {
 }
 
 function findVinDuplicateForAdmin(sheet, vinPrefix, currentVehicleId) {
-    if (!sheet || !vinPrefix || sheet.getLastRow() < 2) return null;
+    const lastRow = sheet && sheet.getLastRow();
+    if (!sheet || !vinPrefix || lastRow < 2) return null;
     const vinColumnIndex = getVinColumnIndex(sheet);
     if (!vinColumnIndex) throw new Error("La hoja «Cortes» no contiene el encabezado «VIN».");
-    const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn()).getValues();
-    for (let index = 0; index < data.length; index++) {
-        const row = data[index];
-        const vehicleId = String(row[COLS_CORTES.id - 1] || "").trim();
+
+    const rowCount = lastRow - 1;
+    const identityFirstColumn = Math.min(COLS_CORTES.id, COLS_CORTES.marca, COLS_CORTES.modelo);
+    const identityLastColumn = Math.max(COLS_CORTES.id, COLS_CORTES.marca, COLS_CORTES.modelo);
+    const identityData = sheet.getRange(2, identityFirstColumn, rowCount,
+        identityLastColumn - identityFirstColumn + 1).getValues();
+    const yearFirstColumn = Math.min(COLS_CORTES.anoDesde, COLS_CORTES.anoHasta);
+    const yearLastColumn = Math.max(COLS_CORTES.anoDesde, COLS_CORTES.anoHasta);
+    const yearData = sheet.getRange(2, yearFirstColumn, rowCount,
+        yearLastColumn - yearFirstColumn + 1).getValues();
+    const vinData = sheet.getRange(2, vinColumnIndex, rowCount, 1).getValues();
+    const idIndex = COLS_CORTES.id - identityFirstColumn;
+    const brandIndex = COLS_CORTES.marca - identityFirstColumn;
+    const modelIndex = COLS_CORTES.modelo - identityFirstColumn;
+    const fromYearIndex = COLS_CORTES.anoDesde - yearFirstColumn;
+    const toYearIndex = COLS_CORTES.anoHasta - yearFirstColumn;
+
+    for (let index = 0; index < rowCount; index++) {
+        const vehicleId = String(identityData[index][idIndex] || "").trim();
         if (currentVehicleId && vehicleId === String(currentVehicleId)) continue;
-        if (!parseVinCollectionForAdmin(row[vinColumnIndex - 1]).includes(vinPrefix)) continue;
-        const brand = row[COLS_CORTES.marca - 1] || "";
-        const model = row[COLS_CORTES.modelo - 1] || "";
-        const fromYear = row[COLS_CORTES.anoDesde - 1] || "";
-        const toYear = row[COLS_CORTES.anoHasta - 1] || "";
+        if (!parseVinCollectionForAdmin(vinData[index][0]).includes(vinPrefix)) continue;
+        const brand = identityData[index][brandIndex] || "";
+        const model = identityData[index][modelIndex] || "";
+        const fromYear = yearData[index][fromYearIndex] || "";
+        const toYear = yearData[index][toYearIndex] || "";
         return { vehicleId: vehicleId, modelName: (brand + " " + model + " (" + fromYear + (toYear ? "-" + toYear : "") + ")").trim() };
     }
     return null;
