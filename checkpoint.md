@@ -872,3 +872,15 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - Configuración pendiente por entorno para la futura Beta: crear GPSpedia_SERVICE_URL_WRITE y GPSpedia_SERVICE_URL_FEEDBACK en ScriptProperties del Coordinator, apuntando a los endpoints del mismo entorno. No se leyeron ni modificaron valores remotos.
 - No se desplegó Apps Script ni se alteraron secrets, ScriptProperties, Drive o Spreadsheet. CI integral y Beta siguen pendientes.
 - Siguiente tarea de implementación: catálogo canónico de URLs/secretos con fallback legacy y matriz de despliegue mínimo. Después continuar controles ADMIN, Inbox y auditoría/organizador de imágenes. La etapa Beta permanece bloqueada hasta cerrar toda implementación y regresión integral.
+
+
+================================================================================
+2026-11-19 — CONTINUIDAD: ARQUITECTURA Y PROTOCOLO COMPATIBLE
+- HEAD de inicio confirmado: 97754cabf9ca86d53b12aafca7c92aa2cc53d7e7 en GPSpedia2.2.5_work; rama base GPSpedia2.2.5 sin modificaciones.
+- Coordinator 1.4.5 separa versión interna y protocolo. Los clientes sin protocolVersion se fijan a v1; versiones admitidas explícitas; versiones desconocidas rechazadas. SharedMutationClient se conserva sin cambios y continúa usando v1.
+- Se documentó matriz de despliegue en Services/SERVICE_ARCHITECTURE_PLAN.md y Services/COORDINATOR_SETUP.md: cambios internos compatibles requieren solo Coordinator; cambios aditivos actualizan solo consumidores que utilicen la nueva acción; cambios locales del cliente afectan solo consumidores que contengan la copia afectada.
+- Pruebas ejecutadas localmente en memoria: SharedMutationCoordinator 77/77; CoordinatorCapabilityPreservation 6/6; ServiceTrafficAdminContract 33/33; ServiceTrafficAggregation 6/6; ServiceTrafficBatch 5/5; DirectTrafficRoutingCoverage 6/6; ServiceBrowserTrafficContract 9/9; ServiceTrafficAggregatorContract 5/5. Sintaxis de Coordinator, SharedMutationClient, serviceTelemetry y Service Worker PASS. No equivale a ejecución del runner Node completo ni CI.
+- Se añadió CoordinatorCapabilityPreservation.mjs al runner. Cubre RBAC jerárquico, autoeliminación/último Desarrollador, cierre lógico, revocación de sesiones, invalidación de caché WRITE/FEEDBACK y recuperación ante fallos parciales.
+- No se desplegó ni modificó ScriptProperties/secretos; no se consultaron endpoints, Drive ni Spreadsheet.
+- Próxima tarea: terminar Fase 2 con revisión de configuración y matriz por entorno, y después Fase 4 ADMIN (mensajes de borrado de logs, retención y padding de modal). Mantener Fase 5 auditoría/organizador de imágenes y Fase 6 documentación/rotación. La regresión integral sigue al final; Beta/deploy solo después y con autorización.
+================================================================================
