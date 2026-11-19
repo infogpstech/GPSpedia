@@ -82,6 +82,26 @@ function inboxConversationText_(value, maxLength, field, allowNewlines) {
     if (!normalized || normalized.length > maxLength) throw new Error(field + " está vacío o supera el límite permitido.");
     return normalized;
 }
+function inboxPlainTextPreview_(value, maxLength) {
+    const limit = Number.isSafeInteger(maxLength) ? Math.max(1, Math.min(500, maxLength)) : 180;
+    let text = String(value == null ? "" : value);
+    // El resumen nunca debe mostrar contenido ejecutable ni etiquetas HTML.
+    text = text.replace(/<(script|style)\\b[^>]*>[\\s\\S]*?<\\/\\1\\s*>/gi, " ")
+        .replace(/<!--[\\s\\S]*?-->/g, " ")
+        .replace(/<(?:br|\\/p|\\/div|\\/li|\\/h[1-6]|\\/blockquote|\\/tr|\\/section|\\/article)\\b[^>]*>/gi, " ")
+        .replace(/<[^>]*>/g, " ");
+    const namedEntities = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", "#39": "'" };
+    text = text.replace(/&nbsp;|&#160;|&#xA0;/gi, " ")
+        .replace(/&(amp|lt|gt|quot|apos|#39);/gi, (entity, name) => namedEntities[name.toLowerCase()] || " ")
+        .replace(/&#(x[0-9a-f]+|[0-9]+);/gi, (entity, code) => {
+            const point = code.charAt(0).toLowerCase() === "x"
+                ? parseInt(code.slice(1), 16) : parseInt(code, 10);
+            if (!Number.isSafeInteger(point) || point <= 0 || point > 0x10FFFF ||
+                (point >= 0xD800 && point <= 0xDFFF)) return " ";
+            try { return String.fromCodePoint(point); } catch (error) { return " "; }
+        });
+    return text.replace(/[\\s\\u00A0]+/g, " ").trim().slice(0, limit);
+}
 function inboxConversationKey_(value, field) {
     const key = String(value === null || value === undefined ? "" : value).trim();
     if (!/^[A-Za-z0-9_-]{8,100}$/.test(key)) throw new Error(field + " no es válido.");
@@ -306,7 +326,7 @@ function inboxUpdateConversationForMessage_(sheet, found, message, messageRows, 
     if (storedLastMessageIndex < 0 || messageIndex > effectiveLastMessageIndex) {
         const latestMessage = conversationMessages[storedLastMessageIndex < 0 ? conversationMessages.length - 1 : messageIndex];
         row[2] = now; row[13] = latestMessage[0]; row[14] = latestMessage[2];
-        row[15] = String(latestMessage[6] || "").slice(0,180);
+        row[15] = inboxPlainTextPreview_(latestMessage[6], 180);
         row[16] = conversationMessages.length;
         sheet.getRange(found.rowNumber,1,1,INBOX_CONVERSATION_HEADERS_.length).setValues([row]);
         SpreadsheetApp.flush(); found.row = row;
@@ -509,7 +529,7 @@ function handleGetInboxConversations(payload) {
                 conversationId,subject:String(row[3] || ""),category:String(row[4] || "general"),
                 type:String(row[5] || "direct"),status:String(row[6] || "open"),createdAt:String(row[1] || ""),
                 updatedAt:String(row[2] || ""),createdById:String(row[7] || ""),lastMessageAt:String(row[14] || ""),
-                lastMessageId:String(row[13] || ""),lastMessagePreview:String(row[15] || ""),messageCount:expectedMessageCount,
+                lastMessageId:String(row[13] || ""),lastMessagePreview:inboxPlainTextPreview_(row[15] || (lastMessage ? lastMessage[6] : ""),180),messageCount:expectedMessageCount,
                 lastMessageAuthorName:String(lastMessage ? lastMessage[4] || "" : ""),
                 lastMessageAuthorId:String(lastMessage ? lastMessage[3] || "" : ""),
                 otherParticipants:other.map(user => ({id:user.id,name:String(user.name || ""),role:String(user.role || "")})),
