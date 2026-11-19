@@ -642,3 +642,16 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - Prueba dinámica en AdminImageScanCoordinatorContract: rutas/nombres esperados, extensiones pendientes de inspección, tipos desconocidos, fórmulas, datos incompletos, referencias duplicadas y marcas mult categoría.
 - HEAD de código aa967514d3602f0512a05f9ddf1fafc1c11c0c24: 146 suites, 2,157 pruebas aprobadas, 0 fallos; health y Pages SUCCESS. No se desplegó Apps Script ni se modificó Drive/Spreadsheet.
 ================================================================================
+
+
+================================================================================
+2026-11-19 — ENDPOINT DRY-RUN DEL ORGANIZADOR
+- ADMIN: nueva acción previewCortesImageOrganizer de solo lectura; exige auditoría completa/vigente de la sesión Desarrollador.
+- Se valida inventario total, rutas registradas, integridad de metadatos, extensión original, referencias activas de todas las hojas, historial, carpetas destino y conflictos de nombre/destino.
+- Respuesta paginada (25; máximo 50) con ready/already_correct/blocked, motivos, rutas/nombres propuestos, digest y canApply:false.
+- Se preserva folderPath en cada página de metadatos de auditoría. Se requiere ejecutar una auditoría nueva después del despliegue para disponer de rutas históricas.
+- Se bloquean colisiones entre destinos propuestos.
+- Contrato corregido para evitar falsos positivos de la búsqueda de llamadas mutadoras.
+- CI HEAD 6e43666b69ff20b7945f5ebe7b7745a7758ce8d0: 146 suites, 2,157 pruebas aprobadas, 0 fallos; health y Pages SUCCESS.
+- Pendiente: conectar la UI del modal/consola con el endpoint y revisar la paginación y resultados reales después del despliegue. No se realizaron escrituras ni movimientos.
+================================================================================
