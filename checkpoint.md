@@ -194,3 +194,11 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Commits: `31fe4a4577d9212ec39ee25a665995e836a7a0fb` (código, prueba y runner); `e11056bca8759256871d7e7748a083b5d2b3af2e` (ajuste de aserción de prueba).
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó ADMIN ni se modificaron datos productivos.
 - Siguiente paso: revisar las restantes lecturas/escrituras de Sheets bajo el ScriptLock en `handleAddOrUpdateCut` y seleccionar la siguiente reducción segura de llamadas, manteniendo la atomicidad de Cortes/Idempotencia.
+
+
+## Continuidad — ADMIN recuperación con escrituras por lote (2026-11-19)
+- Se agruparon las reparaciones de campos faltantes de vehículo (columnas 2–8) en un único `setValues()` y los cuatro campos contiguos del slot de corte en otro.
+- La lógica solo sustituye campos vacíos; conserva marca/tipo/años existentes, normalización de rangos, testigo y colaborador separados, VIN, timestamp y transición idempotente.
+- Prueba nueva `AdminRecoveryRepairBatchWrites.mjs` integrada en `RunServiceTests.mjs`; incluye simulación de escrituras y caso sin cambios.
+- Estado: implementación publicada; validación CI pendiente. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
+- Próximo paso: revisar el diff y resultados CI; si pasan, cerrar esta subactividad y continuar reduciendo llamadas de Sheets en el handler ADMIN.

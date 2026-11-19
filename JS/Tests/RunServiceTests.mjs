@@ -75,6 +75,7 @@ runGroup('32','ADMIN',()=>{
   runCli('WRITE reutiliza la fila de vehículo localizada durante el registro de cortes','JS/Tests/WriteCutExistingVehicleSnapshotReuse.mjs');
   runCli('WRITE agrupa escrituras de cortes sin alterar campos separados','JS/Tests/WriteCutSlotBatchWrites.mjs');
   runCli('ADMIN agrupa los cinco campos contiguos del corte existente','JS/Tests/AdminCutSlotBatchWrites.mjs');
+  runCli('ADMIN agrupa reparaciones de registros recuperados','JS/Tests/AdminRecoveryRepairBatchWrites.mjs');
   runCli('WRITE recupera opId heredados sin descargar Cortes completo','JS/Tests/WriteOpIdLegacyLookup.mjs');
   runCli('WRITE localiza vehicleId leyendo solo la columna ID','JS/Tests/WriteUniqueVehicleRowBoundedRead.mjs');
   runCli('WRITE evita reinicializar ledger Idempotencia compatible','JS/Tests/IdempotenciaSheetLookupFastPath.mjs');

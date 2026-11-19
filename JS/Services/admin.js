@@ -6988,19 +6988,35 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
                     rowObj = mapRowToObject(rowValues, COLS_CORTES);
                 }
 
-                // 3. Complete missing/empty text fields in the sheet (partially completed registration)
+                // 3. Completar campos faltantes con escrituras por lote.
+                // El snapshot de la fila fue leído/revalidado bajo el lock; se conservan
+                // intactos los valores existentes y solo se sustituyen campos vacíos.
                 if (vehicleData) {
+                    const vehicleFieldValues = [
+                        rowValues[COLS_CORTES.categoria - 1],
+                        rowValues[COLS_CORTES.marca - 1],
+                        rowValues[COLS_CORTES.modelo - 1],
+                        rowValues[COLS_CORTES.versionesAplicables - 1],
+                        rowValues[COLS_CORTES.anoDesde - 1],
+                        rowValues[COLS_CORTES.anoHasta - 1],
+                        rowValues[COLS_CORTES.tipoEncendido - 1]
+                    ];
+                    let vehicleFieldsChanged = false;
                     if (!rowObj.categoria && vehicleData.categoria) {
-                        sheet.getRange(rowIndex, COLS_CORTES.categoria).setValue(vehicleData.categoria);
+                        vehicleFieldValues[0] = vehicleData.categoria;
+                        vehicleFieldsChanged = true;
                     }
                     if (!rowObj.marca && vehicleData.marca) {
-                        sheet.getRange(rowIndex, COLS_CORTES.marca).setValue(vehicleData.marca);
+                        vehicleFieldValues[1] = vehicleData.marca;
+                        vehicleFieldsChanged = true;
                     }
                     if (!rowObj.modelo && vehicleData.modelo) {
-                        sheet.getRange(rowIndex, COLS_CORTES.modelo).setValue(vehicleData.modelo);
+                        vehicleFieldValues[2] = vehicleData.modelo;
+                        vehicleFieldsChanged = true;
                     }
                     if (!rowObj.versionesAplicables && vehicleData.versionesAplicables) {
-                        sheet.getRange(rowIndex, COLS_CORTES.versionesAplicables).setValue(vehicleData.versionesAplicables);
+                        vehicleFieldValues[3] = vehicleData.versionesAplicables;
+                        vehicleFieldsChanged = true;
                     }
                     if (!rowObj.anoDesde && vehicleData.anoDesde) {
                         const yearInput = String(vehicleData.anoDesde).trim();
@@ -7011,28 +7027,42 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
                             anoDesde = Math.min(start, end);
                             anoHasta = Math.max(start, end);
                         }
-                        sheet.getRange(rowIndex, COLS_CORTES.anoDesde).setValue(anoDesde);
+                        vehicleFieldValues[4] = anoDesde;
+                        vehicleFieldsChanged = true;
                         if (!rowObj.anoHasta) {
-                            sheet.getRange(rowIndex, COLS_CORTES.anoHasta).setValue(anoHasta);
+                            vehicleFieldValues[5] = anoHasta;
                         }
                     }
                     if (!rowObj.tipoEncendido && vehicleData.tipoEncendido) {
-                        sheet.getRange(rowIndex, COLS_CORTES.tipoEncendido).setValue(vehicleData.tipoEncendido);
+                        vehicleFieldValues[6] = vehicleData.tipoEncendido;
+                        vehicleFieldsChanged = true;
+                    }
+                    if (vehicleFieldsChanged) {
+                        sheet.getRange(rowIndex, COLS_CORTES.categoria, 1, vehicleFieldValues.length)
+                            .setValues([vehicleFieldValues]);
                     }
                 }
 
                 if (cutData) {
-                    if (!rowObj[`tipoCorte${slotIndex}`] && cutData.tipoCorte1) {
-                        sheet.getRange(rowIndex, COLS_CORTES[`tipoCorte${slotIndex}`]).setValue(cutData.tipoCorte1 || "");
-                    }
-                    if (!rowObj[`ubicacionCorte${slotIndex}`] && cutData.ubicacionCorte1) {
-                        sheet.getRange(rowIndex, COLS_CORTES[`ubicacionCorte${slotIndex}`]).setValue(cutData.ubicacionCorte1 || "");
-                    }
-                    if (!rowObj[`colorCableCorte${slotIndex}`] && cutData.colorCableCorte1) {
-                        sheet.getRange(rowIndex, COLS_CORTES[`colorCableCorte${slotIndex}`]).setValue(cutData.colorCableCorte1 || "");
-                    }
-                    if (!rowObj[`configRelay${slotIndex}`] && cutData.configRelay1) {
-                        sheet.getRange(rowIndex, COLS_CORTES[`configRelay${slotIndex}`]).setValue(cutData.configRelay1 || "");
+                    const cutSlotCoreFields = [
+                        { key: "tipoCorte" + slotIndex, value: cutData.tipoCorte1 },
+                        { key: "ubicacionCorte" + slotIndex, value: cutData.ubicacionCorte1 },
+                        { key: "colorCableCorte" + slotIndex, value: cutData.colorCableCorte1 },
+                        { key: "configRelay" + slotIndex, value: cutData.configRelay1 }
+                    ];
+                    const cutSlotCoreValues = cutSlotCoreFields.map(function(field) {
+                        return rowValues[COLS_CORTES[field.key] - 1];
+                    });
+                    let cutSlotCoreChanged = false;
+                    cutSlotCoreFields.forEach(function(field, index) {
+                        if (!rowObj[field.key] && field.value) {
+                            cutSlotCoreValues[index] = field.value;
+                            cutSlotCoreChanged = true;
+                        }
+                    });
+                    if (cutSlotCoreChanged) {
+                        sheet.getRange(rowIndex, COLS_CORTES["tipoCorte" + slotIndex], 1, cutSlotCoreValues.length)
+                            .setValues([cutSlotCoreValues]);
                     }
                     const testigoKey = `activaTestigo${slotIndex}`;
                     if ((rowObj[testigoKey] === "" || rowObj[testigoKey] === null || rowObj[testigoKey] === undefined) && typeof cutData.activaTestigo1 === "boolean") {

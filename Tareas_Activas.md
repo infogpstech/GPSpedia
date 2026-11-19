@@ -665,3 +665,11 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - Commits: implementación/prueba/runner `31fe4a4577d9212ec39ee25a665995e836a7a0fb`; ajuste de aserción `e11056bca8759256871d7e7748a083b5d2b3af2e`.
 
 Siguiente paso: continuar GP-PERF-ADMIN-CUT-LOCK-01 inspeccionando las escrituras y lecturas restantes bajo el ScriptLock en `handleAddOrUpdateCut`; priorizar reducción de llamadas remotas sin trasladar fuera del lock las reservas, validaciones de conflicto ni escrituras que deban ser atómicas.
+
+
+### ADMIN — escrituras por lote al recuperar registros parcialmente completados (2026-11-19)
+- [x] Agrupar categoría, marca, modelo, versiones, años y tipo de encendido en una escritura contigua (columnas 2–8), solo cuando existan campos vacíos.
+- [x] Agrupar tipo, ubicación, color y configuración de relay del slot recuperado en una escritura contigua; conservar testigo y colaborador en columnas independientes.
+- [x] Preservar valores existentes, normalización de rango de años, VIN, timestamp, flush y finalización idempotente.
+- [x] Añadir `AdminRecoveryRepairBatchWrites.mjs` al runner con simulación de los lotes, preservación de datos y omisión de escrituras cuando no hay cambios.
+- Estado previo a CI: IMPLEMENTADA; pendiente ejecutar regresión y revisar diff remoto.
