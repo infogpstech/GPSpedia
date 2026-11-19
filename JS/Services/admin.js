@@ -10399,7 +10399,8 @@ function storeDriveAuditSeenPage_(auditId, pageIndex, fileIds, folderIds, fileMe
     const metadata = (Array.isArray(fileMetadata) ? fileMetadata : []).map(item => ({
         fileId: String(item && item.fileId || "").trim(),
         fileName: String(item && item.fileName || ""),
-        mimeType: String(item && item.mimeType || "").toLowerCase()
+        mimeType: String(item && item.mimeType || "").toLowerCase(),
+        folderPath: String(item && item.folderPath || "")
     }));
     const payload = {
         unused: normalizeDriveAuditFileIds_(unused),
