@@ -3329,13 +3329,9 @@ function buildCortesImageOrganizerTargets_(cortesValues, cortesFormulas, logosVa
         const url = String(row && row[2] || "").trim();
         if (!brandRaw && !url) return;
         if (!url) return;
-        const brand = normalizeOrganizerSegment_(brandRaw);
         const brandKey = normalizeBrandKey(brandRaw);
-        const categories = Array.from(categoryByBrand.get(brandKey) || []);
-        const reasons = [];
-        if (!brand) reasons.push("missing_logo_brand");
-        if (!categories.length) reasons.push("brand_has_no_category_in_cortes");
-        if (categories.length > 1) reasons.push("brand_has_multiple_categories");
+        const logoDestination = buildCanonicalLogoDestination_(brandRaw, Array.from(categoryByBrand.get(brandKey) || []));
+        const reasons = logoDestination.reasons.slice();
         if (logoBrandCounts.get(brandKey) > 1) reasons.push("duplicate_logo_brand_row");
         const ids = extractDriveFileIds(url);
         if (ids.length !== 1) reasons.push(ids.length ? "multiple_file_ids_in_cell" : "invalid_drive_reference");
@@ -3346,8 +3342,8 @@ function buildCortesImageOrganizerTargets_(cortesValues, cortesFormulas, logosVa
             field: "urlLogo", brand: brandRaw,
             fileId: ids.length === 1 ? ids[0] : "",
             currentUrl: url,
-            targetFolderPath: categories.length === 1 && brand ? "Cortes/" + categories[0] + "/" + brand : "",
-            targetBaseName: brand ? normalizeOrganizerFilePart_(brandRaw).toLowerCase() + "_logo" : "",
+            targetFolderPath: logoDestination.targetFolderPath,
+            targetBaseName: logoDestination.targetBaseName,
             functionCode: "logo", reasons
         });
     });
@@ -5543,20 +5539,47 @@ function getNextLogoIdLocked_(sheet) {
 /**
  * Registro de logotipos con ID numérico asignado por el backend, sin fórmulas de fila.
  */
-function resolveLogoCategoryFromCortesRows_(cortesValues, brandName) {
+function getLogoCategoryCandidatesFromCortesRows_(cortesValues, brandName) {
     const rows = Array.isArray(cortesValues) ? cortesValues : [];
     const brandKey = normalizeOrganizerSegment_(brandName).toLowerCase();
-    if (!brandKey) throw new Error("La marca del logotipo no es válida.");
+    if (!brandKey) return [];
     const categories = new Set();
     rows.slice(1).forEach(row => {
         const rowBrand = normalizeOrganizerSegment_(row && row[COLS_CORTES.marca - 1]).toLowerCase();
         const category = normalizeOrganizerSegment_(row && row[COLS_CORTES.categoria - 1]);
         if (rowBrand === brandKey && category) categories.add(category);
     });
-    if (categories.size !== 1) throw new Error(categories.size
+    return Array.from(categories);
+}
+
+function buildCanonicalLogoDestination_(brandName, categoryCandidates) {
+    const brand = normalizeOrganizerSegment_(brandName);
+    const categories = Array.from(new Set((Array.isArray(categoryCandidates) ? categoryCandidates : [])
+        .map(value => normalizeOrganizerSegment_(value)).filter(Boolean)));
+    const targetBaseName = normalizeOrganizerFilePart_(brandName).toLowerCase();
+    const reasons = [];
+    if (!brand) reasons.push("missing_logo_brand");
+    if (!categories.length) reasons.push("brand_has_no_category_in_cortes");
+    if (categories.length > 1) reasons.push("brand_has_multiple_categories");
+    if (!targetBaseName) reasons.push("invalid_logo_filename");
+    const category = categories.length === 1 ? categories[0] : "";
+    return {
+        brand, category, categories,
+        targetFolderPath: category && brand ? "Cortes/" + category + "/" + brand : "",
+        targetBaseName: targetBaseName ? targetBaseName + "_logo" : "",
+        reasons: Array.from(new Set(reasons))
+    };
+}
+
+function resolveLogoCategoryFromCortesRows_(cortesValues, brandName) {
+    const destination = buildCanonicalLogoDestination_(
+        brandName, getLogoCategoryCandidatesFromCortesRows_(cortesValues, brandName)
+    );
+    if (!destination.brand) throw new Error("La marca del logotipo no es válida.");
+    if (destination.categories.length !== 1) throw new Error(destination.categories.length
         ? "La marca aparece en varias categorías; no se puede asignar una carpeta única."
         : "La marca no tiene una categoría única registrada en Cortes.");
-    return Array.from(categories)[0];
+    return destination.category;
 }
 
 function handleAddLogo(payload, logMessage) {
@@ -5575,16 +5598,23 @@ function handleAddLogo(payload, logMessage) {
     const cortesValues = cortesLastRow > 0
         ? cortesSheet.getRange(1, 1, cortesLastRow, COLS_CORTES.marca).getValues()
         : [];
-    const category = resolveLogoCategoryFromCortesRows_(cortesValues, nombreMarca);
+    const logoDestination = buildCanonicalLogoDestination_(
+        nombreMarca, getLogoCategoryCandidatesFromCortesRows_(cortesValues, nombreMarca)
+    );
+    if (logoDestination.reasons.length) {
+        if (!logoDestination.brand) throw new Error("La marca del logotipo no es válida.");
+        if (logoDestination.categories.length > 1) throw new Error("La marca aparece en varias categorías; no se puede asignar una carpeta única.");
+        if (!logoDestination.categories.length) throw new Error("La marca no tiene una categoría única registrada en Cortes.");
+        throw new Error("No se pudo construir el destino canónico del logotipo.");
+    }
     const extension = getCanonicalImageExtension({ getName: () => filename, getMimeType: () => mimeType });
-    const logoBaseName = normalizeOrganizerFilePart_(nombreMarca).toLowerCase();
-    if (!extension || !logoBaseName) throw new Error("No se pudo construir el nombre canónico del logotipo conservando su extensión.");
-    const canonicalFilename = logoBaseName + "_logo" + extension;
+    if (!extension || !logoDestination.targetBaseName) throw new Error("No se pudo construir el nombre canónico del logotipo conservando su extensión.");
+    const canonicalFilename = logoDestination.targetBaseName + extension;
     logMessage("Registro Logo", "Iniciando registro de logotipo para la marca: " + nombreMarca);
     const rootFolder = getCortesRootFolder();
-    const categoryFolder = findOrCreateSubFolder(rootFolder, category);
-    const brandFolderName = normalizeOrganizerSegment_(nombreMarca);
-    const brandFolder = findOrCreateSubFolder(categoryFolder, brandFolderName);
+    const destinationSegments = logoDestination.targetFolderPath.split("/");
+    const categoryFolder = findOrCreateSubFolder(rootFolder, destinationSegments[1]);
+    const brandFolder = findOrCreateSubFolder(categoryFolder, destinationSegments[2]);
     if (hasDriveFilenameConflictInFolder(brandFolder, canonicalFilename)) {
         throw new Error("Ya existe un archivo con el nombre canónico del logotipo; no se sobrescribió.");
     }

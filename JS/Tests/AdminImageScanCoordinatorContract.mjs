@@ -342,6 +342,7 @@ const organizerBuilder = new Function(
         extractFunction(admin, "normalizeOrganizerFilePart_"),
         extractFunction(admin, "mapCorteTypeToFunctionCode_"),
         extractFunction(admin, "getCorteFunctionSuffix_"),
+        extractFunction(admin, "buildCanonicalLogoDestination_"),
         extractFunction(admin, "buildCortesImageOrganizerTargets_")
     ].join(String.fromCharCode(10)) + String.fromCharCode(10) + "return buildCortesImageOrganizerTargets_;"
 )(actualCortesCols);
@@ -486,9 +487,25 @@ assert.equal(vehicleYearFolderName({ anoDesde: 2020, anoHasta: "" }), "");
 
 const logoCategoryResolver = new Function("COLS_CORTES",
     extractFunction(admin, "normalizeOrganizerSegment_") +
+    extractFunction(admin, "normalizeOrganizerFilePart_") +
+    extractFunction(admin, "getLogoCategoryCandidatesFromCortesRows_") +
+    extractFunction(admin, "buildCanonicalLogoDestination_") +
     extractFunction(admin, "resolveLogoCategoryFromCortesRows_") +
     "\nreturn resolveLogoCategoryFromCortesRows_;"
 )({ categoria: 2, marca: 3 });
+const logoDestinationBuilder = new Function(
+    extractFunction(admin, "normalizeOrganizerSegment_") +
+    extractFunction(admin, "normalizeOrganizerFilePart_") +
+    extractFunction(admin, "buildCanonicalLogoDestination_") +
+    "\nreturn buildCanonicalLogoDestination_;"
+)();
+const canonicalLogoDestination = logoDestinationBuilder("Toyota", ["Camion pesado"]);
+assert.equal(canonicalLogoDestination.targetFolderPath, "Cortes/Camion_pesado/Toyota");
+assert.equal(canonicalLogoDestination.targetBaseName, "toyota_logo");
+assert.deepEqual(canonicalLogoDestination.reasons, []);
+const ambiguousLogoDestination = logoDestinationBuilder("Toyota", ["Camion pesado", "Autobus"]);
+assert.ok(ambiguousLogoDestination.reasons.includes("brand_has_multiple_categories"));
+assert.equal(ambiguousLogoDestination.targetFolderPath, "");
 const logoRowsUnique = [
     ["id", "categoria", "marca"],
     ["1", "Camion pesado", "Toyota"],
@@ -500,9 +517,12 @@ assert.throws(() => logoCategoryResolver([
 ], "Toyota"));
 assert.throws(() => logoCategoryResolver(logoRowsUnique, "Marca inexistente"));
 const logoHandlerSource = extractFunction(admin, "handleAddLogo");
-assert.ok(logoHandlerSource.includes("resolveLogoCategoryFromCortesRows_"));
-assert.ok(logoHandlerSource.includes("findOrCreateSubFolder(rootFolder, category)"));
-assert.ok(logoHandlerSource.includes("findOrCreateSubFolder(categoryFolder, brandFolderName)"));
+assert.ok(logoHandlerSource.includes("buildCanonicalLogoDestination_"));
+assert.ok(logoHandlerSource.includes("getLogoCategoryCandidatesFromCortesRows_"));
+assert.ok(logoHandlerSource.includes("logoDestination.targetFolderPath"));
+assert.ok(logoHandlerSource.includes("logoDestination.targetBaseName"));
+assert.ok(logoHandlerSource.includes("findOrCreateSubFolder(rootFolder, destinationSegments[1])"));
+assert.ok(logoHandlerSource.includes("findOrCreateSubFolder(categoryFolder, destinationSegments[2])"));
 assert.equal(logoHandlerSource.includes('findOrCreateSubFolder(rootFolder, "Logos")'), false);
 assert.ok(logoHandlerSource.includes("canonicalFilename"));
 assert.ok(logoHandlerSource.includes("hasDriveFilenameConflictInFolder"));
@@ -517,6 +537,8 @@ assert.ok(reconciliationTargetsSource.includes("if (cutMatch && !currentValue &&
 const logoTarget = organizerFixture.targets.find(target => target.sheetName === "LogosMarca");
 assert.equal(logoTarget.targetFolderPath, "Cortes/Camion_pesado/Toyota");
 assert.equal(logoTarget.targetBaseName, "toyota_logo");
+assert.equal(logoTarget.targetFolderPath, canonicalLogoDestination.targetFolderPath);
+assert.equal(logoTarget.targetBaseName, canonicalLogoDestination.targetBaseName);
 const unknownCutRow = makeOrganizerRow(); setOrganizerCell(unknownCutRow,"tipoCorte1","Corte especial no catalogado");
 const unknownPlan = organizerBuilder([Array(organizerColumnCount).fill("header"), unknownCutRow], [], [], []);
 assert.equal(unknownPlan.targets.find(target => target.field === "imgCorte1").status, "blocked");
