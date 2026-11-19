@@ -2968,7 +2968,7 @@ function findRowByOpId(sheet, opId) {
     const headers = cortesSheet.getRange(1, 1, 1, lastColumn).getValues()[0] || [];
 
     // TextFinder ejecuta la búsqueda en Sheets y devuelve solo celdas coincidentes;
-    // evita descargar y recorrer todas las filas/columnas con getDataRange().getValues().
+    // evita transferir y recorrer todas las celdas de la hoja en memoria.
     const searchRange = cortesSheet.getRange(2, 1, lastRow - 1, lastColumn);
     const finder = searchRange.createTextFinder(cleanOpId);
     finder.matchCase(true);
