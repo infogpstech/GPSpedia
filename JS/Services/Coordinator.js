@@ -791,6 +791,10 @@ function createSharedMutationCoordinator_(dependencies) {
             requestSpecs.push(spec);
         });
         if (!requests.length) return results;
+        if (typeof fetchAll !== "function" && typeof fetch !== "function") {
+            requestSpecs.forEach(spec => { results[spec.service] = { status: "unavailable", reason: "fetch_unavailable" }; });
+            return results;
+        }
         let responses = null;
         if (typeof fetchAll === "function") {
             try { responses = fetchAll(requests); } catch (error) { responses = null; }
