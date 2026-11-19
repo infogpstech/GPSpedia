@@ -272,7 +272,8 @@ function recordUsersDirectTraffic_() {
 
 function readUsersDirectTraffic_(suppliedSecret) {
     const properties = PropertiesService.getScriptProperties();
-    const expectedSecret = String(properties.getProperty(USERS_TRAFFIC_SECRET_PROPERTY_) || "");
+    const expectedSecret = String(properties.getProperty("GPSpedia_COORDINATOR_SECRET") ||
+        properties.getProperty(USERS_TRAFFIC_SECRET_PROPERTY_) || "");
     const supplied = String(suppliedSecret || "");
     let difference = expectedSecret.length ^ supplied.length;
     const length = Math.max(expectedSecret.length, supplied.length);
