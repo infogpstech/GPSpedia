@@ -39,20 +39,27 @@ testCase("el borrado, restauración, movimiento y acciones masivas informan resu
     assert.match(replaced, /fallidas|requieren revisión/);
 });
 
-testCase("la auditoría registra inicio, avance, resultado y error sin duplicar toasts", () => {
+testCase("la auditoría registra inicio, avance, resultados y errores en la consola del modal", () => {
     assert.doesNotMatch(audit, /mostrarNotificacion\(|alert\(/);
     const start = audit.indexOf("const runAudit = async (resume) =>");
     const end = audit.indexOf("if (startButton) startButton.onclick", start);
     const run = audit.slice(start, end);
     assert.match(run, /Iniciando recorrido de Cortes/);
-    assert.match(run, /AUDITORÍA DRIVE.*batchStatusMessage/);
-    assert.match(run, /AUDITORÍA DRIVE.*inventoryMessage/);
-    assert.match(run, /AUDITORÍA DRIVE.*statusMessage/);
+    assert.match(run, /appendAuditBatchSummary\(response, uniqueResponseFiles\)/);
+    assert.match(run, /updateSummary\(batchStatusMessage, "progress"\)/);
+    assert.match(run, /updateSummary\(inventoryMessage/);
+    assert.match(run, /updateSummary\(statusMessage, "error"\)/);
+    assert.match(audit, /const appendAuditConsole =/);
+    assert.match(audit, /const appendFiles = \(files\)/);
+    assert.match(audit, /const requestAuditConsoleConfirmation = async/);
 });
 
-testCase("inventario, organización y conciliación conservan estados y reportan resultados", () => {
-    assert.match(audit, /\[AUDITORÍA DRIVE\] " \+ inventoryMessage/);
-    assert.match(audit, /\[ORGANIZACIÓN DRIVE\]/);
+testCase("inventario y organización conservan confirmación global y resultados en consola de Cortes", () => {
+    assert.match(audit, /appendAuditConsole\(inventoryMessage/);
+    assert.match(audit, /requestAuditConsoleConfirmation\(/);
+    assert.match(audit, /window\.gpsepediaRequestDeveloperConsoleConfirmation\(message\)/);
+    assert.match(audit, /Lote de organización/);
+    assert.match(audit, /\[AUDITORÍA DRIVE\]/);
     assert.match(audit, /\[CONCILIACIÓN DRIVE\]/);
     assert.match(audit, /rollback confirmado/);
     assert.match(audit, /Sin cambios en Spreadsheet, Drive ni permisos/);
