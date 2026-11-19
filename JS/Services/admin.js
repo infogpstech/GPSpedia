@@ -6847,6 +6847,19 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
     // Se preparan antes del ScriptLock para que su latencia no serialice otras operaciones.
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
     if (!sheet) throw new Error("No se encontró la hoja «Cortes».");
+
+    // La búsqueda completa del ID es una lectura de preparación. Dentro del lock solo
+    // se confirma la celda candidata, evitando recorrer toda la columna en la sección crítica.
+    let existingVehicleRowIndex = null;
+    if (String(vehicleId || "").trim()) {
+        const lastRowForLookup = sheet.getLastRow();
+        if (lastRowForLookup >= 2) {
+            const idsSnapshot = sheet.getRange(2, 1, lastRowForLookup, 1).getValues().flat();
+            const existingIndex = idsSnapshot.findIndex(id => String(id) === String(vehicleId));
+            if (existingIndex !== -1) existingVehicleRowIndex = existingIndex + 2;
+        }
+    }
+
     let preparedVehicleData = null;
     let preparedVehicleYear = null;
     if (!vehicleId) {
@@ -7042,10 +7055,15 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
         let savedSlotIndex = 1;
 
     if (vehicleId) { // --- Lógica para vehículo EXISTENTE ---
-        const ids = sheet.getRange(2, 1, sheet.getLastRow(), 1).getValues().flat();
-        const existingIndex = ids.findIndex(id => id.toString() == vehicleId.toString());
-        if (existingIndex === -1) throw new Error("El ID del vehículo no fue encontrado.");
-        rowIndex = existingIndex + 2;
+        if (existingVehicleRowIndex === null) throw new Error("El ID del vehículo no fue encontrado.");
+        rowIndex = existingVehicleRowIndex;
+
+        // Revalidar la posición candidata bajo lock: la búsqueda previa nunca autoriza
+        // escribir si el ID fue eliminado, movido o reemplazado mientras se preparaba.
+        const currentVehicleId = sheet.getRange(rowIndex, COLS_CORTES.id).getValue();
+        if (String(currentVehicleId) !== String(vehicleId)) {
+            throw new Error("La ubicación del vehículo cambió durante la preparación. Reintenta la operación.");
+        }
 
         const rowValues = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getValues()[0];
         const vehicleInfo = mapRowToObject(rowValues, COLS_CORTES);
