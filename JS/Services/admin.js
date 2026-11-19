@@ -7147,7 +7147,7 @@ function getVehicleYearFolderName(vehicleInfo) {
     const info = vehicleInfo || {};
     const rawDesde = String(info.anoDesde === null || info.anoDesde === undefined ? '' : info.anoDesde).trim();
     const rawHasta = String(info.anoHasta === null || info.anoHasta === undefined ? '' : info.anoHasta).trim();
-    if (!/^\\d{4}$/.test(rawDesde) || !/^\\d{4}$/.test(rawHasta)) return '';
+    if (!/^\d{4}$/.test(rawDesde) || !/^\d{4}$/.test(rawHasta)) return '';
     const desde = Number(rawDesde);
     const hasta = Number(rawHasta);
     if (desde > hasta) return '';
