@@ -6782,20 +6782,30 @@ function findNextAvailableCutSlot_(rowValues, vehicleId) {
     }
     return null;
 }
-function runAdminDriveWorkOutsideScriptLock_(lock, opId, operation, revalidate) {
-    if (!String(opId || "").trim() || !lock || typeof lock.hasLock !== "function" || !lock.hasLock()) return operation();
+function runAdminDriveWorkOutsideScriptLock_(lock, opId, operation, revalidate, operationHash) {
+    const cleanOpId = String(opId || "").trim();
+    if (!cleanOpId || !lock || typeof lock.hasLock !== "function" || !lock.hasLock()) return operation();
     lock.releaseLock();
     let result, operationError = null;
     try { result = operation(); } catch (error) { operationError = error; }
     let reacquired = false;
     try { reacquired = lock.tryLock(0); } catch (lockError) { reacquired = false; }
+    const retryHint = " Reintenta con opId " + cleanOpId +
+        (operationHash ? " y operationHash " + operationHash : "") + ".";
     if (!reacquired) {
-        const pendingError = new Error("El trabajo de Drive terminó o quedó pendiente, pero ADMIN está ocupado. Conserva el mismo opId y reintenta para completar el registro.");
+        const pendingError = new Error("El trabajo de Drive terminó o quedó pendiente, pero ADMIN está ocupado." + retryHint);
         pendingError.code = "ADMIN_LOCK_REACQUIRE_PENDING";
+        pendingError.opId = cleanOpId;
+        pendingError.operationHash = operationHash || "";
         if (operationError) pendingError.cause = operationError;
         throw pendingError;
     }
-    if (operationError) throw operationError;
+    if (operationError) {
+        operationError.opId = cleanOpId;
+        operationError.operationHash = operationHash || "";
+        operationError.message = String(operationError.message || operationError) + retryHint;
+        throw operationError;
+    }
     return typeof revalidate === "function" ? revalidate(result) : result;
 }
 
@@ -6814,8 +6824,12 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
         const opMatch = payload.colaborador.match(/\[(OP-[a-zA-Z0-9_-]+)\]/);
         if (opMatch) opId = opMatch[1];
     }
-    const operationHash = opId ? computeCutOperationFingerprint_(payload) : null;
-    if (opId && normalizeIdempotenciaOperationHash_(payload.operationHash, "Solicitud addOrUpdateCut ADMIN") !== operationHash) {
+    const legacyRequest = !opId;
+    // Las solicitudes antiguas reciben una clave interna: permite reservar el slot y liberar
+    // el lock durante Drive sin dejar la ejecución legacy dentro de la sección crítica.
+    if (legacyRequest) opId = "OP-LEGACY-" + Utilities.getUuid().replace(/-/g, "");
+    const operationHash = computeCutOperationFingerprint_(payload);
+    if (!legacyRequest && normalizeIdempotenciaOperationHash_(payload.operationHash, "Solicitud addOrUpdateCut ADMIN") !== operationHash) {
         throw new Error("La huella enviada no coincide con el contenido de la operación.");
     }
     const vinPrefix = cutData.vin ? extractVinPrefixForAdmin(cutData.vin) : "";
@@ -7178,7 +7192,7 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
     }
 
     logMessage("Registro Administrativo", `Corte administrativo guardado exitosamente. ID asignado: ${newId}`);
-    return { status: 'success', message: `Corte administrativo agregado de forma silenciosa.`, vehicleId: newId, timestamp: formattedDate, slotIndex: savedSlotIndex, operationHash: operationHash };
+    return { status: 'success', message: `Corte administrativo agregado de forma silenciosa.`, vehicleId: newId, timestamp: formattedDate, slotIndex: savedSlotIndex, opId: opId, operationHash: operationHash };
     } finally {
         if (lock.hasLock()) lock.releaseLock();
     }
