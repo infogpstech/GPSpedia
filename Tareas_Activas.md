@@ -510,4 +510,7 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Mover autenticación contextual, lectura de listas oficiales y validación del payload antes de adquirir el ScriptLock global de WRITE.
 - [x] Reducir la lectura de listas de Cortes a columnas 2–26 y la de Relay a su columna de configuración.
 - [x] Añadir prueba determinista para orden preflight→lock, validación y rangos leídos.
-- [ ] CI integral y revisión del diff pendientes.
+- [x] CI 44615757832 SUCCESS: 169 suites, 2,348 pruebas aprobadas, 0 fallos; `WriteCutPreflightOutsideLock` 1/1, `CutPayloadValidation` 35/35 y autorización/minimización WRITE 13/13.
+- [x] Health read-only 44615757812 SUCCESS; GitHub Pages 44615756805 SUCCESS.
+- [x] Diff revisado: la preparación queda fuera del ScriptLock; las lecturas de validación se acotan a columnas necesarias.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó WRITE ni se modificaron Sheets/Drive productivos.

@@ -5,7 +5,7 @@ Fecha: 2026-11-19
 ## Repositorio y ramas
 - Repositorio: infogpstech/GPSpedia
 - Rama autorizada: GPSpedia2.2.5_work
-- HEAD: cca336d1472d0c727ae905cdf735aa147781e28c
+- HEAD: 3cb7fb0e277daaf4d2aa263d7cfe4a08ba19a734
 - Rama base protegida GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificar)
 - El historial completo previo está preservado en Checkpoint_Archive/checkpoint_2026-11-19_parte_003.md; ver Checkpoint_Archive/manifest.md.
 
@@ -16,17 +16,18 @@ Fecha: 2026-11-19
 - No inferir deployments Apps Script ni permisos externos desde el código versionado.
 
 ## Última tarea completada
-ADMIN — localización de vehículo por columna ID y eliminación de declaraciones duplicadas:
-- `findUniqueCortesVehicleRow_` lee primero únicamente la columna ID; solo lee la fila completa cuando encuentra exactamente una coincidencia.
-- Se eliminaron dos declaraciones globales duplicadas que sobrescribían la función optimizada; queda una única implementación.
-- La prueba `AdminUniqueVehicleRowBoundedRead` verifica unicidad de la declaración, lectura acotada, ID único, duplicados, ID inválido y ausencia de coincidencias.
-- CI 44614041417 SUCCESS: 168 suites, 2,347 pruebas aprobadas, 0 fallos; prueba específica 13/13 y sintaxis JS aprobada.
-- Health read-only 44614041045 SUCCESS; GitHub Pages 44613910857 SUCCESS sobre el commit funcional anterior.
-- Commits: b9bc06d04cd72e1968362b2d25dd34b86a8e487f (optimización y eliminación de duplicados), 38ec5ae42c2325a1c331e8fe2ea906108ad66b63 (ajuste del contador de aserciones).
-- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó Apps Script ni se modificaron datos productivos.
+WRITE — preflight de addOrUpdateCut fuera del ScriptLock:
+- Se confirmó que la ruta canónica addOrUpdateCut pertenece a WRITE; ADMIN rechaza la acción heredada.
+- Autenticación contextual, lectura de listas oficiales y validación del payload se realizan antes de adquirir el ScriptLock global.
+- Las listas de Cortes se leen desde las columnas 2–26 necesarias; Relay se lee solo desde la columna de configuración.
+- Prueba aislada `WriteCutPreflightOutsideLock` 1/1; `CutPayloadValidation` 35/35; autorización/minimización WRITE 13/13.
+- CI 44615757832 SUCCESS: 169 suites, 2,348 pruebas aprobadas, 0 fallos; sintaxis JavaScript aprobada.
+- Health read-only 44615757812 SUCCESS; GitHub Pages 44615756805 SUCCESS.
+- Commits: e4e32bc49c416d006edf4be4e006b3528a42b364 (preflight/rangos acotados), da6b62baa2c3c8f0b4ccb9931f5882dfea544584 (ajuste de extracción de pruebas), 8b26ab4a8e5c2c590e85dc61eb22b85701064d23 y 3cb7fb0e277daaf4d2aa263d7cfe4a08ba19a734 (contratos de actor central).
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó WRITE ni se modificaron datos productivos.
 
 ## Siguiente trabajo
-Continuar GP-PERF-ADMIN-CUT-LOCK-01. Siguiente prioridad: revisar y reducir la sección crítica restante de `handleAddOrUpdateCut`, preservando exclusión e idempotencia sobre Cortes/Idempotencia. A continuación, completar el aislamiento entre operaciones independientes y las pruebas de no interferencia entre Inbox, health, login, auditoría y registro de cortes. Confirmar los límites reales de proyectos/deployments Apps Script sin inferir Script IDs desde archivos ausentes. Consultar Tareas_Activas.md para dependencias y orden; no iniciar funcionalidades nuevas mientras permanezca abierto este backlog.
+Continuar GP-PERF-WRITE-CUT-LOCK-02. Revisar la sección crítica restante de `handleAddOrUpdateCutLocked` y `handleAddOrUpdateCutLockedUnsafe_`: reducir lecturas/escrituras de Sheets y flushes dentro del ScriptLock, manteniendo la asignación única de IDs, reserva de slots, rollback e idempotencia de Cortes/Idempotencia. Priorizar operaciones de escritura por lotes cuando no alteren fórmulas ni datos concurrentes. Añadir pruebas de concurrencia/no interferencia entre funciones del mismo servicio. No asumir que los ScriptLock de deployments distintos son compartidos; verificar los límites reales de proyectos sin inferir Script IDs. No desplegar Apps Script ni tocar datos productivos sin autorización.
 
 ## Restricciones
 - Trabajar únicamente en GPSpedia2.2.5_work.
@@ -61,3 +62,6 @@ Siguiente paso P0: auditar y reducir lecturas restantes dentro del ScriptLock de
 
 
 2026-11-19 — En progreso GP-PERF-ADMIN-CUT-LOCK-01: se confirma que addOrUpdateCut se enruta a WRITE y ADMIN rechaza la ruta heredada. Próxima optimización: mover autenticación contextual, lectura de listas y validación del payload fuera del ScriptLock WRITE; acotar columnas leídas en Cortes/Relay. CI pendiente.
+
+
+2026-11-19 — Cierre preflight WRITE: HEAD 3cb7fb0e277daaf4d2aa263d7cfe4a08ba19a734; CI 44615757832 SUCCESS (169 suites, 2,348 pruebas, 0 fallos); health 44615757812 SUCCESS; Pages 44615756805 SUCCESS. El preflight de addOrUpdateCut se ejecuta antes del ScriptLock y lee solo las columnas requeridas. Próximo paso: reducir llamadas/flushes dentro de la sección crítica sin debilitar la idempotencia.
