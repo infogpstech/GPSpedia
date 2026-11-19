@@ -997,3 +997,12 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - La secuencia se detiene si hay cambios locales o si el fast-forward no es posible; no descarta cambios ni utiliza reset --hard, clean o force. lista_beta.txt apunta explícitamente a esta preparación.
 - Preparación documental completada. La ejecución de sincronización, deployments Apps Script y pruebas contra servicios/Drive/Spreadsheet quedan pendientes de autorización del entorno Beta.
 ================================================================================
+
+
+================================================================================
+2026-11-19 — CONTINUIDAD: SIMPLIFICACIÓN DE SESIÓN ADMIN
+- HEAD confirmado antes del cambio: 4d26dbe4661b4fe0ceba3289b222ee204f009a65 en GPSpedia2.2.5_work; GPSpedia2.2.5 en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Hallazgo: doPost ADMIN adquiría leases para lecturas y mutaciones ordinarias. La sección 15 prohíbe leases y viajes a Coordinator por acción ordinaria.
+- Cambio preparado: ADMIN obtiene actor cacheado y conserva RBAC/auditoría; llamadas ADMIN→WRITE dejan de requerir token de lease y WRITE valida su actor cacheado con userId/sessionToken.
+- Pendiente: pruebas de contrato/regresión, revisión del diff, CI y publicación verificada. No se realizó deployment ni acceso a Drive/Spreadsheet/ScriptProperties.
+================================================================================

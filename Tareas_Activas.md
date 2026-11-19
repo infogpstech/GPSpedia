@@ -238,3 +238,9 @@ Aplicar la estructura objetivo después de validar el dry-run:
 - [x] Los tipos sin categoría o con categorías ambiguas siguen bloqueados; no se amplían permisos ni se añaden llamadas de red.
 - [x] CI run 44532907478: 152 suites, 2,224 pruebas, 0 fallos; LogoIdIntegrity 13/13.
 - [ ] Beta: comprobar en Drive aislado que el archivo subido y el preview produzcan exactamente la misma ruta/nombre. No se creó ni movió ningún archivo productivo.
+
+
+## Adenda 2026-11-19 — ADMIN: simplificación de sesión en curso
+- El router ADMIN todavía envolvía lecturas y mutaciones ordinarias en leases del Coordinator, en contradicción directa con la sección 15 de NORMAS_DESAROLLO.md.
+- Corrección preparada: ADMIN usa el actor de sesión cacheado; las llamadas internas ADMIN→WRITE transmiten userId/sessionToken para que WRITE valide su propio actor cacheado. Se mantienen RBAC y auditoría de mutaciones.
+- La tarea permanece **EN PROGRESO** hasta aprobar las pruebas locales de contrato/regresión y revisar el diff publicado. No desplegar Apps Script ni invocar servicios remotos.

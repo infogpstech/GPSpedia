@@ -22,10 +22,11 @@ const FEEDBACK_SERVICE_URL = "https://script.google.com/macros/s/AKfycbzHV29RS2a
 const CATALOG_TRAFFIC_SECRET_PROPERTY_ = "GPSpedia_CATALOG_TRAFFIC_SECRET";
 const LOGOS_MARCA_ID_COUNTER_PROPERTY = "LOGOS_MARCA_ID_COUNTER";
 
-/** WRITE es la autoridad única para asignar y estabilizar IDs de Cortes. */
-function callWriteServiceAction(action, payload, sharedMutationToken) {
-    if (!sharedMutationToken) throw new Error("La llamada interna a WRITE requiere una lease compartida válida.");
-    const requestPayload = Object.assign({}, payload || {}, { __sharedMutationToken: sharedMutationToken });
+/** WRITE es la autoridad única para asignar y estabilizar IDs de Cortes.
+ * WRITE resuelve el actor desde su caché de sesión; no requiere una lease entre servicios.
+ */
+function callWriteServiceAction(action, payload) {
+    const requestPayload = Object.assign({}, payload || {});
     const response = UrlFetchApp.fetch(WRITE_SERVICE_URL, {
         method: "post",
         contentType: "text/plain",
@@ -47,23 +48,23 @@ function callWriteServiceAction(action, payload, sharedMutationToken) {
     return result;
 }
 
-function requestNextVehicleIdFromWriteService(payload, sharedMutationToken) {
+function requestNextVehicleIdFromWriteService(payload) {
     const result = callWriteServiceAction("allocateVehicleId", {
         userId: payload && payload.userId,
         sessionToken: payload && payload.sessionToken
-    }, sharedMutationToken);
+    });
     const vehicleId = Number(result.vehicleId);
     if (!Number.isSafeInteger(vehicleId) || vehicleId < 1) throw new Error("WRITE devolvió un ID de vehículo inválido.");
     return vehicleId;
 }
 
-function requestCortesIdFreezeFromWriteService(payload, backupId, sharedMutationToken) {
+function requestCortesIdFreezeFromWriteService(payload, backupId) {
     return callWriteServiceAction("freezeCortesIds", {
         userId: payload && payload.userId,
         sessionToken: payload && payload.sessionToken,
         backupId,
         confirm: true
-    }, sharedMutationToken);
+    });
 }
 
 
@@ -867,12 +868,6 @@ function isSharedMutationAction_(action) {
     return ["backupDatabase","backupDrive","restoreDatabase","restoreDrive","reorganizeDatabase","normalizeImages","organizePrimaryVehicleImages","restoreAllTrashedImages","addLogo","updateVehicleField","uploadAdminImage","migrateCortesOperationIds","migrateIdentifiers","rollbackIdentifiers","freezeIdentifierFormulas","reconcilePendingImageUploads","createSheet","addColumn","driveCommand","recoverReplacedImage","deleteReplacedImage","restoreReplacedImageFromTrash","permanentlyDeleteReplacedImage","markReplacedImageInUse","saveUnusedImagesInventory","applyCortesImageReconciliation","createCortesImageFolder","moveReplacedImage","getReplacedImageDownloadUrl","migrateReplacedImagesSchema","auditDriveImagesInCortes"].includes(action);
 }
 
-// Consultas largas de inventario/Drive obtienen una lease propia de lectura.
-// No se registran como mutaciones ni generan eventos administrativos de escritura.
-function isSharedReadAction_(action) {
-    return ["getReplacedImages", "getDriveStorage", "getCortesImageFolders", "auditIdentifiers", "getAdminImageUploadStatus", "previewCortesImageReconciliation", "previewCortesImageOrganizer"].includes(action);
-}
-
 function doPost(e) {
     let request;
     try {
@@ -902,35 +897,17 @@ function doPost(e) {
             })).setMimeType(ContentService.MimeType.TEXT);
         }
     }
-    const sessionOptions = { session: { sessionToken: payload.sessionToken } };
-    if (!isSharedMutationAction_(action)) {
-        if (action === "ping") return doPostInternal_(withSharedSessionActor_(e, null));
-        const operation = isSharedReadAction_(action) ? action : "sessionActivity";
-        try {
-            return withSharedMutationLease_("ADMIN", operation, function(token, actor) {
-                return doPostInternal_(withSharedSessionActor_(e, actor));
-            }, sessionOptions);
-        } catch (error) {
-            return ContentService.createTextOutput(JSON.stringify({
-                status: "error",
-                message: error && error.message ? error.message : "La operación fue rechazada por el coordinador compartido."
-            })).setMimeType(ContentService.MimeType.TEXT);
-        }
-    }
-
-    const nestedToken = String(payload.__sharedMutationToken || "").trim();
+    if (action === "ping") return doPostInternal_(withSharedSessionActor_(e, null));
     try {
-        return withSharedMutationLease_("ADMIN", action, function(token, actor) {
-            request.payload = Object.assign({}, payload, { __sharedMutationToken: token });
-            const wrappedEvent = Object.assign({}, e || {}, {
-                postData: Object.assign({}, e && e.postData || {}, { contents: JSON.stringify(request) })
-            });
-            return doPostInternal_(withSharedSessionActor_(wrappedEvent, actor));
-        }, Object.assign(sessionOptions, nestedToken ? { nestedToken: nestedToken } : {}));
+        // La sesión se valida contra el actor cacheado al iniciar sesión. Las
+        // capacidades se comprueban localmente en doPostInternal_; no se adquiere
+        // una lease ni se consulta Coordinator en cada acción ADMIN.
+        const actor = getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "ADMIN" });
+        return doPostInternal_(withSharedSessionActor_(e, actor));
     } catch (error) {
         return ContentService.createTextOutput(JSON.stringify({
             status: "error",
-            message: error && error.message ? error.message : "La operación fue rechazada por el coordinador compartido."
+            message: error && error.message ? error.message : "No se pudo recuperar el contexto de sesión."
         })).setMimeType(ContentService.MimeType.TEXT);
     }
 }
@@ -2725,7 +2702,7 @@ function handleReorganizeDatabase(payload, logMessage, developerContext) {
     logMessage("Reorganización DB", "Ejecutando copia de seguridad preventiva antes de reorganizar...");
     const backupInfo = handleBackupDatabase(payload, logMessage, developerContext);
     logMessage("Reorganización DB", "Estabilizando los IDs de Cortes antes de cambiar el orden de las filas...");
-    const idFreezeResult = requestCortesIdFreezeFromWriteService(payload, backupInfo.backupId, payload && payload.__sharedMutationToken);
+    const idFreezeResult = requestCortesIdFreezeFromWriteService(payload, backupInfo.backupId);
     logMessage("Reorganización DB", `IDs estabilizados: ${idFreezeResult.formulasToFreeze || 0} fórmulas convertidas y ${idFreezeResult.emptyFormulaRowsToClear || 0} fórmulas vacías retiradas.`);
 
     logMessage("Reorganización DB", "Iniciando reordenamiento alfabético por marca en la hoja Cortes...");
@@ -6866,7 +6843,7 @@ const filename = buildCanonicalImageBaseName(rowObj, "imgCorte" + slotIndex);
 
         // ADMIN solicita el ID al asignador central de WRITE; nunca genera uno localmente.
         try {
-            newId = requestNextVehicleIdFromWriteService(payload, payload && payload.__sharedMutationToken);
+            newId = requestNextVehicleIdFromWriteService(payload);
             sheet.getRange(rowIndex, COLS_CORTES.id).setValue(newId);
             SpreadsheetApp.flush();
             if (Number(sheet.getRange(rowIndex, COLS_CORTES.id).getValue()) !== newId) {
@@ -6974,7 +6951,7 @@ function sanitizeSupplementaryRichText_(value) {
 function createSupplementaryInfoError_(code,message){const e=new Error(message);e.code=code;return e;}
 function hasSupplementaryValue_(v){return typeof v==="string"&&v.trim()!=="";}
 function assertSupplementaryInfoPayloadKeys_(payload){
- const allowed=new Set(["vehicleId","userId","sessionToken","__sharedMutationToken","timestamp","opId","apertura","cableAlimen","cableAlimen2","cableAlimen3","notaImportante","imgApertura","imgCableAlimen","imgCableAlimen2","imgCableAlimen3"]);
+ const allowed=new Set(["vehicleId","userId","sessionToken","timestamp","opId","apertura","cableAlimen","cableAlimen2","cableAlimen3","notaImportante","imgApertura","imgCableAlimen","imgCableAlimen2","imgCableAlimen3"]);
  const videoFields=new Set(["video","videoUrl","Video","videoGuiaUrl","videoGuiaDesarmeUrl","field","fieldName"]);
  const keys=Object.keys(payload||{}),videoField=keys.find(key=>videoFields.has(key));
  if(videoField)throw createSupplementaryInfoError_("SUPPLEMENTARY_VIDEO_APPROVAL_REQUIRED","El vídeo no se puede guardar mediante addSupplementaryInfo ni con un enlace directo. Utiliza el flujo de aprobación de YouTube.");

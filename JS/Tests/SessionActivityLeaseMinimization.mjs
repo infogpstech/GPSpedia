@@ -21,7 +21,6 @@ const usersDoPost = functionBlock(users, "doPost", "doPostInternal_");
 const authDoPost = functionBlock(auth, "doPost", "doPostInternal_");
 const writeDoPost = functionBlock(write, "doPost", "doPostInternal_");
 const feedbackDoPost = functionBlock(feedback, "doPost", "doPostInternal_");
-const adminReadPolicy = functionBlock(admin, "isSharedReadAction_", "doPost");
 const authMutationPolicy = functionBlock(auth, "isSharedMutationAction_", "syncAuthSheetActivityFromActor_");
 const usersMutationPolicy = functionBlock(users, "isSharedMutationAction_", "doPost");
 const usersCoordinatorPolicy = coordinator.slice(
@@ -62,13 +61,18 @@ test("AUTH benchmark usa actor cacheado; las mutaciones de sesión conservan coo
     assert.match(authMutationPolicy, /login.*touchSession.*deleteUser.*updateUser.*logout/);
 });
 
-test("ADMIN telemetría no adquiere una lease redundante; lecturas de recursos sí la conservan", () => {
-    const traffic = adminDoPost.indexOf('if (action === "getServiceTraffic")');
-    const lease = adminDoPost.indexOf('withSharedMutationLease_("ADMIN", operation');
-    assert.ok(traffic >= 0 && adminDoPost.indexOf("getCachedSharedSessionActor_", traffic) > traffic);
-    assert.ok(lease > traffic);
-    assert.equal(adminReadPolicy.includes('"getServiceTraffic"'), false);
-    assert.match(adminReadPolicy, /getReplacedImages.*getDriveStorage/);
+test("ADMIN usa actor cacheado para todas las acciones y no adquiere leases", () => {
+    assert.match(adminDoPost, /if \(action === "ping"\).*?getCachedSharedSessionActor_/s);
+    assert.match(adminDoPost, /doPostInternal_\(withSharedSessionActor_\(e, actor\)\)/);
+    assert.doesNotMatch(adminDoPost, /withSharedMutationLease_|sessionActivity|nestedToken|__sharedMutationToken/);
+    assert.match(admin, /if \(action !== "ping" && isSharedMutationAction_\(action\)\)\s*\{\s*auditEvent = beginAdminAuditEvent_/);
+});
+test("ADMIN→WRITE conserva autenticación de actor sin token compartido", () => {
+    assert.match(admin, /function callWriteServiceAction\(action, payload\)/);
+    assert.doesNotMatch(admin, /callWriteServiceAction\([\s\S]{0,500}__sharedMutationToken/);
+    assert.match(writeDoPost, /getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "WRITE" \}\)/);
+    assert.match(admin, /requestNextVehicleIdFromWriteService\(payload\)/);
+    assert.match(admin, /requestCortesIdFreezeFromWriteService\(payload, backupInfo\.backupId\)/);
 });
 
 console.log("SessionActivityLeaseMinimization: " + passed + "/" + passed + " PASS");

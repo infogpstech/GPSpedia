@@ -829,3 +829,12 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - lista_beta.txt: índice actualizado para indicar que los comandos deben ejecutarse antes de cualquier prueba Beta.
 - Tareas_Activas.md y checkpoint.md: preparación documental registrada como completada. No se desplegó Apps Script ni se accedió a secretos, ScriptProperties, Drive o Spreadsheet.
 ================================================================================
+
+
+================================================================================
+2026-11-19 — ADMIN: RETIRO DE LEASES EN OPERACIONES ORDINARIAS (EN VALIDACIÓN)
+- JS/Services/admin.js: dispatch con actor cacheado; conserva comprobaciones de rol y auditoría de mutaciones.
+- JS/Services/admin.js: llamadas internas a WRITE transmiten el contexto de sesión; WRITE valida su actor cacheado sin token de lease compartido.
+- JS/Tests/SessionActivityLeaseMinimization.mjs: contrato ampliado para exigir ausencia de leases en ADMIN y autenticación independiente de WRITE.
+- No se desplegó Apps Script ni se ejecutaron operaciones sobre servicios remotos, Drive o Spreadsheet.
+================================================================================
