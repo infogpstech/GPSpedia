@@ -1011,3 +1011,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-19] WRITE: se agrupan los campos consecutivos del corte existente en un único setValues y las columnas 2–16 del vehículo nuevo en un lote; testigo, colaborador, timestamp, VIN y reservas de idempotencia conservan sus escrituras separadas.
+
+
+[2026-11-19] WRITE: la recuperación de opId heredados usa TextFinder sobre el rango de datos en lugar de descargar la hoja Cortes completa; la lectura de encabezados se mantiene separada y la validación final de vehículo/fila permanece.

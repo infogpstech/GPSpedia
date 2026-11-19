@@ -16,18 +16,18 @@ Fecha: 2026-11-19
 - No inferir deployments Apps Script ni permisos externos desde el código versionado.
 
 ## Última tarea completada
-WRITE — escrituras por lote en registro de cortes:
-- Los cinco campos consecutivos del slot de corte existente se escriben en un único `setValues`; testigo y colaborador siguen en sus columnas separadas.
-- Para vehículo nuevo, las columnas 2–16 se escriben en un solo lote; los campos de video y contador permanecen vacíos después de la limpieza inicial.
-- La reserva de VIN y el registro pending de `opId` permanecen antes de liberar el ScriptLock para Drive.
-- La prueba `WriteCutSlotBatchWrites` comprueba mapa de columnas, valores de lote, campos separados y orden de reservas.
-- CI 44616477533 SUCCESS: 170 suites, 2,349 pruebas aprobadas, 0 fallos; prueba específica 1/1 y sintaxis JS aprobada.
-- Health read-only 44616477539 SUCCESS; GitHub Pages 44616474879 SUCCESS.
-- Commits: e121e174b9af20b6307cf78a6a6bcde1445ac374 (lotes de escritura), c67964b3984965910688b5a3f0448bf487cba41a (comentario de implementación).
+WRITE — búsqueda heredada de opId sin descarga completa de Cortes:
+- Se reemplazó el recorrido de `getDataRange().getValues()` por `TextFinder` server-side; solo se leen los encabezados y las celdas coincidentes.
+- Se conservan coincidencias directas en columnas `idOperacion`/`id_operacion`, VIN legacy OP, etiquetas `[opId]`, detección de duplicados y validación final de `vehicleId`/fila.
+- La ruta normal de Idempotencia sigue teniendo prioridad y evita TextFinder cuando ya existe una entrada.
+- Prueba `WriteOpIdLegacyLookup` 9/9 PASS.
+- CI 44617280202 SUCCESS: 171 suites, 2,358 pruebas aprobadas, 0 fallos; sintaxis JS aprobada.
+- Health read-only 44617280343 SUCCESS; GitHub Pages 44617279984 SUCCESS.
+- Commits: da2554903bb559cf06ee7e1abd2504333af248af (TextFinder y prueba), 833de2d87faab2203ebc2fe213a4f9f2afb1ac74 (comentario aclaratorio).
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó WRITE ni se modificaron datos productivos.
 
 ## Siguiente trabajo
-Continuar GP-PERF-WRITE-CUT-LOCK-03. Revisar el fallback heredado de `findRowByOpId`, que todavía usa `getDataRange()` cuando no existe entrada en Idempotencia. Reducir esa lectura a encabezados y columnas de operación/colaborador necesarias, preservando detección de coincidencias directas, etiquetas legacy, duplicados ambiguos y validación de vehicleId. Mantener la exclusión crítica para Cortes/Idempotencia. Después revisar flushes restantes y llamadas de Sheets dentro del lock. No asumir que ScriptLock de deployments distintos se comparte; no desplegar Apps Script ni tocar datos productivos sin autorización.
+Continuar GP-PERF-WRITE-CUT-LOCK-04. Auditar `readIdempotenciaEntries_` y su uso repetido dentro de `handleAddOrUpdateCutLocked`: determinar si puede evitarse descargar el ledger completo en cada intento y reutilizar una lectura bajo el mismo lock sin debilitar detección de opId duplicado, asociaciones vehículo/slot, operationHash ni compatibilidad histórica A:E. Medir primero los usos y contratos; no cambiar la política de idempotencia ni introducir leases/locks adicionales. Después revisar los flushes restantes. No desplegar Apps Script ni tocar datos productivos sin autorización.
 
 ## Restricciones
 - Trabajar únicamente en GPSpedia2.2.5_work.
@@ -68,3 +68,6 @@ Siguiente paso P0: auditar y reducir lecturas restantes dentro del ScriptLock de
 
 
 2026-11-19 — Cierre de lotes WRITE: HEAD funcional c67964b3984965910688b5a3f0448bf487cba41a; CI 44616477533 SUCCESS (170 suites, 2,349 pruebas, 0 fallos); health 44616477539 SUCCESS; Pages 44616474879 SUCCESS. La persistencia de cortes reduce llamadas setValue mediante lotes contiguos, manteniendo reservas VIN/opId previas a Drive. Próximo paso: lectura heredada de findRowByOpId.
+
+
+2026-11-19 — Cierre de búsqueda heredada WRITE: HEAD 833de2d87faab2203ebc2fe213a4f9f2afb1ac74; CI 44617280202 SUCCESS (171 suites, 2,358 pruebas, 0 fallos); health 44617280343 SUCCESS; Pages 44617279984 SUCCESS. La búsqueda legacy de opId ya no transfiere toda la hoja Cortes; mantiene las comprobaciones de ambigüedad y vehículo. Próximo paso: auditar lecturas repetidas del ledger Idempotencia.

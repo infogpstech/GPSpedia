@@ -523,3 +523,13 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] CI 44616477533 SUCCESS: 170 suites, 2,349 pruebas aprobadas, 0 fallos; WriteCutSlotBatchWrites 1/1 y sintaxis JavaScript aprobada.
 - [x] Health read-only 44616477539 SUCCESS; GitHub Pages 44616474879 SUCCESS.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó WRITE ni se modificaron Sheets/Drive productivos.
+
+### WRITE — búsqueda heredada de opId sin lectura completa de Cortes (2026-11-19)
+- [x] Sustituir getDataRange().getValues() por TextFinder en el rango de datos; leer encabezados por separado.
+- [x] Conservar coincidencias directas en columnas idOperacion/id_operacion y VIN legacy con formato OP.
+- [x] Conservar búsqueda de etiquetas [opId], detección de duplicados/ambigüedad y validación de vehicleId/fila.
+- [x] Mantener la ruta Idempotencia prioritaria sin ejecutar TextFinder cuando existe entrada.
+- [x] Añadir WriteOpIdLegacyLookup: 9/9 PASS.
+- [x] CI 44617280202 SUCCESS: 171 suites, 2,358 pruebas aprobadas, 0 fallos; sintaxis JavaScript aprobada.
+- [x] Health read-only 44617280343 SUCCESS; GitHub Pages 44617279984 SUCCESS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó WRITE ni se modificaron Sheets/Drive productivos.
