@@ -1156,3 +1156,12 @@ ACTUALIZACIÓN DE CONTINUIDAD — 2026-11-19
 - Séptimo CI 44558022613: 150 suites / 2,143 pruebas; falló solo la extracción del publisher en CatalogChangeFeed por un escape doble del salto de línea. Se corrige el delimitador de la prueba.
 
 - Octavo CI 44558202901: 150 suites / 2,143 pruebas; falló la última aserción estática que aún esperaba la llamada antigua `publishCortesCatalogChange_(action, vehicleId)`. Se actualiza para exigir el tercer argumento `response.catalogVersion`.
+
+================================================================================
+2026-11-19 — WRITE: CARPETAS SUPLEMENTARIAS SIN SCRIPTLOCK GLOBAL
+- `findOrCreateSupplementaryVehicleFolder_` deja de adquirir ScriptLock de WRITE durante operaciones Drive.
+- Se añadió lease Coordinator `ensureSupplementaryVehicleFolder` con recurso exclusivo `DRIVE_FOLDER`; la operación no comparte el recurso `CORTES`.
+- Se añadió prueba de coexistencia: dentro de la lease de carpeta puede adquirirse la lease de addOrUpdateCut.
+- CI pendiente. Sin despliegue ni acceso a Drive real.
+================================================================================
+

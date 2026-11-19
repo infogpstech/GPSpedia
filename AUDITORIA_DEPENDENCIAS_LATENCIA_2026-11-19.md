@@ -119,3 +119,7 @@ La publicación del feed se ejecutaba después de confirmar la mutación, pero `
 Prueba adicional: `WriteCatalogPublicationIsolation.mjs` verifica la secuencia monotónica de WRITE y que la publicación remota no adquiere ScriptLock. `SharedMutationCoordinator.js` prueba llegada fuera de orden y compatibilidad legacy mediante reset.
 
 Ajuste de compatibilidad detectado por CatalogChangeFeed: cuando una publicación legacy WRITE/Cortes se convierte a reset por no incluir sourceVersion, el evento debe llevar `resetRequired: true` para que el cliente solicite snapshot completo.
+
+## Corrección — carpeta Drive suplementaria
+`findOrCreateSupplementaryVehicleFolder_` mantenía el ScriptLock global de WRITE mientras ejecutaba consultas/creación de carpetas Drive. Se sustituyó por una lease específica Coordinator `ensureSupplementaryVehicleFolder` sobre `DRIVE_FOLDER`, separada del recurso `CORTES`. Esto permite que una mutación de Cortes avance mientras se prepara la carpeta; solo las preparaciones de carpeta que comparten ese recurso se coordinan. No se ha desplegado.
+

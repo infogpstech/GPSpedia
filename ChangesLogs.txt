@@ -909,3 +909,5 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 2026-11-19 — CatalogChangeFeed: corregido escape del salto de línea en el extractor estático de publishCortesCatalogChange_.
 
 2026-11-19 — CatalogChangeFeed: actualizada expresión de despacho para exigir response.catalogVersion al publisher WRITE.
+
+2026-11-19 — WRITE: la preparación de carpetas suplementarias usa lease Coordinator DRIVE_FOLDER en vez de ScriptLock global; se añade prueba de aislamiento frente a mutaciones CORTES (pendiente CI).

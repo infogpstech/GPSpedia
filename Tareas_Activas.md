@@ -373,3 +373,10 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - Corrección del test estático: el delimitador de extracción de `publishCortesCatalogChange_` debe buscar el salto de línea real antes del siguiente helper; se corrige el escape del fixture.
 
 - Ajuste de contrato adicional: la expresión de CatalogChangeFeed para el despacho post-mutación ahora exige que se envíe `response.catalogVersion` al publisher.
+
+### Carpetas Drive de información suplementaria — aislamiento de recurso (2026-11-19)
+- [x] Retirar el ScriptLock global de WRITE alrededor de `findOrCreateVehicleFolder`.
+- [x] Coordinar solo la operación de carpeta mediante lease Coordinator `ensureSupplementaryVehicleFolder` sobre el recurso `DRIVE_FOLDER`; no comparte recurso con mutaciones `CORTES`.
+- [x] Añadir prueba de lease anidada que demuestra que la mutación de Cortes puede avanzar mientras se prepara una carpeta.
+- [ ] Ejecutar CI antes de marcar validado.
+
