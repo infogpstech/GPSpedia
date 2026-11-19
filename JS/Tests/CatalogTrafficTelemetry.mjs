@@ -95,6 +95,16 @@ test("las ventanas de una hora, seis horas y veinticuatro horas se calculan por 
     assert.equal(result.totals.last24Hours, 2);
 });
 
+test("CATALOG acepta secreto Coordinator y conserva fallback legacy", () => {
+    const h = createHarness();
+    h.properties.setProperty("GPSpedia_COORDINATOR_SECRET", secret);
+    assert.equal(h.readCatalogTraffic_(secret, base).status, "success");
+    h.properties.deleteProperty("GPSpedia_COORDINATOR_SECRET");
+    h.properties.setProperty("GPSpedia_CATALOG_TRAFFIC_SECRET", secret);
+    assert.equal(h.readCatalogTraffic_(secret, base).status, "success");
+    h.properties.setProperty("GPSpedia_COORDINATOR_SECRET", "wrong-coordinator-secret".padEnd(48, "x"));
+    assert.equal(h.readCatalogTraffic_(secret, base).status, "error");
+});
 test("un secreto ausente, corto o incorrecto no permite leer métricas", () => {
     const h = createHarness();
     h.properties.setProperty("GPSpedia_CATALOG_TRAFFIC_SECRET", secret);
