@@ -338,7 +338,7 @@ function doPost(e) {
         try {
             // getUsers es una lectura: reutiliza el actor local y no adquiere una lease
             // de actividad en Coordinator en cada apertura de la pantalla.
-            const actor = getCachedSharedSessionActor_(payload.userId, payload.sessionToken);
+            const actor = getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "USERS" });
             return doPostInternal_(withSharedSessionActor_(e, actor));
         } catch (error) {
             return ContentService.createTextOutput(JSON.stringify({
