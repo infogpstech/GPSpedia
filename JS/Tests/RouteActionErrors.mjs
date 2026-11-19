@@ -9,7 +9,7 @@ assert.ok(routeMatch, "No se encontró routeAction.");
 const routeSource = routeMatch[0];
 function buildRouteAction(fetchImpl) {
     return new Function("ACTION_TO_SERVICE_MAP","API_ENDPOINTS","fetch",
-        helperMatch[0] + "\n" + routeSource + "\nreturn routeAction;")(
+        helperMatch[0] + "\n" + routeSource + "\nreturn routeActionInternal_;")(
         { testAction:"TEST" }, { TEST:"https://test.invalid/exec" }, fetchImpl
     );
 }
