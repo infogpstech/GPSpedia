@@ -9,9 +9,14 @@ const sharedClient = readFileSync(new URL("../Services/SharedMutationClient.js",
 const apiConfig = readFileSync(new URL("../Frontend/api-config.js", import.meta.url), "utf8");
 
 function extractFunction(source, name) {
-    const match = source.match(new RegExp("function " + name + "\\([^\\n]*\) \\{[\\s\\S]*?\\n\\}"));
-    assert.ok(match, "No se encontró " + name);
-    return match[0];
+    const start = source.indexOf("function " + name + "(");
+    assert.ok(start >= 0, "No se encontró " + name);
+    const next = source.indexOf("\nfunction ", start + 10);
+    const end = next >= 0 ? next : source.length;
+    const block = source.slice(start, end);
+    const close = block.lastIndexOf("\n}");
+    assert.ok(close >= 0, "No se encontró el cierre de " + name);
+    return block.slice(0, close + 2);
 }
 const mutation = new Function(extractFunction(admin, "isSharedMutationAction_") +
     "\nreturn isSharedMutationAction_;")();
@@ -364,16 +369,16 @@ assert.throws(() => logoCategoryResolver([
 ], "Toyota"));
 assert.throws(() => logoCategoryResolver(logoRowsUnique, "Marca inexistente"));
 const logoHandlerSource = extractFunction(admin, "handleAddLogo");
-assert.match(logoHandlerSource, /resolveLogoCategoryFromCortesRows_/);
-assert.match(logoHandlerSource, /findOrCreateSubFolder\(rootFolder, category\)/);
-assert.match(logoHandlerSource, /findOrCreateSubFolder\(categoryFolder, brandFolderName\)/);
-assert.doesNotMatch(logoHandlerSource, /findOrCreateSubFolder\(rootFolder, "Logos"\)/);
-assert.match(logoHandlerSource, /canonicalFilename/);
-assert.match(logoHandlerSource, /hasDriveFilenameConflictInFolder/);
+assert.ok(logoHandlerSource.includes("resolveLogoCategoryFromCortesRows_"));
+assert.ok(logoHandlerSource.includes("findOrCreateSubFolder(rootFolder, category)"));
+assert.ok(logoHandlerSource.includes("findOrCreateSubFolder(categoryFolder, brandFolderName)"));
+assert.equal(logoHandlerSource.includes('findOrCreateSubFolder(rootFolder, "Logos")'), false);
+assert.ok(logoHandlerSource.includes("canonicalFilename"));
+assert.ok(logoHandlerSource.includes("hasDriveFilenameConflictInFolder"));
 const uploadHandlerSource = extractFunction(admin, "handleUploadAdminImage");
-assert.match(uploadHandlerSource, /buildCanonicalImageBaseName\(mapRowToObject\(rowValues, COLS_CORTES\), fieldName\)/);
-assert.match(admin, /cutImageInfo\["tipoCorte" \+ cutSlotIndex\] = cutData\.tipoCorte1/);
-assert.match(admin, /canonicalVehicleInfo.*tipoCorte1: cutData\.tipoCorte1/);
+assert.ok(uploadHandlerSource.includes("buildCanonicalImageBaseName(mapRowToObject(rowValues, COLS_CORTES), fieldName)"));
+assert.ok(admin.includes('cutImageInfo["tipoCorte" + cutSlotIndex] = cutData.tipoCorte1'));
+assert.ok(admin.includes("canonicalVehicleInfo") && admin.includes("tipoCorte1: cutData.tipoCorte1"));
 
 const logoTarget = organizerFixture.targets.find(target => target.sheetName === "LogosMarca");
 assert.equal(logoTarget.targetFolderPath, "Cortes/Camion_pesado/Toyota");
