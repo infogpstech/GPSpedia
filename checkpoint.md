@@ -1128,3 +1128,4 @@ ACTUALIZACIÓN DE CONTINUIDAD — 2026-11-19
 - Hallazgo siguiente: `publishCortesCatalogChange_` mantiene ScriptLock durante publicación remota a Coordinator; requiere separar sin reordenar snapshots.
 ================================================================================
 
+- Incidencia CI 44555115677: 150 suites / 2,138 pruebas, con un fallo en tres aserciones de AUG-039 que exigían `waitLock`. El handler conserva autenticación/rol dentro del lock; el contrato se actualizó para validar `tryLock(0)` y el caso ocupado. Se espera nueva ejecución para confirmar.

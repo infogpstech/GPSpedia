@@ -348,3 +348,4 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [ ] Reducir la sección crítica del asignador: actualmente verifica IDs existentes en la hoja completa; evaluar contador + reconciliación segura sin perder detección de duplicados o IDs manuales.
 - [ ] Resolver publicación del catálogo: `publishCortesCatalogChange_` mantiene ScriptLock durante la llamada a Coordinator; separar snapshot/orden de publicación sin permitir eventos obsoletos.
 
+- [x] Ajuste del contrato de pruebas AUG-039 para reflejar el nuevo comportamiento del asignador: adquisición inmediata `tryLock(0)`, validación de rol dentro de la sección crítica y liberación solo tras adquirirlo. El primer CI detectó esta expectativa antigua; se actualiza la prueba, no se revierte la corrección.
