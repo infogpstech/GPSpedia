@@ -1088,3 +1088,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-19 · corrección de prueba] La primera regresión de AdminExistingVehicleSnapshotRevalidation falló porque el test contaba dos lecturas de fila de toda la rama: la lectura inicial de identidad y una lectura posterior a Drive necesaria para preparar VIN. La prueba se acotó al tramo previo a Drive, donde se elimina el getValue redundante. No se retiró la lectura posterior funcional.
+
+
+[2026-11-19 · cierre] ADMIN revalidación de vehículo existente desde snapshot: se eliminó un getValue() individual del ID, reutilizando la lectura integral de fila bajo ScriptLock para validar rowValues[COLS_CORTES.id - 1]. Se mantuvo la búsqueda de candidato fuera del lock y la lectura posterior a Drive que prepara VIN. Prueba AdminExistingVehicleLookupPreflight 8/8 y AdminExistingVehicleSnapshotRevalidation 7/7 PASS. CI 44636938042 SUCCESS: 189 suites, 2491 pruebas aprobadas, 0 fallos; health read-only 44636938094 SUCCESS. La primera CI falló solo por una aserción de prueba que incluía una lectura posterior a Drive; se acotó y la repetición aprobó. Pages 44636937345 aún estaba en ejecución al cierre. No se desplegó Apps Script ni se modificaron datos productivos.

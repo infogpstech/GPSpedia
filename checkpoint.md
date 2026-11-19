@@ -264,3 +264,15 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - La primera ejecución detectó una aserción excesiva: contaba también la lectura posterior a Drive usada para preparar VIN.
 - Se acotó la prueba al tramo anterior a Drive. La lectura posterior se conserva porque cumple una función distinta.
 - Repetición de regresión pendiente.
+
+
+## Cierre — revalidación de vehicleId desde snapshot en ADMIN (2026-11-19)
+- Commit funcional/pruebas: `c018efb4591d1fa53e8b2b31d9b90aa99062966f`; corrección de alcance de prueba y registro de CI: `e253a187a970cca1d9e54595a445826d9ce90778`.
+- La rama de vehículo existente de `handleAddOrUpdateCut` ya no ejecuta `getRange(rowIndex, COLS_CORTES.id).getValue()`; lee la fila completa una vez antes de Drive y valida el ID desde `rowValues[COLS_CORTES.id - 1]`.
+- La búsqueda previa de la fila sigue fuera del ScriptLock y la validación final sigue dentro del lock. Se conserva la segunda lectura posterior a Drive porque prepara la colección VIN después de la espera externa.
+- `AdminExistingVehicleLookupPreflight`: 8/8 PASS. `AdminExistingVehicleSnapshotRevalidation`: 7/7 PASS.
+- CI `44636938042` SUCCESS: 189 suites, 2,491 pruebas aprobadas, 0 fallos; sintaxis aprobada.
+- Health read-only `44636938094` SUCCESS.
+- Pages `44636937345` estaba IN_PROGRESS al registrar el cierre; no se declara como aprobado.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó Apps Script ni se modificaron datos productivos.
+- Siguiente tarea: continuar inspeccionando la recuperación/alta ADMIN para eliminar lecturas individuales que sean duplicadas por un snapshot posterior, sin reducir las revalidaciones que protegen concurrencia e integridad.
