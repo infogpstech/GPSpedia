@@ -3,7 +3,8 @@
 // No accede a Spreadsheet ni Drive. El estado de leases vive en ScriptProperties.
 // ============================================================================
 
-const SHARED_MUTATION_COORDINATOR_VERSION = "1.4.1";
+const SHARED_MUTATION_COORDINATOR_VERSION = "1.4.2";
+const SHARED_MUTATION_PROTOCOL_VERSION = 1;
 const SHARED_MUTATION_LEASES_PROPERTY = "GPSpedia_SHARED_MUTATION_LEASES";
 const SHARED_MUTATION_LEASE_TTL_MS = 45 * 60 * 1000;
 const SHARED_MUTATION_DRAIN_RESERVATION_TTL_MS = 60 * 1000;
@@ -1185,9 +1186,15 @@ function createSharedMutationCoordinator_(dependencies) {
     }
 
     function handleRequest(request) {
-        if (!request || typeof request !== "object") throw new Error("Solicitud inválida.");
+        if (!request || typeof request !== "object" || Array.isArray(request)) throw new Error("Solicitud inválida.");
+        const protocolVersion = request.protocolVersion === undefined || request.protocolVersion === null
+            ? SHARED_MUTATION_PROTOCOL_VERSION : Number(request.protocolVersion);
+        if (!Number.isSafeInteger(protocolVersion) || protocolVersion !== SHARED_MUTATION_PROTOCOL_VERSION) {
+            throw new Error("Versión de protocolo no compatible con este Coordinator.");
+        }
         const action = String(request.action || "").trim();
-        const payload = request.payload && typeof request.payload === "object" ? request.payload : {};
+        const payload = request.payload && typeof request.payload === "object" && !Array.isArray(request.payload)
+            ? request.payload : {};
         const service = authenticate_(payload);
         const operation = String(payload.operation || "").trim();
 
