@@ -597,7 +597,7 @@ function createSharedMutationCoordinator_(dependencies) {
         if (typeof fetch !== "function") {
             throw new Error("La comunicación remota de invalidación no está disponible en Coordinator.");
         }
-        const targets = ["WRITE", "FEEDBACK"];
+        const targets = ["WRITE", "FEEDBACK", "ADMIN"];
         const batchSize = 5;
         targets.forEach(target => {
             const url = String(properties.getProperty("GPSpedia_SERVICE_URL_" + target) || "").trim();
@@ -607,7 +607,7 @@ function createSharedMutationCoordinator_(dependencies) {
                 throw new Error("La configuración de invalidación remota de " + target + " está incompleta.");
             }
         });
-        const confirmed = { WRITE: 0, FEEDBACK: 0 };
+        const confirmed = { WRITE: 0, FEEDBACK: 0, ADMIN: 0 };
         for (let offset = 0; offset < tokens.length; offset += batchSize) {
             const batch = tokens.slice(offset, offset + batchSize);
             targets.forEach(target => {

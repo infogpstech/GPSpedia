@@ -878,6 +878,11 @@ function doPost(e) {
     if (!request || typeof request !== "object") return doPostInternal_(e);
     const action = String(request.action || "");
     const payload = request.payload && typeof request.payload === "object" ? request.payload : {};
+    if (action === "__invalidateSessionActorCache") {
+        const invalidation = handleSharedSessionActorCacheInvalidation_(payload);
+        return ContentService.createTextOutput(JSON.stringify(invalidation))
+            .setMimeType(ContentService.MimeType.JSON);
+    }
     if (["checkOperation", "addOrUpdateCut", "addSupplementaryInfo"].includes(action)) {
         return ContentService.createTextOutput(JSON.stringify({
             status: "error", code: "ACTION_MOVED_TO_WRITE",
