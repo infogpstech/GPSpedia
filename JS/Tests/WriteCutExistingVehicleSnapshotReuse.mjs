@@ -55,10 +55,10 @@ test("rechaza una instantánea cuya identidad de vehículo no coincide", () => {
 test("el handler transmite la fila localizada y la ruta existente consume esa instantánea", () => {
     const locked = extract("handleAddOrUpdateCutLocked", "buildCutSlotCoreValues_");
     const unsafe = extract("handleAddOrUpdateCutLockedUnsafe_", "handleCheckVehicle");
-    assert.match(locked, /rowIndex: existingRowIndex,[\\s\\S]*rowValues: existingRowValues/);
-    assert.match(locked, /idempotencyEntriesSnapshot, \\{/);
-    assert.match(unsafe, /getPreparedExistingVehicleRow_\\(sheet, vehicleId, existingVehicleSnapshot\\)/);
-    assert.doesNotMatch(unsafe, /getRange\\(2, 1, sheet\\.getLastRow\\(\\), 1\\)/);
+    assert.match(locked, /rowIndex: existingRowIndex,[\s\S]*rowValues: existingRowValues/);
+    assert.match(locked, /idempotencyEntriesSnapshot, \{/);
+    assert.match(unsafe, /getPreparedExistingVehicleRow_\(sheet, vehicleId, existingVehicleSnapshot\)/);
+    assert.doesNotMatch(unsafe, /getRange\(2, 1, sheet\.getLastRow\(\), 1\)/);
 });
 
 console.log("WriteCutExistingVehicleSnapshotReuse: " + passed + "/" + passed + " PASS — se elimina la segunda búsqueda de ID y la segunda lectura de fila");
