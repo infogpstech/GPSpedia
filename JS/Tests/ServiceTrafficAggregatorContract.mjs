@@ -80,6 +80,9 @@ check("No mezcla una respuesta directa con scope o conteos inválidos", () => {
     const malformed = {
         AUTH: Object.assign({}, direct.AUTH, { buckets: [{ startAt, count: -2 }] })
     };
-    assert.throws(() => mergeDirectServiceTraffic_(coordinator, malformed));
+    const partial = mergeDirectServiceTraffic_(coordinator, malformed);
+    assert.equal(partial.status, "success");
+    assert.equal(partial.totals.lastHour.AUTH, 0);
+    assert.equal(partial.sources.AUTH.directRequestsAvailable, false);
 });
 console.log("ServiceTrafficAggregatorContract: " + passed + "/" + passed + " PASS");
