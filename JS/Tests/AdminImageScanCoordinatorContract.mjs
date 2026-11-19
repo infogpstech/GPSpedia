@@ -369,7 +369,7 @@ const vehicleFolderBuilder = new Function(
     extractFunction(admin, "normalizeOrganizerSegment_") +
     extractFunction(admin, "getVehicleYearFolderName") +
     extractFunction(admin, "findOrCreateVehicleFolder") +
-    "\\nreturn findOrCreateVehicleFolder;"
+    "\nreturn findOrCreateVehicleFolder;"
 )(
     () => ({ path: ["Cortes"] }),
     (parent, name) => {
