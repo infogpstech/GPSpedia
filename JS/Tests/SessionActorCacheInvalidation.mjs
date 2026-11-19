@@ -43,13 +43,10 @@ const accepted = api.handleSharedSessionActorCacheInvalidation_(
 assert.deepEqual(accepted, { status: "success", invalidated: 2 });
 assert.equal(removed.length, 2, "La invalidación elimina claves exactas y deduplica tokens.");
 
-function createClient(events, failService = "") {
+function createClient(events, failAction = "") {
     const properties = {
         getProperty(name) {
             return ({
-                GPSpedia_COORDINATOR_SECRET: secret,
-                GPSpedia_WRITE_URL: "https://script.google.com/macros/s/WRITE/exec",
-                GPSpedia_FEEDBACK_URL: "https://script.google.com/macros/s/FEEDBACK/exec",
                 GPSpedia_COORDINATOR_URL: "https://script.google.com/macros/s/COORDINATOR/exec",
                 GPSpedia_COORDINATOR_SECRET: "coordinator-secret-40-characters-long"
             })[name] || "";
@@ -60,16 +57,25 @@ function createClient(events, failService = "") {
         uuid: () => "request-id",
         logger: () => {},
         fetch(url, options) {
-            const service = url.includes("/WRITE/") ? "WRITE" :
-                url.includes("/FEEDBACK/") ? "FEEDBACK" : "COORDINATOR";
+            assert.equal(url, "https://script.google.com/macros/s/COORDINATOR/exec",
+                "AUTH debe comunicarse únicamente con Coordinator.");
             const request = JSON.parse(options.payload);
-            events.push({ service, action: request.action, payload: request.payload });
-            if (service === failService) {
-                return { getResponseCode: () => 503, getContentText: () => "{}" };
+            const event = {
+                service: "COORDINATOR",
+                action: request.action,
+                payload: request.payload,
+                protocolVersion: request.protocolVersion
+            };
+            events.push(event);
+            if (request.action === failAction) {
+                return {
+                    getResponseCode: () => 503,
+                    getContentText: () => JSON.stringify({ status: "error", message: "fallo controlado de invalidación" })
+                };
             }
-            const result = service === "COORDINATOR"
-                ? { status: "success", revoked: true }
-                : { status: "success", invalidated: request.payload.sessionTokens.length };
+            const result = request.action === "invalidateSessionActorCaches"
+                ? { status: "success", invalidated: request.payload.sessionTokens.length, services: ["WRITE", "FEEDBACK"] }
+                : { status: "success", revoked: true };
             return { getResponseCode: () => 200, getContentText: () => JSON.stringify(result) };
         }
     });
@@ -78,35 +84,42 @@ function createClient(events, failService = "") {
 const singleEvents = [];
 const single = createClient(singleEvents);
 single.revokeSession("U-1", "token-A");
-assert.deepEqual(singleEvents.map(event => event.service), ["WRITE", "FEEDBACK", "COORDINATOR"]);
-assert.deepEqual(singleEvents.slice(0, 2).map(event => event.payload.sessionTokens), [["token-A"], ["token-A"]]);
-assert.equal(singleEvents[2].action, "revokeSession");
+assert.deepEqual(singleEvents.map(event => event.action), ["invalidateSessionActorCaches", "revokeSession"]);
+assert.ok(singleEvents.every(event => event.service === "COORDINATOR"));
+assert.equal(singleEvents[0].protocolVersion, 1);
+assert.equal(singleEvents[0].payload.service, "AUTH");
+assert.equal(singleEvents[0].payload.operation, "invalidateSessionActorCaches");
+assert.deepEqual(singleEvents[0].payload.sessionTokens, ["token-A"]);
+assert.equal(singleEvents[1].payload.service, "AUTH");
 
 const multipleEvents = [];
 createClient(multipleEvents).revokeUserSessions("U-2", ["token-B", "token-C"]);
-assert.deepEqual(multipleEvents.map(event => event.service), ["WRITE", "FEEDBACK", "COORDINATOR"]);
+assert.deepEqual(multipleEvents.map(event => event.action), ["invalidateSessionActorCaches", "revokeUserSessions"]);
 assert.deepEqual(multipleEvents[0].payload.sessionTokens, ["token-B", "token-C"]);
-assert.equal(multipleEvents[2].action, "revokeUserSessions");
 
 const partialEvents = [];
-assert.throws(() => createClient(partialEvents, "FEEDBACK").revokeSession("U-1", "token-A"),
-    /No se pudo confirmar la invalidación de caché en FEEDBACK/);
-assert.deepEqual(partialEvents.map(event => event.service), ["WRITE", "FEEDBACK"],
-    "Si falla un servicio, AUTH no solicita todavía la revocación central.");
+assert.throws(() => createClient(partialEvents, "invalidateSessionActorCaches").revokeSession("U-1", "token-A"),
+    /fallo controlado de invalidación/);
+assert.deepEqual(partialEvents.map(event => event.action), ["invalidateSessionActorCaches"],
+    "Si Coordinator no confirma la invalidación, AUTH no solicita la revocación central.");
+
 const unlimitedEvents = [];
 const unlimitedTokens = Array.from({ length: 13 }, (_, index) => "developer-token-" + index);
 createClient(unlimitedEvents).revokeUserSessions("DEV-1", unlimitedTokens);
-assert.deepEqual(unlimitedEvents.map(event => event.service),
-    ["WRITE", "FEEDBACK", "WRITE", "FEEDBACK", "WRITE", "FEEDBACK", "COORDINATOR"]);
-assert.deepEqual(unlimitedEvents.filter(event => event.service !== "COORDINATOR")
-    .map(event => event.payload.sessionTokens.length), [5, 5, 5, 5, 3, 3]);
-assert.equal(unlimitedEvents.filter(event => event.service === "COORDINATOR").length, 1,
-    "Coordinator revoca una sola vez y solo después de limpiar todos los lotes.");
+assert.deepEqual(unlimitedEvents.map(event => event.action), ["invalidateSessionActorCaches", "revokeUserSessions"]);
+assert.equal(unlimitedEvents[0].payload.sessionTokens.length, 13,
+    "El cliente envía a Coordinator lotes de hasta 25; no divide anticipadamente en lotes de cinco.");
+
+const batchEvents = [];
+const batchTokens = Array.from({ length: 26 }, (_, index) => "developer-batch-token-" + index);
+createClient(batchEvents).revokeUserSessions("DEV-2", batchTokens);
+assert.deepEqual(batchEvents.map(event => event.action),
+    ["invalidateSessionActorCaches", "invalidateSessionActorCaches", "revokeUserSessions"]);
+assert.deepEqual(batchEvents.slice(0, 2).map(event => event.payload.sessionTokens.length), [25, 1]);
+
 assert.equal(authSource.includes("tokens.length > 5"), false,
     "AUTH debe enumerar todas las sesiones activas, incluso las cuentas Developer ilimitadas.");
 assert.match(authSource, /'desarrollador': Infinity/);
-
-// Cobertura del cableado real de los tres servicios y de los flujos de revocación AUTH.
 assert.match(writeSource, /action === "__invalidateSessionActorCache"[\s\S]*?handleSharedSessionActorCacheInvalidation_/);
 assert.match(feedbackSource, /action === "__invalidateSessionActorCache"[\s\S]*?handleSharedSessionActorCacheInvalidation_/);
 assert.match(authSource, /function handleLogout[\s\S]*?revokeSharedSessionContext_/);
@@ -117,5 +130,5 @@ assert.match(authSource, /function getActiveSessionTokensForUserUnderLock_/);
 assert.doesNotMatch(apiConfigSource, /__invalidateSessionActorCache/);
 assert.match(source, /GPSpedia_COORDINATOR_SECRET/);
 assert.doesNotMatch(source, /GPSpedia_SESSION_CACHE_INVALIDATION_SECRET/);
-
+assert.doesNotMatch(source, /GPSpedia_WRITE_URL|GPSpedia_FEEDBACK_URL|GPSpedia_COORDINATOR_SECRET_WRITE|GPSpedia_COORDINATOR_SECRET_FEEDBACK/);
 console.log("SessionActorCacheInvalidation: 1/1 PASS — claves compatibles, autenticación interna, aislamiento por token, flujos AUTH y fallo parcial");

@@ -510,6 +510,11 @@ function handleClearSensitiveLogs(payload) {
         };
     }
 
+    const resultMessage = deletedCount > 0
+        ? "Se eliminaron " + deletedCount + " registros confidenciales de Logs tras revisar " + scannedCount + " registros."
+        : scannedCount > 0
+            ? "Se revisaron " + scannedCount + " registros y no se encontraron datos confidenciales para eliminar."
+            : "No hay registros en la hoja Logs para revisar.";
     logToSheet("INFO", "Sensitive Logs purge completed.", {
         requesterUserId: userId,
         scannedCount,
@@ -519,7 +524,7 @@ function handleClearSensitiveLogs(payload) {
         status: "success",
         scannedCount,
         deletedCount,
-        message: "Se eliminaron " + deletedCount + " registros confidenciales de Logs."
+        message: resultMessage
     };
 }
 
