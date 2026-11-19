@@ -7129,12 +7129,12 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
 
         // Revalidar la posición candidata bajo lock: la búsqueda previa nunca autoriza
         // escribir si el ID fue eliminado, movido o reemplazado mientras se preparaba.
-        const currentVehicleId = sheet.getRange(rowIndex, COLS_CORTES.id).getValue();
-        if (String(currentVehicleId) !== String(vehicleId)) {
+        // La fila completa ya incluye el ID. Una sola lectura entrega un snapshot
+        // coherente y permite revalidar la identidad sin una consulta getValue adicional.
+        const rowValues = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getValues()[0];
+        if (String(rowValues[COLS_CORTES.id - 1]) !== String(vehicleId)) {
             throw new Error("La ubicación del vehículo cambió durante la preparación. Reintenta la operación.");
         }
-
-        const rowValues = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getValues()[0];
         const vehicleInfo = mapRowToObject(rowValues, COLS_CORTES);
         let preparedVinCollection = null;
         const cutSlotIndex = findNextAvailableCutSlot_(rowValues, vehicleId);

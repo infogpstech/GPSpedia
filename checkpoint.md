@@ -250,3 +250,11 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Pages `44636291778` estaba QUEUED al cierre; no se declara como aprobado.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
 - Siguiente tarea: inspeccionar la recuperación ADMIN para reducir otra lectura individual de Sheets o costo de revalidación que pueda evitarse usando el snapshot existente, sin debilitar la reserva idempotente ni la atomicidad de las escrituras.
+
+
+## Continuidad — revalidación de vehicleId desde snapshot en ADMIN (2026-11-19)
+- En la rama de vehículo existente de `handleAddOrUpdateCut`, la fila se lee una vez bajo ScriptLock y el ID se valida desde `rowValues[COLS_CORTES.id - 1]`.
+- Se elimina la llamada individual `getRange(rowIndex, COLS_CORTES.id).getValue()`, sin retirar la revalidación ni moverla fuera del lock.
+- La búsqueda de fila candidata sigue fuera del lock; el snapshot bajo lock es la fuente de identidad antes de mapear y escribir.
+- Pruebas actualizadas: `AdminExistingVehicleLookupPreflight.mjs`; nueva `AdminExistingVehicleSnapshotRevalidation.mjs`.
+- CI pendiente. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.

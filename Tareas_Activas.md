@@ -699,3 +699,11 @@ Siguiente paso: continuar GP-PERF-ADMIN-CUT-LOCK-01 inspeccionando las escritura
 - [x] Health read-only `44636291825` SUCCESS.
 - Las dos primeras ejecuciones de regresión fallaron por delimitaciones/mocks de la prueba nueva; se corrigieron y la repetición final aprobó.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
+
+
+### ADMIN — revalidación de vehículo existente desde el snapshot de fila (2026-11-19)
+- [x] Eliminar la lectura individual `getValue()` del ID dentro del ScriptLock.
+- [x] Reutilizar la lectura completa de fila para validar `COLS_CORTES.id` antes de mapear o escribir.
+- [x] Mantener la búsqueda de fila candidata fuera del lock y confirmar bajo lock que la fila aún contiene el ID esperado.
+- [x] Actualizar `AdminExistingVehicleLookupPreflight.mjs` y añadir `AdminExistingVehicleSnapshotRevalidation.mjs` al runner.
+- Estado: IMPLEMENTACIÓN PUBLICADA; regresión y health pendientes de CI. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.

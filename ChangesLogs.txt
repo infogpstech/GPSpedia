@@ -1082,3 +1082,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-19 · cierre] ADMIN recuperación reutiliza snapshot para vincular imágenes: eliminadas dos lecturas individuales getValue() de Cortes. El callback de revalidación actualiza verified.rowValues después de escribir URL reparadas; se preservan las URL existentes. Prueba AdminRecoveryImageSnapshotReuse 7/7 PASS. CI 44636292022 SUCCESS: 188 suites, 2483 pruebas aprobadas, 0 fallos; health read-only 44636291825 SUCCESS. Las dos primeras regresiones fallaron por problemas de delimitación/mocks de la prueba nueva, corregidos antes de la ejecución aprobada. Pages 44636291778 estaba QUEUED al cierre. No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+[2026-11-19] ADMIN: revalidación de vehículo existente reutiliza el snapshot de fila. Se elimina una llamada individual `getValue()` para leer el ID; la lectura integral de fila bajo ScriptLock ahora valida `rowValues[COLS_CORTES.id - 1]` antes de mapear y operar. Se conserva el preflight de búsqueda fuera del lock y la revalidación protegida. Se actualiza AdminExistingVehicleLookupPreflight y se añade AdminExistingVehicleSnapshotRevalidation.
