@@ -178,6 +178,7 @@ runGroup('36','AUTH',()=>{
  }));
 });
 runGroup('37','USERS',()=>{
+ runCli('USERS telemetría directa de consultas getUsers','JS/Tests/UsersDirectTrafficTelemetry.mjs');
   runCli('USERS tabla responsive y acciones iconográficas móviles','JS/Tests/ResponsiveFormsUsers.js');
  const users=read('JS/Services/users.js'),testUsers=read('JS/Tests/users.js');
  runCli('P2 generador backend de IDs de usuario','JS/Tests/UserIdGenerator.mjs');
