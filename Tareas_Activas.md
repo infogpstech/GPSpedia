@@ -343,6 +343,7 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 ## Avance de implementación — GP-PERF-ADMIN-CUT-LOCK-01 (2026-11-19)
 - [x] Primer ajuste de reserva: `findNextAvailableCutSlot_` ahora excluye los slots del mismo vehículo que ya estén registrados como `pending` en Idempotencia. Esto permite reservar el destino antes de liberar el lock para Drive.
 - [x] `AdminCutSlotReservation.mjs` y CI: 5/5 PASS en la regresión 44592625381.
+- [x] Mover fuera del ScriptLock la lectura del catálogo de marcas/modelos/versiones, la normalización de esas entidades y el parseo del año para altas nuevas. El payload original se conserva sin mutación; la fila/ID y las escrituras siguen protegidas. `AdminCutEntityPreflight.mjs` 7/7 PASS; CI `44629325732` SUCCESS: 180 suites, 2,427 pruebas aprobadas, 0 fallos; sintaxis JS aprobada.
 - [ ] Continuar con la separación del flujo en reserva breve, WRITE/Drive fuera del lock y revalidación/persistencia breve. La carga de Drive queda fuera del lock también para legacy; el handler todavía mantiene bajo el lock otras lecturas y escrituras de Sheets, por lo que GP-PERF-ADMIN-CUT-LOCK-01 sigue EN PROGRESO.
 - [ ] Añadir recuperación segura y pruebas de no interferencia entre auditoría, Inbox, health, login y registro de cortes. No se ha confirmado el mapa de proyectos Apps Script desplegados; el repositorio no contiene manifiestos `.clasp.json` ni `appsscript.json` que permitan asociar cada fuente a un Script ID.
 
