@@ -3137,6 +3137,212 @@ function getCanonicalImageExtension(file) {
  * Construye destinos esperados para conciliación de imágenes. No realiza escrituras.
  * El nombre canónico se usa como clave exacta; no se infiere por similitud.
  */
+
+function normalizeOrganizerSegment_(value) {
+    return String(value === null || value === undefined ? "" : value)
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .trim().replace(/[\\/]/g, "_").replace(/\s+/g, "_")
+        .replace(/[^a-zA-Z0-9_-]/g, "_").replace(/_+/g, "_")
+        .replace(/^_+|_+$/g, "");
+}
+
+function normalizeOrganizerFilePart_(value) {
+    return String(value === null || value === undefined ? "" : value)
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .trim().replace(/[\\/,]/g, "_").replace(/\s+/g, "_")
+        .replace(/[^a-zA-Z0-9_-]/g, "_").replace(/_+/g, "_")
+        .replace(/^_+|_+$/g, "");
+}
+
+function mapCorteTypeToFunctionCode_(value) {
+    const normalized = String(value || "").normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "").toLowerCase()
+        .replace(/[^a-z0-9]/g, "");
+    const matches = [];
+    if (["ignicion", "encendido", "ign", "corteignicion"].some(token => normalized.includes(token))) matches.push("ign");
+    if (["bomba", "bombacombustible", "fuelpump"].some(token => normalized.includes(token))) matches.push("bomba");
+    if (["boton", "pulsador", "button", "btn"].some(token => normalized.includes(token))) matches.push("btn");
+    return matches.length === 1 ? matches[0] : "";
+}
+
+/**
+ * Constructor puro de destinos para el organizador de Cortes.
+ * Solo transforma matrices ya leídas; no accede a Drive/Spreadsheet ni realiza escrituras.
+ * La inspección de existencia, referencias cruzadas y conflictos se completa en el endpoint dry-run.
+ */
+function buildCortesImageOrganizerTargets_(cortesValues, cortesFormulas, logosValues, logosFormulas) {
+    const rows = Array.isArray(cortesValues) ? cortesValues : [];
+    const rowFormulas = Array.isArray(cortesFormulas) ? cortesFormulas : [];
+    const logoRows = Array.isArray(logosValues) ? logosValues : [];
+    const logoFormulas = Array.isArray(logosFormulas) ? logosFormulas : [];
+    const targets = [];
+    const issues = [];
+    const categoryByBrand = new Map();
+    const vehicleIdCounts = new Map();
+    const logoBrandCounts = new Map();
+    const fileIdCounts = new Map();
+    const cutFields = [
+        { field: "imgCorte1", typeField: "tipoCorte1" },
+        { field: "imgCorte2", typeField: "tipoCorte2" },
+        { field: "imgCorte3", typeField: "tipoCorte3" }
+    ];
+    const fixedFields = [
+        { field: "imagenVehiculo", code: "imagenVehiculo" },
+        { field: "imgApertura", code: "apert" },
+        { field: "imgCableAlimen", code: "alim" },
+        { field: "imgCableAlimen2", code: "alim2" },
+        { field: "imgCableAlimen3", code: "shock" }
+    ];
+    const col = key => Number(COLS_CORTES[key]) - 1;
+    const cell = (row, key) => row && col(key) >= 0 ? row[col(key)] : "";
+    const formulaAt = (matrix, rowIndex, columnIndex) =>
+        Boolean(matrix[rowIndex] && matrix[rowIndex][columnIndex]);
+    const normalizeBrandKey = value => normalizeOrganizerSegment_(value).toLowerCase();
+
+    rows.slice(1).forEach(row => {
+        const brand = String(cell(row, "marca") || "").trim();
+        const category = normalizeOrganizerSegment_(cell(row, "categoria"));
+        if (!brand || !category) return;
+        const key = normalizeBrandKey(brand);
+        if (!categoryByBrand.has(key)) categoryByBrand.set(key, new Set());
+        categoryByBrand.get(key).add(category);
+    });
+    rows.slice(1).forEach(row => {
+        const id = String(cell(row, "id") || "").trim();
+        if (id) vehicleIdCounts.set(id, (vehicleIdCounts.get(id) || 0) + 1);
+    });
+    logoRows.slice(1).forEach(row => {
+        const brand = normalizeBrandKey(row && row[1]);
+        if (brand) logoBrandCounts.set(brand, (logoBrandCounts.get(brand) || 0) + 1);
+    });
+
+    const addTarget = target => {
+        target.reasons = Array.from(new Set(target.reasons || []));
+        target.status = target.reasons.length ? "blocked" : "candidate";
+        targets.push(target);
+        if (target.fileId) fileIdCounts.set(target.fileId, (fileIdCounts.get(target.fileId) || 0) + 1);
+    };
+
+    rows.slice(1).forEach((row, index) => {
+        const sheetRow = index + 2;
+        const vehicleId = String(cell(row, "id") || "").trim();
+        const rawCategory = cell(row, "categoria");
+        const rawBrand = cell(row, "marca");
+        const rawModel = cell(row, "modelo");
+        const rawVersion = String(cell(row, "versionesAplicables") || "").trim();
+        const rawIgnition = String(cell(row, "tipoEncendido") || "").trim();
+        const versionOrIgnition = rawVersion || rawIgnition;
+        const category = normalizeOrganizerSegment_(rawCategory);
+        const brand = normalizeOrganizerSegment_(rawBrand);
+        const model = normalizeOrganizerSegment_(rawModel);
+        const rawStart = String(cell(row, "anoDesde") || "").trim();
+        const rawEnd = String(cell(row, "anoHasta") || "").trim();
+        const start = /^\d{4}$/.test(rawStart) ? rawStart : "";
+        const end = /^\d{4}$/.test(rawEnd) ? rawEnd : "";
+        const versionSegment = normalizeOrganizerSegment_(versionOrIgnition);
+        const baseReasons = [];
+        if (!vehicleId) baseReasons.push("missing_vehicle_id");
+        else if (vehicleIdCounts.get(vehicleId) > 1) baseReasons.push("duplicate_vehicle_id");
+        if (!category) baseReasons.push("missing_category");
+        if (!brand) baseReasons.push("missing_brand");
+        if (!model) baseReasons.push("missing_model");
+        if (!versionSegment) baseReasons.push("missing_version_or_ignition");
+        if (/[\/,]/.test(versionOrIgnition)) baseReasons.push("multiple_versions_or_ignitions_require_review");
+        if (!start || !end) baseReasons.push("missing_or_invalid_year_range");
+        else if (Number(start) > Number(end)) baseReasons.push("reversed_year_range");
+        const folderSegments = [category, brand, model, versionSegment, start && end ? start + "-" + end : ""].filter(Boolean);
+        const targetFolderPath = folderSegments.length === 5 ? "Cortes/" + folderSegments.join("/") : "";
+        const nameParts = [normalizeOrganizerFilePart_(rawModel), normalizeOrganizerFilePart_(versionOrIgnition), start, end];
+        const cutCounters = Object.create(null);
+
+        const pushImage = (field, code, extraReasons, sourceValue) => {
+            const rawUrl = String(sourceValue || "").trim();
+            if (!rawUrl) return;
+            const ids = extractDriveFileIds(rawUrl);
+            const reasons = baseReasons.concat(extraReasons || []);
+            if (ids.length !== 1) reasons.push(ids.length ? "multiple_file_ids_in_cell" : "invalid_drive_reference");
+            const targetBaseName = code && nameParts.every(Boolean) ? nameParts.concat(code).join("_") : "";
+            if (formulaAt(rowFormulas, index + 1, col(field))) reasons.push("formula_in_image_cell");
+            addTarget({
+                sheetName: "Cortes", row: sheetRow, vehicleId, field,
+                fileId: ids.length === 1 ? ids[0] : "",
+                currentUrl: rawUrl, targetFolderPath, targetBaseName,
+                functionCode: code || "", reasons
+            });
+        };
+
+        fixedFields.forEach(item => pushImage(item.field, item.code, [], cell(row, item.field)));
+        cutFields.forEach(item => {
+            const rawUrl = String(cell(row, item.field) || "").trim();
+            if (!rawUrl) return;
+            const code = mapCorteTypeToFunctionCode_(cell(row, item.typeField));
+            if (!code) {
+                pushImage(item.field, "", ["unrecognized_cut_type:" + item.typeField], rawUrl);
+                return;
+            }
+            cutCounters[code] = (cutCounters[code] || 0) + 1;
+            const suffix = (code === "ign" || code === "bomba")
+                ? code + cutCounters[code]
+                : (cutCounters[code] === 1 ? code : code + cutCounters[code]);
+            pushImage(item.field, suffix, [], rawUrl);
+        });
+    });
+
+    logoRows.slice(1).forEach((row, index) => {
+        const sheetRow = index + 2;
+        const brandRaw = String(row && row[1] || "").trim();
+        const url = String(row && row[2] || "").trim();
+        if (!brandRaw && !url) return;
+        if (!url) return;
+        const brand = normalizeOrganizerSegment_(brandRaw);
+        const brandKey = normalizeBrandKey(brandRaw);
+        const categories = Array.from(categoryByBrand.get(brandKey) || []);
+        const reasons = [];
+        if (!brand) reasons.push("missing_logo_brand");
+        if (!categories.length) reasons.push("brand_has_no_category_in_cortes");
+        if (categories.length > 1) reasons.push("brand_has_multiple_categories");
+        if (logoBrandCounts.get(brandKey) > 1) reasons.push("duplicate_logo_brand_row");
+        const ids = extractDriveFileIds(url);
+        if (ids.length !== 1) reasons.push(ids.length ? "multiple_file_ids_in_cell" : "invalid_drive_reference");
+        if (formulaAt(logoFormulas, index + 1, 1)) reasons.push("formula_in_logo_brand_cell");
+        if (formulaAt(logoFormulas, index + 1, 2)) reasons.push("formula_in_logo_url_cell");
+        addTarget({
+            sheetName: "LogosMarca", row: sheetRow, vehicleId: "",
+            field: "urlLogo", brand: brandRaw,
+            fileId: ids.length === 1 ? ids[0] : "",
+            currentUrl: url,
+            targetFolderPath: categories.length === 1 && brand ? "Cortes/" + categories[0] + "/" + brand : "",
+            targetBaseName: brand ? normalizeOrganizerFilePart_(brandRaw).toLowerCase() + "_logo" : "",
+            functionCode: "logo", reasons
+        });
+    });
+
+    targets.forEach(target => {
+        if (target.fileId && fileIdCounts.get(target.fileId) > 1) {
+            target.reasons.push("shared_drive_file_id_requires_review");
+            target.reasons = Array.from(new Set(target.reasons));
+            target.status = "blocked";
+        }
+    });
+    targets.forEach(target => {
+        if (target.status === "blocked") {
+            issues.push({
+                sheetName: target.sheetName, row: target.row, field: target.field,
+                fileId: target.fileId, reasons: target.reasons.slice()
+            });
+        }
+    });
+    return {
+        targets, issues,
+        summary: {
+            targetCount: targets.length,
+            candidateCount: targets.filter(target => target.status === "candidate").length,
+            blockedCount: targets.filter(target => target.status === "blocked").length
+        },
+        writePerformed: false
+    };
+}
+
 function buildCortesImageReconciliationTargets_() {
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
     if (!sheet) throw new Error("No se encontró la hoja «Cortes».");

@@ -235,4 +235,67 @@ assert.ok(admin.includes("visitedFolderPaths.set(String(current.folderId), Strin
     "La consola debe recibir la ruta de cada carpeta procesada.");
 assert.ok(admin.includes("foldersVisitedPaths: Array.from(visitedFolderPaths.values())"),
     "La respuesta de ADMIN debe exponer las rutas recorridas para su salida en consola.");
+
+const organizerBuilder = new Function(
+    "COLS_CORTES",
+    [
+        extractFunction(admin, "extractDriveFileIds"),
+        extractFunction(admin, "normalizeOrganizerSegment_"),
+        extractFunction(admin, "normalizeOrganizerFilePart_"),
+        extractFunction(admin, "mapCorteTypeToFunctionCode_"),
+        extractFunction(admin, "buildCortesImageOrganizerTargets_")
+    ].join(String.fromCharCode(10)) + String.fromCharCode(10) + "return buildCortesImageOrganizerTargets_;"
+)({
+    id:1,categoria:2,marca:3,modelo:4,versionesAplicables:5,anoDesde:6,anoHasta:7,tipoEncendido:8,
+    imagenVehiculo:9,tipoCorte1:12,imgCorte1:16,tipoCorte2:19,imgCorte2:23,
+    tipoCorte3:26,imgCorte3:30,imgApertura:33,imgCableAlimen:34,imgCableAlimen2:35,imgCableAlimen3:36
+});
+const makeOrganizerRow = () => {
+    const row = Array(36).fill("");
+    row[0]="C-1"; row[1]="Camión pesado"; row[2]="Toyota"; row[3]="Hilux";
+    row[4]="SRV"; row[5]=2020; row[6]=2025; row[7]="Llave";
+    row[8]="https://drive.google.com/file/d/AAAAAAAAAAAAAAAAAAAAAA/view";
+    row[11]="Ignición"; row[15]="https://drive.google.com/file/d/BBBBBBBBBBBBBBBBBBBBBB/view";
+    row[18]="Bomba"; row[22]="https://drive.google.com/file/d/CCCCCCCCCCCCCCCCCCCCCC/view";
+    row[25]="Botón"; row[29]="https://drive.google.com/file/d/DDDDDDDDDDDDDDDDDDDDDD/view";
+    row[32]="https://drive.google.com/file/d/EEEEEEEEEEEEEEEEEEEEEE/view";
+    row[33]="https://drive.google.com/file/d/FFFFFFFFFFFFFFFFFFFFFF/view";
+    row[34]="https://drive.google.com/file/d/GGGGGGGGGGGGGGGGGGGGGG/view";
+    row[35]="https://drive.google.com/file/d/HHHHHHHHHHHHHHHHHHHHHH/view";
+    return row;
+};
+const organizerFixture = organizerBuilder(
+    [Array(36).fill("header"), makeOrganizerRow()], [Array(36).fill(""), Array(36).fill("")],
+    [["id","marca","urlLogo"],["L-1","Toyota","https://drive.google.com/file/d/IIIIIIIIIIIIIIIIIIIIII/view"]],
+    [["id","marca","urlLogo"],["","",""]]
+);
+assert.equal(organizerFixture.writePerformed, false);
+assert.equal(organizerFixture.summary.candidateCount, 9);
+assert.equal(organizerFixture.summary.blockedCount, 0);
+const mainTarget = organizerFixture.targets.find(target => target.field === "imagenVehiculo");
+assert.equal(mainTarget.targetFolderPath, "Cortes/Camion_pesado/Toyota/Hilux/SRV/2020-2025");
+assert.equal(mainTarget.targetBaseName, "Hilux_SRV_2020_2025_imagenVehiculo");
+assert.equal(organizerFixture.targets.find(target => target.field === "imgCorte1").targetBaseName, "Hilux_SRV_2020_2025_ign1");
+assert.equal(organizerFixture.targets.find(target => target.field === "imgCorte2").targetBaseName, "Hilux_SRV_2020_2025_bomba1");
+assert.equal(organizerFixture.targets.find(target => target.field === "imgCorte3").targetBaseName, "Hilux_SRV_2020_2025_btn");
+const logoTarget = organizerFixture.targets.find(target => target.sheetName === "LogosMarca");
+assert.equal(logoTarget.targetFolderPath, "Cortes/Camion_pesado/Toyota");
+assert.equal(logoTarget.targetBaseName, "toyota_logo");
+const unknownCutRow = makeOrganizerRow(); unknownCutRow[11] = "Corte especial no catalogado";
+const unknownPlan = organizerBuilder([Array(36).fill("header"), unknownCutRow], [], [], []);
+assert.equal(unknownPlan.targets.find(target => target.field === "imgCorte1").status, "blocked");
+const missingYearRow = makeOrganizerRow(); missingYearRow[6] = "";
+const missingPlan = organizerBuilder([Array(36).fill("header"), missingYearRow], [], [], []);
+assert.ok(missingPlan.targets.filter(target => target.sheetName === "Cortes").every(target => target.status === "blocked"));
+const formulaMatrix = [Array(36).fill(""), Array(36).fill("")]; formulaMatrix[1][8] = "=IMAGE(url)";
+const formulaPlan = organizerBuilder([Array(36).fill("header"), makeOrganizerRow()], formulaMatrix, [], []);
+assert.ok(formulaPlan.targets.find(target => target.field === "imagenVehiculo").reasons.includes("formula_in_image_cell"));
+const ambiguousRows = [Array(36).fill("header"), makeOrganizerRow(), makeOrganizerRow()];
+ambiguousRows[2][0] = "C-2"; ambiguousRows[2][1] = "Autobus";
+const ambiguousPlan = organizerBuilder(ambiguousRows, [], [["h","marca","urlLogo"],["l","Toyota","https://drive.google.com/file/d/IIIIIIIIIIIIIIIIIIIIII/view"]], []);
+assert.ok(ambiguousPlan.targets.find(target => target.sheetName === "LogosMarca").reasons.includes("brand_has_multiple_categories"));
+const builderSource = extractFunction(admin, "buildCortesImageOrganizerTargets_");
+assert.ok(!["DriveApp","SpreadsheetApp","setName","moveTo","setTrashed","setValue","appendRow"].some(token => builderSource.includes(token)),
+    "El constructor puro no debe ejecutar operaciones de Drive ni Spreadsheet.");
+
 console.log("AdminImageScanCoordinatorContract: 1/1 PASS");
