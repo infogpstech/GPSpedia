@@ -5,7 +5,7 @@ import { dirname, resolve } from "node:path";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const admin = readFileSync(resolve(root, "JS/Services/admin.js"), "utf8");
-const start = admin.indexOf("function mergeDirectServiceTraffic_(");
+const start = admin.indexOf("function normalizeCoordinatorServiceTraffic_(source)");
 const end = admin.indexOf("\nfunction handleGetServiceTraffic_", start);
 assert.ok(start >= 0 && end > start, "No se encontró la función de agregación CATALOG/Coordinator.");
 const mergeSource = admin.slice(start, end);
@@ -18,6 +18,7 @@ function coordinatorFixture() {
     return {
         status: "success",
         scope: "coordinator_protected_operations",
+        services: ["AUTH", "CATALOG", "WRITE", "USERS", "FEEDBACK", "UTILITIES", "ADMIN"],
         buckets: [{ startAt: 1_800_000_000_000, counts: { ...counts } }],
         totals: Object.fromEntries(periods.map(period => [period, { ...counts }]))
     };
