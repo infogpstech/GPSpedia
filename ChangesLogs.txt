@@ -1121,3 +1121,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-19] ADMIN: el alta de vehículo nuevo limpia ahora la fila completa (incluido el ID heredado) con una sola llamada clearContent(), en lugar de dos llamadas separadas para columnas 2–final e ID. Se conserva el orden de copia de plantilla, limpieza, flush, asignación/confirmación del ID central y reserva idempotente.
+
+
+[2026-11-19 · cierre] ADMIN alta de vehículo nuevo: la limpieza inicial ahora se realiza con una sola llamada `clearContent()` sobre la fila completa (columna 1 a `lastColumn`), manteniendo la copia de formato/validación antes de limpiar y el orden de flush, asignación/confirmación del ID central, reserva pending, Drive y completed. Prueba `AdminNewVehicleSingleRowClear` integrada al runner. CI regresión `44640068663` SUCCESS sobre HEAD `4f99a114e00d178181e30a093dd40f4c50453a07`; health read-only `44640068448` SUCCESS. No hubo despliegue Apps Script ni escrituras en Sheets/Drive productivos.
