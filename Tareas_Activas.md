@@ -735,3 +735,11 @@ Siguiente paso: continuar GP-PERF-ADMIN-CUT-LOCK-01 inspeccionando las escritura
 - [x] Health read-only `44639307367` SUCCESS.
 - [x] Pages `44639306388` SUCCESS.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+### ADMIN — revalidar ID del vehículo nuevo desde snapshot post-Drive (2026-11-19)
+- [x] Sustituir la lectura individual de `COLS_CORTES.id` por el ID de `verified.rowValues` devuelto por `findRowByOpId`.
+- [x] Mantener las verificaciones de rowIndex, vehicleId, slotIndex y operationHash.
+- [x] Mantener la lectura completa y comprobación de unicidad de vehicleId dentro de `findRowByOpId`.
+- [x] Añadir `AdminNewVehiclePostDriveIdSnapshotReuse.mjs` al runner.
+- Estado: IMPLEMENTACIÓN PUBLICADA; CI pendiente. No se desplegó Apps Script ni se modificaron datos productivos.

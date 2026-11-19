@@ -7265,7 +7265,7 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
                 const verified = findRowByOpId(sheet, opId, idempotencyEntriesSnapshot);
                 if (!verified || verified.rowIndex !== rowIndex || verified.vehicleId !== String(newId) ||
                     verified.slotIndex !== 1 || verified.operationHash !== operationHash ||
-                    Number(sheet.getRange(rowIndex, COLS_CORTES.id).getValue()) !== Number(newId)) {
+                    Number(verified.rowValues[COLS_CORTES.id - 1]) !== Number(newId)) {
                     throw new Error("La reserva del vehículo cambió durante la carga; no se aplicaron las imágenes.");
                 }
             }

@@ -337,3 +337,11 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Las dos primeras CI fallaron por aserciones demasiado estrictas/escapadas en el test; la tercera aprobó. No se cambió la lógica funcional por esos fallos.
 - No se desplegó Apps Script ni se modificaron datos productivos.
 - Siguiente tarea: revisar si el preflight de VIN y la revalidación post-Drive hacen consultas duplicadas a la columna VIN que puedan combinarse sin omitir detección de duplicados concurrentes.
+
+
+## Continuidad — ID del vehículo nuevo desde snapshot post-Drive (2026-11-19)
+- La revalidación posterior a Drive en la rama de vehículo nuevo ya no vuelve a consultar `getRange(rowIndex, COLS_CORTES.id).getValue()`.
+- Usa `verified.rowValues[COLS_CORTES.id - 1]`, parte de la fila completa que `findRowByOpId` obtiene después de validar la unicidad del vehículo.
+- Se mantienen las comprobaciones de rowIndex, vehicleId, slotIndex y operationHash; no se debilita la reserva idempotente.
+- Nueva prueba `AdminNewVehiclePostDriveIdSnapshotReuse.mjs` integrada al runner.
+- CI pendiente. No se desplegó Apps Script ni se modificaron datos productivos.
