@@ -5,6 +5,7 @@
 
 // 1. CONFIGURACIÓN
 import { runCatalogRequestWithRetry } from './catalogRequest.js';
+import { recordBrowserServiceTraffic } from './serviceTelemetry.js';
 
 export const RICH_TEXT_MODE_KEY = "gpsepedia_rich_text_mode_cache";
 export const RICH_TEXT_MODES = Object.freeze({ STRICT: "strict", ADVANCED: "advanced" });
@@ -132,7 +133,7 @@ function createRouteActionError_(message, options = {}) {
 }
 
 // 2. LÓGICA DE RUTEO CENTRAL
-export async function routeAction(action, payload = {}, serviceOverride = null, requestOptions = {}) {
+async function routeActionInternal_(action, payload = {}, serviceOverride = null, requestOptions = {}) {
     const service = serviceOverride || ACTION_TO_SERVICE_MAP[action];
     if (!service) throw new Error(`Acción no definida: ${action}`);
     const targetUrl = API_ENDPOINTS[service];
@@ -221,6 +222,34 @@ export async function routeAction(action, payload = {}, serviceOverride = null, 
             });
         }
         return result;
+}
+
+
+/**
+ * Registra métricas efímeras del navegador actual sin persistir ni transmitir datos.
+ * Cada intento HTTP se contabiliza; los reintentos quedan visibles como intentos separados.
+ */
+export async function routeAction(action, payload = {}, serviceOverride = null, requestOptions = {}) {
+    const service = serviceOverride || ACTION_TO_SERVICE_MAP[action] || "";
+    const startedAt = Date.now();
+    try {
+        const result = await routeActionInternal_(action, payload, serviceOverride, requestOptions);
+        try {
+            recordBrowserServiceTraffic({
+                service, action, timestamp: Date.now(), durationMs: Date.now() - startedAt,
+                outcome: "success"
+            });
+        } catch (telemetryError) {}
+        return result;
+    } catch (error) {
+        try {
+            recordBrowserServiceTraffic({
+                service, action, timestamp: Date.now(), durationMs: Date.now() - startedAt,
+                outcome: "error", httpStatus: error && error.httpStatus
+            });
+        } catch (telemetryError) {}
+        throw error;
+    }
 }
 
 export async function routeActionWithRetry(action, payload = {}, options = {}) {
