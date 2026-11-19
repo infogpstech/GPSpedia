@@ -351,3 +351,5 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Ajuste del contrato de pruebas AUG-039 para reflejar el nuevo comportamiento del asignador: adquisición inmediata `tryLock(0)`, validación de rol dentro de la sección crítica y liberación solo tras adquirirlo. El primer CI detectó esta expectativa antigua; se actualiza la prueba, no se revierte la corrección.
 
 - Diagnóstico del segundo CI: el parser de la prueba AUG-039 no pudo extraer el handler después de introducir comentario de línea dentro del cuerpo. Se elimina ese comentario local; la lógica de adquisición inmediata permanece.
+
+- Diagnóstico del tercer CI: el contrato AUG-039 utiliza un assert local mínimo y no dispone de `assert.equal`; se corrigen los dos fixtures para comprobar `tryLock(0)` con el assert compatible.

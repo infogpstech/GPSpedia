@@ -1131,3 +1131,5 @@ ACTUALIZACIÓN DE CONTINUIDAD — 2026-11-19
 - Incidencia CI 44555115677: 150 suites / 2,138 pruebas, con un fallo en tres aserciones de AUG-039 que exigían `waitLock`. El handler conserva autenticación/rol dentro del lock; el contrato se actualizó para validar `tryLock(0)` y el caso ocupado. Se espera nueva ejecución para confirmar.
 
 - Segundo CI 44555450856: 150 suites, 2,138 pruebas y fallo de extracción de `handleAllocateVehicleId` en el parser estático de AUG-039. Se elimina comentario interno del handler para mantener compatibilidad con el extractor; no cambia el comportamiento.
+
+- Tercer CI 44555711003: 150 suites, 2,138 pruebas; el handler ya fue extraído y las aserciones estáticas pasaron, pero dos fixtures usaban `assert.equal` no disponible en el assert local. Se sustituye por aserción booleana.
