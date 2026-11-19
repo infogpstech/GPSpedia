@@ -28,7 +28,8 @@ assert.match(existing, /getRange\(rowIndex, COLS_CORTES\[`tipoCorte\$\{cutSlotIn
 assert.match(existing, /COLS_CORTES\[`activaTestigo\$\{cutSlotIndex\}`\]\)\.setValue\(cutData\.activaTestigo1 === true\)/);
 assert.match(existing, /COLS_CORTES\[`colaboradorCorte\$\{cutSlotIndex\}`\]\)\.setValue\(colaboradorName\)/);
 for (const field of ["tipoCorte", "ubicacionCorte", "colorCableCorte", "configRelay", "imgCorte"]) {
-    assert.doesNotMatch(existing, new RegExp("COLS_CORTES\\[\`" + field + "\\\$\\{cutSlotIndex\\}\`\\]\\)\\.setValue"));
+    const individualWrite = "COLS_CORTES[`" + field + "${cutSlotIndex}`]).setValue";
+    assert.equal(existing.includes(individualWrite), false, field + " no debe conservar una escritura individual");
 }
 assert.match(existing, /recordOpId\(opId, vehicleId, cutSlotIndex, formattedDate, "pending"/);
 assert.ok(existing.indexOf("recordOpId(opId, vehicleId, cutSlotIndex, formattedDate, \"pending\"") <
