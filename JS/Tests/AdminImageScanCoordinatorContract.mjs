@@ -247,6 +247,7 @@ const organizerBuilder = new Function(
         extractFunction(admin, "normalizeOrganizerSegment_"),
         extractFunction(admin, "normalizeOrganizerFilePart_"),
         extractFunction(admin, "mapCorteTypeToFunctionCode_"),
+        extractFunction(admin, "getCorteFunctionSuffix_"),
         extractFunction(admin, "buildCortesImageOrganizerTargets_")
     ].join(String.fromCharCode(10)) + String.fromCharCode(10) + "return buildCortesImageOrganizerTargets_;"
 )(actualCortesCols);
