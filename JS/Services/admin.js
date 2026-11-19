@@ -9288,66 +9288,115 @@ function getDirectServiceTrafficBatch_() {
     return results;
 }
 
+function normalizeCoordinatorServiceTraffic_(source) {
+    const expectedServices = ["AUTH", "CATALOG", "WRITE", "USERS", "FEEDBACK", "UTILITIES", "ADMIN"];
+    if (!source || source.status !== "success" || source.scope !== "coordinator_protected_operations" ||
+        !Array.isArray(source.services) || !Array.isArray(source.buckets) ||
+        !source.totals || typeof source.totals !== "object") {
+        throw new Error("Coordinator devolvió un agregado de tráfico incompleto o con un scope inesperado.");
+    }
+    const reportedServices = source.services.map(value => String(value || "").toUpperCase());
+    if (reportedServices.length !== expectedServices.length ||
+        expectedServices.some(service => !reportedServices.includes(service)) ||
+        reportedServices.some(service => !expectedServices.includes(service))) {
+        throw new Error("El agregado de Coordinator no contiene exactamente los siete servicios activos.");
+    }
+    const normalizeCounts = (input, label) => {
+        if (!input || typeof input !== "object" || Array.isArray(input)) {
+            throw new Error("El agregado de Coordinator no contiene conteos válidos en " + label + ".");
+        }
+        const output = {};
+        expectedServices.forEach(service => {
+            const count = input[service];
+            if (!Number.isSafeInteger(count) || count < 0) {
+                throw new Error("El conteo de " + service + " no es válido en " + label + ".");
+            }
+            output[service] = count;
+        });
+        return output;
+    };
+    const totals = {
+        lastHour: normalizeCounts(source.totals.lastHour, "lastHour"),
+        last6Hours: normalizeCounts(source.totals.last6Hours, "last6Hours"),
+        last24Hours: normalizeCounts(source.totals.last24Hours, "last24Hours")
+    };
+    const buckets = source.buckets.map((bucket, index) => {
+        if (!bucket || !Number.isSafeInteger(bucket.startAt) || bucket.startAt <= 0) {
+            throw new Error("El bucket " + index + " no contiene una marca temporal válida.");
+        }
+        return { startAt: bucket.startAt, counts: normalizeCounts(bucket.counts, "bucket " + index) };
+    }).sort((left, right) => left.startAt - right.startAt);
+    return Object.assign({}, source, { services: expectedServices.slice(), totals, buckets });
+}
+
 function mergeDirectServiceTraffic_(coordinatorResult, directResults) {
-    const result = JSON.parse(JSON.stringify(coordinatorResult));
+    const result = normalizeCoordinatorServiceTraffic_(coordinatorResult);
     const sources = {
         coordinator: { available: true, scope: "protected_operations" }
     };
     const services = ["CATALOG", "AUTH", "WRITE", "FEEDBACK"];
     const bucketsByStart = new Map();
-    result.buckets.forEach(bucket => {
-        const startAt = Number(bucket && bucket.startAt);
-        if (Number.isSafeInteger(startAt)) bucketsByStart.set(startAt, bucket);
+    result.buckets.forEach(bucket => bucketsByStart.set(bucket.startAt, bucket));
+    result.services.forEach(service => {
+        sources[service] = {
+            coordinatorAvailable: true,
+            coordinatorScope: "protected_operations",
+            directRequestsAvailable: false,
+            directRequestScope: null,
+            accuracy: "coordinator_only",
+            mayUndercount: true,
+            reason: "not_instrumented"
+        };
     });
     services.forEach(service => {
         const directResult = directResults && directResults[service];
         const expectedScope = service === "CATALOG" ? "catalog_post_requests" : "direct_post_requests";
         const directAvailable = Boolean(directResult && directResult.status === "success" &&
             directResult.service === service && directResult.scope === expectedScope &&
-            Array.isArray(directResult.buckets) && directResult.totals);
+            Array.isArray(directResult.buckets) && directResult.totals &&
+            ["lastHour", "last6Hours", "last24Hours"].every(period =>
+                Number.isSafeInteger(directResult.totals[period]) && directResult.totals[period] >= 0));
         const directBuckets = new Map();
         if (directAvailable) {
             directResult.buckets.forEach(bucket => {
-                const startAt = Number(bucket && bucket.startAt);
-                const count = Number(bucket && bucket.count);
-                if (Number.isSafeInteger(startAt) && Number.isSafeInteger(count) && count >= 0) {
-                    directBuckets.set(startAt, count);
+                if (!bucket || !Number.isSafeInteger(bucket.startAt) ||
+                    !Number.isSafeInteger(bucket.count) || bucket.count < 0) {
+                    throw new Error("La fuente directa " + service + " devolvió un bucket inválido.");
                 }
+                directBuckets.set(bucket.startAt, bucket.count);
             });
             directBuckets.forEach((count, startAt) => {
                 let bucket = bucketsByStart.get(startAt);
                 if (!bucket) {
                     const counts = {};
-                    Object.keys(result.totals.last24Hours || {}).forEach(name => { counts[name] = 0; });
+                    result.services.forEach(name => { counts[name] = 0; });
                     bucket = { startAt, counts };
                     result.buckets.push(bucket);
                     bucketsByStart.set(startAt, bucket);
                 }
-                if (!bucket.counts || typeof bucket.counts !== "object") bucket.counts = {};
-                bucket.counts[service] = Math.max(0, Number(bucket.counts[service]) || 0) + count;
+                bucket.counts[service] += count;
             });
             ["lastHour", "last6Hours", "last24Hours"].forEach(period => {
-                result.totals[period][service] = Math.max(0, Number(result.totals[period][service]) || 0) +
-                    Math.max(0, Number(directResult.totals[period]) || 0);
+                result.totals[period][service] += directResult.totals[period];
             });
         }
         sources[service] = {
-            available: true,
+            coordinatorAvailable: true,
             coordinatorScope: "protected_operations",
             directRequestsAvailable: directAvailable,
             directRequestScope: directAvailable ? directResult.scope : null,
-            accuracy: directAvailable ? directResult.accuracy : "partial",
-            mayUndercount: directAvailable ? directResult.mayUndercount === true : true,
-            reason: directAvailable ? null : String(directResult && directResult.reason || "unavailable")
+            accuracy: directAvailable ? directResult.accuracy : "coordinator_only",
+            mayUndercount: true,
+            reason: directAvailable ? null : String(directResult && directResult.reason || "not_configured")
         };
         if (service === "CATALOG") sources[service].feedRequests = "coordinator";
     });
-    result.buckets.sort((left, right) => Number(left.startAt) - Number(right.startAt));
+    result.buckets.sort((left, right) => left.startAt - right.startAt);
     result.scope = "global_service_traffic";
     result.sources = sources;
     result.coverage = {
-        description: "Agregado combinado: operaciones protegidas de Coordinator, solicitudes directas de lectura CATALOG y rutas directas instrumentadas en AUTH, WRITE, FEEDBACK y UTILITIES con contadores locales best-effort.",
-        excludes: ["sondeos de salud", "solicitudes HTTP que no atraviesan las rutas instrumentadas"]
+        description: "Agregado de operaciones protegidas de los siete servicios activos, más lecturas directas instrumentadas de CATALOG, AUTH, WRITE y FEEDBACK cuando sus contadores están configurados.",
+        excludes: ["sondeos de salud", "solicitudes HTTP que no atraviesan rutas instrumentadas"]
     };
     result.excluded = result.coverage.excludes.slice();
     return result;
@@ -9363,8 +9412,9 @@ function handleGetServiceTraffic_(payload, logMessage, developerContext) {
     }
     const coordinatorResult = getSharedServiceTraffic_();
     if (!coordinatorResult || coordinatorResult.status !== "success" ||
+        coordinatorResult.scope !== "coordinator_protected_operations" ||
         !Array.isArray(coordinatorResult.buckets) || !coordinatorResult.totals) {
-        throw new Error("No se pudo recuperar la telemetría global del coordinador.");
+        throw new Error("No se pudo recuperar un agregado global válido del coordinador.");
     }
     const result = mergeDirectServiceTraffic_(coordinatorResult, getDirectServiceTrafficBatch_());
     if (typeof logMessage === "function") {
