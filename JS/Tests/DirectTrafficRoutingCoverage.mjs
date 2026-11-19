@@ -48,13 +48,15 @@ test("FEEDBACK cuenta todas las acciones con telemetría directa y usa actor cac
     assert.doesNotMatch(feedback,/function isSharedMutationAction_\(action\)/);
 });
 
-test("UTILITIES, USERS y ADMIN no crean contadores locales redundantes", () => {
+test("USERS contabiliza getUsers sin lease adicional; UTILITIES y ADMIN conservan Coordinator", () => {
     assert.match(utilities, /withSharedMutationLease_\("UTILITIES","migrateTimestamps"/);
     assert.doesNotMatch(utilities, /DIRECT_SERVICE_TRAFFIC_CONFIG_/);
     assert.match(users, /withSharedMutationLease_\("USERS", action/);
     assert.match(users, /getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken\)/);
     assert.doesNotMatch(users, /withSharedMutationLease_\("USERS", "sessionActivity"/);
-    assert.doesNotMatch(users, /DIRECT_SERVICE_TRAFFIC_CONFIG_/);
+    assert.match(users, /USERS_DIRECT_TRAFFIC_PREFIX_/);
+    assert.match(users, /if \(action === "getUsers"\) recordUsersDirectTraffic_\(\)/);
+    assert.match(users, /if \(action === "getServiceTraffic"\)[\s\S]*?readUsersDirectTraffic_/);
     assert.match(admin, /withSharedMutationLease_\("ADMIN", action/);
     assert.doesNotMatch(admin, /DIRECT_SERVICE_TRAFFIC_CONFIG_/);
 });
