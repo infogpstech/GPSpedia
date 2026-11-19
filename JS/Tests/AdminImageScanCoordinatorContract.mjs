@@ -267,9 +267,9 @@ assert.ok(allSheetsReferenceSource.includes("sheet.getImages()"),
     "La auditoría debe detectar imágenes flotantes sobre la cuadrícula.");
 assert.ok(allSheetsReferenceSource.includes("getRichTextValues()") && allSheetsReferenceSource.includes("getFormulas()"),
     "Las demás hojas deben incluir fórmulas y enlaces enriquecidos en el escaneo.");
-const organizerPreviewSource = extractFunction(admin, "handlePreviewCortesImageOrganizer_");
-assert.ok(organizerPreviewSource.includes("collectActiveDriveReferences(true)"));
-assert.doesNotMatch(organizerPreviewSource, /\.setValue\(|\.setName\(|\.setTrashed\(|\.createFile\(|\.createFolder\(/,
+const organizerPreviewReadOnlySource = extractFunction(admin, "handlePreviewCortesImageOrganizer_");
+assert.ok(organizerPreviewReadOnlySource.includes("collectActiveDriveReferences(true)"));
+assert.doesNotMatch(organizerPreviewReadOnlySource, /\.setValue\(|\.setName\(|\.setTrashed\(|\.createFile\(|\.createFolder\(/,
     "El preview del organizador debe seguir siendo estrictamente de solo lectura.");
 console.log("ImageReferenceCoverageContract: PASS");
 
@@ -501,9 +501,9 @@ assert.match(admin, /file_moved_since_drive_audit/);
 assert.match(admin, /active_reference_location_mismatch/);
 assert.match(admin, /loadDriveAuditSeenIds_\(auditId, Number\(auditState\.pageCount\), false\)/);
 assert.match(admin, /loadDriveAuditFileMetadata_\(auditId, Number\(auditState\.pageCount\), false\)/);
-const organizerPreviewSource = extractFunction(admin, "handlePreviewCortesImageOrganizer_");
-assert.ok(!/\.(?:setName|moveTo|setTrashed|setValue|appendRow|createFolder|setSharing)\s*\(/.test(organizerPreviewSource),
+const organizerPreviewReadOnlySource = extractFunction(admin, "handlePreviewCortesImageOrganizer_");
+assert.ok(!/\.(?:setName|moveTo|setTrashed|setValue|appendRow|createFolder|setSharing)\s*\(/.test(organizerPreviewReadOnlySource),
     "El endpoint dry-run no debe modificar Drive ni Spreadsheet.");
-assert.match(organizerPreviewSource, /writePerformed: false, canApply: false/);
+assert.match(organizerPreviewReadOnlySource, /writePerformed: false, canApply: false/);
 
 console.log("AdminImageScanCoordinatorContract: 1/1 PASS");
