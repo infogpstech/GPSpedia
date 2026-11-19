@@ -6990,10 +6990,14 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
                             throw new Error("La reserva cambió durante la reparación de imágenes; no se aplicaron los cambios.");
                         }
                         const current = mapRowToObject(verified.rowValues, COLS_CORTES);
-                        if (images.vehicleImageUrl && !checkFileIdValid(current.imagenVehiculo))
+                        if (images.vehicleImageUrl && !checkFileIdValid(current.imagenVehiculo)) {
                             sheet.getRange(verified.rowIndex, COLS_CORTES.imagenVehiculo).setValue(images.vehicleImageUrl);
-                        if (images.cutImageUrl && !checkFileIdValid(current[`imgCorte${slotIndex}`]))
+                            verified.rowValues[COLS_CORTES.imagenVehiculo - 1] = images.vehicleImageUrl;
+                        }
+                        if (images.cutImageUrl && !checkFileIdValid(current[`imgCorte${slotIndex}`])) {
                             sheet.getRange(verified.rowIndex, COLS_CORTES[`imgCorte${slotIndex}`]).setValue(images.cutImageUrl);
+                            verified.rowValues[COLS_CORTES[`imgCorte${slotIndex}`] - 1] = images.cutImageUrl;
+                        }
                         return verified;
                         }, operationHash);
                 }
@@ -7098,8 +7102,8 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
                     recordOpId(opId, rowObj.id, slotIndex, match.timestamp || rowObj.timestamp, "completed", operationHash, idempotencyEntriesSnapshot);
                 }
                 markAdminCutImagesLinkedOutsideLock_(lock, opId, rowObj.id, slotIndex, operationHash, [
-                    sheet.getRange(rowIndex, COLS_CORTES.imagenVehiculo).getValue(),
-                    sheet.getRange(rowIndex, COLS_CORTES["imgCorte" + slotIndex]).getValue()
+                    rowValues[COLS_CORTES.imagenVehiculo - 1],
+                    rowValues[COLS_CORTES["imgCorte" + slotIndex] - 1]
                 ], idempotencyEntriesSnapshot);
                 return {
                     status: 'success',

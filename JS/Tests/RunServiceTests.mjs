@@ -77,6 +77,7 @@ runGroup('32','ADMIN',()=>{
   runCli('ADMIN agrupa los cinco campos contiguos del corte existente','JS/Tests/AdminCutSlotBatchWrites.mjs');
   runCli('ADMIN agrupa reparaciones de registros recuperados','JS/Tests/AdminRecoveryRepairBatchWrites.mjs');
   runCli('ADMIN evita el ciclo Drive/lock si la recuperación no necesita reparar imágenes','JS/Tests/AdminRecoveryImageRepairFastPath.mjs');
+  runCli('ADMIN reutiliza snapshot de fila para vincular imágenes recuperadas','JS/Tests/AdminRecoveryImageSnapshotReuse.mjs');
   runCli('WRITE recupera opId heredados sin descargar Cortes completo','JS/Tests/WriteOpIdLegacyLookup.mjs');
   runCli('WRITE localiza vehicleId leyendo solo la columna ID','JS/Tests/WriteUniqueVehicleRowBoundedRead.mjs');
   runCli('WRITE evita reinicializar ledger Idempotencia compatible','JS/Tests/IdempotenciaSheetLookupFastPath.mjs');

@@ -1076,3 +1076,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-19 · cierre] ADMIN fast path de recuperación de imágenes: tras acotar la prueba a la ruta de recuperación idempotente, CI 44635382990 SUCCESS (187 suites, 2476 pruebas aprobadas, 0 fallos; AdminRecoveryImageRepairFastPath 6/6); health read-only 44635382893 SUCCESS. La primera ejecución había fallado únicamente por una aserción de prueba que contaba otra ruta Drive del handler; la prueba fue corregida y la repetición aprobó. Pages 44635380904 seguía QUEUED al registrar este cierre. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
+
+
+[2026-11-19] ADMIN: recuperación idempotente reutiliza el snapshot de la fila para vincular imágenes. La revalidación actualiza `verified.rowValues` al escribir URL faltantes; la vinculación posterior consume esos valores en memoria y elimina dos lecturas individuales de Sheets (`getValue()`). Se preservan URL existentes y el flujo Drive/ledger fuera del ScriptLock. Se añade AdminRecoveryImageSnapshotReuse.mjs.

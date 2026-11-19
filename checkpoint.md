@@ -230,3 +230,11 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Pages 44635380904 estaba QUEUED al momento del registro; no se declara como aprobado.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
 - Siguiente actividad: continuar la reducción de lecturas individuales/costos de revalidación restantes en recuperación ADMIN, sin sacar del lock las escrituras o reservas que requieran atomicidad.
+
+
+## Continuidad — snapshot de imágenes en recuperación ADMIN (2026-11-19)
+- En el callback de revalidación de imágenes, al escribir una URL faltante en Cortes también se actualiza el índice correspondiente de `verified.rowValues`.
+- Tras recuperar el registro, `rowValues` refleja tanto las URL existentes como las reparadas. La llamada a `markAdminCutImagesLinkedOutsideLock_` reutiliza esas posiciones y elimina dos llamadas individuales `getValue()`.
+- Se conserva la escritura condicional (no reemplaza URL válida), la vinculación del ledger y el trabajo Drive fuera del lock.
+- Prueba `AdminRecoveryImageSnapshotReuse.mjs` integrada en el runner; CI pendiente.
+- No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.

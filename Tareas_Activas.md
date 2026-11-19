@@ -688,3 +688,11 @@ Siguiente paso: continuar GP-PERF-ADMIN-CUT-LOCK-01 inspeccionando las escritura
 - [x] CI final 44635382990 SUCCESS: 187 suites, 2476 pruebas aprobadas, 0 fallos; AdminRecoveryImageRepairFastPath 6/6 PASS y sintaxis aprobada.
 - [x] Health read-only 44635382893 SUCCESS.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
+
+
+### ADMIN — reutilización del snapshot para vincular imágenes recuperadas (2026-11-19)
+- [x] Actualizar en memoria `verified.rowValues` cuando la revalidación escribe una URL de imagen faltante.
+- [x] Reutilizar `rowValues` para obtener las URL de vehículo y corte al invocar `markAdminCutImagesLinkedOutsideLock_`, eliminando dos llamadas individuales `getValue()`.
+- [x] Mantener valores ya válidos, sincronización del ledger y flujo Drive fuera del ScriptLock.
+- [x] Añadir `AdminRecoveryImageSnapshotReuse.mjs` al runner con comprobación de ausencia de lecturas y simulación de preservación/escritura.
+- Estado: IMPLEMENTACIÓN PUBLICADA; regresión y health pendientes de CI. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
