@@ -605,8 +605,6 @@ function handleAllocateVehicleId(payload) {
     const lock = LockService.getScriptLock();
     let lockAcquired = false;
     try {
-        // El asignador comparte el ScriptLock global de WRITE. Nunca debe esperar
-        // mientras mantiene ocupadas otras acciones; el cliente puede reintentar.
         lockAcquired = lock.tryLock(0);
         if (!lockAcquired) {
             const busyError = new Error("WRITE está ocupado con otra operación de escritura. Reintenta la asignación en unos instantes.");

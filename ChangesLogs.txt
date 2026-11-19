@@ -887,3 +887,5 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 2026-11-19 — WRITE allocator: handleAllocateVehicleId deja de esperar 30 s por el ScriptLock global; devuelve WRITE_BUSY para reintento y libera solo si adquirió el lock. Añadida prueba WriteIdAllocatorNonBlocking.mjs (pendiente CI).
 
 2026-11-19 — CI detectó contrato obsoleto en WriteAuthorizationMinimization (AUG-039) que exigía waitLock en allocateVehicleId. Se actualizó a tryLock(0), conservando verificación de rol dentro del lock y liberación condicional.
+
+2026-11-19 — Compatibilidad del parser estático AUG-039: eliminado comentario dentro de handleAllocateVehicleId; lógica tryLock(0) sin cambios.
