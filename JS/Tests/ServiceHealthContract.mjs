@@ -185,7 +185,7 @@ await check("El panel presenta los seis estados y no muestra metadatos internos"
         assert.ok(uiSource.includes(status + ':'));
     }
     const start = uiSource.indexOf("function renderServiceDetail()");
-    const end = uiSource.indexOf("function renderServiceTrafficChart()", start);
+    const end = uiSource.indexOf("function renderLocalServiceTrafficChart_(", start);
     const detail = uiSource.slice(start, end);
     assert.ok(!detail.includes("sheetsAccessed"));
     assert.ok(!detail.includes("cacheStatus"));
