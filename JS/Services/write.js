@@ -659,6 +659,7 @@ function getNextCortesVehicleIdLocked(sheet) {
     properties.setProperty(CORTES_ID_COUNTER_PROPERTY, String(nextId));
     return nextId;
 }
+/** Endpoint autenticado para que ADMIN solicite un ID al asignador central. */
 function handleAllocateVehicleId(payload) {
     const lock = LockService.getScriptLock();
     let lockAcquired = false;
