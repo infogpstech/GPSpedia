@@ -198,6 +198,7 @@ function createSharedMutationCoordinator_(dependencies) {
     const now = dependencies.now;
     const uuid = dependencies.uuid;
     const sleep = dependencies.sleep;
+    const fetch = dependencies.fetch;
 
     function constantTimeEquals_(left, right) {
         left = String(left || "");
@@ -575,6 +576,72 @@ function createSharedMutationCoordinator_(dependencies) {
     }
 
 
+
+    function invalidateSessionActorCaches_(service, operation, payload) {
+        if (service !== "AUTH" || operation !== "invalidateSessionActorCaches") {
+            throw new Error("Solo AUTH puede solicitar la invalidación remota de caché de sesión.");
+        }
+        const userId = String(payload.userId || "").trim();
+        const suppliedTokens = Array.isArray(payload.sessionTokens) ? payload.sessionTokens : [];
+        if (!userId || userId.length > 128 || !suppliedTokens.length || suppliedTokens.length > 25 ||
+            suppliedTokens.some(token => typeof token !== "string" || token.length < 16 || token.length > 200)) {
+            throw new Error("La invalidación remota requiere un usuario y entre 1 y 25 tokens válidos.");
+        }
+        const tokens = Array.from(new Set(suppliedTokens));
+        if (tokens.length !== suppliedTokens.length) {
+            throw new Error("La invalidación remota contiene tokens duplicados.");
+        }
+        if (typeof fetch !== "function") {
+            throw new Error("La comunicación remota de invalidación no está disponible en Coordinator.");
+        }
+        const targets = ["WRITE", "FEEDBACK"];
+        const batchSize = 5;
+        targets.forEach(target => {
+            const url = String(properties.getProperty("GPSpedia_SERVICE_URL_" + target) || "").trim();
+            const secret = String(properties.getProperty("GPSpedia_COORDINATOR_SECRET_" + target) || "");
+            if (!url.startsWith("https://script.google.com/macros/s/") || !url.endsWith("/exec") ||
+                secret.length < 32) {
+                throw new Error("La configuración de invalidación remota de " + target + " está incompleta.");
+            }
+        });
+        const confirmed = { WRITE: 0, FEEDBACK: 0 };
+        for (let offset = 0; offset < tokens.length; offset += batchSize) {
+            const batch = tokens.slice(offset, offset + batchSize);
+            targets.forEach(target => {
+                const url = String(properties.getProperty("GPSpedia_SERVICE_URL_" + target) || "").trim();
+                const secret = String(properties.getProperty("GPSpedia_COORDINATOR_SECRET_" + target) || "");
+                let response;
+                try {
+                    response = fetch(url, {
+                        method: "post",
+                        contentType: "application/json",
+                        muteHttpExceptions: true,
+                        followRedirects: true,
+                        payload: JSON.stringify({
+                            action: "__invalidateSessionActorCache",
+                            payload: { secret, userId, sessionTokens: batch }
+                        })
+                    });
+                } catch (error) {
+                    throw new Error("No se pudo contactar el servicio " + target + " para invalidar su caché.");
+                }
+                let result = null;
+                try { result = JSON.parse(response.getContentText()); } catch (error) {}
+                const status = response.getResponseCode();
+                if (status < 200 || status >= 300 || !result || result.status !== "success" ||
+                    result.invalidated !== batch.length) {
+                    throw new Error("El servicio " + target + " no confirmó la invalidación remota de caché.");
+                }
+                confirmed[target] += result.invalidated;
+            });
+        }
+        return {
+            status: "success",
+            invalidated: tokens.length,
+            services: targets.slice(),
+            confirmed
+        };
+    }
 
     function syncUserSessions_(service, operation, payload) {
         if (service !== "AUTH" || operation !== "syncUserSessions") {
@@ -1209,6 +1276,7 @@ function createSharedMutationCoordinator_(dependencies) {
         if (action === "revokeSession") return revokeSession_(service, operation, payload);
         if (action === "revokeUserSessions") return revokeUserSessions_(service, operation, payload);
         if (action === "validateSessionContext") return validateSessionContext_(service, operation, payload);
+        if (action === "invalidateSessionActorCaches") return invalidateSessionActorCaches_(service, operation, payload);
         if (action === "getServiceTraffic") return readServiceTraffic_(service, operation);
         throw new Error("Acción interna desconocida para el coordinador.");
     }
