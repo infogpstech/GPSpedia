@@ -333,8 +333,11 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [ ] Aplicar como criterio transversal el aislamiento entre operaciones independientes, no solo reducir duración de `handleAddOrUpdateCut`.
 - [ ] Mapear los límites reales de proyecto/deployment: `ScriptLock` es global por proyecto Apps Script y puede bloquear otras funciones aunque estén en archivos separados.
 - [ ] Inventariar para cada lock el recurso/estado exacto que protege; separar auditoría/telemetría, Inbox, health, autenticación y registro de cortes cuando no comparten recurso.
-- [ ] Añadir pruebas de no interferencia entre auditoría lenta, Inbox, health, login y registro de cortes; añadir también pruebas de conflicto sobre el mismo recurso.
-- [ ] No considerar aceptable una arquitectura que evita corrupción pero serializa funciones no relacionadas.
+- [x] Añadir pruebas locales de no interferencia: auditoría + Inbox (sendInboxMessage), consulta de telemetría, ping de salud (sin lease/ScriptLock), login y registro WRITE; conservar conflicto entre auditorías sobre IMAGE_AUDIT_STATE y conflictos de recursos compartidos ya cubiertos por Coordinator.
+- [x] Verificar en CI que la auditoría no bloquea las operaciones independientes cubiertas por los contratos; CI 44626115506 SUCCESS: 176 suites, 2,400 pruebas aprobadas, 0 fallos. Health read-only 44626115768 SUCCESS.
+- [ ] Mapear Script IDs/proyectos Apps Script desplegados. No hay .clasp.json ni appsscript.json versionados; los IDs de deployment presentes en URLs no demuestran por sí solos qué fuentes comparten proyecto. No inferir aislamiento real.
+- [ ] No considerar aceptable una arquitectura que evita corrupción pero serializa funciones no relacionadas; completar prueba real de concurrencia en Beta autorizada.
+- [ ] Continuar la sección crítica de handleAddOrUpdateCut: revisar compatibilidad de solicitudes sin opId, porque runAdminDriveWorkOutsideScriptLock_ ejecuta Drive bajo el lock cuando no hay opId; no liberar ese lock sin una reserva/revalidación segura.
 
 ## Avance de implementación — GP-PERF-ADMIN-CUT-LOCK-01 (2026-11-19)
 - [x] Primer ajuste de reserva: `findNextAvailableCutSlot_` ahora excluye los slots del mismo vehículo que ya estén registrados como `pending` en Idempotencia. Esto permite reservar el destino antes de liberar el lock para Drive.
