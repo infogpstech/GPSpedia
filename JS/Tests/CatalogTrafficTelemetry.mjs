@@ -139,4 +139,4 @@ test("el router excluye su endpoint de telemetría y cuenta solo acciones CATALO
     assert.doesNotMatch(telemetrySource, /UrlFetchApp|LockService\.waitLock/);
 });
 
-console.log("CatalogTrafficTelemetry: " + passed + "/8 PASS");
+console.log("CatalogTrafficTelemetry: " + passed + "/9 PASS");
