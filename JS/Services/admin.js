@@ -9401,19 +9401,43 @@ function mergeCatalogServiceTraffic_(coordinatorResult, catalogResult) {
     return mergeDirectServiceTraffic_(coordinatorResult, { CATALOG: catalogResult });
 }
 
+function validateGlobalServiceTrafficResult_(source) {
+    const expectedServices = ["AUTH", "CATALOG", "WRITE", "USERS", "FEEDBACK", "UTILITIES", "ADMIN"];
+    if (!source || source.status !== "success" || source.scope !== "global_service_traffic" ||
+        !Array.isArray(source.services) || source.services.length !== expectedServices.length ||
+        expectedServices.some(service => !source.services.includes(service)) ||
+        source.services.some(service => !expectedServices.includes(service)) ||
+        !Array.isArray(source.buckets) || !source.totals) return false;
+    const validCounts = counts => counts && typeof counts === "object" && !Array.isArray(counts) &&
+        expectedServices.every(service => Number.isSafeInteger(counts[service]) && counts[service] >= 0);
+    if (!["lastHour", "last6Hours", "last24Hours"].every(period => validCounts(source.totals[period]))) return false;
+    return source.buckets.every(bucket => bucket && Number.isSafeInteger(bucket.startAt) && bucket.startAt > 0 &&
+        validCounts(bucket.counts));
+}
+
 function handleGetServiceTraffic_(payload, logMessage, developerContext) {
     if (!developerContext || String(developerContext.role || "").toLowerCase() !== "desarrollador") {
         throw new Error("Acceso denegado: la telemetría global está reservada a Desarrollador.");
     }
     const coordinatorResult = getSharedServiceTraffic_();
     if (!coordinatorResult || coordinatorResult.status !== "success" ||
-        coordinatorResult.scope !== "coordinator_protected_operations" ||
         !Array.isArray(coordinatorResult.buckets) || !coordinatorResult.totals) {
         throw new Error("No se pudo recuperar un agregado global válido del coordinador.");
     }
-    const result = mergeDirectServiceTraffic_(coordinatorResult, getDirectServiceTrafficBatch_());
+    let result;
+    if (coordinatorResult.scope === "global_service_traffic") {
+        if (!validateGlobalServiceTrafficResult_(coordinatorResult)) {
+            throw new Error("Coordinator devolvió una telemetría global incompleta o inválida.");
+        }
+        result = coordinatorResult;
+    } else if (coordinatorResult.scope === "coordinator_protected_operations") {
+        // Compatibilidad temporal con Coordinator anterior a la agregación central.
+        result = mergeDirectServiceTraffic_(coordinatorResult, getDirectServiceTrafficBatch_());
+    } else {
+        throw new Error("Coordinator devolvió un scope de telemetría no compatible.");
+    }
     if (typeof logMessage === "function") {
-        logMessage("Telemetría global", "Se recuperaron métricas agregadas de Coordinator y fuentes directas instrumentadas.", 1, 1);
+        logMessage("Telemetría global", "Se recuperaron métricas de los siete servicios mediante Coordinator.", 1, 1);
     }
     return result;
 }
