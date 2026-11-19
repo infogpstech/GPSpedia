@@ -666,7 +666,7 @@ function doGet(e) {
 
 
 function isSharedMutationAction_(action) {
-    return ["login","touchSession","acceptTerms","requestPasswordRecovery","completePasswordRecovery","changePassword","resetUserPassword","resetUserSessions","clearSensitiveLogs","deleteUser","updateUser","logout","migrateLegacyPasswords"].includes(action);
+    return ["login","touchSession","acceptTerms","requestPasswordRecovery","completePasswordRecovery","changePassword","resetUserPassword","resetUserSessions","deleteUser","updateUser","logout","migrateLegacyPasswords"].includes(action);
 }
 
 function syncAuthSheetActivityFromActor_(userId, sessionToken, actor) {
@@ -712,6 +712,19 @@ function doPost(e) {
     }
     if (DIRECT_SERVICE_TRAFFIC_CONFIG_.actions.has(action)) recordDirectServiceTraffic_();
     const payload = request.payload && typeof request.payload === "object" ? request.payload : {};
+    if (action === "clearSensitiveLogs") {
+        try {
+            // La purga de Logs solo requiere capacidad Desarrollador; no modifica
+            // sesiones ni necesita una lease o autorización remota por acción.
+            const actor = getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "AUTH" });
+            return doPostInternal_(withSharedSessionActor_(e, actor));
+        } catch (error) {
+            return ContentService.createTextOutput(JSON.stringify({
+                status: "error",
+                message: error && error.message ? error.message : "No se pudo recuperar el contexto de sesión."
+            })).setMimeType(ContentService.MimeType.TEXT);
+        }
+    }
     if (action === "benchmarkPasswordKdf") {
         try {
             // El benchmark solo calcula con una cadena fija: el actor cacheado basta;

@@ -94,6 +94,9 @@ testCase("AUTH usa el actor central y no repite verificaciones de usuario/rol en
  assert.equal(api.includes("ensureSessionTouched_"),false);
  assert.equal(api.includes("touchSessionBeforeAction"),false);
  assert.match(auth,/const sessionOptions = payload\.sessionToken && action !== "logout"\s*\? \{ session: \{ sessionToken: payload\.sessionToken \} \}/);
+ const authRouter=auth.slice(auth.indexOf("function doPost(e)"),auth.indexOf("function doPostInternal_(e)"));
+ assert.match(authRouter,/action === "clearSensitiveLogs"[\\s\\S]*?getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "AUTH" \}\)/);
+ assert.doesNotMatch(authRouter,/withSharedMutationLease_\("AUTH", "clearSensitiveLogs"/);
 });
 testCase("Coordinator conserva metadatos de recursos ADMIN sin sesiones ni subleases por acción",()=>{
  const policyStart=coordinator.indexOf("function coordinatorPolicy_");

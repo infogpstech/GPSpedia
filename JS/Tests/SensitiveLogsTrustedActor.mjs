@@ -171,11 +171,12 @@ function createDispatchHarness(source, service, extraBindings = {}) {
         return dispatcher(event);
     }};
 }
-test("la limpieza de Logs usa la lease AUTH específica y el actor central", () => {
+test("la limpieza de Logs usa actor cacheado y RBAC Desarrollador sin lease", () => {
     assert.match(apiConfig, /['"]clearSensitiveLogs['"]\s*:\s*['"]AUTH['"]/);
     const harness = createDispatchHarness(auth,"AUTH");
     const payload = harness.send("clearSensitiveLogs");
-    assert.deepEqual(harness.calls,[{service:"AUTH",operation:"clearSensitiveLogs",sessionToken:"trusted-session"}]);
+    assert.deepEqual(harness.calls,[]);
+    assert.deepEqual(harness.actorLookups,[{userId:"DEV-1",sessionToken:"trusted-session"}]);
     assert.equal(payload.__sharedSessionActor.userId,"DEV-1");
     assert.equal(payload.__sharedSessionActor.epoch,7);
     const policy = new Function(coordinator + String.fromCharCode(10) + "return coordinatorPolicy_;")();
