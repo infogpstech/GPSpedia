@@ -672,4 +672,8 @@ Siguiente paso: continuar GP-PERF-ADMIN-CUT-LOCK-01 inspeccionando las escritura
 - [x] Agrupar tipo, ubicación, color y configuración de relay del slot recuperado en una escritura contigua; conservar testigo y colaborador en columnas independientes.
 - [x] Preservar valores existentes, normalización de rango de años, VIN, timestamp, flush y finalización idempotente.
 - [x] Añadir `AdminRecoveryRepairBatchWrites.mjs` al runner con simulación de los lotes, preservación de datos y omisión de escrituras cuando no hay cambios.
-- Estado previo a CI: IMPLEMENTADA; pendiente ejecutar regresión y revisar diff remoto.
+- [x] CI `44634550285` SUCCESS: sintaxis de módulos modificados y suite completa de regresión aprobadas.
+- [x] Health read-only `44634550314` SUCCESS sobre el mismo HEAD.
+- [x] Diff revisado: seis archivos, solo el handler ADMIN, prueba/runner y registros de esta tarea.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
+- Commit: `65a4aa5f873e7f88c7230c837206c56743bb40b8`.
