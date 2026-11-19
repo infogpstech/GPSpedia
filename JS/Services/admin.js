@@ -6596,13 +6596,22 @@ function computeCutOperationFingerprint_(payload) {
     return digest.map(byte => ((Number(byte) + 256) % 256).toString(16).padStart(2, "0")).join("");
 }
 
-function findNextAvailableCutSlot_(rowValues) {
+function findNextAvailableCutSlot_(rowValues, vehicleId) {
     if (!Array.isArray(rowValues)) throw new Error("No se pudo verificar la disponibilidad de los espacios de corte.");
+    const reservedSlots = new Set();
+    if (vehicleId !== null && vehicleId !== undefined && String(vehicleId).trim() !== "") {
+        const entries = readIdempotenciaEntries_(getIdempotenciaSheet(), false).entries;
+        entries.forEach(entry => {
+            if (entry.status === "pending" && String(entry.vehicleId) === String(vehicleId)) {
+                reservedSlots.add(Number(entry.slotIndex));
+            }
+        });
+    }
     for (let slot = 1; slot <= 3; slot++) {
         const column = COLS_CORTES['tipoCorte' + slot];
         if (!column) throw new Error("La estructura de columnas de cortes no es válida.");
         const value = rowValues[column - 1];
-        if (value === null || value === undefined || String(value).trim() === "") return slot;
+        if ((value === null || value === undefined || String(value).trim() === "") && !reservedSlots.has(slot)) return slot;
     }
     return null;
 }
@@ -6794,7 +6803,7 @@ const filename = buildCanonicalImageBaseName(rowObj, "imgCorte" + slotIndex);
             ? prepareVinCollectionForAdmin(sheet, rowValues, vehicleId, vinColumnIndex, vinPrefix, vehicleData && vehicleData.versionesAplicables)
             : null;
 
-        const cutSlotIndex = findNextAvailableCutSlot_(rowValues);
+        const cutSlotIndex = findNextAvailableCutSlot_(rowValues, vehicleId);
         if (cutSlotIndex === null) throw new Error("No hay espacios disponibles para más cortes.");
         savedSlotIndex = cutSlotIndex;
 

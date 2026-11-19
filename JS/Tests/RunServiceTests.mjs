@@ -71,6 +71,7 @@ runGroup('32','ADMIN',()=>{
  runCli('P4 política de roles para compartir, imprimir y editar ficha','JS/Tests/VehicleModalRolePolicy.mjs');
  runCli('Modal de corte: colaborador comunitario cuando falta','JS/Tests/CutDetailContributorFallback.mjs');
   runCli('WRITE cargas Drive fuera del ScriptLock y reserva de slots','JS/Tests/WriteDriveOutsideLock.mjs');
+  runCli('ADMIN reserva slots de corte ocupados por operaciones pending','JS/Tests/AdminCutSlotReservation.mjs');
   runCli('RBAC y sesiones ilimitadas del rol Desarrollador','JS/Tests/DeveloperPrivilegeRouting.mjs');
  runCli('P4 protección de medios sin bloquear texto ni controles','JS/Tests/ClientInteractionPolicy.mjs');
  recordResult('ADMIN compensación de reemplazos in-modal/AUG-038',loadFunction('JS/Tests/AdminImageReplacementCompensation.js','runAdminImageReplacementCompensationTests')(read('JS/Frontend/ui.js'),a));

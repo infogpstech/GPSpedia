@@ -1111,3 +1111,12 @@ ACTUALIZACIÓN DE CONTINUIDAD — 2026-11-19
 - Pruebas requeridas: operación de auditoría lenta concurrente con Inbox, health, login y registro de cortes; cada una debe terminar dentro de su presupuesto. Mantener pruebas de exclusión/conflicto para mutaciones del mismo recurso.
 - Evitar locks genéricos; auditoría/telemetría best-effort y fuera de rutas síncronas críticas. No eliminar garantías de integridad.
 ================================================================================
+
+================================================================================
+2026-11-19 — GP-PERF-ADMIN-CUT-LOCK-01: PRIMER PASO DE RESERVA DE SLOTS
+- Rama: GPSpedia2.2.5_work. HEAD base verificado antes del cambio: da2afc850ab4251528e74f02a66cf3ba33daabf0. Rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- `findNextAvailableCutSlot_` ahora consulta el ledger Idempotencia y excluye slots pending del mismo vehículo; se añadió prueba determinista y se conectó al runner integral.
+- Este cambio es preparatorio: el handler ADMIN todavía mantiene el ScriptLock durante WRITE/Drive y la recuperación. No se declara completada la tarea ni validada la prueba hasta ejecutar CI.
+- No se desplegó Apps Script ni se tocaron ScriptProperties, secretos, Drive o Spreadsheet.
+================================================================================
+

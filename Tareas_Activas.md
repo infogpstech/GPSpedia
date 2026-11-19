@@ -335,3 +335,10 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [ ] Inventariar para cada lock el recurso/estado exacto que protege; separar auditoría/telemetría, Inbox, health, autenticación y registro de cortes cuando no comparten recurso.
 - [ ] Añadir pruebas de no interferencia entre auditoría lenta, Inbox, health, login y registro de cortes; añadir también pruebas de conflicto sobre el mismo recurso.
 - [ ] No considerar aceptable una arquitectura que evita corrupción pero serializa funciones no relacionadas.
+
+## Avance de implementación — GP-PERF-ADMIN-CUT-LOCK-01 (2026-11-19)
+- [x] Primer ajuste de reserva: `findNextAvailableCutSlot_` ahora excluye los slots del mismo vehículo que ya estén registrados como `pending` en Idempotencia. Esto permite reservar el destino antes de liberar el lock para Drive.
+- [ ] Ejecutar la prueba local `AdminCutSlotReservation.mjs` y CI; no marcar el subpaso como validado hasta comprobar resultados.
+- [ ] Continuar con la separación del flujo en reserva breve, WRITE/Drive fuera del lock y revalidación/persistencia breve. El handler aún conserva el lock global durante el resto del proceso; esta modificación por sí sola NO cierra la tarea.
+- [ ] Añadir recuperación segura y pruebas de no interferencia entre auditoría, Inbox, health, login y registro de cortes. No se ha confirmado el mapa de proyectos Apps Script desplegados; el repositorio no contiene manifiestos `.clasp.json` ni `appsscript.json` que permitan asociar cada fuente a un Script ID.
+

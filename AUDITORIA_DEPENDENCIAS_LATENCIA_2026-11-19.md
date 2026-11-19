@@ -105,3 +105,7 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 ## Observación de alcance de locks
 
 El inventario estático localiza ScriptLocks en ADMIN, AUTH, USERS, WRITE, FEEDBACK, InboxConversations y otros módulos. Un `ScriptLock` no se limita a la función que lo adquiere: dentro de un mismo proyecto Apps Script es compartido por las ejecuciones de ese proyecto. Por tanto, separar funciones en archivos no aísla operaciones. La auditoría siguiente debe mapear cada despliegue/proyecto y asociar cada lock al recurso que protege; las llamadas remotas y trabajo no crítico deben salir del lock. No asumir que Inbox/health/login están aislados entre sí hasta confirmar si viven en proyectos de Apps Script distintos.
+
+## Adenda — reserva de slots pending
+La implementación inicial de ADMIN seleccionaba el primer slot vacío leyendo únicamente la fila de Cortes. Si se libera el lock durante una carga, esa lectura no detectaría una reserva `pending` de otra solicitud. El primer paso de corrección hace que `findNextAvailableCutSlot_` consulte Idempotencia y excluya slots pending asociados al mismo vehículo. La protección solo sirve como reserva si el registro pending se escribe antes de liberar el lock; el handler actual aún no libera el lock, por lo que el cambio es preparatorio y no reduce todavía la latencia.
+

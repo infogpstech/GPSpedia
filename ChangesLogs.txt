@@ -878,3 +878,9 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - Tareas_Activas.md identifica GP-PERF-ADMIN-CUT-LOCK-01 como siguiente implementación prioritaria: separar reserva, I/O externo y persistencia de handleAddOrUpdateCut.
 - checkpoint.md actualiza HEAD real y continuidad; no se modificó código ni se ejecutaron pruebas/deployments.
 ================================================================================
+
+2026-11-19 — GP-PERF-ADMIN-CUT-LOCK-01 (paso preparatorio)
+- ADMIN: findNextAvailableCutSlot_ ahora excluye slots reservados por operaciones pending del mismo vehículo en Idempotencia.
+- Se agregó JS/Tests/AdminCutSlotReservation.mjs y se incorporó al runner integral.
+- El handler todavía conserva el lock durante WRITE/Drive; tarea en progreso, sin cierre ni validación CI declarada.
+
