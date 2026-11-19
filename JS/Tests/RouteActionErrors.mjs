@@ -3,10 +3,10 @@ import { readFileSync } from "node:fs";
 const apiSource = readFileSync(new URL("../Frontend/api-config.js", import.meta.url), "utf8");
 const uiSource = readFileSync(new URL("../Frontend/ui.js", import.meta.url), "utf8");
 const helperMatch = apiSource.match(/function createRouteActionError_\([\s\S]*?\n\}/);
-const routeMatch = apiSource.match(/export async function routeAction\([\s\S]*?\n\}/);
+const routeMatch = apiSource.match(/async function routeActionInternal_\([\s\S]*?\n\}/);
 assert.ok(helperMatch, "No se encontró createRouteActionError_.");
 assert.ok(routeMatch, "No se encontró routeAction.");
-const routeSource = routeMatch[0].replace("export async function", "async function");
+const routeSource = routeMatch[0];
 function buildRouteAction(fetchImpl) {
     return new Function("ACTION_TO_SERVICE_MAP","API_ENDPOINTS","fetch",
         helperMatch[0] + "\n" + routeSource + "\nreturn routeAction;")(
