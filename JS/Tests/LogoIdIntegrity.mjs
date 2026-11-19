@@ -46,6 +46,9 @@ test("Rechaza IDs malformados y filas con datos sin ID",()=>{
 test("Ignora filas plantilla vacías con fórmula histórica",()=>{
  const h=generator(sheet([["id","nombre"],[1,"A"],["",""]],[["id"],["=ROW()-1"],["=ROW()-1"]]));assert.equal(h.next(),2);
 });
+test("handleAddLogo usa creación segura de carpeta sin fusionar duplicados",()=>{
+ const fn=extract("handleAddLogo");assert.match(fn,/findOrCreateSubFolder\(rootFolder, "Logos"\)/);assert.doesNotMatch(fn,/getOrCreateSubFolder/);
+});
 test("handleAddLogo escribe el ID como valor y elimina la espera de fórmula",()=>{
  const fn=extract("handleAddLogo");assert.match(fn,/getNextLogoIdLocked_\(sheet\)/);assert.match(fn,/getRange\(newRow, 1\)\.setValue\(newId\)/);
  assert.doesNotMatch(fn,/setFormula|Utilities\.sleep/);
@@ -108,7 +111,7 @@ function addLogoHarness(options={}){
   getSpreadsheet:()=>({getSheetByName:()=>sheetValue}),
   SHEET_NAMES:{LOGOS_MARCA:"LogosMarca"},
   getCortesRootFolder:()=>({}),
-  getOrCreateSubFolder:()=>folder,
+  findOrCreateSubFolder:()=>folder,
   Utilities:{base64Decode:()=>[1,2,3],newBlob:()=>({})},
   LockService:{getScriptLock:()=>lock},
   SpreadsheetApp:{flush,CopyPasteType:{PASTE_FORMAT:"PASTE_FORMAT",PASTE_DATA_VALIDATION:"PASTE_DATA_VALIDATION"}},

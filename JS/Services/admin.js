@@ -5097,7 +5097,7 @@ function handleAddLogo(payload, logMessage) {
 
     logMessage("Registro Logo", `Iniciando registro de logotipo para la marca: ${nombreMarca}`);
     const rootFolder = getCortesRootFolder();
-    const logosFolder = getOrCreateSubFolder(rootFolder, "Logos");
+    const logosFolder = findOrCreateSubFolder(rootFolder, "Logos");
     logMessage("Registro Logo", `Subiendo logotipo '${filename}' de tipo '${mimeType}'...`);
     const decodedData = Utilities.base64Decode(fileData);
     const blob = Utilities.newBlob(decodedData, mimeType, filename);
