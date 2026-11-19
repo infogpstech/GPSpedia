@@ -8608,44 +8608,6 @@ function findUniqueCortesVehicleRow_(sheet, vehicleId, opId) {
     const rowValues = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getValues()[0];
     return { rowIndex: rowIndex, rowValues: rowValues };
 }
-function findUniqueCortesVehicleRow_(cortesSheet, vehicleId, opId) {
-    if (!cortesSheet) throw new Error("No se encontró la hoja Cortes para recuperar el opId " + opId + ".");
-    const cleanVehicleId = normalizeIdempotenciaVehicleId_(vehicleId, "Recuperación " + opId);
-    const data = cortesSheet.getDataRange().getValues();
-    const matches = [];
-
-    for (let rowOffset = 1; rowOffset < data.length; rowOffset++) {
-        const rawId = data[rowOffset][COLS_CORTES.id - 1];
-        if (isBlankIdempotenciaValue_(rawId)) continue;
-        if (normalizeIdempotenciaVehicleId_(rawId, "Cortes fila " + (rowOffset + 1)) === cleanVehicleId) {
-            matches.push({ rowIndex: rowOffset + 1, rowValues: data[rowOffset] });
-        }
-    }
-    if (matches.length !== 1) {
-        throw new Error("No se puede recuperar el opId " + opId + ": vehicleId " + cleanVehicleId +
-            " aparece en " + matches.length + " filas de Cortes; se requiere exactamente una. No se modificó.");
-    }
-    return matches[0];
-}
-
-function findUniqueCortesVehicleRow_(cortesSheet, vehicleId, opId) {
-    if (!cortesSheet) throw new Error("No se encontró la hoja Cortes para recuperar el opId " + opId + ".");
-    const cleanVehicleId = normalizeIdempotenciaVehicleId_(vehicleId, "Recuperación " + opId);
-    const data = cortesSheet.getDataRange().getValues();
-    const matches = [];
-    for (let rowOffset = 1; rowOffset < data.length; rowOffset++) {
-        const rawId = data[rowOffset][COLS_CORTES.id - 1];
-        if (isBlankIdempotenciaValue_(rawId)) continue;
-        if (normalizeIdempotenciaVehicleId_(rawId, "Cortes fila " + (rowOffset + 1)) === cleanVehicleId) {
-            matches.push({ rowIndex: rowOffset + 1, rowValues: data[rowOffset] });
-        }
-    }
-    if (matches.length !== 1) {
-        throw new Error("No se puede recuperar el opId " + opId + ": vehicleId " + cleanVehicleId +
-            " aparece en " + matches.length + " filas de Cortes; se requiere exactamente una. No se modificó.");
-    }
-    return matches[0];
-}
 
 function findRowByOpId(sheet, opId) {
     const cleanOpId = String(opId === null || opId === undefined ? "" : opId).trim();

@@ -999,3 +999,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-19] ADMIN: findUniqueCortesVehicleRow_ deja de usar getDataRange completo; valida la columna ID, conserva detección de duplicados/corrupción y lee la fila completa solo para la coincidencia única. Se añade AdminUniqueVehicleRowBoundedRead.mjs; CI pendiente.
+
+
+[2026-11-19] Corrección de localización por ID: se eliminaron dos declaraciones globales duplicadas que sobrescribían la implementación acotada y mantenían getDataRange; queda una única función efectiva. La prueba ahora comprueba que no existan declaraciones duplicadas. CI pendiente.

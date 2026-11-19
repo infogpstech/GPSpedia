@@ -499,4 +499,4 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Sustituir getDataRange completo por lectura de la columna ID; leer la fila completa solo después de confirmar una coincidencia única.
 - [x] Mantener detección de IDs duplicados y validación de todos los IDs no vacíos.
 - [x] Añadir AdminUniqueVehicleRowBoundedRead.mjs al runner.
-- [ ] CI integral y revisión del diff pendientes. No se despliega ADMIN ni se modifican datos externos.
+- [ ] CI integral pendiente. La revisión del diff detectó dos declaraciones duplicadas posteriores que sobrescribían la función optimizada; se eliminan para conservar una única implementación efectiva.
