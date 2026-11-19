@@ -61,6 +61,20 @@ testCase("protege registros que requieren revisión o están en uso",()=>{
 testCase("excluye registros confirmados como eliminados",()=>{
     assert.equal(collectedHistory.has(historyIds[4]),false);
 });
+testCase("reconoce inventario legado sin columnas dinámicas como sin uso",()=>{
+    const legacyId="drive-file-id-legacy-unused-0000007";
+    const legacyHeaders=historyHeaders.slice(0,11);
+    const legacyRow=Array(11).fill("");
+    legacyRow[0]="INV-LEGACY";legacyRow[2]="inventario_sin_uso";legacyRow[5]=legacyId;
+    legacyRow[7]="https://drive.google.com/file/d/"+legacyId+"/view";
+    legacyRow[10]="sin_uso_detectado";
+    const legacyRows=[legacyHeaders,legacyRow];
+    const legacyHistory=collectHistory(
+        ()=>({getSheetByName:()=>({getLastRow:()=>legacyRows.length,getDataRange:()=>({getValues:()=>legacyRows})})}),
+        {IMAGENES_REEMPLAZADAS:"Imagenes_Reemplazadas"},extractDriveFileIds
+    )();
+    assert.equal(legacyHistory.has(legacyId),false);
+});
 testCase("permite asociar una imagen inventariada como sin uso si coincide con un destino",()=>{
     const candidate={...file(7,"same.png"),fileId:historyIds[0]};
     const p=planner([target("same")],[candidate],new Map(),true,collectedHistory);

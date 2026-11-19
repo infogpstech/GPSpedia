@@ -3627,10 +3627,12 @@ function collectReplacedImageHistoryIds_() {
 
     for (let r = 1; r < rows.length; r++) {
         const row = rows[r];
-        const origin = originIndex >= 0 ? String(row[originIndex] || "").trim() : "";
-        const recordType = typeIndex >= 0
-            ? String(row[typeIndex] || "").trim()
-            : "reemplazada";
+        const contentType = String(row[2] || "").trim();
+        const legacyUnusedInventory = contentType === "inventario_sin_uso";
+        const storedOrigin = originIndex >= 0 ? String(row[originIndex] || "").trim() : "";
+        const origin = storedOrigin || (legacyUnusedInventory ? "auditoria_drive" : "");
+        const storedRecordType = typeIndex >= 0 ? String(row[typeIndex] || "").trim() : "";
+        const recordType = storedRecordType || (legacyUnusedInventory ? "sin_uso_detectado" : "reemplazada");
         const status = String(row[10] || "historica").trim();
 
         // Las filas de inventario "sin uso" no son historial de reemplazo.
