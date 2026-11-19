@@ -615,3 +615,11 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Devolver `opId` y `operationHash` en respuesta exitosa; adjuntar ambos al error de reacquisición y entregar indicación de reintento si Drive falla, evitando reservas sin referencia recuperable.
 - [x] Añadir `AdminLegacyCutReservation.mjs`: 9/9 PASS. CI `44628738510` SUCCESS: 179 suites, 2,420 pruebas aprobadas, 0 fallos; sintaxis JS aprobada. Health read-only `44628738518` SUCCESS.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. La separación completa del handler ADMIN sigue pendiente: operaciones de Sheets permanecen dentro de la sección crítica; no se afirma aislamiento global entre todos los servicios.
+
+### ADMIN — acceso rápido al ledger Idempotencia compatible (2026-11-19)
+- [x] Evitar initializeIdempotenciaSheet cuando la hoja primaria o fallback tiene los encabezados A:F completos y compatibles.
+- [x] Mantener inicialización y reparación cuando falten encabezados; conservar el rechazo de estados inseguros.
+- [x] Mantener readIdempotenciaEntries_ en los callsites para validar integralmente el ledger antes de recuperar o registrar operaciones.
+- [x] Añadir AdminIdempotenciaSheetLookupFastPath.mjs al runner: 6/6 PASS.
+- [x] CI 44631635536 SUCCESS: 182 suites, 2,440 pruebas aprobadas, 0 fallos; sintaxis JavaScript aprobada.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó ADMIN ni se modificaron Sheets/Drive productivos. GP-PERF-ADMIN-CUT-LOCK-01 continúa EN PROGRESO.
