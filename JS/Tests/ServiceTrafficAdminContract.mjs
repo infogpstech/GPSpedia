@@ -34,7 +34,7 @@ assert.match(writeService,/actions: new Set\(\["checkVehicle","getSuggestion","c
 assert.match(feedbackService,/actions: new Set\(\["recordLike","reportProblem"/);
 assert.match(usersService,/USERS_DIRECT_TRAFFIC_PREFIX_/);
 assert.match(usersService,/if \(action === "getUsers"\) recordUsersDirectTraffic_\(\)/);
-assert.match(feedbackService,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken\)/);
+assert.match(feedbackService,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "FEEDBACK" \}\)/);
 assert.doesNotMatch(feedbackService.slice(feedbackService.indexOf("function doPost(e)"),feedbackService.indexOf("\nconst RICH_TEXT_MODE_PROPERTY_")),/withSharedMutationLease_/);
 assert.match(feedbackService,/anonymousSuggestion/);
 assert.match(feedbackService,/actions: new Set\([\s\S]*?"suggestYear"[\s\S]*?"sendContactForm"/);
