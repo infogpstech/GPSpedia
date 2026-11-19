@@ -74,7 +74,7 @@ Acciones internas de contexto de sesión:
 
 Al cerrar sesión se revoca únicamente el token correspondiente. Los cambios de rol, eliminación de cuenta, cambios/restablecimientos de contraseña y restablecimientos globales de sesiones revocan el contexto antes de modificar los registros de la hoja.
 
-USERS y UTILITIES conservan actualmente sus flujos coordinados específicos y requieren auditoría adicional contra la sección 15. WRITE, FEEDBACK y ADMIN validan el actor desde caché local para sus acciones ordinarias. ADMIN→WRITE transmite userId/sessionToken y WRITE valida su propio actor cacheado; no hay token de lease anidada.
+USERS conserva leases en createUser/updateProfile para serializarse con AUTH delete/reset/role update sobre Users; retirar esa coordinación sin centralizar la propiedad de escritura abriría carreras de datos. UTILITIES conserva lease para migrateTimestamps, migración manual con staging/backup/rollback. AUTH conserva leases para ciclo de sesión, recuperación y revocación; clearSensitiveLogs ya usa actor cacheado sin lease. WRITE, FEEDBACK y ADMIN validan el actor desde caché local para sus acciones ordinarias. ADMIN→WRITE transmite userId/sessionToken y WRITE valida su propio actor cacheado; no hay token de lease anidada.
 
 ### Protocolo HTTP interno (versión 1)
 

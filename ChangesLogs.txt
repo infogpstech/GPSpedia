@@ -847,3 +847,5 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - ADMIN usa actor cacheado sin leases por acción; mantiene RBAC y auditoría. ADMIN→WRITE usa validación de actor cacheado en WRITE. AUTH→Coordinator invalida caché en WRITE/FEEDBACK/ADMIN. No hubo deployment Apps Script ni operaciones en Drive/Spreadsheet.
 
 - AUTH: `clearSensitiveLogs` ahora valida actor cacheado y rol Desarrollador sin lease ni viaje de autorización a Coordinator. Se actualizó `JS/Tests/Auth.js` como copia aislada. `SensitiveLogsTrustedActor` 7/7 PASS; `SessionActivityCoordination` 11/11 PASS. CI run 44541720461 SUCCESS: 152 suites, 2,224 pruebas, 0 fallos.
+
+- Revisión de leases restante: AUTH/clearSensitiveLogs se simplificó a actor cacheado sin lease; AUTH conserva coordinación para ciclo de sesión, recuperación, revocación y cambios de cuenta. USERS/createUser/updateProfile y UTILITIES/migrateTimestamps mantienen coordinación por conflictos de datos comprobados (AUTH delete/reset/role update y migración manual con rollback); no se retiraron sin alternativa equivalente.

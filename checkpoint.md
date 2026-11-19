@@ -1034,3 +1034,13 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - No se desplegó Apps Script ni se modificaron ScriptProperties, secretos, Drive o Spreadsheet.
 - Pendiente: auditoría de los flujos AUTH restantes, USERS y UTILITIES. USERS conserva coordinación de mutaciones de cuenta con delete/reset AUTH; UTILITIES conserva lease de migración manual. Revisar necesidad exacta contra sección 15 antes de cambiar.
 ================================================================================
+
+
+================================================================================
+2026-11-19 — REVISIÓN DE LEASES RESTANTES SEGÚN SECCIÓN 15
+- AUTH: clearSensitiveLogs ya usa actor cacheado sin lease. Las demás leases del dispatcher AUTH corresponden a login/touchSession, aceptación de términos, recuperación/cambio de contraseña, revocación/logout, cambios de rol/cuenta y migración legacy.
+- USERS: createUser/updateProfile conservan lease por conflicto real con AUTH/deleteUser, resetUserSessions y updateUser. UsersAtomicMutations prueba la serialización por recursos compartidos. Retirar esa lease sin trasladar las escrituras de Users a un único servicio dejaría una carrera interproyecto.
+- UTILITIES: migrateTimestamps es migración manual con staging/backup/rollback y ScriptLock; no tiene consumidor ordinario en la interfaz. Se conserva su lease de mantenimiento.
+- WRITE, FEEDBACK y ADMIN no adquieren leases en sus acciones ordinarias. ADMIN/clearSensitiveLogs tampoco.
+- No se hizo una eliminación indiscriminada de leases que debilitara la integridad de cuentas o migraciones. La siguiente tarea local de código queda condicionada a un rediseño de propiedad de escrituras de Users si se decide eliminar esa coordinación; Safe Apply sigue bloqueado hasta preview real autorizado.
+================================================================================

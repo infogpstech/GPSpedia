@@ -258,3 +258,11 @@ Aplicar la estructura objetivo después de validar el dry-run:
 - [x] `SensitiveLogsTrustedActor` 7/7 PASS; `SessionActivityCoordination` 11/11 PASS.
 - CI run 44541720461 SUCCESS: 152 suites, 2,224 pruebas, 0 fallos. Health read-only 44541720459 SUCCESS. Pages run 44541720180 pendiente al registrar.
 - Siguiente revisión: clasificar los usos restantes de leases en AUTH (ciclo de sesión/recuperación), USERS (mutaciones de cuenta que hoy se serializan con delete/reset AUTH) y UTILITIES (migración manual con lock local). No retirar protecciones de concurrencia sin una alternativa equivalente.
+
+
+## Adenda 2026-11-19 — revisión de leases restantes según sección 15
+- [x] AUTH: `clearSensitiveLogs` pasó a actor cacheado y RBAC local, sin lease. Las leases restantes de AUTH están ligadas a login, actividad de sesión, recuperación/cambio de contraseña, revocación/eliminación de cuenta, cambios de rol y migración legacy de credenciales.
+- [x] USERS: `createUser` y `updateProfile` conservan lease porque se serializan con `AUTH/deleteUser`, `resetUserSessions` y `updateUser` sobre recursos compartidos; retirarla sin trasladar la propiedad de escritura de Users abriría una carrera entre actualización de perfil/alta y eliminación o cambio de cuenta. La suite `UsersAtomicMutations` conserva esta garantía.
+- [x] UTILITIES: `migrateTimestamps` es una migración manual con staging, backup, rollback y `ScriptLock` local; no tiene consumidor ordinario en la interfaz. Se conserva la lease de mantenimiento hasta rediseñar el flujo de migración.
+- [x] No se encontraron leases en los routers ordinarios de WRITE, FEEDBACK o ADMIN; `AUTH/clearSensitiveLogs` tampoco adquiere lease.
+- Resultado: no se retiran las coordinaciones de USERS/UTILITIES sin una alternativa de integridad equivalente. La sección 15 sigue prevaleciendo para acciones ordinarias; estas rutas se documentan como operaciones de cuenta/migración, no como autorización por cada acción de contenido.
