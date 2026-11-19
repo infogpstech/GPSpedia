@@ -213,3 +213,9 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Si alguna imagen falta, se mantiene el flujo Drive fuera del lock y la revalidación de opId, vehículo, slot y operationHash.
 - Prueba `AdminRecoveryImageRepairFastPath.mjs` integrada en `RunServiceTests.mjs`; resultado de CI pendiente.
 - No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
+
+
+### Nota de corrección de prueba — fast path de imágenes ADMIN
+- La primera CI del commit `c7ac5e081a7ce63a064ce1a5919375ad976fd159` aprobó sintaxis y health read-only, pero la suite falló en una aserción de la prueba nueva que inspeccionaba todo el handler y contaba otra ruta Drive no relacionada.
+- La prueba se limita ahora al bloque de recuperación idempotente; se ajustó también la indentación del bloque condicional. No se modificó el comportamiento funcional adicional.
+- Repetición de regresión pendiente.

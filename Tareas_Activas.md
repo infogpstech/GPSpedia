@@ -684,4 +684,5 @@ Siguiente paso: continuar GP-PERF-ADMIN-CUT-LOCK-01 inspeccionando las escritura
 - [x] Omitir la liberación/reacquisición del ScriptLock y la reconsulta de revalidación cuando ambas imágenes ya están completas.
 - [x] Mantener la ruta Drive existente, con revalidación de opId/vehículo/slot/huella, cuando al menos una imagen requiere reparación.
 - [x] Añadir `AdminRecoveryImageRepairFastPath.mjs` al runner para cubrir imágenes completas, faltantes individualmente, ambas faltantes y corte no recomendado.
-- Estado: IMPLEMENTACIÓN PUBLICADA; regresión y health pendientes de CI. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
+- CI inicial: sintaxis y health read-only SUCCESS; la suite detectó una aserción demasiado amplia en la prueba nueva (contaba otra ruta Drive del handler). Se acotó la prueba a la recuperación idempotente y se corrigió la indentación del bloque. Regresión pendiente de repetición.
+- Estado: IMPLEMENTACIÓN PUBLICADA; CI en corrección. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.

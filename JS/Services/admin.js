@@ -6966,36 +6966,36 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
                 // y evitar una liberación/reacquisición y una consulta de revalidación innecesarias.
                 if (imageRepairNeeds.vehicle || imageRepairNeeds.cut) {
                     repairedImages = runAdminDriveWorkOutsideScriptLock_(lock, opId, function() {
-                    let vehicleImageUrl = "", cutImageUrl = "";
-                    const needsVehicleImage = imageRepairNeeds.vehicle;
-                    const needsCutImage = imageRepairNeeds.cut;
-                    if (needsVehicleImage || needsCutImage) {
-                        const folder = findOrCreateVehicleFolder(mergeVehicleFolderInfo(rowObj, vehicleData));
-                        if (needsVehicleImage) {
-                            const filename = buildCanonicalImageBaseName(rowObj, "imagenVehiculo");
-                            vehicleImageUrl = uploadImageToDrive(vehicleData.imagenVehiculo, filename, folder,
-                                buildImageUploadOperationKey(opId, rowObj.id, "imagenVehiculo"));
+                        let vehicleImageUrl = "", cutImageUrl = "";
+                        const needsVehicleImage = imageRepairNeeds.vehicle;
+                        const needsCutImage = imageRepairNeeds.cut;
+                        if (needsVehicleImage || needsCutImage) {
+                            const folder = findOrCreateVehicleFolder(mergeVehicleFolderInfo(rowObj, vehicleData));
+                            if (needsVehicleImage) {
+                                const filename = buildCanonicalImageBaseName(rowObj, "imagenVehiculo");
+                                vehicleImageUrl = uploadImageToDrive(vehicleData.imagenVehiculo, filename, folder,
+                                    buildImageUploadOperationKey(opId, rowObj.id, "imagenVehiculo"));
+                            }
+                            if (needsCutImage) {
+                                const filename = buildCanonicalImageBaseName(rowObj, "imgCorte" + slotIndex);
+                                cutImageUrl = uploadImageToDrive(cutData.imgCorte1, filename, folder,
+                                    buildImageUploadOperationKey(opId, rowObj.id, "imgCorte" + slotIndex));
+                            }
                         }
-                        if (needsCutImage) {
-                            const filename = buildCanonicalImageBaseName(rowObj, "imgCorte" + slotIndex);
-                            cutImageUrl = uploadImageToDrive(cutData.imgCorte1, filename, folder,
-                                buildImageUploadOperationKey(opId, rowObj.id, "imgCorte" + slotIndex));
+                        return { vehicleImageUrl, cutImageUrl };
+                    }, function(images) {
+                        const verified = findRowByOpId(sheet, opId, idempotencyEntriesSnapshot);
+                        if (!verified || verified.rowIndex !== rowIndex || verified.slotIndex !== slotIndex ||
+                            verified.vehicleId !== String(rowObj.id) || verified.operationHash !== operationHash) {
+                            throw new Error("La reserva cambió durante la reparación de imágenes; no se aplicaron los cambios.");
                         }
-                    }
-                    return { vehicleImageUrl, cutImageUrl };
-                }, function(images) {
-                    const verified = findRowByOpId(sheet, opId, idempotencyEntriesSnapshot);
-                    if (!verified || verified.rowIndex !== rowIndex || verified.slotIndex !== slotIndex ||
-                        verified.vehicleId !== String(rowObj.id) || verified.operationHash !== operationHash) {
-                        throw new Error("La reserva cambió durante la reparación de imágenes; no se aplicaron los cambios.");
-                    }
-                    const current = mapRowToObject(verified.rowValues, COLS_CORTES);
-                    if (images.vehicleImageUrl && !checkFileIdValid(current.imagenVehiculo))
-                        sheet.getRange(verified.rowIndex, COLS_CORTES.imagenVehiculo).setValue(images.vehicleImageUrl);
-                    if (images.cutImageUrl && !checkFileIdValid(current[`imgCorte${slotIndex}`]))
-                        sheet.getRange(verified.rowIndex, COLS_CORTES[`imgCorte${slotIndex}`]).setValue(images.cutImageUrl);
-                    return verified;
-                    }, operationHash);
+                        const current = mapRowToObject(verified.rowValues, COLS_CORTES);
+                        if (images.vehicleImageUrl && !checkFileIdValid(current.imagenVehiculo))
+                            sheet.getRange(verified.rowIndex, COLS_CORTES.imagenVehiculo).setValue(images.vehicleImageUrl);
+                        if (images.cutImageUrl && !checkFileIdValid(current[`imgCorte${slotIndex}`]))
+                            sheet.getRange(verified.rowIndex, COLS_CORTES[`imgCorte${slotIndex}`]).setValue(images.cutImageUrl);
+                        return verified;
+                        }, operationHash);
                 }
                 if (repairedImages && repairedImages.rowIndex) {
                     match = repairedImages; rowIndex = match.rowIndex; rowValues = match.rowValues;
