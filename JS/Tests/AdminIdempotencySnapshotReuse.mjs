@@ -65,14 +65,17 @@ test("lectura dirigida devuelve null si no existe el opId",()=>{
 test("findRowByOpId reutiliza snapshot y no vuelve a leer el ledger",()=>{
  const code=sliceFunction("findRowByOpId");
  let fullReads=0;
- const find=new Function("normalizeIdempotenciaOpId_","readIdempotenciaEntries_","getIdempotenciaSheet","getSpreadsheet","SHEET_NAMES","findUniqueCortesVehicleRow_","COLS_CORTES","normalizeIdempotenciaVehicleId_",code+"\nreturn findRowByOpId;")(
+ const entry={opId:"OP-1",vehicleId:"42",slotIndex:1,timestamp:"fecha",status:"pending",operationHash:"a".repeat(64),rowIndex:2};
+ const snapshot={entries:[entry],byOpId:new Map([["OP-1",entry]])};
+ const updateSnapshot=new Function(updateCode+"\nreturn updateIdempotenciaEntriesSnapshot_;")();
+ let currentEntry=entry;
+ const find=new Function("normalizeIdempotenciaOpId_","readIdempotenciaEntries_","getIdempotenciaSheet","getSpreadsheet","SHEET_NAMES","findUniqueCortesVehicleRow_","COLS_CORTES","normalizeIdempotenciaVehicleId_","readIdempotenciaEntryByOpId_","updateIdempotenciaEntriesSnapshot_",code+"\nreturn findRowByOpId;")(
   normalizeOpId,()=>{fullReads++;throw Error("lectura integral inesperada");},()=>{throw Error("getIdempotenciaSheet inesperado");},
   ()=>{throw Error("getSpreadsheet inesperado");},{CORTES:"Cortes"},
   (sheet,vehicleId,opId)=>({rowIndex:2,rowValues:Array(37).fill("").map((v,i)=>i===0?vehicleId:i===36?"fecha":"")}),
-  {colaboradorCorte1:18,timestamp:37},value=>String(value)
+  {colaboradorCorte1:18,timestamp:37},value=>String(value),
+  ()=>currentEntry,updateSnapshot
  );
- const entry={opId:"OP-1",vehicleId:"42",slotIndex:1,timestamp:"fecha",status:"pending",operationHash:"a".repeat(64),rowIndex:2};
- const snapshot={entries:[entry],byOpId:new Map([["OP-1",entry]])};
  const result=find({}, "OP-1",snapshot);
  assert.equal(result.fromIdempotenciaSheet,true);assert.equal(result.vehicleId,"42");assert.equal(fullReads,0);
 });
