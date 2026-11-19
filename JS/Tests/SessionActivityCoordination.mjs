@@ -9,7 +9,7 @@ const api=read("JS/Frontend/api-config.js"),write=read("JS/Services/write.js"),u
 let passed=0;function testCase(name,fn){fn();passed++;console.log("PASS "+name);}
 testCase("WRITE consulta checkOperation sin lease y usa actor cacheado para mutaciones",()=>{
  assert.match(write,/if \(!isSharedMutationAction_\(action\)\) \{[\s\S]*?doPostInternal_\(withSharedSessionActor_\(e, null\)\)/);
- assert.match(write,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken\)/);
+ assert.match(write,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "WRITE" \}\)/);
  assert.doesNotMatch(write,/withSharedMutationLease_\("WRITE", action/);
  assert.doesNotMatch(write,/touchSessionActivityIfDue_|getSessionExpirationStatus_/);
  ["handleAddOrUpdateCutLocked","handleAddVinToVehicleLocked","assertDeveloperForIdMaintenance"].forEach(name=>{
