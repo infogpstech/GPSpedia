@@ -718,4 +718,6 @@ Siguiente paso: continuar GP-PERF-ADMIN-CUT-LOCK-01 inspeccionando las escritura
 - [x] Mantener timestamp, testigo y colaborador en sus columnas independientes.
 - [x] Conservar la asignación y lectura de confirmación del ID centralizado, la reserva idempotente pending/completed, la carga Drive fuera del lock y el flush final.
 - [x] Añadir `AdminNewVehicleBatchWrites.mjs` al runner con simulación de rangos, valores y número de escrituras.
-- Estado: IMPLEMENTACIÓN PUBLICADA; validación local/CI pendiente. No se desplegó Apps Script ni se modificaron datos productivos.
+- [x] CI `44637971280` SUCCESS: 190 suites, 2,504 pruebas aprobadas, 0 fallos; `AdminNewVehicleBatchWrites` 13/13 PASS y sintaxis JavaScript aprobada.
+- [x] Health read-only `44637971232` SUCCESS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó Apps Script ni se modificaron datos productivos.

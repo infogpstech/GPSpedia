@@ -1094,3 +1094,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-19] ADMIN: el alta de vehículos nuevos agrupa las columnas contiguas del vehículo (2–9) y del primer corte (12–16) en dos llamadas setValues(), en lugar de escrituras individuales. Timestamp, testigo y colaborador permanecen separados. Se conserva la verificación de ID centralizado, reserva idempotente, trabajo Drive fuera del ScriptLock y flush.
+
+
+[2026-11-19 · cierre] ADMIN alta de vehículos nuevos: dos escrituras setValues() sustituyen las escrituras individuales de columnas 2–9 (datos e imagen del vehículo) y 12–16 (datos e imagen del primer corte). Timestamp, testigo y colaborador permanecen separados. Prueba AdminNewVehicleBatchWrites 13/13 PASS. CI 44637971280 SUCCESS: 190 suites, 2504 pruebas aprobadas, 0 fallos; sintaxis aprobada. Health read-only 44637971232 SUCCESS. Pages 44637970083 pendiente al momento del cierre documental. Se preservaron ID centralizado, reserva idempotente, Drive fuera del lock y flush. No se desplegó Apps Script ni se modificaron datos productivos.

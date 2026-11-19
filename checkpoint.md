@@ -284,3 +284,15 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Se conserva lectura de confirmación del ID centralizado, reserva idempotente pending antes de Drive y completed después de flush, con las cargas Drive fuera del ScriptLock.
 - Nueva prueba `AdminNewVehicleBatchWrites.mjs` verifica el mapa de columnas, valores escritos, cinco llamadas finales, y orden de ID/reserva/Drive/completado.
 - Validación local/CI pendiente. No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+## Cierre — alta de vehículos nuevos ADMIN con escrituras por lote (2026-11-19)
+- Commit de código/prueba: `c8b3591fa78624721b355e6f1ba1e2360c06f456`.
+- El alta nueva escribe categoría, marca, modelo, versiones, años, encendido e imagen en un lote contiguo de columnas 2–9; el primer corte (tipo, ubicación, color, relay e imagen) en otro lote de columnas 12–16.
+- Timestamp, testigo y colaborador se mantienen separados. Se conserva la lectura de confirmación del ID WRITE, la reserva pending antes de Drive, la carga de imágenes fuera del lock y el completed posterior al flush.
+- `AdminNewVehicleBatchWrites`: 13/13 PASS.
+- CI `44637971280` SUCCESS: 190 suites, 2,504 pruebas aprobadas, 0 fallos; sintaxis JavaScript aprobada.
+- Health read-only `44637971232` SUCCESS.
+- Pages `44637970083` pendiente al registrar este cierre; no se declara aprobado.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó Apps Script ni se modificaron datos productivos.
+- Siguiente paso: continuar `GP-PERF-ADMIN-CUT-LOCK-01` inspeccionando el alta de vehículo nuevo para reducir llamadas de Sheets que no comprometan la lectura de confirmación del ID, las reservas idempotentes ni la integridad de la fila.
