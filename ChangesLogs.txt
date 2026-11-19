@@ -776,3 +776,12 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - JS/Tests/CortesImageReconciliation.mjs: pruebas para inventario sin uso, reemplazos históricos, estados protegidos, eliminados, compatibilidad legacy y asociación candidata.
 - No se aplicaron cambios productivos en Drive/Spreadsheet ni deployments.
 ================================================================================
+
+ 
+================================================================================
+2026-11-19 — RUTAS DE ALTA ALINEADAS CON EL ORGANIZADOR
+- JS/Services/admin.js: findOrCreateVehicleFolder utiliza normalización canónica de categoría, marca, modelo y versión/encendido; getVehicleYearFolderName devuelve AAAA-AAAA, consistente con el preview del organizador.
+- Se rechazan segmentos obligatorios ausentes y rangos invertidos para evitar altas fuera de la estructura objetivo.
+- JS/Tests/AdminImageScanCoordinatorContract.mjs: prueba de ruta completa de alta y rechazo de rango invertido.
+- No se desplegó Apps Script ni se modificaron archivos/celdas productivas.
+================================================================================

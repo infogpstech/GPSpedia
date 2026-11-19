@@ -195,3 +195,12 @@ Aplicar la estructura objetivo después de validar el dry-run:
 - [x] Compatibilidad con inventario legado sin columnas dinámicas: `tipo_contenido=inventario_sin_uso` identifica el registro como sin uso.
 - [x] Pruebas: CortesImageReconciliation 34/34; regresión integral CI 152 suites, 2,224 pruebas, 0 fallos; health SUCCESS.
 - [ ] Beta: verificar la clasificación con datos reales de Drive/Spreadsheet después del deployment autorizado. No se aplicó ninguna asociación ni movimiento.
+
+ 
+## Actualización 2026-11-19 — rutas de alta alineadas con el organizador
+- [x] `findOrCreateVehicleFolder` utiliza la misma normalización de segmentos que el organizador: categoría, marca, modelo y versión/encendido.
+- [x] `getVehicleYearFolderName` genera el formato canónico `AAAA-AAAA`, incluido `2020-2020` para un solo año; los rangos invertidos se rechazan.
+- [x] La creación de carpetas no utiliza valores sustitutos cuando faltan categoría, marca, modelo, versión/encendido o rango válido; se detiene antes de crear una ruta divergente.
+- [x] Prueba contractual: alta genera exactamente `Cortes/Camion_pesado/Toyota/Hilux_SRV/SRV/2020-2025`, igual al destino del organizador.
+- CI HEAD `0766fda94d9171c772e0052bff26d65f26deef14`: 152 suites, 2,224 pruebas aprobadas, 0 fallos; health y Pages SUCCESS.
+- [ ] Beta: validar rutas actuales y destinos propuestos con inventario real; cualquier carpeta equivalente duplicada debe continuar bloqueando la operación.

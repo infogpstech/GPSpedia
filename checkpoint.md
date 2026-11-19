@@ -929,3 +929,15 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - No se desplegó Apps Script ni se modificaron Drive, Spreadsheet, secretos o ScriptProperties. No se aplicaron movimientos ni cambios de URL.
 - Siguiente: continuar la auditoría de consistencia del inventario persistente y de las referencias cruzadas; luego revisar clasificación de archivos sin uso/reemplazados en el preview paginado. Beta solo tras cerrar implementación local y con autorización.
 ================================================================================
+
+ 
+================================================================================
+2026-11-19 — CONTINUIDAD: UNIFICACIÓN DE RUTAS DE ALTA Y ORGANIZADOR
+- HEAD de inicio: 9e8c694960ec50a3295081643d98dbcdf2e7e6a1; HEAD validado: 0766fda94d9171c772e0052bff26d65f26deef14.
+- Hallazgo: findOrCreateVehicleFolder utilizaba sanitizeForFolderDisplay y getVehicleYearFolderName generaba años con guion bajo; el organizador construía segmentos normalizados con guion medio. Las altas podían crear una ruta distinta de la ruta objetivo del preview.
+- Corrección: findOrCreateVehicleFolder ahora normaliza categoría, marca, modelo y versión/encendido con normalizeOrganizerSegment_; el rango se genera como AAAA-AAAA y se rechazan rangos invertidos o segmentos obligatorios ausentes. No se crean carpetas con valores de reemplazo que contradigan el destino canónico.
+- Prueba contractual añadida: alta de Hilux genera exactamente Cortes/Camion_pesado/Toyota/Hilux_SRV/SRV/2020-2025; coincide con el formato del organizador. Se comprueba rechazo de rango invertido.
+- CI run 44524858005 SUCCESS: 152 suites, 2,224 pruebas aprobadas, 0 fallos; CortesImageReconciliation 34/34; LogoIdIntegrity 13/13; AdminImageScanCoordinatorContract 1/1. Health run 44524858035 SUCCESS. Pages run 44524856139 SUCCESS.
+- No se desplegó Apps Script ni se modificaron datos Drive/Spreadsheet. No se movieron, renombraron ni eliminaron archivos.
+- Siguiente: completar auditoría local de consistencia del inventario y del registro de altas; después ejecutar verificación integral y preparar Beta con comandos de sincronización seguros. Aplicación masiva sigue deshabilitada.
+================================================================================

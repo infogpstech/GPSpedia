@@ -680,3 +680,14 @@ Corrección: filtrar por origen, tipo y estado; preservar reemplazos históricos
 Validación: CortesImageReconciliation 34/34; regresión CI run 44523981556 SUCCESS, 152 suites y 2,224 pruebas aprobadas, 0 fallos; health run 44523981464 SUCCESS.
 Severidad: media (clasificación/integridad de inventario). Estado: CORREGIDO LOCALMENTE; verificación con datos reales pendiente de Beta.
 ================================================================================
+
+ 
+================================================================================
+2026-11-19 — HALLAZGO CORREGIDO: RUTAS DE ALTA DISTINTAS A LAS DEL ORGANIZADOR
+Ubicación: JS/Services/admin.js, findOrCreateVehicleFolder y getVehicleYearFolderName.
+Evidencia: el alta usaba sanitizeForFolderDisplay para conservar espacios/acentos y getVehicleYearFolderName generaba rangos con guion bajo (ej. 2020_2025); buildCortesImageOrganizerTargets_ normalizaba los segmentos y proponía rangos con guion medio (2020-2025).
+Impacto: imágenes nuevas podían guardarse en rutas distintas de las propuestas por el organizador, fragmentando el árbol y dificultando la reconciliación.
+Corrección: las altas usan normalizeOrganizerSegment_ en todos los segmentos, el rango es AAAA-AAAA y se rechazan datos obligatorios ausentes/rangos invertidos.
+Validación: AdminImageScanCoordinatorContract 1/1; CI run 44524858005 SUCCESS, 152 suites y 2,224 pruebas aprobadas, 0 fallos; health y Pages SUCCESS.
+Severidad: media (consistencia de almacenamiento). Estado: CORREGIDO LOCALMENTE; validación de rutas reales pendiente de Beta.
+================================================================================
