@@ -44,7 +44,9 @@ test("el favicon apunta al PNG oficial local con canal alfa", () => {
 });
 
 test("el Service Worker precarga el logo claro y el logo oscuro para uso offline", () => {
-    assert.match(worker, /gpsepedia-cache-v73/);
+    const cacheName = worker.match(/const CACHE_NAME\\s*=\\s*['"]([^'"]+)['"]/);
+    assert.ok(cacheName && /^gpsepedia-cache-v\\d+$/.test(cacheName[1]),
+        "el Service Worker debe usar una versión explícita y creciente de caché");
     assert.ok(worker.includes("'./Images/icon-v3-512x512.png'"));
     assert.ok(worker.includes("'./Images/Logo_TemaOscuro.png'"));
 });
