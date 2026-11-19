@@ -338,12 +338,12 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Verificar en CI que la auditoría no bloquea las operaciones independientes cubiertas por los contratos; CI 44626115506 SUCCESS: 176 suites, 2,400 pruebas aprobadas, 0 fallos. Health read-only 44626115768 SUCCESS.
 - [ ] Mapear Script IDs/proyectos Apps Script desplegados. No hay .clasp.json ni appsscript.json versionados; los IDs de deployment presentes en URLs no demuestran por sí solos qué fuentes comparten proyecto. No inferir aislamiento real.
 - [ ] No considerar aceptable una arquitectura que evita corrupción pero serializa funciones no relacionadas; completar prueba real de concurrencia en Beta autorizada.
-- [ ] Continuar la sección crítica de handleAddOrUpdateCut: revisar compatibilidad de solicitudes sin opId, porque runAdminDriveWorkOutsideScriptLock_ ejecuta Drive bajo el lock cuando no hay opId; no liberar ese lock sin una reserva/revalidación segura.
+- [x] Resolver solicitudes legacy sin opId: generar una clave interna OP-LEGACY única y huella del payload, reservar slot/vehículo en el ledger pending, ejecutar Drive fuera del ScriptLock y revalidar la reserva antes de escribir. La respuesta devuelve opId/operationHash; los errores de Drive incluyen credenciales de reintento.
 
 ## Avance de implementación — GP-PERF-ADMIN-CUT-LOCK-01 (2026-11-19)
 - [x] Primer ajuste de reserva: `findNextAvailableCutSlot_` ahora excluye los slots del mismo vehículo que ya estén registrados como `pending` en Idempotencia. Esto permite reservar el destino antes de liberar el lock para Drive.
 - [x] `AdminCutSlotReservation.mjs` y CI: 5/5 PASS en la regresión 44592625381.
-- [ ] Continuar con la separación del flujo en reserva breve, WRITE/Drive fuera del lock y revalidación/persistencia breve. El handler aún conserva el lock global durante el resto del proceso; esta modificación por sí sola NO cierra la tarea.
+- [ ] Continuar con la separación del flujo en reserva breve, WRITE/Drive fuera del lock y revalidación/persistencia breve. La carga de Drive queda fuera del lock también para legacy; el handler todavía mantiene bajo el lock otras lecturas y escrituras de Sheets, por lo que GP-PERF-ADMIN-CUT-LOCK-01 sigue EN PROGRESO.
 - [ ] Añadir recuperación segura y pruebas de no interferencia entre auditoría, Inbox, health, login y registro de cortes. No se ha confirmado el mapa de proyectos Apps Script desplegados; el repositorio no contiene manifiestos `.clasp.json` ni `appsscript.json` que permitan asociar cada fuente a un Script ID.
 
 ### Avance adicional — asignador central de IDs WRITE (2026-11-19)
@@ -605,3 +605,11 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Añadir `AdminCutPreflightBeforeAllocation.mjs` al runner: 7/7 PASS; cubre hash, asignación fuera del lock, extracción VIN y timestamp precomputados, y revalidación idempotente.
 - [x] CI `44627981794` SUCCESS: 178 suites, 2,411 pruebas aprobadas, 0 fallos; sintaxis JS aprobada. Health read-only `44627981620` SUCCESS.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA como subactividad; GP-PERF-ADMIN-CUT-LOCK-01 continúa EN PROGRESO.
+
+
+### ADMIN — reserva idempotente para solicitudes legacy sin opId (2026-11-19)
+- [x] Generar `OP-LEGACY-<UUID>` interno para solicitudes antiguas que no envían `opId`; calcular huella de payload y registrar reserva `pending` antes de Drive.
+- [x] Aplicar la misma ruta de `runAdminDriveWorkOutsideScriptLock_`: liberar ScriptLock durante Drive, readquirir con `tryLock(0)` y revalidar `opId`, vehicleId, slot y operationHash antes de persistir.
+- [x] Devolver `opId` y `operationHash` en respuesta exitosa; adjuntar ambos al error de reacquisición y entregar indicación de reintento si Drive falla, evitando reservas sin referencia recuperable.
+- [x] Añadir `AdminLegacyCutReservation.mjs`: 9/9 PASS. CI `44628738510` SUCCESS: 179 suites, 2,420 pruebas aprobadas, 0 fallos; sintaxis JS aprobada. Health read-only `44628738518` SUCCESS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. La separación completa del handler ADMIN sigue pendiente: operaciones de Sheets permanecen dentro de la sección crítica; no se afirma aislamiento global entre todos los servicios.
