@@ -836,3 +836,13 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - Commits de esta corrección: admin.js 0dd00118ce71711a4e0dc8bf9189a45dd313d63a; prueba 395e3bacdba867e48e31932d76499a716379c0ae; Tareas_Activas 49c4b8837b85328129230ab74d09321d4120dc14; ChangesLogs 5f72e162e1e6fbb6a71580062bc980e35af27413; Auditoría 29f92657afaa5754bddebb0205b73a451c9b016d.
 - Validación: cambios aún sin CI confirmada al momento de esta adenda. No se desplegó Apps Script ni se modificaron Spreadsheet/Drive.
 - Siguiente paso: verificar CI/sintaxis en el HEAD resultante; después, conforme al checkpoint del organizador, desplegar ADMIN solo con autorización/entorno Beta, ejecutar una auditoría Drive nueva y revisar el preview real. Mantener canApply:false y no habilitar movimientos/renombrados.
+
+
+### Validación local de la corrección de códigos — 2026-11-18
+- HEAD de la rama antes de esta actualización documental: c463d5c3322d665c1addec6b3b98b4adaa2807cb. Rama base confirmada sin cambios: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Sintaxis: compilación estática de JS/Services/admin.js PASS; compilación sintáctica del módulo JS/Tests/AdminImageScanCoordinatorContract.mjs PASS.
+- Ejecución del contrato AdminImageScanCoordinatorContract.mjs con las fuentes actuales recuperadas de la rama y un adaptador local en memoria para sus lecturas de archivos: PASS. Se ejecutaron todas las aserciones del archivo, incluidas las nuevas series ign1..3, bomba1..3, btn1..3, alim1..3 y apert.
+- Prueba aislada adicional del constructor puro: PASS para las cinco familias/campos y sus nombres completos. No se invocaron servicios Apps Script, Drive ni Spreadsheet.
+- El endpoint de estado combinado de GitHub no devolvió checks para este SHA; la herramienta disponible para workflow runs filtra ejecuciones disparadas por pull request. Por ello CI/Actions no queda acreditada en esta sesión y no se afirma como aprobada.
+- Estado local: corrección y contrato completados; validación local reproducible aprobada. Validación CI pendiente de evidencia. Validación Beta pendiente de despliegue ADMIN, auditoría Drive nueva y preview real. Aplicación de movimientos/renombrados permanece deshabilitada.
+- Próximo paso: obtener evidencia CI del HEAD publicado y, cuando corresponda al entorno Beta autorizado, desplegar ADMIN, ejecutar auditoría completa nueva y revisar cada destino. No ejecutar operaciones mutadoras.
