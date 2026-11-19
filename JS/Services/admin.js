@@ -7174,8 +7174,10 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
                 // findRowByOpId ya revalidó la unicidad y devolvió la fila actualizada bajo lock.
                 verifiedRowValues = verified.rowValues;
             }
-            const currentValues = verifiedRowValues ||
-                sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getValues()[0];
+            if (!verifiedRowValues) {
+                throw new Error("No se obtuvo la fila verificada después de Drive; no se preparó ni escribió el VIN.");
+            }
+            const currentValues = verifiedRowValues;
             preparedVinCollection = vinPrefix
                 ? prepareVinCollectionForAdmin(sheet, currentValues, vehicleId, vinColumnIndex, vinPrefix, vehicleData && vehicleData.versionesAplicables)
                 : null;
