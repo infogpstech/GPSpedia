@@ -53,7 +53,7 @@ assert.match(newBranch,/COLS_CORTES\.colaboradorCorte1/);
 assert.match(newBranch,/COLS_CORTES\.timestamp/);
 assert.match(newBranch,/COLS_CORTES\.activaTestigo1/);
 const vinReservation=newBranch.indexOf("sheet.getRange(rowIndex, vinColumnIndex).setValue(serializeVinCollection([vinPrefix]));");
-const opReservation=newBranch.indexOf('recordOpId(opId, newId, 1, formattedDate, "pending", operationHash);');
+const opReservation=newBranch.indexOf('recordOpId(opId, newId, 1, formattedDate, "pending", operationHash, idempotencyEntriesSnapshot);');
 const driveStart=newBranch.indexOf("runWriteDriveWorkOutsideScriptLock_");
 assert.ok(vinReservation>=0&&opReservation>=0&&driveStart>vinReservation&&driveStart>opReservation,
  "VIN y opId deben reservarse antes de liberar el lock para Drive");
