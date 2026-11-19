@@ -167,5 +167,14 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Se mantiene la lectura integral única para detectar filas inválidas y `opId` duplicados; después de cada escritura el snapshot se actualiza con la entrada verificada. No se debilita la transición pending → completed.
 - Prueba `AdminIdempotencySnapshotReuse.mjs`: 10/10 PASS. CI `44632610105` SUCCESS: 183 suites, 2,450 pruebas aprobadas, 0 fallos; health read-only `44632610206` SUCCESS.
 - HEAD de código y prueba antes de registros: `063d9ae079c5db56b87f08cac99c92ead1ac8a9a`. Commits de implementación: `748d9f5c868571607d90a3fe805283112f74e276` y refinamientos relacionados. Registros actualizados después.
-- Próximo objetivo dentro de `GP-PERF-ADMIN-CUT-LOCK-01`: revisar `ensureTestigoColumns` y `getVinColumnIndex` para eliminar lecturas de encabezados redundantes del lock mediante prelectura y revalidación acotada, sin mover reparaciones/escrituras de esquema fuera de la exclusión.
+- Próximo objetivo dentro de `GP-PERF-ADMIN-CUT-LOCK-01`: evaluar las lecturas de `findVinDuplicateForAdmin` y `findUniqueCortesVehicleRow_` para reducir datos transferidos o consultas repetidas, considerando TextFinder/lecturas dirigidas solo si conservan detección de duplicados, filas ambiguas y validación de concurrencia. No eliminar la comprobación de unicidad ni moverla fuera de la exclusión sin revalidación segura.
 - No se desplegó Apps Script ni se modificaron Sheets/Drive productivos. La concurrencia real y la validación de datos permanecen pendientes de Beta autorizada.
+
+
+## Continuidad — encabezados ADMIN compartidos en registro y recuperación (2026-11-19)
+- `ensureTestigoColumns` ahora realiza una sola lectura de encabezados para validar duplicados VIN y nombres testigo; ya no llama a `getVinColumnIndex` ni vuelve a leer AT:AV por separado.
+- Devuelve `vinColumnIndex` y el snapshot de encabezados, actualizando AT:AV en memoria tras la reparación. `handleAddOrUpdateCut` reutiliza ambos resultados y evita otra lectura completa de encabezados al resolver la columna de operación durante la recuperación idempotente.
+- Las mutaciones/reparaciones AT:AV permanecen bajo ScriptLock. Se conservan los rechazos de VIN/testigo duplicados y de columnas con datos sin encabezado.
+- Prueba `AdminTestigoHeaderReadReuse.mjs`: 7/7 PASS. CI `44633178723` SUCCESS: 184 suites, 2,457 pruebas aprobadas, 0 fallos; health read-only `44633178689` SUCCESS.
+- Commits de implementación/prueba: `2c2c1bfc9bae29feba3d21b2c3b9c1d45d599c72`, `f9bc11298245c9d462eae8f264baa61442bad23d`, `aac6700e4abbd5d6a63787999f0abb0c543a0f92`, `d481c18112b5e43c11f4aadad865a2ee9d20b91d`, `3736fb988c6889051c589e23380ac802012c3d1b`. Runner `3731b9149eaa46fd4af222fa966dff80533ef5f9`.
+- No se desplegó Apps Script ni se modificaron Sheets/Drive productivos. Validación real y concurrencia siguen pendientes de Beta autorizada.
