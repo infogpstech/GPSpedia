@@ -825,3 +825,14 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - CI HEAD bb3f3a1fcf47d328f1ab51a4ab5dc3a93e2e3807: workflow 44443503640 SUCCESS — 146 suites, 2,157 pruebas aprobadas, 0 fallos; health read-only 44443503694 SUCCESS; Pages 44443503156 SUCCESS.
 - No se desplegó Apps Script ni se ejecutó el preview sobre Drive productivo. El nuevo endpoint exige metadatos folderPath; tras desplegar ADMIN debe ejecutarse una auditoría Drive nueva para poblar esas rutas en caché.
 - Siguiente paso exacto: desplegar el servicio ADMIN actualizado, abrir la auditoría Drive, iniciar una auditoría nueva y luego ejecutar «Previsualizar organización». Revisar resultados y bloqueos con datos reales; no aplicar movimientos ni renombrados. Después corregir hallazgos del preview antes de diseñar la aplicación segura y rollback.
+
+
+### Adenda de continuidad — códigos funcionales del organizador (2026-11-18)
+- HEAD de partida confirmado para esta corrección: 7e03b0bb95bbdab627c512aa629522399c0bf08f, rama GPSpedia2.2.5_work; base protegida GPSpedia2.2.5 con merge-base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Auditoría del helper buildCortesImageOrganizerTargets_: el mapeo de tipoCorte1/2/3 ya reconocía ignición, bomba y botón, pero la salida dejaba el primer btn sin sufijo numérico. Los campos de alimentación se etiquetaban alim, alim2 y shock, no como serie uniforme.
+- Corrección aplicada: los tres slots se numeran según su función real (ign1..ign3, bomba1..bomba3, btn1..btn3); imgCableAlimen/2/3 producen alim1/alim2/alim3. imgApertura mantiene apert e imagenVehiculo mantiene imagenVehiculo. Tipos no reconocidos o ambiguos siguen bloqueados.
+- Pruebas añadidas en AdminImageScanCoordinatorContract.mjs: escenarios de tres slots para cada función (ignición, bomba de combustible y señal a botón), más nombres de las tres alimentaciones y apertura.
+- Registros actualizados: Tareas_Activas.md, ChangesLogs.txt y Auditoría.txt. No se añadió contenido a Tareas_Pendientes.md ni lista_beta_parte2.txt por la rotación documental pendiente.
+- Commits de esta corrección: admin.js 0dd00118ce71711a4e0dc8bf9189a45dd313d63a; prueba 395e3bacdba867e48e31932d76499a716379c0ae; Tareas_Activas 49c4b8837b85328129230ab74d09321d4120dc14; ChangesLogs 5f72e162e1e6fbb6a71580062bc980e35af27413; Auditoría 29f92657afaa5754bddebb0205b73a451c9b016d.
+- Validación: cambios aún sin CI confirmada al momento de esta adenda. No se desplegó Apps Script ni se modificaron Spreadsheet/Drive.
+- Siguiente paso: verificar CI/sintaxis en el HEAD resultante; después, conforme al checkpoint del organizador, desplegar ADMIN solo con autorización/entorno Beta, ejecutar una auditoría Drive nueva y revisar el preview real. Mantener canApply:false y no habilitar movimientos/renombrados.
