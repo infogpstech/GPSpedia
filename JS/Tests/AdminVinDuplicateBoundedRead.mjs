@@ -31,4 +31,6 @@ assert.equal(fn({getLastRow:()=>1},"VIN-A",null),null);
 assert.ok(source.includes("findVinDuplicateForAdmin(sheet, vinPrefix, vehicleId, vinColumnIndex)"),"Debe reutilizar índice en preparación");
 assert.ok(source.includes("findVinDuplicateForAdmin(sheet, vinPrefix, null, vinColumnIndex)"),"Debe reutilizar índice en alta nueva");
 assert.ok(source.includes("prepareAdminVinCollectionEdit_(sheet, rowValues, vehicleId, rawValue, vinColumnIndex)"),"Debe reutilizar índice en edición");
-console.log("AdminVinDuplicateBoundedRead: 10/10 PASS — lectura selectiva, exclusión del vehículo actual y VIN duplicado");
+assert.ok(source.includes("findVinDuplicateForAdmin(sheet, next, vehicleId, resolvedVinColumnIndex)"),"La edición de colección debe reutilizar el índice resuelto en sus validaciones");
+
+console.log("AdminVinDuplicateBoundedRead: 11/11 PASS — lectura selectiva, exclusión del vehículo actual y VIN duplicado");

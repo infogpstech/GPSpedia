@@ -990,3 +990,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-19] ADMIN: findVinDuplicateForAdmin y preparación/edición de colecciones VIN reutilizan vinColumnIndex ya resuelto; se evita volver a leer encabezados dentro del mismo flujo y se conserva fallback compatible. AdminVinDuplicateBoundedRead ampliada; CI pendiente.
+
+
+[2026-11-19] Ajuste de compatibilidad VIN: prepareAdminVinCollectionEdit_ conserva fallback cuando no recibe vinColumnIndex y reutiliza el índice resuelto para comprobar duplicados; se amplía la regresión. Primer CI detectó esta ruta legacy; corrección pendiente de validar.

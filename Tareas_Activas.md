@@ -492,4 +492,4 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Reutilizar el índice VIN ya resuelto por el handler y los editores; evitar lecturas repetidas de encabezados.
 - [x] Mantener fallback compatible cuando no se proporciona un índice.
 - [x] Ampliar AdminVinDuplicateBoundedRead.mjs para cubrir override y fallback.
-- [ ] CI integral y revisión del diff pendientes. No se despliega ADMIN ni se modifican datos externos.
+- [ ] CI pendiente: el primer intento detectó que el helper de edición VIN debe conservar fallback cuando se invoca sin índice; se corrige sin eliminar compatibilidad.

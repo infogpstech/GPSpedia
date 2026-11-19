@@ -50,3 +50,5 @@ Siguiente optimización P0: reducir el ancho de lectura de findVinDuplicateForAd
 Siguiente paso P0: revisar lecturas restantes y acortar la sección crítica de handleAddOrUpdateCut; preservar exclusión de Cortes/Idempotencia y crear pruebas de no interferencia con Inbox, health, login y auditoría.
 
 2026-11-19 — Siguiente ajuste P0: reutilizar vinColumnIndex ya calculado en detección de duplicados y edición de colecciones VIN; evitar lecturas repetidas de encabezados. Regresión ampliada, CI pendiente.
+
+2026-11-19 — CI detectó regresión de compatibilidad en prepareAdminVinCollectionEdit_ cuando se invoca sin índice VIN explícito; se añade fallback a getVinColumnIndex y se pasa el índice resuelto a la comprobación de duplicados. CI pendiente.

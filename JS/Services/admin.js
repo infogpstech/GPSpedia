@@ -5716,7 +5716,12 @@ function handleAddLogo(payload, logMessage) {
 function prepareAdminVinCollectionEdit_(sheet, rowValues, vehicleId, rawValue, vinColumnIndex) {
     if (typeof rawValue !== "string" && !Array.isArray(rawValue)) throw new Error("La colección VIN debe enviarse como texto o arreglo.");
     const collection = parseVinCollectionForAdmin(rawValue);
-    const existing = parseVinCollectionForAdmin(rowValues[vinColumnIndex - 1]);
+    const suppliedVinColumnIndex = Number(vinColumnIndex);
+    const resolvedVinColumnIndex = Number.isSafeInteger(suppliedVinColumnIndex) && suppliedVinColumnIndex > 0
+        ? suppliedVinColumnIndex
+        : getVinColumnIndex(sheet);
+    if (!resolvedVinColumnIndex) throw new Error("La hoja «Cortes» no contiene un encabezado VIN único.");
+    const existing = parseVinCollectionForAdmin(rowValues[resolvedVinColumnIndex - 1]);
     const versionParts = String(rowValues[COLS_CORTES.versionesAplicables - 1] || "").split(/[,/\\;]+/).map(value => value.trim()).filter(Boolean);
     if (versionParts.length > 3) throw new Error("El vehículo contiene más de tres versiones; revisa su configuración antes de editar la colección VIN.");
     const maxAllowed = Math.max(1, versionParts.length);
@@ -5725,7 +5730,7 @@ function prepareAdminVinCollectionEdit_(sheet, rowValues, vehicleId, rawValue, v
         const previous = existing[index] || "", next = collection[index] || "";
         if (previous && next !== previous) throw new Error("No se permite reemplazar, eliminar ni mover un VIN ya asociado a una versión. Solo pueden completarse posiciones vacías.");
         if (!previous && next) {
-            const duplicate = findVinDuplicateForAdmin(sheet, next, vehicleId);
+            const duplicate = findVinDuplicateForAdmin(sheet, next, vehicleId, resolvedVinColumnIndex);
             if (duplicate) throw new Error("VIN ya está registrado para: " + duplicate.modelName);
         }
     }
