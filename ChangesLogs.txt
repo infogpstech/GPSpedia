@@ -592,3 +592,13 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - checkpoint.md: se actualiza continuidad con los siete identificadores y sus requisitos.
 - Alcance: solo documentación. No se modificó código, Spreadsheet, Drive, permisos, Coordinator ni archivos de imágenes. No se ejecutó auditoría funcional ni se comprobó causalidad entre Inbox y la auditoría.
 ================================================================================
+
+
+
+================================================================================
+2026-11-18 — REGISTRO DE REQUISITOS BETA: CONSOLA Y ORGANIZACIÓN AUTOMÁTICA
+- lista_beta_parte2.txt: añadidos BETA-ADMIN-CUT-IMAGE-AUDIT-CONSOLE-01, BETA-ADMIN-CUT-IMAGE-ORGANIZER-AUDIT-01, BETA-ADMIN-CUT-IMAGE-ORGANIZER-STRUCTURE-01, BETA-ADMIN-CUT-IMAGE-ORGANIZER-REGISTRATION-CONSISTENCY-01, BETA-ADMIN-CUT-IMAGE-ORGANIZER-NAMING-01 y BETA-ADMIN-CUT-IMAGE-FUNCTION-CODES-01.
+- Auditoría.txt: registrados el flujo de confirmación por consola, la consola centralizada del modal, la auditoría del organizador, la estructura jerárquica, la coherencia de altas, la nomenclatura y los códigos de función.
+- checkpoint.md: actualizado para continuidad.
+- Alcance: documentación solamente. No se inspeccionó ni modificó código, Drive o Spreadsheet; no se movieron/renombraron imágenes ni se ejecutaron pruebas funcionales.
+================================================================================
