@@ -178,3 +178,10 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Prueba `AdminTestigoHeaderReadReuse.mjs`: 7/7 PASS. CI `44633178723` SUCCESS: 184 suites, 2,457 pruebas aprobadas, 0 fallos; health read-only `44633178689` SUCCESS.
 - Commits de implementación/prueba: `2c2c1bfc9bae29feba3d21b2c3b9c1d45d599c72`, `f9bc11298245c9d462eae8f264baa61442bad23d`, `aac6700e4abbd5d6a63787999f0abb0c543a0f92`, `d481c18112b5e43c11f4aadad865a2ee9d20b91d`, `3736fb988c6889051c589e23380ac802012c3d1b`. Runner `3731b9149eaa46fd4af222fa966dff80533ef5f9`.
 - No se desplegó Apps Script ni se modificaron Sheets/Drive productivos. Validación real y concurrencia siguen pendientes de Beta autorizada.
+
+
+## Estado remoto verificado — 2026-11-19
+- HEAD de `GPSpedia2.2.5_work`: `7e1296fb7871358267658e4836bbb6a0cdc66ed7`.
+- Rama base protegida `GPSpedia2.2.5`: `d9acc68d889985c2e2f42fe3a02e502efc86ead1` (sin modificaciones).
+- Regresión sobre el código, pruebas, runner y registros de tarea/changelog: CI `44633296363` SUCCESS, 184 suites / 2,457 pruebas / 0 fallos; health read-only `44633296340` SUCCESS. El último commit posterior corresponde únicamente a este checkpoint.
+- `GP-PERF-ADMIN-CUT-LOCK-01` continúa EN PROGRESO; siguiente revisión: lecturas de VIN e identificación de vehículo en `findVinDuplicateForAdmin` y `findUniqueCortesVehicleRow_`, con prioridad en preservar detección de duplicados y concurrencia.
