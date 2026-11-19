@@ -8356,6 +8356,54 @@ export async function openAuditDriveModal() {
                 String(file.lastUpdated || 'Fecha no disponible')
             ].join(' | ');
             appendAuditConsole(details, classification === 'No verificable' ? 'warning' : 'info');
+            if (classification !== 'Histórica' && classification !== 'Sin uso detectado') return;
+
+            const row = document.createElement('div');
+            row.style.cssText = "display:flex; justify-content:space-between; align-items:center; gap:10px; padding:8px; border:1px solid var(--border-color); border-radius:6px; font-size:0.8rem; background:var(--card-bg);";
+            if (String(file.mimeType || '').startsWith('image/')) {
+                const preview = document.createElement('img');
+                preview.style.cssText = "width:58px; height:58px; flex:0 0 58px; object-fit:contain; border-radius:4px; background:var(--surface-bg);";
+                preview.loading = 'lazy';
+                preview.alt = 'Vista previa de ' + (file.fileName || 'imagen');
+                preview.dataset.drivePreviewVerification = 'pending';
+                preview.onload = () => {
+                    preview.dataset.drivePreviewVerification = 'loaded';
+                    preview.title = 'Miniatura cargada en la sesión autorizada actual';
+                };
+                preview.onerror = () => {
+                    preview.dataset.drivePreviewVerification = 'unavailable';
+                    preview.onerror = null;
+                    preview.src = 'https://placehold.co/120x120/cccccc/333333?text=Sin+vista';
+                    preview.title = 'No se pudo cargar la miniatura con la sesión actual';
+                };
+                preview.src = getImageUrl(file.fileId, 120);
+                row.appendChild(preview);
+            }
+            const info = document.createElement('div');
+            info.style.cssText = "min-width:0; flex:1;";
+            const name = document.createElement('div');
+            name.style.cssText = "font-weight:600; min-width:0; max-width:100%; white-space:normal; overflow-wrap:anywhere; line-height:1.3;";
+            name.textContent = file.fileName || 'Archivo sin nombre';
+            name.title = file.fileName || 'Archivo sin nombre';
+            const detailsEl = document.createElement('div');
+            detailsEl.style.cssText = "font-size:0.75rem; color:var(--text-disabled);";
+            detailsEl.textContent = (file.folderPath || '') + ' | ' +
+                ((Number(file.size) || 0) / 1024).toFixed(1) + ' KB | ' +
+                (file.lastUpdated || 'Fecha no disponible');
+            info.appendChild(name);
+            info.appendChild(detailsEl);
+            const badge = document.createElement('span');
+            badge.style.cssText = "padding:3px 8px; border-radius:4px; font-weight:bold; font-size:0.75rem; white-space:nowrap;";
+            const badgeColors = {
+                'En uso': '#28a745', 'Histórica': '#007bff',
+                'Sin uso detectado': '#e0a800', 'No verificable': '#dc3545'
+            };
+            badge.style.backgroundColor = badgeColors[classification] || '#6c757d';
+            badge.style.color = '#fff';
+            badge.textContent = classification;
+            row.appendChild(info);
+            row.appendChild(badge);
+            container.appendChild(row);
         });
     };
 
