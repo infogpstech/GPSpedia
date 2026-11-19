@@ -913,3 +913,5 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 2026-11-19 — WRITE: la preparación de carpetas suplementarias usa lease Coordinator DRIVE_FOLDER en vez de ScriptLock global; se añade prueba de aislamiento frente a mutaciones CORTES (pendiente CI).
 
 2026-11-19 — CI 82a35b6 SUCCESS: 157 suites, 2,251 pruebas, 0 fallos; health read-only SUCCESS. AdminCutSlotReservation 5/5, WriteIdAllocatorNonBlocking 5/5, WriteCatalogPublicationIsolation 9/9, WriteSupplementaryFolderLease 4/4, Coordinator 80/80.
+
+2026-11-19 — ADMIN: liberar ScriptLock durante operaciones Drive de registro/recuperación de cortes con revalidación de opId, huella, vehículo, fila y slot; nueva prueba AdminDriveLockIsolation.mjs.

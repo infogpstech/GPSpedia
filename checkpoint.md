@@ -1172,3 +1172,4 @@ CI del commit `82a35b6216f50e584423b8c2f2dfd0a954def565`:
 - GitHub Pages estaba en ejecución al momento de actualizar este checkpoint.
 - No se desplegó WRITE ni Coordinator y no se modificaron datos/propiedades de producción.
 
+2026-11-19 — ADMIN: se añadió runAdminDriveWorkOutsideScriptLock_ y se movieron las cargas/creación de carpetas Drive del flujo idempotente, vehículo existente y vehículo nuevo fuera del ScriptLock, con revalidación tras tryLock(0). Prueba AdminDriveLockIsolation.mjs agregada al runner. CI pendiente; la llamada ADMIN→WRITE para asignación de ID aún sigue dentro del lock.

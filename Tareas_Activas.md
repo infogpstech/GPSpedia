@@ -380,3 +380,8 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Añadir prueba de lease anidada que demuestra que la mutación de Cortes puede avanzar mientras se prepara una carpeta.
 - [x] CI completado: 157 suites, 2,251 pruebas aprobadas, 0 fallos; health read-only SUCCESS. GitHub Pages sigue en ejecución.
 
+### ADMIN — primera extracción de Drive fuera del ScriptLock (2026-11-19)
+- [x] Añadir helper no bloqueante que libera el ScriptLock durante Drive y reintenta adquirirlo con `tryLock(0)`.
+- [x] Aplicar el helper a reparación idempotente de imágenes, alta de corte en vehículo existente y alta de vehículo nuevo; revalidar opId, huella, vehículo, fila y slot antes de aplicar resultados.
+- [x] Añadir `AdminDriveLockIsolation.mjs` y conectarlo al runner.
+- [ ] CI y revisión integral pendientes. La asignación de ID ADMIN→WRITE aún permanece bajo lock y será el siguiente subpaso.

@@ -6615,6 +6615,23 @@ function findNextAvailableCutSlot_(rowValues, vehicleId) {
     }
     return null;
 }
+function runAdminDriveWorkOutsideScriptLock_(lock, opId, operation, revalidate) {
+    if (!String(opId || "").trim() || !lock || typeof lock.hasLock !== "function" || !lock.hasLock()) return operation();
+    lock.releaseLock();
+    let result, operationError = null;
+    try { result = operation(); } catch (error) { operationError = error; }
+    let reacquired = false;
+    try { reacquired = lock.tryLock(0); } catch (lockError) { reacquired = false; }
+    if (!reacquired) {
+        const pendingError = new Error("El trabajo de Drive terminó o quedó pendiente, pero ADMIN está ocupado. Conserva el mismo opId y reintenta para completar el registro.");
+        pendingError.code = "ADMIN_LOCK_REACQUIRE_PENDING";
+        if (operationError) pendingError.cause = operationError;
+        throw pendingError;
+    }
+    if (operationError) throw operationError;
+    return typeof revalidate === "function" ? revalidate(result) : result;
+}
+
 function handleAddOrUpdateCut(payload, logMessage, developerContext) {
     const lock = LockService.getScriptLock();
     try {
@@ -6656,7 +6673,7 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
         }
 
         if (opId) {
-            const match = findRowByOpId(sheet, opId);
+            let match = findRowByOpId(sheet, opId);
             if (match) {
                 if (!match.operationHash || match.operationHash !== operationHash) {
                     throw new Error("El opId ya existe, pero su contenido no coincide o pertenece a un registro legado sin huella verificable.");
@@ -6665,9 +6682,9 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
                 if (vehicleId && storedVehicleId !== normalizeIdempotenciaVehicleId_(vehicleId, "Reintento addOrUpdateCut ADMIN")) {
                     throw new Error("El opId ya está vinculado a otro vehículo; no se modificó.");
                 }
-                const rowIndex = match.rowIndex;
-                const rowValues = match.rowValues;
-                const rowObj = mapRowToObject(rowValues, COLS_CORTES);
+                let rowIndex = match.rowIndex;
+                let rowValues = match.rowValues;
+                let rowObj = mapRowToObject(rowValues, COLS_CORTES);
                 const recoveredVinCollection = vinPrefix
                     ? prepareVinCollectionForAdmin(sheet, rowValues, rowObj.id, vinColumnIndex, vinPrefix, vehicleData && vehicleData.versionesAplicables)
                     : null;
@@ -6679,26 +6696,41 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
                 else if (matchedColName.includes("2") || match.colIndex === COLS_CORTES.colaboradorCorte2) slotIndex = 2;
                 else if (matchedColName.includes("3") || match.colIndex === COLS_CORTES.colaboradorCorte3) slotIndex = 3;
 
-                // 1. Check and repair vehicle image if it was registered but is invalid/corrupted/trashed
-                if (vehicleData && vehicleData.imagenVehiculo) {
-                    const currentImg = rowObj.imagenVehiculo;
-                    if (!checkFileIdValid(currentImg)) {
+                const repairedImages = runAdminDriveWorkOutsideScriptLock_(lock, opId, function() {
+                    let vehicleImageUrl = "", cutImageUrl = "";
+                    const needsVehicleImage = vehicleData && vehicleData.imagenVehiculo && !checkFileIdValid(rowObj.imagenVehiculo);
+                    const needsCutImage = cutData && cutData.imgCorte1 && cutData.tipoCorte1 !== "No recomendado" &&
+                        !checkFileIdValid(rowObj[`imgCorte${slotIndex}`]);
+                    if (needsVehicleImage || needsCutImage) {
                         const folder = findOrCreateVehicleFolder(mergeVehicleFolderInfo(rowObj, vehicleData));
-const filename = buildCanonicalImageBaseName(rowObj, "imagenVehiculo");
-                        const newUrl = uploadImageToDrive(vehicleData.imagenVehiculo, filename, folder, buildImageUploadOperationKey(opId, rowObj.id, "imagenVehiculo"));
-                        sheet.getRange(rowIndex, COLS_CORTES.imagenVehiculo).setValue(newUrl);
+                        if (needsVehicleImage) {
+                            const filename = buildCanonicalImageBaseName(rowObj, "imagenVehiculo");
+                            vehicleImageUrl = uploadImageToDrive(vehicleData.imagenVehiculo, filename, folder,
+                                buildImageUploadOperationKey(opId, rowObj.id, "imagenVehiculo"));
+                        }
+                        if (needsCutImage) {
+                            const filename = buildCanonicalImageBaseName(rowObj, "imgCorte" + slotIndex);
+                            cutImageUrl = uploadImageToDrive(cutData.imgCorte1, filename, folder,
+                                buildImageUploadOperationKey(opId, rowObj.id, "imgCorte" + slotIndex));
+                        }
                     }
-                }
-
-                // 2. Check and repair cut image if it was registered but is invalid/corrupted/trashed
-                if (cutData && cutData.imgCorte1 && cutData.tipoCorte1 !== 'No recomendado') {
-                    const currentCorteImg = rowObj[`imgCorte${slotIndex}`];
-                    if (!checkFileIdValid(currentCorteImg)) {
-                        const folder = findOrCreateVehicleFolder(mergeVehicleFolderInfo(rowObj, vehicleData));
-const filename = buildCanonicalImageBaseName(rowObj, "imgCorte" + slotIndex);
-                        const newCorteImgUrl = uploadImageToDrive(cutData.imgCorte1, filename, folder, buildImageUploadOperationKey(opId, rowObj.id, "imgCorte" + slotIndex));
-                        sheet.getRange(rowIndex, COLS_CORTES[`imgCorte${slotIndex}`]).setValue(newCorteImgUrl);
+                    return { vehicleImageUrl, cutImageUrl };
+                }, function(images) {
+                    const verified = findRowByOpId(sheet, opId);
+                    if (!verified || verified.rowIndex !== rowIndex || verified.slotIndex !== slotIndex ||
+                        verified.vehicleId !== String(rowObj.id) || verified.operationHash !== operationHash) {
+                        throw new Error("La reserva cambió durante la reparación de imágenes; no se aplicaron los cambios.");
                     }
+                    const current = mapRowToObject(verified.rowValues, COLS_CORTES);
+                    if (images.vehicleImageUrl && !checkFileIdValid(current.imagenVehiculo))
+                        sheet.getRange(verified.rowIndex, COLS_CORTES.imagenVehiculo).setValue(images.vehicleImageUrl);
+                    if (images.cutImageUrl && !checkFileIdValid(current[`imgCorte${slotIndex}`]))
+                        sheet.getRange(verified.rowIndex, COLS_CORTES[`imgCorte${slotIndex}`]).setValue(images.cutImageUrl);
+                    return verified;
+                });
+                if (repairedImages && repairedImages.rowIndex) {
+                    match = repairedImages; rowIndex = match.rowIndex; rowValues = match.rowValues;
+                    rowObj = mapRowToObject(rowValues, COLS_CORTES);
                 }
 
                 // 3. Complete missing/empty text fields in the sheet (partially completed registration)
@@ -6799,24 +6831,35 @@ const filename = buildCanonicalImageBaseName(rowObj, "imgCorte" + slotIndex);
 
         const rowValues = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getValues()[0];
         const vehicleInfo = mapRowToObject(rowValues, COLS_CORTES);
-        const preparedVinCollection = vinPrefix
-            ? prepareVinCollectionForAdmin(sheet, rowValues, vehicleId, vinColumnIndex, vinPrefix, vehicleData && vehicleData.versionesAplicables)
-            : null;
-
+        let preparedVinCollection = null;
         const cutSlotIndex = findNextAvailableCutSlot_(rowValues, vehicleId);
         if (cutSlotIndex === null) throw new Error("No hay espacios disponibles para más cortes.");
         savedSlotIndex = cutSlotIndex;
-
         if (opId) recordOpId(opId, vehicleId, cutSlotIndex, formattedDate, "pending", operationHash);
 
-        let imageUrl = '';
-        if (cutData.imgCorte1) {
+        const imageUrl = runAdminDriveWorkOutsideScriptLock_(lock, opId, function() {
+            if (!cutData.imgCorte1) return "";
             const folder = findOrCreateVehicleFolder(vehicleInfo);
             const cutImageInfo = Object.assign({}, vehicleInfo);
             cutImageInfo["tipoCorte" + cutSlotIndex] = cutData.tipoCorte1;
             const filename = buildCanonicalImageBaseName(cutImageInfo, "imgCorte" + cutSlotIndex);
-            imageUrl = uploadImageToDrive(cutData.imgCorte1, filename, folder, buildImageUploadOperationKey(opId, vehicleId, "imgCorte" + cutSlotIndex));
-        }
+            return uploadImageToDrive(cutData.imgCorte1, filename, folder,
+                buildImageUploadOperationKey(opId, vehicleId, "imgCorte" + cutSlotIndex));
+        }, function(url) {
+            if (opId) {
+                const verified = findRowByOpId(sheet, opId);
+                if (!verified || verified.rowIndex !== rowIndex || verified.slotIndex !== cutSlotIndex ||
+                    verified.vehicleId !== String(vehicleId) || verified.operationHash !== operationHash ||
+                    String(verified.rowValues[COLS_CORTES["tipoCorte" + cutSlotIndex] - 1] || "").trim()) {
+                    throw new Error("El vehículo o espacio de corte cambió durante la carga; no se aplicó la imagen.");
+                }
+            }
+            const currentValues = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getValues()[0];
+            preparedVinCollection = vinPrefix
+                ? prepareVinCollectionForAdmin(sheet, currentValues, vehicleId, vinColumnIndex, vinPrefix, vehicleData && vehicleData.versionesAplicables)
+                : null;
+            return url;
+        });
 
         sheet.getRange(rowIndex, COLS_CORTES[`tipoCorte${cutSlotIndex}`]).setValue(cutData.tipoCorte1);
         sheet.getRange(rowIndex, COLS_CORTES[`ubicacionCorte${cutSlotIndex}`]).setValue(cutData.ubicacionCorte1);
@@ -6899,21 +6942,37 @@ const filename = buildCanonicalImageBaseName(rowObj, "imgCorte" + slotIndex);
         }
         anioParaFolder = anoDesde;
 
-        // Subir imágenes y obtener URLs...
+        // Subir imágenes fuera del ScriptLock; la fila e ID pendientes reservan el destino.
         const canonicalVehicleInfo = Object.assign({}, vehicleData, {
             anoDesde: anoDesde, anoHasta: anoHasta, tipoCorte1: cutData.tipoCorte1
         });
-        const folder = findOrCreateVehicleFolder(canonicalVehicleInfo);
-        let vehiculoImageUrl = '';
-        if (vehicleData.imagenVehiculo) {
-            const filename = buildCanonicalImageBaseName(canonicalVehicleInfo, "imagenVehiculo");
-            vehiculoImageUrl = uploadImageToDrive(vehicleData.imagenVehiculo, filename, folder, buildImageUploadOperationKey(opId, newId, "imagenVehiculo"));
-        }
-        let corteImageUrl = '';
-        if (cutData.imgCorte1) {
-            const filename = buildCanonicalImageBaseName(canonicalVehicleInfo, "imgCorte1");
-            corteImageUrl = uploadImageToDrive(cutData.imgCorte1, filename, folder, buildImageUploadOperationKey(opId, newId, "imgCorte1"));
-        }
+        const uploaded = runAdminDriveWorkOutsideScriptLock_(lock, opId, function() {
+            const folder = findOrCreateVehicleFolder(canonicalVehicleInfo);
+            let vehicleImageUrl = "", cutImageUrl = "";
+            if (vehicleData.imagenVehiculo) {
+                const filename = buildCanonicalImageBaseName(canonicalVehicleInfo, "imagenVehiculo");
+                vehicleImageUrl = uploadImageToDrive(vehicleData.imagenVehiculo, filename, folder,
+                    buildImageUploadOperationKey(opId, newId, "imagenVehiculo"));
+            }
+            if (cutData.imgCorte1) {
+                const filename = buildCanonicalImageBaseName(canonicalVehicleInfo, "imgCorte1");
+                cutImageUrl = uploadImageToDrive(cutData.imgCorte1, filename, folder,
+                    buildImageUploadOperationKey(opId, newId, "imgCorte1"));
+            }
+            return { vehicleImageUrl, cutImageUrl };
+        }, function(images) {
+            if (opId) {
+                const verified = findRowByOpId(sheet, opId);
+                if (!verified || verified.rowIndex !== rowIndex || verified.vehicleId !== String(newId) ||
+                    verified.slotIndex !== 1 || verified.operationHash !== operationHash ||
+                    Number(sheet.getRange(rowIndex, COLS_CORTES.id).getValue()) !== Number(newId)) {
+                    throw new Error("La reserva del vehículo cambió durante la carga; no se aplicaron las imágenes.");
+                }
+            }
+            return images;
+        });
+        const vehiculoImageUrl = uploaded.vehicleImageUrl;
+        const corteImageUrl = uploaded.cutImageUrl;
 
         // 4. Escribir los nuevos datos en las celdas específicas usando múltiples `setValue` para claridad.
         sheet.getRange(rowIndex, COLS_CORTES.categoria).setValue(vehicleData.categoria || '');
