@@ -1316,9 +1316,11 @@ function doPostInternal_(e) {
                 response = handleAuditDriveImagesInCortes(payload, logMessage, developerContext);
                 break;
             case 'saveUnusedImagesInventory':
-                response = payload && payload.mode === "organize"
-                    ? handleOrganizeUnusedImagesBatch(payload, logMessage, developerContext)
-                    : handleSaveUnusedImagesInventory(payload, logMessage);
+                response = withSharedMutationLease_("ADMIN", "saveUnusedImagesInventory", function() {
+                    return payload && payload.mode === "organize"
+                        ? handleOrganizeUnusedImagesBatch(payload, logMessage, developerContext)
+                        : handleSaveUnusedImagesInventory(payload, logMessage, developerContext);
+                });
                 break;
             case 'getCortesImageFolders':
                 response = handleGetCortesImageFolders(payload, logMessage);
@@ -4751,12 +4753,7 @@ function copyAdminRowPresentationOnly_(sheet, sourceRow, targetRow, lastColumn) 
 
 function getNextAdminFormulaBasedId_(sheet, idColumn) {
     if (!sheet || !Number.isInteger(idColumn) || idColumn < 1) throw new Error("Hoja o columna ID inválida.");
-    const lock = LockService.getScriptLock();
-    const alreadyHeld = typeof lock.hasLock === "function" && lock.hasLock();
-    let acquired = false;
-    try {
-        if (!alreadyHeld) { lock.waitLock(15000); acquired = true; }
-        const ss = getSpreadsheet(), configSheet = ss.getSheetByName(IDENTIFIER_SEQUENCE_CONFIG_SHEET_);
+    const ss = getSpreadsheet(), configSheet = ss.getSheetByName(IDENTIFIER_SEQUENCE_CONFIG_SHEET_);
         let pattern = null;
         if (configSheet && configSheet.getLastRow() > 1) {
             const actualHeaders = configSheet.getRange(1, 1, 1, IDENTIFIER_SEQUENCE_CONFIG_HEADERS_.length).getValues()[0].map(value => String(value || ""));
@@ -4815,10 +4812,7 @@ function getNextAdminFormulaBasedId_(sheet, idColumn) {
         const next = Math.max(maxSuffix, stored) + 1;
         if (!Number.isSafeInteger(next) || next < 1) throw new Error("Se agotó la secuencia de IDs de " + sheet.getName() + ".");
         properties.setProperty(key, String(next));
-        return pattern.prefix + String(next).padStart(pattern.padding, "0");
-    } finally {
-        if (acquired) lock.releaseLock();
-    }
+    return pattern.prefix + String(next).padStart(pattern.padding, "0");
 }
 
 function persistIdentifierSequenceConfigs_(ss, entries) {
@@ -9897,26 +9891,23 @@ function handleRecoverReplacedImage(payload, logMessage) {
 function recordImageAdministrationActivity(developerContext, activityType, associatedId, details) {
     try {
         if (!developerContext || !developerContext.userId) return false;
-        const sheet = getSpreadsheet().getSheetByName("ActividadUsuario");
-        if (!sheet) throw new Error("No se encontró la hoja ActividadUsuario.");
-
-        const lastRow = sheet.getLastRow();
-        const newRowNumber = lastRow + 1;
-        const lastColumn = Math.max(sheet.getLastColumn(), 7);
-        if (lastRow >= 2) copyAdminRowPresentationOnly_(sheet, 2, newRowNumber, lastColumn);
-        sheet.getRange(newRowNumber, 1).setValue(getNextAdminFormulaBasedId_(sheet, 1));
-        sheet.getRange(newRowNumber, 2, 1, 6).setValues([[
-            new Date().toISOString(),
-            developerContext.userId,
-            developerContext.userName || "Usuario",
-            activityType,
-            associatedId || "",
-            details || ""
-        ]]);
-        SpreadsheetApp.flush();
-        return true;
+        return withSharedMutationLease_("ADMIN", "recordAdminImageActivity", function() {
+            const sheet = getSpreadsheet().getSheetByName("ActividadUsuario");
+            if (!sheet) throw new Error("No se encontró la hoja ActividadUsuario.");
+            const lastRow = sheet.getLastRow();
+            const newRowNumber = lastRow + 1;
+            const lastColumn = Math.max(sheet.getLastColumn(), 7);
+            if (lastRow >= 2) copyAdminRowPresentationOnly_(sheet, 2, newRowNumber, lastColumn);
+            sheet.getRange(newRowNumber, 1).setValue(getNextAdminFormulaBasedId_(sheet, 1));
+            sheet.getRange(newRowNumber, 2, 1, 6).setValues([[
+                new Date().toISOString(), developerContext.userId,
+                developerContext.userName || "Usuario", activityType, associatedId || "", details || ""
+            ]]);
+            SpreadsheetApp.flush();
+            return true;
+        });
     } catch (error) {
-        Logger.log("No se pudo registrar la acción de administración de imágenes: " + error.message);
+        Logger.log("No se pudo registrar la acción de administración de imágenes: " + String(error && error.message || error));
         return false;
     }
 }
@@ -11145,11 +11136,7 @@ function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) 
     const uniqueFiles = uniqueIds.map(fileId => ({ fileId: fileId }));
     const auditId = String(payload && payload.auditId || getLatestDriveAuditIdForUser_(ownerId)).trim();
 
-    const lock = LockService.getScriptLock();
-    try { lock.waitLock(30000); }
-    catch (e) { throw new Error("No se pudo bloquear la actualización del inventario. Intenta nuevamente."); }
-
-    try {
+    {
         const auditState = validateCompletedDriveAudit_(auditId, ownerId, uniqueFiles);
         const submissionDigest = hashDriveAuditFileIds_(uniqueFiles);
         if (auditState.inventorySubmissionDigest && auditState.inventorySubmissionDigest !== submissionDigest) {
@@ -11378,13 +11365,8 @@ function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) 
             blockedCount + " bloqueadas, " + errorCount + " con error y " + staleCount + " no confirmadas.");
         return Object.assign({ status: "success", auditId: auditId, inventoryOperationId: inventoryOperationId,
             results: results }, summary);
-    } finally {
-        lock.releaseLock();
     }
 }
-
-
-
 function handleOrganizeUnusedImagesBatch(payload, logMessage, developerContext) {
     const auditId = String(payload && payload.auditId || "").trim();
     const submittedFiles = Array.isArray(payload && payload.files) ? payload.files : [];
@@ -11410,11 +11392,7 @@ function handleOrganizeUnusedImagesBatch(payload, logMessage, developerContext) 
         if (!seenIds.has(fileId)) { seenIds.add(fileId); fileIds.push(fileId); }
     });
 
-    const lock = LockService.getScriptLock();
-    try { lock.waitLock(30000); }
-    catch (e) { throw new Error("No se pudo bloquear la organización de imágenes. Intenta nuevamente."); }
-
-    try {
+    {
         const rootFolder = getCortesRootFolder();
         const sheet = getOrCreateReplacedImagesSheet();
         const headers = ensureReplacedImagesInventoryColumns(sheet);
@@ -11745,12 +11723,8 @@ function handleOrganizeUnusedImagesBatch(payload, logMessage, developerContext) 
             folderPath: destinationPath, processedCount: fileIds.length, movedCount: movedCount,
             alreadyOrganizedCount: alreadyOrganizedCount, manualPreservedCount: manualPreservedCount,
             failedCount: failedCount, blockedCount: blockedCount, loggingErrorCount: loggingErrorCount };
-    } finally {
-        lock.releaseLock();
     }
 }
-
-
 function handleAuditDriveImagesInCortes(payload, logMessage, developerContext) {
     // La lease protege únicamente el estado/cursor de auditoría. No reserva CORTES ni DRIVE,
     // por lo que el escáner no bloquea el registro de cortes ni otras operaciones de negocio.

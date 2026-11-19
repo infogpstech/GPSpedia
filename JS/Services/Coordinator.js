@@ -121,7 +121,8 @@ function coordinatorPolicy_(service, operation) {
             deleteReplacedImage: { read: identityRead, write: ["CORTES", "DRIVE", "IMAGE_INVENTORY", "ACTIVITY"] },
             restoreReplacedImageFromTrash: { read: identityRead, write: ["DRIVE", "IMAGE_INVENTORY", "ACTIVITY"] },
             permanentlyDeleteReplacedImage: { read: identityRead, write: ["DRIVE", "IMAGE_INVENTORY", "ACTIVITY"] },
-            saveUnusedImagesInventory: { read: [...identityRead, "CORTES"], write: ["DRIVE", "IMAGE_INVENTORY", "ACTIVITY"] },
+            saveUnusedImagesInventory: { write: ["IMAGE_INVENTORY"] },
+            recordAdminImageActivity: { write: ["ACTIVITY"] },
             createCortesImageFolder: { read: identityRead, write: ["DRIVE", "ACTIVITY"] },
             moveReplacedImage: { read: identityRead, write: ["CORTES", "DRIVE", "IMAGE_INVENTORY", "ACTIVITY"] },
             getReplacedImageDownloadUrl: { read: [...identityRead, "DRIVE"], write: ["ACTIVITY"] },
@@ -178,7 +179,7 @@ function coordinatorPolicy_(service, operation) {
     // la lease. No debe reservar USERS ni SESSION_CONTEXTS durante el recorrido:
     // el login escribe ambos recursos y debe poder continuar en paralelo.
     if (((service === "AUTH" && operation !== "requestPasswordRecovery") ||
-        (service === "ADMIN" && !["getCortesImageFolders", "auditDriveImagesInCortes"].includes(operation))) &&
+        (service === "ADMIN" && !["getCortesImageFolders", "auditDriveImagesInCortes", "saveUnusedImagesInventory", "recordAdminImageActivity"].includes(operation))) &&
         !readResources.includes("SESSION_CONTEXTS") && !writeResources.includes("SESSION_CONTEXTS")) {
         readResources.push("SESSION_CONTEXTS");
     }
