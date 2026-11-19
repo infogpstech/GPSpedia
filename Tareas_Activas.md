@@ -471,4 +471,5 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Mover markImageUploadLinked (Drive + ImageUploadLedger) fuera del ScriptLock mediante runAdminDriveWorkOutsideScriptLock_.
 - [x] Revalidar opId, vehículo, slot, estado y huella al readquirir; solicitudes legacy usan clave estable derivada de fileId.
 - [x] Añadir AdminCutImageLinkOutsideLock.mjs al runner.
-- [ ] CI integral y revisión del diff pendientes. No se despliega ADMIN ni se modifican datos externos.
+- [x] CI 44593963972 (intento 2, checkout HEAD 8a3d70d) SUCCESS: 165 suites, 2,316 pruebas aprobadas, 0 fallos; `AdminCutImageLinkOutsideLock` 12/12 y sintaxis JS aprobada. Health read-only 44593963988 SUCCESS; GitHub Pages 44594081770 SUCCESS. Diff revisado.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó ADMIN ni se modificaron datos externos.

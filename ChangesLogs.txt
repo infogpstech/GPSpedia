@@ -972,3 +972,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 [2026-11-19] Ajuste del fixture AdminCutImageLinkOutsideLock: el mock de Spreadsheet expone getSheetByName para que la prueba alcance la revalidación del ledger; sin cambio funcional.
 
 [2026-11-19] Se completa el mock getSheetByName también en el escenario de conflicto de AdminCutImageLinkOutsideLock; sin cambio funcional.
+
+
+[2026-11-19] Cierre de vinculación de imágenes ADMIN fuera del ScriptLock: CI 44593963972 intento 2 SUCCESS (165 suites, 2,316 pruebas, 0 fallos); AdminCutImageLinkOutsideLock 12/12. Health read-only 44593963988 y GitHub Pages 44594081770 SUCCESS. Diff revisado; validación real Apps Script/Drive/Spreadsheet pendiente de Beta autorizada.
