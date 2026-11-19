@@ -2810,7 +2810,7 @@ function findOrCreateIdempotenciaSheet() {
         if (isUnsafeIdempotenciaHeaderState_(state)) {
             throw new Error("La hoja Idempotencia tiene datos bajo un encabezado vacío o incompleto; se detuvo sin repararla ni cambiar de hoja.");
         }
-        if (state.compatible) return initializeIdempotenciaSheet(primary);
+        if (state.compatible) return state.missingIndexes.length ? initializeIdempotenciaSheet(primary) : primary;
     }
 
     if (fallback) {
@@ -2821,7 +2821,7 @@ function findOrCreateIdempotenciaSheet() {
         if (!state.compatible) {
             throw new Error("La hoja Idempotencia_Cortes existe, pero su estructura no es compatible; requiere revisión manual.");
         }
-        return initializeIdempotenciaSheet(fallback);
+        return state.missingIndexes.length ? initializeIdempotenciaSheet(fallback) : fallback;
     }
 
     if (primary) {
