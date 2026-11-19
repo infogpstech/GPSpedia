@@ -9026,16 +9026,22 @@ function getExistingEntities(sheet) {
   if (lastRow < 2) {
     return { brands: [], models: [], versions: [] };
   }
-  var data = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).getValues();
+  // Solo se leen las tres columnas usadas por el catálogo de entidades, no toda la fila.
+  var firstColumn = Math.min(COLS_CORTES.marca, COLS_CORTES.modelo, COLS_CORTES.versionesAplicables);
+  var lastColumn = Math.max(COLS_CORTES.marca, COLS_CORTES.modelo, COLS_CORTES.versionesAplicables);
+  var data = sheet.getRange(2, firstColumn, lastRow - 1, lastColumn - firstColumn + 1).getValues();
+  var brandIndex = COLS_CORTES.marca - firstColumn;
+  var modelIndex = COLS_CORTES.modelo - firstColumn;
+  var versionIndex = COLS_CORTES.versionesAplicables - firstColumn;
   var brands = [];
   var models = [];
   var versions = [];
 
   for (var i = 0; i < data.length; i++) {
     var row = data[i];
-    var brandVal = String(row[COLS_CORTES.marca - 1] || "").trim();
-    var modelVal = String(row[COLS_CORTES.modelo - 1] || "").trim();
-    var versionVal = String(row[COLS_CORTES.versionesAplicables - 1] || "").trim();
+    var brandVal = String(row[brandIndex] || "").trim();
+    var modelVal = String(row[modelIndex] || "").trim();
+    var versionVal = String(row[versionIndex] || "").trim();
 
     if (brandVal && brands.indexOf(brandVal) === -1) brands.push(brandVal);
     if (modelVal && models.indexOf(modelVal) === -1) models.push(modelVal);
