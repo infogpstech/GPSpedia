@@ -139,7 +139,8 @@ check("Ambas mutaciones exigen Desarrollador, actor cacheado y auditoría antes 
     const auditEnd = adminSource.indexOf("function handleAuditDriveImagesInCortesCore_", auditStart);
     assert.ok(auditStart >= 0 && auditEnd > auditStart);
     assert.ok(adminSource.slice(auditStart, auditEnd).includes('withSharedMutationLease_("ADMIN", "auditDriveImagesInCortes"'));
-    assert.ok(!(adminSource.slice(0, auditStart) + adminSource.slice(auditEnd)).includes("withSharedMutationLease_"));
+    const adminLeaseOperations = [...adminSource.matchAll(/withSharedMutationLease_\("ADMIN", "([^"]+)"/g)].map(match => match[1]).sort();
+    assert.deepEqual(adminLeaseOperations, ["auditDriveImagesInCortes", "recordAdminImageActivity", "saveUnusedImagesInventory"].sort());
     assert.ok(adminSource.includes("function isSharedMutationAction_(action)"));
     assert.ok(adminSource.includes('"createSheet","addColumn","driveCommand"'));
 });
