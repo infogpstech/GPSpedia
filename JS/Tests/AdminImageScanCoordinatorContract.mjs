@@ -242,6 +242,37 @@ assert.ok(admin.includes("visitedFolderPaths.set(String(current.folderId), Strin
 assert.ok(admin.includes("foldersVisitedPaths: Array.from(visitedFolderPaths.values())"),
     "La respuesta de ADMIN debe exponer las rutas recorridas para su salida en consola.");
 
+const cortesReferenceSource = extractFunction(admin, "collectCortesImageReferences");
+const allSheetsReferenceSource = extractFunction(admin, "collectActiveDriveReferences");
+const requiredImageFields = [
+    "imagenVehiculo", "imgCorte1", "imgCorte2", "imgCorte3",
+    "imgApertura", "imgCableAlimen", "imgCableAlimen2", "imgCableAlimen3"
+];
+for (const field of requiredImageFields) {
+    assert.ok(cortesReferenceSource.includes('"'+field+'"'),
+        "La auditoría debe cubrir la columna de imagen "+field);
+}
+assert.ok(cortesReferenceSource.includes("new Set(imageColumns.map(item => item.column))"),
+    "La auditoría debe bloquear columnas de imagen duplicadas.");
+for (const reader of ["getDisplayValues()", "getValues()", "getFormulas()", "getRichTextValues()", "getContentUrl()"]) {
+    assert.ok(cortesReferenceSource.includes(reader), "La captura de Cortes debe inspeccionar "+reader);
+}
+assert.ok(cortesReferenceSource.includes("getRuns()"),
+    "La auditoría debe inspeccionar enlaces enriquecidos dentro de las celdas.");
+assert.ok(allSheetsReferenceSource.includes("getSpreadsheet().getSheets()"),
+    "La auditoría debe recorrer todas las hojas del Spreadsheet.");
+assert.ok(allSheetsReferenceSource.includes("collectCortesImageReferences(includeLocations)"),
+    "Cortes debe usar el lector especializado de sus ocho columnas de imagen.");
+assert.ok(allSheetsReferenceSource.includes("sheet.getImages()"),
+    "La auditoría debe detectar imágenes flotantes sobre la cuadrícula.");
+assert.ok(allSheetsReferenceSource.includes("getRichTextValues()") && allSheetsReferenceSource.includes("getFormulas()"),
+    "Las demás hojas deben incluir fórmulas y enlaces enriquecidos en el escaneo.");
+const organizerPreviewSource = extractFunction(admin, "handlePreviewCortesImageOrganizer_");
+assert.ok(organizerPreviewSource.includes("collectActiveDriveReferences(true)"));
+assert.doesNotMatch(organizerPreviewSource, /\.setValue\(|\.setName\(|\.setTrashed\(|\.createFile\(|\.createFolder\(/,
+    "El preview del organizador debe seguir siendo estrictamente de solo lectura.");
+console.log("ImageReferenceCoverageContract: PASS");
+
 const colsMatch = admin.match(/const COLS_CORTES = (\{[\s\S]*?\n\});/);
 assert.ok(colsMatch, "Debe existir el mapa real de columnas de Cortes.");
 const actualCortesCols = new Function("return (" + colsMatch[1] + ");")();
