@@ -310,6 +310,12 @@ assert.ok(!["DriveApp","SpreadsheetApp","setName","moveTo","setTrashed","setValu
     "El constructor puro no debe ejecutar operaciones de Drive ni Spreadsheet.");
 
 assert.match(apiConfig, /previewCortesImageOrganizer.*ADMIN/);
+assert.ok(ui.includes('routeActionWithRetry("previewCortesImageOrganizer"'), "La consola debe invocar el preview del organizador.");
+assert.ok(ui.includes("btn-audit-drive-organizer-preview"), "La consola debe enlazar el control del preview.");
+const indexHtml = readFileSync(new URL("../../index.html", import.meta.url), "utf8");
+assert.ok(indexHtml.includes('id="btn-audit-drive-organizer-preview"'));
+assert.ok(indexHtml.includes('id="audit-drive-organizer-results"'));
+
 assert.ok(coordinator.includes('previewCortesImageOrganizer: { read: [...identityRead, "CORTES", "DRIVE", "IMAGE_INVENTORY", "IMAGE_AUDIT_STATE", "TUTORIAL", "FEEDBACK", "LOGOS", "RELAY"] }'), "El preview debe declarar únicamente recursos de lectura en Coordinator.");
 assert.match(admin, /previewCortesImageOrganizer/);
 assert.match(admin, /case 'previewCortesImageOrganizer'/);
