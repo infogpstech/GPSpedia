@@ -65,7 +65,6 @@ testCase("excluye registros confirmados como eliminados",()=>{
 const id=n=>"drive-file-id-000000000000000"+n;
 const target=(baseName,extra={})=>({row:2,vehicleId:"V-001",field:"imagenVehiculo",column:9,baseName,currentValue:"",...extra});
 const file=(n,name,mimeType="image/jpeg")=>({fileId:id(n),fileName:name,mimeType,accessPublic:true});
-let passed=0;function testCase(name,fn){fn();passed++;console.log("PASS "+name);}
 const validatorStart=admin.indexOf("function buildCortesImageReconciliationApprovalManifest_");
 const validatorEnd=admin.indexOf("\n}\n",validatorStart)+2;
 assert.ok(validatorStart>=0&&validatorEnd>validatorStart,"validador de aprobaciones ausente");
