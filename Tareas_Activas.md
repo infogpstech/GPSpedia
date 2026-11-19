@@ -644,3 +644,12 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Prueba `AdminTestigoHeaderReadReuse.mjs`: 7/7 PASS. CI `44633000972` SUCCESS: 184 suites, 2,457 pruebas aprobadas, 0 fallos; sintaxis JS aprobada.
 - [x] Health read-only `44633000978` SUCCESS. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. `GP-PERF-ADMIN-CUT-LOCK-01` continúa EN PROGRESO.
+
+
+### ADMIN — reutilización del snapshot de encabezados en recuperación (2026-11-19)
+- [x] Devolver el snapshot de encabezados ya validado por `ensureTestigoColumns`, incluyendo las columnas AT:AV reparadas en memoria.
+- [x] Usar ese snapshot para identificar la columna de operación durante la recuperación idempotente, evitando otra lectura completa de encabezados.
+- [x] Mantener la revalidación del ledger y la lectura de fila después de las operaciones Drive; el snapshot de encabezados solo se reutiliza mientras el lock sigue en posesión de la ejecución.
+- [x] Prueba `AdminTestigoHeaderReadReuse.mjs`: 7/7 PASS. CI `44633178723` SUCCESS: 184 suites, 2,457 pruebas aprobadas, 0 fallos; sintaxis JS aprobada.
+- [x] Health read-only `44633178689` SUCCESS. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. `GP-PERF-ADMIN-CUT-LOCK-01` continúa EN PROGRESO.
