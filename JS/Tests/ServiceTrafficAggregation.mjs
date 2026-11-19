@@ -82,7 +82,7 @@ test("combina contadores directos de AUTH, WRITE y FEEDBACK con operaciones Coor
         };
     }
     const result = mergeDirectServiceTraffic_(coordinator, directResults);
-    for (const service of ["AUTH", "WRITE", "FEEDBACK"]) {
+    for (const service of ["AUTH", "WRITE", "FEEDBACK", "USERS"]) {
         assert.equal(result.totals.last24Hours[service], coordinator.totals.last24Hours[service] + 9);
         assert.equal(result.buckets[0].counts[service], coordinator.buckets[0].counts[service] + 9);
         assert.equal(result.sources[service].directRequestsAvailable, true);
@@ -98,7 +98,7 @@ test("conserva buckets directos que cruzan el límite de hora respecto a Coordin
     const coordinator = coordinatorFixture();
     const nextHour = coordinator.buckets[0].startAt + 60 * 60 * 1000;
     const directResults = {};
-    for (const service of ["AUTH", "WRITE", "FEEDBACK"]) {
+    for (const service of ["AUTH", "WRITE", "FEEDBACK", "USERS"]) {
         directResults[service] = {
             status: "success", service, scope: "direct_post_requests",
             accuracy: "best_effort_nonblocking", mayUndercount: true,
@@ -110,7 +110,7 @@ test("conserva buckets directos que cruzan el límite de hora respecto a Coordin
     assert.equal(result.buckets.length, 2);
     assert.equal(result.buckets[0].startAt, coordinator.buckets[0].startAt);
     assert.equal(result.buckets[1].startAt, nextHour);
-    for (const service of ["AUTH", "WRITE", "FEEDBACK"]) {
+    for (const service of ["AUTH", "WRITE", "FEEDBACK", "USERS"]) {
         assert.equal(result.buckets[1].counts[service], 3);
         assert.equal(result.buckets[0].counts[service], coordinator.buckets[0].counts[service]);
     }
