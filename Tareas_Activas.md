@@ -286,3 +286,11 @@ Aplicar la estructura objetivo después de validar el dry-run:
 - La preparación y carga de imágenes en Drive ocurren antes de adquirir el lock; la sección crítica usa tryLock(0), vuelve a leer el registro y compara el plan para detectar cambios concurrentes antes de escribir.
 - Se conservan persistencia verificada, rollback de la fila, idempotencia de carga por operationKey y confirmación del ledger. Si el registro cambia durante la carga, no se sobrescriben datos; las cargas no vinculadas permanecen sujetas a reconciliación del ledger.
 - Validación local contractual registrada en AdminSupplementaryUploadOutsideLock.mjs; ejecución de CI pendiente. No se desplegó ADMIN ni se accedió a Drive/Spreadsheet productivos.
+
+
+### Cierre verificado — GP-PERF-ADMIN-SUPPLEMENTARY-UPLOAD-LOCK-01 — 2026-11-19
+- CI run 44549910139 SUCCESS: 153 suites, 2,225 pruebas aprobadas, 0 fallos; incluye AdminSupplementaryUploadOutsideLock.
+- Comprobación sintáctica de módulos JavaScript modificados: SUCCESS.
+- Health read-only run 44549910083 SUCCESS. No se desplegó Apps Script ni se modificaron datos/propiedades productivas.
+- La tarea queda COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. En Beta comprobar concurrencia real y comportamiento de archivos pendientes ante un conflicto.
+- HEAD de implementación: cc7cd93e670d4d7dfd4b46ead8eb60bc830101e0.

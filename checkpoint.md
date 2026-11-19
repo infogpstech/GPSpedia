@@ -1077,3 +1077,14 @@ ACTUALIZACIÓN DE CONTINUIDAD — 2026-11-19
 - Prueba contractual añadida a RunServiceTests.mjs. CI pendiente de ejecución.
 - No se desplegó Apps Script ni se modificaron ScriptProperties, secretos, Drive o Spreadsheet.
 ================================================================================
+
+
+================================================================================
+2026-11-19 — CIERRE GP-PERF-ADMIN-SUPPLEMENTARY-UPLOAD-LOCK-01
+- HEAD de implementación verificado: cc7cd93e670d4d7dfd4b46ead8eb60bc830101e0 en GPSpedia2.2.5_work; padre 41ada27411b324b356a62dbf07a2dd85cea36a61. Rama base GPSpedia2.2.5 continúa en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- GitHub Actions run 44549910139 SUCCESS: sintaxis y regresión integral aprobadas; 153 suites, 2,225 pruebas, 0 fallos. La prueba AdminSupplementaryUploadOutsideLock quedó incluida.
+- Health read-only run 44549910083 SUCCESS.
+- Cambio local completado: carga Drive fuera del lock; tryLock(0), relectura y comparación del plan antes de persistir; se mantienen verificación, rollback y ledger.
+- Validación Beta pendiente: concurrencia real entre solicitudes Apps Script y revisión de recuperación de cargas que queden sin vínculo tras un conflicto. No se ejecutaron deployments ni operaciones reales en Drive/Spreadsheet.
+- Siguiente prioridad de rendimiento: revisar handleAddOrUpdateCut, que todavía mantiene un ScriptLock global mientras realiza llamadas a WRITE y carga imágenes a Drive. Auditar el flujo completo y separar la sección crítica sin debilitar idempotencia ni recuperación.
+================================================================================

@@ -863,3 +863,10 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - JS/Tests/AdminSupplementaryUploadOutsideLock.mjs: contrato anti-regresión para orden de carga/lock, ausencia de espera, revalidación, persistencia y ledger.
 - JS/Tests/RunServiceTests.mjs: nueva prueba incorporada a la regresión integral.
 - Tareas_Activas.md y checkpoint.md: estado y continuidad documentados; CI aún no ejecutada.
+
+
+[2026-11-19] Cierre GP-PERF-ADMIN-SUPPLEMENTARY-UPLOAD-LOCK-01
+- CI run 44549910139 SUCCESS: 153 suites, 2,225 pruebas aprobadas, 0 fallos; sintaxis de módulos modificados aprobada.
+- Health read-only run 44549910083 SUCCESS.
+- Tarea completada localmente; concurrencia real y recuperación de archivos pendientes quedan para Beta autorizada.
+- HEAD: cc7cd93e670d4d7dfd4b46ead8eb60bc830101e0.
