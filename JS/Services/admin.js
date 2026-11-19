@@ -6959,7 +6959,7 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
                     }
                     return { vehicleImageUrl, cutImageUrl };
                 }, function(images) {
-                    const verified = findRowByOpId(sheet, opId);
+                    const verified = findRowByOpId(sheet, opId, idempotencyEntriesSnapshot);
                     if (!verified || verified.rowIndex !== rowIndex || verified.slotIndex !== slotIndex ||
                         verified.vehicleId !== String(rowObj.id) || verified.operationHash !== operationHash) {
                         throw new Error("La reserva cambió durante la reparación de imágenes; no se aplicaron los cambios.");
@@ -7155,7 +7155,7 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
                 recordOpId(opId, newId, 1, formattedDate, "pending", operationHash, idempotencyEntriesSnapshot);
             } catch (error) {
                 try {
-                    const persistedOperation = findRowByOpId(sheet, opId);
+                    const persistedOperation = findRowByOpId(sheet, opId, idempotencyEntriesSnapshot);
                     if (!persistedOperation || persistedOperation.rowIndex !== rowIndex) removeEmptyPendingCutRow(sheet, rowIndex, lastColumn);
                 } catch (verificationError) {
                     Logger.log("No se pudo determinar si la reserva de opId quedó persistida: " + verificationError.message);
