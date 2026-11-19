@@ -9391,7 +9391,7 @@ function mergeDirectServiceTraffic_(coordinatorResult, directResults) {
     result.sources = sources;
     result.coverage = {
         description: "Agregado de operaciones protegidas de los siete servicios activos, más solicitudes directas de lectura CATALOG y rutas directas instrumentadas de AUTH, WRITE, USERS y FEEDBACK cuando sus contadores están configurados.",
-        excludes: ["sondeos de salud", "solicitudes HTTP que no atraviesan rutas instrumentadas"]
+        excludes: ["sondeos de salud", "solicitudes HTTP que no atraviesan las rutas instrumentadas"]
     };
     result.excluded = result.coverage.excludes.slice();
     return result;
