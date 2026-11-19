@@ -449,3 +449,56 @@ Alcance: revisión estática de JS/Frontend/ui.js, index.html y JS/Services/admi
 - El defecto a corregir es la fragmentación de la salida y la falta de trazabilidad dentro del modal: progreso y resultados deben mostrarse también en la consola de Cortes, mientras la terminal del Desarrollador sigue siendo el punto de confirmación explícita.
 - La validación del inventario también debe reconocer el estado backend «no_confirmada» y conciliar savedCount/blockedCount/errorCount/noLongerConfirmedCount con los resultados individuales. No habilitar movimientos si el resumen no coincide.
 ================================================================================
+
+
+================================================================================
+2026-11-18 — AUDITORÍA AMPLIADA DEL ORGANIZADOR AUTOMÁTICO (NORMALIZACIÓN Y MOVIMIENTO)
+================================================================================
+Alcance: inspección estática de JS/Services/admin.js y sus contratos. No se ejecutó normalizeImages ni organizePrimaryVehicleImages; no se accedió ni modificó Drive o Spreadsheet productivos.
+
+### Hallazgos adicionales
+
+1. handleNormalizeImages (JS/Services/admin.js:2752-2965) — severidad ALTA (integridad) / ALTA (alcance funcional)
+- Procesa los ocho campos de imagen de Cortes, pero no procesa filas de LogosMarca.
+- Construye imageToRowMap únicamente con las ocho columnas de Cortes; no verifica el conjunto de referencias activas de todas las hojas, aunque collectActiveDriveReferences (línea 231) ya ofrece esa cobertura y excluye Imagenes_Reemplazadas.
+- Si encuentra un archivo en papelera, ejecuta file.setTrashed(false) automáticamente antes de validar el resto del recurso. La normalización puede restaurar archivos eliminados sin una orden específica de recuperación.
+- Llama normalizeExistingVehicleFolderPath, que solo renombra segmentos existentes con coincidencia única; si falta un segmento, no crea la jerarquía. Después renombra archivos, pero no los mueve al destino esperado.
+- Comprueba la ubicación comparando únicamente el nombre de una carpeta padre inmediata con el nombre de generación; no verifica la ruta completa categoría/marca/modelo/versión/años. Una carpeta con el mismo nombre en otra ubicación puede parecer correcta.
+- Si un ID se comparte entre varias celdas de Cortes y los nombres calculados difieren, crea una copia en el padre actual y actualiza la URL de una celda. No genera un plan previo de destinos ni verifica referencias fuera de Cortes antes de esa decisión.
+
+2. handleOrganizePrimaryVehicleImages (JS/Services/admin.js:2978-3105) — severidad ALTA (cobertura y referencias)
+- Solo procesa vehicleInfo.imagenVehiculo. No mueve imgCorte1/2/3, imgApertura ni imgCableAlimen/2/3, y no recorre LogosMarca.
+- La protección previa usa collectCortesImageReferences(true), limitada a las referencias de Cortes; no verifica referencias de las demás hojas antes de mover.
+- Es un organizador parcial de imagen principal, no el organizador integral requerido.
+
+3. Constructor de carpetas y valores incompletos — severidad MEDIA
+- getVehicleYearFolderName (línea 6651) devuelve rangos con guion bajo (por ejemplo 2020_2026), mientras el requisito Beta establece el nombre de carpeta 2020-2026. Para año faltante devuelve «Sin_Año».
+- findOrCreateVehicleFolder (línea 6665) y normalizeExistingVehicleFolderPath (línea 6684) sustituyen datos ausentes por «Sin_Categoria», «Sin_Marca», «Sin_Modelo» y «Sin_Tipo_de_Encendido». Estos valores inventados no cumplen la instrucción de no crear categorías ni datos que no existan; las filas incompletas deben bloquearse y reportarse.
+- normalizeExistingVehicleFolderPath no crea carpetas ausentes; findOrCreateVehicleFolder sí las crea, pero usa los placeholders anteriores.
+
+4. Nomenclatura y extensión — severidad MEDIA
+- buildCanonicalImageBaseName (línea 3113) usa sufijos heredados corte1/corte2/corte3/apert/alimen/alimen2/alimen3; no usa los códigos ign, bomba, btn, apert, alim, alim2 y shock del requisito Beta.
+- Para imagenVehiculo el sufijo actual es vacío, mientras el ejemplo requerido incluye _imagenVehiculo.
+- El nombre incorpora anoDesde, pero no anoHasta; además incorpora versionesAplicables y tipoEncendido como componentes separados, en lugar de usar versión o encendido como el único segmento correspondiente.
+- getCanonicalImageExtension (línea 3122) infiere una extensión a partir del MIME cuando el archivo no tiene extensión. La regla requerida es conservar la extensión original, no inventar una nueva.
+- La asignación de ign/bomba/btn debe basarse en los valores reales de tipoCorte1/2/3 y su función; no debe asignarse solo por número de columna ni inventarse una equivalencia cuando el valor no se reconoce.
+
+5. Alta de logos — severidad MEDIA
+- handleAddLogo (línea 5092) continúa guardando el archivo en Cortes/Logos, no directamente en Cortes/<categoría>/<marca>/ como requiere la estructura Beta.
+- Se aplicó una mitigación de seguridad: handleAddLogo ahora utiliza findOrCreateSubFolder, que rechaza nombres de carpeta equivalentes múltiples, en lugar de entrar al helper heredado getOrCreateSubFolder que intenta fusionar carpetas. El registro de logos ya no invoca ese camino de fusión.
+- LogosMarca guarda la marca en columna 2 y la URL en columna 3; la categoría no forma parte de esa fila. Antes de mover el logo al primer nivel de una carpeta de marca, el nuevo plan debe resolver una única categoría desde Cortes o marcar la marca como ambigua si aparece en varias categorías. No se debe elegir una categoría arbitrariamente.
+
+### Criterios obligatorios del siguiente diseño
+- Construir primero un preview/dry-run de solo lectura para las ocho columnas de imagen de Cortes y las referencias de LogosMarca; comparar ID, nombre, extensión y ruta actual con el destino propuesto.
+- Usar referencias activas de todas las hojas, excluyendo únicamente Imagenes_Reemplazadas para determinar uso vigente. Una referencia no interpretable, compartida o ambigua bloquea el movimiento automático.
+- Ruta de vehículo: Cortes/<categoría>/<marca>/<modelo>/<versión-o-encendido>/<año-inicio-año-fin>. Logo: archivo <marca>_logo.<extensión> en el primer nivel de la carpeta de marca.
+- Nombre de archivo: <modelo>_<versión-o-encendido>_<año-inicio>_<año-fin>_<función>.<extensión>, con los códigos de función del registro Beta. Preservar la extensión original.
+- No crear valores sustitutos, no restaurar archivos en papelera, no fusionar ni enviar carpetas a papelera, no sobrescribir archivos existentes y no modificar Spreadsheet/Drive durante el preview.
+- La fase de aplicación será separada, explícita y confirmada desde la consola del Desarrollador, con operaciones idempotentes, verificación por archivo y rollback.
+
+### Estado
+- Auditoría estática de consola: COMPLETADA.
+- Auditoría estática de normalización/organizador: COMPLETADA.
+- Mitigación de fusión de carpetas en alta de logo: APLICADA y cubierta por LogoIdIntegrity.
+- Organizador integral y dry-run: PENDIENTES. No se ejecutaron operaciones reales de Drive/Spreadsheet.
+================================================================================

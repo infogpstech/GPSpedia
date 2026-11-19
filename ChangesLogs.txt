@@ -621,3 +621,14 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - Archivos: JS/Services/admin.js, JS/Frontend/ui.js, index.html, style.css, JS/Tests/CortesImageReconciliationUI.mjs, JS/Tests/AdminImageScanCoordinatorContract.mjs.
 - La organización de Drive no se ejecutó ni se modificaron archivos, carpetas o Spreadsheet reales.
 ================================================================================
+
+
+================================================================================
+2026-11-18 — CIERRE DE CONSOLA Y MITIGACIÓN DE ALTA DE LOGOS
+- Consola de auditoría de Cortes implementada como salida principal del modal; incluye rutas de carpetas visitadas por lote, resultados individuales, clasificación, conteos, advertencias, errores, versión ADMIN y hora del último escaneo. La lista de miniaturas históricas/sin uso se conserva como vista complementaria.
+- La confirmación afirmativa/negativa sigue ejecutándose desde la terminal global del Desarrollador; el modal también registra el resultado.
+- Se corrigió el estado backend no_confirmada y se exige conciliar savedCount, blockedCount, errorCount y noLongerConfirmedCount con los resultados individuales antes de habilitar organización.
+- handleAddLogo ahora usa findOrCreateSubFolder, evitando el helper heredado de fusión de carpetas. La ruta de logos sigue siendo Cortes/Logos; el traslado al primer nivel de la carpeta de marca queda pendiente del nuevo organizador.
+- CI final en HEAD d81894f53e6036a1b3d0e0e86b317ad913ec42ee: 146 suites, 2,157 pruebas aprobadas, 0 fallos. Health read-only SUCCESS. Pages build/deployment SUCCESS.
+- No se ejecutaron operaciones de Drive/Spreadsheet productivos.
+================================================================================
