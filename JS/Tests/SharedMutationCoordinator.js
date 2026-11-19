@@ -174,6 +174,27 @@ function runSharedMutationCoordinatorTests() {
         release_(loginRuntime, "AUTH", "login", login.token);
     });
 
+    test_("La auditoría ADMIN no bloquea Inbox ni consultas de salud/tráfico", function() {
+        const r = createRuntime_();
+        const audit = acquire_(r, "ADMIN", "auditDriveImagesInCortes");
+        assert_(audit.status === "success", "La auditoría debe reservar IMAGE_AUDIT_STATE.");
+
+        const inbox = acquire_(r, "FEEDBACK", "sendInboxMessage");
+        assert_(inbox.status === "success",
+            "La auditoría no debe bloquear el envío/consulta operativa del Inbox.");
+        const traffic = acquire_(r, "ADMIN", "getServiceTraffic");
+        assert_(traffic.status === "success",
+            "La auditoría no debe bloquear la consulta de telemetría/estado del servicio.");
+
+        const duplicateAudit = acquire_(r, "ADMIN", "auditDriveImagesInCortes");
+        assert_(duplicateAudit.status === "error" && duplicateAudit.code === "busy",
+            "La exclusión debe mantenerse entre dos auditorías sobre IMAGE_AUDIT_STATE.");
+
+        release_(r, "ADMIN", "getServiceTraffic", traffic.token);
+        release_(r, "FEEDBACK", "sendInboxMessage", inbox.token);
+        release_(r, "ADMIN", "auditDriveImagesInCortes", audit.token);
+    });
+
     test_("FEEDBACK y WRITE comparten solo lectura de contexto y permiten operaciones independientes", function() {
         const r = createRuntime_();
         const feedback = acquire_(r, "FEEDBACK", "reportProblem");
