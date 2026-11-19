@@ -238,3 +238,15 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Se conserva la escritura condicional (no reemplaza URL válida), la vinculación del ledger y el trabajo Drive fuera del lock.
 - Prueba `AdminRecoveryImageSnapshotReuse.mjs` integrada en el runner; CI pendiente.
 - No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
+
+
+## Cierre — reutilización del snapshot de imágenes en recuperación ADMIN (2026-11-19)
+- Commit de implementación/prueba: `501fd3529a4dfeeb5f341cb192c86e152f2fb6e7`; corrección de mocks: `4303ee585ead1654e94e3fb0c21f7c8f24cbe95d`; ajuste de delimitación de prueba: `95ede1391a80ad2efa73c2a4dd3d888312f02c38`.
+- Se eliminan dos llamadas individuales `getValue()` de la fila Cortes al pasar las URL a `markAdminCutImagesLinkedOutsideLock_`; se reutiliza `rowValues`.
+- Cuando la revalidación escribe una URL faltante, actualiza también `verified.rowValues` en memoria. La ruta de URL válida existente no se sobrescribe.
+- Prueba `AdminRecoveryImageSnapshotReuse`: 7/7 PASS.
+- CI `44636292022` SUCCESS: 188 suites, 2,483 pruebas aprobadas, 0 fallos; sintaxis JavaScript aprobada.
+- Health read-only `44636291825` SUCCESS.
+- Pages `44636291778` estaba QUEUED al cierre; no se declara como aprobado.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
+- Siguiente tarea: inspeccionar la recuperación ADMIN para reducir otra lectura individual de Sheets o costo de revalidación que pueda evitarse usando el snapshot existente, sin debilitar la reserva idempotente ni la atomicidad de las escrituras.

@@ -1079,3 +1079,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-19] ADMIN: recuperación idempotente reutiliza el snapshot de la fila para vincular imágenes. La revalidación actualiza `verified.rowValues` al escribir URL faltantes; la vinculación posterior consume esos valores en memoria y elimina dos lecturas individuales de Sheets (`getValue()`). Se preservan URL existentes y el flujo Drive/ledger fuera del ScriptLock. Se añade AdminRecoveryImageSnapshotReuse.mjs.
+
+
+[2026-11-19 · cierre] ADMIN recuperación reutiliza snapshot para vincular imágenes: eliminadas dos lecturas individuales getValue() de Cortes. El callback de revalidación actualiza verified.rowValues después de escribir URL reparadas; se preservan las URL existentes. Prueba AdminRecoveryImageSnapshotReuse 7/7 PASS. CI 44636292022 SUCCESS: 188 suites, 2483 pruebas aprobadas, 0 fallos; health read-only 44636291825 SUCCESS. Las dos primeras regresiones fallaron por problemas de delimitación/mocks de la prueba nueva, corregidos antes de la ejecución aprobada. Pages 44636291778 estaba QUEUED al cierre. No se desplegó Apps Script ni se modificaron datos productivos.

@@ -695,4 +695,7 @@ Siguiente paso: continuar GP-PERF-ADMIN-CUT-LOCK-01 inspeccionando las escritura
 - [x] Reutilizar `rowValues` para obtener las URL de vehículo y corte al invocar `markAdminCutImagesLinkedOutsideLock_`, eliminando dos llamadas individuales `getValue()`.
 - [x] Mantener valores ya válidos, sincronización del ledger y flujo Drive fuera del ScriptLock.
 - [x] Añadir `AdminRecoveryImageSnapshotReuse.mjs` al runner con comprobación de ausencia de lecturas y simulación de preservación/escritura.
-- Estado: IMPLEMENTACIÓN PUBLICADA; regresión y health pendientes de CI. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
+- [x] CI final `44636292022` SUCCESS: 188 suites, 2,483 pruebas aprobadas, 0 fallos; `AdminRecoveryImageSnapshotReuse` 7/7 PASS, sintaxis aprobada.
+- [x] Health read-only `44636291825` SUCCESS.
+- Las dos primeras ejecuciones de regresión fallaron por delimitaciones/mocks de la prueba nueva; se corrigieron y la repetición final aprobó.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
