@@ -199,6 +199,7 @@ function createSharedMutationCoordinator_(dependencies) {
     const uuid = dependencies.uuid;
     const sleep = dependencies.sleep;
     const fetch = dependencies.fetch;
+    const fetchAll = dependencies.fetchAll;
 
     function constantTimeEquals_(left, right) {
         left = String(left || "");
@@ -760,11 +761,174 @@ function createSharedMutationCoordinator_(dependencies) {
         return true;
     }
 
+    function readDirectServiceTrafficBatch_() {
+        const specs = [
+            { service: "CATALOG", scope: "catalog_post_requests" },
+            { service: "AUTH", scope: "direct_post_requests" },
+            { service: "USERS", scope: "direct_post_requests" },
+            { service: "WRITE", scope: "direct_post_requests" },
+            { service: "FEEDBACK", scope: "direct_post_requests" }
+        ];
+        const results = {};
+        const requests = [];
+        const requestSpecs = [];
+        specs.forEach(spec => {
+            const url = String(properties.getProperty("GPSpedia_SERVICE_URL_" + spec.service) || "").trim();
+            const secret = String(properties.getProperty("GPSpedia_COORDINATOR_SECRET_" + spec.service) || "");
+            if (!url.startsWith("https://script.google.com/macros/s/") || !url.endsWith("/exec") ||
+                secret.length < 32) {
+                results[spec.service] = { status: "unavailable", reason: "not_configured" };
+                return;
+            }
+            requests.push({
+                url,
+                method: "post",
+                contentType: "text/plain",
+                payload: JSON.stringify({ action: "getServiceTraffic", payload: { secret } }),
+                muteHttpExceptions: true,
+                followRedirects: true
+            });
+            requestSpecs.push(spec);
+        });
+        if (!requests.length) return results;
+        let responses = null;
+        if (typeof fetchAll === "function") {
+            try { responses = fetchAll(requests); } catch (error) { responses = null; }
+        }
+        if (!Array.isArray(responses) || responses.length !== requests.length) {
+            responses = requests.map(request => {
+                if (typeof fetch !== "function") return null;
+                const options = Object.assign({}, request);
+                delete options.url;
+                try { return fetch(request.url, options); } catch (error) { return null; }
+            });
+        }
+        requestSpecs.forEach((spec, index) => {
+            try {
+                const response = responses[index];
+                if (!response || typeof response.getResponseCode !== "function" ||
+                    typeof response.getContentText !== "function") throw new Error("request_failed");
+                const status = response.getResponseCode();
+                if (status < 200 || status >= 300) throw new Error("request_failed");
+                const result = JSON.parse(response.getContentText() || "{}");
+                const validTotals = result && result.totals &&
+                    ["lastHour", "last6Hours", "last24Hours"].every(period =>
+                        Number.isSafeInteger(result.totals[period]) && result.totals[period] >= 0);
+                if (!result || result.status !== "success" || result.service !== spec.service ||
+                    result.scope !== spec.scope || !Array.isArray(result.buckets) || !validTotals) {
+                    throw new Error("invalid_response");
+                }
+                const validBuckets = result.buckets.filter(bucket => bucket &&
+                    Number.isSafeInteger(bucket.startAt) && bucket.startAt > 0 &&
+                    Number.isSafeInteger(bucket.count) && bucket.count >= 0);
+                results[spec.service] = Object.assign({}, result, {
+                    buckets: validBuckets,
+                    accuracy: validBuckets.length === result.buckets.length
+                        ? String(result.accuracy || "best_effort_nonblocking") : "partial",
+                    reason: validBuckets.length === result.buckets.length ? null : "invalid_buckets_ignored"
+                });
+            } catch (error) {
+                results[spec.service] = {
+                    status: "unavailable",
+                    reason: String(error && error.message || error) === "invalid_response" ? "invalid_response" : "request_failed"
+                };
+            }
+        });
+        return results;
+    }
+
+    function mergeServiceTrafficSources_(source, directResults) {
+        const expectedServices = SERVICE_TRAFFIC_SERVICES_.slice();
+        if (!source || source.status !== "success" || source.scope !== "coordinator_protected_operations" ||
+            !Array.isArray(source.services) || !Array.isArray(source.buckets) || !source.totals) {
+            throw new Error("Coordinator no pudo normalizar su agregado de tráfico.");
+        }
+        const reported = source.services.map(value => String(value || "").toUpperCase());
+        if (reported.length !== expectedServices.length ||
+            expectedServices.some(service => !reported.includes(service)) ||
+            reported.some(service => !expectedServices.includes(service))) {
+            throw new Error("El agregado central no contiene exactamente los servicios activos.");
+        }
+        const normalizeCounts = input => {
+            if (!input || typeof input !== "object" || Array.isArray(input)) {
+                throw new Error("El agregado central contiene conteos inválidos.");
+            }
+            const counts = {};
+            expectedServices.forEach(service => {
+                if (!Number.isSafeInteger(input[service]) || input[service] < 0) {
+                    throw new Error("El conteo central de " + service + " no es válido.");
+                }
+                counts[service] = input[service];
+            });
+            return counts;
+        };
+        const result = Object.assign({}, source, {
+            services: expectedServices.slice(),
+            totals: {
+                lastHour: normalizeCounts(source.totals.lastHour),
+                last6Hours: normalizeCounts(source.totals.last6Hours),
+                last24Hours: normalizeCounts(source.totals.last24Hours)
+            },
+            buckets: source.buckets.map((bucket, index) => {
+                if (!bucket || !Number.isSafeInteger(bucket.startAt) || bucket.startAt <= 0) {
+                    throw new Error("El bucket central " + index + " no contiene una marca temporal válida.");
+                }
+                return { startAt: bucket.startAt, counts: normalizeCounts(bucket.counts) };
+            })
+        });
+        const sources = { coordinator: { available: true, scope: "protected_operations" } };
+        const directServices = ["CATALOG", "AUTH", "USERS", "WRITE", "FEEDBACK"];
+        const bucketsByStart = new Map(result.buckets.map(bucket => [bucket.startAt, bucket]));
+        directServices.forEach(service => {
+            const direct = directResults && directResults[service];
+            const expectedScope = service === "CATALOG" ? "catalog_post_requests" : "direct_post_requests";
+            const available = Boolean(direct && direct.status === "success" &&
+                direct.service === service && direct.scope === expectedScope &&
+                Array.isArray(direct.buckets) && direct.totals &&
+                ["lastHour", "last6Hours", "last24Hours"].every(period =>
+                    Number.isSafeInteger(direct.totals[period]) && direct.totals[period] >= 0));
+            if (available) {
+                direct.buckets.forEach(bucket => {
+                    let target = bucketsByStart.get(bucket.startAt);
+                    if (!target) {
+                        const counts = {};
+                        expectedServices.forEach(name => { counts[name] = 0; });
+                        target = { startAt: bucket.startAt, counts };
+                        result.buckets.push(target);
+                        bucketsByStart.set(bucket.startAt, target);
+                    }
+                    target.counts[service] += bucket.count;
+                });
+                ["lastHour", "last6Hours", "last24Hours"].forEach(period => {
+                    result.totals[period][service] += direct.totals[period];
+                });
+            }
+            sources[service] = {
+                coordinatorScope: "protected_operations",
+                directRequestsAvailable: available,
+                directRequestScope: available ? direct.scope : null,
+                accuracy: available ? String(direct.accuracy || "best_effort_nonblocking") : "partial",
+                mayUndercount: true,
+                reason: available ? (direct.reason || null) : String(direct && direct.reason || "not_configured")
+            };
+            if (service === "CATALOG") sources[service].feedRequests = "coordinator";
+        });
+        result.buckets.sort((left, right) => left.startAt - right.startAt);
+        result.scope = "global_service_traffic";
+        result.sources = sources;
+        result.coverage = {
+            description: "Agregado de operaciones protegidas de los siete servicios activos, más solicitudes directas de lectura CATALOG y rutas directas instrumentadas de AUTH, WRITE, USERS y FEEDBACK cuando sus contadores están configurados.",
+            excludes: ["sondeos de salud", "solicitudes HTTP que no atraviesan las rutas instrumentadas"]
+        };
+        result.excluded = result.coverage.excludes.slice();
+        return result;
+    }
+
     function readServiceTraffic_(service, operation) {
         if (service !== "ADMIN" || operation !== "getServiceTraffic") {
             throw new Error("Solo ADMIN puede consultar la telemetría global.");
         }
-        return withCoordinatorLock_(() => {
+        const coordinatorResult = withCoordinatorLock_(() => {
             const capturedAt = now();
             const currentBucket = Math.floor(capturedAt / SERVICE_TRAFFIC_BUCKET_MS_) * SERVICE_TRAFFIC_BUCKET_MS_;
             const firstBucket = currentBucket - SERVICE_TRAFFIC_WINDOW_MS_ + SERVICE_TRAFFIC_BUCKET_MS_;
@@ -791,7 +955,6 @@ function createSharedMutationCoordinator_(dependencies) {
                 });
                 stored.set(startAt, counts);
             });
-
             const zeroCounts = () => Object.fromEntries(SERVICE_TRAFFIC_SERVICES_.map(key => [key, 0]));
             const totals = { lastHour: zeroCounts(), last6Hours: zeroCounts(), last24Hours: zeroCounts() };
             const buckets = [];
@@ -817,7 +980,9 @@ function createSharedMutationCoordinator_(dependencies) {
                 excluded: ["lecturas públicas no coordinadas", "feed público del catálogo", "sondeos de salud"]
             };
         });
+        return mergeServiceTrafficSources_(coordinatorResult, readDirectServiceTrafficBatch_());
     }
+
 
     function authorizeSession_(userId, token, currentTime) {
         const context = readAuthContext_(userId);
