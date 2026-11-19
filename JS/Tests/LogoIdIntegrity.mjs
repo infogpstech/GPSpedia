@@ -46,11 +46,14 @@ test("Rechaza IDs malformados y filas con datos sin ID",()=>{
 test("Ignora filas plantilla vacías con fórmula histórica",()=>{
  const h=generator(sheet([["id","nombre"],[1,"A"],["",""]],[["id"],["=ROW()-1"],["=ROW()-1"]]));assert.equal(h.next(),2);
 });
-test("handleAddLogo resuelve categoría y crea carpeta de marca sin duplicar Logos",()=>{
+test("handleAddLogo usa el destino canónico compartido con el organizador",()=>{
  const fn=extract("handleAddLogo");
- assert.match(fn,/resolveLogoCategoryFromCortesRows_/);
- assert.match(fn,/findOrCreateSubFolder\(rootFolder, category\)/);
- assert.match(fn,/findOrCreateSubFolder\(categoryFolder, brandFolderName\)/);
+ assert.match(fn,/buildCanonicalLogoDestination_/);
+ assert.match(fn,/getLogoCategoryCandidatesFromCortesRows_/);
+ assert.match(fn,/logoDestination\.targetFolderPath/);
+ assert.match(fn,/logoDestination\.targetBaseName/);
+ assert.match(fn,/findOrCreateSubFolder\(rootFolder, destinationSegments\[1\]\)/);
+ assert.match(fn,/findOrCreateSubFolder\(categoryFolder, destinationSegments\[2\]\)/);
  assert.doesNotMatch(fn,/findOrCreateSubFolder\(rootFolder, "Logos"\)/);
  assert.doesNotMatch(fn,/getOrCreateSubFolder/);
 });
@@ -134,14 +137,14 @@ function addLogoHarness(options={}){
   getCanonicalImageExtension:({getName,getMimeType})=>getName().match(/(\.[A-Za-z0-9]{2,5})$/)?.[1]||"",
   normalizeOrganizerSegment_:value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().replace(/[\\/\s]+/g,"_").replace(/[^a-zA-Z0-9_-]/g,"_").replace(/_+/g,"_").replace(/^_+|_+$/g,""),
   normalizeOrganizerFilePart_:value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().replace(/[\\/,]/g,"_").replace(/\s+/g,"_").replace(/[^a-zA-Z0-9_-]/g,"_").replace(/_+/g,"_").replace(/^_+|_+$/g,""),
-  resolveLogoCategoryFromCortesRows_:(values,brand)=>"Camion_pesado",
+  COLS_CORTES:{categoria:2,marca:3},
   Utilities:{base64Decode:()=>[1,2,3],newBlob:(data,mime,name)=>{createdFilename=name;return {};}},
   LockService:{getScriptLock:()=>lock},
   SpreadsheetApp:{flush,CopyPasteType:{PASTE_FORMAT:"PASTE_FORMAT",PASTE_DATA_VALIDATION:"PASTE_DATA_VALIDATION"}},
   PropertiesService:{getScriptProperties:()=>properties},
   LOGOS_MARCA_ID_COUNTER_PROPERTY:"LOGOS_MARCA_ID_COUNTER"
  };
- const fn=new Function(...Object.keys(deps),extract("copyAdminRowPresentationOnly_")+"\n"+extract("getNextLogoIdLocked_")+"\n"+extract("handleAddLogo")+"\nreturn handleAddLogo;")(...Object.values(deps));
+ const fn=new Function(...Object.keys(deps),extract("getLogoCategoryCandidatesFromCortesRows_")+"\n"+extract("buildCanonicalLogoDestination_")+"\n"+extract("copyAdminRowPresentationOnly_")+"\n"+extract("getNextLogoIdLocked_")+"\n"+extract("handleAddLogo")+"\nreturn handleAddLogo;")(...Object.values(deps));
  return {run:()=>fn({nombreMarca:"Marca nueva",fileData:"AQID",filename:"logo.png",mimeType:"image/png"},()=>{}),
   rows,file,folderCalls,get createdFilename(){return createdFilename;},get trashed(){return trashed;},get description(){return description;}};
 }
