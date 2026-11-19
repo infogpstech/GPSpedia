@@ -729,9 +729,16 @@ function ensureTestigoColumns(sheet, lockAlreadyHeld = false) {
         const headerNames = ["activaTestigo1", "activaTestigo2", "activaTestigo3"];
         const lastColumn = sheet.getLastColumn();
         if (lastColumn < 1) throw new Error('La hoja «Cortes» no contiene encabezados.');
-        getVinColumnIndex(sheet); // Rechaza encabezados VIN duplicados antes de modificar AT:AV.
-
         const currentHeaders = sheet.getRange(1, 1, 1, lastColumn).getValues()[0];
+        const vinMatches = [];
+        currentHeaders.forEach((value, index) => {
+            if (String(value || "").trim().toLowerCase() === "vin") vinMatches.push(index + 1);
+        });
+        if (vinMatches.length > 1) {
+            throw new Error("La hoja «Cortes» contiene encabezados VIN duplicados en las columnas " + vinMatches.join(", ") + "; no se realizó ninguna escritura.");
+        }
+        const vinColumnIndex = vinMatches.length === 1 ? vinMatches[0] : 0;
+
         headerNames.forEach((name, index) => {
             const matches = [];
             currentHeaders.forEach((value, column) => {
@@ -751,7 +758,9 @@ function ensureTestigoColumns(sheet, lockAlreadyHeld = false) {
         if (maxColumns < 48) sheet.insertColumnsAfter(maxColumns, 48 - maxColumns);
 
         const lastRow = sheet.getLastRow();
-        const targetHeaders = sheet.getRange(1, 46, 1, 3).getValues()[0];
+        // currentHeaders ya contiene AT:AV cuando existen; si lastColumn es menor,
+        // esas celdas no tienen contenido y se crearán vacías al ampliar la hoja.
+        const targetHeaders = [45, 46, 47].map(index => String(currentHeaders[index] || ""));
         for (let index = 0; index < headerNames.length; index++) {
             const current = String(targetHeaders[index] || "").trim();
             if (current && current.toLowerCase() !== headerNames[index].toLowerCase()) {
@@ -776,7 +785,8 @@ function ensureTestigoColumns(sheet, lockAlreadyHeld = false) {
         return {
             activaTestigo1: 46,
             activaTestigo2: 47,
-            activaTestigo3: 48
+            activaTestigo3: 48,
+            vinColumnIndex: vinColumnIndex
         };
     } finally {
         if (lockAcquired) lock.releaseLock();
@@ -6900,8 +6910,8 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
     try {
 
         logMessage("Registro Administrativo", `Procesando addOrUpdateCut administrativo...`);
-        ensureTestigoColumns(sheet, true);
-        const vinColumnIndex = getVinColumnIndex(sheet);
+        const testigoSchema = ensureTestigoColumns(sheet, true);
+        const vinColumnIndex = testigoSchema.vinColumnIndex;
         if (cutData.vin && !vinColumnIndex) {
             throw new Error("La hoja «Cortes» no contiene el encabezado «VIN»; no se puede guardar el identificador sin alterar otras columnas.");
         }
