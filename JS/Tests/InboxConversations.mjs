@@ -221,11 +221,23 @@ run("La lectura de conversaciones normaliza también previews históricos guarda
         body:"<p>Texto <strong>legible</strong> &amp; seguro</p><script>alert(1)</script>",
         idempotencyKey:"html-preview-legacy-01"
     });
-    const result = api.handleGetInboxConversations({ ...actor("U1","token-a"), folder:"sent", query:"legible" });
-    const item = result.data.find(entry => entry.conversationId === created.conversationId);
-    assert.ok(item);
-    assert.equal(item.lastMessagePreview, "Texto legible & seguro");
-    assert.doesNotMatch(item.lastMessagePreview, /<[^>]*>|alert\(1\)/);
+    try {
+        const result = api.handleGetInboxConversations({ ...actor("U1","token-a"), folder:"sent", query:"legible" });
+        const item = result.data.find(entry => entry.conversationId === created.conversationId);
+        assert.ok(item);
+        assert.equal(item.lastMessagePreview, "Texto legible & seguro");
+        assert.doesNotMatch(item.lastMessagePreview, /<[^>]*>|alert\(1\)/);
+    } finally {
+        const removeConversation = (name, column) => {
+            const sheet = spreadsheet.getSheetByName(name);
+            sheet.rows = sheet.rows.filter((row,index) => index === 0 || String(row[column] || "") !== created.conversationId);
+        };
+        removeConversation("InboxConversations",0);
+        removeConversation("InboxMessages",1);
+        removeConversation("InboxConversationState",0);
+        removeConversation("InboxConversationFlags",0);
+        removeConversation("InboxConversationAudit",5);
+    }
 });
 run("El preview aplica el límite de longitud sin modificar el mensaje completo", () => {
     const preview = api.inboxPlainTextPreview_("<p>" + "x".repeat(220) + "</p>", 180);
