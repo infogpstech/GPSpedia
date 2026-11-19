@@ -36,7 +36,8 @@ Normativa: NORMAS_DESAROLLO.md
 - Mantener deny-by-default, RBAC, actor confiable, leases, idempotencia, auditoría y rollback. La simplificación debe reducir mantenimiento y despliegues, no ampliar privilegios.
 - Auditoría y diseño registrados en `Services/SERVICE_ARCHITECTURE_PLAN.md`. Hallazgo clave: SharedMutationClient mezcla transporte con orquestación de invalidación remota; hoy AUTH llama directamente a WRITE y FEEDBACK para borrar cachés antes de pedir la revocación central. No cambiar ese orden hasta disponer de idempotencia, recuperación y pruebas de fallos parciales.
 - Configuración actual inventariada: Coordinator mantiene seis secretos por servicio; cada consumidor tiene URL/secreto del Coordinator; ADMIN tiene URLs y cinco secretos directos de telemetría; los servicios mantienen secretos directos de telemetría. No se consultaron ni modificaron valores remotos.
-- Siguiente subpaso: contrato versionado y pruebas de compatibilidad; después prototipo aislado de orquestación de invalidación con fallos parciales. No cambiar ScriptProperties ni desplegar en esta fase.
+- [x] Contrato POST v1 implementado: cliente actual declara `protocolVersion: 1`; Coordinator 1.4.2 acepta clientes antiguos sin campo como v1 y rechaza versiones desconocidas antes de ejecutar operaciones. Documentación y pruebas de compatibilidad añadidas.
+- Siguiente subpaso: prototipo aislado de orquestación de invalidación remota con fallos parciales; después configuración canónica con fallback legacy. No cambiar ScriptProperties ni desplegar en esta fase.
 
 ### Fase 3 — Inbox y aislamiento de operaciones
 **P1 · CORRECCIONES LOCALES IMPLEMENTADAS; REGRESIÓN Y CONFIGURACIÓN REMOTA PENDIENTES**
