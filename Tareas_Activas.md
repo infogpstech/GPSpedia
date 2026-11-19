@@ -55,3 +55,10 @@ Aplicar la estructura objetivo después de validar el dry-run:
 - No se han movido, renombrado, copiado, restaurado ni eliminado archivos productivos.
 - No se han desplegado Apps Script. La validación de la nueva organización requerirá ejecutar primero el dry-run tras su despliegue y revisar sus resultados.
 - Siguiente paso exacto: construir y probar el endpoint de preview de solo lectura, reutilizando collectActiveDriveReferences y el inventario recursivo existente, sin invocar normalizeImages ni organizePrimaryVehicleImages.
+
+
+## Actualización 2026-11-19 — subpaso completado
+- [x] Constructor puro buildCortesImageOrganizerTargets_: genera rutas y nombres para ocho campos de Cortes y LogosMarca; usa columnas reales, bloquea datos ambiguos y no realiza escrituras.
+- [x] Prueba dinámica con el mapa real COLS_CORTES: rutas/nombres, tipo desconocido, fórmula, año faltante, ID compartido y marca mult categoría.
+- [ ] El P0 DRY-RUN-01 continúa abierto: falta conectar el endpoint de solo lectura que inspecciona cada archivo del inventario, obtiene su ruta y extensión originales, compara referencias activas de todas las hojas, detecta conflictos y emite manifiesto completo con digest.
+- CI del subpaso: 146 suites, 2,157 pruebas aprobadas, 0 fallos en HEAD aa967514d3602f0512a05f9ddf1fafc1c11c0c24. Apps Script aún no desplegado; no se realizaron operaciones productivas.

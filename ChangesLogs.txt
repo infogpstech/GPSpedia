@@ -632,3 +632,13 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - CI final en HEAD d81894f53e6036a1b3d0e0e86b317ad913ec42ee: 146 suites, 2,157 pruebas aprobadas, 0 fallos. Health read-only SUCCESS. Pages build/deployment SUCCESS.
 - No se ejecutaron operaciones de Drive/Spreadsheet productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-19 — CONSTRUCTOR PURO DEL ORGANIZADOR
+- Se incorporó buildCortesImageOrganizerTargets_ para calcular destinos de las ocho imágenes de Cortes y los logos de LogosMarca, sin mutaciones.
+- Se añadieron normalizadores sin acentos/espacios y mapeo conservador de tipoCorte a ign/bomba/btn; los valores desconocidos o ambiguos se bloquean.
+- El constructor usa el mapa real de columnas y bloquea IDs compartidos, años incompletos/invertidos, fórmulas y marcas sin categoría única.
+- Prueba dinámica en AdminImageScanCoordinatorContract: rutas/nombres esperados, extensiones pendientes de inspección, tipos desconocidos, fórmulas, datos incompletos, referencias duplicadas y marcas mult categoría.
+- HEAD de código aa967514d3602f0512a05f9ddf1fafc1c11c0c24: 146 suites, 2,157 pruebas aprobadas, 0 fallos; health y Pages SUCCESS. No se desplegó Apps Script ni se modificó Drive/Spreadsheet.
+================================================================================

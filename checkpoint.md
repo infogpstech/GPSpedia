@@ -793,3 +793,13 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - Próxima tarea P0: implementar un dry-run de solo lectura que recorra los ocho campos de Cortes y LogosMarca, calcule ruta/nombre de destino, contraste todas las referencias activas de todas las hojas y bloquee filas/archivos ambiguos. No habilitar movimientos hasta validar el manifiesto completo.
 - P1 posterior: unificar altas de logos y cortes con la estructura destino; corregir nomenclatura, año completo, sufijos funcionales y extensión; implementar aplicación explícita por lotes con confirmación en consola, idempotencia y rollback.
 - Mantenimiento documental pendiente: Tareas_Pendientes.md (182,953 caracteres Unicode) y lista_beta_parte2.txt (184,840 caracteres Unicode) ya superan el umbral de 180,000. No seguir añadiendo contenido a esos archivos; rotarlos sin pérdida, verificar reconstrucción exacta y actualizar manifiestos. Hasta entonces, el seguimiento activo se concentra en Tareas_Activas.md.
+
+
+### Continuidad del organizador — constructor puro (2026-11-19)
+- HEAD de código verificado: aa967514d3602f0512a05f9ddf1fafc1c11c0c24. Rama base protegida sin cambios.
+- Completado: buildCortesImageOrganizerTargets_ calcula propuestas de ruta y nombre para las ocho columnas de Cortes y LogosMarca, sin acceder a servicios ni ejecutar escrituras.
+- El constructor usa el mapa real COLS_CORTES; aplica los códigos funcionales a partir de tipoCorte1/2/3 y bloquea tipos desconocidos, datos incompletos, rangos inválidos, fórmulas, IDs compartidos y logos con categoría no única.
+- La extensión original queda pendiente de adjuntarse durante la inspección real del archivo. No se usa MIME para inventar extensiones.
+- CI en HEAD aa967514: workflow 44440031631 SUCCESS — 146 suites, 2,157 pruebas aprobadas, 0 fallos; health 44440031388 SUCCESS; Pages 44440029769 SUCCESS.
+- No se desplegó Apps Script ni se modificó Drive/Spreadsheet. El helper es código fuente y su validación fue estática/dinámica con fixtures.
+- Siguiente paso exacto: conectar un endpoint previewCortesImageOrganizer de solo lectura, validar auditoría Drive completa vigente, inspeccionar metadatos/rutas/extensiones, contrastar referencias activas de todas las hojas, detectar conflictos y generar un manifestDigest. Sin crear carpetas, mover, renombrar, copiar, restaurar ni escribir.
