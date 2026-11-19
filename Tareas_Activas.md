@@ -355,3 +355,10 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - Diagnóstico del tercer CI: el contrato AUG-039 utiliza un assert local mínimo y no dispone de `assert.equal`; se corrigen los dos fixtures para comprobar `tryLock(0)` con el assert compatible.
 
 - El cuarto CI reveló una segunda suite de contrato (`WriteAuthorizationContracts.js`) con un mock antiguo que solo implementaba `waitLock`. Se actualiza el mock a `tryLock(0)` y se mantiene la comprobación de autorización dentro del lock.
+
+### Aislamiento de publicación del catálogo WRITE (2026-11-19)
+- [x] Se elimina el ScriptLock global de la llamada HTTP a Coordinator: el snapshot se lee y se publica sin mantener ese lock.
+- [x] WRITE asigna una secuencia global monotónica dentro de la sección crítica de cada mutación de Cortes (registro de corte, información suplementaria y VIN).
+- [x] Coordinator compara la secuencia bajo su propio lock; si una publicación llega atrasada, emite `reset` en vez de aplicar el snapshot obsoleto. Las publicaciones legacy sin versión también se convierten en reset.
+- [ ] Ejecutar pruebas Coordinator y regresión completa. La secuencia y publicación siguen pendientes de verificación CI.
+

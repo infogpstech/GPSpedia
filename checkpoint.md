@@ -1135,3 +1135,13 @@ ACTUALIZACIÓN DE CONTINUIDAD — 2026-11-19
 - Tercer CI 44555711003: 150 suites, 2,138 pruebas; el handler ya fue extraído y las aserciones estáticas pasaron, pero dos fixtures usaban `assert.equal` no disponible en el assert local. Se sustituye por aserción booleana.
 
 - Cuarto CI 44555916947: 153 suites, 2,212 pruebas; `WriteAuthorizationMinimization` ya pasó. Falló `WriteAuthorizationContracts` porque su mock de LockService solo ofrecía waitLock; se actualiza el contrato y mock para tryLock(0).
+
+================================================================================
+2026-11-19 — WRITE: PUBLICACIÓN DEL CATÁLOGO SIN BLOQUEAR EL SCRIPTLOCK LOCAL
+- `publishCortesCatalogChange_` ya no mantiene el ScriptLock durante la petición HTTP al Coordinator.
+- WRITE reserva una versión global monotónica mientras conserva el lock de mutación; se incluye en el evento del catálogo.
+- Coordinator acepta versiones nuevas y convierte versiones atrasadas en evento reset, evitando que una respuesta lenta sobrescriba snapshots más recientes. Publicaciones legacy sin versión se convierten en reset.
+- La versión se adjunta a addOrUpdateCut, addSupplementaryInfo y addVinToVehicle. Pruebas deterministas agregadas a SharedMutationCoordinator.
+- No se ha desplegado WRITE ni Coordinator; la compatibilidad de despliegues se validará en CI estático y seguirá pendiente de despliegue autorizado.
+================================================================================
+

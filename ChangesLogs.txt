@@ -893,3 +893,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 2026-11-19 — Ajuste de fixtures AUG-039: el test harness usa assert booleano propio; reemplazado assert.equal por assert(ms===0).
 
 2026-11-19 — Actualizado WriteAuthorizationContracts.js: mock del ScriptLock usa tryLock(0) para el contrato no bloqueante del asignador de IDs.
+
+2026-11-19 — WRITE/Catalog: eliminado ScriptLock local durante la publicación HTTP a Coordinator. Añadida secuencia de origen y protección anti-regresión en Coordinator; publicaciones atrasadas/legacy provocan reset en vez de aplicar snapshot obsoleto. Pendiente CI.
+

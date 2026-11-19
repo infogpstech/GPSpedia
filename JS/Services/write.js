@@ -351,7 +351,7 @@ function doPostInternal_(e) {
                         ? response.vehicleId
                         : (response.vehicleId || requestPayload.vehicleId);
                     if (!vehicleId) throw new Error("La mutación WRITE no devolvió un ID de vehículo verificable.");
-                    publishCortesCatalogChange_(action, vehicleId);
+                    publishCortesCatalogChange_(action, vehicleId, response.catalogVersion);
                 } else {
                     // freezeCortesIds puede modificar varias filas/IDs: requiere reconciliación completa.
                     publishSharedCatalogChange_("WRITE", action, { operation: "reset" });
@@ -499,19 +499,27 @@ function buildCortesCatalogChange_(reference) {
     return { collection: "cortes", recordId: wanted, operation: "upsert", snapshot: snapshot };
 }
 
-function publishCortesCatalogChange_(action, reference) {
-    const lock = LockService.getScriptLock();
-    lock.waitLock(15000);
-    try {
-        try {
-            const change = buildCortesCatalogChange_(reference);
-            publishSharedCatalogChange_("WRITE", action, change);
-        } catch (catalogPublishError) {
-            publishSharedCatalogChange_("WRITE", action, { operation: "reset" });
-        }
-    } finally {
-        lock.releaseLock();
+const WRITE_CATALOG_VERSION_PROPERTY_ = "GPSpedia_WRITE_CATALOG_VERSION_V1";
+
+function nextWriteCatalogVersionLocked_(reference) {
+    const vehicleId = String(reference === null || reference === undefined ? "" : reference).trim();
+    if (!/^[1-9]\\d{0,14}$/.test(vehicleId)) throw new Error("No se puede versionar un cambio de catálogo sin un ID de vehículo válido.");
+    const properties = PropertiesService.getScriptProperties();
+    const current = Number(properties.getProperty(WRITE_CATALOG_VERSION_PROPERTY_) || 0);
+    if (!Number.isSafeInteger(current) || current < 0 || current >= Number.MAX_SAFE_INTEGER) {
+        throw new Error("La secuencia de cambios del catálogo WRITE no es válida.");
     }
+    const next = current + 1;
+    properties.setProperty(WRITE_CATALOG_VERSION_PROPERTY_, String(next));
+    return next;
+}
+
+function publishCortesCatalogChange_(action, reference, sourceVersion) {
+    const version = Number(sourceVersion);
+    if (!Number.isSafeInteger(version) || version < 1) throw new Error("La mutación no devolvió una versión de catálogo verificable.");
+    const change = buildCortesCatalogChange_(reference);
+    change.sourceVersion = version;
+    publishSharedCatalogChange_("WRITE", action, change);
 }
 
 // ============================================================================
@@ -549,8 +557,17 @@ function handleAddOrUpdateCut(payload) {
         throw busyError;
     }
     const lockState = { releasedForDrive: false };
-    try { return handleAddOrUpdateCutLocked(payload, lock, lockState); }
-    finally { if (lock.hasLock()) lock.releaseLock(); }
+    try {
+        const result = handleAddOrUpdateCutLocked(payload, lock, lockState);
+        if (result && result.status === "success" && result.vehicleId) {
+            try { result.catalogVersion = nextWriteCatalogVersionLocked_(result.vehicleId); }
+            catch (versionError) {
+                result.catalogResetRequired = true;
+                Logger.log("La mutación se guardó, pero no se pudo reservar versión de catálogo: " + String(versionError && versionError.message || versionError));
+            }
+        }
+        return result;
+    } finally { if (lock.hasLock()) lock.releaseLock(); }
 }
 
 
@@ -1516,8 +1533,16 @@ function handleAddSupplementaryInfo(payload) {
     }
 
     let result;
-    try { result = handleAddSupplementaryInfoLocked(preparedPayload, actorName, sheet); }
-    finally { lock.releaseLock(); }
+    try {
+        result = handleAddSupplementaryInfoLocked(preparedPayload, actorName, sheet);
+        if (result && result.status === "success") {
+            try { result.catalogVersion = nextWriteCatalogVersionLocked_(payload.vehicleId); }
+            catch (versionError) {
+                result.catalogResetRequired = true;
+                Logger.log("La información suplementaria se guardó, pero no se pudo reservar versión de catálogo: " + String(versionError && versionError.message || versionError));
+            }
+        }
+    } finally { lock.releaseLock(); }
 
     uploadedUrls.forEach(url => {
         try { markImageUploadLinked(url, { shortLedgerLock: true }); }
@@ -3248,11 +3273,20 @@ function handleCheckVinDuplicate(payload) {
 
 function handleAddVinToVehicle(payload) {
     const lock = LockService.getScriptLock();
-    try { lock.waitLock(30000); }
-    catch (error) { return { status: "error", message: "No se pudo obtener el bloqueo para registrar el VIN. Intenta nuevamente." }; }
-    try { return handleAddVinToVehicleLocked(payload || {}); }
-    catch (error) { return { status: "error", message: error && error.message ? error.message : "No se pudo registrar el VIN." }; }
-    finally { lock.releaseLock(); }
+    if (!lock.tryLock(0)) return { status: "error", code: "WRITE_BUSY", message: "WRITE está ocupado con otra operación. Reintenta el registro del VIN en unos instantes." };
+    try {
+        const result = handleAddVinToVehicleLocked(payload || {});
+        if (result && result.status === "success") {
+            try { result.catalogVersion = nextWriteCatalogVersionLocked_(result.vehicleId || (payload && payload.vehicleId)); }
+            catch (versionError) {
+                result.catalogResetRequired = true;
+                Logger.log("El VIN se guardó, pero no se pudo reservar versión de catálogo: " + String(versionError && versionError.message || versionError));
+            }
+        }
+        return result;
+    } catch (error) {
+        return { status: "error", code: error && error.code || "SERVICE_ERROR", message: error && error.message ? error.message : "No se pudo registrar el VIN." };
+    } finally { lock.releaseLock(); }
 }
 function handleAddVinToVehicleLocked(payload) {
     getAuthenticatedCollaborator(payload);

@@ -1316,6 +1316,40 @@ function runSharedMutationCoordinatorTests() {
             "Los consumidores antiguos deben conservar el comportamiento por defecto AUTH.");
     });
 
+    test_("WRITE publica snapshots fuera de orden como reset y nunca permite regresión del catálogo", function() {
+        const r = createRuntime_();
+        const newer = r.request("publishCatalogChange", "WRITE", "addOrUpdateCut", {
+            requestId: "write-catalog-version-0002",
+            change: { collection: "cortes", recordId: "42", operation: "upsert",
+                snapshot: { id: "42", marca: "Nuevo" }, sourceVersion: 2 }
+        });
+        const stale = r.request("publishCatalogChange", "WRITE", "addOrUpdateCut", {
+            requestId: "write-catalog-version-0001",
+            change: { collection: "cortes", recordId: "42", operation: "upsert",
+                snapshot: { id: "42", marca: "Antiguo" }, sourceVersion: 1 }
+        });
+        const feed = r.coordinator.getPublicCatalogChanges({ cursor: 0, limit: 50 });
+        assert_(newer.status === "success" && stale.status === "success",
+            "Ambas publicaciones deben terminar con respuesta controlada.");
+        assert_(feed.changes.length === 2 && feed.changes[0].snapshot.marca === "Nuevo" &&
+            feed.changes[1].operation === "reset" && feed.changes[1].staleSourceVersion === true,
+            "Una versión atrasada debe forzar reset y nunca publicar un snapshot antiguo.");
+        assert_(feed.resetRequired === true && feed.currentRevision === 2,
+            "El feed debe solicitar reconciliación completa al detectar una publicación atrasada.");
+    });
+
+    test_("WRITE convierte publicaciones legacy sin versión en reset seguro", function() {
+        const r = createRuntime_();
+        const result = r.request("publishCatalogChange", "WRITE", "addOrUpdateCut", {
+            requestId: "write-catalog-legacy-0001",
+            change: { collection: "cortes", recordId: "77", operation: "upsert", snapshot: { id: "77" } }
+        });
+        const feed = r.coordinator.getPublicCatalogChanges({ cursor: 0, limit: 50 });
+        assert_(result.status === "success" && feed.changes.length === 1 &&
+            feed.changes[0].operation === "reset" && feed.resetRequired === true,
+            "Las publicaciones antiguas de WRITE no deben sobrescribir snapshots versionados.");
+    });
+
     const summary = { status: failed === 0 ? "PASS" : "FAIL", passed, failed, results };
     return summary;
 }

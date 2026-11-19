@@ -16,6 +16,7 @@ const SHARED_MUTATION_MAX_WAIT_MS = 15000;
 const SHARED_MUTATION_MAX_ACTIVE_LEASES = 20;
 const SHARED_MUTATION_MAX_STATE_LENGTH = 8000;
 const CATALOG_CHANGE_REVISION_PROPERTY_ = "GPSpedia_CATALOG_CHANGE_REVISION";
+const CATALOG_WRITE_SOURCE_VERSION_PROPERTY_ = "GPSpedia_CATALOG_WRITE_SOURCE_VERSION_V1";
 const CATALOG_CHANGE_EVENT_PREFIX_ = "GPSpedia_CATALOG_CHANGE_EVENT_";
 const CATALOG_CHANGE_MAX_EVENTS_ = 100;
 const CATALOG_CHANGE_MAX_EVENT_LENGTH_ = 4000;
@@ -1288,8 +1289,21 @@ function createSharedMutationCoordinator_(dependencies) {
                     throw new Error("La operación del cambio de catálogo no es válida.");
                 }
             }
+            let sourceVersion = null;
+            if (source.sourceVersion !== undefined && source.sourceVersion !== null) {
+                sourceVersion = Number(source.sourceVersion);
+                if (service !== "WRITE" || collection !== "cortes" ||
+                    !Number.isSafeInteger(sourceVersion) || sourceVersion < 1) {
+                    throw new Error("La versión de origen solo es válida para cambios WRITE de Cortes y debe ser un entero positivo.");
+                }
+            } else if (service === "WRITE" && collection === "cortes" && changeOperation !== "reset") {
+                // Publicaciones de una ejecución anterior a la versión del contrato:
+                // se convierten en reset para que no puedan sobrescribir snapshots nuevos.
+                collection = "*"; recordId = "*"; changeOperation = "reset"; snapshot = null;
+            }
             const event = { collection, recordId, operation: changeOperation, snapshot,
                 createdAt: new Date(now()).toISOString(), sourceService: service, sourceOperation: operation };
+            if (sourceVersion !== null) event.sourceVersion = sourceVersion;
             if (requestId) {
                 event.sourceRequestId = requestId;
                 event.batchIndex = index;
@@ -1364,11 +1378,26 @@ function createSharedMutationCoordinator_(dependencies) {
                 }
             }
 
-            if (!Number.isSafeInteger(currentRevision + events.length)) {
+            let currentWriteSourceVersion = Number(properties.getProperty(CATALOG_WRITE_SOURCE_VERSION_PROPERTY_) || 0);
+            if (!Number.isSafeInteger(currentWriteSourceVersion) || currentWriteSourceVersion < 0) currentWriteSourceVersion = 0;
+            const acceptedEvents = events.map(item => {
+                if (item.event.sourceVersion === undefined) return item;
+                if (item.event.sourceVersion <= currentWriteSourceVersion) {
+                    const resetEvent = Object.assign({}, item.event, {
+                        collection: "*", recordId: "*", operation: "reset", snapshot: null,
+                        staleSourceVersion: true
+                    });
+                    return { event: resetEvent, resetRequired: true };
+                }
+                currentWriteSourceVersion = item.event.sourceVersion;
+                properties.setProperty(CATALOG_WRITE_SOURCE_VERSION_PROPERTY_, String(currentWriteSourceVersion));
+                return item;
+            });
+            if (!Number.isSafeInteger(currentRevision + acceptedEvents.length)) {
                 throw new Error("La revisión del catálogo alcanzó su límite seguro.");
             }
             const firstRevision = currentRevision + 1;
-            events.forEach((item, index) => {
+            acceptedEvents.forEach((item, index) => {
                 currentRevision++;
                 const storedEvent = Object.assign({}, item.event, { revision: currentRevision, resetRequired: item.resetRequired });
                 properties.setProperty(CATALOG_CHANGE_EVENT_PREFIX_ + currentRevision, JSON.stringify(storedEvent));
@@ -1380,8 +1409,8 @@ function createSharedMutationCoordinator_(dependencies) {
                 properties.deleteProperty(CATALOG_CHANGE_EVENT_PREFIX_ + oldest);
             }
             return {
-                status: "success", count: events.length, firstRevision, lastRevision: currentRevision,
-                resetRequired: events.some(item => item.resetRequired),
+                status: "success", count: acceptedEvents.length, firstRevision, lastRevision: currentRevision,
+                resetRequired: acceptedEvents.some(item => item.resetRequired),
                 duplicate: false, recoveredPartial: false
             };
         });
