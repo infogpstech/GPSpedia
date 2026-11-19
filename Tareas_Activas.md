@@ -634,3 +634,13 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Health read-only `44632610206` SUCCESS. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
 - Commits de implementación y refinamiento: `748d9f5c868571607d90a3fe805283112f74e276`, `4c3d24824ad38c96f38488b54cd390dba4089536`, `f96d988a4c3b42a1064c6ea4ecadfc4caa47e1d6`; pruebas/contratos: `70d676d5e0d5720e32eae004c825934bc466bc89` y commits posteriores hasta `e2af8eeeacce492749b9c9e0ace43d2ec3d3205f`.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. `GP-PERF-ADMIN-CUT-LOCK-01` continúa EN PROGRESO.
+
+
+### ADMIN — reutilización de encabezados VIN y testigo (2026-11-19)
+- [x] Eliminar la lectura duplicada de encabezados: `ensureTestigoColumns` valida VIN y columnas testigo desde una sola lectura de encabezados.
+- [x] Reutilizar el mismo snapshot para AT:AV, evitando una segunda consulta del rango de encabezados.
+- [x] Devolver `vinColumnIndex` al handler para eliminar la segunda llamada a `getVinColumnIndex` dentro del lock.
+- [x] Conservar rechazo de VIN/testigo duplicados, validación de datos sin encabezado y reparación de columnas AT:AV bajo el lock.
+- [x] Prueba `AdminTestigoHeaderReadReuse.mjs`: 7/7 PASS. CI `44633000972` SUCCESS: 184 suites, 2,457 pruebas aprobadas, 0 fallos; sintaxis JS aprobada.
+- [x] Health read-only `44633000978` SUCCESS. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. `GP-PERF-ADMIN-CUT-LOCK-01` continúa EN PROGRESO.
