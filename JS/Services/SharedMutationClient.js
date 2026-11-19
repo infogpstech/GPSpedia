@@ -3,6 +3,8 @@
 // Incluir este archivo en cada proyecto AUTH, USERS, WRITE, ADMIN, FEEDBACK y UTILITIES.
 // ============================================================================
 
+const SHARED_MUTATION_CLIENT_PROTOCOL_VERSION = 1;
+
 function createSharedMutationClient_(dependencies) {
     const properties = dependencies.properties;
     const fetch = dependencies.fetch;
@@ -26,7 +28,11 @@ function createSharedMutationClient_(dependencies) {
             operation: operation,
             secret: secret
         });
-        const requestBody = JSON.stringify({ action: action, payload: payload });
+        const requestBody = JSON.stringify({
+            protocolVersion: SHARED_MUTATION_CLIENT_PROTOCOL_VERSION,
+            action: action,
+            payload: payload
+        });
 
         for (let attempt = 0; attempt < 2; attempt++) {
             let response;
