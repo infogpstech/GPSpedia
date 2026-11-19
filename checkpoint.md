@@ -1173,3 +1173,5 @@ CI del commit `82a35b6216f50e584423b8c2f2dfd0a954def565`:
 - No se desplegó WRITE ni Coordinator y no se modificaron datos/propiedades de producción.
 
 2026-11-19 — ADMIN: se añadió runAdminDriveWorkOutsideScriptLock_ y se movieron las cargas/creación de carpetas Drive del flujo idempotente, vehículo existente y vehículo nuevo fuera del ScriptLock, con revalidación tras tryLock(0). Prueba AdminDriveLockIsolation.mjs agregada al runner. CI pendiente; la llamada ADMIN→WRITE para asignación de ID aún sigue dentro del lock.
+
+- Corrección de seguridad del helper ADMIN: el bloque `finally` verifica `lock.hasLock()` antes de liberar; si la readquisición no fue posible, se conserva el error `ADMIN_LOCK_REACQUIRE_PENDING` sin provocar una segunda excepción.

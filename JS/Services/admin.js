@@ -7002,7 +7002,7 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
     logMessage("Registro Administrativo", `Corte administrativo guardado exitosamente. ID asignado: ${newId}`);
     return { status: 'success', message: `Corte administrativo agregado de forma silenciosa.`, vehicleId: newId, timestamp: formattedDate, slotIndex: savedSlotIndex, operationHash: operationHash };
     } finally {
-        lock.releaseLock();
+        if (lock.hasLock()) lock.releaseLock();
     }
 }
 

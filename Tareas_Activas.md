@@ -385,3 +385,5 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Aplicar el helper a reparación idempotente de imágenes, alta de corte en vehículo existente y alta de vehículo nuevo; revalidar opId, huella, vehículo, fila y slot antes de aplicar resultados.
 - [x] Añadir `AdminDriveLockIsolation.mjs` y conectarlo al runner.
 - [ ] CI y revisión integral pendientes. La asignación de ID ADMIN→WRITE aún permanece bajo lock y será el siguiente subpaso.
+
+- Revisión del helper ADMIN: el `finally` exterior libera el ScriptLock solo si la ejecución lo conserva. Esto evita que un fallo de `tryLock(0)` al volver de Drive sea ocultado por un `releaseLock()` sin propiedad.
