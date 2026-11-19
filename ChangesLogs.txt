@@ -690,3 +690,39 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - No se desplegó Apps Script, no se modificaron ScriptProperties, Drive ni Spreadsheet y no se ejecutaron pruebas Beta.
 ================================================================================
 
+
+================================================================================
+2026-11-19 — PLAN DE EJECUCIÓN Y TELEMETRÍA ADMIN
+- Tareas_Activas.md: plan ordenado de implementación local antes de Beta, con siete fases y criterio de no despliegue/no modificación de secretos ni datos externos.
+- BETA-ADMIN-SERVICE-TELEMETRY-02: inventario de siete servicios activos sin LEGACY; detalle de servicio, métricas globales y locales; gráfica global y gráfica del navegador actual; detección móvil/tableta/escritorio.
+- JS/Frontend/serviceTelemetry.js: métricas efímeras por servicio y acción, resultado, latencia y tipo de cliente. No conserva payloads, tokens, usuarios ni datos personales; no transmite ni persiste telemetría.
+- JS/Services/admin.js: normalización estricta del contrato Coordinator, fuentes directas parciales, validación de buckets y descripción de cobertura. La respuesta de una fuente inválida no descarta el agregado global.
+- App Shell PWA: módulo serviceTelemetry precargado y caché v74.
+- Validación local: ServiceBrowserTrafficContract 9/9; ServiceTrafficAggregatorContract PASS; ServiceTrafficAggregation 6/6; ServiceTrafficAdminContract PASS; sintaxis de módulos productivos PASS. La regresión integral final queda pendiente.
+================================================================================
+
+================================================================================
+2026-11-19 — CORRECCIÓN DE IDENTIDAD DE SERVICIO EN VALIDACIÓN DE SESIÓN
+- Hallazgo: SharedMutationClient.validateSessionContext enviaba service=AUTH desde cualquier proyecto, pero cada consumidor enviaba su propio GPSpedia_COORDINATOR_SECRET. Con secretos independientes, Coordinator rechazaba la llamada de FEEDBACK y otros servicios al poblar su caché de actor.
+- Coordinator 1.4.1 admite validar contexto para AUTH, USERS, WRITE, ADMIN, FEEDBACK y UTILITIES usando el secreto propio del servicio. Registro, sincronización y revocación continúan siendo exclusivos de AUTH.
+- SharedMutationClient acepta el servicio solicitante; AUTH, ADMIN, FEEDBACK, USERS y WRITE pasan su identidad explícita. El valor por defecto AUTH mantiene compatibilidad con clientes antiguos.
+- La telemetría atribuye la validación al servicio real.
+- Pruebas: SharedMutationCoordinator 68/68; contrato estático ServiceTrafficAdminContract PASS; sintaxis de Coordinator, cliente y cinco servicios PASS.
+- No se compartieron secretos entre servicios ni se modificaron ScriptProperties/deployments.
+================================================================================
+
+================================================================================
+2026-11-19 — PREVIEW DE CONVERSACIONES INBOX
+- InboxConversations.js: inboxPlainTextPreview_ elimina etiquetas y bloques script/style, convierte entidades HTML y limita el resumen a 180 caracteres.
+- El resumen se normaliza al guardar y también al leer registros históricos; no se reescribe el cuerpo del mensaje.
+- ui.js conserva el renderizado del mensaje completo mediante sanitizeHtmlContent(..., "advanced").
+- Pruebas InboxConversations 66/66; sintaxis backend PASS.
+- Se actualizó el contrato del dispatcher para verificar que FEEDBACK valida con su identidad propia.
+================================================================================
+
+================================================================================
+2026-11-19 — DISEÑO DE DESACOPLAMIENTO DE SERVICIOS
+- Nuevo documento Services/SERVICE_ARCHITECTURE_PLAN.md: contrato versionado, cliente estable, orquestación central, invalidación remota idempotente/recuperable, migración gradual de configuración y matriz de capacidades obligatorias.
+- Auditoría confirma que SharedMutationClient mezcla transporte con fan-out de invalidación remota hacia WRITE y FEEDBACK. No se cambia el orden actual de invalidación/revocación hasta diseñar recuperación de fallos parciales.
+- Inventario de configuración documentado sin leer ni modificar valores secretos.
+================================================================================
