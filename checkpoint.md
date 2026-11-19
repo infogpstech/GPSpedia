@@ -345,3 +345,10 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Se mantienen las comprobaciones de rowIndex, vehicleId, slotIndex y operationHash; no se debilita la reserva idempotente.
 - Nueva prueba `AdminNewVehiclePostDriveIdSnapshotReuse.mjs` integrada al runner.
 - CI pendiente. No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+### Cierre de validación — snapshot post-Drive en vehículo existente (2026-11-19)
+- Commit de implementación y prueba: `12f1c9d92f5f3eddd8a255ead0db5dc7af71284d`; correcciones de test: `f27092ddc40d4ba3e3f13aba0cf5c6e02f4fe8f3`, `c9101a81a8574e9133bb8d4335d837eed3f3e4d9`; commit actual de seguimiento: `5e40c515e0274d039bff543187c7c1df916d386e`.
+- CI regresión `44639776262` SUCCESS: 192 suites, 2,520 pruebas aprobadas, 0 fallos.
+- Health read-only `44639776244` SUCCESS; Pages `44639775855` SUCCESS.
+- No se desplegó Apps Script ni se modificaron datos productivos.

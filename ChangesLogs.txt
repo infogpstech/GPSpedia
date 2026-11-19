@@ -1115,3 +1115,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-19] ADMIN: en el alta de vehículo nuevo, la revalidación post-Drive comprueba el ID con `verified.rowValues[COLS_CORTES.id - 1]` devuelto por `findRowByOpId`, eliminando una consulta individual redundante. Se conservan las verificaciones de rowIndex, vehicleId, slotIndex, operationHash y unicidad del ID. Nueva prueba AdminNewVehiclePostDriveIdSnapshotReuse.
+
+
+[2026-11-19 · cierre] Alta de corte en vehículo existente: el callback posterior a Drive reutiliza la fila completa devuelta por findRowByOpId para preparar VIN, evitando una segunda lectura integral de la misma fila. Se mantienen la comprobación de unicidad del vehículo, fila, slot, hash y slot vacío; el fallback se conserva sin opId. Prueba AdminExistingVehiclePostDriveSnapshotReuse 9/9 PASS. CI 44639776262 SUCCESS: 192 suites, 2,520 pruebas aprobadas, 0 fallos. Health read-only 44639776244 SUCCESS; Pages 44639775855 SUCCESS. No se desplegó Apps Script ni se modificaron datos productivos.

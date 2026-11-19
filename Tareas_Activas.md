@@ -742,4 +742,4 @@ Siguiente paso: continuar GP-PERF-ADMIN-CUT-LOCK-01 inspeccionando las escritura
 - [x] Mantener las verificaciones de rowIndex, vehicleId, slotIndex y operationHash.
 - [x] Mantener la lectura completa y comprobación de unicidad de vehicleId dentro de `findRowByOpId`.
 - [x] Añadir `AdminNewVehiclePostDriveIdSnapshotReuse.mjs` al runner.
-- Estado: IMPLEMENTACIÓN PUBLICADA; CI pendiente. No se desplegó Apps Script ni se modificaron datos productivos.
+- Estado: IMPLEMENTACIÓN PUBLICADA; CI regresión `44639776262` SUCCESS: 192 suites, 2,520 pruebas aprobadas, 0 fallos; ambas pruebas de snapshot ADMIN PASS. Health read-only `44639776244` SUCCESS. Pages `44639775855` SUCCESS. No se desplegó Apps Script ni se modificaron datos productivos.
