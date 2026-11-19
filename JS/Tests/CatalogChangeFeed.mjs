@@ -170,12 +170,17 @@ test("alta ADMIN de Logo publica upsert exacto tras verificar la fila persistida
 });
 test("WRITE publica upsert exacto de Cortes tras releer fila y conserva reset para migración masiva", () => {
     assert.ok(writeSource.includes("function buildCortesCatalogChange_(reference)"));
-    assert.ok(writeSource.includes("function publishCortesCatalogChange_(action, reference)"));
+    assert.ok(writeSource.includes("function publishCortesCatalogChange_(action, reference, sourceVersion)"));
     assert.ok(writeSource.includes('collection: "cortes", recordId: wanted, operation: "upsert"'));
     assert.ok(writeSource.includes('["addOrUpdateCut", "addSupplementaryInfo", "addVinToVehicle"].includes(action)'));
-    assert.ok(writeSource.includes('publishCortesCatalogChange_(action, vehicleId)'));
+    assert.ok(writeSource.includes('publishCortesCatalogChange_(action, vehicleId, response.catalogVersion)'));
     assert.ok(writeSource.includes('publishSharedCatalogChange_("WRITE", action, { operation: "reset" })'));
-    assert.ok(writeSource.includes("getScriptLock()") && writeSource.includes("waitLock(15000)"));
+    assert.ok(writeSource.includes("nextWriteCatalogVersionLocked_"));
+    const publisherStart = writeSource.indexOf("function publishCortesCatalogChange_");
+    const publisherEnd = writeSource.indexOf("\\nfunction runWriteDriveWorkOutsideScriptLock_", publisherStart);
+    const publisher = writeSource.slice(publisherStart, publisherEnd);
+    assert.ok(publisherEnd > publisherStart);
+    assert.doesNotMatch(publisher, /LockService|getScriptLock|waitLock|tryLock/);
 });
 test("normalizeImages publica solo filas reescritas y usa reset ante respuestas parciales/error", () => {
     assert.ok(adminSource.includes("const changedVehicleIds = new Set()"));

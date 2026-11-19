@@ -367,3 +367,5 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - Ajuste de fixture: CatalogChangeFeed prueba una publicación WRITE/Cortes versionada explícitamente (`sourceVersion: 1`) para conservar su intención de verificar cursor/lectura de un evento delete, no el fallback legacy.
 
 - Ajuste adicional de fixtures CatalogChangeFeed: todos los eventos WRITE/Cortes usados para verificar upsert, tamaño máximo, retención y cursor público ahora declaran versiones secuenciales coherentes; los casos legacy se cubren por separado en SharedMutationCoordinator.
+
+- Actualización de contrato CatalogChangeFeed: la prueba estática ahora valida la firma versionada de `publishCortesCatalogChange_` y exige que el publisher HTTP no contenga adquisición de ScriptLock.
