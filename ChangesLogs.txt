@@ -583,3 +583,12 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - Se registra como PASS reportado por el usuario la auditoría de imágenes sin uso en la carpeta de cortes.
 - `checkpoint.md` actualizado para continuidad. No se modificó código de producción; los hallazgos funcionales/visuales siguen pendientes de reproducción y corrección.
 ================================================================================
+
+
+================================================================================
+2026-11-18 — REGISTRO DOCUMENTAL DE NUEVOS HALLAZGOS Y REQUISITOS BETA
+- lista_beta_parte2.txt: se agregan BETA-CUT-MODAL-IMAGE-CONTAINER-PADDING-01, BETA-INBOX-SHARED-COORDINATOR-AUTH-01, BETA-ADMIN-IMAGE-AUDIT-CONCURRENCY-01, BETA-ADMIN-CUT-IMAGE-AUDIT-COVERAGE-01, BETA-ADMIN-CUT-IMAGE-LIBRARY-INVENTORY-01, BETA-ADMIN-CUT-IMAGE-VEHICLE-MATCH-01 y BETA-ADMIN-CUT-IMAGE-REPLACEMENT-LINK-01.
+- Auditoría.txt: se documentan evidencia reportada, impacto, diagnóstico y criterios esperados; se distingue el reporte del usuario de un defecto reproducido.
+- checkpoint.md: se actualiza continuidad con los siete identificadores y sus requisitos.
+- Alcance: solo documentación. No se modificó código, Spreadsheet, Drive, permisos, Coordinator ni archivos de imágenes. No se ejecutó auditoría funcional ni se comprobó causalidad entre Inbox y la auditoría.
+================================================================================
