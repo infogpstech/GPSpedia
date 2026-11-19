@@ -636,3 +636,14 @@ Riesgo residual:
 - Pruebas aisladas: 74/74 PASS; cubren éxito, dos destinos, lotes, fallo parcial, reintento, revocación individual y global, compatibilidad de protocolo y rechazo de servicios no autorizados.
 - Requisito de configuración pendiente para cada entorno: GPSpedia_SERVICE_URL_WRITE y GPSpedia_SERVICE_URL_FEEDBACK en Coordinator. No se cambió ScriptProperties ni se desplegó.
 ================================================================================
+
+
+================================================================================
+2026-11-19 — HALLAZGO: COMPATIBILIDAD DEL PROTOCOLO LEGACY
+Ubicación: JS/Services/Coordinator.js, handleRequest.
+Evidencia: el valor predeterminado para solicitudes sin protocolVersion se derivaba de SHARED_MUTATION_PROTOCOL_VERSION. Si esa constante se incrementaba junto con una futura evolución del protocolo, los clientes antiguos sin campo podían interpretarse como la versión nueva y quedar sujetos a semántica no declarada.
+Impacto: riesgo de incompatibilidad entre proyectos Apps Script que no se despliegan simultáneamente.
+Corrección: Coordinator 1.4.5 usa SHARED_MUTATION_LEGACY_PROTOCOL_VERSION_ = 1, mantiene SHARED_MUTATION_SUPPORTED_PROTOCOL_VERSIONS_ explícita y acepta v1 sin campo o explícito. Las versiones futuras deben coexistir con v1.
+Validación: SharedMutationCoordinator 77/77 PASS; contrato estático 33/33 PASS; sintaxis Coordinator PASS.
+Severidad: media (compatibilidad/despliegue). Estado: CORREGIDO LOCALMENTE.
+================================================================================
