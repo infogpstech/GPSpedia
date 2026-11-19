@@ -9,7 +9,7 @@ function sliceFunction(name,nextName){
  return source.slice(start,end);
 }
 const readerCode=sliceFunction("readIdempotenciaEntryByOpId_","updateIdempotenciaEntriesSnapshot_");
-const updateCode=sliceFunction("updateIdempotenciaEntriesSnapshot_","initializeIdempotenciaSheet");
+const updateCode=sliceFunction("updateIdempotenciaEntriesSnapshot_");
 const normalizeOpId=value=>{const v=String(value||"").trim();if(!/^OP-[A-Za-z0-9_-]{1,100}$/.test(v))throw Error("opId inválido");return v;};
 const normalizeEntry=(row,rowIndex)=>{
  const opId=String(row[0]||"").trim();if(!opId)return null;
