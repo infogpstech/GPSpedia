@@ -17,8 +17,8 @@ function runIdempotenciaIntegrityTests(){
  run("registro legado sin huella se conserva como no verificable",()=>{const e=readIdempotenciaEntries_(sheet([IDEMPOTENCIA_HEADERS,["OP-a","7",1,"10/11/2026 09:00:00","completed",""]]),false).entries[0];assert(e.operationHash==="");});
  run("hoja histórica A:E se lee sin pedir columna F inexistente",()=>{const e=readIdempotenciaEntries_(sheet([["opId","vehicleId","slotIndex","timestamp","status"],["OP-legacy","7",1,"10/11/2026 09:00:00","completed"]],5),true).entries[0];assert(e.operationHash==="");});
 
- run("vehicleId duplicado en Cortes",()=>{COLS_CORTES.id=1;throws(()=>findUniqueCortesVehicleRow_({getDataRange:()=>({getValues:()=>[["id"],[7],[7]]})},"7","OP-a"),"aparece en 2 filas");});
- run("vehicleId único en Cortes",()=>{COLS_CORTES.id=1;assert(findUniqueCortesVehicleRow_({getDataRange:()=>({getValues:()=>[["id"],[7],[8]]})},"7","OP-a").rowIndex===2);});
+ run("vehicleId duplicado en Cortes",()=>{COLS_CORTES.id=1;throws(()=>findUniqueCortesVehicleRow_(sheet([["id"],[7],[7]],1),"7","OP-a"),"aparece en 2 filas");});
+ run("vehicleId único en Cortes",()=>{COLS_CORTES.id=1;assert(findUniqueCortesVehicleRow_(sheet([["id"],[7],[8]],1),"7","OP-a").rowIndex===2);});
 
  run("migración completa un registro pending existente",()=>{const p=getNewIdempotenciaEntries([{opId:"OP-a",vehicleId:"7",slotIndex:1,timestamp:"10/11/2026"}],new Map([["OP-a",{vehicleId:"7",slotIndex:1,status:"pending",rowIndex:3}]]));assert(p.entriesToComplete.length===1&&p.entriesToComplete[0].rowIndex===3&&p.entriesToWrite.length===0);});
  run("migración rechaza asociación incompatible",()=>{let e;try{getNewIdempotenciaEntries([{opId:"OP-a",vehicleId:"7",slotIndex:1,timestamp:"10/11/2026"}],new Map([["OP-a",{vehicleId:"8",slotIndex:1,status:"completed",rowIndex:3}]]));}catch(x){e=x;}assert(!!e&&String(e.message||e).includes("asociación diferente"));});
