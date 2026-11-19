@@ -89,6 +89,7 @@ runGroup('32','ADMIN',()=>{
   runCli('ADMIN valida el contrato idempotente antes de asignar ID y adquirir lock','JS/Tests/AdminCutPreflightBeforeAllocation.mjs');
   runCli('ADMIN reserva solicitudes legacy sin opId para Drive fuera del lock','JS/Tests/AdminLegacyCutReservation.mjs');
   runCli('ADMIN prepara catálogo y datos de alta fuera del lock','JS/Tests/AdminCutEntityPreflight.mjs');
+  runCli('ADMIN busca fila de vehículo existente antes del lock y revalida ID','JS/Tests/AdminExistingVehicleLookupPreflight.mjs');
   runCli('ADMIN sincroniza carpeta de imagen después de liberar ScriptLock','JS/Tests/AdminVehicleFolderSyncOutsideLock.mjs');
   runCli('ADMIN reemplazo de imagen ejecuta Drive fuera del ScriptLock y revalida opId','JS/Tests/AdminImageUploadDriveIsolation.mjs');
   runCli('ADMIN recupera reemplazos linked fuera del ScriptLock','JS/Tests/AdminImageUploadLinkedRecoveryIsolation.mjs');
