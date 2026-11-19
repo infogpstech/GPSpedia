@@ -53,6 +53,14 @@ check("La lectura protegida devuelve 24 buckets y totales correctos", () => {
     assert.equal(result.totals.last24Hours, 2);
     assert.equal(result.accuracy, "best_effort_nonblocking");
 });
+check("USERS acepta el secreto Coordinator y conserva fallback legacy", () => {
+    properties.set("GPSpedia_COORDINATOR_SECRET", "users-telemetry-secret-012345678901234567890123");
+    assert.equal(readUsersDirectTraffic_("users-telemetry-secret-012345678901234567890123").status, "success");
+    properties.delete("GPSpedia_COORDINATOR_SECRET");
+    assert.equal(readUsersDirectTraffic_("users-telemetry-secret-012345678901234567890123").status, "success");
+    properties.set("GPSpedia_COORDINATOR_SECRET", "wrong-coordinator-secret");
+    assert.equal(readUsersDirectTraffic_("users-telemetry-secret-012345678901234567890123").status, "error");
+});
 check("La consulta interna rechaza secretos incorrectos y no devuelve conteos", () => {
     const result = readUsersDirectTraffic_("incorrect-secret");
     assert.equal(result.status, "error");
