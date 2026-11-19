@@ -13,10 +13,10 @@ assert.ok(handler.includes('opId = "OP-LEGACY-" + Utilities.getUuid().replace(/-
     "Debe crear una clave interna única y compatible con el ledger");
 assert.ok(handler.includes("const operationHash = computeCutOperationFingerprint_(payload);"),
     "Debe generar una huella estable para la operación legacy");
-assert.ok(handler.includes('recordOpId(opId, vehicleId, cutSlotIndex, formattedDate, "pending", operationHash)'),
-    "Debe reservar el slot antes de liberar el lock para Drive en vehículos existentes");
-assert.ok(handler.includes('recordOpId(opId, newId, 1, formattedDate, "pending", operationHash)'),
-    "Debe reservar el ID/fila nueva antes de liberar el lock para Drive");
+assert.ok(handler.includes('recordOpId(opId, vehicleId, cutSlotIndex, formattedDate, "pending", operationHash, idempotencyEntriesSnapshot)'),
+    "Debe reservar el slot antes de liberar el lock para Drive en vehículos existentes usando el snapshot validado");
+assert.ok(handler.includes('recordOpId(opId, newId, 1, formattedDate, "pending", operationHash, idempotencyEntriesSnapshot)'),
+    "Debe reservar el ID/fila nueva antes de liberar el lock para Drive usando el snapshot validado");
 assert.ok(handler.includes("opId: opId, operationHash: operationHash"),
     "Debe devolver las credenciales internas para que un reintento pueda ser idempotente");
 
