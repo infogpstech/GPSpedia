@@ -58,7 +58,7 @@ for (const [path, service] of [
     ["JS/Services/feedback.js", "FEEDBACK"], ["JS/Services/users.js", "USERS"],
     ["JS/Services/write.js", "WRITE"]
 ]) {
-    assert.match(read(path), new RegExp("getCachedSharedSessionActor_\\\\(payload\\\\.userId, payload\\\\.sessionToken, \\{ service: \"" + service + "\" \\}\\\\)"));
+    assert.match(read(path), new RegExp("getCachedSharedSessionActor_\\(payload\\.userId, payload\\.sessionToken, \\{ service: \"" + service + "\" \\}\\)"));
 }
 assert.match(shared,/function getServiceTraffic\(\)/);
 assert.match(shared,/send_\("getServiceTraffic", "ADMIN", "getServiceTraffic", \{\}\)/);
