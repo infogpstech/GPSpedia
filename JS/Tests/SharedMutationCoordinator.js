@@ -162,22 +162,22 @@ function runSharedMutationCoordinatorTests() {
         release_(r, "AUTH", "logout", retry.token);
     });
 
-    test_("AUTH acceptTerms puede convivir con ADMIN sessionActivity sin liberar la protección de login", function() {
+    test_("AUTH acceptTerms mantiene la protección del login sin depender de leases ADMIN", function() {
         const r = createRuntime_();
-        const adminActivity = acquire_(r, "ADMIN", "sessionActivity");
-        assert_(adminActivity.status === "success", "ADMIN/sessionActivity debía obtener su lease compartida.");
         const terms = coordinatorPolicy_("AUTH", "acceptTerms");
         assert_(terms.readResources.includes("SESSION_CONTEXTS"), "acceptTerms debe leer el contexto central de sesión.");
         assert_(terms.writeResources.includes("USERS"), "acceptTerms debe persistir el registro por usuario.");
         assert_(!terms.writeResources.includes("ACTIVE_SESSIONS"), "acceptTerms no debe actualizar actividad durante la aceptación.");
         assert_(!terms.writeResources.includes("SESSION_CONTEXTS"), "acceptTerms no debe revocar el contexto compartido.");
-
         const acceptance = acquire_(r, "AUTH", "acceptTerms");
-        assert_(acceptance.status === "success", "Aceptar términos no debe quedar bloqueado por ADMIN/sessionActivity.");
+        assert_(acceptance.status === "success", "Aceptar términos debe adquirir su protección AUTH.");
         const login = acquire_(r, "AUTH", "login");
         assert_(login.status === "error" && login.code === "busy", "El login sí debe esperar porque modifica ActiveSessions.");
         release_(r, "AUTH", "acceptTerms", acceptance.token);
-        release_(r, "ADMIN", "sessionActivity", adminActivity.token);
+        const retry = acquire_(r, "AUTH", "login");
+        assert_(retry.status === "success", "El login debe continuar al terminar acceptTerms.");
+        release_(r, "AUTH", "login", retry.token);
+        expectThrow_(() => coordinatorPolicy_("ADMIN", "sessionActivity"), "no está habilitada");
     });
 
     test_("Cambio de rol/sesión AUTH bloquea mutaciones protegidas activas", function() {
@@ -354,23 +354,21 @@ function runSharedMutationCoordinatorTests() {
         });
     });
 
-    test_("ADMIN addOrUpdateCut autoriza solo allocateVehicleId anidado", function() {
-        const r = createRuntime_();
-        const admin = acquire_(r, "ADMIN", "addOrUpdateCut");
-        const valid = r.request("validate", "WRITE", "allocateVehicleId", { token: admin.token });
-        assert_(valid.status === "success" && valid.valid, "allocateVehicleId debía estar permitido.");
-        expectThrow_(() => r.request("validate", "WRITE", "freezeCortesIds", { token: admin.token }), "no autoriza");
-        expectThrow_(() => release_(r, "WRITE", "allocateVehicleId", admin.token), "propietaria");
-        release_(r, "ADMIN", "addOrUpdateCut", admin.token);
+    test_("ADMIN→WRITE asigna IDs con su propia sesión, sin sublease anidada", function() {
+        const adminPolicy = coordinatorPolicy_("ADMIN", "addOrUpdateCut");
+        assert_(Object.keys(adminPolicy.nestedActions || {}).length === 0,
+            "ADMIN ya no declara operaciones WRITE anidadas dentro de una lease.");
+        const writePolicy = coordinatorPolicy_("WRITE", "allocateVehicleId");
+        assert_(writePolicy.writeResources.includes("CORTES"),
+            "WRITE conserva la política propia del asignador.");
     });
 
-    test_("ADMIN reorganizeDatabase autoriza solo freezeCortesIds anidado", function() {
-        const r = createRuntime_();
-        const admin = acquire_(r, "ADMIN", "reorganizeDatabase");
-        const valid = r.request("validate", "WRITE", "freezeCortesIds", { token: admin.token });
-        assert_(valid.status === "success" && valid.valid, "freezeCortesIds debía estar permitido.");
-        expectThrow_(() => r.request("validate", "WRITE", "allocateVehicleId", { token: admin.token }), "no autoriza");
-        release_(r, "ADMIN", "reorganizeDatabase", admin.token);
+    test_("ADMIN reorganizeDatabase congela IDs sin sublease de Coordinator", function() {
+        const adminPolicy = coordinatorPolicy_("ADMIN", "reorganizeDatabase");
+        assert_(Object.keys(adminPolicy.nestedActions || {}).length === 0,
+            "La acción ADMIN no debe encadenar una lease WRITE.");
+        assert_(coordinatorPolicy_("WRITE", "freezeCortesIds").writeResources.includes("CORTES"),
+            "WRITE conserva su propia protección funcional para congelar IDs.");
     });
 
     test_("Reintento acquire con requestId devuelve la misma lease", function() {
@@ -416,18 +414,14 @@ function runSharedMutationCoordinatorTests() {
         assert_(!r.properties.getProperty("GPSpedia_SHARED_MUTATION_LEASES"), "Lease debía liberarse tras excepción.");
     });
 
-    test_("Cliente falla cerrado sin configuración y valida lease anidada", function() {
-        const r = createRuntime_();
-        const admin = acquire_(r, "ADMIN", "addOrUpdateCut");
-        const client = r.makeClient("WRITE");
-        const nested = client.withLease("WRITE", "allocateVehicleId", () => "nested", { nestedToken: admin.token });
-        assert_(nested === "nested", "Acción anidada debía ejecutarse después de validar lease.");
-        release_(r, "ADMIN", "addOrUpdateCut", admin.token);
-
+    test_("Cliente falla cerrado sin configuración; ADMIN→WRITE no requiere lease anidada", function() {
+        const adminPolicy = coordinatorPolicy_("ADMIN", "addOrUpdateCut");
+        assert_(Object.keys(adminPolicy.nestedActions || {}).length === 0,
+            "ADMIN no debe requerir ni transportar un token de lease hacia WRITE.");
         const missingClient = createSharedMutationClient_({
             properties: { getProperty: () => null },
             fetch: () => { throw new Error("fetch no debe ejecutarse"); },
-            uuid: r.uuid,
+            uuid: () => "request-id",
             logger: function() {}
         });
         expectThrow_(() => missingClient.withLease("WRITE", "addVinToVehicle", () => "no"), "no está configurada");
@@ -476,7 +470,7 @@ function runSharedMutationCoordinatorTests() {
         release_(second, "FEEDBACK", "removeVehicleFromProblem", relationLease.token);
     });
 
-    test_("FEEDBACK recordLike reserves session activity, CORTES, FEEDBACK ledger and ACTIVITY", function() {
+    test_("FEEDBACK recordLike conserva sus recursos sin depender de actividad ADMIN", function() {
         const policy = coordinatorPolicy_("FEEDBACK", "recordLike");
         ["CORTES", "FEEDBACK", "ACTIVITY"].forEach(function(resource) {
             assert_(policy.writeResources.includes(resource), "recordLike debe reservar " + resource + ".");
@@ -484,11 +478,8 @@ function runSharedMutationCoordinatorTests() {
         const r = createRuntime_();
         const like = acquire_(r, "FEEDBACK", "recordLike");
         assert_(like.status === "success", "recordLike debe obtener su lease.");
-        const adminActivity = acquire_(r, "ADMIN", "sessionActivity");
-        assert_(adminActivity.status === "success",
-            "ADMIN/sessionActivity puede coexistir con recordLike porque ambos leen el contexto central.");
-        release_(r, "ADMIN", "sessionActivity", adminActivity.token);
         release_(r, "FEEDBACK", "recordLike", like.token);
+        expectThrow_(() => coordinatorPolicy_("ADMIN", "sessionActivity"), "no está habilitada");
     });
     test_("FEEDBACK suggestYear y approveVideo reservan Cortes, Feedback y Activity", function() {
         ["suggestYear", "approveVideo"].forEach(function(action) {
@@ -621,24 +612,13 @@ function runSharedMutationCoordinatorTests() {
     });
 
 
-    test_("ADMIN permite consultas concurrentes con lectura del contexto central", function() {
-        const r = createRuntime_();
-        const policy = coordinatorPolicy_("ADMIN", "sessionActivity");
-        assert_(policy.readResources.includes("SESSION_CONTEXTS"), "ADMIN debe leer el contexto central de sesión.");
-        assert_(!policy.writeResources.includes("ACTIVE_SESSIONS") && !policy.sharedWriteResources.includes("ACTIVE_SESSIONS"),
-            "ADMIN no debe escribir LastActivityAt en cada acción.");
-        const first = acquire_(r, "ADMIN", "sessionActivity");
-        const second = acquire_(r, "ADMIN", "sessionActivity");
-        assert_(first.status === "success" && second.status === "success",
-            "Dos consultas ADMIN protegidas deben poder coexistir porque solo leen SESSION_CONTEXTS.");
-        const logout = acquire_(r, "AUTH", "logout");
-        assert_(logout.status === "error" && logout.code === "busy",
-            "La lectura de SESSION_CONTEXTS debe seguir bloqueando logout y revocaciones AUTH.");
-        release_(r, "ADMIN", "sessionActivity", first.token);
-        release_(r, "ADMIN", "sessionActivity", second.token);
-        const retry = acquire_(r, "AUTH", "logout");
-        assert_(retry.status === "success", "AUTH debe continuar al terminar las operaciones ADMIN.");
-        release_(r, "AUTH", "logout", retry.token);
+    test_("ADMIN no conserva sessionActivity ni bloquea logout por lecturas ordinarias", function() {
+        expectThrow_(() => coordinatorPolicy_("ADMIN", "sessionActivity"), "no está habilitada");
+        const readPolicy = coordinatorPolicy_("ADMIN", "getReplacedImages");
+        assert_(readPolicy.readResources.includes("DRIVE") && readPolicy.readResources.includes("CORTES"),
+            "El metadato de recursos conserva el alcance funcional del inventario.");
+        assert_(!readPolicy.writeResources.includes("ACTIVE_SESSIONS"),
+            "El inventario no debe escribir actividad de sesión.");
     });
 
     test_("Inicializar historial tiene política mínima y conflicto por IMAGE_INVENTORY", function() {
@@ -693,53 +673,24 @@ function runSharedMutationCoordinatorTests() {
         release_(r, "AUTH", "login", loginAfter.token);
     });
 
-    test_("ADMIN/getCortesImageFolders no bloquea el login durante la enumeración de Drive", function() {
-        const r = createRuntime_();
+    test_("ADMIN/getCortesImageFolders conserva metadatos sin lease ni bloqueo del login", function() {
         const policy = coordinatorPolicy_("ADMIN", "getCortesImageFolders");
-        assert_(policy.readResources.includes("DRIVE"), "La consulta debe conservar la protección de lectura del árbol Drive.");
+        assert_(policy.readResources.includes("DRIVE"), "La consulta conserva su alcance funcional sobre Drive.");
         assert_(!policy.readResources.includes("USERS") && !policy.readResources.includes("SESSION_CONTEXTS"),
             "La enumeración de Drive no debe reservar recursos de identidad ya validados por el actor central.");
-        const folders = acquire_(r, "ADMIN", "getCortesImageFolders");
-        assert_(folders.status === "success", "La consulta de carpetas debe obtener su lease.");
-        const login = acquire_(r, "AUTH", "login");
-        assert_(login.status === "success",
-            "El login debe poder crear la sesión mientras una consulta de carpetas Drive permanece activa.");
-        release_(r, "AUTH", "login", login.token);
-        release_(r, "ADMIN", "getCortesImageFolders", folders.token);
-        const competingDriveWrite = acquire_(r, "ADMIN", "createCortesImageFolder");
-        assert_(competingDriveWrite.status === "success",
-            "La liberación de la lectura debe dejar disponible el recurso Drive para nuevas operaciones.");
-        release_(r, "ADMIN", "createCortesImageFolder", competingDriveWrite.token);
+        assert_(!policy.writeResources.includes("ACTIVE_SESSIONS"),
+            "La consulta no debe actualizar LastActivityAt.");
     });
 
-    test_("ADMIN separa lecturas de inventario y escáner de la lease genérica", function() {
-        const r = createRuntime_();
-        const sessionActivity = acquire_(r, "ADMIN", "sessionActivity");
-        const inventory = acquire_(r, "ADMIN", "getReplacedImages");
-        const storage = acquire_(r, "ADMIN", "getDriveStorage");
-        const folders = acquire_(r, "ADMIN", "getCortesImageFolders");
-        const scan = acquire_(r, "ADMIN", "auditDriveImagesInCortes");
-        assert_(sessionActivity.status === "success" && inventory.status === "success" &&
-            storage.status === "success" && folders.status === "success" && scan.status === "success",
-            "Las consultas y el escáner deben coexistir con la lectura del contexto central.");
-        const duplicateScan = acquire_(r, "ADMIN", "auditDriveImagesInCortes");
-        assert_(duplicateScan.status === "error" && duplicateScan.code === "busy",
-            "Dos escáneres no deben escribir simultáneamente el estado de auditoría.");
-        const migration = acquire_(r, "ADMIN", "migrateReplacedImagesSchema");
-        assert_(migration.status === "error" && migration.code === "busy",
-            "La migración debe esperar mientras inventario/escáner leen IMAGE_INVENTORY.");
-        const inventoryWrite = acquire_(r, "ADMIN", "saveUnusedImagesInventory");
-        assert_(inventoryWrite.status === "error" && inventoryWrite.code === "busy",
-            "La escritura de inventario/Drive debe esperar mientras el escáner conserva su snapshot.");
-        release_(r, "ADMIN", "auditDriveImagesInCortes", scan.token);
-        release_(r, "ADMIN", "getReplacedImages", inventory.token);
-        release_(r, "ADMIN", "getDriveStorage", storage.token);
-        release_(r, "ADMIN", "getCortesImageFolders", folders.token);
-        release_(r, "ADMIN", "sessionActivity", sessionActivity.token);
-        const migrationRetry = acquire_(r, "ADMIN", "migrateReplacedImagesSchema");
-        assert_(migrationRetry.status === "success",
-            "La inicialización del historial debe continuar después de liberar las lecturas.");
-        release_(r, "ADMIN", "migrateReplacedImagesSchema", migrationRetry.token);
+    test_("ADMIN inventario y escáner conservan sus recursos y bloqueos locales, sin leases por acción", function() {
+        const inventory = coordinatorPolicy_("ADMIN", "getReplacedImages");
+        const scan = coordinatorPolicy_("ADMIN", "auditDriveImagesInCortes");
+        const write = coordinatorPolicy_("ADMIN", "saveUnusedImagesInventory");
+        assert_(inventory.readResources.includes("IMAGE_INVENTORY") && inventory.readResources.includes("DRIVE"));
+        assert_(scan.writeResources.includes("IMAGE_AUDIT_STATE"));
+        assert_(write.writeResources.includes("IMAGE_INVENTORY"));
+        assert_(Object.keys(scan.nestedActions || {}).length === 0);
+        assert_(Object.keys(write.nestedActions || {}).length === 0);
     });
 
 
@@ -1191,13 +1142,14 @@ function runSharedMutationCoordinatorTests() {
         const remoteCalls = [];
         const r = createRuntime_(null, function(url, options) {
             const request = JSON.parse(options.payload);
-            const target = url.includes("WRITE") ? "WRITE" : "FEEDBACK";
+            const target = url.includes("WRITE") ? "WRITE" : url.includes("FEEDBACK") ? "FEEDBACK" : "ADMIN";
             remoteCalls.push({ target, tokens: request.payload.sessionTokens.slice() });
             return { getResponseCode: () => 200,
                 getContentText: () => JSON.stringify({ status: "success", invalidated: request.payload.sessionTokens.length }) };
         });
         r.properties.setProperty("GPSpedia_SERVICE_URL_WRITE", "https://script.google.com/macros/s/WRITE/exec");
         r.properties.setProperty("GPSpedia_SERVICE_URL_FEEDBACK", "https://script.google.com/macros/s/FEEDBACK/exec");
+        r.properties.setProperty("GPSpedia_SERVICE_URL_ADMIN", "https://script.google.com/macros/s/ADMIN/exec");
         const client = r.makeClient("AUTH");
         const userId = "USR-REMOTE-REVOKE", token = "session-token-remote-revoke-0001", createdAt = 1700000000000;
         r.request("registerSession", "AUTH", "registerSession", {
@@ -1223,10 +1175,10 @@ function runSharedMutationCoordinatorTests() {
         expectThrow_(() => r.request("validateSessionContext", "AUTH", "validateSessionContext", {
             userId, sessionToken: sessions[6].token
         }), "revocada");
-        assert_(remoteCalls.length === 6, "Las invalidaciones individual y global deben llegar a WRITE y FEEDBACK.");
+        assert_(remoteCalls.length === 9, "Las invalidaciones individual y global deben llegar a WRITE, FEEDBACK y ADMIN.");
     });
 
-    test_("Coordinator centraliza invalidación remota por lotes para WRITE y FEEDBACK", function() {
+    test_("Coordinator centraliza invalidación remota por lotes para WRITE, FEEDBACK y ADMIN", function() {
         const calls = [];
         const r = createRuntime_(null, function(url, options) {
             const request = JSON.parse(options.payload);
@@ -1246,8 +1198,8 @@ function runSharedMutationCoordinatorTests() {
             userId: "USR-CACHE-1", sessionTokens: tokens
         });
         assert_(result.status === "success" && result.invalidated === 7, "Debe confirmar todos los tokens.");
-        assert_(result.confirmed.WRITE === 7 && result.confirmed.FEEDBACK === 7, "Ambos servicios deben confirmar cada token.");
-        assert_(calls.length === 4, "Siete tokens deben dividirse en dos lotes por cada servicio.");
+        assert_(result.confirmed.WRITE === 7 && result.confirmed.FEEDBACK === 7 && result.confirmed.ADMIN === 7, "Los tres servicios deben confirmar cada token.");
+        assert_(calls.length === 6, "Siete tokens deben dividirse en dos lotes por cada uno de los tres servicios.");
         assert_(calls.every(call => call.request.payload.userId === "USR-CACHE-1"), "Debe conservar la identidad objetivo.");
         assert_(!JSON.stringify(result).includes("session-token-cache"), "La respuesta no debe exponer tokens.");
     });
@@ -1273,7 +1225,7 @@ function runSharedMutationCoordinatorTests() {
         failFeedback = false;
         const retry = r.request("invalidateSessionActorCaches", "AUTH", "invalidateSessionActorCaches", payload);
         assert_(retry.status === "success" && retry.invalidated === 1, "El mismo lote debe poder repetirse sin duplicar efectos.");
-        assert_(calls.join(",") === "WRITE,FEEDBACK,WRITE,FEEDBACK", "El reintento debe confirmar ambos destinos.");
+        assert_(calls.join(",") === "WRITE,FEEDBACK,WRITE,FEEDBACK,ADMIN", "El reintento debe confirmar los tres destinos.");
     });
 
     test_("La invalidación remota de caché permanece reservada a AUTH", function() {
