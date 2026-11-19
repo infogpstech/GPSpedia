@@ -90,10 +90,7 @@ function coordinatorPolicy_(service, operation) {
             getAdminImageUploadStatus: { read: [...identityRead, "CORTES", "DRIVE"], write: ["IMAGE_UPLOAD_LEDGER"] },
             previewCortesImageReconciliation: { read: [...identityRead, "CORTES", "DRIVE", "IMAGE_INVENTORY", "IMAGE_AUDIT_STATE", "TUTORIAL", "FEEDBACK", "LOGOS", "RELAY"] },
             previewCortesImageOrganizer: { read: [...identityRead, "CORTES", "DRIVE", "IMAGE_INVENTORY", "IMAGE_AUDIT_STATE", "TUTORIAL", "FEEDBACK", "LOGOS", "RELAY"] },
-            auditDriveImagesInCortes: {
-                read: ["USERS", "CORTES", "DRIVE", "IMAGE_INVENTORY", "TUTORIAL", "FEEDBACK", "LOGOS", "RELAY"],
-                write: ["IMAGE_AUDIT_STATE"]
-            },
+            auditDriveImagesInCortes: { write: ["IMAGE_AUDIT_STATE"] },
             migrateReplacedImagesSchema: { read: ["USERS"], write: ["IMAGE_INVENTORY"] },
             backupDatabase: { maintenance: true },
             backupDrive: { read: identityRead, write: ["DRIVE"] },

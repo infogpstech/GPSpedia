@@ -153,18 +153,16 @@ check("Los eventos STARTED no se purgan y 20 pendientes bloquean nuevas operacio
         error=>error.code==="ADMIN_AUDIT_PENDING_REVIEW_REQUIRED");
     assert.equal(Object.keys(f.properties.data).length,20);
 });
-check("Un fallo al guardar el inicio impide continuar",()=>{
-    const f=createHarness({failAllWrites:true});
-    let actionExecuted=false;
-    assert.throws(()=>{const event=f.api.beginAdminAuditEvent_("driveCommand",{}, {userId:"user-1",role:"Desarrollador"},new Date());actionExecuted=true;return event;},
-        error=>error.code==="ADMIN_AUDIT_START_FAILED");
-    assert.equal(actionExecuted,false);
+check("El router trata el inicio de auditoría como best-effort",()=>{
+    const body=source.slice(source.indexOf("function doPostInternal_(e)"),source.indexOf("// ADMIN publica un delta exacto"));
+    assert.match(body,/try\s*\{\s*auditEvent = beginAdminAuditEvent_\([\s\S]*?catch\s*\(auditError\)/);
+    assert.match(body,/la operación continúa sin bloquearse/);
 });
-check("Un timeout del ScriptLock impide ejecutar la operación sensible",()=>{
-    const f=createHarness({lockFail:true});
-    assert.throws(()=>f.api.beginAdminAuditEvent_("driveCommand",{}, {userId:"user-1",role:"Desarrollador"},new Date()),
-        error=>error.code==="ADMIN_AUDIT_START_FAILED");
-    assert.equal(f.properties.writeCount,0);
+check("Inicio y cierre de auditoría no adquieren ScriptLock global",()=>{
+    const f=createHarness();
+    const event=f.api.beginAdminAuditEvent_("driveCommand",{}, {userId:"user-1",role:"Desarrollador"},new Date());
+    f.api.finalizeAdminAuditEvent_(event,{response:{status:"success"},payload:{},stage:"Fin",durationMs:50});
+    assert.equal(f.lockAcquires,0);
     assert.equal(f.lockReleases,0);
 });
 check("Un fallo al cerrar deja el evento STARTED sin afirmar éxito",()=>{
@@ -201,7 +199,8 @@ check("doPostInternal_ autentica, persiste STARTED antes del switch y finaliza a
     const response=body.indexOf("ContentService.createTextOutput");
     assert.ok(auth>=0&&auth<begin&&begin<dispatch);
     assert.ok(finish>dispatch&&catchStart>finish&&catchFinish>catchStart&&response>catchFinish);
-    assert.ok(body.includes("ADMIN_AUDIT_FINALIZE_FAILED"));
+    assert.match(body,/auditWarning = "La operación se completó/);
+    assert.doesNotMatch(body,/throw createAdminAuditError_\([\s\S]*?ADMIN_AUDIT_FINALIZE_FAILED/);
     assert.ok(body.includes("isSharedMutationAction_(action)"));
 });
 console.log("AdminAuditTrail: "+passed+"/"+passed+" PASS");

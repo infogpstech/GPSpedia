@@ -1067,11 +1067,7 @@ function pruneAdminAuditProperties_(properties, currentTime) {
 }
 
 function beginAdminAuditEvent_(action, payload, actor, startedAt) {
-    const lock = LockService.getScriptLock();
-    let locked = false;
     try {
-        lock.waitLock(10000);
-        locked = true;
         const properties = PropertiesService.getScriptProperties();
         const now = Date.now();
         pruneAdminAuditProperties_(properties, now);
@@ -1119,17 +1115,11 @@ function beginAdminAuditEvent_(action, payload, actor, startedAt) {
     } catch (error) {
         if (error && error.code) throw error;
         throw createAdminAuditError_("No se pudo iniciar el registro persistente de auditoría; la operación ADMIN no fue ejecutada.", "ADMIN_AUDIT_START_FAILED");
-    } finally {
-        if (locked) lock.releaseLock();
     }
 }
 
 function finalizeAdminAuditEvent_(auditEvent, details) {
-    const lock = LockService.getScriptLock();
-    let locked = false;
     try {
-        lock.waitLock(10000);
-        locked = true;
         const properties = PropertiesService.getScriptProperties();
         const reference = auditEvent && typeof auditEvent === "object" ? auditEvent : {};
         const raw = properties.getProperty(reference.key);
@@ -1165,7 +1155,8 @@ function finalizeAdminAuditEvent_(auditEvent, details) {
         if (properties.getProperty(reference.key) !== serialized) {
             throw createAdminAuditError_("No se pudo verificar el cierre del registro persistente ADMIN.", "ADMIN_AUDIT_FINALIZE_FAILED", event.eventId);
         }
-        pruneAdminAuditProperties_(properties, Date.now());
+        try { pruneAdminAuditProperties_(properties, Date.now()); }
+        catch (pruneError) { Logger.log("La limpieza de eventos ADMIN se pospuso: " + String(pruneError && pruneError.message || pruneError)); }
         return event.eventId;
     } catch (error) {
         if (error && error.code) throw error;
@@ -1181,6 +1172,7 @@ function doPostInternal_(e) {
     const logs = [];
     let auditEvent = null;
     let auditFinalizeAttempted = false;
+    let auditWarning = "";
     let auditPayload = null;
     let auditStage = "Inicio";
 
@@ -1209,7 +1201,11 @@ function doPostInternal_(e) {
 
         const developerContext = action === 'ping' ? null : (ADMIN_MODAL_EDIT_ACTIONS.has(action) ? assertModalEditSession(payload) : assertDeveloperSession(payload));
         if (action !== "ping" && isSharedMutationAction_(action)) {
-            auditEvent = beginAdminAuditEvent_(action, payload, developerContext, startTime);
+            try { auditEvent = beginAdminAuditEvent_(action, payload, developerContext, startTime); }
+            catch (auditError) {
+                auditWarning = "No se pudo registrar el inicio de auditoría; la operación continúa sin bloquearse.";
+                Logger.log("Auditoría ADMIN best-effort: " + String(auditError && auditError.message || auditError));
+            }
         }
 
         logMessage("Inicio", `Iniciando acción administrativa: ${action}`);
@@ -1365,13 +1361,11 @@ function doPostInternal_(e) {
                 });
                 response.auditEventId = auditEvent.eventId;
             } catch (auditError) {
-                throw createAdminAuditError_(
-                    "La operación terminó, pero no se pudo confirmar el cierre de su registro persistente. No se reportará como éxito. Evento: " + auditEvent.eventId,
-                    "ADMIN_AUDIT_FINALIZE_FAILED",
-                    auditEvent.eventId
-                );
+                auditWarning = "La operación se completó, pero el cierre de auditoría quedó pendiente de revisión.";
+                Logger.log("No se pudo finalizar la auditoría ADMIN " + auditEvent.eventId + ": " + String(auditError && auditError.message || auditError));
             }
         }
+        if (auditWarning) response.auditWarning = auditWarning;
 
     } catch (error) {
         logMessage("Falla Crítica", `Error: ${error.message}`, 0, 0, false, true);
@@ -1394,14 +1388,11 @@ function doPostInternal_(e) {
                 auditFinalizeError = finalizeError;
             }
         }
-        const auditEventId = auditEvent && auditEvent.eventId || error && error.auditEventId || "";
-        const responseMessage = auditFinalizeError
-            ? "La operación falló y el registro persistente no pudo cerrarse. El evento de inicio permanece para revisión. Evento: " + auditEventId
-            : String(error && error.message || "Error administrativo.");
-
+        const auditEventId = auditEvent && auditEvent.eventId || "";
+        const responseMessage = String(error && error.message || "Error administrativo.");
         response = {
             status: "error",
-            code: auditFinalizeError ? "ADMIN_AUDIT_FINALIZE_FAILED" : error && error.code || "SERVICE_ERROR",
+            code: error && error.code || "SERVICE_ERROR",
             estado: "error",
             message: responseMessage,
             mensaje: responseMessage,
@@ -1409,6 +1400,9 @@ function doPostInternal_(e) {
             logs: logs
         };
         if (auditEventId) response.auditEventId = auditEventId;
+        if (auditWarning || auditFinalizeError) {
+            response.auditWarning = auditWarning || "No se pudo cerrar el registro de auditoría; el error original se conserva.";
+        }
     }
 
     // ADMIN publica un delta exacto para alta de Logo cuando la fila final puede verificarse.
@@ -11760,13 +11754,13 @@ function handleOrganizeUnusedImagesBatch(payload, logMessage, developerContext) 
 
 
 function handleAuditDriveImagesInCortes(payload, logMessage, developerContext) {
-    const lock = LockService.getScriptLock();
-    try { lock.waitLock(30000); }
-    catch (lockError) { throw new Error("No se pudo bloquear la actualización del estado de auditoría. Intenta nuevamente."); }
-    try { return handleAuditDriveImagesInCortesLocked_(payload, logMessage, developerContext); }
-    finally { lock.releaseLock(); }
+    // La lease protege únicamente el estado/cursor de auditoría. No reserva CORTES ni DRIVE,
+    // por lo que el escáner no bloquea el registro de cortes ni otras operaciones de negocio.
+    return withSharedMutationLease_("ADMIN", "auditDriveImagesInCortes", function() {
+        return handleAuditDriveImagesInCortesCore_(payload, logMessage, developerContext);
+    });
 }
-function handleAuditDriveImagesInCortesLocked_(payload, logMessage, developerContext) {
+function handleAuditDriveImagesInCortesCore_(payload, logMessage, developerContext) {
     const requestStartedAt = Date.now();
     const ownerId = String(developerContext && developerContext.userId || "").trim();
     if (!ownerId) throw new Error("La auditoría requiere una sesión Desarrollador verificada.");

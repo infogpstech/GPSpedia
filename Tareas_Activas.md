@@ -395,3 +395,10 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [ ] CI y revisión de compatibilidad de reintentos pendientes. La asignación puede dejar IDs sin usar si una solicitud se reintenta o falla antes de persistir; los IDs no se reutilizan, por diseño.
 
 - CI de `AdminVehicleIdOutsideLock.mjs`: SUCCESS 4/4. Regresión integral del commit `b80b443`: 159 suites, 2,264 pruebas aprobadas, 0 fallos; health read-only SUCCESS. GitHub Pages continúa ejecutándose al momento del registro.
+
+### Aislamiento de auditoría ADMIN frente a registro de cortes (2026-11-19)
+- [x] Retirar `ScriptLock` global de `handleAuditDriveImagesInCortes`; la ejecución usa una lease exclusiva `IMAGE_AUDIT_STATE`.
+- [x] Reducir la política Coordinator de `auditDriveImagesInCortes` a `IMAGE_AUDIT_STATE`: no toma leases CORTES ni DRIVE y puede coexistir con `WRITE/addOrUpdateCut`.
+- [x] Retirar ScriptLock de inicio/cierre del registro ADMIN; cada evento usa una propiedad única.
+- [x] Convertir inicio y cierre de auditoría en best-effort: sus fallos se informan como advertencia y no impiden ni degradan el resultado de la operación principal.
+- [x] Añadir contratos de aislamiento Coordinator y pruebas de auditoría best-effort. CI pendiente.

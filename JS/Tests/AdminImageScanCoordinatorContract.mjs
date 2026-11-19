@@ -34,7 +34,9 @@ const router = admin.slice(admin.indexOf("function doPost(e)"), admin.indexOf("c
 assert.ok(router.includes('getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "ADMIN" })'));
 assert.ok(!router.includes("withSharedMutationLease_"),
     "Ninguna lectura o mutación ADMIN debe adquirir leases por acción.");
-assert.ok(!admin.includes("withSharedMutationLease_"));
+const auditHandler = extractFunction(admin, "handleAuditDriveImagesInCortes");
+assert.ok(auditHandler.includes('withSharedMutationLease_("ADMIN", "auditDriveImagesInCortes"'),
+    "El escáner usa una lease específica para su estado, no ScriptLock global.");
 assert.ok(admin.includes("function assertDeveloperSession(payload)"));
 assert.ok(admin.includes("function assertModalEditSession(payload)"));
 const internal = admin.slice(admin.indexOf("function doPostInternal_(e)"));
@@ -50,7 +52,9 @@ assert.match(adminPolicy, /getServiceTraffic: \{ read: \["SERVICE_TRAFFIC"\] \}/
 assert.doesNotMatch(adminPolicy, /sessionActivity|nestedActions/);
 assert.equal(policy("ADMIN", "getServiceTraffic").readResources.includes("SERVICE_TRAFFIC"), true);
 assert.equal(policy("ADMIN", "backupDatabase").maintenance, true);
-assert.equal(policy("ADMIN", "auditDriveImagesInCortes").writeResources.includes("IMAGE_AUDIT_STATE"), true);
+assert.deepEqual(policy("ADMIN", "auditDriveImagesInCortes").readResources, [],
+    "La auditoría no debe tomar leases de lectura CORTES/DRIVE que bloqueen los cortes.");
+assert.deepEqual(policy("ADMIN", "auditDriveImagesInCortes").writeResources, ["IMAGE_AUDIT_STATE"]);
 assert.equal(policy("ADMIN", "saveUnusedImagesInventory").writeResources.includes("IMAGE_INVENTORY"), true);
 assert.equal(policy("ADMIN", "migrateReplacedImagesSchema").writeResources.includes("IMAGE_INVENTORY"), true);
 const inventory = policy("ADMIN", "getReplacedImages");
