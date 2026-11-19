@@ -1356,8 +1356,7 @@ function handleAddOrUpdateCutLockedUnsafe_(payload, lock, lockState, collaborato
         const vehiculoImageUrl = preparedImages.vehicleImage;
         const corteImageUrl = preparedImages.cutImage;
 
-        // 4. Escribir los nuevos datos en las celdas específicas usando múltiples `setValue` para claridad.
-        // Esto es más legible que crear un array gigante y previene errores de índice.
+        // 4. Escribir los datos base y el primer corte en un lote; los campos separados se actualizan individualmente.
         // La fila nueva fue limpiada antes de la carga; las columnas 2–16 se escriben en un solo lote.
         const rowCoreValues = [
             vehicleData.categoria || '',
