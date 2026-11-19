@@ -80,19 +80,19 @@ No cambiar secretos, ScriptProperties, deployments, hojas ni datos productivos d
 
 ## 4. Secuencia de implementación
 
-1. **Contrato y pruebas de compatibilidad — IMPLEMENTADO LOCALMENTE:** protocolo POST v1 independiente de la versión de Coordinator. SharedMutationClient declara `protocolVersion: 1`; Coordinator interpreta la ausencia del campo como v1 para clientes antiguos y rechaza versiones desconocidas antes de ejecutar operaciones. Las pruebas cubren cliente legacy, cliente v1 y rechazo de versiones no soportadas. Coordinator 1.4.2.
-2. **Orquestación central de invalidación — IMPLEMENTADA LOCALMENTE:** AUTH envía la orden a Coordinator; Coordinator llama WRITE y FEEDBACK con sus secretos individuales y URLs centralizadas, subdivide lotes a cinco tokens y exige confirmación exacta de ambos destinos. La operación falla cerrada y admite reintento idempotente si un destino falla parcialmente. SharedMutationClient ya no necesita URLs ni secretos de otros servicios para esta función. Pruebas aisladas cubren éxito, lotes, fallo parcial, reintento, identidad AUTH y revocación individual/global. Requiere configurar `GPSpedia_SERVICE_URL_WRITE` y `GPSpedia_SERVICE_URL_FEEDBACK` en el Coordinator de cada entorno antes de Beta.
-3. **Migración de cliente:** conservar las funciones públicas actuales como adaptadores compatibles; no retirar los endpoints internos de WRITE/FEEDBACK.
-4. **Configuración canónica:** definir nombres y fallback legacy; añadir diagnóstico de configuración que solo devuelva presencia/validez, nunca valores.
-5. **Cobertura de capacidades críticas:** pruebas de salud, RBAC, restricciones, cambio de rol, revocación individual/global, limpieza remota de caché, cierre de cuenta y rollback.
-6. **Plan de despliegue mínimo:** matriz de qué proyectos requieren nueva versión por cambio. Validación Beta posterior a todas las implementaciones locales y con autorización.
+1. **Contrato y pruebas de compatibilidad — IMPLEMENTADO LOCALMENTE:** protocolo POST v1 independiente de la versión de Coordinator. SharedMutationClient declara `protocolVersion: 1`; Coordinator interpreta la ausencia del campo como v1 para clientes antiguos y rechaza versiones desconocidas antes de ejecutar operaciones. Coordinator 1.4.4.
+2. **Orquestación central de invalidación y telemetría — IMPLEMENTADAS LOCALMENTE:** AUTH delega la invalidación de caché en Coordinator, que contacta WRITE/FEEDBACK con sus secretos y URLs individuales; además, Coordinator consulta en paralelo CATALOG/AUTH/USERS/WRITE/FEEDBACK para devolver la telemetría global final. Las fuentes parciales no descartan el agregado; buckets duplicados/corruptos se ignoran y se señalan. SharedMutationClient ya no conoce URLs/secretos de WRITE/FEEDBACK para invalidar caché. ADMIN consume el agregado global central y mantiene fallback temporal para Coordinator anterior a 1.4.4.
+3. **Migración de cliente y configuración canónica — EN PROGRESO:** conservar funciones públicas/adaptadores compatibles; unificar el secreto de telemetría con `GPSpedia_COORDINATOR_SECRET`, mantener fallback legacy seguro y centralizar URLs en Coordinator. CATALOG utiliza un secreto de lectura dedicado.
+4. **Cobertura de capacidades críticas:** probar salud, RBAC, restricciones, cambios de rol, revocación individual/global, limpieza remota de caché, cierre de cuenta y rollback.
+5. **Plan de despliegue mínimo:** matriz de qué proyectos requieren nueva versión por cambio. Validación Beta posterior a todas las implementaciones locales y con autorización.
 
+## Estado actualizado de configuración (2026-11-19)
 
-2. **Orquestación central de invalidación:** prototipo aislado con fetch inyectado; probar éxito, timeout, respuesta inválida, fallo parcial, repetición idempotente y recuperación.
-3. **Migración de cliente:** conservar las funciones públicas actuales como adaptadores compatibles; no retirar los endpoints internos de WRITE/FEEDBACK.
-4. **Configuración canónica:** definir nombres y fallback legacy; añadir diagnóstico de configuración que solo devuelva presencia/validez, nunca valores.
-5. **Cobertura de capacidades críticas:** pruebas de salud, RBAC, restricciones, cambio de rol, revocación individual/global, limpieza remota de caché, cierre de cuenta y rollback.
-6. **Plan de despliegue mínimo:** matriz de qué proyectos requieren nueva versión por cambio. Validación Beta posterior a todas las implementaciones locales y con autorización.
+- Coordinator centraliza cinco URLs de telemetría: `GPSpedia_SERVICE_URL_CATALOG/AUTH/USERS/WRITE/FEEDBACK`. Reutiliza secretos de Coordinator de AUTH/USERS/WRITE/FEEDBACK y requiere un secreto dedicado `GPSpedia_COORDINATOR_SECRET_CATALOG` solo para lectura interna.
+- Las fuentes AUTH/USERS/WRITE/FEEDBACK y CATALOG aceptan primero `GPSpedia_COORDINATOR_SECRET`; si está ausente, aceptan su propiedad de tráfico anterior. Si el secreto nuevo existe pero no coincide, fallan cerradas y no usan el fallback.
+- ADMIN consume el agregado global central. La consulta directa con secretos antiguos se conserva solo como compatibilidad temporal para Coordinator anterior a 1.4.4.
+- Valores remotos no leídos ni modificados. Antes de Beta se deben crear URLs y secreto CATALOG en cada entorno, copiar el mismo secreto dedicado a CATALOG y verificar que cada secreto local coincide con el valor de Coordinator.
+
 
 ## 5. Matriz de aceptación obligatoria
 
