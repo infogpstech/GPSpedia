@@ -310,7 +310,7 @@ assert.ok(!["DriveApp","SpreadsheetApp","setName","moveTo","setTrashed","setValu
     "El constructor puro no debe ejecutar operaciones de Drive ni Spreadsheet.");
 
 assert.match(apiConfig, /previewCortesImageOrganizer.*ADMIN/);
-assert.match(coordinator, /previewCortesImageOrganizer: \{ read: \[\.\.\.identityRead, "CORTES", "DRIVE", "IMAGE_INVENTORY", "IMAGE_AUDIT_STATE", "TUTORIAL", "FEEDBACK", "LOGOS", "RELAY" \] \}/);
+assert.ok(coordinator.includes('previewCortesImageOrganizer: { read: [...identityRead, "CORTES", "DRIVE", "IMAGE_INVENTORY", "IMAGE_AUDIT_STATE", "TUTORIAL", "FEEDBACK", "LOGOS", "RELAY"] }'), "El preview debe declarar únicamente recursos de lectura en Coordinator.");
 assert.match(admin, /previewCortesImageOrganizer/);
 assert.match(admin, /case 'previewCortesImageOrganizer'/);
 assert.match(admin, /function inspectCortesOrganizerTargetFolderReadOnly_/);
