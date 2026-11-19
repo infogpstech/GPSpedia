@@ -5,6 +5,10 @@
 
 const SHARED_MUTATION_COORDINATOR_VERSION = "1.4.4";
 const SHARED_MUTATION_PROTOCOL_VERSION = 1;
+// La versión del software Coordinator no obliga a cambiar el protocolo de los clientes.
+// Mantener v1 mientras sea compatible; añadir versiones nuevas sin retirar las anteriores.
+const SHARED_MUTATION_SUPPORTED_PROTOCOL_VERSIONS_ = Object.freeze([1]);
+const SHARED_MUTATION_LEGACY_PROTOCOL_VERSION_ = 1;
 const SHARED_MUTATION_LEASES_PROPERTY = "GPSpedia_SHARED_MUTATION_LEASES";
 const SHARED_MUTATION_LEASE_TTL_MS = 45 * 60 * 1000;
 const SHARED_MUTATION_DRAIN_RESERVATION_TTL_MS = 60 * 1000;
@@ -1429,8 +1433,9 @@ function createSharedMutationCoordinator_(dependencies) {
     function handleRequest(request) {
         if (!request || typeof request !== "object" || Array.isArray(request)) throw new Error("Solicitud inválida.");
         const protocolVersion = request.protocolVersion === undefined || request.protocolVersion === null
-            ? SHARED_MUTATION_PROTOCOL_VERSION : Number(request.protocolVersion);
-        if (!Number.isSafeInteger(protocolVersion) || protocolVersion !== SHARED_MUTATION_PROTOCOL_VERSION) {
+            ? SHARED_MUTATION_LEGACY_PROTOCOL_VERSION_ : Number(request.protocolVersion);
+        if (!Number.isSafeInteger(protocolVersion) ||
+            !SHARED_MUTATION_SUPPORTED_PROTOCOL_VERSIONS_.includes(protocolVersion)) {
             throw new Error("Versión de protocolo no compatible con este Coordinator.");
         }
         const action = String(request.action || "").trim();
