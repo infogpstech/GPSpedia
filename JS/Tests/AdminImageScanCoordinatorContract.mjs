@@ -55,7 +55,10 @@ assert.equal(policy("ADMIN", "backupDatabase").maintenance, true);
 assert.deepEqual(policy("ADMIN", "auditDriveImagesInCortes").readResources, [],
     "La auditoría no debe tomar leases de SESSION_CONTEXTS, CORTES ni DRIVE que bloqueen login/cortes.");
 assert.deepEqual(policy("ADMIN", "auditDriveImagesInCortes").writeResources, ["IMAGE_AUDIT_STATE"]);
-assert.equal(policy("ADMIN", "saveUnusedImagesInventory").writeResources.includes("IMAGE_INVENTORY"), true);
+assert.deepEqual(policy("ADMIN", "saveUnusedImagesInventory").readResources, []);
+assert.deepEqual(policy("ADMIN", "saveUnusedImagesInventory").writeResources, ["IMAGE_INVENTORY"]);
+assert.deepEqual(policy("ADMIN", "recordAdminImageActivity").readResources, []);
+assert.deepEqual(policy("ADMIN", "recordAdminImageActivity").writeResources, ["ACTIVITY"]);
 assert.equal(policy("ADMIN", "migrateReplacedImagesSchema").writeResources.includes("IMAGE_INVENTORY"), true);
 const inventory = policy("ADMIN", "getReplacedImages");
 for (const resource of ["CORTES", "DRIVE", "IMAGE_INVENTORY", "RELAY"]) {

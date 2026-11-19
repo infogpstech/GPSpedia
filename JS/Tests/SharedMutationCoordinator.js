@@ -136,6 +136,23 @@ function runSharedMutationCoordinatorTests() {
         release_(r, "ADMIN", "restoreDrive", admin.token);
     });
 
+    test_("El inventario ADMIN no bloquea cortes ni login; su estado se serializa aparte", function() {
+        const cutsRuntime = createRuntime_();
+        const inventory = acquire_(cutsRuntime, "ADMIN", "saveUnusedImagesInventory");
+        const write = acquire_(cutsRuntime, "WRITE", "addOrUpdateCut");
+        assert_(inventory.status === "success" && write.status === "success",
+            "IMAGE_INVENTORY debe coexistir con CORTES/DRIVE de WRITE.");
+        release_(cutsRuntime, "ADMIN", "saveUnusedImagesInventory", inventory.token);
+        release_(cutsRuntime, "WRITE", "addOrUpdateCut", write.token);
+        const loginRuntime = createRuntime_();
+        const inventoryLogin = acquire_(loginRuntime, "ADMIN", "saveUnusedImagesInventory");
+        const login = acquire_(loginRuntime, "AUTH", "login");
+        assert_(inventoryLogin.status === "success" && login.status === "success",
+            "IMAGE_INVENTORY debe coexistir con login AUTH.");
+        release_(loginRuntime, "ADMIN", "saveUnusedImagesInventory", inventoryLogin.token);
+        release_(loginRuntime, "AUTH", "login", login.token);
+    });
+
     test_("La auditoría ADMIN reserva solo su estado y no bloquea WRITE ni login", function() {
         const cutsRuntime = createRuntime_();
         const audit = acquire_(cutsRuntime, "ADMIN", "auditDriveImagesInCortes");
