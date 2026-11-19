@@ -7152,21 +7152,23 @@ function getVehicleYearFolderName(vehicleInfo) {
     let hasta = inlineRange ? parseInt(inlineRange[2], 10) : parseInt(rawHasta, 10);
     if (!Number.isFinite(desde)) return 'Sin_Año';
     if (!Number.isFinite(hasta)) hasta = desde;
-    const start = Math.min(desde, hasta);
-    const end = Math.max(desde, hasta);
-    return start === end ? String(start) : String(start) + '_' + String(end);
+    if (desde > hasta) return '';
+    return String(desde) + '-' + String(hasta);
 }
 
 function findOrCreateVehicleFolder(vehicleInfo) {
     const info = vehicleInfo || {};
     const rootFolder = getCortesRootFolder();
-    const category = sanitizeForFolderDisplay(info.categoria || 'Sin_Categoria');
-    const brand = sanitizeForFolderDisplay(info.marca || 'Sin_Marca');
-    const model = sanitizeForFolderDisplay(info.modelo || 'Sin_Modelo');
-    const versionOrIgnition = sanitizeForFolderDisplay(
-        String(info.versionesAplicables || '').trim() || String(info.tipoEncendido || '').trim() || 'Sin_Tipo_de_Encendido'
+    const category = normalizeOrganizerSegment_(info.categoria);
+    const brand = normalizeOrganizerSegment_(info.marca);
+    const model = normalizeOrganizerSegment_(info.modelo);
+    const versionOrIgnition = normalizeOrganizerSegment_(
+        String(info.versionesAplicables || '').trim() || String(info.tipoEncendido || '').trim()
     );
-    const yearRange = sanitizeForFolderDisplay(getVehicleYearFolderName(info));
+    const yearRange = normalizeOrganizerSegment_(getVehicleYearFolderName(info));
+    if (!category || !brand || !model || !versionOrIgnition || !/^\d{4}-\d{4}$/.test(yearRange)) {
+        throw new Error("No se puede crear la carpeta del vehículo: faltan datos canónicos o el rango de años es inválido.");
+    }
 
     const categoryFolder = findOrCreateSubFolder(rootFolder, category);
     const brandFolder = findOrCreateSubFolder(categoryFolder, brand);

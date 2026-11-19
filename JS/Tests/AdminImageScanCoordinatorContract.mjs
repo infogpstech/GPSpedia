@@ -363,6 +363,31 @@ assert.deepEqual(mixedCutPlan.targets.filter(target => /^imgCorte[123]$/.test(ta
         "Hilux_SRV_2020_2025_ign2"
     ]);
 
+const vehicleFolderCalls = [];
+const vehicleFolderBuilder = new Function(
+    "getCortesRootFolder", "findOrCreateSubFolder",
+    extractFunction(admin, "normalizeOrganizerSegment_") +
+    extractFunction(admin, "getVehicleYearFolderName") +
+    extractFunction(admin, "findOrCreateVehicleFolder") +
+    "\\nreturn findOrCreateVehicleFolder;"
+)(
+    () => ({ path: ["Cortes"] }),
+    (parent, name) => {
+        vehicleFolderCalls.push(name);
+        return { path: parent.path.concat(name) };
+    }
+);
+const canonicalFolder = vehicleFolderBuilder({
+    categoria: "Camión pesado", marca: "Toyota", modelo: "Hilux SRV",
+    versionesAplicables: "SRV", anoDesde: 2020, anoHasta: 2025
+});
+assert.deepEqual(vehicleFolderCalls, ["Camion_pesado", "Toyota", "Hilux_SRV", "SRV", "2020-2025"]);
+assert.deepEqual(canonicalFolder.path, ["Cortes", "Camion_pesado", "Toyota", "Hilux_SRV", "SRV", "2020-2025"]);
+assert.throws(() => vehicleFolderBuilder({
+    categoria: "Camión pesado", marca: "Toyota", modelo: "Hilux",
+    versionesAplicables: "SRV", anoDesde: 2025, anoHasta: 2020
+}), /rango de años es inválido/);
+
 const logoCategoryResolver = new Function("COLS_CORTES",
     extractFunction(admin, "normalizeOrganizerSegment_") +
     extractFunction(admin, "resolveLogoCategoryFromCortesRows_") +
