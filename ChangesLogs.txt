@@ -1118,3 +1118,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-19 · cierre] Alta de corte en vehículo existente: el callback posterior a Drive reutiliza la fila completa devuelta por findRowByOpId para preparar VIN, evitando una segunda lectura integral de la misma fila. Se mantienen la comprobación de unicidad del vehículo, fila, slot, hash y slot vacío; el fallback se conserva sin opId. Prueba AdminExistingVehiclePostDriveSnapshotReuse 9/9 PASS. CI 44639776262 SUCCESS: 192 suites, 2,520 pruebas aprobadas, 0 fallos. Health read-only 44639776244 SUCCESS; Pages 44639775855 SUCCESS. No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+[2026-11-19] ADMIN: el alta de vehículo nuevo limpia ahora la fila completa (incluido el ID heredado) con una sola llamada clearContent(), en lugar de dos llamadas separadas para columnas 2–final e ID. Se conserva el orden de copia de plantilla, limpieza, flush, asignación/confirmación del ID central y reserva idempotente.

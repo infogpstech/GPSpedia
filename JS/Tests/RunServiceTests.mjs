@@ -77,6 +77,7 @@ runGroup('32','ADMIN',()=>{
   runCli('ADMIN agrupa los cinco campos contiguos del corte existente','JS/Tests/AdminCutSlotBatchWrites.mjs');
   runCli('ADMIN agrupa reparaciones de registros recuperados','JS/Tests/AdminRecoveryRepairBatchWrites.mjs');
   runCli('ADMIN agrupa escrituras del alta de vehículos nuevos','JS/Tests/AdminNewVehicleBatchWrites.mjs');
+  runCli('ADMIN limpia la fila nueva con una sola llamada clearContent','JS/Tests/AdminNewVehicleSingleRowClear.mjs');
   runCli('ADMIN revalida ID de vehículo nuevo desde snapshot post-Drive','JS/Tests/AdminNewVehiclePostDriveIdSnapshotReuse.mjs');
   runCli('ADMIN evita el ciclo Drive/lock si la recuperación no necesita reparar imágenes','JS/Tests/AdminRecoveryImageRepairFastPath.mjs');
   runCli('ADMIN reutiliza snapshot de fila para vincular imágenes recuperadas','JS/Tests/AdminRecoveryImageSnapshotReuse.mjs');

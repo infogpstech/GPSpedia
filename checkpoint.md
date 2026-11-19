@@ -352,3 +352,11 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - CI regresión `44639776262` SUCCESS: 192 suites, 2,520 pruebas aprobadas, 0 fallos.
 - Health read-only `44639776244` SUCCESS; Pages `44639775855` SUCCESS.
 - No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+## Continuidad — limpieza de fila única en alta de vehículo nuevo ADMIN (2026-11-19)
+- Se reemplazaron dos llamadas clearContent() consecutivas por una llamada sobre el rango completo de la fila nueva, desde la columna 1 hasta lastColumn.
+- La copia de formato/validación permanece antes de la limpieza; el ID heredado se limpia igualmente.
+- Se mantienen flush, asignación y lectura de confirmación del ID central, reserva pending antes de Drive y completed tras las escrituras.
+- Prueba nueva `AdminNewVehicleSingleRowClear.mjs` integrada en `RunServiceTests.mjs`.
+- CI pendiente. No se desplegó Apps Script ni se modificaron datos productivos.

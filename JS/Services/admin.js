@@ -7200,9 +7200,8 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
         // Copiar la plantilla de formato/validación y retirar la fórmula heredada de ID.
         copyAdminRowPresentationOnly_(sheet, lastRow, rowIndex, lastColumn);
 
-        const dataRange = sheet.getRange(rowIndex, 2, 1, lastColumn - 1);
-        dataRange.clearContent();
-        sheet.getRange(rowIndex, COLS_CORTES.id).clearContent();
+        // Toda la fila debe quedar vacía, incluido el ID heredado, antes de asignar el ID central.
+        sheet.getRange(rowIndex, 1, 1, lastColumn).clearContent();
         SpreadsheetApp.flush();
 
         // ID central reservado antes del ScriptLock de ADMIN; nunca se genera localmente.

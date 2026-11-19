@@ -743,3 +743,11 @@ Siguiente paso: continuar GP-PERF-ADMIN-CUT-LOCK-01 inspeccionando las escritura
 - [x] Mantener la lectura completa y comprobación de unicidad de vehicleId dentro de `findRowByOpId`.
 - [x] Añadir `AdminNewVehiclePostDriveIdSnapshotReuse.mjs` al runner.
 - Estado: IMPLEMENTACIÓN PUBLICADA; CI regresión `44639776262` SUCCESS: 192 suites, 2,520 pruebas aprobadas, 0 fallos; ambas pruebas de snapshot ADMIN PASS. Health read-only `44639776244` SUCCESS. Pages `44639775855` SUCCESS. No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+### ADMIN — limpieza de fila única al crear vehículo nuevo (2026-11-19)
+- [x] Sustituir las dos llamadas iniciales `clearContent()` (columnas 2–final e ID) por una sola limpieza contigua de la fila completa.
+- [x] Mantener copia de formato/validación antes de limpiar contenidos.
+- [x] Mantener flush, asignación del ID preasignado, confirmación de escritura y reserva idempotente pending antes de Drive.
+- [x] Añadir `AdminNewVehicleSingleRowClear.mjs` al runner.
+- Estado: IMPLEMENTACIÓN PUBLICADA; CI pendiente. No se desplegó Apps Script ni se modificaron datos productivos.
