@@ -8399,7 +8399,7 @@ export async function openAuditDriveModal() {
                 Number(response && response.unverifiableReferenceCount) > 0 ? 'warning' : 'progress');
     };
 
-    const updateSummary = (statusText) => {
+    const updateSummary = (statusText, statusLevel) => {
         if (!isCurrentRequest()) return;
         const counts = {
             inUse: allFiles.filter(file => file.classification === 'En uso').length,
@@ -8409,16 +8409,20 @@ export async function openAuditDriveModal() {
         };
         if (statusText) {
             const lower = String(statusText).toLowerCase();
-            const level = /error|fall|detuvo|no se pudo|no disponible|bloquead/.test(lower) ? 'warning' :
-                (complete ? 'success' : 'progress');
-            appendAuditConsole(statusText, level);
+            const inferredLevel = /error|fall|detuvo|no se pudo|no disponible|bloquead|parcial/.test(lower)
+                ? 'warning' : (complete ? 'success' : 'progress');
+            appendAuditConsole(statusText, statusLevel || inferredLevel);
         }
         if (auditConsoleStatus) auditConsoleStatus.textContent =
             complete ? 'Auditoría completa' : (isRunning ? 'En progreso' : 'Disponible');
+        appendAuditConsole('Carpeta raíz: ' + rootFolderName + (rootFolderId ? ' (' + rootFolderId + ')' : '') +
+            '. Versión ADMIN: ' + (serviceVersion || 'no disponible') +
+            '. Último escaneo: ' + (lastScanAt ? new Date(lastScanAt).toLocaleString() : 'no disponible') + '.');
         appendAuditConsole('Resumen acumulado: ' + totalDiscovered + ' descubiertos, ' + totalAnalyzed +
-            ' analizados, ' + foldersVisited + ' carpetas recorridas, ' + batches + ' lotes; ' +
-            counts.inUse + ' en uso, ' + counts.historical + ' históricas, ' + counts.unused +
-            ' sin uso y ' + counts.unverified + ' no verificables. Errores: ' + errorCount +
+            ' analizados, ' + foldersVisited + ' carpetas recorridas, ' + pendingFolderCount +
+            ' pendientes, ' + batches + ' lotes; ' + counts.inUse + ' en uso, ' +
+            counts.historical + ' históricas, ' + counts.unused + ' sin uso y ' +
+            counts.unverified + ' no verificables. Errores: ' + errorCount +
             '; duplicados: ' + (duplicateFileCount + uiDuplicateFileCount) + ' archivos y ' +
             duplicateFolderCount + ' carpetas; referencias no interpretables: ' + unverifiableReferences + '.',
             errorCount || unverifiableReferences ? 'warning' : (complete ? 'success' : 'info'));
@@ -8501,8 +8505,7 @@ export async function openAuditDriveModal() {
             inventoryMessage = 'Auditoría completa. No hay imágenes sin uso para registrar; no se escribió en Spreadsheet.';
             try { await persistState('complete'); }
             catch (error) { inventoryMessage += ' No se pudo guardar el estado local: ' + String(error && error.message || error); }
-            updateSummary(inventoryMessage);
-            appendAuditConsole(inventoryMessage, "info");
+            updateSummary(inventoryMessage, "info");
             updateControls();
             return;
         }
@@ -8528,8 +8531,7 @@ export async function openAuditDriveModal() {
             if (!auditId) {
                 inventoryStatus = 'error';
                 inventoryMessage = 'No existe un auditId de ADMIN verificable para registrar el inventario. No se escribió en Spreadsheet.';
-                updateSummary(inventoryMessage);
-                appendAuditConsole(inventoryMessage, "error");
+                updateSummary(inventoryMessage, "error");
                 return;
             }
 
@@ -8613,8 +8615,7 @@ export async function openAuditDriveModal() {
                 localPersistenceWarning += ' No se pudo confirmar el guardado local del resultado de inventario: ' +
                     storageError.message;
             }
-            updateSummary(inventoryMessage + localPersistenceWarning);
-            appendAuditConsole(inventoryMessage + localPersistenceWarning,
+            updateSummary(inventoryMessage + localPersistenceWarning,
                 inventoryStatus === "error" ? "error" : (localPersistenceWarning ? "warning" : "success"));
         } finally {
             isRunning = false;
@@ -8678,8 +8679,7 @@ export async function openAuditDriveModal() {
             if (isCurrentRequest()) {
                 try { await persistState('complete'); }
                 catch (storageError) { inventoryMessage += ' No se pudo guardar localmente el resultado: ' + storageError.message; }
-                updateSummary(inventoryMessage);
-                appendAuditConsole(inventoryMessage,
+                updateSummary(inventoryMessage,
                     inventoryStatus === "organized" ? "success" : "warning");
             }
             isRunning = false;
@@ -8928,8 +8928,7 @@ export async function openAuditDriveModal() {
                 const batchStatusMessage = complete
                     ? 'Recorrido del árbol finalizado. Verificando el inventario...'
                     : 'Auditoría en progreso: ' + totalAnalyzed + ' archivos analizados; lote actual: ' + batchSize + '.';
-                updateSummary(batchStatusMessage);
-                appendAuditConsole(batchStatusMessage, "progress");
+                updateSummary(batchStatusMessage, "progress");
 
                 await persistState(complete ? 'complete' : 'running');
                 if (!isCurrentRequest()) return;
@@ -8945,8 +8944,7 @@ export async function openAuditDriveModal() {
                 : 'Auditoría completa. No se encontraron imágenes sin uso; no se escribió inventario en Spreadsheet.';
             await persistState('complete');
             if (!isCurrentRequest()) return;
-            updateSummary(inventoryMessage);
-            appendAuditConsole(inventoryMessage,
+            updateSummary(inventoryMessage,
                 errorCount || unverifiableReferences ? "warning" : "success");
         } catch (error) {
             if (!isCurrentRequest()) return;
@@ -8971,8 +8969,7 @@ export async function openAuditDriveModal() {
             } catch (persistenceError) {
                 statusMessage += ' Además, no se pudo guardar el último estado local: ' + persistenceError.message;
             }
-            updateSummary(statusMessage);
-            appendAuditConsole(statusMessage, "error");
+            updateSummary(statusMessage, "error");
         } finally {
             isRunning = false;
             isDriveAuditRunning = false;
