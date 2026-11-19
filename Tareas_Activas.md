@@ -769,3 +769,13 @@ Siguiente tarea de `GP-PERF-ADMIN-CUT-LOCK-01`: analizar las lecturas restantes 
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
 
 Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lecturas restantes de `handleAddOrUpdateCut`, sin trasladar reservas, revalidaciones ni escrituras atómicas fuera del ScriptLock.
+
+
+### ADMIN — agrupar validación de columnas testigo AT:AV (2026-11-19)
+- [x] Reunir las columnas de testigo sin encabezado en el rango contiguo mínimo.
+- [x] Sustituir hasta tres lecturas individuales por una sola lectura compartida bajo ScriptLock.
+- [x] Conservar las validaciones de datos preexistentes, encabezados incompatibles, VIN duplicado y ampliación de columnas.
+- [x] Actualizar `AdminTestigoHeaderReadReuse.mjs`; permanece integrado en `RunServiceTests.mjs`.
+- [x] Validación estática directa: siete condiciones PASS.
+- [ ] Ejecutar CI Node completa sobre el HEAD actual. Los runs visibles todavía pertenecen al HEAD anterior `d24e1a74`; no se consideran validación de estos commits.
+- Estado: IMPLEMENTACIÓN Y PRUEBA ACTUALIZADA; CI PENDIENTE. Sin despliegue Apps Script ni cambios en hojas productivas.
