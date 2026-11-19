@@ -851,3 +851,8 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - Revisión de leases restante: AUTH/clearSensitiveLogs se simplificó a actor cacheado sin lease; AUTH conserva coordinación para ciclo de sesión, recuperación, revocación y cambios de cuenta. USERS/createUser/updateProfile y UTILITIES/migrateTimestamps mantienen coordinación por conflictos de datos comprobados (AUTH delete/reset/role update y migración manual con rollback); no se retiraron sin alternativa equivalente.
 
 - Estado final registrado: regresión 44542256815 SUCCESS (152 suites, 2,224 pruebas, 0 fallos); health read-only 44542256611 SUCCESS; Pages 44542253541 SUCCESS. No deployment Apps Script ni operaciones en Drive/Spreadsheet.
+
+2026-11-19 — RECONCILIACIÓN DE HALLAZGOS BETA CON PRUEBAS LOCALES
+- Se documentó qué reportes tienen ya corrección/contrato automatizado (preview Inbox, cabecera de corte, health/events, telemetría, mensajes/selector de Logs y aislamiento de auditoría) y qué validación real sigue pendiente.
+- Se confirmó que el organizador tiene implementadas localmente las fases de rutas, nomenclatura, referencias, inventario y conciliación; Safe Apply continúa bloqueado hasta preview real revisado y autorización.
+- HEAD base documental: bd47210d1bb8cf30bafe4261dc4d9370613d8ee2. CI regresión 44542583589 SUCCESS; health read-only 44542583925 SUCCESS; Pages 44542583372 SUCCESS.

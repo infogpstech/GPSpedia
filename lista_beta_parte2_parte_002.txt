@@ -1005,3 +1005,24 @@ Cortes/
 
 **Nota de alcance:** requisitos/reportes Beta. No se ejecutó aquí auditoría de código ni se movieron/renombraron archivos. La futura implementación debe previsualizar cambios y proteger referencias antes de operaciones masivas.
 ================================================================================
+
+================================================================================
+REVISIÓN DE IMPLEMENTACIÓN LOCAL — 2026-11-19
+
+Esta adenda separa el estado del código/pruebas automatizadas de la validación visual o funcional que solo puede completarse en el entorno Beta. No convierte pruebas estáticas o simuladas en evidencia de ejecución real.
+
+**Correcciones locales ya presentes y cubiertas por la regresión:**
+- BETA-INBOX-PREVIEW-HTML-01: el backend normaliza el preview a texto plano, elimina contenido script/style y decodifica entidades. InboxConversations.mjs prueba HTML enriquecido, contenido hostil y previews históricos.
+- BETA-CUT-MODAL-HEADER-LONG-MODEL-01: el encabezado calcula si el nombre cabe junto al logo; si no, lo pasa a una fila completa debajo del logo y desplaza el divisor. ResizeObserver reevalúa cambios de tamaño. CutDetailModalLayout.mjs cubre la distribución, el logo y la fila del divisor. Falta validación visual en escritorio y móvil real.
+- BETA-ADMIN-HEALTH-EVENTS-01: el detalle declara el arreglo events dentro de renderServiceDetail; ServiceBrowserTrafficContract.mjs verifica la inicialización y la presentación de eventos. El error reportado no se reproduce en el contrato actual; falta repetir el escaneo en Beta.
+- BETA-ADMIN-GLOBAL-TRAFFIC-01 y BETA-ADMIN-SERVICE-TELEMETRY-02: normalización, agregación de los siete servicios, fuentes directas, consulta agrupada y fallos parciales cubiertos por ServiceTrafficAdminContract, ServiceTrafficAggregatorContract, ServiceTrafficAggregation, ServiceTrafficBatch y ServiceBrowserTrafficContract. Falta confirmar datos reales y configuración de secretos en Beta.
+- BETA-ADMIN-LOGS-CLEAR-FEEDBACK-01 y BETA-ADMIN-LOG-RETENTION-UI-01: mensajes diferenciados para cero/eliminación/error y selector responsive cubiertos por ActivityLogsClearFeedback y AdminLogsMaintenanceContract.
+- BETA-ADMIN-IMAGE-AUDIT-CONCURRENCY-01: contratos locales conservan ScriptLock de inventario/migración y evitan leases por acción ordinaria; AdminImageScanCoordinatorContract, AdminDriveAuditClientRetry y regresión de servicios cubren aislamiento lógico. La concurrencia entre proyectos Apps Script aún requiere Beta.
+
+**Organizador de imágenes — implementación local:**
+- Las fases de nomenclatura, rutas canónicas, conciliación, cobertura de referencias, inventario persistente, idempotencia y protección de referencias constan como completadas en Tareas_Activas.md y tienen regresión local aprobada.
+- BETA-ADMIN-CUT-IMAGE-ORGANIZER-AUDIT/STRUCTURE/REGISTRATION-CONSISTENCY/NAMING/FUNCTION-CODES y los requisitos de inventario/relación se consideran implementados localmente según esos contratos; no equivalen a confirmar que Drive real coincide con la previsualización.
+- **Safe Apply continúa BLOQUEADO:** falta ejecutar una auditoría/preview real autorizada de Drive/Spreadsheet, revisar el manifiesto completo, ACL, duplicados, referencias y destinos. No mover, renombrar, sobrescribir ni borrar archivos productivos en esta fase.
+
+**Estado de validación:** la regresión de servicios, health read-only y Pages del HEAD bd47210d1bb8cf30bafe4261dc4d9370613d8ee2 finalizaron SUCCESS (runs 44542583589, 44542583925 y 44542583372). La regresión automatizada no sustituye los pasos manuales de Beta enumerados en cada hallazgo.
+================================================================================

@@ -268,3 +268,14 @@ Aplicar la estructura objetivo después de validar el dry-run:
 - Resultado: no se retiran las coordinaciones de USERS/UTILITIES sin una alternativa de integridad equivalente. La sección 15 sigue prevaleciendo para acciones ordinarias; estas rutas se documentan como operaciones de cuenta/migración, no como autorización por cada acción de contenido.
 
 - Estado de cierre local: ADMIN y AUTH/clearSensitiveLogs simplificados y probados; quedan solo validaciones Beta y Safe Apply condicionado a preview real. Última regresión 44542256815 SUCCESS (152 suites/2,224 pruebas/0 fallos); health 44542256611 SUCCESS; Pages 44542253541 SUCCESS. HEAD documental 6ad8d99f41bc009e193932171afbcb86a0105230; base protegida sin cambios.
+
+## Adenda 2026-11-19 — separar implementación local y validación Beta
+- [x] Revisión de BETA-INBOX-PREVIEW-HTML-01: preview de texto plano, eliminación de script/style, entidades y contenido hostil cubiertos por InboxConversations.mjs; validación visual Beta pendiente.
+- [x] BETA-CUT-MODAL-HEADER-LONG-MODEL-01: ajuste dinámico debajo del logo, ResizeObserver, divisor y acciones cubiertos por CutDetailModalLayout.mjs; falta prueba visual real en escritorio y ambas orientaciones móviles.
+- [x] BETA-ADMIN-HEALTH-EVENTS-01: events se declara dentro de renderServiceDetail y ServiceBrowserTrafficContract.mjs verifica su uso; repetir escaneo en Beta.
+- [x] BETA-ADMIN-GLOBAL-TRAFFIC-01 / SERVICE-TELEMETRY-02: contratos de siete servicios, normalización, fuentes directas, consulta batch y fallos parciales incluidos en regresión. Configuración y datos reales quedan para Beta.
+- [x] BETA-ADMIN-LOGS-CLEAR-FEEDBACK-01 / LOG-RETENTION-UI-01: resultados de cero/eliminación/error y selector responsive cubiertos por ActivityLogsClearFeedback.mjs y AdminLogsMaintenanceContract.mjs.
+- [x] BETA-ADMIN-IMAGE-AUDIT-CONCURRENCY-01: pruebas de contratos de locks locales y ausencia de leases ordinarias; concurrencia real entre proyectos sigue pendiente de Beta.
+- [x] Revisión del organizador: rutas, nombres, referencias, inventario y conciliación figuran implementados y probados localmente en Fase 5. Esto no autoriza Safe Apply.
+- [ ] Safe Apply: esperar preview real autorizado de Drive/Spreadsheet y revisión de manifiesto, ACL, duplicados, referencias y destinos. No aplicar movimientos/renombrados/borrados productivos sin autorización explícita.
+- CI del HEAD bd47210d1bb8cf30bafe4261dc4d9370613d8ee2: regresión 44542583589 SUCCESS; health read-only 44542583925 SUCCESS; Pages 44542583372 SUCCESS.

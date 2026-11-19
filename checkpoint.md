@@ -1056,3 +1056,13 @@ ESTADO ACTUAL DEL REPOSITORIO — 2026-11-19
 - No se desplegaron proyectos Apps Script ni se modificaron ScriptProperties, secretos, Drive o Spreadsheet.
 - Pendiente local condicionado: Safe Apply del organizador requiere auditoría/preview real de Drive y revisión del manifiesto antes de implementarse; no aplicar movimientos ni renombrados.
 ================================================================================
+
+================================================================================
+ACTUALIZACIÓN DE CONTINUIDAD — 2026-11-19
+- HEAD verificado antes de esta actualización: bd47210d1bb8cf30bafe4261dc4d9370613d8ee2; rama base protegida GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Se separaron los hallazgos Beta cuyo código y contratos locales ya están implementados de las pruebas visuales/funcionales reales que siguen pendientes.
+- Preview Inbox, encabezado largo de corte, health/events, telemetría global, mantenimiento de Logs y coordinación de auditoría cuentan con contratos automatizados incluidos en la regresión.
+- Organizador de imágenes: fases locales de estructura, nomenclatura, referencias, inventario y conciliación registradas como completadas; Safe Apply no está autorizado ni listo hasta disponer de preview real de Drive/Spreadsheet revisado.
+- No se realizó deployment Apps Script ni se modificaron ScriptProperties, secretos, Drive o Spreadsheet.
+- CI del HEAD bd47210d1bb8cf30bafe4261dc4d9370613d8ee2: 44542583589 / 44542583925 / 44542583372 SUCCESS.
+================================================================================
