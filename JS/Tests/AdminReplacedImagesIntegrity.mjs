@@ -1071,7 +1071,11 @@ check("La organización revalida referencias e historial por archivo y protege u
     assert.ok(organize.includes("rollbackError"));
     assert.ok(save.includes('previousOrganizationState === "movida_manual" && previousManualLocation'));
     assert.ok(save.includes('String(row[column("estado_organizacion") - 1] || "") === "movida_manual"'));
-    assert.ok(coordinator.includes('saveUnusedImagesInventory: { read: [...identityRead, "CORTES"]'));
+    assert.ok(save.includes("const lock = LockService.getScriptLock()"));
+    assert.ok(save.includes("lock.waitLock(30000)"),
+        "La escritura del inventario conserva exclusión local sin lease de Coordinator.");
+    assert.ok(!coordinator.includes("saveUnusedImagesInventory: {"),
+        "El inventario no debe conservar una política de lease por acción en Coordinator.");
 });
 
 
