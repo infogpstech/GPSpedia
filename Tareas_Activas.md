@@ -721,3 +721,12 @@ Siguiente paso: continuar GP-PERF-ADMIN-CUT-LOCK-01 inspeccionando las escritura
 - [x] CI `44637971280` SUCCESS: 190 suites, 2,504 pruebas aprobadas, 0 fallos; `AdminNewVehicleBatchWrites` 13/13 PASS y sintaxis JavaScript aprobada.
 - [x] Health read-only `44637971232` SUCCESS.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+### ADMIN — reutilizar fila verificada después de Drive al agregar corte a vehículo existente (2026-11-19)
+- [x] Reutilizar `verified.rowValues` devuelto por `findRowByOpId` después de la carga Drive.
+- [x] Eliminar la segunda lectura integral de la misma fila usada para preparar VIN.
+- [x] Mantener la comprobación de unicidad del vehicleId, rowIndex, slotIndex, operationHash y disponibilidad del slot después de Drive.
+- [x] Mantener lectura de fallback si no existe opId.
+- [x] Añadir `AdminExistingVehiclePostDriveSnapshotReuse.mjs` al runner.
+- Estado: IMPLEMENTACIÓN PUBLICADA; regresión y health pendientes de CI. No se desplegó Apps Script ni se modificaron datos productivos.

@@ -7151,6 +7151,7 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
             return uploadImageToDrive(cutData.imgCorte1, filename, folder,
                 buildImageUploadOperationKey(opId, vehicleId, "imgCorte" + cutSlotIndex));
         }, function(url) {
+            let verifiedRowValues = null;
             if (opId) {
                 const verified = findRowByOpId(sheet, opId, idempotencyEntriesSnapshot);
                 if (!verified || verified.rowIndex !== rowIndex || verified.slotIndex !== cutSlotIndex ||
@@ -7158,8 +7159,11 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
                     String(verified.rowValues[COLS_CORTES["tipoCorte" + cutSlotIndex] - 1] || "").trim()) {
                     throw new Error("El vehículo o espacio de corte cambió durante la carga; no se aplicó la imagen.");
                 }
+                // findRowByOpId ya revalidó la unicidad y devolvió la fila actualizada bajo lock.
+                verifiedRowValues = verified.rowValues;
             }
-            const currentValues = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getValues()[0];
+            const currentValues = verifiedRowValues ||
+                sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getValues()[0];
             preparedVinCollection = vinPrefix
                 ? prepareVinCollectionForAdmin(sheet, currentValues, vehicleId, vinColumnIndex, vinPrefix, vehicleData && vehicleData.versionesAplicables)
                 : null;

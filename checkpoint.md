@@ -306,3 +306,11 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Health read-only `44637971232` SUCCESS; Pages `44637970083` SUCCESS.
 - No se desplegó Apps Script ni se modificaron datos productivos.
 - Siguiente tarea: inspeccionar lecturas de fila y revalidaciones del alta nueva después de Drive para identificar una consulta redundante demostrable sin alterar concurrencia ni recuperación idempotente.
+
+
+## Continuidad — snapshot post-Drive para alta de corte en vehículo existente (2026-11-19)
+- En el callback post-Drive de la rama de vehículo existente, `findRowByOpId` ya valida la entrada de idempotencia y llama a `findUniqueCortesVehicleRow_`, que verifica la unicidad del ID y lee la fila completa actual.
+- Se reutiliza `verified.rowValues` para preparar VIN, eliminando la lectura integral duplicada inmediatamente posterior.
+- Se mantienen las validaciones de fila, vehículo, slot, hash y slot aún vacío. El fallback de lectura sigue disponible cuando no hay opId.
+- Nueva prueba `AdminExistingVehiclePostDriveSnapshotReuse.mjs` integrada en el runner.
+- CI pendiente. No se desplegó Apps Script ni se modificaron datos productivos.

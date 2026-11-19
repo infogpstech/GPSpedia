@@ -98,6 +98,7 @@ runGroup('32','ADMIN',()=>{
   runCli('ADMIN prepara catálogo y datos de alta fuera del lock','JS/Tests/AdminCutEntityPreflight.mjs');
   runCli('ADMIN busca fila de vehículo existente antes del lock y revalida ID','JS/Tests/AdminExistingVehicleLookupPreflight.mjs');
   runCli('ADMIN revalida vehicleId desde el snapshot de fila sin lectura individual','JS/Tests/AdminExistingVehicleSnapshotRevalidation.mjs');
+  runCli('ADMIN reutiliza fila verificada post-Drive para preparar VIN','JS/Tests/AdminExistingVehiclePostDriveSnapshotReuse.mjs');
   runCli('ADMIN reutiliza encabezados VIN/testigo sin lecturas repetidas','JS/Tests/AdminTestigoHeaderReadReuse.mjs');
   runCli('ADMIN sincroniza carpeta de imagen después de liberar ScriptLock','JS/Tests/AdminVehicleFolderSyncOutsideLock.mjs');
   runCli('ADMIN reemplazo de imagen ejecuta Drive fuera del ScriptLock y revalida opId','JS/Tests/AdminImageUploadDriveIsolation.mjs');
