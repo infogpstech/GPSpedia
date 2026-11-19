@@ -54,7 +54,7 @@ AUTH/USERS/UTILITIES de prueba deben apuntar a un coordinador de prueba independ
 
 La acción FEEDBACK `initYouTubeUpload` no adquiere lease: inicia una sesión de carga en YouTube y no modifica los recursos compartidos de Spreadsheet/Drive. El registro y aprobación posteriores sí se coordinan; el contrato de YouTube permanece en AUG-043.
 
-## Contexto central de sesión (Coordinator 1.4.4)
+## Contexto central de sesión (Coordinator 1.4.5)
 
 El coordinador mantiene la identidad activa en `ScriptProperties`, sin consultar `Users` ni `ActiveSessions` en cada operación de los demás servicios.
 
@@ -86,7 +86,7 @@ Coordinator 1.4.3 y SharedMutationClient declaran `protocolVersion: 1` en cada p
 - Un cambio que requiera una capacidad nueva del cliente solo exige actualizar los consumidores que invoquen esa capacidad; las acciones anteriores permanecen disponibles durante la transición.
 - Las peticiones GET del feed público mantienen su contrato de lectura separado.
 
-## Agregación central de telemetría (Coordinator 1.4.4)
+## Agregación central de telemetría (Coordinator 1.4.5)
 
 La consulta ADMIN `getServiceTraffic` devuelve el agregado final de siete servicios activos. Coordinator obtiene las operaciones protegidas de sus buckets y consulta CATALOG, AUTH, USERS, WRITE y FEEDBACK mediante `fetchAll`, sin mantener el lock de ScriptProperties durante las llamadas externas.
 
