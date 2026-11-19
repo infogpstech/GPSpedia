@@ -673,29 +673,29 @@ function findVinDuplicateForAdmin(sheet, vinPrefix, currentVehicleId, vinColumnI
     if (!vinColumnIndex) throw new Error("La hoja «Cortes» no contiene el encabezado «VIN».");
 
     const rowCount = lastRow - 1;
-    const identityFirstColumn = Math.min(COLS_CORTES.id, COLS_CORTES.marca, COLS_CORTES.modelo);
-    const identityLastColumn = Math.max(COLS_CORTES.id, COLS_CORTES.marca, COLS_CORTES.modelo);
-    const identityData = sheet.getRange(2, identityFirstColumn, rowCount,
-        identityLastColumn - identityFirstColumn + 1).getValues();
-    const yearFirstColumn = Math.min(COLS_CORTES.anoDesde, COLS_CORTES.anoHasta);
-    const yearLastColumn = Math.max(COLS_CORTES.anoDesde, COLS_CORTES.anoHasta);
-    const yearData = sheet.getRange(2, yearFirstColumn, rowCount,
-        yearLastColumn - yearFirstColumn + 1).getValues();
+    // ID, marca, modelo y años están dentro de las columnas 1–7 contiguas.
+    // Una sola lectura conserva los mismos campos y evita una llamada remota adicional.
+    const vehicleFirstColumn = Math.min(COLS_CORTES.id, COLS_CORTES.marca, COLS_CORTES.modelo,
+        COLS_CORTES.anoDesde, COLS_CORTES.anoHasta);
+    const vehicleLastColumn = Math.max(COLS_CORTES.id, COLS_CORTES.marca, COLS_CORTES.modelo,
+        COLS_CORTES.anoDesde, COLS_CORTES.anoHasta);
+    const vehicleData = sheet.getRange(2, vehicleFirstColumn, rowCount,
+        vehicleLastColumn - vehicleFirstColumn + 1).getValues();
     const vinData = sheet.getRange(2, vinColumnIndex, rowCount, 1).getValues();
-    const idIndex = COLS_CORTES.id - identityFirstColumn;
-    const brandIndex = COLS_CORTES.marca - identityFirstColumn;
-    const modelIndex = COLS_CORTES.modelo - identityFirstColumn;
-    const fromYearIndex = COLS_CORTES.anoDesde - yearFirstColumn;
-    const toYearIndex = COLS_CORTES.anoHasta - yearFirstColumn;
+    const idIndex = COLS_CORTES.id - vehicleFirstColumn;
+    const brandIndex = COLS_CORTES.marca - vehicleFirstColumn;
+    const modelIndex = COLS_CORTES.modelo - vehicleFirstColumn;
+    const fromYearIndex = COLS_CORTES.anoDesde - vehicleFirstColumn;
+    const toYearIndex = COLS_CORTES.anoHasta - vehicleFirstColumn;
 
     for (let index = 0; index < rowCount; index++) {
-        const vehicleId = String(identityData[index][idIndex] || "").trim();
+        const vehicleId = String(vehicleData[index][idIndex] || "").trim();
         if (currentVehicleId && vehicleId === String(currentVehicleId)) continue;
         if (!parseVinCollectionForAdmin(vinData[index][0]).includes(vinPrefix)) continue;
-        const brand = identityData[index][brandIndex] || "";
-        const model = identityData[index][modelIndex] || "";
-        const fromYear = yearData[index][fromYearIndex] || "";
-        const toYear = yearData[index][toYearIndex] || "";
+        const brand = vehicleData[index][brandIndex] || "";
+        const model = vehicleData[index][modelIndex] || "";
+        const fromYear = vehicleData[index][fromYearIndex] || "";
+        const toYear = vehicleData[index][toYearIndex] || "";
         return { vehicleId: vehicleId, modelName: (brand + " " + model + " (" + fromYear + (toYear ? "-" + toYear : "") + ")").trim() };
     }
     return null;
