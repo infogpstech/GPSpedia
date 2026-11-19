@@ -320,3 +320,8 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - La primera regresión falló por una aserción demasiado estricta: también rechazaba el fallback de lectura para ausencia de snapshot.
 - Se ajustó el test para comprobar que la lectura queda protegida por `verifiedRowValues ||`, de modo que solo se ejecuta si no existe snapshot verificado.
 - Implementación funcional sin cambios; repetición de CI pendiente.
+
+
+### Segunda nota de CI — snapshot post-Drive de vehículo existente
+- La segunda ejecución falló por el escape duplicado del operador `||` en el patrón regex de la prueba, no por la lógica funcional.
+- El patrón se reescribe para reconocer el fallback condicionado correctamente. Nueva regresión pendiente.

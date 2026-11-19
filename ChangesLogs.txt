@@ -1106,3 +1106,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-19 · ajuste de prueba] La primera CI de AdminExistingVehiclePostDriveSnapshotReuse falló por una aserción excesiva: prohibía cualquier lectura integral dentro del callback, incluyendo el fallback válido cuando no hay snapshot/opId. La prueba se corrigió para exigir que la lectura permanezca únicamente detrás del operador `verifiedRowValues ||`; el camino normal reutiliza la fila verificada. La implementación no se modificó.
+
+
+[2026-11-19 · segundo ajuste de prueba] El segundo CI volvió a fallar en la aserción del fallback, esta vez porque el patrón regex del propio test tenía barras invertidas duplicadas y buscaba el texto literal `\|\|` en vez del operador `||`. Se corrige el patrón con los escapes apropiados. No se modifica la implementación funcional.
