@@ -19,8 +19,7 @@ assert.doesNotMatch(branch, /getRange\(rowIndex,\s*COLS_CORTES\.id\)\.getValue\(
     "No debe existir lectura individual de la celda ID");
 const preDrive = branch.slice(0, branch.indexOf("runAdminDriveWorkOutsideScriptLock_"));
 assert.ok(preDrive.length > 0, "No se encontró el inicio del trabajo Drive");
-assert.equal((preDrive.match(/getRange\(rowIndex, 1, 1, sheet\.getLastColumn\(\)\)\.getValues\(\)\[0\]/g) || []).length, 1,
-    "Antes de Drive debe existir una sola lectura integral de fila para revalidar la identidad");
+assert.equal((preDrive.match(/getRange\\(rowIndex, 1, 1, snapshotWidth\\)\\.getValues\\(\\)\\[0\\]/g) || []).length, 1,\n    "Antes de Drive debe existir una sola lectura acotada de fila para revalidar la identidad");\nassert.doesNotMatch(preDrive, /getRange\\(rowIndex, 1, 1, sheet\\.getLastColumn\\(\\)\\)/,\n    "La lectura no debe transferir columnas auxiliares fuera del esquema ADMIN y VIN");\nconst snapshotWidth = requiredVinColumn => Math.max(48, requiredVinColumn || 0);\nassert.equal(snapshotWidth(0), 48, "Debe cubrir todo el esquema ADMIN");\nassert.equal(snapshotWidth(45), 48, "Debe conservar el ancho del esquema si VIN está dentro de él");\nassert.equal(snapshotWidth(52), 52, "Debe incluir VIN si está después de las columnas ADMIN");
 const validateSnapshotId = (rowValues, expectedId) =>
     String(rowValues[0]) === String(expectedId);
 assert.equal(validateSnapshotId(["123", "Toyota"], 123), true, "Debe aceptar ID numérico/string equivalente");
