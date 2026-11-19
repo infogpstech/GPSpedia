@@ -674,3 +674,19 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - JS/Tests/AdminImageScanCoordinatorContract.mjs: se agregan pruebas de las tres posiciones para cada familia de corte y se verifican las tres alimentaciones y apertura.
 - No se modificaron URLs, filas de Spreadsheet, archivos de Drive, carpetas ni deployments. Validación CI del nuevo commit pendiente.
 ================================================================================
+
+
+================================================================================
+2026-11-19 — ADMIN: telemetría global/local de los siete servicios
+- Se registró al inicio de Tareas_Activas.md el plan ordenado de implementación local, con la simplificación de Coordinator/SharedMutation como fase P0 independiente y Beta diferida hasta cerrar todas las tareas.
+- JS/Frontend/ui.js: corregida la referencia a events/lastEvent no declarados; el detalle de cada servicio presenta métricas globales y locales, y dos gráficas separadas (agregado global y tráfico del servicio en el navegador actual). La lista de salud excluye LEGACY.
+- JS/Frontend/serviceTelemetry.js (nuevo) y api-config.js: métricas locales en memoria por servicio, latencia, resultado, acciones recientes y clasificación móvil/tableta/escritorio. No guarda payloads/tokens, no persiste ni añade llamadas de red por acción. getCatalogChanges también queda instrumentado.
+- JS/Services/admin.js: normalización estricta del agregado Coordinator; exige exactamente los siete servicios activos, tres periodos y buckets íntegros. Las fuentes directas inválidas se degradan a parciales sin ocultar el agregado central ni las demás fuentes.
+- JS/Services/users.js: contador directo best-effort para getUsers con tryLock(0), endpoint interno protegido por GPSpedia_USERS_TRAFFIC_SECRET y buckets horarios de 24 h. Se conserva el conteo Coordinator para createUser/updateProfile. JS/Tests/users.js mantiene paridad de fixture.
+- ADMIN agrega cinco fuentes directas (CATALOG, AUTH, WRITE, FEEDBACK y USERS) a las operaciones protegidas de los siete servicios. La configuración del secreto USERS queda documentada para la etapa Beta; no se configuraron secretos en Apps Script.
+- service-worker.js: precache de serviceTelemetry.js y actualización de la caché PWA a v74.
+- Pruebas registradas: ServiceBrowserTrafficContract, ServiceTrafficAggregatorContract, UsersDirectTrafficTelemetry; actualizados ServiceTrafficAggregation, ServiceTrafficBatch, DirectTrafficRoutingCoverage, ServiceTrafficAdminContract, ServiceHealthContract, ServiceMetricsTelemetry, ServiceWorkerCache y RunServiceTests.
+- Validación aislada en el entorno disponible: 24/24 comprobaciones PASS, incluyendo sintaxis de seis módulos, métricas móviles, agregación de siete servicios, fuentes parciales, contador USERS, batch de cinco fuentes y App Shell. La regresión Node completa/CI no está acreditada en esta sesión.
+- No se desplegó Apps Script, no se modificaron ScriptProperties, Drive ni Spreadsheet y no se ejecutaron pruebas Beta.
+================================================================================
+
