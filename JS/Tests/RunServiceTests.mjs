@@ -76,6 +76,7 @@ runGroup('32','ADMIN',()=>{
   runCli('WRITE recupera opId heredados sin descargar Cortes completo','JS/Tests/WriteOpIdLegacyLookup.mjs');
   runCli('WRITE localiza vehicleId leyendo solo la columna ID','JS/Tests/WriteUniqueVehicleRowBoundedRead.mjs');
   runCli('WRITE evita reinicializar ledger Idempotencia compatible','JS/Tests/IdempotenciaSheetLookupFastPath.mjs');
+  runCli('WRITE reutiliza snapshot Idempotencia y verifica opId dirigido','JS/Tests/WriteIdempotencySnapshotReuse.mjs');
   runCli('ADMIN reserva slots de corte ocupados por operaciones pending','JS/Tests/AdminCutSlotReservation.mjs');
   runCli('WRITE asignación de IDs no espera el ScriptLock global','JS/Tests/WriteIdAllocatorNonBlocking.mjs');
   runCli('WRITE publicación del catálogo fuera del ScriptLock global','JS/Tests/WriteCatalogPublicationIsolation.mjs');

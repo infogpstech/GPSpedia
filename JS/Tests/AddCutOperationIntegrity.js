@@ -185,7 +185,7 @@ function runAddCutOperationIntegrityTests(sources) {
         for (const source of [write, admin]) {
             const calls = source.match(/recordOpId\(opId,[^\n]+/g) || [];
             assert_(calls.length >= 5);
-            assert_(calls.every(line => /operationHash\)/.test(line)), 'Hay una llamada recordOpId sin operationHash.');
+            assert_(calls.every(line => /operationHash(?:,\s*idempotencyEntriesSnapshot)?\)/.test(line)), 'Hay una llamada recordOpId sin operationHash.');
             assert_(/appendRow\(\[cleanOpId, cleanVehicleId, cleanSlotIndex, cleanTimestamp, targetStatus, cleanOperationHash\]\)/.test(source));
         }
     });
