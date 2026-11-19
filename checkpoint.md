@@ -884,3 +884,14 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - No se desplegó ni modificó ScriptProperties/secretos; no se consultaron endpoints, Drive ni Spreadsheet.
 - Próxima tarea: terminar Fase 2 con revisión de configuración y matriz por entorno, y después Fase 4 ADMIN (mensajes de borrado de logs, retención y padding de modal). Mantener Fase 5 auditoría/organizador de imágenes y Fase 6 documentación/rotación. La regresión integral sigue al final; Beta/deploy solo después y con autorización.
 ================================================================================
+
+
+================================================================================
+2026-11-19 — CONTINUIDAD: FASE 4 ADMIN
+- Se corrigieron los mensajes de limpieza AUTH/Logs y FEEDBACK/ActividadUsuario para distinguir eliminación, ausencia de registros y revisión sin coincidencias. Los fallos parciales continúan devolviendo error y conservan el estado reintentable.
+- Selector de retención compactado con opciones «Últimos 7 días» y «Todos (conservar encabezados)», layout grid responsive y ancho mínimo cero.
+- Padding de .detail-recommended-cut reducido de 12 px a 8 px; no se alteraron encabezado, logo, nombre ni acciones.
+- Pruebas locales ejecutadas: SensitiveLogsTrustedActor 7/7; ActivityLogsClearFeedback 5/5; AdminLogsMaintenanceContract 10/10. Se registraron en RunServiceTests.mjs.
+- Fase 4 permanece en progreso por auditoría de métricas/telemetría visibles y validación visual responsive; estas últimas requieren navegador real y se difieren a Beta.
+- Siguiente: completar auditoría de telemetría UI (sin modificar la captura local/global ya cerrada), después continuar Fase 5 auditoría y organizador de imágenes. No desplegar ni modificar datos externos.
+================================================================================
