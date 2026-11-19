@@ -63,12 +63,12 @@ check("La invalidación remota exige confirmación de WRITE y FEEDBACK antes de 
     const revokeOne = extract(client, "revokeSession");
     const revokeAll = extract(client, "revokeUserSessions");
     assert.match(invalidate, /send_\("invalidateSessionActorCaches", "AUTH"/);
-    assert.match(invalidate, /!\["WRITE", "FEEDBACK"\]\.every/);
+    assert.match(invalidate, /!\["WRITE", "FEEDBACK", "ADMIN"\]\.every/);
     assert.ok(revokeOne.indexOf("invalidateSessionActorCaches") < revokeOne.indexOf('send_("revokeSession"'));
     assert.ok(revokeAll.indexOf("invalidateSessionActorCaches") < revokeAll.indexOf('send_("revokeUserSessions"'));
     const remote = extract(coordinator, "invalidateSessionActorCaches_");
     assert.match(remote, /service !== "AUTH"/);
-    assert.match(remote, /\["WRITE", "FEEDBACK"\]/);
+    assert.match(remote, /\["WRITE", "FEEDBACK", "ADMIN"\]/);
     assert.match(remote, /fetchAll\(requests\)/);
 });
 check("El coordinador no sustituye los controles de permisos ni las operaciones remotas del panel ADMIN", () => {

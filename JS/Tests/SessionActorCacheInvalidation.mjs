@@ -5,6 +5,7 @@ const source = fs.readFileSync("JS/Services/SharedMutationClient.js", "utf8");
 const authSource = fs.readFileSync("JS/Services/Auth.js", "utf8");
 const writeSource = fs.readFileSync("JS/Services/write.js", "utf8");
 const feedbackSource = fs.readFileSync("JS/Services/feedback.js", "utf8");
+const adminSource = fs.readFileSync("JS/Services/admin.js", "utf8");
 const apiConfigSource = fs.readFileSync("JS/Frontend/api-config.js", "utf8");
 const removed = [];
 const digest = () => [1, 2, 3, 4];
@@ -74,7 +75,7 @@ function createClient(events, failAction = "") {
                 };
             }
             const result = request.action === "invalidateSessionActorCaches"
-                ? { status: "success", invalidated: request.payload.sessionTokens.length, services: ["WRITE", "FEEDBACK"] }
+                ? { status: "success", invalidated: request.payload.sessionTokens.length, services: ["WRITE", "FEEDBACK", "ADMIN"] }
                 : { status: "success", revoked: true };
             return { getResponseCode: () => 200, getContentText: () => JSON.stringify(result) };
         }
@@ -122,6 +123,7 @@ assert.equal(authSource.includes("tokens.length > 5"), false,
 assert.match(authSource, /'desarrollador': Infinity/);
 assert.match(writeSource, /action === "__invalidateSessionActorCache"[\s\S]*?handleSharedSessionActorCacheInvalidation_/);
 assert.match(feedbackSource, /action === "__invalidateSessionActorCache"[\s\S]*?handleSharedSessionActorCacheInvalidation_/);
+assert.match(adminSource, /action === "__invalidateSessionActorCache"[\s\S]*?handleSharedSessionActorCacheInvalidation_/);
 assert.match(authSource, /function handleLogout[\s\S]*?revokeSharedSessionContext_/);
 assert.equal(authSource.includes("revokeSharedUserSessionContexts_(userId, getActiveSessionTokensForUserUnderLock_(sessionsSheet, userId))"), true);
 assert.equal(authSource.includes("revokeSharedUserSessionContexts_(targetUserId, getActiveSessionTokensForUserUnderLock_(sessionsSheet, targetUserId))"), true);
