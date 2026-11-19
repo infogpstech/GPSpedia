@@ -757,3 +757,15 @@ Siguiente paso: continuar GP-PERF-ADMIN-CUT-LOCK-01 inspeccionando las escritura
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos; integración/concurrencia real pendiente de Beta autorizada.
 
 Siguiente tarea de `GP-PERF-ADMIN-CUT-LOCK-01`: analizar las lecturas restantes de Sheets en `handleAddOrUpdateCut` y reducir únicamente consultas redundantes demostrables, preservando atomicidad e idempotencia.
+
+
+### ADMIN — combinar lecturas acotadas en búsqueda de VIN (2026-11-19)
+- [x] Combinar ID, marca, modelo y años en una sola lectura contigua derivada de `COLS_CORTES`.
+- [x] Mantener la lectura VIN independiente y dirigida; no usar `getLastColumn()` ni leer toda la fila.
+- [x] Preservar exclusión del vehículo actual, detección de duplicados y descripción de marca/modelo/años.
+- [x] Actualizar `AdminVinDuplicateBoundedRead.mjs`: 11/11 PASS; contrato WRITE/ADMIN VIN: 12/12 PASS.
+- [x] CI final `44640492213` SUCCESS: 193 suites, 2,527 pruebas aprobadas, 0 fallos; sintaxis aprobada.
+- [x] Health read-only `44640492202` SUCCESS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
+
+Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lecturas restantes de `handleAddOrUpdateCut`, sin trasladar reservas, revalidaciones ni escrituras atómicas fuera del ScriptLock.
