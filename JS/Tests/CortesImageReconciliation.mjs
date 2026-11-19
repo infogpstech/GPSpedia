@@ -77,7 +77,7 @@ testCase("reconoce inventario legado sin columnas dinámicas como sin uso",()=>{
 });
 testCase("permite asociar una imagen inventariada como sin uso si coincide con un destino",()=>{
     const candidate={fileId:historyIds[0],fileName:"same.png",mimeType:"image/jpeg",accessPublic:true};
-    const p=planner([target("same")],[candidate],new Map(),true,collectedHistory);
+    const p=planner([{row:2,vehicleId:"V-001",field:"imagenVehiculo",column:9,baseName:"same",currentValue:""}],[candidate],new Map(),true,collectedHistory);
     assert.equal(p.results[0].status,"matched");
 });
 
