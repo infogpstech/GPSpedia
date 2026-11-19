@@ -282,7 +282,33 @@ assert.equal(mainTarget.targetFolderPath, "Cortes/Camion_pesado/Toyota/Hilux/SRV
 assert.equal(mainTarget.targetBaseName, "Hilux_SRV_2020_2025_imagenVehiculo");
 assert.equal(organizerFixture.targets.find(target => target.field === "imgCorte1").targetBaseName, "Hilux_SRV_2020_2025_ign1");
 assert.equal(organizerFixture.targets.find(target => target.field === "imgCorte2").targetBaseName, "Hilux_SRV_2020_2025_bomba1");
-assert.equal(organizerFixture.targets.find(target => target.field === "imgCorte3").targetBaseName, "Hilux_SRV_2020_2025_btn");
+assert.equal(organizerFixture.targets.find(target => target.field === "imgCorte3").targetBaseName, "Hilux_SRV_2020_2025_btn1");
+assert.equal(organizerFixture.targets.find(target => target.field === "imgCableAlimen").targetBaseName, "Hilux_SRV_2020_2025_alim1");
+assert.equal(organizerFixture.targets.find(target => target.field === "imgCableAlimen2").targetBaseName, "Hilux_SRV_2020_2025_alim2");
+assert.equal(organizerFixture.targets.find(target => target.field === "imgCableAlimen3").targetBaseName, "Hilux_SRV_2020_2025_alim3");
+assert.equal(organizerFixture.targets.find(target => target.field === "imgApertura").targetBaseName, "Hilux_SRV_2020_2025_apert");
+
+const numberedCutCodes = [
+    { type: "Ignición", code: "ign" },
+    { type: "Bomba de combustible", code: "bomba" },
+    { type: "Señal a botón", code: "btn" }
+];
+numberedCutCodes.forEach(({ type, code }) => {
+    const row = makeOrganizerRow();
+    [1, 2, 3].forEach(slot => {
+        setOrganizerCell(row, "tipoCorte" + slot, type);
+        const fileId = (code + slot).padEnd(22, "X");
+        setOrganizerCell(row, "imgCorte" + slot, "https://drive.google.com/file/d/" + fileId + "/view");
+    });
+    const plan = organizerBuilder(
+        [Array(organizerColumnCount).fill("header"), row], [], [], []
+    );
+    const names = plan.targets
+        .filter(target => /^imgCorte[123]$/.test(target.field))
+        .map(target => target.targetBaseName);
+    assert.deepEqual(names, [1, 2, 3].map(slot => "Hilux_SRV_2020_2025_" + code + slot));
+});
+
 const logoTarget = organizerFixture.targets.find(target => target.sheetName === "LogosMarca");
 assert.equal(logoTarget.targetFolderPath, "Cortes/Camion_pesado/Toyota");
 assert.equal(logoTarget.targetBaseName, "toyota_logo");
