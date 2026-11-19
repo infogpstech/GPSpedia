@@ -1002,3 +1002,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-19] Corrección de localización por ID: se eliminaron dos declaraciones globales duplicadas que sobrescribían la implementación acotada y mantenían getDataRange; queda una única función efectiva. La prueba ahora comprueba que no existan declaraciones duplicadas. CI pendiente.
+
+
+[2026-11-19] ADMIN: se elimina la duplicación de findUniqueCortesVehicleRow_ que sobrescribía la versión optimizada; el localizador conserva una única implementación que consulta primero la columna ID y luego la fila coincidente. Se amplía AdminUniqueVehicleRowBoundedRead para detectar declaraciones duplicadas.

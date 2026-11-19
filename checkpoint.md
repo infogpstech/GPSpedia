@@ -5,7 +5,7 @@ Fecha: 2026-11-19
 ## Repositorio y ramas
 - Repositorio: infogpstech/GPSpedia
 - Rama autorizada: GPSpedia2.2.5_work
-- HEAD: cab6da36207b2768b77de7cc52ea5c6554424c58
+- HEAD: 38ec5ae42c2325a1c331e8fe2ea906108ad66b63
 - Rama base protegida GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificar)
 - El historial completo previo está preservado en Checkpoint_Archive/checkpoint_2026-11-19_parte_003.md; ver Checkpoint_Archive/manifest.md.
 
@@ -16,19 +16,17 @@ Fecha: 2026-11-19
 - No inferir deployments Apps Script ni permisos externos desde el código versionado.
 
 ## Última tarea completada
-GP-PERF-ADMIN-CUT-LOCK-01 — aislamiento de compensación del reemplazo de imágenes ADMIN:
-- La recuperación linked y la compensación del catch ejecutan I/O Drive fuera del ScriptLock.
-- Antes de compensar se reserva el opId en requires_review; al readquirir se revalidan vehículo, campo, URL, huella y estado del ledger.
-- Se conserva el orden de compensación del historial antes del ledger.
-- El fallback Drive tras fallo de escritura del ledger también se ejecuta fuera del lock.
-- AdminImageUploadCompensationIsolation: 10/10 PASS.
-- CI 44592625381 SUCCESS: 164 suites, 2,304 pruebas aprobadas, 0 fallos; sintaxis JS aprobada.
-- Health read-only 44592625568 SUCCESS; GitHub Pages 44592624258 SUCCESS.
-- Commits: 237692ff0548d2a0735c33f05c3f3f66c87ad5a9, 71a9ae642ebf7c918befbcbceb5ddde9797f8acc, cab6da36207b2768b77de7cc52ea5c6554424c58.
+ADMIN — localización de vehículo por columna ID y eliminación de declaraciones duplicadas:
+- `findUniqueCortesVehicleRow_` lee primero únicamente la columna ID; solo lee la fila completa cuando encuentra exactamente una coincidencia.
+- Se eliminaron dos declaraciones globales duplicadas que sobrescribían la función optimizada; queda una única implementación.
+- La prueba `AdminUniqueVehicleRowBoundedRead` verifica unicidad de la declaración, lectura acotada, ID único, duplicados, ID inválido y ausencia de coincidencias.
+- CI 44614041417 SUCCESS: 168 suites, 2,347 pruebas aprobadas, 0 fallos; prueba específica 13/13 y sintaxis JS aprobada.
+- Health read-only 44614041045 SUCCESS; GitHub Pages 44613910857 SUCCESS sobre el commit funcional anterior.
+- Commits: b9bc06d04cd72e1968362b2d25dd34b86a8e487f (optimización y eliminación de duplicados), 38ec5ae42c2325a1c331e8fe2ea906108ad66b63 (ajuste del contador de aserciones).
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó Apps Script ni se modificaron datos productivos.
 
 ## Siguiente trabajo
-Continuar GP-PERF-ADMIN-CUT-LOCK-01. Prioridad restante: pruebas de no interferencia entre Inbox, health, login, auditoría y registro de cortes; documentar límites reales de proyectos/deployments Apps Script; revisar la sección crítica restante de handleAddOrUpdateCut. Consultar Tareas_Activas.md para dependencias y orden. No iniciar funcionalidades nuevas mientras permanezca abierto este backlog.
+Continuar GP-PERF-ADMIN-CUT-LOCK-01. Siguiente prioridad: revisar y reducir la sección crítica restante de `handleAddOrUpdateCut`, preservando exclusión e idempotencia sobre Cortes/Idempotencia. A continuación, completar el aislamiento entre operaciones independientes y las pruebas de no interferencia entre Inbox, health, login, auditoría y registro de cortes. Confirmar los límites reales de proyectos/deployments Apps Script sin inferir Script IDs desde archivos ausentes. Consultar Tareas_Activas.md para dependencias y orden; no iniciar funcionalidades nuevas mientras permanezca abierto este backlog.
 
 ## Restricciones
 - Trabajar únicamente en GPSpedia2.2.5_work.
@@ -58,3 +56,5 @@ Siguiente paso P0: auditar y reducir lecturas restantes dentro del ScriptLock de
 2026-11-19 — Siguiente optimización P0: findUniqueCortesVehicleRow_ ahora escanea únicamente la columna ID y lee la fila completa solo tras confirmar una coincidencia única; regresión añadida, CI pendiente.
 
 2026-11-19 — Revisión del diff de localización por ID encontró tres declaraciones globales de findUniqueCortesVehicleRow_; la última sobrescribía la optimización y seguía usando getDataRange. Se conserva una única implementación acotada y se amplía la prueba para detectar duplicados. CI pendiente.
+
+2026-11-19 — Cierre ADMIN localización por ID: HEAD 38ec5ae42c2325a1c331e8fe2ea906108ad66b63; CI 44614041417 SUCCESS (168 suites, 2,347 pruebas, 0 fallos; AdminUniqueVehicleRowBoundedRead 13/13); health read-only 44614041045 SUCCESS; Pages 44613910857 SUCCESS sobre el commit funcional b9bc06d. Diff revisado: una sola declaración efectiva, sin getDataRange en el localizador. Pendiente solo validación real en Beta autorizada. Próximo paso: sección crítica restante de handleAddOrUpdateCut y aislamiento entre funciones independientes.

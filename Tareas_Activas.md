@@ -499,4 +499,8 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Sustituir getDataRange completo por lectura de la columna ID; leer la fila completa solo después de confirmar una coincidencia única.
 - [x] Mantener detección de IDs duplicados y validación de todos los IDs no vacíos.
 - [x] Añadir AdminUniqueVehicleRowBoundedRead.mjs al runner.
-- [ ] CI integral pendiente. La revisión del diff detectó dos declaraciones duplicadas posteriores que sobrescribían la función optimizada; se eliminan para conservar una única implementación efectiva.
+- [x] Eliminar las dos declaraciones globales duplicadas que sobrescribían la implementación optimizada; queda una sola función efectiva.
+- [x] Fortalecer AdminUniqueVehicleRowBoundedRead para exigir una única declaración y verificar lectura acotada, coincidencia única, duplicados, IDs inválidos y ausencia de coincidencias.
+- [x] CI 44614041417 SUCCESS: 168 suites, 2,347 pruebas aprobadas, 0 fallos; AdminUniqueVehicleRowBoundedRead 13/13 y sintaxis JavaScript aprobada.
+- [x] Health read-only 44614041045 SUCCESS. GitHub Pages 44613910857 SUCCESS sobre el commit funcional anterior (b9bc06d).
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó ADMIN ni se modificaron datos externos.
