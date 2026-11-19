@@ -145,7 +145,7 @@ test("handler toma una lectura integral y la comparte con todos los pasos",()=>{
  const locked=source.slice(lockedStart,lockedEnd);
  assert.equal((locked.match(/readIdempotenciaEntries_\(/g)||[]).length,1);
  assert.match(locked,/idempotencyEntriesSnapshot\.sheet = idempotencySheetBefore/);
- assert.match(locked,/handleAddOrUpdateCutLockedUnsafe_\(validatedPayload, lock, lockState, collaboratorName, idempotencyEntriesSnapshot\)/);
+ assert.match(locked,/handleAddOrUpdateCutLockedUnsafe_\(validatedPayload, lock, lockState, collaboratorName, idempotencyEntriesSnapshot, \{/);
  assert.match(locked,/const idempotencySheet = idempotencySheetBefore/);
  const unsafeStart=source.indexOf("function handleAddOrUpdateCutLockedUnsafe_"),unsafeEnd=source.indexOf("\nfunction ",unsafeStart+10);
  const unsafe=source.slice(unsafeStart,unsafeEnd);
