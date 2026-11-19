@@ -7118,12 +7118,16 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
             return url;
         }, operationHash);
 
-        sheet.getRange(rowIndex, COLS_CORTES[`tipoCorte${cutSlotIndex}`]).setValue(cutData.tipoCorte1);
-        sheet.getRange(rowIndex, COLS_CORTES[`ubicacionCorte${cutSlotIndex}`]).setValue(cutData.ubicacionCorte1);
-        sheet.getRange(rowIndex, COLS_CORTES[`colorCableCorte${cutSlotIndex}`]).setValue(cutData.colorCableCorte1);
-        sheet.getRange(rowIndex, COLS_CORTES[`configRelay${cutSlotIndex}`]).setValue(cutData.configRelay1);
+        // Las columnas 12–16, 19–23 y 26–30 mantienen el mismo contrato:
+        // cinco campos consecutivos del corte. Se escriben en una sola llamada;
+        // testigo y colaborador permanecen separados por el esquema histórico.
+        const slotCoreValues = [
+            cutData.tipoCorte1, cutData.ubicacionCorte1, cutData.colorCableCorte1,
+            cutData.configRelay1, imageUrl
+        ];
+        sheet.getRange(rowIndex, COLS_CORTES[`tipoCorte${cutSlotIndex}`], 1, slotCoreValues.length)
+            .setValues([slotCoreValues]);
         sheet.getRange(rowIndex, COLS_CORTES[`activaTestigo${cutSlotIndex}`]).setValue(cutData.activaTestigo1 === true);
-        sheet.getRange(rowIndex, COLS_CORTES[`imgCorte${cutSlotIndex}`]).setValue(imageUrl);
         sheet.getRange(rowIndex, COLS_CORTES[`colaboradorCorte${cutSlotIndex}`]).setValue(colaboradorName);
         if (preparedVinCollection) {
             sheet.getRange(rowIndex, vinColumnIndex).setValue(serializeVinCollection(preparedVinCollection));
