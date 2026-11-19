@@ -9102,11 +9102,16 @@ function ensureReplacedImagesInventoryColumns(sheet) {
             const contentValues=sheet.getRange(2,3,lastRow-1,1).getValues();
             const driveValues=sheet.getRange(2,6,lastRow-1,1).getValues();
             const originalValues=sheet.getRange(2,8,lastRow-1,1).getValues();
-            let typeChanged=false,visualChanged=false;
+            let typeChanged=false,originChanged=false,visualChanged=false;
             for(let i=0;i<typeValues.length;i++){
                 const hasId=String(idValues[i][0]||"").trim()!=="";
-                const origin=String(originValues[i][0]||"").trim();
+                let origin=String(originValues[i][0]||"").trim();
                 const contentType=String(contentValues[i][0]||"").trim();
+                if(!origin&&contentType==="inventario_sin_uso"){
+                    origin="auditoria_drive";
+                    originValues[i][0]=origin;
+                    originChanged=true;
+                }
                 if(!typeValues[i][0]&&hasId){
                     if(origin==="auditoria_drive"&&contentType==="inventario_sin_uso"){typeValues[i][0]="sin_uso_detectado";typeChanged=true;}
                     else if(origin!=="auditoria_drive"&&contentType!=="inventario_sin_uso"){typeValues[i][0]="reemplazada";typeChanged=true;}
@@ -9117,6 +9122,7 @@ function ensureReplacedImagesInventoryColumns(sheet) {
                 }
             }
             if(typeChanged)sheet.getRange(2,typeCol,lastRow-1,1).setValues(typeValues);
+            if(originChanged)sheet.getRange(2,originCol,lastRow-1,1).setValues(originValues);
             if(visualChanged)sheet.getRange(2,visualCol,lastRow-1,1).setValues(visualValues);
         }
         SpreadsheetApp.flush();

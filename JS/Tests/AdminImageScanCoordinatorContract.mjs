@@ -293,6 +293,42 @@ assert.ok(unusedInventoryHandlerSource.includes("ultima_operacion_inventario_id"
     "El inventario debe conservar idempotencia y resultado verificable por operación.");
 console.log("UnusedImageInventoryPersistenceContract: PASS");
 
+
+const legacyInventoryBaseHeaders = ["id_reemplazo","fecha_reemplazo","tipo_contenido","registro_id","campo",
+    "archivo_drive_id","nombre_archivo","url_anterior","sustituida_por_url","referencia_texto","estado"];
+const legacyInventoryCells = [
+    legacyInventoryBaseHeaders.slice(),
+    ["INV-LEGACY", "", "inventario_sin_uso", "", "", "legacy-drive-file-000000000001",
+        "unused.png", "https://drive.google.com/file/d/legacy-drive-file-000000000001/view", "",
+        "Cortes/Original", "sin_uso_detectado"]
+];
+const legacyInventorySheet = {
+    getLastRow: () => legacyInventoryCells.length,
+    getLastColumn: () => Math.max(...legacyInventoryCells.map(row => row.length)),
+    getRange: (row, column, rowCount = 1, columnCount = 1) => ({
+        getDisplayValues: () => Array.from({length:rowCount},(_,r)=>Array.from({length:columnCount},(_,c)=>String(legacyInventoryCells[row-1+r]?.[column-1+c] ?? ""))),
+        getValues: () => Array.from({length:rowCount},(_,r)=>Array.from({length:columnCount},(_,c)=>legacyInventoryCells[row-1+r]?.[column-1+c] ?? "")),
+        setValue: value => { while(legacyInventoryCells[row-1].length<column)legacyInventoryCells[row-1].push("");legacyInventoryCells[row-1][column-1]=value;return this; },
+        setValues: values => { values.forEach((valuesRow,r)=>valuesRow.forEach((value,c)=>{while(legacyInventoryCells[row-1+r].length<column+c)legacyInventoryCells[row-1+r].push("");legacyInventoryCells[row-1+r][column-1+c]=value;}));return this; },
+        setFontWeight: () => ({setBackground:()=>({})}),
+        setBackground: () => ({})
+    })
+};
+const migrateLegacyInventory = new Function(
+    "withReplacedImagesSchemaLock_", "extractDriveFileIds", "SpreadsheetApp",
+    extractFunction(admin, "ensureReplacedImagesInventoryColumns") + "\\nreturn ensureReplacedImagesInventoryColumns;"
+)(
+    callback => callback(),
+    value => { const match=String(value||"").match(/[A-Za-z0-9_-]{20,}/);return match?[match[0]]:[]; },
+    {flush:()=>{}}
+);
+const migratedInventoryHeaders = migrateLegacyInventory(legacyInventorySheet);
+const migratedOriginColumn = migratedInventoryHeaders.indexOf("origen_registro");
+const migratedTypeColumn = migratedInventoryHeaders.indexOf("tipo_registro");
+assert.equal(legacyInventoryCells[1][migratedOriginColumn], "auditoria_drive");
+assert.equal(legacyInventoryCells[1][migratedTypeColumn], "sin_uso_detectado");
+console.log("LegacyUnusedInventoryMigrationContract: PASS");
+
 console.log("ImageReferenceCoverageContract: PASS");
 
 const colsMatch = admin.match(/const COLS_CORTES = (\{[\s\S]*?\n\});/);
