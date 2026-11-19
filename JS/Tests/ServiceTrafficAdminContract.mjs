@@ -48,6 +48,18 @@ assert.match(coordinator,/scope: "coordinator_protected_operations"/);
 assert.match(coordinator,/SERVICE_TRAFFIC_BUCKET_MS_ = 60 \* 60 \* 1000/);
 assert.match(coordinator,/SERVICE_TRAFFIC_WINDOW_MS_ = 24 \* 60 \* 60 \* 1000/);
 assert.match(coordinator,/recordServiceTrafficEvent_\(service, currentTime, operation\)/);
+assert.match(coordinator,/SHARED_MUTATION_COORDINATOR_VERSION = "1\.4\.1"/);
+assert.match(coordinator,/function validateSessionContext_\(service, operation, payload\)/);
+assert.match(coordinator,/!\["AUTH", "USERS", "WRITE", "ADMIN", "FEEDBACK", "UTILITIES"\]\.includes\(service\)/);
+assert.match(shared,/function validateSessionContext\(userId, sessionToken, service\)/);
+assert.match(shared,/deps\.service \|\| "AUTH"/);
+for (const [path, service] of [
+    ["JS/Services/Auth.js", "AUTH"], ["JS/Services/admin.js", "ADMIN"],
+    ["JS/Services/feedback.js", "FEEDBACK"], ["JS/Services/users.js", "USERS"],
+    ["JS/Services/write.js", "WRITE"]
+]) {
+    assert.match(read(path), new RegExp("getCachedSharedSessionActor_\\\\(payload\\\\.userId, payload\\\\.sessionToken, \\{ service: \"" + service + "\" \\}\\\\)"));
+}
 assert.match(shared,/function getServiceTraffic\(\)/);
 assert.match(shared,/send_\("getServiceTraffic", "ADMIN", "getServiceTraffic", \{\}\)/);
 
