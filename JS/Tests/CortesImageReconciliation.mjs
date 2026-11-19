@@ -10,6 +10,8 @@ assert.ok(start>=0&&end>start,"planner de conciliación ausente");
 const extractDriveFileIds=value=>{const text=String(value||"");const matches=[...text.matchAll(/(?:file\/d\/|id=|\/d\/)([a-zA-Z0-9_-]{20,})/g)].map(m=>m[1]);if(!matches.length&&/^[a-zA-Z0-9_-]{20,}$/.test(text))matches.push(text);return [...new Set(matches)];};
 const SHEET_NAMES={CORTES:"Cortes"};
 const planner=new Function("extractDriveFileIds","SHEET_NAMES",admin.slice(start,end)+";return buildCortesImageReconciliationPlan_;")(extractDriveFileIds,SHEET_NAMES);
+let passed=0;function testCase(name,fn){fn();passed++;console.log("PASS "+name);}
+
 const historyStart=admin.indexOf("function collectReplacedImageHistoryIds_");
 const historyEnd=admin.indexOf("\n}\n",historyStart)+2;
 assert.ok(historyStart>=0&&historyEnd>historyStart,"helper de historial ausente");
