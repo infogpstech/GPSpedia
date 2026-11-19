@@ -10,13 +10,22 @@ Normativa: NORMAS_DESAROLLO.md
 **Orden obligatorio:** terminar las implementaciones y correcciones locales; ejecutar la regresión integral; solo después preparar y realizar despliegues y validaciones Beta con autorización. No desplegar Apps Script, cambiar ScriptProperties/secretos ni ejecutar pruebas contra Drive, Spreadsheet o servicios remotos durante este bloque.
 
 ### Fase 1 — ADMIN: salud y telemetría de servicios
-**P0 · EN PROGRESO · BETA-ADMIN-SERVICE-TELEMETRY-02 + BETA-ADMIN-GLOBAL-TRAFFIC-01**
+**P0 · IMPLEMENTADO LOCALMENTE; PENDIENTE REGRESIÓN INTEGRAL · BETA-ADMIN-SERVICE-TELEMETRY-02 + BETA-ADMIN-GLOBAL-TRAFFIC-01**
 - Corregir los defectos reproducibles del escáner (incluido `events is not defined`) y del contrato/respuesta del agregado global.
 - Recuperar salud y tráfico de todos los servicios activos, incluido el tráfico del navegador móvil; excluir LEGACY del inventario, las consultas y la interfaz.
 - El escáner debe mostrar una tarjeta por cada servicio activo. Al seleccionar una tarjeta, mostrar todas las métricas disponibles de ese servicio, su estado/versión/latencia y los datos diagnósticos seguros.
 - Presentar dos gráficas separadas: (1) tráfico global agregado de los servicios y (2) tráfico local del servicio seleccionado. No confundir datos ausentes con cero ni disponibilidad del endpoint con salud integral de Sheets/Drive.
 - Aislar fallos parciales: un servicio sin telemetría o con error no debe ocultar los datos de los demás. Mantener la interfaz y las consultas funcionales en navegador móvil.
 - Validar contratos, autenticación, permisos, límites, normalización, renderizado, concurrencia y coste de telemetría sin añadir esperas ni viajes de red a las acciones ordinarias.
+
+**Estado de implementación local (2026-11-19):**
+- Corregido el detalle de servicio que referenciaba `events` y `lastEvent` sin declararlos.
+- Añadido `JS/Frontend/serviceTelemetry.js`: métricas efímeras por servicio, latencia, resultado, últimas acciones y detección móvil/tableta/escritorio; sin payloads, tokens, persistencia ni llamadas de red adicionales.
+- Recuperadas dos gráficas independientes: agregado global de los siete servicios y tráfico local del servicio seleccionado en el navegador actual.
+- Endurecido el contrato global: exige los siete servicios activos, los tres periodos y buckets íntegros; LEGACY se rechaza. Un fallo de una fuente directa no invalida Coordinator ni las demás fuentes.
+- Añadido contador directo no bloqueante para `USERS/getUsers`; ADMIN consulta cinco fuentes directas (CATALOG, AUTH, WRITE, FEEDBACK y USERS), además de las operaciones coordinadas de los siete servicios.
+- Añadido el módulo al App Shell PWA y aumentado la caché a v74. Pruebas nuevas registradas en `RunServiceTests.mjs`.
+- Validación aislada ejecutada: 24/24 comprobaciones PASS (sintaxis de seis módulos, agregación, fallos parciales, cinco fuentes directas, contador USERS, telemetría móvil, validación global y App Shell). La regresión Node completa y CI aún no están acreditadas. No se desplegó Apps Script ni se modificaron ScriptProperties, Drive o Spreadsheet.
 
 ### Fase 2 — Simplificación de arquitectura y configuración de servicios
 **P0 · PENDIENTE · SERVICE-ARCHITECTURE-SIMPLIFICATION-01 (requisito expreso nuevo)**
@@ -65,22 +74,28 @@ Normativa: NORMAS_DESAROLLO.md
 - [x] BETA-ADMIN-CUT-IMAGE-AUDIT-CONSOLE-01 — consola de Cortes como salida principal; confirmación conservada en terminal global del Desarrollador; resultados y resumen verificados.
 - [x] BETA-ADMIN-CUT-IMAGE-ORGANIZER-AUDIT-01 — auditoría estática de normalización, movimiento, rutas, nomenclatura, referencias y alta de logos.
 - [x] Mitigación de alta de logos — handleAddLogo usa findOrCreateSubFolder y no activa la fusión heredada de carpetas.
+- [x] BETA-ADMIN-CUT-IMAGE-ORGANIZER-DRY-RUN-01 — constructor puro, endpoint preview y UI paginada de solo lectura implementados localmente; pendiente validar datos reales en la futura etapa Beta.
+- [x] BETA-ADMIN-SERVICE-TELEMETRY-02 — inventario de siete servicios, detalle por servicio, agregado global, gráfica local de navegador y cobertura móvil implementados localmente; regresión integral pendiente.
 - [x] CI: 146 suites, 2,157 pruebas aprobadas, 0 fallos; health y Pages SUCCESS en HEAD d81894f53e6036a1b3d0e0e86b317ad913ec42ee.
 
 ## Pendientes — prioridad inmediata
 
-### P0 — BETA-ADMIN-CUT-IMAGE-ORGANIZER-DRY-RUN-01
-Implementar un preview estrictamente de solo lectura:
-- Recorrer las ocho columnas de imagen de cada fila válida de Cortes y las referencias de LogosMarca.
-- Comparar ID, nombre, extensión y ruta actual del archivo con el destino calculado.
-- Usar referencias activas de todas las hojas, excluyendo Imagenes_Reemplazadas para determinar uso vigente.
-- Mostrar por archivo: hoja/fila/campo, ID, nombre actual, ruta actual, nombre/ruta propuestos, clasificación y motivo.
-- Detectar IDs compartidos, referencias no interpretables, filas duplicadas, destinos ambiguos, carpetas duplicadas y conflictos de nombre.
-- No crear carpetas, mover, renombrar, copiar, restaurar de papelera, eliminar, sobrescribir ni escribir en Spreadsheet.
-- No inventar valores: bloquear si faltan categoría, marca, modelo, versión/encendido o años.
-- Para logos, resolver una sola categoría desde Cortes; si una marca aparece en varias categorías o no aparece, marcarla como ambigua y no elegir arbitrariamente.
-- Para imgCorte1/2/3, mapear tipoCorte1/2/3 a ign, bomba o btn usando el valor real. Si no se reconoce, bloquear la propuesta.
-- Preservar exactamente la extensión original.
+### P0 — SERVICE-ARCHITECTURE-SIMPLIFICATION-01
+- Desacoplar la implementación central de Coordinator de los clientes Apps Script; estabilizar/versionar el contrato para que cambios internos no requieran redeploy de todos los consumidores.
+- Reducir la necesidad de sincronizar copias de SharedMutationClient sin introducir dependencias de bibliotecas/versiones que sigan exigiendo desplegar cada consumidor.
+- Consolidar URLs y secretos con nombres/configuración uniformes, manteniendo secretos fuera del repositorio y aislamiento entre servicios.
+- Conservar y probar: salud de todos los servicios; restricciones de cuentas; revocación remota de sesiones; limpieza remota de caché por usuario; cierre/eliminación remota de cuentas. No retirar permisos, RBAC, auditoría ni rollback.
+
+### P1 — INBOX-AUTHORIZATION-AND-ISOLATION-01
+- Corregir «servicio no autorizado» en las consultas Inbox sin ampliar privilegios.
+- Auditar interferencias de locks/leases entre auditoría de imágenes e Inbox.
+- Corregir el fragmento HTML en la bandeja para mostrar texto legible y mantener renderizado seguro al abrir el mensaje.
+
+### P1 — ADMIN-FEEDBACK-AND-RESPONSIVE-01
+- Corregir los mensajes de borrado de logs (borrado efectivo, sin registros y error).
+- Compactar retención de logs (7 días / eliminar todos) sin overflow.
+- Corregir el padding del contenedor de imagen del modal sin mover logo, nombre ni acciones ya aceptados.
+
 
 ### P1 — BETA-ADMIN-CUT-IMAGE-ORGANIZER-STRUCTURE-01
 Aplicar la estructura objetivo después de validar el dry-run:
@@ -110,13 +125,13 @@ Aplicar la estructura objetivo después de validar el dry-run:
 - La auditoría de código no equivale a validar los datos reales de Drive/Spreadsheet.
 - No se han movido, renombrado, copiado, restaurado ni eliminado archivos productivos.
 - No se han desplegado Apps Script. La validación de la nueva organización requerirá ejecutar primero el dry-run tras su despliegue y revisar sus resultados.
-- Siguiente paso exacto: el constructor puro, endpoint ADMIN previewCortesImageOrganizer y UI paginada del preview ya están implementados localmente. Corregida la nomenclatura funcional; verificar CI disponible, luego desplegar ADMIN en Beta, ejecutar una auditoría Drive nueva y revisar el preview real. No aplicar movimientos ni renombrados.
+- Estado: constructor, endpoint y UI del preview implementados localmente. La validación de CI/contratos queda en la regresión local; el despliegue ADMIN, auditoría Drive nueva y preview real se posponen hasta cerrar todas las tareas locales. No aplicar movimientos ni renombrados.
 
 
 ## Actualización 2026-11-19 — subpaso completado
 - [x] Constructor puro buildCortesImageOrganizerTargets_: genera rutas y nombres para ocho campos de Cortes y LogosMarca; usa columnas reales, bloquea datos ambiguos y no realiza escrituras.
 - [x] Prueba dinámica con el mapa real COLS_CORTES: rutas/nombres, tipo desconocido, fórmula, año faltante, ID compartido y marca mult categoría.
-- [ ] El P0 DRY-RUN-01 continúa abierto: falta conectar el endpoint de solo lectura que inspecciona cada archivo del inventario, obtiene su ruta y extensión originales, compara referencias activas de todas las hojas, detecta conflictos y emite manifiesto completo con digest.
+- [x] El P0 DRY-RUN-01 quedó implementado localmente: endpoint de solo lectura, inspección de inventario/rutas/extensiones, referencias activas de todas las hojas, conflictos, manifiesto y digest; la UI paginada ya está conectada.
 - CI del subpaso: 146 suites, 2,157 pruebas aprobadas, 0 fallos en HEAD aa967514d3602f0512a05f9ddf1fafc1c11c0c24. Apps Script aún no desplegado; no se realizaron operaciones productivas.
 
 
@@ -126,8 +141,8 @@ Aplicar la estructura objetivo después de validar el dry-run:
 - [x] Paginación por destinos (25 por defecto, máximo 50), estados y motivos por archivo, manifestDigest, writePerformed:false y canApply:false.
 - [x] Persistencia de folderPath en páginas de auditoría y bloqueo de destinos duplicados.
 - [x] CI: 146 suites, 2,157 pruebas aprobadas, 0 fallos; health y Pages SUCCESS en HEAD 6e43666b69ff20b7945f5ebe7b7745a7758ce8d0.
-- [ ] Integrar previewCortesImageOrganizer en ui.js y presentar resultados paginados en el modal/consola. El frontend aún no invoca esta acción.
-- [ ] Desplegar ADMIN actualizado, generar una auditoría Drive nueva (las auditorías antiguas no tienen folderPath en caché) y validar resultados reales. No aplicar cambios.
+- [x] Integrar previewCortesImageOrganizer en ui.js y presentar resultados paginados en el modal/consola.
+- [ ] Validar en Beta tras cerrar todas las implementaciones locales: desplegar ADMIN, generar una auditoría Drive nueva y revisar resultados reales. No aplicar cambios.
 - [ ] Mantener bloqueada la aplicación de movimientos/renombrados hasta terminar la UI, revisar el manifiesto real y probar rollback.
 
 
@@ -136,7 +151,7 @@ Aplicar la estructura objetivo después de validar el dry-run:
 - [x] ui.js recorre las páginas del endpoint, valida digest estable, offset, total, finalización y banderas writePerformed:false/canApply:false; presenta conteos y detalles por archivo.
 - [x] No se habilita ninguna mutación desde la UI.
 - CI HEAD bb3f3a1fcf47d328f1ab51a4ab5dc3a93e2e3807: 146 suites, 2,157 pruebas aprobadas, 0 fallos; health y Pages SUCCESS.
-- [ ] Desplegar ADMIN actualizado y ejecutar una auditoría Drive nueva para persistir folderPath en el inventario.
+- [ ] Validar en Beta después de cerrar todas las implementaciones locales: desplegar ADMIN y ejecutar una auditoría Drive nueva para persistir folderPath en el inventario.
 - [ ] Ejecutar el preview real y revisar rutas, nombres, extensiones, referencias y conflictos. Mantener la aplicación bloqueada.
 - [ ] Corregir cualquier discrepancia real antes de implementar la aplicación segura por lotes y rollback.
 
