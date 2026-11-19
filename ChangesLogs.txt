@@ -955,3 +955,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 2026-11-19 — ADMIN: recuperación de reemplazos linked verifica archivos y metadata Drive fuera del ScriptLock, con revalidación del ledger y URL.
 
 2026-11-19 — ADMIN recuperación linked de reemplazos fuera del ScriptLock. CI 44572041539 SUCCESS: 163 suites, 2,294 pruebas, 0 fallos; health read-only SUCCESS. Compensación Drive aún pendiente.
+
+
+[2026-11-19] ADMIN: la compensación del reemplazo de imagen reserva el opId como requires_review antes de liberar ScriptLock. La actualización de metadata Drive y su fallback se ejecutan fuera del lock; al readquirir se revalidan vehículo, campo, URL, huella y estado del ledger. Se añade AdminImageUploadCompensationIsolation.mjs al runner. CI pendiente.

@@ -6546,6 +6546,20 @@ function handleUploadAdminImage(payload, logMessage) {
         let rollbackFailed = false;
         let historySheet = null;
         let historyRowIndex = null;
+        let compensationReserved = false;
+
+        // Reserva el opId antes de compensar: un reintento no puede reactivar la operación.
+        if (newFile && operationContentHash && operationSheet && operationRecord) {
+            try {
+                operationRecord.values[9] = "requires_review";
+                operationRecord.values[11] = Utilities.formatDate(new Date(), "GMT-6", "yyyy-MM-dd HH:mm:ss");
+                saveAdminImageUploadOperation(operationSheet, operationRecord);
+                compensationReserved = true;
+            } catch (reserveError) {
+                rollbackFailed = true;
+                rollbackMessage += " No se pudo reservar el ledger para compensación; el archivo Drive se conserva sin modificar: " + reserveError.message + ".";
+            }
+        }
 
         if (activeCell && newImageUrl) {
             try {
@@ -6593,18 +6607,41 @@ function handleUploadAdminImage(payload, logMessage) {
             }
         }
 
-        if (newFile && operationContentHash) {
+        if (newFile && operationContentHash && compensationReserved) {
             try {
-                updateAdminImageUploadFileState_(
-                    newFile, operationId, operationContentHash,
-                    rollbackFailed || operationConflict ? "requires_review" : "cancelled",
-                    fileCreatedThisAttempt && !rollbackFailed && !operationConflict
-                );
-            } catch (fileError) {
+                runAdminDriveWorkOutsideScriptLock_(lock, operationId, function() {
+                    try {
+                        updateAdminImageUploadFileState_(
+                            newFile, operationId, operationContentHash,
+                            rollbackFailed || operationConflict ? "requires_review" : "cancelled",
+                            fileCreatedThisAttempt && !rollbackFailed && !operationConflict
+                        );
+                    } catch (fileError) {
+                        rollbackFailed = true;
+                        rollbackMessage += " No se pudo verificar el estado compensatorio del archivo Drive: " + fileError.message + ".";
+                        try { updateAdminImageUploadFileState_(newFile, operationId, operationContentHash, "requires_review", false); }
+                        catch (reviewFileError) {
+                            rollbackMessage += " Tampoco se pudo marcar el archivo para revisión: " + reviewFileError.message + ".";
+                        }
+                    }
+                    return true;
+                }, function() {
+                    const latestOperation = findAdminImageUploadOperation(operationSheet, operationId);
+                    if (!latestOperation ||
+                        String(latestOperation.values[1]) !== String(vehicleId) ||
+                        String(latestOperation.values[2]) !== String(fieldName) ||
+                        String(latestOperation.values[6]) !== operationContentHash ||
+                        String(latestOperation.values[9]) !== "requires_review" ||
+                        (newImageUrl && String(latestOperation.values[4] || "") !== newImageUrl)) {
+                        throw new Error("La reserva de compensación cambió durante el trabajo Drive; se requiere revisión.");
+                    }
+                    operationRecord = latestOperation;
+                    return true;
+                });
+            } catch (fileIsolationError) {
+                if (fileIsolationError && fileIsolationError.code === "ADMIN_LOCK_REACQUIRE_PENDING") throw fileIsolationError;
                 rollbackFailed = true;
-                rollbackMessage += " No se pudo verificar el estado compensatorio del archivo Drive: " + fileError.message + ".";
-                try { updateAdminImageUploadFileState_(newFile, operationId, operationContentHash, "requires_review", false); }
-                catch (reviewFileError) { rollbackMessage += " Tampoco se pudo marcar el archivo para revisión: " + reviewFileError.message + "."; }
+                rollbackMessage += " No se pudo completar la compensación Drive fuera del ScriptLock: " + fileIsolationError.message + ".";
             }
         }
 
@@ -6633,9 +6670,29 @@ function handleUploadAdminImage(payload, logMessage) {
                     try { updateAdminImageReplacementHistoryStatus_(historySheet, historyRowIndex, "requiere_revision"); }
                     catch (historyReviewError) { rollbackMessage += " No se pudo alinear el historial con requires_review: " + historyReviewError.message + "."; }
                 }
-                if (newFile && operationContentHash) {
-                    try { updateAdminImageUploadFileState_(newFile, operationId, operationContentHash, "requires_review", false); }
-                    catch (fileReviewError) { rollbackMessage += " No se pudo alinear el archivo Drive con requires_review: " + fileReviewError.message + "."; }
+                if (newFile && operationContentHash && compensationReserved) {
+                    try {
+                        runAdminDriveWorkOutsideScriptLock_(lock, operationId, function() {
+                            updateAdminImageUploadFileState_(newFile, operationId, operationContentHash, "requires_review", false);
+                            return true;
+                        }, function() {
+                            const latestOperation = findAdminImageUploadOperation(operationSheet, operationId);
+                            const latestStatus = latestOperation && String(latestOperation.values[9] || "");
+                            if (!latestOperation ||
+                                String(latestOperation.values[1]) !== String(vehicleId) ||
+                                String(latestOperation.values[2]) !== String(fieldName) ||
+                                String(latestOperation.values[6]) !== operationContentHash ||
+                                !["requires_review", finalStatus].includes(latestStatus) ||
+                                (newImageUrl && String(latestOperation.values[4] || "") !== newImageUrl)) {
+                                throw new Error("No se pudo revalidar el ledger para alinear metadata Drive con requires_review.");
+                            }
+                            operationRecord = latestOperation;
+                            return true;
+                        });
+                    } catch (fileReviewError) {
+                        if (fileReviewError && fileReviewError.code === "ADMIN_LOCK_REACQUIRE_PENDING") throw fileReviewError;
+                        rollbackMessage += " No se pudo alinear el archivo Drive con requires_review fuera del ScriptLock: " + fileReviewError.message + ".";
+                    }
                 }
             }
         }

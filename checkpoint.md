@@ -1217,3 +1217,5 @@ CI `44571281616` SUCCESS — 162 suites, 2,289 pruebas aprobadas, 0 fallos. `Adm
 2026-11-19 — ADMIN reemplazo de imágenes: rama de recuperación `status=linked` ya mueve lookup/verificación Drive y metadata final fuera del ScriptLock; revalida vehículo/fila y ledger opId/estado/URL antes de recuperar historial. Nueva prueba AdminImageUploadLinkedRecoveryIsolation.mjs; CI pendiente. Las rutas de error/compensación continúan en revisión.
 
 CI `44572041539` SUCCESS — 163 suites, 2,294 pruebas aprobadas, 0 fallos. `AdminImageUploadLinkedRecoveryIsolation` 5/5 y `ADMIN compensación de reemplazos in-modal` 9/9; health read-only `44572041605` SUCCESS. La rama `status=linked` ahora verifica existencia, papelera e integridad del archivo fuera del ScriptLock y revalida el ledger/URL; metadata final también se confirma fuera del lock. Pendiente de esta tarea: las operaciones Drive ejecutadas por compensación en el `catch` siguen dentro del ScriptLock.
+
+2026-11-19 — ADMIN: compensación del catch refactorizada para reservar opId, liberar ScriptLock durante metadata Drive y revalidar ledger; regresión añadida. CI/revisión pendientes.
