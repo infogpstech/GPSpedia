@@ -6805,8 +6805,21 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
     const colaboradorName = String(developerContext && developerContext.fullName || "").trim();
     if (!colaboradorName) throw new Error("El perfil del usuario autenticado no tiene un nombre completo registrado.");
 
-    // La asignación central se realiza antes del lock ADMIN. WRITE mantiene su propia
-    // exclusión para el contador; ADMIN solo reserva y persiste la fila al volver.
+    // Resolver y validar el contrato idempotente antes de cualquier llamada remota
+    // o sección crítica. Un payload inválido no debe consumir un ID de WRITE.
+    let opId = payload.opId || null;
+    // Compatibilidad con operaciones antiguas: solo se extrae el opId del campo heredado.
+    // El nombre de colaborador enviado por el cliente nunca se utiliza como identidad.
+    if (!opId && typeof payload.colaborador === "string") {
+        const opMatch = payload.colaborador.match(/\\[(OP-[a-zA-Z0-9_-]+)\\]/);
+        if (opMatch) opId = opMatch[1];
+    }
+    const operationHash = opId ? computeCutOperationFingerprint_(payload) : null;
+    if (opId && normalizeIdempotenciaOperationHash_(payload.operationHash, "Solicitud addOrUpdateCut ADMIN") !== operationHash) {
+        throw new Error("La huella enviada no coincide con el contenido de la operación.");
+    }
+
+    // WRITE asigna el ID fuera del ScriptLock ADMIN; conserva su propia exclusión.
     const preallocatedVehicleId = String(vehicleId || "").trim()
         ? null
         : requestNextVehicleIdFromWriteService(payload);
@@ -6834,18 +6847,6 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
         const vinPrefix = cutData.vin ? extractVinPrefixForAdmin(cutData.vin) : "";
         if (cutData.vin && !vinColumnIndex) {
             throw new Error("La hoja «Cortes» no contiene el encabezado «VIN»; no se puede guardar el identificador sin alterar otras columnas.");
-        }
-
-        let opId = payload.opId || null;
-        // Compatibilidad con operaciones antiguas: solo se extrae el opId del campo heredado.
-        // El nombre de colaborador enviado por el cliente nunca se utiliza como identidad.
-        if (!opId && typeof payload.colaborador === 'string') {
-            const opMatch = payload.colaborador.match(/\[(OP-[a-zA-Z0-9_-]+)\]/);
-            if (opMatch) opId = opMatch[1];
-        }
-        const operationHash = opId ? computeCutOperationFingerprint_(payload) : null;
-        if (opId && normalizeIdempotenciaOperationHash_(payload.operationHash, "Solicitud addOrUpdateCut ADMIN") !== operationHash) {
-            throw new Error("La huella enviada no coincide con el contenido de la operación.");
         }
 
         if (opId) {
