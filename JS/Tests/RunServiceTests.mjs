@@ -189,6 +189,8 @@ runGroup('38','INTEGRATION',()=>{
  runCli('AUG-022 eliminación asíncrona de caché IndexedDB ADMIN','JS/Tests/AdminClientCacheDeletion.mjs');
  runCli('AUG-024 contrato de salud, identidad y clasificación de servicios','JS/Tests/ServiceHealthContract.mjs');
  runCli('BETA-043 contrato de telemetría global coordinada','JS/Tests/ServiceTrafficAdminContract.mjs');
+ runCli('BETA-043 telemetría local por servicio y navegador móvil','JS/Tests/ServiceBrowserTrafficContract.mjs');
+ runCli('BETA-043 contrato y agregación de tráfico de los siete servicios','JS/Tests/ServiceTrafficAggregatorContract.mjs');
  runCli('BETA-043 agregación global Coordinator + fuentes directas','JS/Tests/ServiceTrafficAggregation.mjs');
  runCli('BETA-043 telemetría directa AUTH WRITE FEEDBACK','JS/Tests/DirectServiceTrafficTelemetry.mjs');
  runCli('BETA-043 consulta agrupada de telemetría directa y fallos parciales','JS/Tests/ServiceTrafficBatch.mjs');
