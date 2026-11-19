@@ -81,6 +81,7 @@ runGroup('32','ADMIN',()=>{
   runCli('ADMIN reemplazo de imagen ejecuta Drive fuera del ScriptLock y revalida opId','JS/Tests/AdminImageUploadDriveIsolation.mjs');
   runCli('ADMIN recupera reemplazos linked fuera del ScriptLock','JS/Tests/AdminImageUploadLinkedRecoveryIsolation.mjs');
   runCli('ADMIN compensa archivos Drive fuera del ScriptLock con reserva idempotente','JS/Tests/AdminImageUploadCompensationIsolation.mjs');
+  runCli('ADMIN vincula imágenes de cortes fuera del ScriptLock','JS/Tests/AdminCutImageLinkOutsideLock.mjs');
   runCli('ADMIN inventario Drive no bloquea cortes ni login','JS/Tests/AdminInventoryLockIsolation.mjs');
   runCli('RBAC y sesiones ilimitadas del rol Desarrollador','JS/Tests/DeveloperPrivilegeRouting.mjs');
  runCli('P4 protección de medios sin bloquear texto ni controles','JS/Tests/ClientInteractionPolicy.mjs');

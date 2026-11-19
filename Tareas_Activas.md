@@ -465,3 +465,10 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Añadir regresión AdminImageUploadCompensationIsolation.mjs al runner.
 - [x] CI 44592625381 SUCCESS: 164 suites, 2,304 pruebas aprobadas, 0 fallos; regresión `AdminImageUploadCompensationIsolation` 10/10 y sintaxis JavaScript aprobada. Health read-only 44592625568 SUCCESS; GitHub Pages 44592624258 SUCCESS. Diff revisado y commits verificados.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Pendiente deployment autorizado y prueba real Drive/Spreadsheet; no se modificaron datos productivos.
+
+### ADMIN — vinculación post-commit de imágenes fuera del ScriptLock (2026-11-19)
+- [x] Recuperación idempotente, alta en vehículo existente y alta de vehículo nuevo persisten primero el estado completed.
+- [x] Mover markImageUploadLinked (Drive + ImageUploadLedger) fuera del ScriptLock mediante runAdminDriveWorkOutsideScriptLock_.
+- [x] Revalidar opId, vehículo, slot, estado y huella al readquirir; solicitudes legacy usan clave estable derivada de fileId.
+- [x] Añadir AdminCutImageLinkOutsideLock.mjs al runner.
+- [ ] CI integral y revisión del diff pendientes. No se despliega ADMIN ni se modifican datos externos.

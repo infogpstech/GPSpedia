@@ -6947,11 +6947,13 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
                     sheet.getRange(rowIndex, COLS_CORTES.timestamp).setValue(match.timestamp);
                 }
                 SpreadsheetApp.flush();
-                markImageUploadLinked(sheet.getRange(rowIndex, COLS_CORTES.imagenVehiculo).getValue());
-                markImageUploadLinked(sheet.getRange(rowIndex, COLS_CORTES["imgCorte" + slotIndex]).getValue());
                 if (opId && rowObj.id) {
                     recordOpId(opId, rowObj.id, slotIndex, match.timestamp || rowObj.timestamp, "completed", operationHash);
                 }
+                markAdminCutImagesLinkedOutsideLock_(lock, opId, rowObj.id, slotIndex, operationHash, [
+                    sheet.getRange(rowIndex, COLS_CORTES.imagenVehiculo).getValue(),
+                    sheet.getRange(rowIndex, COLS_CORTES["imgCorte" + slotIndex]).getValue()
+                ]);
                 return {
                     status: 'success',
                     message: 'La operación ya fue completada (recuperada, reparada y completada).',
@@ -7025,8 +7027,8 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
         }
         sheet.getRange(rowIndex, COLS_CORTES.timestamp).setValue(formattedDate);
         SpreadsheetApp.flush();
-        markImageUploadLinked(sheet.getRange(rowIndex, COLS_CORTES["imgCorte" + cutSlotIndex]).getValue());
         if (opId) recordOpId(opId, vehicleId, cutSlotIndex, formattedDate, "completed", operationHash);
+        markAdminCutImagesLinkedOutsideLock_(lock, opId, vehicleId, cutSlotIndex, operationHash, [imageUrl]);
 
         newId = vehicleId;
 
@@ -7147,9 +7149,8 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
         sheet.getRange(rowIndex, COLS_CORTES.imgCorte1).setValue(corteImageUrl);
         sheet.getRange(rowIndex, COLS_CORTES.colaboradorCorte1).setValue(colaboradorName);
         SpreadsheetApp.flush();
-        markImageUploadLinked(vehiculoImageUrl);
-        markImageUploadLinked(corteImageUrl);
         if (opId) recordOpId(opId, newId, 1, formattedDate, "completed", operationHash);
+        markAdminCutImagesLinkedOutsideLock_(lock, opId, newId, 1, operationHash, [vehiculoImageUrl, corteImageUrl]);
     }
 
     logMessage("Registro Administrativo", `Corte administrativo guardado exitosamente. ID asignado: ${newId}`);
@@ -7783,6 +7784,31 @@ function getImageUploadReferences_(fileId) {
         });
     });
     return references;
+}
+
+function markAdminCutImagesLinkedOutsideLock_(lock, opId, vehicleId, slotIndex, operationHash, imageUrls) {
+    const urls = Array.from(new Set((Array.isArray(imageUrls) ? imageUrls : [])
+        .map(value => String(value || "").trim())
+        .filter(value => getImageUploadFileId_(value))));
+    if (!urls.length) return [];
+    const cleanOpId = String(opId || "").trim();
+    const isolationKey = cleanOpId || ("ADMIN_IMAGE_LINK_" + String(vehicleId || "") + "_" +
+        urls.map(getImageUploadFileId_).join("_"));
+    return runAdminDriveWorkOutsideScriptLock_(lock, isolationKey, function() {
+        return urls.map(url => markImageUploadLinked(url));
+    }, function(results) {
+        if (cleanOpId) {
+            const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+            const latest = findRowByOpId(sheet, cleanOpId);
+            if (!latest || latest.status !== "completed" ||
+                String(latest.vehicleId) !== String(vehicleId) ||
+                Number(latest.slotIndex) !== Number(slotIndex) ||
+                latest.operationHash !== operationHash) {
+                throw new Error("La operación de corte cambió durante la vinculación de imágenes; se conserva el ledger para recuperación.");
+            }
+        }
+        return results;
+    });
 }
 
 function markImageUploadLinked(imageUrl) {

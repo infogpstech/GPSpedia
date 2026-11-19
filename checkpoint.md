@@ -35,3 +35,6 @@ Continuar GP-PERF-ADMIN-CUT-LOCK-01. Prioridad restante: pruebas de no interfere
 - No modificar ni fusionar GPSpedia2.2.5.
 - No desplegar Apps Script ni modificar Sheets/Drive productivos sin autorización expresa.
 - Las validaciones reales de Drive/Spreadsheet, concurrencia y deployments quedan para Beta autorizada.
+
+
+2026-11-19 — Siguiente subpaso P0: separar la sincronización markImageUploadLinked (Drive + ImageUploadLedger) del ScriptLock en handleAddOrUpdateCut; regresión añadida, CI pendiente.
