@@ -3189,21 +3189,7 @@ function mapCorteTypeToFunctionCode_(value) {
 }
 
 function getCorteFunctionSuffix_(typeValues, imageValues, slotIndex) {
-    const types = Array.isArray(typeValues) ? typeValues : [];
-    const images = Array.isArray(imageValues) ? imageValues : [];
-    const slot = Number(slotIndex);
-    if (!Number.isInteger(slot) || slot < 1 || slot > 3) return "";
-    const code = mapCorteTypeToFunctionCode_(types[slot - 1]);
-    if (!code) return "";
-    let ordinal = 1;
-    for (let index = 0; index < slot - 1; index++) {
-        if (!String(images[index] || "").trim()) continue;
-        const previousCode = mapCorteTypeToFunctionCode_(types[index]);
-        if (!previousCode) return "";
-        if (previousCode === code) ordinal++;
-    }
-    return code + ordinal;
-}
+
     const types = Array.isArray(typeValues) ? typeValues : [];
     const slot = Number(slotIndex);
     if (!Number.isInteger(slot) || slot < 1 || slot > 3) return "";
