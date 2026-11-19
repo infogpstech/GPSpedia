@@ -402,3 +402,5 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Retirar ScriptLock de inicio/cierre del registro ADMIN; cada evento usa una propiedad única.
 - [x] Convertir inicio y cierre de auditoría en best-effort: sus fallos se informan como advertencia y no impiden ni degradan el resultado de la operación principal.
 - [x] Añadir contratos de aislamiento Coordinator y pruebas de auditoría best-effort. CI pendiente.
+
+- CI inicial de aislamiento de auditoría falló por un `finally` residual del lock retirado y un contrato antiguo que prohibía cualquier lease ADMIN. Se corrigen ambos: el test permite exclusivamente `auditDriveImagesInCortes` y exige que las demás acciones ADMIN sigan sin leases.

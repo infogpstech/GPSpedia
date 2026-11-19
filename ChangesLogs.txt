@@ -925,3 +925,5 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 2026-11-19 — CI ADMIN ID fuera del lock: 159 suites, 2,264 pruebas, 0 fallos; health read-only SUCCESS. Se verificó que la llamada ADMIN→WRITE ocurre antes de adquirir el ScriptLock y que ADMIN no espera 30 segundos para entrar.
 
 2026-11-19 — ADMIN: auditoría de imágenes Drive aislada con lease IMAGE_AUDIT_STATE (sin locks CORTES/DRIVE); registro persistente best-effort sin ScriptLock y sin bloquear/falsear el resultado de operaciones de negocio.
+
+2026-11-19 — Ajustes post-CI auditoría ADMIN: eliminar referencia residual al lock en finalización y permitir lease específica IMAGE_AUDIT_STATE sin habilitar leases en otras acciones.

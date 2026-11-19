@@ -58,7 +58,13 @@ test("USERS contabiliza getUsers sin lease adicional; UTILITIES conserva Coordin
     assert.match(users, /if \(action === "getUsers"\) recordUsersDirectTraffic_\(\)/);
     assert.match(users, /if \(action === "getServiceTraffic"\)[\s\S]*?readUsersDirectTraffic_/);
     assert.match(admin, /getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "ADMIN" \}\)/);
-    assert.doesNotMatch(admin, /withSharedMutationLease_/);
+    const auditStart = admin.indexOf("function handleAuditDriveImagesInCortes(");
+    const auditEnd = admin.indexOf("\\nfunction handleAuditDriveImagesInCortesCore_", auditStart);
+    assert.ok(auditStart >= 0 && auditEnd > auditStart);
+    const auditHandler = admin.slice(auditStart, auditEnd);
+    assert.match(auditHandler, /withSharedMutationLease_\("ADMIN", "auditDriveImagesInCortes"/);
+    assert.doesNotMatch(admin.slice(0, auditStart) + admin.slice(auditEnd), /withSharedMutationLease_/,
+        "Solo el escáner de auditoría puede adquirir la lease de su estado.");
     assert.doesNotMatch(admin, /DIRECT_SERVICE_TRAFFIC_CONFIG_/);
 });
 

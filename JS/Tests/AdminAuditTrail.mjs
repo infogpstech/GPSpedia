@@ -165,7 +165,7 @@ check("Inicio y cierre de auditoría no adquieren ScriptLock global",()=>{
     assert.equal(f.lockAcquires,0);
     assert.equal(f.lockReleases,0);
 });
-check("Un fallo al cerrar deja el evento STARTED sin afirmar éxito",()=>{
+check("Un fallo al cerrar deja el evento STARTED y el router conserva el resultado de negocio",()=>{
     const f=createHarness({failOnWrite:2});
     const event=f.api.beginAdminAuditEvent_("driveCommand",{}, {userId:"user-1",role:"Desarrollador"},new Date());
     assert.throws(()=>f.api.finalizeAdminAuditEvent_(event,{response:{status:"success"},payload:{},stage:"Fin",durationMs:50}),
@@ -202,5 +202,7 @@ check("doPostInternal_ autentica, persiste STARTED antes del switch y finaliza a
     assert.match(body,/auditWarning = "La operación se completó/);
     assert.doesNotMatch(body,/throw createAdminAuditError_\([\s\S]*?ADMIN_AUDIT_FINALIZE_FAILED/);
     assert.ok(body.includes("isSharedMutationAction_(action)"));
+    assert.match(body,/catch\s*\(auditError\)[\s\S]*?auditWarning = "La operación se completó/);
+    assert.doesNotMatch(body,/throw createAdminAuditError_\([\s\S]*?ADMIN_AUDIT_FINALIZE_FAILED/);
 });
 console.log("AdminAuditTrail: "+passed+"/"+passed+" PASS");

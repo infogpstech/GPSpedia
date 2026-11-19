@@ -1161,8 +1161,6 @@ function finalizeAdminAuditEvent_(auditEvent, details) {
     } catch (error) {
         if (error && error.code) throw error;
         throw createAdminAuditError_("No se pudo finalizar el registro persistente de auditoría ADMIN.", "ADMIN_AUDIT_FINALIZE_FAILED", auditEvent && auditEvent.eventId);
-    } finally {
-        if (locked) lock.releaseLock();
     }
 }
 
