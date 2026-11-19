@@ -5921,7 +5921,6 @@ function handleUpdateVehicleField(payload, logMessage) {
     }
     return response;
 }
-
 const ADMIN_IMAGE_UPLOAD_SHEET_NAME = "AdminImageUploads";
 const ADMIN_IMAGE_UPLOAD_HEADERS = [
     "opId", "vehicleId", "fieldName", "urlAnterior", "urlNueva", "archivoDriveId",

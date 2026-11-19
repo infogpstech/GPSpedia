@@ -442,3 +442,5 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Ejecutar movimiento/renombrado de imagen principal después de liberar ScriptLock; fallos de Drive se devuelven como advertencia sin revertir el metadato guardado.
 - [x] Cambiar la adquisición a `tryLock(0)` para evitar esperas de 30 s; añadir `AdminVehicleFolderSyncOutsideLock.mjs` al runner.
 - [ ] CI y revisión de concurrencia pendientes.
+
+- CI inicial del cambio de sincronización Drive: 2 contratos antiguos no encontraron el cierre del handler por un salto de línea extra entre la función y `ADMIN_IMAGE_UPLOAD_SHEET_NAME`. Se conserva el delimitador esperado por los tests de extracción; sin cambio funcional.
