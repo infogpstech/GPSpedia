@@ -635,7 +635,7 @@
         <button type="button" class="info-close-btn" id="close-audit-drive-modal" aria-label="Cerrar auditoría">&times;</button>
         <div class="dev-heading-with-help"><h2 id="audit-drive-title"><i class="fa-brands fa-google-drive"></i> Auditoría de Cortes</h2><button type="button" class="gp-help-trigger" aria-label="Ayuda sobre alcance de auditoría" title="Ayuda" aria-controls="dev-help-audit-scope" aria-expanded="false"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button><span id="dev-help-audit-scope" class="gp-help-popover dev-heading-help-popover" role="tooltip" hidden>Explora recursivamente la carpeta principal Cortes. El progreso y los resultados parciales se conservan localmente. La auditoría no mueve archivos; cada traslado requiere una acción explícita y confirmación del Desarrollador.</span></div>
         <div class="dev-heading-with-help dev-audit-scope-row">
-            <p id="audit-drive-results-scope" style="font-size:0.85em; color:var(--text-disabled); margin:0;">Resumen de todas las categorías. La lista muestra imágenes históricas y sin uso detectado.</p>
+            <p id="audit-drive-results-scope" style="font-size:0.85em; color:var(--text-disabled); margin:0;">La consola registra todos los archivos y resultados; la lista complementaria muestra vistas previas de imágenes históricas y sin uso detectado.</p>
             <button type="button" class="gp-help-trigger" aria-label="Ayuda sobre categorías del resumen" title="Ayuda" aria-controls="dev-help-audit-categories" aria-expanded="false"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button><span id="dev-help-audit-categories" class="gp-help-popover dev-heading-help-popover" role="tooltip" hidden>Descubiertos: archivos únicos con ID válido. Analizados: archivos cuya clasificación se intentó, incluidos errores. Pendientes: carpetas aún por recorrer. Errores: IDs o metadatos que no pudieron leerse. Las miniaturas se verifican con la sesión autorizada. Los duplicados se omiten y contabilizan por separado.</span></div>
         <div id="audit-drive-toolbar" class="audit-drive-toolbar" role="toolbar" aria-label="Herramientas de auditoría de Cortes" aria-orientation="horizontal">
             <button type="button" id="btn-audit-drive-toolbar-toggle" class="btn btn-secondary audit-drive-toolbar-toggle" aria-label="Expandir etiquetas de acciones" title="Expandir acciones" aria-expanded="false" aria-controls="audit-drive-toolbar-actions">
@@ -649,8 +649,9 @@
                 <button type="button" id="btn-audit-drive-reconcile" class="btn btn-secondary audit-drive-action" aria-label="Simular conciliación con Cortes" title="Simular conciliación con Cortes" hidden disabled><i class="fa-solid fa-link" aria-hidden="true"></i><span class="audit-drive-action-label" aria-hidden="true">Simular conciliación con Cortes</span></button>
             </div>
         </div>
-        <div id="audit-drive-summary" style="margin-bottom: 10px; font-size: 0.85rem; font-weight: 600;"></div>
-        <div id="audit-drive-results-container" hidden aria-hidden="true"></div>
+        <div id="audit-drive-summary" style="margin-bottom: 10px;"></div>
+        <div id="audit-drive-results-container" style="max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 5px;">
+            <div style="text-align:center; padding:20px; color:var(--text-disabled);"><i class="fa-solid fa-spinner fa-spin"></i> Explorando árbol de Drive...</div>
         </div>
         <section id="audit-drive-reconciliation-panel" class="audit-drive-reconciliation-panel" hidden aria-live="polite">
             <h3>Conciliación Drive ↔ Cortes</h3>

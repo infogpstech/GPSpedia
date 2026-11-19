@@ -8273,9 +8273,6 @@ export async function openAuditDriveModal() {
             </div>
         </section>
     `;
-    container.hidden = true;
-    container.setAttribute('aria-hidden', 'true');
-
     const auditConsoleOutput = document.getElementById('audit-drive-console-output');
     const auditConsoleStatus = document.getElementById('audit-drive-console-status');
     const allFiles = [];

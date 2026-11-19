@@ -161,8 +161,8 @@ testCase("la auditoría concentra progreso y resultados en la consola de Cortes"
  assert.ok(ui.includes("responde «sí» o «no» en la terminal global del Desarrollador"));
  assert.ok(ui.includes("'no_confirmada'"));
  assert.ok(ui.includes("Los conteos del resumen ADMIN no coinciden con los resultados individuales"));
- assert.ok(ui.includes("container.hidden = true"));
- assert.ok(html.includes('id="audit-drive-results-container" hidden'));
+ assert.ok(!ui.includes("container.hidden = true"));
+ assert.ok(html.includes('id="audit-drive-results-container" style="max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 5px;"'));
  assert.ok(css.includes(".audit-drive-console-output"));
 });
 console.log("CortesImageReconciliationUI: "+passed+"/"+passed+" PASS");

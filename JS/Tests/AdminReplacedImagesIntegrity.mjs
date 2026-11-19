@@ -1022,7 +1022,8 @@ check("El escaneo y el guardado del inventario no mueven archivos automáticamen
     assert.ok(saveBlock.includes("resultsBySubmittedId.size !== submittedIds.size"));
     assert.equal(saveBlock.includes(": unusedFiles.map(item => String(item.fileId || ''))"),false);
     const explicitBlock=ui.slice(organizeStart,ui.indexOf("const updateControls",organizeStart));
-    assert.ok(explicitBlock.includes("window.gpsepediaRequestDeveloperConsoleConfirmation("));
+    assert.ok(explicitBlock.includes("requestAuditConsoleConfirmation("));
+    assert.ok(ui.includes("window.gpsepediaRequestDeveloperConsoleConfirmation(message)"));
     assert.equal(explicitBlock.includes("window.confirm("), false);
     assert.ok(explicitBlock.includes("mode: 'organize'"));
     assert.ok(explicitBlock.includes("confirmed: true"));
@@ -1031,9 +1032,10 @@ check("El escaneo y el guardado del inventario no mueven archivos automáticamen
     assert.ok(ui.includes("seenFileIds.has(fileId)"));
     assert.ok(ui.includes("renderedFileIds.has(fileId)"));
     assert.ok(ui.includes("getCursorPositionSignature"));
-    assert.ok(ui.includes("audit-service-version"));
+    assert.ok(ui.includes("Versión ADMIN: "));
+    assert.ok(ui.includes("Último escaneo: "));
     assert.ok(ui.includes("Miniatura cargada en la sesión autorizada actual"));
-    assert.ok(html.includes("La lista muestra imágenes históricas y sin uso detectado."));
+    assert.ok(html.includes("La consola registra todos los archivos y resultados"));
     assert.ok(html.includes("dev-help-audit-categories"));
     assert.ok(ui.includes("reconciliationUrl"));
 });
