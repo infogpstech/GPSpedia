@@ -8829,7 +8829,7 @@ export async function openAuditDriveModal() {
         isRunning = true;
         isDriveAuditRunning = true;
         updateControls();
-        appendAuditConsole(resume ? "Reanudando desde el último lote confirmado." : "Iniciando recorrido recursivo de la carpeta Cortes.", "info");
+        appendAuditConsole(resume ? "Reanudando desde el último lote confirmado." : "Iniciando recorrido de Cortes (escaneo recursivo).", "info");
 
         try {
             if (resume) {
