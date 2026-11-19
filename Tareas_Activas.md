@@ -62,3 +62,14 @@ Aplicar la estructura objetivo después de validar el dry-run:
 - [x] Prueba dinámica con el mapa real COLS_CORTES: rutas/nombres, tipo desconocido, fórmula, año faltante, ID compartido y marca mult categoría.
 - [ ] El P0 DRY-RUN-01 continúa abierto: falta conectar el endpoint de solo lectura que inspecciona cada archivo del inventario, obtiene su ruta y extensión originales, compara referencias activas de todas las hojas, detecta conflictos y emite manifiesto completo con digest.
 - CI del subpaso: 146 suites, 2,157 pruebas aprobadas, 0 fallos en HEAD aa967514d3602f0512a05f9ddf1fafc1c11c0c24. Apps Script aún no desplegado; no se realizaron operaciones productivas.
+
+
+## Actualización 2026-11-19 — endpoint backend dry-run
+- [x] Acción ADMIN previewCortesImageOrganizer, con permiso compartido de solo lectura en ADMIN, api-config y Coordinator.
+- [x] Revalidación de auditoría completa/vigente, inventario y metadatos con rutas, extensión original, referencias activas de todas las hojas, historial, carpetas destino y colisiones.
+- [x] Paginación por destinos (25 por defecto, máximo 50), estados y motivos por archivo, manifestDigest, writePerformed:false y canApply:false.
+- [x] Persistencia de folderPath en páginas de auditoría y bloqueo de destinos duplicados.
+- [x] CI: 146 suites, 2,157 pruebas aprobadas, 0 fallos; health y Pages SUCCESS en HEAD 6e43666b69ff20b7945f5ebe7b7745a7758ce8d0.
+- [ ] Integrar previewCortesImageOrganizer en ui.js y presentar resultados paginados en el modal/consola. El frontend aún no invoca esta acción.
+- [ ] Desplegar ADMIN actualizado, generar una auditoría Drive nueva (las auditorías antiguas no tienen folderPath en caché) y validar resultados reales. No aplicar cambios.
+- [ ] Mantener bloqueada la aplicación de movimientos/renombrados hasta terminar la UI, revisar el manifiesto real y probar rollback.
