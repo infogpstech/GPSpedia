@@ -6818,6 +6818,11 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
     if (opId && normalizeIdempotenciaOperationHash_(payload.operationHash, "Solicitud addOrUpdateCut ADMIN") !== operationHash) {
         throw new Error("La huella enviada no coincide con el contenido de la operación.");
     }
+    const vinPrefix = cutData.vin ? extractVinPrefixForAdmin(cutData.vin) : "";
+    // El timestamp administrativo es independiente de la hoja y se prepara antes del lock.
+    const targetDate = new Date();
+    targetDate.setDate(targetDate.getDate() - 365);
+    const formattedDate = Utilities.formatDate(targetDate, "GMT-6", "dd/MM/yyyy");
 
     // WRITE asigna el ID fuera del ScriptLock ADMIN; conserva su propia exclusión.
     const preallocatedVehicleId = String(vehicleId || "").trim()
@@ -6844,7 +6849,6 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
         const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
         ensureTestigoColumns(sheet, true);
         const vinColumnIndex = getVinColumnIndex(sheet);
-        const vinPrefix = cutData.vin ? extractVinPrefixForAdmin(cutData.vin) : "";
         if (cutData.vin && !vinColumnIndex) {
             throw new Error("La hoja «Cortes» no contiene el encabezado «VIN»; no se puede guardar el identificador sin alterar otras columnas.");
         }
@@ -6992,11 +6996,6 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
             const duplicate = findVinDuplicateForAdmin(sheet, vinPrefix, null, vinColumnIndex);
             if (duplicate) throw new Error("VIN ya está registrado para: " + duplicate.modelName);
         }
-
-        // Forzar timestamp administrativo (hace 365 días) para registro silencioso
-        let targetDate = new Date();
-        targetDate.setDate(targetDate.getDate() - 365);
-        const formattedDate = Utilities.formatDate(targetDate, "GMT-6", "dd/MM/yyyy");
 
         let rowIndex;
         let newId;
