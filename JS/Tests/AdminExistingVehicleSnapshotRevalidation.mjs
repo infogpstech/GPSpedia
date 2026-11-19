@@ -10,7 +10,7 @@ const branchStart = handler.indexOf("if (vehicleId) { // --- Lógica para vehíc
 const branchEnd = handler.indexOf("} else { // --- Lógica para vehículo NUEVO", branchStart);
 assert.ok(branchStart >= 0 && branchEnd > branchStart, "No se encontró la rama de vehículo existente");
 const branch = handler.slice(branchStart, branchEnd);
-const rowRead = branch.indexOf("const rowValues = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getValues()[0];");
+const rowRead = branch.indexOf("const snapshotWidth = Math.max(48, vinColumnIndex || 0);\n        const rowValues = sheet.getRange(rowIndex, 1, 1, snapshotWidth).getValues()[0];");
 const idCheck = branch.indexOf("if (String(rowValues[COLS_CORTES.id - 1]) !== String(vehicleId))");
 const objectMap = branch.indexOf("const vehicleInfo = mapRowToObject(rowValues, COLS_CORTES);");
 assert.ok(rowRead >= 0 && rowRead < idCheck && idCheck < objectMap,
