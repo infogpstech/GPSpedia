@@ -41,6 +41,7 @@ Normativa: NORMAS_DESAROLLO.md
 - Pruebas aisladas: SharedMutationCoordinator 77/77 PASS; ServiceBrowserTrafficContract 9/9; ServiceTrafficAggregatorContract PASS; ServiceTrafficAggregation 6/6; ServiceTrafficAdminContract pendiente de repetir tras el cambio central; InboxConversations 66/66. No se ejecutaron llamadas remotas reales ni CI integral.
 - Política de despliegue documentada en Services/SERVICE_ARCHITECTURE_PLAN.md y Services/COORDINATOR_SETUP.md: cambios internos compatibles requieren solo Coordinator; cambios aditivos afectan únicamente consumidores que invoquen la nueva operación; el cliente legacy v1 se mantiene.
 - Validación del protocolo: SharedMutationCoordinator 77/77 PASS tras fijar la compatibilidad legacy en v1 y comprobar clientes explícitos v1, legacy sin campo y rechazo de versiones inválidas.
+- Nueva prueba registrada en RunServiceTests.mjs: CoordinatorCapabilityPreservation 6/6 PASS. Verifica RBAC jerárquico, restricciones al último Desarrollador, orden de invalidación remota antes de cierre/revocación, desactivación segura y recuperación reintentable, y confirmación de WRITE/FEEDBACK.
 - Siguiente subpaso: completar la matriz de configuración por entorno y compatibilidad de telemetría/cliente; retirar dependencias legacy solo después de Beta autorizada. No desplegar en esta fase.
 
 ### Fase 3 — Inbox y aislamiento de operaciones
