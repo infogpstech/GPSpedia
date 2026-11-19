@@ -158,6 +158,14 @@ check("El router trata el inicio de auditoría como best-effort",()=>{
     assert.match(body,/try\s*\{\s*auditEvent = beginAdminAuditEvent_\([\s\S]*?catch\s*\(auditError\)/);
     assert.match(body,/la operación continúa sin bloquearse/);
 });
+check("El escáner de salud ping no depende de auditoría ni adquiere ScriptLock",()=>{
+    const body=extractFunction("doPostInternal_");
+    const route=source.slice(source.indexOf("function doGet(e)"),source.indexOf("function doPostInternal_"));
+    assert.match(route,/if \(action === "ping"\) return doPostInternal_/);
+    assert.match(body,/if \(action !== "ping" && isSharedMutationAction_\(action\)\)/);
+    assert.doesNotMatch(body,/LockService\.getScriptLock|waitLock\(|tryLock\(/);
+    assert.equal(h.api.isSharedMutationAction_("ping"),false);
+});
 check("Inicio y cierre de auditoría no adquieren ScriptLock global",()=>{
     const f=createHarness();
     const event=f.api.beginAdminAuditEvent_("driveCommand",{}, {userId:"user-1",role:"Desarrollador"},new Date());
