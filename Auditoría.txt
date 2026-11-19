@@ -647,3 +647,14 @@ Corrección: Coordinator 1.4.5 usa SHARED_MUTATION_LEGACY_PROTOCOL_VERSION_ = 1,
 Validación: SharedMutationCoordinator 77/77 PASS; contrato estático 33/33 PASS; sintaxis Coordinator PASS.
 Severidad: media (compatibilidad/despliegue). Estado: CORREGIDO LOCALMENTE.
 ================================================================================
+
+
+================================================================================
+2026-11-19 — HALLAZGO: MENSAJES AMBIGUOS Y DESBORDAMIENTO EN LIMPIEZA ADMIN
+Ubicaciones: JS/Services/Auth.js::handleClearSensitiveLogs; JS/Services/feedback.js::handleClearActivityLogs; index.html selector clear-logs-option-select; style.css .dev-maintenance-retention.
+Evidencia: AUTH informaba «Se eliminaron 0» incluso cuando no existían coincidencias sensibles o no había filas; FEEDBACK informaba «Se eliminaron 0» cuando la retención no encontraba actividad mayor a siete días. Las etiquetas largas del selector podían consumir espacio horizontal y desbordar el panel en pantallas estrechas.
+Impacto: el operador podía interpretar una operación sin cambios como una eliminación efectiva y el control de retención perdía legibilidad.
+Corrección: mensajes explícitos según deletedCount/scannedCount; etiquetas cortas y layout grid responsive con min-width:0. Se redujo padding de la tarjeta de corte recomendado de 12 px a 8 px.
+Validación: SensitiveLogsTrustedActor 7/7; ActivityLogsClearFeedback 5/5; AdminLogsMaintenanceContract 10/10.
+Severidad: baja-media (UX/operación). Estado: CORREGIDO LOCALMENTE; validación visual de navegador pendiente.
+================================================================================
