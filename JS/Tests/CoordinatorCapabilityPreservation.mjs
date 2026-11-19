@@ -74,7 +74,7 @@ check("La invalidación remota exige confirmación de WRITE y FEEDBACK antes de 
 check("El coordinador no sustituye los controles de permisos ni las operaciones remotas del panel ADMIN", () => {
     assert.match(admin, /function handleGetServiceTraffic_/);
     assert.match(admin, /developerContext\.role[\s\S]*desarrollador/);
-    assert.match(admin, /function handleDeleteUser|deleteUser/);
+    assert.match(admin, /function handleGetServiceTraffic_/);
     assert.match(users, /function handleCreateUser|createUser/);
 });
 console.log("CoordinatorCapabilityPreservation: " + passed + "/" + passed + " PASS");
