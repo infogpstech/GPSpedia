@@ -6309,22 +6309,46 @@ function handleUploadAdminImage(payload, logMessage) {
                 if (latestLinkedUrl === newImageUrl) {
                     const linkedFileId = String(values[5] || extractDriveFileId(newImageUrl) || "");
                     if (!linkedFileId) throw new Error("La operación figura vinculada, pero no contiene un ID de archivo verificable.");
-                    try { newFile = DriveApp.getFileById(linkedFileId); }
-                    catch (fileLookupError) {
+                    const linkedDriveCheck = runAdminDriveWorkOutsideScriptLock_(lock, operationId, function() {
+                        let linkedFile = null, reviewReason = "";
+                        try { linkedFile = DriveApp.getFileById(linkedFileId); }
+                        catch (fileLookupError) {
+                            reviewReason = "El archivo de una operación vinculada ya no está disponible en Drive. No se modificó la referencia activa.";
+                        }
+                        if (linkedFile && !reviewReason && linkedFile.isTrashed()) {
+                            reviewReason = "El archivo de una operación ya vinculada fue enviado a papelera posteriormente. No se reactivó automáticamente ni se modificó la referencia activa.";
+                        }
+                        if (linkedFile && !reviewReason) {
+                            try { verifyAdminImageUploadFile(linkedFile, actualMimeType, contentHash); }
+                            catch (integrityError) {
+                                reviewReason = "El archivo de una operación vinculada no superó la verificación de integridad. No se modificó la referencia activa: " + integrityError.message;
+                            }
+                        }
+                        newFile = linkedFile;
+                        return { file: linkedFile, reviewReason };
+                    }, function(result) {
+                        const latestRow = findUniqueAdminVehicleRow_(sheet, String(vehicleId).trim());
+                        const latestValues = sheet.getRange(latestRow, 1, 1, sheet.getLastColumn()).getValues()[0];
+                        const latestCell = sheet.getRange(latestRow, colIndex);
+                        const latestOperation = findAdminImageUploadOperation(operationSheet, operationId);
+                        if (!latestOperation || String(latestOperation.values[1]) !== String(vehicleId) ||
+                            String(latestOperation.values[2]) !== fieldName || String(latestOperation.values[6]) !== contentHash ||
+                            String(latestOperation.values[9]) !== "linked" || String(latestOperation.values[4] || "") !== newImageUrl) {
+                            throw new Error("El ledger de una operación vinculada cambió durante la verificación; requiere reintento.");
+                        }
+                        actualRow = latestRow; rowValues = latestValues; activeCell = latestCell; operationRecord = latestOperation;
+                        return Object.assign({}, result, { superseded: String(latestCell.getValue() || "").trim() !== newImageUrl });
+                    });
+                    newFile = linkedDriveCheck.file;
+                    if (linkedDriveCheck.reviewReason) {
                         return markAdminImageUploadRequiresReview_(operationSheet, operationRecord, operationId, originalUrl,
-                            "El archivo de una operación vinculada ya no está disponible en Drive. No se modificó la referencia activa.",
-                            logMessage, null, contentHash);
+                            linkedDriveCheck.reviewReason, logMessage, newFile, contentHash);
                     }
-                    if (newFile.isTrashed()) {
-                        return markAdminImageUploadRequiresReview_(operationSheet, operationRecord, operationId, originalUrl,
-                            "El archivo de una operación ya vinculada fue enviado a papelera posteriormente. No se reactivó automáticamente ni se modificó la referencia activa.",
-                            logMessage, newFile, contentHash);
-                    }
-                    try { verifyAdminImageUploadFile(newFile, actualMimeType, contentHash); }
-                    catch (integrityError) {
-                        return markAdminImageUploadRequiresReview_(operationSheet, operationRecord, operationId, originalUrl,
-                            "El archivo de una operación vinculada no superó la verificación de integridad. No se modificó la referencia activa: " + integrityError.message,
-                            logMessage, newFile, contentHash);
+                    if (linkedDriveCheck.superseded) {
+                        return {
+                            status: "success", imageUrl: newImageUrl, currentImageUrl: String(activeCell.getValue() || "").trim(), superseded: true,
+                            message: "El intento ya se había completado, pero el campo fue actualizado posteriormente."
+                        };
                     }
                     if (originalUrl) {
                         try {
@@ -6342,14 +6366,26 @@ function handleUploadAdminImage(payload, logMessage) {
                                 logMessage, newFile, contentHash);
                         }
                     }
-                    try { updateAdminImageUploadFileState_(newFile, operationId, contentHash, "linked", false); }
-                    catch (descriptionError) {
+                    try {
+                        runAdminDriveWorkOutsideScriptLock_(lock, operationId, function() {
+                            updateAdminImageUploadFileState_(newFile, operationId, contentHash, "linked", false);
+                            return true;
+                        }, function() {
+                            const latestOperation = findAdminImageUploadOperation(operationSheet, operationId);
+                            if (!latestOperation || String(latestOperation.values[9]) !== "linked" ||
+                                String(latestOperation.values[4] || "") !== newImageUrl) {
+                                throw new Error("El ledger cambió antes de confirmar metadata Drive.");
+                            }
+                            operationRecord = latestOperation;
+                            return true;
+                        });
+                    } catch (descriptionError) {
                         return markAdminImageUploadRequiresReview_(operationSheet, operationRecord, operationId, originalUrl,
                             "No se pudo verificar el estado del archivo de una operación ya vinculada: " + descriptionError.message,
                             logMessage, newFile, contentHash);
                     }
                     return {
-                        status: "success", imageUrl: newImageUrl, currentImageUrl: latestLinkedUrl,
+                        status: "success", imageUrl: newImageUrl, currentImageUrl: newImageUrl,
                         message: "El reemplazo ya estaba completado; se recuperó la confirmación."
                     };
                 }

@@ -453,3 +453,10 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Si no se puede readquirir el lock, conservar ledger/archivo en estado pendiente y solicitar reintento con el mismo `opId`; `finally` libera solo si conserva el lock.
 - [x] CI `44571281616` SUCCESS: 162 suites, 2,289 pruebas aprobadas, 0 fallos; `AdminImageUploadDriveIsolation` 9/9 y `AdminVehicleFolderSyncOutsideLock` 7/7. Health read-only `44571281679` SUCCESS.
 - [ ] Aislar la rama de recuperación `status === linked` (lectura/verificación Drive e historial) y las operaciones Drive de compensación del `catch`; actualmente aún se ejecutan bajo ScriptLock.
+
+### ADMIN — recuperación de reemplazos ya vinculados fuera del ScriptLock (2026-11-19)
+- [x] Mover lookup, comprobación de papelera e integridad de archivos de operaciones `linked` fuera del ScriptLock.
+- [x] Revalidar fila/vehículo y ledger `opId` (estado, URL, campo y huella) antes de recuperar historial.
+- [x] Mover actualización final de metadata Drive fuera del lock y revalidar ledger antes de confirmarla.
+- [x] Añadir `AdminImageUploadLinkedRecoveryIsolation.mjs` al runner.
+- [ ] CI y revisión de rutas de error pendientes.
