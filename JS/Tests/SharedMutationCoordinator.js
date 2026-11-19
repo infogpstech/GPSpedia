@@ -1104,6 +1104,45 @@ function runSharedMutationCoordinatorTests() {
         assert_(store.size === 0);
     });
 
+    test_("El cliente AUTH conserva revocación individual y global usando invalidación central", function() {
+        const remoteCalls = [];
+        const r = createRuntime_(null, function(url, options) {
+            const request = JSON.parse(options.payload);
+            const target = url.includes("WRITE") ? "WRITE" : "FEEDBACK";
+            remoteCalls.push({ target, tokens: request.payload.sessionTokens.slice() });
+            return { getResponseCode: () => 200,
+                getContentText: () => JSON.stringify({ status: "success", invalidated: request.payload.sessionTokens.length }) };
+        });
+        r.properties.setProperty("GPSpedia_SERVICE_URL_WRITE", "https://script.google.com/macros/s/WRITE/exec");
+        r.properties.setProperty("GPSpedia_SERVICE_URL_FEEDBACK", "https://script.google.com/macros/s/FEEDBACK/exec");
+        const client = r.makeClient("AUTH");
+        const userId = "USR-REMOTE-REVOKE", token = "session-token-remote-revoke-0001", createdAt = 1700000000000;
+        r.request("registerSession", "AUTH", "registerSession", {
+            userId, sessionToken: token, role: "tecnico", fullName: "Técnico", createdAt, lastActivityAt: createdAt
+        });
+        const individual = client.revokeSession(userId, token);
+        assert_(individual.status === "success" && individual.revoked === true,
+            "La revocación individual debe conservar su resultado.");
+        expectThrow_(() => r.request("validateSessionContext", "AUTH", "validateSessionContext", {
+            userId, sessionToken: token
+        }), "revocada");
+
+        const sessions = Array.from({ length: 7 }, (_, index) => ({
+            token: "session-token-remote-bulk-" + String(index).padStart(4, "0"),
+            createdAt: createdAt + index + 1, lastActivityAt: createdAt + index + 1
+        }));
+        r.request("syncUserSessions", "AUTH", "syncUserSessions", {
+            userId, role: "desarrollador", fullName: "Developer", sessions
+        });
+        const bulk = client.revokeUserSessions(userId, sessions.map(item => item.token));
+        assert_(bulk.status === "success" && bulk.revoked === true,
+            "La revocación global debe conservar su resultado.");
+        expectThrow_(() => r.request("validateSessionContext", "AUTH", "validateSessionContext", {
+            userId, sessionToken: sessions[6].token
+        }), "revocada");
+        assert_(remoteCalls.length === 6, "Las invalidaciones individual y global deben llegar a WRITE y FEEDBACK.");
+    });
+
     test_("Coordinator centraliza invalidación remota por lotes para WRITE y FEEDBACK", function() {
         const calls = [];
         const r = createRuntime_(null, function(url, options) {
