@@ -611,3 +611,13 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - No se modificó código, no se ejecutaron acciones de Drive/Spreadsheet y no se movieron, renombraron ni eliminaron imágenes.
 - Estado: auditoría estática del organizador completada; consola, rutas, nomenclatura, alta de logos y protección integral de referencias pendientes de implementación y pruebas.
 ================================================================================
+
+
+================================================================================
+2026-11-18 — CONSOLA CENTRAL DE AUDITORÍA DE CORTES
+- Se sustituyeron los indicadores separados y la lista de tarjetas del modal por una consola cronológica accesible; registra lotes, rutas de carpetas visitadas, resultados individuales, conteos acumulados, advertencias y errores.
+- ADMIN ahora devuelve las rutas visitadas en cada página de auditoría. La confirmación afirmativa/negativa continúa ejecutándose desde la terminal global del Desarrollador, y su resultado se refleja en la consola del modal.
+- Se reforzó la conciliación de resultados del inventario: acepta no_confirmada, rechaza IDs extra/duplicados y compara los conteos del servidor con los estados individuales antes de habilitar la organización.
+- Archivos: JS/Services/admin.js, JS/Frontend/ui.js, index.html, style.css, JS/Tests/CortesImageReconciliationUI.mjs, JS/Tests/AdminImageScanCoordinatorContract.mjs.
+- La organización de Drive no se ejecutó ni se modificaron archivos, carpetas o Spreadsheet reales.
+================================================================================

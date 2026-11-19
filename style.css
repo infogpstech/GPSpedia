@@ -6377,3 +6377,44 @@ textarea.rich-text-source[hidden] { display:none !important; }
     grid-row:5;
 }
 
+
+
+/* Consola principal del modal de auditoría de Cortes. */
+#audit-drive-modal .audit-drive-console {
+    width: 100%; min-width: 0; margin: 0 0 12px; overflow: hidden;
+    border: 1px solid var(--gp-color-border, var(--border-color, #4b5563));
+    border-radius: 9px; background: #111827; color: #e5e7eb;
+}
+#audit-drive-modal .audit-drive-console-header {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    min-width: 0; padding: 9px 12px; border-bottom: 1px solid #374151;
+    background: #1f2937; color: #f9fafb;
+}
+#audit-drive-modal .audit-drive-console-header strong { font-size: .9rem; letter-spacing: .02em; }
+#audit-drive-modal .audit-drive-console-header span {
+    min-width: 0; color: #cbd5e1; font-size: .75rem; text-align: right;
+}
+#audit-drive-modal .audit-drive-console-output {
+    min-width: 0; max-height: min(52vh, 560px); min-height: 220px; overflow: auto;
+    padding: 9px 11px; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    overflow-wrap: anywhere; scrollbar-gutter: stable;
+}
+#audit-drive-modal .audit-drive-console-line {
+    display: grid; grid-template-columns: auto auto minmax(0, 1fr);
+    align-items: start; gap: 8px; padding: 2px 0; color: #e5e7eb;
+}
+#audit-drive-modal .audit-drive-console-line time { color: #9ca3af; white-space: nowrap; }
+#audit-drive-modal .audit-drive-console-level { min-width: 62px; color: #93c5fd; font-weight: 700; }
+#audit-drive-modal .audit-drive-console-line.is-progress .audit-drive-console-level { color: #93c5fd; }
+#audit-drive-modal .audit-drive-console-line.is-success .audit-drive-console-level { color: #86efac; }
+#audit-drive-modal .audit-drive-console-line.is-warning .audit-drive-console-level { color: #fcd34d; }
+#audit-drive-modal .audit-drive-console-line.is-error .audit-drive-console-level { color: #fca5a5; }
+#audit-drive-modal .audit-drive-console-message { min-width: 0; white-space: pre-wrap; }
+#audit-drive-modal #audit-drive-results-container[hidden] { display: none !important; }
+@media (max-width: 600px) {
+    #audit-drive-modal .audit-drive-console-output { min-height: 180px; max-height: 52vh; padding: 8px; }
+    #audit-drive-modal .audit-drive-console-line { grid-template-columns: auto minmax(0, 1fr); gap: 5px 8px; }
+    #audit-drive-modal .audit-drive-console-line time { grid-column: 1; }
+    #audit-drive-modal .audit-drive-console-level { grid-column: 2; min-width: 0; }
+    #audit-drive-modal .audit-drive-console-message { grid-column: 1 / -1; padding-left: 0; }
+}

@@ -149,4 +149,20 @@ testCase("el reporte es responsive y accesible",()=>{
  assert.match(css,/\.audit-drive-reconciliation-panel\[hidden\]/);
  assert.match(css,/@media \(max-width: 600px\)/);
 });
+
+testCase("la auditoría concentra progreso y resultados en la consola de Cortes",()=>{
+ assert.ok(ui.includes('id="audit-drive-console-output"'));
+ assert.ok(ui.includes("const appendAuditConsole ="));
+ assert.ok(ui.includes("const appendAuditBatchSummary ="));
+ assert.ok(ui.includes("response.foldersVisitedPaths"));
+ assert.ok(ui.includes("Carpeta recorrida:"));
+ assert.ok(ui.includes("Resumen acumulado:"));
+ assert.ok(ui.includes("window.gpsepediaRequestDeveloperConsoleConfirmation"));
+ assert.ok(ui.includes("responde «sí» o «no» en la terminal global del Desarrollador"));
+ assert.ok(ui.includes("'no_confirmada'"));
+ assert.ok(ui.includes("Los conteos del resumen ADMIN no coinciden con los resultados individuales"));
+ assert.ok(ui.includes("container.hidden = true"));
+ assert.ok(html.includes('id="audit-drive-results-container" hidden'));
+ assert.ok(css.includes(".audit-drive-console-output"));
+});
 console.log("CortesImageReconciliationUI: "+passed+"/"+passed+" PASS");

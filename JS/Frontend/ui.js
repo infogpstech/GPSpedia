@@ -8259,34 +8259,25 @@ export async function openAuditDriveModal() {
     };
 
     summaryEl.innerHTML = `
-        <div style="background:var(--card-bg); padding:10px; border-radius:6px; border:1px solid var(--border-color); display:flex; gap:15px; flex-wrap:wrap;">
-            <span>📁 <strong>Carpeta raíz:</strong> <span id="audit-root-name">Cortes</span> (<code id="audit-root-id"></code>)</span>
-            <span>🔎 <strong>Archivos descubiertos:</strong> <span id="audit-discovered-count">0</span></span>
-            <span>📊 <strong>Archivos analizados:</strong> <span id="audit-total-count">0</span></span>
-            <span>📂 <strong>Carpetas descubiertas (incluye raíz):</strong> <span id="audit-folder-count">1</span></span>
-            <span>🔁 <strong>Lotes recibidos:</strong> <span id="audit-batch-count">0</span></span>
-            <span>⏳ <strong>Carpetas en pila pendiente:</strong> <span id="audit-pending-folder-count">0</span></span>
-            <span>⚠️ <strong>Errores:</strong> <span id="audit-error-count">0</span></span>
-            <span>♻️ <strong>Archivos duplicados omitidos:</strong> <span id="audit-duplicate-file-count">0</span></span>
-            <span>📁 <strong>Carpetas duplicadas omitidas:</strong> <span id="audit-duplicate-folder-count">0</span></span>
-            <span><strong>Último escaneo:</strong> <span id="audit-last-scan-at">No disponible</span></span>
-            <span><strong>Versión ADMIN:</strong> <span id="audit-service-version">No disponible</span></span>
-            <span style="color:#28a745;">✅ <strong>En uso:</strong> <span id="audit-in-use-count">0</span></span>
-            <span style="color:#007bff;">🕒 <strong>Históricas:</strong> <span id="audit-historical-count">0</span></span>
-            <span style="color:#ffc107;">⚠️ <strong>Sin uso:</strong> <span id="audit-unused-count">0</span></span>
-            <span style="color:#dc3545;">❓ <strong>No verificables:</strong> <span id="audit-unverified-count">0</span></span>
-            <span><strong>Referencias no interpretables:</strong> <span id="audit-unknown-references">0</span></span>
-            <span id="audit-status" style="font-weight:600;">Recuperando el estado local...</span>
-        </div>
+        <section class="audit-drive-console" aria-label="Consola de auditoría de Cortes">
+            <header class="audit-drive-console-header">
+                <strong>Consola de Cortes</strong>
+                <span id="audit-drive-console-status" role="status">Lista para iniciar</span>
+            </header>
+            <div id="audit-drive-console-output" class="audit-drive-console-output"
+                 role="log" aria-live="polite" aria-relevant="additions text" tabindex="0">
+                <div class="audit-drive-console-line is-info">
+                    <span class="audit-drive-console-level">INFO</span>
+                    <span>La salida de auditoría, los lotes y los resultados aparecerán aquí.</span>
+                </div>
+            </div>
+        </section>
     `;
+    container.hidden = true;
+    container.setAttribute('aria-hidden', 'true');
 
-    const auditStatusEl = document.getElementById('audit-status');
-    const auditTotalEl = document.getElementById('audit-total-count');
-    const auditRootNameEl = document.getElementById('audit-root-name');
-    const auditRootIdEl = document.getElementById('audit-root-id');
-    const auditFolderCountEl = document.getElementById('audit-folder-count');
-    const auditBatchCountEl = document.getElementById('audit-batch-count');
-    const auditPendingFolderCountEl = document.getElementById('audit-pending-folder-count');
+    const auditConsoleOutput = document.getElementById('audit-drive-console-output');
+    const auditConsoleStatus = document.getElementById('audit-drive-console-status');
     const allFiles = [];
     const seenFileIds = new Set();
     const renderedFileIds = new Set();
@@ -8323,62 +8314,92 @@ export async function openAuditDriveModal() {
     let isRunning = false;
     let isReconciling = false;
 
+    const appendAuditConsole = (message, level = 'info') => {
+        if (!isCurrentRequest()) return;
+        const text = String(message === null || message === undefined ? '' : message).trim();
+        if (!text) return;
+        const allowed = ['info', 'progress', 'success', 'warning', 'error'];
+        const normalizedLevel = allowed.includes(level) ? level : 'info';
+        const labels = { info: 'INFO', progress: 'PROGRESO', success: 'OK', warning: 'AVISO', error: 'ERROR' };
+        if (!auditConsoleOutput) {
+            logDeveloperOperation_('[AUDITORÍA DRIVE] ' + text, normalizedLevel);
+            return;
+        }
+        const wasAtBottom = auditConsoleOutput.scrollHeight - auditConsoleOutput.scrollTop -
+            auditConsoleOutput.clientHeight < 48;
+        const line = document.createElement('div');
+        line.className = 'audit-drive-console-line is-' + normalizedLevel;
+        const timestamp = document.createElement('time');
+        timestamp.dateTime = new Date().toISOString();
+        timestamp.textContent = new Date().toLocaleTimeString();
+        const levelLabel = document.createElement('span');
+        levelLabel.className = 'audit-drive-console-level';
+        levelLabel.textContent = labels[normalizedLevel];
+        const content = document.createElement('span');
+        content.className = 'audit-drive-console-message';
+        content.textContent = text;
+        line.append(timestamp, levelLabel, content);
+        auditConsoleOutput.appendChild(line);
+        if (wasAtBottom) auditConsoleOutput.scrollTop = auditConsoleOutput.scrollHeight;
+        if (auditConsoleStatus && normalizedLevel === 'error') auditConsoleStatus.textContent = 'Con errores';
+        else if (auditConsoleStatus && normalizedLevel === 'warning') auditConsoleStatus.textContent = 'Requiere revisión';
+    };
+
     const appendFiles = (files) => {
         if (!isCurrentRequest()) return;
         files.forEach(file => {
             const fileId = String(file && file.fileId || '').trim();
             if (!/^[a-zA-Z0-9_-]{20,}$/.test(fileId) || renderedFileIds.has(fileId)) return;
             renderedFileIds.add(fileId);
-            if (file.classification !== 'Histórica' && file.classification !== 'Sin uso detectado') return;
-            const row = document.createElement('div');
-            row.style.cssText = "display:flex; justify-content:space-between; align-items:center; gap:10px; padding:8px; border:1px solid var(--border-color); border-radius:6px; font-size:0.8rem; background:var(--card-bg);";
-            if (String(file.mimeType || '').startsWith('image/')) {
-                const preview = document.createElement('img');
-                preview.style.cssText = "width:58px; height:58px; flex:0 0 58px; object-fit:contain; border-radius:4px; background:var(--surface-bg);";
-                preview.loading = 'lazy';
-                preview.alt = 'Vista previa de ' + (file.fileName || 'imagen');
-                preview.dataset.drivePreviewVerification = 'pending';
-                preview.onload = () => {
-                    preview.dataset.drivePreviewVerification = 'loaded';
-                    preview.title = 'Miniatura cargada en la sesión autorizada actual';
-                };
-                preview.onerror = () => {
-                    preview.dataset.drivePreviewVerification = 'unavailable';
-                    preview.onerror = null;
-                    preview.src = 'https://placehold.co/120x120/cccccc/333333?text=Sin+vista';
-                    preview.title = 'No se pudo cargar la miniatura con la sesión actual';
-                };
-                preview.src = getImageUrl(file.fileId, 120);
-                row.appendChild(preview);
-            }
-            const info = document.createElement('div');
-            info.style.cssText = "min-width:0; flex:1;";
-            const name = document.createElement('div');
-            name.style.cssText = "font-weight:600; min-width:0; max-width:100%; white-space:normal; overflow-wrap:anywhere; line-height:1.3;";
-            name.textContent = file.fileName || 'Archivo sin nombre';
-            name.title = file.fileName || 'Archivo sin nombre';
-            const details = document.createElement('div');
-            details.style.cssText = "font-size:0.75rem; color:var(--text-disabled);";
-            details.textContent = (file.folderPath || '') + ' | ' +
-                ((Number(file.size) || 0) / 1024).toFixed(1) + ' KB | ' +
-                (file.lastUpdated || 'Fecha no disponible');
-            info.appendChild(name);
-            info.appendChild(details);
-            const badge = document.createElement('span');
-            badge.style.cssText = "padding:3px 8px; border-radius:4px; font-weight:bold; font-size:0.75rem; white-space:nowrap;";
-            const badgeColors = {
-                'En uso': '#28a745',
-                'Histórica': '#007bff',
-                'Sin uso detectado': '#e0a800',
-                'No verificable': '#dc3545'
-            };
-            badge.style.backgroundColor = badgeColors[file.classification] || '#6c757d';
-            badge.style.color = '#fff';
-            badge.textContent = file.classification || 'No verificable';
-            row.appendChild(info);
-            row.appendChild(badge);
-            container.appendChild(row);
+            const classification = String(file.classification || 'No verificable');
+            const details = [
+                classification, String(file.folderPath || 'Ruta no disponible'),
+                String(file.fileName || 'Archivo sin nombre'), 'ID ' + fileId,
+                ((Number(file.size) || 0) / 1024).toFixed(1) + ' KB',
+                String(file.lastUpdated || 'Fecha no disponible')
+            ].join(' | ');
+            appendAuditConsole(details, classification === 'No verificable' ? 'warning' : 'info');
         });
+    };
+
+    const appendAuditBatchSummary = (response, files) => {
+        const byFolder = new Map();
+        (Array.isArray(files) ? files : []).forEach(file => {
+            const path = String(file && file.folderPath || 'Ruta no disponible');
+            if (!byFolder.has(path)) byFolder.set(path, { total: 0, inUse: 0, historical: 0, unused: 0, unverified: 0 });
+            const count = byFolder.get(path);
+            count.total++;
+            if (file.classification === 'En uso') count.inUse++;
+            else if (file.classification === 'Histórica') count.historical++;
+            else if (file.classification === 'Sin uso detectado') count.unused++;
+            else count.unverified++;
+        });
+        const visited = Array.isArray(response && response.foldersVisitedPaths)
+            ? response.foldersVisitedPaths.map(path => String(path || '')).filter(Boolean) : [];
+        const visitedSet = new Set(visited);
+        visited.forEach(path => {
+            const count = byFolder.get(path) || { total: 0, inUse: 0, historical: 0, unused: 0, unverified: 0 };
+            appendAuditConsole('Carpeta recorrida: ' + path + ' — ' + count.total + ' archivos; ' +
+                count.inUse + ' en uso, ' + count.historical + ' históricos, ' +
+                count.unused + ' sin uso y ' + count.unverified + ' no verificables.',
+                count.unverified ? 'warning' : 'progress');
+        });
+        byFolder.forEach((count, path) => {
+            if (visitedSet.has(path)) return;
+            appendAuditConsole('Resultados de carpeta: ' + path + ' — ' + count.total + ' archivos; ' +
+                count.inUse + ' en uso, ' + count.historical + ' históricos, ' +
+                count.unused + ' sin uso y ' + count.unverified + ' no verificables.',
+                count.unverified ? 'warning' : 'info');
+        });
+        appendAuditConsole('Lote ' + batches + ': ' + (Number(response && response.batchAnalyzed) || 0) +
+            ' archivos recibidos; ' + (Number(response && response.foldersVisited) || 0) +
+            ' carpetas acumuladas; ' + (Number(response && response.pendingFolderCount) || 0) +
+            ' carpetas pendientes; ' + (Number(response && response.errorCount) || 0) +
+            ' errores; ' + (Number(response && response.duplicateFileCount) || 0) +
+            ' archivos duplicados y ' + (Number(response && response.duplicateFolderCount) || 0) +
+            ' carpetas duplicadas omitidas; ' + (Number(response && response.unverifiableReferenceCount) || 0) +
+            ' referencias no interpretables.', Number(response && response.errorCount) > 0 ||
+                Number(response && response.unverifiableReferenceCount) > 0 ? 'warning' : 'progress');
     };
 
     const updateSummary = (statusText) => {
@@ -8389,28 +8410,33 @@ export async function openAuditDriveModal() {
             unused: allFiles.filter(file => file.classification === 'Sin uso detectado').length,
             unverified: allFiles.filter(file => file.classification === 'No verificable').length
         };
-        if (auditTotalEl) auditTotalEl.textContent = String(totalAnalyzed);
-        if (auditFolderCountEl) auditFolderCountEl.textContent = String(foldersVisited);
-        if (auditBatchCountEl) auditBatchCountEl.textContent = String(batches);
-        if (auditPendingFolderCountEl) auditPendingFolderCountEl.textContent = String(pendingFolderCount);
-        const setText = (id, value) => {
-            const element = document.getElementById(id);
-            if (element) element.textContent = String(value);
-        };
-        setText('audit-discovered-count', totalDiscovered);
-        setText('audit-error-count', errorCount);
-        setText('audit-duplicate-file-count', duplicateFileCount + uiDuplicateFileCount);
-        setText('audit-duplicate-folder-count', duplicateFolderCount);
-        setText('audit-last-scan-at', lastScanAt ? new Date(lastScanAt).toLocaleString() : 'No disponible');
-        setText('audit-service-version', serviceVersion || 'No disponible');
-        if (auditRootNameEl) auditRootNameEl.textContent = rootFolderName;
-        if (auditRootIdEl) auditRootIdEl.textContent = rootFolderId;
-        setText('audit-in-use-count', counts.inUse);
-        setText('audit-historical-count', counts.historical);
-        setText('audit-unused-count', counts.unused);
-        setText('audit-unverified-count', counts.unverified);
-        setText('audit-unknown-references', unverifiableReferences);
-        if (auditStatusEl) auditStatusEl.textContent = statusText || '';
+        if (statusText) {
+            const lower = String(statusText).toLowerCase();
+            const level = /error|fall|detuvo|no se pudo|no disponible|bloquead/.test(lower) ? 'warning' :
+                (complete ? 'success' : 'progress');
+            appendAuditConsole(statusText, level);
+        }
+        if (auditConsoleStatus) auditConsoleStatus.textContent =
+            complete ? 'Auditoría completa' : (isRunning ? 'En progreso' : 'Disponible');
+        appendAuditConsole('Resumen acumulado: ' + totalDiscovered + ' descubiertos, ' + totalAnalyzed +
+            ' analizados, ' + foldersVisited + ' carpetas recorridas, ' + batches + ' lotes; ' +
+            counts.inUse + ' en uso, ' + counts.historical + ' históricas, ' + counts.unused +
+            ' sin uso y ' + counts.unverified + ' no verificables. Errores: ' + errorCount +
+            '; duplicados: ' + (duplicateFileCount + uiDuplicateFileCount) + ' archivos y ' +
+            duplicateFolderCount + ' carpetas; referencias no interpretables: ' + unverifiableReferences + '.',
+            errorCount || unverifiableReferences ? 'warning' : (complete ? 'success' : 'info'));
+    };
+
+    const requestAuditConsoleConfirmation = async (message) => {
+        if (typeof window.gpsepediaRequestDeveloperConsoleConfirmation !== 'function') {
+            appendAuditConsole('No está disponible la terminal de confirmación del Desarrollador. No se ejecutó la operación.', 'error');
+            return false;
+        }
+        appendAuditConsole('Confirmación requerida: responde «sí» o «no» en la terminal global del Desarrollador.', 'warning');
+        const accepted = await window.gpsepediaRequestDeveloperConsoleConfirmation(message);
+        appendAuditConsole(accepted ? 'Confirmación afirmativa recibida desde la terminal del Desarrollador.' :
+            'Confirmación cancelada o vencida. No se ejecutó la operación.', accepted ? 'success' : 'warning');
+        return accepted === true;
     };
 
     const persistState = async (status, extra = {}) => {
@@ -8479,11 +8505,11 @@ export async function openAuditDriveModal() {
             try { await persistState('complete'); }
             catch (error) { inventoryMessage += ' No se pudo guardar el estado local: ' + String(error && error.message || error); }
             updateSummary(inventoryMessage);
-            logDeveloperOperation_("[AUDITORÍA DRIVE] " + inventoryMessage, "info");
+            appendAuditConsole(inventoryMessage, "info");
             updateControls();
             return;
         }
-        if (!window.gpsepediaRequestDeveloperConsoleConfirmation || !(await window.gpsepediaRequestDeveloperConsoleConfirmation(
+        if (!(await requestAuditConsoleConfirmation(
             '¿Registrar ' + unusedFiles.length + ' imágenes sin uso en la hoja «Imagenes_Reemplazadas» de Spreadsheet? Esta acción escribe un inventario, pero no mueve archivos ni cambia URLs o permisos.'
         ))) return;
 
@@ -8506,7 +8532,7 @@ export async function openAuditDriveModal() {
                 inventoryStatus = 'error';
                 inventoryMessage = 'No existe un auditId de ADMIN verificable para registrar el inventario. No se escribió en Spreadsheet.';
                 updateSummary(inventoryMessage);
-                logDeveloperOperation_("[AUDITORÍA DRIVE] " + inventoryMessage, "error");
+                appendAuditConsole(inventoryMessage, "error");
                 return;
             }
 
@@ -8531,27 +8557,51 @@ export async function openAuditDriveModal() {
                 const submittedIds = new Set(unusedFiles.map(item => String(item.fileId || '')).filter(id => /^[a-zA-Z0-9_-]{20,}$/.test(id)));
                 const resultsBySubmittedId = new Map();
                 inventoryResult.results.forEach(item => {
-                    if (!item || !submittedIds.has(String(item.fileId || ''))) return;
-                    const fileId = String(item.fileId);
+                    const fileId = String(item && item.fileId || '');
+                    if (!item || !submittedIds.has(fileId)) {
+                        throw new Error('ADMIN devolvió un resultado vacío o no solicitado para el inventario.');
+                    }
                     if (resultsBySubmittedId.has(fileId)) {
                         throw new Error('ADMIN devolvió resultados duplicados para una imagen; revisa el inventario antes de organizar.');
                     }
-                    if (!['confirmado', 'bloqueado', 'error'].includes(String(item.status || ''))) {
+                    if (!['confirmado', 'bloqueado', 'error', 'no_confirmada'].includes(String(item.status || ''))) {
                         throw new Error('ADMIN devolvió un estado de inventario no reconocido para una imagen.');
                     }
-                    resultsBySubmittedId.set(fileId, String(item.status));
+                    resultsBySubmittedId.set(fileId, item);
                 });
                 if (resultsBySubmittedId.size !== submittedIds.size) {
                     throw new Error('ADMIN no devolvió un resultado individual para cada imagen enviada; no se habilitará la organización.');
                 }
-                inventoryConfirmedFileIds = Array.from(submittedIds).filter(fileId => resultsBySubmittedId.get(fileId) === 'confirmado');
+                const countStatus = status => Array.from(resultsBySubmittedId.values())
+                    .filter(item => item.status === status).length;
+                const confirmedCount = countStatus('confirmado');
+                const blockedCount = countStatus('bloqueado');
+                const errorCount = countStatus('error');
+                const noLongerConfirmedCount = countStatus('no_confirmada');
+                const serverCounts = {
+                    saved: Number(inventoryResult.savedCount),
+                    blocked: Number(inventoryResult.blockedCount),
+                    errors: Number(inventoryResult.errorCount),
+                    stale: Number(inventoryResult.noLongerConfirmedCount)
+                };
+                if (!Number.isInteger(serverCounts.saved) || serverCounts.saved !== confirmedCount ||
+                    !Number.isInteger(serverCounts.blocked) || serverCounts.blocked !== blockedCount ||
+                    !Number.isInteger(serverCounts.errors) || serverCounts.errors !== errorCount ||
+                    !Number.isInteger(serverCounts.stale) || serverCounts.stale !== noLongerConfirmedCount) {
+                    throw new Error('Los conteos del resumen ADMIN no coinciden con los resultados individuales. No se habilitará la organización.');
+                }
+                inventoryConfirmedFileIds = Array.from(submittedIds).filter(fileId => resultsBySubmittedId.get(fileId).status === 'confirmado');
+                resultsBySubmittedId.forEach((item, fileId) => {
+                    const file = allFiles.find(candidate => String(candidate.fileId) === fileId);
+                    const level = item.status === 'error' ? 'error' :
+                        (item.status === 'bloqueado' ? 'warning' : (item.status === 'confirmado' ? 'success' : 'info'));
+                    appendAuditConsole('Inventario — ' + String(file && file.fileName || fileId) + ' (' + fileId + '): ' +
+                        item.status + (item.message ? ' — ' + item.message : ''), level);
+                });
                 inventoryStatus = 'saved';
-                const blockedCount = Math.max(0, Number(inventoryResult.blockedCount) || 0);
-                const errorCount = Math.max(0, Number(inventoryResult.errorCount) || 0);
-                inventoryMessage = 'Inventario registrado. ' + (Number(inventoryResult.savedCount) || 0) +
-                    ' imágenes guardadas y ' + inventoryConfirmedFileIds.length +
-                    ' confirmadas para organización explícita. ' + blockedCount + ' bloqueadas y ' +
-                    errorCount + ' con error. No se movió ningún archivo.';
+                inventoryMessage = 'Inventario verificado: ' + confirmedCount + ' imágenes guardadas y confirmadas para organización explícita; ' +
+                    blockedCount + ' bloqueadas, ' + errorCount + ' con error y ' + noLongerConfirmedCount +
+                    ' que ya no estaban confirmadas. No se movió ningún archivo.';
             } catch (inventoryError) {
                 if (!isCurrentRequest()) return;
                 inventoryStatus = 'error';
@@ -8567,7 +8617,7 @@ export async function openAuditDriveModal() {
                     storageError.message;
             }
             updateSummary(inventoryMessage + localPersistenceWarning);
-            logDeveloperOperation_("[AUDITORÍA DRIVE] " + inventoryMessage + localPersistenceWarning,
+            appendAuditConsole(inventoryMessage + localPersistenceWarning,
                 inventoryStatus === "error" ? "error" : (localPersistenceWarning ? "warning" : "success"));
         } finally {
             isRunning = false;
@@ -8581,7 +8631,7 @@ export async function openAuditDriveModal() {
             !inventoryAuditId || !inventoryOperationId || !inventoryConfirmedFileIds.length ||
             isRunning || isDriveAuditRunning) return;
         const fileIds = Array.from(new Set(inventoryConfirmedFileIds));
-        if (!window.gpsepediaRequestDeveloperConsoleConfirmation || !(await window.gpsepediaRequestDeveloperConsoleConfirmation(
+        if (!(await requestAuditConsoleConfirmation(
             '¿Deseas mover ' + fileIds.length + ' imágenes confirmadas a «Imagenes_Sin_Uso»? ' +
             'Esta acción mueve archivos de Google Drive, pero no los elimina. Las ubicaciones marcadas como manuales se conservarán.'
         ))) return;
@@ -8611,8 +8661,9 @@ export async function openAuditDriveModal() {
                     alreadyOrganizedCount + ' ya organizadas, ' + manualPreservedCount +
                     ' ubicaciones manuales conservadas, ' + failedCount + ' fallidas y ' + blockedCount + ' bloqueadas.';
                 await persistState('complete');
-                logDeveloperOperation_("[ORGANIZACIÓN DRIVE] Lote " + Math.ceil((offset + batch.length) / batchSize) +
-                    " de " + Math.ceil(fileIds.length / batchSize) + " guardado. " + inventoryMessage, "info");
+                appendAuditConsole("Lote de organización " + Math.ceil((offset + batch.length) / batchSize) +
+                    " de " + Math.ceil(fileIds.length / batchSize) + " confirmado. " + inventoryMessage +
+                    (result.folderPath ? " Destino: " + result.folderPath : ""), "progress");
             }
             const completed = movedCount + alreadyOrganizedCount + manualPreservedCount === fileIds.length &&
                 failedCount === 0 && blockedCount === 0 && loggingErrorCount === 0;
@@ -8631,7 +8682,7 @@ export async function openAuditDriveModal() {
                 try { await persistState('complete'); }
                 catch (storageError) { inventoryMessage += ' No se pudo guardar localmente el resultado: ' + storageError.message; }
                 updateSummary(inventoryMessage);
-                logDeveloperOperation_("[ORGANIZACIÓN DRIVE] " + inventoryMessage,
+                appendAuditConsole(inventoryMessage,
                     inventoryStatus === "organized" ? "success" : "warning");
             }
             isRunning = false;
@@ -8733,7 +8784,7 @@ export async function openAuditDriveModal() {
         isRunning = true;
         isDriveAuditRunning = true;
         updateControls();
-        logDeveloperOperation_(resume ? "[AUDITORÍA DRIVE] Reanudando desde el último lote confirmado." : "[AUDITORÍA DRIVE] Iniciando recorrido de Cortes.", "info");
+        appendAuditConsole(resume ? "Reanudando desde el último lote confirmado." : "Iniciando recorrido recursivo de la carpeta Cortes.", "info");
 
         try {
             if (resume) {
@@ -8769,6 +8820,8 @@ export async function openAuditDriveModal() {
                 inventoryConfirmedFileIds = [];
                 auditId = '';
                 auditStartedAt = Date.now();
+                if (auditConsoleOutput) auditConsoleOutput.replaceChildren();
+                appendAuditConsole('Nueva auditoría iniciada. Los resultados se mostrarán en esta consola.', 'info');
                 localStateRevision = 0;
                 localPageCount = 0;
                 pendingBatchIndex = null;
@@ -8873,19 +8926,20 @@ export async function openAuditDriveModal() {
                     seenCursorSignatures.add(signature);
                 }
 
+                appendAuditBatchSummary(response, uniqueResponseFiles);
                 appendFiles(uniqueResponseFiles);
                 const batchStatusMessage = complete
                     ? 'Recorrido del árbol finalizado. Verificando el inventario...'
                     : 'Auditoría en progreso: ' + totalAnalyzed + ' archivos analizados; lote actual: ' + batchSize + '.';
                 updateSummary(batchStatusMessage);
-                logDeveloperOperation_("[AUDITORÍA DRIVE] " + batchStatusMessage, "info");
+                appendAuditConsole(batchStatusMessage, "progress");
 
                 await persistState(complete ? 'complete' : 'running');
                 if (!isCurrentRequest()) return;
             }
 
             if (!allFiles.some(file => file.classification === 'Histórica' || file.classification === 'Sin uso detectado')) {
-                container.textContent = 'No se encontraron imágenes sin uso confirmadas en el árbol «Cortes».';
+                appendAuditConsole('No se encontraron imágenes sin uso confirmadas en el árbol «Cortes».', 'success');
             }
             const hasUnusedImages = allFiles.some(file => file.classification === 'Sin uso detectado');
             inventoryStatus = hasUnusedImages ? 'not_saved' : 'saved';
@@ -8895,7 +8949,7 @@ export async function openAuditDriveModal() {
             await persistState('complete');
             if (!isCurrentRequest()) return;
             updateSummary(inventoryMessage);
-            logDeveloperOperation_("[AUDITORÍA DRIVE] " + inventoryMessage,
+            appendAuditConsole(inventoryMessage,
                 errorCount || unverifiableReferences ? "warning" : "success");
         } catch (error) {
             if (!isCurrentRequest()) return;
@@ -8921,7 +8975,7 @@ export async function openAuditDriveModal() {
                 statusMessage += ' Además, no se pudo guardar el último estado local: ' + persistenceError.message;
             }
             updateSummary(statusMessage);
-            logDeveloperOperation_("[AUDITORÍA DRIVE] " + statusMessage, "error");
+            appendAuditConsole(statusMessage, "error");
         } finally {
             isRunning = false;
             isDriveAuditRunning = false;

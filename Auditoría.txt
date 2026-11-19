@@ -439,3 +439,13 @@ Alcance: revisión estática de JS/Frontend/ui.js, index.html y JS/Services/admi
 - BETA-ADMIN-CUT-IMAGE-ORGANIZER-STRUCTURE-01, REGISTRATION-CONSISTENCY-01, NAMING-01 y FUNCTION-CODES-01: brechas confirmadas en código; implementación y pruebas pendientes.
 - Orden recomendado: (1) consolidar la consola y la confirmación sin cambiar la semántica del backend; (2) implementar un diagnóstico/dry-run del organizador que compare Cortes, Logos, rutas y referencias sin mutar Drive; (3) corregir el constructor de rutas/nomenclatura y los flujos de alta; (4) habilitar movimientos solo después de revisión y pruebas de rollback/idempotencia.
 ================================================================================
+
+
+================================================================================
+2026-11-18 — ADENDA: PRECISIÓN DEL FLUJO DE CONFIRMACIÓN DE INVENTARIO
+================================================================================
+- Rectificación de interpretación en BETA-ADMIN-CUT-IMAGE-AUDIT-CONSOLE-01: la confirmación mediante la terminal global del Desarrollador no es un comportamiento que deba sustituirse por window.confirm. El requisito del usuario establece expresamente que la orden de confirmación se ejecuta desde esa consola.
+- La implementación actual ya exige la respuesta «sí/no» en dev-terminal-input antes de registrar inventario o mover imágenes. Esa barrera se conserva.
+- El defecto a corregir es la fragmentación de la salida y la falta de trazabilidad dentro del modal: progreso y resultados deben mostrarse también en la consola de Cortes, mientras la terminal del Desarrollador sigue siendo el punto de confirmación explícita.
+- La validación del inventario también debe reconocer el estado backend «no_confirmada» y conciliar savedCount/blockedCount/errorCount/noLongerConfirmedCount con los resultados individuales. No habilitar movimientos si el resumen no coincide.
+================================================================================

@@ -773,3 +773,11 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - No se modificó código ni se ejecutaron operaciones sobre Drive/Spreadsheet. No se movió, renombró, sobrescribió ni eliminó ningún archivo.
 - Siguiente paso inmediato: implementar BETA-ADMIN-CUT-IMAGE-AUDIT-CONSOLE-01 (consola única dentro del modal y confirmación explícita con resultados por archivo coherentes), preservando el backend de inventario y los permisos. Después construir un dry-run del organizador para Cortes/Logos y los ocho campos, comprobar referencias en todas las hojas y corregir rutas/nomenclatura/altas. No habilitar movimientos masivos hasta que el diagnóstico y rollback estén probados.
 - Estado: auditoría estática completada; implementación pendiente. Mantener intacta la rama base.
+
+
+### Implementación — consola de auditoría de Cortes (2026-11-18)
+- Se conserva el requisito de confirmar «sí/no» desde la terminal global del Desarrollador; no se sustituye por window.confirm. El modal incorpora una consola de salida principal y registra en ella la solicitud y el resultado de la confirmación.
+- Cambios preparados: consola cronológica dentro del modal; detalle por archivo con clasificación, ruta, nombre, ID, tamaño y fecha; resumen por lote y carpeta; rutas realmente visitadas devueltas por ADMIN; conteos acumulados y errores visibles.
+- Se corrigió la conciliación de resultados de inventario: se admite el estado backend no_confirmada; se rechazan resultados vacíos, IDs no solicitados y duplicados; savedCount, blockedCount, errorCount y noLongerConfirmedCount deben coincidir con los estados individuales antes de habilitar movimientos.
+- Pruebas de contrato ampliadas: CortesImageReconciliationUI y AdminImageScanCoordinatorContract. CI pendiente de confirmar en el nuevo HEAD.
+- No se ejecutaron acciones reales sobre Drive/Spreadsheet. La organización automática de imágenes continúa pendiente de la auditoría/implementación separada; no mover ni renombrar archivos hasta completar dry-run y protección de referencias.

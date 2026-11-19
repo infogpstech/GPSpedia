@@ -11177,6 +11177,7 @@ function handleAuditDriveImagesInCortesLocked_(payload, logMessage, developerCon
     const processed = loadDriveAuditSeenIds_(auditId, pageIndex), seenFileIds = new Set(processed.fileIds), seenFolderIds = new Set(processed.folderIds);
     const deduplicationLoadMs = Date.now() - deduplicationLoadStartedAt;
     const pageFileIds = [], pageFolderIds = [];
+    const visitedFolderPaths = new Map();
     if (!cursor && !seenFolderIds.has(DRIVE_FOLDER_ID)) { seenFolderIds.add(DRIVE_FOLDER_ID); pageFolderIds.push(DRIVE_FOLDER_ID); }
     const activeDriveIds = new Set(referenceSnapshot.activeDriveIds), historicalDriveIds = new Set(referenceSnapshot.historicalDriveIds), protectedDriveIds = new Set(referenceSnapshot.protectedDriveIds || []);
     let batchFiles = 0, batchFolders = 0, batchFileEntries = 0, batchFolderEntries = 0;
@@ -11186,6 +11187,7 @@ function handleAuditDriveImagesInCortesLocked_(payload, logMessage, developerCon
         batchFileEntries < batchFileEntriesLimit && batchFolderEntries < batchFolderEntriesLimit &&
         Date.now() - batchStartedAt < batchBudgetMs) {
         const current = stack[stack.length - 1], folder = getAuditFolderById(current.folderId);
+        visitedFolderPaths.set(String(current.folderId), String(current.path || rootFolder.getName()));
         if (!current.filesDone) {
             const files = current.fileToken ? DriveApp.continueFileIterator(current.fileToken) : folder.getFiles();
             while (files.hasNext() && batchFiles < batchFilesLimit && batchFileEntries < batchFileEntriesLimit &&
@@ -11261,7 +11263,8 @@ function handleAuditDriveImagesInCortesLocked_(payload, logMessage, developerCon
     };
     const response = { status: "success", auditId, serverCompletionVerified: complete, serviceVersion: ADMIN_SERVICE_VERSION, serverTimestamp,
         rootFolderName: rootFolder.getName(), rootFolderId: DRIVE_FOLDER_ID, batchAnalyzed: batchFiles, totalDiscovered, totalAnalyzed,
-        foldersVisited, pendingFolderCount: stack.length, errorCount, duplicateFileCount, duplicateFolderCount,
+        foldersVisited, foldersVisitedPaths: Array.from(visitedFolderPaths.values()), pendingFolderCount: stack.length,
+        errorCount, duplicateFileCount, duplicateFolderCount,
         complete, partial: !complete, unverifiableReferenceCount: referenceSnapshot.unverifiableReferenceCount,
         metrics, files: auditResults, cursor: nextCursor };
     const responseCacheKey = getDriveAuditResponseCacheKey_(auditId, inputFingerprint);

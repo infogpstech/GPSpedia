@@ -228,4 +228,11 @@ for (const action of adminCaseNames) {
     assert.ok(action === "ping" || action === "getServiceTraffic" || mutation(action) || read(action),
         "La acción ADMIN/" + action + " no está clasificada en el dispatcher compartido.");
 }
+
+assert.ok(admin.includes("const visitedFolderPaths = new Map()"),
+    "Cada página debe recopilar las rutas de carpetas realmente visitadas.");
+assert.ok(admin.includes("visitedFolderPaths.set(String(current.folderId), String(current.path || rootFolder.getName()))"),
+    "La consola debe recibir la ruta de cada carpeta procesada.");
+assert.ok(admin.includes("foldersVisitedPaths: Array.from(visitedFolderPaths.values())"),
+    "La respuesta de ADMIN debe exponer las rutas recorridas para su salida en consola.");
 console.log("AdminImageScanCoordinatorContract: 1/1 PASS");
