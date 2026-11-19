@@ -542,3 +542,15 @@ Alcance: inspección estática de JS/Services/admin.js y sus contratos. No se ej
 - CI en HEAD bb3f3a1fcf47d328f1ab51a4ab5dc3a93e2e3807: 146 suites, 2,157 pruebas aprobadas, 0 fallos; health y Pages SUCCESS.
 - Pendiente validación real tras desplegar ADMIN: la auditoría debe ejecutarse nuevamente para que el caché contenga folderPath. No se han ejecutado operaciones productivas.
 ================================================================================
+
+
+================================================================================
+2026-11-18 — ADENDA: discrepancia en códigos funcionales del organizador
+================================================================================
+- Evidencia: JS/Services/admin.js, helper mapCorteTypeToFunctionCode_ y constructor buildCortesImageOrganizerTargets_. El constructor ya derivaba ign/bomba/btn desde tipoCorte1/2/3, pero el sufijo dejaba btn sin número cuando era el primero. Los campos imgCableAlimen/2/3 se nombraban alim/alim2/shock.
+- Impacto: nomenclatura no uniforme y falta de trazabilidad para múltiples recursos de la misma función; el nombre propuesto no cumplía la serie explícita solicitada.
+- Severidad: MEDIA (consistencia del inventario y nomenclatura).
+- Corrección aplicada en rama de trabajo: numeración por función para ign1..ign3, bomba1..bomba3 y btn1..btn3; campos de alimentación alim1..alim3; apert e imagenVehiculo se conservan.
+- Cobertura añadida: pruebas dinámicas para tres slots de cada tipo de corte, tres alimentaciones y apertura. CI pendiente al registrar esta adenda.
+- Límite: no se inspeccionaron datos productivos ni se movieron/renombraron archivos; el preview real sigue pendiente de despliegue ADMIN y nueva auditoría Drive.
+================================================================================
