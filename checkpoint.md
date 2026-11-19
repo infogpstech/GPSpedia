@@ -861,3 +861,14 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - Preview Inbox: helper 127343103bd6d799d50244e6ba2532b8cc99070b; pruebas Inbox actualizadas, último commit 2cc6c7af70057e1c01198d26b18c66dd9d8ef1cb.
 - No se afirma CI ni validación Beta. El último HEAD anotado corresponde al commit de Auditoría.txt; este checkpoint y los siguientes registros avanzarán el HEAD.
 - Siguiente ejecución: completar pruebas de contratos versionados/compatibilidad de Coordinator y SharedMutationClient; después revisar configuración de secretos con fallback legacy sin consultar valores remotos. Continuar con controles ADMIN, Inbox restante y auditoría/organizador de imágenes. No desplegar hasta cerrar todas las implementaciones y regresión integral.
+
+### Continuidad — contrato versionado e invalidación remota central — 2026-11-19
+- HEAD antes de registrar este checkpoint: 892706fed8049447ef059e9808d9b2ba949a335f. Rama GPSpedia2.2.5_work; rama base protegida GPSpedia2.2.5 = d9acc68d889985c2e2f42fe3a02e502efc86ead1 (compare: ahead, behind 0). No modificar base.
+- Coordinator 1.4.2/1.4.3 y SharedMutationClient incorporan protocolo POST v1. El cliente envía protocolVersion:1; Coordinator acepta clientes antiguos sin campo como v1 y rechaza versiones no soportadas.
+- La invalidación remota de caché se centralizó: AUTH → Coordinator → WRITE/FEEDBACK. Coordinator usa GPSpedia_COORDINATOR_SECRET_WRITE/FEEDBACK y las URLs GPSpedia_SERVICE_URL_WRITE/FEEDBACK; valida ambas configuraciones antes de enviar, subdivide lotes y exige confirmación exacta.
+- SharedMutationClient dejó de almacenar/conocer URLs y secretos de WRITE/FEEDBACK para la invalidación. El orden se mantiene: confirmar borrado remoto antes de revocar el contexto central. Los errores parciales fallan cerrados y se pueden reintentar de forma idempotente.
+- Las acciones de registro, sincronización y revocación siguen exclusivas de AUTH. La validación de sesión sigue permitida a cada servicio activo con su propio secreto.
+- Pruebas aisladas: SharedMutationCoordinator 74/74 PASS. Se cubren protocolo legacy/v1, versión desconocida, identidad por servicio, invalidación remota en lotes, fallo parcial, reintento, revocación individual y global.
+- Configuración pendiente por entorno para la futura Beta: crear GPSpedia_SERVICE_URL_WRITE y GPSpedia_SERVICE_URL_FEEDBACK en ScriptProperties del Coordinator, apuntando a los endpoints del mismo entorno. No se leyeron ni modificaron valores remotos.
+- No se desplegó Apps Script ni se alteraron secrets, ScriptProperties, Drive o Spreadsheet. CI integral y Beta siguen pendientes.
+- Siguiente tarea de implementación: catálogo canónico de URLs/secretos con fallback legacy y matriz de despliegue mínimo. Después continuar controles ADMIN, Inbox y auditoría/organizador de imágenes. La etapa Beta permanece bloqueada hasta cerrar toda implementación y regresión integral.
