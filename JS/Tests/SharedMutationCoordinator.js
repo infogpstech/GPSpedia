@@ -1103,6 +1103,43 @@ function runSharedMutationCoordinatorTests() {
         assert_(store.size === 0);
     });
 
+    test_("Cada servicio valida sesiones con su propia identidad y secreto", function() {
+        const r = createRuntime_();
+        const userId = "USR-SERVICE-VALIDATION";
+        const token = "session-token-service-validation-0001";
+        const createdAt = 1700000000000;
+        r.request("registerSession", "AUTH", "registerSession", {
+            userId, sessionToken: token, role: "tecnico", fullName: "Técnico",
+            createdAt, lastActivityAt: createdAt
+        });
+        const services = ["AUTH", "USERS", "WRITE", "ADMIN", "FEEDBACK", "UTILITIES"];
+        services.forEach(service => {
+            const client = r.makeClient(service);
+            const result = client.validateSessionContext(userId, token, service);
+            assert_(result.status === "success" && result.valid === true &&
+                result.actor.userId === userId && result.actor.role === "tecnico",
+                service + " debe validar con su propio secreto.");
+        });
+        const traffic = r.request("getServiceTraffic", "ADMIN", "getServiceTraffic");
+        services.forEach(service => {
+            assert_(traffic.totals.last24Hours[service] >= 1,
+                "La validación debe atribuirse al servicio solicitante " + service + ".");
+        });
+        expectThrow_(() => r.makeClient("FEEDBACK").validateSessionContext(userId, token, "CATALOG"), "no autorizado");
+    });
+
+    test_("El cliente antiguo conserva la validación AUTH por defecto", function() {
+        const r = createRuntime_();
+        const userId = "USR-AUTH-DEFAULT", token = "session-token-auth-default-0001", createdAt = 1700000000000;
+        r.request("registerSession", "AUTH", "registerSession", {
+            userId, sessionToken: token, role: "jefe", fullName: "Jefe",
+            createdAt, lastActivityAt: createdAt
+        });
+        const result = r.makeClient("AUTH").validateSessionContext(userId, token);
+        assert_(result.status === "success" && result.actor.userId === userId,
+            "Los consumidores antiguos deben conservar el comportamiento por defecto AUTH.");
+    });
+
     const summary = { status: failed === 0 ? "PASS" : "FAIL", passed, failed, results };
     return summary;
 }
