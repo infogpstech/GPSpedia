@@ -177,3 +177,16 @@ El token de lease solo se transmite entre servicios Apps Script. No debe exponer
 ## Límites de esta entrega
 
 La instrumentación del navegador vive en `JS/Frontend/serviceTelemetry.js`, se conecta al router central `JS/Frontend/api-config.js` y forma parte del App Shell del Service Worker. No se cambian endpoints públicos de servicios existentes ni se realizan deployments o pruebas contra Spreadsheet/Drive productivos. La activación requiere desplegar/configurar primero el coordinador de cada entorno y después actualizar los proyectos de servicio. Las pruebas reales de concurrencia entre proyectos y la validación de deployments quedan diferidas a Beta.
+
+
+## Matriz de impacto de cambios y despliegues
+
+- **Solo Coordinator:** cambios internos compatibles de autorización, leases, almacenamiento, monitoreo, agregación, orquestación y correcciones que mantengan las acciones y payloads existentes.
+- **Solo configuración de Coordinator:** cambios de URLs/secretos centrales por entorno que no alteren el contrato HTTP.
+- **Coordinator + consumidor(es) concretos:** una operación nueva requiere modificar únicamente los servicios que la invocarán. Los demás clientes siguen en protocolo v1.
+- **Consumidores afectados:** una corrección de código local en SharedMutationClient requiere actualizar los proyectos que contienen esa copia y dependen de la función corregida. No se deben actualizar los seis servicios por rutina si no utilizan el cambio.
+- **Cambios incompatibles:** no se publican retirando v1. Debe existir convivencia de versiones, migración gradual y pruebas de compatibilidad antes de retirar una versión antigua.
+
+La versión de software Coordinator es independiente del protocolo. La versión omitida por clientes legacy se interpreta como v1; los cambios internos no deben incrementar la versión de protocolo. La compatibilidad actual se valida en JS/Tests/SharedMutationCoordinator.js.
+
+Esta matriz reduce despliegues innecesarios, pero no elimina la necesidad de publicar un consumidor cuando su propio código local cambia. Tampoco se utiliza Apps Script Libraries como atajo: sus referencias versionadas también deben actualizarse en cada proyecto.
