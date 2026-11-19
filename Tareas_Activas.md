@@ -30,11 +30,11 @@ Normativa: NORMAS_DESAROLLO.md
 ### Fase 2 — Simplificación de arquitectura y configuración de servicios
 **P0 · IMPLEMENTACIÓN LOCAL BASE COMPLETADA; CONFIGURACIÓN Y VALIDACIÓN REMOTA PENDIENTES · SERVICE-ARCHITECTURE-SIMPLIFICATION-01**
 - Reducir el acoplamiento de despliegue: cambios internos compatibles de Coordinator se publican solo en Coordinator; una capacidad nueva del cliente solo requiere actualizar los consumidores que la utilicen.
-- Mantener SharedMutationClient como transporte versionado y estable. Coordinator conserva la autoridad sobre permisos, leases, sesiones, telemetría y orquestación remota.
-- **Capacidades innegociables:** salud de todos los servicios; restricciones/cambios de acceso; revocación individual y global; invalidación remota de caché en WRITE y FEEDBACK; cierre/eliminación remota de cuentas con recuperación/compensación. Deny-by-default, RBAC, actor confiable, leases, idempotencia, auditoría y rollback permanecen.
+- Coordinator conserva la autoridad sobre el ciclo de vida de sesión, revocaciones, invalidación remota y telemetría. Las leases se mantienen solo en los flujos que aún las requieren; ADMIN ya no adquiere leases por acción ordinaria.
+- **Capacidades innegociables:** salud de servicios; restricciones/cambios de acceso; revocación individual y global; invalidación remota de caché en WRITE, FEEDBACK y ADMIN; cierre/eliminación remota de cuentas con recuperación/compensación. Deny-by-default, RBAC, actor confiable, idempotencia, auditoría y rollback permanecen. La sección 15 de NORMAS_DESAROLLO.md prevalece sobre cualquier lease por acción ordinaria.
 - Auditoría y diseño: `Services/SERVICE_ARCHITECTURE_PLAN.md`.
 - [x] Protocolo POST v1 estable e independiente de la versión interna: SharedMutationClient envía `protocolVersion: 1`; Coordinator interpreta la ausencia del campo como v1 fijo, mantiene una lista explícita de versiones admitidas y rechaza versiones desconocidas antes de ejecutar acciones. Una futura versión debe convivir con v1; los cambios internos no deben exigir actualizar consumidores.
-- [x] Invalidación remota centralizada: AUTH solicita a Coordinator; Coordinator contacta WRITE/FEEDBACK con sus secretos individuales y URLs centralizadas. Prevalida configuración, subdivide lotes, exige confirmación exacta y admite reintentos idempotentes. Se conserva el orden invalidación→revocación; si hay fallo parcial, AUTH no avanza a revocar.
+- [x] Invalidación remota centralizada: AUTH solicita a Coordinator; Coordinator contacta WRITE, FEEDBACK y ADMIN con sus secretos individuales y URLs centralizadas. Prevalida configuración, subdivide lotes, exige confirmación exacta y admite reintentos idempotentes. Se conserva el orden invalidación→revocación; si hay fallo parcial, AUTH no avanza a revocar.
 - [x] Telemetría centralizada: Coordinator consulta en paralelo CATALOG/AUTH/USERS/WRITE/FEEDBACK y agrega sus contadores a los siete servicios; ADMIN consume un solo resultado global. Las fuentes parciales no anulan el agregado y los buckets corruptos/duplicados se ignoran con cobertura parcial.
 - [x] Simplificación inicial de secretos: AUTH/USERS/WRITE/FEEDBACK y CATALOG aceptan `GPSpedia_COORDINATOR_SECRET` para telemetría directa, con fallback a la propiedad antigua solo cuando el secreto nuevo no existe. ADMIN mantiene su consulta directa solo como compatibilidad temporal con Coordinator anterior a 1.4.5.
 - Catálogo canónico documentado en `Services/COORDINATOR_SETUP.md`: cada consumidor usa `GPSpedia_COORDINATOR_URL` y `GPSpedia_COORDINATOR_SECRET`; Coordinator mantiene valores criptográficos independientes por servicio y URLs centralizadas. CATALOG tiene secreto limitado a telemetría de solo lectura. No se comparten secretos entre servicios.
@@ -42,7 +42,7 @@ Normativa: NORMAS_DESAROLLO.md
 - Pruebas aisladas: SharedMutationCoordinator 77/77 PASS; ServiceBrowserTrafficContract 9/9; ServiceTrafficAggregatorContract PASS; ServiceTrafficAggregation 6/6; ServiceTrafficAdminContract 33/33 PASS tras el cambio central; InboxConversations 66/66. No se ejecutaron llamadas remotas reales ni CI integral.
 - Política de despliegue documentada en Services/SERVICE_ARCHITECTURE_PLAN.md y Services/COORDINATOR_SETUP.md: cambios internos compatibles requieren solo Coordinator; cambios aditivos afectan únicamente consumidores que invoquen la nueva operación; el cliente legacy v1 se mantiene.
 - Validación del protocolo: SharedMutationCoordinator 77/77 PASS tras fijar la compatibilidad legacy en v1 y comprobar clientes explícitos v1, legacy sin campo y rechazo de versiones inválidas.
-- Nueva prueba registrada en RunServiceTests.mjs: CoordinatorCapabilityPreservation 6/6 PASS. Verifica RBAC jerárquico, restricciones al último Desarrollador, orden de invalidación remota antes de cierre/revocación, desactivación segura y recuperación reintentable, y confirmación de WRITE/FEEDBACK.
+- Nueva prueba registrada en RunServiceTests.mjs: CoordinatorCapabilityPreservation 6/6 PASS. Verifica RBAC jerárquico, restricciones al último Desarrollador, orden de invalidación remota antes de cierre/revocación, desactivación segura y recuperación reintentable, con confirmación de WRITE/FEEDBACK/ADMIN.
 - La matriz de impacto de despliegue y el catálogo de configuración por servicio quedaron documentados. La implementación local base de esta fase se considera completa; quedan pendientes la configuración/verificación de cada entorno y la retirada de propiedades legacy en Beta autorizada. No desplegar en esta fase.
 
 ### Fase 3 — Inbox y aislamiento de operaciones
@@ -240,11 +240,14 @@ Aplicar la estructura objetivo después de validar el dry-run:
 - [ ] Beta: comprobar en Drive aislado que el archivo subido y el preview produzcan exactamente la misma ruta/nombre. No se creó ni movió ningún archivo productivo.
 
 
-## Adenda 2026-11-19 — ADMIN: simplificación de sesión en curso
+## Adenda 2026-11-19 — ADMIN: simplificación de sesión completada
 - El router ADMIN todavía envolvía lecturas y mutaciones ordinarias en leases del Coordinator, en contradicción directa con la sección 15 de NORMAS_DESAROLLO.md.
 - Corrección preparada: ADMIN usa el actor de sesión cacheado; las llamadas internas ADMIN→WRITE transmiten userId/sessionToken para que WRITE valide su propio actor cacheado. Se mantienen RBAC y auditoría de mutaciones.
-- La tarea permanece **EN PROGRESO** hasta aprobar las pruebas locales de contrato/regresión y revisar el diff publicado. No desplegar Apps Script ni invocar servicios remotos.
+- La tarea queda **COMPLETADA LOCALMENTE**: no hay leases ni llamadas de autorización a Coordinator en el router ADMIN; RBAC y auditoría se mantienen; ADMIN→WRITE usa credenciales de sesión y validación de actor cacheado en WRITE. La invalidación remota de caché incluye ADMIN.
 
 - CI run 44535834471 detectó contratos históricos que aún exigían token/lease ADMIN; se alinearon las pruebas con actor cacheado y se retiraron políticas ADMIN de lease obsoletas.
 
 - La segunda ejecución CI (run 44536463315) detectó dos errores en los contratos actualizados: escapes literales y delimitador de función incorrecto. Se corrigieron antes de reintentar.
+
+- CI final del cambio ADMIN, run 44539942784: **SUCCESS — 152 suites, 2,224 pruebas aprobadas, 0 fallos**. Health read-only 44539942669 SUCCESS; Pages 44539942102 SUCCESS. HEAD de cierre: 71894f2e4c391e13b7935738389967f4a8ebe083.
+- Siguiente tarea local: auditar los puntos restantes de adquisición de leases en AUTH/USERS/UTILITIES contra la sección 15; conservar solo las excepciones de sesión expresamente permitidas. Safe Apply del organizador sigue bloqueado hasta revisar un preview real de Drive y recibir autorización; no mover ni renombrar archivos.

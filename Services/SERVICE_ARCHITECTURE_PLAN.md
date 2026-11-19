@@ -16,7 +16,7 @@ No se permite eliminar ni degradar ninguna de estas capacidades:
 - Revocación individual y global de sesiones.
 - Invalidación remota de caché de contexto de sesión por usuario/token en los servicios consumidores.
 - Cierre/eliminación remota de cuentas y su flujo de recuperación/compensación.
-- Deny-by-default, RBAC, leases, exclusión de recursos compartidos, idempotencia y rollback.
+- Deny-by-default, RBAC y actor confiable permanecen. No se adquieren leases para acciones ordinarias ADMIN; las rutas de sesión/revocación conservan únicamente el mecanismo de invalidación dirigido.
 
 No cambiar secretos, ScriptProperties, deployments, hojas ni datos productivos durante la implementación local.
 
@@ -32,14 +32,14 @@ No cambiar secretos, ScriptProperties, deployments, hojas ni datos productivos d
 ### SharedMutationClient
 
 - `JS/Services/SharedMutationClient.js` se incluye como copia en AUTH, USERS, WRITE, ADMIN, FEEDBACK y UTILITIES.
-- Contiene transporte HTTP, adquisición/liberación de leases, publicación del feed, consulta de telemetría, sincronización de sesión y coordinación de revocaciones.
+- Contiene transporte HTTP, leases para consumidores que todavía las requieren, publicación del feed, consulta de telemetría, sincronización de sesión e invalidación de caché. ADMIN no utiliza leases para sus acciones ordinarias.
 - `invalidateSessionActorCaches()` envía los tokens a Coordinator con identidad AUTH; Coordinator contacta WRITE y FEEDBACK usando sus URLs y secretos propios. El cliente ya no conoce credenciales ni URLs ajenas.
 - `revokeSession()` y `revokeUserSessions()` conservan el orden invalidación remota confirmada antes de la revocación central.
 
 ### Configuración detectada
 
 - Cada consumidor mantiene `GPSpedia_COORDINATOR_URL` y `GPSpedia_COORDINATOR_SECRET`.
-- Coordinator mantiene seis secretos de autenticación por servicio y un secreto dedicado de lectura para CATALOG; además, centraliza cinco URLs de telemetría y dos URLs de invalidación remota.
+- Coordinator mantiene secretos de autenticación independientes por servicio y un secreto dedicado de lectura para CATALOG; además, centraliza URLs de telemetría y URLs de invalidación remota para WRITE, FEEDBACK y ADMIN.
 - AUTH, USERS, WRITE y FEEDBACK reutilizan su secreto Coordinator local para telemetría directa. CATALOG usa `GPSpedia_COORDINATOR_SECRET` con el secreto dedicado `GPSpedia_COORDINATOR_SECRET_CATALOG`.
 - Los secretos directos `GPSpedia_<SERVICIO>_TRAFFIC_SECRET` se conservan como fallback legacy. ADMIN aún conserva URLs/secretos directos para hablar con Coordinators anteriores a 1.4.4; el flujo actual no los necesita.
 - El frontend conserva URLs públicas para llamadas de servicio. ADMIN conserva las URLs de otros servicios únicamente para operaciones de administración que las requieren, además del fallback antiguo de telemetría.
@@ -64,8 +64,8 @@ No cambiar secretos, ScriptProperties, deployments, hojas ni datos productivos d
 ### C. Revocación e invalidación remota de caché
 
 1. Mantener la revocación central individual y por usuario, incluida la protección por epoch y los contextos segmentados.
-2. Mantener la invalidación de caché en WRITE y FEEDBACK; no sustituirla por expiración pasiva ni por un borrado solo local.
-3. **Implementado localmente:** operación central idempotente, confirmación individual de WRITE/FEEDBACK, lotes limitados y reintento seguro ante fallos parciales. No se declara éxito prematuramente.
+2. Mantener la invalidación de caché en WRITE, FEEDBACK y ADMIN; no sustituirla por expiración pasiva ni por un borrado solo local.
+3. **Implementado localmente:** operación central idempotente, confirmación individual de WRITE/FEEDBACK/ADMIN, lotes limitados y reintento seguro ante fallos parciales. No se declara éxito prematuramente.
 4. **Verificado en pruebas aisladas:** se conserva el orden invalidación remota confirmada antes de revocación central y actualización de AUTH/ActiveSessions.
 5. La eliminación/cierre de cuenta y los cambios de privilegio deben seguir revocando sesiones y conservar los marcadores de recuperación existentes.
 
@@ -80,7 +80,7 @@ No cambiar secretos, ScriptProperties, deployments, hojas ni datos productivos d
 ## 4. Secuencia de implementación
 
 1. **Contrato y pruebas de compatibilidad — IMPLEMENTADO LOCALMENTE:** protocolo POST v1 independiente de la versión de Coordinator. SharedMutationClient declara `protocolVersion: 1`; Coordinator interpreta la ausencia del campo como v1 para clientes antiguos y rechaza versiones desconocidas antes de ejecutar operaciones. Coordinator 1.4.5.
-2. **Orquestación central de invalidación y telemetría — IMPLEMENTADAS LOCALMENTE:** AUTH delega la invalidación de caché en Coordinator, que contacta WRITE/FEEDBACK con sus secretos y URLs individuales; además, Coordinator consulta en paralelo CATALOG/AUTH/USERS/WRITE/FEEDBACK para devolver la telemetría global final. Las fuentes parciales no descartan el agregado; buckets duplicados/corruptos se ignoran y se señalan. SharedMutationClient ya no conoce URLs/secretos de WRITE/FEEDBACK para invalidar caché. ADMIN consume el agregado global central y mantiene fallback temporal para Coordinator anterior a 1.4.4.
+2. **Orquestación central de invalidación y telemetría — IMPLEMENTADAS LOCALMENTE:** AUTH delega la invalidación de caché en Coordinator, que contacta WRITE/FEEDBACK/ADMIN con sus secretos y URLs individuales; además, Coordinator consulta en paralelo CATALOG/AUTH/USERS/WRITE/FEEDBACK para devolver la telemetría global final. ADMIN usa actor cacheado sin leases por acción; RBAC y auditoría se mantienen.
 3. **Migración de cliente y configuración canónica — EN PROGRESO:** conservar funciones públicas/adaptadores compatibles; unificar el secreto de telemetría con `GPSpedia_COORDINATOR_SECRET`, mantener fallback legacy seguro y centralizar URLs en Coordinator. CATALOG utiliza un secreto de lectura dedicado.
 4. **Cobertura de capacidades críticas:** probar salud, RBAC, restricciones, cambios de rol, revocación individual/global, limpieza remota de caché, cierre de cuenta y rollback.
 5. **Plan de despliegue mínimo:** matriz de qué proyectos requieren nueva versión por cambio. Validación Beta posterior a todas las implementaciones locales y con autorización.

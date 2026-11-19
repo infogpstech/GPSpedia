@@ -832,7 +832,7 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 ================================================================================
-2026-11-19 — ADMIN: RETIRO DE LEASES EN OPERACIONES ORDINARIAS (EN VALIDACIÓN)
+2026-11-19 — ADMIN: RETIRO DE LEASES EN OPERACIONES ORDINARIAS (COMPLETADO)
 - JS/Services/admin.js: dispatch con actor cacheado; conserva comprobaciones de rol y auditoría de mutaciones.
 - JS/Services/admin.js: llamadas internas a WRITE transmiten el contexto de sesión; WRITE valida su actor cacheado sin token de lease compartido.
 - JS/Tests/SessionActivityLeaseMinimization.mjs: contrato ampliado para exigir ausencia de leases en ADMIN y autenticación independiente de WRITE.
@@ -842,3 +842,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - CI run 44535834471: sintaxis ADMIN aprobada; contratos históricos de token ADMIN→WRITE y leases ADMIN requirieron actualización. Se alinearon pruebas y política Coordinator; nueva ejecución pendiente.
 
 - CI run 44536463315: sintaxis aprobada; se detectaron dos defectos en las pruebas de contrato actualizadas, no en los servicios. Se corrigieron y se repetirá la regresión.
+
+- Cierre verificado: CI run 44539942784 SUCCESS (152 suites, 2,224 pruebas, 0 fallos); health read-only 44539942669 SUCCESS; Pages 44539942102 SUCCESS. HEAD 71894f2e4c391e13b7935738389967f4a8ebe083.
+- ADMIN usa actor cacheado sin leases por acción; mantiene RBAC y auditoría. ADMIN→WRITE usa validación de actor cacheado en WRITE. AUTH→Coordinator invalida caché en WRITE/FEEDBACK/ADMIN. No hubo deployment Apps Script ni operaciones en Drive/Spreadsheet.

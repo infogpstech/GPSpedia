@@ -5,8 +5,8 @@
 - `JS/Services/Coordinator.js`: servicio Apps Script independiente. Mantiene las leases en ScriptProperties y no accede a Spreadsheet ni Drive.
 - `JS/Services/SharedMutationClient.js`: cliente servidor-a-servidor que debe incluirse en cada proyecto AUTH, USERS, WRITE, ADMIN, FEEDBACK y UTILITIES.
 - Los routers de esos servicios delegan las acciones mutadoras al coordinador antes de ejecutar sus handlers. Los locks locales existentes se conservan.
-- ADMIN declara `ACTIVE_SESSIONS` como `sharedWriteResources` para permitir consultas ADMIN concurrentes que únicamente actualizan `LastActivityAt`. Esta compatibilidad es cooperativa entre leases ADMIN; las escrituras normales de AUTH/USERS/WRITE/FEEDBACK/UTILITIES siguen bloqueándolas. No se debe usar esta modalidad para mutaciones adicionales de la hoja de sesiones.
-- En FEEDBACK, las lecturas autenticadas `getInboxRecipients`, `getInboxConversations` y `getInboxMessages` adquieren `FEEDBACK/sessionActivity`, que reserva `ACTIVE_SESSIONS` y actualiza `LastActivityAt`. Las mutaciones `createInboxConversation`, `sendInboxMessage`, `markInboxRead` y `archiveInboxConversation` reservan `ACTIVE_SESSIONS` y `FEEDBACK` durante la validación y escritura. `recordLike` reserva `ACTIVE_SESSIONS`, `CORTES`, `FEEDBACK` y `ACTIVITY`, porque su validación autenticada también actualiza la actividad de sesión.
+- ADMIN ya no declara `ACTIVE_SESSIONS` como `sharedWriteResources` ni adquiere leases para acciones ordinarias. Usa el actor de sesión cacheado y conserva la matriz RBAC/auditoría; logout y eliminación de cuenta invalidan su caché mediante el endpoint interno autenticado.
+- FEEDBACK usa el actor cacheado para lecturas y mutaciones autenticadas; no adquiere `FEEDBACK/sessionActivity` ni leases por acción. `recordLike` conserva sus escrituras funcionales en Cortes, Feedback y Activity sin bloquear una operación con viajes a Coordinator.
 
 ## Configuración de cada entorno
 
@@ -74,7 +74,7 @@ Acciones internas de contexto de sesión:
 
 Al cerrar sesión se revoca únicamente el token correspondiente. Los cambios de rol, eliminación de cuenta, cambios/restablecimientos de contraseña y restablecimientos globales de sesiones revocan el contexto antes de modificar los registros de la hoja.
 
-Los servicios `USERS`, `WRITE`, `ADMIN`, `FEEDBACK` y `UTILITIES` envían `userId` y `sessionToken` al adquirir la lease. El coordinador devuelve el actor verificado en esa misma respuesta; `SharedMutationClient` elimina cualquier actor enviado por el navegador y adjunta únicamente el actor recibido del coordinador. Los helpers de autorización consumen ese contexto sin repetir búsquedas de sesión en hojas. `USERS/updateProfile` conserva una búsqueda exacta de la fila del usuario porque necesita localizar la fila que modificará.
+USERS y UTILITIES conservan actualmente sus flujos coordinados específicos y requieren auditoría adicional contra la sección 15. WRITE, FEEDBACK y ADMIN validan el actor desde caché local para sus acciones ordinarias. ADMIN→WRITE transmite userId/sessionToken y WRITE valida su propio actor cacheado; no hay token de lease anidada.
 
 ### Protocolo HTTP interno (versión 1)
 
@@ -93,7 +93,7 @@ La consulta ADMIN `getServiceTraffic` devuelve el agregado final de siete servic
 - Cada fuente conserva su propio endpoint y responde con scope, totales y buckets; Coordinator valida identidad, scope y valores antes de agregarlos.
 - Una fuente ausente o con error se declara parcial sin descartar el agregado central ni las demás fuentes.
 - Los buckets inválidos o duplicados se ignoran y quedan señalados como cobertura parcial.
-- UTILITIES y ADMIN se contabilizan desde Coordinator; no se suman contadores directos para evitar duplicidad.
+- UTILITIES y las operaciones que aún adquieren leases se contabilizan desde Coordinator. ADMIN dejó de generar contadores por lease; no se añadirá escritura/llamada por acción para recuperar ese conteo porque la sección 15 prohíbe degradar el rendimiento por telemetría.
 - El endpoint global no devuelve secretos, tokens ni identidades.
 - Los secretos directos antiguos se mantienen únicamente como fallback de ADMIN cuando consulta un Coordinator anterior a 1.4.4.
 
@@ -105,14 +105,14 @@ El cambio es compatible con clientes anteriores que omiten el parámetro opciona
 
 ## Invalidación remota de caché (Coordinator 1.4.3)
 
-AUTH solicita a Coordinator la invalidación de tokens en WRITE y FEEDBACK. Coordinator usa las URLs `GPSpedia_SERVICE_URL_WRITE/FEEDBACK` y los secretos individuales ya configurados para cada servicio; los endpoints remotos conservan la acción interna `__invalidateSessionActorCache` y su verificación de secreto.
+AUTH solicita a Coordinator la invalidación de tokens en WRITE, FEEDBACK y ADMIN. Coordinator usa las URLs `GPSpedia_SERVICE_URL_WRITE/FEEDBACK/ADMIN` y los secretos individuales de cada servicio; los endpoints internos conservan `__invalidateSessionActorCache` y su verificación de secreto.
 
 - AUTH envía lotes de hasta 25 tokens al Coordinator; este los subdivide en grupos de cinco, según el límite de los endpoints remotos.
 - Coordinator valida previamente ambas URLs y ambos secretos antes de contactar cualquiera de los destinos.
 - La operación solo devuelve éxito cuando WRITE y FEEDBACK confirman el número exacto de tokens recibidos.
 - Si una respuesta se pierde o un destino falla después de que el otro ya invalidó, se puede repetir el mismo lote: `CacheService.remove` es idempotente y la operación no expone tokens en la respuesta.
 - La revocación central continúa después de confirmar la invalidación remota, conservando el orden actual. Si la invalidación falla, AUTH no avanza a revocar el contexto central y puede reintentar.
-- No se retiran los endpoints internos ni las comprobaciones de secreto de WRITE/FEEDBACK.
+- No se retiran los endpoints internos ni las comprobaciones de secreto de WRITE/FEEDBACK/ADMIN.
 
 AUTH ya no necesita conocer ni almacenar las URLs de WRITE/FEEDBACK para esta operación. Las propiedades antiguas pueden permanecer durante la transición; no se requiere borrarlas.
 
@@ -156,7 +156,7 @@ Para completar rutas POST que no pasan por Coordinator, cada servicio con rutas 
 - FEEDBACK: getPysData, getCatalogChanges y suggestYear anónimo (userId 0). sendContactForm y suggestYear autenticado mantienen el conteo Coordinator.
 - UTILITIES: migrateTimestamps obtiene una lease de Coordinator dentro de su handler; no tiene contador local para evitar doble conteo.
 - USERS: createUser y updateProfile pasan por Coordinator; getUsers reutiliza el actor cacheado y mantiene un contador directo local no bloqueante para no añadir un viaje de red por cada lectura.
-- ADMIN: las operaciones pasan por Coordinator; ping se excluye intencionalmente como sondeo.
+- ADMIN: las acciones ordinarias usan actor cacheado y no pasan por Coordinator ni adquieren leases; `getServiceTraffic` conserva su consulta específica de agregado global.
 
 ADMIN consulta los cinco contadores directos (CATALOG, AUTH, WRITE, FEEDBACK y USERS) en una sola operación agrupada con UrlFetchApp.fetchAll al refrescar el panel Developer. Si fetchAll falla globalmente, intenta los endpoints por separado; el fallo de una fuente no invalida las demás ni el agregado Coordinator. La consulta se ejecuta según el intervalo del panel (60 s), no por cada acción del usuario. El endpoint interno getServiceTraffic no se cuenta a sí mismo.
 
@@ -168,11 +168,11 @@ La interfaz Developer muestra el agregado global y, al seleccionar un servicio, 
 
 ## Política y recuperación
 
-La política de operaciones es deny-by-default. Si una acción mutadora no está registrada, se rechaza antes de ejecutar el handler. `migrateReplacedImagesSchema` tiene una política explícita limitada a `IMAGE_INVENTORY`; no reserva mantenimiento global. La actualización de `LastActivityAt` de ADMIN utiliza escritura cooperativa: dos leases ADMIN pueden coexistir cuando comparten únicamente esa actividad, pero cualquier lectura/escritura normal o mutación AUTH sobre `ACTIVE_SESSIONS` sigue generando conflicto. Si faltan URL/secreto, falla la llamada HTTP, la respuesta no es válida o el estado central está corrupto, la operación falla cerrada. `migrateCortesOperationIds` usa mantenimiento exclusivo tanto en simulación como en confirmación, porque ambas fases leen el mismo mapa de idempotencia. `migrateTimestamps` usa una lease de lectura/escritura por recursos; queda bloqueada por cualquier mantenimiento integral de ADMIN.
+La política de operaciones es deny-by-default. Los metadatos de recursos ADMIN se conservan para contratos de integridad, pero el router no adquiere leases ni llama a Coordinator por acción. `migrateReplacedImagesSchema`, inventario y organizador mantienen las comprobaciones funcionales y bloqueos locales estrictamente necesarios; no se serializan acciones independientes ni se mantiene un lock durante cargas. `migrateTimestamps` de UTILITIES conserva su lease actual y queda pendiente de auditoría frente a la sección 15. Si faltan credenciales de sesión o la caché fue invalidada, ADMIN falla cerrado.
 
 Las leases expiran a los 45 minutos, por encima del límite máximo habitual de ejecución de Apps Script, y se eliminan al adquirir/validar/liberar nuevas leases. Un cierre inesperado puede mantener recursos bloqueados hasta que venza la lease; no se libera una lease por suposición. El cliente libera en finally y registra únicamente el fallo de liberación, sin exponer tokens.
 
-El token de lease solo se transmite entre servicios Apps Script. No debe exponerse en frontend, localStorage, sessionStorage ni respuestas al navegador. ADMIN conserva una única lease durante reorganización/alta y la llamada anidada WRITE valida el token contra la lista de acciones permitidas.
+Los tokens de lease, cuando aún se usan en los servicios que conservan coordinación, solo se transmiten entre proyectos Apps Script y nunca al navegador. ADMIN no genera ni transmite tokens de lease; sus llamadas internas ADMIN→WRITE usan userId/sessionToken y validación de actor cacheado.
 
 ## Límites de esta entrega
 
@@ -201,9 +201,16 @@ Cada servicio conserva una identidad criptográfica distinta. La simplificación
 | AUTH | GPSpedia_COORDINATOR_SECRET | GPSpedia_COORDINATOR_SECRET_AUTH | Protocolo interno, leases, sesión y telemetría AUTH |
 | USERS | GPSpedia_COORDINATOR_SECRET | GPSpedia_COORDINATOR_SECRET_USERS | Protocolo interno, leases, sesión y telemetría USERS |
 | WRITE | GPSpedia_COORDINATOR_SECRET | GPSpedia_COORDINATOR_SECRET_WRITE | Protocolo interno, leases, sesión y telemetría WRITE |
-| ADMIN | GPSpedia_COORDINATOR_SECRET | GPSpedia_COORDINATOR_SECRET_ADMIN | Protocolo interno, leases y consulta global |
+| ADMIN | GPSpedia_COORDINATOR_SECRET | GPSpedia_COORDINATOR_SECRET_ADMIN | Validación de actor, invalidación interna de caché y consulta global; no leases ordinarias |
 | FEEDBACK | GPSpedia_COORDINATOR_SECRET | GPSpedia_COORDINATOR_SECRET_FEEDBACK | Protocolo interno, leases, sesión y telemetría FEEDBACK |
 | UTILITIES | GPSpedia_COORDINATOR_SECRET | GPSpedia_COORDINATOR_SECRET_UTILITIES | Protocolo interno, leases y sesión |
 | CATALOG | GPSpedia_COORDINATOR_SECRET | GPSpedia_COORDINATOR_SECRET_CATALOG | Solo lectura interna de telemetría; no habilita leases ni mutaciones |
 
 Los valores de la columna Coordinator son todos diferentes. No copiar el secreto de AUTH a otro proyecto. Cada consumidor configura además GPSpedia_COORDINATOR_URL con la URL del Coordinator del mismo entorno. Las URLs de servicios consultados directamente se centralizan como GPSpedia_SERVICE_URL_<SERVICIO> en Coordinator. Las propiedades antiguas *_TRAFFIC_SECRET quedan como fallback transitorio y se retiran únicamente después de migrar y validar Beta.
+
+
+## Actualización 2026-11-19 — ADMIN sin leases ordinarias
+- ADMIN obtiene el actor mediante getCachedSharedSessionActor_ y ejecuta las comprobaciones de capacidad localmente. No solicita leases ni consulta Coordinator por acción.
+- AUTH→Coordinator invalida también la caché ADMIN en logout/revocación/eliminación; el endpoint interno ADMIN valida el secreto propio.
+- La telemetría por leases ya no representa las acciones ADMIN ordinarias. No se añade un contador con escritura o viaje de red por acción.
+- Pendiente de esta iniciativa: auditar las leases restantes de AUTH/USERS/UTILITIES frente a la sección 15 de NORMAS_DESAROLLO.md.

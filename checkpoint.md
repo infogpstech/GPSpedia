@@ -1004,9 +1004,22 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - HEAD confirmado antes del cambio: 4d26dbe4661b4fe0ceba3289b222ee204f009a65 en GPSpedia2.2.5_work; GPSpedia2.2.5 en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 - Hallazgo: doPost ADMIN adquiría leases para lecturas y mutaciones ordinarias. La sección 15 prohíbe leases y viajes a Coordinator por acción ordinaria.
 - Cambio preparado: ADMIN obtiene actor cacheado y conserva RBAC/auditoría; llamadas ADMIN→WRITE dejan de requerir token de lease y WRITE valida su actor cacheado con userId/sessionToken.
-- Pendiente: pruebas de contrato/regresión, revisión del diff, CI y publicación verificada. No se realizó deployment ni acceso a Drive/Spreadsheet/ScriptProperties.
+- Resultado: corrección y contratos publicados en GPSpedia2.2.5_work; CI final SUCCESS (152 suites, 2,224 pruebas, 0 fallos). No se realizó deployment Apps Script ni acceso a Drive/Spreadsheet/ScriptProperties.
 ================================================================================
 
 - CI run 44535834471: sintaxis aprobada; regresión falló por tres contratos de arquitectura anterior. Corrección de contratos y política Coordinator en curso; no se ignoraron los fallos.
 
 - CI run 44536463315: sintaxis de servicios aprobada; fallaron dos contratos por escapes literales introducidos al actualizarlos. Corrección puntual aplicada.
+
+
+================================================================================
+2026-11-19 — CIERRE: SIMPLIFICACIÓN DE SESIÓN ADMIN
+- HEAD final de esta tarea: 71894f2e4c391e13b7935738389967f4a8ebe083 en GPSpedia2.2.5_work. Rama base GPSpedia2.2.5 conservada en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- ADMIN ya no adquiere leases ni consulta Coordinator para autorizar acciones ordinarias. El router usa getCachedSharedSessionActor_; doPostInternal_ mantiene la matriz RBAC, assertDeveloperSession/assertModalEditSession y auditoría de mutaciones.
+- ADMIN→WRITE transmite userId/sessionToken; WRITE valida su propio actor cacheado. No se propaga __sharedMutationToken ni se depende de nestedActions.
+- Se amplió la invalidación remota de caché: AUTH→Coordinator→WRITE/FEEDBACK/ADMIN. ADMIN expone __invalidateSessionActorCache con verificación de secreto, preservando logout y eliminación de cuenta.
+- Las operaciones del inventario/organizador conservan sus ScriptLock locales y verificaciones por archivo; no se elimina protección de integridad ni se ejecuta Safe Apply.
+- CI run 44539942784 SUCCESS: 152 suites, 2,224 pruebas aprobadas, 0 fallos. Health read-only 44539942669 SUCCESS; Pages 44539942102 SUCCESS.
+- No se desplegó Apps Script ni se modificaron ScriptProperties, secretos, Drive o Spreadsheet.
+- Próxima tarea: revisar los usos restantes de leases en AUTH/USERS/UTILITIES contra la sección 15. Safe Apply permanece condicionado a preview real y autorización.
+================================================================================
