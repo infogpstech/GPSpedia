@@ -6400,8 +6400,8 @@ function handleUploadAdminImage(payload, logMessage) {
             verifyAdminImageUploadFile(preparedFile, actualMimeType, contentHash);
             const description = String(preparedFile.getDescription() || "");
             if (description.startsWith("GPSpediaAdminImageUpload|")) {
-                const opMatch = description.match(/(?:^|\\|)opId=([^|]*)/);
-                const hashMatch = description.match(/(?:^|\\|)hash=([^|]*)/);
+                const opMatch = description.match(/(?:^|\|)opId=([^|]*)/);
+                const hashMatch = description.match(/(?:^|\|)hash=([^|]*)/);
                 if (!opMatch || opMatch[1] !== operationId || !hashMatch || hashMatch[1] !== contentHash) {
                     throw new Error("El archivo Drive encontrado contiene metadatos de otra operación.");
                 }
