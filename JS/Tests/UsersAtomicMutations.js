@@ -36,7 +36,7 @@ function runUsersAtomicMutationTests(usersSource, authSource, coordinatorSource)
             "La búsqueda de Users solo se permite para localizar el registro destino de updateProfile.");
         assert(profileHandler.includes("userRowIndex") && !profileHandler.includes("findUniqueUserRow_"),
             "La actualización de perfil debe reutilizar la fila destino ya localizada.");
-        assert(dispatcher.includes('getCachedSharedSessionActor_(payload.userId, payload.sessionToken)'),
+        assert(dispatcher.includes('getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "USERS" })'),
             "getUsers debe reutilizar el actor cacheado.");
         assert(!dispatcher.includes('withSharedMutationLease_("USERS", "sessionActivity"'),
             "getUsers no debe adquirir una lease ni registrar actividad por cada lectura.");
