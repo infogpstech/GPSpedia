@@ -55,11 +55,12 @@ Normativa: NORMAS_DESAROLLO.md
 - Pendiente: ejecutar la regresión integral en el HEAD final. Tras autorizar la futura etapa Beta, verificar que GPSpedia_COORDINATOR_SECRET_FEEDBACK/USERS/WRITE/ADMIN coincidan con las propiedades de Coordinator y confirmar el flujo real de Inbox. No se consultaron ni modificaron secretos ni deployments.
 
 ### Fase 4 — ADMIN: controles y retroalimentación
-**P1/P2 · PENDIENTE**
-- Corregir el mensaje de borrado de logs para distinguir eliminación efectiva, ausencia de registros y error.
-- Compactar el selector de retención (últimos 7 días / eliminar todos) y corregir desbordamientos.
-- Corregir el padding innecesario del contenedor de imagen del modal de corte sin alterar logo, nombre, acciones ni distribución ya aceptada.
-- Auditar la telemetría y las métricas visibles en escritorio y móvil para evitar datos duplicados o contradictorios.
+**P1/P2 · IMPLEMENTACIÓN PARCIAL; AUDITORÍA VISUAL/TELEMETRÍA PENDIENTE**
+- [x] Mensajes de limpieza de Logs: distinguen eliminación efectiva, hoja sin registros, registros revisados sin coincidencias sensibles y fallos/limpieza parcial.
+- [x] Selector de retención compacto: opciones breves «Últimos 7 días» y «Todos (conservar encabezados)», etiqueta reducida y layout grid con min-width:0 para evitar overflow.
+- [x] Contenedor de corte recomendado: padding reducido de 12 px a 8 px, sin alterar logo, nombre, acciones ni estructura del encabezado.
+- [ ] Auditar la telemetría y las métricas visibles en escritorio y móvil para evitar datos duplicados o contradictorios; validar el layout visual en navegador real en Beta.
+- Pruebas locales: SensitiveLogsTrustedActor 7/7; ActivityLogsClearFeedback 5/5; AdminLogsMaintenanceContract 10/10.
 
 ### Fase 5 — Auditoría y organizador de imágenes
 **P1 · PENDIENTE LOCAL**
