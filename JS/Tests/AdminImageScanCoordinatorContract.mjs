@@ -308,7 +308,7 @@ const legacyInventorySheet = {
     getRange: (row, column, rowCount = 1, columnCount = 1) => ({
         getDisplayValues: () => Array.from({length:rowCount},(_,r)=>Array.from({length:columnCount},(_,c)=>String(legacyInventoryCells[row-1+r]?.[column-1+c] ?? ""))),
         getValues: () => Array.from({length:rowCount},(_,r)=>Array.from({length:columnCount},(_,c)=>legacyInventoryCells[row-1+r]?.[column-1+c] ?? "")),
-        setValue: value => { while(legacyInventoryCells[row-1].length<column)legacyInventoryCells[row-1].push("");legacyInventoryCells[row-1][column-1]=value;return this; },
+        setValue: function(value) { while(legacyInventoryCells[row-1].length<column)legacyInventoryCells[row-1].push("");legacyInventoryCells[row-1][column-1]=value;return this; },
         setValues: values => { values.forEach((valuesRow,r)=>valuesRow.forEach((value,c)=>{while(legacyInventoryCells[row-1+r].length<column+c)legacyInventoryCells[row-1+r].push("");legacyInventoryCells[row-1+r][column-1+c]=value;}));return this; },
         setFontWeight: () => ({setBackground:()=>({})}),
         setBackground: () => ({})
@@ -316,7 +316,7 @@ const legacyInventorySheet = {
 };
 const migrateLegacyInventory = new Function(
     "withReplacedImagesSchemaLock_", "extractDriveFileIds", "SpreadsheetApp",
-    extractFunction(admin, "ensureReplacedImagesInventoryColumns") + "\\nreturn ensureReplacedImagesInventoryColumns;"
+    extractFunction(admin, "ensureReplacedImagesInventoryColumns") + "\nreturn ensureReplacedImagesInventoryColumns;"
 )(
     callback => callback(),
     value => { const match=String(value||"").match(/[A-Za-z0-9_-]{20,}/);return match?[match[0]]:[]; },
