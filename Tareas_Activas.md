@@ -279,3 +279,10 @@ Aplicar la estructura objetivo después de validar el dry-run:
 - [x] Revisión del organizador: rutas, nombres, referencias, inventario y conciliación figuran implementados y probados localmente en Fase 5. Esto no autoriza Safe Apply.
 - [ ] Safe Apply: esperar preview real autorizado de Drive/Spreadsheet y revisión de manifiesto, ACL, duplicados, referencias y destinos. No aplicar movimientos/renombrados/borrados productivos sin autorización explícita.
 - CI del HEAD bd47210d1bb8cf30bafe4261dc4d9370613d8ee2: regresión 44542583589 SUCCESS; health read-only 44542583925 SUCCESS; Pages 44542583372 SUCCESS.
+
+
+### P1 — GP-PERF-ADMIN-SUPPLEMENTARY-UPLOAD-LOCK-01 — COMPLETADA CON VALIDACIÓN DIFERIDA A BETA
+- Se eliminó la espera global de hasta 30 segundos mientras ADMIN procesa imágenes de información suplementaria.
+- La preparación y carga de imágenes en Drive ocurren antes de adquirir el lock; la sección crítica usa tryLock(0), vuelve a leer el registro y compara el plan para detectar cambios concurrentes antes de escribir.
+- Se conservan persistencia verificada, rollback de la fila, idempotencia de carga por operationKey y confirmación del ledger. Si el registro cambia durante la carga, no se sobrescriben datos; las cargas no vinculadas permanecen sujetas a reconciliación del ledger.
+- Validación local contractual registrada en AdminSupplementaryUploadOutsideLock.mjs; ejecución de CI pendiente. No se desplegó ADMIN ni se accedió a Drive/Spreadsheet productivos.

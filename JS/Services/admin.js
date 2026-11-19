@@ -6983,15 +6983,8 @@ function persistSupplementaryInfoValues_(sheet,row,original,updated){
  try{range.setValues([updated]);SpreadsheetApp.flush();const saved=range.getValues()[0];if(!updated.every((v,i)=>String(saved[i]==null?"":saved[i])===String(v==null?"":v)))throw Error("La lectura posterior no coincide.");return true;}
  catch(e){let rollback="";try{range.setValues([original]);SpreadsheetApp.flush();}catch(r){rollback=" La reversión automática también falló: "+String(r&&r.message||r);}throw createSupplementaryInfoError_("SUPPLEMENTARY_PERSISTENCE_FAILED","No se pudo confirmar la escritura de la información suplementaria."+rollback);}
 }
-function handleAddSupplementaryInfo(payload, logMessage){
- 
- const lock=LockService.getScriptLock();try{lock.waitLock(30000);}catch(e){throw createSupplementaryInfoError_("SUPPLEMENTARY_LOCK_FAILED","No se pudo bloquear el registro de información suplementaria. Intente nuevamente.");}
- try{return handleAddSupplementaryInfoLocked(payload, logMessage);}finally{lock.releaseLock();}
-}
-function handleAddSupplementaryInfoLocked(payload, logMessage){
- 
+function getSupplementaryInfoState_(payload) {
  if(!payload||typeof payload!=="object"||!String(payload.vehicleId||"").trim())throw createSupplementaryInfoError_("SUPPLEMENTARY_INVALID_VEHICLE_ID","El ID del vehículo es requerido para agregar información suplementaria.");
- logMessage("Registro Administrativo","Procesando addSupplementaryInfo administrativo para ID: "+payload.vehicleId+"...");
  const sheet=getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
  if(!sheet||sheet.getLastRow()<2)throw createSupplementaryInfoError_("VEHICLE_NOT_FOUND","El vehículo indicado no existe en el registro.");
  if(sheet.getLastColumn()<COLS_CORTES.imgCableAlimen3)throw createSupplementaryInfoError_("SUPPLEMENTARY_SCHEMA_INVALID","La hoja Cortes no contiene todas las columnas de información suplementaria.");
@@ -7000,18 +6993,58 @@ function handleAddSupplementaryInfoLocked(payload, logMessage){
  if(!matches.length)throw createSupplementaryInfoError_("VEHICLE_NOT_FOUND","El vehículo indicado no existe en el registro.");
  if(matches.length>1)throw createSupplementaryInfoError_("VEHICLE_ID_AMBIGUOUS","El ID del vehículo aparece más de una vez. No se realizó ninguna modificación.");
  const row=matches[0],rowValues=sheet.getRange(row,1,1,sheet.getLastColumn()).getValues()[0],vehicle=mapRowToObject(rowValues,COLS_CORTES);
- const plan=buildSupplementaryInfoPlan_(payload,vehicle),original=rowValues.slice(COLS_CORTES.apertura-1,COLS_CORTES.imgCableAlimen3),updated=original.slice(),index=field=>COLS_CORTES[field]-COLS_CORTES.apertura;
+ const plan=buildSupplementaryInfoPlan_(payload,vehicle);
+ const original=rowValues.slice(COLS_CORTES.apertura-1,COLS_CORTES.imgCableAlimen3),updated=original.slice(),index=field=>COLS_CORTES[field]-COLS_CORTES.apertura;
  Object.keys(plan.updates).forEach(field=>{if(field.indexOf("img")!==0)updated[index(field)]=plan.updates[field];});
- const imageFields=["imgApertura","imgCableAlimen","imgCableAlimen2","imgCableAlimen3"],images=imageFields.filter(field=>hasSupplementaryValue_(plan.updates[field]));
- try{
-  const folder=images.length?findOrCreateVehicleFolder(vehicle):null;
-  images.forEach(field=>{const url=uploadImageToDrive(plan.updates[field],buildCanonicalImageBaseName(vehicle,field),folder,buildImageUploadOperationKey(payload.opId,payload.vehicleId,field));if(!url)throw Error("La carga de imagen no devolvió una URL válida.");updated[index(field)]=url;});
-  const ti=index("timestamp");if(!hasSupplementaryValue_(String(updated[ti]||""))){let date=new Date();date.setDate(date.getDate()-365);updated[ti]=hasSupplementaryValue_(payload.timestamp)?payload.timestamp:Utilities.formatDate(date,"GMT-6","dd/MM/yyyy");}
-  persistSupplementaryInfoValues_(sheet,row,original,updated);
- }catch(e){if(e&&e.code)throw e;throw createSupplementaryInfoError_("SUPPLEMENTARY_PERSISTENCE_FAILED","No se pudo guardar la información suplementaria: "+String(e&&e.message||e));}
- images.forEach(field=>{try{markImageUploadLinked(updated[index(field)]);}catch(e){logMessage("Advertencia","La imagen se guardó, pero no se confirmó su vínculo en el ledger: "+String(e&&e.message||e),0,0,true,false);}});
- logMessage("Registro Administrativo","Información suplementaria administrativa agregada con éxito.");
- return {status:"success",message:"Información suplementaria administrativa agregada de forma silenciosa.",vehicleId:String(payload.vehicleId),slotIndex:plan.slotIndex,apertureSaved:plan.apertureRequested};
+ const images=["imgApertura","imgCableAlimen","imgCableAlimen2","imgCableAlimen3"].filter(field=>hasSupplementaryValue_(plan.updates[field]));
+ return {sheet,row,vehicle,plan,original,updated,index,images};
+}
+function getSupplementaryInfoPlanSignature_(state) {
+ return JSON.stringify({slotIndex:state.plan.slotIndex,apertureRequested:state.plan.apertureRequested,fields:Object.keys(state.plan.updates).sort()});
+}
+function handleAddSupplementaryInfo(payload, logMessage){
+ if(!payload||typeof payload!=="object")throw createSupplementaryInfoError_("SUPPLEMENTARY_INVALID_VEHICLE_ID","El ID del vehículo es requerido para agregar información suplementaria.");
+ logMessage("Registro Administrativo","Procesando addSupplementaryInfo administrativo para ID: "+payload.vehicleId+"...");
+ let prepared;
+ try {
+  // Las lecturas iniciales y las transferencias a Drive no bloquean las escrituras de otros usuarios.
+  prepared=getSupplementaryInfoState_(payload);
+  const signature=getSupplementaryInfoPlanSignature_(prepared);
+  const uploaded={};
+  if(prepared.images.length){
+   const folder=findOrCreateVehicleFolder(prepared.vehicle);
+   prepared.images.forEach(field=>{
+    const url=uploadImageToDrive(prepared.plan.updates[field],buildCanonicalImageBaseName(prepared.vehicle,field),folder,buildImageUploadOperationKey(payload.opId,payload.vehicleId,field));
+    if(!url)throw Error("La carga de imagen no devolvió una URL válida.");
+    uploaded[field]=url;
+   });
+  }
+
+  // La sección crítica solo revalida y escribe. No espera por la carga de Drive.
+  const lock=LockService.getScriptLock();
+  let lockAcquired=false;
+  try {
+   lockAcquired=typeof lock.tryLock==="function"&&lock.tryLock(0);
+   if(!lockAcquired)throw createSupplementaryInfoError_("SUPPLEMENTARY_LOCK_FAILED","El registro está ocupado. Conserva la operación y vuelve a intentarlo.");
+   const current=getSupplementaryInfoState_(payload);
+   if(getSupplementaryInfoPlanSignature_(current)!==signature)throw createSupplementaryInfoError_("SUPPLEMENTARY_CONFLICT","La información cambió mientras se cargaban los archivos. No se sobrescribieron datos; vuelve a revisar el registro.");
+   const updated=current.updated,index=current.index;
+   Object.keys(uploaded).forEach(field=>{updated[index(field)]=uploaded[field];});
+   const ti=index("timestamp");
+   if(!hasSupplementaryValue_(String(updated[ti]||""))){let date=new Date();date.setDate(date.getDate()-365);updated[ti]=hasSupplementaryValue_(payload.timestamp)?payload.timestamp:Utilities.formatDate(date,"GMT-6","dd/MM/yyyy");}
+   persistSupplementaryInfoValues_(current.sheet,current.row,current.original,updated);
+   prepared={...current,updated};
+  } finally {
+   if(lockAcquired)lock.releaseLock();
+  }
+
+  prepared.images.forEach(field=>{try{markImageUploadLinked(prepared.updated[prepared.index(field)]);}catch(e){logMessage("Advertencia","La imagen se guardó, pero no se confirmó su vínculo en el ledger: "+String(e&&e.message||e),0,0,true,false);}});
+  logMessage("Registro Administrativo","Información suplementaria administrativa agregada con éxito.");
+  return {status:"success",message:"Información suplementaria administrativa agregada de forma silenciosa.",vehicleId:String(payload.vehicleId),slotIndex:prepared.plan.slotIndex,apertureSaved:prepared.plan.apertureRequested};
+ } catch(e) {
+  if(e&&e.code)throw e;
+  throw createSupplementaryInfoError_("SUPPLEMENTARY_PERSISTENCE_FAILED","No se pudo guardar la información suplementaria: "+String(e&&e.message||e));
+ }
 }
 // ============================================================================
 // HELPERS COMUNES

@@ -1066,3 +1066,14 @@ ACTUALIZACIÓN DE CONTINUIDAD — 2026-11-19
 - No se realizó deployment Apps Script ni se modificaron ScriptProperties, secretos, Drive o Spreadsheet.
 - CI del HEAD bd47210d1bb8cf30bafe4261dc4d9370613d8ee2: 44542583589 / 44542583925 / 44542583372 SUCCESS.
 ================================================================================
+
+
+================================================================================
+2026-11-19 — GP-PERF-ADMIN-SUPPLEMENTARY-UPLOAD-LOCK-01
+- HEAD de inicio verificado: 41ada27411b324b356a62dbf07a2dd85cea36a61; rama GPSpedia2.2.5_work. Rama base GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Hallazgo: handleAddSupplementaryInfo mantenía ScriptLock durante búsqueda, carga de imágenes Drive, escritura y verificación, con espera de hasta 30 segundos.
+- Cambio local preparado: transferencias Drive fuera del lock; sección crítica con tryLock(0), relectura de la fila, comparación del plan para detectar conflictos concurrentes y persistencia con verificación/rollback.
+- Se conserva el ledger de cargas; ante conflicto posterior a la carga no se elimina el archivo automáticamente.
+- Prueba contractual añadida a RunServiceTests.mjs. CI pendiente de ejecución.
+- No se desplegó Apps Script ni se modificaron ScriptProperties, secretos, Drive o Spreadsheet.
+================================================================================
