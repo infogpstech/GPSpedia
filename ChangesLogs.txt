@@ -737,3 +737,14 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - Configuración pendiente por entorno: GPSpedia_SERVICE_URL_WRITE y GPSpedia_SERVICE_URL_FEEDBACK en Coordinator. No se consultaron ni modificaron propiedades remotas.
 - Pruebas SharedMutationCoordinator: 74/74 PASS; incluye cliente legacy/v1, rechazo de versión no compatible, invalidación en lotes, fallo parcial, reintento, revocación individual y global.
 ================================================================================
+
+
+================================================================================
+2026-11-19 — COORDINATOR 1.4.5: PROTOCOLO ESTABLE Y MATRIZ DE DESPLIEGUE
+- Coordinator: la versión interna del servicio se actualiza a 1.4.5 y queda separada explícitamente del protocolo HTTP v1.
+- Los clientes legacy que omiten protocolVersion se interpretan siempre como v1; el Coordinator mantiene una lista explícita de versiones admitidas y rechaza versiones inválidas/desconocidas.
+- SharedMutationClient no se modificó: los consumidores actuales continúan enviando v1. Los cambios internos compatibles de Coordinator no requieren republicar los consumidores.
+- Services/SERVICE_ARCHITECTURE_PLAN.md y Services/COORDINATOR_SETUP.md: matriz de impacto por tipo de cambio y regla de convivencia de versiones; se aclara que una corrección local de SharedMutationClient sí requiere actualizar únicamente los proyectos consumidores afectados.
+- Pruebas: SharedMutationCoordinator 77/77; CoordinatorCapabilityPreservation 6/6; ServiceTrafficAdminContract 33/33; ServiceTrafficAggregation 6/6; ServiceTrafficBatch 5/5; DirectTrafficRoutingCoverage 6/6; ServiceBrowserTrafficContract 9/9; ServiceTrafficAggregatorContract 5/5. Sintaxis de Coordinator, SharedMutationClient, serviceTelemetry y Service Worker PASS.
+- No se desplegó Apps Script, no se modificaron ScriptProperties/secretos, ni se tocaron Drive, Spreadsheet o datos externos.
+================================================================================
