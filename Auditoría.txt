@@ -530,3 +530,15 @@ Alcance: inspección estática de JS/Services/admin.js y sus contratos. No se ej
 - CI HEAD 6e43666b69ff20b7945f5ebe7b7745a7758ce8d0: 146 suites, 2,157 pruebas aprobadas, 0 fallos; health read-only y Pages SUCCESS.
 - La interfaz ui.js todavía no invoca ni presenta este endpoint. No se desplegó Apps Script y no se ejecutaron operaciones reales de Drive/Spreadsheet.
 ================================================================================
+
+
+================================================================================
+2026-11-19 — INTEGRACIÓN DEL PREVIEW EN LA CONSOLA (ACTUALIZACIÓN)
+================================================================================
+- Se añadió el botón «Previsualizar organización» a la barra de herramientas del modal de auditoría y un panel separado para los resultados de Cortes/LogosMarca.
+- ui.js invoca previewCortesImageOrganizer de forma paginada (25 destinos por solicitud), exige writePerformed:false y canApply:false, valida digest constante, cursor/offset, total de destinos y finalización.
+- La consola muestra conteos de destinos listos, ya correctos y bloqueados; presenta nombre/ruta actual, destino, nombre propuesto y razones. Se limita el render visual a 500 filas, pero recorre todas las páginas y confirma el total completo.
+- El control solo aparece al completar la auditoría. No ofrece aplicación ni ejecuta movimientos/renombrados.
+- CI en HEAD bb3f3a1fcf47d328f1ab51a4ab5dc3a93e2e3807: 146 suites, 2,157 pruebas aprobadas, 0 fallos; health y Pages SUCCESS.
+- Pendiente validación real tras desplegar ADMIN: la auditoría debe ejecutarse nuevamente para que el caché contenga folderPath. No se han ejecutado operaciones productivas.
+================================================================================
