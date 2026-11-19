@@ -815,3 +815,13 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - CI en HEAD 6e43666b69ff20b7945f5ebe7b7745a7758ce8d0: workflow 44443122888 SUCCESS — 146 suites, 2,157 pruebas aprobadas, 0 fallos; health read-only 44443122921 SUCCESS; Pages 44443122280 SUCCESS.
 - No se desplegó Apps Script. No se movió, renombró, creó, restauró ni eliminó ningún archivo; no se escribieron datos en Spreadsheet.
 - Pendiente: ui.js no está conectado a previewCortesImageOrganizer. Integrar la vista paginada dentro del modal/consola, presentar los resultados por archivo y permitir revisar el digest sin habilitar aún la aplicación. Luego desplegar ADMIN, ejecutar una auditoría Drive nueva y validar el preview real. La aplicación segura por lotes continúa deshabilitada (canApply:false).
+
+
+### Continuidad — UI conectada al preview del organizador (2026-11-19)
+- HEAD de código: bb3f3a1fcf47d328f1ab51a4ab5dc3a93e2e3807. Rama de trabajo GPSpedia2.2.5_work. Rama base protegida GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- index.html incorpora botón «Previsualizar organización» y panel separado dentro del modal de auditoría.
+- ui.js recorre previewCortesImageOrganizer por páginas de 25 destinos, comprueba que el digest no cambie, valida offset/total/finalización, muestra resumen y detalle por destino (hasta 500 filas visibles; recorre todos los resultados). Exige writePerformed:false y canApply:false.
+- El control solo se habilita tras una auditoría completa. No existe botón de aplicación del organizador y no se realizan mutaciones.
+- CI HEAD bb3f3a1fcf47d328f1ab51a4ab5dc3a93e2e3807: workflow 44443503640 SUCCESS — 146 suites, 2,157 pruebas aprobadas, 0 fallos; health read-only 44443503694 SUCCESS; Pages 44443503156 SUCCESS.
+- No se desplegó Apps Script ni se ejecutó el preview sobre Drive productivo. El nuevo endpoint exige metadatos folderPath; tras desplegar ADMIN debe ejecutarse una auditoría Drive nueva para poblar esas rutas en caché.
+- Siguiente paso exacto: desplegar el servicio ADMIN actualizado, abrir la auditoría Drive, iniciar una auditoría nueva y luego ejecutar «Previsualizar organización». Revisar resultados y bloqueos con datos reales; no aplicar movimientos ni renombrados. Después corregir hallazgos del preview antes de diseñar la aplicación segura y rollback.
