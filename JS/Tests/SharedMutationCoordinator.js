@@ -976,7 +976,9 @@ function runSharedMutationCoordinatorTests() {
         assert_(traffic.sources.AUTH.accuracy === "partial" &&
             traffic.sources.AUTH.reason === "invalid_or_duplicate_buckets_ignored",
             "La fuente debe declararse parcial si contiene buckets repetidos o corruptos.");
-        assert_(traffic.buckets[0].counts.AUTH === 1,
+        const currentStartAt = Math.floor(1700000000000 / (60 * 60 * 1000)) * (60 * 60 * 1000);
+        const currentBucket = traffic.buckets.find(bucket => bucket.startAt === currentStartAt);
+        assert_(currentBucket && currentBucket.counts.AUTH === 1,
             "Solo debe agregarse el primer bucket válido.");
         assert_(traffic.totals.last24Hours.AUTH === 3,
             "Los totales directos siguen conservando la cifra declarada por la fuente.");
