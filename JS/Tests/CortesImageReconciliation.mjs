@@ -11,7 +11,7 @@ const extractDriveFileIds=value=>{const text=String(value||"");const matches=[..
 const SHEET_NAMES={CORTES:"Cortes"};
 const planner=new Function("extractDriveFileIds","SHEET_NAMES",admin.slice(start,end)+";return buildCortesImageReconciliationPlan_;")(extractDriveFileIds,SHEET_NAMES);
 const historyStart=admin.indexOf("function collectReplacedImageHistoryIds_");
-const historyEnd=admin.indexOf("\\n}\\n",historyStart)+2;
+const historyEnd=admin.indexOf("\n}\n",historyStart)+2;
 assert.ok(historyStart>=0&&historyEnd>historyStart,"helper de historial ausente");
 const collectHistory=new Function("getSpreadsheet","SHEET_NAMES","extractDriveFileIds",
     admin.slice(historyStart,historyEnd)+";return collectReplacedImageHistoryIds_;");
