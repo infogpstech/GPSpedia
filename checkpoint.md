@@ -1101,3 +1101,13 @@ ACTUALIZACIÓN DE CONTINUIDAD — 2026-11-19
 - Siguiente tarea: GP-PERF-ADMIN-CUT-LOCK-01, EN PROGRESO. Diseñar reserva atómica de opId/ID/slot, ejecutar WRITE/Drive fuera del lock y revalidar antes de persistir. Preservar idempotencia, ledger, recuperación, verificación y rollback.
 - Solo se realizó inspección estática y actualización documental. No se modificó código, deployments, ScriptProperties, secretos, Drive ni Spreadsheet; no se ejecutaron pruebas ni mediciones remotas.
 ================================================================================
+
+
+================================================================================
+2026-11-19 — PRINCIPIO ARQUITECTÓNICO: AISLAMIENTO ENTRE OPERACIONES
+- Requisito explícito: auditoría no debe bloquear Inbox, escáner de salud, login/validación de sesión ni registro de cortes; ninguna operación independiente debe bloquear a otra.
+- La corrección de GP-PERF-ADMIN-CUT-LOCK-01 amplía su criterio: no basta sacar WRITE/Drive del lock; hay que proteger solo el recurso compartido y probar no interferencia entre operaciones distintas.
+- Importante: Apps Script ScriptLock es global dentro de un proyecto/script, no por función ni archivo. Debe verificarse el mapa de proyectos/deployments antes de afirmar aislamiento entre servicios; si comparten proyecto, el lock cruza funciones.
+- Pruebas requeridas: operación de auditoría lenta concurrente con Inbox, health, login y registro de cortes; cada una debe terminar dentro de su presupuesto. Mantener pruebas de exclusión/conflicto para mutaciones del mismo recurso.
+- Evitar locks genéricos; auditoría/telemetría best-effort y fuera de rutas síncronas críticas. No eliminar garantías de integridad.
+================================================================================

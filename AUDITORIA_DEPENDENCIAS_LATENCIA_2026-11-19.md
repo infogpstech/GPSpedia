@@ -84,3 +84,24 @@ No se detectó necesidad de desplegar todos los servicios por cada cambio intern
 ## 6. Limitaciones
 
 Inspección estática. No se midieron tiempos reales, concurrencia Apps Script, latencia WRITE/Drive ni deployments activos. Esas mediciones quedan para Beta autorizada. No se modificó código, deployments, ScriptProperties, secretos, Drive ni Spreadsheet.
+
+
+## Principio arquitectónico obligatorio — aislamiento entre operaciones (2026-11-19)
+
+Una operación de una función o subsistema no debe bloquear operaciones independientes de otra función o subsistema. La auditoría/telemetría no debe impedir consultas del Inbox, escáneres de salud, inicios de sesión, validaciones de sesión ni registro de cortes; tampoco al contrario.
+
+Reglas de implementación:
+1. No usar un `ScriptLock` global como mutex genérico para todo el servicio. Cada lock debe proteger exclusivamente el estado compartido que requiere atomicidad.
+2. Preferir locks de recurso/registro/operación o reservas idempotentes breves. Operaciones sobre recursos distintos deben poder progresar en paralelo.
+3. Lecturas, auditorías, escáneres de salud, llamadas HTTP, Drive y trabajo de cálculo no deben ejecutarse dentro de una sección crítica si no son parte indispensable de la mutación atómica.
+4. Para escrituras sobre el mismo recurso, conservar exclusión/conflict detection, versionado y revalidación; el aislamiento no significa permitir corrupción por concurrencia.
+5. Telemetría y auditoría deben ser best-effort, con timeout corto, límites de concurrencia y aislamiento de fallos; nunca ser una dependencia síncrona del camino de login, Inbox o registro.
+6. Definir pruebas de no interferencia: mantener una operación lenta/esperando y comprobar que Inbox, health, login y registro de cortes independientes terminan dentro de su propio presupuesto; además probar conflicto cuando dos operaciones modifican el mismo recurso.
+7. Documentar el ámbito real de cada lock: Apps Script `ScriptLock` es global dentro de un proyecto/script, no un lock por función. Antes de afirmar aislamiento entre servicios, verificar que cada servicio corre en proyecto independiente; si comparten proyecto, el lock puede cruzar funciones aunque estén en archivos distintos.
+
+Criterio de aceptación: concurrencia entre operaciones independientes sin espera causada por locks compartidos, conservando consistencia para mutaciones del mismo recurso. No cerrar la tarea con pruebas unitarias solamente: incluir pruebas de no interferencia y, en Beta autorizada, concurrencia real.
+
+
+## Observación de alcance de locks
+
+El inventario estático localiza ScriptLocks en ADMIN, AUTH, USERS, WRITE, FEEDBACK, InboxConversations y otros módulos. Un `ScriptLock` no se limita a la función que lo adquiere: dentro de un mismo proyecto Apps Script es compartido por las ejecuciones de ese proyecto. Por tanto, separar funciones en archivos no aísla operaciones. La auditoría siguiente debe mapear cada despliegue/proyecto y asociar cada lock al recurso que protege; las llamadas remotas y trabajo no crítico deben salir del lock. No asumir que Inbox/health/login están aislados entre sí hasta confirmar si viven en proyectos de Apps Script distintos.
