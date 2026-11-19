@@ -203,7 +203,8 @@ function directServiceTrafficSecretEquals_(expected, supplied) {
 
 function readDirectServiceTraffic_(suppliedSecret, capturedAt) {
     const properties = PropertiesService.getScriptProperties();
-    const expectedSecret = String(properties.getProperty(DIRECT_SERVICE_TRAFFIC_CONFIG_.secretProperty) || "");
+    const expectedSecret = String(properties.getProperty("GPSpedia_COORDINATOR_SECRET") ||
+        properties.getProperty(DIRECT_SERVICE_TRAFFIC_CONFIG_.secretProperty) || "");
     if (!directServiceTrafficSecretEquals_(expectedSecret, suppliedSecret)) {
         return { status: "error", message: "Acceso denegado a la telemetría del servicio." };
     }
