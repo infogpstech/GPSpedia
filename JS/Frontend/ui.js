@@ -6135,7 +6135,8 @@ function initAdminPanelListeners() {
         const expectedServices = Object.keys(serviceHealthResults).filter(key => key !== "LEGACY");
         const services = result.services.map(value => String(value || "").toUpperCase());
         if (!services.length || services.includes("LEGACY") || new Set(services).size !== services.length) return false;
-        if (expectedServices.length && expectedServices.some(service => !services.includes(service))) return false;
+        if (expectedServices.length && (services.length !== expectedServices.length ||
+            expectedServices.some(service => !services.includes(service)))) return false;
         const validCountMap = values => values && typeof values === "object" && !Array.isArray(values) &&
             services.every(service => Number.isSafeInteger(values[service]) && values[service] >= 0);
         if (!["lastHour", "last6Hours", "last24Hours"].every(period => validCountMap(result.totals[period]))) return false;
