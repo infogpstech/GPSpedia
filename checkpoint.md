@@ -141,3 +141,11 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - `GP-PERF-ADMIN-CUT-LOCK-01` sigue EN PROGRESO: otras lecturas/escrituras de Sheets aún permanecen bajo el ScriptLock. No se desplegó Apps Script ni se modificaron datos productivos.
 
 - Verificación posterior: health read-only `44629325982` SUCCESS en el HEAD de código `bab825c07db2feb7f24a280b81d37ef8b01ab577`; regresión `44629451857` SUCCESS en el HEAD documental previo, 180 suites / 2,427 pruebas / 0 fallos.
+
+
+## Continuidad — búsqueda de vehículo ADMIN fuera del lock (2026-11-19)
+- En `handleAddOrUpdateCut`, la búsqueda de la fila por ID para vehículos existentes ahora lee la columna antes de adquirir `ScriptLock`.
+- Bajo lock se revalida la celda ID de la fila candidata antes de acceder al snapshot completo o modificarla. Una posición obsoleta provoca aborto seguro; no se escribe sobre otra fila.
+- Prueba `AdminExistingVehicleLookupPreflight.mjs`: 7/7 PASS. CI `44629836237` SUCCESS: 181 suites, 2,434 pruebas aprobadas, 0 fallos. Health read-only `44629836299` SUCCESS.
+- Commits: código `570840a859c78521c6e6e8f066d5c77077d14ada`; prueba `fc21c17e368296620dd6321172346f3c833bcd67`; runner `22a05a7274153984d65e03806ed055f8988c0c01`.
+- `GP-PERF-ADMIN-CUT-LOCK-01` sigue EN PROGRESO: la reserva, lectura de fila objetivo, selección de slot, validación de VIN y escrituras críticas siguen protegidas; quedan más operaciones de Sheets por separar sin debilitar atomicidad. No se desplegó Apps Script ni se modificaron datos productivos.
