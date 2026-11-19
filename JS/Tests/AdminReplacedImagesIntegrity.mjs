@@ -1075,8 +1075,8 @@ check("La organización revalida referencias e historial por archivo y protege u
         "El handler de inventario no debe retener el ScriptLock global.");
     assert.ok(admin.includes('withSharedMutationLease_("ADMIN", "saveUnusedImagesInventory"'),
         "El router debe coordinar el inventario mediante su lease IMAGE_INVENTORY independiente.");
-    assert.ok(admin.includes('write: ["IMAGE_INVENTORY"]') || admin.includes('"IMAGE_INVENTORY"'),
-        "La política de inventario debe usar su recurso dedicado.");
+    assert.match(coordinator, /saveUnusedImagesInventory:\s*\{\s*write:\s*\["IMAGE_INVENTORY"\]\s*\}/,
+        "Coordinator debe reservar únicamente el recurso IMAGE_INVENTORY para este handler.");
 
 });
 
