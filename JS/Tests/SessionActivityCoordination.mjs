@@ -33,7 +33,7 @@ testCase("ADMIN exige actor central cacheado y no coordina acciones ordinarias",
  const start=admin.indexOf("function doPost(e)"),end=admin.indexOf("\nfunction doPostInternal_",start),router=admin.slice(start,end);
  assert.ok(router.includes('getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "ADMIN" })'));
  assert.doesNotMatch(router,/withSharedMutationLease_|sessionActivity|nestedToken|__sharedMutationToken/);
- const auditStart=admin.indexOf("function handleAuditDriveImagesInCortes("),auditEnd=admin.indexOf("\\nfunction handleAuditDriveImagesInCortesCore_",auditStart);
+ const auditStart=admin.indexOf("function handleAuditDriveImagesInCortes("),auditEnd=admin.indexOf("function handleAuditDriveImagesInCortesCore_",auditStart);
  assert.ok(auditStart>=0&&auditEnd>auditStart);
  assert.match(admin.slice(auditStart,auditEnd),/withSharedMutationLease_\("ADMIN", "auditDriveImagesInCortes"/);
  assert.doesNotMatch(admin.slice(0,auditStart)+admin.slice(auditEnd),/withSharedMutationLease_/);

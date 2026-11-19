@@ -119,7 +119,7 @@ function buildHelpers({sheet=null, spreadsheet=null, lock=lockHarness(), flush=(
 check("Las operaciones del gestor validan referencias globales y no solo Cortes",()=>{
     const names=["handleGetReplacedImages","handleRecoverReplacedImage","handleDeleteReplacedImage",
         "handleMoveReplacedImage","handleGetReplacedImageDownloadUrl","handleSaveUnusedImagesInventory",
-        "handleOrganizeUnusedImagesBatch","handleAuditDriveImagesInCortesLocked_"];
+        "handleOrganizeUnusedImagesBatch","handleAuditDriveImagesInCortesCore_"];
     names.forEach(name=>assert.match(fnSource(admin,name),/collectActiveDriveReferences/,
         name+" debe usar el escáner global de referencias"));
     const scanner=fnSource(admin,"collectActiveDriveReferences");
@@ -596,7 +596,7 @@ check("La pertenencia a Cortes memoiza ancestros por petición sin marcar como v
     assert.equal(cache.get("outside-folder"),false);
 });
 check("Cada petición de auditoría conserva un presupuesto temporal y expone métricas de etapa/tamaño",()=>{
-    const audit=fnSource(admin,"handleAuditDriveImagesInCortesLocked_");
+    const audit=fnSource(admin,"handleAuditDriveImagesInCortesCore_");
     assert.ok(audit.includes("const batchBudgetMs = 18000"));
     assert.ok(audit.includes("Date.now() - batchStartedAt < batchBudgetMs"));
     for(const metric of ["referenceCaptureMs","historyCaptureMs","snapshotLoadMs","snapshotPersistMs",
@@ -834,7 +834,7 @@ check("El cursor de auditoría se firma por contenido y rechaza una pila vacía 
     assert.match(fingerprint,/^[a-f0-9]{64}$/);
     const repeatedPosition={...cursor,totalAnalyzed:26,foldersVisited:99};
     assert.equal(fingerprint,h.getDriveAuditCursorFingerprint_(repeatedPosition));
-    const auditSource=fnSource(admin,"handleAuditDriveImagesInCortesLocked_");
+    const auditSource=fnSource(admin,"handleAuditDriveImagesInCortesCore_");
     assert.ok(auditSource.includes("state.lastRequestFingerprint === inputFingerprint"));
     assert.ok(auditSource.includes("state.lastRequestTotalAnalyzed"));
     assert.ok(auditSource.includes("contadores alterados"));
@@ -926,7 +926,7 @@ check("Una auditoría parcial o una página perdida no puede autorizar el invent
     assert.throws(()=>h.loadDriveAuditUnusedFileIds_(AUDIT_ID,1),/Falta una página/);
 });
 check("El inventario y la organización usan la misma auditoría y operación verificadas",()=>{
-    const audit=fnSource(admin,"handleAuditDriveImagesInCortesLocked_");
+    const audit=fnSource(admin,"handleAuditDriveImagesInCortesCore_");
     const save=fnSource(admin,"handleSaveUnusedImagesInventory");
     const organize=fnSource(admin,"handleOrganizeUnusedImagesBatch");
     assert.ok(audit.includes("expectedCursorFingerprint"));

@@ -929,3 +929,5 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 2026-11-19 — Ajustes post-CI auditoría ADMIN: eliminar referencia residual al lock en finalización y permitir lease específica IMAGE_AUDIT_STATE sin habilitar leases en otras acciones.
 
 2026-11-19 — Pruebas de aislamiento de auditoría: actualizar contratos de coordinación y extracción para permitir únicamente la lease IMAGE_AUDIT_STATE.
+
+2026-11-19 — Tests: actualizar referencias al núcleo del escáner renombrado y corregir delimitador de extracción en SessionActivityCoordination.

@@ -1185,3 +1185,5 @@ CI `44562328607`: SUCCESS — 159 suites, 2,264 pruebas aprobadas, 0 fallos. `Ad
 - Primer CI del aislamiento de auditoría detectó: referencia residual a `locked` en el cierre del evento y una prueba de telemetría que prohibía todas las leases ADMIN. Se elimina el finally residual y se ajusta el contrato para permitir únicamente la lease de estado del escáner.
 
 - Segundo CI: `AdminAuditTrail` 15/15; el contrato de rutas directas y coordinación de sesión aún prohibía cualquier lease ADMIN, aunque ahora el escáner usa una lease de recurso independiente. Se actualizan ambos contratos y el delimitador de extracción.
+
+- Tercer CI del aislamiento de auditoría: `AdminAuditTrail` 15/15, `DirectTrafficRoutingCoverage` 6/6. Ajustar contratos restantes al nuevo nombre `handleAuditDriveImagesInCortesCore_` y eliminar el escape doble en `SessionActivityCoordination`.
