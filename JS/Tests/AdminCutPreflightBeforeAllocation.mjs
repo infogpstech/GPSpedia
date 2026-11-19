@@ -22,8 +22,8 @@ assert.ok(lock > allocation,
     "La asignación central WRITE debe continuar fuera del ScriptLock ADMIN");
 assert.equal(duplicateValidation, -1,
     "La huella no debe recalcularse ni validarse otra vez dentro del ScriptLock");
-assert.ok(handler.indexOf("findRowByOpId(sheet, opId)") > lock,
-    "La recuperación idempotente debe seguir revalidándose dentro del lock");
+assert.ok(handler.indexOf("findRowByOpId(sheet, opId, idempotencyEntriesSnapshot)") > lock,
+    "La recuperación idempotente debe seguir revalidándose dentro del lock con snapshot validado");
 assert.ok(handler.includes("newId = Number(preallocatedVehicleId)"),
     "La fila nueva debe utilizar el ID preasignado");
 
