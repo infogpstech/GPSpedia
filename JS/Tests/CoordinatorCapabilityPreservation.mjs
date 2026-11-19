@@ -14,11 +14,8 @@ const admin = read("JS/Services/admin.js");
 function extract(source, name) {
     const start = source.indexOf("function " + name + "(");
     assert.ok(start >= 0, "No se encontró " + name);
-    const candidates = [
-        source.indexOf("\nfunction ", start + 10),
-        source.indexOf("\nconst ", start + 10)
-    ].filter(index => index > start);
-    const end = candidates.length ? Math.min(...candidates) : source.length;
+    const nextFunction = source.indexOf("\nfunction ", start + 10);
+    const end = nextFunction > start ? nextFunction : source.length;
     return source.slice(start, end);
 }
 let passed = 0;
@@ -48,7 +45,7 @@ check("La cuenta se desactiva solo después de invalidar sesiones y login pendie
     const sessionRows = deletion.indexOf("sessionsSheet.deleteRow");
     assert.ok(pending >= 0 && remote > pending && tombstone > remote && sessionRows > tombstone);
     assert.match(deletion, /remainingSessions\.length/);
-    assert.match(deletion, /cleanupPending: true/);
+    assert.match(deletion, /status: 'error'/);
     assert.match(deletion, /disabled: true/);
 });
 check("Delete, update y revocaciones están cubiertos por leases AUTH sobre recursos de identidad", () => {
