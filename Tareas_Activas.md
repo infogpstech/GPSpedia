@@ -408,3 +408,5 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - Segundo CI del aislamiento de auditoría: `AdminAuditTrail` pasó 15/15; fallaron dos contratos estáticos que aún prohibían toda lease ADMIN y un delimitador con escape doble. Se ajustan para permitir solo la lease `IMAGE_AUDIT_STATE`.
 
 - Tercer CI: `AdminAuditTrail` 15/15 y `DirectTrafficRoutingCoverage` 6/6 pasaron. Fallaron dos referencias de prueba al nombre anterior del escáner (`...Locked_`) y un delimitador escapado incorrectamente; se actualizan a `...Core_`.
+
+- Cuarto CI: `AdminAuditTrail` 15/15, `SessionActivityCoordination` 11/11, `DirectTrafficRoutingCoverage` 6/6 y `AdminReplacedImagesIntegrity` 56/56 pasaron. Falló `AdminSheetActionsContract` porque prohibía cualquier lease ADMIN; se actualiza para permitir exclusivamente la lease de auditoría.

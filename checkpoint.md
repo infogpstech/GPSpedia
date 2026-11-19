@@ -1187,3 +1187,5 @@ CI `44562328607`: SUCCESS — 159 suites, 2,264 pruebas aprobadas, 0 fallos. `Ad
 - Segundo CI: `AdminAuditTrail` 15/15; el contrato de rutas directas y coordinación de sesión aún prohibía cualquier lease ADMIN, aunque ahora el escáner usa una lease de recurso independiente. Se actualizan ambos contratos y el delimitador de extracción.
 
 - Tercer CI del aislamiento de auditoría: `AdminAuditTrail` 15/15, `DirectTrafficRoutingCoverage` 6/6. Ajustar contratos restantes al nuevo nombre `handleAuditDriveImagesInCortesCore_` y eliminar el escape doble en `SessionActivityCoordination`.
+
+- Cuarto CI del aislamiento de auditoría: los contratos de auditoría, sesión, rutas y gestor de imágenes pasaron. `AdminSheetActionsContract` conservaba una aserción global de ausencia de leases; se limita ahora a verificar que solo el escáner adquiere la lease IMAGE_AUDIT_STATE.
