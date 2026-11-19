@@ -46,13 +46,11 @@ El coordinador mantiene la identidad activa en `ScriptProperties`, sin consultar
 - La vigencia absoluta es de tres meses; la inactividad máxima es de un mes.
 - La actividad central se actualiza como máximo una vez cada cinco minutos.
 
-Acciones internas disponibles únicamente para el servicio `AUTH`:
+Acciones internas de contexto de sesión:
 
-- `syncUserSessions`: sincroniza el conjunto de tokens que realmente aparece en `ActiveSessions`, conserva sesiones vigentes y elimina índices obsoletos.
-- `registerSession`: registra una sesión individual.
-- `validateSessionContext`: valida la restauración de sesión al iniciar la aplicación.
-- `revokeSession`: invalida una sesión concreta.
-- `revokeUserSessions`: incrementa el epoch, fija `revokedBefore` y revoca todas las sesiones.
+- Exclusivas de `AUTH`: `syncUserSessions`, `registerSession`, `revokeSession` y `revokeUserSessions`. Solo AUTH puede registrar, sincronizar o revocar sesiones.
+- `validateSessionContext`: cualquier servicio activo autenticado (AUTH, USERS, WRITE, ADMIN, FEEDBACK o UTILITIES) puede validar un token usando su propio secreto de servicio. La respuesta devuelve únicamente el actor validado para que ese servicio construya su caché local; la operación se atribuye al servicio solicitante. No se acepta CATALOG ni una identidad de servicio desconocida.
+- La validación por servicio evita que FEEDBACK/USERS/WRITE/ADMIN intenten autenticarse como AUTH con un secreto distinto. No se comparte el secreto de AUTH con otros proyectos y no se amplían las acciones de registro o revocación.
 
 `AUTH` sincroniza las sesiones al iniciar sesión. La primera validación de una sesión creada antes de esta versión puede migrarla desde `ActiveSessions`, siempre que no exista una revocación previa. Un token revocado, expirado o anterior a `revokedBefore` nunca se vuelve a registrar por esa vía.
 
@@ -60,7 +58,13 @@ Al cerrar sesión se revoca únicamente el token correspondiente. Los cambios de
 
 Los servicios `USERS`, `WRITE`, `ADMIN`, `FEEDBACK` y `UTILITIES` envían `userId` y `sessionToken` al adquirir la lease. El coordinador devuelve el actor verificado en esa misma respuesta; `SharedMutationClient` elimina cualquier actor enviado por el navegador y adjunta únicamente el actor recibido del coordinador. Los helpers de autorización consumen ese contexto sin repetir búsquedas de sesión en hojas. `USERS/updateProfile` conserva una búsqueda exacta de la fila del usuario porque necesita localizar la fila que modificará.
 
-### Recursos de coordinación
+### Validación de sesión por identidad de servicio (contrato 1.4.1)
+
+Cada consumidor que necesite poblar su caché local de actor llama `validateSessionContext` indicando su propio nombre de servicio. Coordinator autentica el secreto correspondiente y valida el mismo contexto central de sesión. AUTH conserva en exclusiva registro, sincronización y revocación. La telemetría atribuye la validación al servicio que la solicita.
+
+El cambio es compatible con clientes anteriores que omiten el parámetro opcional: la llamada conserva el comportamiento AUTH. Los consumidores actualizados deben pasar explícitamente AUTH, ADMIN, FEEDBACK, USERS o WRITE según su proyecto. No se debe copiar el secreto de AUTH a otros servicios.
+
+## Recursos de coordinación
 
 `SESSION_CONTEXTS` es un recurso lógico, no una hoja de cálculo:
 
