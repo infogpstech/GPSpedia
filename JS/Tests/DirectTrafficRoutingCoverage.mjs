@@ -57,7 +57,8 @@ test("USERS contabiliza getUsers sin lease adicional; UTILITIES conserva Coordin
     assert.match(users, /USERS_DIRECT_TRAFFIC_PREFIX_/);
     assert.match(users, /if \(action === "getUsers"\) recordUsersDirectTraffic_\(\)/);
     assert.match(users, /if \(action === "getServiceTraffic"\)[\s\S]*?readUsersDirectTraffic_/);
-    assert.match(admin, /getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "ADMIN" \}\)/);\n    assert.doesNotMatch(admin, /withSharedMutationLease_/);
+    assert.match(admin, /getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "ADMIN" \}\)/);
+    assert.doesNotMatch(admin, /withSharedMutationLease_/);
     assert.doesNotMatch(admin, /DIRECT_SERVICE_TRAFFIC_CONFIG_/);
 });
 

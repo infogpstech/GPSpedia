@@ -840,3 +840,5 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 ================================================================================
 
 - CI run 44535834471: sintaxis ADMIN aprobada; contratos históricos de token ADMIN→WRITE y leases ADMIN requirieron actualización. Se alinearon pruebas y política Coordinator; nueva ejecución pendiente.
+
+- CI run 44536463315: sintaxis aprobada; se detectaron dos defectos en las pruebas de contrato actualizadas, no en los servicios. Se corrigieron y se repetirá la regresión.

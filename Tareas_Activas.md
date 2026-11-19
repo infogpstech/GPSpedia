@@ -246,3 +246,5 @@ Aplicar la estructura objetivo después de validar el dry-run:
 - La tarea permanece **EN PROGRESO** hasta aprobar las pruebas locales de contrato/regresión y revisar el diff publicado. No desplegar Apps Script ni invocar servicios remotos.
 
 - CI run 44535834471 detectó contratos históricos que aún exigían token/lease ADMIN; se alinearon las pruebas con actor cacheado y se retiraron políticas ADMIN de lease obsoletas.
+
+- La segunda ejecución CI (run 44536463315) detectó dos errores en los contratos actualizados: escapes literales y delimitador de función incorrecto. Se corrigieron antes de reintentar.

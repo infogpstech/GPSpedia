@@ -1008,3 +1008,5 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 ================================================================================
 
 - CI run 44535834471: sintaxis aprobada; regresión falló por tres contratos de arquitectura anterior. Corrección de contratos y política Coordinator en curso; no se ignoraron los fallos.
+
+- CI run 44536463315: sintaxis de servicios aprobada; fallaron dos contratos por escapes literales introducidos al actualizarlos. Corrección puntual aplicada.

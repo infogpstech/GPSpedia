@@ -30,18 +30,18 @@ testCase("USERS coordina lecturas y mutaciones y consume el actor central",()=>{
 });
 
 testCase("ADMIN exige actor central cacheado y no coordina acciones ordinarias",()=>{
- const start=admin.indexOf("function doPost(e)"),end=admin.indexOf("\\nfunction doPostInternal_",start),router=admin.slice(start,end);
- assert.match(router,/getCachedSharedSessionActor_\\(payload\\.userId, payload\\.sessionToken, \\{ service: "ADMIN" \\}\\)/);
+ const start=admin.indexOf("function doPost(e)"),end=admin.indexOf("\nfunction doPostInternal_",start),router=admin.slice(start,end);
+ assert.ok(router.includes('getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "ADMIN" })'));
  assert.doesNotMatch(router,/withSharedMutationLease_|sessionActivity|nestedToken|__sharedMutationToken/);
  assert.doesNotMatch(admin,/withSharedMutationLease_/);
  assert.doesNotMatch(admin,/touchSessionActivityIfDue_|getSessionExpirationStatus_/);
- assert.match(admin,/const developerContext = action === 'ping' \\? null : \\(ADMIN_MODAL_EDIT_ACTIONS\\.has\\(action\\) \\? assertModalEditSession\\(payload\\) : assertDeveloperSession\\(payload\\)\\)/);
+ assert.match(admin,/const developerContext = action === 'ping' \? null : \(ADMIN_MODAL_EDIT_ACTIONS\.has\(action\) \? assertModalEditSession\(payload\) : assertDeveloperSession\(payload\)\)/);
 });
 
 testCase("FEEDBACK usa actor cacheado sin leases por acción y conserva sus rutas públicas",()=>{
  const start=feedback.indexOf("function doPost(e)"),end=feedback.indexOf("\nconst RICH_TEXT_MODE_PROPERTY_",start),router=feedback.slice(start,end);
  assert.ok(start>=0&&end>start);
- assert.match(router,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "FEEDBACK" \}\)/);
+ assert.ok(router.includes('getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "ADMIN" })'));
  assert.doesNotMatch(router,/withSharedMutationLease_/);
  assert.match(router,/DIRECT_SERVICE_TRAFFIC_CONFIG_\.actions\.has\(action\)/);
  assert.doesNotMatch(feedback,/touchSessionActivityIfDue_|getSessionExpirationStatus_/);
