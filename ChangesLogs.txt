@@ -1103,3 +1103,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-19] ADMIN: al agregar un corte a un vehículo existente, se reutiliza verified.rowValues retornado por findRowByOpId después de Drive para preparar VIN, evitando una segunda lectura integral de la misma fila. Se conservan unicidad, revalidación de rowIndex/vehicleId/slotIndex/operationHash y disponibilidad del slot. Fallback de lectura mantenido para ausencia de opId. Nueva prueba AdminExistingVehiclePostDriveSnapshotReuse.
+
+
+[2026-11-19 · ajuste de prueba] La primera CI de AdminExistingVehiclePostDriveSnapshotReuse falló por una aserción excesiva: prohibía cualquier lectura integral dentro del callback, incluyendo el fallback válido cuando no hay snapshot/opId. La prueba se corrigió para exigir que la lectura permanezca únicamente detrás del operador `verifiedRowValues ||`; el camino normal reutiliza la fila verificada. La implementación no se modificó.

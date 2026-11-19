@@ -729,4 +729,5 @@ Siguiente paso: continuar GP-PERF-ADMIN-CUT-LOCK-01 inspeccionando las escritura
 - [x] Mantener la comprobación de unicidad del vehicleId, rowIndex, slotIndex, operationHash y disponibilidad del slot después de Drive.
 - [x] Mantener lectura de fallback si no existe opId.
 - [x] Añadir `AdminExistingVehiclePostDriveSnapshotReuse.mjs` al runner.
-- Estado: IMPLEMENTACIÓN PUBLICADA; regresión y health pendientes de CI. No se desplegó Apps Script ni se modificaron datos productivos.
+- CI inicial `44638854344`: la implementación pasó sintaxis, pero falló una aserción de prueba que prohibía incluso la lectura fallback para ausencia de opId. Se ajustó el contrato del test para exigir que esa lectura exista solo detrás de `verifiedRowValues ||`.
+- Estado: implementación publicada; repetición de regresión pendiente. No se desplegó Apps Script ni se modificaron datos productivos.

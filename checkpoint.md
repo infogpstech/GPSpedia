@@ -314,3 +314,9 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Se mantienen las validaciones de fila, vehículo, slot, hash y slot aún vacío. El fallback de lectura sigue disponible cuando no hay opId.
 - Nueva prueba `AdminExistingVehiclePostDriveSnapshotReuse.mjs` integrada en el runner.
 - CI pendiente. No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+### Nota de CI — snapshot post-Drive de vehículo existente
+- La primera regresión falló por una aserción demasiado estricta: también rechazaba el fallback de lectura para ausencia de snapshot.
+- Se ajustó el test para comprobar que la lectura queda protegida por `verifiedRowValues ||`, de modo que solo se ejecuta si no existe snapshot verificado.
+- Implementación funcional sin cambios; repetición de CI pendiente.

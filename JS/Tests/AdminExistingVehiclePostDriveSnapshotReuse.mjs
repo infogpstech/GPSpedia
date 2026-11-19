@@ -21,8 +21,10 @@ const current = callback.indexOf("const currentValues = verifiedRowValues ||");
 const prepare = callback.indexOf("prepareVinCollectionForAdmin(sheet, currentValues");
 assert.ok(verify >= 0 && verify < assign && assign < current && current < prepare,
     "El snapshot debe obtenerse tras Drive, validarse y reutilizarse al preparar VIN");
-assert.doesNotMatch(callback, /getRange\(rowIndex,\s*1,\s*1,\s*sheet\.getLastColumn\(\)\)\.getValues\(\)/,
-    "No debe repetirse la lectura integral de fila dentro del callback cuando findRowByOpId ya la devuelve");
+assert.match(callback, /const currentValues = verifiedRowValues \\|\\|\\s*sheet\\.getRange\\(rowIndex, 1, 1, sheet\\.getLastColumn\\(\\)\\)\\.getValues\\(\\)\\[0\\]/,
+    "La lectura integral solo debe quedar como fallback cuando no hay snapshot verificado");
+assert.equal((callback.match(/getRange\\(rowIndex, 1, 1, sheet\\.getLastColumn\\(\\)\\)\\.getValues\\(\\)\\[0\\]/g) || []).length, 1,
+    "Debe existir una única lectura fallback, protegida por verifiedRowValues");
 assert.match(callback, /verified\.rowIndex !== rowIndex/);
 assert.match(callback, /verified\.slotIndex !== cutSlotIndex/);
 assert.match(callback, /verified\.vehicleId !== String\(vehicleId\)/);
