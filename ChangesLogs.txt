@@ -919,3 +919,5 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 2026-11-19 — ADMIN: liberar ScriptLock en finally solo cuando la ejecución lo posee, preservando el estado pendiente cuando tryLock(0) no consigue readquirirlo.
 
 2026-11-19 — CI ADMIN Drive isolation: 158 suites, 2,260 pruebas, 0 fallos; health read-only SUCCESS. Las cargas/consultas Drive del flujo ADMIN con opId ya se ejecutan fuera del ScriptLock y revalidan la reserva antes de aplicar URLs.
+
+2026-11-19 — ADMIN: mover asignación central de ID a WRITE fuera del ScriptLock local y sustituir espera de 30 s por tryLock(0)/ADMIN_BUSY; prueba AdminVehicleIdOutsideLock.mjs.

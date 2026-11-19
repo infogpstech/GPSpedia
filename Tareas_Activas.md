@@ -387,3 +387,9 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [ ] CI y revisión integral pendientes. La asignación de ID ADMIN→WRITE aún permanece bajo lock y será el siguiente subpaso.
 
 - Revisión del helper ADMIN: el `finally` exterior libera el ScriptLock solo si la ejecución lo conserva. Esto evita que un fallo de `tryLock(0)` al volver de Drive sea ocultado por un `releaseLock()` sin propiedad.
+
+### ADMIN — asignación central de ID fuera del ScriptLock (2026-11-19)
+- [x] Mover la petición ADMIN→WRITE de asignación de ID antes de adquirir el ScriptLock ADMIN; WRITE conserva su propia exclusión sobre el contador.
+- [x] Cambiar la adquisición ADMIN de espera de 30 s a `tryLock(0)` con error `ADMIN_BUSY` para no mantener solicitudes independientes en cola dentro del servicio.
+- [x] Añadir `AdminVehicleIdOutsideLock.mjs` al runner.
+- [ ] CI y revisión de compatibilidad de reintentos pendientes. La asignación puede dejar IDs sin usar si una solicitud se reintenta o falla antes de persistir; los IDs no se reutilizan, por diseño.

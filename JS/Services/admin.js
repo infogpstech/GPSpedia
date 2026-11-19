@@ -6633,23 +6633,32 @@ function runAdminDriveWorkOutsideScriptLock_(lock, opId, operation, revalidate) 
 }
 
 function handleAddOrUpdateCut(payload, logMessage, developerContext) {
+    const { vehicleData, cutData, vehicleId } = payload || {};
+    if (!cutData) throw new Error("Los datos del corte son requeridos.");
+    const colaboradorName = String(developerContext && developerContext.fullName || "").trim();
+    if (!colaboradorName) throw new Error("El perfil del usuario autenticado no tiene un nombre completo registrado.");
+
+    // La asignación central se realiza antes del lock ADMIN. WRITE mantiene su propia
+    // exclusión para el contador; ADMIN solo reserva y persiste la fila al volver.
+    const preallocatedVehicleId = String(vehicleId || "").trim()
+        ? null
+        : requestNextVehicleIdFromWriteService(payload);
+
     const lock = LockService.getScriptLock();
     try {
-        // Intentar obtener el bloqueo por un máximo de 30 segundos
-        lock.waitLock(30000);
+        if (!lock.tryLock(0)) {
+            const busyError = new Error("ADMIN está procesando otra escritura. Reintenta en unos instantes con el mismo opId.");
+            busyError.code = "ADMIN_BUSY";
+            throw busyError;
+        }
     } catch (e) {
-        throw new Error("No se pudo obtener el bloqueo de la hoja de cálculo. Por favor reintente en unos instantes.");
+        if (e && e.code === "ADMIN_BUSY") throw e;
+        const lockError = new Error("No se pudo obtener el bloqueo breve de ADMIN. Reintenta con el mismo opId.");
+        lockError.code = "ADMIN_BUSY";
+        throw lockError;
     }
 
     try {
-        const { vehicleData, cutData, vehicleId } = payload || {};
-        if (!cutData) {
-            throw new Error("Los datos del corte son requeridos.");
-        }
-        const colaboradorName = String(developerContext && developerContext.fullName || "").trim();
-        if (!colaboradorName) {
-            throw new Error("El perfil del usuario autenticado no tiene un nombre completo registrado.");
-        }
 
         logMessage("Registro Administrativo", `Procesando addOrUpdateCut administrativo...`);
         const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
@@ -6898,9 +6907,10 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
         sheet.getRange(rowIndex, COLS_CORTES.id).clearContent();
         SpreadsheetApp.flush();
 
-        // ADMIN solicita el ID al asignador central de WRITE; nunca genera uno localmente.
+        // ID central reservado antes del ScriptLock de ADMIN; nunca se genera localmente.
         try {
-            newId = requestNextVehicleIdFromWriteService(payload);
+            newId = Number(preallocatedVehicleId);
+            if (!Number.isSafeInteger(newId) || newId < 1) throw new Error("No hay un ID central preasignado válido.");
             sheet.getRange(rowIndex, COLS_CORTES.id).setValue(newId);
             SpreadsheetApp.flush();
             if (Number(sheet.getRange(rowIndex, COLS_CORTES.id).getValue()) !== newId) {
