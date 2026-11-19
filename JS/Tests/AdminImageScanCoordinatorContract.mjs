@@ -267,9 +267,9 @@ assert.ok(allSheetsReferenceSource.includes("sheet.getImages()"),
     "La auditoría debe detectar imágenes flotantes sobre la cuadrícula.");
 assert.ok(allSheetsReferenceSource.includes("getRichTextValues()") && allSheetsReferenceSource.includes("getFormulas()"),
     "Las demás hojas deben incluir fórmulas y enlaces enriquecidos en el escaneo.");
-const organizerPreviewReadOnlySource = extractFunction(admin, "handlePreviewCortesImageOrganizer_");
-assert.ok(organizerPreviewReadOnlySource.includes("collectActiveDriveReferences(true)"));
-assert.doesNotMatch(organizerPreviewReadOnlySource, /\.setValue\(|\.setName\(|\.setTrashed\(|\.createFile\(|\.createFolder\(/,
+const imageReferencePreviewSource = extractFunction(admin, "handlePreviewCortesImageOrganizer_");
+assert.ok(imageReferencePreviewSource.includes("collectActiveDriveReferences(true)"));
+assert.doesNotMatch(imageReferencePreviewSource, /\.setValue\(|\.setName\(|\.setTrashed\(|\.createFile\(|\.createFolder\(/,
     "El preview del organizador debe seguir siendo estrictamente de solo lectura.");
 console.log("ImageReferenceCoverageContract: PASS");
 
