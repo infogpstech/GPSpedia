@@ -387,6 +387,13 @@ assert.throws(() => vehicleFolderBuilder({
     categoria: "Camión pesado", marca: "Toyota", modelo: "Hilux",
     versionesAplicables: "SRV", anoDesde: 2025, anoHasta: 2020
 }), /rango de años es inválido/);
+const vehicleYearFolderName = new Function(
+    extractFunction(admin, "getVehicleYearFolderName") + "\\nreturn getVehicleYearFolderName;"
+)();
+assert.equal(vehicleYearFolderName({ anoDesde: 2020, anoHasta: 2025 }), "2020-2025");
+assert.equal(vehicleYearFolderName({ anoDesde: 2020, anoHasta: 2020 }), "2020-2020");
+assert.equal(vehicleYearFolderName({ anoDesde: "2020abc", anoHasta: 2025 }), "");
+assert.equal(vehicleYearFolderName({ anoDesde: 2020, anoHasta: "" }), "");
 
 const logoCategoryResolver = new Function("COLS_CORTES",
     extractFunction(admin, "normalizeOrganizerSegment_") +

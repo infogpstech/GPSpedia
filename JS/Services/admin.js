@@ -7147,13 +7147,11 @@ function getVehicleYearFolderName(vehicleInfo) {
     const info = vehicleInfo || {};
     const rawDesde = String(info.anoDesde === null || info.anoDesde === undefined ? '' : info.anoDesde).trim();
     const rawHasta = String(info.anoHasta === null || info.anoHasta === undefined ? '' : info.anoHasta).trim();
-    const inlineRange = rawDesde.match(/^(\\d{4})\\s*[-–]\\s*(\\d{4})$/);
-    let desde = inlineRange ? parseInt(inlineRange[1], 10) : parseInt(rawDesde, 10);
-    let hasta = inlineRange ? parseInt(inlineRange[2], 10) : parseInt(rawHasta, 10);
-    if (!Number.isFinite(desde)) return 'Sin_Año';
-    if (!Number.isFinite(hasta)) hasta = desde;
+    if (!/^\\d{4}$/.test(rawDesde) || !/^\\d{4}$/.test(rawHasta)) return '';
+    const desde = Number(rawDesde);
+    const hasta = Number(rawHasta);
     if (desde > hasta) return '';
-    return String(desde) + '-' + String(hasta);
+    return rawDesde + '-' + rawHasta;
 }
 
 function findOrCreateVehicleFolder(vehicleInfo) {
