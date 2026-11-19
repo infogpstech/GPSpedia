@@ -1120,3 +1120,11 @@ ACTUALIZACIÓN DE CONTINUIDAD — 2026-11-19
 - No se desplegó Apps Script ni se tocaron ScriptProperties, secretos, Drive o Spreadsheet.
 ================================================================================
 
+================================================================================
+2026-11-19 — WRITE: ASIGNADOR CENTRAL DE IDs NO BLOQUEANTE
+- En `handleAllocateVehicleId`, reemplazado `waitLock(30000)` por `tryLock(0)`; si el lock global WRITE está ocupado, devuelve `WRITE_BUSY` y permite reintento. El finally libera solo si adquirió el lock.
+- Prueba añadida: `JS/Tests/WriteIdAllocatorNonBlocking.mjs`, integrada en RunServiceTests.
+- Pendiente ejecutar CI. El escaneo de IDs de Cortes aún ocurre dentro de la sección crítica.
+- Hallazgo siguiente: `publishCortesCatalogChange_` mantiene ScriptLock durante publicación remota a Coordinator; requiere separar sin reordenar snapshots.
+================================================================================
+

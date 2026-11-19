@@ -884,3 +884,5 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - Se agregó JS/Tests/AdminCutSlotReservation.mjs y se incorporó al runner integral.
 - El handler todavía conserva el lock durante WRITE/Drive; tarea en progreso, sin cierre ni validación CI declarada.
 
+2026-11-19 — WRITE allocator: handleAllocateVehicleId deja de esperar 30 s por el ScriptLock global; devuelve WRITE_BUSY para reintento y libera solo si adquirió el lock. Añadida prueba WriteIdAllocatorNonBlocking.mjs (pendiente CI).
+

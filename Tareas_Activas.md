@@ -342,3 +342,9 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [ ] Continuar con la separación del flujo en reserva breve, WRITE/Drive fuera del lock y revalidación/persistencia breve. El handler aún conserva el lock global durante el resto del proceso; esta modificación por sí sola NO cierra la tarea.
 - [ ] Añadir recuperación segura y pruebas de no interferencia entre auditoría, Inbox, health, login y registro de cortes. No se ha confirmado el mapa de proyectos Apps Script desplegados; el repositorio no contiene manifiestos `.clasp.json` ni `appsscript.json` que permitan asociar cada fuente a un Script ID.
 
+### Avance adicional — asignador central de IDs WRITE (2026-11-19)
+- [x] Sustituir la espera de hasta 30 segundos en `handleAllocateVehicleId` por adquisición inmediata `tryLock(0)`. Si WRITE está ocupado, responde con `WRITE_BUSY` para permitir reintento, sin quedar esperando y reteniendo la ejecución.
+- [ ] Ejecutar prueba determinista y CI antes de marcar validado.
+- [ ] Reducir la sección crítica del asignador: actualmente verifica IDs existentes en la hoja completa; evaluar contador + reconciliación segura sin perder detección de duplicados o IDs manuales.
+- [ ] Resolver publicación del catálogo: `publishCortesCatalogChange_` mantiene ScriptLock durante la llamada a Coordinator; separar snapshot/orden de publicación sin permitir eventos obsoletos.
+

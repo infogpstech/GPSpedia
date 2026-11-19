@@ -603,14 +603,21 @@ function getNextCortesVehicleIdLocked(sheet) {
 /** Endpoint autenticado para que ADMIN solicite un ID al asignador central. */
 function handleAllocateVehicleId(payload) {
     const lock = LockService.getScriptLock();
-    try { lock.waitLock(30000); }
-    catch (error) { throw new Error("No se pudo obtener el bloqueo central de IDs. Intente nuevamente."); }
+    let lockAcquired = false;
     try {
+        // El asignador comparte el ScriptLock global de WRITE. Nunca debe esperar
+        // mientras mantiene ocupadas otras acciones; el cliente puede reintentar.
+        lockAcquired = lock.tryLock(0);
+        if (!lockAcquired) {
+            const busyError = new Error("WRITE está ocupado con otra operación de escritura. Reintenta la asignación en unos instantes.");
+            busyError.code = "WRITE_BUSY";
+            throw busyError;
+        }
         assertDeveloperForIdMaintenance(payload);
         const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
         return { status: "success", vehicleId: getNextCortesVehicleIdLocked(sheet) };
     } finally {
-        lock.releaseLock();
+        if (lockAcquired) lock.releaseLock();
     }
 }
 
