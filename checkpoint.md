@@ -16,18 +16,18 @@ Fecha: 2026-11-19
 - No inferir deployments Apps Script ni permisos externos desde el código versionado.
 
 ## Última tarea completada
-WRITE — preflight de addOrUpdateCut fuera del ScriptLock:
-- Se confirmó que la ruta canónica addOrUpdateCut pertenece a WRITE; ADMIN rechaza la acción heredada.
-- Autenticación contextual, lectura de listas oficiales y validación del payload se realizan antes de adquirir el ScriptLock global.
-- Las listas de Cortes se leen desde las columnas 2–26 necesarias; Relay se lee solo desde la columna de configuración.
-- Prueba aislada `WriteCutPreflightOutsideLock` 1/1; `CutPayloadValidation` 35/35; autorización/minimización WRITE 13/13.
-- CI 44615757832 SUCCESS: 169 suites, 2,348 pruebas aprobadas, 0 fallos; sintaxis JavaScript aprobada.
-- Health read-only 44615757812 SUCCESS; GitHub Pages 44615756805 SUCCESS.
-- Commits: e4e32bc49c416d006edf4be4e006b3528a42b364 (preflight/rangos acotados), da6b62baa2c3c8f0b4ccb9931f5882dfea544584 (ajuste de extracción de pruebas), 8b26ab4a8e5c2c590e85dc61eb22b85701064d23 y 3cb7fb0e277daaf4d2aa263d7cfe4a08ba19a734 (contratos de actor central).
+WRITE — escrituras por lote en registro de cortes:
+- Los cinco campos consecutivos del slot de corte existente se escriben en un único `setValues`; testigo y colaborador siguen en sus columnas separadas.
+- Para vehículo nuevo, las columnas 2–16 se escriben en un solo lote; los campos de video y contador permanecen vacíos después de la limpieza inicial.
+- La reserva de VIN y el registro pending de `opId` permanecen antes de liberar el ScriptLock para Drive.
+- La prueba `WriteCutSlotBatchWrites` comprueba mapa de columnas, valores de lote, campos separados y orden de reservas.
+- CI 44616477533 SUCCESS: 170 suites, 2,349 pruebas aprobadas, 0 fallos; prueba específica 1/1 y sintaxis JS aprobada.
+- Health read-only 44616477539 SUCCESS; GitHub Pages 44616474879 SUCCESS.
+- Commits: e121e174b9af20b6307cf78a6a6bcde1445ac374 (lotes de escritura), c67964b3984965910688b5a3f0448bf487cba41a (comentario de implementación).
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó WRITE ni se modificaron datos productivos.
 
 ## Siguiente trabajo
-Continuar GP-PERF-WRITE-CUT-LOCK-02. Revisar la sección crítica restante de `handleAddOrUpdateCutLocked` y `handleAddOrUpdateCutLockedUnsafe_`: reducir lecturas/escrituras de Sheets y flushes dentro del ScriptLock, manteniendo la asignación única de IDs, reserva de slots, rollback e idempotencia de Cortes/Idempotencia. Priorizar operaciones de escritura por lotes cuando no alteren fórmulas ni datos concurrentes. Añadir pruebas de concurrencia/no interferencia entre funciones del mismo servicio. No asumir que los ScriptLock de deployments distintos son compartidos; verificar los límites reales de proyectos sin inferir Script IDs. No desplegar Apps Script ni tocar datos productivos sin autorización.
+Continuar GP-PERF-WRITE-CUT-LOCK-03. Revisar el fallback heredado de `findRowByOpId`, que todavía usa `getDataRange()` cuando no existe entrada en Idempotencia. Reducir esa lectura a encabezados y columnas de operación/colaborador necesarias, preservando detección de coincidencias directas, etiquetas legacy, duplicados ambiguos y validación de vehicleId. Mantener la exclusión crítica para Cortes/Idempotencia. Después revisar flushes restantes y llamadas de Sheets dentro del lock. No asumir que ScriptLock de deployments distintos se comparte; no desplegar Apps Script ni tocar datos productivos sin autorización.
 
 ## Restricciones
 - Trabajar únicamente en GPSpedia2.2.5_work.
@@ -65,3 +65,6 @@ Siguiente paso P0: auditar y reducir lecturas restantes dentro del ScriptLock de
 
 
 2026-11-19 — Cierre preflight WRITE: HEAD 3cb7fb0e277daaf4d2aa263d7cfe4a08ba19a734; CI 44615757832 SUCCESS (169 suites, 2,348 pruebas, 0 fallos); health 44615757812 SUCCESS; Pages 44615756805 SUCCESS. El preflight de addOrUpdateCut se ejecuta antes del ScriptLock y lee solo las columnas requeridas. Próximo paso: reducir llamadas/flushes dentro de la sección crítica sin debilitar la idempotencia.
+
+
+2026-11-19 — Cierre de lotes WRITE: HEAD funcional c67964b3984965910688b5a3f0448bf487cba41a; CI 44616477533 SUCCESS (170 suites, 2,349 pruebas, 0 fallos); health 44616477539 SUCCESS; Pages 44616474879 SUCCESS. La persistencia de cortes reduce llamadas setValue mediante lotes contiguos, manteniendo reservas VIN/opId previas a Drive. Próximo paso: lectura heredada de findRowByOpId.

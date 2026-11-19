@@ -514,3 +514,12 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Health read-only 44615757812 SUCCESS; GitHub Pages 44615756805 SUCCESS.
 - [x] Diff revisado: la preparación queda fuera del ScriptLock; las lecturas de validación se acotan a columnas necesarias.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó WRITE ni se modificaron Sheets/Drive productivos.
+
+### WRITE — escrituras por lote dentro del registro de cortes (2026-11-19)
+- [x] Agrupar los cinco campos consecutivos del corte existente en una sola llamada setValues; mantener separados testigo y colaborador.
+- [x] Agrupar las columnas 2–16 del vehículo nuevo en una sola llamada setValues, preservando columnas de video/contador vacías tras la limpieza.
+- [x] Mantener la reserva de VIN y opId antes de liberar el ScriptLock para las cargas Drive.
+- [x] Añadir WriteCutSlotBatchWrites para comprobar columnas contiguas, contenido del lote y orden de reservas.
+- [x] CI 44616477533 SUCCESS: 170 suites, 2,349 pruebas aprobadas, 0 fallos; WriteCutSlotBatchWrites 1/1 y sintaxis JavaScript aprobada.
+- [x] Health read-only 44616477539 SUCCESS; GitHub Pages 44616474879 SUCCESS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó WRITE ni se modificaron Sheets/Drive productivos.

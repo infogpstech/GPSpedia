@@ -1008,3 +1008,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-19] WRITE: se prepara el preflight autenticado/validado antes de adquirir ScriptLock y se acotan las lecturas de listas oficiales a columnas necesarias de Cortes y Relay. Se añaden/ajustan contratos y prueba aislada de no interferencia.
+
+
+[2026-11-19] WRITE: se agrupan los campos consecutivos del corte existente en un único setValues y las columnas 2–16 del vehículo nuevo en un lote; testigo, colaborador, timestamp, VIN y reservas de idempotencia conservan sus escrituras separadas.
