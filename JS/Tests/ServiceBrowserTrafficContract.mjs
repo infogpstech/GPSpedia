@@ -72,6 +72,8 @@ check("La instrumentación del router es no bloqueante y registra éxito/error",
     assert.match(api, /export async function routeAction\(/);
     assert.match(api, /outcome: "success"/);
     assert.match(api, /outcome: "error"/);
+    assert.match(api, /action: "getCatalogChanges"/);
+    assert.match(api, /service: "FEEDBACK"/);
 });
 check("ADMIN declara las métricas locales, corrige events y muestra las dos gráficas", () => {
     const ui = read("JS/Frontend/ui.js");
