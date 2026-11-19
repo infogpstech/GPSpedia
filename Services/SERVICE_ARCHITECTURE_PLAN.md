@@ -118,3 +118,25 @@ No cambiar secretos, ScriptProperties, deployments, hojas ni datos productivos d
 ## 7. Límites de esta auditoría
 
 Auditoría estática de fuentes y documentación de la rama de trabajo. No se consultaron ScriptProperties, secretos, deployments, hojas ni endpoints productivos. No se afirma que las configuraciones remotas coincidan ni que la revocación remota haya sido probada en vivo.
+
+
+## 8. Política de compatibilidad y matriz de impacto de despliegue
+
+La versión de Coordinator (SHARED_MUTATION_COORDINATOR_VERSION) y la versión del protocolo HTTP (SHARED_MUTATION_PROTOCOL_VERSION) son independientes. Un cambio interno de políticas, almacenamiento, locks, telemetría, diagnóstico o correcciones que conserve el contrato no debe incrementar el protocolo ni requerir cambios en los consumidores.
+
+- Coordinator mantiene explícitamente las versiones de protocolo compatibles. La ausencia de protocolVersion en clientes antiguos se interpreta como v1, de forma fija; no debe derivarse de la versión interna vigente.
+- Una versión nueva de protocolo se incorpora de forma aditiva y convive con las anteriores mientras existan consumidores que las utilicen. No retirar v1 como parte de una publicación interna ordinaria.
+- Las acciones nuevas se publican primero en Coordinator. Solo los proyectos que necesiten invocarlas incorporan el adaptador cliente correspondiente; los demás continúan usando v1 sin actualización.
+- SharedMutationClient.js se trata como un adaptador estable y de cambios excepcionales. No se modifica para cambios internos del Coordinator. Si una corrección afecta a una función común, actualizar únicamente los proyectos que contienen y utilizan esa función, conservando wrappers y firmas existentes.
+- No adoptar Apps Script Libraries como solución automática: actualizar la versión referenciada por cada proyecto también requiere gestionar cada consumidor y su deployment.
+
+| Tipo de cambio | Proyectos que requieren actualización |
+|---|---|
+| Corrección interna compatible de Coordinator, locks, almacenamiento o políticas | Coordinator |
+| Cambio de configuración central de URLs/secretos | Solo ScriptProperties del Coordinator del entorno correspondiente; no redeploy de consumidores |
+| Cambio aditivo de una acción ya soportada por el cliente estable | Coordinator; consumidores solo si empiezan a utilizar la acción nueva |
+| Cambio de una función local de SharedMutationClient | Únicamente consumidores cuyo código/flujo requiere esa corrección |
+| Cambio incompatible del protocolo | No permitido como actualización simultánea; introducir versión paralela, migrar consumidores gradualmente y retirar la anterior solo con evidencia de cero consumidores |
+| Cambio de lógica propia de un servicio | Ese servicio y sus pruebas/deployment, no los demás |
+
+La matriz es el criterio para decidir los despliegues Beta. No implica que se hayan modificado proyectos, deployments o ScriptProperties remotos.
