@@ -1040,6 +1040,16 @@ function handleAddOrUpdateCutLocked(preparedRequest, lock, lockState) {
     }
 }
 
+function buildCutSlotCoreValues_(cutData, imageUrl) {
+    return [
+        cutData.tipoCorte1,
+        cutData.ubicacionCorte1,
+        cutData.colorCableCorte1,
+        cutData.configRelay1,
+        imageUrl || ""
+    ];
+}
+
 function handleAddOrUpdateCutLockedUnsafe_(payload, lock, lockState, collaboratorName) {
     payload = payload && typeof payload === 'object' ? payload : {};
     const { vehicleData, cutData, vehicleId } = payload;
@@ -1249,12 +1259,9 @@ function handleAddOrUpdateCutLockedUnsafe_(payload, lock, lockState, collaborato
             });
         }
 
-        sheet.getRange(rowIndex, COLS_CORTES[`tipoCorte${cutSlotIndex}`]).setValue(cutData.tipoCorte1);
-        sheet.getRange(rowIndex, COLS_CORTES[`ubicacionCorte${cutSlotIndex}`]).setValue(cutData.ubicacionCorte1);
-        sheet.getRange(rowIndex, COLS_CORTES[`colorCableCorte${cutSlotIndex}`]).setValue(cutData.colorCableCorte1);
-        sheet.getRange(rowIndex, COLS_CORTES[`configRelay${cutSlotIndex}`]).setValue(cutData.configRelay1);
+        const slotCoreValues = buildCutSlotCoreValues_(cutData, imageUrl);
+        sheet.getRange(rowIndex, COLS_CORTES[`tipoCorte${cutSlotIndex}`], 1, slotCoreValues.length).setValues([slotCoreValues]);
         sheet.getRange(rowIndex, COLS_CORTES[`activaTestigo${cutSlotIndex}`]).setValue(cutData.activaTestigo1 === true);
-        sheet.getRange(rowIndex, COLS_CORTES[`imgCorte${cutSlotIndex}`]).setValue(imageUrl);
         sheet.getRange(rowIndex, COLS_CORTES[`colaboradorCorte${cutSlotIndex}`]).setValue(colaboradorName);
         if (updatedVinCollection) {
             sheet.getRange(rowIndex, vinColumnIndex).setValue(JSON.stringify(updatedVinCollection));
@@ -1351,24 +1358,24 @@ function handleAddOrUpdateCutLockedUnsafe_(payload, lock, lockState, collaborato
 
         // 4. Escribir los nuevos datos en las celdas específicas usando múltiples `setValue` para claridad.
         // Esto es más legible que crear un array gigante y previene errores de índice.
-        sheet.getRange(rowIndex, COLS_CORTES.categoria).setValue(vehicleData.categoria || '');
-        sheet.getRange(rowIndex, COLS_CORTES.marca).setValue(vehicleData.marca);
-        sheet.getRange(rowIndex, COLS_CORTES.modelo).setValue(vehicleData.modelo);
-        sheet.getRange(rowIndex, COLS_CORTES.versionesAplicables).setValue(vehicleData.versionesAplicables || '');
-        sheet.getRange(rowIndex, COLS_CORTES.anoDesde).setValue(anoDesde);
-        sheet.getRange(rowIndex, COLS_CORTES.anoHasta).setValue(anoHasta);
-        sheet.getRange(rowIndex, COLS_CORTES.tipoEncendido).setValue(vehicleData.tipoEncendido);
-        sheet.getRange(rowIndex, COLS_CORTES.imagenVehiculo).setValue(vehiculoImageUrl);
-        sheet.getRange(rowIndex, COLS_CORTES.timestamp).setValue(formattedDate);
-
-        // Datos del primer corte
-        sheet.getRange(rowIndex, COLS_CORTES.tipoCorte1).setValue(cutData.tipoCorte1);
-        sheet.getRange(rowIndex, COLS_CORTES.ubicacionCorte1).setValue(cutData.ubicacionCorte1);
-        sheet.getRange(rowIndex, COLS_CORTES.colorCableCorte1).setValue(cutData.colorCableCorte1);
-        sheet.getRange(rowIndex, COLS_CORTES.configRelay1).setValue(cutData.configRelay1);
-        sheet.getRange(rowIndex, COLS_CORTES.activaTestigo1).setValue(cutData.activaTestigo1 === true);
-        sheet.getRange(rowIndex, COLS_CORTES.imgCorte1).setValue(corteImageUrl);
+        // La fila nueva fue limpiada antes de la carga; las columnas 2–16 se escriben en un solo lote.
+        const rowCoreValues = [
+            vehicleData.categoria || '',
+            vehicleData.marca,
+            vehicleData.modelo,
+            vehicleData.versionesAplicables || '',
+            anoDesde,
+            anoHasta,
+            vehicleData.tipoEncendido,
+            vehiculoImageUrl,
+            '',
+            '',
+            ...buildCutSlotCoreValues_(cutData, corteImageUrl)
+        ];
+        sheet.getRange(rowIndex, COLS_CORTES.categoria, 1, rowCoreValues.length).setValues([rowCoreValues]);
         sheet.getRange(rowIndex, COLS_CORTES.colaboradorCorte1).setValue(colaboradorName);
+        sheet.getRange(rowIndex, COLS_CORTES.timestamp).setValue(formattedDate);
+        sheet.getRange(rowIndex, COLS_CORTES.activaTestigo1).setValue(cutData.activaTestigo1 === true);
         SpreadsheetApp.flush();
         runWriteDriveWorkOutsideScriptLock_(lock, lockState, opId, () => markImageUploadLinked(vehiculoImageUrl, { shortLedgerLock: true }));
         runWriteDriveWorkOutsideScriptLock_(lock, lockState, opId, () => markImageUploadLinked(corteImageUrl, { shortLedgerLock: true }));

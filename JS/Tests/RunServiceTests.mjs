@@ -72,6 +72,7 @@ runGroup('32','ADMIN',()=>{
  runCli('Modal de corte: colaborador comunitario cuando falta','JS/Tests/CutDetailContributorFallback.mjs');
   runCli('WRITE cargas Drive fuera del ScriptLock y reserva de slots','JS/Tests/WriteDriveOutsideLock.mjs');
   runCli('WRITE prepara validación de cortes fuera del ScriptLock con lecturas acotadas','JS/Tests/WriteCutPreflightOutsideLock.mjs');
+  runCli('WRITE agrupa escrituras de cortes sin alterar campos separados','JS/Tests/WriteCutSlotBatchWrites.mjs');
   runCli('ADMIN reserva slots de corte ocupados por operaciones pending','JS/Tests/AdminCutSlotReservation.mjs');
   runCli('WRITE asignación de IDs no espera el ScriptLock global','JS/Tests/WriteIdAllocatorNonBlocking.mjs');
   runCli('WRITE publicación del catálogo fuera del ScriptLock global','JS/Tests/WriteCatalogPublicationIsolation.mjs');
