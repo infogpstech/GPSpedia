@@ -28,12 +28,15 @@ Normativa: NORMAS_DESAROLLO.md
 - Validación aislada ejecutada: 24/24 comprobaciones PASS (sintaxis de seis módulos, agregación, fallos parciales, cinco fuentes directas, contador USERS, telemetría móvil, validación global y App Shell). La regresión Node completa y CI aún no están acreditadas. No se desplegó Apps Script ni se modificaron ScriptProperties, Drive o Spreadsheet.
 
 ### Fase 2 — Simplificación de arquitectura y configuración de servicios
-**P0 · PENDIENTE · SERVICE-ARCHITECTURE-SIMPLIFICATION-01 (requisito expreso nuevo)**
-- Reducir el acoplamiento de despliegue entre los servicios Apps Script: un cambio interno del Coordinator o de SharedMutation no debe obligar automáticamente a volver a desplegar todos los servicios consumidores.
-- Estabilizar y versionar el contrato de comunicación entre servicios; separar el protocolo/cliente estable de la implementación central que evoluciona. Evaluar alternativas compatibles con Apps Script antes de elegir diseño; no asumir que una librería compartida elimina por sí sola los despliegues.
-- Simplificar nombres, distribución y documentación de secretos/URLs. Mantener secretos fuera del repositorio y conservar aislamiento suficiente entre servicios; no exponerlos en endpoints, logs ni frontend.
-- **Capacidades que deben conservarse y probarse explícitamente:** monitoreo de salud de todos los servicios; restricciones y cambios de acceso de cuentas; revocación/cierre remoto de sesiones; limpieza remota de caché por usuario; cierre/eliminación remota de cuentas. Ninguna puede degradarse, eliminarse ni convertirse en una operación manual.
-- Mantener intacta la matriz RBAC, la identidad confiable y las protecciones indispensables. La simplificación debe reducir mantenimiento y despliegues, no eliminar funciones ni ampliar privilegios.
+**P0 · AUDITORÍA ESTÁTICA COMPLETADA; IMPLEMENTACIÓN PENDIENTE · SERVICE-ARCHITECTURE-SIMPLIFICATION-01**
+- Reducir el acoplamiento de despliegue entre los servicios Apps Script: un cambio interno del Coordinator no debe exigir actualizar consumidores si el contrato HTTP permanece compatible; una modificación del cliente solo debe afectar los consumidores que necesiten la nueva capacidad.
+- Estabilizar y versionar el contrato de comunicación; mantener SharedMutationClient como transporte estable y trasladar gradualmente la orquestación cruzada a Coordinator. No asumir que una librería compartida elimina por sí sola los despliegues.
+- Simplificar nombres, distribución y documentación de secretos/URLs con fallback legacy y migración gradual. Mantener secretos fuera del repositorio y aislamiento independiente por servicio.
+- **Capacidades obligatorias:** salud de todos los servicios; restricciones/cambios de acceso; revocación individual y global; invalidación remota de caché en WRITE y FEEDBACK; cierre/eliminación remota de cuentas con recuperación/compensación. Ninguna puede degradarse, eliminarse ni convertirse en operación manual.
+- Mantener deny-by-default, RBAC, actor confiable, leases, idempotencia, auditoría y rollback. La simplificación debe reducir mantenimiento y despliegues, no ampliar privilegios.
+- Auditoría y diseño registrados en `Services/SERVICE_ARCHITECTURE_PLAN.md`. Hallazgo clave: SharedMutationClient mezcla transporte con orquestación de invalidación remota; hoy AUTH llama directamente a WRITE y FEEDBACK para borrar cachés antes de pedir la revocación central. No cambiar ese orden hasta disponer de idempotencia, recuperación y pruebas de fallos parciales.
+- Configuración actual inventariada: Coordinator mantiene seis secretos por servicio; cada consumidor tiene URL/secreto del Coordinator; ADMIN tiene URLs y cinco secretos directos de telemetría; los servicios mantienen secretos directos de telemetría. No se consultaron ni modificaron valores remotos.
+- Siguiente subpaso: contrato versionado y pruebas de compatibilidad; después prototipo aislado de orquestación de invalidación con fallos parciales. No cambiar ScriptProperties ni desplegar en esta fase.
 
 ### Fase 3 — Inbox y aislamiento de operaciones
 **P1 · PENDIENTE**
