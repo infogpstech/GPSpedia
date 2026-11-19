@@ -3210,20 +3210,37 @@ function getExistingEntities(sheet) {
   if (lastRow < 2) {
     return { brands: [], models: [], versions: [] };
   }
-  var data = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).getValues();
+  var firstEntityColumn = COLS_CORTES.marca;
+  var entityColumnCount = COLS_CORTES.versionesAplicables - firstEntityColumn + 1;
+  var data = sheet.getRange(2, firstEntityColumn, lastRow - 1, entityColumnCount).getValues();
   var brands = [];
   var models = [];
   var versions = [];
+  var brandSet = new Set();
+  var modelSet = new Set();
+  var versionSet = new Set();
+  var brandOffset = COLS_CORTES.marca - firstEntityColumn;
+  var modelOffset = COLS_CORTES.modelo - firstEntityColumn;
+  var versionOffset = COLS_CORTES.versionesAplicables - firstEntityColumn;
 
   for (var i = 0; i < data.length; i++) {
     var row = data[i];
-    var brandVal = String(row[COLS_CORTES.marca - 1] || "").trim();
-    var modelVal = String(row[COLS_CORTES.modelo - 1] || "").trim();
-    var versionVal = String(row[COLS_CORTES.versionesAplicables - 1] || "").trim();
+    var brandVal = String(row[brandOffset] || "").trim();
+    var modelVal = String(row[modelOffset] || "").trim();
+    var versionVal = String(row[versionOffset] || "").trim();
 
-    if (brandVal && brands.indexOf(brandVal) === -1) brands.push(brandVal);
-    if (modelVal && models.indexOf(modelVal) === -1) models.push(modelVal);
-    if (versionVal && versions.indexOf(versionVal) === -1) versions.push(versionVal);
+    if (brandVal && !brandSet.has(brandVal)) {
+      brandSet.add(brandVal);
+      brands.push(brandVal);
+    }
+    if (modelVal && !modelSet.has(modelVal)) {
+      modelSet.add(modelVal);
+      models.push(modelVal);
+    }
+    if (versionVal && !versionSet.has(versionVal)) {
+      versionSet.add(versionVal);
+      versions.push(versionVal);
+    }
   }
 
   return { brands: brands, models: models, versions: versions };

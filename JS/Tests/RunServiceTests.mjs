@@ -80,6 +80,7 @@ runGroup('32','ADMIN',()=>{
   runCli('ADMIN reserva slots de corte ocupados por operaciones pending','JS/Tests/AdminCutSlotReservation.mjs');
   runCli('WRITE asignación de IDs no espera el ScriptLock global','JS/Tests/WriteIdAllocatorNonBlocking.mjs');
   runCli('WRITE asignador de vehicleId inspecciona solo IDs y filas incompletas','JS/Tests/WriteVehicleIdAllocatorBoundedRead.mjs');
+  runCli('WRITE limita lectura de entidades existentes a marca/modelo/versiones','JS/Tests/WriteEntityLookupBoundedRead.mjs');
   runCli('WRITE publicación del catálogo fuera del ScriptLock global','JS/Tests/WriteCatalogPublicationIsolation.mjs');
   runCli('WRITE carpetas suplementarias usan lease Drive independiente','JS/Tests/WriteSupplementaryFolderLease.mjs');
   runCli('ADMIN libera ScriptLock durante trabajo Drive con revalidación','JS/Tests/AdminDriveLockIsolation.mjs');

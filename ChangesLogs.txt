@@ -1026,3 +1026,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-19] WRITE: getNextCortesVehicleIdLocked lee la columna ID y fórmulas; consulta otras columnas solo para filas candidatas con ID vacío o fórmula, agrupando rangos contiguos.
+
+
+[2026-11-19] WRITE: getExistingEntities ahora lee únicamente las columnas marca/modelo/versiones aplicables y deduplica con Set conservando orden de primera aparición y normalización existente. Se añade WriteEntityLookupBoundedRead.mjs y se registra en RunServiceTests.mjs; CI pendiente.

@@ -574,3 +574,11 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] CI 44620038256 SUCCESS: 175 suites, 2,390 pruebas aprobadas, 0 fallos.
 - [x] Health read-only 44620038295 SUCCESS; GitHub Pages 44620037793 SUCCESS.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó WRITE ni se modificaron Sheets/Drive productivos.
+
+### WRITE — lectura acotada de entidades existentes (2026-11-19)
+- [x] Leer únicamente las columnas contiguas marca/modelo/versiones aplicables en lugar de todas las columnas de Cortes.
+- [x] Mantener la normalización exacta por String(... || "").trim(), el orden de primera aparición y la deduplicación sensible a mayúsculas.
+- [x] Sustituir búsquedas repetidas indexOf por Set, conservando los arreglos ordenados que consume resolveAndNormalizeEntity.
+- [x] Añadir WriteEntityLookupBoundedRead.mjs al runner con cobertura de rango, orden, duplicados, offsets y hoja vacía.
+- [ ] CI integral, sintaxis y revisión del diff pendientes.
+- Estado: EN PROGRESO. No se despliega WRITE ni se modifican Sheets/Drive productivos.

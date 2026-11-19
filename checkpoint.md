@@ -5,7 +5,7 @@ Fecha: 2026-11-19
 ## Repositorio y ramas
 - Repositorio: infogpstech/GPSpedia
 - Rama autorizada: GPSpedia2.2.5_work
-- HEAD: 3cb7fb0e277daaf4d2aa263d7cfe4a08ba19a734
+- HEAD: 93a4739b057f30df834b4fee33d82189eda5ac2b (antes de la siguiente publicación)
 - Rama base protegida GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificar)
 - El historial completo previo está preservado en Checkpoint_Archive/checkpoint_2026-11-19_parte_003.md; ver Checkpoint_Archive/manifest.md.
 
@@ -27,7 +27,7 @@ WRITE — asignador de vehicleId con lecturas acotadas:
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó WRITE ni se modificaron Sheets/Drive productivos.
 
 ## Siguiente trabajo
-Continuar GP-PERF-WRITE-CUT-LOCK-06. Acotar `getExistingEntities(sheet)`, usado al crear vehículos dentro del ScriptLock: leer solo las columnas contiguas marca/modelo/versiones (COLS_CORTES.marca a COLS_CORTES.versionesAplicables), conservar orden y deduplicación de valores, y comprobar si conviene sustituir búsquedas repetidas `indexOf` por Set sin alterar la normalización. Añadir prueba que verifique rango, resultados y hoja vacía. No mover la validación fuera del lock sin resolver el riesgo de normalización concurrente. No desplegar Apps Script ni modificar datos productivos.
+La tarea GP-PERF-WRITE-CUT-LOCK-06 está implementada en el HEAD de trabajo actual y pendiente de CI/revisión: `getExistingEntities(sheet)` lee únicamente marca/modelo/versiones aplicables y deduplica con Set conservando orden y normalización. Tras aprobar CI, continuar con el siguiente pendiente P0 del backlog, priorizando reducir la sección crítica restante sin debilitar la consistencia de Cortes/Idempotencia ni bloquear funciones independientes.
 
 ## Restricciones
 - Trabajar únicamente en GPSpedia2.2.5_work.
@@ -83,3 +83,6 @@ Siguiente paso P0: auditar y reducir lecturas restantes dentro del ScriptLock de
 
 
 2026-11-19 — Cierre asignador WRITE: HEAD funcional 8d72fe40c731da53066c7e9059e280b502385b07; CI 44620038256 SUCCESS (175 suites, 2,390 pruebas, 0 fallos; WriteVehicleIdAllocatorBoundedRead 11/11); health 44620038295 SUCCESS; Pages 44620037793 SUCCESS. El asignador inspecciona solo IDs y filas candidatas, manteniendo el contador central. Próximo paso: acotar lectura de entidades existentes.
+
+
+2026-11-19 — En progreso GP-PERF-WRITE-CUT-LOCK-06: getExistingEntities limita lectura a columnas contiguas marca/modelo/versiones y usa Set para deduplicar preservando orden/normalización. Prueba WriteEntityLookupBoundedRead añadida al runner; CI pendiente.
