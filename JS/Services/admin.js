@@ -6380,6 +6380,7 @@ function handleUploadAdminImage(payload, logMessage) {
                             return true;
                         });
                     } catch (descriptionError) {
+                        if (descriptionError && descriptionError.code === "ADMIN_LOCK_REACQUIRE_PENDING") throw descriptionError;
                         return markAdminImageUploadRequiresReview_(operationSheet, operationRecord, operationId, originalUrl,
                             "No se pudo verificar el estado del archivo de una operación ya vinculada: " + descriptionError.message,
                             logMessage, newFile, contentHash);

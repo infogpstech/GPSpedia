@@ -14,4 +14,6 @@ assert.ok(history > driveCheck && finalState > history, "La historia se conserva
 assert.ok(handler.includes('String(latestOperation.values[9]) !== "linked"') &&
     handler.includes('String(latestOperation.values[4] || "") !== newImageUrl'),
     "La recuperación debe revalidar ledger y URL antes de confirmar");
+assert.ok(handler.includes('if (descriptionError && descriptionError.code === "ADMIN_LOCK_REACQUIRE_PENDING") throw descriptionError'),
+    "Si no se recupera el lock, el error pendiente debe llegar al handler exterior sin escribir fuera de la sección crítica");
 console.log("AdminImageUploadLinkedRecoveryIsolation: 5/5 PASS — recuperación linked sin retener el ScriptLock durante Drive");
