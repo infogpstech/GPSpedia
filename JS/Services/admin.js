@@ -780,13 +780,15 @@ function ensureTestigoColumns(sheet, lockAlreadyHeld = false) {
             if (String(targetHeaders[index] || "").trim() !== headerNames[index]) {
                 sheet.getRange(1, targetColumns[index]).setValue(headerNames[index]);
             }
+            currentHeaders[targetColumns[index] - 1] = headerNames[index];
             COLS_CORTES[headerNames[index]] = targetColumns[index];
         }
         return {
             activaTestigo1: 46,
             activaTestigo2: 47,
             activaTestigo3: 48,
-            vinColumnIndex: vinColumnIndex
+            vinColumnIndex: vinColumnIndex,
+            headers: currentHeaders
         };
     } finally {
         if (lockAcquired) lock.releaseLock();
@@ -6941,8 +6943,8 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
                 const recoveredVinCollection = vinPrefix
                     ? prepareVinCollectionForAdmin(sheet, rowValues, rowObj.id, vinColumnIndex, vinPrefix, vehicleData && vehicleData.versionesAplicables)
                     : null;
-                const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-                const matchedColName = String(headers[match.colIndex - 1]).toLowerCase();
+                const headers = testigoSchema.headers;
+                const matchedColName = String(headers[match.colIndex - 1] || "").toLowerCase();
 
                 let slotIndex = 1;
                 if (matchedColName.includes("1") || match.colIndex === COLS_CORTES.colaboradorCorte1) slotIndex = 1;
