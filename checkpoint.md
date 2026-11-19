@@ -1218,4 +1218,4 @@ CI `44571281616` SUCCESS — 162 suites, 2,289 pruebas aprobadas, 0 fallos. `Adm
 
 CI `44572041539` SUCCESS — 163 suites, 2,294 pruebas aprobadas, 0 fallos. `AdminImageUploadLinkedRecoveryIsolation` 5/5 y `ADMIN compensación de reemplazos in-modal` 9/9; health read-only `44572041605` SUCCESS. La rama `status=linked` ahora verifica existencia, papelera e integridad del archivo fuera del ScriptLock y revalida el ledger/URL; metadata final también se confirma fuera del lock. Pendiente de esta tarea: las operaciones Drive ejecutadas por compensación en el `catch` siguen dentro del ScriptLock.
 
-2026-11-19 — ADMIN: compensación del catch refactorizada para reservar opId, liberar ScriptLock durante metadata Drive y revalidar ledger; regresión añadida. CI/revisión pendientes.
+2026-11-19 — ADMIN: compensación del catch refactorizada para reservar opId, liberar ScriptLock durante metadata Drive y revalidar ledger; regresión añadida. CI/revisión pendientes. CI inicial detectó un fixture inválido: el test de no-readquisición partía sin poseer lock. Se ajusta para liberar un lock previamente adquirido y verificar ADMIN_LOCK_REACQUIRE_PENDING.

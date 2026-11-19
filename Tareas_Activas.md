@@ -460,7 +460,7 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Mover actualización final de metadata Drive fuera del lock y revalidar ledger antes de confirmarla.
 - [x] Añadir `AdminImageUploadLinkedRecoveryIsolation.mjs` al runner.
 - [x] CI `44572041539` SUCCESS: 163 suites, 2,294 pruebas aprobadas, 0 fallos; `AdminImageUploadLinkedRecoveryIsolation` 5/5 y compensación in-modal 9/9. Health read-only `44572041605` SUCCESS.
-- [x] Aislar las operaciones Drive de compensación del catch: reservar opId como requires_review, actualizar metadata Drive fuera del ScriptLock y revalidar el ledger al readquirir.
+- [ ] Aislar las operaciones Drive de compensación del catch: reserva opId y metadata Drive fuera del ScriptLock implementadas; falta aprobar CI y revisión.
 - [x] Aislar también el fallback de metadata Drive cuando falla la escritura final del ledger.
 - [x] Añadir regresión AdminImageUploadCompensationIsolation.mjs al runner.
 - [ ] CI integral, revisión del diff y comprobación del commit pendientes; validación real Drive/Spreadsheet queda para Beta autorizada.
