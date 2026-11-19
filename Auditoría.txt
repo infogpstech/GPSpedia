@@ -658,3 +658,14 @@ Corrección: mensajes explícitos según deletedCount/scannedCount; etiquetas co
 Validación: SensitiveLogsTrustedActor 7/7; ActivityLogsClearFeedback 5/5; AdminLogsMaintenanceContract 10/10.
 Severidad: baja-media (UX/operación). Estado: CORREGIDO LOCALMENTE; validación visual de navegador pendiente.
 ================================================================================
+
+ 
+================================================================================
+2026-11-19 — HALLAZGO CORREGIDO: ORDINAL DE IMÁGENES DE CORTE NO USABA SLOTS POBLADOS
+Ubicación: JS/Services/admin.js, getCorteFunctionSuffix_.
+Evidencia: la función recibía imageValues, pero el cuerpo solo contaba tipos de corte anteriores. En registros con huecos de imágenes, podía generar sufijos que no correspondían al ordinal de recursos realmente presentes.
+Impacto: nomenclatura con huecos y menor consistencia entre el organizador y el alta/reemplazo de imágenes.
+Corrección: contar únicamente slots anteriores con imagen; incrementar solo cuando el tipo anterior corresponde a la misma función. Si un slot anterior contiene imagen y su tipo no es reconocible, bloquear el nombre para revisión.
+Validación: pruebas dinámicas 5/5 PASS; GitHub Actions run 44522387683 SUCCESS, 152 suites y 2,218 pruebas aprobadas, 0 fallos; AdminImageScanCoordinatorContract 1/1 y LogoIdIntegrity 13/13.
+Severidad: baja-media (integridad de nomenclatura). Estado: CORREGIDO LOCALMENTE; preview con datos reales pendiente de Beta.
+================================================================================

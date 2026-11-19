@@ -905,3 +905,16 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - La inspección visual en navegador real y dispositivo móvil queda reservada a Beta. No se realizó deployment ni se modificaron datos externos.
 - Siguiente: iniciar Fase 5, auditoría integral de imágenes y coherencia del organizador, empezando por verificar código actual y cobertura de referencias antes de modificar.
 ================================================================================
+
+ 
+================================================================================
+2026-11-19 — CONTINUIDAD: AUDITORÍA DE NOMENCLATURA FUNCIONAL DE IMÁGENES
+- HEAD de inicio de esta revisión: 95cd706400d6f9cf70d24fde441d4fb2aa66d020. HEAD de implementación: ceafea0c056c24cd593d288124ef248059d10a90. Rama autorizada GPSpedia2.2.5_work; base GPSpedia2.2.5 verificada en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Auditoría de cambios previos: el helper getCorteFunctionSuffix_ aceptaba imageValues, pero no los utilizaba. Se detectó riesgo de ordinales no consecutivos cuando había huecos en los slots de imágenes.
+- Corrección publicada: la numeración cuenta solo imágenes anteriores realmente pobladas de la misma función; el slot actual representa el recurso que se está nombrando. Un tipo anterior no reconocido con imagen bloquea el destino.
+- Mapeo verificado: ign1..ign3, bomba1..bomba3, btn1..btn3; alim1..alim3; apert; imagenVehiculo. El código oficial para ignición es ign, según el catálogo funcional existente.
+- Pruebas aisladas dinámicas: 5/5 PASS para ordinal de recursos presentes, salto de slot vacío, tipo ambiguo y funciones mixtas.
+- GitHub Actions run 44522387683 SUCCESS: 152 suites, 2,218 pruebas, 0 fallos; AdminImageScanCoordinatorContract 1/1; LogoIdIntegrity 13/13. Health run 44522387652 SUCCESS. Pages run 44522386244 estaba en espera al registrar.
+- No se desplegó Apps Script ni se consultaron/modificaron Drive, Spreadsheet, ScriptProperties o secretos. No se movieron, renombraron, borraron ni restauraron archivos productivos.
+- Siguiente: continuar Fase 5 auditando cobertura del inventario, referencias cruzadas e historial de imágenes; mantener la aplicación masiva bloqueada hasta validar preview real y rollback en Beta autorizada.
+================================================================================

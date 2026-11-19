@@ -758,3 +758,11 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - style.css: selector en grid con min-width:0 y adaptación móvil; padding de .detail-recommended-cut reducido de 12 px a 8 px sin cambiar encabezado ni acciones.
 - Pruebas: SensitiveLogsTrustedActor 7/7; ActivityLogsClearFeedback 5/5; AdminLogsMaintenanceContract 10/10.
 ================================================================================
+
+ 
+================================================================================
+2026-11-19 — CORRECCIÓN DE NUMERACIÓN FUNCIONAL DE IMÁGENES
+- JS/Services/admin.js: getCorteFunctionSuffix_ ahora utiliza imageValues y asigna ordinales según los recursos de corte anteriores realmente poblados; un tipo anterior desconocido con imagen impide una asignación ambigua.
+- JS/Tests/AdminImageScanCoordinatorContract.mjs: fixture canónica completa y casos de regresión para slot previo vacío y tipo previo ambiguo. Se mantienen las comprobaciones existentes de ign1..3, bomba1..3, btn1..3, alim1..3, apert e imagenVehiculo.
+- No se modificaron archivos de Drive/Spreadsheet ni deployments Apps Script.
+================================================================================
