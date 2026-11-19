@@ -153,7 +153,8 @@ function catalogTrafficSecretEquals_(expected, supplied) {
 
 function readCatalogTraffic_(suppliedSecret, capturedAt) {
     const properties = PropertiesService.getScriptProperties();
-    const expectedSecret = String(properties.getProperty(CATALOG_TRAFFIC_SECRET_PROPERTY_) || "");
+    const expectedSecret = String(properties.getProperty("GPSpedia_COORDINATOR_SECRET") ||
+        properties.getProperty(CATALOG_TRAFFIC_SECRET_PROPERTY_) || "");
     if (!catalogTrafficSecretEquals_(expectedSecret, suppliedSecret)) {
         return { status: "error", message: "Acceso denegado a la telemetría CATALOG." };
     }
