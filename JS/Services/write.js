@@ -2897,44 +2897,29 @@ function recordOpId(opId, vehicleId, slotIndex, timestamp, status, operationHash
     return verified;
 }
 
-function findUniqueCortesVehicleRow_(sheet,vehicleId,opId){if(!sheet)throw Error("No se encontró la hoja Cortes para recuperar el opId "+opId+".");const id=normalizeIdempotenciaVehicleId_(vehicleId,"Recuperación "+opId),data=sheet.getDataRange().getValues(),matches=[];for(let r=1;r<data.length;r++){const v=data[r][COLS_CORTES.id-1];if(isBlankIdempotenciaValue_(v))continue;if(normalizeIdempotenciaVehicleId_(v,"Cortes fila "+(r+1))===id)matches.push({rowIndex:r+1,rowValues:data[r]});}if(matches.length!==1)throw Error("No se puede recuperar el opId "+opId+": vehicleId "+id+" aparece en "+matches.length+" filas de Cortes; se requiere exactamente una. No se modificó.");return matches[0];}
 function findUniqueCortesVehicleRow_(cortesSheet, vehicleId, opId) {
     if (!cortesSheet) throw new Error("No se encontró la hoja Cortes para recuperar el opId " + opId + ".");
     const cleanVehicleId = normalizeIdempotenciaVehicleId_(vehicleId, "Recuperación " + opId);
-    const data = cortesSheet.getDataRange().getValues();
+    const lastRow = cortesSheet.getLastRow();
+    const idRows = lastRow > 1
+        ? cortesSheet.getRange(2, COLS_CORTES.id, lastRow - 1, 1).getValues()
+        : [];
     const matches = [];
-
-    for (let rowOffset = 1; rowOffset < data.length; rowOffset++) {
-        const rawId = data[rowOffset][COLS_CORTES.id - 1];
+    for (let offset = 0; offset < idRows.length; offset++) {
+        const rawId = idRows[offset][0];
         if (isBlankIdempotenciaValue_(rawId)) continue;
-        if (normalizeIdempotenciaVehicleId_(rawId, "Cortes fila " + (rowOffset + 1)) === cleanVehicleId) {
-            matches.push({ rowIndex: rowOffset + 1, rowValues: data[rowOffset] });
+        const rowIndex = offset + 2;
+        if (normalizeIdempotenciaVehicleId_(rawId, "Cortes fila " + rowIndex) === cleanVehicleId) {
+            matches.push(rowIndex);
         }
     }
     if (matches.length !== 1) {
         throw new Error("No se puede recuperar el opId " + opId + ": vehicleId " + cleanVehicleId +
             " aparece en " + matches.length + " filas de Cortes; se requiere exactamente una. No se modificó.");
     }
-    return matches[0];
-}
-
-function findUniqueCortesVehicleRow_(cortesSheet, vehicleId, opId) {
-    if (!cortesSheet) throw new Error("No se encontró la hoja Cortes para recuperar el opId " + opId + ".");
-    const cleanVehicleId = normalizeIdempotenciaVehicleId_(vehicleId, "Recuperación " + opId);
-    const data = cortesSheet.getDataRange().getValues();
-    const matches = [];
-    for (let rowOffset = 1; rowOffset < data.length; rowOffset++) {
-        const rawId = data[rowOffset][COLS_CORTES.id - 1];
-        if (isBlankIdempotenciaValue_(rawId)) continue;
-        if (normalizeIdempotenciaVehicleId_(rawId, "Cortes fila " + (rowOffset + 1)) === cleanVehicleId) {
-            matches.push({ rowIndex: rowOffset + 1, rowValues: data[rowOffset] });
-        }
-    }
-    if (matches.length !== 1) {
-        throw new Error("No se puede recuperar el opId " + opId + ": vehicleId " + cleanVehicleId +
-            " aparece en " + matches.length + " filas de Cortes; se requiere exactamente una. No se modificó.");
-    }
-    return matches[0];
+    const rowIndex = matches[0];
+    const rowValues = cortesSheet.getRange(rowIndex, 1, 1, cortesSheet.getLastColumn()).getValues()[0];
+    return { rowIndex: rowIndex, rowValues: rowValues };
 }
 
 function findRowByOpId(sheet, opId) {

@@ -74,6 +74,7 @@ runGroup('32','ADMIN',()=>{
   runCli('WRITE prepara validación de cortes fuera del ScriptLock con lecturas acotadas','JS/Tests/WriteCutPreflightOutsideLock.mjs');
   runCli('WRITE agrupa escrituras de cortes sin alterar campos separados','JS/Tests/WriteCutSlotBatchWrites.mjs');
   runCli('WRITE recupera opId heredados sin descargar Cortes completo','JS/Tests/WriteOpIdLegacyLookup.mjs');
+  runCli('WRITE localiza vehicleId leyendo solo la columna ID','JS/Tests/WriteUniqueVehicleRowBoundedRead.mjs');
   runCli('ADMIN reserva slots de corte ocupados por operaciones pending','JS/Tests/AdminCutSlotReservation.mjs');
   runCli('WRITE asignación de IDs no espera el ScriptLock global','JS/Tests/WriteIdAllocatorNonBlocking.mjs');
   runCli('WRITE publicación del catálogo fuera del ScriptLock global','JS/Tests/WriteCatalogPublicationIsolation.mjs');
