@@ -1074,8 +1074,7 @@ check("La organización revalida referencias e historial por archivo y protege u
     assert.ok(save.includes("const lock = LockService.getScriptLock()"));
     assert.ok(save.includes("lock.waitLock(30000)"),
         "La escritura del inventario conserva exclusión local sin lease de Coordinator.");
-    assert.ok(!coordinator.includes("saveUnusedImagesInventory: {"),
-        "El inventario no debe conservar una política de lease por acción en Coordinator.");
+
 });
 
 

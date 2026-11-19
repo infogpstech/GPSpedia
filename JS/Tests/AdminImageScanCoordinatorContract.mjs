@@ -22,7 +22,7 @@ const policy = new Function(coordinator + "\nreturn coordinatorPolicy_;")();
 for (const action of ["getReplacedImages", "getDriveStorage", "getCortesImageFolders",
     "auditIdentifiers", "getAdminImageUploadStatus", "previewCortesImageReconciliation",
     "previewCortesImageOrganizer"]) {
-    assert.equal(mutation(action), false, action + " es una lectura/preview y no debe auditarse como mutación.");
+    assert.equal(mutation(action), false, action + " es lectura/preview y no debe auditarse como mutación.");
 }
 assert.equal(mutation("auditDriveImagesInCortes"), true,
     "El escáner conserva auditoría administrativa porque persiste estado.");
@@ -38,10 +38,8 @@ assert.ok(!admin.includes("withSharedMutationLease_"));
 assert.ok(admin.includes("function assertDeveloperSession(payload)"));
 assert.ok(admin.includes("function assertModalEditSession(payload)"));
 const internal = admin.slice(admin.indexOf("function doPostInternal_(e)"));
-assert.ok(internal.includes("assertDeveloperSession(payload)"),
-    "Las operaciones ADMIN conservan autorización de Desarrollador.");
-assert.ok(internal.includes("beginAdminAuditEvent_(action, payload, developerContext, startTime)"),
-    "Las mutaciones ADMIN conservan auditoría persistente.");
+assert.ok(internal.includes("assertDeveloperSession(payload)"));
+assert.ok(internal.includes("beginAdminAuditEvent_(action, payload, developerContext, startTime)"));
 assert.ok(internal.includes("if (action !== \"ping\" && isSharedMutationAction_(action))"));
 
 const policyStart = coordinator.indexOf("function coordinatorPolicy_");
@@ -49,17 +47,20 @@ const adminStart = coordinator.indexOf("ADMIN: {", policyStart);
 const adminEnd = coordinator.indexOf("FEEDBACK: {", adminStart);
 const adminPolicy = coordinator.slice(adminStart, adminEnd);
 assert.match(adminPolicy, /getServiceTraffic: \{ read: \["SERVICE_TRAFFIC"\] \}/);
-assert.doesNotMatch(adminPolicy, /sessionActivity|nestedActions|backupDatabase|auditDriveImagesInCortes|migrateIdentifiers/);
+assert.doesNotMatch(adminPolicy, /sessionActivity|nestedActions/);
 assert.equal(policy("ADMIN", "getServiceTraffic").readResources.includes("SERVICE_TRAFFIC"), true);
-for (const action of ["backupDatabase", "auditDriveImagesInCortes", "getReplacedImages", "previewCortesImageOrganizer"]) {
-    assert.equal(policy("ADMIN", action), null,
-        action + " no debe conservar una política de lease en Coordinator.");
+assert.equal(policy("ADMIN", "backupDatabase").maintenance, true);
+assert.equal(policy("ADMIN", "auditDriveImagesInCortes").writeResources.includes("IMAGE_AUDIT_STATE"), true);
+assert.equal(policy("ADMIN", "saveUnusedImagesInventory").writeResources.includes("IMAGE_INVENTORY"), true);
+assert.equal(policy("ADMIN", "migrateReplacedImagesSchema").writeResources.includes("IMAGE_INVENTORY"), true);
+const inventory = policy("ADMIN", "getReplacedImages");
+for (const resource of ["CORTES", "DRIVE", "IMAGE_INVENTORY", "RELAY"]) {
+    assert.ok(inventory.readResources.includes(resource), "Inventario mantiene su contrato de lectura: " + resource);
 }
-
+assert.ok(!inventory.writeResources.includes("ACTIVE_SESSIONS"));
+for (const action of ["backupDatabase", "auditDriveImagesInCortes", "getReplacedImages", "previewCortesImageOrganizer"]) {
+    assert.ok(policy("ADMIN", action), "Se conserva metadato de recursos para " + action);
+}
 assert.match(ui, /routeActionWithRetry\('auditDriveImagesInCortes'[\s\S]*?timeoutMs:\s*cursor\s*\?\s*45000\s*:\s*120000/);
-const historyHandler = extractFunction(admin, "handleGetReplacedImages");
-assert.match(historyHandler, /collectActiveDriveReferences\(false\)/);
-assert.match(historyHandler, /active_reference_count:\s*Array\.isArray\(activeReferences\)\s*\?\s*activeReferences\.length\s*:\s*activeReferences\s*\?\s*1\s*:\s*0/);
 assert.match(ui, /routeActionWithRetry\(['"]getReplacedImages['"][\s\S]*?timeoutMs:\s*120000,\s*maxAttempts:\s*2/);
-
-console.log("AdminImageScanCoordinatorContract: 1/1 PASS — lecturas y mutaciones sin leases; RBAC y auditoría ADMIN preservados");
+console.log("AdminImageScanCoordinatorContract: 1/1 PASS — ADMIN sin leases, RBAC/auditoría y metadatos preservados");

@@ -95,12 +95,12 @@ testCase("AUTH usa el actor central y no repite verificaciones de usuario/rol en
  assert.equal(api.includes("touchSessionBeforeAction"),false);
  assert.match(auth,/const sessionOptions = payload\.sessionToken && action !== "logout"\s*\? \{ session: \{ sessionToken: payload\.sessionToken \} \}/);
 });
-testCase("Coordinator conserva solo telemetría protegida para ADMIN",()=>{
+testCase("Coordinator conserva metadatos de recursos ADMIN sin sesiones ni subleases por acción",()=>{
  const policyStart=coordinator.indexOf("function coordinatorPolicy_");
  const start=coordinator.indexOf("ADMIN: {",policyStart),end=coordinator.indexOf("FEEDBACK: {",start);
  const adminPolicy=coordinator.slice(start,end);
  assert.match(adminPolicy,/getServiceTraffic: \{ read: \["SERVICE_TRAFFIC"\] \}/);
- assert.doesNotMatch(adminPolicy,/sessionActivity|nestedActions|backupDatabase|auditDriveImagesInCortes|migrateIdentifiers/);
+ assert.doesNotMatch(adminPolicy,/sessionActivity|nestedActions/);
  assert.match(coordinator,/readResources\.push\("SESSION_CONTEXTS"\)/);
  assert.match(coordinator,/writeResources\.push\("ACTIVE_SESSIONS"\)/);
  assert.equal(coordinator.includes('sharedWrite: ["ACTIVE_SESSIONS"]'),false);
