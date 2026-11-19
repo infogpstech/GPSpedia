@@ -86,9 +86,9 @@ function inboxPlainTextPreview_(value, maxLength) {
     const limit = Number.isSafeInteger(maxLength) ? Math.max(1, Math.min(500, maxLength)) : 180;
     let text = String(value == null ? "" : value);
     // El resumen nunca debe mostrar contenido ejecutable ni etiquetas HTML.
-    text = text.replace(/<(script|style)\\b[^>]*>[\\s\\S]*?<\\/\\1\\s*>/gi, " ")
-        .replace(/<!--[\\s\\S]*?-->/g, " ")
-        .replace(/<(?:br|\\/p|\\/div|\\/li|\\/h[1-6]|\\/blockquote|\\/tr|\\/section|\\/article)\\b[^>]*>/gi, " ")
+    text = text.replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, " ")
+        .replace(/<!--[\s\S]*?-->/g, " ")
+        .replace(/<(?:br|\/p|\/div|\/li|\/h[1-6]|\/blockquote|\/tr|\/section|\/article)\b[^>]*>/gi, " ")
         .replace(/<[^>]*>/g, " ");
     const namedEntities = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", "#39": "'" };
     text = text.replace(/&nbsp;|&#160;|&#xA0;/gi, " ")
@@ -100,7 +100,7 @@ function inboxPlainTextPreview_(value, maxLength) {
                 (point >= 0xD800 && point <= 0xDFFF)) return " ";
             try { return String.fromCodePoint(point); } catch (error) { return " "; }
         });
-    return text.replace(/[\\s\\u00A0]+/g, " ").trim().slice(0, limit);
+    return text.replace(/[\s\u00A0]+/g, " ").trim().slice(0, limit);
 }
 function inboxConversationKey_(value, field) {
     const key = String(value === null || value === undefined ? "" : value).trim();
