@@ -10,7 +10,7 @@ const lock = handler.indexOf("lock.tryLock(0)");
 const lookup = handler.indexOf("const idsSnapshot = sheet.getRange(2, 1, lastRowForLookup, 1).getValues().flat();");
 const rowResolution = handler.indexOf("existingVehicleRowIndex = existingIndex + 2;");
 const existingBranch = handler.indexOf("if (vehicleId) { // --- Lógica para vehículo EXISTENTE ---");
-const rowSnapshot = handler.indexOf("const rowValues = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getValues()[0];", existingBranch);
+const rowSnapshot = handler.indexOf("const snapshotWidth = Math.max(48, vinColumnIndex || 0);\n        const rowValues = sheet.getRange(rowIndex, 1, 1, snapshotWidth).getValues()[0];", existingBranch);
 const revalidation = handler.indexOf("if (String(rowValues[COLS_CORTES.id - 1]) !== String(vehicleId))", existingBranch);
 
 assert.ok(lookup >= 0 && lookup < lock,
