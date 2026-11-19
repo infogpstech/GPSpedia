@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-const source=readFileSync(new URL("../Services/write.js",import.meta.url),"utf8");
+const source=readFileSync(new URL("../Services/admin.js",import.meta.url),"utf8");
 const start=source.indexOf("function findOrCreateIdempotenciaSheet(");
 const end=source.indexOf("\nfunction ",start+10);
 assert.ok(start>=0&&end>start,"No se encontró findOrCreateIdempotenciaSheet");
