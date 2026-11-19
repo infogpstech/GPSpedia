@@ -271,6 +271,28 @@ const imageReferencePreviewSource = extractFunction(admin, "handlePreviewCortesI
 assert.ok(imageReferencePreviewSource.includes("collectActiveDriveReferences(true)"));
 assert.doesNotMatch(imageReferencePreviewSource, /\.setValue\(|\.setName\(|\.setTrashed\(|\.createFile\(|\.createFolder\(/,
     "El preview del organizador debe seguir siendo estrictamente de solo lectura.");
+
+const unusedInventoryHandlerSource = extractFunction(admin, "handleSaveUnusedImagesInventory");
+const verifiedInventoryWriterSource = extractFunction(admin, "writeDriveInventoryRowVerified_");
+for (const invariant of [
+    "validateCompletedDriveAudit_", "collectActiveDriveReferences(false)",
+    "references.references.has(fileId)", "manuallyProtectedDriveIds.has(fileId)",
+    "historicalDriveIds.has(fileId)", "duplicateDriveIds.has(fileId)",
+    "getSingleParentFolderInsideCortes", "writeDriveInventoryRowVerified_",
+    "historyIntegrityUncertain", "staleUpdateSkipped"
+]) {
+    assert.ok(unusedInventoryHandlerSource.includes(invariant),
+        "El inventario persistente debe conservar la validación "+invariant);
+}
+for (const invariant of ["setValues([row])", "SpreadsheetApp.flush()", "readBack()", "matches(persisted)", "retryError", "requiere_revision"]) {
+    assert.ok(verifiedInventoryWriterSource.includes(invariant),
+        "La escritura de inventario debe verificar persistencia y recuperación: "+invariant);
+}
+assert.ok(unusedInventoryHandlerSource.includes("ultima_operacion_inventario_id") &&
+    unusedInventoryHandlerSource.includes("resultado_inventario"),
+    "El inventario debe conservar idempotencia y resultado verificable por operación.");
+console.log("UnusedImageInventoryPersistenceContract: PASS");
+
 console.log("ImageReferenceCoverageContract: PASS");
 
 const colsMatch = admin.match(/const COLS_CORTES = (\{[\s\S]*?\n\});/);
