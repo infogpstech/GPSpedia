@@ -32,7 +32,7 @@ test("add_cortes procesa aportes y consultas de cortes directamente en WRITE", (
     assert.match(api, /'addOrUpdateCut': 'WRITE'/);
     assert.match(api, /'addSupplementaryInfo': 'WRITE'/);
     assert.match(api, /'checkOperation': 'WRITE'/);
-    assert.match(write, /getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken\)/);
+    assert.match(write, /getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "WRITE" \}\)/);
     assert.doesNotMatch(write, /withSharedMutationLease_\("WRITE", action/);
     assert.match(admin, /"ACTION_MOVED_TO_WRITE"/);
 });
@@ -43,7 +43,7 @@ test("FEEDBACK cuenta todas las acciones con telemetría directa y usa actor cac
     const start=feedback.indexOf("function doPost(e)"),end=feedback.indexOf("\nconst RICH_TEXT_MODE_PROPERTY_",start),router=feedback.slice(start,end);
     assert.ok(start>=0&&end>start);
     assert.match(router,/DIRECT_SERVICE_TRAFFIC_CONFIG_\.actions\.has\(action\)/);
-    assert.match(router,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken\)/);
+    assert.match(router,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "FEEDBACK" \}\)/);
     assert.doesNotMatch(router,/withSharedMutationLease_/);
     assert.doesNotMatch(feedback,/function isSharedMutationAction_\(action\)/);
 });
@@ -52,7 +52,7 @@ test("USERS contabiliza getUsers sin lease adicional; UTILITIES y ADMIN conserva
     assert.match(utilities, /withSharedMutationLease_\("UTILITIES","migrateTimestamps"/);
     assert.doesNotMatch(utilities, /DIRECT_SERVICE_TRAFFIC_CONFIG_/);
     assert.match(users, /withSharedMutationLease_\("USERS", action/);
-    assert.match(users, /getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken\)/);
+    assert.match(users, /getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "USERS" \}\)/);
     assert.doesNotMatch(users, /withSharedMutationLease_\("USERS", "sessionActivity"/);
     assert.match(users, /USERS_DIRECT_TRAFFIC_PREFIX_/);
     assert.match(users, /if \(action === "getUsers"\) recordUsersDirectTraffic_\(\)/);
