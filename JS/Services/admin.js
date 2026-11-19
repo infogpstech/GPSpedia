@@ -6922,7 +6922,7 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
                     if (images.cutImageUrl && !checkFileIdValid(current[`imgCorte${slotIndex}`]))
                         sheet.getRange(verified.rowIndex, COLS_CORTES[`imgCorte${slotIndex}`]).setValue(images.cutImageUrl);
                     return verified;
-                });
+                }, operationHash);
                 if (repairedImages && repairedImages.rowIndex) {
                     match = repairedImages; rowIndex = match.rowIndex; rowValues = match.rowValues;
                     rowObj = mapRowToObject(rowValues, COLS_CORTES);
@@ -7051,7 +7051,7 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
                 ? prepareVinCollectionForAdmin(sheet, currentValues, vehicleId, vinColumnIndex, vinPrefix, vehicleData && vehicleData.versionesAplicables)
                 : null;
             return url;
-        });
+        }, operationHash);
 
         sheet.getRange(rowIndex, COLS_CORTES[`tipoCorte${cutSlotIndex}`]).setValue(cutData.tipoCorte1);
         sheet.getRange(rowIndex, COLS_CORTES[`ubicacionCorte${cutSlotIndex}`]).setValue(cutData.ubicacionCorte1);
@@ -7163,7 +7163,7 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
                 }
             }
             return images;
-        });
+        }, operationHash);
         const vehiculoImageUrl = uploaded.vehicleImageUrl;
         const corteImageUrl = uploaded.cutImageUrl;
 
@@ -7846,7 +7846,7 @@ function markAdminCutImagesLinkedOutsideLock_(lock, opId, vehicleId, slotIndex, 
             }
         }
         return results;
-    });
+    }, operationHash);
 }
 
 function markImageUploadLinked(imageUrl) {
