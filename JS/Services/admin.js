@@ -6843,6 +6843,33 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
         ? null
         : requestNextVehicleIdFromWriteService(payload);
 
+    // La lectura del catálogo y la normalización de entidades no modifican el registro.
+    // Se preparan antes del ScriptLock para que su latencia no serialice otras operaciones.
+    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+    if (!sheet) throw new Error("No se encontró la hoja «Cortes».");
+    let preparedVehicleData = null;
+    let preparedVehicleYear = null;
+    if (!vehicleId) {
+        if (!vehicleData) throw new Error("Los datos del vehículo son requeridos para un nuevo registro.");
+        const entities = getExistingEntities(sheet);
+        preparedVehicleData = Object.assign({}, vehicleData);
+        preparedVehicleData.marca = resolveAndNormalizeEntity(preparedVehicleData.marca, entities.brands, false);
+        preparedVehicleData.modelo = resolveAndNormalizeEntity(preparedVehicleData.modelo, entities.models, false);
+        preparedVehicleData.versionesAplicables = resolveAndNormalizeEntity(preparedVehicleData.versionesAplicables, entities.versions, true);
+
+        const yearInput = preparedVehicleData.anoDesde.trim();
+        let anoDesde, anoHasta;
+        if (yearInput.includes('-')) {
+            const [start, end] = yearInput.split('-').map(y => parseInt(y.trim(), 10));
+            anoDesde = Math.min(start, end);
+            anoHasta = Math.max(start, end);
+        } else {
+            anoDesde = parseInt(yearInput, 10);
+            anoHasta = anoDesde;
+        }
+        preparedVehicleYear = { anoDesde: anoDesde, anoHasta: anoHasta };
+    }
+
     const lock = LockService.getScriptLock();
     try {
         if (!lock.tryLock(0)) {
@@ -6860,7 +6887,6 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
     try {
 
         logMessage("Registro Administrativo", `Procesando addOrUpdateCut administrativo...`);
-        const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
         ensureTestigoColumns(sheet, true);
         const vinColumnIndex = getVinColumnIndex(sheet);
         if (cutData.vin && !vinColumnIndex) {
@@ -7071,13 +7097,7 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
         newId = vehicleId;
 
     } else { // --- Lógica para vehículo NUEVO (CORREGIDO PARA PRESERVAR FÓRMULA DE ID) ---
-        if (!vehicleData) throw new Error("Los datos del vehículo son requeridos para un nuevo registro.");
-
-        var entities = getExistingEntities(sheet);
-        vehicleData.marca = resolveAndNormalizeEntity(vehicleData.marca, entities.brands, false);
-        vehicleData.modelo = resolveAndNormalizeEntity(vehicleData.modelo, entities.models, false);
-        vehicleData.versionesAplicables = resolveAndNormalizeEntity(vehicleData.versionesAplicables, entities.versions, true);
-
+        const newVehicleData = preparedVehicleData;
         const lastRow = sheet.getLastRow();
         rowIndex = lastRow + 1;
         const lastColumn = sheet.getLastColumn();
@@ -7123,28 +7143,20 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
 
         // 3. Preparar los datos que se van a escribir.
         // Parsear año...
-        const yearInput = vehicleData.anoDesde.trim();
-        let anoDesde, anoHasta, anioParaFolder;
-        if (yearInput.includes('-')) {
-            const [start, end] = yearInput.split('-').map(y => parseInt(y.trim(), 10));
-            anoDesde = Math.min(start, end);
-            anoHasta = Math.max(start, end);
-        } else {
-            anoDesde = parseInt(yearInput, 10);
-            anoHasta = anoDesde;
-        }
-        anioParaFolder = anoDesde;
+        const anoDesde = preparedVehicleYear.anoDesde;
+        const anoHasta = preparedVehicleYear.anoHasta;
+        const anioParaFolder = anoDesde;
 
         // Subir imágenes fuera del ScriptLock; la fila e ID pendientes reservan el destino.
-        const canonicalVehicleInfo = Object.assign({}, vehicleData, {
+        const canonicalVehicleInfo = Object.assign({}, newVehicleData, {
             anoDesde: anoDesde, anoHasta: anoHasta, tipoCorte1: cutData.tipoCorte1
         });
         const uploaded = runAdminDriveWorkOutsideScriptLock_(lock, opId, function() {
             const folder = findOrCreateVehicleFolder(canonicalVehicleInfo);
             let vehicleImageUrl = "", cutImageUrl = "";
-            if (vehicleData.imagenVehiculo) {
+            if (newVehicleData.imagenVehiculo) {
                 const filename = buildCanonicalImageBaseName(canonicalVehicleInfo, "imagenVehiculo");
-                vehicleImageUrl = uploadImageToDrive(vehicleData.imagenVehiculo, filename, folder,
+                vehicleImageUrl = uploadImageToDrive(newVehicleData.imagenVehiculo, filename, folder,
                     buildImageUploadOperationKey(opId, newId, "imagenVehiculo"));
             }
             if (cutData.imgCorte1) {
@@ -7168,13 +7180,13 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
         const corteImageUrl = uploaded.cutImageUrl;
 
         // 4. Escribir los nuevos datos en las celdas específicas usando múltiples `setValue` para claridad.
-        sheet.getRange(rowIndex, COLS_CORTES.categoria).setValue(vehicleData.categoria || '');
-        sheet.getRange(rowIndex, COLS_CORTES.marca).setValue(vehicleData.marca);
-        sheet.getRange(rowIndex, COLS_CORTES.modelo).setValue(vehicleData.modelo);
-        sheet.getRange(rowIndex, COLS_CORTES.versionesAplicables).setValue(vehicleData.versionesAplicables || '');
+        sheet.getRange(rowIndex, COLS_CORTES.categoria).setValue(newVehicleData.categoria || '');
+        sheet.getRange(rowIndex, COLS_CORTES.marca).setValue(newVehicleData.marca);
+        sheet.getRange(rowIndex, COLS_CORTES.modelo).setValue(newVehicleData.modelo);
+        sheet.getRange(rowIndex, COLS_CORTES.versionesAplicables).setValue(newVehicleData.versionesAplicables || '');
         sheet.getRange(rowIndex, COLS_CORTES.anoDesde).setValue(anoDesde);
         sheet.getRange(rowIndex, COLS_CORTES.anoHasta).setValue(anoHasta);
-        sheet.getRange(rowIndex, COLS_CORTES.tipoEncendido).setValue(vehicleData.tipoEncendido);
+        sheet.getRange(rowIndex, COLS_CORTES.tipoEncendido).setValue(newVehicleData.tipoEncendido);
         sheet.getRange(rowIndex, COLS_CORTES.imagenVehiculo).setValue(vehiculoImageUrl);
         sheet.getRange(rowIndex, COLS_CORTES.timestamp).setValue(formattedDate);
 
