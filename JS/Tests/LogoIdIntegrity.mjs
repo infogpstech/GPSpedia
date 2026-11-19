@@ -127,6 +127,7 @@ function addLogoHarness(options={}){
  const deps={
   getSpreadsheet:()=>({getSheetByName:name=>name==="Cortes"?cortesSheet:sheetValue}),
   SHEET_NAMES:{LOGOS_MARCA:"LogosMarca",CORTES:"Cortes"},
+  COLS_CORTES:{categoria:2,marca:3},
   getCortesRootFolder:()=>rootFolder,
   findOrCreateSubFolder:(parent,name)=>{folderCalls.push({parent,name});return folderCalls.length===1?categoryFolder:brandFolder;},
   hasDriveFilenameConflictInFolder:(folder,name)=>false,
