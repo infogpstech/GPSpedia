@@ -6391,6 +6391,8 @@ function handleUploadAdminImage(payload, logMessage) {
                     created = true;
                 }
             }
+            newFile = preparedFile;
+            fileCreatedThisAttempt = created;
             if (preparedFile.isTrashed()) {
                 return { file: preparedFile, created, requiresReview: true,
                     reason: "El archivo asociado al intento está en papelera. No se reactivó automáticamente; requiere revisión manual." };

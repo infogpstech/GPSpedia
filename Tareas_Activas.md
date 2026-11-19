@@ -444,3 +444,11 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] CI `44570179580` SUCCESS: 161 suites, 2,280 pruebas aprobadas, 0 fallos; `AdminVehicleFolderSyncOutsideLock` 7/7, `WRITE/ADMIN VIN` 12/12 y `ADMIN edición modal/RBAC` 9/9. Health read-only `44570179476` SUCCESS.
 
 - CI inicial del cambio de sincronización Drive: 2 contratos antiguos no encontraron el cierre del handler por un salto de línea extra entre la función y `ADMIN_IMAGE_UPLOAD_SHEET_NAME`. Se conserva el delimitador esperado por los tests de extracción; sin cambio funcional.
+
+### ADMIN — reemplazo de imagen fuera del ScriptLock (2026-11-19)
+- [x] Cambiar adquisición a `tryLock(0)` para evitar espera de 30 s.
+- [x] Mover búsqueda/creación/verificación del archivo y metadata pendiente a Drive fuera del lock con `runAdminDriveWorkOutsideScriptLock_`.
+- [x] Revalidar vehículo/fila, URL activa, nombre canónico y ledger `opId` al readquirir antes de persistir la URL.
+- [x] Mover confirmación final de nombre/estado Drive fuera del lock; revalidar que la URL activa siga siendo la nueva antes de completar el ledger.
+- [x] Si no se puede readquirir el lock, conservar ledger/archivo en estado pendiente y solicitar reintento con el mismo `opId`; `finally` libera solo si conserva el lock.
+- [ ] CI y revisión de rutas de recuperación/compensación pendientes.
