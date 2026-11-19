@@ -24,6 +24,6 @@ assert.equal(key,"OP-1");assert.equal(driveRan,true);assert.equal(held,true);
 held=true;driveRan=false;
 assert.deepEqual(fn(lock,null,"42",1,null,["https://drive.google.com/uc?export=view&id=c"]),[true]);
 assert.equal(key,"ADMIN_IMAGE_LINK_42_c");assert.equal(driveRan,true);
-const conflict=build(fake,v=>String(v).match(/id=([^&]+)/)?.[1]||"",()=>true,()=>({}),{CORTES:"Cortes"},()=>({status:"pending",vehicleId:"42",slotIndex:2,operationHash:"hash"}));
+const conflict=build(fake,v=>String(v).match(/id=([^&]+)/)?.[1]||"",()=>true,()=>({getSheetByName:()=>({})}),{CORTES:"Cortes"},()=>({status:"pending",vehicleId:"42",slotIndex:2,operationHash:"hash"}));
 assert.throws(()=>conflict(lock,"OP-1","42",2,"hash",["https://drive.google.com/uc?export=view&id=d"]),/cambió durante la vinculación/);
 console.log("AdminCutImageLinkOutsideLock: 12/12 PASS — Drive fuera del lock, revalidación y clave legacy estable");
