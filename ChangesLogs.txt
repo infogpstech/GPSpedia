@@ -949,3 +949,5 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 2026-11-19 — ADMIN: sincronización de carpeta de imagen principal fuera de ScriptLock. CI 44570179580 SUCCESS: 161 suites, 2,280 pruebas, 0 fallos; health read-only SUCCESS.
 
 2026-11-19 — ADMIN: reemplazo de imágenes in-modal mueve creación/recuperación y confirmación Drive fuera del ScriptLock, con revalidación de URL, fila, metadatos y opId.
+
+2026-11-19 — ADMIN reemplazo in-modal: Drive principal fuera del ScriptLock, con revalidación idempotente. CI 44571281616 SUCCESS: 162 suites, 2,289 pruebas, 0 fallos; health read-only SUCCESS. Recuperación linked y compensación Drive siguen pendientes de aislamiento.

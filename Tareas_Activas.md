@@ -451,4 +451,5 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Revalidar vehículo/fila, URL activa, nombre canónico y ledger `opId` al readquirir antes de persistir la URL.
 - [x] Mover confirmación final de nombre/estado Drive fuera del lock; revalidar que la URL activa siga siendo la nueva antes de completar el ledger.
 - [x] Si no se puede readquirir el lock, conservar ledger/archivo en estado pendiente y solicitar reintento con el mismo `opId`; `finally` libera solo si conserva el lock.
-- [ ] CI y revisión de rutas de recuperación/compensación pendientes.
+- [x] CI `44571281616` SUCCESS: 162 suites, 2,289 pruebas aprobadas, 0 fallos; `AdminImageUploadDriveIsolation` 9/9 y `AdminVehicleFolderSyncOutsideLock` 7/7. Health read-only `44571281679` SUCCESS.
+- [ ] Aislar la rama de recuperación `status === linked` (lectura/verificación Drive e historial) y las operaciones Drive de compensación del `catch`; actualmente aún se ejecutan bajo ScriptLock.
