@@ -123,7 +123,7 @@ function runWriteAuthorizationMinimizationTests(sources) {
  run("Controles existentes addOrUpdateCut, addVinToVehicle y freezeCortesIds siguen autenticados",()=>{
   for(const name of ["handleAddOrUpdateCutLocked","handleAddVinToVehicleLocked","handleFreezeCortesIds"]){
    let fn;
-   if(name==="handleAddOrUpdateCutLocked"){const start=write.indexOf("function handleAddOrUpdateCutLocked("),end=write.indexOf("\nfunction handleAddOrUpdateCutLockedUnsafe_",start);fn=write.slice(start,end);}
+   if(name==="handleAddOrUpdateCutLocked"){fn=extract(write,"prepareAddOrUpdateCutRequest_");}
    else fn=extract(write,name);
    assert(fn.includes("getAuthenticatedCollaborator")||fn.includes("assertDeveloperForIdMaintenance"),"Falta protección en "+name);
   }

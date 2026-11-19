@@ -8,7 +8,7 @@ function extract(name,nextName){
  assert.ok(end>start,"No se encontró el límite de "+name);
  return source.slice(start,end);
 }
-const optionsCode=extract("getAddCutPayloadValidationOptions_","prepareAddOrUpdateCutRequest_");
+const optionsCode=extract("getAddCutPayloadValidationOptions_");
 const optionsFn=new Function("COLS_CORTES",optionsCode+"\nreturn getAddCutPayloadValidationOptions_;")({
  categoria:2,tipoEncendido:8,tipoCorte1:12,tipoCorte2:19,tipoCorte3:26
 });
