@@ -1199,3 +1199,5 @@ CI `44565411437`: SUCCESS — 159 suites, 2,265 pruebas aprobadas, 0 fallos. `Ad
 2026-11-19 — Inventario ADMIN: handlers de escaneo/organización ya no usan ScriptLock global; el router coordina solo IMAGE_INVENTORY. Registro de actividad se coordina con lease ACTIVITY breve, y su asignador de ID no usa ScriptLock. Se añadieron pruebas estáticas y de coexistencia; CI pendiente. No se desplegó ADMIN/Coordinator.
 
 2026-11-19 — CI de inventario ADMIN encontró dos contratos de pruebas obsoletos: prohibían leases ADMIN adicionales a auditoría. Se actualizan para permitir exactamente las tres operaciones de recurso independiente: auditDriveImagesInCortes, saveUnusedImagesInventory e recordAdminImageActivity. Sin cambios funcionales ni despliegues en esta corrección.
+
+2026-11-19 — Segundo hallazgo de CI tras el aislamiento de inventario: `AdminReplacedImagesIntegrity` aún exigía ScriptLock dentro del handler de inventario. Se actualiza el contrato para exigir ausencia de ScriptLock y coordinación explícita mediante la lease IMAGE_INVENTORY. No cambia el código funcional.

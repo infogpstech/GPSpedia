@@ -1071,9 +1071,12 @@ check("La organización revalida referencias e historial por archivo y protege u
     assert.ok(organize.includes("rollbackError"));
     assert.ok(save.includes('previousOrganizationState === "movida_manual" && previousManualLocation'));
     assert.ok(save.includes('String(row[column("estado_organizacion") - 1] || "") === "movida_manual"'));
-    assert.ok(save.includes("const lock = LockService.getScriptLock()"));
-    assert.ok(save.includes("lock.waitLock(30000)"),
-        "La escritura del inventario conserva exclusión local sin lease de Coordinator.");
+    assert.ok(!save.includes("LockService.getScriptLock()") && !save.includes("waitLock("),
+        "El handler de inventario no debe retener el ScriptLock global.");
+    assert.ok(admin.includes('withSharedMutationLease_("ADMIN", "saveUnusedImagesInventory"'),
+        "El router debe coordinar el inventario mediante su lease IMAGE_INVENTORY independiente.");
+    assert.ok(admin.includes('write: ["IMAGE_INVENTORY"]') || admin.includes('"IMAGE_INVENTORY"'),
+        "La política de inventario debe usar su recurso dedicado.");
 
 });
 
