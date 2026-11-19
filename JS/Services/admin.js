@@ -9337,33 +9337,22 @@ function mergeDirectServiceTraffic_(coordinatorResult, directResults) {
     const services = ["CATALOG", "AUTH", "WRITE", "FEEDBACK"];
     const bucketsByStart = new Map();
     result.buckets.forEach(bucket => bucketsByStart.set(bucket.startAt, bucket));
-    result.services.forEach(service => {
-        sources[service] = {
-            coordinatorAvailable: true,
-            coordinatorScope: "protected_operations",
-            directRequestsAvailable: false,
-            directRequestScope: null,
-            accuracy: "coordinator_only",
-            mayUndercount: true,
-            reason: "not_instrumented"
-        };
-    });
     services.forEach(service => {
         const directResult = directResults && directResults[service];
         const expectedScope = service === "CATALOG" ? "catalog_post_requests" : "direct_post_requests";
         const directAvailable = Boolean(directResult && directResult.status === "success" &&
             directResult.service === service && directResult.scope === expectedScope &&
-            Array.isArray(directResult.buckets) && directResult.buckets.every(bucket =>
-                bucket && Number.isSafeInteger(bucket.startAt) && bucket.startAt > 0 &&
-                Number.isSafeInteger(bucket.count) && bucket.count >= 0) &&
-            directResult.totals && ["lastHour", "last6Hours", "last24Hours"].every(period =>
+            Array.isArray(directResult.buckets) && directResult.totals &&
+            ["lastHour", "last6Hours", "last24Hours"].every(period =>
                 Number.isSafeInteger(directResult.totals[period]) && directResult.totals[period] >= 0));
         const directBuckets = new Map();
+        let invalidBucketCount = 0;
         if (directAvailable) {
             directResult.buckets.forEach(bucket => {
-                if (!bucket || !Number.isSafeInteger(bucket.startAt) ||
+                if (!bucket || !Number.isSafeInteger(bucket.startAt) || bucket.startAt <= 0 ||
                     !Number.isSafeInteger(bucket.count) || bucket.count < 0) {
-                    throw new Error("La fuente directa " + service + " devolvió un bucket inválido.");
+                    invalidBucketCount += 1;
+                    return;
                 }
                 directBuckets.set(bucket.startAt, bucket.count);
             });
@@ -9383,13 +9372,15 @@ function mergeDirectServiceTraffic_(coordinatorResult, directResults) {
             });
         }
         sources[service] = {
-            coordinatorAvailable: true,
+            available: true,
             coordinatorScope: "protected_operations",
             directRequestsAvailable: directAvailable,
             directRequestScope: directAvailable ? directResult.scope : null,
-            accuracy: directAvailable ? directResult.accuracy : "coordinator_only",
+            accuracy: directAvailable && invalidBucketCount === 0 ? directResult.accuracy : "partial",
             mayUndercount: true,
-            reason: directAvailable ? null : String(directResult && directResult.reason || "not_configured")
+            reason: directAvailable
+                ? (invalidBucketCount ? "invalid_buckets_ignored" : null)
+                : String(directResult && directResult.reason || "not_configured")
         };
         if (service === "CATALOG") sources[service].feedRequests = "coordinator";
     });
@@ -9397,7 +9388,7 @@ function mergeDirectServiceTraffic_(coordinatorResult, directResults) {
     result.scope = "global_service_traffic";
     result.sources = sources;
     result.coverage = {
-        description: "Agregado de operaciones protegidas de los siete servicios activos, más lecturas directas instrumentadas de CATALOG, AUTH, WRITE y FEEDBACK cuando sus contadores están configurados.",
+        description: "Agregado de operaciones protegidas de los siete servicios activos, más solicitudes directas de lectura CATALOG y rutas directas instrumentadas de AUTH, WRITE y FEEDBACK cuando sus contadores están configurados.",
         excludes: ["sondeos de salud", "solicitudes HTTP que no atraviesan rutas instrumentadas"]
     };
     result.excluded = result.coverage.excludes.slice();
