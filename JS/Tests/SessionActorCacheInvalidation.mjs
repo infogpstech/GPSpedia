@@ -83,22 +83,22 @@ function createClient(events, failAction = "") {
 
 const singleEvents = [];
 const single = createClient(singleEvents);
-single.revokeSession("U-1", "token-A");
+single.revokeSession("U-1", "session-token-A-0001");
 assert.deepEqual(singleEvents.map(event => event.action), ["invalidateSessionActorCaches", "revokeSession"]);
 assert.ok(singleEvents.every(event => event.service === "COORDINATOR"));
 assert.equal(singleEvents[0].protocolVersion, 1);
 assert.equal(singleEvents[0].payload.service, "AUTH");
 assert.equal(singleEvents[0].payload.operation, "invalidateSessionActorCaches");
-assert.deepEqual(singleEvents[0].payload.sessionTokens, ["token-A"]);
+assert.deepEqual(singleEvents[0].payload.sessionTokens, ["session-token-A-0001"]);
 assert.equal(singleEvents[1].payload.service, "AUTH");
 
 const multipleEvents = [];
-createClient(multipleEvents).revokeUserSessions("U-2", ["token-B", "token-C"]);
+createClient(multipleEvents).revokeUserSessions("U-2", ["session-token-B-0001", "session-token-C-0001"]);
 assert.deepEqual(multipleEvents.map(event => event.action), ["invalidateSessionActorCaches", "revokeUserSessions"]);
-assert.deepEqual(multipleEvents[0].payload.sessionTokens, ["token-B", "token-C"]);
+assert.deepEqual(multipleEvents[0].payload.sessionTokens, ["session-token-B-0001", "session-token-C-0001"]);
 
 const partialEvents = [];
-assert.throws(() => createClient(partialEvents, "invalidateSessionActorCaches").revokeSession("U-1", "token-A"),
+assert.throws(() => createClient(partialEvents, "invalidateSessionActorCaches").revokeSession("U-1", "session-token-A-0001"),
     /fallo controlado de invalidación/);
 assert.deepEqual(partialEvents.map(event => event.action), ["invalidateSessionActorCaches"],
     "Si Coordinator no confirma la invalidación, AUTH no solicita la revocación central.");
