@@ -1103,6 +1103,42 @@ function runSharedMutationCoordinatorTests() {
         assert_(store.size === 0);
     });
 
+    test_("Coordinator conserva compatibilidad con clientes legacy y rechaza protocolos desconocidos", function() {
+        const r = createRuntime_();
+        const legacy = r.request("getServiceTraffic", "ADMIN", "getServiceTraffic");
+        assert_(legacy.status === "success", "Los clientes sin protocolVersion deben conservar el contrato v1.");
+        expectThrow_(() => r.coordinator.handleRequest({
+            protocolVersion: 99,
+            action: "getServiceTraffic",
+            payload: { service: "ADMIN", operation: "getServiceTraffic", secret: r.secrets.ADMIN }
+        }), "protocolo no compatible");
+        expectThrow_(() => r.coordinator.handleRequest({
+            protocolVersion: "invalid",
+            action: "getServiceTraffic",
+            payload: { service: "ADMIN", operation: "getServiceTraffic", secret: r.secrets.ADMIN }
+        }), "protocolo no compatible");
+    });
+
+    test_("SharedMutationClient declara protocolo v1 sin cambiar la semántica de la operación", function() {
+        const r = createRuntime_();
+        r.properties.setProperty("GPSpedia_COORDINATOR_URL", "https://script.google.com/macros/s/TEST_DEPLOYMENT/exec");
+        r.properties.setProperty("GPSpedia_COORDINATOR_SECRET", r.secrets.ADMIN);
+        let captured = null;
+        const client = createSharedMutationClient_({
+            properties: r.properties, uuid: r.uuid, logger: function() {},
+            fetch: function(url, options) {
+                captured = JSON.parse(options.payload);
+                const result = r.coordinator.handleRequest(captured);
+                return { getResponseCode: () => 200, getContentText: () => JSON.stringify(result) };
+            }
+        });
+        const result = client.getServiceTraffic();
+        assert_(captured && captured.protocolVersion === 1,
+            "El cliente actual debe declarar protocolVersion 1.");
+        assert_(result.status === "success" && result.scope === "coordinator_protected_operations",
+            "La versión de protocolo no debe cambiar el resultado funcional.");
+    });
+
     test_("Cada servicio valida sesiones con su propia identidad y secreto", function() {
         const r = createRuntime_();
         const userId = "USR-SERVICE-VALIDATION";
