@@ -31,7 +31,7 @@ test("VIN duplicado se rechaza antes de ampliar o modificar columnas",()=>{
  assert.ok(duplicate>=0&&insert>duplicate&&write>duplicate);
 });
 test("AT:AV se reutiliza desde currentHeaders sin segunda lectura de rango",()=>{
- assert.ok(ensure.includes("const targetHeaders = [45, 46, 47].map(index => String(currentHeaders[index] || ""));"));
+ assert.ok(ensure.includes('const targetHeaders = [45, 46, 47].map(index => String(currentHeaders[index] || ""));'));
  assert.ok(!ensure.includes("getRange(1, 46, 1, 3)"));
 });
 test("la ampliación/reparación de columnas testigo se conserva",()=>{
