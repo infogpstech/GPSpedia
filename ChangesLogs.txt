@@ -1097,3 +1097,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-19 · cierre] ADMIN alta de vehículos nuevos: dos escrituras setValues() sustituyen las escrituras individuales de columnas 2–9 (datos e imagen del vehículo) y 12–16 (datos e imagen del primer corte). Timestamp, testigo y colaborador permanecen separados. Prueba AdminNewVehicleBatchWrites 13/13 PASS. CI 44637971280 SUCCESS: 190 suites, 2504 pruebas aprobadas, 0 fallos; sintaxis aprobada. Health read-only 44637971232 SUCCESS. Pages 44637970083 pendiente al momento del cierre documental. Se preservaron ID centralizado, reserva idempotente, Drive fuera del lock y flush. No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+[2026-11-19 · cierre] Alta de vehículos nuevos ADMIN: los campos contiguos del vehículo (categoría a imagen, columnas 2–9) y del primer corte (12–16) se guardan con dos setValues() por lote. Timestamp, testigo y colaborador se mantienen separados. Prueba AdminNewVehicleBatchWrites 13/13 PASS. CI 44637971280 SUCCESS: 190 suites, 2,504 pruebas aprobadas, 0 fallos; sintaxis aprobada. Health read-only 44637971232 SUCCESS. Pages 44637970083 SUCCESS. No se desplegó Apps Script ni se modificaron datos productivos.

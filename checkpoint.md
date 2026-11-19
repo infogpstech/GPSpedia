@@ -296,3 +296,13 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Pages `44637970083` pendiente al registrar este cierre; no se declara aprobado.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó Apps Script ni se modificaron datos productivos.
 - Siguiente paso: continuar `GP-PERF-ADMIN-CUT-LOCK-01` inspeccionando el alta de vehículo nuevo para reducir llamadas de Sheets que no comprometan la lectura de confirmación del ID, las reservas idempotentes ni la integridad de la fila.
+
+
+## Cierre — alta de vehículos nuevos ADMIN con escrituras por lote (2026-11-19)
+- Commit de implementación/prueba: `c8b3591fa78624721b355e6f1ba1e2360c06f456`.
+- Se sustituyeron 13 escrituras individuales de campos contiguos por dos lotes `setValues()`: vehículo (columnas 2–9) y primer corte (12–16). Timestamp, testigo y colaborador siguen como escrituras separadas.
+- Prueba `AdminNewVehicleBatchWrites.mjs`: 13/13 PASS; verifica valores, rangos, cinco escrituras finales y preservación del orden ID → reserva pending → Drive → escritura/flush → completed.
+- CI regresión `44637971280` SUCCESS: 190 suites, 2,504 pruebas aprobadas, 0 fallos; sintaxis aprobada.
+- Health read-only `44637971232` SUCCESS; Pages `44637970083` SUCCESS.
+- No se desplegó Apps Script ni se modificaron datos productivos.
+- Siguiente tarea: inspeccionar lecturas de fila y revalidaciones del alta nueva después de Drive para identificar una consulta redundante demostrable sin alterar concurrencia ni recuperación idempotente.
