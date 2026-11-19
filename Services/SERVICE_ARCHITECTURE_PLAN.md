@@ -3,7 +3,7 @@
 Fecha: 2026-11-19  
 Rama de trabajo: `GPSpedia2.2.5_work`  
 Rama base protegida: `GPSpedia2.2.5`  
-Estado: auditoría estática completada; implementación pendiente.
+Estado: auditoría estática completada; contrato v1 e invalidación central implementados localmente; configuración canónica pendiente.
 
 ## 1. Objetivo y restricciones
 
@@ -81,7 +81,7 @@ No cambiar secretos, ScriptProperties, deployments, hojas ni datos productivos d
 ## 4. Secuencia de implementación
 
 1. **Contrato y pruebas de compatibilidad — IMPLEMENTADO LOCALMENTE:** protocolo POST v1 independiente de la versión de Coordinator. SharedMutationClient declara `protocolVersion: 1`; Coordinator interpreta la ausencia del campo como v1 para clientes antiguos y rechaza versiones desconocidas antes de ejecutar operaciones. Las pruebas cubren cliente legacy, cliente v1 y rechazo de versiones no soportadas. Coordinator 1.4.2.
-2. **Orquestación central de invalidación:** prototipo aislado con fetch inyectado; probar éxito, timeout, respuesta inválida, fallo parcial, repetición idempotente y recuperación.
+2. **Orquestación central de invalidación — IMPLEMENTADA LOCALMENTE:** AUTH envía la orden a Coordinator; Coordinator llama WRITE y FEEDBACK con sus secretos individuales y URLs centralizadas, subdivide lotes a cinco tokens y exige confirmación exacta de ambos destinos. La operación falla cerrada y admite reintento idempotente si un destino falla parcialmente. SharedMutationClient ya no necesita URLs ni secretos de otros servicios para esta función. Pruebas aisladas cubren éxito, lotes, fallo parcial, reintento, identidad AUTH y revocación individual/global. Requiere configurar `GPSpedia_SERVICE_URL_WRITE` y `GPSpedia_SERVICE_URL_FEEDBACK` en el Coordinator de cada entorno antes de Beta.
 3. **Migración de cliente:** conservar las funciones públicas actuales como adaptadores compatibles; no retirar los endpoints internos de WRITE/FEEDBACK.
 4. **Configuración canónica:** definir nombres y fallback legacy; añadir diagnóstico de configuración que solo devuelva presencia/validez, nunca valores.
 5. **Cobertura de capacidades críticas:** pruebas de salud, RBAC, restricciones, cambio de rol, revocación individual/global, limpieza remota de caché, cierre de cuenta y rollback.
