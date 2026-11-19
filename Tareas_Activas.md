@@ -485,4 +485,5 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Sustituir lectura de toda la fila por rangos de ID/marca/modelo, años y VIN.
 - [x] Conservar exclusión del vehículo actual, normalización de VIN y formato del nombre del duplicado.
 - [x] Añadir AdminVinDuplicateBoundedRead.mjs al runner.
-- [ ] CI integral y revisión del diff pendientes. No se despliega ADMIN ni se modifican datos externos.
+- [x] CI 44595220751 SUCCESS: 167 suites, 2,331 pruebas aprobadas, 0 fallos; `AdminVinDuplicateBoundedRead` 8/8 y `AdminEntityLookupBoundedRead` 7/7. Sintaxis JavaScript aprobada. Health read-only 44595220797 SUCCESS; GitHub Pages 44595218915 SUCCESS. Diff revisado.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó ADMIN ni se modificaron datos externos.

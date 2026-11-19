@@ -984,3 +984,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-19] ADMIN: findVinDuplicateForAdmin deja de cargar todas las columnas de Cortes y lee únicamente ID/marca/modelo, años y VIN; mantiene exclusión del vehículo actual y detección de duplicados. Se añade AdminVinDuplicateBoundedRead.mjs; CI pendiente.
+
+
+[2026-11-19] Cierre de lectura acotada para duplicados VIN ADMIN: CI 44595220751 SUCCESS (167 suites, 2,331 pruebas, 0 fallos); AdminVinDuplicateBoundedRead 8/8 y AdminEntityLookupBoundedRead 7/7. Health read-only 44595220797 y GitHub Pages 44595218915 SUCCESS. Diff revisado; no se desplegó ADMIN ni se modificaron datos productivos.
