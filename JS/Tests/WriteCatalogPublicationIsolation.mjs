@@ -22,7 +22,7 @@ assert.equal(version("42"), 2);
 assert.throws(() => version("0"), /ID de vehículo válido/);
 assert.throws(() => version("42x"), /ID de vehículo válido/);
 
-const publisherSource = extract("publishCortesCatalogChange_", "getWriteCortesColumnMap_");
+const publisherSource = extract("publishCortesCatalogChange_", "runWriteDriveWorkOutsideScriptLock_");
 assert.doesNotMatch(publisherSource, /LockService|getScriptLock|waitLock|tryLock/);
 let published = null;
 const publish = new Function("buildCortesCatalogChange_", "publishSharedCatalogChange_", publisherSource + ";return publishCortesCatalogChange_;")(
@@ -34,4 +34,4 @@ assert.equal(published.service, "WRITE");
 assert.equal(published.change.sourceVersion, 9);
 assert.equal(published.change.recordId, "42");
 assert.throws(() => publish("addOrUpdateCut", "42", null), /versión de catálogo verificable/);
-console.log("WriteCatalogPublicationIsolation: 8/8 PASS — secuencia monotónica y HTTP a Coordinator sin ScriptLock local");
+console.log("WriteCatalogPublicationIsolation: 9/9 PASS — secuencia monotónica y HTTP a Coordinator sin ScriptLock local");
