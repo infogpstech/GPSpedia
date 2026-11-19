@@ -51,4 +51,6 @@ Siguiente paso P0: revisar lecturas restantes y acortar la sección crítica de 
 
 2026-11-19 — Siguiente ajuste P0: reutilizar vinColumnIndex ya calculado en detección de duplicados y edición de colecciones VIN; evitar lecturas repetidas de encabezados. Regresión ampliada, CI pendiente.
 
-2026-11-19 — CI detectó regresión de compatibilidad en prepareAdminVinCollectionEdit_ cuando se invoca sin índice VIN explícito; se añade fallback a getVinColumnIndex y se pasa el índice resuelto a la comprobación de duplicados. CI pendiente.
+2026-11-19 — CI 44596161669 SUCCESS: 167 suites, 2,334 pruebas, 0 fallos; AdminVinDuplicateBoundedRead 11/11. Health 44596161551 y Pages 44596160331 SUCCESS.
+
+Siguiente paso P0: auditar y reducir lecturas restantes dentro del ScriptLock de handleAddOrUpdateCut; preservar exclusión de Cortes/Idempotencia y completar pruebas de no interferencia entre Inbox, health, login, auditoría y registro de cortes.
