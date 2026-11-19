@@ -25,7 +25,7 @@ Normativa: NORMAS_DESAROLLO.md
 - Endurecido el contrato global: exige los siete servicios activos, los tres periodos y buckets íntegros; LEGACY se rechaza. Un fallo de una fuente directa no invalida Coordinator ni las demás fuentes.
 - Añadido contador directo no bloqueante para `USERS/getUsers`; ADMIN consulta cinco fuentes directas (CATALOG, AUTH, WRITE, FEEDBACK y USERS), además de las operaciones coordinadas de los siete servicios.
 - Añadido el módulo al App Shell PWA y aumentado la caché a v74. Pruebas nuevas registradas en `RunServiceTests.mjs`.
-- Validación aislada ejecutada: 24/24 comprobaciones PASS (sintaxis de seis módulos, agregación, fallos parciales, cinco fuentes directas, contador USERS, telemetría móvil, validación global y App Shell). La regresión Node completa y CI aún no están acreditadas. No se desplegó Apps Script ni se modificaron ScriptProperties, Drive o Spreadsheet.
+- Validaciones aisladas adicionales: ServiceBrowserTrafficContract 9/9; ServiceTrafficAggregatorContract PASS; ServiceTrafficAggregation 6/6; ServiceTrafficAdminContract PASS; syntax check de módulos productivos PASS. Se mantiene pendiente la regresión integral de todas las suites en el HEAD final. No se desplegó Apps Script ni se modificaron ScriptProperties, Drive o Spreadsheet.
 
 ### Fase 2 — Simplificación de arquitectura y configuración de servicios
 **P0 · AUDITORÍA ESTÁTICA COMPLETADA; IMPLEMENTACIÓN PENDIENTE · SERVICE-ARCHITECTURE-SIMPLIFICATION-01**
@@ -39,10 +39,13 @@ Normativa: NORMAS_DESAROLLO.md
 - Siguiente subpaso: contrato versionado y pruebas de compatibilidad; después prototipo aislado de orquestación de invalidación con fallos parciales. No cambiar ScriptProperties ni desplegar en esta fase.
 
 ### Fase 3 — Inbox y aislamiento de operaciones
-**P1 · PENDIENTE**
-- Diagnosticar y corregir «servicio no autorizado para el coordinador compartido» en Inbox, sin ampliar privilegios.
-- Determinar si la auditoría de imágenes interfiere con Inbox u operaciones independientes; revisar locks, leases, timeouts y liberación ante errores.
-- Corregir la vista previa del contenido HTML en la bandeja: mostrar texto/fragmento legible y no etiquetas HTML sin procesar, preservando el renderizado seguro del mensaje completo.
+**P1 · CORRECCIONES LOCALES IMPLEMENTADAS; REGRESIÓN Y CONFIGURACIÓN REMOTA PENDIENTES**
+- Corregido el contrato de validación de sesión: SharedMutationClient ahora identifica el servicio solicitante; Coordinator permite validar el actor con el secreto propio de AUTH, USERS, WRITE, ADMIN, FEEDBACK o UTILITIES, sin ampliar las acciones de registro/revocación reservadas a AUTH.
+- Actualizados los consumidores AUTH, ADMIN, FEEDBACK, USERS y WRITE para enviar su identidad de servicio explícita. Esto corrige el defecto de FEEDBACK que intentaba validarse como AUTH usando el secreto FEEDBACK, causa reproducible del rechazo del Coordinator al cargar Inbox cuando la caché local no estaba poblada.
+- El contrato mantiene compatibilidad con clientes anteriores que omiten el parámetro opcional (se conserva AUTH como valor por defecto). La telemetría atribuye la validación al servicio real.
+- Corregido el preview de Inbox: al crear o leer conversaciones se convierte el contenido HTML a texto legible, se retiran etiquetas y bloques script/style y se decodifican entidades. El cuerpo completo continúa renderizándose con `sanitizeHtmlContent(..., "advanced")`; no se cambió su sanitización ni su almacenamiento.
+- Pruebas ejecutadas: SharedMutationCoordinator 68/68; InboxConversations 66/66. La prueba de Inbox confirma el envío de identidad FEEDBACK y el preview histórico con HTML. Sintaxis de los cinco servicios, Coordinator, SharedMutationClient e InboxConversations PASS.
+- Pendiente: ejecutar la regresión integral en el HEAD final. Tras autorizar la futura etapa Beta, verificar que GPSpedia_COORDINATOR_SECRET_FEEDBACK/USERS/WRITE/ADMIN coincidan con las propiedades de Coordinator y confirmar el flujo real de Inbox. No se consultaron ni modificaron secretos ni deployments.
 
 ### Fase 4 — ADMIN: controles y retroalimentación
 **P1/P2 · PENDIENTE**
