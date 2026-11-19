@@ -715,6 +715,7 @@ export async function getCatalogChanges(cursor = 0, limit = 50, sessionPayload =
     if (!Number.isSafeInteger(normalizedCursor) || normalizedCursor < 0) throw new TypeError("El cursor del catálogo no es válido.");
     if (!Number.isInteger(normalizedLimit) || normalizedLimit < 1 || normalizedLimit > 50) throw new TypeError("El límite del feed debe estar entre 1 y 50.");
     let outcome = "network_error", httpStatus = null;
+    const startedAt = Date.now();
     const query = "?catalogFeed=1&cursor=" + encodeURIComponent(normalizedCursor) + "&limit=" + encodeURIComponent(normalizedLimit);
     try {
         let response;
@@ -773,5 +774,16 @@ export async function getCatalogChanges(cursor = 0, limit = 50, sessionPayload =
         if (!result || typeof result !== "object" || Array.isArray(result) || result.status !== "success") throw createRouteActionError_(result && typeof result.message === "string" ? result.message : "El feed público del catálogo no está disponible.", { kind: "application", code: "CATALOG_FEED_REJECTED", httpStatus });
         outcome = "success";
         return result;
-    } finally {}
+    } finally {
+        try {
+            recordBrowserServiceTraffic({
+                service: "FEEDBACK",
+                action: "getCatalogChanges",
+                timestamp: Date.now(),
+                durationMs: Date.now() - startedAt,
+                outcome: outcome === "success" ? "success" : "error",
+                httpStatus
+            });
+        } catch (telemetryError) {}
+    }
 }
