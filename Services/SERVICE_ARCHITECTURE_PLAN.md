@@ -3,7 +3,7 @@
 Fecha: 2026-11-19  
 Rama de trabajo: `GPSpedia2.2.5_work`  
 Rama base protegida: `GPSpedia2.2.5`  
-Estado: auditoría estática completada; contrato v1 e invalidación central implementados localmente; configuración canónica pendiente.
+Estado: contrato v1, invalidación remota central y agregación central de telemetría implementados localmente; migración de secretos y configuración por entorno pendientes.
 
 ## 1. Objetivo y restricciones
 
@@ -33,17 +33,16 @@ No cambiar secretos, ScriptProperties, deployments, hojas ni datos productivos d
 
 - `JS/Services/SharedMutationClient.js` se incluye como copia en AUTH, USERS, WRITE, ADMIN, FEEDBACK y UTILITIES.
 - Contiene transporte HTTP, adquisición/liberación de leases, publicación del feed, consulta de telemetría, sincronización de sesión y coordinación de revocaciones.
-- Además de enviar comandos a Coordinator, `invalidateSessionActorCaches()` llama directamente a WRITE y FEEDBACK, en lotes de cinco tokens, para borrar cachés locales. `revokeSession()` y `revokeUserSessions()` dependen de esa operación antes de pedir la revocación central.
-- Esta responsabilidad cruzada, junto con la configuración de endpoints y secretos duplicada, hace que una modificación del cliente pueda requerir sincronizar varias copias.
+- `invalidateSessionActorCaches()` envía los tokens a Coordinator con identidad AUTH; Coordinator contacta WRITE y FEEDBACK usando sus URLs y secretos propios. El cliente ya no conoce credenciales ni URLs ajenas.
+- `revokeSession()` y `revokeUserSessions()` conservan el orden invalidación remota confirmada antes de la revocación central.
 
 ### Configuración detectada
 
 - Cada consumidor mantiene `GPSpedia_COORDINATOR_URL` y `GPSpedia_COORDINATOR_SECRET`.
-- Coordinator mantiene un secreto por servicio.
-- ADMIN mantiene URLs de servicios y secretos directos para cinco fuentes de telemetría.
-- Cada servicio instrumentado mantiene además su secreto directo de telemetría.
-- ADMIN y el frontend contienen URLs de endpoints de servicios. Las URLs no son secretos, pero tenerlas duplicadas incrementa el riesgo de desincronización.
-- Las claves y nombres de configuración no son uniformes para todos los usos internos.
+- Coordinator mantiene seis secretos de autenticación por servicio y un secreto dedicado de lectura para CATALOG; además, centraliza cinco URLs de telemetría y dos URLs de invalidación remota.
+- AUTH, USERS, WRITE y FEEDBACK reutilizan su secreto Coordinator local para telemetría directa. CATALOG usa `GPSpedia_COORDINATOR_SECRET` con el secreto dedicado `GPSpedia_COORDINATOR_SECRET_CATALOG`.
+- Los secretos directos `GPSpedia_<SERVICIO>_TRAFFIC_SECRET` se conservan como fallback legacy. ADMIN aún conserva URLs/secretos directos para hablar con Coordinators anteriores a 1.4.4; el flujo actual no los necesita.
+- El frontend conserva URLs públicas para llamadas de servicio. ADMIN conserva las URLs de otros servicios únicamente para operaciones de administración que las requieren, además del fallback antiguo de telemetría.
 
 ## 3. Diseño objetivo
 
@@ -66,16 +65,16 @@ No cambiar secretos, ScriptProperties, deployments, hojas ni datos productivos d
 
 1. Mantener la revocación central individual y por usuario, incluida la protección por epoch y los contextos segmentados.
 2. Mantener la invalidación de caché en WRITE y FEEDBACK; no sustituirla por expiración pasiva ni por un borrado solo local.
-3. Diseñar una operación central idempotente, con confirmación por servicio, estado recuperable y reintento seguro. Debe contemplar fallos parciales sin declarar éxito prematuramente.
-4. Preservar el orden seguro entre invalidación, revocación central y actualización de AUTH/ActiveSessions. No cambiar ese orden hasta tener pruebas de fallos y recuperación.
+3. **Implementado localmente:** operación central idempotente, confirmación individual de WRITE/FEEDBACK, lotes limitados y reintento seguro ante fallos parciales. No se declara éxito prematuramente.
+4. **Verificado en pruebas aisladas:** se conserva el orden invalidación remota confirmada antes de revocación central y actualización de AUTH/ActiveSessions.
 5. La eliminación/cierre de cuenta y los cambios de privilegio deben seguir revocando sesiones y conservar los marcadores de recuperación existentes.
 
 ### D. Configuración y secretos
 
 1. Definir un catálogo canónico de nombres de propiedades y de URLs por entorno.
-2. Reducir duplicaciones de secretos cuando un mismo secreto de servicio pueda autenticar de forma segura los canales internos, manteniendo secretos independientes por servicio.
+2. **Implementado localmente para telemetría:** AUTH/USERS/WRITE/FEEDBACK reutilizan su secreto Coordinator; CATALOG dispone de un secreto dedicado de solo lectura. Se mantienen secretos independientes por servicio.
 3. Mantener secretos fuera del repositorio, frontend, Spreadsheet, logs y documentación.
-4. Introducir compatibilidad de lectura con nombres anteriores y migración explícita; nunca borrar una propiedad antigua hasta confirmar que todos los consumidores ya usan la nueva.
+4. **Implementado con fallback:** los endpoints de telemetría leen primero `GPSpedia_COORDINATOR_SECRET`; solo si no existe, aceptan la propiedad legacy. Un secreto nuevo presente pero incorrecto falla cerrado. No borrar propiedades antiguas hasta terminar despliegues y Beta.
 5. Centralizar la configuración que necesita Coordinator para las llamadas entre servicios; validar URL, servicio de destino y secreto en el servidor.
 
 ## 4. Secuencia de implementación
