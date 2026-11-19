@@ -56,7 +56,7 @@ assert.match(coordinator,/function readDirectServiceTrafficBatch_\(\)/);
 assert.match(coordinator,/function mergeServiceTrafficSources_\(source, directResults\)/);
 assert.match(coordinator,/fetchAll\(requests\)/);
 assert.match(coordinator,/GPSpedia_COORDINATOR_SECRET_" \+ spec\.service/);
-assert.match(coordinator,/scope: "global_service_traffic"/);
+assert.match(coordinator,/result\.scope = "global_service_traffic"/);
 assert.match(admin,/coordinatorResult\.scope === "global_service_traffic"/);
 assert.match(admin,/coordinatorResult\.scope === "coordinator_protected_operations"/);
 
