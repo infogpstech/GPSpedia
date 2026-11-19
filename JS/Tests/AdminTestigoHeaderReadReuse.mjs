@@ -40,10 +40,14 @@ test("la ampliación/reparación de columnas testigo se conserva",()=>{
 });
 test("el helper devuelve el índice VIN calculado",()=>{
  assert.ok(ensure.includes("vinColumnIndex: vinColumnIndex"));
+ assert.ok(ensure.includes("headers: currentHeaders"));
+ assert.ok(ensure.includes("currentHeaders[targetColumns[index] - 1] = headerNames[index];"));
 });
 test("handleAddOrUpdateCut reutiliza el resultado y no vuelve a leer encabezados VIN",()=>{
  assert.ok(handler.includes("const testigoSchema = ensureTestigoColumns(sheet, true);"));
  assert.ok(handler.includes("const vinColumnIndex = testigoSchema.vinColumnIndex;"));
  assert.ok(!handler.includes("const vinColumnIndex = getVinColumnIndex(sheet);"));
+ assert.ok(handler.includes("const headers = testigoSchema.headers;"));
+ assert.ok(!handler.includes("sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0]"));
 });
-console.log("AdminTestigoHeaderReadReuse: "+passed+"/"+passed+" PASS — encabezados compartidos, validación VIN y AT:AV");
+console.log("AdminTestigoHeaderReadReuse: "+passed+"/"+passed+" PASS — encabezados compartidos, validación VIN, AT:AV y recuperación");
