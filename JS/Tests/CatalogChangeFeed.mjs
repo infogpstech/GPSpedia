@@ -264,7 +264,7 @@ test("mutaciones PyS publican upsert exacto tras verificar ID y fila bajo lock",
     assert.ok(feedbackSource.includes('publishPysCatalogChange_(action, problemId)'));
 });
 test("WRITE y FEEDBACK publican deltas exactos y conservan reset para operaciones masivas", () => {
-    assert.match(writeSource,/response && response\.status === "success"[\s\S]*?catalogWriters\.includes\(action\)[\s\S]*?publishCortesCatalogChange_\(action, vehicleId\)/);
+    assert.match(writeSource,/response && response\.status === "success"[\s\S]*?catalogWriters\.includes\(action\)[\s\S]*?publishCortesCatalogChange_\(action, vehicleId, response\.catalogVersion\)/);
     assert.match(writeSource,/\["addOrUpdateCut", "addSupplementaryInfo", "addVinToVehicle"\]/);
     assert.ok(writeSource.includes('publishSharedCatalogChange_("WRITE", action, { operation: "reset" })'));
     assert.match(writeSource,/!String\(requestPayload\.__sharedMutationToken \|\| ""\)\.trim\(\)/);

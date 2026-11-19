@@ -1154,3 +1154,5 @@ ACTUALIZACIÓN DE CONTINUIDAD — 2026-11-19
 - Sexto CI 44557801354: 150 suites / 2,143 pruebas; cursor, retención, versiones y reset legacy pasaron. Falló la aserción estática antigua que exigía lock de 15 s en `publishCortesCatalogChange_`; se sustituye por contrato de publicación versionada sin lock.
 
 - Séptimo CI 44558022613: 150 suites / 2,143 pruebas; falló solo la extracción del publisher en CatalogChangeFeed por un escape doble del salto de línea. Se corrige el delimitador de la prueba.
+
+- Octavo CI 44558202901: 150 suites / 2,143 pruebas; falló la última aserción estática que aún esperaba la llamada antigua `publishCortesCatalogChange_(action, vehicleId)`. Se actualiza para exigir el tercer argumento `response.catalogVersion`.
