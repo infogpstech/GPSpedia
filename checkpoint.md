@@ -1152,3 +1152,5 @@ ACTUALIZACIÓN DE CONTINUIDAD — 2026-11-19
 - Quinto CI 44557552513: el contrato de reset legacy ya pasó; el siguiente fixture de lectura pública todavía usaba evento WRITE sin versión. Se actualizan todos los eventos de la suite CatalogChangeFeed con sourceVersion monotónica (1–109) para que las pruebas midan paginación/retención y no el fallback legacy.
 
 - Sexto CI 44557801354: 150 suites / 2,143 pruebas; cursor, retención, versiones y reset legacy pasaron. Falló la aserción estática antigua que exigía lock de 15 s en `publishCortesCatalogChange_`; se sustituye por contrato de publicación versionada sin lock.
+
+- Séptimo CI 44558022613: 150 suites / 2,143 pruebas; falló solo la extracción del publisher en CatalogChangeFeed por un escape doble del salto de línea. Se corrige el delimitador de la prueba.

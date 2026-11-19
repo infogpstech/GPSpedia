@@ -177,7 +177,7 @@ test("WRITE publica upsert exacto de Cortes tras releer fila y conserva reset pa
     assert.ok(writeSource.includes('publishSharedCatalogChange_("WRITE", action, { operation: "reset" })'));
     assert.ok(writeSource.includes("nextWriteCatalogVersionLocked_"));
     const publisherStart = writeSource.indexOf("function publishCortesCatalogChange_");
-    const publisherEnd = writeSource.indexOf("\\nfunction runWriteDriveWorkOutsideScriptLock_", publisherStart);
+    const publisherEnd = writeSource.indexOf("\nfunction runWriteDriveWorkOutsideScriptLock_", publisherStart);
     const publisher = writeSource.slice(publisherStart, publisherEnd);
     assert.ok(publisherEnd > publisherStart);
     assert.doesNotMatch(publisher, /LockService|getScriptLock|waitLock|tryLock/);

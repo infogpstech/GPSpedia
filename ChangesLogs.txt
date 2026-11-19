@@ -905,3 +905,5 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 2026-11-19 — CatalogChangeFeed: fixtures WRITE/Cortes con sourceVersion monotónica para probar upsert, evento grande, retención y cursor sin activar fallback legacy.
 
 2026-11-19 — CatalogChangeFeed: actualizado contrato estático del publisher WRITE para firma sourceVersion y ausencia de ScriptLock durante HTTP.
+
+2026-11-19 — CatalogChangeFeed: corregido escape del salto de línea en el extractor estático de publishCortesCatalogChange_.

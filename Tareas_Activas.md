@@ -369,3 +369,5 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - Ajuste adicional de fixtures CatalogChangeFeed: todos los eventos WRITE/Cortes usados para verificar upsert, tamaño máximo, retención y cursor público ahora declaran versiones secuenciales coherentes; los casos legacy se cubren por separado en SharedMutationCoordinator.
 
 - Actualización de contrato CatalogChangeFeed: la prueba estática ahora valida la firma versionada de `publishCortesCatalogChange_` y exige que el publisher HTTP no contenga adquisición de ScriptLock.
+
+- Corrección del test estático: el delimitador de extracción de `publishCortesCatalogChange_` debe buscar el salto de línea real antes del siguiente helper; se corrige el escape del fixture.
