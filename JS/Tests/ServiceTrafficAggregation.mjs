@@ -73,7 +73,7 @@ test("si el contador directo CATALOG no está configurado conserva Coordinator y
 test("combina contadores directos de AUTH, WRITE y FEEDBACK con operaciones Coordinator", () => {
     const coordinator = coordinatorFixture();
     const directResults = {};
-    for (const service of ["AUTH", "WRITE", "FEEDBACK"]) {
+    for (const service of ["AUTH", "WRITE", "FEEDBACK", "USERS"]) {
         directResults[service] = {
             status: "success", service, scope: "direct_post_requests",
             accuracy: "best_effort_nonblocking", mayUndercount: true,
@@ -90,7 +90,7 @@ test("combina contadores directos de AUTH, WRITE y FEEDBACK con operaciones Coor
     }
     assert.equal(result.totals.last24Hours.UTILITIES, coordinator.totals.last24Hours.UTILITIES, "UTILITIES no debe sumarse dos veces: migrateTimestamps ya obtiene lease Coordinator.");
     assert.equal(result.sources.UTILITIES, undefined);
-    assert.equal(result.totals.last24Hours.USERS, 1, "USERS conserva solo su fuente Coordinator porque sus acciones conocidas ya pasan por lease.");
+    assert.equal(result.totals.last24Hours.USERS, 10, "USERS combina las mutaciones coordinadas con las consultas directas getUsers.");
     assert.equal(result.sources.coordinator.available, true);
 });
 
@@ -118,7 +118,7 @@ test("conserva buckets directos que cruzan el límite de hora respecto a Coordin
 
 test("la falta de configuración de cada fuente directa conserva su agregado Coordinator y declara cobertura parcial", () => {
     const coordinator = coordinatorFixture();
-    const unavailable = Object.fromEntries(["CATALOG", "AUTH", "WRITE", "FEEDBACK"]
+    const unavailable = Object.fromEntries(["CATALOG", "AUTH", "WRITE", "FEEDBACK", "USERS"]
         .map(service => [service, { status: "unavailable", reason: "not_configured" }]));
     const result = mergeDirectServiceTraffic_(coordinator, unavailable);
     for (const service of Object.keys(unavailable)) {
