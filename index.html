@@ -647,6 +647,7 @@
                 <button type="button" id="btn-audit-drive-organize" class="btn btn-secondary audit-drive-action" aria-label="Organizar imágenes confirmadas" title="Organizar imágenes confirmadas" hidden disabled><i class="fa-solid fa-folder-open" aria-hidden="true"></i><span class="audit-drive-action-label" aria-hidden="true">Organizar imágenes confirmadas</span></button>
                 <button type="button" id="btn-audit-drive-save-inventory" class="btn btn-secondary audit-drive-action" aria-label="Registrar inventario sin uso" title="Registrar inventario sin uso" hidden disabled><i class="fa-solid fa-clipboard-check" aria-hidden="true"></i><span class="audit-drive-action-label" aria-hidden="true">Registrar inventario sin uso</span></button>
                 <button type="button" id="btn-audit-drive-reconcile" class="btn btn-secondary audit-drive-action" aria-label="Simular conciliación con Cortes" title="Simular conciliación con Cortes" hidden disabled><i class="fa-solid fa-link" aria-hidden="true"></i><span class="audit-drive-action-label" aria-hidden="true">Simular conciliación con Cortes</span></button>
+                <button type="button" id="btn-audit-drive-organizer-preview" class="btn btn-secondary audit-drive-action" aria-label="Previsualizar organización completa" title="Previsualizar organización completa" hidden disabled><i class="fa-solid fa-folder-tree" aria-hidden="true"></i><span class="audit-drive-action-label" aria-hidden="true">Previsualizar organización</span></button>
             </div>
         </div>
         <div id="audit-drive-summary" style="margin-bottom: 10px;"></div>
@@ -659,6 +660,12 @@
             <div id="audit-drive-reconciliation-counts" class="audit-drive-reconciliation-counts"></div>
             <div id="audit-drive-reconciliation-results" class="audit-drive-reconciliation-results"></div>
             <button type="button" id="btn-audit-drive-apply-reconciliation" class="btn btn-primary" hidden disabled>Aplicar propuestas seleccionadas</button>
+        </section>
+        <section id="audit-drive-organizer-panel" class="audit-drive-reconciliation-panel" hidden aria-live="polite">
+            <h3>Preview de organización Cortes / LogosMarca</h3>
+            <p id="audit-drive-organizer-status">La simulación compara rutas, nombres, extensiones y referencias. No modifica Drive ni Spreadsheet.</p>
+            <div id="audit-drive-organizer-counts" class="audit-drive-reconciliation-counts"></div>
+            <div id="audit-drive-organizer-results" class="audit-drive-reconciliation-results"></div>
         </section>
     </div>
 </div>
