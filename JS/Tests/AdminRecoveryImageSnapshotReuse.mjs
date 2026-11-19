@@ -22,18 +22,22 @@ const callbackStart = recovery.indexOf("function(images) {");
 const callbackEnd = recovery.indexOf("}, operationHash);", callbackStart);
 assert.ok(callbackStart >= 0 && callbackEnd > callbackStart, "No se encontró callback de revalidación");
 const callbackSource = recovery.slice(callbackStart, callbackEnd + 1);
+const verifiedRow = { rowIndex: 9, slotIndex: 1, vehicleId: "33", operationHash: "hash", rowValues: null };
 const callback = new Function("mapRowToObject", "COLS_CORTES", "checkFileIdValid", "sheet",
+    "findRowByOpId", "opId", "idempotencyEntriesSnapshot", "rowIndex", "slotIndex", "rowObj", "operationHash",
     "return (" + callbackSource + ");")(
-    (values) => ({ imagenVehiculo: values[columns.imagenVehiculo - 1], imgCorte1: values[columns.imgCorte1 - 1] }),
+    values => ({ imagenVehiculo: values[columns.imagenVehiculo - 1], imgCorte1: values[columns.imgCorte1 - 1] }),
     columns,
     value => typeof value === "string" && value.startsWith("valid:"),
-    { getRange: (row, col) => ({ setValue: value => writes.push({ row, col, value }) }) }
+    { getRange: (row, col) => ({ setValue: value => writes.push({ row, col, value }) }) },
+    () => verifiedRow, "op-1", {}, 9, 1, { id: 33 }, "hash"
 );
 const writes = [];
 const rowValues = Array(48).fill("");
 rowValues[columns.imagenVehiculo - 1] = "valid:existing-vehicle";
 rowValues[columns.imgCorte1 - 1] = "";
-const verified = { rowIndex: 9, rowValues };
+verifiedRow.rowValues = rowValues;
+const verified = verifiedRow;
 const result = callback({ vehicleImageUrl: "new-vehicle-url", cutImageUrl: "new-cut-url" });
 assert.equal(result, verified);
 assert.equal(rowValues[columns.imagenVehiculo - 1], "valid:existing-vehicle", "Debe preservar la URL válida existente");
