@@ -1044,3 +1044,15 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - WRITE, FEEDBACK y ADMIN no adquieren leases en sus acciones ordinarias. ADMIN/clearSensitiveLogs tampoco.
 - No se hizo una eliminación indiscriminada de leases que debilitara la integridad de cuentas o migraciones. La siguiente tarea local de código queda condicionada a un rediseño de propiedad de escrituras de Users si se decide eliminar esa coordinación; Safe Apply sigue bloqueado hasta preview real autorizado.
 ================================================================================
+
+
+================================================================================
+ESTADO ACTUAL DEL REPOSITORIO — 2026-11-19
+- Rama de trabajo: GPSpedia2.2.5_work
+- HEAD al registrar este checkpoint: 6ad8d99f41bc009e193932171afbcb86a0105230
+- Rama base protegida GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+- Regresión final tras AUTH/clearSensitiveLogs: run 44541720461 SUCCESS; 152 suites, 2,224 pruebas, 0 fallos.
+- Tras actualización documental de clasificación de leases: run 44542256815 SUCCESS; 152 suites, 2,224 pruebas, 0 fallos. Health read-only 44542256611 SUCCESS; Pages 44542253541 SUCCESS.
+- No se desplegaron proyectos Apps Script ni se modificaron ScriptProperties, secretos, Drive o Spreadsheet.
+- Pendiente local condicionado: Safe Apply del organizador requiere auditoría/preview real de Drive y revisión del manifiesto antes de implementarse; no aplicar movimientos ni renombrados.
+================================================================================

@@ -266,3 +266,5 @@ Aplicar la estructura objetivo después de validar el dry-run:
 - [x] UTILITIES: `migrateTimestamps` es una migración manual con staging, backup, rollback y `ScriptLock` local; no tiene consumidor ordinario en la interfaz. Se conserva la lease de mantenimiento hasta rediseñar el flujo de migración.
 - [x] No se encontraron leases en los routers ordinarios de WRITE, FEEDBACK o ADMIN; `AUTH/clearSensitiveLogs` tampoco adquiere lease.
 - Resultado: no se retiran las coordinaciones de USERS/UTILITIES sin una alternativa de integridad equivalente. La sección 15 sigue prevaleciendo para acciones ordinarias; estas rutas se documentan como operaciones de cuenta/migración, no como autorización por cada acción de contenido.
+
+- Estado de cierre local: ADMIN y AUTH/clearSensitiveLogs simplificados y probados; quedan solo validaciones Beta y Safe Apply condicionado a preview real. Última regresión 44542256815 SUCCESS (152 suites/2,224 pruebas/0 fallos); health 44542256611 SUCCESS; Pages 44542253541 SUCCESS. HEAD documental 6ad8d99f41bc009e193932171afbcb86a0105230; base protegida sin cambios.
