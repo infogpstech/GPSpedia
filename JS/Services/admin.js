@@ -6811,7 +6811,7 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
     // Compatibilidad con operaciones antiguas: solo se extrae el opId del campo heredado.
     // El nombre de colaborador enviado por el cliente nunca se utiliza como identidad.
     if (!opId && typeof payload.colaborador === "string") {
-        const opMatch = payload.colaborador.match(/\\[(OP-[a-zA-Z0-9_-]+)\\]/);
+        const opMatch = payload.colaborador.match(/\[(OP-[a-zA-Z0-9_-]+)\]/);
         if (opMatch) opId = opMatch[1];
     }
     const operationHash = opId ? computeCutOperationFingerprint_(payload) : null;
