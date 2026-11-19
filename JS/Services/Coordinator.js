@@ -1328,7 +1328,8 @@ function doPost(e) {
             lockService: LockService,
             now: function() { return Date.now(); },
             uuid: function() { return Utilities.getUuid(); },
-            sleep: function(milliseconds) { Utilities.sleep(milliseconds); }
+            sleep: function(milliseconds) { Utilities.sleep(milliseconds); },
+            fetch: function(url, options) { return UrlFetchApp.fetch(url, options); }
         });
         response = coordinator.handleRequest(request);
     } catch (error) {
