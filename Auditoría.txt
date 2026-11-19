@@ -334,3 +334,48 @@ Adenda de validación final GP-PWA-RECENT-VIEWS-02: al subir CACHE_NAME a v70 ta
 - Validación: CI `44394961438` SUCCESS (146 suites, 2,155 pruebas, 0 fallos); CutDetailModalLayout 28/28; RecentlyViewedCarousel 1/1; ServiceWorkerCache 12/12; OfflineBrandAssets 4/4. Pages `44394961041` SUCCESS; health GET-only `44394961427` SUCCESS.
 - La comprobación visual real en navegador/dispositivo y la medición de arranque PWA/caché siguen pendientes de Beta.
 ================================================================================
+
+
+================================================================================
+2026-11-18 — NUEVOS HALLAZGOS BETA: MODAL, AUTORIZACIÓN INBOX Y AUDITORÍA DE IMÁGENES
+================================================================================
+
+### BETA-CUT-MODAL-IMAGE-CONTAINER-PADDING-01
+- Evidencia reportada: el contenedor de la imagen del modelo en el modal de detalle de corte mantiene padding horizontal y vertical innecesario.
+- Impacto: reduce el área útil de imagen y genera espacio visual no justificado.
+- Corrección esperada: reducir/eliminar el padding sin alterar proporciones, encabezado, logo, nombre del modelo ni acciones.
+- Estado: pendiente de reproducción, inspección CSS y validación responsive.
+
+### BETA-INBOX-SHARED-COORDINATOR-AUTH-01
+- Evidencia reportada: al consultar Inbox aparece «Servicio no autorizado para el coordinador compartido».
+- Impacto: impide el acceso a una función principal de comunicación.
+- Diagnóstico: revisar autorización de servicio, identidad, token, contexto de sesión/rol, allowlist y contrato Inbox-Coordinator; comprobar si coincide temporalmente con la auditoría.
+- Estado: pendiente. No se presume que la causa sea Coordinator ni se propone relajar permisos.
+
+### BETA-ADMIN-IMAGE-AUDIT-CONCURRENCY-01
+- Riesgo por verificar: la auditoría podría interferir con funciones concurrentes.
+- Inspeccionar locks/leases, contención, duración, liberación de recursos y aislamiento.
+- Estado: investigación pendiente; no se ha demostrado causalidad con el error de Inbox.
+
+### BETA-ADMIN-CUT-IMAGE-AUDIT-COVERAGE-01
+- Requisito: recorrer toda la carpeta de cortes y subcarpetas y contrastar imágenes con referencias de todas las hojas de Spreadsheet, excluyendo únicamente la hoja de imágenes reemplazadas al determinar uso vigente.
+- Verificar cobertura de directorios, hojas y formatos, normalización y ausencia de falsos positivos.
+- Estado: cobertura completa pendiente de auditoría técnica. El PASS previamente reportado acredita que la detección se ejecutó, no que cumpla este alcance ampliado.
+
+### BETA-ADMIN-CUT-IMAGE-LIBRARY-INVENTORY-01
+- Requisito: registrar nombre, fecha de creación (si Drive la proporciona), tamaño, ruta completa, URL visualizable, modelo relacionado, referencia vigente asociada y estado/procedencia.
+- Ejemplo: Cortes/SUV/Toyota/Prado/LTX/2024-2027/toyota_prado_ltx_boton_imagenVehiculo.png.
+- Los registros deben ser consultables y gestionables desde la biblioteca. La auditoría no debe borrar ni mover archivos.
+- Estado: pendiente de diseño/implementación y validación de persistencia y permisos.
+
+### BETA-ADMIN-CUT-IMAGE-VEHICLE-MATCH-01
+- Requisito: relacionar imágenes con filas/modelos de la hoja de cortes mediante coincidencia normalizada de marca, modelo, año, encendido y tipo de corte/función. Ejemplo: toyota_prado_btn_2024_ign.jpg.
+- Si el nombre no basta, usar la ruta como contexto. Registrar método, candidato y confianza; resolver ambigüedades mediante revisión.
+- Estado: pendiente de implementación/validación.
+
+### BETA-ADMIN-CUT-IMAGE-REPLACEMENT-LINK-01
+- Requisito: buscar en el registro de corte una imagen vigente relacionada y guardar nombre/enlace como referencia. Clasificar «Reemplazada» solo con evidencia suficiente; de lo contrario «Sin uso» o revisión pendiente.
+- Estado: pendiente de implementación/validación.
+
+**Nota:** actualización documental basada en reportes y requisitos del usuario. No se inspeccionó ni modificó código, Spreadsheet, Drive o permisos; no se presenta como defecto reproducido ni como capacidad implementada.
+================================================================================
