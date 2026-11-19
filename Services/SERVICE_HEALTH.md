@@ -14,9 +14,9 @@ El endpoint de diagnóstico es una superficie pública de solo lectura. Su respu
 | CATALOG | `GPSpedia-Catalog` | 2.4.0 | `available` |
 | WRITE | `GPSpedia-Write` | 2.3.1 | `available` |
 | USERS | `GPSpedia-Users` | 2.4.2 | `available` |
-| FEEDBACK | `GPSpedia-Feedback` | 1.2.1 | `available` |
+| FEEDBACK | `GPSpedia-Feedback` | 1.2.2 | `available` |
 | UTILITIES | `GPSpedia-Utilities` | 1.5.0 | `available` |
-| ADMIN | `GPSpedia-Admin` | 2.6.0 | `available` |
+| ADMIN | `GPSpedia-Admin` | 2.7.1 | `available` |
 
 La versión se informa cuando está disponible; no reemplaza la validación de identidad. Los deployments externos no se consideran verificados solo porque exista código fuente con el contrato esperado.
 
@@ -51,3 +51,7 @@ La revisión local cubre los siete servicios versionados. LEGACY está excluido 
 ## Prueba local
 
 `node --experimental-default-type=module JS/Tests/ServiceHealthContract.mjs`
+
+## Revisión de versiones fuente — 2026-11-19
+
+Las versiones de FEEDBACK (1.2.2) y ADMIN (2.7.1) se cotejaron con los objetos JSON de salud de `JS/Services/feedback.js` y `JS/Services/admin.js`, respectivamente. Las versiones documentadas describen la rama fuente; no certifican que los deployments externos estén actualizados.

@@ -712,3 +712,13 @@ Corrección: si tipo_contenido=inventario_sin_uso y origen_registro está vacío
 Validación: LegacyUnusedInventoryMigrationContract PASS; UnusedImageInventoryPersistenceContract PASS; CI run 44527866474 SUCCESS, 152 suites y 2,224 pruebas, 0 fallos.
 Severidad: media (compatibilidad e integridad de inventario). Estado: CORREGIDO LOCALMENTE.
 ================================================================================
+
+ 
+================================================================================
+2026-11-19 — HALLAZGO CORREGIDO: VERSIONES DE FEEDBACK Y ADMIN DESACTUALIZADAS EN CONTRATO DE SALUD
+Ubicación: Services/SERVICE_HEALTH.md, tabla de contratos versionados.
+Evidencia: los endpoints fuente de JS/Services/feedback.js y JS/Services/admin.js declaran FEEDBACK 1.2.2 y ADMIN 2.7.1; el documento indicaba 1.2.1 y 2.6.0.
+Impacto: el manual operativo podía inducir a comparar deployments con versiones fuente incorrectas.
+Corrección: tabla actualizada a 1.2.2 y 2.7.1, con nota que distingue versión fuente de deployment remoto.
+Severidad: baja (trazabilidad documental). Estado: CORREGIDO LOCALMENTE.
+================================================================================

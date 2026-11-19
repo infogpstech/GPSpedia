@@ -71,12 +71,14 @@ Normativa: NORMAS_DESAROLLO.md
 - Diseñar aplicación por lotes solo después del preview: idempotencia, verificación individual, manifiesto, compensación/rollback y confirmación explícita. No mover, renombrar, borrar ni restaurar archivos en esta fase.
 
 ### Fase 6 — Documentación y coherencia de registros
-**P2 · PENDIENTE**
-- Rotar sin pérdida `Tareas_Pendientes.md` y `lista_beta_parte2.txt`, que superan el umbral documental; verificar reconstrucción exacta y manifiestos antes de añadir contenido a esos archivos.
-- Reconciliar versiones y contratos documentados en `Services/SERVICE_HEALTH.md` con los endpoints fuente.
-- Mantener Auditoría, ChangesLogs, tareas y checkpoint sincronizados; no reescribir evidencia histórica.
-
+**P2 · COMPLETADA CON VALIDACIÓN DIFERIDA A BETA**
+- [x] Rotación sin pérdida de Tareas_Pendientes.md y lista_beta_parte2.txt; ambos índices apuntan a sus partes ordenadas.
+- [x] Reconstrucción exacta verificada contra los SHA de blob Git originales; límites elegidos en encabezado de sección y separador entre registros.
+- [x] Manifiesto documental actualizado con tamaños Unicode/UTF-8, límites, rutas y SHA de cada parte.
+- [x] Services/SERVICE_HEALTH.md reconciliado con las versiones declaradas por los endpoints fuente: FEEDBACK 1.2.2 y ADMIN 2.7.1. Las versiones de deployments externos siguen sin verificarse.
+- [x] Tareas_Activas.md, lista_beta.txt, Auditoría.txt, ChangesLogs.txt y checkpoint.md actualizados sin reescribir registros históricos.
 ### Fase 7 — Regresión integral y transición a Beta
+**PENDIENTE · SIGUIENTE ETAPA**
 - Ejecutar las pruebas locales pertinentes de cada fase y una regresión integral de contratos, sintaxis, permisos, sesiones, revocaciones, caché remota, cuentas, telemetría y flujos administrativos.
 - Registrar por separado lo aprobado localmente y lo que exige deployment, credenciales, navegador/dispositivo real, Drive o Spreadsheet.
 - Abrir la fase Beta únicamente después de cerrar las implementaciones locales; preparar primero los comandos seguros de sincronización exigidos por NORMAS_DESAROLLO.md.
@@ -95,24 +97,24 @@ Normativa: NORMAS_DESAROLLO.md
 
 ## Pendientes — prioridad inmediata
 
-### P0 — SERVICE-ARCHITECTURE-SIMPLIFICATION-01
+### P0 — SERVICE-ARCHITECTURE-SIMPLIFICATION-01 — COMPLETADA CON VALIDACIÓN DIFERIDA A BETA
 - Desacoplar la implementación central de Coordinator de los clientes Apps Script; estabilizar/versionar el contrato para que cambios internos no requieran redeploy de todos los consumidores.
 - Reducir la necesidad de sincronizar copias de SharedMutationClient sin introducir dependencias de bibliotecas/versiones que sigan exigiendo desplegar cada consumidor.
 - Consolidar URLs y secretos con nombres/configuración uniformes, manteniendo secretos fuera del repositorio y aislamiento entre servicios.
 - Conservar y probar: salud de todos los servicios; restricciones de cuentas; revocación remota de sesiones; limpieza remota de caché por usuario; cierre/eliminación remota de cuentas. No retirar permisos, RBAC, auditoría ni rollback.
 
-### P1 — INBOX-AUTHORIZATION-AND-ISOLATION-01
+### P1 — INBOX-AUTHORIZATION-AND-ISOLATION-01 — COMPLETADA CON VALIDACIÓN DIFERIDA A BETA
 - Corregir «servicio no autorizado» en las consultas Inbox sin ampliar privilegios.
 - Auditar interferencias de locks/leases entre auditoría de imágenes e Inbox.
 - Corregir el fragmento HTML en la bandeja para mostrar texto legible y mantener renderizado seguro al abrir el mensaje.
 
-### P1 — ADMIN-FEEDBACK-AND-RESPONSIVE-01
+### P1 — ADMIN-FEEDBACK-AND-RESPONSIVE-01 — COMPLETADA CON VALIDACIÓN DIFERIDA A BETA
 - Corregir los mensajes de borrado de logs (borrado efectivo, sin registros y error).
 - Compactar retención de logs (7 días / eliminar todos) sin overflow.
 - Corregir el padding del contenedor de imagen del modal sin mover logo, nombre ni acciones ya aceptados.
 
 
-### P1 — BETA-ADMIN-CUT-IMAGE-ORGANIZER-STRUCTURE-01
+### P1 — BETA-ADMIN-CUT-IMAGE-ORGANIZER-STRUCTURE-01 — IMPLEMENTACIÓN LOCAL COMPLETADA; VALIDACIÓN BETA PENDIENTE
 Aplicar la estructura objetivo después de validar el dry-run:
 - Vehículos: Cortes/<categoría>/<marca>/<modelo>/<versión-o-encendido>/<año-inicio-año-fin>/
 - Logo: <marca>_logo.<extensión> en el primer nivel de la carpeta de marca.
@@ -131,7 +133,7 @@ Aplicar la estructura objetivo después de validar el dry-run:
 - Aplicar por lotes idempotentes; verificar cada movimiento/renombrado y actualización de URL; registrar manifiesto y permitir rollback.
 - No eliminar ni restaurar archivos automáticamente.
 
-### P2 — DOC-ROTATION-01
+### P2 — DOC-ROTATION-01 — COMPLETADA
 - Rotar Tareas_Pendientes.md y lista_beta_parte2.txt, ambos por encima de 180,000 caracteres Unicode.
 - Dividir solo en límites de registro, conservar contenido exacto, verificar reconstrucción y actualizar los manifiestos/índices.
 - No añadir más contenido a esos dos archivos hasta completar la rotación.

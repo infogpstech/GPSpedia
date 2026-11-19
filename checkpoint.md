@@ -966,3 +966,15 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - Fase 5 solo queda pendiente de Beta real: auditoría completa, revisión visual/funcional del preview, ACL y reconciliación en entorno autorizado. No activar aplicación masiva.
 - Siguiente prioridad: Fase 6 documental. Rotar sin pérdida Tareas_Pendientes.md y lista_beta_parte2.txt (superan el umbral); reconciliar Services/SERVICE_HEALTH.md con endpoints fuente. No editar archivos sobredimensionados antes de rotarlos y verificar manifiestos.
 ================================================================================
+
+ 
+================================================================================
+2026-11-19 — CIERRE FASE 6 DOCUMENTAL / CONTINUIDAD A FASE 7
+- HEAD confirmado al iniciar: eadbf468b35022290955a4ee7cceaad820cbb611; rama GPSpedia2.2.5_work. La rama base GPSpedia2.2.5 fue consultada y no se modificó.
+- Rotado Tareas_Pendientes.md (182,953 caracteres Unicode; 185,938 bytes UTF-8) en Tareas_Pendientes_parte_001.md y _002.md, con corte en el encabezado «Solicitudes post revisión — 2026-11-16».
+- Rotado lista_beta_parte2.txt (184,838 caracteres Unicode; 186,955 bytes UTF-8) en lista_beta_parte2_parte_001.txt y _002.txt, con corte en el separador anterior a AUG-042.
+- En ambos casos, la concatenación exacta de las partes reproduce el SHA de blob Git original. Índices y ROTACION_DOCUMENTAL_MANIFIESTO_2026-11-19.md actualizados.
+- Services/SERVICE_HEALTH.md reconciliado con versiones fuente: FEEDBACK 1.2.2 y ADMIN 2.7.1. Deployments externos no verificados.
+- Tareas_Activas.md actualizado: Fase 6 completada localmente; Fase 7 (regresión integral) es el siguiente paso.
+- No se modificó código de servicios, no se desplegó Apps Script y no se consultaron/modificaron secretos, ScriptProperties, Drive ni Spreadsheet.
+================================================================================

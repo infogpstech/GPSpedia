@@ -802,3 +802,13 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - Regresión integral HEAD 41c844ab: 152 suites, 2,224 pruebas aprobadas, 0 fallos; health y Pages SUCCESS.
 - Fase 5 cerrada localmente; solo queda validación Beta real. No se aplicaron escrituras/movimientos sobre Drive o Spreadsheet.
 ================================================================================
+
+ 
+================================================================================
+2026-11-19 — ROTACIÓN DOCUMENTAL Y COHERENCIA DEL CONTRATO DE SALUD
+- Tareas_Pendientes.md pasa a ser un índice de Tareas_Pendientes_parte_001.md y Tareas_Pendientes_parte_002.md.
+- lista_beta_parte2.txt pasa a ser un índice de lista_beta_parte2_parte_001.txt y lista_beta_parte2_parte_002.txt; lista_beta.txt actualiza el orden de lectura.
+- Se crea ROTACION_DOCUMENTAL_MANIFIESTO_2026-11-19.md con tamaños, límites, SHA de blobs y verificación de reconstrucción exacta.
+- Services/SERVICE_HEALTH.md actualiza las versiones fuente FEEDBACK 1.2.2 y ADMIN 2.7.1.
+- Tareas_Activas.md registra el cierre local de Fase 6 y la transición a Fase 7.
+================================================================================

@@ -1,0 +1,1007 @@
+================================================================================
+AUG-042 — INVALIDACIÓN DE SESIÓN, ROL Y ESTADO PRIVILEGIADO DEL CLIENTE
+Antes de cualquier prueba, confirmar repositorio/rama/limpieza y sincronizar sin descartar cambios:
+~~~bash
+set -euo pipefail
+EXPECTED_REPO='infogpstech/GPSpedia'; EXPECTED_BRANCH='GPSpedia2.2.5_work'
+ROOT="$(git rev-parse --show-toplevel)"; test "$(basename "$ROOT")" = GPSpedia
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH"
+case "$(git remote get-url origin)" in *infogpstech/GPSpedia.git|*infogpstech/GPSpedia) ;; *) exit 1 ;; esac
+test -z "$(git status --porcelain)" || { echo 'Árbol no limpio'; exit 1; }
+git fetch origin "$EXPECTED_BRANCH"; git pull --ff-only origin "$EXPECTED_BRANCH"; git status --short; git rev-parse HEAD
+~~~
+
+Entorno: navegador de prueba, dos cuentas no productivas (Desarrollador y Técnico/Supervisor/Jefe), deployments AUTH/FEEDBACK/ADMIN de prueba, IndexedDB aislada. No utilizar datos ni endpoints productivos.
+
+Matriz:
+1. Logout con cada modal privilegiado abierto (DevTools, historial de imágenes, Inbox, Dashboard y auditoría Drive): confirmar cierre, borrado de detalles/listas/consola, listeners y caches; comprobar que window.state.currentUser queda null y window.ui no conserva token.
+2. Cuenta A cierra sesión y cuenta B inicia inmediatamente antes de que termine la respuesta logout de A; confirmar que then/catch obsoletos no muestran notificaciones ni mutan la sesión B.
+3. Developer→Técnico y Supervisor→Jefe en la misma instancia; comprobar revocación del servidor, limpieza total y que no reaparecen controles. Repetir ascenso de Técnico→Supervisor y confirmar que los privilegios aparecen solo tras reautenticación válida.
+4. Cambiar Privilegios de A desde otra sesión/dispositivo mientras su pestaña permanece abierta. Recuperar foco, cambiar visibilidad, reconectar y esperar el intervalo; confirmar logout token-aware y bloqueo de nuevas aperturas cuando la red no permite verificar.
+5. Iniciar sesión consecutivamente con dos cuentas en el mismo navegador; verificar aislamiento de Inbox, Dashboard, historial, DevTools, auditoría Drive, IndexedDB y respuestas asíncronas.
+6. Invocar directamente desde consola las funciones globales exportadas para abrir/renderizar vistas privilegiadas con rol Técnico o sesión revocada. Confirmar rechazo sin consultar ni mutar datos. Repetir con sesión vigente y roles autorizados.
+7. Inbox: Desarrollador/Gefe/Supervisor pueden aprobar/rechazar; Jefe puede consultar Inbox pero no aprobar/rechazar ni abrir Dashboard; Técnico no abre Inbox. Verificar autorización backend aunque se fuerce la UI.
+8. Simular demora/fallo de red durante validateActiveSession, updateUser y logout; comprobar estado pendiente, limpieza local fail-closed y que ninguna operación posterior usa credenciales de una cuenta nueva.
+9. IndexedDB: estado DriveAuditState de A no debe aparecer en B; misma cuenta conserva estado tras recarga normal; logout/cambio de rol limpia; fallos de persistencia no recuperan datos de otra cuenta.
+10. Revisar logs del navegador y AUTH/FEEDBACK: no exponer tokens, no dejar sesiones huérfanas ni duplicar listeners/intervalos tras múltiples login/logout.
+
+Criterio de cierre: matriz repetida al menos dos veces por transición; capturas/logs de estado anterior/posterior; evidencia de revocación ActiveSessions; cero controles o datos privilegiados residuales. No ejecutar pruebas con cuentas reales de producción.
+================================================================================
+
+
+================================================================================
+AUG-043 — VALIDACIÓN DE INTEGRACIÓN REAL PENDIENTE
+1. Apps Script/Spreadsheet aislados: ejecutar dos submitVideoForApproval concurrentes con el mismo opVideoId y comprobar una sola fila; repetir con opVideoId distintos y el mismo destino.
+2. LockService real: comprobar contención, timeout, liberación ante excepción y serialización entre submit/approve/reject en ejecuciones separadas.
+3. YouTube Data API real: sesión resumable, expiración, pérdida de respuesta, reanudación, ID real de 11 caracteres, vídeo no listado y ausencia de duplicados huérfanos.
+4. FEEDBACK/Users reales: revocar o cambiar cuenta durante la subida; confirmar que una sesión inválida no puede iniciar ni enviar la aprobación y que la identidad/rol se deriva del servidor.
+5. Spreadsheet aislada: inyectar fallo real después de persistir approved y antes de publicar; comprobar reintento, lectura de destino y recuperación para Cortes, PyS y Tutoriales. Repetir con miniatura de Tutorial.
+6. Navegador real: IndexedDB, recarga, cierre del modal, cancelación, dos pestañas y restauración de operación pendiente; comprobar que opVideoId y videoId real nunca se intercambian.
+No ejecutar contra hojas, credenciales, deployments ni vídeos productivos. La validación CI local no sustituye esta integración.
+================================================================================
+
+
+================================================================================
+AUG-154 — VALIDACIÓN BETA DE RECUPERACIÓN DE PERFIL/ROL EN AUTH
+
+PREPARACIÓN OBLIGATORIA — sincronizar sin descartar cambios locales:
+```bash
+set -eu
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ROOT="$(git rev-parse --show-toplevel)"
+test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in *infogpstech/GPSpedia.git) ;; *) echo "Remote incorrecto: $REMOTE_URL"; exit 1 ;; esac
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH" || { echo "Rama incorrecta"; exit 1; }
+test -z "$(git status --porcelain)" || { echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; }
+git fetch origin "$EXPECTED_BRANCH"
+git pull --ff-only origin "$EXPECTED_BRANCH"
+printf 'Repositorio: %s\nRama: %s\nHEAD: ' "$ROOT" "$(git branch --show-current)"
+git rev-parse HEAD
+git status --short --branch
+```
+
+PRUEBAS AISLADAS (no usar endpoints ni hojas productivas):
+1. En una copia aislada de AUTH y su Spreadsheet de pruebas, crear dos cuentas activas: solicitante Desarrollador y destino Técnico con al menos dos sesiones.
+2. Enviar updateUser con Privilegios y Nombre_Completo nuevos. Inyectar fallo en la escritura de Nombre_Completo después de confirmar el rol. Verificar: respuesta pendiente/error, rol nuevo, nombre anterior, tokens de destino invalidados, marcador compartido en Users.SessionToken y marcador local en ScriptProperties.
+3. Reintentar exactamente el mismo payload. Verificar nombre nuevo, rol nuevo, sesiones revocadas/eliminadas y retirada de ambos marcadores solo después de confirmar escritura y flush.
+4. Repetir con fallo de flush posterior a la escritura del nombre. El marcador debe permanecer y el reintento debe terminar sin reactivar tokens ni aplicar una intención distinta.
+5. Simular setValue que aplica el valor y luego lanza excepción; comprobar que la lectura de verificación detecta el valor persistido y no duplica la operación.
+6. Alterar newFullName entre marcador compartido y local, o enviar un nombre distinto durante una operación pendiente. Debe rechazarse sin limpiar marcadores ni restaurar tokens.
+7. Verificar compatibilidad de un marcador histórico sin newFullName: completar la revocación pendiente y actualizar el nombre en una operación separada.
+8. Ejecutar intercalados con login/logout/updateUser en ejecuciones AUTH separadas y comprobar que no se autorizan tokens residuales ni se borran sesiones ajenas.
+
+Registrar IDs de prueba y resultados sin incluir contraseñas, tokens, nombres reales ni datos sensibles. No desplegar ni ejecutar contra proyectos, endpoints, credenciales o hojas productivas.
+================================================================================
+
+
+================================================================================
+AUG-047 — VALIDACIÓN BETA DE ACCESIBILIDAD, HISTORY API Y OFFLINE LEGAL
+
+PREPARACIÓN OBLIGATORIA — sincronizar sin descartar cambios locales:
+```bash
+set -eu
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ROOT="$(git rev-parse --show-toplevel)"
+test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in *infogpstech/GPSpedia.git) ;; *) echo "Remote incorrecto: $REMOTE_URL"; exit 1 ;; esac
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH" || { echo "Rama incorrecta"; exit 1; }
+test -z "$(git status --porcelain)" || { echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; }
+git fetch origin "$EXPECTED_BRANCH"
+git pull --ff-only origin "$EXPECTED_BRANCH"
+printf 'Repositorio: %s\nRama: %s\nHEAD: ' "$ROOT" "$(git branch --show-current)"
+git rev-parse HEAD
+git status --short --branch
+```
+
+PRUEBAS AISLADAS:
+1. Crear una cuenta de prueba sin aceptación vigente. Abrir el aviso obligatorio con teclado: foco inicial en Aceptar Términos, Tab/Shift+Tab no deben salir del diálogo y Escape no debe cerrarlo ni mostrar el catálogo.
+2. Activar TalkBack en Android y NVDA o VoiceOver en escritorio. Confirmar que el aviso y el acuerdo anuncian rol, título y descripción; que el fondo no se presenta como contenido activo mientras el acuerdo está abierto.
+3. Abrir el acuerdo desde el enlace del aviso. Confirmar foco inicial en el encabezado, ciclo de foco con Tab/Shift+Tab, cierre con Escape y con botón; ambos cierres deben devolver el foco al enlace y dejar visible el aviso obligatorio.
+4. Abrir el acuerdo desde login y footer; cerrar con Escape y botón. Confirmar que el foco retorna al enlace que inició la apertura.
+5. Repetir con viewport móvil estrecho, orientación vertical/horizontal, zoom del navegador y temas claro/oscuro. Verificar que el botón de cierre no se solape con el título y que el contenido conserve scroll.
+6. Actualizar desde el Service Worker anterior a v21. Tras activación, desconectar la red y abrir ambos modales. Confirmar carga local de Images/Logo_TemaOscuro.png y Images/tracklink_logo.png en claro/oscuro; inspeccionar Cache Storage y verificar que el cache activo sea gpsepedia-cache-v21.
+7. Con el aviso visible, abrir el acuerdo y cerrarlo usando Atrás, Escape y botón. Confirmar que el aviso permanece, que la pila __gpOverlayStack queda vacía al cerrar el acuerdo y que no aparecen entradas modalOpen residuales.
+8. Abrir y cerrar desde cada punto de entrada varias veces, recargar y repetir. Confirmar que no se acumulan listeners, el foco no queda en un elemento oculto y el aviso no puede descartarse antes de la aceptación confirmada.
+
+Registrar navegador, dispositivo, lector de pantalla y versión del Service Worker. No aprobar ni modificar contenido jurídico; AUG-046 conserva su proceso de aprobación corporativa. No usar cuentas reales ni desplegar a producción.
+================================================================================
+
+
+================================================================================
+AUG-151 — VALIDACIÓN BETA DEL ARRANQUE, CACHÉ Y RECUPERACIÓN DEL CATÁLOGO
+
+PREPARACIÓN OBLIGATORIA — sincronizar sin descartar cambios locales:
+```bash
+set -eu
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ROOT="$(git rev-parse --show-toplevel)"
+test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in *infogpstech/GPSpedia.git) ;; *) echo "Remote incorrecto: $REMOTE_URL"; exit 1 ;; esac
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH" || { echo "Rama incorrecta"; exit 1; }
+test -z "$(git status --porcelain)" || { echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; }
+git fetch origin "$EXPECTED_BRANCH"
+git pull --ff-only origin "$EXPECTED_BRANCH"
+printf 'Repositorio: %s\nRama: %s\nHEAD: ' "$ROOT" "$(git branch --show-current)"
+git rev-parse HEAD
+git status --short --branch
+```
+
+PRUEBAS AISLADAS:
+1. Con API y Spreadsheet de pruebas, devolver un snapshot completo no vacío. Confirmar estado ready, categorías ordenadas, persistencia de caché solo después del procesamiento y carga compartida de PyS.
+2. Devolver un snapshot completo con las cuatro colecciones vacías. Debe quedar ready y no presentar error; repetir con red caída y caché vacía válida: debe quedar stale, no error terminal.
+3. Inyectar payload parcial (colección ausente), colecciones no-array, raíz array, null/primitive/array en cada colección y IDs de Cortes duplicados/vacíos. Ninguno debe guardarse ni declararse ready.
+4. Corromper IndexedDB (estructura parcial, elemento nulo, ID duplicado) y cortar la red. Debe descartarse la caché y mostrarse error terminal con estado de colecciones vacío y coherente.
+5. Simular error de normalización, error al actualizar estado y error en renderizado de sincronización silenciosa. Verificar que no se marque ready ni se guarde un snapshot que no terminó de procesarse; si existe caché válida, debe recuperarse como stale.
+6. Interrumpir la lectura de IndexedDB y hacer fallar la red; luego devolver un snapshot válido vacío y otro no vacío en el fallback. Confirmar recuperación stale.
+7. Iniciar una carga y cambiar de sesión/cancelarla antes de que responda la API. Resolver la respuesta después de la cancelación; comprobar que no modifica estado ni IndexedDB de la nueva sesión.
+8. Actualizar catálogo desde caché y red mientras hay una tarjeta/modal abierto; comprobar que un error de actualización silenciosa mantiene estado stale y no elimina la última instantánea válida.
+9. Repetir con navegador sin IndexedDB disponible, almacenamiento lleno, conexión intermitente y recarga durante la carga. Registrar estado, mensajes y contenido visible.
+
+No usar catálogos ni sesiones productivas. No ejecutar deployments. Registrar solo IDs de fixtures y resultados no sensibles.
+================================================================================
+
+
+================================================================================
+AUG-148 — VALIDACIÓN BETA DE ACCESIBILIDAD DEL MODAL DE DESARROLLADOR
+
+PREPARACIÓN OBLIGATORIA — sincronizar sin descartar cambios locales:
+```bash
+set -eu
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ROOT="$(git rev-parse --show-toplevel)"
+test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in *infogpstech/GPSpedia.git) ;; *) echo "Remote incorrecto: $REMOTE_URL"; exit 1 ;; esac
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH" || { echo "Rama incorrecta"; exit 1; }
+test -z "$(git status --porcelain)" || { echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; }
+git fetch origin "$EXPECTED_BRANCH"
+git pull --ff-only origin "$EXPECTED_BRANCH"
+printf 'Repositorio: %s\\nRama: %s\\nHEAD: ' "$ROOT" "$(git branch --show-current)"
+git rev-parse HEAD
+git status --short --branch
+```
+
+1. Abrir el panel de desarrollador desde menú y disparador alternativo; confirmar foco inicial en el título.
+2. Recorrer controles con Tab/Shift+Tab y verificar que el foco no escape del panel; cerrar con Escape y botón, verificando retorno al disparador visible.
+3. Abrir un modal administrativo encima del panel y confirmar que solo el diálogo superior recibe Escape y navegación de teclado.
+4. Probar Atrás/Adelante del navegador, reapertura y cierre repetido; verificar pila overlayHistory sin entradas residuales.
+5. Repetir en escritorio y móvil con NVDA/VoiceOver/TalkBack, temas claro/oscuro y zoom 200 %.
+
+No ejecutar operaciones administrativas reales ni usar datos productivos.
+================================================================================
+
+
+================================================================================
+AUG-149 — VALIDACIÓN BETA DE RADIOS NATIVOS Y PANELES DEL DESARROLLADOR
+
+PREPARACIÓN OBLIGATORIA — sincronizar sin descartar cambios locales:
+```bash
+set -eu
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ROOT="$(git rev-parse --show-toplevel)"
+test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in *infogpstech/GPSpedia.git) ;; *) echo "Remote incorrecto: $REMOTE_URL"; exit 1 ;; esac
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH" || { echo "Rama incorrecta"; exit 1; }
+test -z "$(git status --porcelain)" || { echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; }
+git fetch origin "$EXPECTED_BRANCH"
+git pull --ff-only origin "$EXPECTED_BRANCH"
+printf 'Repositorio: %s\\nRama: %s\\nHEAD: ' "$ROOT" "$(git branch --show-current)"
+git rev-parse HEAD
+git status --short --branch
+```
+
+1. Con teclado, entrar al grupo y recorrer las cinco opciones con flechas; verificar selección única, foco visible y actualización del panel.
+2. Confirmar que Tab entra/sale del grupo según el comportamiento nativo de radios y que el foco no queda atrapado en controles ocultos.
+3. Con NVDA, VoiceOver y TalkBack, comprobar que se anuncia la leyenda del grupo, nombre/estado de cada radio y relación con el panel seleccionado.
+4. Verificar que los paneles ocultos no reciben foco ni aparecen en el árbol de accesibilidad; el panel activo anuncia su encabezado.
+5. Repetir en navegadores mínimos soportados para confirmar CSS :has(), escritorio/móvil, zoom 200 % y temas claro/oscuro.
+
+No ejecutar acciones administrativas ni usar datos productivos.
+================================================================================
+
+
+================================================================================
+AUG-019 — Validación real de alcance de terminal Drive (solo entorno aislado)
+
+Preparación obligatoria: ejecutar desde el directorio padre del checkout GPSpedia. Si el checkout tiene cambios locales o la rama no coincide, detenerse; no descartar ni sobrescribir trabajo.
+```bash
+test -z "$(git -C GPSpedia status --porcelain)" || { echo "STOP: checkout con cambios locales"; exit 1; }
+test "$(git -C GPSpedia branch --show-current)" = "GPSpedia2.2.5_work" || { echo "STOP: rama incorrecta"; exit 1; }
+git -C GPSpedia fetch origin GPSpedia2.2.5_work
+git -C GPSpedia pull --ff-only origin GPSpedia2.2.5_work
+test "$(git -C GPSpedia rev-parse HEAD)" = "93fd2330976ffb5619ac1544fd51a53a3992413d" || { echo "STOP: HEAD distinto del checkpoint"; exit 1; }
+git -C GPSpedia status --short --branch
+```
+
+1. Crear una copia aislada de la carpeta Cortes y un deployment ADMIN de prueba separado; usar una cuenta Desarrollador dedicada y confirmar que la configuración no apunta a Drive/Spreadsheet productivos.
+2. Verificar que dir/ls/tree solo muestren Cortes y sus descendientes. Preparar una carpeta externa, una carpeta con ascendencia ambigua y un archivo con padre externo; confirmar que no se listan ni se navega a ellos.
+3. Probar currentFolderId externo, cd .. en la raíz, cd / desde un ID inválido, subcarpetas anidadas y nombres duplicados.
+4. Confirmar que mkdir dentro del árbol funciona; mkdir con currentFolderId externo o movido fuera entre validación y escritura debe rechazarse sin crear una carpeta fuera de Cortes.
+5. Confirmar que move funciona entre carpetas internas; debe rechazar origen externo, destino externo, archivo con padre externo adicional y destino con ancestro externo, sin mover recursos.
+6. Durante una operación controlada, cambiar desde otra sesión la ubicación del archivo o destino entre validación y escritura; revisar que no se reporte éxito si la ubicación final no puede verificarse.
+7. Comparar IDs, padres y ubicaciones antes/después; no debe modificarse ningún recurso fuera de la copia Cortes.
+
+No ejecutar contra el Drive operativo, la carpeta Cortes productiva, endpoints productivos ni datos reales de usuarios.
+================================================================================
+
+
+================================================================================
+AUG-020 — Validación real de lectura y purga de ActividadUsuario (solo Spreadsheet aislada)
+
+Preparación obligatoria: ejecutar desde el directorio padre del checkout GPSpedia. Si el checkout tiene cambios locales o la rama no coincide, detenerse; no descartar ni sobrescribir trabajo.
+```bash
+test -z "$(git -C GPSpedia status --porcelain)" || { echo "STOP: checkout con cambios locales"; exit 1; }
+test "$(git -C GPSpedia branch --show-current)" = "GPSpedia2.2.5_work" || { echo "STOP: rama incorrecta"; exit 1; }
+git -C GPSpedia fetch origin GPSpedia2.2.5_work
+git -C GPSpedia pull --ff-only origin GPSpedia2.2.5_work
+git -C GPSpedia log -1 --oneline
+git -C GPSpedia status --short --branch
+```
+
+1. Preparar una Spreadsheet aislada con ActividadUsuario de tamaño representativo y encabezados reales; crear filas con Date, ISO, fecha heredada parseable, exactamente siete días, más de siete días, fecha futura, vacío, texto inválido, valor numérico y Date inválido.
+2. Ejecutar getActivityLogs y confirmar que cada fuente lee como máximo las últimas 100 filas, que el resultado combinado no supera 100 y que el orden cronológico es estable.
+3. Ejecutar la purga keepLastWeek=true; verificar que solo se eliminan fechas válidas con antigüedad estrictamente mayor a siete días.
+4. Confirmar que los registros no clasificables permanecen intactos y que la respuesta y la consola informan unclassifiedCount correcto.
+5. Confirmar que el borrado por bloques descendentes no altera IDs ni filas retenidas y que una ejecución repetida es segura.
+6. Verificar que InboxAuditLog no cambia al purgar ActividadUsuario.
+7. Ejecutar una escritura de actividad concurrente desde otra sesión del deployment aislado; confirmar que espera la lease ACTIVITY y que no se pierde ni se elimina la fila nueva.
+8. Ejecutar el vaciado total explícito en otra copia de prueba y confirmar que elimina todas las filas de ActividadUsuario, incluidas las no clasificables, sin tocar InboxAuditLog.
+
+No ejecutar contra Spreadsheet, endpoints, deployments ni datos productivos.
+================================================================================
+
+
+================================================================================
+AUG-021 — Validación real de auditoría persistente ADMIN (solo deployment aislado)
+
+Preparación obligatoria: ejecutar desde el directorio padre del checkout GPSpedia. Si el checkout tiene cambios locales o la rama no coincide, detenerse; no descartar ni sobrescribir trabajo.
+```bash
+test -z "$(git -C GPSpedia status --porcelain)" || { echo "STOP: checkout con cambios locales"; exit 1; }
+test "$(git -C GPSpedia branch --show-current)" = "GPSpedia2.2.5_work" || { echo "STOP: rama incorrecta"; exit 1; }
+git -C GPSpedia fetch origin GPSpedia2.2.5_work
+git -C GPSpedia pull --ff-only origin GPSpedia2.2.5_work
+git -C GPSpedia log -1 --oneline
+git -C GPSpedia status --short --branch
+```
+
+1. En el proyecto Apps Script aislado, verificar que solo mantenedores autorizados tengan acceso de editor. Los usuarios finales y editores no autorizados no deben poder abrir ni modificar ScriptProperties.
+2. Ejecutar una acción ADMIN sensible con sesión Desarrollador y otra permitida a Gefe; verificar que actorId/actorRole provienen de la sesión validada del servidor.
+3. Verificar que cada operación crea STARTED antes del handler y finaliza con tiempos, acción, recurso, etapa, resultado y resumen parcial; probar success, partial y error.
+4. Inspeccionar ScriptProperties directamente desde el proyecto Apps Script (no desde un endpoint) y confirmar que no contiene tokens, contraseñas, Base64, URLs, payloads, mensajes ni stack traces.
+5. Simular una ejecución interrumpida después de STARTED; confirmar que el evento permanece pendiente, no se purga y que 20 eventos pendientes bloquean nuevas operaciones hasta revisión.
+6. Verificar la retención de 180 días y el límite de 300 eventos finalizados con datos de prueba; confirmar que la poda no elimina eventos pendientes.
+7. Simular fallo de persistencia inicial y timeout de lock: el handler sensible no debe ejecutarse. Simular fallo de finalización después de una operación: la respuesta no debe anunciar éxito y debe incluir eventId.
+8. Confirmar que no existe endpoint ADMIN de lectura/modificación del registro y que la protección efectiva corresponde al ACL del proyecto Apps Script.
+
+No ejecutar contra deployments productivos, cuentas reales de usuarios finales ni recursos productivos.
+================================================================================
+
+
+================================================================================
+AUG-022 — Verificación real de eliminación de caché IndexedDB ADMIN
+1. En navegador y perfil de prueba aislados, crear/abrir GPSpedia_DB y comprobar una limpieza normal: onsuccess, eliminación individual de ambas claves localStorage, notificación de éxito y recarga.
+2. Mantener una conexión abierta a GPSpedia_DB desde otra pestaña; ejecutar la limpieza desde ADMIN y confirmar onblocked, mensaje de limpieza incompleta, reporte separado de localStorage y ausencia de recarga automática.
+3. Cerrar la conexión de la otra pestaña y observar si la solicitud pendiente emite onsuccess; confirmar que la ejecución que ya informó bloqueo no presenta después éxito ni dispara reload. Recargar manualmente y comprobar el estado de la base.
+4. Probar onerror real, API IndexedDB no disponible y errores de acceso a localStorage; confirmar que se reportan por separado y nunca se anuncia limpieza completa.
+5. Confirmar que el botón vuelve a habilitarse en todos los resultados.
+No usar datos productivos, perfiles reales ni deployments operativos.
+================================================================================
+
+
+================================================================================
+AUG-023 — Validación de acciones ADMIN internas createSheet/addColumn
+1. Usar un proyecto ADMIN y Spreadsheet de prueba aislados. Ejecutar createSheet con nombre y encabezados válidos y confirmar respuesta, estructura y fórmula opcional.
+2. Repetir createSheet con nombre duplicado, caracteres reservados, payload inválido, encabezados no textuales y fórmula inválida; confirmar rechazo sin crear hoja.
+3. Ejecutar addColumn en una hoja existente; comprobar que se agrega al final y la respuesta devuelve columnIndex correcto. Probar hoja inexistente y encabezados inválidos sin escrituras.
+4. Probar sesión Desarrollador válida, sesión expirada/inválida y roles Gefe, Supervisor y Técnico; solo Desarrollador debe modificar.
+5. Simular lease ocupada y fallos de escritura; confirmar rechazo, auditoría y ausencia de modificaciones parciales no reportadas.
+6. Antes de cualquier deprecación futura, revisar scripts externos no versionados que consuman las acciones. Esta tarea no las retira.
+No usar Spreadsheet, deployments ni cuentas productivas.
+================================================================================
+
+================================================================================
+AUG-024 — Validación Beta de contratos de salud y deployments
+
+Antes de ejecutar cualquier prueba, sincronizar de forma segura la rama autorizada. Desde el directorio local del repositorio GPSpedia:
+
+```sh
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+test -z "$(git status --porcelain)" || { echo "Hay cambios locales; conservarlos y detener la sincronización"; exit 1; }
+git fetch origin GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git rev-parse HEAD
+```
+
+1. En un entorno aislado, consultar AUTH, CATALOG, WRITE, USERS, FEEDBACK, UTILITIES y ADMIN con `?debug=true`; comprobar HTTP, MIME JSON, identidad exacta, versión y estado. Comparar cada respuesta con `Services/SERVICE_HEALTH.md` y el código fuente desplegado.
+2. Verificar que cada ID configurado en JS/Frontend/api-config.js corresponde al proyecto/versión esperados y que no se ejecuta una versión anterior. No modificar ni redeplegar desde esta prueba.
+3. Comprobar que las respuestas públicas no contienen spreadsheetId, driveFolderId, cacheKey, nombres de hojas, estructura interna, stack traces, tokens, contraseñas ni secretos. No guardar cuerpos que contengan datos sensibles.
+4. Confirmar que LEGACY permanece unknown hasta obtener identidad y contrato verificables; no inferir identidad por HTTP 2xx ni por el nombre de la URL.
+5. Simular en entorno aislado HTTP 4xx/5xx, timeout, red desconectada, cuerpo vacío, HTML, JSON inválido, objeto/estado/identidad desconocidos y respuesta lenta; confirmar aislamiento entre servicios.
+6. Si existe una fuente de solo lectura aprobada para Sheets/Drive, verificarla por separado del estado HTTP del endpoint. No introducir escrituras ni operaciones de migración/backup como pruebas de salud.
+7. Confirmar que el ping ADMIN puede fallar o agotar timeout sin impedir que el resto del escaneo termine; comprobar que el panel muestra código HTTP, estado, motivo y última respuesta válida.
+
+No usar cuentas de usuarios finales, hojas/archivos productivos ni deployments operativos para pruebas destructivas. No cambiar ACL ni publicar versiones durante esta validación.
+================================================================================
+
+================================================================================
+AUG-025 — Validación Beta de telemetría local
+
+Antes de ejecutar cualquier prueba, sincronizar de forma segura la rama autorizada desde el directorio local del repositorio GPSpedia:
+
+```sh
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+test -z "$(git status --porcelain)" || { echo "Hay cambios locales; conservarlos y detener la sincronización"; exit 1; }
+git fetch origin GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git rev-parse HEAD
+```
+
+1. Abrir el panel ADMIN en navegador de prueba y observar solicitudes API de duración corta y larga; comprobar que el gráfico las agrupa por hora de inicio y que la duración corresponde al tiempo total.
+2. Dejar el panel sin solicitudes por más de 15 minutos; confirmar que los eventos desaparecen de la ventana móvil y que el gráfico/detalle se actualizan sin requerir una nueva solicitud.
+3. Generar más de 600 eventos dentro de 15 minutos; confirmar advertencia de muestra truncada y que los conteos no se presentan como totales completos.
+4. Generar solicitudes concurrentes que finalicen fuera de orden; comprobar orden por inicio, límites de ventana y distribución en los 15 buckets.
+5. Ocultar el modal ADMIN y cambiar a otra sección; confirmar que la suscripción no reconstruye DOM oculto. Volver al diagnóstico y confirmar que la vista se actualiza.
+6. Cerrar sesión/cambiar de usuario y comprobar que el temporizador se limpia y no queda una suscripción asociada al contexto anterior.
+
+No utilizar cuentas de usuarios finales ni almacenar telemetría en recursos productivos.
+================================================================================
+
+
+================================================================================
+AUG-026 — Historial de imágenes reemplazadas (entorno aislado)
+
+Antes de iniciar cualquier prueba, verificar repositorio/rama y sincronizar de forma segura:
+```bash
+test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || exit 1
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || exit 1
+test -z "$(git status --porcelain)" || { echo "Árbol sucio; detenerse y preservar cambios."; exit 1; }
+git fetch origin GPSpedia2.2.5_work && git pull --ff-only origin GPSpedia2.2.5_work
+git status --short
+git rev-parse HEAD
+```
+
+1. Usar un proyecto Apps Script y una Spreadsheet de prueba con copia desechable del esquema; comprobar ACL/editores y rechazo de roles no autorizados.
+2. Consultar el historial sin hoja y con esquema antiguo: confirmar que la lectura no crea ni modifica la Spreadsheet; ejecutar la migración explícita y comprobar idempotencia de los doce encabezados.
+3. Probar filas historica, restablecida, en_papelera, requiere_revision y cancelada; verificar que todas se muestran y que solo los estados autorizados habilitan restauración.
+4. Probar IDs duplicados, archivo_drive_id/url_anterior/url_visualizacion mismatched, fila parcial, estado desconocido, MIME no imagen y archivo Drive en papelera; confirmar que se presentan para revisión y no se modifican.
+5. Simular en Spreadsheet aislada fallos de setValue/flush durante restauración/eliminación; confirmar rollback de celda, archivo y estado histórico, o requiere_revision si no puede verificarse la compensación.
+6. Probar permisos y referencias activas antes de acciones mutantes. Confirmar que no se toca ningún archivo fuera de la carpeta autorizada.
+
+No usar cuentas, hojas, archivos Drive ni deployments productivos.
+================================================================================
+
+
+================================================================================
+AUG-155 — VALIDACIÓN BETA DE INCIDENCIAS DE INICIO, TUTORIALES, INBOX Y PWA
+
+PREPARACIÓN OBLIGATORIA — ejecutar antes de cualquier prueba, desde una terminal dentro del repositorio local. Esta secuencia no descarta cambios y se detiene si el árbol está sucio:
+```bash
+set -eu
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ROOT="$(git rev-parse --show-toplevel)"
+test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in *infogpstech/GPSpedia.git) ;; *) echo "Remote incorrecto: $REMOTE_URL"; exit 1 ;; esac
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH" || { echo "Rama incorrecta"; exit 1; }
+test -z "$(git status --porcelain)" || { echo "Hay cambios locales sin guardar; detener sincronización y preservarlos"; exit 1; }
+git fetch origin "$EXPECTED_BRANCH"
+git pull --ff-only origin "$EXPECTED_BRANCH"
+printf 'Repositorio: %s\nRama: %s\nHEAD: ' "$ROOT" "$(git branch --show-current)"
+git rev-parse HEAD
+git status --short --branch
+```
+
+ENTORNO Y REGISTRO
+- Usar únicamente cuentas, perfiles de navegador, proyectos Apps Script, coordinador, Spreadsheet y datos de prueba Beta. No utilizar usuarios finales ni recursos productivos.
+- Antes de cada caso registrar fecha/hora, HEAD, versión frontend/Service Worker, versiones de deployments AUTH/Coordinator/FEEDBACK, rol de cuenta, navegador/SO/dispositivo y resultado PASS/FAIL/NO EJECUTADA.
+- No copiar secretos, tokens ni cuerpos de respuestas sensibles a capturas, logs o este registro. Para comparar secretos, verificar igualdad dentro de ScriptProperties del mismo entorno sin revelarlos.
+- No modificar ScriptProperties ni deployments como parte de una comprobación de solo lectura. Si se detecta una propiedad ausente/incorrecta, documentar el nombre de la propiedad y solicitar autorización para corregir únicamente Beta.
+
+1. AVISO OBLIGATORIO Y SESIÓN
+- En un perfil de navegador Beta nuevo, iniciar sesión y aceptar el aviso. Confirmar que la aplicación continúa, se muestra el saludo y aparecen los controles del rol.
+- Cerrar sesión e iniciar de nuevo con la misma cuenta y perfil; el aviso no debe reaparecer.
+- Abrir la cuenta en otro perfil/navegador Beta; el aviso debe aparecer una vez. Aceptarlo, cerrar sesión y volver a entrar; no debe reaparecer.
+- Repetir la aceptación mientras se ejecuta una consulta ADMIN/sessionActivity. No debe aparecer «recurso ocupado»; no debe debilitarse la validación de token ni la revocación.
+- Probar sesión expirada, token inválido y rol revocado; no deben aceptar términos ni acceder al catálogo.
+
+2. SALUDO Y REACCIÓN ÚTIL
+- Confirmar que el saludo usa el nombre de la cuenta después de iniciar sesión y después de aceptar el aviso por primera vez.
+- Pulsar 👍🏿 en un registro de prueba. Confirmar respuesta satisfactoria y persistencia tras actualizar la vista.
+- Reintentar la misma acción y hacer doble clic rápido; no deben generarse reacciones duplicadas ni mensajes de error falsos. Verificar que la cuenta no puede modificar reacciones ajenas.
+
+3. TARJETA AGREGAR TUTORIAL Y PERMISOS
+- Iniciar sesión como Desarrollador con sesión recién iniciada y con sesión restaurada. Abrir Tutoriales y confirmar que aparece «Agregar Tutorial», incluso si no existen tutoriales.
+- Iniciar sesión como Técnico, Técnico exterior, Supervisor y Jefe; confirmar que la tarjeta no aparece para esos roles.
+- Intentar `addTutorial` desde cada rol no Desarrollador con token de prueba; el backend debe rechazarlo sin escribir en la hoja Tutorial.
+- Si la sesión restaurada contiene el identificador heredado `id` en minúscula, confirmar que el contexto de UI reconoce el rol sin omitir la validación de SessionToken.
+
+4. TARJETA AGREGAR PROBLEMA EN PyS
+- Abrir el modal de detalle de un vehículo con un único problema relacionado y después con varios problemas.
+- Comparar la tarjeta «Agregar Problema» con las tarjetas de problema: altura renderizada, alineación vertical, ancho, margen y separación.
+- Repetir en viewport móvil y escritorio, con tema claro/oscuro y textos largos. Confirmar que el carrusel no corta ni desplaza la tarjeta final.
+
+5. INBOX — CONFIGURACIÓN DE FEEDBACK Y ROLES TÉCNICOS
+- Consultar `GET ?debug=true` del deployment FEEDBACK Beta. Confirmar que `coordinatorConfigured` sea booleano y que la respuesta no contenga URL, secretos, tokens ni ScriptProperties.
+- Interpretación: `false` indica que falta configuración local con formato válido o el cliente coordinador no está incluido. `true` solo confirma presencia/formato local; no demuestra que el secreto coincida con el coordinador remoto.
+- En modo de solo lectura, comprobar que `GPSpedia_COORDINATOR_URL` de FEEDBACK apunta al coordinador Beta y que `GPSpedia_COORDINATOR_SECRET` coincide con `GPSpedia_COORDINATOR_SECRET_FEEDBACK` del mismo coordinador. No revelar ni registrar los valores.
+- Confirmar que el deployment FEEDBACK contiene `SharedMutationClient.js` y que el Coordinator Beta contiene las políticas `FEEDBACK/sessionActivity`, `createInboxConversation`, `sendInboxMessage`, `markInboxRead` y `archiveInboxConversation`.
+- Con Técnico y Técnico exterior, abrir Inbox y comprobar que aparece la opción de consultar al Desarrollador, se listan únicamente destinatarios Desarrollador y se puede crear/enviar/leer/archivar una conversación de prueba.
+- Confirmar que técnicos no ven solicitudes históricas ni controles Aprobar/Rechazar/Borrar de reportes privilegiados. Probar que las operaciones privilegiadas son rechazadas por backend incluso si se invocan manualmente.
+- Con Desarrollador, comprobar el flujo de conversaciones y la vista de solicitudes históricas según sus permisos. Verificar persistencia de mensajes, no leídos, enviados, archivados, auditoría e idempotencia.
+- Si el diagnóstico local da `true` pero el Coordinator rechaza FEEDBACK, registrar las versiones y solicitar revisión de la coincidencia de secretos/deployment; no ampliar RBAC como workaround.
+
+6. INBOX MÓVIL
+- En Android y iOS, abrir Inbox con una cuenta autorizada. Confirmar que la lista y el detalle no quedan apilados: se muestra una sola vista y el botón «Volver a solicitudes» regresa a la lista.
+- Comprobar barra contextual de acciones, tamaño táctil, scroll independiente, teclado, foco, lector de pantalla, tema claro/oscuro y textos largos.
+- Confirmar que responder, resolver y borrar solo aparecen cuando el tipo de registro y el rol admiten la operación. Conversaciones directas permiten archivar/restaurar; no debe aparecer una acción de borrado que el backend no soporte.
+
+7. ACTUALIZACIÓN Y RECARGA PWA
+- Actualizar desde la versión previa con caché `gpsepedia-cache-v26` a `gpsepedia-cache-v27`. Confirmar que se descarga y activa la nueva versión y que el documento puede recargarse.
+- Probar la acción «Recargar aplicación» del menú lateral y F5/Ctrl+R cuando el navegador lo permita. La recarga no debe quedar bloqueada ni dejar un modal/overlay invisible.
+- Abrir dos pestañas de la misma instalación, actualizar el Service Worker y comprobar que ambas recuperan una versión coherente sin bucles de recarga.
+- Probar offline, reconexión y actualización interrumpida. Confirmar que la sesión, borradores y operaciones locales pendientes se conservan o muestran un estado recuperable.
+- Comprobar que pull-to-refresh actualiza únicamente el catálogo y no recarga el documento involuntariamente.
+
+8. CAPTURAS DE PANTALLA Y LÍMITES DE PLATAFORMA
+- Confirmar en Android/iOS que las restricciones actuales de menú contextual, selección y arrastre solo son disuasorias; no deben describirse como bloqueo de capturas.
+- Intentar una captura nativa y documentar el resultado del sistema operativo. Una PWA web no dispone de una API interoperable para impedirla; `FLAG_SECURE` requiere un contenedor Android nativo controlado.
+- No añadir blur, ocultación del contenido ni marcas de agua sin evaluar legibilidad, accesibilidad y aprobación. Si se propone una marca de agua, probar identificación de cuenta, contraste y lectura en móvil/escritorio sin alterar el contenido original.
+
+CRITERIO DE CIERRE
+- Marcar cada subprueba PASS, FAIL o NO EJECUTADA y adjuntar evidencia no sensible.
+- Si FEEDBACK/Coordinator falla por configuración, conservar el resultado como pendiente de integración Beta; no atribuirlo a RBAC sin evidencia.
+- No desplegar a producción, no modificar datos productivos y no copiar secretos a los registros.
+================================================================================
+
+
+================================================================================
+AUG-156 — ACCESO DEVELOPER, ESCÁNER Y MIGRACIÓN DEL HISTORIAL DE IMÁGENES
+
+PREPARACIÓN OBLIGATORIA — ejecutar antes de cualquier prueba, desde una terminal dentro del repositorio local. Esta secuencia no descarta cambios y se detiene si el árbol está sucio:
+```bash
+set -eu
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ROOT="$(git rev-parse --show-toplevel)"
+test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in *infogpstech/GPSpedia.git) ;; *) echo "Remote incorrecto: $REMOTE_URL"; exit 1 ;; esac
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH" || { echo "Rama incorrecta"; exit 1; }
+test -z "$(git status --porcelain)" || { echo "Hay cambios locales sin guardar; detener sincronización y preservarlos"; exit 1; }
+git fetch origin "$EXPECTED_BRANCH"
+git pull --ff-only origin "$EXPECTED_BRANCH"
+printf 'Repositorio: %s\nRama: %s\nHEAD: ' "$ROOT" "$(git branch --show-current)"
+git rev-parse HEAD
+git status --short --branch
+```
+
+ENTORNO Y REGISTRO
+- Usar exclusivamente cuenta Desarrollador de prueba, cuentas de roles no privilegiados, proyectos Apps Script Beta y una Spreadsheet/Drive desechables. No usar producción.
+- Registrar fecha/hora, HEAD, navegador/SO/dispositivo, rol, versión de ADMIN y Coordinator y resultado PASS/FAIL/NO EJECUTADA.
+- No copiar secretos, tokens, URL privadas ni datos personales a capturas o registros. La comprobación de propiedades debe ser de solo lectura.
+
+1. ACCESO AL PANEL DEVELOPER
+- Iniciar sesión como Desarrollador y abrir el menú lateral. Confirmar que aparece «Desarrollador» y que abre el panel sin pedir una segunda autenticación.
+- Cerrar sesión, volver a iniciar y repetir. Después recargar la aplicación y repetir con la sesión restaurada.
+- Si el botón no aparece o el panel no abre, registrar únicamente presencia/ausencia de ID, SessionToken y rol normalizado; nunca registrar sus valores.
+- Iniciar sesión como Técnico, Técnico exterior, Supervisor y Jefe. Confirmar que no ven ni pueden abrir el panel Developer y que las acciones ADMIN siguen rechazando sus solicitudes.
+
+2. CARGA DE INVENTARIO E HISTORIAL
+- Confirmar que los deployments Beta de Coordinator y ADMIN incluyen las políticas de getReplacedImages, getDriveStorage, getCortesImageFolders y auditDriveImagesInCortes.
+- Abrir el panel Developer y cargar el inventario/historial. Confirmar que las consultas responden sin «recurso ocupado por operaciones activas ADMIN/sessionActivity».
+- Iniciar el escáner de imágenes mientras se consulta el historial. Confirmar que ambas lecturas pueden coexistir y que el progreso/cursor del escáner se conserva.
+- Repetir la carga en dos pestañas. Confirmar que no se pierde el estado de la cuenta ni se mezclan los resultados de auditoría entre sesiones.
+
+3. CONCURRENCIA Y PROTECCIÓN DE ESCRITURAS
+- Intentar iniciar dos escáneres simultáneos en la misma cuenta. El segundo debe esperar o recibir un mensaje controlado; no debe sobrescribir el estado del primero.
+- Mientras el escáner conserva su snapshot, intentar una operación de escritura de inventario/Drive en el entorno desechable. Debe esperar o ser rechazada por conflicto, sin escritura parcial.
+- Al finalizar/liberar el escáner, repetir la operación y confirmar que puede continuar.
+- Probar continuación de cursor, reintento de la misma página y respuesta repetida; confirmar idempotencia y ausencia de progreso duplicado.
+
+4. INICIALIZAR HISTORIAL
+- En una Spreadsheet Beta desechable sin hoja de historial, pulsar «Inicializar historial». Confirmar que Coordinator acepta ADMIN/migrateReplacedImagesSchema y que la acción termina correctamente.
+- Repetir la inicialización. Debe ser idempotente: no duplicar encabezados, no sobrescribir datos y no crear columnas repetidas.
+- Probar una hoja con encabezados antiguos y otra con encabezados incompletos. Confirmar que solo se agregan los campos faltantes y que los datos existentes se conservan.
+- Si aparece «La acción no está habilitada en la política del coordinador», registrar versión de Coordinator y ADMIN y detener la prueba. El deployment Beta del Coordinator debe actualizarse antes que ADMIN si la política no está publicada. No ampliar permisos ni cambiar ScriptProperties fuera del entorno Beta autorizado.
+
+CRITERIO DE CIERRE
+- Marcar cada subprueba PASS, FAIL o NO EJECUTADA y adjuntar evidencia no sensible.
+- La validación local de contratos no sustituye la prueba con Apps Script/Spreadsheet/Drive reales en Beta.
+- No desplegar a producción, no modificar datos productivos y no copiar secretos a los registros.
+================================================================================
+
+
+
+================================================================================
+AUG-157 — VALIDACIÓN BETA DEL FEED INCREMENTAL Y CACHÉ EN VIVO (GP-CAT-01T)
+
+PREPARACIÓN OBLIGATORIA — ejecutar antes de cualquier prueba, desde una terminal dentro del repositorio local. La secuencia verifica la identidad del repositorio/rama, se detiene ante cambios locales y sincroniza únicamente mediante fast-forward; no descarta archivos ni reescribe historial.
+
+```bash
+set -euo pipefail
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ROOT="$(git rev-parse --show-toplevel)"
+test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in
+  https://github.com/infogpstech/GPSpedia.git|https://github.com/infogpstech/GPSpedia) ;;
+  *) echo "Remoto incorrecto: $REMOTE_URL"; exit 1 ;;
+esac
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH" || { echo "Rama incorrecta"; exit 1; }
+test -z "$(git status --porcelain)" || { echo "Hay cambios locales sin guardar; detener y preservarlos."; exit 1; }
+git fetch origin "$EXPECTED_BRANCH"
+git pull --ff-only origin "$EXPECTED_BRANCH"
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH"
+printf 'Repositorio: %s\nRama: %s\nHEAD: ' "$ROOT" "$(git branch --show-current)"
+git rev-parse HEAD
+git status --short --branch
+```
+
+ENTORNO Y REGISTRO
+- Usar exclusivamente proyectos Apps Script, Coordinator, Spreadsheet, Drive, cuentas y registros de prueba Beta. No usar deployments, hojas, archivos, cuentas ni endpoints productivos.
+- Antes de iniciar, confirmar que AUTH, CATALOG, WRITE, FEEDBACK, ADMIN y Coordinator Beta corresponden a una misma versión compatible de esta rama. No desplegar ni cambiar ScriptProperties como parte de esta prueba.
+- Registrar fecha/hora, HEAD, versión frontend/Service Worker, versiones de cada deployment, navegador/SO/dispositivo, rol de cada cuenta y resultados PASS/FAIL/NO EJECUTADA.
+- Usar al menos dos cuentas de prueba autorizadas y dos contextos independientes (dos perfiles/dispositivos); añadir dos pestañas del mismo usuario para comprobar coordinación local.
+- No registrar tokens, secretos, URLs temporales, datos personales ni cuerpos sensibles. No utilizar cuentas reales ni datos de producción.
+
+1. ARRANQUE CACHE-FIRST Y MEDICIÓN
+- Con caché vacía, iniciar sesión y medir por separado tiempo hasta primer catálogo visible, finalización del snapshot y primera respuesta del feed.
+- Con caché válida, cerrar/reabrir la aplicación y confirmar que el catálogo aparece desde IndexedDB antes de completar la red; registrar el tiempo hasta primer contenido visible.
+- Conservar DevTools Network y comprobar que el bootstrap obtiene un cursor coherente con el snapshot y que la persistencia de snapshot/cursor es atómica.
+- Repetir con red lenta, latencia alta y pérdida temporal de conectividad. Una caché válida debe permanecer visible como stale; un error de red no debe borrar el último snapshot válido.
+
+2. FEED SIN NOVEDADES
+- Dejar el catálogo sin escrituras durante varios ciclos de sondeo mientras la aplicación permanece visible y online.
+- Confirmar que `getCatalogChanges` consulta desde el cursor vigente y que una respuesta sin novedades actualiza la frescura sin llamar a `getCatalogData` ni descargar las colecciones completas.
+- Registrar cantidad/tamaño de solicitudes, duración, cursor anterior/nuevo y número de eventos. No copiar cuerpos de respuesta con información sensible.
+- Ocultar la pestaña y desconectar la red: el sondeo debe pausarse. Recuperar visibilidad/conexión y comprobar reanudación con backoff sin ráfagas ni solicitudes duplicadas.
+
+3. PROPAGACIÓN ENTRE USUARIOS, PESTAÑAS Y DISPOSITIVOS
+- Abrir la aplicación con la cuenta A en un dispositivo/contexto y con la cuenta B en otro. Dejar ambas sesiones abiertas y con el catálogo ya cargado.
+- Desde A, crear o modificar un registro Cortes de prueba mediante el flujo WRITE autorizado. Confirmar que B recibe el upsert y actualiza la tarjeta sin recargar ni cerrar/reabrir la aplicación.
+- Repetir con una modificación FEEDBACK que afecte PyS y con un tutorial/logotipo de prueba por los flujos autorizados. Confirmar que cada consumidor aplica su colección correcta y conserva el cursor global.
+- Abrir dos pestañas de la misma cuenta. Confirmar que solo la pestaña líder realiza el sondeo, que las demás reciben la actualización por BroadcastChannel o storage event y que el lease se recupera si la pestaña líder se cierra abruptamente.
+- Ejecutar dos escrituras independientes casi simultáneas desde A y otra cuenta. Verificar revisiones monotónicas, ausencia de eventos perdidos/duplicados y convergencia del catálogo en todos los contextos.
+- Medir latencia desde la confirmación de escritura en servidor hasta la actualización visible en B; repetir al menos cinco veces y registrar mediana y máximo, sin asumir un intervalo que no haya sido observado.
+
+4. PRODUCTORES, DELTAS Y RECUPERACIÓN
+- Verificar por separado los productores WRITE, FEEDBACK y ADMIN que estén disponibles en el entorno Beta: alta/edición de Cortes, recordLike, suggestYear cuando realmente se aplica, aprobación/rechazo de vídeo con destino verificado, edición In-Modal, reemplazo/recuperación de imagen y operaciones por lote.
+- Confirmar que una mutación individual publica un upsert con ID estable y snapshot completo; las acciones sin cambio de catálogo (votos previos, freezeCortesIds, movimientos Drive/ledger-only) no publican eventos.
+- En una reconciliación/normalización de imágenes de prueba, comprobar un upsert por vehículo modificado. Si falta un ID, hay warning/error o falla una preparación/publicación, confirmar reset de recuperación y convergencia posterior mediante snapshot.
+- Confirmar que las operaciones masivas de restauración de base, reorganización y migración de IDs conservan reset global. No ejecutar estas operaciones sobre recursos productivos.
+- No esperar cambios Relay: no existe un escritor backend de registros Relay identificado en esta rama.
+
+5. PAGINACIÓN, CURSOR Y RESPUESTAS REPETIDAS
+- En el entorno aislado, generar suficientes eventos de prueba para superar el tamaño de una página y confirmar que el cliente pagina hasta completar el delta, sin saltos ni duplicaciones.
+- Repetir una respuesta/evento ya aplicado y comprobar idempotencia. Si el entorno permite controlar la entrega, retrasar una respuesta anterior y comprobar que no revierte un snapshot de revisión más reciente.
+- Probar cursor vencido, futuro, corrupto o con hueco de revisión. El cliente debe recuperar mediante snapshot completo y persistir snapshot/cursor coherentes; no debe marcar el catálogo como actualizado si falla el procesamiento.
+- Inyectar fallo de red durante una página intermedia y reconectar. Confirmar que el cliente reanuda desde el último cursor confirmado sin perder eventos ni duplicar cambios visibles.
+
+6. ESTADOS ABIERTOS, OFFLINE Y RECUPERACIÓN
+- Mantener una tarjeta y un modal de detalle abiertos mientras otra cuenta modifica el registro. Confirmar actualización silenciosa sin cerrar el modal, perder scroll/filtros ni borrar una edición pendiente.
+- Desconectar la red antes de una escritura offline permitida, reconectar y comprobar reintento/idempotencia. No confundir una operación pendiente con una escritura confirmada.
+- Cerrar una pestaña durante una sincronización y reabrirla; verificar recuperación desde IndexedDB y el cursor persistido.
+- Probar reset del feed con una vista abierta y confirmar reconciliación completa sin dejar colecciones mezcladas entre revisiones.
+
+7. SEGURIDAD Y AISLAMIENTO
+- Consultar el feed con sesión inválida, expirada, revocada y con rol no autorizado cuando corresponda. Confirmar rechazo backend y ausencia de datos de catálogo en respuestas de error.
+- Intentar cursor manipulado o perteneciente a otra sesión; el cursor no debe actuar como autorización ni permitir leer datos no autorizados.
+- Confirmar que las respuestas/logs no exponen secretos, tokens, datos personales ni información interna de infraestructura.
+
+CRITERIOS DE CIERRE
+- Cada subprueba debe quedar marcada PASS, FAIL o NO EJECUTADA con evidencia no sensible y versión exacta de los deployments.
+- Registrar tiempos de primer contenido, snapshot, consulta sin novedades, propagación y reconexión; separar mediana/máximo de impresiones cualitativas.
+- Si una prueba falla por deployment/configuración Beta incompatible, documentar versiones y causa; no modificar producción ni ampliar permisos como workaround.
+- No declarar validación Beta aprobada a partir de CI, simulaciones o revisión estática. La prueba de campo se considera ejecutada únicamente cuando se realiza en los proyectos, cuentas, dispositivos y servicios Beta aislados.
+================================================================================
+
+
+================================================================================
+GP-INBOX-04B/04C/04D — VALIDACIÓN BETA DE ESTADO PRIVADO, TICKETS Y RBAC
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde una terminal dentro del repositorio local. Esta prueba se ejecuta únicamente después de que el usuario autorice el despliegue de los servicios Apps Script compatibles en un entorno Beta aislado.
+
+```bash
+set -euo pipefail
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ROOT="$(git rev-parse --show-toplevel)"
+test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in
+  https://github.com/infogpstech/GPSpedia.git|https://github.com/infogpstech/GPSpedia) ;;
+  *) echo "Remoto incorrecto: $REMOTE_URL"; exit 1 ;;
+esac
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH" || { echo "Rama incorrecta"; exit 1; }
+test -z "$(git status --porcelain)" || { echo "Hay cambios locales sin guardar; detener y preservarlos."; exit 1; }
+git fetch origin "$EXPECTED_BRANCH"
+git pull --ff-only origin "$EXPECTED_BRANCH"
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH"
+printf 'Repositorio: %s\nRama: %s\nHEAD: ' "$ROOT" "$(git branch --show-current)"
+git rev-parse HEAD
+git status --short --branch
+```
+
+PRECONDICIONES Y SEGURIDAD
+- No ejecutar esta validación hasta contar con autorización expresa para actualizar los deployments Apps Script Beta. No desplegar producción ni modificar sus propiedades.
+- Usar una Spreadsheet Beta desechable y carpeta Drive Beta aislada; no reutilizar datos ni cuentas productivas.
+- Confirmar que AUTH, FEEDBACK, Coordinator y los servicios relacionados usan versiones compatibles de la misma rama. Registrar URL/versión de deployment sin copiar tokens ni secretos.
+- Preparar como mínimo tres cuentas de prueba: técnico A, técnico B y Desarrollador D. Añadir una cuarta cuenta C para intentos de acceso no autorizado.
+- Registrar HEAD, fecha/hora, deployment/versiones, navegador/SO/dispositivo, rol, resultado PASS/FAIL/NO EJECUTADA y evidencia no sensible.
+- No crear manualmente la hoja `InboxConversationFlags` antes de probar las acciones; debe crearse de forma diferida al usar marcar no leído u ocultar conversación.
+- No añadir botones, pestañas, paneles ni controles nuevos durante esta prueba. La UI de historial propio de tickets y la selección múltiple permanecen diferidas.
+
+1. HOJA DE ESTADO PRIVADO Y COMPATIBILIDAD
+- En la Spreadsheet Beta, registrar los encabezados de `InboxConversationState` antes de ejecutar las nuevas acciones.
+- Crear una conversación de prueba sin usar marcar no leído ni ocultar. Confirmar que la hoja `InboxConversationFlags` aún no existe y que las operaciones normales de Inbox funcionan.
+- Ejecutar por primera vez `markInboxUnread`; confirmar que se crea `InboxConversationFlags` con los encabezados exactos `conversationId,userId,unreadOverride,deleted,updatedAt`.
+- Confirmar que `InboxConversationState` conserva sus diez columnas originales y que no se reescriben ni migran sus filas.
+- Repetir la acción en otra conversación y verificar que no se crean filas duplicadas para el mismo par conversación/usuario.
+
+2. MARCAR COMO NO LEÍDA
+- A crea una conversación y B la recibe. B abre la conversación y marca lectura hasta el último mensaje; verificar unreadCount=0.
+- B ejecuta `markInboxUnread`; verificar que aparece en la carpeta no leídos con indicador y unreadCount al menos 1.
+- Repetir la solicitud; debe ser idempotente y no duplicar el evento de auditoría.
+- Abrir la conversación y confirmar lectura; el indicador privado debe limpiarse y la conversación debe salir de no leídos.
+- Archivar otra conversación recibida y luego marcarla como no leída; confirmar que se desarchiva para B y vuelve a no leídos.
+- Intentar marcar como no leída una conversación que solo contiene mensajes enviados por el actor; debe rechazarse sin crear un estado no leído falso.
+- C debe intentar marcar como no leída una conversación A-B; debe rechazarse por no ser participante.
+
+3. OCULTAR/ELIMINAR SOLO PARA EL PARTICIPANTE
+- A crea una conversación con B. B ejecuta `deleteInboxConversation`.
+- Confirmar que desaparece de todas las carpetas de B y que B no puede obtener mensajes, responder, archivar, cerrar ni marcar lectura de esa conversación.
+- Confirmar que A todavía puede listar, leer y continuar la conversación.
+- Comprobar que no se borran filas de `InboxConversations`, `InboxMessages` ni auditoría y que el historial de A permanece íntegro.
+- Repetir la eliminación de B; debe responder idempotentemente y no añadir otro evento de auditoría.
+- C intenta ocultar la conversación A-B; debe rechazarse sin crear una fila de estado privado.
+- Enviar un nuevo mensaje desde A después de que B haya ocultado su copia; B debe seguir sin verla y A debe conservar el historial.
+- No ejecutar borrado físico ni editar manualmente los registros de historial.
+
+4. TICKET/REPORTE DE PROBLEMA Y SEGUIMIENTO
+- Desde la UI existente, A crea un reporte de problema para un vehículo/corte Beta. Confirmar que se genera reportId, descripción, categoría por defecto `incidencia_tecnica` y asunto generado con vehículo/corte.
+- Verificar que la categoría/asunto se guardan en `reportMetadata` y que el reporte aparece en el Inbox de soporte de D con asunto, categoría, descripción, autor y estado.
+- Probar las categorías permitidas por API: `incidencia_tecnica`, `instalacion`, `acceso`, `contenido`, `otro`. Categorías no permitidas deben rechazarse.
+- Repetir un reporte con el mismo reportId y mismo contenido/categoría/asunto; debe devolver el registro existente. Reutilizar reportId con contenido, categoría o asunto distintos debe rechazarse.
+- D responde mediante `replyToFeedback` y marca resuelto mediante `markAsResolved`. Confirmar que el detalle de soporte muestra respuesta y estado actualizado.
+- A consulta `getMyProblemReports`; debe recibir solo sus propios tickets con asunto, categoría, descripción, respuesta y estado.
+- Repetir la consulta enviando un userId de B/C en el payload; la respuesta debe seguir limitada al actor autenticado A.
+- Crear tickets para A y B y probar paginación por cursor estable reportId. Una inserción nueva entre páginas no debe duplicar ni omitir registros después del ancla.
+- Usar como cursor un reportId perteneciente a B/C; la consulta de A debe rechazarlo sin revelar datos del otro usuario.
+- Confirmar que el usuario no puede abrir `getFeedbackItems` para consultar todos los reportes; ese acceso permanece restringido a los roles autorizados de soporte.
+
+5. RBAC Y CANAL DE CONTACTO CON DESARROLLADOR
+- Técnico y Técnico_exterior pueden utilizar el reporte de problema autenticado y consultar únicamente sus tickets propios.
+- Verificar que la matriz de Inbox sigue impidiendo conversación directa ordinaria de Técnico/Supervisor/Jefe hacia Desarrollador cuando la política no la permite.
+- Confirmar que `reportProblem` es el canal de soporte y que no aparece un control «Consultar al desarrollador» ni un destinatario Desarrollador en la conversación directa no autorizada.
+- Verificar que Desarrollador/Jefe/Supervisor conservan los permisos de lectura/respuesta/resolución establecidos; no ampliar roles para evitar errores de configuración.
+- Probar sesión expirada, token revocado, actor ausente y userId falsificado. Todas las acciones deben rechazarse en backend sin filtrar tickets ni historial.
+
+6. ACCESIBILIDAD, MÓVIL Y REGRESIÓN
+- En el detalle existente del ticket, comprobar que categoría y estado se leen correctamente y que asunto, descripción y respuesta siguen disponibles.
+- Confirmar que no se añadieron controles visibles para `markInboxUnread`, `deleteInboxConversation` ni `getMyProblemReports`; la integración de UI de historial propio y selección múltiple está pendiente de autorización.
+- Probar teclado (Tab, Shift+Tab, Enter, Escape), foco visible, lector de pantalla, roles/labels ARIA y `prefers-reduced-motion`.
+- Probar tema claro/oscuro, navegación Atrás, lista/detalle móvil, scroll, texto largo y tamaños reales Android/iOS/desktop.
+- Probar dos pestañas y dos dispositivos; confirmar que el estado privado se mantiene por participante y que no se duplica la auditoría.
+- Verificar que errores de red/reintentos no crean duplicados ni borran borradores u operaciones offline.
+
+CRITERIOS DE CIERRE
+- Registrar cada subprueba como PASS, FAIL o NO EJECUTADA con evidencia no sensible y versiones exactas.
+- Confirmar que las filas/mensajes históricos se conservan y que la hoja de flags contiene solo el estado privado necesario.
+- No declarar PASS a partir de CI o mocks; el cierre Beta requiere ejecución contra deployments Apps Script y Spreadsheet Beta aislados.
+- Si una prueba falla por versiones o secretos de Coordinator incompatibles, documentar el entorno y detenerse; no debilitar RBAC ni modificar producción.
+- No ejecutar despliegues adicionales ni migraciones productivas sin autorización expresa.
+================================================================================
+
+## P2 — Protocolo Beta: IDs de fórmula a generación backend
+
+**Preflight obligatorio antes de cualquier prueba.** Ejecutar desde una terminal abierta dentro del repositorio clonado:
+
+    ROOT="$(git rev-parse --show-toplevel)" || exit 1
+    cd "$ROOT" || exit 1
+    test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+    test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || { echo "Remoto incorrecto"; exit 1; }
+    test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+    if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; fi
+    git fetch origin GPSpedia2.2.5_work || exit 1
+    git pull --ff-only origin GPSpedia2.2.5_work || exit 1
+    git rev-parse HEAD
+    git status --short
+
+1. Usar una copia aislada de Spreadsheet, nunca la base productiva. Verificar backup completo y que el enlace corresponda a la copia autorizada.
+2. En el modal Desarrollador, ejecutar auditoría global de columnas ID y guardar el resultado de cada hoja: encabezado, columna, fila, ID calculado, fórmula original, duplicados, vacíos y patrones no reconocidos.
+3. Ejecutar dry-run. Confirmar que solo aparecen como elegibles las fórmulas de secuencia compatibles; los patrones no reconocidos, IDs duplicados, resultados vacíos y filas sin datos deben quedar excluidos.
+4. Revisar referencias cruzadas y escritores de cada hoja. Confirmar que el backend asigna el ID con el mismo prefijo y relleno que la fórmula histórica antes de congelarla.
+5. Ejecutar un lote pequeño, verificar valor/tipo de ID y ausencia de fórmula, interrumpir y reanudar con el mismo migrationId/digest. Verificar snapshots, manifiesto, contador backend y unicidad.
+6. Probar altas nuevas desde cada flujo que escribía IDs mediante copia de fórmula. Confirmar que el ID nuevo se asigna desde backend y que no se copian fórmulas.
+7. Ensayar rollback solo si las huellas coinciden y dentro de la copia Beta. Documentar cualquier conflicto antes de continuar.
+8. Relay permanece excluido hasta confirmar su formato y un escritor backend real. No inventar IDs ni alterar referencias de producción.
+
+
+
+================================================================================
+## HALLAZGOS DE VALIDACIÓN BETA — 2026-11-18
+
+### BETA-INBOX-PREVIEW-HTML-01 — La vista previa del Inbox muestra etiquetas HTML como texto plano
+
+**Estado: REPORTADO POR EL USUARIO · PENDIENTE DE REPRODUCCIÓN Y CORRECCIÓN.**
+
+**Comportamiento observado:**
+- Cuando llega un mensaje nuevo, la bandeja muestra una vista previa de parte del contenido.
+- En esa vista previa se muestran literalmente etiquetas HTML junto con el texto, en lugar de presentar un extracto legible.
+- Al abrir el mensaje, el contenido se carga correctamente y presenta los colores y formatos enriquecidos esperados.
+
+**Resultado esperado:**
+- La vista previa de la bandeja debe mostrar un extracto de texto legible, sin etiquetas HTML visibles.
+- El detalle del mensaje debe conservar el renderizado enriquecido permitido (colores y formatos).
+- La extracción/normalización del texto de vista previa no debe ejecutar HTML ni permitir XSS; debe preservar caracteres acentuados, entidades y saltos de línea de forma razonable.
+
+**Pruebas de reproducción y regresión pendientes:**
+1. Recibir o crear en el entorno Beta un mensaje con texto plano y otro con formato enriquecido (negrita, color, listas, enlaces y saltos de línea).
+2. Comprobar la vista previa antes de abrir el mensaje, después de recargar el Inbox y al volver desde el detalle.
+3. Confirmar que la vista previa no contiene cadenas de etiquetas como `<p>`, `<span>`, `<strong>` o atributos de estilo; debe mostrar únicamente el extracto legible.
+4. Abrir el mensaje y confirmar que el detalle mantiene el formato enriquecido admitido.
+5. Probar contenido hostil controlado (por ejemplo, etiquetas `script`, atributos `onerror` y enlaces con protocolos no permitidos). La vista previa debe ser texto inerte y el detalle debe aplicar la sanitización vigente.
+6. Verificar mensajes antiguos, contenido vacío, entidades HTML, emojis, caracteres Unicode y contenido extenso truncado.
+7. Registrar navegador/dispositivo, rol de la cuenta de prueba, mensaje de prueba no sensible y resultado de cada caso.
+
+**Criterio de cierre:** PASS únicamente cuando la vista previa sea legible y segura, el detalle conserve su formato y las pruebas de seguridad/regresión no detecten ejecución ni alteraciones del contenido. No se ha modificado código del Inbox en este registro.
+
+### BETA-SERVICES-HEALTH-01 — Verificación de disponibilidad de los siete servicios desplegados
+
+**Estado: PASS EN COMPROBACIÓN REMOTA READ-ONLY; VALIDACIÓN FUNCIONAL DE OPERACIONES PENDIENTE.**
+
+- En el commit `6c82a9f6ee255f86f9cdfc7986c0545644bea411`, el workflow de salud informó 7/7 servicios disponibles: ADMIN, AUTH, CATALOG, FEEDBACK, USERS, UTILITIES y WRITE.
+- La comprobación ejecutó únicamente GET `?debug=true`; no realizó POST, escrituras, cambios de propiedades, modificaciones de hojas ni operaciones de negocio.
+- Se detectó que el workflow utilizaba un SHA histórico fijo (`301c7b3a...`) para obtener las URL. Se corrigió para tomar `${{ github.sha }}`, de modo que cada ejecución compruebe las URL del commit que la dispara.
+- La nueva ejecución del workflow, posterior a esta corrección, debe confirmar las URL actualmente configuradas en `JS/Frontend/api-config.js`. No interpretar la ejecución anterior como prueba de esas URL nuevas.
+- La disponibilidad/identidad de los endpoints no demuestra que las propiedades secretas, permisos, lectura/escritura de datos, autenticación ni flujos funcionales estén correctos. Esas pruebas requieren casos Beta aislados y evidencia específica.
+
+**Preflight obligatorio antes de ejecutar las pruebas Beta:**
+
+```bash
+ROOT="$(git rev-parse --show-toplevel)" || exit 1
+cd "$ROOT" || exit 1
+test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || { echo "Remoto incorrecto"; exit 1; }
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; fi
+git fetch origin GPSpedia2.2.5_work || exit 1
+git pull --ff-only origin GPSpedia2.2.5_work || exit 1
+git rev-parse HEAD
+```
+================================================================================
+
+
+### BETA-CUT-MODAL-HEADER-LONG-MODEL-01 — El nombre largo del modelo desplaza el logo y oculta acciones del modal de detalle de corte
+
+**Estado: REPORTADO POR EL USUARIO · PENDIENTE DE REPRODUCCIÓN, DIAGNÓSTICO Y VALIDACIÓN VISUAL BETA.**
+
+**Comportamiento observado:**
+- En la cabecera del modal de detalle de corte, cuando el nombre del modelo es demasiado largo, el texto realiza un salto de línea. Ese salto es correcto y debe conservarse.
+- Al crecer el nombre a una segunda línea, el logo se desplaza hacia arriba en lugar de permitir que el contenido inferior de la cabecera crezca y empuje hacia abajo el divisor azul.
+- Como consecuencia, el logo puede superponerse a los botones de edición e impresión, dejándolos ocultos o parcialmente cubiertos.
+- En un dispositivo móvil girado a orientación horizontal, el logo puede quedar visualmente más arriba que el nombre del modelo, rompiendo la alineación de la cabecera.
+
+**Resultado esperado:**
+- El nombre completo del modelo debe poder saltar de línea sin recortarse ni alterar indebidamente la posición del logo.
+- El crecimiento vertical del título debe ampliar el espacio de la cabecera y empujar hacia abajo la línea/divisor azul y los elementos inferiores; no debe provocar que el logo suba ni que invada la zona de acciones.
+- Los botones de edición e impresión deben permanecer visibles, accesibles y sin superposición con el logo en todos los tamaños.
+- En móvil, tanto en orientación vertical como horizontal, el logo y el nombre deben conservar la relación y alineación previstas en el diseño.
+- Deben preservarse las dimensiones y el ancho automático del logo, la distribución de las columnas, el orden/alineación de las acciones y la ausencia de desplazamiento horizontal no deseado del modal.
+
+**Pruebas de reproducción y regresión pendientes:**
+1. Abrir un corte cuyo nombre de modelo sea suficientemente largo para ocupar dos o más líneas.
+2. Comprobar en escritorio y móvil que el salto de línea se mantiene completo y que el logo no se desplaza hacia arriba.
+3. Verificar que el divisor azul baja junto con el crecimiento de la cabecera y que no invade ni queda detrás del logo.
+4. Confirmar que los botones de edición e impresión permanecen completamente visibles y utilizables.
+5. Repetir en móvil en orientación vertical y horizontal, incluyendo anchos intermedios y cambios de orientación con el modal abierto.
+6. Probar nombres cortos para confirmar que no queda espacio vertical adicional cuando el título no necesita saltar de línea.
+7. Revisar que no aparece scroll horizontal y que no se alteran el logo, el tamaño natural de su primera columna, ni la posición de las acciones.
+
+**Criterio de cierre:** PASS únicamente cuando el título largo empuje hacia abajo los elementos inferiores sin mover el logo hacia arriba, no exista superposición con las acciones y la distribución sea correcta en escritorio y en ambas orientaciones móviles. No se ha modificado código de producción como parte de este registro.
+
+================================================================================
+2026-11-18 — NUEVOS HALLAZGOS DE PRUEBAS BETA: ADMIN / SALUD / TELEMETRÍA / LIMPIEZA
+
+### BETA-ADMIN-HEALTH-EVENTS-01 — Error al escanear la salud de los servidores: `events is not defined`
+**Estado: REPORTADO POR EL USUARIO · PENDIENTE DE REPRODUCCIÓN Y CORRECCIÓN.**
+- Al ejecutar el escaneo de salud desde la consola aparece repetidamente:
+  `[SALUD ERROR] Fallo al escanear servicios: events is not defined`
+- El error se observó a las 5:20:56 p.m. y 5:21:08 p.m.
+- Investigar el flujo de escaneo, el ámbito y la inicialización de `events`, y la gestión de errores por servicio.
+- Criterio de cierre: el escaneo termina sin ReferenceError, informa el resultado de cada servicio y no oculta fallos parciales.
+
+### BETA-ADMIN-GLOBAL-TRAFFIC-01 — Fallo al recuperar el agregado global de tráfico
+**Estado: REPORTADO POR EL USUARIO · PENDIENTE DE DIAGNÓSTICO.**
+- Al consultar el tráfico global, ADMIN muestra: `No fue posible recuperar el agregado global; Respuesta de telemetría no válida`.
+- Revisar el contrato de respuesta del agregado, la validación/normalización del payload, errores HTTP, autenticación y compatibilidad entre ADMIN y los servicios que aportan telemetría.
+- Criterio de cierre: el agregado global se recupera y valida con datos coherentes; si algún servicio falla, se informa el estado parcial sin presentar datos inválidos como válidos.
+
+### BETA-ADMIN-SERVICE-TELEMETRY-02 — Información de salud y tráfico incompleta para los servicios
+**Estado: REPORTADO POR EL USUARIO · PENDIENTE DE DIAGNÓSTICO.**
+- En el panel solo se muestra información de salud de CATALOG.
+- No aparece información de los demás servicios.
+- Tampoco aparece el tráfico en el navegador móvil ni el tráfico global.
+- Investigar el mapeo de endpoints, consultas por servicio, propiedades de telemetría, respuesta agregada, renderizado del panel y diferencias de comportamiento entre escritorio y navegador móvil.
+- No asumir que los endpoints están averiados solo por la ausencia de datos en la interfaz: contrastar respuesta remota, permisos/secreto, contrato y renderizado.
+- Criterio de cierre: se muestran salud y tráfico de todos los servicios instrumentados con datos disponibles; los servicios sin telemetría deben identificarse claramente y no confundirse con cero tráfico o servicio caído.
+
+### BETA-ADMIN-LOGS-CLEAR-FEEDBACK-01 — Mensaje de éxito ambiguo al borrar logs y actividad de usuario
+**Estado: REPORTE DE EXPERIENCIA DE USUARIO · PENDIENTE DE AJUSTE/VALIDACIÓN.**
+- Al solicitar borrar logs y actividad de usuario, la interfaz comunica éxito y a continuación indica que no había actividades que borrar.
+- El mensaje puede interpretarse como si se hubiera borrado información cuando en realidad no existían registros.
+- Ajustar el resultado para distinguir claramente entre eliminación efectuada, operación completada sin registros que eliminar y error. No alterar ni borrar datos históricos adicionales.
+- Criterio de cierre: el mensaje refleja exactamente el resultado real de la operación.
+
+### BETA-ADMIN-LOG-RETENTION-UI-01 — Selector de retención de logs sin estilo y fuera del viewport
+**Estado: REPORTE VISUAL/RESPONSIVE · PENDIENTE DE CORRECCIÓN.**
+- En el selector de eliminación de logs (conservar los últimos 7 días o eliminar todos), el control aparece sin estilo definido, ocupa demasiado espacio y se desborda del viewport.
+- Revisar el componente y sus estilos en escritorio y móvil; limitar ancho/alto, adaptar el control al espacio disponible y asegurar que las opciones sean legibles y utilizables.
+- Mantener las dos opciones y su semántica exacta: conservar logs de los últimos 7 días o eliminar todos.
+- Criterio de cierre: selector integrado visualmente con ADMIN, compacto, accesible y sin desbordamiento horizontal/vertical del viewport.
+
+### BETA-AUDIT-CUT-UNUSED-IMAGES-PASS-01 — Auditoría de carpeta de cortes: detección de imágenes sin uso
+**Estado: PASS REPORTADO POR EL USUARIO.**
+- El usuario confirma que la auditoría de la carpeta de cortes para detectar imágenes sin uso está funcionando.
+- Registrar como prueba Beta satisfactoria según la observación del usuario.
+- No ampliar el alcance ni declarar validaciones adicionales no realizadas.
+================================================================================
+
+
+================================================================================
+2026-11-18 — NUEVOS HALLAZGOS Y REQUISITOS BETA: MODAL DE CORTE, INBOX Y AUDITORÍA DE IMÁGENES
+================================================================================
+
+### BETA-CUT-MODAL-IMAGE-CONTAINER-PADDING-01 — Espacio interno innecesario en el contenedor de imagen
+**Estado: REPORTE VISUAL · PENDIENTE DE REPRODUCCIÓN Y CORRECCIÓN.**
+- El contenedor de la imagen del modelo en el modal de detalle de corte presenta espacio interno horizontal y vertical que reduce el área útil de visualización.
+- Reducir el padding al mínimo indispensable o eliminarlo si no cumple una función de diseño.
+- Preservar proporciones de imagen y distribución del encabezado, logo, nombre del modelo y botones de acción.
+- Criterio de cierre: contenedor compacto, imagen correctamente presentada y sin desplazamientos ni desbordamientos en escritorio y móvil.
+
+### BETA-INBOX-SHARED-COORDINATOR-AUTH-01 — Servicio Inbox no autorizado para el coordinador compartido
+**Estado: REPORTE FUNCIONAL · PENDIENTE DE DIAGNÓSTICO.**
+- Al consultar Inbox aparece: «Servicio no autorizado para el coordinador compartido».
+- Investigar autenticación y autorización entre Inbox, servicio consumidor y Coordinator: identidad del servicio, token/credenciales, permisos, contexto de sesión/rol, registro de servicios autorizados y contrato de respuesta.
+- Determinar si el error es independiente o coincide con la ejecución simultánea de la auditoría de imágenes.
+- Criterio de cierre: Inbox accesible para roles autorizados, sin ampliar privilegios ni debilitar la validación.
+
+### BETA-ADMIN-IMAGE-AUDIT-CONCURRENCY-01 — Posible interferencia de la auditoría con otras funciones
+**Estado: INVESTIGACIÓN PENDIENTE.**
+- Verificar si la auditoría de imágenes sin uso bloquea, limita o altera funciones de la plataforma, especialmente Inbox y operaciones que utilizan Coordinator.
+- Revisar locks, leases, exclusión mutua, duración, liberación ante errores y aislamiento entre tareas.
+- Criterio de cierre: la auditoría no impide operaciones independientes ni deja bloqueos/leases residuales; cualquier exclusión necesaria debe estar delimitada.
+
+### BETA-ADMIN-CUT-IMAGE-AUDIT-COVERAGE-01 — Cobertura y comparación completa de referencias
+**Estado: REQUISITO FUNCIONAL · PENDIENTE DE VERIFICACIÓN.**
+- Recorrer todos los archivos de imagen de la carpeta de cortes y todos sus subdirectorios.
+- Comparar cada archivo contra las referencias de imágenes de todas las hojas de la Spreadsheet, excluyendo únicamente la hoja destinada al registro de imágenes reemplazadas al determinar el uso vigente.
+- Normalizar nombres, rutas e identificadores; evitar falsos positivos por mayúsculas, separadores, codificación o URL.
+- Criterio de cierre: cobertura demostrable de carpetas y hojas; ningún archivo se clasifica sin uso mientras conserve una referencia vigente válida.
+
+### BETA-ADMIN-CUT-IMAGE-LIBRARY-INVENTORY-01 — Inventario gestionable de imágenes sin uso
+**Estado: REQUISITO FUNCIONAL · PENDIENTE DE IMPLEMENTACIÓN/VALIDACIÓN.**
+Cada imagen sin referencia vigente debe generar un registro consultable desde la biblioteca con:
+- Nombre del archivo.
+- Fecha de creación, si el almacenamiento la expone; si no está disponible, indicarlo expresamente.
+- Tamaño del archivo.
+- Directorio y ruta relativa completa.
+- Enlace público o URL de visualización utilizable por la plataforma.
+- Modelo relacionado, nivel de confianza y criterio utilizado.
+- Nombre/enlace de la imagen vigente relacionada, cuando se identifique.
+- Estado y procedencia: «Sin uso» o «Reemplazada».
+Ejemplo: Cortes/SUV/Toyota/Prado/LTX/2024-2027/toyota_prado_ltx_boton_imagenVehiculo.png
+- La biblioteca debe permitir visualizar y gestionar los registros. La detección no debe borrar, mover ni modificar archivos automáticamente.
+- Criterio de cierre: inventario persistente, trazable y visible, con campos no disponibles identificados explícitamente.
+
+### BETA-ADMIN-CUT-IMAGE-VEHICLE-MATCH-01 — Relación inteligente entre imagen y modelo
+**Estado: REQUISITO FUNCIONAL · PENDIENTE DE IMPLEMENTACIÓN/VALIDACIÓN.**
+- Identificar el modelo utilizando primero el nombre del archivo y después la estructura de carpetas como contexto complementario.
+- Interpretar marca/modelo, año o rango, tipo de encendido y tipo de corte/función.
+- Ejemplo: para toyota_prado_btn_2024_ign.jpg, buscar en la hoja de cortes la fila con coincidencia más precisa de Toyota Prado, año 2024, botón y encendido.
+- Aplicar normalización de tokens y puntuación de coincidencia que priorice atributos específicos; no asociar por coincidencia parcial genérica.
+- Si el nombre no basta, usar la ruta (por ejemplo, Cortes/SUV/Toyota/Prado/) y contrastar candidatos con la hoja de cortes.
+- Registrar método, candidato y confianza. Si hay coincidencias equivalentes o insuficientes, dejar el caso para revisión manual.
+- Criterio de cierre: asociación explicable y reproducible, con ambigüedad explícita.
+
+### BETA-ADMIN-CUT-IMAGE-REPLACEMENT-LINK-01 — Identificación de imagen vigente relacionada y clasificación
+**Estado: REQUISITO FUNCIONAL · PENDIENTE DE IMPLEMENTACIÓN/VALIDACIÓN.**
+- Tras identificar el modelo y registro probable, buscar si la fila de cortes contiene otra imagen asociada al mismo vehículo/versión.
+- Comparar marca/modelo, año, encendido, tipo de corte, nombre y estructura de carpetas.
+- Guardar nombre y enlace de la imagen relacionada como referencia.
+- Clasificar «Reemplazada» solo si existe evidencia suficiente de una imagen sustituta vigente. Si no se demuestra, usar «Sin uso»; los casos ambiguos quedan pendientes de revisión.
+- Criterio de cierre: estado y relación respaldados por datos de Spreadsheet/Drive; ninguna eliminación automática.
+
+================================================================================
+
+================================================================================
+2026-11-18 — REQUISITOS BETA: CONSOLA DE AUDITORÍA Y ORGANIZACIÓN AUTOMÁTICA DE IMÁGENES
+================================================================================
+
+### BETA-ADMIN-CUT-IMAGE-AUDIT-CONSOLE-01 — Confirmación de registro y salida completa en consola
+**Estado: REQUISITO FUNCIONAL/UX · PENDIENTE DE AUDITORÍA E IMPLEMENTACIÓN.**
+- Actualmente, al finalizar la auditoría aparece un botón para registrar los archivos detectados, pero la orden de confirmación debe ejecutarse desde la consola del desarrollador. Revisar y corregir este flujo para que la confirmación y el registro sean explícitos, coherentes y verificables. La interfaz no debe comunicar que los registros se guardaron si la operación no se confirmó y completó.
+- Todos los mensajes y resultados deben mostrarse en la consola del desarrollador: procesamiento por lotes, cantidad de imágenes, carpetas/subcarpetas recorridas, resultados por carpeta, coincidencias, imágenes sin uso, errores y resumen final.
+- El modal de auditoría de cortes debe mostrar la consola de cortes como salida principal. Sustituir los indicadores independientes que actualmente presentan esos contenidos por una consola centralizada.
+- Distinguir mensajes informativos, progreso, advertencias, errores y resultado final; mantener trazabilidad por lote y evitar mensajes engañosos o duplicados.
+- Criterio de cierre: una única consola permite revisar el proceso completo y el registro confirmado refleja el resultado real.
+
+### BETA-ADMIN-CUT-IMAGE-ORGANIZER-AUDIT-01 — Auditoría de la función de organización automática
+**Estado: INVESTIGACIÓN PENDIENTE.**
+- Auditar la implementación actual de organización automática, sus fuentes de datos, reglas de rutas, nomenclatura, operaciones de almacenamiento y manejo de errores.
+- Comprobar la correspondencia entre filas de las hojas Cortes/Logos y los archivos físicos.
+- Documentar diferencias entre la estructura real y la estructura objetivo.
+- Durante el diagnóstico no mover, renombrar ni sobrescribir archivos.
+
+### BETA-ADMIN-CUT-IMAGE-ORGANIZER-STRUCTURE-01 — Estructura jerárquica canónica de carpetas
+**Estado: REQUISITO FUNCIONAL · PENDIENTE DE VERIFICACIÓN/IMPLEMENTACIÓN.**
+La organización automática debe procesar fila por fila los registros de las hojas Cortes y Logos de la Spreadsheet y verificar que cada imagen esté en la ubicación correspondiente.
+
+Estructura esperada:
+1. Cortes/ — directorio raíz.
+2. Categoría: SUV, Pick_up, Sedan, Camion_ligero, Camión_pesado, Autobus, entre las categorías válidas del catálogo.
+3. Marca: Toyota, Honda, Audi, Hyundai, etc. La carpeta de marca debe contener el logo correspondiente.
+4. Modelo: Hilux, Civic, A1, County, etc.
+5. Versión de equipamiento/aplicabilidad o tipo de encendido, cuando no exista una versión registrada.
+6. Rango de años aplicable.
+7. Archivos de imagen correspondientes.
+
+Ejemplo:
+Cortes/
+└── Autobus/
+    └── Hyundai/
+        ├── hyundai_logo.png
+        └── County/
+            └── llave/
+                └── 2020-2026/
+                    ├── County_llave_2020_imagen.png
+                    ├── County_llave_2020_ign1.jpg
+                    ├── County_llave_2020_alimen.jpg
+                    └── County_llave_2020_apert.jpg
+
+- El logo de marca se almacena en el primer nivel de la carpeta de marca, no dentro de la carpeta de un modelo.
+- El quinto nivel representa la versión registrada; si no existe versión, utiliza el tipo de encendido correspondiente.
+- Respetar las categorías y valores reales de la Spreadsheet; no inventar categorías ni perder correspondencia con los registros.
+- Criterio de cierre: las rutas se derivan de cada fila y las imágenes/logos quedan en el nivel correcto.
+
+### BETA-ADMIN-CUT-IMAGE-ORGANIZER-REGISTRATION-CONSISTENCY-01 — Coherencia con los flujos de alta
+**Estado: REQUISITO FUNCIONAL · PENDIENTE DE AUDITORÍA.**
+- Verificar los procesos de registro de un nuevo corte, alta de un nuevo modelo y registro de un nuevo logo de marca.
+- Los tres flujos deben aplicar la misma estructura canónica y reglas de nomenclatura.
+- Un nuevo logo debe quedar en el directorio de marca; las imágenes de cortes bajo categoría/marca/modelo/versión o encendido/rango de años.
+- Criterio de cierre: la organización automática y los flujos de alta generan rutas compatibles, sin estructuras divergentes.
+
+### BETA-ADMIN-CUT-IMAGE-ORGANIZER-NAMING-01 — Nomenclatura de imágenes según uso
+**Estado: REQUISITO FUNCIONAL · PENDIENTE DE IMPLEMENTACIÓN/VALIDACIÓN.**
+- Renombrar los archivos según modelo, versión o tipo de encendido, año/rango y función.
+- Formato esperado: Modelo_version-o-encendido_año-o-rango_funcion.extensión.
+- Conservar siempre la extensión original; no convertir formatos ni cambiar la extensión para hacerla coincidir con el contenido.
+- Ejemplos:
+  - Hilux_srv_2020_2025_imagenVehiculo.png
+  - Hilux_srv_2020_2025_ign1.jpg
+  - Hilux_srv_2020_2025_bomba1.jpg
+  - Hilux_srv_2020_2025_btn.jpg
+  - Hilux_srv_2020_2025_ign2.jpg — segundo recurso de ignición cuando ya existe otro recurso con la misma función.
+- Los sufijos numerados deben evitar colisiones; no sobrescribir archivos existentes.
+- Criterio de cierre: nombre determinista, extensión preservada, unicidad y referencias de Spreadsheet actualizadas consistentemente tras renombrar.
+
+### BETA-ADMIN-CUT-IMAGE-FUNCTION-CODES-01 — Catálogo de abreviaturas para funciones de corte
+**Estado: REQUISITO FUNCIONAL · PENDIENTE DE INTEGRACIÓN/VALIDACIÓN.**
+| Código | Significado |
+|---|---|
+| ign | Ignición |
+| bomba | Bomba de combustible |
+| btn | Señal al botón |
+| apert | Apertura |
+| alim | Alimentación |
+| alim2 | Alimentación 2 |
+| shock | Señal al ahogador |
+
+- Los sufijos numéricos identifican recursos distintos de una misma función (por ejemplo, ign1 e ign2).
+- La función de imagen del vehículo utiliza el identificador descriptivo imagenVehiculo.
+- Criterio de cierre: formularios, organizador automático y referencias de Spreadsheet reconocen los códigos de forma consistente.
+
+**Nota de alcance:** requisitos/reportes Beta. No se ejecutó aquí auditoría de código ni se movieron/renombraron archivos. La futura implementación debe previsualizar cambios y proteger referencias antes de operaciones masivas.
+================================================================================
