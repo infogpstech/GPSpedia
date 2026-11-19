@@ -17,6 +17,7 @@ let spreadsheet = null;
 const WRITE_SERVICE_URL = "https://script.google.com/macros/s/AKfycbxRmefmJ28iCIUJxVZ_1yHkPK9qDZORz3vkwAfe4gk6prIPIx3dO1yhG46mTjbU1a2J1A/exec";
 const CATALOG_SERVICE_URL = "https://script.google.com/macros/s/AKfycbyarvVEHx8ox-E8BmUK1jcQqQufblj50zv4svILFj2g7Js81FtMtVu8KT0Fj2klvp39/exec";
 const AUTH_SERVICE_URL = "https://script.google.com/macros/s/AKfycbxnKeNxMEPbDl4mMhzl2XihiPoFMaRh0TljFk_C31WwtlMCfpNOE7PUuwPYQBZaTOgb/exec";
+const USERS_SERVICE_URL = "https://script.google.com/macros/s/AKfycby9LayRuP0-qcY95X__1sxRfjIThXVCD00-5Gl78jRnrOngI4LmBgGpXbtrAalYnEp9/exec";
 const FEEDBACK_SERVICE_URL = "https://script.google.com/macros/s/AKfycbzHV29RS2af0sOzSynh3BWDSJl-6ZFl1Pd7jREUJbNQtmza3Q1ldm8k8DcslhbZXpAGRA/exec";
 const CATALOG_TRAFFIC_SECRET_PROPERTY_ = "GPSpedia_CATALOG_TRAFFIC_SECRET";
 const LOGOS_MARCA_ID_COUNTER_PROPERTY = "LOGOS_MARCA_ID_COUNTER";
@@ -9209,6 +9210,7 @@ function getDirectServiceTrafficBatch_() {
     const specs = [
         { service: "CATALOG", url: CATALOG_SERVICE_URL, scope: "catalog_post_requests" },
         { service: "AUTH", url: AUTH_SERVICE_URL, scope: "direct_post_requests" },
+        { service: "USERS", url: USERS_SERVICE_URL, scope: "direct_post_requests" },
         { service: "WRITE", url: WRITE_SERVICE_URL, scope: "direct_post_requests" },
         { service: "FEEDBACK", url: FEEDBACK_SERVICE_URL, scope: "direct_post_requests" }
     ];
@@ -9334,7 +9336,7 @@ function mergeDirectServiceTraffic_(coordinatorResult, directResults) {
     const sources = {
         coordinator: { available: true, scope: "protected_operations" }
     };
-    const services = ["CATALOG", "AUTH", "WRITE", "FEEDBACK"];
+    const services = ["CATALOG", "AUTH", "WRITE", "FEEDBACK", "USERS"];
     const bucketsByStart = new Map();
     result.buckets.forEach(bucket => bucketsByStart.set(bucket.startAt, bucket));
     services.forEach(service => {
@@ -9388,7 +9390,7 @@ function mergeDirectServiceTraffic_(coordinatorResult, directResults) {
     result.scope = "global_service_traffic";
     result.sources = sources;
     result.coverage = {
-        description: "Agregado de operaciones protegidas de los siete servicios activos, más solicitudes directas de lectura CATALOG y rutas directas instrumentadas de AUTH, WRITE y FEEDBACK cuando sus contadores están configurados.",
+        description: "Agregado de operaciones protegidas de los siete servicios activos, más solicitudes directas de lectura CATALOG y rutas directas instrumentadas de AUTH, WRITE, USERS y FEEDBACK cuando sus contadores están configurados.",
         excludes: ["sondeos de salud", "solicitudes HTTP que no atraviesan rutas instrumentadas"]
     };
     result.excluded = result.coverage.excludes.slice();
