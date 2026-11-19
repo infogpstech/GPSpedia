@@ -1020,3 +1020,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-19] WRITE: findOrCreateIdempotenciaSheet evita initializeIdempotenciaSheet para hojas A:F completas y compatibles; conserva reparación para encabezados faltantes y validación integral explícita en los callsites.
+
+
+[2026-11-19] WRITE: el flujo addOrUpdateCut comparte un snapshot validado de Idempotencia entre recuperación y registro; la verificación posterior se limita al opId afectado y su fila, conservando detección de duplicados y asociación.

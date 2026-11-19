@@ -16,18 +16,20 @@ Fecha: 2026-11-19
 - No inferir deployments Apps Script ni permisos externos desde el código versionado.
 
 ## Última tarea completada
-WRITE — acceso rápido a hoja Idempotencia compatible:
-- `findOrCreateIdempotenciaSheet` devuelve directamente la hoja primaria/fallback cuando los encabezados A:F están completos y son compatibles; evita llamar a `initializeIdempotenciaSheet` en cada acceso.
-- La inicialización completa sigue activa para hojas nuevas y reparación de encabezados faltantes.
-- Se verificó que los tres callsites actuales de `getIdempotenciaSheet` ejecutan después `readIdempotenciaEntries_`, por lo que la validación integral de registros y duplicados no se elimina.
-- Prueba `IdempotenciaSheetLookupFastPath` 6/6 PASS.
-- CI 44618414190 SUCCESS: 173 suites, 2,370 pruebas aprobadas, 0 fallos; sintaxis JS aprobada.
-- Health read-only 44618414220 SUCCESS; GitHub Pages 44618411994 SUCCESS.
-- Commit: 125cb7c5ec8fb3e8a05c1e04c6680fcbf50fcf54.
-- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó WRITE ni se modificaron datos productivos.
+WRITE — reutilización del snapshot Idempotencia por operación:
+- `handleAddOrUpdateCutLocked` carga y valida el ledger completo una sola vez y comparte el snapshot con `handleAddOrUpdateCutLockedUnsafe_`.
+- `findRowByOpId` usa el mapa del snapshot; `recordOpId` evita nuevas lecturas integrales y revalida el opId afectado mediante TextFinder en la columna A y lectura de su fila.
+- Se detectan entradas creadas en paralelo, cambios de asociación, duplicados del mismo opId y alteraciones del encabezado.
+- El snapshot se actualiza después de append/update; `completed` no retrocede a `pending`.
+- Rollback conserva la hoja efectiva primaria/fallback y el contenido anterior de la fila Idempotencia.
+- Prueba `WriteIdempotencySnapshotReuse` 9/9 PASS.
+- CI 44619301598 SUCCESS: 174 suites, 2,379 pruebas aprobadas, 0 fallos; sintaxis JS aprobada.
+- Health read-only 44619301575 SUCCESS; GitHub Pages 44619301580 SUCCESS.
+- Commits: 4c74b424cf996cd6e5e8eb1498769ab88e627b76 (snapshot y verificación dirigida), e034fbf44e8795170ebae1e3a6293db0b17b50e7 (ajuste de aserción de reserva).
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó WRITE ni se modificaron Sheets/Drive productivos.
 
 ## Siguiente trabajo
-Continuar GP-PERF-WRITE-CUT-LOCK-04B. Reutilizar una única lectura validada del ledger Idempotencia durante `handleAddOrUpdateCutLocked`: compartir el snapshot con `findRowByOpId` y `recordOpId`, evitar nuevas lecturas completas en cada fase y mantener verificación dirigida del opId después de append/update. Preservar detección de duplicados preexistentes en todo el ledger, asociación vehicleId/slotIndex, operationHash, transición monotónica pending/completed, rollback y compatibilidad A:E. No cambiar la política de idempotencia ni agregar locks/leases. No desplegar Apps Script ni modificar datos productivos.
+Continuar GP-PERF-WRITE-CUT-LOCK-05. Auditar `getNextCortesVehicleIdLocked`, que aún puede leer la tabla completa para asignar ID y detectar filas incompletas. Determinar si puede escanear la columna ID y leer únicamente filas con ID vacío para comprobar datos/fórmulas, preservando detección de IDs duplicados/corruptos, filas con fórmulas, monotonicidad del siguiente ID y rollback. No sustituir por un contador de PropertiesService sin demostrar consistencia frente a altas concurrentes y edición manual. Medir llamadas y rangos antes de cambiar. No desplegar Apps Script ni modificar datos productivos.
 
 ## Restricciones
 - Trabajar únicamente en GPSpedia2.2.5_work.
@@ -77,3 +79,6 @@ Siguiente paso P0: auditar y reducir lecturas restantes dentro del ScriptLock de
 
 
 2026-11-19 — Cierre fast path Idempotencia: HEAD 125cb7c5ec8fb3e8a05c1e04c6680fcbf50fcf54; CI 44618414190 SUCCESS (173 suites, 2,370 pruebas, 0 fallos; IdempotenciaSheetLookupFastPath 6/6); health 44618414220 SUCCESS; Pages 44618411994 SUCCESS. La hoja A:F compatible ya no se reinicializa ni valida integralmente en cada get; los callsites siguen validando el ledger explícitamente. Próximo paso: reutilizar snapshot por operación.
+
+
+2026-11-19 — Cierre snapshot Idempotencia: HEAD funcional e034fbf44e8795170ebae1e3a6293db0b17b50e7; CI 44619301598 SUCCESS (174 suites, 2,379 pruebas, 0 fallos; WriteIdempotencySnapshotReuse 9/9); health 44619301575 SUCCESS; Pages 44619301580 SUCCESS. El handler realiza una validación integral del ledger por operación y usa verificaciones dirigidas en las fases de escritura. Próximo paso: auditar el asignador de IDs de Cortes.

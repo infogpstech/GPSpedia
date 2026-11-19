@@ -552,3 +552,15 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] CI 44618414190 SUCCESS: 173 suites, 2,370 pruebas aprobadas, 0 fallos.
 - [x] Health read-only 44618414220 SUCCESS; GitHub Pages 44618411994 SUCCESS.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó WRITE ni se modificaron Sheets/Drive productivos.
+
+### WRITE — reutilización del snapshot Idempotencia por operación (2026-11-19)
+- [x] Leer y validar el ledger completo una sola vez al entrar en la sección crítica de addOrUpdateCut.
+- [x] Compartir el snapshot con findRowByOpId y recordOpId; evitar nuevas lecturas integrales en esas fases.
+- [x] Verificar el opId afectado mediante TextFinder en la columna A y lectura de su fila; detectar duplicados incluso con espacios.
+- [x] Actualizar el snapshot tras append/update y mantener pending/completed monotónico.
+- [x] Mantener rollback sobre la hoja efectiva primaria/fallback y snapshot previo de la fila.
+- [x] Añadir WriteIdempotencySnapshotReuse: 9/9 PASS.
+- [x] CI 44619301598 SUCCESS: 174 suites, 2,379 pruebas aprobadas, 0 fallos.
+- [x] Health read-only 44619301575 SUCCESS; GitHub Pages 44619301580 SUCCESS.
+- Nota: el primer intento CI detectó una aserción de prueba desactualizada tras ampliar la firma de recordOpId; se corrigió el contrato de prueba y la ejecución final pasó.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó WRITE ni se modificaron Sheets/Drive productivos.
