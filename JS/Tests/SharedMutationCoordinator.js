@@ -19,7 +19,7 @@ function runSharedMutationCoordinatorTests() {
         if (expectedText) assert_(String(thrown.message || thrown).includes(expectedText), "Error inesperado: " + String(thrown.message || thrown));
     }
 
-    function createRuntime_(sleepHook, fetchHook) {
+    function createRuntime_(sleepHook, fetchHook, fetchAllHook) {
         const store = {};
         let clock = 1700000000000;
         let sequence = 0;
@@ -37,7 +37,7 @@ function runSharedMutationCoordinatorTests() {
         };
         const secrets = {
             ADMIN: "A".repeat(40), WRITE: "W".repeat(40), FEEDBACK: "F".repeat(40),
-            AUTH: "H".repeat(40), USERS: "U".repeat(40), UTILITIES: "T".repeat(40)
+            AUTH: "H".repeat(40), USERS: "U".repeat(40), UTILITIES: "T".repeat(40), CATALOG: "C".repeat(40)
         };
         Object.keys(secrets).forEach(service => properties.setProperty("GPSpedia_COORDINATOR_SECRET_" + service, secrets[service]));
         const coordinator = createSharedMutationCoordinator_({
@@ -46,7 +46,8 @@ function runSharedMutationCoordinatorTests() {
             now: () => clock,
             uuid: uuid,
             sleep: milliseconds => { clock += milliseconds; if (typeof sleepHook === "function") sleepHook(milliseconds); },
-            fetch: fetchHook
+            fetch: fetchHook,
+            fetchAll: fetchAllHook
         });
 
         function request(action, service, operation, extra) {
@@ -914,6 +915,61 @@ function runSharedMutationCoordinatorTests() {
         }), "expiró");
     });
 
+
+    test_("Coordinator centraliza los cinco contadores directos y conserva los siete servicios", function() {
+        const services = ["CATALOG", "AUTH", "USERS", "WRITE", "FEEDBACK"];
+        const r = createRuntime_(null, null, requests => requests.map(request => {
+            const service = services.find(name => request.url.includes("/" + name + "/"));
+            const count = 2;
+            const startAt = Math.floor(1700000000000 / (60 * 60 * 1000)) * (60 * 60 * 1000);
+            return {
+                getResponseCode: () => 200,
+                getContentText: () => JSON.stringify({
+                    status: "success", service,
+                    scope: service === "CATALOG" ? "catalog_post_requests" : "direct_post_requests",
+                    accuracy: "best_effort_nonblocking",
+                    buckets: [{ startAt, count }],
+                    totals: { lastHour: count, last6Hours: count, last24Hours: count }
+                })
+            };
+        }));
+        services.forEach(service => {
+            r.properties.setProperty("GPSpedia_SERVICE_URL_" + service, "https://script.google.com/macros/s/" + service + "/exec");
+            r.properties.setProperty("GPSpedia_COORDINATOR_SECRET_" + service, r.secrets[service]);
+        });
+        acquire_(r, "AUTH", "login", "traffic-central-auth-0001");
+        r.coordinator.getPublicCatalogChanges({ cursor: 0, limit: 10 });
+        r.request("getCatalogChanges", "FEEDBACK", "getCatalogChanges", { cursor: 0, limit: 10 });
+        const traffic = r.request("getServiceTraffic", "ADMIN", "getServiceTraffic");
+        assert_(traffic.scope === "global_service_traffic", "Coordinator debe devolver el agregado global final.");
+        assert_(traffic.services.length === 7 && !traffic.services.includes("LEGACY"),
+            "El inventario debe incluir los siete servicios activos y excluir LEGACY.");
+        assert_(traffic.totals.last24Hours.AUTH === 3, "AUTH debe combinar lease y contador directo.");
+        assert_(traffic.totals.last24Hours.CATALOG === 3, "CATALOG debe combinar feed Coordinator y contador directo.");
+        assert_(traffic.totals.last24Hours.FEEDBACK === 3, "FEEDBACK debe combinar feed interno y contador directo.");
+        assert_(traffic.totals.last24Hours.USERS === 2 && traffic.totals.last24Hours.WRITE === 2,
+            "USERS y WRITE deben sumar sus contadores directos.");
+        assert_(traffic.totals.last24Hours.UTILITIES === 0 && traffic.totals.last24Hours.ADMIN === 0,
+            "No se deben duplicar servicios sin contador directo.");
+        services.forEach(service => assert_(traffic.sources[service].directRequestsAvailable === true,
+            service + " debe confirmar su fuente directa."));
+        assert_(traffic.sources.CATALOG.feedRequests === "coordinator",
+            "El feed público debe conservar su atribución a Coordinator.");
+    });
+
+    test_("La falta de una fuente directa conserva el agregado y declara cobertura parcial", function() {
+        const r = createRuntime_();
+        r.properties.setProperty("GPSpedia_SERVICE_URL_AUTH", "https://script.google.com/macros/s/AUTH/exec");
+        r.properties.setProperty("GPSpedia_COORDINATOR_SECRET_AUTH", r.secrets.AUTH);
+        const traffic = r.request("getServiceTraffic", "ADMIN", "getServiceTraffic");
+        assert_(traffic.status === "success" && traffic.scope === "global_service_traffic",
+            "Un servicio sin configuración directa no debe romper la consulta global.");
+        assert_(traffic.sources.AUTH.directRequestsAvailable === false &&
+            traffic.sources.AUTH.reason === "not_configured",
+            "La fuente sin respuesta debe declararse parcial.");
+        assert_(traffic.totals.last24Hours.AUTH === 0,
+            "Una fuente no disponible no debe inventar conteos.");
+    });
 
     test_("La telemetría global cuenta leases por servicio y deduplica reintentos de requestId", function() {
         const r = createRuntime_();
