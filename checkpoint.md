@@ -1145,3 +1145,4 @@ ACTUALIZACIÓN DE CONTINUIDAD — 2026-11-19
 - No se ha desplegado WRITE ni Coordinator; la compatibilidad de despliegues se validará en CI estático y seguirá pendiente de despliegue autorizado.
 ================================================================================
 
+- CI 44557059621: 150 suites / 2,143 pruebas; las pruebas de versión y aislamiento pasaron. Falló CatalogChangeFeed porque la conversión legacy a reset no marcaba `resetRequired`; se ajusta el indicador para que los clientes hagan reconciliación completa.

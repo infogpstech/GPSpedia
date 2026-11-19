@@ -1290,6 +1290,7 @@ function createSharedMutationCoordinator_(dependencies) {
                 }
             }
             let sourceVersion = null;
+            let legacyWriteReset = false;
             if (source.sourceVersion !== undefined && source.sourceVersion !== null) {
                 sourceVersion = Number(source.sourceVersion);
                 if (service !== "WRITE" || collection !== "cortes" ||
@@ -1300,6 +1301,7 @@ function createSharedMutationCoordinator_(dependencies) {
                 // Publicaciones de una ejecución anterior a la versión del contrato:
                 // se convierten en reset para que no puedan sobrescribir snapshots nuevos.
                 collection = "*"; recordId = "*"; changeOperation = "reset"; snapshot = null;
+                legacyWriteReset = true;
             }
             const event = { collection, recordId, operation: changeOperation, snapshot,
                 createdAt: new Date(now()).toISOString(), sourceService: service, sourceOperation: operation };
@@ -1309,7 +1311,7 @@ function createSharedMutationCoordinator_(dependencies) {
                 event.batchIndex = index;
                 event.batchCount = changes.length;
             }
-            let serialized = JSON.stringify(event), resetRequired = false;
+            let serialized = JSON.stringify(event), resetRequired = legacyWriteReset;
             if (serialized.length > CATALOG_CHANGE_MAX_EVENT_LENGTH_) {
                 event.collection = "*"; event.recordId = "*"; event.operation = "reset"; event.snapshot = null;
                 serialized = JSON.stringify(event); resetRequired = true;
