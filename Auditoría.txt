@@ -515,3 +515,18 @@ Alcance: inspección estática de JS/Services/admin.js y sus contratos. No se ej
 - Prueba dinámica ampliada en AdminImageScanCoordinatorContract: usa el mapa real de COLS_CORTES y verifica rutas, nombres, tipos desconocidos, fórmulas, años incompletos, IDs compartidos y marcas ambiguas.
 - Estado: constructor puro IMPLEMENTADO y CI PASS. El endpoint dry-run que inspecciona archivos/rutas/referencias cruzadas y genera el manifiesto completo sigue pendiente. No se ejecutó ninguna operación real.
 ================================================================================
+
+
+================================================================================
+2026-11-19 — ENDPOINT DRY-RUN DEL ORGANIZADOR (BACKEND)
+================================================================================
+- Se incorporó la acción ADMIN previewCortesImageOrganizer, registrada como lectura compartida en ADMIN/Coordinator y en el mapa de api-config.
+- El endpoint exige sesión Desarrollador y una auditoría Drive completa, vigente (máximo seis horas), de la misma sesión y coincidente con la última auditoría del usuario.
+- Contrasta el inventario completo con metadatos y rutas, verifica que los archivos no hayan cambiado desde la auditoría, conserva la extensión original, inspecciona rutas destino sin crearlas, detecta carpetas ambiguas, colisiones de nombre y colisiones entre destinos calculados.
+- Contrasta referencias activas de todas las hojas; excluye el historial de reemplazadas como referencia activa, pero bloquea archivos incluidos en ese historial. Bloquea referencias compartidas, referencias adicionales, inventario incompleto y destinos ambiguos.
+- La respuesta es paginada por destinos (25 por defecto, máximo 50), devuelve estados ready/already_correct/blocked, razones, rutas y nombres, resumen, digest y writePerformed:false/canApply:false.
+- Se corrigió la persistencia de folderPath en metadatos de auditoría. Una auditoría anterior que no contenga rutas no sirve para este preview; se requiere una auditoría nueva después de desplegar el servicio actualizado.
+- Se añadió protección contra dos destinos que propongan el mismo nombre dentro de la misma carpeta.
+- CI HEAD 6e43666b69ff20b7945f5ebe7b7745a7758ce8d0: 146 suites, 2,157 pruebas aprobadas, 0 fallos; health read-only y Pages SUCCESS.
+- La interfaz ui.js todavía no invoca ni presenta este endpoint. No se desplegó Apps Script y no se ejecutaron operaciones reales de Drive/Spreadsheet.
+================================================================================
