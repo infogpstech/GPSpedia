@@ -2962,27 +2962,40 @@ function findRowByOpId(sheet, opId) {
         };
     }
 
-    if (cortesSheet.getLastRow() <= 1) return null;
-    const data = cortesSheet.getDataRange().getValues();
-    const headers = data[0] || [];
-    const vinColumn = headers.findIndex(header => String(header || "").trim().toLowerCase() === "vin") + 1;
-    const operationColumns = [];
-    headers.forEach((header, index) => {
-        const normalized = String(header || "").trim().toLowerCase();
-        const legacyVinColumn = vinColumn > 0 && index + 1 === vinColumn &&
-            data.slice(1).some(row => /^OP-[A-Za-z0-9_-]{1,100}$/.test(String(row[index] || "").trim()));
-        if (normalized.includes("idoperacion") || normalized.includes("id_operacion") || legacyVinColumn) {
-            operationColumns.push(index);
-        }
-    });
+    const lastRow = cortesSheet.getLastRow();
+    const lastColumn = cortesSheet.getLastColumn();
+    if (lastRow <= 1 || lastColumn < 1) return null;
+    const headers = cortesSheet.getRange(1, 1, 1, lastColumn).getValues()[0] || [];
+
+    // TextFinder ejecuta la búsqueda en Sheets y devuelve solo celdas coincidentes;
+    // evita descargar y recorrer todas las filas/columnas con getDataRange().getValues().
+    const searchRange = cortesSheet.getRange(2, 1, lastRow - 1, lastColumn);
+    const finder = searchRange.createTextFinder(cleanOpId);
+    finder.matchCase(true);
+    finder.matchEntireCell(false);
+    finder.useRegularExpression(false);
+    if (typeof finder.matchFormulaText === "function") finder.matchFormulaText(false);
+    const foundRanges = finder.findAll() || [];
 
     const directMatches = [];
-    data.slice(1).forEach((row, offset) => {
-        operationColumns.forEach(column => {
-            if (String(row[column] || "").trim() === cleanOpId) {
-                directMatches.push({ rowIndex: offset + 2, rowValues: row, colIndex: column + 1 });
-            }
-        });
+    const taggedMatches = [];
+    foundRanges.forEach(range => {
+        const rowIndex = range.getRow();
+        if (rowIndex < 2) return;
+        const colIndex = range.getColumn();
+        const value = range.getValue();
+        const normalizedHeader = String(headers[colIndex - 1] || "").trim().toLowerCase();
+        const isOperationColumn = normalizedHeader.includes("idoperacion") ||
+            normalizedHeader.includes("id_operacion") ||
+            (normalizedHeader === "vin" && /^OP-[A-Za-z0-9_-]{1,100}$/.test(String(value || "").trim()));
+
+        if (String(value || "").trim() === cleanOpId && isOperationColumn) {
+            directMatches.push({ rowIndex: rowIndex, colIndex: colIndex });
+        }
+        if (typeof value === "string" &&
+            (value === cleanOpId || value.includes("[" + cleanOpId + "]"))) {
+            taggedMatches.push({ rowIndex: rowIndex, colIndex: colIndex });
+        }
     });
 
     let match = null;
@@ -2993,15 +3006,6 @@ function findRowByOpId(sheet, opId) {
     if (directMatches.length === 1) {
         match = directMatches[0];
     } else {
-        const taggedMatches = [];
-        data.slice(1).forEach((row, offset) => {
-            row.forEach((value, column) => {
-                if (typeof value === "string" &&
-                    (value === cleanOpId || value.includes("[" + cleanOpId + "]"))) {
-                    taggedMatches.push({ rowIndex: offset + 2, rowValues: row, colIndex: column + 1 });
-                }
-            });
-        });
         if (taggedMatches.length > 1) {
             throw new Error("El opId heredado " + cleanOpId +
                 " aparece en varias celdas de Cortes; no se eligió ni limpió ninguna coincidencia.");
@@ -3010,7 +3014,7 @@ function findRowByOpId(sheet, opId) {
     }
 
     if (!match) return null;
-    const vehicleId = match.rowValues[COLS_CORTES.id - 1];
+    const vehicleId = cortesSheet.getRange(match.rowIndex, COLS_CORTES.id).getValue();
     const unique = findUniqueCortesVehicleRow_(cortesSheet, vehicleId, cleanOpId);
     if (unique.rowIndex !== match.rowIndex) {
         throw new Error("La fila heredada del opId " + cleanOpId + " no coincide con la única fila de su vehicleId.");
@@ -3027,7 +3031,6 @@ function findRowByOpId(sheet, opId) {
         fromIdempotenciaSheet: false
     };
 }
-
 function handleCheckOperation(payload) {
     const { opId } = payload || {};
     if (!opId) throw new Error("ID de operación requerido.");
