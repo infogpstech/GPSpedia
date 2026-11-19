@@ -2170,3 +2170,70 @@ git rev-parse HEAD
 - Registrar como prueba Beta satisfactoria según la observación del usuario.
 - No ampliar el alcance ni declarar validaciones adicionales no realizadas.
 ================================================================================
+
+
+================================================================================
+2026-11-18 — NUEVOS HALLAZGOS Y REQUISITOS BETA: MODAL DE CORTE, INBOX Y AUDITORÍA DE IMÁGENES
+================================================================================
+
+### BETA-CUT-MODAL-IMAGE-CONTAINER-PADDING-01 — Espacio interno innecesario en el contenedor de imagen
+**Estado: REPORTE VISUAL · PENDIENTE DE REPRODUCCIÓN Y CORRECCIÓN.**
+- El contenedor de la imagen del modelo en el modal de detalle de corte presenta espacio interno horizontal y vertical que reduce el área útil de visualización.
+- Reducir el padding al mínimo indispensable o eliminarlo si no cumple una función de diseño.
+- Preservar proporciones de imagen y distribución del encabezado, logo, nombre del modelo y botones de acción.
+- Criterio de cierre: contenedor compacto, imagen correctamente presentada y sin desplazamientos ni desbordamientos en escritorio y móvil.
+
+### BETA-INBOX-SHARED-COORDINATOR-AUTH-01 — Servicio Inbox no autorizado para el coordinador compartido
+**Estado: REPORTE FUNCIONAL · PENDIENTE DE DIAGNÓSTICO.**
+- Al consultar Inbox aparece: «Servicio no autorizado para el coordinador compartido».
+- Investigar autenticación y autorización entre Inbox, servicio consumidor y Coordinator: identidad del servicio, token/credenciales, permisos, contexto de sesión/rol, registro de servicios autorizados y contrato de respuesta.
+- Determinar si el error es independiente o coincide con la ejecución simultánea de la auditoría de imágenes.
+- Criterio de cierre: Inbox accesible para roles autorizados, sin ampliar privilegios ni debilitar la validación.
+
+### BETA-ADMIN-IMAGE-AUDIT-CONCURRENCY-01 — Posible interferencia de la auditoría con otras funciones
+**Estado: INVESTIGACIÓN PENDIENTE.**
+- Verificar si la auditoría de imágenes sin uso bloquea, limita o altera funciones de la plataforma, especialmente Inbox y operaciones que utilizan Coordinator.
+- Revisar locks, leases, exclusión mutua, duración, liberación ante errores y aislamiento entre tareas.
+- Criterio de cierre: la auditoría no impide operaciones independientes ni deja bloqueos/leases residuales; cualquier exclusión necesaria debe estar delimitada.
+
+### BETA-ADMIN-CUT-IMAGE-AUDIT-COVERAGE-01 — Cobertura y comparación completa de referencias
+**Estado: REQUISITO FUNCIONAL · PENDIENTE DE VERIFICACIÓN.**
+- Recorrer todos los archivos de imagen de la carpeta de cortes y todos sus subdirectorios.
+- Comparar cada archivo contra las referencias de imágenes de todas las hojas de la Spreadsheet, excluyendo únicamente la hoja destinada al registro de imágenes reemplazadas al determinar el uso vigente.
+- Normalizar nombres, rutas e identificadores; evitar falsos positivos por mayúsculas, separadores, codificación o URL.
+- Criterio de cierre: cobertura demostrable de carpetas y hojas; ningún archivo se clasifica sin uso mientras conserve una referencia vigente válida.
+
+### BETA-ADMIN-CUT-IMAGE-LIBRARY-INVENTORY-01 — Inventario gestionable de imágenes sin uso
+**Estado: REQUISITO FUNCIONAL · PENDIENTE DE IMPLEMENTACIÓN/VALIDACIÓN.**
+Cada imagen sin referencia vigente debe generar un registro consultable desde la biblioteca con:
+- Nombre del archivo.
+- Fecha de creación, si el almacenamiento la expone; si no está disponible, indicarlo expresamente.
+- Tamaño del archivo.
+- Directorio y ruta relativa completa.
+- Enlace público o URL de visualización utilizable por la plataforma.
+- Modelo relacionado, nivel de confianza y criterio utilizado.
+- Nombre/enlace de la imagen vigente relacionada, cuando se identifique.
+- Estado y procedencia: «Sin uso» o «Reemplazada».
+Ejemplo: Cortes/SUV/Toyota/Prado/LTX/2024-2027/toyota_prado_ltx_boton_imagenVehiculo.png
+- La biblioteca debe permitir visualizar y gestionar los registros. La detección no debe borrar, mover ni modificar archivos automáticamente.
+- Criterio de cierre: inventario persistente, trazable y visible, con campos no disponibles identificados explícitamente.
+
+### BETA-ADMIN-CUT-IMAGE-VEHICLE-MATCH-01 — Relación inteligente entre imagen y modelo
+**Estado: REQUISITO FUNCIONAL · PENDIENTE DE IMPLEMENTACIÓN/VALIDACIÓN.**
+- Identificar el modelo utilizando primero el nombre del archivo y después la estructura de carpetas como contexto complementario.
+- Interpretar marca/modelo, año o rango, tipo de encendido y tipo de corte/función.
+- Ejemplo: para toyota_prado_btn_2024_ign.jpg, buscar en la hoja de cortes la fila con coincidencia más precisa de Toyota Prado, año 2024, botón y encendido.
+- Aplicar normalización de tokens y puntuación de coincidencia que priorice atributos específicos; no asociar por coincidencia parcial genérica.
+- Si el nombre no basta, usar la ruta (por ejemplo, Cortes/SUV/Toyota/Prado/) y contrastar candidatos con la hoja de cortes.
+- Registrar método, candidato y confianza. Si hay coincidencias equivalentes o insuficientes, dejar el caso para revisión manual.
+- Criterio de cierre: asociación explicable y reproducible, con ambigüedad explícita.
+
+### BETA-ADMIN-CUT-IMAGE-REPLACEMENT-LINK-01 — Identificación de imagen vigente relacionada y clasificación
+**Estado: REQUISITO FUNCIONAL · PENDIENTE DE IMPLEMENTACIÓN/VALIDACIÓN.**
+- Tras identificar el modelo y registro probable, buscar si la fila de cortes contiene otra imagen asociada al mismo vehículo/versión.
+- Comparar marca/modelo, año, encendido, tipo de corte, nombre y estructura de carpetas.
+- Guardar nombre y enlace de la imagen relacionada como referencia.
+- Clasificar «Reemplazada» solo si existe evidencia suficiente de una imagen sustituta vigente. Si no se demuestra, usar «Sin uso»; los casos ambiguos quedan pendientes de revisión.
+- Criterio de cierre: estado y relación respaldados por datos de Spreadsheet/Drive; ninguna eliminación automática.
+
+================================================================================
