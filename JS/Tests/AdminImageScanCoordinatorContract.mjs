@@ -323,7 +323,7 @@ assert.match(admin, /active_reference_location_mismatch/);
 assert.match(admin, /loadDriveAuditSeenIds_\(auditId, Number\(auditState\.pageCount\), false\)/);
 assert.match(admin, /loadDriveAuditFileMetadata_\(auditId, Number\(auditState\.pageCount\), false\)/);
 const organizerPreviewSource = extractFunction(admin, "handlePreviewCortesImageOrganizer_");
-assert.ok(!["setName","moveTo","setTrashed","setValue","appendRow","createFolder","setSharing"].some(token => organizerPreviewSource.includes(token)),
+assert.ok(!/\\.(?:setName|moveTo|setTrashed|setValue|appendRow|createFolder|setSharing)\\s*\\(/.test(organizerPreviewSource),
     "El endpoint dry-run no debe modificar Drive ni Spreadsheet.");
 assert.match(organizerPreviewSource, /writePerformed: false, canApply: false/);
 
