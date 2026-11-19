@@ -3,7 +3,7 @@
 // No accede a Spreadsheet ni Drive. El estado de leases vive en ScriptProperties.
 // ============================================================================
 
-const SHARED_MUTATION_COORDINATOR_VERSION = "1.4.0";
+const SHARED_MUTATION_COORDINATOR_VERSION = "1.4.1";
 const SHARED_MUTATION_LEASES_PROPERTY = "GPSpedia_SHARED_MUTATION_LEASES";
 const SHARED_MUTATION_LEASE_TTL_MS = 45 * 60 * 1000;
 const SHARED_MUTATION_DRAIN_RESERVATION_TTL_MS = 60 * 1000;
