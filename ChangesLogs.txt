@@ -665,3 +665,12 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - CI HEAD bb3f3a1fcf47d328f1ab51a4ab5dc3a93e2e3807: 146 suites, 2,157 pruebas aprobadas, 0 fallos; health y Pages SUCCESS.
 - Siguiente paso: desplegar ADMIN, generar una auditoría nueva y comprobar el preview con los datos reales. No se movieron ni renombraron archivos.
 ================================================================================
+
+
+================================================================================
+2026-11-18 — Normalización de códigos funcionales del organizador de imágenes
+- JS/Services/admin.js: los campos imgCorte1/2/3 numeran cada imagen según su tipo real: ign1..ign3, bomba1..bomba3 y btn1..btn3. Se elimina el caso especial que dejaba btn sin número.
+- JS/Services/admin.js: imgCableAlimen, imgCableAlimen2 e imgCableAlimen3 pasan a alim1, alim2 y alim3. imgApertura conserva apert; imagenVehiculo conserva su identificador funcional.
+- JS/Tests/AdminImageScanCoordinatorContract.mjs: se agregan pruebas de las tres posiciones para cada familia de corte y se verifican las tres alimentaciones y apertura.
+- No se modificaron URLs, filas de Spreadsheet, archivos de Drive, carpetas ni deployments. Validación CI del nuevo commit pendiente.
+================================================================================
