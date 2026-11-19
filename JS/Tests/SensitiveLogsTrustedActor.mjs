@@ -196,4 +196,26 @@ test("la limpieza de ActividadUsuario usa actor cacheado y RBAC Desarrollador si
     assert.match(feedback,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "FEEDBACK" \}\)/);
     assert.doesNotMatch(feedback.slice(feedback.indexOf("function doPost(e)"),feedback.indexOf("\nconst RICH_TEXT_MODE_PROPERTY_")),/withSharedMutationLease_/);
 });
+test("distingue una hoja sin registros de una revisión sin datos confidenciales", () => {
+    const noMatches = createHarness();
+    noMatches.rows.splice(2, 1);
+    const unchanged = noMatches.handler({
+        userId: "DEV-1",
+        __sharedSessionActor: { userId: "DEV-1", role: "Desarrollador", epoch: 7 }
+    });
+    assert.equal(unchanged.status, "success");
+    assert.equal(unchanged.scannedCount, 2);
+    assert.equal(unchanged.deletedCount, 0);
+    assert.match(unchanged.message, /no se encontraron datos confidenciales/i);
+
+    const empty = createHarness();
+    empty.rows.splice(1);
+    const noRows = empty.handler({
+        userId: "DEV-1",
+        __sharedSessionActor: { userId: "DEV-1", role: "Desarrollador", epoch: 7 }
+    });
+    assert.equal(noRows.scannedCount, 0);
+    assert.equal(noRows.deletedCount, 0);
+    assert.match(noRows.message, /no hay registros/i);
+});
 console.log("SensitiveLogsTrustedActor: " + passed + "/" + passed + " PASS");
