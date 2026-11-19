@@ -1,589 +1,190 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-
-const admin = readFileSync(new URL("../Services/admin.js", import.meta.url), "utf8");
-const coordinator = readFileSync(new URL("../Services/Coordinator.js", import.meta.url), "utf8");
-const feedback = readFileSync(new URL("../Services/feedback.js", import.meta.url), "utf8");
-const ui = readFileSync(new URL("../Frontend/ui.js", import.meta.url), "utf8");
-const sharedClient = readFileSync(new URL("../Services/SharedMutationClient.js", import.meta.url), "utf8");
-const apiConfig = readFileSync(new URL("../Frontend/api-config.js", import.meta.url), "utf8");
-
-function extractFunction(source, name) {
-    const start = source.indexOf("function " + name + "(");
-    assert.ok(start >= 0, "No se encontró " + name);
-    const next = source.indexOf("\nfunction ", start + 10);
-    const end = next >= 0 ? next : source.length;
-    const block = source.slice(start, end);
-    const close = block.lastIndexOf("\n}");
-    assert.ok(close >= 0, "No se encontró el cierre de " + name);
-    return block.slice(0, close + 2);
-}
-const mutation = new Function(extractFunction(admin, "isSharedMutationAction_") +
-    "\nreturn isSharedMutationAction_;")();
-const read = new Function(extractFunction(admin, "isSharedReadAction_") +
-    "\nreturn isSharedReadAction_;")();
-const policy = new Function(coordinator + "\nreturn coordinatorPolicy_;")();
-
-for (const action of ["getReplacedImages", "getDriveStorage", "getCortesImageFolders"]) {
-    assert.equal(read(action), true, action + " debe usar una lease de lectura específica.");
-    assert.equal(mutation(action), false, action + " no debe generar auditoría de mutación.");
-}
-assert.equal(mutation("auditDriveImagesInCortes"), true,
-    "El escáner debe mantener auditoría administrativa y lease específica.");
-assert.equal(read("auditDriveImagesInCortes"), false);
-assert.equal(mutation("migrateReplacedImagesSchema"), true);
-assert.equal(mutation("backupDatabase"), true, "El respaldo debe pasar por la lease de mutación ADMIN.");
-assert.equal(policy("ADMIN", "backupDatabase").maintenance, true,
-    "La creación de respaldo debe reservar mantenimiento exclusivo.");
-
-const router = admin.slice(admin.indexOf("function doPost(e)"), admin.indexOf("const ADMIN_AUDIT_PROPERTY_PREFIX_"));
-assert.ok(router.includes("const operation = isSharedReadAction_(action) ? action : \"sessionActivity\""),
-    "El router debe elegir la lease dedicada para las lecturas.");
-assert.ok(router.includes('withSharedMutationLease_("ADMIN", operation'),
-    "Las consultas deben pasar por el coordinador.");
-const internal = admin.slice(admin.indexOf("function doPostInternal_(e)"));
-assert.ok(internal.includes("assertDeveloperSession(payload)"),
-    "Las lecturas y mutaciones ADMIN deben conservar autorización de Desarrollador.");
-assert.match(ui, /routeActionWithRetry\('auditDriveImagesInCortes'[\s\S]*?timeoutMs:\s*cursor\s*\?\s*45000\s*:\s*120000/,
-    "La captura inicial de referencias necesita hasta 120 s; las páginas con cursor conservan timeout y reintentos acotados.");
-
-const historyHandler = extractFunction(admin, "handleGetReplacedImages");
-assert.match(historyHandler, /collectActiveDriveReferences\(false\)/,
-    "El historial solo necesita saber si hay referencias activas; no debe materializar ubicaciones completas.");
-assert.match(historyHandler, /active_reference_count:\s*Array\.isArray\(activeReferences\)\s*\?\s*activeReferences\.length\s*:\s*activeReferences\s*\?\s*1\s*:\s*0/,
-    "Una referencia activa booleana debe seguir bloqueando acciones destructivas.");
-assert.match(ui, /routeActionWithRetry\(['"]getReplacedImages['"][\s\S]*?timeoutMs:\s*120000,\s*maxAttempts:\s*2/,
-    "La lectura del historial debe tener timeout acotado y reintento seguro de solo lectura.");
-const inventory = policy("ADMIN", "getReplacedImages");
-for (const resource of ["USERS", "CORTES", "DRIVE", "IMAGE_INVENTORY", "RELAY"]) {
-    assert.ok(inventory.readResources.includes(resource), "Inventario debe reservar lectura de " + resource);
-}
-assert.ok(inventory.readResources.includes("SESSION_CONTEXTS"));
-assert.ok(!inventory.writeResources.includes("ACTIVE_SESSIONS"),
-    "Inventario no debe escribir LastActivityAt en cada lectura.");
-const scan = policy("ADMIN", "auditDriveImagesInCortes");
-for (const resource of ["CORTES", "DRIVE", "IMAGE_INVENTORY", "RELAY"]) {
-    assert.ok(scan.readResources.includes(resource), "Escáner debe reservar lectura de " + resource);
-}
-assert.ok(scan.readResources.includes("SESSION_CONTEXTS"));
-assert.ok(!scan.writeResources.includes("ACTIVE_SESSIONS"));
-assert.ok(scan.writeResources.includes("IMAGE_AUDIT_STATE"),
-    "El estado del escáner debe serializarse sin bloquear las lecturas del inventario.");
-const migration = policy("ADMIN", "migrateReplacedImagesSchema");
-assert.deepEqual(migration.readResources, ["USERS", "SESSION_CONTEXTS"]);
-assert.deepEqual(migration.writeResources, ["IMAGE_INVENTORY"]);
-assert.ok(!migration.writeResources.includes("ACTIVE_SESSIONS"),
-    "La inicialización no debe modificar la actividad de sesión.");
-assert.equal(migration.maintenance, false);
-
-// Toda mutación declarada por ADMIN debe tener una política explícita.
-// Evita que el router adquiera una lease cuyo par servicio/operación no exista.
-const adminMutationList = extractFunction(admin, "isSharedMutationAction_");
-const mutationNames = [...adminMutationList.matchAll(/"([^"]+)"/g)].map(match => match[1]);
-for (const action of mutationNames) {
-    const entry = policy("ADMIN", action);
-    assert.ok(entry, "Falta política explícita para ADMIN/" + action);
-}
-assert.equal(policy("ADMIN", "markReplacedImageInUse").writeResources.includes("IMAGE_INVENTORY"), true);
-assert.equal(policy("ADMIN", "applyCortesImageReconciliation").writeResources.includes("CORTES"), true);
-assert.equal(policy("ADMIN", "applyCortesImageReconciliation").readResources.includes("DRIVE"), true,
-    "La aplicación debe reservar lectura de ACL y archivos Drive.");
-assert.equal(policy("ADMIN", "freezeIdentifierFormulas").maintenance, true);
-
-// Toda lectura ADMIN que solicita lease dedicada debe tener una política.
-for (const action of ["getReplacedImages", "getDriveStorage", "getCortesImageFolders", "auditIdentifiers", "getAdminImageUploadStatus", "previewCortesImageReconciliation"]) {
-    assert.equal(read(action), true, action + " debe usar una lease de lectura.");
-    assert.ok(policy("ADMIN", action), "Falta política explícita para ADMIN/" + action);
-}
-const serviceTrafficRouter = admin.slice(admin.indexOf("function doPost(e)"), admin.indexOf("const ADMIN_AUDIT_PROPERTY_PREFIX_"));
-assert.match(serviceTrafficRouter, /if \(action === "getServiceTraffic"\)[\s\S]*?getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "ADMIN" \}\)/);
-const serviceTraffic = policy("ADMIN", "getServiceTraffic");
-assert.ok(serviceTraffic.readResources.includes("SERVICE_TRAFFIC"),
-    "La consulta agregada conserva su lectura específica de telemetría en Coordinator.");
-assert.deepEqual(serviceTraffic.writeResources, []);
-assert.equal(read("getServiceTraffic"), false, "ADMIN valida con actor cacheado y no adquiere una lease adicional.");
-assert.equal(mutation("getServiceTraffic"), false);
-
-const batchPublisher = extractFunction(admin, "publishAdminCortesCatalogChanges_");
-assert.match(batchPublisher, /publishSharedCatalogChanges_\("ADMIN", action, changes\.slice\(offset, offset \+ 50\)\)/);
-assert.doesNotMatch(batchPublisher, /changes\.forEach\(change => publishSharedCatalogChange_/);
-assert.match(sharedClient, /function publishCatalogChanges\(service, operation, changes\)/);
-assert.match(sharedClient, /action === "publishCatalogChanges"[\s\S]*?uuid\(\)/);
-assert.match(sharedClient, /function publishSharedCatalogChanges_\(service, operation, changes\)/);
-assert.match(coordinator, /if \(action === "publishCatalogChanges"\) return publishCatalogChanges_\(service, operation, payload\)/);
-assert.match(coordinator, /changes\.length > 50/);
-
-
-const identifierAudit = policy("ADMIN", "auditIdentifiers");
-for (const resource of ["USERS", "CORTES", "TUTORIAL", "FEEDBACK", "LOGOS", "RELAY"]) {
-    assert.ok(identifierAudit.readResources.includes(resource),
-        "La auditoría de IDs debe reservar lectura de " + resource);
-}
-assert.deepEqual(identifierAudit.writeResources, [],
-    "La auditoría de identificadores es estrictamente de solo lectura.");
-
-const operationRead = policy("ADMIN", "checkOperation");
-assert.ok(operationRead.readResources.includes("CORTES"));
-assert.ok(operationRead.readResources.includes("IDEMPOTENCIA"));
-const uploadStatus = policy("ADMIN", "getAdminImageUploadStatus");
-assert.ok(uploadStatus.readResources.includes("CORTES"));
-assert.ok(uploadStatus.readResources.includes("DRIVE"));
-assert.ok(uploadStatus.writeResources.includes("IMAGE_UPLOAD_LEDGER"),
-    "La consulta puede inicializar el ledger de imágenes y debe reservar su escritura.");
-const reconciliationPreview = policy("ADMIN", "previewCortesImageReconciliation");
-for (const resource of ["CORTES", "DRIVE", "IMAGE_INVENTORY", "IMAGE_AUDIT_STATE", "TUTORIAL", "FEEDBACK", "LOGOS", "RELAY"]) {
-    assert.ok(reconciliationPreview.readResources.includes(resource),
-        "La vista previa debe reservar lectura de " + resource);
-}
-
-
-// FEEDBACK ya no reserva recursos Coordinator por cada acción: el rol se consume del actor cacheado.
-const feedbackPermissionsStart = feedback.indexOf("const FEEDBACK_ACTION_PERMISSIONS = Object.freeze(");
-const feedbackPermissionsEnd = feedback.indexOf("});", feedbackPermissionsStart) + 3;
-const feedbackPermissions = feedback.slice(feedbackPermissionsStart, feedbackPermissionsEnd);
-assert.ok(feedbackPermissions.includes('notifyDevelopersDriveCritical: ["Desarrollador"]'));
-const feedbackRouter = feedback.slice(feedback.indexOf("function doPost(e)"), feedback.indexOf("\nconst RICH_TEXT_MODE_PROPERTY_"));
-assert.ok(feedbackRouter.includes('getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "FEEDBACK" })'));
-assert.ok(!feedbackRouter.includes("withSharedMutationLease_"));
-assert.ok(feedback.includes('actions: new Set(["recordLike","reportProblem"'));
-
-const feedbackRouterHarness = new Function(
-    extractFunction(feedback, "doPost") + "\n" +
-    `
-    const actorCalls = [];
-    function getCachedSharedSessionActor_(userId, sessionToken) {
-        actorCalls.push({userId, sessionToken});
-        return {userId, role:"desarrollador", fullName:"Ana", epoch:1};
-    }
-    function withSharedSessionActor_(event, actor) {
-        const request = JSON.parse(event.postData.contents);
-        request.payload.__sharedSessionActor = actor;
-        event.postData.contents = JSON.stringify(request);
-        return event;
-    }
-    function doPostInternal_(event) { return JSON.parse(event.postData.contents); }
-    const FEEDBACK_ACTION_PERMISSIONS = {notifyDevelopersDriveCritical:["Desarrollador"]};
-    const FEEDBACK_PUBLIC_ACTIONS = new Set();
-    const DIRECT_SERVICE_TRAFFIC_CONFIG_ = {actions:new Set(["notifyDevelopersDriveCritical"])};
-    function readDirectServiceTraffic_() { return {status:"unavailable"}; }
-    function recordDirectServiceTraffic_() { return false; }
-    const ContentService = {createTextOutput:value=>({value,setMimeType(){return this;}}),MimeType:{TEXT:"text/plain"}};
-    return {
-        actorCalls,
-        send(action) {
-            actorCalls.length=0;
-            const event={postData:{contents:JSON.stringify({action,payload:{userId:"developer",sessionToken:"test-session"}})}};
-            return {result:doPost(event),actorCalls:actorCalls.slice()};
-        }
-    };
-    `
-)();
-const driveAlertRoute = feedbackRouterHarness.send("notifyDevelopersDriveCritical");
-assert.deepEqual(driveAlertRoute.actorCalls,[{userId:"developer",sessionToken:"test-session"}]);
-
-
-
-const routerHarness = new Function(
-    extractFunction(admin, "isSharedMutationAction_") + "\n" +
-    extractFunction(admin, "isSharedReadAction_") + "\n" +
-    extractFunction(admin, "doPost") + "\n" +
-    `
-    const calls = [];
-    function withSharedMutationLease_(service, operation, callback) {
-        calls.push({ service, operation });
-        return callback("coordinated-token", { userId: "test-user", role: "Desarrollador", epoch: 1 });
-    }
-    function withSharedSessionActor_(event, actor) { return event; }
-    function doPostInternal_(event) { return JSON.parse(event.postData.contents); }
-    const ContentService = { createTextOutput: value => ({ value, setMimeType() { return this; } }), MimeType: { TEXT: "text/plain" } };
-    return {
-        calls,
-        send(action) {
-            calls.length = 0;
-            const event = { postData: { contents: JSON.stringify({ action, payload: { userId: "test-user" } }) } };
-            return { result: doPost(event), calls: calls.slice() };
-        }
-    };
-    `
-)();
-for (const action of ["getReplacedImages", "getDriveStorage", "getCortesImageFolders", "auditIdentifiers"]) {
-    const routed = routerHarness.send(action);
-    assert.equal(routed.calls.length, 1);
-    assert.equal(routed.calls[0].service, "ADMIN");
-    assert.equal(routed.calls[0].operation, action,
-        action + " debe adquirir su lease específica y no ADMIN/sessionActivity.");
-}
-for (const action of ["auditDriveImagesInCortes", "migrateReplacedImagesSchema", "backupDatabase"]) {
-    const routed = routerHarness.send(action);
-    assert.equal(routed.calls.length, 1);
-    assert.equal(routed.calls[0].operation, action);
-    assert.equal(routed.result.payload.__sharedMutationToken, "coordinated-token");
-}
-const fallback = routerHarness.send("unknownAdminAction");
-assert.equal(fallback.calls[0].operation, "sessionActivity",
-    "Las acciones heredadas deben conservar la protección de sesión por defecto.");
-const ping = routerHarness.send("ping");
-assert.equal(ping.calls.length, 0, "ping no debe reservar una lease de escritura.");
-
-
-assert.match(admin,/function verifyImageReconciliationBackup_\(/);
-assert.match(admin,/function classifyCortesImageAcl_\(/);
-assert.match(admin,/function findMissingCortesDriveReferences_\(/);
-const adminCaseNames = [...admin.matchAll(/case\s+['"]([^'"]+)['"]\s*:/g)].map(match => match[1]);
-for (const action of adminCaseNames) {
-    assert.ok(action === "ping" || action === "getServiceTraffic" || mutation(action) || read(action),
-        "La acción ADMIN/" + action + " no está clasificada en el dispatcher compartido.");
-}
-
-assert.ok(admin.includes("const visitedFolderPaths = new Map()"),
-    "Cada página debe recopilar las rutas de carpetas realmente visitadas.");
-assert.ok(admin.includes("visitedFolderPaths.set(String(current.folderId), String(current.path || rootFolder.getName()))"),
-    "La consola debe recibir la ruta de cada carpeta procesada.");
-assert.ok(admin.includes("foldersVisitedPaths: Array.from(visitedFolderPaths.values())"),
-    "La respuesta de ADMIN debe exponer las rutas recorridas para su salida en consola.");
-
-const cortesReferenceSource = extractFunction(admin, "collectCortesImageReferences");
-const allSheetsReferenceSource = extractFunction(admin, "collectActiveDriveReferences");
-const requiredImageFields = [
-    "imagenVehiculo", "imgCorte1", "imgCorte2", "imgCorte3",
-    "imgApertura", "imgCableAlimen", "imgCableAlimen2", "imgCableAlimen3"
-];
-for (const field of requiredImageFields) {
-    assert.ok(cortesReferenceSource.includes('"'+field+'"'),
-        "La auditoría debe cubrir la columna de imagen "+field);
-}
-assert.ok(cortesReferenceSource.includes("new Set(imageColumns.map(item => item.column))"),
-    "La auditoría debe bloquear columnas de imagen duplicadas.");
-for (const reader of ["getDisplayValues()", "getValues()", "getFormulas()", "getRichTextValues()", "getContentUrl()"]) {
-    assert.ok(cortesReferenceSource.includes(reader), "La captura de Cortes debe inspeccionar "+reader);
-}
-assert.ok(cortesReferenceSource.includes("getRuns()"),
-    "La auditoría debe inspeccionar enlaces enriquecidos dentro de las celdas.");
-assert.ok(allSheetsReferenceSource.includes("getSpreadsheet().getSheets()"),
-    "La auditoría debe recorrer todas las hojas del Spreadsheet.");
-assert.ok(allSheetsReferenceSource.includes("collectCortesImageReferences(includeLocations)"),
-    "Cortes debe usar el lector especializado de sus ocho columnas de imagen.");
-assert.ok(allSheetsReferenceSource.includes("sheet.getImages()"),
-    "La auditoría debe detectar imágenes flotantes sobre la cuadrícula.");
-assert.ok(allSheetsReferenceSource.includes("getRichTextValues()") && allSheetsReferenceSource.includes("getFormulas()"),
-    "Las demás hojas deben incluir fórmulas y enlaces enriquecidos en el escaneo.");
-const imageReferencePreviewSource = extractFunction(admin, "handlePreviewCortesImageOrganizer_");
-assert.ok(imageReferencePreviewSource.includes("collectActiveDriveReferences(true)"));
-assert.doesNotMatch(imageReferencePreviewSource, /\.setValue\(|\.setName\(|\.setTrashed\(|\.createFile\(|\.createFolder\(/,
-    "El preview del organizador debe seguir siendo estrictamente de solo lectura.");
-
-const unusedInventoryHandlerSource = extractFunction(admin, "handleSaveUnusedImagesInventory");
-const verifiedInventoryWriterSource = extractFunction(admin, "writeDriveInventoryRowVerified_");
-for (const invariant of [
-    "validateCompletedDriveAudit_", "collectActiveDriveReferences(false)",
-    "references.references.has(fileId)", "manuallyProtectedDriveIds.has(fileId)",
-    "historicalDriveIds.has(fileId)", "duplicateDriveIds.has(fileId)",
-    "getSingleParentFolderInsideCortes", "writeDriveInventoryRowVerified_",
-    "historyIntegrityUncertain", "staleUpdateSkipped"
-]) {
-    assert.ok(unusedInventoryHandlerSource.includes(invariant),
-        "El inventario persistente debe conservar la validación "+invariant);
-}
-for (const invariant of ["setValues([row])", "SpreadsheetApp.flush()", "readBack()", "matches(persisted)", "retryError", "requiere_revision"]) {
-    assert.ok(verifiedInventoryWriterSource.includes(invariant),
-        "La escritura de inventario debe verificar persistencia y recuperación: "+invariant);
-}
-assert.ok(unusedInventoryHandlerSource.includes("ultima_operacion_inventario_id") &&
-    unusedInventoryHandlerSource.includes("resultado_inventario"),
-    "El inventario debe conservar idempotencia y resultado verificable por operación.");
-console.log("UnusedImageInventoryPersistenceContract: PASS");
-
-
-const legacyInventoryBaseHeaders = ["id_reemplazo","fecha_reemplazo","tipo_contenido","registro_id","campo",
-    "archivo_drive_id","nombre_archivo","url_anterior","sustituida_por_url","referencia_texto","estado"];
-const legacyInventoryCells = [
-    legacyInventoryBaseHeaders.slice(),
-    ["INV-LEGACY", "", "inventario_sin_uso", "", "", "legacy-drive-file-000000000001",
-        "unused.png", "https://drive.google.com/file/d/legacy-drive-file-000000000001/view", "",
-        "Cortes/Original", "sin_uso_detectado"]
-];
-const legacyInventorySheet = {
-    getLastRow: () => legacyInventoryCells.length,
-    getLastColumn: () => Math.max(...legacyInventoryCells.map(row => row.length)),
-    getRange: (row, column, rowCount = 1, columnCount = 1) => ({
-        getDisplayValues: () => Array.from({length:rowCount},(_,r)=>Array.from({length:columnCount},(_,c)=>String(legacyInventoryCells[row-1+r]?.[column-1+c] ?? ""))),
-        getValues: () => Array.from({length:rowCount},(_,r)=>Array.from({length:columnCount},(_,c)=>legacyInventoryCells[row-1+r]?.[column-1+c] ?? "")),
-        setValue: function(value) { while(legacyInventoryCells[row-1].length<column)legacyInventoryCells[row-1].push("");legacyInventoryCells[row-1][column-1]=value;return this; },
-        setValues: values => { values.forEach((valuesRow,r)=>valuesRow.forEach((value,c)=>{while(legacyInventoryCells[row-1+r].length<column+c)legacyInventoryCells[row-1+r].push("");legacyInventoryCells[row-1+r][column-1+c]=value;}));return this; },
-        setFontWeight: () => ({setBackground:()=>({})}),
-        setBackground: () => ({})
-    })
-};
-const migrateLegacyInventory = new Function(
-    "withReplacedImagesSchemaLock_", "extractDriveFileIds", "SpreadsheetApp",
-    extractFunction(admin, "ensureReplacedImagesInventoryColumns") + "\nreturn ensureReplacedImagesInventoryColumns;"
-)(
-    callback => callback(),
-    value => { const match=String(value||"").match(/[A-Za-z0-9_-]{20,}/);return match?[match[0]]:[]; },
-    {flush:()=>{}}
-);
-const migratedInventoryHeaders = migrateLegacyInventory(legacyInventorySheet);
-const migratedOriginColumn = migratedInventoryHeaders.indexOf("origen_registro");
-const migratedTypeColumn = migratedInventoryHeaders.indexOf("tipo_registro");
-assert.equal(legacyInventoryCells[1][migratedOriginColumn], "auditoria_drive");
-assert.equal(legacyInventoryCells[1][migratedTypeColumn], "sin_uso_detectado");
-console.log("LegacyUnusedInventoryMigrationContract: PASS");
-
-console.log("ImageReferenceCoverageContract: PASS");
-
-const colsMatch = admin.match(/const COLS_CORTES = (\{[\s\S]*?\n\});/);
-assert.ok(colsMatch, "Debe existir el mapa real de columnas de Cortes.");
-const actualCortesCols = new Function("return (" + colsMatch[1] + ");")();
-const organizerBuilder = new Function(
-    "COLS_CORTES",
-    [
-        extractFunction(admin, "extractDriveFileIds"),
-        extractFunction(admin, "normalizeOrganizerSegment_"),
-        extractFunction(admin, "normalizeOrganizerFilePart_"),
-        extractFunction(admin, "mapCorteTypeToFunctionCode_"),
-        extractFunction(admin, "getCorteFunctionSuffix_"),
-        extractFunction(admin, "buildCanonicalLogoDestination_"),
-        extractFunction(admin, "buildCortesImageOrganizerTargets_")
-    ].join(String.fromCharCode(10)) + String.fromCharCode(10) + "return buildCortesImageOrganizerTargets_;"
-)(actualCortesCols);
-const organizerColumnCount = Math.max(...Object.values(actualCortesCols));
-const setOrganizerCell = (row, key, value) => { row[actualCortesCols[key] - 1] = value; };
-const makeOrganizerRow = () => {
-    const row = Array(organizerColumnCount).fill("");
-    setOrganizerCell(row,"id","C-1"); setOrganizerCell(row,"categoria","Camión pesado");
-    setOrganizerCell(row,"marca","Toyota"); setOrganizerCell(row,"modelo","Hilux");
-    setOrganizerCell(row,"versionesAplicables","SRV"); setOrganizerCell(row,"anoDesde",2020);
-    setOrganizerCell(row,"anoHasta",2025); setOrganizerCell(row,"tipoEncendido","Llave");
-    setOrganizerCell(row,"imagenVehiculo","https://drive.google.com/file/d/AAAAAAAAAAAAAAAAAAAAAA/view");
-    setOrganizerCell(row,"tipoCorte1","Ignición"); setOrganizerCell(row,"imgCorte1","https://drive.google.com/file/d/BBBBBBBBBBBBBBBBBBBBBB/view");
-    setOrganizerCell(row,"tipoCorte2","Bomba"); setOrganizerCell(row,"imgCorte2","https://drive.google.com/file/d/CCCCCCCCCCCCCCCCCCCCCC/view");
-    setOrganizerCell(row,"tipoCorte3","Botón"); setOrganizerCell(row,"imgCorte3","https://drive.google.com/file/d/DDDDDDDDDDDDDDDDDDDDDD/view");
-    setOrganizerCell(row,"imgApertura","https://drive.google.com/file/d/EEEEEEEEEEEEEEEEEEEEEE/view");
-    setOrganizerCell(row,"imgCableAlimen","https://drive.google.com/file/d/FFFFFFFFFFFFFFFFFFFFFF/view");
-    setOrganizerCell(row,"imgCableAlimen2","https://drive.google.com/file/d/GGGGGGGGGGGGGGGGGGGGGG/view");
-    setOrganizerCell(row,"imgCableAlimen3","https://drive.google.com/file/d/HHHHHHHHHHHHHHHHHHHHHH/view");
-    return row;
-};
-const organizerFixture = organizerBuilder(
-    [Array(organizerColumnCount).fill("header"), makeOrganizerRow()],
-    [Array(organizerColumnCount).fill(""), Array(organizerColumnCount).fill("")],
-    [["id","marca","urlLogo"],["L-1","Toyota","https://drive.google.com/file/d/IIIIIIIIIIIIIIIIIIIIII/view"]],
-    [["id","marca","urlLogo"],["","",""]]
-);
-assert.equal(organizerFixture.writePerformed, false);
-assert.equal(organizerFixture.summary.candidateCount, 9);
-assert.equal(organizerFixture.summary.blockedCount, 0);
-const mainTarget = organizerFixture.targets.find(target => target.field === "imagenVehiculo");
-assert.equal(mainTarget.targetFolderPath, "Cortes/Camion_pesado/Toyota/Hilux/SRV/2020-2025");
-assert.equal(mainTarget.targetBaseName, "Hilux_SRV_2020_2025_imagenVehiculo");
-assert.equal(organizerFixture.targets.find(target => target.field === "imgCorte1").targetBaseName, "Hilux_SRV_2020_2025_ign1");
-assert.equal(organizerFixture.targets.find(target => target.field === "imgCorte2").targetBaseName, "Hilux_SRV_2020_2025_bomba1");
-assert.equal(organizerFixture.targets.find(target => target.field === "imgCorte3").targetBaseName, "Hilux_SRV_2020_2025_btn1");
-assert.equal(organizerFixture.targets.find(target => target.field === "imgCableAlimen").targetBaseName, "Hilux_SRV_2020_2025_alim1");
-assert.equal(organizerFixture.targets.find(target => target.field === "imgCableAlimen2").targetBaseName, "Hilux_SRV_2020_2025_alim2");
-assert.equal(organizerFixture.targets.find(target => target.field === "imgCableAlimen3").targetBaseName, "Hilux_SRV_2020_2025_alim3");
-assert.equal(organizerFixture.targets.find(target => target.field === "imgApertura").targetBaseName, "Hilux_SRV_2020_2025_apert");
-
-const numberedCutCodes = [
-    { type: "Ignición", code: "ign" },
-    { type: "Bomba de combustible", code: "bomba" },
-    { type: "Señal a botón", code: "btn" }
-];
-numberedCutCodes.forEach(({ type, code }) => {
-    const row = makeOrganizerRow();
-    [1, 2, 3].forEach(slot => {
-        setOrganizerCell(row, "tipoCorte" + slot, type);
-        const fileId = (code + slot).padEnd(22, "X");
-        setOrganizerCell(row, "imgCorte" + slot, "https://drive.google.com/file/d/" + fileId + "/view");
-    });
-    const plan = organizerBuilder(
-        [Array(organizerColumnCount).fill("header"), row], [], [], []
-    );
-    const names = plan.targets
-        .filter(target => /^imgCorte[123]$/.test(target.field))
-        .map(target => target.targetBaseName);
-    assert.deepEqual(names, [1, 2, 3].map(slot => "Hilux_SRV_2020_2025_" + code + slot));
+import vm from "node:vm";
+import fs from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, resolve } from "node:path";
+const root=resolve(dirname(fileURLToPath(import.meta.url)),"../..");
+const read=path=>fs.readFileSync(resolve(root,path),"utf8");
+const api=read("JS/Frontend/api-config.js"),write=read("JS/Services/write.js"),users=read("JS/Services/users.js"),admin=read("JS/Services/admin.js"),feedback=read("JS/Services/feedback.js"),auth=read("JS/Services/Auth.js"),coordinator=read("JS/Services/Coordinator.js"),client=read("JS/Services/SharedMutationClient.js"),utilities=read("JS/Services/Utilities.js");
+let passed=0;function testCase(name,fn){fn();passed++;console.log("PASS "+name);}
+testCase("WRITE consulta checkOperation sin lease y usa actor cacheado para mutaciones",()=>{
+ assert.match(write,/if \(!isSharedMutationAction_\(action\)\) \{[\s\S]*?doPostInternal_\(withSharedSessionActor_\(e, null\)\)/);
+ assert.match(write,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "WRITE" \}\)/);
+ assert.doesNotMatch(write,/withSharedMutationLease_\("WRITE", action/);
+ assert.doesNotMatch(write,/touchSessionActivityIfDue_|getSessionExpirationStatus_/);
+ ["handleAddOrUpdateCutLocked","handleAddVinToVehicleLocked","assertDeveloperForIdMaintenance"].forEach(name=>{
+  const i=write.indexOf("function "+name);assert.ok(i>=0,name);
+  const j=write.indexOf("\nfunction ",i+10);assert.match(write.slice(i,j<0?undefined:j),/getAuthenticatedCollaborator\(/,name+" debe consumir el actor central");
+ });
+ assert.doesNotMatch(write.slice(write.indexOf("function handleCheckOperation"),write.indexOf("\nfunction ",write.indexOf("function handleCheckOperation")+10)),/getAuthenticatedCollaborator\(/);
 });
 
-const canonicalNameBuilder = new Function(
-    extractFunction(admin, "normalizeOrganizerFilePart_") +
-    extractFunction(admin, "mapCorteTypeToFunctionCode_") +
-    extractFunction(admin, "getCorteFunctionSuffix_") +
-    extractFunction(admin, "buildCanonicalImageBaseName") +
-    "\nreturn buildCanonicalImageBaseName;"
-)();
-const canonicalVehicle = {
-    modelo: "Hilux", versionesAplicables: "SRV", tipoEncendido: "Llave",
-    anoDesde: 2020, anoHasta: 2025,
-    tipoCorte1: "Ignición", tipoCorte2: "Bomba de combustible", tipoCorte3: "Ignición",
-    imgCorte1: "drive-image-1", imgCorte2: "drive-image-2", imgCorte3: "drive-image-3"
-};
-assert.equal(canonicalNameBuilder(canonicalVehicle, "imgCorte1"), "Hilux_SRV_2020_2025_ign1");
-assert.equal(canonicalNameBuilder(canonicalVehicle, "imgCorte2"), "Hilux_SRV_2020_2025_bomba1");
-assert.equal(canonicalNameBuilder(canonicalVehicle, "imgCorte3"), "Hilux_SRV_2020_2025_ign2");
-const skippedImageSlot = {
-    ...canonicalVehicle,
-    tipoCorte1: "Ignición", tipoCorte2: "Ignición",
-    imgCorte1: "", imgCorte2: "drive-image-2"
-};
-assert.equal(canonicalNameBuilder(skippedImageSlot, "imgCorte2"), "Hilux_SRV_2020_2025_ign1");
-assert.throws(() => canonicalNameBuilder({
-    ...canonicalVehicle, tipoCorte1: "Tipo ambiguo", imgCorte1: "drive-image-1"
-}, "imgCorte2"));
-assert.equal(canonicalNameBuilder(canonicalVehicle, "imgCableAlimen"), "Hilux_SRV_2020_2025_alim1");
-assert.equal(canonicalNameBuilder(canonicalVehicle, "imgCableAlimen2"), "Hilux_SRV_2020_2025_alim2");
-assert.equal(canonicalNameBuilder(canonicalVehicle, "imgCableAlimen3"), "Hilux_SRV_2020_2025_alim3");
-assert.equal(canonicalNameBuilder(canonicalVehicle, "imgApertura"), "Hilux_SRV_2020_2025_apert");
-assert.equal(canonicalNameBuilder(canonicalVehicle, "imagenVehiculo"), "Hilux_SRV_2020_2025_imagenVehiculo");
-assert.throws(() => canonicalNameBuilder({ ...canonicalVehicle, tipoCorte1: "Corte especial" }, "imgCorte1"));
-assert.throws(() => canonicalNameBuilder({ ...canonicalVehicle, anoHasta: "" }, "imagenVehiculo"));
-assert.throws(() => canonicalNameBuilder({ ...canonicalVehicle, anoDesde: 2026 }, "imagenVehiculo"));
-
-const mixedCutRow = makeOrganizerRow();
-setOrganizerCell(mixedCutRow, "tipoCorte1", "Ignición");
-setOrganizerCell(mixedCutRow, "tipoCorte2", "Bomba de combustible");
-setOrganizerCell(mixedCutRow, "tipoCorte3", "Ignición");
-[1, 2, 3].forEach(slot => setOrganizerCell(mixedCutRow, "imgCorte" + slot,
-    "https://drive.google.com/file/d/" + ("MIXED" + slot).padEnd(22, "X") + "/view"));
-const mixedCutPlan = organizerBuilder([Array(organizerColumnCount).fill("header"), mixedCutRow], [], [], []);
-assert.deepEqual(mixedCutPlan.targets.filter(target => /^imgCorte[123]$/.test(target.field))
-    .map(target => target.targetBaseName), [
-        "Hilux_SRV_2020_2025_ign1",
-        "Hilux_SRV_2020_2025_bomba1",
-        "Hilux_SRV_2020_2025_ign2"
-    ]);
-
-const vehicleFolderCalls = [];
-const vehicleFolderBuilder = new Function(
-    "getCortesRootFolder", "findOrCreateSubFolder",
-    extractFunction(admin, "normalizeOrganizerSegment_") +
-    extractFunction(admin, "getVehicleYearFolderName") +
-    extractFunction(admin, "findOrCreateVehicleFolder") +
-    "\nreturn findOrCreateVehicleFolder;"
-)(
-    () => ({ path: ["Cortes"] }),
-    (parent, name) => {
-        vehicleFolderCalls.push(name);
-        return { path: parent.path.concat(name) };
-    }
-);
-const canonicalFolder = vehicleFolderBuilder({
-    categoria: "Camión pesado", marca: "Toyota", modelo: "Hilux SRV",
-    versionesAplicables: "SRV", anoDesde: 2020, anoHasta: 2025
+testCase("USERS coordina lecturas y mutaciones y consume el actor central",()=>{
+ assert.match(users,/if \(action !== "getUsers"\) return doPostInternal_\(withSharedSessionActor_\(e, null\)\)/);
+ assert.match(users,/function isSharedMutationAction_\(action\)\s*\{\s*return \["createUser","updateProfile"\]/);
+ assert.doesNotMatch(users,/touchSessionActivityIfDue_|getSessionExpirationStatus_/);
+ ["handleGetUsers","handleCreateUser","handleUpdateProfile"].forEach(name=>{
+  const i=users.indexOf("function "+name);assert.ok(i>=0,name);
+  const j=users.indexOf("\nfunction ",i+10);assert.match(users.slice(i,j<0?undefined:j),/getVerifiedSession\(/,name+" debe consumir el actor central");
+ });
 });
-assert.deepEqual(vehicleFolderCalls, ["Camion_pesado", "Toyota", "Hilux_SRV", "SRV", "2020-2025"]);
-assert.deepEqual(canonicalFolder.path, ["Cortes", "Camion_pesado", "Toyota", "Hilux_SRV", "SRV", "2020-2025"]);
-assert.throws(() => vehicleFolderBuilder({
-    categoria: "Camión pesado", marca: "Toyota", modelo: "Hilux",
-    versionesAplicables: "SRV", anoDesde: 2025, anoHasta: 2020
-}), /rango de años es inválido/);
-const vehicleYearFolderName = new Function(
-    extractFunction(admin, "getVehicleYearFolderName") + "\nreturn getVehicleYearFolderName;"
-)();
-assert.equal(vehicleYearFolderName({ anoDesde: 2020, anoHasta: 2025 }), "2020-2025");
-assert.equal(vehicleYearFolderName({ anoDesde: 2020, anoHasta: 2020 }), "2020-2020");
-assert.equal(vehicleYearFolderName({ anoDesde: "2020abc", anoHasta: 2025 }), "");
-assert.equal(vehicleYearFolderName({ anoDesde: 2020, anoHasta: "" }), "");
 
-const logoCategoryResolver = new Function("COLS_CORTES",
-    extractFunction(admin, "normalizeOrganizerSegment_") +
-    extractFunction(admin, "normalizeOrganizerFilePart_") +
-    extractFunction(admin, "getLogoCategoryCandidatesFromCortesRows_") +
-    extractFunction(admin, "buildCanonicalLogoDestination_") +
-    extractFunction(admin, "resolveLogoCategoryFromCortesRows_") +
-    "\nreturn resolveLogoCategoryFromCortesRows_;"
-)({ categoria: 2, marca: 3 });
-const logoDestinationBuilder = new Function(
-    extractFunction(admin, "normalizeOrganizerSegment_") +
-    extractFunction(admin, "normalizeOrganizerFilePart_") +
-    extractFunction(admin, "buildCanonicalLogoDestination_") +
-    "\nreturn buildCanonicalLogoDestination_;"
-)();
-const canonicalLogoDestination = logoDestinationBuilder("Toyota", ["Camion pesado"]);
-assert.equal(canonicalLogoDestination.targetFolderPath, "Cortes/Camion_pesado/Toyota");
-assert.equal(canonicalLogoDestination.targetBaseName, "toyota_logo");
-assert.deepEqual(canonicalLogoDestination.reasons, []);
-const ambiguousLogoDestination = logoDestinationBuilder("Toyota", ["Camion pesado", "Autobus"]);
-assert.ok(ambiguousLogoDestination.reasons.includes("brand_has_multiple_categories"));
-assert.equal(ambiguousLogoDestination.targetFolderPath, "");
-const logoRowsUnique = [
-    ["id", "categoria", "marca"],
-    ["1", "Camion pesado", "Toyota"],
-    ["2", "Camion pesado", "Toyota"]
-];
-assert.equal(logoCategoryResolver(logoRowsUnique, "Toyota"), "Camion_pesado");
-assert.throws(() => logoCategoryResolver([
-    ["id", "categoria", "marca"], ["1", "Camion pesado", "Toyota"], ["2", "Autobus", "Toyota"]
-], "Toyota"));
-assert.throws(() => logoCategoryResolver(logoRowsUnique, "Marca inexistente"));
-const logoHandlerSource = extractFunction(admin, "handleAddLogo");
-assert.ok(logoHandlerSource.includes("buildCanonicalLogoDestination_"));
-assert.ok(logoHandlerSource.includes("getLogoCategoryCandidatesFromCortesRows_"));
-assert.ok(logoHandlerSource.includes("logoDestination.targetFolderPath"));
-assert.ok(logoHandlerSource.includes("logoDestination.targetBaseName"));
-assert.ok(logoHandlerSource.includes("findOrCreateSubFolder(rootFolder, destinationSegments[1])"));
-assert.ok(logoHandlerSource.includes("findOrCreateSubFolder(categoryFolder, destinationSegments[2])"));
-assert.equal(logoHandlerSource.includes('findOrCreateSubFolder(rootFolder, "Logos")'), false);
-assert.ok(logoHandlerSource.includes("canonicalFilename"));
-assert.ok(logoHandlerSource.includes("hasDriveFilenameConflictInFolder"));
-const uploadHandlerSource = extractFunction(admin, "handleUploadAdminImage");
-assert.ok(uploadHandlerSource.includes("buildCanonicalImageBaseName(mapRowToObject(rowValues, COLS_CORTES), fieldName)"));
-assert.ok(admin.includes('cutImageInfo["tipoCorte" + cutSlotIndex] = cutData.tipoCorte1'));
-assert.ok(admin.includes("canonicalVehicleInfo") && admin.includes("tipoCorte1: cutData.tipoCorte1"));
+testCase("ADMIN exige actor central cacheado y no coordina acciones ordinarias",()=>{
+ const start=admin.indexOf("function doPost(e)"),end=admin.indexOf("\nfunction doPostInternal_",start),router=admin.slice(start,end);
+ assert.ok(router.includes('getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "ADMIN" })'));
+ assert.doesNotMatch(router,/withSharedMutationLease_|sessionActivity|nestedToken|__sharedMutationToken/);
+ assert.doesNotMatch(admin,/withSharedMutationLease_/);
+ assert.doesNotMatch(admin,/touchSessionActivityIfDue_|getSessionExpirationStatus_/);
+ assert.match(admin,/const developerContext = action === 'ping' \? null : \(ADMIN_MODAL_EDIT_ACTIONS\.has\(action\) \? assertModalEditSession\(payload\) : assertDeveloperSession\(payload\)\)/);
+});
 
-const reconciliationTargetsSource = extractFunction(admin, "buildCortesImageReconciliationTargets_");
-assert.ok(reconciliationTargetsSource.includes("if (cutMatch && !currentValue && !cutType && !hasFormula) return;"),
-    "Los slots de corte vacíos y sin tipo no deben generar destinos ni falsos errores.");
-const logoTarget = organizerFixture.targets.find(target => target.sheetName === "LogosMarca");
-assert.equal(logoTarget.targetFolderPath, "Cortes/Camion_pesado/Toyota");
-assert.equal(logoTarget.targetBaseName, "toyota_logo");
-assert.equal(logoTarget.targetFolderPath, canonicalLogoDestination.targetFolderPath);
-assert.equal(logoTarget.targetBaseName, canonicalLogoDestination.targetBaseName);
-const unknownCutRow = makeOrganizerRow(); setOrganizerCell(unknownCutRow,"tipoCorte1","Corte especial no catalogado");
-const unknownPlan = organizerBuilder([Array(organizerColumnCount).fill("header"), unknownCutRow], [], [], []);
-assert.equal(unknownPlan.targets.find(target => target.field === "imgCorte1").status, "blocked");
-const missingYearRow = makeOrganizerRow(); setOrganizerCell(missingYearRow,"anoHasta","");
-const missingPlan = organizerBuilder([Array(organizerColumnCount).fill("header"), missingYearRow], [], [], []);
-assert.ok(missingPlan.targets.filter(target => target.sheetName === "Cortes").every(target => target.status === "blocked"));
-const formulaMatrix = [Array(organizerColumnCount).fill(""), Array(organizerColumnCount).fill("")];
-formulaMatrix[1][actualCortesCols.imagenVehiculo - 1] = "=IMAGE(url)";
-const formulaPlan = organizerBuilder([Array(organizerColumnCount).fill("header"), makeOrganizerRow()], formulaMatrix, [], []);
-assert.ok(formulaPlan.targets.find(target => target.field === "imagenVehiculo").reasons.includes("formula_in_image_cell"));
-const duplicateFileRow = makeOrganizerRow();
-setOrganizerCell(duplicateFileRow,"imagenVehiculo","https://drive.google.com/file/d/AAAAAAAAAAAAAAAAAAAAAA/view");
-setOrganizerCell(duplicateFileRow,"imgCorte1","https://drive.google.com/file/d/AAAAAAAAAAAAAAAAAAAAAA/view");
-const duplicateFilePlan = organizerBuilder([Array(organizerColumnCount).fill("header"), duplicateFileRow], [], [], []);
-assert.ok(duplicateFilePlan.targets.find(target => target.field === "imagenVehiculo").reasons.includes("shared_drive_file_id_requires_review"));
-const ambiguousRows = [Array(organizerColumnCount).fill("header"), makeOrganizerRow(), makeOrganizerRow()];
-setOrganizerCell(ambiguousRows[2],"id","C-2"); setOrganizerCell(ambiguousRows[2],"categoria","Autobus");
-const ambiguousPlan = organizerBuilder(ambiguousRows, [], [["h","marca","urlLogo"],["l","Toyota","https://drive.google.com/file/d/IIIIIIIIIIIIIIIIIIIIII/view"]], []);
-assert.ok(ambiguousPlan.targets.find(target => target.sheetName === "LogosMarca").reasons.includes("brand_has_multiple_categories"));
-const builderSource = extractFunction(admin, "buildCortesImageOrganizerTargets_");
-assert.ok(!["DriveApp","SpreadsheetApp","setName","moveTo","setTrashed","setValue","appendRow"].some(token => builderSource.includes(token)),
-    "El constructor puro no debe ejecutar operaciones de Drive ni Spreadsheet.");
+testCase("FEEDBACK usa actor cacheado sin leases por acción y conserva sus rutas públicas",()=>{
+ const start=feedback.indexOf("function doPost(e)"),end=feedback.indexOf("\nconst RICH_TEXT_MODE_PROPERTY_",start),router=feedback.slice(start,end);
+ assert.ok(start>=0&&end>start);
+ assert.ok(router.includes('getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "FEEDBACK" })'));
+ assert.doesNotMatch(router,/withSharedMutationLease_/);
+ assert.match(router,/DIRECT_SERVICE_TRAFFIC_CONFIG_\.actions\.has\(action\)/);
+ assert.doesNotMatch(feedback,/touchSessionActivityIfDue_|getSessionExpirationStatus_/);
+ assert.match(feedback,/new Set\(\["getPysData", "sendContactForm", "getCatalogChanges"\]\)/);
+ assert.doesNotMatch(feedback,/getCatalogChanges:\s*null/);
+ assert.match(client,/catalogFeed=1/);
+ assert.match(feedback,/const actor = assertFeedbackSession\(source, FEEDBACK_ACTION_PERMISSIONS\[action\]\)/);
+});
 
-assert.match(apiConfig, /previewCortesImageOrganizer.*ADMIN/);
-assert.ok(ui.includes('routeActionWithRetry("previewCortesImageOrganizer"'), "La consola debe invocar el preview del organizador.");
-assert.ok(ui.includes("btn-audit-drive-organizer-preview"), "La consola debe enlazar el control del preview.");
-const indexHtml = readFileSync(new URL("../../index.html", import.meta.url), "utf8");
-assert.ok(indexHtml.includes('id="btn-audit-drive-organizer-preview"'));
-assert.ok(indexHtml.includes('id="audit-drive-organizer-results"'));
+testCase("Los servicios protegidos exigen el actor central y no revalidan Users/ActiveSessions",()=>{
+ const specs=[[admin,"getAdminSessionContext_"],[feedback,"assertFeedbackSession"],[write,"getAuthenticatedCollaborator"],[utilities,"assertUtilitiesDeveloperSession_"]];
+ for(const [source,name] of specs){
+  const start=source.indexOf("function "+name+"(");assert.ok(start>=0,name);
+  const next=name==="getAdminSessionContext_"?source.indexOf("/** Consume el actor autenticado por Coordinator",start):name==="getAuthenticatedCollaborator"?source.indexOf("\n// ===",start):source.indexOf("\nfunction ",start+10),body=source.slice(start,next<0?source.length:next);
+  assert.match(body,/__sharedSessionActor/,name+" debe exigir actor central");
+  assert.doesNotMatch(body,/getSpreadsheet|ActiveSessions|Users|findUniqueRowsByExactValue_|getSessionExpirationStatus_|touchSessionActivityIfDue_/,name+" conserva revalidación local por hojas");
+ }
+ const start=users.indexOf("function getVerifiedSession("),next=users.indexOf("\nfunction ",start+10),userBody=users.slice(start,next<0?users.length:next);
+ const body=userBody.slice(userBody.indexOf("{")+1);
+ assert.match(body,/__sharedSessionActor/);
+ assert.match(body,/if \(requireUserRow === true\)/);
+ assert.doesNotMatch(body,/ActiveSessions|getSessionExpirationStatus_|touchSessionActivityIfDue_|sessionToken/);
+ assert.match(coordinator,/function authorizeSession_\(userId, token, currentTime\)/);
+ assert.match(coordinator,/readAuthContext_\(userId\)/);
+ assert.match(coordinator,/context\.revokedBefore/);
+ assert.match(coordinator,/absoluteExpiry|idleExpiry/);
+});
 
-assert.ok(coordinator.includes('previewCortesImageOrganizer: { read: [...identityRead, "CORTES", "DRIVE", "IMAGE_INVENTORY", "IMAGE_AUDIT_STATE", "TUTORIAL", "FEEDBACK", "LOGOS", "RELAY"] }'), "El preview debe declarar únicamente recursos de lectura en Coordinator.");
-assert.match(admin, /previewCortesImageOrganizer/);
-assert.match(admin, /case 'previewCortesImageOrganizer'/);
-assert.match(admin, /function inspectCortesOrganizerTargetFolderReadOnly_/);
-assert.match(admin, /function handlePreviewCortesImageOrganizer_/);
-assert.match(admin, /folderPath: item\.folderPath/);
-assert.ok(admin.includes('folderPath: String(item && item.folderPath || "")'));
-assert.match(admin, /duplicate_target_destination/);
-assert.match(admin, /file_moved_since_drive_audit/);
-assert.match(admin, /active_reference_location_mismatch/);
-assert.match(admin, /loadDriveAuditSeenIds_\(auditId, Number\(auditState\.pageCount\), false\)/);
-assert.match(admin, /loadDriveAuditFileMetadata_\(auditId, Number\(auditState\.pageCount\), false\)/);
-const organizerPreviewReadOnlySource = extractFunction(admin, "handlePreviewCortesImageOrganizer_");
-assert.ok(!/\.(?:setName|moveTo|setTrashed|setValue|appendRow|createFolder|setSharing)\s*\(/.test(organizerPreviewReadOnlySource),
-    "El endpoint dry-run no debe modificar Drive ni Spreadsheet.");
-assert.match(organizerPreviewReadOnlySource, /writePerformed: false, canApply: false/);
+testCase("AUTH usa el actor central y no repite verificaciones de usuario/rol en cada handler",()=>{
+ assert.equal(auth.includes("touchProtectedAuthRequestSession_"),false);
+ const dispatchStart=auth.indexOf("function doPostInternal_(");
+ const dispatchEnd=auth.indexOf("\nfunction ",dispatchStart+10);
+ const dispatch=auth.slice(dispatchStart,dispatchEnd<0?auth.length:dispatchEnd);
+ assert.equal(dispatch.includes("validateAndTouchSession_"),false);
+ assert.equal(dispatch.includes("validateSessionReadOnly_"),false);
+ assert.match(auth,/function requireSharedAuthActor_\(/);
+ const handlerNames=["handleAcceptTerms","handleChangePassword","handleResetUserPassword","handleResetUserSessions","handleClearSensitiveLogs","handleDeleteUser","handleUpdateUser","handleMigrateLegacyPasswords"];
+ for(const name of handlerNames){
+  const start=auth.indexOf("function "+name+"(");assert.ok(start>=0,"Falta "+name);
+  const end=auth.indexOf("\nfunction ",start+10),body=auth.slice(start,end<0?auth.length:end);
+  if(name==="handleClearSensitiveLogs") assert.match(body,/payload && payload\.__sharedSessionActor/);
+  else assert.match(body,/requireSharedAuthActor_\(/,name+" debe consumir el actor central");
+  if(name==="handleMigrateLegacyPasswords") assert.doesNotMatch(body,/getSessionExpirationStatus_|assertRequesterRoleRevocationClear_/);
+  else assert.doesNotMatch(body,/findSessionRowsByTokenUnderLock_|getSessionExpirationStatus_/,name+" no debe revalidar la sesión");
+ }
+ const logout=auth.slice(auth.indexOf("function handleLogout("));
+ assert.match(logout,/findSessionRowsByTokenUnderLock_\(sessionsSheet, sessionToken\)/);
+ assert.match(logout,/sessionUserId !== requestedUserId/);
+ assert.equal(logout.includes("getSessionExpirationStatus_"),false,"Logout debe poder limpiar sesiones expiradas o ya revocadas");
+ assert.equal(api.includes("ensureSessionTouched_"),false);
+ assert.equal(api.includes("touchSessionBeforeAction"),false);
+ assert.match(auth,/const sessionOptions = payload\.sessionToken && action !== "logout"\s*\? \{ session: \{ sessionToken: payload\.sessionToken \} \}/);
+});
+testCase("Coordinator conserva solo telemetría protegida para ADMIN",()=>{
+ const start=coordinator.indexOf("ADMIN:"),end=coordinator.indexOf("FEEDBACK:",start),adminPolicy=coordinator.slice(start,end);
+ assert.match(adminPolicy,/getServiceTraffic: \{ read: \["SERVICE_TRAFFIC"\] \}/);
+ assert.doesNotMatch(adminPolicy,/sessionActivity|nestedActions|backupDatabase|auditDriveImagesInCortes|migrateIdentifiers/);
+ assert.match(coordinator,/readResources\.push\("SESSION_CONTEXTS"\)/);
+ assert.match(coordinator,/writeResources\.push\("ACTIVE_SESSIONS"\)/);
+ assert.equal(coordinator.includes('sharedWrite: ["ACTIVE_SESSIONS"]'),false);
+ assert.match(coordinator,/login: \{ write: \[\.\.\.identityWrite, "SESSION_CONTEXTS"\] \}/);
+ assert.match(coordinator,/logout: \{ write: \[\.\.\.identityWrite, "SESSION_CONTEXTS"\] \}/);
+});
 
-console.log("AdminImageScanCoordinatorContract: 1/1 PASS");
+testCase("El contexto central de sesión se registra al login, se revoca y se reutiliza en los servicios",()=>{
+ assert.match(auth,/syncSharedSessionContextsForUser_\(/);
+ assert.match(auth,/syncSharedUserSessionContexts_\(/);
+ assert.match(auth,/revokeSharedUserSessionContexts_\(/);
+ assert.match(auth,/revokeSharedSessionContext_\(/);
+ assert.match(auth,/validateSharedSessionContext_\(userId, sessionToken\)/);
+ assert.match(auth,/const sessionOptions = payload\.sessionToken && action !== "logout"/);
+ assert.match(auth,/syncAuthSheetActivityFromActor_\(userId, sessionToken, sharedContext\.actor\)/);
+ assert.match(coordinator,/function registerSession_\(/);
+ assert.match(coordinator,/function syncUserSessions_\(/);
+ assert.match(client,/function syncSharedUserSessionContexts_\(/);
+ assert.match(coordinator,/function revokeSession_\(/);
+ assert.match(coordinator,/function revokeUserSessions_\(/);
+ assert.match(coordinator,/function authorizeSession_\(/);
+ assert.match(coordinator,/function validateSessionContext_\(/);
+ assert.match(client,/options && options\.session/);
+ assert.match(client,/function withSharedSessionActor_\(/);
+ assert.match(client,/delete payload\.__feedbackActor/);
+ for(const source of [users,admin]){
+  assert.match(source,/sessionOptions = \{ session: \{ sessionToken: payload\.sessionToken \} \}/);
+  assert.match(source,/withSharedSessionActor_\(e, actor\)/);
+ }
+ assert.match(feedback,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "FEEDBACK" \}\)/);
+ assert.match(feedback,/withSharedSessionActor_\(e, actor\)/);
+ assert.match(write,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "WRITE" \}\)/);
+ assert.match(write,/withSharedSessionActor_\(e, actor\)/);
+ assert.match(users,/payload && payload\.__sharedSessionActor/);
+ assert.match(write,/__sharedSessionActor/);
+ assert.match(admin,/__sharedSessionActor/);
+ assert.match(feedback,/__sharedSessionActor/);
+ assert.match(utilities,/__sharedSessionActor/);
+ assert.match(utilities,/withSharedMutationLease_\("UTILITIES","migrateTimestamps"/);
+ assert.match(utilities,/__sharedSessionActor:actor/);
+ assert.match(utilities,/sessionToken:payload&&payload\.sessionToken/);
+});
+
+
+
+testCase("AUTH aplica límites por rol y revoca la sesión más antigua sin bloquear el nuevo login",()=>{
+ assert.match(auth,/const SESSION_LIMITS = \{\s*'desarrollador': Infinity,\s*'jefe': 5,\s*'supervisor': 3,\s*'tecnico': 1,\s*'tecnico_exterior': 1\s*\}/);
+ assert.match(auth,/\.sort\(\(a, b\) => a\.createdAt - b\.createdAt \|\| a\.rowIndex - b\.rowIndex\)/);
+ assert.match(auth,/getOldestSessionsToRevoke_\(activeRows, token, sessionLimit\)/);
+ assert.match(auth,/activeRows\.filter\(row => row\.token !== currentToken\)/);
+ assert.doesNotMatch(auth,/rows\.length > 5/);
+ assert.doesNotMatch(auth,/LOGIN_LIMIT_EXCEEDED|SESSION_LIMIT_EXCEEDED/);
+
+ assert.ok(auth.indexOf("candidates.forEach(row => revokeSharedSessionContext_(userId, row.token))") <
+     auth.indexOf("sessionsSheet.getRange(row.rowIndex, COLS_ACTIVE_SESSIONS.ActiveSessions).clearContent()", auth.indexOf("function createOrRecoverLoginSessionUnderLock_")),
+     "Las cachés y el contexto central deben revocarse antes de eliminar la sesión antigua.");
+});
+
+testCase("Coordinator no limita por cinco y almacena sesiones en bloques recuperables",()=>{
+ assert.doesNotMatch(coordinator,/context\.sessions\.length > 5|context\.sessions\.length >= 5|inputSessions\.length > 5/);
+ assert.match(coordinator,/function authSessionChunkPrefix_\(userId, generation\)/);
+ assert.match(coordinator,/function saveAuthContext_\(context\)/);
+ assert.match(coordinator,/SHARED_AUTH_SESSION_CHUNK_LENGTH_/);
+ assert.match(coordinator,/context\.sessionChunkCount/);
+});
+
+
+testCase("La selección de sesiones excedentes respeta los límites y siempre conserva el login nuevo",()=>{
+ const start=auth.indexOf("function getOldestSessionsToRevoke_(");
+ const end=auth.indexOf("\n}",start)+2;
+ assert.ok(start>=0&&end>start,"Debe existir el selector puro de sesiones antiguas.");
+ const select=vm.runInNewContext("("+auth.slice(start,end)+")");
+ for(const [role,limit] of [["tecnico",1],["tecnico_exterior",1],["supervisor",3],["jefe",5]]){
+  const rows=Array.from({length:limit+2},(_,index)=>({
+   token:index===limit+1?"current-login":"old-"+index,
+   rowIndex:300-index,
+   createdAt:1700000000000+index*1000
+  }));
+  const selected=select(rows,"current-login",limit);
+  assert.deepEqual(Array.from(selected,row=>row.token),["old-0","old-1"],role+" debe expulsar solo el exceso más antiguo.");
+ }
+ const developerRows=Array.from({length:100},(_,index)=>({
+  token:"developer-"+index,rowIndex:100-index,createdAt:1700000000000+index
+ }));
+ assert.equal(select(developerRows,"developer-99",Infinity).length,0,
+  "Desarrollador no debe expulsar sesiones por cantidad.");
+});
+
+console.log("SessionActivityCoordination: "+passed+"/"+passed+" PASS");

@@ -77,60 +77,9 @@ function coordinatorPolicy_(service, operation) {
             freezeCortesIds: { read: identityRead, write: ["CORTES"] }
         },
         ADMIN: {
-            // getServiceTraffic es una consulta específica; las acciones ordinarias ADMIN usan actor cacheado.
-            getServiceTraffic: { read: ["SERVICE_TRAFFIC"] },
-            // Las acciones ADMIN leen el contexto central; no escriben LastActivityAt por cada solicitud.
-            getReplacedImages: { read: ["USERS", "CORTES", "DRIVE", "IMAGE_INVENTORY", "TUTORIAL", "FEEDBACK", "LOGOS", "RELAY"] },
-            getDriveStorage: { read: ["USERS", "DRIVE"] },
-            getCortesImageFolders: { read: ["DRIVE"] },
-            auditIdentifiers: { read: ["USERS", "CORTES", "TUTORIAL", "FEEDBACK", "LOGOS", "RELAY"] },
-            checkOperation: { read: [...identityRead, "CORTES", "IDEMPOTENCIA"] },
-            getAdminImageUploadStatus: { read: [...identityRead, "CORTES", "DRIVE"], write: ["IMAGE_UPLOAD_LEDGER"] },
-            previewCortesImageReconciliation: { read: [...identityRead, "CORTES", "DRIVE", "IMAGE_INVENTORY", "IMAGE_AUDIT_STATE", "TUTORIAL", "FEEDBACK", "LOGOS", "RELAY"] },
-            previewCortesImageOrganizer: { read: [...identityRead, "CORTES", "DRIVE", "IMAGE_INVENTORY", "IMAGE_AUDIT_STATE", "TUTORIAL", "FEEDBACK", "LOGOS", "RELAY"] },
-            auditDriveImagesInCortes: {
-                read: ["USERS", "CORTES", "DRIVE", "IMAGE_INVENTORY", "TUTORIAL", "FEEDBACK", "LOGOS", "RELAY"],
-                write: ["IMAGE_AUDIT_STATE"]
-            },
-            migrateReplacedImagesSchema: { read: ["USERS"], write: ["IMAGE_INVENTORY"] },
-            backupDatabase: { maintenance: true },
-            backupDrive: { read: identityRead, write: ["DRIVE"] },
-            restoreDatabase: { maintenance: true },
-            restoreDrive: { read: identityRead, write: ["DRIVE"] },
-            reorganizeDatabase: {
-                maintenance: true
-            },
-            normalizeImages: { read: identityRead, write: ["CORTES", "DRIVE"] },
-            organizePrimaryVehicleImages: { read: identityRead, write: ["CORTES", "DRIVE"] },
-            restoreAllTrashedImages: { maintenance: true },
-            addLogo: { read: identityRead, write: ["LOGOS", "DRIVE"] },
-            updateVehicleField: { read: identityRead, write: ["CORTES", "DRIVE"] },
-            uploadAdminImage: { read: identityRead, write: ["CORTES", "DRIVE", "IMAGE_INVENTORY"] },
-            migrateCortesOperationIds: { maintenance: true }, // Dry-run y confirmación comparten la ventana exclusiva.
-            migrateIdentifiers: { maintenance: true },
-            rollbackIdentifiers: { maintenance: true },
-            reconcilePendingImageUploads: { maintenance: true },
-            addOrUpdateCut: {
-                read: identityRead,
-                write: ["CORTES", "DRIVE", "IDEMPOTENCIA", "IMAGE_UPLOAD_LEDGER"]
-            },
-            addSupplementaryInfo: { read: identityRead, write: ["CORTES", "DRIVE", "IMAGE_UPLOAD_LEDGER"] },
-            createSheet: { maintenance: true },
-            addColumn: { maintenance: true },
-            driveCommand: { read: identityRead, write: ["DRIVE"] },
-            recoverReplacedImage: { read: identityRead, write: ["CORTES", "DRIVE", "IMAGE_INVENTORY"] },
-            deleteReplacedImage: { read: identityRead, write: ["CORTES", "DRIVE", "IMAGE_INVENTORY", "ACTIVITY"] },
-            restoreReplacedImageFromTrash: { read: identityRead, write: ["DRIVE", "IMAGE_INVENTORY", "ACTIVITY"] },
-            permanentlyDeleteReplacedImage: { read: identityRead, write: ["DRIVE", "IMAGE_INVENTORY", "ACTIVITY"] },
-            saveUnusedImagesInventory: { read: [...identityRead, "CORTES"], write: ["DRIVE", "IMAGE_INVENTORY", "ACTIVITY"] },
-            createCortesImageFolder: { read: identityRead, write: ["DRIVE", "ACTIVITY"] },
-            moveReplacedImage: { read: identityRead, write: ["CORTES", "DRIVE", "IMAGE_INVENTORY", "ACTIVITY"] },
-            getReplacedImageDownloadUrl: { read: [...identityRead, "DRIVE"], write: ["ACTIVITY"] },
-            // Operaciones añadidas al dispatcher ADMIN: cada una debe tener una política explícita.
-            markReplacedImageInUse: { read: [...identityRead, "DRIVE", "IMAGE_INVENTORY"], write: ["IMAGE_INVENTORY", "ACTIVITY"] },
-            applyCortesImageReconciliation: { read: [...identityRead, "CORTES", "DRIVE", "IMAGE_AUDIT_STATE"], write: ["CORTES", "ACTIVITY"] },
-            // La congelación de fórmulas recorre varias hojas y requiere exclusión global.
-            freezeIdentifierFormulas: { maintenance: true }
+            // Las acciones ordinarias ADMIN usan actor cacheado. Solo el endpoint
+            // específico de telemetría consulta Coordinator; no requiere lease.
+            getServiceTraffic: { read: ["SERVICE_TRAFFIC"] }
         },
         FEEDBACK: {
             sessionActivity: { read: feedbackRead },
