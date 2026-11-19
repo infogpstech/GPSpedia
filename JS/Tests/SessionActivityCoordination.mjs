@@ -39,7 +39,7 @@ testCase("ADMIN exige actor central y coordina lecturas y mutaciones",()=>{
 testCase("FEEDBACK usa actor cacheado sin leases por acción y conserva sus rutas públicas",()=>{
  const start=feedback.indexOf("function doPost(e)"),end=feedback.indexOf("\nconst RICH_TEXT_MODE_PROPERTY_",start),router=feedback.slice(start,end);
  assert.ok(start>=0&&end>start);
- assert.match(router,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken\)/);
+ assert.match(router,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "FEEDBACK" \}\)/);
  assert.doesNotMatch(router,/withSharedMutationLease_/);
  assert.match(router,/DIRECT_SERVICE_TRAFFIC_CONFIG_\.actions\.has\(action\)/);
  assert.doesNotMatch(feedback,/touchSessionActivityIfDue_|getSessionExpirationStatus_/);
@@ -129,9 +129,9 @@ testCase("El contexto central de sesión se registra al login, se revoca y se re
   assert.match(source,/sessionOptions = \{ session: \{ sessionToken: payload\.sessionToken \} \}/);
   assert.match(source,/withSharedSessionActor_\(e, actor\)/);
  }
- assert.match(feedback,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken\)/);
+ assert.match(feedback,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "FEEDBACK" \}\)/);
  assert.match(feedback,/withSharedSessionActor_\(e, actor\)/);
- assert.match(write,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken\)/);
+ assert.match(write,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "WRITE" \}\)/);
  assert.match(write,/withSharedSessionActor_\(e, actor\)/);
  assert.match(users,/payload && payload\.__sharedSessionActor/);
  assert.match(write,/__sharedSessionActor/);
