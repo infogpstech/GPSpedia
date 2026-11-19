@@ -186,3 +186,12 @@ Aplicar la estructura objetivo después de validar el dry-run:
 - [x] Pruebas dinámicas de slots poblados/vacíos, tipos mixtos y tipo ambiguo; el contrato existente cubre los tres ordinales de ignición, bomba y botón.
 - CI HEAD `ceafea0c056c24cd593d288124ef248059d10a90`: 152 suites, 2,218 pruebas aprobadas, 0 fallos; health SUCCESS. Pages en espera al momento del registro.
 - [ ] Beta: tras autorizar deployment ADMIN, ejecutar auditoría Drive nueva y preview de solo lectura con datos reales. Comprobar nombres, extensiones, referencias y conflictos; no aplicar movimientos ni renombrados.
+
+ 
+## Actualización 2026-11-19 — clasificación del inventario y del historial
+- [x] Corregida la clasificación compartida por el preview de conciliación: `collectReplacedImageHistoryIds_` ahora distingue `origen_registro`, `tipo_registro` y `estado`.
+- [x] Los registros `auditoria_drive / sin_uso_detectado` dejan de confundirse con imágenes reemplazadas y pueden volver a ser candidatos si coinciden con un destino vacío y seguro.
+- [x] Se conservan como no reutilizables los reemplazos históricos y los registros protegidos/en revisión; se excluyen los registros confirmados como `eliminada`.
+- [x] Compatibilidad con inventario legado sin columnas dinámicas: `tipo_contenido=inventario_sin_uso` identifica el registro como sin uso.
+- [x] Pruebas: CortesImageReconciliation 34/34; regresión integral CI 152 suites, 2,224 pruebas, 0 fallos; health SUCCESS.
+- [ ] Beta: verificar la clasificación con datos reales de Drive/Spreadsheet después del deployment autorizado. No se aplicó ninguna asociación ni movimiento.

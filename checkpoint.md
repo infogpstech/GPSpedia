@@ -918,3 +918,14 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - No se desplegó Apps Script ni se consultaron/modificaron Drive, Spreadsheet, ScriptProperties o secretos. No se movieron, renombraron, borraron ni restauraron archivos productivos.
 - Siguiente: continuar Fase 5 auditando cobertura del inventario, referencias cruzadas e historial de imágenes; mantener la aplicación masiva bloqueada hasta validar preview real y rollback en Beta autorizada.
 ================================================================================
+
+ 
+================================================================================
+2026-11-19 — CONTINUIDAD: SEPARACIÓN DE INVENTARIO SIN USO E HISTORIAL DE REEMPLAZOS
+- HEAD de inicio: 1928a019393d845eca0421126adbb3da15257dd7; HEAD de código validado: 3268f913090065d806c7ede426fb7bce3ba8c7fe.
+- Hallazgo: collectReplacedImageHistoryIds_ incorporaba indiscriminadamente IDs de Imagenes_Reemplazadas, incluyendo registros de inventario creados por auditoría Drive con tipo_registro=sin_uso_detectado. Eso los clasificaba como historical y bloqueaba su posible asociación con un destino canónico vacío.
+- Corrección: la función interpreta origen_registro, tipo_registro y estado; excluye registros normales sin_uso_detectado y eliminada; conserva reemplazadas y estados protegidos/en revisión. Añadido fallback para filas antiguas sin columnas dinámicas mediante tipo_contenido=inventario_sin_uso.
+- Pruebas de regresión: CortesImageReconciliation 34/34; clasificación dinámica 7/7 y prueba integrada que permite que una imagen de inventario sin uso coincida con un destino; CI run 44523981556 SUCCESS: 152 suites, 2,224 pruebas, 0 fallos. Health run 44523981464 SUCCESS. Pages run 44523980626 pendiente al registrar.
+- No se desplegó Apps Script ni se modificaron Drive, Spreadsheet, secretos o ScriptProperties. No se aplicaron movimientos ni cambios de URL.
+- Siguiente: continuar la auditoría de consistencia del inventario persistente y de las referencias cruzadas; luego revisar clasificación de archivos sin uso/reemplazados en el preview paginado. Beta solo tras cerrar implementación local y con autorización.
+================================================================================

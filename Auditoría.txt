@@ -669,3 +669,14 @@ Corrección: contar únicamente slots anteriores con imagen; incrementar solo cu
 Validación: pruebas dinámicas 5/5 PASS; GitHub Actions run 44522387683 SUCCESS, 152 suites y 2,218 pruebas aprobadas, 0 fallos; AdminImageScanCoordinatorContract 1/1 y LogoIdIntegrity 13/13.
 Severidad: baja-media (integridad de nomenclatura). Estado: CORREGIDO LOCALMENTE; preview con datos reales pendiente de Beta.
 ================================================================================
+
+ 
+================================================================================
+2026-11-19 — HALLAZGO CORREGIDO: INVENTARIO SIN USO CONFUNDIDO CON HISTORIAL DE REEMPLAZOS
+Ubicación: JS/Services/admin.js, collectReplacedImageHistoryIds_; consumidor: handlePreviewCortesImageReconciliation_.
+Evidencia: el helper agregaba todos los IDs de las columnas archivo_drive_id, url_anterior y sustituida_por_url sin consultar origen_registro, tipo_registro o estado. La hoja Imagenes_Reemplazadas también almacena inventario originado por auditoría Drive con tipo_contenido=inventario_sin_uso y tipo_registro=sin_uso_detectado.
+Impacto: una imagen detectada como sin uso podía recibir estado historical en el planner y quedar excluida de una coincidencia exacta con un destino vacío, aunque no fuera un reemplazo histórico.
+Corrección: filtrar por origen, tipo y estado; preservar reemplazos históricos y estados protegidos/en revisión; excluir sin_uso_detectado ordinario y eliminada. Añadir fallback para filas legacy sin columnas dinámicas mediante tipo_contenido.
+Validación: CortesImageReconciliation 34/34; regresión CI run 44523981556 SUCCESS, 152 suites y 2,224 pruebas aprobadas, 0 fallos; health run 44523981464 SUCCESS.
+Severidad: media (clasificación/integridad de inventario). Estado: CORREGIDO LOCALMENTE; verificación con datos reales pendiente de Beta.
+================================================================================

@@ -766,3 +766,13 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - JS/Tests/AdminImageScanCoordinatorContract.mjs: fixture canónica completa y casos de regresión para slot previo vacío y tipo previo ambiguo. Se mantienen las comprobaciones existentes de ign1..3, bomba1..3, btn1..3, alim1..3, apert e imagenVehiculo.
 - No se modificaron archivos de Drive/Spreadsheet ni deployments Apps Script.
 ================================================================================
+
+ 
+================================================================================
+2026-11-19 — CLASIFICACIÓN CORRECTA DEL INVENTARIO SIN USO
+- JS/Services/admin.js: collectReplacedImageHistoryIds_ distingue registros de reemplazo de registros de inventario Drive sin uso mediante origen_registro, tipo_registro y estado.
+- Las imágenes inventariadas como sin_uso_detectado ya no se marcan automáticamente como historical; pueden ser candidatas si cumplen las verificaciones del destino. Los registros reemplazados, protegidos o en revisión siguen excluidos; los eliminados se omiten.
+- Se reconoce el inventario legado sin columnas dinámicas a partir de tipo_contenido=inventario_sin_uso.
+- JS/Tests/CortesImageReconciliation.mjs: pruebas para inventario sin uso, reemplazos históricos, estados protegidos, eliminados, compatibilidad legacy y asociación candidata.
+- No se aplicaron cambios productivos en Drive/Spreadsheet ni deployments.
+================================================================================
