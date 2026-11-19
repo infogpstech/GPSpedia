@@ -428,3 +428,7 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Ejecutar ambos modos bajo lease exclusiva `IMAGE_INVENTORY`, sin lecturas/leases de CORTES, DRIVE ni SESSION_CONTEXTS.
 - [x] Separar el append de `ActividadUsuario` en lease puntual `ACTIVITY`; eliminar ScriptLock del asignador de ID usado solo por ese append.
 - [x] Añadir `AdminInventoryLockIsolation.mjs` y prueba de coexistencia Coordinator con WRITE y AUTH. CI pendiente.
+
+### Corrección de contratos tras aislamiento del inventario ADMIN (2026-11-19)
+- [x] Ajustar `SessionActivityCoordination` y `DirectTrafficRoutingCoverage`: sus contratos prohibían cualquier lease ADMIN salvo auditoría y quedaron obsoletos al aislar correctamente inventario (`IMAGE_INVENTORY`) y actividad (`ACTIVITY`).
+- [ ] Ejecutar CI integral y verificar que solo existan las tres leases explícitas y de recurso independiente.
