@@ -602,3 +602,12 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - checkpoint.md: actualizado para continuidad.
 - Alcance: documentación solamente. No se inspeccionó ni modificó código, Drive o Spreadsheet; no se movieron/renombraron imágenes ni se ejecutaron pruebas funcionales.
 ================================================================================
+
+
+================================================================================
+2026-11-18 — AUDITORÍA ESTÁTICA: CONSOLA Y ORGANIZADOR DE IMÁGENES
+- Se inspeccionaron JS/Frontend/ui.js, index.html y JS/Services/admin.js en el HEAD bed9f15814badc314f664bfc9e627cd9f875ed2f.
+- Auditoría.txt registra evidencia y severidad: confirmación solicitada en terminal global y resultados fragmentados; organizador limitado a imagenVehiculo de Cortes; verificación de referencias limitada a Cortes; alta de logos en Cortes/Logos; nomenclatura sin año final y con sufijos heredados; ruta de fusión de carpetas que puede enviar origen a papelera tras fallos parciales.
+- No se modificó código, no se ejecutaron acciones de Drive/Spreadsheet y no se movieron, renombraron ni eliminaron imágenes.
+- Estado: auditoría estática del organizador completada; consola, rutas, nomenclatura, alta de logos y protección integral de referencias pendientes de implementación y pruebas.
+================================================================================

@@ -391,3 +391,51 @@ Adenda de validación final GP-PWA-RECENT-VIEWS-02: al subir CACHE_NAME a v70 ta
 - BETA-ADMIN-CUT-IMAGE-FUNCTION-CODES-01: ign=ignición, bomba=bomba de combustible, btn=señal al botón, apert=apertura, alim=alimentación, alim2=alimentación 2, shock=señal al ahogador. Sufijos numéricos distinguen varias imágenes de una función.
 - Estado: requisitos pendientes de auditoría técnica/implementación. No se afirma que la organización actual cumpla o incumpla; no se ejecutaron operaciones en Drive/Spreadsheet.
 ================================================================================
+
+
+================================================================================
+2026-11-18 — AUDITORÍA TÉCNICA: CONSOLA DE AUDITORÍA Y ORGANIZADOR DE IMÁGENES
+================================================================================
+Alcance: revisión estática de JS/Frontend/ui.js, index.html y JS/Services/admin.js en GPSpedia2.2.5_work, HEAD bed9f15814badc314f664bfc9e627cd9f875ed2f. No se ejecutaron acciones sobre Drive/Spreadsheet ni se movieron, renombraron, eliminaron o sobrescribieron archivos.
+
+### BETA-ADMIN-CUT-IMAGE-AUDIT-CONSOLE-01 — salida y confirmación
+- Evidencia: JS/Frontend/ui.js:5694, requestDeveloperConsoleConfirmation_ solicita la respuesta en la terminal global del desarrollador; las acciones saveUnusedInventory (línea 8470) y organizeUnusedImages (línea 8579) dependen de window.gpsepediaRequestDeveloperConsoleConfirmation. El usuario debe salir del flujo del modal y contestar en esa terminal.
+- Evidencia: index.html:633-653 define el modal, una zona de resumen y otra lista de resultados. JS/Frontend/ui.js:8384 actualiza numerosos contadores independientes; appendFiles (línea 8326) renderiza tarjetas/listas; logDeveloperOperation_ (línea 7723) envía mensajes a window.gpsepediaDeveloperLog, que corresponde a la consola general y no a una consola propia del modal.
+- Impacto: la actividad está fragmentada; el usuario no dispone de una única secuencia cronológica que reúna lotes, carpetas, archivos, clasificación, advertencias, errores y resultado final dentro de la auditoría de Cortes.
+- Severidad: MEDIA (UX/trazabilidad). La confirmación del inventario sí está condicionada a una respuesta afirmativa; no se debe afirmar que el backend registra sin confirmación.
+- Observación adicional: la UI verifica auditId, inventoryOperationId y un resultado individual por cada ID enviado, pero no contrasta savedCount con el número de resultados confirmados ni rechaza explícitamente resultados adicionales no solicitados. Reforzar la coherencia del resumen antes de declarar el registro completo.
+- Criterio de corrección: consola única en el modal con niveles diferenciados (información, progreso, advertencia, error y cierre), trazabilidad por lote/carpeta/archivo y un flujo de confirmación visible y explícito; el resumen de guardado debe derivarse de resultados individuales verificados y no de un contador independiente.
+
+### BETA-ADMIN-CUT-IMAGE-ORGANIZER-AUDIT-01 / STRUCTURE-01 — cobertura del organizador
+- Evidencia: JS/Services/admin.js:2978, handleOrganizePrimaryVehicleImages, lee exclusivamente SHEET_NAMES.CORTES y procesa vehicleInfo.imagenVehiculo. No recorre la hoja LogosMarca ni los otros siete campos de imagen.
+- Evidencia: JS/Services/admin.js:6732, movePrimaryVehicleImageToCanonicalFolder comprueba referencias mediante collectCortesImageReferences(true), limitado a los ocho campos de la hoja Cortes. No utiliza collectActiveDriveReferences para verificar referencias en todas las hojas antes de mover.
+- Impacto: el organizador principal no cumple el alcance de procesar fila por fila Cortes y Logos; además, una imagen que también esté referenciada fuera de Cortes no queda protegida por esta comprobación de uso compartido. Un movimiento puede romper una referencia externa a esa hoja.
+- Severidad: ALTA (integridad de referencias) y MEDIA (cobertura funcional).
+- Evidencia complementaria: collectActiveDriveReferences (JS/Services/admin.js:231) sí excluye Imagenes_Reemplazadas y escanea las demás hojas, mientras collectCortesImageReferences (línea 341) se limita a los campos definidos de Cortes. El inventario de auditoría y la protección del organizador, por tanto, no usan actualmente el mismo alcance de referencias.
+- Criterio de corrección: antes de cualquier movimiento, comprobar todas las referencias activas en todas las hojas permitidas, excluir únicamente Imagenes_Reemplazadas para determinar uso vigente, detectar referencias no interpretables y bloquear ante ambigüedad.
+
+### BETA-ADMIN-CUT-IMAGE-ORGANIZER-REGISTRATION-CONSISTENCY-01 — altas y rutas
+- Evidencia: JS/Services/admin.js:5089, handleAddLogo crea/usa Cortes/Logos mediante getOrCreateSubFolder y guarda el archivo allí; no lo coloca en Cortes/<categoría>/<marca>/.
+- Evidencia: findOrCreateVehicleFolder (línea 6665) crea Cortes/<categoría>/<marca>/<modelo>/<versión-o-encendido>/<rango-años>/ para las imágenes del vehículo. El alta de corte reutiliza esta ruta; el alta de logo usa una ruta distinta.
+- Impacto: el flujo de alta de logo no coincide con la estructura objetivo, que exige el logo en el primer nivel de la carpeta de marca. Las altas y el organizador no comparten un único constructor de destinos.
+- Severidad: MEDIA.
+- Criterio de corrección: derivar los destinos desde un constructor común y probado; guardar logos en la carpeta de marca y recursos del vehículo en la jerarquía completa, sin inventar categorías ni valores.
+
+### BETA-ADMIN-CUT-IMAGE-ORGANIZER-NAMING-01 / FUNCTION-CODES-01 — nomenclatura
+- Evidencia: JS/Services/admin.js:3113, buildCanonicalImageBaseName incluye modelo, versionesAplicables, tipoEncendido y anoDesde; no incorpora anoHasta. Sus sufijos heredados son corte1, corte2, corte3, apert, alimen, alimen2 y alimen3.
+- Impacto: el nombre no representa el rango completo de años y los sufijos no corresponden al catálogo solicitado ign, bomba, btn, apert, alim, alim2 y shock. Tampoco existe en este helper una estrategia explícita de numeración por colisión funcional (ign1/ign2) según el uso real de cada imagen.
+- Severidad: MEDIA.
+- Criterio de corrección: mapear cada campo real de Spreadsheet a su código funcional confirmado; incluir año o rango; conservar la extensión original; resolver colisiones con sufijos deterministas y actualizar las referencias de Spreadsheet solo después de verificar el archivo destino.
+
+### Riesgo adicional de integridad en la ruta heredada de logos
+- Evidencia: getOrCreateSubFolder / mergeFolders (JS/Services/admin.js, alrededor de las líneas 3739 y 6603) intenta fusionar carpetas canónicamente duplicadas y enviar la carpeta origen a papelera. mergeFolders captura errores de movimiento de archivos/subcarpetas y puede continuar hasta enviar la carpeta origen a papelera aun cuando alguna transferencia haya fallado.
+- La ruta de alta de logo utiliza getOrCreateSubFolder para Cortes/Logos. La ruta nueva findOrCreateSubFolder (línea 6603) tiene un comportamiento más conservador: rechaza carpetas equivalentes múltiples y no las fusiona.
+- Severidad: ALTA (posible pérdida de acceso a archivos por papelera). No se ejecutó la fusión ni se tocó Drive.
+- Criterio de corrección: no fusionar ni enviar carpetas a papelera como efecto colateral de resolver un destino; producir un diagnóstico/dry-run de duplicados y exigir una operación explícita, con verificación íntegra de cada archivo y rollback antes de retirar una carpeta origen.
+
+### Estado y secuencia
+- BETA-ADMIN-CUT-IMAGE-ORGANIZER-AUDIT-01: AUDITORÍA ESTÁTICA COMPLETADA; no equivale a validar la estructura real de Drive ni las filas productivas.
+- BETA-ADMIN-CUT-IMAGE-AUDIT-CONSOLE-01: DEFECTO DE UX CONFIRMADO EN CÓDIGO; implementación pendiente.
+- BETA-ADMIN-CUT-IMAGE-ORGANIZER-STRUCTURE-01, REGISTRATION-CONSISTENCY-01, NAMING-01 y FUNCTION-CODES-01: brechas confirmadas en código; implementación y pruebas pendientes.
+- Orden recomendado: (1) consolidar la consola y la confirmación sin cambiar la semántica del backend; (2) implementar un diagnóstico/dry-run del organizador que compare Cortes, Logos, rutas y referencias sin mutar Drive; (3) corregir el constructor de rutas/nomenclatura y los flujos de alta; (4) habilitar movimientos solo después de revisión y pruebas de rollback/idempotencia.
+================================================================================
