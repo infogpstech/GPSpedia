@@ -190,3 +190,20 @@ La instrumentación del navegador vive en `JS/Frontend/serviceTelemetry.js`, se 
 La versión de software Coordinator es independiente del protocolo. La versión omitida por clientes legacy se interpreta como v1; los cambios internos no deben incrementar la versión de protocolo. La compatibilidad actual se valida en JS/Tests/SharedMutationCoordinator.js.
 
 Esta matriz reduce despliegues innecesarios, pero no elimina la necesidad de publicar un consumidor cuando su propio código local cambia. Tampoco se utiliza Apps Script Libraries como atajo: sus referencias versionadas también deben actualizarse en cada proyecto.
+
+
+## Catálogo canónico de secretos por servicio
+
+Cada servicio conserva una identidad criptográfica distinta. La simplificación consiste en usar el mismo nombre de propiedad local en cada proyecto y reutilizar ese secreto para autenticación Coordinator y telemetría directa; no consiste en compartir un único valor entre servicios.
+
+| Proyecto consumidor | Propiedad local | Propiedad correspondiente en Coordinator | Uso |
+|---|---|---|---|
+| AUTH | GPSpedia_COORDINATOR_SECRET | GPSpedia_COORDINATOR_SECRET_AUTH | Protocolo interno, leases, sesión y telemetría AUTH |
+| USERS | GPSpedia_COORDINATOR_SECRET | GPSpedia_COORDINATOR_SECRET_USERS | Protocolo interno, leases, sesión y telemetría USERS |
+| WRITE | GPSpedia_COORDINATOR_SECRET | GPSpedia_COORDINATOR_SECRET_WRITE | Protocolo interno, leases, sesión y telemetría WRITE |
+| ADMIN | GPSpedia_COORDINATOR_SECRET | GPSpedia_COORDINATOR_SECRET_ADMIN | Protocolo interno, leases y consulta global |
+| FEEDBACK | GPSpedia_COORDINATOR_SECRET | GPSpedia_COORDINATOR_SECRET_FEEDBACK | Protocolo interno, leases, sesión y telemetría FEEDBACK |
+| UTILITIES | GPSpedia_COORDINATOR_SECRET | GPSpedia_COORDINATOR_SECRET_UTILITIES | Protocolo interno, leases y sesión |
+| CATALOG | GPSpedia_COORDINATOR_SECRET | GPSpedia_COORDINATOR_SECRET_CATALOG | Solo lectura interna de telemetría; no habilita leases ni mutaciones |
+
+Los valores de la columna Coordinator son todos diferentes. No copiar el secreto de AUTH a otro proyecto. Cada consumidor configura además GPSpedia_COORDINATOR_URL con la URL del Coordinator del mismo entorno. Las URLs de servicios consultados directamente se centralizan como GPSpedia_SERVICE_URL_<SERVICIO> en Coordinator. Las propiedades antiguas *_TRAFFIC_SECRET quedan como fallback transitorio y se retiran únicamente después de migrar y validar Beta.
