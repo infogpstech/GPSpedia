@@ -726,3 +726,14 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - Auditoría confirma que SharedMutationClient mezcla transporte con fan-out de invalidación remota hacia WRITE y FEEDBACK. No se cambia el orden actual de invalidación/revocación hasta diseñar recuperación de fallos parciales.
 - Inventario de configuración documentado sin leer ni modificar valores secretos.
 ================================================================================
+
+================================================================================
+2026-11-19 — PROTOCOLO INTERNO V1 Y ORQUESTACIÓN CENTRAL DE CACHÉ
+- Coordinator 1.4.2 introduce protocolVersion: 1 para peticiones POST internas. Clientes antiguos que omiten el campo se interpretan como v1; versiones desconocidas se rechazan antes de ejecutar acciones.
+- Coordinator 1.4.3 incorpora invalidateSessionActorCaches, exclusiva de AUTH. La operación contacta WRITE y FEEDBACK con secretos por servicio y URLs centralizadas en el proyecto Coordinator.
+- SharedMutationClient ya no conoce GPSpedia_WRITE_URL/GPSpedia_FEEDBACK_URL ni usa el secreto de AUTH para autenticarse directamente en esos servicios. Envía los tokens al Coordinator por el canal autenticado de AUTH.
+- Coordinator valida ambas configuraciones antes de iniciar, divide lotes de hasta 25 en grupos remotos de cinco y exige confirmación exacta de WRITE y FEEDBACK.
+- Se conserva el orden actual: invalidación remota confirmada antes de revocación central. Los fallos parciales devuelven error; repetir la misma invalidación es idempotente.
+- Configuración pendiente por entorno: GPSpedia_SERVICE_URL_WRITE y GPSpedia_SERVICE_URL_FEEDBACK en Coordinator. No se consultaron ni modificaron propiedades remotas.
+- Pruebas SharedMutationCoordinator: 74/74 PASS; incluye cliente legacy/v1, rechazo de versión no compatible, invalidación en lotes, fallo parcial, reintento, revocación individual y global.
+================================================================================
