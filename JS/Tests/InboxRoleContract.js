@@ -53,7 +53,7 @@ run('getCatalogChanges es una lectura pública del journal y no exige actor/leas
   assert(debug.includes('coordinatorConfigured'));
   assert(!debug.includes('GPSpedia_COORDINATOR_SECRET'),'El endpoint de diagnóstico no debe exponer nombres ni valores secretos.');
  });
- run('Lecturas FEEDBACK protegidas usan actor cacheado; rutas públicas no requieren sesión',()=>{const d=feedback.slice(feedback.indexOf('function doPost(e)'),feedback.indexOf('const RICH_TEXT_MODE_PROPERTY_'));assert(d.includes('getCachedSharedSessionActor_(payload.userId, payload.sessionToken)'));assert(!d.includes('withSharedMutationLease_'));assert(d.includes('FEEDBACK_PUBLIC_ACTIONS.has(action)'));});
+ run('Lecturas FEEDBACK protegidas usan actor cacheado; rutas públicas no requieren sesión',()=>{const d=feedback.slice(feedback.indexOf('function doPost(e)'),feedback.indexOf('const RICH_TEXT_MODE_PROPERTY_'));assert(d.includes('getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "FEEDBACK" })'));assert(!d.includes('withSharedMutationLease_'));assert(d.includes('FEEDBACK_PUBLIC_ACTIONS.has(action)'));});
 
  run('Backend ignora rol falsificado y usa actor autenticado',()=>{const s=feedback.indexOf('const FEEDBACK_ACTION_PERMISSIONS = Object.freeze('),e=feedback.indexOf(');',s)+2;const api=new Function('assertFeedbackSession',feedback.slice(s,e)+'\n'+extract(feedback,'authorizeFeedbackAction_')+'\nreturn authorizeFeedbackAction_;')(()=>({userId:'U1',userName:'Verificado',role:'Supervisor'}));const out=api('approveVideo',{userRole:'Desarrollador'});assert(out.userRole==='Supervisor');});
  run('Todos los rangos autorizados pueden iniciar mensajes desde el control existente',()=>{
