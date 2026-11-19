@@ -19,7 +19,7 @@ function runSharedMutationCoordinatorTests() {
         if (expectedText) assert_(String(thrown.message || thrown).includes(expectedText), "Error inesperado: " + String(thrown.message || thrown));
     }
 
-    function createRuntime_(sleepHook) {
+    function createRuntime_(sleepHook, fetchHook) {
         const store = {};
         let clock = 1700000000000;
         let sequence = 0;
@@ -45,7 +45,8 @@ function runSharedMutationCoordinatorTests() {
             lockService: lockService,
             now: () => clock,
             uuid: uuid,
-            sleep: milliseconds => { clock += milliseconds; if (typeof sleepHook === "function") sleepHook(milliseconds); }
+            sleep: milliseconds => { clock += milliseconds; if (typeof sleepHook === "function") sleepHook(milliseconds); },
+            fetch: fetchHook
         });
 
         function request(action, service, operation, extra) {
@@ -1101,6 +1102,63 @@ function runSharedMutationCoordinatorTests() {
         expectThrow_(() => getCachedSharedSessionActor_("U-1", "token-1", { cache, keyFor: () => "revoked", validate: () => ({ status: "success", valid: false }) }), "revocada");
         expectThrow_(() => getCachedSharedSessionActor_("U-1", "token-2", { cache, keyFor: () => "wrong", validate: () => ({ status: "success", valid: true, actor: { userId: "U-2", role: "tecnico", epoch: 1 } }) }), "revocada");
         assert_(store.size === 0);
+    });
+
+    test_("Coordinator centraliza invalidación remota por lotes para WRITE y FEEDBACK", function() {
+        const calls = [];
+        const r = createRuntime_(null, function(url, options) {
+            const request = JSON.parse(options.payload);
+            calls.push({ url, request });
+            const target = url.includes("WRITE") ? "WRITE" : "FEEDBACK";
+            assert_(request.action === "__invalidateSessionActorCache", "Debe usar el endpoint interno de invalidación.");
+            assert_(request.payload.secret === r.secrets[target], "Debe usar el secreto propio de " + target + ".");
+            return {
+                getResponseCode: () => 200,
+                getContentText: () => JSON.stringify({ status: "success", invalidated: request.payload.sessionTokens.length })
+            };
+        });
+        r.properties.setProperty("GPSpedia_SERVICE_URL_WRITE", "https://script.google.com/macros/s/WRITE/exec");
+        r.properties.setProperty("GPSpedia_SERVICE_URL_FEEDBACK", "https://script.google.com/macros/s/FEEDBACK/exec");
+        const tokens = Array.from({ length: 7 }, (_, index) => "session-token-cache-" + String(index).padStart(4, "0"));
+        const result = r.request("invalidateSessionActorCaches", "AUTH", "invalidateSessionActorCaches", {
+            userId: "USR-CACHE-1", sessionTokens: tokens
+        });
+        assert_(result.status === "success" && result.invalidated === 7, "Debe confirmar todos los tokens.");
+        assert_(result.confirmed.WRITE === 7 && result.confirmed.FEEDBACK === 7, "Ambos servicios deben confirmar cada token.");
+        assert_(calls.length === 4, "Siete tokens deben dividirse en dos lotes por cada servicio.");
+        assert_(calls.every(call => call.request.payload.userId === "USR-CACHE-1"), "Debe conservar la identidad objetivo.");
+        assert_(!JSON.stringify(result).includes("session-token-cache"), "La respuesta no debe exponer tokens.");
+    });
+
+    test_("Una invalidación parcial falla de forma explícita y admite reintento idempotente", function() {
+        let failFeedback = true;
+        const calls = [];
+        const r = createRuntime_(null, function(url, options) {
+            const request = JSON.parse(options.payload);
+            const target = url.includes("WRITE") ? "WRITE" : "FEEDBACK";
+            calls.push(target);
+            const invalidated = request.payload.sessionTokens.length;
+            if (target === "FEEDBACK" && failFeedback) {
+                return { getResponseCode: () => 503, getContentText: () => JSON.stringify({ status: "error" }) };
+            }
+            return { getResponseCode: () => 200, getContentText: () => JSON.stringify({ status: "success", invalidated }) };
+        });
+        r.properties.setProperty("GPSpedia_SERVICE_URL_WRITE", "https://script.google.com/macros/s/WRITE/exec");
+        r.properties.setProperty("GPSpedia_SERVICE_URL_FEEDBACK", "https://script.google.com/macros/s/FEEDBACK/exec");
+        const payload = { userId: "USR-CACHE-2", sessionTokens: ["session-token-cache-retry-0001"] };
+        expectThrow_(() => r.request("invalidateSessionActorCaches", "AUTH", "invalidateSessionActorCaches", payload), "FEEDBACK");
+        assert_(calls.join(",") === "WRITE,FEEDBACK", "La primera ejecución debe detectar el fallo parcial.");
+        failFeedback = false;
+        const retry = r.request("invalidateSessionActorCaches", "AUTH", "invalidateSessionActorCaches", payload);
+        assert_(retry.status === "success" && retry.invalidated === 1, "El mismo lote debe poder repetirse sin duplicar efectos.");
+        assert_(calls.join(",") === "WRITE,FEEDBACK,WRITE,FEEDBACK", "El reintento debe confirmar ambos destinos.");
+    });
+
+    test_("La invalidación remota de caché permanece reservada a AUTH", function() {
+        const r = createRuntime_();
+        expectThrow_(() => r.request("invalidateSessionActorCaches", "WRITE", "invalidateSessionActorCaches", {
+            userId: "USR-CACHE-3", sessionTokens: ["session-token-cache-denied-0001"]
+        }), "Solo AUTH");
     });
 
     test_("Coordinator conserva compatibilidad con clientes legacy y rechaza protocolos desconocidos", function() {
