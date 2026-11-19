@@ -878,7 +878,7 @@ const dispatch = new Function(
 )(
     { getInboxRecipients:null, getInboxConversations:null, getInboxMessages:null, createInboxConversation:null },
     new Set(),
-    (userId, sessionToken) => { dispatchCalls.push({userId,sessionToken}); return trustedInboxActor; },
+    (userId, sessionToken, options) => { dispatchCalls.push({userId,sessionToken,service:options && options.service}); return trustedInboxActor; },
     (event, actor) => {
         const request = JSON.parse(event.postData.contents);
         request.payload.__sharedSessionActor = actor;
@@ -895,7 +895,7 @@ for (const action of ["getInboxRecipients","getInboxConversations","getInboxMess
     dispatchCalls.length = 0;
     const event = { postData:{contents:JSON.stringify({action,payload:{userId:"U1",sessionToken:"token-a"}})} };
     const payload = dispatch(event);
-    assert.deepEqual(dispatchCalls,[{userId:"U1",sessionToken:"token-a"}]);
+    assert.deepEqual(dispatchCalls,[{userId:"U1",sessionToken:"token-a",service:"FEEDBACK"}]);
     assert.equal(payload.__sharedSessionActor.userId,"U1");
     assert.equal(payload.__sharedSessionActor.epoch,1);
 }
