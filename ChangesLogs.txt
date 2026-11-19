@@ -901,3 +901,5 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 2026-11-19 — Coordinator: las publicaciones legacy WRITE/Cortes convertidas a reset ahora marcan resetRequired=true para conservar el contrato del feed incremental.
 
 2026-11-19 — CatalogChangeFeed: fixture de publicación WRITE/Cortes ahora incluye sourceVersion para representar el contrato versionado actual.
+
+2026-11-19 — CatalogChangeFeed: fixtures WRITE/Cortes con sourceVersion monotónica para probar upsert, evento grande, retención y cursor sin activar fallback legacy.

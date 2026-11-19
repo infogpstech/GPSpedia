@@ -31,7 +31,7 @@ function request(action, service, operation, extra = {}, secret = service.repeat
     return coordinator.handleRequest({ action, payload: { service, operation, secret, ...extra } });
 }
 test("publica revisiones monotónicas entre servicios", () => {
-    const a = request("publishCatalogChange","WRITE","addOrUpdateCut",{change:{collection:"cortes",recordId:"V-1",operation:"upsert",snapshot:{id:"V-1",modelo:"A"}}});
+    const a = request("publishCatalogChange","WRITE","addOrUpdateCut",{change:{collection:"cortes",recordId:"V-1",operation:"upsert",snapshot:{id:"V-1",modelo:"A"},sourceVersion:1}});
     const b = request("publishCatalogChange","FEEDBACK","recordLike",{change:{collection:"cortes",recordId:"V-1",operation:"upsert",snapshot:{id:"V-1",utilCorte1:2}}});
     assert.equal(a.revision,1); assert.equal(b.revision,2);
 });
@@ -51,7 +51,7 @@ test("rechaza colecciones, IDs y snapshots inválidos", () => {
     assert.throws(()=>request("publishCatalogChange","WRITE","addOrUpdateCut",{change:{collection:"cortes",recordId:"1",operation:"upsert",snapshot:[]}}),/snapshot/);
 });
 test("evento grande se convierte en reset seguro", () => {
-    const result = request("publishCatalogChange","WRITE","addOrUpdateCut",{change:{collection:"cortes",recordId:"V-LARGE",operation:"upsert",snapshot:{id:"V-LARGE",description:"x".repeat(6000)}}});
+    const result = request("publishCatalogChange","WRITE","addOrUpdateCut",{change:{collection:"cortes",recordId:"V-LARGE",operation:"upsert",snapshot:{id:"V-LARGE",description:"x".repeat(6000)},sourceVersion:2}});
     assert.equal(result.resetRequired,true);
     const page = request("getCatalogChanges","FEEDBACK","getCatalogChanges",{cursor:2,limit:5});
     assert.equal(page.changes[0].operation,"reset"); assert.equal(page.resetRequired,true);
@@ -70,7 +70,7 @@ test("rechaza cursor futuro y límites fuera del contrato", () => {
     assert.throws(()=>request("getCatalogChanges","FEEDBACK","getCatalogChanges",{cursor:0,limit:51}),/entre 1 y 50/);
 });
 test("cursor vencido activa recuperación de snapshot", () => {
-    for (let i=0;i<105;i++) request("publishCatalogChange","WRITE","addOrUpdateCut",{change:{collection:"cortes",recordId:"V-"+i,operation:"delete"}});
+    for (let i=0;i<105;i++) request("publishCatalogChange","WRITE","addOrUpdateCut",{change:{collection:"cortes",recordId:"V-"+i,operation:"delete",sourceVersion:i+3}});
     const page = request("getCatalogChanges","FEEDBACK","getCatalogChanges",{cursor:0,limit:50});
     assert.equal(page.resetRequired,true); assert.equal(page.changes.length,0);
     assert.ok(page.minRevision>1);
@@ -114,7 +114,7 @@ test("la lectura pública preserva cursor y límites sin autenticar servicio", (
     const headPage = coordinator.getPublicCatalogChanges({cursor:Number.MAX_SAFE_INTEGER,limit:1});
     assert.equal(headPage.status,"success");
     assert.equal(headPage.resetRequired,true);
-    request("publishCatalogChange","WRITE","addOrUpdateCut",{change:{collection:"cortes",recordId:"PUBLIC-READ-1",operation:"delete",sourceVersion:1}});
+    request("publishCatalogChange","WRITE","addOrUpdateCut",{change:{collection:"cortes",recordId:"PUBLIC-READ-1",operation:"delete",sourceVersion:108}});
     const page = coordinator.getPublicCatalogChanges({cursor:headPage.currentRevision,limit:1});
     assert.equal(page.status,"success");
     assert.equal(page.changes.length,1);
@@ -138,7 +138,7 @@ test("SharedMutationClient usa GET y funciona sin GPSpedia_COORDINATOR_SECRET", 
         }
     });
     const headPage = coordinator.getPublicCatalogChanges({cursor:Number.MAX_SAFE_INTEGER,limit:1});
-    request("publishCatalogChange","WRITE","addOrUpdateCut",{change:{collection:"cortes",recordId:"PUBLIC-CLIENT-1",operation:"delete"}});
+    request("publishCatalogChange","WRITE","addOrUpdateCut",{change:{collection:"cortes",recordId:"PUBLIC-CLIENT-1",operation:"delete",sourceVersion:109}});
     const page = client.getCatalogChanges(headPage.currentRevision,1);
     assert.equal(page.status,"success");
     assert.equal(page.changes.length,1);

@@ -365,3 +365,5 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - Corrección post-CI: las publicaciones legacy WRITE/Cortes se transforman en reset y deben devolver `resetRequired: true`, conservando el contrato del cliente incremental cuando la versión antigua no enviaba `sourceVersion`.
 
 - Ajuste de fixture: CatalogChangeFeed prueba una publicación WRITE/Cortes versionada explícitamente (`sourceVersion: 1`) para conservar su intención de verificar cursor/lectura de un evento delete, no el fallback legacy.
+
+- Ajuste adicional de fixtures CatalogChangeFeed: todos los eventos WRITE/Cortes usados para verificar upsert, tamaño máximo, retención y cursor público ahora declaran versiones secuenciales coherentes; los casos legacy se cubren por separado en SharedMutationCoordinator.
