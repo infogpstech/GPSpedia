@@ -1064,3 +1064,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-19] ADMIN: ensureTestigoColumns devuelve el snapshot de encabezados validado, con las columnas AT:AV normalizadas en memoria. handleAddOrUpdateCut reutiliza ese snapshot para resolver la columna de operación al recuperar un opId, evitando otra lectura completa de encabezados mientras conserva la exclusión y revalidación del ledger. AdminTestigoHeaderReadReuse 7/7 PASS; CI 44633178723 SUCCESS: 184 suites, 2,457 pruebas, 0 fallos; health read-only 44633178689 SUCCESS. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
+
+
+[2026-11-19] ADMIN: en la rama existente de `handleAddOrUpdateCut`, los cinco campos contiguos del corte (tipo, ubicación, color, configuración de relay e imagen) ahora se persisten mediante una sola llamada `setValues()`. Las columnas de testigo y colaborador se mantienen como escrituras separadas porque no son contiguas en el esquema; VIN, timestamp y reservas idempotentes conservan su flujo. Se añade `AdminCutSlotBatchWrites.mjs` al runner. CI `44633759321` SUCCESS y health read-only `44633759352` SUCCESS sobre HEAD `e11056bca8759256871d7e7748a083b5d2b3af2e`. No se desplegó ADMIN ni se modificaron Sheets/Drive productivos.

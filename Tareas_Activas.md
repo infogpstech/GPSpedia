@@ -653,3 +653,15 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Prueba `AdminTestigoHeaderReadReuse.mjs`: 7/7 PASS. CI `44633178723` SUCCESS: 184 suites, 2,457 pruebas aprobadas, 0 fallos; sintaxis JS aprobada.
 - [x] Health read-only `44633178689` SUCCESS. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. `GP-PERF-ADMIN-CUT-LOCK-01` continúa EN PROGRESO.
+
+
+### ADMIN — escrituras por lote en cortes de vehículos existentes (2026-11-19)
+- [x] Agrupar los cinco campos contiguos del slot (tipo, ubicación, color, relay e imagen) en una llamada `setValues()` para los tres slots posibles.
+- [x] Mantener testigo y colaborador en sus columnas independientes; preservar VIN, timestamp, flush y reservas/transiciones idempotentes.
+- [x] Añadir `AdminCutSlotBatchWrites.mjs` al runner; comprobar continuidad de columnas y ausencia de escrituras individuales para los cinco campos.
+- [x] CI `44633759321` SUCCESS: sintaxis JavaScript y suite completa aprobadas.
+- [x] Health read-only `44633759352` SUCCESS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó ADMIN ni se modificaron Sheets/Drive productivos.
+- Commits: implementación/prueba/runner `31fe4a4577d9212ec39ee25a665995e836a7a0fb`; ajuste de aserción `e11056bca8759256871d7e7748a083b5d2b3af2e`.
+
+Siguiente paso: continuar GP-PERF-ADMIN-CUT-LOCK-01 inspeccionando las escrituras y lecturas restantes bajo el ScriptLock en `handleAddOrUpdateCut`; priorizar reducción de llamadas remotas sin trasladar fuera del lock las reservas, validaciones de conflicto ni escrituras que deban ser atómicas.

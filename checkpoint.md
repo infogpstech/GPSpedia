@@ -5,7 +5,7 @@ Fecha: 2026-11-19
 ## Repositorio y ramas
 - Repositorio: infogpstech/GPSpedia
 - Rama autorizada: GPSpedia2.2.5_work
-- HEAD funcional de implementación: a7717124cd95af40411963637ec981dfcb63f852
+- HEAD de trabajo confirmado: e11056bca8759256871d7e7748a083b5d2b3af2e
 - Rama base protegida GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificar)
 - El historial completo previo está preservado en Checkpoint_Archive/checkpoint_2026-11-19_parte_003.md; ver Checkpoint_Archive/manifest.md.
 
@@ -185,3 +185,12 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Rama base protegida `GPSpedia2.2.5`: `d9acc68d889985c2e2f42fe3a02e502efc86ead1` (sin modificaciones).
 - Regresión sobre el código, pruebas, runner y registros de tarea/changelog: CI `44633296363` SUCCESS, 184 suites / 2,457 pruebas / 0 fallos; health read-only `44633296340` SUCCESS. El último commit posterior corresponde únicamente a este checkpoint.
 - `GP-PERF-ADMIN-CUT-LOCK-01` continúa EN PROGRESO; siguiente revisión: lecturas de VIN e identificación de vehículo en `findVinDuplicateForAdmin` y `findUniqueCortesVehicleRow_`, con prioridad en preservar detección de duplicados y concurrencia.
+
+
+## Continuidad — ADMIN escrituras por lote (2026-11-19)
+- Se completó una optimización localizada en la rama de vehículo existente de `handleAddOrUpdateCut`: los cinco campos consecutivos del slot se escriben con una llamada `setValues()`.
+- Testigo y colaborador siguen separados debido a sus posiciones no contiguas; se preservan las reservas pending/completed, VIN, timestamp, flush y la sincronización de imágenes fuera del lock.
+- Prueba integrada: `AdminCutSlotBatchWrites.mjs`; CI `44633759321` SUCCESS y health read-only `44633759352` SUCCESS sobre HEAD `e11056bca8759256871d7e7748a083b5d2b3af2e`.
+- Commits: `31fe4a4577d9212ec39ee25a665995e836a7a0fb` (código, prueba y runner); `e11056bca8759256871d7e7748a083b5d2b3af2e` (ajuste de aserción de prueba).
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó ADMIN ni se modificaron datos productivos.
+- Siguiente paso: revisar las restantes lecturas/escrituras de Sheets bajo el ScriptLock en `handleAddOrUpdateCut` y seleccionar la siguiente reducción segura de llamadas, manteniendo la atomicidad de Cortes/Idempotencia.
