@@ -422,3 +422,9 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Pruebas: AdminAuditTrail 15/15; AdminImageScanCoordinatorContract 1/1; SessionActivityCoordination 11/11; DirectTrafficRoutingCoverage 6/6; Coordinator 81/81.
 - [x] Regresión: 159 suites, 2,265 pruebas aprobadas, 0 fallos. Health read-only y Pages SUCCESS.
 - Pendiente dentro del mismo principio: aislar el proceso de inventario/organización de imágenes, que aún mantiene ScriptLock en ADMIN.
+
+### Inventario/organización de imágenes ADMIN — aislamiento (2026-11-19)
+- [x] Retirar ScriptLock global de `handleSaveUnusedImagesInventory` y `handleOrganizeUnusedImagesBatch`.
+- [x] Ejecutar ambos modos bajo lease exclusiva `IMAGE_INVENTORY`, sin lecturas/leases de CORTES, DRIVE ni SESSION_CONTEXTS.
+- [x] Separar el append de `ActividadUsuario` en lease puntual `ACTIVITY`; eliminar ScriptLock del asignador de ID usado solo por ese append.
+- [x] Añadir `AdminInventoryLockIsolation.mjs` y prueba de coexistencia Coordinator con WRITE y AUTH. CI pendiente.

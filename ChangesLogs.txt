@@ -939,3 +939,5 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 2026-11-19 — SharedMutationCoordinator: separar escenarios de concurrencia auditoría+WRITE y auditoría+AUTH/login, preservando el conflicto legítimo entre escritura de Cortes y login.
 
 2026-11-19 — CI auditoría ADMIN aislada: 159 suites, 2,265 pruebas, 0 fallos; health read-only y Pages SUCCESS. Lease exclusiva IMAGE_AUDIT_STATE; no bloquea login ni registro WRITE.
+
+2026-11-19 — ADMIN: aislar escaneo/organización de inventario bajo IMAGE_INVENTORY, sin CORTES/DRIVE/SESSION_CONTEXTS; actividad con lease ACTIVITY puntual y sin ScriptLock global.
