@@ -23,6 +23,12 @@ En ScriptProperties del proyecto coordinador, crear seis secretos independientes
 
 Cada secreto debe tener al menos 32 caracteres aleatorios. Generar uno distinto por servicio. No guardar los valores en el repositorio, código fuente, navegador, hojas de cálculo ni logs.
 
+Además, configurar en el proyecto Coordinator las URLs de los endpoints del mismo entorno:
+- `GPSpedia_SERVICE_URL_WRITE`
+- `GPSpedia_SERVICE_URL_FEEDBACK`
+
+Estas URLs permiten que Coordinator centralice la invalidación de caché de actor remota. La operación utiliza los secretos ya existentes `GPSpedia_COORDINATOR_SECRET_WRITE` y `GPSpedia_COORDINATOR_SECRET_FEEDBACK`; no crea un secreto compartido nuevo. Las URLs deben ser endpoints /exec del entorno correspondiente, nunca de producción desde un Coordinator de prueba.
+
 En el proyecto Apps Script de cada servicio, incluir `JS/Services/SharedMutationClient.js` y crear estas dos ScriptProperties:
 
 - `GPSpedia_COORDINATOR_URL`: URL /exec del coordinador correspondiente al mismo entorno.
@@ -36,7 +42,7 @@ AUTH/USERS/UTILITIES de prueba deben apuntar a un coordinador de prueba independ
 
 La acción FEEDBACK `initYouTubeUpload` no adquiere lease: inicia una sesión de carga en YouTube y no modifica los recursos compartidos de Spreadsheet/Drive. El registro y aprobación posteriores sí se coordinan; el contrato de YouTube permanece en AUG-043.
 
-## Contexto central de sesión (Coordinator 1.4.2)
+## Contexto central de sesión (Coordinator 1.4.3)
 
 El coordinador mantiene la identidad activa en `ScriptProperties`, sin consultar `Users` ni `ActiveSessions` en cada operación de los demás servicios.
 
@@ -48,7 +54,7 @@ El coordinador mantiene la identidad activa en `ScriptProperties`, sin consultar
 
 Acciones internas de contexto de sesión:
 
-- Exclusivas de `AUTH`: `syncUserSessions`, `registerSession`, `revokeSession` y `revokeUserSessions`. Solo AUTH puede registrar, sincronizar o revocar sesiones.
+- Exclusivas de `AUTH`: `syncUserSessions`, `registerSession`, `revokeSession`, `revokeUserSessions` e `invalidateSessionActorCaches`. Solo AUTH puede registrar, sincronizar, revocar sesiones o solicitar la limpieza remota de caché de actores.
 - `validateSessionContext`: cualquier servicio activo autenticado (AUTH, USERS, WRITE, ADMIN, FEEDBACK o UTILITIES) puede validar un token usando su propio secreto de servicio. La respuesta devuelve únicamente el actor validado para que ese servicio construya su caché local; la operación se atribuye al servicio solicitante. No se acepta CATALOG ni una identidad de servicio desconocida.
 - La validación por servicio evita que FEEDBACK/USERS/WRITE/ADMIN intenten autenticarse como AUTH con un secreto distinto. No se comparte el secreto de AUTH con otros proyectos y no se amplían las acciones de registro o revocación.
 
@@ -60,7 +66,7 @@ Los servicios `USERS`, `WRITE`, `ADMIN`, `FEEDBACK` y `UTILITIES` envían `userI
 
 ### Protocolo HTTP interno (versión 1)
 
-Coordinator 1.4.2 y SharedMutationClient declaran `protocolVersion: 1` en cada petición POST interna. La versión del protocolo es independiente de la versión de implementación del Coordinator.
+Coordinator 1.4.3 y SharedMutationClient declaran `protocolVersion: 1` en cada petición POST interna. La versión del protocolo es independiente de la versión de implementación del Coordinator.
 
 - Los clientes anteriores que no envían `protocolVersion` se interpretan como protocolo 1 para mantener compatibilidad durante la actualización gradual.
 - Las versiones desconocidas o mal formadas se rechazan antes de autenticar o ejecutar una operación.
@@ -73,6 +79,19 @@ Coordinator 1.4.2 y SharedMutationClient declaran `protocolVersion: 1` en cada p
 Cada consumidor que necesite poblar su caché local de actor llama `validateSessionContext` indicando su propio nombre de servicio. Coordinator autentica el secreto correspondiente y valida el mismo contexto central de sesión. AUTH conserva en exclusiva registro, sincronización y revocación. La telemetría atribuye la validación al servicio que la solicita.
 
 El cambio es compatible con clientes anteriores que omiten el parámetro opcional: la llamada conserva el comportamiento AUTH. Los consumidores actualizados deben pasar explícitamente AUTH, ADMIN, FEEDBACK, USERS o WRITE según su proyecto. No se debe copiar el secreto de AUTH a otros servicios.
+
+## Invalidación remota de caché (Coordinator 1.4.3)
+
+AUTH solicita a Coordinator la invalidación de tokens en WRITE y FEEDBACK. Coordinator usa las URLs `GPSpedia_SERVICE_URL_WRITE/FEEDBACK` y los secretos individuales ya configurados para cada servicio; los endpoints remotos conservan la acción interna `__invalidateSessionActorCache` y su verificación de secreto.
+
+- AUTH envía lotes de hasta 25 tokens al Coordinator; este los subdivide en grupos de cinco, según el límite de los endpoints remotos.
+- Coordinator valida previamente ambas URLs y ambos secretos antes de contactar cualquiera de los destinos.
+- La operación solo devuelve éxito cuando WRITE y FEEDBACK confirman el número exacto de tokens recibidos.
+- Si una respuesta se pierde o un destino falla después de que el otro ya invalidó, se puede repetir el mismo lote: `CacheService.remove` es idempotente y la operación no expone tokens en la respuesta.
+- La revocación central continúa después de confirmar la invalidación remota, conservando el orden actual. Si la invalidación falla, AUTH no avanza a revocar el contexto central y puede reintentar.
+- No se retiran los endpoints internos ni las comprobaciones de secreto de WRITE/FEEDBACK.
+
+AUTH ya no necesita conocer ni almacenar las URLs de WRITE/FEEDBACK para esta operación. Las propiedades antiguas pueden permanecer durante la transición; no se requiere borrarlas.
 
 ## Recursos de coordinación
 
