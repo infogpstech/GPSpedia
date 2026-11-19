@@ -139,3 +139,5 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Prueba `AdminCutEntityPreflight.mjs`: 7/7 PASS. CI `44629325732` SUCCESS: 180 suites, 2,427 pruebas aprobadas, 0 fallos; sintaxis JS aprobada.
 - Commit de código `9b5bc661d6f6a76ec9cb5ecee0225e99c7de5540`; prueba `cabc7385d2138309c9416d9f3391aa130ab78d70`; runner `bab825c07db2feb7f24a280b81d37ef8b01ab577`.
 - `GP-PERF-ADMIN-CUT-LOCK-01` sigue EN PROGRESO: otras lecturas/escrituras de Sheets aún permanecen bajo el ScriptLock. No se desplegó Apps Script ni se modificaron datos productivos.
+
+- Verificación posterior: health read-only `44629325982` SUCCESS en el HEAD de código `bab825c07db2feb7f24a280b81d37ef8b01ab577`; regresión `44629451857` SUCCESS en el HEAD documental previo, 180 suites / 2,427 pruebas / 0 fallos.
