@@ -93,6 +93,20 @@ function addLogoHarness(options={}){
    };
   }
  };
+ const originalGetRange=sheetValue.getRange;
+ sheetValue.getRange=(row,col,nr=1,nc=1)=>{
+  const range=originalGetRange(row,col,nr,nc);
+  range.row=row;range.col=col;range.nr=nr;range.nc=nc;
+  range.copyTo=(destination,pasteType)=>{
+   if(options.failCopy)throw new Error("copy failure simulated");
+   if(pasteType==="PASTE_FORMAT"||pasteType==="PASTE_DATA_VALIDATION")return destination;
+   const source=rows.slice(row-1,row-1+nr).map(item=>item.slice());
+   while(rows.length<destination.row+destination.nr-1)rows.push(["","","",""]);
+   for(let r=0;r<nr;r++)for(let c=0;c<nc;c++)rows[destination.row-1+r][destination.col-1+c]=source[r][c];
+   return destination;
+  };
+  return range;
+ };
  const cortesSheet={getDataRange:()=>({getValues:()=>cortesRows})};
  const rootFolder={kind:"root"},categoryFolder={kind:"category"};
  const brandFolder={

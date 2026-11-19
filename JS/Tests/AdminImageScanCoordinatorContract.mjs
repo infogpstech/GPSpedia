@@ -9,7 +9,7 @@ const sharedClient = readFileSync(new URL("../Services/SharedMutationClient.js",
 const apiConfig = readFileSync(new URL("../Frontend/api-config.js", import.meta.url), "utf8");
 
 function extractFunction(source, name) {
-    const match = source.match(new RegExp("function " + name + "\\([^\\n]*\\) \\{[\\s\\S]*?\\n\\}"));
+    const match = source.match(new RegExp("function " + name + "\\([^\\n]*\) \\{[\\s\\S]*?\\n\\}"));
     assert.ok(match, "No se encontró " + name);
     return match[0];
 }
@@ -365,15 +365,15 @@ assert.throws(() => logoCategoryResolver([
 assert.throws(() => logoCategoryResolver(logoRowsUnique, "Marca inexistente"));
 const logoHandlerSource = extractFunction(admin, "handleAddLogo");
 assert.match(logoHandlerSource, /resolveLogoCategoryFromCortesRows_/);
-assert.match(logoHandlerSource, /findOrCreateSubFolder\\(rootFolder, category\\)/);
-assert.match(logoHandlerSource, /findOrCreateSubFolder\\(categoryFolder, brandFolderName\\)/);
-assert.doesNotMatch(logoHandlerSource, /findOrCreateSubFolder\\(rootFolder, "Logos"\\)/);
+assert.match(logoHandlerSource, /findOrCreateSubFolder\(rootFolder, category\)/);
+assert.match(logoHandlerSource, /findOrCreateSubFolder\(categoryFolder, brandFolderName\)/);
+assert.doesNotMatch(logoHandlerSource, /findOrCreateSubFolder\(rootFolder, "Logos"\)/);
 assert.match(logoHandlerSource, /canonicalFilename/);
 assert.match(logoHandlerSource, /hasDriveFilenameConflictInFolder/);
 const uploadHandlerSource = extractFunction(admin, "handleUploadAdminImage");
-assert.match(uploadHandlerSource, /buildCanonicalImageBaseName\\(mapRowToObject\\(rowValues, COLS_CORTES\\), fieldName\\)/);
-assert.match(admin, /cutImageInfo\\["tipoCorte" \\+ cutSlotIndex\\] = cutData\\.tipoCorte1/);
-assert.match(admin, /canonicalVehicleInfo.*tipoCorte1: cutData\\.tipoCorte1/);
+assert.match(uploadHandlerSource, /buildCanonicalImageBaseName\(mapRowToObject\(rowValues, COLS_CORTES\), fieldName\)/);
+assert.match(admin, /cutImageInfo\["tipoCorte" \+ cutSlotIndex\] = cutData\.tipoCorte1/);
+assert.match(admin, /canonicalVehicleInfo.*tipoCorte1: cutData\.tipoCorte1/);
 
 const logoTarget = organizerFixture.targets.find(target => target.sheetName === "LogosMarca");
 assert.equal(logoTarget.targetFolderPath, "Cortes/Camion_pesado/Toyota");
