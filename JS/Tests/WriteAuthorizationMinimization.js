@@ -104,7 +104,8 @@ function runWriteAuthorizationMinimizationTests(sources) {
   assert(add.includes("const serviceOverride = null")&&add.includes("silent: silentVal"));
   const start=write.indexOf("function handleAddOrUpdateCutLockedUnsafe_"),end=write.indexOf("\nfunction ",start+10),handler=write.slice(start,end<0?write.length:end);
    const preflightStart=write.indexOf("function prepareAddOrUpdateCutRequest_"),preflightEnd=write.indexOf("\nfunction handleAddOrUpdateCut(payload)",preflightStart),preflight=write.slice(preflightStart,preflightEnd);
-   const outer=extract(write,"handleAddOrUpdateCut"),locked=extract(write,"handleAddOrUpdateCutLocked");
+   const outer=extract(write,"handleAddOrUpdateCut");
+   const lockedStart=write.indexOf("function handleAddOrUpdateCutLocked("),lockedEnd=write.indexOf("\nfunction handleAddOrUpdateCutLockedUnsafe_",lockedStart),locked=write.slice(lockedStart,lockedEnd);
    assert(preflight.includes('getAuthenticatedCollaborator(payload, payload && payload.silent === true ? ["desarrollador"] : undefined)'));
    assert(preflight.includes("getAddCutPayloadValidationOptions_")&&preflight.includes("validateAddOrUpdateCutPayload_"));
    assert(outer.indexOf("prepareAddOrUpdateCutRequest_(payload)")<outer.indexOf("lock.tryLock(0)"),"El preflight debe ejecutarse antes del lock.");
