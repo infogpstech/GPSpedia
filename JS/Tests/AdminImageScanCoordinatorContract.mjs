@@ -316,6 +316,8 @@ assert.match(admin, /case 'previewCortesImageOrganizer'/);
 assert.match(admin, /function inspectCortesOrganizerTargetFolderReadOnly_/);
 assert.match(admin, /function handlePreviewCortesImageOrganizer_/);
 assert.match(admin, /folderPath: item\.folderPath/);
+assert.match(admin, /folderPath: String\\(item && item\\.folderPath \\|\\| ""\\)/);
+assert.match(admin, /duplicate_target_destination/);
 assert.match(admin, /file_moved_since_drive_audit/);
 assert.match(admin, /active_reference_location_mismatch/);
 assert.match(admin, /loadDriveAuditSeenIds_\(auditId, Number\(auditState\.pageCount\), false\)/);
