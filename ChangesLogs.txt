@@ -748,3 +748,13 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - Pruebas: SharedMutationCoordinator 77/77; CoordinatorCapabilityPreservation 6/6; ServiceTrafficAdminContract 33/33; ServiceTrafficAggregation 6/6; ServiceTrafficBatch 5/5; DirectTrafficRoutingCoverage 6/6; ServiceBrowserTrafficContract 9/9; ServiceTrafficAggregatorContract 5/5. Sintaxis de Coordinator, SharedMutationClient, serviceTelemetry y Service Worker PASS.
 - No se desplegó Apps Script, no se modificaron ScriptProperties/secretos, ni se tocaron Drive, Spreadsheet o datos externos.
 ================================================================================
+
+
+================================================================================
+2026-11-19 — ADMIN: RESULTADOS DE LIMPIEZA DE LOGS Y CONTROLES COMPACTOS
+- AUTH/handleClearSensitiveLogs: el mensaje distingue eliminación real, revisión sin coincidencias confidenciales y hoja sin registros; conserva scannedCount/deletedCount y el manejo de fallo parcial.
+- FEEDBACK/handleClearActivityLogs: no afirma «Se eliminaron 0»; distingue ausencia de hoja, ausencia de filas, retención sin registros antiguos y eliminación real. Mantiene filas con fecha no clasificable para revisión.
+- index.html: selector de retención con etiquetas breves, accesibles y opciones de 7 días o todos los registros conservando encabezados.
+- style.css: selector en grid con min-width:0 y adaptación móvil; padding de .detail-recommended-cut reducido de 12 px a 8 px sin cambiar encabezado ni acciones.
+- Pruebas: SensitiveLogsTrustedActor 7/7; ActivityLogsClearFeedback 5/5; AdminLogsMaintenanceContract 10/10.
+================================================================================
