@@ -36,7 +36,7 @@ AUTH/USERS/UTILITIES de prueba deben apuntar a un coordinador de prueba independ
 
 La acción FEEDBACK `initYouTubeUpload` no adquiere lease: inicia una sesión de carga en YouTube y no modifica los recursos compartidos de Spreadsheet/Drive. El registro y aprobación posteriores sí se coordinan; el contrato de YouTube permanece en AUG-043.
 
-## Contexto central de sesión (versión 1.4.0)
+## Contexto central de sesión (Coordinator 1.4.2)
 
 El coordinador mantiene la identidad activa en `ScriptProperties`, sin consultar `Users` ni `ActiveSessions` en cada operación de los demás servicios.
 
@@ -58,7 +58,17 @@ Al cerrar sesión se revoca únicamente el token correspondiente. Los cambios de
 
 Los servicios `USERS`, `WRITE`, `ADMIN`, `FEEDBACK` y `UTILITIES` envían `userId` y `sessionToken` al adquirir la lease. El coordinador devuelve el actor verificado en esa misma respuesta; `SharedMutationClient` elimina cualquier actor enviado por el navegador y adjunta únicamente el actor recibido del coordinador. Los helpers de autorización consumen ese contexto sin repetir búsquedas de sesión en hojas. `USERS/updateProfile` conserva una búsqueda exacta de la fila del usuario porque necesita localizar la fila que modificará.
 
-### Validación de sesión por identidad de servicio (contrato 1.4.1)
+### Protocolo HTTP interno (versión 1)
+
+Coordinator 1.4.2 y SharedMutationClient declaran `protocolVersion: 1` en cada petición POST interna. La versión del protocolo es independiente de la versión de implementación del Coordinator.
+
+- Los clientes anteriores que no envían `protocolVersion` se interpretan como protocolo 1 para mantener compatibilidad durante la actualización gradual.
+- Las versiones desconocidas o mal formadas se rechazan antes de autenticar o ejecutar una operación.
+- Los cambios internos compatibles de Coordinator solo requieren actualizar el proyecto Coordinator. No se debe exigir que todos los consumidores se desplieguen simultáneamente.
+- Un cambio que requiera una capacidad nueva del cliente solo exige actualizar los consumidores que invoquen esa capacidad; las acciones anteriores permanecen disponibles durante la transición.
+- Las peticiones GET del feed público mantienen su contrato de lectura separado.
+
+## Validación de sesión por identidad de servicio (contrato 1.4.2)
 
 Cada consumidor que necesite poblar su caché local de actor llama `validateSessionContext` indicando su propio nombre de servicio. Coordinator autentica el secreto correspondiente y valida el mismo contexto central de sesión. AUTH conserva en exclusiva registro, sincronización y revocación. La telemetría atribuye la validación al servicio que la solicita.
 
