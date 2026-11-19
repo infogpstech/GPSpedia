@@ -25,7 +25,7 @@ function runAdminImageReplacementCompensationTests(uiSource, adminSource) {
         assert(!/ids\.findIndex/.test(handler), "El reemplazo todavía selecciona la primera fila coincidente.");
     });
     run("Una imagen linked enviada a papelera pasa a revisión sin reactivarse", () => {
-        assert(linkedBlock.includes("if (newFile.isTrashed())"), "Falta detectar el archivo eliminado.");
+        assert(linkedBlock.includes("linkedFile.isTrashed()"), "Falta detectar el archivo eliminado fuera del ScriptLock.");
         assert(linkedBlock.includes("markAdminImageUploadRequiresReview_"), "La operación linked no delega la reconciliación a requires_review.");
         const reviewHelper = extractFunction(admin, "markAdminImageUploadRequiresReview_");
         assert(reviewHelper.includes('"requires_review"'), "El helper no marca requires_review en el ledger.");
