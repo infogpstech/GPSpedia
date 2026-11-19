@@ -812,3 +812,11 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - Services/SERVICE_HEALTH.md actualiza las versiones fuente FEEDBACK 1.2.2 y ADMIN 2.7.1.
 - Tareas_Activas.md registra el cierre local de Fase 6 y la transición a Fase 7.
 ================================================================================
+
+ 
+================================================================================
+2026-11-19 — UNIFICACIÓN DEL DESTINO DE LOGOTIPOS
+- JS/Services/admin.js: nuevo buildCanonicalLogoDestination_ compartido por el preview del organizador y handleAddLogo; el alta consume sus segmentos de ruta y nombre base.
+- JS/Tests/AdminImageScanCoordinatorContract.mjs: comprueba que el destino de LogosMarca coincide con el constructor canónico y bloquea categorías ambiguas.
+- JS/Tests/LogoIdIntegrity.mjs: actualiza el contrato del alta y el harness para la nueva dependencia compartida.
+================================================================================

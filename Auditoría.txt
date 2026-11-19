@@ -722,3 +722,14 @@ Impacto: el manual operativo podía inducir a comparar deployments con versiones
 Corrección: tabla actualizada a 1.2.2 y 2.7.1, con nota que distingue versión fuente de deployment remoto.
 Severidad: baja (trazabilidad documental). Estado: CORREGIDO LOCALMENTE.
 ================================================================================
+
+ 
+================================================================================
+2026-11-19 — HALLAZGO CORREGIDO: CONSTRUCCIÓN DUPLICADA DEL DESTINO DE LOGOTIPOS
+Ubicación: JS/Services/admin.js, buildCortesImageOrganizerTargets_ y handleAddLogo.
+Evidencia: el preview construía targetFolderPath/targetBaseName dentro de su bloque de LogosMarca, mientras handleAddLogo resolvía categoría, nombre y carpeta por separado.
+Impacto: una futura modificación podía hacer divergir el nombre/ruta de alta respecto del destino mostrado por el organizador.
+Corrección: buildCanonicalLogoDestination_ centraliza ruta, nombre base y razones; ambos flujos consumen el mismo resultado. La categoría múltiple o ausente continúa bloqueada.
+Validación: AdminImageScanCoordinatorContract PASS; LogoIdIntegrity 13/13; CI run 44532907478 SUCCESS, 152 suites y 2,224 pruebas, 0 fallos.
+Severidad: media (coherencia de referencias y prevención de rutas divergentes). Estado: CORREGIDO LOCALMENTE.
+================================================================================

@@ -78,7 +78,11 @@ Normativa: NORMAS_DESAROLLO.md
 - [x] Services/SERVICE_HEALTH.md reconciliado con las versiones declaradas por los endpoints fuente: FEEDBACK 1.2.2 y ADMIN 2.7.1. Las versiones de deployments externos siguen sin verificarse.
 - [x] Tareas_Activas.md, lista_beta.txt, Auditoría.txt, ChangesLogs.txt y checkpoint.md actualizados sin reescribir registros históricos.
 ### Fase 7 — Regresión integral y transición a Beta
-**PENDIENTE · SIGUIENTE ETAPA**
+**REGRESIÓN INTEGRAL LOCAL COMPLETADA; VALIDACIÓN BETA PENDIENTE**
+- [x] Regresión integral CI run 44532907478: 152 suites, 2,224 pruebas aprobadas, 0 fallos; LogoIdIntegrity 13/13 PASS.
+- [x] Health run 44532907375 SUCCESS y Pages run 44532906078 SUCCESS.
+- [ ] Beta: requiere autorización para desplegar los proyectos Apps Script del entorno aislado y ejecutar auditoría Drive/Spreadsheet de solo lectura; no aplicar movimientos ni renombrados.
+
 - Ejecutar las pruebas locales pertinentes de cada fase y una regresión integral de contratos, sintaxis, permisos, sesiones, revocaciones, caché remota, cuentas, telemetría y flujos administrativos.
 - Registrar por separado lo aprobado localmente y lo que exige deployment, credenciales, navegador/dispositivo real, Drive o Spreadsheet.
 - Abrir la fase Beta únicamente después de cerrar las implementaciones locales; preparar primero los comandos seguros de sincronización exigidos por NORMAS_DESAROLLO.md.
@@ -122,7 +126,7 @@ Aplicar la estructura objetivo después de validar el dry-run:
 - Códigos funcionales obligatorios: ign1..ign3, bomba1..bomba3 y btn1..btn3, numerados por función real derivada de tipoCorte1/2/3; alim1..alim3 para imgCableAlimen/2/3; apert para imgApertura; imagenVehiculo para la imagen principal. Los tipos desconocidos o ambiguos bloquean el destino. La extensión original se conserva.
 - Resolver colisiones sin sobrescribir y sin enviar archivos o carpetas a papelera.
 
-### P1 — BETA-ADMIN-CUT-IMAGE-ORGANIZER-REGISTRATION-CONSISTENCY-01
+### P1 — BETA-ADMIN-CUT-IMAGE-ORGANIZER-REGISTRATION-CONSISTENCY-01 — COMPLETADA CON VALIDACIÓN DIFERIDA A BETA
 - Unificar handleAddLogo y altas de imágenes de Cortes con el mismo constructor de destino.
 - La alta de logo debe guardar en el primer nivel de la carpeta de marca, no en Cortes/Logos.
 - Mantener bloqueada la operación si la categoría de una marca no es única.
@@ -225,3 +229,11 @@ Aplicar la estructura objetivo después de validar el dry-run:
 - [x] Contratos adicionales: ImageReferenceCoverageContract, UnusedImageInventoryPersistenceContract y LegacyUnusedInventoryMigrationContract PASS.
 - CI HEAD `41c844ab9578499c4f49e4e4584bd32a09a0c8e8`: 152 suites, 2,224 pruebas, 0 fallos; health y Pages SUCCESS.
 - [ ] Beta pendiente: ejecutar auditoría real en Drive/Spreadsheet con sesión Desarrollador autorizada, revisar preview completo, ACL, duplicados, referencias faltantes y rutas actuales. No se aplicaron cambios reales ni se movieron archivos.
+
+
+## Adenda 2026-11-19 — coherencia del registro de logotipos
+- [x] `buildCanonicalLogoDestination_` es la única construcción de `targetFolderPath` y `targetBaseName` para logos; lo utilizan tanto `buildCortesImageOrganizerTargets_` como `handleAddLogo`.
+- [x] La alta crea la carpeta desde los segmentos del destino canónico y conserva extensión original, categoría única y prevención de colisiones.
+- [x] Los tipos sin categoría o con categorías ambiguas siguen bloqueados; no se amplían permisos ni se añaden llamadas de red.
+- [x] CI run 44532907478: 152 suites, 2,224 pruebas, 0 fallos; LogoIdIntegrity 13/13.
+- [ ] Beta: comprobar en Drive aislado que el archivo subido y el preview produzcan exactamente la misma ruta/nombre. No se creó ni movió ningún archivo productivo.

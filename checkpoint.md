@@ -978,3 +978,13 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - Tareas_Activas.md actualizado: Fase 6 completada localmente; Fase 7 (regresión integral) es el siguiente paso.
 - No se modificó código de servicios, no se desplegó Apps Script y no se consultaron/modificaron secretos, ScriptProperties, Drive ni Spreadsheet.
 ================================================================================
+
+ 
+================================================================================
+2026-11-19 — CIERRE P1 REGISTRATION CONSISTENCY / REGRESIÓN INTEGRAL
+- HEAD inicial de esta corrección: 71ff293d4ceef074b9cbf18235483eb3643acfaf. HEAD final de código/pruebas: c21a196dee2f946194c7c99b489a4af323cd245e.
+- handleAddLogo y el preview LogosMarca comparten buildCanonicalLogoDestination_: misma ruta Cortes/categoría/marca y mismo nombre base marca_logo. Categorías inexistentes o ambiguas siguen bloqueadas.
+- Primera CI 44532398823 detectó un contrato legado que aún exigía resolveLogoCategoryFromCortesRows_ directamente en handleAddLogo; se actualizó LogoIdIntegrity.mjs al nuevo constructor, sin cambiar la política funcional.
+- CI final 44532907478 SUCCESS: 152 suites, 2,224 pruebas, 0 fallos; LogoIdIntegrity 13/13. Health 44532907375 SUCCESS; Pages 44532906078 SUCCESS.
+- Fase 5 queda cerrada localmente, incluida coherencia de alta de logos. Fase 7: regresión integral local aprobada; siguiente paso es Beta de solo lectura con autorización. No se desplegó Apps Script ni se modificaron Drive, Spreadsheet, ScriptProperties o secretos.
+================================================================================
