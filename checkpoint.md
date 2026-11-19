@@ -951,3 +951,18 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - CI run 44525492921 SUCCESS: 152 suites, 2,224 pruebas, 0 fallos. Health run 44525493007 SUCCESS. Pages run 44525492332 en curso al registrar.
 - La ejecución previa 44525337604 falló por una expresión regular generada con escape duplicado; se corrigió y la ejecución posterior aprobó. No quedó fallo reproducible en el HEAD actual.
 ================================================================================
+
+ 
+================================================================================
+2026-11-19 — CIERRE LOCAL DE FASE 5 / CONTINUIDAD HACIA FASE 6
+- HEAD de código y pruebas: 41c844ab9578499c4f49e4e4584bd32a09a0c8e8. Rama de trabajo GPSpedia2.2.5_work. Rama base GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Fase 5 cerrada a nivel de implementación local. La nomenclatura funcional cubre las ocho columnas de imagen: imagenVehiculo; ign1..3; bomba1..3; btn1..3; apert; alim1..3. La numeración de corte cuenta solo imágenes anteriores presentes y bloquea tipos ambiguos.
+- Rutas de altas alineadas con el organizador: segmentos normalizados; rango AAAA-AAAA exacto; datos faltantes, parciales o invertidos rechazados.
+- Cobertura de referencias verificada por contrato: ocho columnas de Cortes; todas las hojas activas; fórmulas, display values, rich text, imágenes en celda y over-grid; referencias no verificables bloquean.
+- Inventario persistente verificado por contrato: auditoría completa, referencias activas, estados protegidos, duplicados, idempotencia, write/read-back, reintento y estado requiere_revision si no se puede reconciliar.
+- Clasificación del historial: sin_uso_detectado no se confunde con reemplazada; estados protegidos/revisión se conservan; eliminada se excluye; compatibilidad legacy infiere origen y tipo a partir de tipo_contenido=inventario_sin_uso.
+- CI run 44527866474 SUCCESS: 152 suites, 2,224 pruebas, 0 fallos. CortesImageReconciliation 34/34; CortesImageReconciliationApply 15/15; AdminImageTrashLifecycle 40/40; LogoIdIntegrity 13/13; AdminImageScanCoordinatorContract 1/1. Health run 44527866483 SUCCESS. Pages run 44527865547 SUCCESS.
+- No deployment Apps Script, no lectura/escritura real de Drive/Spreadsheet, no modificación de ScriptProperties/secretos; no movimientos, renombrados, eliminaciones ni restauraciones.
+- Fase 5 solo queda pendiente de Beta real: auditoría completa, revisión visual/funcional del preview, ACL y reconciliación en entorno autorizado. No activar aplicación masiva.
+- Siguiente prioridad: Fase 6 documental. Rotar sin pérdida Tareas_Pendientes.md y lista_beta_parte2.txt (superan el umbral); reconciliar Services/SERVICE_HEALTH.md con endpoints fuente. No editar archivos sobredimensionados antes de rotarlos y verificar manifiestos.
+================================================================================

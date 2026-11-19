@@ -701,3 +701,14 @@ Corrección: expresión regular exacta para cuatro dígitos en ambos campos; no 
 Validación: prueba dinámica de rutas 5/5 PASS; CI run 44525492921 SUCCESS, 152 suites y 2,224 pruebas, 0 fallos; health SUCCESS.
 Estado: CORREGIDO LOCALMENTE.
 ================================================================================
+
+ 
+================================================================================
+2026-11-19 — HALLAZGO CORREGIDO: MIGRACIÓN LEGACY NO INFERÍA ORIGEN DEL INVENTARIO SIN USO
+Ubicación: JS/Services/admin.js, ensureReplacedImagesInventoryColumns.
+Evidencia: al migrar una fila antigua con tipo_contenido=inventario_sin_uso y sin origen_registro, el migrador agregaba las columnas dinámicas, pero no infería origen ni tipo porque la condición exigía origen_registro=auditoria_drive ya presente.
+Impacto: el registro quedaba sin clasificación y podía bloquear la migración/validación del inventario.
+Corrección: si tipo_contenido=inventario_sin_uso y origen_registro está vacío, se completa como auditoria_drive; tipo_registro se completa como sin_uso_detectado. La escritura se verifica tras SpreadsheetApp.flush.
+Validación: LegacyUnusedInventoryMigrationContract PASS; UnusedImageInventoryPersistenceContract PASS; CI run 44527866474 SUCCESS, 152 suites y 2,224 pruebas, 0 fallos.
+Severidad: media (compatibilidad e integridad de inventario). Estado: CORREGIDO LOCALMENTE.
+================================================================================

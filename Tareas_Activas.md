@@ -64,7 +64,7 @@ Normativa: NORMAS_DESAROLLO.md
 - Pendiente exclusivamente Beta: inspección visual en navegador/dispositivo real y confirmación responsive en escritorio/móvil.
 
 ### Fase 5 — Auditoría y organizador de imágenes
-**P1 · PENDIENTE LOCAL**
+**P1 · IMPLEMENTACIÓN LOCAL COMPLETADA; VALIDACIÓN REAL/BETA PENDIENTE**
 - Reconciliar los registros históricos con el código real: el constructor puro, endpoint `previewCortesImageOrganizer` y UI paginada ya constan implementados; no repetirlos.
 - Completar auditoría de cobertura, referencias de todas las hojas, inventario persistente, relación inteligente vehículo/imagen y clasificación explicable de «Sin uso»/«Reemplazada».
 - Unificar rutas y nomenclatura de altas de cortes, modelos y logos; mantener `ign1..3`, `bomba1..3`, `btn1..3`, `alim1..3`, `apert` y extensión original.
@@ -210,3 +210,16 @@ Aplicar la estructura objetivo después de validar el dry-run:
 - [x] `getVehicleYearFolderName` ahora acepta únicamente `anoDesde` y `anoHasta` con cuatro dígitos exactos; no interpreta parcialmente valores como `2020abc`.
 - [x] Los años faltantes, formatos inválidos y rangos invertidos no producen rutas; un año único requiere el mismo año en ambos campos y genera `AAAA-AAAA`.
 - Pruebas dinámicas de rutas: 5/5 PASS. CI run 44525492921 SUCCESS: 152 suites, 2,224 pruebas, 0 fallos; health run 44525493007 SUCCESS. Pages run 44525492332 en curso al registrar.
+
+ 
+## Cierre local de Fase 5 — 2026-11-19
+- [x] Nomenclatura funcional para las ocho columnas de imagen: `imagenVehiculo`, `ign1..3`, `bomba1..3`, `btn1..3`, `apert`, `alim1..3`; extensión original preservada.
+- [x] Numeración de cortes según recursos realmente presentes; slots vacíos no consumen ordinal y tipos previos ambiguos bloquean.
+- [x] Rutas de alta y organizador alineadas; segmentos normalizados y rango estricto `AAAA-AAAA`.
+- [x] Cobertura de referencias: ocho columnas de Cortes, todas las demás hojas activas, fórmulas, texto enriquecido, imágenes en celda y sobre cuadrícula; referencias no verificables bloquean la clasificación.
+- [x] Inventario persistente: auditoría completa, idempotencia por operación, validación de referencias, verificación de escritura/read-back, protección de duplicados y estados inciertos.
+- [x] Historial separado de inventario sin uso; migración legacy infiere `auditoria_drive / sin_uso_detectado` cuando `tipo_contenido=inventario_sin_uso`.
+- [x] Conciliación exacta y aplicación controlada revisadas: CortesImageReconciliation 34/34; CortesImageReconciliationApply 15/15; AdminImageTrashLifecycle 40/40; LogoIdIntegrity 13/13; AdminImageScanCoordinatorContract 1/1.
+- [x] Contratos adicionales: ImageReferenceCoverageContract, UnusedImageInventoryPersistenceContract y LegacyUnusedInventoryMigrationContract PASS.
+- CI HEAD `41c844ab9578499c4f49e4e4584bd32a09a0c8e8`: 152 suites, 2,224 pruebas, 0 fallos; health y Pages SUCCESS.
+- [ ] Beta pendiente: ejecutar auditoría real en Drive/Spreadsheet con sesión Desarrollador autorizada, revisar preview completo, ACL, duplicados, referencias faltantes y rutas actuales. No se aplicaron cambios reales ni se movieron archivos.

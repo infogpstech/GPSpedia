@@ -793,3 +793,12 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - JS/Tests/AdminImageScanCoordinatorContract.mjs: casos de año único, rango válido, dato parcial, dato faltante y rango invertido.
 - Validación CI posterior: 152 suites, 2,224 pruebas aprobadas, 0 fallos.
 ================================================================================
+
+ 
+================================================================================
+2026-11-19 — CIERRE LOCAL FASE 5: INVENTARIO, COBERTURA Y COMPATIBILIDAD LEGACY
+- JS/Services/admin.js: migración de esquema ahora completa origen_registro=auditoria_drive y tipo_registro=sin_uso_detectado para filas legacy con tipo_contenido=inventario_sin_uso, incluso si las columnas dinámicas aún no existían.
+- JS/Tests/AdminImageScanCoordinatorContract.mjs: contratos de cobertura de referencias, persistencia verificada del inventario y migración legacy.
+- Regresión integral HEAD 41c844ab: 152 suites, 2,224 pruebas aprobadas, 0 fallos; health y Pages SUCCESS.
+- Fase 5 cerrada localmente; solo queda validación Beta real. No se aplicaron escrituras/movimientos sobre Drive o Spreadsheet.
+================================================================================
