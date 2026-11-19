@@ -302,12 +302,12 @@ Aplicar la estructura objetivo después de validar el dry-run:
 
 ### P0 — GP-PERF-ADMIN-CUT-LOCK-01 — EN PROGRESO
 - [x] Confirmado que `handleAddOrUpdateCut` mantiene `ScriptLock` durante la llamada ADMIN→WRITE de asignación de ID y durante operaciones de carpetas/carga Drive; la recuperación por opId también puede realizar I/O de Drive bajo el lock.
-- [ ] Diseñar reserva atómica para operación, ID/vehículo y slot que impida que solicitudes concurrentes ocupen el mismo destino.
-- [ ] Mover la llamada a WRITE y las cargas/consultas Drive fuera del lock.
-- [ ] Re-adquirir el lock sin espera prolongada y revalidar reserva, fila, slot, opId y operationHash antes de persistir.
+- [x] Reserva atómica de operación/vehículo/slot para el flujo con `opId`: ledger `pending` reserva el slot antes de liberar el lock. La reserva idempotente del ID central para altas nuevas sigue pendiente.
+- [x] Mover las operaciones de carpetas/carga/reparación Drive fuera del lock para operaciones con `opId`; la llamada ADMIN→WRITE de asignación de ID continúa pendiente.
+- [x] Re-adquirir con `tryLock(0)` y revalidar reserva, fila, slot, opId y operationHash antes de aplicar las URLs; el `finally` solo libera el lock si sigue en posesión de la ejecución.
 - [ ] Preservar ledger de imágenes, recuperación de respuesta perdida, idempotencia, verificación de escritura y compensación/revisión ante fallos.
-- [ ] Añadir pruebas locales deterministas de concurrencia, reintentos, fallos de WRITE/Drive, pérdida de respuesta antes/después de commit y anti-regresión.
-- [ ] Ejecutar regresión integral y revisar diff antes de cerrar.
+- [x] Añadir prueba determinista `AdminDriveLockIsolation.mjs` (9/9), conectarla al runner y validar recuperación/error de Drive y fallo de readquisición; quedan pendientes pruebas de extremo a extremo para asignación de ID y concurrencia real Beta.
+- [x] Ejecutar regresión integral: 158 suites, 2,260 pruebas aprobadas, 0 fallos; health read-only SUCCESS. Revisión funcional del helper y su `finally` completada.
 - Beta: concurrencia real y comportamiento de Drive/Spreadsheet pendientes de autorización; no desplegar ni tocar datos reales en esta fase.
 
 **Conclusiones de arquitectura:** ADMIN ya usa actor cacheado en acciones ordinarias; no se encontró viaje a Coordinator por cada clic. USERS conserva coordinación por conflictos de ciclo de cuenta y UTILITIES por migración manual. La matriz de impacto de despliegue existente en `Services/SERVICE_ARCHITECTURE_PLAN.md` y `Services/COORDINATOR_SETUP.md` ya permite publicar cambios internos compatibles de Coordinator sin redeploy de consumidores.
