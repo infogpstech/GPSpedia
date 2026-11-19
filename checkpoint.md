@@ -1133,3 +1133,5 @@ ACTUALIZACIÓN DE CONTINUIDAD — 2026-11-19
 - Segundo CI 44555450856: 150 suites, 2,138 pruebas y fallo de extracción de `handleAllocateVehicleId` en el parser estático de AUG-039. Se elimina comentario interno del handler para mantener compatibilidad con el extractor; no cambia el comportamiento.
 
 - Tercer CI 44555711003: 150 suites, 2,138 pruebas; el handler ya fue extraído y las aserciones estáticas pasaron, pero dos fixtures usaban `assert.equal` no disponible en el assert local. Se sustituye por aserción booleana.
+
+- Cuarto CI 44555916947: 153 suites, 2,212 pruebas; `WriteAuthorizationMinimization` ya pasó. Falló `WriteAuthorizationContracts` porque su mock de LockService solo ofrecía waitLock; se actualiza el contrato y mock para tryLock(0).

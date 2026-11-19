@@ -353,3 +353,5 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - Diagnóstico del segundo CI: el parser de la prueba AUG-039 no pudo extraer el handler después de introducir comentario de línea dentro del cuerpo. Se elimina ese comentario local; la lógica de adquisición inmediata permanece.
 
 - Diagnóstico del tercer CI: el contrato AUG-039 utiliza un assert local mínimo y no dispone de `assert.equal`; se corrigen los dos fixtures para comprobar `tryLock(0)` con el assert compatible.
+
+- El cuarto CI reveló una segunda suite de contrato (`WriteAuthorizationContracts.js`) con un mock antiguo que solo implementaba `waitLock`. Se actualiza el mock a `tryLock(0)` y se mantiene la comprobación de autorización dentro del lock.
