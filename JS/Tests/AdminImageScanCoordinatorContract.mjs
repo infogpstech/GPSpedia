@@ -320,11 +320,20 @@ const canonicalNameBuilder = new Function(
 const canonicalVehicle = {
     modelo: "Hilux", versionesAplicables: "SRV", tipoEncendido: "Llave",
     anoDesde: 2020, anoHasta: 2025,
-    tipoCorte1: "Ignición", tipoCorte2: "Bomba de combustible", tipoCorte3: "Ignición"
+    tipoCorte1: "Ignición", tipoCorte2: "Bomba de combustible", tipoCorte3: "Ignición",
+    imgCorte1: "drive-image-1", imgCorte2: "drive-image-2", imgCorte3: "drive-image-3"
 };
 assert.equal(canonicalNameBuilder(canonicalVehicle, "imgCorte1"), "Hilux_SRV_2020_2025_ign1");
 assert.equal(canonicalNameBuilder(canonicalVehicle, "imgCorte2"), "Hilux_SRV_2020_2025_bomba1");
 assert.equal(canonicalNameBuilder(canonicalVehicle, "imgCorte3"), "Hilux_SRV_2020_2025_ign2");
+const skippedImageSlot = {
+    ...canonicalVehicle, imgCorte1: "", imgCorte2: "drive-image-2",
+    tipoCorte1: "Ignición", tipoCorte2: "Ignición"
+};
+assert.equal(canonicalNameBuilder(skippedImageSlot, "imgCorte2"), "Hilux_SRV_2020_2025_ign1");
+assert.throws(() => canonicalNameBuilder({
+    ...canonicalVehicle, tipoCorte1: "Tipo ambiguo", imgCorte1: "drive-image-1"
+}, "imgCorte2"));
 assert.equal(canonicalNameBuilder(canonicalVehicle, "imgCableAlimen"), "Hilux_SRV_2020_2025_alim1");
 assert.equal(canonicalNameBuilder(canonicalVehicle, "imgCableAlimen2"), "Hilux_SRV_2020_2025_alim2");
 assert.equal(canonicalNameBuilder(canonicalVehicle, "imgCableAlimen3"), "Hilux_SRV_2020_2025_alim3");

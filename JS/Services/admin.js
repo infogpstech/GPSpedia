@@ -3127,7 +3127,7 @@ function buildCanonicalImageBaseName(vehicleInfo, fieldName) {
     const cutMatch = String(fieldName || "").match(/^imgCorte([123])$/);
     if (cutMatch) {
         const types = [info.tipoCorte1, info.tipoCorte2, info.tipoCorte3];
-        functionCode = getCorteFunctionSuffix_(types, Number(cutMatch[1]));
+        functionCode = getCorteFunctionSuffix_(types, [info.imgCorte1, info.imgCorte2, info.imgCorte3], Number(cutMatch[1]));
         if (!functionCode) throw new Error("El tipo de corte no permite asignar un código funcional inequívoco.");
     }
     if (!functionCode) throw new Error("El campo de imagen no tiene una nomenclatura funcional definida.");
@@ -3188,7 +3188,22 @@ function mapCorteTypeToFunctionCode_(value) {
     return matches.length === 1 ? matches[0] : "";
 }
 
-function getCorteFunctionSuffix_(typeValues, slotIndex) {
+function getCorteFunctionSuffix_(typeValues, imageValues, slotIndex) {
+    const types = Array.isArray(typeValues) ? typeValues : [];
+    const images = Array.isArray(imageValues) ? imageValues : [];
+    const slot = Number(slotIndex);
+    if (!Number.isInteger(slot) || slot < 1 || slot > 3) return "";
+    const code = mapCorteTypeToFunctionCode_(types[slot - 1]);
+    if (!code) return "";
+    let ordinal = 1;
+    for (let index = 0; index < slot - 1; index++) {
+        if (!String(images[index] || "").trim()) continue;
+        const previousCode = mapCorteTypeToFunctionCode_(types[index]);
+        if (!previousCode) return "";
+        if (previousCode === code) ordinal++;
+    }
+    return code + ordinal;
+}
     const types = Array.isArray(typeValues) ? typeValues : [];
     const slot = Number(slotIndex);
     if (!Number.isInteger(slot) || slot < 1 || slot > 3) return "";
@@ -3290,6 +3305,7 @@ function buildCortesImageOrganizerTargets_(cortesValues, cortesFormulas, logosVa
         const targetFolderPath = folderSegments.length === 5 ? "Cortes/" + folderSegments.join("/") : "";
         const nameParts = [normalizeOrganizerFilePart_(rawModel), normalizeOrganizerFilePart_(versionOrIgnition), start, end];
         const cutTypes = cutFields.map(item => cell(row, item.typeField));
+        const cutImages = cutFields.map(item => cell(row, item.field));
 
         const pushImage = (field, code, extraReasons, sourceValue) => {
             const rawUrl = String(sourceValue || "").trim();
@@ -3311,7 +3327,7 @@ function buildCortesImageOrganizerTargets_(cortesValues, cortesFormulas, logosVa
         cutFields.forEach((item, index) => {
             const rawUrl = String(cell(row, item.field) || "").trim();
             if (!rawUrl) return;
-            const suffix = getCorteFunctionSuffix_(cutTypes, index + 1);
+            const suffix = getCorteFunctionSuffix_(cutTypes, cutImages, index + 1);
             if (!suffix) {
                 pushImage(item.field, "", ["unrecognized_cut_type:" + item.typeField], rawUrl);
                 return;
