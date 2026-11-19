@@ -3,7 +3,7 @@
 // No accede a Spreadsheet ni Drive. El estado de leases vive en ScriptProperties.
 // ============================================================================
 
-const SHARED_MUTATION_COORDINATOR_VERSION = "1.4.4";
+const SHARED_MUTATION_COORDINATOR_VERSION = "1.4.5";
 const SHARED_MUTATION_PROTOCOL_VERSION = 1;
 // La versión del software Coordinator no obliga a cambiar el protocolo de los clientes.
 // Mantener v1 mientras sea compatible; añadir versiones nuevas sin retirar las anteriores.
