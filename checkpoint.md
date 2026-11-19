@@ -16,20 +16,18 @@ Fecha: 2026-11-19
 - No inferir deployments Apps Script ni permisos externos desde el código versionado.
 
 ## Última tarea completada
-WRITE — reutilización del snapshot Idempotencia por operación:
-- `handleAddOrUpdateCutLocked` carga y valida el ledger completo una sola vez y comparte el snapshot con `handleAddOrUpdateCutLockedUnsafe_`.
-- `findRowByOpId` usa el mapa del snapshot; `recordOpId` evita nuevas lecturas integrales y revalida el opId afectado mediante TextFinder en la columna A y lectura de su fila.
-- Se detectan entradas creadas en paralelo, cambios de asociación, duplicados del mismo opId y alteraciones del encabezado.
-- El snapshot se actualiza después de append/update; `completed` no retrocede a `pending`.
-- Rollback conserva la hoja efectiva primaria/fallback y el contenido anterior de la fila Idempotencia.
-- Prueba `WriteIdempotencySnapshotReuse` 9/9 PASS.
-- CI 44619301598 SUCCESS: 174 suites, 2,379 pruebas aprobadas, 0 fallos; sintaxis JS aprobada.
-- Health read-only 44619301575 SUCCESS; GitHub Pages 44619301580 SUCCESS.
-- Commits: 4c74b424cf996cd6e5e8eb1498769ab88e627b76 (snapshot y verificación dirigida), e034fbf44e8795170ebae1e3a6293db0b17b50e7 (ajuste de aserción de reserva).
+WRITE — asignador de vehicleId con lecturas acotadas:
+- `getNextCortesVehicleIdLocked` ya no lee todas las columnas de cada fila.
+- Primero lee valores y fórmulas de la columna ID; solo consulta las columnas restantes en filas con ID vacío o fórmula, agrupando candidatos contiguos.
+- Se preserva la lógica anterior para filas con fórmula sin datos, filas incompletas, IDs inválidos/duplicados y contador monotónico de PropertiesService.
+- Prueba `WriteVehicleIdAllocatorBoundedRead` 11/11 PASS.
+- CI 44620038256 SUCCESS: 175 suites, 2,390 pruebas aprobadas, 0 fallos; sintaxis JS aprobada.
+- Health read-only 44620038295 SUCCESS; GitHub Pages 44620037793 SUCCESS.
+- Commits: 487524f4cf87ec88a5f76fc35f3b1a1fbb5027da (lecturas acotadas), 8d72fe40c731da53066c7e9059e280b502385b07 (restauración de documentación del endpoint).
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó WRITE ni se modificaron Sheets/Drive productivos.
 
 ## Siguiente trabajo
-Continuar GP-PERF-WRITE-CUT-LOCK-05. Auditar `getNextCortesVehicleIdLocked`, que aún puede leer la tabla completa para asignar ID y detectar filas incompletas. Determinar si puede escanear la columna ID y leer únicamente filas con ID vacío para comprobar datos/fórmulas, preservando detección de IDs duplicados/corruptos, filas con fórmulas, monotonicidad del siguiente ID y rollback. No sustituir por un contador de PropertiesService sin demostrar consistencia frente a altas concurrentes y edición manual. Medir llamadas y rangos antes de cambiar. No desplegar Apps Script ni modificar datos productivos.
+Continuar GP-PERF-WRITE-CUT-LOCK-06. Acotar `getExistingEntities(sheet)`, usado al crear vehículos dentro del ScriptLock: leer solo las columnas contiguas marca/modelo/versiones (COLS_CORTES.marca a COLS_CORTES.versionesAplicables), conservar orden y deduplicación de valores, y comprobar si conviene sustituir búsquedas repetidas `indexOf` por Set sin alterar la normalización. Añadir prueba que verifique rango, resultados y hoja vacía. No mover la validación fuera del lock sin resolver el riesgo de normalización concurrente. No desplegar Apps Script ni modificar datos productivos.
 
 ## Restricciones
 - Trabajar únicamente en GPSpedia2.2.5_work.
@@ -82,3 +80,6 @@ Siguiente paso P0: auditar y reducir lecturas restantes dentro del ScriptLock de
 
 
 2026-11-19 — Cierre snapshot Idempotencia: HEAD funcional e034fbf44e8795170ebae1e3a6293db0b17b50e7; CI 44619301598 SUCCESS (174 suites, 2,379 pruebas, 0 fallos; WriteIdempotencySnapshotReuse 9/9); health 44619301575 SUCCESS; Pages 44619301580 SUCCESS. El handler realiza una validación integral del ledger por operación y usa verificaciones dirigidas en las fases de escritura. Próximo paso: auditar el asignador de IDs de Cortes.
+
+
+2026-11-19 — Cierre asignador WRITE: HEAD funcional 8d72fe40c731da53066c7e9059e280b502385b07; CI 44620038256 SUCCESS (175 suites, 2,390 pruebas, 0 fallos; WriteVehicleIdAllocatorBoundedRead 11/11); health 44620038295 SUCCESS; Pages 44620037793 SUCCESS. El asignador inspecciona solo IDs y filas candidatas, manteniendo el contador central. Próximo paso: acotar lectura de entidades existentes.

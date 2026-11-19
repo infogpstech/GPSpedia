@@ -564,3 +564,13 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Health read-only 44619301575 SUCCESS; GitHub Pages 44619301580 SUCCESS.
 - Nota: el primer intento CI detectó una aserción de prueba desactualizada tras ampliar la firma de recordOpId; se corrigió el contrato de prueba y la ejecución final pasó.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó WRITE ni se modificaron Sheets/Drive productivos.
+
+### WRITE — asignador de vehicleId con lecturas acotadas (2026-11-19)
+- [x] Sustituir lectura de todas las columnas por lectura de la columna ID y fórmulas.
+- [x] Inspeccionar otras columnas únicamente en filas con ID vacío o fórmula.
+- [x] Agrupar filas candidatas contiguas en bloques para reducir llamadas.
+- [x] Preservar filas con fórmula sin datos, filas incompletas, IDs inválidos/duplicados y contador monotónico.
+- [x] Añadir WriteVehicleIdAllocatorBoundedRead: 11/11 PASS.
+- [x] CI 44620038256 SUCCESS: 175 suites, 2,390 pruebas aprobadas, 0 fallos.
+- [x] Health read-only 44620038295 SUCCESS; GitHub Pages 44620037793 SUCCESS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó WRITE ni se modificaron Sheets/Drive productivos.
