@@ -6193,14 +6193,6 @@ function initAdminPanelListeners() {
             if (button) button.disabled = false;
         }
     }
-    if (!window.adminServiceTrafficListenerAttached) {
-        window.addEventListener("gpsepedia:service-traffic-updated", event => {
-            if (!isAdminPanelCurrent_() || !selectedServiceKey ||
-                event && event.detail && event.detail.service !== selectedServiceKey) return;
-            renderServiceDetail();
-        });
-        window.adminServiceTrafficListenerAttached = true;
-    }
     const scanBtn = document.getElementById("btn-check-services-health");
     if (scanBtn) scanBtn.onclick = () => runServicesHealthScan();
     const globalTrafficRefreshBtn = document.getElementById("btn-refresh-global-service-traffic");
@@ -6223,6 +6215,7 @@ function initAdminPanelListeners() {
     if (!window.adminGlobalServiceTrafficRefreshInterval) {
         window.adminGlobalServiceTrafficRefreshInterval = window.setInterval(() => {
             if (!isAdminPanelCurrent_() || !isGlobalServiceTrafficVisible_()) return;
+            if (selectedServiceKey) renderServiceDetail();
             if (Date.now() - lastGlobalServiceTrafficFetchAt >= 60000) loadGlobalServiceTraffic_();
         }, 15000);
     }
