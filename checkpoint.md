@@ -737,3 +737,16 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - Limpieza: el mensaje de éxito al borrar logs/actividad no distingue claramente el caso sin registros que eliminar. Selector de retención (últimos 7 días / eliminar todos) sin estilo, demasiado grande y desbordado del viewport.
 - PASS reportado por el usuario: auditoría de carpeta de cortes para detectar imágenes sin uso funciona. No se atribuyen pruebas adicionales.
 - Estado: hallazgos reportados, aún no reproducidos ni corregidos. No se modificó código de producción en esta actualización documental.
+
+
+### Continuidad Beta — nuevos reportes de modal, Inbox y auditoría de imágenes (2026-11-18)
+- IDs registrados: BETA-CUT-MODAL-IMAGE-CONTAINER-PADDING-01, BETA-INBOX-SHARED-COORDINATOR-AUTH-01, BETA-ADMIN-IMAGE-AUDIT-CONCURRENCY-01, BETA-ADMIN-CUT-IMAGE-AUDIT-COVERAGE-01, BETA-ADMIN-CUT-IMAGE-LIBRARY-INVENTORY-01, BETA-ADMIN-CUT-IMAGE-VEHICLE-MATCH-01 y BETA-ADMIN-CUT-IMAGE-REPLACEMENT-LINK-01.
+- Modal de corte: reducir/eliminar padding horizontal y vertical del contenedor de imagen, preservando composición y comportamiento responsive.
+- Inbox: usuario reporta «Servicio no autorizado para el coordinador compartido». Diagnóstico pendiente sobre autorización, identidad, token/contexto de sesión y contrato Inbox-Coordinator. No relajar controles de acceso.
+- Auditoría concurrente: comprobar si interfiere con Inbox u operaciones que utilizan Coordinator; revisar locks, leases, contención y liberación. No hay causalidad demostrada.
+- Cobertura: verificar recorrido completo de carpeta de cortes y subcarpetas y comparación con referencias de todas las hojas Spreadsheet, excluyendo únicamente la hoja de imágenes reemplazadas al determinar uso vigente.
+- Biblioteca: cada imagen sin referencia debe registrar nombre, fecha de creación si está disponible, tamaño, ruta completa, URL visualizable, modelo relacionado, imagen vigente relacionada y estado/procedencia. Ejemplo de ruta: Cortes/SUV/Toyota/Prado/LTX/2024-2027/toyota_prado_ltx_boton_imagenVehiculo.png.
+- Relación vehículo-imagen: coincidencia normalizada por marca/modelo/año/encendido/tipo de corte; usar ruta como criterio complementario. Registrar método/confianza y dejar ambigüedades para revisión.
+- Clasificación: «Reemplazada» solo con evidencia de sustitución vigente; si no se demuestra, «Sin uso» o revisión pendiente. No borrar ni mover archivos automáticamente.
+- El PASS anterior reportado por el usuario acredita únicamente que la detección se ejecutó; no demuestra cobertura completa, clasificación, persistencia ni biblioteca.
+- Estado: reportes/requisitos registrados; no se inspeccionó ni modificó código. Causa del error Inbox y posible interferencia siguen sin verificar.
