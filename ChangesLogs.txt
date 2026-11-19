@@ -935,3 +935,5 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 2026-11-19 — Tests ADMIN: ajustar contrato de createSheet/addColumn para permitir la lease específica del escáner y seguir prohibiendo leases en el resto de ADMIN.
 
 2026-11-19 — Coordinator: excluir auditDriveImagesInCortes de la lease implícita SESSION_CONTEXTS; la auditoría solo reserva IMAGE_AUDIT_STATE y no bloquea login AUTH.
+
+2026-11-19 — SharedMutationCoordinator: separar escenarios de concurrencia auditoría+WRITE y auditoría+AUTH/login, preservando el conflicto legítimo entre escritura de Cortes y login.

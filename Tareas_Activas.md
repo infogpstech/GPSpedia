@@ -412,3 +412,5 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - Cuarto CI: `AdminAuditTrail` 15/15, `SessionActivityCoordination` 11/11, `DirectTrafficRoutingCoverage` 6/6 y `AdminReplacedImagesIntegrity` 56/56 pasaron. Falló `AdminSheetActionsContract` porque prohibía cualquier lease ADMIN; se actualiza para permitir exclusivamente la lease de auditoría.
 
 - Quinto CI: detectó que Coordinator añade `SESSION_CONTEXTS` automáticamente a casi todas las leases ADMIN, incluso la auditoría. Se excluye `auditDriveImagesInCortes` de ese recurso para que el escáner tampoco bloquee login AUTH. La prueba de coexistencia ahora cubre auditoría + login + registro WRITE.
+
+- Sexto CI: la nueva prueba intentaba mantener simultáneamente `WRITE/addOrUpdateCut` y `AUTH/login`, que sí comparten `SESSION_CONTEXTS` por diseño. Se separa en dos escenarios: auditoría + WRITE y auditoría + login; ambos deben coexistir. La exclusión entre WRITE y login permanece intacta.

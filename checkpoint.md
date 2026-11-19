@@ -1191,3 +1191,5 @@ CI `44562328607`: SUCCESS — 159 suites, 2,264 pruebas aprobadas, 0 fallos. `Ad
 - Cuarto CI del aislamiento de auditoría: los contratos de auditoría, sesión, rutas y gestor de imágenes pasaron. `AdminSheetActionsContract` conservaba una aserción global de ausencia de leases; se limita ahora a verificar que solo el escáner adquiere la lease IMAGE_AUDIT_STATE.
 
 - Quinto CI del aislamiento: la política automática añadía SESSION_CONTEXTS a la lease de auditoría, bloqueando login AUTH aunque CORTES/DRIVE estuvieran excluidos. Se elimina también esa dependencia implícita y se amplía la prueba de concurrencia para AUTH/login.
+
+- Sexto CI: 154 suites / 2,148 pruebas; falló únicamente la prueba de concurrencia porque intentaba exigir coexistencia entre WRITE/addOrUpdateCut y AUTH/login, que legítimamente comparten SESSION_CONTEXTS. La prueba se divide en dos pares independientes con la auditoría.
