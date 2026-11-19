@@ -5,7 +5,7 @@ Fecha: 2026-11-19
 ## Repositorio y ramas
 - Repositorio: infogpstech/GPSpedia
 - Rama autorizada: GPSpedia2.2.5_work
-- HEAD de trabajo confirmado: e11056bca8759256871d7e7748a083b5d2b3af2e
+- HEAD de implementación funcional: e11056bca8759256871d7e7748a083b5d2b3af2e; commit documental de cierre: d7604b4f03b09ce99e76f285a581321f72ab7f49
 - Rama base protegida GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificar)
 - El historial completo previo está preservado en Checkpoint_Archive/checkpoint_2026-11-19_parte_003.md; ver Checkpoint_Archive/manifest.md.
 
