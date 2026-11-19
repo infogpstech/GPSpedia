@@ -733,3 +733,22 @@ Corrección: buildCanonicalLogoDestination_ centraliza ruta, nombre base y razon
 Validación: AdminImageScanCoordinatorContract PASS; LogoIdIntegrity 13/13; CI run 44532907478 SUCCESS, 152 suites y 2,224 pruebas, 0 fallos.
 Severidad: media (coherencia de referencias y prevención de rutas divergentes). Estado: CORREGIDO LOCALMENTE.
 ================================================================================
+
+
+================================================================================
+2026-11-19 — HALLAZGO P0: ADMIN MANTIENE LOCK GLOBAL DURANTE WRITE Y DRIVE
+Ubicación: JS/Services/admin.js, handleAddOrUpdateCut (línea 6609 en HEAD 7c4c576).
+Evidencia: waitLock(30000) envuelve el handler completo; el flujo nuevo invoca requestNextVehicleIdFromWriteService (UrlFetchApp.fetch a WRITE) y ejecuta findOrCreateVehicleFolder/uploadImageToDrive; la recuperación por opId también puede reparar imágenes en Drive antes del finally que libera el lock.
+Impacto: el lock global del proyecto ADMIN queda retenido durante latencia externa, bloqueando operaciones independientes hasta 30 segundos y mezclando reserva, transferencia, escritura y recuperación.
+Criterio: reservar atómicamente opId/operationHash, vehículo e índice de slot; liberar el lock durante WRITE/Drive; revalidar bajo lock antes de persistir; mantener ledger, idempotencia, recuperación, verificación y compensación. Añadir pruebas de concurrencia y pérdida de respuesta.
+Severidad: alta. Estado: CONFIRMADO; corrección pendiente como GP-PERF-ADMIN-CUT-LOCK-01.
+
+================================================================================
+2026-11-19 — AUDITORÍA DE DEPENDENCIAS Y DESPLIEGUE
+- ADMIN usa actor de sesión cacheado en operaciones ordinarias; no se encontró consulta a Coordinator por cada acción en el dispatcher actual.
+- La llamada ADMIN→WRITE para asignar ID de vehículo nuevo es necesaria por autoridad central, pero no debe ejecutarse bajo el ScriptLock global.
+- La telemetría agregada Coordinator se consulta desde el panel ADMIN, no como paso de cada operación ordinaria.
+- USERS conserva coordinación por conflictos de ciclo de cuenta; UTILITIES por migración manual. No se recomienda retirar esas garantías sin rediseño de propiedad de escritura.
+- Matriz de despliegue existente: cambio interno compatible Coordinator → solo Coordinator; lógica propia → servicio afectado; configuración central → ScriptProperties Coordinator; cambios de SharedMutationClient → consumidores afectados.
+- Inspección estática; sin mediciones de producción ni consultas a servicios remotos.
+================================================================================

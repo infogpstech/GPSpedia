@@ -294,3 +294,20 @@ Aplicar la estructura objetivo después de validar el dry-run:
 - Health read-only run 44549910083 SUCCESS. No se desplegó Apps Script ni se modificaron datos/propiedades productivas.
 - La tarea queda COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. En Beta comprobar concurrencia real y comportamiento de archivos pendientes ante un conflicto.
 - HEAD de implementación: cc7cd93e670d4d7dfd4b46ead8eb60bc830101e0.
+
+
+## 2026-11-19 — Auditoría de dependencias y siguiente implementación
+
+**Auditoría estática completada:** `AUDITORIA_DEPENDENCIAS_LATENCIA_2026-11-19.md`.
+
+### P0 — GP-PERF-ADMIN-CUT-LOCK-01 — EN PROGRESO
+- [x] Confirmado que `handleAddOrUpdateCut` mantiene `ScriptLock` durante la llamada ADMIN→WRITE de asignación de ID y durante operaciones de carpetas/carga Drive; la recuperación por opId también puede realizar I/O de Drive bajo el lock.
+- [ ] Diseñar reserva atómica para operación, ID/vehículo y slot que impida que solicitudes concurrentes ocupen el mismo destino.
+- [ ] Mover la llamada a WRITE y las cargas/consultas Drive fuera del lock.
+- [ ] Re-adquirir el lock sin espera prolongada y revalidar reserva, fila, slot, opId y operationHash antes de persistir.
+- [ ] Preservar ledger de imágenes, recuperación de respuesta perdida, idempotencia, verificación de escritura y compensación/revisión ante fallos.
+- [ ] Añadir pruebas locales deterministas de concurrencia, reintentos, fallos de WRITE/Drive, pérdida de respuesta antes/después de commit y anti-regresión.
+- [ ] Ejecutar regresión integral y revisar diff antes de cerrar.
+- Beta: concurrencia real y comportamiento de Drive/Spreadsheet pendientes de autorización; no desplegar ni tocar datos reales en esta fase.
+
+**Conclusiones de arquitectura:** ADMIN ya usa actor cacheado en acciones ordinarias; no se encontró viaje a Coordinator por cada clic. USERS conserva coordinación por conflictos de ciclo de cuenta y UTILITIES por migración manual. La matriz de impacto de despliegue existente en `Services/SERVICE_ARCHITECTURE_PLAN.md` y `Services/COORDINATOR_SETUP.md` ya permite publicar cambios internos compatibles de Coordinator sin redeploy de consumidores.

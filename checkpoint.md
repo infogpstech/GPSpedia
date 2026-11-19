@@ -1088,3 +1088,16 @@ ACTUALIZACIÓN DE CONTINUIDAD — 2026-11-19
 - Validación Beta pendiente: concurrencia real entre solicitudes Apps Script y revisión de recuperación de cargas que queden sin vínculo tras un conflicto. No se ejecutaron deployments ni operaciones reales en Drive/Spreadsheet.
 - Siguiente prioridad de rendimiento: revisar handleAddOrUpdateCut, que todavía mantiene un ScriptLock global mientras realiza llamadas a WRITE y carga imágenes a Drive. Auditar el flujo completo y separar la sección crítica sin debilitar idempotencia ni recuperación.
 ================================================================================
+
+
+================================================================================
+2026-11-19 — AUDITORÍA DE DEPENDENCIAS Y LATENCIA / CONTINUIDAD
+- HEAD remoto verificado: 7c4c576c0463f9bc8891b1720d6d5c058114cd6d en GPSpedia2.2.5_work; padre cc7cd93e670d4d7dfd4b46ead8eb60bc830101e0. La rama base GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- El último commit 7c4c576 es documental (26 líneas en ChangesLogs.txt, Tareas_Activas.md y checkpoint.md); no contiene cambios de código. La tarea GP-PERF-ADMIN-SUPPLEMENTARY-UPLOAD-LOCK-01 quedó cerrada en cc7cd93; CI 44549910139 SUCCESS, 153 suites/2,225 pruebas/0 fallos.
+- Auditoría estática registrada en AUDITORIA_DEPENDENCIAS_LATENCIA_2026-11-19.md. Hallazgo P0: handleAddOrUpdateCut mantiene ScriptLock durante UrlFetch a WRITE y operaciones de carpetas/carga Drive, incluyendo recuperación por opId.
+- ADMIN usa actor cacheado en acciones ordinarias; no se encontró consulta a Coordinator por cada acción. La telemetría global se solicita desde el panel. La llamada WRITE para ID nuevo es necesaria, pero debe salir del lock.
+- USERS conserva coordinación por conflictos de ciclo de cuenta; UTILITIES por migración manual. No retirar leases indiscriminadamente.
+- La matriz de despliegue existente separa cambios internos compatibles de Coordinator (solo Coordinator), lógica propia (solo servicio afectado), configuración central (ScriptProperties Coordinator) y cambios de SharedMutationClient (consumidores afectados).
+- Siguiente tarea: GP-PERF-ADMIN-CUT-LOCK-01, EN PROGRESO. Diseñar reserva atómica de opId/ID/slot, ejecutar WRITE/Drive fuera del lock y revalidar antes de persistir. Preservar idempotencia, ledger, recuperación, verificación y rollback.
+- Solo se realizó inspección estática y actualización documental. No se modificó código, deployments, ScriptProperties, secretos, Drive ni Spreadsheet; no se ejecutaron pruebas ni mediciones remotas.
+================================================================================

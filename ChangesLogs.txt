@@ -870,3 +870,11 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - Health read-only run 44549910083 SUCCESS.
 - Tarea completada localmente; concurrencia real y recuperación de archivos pendientes quedan para Beta autorizada.
 - HEAD: cc7cd93e670d4d7dfd4b46ead8eb60bc830101e0.
+
+
+================================================================================
+2026-11-19 — AUDITORÍA DE DEPENDENCIAS Y LATENCIA
+- Añadido AUDITORIA_DEPENDENCIAS_LATENCIA_2026-11-19.md con el análisis estático de servicios, llamadas cruzadas, locks y matriz de despliegue.
+- Tareas_Activas.md identifica GP-PERF-ADMIN-CUT-LOCK-01 como siguiente implementación prioritaria: separar reserva, I/O externo y persistencia de handleAddOrUpdateCut.
+- checkpoint.md actualiza HEAD real y continuidad; no se modificó código ni se ejecutaron pruebas/deployments.
+================================================================================
