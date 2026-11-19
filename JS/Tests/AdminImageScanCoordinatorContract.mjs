@@ -317,7 +317,7 @@ const canonicalNameBuilder = new Function(
     "\nreturn buildCanonicalImageBaseName;"
 )();
 const canonicalVehicle = {
-    modelo: "Hilux SRV", versionesAplicables: "SRV", tipoEncendido: "Llave",
+    modelo: "Hilux", versionesAplicables: "SRV", tipoEncendido: "Llave",
     anoDesde: 2020, anoHasta: 2025,
     tipoCorte1: "Ignición", tipoCorte2: "Bomba de combustible", tipoCorte3: "Ignición"
 };
