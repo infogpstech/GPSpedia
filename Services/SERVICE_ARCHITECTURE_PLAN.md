@@ -80,7 +80,14 @@ No cambiar secretos, ScriptProperties, deployments, hojas ni datos productivos d
 
 ## 4. Secuencia de implementación
 
-1. **Contrato y pruebas de compatibilidad:** documentar versión, acciones, errores y reglas de compatibilidad; crear fixtures de clientes antiguos y nuevos.
+1. **Contrato y pruebas de compatibilidad — IMPLEMENTADO LOCALMENTE:** protocolo POST v1 independiente de la versión de Coordinator. SharedMutationClient declara `protocolVersion: 1`; Coordinator interpreta la ausencia del campo como v1 para clientes antiguos y rechaza versiones desconocidas antes de ejecutar operaciones. Las pruebas cubren cliente legacy, cliente v1 y rechazo de versiones no soportadas. Coordinator 1.4.2.
+2. **Orquestación central de invalidación:** prototipo aislado con fetch inyectado; probar éxito, timeout, respuesta inválida, fallo parcial, repetición idempotente y recuperación.
+3. **Migración de cliente:** conservar las funciones públicas actuales como adaptadores compatibles; no retirar los endpoints internos de WRITE/FEEDBACK.
+4. **Configuración canónica:** definir nombres y fallback legacy; añadir diagnóstico de configuración que solo devuelva presencia/validez, nunca valores.
+5. **Cobertura de capacidades críticas:** pruebas de salud, RBAC, restricciones, cambio de rol, revocación individual/global, limpieza remota de caché, cierre de cuenta y rollback.
+6. **Plan de despliegue mínimo:** matriz de qué proyectos requieren nueva versión por cambio. Validación Beta posterior a todas las implementaciones locales y con autorización.
+
+
 2. **Orquestación central de invalidación:** prototipo aislado con fetch inyectado; probar éxito, timeout, respuesta inválida, fallo parcial, repetición idempotente y recuperación.
 3. **Migración de cliente:** conservar las funciones públicas actuales como adaptadores compatibles; no retirar los endpoints internos de WRITE/FEEDBACK.
 4. **Configuración canónica:** definir nombres y fallback legacy; añadir diagnóstico de configuración que solo devuelva presencia/validez, nunca valores.
