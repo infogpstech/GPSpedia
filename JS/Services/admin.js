@@ -6199,10 +6199,10 @@ function handleUploadAdminImage(payload, logMessage) {
     }
 
     const lock = LockService.getScriptLock();
-    try {
-        lock.waitLock(30000);
-    } catch (e) {
-        throw new Error("No se pudo bloquear la operación de reemplazo. Intenta nuevamente.");
+    if (!lock.tryLock(0)) {
+        const busyError = new Error("ADMIN está procesando otra escritura. Reintenta el reemplazo con el mismo opId.");
+        busyError.code = "ADMIN_BUSY";
+        throw busyError;
     }
 
     let newFile = null;
@@ -6222,8 +6222,8 @@ function handleUploadAdminImage(payload, logMessage) {
 
         const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
         if (!sheet || sheet.getLastRow() < 2) throw new Error("No hay registros disponibles en la hoja Cortes.");
-        const actualRow = findUniqueAdminVehicleRow_(sheet, String(vehicleId).trim());
-        const rowValues = sheet.getRange(actualRow, 1, 1, sheet.getLastColumn()).getValues()[0];
+        let actualRow = findUniqueAdminVehicleRow_(sheet, String(vehicleId).trim());
+        let rowValues = sheet.getRange(actualRow, 1, 1, sheet.getLastColumn()).getValues()[0];
         const colIndex = COLS_CORTES[fieldName];
         if (!colIndex) throw new Error("El campo '" + fieldName + "' no tiene una columna válida en Cortes.");
         activeCell = sheet.getRange(actualRow, colIndex);
@@ -6366,52 +6366,77 @@ function handleUploadAdminImage(payload, logMessage) {
         }
 
         const vehicleInfo = mapRowToObject(rowValues, COLS_CORTES);
-        const genFolder = findOrCreateVehicleFolder(vehicleInfo);
         const operationStatus = String(operationRecord.values[9] || "pending");
         const storedFileId = String(operationRecord.values[5] || "").trim();
-
-        if (storedFileId) {
-            try {
-                newFile = DriveApp.getFileById(storedFileId);
-            } catch (fileLookupError) {
-                newFile = null;
+        const drivePreparation = runAdminDriveWorkOutsideScriptLock_(lock, operationId, function() {
+            const genFolder = findOrCreateVehicleFolder(vehicleInfo);
+            let preparedFile = null;
+            let created = false;
+            if (storedFileId) {
+                try { preparedFile = DriveApp.getFileById(storedFileId); }
+                catch (fileLookupError) { preparedFile = null; }
             }
-        }
-
-        if (!newFile) {
-            const namedFiles = genFolder.getFilesByName(temporaryFilename);
-            let foundFile = null;
-            while (namedFiles.hasNext()) {
-                const candidate = namedFiles.next();
-                if (foundFile) throw new Error("Se encontraron varios archivos temporales para el mismo opId; se detuvo la recuperación.");
-                foundFile = candidate;
+            if (!preparedFile) {
+                const namedFiles = genFolder.getFilesByName(temporaryFilename);
+                let foundFile = null;
+                while (namedFiles.hasNext()) {
+                    const candidate = namedFiles.next();
+                    if (foundFile) throw new Error("Se encontraron varios archivos temporales para el mismo opId; se detuvo la recuperación.");
+                    foundFile = candidate;
+                }
+                if (foundFile) preparedFile = foundFile;
+                else {
+                    const blob = Utilities.newBlob(decodedData, actualMimeType, temporaryFilename);
+                    preparedFile = genFolder.createFile(blob);
+                    created = true;
+                }
             }
-            if (foundFile) {
-                newFile = foundFile;
-            } else {
-                const blob = Utilities.newBlob(decodedData, actualMimeType, temporaryFilename);
-                newFile = genFolder.createFile(blob);
-                fileCreatedThisAttempt = true;
+            if (preparedFile.isTrashed()) {
+                return { file: preparedFile, created, requiresReview: true,
+                    reason: "El archivo asociado al intento está en papelera. No se reactivó automáticamente; requiere revisión manual." };
             }
-        }
-
-        if (newFile.isTrashed()) {
+            verifyAdminImageUploadFile(preparedFile, actualMimeType, contentHash);
+            const description = String(preparedFile.getDescription() || "");
+            if (description.startsWith("GPSpediaAdminImageUpload|")) {
+                const opMatch = description.match(/(?:^|\\|)opId=([^|]*)/);
+                const hashMatch = description.match(/(?:^|\\|)hash=([^|]*)/);
+                if (!opMatch || opMatch[1] !== operationId || !hashMatch || hashMatch[1] !== contentHash) {
+                    throw new Error("El archivo Drive encontrado contiene metadatos de otra operación.");
+                }
+            }
+            preparedFile.setDescription(buildAdminImageUploadDescription(operationId, contentHash, "pending"));
+            return { file: preparedFile, created,
+                url: "https://drive.google.com/uc?export=view&id=" + preparedFile.getId() };
+        }, function(result) {
+            const latestRow = findUniqueAdminVehicleRow_(sheet, String(vehicleId).trim());
+            const latestValues = sheet.getRange(latestRow, 1, 1, sheet.getLastColumn()).getValues()[0];
+            const latestCell = sheet.getRange(latestRow, colIndex);
+            const latestUrl = String(latestCell.getValue() || "").trim();
+            const latestFilename = buildCanonicalImageBaseName(mapRowToObject(latestValues, COLS_CORTES), fieldName) + extension;
+            if (latestUrl !== originalUrl && latestUrl !== result.url && latestUrl !== previousNewImageUrl) {
+                operationConflict = true;
+                throw new Error("La referencia de imagen cambió durante la carga. No se sobrescribió el valor actual.");
+            }
+            if (latestFilename !== newFilename) {
+                operationConflict = true;
+                throw new Error("Los metadatos del vehículo cambiaron durante la carga; se conserva el archivo pendiente para reintento.");
+            }
+            const latestOperation = findAdminImageUploadOperation(operationSheet, operationId);
+            if (!latestOperation || String(latestOperation.values[1]) !== String(vehicleId) ||
+                String(latestOperation.values[2]) !== fieldName || String(latestOperation.values[6]) !== contentHash ||
+                String(latestOperation.values[7]) !== actualMimeType || String(latestOperation.values[8]) !== String(filename)) {
+                throw new Error("El ledger de carga cambió durante la operación; se conserva el archivo para recuperación.");
+            }
+            actualRow = latestRow; rowValues = latestValues; activeCell = latestCell; operationRecord = latestOperation;
+            return result;
+        });
+        newFile = drivePreparation.file;
+        fileCreatedThisAttempt = drivePreparation.created;
+        if (drivePreparation.requiresReview) {
             return markAdminImageUploadRequiresReview_(operationSheet, operationRecord, operationId, originalUrl,
-                "El archivo asociado al intento está en papelera. No se reactivó automáticamente; requiere revisión manual.",
-                logMessage, newFile, contentHash);
+                drivePreparation.reason, logMessage, newFile, contentHash);
         }
-        verifyAdminImageUploadFile(newFile, actualMimeType, contentHash);
-
-        const description = String(newFile.getDescription() || "");
-        if (description.startsWith("GPSpediaAdminImageUpload|")) {
-            const opMatch = description.match(/(?:^|\|)opId=([^|]*)/);
-            const hashMatch = description.match(/(?:^|\|)hash=([^|]*)/);
-            if (!opMatch || opMatch[1] !== operationId || !hashMatch || hashMatch[1] !== contentHash) {
-                throw new Error("El archivo Drive encontrado contiene metadatos de otra operación.");
-            }
-        }
-        newFile.setDescription(buildAdminImageUploadDescription(operationId, contentHash, "pending"));
-        newImageUrl = "https://drive.google.com/uc?export=view&id=" + newFile.getId();
+        newImageUrl = drivePreparation.url;
 
         operationRecord.values[4] = newImageUrl;
         operationRecord.values[5] = newFile.getId();
@@ -6446,8 +6471,20 @@ function handleUploadAdminImage(payload, logMessage) {
             throw new Error("No se pudo verificar la nueva URL en Cortes después de SpreadsheetApp.flush().");
         }
 
-        if (newFile.getName() !== newFilename) newFile.setName(newFilename);
-        updateAdminImageUploadFileState_(newFile, operationId, contentHash, "linked", false);
+        runAdminDriveWorkOutsideScriptLock_(lock, operationId, function() {
+            if (newFile.getName() !== newFilename) newFile.setName(newFilename);
+            updateAdminImageUploadFileState_(newFile, operationId, contentHash, "linked", false);
+            return true;
+        }, function() {
+            const latestRow = findUniqueAdminVehicleRow_(sheet, String(vehicleId).trim());
+            const latestCell = sheet.getRange(latestRow, colIndex);
+            if (String(latestCell.getValue() || "").trim() !== newImageUrl) {
+                operationConflict = true;
+                throw new Error("La referencia activa cambió durante la confirmación Drive; se conserva sin sobrescribir.");
+            }
+            actualRow = latestRow; activeCell = latestCell;
+            return true;
+        });
 
         operationRecord.values[9] = "linked";
         operationRecord.values[11] = Utilities.formatDate(new Date(), "GMT-6", "yyyy-MM-dd HH:mm:ss");
@@ -6459,6 +6496,13 @@ function handleUploadAdminImage(payload, logMessage) {
             message: "La imagen del campo '" + fieldName + "' se actualizó en Drive y Sheets."
         };
     } catch (error) {
+        if (error && error.code === "ADMIN_LOCK_REACQUIRE_PENDING") {
+            logMessage("Edición In-Modal", "El trabajo Drive de la operación " + operationId +
+                " quedó pendiente de readquisición del lock. Conserva el mismo opId para recuperar el intento.", 0, 0, true, true);
+            const pendingError = new Error("La carga quedó pendiente de confirmación por contención ADMIN. Reintenta con el mismo opId para recuperar el archivo sin duplicarlo.");
+            pendingError.code = "ADMIN_LOCK_REACQUIRE_PENDING";
+            throw pendingError;
+        }
         let rollbackMessage = "";
         let rollbackFailed = false;
         let historySheet = null;
@@ -6560,7 +6604,7 @@ function handleUploadAdminImage(payload, logMessage) {
         logMessage("Edición In-Modal", "Reemplazo " + operationId + " no confirmado. Motivo: " + error.message + rollbackMessage, 0, 0, true, true);
         throw new Error("No se completó el reemplazo; se intentó compensar y verificar todos los recursos. " + error.message + rollbackMessage);
     } finally {
-        lock.releaseLock();
+        if (lock.hasLock()) lock.releaseLock();
     }
 }
 
