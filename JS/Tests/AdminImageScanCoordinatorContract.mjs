@@ -388,7 +388,7 @@ assert.throws(() => vehicleFolderBuilder({
     versionesAplicables: "SRV", anoDesde: 2025, anoHasta: 2020
 }), /rango de años es inválido/);
 const vehicleYearFolderName = new Function(
-    extractFunction(admin, "getVehicleYearFolderName") + "\\nreturn getVehicleYearFolderName;"
+    extractFunction(admin, "getVehicleYearFolderName") + "\nreturn getVehicleYearFolderName;"
 )();
 assert.equal(vehicleYearFolderName({ anoDesde: 2020, anoHasta: 2025 }), "2020-2025");
 assert.equal(vehicleYearFolderName({ anoDesde: 2020, anoHasta: 2020 }), "2020-2020");
