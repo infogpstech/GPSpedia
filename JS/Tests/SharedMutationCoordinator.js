@@ -957,6 +957,31 @@ function runSharedMutationCoordinatorTests() {
             "El feed público debe conservar su atribución a Coordinator.");
     });
 
+    test_("Coordinator ignora buckets directos inválidos y duplicados sin contaminar la gráfica", function() {
+        const r = createRuntime_(null, null, requests => requests.map(request => {
+            const service = request.url.includes("/AUTH/") ? "AUTH" : "OTHER";
+            const startAt = Math.floor(1700000000000 / (60 * 60 * 1000)) * (60 * 60 * 1000);
+            return {
+                getResponseCode: () => 200,
+                getContentText: () => JSON.stringify({
+                    status: "success", service, scope: "direct_post_requests",
+                    totals: { lastHour: 3, last6Hours: 3, last24Hours: 3 },
+                    buckets: [{ startAt, count: 1 }, { startAt, count: 99 }, { startAt: "invalid", count: 50 }]
+                })
+            };
+        }));
+        r.properties.setProperty("GPSpedia_SERVICE_URL_AUTH", "https://script.google.com/macros/s/AUTH/exec");
+        r.properties.setProperty("GPSpedia_COORDINATOR_SECRET_AUTH", r.secrets.AUTH);
+        const traffic = r.request("getServiceTraffic", "ADMIN", "getServiceTraffic");
+        assert_(traffic.sources.AUTH.accuracy === "partial" &&
+            traffic.sources.AUTH.reason === "invalid_or_duplicate_buckets_ignored",
+            "La fuente debe declararse parcial si contiene buckets repetidos o corruptos.");
+        assert_(traffic.buckets[0].counts.AUTH === 1,
+            "Solo debe agregarse el primer bucket válido.");
+        assert_(traffic.totals.last24Hours.AUTH === 3,
+            "Los totales directos siguen conservando la cifra declarada por la fuente.");
+    });
+
     test_("La falta de una fuente directa conserva el agregado y declara cobertura parcial", function() {
         const r = createRuntime_();
         r.properties.setProperty("GPSpedia_SERVICE_URL_AUTH", "https://script.google.com/macros/s/AUTH/exec");
