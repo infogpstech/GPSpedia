@@ -655,3 +655,13 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 - CI HEAD 6e43666b69ff20b7945f5ebe7b7745a7758ce8d0: 146 suites, 2,157 pruebas aprobadas, 0 fallos; health y Pages SUCCESS.
 - Pendiente: conectar la UI del modal/consola con el endpoint y revisar la paginación y resultados reales después del despliegue. No se realizaron escrituras ni movimientos.
 ================================================================================
+
+
+================================================================================
+2026-11-19 — UI DEL PREVIEW DEL ORGANIZADOR
+- index.html: botón «Previsualizar organización» y panel independiente para el reporte.
+- ui.js: paginación del endpoint previewCortesImageOrganizer, validación de digest/cursor/total, resumen y detalle por destino; muestra hasta 500 filas y confirma el recorrido de todas las páginas.
+- El botón aparece solo con auditoría completa. La UI exige writePerformed:false y canApply:false; no hay acción de aplicación.
+- CI HEAD bb3f3a1fcf47d328f1ab51a4ab5dc3a93e2e3807: 146 suites, 2,157 pruebas aprobadas, 0 fallos; health y Pages SUCCESS.
+- Siguiente paso: desplegar ADMIN, generar una auditoría nueva y comprobar el preview con los datos reales. No se movieron ni renombraron archivos.
+================================================================================
