@@ -3687,10 +3687,18 @@ function handlePreviewCortesImageOrganizer_(payload, logMessage, developerContex
     const offset = Number.isInteger(offsetValue) && offsetValue >= 0 ? offsetValue : 0;
     const limit = Number.isInteger(limitValue) && limitValue > 0 ? Math.min(limitValue, 50) : 25;
     const selected = targetSnapshot.targets.slice(offset, offset + limit);
+    const destinationCounts = new Map();
+    targetSnapshot.targets.forEach(target => {
+        if (target.status !== "candidate" || !target.targetFolderPath || !target.targetBaseName) return;
+        const key = target.targetFolderPath.toLowerCase() + "/" + target.targetBaseName.toLowerCase();
+        destinationCounts.set(key, (destinationCounts.get(key) || 0) + 1);
+    });
 
     selected.forEach(target => {
         if (target.status !== "candidate") return;
         const reasons = target.reasons || [];
+        const destinationKey = String(target.targetFolderPath || "").toLowerCase() + "/" + String(target.targetBaseName || "").toLowerCase();
+        if ((destinationCounts.get(destinationKey) || 0) > 1) reasons.push("duplicate_target_destination");
         const audited = metadataById.get(target.fileId);
         if (!audited) reasons.push("file_not_in_completed_drive_inventory");
         if (historicalIds.has(target.fileId)) reasons.push("file_is_in_replaced_image_history");
