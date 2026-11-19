@@ -381,3 +381,14 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - No se desplegó Apps Script ni se modificaron Sheets/Drive productivos; la integración/concurrencia real queda para Beta autorizada.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 - Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` revisando las lecturas restantes dentro de `handleAddOrUpdateCut`, priorizando llamadas remotas repetidas y manteniendo las reservas, revalidaciones y escrituras atómicas bajo el ScriptLock.
+
+
+## Continuidad — agrupar validación de columnas testigo ADMIN (2026-11-19)
+- En `ensureTestigoColumns`, la comprobación de datos existentes bajo los encabezados faltantes de AT:AV ahora reúne los índices faltantes y lee una sola vez el rango contiguo mínimo que los cubre. Antes podía ejecutar hasta tres lecturas individuales dentro del ScriptLock.
+- Se mantienen la detección de encabezados VIN duplicados, la validación de encabezados testigo incompatibles, los mensajes de error, la ampliación de columnas y las escrituras de encabezado. Si no faltan encabezados o no hay filas de datos, no se realiza la lectura adicional.
+- Se actualizó `AdminTestigoHeaderReadReuse.mjs` para comprobar el rango compartido y la ausencia del patrón de lecturas individuales; la prueba continúa integrada en `RunServiceTests.mjs`.
+- Commits: implementación `0a9d42469774380357a0fa525a4f032e532349b2`; prueba `3412d525e335993919844c211f8bb4c5d5f84ce5`.
+- Validación estática directa de siete condiciones del cambio: PASS. La suite Node/CI no se ejecutó sobre el HEAD nuevo: los workflows visibles corresponden al HEAD anterior `d24e1a74`; no se reporta CI como aprobada.
+- No se desplegó Apps Script ni se modificaron hojas productivas.
+- Estado: IMPLEMENTACIÓN Y PRUEBA ACTUALIZADA; CI PENDIENTE.
+- Siguiente paso: ejecutar la regresión completa sobre este HEAD y revisar el resultado antes de cerrar la tarea GP-PERF-ADMIN-CUT-LOCK-01.
