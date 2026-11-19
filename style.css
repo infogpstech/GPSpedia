@@ -2683,10 +2683,11 @@ body.dark-mode .terms-agreement-logo {
 }
 
 #dev-tools-modal .dev-maintenance-retention {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(64px, auto) minmax(0, 1fr);
     align-items: center;
     gap: 8px;
-    flex-wrap: wrap;
+    min-width: 0;
     padding-left: 38px;
 }
 
@@ -2694,11 +2695,13 @@ body.dark-mode .terms-agreement-logo {
     color: var(--text-disabled);
     font-size: 0.82rem;
     font-weight: 600;
+    white-space: nowrap;
 }
 
 #dev-tools-modal .dev-maintenance-retention .dev-input {
-    flex: 1 1 200px;
+    width: 100%;
     min-width: 0;
+    max-width: 100%;
 }
 
 @media (max-width: 760px) {
@@ -2776,8 +2779,8 @@ body.dark-mode .terms-agreement-logo {
     }
 
     #dev-tools-modal .dev-maintenance-retention {
+        grid-template-columns: minmax(0, 1fr);
         align-items: stretch;
-        flex-direction: column;
         padding-left: 0;
     }
 
@@ -4706,7 +4709,7 @@ td, th {
 .detail-recommended-cut {
     min-width: 0;
     margin: 4px 0 12px;
-    padding: 12px;
+    padding: 8px;
     border: 1px solid var(--gp-color-border, var(--border-color, #ddd));
     border-radius: 10px;
     background: var(--gp-color-surface, var(--card-bg, #fff));
