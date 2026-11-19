@@ -75,6 +75,18 @@ for (const service of services) {
         assert.equal(JSON.stringify(result).includes(secret), false);
     });
 
+    test(service.name + " acepta el secreto Coordinator y mantiene fallback legacy", () => {
+        const h = createHarness(factory);
+        h.store.set("GPSpedia_COORDINATOR_SECRET", secret);
+        assert.equal(h.readDirectServiceTraffic_(secret, base).status, "success");
+        h.store.delete("GPSpedia_COORDINATOR_SECRET");
+        h.store.set(expectedSecretProperty, secret);
+        assert.equal(h.readDirectServiceTraffic_(secret, base).status, "success");
+        h.store.set("GPSpedia_COORDINATOR_SECRET", "wrong-coordinator-secret".padEnd(48, "x"));
+        assert.equal(h.readDirectServiceTraffic_(secret, base).status, "error",
+            "Un secreto Coordinator presente pero incorrecto no debe caer al secreto legacy.");
+    });
+
     test(service.name + " omite telemetría cuando el lock está ocupado sin liberar ni escribir", () => {
         const h = createHarness(factory, { lockAvailable: false });
         assert.equal(h.recordDirectServiceTraffic_(base), false);
@@ -114,7 +126,7 @@ const router = feedback.slice(routerStart, routerEnd);
 assert.ok(routerStart >= 0 && routerEnd > routerStart);
 assert.match(router,/if \(DIRECT_SERVICE_TRAFFIC_CONFIG_\.actions\.has\(action\)\) recordDirectServiceTraffic_\(\)/);
 assert.equal((router.match(/recordDirectServiceTraffic_\(/g)||[]).length,1,"Cada acción FEEDBACK se cuenta una sola vez.");
-assert.match(router,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken\)/);
+assert.match(router,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "FEEDBACK" \}\)/);
 assert.doesNotMatch(router,/withSharedMutationLease_/);
 assert.match(router,/anonymousSuggestion/);
 assert.match(feedback,/const FEEDBACK_PUBLIC_ACTIONS = new Set\(\["getPysData", "sendContactForm", "getCatalogChanges"\]\)/);
