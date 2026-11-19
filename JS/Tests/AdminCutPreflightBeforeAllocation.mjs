@@ -14,6 +14,10 @@ const duplicateValidation = handler.indexOf("normalizeIdempotenciaOperationHash_
 
 assert.ok(validation >= 0 && allocation > validation,
     "El contrato operationHash debe validarse antes de solicitar un ID remoto");
+assert.ok(handler.indexOf("extractVinPrefixForAdmin(cutData.vin)") < lock,
+    "La extracción pura del VIN debe ocurrir antes del ScriptLock");
+assert.ok(handler.indexOf('Utilities.formatDate(targetDate, "GMT-6", "dd/MM/yyyy")') < lock,
+    "El timestamp administrativo debe prepararse antes del ScriptLock");
 assert.ok(lock > allocation,
     "La asignación central WRITE debe continuar fuera del ScriptLock ADMIN");
 assert.equal(duplicateValidation, -1,
@@ -23,4 +27,4 @@ assert.ok(handler.indexOf("findRowByOpId(sheet, opId)") > lock,
 assert.ok(handler.includes("newId = Number(preallocatedVehicleId)"),
     "La fila nueva debe utilizar el ID preasignado");
 
-console.log("AdminCutPreflightBeforeAllocation: 5/5 PASS — hash validado antes de WRITE y lock, revalidación idempotente conservada");
+console.log("AdminCutPreflightBeforeAllocation: 7/7 PASS — hash validado antes de WRITE y lock, revalidación idempotente conservada");
