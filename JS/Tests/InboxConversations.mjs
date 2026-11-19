@@ -491,7 +491,7 @@ run("Supervisor, Jefe y Desarrollador pueden cerrar casos; el cierre bloquea com
 });
 run("Las mutaciones Inbox mantienen RBAC y usan actor cacheado sin leases por acción", () => {
     const router = feedbackSource.slice(feedbackSource.indexOf("function doPost(e)"), feedbackSource.indexOf("\nconst RICH_TEXT_MODE_PROPERTY_"));
-    assert.ok(router.includes("getCachedSharedSessionActor_(payload.userId, payload.sessionToken)"));
+    assert.ok(router.includes('getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "FEEDBACK" })'));
     assert.ok(!router.includes("withSharedMutationLease_"));
     for (const action of ["createInboxConversation","sendInboxMessage","markInboxRead","markInboxUnread","deleteInboxConversation","archiveInboxConversation","closeInboxConversation"]) {
         assert.ok(feedbackSource.includes(action + ":"), action + " debe permanecer declarada en FEEDBACK_ACTION_PERMISSIONS.");
