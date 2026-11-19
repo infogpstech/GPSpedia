@@ -157,6 +157,8 @@ runGroup('36','AUTH',()=>{
  runCli('AUTH aceptación de términos por usuario y dispositivo','JS/Tests/TermsAcceptance.js');
   runCli('AUTH aceptación local y sincronización asíncrona por sesión/dispositivo','JS/Tests/TermsAsyncSync.mjs');
  runCli('AUTH purga de Logs usando actor confiable sin revalidación por acción','JS/Tests/SensitiveLogsTrustedActor.mjs');
+ runCli('FEEDBACK limpieza de ActividadUsuario: retención y resultados sin cambios','JS/Tests/ActivityLogsClearFeedback.mjs');
+ runCli('ADMIN UI: selector compacto y mensajes de limpieza de Logs','JS/Tests/AdminLogsMaintenanceContract.mjs');
  runCli('AUTH restauración de sesión sin revalidación redundante','JS/Tests/SessionRestoreOnValidationFailure.mjs');
   runCli('AUTH recuperación accesible de sesiones revocadas/legacy','JS/Tests/SessionInvalidationFlow.mjs');
  runCli('AUTH PBKDF2 versionado, compatibilidad legacy y coste','JS/Tests/PasswordHashMigration.mjs');
