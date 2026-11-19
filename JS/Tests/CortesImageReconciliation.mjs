@@ -10,6 +10,56 @@ assert.ok(start>=0&&end>start,"planner de conciliación ausente");
 const extractDriveFileIds=value=>{const text=String(value||"");const matches=[...text.matchAll(/(?:file\/d\/|id=|\/d\/)([a-zA-Z0-9_-]{20,})/g)].map(m=>m[1]);if(!matches.length&&/^[a-zA-Z0-9_-]{20,}$/.test(text))matches.push(text);return [...new Set(matches)];};
 const SHEET_NAMES={CORTES:"Cortes"};
 const planner=new Function("extractDriveFileIds","SHEET_NAMES",admin.slice(start,end)+";return buildCortesImageReconciliationPlan_;")(extractDriveFileIds,SHEET_NAMES);
+const historyStart=admin.indexOf("function collectReplacedImageHistoryIds_");
+const historyEnd=admin.indexOf("\\n}\\n",historyStart)+2;
+assert.ok(historyStart>=0&&historyEnd>historyStart,"helper de historial ausente");
+const collectHistory=new Function("getSpreadsheet","SHEET_NAMES","extractDriveFileIds",
+    admin.slice(historyStart,historyEnd)+";return collectReplacedImageHistoryIds_;");
+const historyHeaders=["id_reemplazo","fecha_reemplazo","tipo_contenido","registro_id","campo",
+    "archivo_drive_id","nombre_archivo","url_anterior","sustituida_por_url","referencia_texto","estado",
+    "origen_registro","tipo_mime","ubicacion_original","fecha_creacion_drive","fecha_deteccion",
+    "url_visualizacion","ubicacion_actual","tipo_registro"];
+const historyRow=(fileId,origin,type,status,replacementId="")=>{
+    const row=Array(historyHeaders.length).fill("");
+    row[2]=origin==="auditoria_drive"?"inventario_sin_uso":"vehiculo";
+    row[5]=fileId;row[7]="https://drive.google.com/file/d/"+fileId+"/view";
+    row[8]=replacementId?"https://drive.google.com/file/d/"+replacementId+"/view":"";
+    row[10]=status;row[11]=origin;row[18]=type;return row;
+};
+const historyIds=[
+    "drive-file-id-unused-000000000001",
+    "drive-file-id-replaced-000000000002",
+    "drive-file-id-replacement-000000003",
+    "drive-file-id-review-000000000004",
+    "drive-file-id-deleted-000000000005",
+    "drive-file-id-inuse-000000000006"
+];
+const historyRows=[historyHeaders,
+    historyRow(historyIds[0],"auditoria_drive","sin_uso_detectado","sin_uso_detectado"),
+    historyRow(historyIds[1],"reemplazo","reemplazada","historica",historyIds[2]),
+    historyRow(historyIds[3],"auditoria_drive","sin_uso_detectado","requiere_revision"),
+    historyRow(historyIds[4],"reemplazo","reemplazada","eliminada"),
+    historyRow(historyIds[5],"auditoria_drive","sin_uso_detectado","en_uso")
+];
+const collectedHistory=collectHistory(
+    ()=>({getSheetByName:()=>({getLastRow:()=>historyRows.length,getDataRange:()=>({getValues:()=>historyRows})})}),
+    {IMAGENES_REEMPLAZADAS:"Imagenes_Reemplazadas"},extractDriveFileIds
+)();
+testCase("excluye registros de inventario sin uso del historial de reemplazos",()=>{
+    assert.equal(collectedHistory.has(historyIds[0]),false);
+});
+testCase("conserva las imágenes originales y sustitutas de un reemplazo histórico",()=>{
+    assert.equal(collectedHistory.has(historyIds[1]),true);
+    assert.equal(collectedHistory.has(historyIds[2]),true);
+});
+testCase("protege registros que requieren revisión o están en uso",()=>{
+    assert.equal(collectedHistory.has(historyIds[3]),true);
+    assert.equal(collectedHistory.has(historyIds[5]),true);
+});
+testCase("excluye registros confirmados como eliminados",()=>{
+    assert.equal(collectedHistory.has(historyIds[4]),false);
+});
+
 const id=n=>"drive-file-id-000000000000000"+n;
 const target=(baseName,extra={})=>({row:2,vehicleId:"V-001",field:"imagenVehiculo",column:9,baseName,currentValue:"",...extra});
 const file=(n,name,mimeType="image/jpeg")=>({fileId:id(n),fileName:name,mimeType,accessPublic:true});

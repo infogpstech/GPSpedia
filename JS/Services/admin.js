@@ -3621,13 +3621,34 @@ function collectReplacedImageHistoryIds_() {
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.IMAGENES_REEMPLAZADAS);
     if (!sheet || sheet.getLastRow() < 2) return ids;
     const rows = sheet.getDataRange().getValues();
+    const headers = rows.length ? rows[0].map(value => String(value || "").trim()) : [];
+    const originIndex = headers.indexOf("origen_registro");
+    const typeIndex = headers.indexOf("tipo_registro");
+
     for (let r = 1; r < rows.length; r++) {
         const row = rows[r];
-        new Set([].concat(extractDriveFileIds(row[5]), extractDriveFileIds(row[7]), extractDriveFileIds(row[8]))).forEach(id => ids.add(id));
+        const origin = originIndex >= 0 ? String(row[originIndex] || "").trim() : "";
+        const recordType = typeIndex >= 0
+            ? String(row[typeIndex] || "").trim()
+            : "reemplazada";
+        const status = String(row[10] || "historica").trim();
+
+        // Las filas de inventario "sin uso" no son historial de reemplazo.
+        // Se conservan como históricas/protegidas solo los estados que el escáner
+        // trata explícitamente como no reutilizables.
+        if (status === "eliminada") continue;
+        const isProtected = ["en_uso", "requiere_revision", "eliminacion_pendiente", "en_papelera"].includes(status);
+        const isReplacedRecord = origin !== "auditoria_drive" && recordType === "reemplazada";
+        if (!isProtected && !isReplacedRecord) continue;
+
+        new Set([].concat(
+            extractDriveFileIds(row[5]),
+            extractDriveFileIds(row[7]),
+            extractDriveFileIds(row[8])
+        )).forEach(id => ids.add(id));
     }
     return ids;
 }
-
 
 function inspectCortesOrganizerTargetFolderReadOnly_(rootFolder, targetPath) {
     const parts = String(targetPath || "").split("/").filter(Boolean);
