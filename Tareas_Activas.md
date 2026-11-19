@@ -677,3 +677,11 @@ Siguiente paso: continuar GP-PERF-ADMIN-CUT-LOCK-01 inspeccionando las escritura
 - [x] Diff revisado: seis archivos, solo el handler ADMIN, prueba/runner y registros de esta tarea.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
 - Commit: `65a4aa5f873e7f88c7230c837206c56743bb40b8`.
+
+
+### ADMIN — fast path de recuperación sin reparación de imágenes (2026-11-19)
+- [x] Detectar bajo el lock si falta la imagen del vehículo o la imagen del slot recuperado antes de iniciar trabajo Drive.
+- [x] Omitir la liberación/reacquisición del ScriptLock y la reconsulta de revalidación cuando ambas imágenes ya están completas.
+- [x] Mantener la ruta Drive existente, con revalidación de opId/vehículo/slot/huella, cuando al menos una imagen requiere reparación.
+- [x] Añadir `AdminRecoveryImageRepairFastPath.mjs` al runner para cubrir imágenes completas, faltantes individualmente, ambas faltantes y corte no recomendado.
+- Estado: IMPLEMENTACIÓN PUBLICADA; regresión y health pendientes de CI. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.

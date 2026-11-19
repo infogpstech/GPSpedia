@@ -1070,3 +1070,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-19] ADMIN: en la recuperación idempotente de registros parcialmente completados, se agrupan los campos contiguos de vehículo (categoría a tipo de encendido) y los cuatro campos principales del slot de corte en un máximo de dos llamadas setValues(). Solo se completan celdas vacías; se preservan valores existentes, orden de años, testigo y colaborador en sus columnas separadas, VIN, timestamp, flush y transición idempotente. Se añade AdminRecoveryRepairBatchWrites.mjs al runner con simulación local de la escritura. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
+
+
+[2026-11-19] ADMIN: la recuperación idempotente calcula si faltan imágenes antes de iniciar trabajo Drive. Cuando la imagen del vehículo y la del slot ya son válidas, omite el ciclo innecesario de liberar/reacquirir ScriptLock y la consulta posterior de revalidación; cuando falta alguna, conserva la carga Drive y la revalidación idempotente existentes. Se añade AdminRecoveryImageRepairFastPath.mjs al runner. Validación CI pendiente al publicar.

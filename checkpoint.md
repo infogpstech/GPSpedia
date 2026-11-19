@@ -205,3 +205,11 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
 - Commit funcional: `65a4aa5f873e7f88c7230c837206c56743bb40b8`.
 - Próximo paso: continuar con la siguiente reducción segura de llamadas a Sheets en la recuperación ADMIN, conservando el lock para las reservas y escrituras atómicas.
+
+
+## Continuidad — fast path de imágenes en recuperación ADMIN (2026-11-19)
+- `getAdminRecoveryImageRepairNeeds_` detecta si la recuperación necesita reparar la imagen del vehículo, la imagen del slot o ambas.
+- Si ninguna requiere reparación, `handleAddOrUpdateCut` ya no entra en `runAdminDriveWorkOutsideScriptLock_`: conserva el ScriptLock adquirido y evita la reacquisición y la consulta posterior de `findRowByOpId`.
+- Si alguna imagen falta, se mantiene el flujo Drive fuera del lock y la revalidación de opId, vehículo, slot y operationHash.
+- Prueba `AdminRecoveryImageRepairFastPath.mjs` integrada en `RunServiceTests.mjs`; resultado de CI pendiente.
+- No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.

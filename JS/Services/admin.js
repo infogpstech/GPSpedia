@@ -6821,6 +6821,15 @@ function runAdminDriveWorkOutsideScriptLock_(lock, opId, operation, revalidate, 
     return typeof revalidate === "function" ? revalidate(result) : result;
 }
 
+function getAdminRecoveryImageRepairNeeds_(vehicleData, cutData, rowObj, slotIndex) {
+    const needsVehicleImage = Boolean(vehicleData && vehicleData.imagenVehiculo &&
+        !checkFileIdValid(rowObj.imagenVehiculo));
+    const needsCutImage = Boolean(cutData && cutData.imgCorte1 &&
+        cutData.tipoCorte1 !== "No recomendado" &&
+        !checkFileIdValid(rowObj[`imgCorte${slotIndex}`]));
+    return { vehicle: needsVehicleImage, cut: needsCutImage };
+}
+
 function handleAddOrUpdateCut(payload, logMessage, developerContext) {
     const { vehicleData, cutData, vehicleId } = payload || {};
     if (!cutData) throw new Error("Los datos del corte son requeridos.");
@@ -6951,11 +6960,15 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
                 else if (matchedColName.includes("2") || match.colIndex === COLS_CORTES.colaboradorCorte2) slotIndex = 2;
                 else if (matchedColName.includes("3") || match.colIndex === COLS_CORTES.colaboradorCorte3) slotIndex = 3;
 
-                const repairedImages = runAdminDriveWorkOutsideScriptLock_(lock, opId, function() {
+                const imageRepairNeeds = getAdminRecoveryImageRepairNeeds_(vehicleData, cutData, rowObj, slotIndex);
+                let repairedImages = null;
+                // Si las imágenes ya están completas, no hay trabajo Drive: conservar el lock
+                // y evitar una liberación/reacquisición y una consulta de revalidación innecesarias.
+                if (imageRepairNeeds.vehicle || imageRepairNeeds.cut) {
+                    repairedImages = runAdminDriveWorkOutsideScriptLock_(lock, opId, function() {
                     let vehicleImageUrl = "", cutImageUrl = "";
-                    const needsVehicleImage = vehicleData && vehicleData.imagenVehiculo && !checkFileIdValid(rowObj.imagenVehiculo);
-                    const needsCutImage = cutData && cutData.imgCorte1 && cutData.tipoCorte1 !== "No recomendado" &&
-                        !checkFileIdValid(rowObj[`imgCorte${slotIndex}`]);
+                    const needsVehicleImage = imageRepairNeeds.vehicle;
+                    const needsCutImage = imageRepairNeeds.cut;
                     if (needsVehicleImage || needsCutImage) {
                         const folder = findOrCreateVehicleFolder(mergeVehicleFolderInfo(rowObj, vehicleData));
                         if (needsVehicleImage) {
@@ -6982,7 +6995,8 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
                     if (images.cutImageUrl && !checkFileIdValid(current[`imgCorte${slotIndex}`]))
                         sheet.getRange(verified.rowIndex, COLS_CORTES[`imgCorte${slotIndex}`]).setValue(images.cutImageUrl);
                     return verified;
-                }, operationHash);
+                    }, operationHash);
+                }
                 if (repairedImages && repairedImages.rowIndex) {
                     match = repairedImages; rowIndex = match.rowIndex; rowValues = match.rowValues;
                     rowObj = mapRowToObject(rowValues, COLS_CORTES);
