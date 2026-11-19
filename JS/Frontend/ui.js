@@ -8,6 +8,7 @@ import { createPrintableQrDataUrl } from './printQr.js';
 
 import { getFeedbackItems, getInboxRecipients, getInboxConversations, getInboxMessages, createInboxConversation, sendInboxMessage, markInboxRead, archiveInboxConversation, closeInboxConversation as apiCloseInboxConversation, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, clearSensitiveLogs, checkAllServicesHealth, getActivityLogs, recordVehicleView, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange, approveVideo, rejectVideo, getRichTextMode, loadRichTextMode, setRichTextMode, routeActionWithRetry } from './api-config.js';
 import { getState, setState, subscribe } from './state.js';
+import { getBrowserServiceTrafficSnapshot } from './serviceTelemetry.js';
 import * as offline from './offline.js';
 import { createEditBackupStore, getEditBackupFieldsToRestore } from './editBackupStore.js';
 import { isAdminImageUploadStatusConfirmedCancelled } from './adminImageUploadIsolation.js';
@@ -5780,7 +5781,7 @@ function initAdminPanelListeners() {
         const grid = document.getElementById("services-health-grid");
         if (!grid) return;
         grid.replaceChildren();
-        const keys = Object.keys(serviceHealthResults);
+        const keys = Object.keys(serviceHealthResults).filter(key => key !== "LEGACY");
         if (!keys.length) {
             const empty = document.createElement("p");
             empty.className = "dev-empty-state";
@@ -5833,6 +5834,9 @@ function initAdminPanelListeners() {
         if (!detail) return;
         detail.replaceChildren();
         const item = serviceHealthResults[selectedServiceKey];
+        const localTraffic = selectedServiceKey ? getBrowserServiceTrafficSnapshot(selectedServiceKey) : null;
+        const events = localTraffic && Array.isArray(localTraffic.events) ? localTraffic.events : [];
+        const lastEvent = localTraffic && localTraffic.lastEvent ? localTraffic.lastEvent : null;
         if (!selectedServiceKey || !item) {
             const empty = document.createElement("p");
             empty.className = "dev-empty-state";
@@ -5873,9 +5877,34 @@ function initAdminPanelListeners() {
             createServiceMetric("Latencia del diagnóstico", Number.isFinite(item.latency) ? `${Math.round(item.latency)} ms` : "No disponible"),
             createServiceMetric("Operaciones globales (1 h)", serviceCount("lastHour")),
             createServiceMetric("Operaciones globales (6 h)", serviceCount("last6Hours")),
-            createServiceMetric("Operaciones globales (24 h)", serviceCount("last24Hours"))
+            createServiceMetric("Operaciones globales (24 h)", serviceCount("last24Hours")),
+            createServiceMetric("Solicitudes de este navegador (24 h)", String(localTraffic?.metrics?.requests || 0)),
+            createServiceMetric("Respuestas correctas (24 h)", String(localTraffic?.metrics?.successes || 0)),
+            createServiceMetric("Errores observados (24 h)", String(localTraffic?.metrics?.errors || 0)),
+            createServiceMetric("Latencia media local", Number.isFinite(localTraffic?.metrics?.averageDurationMs)
+                ? Math.round(localTraffic.metrics.averageDurationMs) + " ms" : "Sin mediciones"),
+            createServiceMetric("Tipo de navegador", localTraffic?.clientType === "mobile" ? "Móvil"
+                : localTraffic?.clientType === "tablet" ? "Tableta" : localTraffic?.clientType === "desktop" ? "Escritorio" : "No identificado")
         );
         detail.appendChild(metrics);
+
+        const localTrafficPanel = document.createElement("section");
+        localTrafficPanel.className = "dev-service-traffic-panel";
+        const localTrafficHeading = document.createElement("h5");
+        localTrafficHeading.textContent = "Tráfico local · " + selectedServiceKey;
+        localTrafficPanel.appendChild(localTrafficHeading);
+        const localTrafficChart = document.createElement("div");
+        localTrafficChart.className = "dev-service-traffic-chart";
+        renderLocalServiceTrafficChart_(localTrafficChart, localTraffic);
+        localTrafficPanel.appendChild(localTrafficChart);
+        const localTrafficNote = document.createElement("p");
+        localTrafficNote.className = "dev-service-note";
+        localTrafficNote.textContent = "Métricas de las solicitudes observadas por este navegador durante la sesión actual (" +
+            (localTraffic?.clientType === "mobile" ? "móvil" : localTraffic?.clientType === "tablet" ? "tableta" : "escritorio") +
+            "). Son locales, temporales y no se envían ni persisten; el gráfico global se muestra por separado.";
+        localTrafficPanel.appendChild(localTrafficNote);
+        detail.appendChild(localTrafficPanel);
+
         const note = document.createElement("p");
         note.className = "dev-service-note";
         const catalogSource = globalServiceTrafficData && globalServiceTrafficData.sources && globalServiceTrafficData.sources.CATALOG;
@@ -5929,6 +5958,67 @@ function initAdminPanelListeners() {
             detail.appendChild(last);
         }
     }
+    function renderLocalServiceTrafficChart_(container, snapshot) {
+        container.replaceChildren();
+        const buckets = snapshot && Array.isArray(snapshot.buckets) ? snapshot.buckets : [];
+        const total = snapshot && snapshot.metrics ? Number(snapshot.metrics.requests) || 0 : 0;
+        if (!total || !buckets.length) {
+            const empty = document.createElement("p");
+            empty.className = "dev-empty-state";
+            empty.textContent = "Aún no se han observado solicitudes de este servicio en el navegador durante esta sesión.";
+            container.appendChild(empty);
+            return;
+        }
+        const ordered = buckets.slice().sort((a, b) => Number(a.startAt) - Number(b.startAt));
+        const maxValue = Math.max(1, ...ordered.map(bucket => Math.max(0, Number(bucket.count) || 0)));
+        const width = 920, height = 230, left = 48, right = 18, top = 18, bottom = 42;
+        const plotWidth = width - left - right, plotHeight = height - top - bottom;
+        const ns = "http://www.w3.org/2000/svg";
+        const svg = document.createElementNS(ns, "svg");
+        svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+        svg.setAttribute("class", "dev-service-traffic-svg");
+        svg.setAttribute("role", "img");
+        svg.setAttribute("aria-label", "Tráfico local del servicio seleccionado en este navegador, por hora durante las últimas 24 horas.");
+        [0, Math.ceil(maxValue / 2), maxValue].filter((value, index, values) => values.indexOf(value) === index).forEach(value => {
+            const y = top + plotHeight - (value / maxValue) * plotHeight;
+            const line = document.createElementNS(ns, "line");
+            line.setAttribute("x1", left); line.setAttribute("x2", width - right);
+            line.setAttribute("y1", y); line.setAttribute("y2", y);
+            line.setAttribute("class", "dev-service-traffic-gridline");
+            svg.appendChild(line);
+            const label = document.createElementNS(ns, "text");
+            label.setAttribute("x", left - 10); label.setAttribute("y", y + 4);
+            label.setAttribute("text-anchor", "end"); label.setAttribute("class", "dev-service-traffic-axis");
+            label.textContent = String(value); svg.appendChild(label);
+        });
+        const labelIndexes = [...new Set([0, 6, 12, 18, ordered.length - 1])].filter(index => index >= 0 && index < ordered.length);
+        labelIndexes.forEach(index => {
+            const x = left + (index / Math.max(1, ordered.length - 1)) * plotWidth;
+            const label = document.createElementNS(ns, "text");
+            label.setAttribute("x", x); label.setAttribute("y", height - 12);
+            label.setAttribute("text-anchor", "middle"); label.setAttribute("class", "dev-service-traffic-axis");
+            label.textContent = new Date(Number(ordered[index].startAt)).toLocaleTimeString([], { hour: "2-digit" });
+            svg.appendChild(label);
+        });
+        const points = ordered.map((bucket, index) => {
+            const x = left + (index / Math.max(1, ordered.length - 1)) * plotWidth;
+            const y = top + plotHeight - (Math.max(0, Number(bucket.count) || 0) / maxValue) * plotHeight;
+            return `${x},${y}`;
+        }).join(" ");
+        const line = document.createElementNS(ns, "polyline");
+        line.setAttribute("points", points);
+        line.setAttribute("class", "dev-service-traffic-line dev-service-color-0");
+        svg.appendChild(line);
+        container.appendChild(svg);
+        const legend = document.createElement("div");
+        legend.className = "dev-service-traffic-legend";
+        const entry = document.createElement("span");
+        entry.className = "dev-service-traffic-legend-item dev-service-color-0";
+        entry.textContent = snapshot.service + " · navegador actual";
+        legend.appendChild(entry);
+        container.appendChild(legend);
+    }
+
     function renderGlobalServiceTrafficChart_() {
         const container = document.getElementById("global-service-traffic-chart");
         if (!container) return;
@@ -5963,7 +6053,7 @@ function initAdminPanelListeners() {
         container.appendChild(summary);
 
         const buckets = data.buckets.slice().sort((a, b) => Number(a.startAt) - Number(b.startAt));
-        const services = data.services.filter(service => /^[A-Z_]{2,20}$/.test(String(service)));
+        const services = data.services.filter(service => service !== "LEGACY" && /^[A-Z_]{2,20}$/.test(String(service)));
         if (!buckets.length || !services.length) {
             const empty = document.createElement("p");
             empty.className = "dev-empty-state";
@@ -6032,6 +6122,21 @@ function initAdminPanelListeners() {
         container.appendChild(note);
     }
 
+    function isValidGlobalServiceTrafficResponse_(result) {
+        if (!result || typeof result !== "object" || result.status !== "success" ||
+            result.scope !== "global_service_traffic" || !Array.isArray(result.services) ||
+            !Array.isArray(result.buckets) || !result.totals || typeof result.totals !== "object") return false;
+        const expectedServices = Object.keys(serviceHealthResults).filter(key => key !== "LEGACY");
+        const services = result.services.map(value => String(value || "").toUpperCase());
+        if (!services.length || services.includes("LEGACY") || new Set(services).size !== services.length) return false;
+        if (expectedServices.length && expectedServices.some(service => !services.includes(service))) return false;
+        const validCountMap = values => values && typeof values === "object" && !Array.isArray(values) &&
+            services.every(service => Number.isSafeInteger(values[service]) && values[service] >= 0);
+        if (!["lastHour", "last6Hours", "last24Hours"].every(period => validCountMap(result.totals[period]))) return false;
+        return result.buckets.every(bucket =>
+            bucket && Number.isSafeInteger(bucket.startAt) && validCountMap(bucket.counts));
+    }
+
     async function loadGlobalServiceTraffic_(force = false) {
         if (globalServiceTrafficLoading || !isAdminPanelCurrent_()) return;
         if (!force && Date.now() - lastGlobalServiceTrafficFetchAt < 60000) return;
@@ -6042,8 +6147,8 @@ function initAdminPanelListeners() {
         try {
             const result = await routeActionWithRetry("getServiceTraffic", getSessionPayload_(), { timeoutMs: 15000, maxAttempts: 2 });
             if (!isAdminPanelCurrent_()) return;
-            if (!result || result.status !== "success" || result.scope !== "global_service_traffic") {
-                throw new Error(result && result.message ? result.message : "Respuesta de telemetría no válida.");
+            if (!isValidGlobalServiceTrafficResponse_(result)) {
+                throw new Error("El agregado global no cumple el contrato de servicios, buckets y totales; se conservan los datos de diagnóstico individuales.");
             }
             globalServiceTrafficData = result;
             globalServiceTrafficError = null;
@@ -6087,6 +6192,14 @@ function initAdminPanelListeners() {
             isHealthScanRunning = false;
             if (button) button.disabled = false;
         }
+    }
+    if (!window.adminServiceTrafficListenerAttached) {
+        window.addEventListener("gpsepedia:service-traffic-updated", event => {
+            if (!isAdminPanelCurrent_() || !selectedServiceKey ||
+                event && event.detail && event.detail.service !== selectedServiceKey) return;
+            renderServiceDetail();
+        });
+        window.adminServiceTrafficListenerAttached = true;
     }
     const scanBtn = document.getElementById("btn-check-services-health");
     if (scanBtn) scanBtn.onclick = () => runServicesHealthScan();
