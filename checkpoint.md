@@ -750,3 +750,15 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - Clasificación: «Reemplazada» solo con evidencia de sustitución vigente; si no se demuestra, «Sin uso» o revisión pendiente. No borrar ni mover archivos automáticamente.
 - El PASS anterior reportado por el usuario acredita únicamente que la detección se ejecutó; no demuestra cobertura completa, clasificación, persistencia ni biblioteca.
 - Estado: reportes/requisitos registrados; no se inspeccionó ni modificó código. Causa del error Inbox y posible interferencia siguen sin verificar.
+
+
+
+### Continuidad Beta — consola de auditoría y organización automática de imágenes (2026-11-18)
+- Nuevos IDs: BETA-ADMIN-CUT-IMAGE-AUDIT-CONSOLE-01, BETA-ADMIN-CUT-IMAGE-ORGANIZER-AUDIT-01, BETA-ADMIN-CUT-IMAGE-ORGANIZER-STRUCTURE-01, BETA-ADMIN-CUT-IMAGE-ORGANIZER-REGISTRATION-CONSISTENCY-01, BETA-ADMIN-CUT-IMAGE-ORGANIZER-NAMING-01 y BETA-ADMIN-CUT-IMAGE-FUNCTION-CODES-01.
+- Consola: revisar la confirmación del registro de imágenes detectadas, actualmente solicitada desde consola del desarrollador. El modal de auditoría debe presentar la consola de cortes como salida centralizada para lotes, conteos, carpetas, resultados, coincidencias y errores, en sustitución de indicadores independientes.
+- Organización automática: auditar lectura fila por fila de las hojas Cortes y Logos y verificar ubicación por categoría/marca/modelo/versión o encendido/rango de años. El logo se almacena en el primer nivel de la carpeta de marca.
+- Estructura ejemplo: Cortes/Autobus/Hyundai/County/llave/2020-2026/archivos de imagen; hyundai_logo.png en el directorio Hyundai.
+- Coherencia de altas: revisar que registrar un corte, un nuevo modelo y un nuevo logo genere rutas compatibles con la estructura canónica.
+- Nomenclatura: Modelo_versión-o-encendido_año-o-rango_función.extensión; conservar extensión original y evitar colisiones. Ejemplos Hilux_srv_2020_2025_imagenVehiculo.png, Hilux_srv_2020_2025_ign1.jpg, Hilux_srv_2020_2025_bomba1.jpg, Hilux_srv_2020_2025_btn.jpg y Hilux_srv_2020_2025_ign2.jpg.
+- Códigos: ign (ignición), bomba (bomba de combustible), btn (señal al botón), apert (apertura), alim (alimentación), alim2 (alimentación 2), shock (señal al ahogador). Numeración para recursos múltiples de la misma función.
+- Estado: requisitos registrados; auditoría de código y pruebas de ejecución pendientes. No se modificaron archivos de Drive ni datos de Spreadsheet.
