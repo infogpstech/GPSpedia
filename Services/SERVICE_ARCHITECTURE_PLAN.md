@@ -147,3 +147,7 @@ La matriz es el criterio para decidir los despliegues Beta. No implica que se ha
 La configuración local utiliza una propiedad uniforme por consumidor (GPSpedia_COORDINATOR_URL y GPSpedia_COORDINATOR_SECRET). Coordinator conserva una propiedad por identidad de servicio, con valores independientes; CATALOG usa una credencial limitada a lectura. Las URLs de comunicación entre proyectos se mantienen en Coordinator y no se distribuyen entre clientes. Esta separación evita que AUTH necesite credenciales de WRITE/FEEDBACK y evita duplicar las URLs remotas en SharedMutationClient.
 
 No se fusionan los secretos de los servicios en un único valor: esa reducción debilitaría el aislamiento y permitiría que un consumidor comprometido suplantara a otro. Las propiedades legacy de telemetría se mantienen solo durante la transición y no se eliminan antes de validar todos los entornos Beta.
+
+
+## Actualización 2026-11-19 — AUTH sin lease para limpieza de Logs
+- `clearSensitiveLogs` es una operación administrativa local: usa actor cacheado y RBAC de Desarrollador, sin lease ni revalidación de Coordinator por acción. Las operaciones de sesión/recuperación permanecen bajo revisión diferenciada.

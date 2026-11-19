@@ -251,3 +251,10 @@ Aplicar la estructura objetivo después de validar el dry-run:
 
 - CI final del cambio ADMIN, run 44539942784: **SUCCESS — 152 suites, 2,224 pruebas aprobadas, 0 fallos**. Health read-only 44539942669 SUCCESS; Pages 44539942102 SUCCESS. HEAD de cierre: 71894f2e4c391e13b7935738389967f4a8ebe083.
 - Siguiente tarea local: auditar los puntos restantes de adquisición de leases en AUTH/USERS/UTILITIES contra la sección 15; conservar solo las excepciones de sesión expresamente permitidas. Safe Apply del organizador sigue bloqueado hasta revisar un preview real de Drive y recibir autorización; no mover ni renombrar archivos.
+
+
+## Adenda 2026-11-19 — AUTH: limpieza de Logs sin lease
+- [x] `clearSensitiveLogs` dejó de pasar por `withSharedMutationLease_`; AUTH obtiene el actor desde caché y ejecuta localmente el control de rol Desarrollador. La acción no modifica sesiones y no requiere autorización de Coordinator por solicitud.
+- [x] `SensitiveLogsTrustedActor` 7/7 PASS; `SessionActivityCoordination` 11/11 PASS.
+- CI run 44541720461 SUCCESS: 152 suites, 2,224 pruebas, 0 fallos. Health read-only 44541720459 SUCCESS. Pages run 44541720180 pendiente al registrar.
+- Siguiente revisión: clasificar los usos restantes de leases en AUTH (ciclo de sesión/recuperación), USERS (mutaciones de cuenta que hoy se serializan con delete/reset AUTH) y UTILITIES (migración manual con lock local). No retirar protecciones de concurrencia sin una alternativa equivalente.

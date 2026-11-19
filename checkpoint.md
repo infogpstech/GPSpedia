@@ -1023,3 +1023,14 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - No se desplegó Apps Script ni se modificaron ScriptProperties, secretos, Drive o Spreadsheet.
 - Próxima tarea: revisar los usos restantes de leases en AUTH/USERS/UTILITIES contra la sección 15. Safe Apply permanece condicionado a preview real y autorización.
 ================================================================================
+
+
+================================================================================
+2026-11-19 — AUTH: LIMPIEZA DE LOGS SIN LEASE
+- `clearSensitiveLogs` se excluyó de `isSharedMutationAction_` y ahora obtiene el actor de sesión cacheado con service AUTH; `doPostInternal_` conserva el control local de Desarrollador y la auditoría funcional.
+- Se actualizó la copia aislada `JS/Tests/Auth.js` para conservar paridad de fuente.
+- `SensitiveLogsTrustedActor` 7/7 PASS; `SessionActivityCoordination` 11/11 PASS.
+- CI run 44541720461 SUCCESS: 152 suites, 2,224 pruebas, 0 fallos. Health read-only 44541720459 SUCCESS. Pages run 44541720180 en curso.
+- No se desplegó Apps Script ni se modificaron ScriptProperties, secretos, Drive o Spreadsheet.
+- Pendiente: auditoría de los flujos AUTH restantes, USERS y UTILITIES. USERS conserva coordinación de mutaciones de cuenta con delete/reset AUTH; UTILITIES conserva lease de migración manual. Revisar necesidad exacta contra sección 15 antes de cambiar.
+================================================================================
