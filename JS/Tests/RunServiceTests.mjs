@@ -76,6 +76,7 @@ runGroup('32','ADMIN',()=>{
   runCli('WRITE agrupa escrituras de cortes sin alterar campos separados','JS/Tests/WriteCutSlotBatchWrites.mjs');
   runCli('ADMIN agrupa los cinco campos contiguos del corte existente','JS/Tests/AdminCutSlotBatchWrites.mjs');
   runCli('ADMIN agrupa reparaciones de registros recuperados','JS/Tests/AdminRecoveryRepairBatchWrites.mjs');
+  runCli('ADMIN agrupa escrituras del alta de vehículos nuevos','JS/Tests/AdminNewVehicleBatchWrites.mjs');
   runCli('ADMIN evita el ciclo Drive/lock si la recuperación no necesita reparar imágenes','JS/Tests/AdminRecoveryImageRepairFastPath.mjs');
   runCli('ADMIN reutiliza snapshot de fila para vincular imágenes recuperadas','JS/Tests/AdminRecoveryImageSnapshotReuse.mjs');
   runCli('WRITE recupera opId heredados sin descargar Cortes completo','JS/Tests/WriteOpIdLegacyLookup.mjs');

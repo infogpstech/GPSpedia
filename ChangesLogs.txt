@@ -1091,3 +1091,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-19 · cierre] ADMIN revalidación de vehículo existente desde snapshot: se eliminó un getValue() individual del ID, reutilizando la lectura integral de fila bajo ScriptLock para validar rowValues[COLS_CORTES.id - 1]. Se mantuvo la búsqueda de candidato fuera del lock y la lectura posterior a Drive que prepara VIN. Prueba AdminExistingVehicleLookupPreflight 8/8 y AdminExistingVehicleSnapshotRevalidation 7/7 PASS. CI 44636938042 SUCCESS: 189 suites, 2491 pruebas aprobadas, 0 fallos; health read-only 44636938094 SUCCESS. La primera CI falló solo por una aserción de prueba que incluía una lectura posterior a Drive; se acotó y la repetición aprobó. Pages 44636937345 aún estaba en ejecución al cierre. No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+[2026-11-19] ADMIN: el alta de vehículos nuevos agrupa las columnas contiguas del vehículo (2–9) y del primer corte (12–16) en dos llamadas setValues(), en lugar de escrituras individuales. Timestamp, testigo y colaborador permanecen separados. Se conserva la verificación de ID centralizado, reserva idempotente, trabajo Drive fuera del ScriptLock y flush.

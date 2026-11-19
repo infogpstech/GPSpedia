@@ -7270,24 +7270,33 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
         const vehiculoImageUrl = uploaded.vehicleImageUrl;
         const corteImageUrl = uploaded.cutImageUrl;
 
-        // 4. Escribir los nuevos datos en las celdas específicas usando múltiples `setValue` para claridad.
-        sheet.getRange(rowIndex, COLS_CORTES.categoria).setValue(newVehicleData.categoria || '');
-        sheet.getRange(rowIndex, COLS_CORTES.marca).setValue(newVehicleData.marca);
-        sheet.getRange(rowIndex, COLS_CORTES.modelo).setValue(newVehicleData.modelo);
-        sheet.getRange(rowIndex, COLS_CORTES.versionesAplicables).setValue(newVehicleData.versionesAplicables || '');
-        sheet.getRange(rowIndex, COLS_CORTES.anoDesde).setValue(anoDesde);
-        sheet.getRange(rowIndex, COLS_CORTES.anoHasta).setValue(anoHasta);
-        sheet.getRange(rowIndex, COLS_CORTES.tipoEncendido).setValue(newVehicleData.tipoEncendido);
-        sheet.getRange(rowIndex, COLS_CORTES.imagenVehiculo).setValue(vehiculoImageUrl);
+        // 4. Guardar los campos contiguos del vehículo y del primer corte en dos lotes.
+        // ID, reserva pending y cargas Drive ya fueron confirmados; timestamp, testigo y
+        // colaborador permanecen separados por su ubicación no contigua en el esquema.
+        const newVehicleValues = [
+            newVehicleData.categoria || '',
+            newVehicleData.marca,
+            newVehicleData.modelo,
+            newVehicleData.versionesAplicables || '',
+            anoDesde,
+            anoHasta,
+            newVehicleData.tipoEncendido,
+            vehiculoImageUrl
+        ];
+        sheet.getRange(rowIndex, COLS_CORTES.categoria, 1, newVehicleValues.length)
+            .setValues([newVehicleValues]);
         sheet.getRange(rowIndex, COLS_CORTES.timestamp).setValue(formattedDate);
 
-        // Datos del primer corte
-        sheet.getRange(rowIndex, COLS_CORTES.tipoCorte1).setValue(cutData.tipoCorte1);
-        sheet.getRange(rowIndex, COLS_CORTES.ubicacionCorte1).setValue(cutData.ubicacionCorte1);
-        sheet.getRange(rowIndex, COLS_CORTES.colorCableCorte1).setValue(cutData.colorCableCorte1);
-        sheet.getRange(rowIndex, COLS_CORTES.configRelay1).setValue(cutData.configRelay1);
+        const newCutSlotValues = [
+            cutData.tipoCorte1,
+            cutData.ubicacionCorte1,
+            cutData.colorCableCorte1,
+            cutData.configRelay1,
+            corteImageUrl
+        ];
+        sheet.getRange(rowIndex, COLS_CORTES.tipoCorte1, 1, newCutSlotValues.length)
+            .setValues([newCutSlotValues]);
         sheet.getRange(rowIndex, COLS_CORTES.activaTestigo1).setValue(cutData.activaTestigo1 === true);
-        sheet.getRange(rowIndex, COLS_CORTES.imgCorte1).setValue(corteImageUrl);
         sheet.getRange(rowIndex, COLS_CORTES.colaboradorCorte1).setValue(colaboradorName);
         SpreadsheetApp.flush();
         if (opId) recordOpId(opId, newId, 1, formattedDate, "completed", operationHash, idempotencyEntriesSnapshot);

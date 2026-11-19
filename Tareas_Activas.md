@@ -710,3 +710,12 @@ Siguiente paso: continuar GP-PERF-ADMIN-CUT-LOCK-01 inspeccionando las escritura
 - [x] CI final `44636938042` SUCCESS: 189 suites, 2,491 pruebas aprobadas, 0 fallos; `AdminExistingVehicleSnapshotRevalidation` 7/7 PASS y sintaxis aprobada.
 - [x] Health read-only `44636938094` SUCCESS.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
+
+
+### ADMIN — escrituras por lote al dar de alta vehículos nuevos (2026-11-19)
+- [x] Agrupar categoría, marca, modelo, versiones, años, encendido e imagen del vehículo en una escritura contigua (columnas 2–9).
+- [x] Agrupar tipo, ubicación, color, configuración del relay e imagen del primer corte en otra escritura contigua (columnas 12–16).
+- [x] Mantener timestamp, testigo y colaborador en sus columnas independientes.
+- [x] Conservar la asignación y lectura de confirmación del ID centralizado, la reserva idempotente pending/completed, la carga Drive fuera del lock y el flush final.
+- [x] Añadir `AdminNewVehicleBatchWrites.mjs` al runner con simulación de rangos, valores y número de escrituras.
+- Estado: IMPLEMENTACIÓN PUBLICADA; validación local/CI pendiente. No se desplegó Apps Script ni se modificaron datos productivos.

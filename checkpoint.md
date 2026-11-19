@@ -276,3 +276,11 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Pages `44636937345` estaba IN_PROGRESS al registrar el cierre; no se declara como aprobado.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó Apps Script ni se modificaron datos productivos.
 - Siguiente tarea: continuar inspeccionando la recuperación/alta ADMIN para eliminar lecturas individuales que sean duplicadas por un snapshot posterior, sin reducir las revalidaciones que protegen concurrencia e integridad.
+
+
+## Continuidad — alta de vehículos nuevos ADMIN con escrituras por lote (2026-11-19)
+- El alta nueva agrupa los campos de vehículo (categoría a imagen, columnas 2–9) en un setValues() y los campos del primer corte (12–16) en otro.
+- Timestamp (37), testigo (46) y colaborador (18) permanecen como escrituras separadas por no ser contiguas.
+- Se conserva lectura de confirmación del ID centralizado, reserva idempotente pending antes de Drive y completed después de flush, con las cargas Drive fuera del ScriptLock.
+- Nueva prueba `AdminNewVehicleBatchWrites.mjs` verifica el mapa de columnas, valores escritos, cinco llamadas finales, y orden de ID/reserva/Drive/completado.
+- Validación local/CI pendiente. No se desplegó Apps Script ni se modificaron datos productivos.
