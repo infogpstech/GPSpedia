@@ -5,6 +5,62 @@ Rama de trabajo: GPSpedia2.2.5_work
 Rama base protegida: GPSpedia2.2.5 (no modificar)
 Normativa: NORMAS_DESAROLLO.md
 
+## Plan de ejecución vigente — implementación local antes de Beta (2026-11-19)
+
+**Orden obligatorio:** terminar las implementaciones y correcciones locales; ejecutar la regresión integral; solo después preparar y realizar despliegues y validaciones Beta con autorización. No desplegar Apps Script, cambiar ScriptProperties/secretos ni ejecutar pruebas contra Drive, Spreadsheet o servicios remotos durante este bloque.
+
+### Fase 1 — ADMIN: salud y telemetría de servicios
+**P0 · EN PROGRESO · BETA-ADMIN-SERVICE-TELEMETRY-02 + BETA-ADMIN-GLOBAL-TRAFFIC-01**
+- Corregir los defectos reproducibles del escáner (incluido `events is not defined`) y del contrato/respuesta del agregado global.
+- Recuperar salud y tráfico de todos los servicios activos, incluido el tráfico del navegador móvil; excluir LEGACY del inventario, las consultas y la interfaz.
+- El escáner debe mostrar una tarjeta por cada servicio activo. Al seleccionar una tarjeta, mostrar todas las métricas disponibles de ese servicio, su estado/versión/latencia y los datos diagnósticos seguros.
+- Presentar dos gráficas separadas: (1) tráfico global agregado de los servicios y (2) tráfico local del servicio seleccionado. No confundir datos ausentes con cero ni disponibilidad del endpoint con salud integral de Sheets/Drive.
+- Aislar fallos parciales: un servicio sin telemetría o con error no debe ocultar los datos de los demás. Mantener la interfaz y las consultas funcionales en navegador móvil.
+- Validar contratos, autenticación, permisos, límites, normalización, renderizado, concurrencia y coste de telemetría sin añadir esperas ni viajes de red a las acciones ordinarias.
+
+### Fase 2 — Simplificación de arquitectura y configuración de servicios
+**P0 · PENDIENTE · SERVICE-ARCHITECTURE-SIMPLIFICATION-01 (requisito expreso nuevo)**
+- Reducir el acoplamiento de despliegue entre los servicios Apps Script: un cambio interno del Coordinator o de SharedMutation no debe obligar automáticamente a volver a desplegar todos los servicios consumidores.
+- Estabilizar y versionar el contrato de comunicación entre servicios; separar el protocolo/cliente estable de la implementación central que evoluciona. Evaluar alternativas compatibles con Apps Script antes de elegir diseño; no asumir que una librería compartida elimina por sí sola los despliegues.
+- Simplificar nombres, distribución y documentación de secretos/URLs. Mantener secretos fuera del repositorio y conservar aislamiento suficiente entre servicios; no exponerlos en endpoints, logs ni frontend.
+- **Capacidades que deben conservarse y probarse explícitamente:** monitoreo de salud de todos los servicios; restricciones y cambios de acceso de cuentas; revocación/cierre remoto de sesiones; limpieza remota de caché por usuario; cierre/eliminación remota de cuentas. Ninguna puede degradarse, eliminarse ni convertirse en una operación manual.
+- Mantener intacta la matriz RBAC, la identidad confiable y las protecciones indispensables. La simplificación debe reducir mantenimiento y despliegues, no eliminar funciones ni ampliar privilegios.
+
+### Fase 3 — Inbox y aislamiento de operaciones
+**P1 · PENDIENTE**
+- Diagnosticar y corregir «servicio no autorizado para el coordinador compartido» en Inbox, sin ampliar privilegios.
+- Determinar si la auditoría de imágenes interfiere con Inbox u operaciones independientes; revisar locks, leases, timeouts y liberación ante errores.
+- Corregir la vista previa del contenido HTML en la bandeja: mostrar texto/fragmento legible y no etiquetas HTML sin procesar, preservando el renderizado seguro del mensaje completo.
+
+### Fase 4 — ADMIN: controles y retroalimentación
+**P1/P2 · PENDIENTE**
+- Corregir el mensaje de borrado de logs para distinguir eliminación efectiva, ausencia de registros y error.
+- Compactar el selector de retención (últimos 7 días / eliminar todos) y corregir desbordamientos.
+- Corregir el padding innecesario del contenedor de imagen del modal de corte sin alterar logo, nombre, acciones ni distribución ya aceptada.
+- Auditar la telemetría y las métricas visibles en escritorio y móvil para evitar datos duplicados o contradictorios.
+
+### Fase 5 — Auditoría y organizador de imágenes
+**P1 · PENDIENTE LOCAL**
+- Reconciliar los registros históricos con el código real: el constructor puro, endpoint `previewCortesImageOrganizer` y UI paginada ya constan implementados; no repetirlos.
+- Completar auditoría de cobertura, referencias de todas las hojas, inventario persistente, relación inteligente vehículo/imagen y clasificación explicable de «Sin uso»/«Reemplazada».
+- Unificar rutas y nomenclatura de altas de cortes, modelos y logos; mantener `ign1..3`, `bomba1..3`, `btn1..3`, `alim1..3`, `apert` y extensión original.
+- Diseñar aplicación por lotes solo después del preview: idempotencia, verificación individual, manifiesto, compensación/rollback y confirmación explícita. No mover, renombrar, borrar ni restaurar archivos en esta fase.
+
+### Fase 6 — Documentación y coherencia de registros
+**P2 · PENDIENTE**
+- Rotar sin pérdida `Tareas_Pendientes.md` y `lista_beta_parte2.txt`, que superan el umbral documental; verificar reconstrucción exacta y manifiestos antes de añadir contenido a esos archivos.
+- Reconciliar versiones y contratos documentados en `Services/SERVICE_HEALTH.md` con los endpoints fuente.
+- Mantener Auditoría, ChangesLogs, tareas y checkpoint sincronizados; no reescribir evidencia histórica.
+
+### Fase 7 — Regresión integral y transición a Beta
+- Ejecutar las pruebas locales pertinentes de cada fase y una regresión integral de contratos, sintaxis, permisos, sesiones, revocaciones, caché remota, cuentas, telemetría y flujos administrativos.
+- Registrar por separado lo aprobado localmente y lo que exige deployment, credenciales, navegador/dispositivo real, Drive o Spreadsheet.
+- Abrir la fase Beta únicamente después de cerrar las implementaciones locales; preparar primero los comandos seguros de sincronización exigidos por NORMAS_DESAROLLO.md.
+
+**Criterio de avance:** cerrar cada tarea con diff revisado, pruebas locales reproducibles y commit verificado en `GPSpedia2.2.5_work`. Si aparece un hallazgo crítico de seguridad/integridad, atenderlo antes de avanzar. La rama base `GPSpedia2.2.5` permanece protegida e intacta.
+
+---
+
 ## Completadas en esta continuidad
 - [x] BETA-ADMIN-CUT-IMAGE-AUDIT-CONSOLE-01 — consola de Cortes como salida principal; confirmación conservada en terminal global del Desarrollador; resultados y resumen verificados.
 - [x] BETA-ADMIN-CUT-IMAGE-ORGANIZER-AUDIT-01 — auditoría estática de normalización, movimiento, rutas, nomenclatura, referencias y alta de logos.
