@@ -652,8 +652,9 @@ function createSharedMutationCoordinator_(dependencies) {
     }
 
     function validateSessionContext_(service, operation, payload) {
-        if (service !== "AUTH" || operation !== "validateSessionContext") {
-            throw new Error("Solo AUTH puede consultar la restauración de sesión.");
+        if (!["AUTH", "USERS", "WRITE", "ADMIN", "FEEDBACK", "UTILITIES"].includes(service) ||
+            operation !== "validateSessionContext") {
+            throw new Error("El servicio no está autorizado para validar un contexto de sesión.");
         }
         const userId = String(payload.userId || "").trim();
         const token = String(payload.sessionToken || "");
@@ -661,7 +662,7 @@ function createSharedMutationCoordinator_(dependencies) {
         return withCoordinatorLock_(() => {
             const currentTime = now();
             const actor = authorizeSession_(userId, token, currentTime);
-            try { recordServiceTrafficEvent_("AUTH", currentTime, "validateSessionContext"); }
+            try { recordServiceTrafficEvent_(service, currentTime, "validateSessionContext"); }
             catch (trafficError) { /* La telemetría nunca debe bloquear la restauración de sesión. */ }
             return { status: "success", valid: true, actor };
         });
