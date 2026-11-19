@@ -960,3 +960,5 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 [2026-11-19] ADMIN: la compensación del reemplazo de imagen reserva el opId como requires_review antes de liberar ScriptLock. La actualización de metadata Drive y su fallback se ejecutan fuera del lock; al readquirir se revalidan vehículo, campo, URL, huella y estado del ledger. Se añade AdminImageUploadCompensationIsolation.mjs al runner. CI pendiente.
 
 [2026-11-19] Ajuste de prueba: el escenario de fallo de readquisición debe comenzar con ScriptLock adquirido, liberarlo durante Drive y simular tryLock(0) fallido; no debe iniciar sin lock, porque el helper ejecuta directamente cuando no es propietario.
+
+[2026-11-19] Ajuste de orden: se conserva la actualización/verificación del historial antes de reservar el ledger; la reserva precede a todo trabajo Drive fuera del lock.

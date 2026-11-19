@@ -6548,19 +6548,6 @@ function handleUploadAdminImage(payload, logMessage) {
         let historyRowIndex = null;
         let compensationReserved = false;
 
-        // Reserva el opId antes de compensar: un reintento no puede reactivar la operación.
-        if (newFile && operationContentHash && operationSheet && operationRecord) {
-            try {
-                operationRecord.values[9] = "requires_review";
-                operationRecord.values[11] = Utilities.formatDate(new Date(), "GMT-6", "yyyy-MM-dd HH:mm:ss");
-                saveAdminImageUploadOperation(operationSheet, operationRecord);
-                compensationReserved = true;
-            } catch (reserveError) {
-                rollbackFailed = true;
-                rollbackMessage += " No se pudo reservar el ledger para compensación; el archivo Drive se conserva sin modificar: " + reserveError.message + ".";
-            }
-        }
-
         if (activeCell && newImageUrl) {
             try {
                 const currentValue = String(activeCell.getValue() || "").trim();
@@ -6604,6 +6591,19 @@ function handleUploadAdminImage(payload, logMessage) {
             } catch (historyError) {
                 rollbackFailed = true;
                 rollbackMessage += " No se pudo actualizar y verificar el estado del registro histórico: " + historyError.message + ".";
+            }
+        }
+
+        // El historial se compensa primero; el lock sigue retenido hasta reservar el opId.
+        if (newFile && operationContentHash && operationSheet && operationRecord) {
+            try {
+                operationRecord.values[9] = "requires_review";
+                operationRecord.values[11] = Utilities.formatDate(new Date(), "GMT-6", "yyyy-MM-dd HH:mm:ss");
+                saveAdminImageUploadOperation(operationSheet, operationRecord);
+                compensationReserved = true;
+            } catch (reserveError) {
+                rollbackFailed = true;
+                rollbackMessage += " No se pudo reservar el ledger para compensación; el archivo Drive se conserva sin modificar: " + reserveError.message + ".";
             }
         }
 
