@@ -159,4 +159,13 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Commits: código `b963f2d4e3c8e1242e014b624e4cd684035a7005`; prueba `4d72437e24abd9c2d1db02251c5bd35e8f768f46`; runner `11afd89eb34c84e601a81bea016c2583440cdcae`.
 - Registros: tareas `c0e9a092837c9acb02aaa009314a6962b7397d7b`; changelog `6ba7b05df01a8debd992fb64449a799a28056054`.
 - No se desplegó Apps Script ni se modificaron Sheets/Drive productivos. Pendiente validación real en Beta autorizada.
-- Siguiente implementación: reutilizar un snapshot validado del ledger Idempotencia durante una operación ADMIN, evitando que `findRowByOpId` y `recordOpId` repitan lecturas completas; conservar comprobación dirigida del `opId`, detección de duplicados, asociación vehículo/slot/hash y transición monotónica pending→completed. Mantener recuperación y reserva dentro del ScriptLock hasta demostrar una alternativa atómica.
+- Siguiente implementación: inspeccionar las lecturas de encabezados y la comprobación/reparación de columnas (`ensureTestigoColumns`, `getVinColumnIndex`) que aún se ejecutan dentro de la sección crítica. Evaluar prelectura + revalidación dirigida o evitar consultas redundantes cuando el esquema ya está completo; conservar creación/reparación segura y no trasladar mutaciones fuera del lock.
+
+
+## Continuidad — snapshot idempotente ADMIN compartido (2026-11-19)
+- La rama ya contiene la reutilización de un snapshot integral del ledger Idempotencia por cada operación `handleAddOrUpdateCut`. `findRowByOpId`, `recordOpId` y revalidaciones tras Drive comparten la misma referencia; las comprobaciones dirigidas verifican la entrada actual y detectan cambios de asociación/estado.
+- Se mantiene la lectura integral única para detectar filas inválidas y `opId` duplicados; después de cada escritura el snapshot se actualiza con la entrada verificada. No se debilita la transición pending → completed.
+- Prueba `AdminIdempotencySnapshotReuse.mjs`: 10/10 PASS. CI `44632610105` SUCCESS: 183 suites, 2,450 pruebas aprobadas, 0 fallos; health read-only `44632610206` SUCCESS.
+- HEAD de código y prueba antes de registros: `063d9ae079c5db56b87f08cac99c92ead1ac8a9a`. Commits de implementación: `748d9f5c868571607d90a3fe805283112f74e276` y refinamientos relacionados. Registros actualizados después.
+- Próximo objetivo dentro de `GP-PERF-ADMIN-CUT-LOCK-01`: revisar `ensureTestigoColumns` y `getVinColumnIndex` para eliminar lecturas de encabezados redundantes del lock mediante prelectura y revalidación acotada, sin mover reparaciones/escrituras de esquema fuera de la exclusión.
+- No se desplegó Apps Script ni se modificaron Sheets/Drive productivos. La concurrencia real y la validación de datos permanecen pendientes de Beta autorizada.
