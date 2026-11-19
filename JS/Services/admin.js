@@ -6906,8 +6906,17 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
             throw new Error("La hoja «Cortes» no contiene el encabezado «VIN»; no se puede guardar el identificador sin alterar otras columnas.");
         }
 
+        // Un único snapshot integral por operación; tras liberar/re-adquirir el lock,
+        // las comprobaciones dirigidas del opId refrescan y validan su entrada.
+        let idempotencyEntriesSnapshot = null;
         if (opId) {
-            let match = findRowByOpId(sheet, opId);
+            const idempotencySheet = getIdempotenciaSheet();
+            idempotencyEntriesSnapshot = readIdempotenciaEntries_(idempotencySheet, false);
+            idempotencyEntriesSnapshot.sheet = idempotencySheet;
+        }
+
+        if (opId) {
+            let match = findRowByOpId(sheet, opId, idempotencyEntriesSnapshot);
             if (match) {
                 if (!match.operationHash || match.operationHash !== operationHash) {
                     throw new Error("El opId ya existe, pero su contenido no coincide o pertenece a un registro legado sin huella verificable.");
@@ -7030,12 +7039,12 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
                 }
                 SpreadsheetApp.flush();
                 if (opId && rowObj.id) {
-                    recordOpId(opId, rowObj.id, slotIndex, match.timestamp || rowObj.timestamp, "completed", operationHash);
+                    recordOpId(opId, rowObj.id, slotIndex, match.timestamp || rowObj.timestamp, "completed", operationHash, idempotencyEntriesSnapshot);
                 }
                 markAdminCutImagesLinkedOutsideLock_(lock, opId, rowObj.id, slotIndex, operationHash, [
                     sheet.getRange(rowIndex, COLS_CORTES.imagenVehiculo).getValue(),
                     sheet.getRange(rowIndex, COLS_CORTES["imgCorte" + slotIndex]).getValue()
-                ]);
+                ], idempotencyEntriesSnapshot);
                 return {
                     status: 'success',
                     message: 'La operación ya fue completada (recuperada, reparada y completada).',
@@ -7071,7 +7080,7 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
         const cutSlotIndex = findNextAvailableCutSlot_(rowValues, vehicleId);
         if (cutSlotIndex === null) throw new Error("No hay espacios disponibles para más cortes.");
         savedSlotIndex = cutSlotIndex;
-        if (opId) recordOpId(opId, vehicleId, cutSlotIndex, formattedDate, "pending", operationHash);
+        if (opId) recordOpId(opId, vehicleId, cutSlotIndex, formattedDate, "pending", operationHash, idempotencyEntriesSnapshot);
 
         const imageUrl = runAdminDriveWorkOutsideScriptLock_(lock, opId, function() {
             if (!cutData.imgCorte1) return "";
@@ -7109,8 +7118,8 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
         }
         sheet.getRange(rowIndex, COLS_CORTES.timestamp).setValue(formattedDate);
         SpreadsheetApp.flush();
-        if (opId) recordOpId(opId, vehicleId, cutSlotIndex, formattedDate, "completed", operationHash);
-        markAdminCutImagesLinkedOutsideLock_(lock, opId, vehicleId, cutSlotIndex, operationHash, [imageUrl]);
+        if (opId) recordOpId(opId, vehicleId, cutSlotIndex, formattedDate, "completed", operationHash, idempotencyEntriesSnapshot);
+        markAdminCutImagesLinkedOutsideLock_(lock, opId, vehicleId, cutSlotIndex, operationHash, [imageUrl], idempotencyEntriesSnapshot);
 
         newId = vehicleId;
 
@@ -7143,7 +7152,7 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
         }
         if (opId) {
             try {
-                recordOpId(opId, newId, 1, formattedDate, "pending", operationHash);
+                recordOpId(opId, newId, 1, formattedDate, "pending", operationHash, idempotencyEntriesSnapshot);
             } catch (error) {
                 try {
                     const persistedOperation = findRowByOpId(sheet, opId);
@@ -7217,8 +7226,8 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
         sheet.getRange(rowIndex, COLS_CORTES.imgCorte1).setValue(corteImageUrl);
         sheet.getRange(rowIndex, COLS_CORTES.colaboradorCorte1).setValue(colaboradorName);
         SpreadsheetApp.flush();
-        if (opId) recordOpId(opId, newId, 1, formattedDate, "completed", operationHash);
-        markAdminCutImagesLinkedOutsideLock_(lock, opId, newId, 1, operationHash, [vehiculoImageUrl, corteImageUrl]);
+        if (opId) recordOpId(opId, newId, 1, formattedDate, "completed", operationHash, idempotencyEntriesSnapshot);
+        markAdminCutImagesLinkedOutsideLock_(lock, opId, newId, 1, operationHash, [vehiculoImageUrl, corteImageUrl], idempotencyEntriesSnapshot);
     }
 
     logMessage("Registro Administrativo", `Corte administrativo guardado exitosamente. ID asignado: ${newId}`);
@@ -7854,7 +7863,7 @@ function getImageUploadReferences_(fileId) {
     return references;
 }
 
-function markAdminCutImagesLinkedOutsideLock_(lock, opId, vehicleId, slotIndex, operationHash, imageUrls) {
+function markAdminCutImagesLinkedOutsideLock_(lock, opId, vehicleId, slotIndex, operationHash, imageUrls, entriesSnapshot) {
     const urls = Array.from(new Set((Array.isArray(imageUrls) ? imageUrls : [])
         .map(value => String(value || "").trim())
         .filter(value => getImageUploadFileId_(value))));
@@ -7867,7 +7876,7 @@ function markAdminCutImagesLinkedOutsideLock_(lock, opId, vehicleId, slotIndex, 
     }, function(results) {
         if (cleanOpId) {
             const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
-            const latest = findRowByOpId(sheet, cleanOpId);
+            const latest = findRowByOpId(sheet, cleanOpId, entriesSnapshot);
             if (!latest || latest.status !== "completed" ||
                 String(latest.vehicleId) !== String(vehicleId) ||
                 Number(latest.slotIndex) !== Number(slotIndex) ||
@@ -8581,7 +8590,53 @@ function removeEmptyPendingCutRow(sheet, rowIndex, lastColumn) {
     }
 }
 
-function recordOpId(opId, vehicleId, slotIndex, timestamp, status, operationHash) {
+function readIdempotenciaEntryByOpId_(sheet, opId) {
+    const cleanOpId = String(opId === null || opId === undefined ? "" : opId).trim();
+    if (!sheet || !cleanOpId) return null;
+    normalizeIdempotenciaOpId_(cleanOpId, "Verificación de operación");
+    const state = getIdempotenciaHeaderState(sheet);
+    if (!state.compatible || state.missingIndexes.length) {
+        throw new Error("La hoja Idempotencia dejó de ser compatible durante la operación; no se modificó.");
+    }
+    const lastRow = sheet.getLastRow();
+    if (lastRow <= 1) return null;
+    const finder = sheet.getRange(2, 1, lastRow - 1, 1).createTextFinder(cleanOpId);
+    finder.matchCase(true);
+    finder.matchEntireCell(false);
+    finder.useRegularExpression(false);
+    if (typeof finder.matchFormulaText === "function") finder.matchFormulaText(false);
+    const matches = (finder.findAll() || []).filter(range =>
+        String(range.getValue() || "").trim() === cleanOpId
+    );
+    if (matches.length > 1) {
+        throw new Error("opId duplicado " + cleanOpId + " en Idempotencia; no se modificó.");
+    }
+    if (!matches.length) return null;
+    const rowIndex = matches[0].getRow();
+    const availableColumns = Math.min(IDEMPOTENCIA_HEADERS.length, Math.max(0, Number(sheet.getMaxColumns()) || 0));
+    if (availableColumns < IDEMPOTENCIA_HEADERS.length) {
+        throw new Error("La fila del opId " + cleanOpId + " no contiene las seis columnas esperadas.");
+    }
+    const sourceRow = sheet.getRange(rowIndex, 1, 1, availableColumns).getValues()[0];
+    const row = sourceRow.concat(Array(Math.max(0, IDEMPOTENCIA_HEADERS.length - sourceRow.length)).fill(""));
+    const entry = normalizeIdempotenciaEntry_(row, rowIndex);
+    if (!entry || entry.opId !== cleanOpId) {
+        throw new Error("No se pudo validar la fila del opId " + cleanOpId + ".");
+    }
+    return entry;
+}
+
+function updateIdempotenciaEntriesSnapshot_(snapshot, entry) {
+    if (!snapshot || !entry) return;
+    if (!Array.isArray(snapshot.entries)) snapshot.entries = [];
+    if (!(snapshot.byOpId instanceof Map)) snapshot.byOpId = new Map();
+    const index = snapshot.entries.findIndex(item => item.opId === entry.opId);
+    if (index >= 0) snapshot.entries[index] = entry;
+    else snapshot.entries.push(entry);
+    snapshot.byOpId.set(entry.opId, entry);
+}
+
+function recordOpId(opId, vehicleId, slotIndex, timestamp, status, operationHash, entriesSnapshot) {
     const cleanOpId = String(opId === null || opId === undefined ? "" : opId).trim();
     if (!cleanOpId) return null;
     normalizeIdempotenciaOpId_(cleanOpId, "Registro de operación");
@@ -8596,8 +8651,26 @@ function recordOpId(opId, vehicleId, slotIndex, timestamp, status, operationHash
     }
     const targetStatus = normalizeIdempotenciaStatus_(status === undefined ? "completed" : status, "Registro de operación");
     const cleanOperationHash = normalizeIdempotenciaOperationHash_(operationHash, "Registro de operación");
-    const sheet = getIdempotenciaSheet();
-    const existing = readIdempotenciaEntries_(sheet, false).byOpId.get(cleanOpId);
+    const sheet = entriesSnapshot && entriesSnapshot.sheet ? entriesSnapshot.sheet : getIdempotenciaSheet();
+    const ledgerSnapshot = entriesSnapshot || readIdempotenciaEntries_(sheet, false);
+    let existing = ledgerSnapshot.byOpId.get(cleanOpId);
+
+    if (entriesSnapshot) {
+        const current = readIdempotenciaEntryByOpId_(sheet, cleanOpId);
+        if (!!existing !== !!current) {
+            throw new Error("El ledger Idempotencia cambió durante la operación para el opId " + cleanOpId + "; reintenta con el mismo identificador.");
+        }
+        if (existing && current) {
+            if (existing.rowIndex !== current.rowIndex || existing.vehicleId !== current.vehicleId ||
+                existing.slotIndex !== current.slotIndex || existing.operationHash !== current.operationHash) {
+                throw new Error("La asociación del opId " + cleanOpId + " cambió durante la operación; no se modificó.");
+            }
+            if (existing.status === "completed" && current.status !== "completed") {
+                throw new Error("El estado completed del opId " + cleanOpId + " no puede retroceder.");
+            }
+            existing = current;
+        }
+    }
 
     if (existing) {
         if (existing.vehicleId !== cleanVehicleId || existing.slotIndex !== cleanSlotIndex) {
@@ -8610,24 +8683,29 @@ function recordOpId(opId, vehicleId, slotIndex, timestamp, status, operationHash
         if (existing.status !== finalStatus) sheet.getRange(existing.rowIndex, 5).setValue(finalStatus);
         SpreadsheetApp.flush();
 
-        const verified = readIdempotenciaEntries_(sheet, false).byOpId.get(cleanOpId);
+        const verified = entriesSnapshot
+            ? readIdempotenciaEntryByOpId_(sheet, cleanOpId)
+            : readIdempotenciaEntries_(sheet, false).byOpId.get(cleanOpId);
         if (!verified || verified.vehicleId !== cleanVehicleId ||
             verified.slotIndex !== cleanSlotIndex || verified.status !== finalStatus || verified.operationHash !== cleanOperationHash) {
             throw new Error("No se pudo verificar la actualización del opId " + cleanOpId + ".");
         }
+        if (entriesSnapshot) updateIdempotenciaEntriesSnapshot_(entriesSnapshot, verified);
         return verified;
     }
 
     sheet.appendRow([cleanOpId, cleanVehicleId, cleanSlotIndex, cleanTimestamp, targetStatus, cleanOperationHash]);
     SpreadsheetApp.flush();
-    const verified = readIdempotenciaEntries_(sheet, false).byOpId.get(cleanOpId);
+    const verified = entriesSnapshot
+        ? readIdempotenciaEntryByOpId_(sheet, cleanOpId)
+        : readIdempotenciaEntries_(sheet, false).byOpId.get(cleanOpId);
     if (!verified || verified.vehicleId !== cleanVehicleId ||
         verified.slotIndex !== cleanSlotIndex || verified.status !== targetStatus || verified.operationHash !== cleanOperationHash) {
         throw new Error("No se pudo verificar el registro del opId " + cleanOpId + ".");
     }
+    if (entriesSnapshot) updateIdempotenciaEntriesSnapshot_(entriesSnapshot, verified);
     return verified;
 }
-
 function findUniqueCortesVehicleRow_(sheet, vehicleId, opId) {
     if (!sheet) throw new Error("No se encontró la hoja Cortes para recuperar el opId " + opId + ".");
     const id = normalizeIdempotenciaVehicleId_(vehicleId, "Recuperación " + opId);
@@ -8653,13 +8731,31 @@ function findUniqueCortesVehicleRow_(sheet, vehicleId, opId) {
     return { rowIndex: rowIndex, rowValues: rowValues };
 }
 
-function findRowByOpId(sheet, opId) {
+function findRowByOpId(sheet, opId, entriesSnapshot) {
     const cleanOpId = String(opId === null || opId === undefined ? "" : opId).trim();
     if (!cleanOpId) return null;
     normalizeIdempotenciaOpId_(cleanOpId, "Recuperación de operación");
 
-    const idempotenciaSheet = getIdempotenciaSheet();
-    const entry = readIdempotenciaEntries_(idempotenciaSheet, false).byOpId.get(cleanOpId);
+    const idempotenciaSheet = entriesSnapshot && entriesSnapshot.sheet ? entriesSnapshot.sheet : getIdempotenciaSheet();
+    let entry;
+    if (entriesSnapshot) {
+        const snapshotEntry = entriesSnapshot.byOpId.get(cleanOpId) || null;
+        const currentEntry = readIdempotenciaEntryByOpId_(idempotenciaSheet, cleanOpId);
+        if (!!snapshotEntry !== !!currentEntry) {
+            throw new Error("El ledger Idempotencia cambió durante la recuperación del opId " + cleanOpId + "; reintenta con el mismo identificador.");
+        }
+        if (snapshotEntry && currentEntry) {
+            if (snapshotEntry.rowIndex !== currentEntry.rowIndex || snapshotEntry.vehicleId !== currentEntry.vehicleId ||
+                snapshotEntry.slotIndex !== currentEntry.slotIndex || snapshotEntry.operationHash !== currentEntry.operationHash ||
+                (snapshotEntry.status === "completed" && currentEntry.status !== "completed")) {
+                throw new Error("La asociación o el estado del opId " + cleanOpId + " cambió durante la recuperación; no se modificó.");
+            }
+        }
+        entry = currentEntry;
+        if (entry) updateIdempotenciaEntriesSnapshot_(entriesSnapshot, entry);
+    } else {
+        entry = readIdempotenciaEntries_(idempotenciaSheet, false).byOpId.get(cleanOpId);
+    }
     const cortesSheet = sheet || getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
     if (!cortesSheet) throw new Error("No se encontró la hoja Cortes para recuperar " + cleanOpId + ".");
 
