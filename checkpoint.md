@@ -16,18 +16,19 @@ Fecha: 2026-11-19
 - No inferir deployments Apps Script ni permisos externos desde el código versionado.
 
 ## Última tarea completada
-WRITE — búsqueda heredada de opId sin descarga completa de Cortes:
-- Se reemplazó el recorrido de `getDataRange().getValues()` por `TextFinder` server-side; solo se leen los encabezados y las celdas coincidentes.
-- Se conservan coincidencias directas en columnas `idOperacion`/`id_operacion`, VIN legacy OP, etiquetas `[opId]`, detección de duplicados y validación final de `vehicleId`/fila.
-- La ruta normal de Idempotencia sigue teniendo prioridad y evita TextFinder cuando ya existe una entrada.
-- Prueba `WriteOpIdLegacyLookup` 9/9 PASS.
-- CI 44617280202 SUCCESS: 171 suites, 2,358 pruebas aprobadas, 0 fallos; sintaxis JS aprobada.
-- Health read-only 44617280343 SUCCESS; GitHub Pages 44617279984 SUCCESS.
-- Commits: da2554903bb559cf06ee7e1abd2504333af248af (TextFinder y prueba), 833de2d87faab2203ebc2fe213a4f9f2afb1ac74 (comentario aclaratorio).
+WRITE — localizador único de vehículo por columna ID:
+- Se encontraron tres declaraciones globales de `findUniqueCortesVehicleRow_`; las posteriores sobrescribían la versión previa y mantenían `getDataRange()`.
+- Se eliminaron las tres versiones duplicadas y quedó una sola implementación efectiva.
+- El localizador lee únicamente la columna ID y lee la fila completa solo cuando hay exactamente una coincidencia.
+- Se conservan los errores por ID inválido, ID duplicado, ID inexistente y hoja ausente.
+- Prueba `WriteUniqueVehicleRowBoundedRead` 6/6 PASS; exige una única declaración y rangos acotados.
+- CI 44617773715 SUCCESS: 172 suites, 2,364 pruebas aprobadas, 0 fallos; sintaxis JS aprobada.
+- Health read-only 44617773600 SUCCESS; GitHub Pages 44617772427 SUCCESS.
+- Commit: e293e4152c6feba57badfc711bf0cee95f0ef769.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó WRITE ni se modificaron datos productivos.
 
 ## Siguiente trabajo
-Continuar GP-PERF-WRITE-CUT-LOCK-04. Auditar `readIdempotenciaEntries_` y su uso repetido dentro de `handleAddOrUpdateCutLocked`: determinar si puede evitarse descargar el ledger completo en cada intento y reutilizar una lectura bajo el mismo lock sin debilitar detección de opId duplicado, asociaciones vehículo/slot, operationHash ni compatibilidad histórica A:E. Medir primero los usos y contratos; no cambiar la política de idempotencia ni introducir leases/locks adicionales. Después revisar los flushes restantes. No desplegar Apps Script ni tocar datos productivos sin autorización.
+Continuar GP-PERF-WRITE-CUT-LOCK-04. Auditar `readIdempotenciaEntries_` y sus lecturas repetidas dentro de `handleAddOrUpdateCutLocked`: el flujo actual toma un snapshot parcial del ledger, después `findRowByOpId` carga el ledger completo y `recordOpId` vuelve a leerlo antes y después de escribir. Evaluar reutilizar una única lectura validada durante la sección crítica y verificar el registro final con una consulta dirigida al opId, conservando duplicados globales preexistentes, asociación vehicleId/slotIndex, operationHash, estados pending/completed y compatibilidad histórica A:E. No cambiar la política de idempotencia ni agregar locks/leases. No desplegar Apps Script ni modificar datos productivos.
 
 ## Restricciones
 - Trabajar únicamente en GPSpedia2.2.5_work.
@@ -71,3 +72,6 @@ Siguiente paso P0: auditar y reducir lecturas restantes dentro del ScriptLock de
 
 
 2026-11-19 — Cierre de búsqueda heredada WRITE: HEAD 833de2d87faab2203ebc2fe213a4f9f2afb1ac74; CI 44617280202 SUCCESS (171 suites, 2,358 pruebas, 0 fallos); health 44617280343 SUCCESS; Pages 44617279984 SUCCESS. La búsqueda legacy de opId ya no transfiere toda la hoja Cortes; mantiene las comprobaciones de ambigüedad y vehículo. Próximo paso: auditar lecturas repetidas del ledger Idempotencia.
+
+
+2026-11-19 — Cierre localizador WRITE: HEAD e293e4152c6feba57badfc711bf0cee95f0ef769; CI 44617773715 SUCCESS (172 suites, 2,364 pruebas, 0 fallos; WriteUniqueVehicleRowBoundedRead 6/6); health 44617773600 SUCCESS; Pages 44617772427 SUCCESS. El localizador efectivo ya no usa getDataRange y no hay declaraciones duplicadas. Próximo paso: reutilizar lecturas validadas del ledger Idempotencia.

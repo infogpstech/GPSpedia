@@ -533,3 +533,12 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] CI 44617280202 SUCCESS: 171 suites, 2,358 pruebas aprobadas, 0 fallos; sintaxis JavaScript aprobada.
 - [x] Health read-only 44617280343 SUCCESS; GitHub Pages 44617279984 SUCCESS.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó WRITE ni se modificaron Sheets/Drive productivos.
+
+### WRITE — localizador único de vehículo por columna ID (2026-11-19)
+- [x] Eliminar las tres declaraciones duplicadas de findUniqueCortesVehicleRow_ que se sobrescribían entre sí.
+- [x] Mantener una sola implementación que lee primero la columna ID y solo después la fila completa coincidente.
+- [x] Conservar validación de IDs no vacíos, detección de IDs inválidos/duplicados y error si no existe una coincidencia única.
+- [x] Añadir WriteUniqueVehicleRowBoundedRead: 6/6 PASS y comprobación de una sola declaración.
+- [x] CI 44617773715 SUCCESS: 172 suites, 2,364 pruebas aprobadas, 0 fallos.
+- [x] Health read-only 44617773600 SUCCESS; GitHub Pages 44617772427 SUCCESS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó WRITE ni se modificaron Sheets/Drive productivos.
