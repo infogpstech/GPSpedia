@@ -54,7 +54,7 @@ Aplicar la estructura objetivo después de validar el dry-run:
 - La auditoría de código no equivale a validar los datos reales de Drive/Spreadsheet.
 - No se han movido, renombrado, copiado, restaurado ni eliminado archivos productivos.
 - No se han desplegado Apps Script. La validación de la nueva organización requerirá ejecutar primero el dry-run tras su despliegue y revisar sus resultados.
-- Siguiente paso exacto: construir y probar el endpoint de preview de solo lectura, reutilizando collectActiveDriveReferences y el inventario recursivo existente, sin invocar normalizeImages ni organizePrimaryVehicleImages.
+- Siguiente paso exacto: el constructor puro, endpoint ADMIN previewCortesImageOrganizer y UI paginada del preview ya están implementados localmente. Corregida la nomenclatura funcional; verificar CI disponible, luego desplegar ADMIN en Beta, ejecutar una auditoría Drive nueva y revisar el preview real. No aplicar movimientos ni renombrados.
 
 
 ## Actualización 2026-11-19 — subpaso completado
