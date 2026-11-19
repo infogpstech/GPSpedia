@@ -86,6 +86,7 @@ runGroup('32','ADMIN',()=>{
   runCli('WRITE carpetas suplementarias usan lease Drive independiente','JS/Tests/WriteSupplementaryFolderLease.mjs');
   runCli('ADMIN libera ScriptLock durante trabajo Drive con revalidación','JS/Tests/AdminDriveLockIsolation.mjs');
   runCli('ADMIN asigna ID WRITE antes de tomar el ScriptLock','JS/Tests/AdminVehicleIdOutsideLock.mjs');
+  runCli('ADMIN valida el contrato idempotente antes de asignar ID y adquirir lock','JS/Tests/AdminCutPreflightBeforeAllocation.mjs');
   runCli('ADMIN sincroniza carpeta de imagen después de liberar ScriptLock','JS/Tests/AdminVehicleFolderSyncOutsideLock.mjs');
   runCli('ADMIN reemplazo de imagen ejecuta Drive fuera del ScriptLock y revalida opId','JS/Tests/AdminImageUploadDriveIsolation.mjs');
   runCli('ADMIN recupera reemplazos linked fuera del ScriptLock','JS/Tests/AdminImageUploadLinkedRecoveryIsolation.mjs');
