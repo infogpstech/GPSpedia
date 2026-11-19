@@ -923,7 +923,7 @@ function runSharedMutationCoordinatorTests() {
         assert_(first.status === "success" && retry.status === "success" && first.token === retry.token,
             "El reintento debe reutilizar la lease existente.");
         const traffic = r.request("getServiceTraffic", "ADMIN", "getServiceTraffic");
-        assert_(traffic.status === "success" && traffic.scope === "coordinator_protected_operations",
+        assert_(traffic.status === "success" && traffic.scope === "global_service_traffic",
             "ADMIN debe obtener el agregado global coordinado.");
         assert_(traffic.totals.last24Hours.AUTH === 1,
             "Un requestId idempotente solo debe incrementar una vez.");
@@ -1232,7 +1232,7 @@ function runSharedMutationCoordinatorTests() {
         const result = client.getServiceTraffic();
         assert_(captured && captured.protocolVersion === 1,
             "El cliente actual debe declarar protocolVersion 1.");
-        assert_(result.status === "success" && result.scope === "coordinator_protected_operations",
+        assert_(result.status === "success" && result.scope === "global_service_traffic",
             "La versión de protocolo no debe cambiar el resultado funcional.");
     });
 
