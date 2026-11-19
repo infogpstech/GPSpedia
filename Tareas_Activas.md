@@ -305,6 +305,7 @@ Aplicar la estructura objetivo después de validar el dry-run:
 - [x] Reserva atómica de operación/vehículo/slot para el flujo con `opId`: ledger `pending` reserva el slot antes de liberar el lock. La reserva idempotente del ID central para altas nuevas sigue pendiente.
 - [x] Mover las operaciones de carpetas/carga/reparación Drive fuera del lock para operaciones con `opId`; la llamada ADMIN→WRITE de asignación de ID continúa pendiente.
 - [x] Re-adquirir con `tryLock(0)` y revalidar reserva, fila, slot, opId y operationHash antes de aplicar las URLs; el `finally` solo libera el lock si sigue en posesión de la ejecución.
+- [x] Mover el cálculo SHA-256 y la validación del `operationHash` antes de la llamada remota a WRITE y del `ScriptLock` ADMIN; las solicitudes idempotentes inválidas ya no consumen un ID ni tiempo de sección crítica. La búsqueda/revalidación del `opId` permanece dentro del lock.
 - [x] Preservar ledger de imágenes, recuperación de respuesta perdida, idempotencia, verificación de escritura y compensación/revisión ante fallos; regresiones integrales aprobadas en CI 44592625381.
 - [x] Añadir prueba determinista `AdminDriveLockIsolation.mjs` (9/9), conectarla al runner y validar recuperación/error de Drive y fallo de readquisición; quedan pendientes pruebas de extremo a extremo para asignación de ID y concurrencia real Beta.
 - [x] Ejecutar regresión integral: 158 suites, 2,260 pruebas aprobadas, 0 fallos; health read-only SUCCESS. Revisión funcional del helper y su `finally` completada.
@@ -348,7 +349,7 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 ### Avance adicional — asignador central de IDs WRITE (2026-11-19)
 - [x] Sustituir la espera de hasta 30 segundos en `handleAllocateVehicleId` por adquisición inmediata `tryLock(0)`. Si WRITE está ocupado, responde con `WRITE_BUSY` para permitir reintento, sin quedar esperando y reteniendo la ejecución.
 - [x] Pruebas deterministas/CI del asignador: `WriteIdAllocatorNonBlocking` 5/5 y `AdminVehicleIdOutsideLock` 4/4 PASS en 44592625381.
-- [ ] Reducir la sección crítica del asignador: actualmente verifica IDs existentes en la hoja completa; evaluar contador + reconciliación segura sin perder detección de duplicados o IDs manuales.
+- [ ] Reducir la sección crítica del asignador: actualmente recorre la columna ID completa y reconcilia IDs manuales, duplicados, fórmulas y filas incompletas; evaluar una estrategia segura sin perder esas garantías.
 - [x] Publicación del catálogo aislada del ScriptLock local, con secuencia monotónica y protección contra eventos obsoletos; `WriteCatalogPublicationIsolation` 9/9 PASS en 44592625381.
 
 - [x] Ajuste del contrato de pruebas AUG-039 para reflejar el nuevo comportamiento del asignador: adquisición inmediata `tryLock(0)`, validación de rol dentro de la sección crítica y liberación solo tras adquirirlo. El primer CI detectó esta expectativa antigua; se actualiza la prueba, no se revierte la corrección.
@@ -596,3 +597,11 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Health read-only `44626945680` SUCCESS.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó WRITE ni se modificaron Sheets/Drive productivos.
 - Commits de implementación/pruebas: `a227e098`, `b7f83510`, `28aaecd6`, `0f739479`, `5a612e06`, `a7717124`.
+
+
+### GP-PERF-ADMIN-CUT-LOCK-01 — preflight idempotente (2026-11-19)
+- [x] Validar el `operationHash` y calcular la huella SHA-256 antes de solicitar un `vehicleId` a WRITE y antes de adquirir el `ScriptLock` ADMIN.
+- [x] Conservar la extracción compatible del `opId` legacy y la búsqueda/revalidación dentro de la sección crítica.
+- [x] Añadir `AdminCutPreflightBeforeAllocation.mjs` al runner: 5/5 PASS.
+- [x] CI `44627738079` SUCCESS: 178 suites, 2,409 pruebas aprobadas, 0 fallos; sintaxis JS aprobada. Health read-only `44627738183` SUCCESS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA como subactividad; GP-PERF-ADMIN-CUT-LOCK-01 continúa EN PROGRESO.
