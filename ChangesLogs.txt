@@ -921,3 +921,5 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 2026-11-19 — CI ADMIN Drive isolation: 158 suites, 2,260 pruebas, 0 fallos; health read-only SUCCESS. Las cargas/consultas Drive del flujo ADMIN con opId ya se ejecutan fuera del ScriptLock y revalidan la reserva antes de aplicar URLs.
 
 2026-11-19 — ADMIN: mover asignación central de ID a WRITE fuera del ScriptLock local y sustituir espera de 30 s por tryLock(0)/ADMIN_BUSY; prueba AdminVehicleIdOutsideLock.mjs.
+
+2026-11-19 — CI ADMIN ID fuera del lock: 159 suites, 2,264 pruebas, 0 fallos; health read-only SUCCESS. Se verificó que la llamada ADMIN→WRITE ocurre antes de adquirir el ScriptLock y que ADMIN no espera 30 segundos para entrar.

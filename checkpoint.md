@@ -1177,3 +1177,5 @@ CI del commit `82a35b6216f50e584423b8c2f2dfd0a954def565`:
 - Corrección de seguridad del helper ADMIN: el bloque `finally` verifica `lock.hasLock()` antes de liberar; si la readquisición no fue posible, se conserva el error `ADMIN_LOCK_REACQUIRE_PENDING` sin provocar una segunda excepción.
 
 2026-11-19 — ADMIN: la asignación central de ID se realiza ahora antes de adquirir ScriptLock ADMIN; la sección crítica usa `tryLock(0)` y responde `ADMIN_BUSY` inmediatamente. Nueva prueba AdminVehicleIdOutsideLock.mjs. CI pendiente. Los fallos/reintentos pueden dejar huecos en la secuencia, pero no duplican IDs; no se reutilizan IDs.
+
+CI `44562328607`: SUCCESS — 159 suites, 2,264 pruebas aprobadas, 0 fallos. `AdminDriveLockIsolation` 9/9 y `AdminVehicleIdOutsideLock` 4/4. Health read-only `44562328694`: SUCCESS. Pages `44562328327` seguía en ejecución. La asignación de ID central está fuera del ScriptLock ADMIN y la entrada al lock es inmediata (`tryLock(0)`).

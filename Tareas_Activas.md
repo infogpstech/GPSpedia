@@ -393,3 +393,5 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Cambiar la adquisición ADMIN de espera de 30 s a `tryLock(0)` con error `ADMIN_BUSY` para no mantener solicitudes independientes en cola dentro del servicio.
 - [x] Añadir `AdminVehicleIdOutsideLock.mjs` al runner.
 - [ ] CI y revisión de compatibilidad de reintentos pendientes. La asignación puede dejar IDs sin usar si una solicitud se reintenta o falla antes de persistir; los IDs no se reutilizan, por diseño.
+
+- CI de `AdminVehicleIdOutsideLock.mjs`: SUCCESS 4/4. Regresión integral del commit `b80b443`: 159 suites, 2,264 pruebas aprobadas, 0 fallos; health read-only SUCCESS. GitHub Pages continúa ejecutándose al momento del registro.
