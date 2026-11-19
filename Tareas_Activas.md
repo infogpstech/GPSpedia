@@ -542,3 +542,13 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] CI 44617773715 SUCCESS: 172 suites, 2,364 pruebas aprobadas, 0 fallos.
 - [x] Health read-only 44617773600 SUCCESS; GitHub Pages 44617772427 SUCCESS.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó WRITE ni se modificaron Sheets/Drive productivos.
+
+### WRITE — acceso rápido a hoja Idempotencia compatible (2026-11-19)
+- [x] Evitar initializeIdempotenciaSheet cuando la hoja primaria ya tiene A:F completos y compatibles.
+- [x] Aplicar el mismo fast path a la hoja fallback compatible.
+- [x] Mantener inicialización/reparación para hojas nuevas o encabezados faltantes.
+- [x] Verificar que los tres callsites actuales de getIdempotenciaSheet ejecutan readIdempotenciaEntries_ y conservan validación integral del ledger.
+- [x] Añadir IdempotenciaSheetLookupFastPath: 6/6 PASS.
+- [x] CI 44618414190 SUCCESS: 173 suites, 2,370 pruebas aprobadas, 0 fallos.
+- [x] Health read-only 44618414220 SUCCESS; GitHub Pages 44618411994 SUCCESS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó WRITE ni se modificaron Sheets/Drive productivos.

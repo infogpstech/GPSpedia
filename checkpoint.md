@@ -16,19 +16,18 @@ Fecha: 2026-11-19
 - No inferir deployments Apps Script ni permisos externos desde el código versionado.
 
 ## Última tarea completada
-WRITE — localizador único de vehículo por columna ID:
-- Se encontraron tres declaraciones globales de `findUniqueCortesVehicleRow_`; las posteriores sobrescribían la versión previa y mantenían `getDataRange()`.
-- Se eliminaron las tres versiones duplicadas y quedó una sola implementación efectiva.
-- El localizador lee únicamente la columna ID y lee la fila completa solo cuando hay exactamente una coincidencia.
-- Se conservan los errores por ID inválido, ID duplicado, ID inexistente y hoja ausente.
-- Prueba `WriteUniqueVehicleRowBoundedRead` 6/6 PASS; exige una única declaración y rangos acotados.
-- CI 44617773715 SUCCESS: 172 suites, 2,364 pruebas aprobadas, 0 fallos; sintaxis JS aprobada.
-- Health read-only 44617773600 SUCCESS; GitHub Pages 44617772427 SUCCESS.
-- Commit: e293e4152c6feba57badfc711bf0cee95f0ef769.
+WRITE — acceso rápido a hoja Idempotencia compatible:
+- `findOrCreateIdempotenciaSheet` devuelve directamente la hoja primaria/fallback cuando los encabezados A:F están completos y son compatibles; evita llamar a `initializeIdempotenciaSheet` en cada acceso.
+- La inicialización completa sigue activa para hojas nuevas y reparación de encabezados faltantes.
+- Se verificó que los tres callsites actuales de `getIdempotenciaSheet` ejecutan después `readIdempotenciaEntries_`, por lo que la validación integral de registros y duplicados no se elimina.
+- Prueba `IdempotenciaSheetLookupFastPath` 6/6 PASS.
+- CI 44618414190 SUCCESS: 173 suites, 2,370 pruebas aprobadas, 0 fallos; sintaxis JS aprobada.
+- Health read-only 44618414220 SUCCESS; GitHub Pages 44618411994 SUCCESS.
+- Commit: 125cb7c5ec8fb3e8a05c1e04c6680fcbf50fcf54.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó WRITE ni se modificaron datos productivos.
 
 ## Siguiente trabajo
-Continuar GP-PERF-WRITE-CUT-LOCK-04. Auditar `readIdempotenciaEntries_` y sus lecturas repetidas dentro de `handleAddOrUpdateCutLocked`: el flujo actual toma un snapshot parcial del ledger, después `findRowByOpId` carga el ledger completo y `recordOpId` vuelve a leerlo antes y después de escribir. Evaluar reutilizar una única lectura validada durante la sección crítica y verificar el registro final con una consulta dirigida al opId, conservando duplicados globales preexistentes, asociación vehicleId/slotIndex, operationHash, estados pending/completed y compatibilidad histórica A:E. No cambiar la política de idempotencia ni agregar locks/leases. No desplegar Apps Script ni modificar datos productivos.
+Continuar GP-PERF-WRITE-CUT-LOCK-04B. Reutilizar una única lectura validada del ledger Idempotencia durante `handleAddOrUpdateCutLocked`: compartir el snapshot con `findRowByOpId` y `recordOpId`, evitar nuevas lecturas completas en cada fase y mantener verificación dirigida del opId después de append/update. Preservar detección de duplicados preexistentes en todo el ledger, asociación vehicleId/slotIndex, operationHash, transición monotónica pending/completed, rollback y compatibilidad A:E. No cambiar la política de idempotencia ni agregar locks/leases. No desplegar Apps Script ni modificar datos productivos.
 
 ## Restricciones
 - Trabajar únicamente en GPSpedia2.2.5_work.
@@ -75,3 +74,6 @@ Siguiente paso P0: auditar y reducir lecturas restantes dentro del ScriptLock de
 
 
 2026-11-19 — Cierre localizador WRITE: HEAD e293e4152c6feba57badfc711bf0cee95f0ef769; CI 44617773715 SUCCESS (172 suites, 2,364 pruebas, 0 fallos; WriteUniqueVehicleRowBoundedRead 6/6); health 44617773600 SUCCESS; Pages 44617772427 SUCCESS. El localizador efectivo ya no usa getDataRange y no hay declaraciones duplicadas. Próximo paso: reutilizar lecturas validadas del ledger Idempotencia.
+
+
+2026-11-19 — Cierre fast path Idempotencia: HEAD 125cb7c5ec8fb3e8a05c1e04c6680fcbf50fcf54; CI 44618414190 SUCCESS (173 suites, 2,370 pruebas, 0 fallos; IdempotenciaSheetLookupFastPath 6/6); health 44618414220 SUCCESS; Pages 44618411994 SUCCESS. La hoja A:F compatible ya no se reinicializa ni valida integralmente en cada get; los callsites siguen validando el ledger explícitamente. Próximo paso: reutilizar snapshot por operación.
