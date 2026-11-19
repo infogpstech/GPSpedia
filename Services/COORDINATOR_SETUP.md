@@ -12,7 +12,7 @@
 
 Crear un proyecto Apps Script independiente para el coordinador. Copiar únicamente `JS/Services/Coordinator.js`, crear un deployment como aplicación web y conservar su URL `/exec`. No reemplazar deployments actuales de los servicios.
 
-En ScriptProperties del proyecto coordinador, crear seis secretos independientes:
+En ScriptProperties del proyecto coordinador, crear seis secretos de autenticación independientes:
 
 - `GPSpedia_COORDINATOR_SECRET_AUTH`
 - `GPSpedia_COORDINATOR_SECRET_USERS`
@@ -23,11 +23,23 @@ En ScriptProperties del proyecto coordinador, crear seis secretos independientes
 
 Cada secreto debe tener al menos 32 caracteres aleatorios. Generar uno distinto por servicio. No guardar los valores en el repositorio, código fuente, navegador, hojas de cálculo ni logs.
 
-Además, configurar en el proyecto Coordinator las URLs de los endpoints del mismo entorno:
+Para la telemetría directa de CATALOG se agrega un secreto independiente de solo lectura:
+- `GPSpedia_COORDINATOR_SECRET_CATALOG`
+
+Este secreto no incorpora CATALOG a la lista de servicios autorizados para leases, sesiones ni mutaciones; solo autentica la consulta interna `getServiceTraffic`.
+
+Configurar en el proyecto Coordinator las URLs de los cinco endpoints del mismo entorno:
+- `GPSpedia_SERVICE_URL_CATALOG`
+- `GPSpedia_SERVICE_URL_AUTH`
+- `GPSpedia_SERVICE_URL_USERS`
 - `GPSpedia_SERVICE_URL_WRITE`
 - `GPSpedia_SERVICE_URL_FEEDBACK`
 
-Estas URLs permiten que Coordinator centralice la invalidación de caché de actor remota. La operación utiliza los secretos ya existentes `GPSpedia_COORDINATOR_SECRET_WRITE` y `GPSpedia_COORDINATOR_SECRET_FEEDBACK`; no crea un secreto compartido nuevo. Las URLs deben ser endpoints /exec del entorno correspondiente, nunca de producción desde un Coordinator de prueba.
+Coordinator consulta estas fuentes en paralelo, usando el secreto individual ya registrado. AUTH, USERS, WRITE y FEEDBACK reutilizan su `GPSpedia_COORDINATOR_SECRET_<SERVICIO>`; CATALOG usa el secreto de telemetría dedicado. Las URLs deben ser endpoints /exec del entorno correspondiente, nunca de producción desde un Coordinator de prueba.
+
+En los proyectos AUTH, USERS, WRITE y FEEDBACK, `GPSpedia_COORDINATOR_SECRET` también autentica el endpoint de telemetría directa; se conserva lectura del secreto antiguo `GPSpedia_<SERVICIO>_TRAFFIC_SECRET` como fallback durante la migración. En CATALOG se configura `GPSpedia_COORDINATOR_SECRET` con el mismo valor de `GPSpedia_COORDINATOR_SECRET_CATALOG`, conservando `GPSpedia_CATALOG_TRAFFIC_SECRET` como fallback legacy. No borrar las propiedades antiguas hasta completar la migración y la validación Beta.
+
+ADMIN recibe el agregado global directamente desde Coordinator. Sus URLs y secretos directos de telemetría solo se conservan temporalmente para compatibilidad con Coordinators anteriores a 1.4.4; no son necesarios para el flujo normal con Coordinator actualizado.
 
 En el proyecto Apps Script de cada servicio, incluir `JS/Services/SharedMutationClient.js` y crear estas dos ScriptProperties:
 
@@ -42,7 +54,7 @@ AUTH/USERS/UTILITIES de prueba deben apuntar a un coordinador de prueba independ
 
 La acción FEEDBACK `initYouTubeUpload` no adquiere lease: inicia una sesión de carga en YouTube y no modifica los recursos compartidos de Spreadsheet/Drive. El registro y aprobación posteriores sí se coordinan; el contrato de YouTube permanece en AUG-043.
 
-## Contexto central de sesión (Coordinator 1.4.3)
+## Contexto central de sesión (Coordinator 1.4.4)
 
 El coordinador mantiene la identidad activa en `ScriptProperties`, sin consultar `Users` ni `ActiveSessions` en cada operación de los demás servicios.
 
@@ -73,6 +85,17 @@ Coordinator 1.4.3 y SharedMutationClient declaran `protocolVersion: 1` en cada p
 - Los cambios internos compatibles de Coordinator solo requieren actualizar el proyecto Coordinator. No se debe exigir que todos los consumidores se desplieguen simultáneamente.
 - Un cambio que requiera una capacidad nueva del cliente solo exige actualizar los consumidores que invoquen esa capacidad; las acciones anteriores permanecen disponibles durante la transición.
 - Las peticiones GET del feed público mantienen su contrato de lectura separado.
+
+## Agregación central de telemetría (Coordinator 1.4.4)
+
+La consulta ADMIN `getServiceTraffic` devuelve el agregado final de siete servicios activos. Coordinator obtiene las operaciones protegidas de sus buckets y consulta CATALOG, AUTH, USERS, WRITE y FEEDBACK mediante `fetchAll`, sin mantener el lock de ScriptProperties durante las llamadas externas.
+
+- Cada fuente conserva su propio endpoint y responde con scope, totales y buckets; Coordinator valida identidad, scope y valores antes de agregarlos.
+- Una fuente ausente o con error se declara parcial sin descartar el agregado central ni las demás fuentes.
+- Los buckets inválidos o duplicados se ignoran y quedan señalados como cobertura parcial.
+- UTILITIES y ADMIN se contabilizan desde Coordinator; no se suman contadores directos para evitar duplicidad.
+- El endpoint global no devuelve secretos, tokens ni identidades.
+- Los secretos directos antiguos se mantienen únicamente como fallback de ADMIN cuando consulta un Coordinator anterior a 1.4.4.
 
 ## Validación de sesión por identidad de servicio (contrato 1.4.2)
 
