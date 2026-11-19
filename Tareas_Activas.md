@@ -404,3 +404,5 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Añadir contratos de aislamiento Coordinator y pruebas de auditoría best-effort. CI pendiente.
 
 - CI inicial de aislamiento de auditoría falló por un `finally` residual del lock retirado y un contrato antiguo que prohibía cualquier lease ADMIN. Se corrigen ambos: el test permite exclusivamente `auditDriveImagesInCortes` y exige que las demás acciones ADMIN sigan sin leases.
+
+- Segundo CI del aislamiento de auditoría: `AdminAuditTrail` pasó 15/15; fallaron dos contratos estáticos que aún prohibían toda lease ADMIN y un delimitador con escape doble. Se ajustan para permitir solo la lease `IMAGE_AUDIT_STATE`.

@@ -59,7 +59,7 @@ test("USERS contabiliza getUsers sin lease adicional; UTILITIES conserva Coordin
     assert.match(users, /if \(action === "getServiceTraffic"\)[\s\S]*?readUsersDirectTraffic_/);
     assert.match(admin, /getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "ADMIN" \}\)/);
     const auditStart = admin.indexOf("function handleAuditDriveImagesInCortes(");
-    const auditEnd = admin.indexOf("\\nfunction handleAuditDriveImagesInCortesCore_", auditStart);
+    const auditEnd = admin.indexOf("\nfunction handleAuditDriveImagesInCortesCore_", auditStart);
     assert.ok(auditStart >= 0 && auditEnd > auditStart);
     const auditHandler = admin.slice(auditStart, auditEnd);
     assert.match(auditHandler, /withSharedMutationLease_\("ADMIN", "auditDriveImagesInCortes"/);

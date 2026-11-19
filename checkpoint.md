@@ -1183,3 +1183,5 @@ CI `44562328607`: SUCCESS — 159 suites, 2,264 pruebas aprobadas, 0 fallos. `Ad
 2026-11-19 — Aislamiento de auditoría ADMIN: `handleAuditDriveImagesInCortes` deja de mantener ScriptLock durante el escaneo; usa lease Coordinator solo para `IMAGE_AUDIT_STATE`, sin bloquear CORTES/DRIVE. `beginAdminAuditEvent_` y `finalizeAdminAuditEvent_` ya no usan ScriptLock. Los fallos de auditoría se devuelven como `auditWarning` y no detienen ni convierten en error una mutación confirmada. Pruebas actualizadas; CI pendiente. Requiere despliegue coordinado de ADMIN + Coordinator cuando se autorice.
 
 - Primer CI del aislamiento de auditoría detectó: referencia residual a `locked` en el cierre del evento y una prueba de telemetría que prohibía todas las leases ADMIN. Se elimina el finally residual y se ajusta el contrato para permitir únicamente la lease de estado del escáner.
+
+- Segundo CI: `AdminAuditTrail` 15/15; el contrato de rutas directas y coordinación de sesión aún prohibía cualquier lease ADMIN, aunque ahora el escáner usa una lease de recurso independiente. Se actualizan ambos contratos y el delimitador de extracción.

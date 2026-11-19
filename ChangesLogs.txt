@@ -927,3 +927,5 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 2026-11-19 — ADMIN: auditoría de imágenes Drive aislada con lease IMAGE_AUDIT_STATE (sin locks CORTES/DRIVE); registro persistente best-effort sin ScriptLock y sin bloquear/falsear el resultado de operaciones de negocio.
 
 2026-11-19 — Ajustes post-CI auditoría ADMIN: eliminar referencia residual al lock en finalización y permitir lease específica IMAGE_AUDIT_STATE sin habilitar leases en otras acciones.
+
+2026-11-19 — Pruebas de aislamiento de auditoría: actualizar contratos de coordinación y extracción para permitir únicamente la lease IMAGE_AUDIT_STATE.
