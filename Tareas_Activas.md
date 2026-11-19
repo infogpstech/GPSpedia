@@ -384,7 +384,7 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Añadir helper no bloqueante que libera el ScriptLock durante Drive y reintenta adquirirlo con `tryLock(0)`.
 - [x] Aplicar el helper a reparación idempotente de imágenes, alta de corte en vehículo existente y alta de vehículo nuevo; revalidar opId, huella, vehículo, fila y slot antes de aplicar resultados.
 - [x] Añadir `AdminDriveLockIsolation.mjs` y conectarlo al runner.
-- [ ] CI y revisión integral pendientes. La asignación de ID ADMIN→WRITE aún permanece bajo lock y será el siguiente subpaso.
+- [x] CI y revisión integral: Drive fuera del ScriptLock, revalidación y prueba `AdminDriveLockIsolation.mjs`; la asignación ADMIN→WRITE se ejecuta antes de adquirir el ScriptLock ADMIN. CI `44568472342` SUCCESS: 160 suites, 2,273 pruebas aprobadas, 0 fallos. Health read-only `44568472256` SUCCESS.
 
 - Revisión del helper ADMIN: el `finally` exterior libera el ScriptLock solo si la ejecución lo conserva. Esto evita que un fallo de `tryLock(0)` al volver de Drive sea ocultado por un `releaseLock()` sin propiedad.
 
@@ -431,8 +431,8 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 
 ### Corrección de contratos tras aislamiento del inventario ADMIN (2026-11-19)
 - [x] Ajustar `SessionActivityCoordination` y `DirectTrafficRoutingCoverage`: sus contratos prohibían cualquier lease ADMIN salvo auditoría y quedaron obsoletos al aislar correctamente inventario (`IMAGE_INVENTORY`) y actividad (`ACTIVITY`).
-- [ ] Ejecutar CI integral y verificar que solo existan las tres leases explícitas y de recurso independiente.
+- [x] CI integral aprobado; se verifican exactamente tres leases ADMIN: `auditDriveImagesInCortes`, `saveUnusedImagesInventory` y `recordAdminImageActivity`, con recursos separados `IMAGE_AUDIT_STATE`, `IMAGE_INVENTORY` y `ACTIVITY`.
 
 ### Ajuste de regresión del inventario ADMIN (2026-11-19)
 - [x] Actualizar `AdminReplacedImagesIntegrity`: el contrato exigía `ScriptLock` dentro del handler, contradiciendo el nuevo aislamiento por lease `IMAGE_INVENTORY`.
-- [ ] Reejecutar regresión completa y confirmar los contratos de auditoría, inventario y actividad.
+- [x] Regresión `44568472342` SUCCESS: 160 suites, 2,273 pruebas aprobadas, 0 fallos. Contratos `SessionActivityCoordination` 11/11, `DirectTrafficRoutingCoverage` 6/6, `AdminReplacedImagesIntegrity` 56/56 y `AdminSheetActionsContract` 9/9.
