@@ -3693,7 +3693,7 @@ function handleClearActivityLogs(payload) {
     const keepLastWeek = payload && payload.keepLastWeek === true;
     const sheet = getSafeSheet(SHEET_NAMES.ACTIVIDAD_USUARIO);
     if (!sheet) {
-        return { status: "success", message: "Hoja de actividad no encontrada, nada que limpiar.", deletedCount: 0, unclassifiedCount: 0 };
+        return { status: "success", message: "No se encontró la hoja ActividadUsuario; no se realizó ninguna eliminación.", deletedCount: 0, unclassifiedCount: 0 };
     }
 
     const lastRow = sheet.getLastRow();
@@ -3764,9 +3764,12 @@ function handleClearActivityLogs(payload) {
     const retainedMessage = unclassifiedCount
         ? " Se conservaron " + unclassifiedCount + " registros con fecha vacía o no válida para revisión; no se eliminan por antigüedad inferida."
         : "";
+    const resultMessage = deletedCount > 0
+        ? "Se eliminaron " + deletedCount + " registros con antigüedad mayor a una semana."
+        : "No se encontraron registros con más de 7 días para eliminar.";
     return {
         status: "success",
-        message: "Se eliminaron " + deletedCount + " registros con antigüedad mayor a una semana." + retainedMessage,
+        message: resultMessage + retainedMessage,
         deletedCount,
         unclassifiedCount,
         retainedUnclassifiedCount: unclassifiedCount
