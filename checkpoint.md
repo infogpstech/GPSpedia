@@ -1146,3 +1146,5 @@ ACTUALIZACIÓN DE CONTINUIDAD — 2026-11-19
 ================================================================================
 
 - CI 44557059621: 150 suites / 2,143 pruebas; las pruebas de versión y aislamiento pasaron. Falló CatalogChangeFeed porque la conversión legacy a reset no marcaba `resetRequired`; se ajusta el indicador para que los clientes hagan reconciliación completa.
+
+- CI 44557268309: la compatibilidad `resetRequired` ya pasó. Segundo fallo de CatalogChangeFeed: el caso de lectura pública usaba publicación WRITE/Cortes sin versión y ahora correctamente se convierte en reset. El fixture se marca como versionado para mantener la prueba de paginación de delete.

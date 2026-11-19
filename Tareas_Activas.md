@@ -363,3 +363,5 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Añadir pruebas Coordinator para publicaciones fuera de orden/legacy y prueba WRITE para secuencia monotónica/publicación sin ScriptLock. Pendiente CI.
 
 - Corrección post-CI: las publicaciones legacy WRITE/Cortes se transforman en reset y deben devolver `resetRequired: true`, conservando el contrato del cliente incremental cuando la versión antigua no enviaba `sourceVersion`.
+
+- Ajuste de fixture: CatalogChangeFeed prueba una publicación WRITE/Cortes versionada explícitamente (`sourceVersion: 1`) para conservar su intención de verificar cursor/lectura de un evento delete, no el fallback legacy.

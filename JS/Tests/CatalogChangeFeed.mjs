@@ -114,7 +114,7 @@ test("la lectura pública preserva cursor y límites sin autenticar servicio", (
     const headPage = coordinator.getPublicCatalogChanges({cursor:Number.MAX_SAFE_INTEGER,limit:1});
     assert.equal(headPage.status,"success");
     assert.equal(headPage.resetRequired,true);
-    request("publishCatalogChange","WRITE","addOrUpdateCut",{change:{collection:"cortes",recordId:"PUBLIC-READ-1",operation:"delete"}});
+    request("publishCatalogChange","WRITE","addOrUpdateCut",{change:{collection:"cortes",recordId:"PUBLIC-READ-1",operation:"delete",sourceVersion:1}});
     const page = coordinator.getPublicCatalogChanges({cursor:headPage.currentRevision,limit:1});
     assert.equal(page.status,"success");
     assert.equal(page.changes.length,1);

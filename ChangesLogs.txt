@@ -899,3 +899,5 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 2026-11-19 — Añadida prueba WriteCatalogPublicationIsolation.mjs para verificar secuencia de origen y que la publicación HTTP no toma el ScriptLock; corregida validación numérica del ID de vehículo.
 
 2026-11-19 — Coordinator: las publicaciones legacy WRITE/Cortes convertidas a reset ahora marcan resetRequired=true para conservar el contrato del feed incremental.
+
+2026-11-19 — CatalogChangeFeed: fixture de publicación WRITE/Cortes ahora incluye sourceVersion para representar el contrato versionado actual.
