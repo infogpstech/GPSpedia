@@ -761,19 +761,29 @@ function ensureTestigoColumns(sheet, lockAlreadyHeld = false) {
         // currentHeaders ya contiene AT:AV cuando existen; si lastColumn es menor,
         // esas celdas no tienen contenido y se crearán vacías al ampliar la hoja.
         const targetHeaders = [45, 46, 47].map(index => String(currentHeaders[index] || ""));
+        const missingHeaderIndexes = [];
         for (let index = 0; index < headerNames.length; index++) {
             const current = String(targetHeaders[index] || "").trim();
             if (current && current.toLowerCase() !== headerNames[index].toLowerCase()) {
                 throw new Error("La columna " + ["AT", "AU", "AV"][index] + " ya contiene el encabezado «" +
                     current + "»; no se sobrescribió.");
             }
-            if (!current && lastRow > 1) {
-                const values = sheet.getRange(2, targetColumns[index], lastRow - 1, 1).getValues();
-                if (values.some(row => row[0] !== "" && row[0] !== null && row[0] !== undefined)) {
+            if (!current && lastRow > 1) missingHeaderIndexes.push(index);
+        }
+        // Las columnas AT:AV son contiguas. Validar todas las columnas sin encabezado
+        // desde un único rango evita hasta tres lecturas remotas bajo el ScriptLock.
+        if (missingHeaderIndexes.length) {
+            const firstMissingIndex = Math.min.apply(null, missingHeaderIndexes);
+            const lastMissingIndex = Math.max.apply(null, missingHeaderIndexes);
+            const missingColumnsData = sheet.getRange(2, targetColumns[firstMissingIndex], lastRow - 1,
+                lastMissingIndex - firstMissingIndex + 1).getValues();
+            missingHeaderIndexes.forEach(index => {
+                const offset = index - firstMissingIndex;
+                if (missingColumnsData.some(row => row[offset] !== "" && row[offset] !== null && row[offset] !== undefined)) {
                     throw new Error("La columna " + ["AT", "AU", "AV"][index] +
                         " contiene datos sin encabezado; no se reasignó.");
                 }
-            }
+            });
         }
 
         for (let index = 0; index < headerNames.length; index++) {
