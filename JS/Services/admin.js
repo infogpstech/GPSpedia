@@ -673,8 +673,8 @@ function findVinDuplicateForAdmin(sheet, vinPrefix, currentVehicleId, vinColumnI
     if (!vinColumnIndex) throw new Error("La hoja «Cortes» no contiene el encabezado «VIN».");
 
     const rowCount = lastRow - 1;
-    // ID, marca, modelo y años están dentro de las columnas 1–7 contiguas.
-    // Una sola lectura conserva los mismos campos y evita una llamada remota adicional.
+    /* ID, marca, modelo y años están dentro de las columnas 1–7 contiguas;
+       se conservan los mismos campos con una llamada remota menos. */
     const vehicleFirstColumn = Math.min(COLS_CORTES.id, COLS_CORTES.marca, COLS_CORTES.modelo,
         COLS_CORTES.anoDesde, COLS_CORTES.anoHasta);
     const vehicleLastColumn = Math.max(COLS_CORTES.id, COLS_CORTES.marca, COLS_CORTES.modelo,
