@@ -2237,3 +2237,93 @@ Ejemplo: Cortes/SUV/Toyota/Prado/LTX/2024-2027/toyota_prado_ltx_boton_imagenVehi
 - Criterio de cierre: estado y relación respaldados por datos de Spreadsheet/Drive; ninguna eliminación automática.
 
 ================================================================================
+
+================================================================================
+2026-11-18 — REQUISITOS BETA: CONSOLA DE AUDITORÍA Y ORGANIZACIÓN AUTOMÁTICA DE IMÁGENES
+================================================================================
+
+### BETA-ADMIN-CUT-IMAGE-AUDIT-CONSOLE-01 — Confirmación de registro y salida completa en consola
+**Estado: REQUISITO FUNCIONAL/UX · PENDIENTE DE AUDITORÍA E IMPLEMENTACIÓN.**
+- Actualmente, al finalizar la auditoría aparece un botón para registrar los archivos detectados, pero la orden de confirmación debe ejecutarse desde la consola del desarrollador. Revisar y corregir este flujo para que la confirmación y el registro sean explícitos, coherentes y verificables. La interfaz no debe comunicar que los registros se guardaron si la operación no se confirmó y completó.
+- Todos los mensajes y resultados deben mostrarse en la consola del desarrollador: procesamiento por lotes, cantidad de imágenes, carpetas/subcarpetas recorridas, resultados por carpeta, coincidencias, imágenes sin uso, errores y resumen final.
+- El modal de auditoría de cortes debe mostrar la consola de cortes como salida principal. Sustituir los indicadores independientes que actualmente presentan esos contenidos por una consola centralizada.
+- Distinguir mensajes informativos, progreso, advertencias, errores y resultado final; mantener trazabilidad por lote y evitar mensajes engañosos o duplicados.
+- Criterio de cierre: una única consola permite revisar el proceso completo y el registro confirmado refleja el resultado real.
+
+### BETA-ADMIN-CUT-IMAGE-ORGANIZER-AUDIT-01 — Auditoría de la función de organización automática
+**Estado: INVESTIGACIÓN PENDIENTE.**
+- Auditar la implementación actual de organización automática, sus fuentes de datos, reglas de rutas, nomenclatura, operaciones de almacenamiento y manejo de errores.
+- Comprobar la correspondencia entre filas de las hojas Cortes/Logos y los archivos físicos.
+- Documentar diferencias entre la estructura real y la estructura objetivo.
+- Durante el diagnóstico no mover, renombrar ni sobrescribir archivos.
+
+### BETA-ADMIN-CUT-IMAGE-ORGANIZER-STRUCTURE-01 — Estructura jerárquica canónica de carpetas
+**Estado: REQUISITO FUNCIONAL · PENDIENTE DE VERIFICACIÓN/IMPLEMENTACIÓN.**
+La organización automática debe procesar fila por fila los registros de las hojas Cortes y Logos de la Spreadsheet y verificar que cada imagen esté en la ubicación correspondiente.
+
+Estructura esperada:
+1. Cortes/ — directorio raíz.
+2. Categoría: SUV, Pick_up, Sedan, Camion_ligero, Camión_pesado, Autobus, entre las categorías válidas del catálogo.
+3. Marca: Toyota, Honda, Audi, Hyundai, etc. La carpeta de marca debe contener el logo correspondiente.
+4. Modelo: Hilux, Civic, A1, County, etc.
+5. Versión de equipamiento/aplicabilidad o tipo de encendido, cuando no exista una versión registrada.
+6. Rango de años aplicable.
+7. Archivos de imagen correspondientes.
+
+Ejemplo:
+Cortes/
+└── Autobus/
+    └── Hyundai/
+        ├── hyundai_logo.png
+        └── County/
+            └── llave/
+                └── 2020-2026/
+                    ├── County_llave_2020_imagen.png
+                    ├── County_llave_2020_ign1.jpg
+                    ├── County_llave_2020_alimen.jpg
+                    └── County_llave_2020_apert.jpg
+
+- El logo de marca se almacena en el primer nivel de la carpeta de marca, no dentro de la carpeta de un modelo.
+- El quinto nivel representa la versión registrada; si no existe versión, utiliza el tipo de encendido correspondiente.
+- Respetar las categorías y valores reales de la Spreadsheet; no inventar categorías ni perder correspondencia con los registros.
+- Criterio de cierre: las rutas se derivan de cada fila y las imágenes/logos quedan en el nivel correcto.
+
+### BETA-ADMIN-CUT-IMAGE-ORGANIZER-REGISTRATION-CONSISTENCY-01 — Coherencia con los flujos de alta
+**Estado: REQUISITO FUNCIONAL · PENDIENTE DE AUDITORÍA.**
+- Verificar los procesos de registro de un nuevo corte, alta de un nuevo modelo y registro de un nuevo logo de marca.
+- Los tres flujos deben aplicar la misma estructura canónica y reglas de nomenclatura.
+- Un nuevo logo debe quedar en el directorio de marca; las imágenes de cortes bajo categoría/marca/modelo/versión o encendido/rango de años.
+- Criterio de cierre: la organización automática y los flujos de alta generan rutas compatibles, sin estructuras divergentes.
+
+### BETA-ADMIN-CUT-IMAGE-ORGANIZER-NAMING-01 — Nomenclatura de imágenes según uso
+**Estado: REQUISITO FUNCIONAL · PENDIENTE DE IMPLEMENTACIÓN/VALIDACIÓN.**
+- Renombrar los archivos según modelo, versión o tipo de encendido, año/rango y función.
+- Formato esperado: Modelo_version-o-encendido_año-o-rango_funcion.extensión.
+- Conservar siempre la extensión original; no convertir formatos ni cambiar la extensión para hacerla coincidir con el contenido.
+- Ejemplos:
+  - Hilux_srv_2020_2025_imagenVehiculo.png
+  - Hilux_srv_2020_2025_ign1.jpg
+  - Hilux_srv_2020_2025_bomba1.jpg
+  - Hilux_srv_2020_2025_btn.jpg
+  - Hilux_srv_2020_2025_ign2.jpg — segundo recurso de ignición cuando ya existe otro recurso con la misma función.
+- Los sufijos numerados deben evitar colisiones; no sobrescribir archivos existentes.
+- Criterio de cierre: nombre determinista, extensión preservada, unicidad y referencias de Spreadsheet actualizadas consistentemente tras renombrar.
+
+### BETA-ADMIN-CUT-IMAGE-FUNCTION-CODES-01 — Catálogo de abreviaturas para funciones de corte
+**Estado: REQUISITO FUNCIONAL · PENDIENTE DE INTEGRACIÓN/VALIDACIÓN.**
+| Código | Significado |
+|---|---|
+| ign | Ignición |
+| bomba | Bomba de combustible |
+| btn | Señal al botón |
+| apert | Apertura |
+| alim | Alimentación |
+| alim2 | Alimentación 2 |
+| shock | Señal al ahogador |
+
+- Los sufijos numéricos identifican recursos distintos de una misma función (por ejemplo, ign1 e ign2).
+- La función de imagen del vehículo utiliza el identificador descriptivo imagenVehiculo.
+- Criterio de cierre: formularios, organizador automático y referencias de Spreadsheet reconocen los códigos de forma consistente.
+
+**Nota de alcance:** requisitos/reportes Beta. No se ejecutó aquí auditoría de código ni se movieron/renombraron archivos. La futura implementación debe previsualizar cambios y proteger referencias antes de operaciones masivas.
+================================================================================
