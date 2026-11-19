@@ -3192,9 +3192,9 @@ function buildCortesImageOrganizerTargets_(cortesValues, cortesFormulas, logosVa
     const fixedFields = [
         { field: "imagenVehiculo", code: "imagenVehiculo" },
         { field: "imgApertura", code: "apert" },
-        { field: "imgCableAlimen", code: "alim" },
+        { field: "imgCableAlimen", code: "alim1" },
         { field: "imgCableAlimen2", code: "alim2" },
-        { field: "imgCableAlimen3", code: "shock" }
+        { field: "imgCableAlimen3", code: "alim3" }
     ];
     const col = key => Number(COLS_CORTES[key]) - 1;
     const cell = (row, key) => row && col(key) >= 0 ? row[col(key)] : "";
@@ -3284,9 +3284,9 @@ function buildCortesImageOrganizerTargets_(cortesValues, cortesFormulas, logosVa
                 return;
             }
             cutCounters[code] = (cutCounters[code] || 0) + 1;
-            const suffix = (code === "ign" || code === "bomba")
-                ? code + cutCounters[code]
-                : (cutCounters[code] === 1 ? code : code + cutCounters[code]);
+            // Cada recurso de una misma función recibe numeración explícita y estable.
+            // Ejemplos: ign1..ign3, bomba1..bomba3 y btn1..btn3.
+            const suffix = code + cutCounters[code];
             pushImage(item.field, suffix, [], rawUrl);
         });
     });
