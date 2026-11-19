@@ -107,7 +107,11 @@ function addLogoHarness(options={}){
   };
   return range;
  };
- const cortesSheet={getDataRange:()=>({getValues:()=>cortesRows})};
+ const cortesSheet={
+  getLastRow:()=>cortesRows.length,
+  getDataRange:()=>({getValues:()=>cortesRows}),
+  getRange:(row,col,nr,nc)=>({getValues:()=>Array.from({length:nr},(_,r)=>Array.from({length:nc},(_,c)=>cortesRows[row-1+r]?.[col-1+c]??""))})
+ };
  const rootFolder={kind:"root"},categoryFolder={kind:"category"};
  const brandFolder={
   kind:"brand",

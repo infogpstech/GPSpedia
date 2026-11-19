@@ -3406,13 +3406,16 @@ function buildCortesImageReconciliationTargets_() {
         }
         const vehicleInfo = mapRowToObject(row, COLS_CORTES);
         fields.forEach(field => {
+            const column = COLS_CORTES[field];
+            const currentValue = String(row[column - 1] == null ? "" : row[column - 1]).trim();
+            const hasFormula = Boolean(formulas[r] && formulas[r][column - 1]);
+            const cutMatch = field.match(/^imgCorte([123])$/);
+            const cutType = cutMatch ? String(vehicleInfo["tipoCorte" + cutMatch[1]] || "").trim() : "";
+            if (cutMatch && !currentValue && !cutType && !hasFormula) return;
             try {
                 const baseName = buildCanonicalImageBaseName(vehicleInfo, field);
-                const column = COLS_CORTES[field];
                 targets.push({
-                    row: r + 1, vehicleId, field, column, baseName,
-                    currentValue: String(row[column - 1] == null ? "" : row[column - 1]).trim(),
-                    hasFormula: Boolean(formulas[r] && formulas[r][column - 1])
+                    row: r + 1, vehicleId, field, column, baseName, currentValue, hasFormula
                 });
             } catch (error) {
                 rowIssues.push({ row: r + 1, vehicleId, field, reason: String(error && error.message || error) });
@@ -5544,7 +5547,11 @@ function handleAddLogo(payload, logMessage) {
     if (existingLogos.slice(1).some(row => normalizeOrganizerSegment_(row && row[1]).toLowerCase() === brandKey)) {
         throw new Error("La marca ya tiene un registro de logotipo; no se creó una fila duplicada.");
     }
-    const category = resolveLogoCategoryFromCortesRows_(cortesSheet.getDataRange().getValues(), nombreMarca);
+    const cortesLastRow = cortesSheet.getLastRow();
+    const cortesValues = cortesLastRow > 0
+        ? cortesSheet.getRange(1, 1, cortesLastRow, COLS_CORTES.marca).getValues()
+        : [];
+    const category = resolveLogoCategoryFromCortesRows_(cortesValues, nombreMarca);
     const extension = getCanonicalImageExtension({ getName: () => filename, getMimeType: () => mimeType });
     const logoBaseName = normalizeOrganizerFilePart_(nombreMarca).toLowerCase();
     if (!extension || !logoBaseName) throw new Error("No se pudo construir el nombre canónico del logotipo conservando su extensión.");

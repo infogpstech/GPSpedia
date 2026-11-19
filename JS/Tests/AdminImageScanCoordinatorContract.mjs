@@ -380,6 +380,9 @@ assert.ok(uploadHandlerSource.includes("buildCanonicalImageBaseName(mapRowToObje
 assert.ok(admin.includes('cutImageInfo["tipoCorte" + cutSlotIndex] = cutData.tipoCorte1'));
 assert.ok(admin.includes("canonicalVehicleInfo") && admin.includes("tipoCorte1: cutData.tipoCorte1"));
 
+const reconciliationTargetsSource = extractFunction(admin, "buildCortesImageReconciliationTargets_");
+assert.ok(reconciliationTargetsSource.includes("if (cutMatch && !currentValue && !cutType && !hasFormula) return;"),
+    "Los slots de corte vacíos y sin tipo no deben generar destinos ni falsos errores.");
 const logoTarget = organizerFixture.targets.find(target => target.sheetName === "LogosMarca");
 assert.equal(logoTarget.targetFolderPath, "Cortes/Camion_pesado/Toyota");
 assert.equal(logoTarget.targetBaseName, "toyota_logo");
