@@ -247,6 +247,7 @@ const organizerBuilder = new Function(
         extractFunction(admin, "normalizeOrganizerSegment_"),
         extractFunction(admin, "normalizeOrganizerFilePart_"),
         extractFunction(admin, "mapCorteTypeToFunctionCode_"),
+        extractFunction(admin, "getCorteFunctionSuffix_"),
         extractFunction(admin, "buildCortesImageOrganizerTargets_")
     ].join(String.fromCharCode(10)) + String.fromCharCode(10) + "return buildCortesImageOrganizerTargets_;"
 )(actualCortesCols);
@@ -317,7 +318,7 @@ const canonicalNameBuilder = new Function(
     "\nreturn buildCanonicalImageBaseName;"
 )();
 const canonicalVehicle = {
-    modelo: "Hilux SRV", versionesAplicables: "SRV", tipoEncendido: "Llave",
+    modelo: "Hilux", versionesAplicables: "SRV", tipoEncendido: "Llave",
     anoDesde: 2020, anoHasta: 2025,
     tipoCorte1: "Ignición", tipoCorte2: "Bomba de combustible", tipoCorte3: "Ignición"
 };
