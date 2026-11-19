@@ -9353,8 +9353,10 @@ function mergeDirectServiceTraffic_(coordinatorResult, directResults) {
         const expectedScope = service === "CATALOG" ? "catalog_post_requests" : "direct_post_requests";
         const directAvailable = Boolean(directResult && directResult.status === "success" &&
             directResult.service === service && directResult.scope === expectedScope &&
-            Array.isArray(directResult.buckets) && directResult.totals &&
-            ["lastHour", "last6Hours", "last24Hours"].every(period =>
+            Array.isArray(directResult.buckets) && directResult.buckets.every(bucket =>
+                bucket && Number.isSafeInteger(bucket.startAt) && bucket.startAt > 0 &&
+                Number.isSafeInteger(bucket.count) && bucket.count >= 0) &&
+            directResult.totals && ["lastHour", "last6Hours", "last24Hours"].every(period =>
                 Number.isSafeInteger(directResult.totals[period]) && directResult.totals[period] >= 0));
         const directBuckets = new Map();
         if (directAvailable) {
