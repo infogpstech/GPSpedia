@@ -751,3 +751,9 @@ Siguiente paso: continuar GP-PERF-ADMIN-CUT-LOCK-01 inspeccionando las escritura
 - [x] Mantener flush, asignación del ID preasignado, confirmación de escritura y reserva idempotente pending antes de Drive.
 - [x] Añadir `AdminNewVehicleSingleRowClear.mjs` al runner.
 - Estado: IMPLEMENTACIÓN PUBLICADA; CI pendiente. No se desplegó Apps Script ni se modificaron datos productivos.
+
+- [x] CI regresión `44640068663` SUCCESS sobre HEAD `4f99a114e00d178181e30a093dd40f4c50453a07`; verificación de rama, sintaxis y suites aisladas completadas.
+- [x] Health read-only `44640068448` SUCCESS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos; integración/concurrencia real pendiente de Beta autorizada.
+
+Siguiente tarea de `GP-PERF-ADMIN-CUT-LOCK-01`: analizar las lecturas restantes de Sheets en `handleAddOrUpdateCut` y reducir únicamente consultas redundantes demostrables, preservando atomicidad e idempotencia.
