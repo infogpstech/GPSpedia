@@ -193,7 +193,7 @@ test("la limpieza de ActividadUsuario usa actor cacheado y RBAC Desarrollador si
     assert.equal(payload.__sharedSessionActor.userId,"DEV-1");
     assert.equal(payload.__sharedSessionActor.epoch,7);
     assert.match(feedback,/clearActivityLogs:\s*\["Desarrollador"\]/);
-    assert.match(feedback,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken\)/);
+    assert.match(feedback,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "FEEDBACK" \}\)/);
     assert.doesNotMatch(feedback.slice(feedback.indexOf("function doPost(e)"),feedback.indexOf("\nconst RICH_TEXT_MODE_PROPERTY_")),/withSharedMutationLease_/);
 });
 console.log("SensitiveLogsTrustedActor: " + passed + "/" + passed + " PASS");
