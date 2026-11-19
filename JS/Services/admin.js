@@ -869,7 +869,7 @@ function isSharedMutationAction_(action) {
 // Consultas largas de inventario/Drive obtienen una lease propia de lectura.
 // No se registran como mutaciones ni generan eventos administrativos de escritura.
 function isSharedReadAction_(action) {
-    return ["getReplacedImages", "getDriveStorage", "getCortesImageFolders", "auditIdentifiers", "getAdminImageUploadStatus", "previewCortesImageReconciliation"].includes(action);
+    return ["getReplacedImages", "getDriveStorage", "getCortesImageFolders", "auditIdentifiers", "getAdminImageUploadStatus", "previewCortesImageReconciliation", "previewCortesImageOrganizer"].includes(action);
 }
 
 function doPost(e) {
@@ -1304,6 +1304,9 @@ function doPostInternal_(e) {
                 break;
             case 'previewCortesImageReconciliation':
                 response = handlePreviewCortesImageReconciliation_(payload, logMessage, developerContext);
+                break;
+            case 'previewCortesImageOrganizer':
+                response = handlePreviewCortesImageOrganizer_(payload, logMessage, developerContext);
                 break;
             case 'applyCortesImageReconciliation':
                 response = handleApplyCortesImageReconciliation_(payload, logMessage, developerContext);
@@ -3593,6 +3596,190 @@ function collectReplacedImageHistoryIds_() {
         new Set([].concat(extractDriveFileIds(row[5]), extractDriveFileIds(row[7]), extractDriveFileIds(row[8]))).forEach(id => ids.add(id));
     }
     return ids;
+}
+
+
+function inspectCortesOrganizerTargetFolderReadOnly_(rootFolder, targetPath) {
+    const parts = String(targetPath || "").split("/").filter(Boolean);
+    if (!parts.length || normalizeOrganizerSegment_(parts.shift()) !== normalizeOrganizerSegment_(rootFolder.getName())) {
+        return { status: "invalid_root", folder: null };
+    }
+    let current = rootFolder;
+    for (const segment of parts) {
+        const iterator = current.getFolders();
+        const matches = [];
+        while (iterator.hasNext()) {
+            const child = iterator.next();
+            if (normalizeOrganizerSegment_(child.getName()) === normalizeOrganizerSegment_(segment)) matches.push(child);
+        }
+        if (matches.length > 1) return { status: "ambiguous", folder: null, segment };
+        if (!matches.length) return { status: "missing", folder: null, segment };
+        current = matches[0];
+    }
+    return { status: "exists", folder: current };
+}
+
+function handlePreviewCortesImageOrganizer_(payload, logMessage, developerContext) {
+    const ownerId = String(developerContext && developerContext.userId || "").trim();
+    if (!ownerId) throw new Error("El preview del organizador requiere una sesión Desarrollador verificada.");
+    const auditId = String(payload && payload.auditId || "").trim();
+    if (!/^[0-9a-f-]{36}$/i.test(auditId)) throw new Error("Ejecuta primero una auditoría Drive completa y envía su auditId.");
+    const auditState = loadDriveAuditServerState_(auditId);
+    if (auditState.ownerId !== ownerId || auditState.status !== "complete" ||
+        auditState.scanVersion !== ADMIN_SERVICE_VERSION || auditState.imageMetadataVersion !== 1 ||
+        !Number.isFinite(Number(auditState.completedAt)) || Date.now() - Number(auditState.completedAt) > 21600000 ||
+        getLatestDriveAuditIdForUser_(ownerId) !== auditId) {
+        throw new Error("La auditoría Drive no está completa, vigente o no corresponde a esta sesión. Ejecuta una auditoría nueva.");
+    }
+
+    const seenIds = loadDriveAuditSeenIds_(auditId, Number(auditState.pageCount), false);
+    const metadata = loadDriveAuditFileMetadata_(auditId, Number(auditState.pageCount), false);
+    const metadataById = new Map(metadata.map(item => [String(item.fileId), item]));
+    if (metadata.length !== seenIds.fileIds.length || metadata.length !== Number(auditState.totalDiscovered) ||
+        seenIds.fileIds.some(id => !metadataById.has(id))) {
+        throw new Error("Los metadatos del inventario Drive no coinciden con la auditoría completa.");
+    }
+    if (metadata.some(item => !String(item.folderPath || "").trim())) {
+        throw new Error("Esta auditoría no conserva las rutas actuales de cada archivo. Ejecuta una auditoría nueva con la versión actualizada.");
+    }
+
+    const spreadsheet = getSpreadsheet();
+    const cortesSheet = spreadsheet.getSheetByName(SHEET_NAMES.CORTES);
+    const logosSheet = spreadsheet.getSheetByName(SHEET_NAMES.LOGOS_MARCA);
+    if (!cortesSheet || !logosSheet) throw new Error("No se encontraron las hojas Cortes y/o LogosMarca.");
+    const cortesRange = cortesSheet.getDataRange();
+    const logosRange = logosSheet.getDataRange();
+    const targetSnapshot = buildCortesImageOrganizerTargets_(
+        cortesRange.getValues(), cortesRange.getFormulas(),
+        logosRange.getValues(), logosRange.getFormulas()
+    );
+    const digestTargets = targetSnapshot.targets.map(item => [
+        item.sheetName, item.row, item.field, item.fileId, item.currentUrl,
+        item.targetFolderPath, item.targetBaseName, item.status, item.reasons
+    ]);
+    const referenceSnapshot = collectActiveDriveReferences(true);
+    const referenceScanVerified = Number(referenceSnapshot.unverifiableReferenceCount || 0) === 0;
+    const root = getCortesRootFolder();
+    const missingCheck = findMissingCortesDriveReferences_(referenceSnapshot.references, seenIds.fileIds, root.getId());
+    const missingReferenceCount = Number(missingCheck.totalMissingReferences || 0);
+    const referencesComplete = missingCheck.verified === true && missingReferenceCount === 0 && referenceScanVerified;
+    const historicalIds = collectReplacedImageHistoryIds_();
+
+    const sourceDigestPayload = JSON.stringify({
+        auditId, auditCompletedAt: Number(auditState.completedAt),
+        targets: digestTargets,
+        references: Array.from(referenceSnapshot.references.entries())
+            .map(([id, locations]) => [id, locations.map(location => [
+                location.sheet, Number(location.row), Number(location.column)
+            ]).sort((left, right) => String(left[0]).localeCompare(String(right[0])) || left[1] - right[1] || left[2] - right[2])])
+            .sort((left, right) => left[0].localeCompare(right[0])),
+        unverifiableReferenceCount: Number(referenceSnapshot.unverifiableReferenceCount || 0),
+        missingReferenceCount, missingReferenceCheckVerified: missingCheck.verified === true,
+        historicalIds: Array.from(historicalIds).sort(),
+        inventory: metadata.map(item => [item.fileId, item.fileName, item.mimeType, item.folderPath])
+            .sort((left, right) => left[0].localeCompare(right[0]))
+    });
+    const manifestDigest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, sourceDigestPayload, Utilities.Charset.UTF_8)
+        .map(value => ("0" + ((value + 256) % 256).toString(16)).slice(-2)).join("");
+
+    const offsetValue = Number(payload && payload.offset);
+    const limitValue = Number(payload && payload.limit);
+    const offset = Number.isInteger(offsetValue) && offsetValue >= 0 ? offsetValue : 0;
+    const limit = Number.isInteger(limitValue) && limitValue > 0 ? Math.min(limitValue, 50) : 25;
+    const selected = targetSnapshot.targets.slice(offset, offset + limit);
+
+    selected.forEach(target => {
+        if (target.status !== "candidate") return;
+        const reasons = target.reasons || [];
+        const audited = metadataById.get(target.fileId);
+        if (!audited) reasons.push("file_not_in_completed_drive_inventory");
+        if (historicalIds.has(target.fileId)) reasons.push("file_is_in_replaced_image_history");
+        if (!referenceScanVerified) reasons.push("active_sheet_references_unverifiable");
+        if (!missingCheck.verified || missingReferenceCount > 0) reasons.push("drive_inventory_does_not_cover_all_active_references");
+        const locations = referenceSnapshot.references.get(target.fileId) || [];
+        if (!locations.length) reasons.push("active_reference_not_found");
+        else if (locations.length > 1) reasons.push("shared_reference_across_cells_or_sheets");
+        if (locations.length === 1) {
+            const expectedSheet = target.sheetName === "Cortes" ? SHEET_NAMES.CORTES : SHEET_NAMES.LOGOS_MARCA;
+            const expectedColumn = target.sheetName === "Cortes" ? Number(COLS_CORTES[target.field]) : 3;
+            const location = locations[0];
+            if (location.sheet !== expectedSheet || Number(location.row) !== Number(target.row) ||
+                Number(location.column) !== expectedColumn) reasons.push("active_reference_location_mismatch");
+        }
+        if (reasons.length) {
+            target.reasons = Array.from(new Set(reasons));
+            target.status = "blocked";
+            return;
+        }
+        try {
+            const file = DriveApp.getFileById(target.fileId);
+            if (file.isTrashed()) throw new Error("file_in_trash");
+            const currentName = String(file.getName() || "");
+            const mimeType = String(file.getMimeType() || "").toLowerCase();
+            if (!mimeType.startsWith("image/")) throw new Error("not_an_image");
+            if (currentName !== String(audited.fileName || "") || mimeType !== String(audited.mimeType || "").toLowerCase()) {
+                throw new Error("file_changed_since_drive_audit");
+            }
+            const extensionMatch = currentName.match(/(\.[A-Za-z0-9]{2,8})$/);
+            if (!extensionMatch) throw new Error("original_extension_missing");
+            const extension = extensionMatch[1];
+            const parent = getSingleParentFolderInsideCortes(file, root.getId());
+            const currentFolderPath = getFolderPathInsideCortes(parent, root.getId());
+            if (currentFolderPath !== String(audited.folderPath || "")) throw new Error("file_moved_since_drive_audit");
+            const targetName = target.targetBaseName + extension;
+            const targetFolder = inspectCortesOrganizerTargetFolderReadOnly_(root, target.targetFolderPath);
+            if (targetFolder.status === "ambiguous" || targetFolder.status === "invalid_root") {
+                throw new Error("target_folder_path_ambiguous_or_invalid");
+            }
+            let nameConflict = false;
+            if (targetFolder.status === "exists") {
+                const iterator = targetFolder.folder.getFilesByName(targetName);
+                while (iterator.hasNext()) {
+                    const existing = iterator.next();
+                    if (String(existing.getId()) !== target.fileId) { nameConflict = true; break; }
+                }
+            }
+            if (nameConflict) throw new Error("target_filename_conflict");
+            target.currentName = currentName;
+            target.currentFolderPath = currentFolderPath;
+            target.originalExtension = extension;
+            target.targetName = targetName;
+            target.targetFolderStatus = targetFolder.status;
+            target.activeReferenceCount = locations.length;
+            target.action = currentFolderPath === target.targetFolderPath && currentName === targetName
+                ? "already_correct"
+                : (currentFolderPath === target.targetFolderPath
+                    ? "rename"
+                    : (currentName === targetName ? "move" : "move_and_rename"));
+            if (targetFolder.status === "missing" && target.action !== "already_correct") {
+                target.action = "create_folder_and_" + target.action;
+            }
+            target.status = target.action === "already_correct" ? "already_correct" : "ready";
+        } catch (error) {
+            target.reasons = Array.from(new Set(reasons.concat(String(error && error.message || error))));
+            target.status = "blocked";
+        }
+    });
+
+    const pageSummary = {
+        ready: selected.filter(item => item.status === "ready").length,
+        alreadyCorrect: selected.filter(item => item.status === "already_correct").length,
+        blocked: selected.filter(item => item.status === "blocked").length
+    };
+    const nextOffset = offset + selected.length < targetSnapshot.targets.length ? offset + selected.length : null;
+    const response = {
+        status: "success", auditId, manifestDigest, offset, limit, nextOffset,
+        complete: nextOffset === null, totalTargets: targetSnapshot.targets.length,
+        summary: targetSnapshot.summary, pageSummary, rowIssues: targetSnapshot.issues,
+        missingReferenceCount, referenceCheckStatus: referencesComplete ? "verified" : "unverifiable",
+        unreferencedDriveFileCount: metadata.filter(item => !referenceSnapshot.references.has(item.fileId)).length,
+        results: selected, writePerformed: false, canApply: false
+    };
+    logMessage && logMessage("Preview del organizador de Cortes",
+        "Dry-run de solo lectura: " + pageSummary.ready + " listos, " + pageSummary.alreadyCorrect +
+        " correctos y " + pageSummary.blocked + " bloqueados en esta página; " +
+        response.unreferencedDriveFileCount + " archivos sin referencia activa; sin escrituras.");
+    return response;
 }
 
 function handlePreviewCortesImageReconciliation_(payload, logMessage, developerContext) {
@@ -10225,7 +10412,7 @@ function storeDriveAuditSeenPage_(auditId, pageIndex, fileIds, folderIds, fileMe
     if (cache.get(key) !== serialized) throw new Error("No se pudo verificar la página combinada de resultados e IDs procesados.");
 }
 
-function loadDriveAuditSeenIds_(auditId, pageCount) {
+function loadDriveAuditSeenIds_(auditId, pageCount, refreshCache = true) {
     if (!Number.isInteger(pageCount) || pageCount < 0) throw new Error("Cantidad de páginas de deduplicación inválida.");
     const cache = CacheService.getScriptCache(), files = new Set(), folders = new Set();
     const batchSize = 100, ttl = getDriveAuditReferenceSnapshotConfig_().ttlSeconds;
@@ -10253,17 +10440,19 @@ function loadDriveAuditSeenIds_(auditId, pageCount) {
         });
         // CacheService limita getAll/putAll a lotes pequeños; renovar y verificar
         // por grupos evita tres llamadas de red por cada página histórica.
-        cache.putAll(refresh, ttl);
-        const verified = cache.getAll(keys);
-        keys.forEach(key => {
-            if (!verified || verified[key] !== refresh[key]) {
-                throw new Error("No se pudo renovar la retención de una página de auditoría.");
-            }
-        });
+        if (refreshCache) {
+            cache.putAll(refresh, ttl);
+            const verified = cache.getAll(keys);
+            keys.forEach(key => {
+                if (!verified || verified[key] !== refresh[key]) {
+                    throw new Error("No se pudo renovar la retención de una página de auditoría.");
+                }
+            });
+        }
     }
     return { fileIds: Array.from(files).sort(), folderIds: Array.from(folders).sort() };
 }
-function loadDriveAuditFileMetadata_(auditId, pageCount) {
+function loadDriveAuditFileMetadata_(auditId, pageCount, refreshCache = true) {
     if (!Number.isInteger(pageCount) || pageCount < 1) throw new Error("La auditoría no contiene páginas verificables.");
     const cache = CacheService.getScriptCache(), result = [], seen = new Set();
     for (let page = 0; page < pageCount; page++) {
@@ -10282,10 +10471,13 @@ function loadDriveAuditFileMetadata_(auditId, pageCount) {
                 throw new Error("El inventario Drive contiene metadatos faltantes o duplicados.");
             }
             seen.add(fileId);
-            result.push({ fileId, fileName, mimeType });
+            const folderPath = String(item && item.folderPath || "");
+            result.push({ fileId, fileName, mimeType, folderPath });
         });
-        cache.put(key, raw, 21600);
-        if (cache.get(key) !== raw) throw new Error("No se pudo renovar la retención de los metadatos Drive.");
+        if (refreshCache) {
+            cache.put(key, raw, 21600);
+            if (cache.get(key) !== raw) throw new Error("No se pudo renovar la retención de los metadatos Drive.");
+        }
     }
     return result;
 }
@@ -11448,7 +11640,7 @@ function handleAuditDriveImagesInCortesLocked_(payload, logMessage, developerCon
     const nextCursor = complete ? null : { stack, totalAnalyzed, foldersVisited, referenceCacheId: auditId, scanVersion: ADMIN_SERVICE_VERSION };
     const cachePersistenceStartedAt = Date.now();
     storeDriveAuditPageResults_(auditId, pageIndex, auditResults.filter(item => item.classification === "Sin uso detectado").map(item => item.fileId));
-    storeDriveAuditSeenPage_(auditId, pageIndex, pageFileIds, pageFolderIds, auditResults.map(item => ({ fileId: item.fileId, fileName: item.fileName, mimeType: item.mimeType })));
+    storeDriveAuditSeenPage_(auditId, pageIndex, pageFileIds, pageFolderIds, auditResults.map(item => ({ fileId: item.fileId, fileName: item.fileName, mimeType: item.mimeType, folderPath: item.folderPath })));
     const cachePersistenceMs = Date.now() - cachePersistenceStartedAt;
     const nextPageCount = pageIndex + 1, serverTimestamp = Date.now();
     const metrics = {

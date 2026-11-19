@@ -6,6 +6,7 @@ const coordinator = readFileSync(new URL("../Services/Coordinator.js", import.me
 const feedback = readFileSync(new URL("../Services/feedback.js", import.meta.url), "utf8");
 const ui = readFileSync(new URL("../Frontend/ui.js", import.meta.url), "utf8");
 const sharedClient = readFileSync(new URL("../Services/SharedMutationClient.js", import.meta.url), "utf8");
+const apiConfig = readFileSync(new URL("../Frontend/api-config.js", import.meta.url), "utf8");
 
 function extractFunction(source, name) {
     const match = source.match(new RegExp("function " + name + "\\([^\\n]*\\) \\{[\\s\\S]*?\\n\\}"));
@@ -307,4 +308,21 @@ assert.ok(ambiguousPlan.targets.find(target => target.sheetName === "LogosMarca"
 const builderSource = extractFunction(admin, "buildCortesImageOrganizerTargets_");
 assert.ok(!["DriveApp","SpreadsheetApp","setName","moveTo","setTrashed","setValue","appendRow"].some(token => builderSource.includes(token)),
     "El constructor puro no debe ejecutar operaciones de Drive ni Spreadsheet.");
+
+assert.match(apiConfig, /previewCortesImageOrganizer.*ADMIN/);
+assert.match(coordinator, /previewCortesImageOrganizer: \{ read: \[\.\.\.identityRead, "CORTES", "DRIVE", "IMAGE_INVENTORY", "IMAGE_AUDIT_STATE", "LOGOS" \] \}/);
+assert.match(admin, /previewCortesImageOrganizer/);
+assert.match(admin, /case 'previewCortesImageOrganizer'/);
+assert.match(admin, /function inspectCortesOrganizerTargetFolderReadOnly_/);
+assert.match(admin, /function handlePreviewCortesImageOrganizer_/);
+assert.match(admin, /folderPath: item\.folderPath/);
+assert.match(admin, /file_moved_since_drive_audit/);
+assert.match(admin, /active_reference_location_mismatch/);
+assert.match(admin, /loadDriveAuditSeenIds_\(auditId, Number\(auditState\.pageCount\), false\)/);
+assert.match(admin, /loadDriveAuditFileMetadata_\(auditId, Number\(auditState\.pageCount\), false\)/);
+const organizerPreviewSource = extractFunction(admin, "handlePreviewCortesImageOrganizer_");
+assert.ok(!["setName","moveTo","setTrashed","setValue","appendRow","createFolder","setSharing"].some(token => organizerPreviewSource.includes(token)),
+    "El endpoint dry-run no debe modificar Drive ni Spreadsheet.");
+assert.match(organizerPreviewSource, /writePerformed: false, canApply: false/);
+
 console.log("AdminImageScanCoordinatorContract: 1/1 PASS");
