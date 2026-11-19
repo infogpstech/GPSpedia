@@ -803,3 +803,15 @@ La prueba de scrollbars heredada incluía reglas de dropdown fuera de los modale
 - CI en HEAD aa967514: workflow 44440031631 SUCCESS — 146 suites, 2,157 pruebas aprobadas, 0 fallos; health 44440031388 SUCCESS; Pages 44440029769 SUCCESS.
 - No se desplegó Apps Script ni se modificó Drive/Spreadsheet. El helper es código fuente y su validación fue estática/dinámica con fixtures.
 - Siguiente paso exacto: conectar un endpoint previewCortesImageOrganizer de solo lectura, validar auditoría Drive completa vigente, inspeccionar metadatos/rutas/extensiones, contrastar referencias activas de todas las hojas, detectar conflictos y generar un manifestDigest. Sin crear carpetas, mover, renombrar, copiar, restaurar ni escribir.
+
+
+### Continuidad — endpoint backend del dry-run del organizador (2026-11-19)
+- HEAD de código verificado: 6e43666b69ff20b7945f5ebe7b7745a7758ce8d0 en GPSpedia2.2.5_work. La rama base protegida GPSpedia2.2.5 no se modificó.
+- Implementado ADMIN previewCortesImageOrganizer y declarado como lectura compartida en isSharedReadAction_, api-config y política de Coordinator.
+- El endpoint exige auditoría Drive completa, vigente (≤6 h), del usuario actual y coincidente con la última auditoría. Revisa el inventario completo y sus rutas; contrasta referencias activas de todas las hojas; valida historial, archivo, MIME, nombre, ruta y extensión original; inspecciona rutas destino sin crearlas.
+- Bloquea referencias compartidas/adicionales, archivos históricos, referencias no verificables, archivos cambiados desde la auditoría, carpetas destino duplicadas, colisiones de nombre y destinos calculados duplicados.
+- Devuelve páginas de destinos (25 por defecto, máximo 50), estado ready/already_correct/blocked, motivos, rutas y nombres propuestos, resumen, manifestDigest, writePerformed:false y canApply:false.
+- Se corrigió storeDriveAuditSeenPage_ para persistir folderPath, necesario para comparar ubicación actual con la capturada en la auditoría. Por tanto, después del despliegue se debe generar una auditoría nueva; las auditorías antiguas sin folderPath no son compatibles con este preview.
+- CI en HEAD 6e43666b69ff20b7945f5ebe7b7745a7758ce8d0: workflow 44443122888 SUCCESS — 146 suites, 2,157 pruebas aprobadas, 0 fallos; health read-only 44443122921 SUCCESS; Pages 44443122280 SUCCESS.
+- No se desplegó Apps Script. No se movió, renombró, creó, restauró ni eliminó ningún archivo; no se escribieron datos en Spreadsheet.
+- Pendiente: ui.js no está conectado a previewCortesImageOrganizer. Integrar la vista paginada dentro del modal/consola, presentar los resultados por archivo y permitir revisar el digest sin habilitar aún la aplicación. Luego desplegar ADMIN, ejecutar una auditoría Drive nueva y validar el preview real. La aplicación segura por lotes continúa deshabilitada (canApply:false).
