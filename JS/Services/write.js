@@ -1028,7 +1028,10 @@ function handleAddOrUpdateCutLocked(preparedRequest, lock, lockState) {
         opRowValues = idempotencySheetBefore.getRange(opRowIndex, 1, 1, IDEMPOTENCIA_HEADERS.length).getValues()[0];
     }
     try {
-        return handleAddOrUpdateCutLockedUnsafe_(validatedPayload, lock, lockState, collaboratorName, idempotencyEntriesSnapshot);
+        return handleAddOrUpdateCutLockedUnsafe_(validatedPayload, lock, lockState, collaboratorName, idempotencyEntriesSnapshot, {
+            rowIndex: existingRowIndex,
+            rowValues: existingRowValues
+        });
     } catch (error) {
         if ((lockState && lockState.releasedForDrive) || (lock && !lock.hasLock())) {
             // Tras una carga fuera del lock puede haber otras escrituras válidas en la misma fila.
@@ -1084,7 +1087,22 @@ function buildCutSlotCoreValues_(cutData, imageUrl) {
     ];
 }
 
-function handleAddOrUpdateCutLockedUnsafe_(payload, lock, lockState, collaboratorName, idempotencyEntriesSnapshot) {
+function getPreparedExistingVehicleRow_(sheet, vehicleId, snapshot) {
+    if (!sheet || !snapshot || !Number.isInteger(snapshot.rowIndex) || snapshot.rowIndex < 2 ||
+        !Array.isArray(snapshot.rowValues)) {
+        throw new Error("No se recibió una fila de vehículo previamente localizada.");
+    }
+    const lastColumn = sheet.getLastColumn();
+    const rowValues = snapshot.rowValues.length === lastColumn
+        ? snapshot.rowValues.slice()
+        : sheet.getRange(snapshot.rowIndex, 1, 1, lastColumn).getValues()[0];
+    if (String(rowValues[COLS_CORTES.id - 1] == null ? "" : rowValues[COLS_CORTES.id - 1]).trim() !== String(vehicleId).trim()) {
+        throw new Error("El vehículo cambió después de su localización; no se realizó ninguna modificación.");
+    }
+    return { rowIndex: snapshot.rowIndex, rowValues: rowValues };
+}
+
+function handleAddOrUpdateCutLockedUnsafe_(payload, lock, lockState, collaboratorName, idempotencyEntriesSnapshot, existingVehicleSnapshot) {
     payload = payload && typeof payload === 'object' ? payload : {};
     const { vehicleData, cutData, vehicleId } = payload;
     if (!cutData) {
@@ -1260,12 +1278,9 @@ function handleAddOrUpdateCutLockedUnsafe_(payload, lock, lockState, collaborato
     }
 
     if (vehicleId) { // --- Lógica para vehículo EXISTENTE ---
-        const ids = sheet.getRange(2, 1, sheet.getLastRow(), 1).getValues().flat();
-        const existingIndex = ids.findIndex(id => id.toString() == vehicleId.toString());
-        if (existingIndex === -1) throw new Error("El ID del vehículo no fue encontrado.");
-        rowIndex = existingIndex + 2;
-
-        const rowValues = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getValues()[0];
+        const existingVehicleRow = getPreparedExistingVehicleRow_(sheet, vehicleId, existingVehicleSnapshot);
+        rowIndex = existingVehicleRow.rowIndex;
+        const rowValues = existingVehicleRow.rowValues;
         const vehicleInfo = mapRowToObject(rowValues, COLS_CORTES);
         let updatedVinCollection = null;
         if (vinPrefix) {
