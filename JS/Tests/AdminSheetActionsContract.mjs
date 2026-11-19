@@ -127,14 +127,15 @@ check("Las rutas canónicas ADMIN y los handlers permanecen alineados", () => {
     assert.ok(adminSource.includes("response = handleAddColumn(payload, logMessage);"));
     assert.ok(adminSource.includes('"createSheet","addColumn"'));
 });
-check("Ambas mutaciones exigen Desarrollador y lease/auditoría antes del handler", () => {
+check("Ambas mutaciones exigen Desarrollador, actor cacheado y auditoría antes del handler", () => {
     const dispatchStart = adminSource.indexOf("function doPostInternal_(e)");
     const dispatch = adminSource.slice(dispatchStart);
     const auth = dispatch.indexOf("assertDeveloperSession(payload)");
     const audit = dispatch.indexOf("beginAdminAuditEvent_(action, payload, developerContext, startTime)");
     const switchAt = dispatch.indexOf("switch (action)");
     assert.ok(auth >= 0 && auth < audit && audit < switchAt);
-    assert.ok(adminSource.includes('withSharedMutationLease_("ADMIN", action'));
+    assert.ok(adminSource.includes('getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "ADMIN" })'));
+    assert.ok(!adminSource.includes("withSharedMutationLease_"));
     assert.ok(adminSource.includes("function isSharedMutationAction_(action)"));
     assert.ok(adminSource.includes('"createSheet","addColumn","driveCommand"'));
 });

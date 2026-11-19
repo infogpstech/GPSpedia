@@ -41,7 +41,7 @@ testCase("ADMIN exige actor central cacheado y no coordina acciones ordinarias",
 testCase("FEEDBACK usa actor cacheado sin leases por acción y conserva sus rutas públicas",()=>{
  const start=feedback.indexOf("function doPost(e)"),end=feedback.indexOf("\nconst RICH_TEXT_MODE_PROPERTY_",start),router=feedback.slice(start,end);
  assert.ok(start>=0&&end>start);
- assert.ok(router.includes('getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "ADMIN" })'));
+ assert.ok(router.includes('getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "FEEDBACK" })'));
  assert.doesNotMatch(router,/withSharedMutationLease_/);
  assert.match(router,/DIRECT_SERVICE_TRAFFIC_CONFIG_\.actions\.has\(action\)/);
  assert.doesNotMatch(feedback,/touchSessionActivityIfDue_|getSessionExpirationStatus_/);
