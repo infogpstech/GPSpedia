@@ -140,13 +140,15 @@ function runSharedMutationCoordinatorTests() {
         const r = createRuntime_();
         const audit = acquire_(r, "ADMIN", "auditDriveImagesInCortes");
         const write = acquire_(r, "WRITE", "addOrUpdateCut");
-        assert_(audit.status === "success" && write.status === "success",
-            "La lease IMAGE_AUDIT_STATE debe coexistir con CORTES/DRIVE de WRITE.");
+        const login = acquire_(r, "AUTH", "login");
+        assert_(audit.status === "success" && write.status === "success" && login.status === "success",
+            "La lease IMAGE_AUDIT_STATE debe coexistir con registro WRITE y login AUTH.");
         const duplicateAudit = acquire_(r, "ADMIN", "auditDriveImagesInCortes");
         assert_(duplicateAudit.status === "error" && duplicateAudit.code === "busy",
             "Dos continuaciones de auditoría no deben modificar simultáneamente el mismo estado.");
         release_(r, "ADMIN", "auditDriveImagesInCortes", audit.token);
         release_(r, "WRITE", "addOrUpdateCut", write.token);
+        release_(r, "AUTH", "login", login.token);
     });
 
     test_("FEEDBACK y WRITE comparten solo lectura de contexto y permiten operaciones independientes", function() {

@@ -53,7 +53,7 @@ assert.doesNotMatch(adminPolicy, /sessionActivity|nestedActions/);
 assert.equal(policy("ADMIN", "getServiceTraffic").readResources.includes("SERVICE_TRAFFIC"), true);
 assert.equal(policy("ADMIN", "backupDatabase").maintenance, true);
 assert.deepEqual(policy("ADMIN", "auditDriveImagesInCortes").readResources, [],
-    "La auditoría no debe tomar leases de lectura CORTES/DRIVE que bloqueen los cortes.");
+    "La auditoría no debe tomar leases de SESSION_CONTEXTS, CORTES ni DRIVE que bloqueen login/cortes.");
 assert.deepEqual(policy("ADMIN", "auditDriveImagesInCortes").writeResources, ["IMAGE_AUDIT_STATE"]);
 assert.equal(policy("ADMIN", "saveUnusedImagesInventory").writeResources.includes("IMAGE_INVENTORY"), true);
 assert.equal(policy("ADMIN", "migrateReplacedImagesSchema").writeResources.includes("IMAGE_INVENTORY"), true);

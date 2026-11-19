@@ -177,7 +177,8 @@ function coordinatorPolicy_(service, operation) {
     // La enumeración prolongada de Drive ya autentica al actor central al adquirir
     // la lease. No debe reservar USERS ni SESSION_CONTEXTS durante el recorrido:
     // el login escribe ambos recursos y debe poder continuar en paralelo.
-    if (((service === "AUTH" && operation !== "requestPasswordRecovery") || (service === "ADMIN" && operation !== "getCortesImageFolders")) &&
+    if (((service === "AUTH" && operation !== "requestPasswordRecovery") ||
+        (service === "ADMIN" && !["getCortesImageFolders", "auditDriveImagesInCortes"].includes(operation))) &&
         !readResources.includes("SESSION_CONTEXTS") && !writeResources.includes("SESSION_CONTEXTS")) {
         readResources.push("SESSION_CONTEXTS");
     }

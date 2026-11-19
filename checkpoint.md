@@ -1189,3 +1189,5 @@ CI `44562328607`: SUCCESS — 159 suites, 2,264 pruebas aprobadas, 0 fallos. `Ad
 - Tercer CI del aislamiento de auditoría: `AdminAuditTrail` 15/15, `DirectTrafficRoutingCoverage` 6/6. Ajustar contratos restantes al nuevo nombre `handleAuditDriveImagesInCortesCore_` y eliminar el escape doble en `SessionActivityCoordination`.
 
 - Cuarto CI del aislamiento de auditoría: los contratos de auditoría, sesión, rutas y gestor de imágenes pasaron. `AdminSheetActionsContract` conservaba una aserción global de ausencia de leases; se limita ahora a verificar que solo el escáner adquiere la lease IMAGE_AUDIT_STATE.
+
+- Quinto CI del aislamiento: la política automática añadía SESSION_CONTEXTS a la lease de auditoría, bloqueando login AUTH aunque CORTES/DRIVE estuvieran excluidos. Se elimina también esa dependencia implícita y se amplía la prueba de concurrencia para AUTH/login.
