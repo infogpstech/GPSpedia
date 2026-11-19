@@ -414,3 +414,11 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - Quinto CI: detectó que Coordinator añade `SESSION_CONTEXTS` automáticamente a casi todas las leases ADMIN, incluso la auditoría. Se excluye `auditDriveImagesInCortes` de ese recurso para que el escáner tampoco bloquee login AUTH. La prueba de coexistencia ahora cubre auditoría + login + registro WRITE.
 
 - Sexto CI: la nueva prueba intentaba mantener simultáneamente `WRITE/addOrUpdateCut` y `AUTH/login`, que sí comparten `SESSION_CONTEXTS` por diseño. Se separa en dos escenarios: auditoría + WRITE y auditoría + login; ambos deben coexistir. La exclusión entre WRITE y login permanece intacta.
+
+### Validación de aislamiento de auditoría ADMIN — CI aprobado (2026-11-19)
+- [x] Escáner sin ScriptLock global; lease limitada a IMAGE_AUDIT_STATE.
+- [x] Coordinator no agrega SESSION_CONTEXTS, CORTES ni DRIVE a esta lease.
+- [x] Inicio/cierre del registro de auditoría sin ScriptLock y best-effort.
+- [x] Pruebas: AdminAuditTrail 15/15; AdminImageScanCoordinatorContract 1/1; SessionActivityCoordination 11/11; DirectTrafficRoutingCoverage 6/6; Coordinator 81/81.
+- [x] Regresión: 159 suites, 2,265 pruebas aprobadas, 0 fallos. Health read-only y Pages SUCCESS.
+- Pendiente dentro del mismo principio: aislar el proceso de inventario/organización de imágenes, que aún mantiene ScriptLock en ADMIN.

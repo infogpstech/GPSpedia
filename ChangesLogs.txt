@@ -937,3 +937,5 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 2026-11-19 — Coordinator: excluir auditDriveImagesInCortes de la lease implícita SESSION_CONTEXTS; la auditoría solo reserva IMAGE_AUDIT_STATE y no bloquea login AUTH.
 
 2026-11-19 — SharedMutationCoordinator: separar escenarios de concurrencia auditoría+WRITE y auditoría+AUTH/login, preservando el conflicto legítimo entre escritura de Cortes y login.
+
+2026-11-19 — CI auditoría ADMIN aislada: 159 suites, 2,265 pruebas, 0 fallos; health read-only y Pages SUCCESS. Lease exclusiva IMAGE_AUDIT_STATE; no bloquea login ni registro WRITE.

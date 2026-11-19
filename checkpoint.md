@@ -1193,3 +1193,5 @@ CI `44562328607`: SUCCESS — 159 suites, 2,264 pruebas aprobadas, 0 fallos. `Ad
 - Quinto CI del aislamiento: la política automática añadía SESSION_CONTEXTS a la lease de auditoría, bloqueando login AUTH aunque CORTES/DRIVE estuvieran excluidos. Se elimina también esa dependencia implícita y se amplía la prueba de concurrencia para AUTH/login.
 
 - Sexto CI: 154 suites / 2,148 pruebas; falló únicamente la prueba de concurrencia porque intentaba exigir coexistencia entre WRITE/addOrUpdateCut y AUTH/login, que legítimamente comparten SESSION_CONTEXTS. La prueba se divide en dos pares independientes con la auditoría.
+
+CI `44565411437`: SUCCESS — 159 suites, 2,265 pruebas aprobadas, 0 fallos. `AdminAuditTrail` 15/15, `AdminImageScanCoordinatorContract` 1/1, `SessionActivityCoordination` 11/11, `DirectTrafficRoutingCoverage` 6/6, `SharedMutationCoordinator` 81/81. Health read-only `44565411315` SUCCESS; Pages `44565410469` SUCCESS. La auditoría de Drive ya no usa ScriptLock; lease solo IMAGE_AUDIT_STATE, sin SESSION_CONTEXTS/CORTES/DRIVE. Registro de auditoría best-effort. Siguiente subpaso: aislar `saveUnusedImagesInventory` y revisar su registro de actividad.
