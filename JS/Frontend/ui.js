@@ -5913,7 +5913,11 @@ function initAdminPanelListeners() {
                 ? " Las lecturas directas CATALOG se cuentan con un contador best-effort no bloqueante y pueden subcontarse."
                 : " Solo se cuentan las consultas del feed público coordinadas; las lecturas directas CATALOG aún no están configuradas.")
             : "";
-        note.textContent = "El estado confirma la respuesta del endpoint y su contrato de identidad; no demuestra por sí solo que las dependencias internas de Google Sheets o Drive estén disponibles. El tráfico combina operaciones protegidas registradas por Coordinator con lecturas directas CATALOG cuando el contador está configurado. No representa todas las solicitudes HTTP y excluye sondeos de salud." + catalogCoverageNote + (globalServiceTrafficError ? " No fue posible actualizar el agregado global." : "");
+        const globalCoverage = globalServiceTrafficData && globalServiceTrafficData.coverage
+            ? String(globalServiceTrafficData.coverage.description || "") : "El agregado global combina operaciones protegidas de Coordinator con contadores directos disponibles.";
+        note.textContent = "El estado confirma la respuesta del endpoint y su contrato de identidad; no demuestra por sí solo que las dependencias internas de Google Sheets o Drive estén disponibles. " +
+            globalCoverage + " No representa todas las solicitudes HTTP y excluye sondeos de salud." +
+            catalogCoverageNote + (globalServiceTrafficError ? " No fue posible actualizar el agregado global." : "");
         detail.appendChild(note);
         const dependencies = document.createElement("div");
         dependencies.className = "dev-service-dependencies";
@@ -6118,7 +6122,9 @@ function initAdminPanelListeners() {
         container.appendChild(legend);
         const note = document.createElement("p");
         note.className = "dev-service-note";
-        note.textContent = "Agregado central de operaciones protegidas que obtuvieron una lease. No incluye lecturas públicas no coordinadas, el feed público ni sondeos de salud; no equivale al total de solicitudes HTTP.";
+        note.textContent = String(data.coverage && data.coverage.description ||
+            "Agregado global de operaciones coordinadas y contadores directos disponibles.") +
+            " Excluye sondeos de salud y rutas no instrumentadas; no equivale al total de solicitudes HTTP.";
         container.appendChild(note);
     }
 
@@ -6181,7 +6187,10 @@ function initAdminPanelListeners() {
         try {
             serviceHealthResults = await checkAllServicesHealth();
             if (!isAdminPanelCurrent_()) return;
-            if (!selectedServiceKey || !serviceHealthResults[selectedServiceKey]) selectedServiceKey = Object.keys(serviceHealthResults)[0] || null;
+            const activeServiceKeys = Object.keys(serviceHealthResults).filter(key => key !== "LEGACY");
+            if (!selectedServiceKey || !serviceHealthResults[selectedServiceKey] || selectedServiceKey === "LEGACY") {
+                selectedServiceKey = activeServiceKeys[0] || null;
+            }
             renderServiceDashboard();
             await loadGlobalServiceTraffic_(true);
             log("[SALUD] Diagnóstico de servicios completado.");
