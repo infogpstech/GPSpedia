@@ -7141,7 +7141,9 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
         // escribir si el ID fue eliminado, movido o reemplazado mientras se preparaba.
         // La fila completa ya incluye el ID. Una sola lectura entrega un snapshot
         // coherente y permite revalidar la identidad sin una consulta getValue adicional.
-        const rowValues = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getValues()[0];
+        // El snapshot solo necesita el esquema ADMIN y la columna VIN dinámica; no transferir columnas auxiliares ajenas.
+        const snapshotWidth = Math.max(48, vinColumnIndex || 0);
+        const rowValues = sheet.getRange(rowIndex, 1, 1, snapshotWidth).getValues()[0];
         if (String(rowValues[COLS_CORTES.id - 1]) !== String(vehicleId)) {
             throw new Error("La ubicación del vehículo cambió durante la preparación. Reintenta la operación.");
         }
