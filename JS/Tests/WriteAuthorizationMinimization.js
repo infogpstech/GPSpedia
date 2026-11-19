@@ -85,7 +85,7 @@ function runWriteAuthorizationMinimizationTests(sources) {
   const fn=extract(write,"handleCheckOperation");
   const start=write.indexOf("function doPost(e)"),end=write.indexOf("\nfunction doPostInternal_",start),router=write.slice(start,end);
   assert(!fn.includes("getAuthenticatedCollaborator(payload)"));
-  assert(router.includes("getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "WRITE" })"));
+  assert(router.includes('getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "WRITE" })'));
   assert(!router.includes("withSharedMutationLease_"));
   assert(router.includes("doPostInternal_(withSharedSessionActor_(e, null))"));
   assert(!fn.includes("rowData")&&!fn.includes("rowValues:"));
