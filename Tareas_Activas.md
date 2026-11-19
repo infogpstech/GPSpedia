@@ -580,5 +580,6 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Mantener la normalización exacta por String(... || "").trim(), el orden de primera aparición y la deduplicación sensible a mayúsculas.
 - [x] Sustituir búsquedas repetidas indexOf por Set, conservando los arreglos ordenados que consume resolveAndNormalizeEntity.
 - [x] Añadir WriteEntityLookupBoundedRead.mjs al runner con cobertura de rango, orden, duplicados, offsets y hoja vacía.
-- [ ] CI integral, sintaxis y revisión del diff pendientes.
-- Estado: EN PROGRESO. No se despliega WRITE ni se modifican Sheets/Drive productivos.
+- [x] CI 44625164726 SUCCESS: 176 suites, 2,398 pruebas aprobadas, 0 fallos; `WriteEntityLookupBoundedRead` 8/8 y sintaxis JavaScript aprobada.
+- [x] Health read-only 44625164725 SUCCESS; diff revisado: únicamente lectura acotada, deduplicación y pruebas/registros de esta tarea.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó WRITE ni se modificaron Sheets/Drive productivos.

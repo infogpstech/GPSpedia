@@ -5,7 +5,7 @@ Fecha: 2026-11-19
 ## Repositorio y ramas
 - Repositorio: infogpstech/GPSpedia
 - Rama autorizada: GPSpedia2.2.5_work
-- HEAD: 93a4739b057f30df834b4fee33d82189eda5ac2b (antes de la siguiente publicación)
+- HEAD: 1cb5bd0cc133b434434b8b28e5fa5f1b40dab8d5
 - Rama base protegida GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificar)
 - El historial completo previo está preservado en Checkpoint_Archive/checkpoint_2026-11-19_parte_003.md; ver Checkpoint_Archive/manifest.md.
 
@@ -16,18 +16,17 @@ Fecha: 2026-11-19
 - No inferir deployments Apps Script ni permisos externos desde el código versionado.
 
 ## Última tarea completada
-WRITE — asignador de vehicleId con lecturas acotadas:
-- `getNextCortesVehicleIdLocked` ya no lee todas las columnas de cada fila.
-- Primero lee valores y fórmulas de la columna ID; solo consulta las columnas restantes en filas con ID vacío o fórmula, agrupando candidatos contiguos.
-- Se preserva la lógica anterior para filas con fórmula sin datos, filas incompletas, IDs inválidos/duplicados y contador monotónico de PropertiesService.
-- Prueba `WriteVehicleIdAllocatorBoundedRead` 11/11 PASS.
-- CI 44620038256 SUCCESS: 175 suites, 2,390 pruebas aprobadas, 0 fallos; sintaxis JS aprobada.
-- Health read-only 44620038295 SUCCESS; GitHub Pages 44620037793 SUCCESS.
-- Commits: 487524f4cf87ec88a5f76fc35f3b1a1fbb5027da (lecturas acotadas), 8d72fe40c731da53066c7e9059e280b502385b07 (restauración de documentación del endpoint).
+GP-PERF-WRITE-CUT-LOCK-06 — lectura acotada de entidades existentes:
+- `getExistingEntities(sheet)` lee solo las columnas contiguas marca/modelo/versiones aplicables (3–5), sin consultar el ancho total de Cortes.
+- Deduplica con `Set`, conservando orden de primera aparición y la normalización previa `String(value || "").trim()`.
+- Prueba `WriteEntityLookupBoundedRead` 8/8 PASS: rango solicitado, orden, duplicados, offsets y hoja vacía.
+- CI 44625164726 SUCCESS: 176 suites, 2,398 pruebas aprobadas, 0 fallos; sintaxis JavaScript aprobada.
+- Health read-only 44625164725 SUCCESS.
+- Commit funcional: 1cb5bd0cc133b434434b8b28e5fa5f1b40dab8d5.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó WRITE ni se modificaron Sheets/Drive productivos.
 
 ## Siguiente trabajo
-La tarea GP-PERF-WRITE-CUT-LOCK-06 está implementada en el HEAD de trabajo actual y pendiente de CI/revisión: `getExistingEntities(sheet)` lee únicamente marca/modelo/versiones aplicables y deduplica con Set conservando orden y normalización. Tras aprobar CI, continuar con el siguiente pendiente P0 del backlog, priorizando reducir la sección crítica restante sin debilitar la consistencia de Cortes/Idempotencia ni bloquear funciones independientes.
+Continuar GP-PERF-ADMIN-CUT-LOCK-01 / aislamiento entre operaciones independientes. El backlog conserva pendiente el inventario verificable de locks/proyectos Apps Script y las pruebas de no interferencia entre auditoría lenta, Inbox, health, login y registro de cortes, además de conflicto sobre el mismo recurso. Antes de modificar locks, inspeccionar los handlers y contratos actuales; no inferir que servicios distintos comparten o no proyecto Apps Script. Priorizar cambios que retiren esperas de funciones independientes sin debilitar la integridad de Cortes/Idempotencia. No desplegar Apps Script ni modificar datos productivos.
 
 ## Restricciones
 - Trabajar únicamente en GPSpedia2.2.5_work.
@@ -86,3 +85,6 @@ Siguiente paso P0: auditar y reducir lecturas restantes dentro del ScriptLock de
 
 
 2026-11-19 — En progreso GP-PERF-WRITE-CUT-LOCK-06: getExistingEntities limita lectura a columnas contiguas marca/modelo/versiones y usa Set para deduplicar preservando orden/normalización. Prueba WriteEntityLookupBoundedRead añadida al runner; CI pendiente.
+
+
+2026-11-19 — Cierre GP-PERF-WRITE-CUT-LOCK-06: HEAD funcional 1cb5bd0cc133b434434b8b28e5fa5f1b40dab8d5; CI 44625164726 SUCCESS (176 suites, 2,398 pruebas, 0 fallos; WriteEntityLookupBoundedRead 8/8); health read-only 44625164725 SUCCESS. Diff revisado. Siguiente: continuar aislamiento entre operaciones independientes y reducir sección crítica restante de WRITE/ADMIN.

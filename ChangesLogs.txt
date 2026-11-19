@@ -1029,3 +1029,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-19] WRITE: getExistingEntities ahora lee únicamente las columnas marca/modelo/versiones aplicables y deduplica con Set conservando orden de primera aparición y normalización existente. Se añade WriteEntityLookupBoundedRead.mjs y se registra en RunServiceTests.mjs; CI pendiente.
+
+
+[2026-11-19] Cierre GP-PERF-WRITE-CUT-LOCK-06: CI 44625164726 SUCCESS (176 suites, 2,398 pruebas, 0 fallos; WriteEntityLookupBoundedRead 8/8); health read-only 44625164725 SUCCESS. La lectura de entidades existentes en WRITE queda acotada a columnas 3–5 y deduplicada con Set. No se desplegó Apps Script ni se modificaron datos productivos.
