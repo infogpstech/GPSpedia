@@ -7725,7 +7725,9 @@ function runAdminDriveWorkOutsideScriptLock_(lock, opId, operation, revalidate, 
 }
 
 function runAdminContributionDriveWorkOutsideScriptLock_(lock, opId, operation, revalidate, operationHash) {
-    return runAdminDriveWorkOutsideScriptLock_(lock, opId, operation, revalidate, operationHash, 2000);
+    // La sincronización Drive no debe esperar por el lock global; el mismo opId
+    // permite recuperar la operación si otra escritura ocupa la sección crítica.
+    return runAdminDriveWorkOutsideScriptLock_(lock, opId, operation, revalidate, operationHash, 0);
 }
 
 function getAdminRecoveryImageRepairNeeds_(vehicleData, cutData, rowObj, slotIndex) {
