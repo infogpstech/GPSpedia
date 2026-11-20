@@ -319,6 +319,6 @@ test("ADMIN usa versiones de origen para Cortes y convierte snapshots legacy en 
     assert.equal(legacyPage.changes[0].operation,"reset");
 });
 test("sourceVersion ADMIN solo se acepta para la colección Cortes", () => {
-    assert.throws(()=>request("publishCatalogChange","ADMIN","addLogo",{change:{collection:"logos",recordId:"L-1",operation:"upsert",sourceVersion:1}}),/versión de origen/);
+    assert.throws(()=>request("publishCatalogChange","ADMIN","addLogo",{change:{collection:"logos",recordId:"L-1",operation:"upsert",snapshot:{id:"L-1"},sourceVersion:1}}),/versión de origen/);
 });
 console.log("CatalogChangeFeed: " + passed + "/" + passed + " PASS");
