@@ -702,3 +702,14 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Hallazgos centrales: búsqueda global entrega registros de Corte individuales; el render actual dibuja una tarjeta por registro y autoabre un único resultado normal; selección de equipamiento omite la selección de encendido; la pantalla de encendido se fuerza aun con una sola opción; la pantalla de años no agrupa rangos ni abre directamente un rango único.
 - Se identificaron los flujos VIN exacto/ambiguo y la restauración de History API como compatibilidad obligatoria. No se modificó código productivo en esta etapa.
 - Estado: EN PROGRESO — auditoría preimplementación completada y registrada; implementación y pruebas específicas pendientes.
+
+## GP-UX-SEARCH-MODEL-GROUPING-01 — implementación local (2026-11-20)
+- Rama: `GPSpedia2.2.5_work`. HEAD verificado antes de este checkpoint: `3aa444fb75e98542f454e847b9a22f71e81e09d4`.
+- Implementados los helpers de agrupación por categoría/marca/modelo y resolución opcional de equipamiento, encendido y rangos. Corregido el orden para usar la mejor relevancia del grupo.
+- UI de búsqueda agrupada; búsqueda textual no abre el modal sin selección del modelo; VIN inequívoco conserva autoapertura y VIN ambiguo/Relay/Tutorial/PyS permanecen separados.
+- Historial existente conserva query, modelo, versión y tipo de encendido; main.js reconstruye búsqueda y niveles por popstate. Prueba de ruta History API agregada.
+- `SearchModelGrouping.mjs` registrado en `RunServiceTests.mjs`. Ejecución aislada Node v22.16.0: 21/21 PASS. Los helpers y History API se ejecutaron; las comprobaciones UI/navigation/main fueron estáticas.
+- `Tareas_Activas.md`, `ChangesLogs.txt` y `AUDITORIA_BUSQUEDA_MODELOS_2026-11-20.md` actualizados.
+- Validación aún pendiente: regresión integral `RunServiceTests.mjs` y prueba visual en navegador. No se dispone de checkout local; las herramientas GitHub consultadas no devolvieron estados de CI para estos commits.
+- La rama base protegida permanece en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; no se escribió en ella. Sin despliegue Apps Script ni cambios en datos productivos.
+- Estado: implementación local completada; cierre de validación pendiente.
