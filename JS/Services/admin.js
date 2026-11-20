@@ -11635,7 +11635,42 @@ function syncContributionCandidateImageInventory_(currentCandidates) {
         });
     });
 
+    // Drive metadata is read before acquiring the inventory lock.
+    const preparedRecords = [];
     const result = { status: "success", created: 0, updated: 0, skipped: 0, errors: [] };
+    records.forEach((record, eventId) => {
+        const event = record.eventRow;
+        const kind = String(event[4] || "").trim().toLowerCase();
+        if (!["cut", "opening", "feed"].includes(kind)) { result.skipped++; return; }
+        let payload = {};
+        try { payload = JSON.parse(String(event[5] || "{}")); } catch (error) {
+            result.errors.push({ eventId, message: "Payload de candidato no es JSON válido." }); return;
+        }
+        const imageUrl = getContributionCandidateImageUrl_(payload);
+        const ids = extractDriveFileIds(imageUrl);
+        if (ids.length !== 1) { result.skipped++; return; }
+        const fileId = ids[0];
+        let fileName = "Imagen candidata " + fileId, mimeType = "image/unknown";
+        let createdAt = "", folderPath = "Ubicación no verificada", organizationError = "";
+        try {
+            const file = DriveApp.getFileById(fileId);
+            fileName = file.getName();
+            mimeType = String(file.getMimeType() || "");
+            createdAt = file.getDateCreated();
+            const parents = file.getParents(), names = [];
+            while (parents.hasNext()) names.push(parents.next().getName());
+            if (names.length) folderPath = names.join(" | ");
+            if (!mimeType.startsWith("image/")) organizationError = "El archivo asociado al candidato no conserva MIME de imagen.";
+            if (file.isTrashed()) organizationError = "El archivo candidato está en la papelera de Drive.";
+        } catch (error) {
+            organizationError = String(error && error.message || error);
+        }
+        preparedRecords.push({
+            eventId, inventoryId: getContributionCandidateInventoryId_(eventId),
+            event, record, imageUrl, fileId, fileName, mimeType, createdAt, folderPath, organizationError
+        });
+    });
+
     withReplacedImagesSchemaLock_(function() {
         const sheet = spreadsheet.getSheetByName(SHEET_NAMES.IMAGENES_REEMPLAZADAS);
         if (!sheet) { result.status = "not_initialized"; return; }
@@ -11648,40 +11683,14 @@ function syncContributionCandidateImageInventory_(currentCandidates) {
             if (id && !rowById.has(id)) rowById.set(id, { rowNumber: i + 1, values: existingRows[i] });
         }
         const appendRows = [];
-        records.forEach((record, eventId) => {
-            const event = record.eventRow;
-            const kind = String(event[4] || "").trim().toLowerCase();
-            if (!["cut", "opening", "feed"].includes(kind)) { result.skipped++; return; }
-            let payload = {};
-            try { payload = JSON.parse(String(event[5] || "{}")); } catch (error) {
-                result.errors.push({ eventId, message: "Payload de candidato no es JSON válido." }); return;
-            }
-            const imageUrl = getContributionCandidateImageUrl_(payload);
-            const ids = extractDriveFileIds(imageUrl);
-            if (ids.length !== 1) { result.skipped++; return; }
-            const fileId = ids[0], inventoryId = getContributionCandidateInventoryId_(eventId);
-            let file = null, fileName = "Imagen candidata " + fileId, mimeType = "image/unknown";
-            let createdAt = "", folderPath = "Ubicación no verificada", organizationError = "";
-            try {
-                file = DriveApp.getFileById(fileId);
-                fileName = file.getName();
-                mimeType = String(file.getMimeType() || "");
-                createdAt = file.getDateCreated();
-                const parents = file.getParents(), names = [];
-                while (parents.hasNext()) names.push(parents.next().getName());
-                if (names.length) folderPath = names.join(" | ");
-                if (!mimeType.startsWith("image/")) organizationError = "El archivo asociado al candidato no conserva MIME de imagen.";
-                if (file.isTrashed()) organizationError = "El archivo candidato está en la papelera de Drive.";
-            } catch (error) {
-                organizationError = String(error && error.message || error);
-            }
-
+        preparedRecords.forEach(prepared => {
+            const { eventId, inventoryId, event, record, imageUrl, fileId, fileName, mimeType, createdAt, folderPath, organizationError } = prepared;
             const row = new Array(headers.length).fill("");
             row[0] = inventoryId;
             row[1] = String(event[8] || new Date().toISOString());
             row[2] = "aporte_candidato";
             row[3] = String(event[2] || "");
-            row[4] = kind;
+            row[4] = String(event[4] || "");
             row[5] = fileId;
             row[6] = fileName;
             row[7] = imageUrl;
@@ -11708,7 +11717,7 @@ function syncContributionCandidateImageInventory_(currentCandidates) {
             const existing = rowById.get(inventoryId);
             if (existing) {
                 const currentStatus = String(existing.values[10] || "").trim();
-                if (currentStatus !== record.status && currentStatus === "requiere_revision") {
+                if (currentStatus === "requiere_revision" && currentStatus !== record.status) {
                     sheet.getRange(existing.rowNumber, 11).setValue(record.status);
                     result.updated++;
                 } else {
