@@ -70,3 +70,11 @@ Esta dirección evita una reserva mutable de slot compartida. Debe confirmarse e
 ## Estado
 
 Este documento fija la dirección de diseño, no declara implementada la solución. P0 permanece abierta hasta completar integración y pruebas.
+
+
+## Hallazgo adicional de idempotencia suplementaria
+
+- La UI de apertura y alimentación genera un `opId` local con `createSuggestionOperationId_` y lo envía a `addSupplementaryInfo`.
+- WRITE permite la clave `opId` en el payload, pero `buildSupplementaryInfoPlan_` no calcula ni valida una huella de operación y `handleAddSupplementaryInfoLocked` no consulta ni registra un ledger de idempotencia.
+- Por ello, un reintento después de perder la respuesta no recupera el resultado original: puede devolver conflicto porque el primer intento ya ocupó el espacio, aunque la escritura haya sido exitosa. La clave de carga Drive evita duplicar el archivo, pero no vuelve idempotente la mutación de texto/catálogo.
+- La implementación del ledger de aportes debe unificar idempotencia para corte, apertura y alimentación. El cliente debe conservar el mismo `opId` y contenido tras un timeout; el servidor debe devolver el resultado ya confirmado para el mismo hash y rechazar el mismo `opId` con contenido distinto.
