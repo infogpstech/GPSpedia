@@ -1,32 +1,42 @@
 # Checkpoint activo — GPSpedia
 
-Fecha: 2026-11-19
+Fecha: 2026-11-20
 
 ## Repositorio y ramas
 - Repositorio: infogpstech/GPSpedia
 - Rama autorizada: GPSpedia2.2.5_work
-- HEAD de implementación funcional: e11056bca8759256871d7e7748a083b5d2b3af2e; commit documental de cierre: d7604b4f03b09ce99e76f285a581321f72ab7f49
-- Rama base protegida GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificar)
-- El historial completo previo está preservado en Checkpoint_Archive/checkpoint_2026-11-19_parte_003.md; ver Checkpoint_Archive/manifest.md.
+- HEAD actual: d6be21521a5119bf7009014e370971f6b4d51cec (commit documental de resolución de tareas Beta/lease).
+- Último commit funcional: 3fd8b2d5afedbfcdec0e261cad4690d3257d962c (ADMIN: verificación del respaldo de conciliación fuera del ScriptLock).
+- Rama base protegida GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificar).
+- La continuidad histórica anterior permanece en este archivo y en Checkpoint_Archive/; no reconstruir sesiones previas si el estado Git actual es verificable.
 
 ## Normativa y arquitectura
 - NORMAS_DESAROLLO.md es la única fuente normativa vigente.
-- README.md describe la PWA, frontend, microservicios Apps Script y persistencia Sheets/Drive.
+- README.md describe PWA, frontend, microservicios Apps Script y persistencia Sheets/Drive.
 - contexto_personal.md confirma ramas y restricciones de publicación.
 - No inferir deployments Apps Script ni permisos externos desde el código versionado.
 
-## Última tarea completada
-GP-PERF-WRITE-CUT-LOCK-06 — lectura acotada de entidades existentes:
-- `getExistingEntities(sheet)` lee solo las columnas contiguas marca/modelo/versiones aplicables (3–5), sin consultar el ancho total de Cortes.
-- Deduplica con `Set`, conservando orden de primera aparición y la normalización previa `String(value || "").trim()`.
-- Prueba `WriteEntityLookupBoundedRead` 8/8 PASS: rango solicitado, orden, duplicados, offsets y hoja vacía.
-- CI 44625164726 SUCCESS: 176 suites, 2,398 pruebas aprobadas, 0 fallos; sintaxis JavaScript aprobada.
-- Health read-only 44625164725 SUCCESS.
-- Commit funcional: 1cb5bd0cc133b434434b8b28e5fa5f1b40dab8d5.
-- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó WRITE ni se modificaron Sheets/Drive productivos.
+## Última tarea de implementación completada
+P1 — ADMIN conciliación de imágenes Cortes: verificación del respaldo fuera del lock.
+- Drive del respaldo (existencia, papelera, MIME, ACL privada, manifiesto y contenido de la copia) se valida fuera de ScriptLock.
+- Tras readquirir con tryLock(0), verifyImageReconciliationBackupSource_ comprueba bajo lock fingerprint y dimensiones de la Spreadsheet operativa.
+- Si no se readquiere el lock o la base cambió, la operación aborta antes del preview y de cualquier escritura.
+- CortesImageReconciliationApply 18/18 PASS; CortesImageReconciliation 34/34 PASS; parsing de admin.js PASS.
+- CI 44708443965 SUCCESS: 215 suites, 2,686 pruebas aprobadas, 0 fallos; health read-only 44708443686 SUCCESS; Pages 44708443338 SUCCESS.
+- Commit funcional: 3fd8b2d5afedbfcdec0e261cad4690d3257d962c.
+- No se desplegó Apps Script ni se modificaron datos productivos.
+
+## Última evaluación de diseño
+- La propuesta de lease/reserva para sacar setTrashed/restauración/compensación del ScriptLock se cerró sin implementación y quedó DIFERIDA A MEDICIÓN BETA.
+- Motivo: ya estaba diferida por adenda del backlog del 2026-11-17; no existe evidencia Beta de contención que justifique el cambio. No añadir leases ni retirar protecciones por suposición.
+- AdminImageTrashLifecycle 41/41 PASS en ejecución local aislada.
+- CI posterior a la actualización documental 44709124865 SUCCESS: 215 suites, 2,686 pruebas, 0 fallos; health read-only 44709124598 SUCCESS; Pages 44709123731 SUCCESS.
 
 ## Siguiente trabajo
-Continuar GP-PERF-ADMIN-CUT-LOCK-01 / aislamiento entre operaciones independientes. El backlog conserva pendiente el inventario verificable de locks/proyectos Apps Script y las pruebas de no interferencia entre auditoría lenta, Inbox, health, login y registro de cortes, además de conflicto sobre el mismo recurso. Antes de modificar locks, inspeccionar los handlers y contratos actuales; no inferir que servicios distintos comparten o no proyecto Apps Script. Priorizar cambios que retiren esperas de funciones independientes sin debilitar la integridad de Cortes/Idempotencia. No desplegar Apps Script ni modificar datos productivos.
+No quedan tareas de implementación local abiertas en Tareas_Activas.md; las 19 casillas restantes requieren despliegues Apps Script, Script IDs, datos reales Drive/Spreadsheet o medición de concurrencia entre deployments.
+- Siguiente etapa: Beta autorizada, comenzando con auditoría y preview de solo lectura. Safe Apply, movimientos, renombrados y eliminaciones permanecen bloqueados hasta revisión y autorización explícita.
+- La secuencia obligatoria al inicio de lista_beta_parte1.txt verifica repositorio/rama/árbol limpio y sincroniza con fetch + pull --ff-only; se revisó su contenido y bash -n PASS. No se ejecutó fetch/pull en un clon local, porque el entorno no pudo resolver github.com y no se dispone de un checkout local.
+- No desplegar Apps Script ni acceder/modificar datos productivos sin autorización expresa.
 
 ## Restricciones
 - Trabajar únicamente en GPSpedia2.2.5_work.
