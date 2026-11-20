@@ -1578,6 +1578,21 @@ function completeFeedbackYearApplication_(application, context) {
     } else if (toChanged) {
         appendFeedbackYearVehicleUpdateEvent_(operation, row[1], "anoHasta", targetTo, rawExpectedTo, sourceExpectedTo);
     }
+    const projectedBaseRow = cortesSheet.getRange(
+        vehicleRowIndex, 1, 1, cortesSheet.getLastColumn()
+    ).getValues()[0];
+    const projectedRange = getFeedbackProjectedVehicleYearSnapshot_(String(row[1]), projectedBaseRow);
+    if (Number(projectedRange.anoDesde) !== targetFrom || Number(projectedRange.anoHasta) !== targetTo) {
+        const pendingLedger = application.sheet;
+        pendingLedger.getRange(application.rowIndex, 9).setValue("requires_review");
+        pendingLedger.getRange(application.rowIndex, 12).setValue(new Date().toISOString());
+        SpreadsheetApp.flush();
+        return {
+            status: "warning", recovered: false, candidateReviewPending: true,
+            _catalogResetRequest: true,
+            message: "La ampliación quedó registrada en AportesVehiculo, pero otra versión del rango prevalece. El evento se conserva como candidato para revisión ADMIN; el catálogo no se anunció como actualizado."
+        };
+    }
     const expectedImageUrl = String(cortesSheet.getRange(vehicleRowIndex, COLS_CORTES.imagenVehiculo).getValue() || "");
     const ledger = application.sheet;
     let activityLogRequest = null;
