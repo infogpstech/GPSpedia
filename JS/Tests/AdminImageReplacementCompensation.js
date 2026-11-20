@@ -21,7 +21,9 @@ function runAdminImageReplacementCompensationTests(uiSource, adminSource) {
     const catchBlock = catchStart >= 0 && catchEnd > catchStart ? admin.slice(catchStart, catchEnd) : "";
     run("El reemplazo exige una única fila Cortes por vehicleId", () => {
         const handler = extractFunction(admin, "handleUploadAdminImage");
-        assert(/findUniqueAdminVehicleRow_\(sheet, String\(vehicleId\)\.trim\(\)\)/.test(handler), "El reemplazo no valida unicidad de vehicleId.");
+        assert(/findUniqueAdminVehicleRow_\(sheet, cleanVehicleId\)/.test(handler), "El reemplazo no resuelve el vehículo mediante la búsqueda única.");
+        const uniqueLookup = extractFunction(admin, "findUniqueAdminVehicleRow_");
+        assert(/matches\.length !== 1/.test(uniqueLookup), "La búsqueda compartida no rechaza IDs inexistentes o duplicados.");
         assert(!/ids\.findIndex/.test(handler), "El reemplazo todavía selecciona la primera fila coincidente.");
     });
     run("Una imagen linked enviada a papelera pasa a revisión sin reactivarse", () => {
