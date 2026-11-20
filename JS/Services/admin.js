@@ -1617,44 +1617,107 @@ function buildAdminCortesCatalogChange_(reference) {
     return { collection: "cortes", recordId: wanted, operation: "upsert", snapshot: snapshot };
 }
 
-function publishAdminCortesCatalogChange_(action, reference) {
-    const lock = LockService.getScriptLock();
-    lock.waitLock(15000);
-    try {
-        try {
-            const change = buildAdminCortesCatalogChange_(reference);
-            publishSharedCatalogChange_("ADMIN", action, change);
-        } catch (catalogPublishError) {
-            publishSharedCatalogChange_("ADMIN", action, { operation: "reset" });
-        }
-    } finally {
-        lock.releaseLock();
+const ADMIN_CATALOG_SOURCE_VERSION_PROPERTY_ = "GPSpedia_ADMIN_CATALOG_SOURCE_VERSION_V1";
+
+function reserveAdminCatalogSourceVersionsLocked_(count) {
+    const amount = Math.floor(Number(count));
+    if (!Number.isSafeInteger(amount) || amount < 1) throw new Error("Cantidad de versiones ADMIN inválida.");
+    const properties = PropertiesService.getScriptProperties();
+    const raw = properties.getProperty(ADMIN_CATALOG_SOURCE_VERSION_PROPERTY_);
+    const current = raw === null ? 0 : Number(raw);
+    if (!Number.isSafeInteger(current) || current < 0) {
+        throw new Error("La versión de origen del catálogo ADMIN no es válida.");
     }
+    const next = current + amount;
+    if (!Number.isSafeInteger(next) || next < 1) {
+        throw new Error("La versión de origen del catálogo ADMIN alcanzó su límite seguro.");
+    }
+    properties.setProperty(ADMIN_CATALOG_SOURCE_VERSION_PROPERTY_, String(next));
+    return Array.from({ length: amount }, (_, index) => current + index + 1);
 }
 
+function publishAdminCatalogChange_(action, buildChange) {
+    let change = { operation: "reset" };
+    const lock = LockService.getScriptLock();
+    let lockAcquired = false;
+    try {
+        if (!lock.tryLock(0)) throw new Error("ADMIN_BUSY");
+        lockAcquired = true;
+        try {
+            const snapshot = buildChange();
+            if (!snapshot || typeof snapshot !== "object" || snapshot.operation === "reset") {
+                change = { operation: "reset" };
+            } else {
+                change = Object.assign({}, snapshot, {
+                    sourceVersion: reserveAdminCatalogSourceVersionsLocked_(1)[0]
+                });
+            }
+        } catch (snapshotError) {
+            change = { operation: "reset" };
+        }
+    } catch (lockError) {
+        change = { operation: "reset" };
+    } finally {
+        if (lockAcquired) lock.releaseLock();
+    }
+    return publishSharedCatalogChange_("ADMIN", action, change);
+}
+
+function publishAdminCatalogChanges_(action, buildChanges) {
+    let versionedChanges = null;
+    const lock = LockService.getScriptLock();
+    let lockAcquired = false;
+    try {
+        if (!lock.tryLock(0)) throw new Error("ADMIN_BUSY");
+        lockAcquired = true;
+        try {
+            const snapshots = buildChanges();
+            if (!Array.isArray(snapshots) || !snapshots.length) {
+                throw new Error("La reconciliación no devolvió IDs de vehículos modificados.");
+            }
+            const versions = reserveAdminCatalogSourceVersionsLocked_(snapshots.length);
+            versionedChanges = snapshots.map((snapshot, index) => {
+                if (!snapshot || typeof snapshot !== "object" || snapshot.operation === "reset") {
+                    throw new Error("Snapshot ADMIN inválido para publicación versionada.");
+                }
+                return Object.assign({}, snapshot, { sourceVersion: versions[index] });
+            });
+        } catch (snapshotError) {
+            versionedChanges = null;
+        }
+    } catch (lockError) {
+        versionedChanges = null;
+    } finally {
+        if (lockAcquired) lock.releaseLock();
+    }
+
+    if (!versionedChanges) {
+        return publishSharedCatalogChange_("ADMIN", action, { operation: "reset" });
+    }
+    try {
+        for (let offset = 0; offset < versionedChanges.length; offset += 50) {
+            publishSharedCatalogChanges_("ADMIN", action, versionedChanges.slice(offset, offset + 50));
+        }
+    } catch (publishError) {
+        return publishSharedCatalogChange_("ADMIN", action, { operation: "reset" });
+    }
+    return { status: "success", published: versionedChanges.length };
+}
+
+function publishAdminCortesCatalogChange_(action, reference) {
+    return publishAdminCatalogChange_(action, () => buildAdminCortesCatalogChange_(reference));
+}
 
 function publishAdminCortesCatalogChanges_(action, references) {
-    const lock = LockService.getScriptLock();
-    lock.waitLock(15000);
-    try {
-        try {
-            const ids = Array.from(new Set((Array.isArray(references) ? references : [])
-                .map(value => String(value === null || value === undefined ? "" : value).trim())
-                .filter(Boolean)));
-            if (!ids.length) throw new Error("La reconciliación no devolvió IDs de vehículos modificados.");
-            const changes = ids.map(id => buildAdminCortesCatalogChange_(id));
-            if (changes.length !== ids.length) throw new Error("No se pudieron verificar todos los registros modificados.");
-            // El Coordinator asigna las revisiones en una sola sección crítica; agrupar
-            // evita un viaje de red por vehículo sin perder el orden de los snapshots.
-            for (let offset = 0; offset < changes.length; offset += 50) {
-                publishSharedCatalogChanges_("ADMIN", action, changes.slice(offset, offset + 50));
-            }
-        } catch (catalogPublishError) {
-            publishSharedCatalogChange_("ADMIN", action, { operation: "reset" });
-        }
-    } finally {
-        lock.releaseLock();
-    }
+    return publishAdminCatalogChanges_(action, () => {
+        const ids = Array.from(new Set((Array.isArray(references) ? references : [])
+            .map(value => String(value === null || value === undefined ? "" : value).trim())
+            .filter(Boolean)));
+        if (!ids.length) throw new Error("La reconciliación no devolvió IDs de vehículos modificados.");
+        const changes = ids.map(id => buildAdminCortesCatalogChange_(id));
+        if (changes.length !== ids.length) throw new Error("No se pudieron verificar todos los registros modificados.");
+        return changes;
+    });
 }
 
 function buildLogoCatalogChange_(logoId, logoUrl, brandName) {
