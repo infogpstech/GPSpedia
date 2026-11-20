@@ -11054,6 +11054,10 @@ function handleResolveVehicleContributionCandidate_(payload, developerContext, l
   const persisted=rowsAfter.find(row=>String(row[0]||"")===eventId);
   if(!persisted||String(persisted[1]||"")!==opId||String(persisted[10]||"")!==sourceEventId||String(persisted[9]||"")!==nextStatus)
    throw new Error("No se pudo verificar la resolución append-only después de escribirla.");
+  try { syncContributionCandidateImageInventory_([]); }
+  catch (inventoryError) {
+   logMessage && logMessage("Inventario de imágenes candidatas", "La resolución se guardó, pero el inventario requiere sincronización posterior: " + (inventoryError.message || inventoryError));
+  }
   if(logMessage)logMessage("Resolución de aporte","Se anexó "+decision+" para "+targetEventId+"; el evento original se conserva.");
   return{status:"success",duplicate:false,eventId,supersedesEventId:targetEventId,sourceEventId,decision,vehicleId,message:"Resolución registrada como evento nuevo; el historial original permanece intacto."};
  });
@@ -12168,6 +12172,7 @@ function handleDeleteReplacedImage(payload,logMessage,developerContext){
         const sheetRep=getOrCreateReplacedImagesSheet(),headers=ensureReplacedImagesInventoryColumns(sheetRep);
         const existing=findReplacedImageRecordById(sheetRep,idReemplazo);if(!existing)throw new Error("Registro de imagen no encontrado.");
         const row=existing.values,type=getReplacedImageRecordType(row,headers);
+        if (type === "candidata_aporte") throw new Error("Las imágenes candidatas se resuelven desde el panel de aportes; no se envían a papelera desde el inventario.");
         const status=String(row[10]||(type==="sin_uso_detectado"?"sin_uso_detectado":"historica"));
         let rowIndex=existing.rowIndex;
         const driveId=getReplacedImageRecordIdentity_(row,headers,true);
@@ -12241,6 +12246,7 @@ function handleRestoreReplacedImageFromTrash(payload,logMessage,developerContext
         const sheet=getOrCreateReplacedImagesSheet(),headers=ensureReplacedImagesInventoryColumns(sheet);
         const existing=findReplacedImageRecordById(sheet,id);if(!existing)throw new Error("Registro de imagen no encontrado.");
         const row=existing.values,type=getReplacedImageRecordType(row,headers),status=String(row[10]||"");
+        if (type === "candidata_aporte") throw new Error("Las imágenes candidatas se conservan hasta resolver el aporte; no se permite restaurarlas desde esta acción.");
         let rowIndex=existing.rowIndex;
         const driveId=getReplacedImageRecordIdentity_(row,headers,true),previousIndex=headers.indexOf("estado_previo_papelera");
         const fallback=type==="sin_uso_detectado"?"sin_uso_detectado":"historica";
@@ -12318,6 +12324,7 @@ function handlePermanentlyDeleteReplacedImage(payload,logMessage,developerContex
         const sheet=getOrCreateReplacedImagesSheet(),headers=ensureReplacedImagesInventoryColumns(sheet);
         const existing=findReplacedImageRecordById(sheet,id);if(!existing)throw new Error("Registro de imagen no encontrado.");
         const row=existing.values,type=getReplacedImageRecordType(row,headers),status=String(row[10]||"");
+        if (type === "candidata_aporte") throw new Error("Las imágenes candidatas se resuelven desde el panel de aportes y no pueden eliminarse desde el inventario.");
         let rowIndex=existing.rowIndex;
         const driveId=getReplacedImageRecordIdentity_(row,headers,true);
         if(status==="eliminada")return {status:"success",message:"La imagen ya estaba eliminada definitivamente.",unchanged:true};
@@ -12389,6 +12396,7 @@ function handleMarkReplacedImageInUse(payload, logMessage, developerContext) {
         const existing = findReplacedImageRecordById(sheet, id);
         if (!existing) throw new Error("Registro de imagen no encontrado.");
         const row = existing.values, type = getReplacedImageRecordType(row, headers);
+        if (type === "candidata_aporte") throw new Error("La aceptación de una imagen candidata debe realizarse al resolver el evento AportesVehiculo.");
         if (String(row[10] || "") !== "requiere_revision") throw new Error("Solo se pueden marcar en uso los registros que requieren revisión.");
         const driveId = getReplacedImageRecordIdentity_(row, headers, true);
         const verified = runAdminDriveWorkOutsideScriptLock_(
