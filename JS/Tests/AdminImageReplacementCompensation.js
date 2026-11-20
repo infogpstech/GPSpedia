@@ -64,12 +64,11 @@ function runAdminImageReplacementCompensationTests(uiSource, adminSource) {
         try { fn({setDescription(){},getDescription(){return "";}}, "op-3", "hash-3", "cancelled", false); } catch (_) { mismatch = true; }
         assert(mismatch, "No detectó metadatos Drive no persistidos.");
     });
-    run("La compensación actualiza el historial antes del ledger y cualquier fallo eleva revisión", () => {
-        assert(catchBlock.indexOf("updateAdminImageReplacementHistoryStatus_") >= 0, "No se actualiza el historial.");
-        assert(catchBlock.indexOf("rollbackFailed = true") >= 0, "Los errores de compensación no se acumulan.");
-        assert(catchBlock.indexOf("updateAdminImageReplacementHistoryStatus_") < catchBlock.indexOf("saveAdminImageUploadOperation"), "El ledger se confirma antes del historial.");
-        assert(/operationRecord\.values\[9\] = finalStatus/.test(catchBlock), "El ledger no usa el resultado final de compensación.");
-        assert(/operationRecord\.values\[9\] = "requires_review"/.test(catchBlock), "No intenta persistir requires_review si falla el ledger.");
+    run("Los fallos parciales conservan el archivo y anexan requires_review al journal", () => {
+        const handler = extractFunction(admin, "handleUploadAdminImage");
+        assert(handler.includes('state: "requires_review"'), "No se registra revisión en el journal ante un fallo parcial.");
+        assert(handler.includes("appendImageUploadEventForAdmin_"), "No se conserva la transición compensatoria append-only.");
+        assert(!handler.includes("setTrashed(true)"), "El flujo nuevo no debe borrar evidencia de una operación parcial.");
     });
     run("El descarte lee el catálogo fresco y usa compare-and-set por campo", () => {
         const discard = ui.slice(ui.indexOf("export async function exitModalEditMode"), ui.indexOf("function getAdminImageUploadOwnerVehicleKey"));

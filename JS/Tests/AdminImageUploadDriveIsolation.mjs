@@ -1,24 +1,14 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-const source = readFileSync(new URL("../Services/admin.js", import.meta.url), "utf8");
-const start = source.indexOf("function handleUploadAdminImage(payload, logMessage, modalContext)");
-const end = source.indexOf("\n// ============================================================================\n// MICROSERVICIO REGISTRO DE CORTES", start);
-assert.ok(start >= 0 && end > start, "No se encontró handleUploadAdminImage");
-const handler = source.slice(start, end);
-assert.ok(handler.includes("lock.waitLock(2000)") && !handler.includes("lock.waitLock(30000)"),
-    "El reemplazo debe adquirir el lock sin espera prolongada");
-assert.ok(handler.includes("runAdminContributionDriveWorkOutsideScriptLock_(lock, operationId"),
-    "La preparación del archivo debe liberar el ScriptLock durante Drive");
-assert.ok(handler.includes("genFolder.createFile(blob)") && handler.includes("DriveApp.getFileById(storedFileId)"),
-    "La creación y recuperación del archivo deben estar dentro del trabajo Drive aislado");
-assert.ok(handler.includes("latestUrl !== originalUrl") && handler.includes("latestFilename !== newFilename"),
-    "La operación debe revalidar referencia activa y metadatos antes de persistir");
-assert.ok(handler.includes("findAdminImageUploadOperation(operationSheet, operationId)"),
-    "La operación debe revalidar el ledger por opId");
-assert.ok(handler.includes('updateAdminImageUploadFileState_(newFile, operationId, contentHash, "linked", false)'),
-    "La confirmación de metadata Drive también debe ejecutarse fuera del lock");
-assert.ok(handler.includes('error.code === "ADMIN_LOCK_REACQUIRE_PENDING"'),
-    "Si no puede readquirir, debe dejar la operación pendiente para reintentar el mismo opId");
-assert.ok(handler.includes("if (lock.hasLock()) lock.releaseLock()"),
-    "El finally no debe liberar un lock que ya no posee");
-console.log("AdminImageUploadDriveIsolation: 9/9 PASS — Drive fuera del lock, revalidación y recuperación idempotente");
+const source=readFileSync(new URL("../Services/admin.js",import.meta.url),"utf8");
+const start=source.indexOf("function handleUploadAdminImage(payload, logMessage, modalContext)");
+const end=source.indexOf("\n// ============================================================================\n// MICROSERVICIO REGISTRO DE CORTES",start);
+assert.ok(start>=0&&end>start,"No se encontró el handler append-only");
+const handler=source.slice(start,end);
+assert.ok(handler.includes("uploadImageToDrive(fileData") && handler.includes("buildImageUploadOperationKey"),"La carga debe usar la reserva idempotente del journal");
+assert.ok(handler.includes("appendAdminVehicleFieldUpdate_") && handler.includes("expectedSourceEventId"),"El cambio de campo debe anexarse a AportesVehiculo con versión fuente");
+assert.ok(handler.includes('state: "linked"') && handler.includes("appendImageUploadEventForAdmin_"),"El archivo debe vincularse mediante un evento append-only");
+assert.ok(!handler.includes("LockService.getScriptLock") && !handler.includes("waitLock("),"El reemplazo no debe depender del ScriptLock global");
+assert.ok(!handler.includes("AdminImageUploads") && !handler.includes("saveAdminImageUploadOperation"),"El reemplazo no debe depender del ledger mutable");
+assert.ok(!handler.includes("activeCell.setValue") && !handler.includes("setValue(url)"),"No debe escribir directamente la referencia materializada");
+console.log("AdminImageUploadDriveIsolation: 7/7 PASS — carga idempotente por journal sin lock global ni escritura directa");
