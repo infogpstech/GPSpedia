@@ -569,6 +569,7 @@ function handleAppendExistingVehicleCut_(preparedRequest) {
     const vehicleId = String(payload.vehicleId || "").trim();
     const opId = String(payload.opId || "").trim();
     const spreadsheet = preparedRequest.spreadsheet;
+    const sheet = preparedRequest.sheet;
     getVehicleContributionLedgerSheet_(spreadsheet);
 
     const operationHash = computeCutOperationFingerprint_(payload);
@@ -576,29 +577,89 @@ function handleAppendExistingVehicleCut_(preparedRequest) {
         throw new Error("La huella enviada no coincide con el contenido del corte.");
     }
 
-    const snapshot = readSupplementaryVehicleSnapshot_(preparedRequest.sheet, vehicleId);
+    const snapshot = readSupplementaryVehicleSnapshot_(sheet, vehicleId);
     const vehicle = snapshot.vehicle;
-    let imageUrl = "";
-    if (payload.cutData.imgCorte1 && payload.cutData.tipoCorte1 !== "No recomendado") {
-        const folder = findOrCreateVehicleFolder(vehicle);
-        imageUrl = uploadImageToDrive(
-            payload.cutData.imgCorte1,
-            buildCanonicalImageBaseName(vehicle, "imgCorte1"),
+    const cut = payload.cutData;
+    const incomingVehicleData = Object.assign({}, payload.vehicleData || {});
+    const entities = Object.keys(incomingVehicleData).length ? getExistingEntities(sheet) : null;
+    if (entities) {
+        if (incomingVehicleData.marca) incomingVehicleData.marca = resolveAndNormalizeEntity(incomingVehicleData.marca, entities.brands, false);
+        if (incomingVehicleData.modelo) incomingVehicleData.modelo = resolveAndNormalizeEntity(incomingVehicleData.modelo, entities.models, false);
+        if (incomingVehicleData.versionesAplicables) incomingVehicleData.versionesAplicables =
+            resolveAndNormalizeEntity(incomingVehicleData.versionesAplicables, entities.versions, true);
+    }
+
+    const vinPrefix = cut.vin ? extractVinPrefix(cut.vin) : "";
+    let acceptedVinPrefix = "";
+    if (vinPrefix) {
+        const vinColumnIndex = getVinColumnIndex(sheet);
+        if (!vinColumnIndex) throw new Error("La hoja «Cortes» no contiene el encabezado «VIN»; no se puede guardar el identificador.");
+        const existingVins = parseVinCollection(snapshot.rowValues[vinColumnIndex - 1]);
+        if (!existingVins.includes(vinPrefix)) {
+            const duplicate = checkVinDuplicateInSheet(sheet, vinPrefix, vehicleId);
+            if (duplicate) throw new Error("VIN ya está registrado para: " + duplicate.modelName);
+            const pendingConflict = findVehicleContributionVinConflict_(spreadsheet, vinPrefix, vehicleId);
+            if (pendingConflict) throw new Error("El VIN ya está reservado por otro aporte pendiente del vehículo " + pendingConflict.vehicleId + ".");
+            const maxAllowed = countEquipmentVersions(incomingVehicleData.versionesAplicables || vehicle.versionesAplicables);
+            addVinToAvailableSlot(existingVins, vinPrefix, maxAllowed);
+            acceptedVinPrefix = vinPrefix;
+        }
+    }
+
+    const metadata = {};
+    ["categoria", "marca", "modelo", "versionesAplicables", "anoDesde", "anoHasta", "tipoEncendido"].forEach(field => {
+        const current = String(vehicle[field] == null ? "" : vehicle[field]).trim();
+        const incoming = String(incomingVehicleData[field] == null ? "" : incomingVehicleData[field]).trim();
+        if (!current && incoming) metadata[field] = incomingVehicleData[field];
+    });
+    if (metadata.anoDesde) {
+        const yearInput = String(metadata.anoDesde).trim();
+        if (yearInput.includes("-")) {
+            const parts = yearInput.split("-").map(value => Number(value.trim()));
+            metadata.anoDesde = Math.min(parts[0], parts[1]);
+            metadata.anoHasta = metadata.anoHasta || Math.max(parts[0], parts[1]);
+        } else {
+            metadata.anoDesde = Number(yearInput);
+            metadata.anoHasta = metadata.anoHasta || metadata.anoDesde;
+        }
+    }
+
+    const folderInfo = mergeVehicleFolderInfo(vehicle, incomingVehicleData);
+    let cutImageUrl = "";
+    let vehicleImageUrl = "";
+    if (cut.imgCorte1 && cut.tipoCorte1 !== "No recomendado") {
+        const folder = findOrCreateVehicleFolder(folderInfo);
+        cutImageUrl = uploadImageToDrive(
+            cut.imgCorte1,
+            buildCanonicalImageBaseName(folderInfo, "imgCorte1"),
             folder,
             buildImageUploadOperationKey(opId, vehicleId, "imgCorte"),
             { shortLedgerLock: true }
         );
-        if (!imageUrl) throw new Error("La carga de la imagen del corte no devolvió una URL válida.");
+        if (!cutImageUrl) throw new Error("La carga de la imagen del corte no devolvió una URL válida.");
     }
+    if (incomingVehicleData.imagenVehiculo && !checkFileIdValid(vehicle.imagenVehiculo)) {
+        const folder = findOrCreateVehicleFolder(folderInfo);
+        vehicleImageUrl = uploadImageToDrive(
+            incomingVehicleData.imagenVehiculo,
+            buildCanonicalImageBaseName(folderInfo, "imagenVehiculo"),
+            folder,
+            buildImageUploadOperationKey(opId, vehicleId, "imagenVehiculo"),
+            { shortLedgerLock: true }
+        );
+        if (!vehicleImageUrl) throw new Error("La carga de la imagen del vehículo no devolvió una URL válida.");
+    }
+    if (vehicleImageUrl) metadata.imagenVehiculo = vehicleImageUrl;
 
-    const cut = payload.cutData;
     const contributionPayload = {
         tipo: String(cut.tipoCorte1 || ""),
         ubicacion: String(cut.ubicacionCorte1 || ""),
         color: String(cut.colorCableCorte1 || ""),
         configRelay: String(cut.configRelay1 || ""),
         activaTestigo: cut.activaTestigo1 === true,
-        image: imageUrl
+        image: cutImageUrl,
+        vehicleData: metadata,
+        vinPrefix: acceptedVinPrefix
     };
     const event = appendVehicleContributionEvent_({
         spreadsheet,
@@ -611,22 +672,31 @@ function handleAppendExistingVehicleCut_(preparedRequest) {
         actorName: preparedRequest.collaboratorName
     });
 
-    if (imageUrl) {
+    [cutImageUrl, vehicleImageUrl].filter(Boolean).forEach(url => {
         try {
-            if (!markImageUploadLinked(imageUrl, { shortLedgerLock: true })) {
-                Logger.log("El corte quedó registrado, pero la imagen permanece pendiente de reconciliación: " + imageUrl);
+            if (!markImageUploadLinked(url, { shortLedgerLock: true })) {
+                Logger.log("El aporte quedó registrado, pero la imagen permanece pendiente de reconciliación: " + url);
             }
         } catch (ledgerError) {
-            Logger.log("El corte quedó registrado, pero no se pudo actualizar ImageUploadLedger: " + String(ledgerError && ledgerError.message || ledgerError));
+            Logger.log("El aporte quedó registrado, pero no se pudo actualizar el journal de imágenes: " +
+                String(ledgerError && ledgerError.message || ledgerError));
         }
-    }
+    });
 
     const slotIndex = getVehicleContributionCutSlotIndex_(spreadsheet, snapshot, event.eventId);
+    const vinConflictAfterAppend = acceptedVinPrefix
+        ? findVehicleContributionVinConflict_(spreadsheet, acceptedVinPrefix, vehicleId)
+        : null;
+    const candidateReviewPending = slotIndex === null || Boolean(vinConflictAfterAppend);
+    let message = slotIndex
+        ? "Corte agregado exitosamente."
+        : "El corte se conservó como candidato porque los espacios disponibles están ocupados.";
+    if (vinConflictAfterAppend) {
+        message += " El VIN quedó pendiente de revisión por una colisión concurrente.";
+    }
     return {
         status: "success",
-        message: slotIndex
-            ? "Corte agregado exitosamente."
-            : "El corte se conservó como candidato porque los espacios disponibles están ocupados.",
+        message,
         vehicleId,
         opId,
         timestamp: Utilities.formatDate(new Date(), "GMT-6", "dd/MM/yyyy"),
@@ -635,14 +705,16 @@ function handleAppendExistingVehicleCut_(preparedRequest) {
         operationHash,
         duplicate: event.duplicate === true,
         catalogResetRequired: true,
-        candidateReviewPending: slotIndex === null
+        candidateReviewPending,
+        vinConflictPending: Boolean(vinConflictAfterAppend)
     };
 }
+
 
 function handleAddOrUpdateCut(payload) {
     const preparedRequest = prepareAddOrUpdateCutRequest_(payload);
     const validated = preparedRequest.validatedPayload;
-    if (validated.vehicleId && validated.opId && !validated.vehicleData && !validated.cutData.vin) {
+    if (validated.vehicleId && validated.opId) {
         return handleAppendExistingVehicleCut_(preparedRequest);
     }
     const lock = getWriteContributionLock_(preparedRequest.validatedPayload.vehicleId);
@@ -2703,6 +2775,31 @@ function computeVehicleContributionHash_(vehicleId, kind, payload) {
     return digest.map(value => ("0" + ((value + 256) % 256).toString(16)).slice(-2)).join("");
 }
 
+function findVehicleContributionVinConflict_(spreadsheetRef, vinPrefix, currentVehicleId) {
+    const prefix = String(vinPrefix || "").trim().toUpperCase();
+    if (!prefix) return null;
+    const sheet = getVehicleContributionLedgerSheet_(spreadsheetRef);
+    if (sheet.getLastRow() < 2) return null;
+    const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1,
+        WRITE_VEHICLE_CONTRIBUTIONS_HEADERS_.length).getValues();
+    for (let index = 0; index < rows.length; index++) {
+        const row = rows[index];
+        const vehicleId = String(row[2] || "").trim();
+        if (!vehicleId || vehicleId === String(currentVehicleId || "").trim()) continue;
+        let payload = null;
+        try { payload = JSON.parse(String(row[5] || "{}")); } catch (error) { payload = null; }
+        if (payload && String(payload.vinPrefix || "").trim().toUpperCase() === prefix) {
+            return {
+                vehicleId,
+                opId: String(row[1] || ""),
+                eventId: String(row[0] || ""),
+                rowIndex: index + 2
+            };
+        }
+    }
+    return null;
+}
+
 function appendVehicleContributionEvent_(options) {
     options = options && typeof options === "object" ? options : {};
     const vehicleId = String(options.vehicleId || "").trim();
@@ -2828,7 +2925,9 @@ function getImageUploadReferences_(fileId) {
             let payload = null;
             try { payload = JSON.parse(String(row[5] || "{}")); } catch (error) { payload = null; }
             if (!payload || typeof payload !== "object") return;
-            const image = String(payload.image || payload.imagenVehiculo || "").trim();
+            const vehicleImage = payload.vehicleData && typeof payload.vehicleData === "object"
+                ? String(payload.vehicleData.imagenVehiculo || "") : "";
+            const image = String(payload.image || payload.imagenVehiculo || vehicleImage || "").trim();
             if (getImageUploadFileId_(image) !== fileId) return;
             references.push({
                 sheet: WRITE_VEHICLE_CONTRIBUTIONS_SHEET_NAME_,
