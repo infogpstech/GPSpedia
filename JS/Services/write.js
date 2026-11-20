@@ -556,11 +556,15 @@ function prepareAddOrUpdateCutRequest_(payload) {
 
 function handleAddOrUpdateCut(payload) {
     const preparedRequest = prepareAddOrUpdateCutRequest_(payload);
-    const lock = LockService.getScriptLock();
+    // Las mutaciones de vehículos existentes usan UserLock: usuarios distintos no se bloquean entre sí.
+    // Solo la creación de una fila nueva conserva ScriptLock para la secuencia numérica global de IDs.
+    const hasExistingVehicle = Boolean(String(preparedRequest.validatedPayload.vehicleId || "").trim());
+    const lock = hasExistingVehicle && typeof LockService.getUserLock === "function"
+        ? LockService.getUserLock() : LockService.getScriptLock();
     let lockAcquired = false;
     try { lockAcquired = lock.tryLock(0); } catch (lockError) { lockAcquired = false; }
     if (!lockAcquired) {
-        const busyError = new Error("WRITE está ocupado con otra escritura breve. Conserva el mismo opId y reintenta.");
+        const busyError = new Error("WRITE está ocupado con otra escritura breve de este usuario o con una reserva global de ID. Conserva el mismo opId y reintenta.");
         busyError.code = "WRITE_BUSY";
         throw busyError;
     }
@@ -1698,11 +1702,13 @@ function handleAddSupplementaryInfo(payload) {
         uploadedUrls = prepared.uploadedUrls;
     }
 
-    const lock = LockService.getScriptLock();
+    // Apertura/alimentación solo modifica un vehículo existente: aislar por usuario y evitar
+    // que una carga de otro colaborador detenga esta operación independiente.
+    const lock = typeof LockService.getUserLock === "function" ? LockService.getUserLock() : LockService.getScriptLock();
     let lockAcquired = false;
     try { lockAcquired = lock.tryLock(0); } catch (error) { lockAcquired = false; }
     if (!lockAcquired) {
-        throw createSupplementaryInfoError_("SUPPLEMENTARY_LOCK_FAILED", "WRITE está ocupado con otra escritura breve. Conserva el mismo intento y vuelve a intentarlo.");
+        throw createSupplementaryInfoError_("SUPPLEMENTARY_LOCK_FAILED", "WRITE está ocupado con otra escritura breve de este usuario. Conserva el mismo intento y vuelve a intentarlo.");
     }
 
     let result;
