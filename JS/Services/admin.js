@@ -9169,7 +9169,8 @@ function uploadImageToDrive(imageData,filename,folder,operationKey) {
     const fileId=String(file.getId()),url="https://drive.google.com/uc?export=view&id="+fileId;
     events=readImageUploadEventsByTokenForAdmin_(eventsSheet,token);projection=projectImageUploadEventsForAdmin_(events);
     if(projection&&projection.state==="requires_review")throw new Error("Se detectó una carga concurrente con más de un archivo; quedó para revisión.");
-    if(!events.some(entry=>String(entry.values[7]||"").trim()===fileId))
+    if(!events.some(entry=>String(entry.values[7]||"").trim()===fileId)||
+        (projection&&!["pending","linked"].includes(projection.state)))
         appendImageUploadEventForAdmin_(eventsSheet,{...expected,state:"pending",fileId,fileUrl:url,fileName:originalFilename});
     const confirmed=projectImageUploadEventsForAdmin_(readImageUploadEventsByTokenForAdmin_(eventsSheet,token));
     if(!confirmed||confirmed.state==="requires_review"||confirmed.fileId!==fileId)
