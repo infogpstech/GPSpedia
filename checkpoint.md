@@ -487,3 +487,11 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - En fallos de escritura, la fila/metadata se revierte y verifica bajo lock; solo si la reversión queda confirmada se libera el lock y se elimina el adjunto. Si la reversión no puede confirmarse, la imagen se conserva para evitar romper una referencia persistida.
 - `FeedbackReportImageCleanupOutsideLock` 5/5 PASS. CI `44646463925` SUCCESS: 199 suites, 2,561 pruebas aprobadas, 0 fallos; health read-only `44646464055` SUCCESS.
 - Commits: implementación `b076250a1d21f200b4824ea13f7c34a270b634e2`, prueba `90e53b23b015c3a9b8084e8e2391b84db4c04583`, runner `5cf1646ce6791825a4c8033dedd722eac21d41c9`.
+
+
+## P1 — adjuntos duplicados/rollback de sugerencias de corte fuera del lock (2026-11-20)
+- En `handleSuggestCutChange`, las imágenes duplicadas de una operación/reporte idempotente se envían a papelera después de liberar ScriptLock.
+- En rollback, solo se elimina el adjunto cuando la fila se limpió y el estado se verificó; si no puede confirmarse la reversión, se conserva la imagen para reconciliación. La actividad de usuario continúa después del lock.
+- `FeedbackSuggestionImageCleanupOutsideLock` 5/5 PASS. CI `44646768057` SUCCESS: 200 suites, 2,566 pruebas aprobadas, 0 fallos; health read-only `44646767980` SUCCESS.
+- Commits: implementación `44e296d523adf38604649b21b218c160bb560262`, prueba `88dd7f4ad8cdea155b72c2e45916ac8b72d31f0a`, runner `c0fad833828847d68c5d027bc99dcfa9d9fa6dfc`, ajuste de contrato `d5c7968aa7dd32877fb0fef243dd0814229af0bc`.
+- Sin despliegue Apps Script ni modificaciones productivas.
