@@ -6,8 +6,8 @@ Rama base protegida: GPSpedia2.2.5 (no modificar)
 Normativa: NORMAS_DESAROLLO.md
 
 ## Estado consolidado vigente — verificado 2026-11-20
-- Rama de trabajo HEAD: `6a6b7441cd41b189e1b894bc0101f95ff83dc5e8`. Rama base protegida: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; no se modificó.
-- Regresión del HEAD: GitHub Actions `44764926538` SUCCESS — 220 suites, 2,735 pruebas aprobadas, 0 fallos. Health read-only `44764926532` SUCCESS; Pages `44764925637` SUCCESS.
+- Rama de trabajo HEAD: `4f5a85065816d2277341cf1f7827c29d9dc2519b`. Rama base protegida: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; no se modificó.
+- Regresión del HEAD: GitHub Actions `44768089834` SUCCESS — 221 suites, 2,743 pruebas aprobadas, 0 fallos. Health read-only `44768090013` SUCCESS; Pages `44768089955` pendiente al registrar esta actualización.
 - Fase 1 (ADMIN salud/telemetría): implementación local y regresión integral COMPLETADAS. Contratos verificados: ServiceHealth 17/17, ServiceTrafficAdmin 33/33, BrowserTraffic 9/9, Aggregator 5/5, Aggregation 6/6, DirectTelemetry 21/21, Batch 5/5 y Metrics 1/1.
 - Fase 2 (arquitectura/Coordinator): implementación local base COMPLETADA; configuración de ScriptProperties, URLs, secretos y deployments reales queda para Beta autorizada.
 - Fase 3 (Inbox/aislamiento): correcciones locales y regresión COMPLETADAS; InboxConversations 66/66 y CoordinatorCapabilityPreservation 6/6. Verificación con credenciales/deployments reales queda para Beta.
@@ -1190,3 +1190,11 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] Confirmar que las escrituras normales del ledger `Idempotencia` se ejecutan bajo ScriptLock; migración también toma el lock. `handleCheckOperation` es de solo lectura.
 - [x] No se identificaron más lecturas redundantes que puedan eliminarse sin reducir la protección frente a cambios externos, fallos parciales o carreras post-Drive. No se modificó código en esta revisión.
 - Estado: AUDITORÍA LOCAL COMPLETADA. El bloque local `GP-PERF-ADMIN-CUT-LOCK-01` queda COMPLETADO CON VALIDACIÓN DIFERIDA A BETA; quedan pendientes únicamente Script IDs reales y pruebas de concurrencia/Drive/Spreadsheet en Beta autorizada.
+
+
+### 2026-11-20 — cobertura local del constructor del organizador de imágenes
+- [x] Añadida `JS/Tests/CortesImageOrganizerTargets.mjs` y registrada en `RunServiceTests.mjs`.
+- [x] Ocho escenarios: destinos de los ocho campos de Cortes + logo; ruta/nombre/código funcional; versiones y años ambiguos; fórmulas; IDs de vehículo duplicados; archivo compartido; tipo de corte no reconocido; marca mult categoría y duplicidad de logo.
+- [x] CI `44768089834` SUCCESS: 221 suites, 2,743 pruebas aprobadas, 0 fallos. `CortesImageOrganizerTargets` 8/8 PASS; health read-only `44768090013` SUCCESS.
+- La primera ejecución falló por un caso de prueba cuyo valor de tipo de corte no produjo un código funcional según el clasificador actual; se ajustó únicamente el dato de prueba al valor canónico y la repetición aprobó. No se modificó código productivo ni se relajó la clasificación.
+- Estado: COBERTURA LOCAL COMPLETADA. El preview real de Drive/Spreadsheet sigue pendiente de Beta; Safe Apply continúa sin implementar y condicionado a la revisión del preview real.
