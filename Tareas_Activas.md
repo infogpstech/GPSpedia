@@ -1355,3 +1355,15 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [ ] Corregir asignación de slots de cortes para que dos opId distintos no seleccionen ni sobrescriban el mismo slot; conservar el contenido entrante si la capacidad está llena.
 - **Aclaración normativa:** no añadir leases ni locks de Coordinator para las operaciones ordinarias WRITE. §15 prohíbe leases, locks globales, esperas y serialización de acciones independientes. La política WRITE de Coordinator existe en el mapa, pero el `doPost` actual no la invoca para estas acciones.
 - Estado de `GP-CONCURRENCY-CUT-MULTI-ENTRY-01`: EN PROGRESO / P0.
+
+
+### 2026-11-20 — Retirada del UserLock suplementario y regresión
+
+- [x] Retirar `UserLock` de `handleAddSupplementaryInfo`; §15 no permite locks/leases ordinarios y ese lock por usuario no coordinaba identidades diferentes.
+- [x] Mantener las cargas Drive antes de la persistencia y sin lock retenido.
+- [x] Actualizar contratos de pruebas que exigían el lock anterior.
+- [x] CI HEAD `65abc19939d2f55b00edc8b9fb4735f62f6a65ab`: 228 suites, 2,817 pruebas, 0 fallos; health read-only SUCCESS.
+- [ ] Resolver mismo slot/campo con registro durable append-only y recuperación/candidato; la escritura por celda solo protege aportes que afectan celdas diferentes.
+- [ ] Resolver idempotencia completa de aportes suplementarios por `opId` y vincular archivos Drive que no se puedan materializar a un candidato revisable.
+- [ ] Revisar y rediseñar el bloqueo `UserLock` restante de cortes existentes y la reserva global de IDs de vehículos conforme a §15, sin perder unicidad ni permitir sobrescrituras.
+- Estado P0: EN PROGRESO.
