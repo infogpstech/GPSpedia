@@ -166,3 +166,12 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 
 - CI `44835908125` SUCCESS: 239 suites, 2968 pruebas aprobadas, 0 fallos. Health read-only `44835908123` SUCCESS.
 - P0 continúa abierto exclusivamente para la reducción del ScriptLock global en las rutas FEEDBACK restantes y las validaciones Beta reales AUG-159/AUG-160. No se desplegó Apps Script ni se modificaron recursos productivos.
+
+
+## Checkpoint — auditoría de asignador numérico y locks FEEDBACK (2026-11-20)
+
+- Se verificó que las reservas de ID numérico pasan por WRITE: alta nueva y endpoint `allocateVehicleId`; ADMIN consume este endpoint antes de su lock local. `CortesIdReservations` conserva opId, hash e ID; los reintentos idénticos recuperan la misma reserva y un hash distinto se rechaza.
+- `getNextCortesVehicleIdLocked` y `handleAllocateVehicleId` mantienen `tryLock(0)`. La exclusión sigue siendo necesaria para no duplicar IDs numéricos. Regresiones existentes de asignador, E2E ADMIN→WRITE y lectura acotada quedan incluidas en CI 44835751507 SUCCESS: 239 suites, 2968 pruebas, 0 fallos.
+- Se revisaron locks FEEDBACK: likes (contador read-modify-write), reportes/sugerencias (deduplicación), PyS (first-write-wins/relaciones) y tutoriales/video (unicidad/transiciones) requieren sustituto append-only/versionado antes de retirarlos. No usar UserLock como reemplazo entre usuarios.
+- La ruta heredada `WRITE/addVinToVehicle` conserva lock global y no tiene consumidor encontrado en módulos frontend principales; sigue expuesta por api-config, así que no se elimina sin revisar integraciones externas.
+- No se modificó código de producción en esta auditoría ni se desplegó. Próximo: migrar una ruta FEEDBACK por vez con journal/proyección y regresión; revisar compatibilidad de `addVinToVehicle`.
