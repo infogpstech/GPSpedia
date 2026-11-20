@@ -32,11 +32,11 @@ const adminField = extract(admin, "handleUpdateVehicleField");
 const adminDriveCore = extract(admin, "runAdminDriveWorkOutsideScriptLock_");
 const adminDrive = extract(admin, "runAdminContributionDriveWorkOutsideScriptLock_");
 
-assert.match(writeEntry, /lock\.waitLock\(2000\)/);
-assert.doesNotMatch(writeEntry, /tryLock\(0\)/);
+assert.match(writeEntry, /lock\.tryLock\(0\)/);
+assert.doesNotMatch(writeEntry, /waitLock\(/);
 assert.match(writeAllocate, /lock\.tryLock\(0\)/);
 assert.doesNotMatch(writeAllocate, /waitLock\(/);
-assert.match(writeDrive, /lock\.waitLock\(2000\)/);
+assert.match(writeDrive, /lock\.tryLock\(0\)/);
 assert.match(adminEntry, /lock\.tryLock\(0\)/);
 assert.doesNotMatch(adminEntry, /waitLock\(/);
 assert.match(adminUpload, /lock\.waitLock\(2000\)/);
@@ -44,7 +44,7 @@ assert.match(adminField, /lock\.tryLock\(0\)/);
 assert.doesNotMatch(adminField, /lock\.waitLock\(/);
 assert.match(adminDrive, /runAdminDriveWorkOutsideScriptLock_\(lock, opId, operation, revalidate, operationHash, 0\)/);
 assert.match(adminDriveCore, /lock\.tryLock\(0\)/);
-assert.match(extract(write, "handleAddSupplementaryInfo"), /lock\.waitLock\(5000\)/);
+assert.match(extract(write, "handleAddSupplementaryInfo"), /lock\.tryLock\(0\)/);
 
 const writeHelper = new Function(writeDrive + "\nreturn runWriteDriveWorkOutsideScriptLock_;")();
 const adminHelper = new Function(adminDriveCore + "\n" + adminDrive + "\nreturn runAdminContributionDriveWorkOutsideScriptLock_;")();
@@ -63,7 +63,7 @@ const adminHelper = new Function(adminDriveCore + "\n" + adminDrive + "\nreturn 
     assert.deepEqual(sequence, ["otra-escritura-durante-drive"]);
     assert.equal(state.releasedForDrive, true);
     assert.equal(lock.held, true, "La operación original debe readquirir el lock antes de confirmar Sheets");
-    assert.deepEqual(lock.waits, [2000, 2000, 2000]);
+    assert.deepEqual(lock.waits, [2000, 2000]);
     lock.releaseLock();
 }
 {
