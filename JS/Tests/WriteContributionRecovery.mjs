@@ -18,7 +18,7 @@ function makeHandler(events, options = {}) {
     return new Function(
         "getSpreadsheet", "SHEET_NAMES", "findRowByOpId", "WRITE_VEHICLE_CONTRIBUTIONS_SHEET_NAME_",
         "findVehicleContributionEventsByOpId_", "readSupplementaryVehicleSnapshot_",
-        "getVehicleContributionCutSlotIndex_", "getVehicleContributionCandidateStatus_", "Utilities",
+        "getVehicleContributionCutSlotIndex_", "getVehicleContributionCandidateStatus_", "findVehicleContributionVinConflict_", "checkVinDuplicateInSheet", "Utilities",
         handler + "\nreturn handleCheckOperation;"
     )(
         () => spreadsheet, { CORTES: "Cortes" }, () => null, "AportesVehiculo",
@@ -26,6 +26,8 @@ function makeHandler(events, options = {}) {
         () => ({ vehicle: options.vehicle || { id: "101" }, rowValues: [] }),
         () => options.slotIndex === undefined ? 1 : options.slotIndex,
         () => options.candidateStatus === true,
+        () => options.vinConflict === true ? { vehicleId: "202" } : null,
+        () => options.baseVinConflict === true ? { vehicleId: "202" } : null,
         { formatDate: () => "20/11/2026" }
     );
 }
@@ -73,9 +75,21 @@ function event({ eventId = "EV-1", opId = "OP-1", vehicleId = "101", hash = "a".
     assert.equal(result.candidateReviewPending, true, "La alimentación desplazada debe conservarse como candidata");
 }
 {
+    const fn = makeHandler([event({ payload: { tipo: "Bomba", vinPrefix: "SHARED" } })], { vinConflict: true });
+    const result = fn({ opId: "OP-1", operationHash: "a".repeat(64) });
+    assert.equal(result.vinConflictPending, true);
+    assert.equal(result.candidateReviewPending, true, "La recuperación debe exponer como candidato el VIN que entró en conflicto después de la primera respuesta");
+}
+{
+    const fn = makeHandler([event({ payload: { tipo: "Bomba", vinPrefix: "EXISTING" } })], { baseVinConflict: true });
+    const result = fn({ opId: "OP-1", operationHash: "a".repeat(64) });
+    assert.equal(result.vinConflictPending, true);
+    assert.equal(result.candidateReviewPending, true, "La recuperación debe comprobar VIN materializados en otros vehículos");
+}
+{
     const fn = makeHandler([]);
     const result = fn({ opId: "OP-MISSING" });
     assert.equal(result.exists, false);
     assert.equal(result.pending, false);
 }
-console.log("WriteContributionRecovery: 7/7 PASS — checkOperation reconoce eventos append-only y conflictos");
+console.log("WriteContributionRecovery: 9/9 PASS — checkOperation reconoce eventos, candidatos y conflictos VIN tardíos");
