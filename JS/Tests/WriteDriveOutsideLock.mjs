@@ -15,12 +15,13 @@ const driveRunner=new Function(driveHelper+";return runWriteDriveWorkOutsideScri
 function fakeLock(busy=false){
  let held=true;const events=[];
  return {events,hasLock:()=>held,releaseLock(){assert.equal(held,true);held=false;events.push("release");},
-  tryLock(timeout){events.push("try:"+timeout);if(busy)return false;held=true;return true;},isHeld:()=>held};
+  tryLock(timeout){events.push("try:"+timeout);if(busy)return false;held=true;return true;},
+  waitLock(timeout){events.push("wait:"+timeout);if(busy)throw new Error("busy");held=true;return true;},isHeld:()=>held};
 }
 {
  const lock=fakeLock(),state={releasedForDrive:false};
  const value=driveRunner(lock,state,"OP-1",()=>{assert.equal(lock.isHeld(),false);lock.events.push("drive");return "uploaded";});
- assert.equal(value,"uploaded");assert.deepEqual(lock.events,["release","drive","try:0"]);
+ assert.equal(value,"uploaded");assert.deepEqual(lock.events,["release","drive","wait:2000"]);
  assert.equal(lock.isHeld(),true);assert.equal(state.releasedForDrive,true);
 }
 {
@@ -31,7 +32,7 @@ function fakeLock(busy=false){
 {
  const lock=fakeLock(true),state={releasedForDrive:false};
  assert.throws(()=>driveRunner(lock,state,"OP-2",()=>{lock.events.push("drive");return "uploaded";}),e=>e.code==="WRITE_LOCK_REACQUIRE_PENDING");
- assert.deepEqual(lock.events,["release","drive","try:0"]);assert.equal(lock.isHeld(),false);assert.equal(state.releasedForDrive,true);
+ assert.deepEqual(lock.events,["release","drive","wait:2000"]);assert.equal(lock.isHeld(),false);assert.equal(state.releasedForDrive,true);
 }
 const slotSource=extract("findNextAvailableCutSlot_","isAddCutPlainObject_");
 const slotRunner=new Function("COLS_CORTES","readIdempotenciaEntries_","getIdempotenciaSheet",
@@ -57,9 +58,9 @@ const preflight=extract("prepareAddOrUpdateCutRequest_","handleAddOrUpdateCut");
 assert.ok(preflight.includes('getAuthenticatedCollaborator(payload, payload && payload.silent === true ? ["desarrollador"] : undefined)'));
 assert.doesNotMatch(locked,/getAuthenticatedCollaborator\(|validateAddOrUpdateCutPayload_/, "El lock no debe retener autenticación ni validación de payload");
 const outer=extract("handleAddOrUpdateCut","handleAddOrUpdateCutLocked");
-assert.ok(outer.indexOf("prepareAddOrUpdateCutRequest_(payload)")<outer.indexOf("lock.tryLock(0)"));
+assert.ok(outer.indexOf("prepareAddOrUpdateCutRequest_(payload)")<outer.indexOf("lock.waitLock(2000)"));
 assert.ok(locked.includes("lockState && lockState.releasedForDrive"));
 assert.ok(source.includes("if (lock.hasLock()) lock.releaseLock()"));
-assert.match(source,/function handleAddOrUpdateCut\(payload\)\s*\{[\s\S]{0,240}lock\.tryLock\(0\)/);
+assert.match(source,/function handleAddOrUpdateCut\(payload\)\s*\{[\s\S]{0,360}lock\.waitLock\(2000\)/);
 assert.doesNotMatch(source,/function handleAddOrUpdateCut\(payload\)\s*\{[\s\S]{0,160}waitLock\(30000\)/);
 console.log("1/1 PASS — WRITE Drive fuera del ScriptLock y reserva de slots");
