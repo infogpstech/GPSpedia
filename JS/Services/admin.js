@@ -10765,6 +10765,8 @@ function requestAdminDriveFile_(fileId,method){
 function handlePermanentlyDeleteReplacedImage(payload,logMessage,developerContext){
     const id=String(payload&&payload.id_reemplazo||"").trim();if(!id)throw new Error("ID de registro de imagen requerido.");
     const lock=LockService.getScriptLock();try{lock.waitLock(30000);}catch(error){throw new Error("No se pudo bloquear la eliminación definitiva. Intenta nuevamente.");}
+    let lockAcquired=true;
+    const releaseLock=()=>{if(lockAcquired){lock.releaseLock();lockAcquired=false;}};
     try{
         const sheet=getOrCreateReplacedImagesSheet(),headers=ensureReplacedImagesInventoryColumns(sheet);
         const existing=findReplacedImageRecordById(sheet,id);if(!existing)throw new Error("Registro de imagen no encontrado.");
@@ -10778,6 +10780,7 @@ function handlePermanentlyDeleteReplacedImage(payload,logMessage,developerContex
         const current=requestAdminDriveFile_(driveId,"get");
         if(current.code===404){
             setReplacedImageHistoryStatusVerified_(sheet,existing.rowIndex,"eliminada");
+            releaseLock();
             recordImageAdministrationActivity(developerContext,"admin_image_permanent_delete",id,"Drive confirmó que la imagen ya no existe; se reconcilió el historial como eliminada.");
             return {status:"success",message:"La imagen ya no existe en Drive y el historial quedó reconciliado como eliminada.",reconciled:true};
         }
@@ -10797,10 +10800,11 @@ function handlePermanentlyDeleteReplacedImage(payload,logMessage,developerContex
         const verification=requestAdminDriveFile_(driveId,"get");
         if(verification.code!==404)throw new Error("La eliminación fue solicitada, pero Drive no confirmó la ausencia del archivo. El registro queda eliminacion_pendiente para reconciliación.");
         setReplacedImageHistoryStatusVerified_(sheet,existing.rowIndex,"eliminada");
+        releaseLock();
         recordImageAdministrationActivity(developerContext,"admin_image_permanent_delete",id,"Imagen "+driveId+" eliminada definitivamente y ausencia confirmada por Drive API.");
         logMessage&&logMessage("Inventario e historial de imágenes","La imagen "+driveId+" fue eliminada definitivamente.");
         return {status:"success",message:"La imagen fue eliminada definitivamente de Google Drive y la ausencia del archivo fue verificada."};
-    }finally{lock.releaseLock();}
+    }finally{releaseLock();}
 }
 
 function handleMarkReplacedImageInUse(payload, logMessage, developerContext) {
