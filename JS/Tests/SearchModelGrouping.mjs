@@ -33,7 +33,7 @@ test('el rango único abre detalle y duplicados se muestran explícitamente',()=
     assert.match(ui,/Registro duplicado/);
 });
 test('la búsqueda textual no autoabre y VIN inequívoco conserva la apertura',()=>{
-    assert.match(ui,/mostrarResultadosDeBusqueda\(\{ type: resultType, query: textoBusqueda, results: renderResults \}, !isRestoring && isVinQuery && Boolean\(matchedVehicleById\)\)/);
+    assert.match(navigation,/mostrarResultadosDeBusqueda\(\{ type: resultType, query: textoBusqueda, results: renderResults \}, !isRestoring && isVinQuery && Boolean\(matchedVehicleById\)\)/);
     assert.match(ui,/autoOpen = false/);
 });
 test('el historial conserva versión, encendido y consulta',()=>{
