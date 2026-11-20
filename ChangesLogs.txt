@@ -1169,3 +1169,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-20 · aislamiento FEEDBACK sugerencia de año] La aplicación de rango ya no mueve la imagen principal ni escribe ActividadUsuario bajo ScriptLock. Tras liberar, el handler registra actividad y sincroniza carpeta Drive usando una lectura fresca; solo mueve si coinciden ID del vehículo y URL de imagen con el snapshot confirmado. Si cambió, omite movimiento y advierte. `FeedbackYearFolderSyncOutsideLock` 5/5, `SuggestYearVoteThreshold` 6/6. CI `44647298901` SUCCESS: 201 suites, 2,571 pruebas aprobadas, 0 fallos. Sin despliegue Apps Script ni cambios productivos.
+
+
+[2026-11-20 · aislamiento FEEDBACK likes] `handleRecordLike` mantiene el incremento y ledger pending/completed bajo ScriptLock, pero difiere `logUserActivity` hasta después de liberar; los replays completed no duplican actividad. `FeedbackLikeActivityOutsideLock` 5/5. CI `44647675553` SUCCESS: 202 suites, 2,576 pruebas aprobadas, 0 fallos; health read-only `44647675689` SUCCESS.
