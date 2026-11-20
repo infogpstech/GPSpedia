@@ -60,4 +60,4 @@ assert.doesNotMatch(
     "La ruta legacy no debe volver a consultar la columna ID ni la fila completa"
 );
 
-console.log("AdminLegacyOpIdSnapshotReuse: 8/8 PASS — recuperación legacy reutiliza snapshot y conserva unicidad/validación");
+console.log("AdminLegacyOpIdSnapshotReuse: 9/9 PASS — recuperación legacy reutiliza snapshot y conserva unicidad/validación");
