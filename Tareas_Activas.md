@@ -1157,3 +1157,12 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] `AdminExistingVehicleLookupPreflight.mjs` 10/10 PASS; CI `44763460378` SUCCESS: 220 suites, 2,735 pruebas, 0 fallos; health read-only `44763460429` SUCCESS.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Sin despliegue Apps Script ni cambios productivos.
 - Siguiente: continuar la auditoría de lecturas remotas dentro de `handleAddOrUpdateCut`.
+
+
+### GP-PERF-ADMIN-CUT-LOCK-01 — snapshot inicial de Idempotencia sin relectura (2026-11-20)
+- [x] Usar el snapshot integral leído bajo ScriptLock en la primera búsqueda de `opId`, sin ejecutar otra lectura dirigida inmediata.
+- [x] Mantener revalidación dirigida por defecto para callbacks post-Drive, operaciones que readquieren lock y reconciliación de errores.
+- [x] `AdminIdempotencySnapshotReuse` 10/10 y `AdminLegacyOpIdSnapshotReuse` 10/10 PASS; CI `44764022976` SUCCESS: 220 suites, 2,735 pruebas, 0 fallos; health read-only `44764023135` SUCCESS.
+- [x] Corregir el extractor de test que aún esperaba la firma anterior; CI inicial `44763915168` falló solo por ese contrato estático y la repetición aprobó.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Sin despliegue Apps Script ni cambios productivos.
+- Siguiente: auditar lecturas de `recordOpId` y `markAdminCutImagesLinkedOutsideLock_`.
