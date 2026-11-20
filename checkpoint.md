@@ -592,3 +592,11 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - `AdminPermanentDeleteDrivePreflightOutsideLock` 9/9 PASS; `AdminPermanentDeleteActivityOutsideLock` 6/6 PASS; `AdminImageTrashLifecycle` 40/40 PASS. CI `44654436417` SUCCESS: 212 suites, 2,651 pruebas aprobadas, 0 fallos; health read-only `44654436415` SUCCESS.
 - Commits: preflight `d47afd59ea80cf7031a715334634e2f308eecf44`, preservación del resultado `051aff78c1135d5af814b0b865978f1dc729bff2`, test `47fe0d697fd44ad557b5fe8a089c659edd1ce9dc`, runner `fef9dbd76bd158fae32c2a23ce7526cb755952da`, guardia de liberación `7dc50208d9951f353d763c896dcc4ddd2d393688`, ajustes de contratos/harness `feba75cca2a4c8c659eaefe279f026bdfc13011e`, `82f3721ee4a9a0b2f8b8cf92c206520a1714ef4d`, `43f2efbaa1399d8e36286d99066250074f524302`, `e01d5eb20b0436d38f814fedc0dac41a6af4068c`.
 - Sin despliegue Apps Script ni cambios productivos.
+
+
+## P1 — ADMIN restauración desde papelera: preflight Drive fuera del lock (2026-11-20)
+- `handleRestoreReplacedImageFromTrash` mueve la lectura Drive del archivo (papelera, MIME, carpeta y ruta) fuera del ScriptLock. Tras readquirir con `tryLock(0)`, compara en el historial tipo/estado/estado previo/Drive ID antes de continuar. El objeto Drive verificado se reutiliza para la restauración; `setTrashed(false)`, lectura posterior y rollback permanecen bajo lock.
+- El camino idempotente de imagen ya restaurada conserva su respuesta. Actividad Coordinator/logging se mantiene post-lock.
+- `AdminRestoreImageDrivePreflightOutsideLock` 10/10 PASS; `AdminRestoreImageActivityOutsideLock` 6/6 PASS; `AdminImageTrashLifecycle` 40/40 PASS. CI `44654753039` SUCCESS: 213 suites, 2,661 pruebas aprobadas, 0 fallos; health read-only `44654752914` SUCCESS.
+- Commits: implementación `c3e167c8b83ba54be8f6221f2286ca3577d5a064`, harness `a0445da7e8f24d5c82d6a26ac62aba968a67a69c`, prueba `33d28902882750dfd552133d86743d39e42612cf`, runner `30dee3ac792dff3694166bdaa3777832a633d1ba`, ajuste de contrato `a3ebeaa58cc96519f827282b60f286170f7dc328`.
+- Sin despliegue Apps Script ni cambios productivos.
