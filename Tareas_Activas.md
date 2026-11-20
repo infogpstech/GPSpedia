@@ -1247,3 +1247,29 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - Pages run 44786207568 seguía en ejecución al registrar esta adenda.
 - Sin despliegue Apps Script ni operaciones reales Drive/Spreadsheet. El historial y la retención se probaron con propiedades simuladas; no se borraron registros de un proyecto Apps Script real.
 - Estado: implementación local de historial/retención COMPLETADA CON VALIDACIÓN DIFERIDA. Pendiente Beta: comprobar cuota y rendimiento reales de ScriptProperties, ACL heredadas y aplicación/rollback en Drive aislado; inspección visual responsive de los nuevos controles.
+
+
+## Requisitos nuevos del usuario — concurrencia de aportes y carrusel de vistos (2026-11-20)
+
+### GP-CONCURRENCY-CUT-MULTI-ENTRY-01 — escrituras concurrentes y conflictos por vehículo/tipo
+**Prioridad: P0 · EN PROGRESO · implementación local antes de Beta.**
+- Permitir operaciones simultáneas e independientes sobre vehículos/modelos diferentes, aunque provengan de usuarios distintos y de distintos puntos de entrada. La idempotencia deduplica únicamente el mismo intento lógico (opId + huella); nunca debe serializar ni descartar aportes legítimos diferentes.
+- Mantener interoperabilidad entre: botón «+» del modal de detalle para agregar corte/apertura/alimentación; edición in-modal de desarrollador para agregar/reemplazar imagen o actualizar datos; formulario HTML/add_cortes.html para registrar corte y vehículo; y Feedback/reporte de error para sugerir o aportar información.
+- Para el mismo vehículo y mismo tipo/slot, permitir que ambas solicitudes lleguen a procesamiento. Detectar una colisión real al reservar/confirmar el mismo recurso, reportar qué registro cambió y preservar el aporte entrante; no sobrescribir silenciosamente ni rechazar todo el trabajo del vehículo.
+- Si los tres slots de corte están ocupados y una colisión impide asociar el nuevo corte, conservar la imagen en la biblioteca «Imágenes reemplazadas» como candidata a corte adicional, con estado/relación de revisión y vehículo/categoría identificables. Aplicar criterio equivalente a apertura y alimentación. No eliminar ni dejar huérfano el archivo; no marcarlo como corte confirmado hasta revisión.
+- Mantener los límites actuales de slots y el modelo de datos compatible. Separar la idempotencia de transporte del control de concurrencia de negocio; evitar locks globales prolongados, llamadas redundantes, cargas dobles y reintentos que dupliquen archivos o filas.
+- Cubrir en pruebas aisladas: dos usuarios/dos vehículos simultáneos; mismo vehículo/slots diferentes; mismo vehículo/mismo slot; capacidad llena con preservación de candidato; reintento del mismo opId; mismo archivo/opId desde distintos puntos de entrada; y errores parciales Drive/Spreadsheet. Verificar también que formularios, reportes, reacciones, reacciones a feedback y otras escrituras no se degraden ni fallen silenciosamente.
+- Revisar contratos y consumidores de ADMIN, WRITE y FEEDBACK antes de modificar. No cambiar RBAC ni requerir nuevas confirmaciones/autenticaciones por acción. No desplegar ni modificar datos productivos durante esta fase local.
+
+### GP-UX-RECENT-VIEWED-CACHE-PARALLEL-01 — render temprano del carrusel Vistos Recientemente
+**Prioridad: P1 · PENDIENTE DE IMPLEMENTACIÓN.**
+- Diagnosticar por qué el carrusel de vistos aparece después de los demás aunque los datos estén en caché local.
+- Hidratar viewedItems directamente desde IndexedDB/caché local en paralelo al resto de la hidratación local y al render de carruseles; no esperar historial de búsqueda, catálogo remoto ni otros carruseles.
+- Evitar lecturas duplicadas de IndexedDB y re-renderizados completos; conservar aislamiento por usuario/sesión, estado previo ante fallos opcionales y actualización incremental del carrusel.
+- Añadir pruebas de orden/tiempos de hidratación, sesión cambiada, IndexedDB lento/no disponible y no duplicación de lecturas.
+
+### Hallazgos iniciales de auditoría (2026-11-20)
+- JS/Services/admin.js::handleAddOrUpdateCut adquiere LockService.getScriptLock() con tryLock(0): cualquier otra escritura que mantenga ese lock puede hacer que una operación legítima de otro vehículo falle inmediatamente con ADMIN_BUSY. El trabajo Drive se libera parcialmente mediante runAdminDriveWorkOutsideScriptLock_, pero la reserva, la escritura de Sheets y otras fases siguen bajo el lock global.
+- En vehículo existente, findNextAvailableCutSlot_ considera slots pendientes y devuelve null cuando los tres están ocupados; el handler lanza «No hay espacios disponibles para más cortes» y no se encontró en este flujo una conservación automática del aporte como candidato en Imágenes reemplazadas.
+- loadUserLocalActivity inicia por separado la lectura de historial de búsqueda y vistos; el test RecentlyViewedCarousel.mjs confirma que no usa Promise.all. mostrarCategorias invoca renderRecentlyViewedCarousel al principio, pero si viewedItems aún no está hidratado, el carrusel no se crea hasta la actualización posterior del estado. Hay que revisar el ciclo de apertura IndexedDB y sus consumidores antes de cambiarlo.
+- Los hallazgos son diagnóstico inicial; no implican que los otros puntos de entrada tengan el mismo defecto. Deben mapearse y probarse sus contratos antes de unificar comportamiento.
