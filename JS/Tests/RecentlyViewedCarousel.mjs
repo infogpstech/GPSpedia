@@ -87,7 +87,7 @@ function makeHydrationHarness({ historyPromise = Promise.resolve([]), viewedResu
         }
     };
     const load = new Function("setState", "getState", "isCurrentSession", "offline", "setTimeout", "console",
-        loadSource + "\\nreturn loadUserLocalActivity;")(
+        loadSource + "\nreturn loadUserLocalActivity;")(
         value => states.push(value),
         () => ({ currentUser: activeUser }),
         () => ownerCurrent,
