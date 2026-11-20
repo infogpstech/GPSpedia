@@ -1163,3 +1163,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-20 · aislamiento FEEDBACK sugerencias] `handleSuggestCutChange` libera ScriptLock antes de enviar a papelera imágenes duplicadas de operaciones/reportes idempotentes. En rollback, elimina el adjunto solo cuando la fila quedó limpiada y verificada; si no se confirma, conserva la imagen para reconciliación. `FeedbackSuggestionImageCleanupOutsideLock` 5/5. CI `44646768057` SUCCESS: 200 suites, 2,566 pruebas aprobadas, 0 fallos; health read-only `44646767980` SUCCESS.
+
+
+[2026-11-20 · aislamiento FEEDBACK sugerencias] `handleSuggestCutChange` libera ScriptLock antes de enviar a papelera imágenes duplicadas de operaciones/reportes idempotentes. En rollback, elimina el adjunto solo cuando la fila quedó limpiada y verificada; si no se confirma, conserva la imagen para reconciliación. `FeedbackSuggestionImageCleanupOutsideLock` 5/5. CI `44646768057` SUCCESS: 200 suites, 2,566 pruebas aprobadas, 0 fallos; health read-only `44646767980` SUCCESS.
