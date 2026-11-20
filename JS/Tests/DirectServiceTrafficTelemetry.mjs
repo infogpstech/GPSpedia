@@ -47,6 +47,7 @@ for (const service of services) {
     const end = source.indexOf(service.end, start);
     assert.ok(start >= 0 && end > start, service.name + " helper block not found");
     const factorySource = source.slice(start, end);
+    assert.doesNotMatch(factorySource, /LockService\.getScriptLock|\.tryLock\(|\.waitLock\(/, service.name + " la telemetría no debe adquirir el ScriptLock global");
     const factory = new Function("LockService", "PropertiesService",
         factorySource + "\nreturn { recordDirectServiceTraffic_, readDirectServiceTraffic_, DIRECT_SERVICE_TRAFFIC_CONFIG_ };"
     );
@@ -63,12 +64,14 @@ for (const service of services) {
         const h = createHarness(factory);
         h.store.set(expectedSecretProperty, secret);
         assert.equal(h.recordDirectServiceTraffic_(base), true);
-        assert.deepEqual(h.calls.tryLock, [0]);
-        assert.equal(h.calls.releases, 1);
+        assert.deepEqual(h.calls.tryLock, []);
+        assert.equal(h.calls.releases, 0);
         const result = h.readDirectServiceTraffic_(secret, base);
         assert.equal(result.status, "success");
         assert.equal(result.service, service.name);
         assert.equal(result.scope, "direct_post_requests");
+        assert.equal(result.accuracy, "best_effort_nonblocking");
+        assert.equal(result.mayUndercount, true);
         assert.equal(result.totals.lastHour, 1);
         assert.equal(result.totals.last6Hours, 1);
         assert.equal(result.totals.last24Hours, 1);
@@ -87,19 +90,19 @@ for (const service of services) {
             "Un secreto Coordinator presente pero incorrecto no debe caer al secreto legacy.");
     });
 
-    test(service.name + " omite telemetría cuando el lock está ocupado sin liberar ni escribir", () => {
+    test(service.name + " registra telemetría aunque el ScriptLock global esté ocupado", () => {
         const h = createHarness(factory, { lockAvailable: false });
-        assert.equal(h.recordDirectServiceTraffic_(base), false);
-        assert.deepEqual(h.calls.tryLock, [0]);
+        assert.equal(h.recordDirectServiceTraffic_(base), true);
+        assert.deepEqual(h.calls.tryLock, []);
         assert.equal(h.calls.releases, 0);
-        assert.equal(h.calls.writes, 0);
-        assert.equal(h.store.size, 0);
+        assert.equal(h.calls.writes, 1);
+        assert.equal(h.store.size, 1);
     });
 
     test(service.name + " falla de forma best-effort si PropertiesService no puede escribir", () => {
         const h = createHarness(factory, { writeError: true });
         assert.equal(h.recordDirectServiceTraffic_(base), false);
-        assert.equal(h.calls.releases, 1);
+        assert.equal(h.calls.releases, 0);
     });
 
     test(service.name + " rechaza secreto ausente o incorrecto", () => {
