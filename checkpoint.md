@@ -617,3 +617,12 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - `AdminMoveImageDrivePreflightOutsideLock` 11/11 PASS; `AdminMoveImageActivityOutsideLock` 7/7 PASS. CI `44655643108` SUCCESS: 215 suites, 2,682 pruebas aprobadas, 0 fallos; health read-only `44655643102` SUCCESS.
 - Commits: implementación `98b6850573c78ef9bf3581b33b53a665eb48628e`, guardia lock `aaedd16062188794f73133f5767d3dfa34ae87c1`, test `c2c4fbad3f526a9d85181a5134e974b65834030b`, runner `460564364b28c9484a40d114fb9640b5888fbbfe`, corrección de variable duplicada `ed532bfaf12da0b0f01da23292393d07f9fdfc56`.
 - Sin despliegue Apps Script ni cambios productivos.
+
+
+## P1 — ADMIN ciclo de papelera: adquisición no bloqueante de ScriptLock (2026-11-20)
+- `handleDeleteReplacedImage` y `handleRestoreReplacedImageFromTrash` sustituyen `waitLock(30000)` por `tryLock(0)`. Cuando ADMIN está ocupado responden con `ADMIN_BUSY` sin esperar 30 segundos ni tocar Drive/historial.
+- Se añade guardia `lockAcquired` para liberar únicamente cuando la operación obtuvo el lock. La liberación temporal/re-adquisición de preflight Drive sigue funcionando con `tryLock(0)`.
+- `AdminImageTrashLifecycle` 41/41 PASS; `AdminDeleteImageActivityOutsideLock` 6/6 PASS; `AdminRestoreImageActivityOutsideLock` 6/6 PASS. CI `44661420739` SUCCESS: 215 suites, 2,684 pruebas aprobadas, 0 fallos; health read-only `44661420823` SUCCESS.
+- Commits: implementación `51e297b8749e8f2284371a42161b28e9001acf83`, guardias de liberación `1133f2082ab4bd61d3cb4303b99b6e2564b8bc25`, pruebas `a84ce23ca38829d3aac5395cf754a5b58809fc01`, corrección de conteo `a660bdbed73c297e60877bfc4a40679d176dad69`, contratos de actividad `61751603ff8f81958389227a07e558b290581744` y `34d04710fc91ee0fd0eddb9e753df1b15a85c126`, correcciones de formato `2d46980eca39127973127b1b62919c14c4df7e0f` y `da1d41be8bf727898d9b5586cc42496c54324674`.
+- No se desplegó Apps Script ni se modificaron datos productivos. Las operaciones destructivas/movimientos de Drive siguen bajo lock; esta tarea solo elimina la espera inicial de hasta 30 segundos.
+- Siguiente: evaluar una reserva/lease idempotente para separar la mutación Drive de papelera/restauración del lock global, sin perder la protección de referencias, la compensación ni la reconciliación.
