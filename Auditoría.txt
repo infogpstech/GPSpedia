@@ -925,3 +925,13 @@ Estado: REGRESIÓN LOCAL COMPLETADA. Concurrencia real de appendRow, fallos real
 - El lock se conserva para deduplicar el par actor/vehículo/corte y serializar el incremento del contador con recuperación pending/completed. Retirarlo sin convertir el contador a eventos append-only y proyectarlos en CATALOG debilitaría integridad.
 - `FeedbackLikePreflightOutsideLock` 5/5 PASS. CI 44836655370 SUCCESS: 240 suites, 2973 pruebas, 0 fallos. Health read-only y Pages estaban en ejecución; no se desplegó.
 ================================================================================
+
+
+2026-11-20 — FEEDBACK reportes/sugerencias: búsquedas dirigidas y replay previo
+- `findReportByReportId_` usa `TextFinder` sobre la columna metadata y lee la fila completa solo después de hallar coincidencia exacta en JSON. `FeedbackReportLookupBoundedRead` 4/4 PASS.
+- `findCutSuggestionByOperation_` y `findCutSuggestionByRequest_` consultan la columna Problema mediante `TextFinder` y leen solo las celdas candidatas. `FeedbackSuggestionLookupBoundedRead` 6/6 PASS.
+- `handleSuggestCutChange` ahora resuelve reintentos existentes antes de cargar imagen o adquirir ScriptLock. Si no hay coincidencia, carga Drive, adquiere el lock y vuelve a validar; si otra solicitud creó la sugerencia durante la carga, libera lock y elimina el adjunto duplicado. `FeedbackSuggestionPreflightOutsideLock` 6/6, `FeedbackSuggestionImageCleanupOutsideLock` 5/5 y `P2FeedbackImageUploadLocks` 1/1 PASS.
+- CI 44837377505 SUCCESS: 243 suites, 2989 pruebas, 0 fallos. Health read-only 44837377778 SUCCESS. Pages seguía en ejecución.
+- Estos cambios reducen lecturas completas y evitan adquirir lock/Drive en reintentos, pero conservan la sección crítica de nuevas escrituras para deduplicación y append. No se retiró el lock de creación.
+- Incidente de rama: un test se creó accidentalmente en `main` al omitir `branch`; fue eliminado en `de13b119529415b8d85e03331647cb5422cb8a1c` y se verificó ausencia en `main`. La rama protegida `GPSpedia2.2.5` permaneció intacta.
+================================================================================
