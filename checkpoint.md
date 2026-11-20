@@ -906,3 +906,13 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Para el mismo vehículo, los conflictos deben ser localizados y visibles; si el límite de cortes impide incorporar una imagen en disputa, preservarla en Imágenes reemplazadas como candidata, con comportamiento equivalente para apertura y alimentación. No se permiten pérdidas silenciosas ni regresiones en formularios, reportes o reacciones.
 - Revisar el render tardío de Vistos recientemente y hacer que consuma caché local en paralelo con los demás carruseles, sin red ni duplicación de lecturas.
 - Estos requisitos se agregan al backlog; no se han implementado aún. La tarea activa previa Safe Apply sigue siendo la continuidad inmediata. La política de concurrencia se ajustará a la sección 15 de NORMAS_DESAROLLO.md (baja latencia, sin locks globales/leases/verificaciones transaccionales ordinarias).
+
+
+## Checkpoint — reserva atómica Safe Apply (2026-11-20)
+- HEAD de código/pruebas de esta subactividad: `d33113f333d0c6f847cbf1cdfe54239ecdc4eaa7`. Rama base protegida: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; sin modificaciones.
+- En `JS/Services/admin.js`, se añadió `decideCortesOrganizerLedgerReservation_` y `reserveLedger` para reservar atómicamente (bajo un lock corto) las transiciones ausente → processing y complete → rollback_processing. Solo una ejecución por operationId obtiene la reserva.
+- Lecturas de ledger individuales sin lock; el lock se usa solo para leer-modificar-escribir las propiedades y expira por contención tras 250 ms. Drive/ACL/carpeta/movimiento permanecen fuera del lock.
+- Si la reserva inicial no se obtiene, se devuelve retry sin cambiar el estado ni tocar Drive. Si falla el guardado final después de que Drive ya cambió, se inspecciona el archivo y se reconcilia el estado durable; se evita repetir el movimiento.
+- Pruebas focalizadas: ApplyPlan 14/14; Executor 17/17; UI contract 13/13; Ledger 6/6. Health read-only 44791334834 SUCCESS.
+- Regresión integral 44791334640 FAILURE por dos contratos de los flujos de aportes (no del organizador): AdminVehicleIdOutsideLock espera tryLock(0), pero el handler actual usa waitLock(2000); AdminSupplementaryUploadOutsideLock exige que no exista espera, pero el handler actual usa waitLock(2000). Estos hallazgos coinciden con la nueva tarea registrada sobre concurrencia entre vehículos; no se modificaron esos flujos en esta subactividad ni se ocultaron las fallas actualizando las pruebas.
+- No se ejecutó Drive real, no se desplegó Apps Script y no se modificó Spreadsheet. Pendiente: continuar con la auditoría/implementación de concurrencia por vehículo y luego Vistos recientemente; validar visualmente los controles Safe Apply y verificar ACL/cuotas en Beta aislado.
