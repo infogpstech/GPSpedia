@@ -7,7 +7,7 @@ assert.ok(start>=0&&end>start,"No se encontró handleUploadAdminImage");
 const handler=source.slice(start,end), cs=handler.lastIndexOf("    } catch (error) {"), ce=handler.indexOf("    } finally {",cs), block=handler.slice(cs,ce);
 assert.ok(cs>=0&&ce>cs,"No se encontró catch");
 const reserve=block.indexOf('operationRecord.values[9] = "requires_review"'), save=block.indexOf("saveAdminImageUploadOperation(operationSheet, operationRecord)",reserve), flag=block.indexOf("compensationReserved = true",save);
-const drives=[...block.matchAll(/runAdminDriveWorkOutsideScriptLock_\(lock, operationId/g)].map(x=>x.index);
+const drives=[...block.matchAll(/runAdminContributionDriveWorkOutsideScriptLock_\(lock, operationId/g)].map(x=>x.index);
 const updates=[...block.matchAll(/updateAdminImageUploadFileState_\(/g)].map(x=>x.index);
 assert.ok(reserve>=0&&save>reserve&&flag>save,"Reserva requires_review previa a Drive");
 assert.equal(drives.length,2);assert.equal(updates.length,3);
