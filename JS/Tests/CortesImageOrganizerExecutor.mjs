@@ -16,6 +16,9 @@ const classify = new Function(extractFunction("classifyCortesImageOrganizerOpera
     "\nreturn classifyCortesImageOrganizerOperationState_;")();
 const decideReservation = new Function(extractFunction("decideCortesOrganizerLedgerReservation_") +
     "\nreturn decideCortesOrganizerLedgerReservation_;")();
+const withLedgerLock = new Function("LockService", extractFunction("withCortesOrganizerLedgerLock_") +
+    "\nreturn withCortesOrganizerLedgerLock_;");
+
 const execute = new Function(extractFunction("classifyCortesImageOrganizerOperationState_") + "\n" +
     extractFunction("decideCortesOrganizerLedgerReservation_") + "\n" +
     extractFunction("executeCortesImageOrganizerManifest_") +
@@ -40,6 +43,11 @@ function fixture(options = {}) {
         loadLedger: id => ledger.get(id) || null,
         saveLedger: record => { ledger.set(record.operationId, structuredClone(record)); events.push("ledger:" + record.status); },
         reserveLedger: (record, allowedStatuses) => {
+            if (options.failReserve) {
+                const error = new Error("ledger contention");
+                error.code = "ORGANIZER_LEDGER_BUSY";
+                throw error;
+            }
             const current = ledger.get(record.operationId) || null;
             const decision = decideReservation(record, current, allowedStatuses);
             if (!decision.reserved) return decision;
@@ -167,9 +175,44 @@ run("no inicia un segundo rollback mientras existe una reserva activa", () => {
     assert.equal(f.ledger.get(operation.operationId).status, "rollback_processing");
     assert.equal(f.state.folderPath, operation.targetFolderPath);
 });
+run("la contención del ledger no se interpreta como fallo Drive ni marca rollback falso", () => {
+    const f = fixture({ failReserve: true });
+    const result = execute([operation], "developer-1", f.adapters);
+    assert.equal(result.results[0].status, "retry");
+    assert.equal(f.ledger.has(operation.operationId), false);
+    assert.equal(f.events.some(event => event.startsWith("move:")), false);
+});
+run("la contención durante rollback conserva el estado completo y no revierte", () => {
+    const f = fixture({ failReserve: true });
+    execute([operation], "developer-1", f.adapters);
+    const before = structuredClone(f.ledger.get(operation.operationId));
+    const result = rollback([operation.operationId], "developer-1", f.adapters);
+    assert.equal(result.results[0].status, "retry");
+    assert.equal(f.ledger.get(operation.operationId).status, before.status);
+    assert.equal(f.state.folderPath, operation.targetFolderPath);
+});
+run("el lock del ledger libera siempre y falla con estado retryable", () => {
+    let held = false, releases = 0;
+    const lock = {
+        tryLock: timeout => { assert.equal(timeout, 250); if (held) return false; held = true; return true; },
+        hasLock: () => held,
+        releaseLock: () => { assert.equal(held, true); held = false; releases++; }
+    };
+    const helper = withLedgerLock({ getScriptLock: () => lock });
+    assert.equal(helper(() => held), true);
+    assert.equal(held, false);
+    assert.equal(releases, 1);
+    const busy = {
+        tryLock: timeout => { assert.equal(timeout, 250); return false; },
+        hasLock: () => false,
+        releaseLock: () => { throw new Error("No debía liberar un lock ajeno"); }
+    };
+    assert.throws(() => withLedgerLock({ getScriptLock: () => busy })(() => 1),
+        error => error && error.code === "ORGANIZER_LEDGER_BUSY");
+});
 run("rechaza IDs duplicados o inválidos en rollback", () => {
     const f = fixture();
     assert.throws(() => rollback([operation.operationId, operation.operationId], "developer-1", f.adapters), /inválidos o repetidos/i);
     assert.throws(() => rollback(["bad"], "developer-1", f.adapters), /inválidos o repetidos/i);
 });
-console.log("CortesImageOrganizerExecutor: 12/12 PASS");
+console.log("CortesImageOrganizerExecutor: 15/15 PASS");
