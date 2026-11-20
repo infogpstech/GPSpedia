@@ -25,3 +25,10 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - completeVehicleExpansionSave_: el estado candidateReviewPending de WRITE prevalece sobre un refresco CATALOG que todavía no muestre el candidato. Si el refresco falla, se informa que el aporte sigue pendiente y no se anuncia como aplicado.
 - Pruebas: AdminVehicleContributionCandidateImagePreview 8/8; AdminVehicleFieldVersioning 8/8; AdminVehicleFieldVersioningContract 7/7. CI 44833154077 SUCCESS: 237 suites, 2951 pruebas, 0 fallos; node --check PASS. Health read-only se verifica por separado; no se desplegó Apps Script.
 - Auditoría §15: el ScriptLock global FEEDBACK sigue protegiendo asignación numérica y lectura-deduplicación-escritura de reportes/sugerencias/aplicaciones de año. No se retiró sin reemplazo seguro; queda tarea explícita para migrar a journal append-only sin romper IDs ni contratos.
+
+
+2026-11-20 — Cierre local GP-UX-RECENT-VIEWED-CACHE-PARALLEL-01
+- Verificado `handleLoginSuccess`: inicia `loadUserLocalActivity(user)` antes de `showApp(user)` sin esperar las lecturas locales; búsqueda y vistos se consultan en paralelo.
+- `loadViewedItems` usa ownerId, reintenta solo IndexedDB no disponible y comprueba sesión/propietario antes de aplicar respuestas tardías. La actualización de vistos renderiza solo el carrusel independiente, sin reconstruir categorías ni disparar consultas remotas.
+- La apertura de ficha actualiza estado en memoria de inmediato y persiste una sola vez; se eliminó la antigua lectura IndexedDB duplicada desde ui.js.
+- Pruebas dinámicas `RecentlyViewedHydrationParallel` 3/3 y `RecentlyViewedCarousel` 1/1. CI 44833576889 SUCCESS: 237 suites, 2954 pruebas, 0 fallos; node --check PASS. Health read-only SUCCESS; Pages build en cola al momento de registrar. Validación Beta visual pendiente.
