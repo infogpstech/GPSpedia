@@ -242,6 +242,6 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 
 - HEAD de código: `e4eb5e52aaf0100fb6dabe1b24deadc21e1c0d3c`.
 - `handleUpdateTutorialItem` hace preflight de solo lectura; si todos los campos ya coinciden, devuelve `alreadyUpdated` sin lock ni escritura. Si existe una diferencia, conserva el lock y repite lectura/validaciones antes de mutar.
-- Regresión `FeedbackTutorialUpdateNoopPreflight` 5/5 PASS. CI `44839560207` SUCCESS: 251 suites, 3033 pruebas aprobadas, 0 fallos. Health read-only `44839560225` SUCCESS.
+- Regresión `FeedbackTutorialUpdateNoopPreflight` 6/6 PASS; cubre no-op sin lock, mutación protegida, relectura bajo lock y conservación de cambios concurrentes en otros campos. CI `44839930123` SUCCESS: 251 suites, 3034 pruebas aprobadas, 0 fallos; `node --check` PASS. Health read-only `44839930193` SUCCESS.
 - No se desplegó Apps Script ni se modificaron datos productivos.
 - Pendiente: reducción segura de los locks FEEDBACK restantes, revisión/migración compatible de `WRITE/addVinToVehicle`, Beta AUG-159/AUG-160 y concurrencia real en recursos aislados.
