@@ -584,3 +584,11 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - `AdminMarkImageInUseDrivePreflightOutsideLock` 10/10 PASS; `AdminReplacedImagesIntegrity` 56/56 PASS. CI `44653864364` SUCCESS: 211 suites, 2,642 pruebas aprobadas, 0 fallos; health read-only `44653864334` SUCCESS.
 - Commits: implementación `5434ac862b8839d5c1d7ef8efa35d6dc87d0d18a`, prueba `0faf804e67175b0db1f486ec76482cf92d18c783`, runner `29dbfd3761d9673867c15b45dfac855615635c98`, ajuste de contrato `5504d165c20e85090ccc4903a1e30f76db1a0548`.
 - No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+## P1 — ADMIN eliminación definitiva: preflight Drive fuera del lock (2026-11-20)
+- `handlePermanentlyDeleteReplacedImage` mueve la consulta inicial de Drive API (`get`), comprobación MIME/trashed, verificación DriveApp y validación de carpeta Cortes fuera del ScriptLock. Después readquiere con `tryLock(0)` y revalida tipo/estado/Drive ID del historial; solo entonces vuelve a comprobar referencias activas y puede continuar.
+- Si el archivo ya no existe (404), reconcilia `eliminada` bajo lock y registra actividad después de liberarlo. Para archivos existentes, la reserva `eliminacion_pendiente`, DELETE y GET final de confirmación permanecen bajo lock para impedir operaciones simultáneas durante la eliminación destructiva.
+- `AdminPermanentDeleteDrivePreflightOutsideLock` 9/9 PASS; `AdminPermanentDeleteActivityOutsideLock` 6/6 PASS; `AdminImageTrashLifecycle` 40/40 PASS. CI `44654436417` SUCCESS: 212 suites, 2,651 pruebas aprobadas, 0 fallos; health read-only `44654436415` SUCCESS.
+- Commits: preflight `d47afd59ea80cf7031a715334634e2f308eecf44`, preservación del resultado `051aff78c1135d5af814b0b865978f1dc729bff2`, test `47fe0d697fd44ad557b5fe8a089c659edd1ce9dc`, runner `fef9dbd76bd158fae32c2a23ce7526cb755952da`, guardia de liberación `7dc50208d9951f353d763c896dcc4ddd2d393688`, ajustes de contratos/harness `feba75cca2a4c8c659eaefe279f026bdfc13011e`, `82f3721ee4a9a0b2f8b8cf92c206520a1714ef4d`, `43f2efbaa1399d8e36286d99066250074f524302`, `e01d5eb20b0436d38f814fedc0dac41a6af4068c`.
+- Sin despliegue Apps Script ni cambios productivos.
