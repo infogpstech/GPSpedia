@@ -1394,3 +1394,19 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [ ] Eliminar gradualmente el `UserLock` del handler legacy de cortes existentes y mantener el `ScriptLock` solo para asignación de ID de vehículo nuevo, si la operación realmente requiere secuencia única.
 - [ ] Implementar metadatos de origen/versionado por campo para que la edición in-modal de Desarrollador pueda sustituir un aporte del ledger sin duplicarlo ni resucitar su valor anterior.
 - Estado P0: EN PROGRESO. No declarar cierre hasta pasar intercalados y recuperación de imágenes.
+
+
+### 2026-11-20 — Intercalado del ledger append-only
+
+- [x] Añadir harness aislado que intercale dos ejecuciones en `appendRow` sin locks.
+- [x] Verificar aportes a vehículos distintos: ambos se conservan y se proyectan en su ficha.
+- [x] Verificar dos cortes del mismo vehículo con `opId` distintos: el orden append asigna slots distintos de forma determinista.
+- [x] Verificar mismo `opId`/mismo payload: se conserva el duplicado físico, pero ambas solicitudes resuelven al evento canónico y CATALOG proyecta una sola vez.
+- [x] Verificar mismo `opId`/payload distinto: se rechaza la confirmación conflictiva; ambos eventos se conservan y la proyección no aplica ninguno.
+- [x] Comparar payload JSON en la deduplicación y en la proyección, incluso si una solicitud reutiliza incorrectamente el mismo hash.
+- [x] CI HEAD `523bbb0a28e1e9b9dc48db483b29019bfb0b0232`: 229 suites, 2,834 pruebas, 0 fallos; health read-only SUCCESS.
+- [ ] Migrar ImageUploadLedger a eventos append-only/reconciliables y eliminar `ScriptLock.waitLock(5000)` sin perder integridad, deduplicación ni recuperación.
+- [ ] Ampliar la ruta de corte append-only a VIN y casos `vehicleData`; garantizar validación/duplicidad VIN global sin lock global.
+- [ ] Integrar recuperación inmediata de aportes del ledger en `checkOperation`, para que una respuesta perdida no fuerce una carga Drive redundante.
+- [ ] Revisar el estado de la primera respuesta cuando un `opId` conflictivo se anexa después: conservar ambos candidatos y dar señal UI de reconciliación, sin exclusión mutua global.
+- Estado P0: EN PROGRESO.
