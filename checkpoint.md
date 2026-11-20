@@ -1040,3 +1040,17 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - CI HEAD `4f54e1ca71a21857a3e23e5d7d1a98ff3a77fe51`: **230 suites / 2,843 pruebas / 0 fallos**; health read-only SUCCESS.
 - Se actualizó `CONCURRENCIA_APORTES_DISENO.md` con estado de implementación parcial y límites reales. Sigue pendiente verificar append concurrente en Google Sheets real; el harness simula appendRow indivisible. ImageUploadLedger aún usa ScriptLock.waitLock(5000); no se retirará hasta sustituir su ledger mutable y su reconciliación ADMIN.
 - HEAD de código verificado `4f54e1ca71a21857a3e23e5d7d1a98ff3a77fe51`; rama base intacta `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+
+
+## 2026-11-20 — Inicio de migración del ledger de imágenes a eventos append-only
+
+- HEAD confirmado de la rama de trabajo: `bbf35e4f7a752519c94b924c4a211642661c39eb`.
+- Rama base `GPSpedia2.2.5` verificada intacta en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- Auditoría de `ImageUploadLedger`: WRITE mantiene una ruta `shortLedgerLock` que usa `ScriptLock.waitLock(5000)`; ADMIN conserva su copia del esquema mutable y el reconciliador modifica filas por índice. Por tanto, no basta con retirar el lock en WRITE: la migración debe mantener compatibilidad con reconciliación ADMIN y con archivos existentes.
+- Se añadió en `JS/Services/write.js` un primer bloque de infraestructura para el diario `ImageUploadEvents`: esquema separado, append de eventos con ID único, confirmación por lectura, consulta por token y proyección determinista. Si un token presenta metadatos incompatibles o varios `fileId`, el estado proyectado es `requires_review`; nunca se elige un archivo arbitrariamente.
+- Se añadió `JS/Tests/ImageUploadEventJournal.mjs` y se registró en `RunServiceTests.mjs`. Prueba esquema, append, intercalado de eventos de operaciones diferentes, detección de varios archivos para el mismo token, metadatos incompatibles y validación de evento.
+- CI del HEAD `bbf35e4`: **231 suites / 2,849 pruebas / 0 fallos**; `deployed service health (read-only)` SUCCESS.
+- Una ejecución intermedia falló por un fixture que afirmaba detectar metadatos divergentes pero solo anexaba un evento; se corrigió el fixture, y la ejecución posterior completa pasó. No fue un fallo de lógica de producción.
+- **Alcance explícito:** `ImageUploadEvents` es todavía infraestructura de migración y pruebas; las cargas WRITE y el reconciliador ADMIN aún usan `ImageUploadLedger` mutable. No se ha retirado ningún lock de carga ni se ha cambiado el flujo productivo de Drive en este subpaso.
+- Próximo paso: adaptar el flujo WRITE a eventos append-only (reserva, archivo localizado/creado, vínculo, error/revisión), derivar estado desde eventos y metadatos Drive, y probar duplicados físicos por concurrencia. Después migrar reconciliación ADMIN a lectura/proyección compatible antes de retirar el ledger mutable y `waitLock(5000)`. No activar la ruta nueva hasta que el flujo dual y la recuperación pasen pruebas.
+- P0 permanece EN PROGRESO. No se desplegó código de servicio ni se modificaron hojas/archivos productivos.
