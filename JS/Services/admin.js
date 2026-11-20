@@ -10671,22 +10671,47 @@ function handleDeleteReplacedImage(payload,logMessage,developerContext){
     try{
         const sheetRep=getOrCreateReplacedImagesSheet(),headers=ensureReplacedImagesInventoryColumns(sheetRep);
         const existing=findReplacedImageRecordById(sheetRep,idReemplazo);if(!existing)throw new Error("Registro de imagen no encontrado.");
-        const rowIndex=existing.rowIndex,row=existing.values,type=getReplacedImageRecordType(row,headers);
+        const row=existing.values,type=getReplacedImageRecordType(row,headers);
         const status=String(row[10]||(type==="sin_uso_detectado"?"sin_uso_detectado":"historica"));
+        let rowIndex=existing.rowIndex;
         const driveId=getReplacedImageRecordIdentity_(row,headers,true);
-        if(status==="en_papelera"){
-            const alreadyTrashed=DriveApp.getFileById(driveId);
-            if(alreadyTrashed.isTrashed()&&String(alreadyTrashed.getMimeType()||"").startsWith("image/"))return {status:"success",message:"La imagen ya estaba en papelera.",unchanged:true};
-            throw new Error("El historial indica en_papelera, pero Drive no confirma ese estado; requiere revisión.");
-        }
         const allowed=type==="sin_uso_detectado"?["sin_uso_detectado","requiere_revision"]:["historica","restablecida","requiere_revision"];
-        if(!isKnownReplacedImageStatus_(type,status)||!allowed.includes(status))throw new Error("El estado del registro no permite enviar esta imagen a papelera.");
+        if(status!=="en_papelera"&&(!isKnownReplacedImageStatus_(type,status)||!allowed.includes(status)))throw new Error("El estado del registro no permite enviar esta imagen a papelera.");
+        const verified=runAdminDriveWorkOutsideScriptLock_(
+            lock,
+            "ADMIN_TRASH_IMAGE_"+idReemplazo,
+            () => {
+                const file=DriveApp.getFileById(driveId);
+                const trashed=file.isTrashed(),mime=String(file.getMimeType()||"");
+                if(status==="en_papelera"){
+                    if(trashed&&mime.startsWith("image/"))return {file,alreadyTrashed:true,sourcePath:""};
+                    throw new Error("El historial indica en_papelera, pero Drive no confirma ese estado; requiere revisión.");
+                }
+                if(trashed)throw new Error("La imagen ya se encuentra en la papelera de Google Drive.");
+                if(!mime.startsWith("image/"))throw new Error("El archivo asociado al registro no es una imagen.");
+                const root=getCortesRootFolder(),source=getSingleParentFolderInsideCortes(file,root.getId());
+                return {file,alreadyTrashed:false,sourcePath:getFolderPathInsideCortes(source,root.getId())};
+            },
+            () => {
+                const latestHeaders=ensureReplacedImagesInventoryColumns(sheetRep);
+                const latest=findReplacedImageRecordById(sheetRep,idReemplazo);
+                if(!latest)throw new Error("El registro desapareció durante la verificación Drive; no se modificó.");
+                const latestRow=latest.values;
+                if(String(latestRow[10]||(type==="sin_uso_detectado"?"sin_uso_detectado":"historica"))!==status||
+                    getReplacedImageRecordType(latestRow,latestHeaders)!==type||
+                    getReplacedImageRecordIdentity_(latestRow,latestHeaders,true)!==driveId) {
+                    throw new Error("El registro cambió durante la verificación Drive; vuelve a intentar.");
+                }
+                return {record:latest,file:arguments[0]&&arguments[0].file,alreadyTrashed:arguments[0]&&arguments[0].alreadyTrashed,
+                    sourcePath:arguments[0]&&arguments[0].sourcePath};
+            }
+        );
+        rowIndex=verified.record.rowIndex;
+        if(verified.alreadyTrashed)return {status:"success",message:"La imagen ya estaba en papelera.",unchanged:true};
+        const file=verified.file,sourcePath=verified.sourcePath;
         const references=collectActiveDriveReferences(),active=references.references.get(driveId)||[];
         if(active.length)throw new Error("Operación bloqueada: la imagen mantiene referencias activas en una o más hojas del Spreadsheet.");
         if(references.unverifiableReferenceCount>0)throw new Error("Operación bloqueada: existen referencias de Drive no interpretables en el Spreadsheet.");
-        const file=DriveApp.getFileById(driveId);if(file.isTrashed())throw new Error("La imagen ya se encuentra en la papelera de Google Drive.");
-        if(!String(file.getMimeType()||"").startsWith("image/"))throw new Error("El archivo asociado al registro no es una imagen.");
-        const root=getCortesRootFolder(),source=getSingleParentFolderInsideCortes(file,root.getId()),sourcePath=getFolderPathInsideCortes(source,root.getId());
         setReplacedImageTrashPreviousStatusVerified_(sheetRep,rowIndex,headers,status);
         try{
             file.setTrashed(true);
