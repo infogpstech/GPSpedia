@@ -897,3 +897,10 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] En rollback, eliminar adjunto solo cuando la fila se limpió y verificó; conservarlo si la reversión no se confirma.
 - [x] `FeedbackSuggestionImageCleanupOutsideLock` 5/5; CI `44646768057` SUCCESS: 200 suites, 2,566 pruebas, 0 fallos; health read-only `44646767980` SUCCESS.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
+
+
+### P1 — FEEDBACK sugerencias: limpieza de adjuntos fuera del lock (2026-11-20)
+- [x] Liberar ScriptLock antes de enviar a papelera imágenes duplicadas de operaciones/reportes idempotentes.
+- [x] En rollback, eliminar adjunto solo cuando la fila se limpió y verificó; conservarlo si la reversión no se confirma.
+- [x] `FeedbackSuggestionImageCleanupOutsideLock` 5/5; CI `44646768057` SUCCESS: 200 suites, 2,566 pruebas, 0 fallos; health read-only `44646767980` SUCCESS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
