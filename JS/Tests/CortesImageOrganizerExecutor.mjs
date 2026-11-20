@@ -71,7 +71,7 @@ run("rechaza una operación durable perteneciente a otro desarrollador", () => {
     const f = fixture();
     f.ledger.set(operation.operationId, { operationId: operation.operationId, ownerId: "other", status: "complete" });
     const result = execute([operation], "developer-1", f.adapters);
-    assert.equal(result.results[0].status, "needs_review");
+    assert.equal(result.results[0].status, "blocked");
     assert.equal(f.state.folderPath, "Cortes/Entrada");
 });
 run("un fallo de ACL evita el movimiento y registra rollback", () => {
