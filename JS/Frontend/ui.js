@@ -7773,7 +7773,7 @@ ${elapsedSec}s
                     button.addEventListener("click",async()=>{
                         if(!isAdminPanelCurrent_())return;let correctedPayload;
                         if(decision==="correct"){try{correctedPayload=JSON.parse(editor.value);if(!correctedPayload||typeof correctedPayload!=="object"||Array.isArray(correctedPayload))throw new Error("La corrección debe ser un objeto JSON.");
-                            if(candidate.kind==="vehicle_update"&&candidate.reason==="field_conflict"){
+                            if(candidate.kind==="vehicle_update"){
                                 if(Object.prototype.hasOwnProperty.call(correctedPayload,"currentValue"))correctedPayload.expectedCurrentValue=correctedPayload.currentValue;
                                 if(Object.prototype.hasOwnProperty.call(correctedPayload,"currentSourceEventId"))correctedPayload.currentSourceEventId=correctedPayload.currentSourceEventId;
                             }
@@ -7787,7 +7787,7 @@ ${elapsedSec}s
                         }catch(error){contributionStatus.textContent="No se pudo resolver "+candidate.eventId+": "+error.message;button.disabled=false;}
                     });actions.appendChild(button);
                 };
-                if(!(candidate.kind==="vehicle_update"&&candidate.reason==="field_conflict"))addAction("Aceptar","accept","btn-primary");
+                if(candidate.kind!=="vehicle_update")addAction("Aceptar","accept","btn-primary");
                 addAction("Guardar corrección","correct","btn-secondary");addAction("Descartar","discard","btn-warning");
                 card.append(title,meta,editor,actions);contributionContainer.appendChild(card);
             });
