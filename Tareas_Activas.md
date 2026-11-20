@@ -874,3 +874,12 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] `FeedbackPysPostCommitOutsideLock` 4/4; `FeedbackPysPendingImageVerificationOutsideLock` 5/5; `P2PysImageUploadOutsideLock` PASS.
 - [x] CI `44645868436` SUCCESS: 197 suites, 2,550 pruebas, 0 fallos; health read-only `44645868341` SUCCESS.
 - Pendiente separado: sacar del lock la papelera de archivos no referenciados y su compensación, usando estado intermedio/revalidación para no borrar imágenes que otra operación haya vinculado.
+
+
+### P1 — FEEDBACK PyS: rollback Drive fuera del lock (2026-11-20)
+- [x] Al confirmar ausencia de referencias, reservar `RECOVERY_REQUIRED` bajo lock y liberar antes de enviar a papelera.
+- [x] Tras confirmar `isTrashed()`, readquirir lock y revalidar opId/problemId/fileId/URL/status antes de restablecer `PENDING`.
+- [x] Si falla Drive o la revalidación, conservar `RECOVERY_REQUIRED` y marcar metadata fuera del lock; no borrar archivos con referencias.
+- [x] `FeedbackPysRollbackOutsideLock` 6/6; `PysImageStorageRecovery` 22/22; `P2PysImageUploadOutsideLock` PASS.
+- [x] CI `44646143035` SUCCESS: 198 suites, 2,556 pruebas, 0 fallos; health read-only `44646143256` SUCCESS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
