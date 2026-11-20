@@ -5,7 +5,7 @@ Fecha: 2026-11-20
 ## Repositorio y ramas
 - Repositorio: infogpstech/GPSpedia
 - Rama autorizada: GPSpedia2.2.5_work
-- HEAD verificado antes de este checkpoint: ba37dd8833f917cdd9a80fbbf234248ed23a7de4 (commit de reconciliación documental de continuidad).
+- HEAD verificado antes de este checkpoint: 38b5a02ca951270c2e93001edfa349a46a805f7a (commit de evaluación de herramientas para Beta).
 - Rama base protegida GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificar).
 - No hay cambios locales disponibles en un clon para sincronizar; la publicación se realizó mediante commits GitHub condicionados al SHA esperado.
 
@@ -24,8 +24,8 @@ P1 — AUTH recuperación de contraseña: logging después de liberar ScriptLock
 - La ejecución inicial 44726038448 detectó contaminación de eventos previos en el harness; se aisló la traza y la repetición pasó sin debilitar la aserción.
 
 ## Estado de implementación y validación
-- No quedan tareas de implementación local abiertas en Tareas_Activas.md. Las casillas abiertas restantes corresponden a despliegues Apps Script autorizados, inventario de Script IDs/proyectos, Drive/Spreadsheet reales o pruebas de concurrencia entre deployments en Beta.
-- Regresión más reciente sobre HEAD ba37dd8833f917cdd9a80fbbf234248ed23a7de4: CI 44731452326 SUCCESS (215 suites, 2,686 pruebas, 0 fallos); health read-only 44731452344 SUCCESS; Pages 44731450125 SUCCESS.
+- Se abrió una nueva tarea local P1 solicitada expresamente: GP-UX-SEARCH-MODEL-GROUPING-01 (agrupación de resultados por modelo y navegación Modelo → Variante → Rango de años → Modal). La auditoría preimplementación está registrada; todavía no se modificó código. Las 17 tareas anteriores de Beta permanecen abiertas y separadas.
+- Regresión más reciente sobre HEAD 38b5a02ca951270c2e93001edfa349a46a805f7a: CI 44731927622 SUCCESS (215 suites, 2,686 pruebas, 0 fallos); health read-only 44731927645 SUCCESS; Pages 44731926587 SUCCESS.
 - lista_beta_parte1.txt comienza con la secuencia obligatoria: verificar repo/rama/árbol limpio, fetch y pull --ff-only; no se usará reset/clean/force. No se ejecutó sincronización local porque no hay clon local disponible.
 - Beta pendiente de autorización. Comenzar únicamente con auditoría y preview Drive/Spreadsheet de solo lectura. Safe Apply, movimientos, renombrados y eliminaciones continúan bloqueados hasta revisión y autorización explícita.
 - No se desplegó Apps Script ni se accedió o modificó datos productivos.
@@ -694,3 +694,11 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - GitHub Actions sí ejecutó la regresión completa sobre el HEAD anterior al checkpoint: `44731452326` SUCCESS (215 suites, 2,686 pruebas, 0 fallos); health GET read-only `44731452344` SUCCESS; Pages `44731450125` SUCCESS.
 - Se buscó una vía conectada para Drive/Sheets/Apps Script: el conector Google Drive está deshabilitado por administración y no está disponible para instalación; no hay acción de Apps Script/clasp ni workflow de despliegue en el repositorio. El workflow de health solo realiza GET de lectura.
 - Resultado: no se inventó una validación Beta ni se desplegó. Las tareas de deployment, auditoría Drive/Spreadsheet y concurrencia real permanecen abiertas. La ejecución podrá continuar cuando exista una vía autorizada al proyecto Apps Script de Beta (Script IDs/credenciales o conector habilitado). No se solicita ni requiere tocar datos productivos.
+
+
+## Tarea local en curso — GP-UX-SEARCH-MODEL-GROUPING-01 (2026-11-20)
+- Requisito registrado: agrupar resultados de búsqueda por modelo; al seleccionar un modelo, mostrar versiones/equipamiento o tipos de encendido únicamente cuando haya varias opciones; después mostrar rangos de años y abrir directamente el modal cuando exista un único rango. La navegación normal, el botón Atrás y el historial del navegador deben seguir la misma jerarquía y omitir pasos de una sola opción.
+- Auditoría preimplementación documentada en AUDITORIA_BUSQUEDA_MODELOS_2026-11-20.md.
+- Hallazgos centrales: búsqueda global entrega registros de Corte individuales; el render actual dibuja una tarjeta por registro y autoabre un único resultado normal; selección de equipamiento omite la selección de encendido; la pantalla de encendido se fuerza aun con una sola opción; la pantalla de años no agrupa rangos ni abre directamente un rango único.
+- Se identificaron los flujos VIN exacto/ambiguo y la restauración de History API como compatibilidad obligatoria. No se modificó código productivo en esta etapa.
+- Estado: EN PROGRESO — auditoría preimplementación completada y registrada; implementación y pruebas específicas pendientes.

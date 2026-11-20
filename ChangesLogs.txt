@@ -1237,3 +1237,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-20 · comprobación de ruta Beta] Node v22.16.0/npm 10.9.2 disponibles; clasp ausente. Checkout GitHub intentado, falla por DNS sin salida de red; no hay clone local. Google Drive connector está deshabilitado por administración y no hay herramienta/workflow Apps Script de despliegue; health workflow solo GET read-only. CI 44731452326 SUCCESS (215 suites, 2,686 pruebas, 0 fallos), health 44731452344 y Pages 44731450125 SUCCESS sobre ba37dd8. No se desplegó ni se marcó Beta como validada.
+
+
+[2026-11-20 · GP-UX-SEARCH-MODEL-GROUPING-01] Se registra por solicitud del usuario la agrupación de resultados de Cortes por modelo y navegación jerárquica Modelo → versión/equipamiento o tipo de encendido → rango de años → modal, omitiendo dimensiones con una sola opción. Auditoría preimplementación en AUDITORIA_BUSQUEDA_MODELOS_2026-11-20.md. Hallazgos: búsqueda muestra una tarjeta por registro, autoabre una coincidencia normal, la selección de equipamiento omite tipos de encendido y la vista de años no agrupa rangos ni abre el rango único. Se documentan preservación de VIN exacto/ambiguo, resultados de otras secciones e historial de navegación. Sin cambios de código; implementación y pruebas pendientes.

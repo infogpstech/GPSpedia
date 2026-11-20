@@ -1089,3 +1089,17 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] Verificar herramientas de despliegue: clasp ausente; Google Drive connector deshabilitado por administración; no existe acción Apps Script ni workflow de despliegue en el repo; health workflow es GET-only.
 - [x] Confirmar CI de GitHub sobre HEAD anterior: 215 suites, 2,686 pruebas, 0 fallos; health y Pages SUCCESS.
 - Estado: DIAGNÓSTICO DE HERRAMIENTAS COMPLETADO. No marcar Beta como validada ni ejecutar despliegues con una ruta no autorizada. Siguiente paso operativo: habilitar un mecanismo de acceso a Apps Script de Beta y proporcionar/autorizar los Script IDs correspondientes.
+
+
+### P1 — Búsqueda agrupada por modelo y navegación jerárquica — GP-UX-SEARCH-MODEL-GROUPING-01 (2026-11-20)
+**Requisito:** los resultados de Cortes se agrupan por modelo, sin listar de entrada cada versión, tipo de encendido o rango. Al seleccionar el modelo, mostrar tarjetas de versión/equipamiento si hay varias; dentro de la selección mostrar tipos de encendido si hay varias; después mostrar los rangos de años. Si una dimensión tiene una sola opción, omitirla. Si solo queda un rango, abrir directamente el modal del registro. La navegación interna y el historial del navegador deben reproducir y restaurar la misma jerarquía.
+- [x] Registrar el requisito y auditar búsqueda global, render de resultados, navegación de catálogo, selección de versión/encendido, rangos, modal y History API.
+- [x] Identificar compatibilidades que deben preservarse: búsquedas por VIN exactas/ambiguas, resultados Relay/Tutorial/PyS, búsqueda por marca/año, navegación desde categorías y retorno a la consulta original.
+- [ ] Implementar agrupación de resultados de Cortes por categoría + marca + modelo, preservando orden de relevancia y resultados de otras secciones.
+- [ ] Unificar el resolver de navegación Modelo → versión/equipamiento opcional → tipo de encendido opcional → rangos de años → modal; no mostrar dimensiones con una sola opción.
+- [ ] Mantener el comportamiento especial de VIN exacto/ambiguo y evitar autoapertura de un resultado normal antes de que el usuario seleccione el modelo.
+- [ ] Corregir/restaurar estados History API para Atrás/Adelante, recarga y retorno a búsqueda; conservar el query y los filtros elegidos.
+- [ ] Añadir pruebas unitarias e integración registradas en RunServiceTests.mjs; cubrir agrupación, cardinalidades 0/1/múltiples, rangos únicos/múltiples, duplicados, VIN, secciones mixtas y navegación.
+- [ ] Ejecutar regresión integral y revisar diff antes del cierre.
+- Auditoría: AUDITORIA_BUSQUEDA_MODELOS_2026-11-20.md.
+- Estado: EN PROGRESO. Auditoría preimplementación completada; sin cambios de código en este commit.
