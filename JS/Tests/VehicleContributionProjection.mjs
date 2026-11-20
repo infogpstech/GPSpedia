@@ -242,6 +242,35 @@ test("resoluciones múltiples concurrentes no sustituyen silenciosamente el even
  assert.equal(result.apertura,null);assert.ok(result.contributionCandidates.some(item=>item.reason==="resolution_conflict"));
 });
 
+test("edición versionada de un campo materializado aplica solo si coincide la versión esperada",()=>{
+ const vehicle=blankVehicle("101");vehicle.modelo="Corolla";
+ const update=event("OP-ADMIN-FIELD-MODEL-1","101","vehicle_update",{fieldName:"modelo",value:"Corolla X",expectedCurrentValue:"Corolla"},2,"dev");
+ const result=project([vehicle],[update])[0];
+ assert.equal(result.modelo,"Corolla X");assert.equal(result.contributionSources.modelo.eventId,update.eventId);
+});
+test("dos ediciones concurrentes del mismo campo producen un conflicto localizado",()=>{
+ const vehicle=blankVehicle("101");vehicle.modelo="Corolla";
+ const first=event("OP-ADMIN-FIELD-MODEL-2","101","vehicle_update",{fieldName:"modelo",value:"Corolla X",expectedCurrentValue:"Corolla"},2,"dev");
+ const second=event("OP-ADMIN-FIELD-MODEL-3","101","vehicle_update",{fieldName:"modelo",value:"Corolla Y",expectedCurrentValue:"Corolla"},3,"dev");
+ const result=project([vehicle],[first,second])[0];
+ assert.equal(result.modelo,"Corolla X");assert.ok(result.contributionCandidates.some(item=>item.eventId===second.eventId&&item.reason==="field_conflict"));
+});
+test("ediciones concurrentes de campos distintos del mismo vehículo se conservan",()=>{
+ const vehicle=blankVehicle("101");vehicle.modelo="Corolla";vehicle.anoDesde=2018;
+ const model=event("OP-ADMIN-FIELD-MODEL-4","101","vehicle_update",{fieldName:"modelo",value:"Corolla X",expectedCurrentValue:"Corolla"},2,"dev");
+ const year=event("OP-ADMIN-FIELD-YEAR-1","101","vehicle_update",{fieldName:"anoDesde",value:2019,expectedCurrentValue:2018},3,"dev");
+ const result=project([vehicle],[model,year])[0];
+ assert.equal(result.modelo,"Corolla X");assert.equal(result.anoDesde,2019);assert.equal(result.contributionCandidates.length,0);
+});
+test("edición versionada puede sustituir el valor procedente de un evento previo",()=>{
+ const vehicle=blankVehicle("101");
+ const source=event("OP-VEHICLE-MODEL-1","101","vehicle",{modelo:"Corolla"},2,"seed");
+ const update=event("OP-ADMIN-FIELD-MODEL-5","101","vehicle_update",{fieldName:"modelo",value:"Corolla X",expectedCurrentValue:"Corolla"},3,"dev",
+     {supersedesEventId:source.eventId});
+ const result=project([vehicle],[source,update])[0];
+ assert.equal(result.modelo,"Corolla X");assert.equal(result.contributionSources.modelo.eventId,update.eventId);
+});
+
 function buildMigrationRuntime(initialHeaders = null) {
     const headers = initialHeaders ? initialHeaders.slice() : [];
     let rowCount = initialHeaders ? 1 : 0;

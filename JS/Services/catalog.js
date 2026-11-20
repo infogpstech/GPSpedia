@@ -411,12 +411,20 @@ function projectVehicleContributionEvents_(vehicles, sourceEvents) {
         const targetId=String(e&&e.supersedesEventId||"").trim();
         if(!targetId||!["accepted","retracted"].includes(String(e.status||"").toLowerCase())||!String(e.actorId||"").trim()||!String(e.opId||"").startsWith("OP-ADMIN-"))return;
         const target=byEventId.get(targetId);
-        if(!target||target.eventId===e.eventId||target.vehicleId!==e.vehicleId||target.kind!==e.kind)return;
+        if(!target||target.eventId===e.eventId||target.vehicleId!==e.vehicleId||target.kind!==e.kind||e.kind==="vehicle_update")return;
         if(!resolutionsByTarget.has(targetId))resolutionsByTarget.set(targetId,[]);resolutionsByTarget.get(targetId).push(e);
     });
     const supersededEventIds=new Set(),conflictingResolutionTargets=new Set();
     resolutionsByTarget.forEach((items,id)=>{if(items.length===1)supersededEventIds.add(id);else conflictingResolutionTargets.add(id);});
     const effectiveEvents=events.filter(e=>{const targetId=String(e&&e.supersedesEventId||"");return !supersededEventIds.has(String(e&&e.eventId||""))&&!conflictingResolutionTargets.has(targetId)&&!(e&&targetId&&String(e.status||"").toLowerCase()==="retracted");});
+    const resolvedFieldCandidateIds=new Set();
+    events.forEach(e=>{
+        if(e.kind!=="vehicle_update"||String(e.status||"").toLowerCase()!=="retracted"||
+            !String(e.actorId||"").trim()||!String(e.opId||"").startsWith("OP-ADMIN-"))return;
+        const candidateId=String(e.payload&&e.payload.resolvesCandidateEventId||"").trim();
+        const candidate=byEventId.get(candidateId);
+        if(candidate&&candidate.kind==="vehicle_update"&&candidate.vehicleId===e.vehicleId)resolvedFieldCandidateIds.add(candidateId);
+    });
     const byVehicle = new Map();
     const byOpId = new Map();
     const conflictedOpIds = new Set();
@@ -464,7 +472,7 @@ function projectVehicleContributionEvents_(vehicles, sourceEvents) {
         if (!event || !String(event.vehicleId || "").trim() ||
             !/^OP-[A-Za-z0-9_-]{1,100}$/.test(String(event.opId || "")) ||
             !/^[a-f0-9]{64}$/i.test(String(event.operationHash || "")) ||
-            !["cut", "opening", "feed", "vehicle"].includes(String(event.kind || "")) ||
+            !["cut", "opening", "feed", "vehicle", "vehicle_update"].includes(String(event.kind || "")) ||
             !event.payload || typeof event.payload !== "object" || Array.isArray(event.payload)) {
             throw new Error("El ledger contiene un evento de aporte inválido; se canceló la proyección completa.");
         }
@@ -525,7 +533,9 @@ function projectVehicleContributionEvents_(vehicles, sourceEvents) {
                 vehicle["utilCorte" + slot] = 0;
                 vehicle["activaTestigo" + slot] = payload.activaTestigo === true;
                 vehicle["colaboradorCorte" + slot] = event.actorName || "";
-                sources["corte" + slot] = { eventId: event.eventId, opId: event.opId, operationHash: event.operationHash };
+                const cutSource={eventId:event.eventId,opId:event.opId,operationHash:event.operationHash};
+                sources["corte"+slot]=cutSource;
+                ["tipoCorte","ubicacionCorte","colorCableCorte","configRelay","imgCorte","activaTestigo","colaboradorCorte"].forEach(prefix=>{sources[prefix+slot]=cutSource;});
                 const metadata = payload.vehicleData && typeof payload.vehicleData === "object" ? payload.vehicleData : {};
                 ["categoria", "marca", "modelo", "versionesAplicables", "anoDesde", "anoHasta", "tipoEncendido", "imagenVehiculo"].forEach(field => {
                     if (metadata[field] === undefined || metadata[field] === null || String(metadata[field]).trim() === "" || String(vehicle[field] || "").trim()) return;
@@ -555,7 +565,8 @@ function projectVehicleContributionEvents_(vehicles, sourceEvents) {
                 }
                 vehicle.apertura = payload.text || "";
                 vehicle.imgApertura = payload.image ? normalizeAndValidateImageId(String(payload.image)) : null;
-                sources.apertura = { eventId: event.eventId, opId: event.opId, operationHash: event.operationHash };
+                const openingSource={eventId:event.eventId,opId:event.opId,operationHash:event.operationHash};
+                sources.apertura=openingSource;sources.imgApertura=openingSource;
             } else if (event.kind === "feed") {
                 const slot = [1, 2, 3].find(index => {
                     const suffix = index === 1 ? "" : String(index);
@@ -569,7 +580,10 @@ function projectVehicleContributionEvents_(vehicles, sourceEvents) {
                 const suffix = slot === 1 ? "" : String(slot);
                 vehicle["cableAlimen" + suffix] = payload.text || "";
                 vehicle["imgCableAlimen" + suffix] = payload.image ? normalizeAndValidateImageId(String(payload.image)) : null;
-                sources["feed" + slot] = { eventId: event.eventId, opId: event.opId, operationHash: event.operationHash };
+                const feedSource={eventId:event.eventId,opId:event.opId,operationHash:event.operationHash};
+                sources["feed"+slot]=feedSource;
+                sources["cableAlimen"+suffix]=feedSource;
+                sources["imgCableAlimen"+suffix]=feedSource;
             } else if (event.kind === "vehicle") {
                 const allowed = ["categoria", "marca", "modelo", "versionesAplicables", "anoDesde", "anoHasta", "tipoEncendido", "imagenVehiculo"];
                 allowed.forEach(field => {
@@ -579,9 +593,36 @@ function projectVehicleContributionEvents_(vehicles, sourceEvents) {
                         ? normalizeAndValidateImageId(String(payload[field])) : payload[field];
                     sources[field] = { eventId: event.eventId, opId: event.opId, operationHash: event.operationHash };
                 });
+            } else if (event.kind === "vehicle_update") {
+                const field=String(payload.fieldName||"");
+                const allowed=new Set(["categoria","modelo","versionesAplicables","tipoEncendido","anoDesde","anoHasta","notaImportante","apertura",
+                    "cableAlimen","cableAlimen2","cableAlimen3","imagenVehiculo","imgCorte1","imgCorte2","imgCorte3","imgApertura",
+                    "imgCableAlimen","imgCableAlimen2","imgCableAlimen3","tipoCorte1","tipoCorte2","tipoCorte3",
+                    "ubicacionCorte1","ubicacionCorte2","ubicacionCorte3","colorCableCorte1","colorCableCorte2","colorCableCorte3",
+                    "configRelay1","configRelay2","configRelay3"]);
+                if(!allowed.has(field)||!Object.prototype.hasOwnProperty.call(payload,"expectedCurrentValue")||
+                    !Object.prototype.hasOwnProperty.call(payload,"value"))
+                    throw new Error("El ledger contiene una actualización de campo inválida; se canceló la proyección completa.");
+                const imageField=["imagenVehiculo","imgCorte1","imgCorte2","imgCorte3","imgApertura","imgCableAlimen","imgCableAlimen2","imgCableAlimen3"].includes(field);
+                const currentValue=vehicle[field]===undefined||vehicle[field]===null?"":String(vehicle[field]);
+                const expectedValue=payload.expectedCurrentValue===undefined||payload.expectedCurrentValue===null?"":String(payload.expectedCurrentValue);
+                const currentSource=sources[field];
+                const expectedSourceId=String(event.supersedesEventId||"").trim();
+                const comparableCurrent=imageField&&currentValue?normalizeAndValidateImageId(currentValue):currentValue;
+                const comparableExpected=imageField&&expectedValue?normalizeAndValidateImageId(expectedValue):expectedValue;
+                if(comparableCurrent!==comparableExpected||(expectedSourceId&&(!currentSource||String(currentSource.eventId)!==expectedSourceId))){
+                    candidates.push({eventId:event.eventId,opId:event.opId,kind:event.kind,reason:"field_conflict",payload});
+                    return;
+                }
+                const nextValue=imageField?(payload.value?normalizeAndValidateImageId(String(payload.value)):null):
+                    (field==="anoDesde"||field==="anoHasta"?Number(payload.value):payload.value);
+                vehicle[field]=nextValue;
+                sources[field]={eventId:event.eventId,opId:event.opId,operationHash:event.operationHash};
+                const resolvedCandidate=String(payload.resolvesCandidateEventId||"").trim();
+                if(resolvedCandidate)resolvedFieldCandidateIds.add(resolvedCandidate);
             }
         });
-        vehicle.contributionCandidates = candidates;
+        vehicle.contributionCandidates = candidates.filter(candidate=>!resolvedFieldCandidateIds.has(String(candidate.eventId||"")));
         vehicle.contributionSources = sources;
         vehicle.contributionConflictCount = candidates.filter(item => item.reason === "opId_conflict").length;
         return vehicle;
