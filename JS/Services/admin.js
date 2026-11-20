@@ -1311,7 +1311,7 @@ function doPostInternal_(e) {
                 response = handleAddLogo(payload, logMessage);
                 break;
             case 'updateVehicleField':
-                response = handleUpdateVehicleField(payload, logMessage);
+                response = handleUpdateVehicleField(payload, logMessage, developerContext);
                 break;
             case 'uploadAdminImage':
                 response = handleUploadAdminImage(payload, logMessage);
@@ -6771,97 +6771,69 @@ function findUniqueAdminVehicleRow_(sheet, vehicleId) {
  * Actualizar de manera silenciosa un campo permitido del modal administrativo.
  * El ID y los campos calculados quedan fuera de la allowlist y nunca se escriben.
  */
-function handleUpdateVehicleField(payload, logMessage) {
-    const { vehicleId, fieldName, value, enforceExpectedCurrentValue, expectedCurrentValue } = payload || {};
-    const cleanVehicleId = String(vehicleId == null ? "" : vehicleId).trim();
-    if (!cleanVehicleId || !fieldName || typeof fieldName !== "string") throw new Error("Parámetros de edición de campo incompletos.");
-    if (!isAdminModalEditField_(fieldName) || fieldName === "id" || fieldName === "timestamp" || fieldName === "contadorBusqueda") {
-        throw new Error("El campo '" + fieldName + "' no forma parte de la edición permitida del modal de detalle.");
-    }
-    if (fieldName === "vin") return handleUpdateVehicleVinCollection_(cleanVehicleId, value, logMessage, expectedCurrentValue, enforceExpectedCurrentValue === true);
-    if (!Object.prototype.hasOwnProperty.call(COLS_CORTES, fieldName) || COLS_CORTES[fieldName] <= COLS_CORTES.id) {
-        throw new Error("El campo '" + fieldName + "' no corresponde a una columna editable del catálogo.");
-    }
 
-    const lock = LockService.getScriptLock();
-    let lockAcquired = false;
-    try {
-        lockAcquired = lock.tryLock(0);
-    } catch (lockError) {
-        lockAcquired = false;
+function handleUpdateVehicleField(payload,logMessage,modalContext) {
+    payload=payload&&typeof payload==="object"?payload:{};
+    const cleanVehicleId=String(payload.vehicleId==null?"":payload.vehicleId).trim();
+    const fieldName=String(payload.fieldName||"");
+    if(!cleanVehicleId||!fieldName)throw new Error("Parámetros de edición de campo incompletos.");
+    if(!isAdminModalEditField_(fieldName)||fieldName==="id"||fieldName==="timestamp"||fieldName==="contadorBusqueda")
+        throw new Error("El campo '"+fieldName+"' no forma parte de la edición permitida del modal de detalle.");
+    if(fieldName==="vin")return handleUpdateVehicleVinCollection_(cleanVehicleId,payload.value,logMessage,payload.expectedCurrentValue,payload.enforceExpectedCurrentValue===true);
+    if(!Object.prototype.hasOwnProperty.call(COLS_CORTES,fieldName)||COLS_CORTES[fieldName]<=COLS_CORTES.id)
+        throw new Error("El campo '"+fieldName+"' no corresponde a una columna editable del catálogo.");
+    if(payload.enforceExpectedCurrentValue!==true||!Object.prototype.hasOwnProperty.call(payload,"expectedCurrentValue"))
+        throw new Error("La edición requiere la versión esperada del campo para detectar conflictos.");
+    const actorId=String(modalContext&&modalContext.userId||"").trim();
+    const actorName=String(modalContext&&(modalContext.fullName||modalContext.userName)||"").trim();
+    if(!actorId)throw new Error("No se pudo identificar al editor autenticado.");
+    const spreadsheet=getSpreadsheet(),vehicleSheet=spreadsheet.getSheetByName(SHEET_NAMES.CORTES);
+    if(!vehicleSheet)throw new Error("No se encontró la hoja «Cortes».");
+    const actualRow=findUniqueAdminVehicleRow_(vehicleSheet,cleanVehicleId);
+    const rowValues=vehicleSheet.getRange(actualRow,1,1,vehicleSheet.getLastColumn()).getValues()[0];
+    const valueToStore=validateAdminModalFieldValue_(vehicleSheet,fieldName,payload.value,rowValues);
+    const expectedCurrentValue=payload.expectedCurrentValue===null||payload.expectedCurrentValue===undefined?"":payload.expectedCurrentValue;
+    const expectedSourceEventId=String(payload.expectedSourceEventId||"").trim();
+    if(expectedSourceEventId&&!/^EV-[A-Za-z0-9_-]{8,100}$/.test(expectedSourceEventId))
+        throw new Error("La versión fuente del campo no es válida.");
+    let ledgerSheet=spreadsheet.getSheetByName(ADMIN_VEHICLE_CONTRIBUTIONS_SHEET_NAME_);
+    if(!ledgerSheet){handleMigrateVehicleContributionsSchema({},null);ledgerSheet=spreadsheet.getSheetByName(ADMIN_VEHICLE_CONTRIBUTIONS_SHEET_NAME_);}
+    if(!ledgerSheet||ledgerSheet.getLastColumn()<ADMIN_VEHICLE_CONTRIBUTIONS_HEADERS_.length)
+        throw new Error("AportesVehiculo no está migrada; no se guardó el cambio.");
+    const headers=ledgerSheet.getRange(1,1,1,ADMIN_VEHICLE_CONTRIBUTIONS_HEADERS_.length).getDisplayValues()[0].map(v=>String(v||"").trim());
+    if(ADMIN_VEHICLE_CONTRIBUTIONS_HEADERS_.some((h,i)=>headers[i]!==h))throw new Error("El esquema AportesVehiculo no coincide.");
+    const payloadData={fieldName,value:valueToStore,expectedCurrentValue};
+    const canonical=JSON.stringify({vehicleId:cleanVehicleId,fieldName,value:valueToStore,expectedCurrentValue,expectedSourceEventId});
+    const digest=Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,canonical,Utilities.Charset.UTF_8);
+    const operationHash=digest.map(v=>("0"+(v&255).toString(16)).slice(-2)).join("");
+    const opId="OP-ADMIN-FIELD-"+operationHash.slice(0,40);
+    const lastRow=ledgerSheet.getLastRow();
+    const rows=lastRow>1?ledgerSheet.getRange(2,1,lastRow-1,ADMIN_VEHICLE_CONTRIBUTIONS_HEADERS_.length).getValues():[];
+    const existing=rows.find(row=>String(row[1]||"").trim()===opId);
+    if(existing){
+        if(String(existing[3]||"").trim().toLowerCase()!==operationHash||String(existing[2]||"").trim()!==cleanVehicleId||
+            String(existing[4]||"")!=="vehicle_update"||String(existing[10]||"").trim()!==expectedSourceEventId)
+            throw new Error("La clave idempotente de esta edición ya está asociada a otro contenido.");
+        return{status:"success",duplicate:true,eventId:String(existing[0]),opId,fieldName,value:valueToStore,
+            expectedCurrentValue,expectedSourceEventId,folderSyncWarning:false,message:"La edición ya estaba registrada; no se añadió otra fila."};
     }
-    if (!lockAcquired) {
-        const busyError = new Error("ADMIN está ocupado con una escritura breve. Reintenta la edición en unos instantes.");
-        busyError.code = "ADMIN_BUSY";
-        throw busyError;
-    }
-
-    let folderSyncVehicleInfo = null;
-    let response;
-    try {
-        const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
-        if (!sheet) throw new Error("No se encontró la hoja «Cortes».");
-        const actualRow = findUniqueAdminVehicleRow_(sheet, cleanVehicleId);
-        const rowValues = sheet.getRange(actualRow, 1, 1, sheet.getLastColumn()).getValues()[0];
-        const colIndex = COLS_CORTES[fieldName];
-        const valueToStore = validateAdminModalFieldValue_(sheet, fieldName, value, rowValues);
-        const target = sheet.getRange(actualRow, colIndex);
-        const previousValue = target.getValue();
-        if (enforceExpectedCurrentValue === true) assertAdminModalExpectedValue_(previousValue, expectedCurrentValue, fieldName);
-        try {
-            target.setValue(valueToStore);
-            SpreadsheetApp.flush();
-            const persisted = target.getValue();
-            if (String(persisted == null ? "" : persisted) !== String(valueToStore == null ? "" : valueToStore)) {
-                throw new Error("El valor guardado no coincide con el valor validado.");
-            }
-        } catch (writeError) {
-            try {
-                target.setValue(previousValue);
-                SpreadsheetApp.flush();
-                if (String(target.getValue() == null ? "" : target.getValue()) !== String(previousValue == null ? "" : previousValue)) {
-                    throw new Error("No se pudo verificar la restauración del valor anterior.");
-                }
-            } catch (rollbackError) {
-                throw new Error("Falló la edición y también su reversión: " + writeError.message + "; " + rollbackError.message);
-            }
-            throw writeError;
-        }
-
-        logMessage("Edición In-Modal", "Actualizando campo '" + fieldName + "' para el vehículo ID: " + cleanVehicleId + "...");
-        const folderMetadataFields = new Set(["categoria", "marca", "modelo", "versionesAplicables", "tipoEncendido", "anoDesde", "anoHasta"]);
-        if (folderMetadataFields.has(fieldName)) {
-            // Capturar el estado confirmado. La sincronización de Drive se ejecuta
-            // después de liberar el ScriptLock para no bloquear otras funciones ADMIN.
-            const updatedValues = sheet.getRange(actualRow, 1, 1, sheet.getLastColumn()).getValues()[0];
-            folderSyncVehicleInfo = { sheet, row: actualRow, vehicle: mapRowToObject(updatedValues, COLS_CORTES) };
-        }
-        logMessage("Edición In-Modal", "Campo '" + fieldName + "' actualizado y verificado para el vehículo ID: " + cleanVehicleId + ".");
-        response = {
-            status: "success",
-            folderSyncWarning: false,
-            message: "El campo '" + fieldName + "' fue guardado y verificado en el registro de la fila " + actualRow + "."
-        };
-    } finally {
-        if (lock.hasLock()) lock.releaseLock();
-    }
-
-    if (folderSyncVehicleInfo) {
-        try {
-            const syncResult = movePrimaryVehicleImageToCanonicalFolder(
-                folderSyncVehicleInfo.sheet, folderSyncVehicleInfo.row, folderSyncVehicleInfo.vehicle, null, logMessage
-            );
-            response.folderSyncWarning = Boolean(syncResult && syncResult.warning);
-            if (response.folderSyncWarning && syncResult.reason) {
-                logMessage("Edición In-Modal", "El metadato se guardó, pero la imagen principal no se movió: " + syncResult.reason, 0, 0, true);
-            }
-        } catch (syncError) {
-            response.folderSyncWarning = true;
-            logMessage("Edición In-Modal", "El campo se guardó, pero no se pudo sincronizar la carpeta de imagenVehiculo: " + syncError.message, 0, 0, true, true);
-        }
-    }
-    return response;
+    const eventId="EV-"+Utilities.getUuid(),createdAt=new Date().toISOString();
+    ledgerSheet.appendRow([eventId,opId,cleanVehicleId,operationHash,"vehicle_update",JSON.stringify(payloadData),
+        actorId,actorName,createdAt,"accepted",expectedSourceEventId]);
+    SpreadsheetApp.flush();
+    const lastAfter=ledgerSheet.getLastRow();
+    const persistedRows=lastAfter>1?ledgerSheet.getRange(2,1,lastAfter-1,ADMIN_VEHICLE_CONTRIBUTIONS_HEADERS_.length).getValues():[];
+    const persisted=persistedRows.find(row=>String(row[0]||"")===eventId);
+    if(!persisted||String(persisted[1]||"")!==opId||String(persisted[2]||"")!==cleanVehicleId||
+        String(persisted[4]||"")!=="vehicle_update"||String(persisted[10]||"").trim()!==expectedSourceEventId)
+        throw new Error("No se pudo verificar la actualización versionada después de anexarla.");
+    const folderMetadataFields=new Set(["categoria","modelo","versionesAplicables","tipoEncendido","anoDesde","anoHasta","imagenVehiculo"]);
+    const folderSyncWarning=folderMetadataFields.has(fieldName);
+    if(logMessage)logMessage("Edición In-Modal","Se anexó una versión del campo '"+fieldName+"' para el vehículo "+cleanVehicleId+"; el registro materializado no se sobrescribió.");
+    return{status:"success",duplicate:false,eventId,opId,fieldName,value:valueToStore,expectedCurrentValue,expectedSourceEventId,
+        folderSyncWarning,message:"La edición quedó registrada como evento versionado. Si otra actualización llegó primero, aparecerá como conflicto localizado para revisión."};
 }
+
 const ADMIN_IMAGE_UPLOAD_SHEET_NAME = "AdminImageUploads";
 const ADMIN_IMAGE_UPLOAD_HEADERS = [
     "opId", "vehicleId", "fieldName", "urlAnterior", "urlNueva", "archivoDriveId",
@@ -10872,6 +10844,7 @@ function handleGetVehicleContributionCandidates_(payload) {
 }
 
 
+
 function handleResolveVehicleContributionCandidate_(payload, developerContext, logMessage) {
  payload=payload&&typeof payload==="object"?payload:{};
  const targetEventId=String(payload.eventId||"").trim(),requestId=String(payload.requestId||"").trim(),decision=String(payload.decision||"").trim().toLowerCase();
@@ -10879,7 +10852,7 @@ function handleResolveVehicleContributionCandidate_(payload, developerContext, l
  if(!/^[A-Za-z0-9_-]{16,80}$/.test(requestId))throw new Error("requestId de resolución no válido.");
  if(!["accept","correct","discard"].includes(decision))throw new Error("Decisión ADMIN no válida.");
  const actorId=String(developerContext&&developerContext.userId||"").trim(),actorName=String(developerContext&&(developerContext.fullName||developerContext.userName)||"").trim();
- if(!actorId)throw new Error("No se pudo identificar al Desarrollador autenticado.");
+ if(!actorId)throw new Error("No se pudo identificar al editor autenticado.");
  const spreadsheet=getSpreadsheet();
  return withReplacedImagesSchemaLock_(function(){
   const sheet=spreadsheet.getSheetByName(ADMIN_VEHICLE_CONTRIBUTIONS_SHEET_NAME_);
@@ -10892,30 +10865,48 @@ function handleResolveVehicleContributionCandidate_(payload, developerContext, l
   const vehicleId=String(target[2]||"").trim(),kind=String(target[4]||"").trim().toLowerCase(),targetStatus=String(target[9]||"").trim().toLowerCase();
   let originalPayload;try{originalPayload=JSON.parse(String(target[5]||"{}"));}catch(e){throw new Error("El payload original no es JSON válido.");}
   if(!originalPayload||typeof originalPayload!=="object"||Array.isArray(originalPayload))throw new Error("El payload original no contiene un objeto válido.");
-  const opId="OP-ADMIN-"+requestId;
+  const isFieldUpdate=kind==="vehicle_update";
   let nextPayload=decision==="correct"?payload.correctedPayload:originalPayload;
   if(!nextPayload||typeof nextPayload!=="object"||Array.isArray(nextPayload))throw new Error("La corrección debe ser un objeto JSON.");
   nextPayload=JSON.parse(JSON.stringify(nextPayload));
-  const nextStatus=decision==="discard"?"retracted":"accepted";
-  const canonical=JSON.stringify({targetEventId,vehicleId,kind,decision,status:nextStatus,payload:nextPayload});
+  if(isFieldUpdate){
+   if(String(nextPayload.fieldName||"")!==String(originalPayload.fieldName||""))throw new Error("La resolución debe conservar el campo original del candidato.");
+   if(!Object.prototype.hasOwnProperty.call(nextPayload,"expectedCurrentValue")||!Object.prototype.hasOwnProperty.call(nextPayload,"value"))throw new Error("La corrección requiere expectedCurrentValue y value.");
+   nextPayload.resolvesCandidateEventId=targetEventId;
+  }
+  const sourceEventId=isFieldUpdate
+   ?String((decision==="correct"&&nextPayload.currentSourceEventId!==undefined?nextPayload.currentSourceEventId:target[10])||"").trim()
+   :targetEventId;
+  if(sourceEventId&&!/^EV-[A-Za-z0-9_-]{8,100}$/.test(sourceEventId))throw new Error("El evento fuente de la corrección no es válido.");
+  const opId="OP-ADMIN-"+requestId,nextStatus=decision==="discard"?"retracted":"accepted";
+  const canonical=JSON.stringify({targetEventId,sourceEventId,vehicleId,kind,decision,status:nextStatus,payload:nextPayload});
   const digest=Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,canonical,Utilities.Charset.UTF_8);
   const operationHash=digest.map(v=>("0"+(v&255).toString(16)).slice(-2)).join("");
   const existing=rows.find(row=>String(row[1]||"").trim()===opId);
   if(existing){
-   if(String(existing[3]||"").trim().toLowerCase()!==operationHash||String(existing[10]||"").trim()!==targetEventId){const e=new Error("El requestId ya fue utilizado con otra resolución.");e.code="CONTRIBUTION_RESOLUTION_IDEMPOTENCY_CONFLICT";throw e;}
-   return{status:"success",duplicate:true,eventId:String(existing[0]),supersedesEventId:targetEventId,decision,vehicleId,message:"La resolución ya estaba registrada; no se añadió otra fila."};
+   let existingPayload={};try{existingPayload=JSON.parse(String(existing[5]||"{}"));}catch(e){}
+   if(String(existing[3]||"").trim().toLowerCase()!==operationHash||String(existing[10]||"").trim()!==sourceEventId||
+      (isFieldUpdate&&String(existingPayload.resolvesCandidateEventId||"")!==targetEventId)){
+    const e=new Error("El requestId ya fue utilizado con otra resolución.");e.code="CONTRIBUTION_RESOLUTION_IDEMPOTENCY_CONFLICT";throw e;
+   }
+   return{status:"success",duplicate:true,eventId:String(existing[0]),supersedesEventId:targetEventId,sourceEventId,decision,vehicleId,message:"La resolución ya estaba registrada; no se añadió otra fila."};
   }
-  if(rows.some(row=>String(row[10]||"").trim()===targetEventId&&["accepted","retracted"].includes(String(row[9]||"").trim().toLowerCase())&&String(row[6]||"").trim())){
-   const e=new Error("Otro Desarrollador ya resolvió este candidato. Actualiza la lista.");e.code="CONTRIBUTION_ALREADY_RESOLVED";throw e;
-  }
+  const alreadyResolved=rows.some(row=>{
+   if(!["accepted","retracted"].includes(String(row[9]||"").trim().toLowerCase())||!String(row[6]||"").trim())return false;
+   if(isFieldUpdate){try{return String(JSON.parse(String(row[5]||"{}")).resolvesCandidateEventId||"")===targetEventId;}catch(e){return false;}}
+   return String(row[10]||"").trim()===targetEventId;
+  });
+  if(alreadyResolved){const e=new Error("Otro editor ya resolvió este candidato. Actualiza la lista.");e.code="CONTRIBUTION_ALREADY_RESOLVED";throw e;}
   if(!["accepted","review"].includes(targetStatus))throw new Error("El evento objetivo ya no está en un estado resoluble.");
   const eventId="EV-"+Utilities.getUuid(),createdAt=new Date().toISOString();
-  sheet.appendRow([eventId,opId,vehicleId,operationHash,kind,JSON.stringify(nextPayload),actorId,actorName,createdAt,nextStatus,targetEventId]);
+  sheet.appendRow([eventId,opId,vehicleId,operationHash,kind,JSON.stringify(nextPayload),actorId,actorName,createdAt,nextStatus,sourceEventId]);
   SpreadsheetApp.flush();
-  const persisted=sheet.getRange(sheet.getLastRow(),1,1,ADMIN_VEHICLE_CONTRIBUTIONS_HEADERS_.length).getValues()[0];
-  if(String(persisted[0]||"")!==eventId||String(persisted[1]||"")!==opId||String(persisted[10]||"")!==targetEventId||String(persisted[9]||"")!==nextStatus)throw new Error("No se pudo verificar la resolución append-only después de escribirla.");
+  const rowsAfter=sheet.getRange(2,1,sheet.getLastRow()-1,ADMIN_VEHICLE_CONTRIBUTIONS_HEADERS_.length).getValues();
+  const persisted=rowsAfter.find(row=>String(row[0]||"")===eventId);
+  if(!persisted||String(persisted[1]||"")!==opId||String(persisted[10]||"")!==sourceEventId||String(persisted[9]||"")!==nextStatus)
+   throw new Error("No se pudo verificar la resolución append-only después de escribirla.");
   if(logMessage)logMessage("Resolución de aporte","Se anexó "+decision+" para "+targetEventId+"; el evento original se conserva.");
-  return{status:"success",duplicate:false,eventId,supersedesEventId:targetEventId,decision,vehicleId,message:"Resolución registrada como evento nuevo; el historial original permanece intacto."};
+  return{status:"success",duplicate:false,eventId,supersedesEventId:targetEventId,sourceEventId,decision,vehicleId,message:"Resolución registrada como evento nuevo; el historial original permanece intacto."};
  });
 }
 
