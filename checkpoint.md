@@ -225,3 +225,14 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - `handleSubmitVideoForApproval` conserva `withVideoApprovalMutationLock_` para unicidad de opVideoId/destino y append coordinado.
 - `FeedbackPendingVideoLookupBoundedRead` 6/6 PASS; `FeedbackVideoApprovalOperationLookupBoundedRead` 5/5 PASS. CI 44838760886 SUCCESS: 248 suites, 3018 pruebas, 0 fallos. Health read-only 44838760925 SUCCESS.
 - No se desplegó ni se modificaron datos productivos.
+
+
+## Checkpoint — búsquedas dirigidas PyS y tutoriales (2026-11-20)
+
+- HEAD de código validado: `87ca969ad9e24a1e005d61574e2a0532ac8f034f`.
+- `findPysRowsById_` consulta columna A y carga solo filas coincidentes; fallback de columna para mocks/adaptadores sin TextFinder.
+- `findTutorialRow_` consulta ID en A y título en B; `handleUpdateTutorialItem` verifica título único en B excluyendo su propia fila.
+- Aprobaciones de vídeo: lookups de opVideoId/destino pendiente en Problema, con lectura dirigida y detección de duplicados.
+- Pruebas: PyS 5/5; tutorial lookup 6/6; tutorial title update 5/5; pending video 6/6; opVideoId 5/5.
+- CI 44839134803 SUCCESS: 250 suites, 3028 pruebas, 0 fallos. Health read-only 44839135309 SUCCESS; Pages pendiente.
+- Locks de creación/actualización permanecen para unicidad e integridad; se redujo lectura dentro de las secciones críticas.
