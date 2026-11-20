@@ -697,6 +697,18 @@ function runSharedMutationCoordinatorTests() {
         expectThrow_(() => acquire_(r, "ADMIN", "unknownImageAction"), "política");
     });
 
+    test_("AportesVehiculo usa mantenimiento exclusivo solo para migrar esquema", function() {
+        const policy = coordinatorPolicy_("ADMIN", "migrateVehicleContributionsSchema");
+        assert_(policy.maintenance === true, "La creación/migración de esquema debe reservar mantenimiento exclusivo.");
+        const r = createRuntime_();
+        const migration = acquire_(r, "ADMIN", "migrateVehicleContributionsSchema");
+        assert_(migration.status === "success", "La migración explícita debe estar habilitada.");
+        const competing = acquire_(r, "ADMIN", "backupDatabase");
+        assert_(competing.status === "error" && competing.code === "busy",
+            "La migración del esquema debe excluir mantenimiento global concurrente.");
+        release_(r, "ADMIN", "migrateVehicleContributionsSchema", migration.token);
+    });
+
     test_("AUTH/requestPasswordRecovery no requiere sesión ni bloquea el login", function() {
         const policy = coordinatorPolicy_("AUTH", "requestPasswordRecovery");
         assert_(policy.writeResources.includes("PASSWORD_RECOVERY"), "La solicitud debe reservar el estado temporal.");
