@@ -8627,6 +8627,199 @@ const IMAGE_UPLOAD_LEDGER_HEADERS = [
     "fileId", "fileUrl", "state", "referenceSheet", "referenceRow", "referenceColumns",
     "referencesJson", "fileName", "createdAt", "updatedAt", "lastError"
 ];
+
+const IMAGE_UPLOAD_EVENTS_SHEET_NAME_ = "ImageUploadEvents";
+const IMAGE_UPLOAD_EVENTS_HEADERS_ = [
+    "eventId", "token", "operationKey", "folderId", "mimeType", "sizeBytes",
+    "contentHash", "fileId", "fileUrl", "state", "referencesJson", "fileName",
+    "createdAt", "lastError"
+];
+
+function getImageUploadEventsSheetForAdmin_() {
+    const sheet = getSpreadsheet().getSheetByName(IMAGE_UPLOAD_EVENTS_SHEET_NAME_);
+    if (!sheet) return null;
+    if (sheet.getLastColumn() < IMAGE_UPLOAD_EVENTS_HEADERS_.length) {
+        throw new Error("ImageUploadEvents tiene una estructura incompleta.");
+    }
+    const headers = sheet.getRange(1, 1, 1, IMAGE_UPLOAD_EVENTS_HEADERS_.length)
+        .getDisplayValues()[0].map(value => String(value || "").trim());
+    if (IMAGE_UPLOAD_EVENTS_HEADERS_.some((header, index) => headers[index] !== header)) {
+        throw new Error("La estructura de ImageUploadEvents no coincide con el contrato esperado.");
+    }
+    return sheet;
+}
+
+function readImageUploadEventsForAdmin_(sheet) {
+    if (!sheet || sheet.getLastRow() < 2) return [];
+    return sheet.getRange(2, 1, sheet.getLastRow() - 1, IMAGE_UPLOAD_EVENTS_HEADERS_.length)
+        .getValues().map((values, index) => ({ rowIndex: index + 2, values }));
+}
+
+function projectImageUploadEventsForAdmin_(entries) {
+    const events = Array.isArray(entries) ? entries : [];
+    if (!events.length) return null;
+    const first = events[0].values || events[0];
+    const identity = [1, 2, 3, 4, 5, 6].map(index =>
+        String(first[index] === null || first[index] === undefined ? "" : first[index]));
+    const fileIds = new Set();
+    const references = new Map();
+    let linked = false, fileMissing = false, requiresReview = false, lastError = "";
+    events.forEach(entry => {
+        const values = entry.values || entry;
+        const candidate = [1, 2, 3, 4, 5, 6].map(index =>
+            String(values[index] === null || values[index] === undefined ? "" : values[index]));
+        if (candidate.some((value, index) => value !== identity[index])) requiresReview = true;
+        const fileId = String(values[7] || "").trim();
+        if (fileId) fileIds.add(fileId);
+        const state = String(values[9] || "").toLowerCase();
+        linked = linked || state === "linked";
+        fileMissing = fileMissing || state === "file_missing";
+        requiresReview = requiresReview || state === "requires_review";
+        if (String(values[10] || "").trim()) references.set(String(values[10]), true);
+        if (String(values[13] || "").trim()) lastError = String(values[13]);
+    });
+    if (fileIds.size > 1) requiresReview = true;
+    return {
+        token: identity[0], operationKey: identity[1], folderId: identity[2],
+        mimeType: identity[3], sizeBytes: Number(identity[4]), contentHash: identity[5],
+        fileId: fileIds.size === 1 ? Array.from(fileIds)[0] : "",
+        fileIds: Array.from(fileIds),
+        state: requiresReview ? "requires_review" : linked ? "linked" : fileMissing ? "file_missing" : "pending",
+        eventCount: events.length, lastError,
+        referencesJson: Array.from(references.keys()).join("|")
+    };
+}
+
+function appendImageUploadEventForAdmin_(sheet, event) {
+    const row = [
+        "IE-" + String(Utilities.getUuid()).replace(/-/g, ""),
+        String(event.token || ""), String(event.operationKey || ""), String(event.folderId || ""),
+        String(event.mimeType || ""), Number(event.sizeBytes), String(event.contentHash || ""),
+        String(event.fileId || ""), String(event.fileUrl || ""), String(event.state || "pending"),
+        String(event.referencesJson || "[]"), String(event.fileName || ""),
+        String(event.createdAt || new Date().toISOString()), String(event.lastError || "").slice(0, 500)
+    ];
+    sheet.appendRow(row);
+    SpreadsheetApp.flush();
+    const found = sheet.getRange(2, 1, Math.max(1, sheet.getLastRow() - 1), 1)
+        .createTextFinder(row[0]).matchCase(true).matchEntireCell(true).findAll();
+    if (found.length !== 1) throw new Error("No se confirmó la transición de ImageUploadEvents.");
+    return row[0];
+}
+
+function reconcileImageUploadEventsForAdmin_(referenceMap, legacyTokens, legacyFileIds, confirm) {
+    const sheet = getImageUploadEventsSheetForAdmin_();
+    if (!sheet) return { items: [], counts: {}, fileIds: [], processed: 0 };
+    const rows = readImageUploadEventsForAdmin_(sheet);
+    const grouped = new Map();
+    rows.forEach(entry => {
+        const token = String(entry.values[1] || "").trim();
+        if (!token) return;
+        if (!grouped.has(token)) grouped.set(token, []);
+        grouped.get(token).push(entry);
+    });
+    const items = [], fileIds = [];
+    const counts = { linked: 0, pending_unreferenced: 0, orphan_candidate: 0, file_missing: 0, requires_review: 0, errors: 0 };
+    grouped.forEach((entries, token) => {
+        const projected = projectImageUploadEventsForAdmin_(entries);
+        if (!projected) return;
+        if (legacyTokens.has(token) && projected.state !== "requires_review") return;
+        const item = {
+            source: "ImageUploadEvents", token, operationKey: projected.operationKey,
+            fileId: projected.fileId, fileIds: projected.fileIds,
+            previousState: projected.state, state: projected.state,
+            referenceCount: 0, reason: "", eventCount: projected.eventCount
+        };
+        let file = null, references = [];
+        try {
+            if (projected.state === "requires_review") {
+                item.state = "requires_review";
+                item.reason = "El journal contiene metadatos incompatibles o varios archivos para el mismo token; se conservan todos para revisión.";
+            } else {
+                const expected = {
+                    token, operationKey: projected.operationKey, folderId: projected.folderId,
+                    mimeType: projected.mimeType, sizeBytes: projected.sizeBytes,
+                    contentHash: projected.contentHash
+                };
+                const folder = DriveApp.getFolderById(expected.folderId);
+                if (String(folder.getId()) !== expected.folderId) throw new Error("La carpeta del evento no coincide con el ID persistido.");
+                if (projected.fileId) {
+                    try { file = DriveApp.getFileById(projected.fileId); } catch (lookupError) { file = null; }
+                }
+                if (!file) {
+                    const extension = getExtensionFromMimeType(expected.mimeType);
+                    file = findExistingImageUpload(folder, "__GPSpediaUpload_" + token + extension, expected, token);
+                }
+                let fileState = "valid";
+                if (!file) fileState = "missing";
+                else {
+                    try { verifyImageUploadFile_(file, folder, expected); }
+                    catch (verifyError) { fileState = "altered"; item.reason = verifyError.message; }
+                }
+                const fileId = file ? String(file.getId()) : projected.fileId;
+                references = fileId ? (referenceMap.get(fileId) || []) : [];
+                item.fileId = fileId || "";
+                item.referenceCount = references.length;
+                if (fileState === "missing") {
+                    item.state = "file_missing";
+                    item.reason = "No se encontró el archivo en Drive ni en la carpeta registrada.";
+                } else if (fileState === "altered") {
+                    item.state = "requires_review";
+                } else if (references.length) {
+                    item.state = "linked";
+                    item.reason = "La referencia de Spreadsheet se verificó por ID de Drive.";
+                } else if (projected.state === "linked") {
+                    item.state = "orphan_candidate";
+                    item.reason = "El archivo existe, pero ya no se encontró una referencia; se conserva para revisión.";
+                } else {
+                    item.state = "pending_unreferenced";
+                    item.reason = "El archivo existe, pero todavía no se encontró una referencia; no se elimina.";
+                }
+                if (fileId) {
+                    fileIds.push(fileId);
+                    legacyFileIds.add(fileId);
+                }
+                if (confirm && item.state !== projected.state ||
+                    confirm && fileId && fileId !== projected.fileId) {
+                    const journalState = item.state === "linked" ? "linked" :
+                        item.state === "file_missing" ? "file_missing" :
+                        item.state === "requires_review" || item.state === "orphan_candidate" ? "requires_review" : "pending";
+                    appendImageUploadEventForAdmin_(sheet, {
+                        token, operationKey: expected.operationKey, folderId: expected.folderId,
+                        mimeType: expected.mimeType, sizeBytes: expected.sizeBytes,
+                        contentHash: expected.contentHash, fileId: journalState === "requires_review" && item.state === "orphan_candidate" ? fileId : fileId,
+                        fileUrl: fileId ? "https://drive.google.com/uc?export=view&id=" + fileId : "",
+                        state: journalState, referencesJson: JSON.stringify(references),
+                        fileName: String((entries[entries.length - 1].values || [])[11] || "")
+                    });
+                }
+                if (confirm && file && item.state === "linked") {
+                    try {
+                        const latest = entries[entries.length - 1].values || [];
+                        const originalName = String(latest[11] || file.getName());
+                        if (originalName && file.getName() !== originalName) file.setName(originalName);
+                        const description = buildImageUploadDescription_({
+                            operationKey: expected.operationKey, token, folderId: expected.folderId,
+                            mimeType: expected.mimeType, sizeBytes: expected.sizeBytes,
+                            contentHash: expected.contentHash, fileName: originalName
+                        }, "linked", JSON.stringify(references));
+                        file.setDescription(description);
+                    } catch (descriptionError) {
+                        item.descriptionWarning = descriptionError.message;
+                    }
+                }
+            }
+        } catch (error) {
+            item.state = "requires_review";
+            item.reason = String(error && error.message || error);
+            counts.errors++;
+        }
+        counts[item.state] = (counts[item.state] || 0) + 1;
+        items.push(item);
+    });
+    return { items, counts, fileIds, processed: items.length };
+}
+
 const IMAGE_UPLOAD_MAX_BYTES = 10 * 1024 * 1024;
 
 function getOrCreateImageUploadLedgerSheet_() {
@@ -8952,6 +9145,17 @@ function markImageUploadLinked(imageUrl) {
         values[15] = new Date().toISOString();
         values[16] = "";
         saveImageUploadLedgerRecord_(ledgerSheet, record);
+        try {
+            const eventsSheet = getImageUploadEventsSheetForAdmin_();
+            if (eventsSheet) appendImageUploadEventForAdmin_(eventsSheet, {
+                token: expected.token, operationKey: expected.operationKey, folderId: expected.folderId,
+                mimeType: expected.mimeType, sizeBytes: expected.sizeBytes, contentHash: expected.contentHash,
+                fileId, fileUrl: "https://drive.google.com/uc?export=view&id=" + fileId,
+                state: "linked", referencesJson: JSON.stringify(references), fileName: String(values[13] || "")
+            });
+        } catch (journalError) {
+            Logger.log("No se pudo anexar la vinculación a ImageUploadEvents: " + String(journalError && journalError.message || journalError));
+        }
 
         try {
             const originalName = String(values[13] || "");
@@ -9159,31 +9363,35 @@ function classifyImageUploadReconciliation_(previousState, fileState, referenceC
 
 function handleReconcilePendingImageUploads(payload, logMessage) {
     const existingLedgerSheet = getSpreadsheet().getSheetByName(IMAGE_UPLOAD_LEDGER_SHEET_NAME);
-    if (!existingLedgerSheet) {
+    const existingEventsSheet = getImageUploadEventsSheetForAdmin_();
+    if (!existingLedgerSheet && !existingEventsSheet) {
         return { status: "success", dryRun: !(payload && payload.confirm === true), processed: 0,
-            message: "ImageUploadLedger todavía no existe; no hay cargas registradas para reconciliar." };
+            message: "No existen registros en ImageUploadLedger ni ImageUploadEvents para reconciliar." };
     }
-    const ledgerSheet = getOrCreateImageUploadLedgerSheet_();
-    const lastRow = ledgerSheet.getLastRow();
+    const ledgerSheet = existingLedgerSheet ? getOrCreateImageUploadLedgerSheet_() : null;
+    const lastRow = ledgerSheet ? ledgerSheet.getLastRow() : 1;
     const requestedStart = Number(payload && payload.startRow);
     const startRow = Number.isInteger(requestedStart) && requestedStart >= 2 ? requestedStart : 2;
     const requestedLimit = payload && payload.limit !== undefined ? Number(payload.limit) : 50;
     const limit = Number.isInteger(requestedLimit) ? Math.max(1, Math.min(100, requestedLimit)) : 50;
     const confirm = !!(payload && payload.confirm === true);
-    if (lastRow < 2 || startRow > lastRow) {
-        return { status: "success", dryRun: !confirm, processed: 0, message: "No hay registros de cargas generales pendientes de reconciliación." };
-    }
-
-    const count = Math.min(limit, lastRow - startRow + 1);
-    const records = ledgerSheet.getRange(startRow, 1, count, IMAGE_UPLOAD_LEDGER_HEADERS.length).getValues();
+    const count = lastRow < 2 || startRow > lastRow ? 0 : Math.min(limit, lastRow - startRow + 1);
+    const records = count ? ledgerSheet.getRange(startRow, 1, count, IMAGE_UPLOAD_LEDGER_HEADERS.length).getValues() : [];
     const referenceMap = getImageUploadReferenceMap_();
     const ledgerFileIds = new Set();
     const allReferenceIds = new Set();
     const items = [];
     const counts = { linked: 0, pending_unreferenced: 0, orphan_candidate: 0, file_missing: 0, requires_review: 0, errors: 0 };
 
-    ledgerSheet.getRange(2, 7, lastRow - 1, 1).getDisplayValues().flat()
-        .forEach(value => { if (String(value || "").trim()) ledgerFileIds.add(String(value).trim()); });
+    if (ledgerSheet && lastRow > 1) {
+        ledgerSheet.getRange(2, 7, lastRow - 1, 1).getDisplayValues().flat()
+            .forEach(value => { if (String(value || "").trim()) ledgerFileIds.add(String(value).trim()); });
+    }
+    const legacyTokens = new Set();
+    if (ledgerSheet && lastRow > 1) {
+        ledgerSheet.getRange(2, 1, lastRow - 1, 1).getDisplayValues().flat()
+            .forEach(value => { const token = String(value || "").trim(); if (token) legacyTokens.add(token); });
+    }
     referenceMap.forEach((references, fileId) => allReferenceIds.add(fileId));
 
     records.forEach((values, offset) => {
@@ -9283,13 +9491,18 @@ function handleReconcilePendingImageUploads(payload, logMessage) {
         items.push(item);
     });
 
+    const journalResult = reconcileImageUploadEventsForAdmin_(referenceMap, legacyTokens, ledgerFileIds, confirm);
+    journalResult.items.forEach(item => items.push(item));
+    Object.keys(journalResult.counts).forEach(key => { counts[key] = (counts[key] || 0) + journalResult.counts[key]; });
+
     items.forEach(item => { if (item.fileId) ledgerFileIds.add(item.fileId); });
     const untrackedReferences = Array.from(allReferenceIds).filter(fileId => !ledgerFileIds.has(fileId));
-    const nextStartRow = startRow + count <= lastRow ? startRow + count : null;
+    const nextStartRow = count && startRow + count <= lastRow ? startRow + count : null;
     if (logMessage) logMessage("Reconciliación de cargas",
         (confirm ? "Aplicados" : "Simulados") + " " + items.length + " registros; no se eliminó ningún archivo.");
     return {
         status: "success", dryRun: !confirm, processed: items.length,
+        legacyProcessed: records.length, journalProcessed: journalResult.processed,
         startRow, nextStartRow, truncated: nextStartRow !== null,
         counts, untrackedReferenceCount: untrackedReferences.length,
         untrackedReferenceFileIds: untrackedReferences.slice(0, 50),
