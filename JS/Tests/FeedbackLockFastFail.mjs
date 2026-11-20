@@ -25,7 +25,7 @@ for(const name of ["handleSuggestYear","handleRecordLike","handleReportProblem",
  assert.ok(body.includes("acquireFeedbackScriptLock_(lock)"),name+" debe adquirir el lock sin espera.");
 }
 {
- const contact=extract("handleSendContactForm");
+ const contact=extract(feedback,"handleSendContactForm");
  assert.doesNotMatch(contact,/LockService\.getScriptLock\(\)|acquireFeedbackScriptLock_\(/,
   "El formulario de contacto no debe conservar el lock global durante su escritura.");
  assert.match(contact,/getNextFormulaBasedId_\(sheet, COLS_CONTACTANOS\.Contacto_ID\)/,
