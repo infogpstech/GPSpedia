@@ -302,4 +302,24 @@ test("sourceVersion FEEDBACK solo se acepta para Cortes, PyS y Tutorial", () => 
     assert.throws(()=>request("publishCatalogChange","FEEDBACK","recordLike",{change:{collection:"logos",recordId:"L-1",operation:"delete",sourceVersion:1}}),/versión de origen/);
     assert.throws(()=>request("publishCatalogChange","ADMIN","restoreDatabase",{change:{collection:"cortes",recordId:"V-1",operation:"delete",sourceVersion:1}}),/versión de origen/);
 });
+test("ADMIN usa versiones de origen para Cortes y convierte snapshots legacy en reset", () => {
+    const first = request("publishCatalogChange","ADMIN","updateVehicleField",{change:{collection:"cortes",recordId:"V-ADMIN",operation:"upsert",snapshot:{id:"V-ADMIN",marca:"A"},sourceVersion:1}});
+    const latest = request("publishCatalogChange","ADMIN","updateVehicleField",{change:{collection:"cortes",recordId:"V-ADMIN",operation:"upsert",snapshot:{id:"V-ADMIN",marca:"C"},sourceVersion:3}});
+    const stale = request("publishCatalogChange","ADMIN","updateVehicleField",{change:{collection:"cortes",recordId:"V-ADMIN",operation:"upsert",snapshot:{id:"V-ADMIN",marca:"B"},sourceVersion:2}});
+    assert.equal(first.resetRequired,false);
+    assert.equal(latest.resetRequired,false);
+    assert.equal(stale.resetRequired,true);
+    const page = request("getCatalogChanges","ADMIN","getCatalogChanges",{cursor:stale.revision-1,limit:1});
+    assert.equal(page.changes[0].operation,"reset");
+    assert.equal(page.changes[0].staleSourceVersion,true);
+
+    const head = request("getCatalogChanges","ADMIN","getCatalogChanges",{cursor:Number.MAX_SAFE_INTEGER,limit:1});
+    const legacy = request("publishCatalogChange","ADMIN","updateVehicleField",{change:{collection:"cortes",recordId:"V-LEGACY",operation:"delete"}});
+    assert.equal(legacy.resetRequired,true);
+    const legacyPage = request("getCatalogChanges","ADMIN","getCatalogChanges",{cursor:head.currentRevision,limit:1});
+    assert.equal(legacyPage.changes[0].operation,"reset");
+});
+test("sourceVersion ADMIN solo se acepta para la colección Cortes", () => {
+    assert.throws(()=>request("publishCatalogChange","ADMIN","addLogo",{change:{collection:"logos",recordId:"L-1",operation:"upsert",sourceVersion:1}}),/versión de origen/);
+});
 console.log("CatalogChangeFeed: " + passed + "/" + passed + " PASS");
