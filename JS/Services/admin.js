@@ -8663,7 +8663,7 @@ function projectImageUploadEventsForAdmin_(entries) {
         String(first[index] === null || first[index] === undefined ? "" : first[index]));
     const fileIds = new Set();
     const references = new Map();
-    let linked = false, fileMissing = false, requiresReview = false, lastError = "";
+    let requiresReview = false, lastError = "", latestState = "pending", latestReferencesJson = "[]";
     events.forEach(entry => {
         const values = entry.values || entry;
         const candidate = [1, 2, 3, 4, 5, 6].map(index =>
@@ -8671,11 +8671,9 @@ function projectImageUploadEventsForAdmin_(entries) {
         if (candidate.some((value, index) => value !== identity[index])) requiresReview = true;
         const fileId = String(values[7] || "").trim();
         if (fileId) fileIds.add(fileId);
-        const state = String(values[9] || "").toLowerCase();
-        linked = linked || state === "linked";
-        fileMissing = fileMissing || state === "file_missing";
-        requiresReview = requiresReview || state === "requires_review";
-        if (String(values[10] || "").trim()) references.set(String(values[10]), true);
+        const state = String(values[9] || "pending").toLowerCase();
+        if (["reserved", "pending", "linked", "file_missing", "requires_review", "error"].includes(state)) latestState = state;
+        if (String(values[10] || "").trim() && String(values[10]) !== "[]") latestReferencesJson = String(values[10]);
         if (String(values[13] || "").trim()) lastError = String(values[13]);
     });
     if (fileIds.size > 1) requiresReview = true;
@@ -8684,9 +8682,9 @@ function projectImageUploadEventsForAdmin_(entries) {
         mimeType: identity[3], sizeBytes: Number(identity[4]), contentHash: identity[5],
         fileId: fileIds.size === 1 ? Array.from(fileIds)[0] : "",
         fileIds: Array.from(fileIds),
-        state: requiresReview ? "requires_review" : linked ? "linked" : fileMissing ? "file_missing" : "pending",
+        state: requiresReview ? "requires_review" : latestState,
         eventCount: events.length, lastError,
-        referencesJson: Array.from(references.keys()).join("|")
+        referencesJson: latestReferencesJson
     };
 }
 
