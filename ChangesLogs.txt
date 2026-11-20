@@ -1208,3 +1208,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-20 · ADMIN movimiento de imágenes] `handleMoveReplacedImage` valida Drive/MIME/papelera/carpetas/rutas y destino fuera del ScriptLock; al readquirir revalida tipo/estado/Drive ID y metadata de ubicación/organización, además de volver a comprobar referencias. `moveTo`, read-back, escritura de metadata y rollback permanecen bajo lock. Actividad/logging post-lock y camino de carpeta idéntica preservados. Pruebas `AdminMoveImageDrivePreflightOutsideLock` 11/11 y `AdminMoveImageActivityOutsideLock` 7/7. CI `44655643108` SUCCESS: 215 suites, 2,682 pruebas aprobadas, 0 fallos; health read-only `44655643102` SUCCESS. Sin despliegue Apps Script ni cambios productivos.
+
+
+[2026-11-20 · ADMIN ciclo de papelera no bloqueante] `handleDeleteReplacedImage` y `handleRestoreReplacedImageFromTrash` usan `tryLock(0)` en vez de esperar 30 segundos. La contención devuelve `ADMIN_BUSY` antes de acceder a Drive o modificar historial; la liberación del lock queda condicionada a adquisición confirmada. Pruebas: `AdminImageTrashLifecycle` 41/41, `AdminDeleteImageActivityOutsideLock` 6/6 y `AdminRestoreImageActivityOutsideLock` 6/6. CI `44661420739` SUCCESS (215 suites, 2,684 pruebas, 0 fallos); health read-only `44661420823` SUCCESS. Sin despliegue Apps Script ni cambios productivos.
