@@ -67,8 +67,10 @@ const spreadsheet = {
 };
 let held = false;
 const lock = {
+    waitLock(timeout) { assert.equal(timeout, 2000); if (held) throw new Error("simulated lock contention"); held = true; },
     tryLock(wait) { assert.equal(wait, 0); if (held) return false; held = true; return true; },
-    releaseLock() { assert.equal(held, true); held = false; }
+    releaseLock() { assert.equal(held, true); held = false; },
+    hasLock() { return held; }
 };
 const allocateInWrite = new Function(
     "COLS_CORTES", "SHEET_NAMES", "PropertiesService", "LockService", "SpreadsheetApp",
