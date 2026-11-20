@@ -362,6 +362,24 @@
     <script type="module">
         // COMPONENT VERSION: 2.1.6
         import { routeAction } from '../JS/Frontend/api-config.js';
+        const sourceInboxItemId = new URLSearchParams(window.location.search).get('sourceInboxItemId') || '';
+        async function resolveSourceInboxReport_(itemId, session, candidateReviewPending) {
+            const sourceId = String(itemId || '').trim();
+            if (!sourceId || candidateReviewPending === true) return false;
+            try {
+                const response = await routeAction('markAsResolved', {
+                    itemId: sourceId, userId: session.userId, sessionToken: session.sessionToken
+                });
+                if (!response || response.status !== 'success') throw new Error('REPORT_RESOLUTION_UNCONFIRMED');
+                return true;
+            } catch (error) {
+                diagnostics.warn('cut-operation.source-report-resolution-failed', {
+                    stage: 'source-report', errorCode: error && error.name || 'ReportResolutionError'
+                });
+                alert('El aporte se guardó, pero no se pudo cerrar el reporte de origen. Puedes marcarlo como resuelto desde el Inbox.');
+                return false;
+            }
+        }
         import { getAddCutOperationPendingOperation, saveAddCutOperationPendingOperation, removeAddCutOperationPendingOperation } from '../JS/Frontend/offline.js';
         import { createDiagnosticLogger } from '../JS/Frontend/diagnosticLogger.js';
         import '../JS/Frontend/lightbox.js';
@@ -503,7 +521,10 @@
                         isNewVehicle: pendingOp.vehicleId === null, slotIndex: pendingOp.vehicleId === null ? 1 : null,
                         cutType: pendingOp.requestData && pendingOp.requestData.cutData && pendingOp.requestData.cutData.tipoCorte1
                     });
-                    alert("Hemos detectado y recuperado exitosamente una operación que se interrumpió.");
+                    await resolveSourceInboxReport_(pendingOp.sourceInboxItemId || sourceInboxItemId, getCurrentSessionForOwner(pendingOp.ownerId), checkRes.candidateReviewPending === true);
+                    alert(checkRes.candidateReviewPending === true
+                        ? "El aporte fue recuperado como candidato de revisión. El reporte de origen permanece pendiente."
+                        : "Hemos detectado y recuperado exitosamente una operación que se interrumpió.");
                     proceedToStage3(checkRes.vehicleId);
                 } else {
                     if (checkRes.pending === true && checkRes.operationHash !== pendingOp.operationHash) throw new Error('PENDING_OPERATION_MISMATCH');
@@ -1201,7 +1222,7 @@
                         ubicacionCorte1: requestData.cutData.ubicacionCorte1, colorCableCorte1: requestData.cutData.colorCableCorte1,
                         silentRegister: silentVal, testigoMotor: requestData.cutData.activaTestigo1, vin: requestData.cutData.vin
                     },
-                    requestData, status: 'processing'
+                    requestData, sourceInboxItemId, status: 'processing'
                 };
                 const saved = await saveAddCutOperationPendingOperation(pendingOp);
                 if (!saved || saved.saved !== true) throw new Error('PENDING_SNAPSHOT_NOT_VERIFIED');
@@ -1253,8 +1274,9 @@
                     isNewVehicle: requestData.vehicleId === null, slotIndex: result.slotIndex,
                     cutType: requestData.cutData && requestData.cutData.tipoCorte1
                 });
+                await resolveSourceInboxReport_(pendingOp.sourceInboxItemId || sourceInboxItemId, submitSession, result.candidateReviewPending === true);
                 alert(result.candidateReviewPending === true
-                    ? "El corte se conservó como candidato para revisión; no se sobrescribió ningún corte existente."
+                    ? "El corte se conservó como candidato para revisión; el reporte de origen permanece pendiente."
                     : "Corte guardado exitosamente."); proceedToStage3(result.vehicleId);
             } catch (error) {
                 diagnostics.error('cut-operation.submit-failed', { stage: 'submit', opId: pendingOp && pendingOp.id, status: pendingOp && pendingOp.status, errorCode: error && error.name || 'OperationError' });
