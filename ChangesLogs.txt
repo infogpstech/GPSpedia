@@ -1157,3 +1157,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-20 · aislamiento FEEDBACK PyS] El rollback de imágenes no referenciadas ahora reserva `RECOVERY_REQUIRED` en el ledger bajo lock, libera ScriptLock, ejecuta Drive trash y verifica `isTrashed()` fuera del lock; después readquiere el lock y revalida opId/problemId/fileId/URL/status antes de limpiar a `PENDING`. Si falla compensación o revalidación, conserva `RECOVERY_REQUIRED` y marca metadata fuera del lock. Pruebas `FeedbackPysRollbackOutsideLock` 6/6, `PysImageStorageRecovery` 22/22 y `P2PysImageUploadOutsideLock` PASS. CI `44646143035` SUCCESS: 198 suites, 2,556 pruebas aprobadas, 0 fallos; health read-only `44646143256` SUCCESS.
+
+
+[2026-11-20 · aislamiento FEEDBACK reportes] `handleReportProblem` libera ScriptLock antes de enviar a papelera adjuntos duplicados. En rollback, primero confirma bajo lock que fila/metadata se revirtieron y solo entonces libera y elimina el adjunto; si no se confirma, conserva la imagen para no romper referencias. `FeedbackReportImageCleanupOutsideLock` 5/5. CI `44646463925` SUCCESS: 199 suites, 2,561 pruebas aprobadas, 0 fallos; health read-only `44646464055` SUCCESS.
