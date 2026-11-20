@@ -554,3 +554,10 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - `AdminRecoverImageDrivePreflightOutsideLock` 11/11 PASS; `AdminReplacedImagesIntegrity` 56/56 PASS. CI `44652896571` SUCCESS: 207 suites, 2,614 pruebas aprobadas, 0 fallos; health read-only `44652896675` SUCCESS. Una primera regresión detectó que el harness `AdminReplacedImagesIntegrity` no inyectaba el helper nuevo; se corrigió el harness y se repitió la regresión completa.
 - Commits: implementación `1c1098d27b1f8c93ca2686cc4d393c130ba340b3`, control de lock en finally `1ea4526ea934b935b1bd255a40ba88318860c2f4`, prueba `c1d074b682a6934f2b20c7c8c32a4a1d310eaf82`, runner `595202304afa87d20e318aee1c96c5eb4964ec0b`, harness `8cecff4d741cbcf43b36919c3b63f8352833794a` y verificación unlocked `36687847d6370ce8d5d2c787b57b8bb26a299f1b`.
 - No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+## P1 — ADMIN envío de imagen a papelera: actividad post-commit fuera del lock (2026-11-20)
+- En `handleDeleteReplacedImage`, la confirmación de estado `en_papelera` y el estado final de la imagen se persisten bajo ScriptLock; el evento de actividad vía Coordinator y el mensaje de logging se ejecutan después de liberar el lock. Se conserva el comportamiento idempotente cuando el archivo ya está en papelera y el rollback Drive/historial actual.
+- `AdminDeleteImageActivityOutsideLock` 6/6 PASS; `AdminImageTrashLifecycle` 40/40 PASS. CI `44653097187` SUCCESS: 208 suites, 2,620 pruebas aprobadas, 0 fallos; health read-only `44653097327` SUCCESS.
+- Commits: implementación `e642a3a3216a67cb87b117077401681a8069e197`, prueba `2b35917b20ef63d24e232de7f0257b19858cd94e`, runner `771c9fd295197f22ce57470e8a93d5ea7476ff27`.
+- No se desplegó Apps Script ni se modificaron datos productivos. La llamada `DriveApp.setTrashed` sigue dentro del lock porque la operación todavía no cuenta con estado intermedio y revalidación segura para la compensación.
