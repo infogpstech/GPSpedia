@@ -9375,40 +9375,21 @@ function handleReconcilePendingImageUploads(payload, logMessage) {
                 item.reason = "La referencia de Spreadsheet se verificó por ID de Drive.";
             }
 
-            if (confirm) {
-                const journalSheet=getOrCreateImageUploadEventsSheetForAdmin_();
-                const journalEntries=readImageUploadEventsByTokenForAdmin_(journalSheet,token);
-                const journalProjection=projectImageUploadEventsForAdmin_(journalEntries);
-                const journalState=nextState==="linked"?"linked":
-                    nextState==="file_missing"?"file_missing":
-                    nextState==="requires_review"||nextState==="orphan_candidate"?"requires_review":"pending";
-                if(journalProjection&&(journalProjection.state==="requires_review"||
-                    journalProjection.operationKey!==operationKey||journalProjection.folderId!==folderId||
-                    journalProjection.mimeType!==mimeType||journalProjection.sizeBytes!==sizeBytes||
-                    journalProjection.contentHash!==contentHash||
-                    (journalProjection.fileId&&fileId&&journalProjection.fileId!==fileId))){
-                    item.state="requires_review";
-                    item.journalWarning="ImageUploadEvents ya contiene una identidad o archivo incompatible; no se anexó una transición.";
-                }else if(!journalProjection||journalProjection.state!==journalState||
-                    String(journalProjection.fileId||"")!==String(fileId||"")||
-                    String(journalProjection.referencesJson||"[]")!==JSON.stringify(references)){
-                    appendImageUploadEventForAdmin_(journalSheet,{
-                        token,operationKey,folderId,mimeType,sizeBytes,contentHash,
-                        fileId:fileId||"",fileUrl:fileId?"https://drive.google.com/uc?export=view&id="+fileId:"",
-                        state:journalState,referencesJson:JSON.stringify(references),
-                        fileName:String(values[13]|| (file&&file.getName()) || ""),
-                        lastError:journalState==="file_missing"||journalState==="requires_review"?item.reason:""
-                    });
-                }
-                if(file&&nextState==="linked"){
-                    try{
-                        const originalName=String(values[13]||"");
-                        if(originalName&&file.getName()!==originalName)file.setName(originalName);
-                        const description=buildImageUploadDescription_({operationKey,token,folderId,mimeType,sizeBytes,contentHash,fileName:originalName},
-                            "linked",JSON.stringify(references));
+            if (confirm && file && nextState === "linked") {
+                try {
+                    const originalName = String(values[13] || "");
+                    if (originalName && file.getName() !== originalName) file.setName(originalName);
+                    const metadata = parseImageUploadDescription_(file.getDescription());
+                    if (metadata && metadata.v === "2") {
+                        const description = buildImageUploadDescription_({
+                            operationKey, token, folderId, mimeType, sizeBytes, contentHash, fileName: originalName
+                        }, "linked", JSON.stringify(references));
                         file.setDescription(description);
-                        if(String(file.getDescription()||"")!==description)item.descriptionWarning="ImageUploadEvents quedó linked, pero Drive no confirmó la descripción.";
-                    }catch(descriptionError){item.descriptionWarning=descriptionError.message;}
+                        if (String(file.getDescription() || "") !== description)
+                            item.descriptionWarning = "Drive no confirmó la descripción; ImageUploadLedger histórico no se modificó.";
+                    }
+                } catch (descriptionError) {
+                    item.descriptionWarning = descriptionError.message;
                 }
             }
         } catch (error) {
@@ -9438,7 +9419,7 @@ function handleReconcilePendingImageUploads(payload, logMessage) {
         untrackedReferenceFileIds: untrackedReferences.slice(0, 50),
         items: items.slice(0, 100),
         message: confirm
-            ? "Reconciliación aplicada a ImageUploadEvents. ImageUploadLedger histórico se conservó sin modificar; los archivos dudosos no se eliminaron."
+            ? "Reconciliación aplicada sin modificar ImageUploadLedger histórico. Las nuevas cargas se gestionan mediante ImageUploadEvents."
             : "Simulación completada. Usa confirm:true para aplicar los estados propuestos; no se borran archivos."
     };
 }
