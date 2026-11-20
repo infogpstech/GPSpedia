@@ -2880,6 +2880,40 @@ function findCutSuggestionByRequest_(sheet, reportId, vehicleId, corteIndex, use
 }
 
 
+
+function findExistingCutSuggestionForRequest_(sheet, request) {
+    request = request && typeof request === "object" ? request : {};
+    const operationId = String(request.suggestionOperationId || "").trim();
+    const reportId = String(request.reportId || "").trim();
+    const vehicleId = String(request.vehicleId || "").trim();
+    const corteIndex = Number(request.corteIndex);
+    const userId = String(request.userId || "");
+    const requestFingerprint = String(request.requestFingerprint || "");
+    const legacyRequestFingerprint = String(request.legacyRequestFingerprint || "");
+
+    const existingByOperation = operationId ? findCutSuggestionByOperation_(sheet, operationId) : null;
+    if (existingByOperation) {
+        const record = existingByOperation.record;
+        const sameOperation = String(record.reportId || "") === reportId &&
+            String(record.vehicleId || "").trim() === vehicleId &&
+            Number(record.corteIndex) === corteIndex &&
+            String(record.userId || "") === userId &&
+            String(record.requestFingerprint || "") === requestFingerprint;
+        if (!sameOperation) throw new Error("El identificador de operación ya pertenece a una solicitud distinta; no se creó otra sugerencia.");
+        return existingByOperation;
+    }
+
+    const existingByRequest = findCutSuggestionByRequest_(sheet, reportId, vehicleId, corteIndex, userId);
+    if (existingByRequest) {
+        const storedFingerprint = String(existingByRequest.record.requestFingerprint || "");
+        if (storedFingerprint !== requestFingerprint && storedFingerprint !== legacyRequestFingerprint) {
+            throw new Error("El reporte ya tiene una sugerencia con datos distintos; no se creó otra sugerencia.");
+        }
+        return existingByRequest;
+    }
+    return null;
+}
+
 function validateCutSuggestionReportContext_(reportId, vehicleId, corteIndex) {
     const normalizedReportId = String(reportId || "").trim();
     const normalizedVehicleId = String(vehicleId || "").trim();
@@ -3014,6 +3048,17 @@ function handleSuggestCutChange(payload) {
     const legacyRequestFingerprint = buildLegacyCutSuggestionRequestFingerprint_(
         normalizedDetails, normalizedProposedValues, legacyImageDataUrl
     );
+    const feedbackSheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
+    if (!feedbackSheet) throw new Error("Hoja Feedbacks no encontrada.");
+    const replayRequest = {
+        suggestionOperationId: normalizedOperationId, reportId: normalizedReportId,
+        vehicleId: normalizedVehicleId, corteIndex: normalizedCorteIndex, userId: normalizedUserId,
+        requestFingerprint, legacyRequestFingerprint
+    };
+    // Resolver reintentos ya registrados antes de cargar otra imagen o adquirir el lock.
+    const preflightExisting = findExistingCutSuggestionForRequest_(feedbackSheet, replayRequest);
+    if (preflightExisting) return buildCutSuggestionReplayResponse_(preflightExisting, normalizedReportId);
+
     // La imagen se carga a Drive antes de adquirir el bloqueo de la hoja.
     let uploadedImage = normalizedImage ? saveSuggestionImageAttachment_(normalizedImage, normalizedVehicleId, normalizedCorteIndex) : null;
     const lock = LockService.getScriptLock();
@@ -3021,33 +3066,14 @@ function handleSuggestCutChange(payload) {
     const releaseLockForDriveWork = () => { if (lockAcquired) { lock.releaseLock(); lockAcquired = false; } };
     try {
         acquireFeedbackScriptLock_(lock); lockAcquired = true;
-        const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
-        if (!sheet) throw new Error("Hoja Feedbacks no encontrada.");
+        const sheet = feedbackSheet;
         pendingSheet = sheet;
-        const existingByOperation = normalizedOperationId
-            ? findCutSuggestionByOperation_(sheet, normalizedOperationId) : null;
-        if (existingByOperation) {
-            const record = existingByOperation.record;
-            const sameOperation = String(record.reportId || "") === normalizedReportId &&
-                String(record.vehicleId || "").trim() === normalizedVehicleId &&
-                Number(record.corteIndex) === normalizedCorteIndex &&
-                String(record.userId || "") === normalizedUserId &&
-                String(record.requestFingerprint || "") === requestFingerprint;
-            if (!sameOperation) throw new Error("El identificador de operación ya pertenece a una solicitud distinta; no se creó otra sugerencia.");
+        // Revalidar dentro del lock por si otra solicitud confirmó el mismo opId durante Drive.
+        const existing = findExistingCutSuggestionForRequest_(sheet, replayRequest);
+        if (existing) {
             releaseLockForDriveWork();
             trashReportImageUpload_(uploadedImage); uploadedImage = null;
-            return buildCutSuggestionReplayResponse_(existingByOperation, normalizedReportId);
-        }
-        // Compatibilidad con clientes anteriores y formularios reabiertos después de perder la respuesta.
-        const existingByRequest = findCutSuggestionByRequest_(sheet, normalizedReportId, normalizedVehicleId, normalizedCorteIndex, normalizedUserId);
-        if (existingByRequest) {
-            const storedFingerprint = String(existingByRequest.record.requestFingerprint || "");
-            if (storedFingerprint !== requestFingerprint && storedFingerprint !== legacyRequestFingerprint) {
-                throw new Error("El reporte ya tiene una sugerencia con datos distintos; no se creó otra sugerencia.");
-            }
-            releaseLockForDriveWork();
-            trashReportImageUpload_(uploadedImage); uploadedImage = null;
-            return buildCutSuggestionReplayResponse_(existingByRequest, normalizedReportId);
+            return buildCutSuggestionReplayResponse_(existing, normalizedReportId);
         }
         const createdAt = new Date().toISOString();
         const lastRow = sheet.getLastRow(), newRowNumber = lastRow + 1;
