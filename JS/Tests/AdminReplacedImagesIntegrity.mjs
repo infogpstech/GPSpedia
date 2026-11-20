@@ -206,7 +206,7 @@ check("La marca manual en uso requiere revisión, identidad y verificación del 
     assert.match(source,/getReplacedImageRecordIdentity_/);
     assert.match(source,/file\.isTrashed\(\)/);
     assert.match(source,/getSingleParentFolderInsideCortes/);
-    assert.match(source,/setReplacedImageHistoryStatusVerified_\(sheet, existing\.rowIndex, "en_uso"\)/);
+    assert.match(source,/setReplacedImageHistoryStatusVerified_\(sheet, verified\.rowIndex, "en_uso"\)/);
     assert.ok(admin.includes('case \'markReplacedImageInUse\':'));
     assert.ok(ui.includes("markReplacedImageInUse"));
 });
