@@ -473,6 +473,7 @@ function projectVehicleContributionEvents_(vehicles, sourceEvents) {
             !/^OP-[A-Za-z0-9_-]{1,100}$/.test(String(event.opId || "")) ||
             !/^[a-f0-9]{64}$/i.test(String(event.operationHash || "")) ||
             !["cut", "opening", "feed", "vehicle", "vehicle_update"].includes(String(event.kind || "")) ||
+            (event.kind==="vehicle_update"&&(!String(event.actorId||"").trim()||!String(event.opId||"").startsWith("OP-ADMIN-"))) ||
             !event.payload || typeof event.payload !== "object" || Array.isArray(event.payload)) {
             throw new Error("El ledger contiene un evento de aporte inválido; se canceló la proyección completa.");
         }
@@ -611,7 +612,8 @@ function projectVehicleContributionEvents_(vehicles, sourceEvents) {
                 const comparableCurrent=imageField&&currentValue?normalizeAndValidateImageId(currentValue):currentValue;
                 const comparableExpected=imageField&&expectedValue?normalizeAndValidateImageId(expectedValue):expectedValue;
                 if(comparableCurrent!==comparableExpected||(expectedSourceId&&(!currentSource||String(currentSource.eventId)!==expectedSourceId))){
-                    candidates.push({eventId:event.eventId,opId:event.opId,kind:event.kind,reason:"field_conflict",payload});
+                    const candidatePayload=Object.assign({},payload,{currentValue:vehicle[field],currentSourceEventId:currentSource&&currentSource.eventId||""});
+                    candidates.push({eventId:event.eventId,opId:event.opId,kind:event.kind,reason:"field_conflict",payload:candidatePayload});
                     return;
                 }
                 const nextValue=imageField?(payload.value?normalizeAndValidateImageId(String(payload.value)):null):
