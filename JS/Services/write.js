@@ -1720,29 +1720,14 @@ function handleAddSupplementaryInfo(payload) {
         uploadedUrls = prepared.uploadedUrls;
     }
 
-    const lock = getWriteContributionLock_(payload.vehicleId);
-    let lockAcquired = false;
-    try { lockAcquired = lock.tryLock(0); } catch (error) { lockAcquired = false; }
-    if (!lockAcquired) {
-        throw createSupplementaryInfoError_("SUPPLEMENTARY_LOCK_FAILED", "WRITE está ocupado con otra escritura breve de este usuario. Conserva el mismo intento y vuelve a intentarlo.");
-    }
-
-    let result;
-    try {
-        result = handleAddSupplementaryInfoLocked(preparedPayload, actorName, sheet);
-        if (result && result.status === "success") {
-            try { result.catalogVersion = nextWriteCatalogVersionLocked_(payload.vehicleId); }
-            catch (versionError) {
-                result.catalogResetRequired = true;
-                Logger.log("La información suplementaria se guardó, pero no se pudo reservar versión de catálogo: " + String(versionError && versionError.message || versionError));
-            }
+    const result = handleAddSupplementaryInfoLocked(preparedPayload, actorName, sheet);
+    if (result && result.status === "success") {
+        try { result.catalogVersion = nextWriteCatalogVersionLocked_(payload.vehicleId); }
+        catch (versionError) {
+            result.catalogResetRequired = true;
+            Logger.log("La información suplementaria se guardó, pero no se pudo reservar versión de catálogo: " + String(versionError && versionError.message || versionError));
         }
-    } finally { if (lockAcquired) lock.releaseLock(); }
-
-    uploadedUrls.forEach(url => {
-        try { markImageUploadLinked(url, { shortLedgerLock: true }); }
-        catch (error) { Logger.log("La imagen se guardó, pero no se confirmó su vínculo en el ledger: " + String(error && error.message || error)); }
-    });
+    }
     return result;
 }
 
