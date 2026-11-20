@@ -1311,3 +1311,17 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
   - FEEDBACK conserva reportes y sugerencias por separado; el flujo de sugerencia actual modifica cortes existentes y aún falta diseñar/validar la vía explícita para convertir un reporte en un nuevo corte o vehículo.
 - [ ] Pendiente principal de esta tarea: reserva/revalidación segura del mismo vehículo entre usuarios; candidatos de corte/apertura/alimentación en «Imagenes_Reemplazadas» con estado de revisión; alta concurrente de modelos duplicados; integración de alta desde Feedback; pruebas paralelas y anti-regresión de formularios/reportes/reacciones.
 - Estado: carrusel local y claves de operación suplementaria **IMPLEMENTADOS**; concurrencia por vehículo y conservación de candidatos **PENDIENTES**.
+
+
+### 2026-11-20 — Continuidad de GP-CONCURRENCY-CUT-MULTI-ENTRY-01 tras regresión
+
+- [x] Confirmar CI del HEAD `0448f80f0d515be3517dffdb7f25b070591fba8e`: run `44794586367` SUCCESS; 227 suites, 2,802 pruebas aprobadas, 0 fallos; sintaxis PASS.
+- [x] Confirmar en router ADMIN que `addOrUpdateCut`, `addSupplementaryInfo` y `checkOperation` se trasladaron a WRITE y no deben corregirse duplicadamente en ADMIN.
+- [x] Revisar rutas reales WRITE para cortes y datos suplementarios.
+- [ ] Corregir la carrera entre usuarios distintos sobre el mismo vehículo: UserLock es por usuario y no ofrece exclusión por vehículo; la reserva pending actual no es atómica entre identidades.
+- [ ] Corregir persistencia suplementaria: evitar escribir/revertir el rango completo 33–42; preservar aportes simultáneos en campos diferentes y registrar los conflictos sobre el mismo campo sin sobrescritura silenciosa.
+- [ ] Conservar como candidatos revisables los archivos de corte/apertura/alimentación que no puedan asociarse por colisión o capacidad llena; enlazarlos al vehículo y al estado de revisión en «Imágenes reemplazadas».
+- [ ] Resolver la idempotencia concurrente del mismo opId entre puntos de entrada y probar errores parciales Drive/Spreadsheet.
+- **Hallazgo técnico:** `handleAddSupplementaryInfo` prepara y sube imágenes antes de adquirir UserLock; luego recalcula el plan. Una colisión puede dejar el archivo subido sin vínculo ni registro de candidato. `persistSupplementaryInfoValues_` hace `setValues` de diez columnas y su rollback puede restaurar una instantánea obsoleta sobre cambios de otro usuario.
+- **Restricción de diseño:** respetar §15 de `NORMAS_DESAROLLO.md`; no reintroducir ScriptLock global ni esperas para serializar acciones ordinarias. Diseñar primero una reserva append-only durable con asignación determinista, pruebas de intercalado y preservación de candidatos.
+- Estado de P0: **EN PROGRESO**. La regresión actual no demuestra concurrencia real entre dos usuarios y no cubre las colisiones/capacidad llena. No desplegar ni modificar datos productivos.
