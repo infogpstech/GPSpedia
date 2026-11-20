@@ -320,18 +320,17 @@ function getNextFormulaBasedId_(sheet, idColumn) {
     try {
         if (!alreadyHeld) { acquireFeedbackScriptLock_(lock); acquired = true; }
         const pattern = getFormulaBasedIdPattern_(sheet, idColumn);
-        const lastRow = sheet.getLastRow(), lastColumn = Math.max(sheet.getLastColumn(), idColumn);
-        const rows = lastRow > 1 ? sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues() : [];
+        const lastRow = sheet.getLastRow();
+        const idValues = lastRow > 1
+            ? sheet.getRange(2, idColumn, lastRow - 1, 1).getValues().map(row => row[0])
+            : [];
         const seen = new Set();
+        const blankOffsets = [];
         let maxSuffix = 0;
-        rows.forEach((row, index) => {
-            const rawId = row[idColumn - 1];
+        idValues.forEach((rawId, index) => {
             const id = String(rawId === null || rawId === undefined ? "" : rawId).trim();
-            const hasRecordData = row.some((value, columnIndex) =>
-                columnIndex !== idColumn - 1 && value !== "" && value !== null && value !== undefined
-            );
             if (!id) {
-                if (hasRecordData) throw new Error("La fila " + (index + 2) + " de " + sheet.getName() + " contiene datos, pero no tiene ID.");
+                blankOffsets.push(index);
                 return;
             }
             if (!id.startsWith(pattern.prefix)) throw new Error("El ID de " + sheet.getName() + " fila " + (index + 2) + " no coincide con el prefijo configurado.");
@@ -344,6 +343,33 @@ function getNextFormulaBasedId_(sheet, idColumn) {
             if (!Number.isSafeInteger(numeric) || numeric < 1) throw new Error("El sufijo ID de " + sheet.getName() + " no es un entero seguro.");
             maxSuffix = Math.max(maxSuffix, numeric);
         });
+
+        if (blankOffsets.length) {
+            const lastColumn = Math.max(sheet.getLastColumn(), idColumn);
+            let runStart = blankOffsets[0], previousOffset = blankOffsets[0];
+            const validateBlankRun = (firstOffset, lastOffset) => {
+                const firstRow = firstOffset + 2;
+                const rows = sheet.getRange(firstRow, 1, lastOffset - firstOffset + 1, lastColumn).getValues();
+                rows.forEach((row, index) => {
+                    const hasRecordData = row.some((value, columnIndex) =>
+                        columnIndex !== idColumn - 1 && value !== "" && value !== null && value !== undefined
+                    );
+                    if (hasRecordData) {
+                        throw new Error("La fila " + (firstRow + index) + " de " + sheet.getName() + " contiene datos, pero no tiene ID.");
+                    }
+                });
+            };
+            for (let i = 1; i < blankOffsets.length; i++) {
+                const offset = blankOffsets[i];
+                if (offset === previousOffset + 1) {
+                    previousOffset = offset;
+                    continue;
+                }
+                validateBlankRun(runStart, previousOffset);
+                runStart = previousOffset = offset;
+            }
+            validateBlankRun(runStart, previousOffset);
+        }
         const properties = PropertiesService.getScriptProperties();
         const propertyKey = "GPSpedia_ID_SEQUENCE_" + sheet.getName().replace(/[^A-Za-z0-9]/g, "_") +
             "_" + idColumn + "_" + pattern.prefix.replace(/[^A-Za-z0-9]/g, "_");
