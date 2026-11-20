@@ -12,7 +12,7 @@ Normativa: NORMAS_DESAROLLO.md
 - Fase 2 (arquitectura/Coordinator): implementación local base COMPLETADA; configuración de ScriptProperties, URLs, secretos y deployments reales queda para Beta autorizada.
 - Fase 3 (Inbox/aislamiento): correcciones locales y regresión COMPLETADAS; InboxConversations 66/66 y CoordinatorCapabilityPreservation 6/6. Verificación con credenciales/deployments reales queda para Beta.
 - Fase 4 (ADMIN controles/responsive): implementación local COMPLETADA; inspección visual real de escritorio/móvil queda para Beta.
-- Fase 5 (auditoría/organizador de imágenes): constructor, inventario, referencias, endpoint preview y UI paginada de solo lectura IMPLEMENTADOS. La auditoría y preview con Drive/Spreadsheet reales siguen pendientes de Beta. **Safe Apply no está implementado** y depende de revisar y aprobar primero el preview real; no mover, renombrar, borrar ni restaurar archivos.
+- Fase 5 (auditoría/organizador de imágenes): constructor, inventario, referencias, endpoint preview y UI paginada de solo lectura IMPLEMENTADOS. La auditoría y preview con Drive/Spreadsheet reales siguen pendientes de Beta. **Safe Apply EN PROGRESO:** ya existen primitivas puras para congelar manifiestos aprobados, exigir confirmación, clasificar reintentos idempotentes y preparar rollback en orden inverso. Aún falta el ejecutor Drive, el registro durable de operaciones y la comprobación de permisos heredados de destinos. No ejecutar movimientos reales hasta revisar y aprobar el preview real.
 - Fase 6 (documentación/rotación): COMPLETADA.
 - Fase 7 (regresión/transición): regresión local COMPLETADA; transición y verificaciones de entorno Beta pendientes.
 - Búsqueda agrupada `GP-UX-SEARCH-MODEL-GROUPING-01`: implementación y regresión COMPLETADAS; SearchModelGrouping 21/21. Falta prueba visual de navegador con catálogo representativo.
@@ -1198,3 +1198,14 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] CI `44768089834` SUCCESS: 221 suites, 2,743 pruebas aprobadas, 0 fallos. `CortesImageOrganizerTargets` 8/8 PASS; health read-only `44768090013` SUCCESS.
 - La primera ejecución falló por un caso de prueba cuyo valor de tipo de corte no produjo un código funcional según el clasificador actual; se ajustó únicamente el dato de prueba al valor canónico y la repetición aprobó. No se modificó código productivo ni se relajó la clasificación.
 - Estado: COBERTURA LOCAL COMPLETADA. El preview real de Drive/Spreadsheet sigue pendiente de Beta; Safe Apply continúa sin implementar y condicionado a la revisión del preview real.
+
+
+### 2026-11-20 — Safe Apply: primitivas de manifiesto, idempotencia y rollback
+- [x] Añadir `buildCortesImageOrganizerApplyManifest_`: digest exacto del preview, confirmación explícita, auditoría válida, referencias verificadas, selección limitada a la página revisada, IDs únicos, destinos no duplicados y nombres sin separadores de ruta.
+- [x] Añadir `classifyCortesImageOrganizerOperationState_` para distinguir estado original listo, operación ya aplicada y deriva/conflicto; bloquea papelera, MIME no imagen e identidad alterada.
+- [x] Añadir `buildCortesImageOrganizerRollbackPlan_`, que invierte el orden de aplicación y solo prepara reversión cuando el archivo sigue exactamente en el destino confirmado.
+- [x] Añadir `JS/Tests/CortesImageOrganizerApplyPlan.mjs` y registrarla en `JS/Tests/RunServiceTests.mjs` (14 escenarios).
+- [x] Parsing del archivo ADMIN completo y ejecución aislada V8 de las 14 comprobaciones focalizadas: PASS.
+- No hay checkout Node local ni se obtuvo evidencia de ejecución CI asociada al commit de esta iteración; la suite oficial queda pendiente de ejecución por GitHub Actions. No afirmar regresión integral.
+- El ejecutor que modifica Drive, el registro durable de operaciones, la comprobación ACL de carpetas destino y la recuperación real siguen pendientes. No se habilitó ni ejecutó ninguna operación Drive/Spreadsheet.
+- Estado: SUBACTIVIDAD DE PREPARACIÓN COMPLETADA; Safe Apply EN PROGRESO. La ejecución real continúa condicionada a revisar el preview real y a confirmar permisos/efectos de herencia del destino.
