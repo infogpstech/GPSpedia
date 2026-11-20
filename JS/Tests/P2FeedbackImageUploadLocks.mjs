@@ -5,7 +5,13 @@ function extract(source,start,end){const i=source.indexOf(start),j=source.indexO
 const report=extract(feedback,"function handleReportProblem(payload)","function enforceFeedbackRateLimit_");
 const suggestion=extract(feedback,"function handleSuggestCutChange(payload)","function parseModelosAsociados");
 assert.ok(report.indexOf("saveReportImageAttachment_")<report.indexOf("acquireFeedbackScriptLock_(lock)"),"El adjunto de reporte debe cargarse antes del lock.");
-assert.ok(report.indexOf("acquireFeedbackScriptLock_(lock)")<report.indexOf("getSafeSheet(SHEET_NAMES.FEEDBACKS)"),"La escritura de reporte debe comenzar bajo lock.");
+const reportPreflight=report.indexOf("findReportByReportId_(feedbackSheet,reportContext.reportId,preflightMetadataColumn)");
+const reportUpload=report.indexOf("saveReportImageAttachment_(imageAttachment,reportContext.reportId)");
+const reportAcquire=report.indexOf("acquireFeedbackScriptLock_(lock)");
+const reportRecheck=report.indexOf("findReportByReportId_(sheet,reportContext.reportId,metadataColumn)");
+assert.ok(reportPreflight>=0&&reportPreflight<reportUpload&&reportUpload<reportAcquire,"El replay y Drive deben resolverse antes de adquirir el lock.");
+assert.ok(reportRecheck>reportAcquire,"El reporte debe revalidarse bajo lock antes de escribir.");
+assert.ok(report.indexOf("ensureReportMetadataColumn(sheet)")>reportAcquire,"La modificación de esquema queda dentro de la sección crítica.");
 assert.ok(report.includes("if(lockAcquired) lock.releaseLock()"),"El lock de reporte solo se libera si fue adquirido.");
 assert.ok(report.includes("La imagen del reporte se conserva porque no se pudo confirmar la reversión"),"No borrar la imagen si la referencia pudo quedar persistida.");
 assert.ok(suggestion.indexOf("saveSuggestionImageAttachment_(normalizedImage")<suggestion.indexOf("acquireFeedbackScriptLock_(lock)"),"La imagen de sugerencia debe cargarse antes del lock.");
