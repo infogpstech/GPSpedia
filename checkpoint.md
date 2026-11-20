@@ -422,3 +422,10 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - `WriteVehicleIdAllocatorBoundedRead`: 11/11 PASS. CI `44642666700` SUCCESS: 193 suites, 2,528 pruebas aprobadas, 0 fallos; sintaxis aprobada.
 - Implementación `10f0f6c5a56c12fce940c7d866e9e4276392f56c`; prueba `10204b8e37c2a71e775b52327b2693c93b55c775`.
 - Sin despliegue Apps Script ni cambios en datos productivos. La sección crítica conserva el escaneo necesario para reconciliar IDs manuales y detectar corrupción.
+
+
+## Decisión de concurrencia — reserva de slots ADMIN (2026-11-20)
+- Se evaluó pasar `idempotencyEntriesSnapshot` a `findNextAvailableCutSlot_` para evitar una segunda lectura del ledger. Se descartó: ADMIN y WRITE pueden operar desde proyectos Apps Script separados y sus `ScriptLock` no se comparten; un snapshot leído antes podría omitir una reserva pending creada concurrentemente por el otro proyecto.
+- Se restauró la lectura fresca del ledger en `findNextAvailableCutSlot_` y se conservó `AdminCutSlotReservation` en su contrato original (5/5 PASS). No se acepta reducir llamadas si debilita la detección de reservas cruzadas.
+- CI final del HEAD restaurado `1967e9911d9f3cfe85fb29b614352543f257eb5e`: `44643030246` SUCCESS, 193 suites, 2,528 pruebas, 0 fallos; health read-only `44643030192` SUCCESS; Pages `44643030815` SUCCESS.
+- Mapa lógico disponible en `Services/SERVICE_ARCHITECTURE_PLAN.md`: Coordinator independiente y SharedMutationClient copiado en AUTH, USERS, WRITE, ADMIN, FEEDBACK y UTILITIES. No hay manifiestos ni Script IDs versionados para verificar el mapeo real de deployments; la concurrencia entre proyectos queda pendiente de Beta autorizada.
