@@ -98,10 +98,11 @@ function makeRow({id="REP-1", status="historica", type="reemplazada", fileId=FIL
     return row;
 }
 function lockHarness() {
-    const state={locked:false,waits:0,releases:0};
+    const state={locked:false,waits:0,releases:0,tryLocks:0};
     const LockService={getScriptLock(){return {
         hasLock(){return state.locked;},
         waitLock(){state.waits++;state.locked=true;},
+        tryLock(timeout){state.tryLocks++;assert.equal(timeout,0);state.locked=true;return true;},
         releaseLock(){state.releases++;state.locked=false;}
     };}};
     return {LockService,state};
@@ -311,14 +312,15 @@ function buildRecover({status="historica",duplicate=false,trashed=false,mime="im
     };
     const restore=new Function("SpreadsheetApp",helperSources.restoreAdminImageActiveCell_+"\nreturn restoreAdminImageActiveCell_;")({flush(){}});
     const restoreCell=(cell,url)=>{if(failRollback)throw new Error("simulated cell rollback failure");return restore(cell,url);};
+    const runAdminDriveWorkOutsideScriptLock_=new Function(fnSource(admin,"runAdminDriveWorkOutsideScriptLock_")+"\nreturn runAdminDriveWorkOutsideScriptLock_;")();
     const api=new Function(
-        "LockService","getOrCreateReplacedImagesSheet","ensureReplacedImagesInventoryColumns","findReplacedImageRecordById",
+        "LockService","runAdminDriveWorkOutsideScriptLock_","getOrCreateReplacedImagesSheet","ensureReplacedImagesInventoryColumns","findReplacedImageRecordById",
         "getReplacedImageRecordType","getReplacedImageRecordIdentity_","DriveApp","COLS_CORTES","getCortesRootFolder",
         "isFileInsideCortes","getSpreadsheet","SHEET_NAMES","collectActiveDriveReferences","recordReplacedImage",
         "SpreadsheetApp","setReplacedImageHistoryStatusVerified_","restoreAdminImageActiveCell_",
         "updateAdminImageReplacementHistoryStatus_","extractDriveFileIds",
         fnSource(admin,"handleRecoverReplacedImage")+"\nreturn handleRecoverReplacedImage;"
-    )(lock.LockService,()=>historySheet,()=>HEADERS,find,getType,getIdentity,
+    )(lock.LockService,runAdminDriveWorkOutsideScriptLock_,()=>historySheet,()=>HEADERS,find,getType,getIdentity,
         {getFileById(id){driveCalls++;return file;}},{imagenVehiculo:9},()=>({getId:()=>"ROOT"}),
         ()=>true,()=>spreadsheet,{CORTES:"Cortes"},()=>({unverifiableReferenceCount:0,references:new Map(conflicts)}),
         ()=>{throw new Error("unexpected swap record");},{flush(){}},wrappedStatus,restoreCell,()=>{},extract);
