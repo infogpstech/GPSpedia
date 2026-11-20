@@ -1706,14 +1706,74 @@ function handleAddSupplementaryInfo(payload) {
         throw createSupplementaryInfoError_("SUPPLEMENTARY_INVALID_VEHICLE_ID", "El ID del vehículo es requerido para agregar información suplementaria.");
     }
 
-    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+    const spreadsheet = getSpreadsheet();
+    const sheet = spreadsheet.getSheetByName(SHEET_NAMES.CORTES);
+    const snapshot = readSupplementaryVehicleSnapshot_(sheet, payload.vehicleId);
+    const normalizedPlan = buildSupplementaryInfoPlan_(payload, {});
+    const isOpening = normalizedPlan.apertureRequested === true;
+    const hasFeed = normalizedPlan.slotIndex !== null;
+    const hasLedgerContribution = isOpening || hasFeed;
+
+    // Los flujos del modal (+) usan opId y se registran como eventos append-only.
+    // Los payloads antiguos de nota sin opId conservan la ruta de compatibilidad.
+    if (hasLedgerContribution && String(payload.opId || "").trim()) {
+        getVehicleContributionLedgerSheet_(spreadsheet);
+        if (isOpening && hasFeed) {
+            throw createSupplementaryInfoError_("SUPPLEMENTARY_INVALID_PAYLOAD", "Apertura y alimentación deben registrarse como operaciones independientes.");
+        }
+
+        let preparedPayload = Object.assign({}, payload);
+        let uploadedUrls = [];
+        const hasImages = ["imgApertura", "imgCableAlimen", "imgCableAlimen2", "imgCableAlimen3"]
+            .some(field => hasSupplementaryValue_(payload[field]));
+        if (hasImages) {
+            const prepared = prepareSupplementaryImageUploads_(preparedPayload, snapshot.vehicle, normalizedPlan);
+            preparedPayload = prepared.payload;
+            uploadedUrls = prepared.uploadedUrls;
+        }
+
+        const kind = isOpening ? "opening" : "feed";
+        const contributionPayload = isOpening
+            ? { text: String(normalizedPlan.updates.apertura || ""), image: String(preparedPayload.imgApertura || "") }
+            : { text: String(preparedPayload.cableAlimen || ""), image: String(preparedPayload.imgCableAlimen || "") };
+        const event = appendVehicleContributionEvent_({
+            spreadsheet,
+            vehicleId: payload.vehicleId,
+            opId: payload.opId,
+            kind,
+            payload: contributionPayload,
+            actorId: payload.__sharedSessionActor && payload.__sharedSessionActor.userId || "",
+            actorName
+        });
+
+        uploadedUrls.forEach(url => {
+            try {
+                if (!markImageUploadLinked(url, { shortLedgerLock: true })) {
+                    Logger.log("El aporte quedó registrado, pero la carga permanece pendiente de reconciliación: " + String(url));
+                }
+            } catch (ledgerError) {
+                Logger.log("El aporte quedó registrado, pero no se pudo actualizar ImageUploadLedger: " + String(ledgerError && ledgerError.message || ledgerError));
+            }
+        });
+
+        return {
+            status: "success",
+            message: isOpening ? "Aporte de apertura registrado." : "Aporte de alimentación registrado.",
+            vehicleId: String(payload.vehicleId),
+            contributionEventId: event.eventId,
+            operationHash: event.operationHash,
+            duplicate: event.duplicate === true,
+            catalogResetRequired: true,
+            candidateReviewPending: event.status === "review"
+        };
+    }
+
+    // Compatibilidad temporal para solicitudes heredadas de nota o sin opId.
     let preparedPayload = Object.assign({}, payload);
     let uploadedUrls = [];
     const hasImages = ["imgApertura", "imgCableAlimen", "imgCableAlimen2", "imgCableAlimen3"]
         .some(field => hasSupplementaryValue_(payload[field]));
-
     if (hasImages) {
-        const snapshot = readSupplementaryVehicleSnapshot_(sheet, payload.vehicleId);
         const preflightPlan = buildSupplementaryInfoPlan_(preparedPayload, snapshot.vehicle);
         const prepared = prepareSupplementaryImageUploads_(preparedPayload, snapshot.vehicle, preflightPlan);
         preparedPayload = prepared.payload;
@@ -1739,7 +1799,6 @@ function handleAddSupplementaryInfo(payload) {
     }
     return result;
 }
-
 function handleAddSupplementaryInfoLocked(payload, actorName, sheet) {
     const snapshot = readSupplementaryVehicleSnapshot_(sheet, payload.vehicleId);
     const plan = buildSupplementaryInfoPlan_(payload, snapshot.vehicle);
