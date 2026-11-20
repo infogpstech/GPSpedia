@@ -110,12 +110,14 @@ function runAdminModalEditIntegrityTests(adminSource) {
     run("La edición in-modal anexa versiones sin lock global ni escritura directa en Cortes",()=>{
         const body=extract("handleUpdateVehicleField");
         assert(/findUniqueAdminVehicleRow_/.test(body));
-        assert(/ledgerSheet\.appendRow\(/.test(body));
+        assert(/appendAdminVehicleFieldUpdate_\(/.test(body));
         assert(/expectedSourceEventId/.test(body));
-        assert(/OP-ADMIN-FIELD-/.test(body));
         assert(!/LockService\.getScriptLock\(\)/.test(body));
         assert(!/target\.setValue\(/.test(body));
         assert(!/saveImageUploadLedgerRecord_/.test(body));
+        const writer=extract("appendAdminVehicleFieldUpdate_");
+        assert(/ledgerSheet\.appendRow\(/.test(writer));
+        assert(/OP-ADMIN-FIELD-/.test(writer));
     });
     return {passed,failed,total:passed+failed,results};
 }
