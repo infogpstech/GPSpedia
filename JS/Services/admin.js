@@ -3779,6 +3779,147 @@ function inspectCortesOrganizerTargetFolderReadOnly_(rootFolder, targetPath) {
     return { status: "exists", folder: current };
 }
 
+
+/**
+ * Valida y congela las operaciones seleccionadas desde una página del preview.
+ * Es una función pura: no consulta ni modifica Drive/Spreadsheet.
+ */
+function buildCortesImageOrganizerApplyManifest_(preview, approvedFileIds, expectedDigest) {
+    const fail = message => { throw new Error(message); };
+    const digest = String(expectedDigest || "").trim().toLowerCase();
+    if (!preview || preview.status !== "success" || preview.writePerformed !== false) {
+        fail("Se requiere un preview válido de solo lectura.");
+    }
+    if (!/^[a-f0-9]{64}$/.test(digest) || String(preview.manifestDigest || "").toLowerCase() !== digest) {
+        fail("El digest aprobado no coincide con el preview.");
+    }
+    if (!/^[0-9a-f-]{36}$/i.test(String(preview.auditId || ""))) {
+        fail("El preview no contiene una auditoría Drive válida.");
+    }
+    if (preview.referenceCheckStatus !== "verified" || Number(preview.missingReferenceCount || 0) !== 0) {
+        fail("Las referencias activas no están verificadas; no se puede preparar la aplicación.");
+    }
+    if (!Array.isArray(approvedFileIds) || approvedFileIds.length < 1 || approvedFileIds.length > 10) {
+        fail("Selecciona entre 1 y 10 imágenes listas en la página del preview.");
+    }
+    if (!Array.isArray(preview.results)) fail("El preview no contiene resultados.");
+    const selectedIds = approvedFileIds.map(value => String(value || "").trim());
+    if (selectedIds.some(id => !/^[a-zA-Z0-9_-]{20,}$/.test(id)) || new Set(selectedIds).size !== selectedIds.length) {
+        fail("La selección contiene IDs inválidos o repetidos.");
+    }
+    const byId = new Map();
+    preview.results.forEach(item => {
+        const id = String(item && item.fileId || "").trim();
+        if (!id) return;
+        if (byId.has(id)) fail("El preview contiene más de un destino para el mismo archivo.");
+        byId.set(id, item);
+    });
+    const destinationKeys = new Set();
+    return selectedIds.map(fileId => {
+        const item = byId.get(fileId);
+        if (!item) fail("La imagen " + fileId + " no pertenece a la página del preview aprobado.");
+        if (item.status !== "ready") fail("La imagen " + fileId + " no está en estado listo para aplicar.");
+        if (Number(item.activeReferenceCount) !== 1) fail("La imagen " + fileId + " no tiene una única referencia activa verificada.");
+        const currentName = String(item.currentName || "");
+        const currentFolderPath = String(item.currentFolderPath || "");
+        const targetFolderPath = String(item.targetFolderPath || "");
+        const targetName = String(item.targetName || "");
+        const extension = String(item.originalExtension || "");
+        const action = String(item.action || "");
+        if (!currentName || !currentFolderPath || !targetFolderPath || !targetName ||
+            !/^\.[A-Za-z0-9]{2,8}$/.test(extension) || !targetName.endsWith(extension)) {
+            fail("La imagen " + fileId + " no contiene origen, destino o extensión verificables.");
+        }
+        const pathParts = targetFolderPath.split("/");
+        if (pathParts.length < 2 || pathParts.some(part => !part || part === "." || part === "..") ||
+            normalizeOrganizerSegment_(pathParts[0]) !== "Cortes") {
+            fail("La ruta de destino de " + fileId + " está fuera de la carpeta Cortes.");
+        }
+        if (!/^(move|rename|move_and_rename|create_folder_and_move|create_folder_and_rename|create_folder_and_move_and_rename)$/.test(action)) {
+            fail("La acción propuesta para " + fileId + " no está reconocida.");
+        }
+        const destinationKey = targetFolderPath.toLowerCase() + "/" + targetName.toLowerCase();
+        if (destinationKeys.has(destinationKey)) fail("Dos imágenes seleccionadas comparten el mismo destino.");
+        destinationKeys.add(destinationKey);
+        return {
+            operationId: digest + ":" + fileId,
+            manifestDigest: digest,
+            auditId: String(preview.auditId),
+            fileId,
+            sheetName: String(item.sheetName || ""),
+            row: Number(item.row),
+            field: String(item.field || ""),
+            currentName,
+            currentFolderPath,
+            targetName,
+            targetFolderPath,
+            originalExtension: extension,
+            action
+        };
+    });
+}
+
+/**
+ * Clasifica el estado observado de Drive frente a una operación congelada.
+ * Permite reintentar de forma idempotente sin repetir un movimiento ya confirmado.
+ */
+function classifyCortesImageOrganizerOperationState_(fileState, operation) {
+    if (!fileState || !operation || String(fileState.fileId || "") !== String(operation.fileId || "")) {
+        return { status: "blocked", reason: "file_identity_mismatch" };
+    }
+    if (fileState.trashed === true) return { status: "blocked", reason: "file_in_trash" };
+    if (!String(fileState.mimeType || "").toLowerCase().startsWith("image/")) {
+        return { status: "blocked", reason: "file_is_not_an_image" };
+    }
+    const folder = String(fileState.folderPath || "");
+    const name = String(fileState.fileName || "");
+    if (folder === String(operation.targetFolderPath || "") && name === String(operation.targetName || "")) {
+        return { status: "already_applied", reason: "" };
+    }
+    if (folder === String(operation.currentFolderPath || "") && name === String(operation.currentName || "")) {
+        return { status: "ready", reason: "" };
+    }
+    return { status: "blocked", reason: "file_location_or_name_changed" };
+}
+
+/**
+ * Prepara rollback solo para operaciones aplicadas cuyo estado actual sigue
+ * coincidiendo exactamente con el destino confirmado. Devuelve orden inverso.
+ */
+function buildCortesImageOrganizerRollbackPlan_(manifest, operationResults, fileStatesById) {
+    if (!Array.isArray(manifest) || !Array.isArray(operationResults) || !fileStatesById) {
+        throw new Error("Faltan datos para preparar el rollback.");
+    }
+    const appliedIds = new Set(operationResults
+        .filter(result => result && result.status === "applied")
+        .map(result => String(result.fileId || "")));
+    const byId = new Map(manifest.map(item => [String(item.fileId || ""), item]));
+    const plan = [];
+    for (let index = operationResults.length - 1; index >= 0; index--) {
+        const result = operationResults[index];
+        if (!result || result.status !== "applied") continue;
+        const fileId = String(result.fileId || "");
+        if (!appliedIds.has(fileId) || !byId.has(fileId)) throw new Error("El resultado aplicado no pertenece al manifiesto.");
+        const operation = byId.get(fileId);
+        const state = fileStatesById[fileId];
+        if (!state || String(state.fileId || "") !== fileId ||
+            state.trashed === true ||
+            String(state.folderPath || "") !== String(operation.targetFolderPath || "") ||
+            String(state.fileName || "") !== String(operation.targetName || "")) {
+            throw new Error("No se puede revertir " + fileId + ": el estado actual no coincide con el destino aplicado.");
+        }
+        plan.push({
+            operationId: operation.operationId,
+            fileId,
+            fromFolderPath: operation.targetFolderPath,
+            fromName: operation.targetName,
+            toFolderPath: operation.currentFolderPath,
+            toName: operation.currentName
+        });
+    }
+    return plan;
+}
+
 function handlePreviewCortesImageOrganizer_(payload, logMessage, developerContext) {
     const ownerId = String(developerContext && developerContext.userId || "").trim();
     if (!ownerId) throw new Error("El preview del organizador requiere una sesión Desarrollador verificada.");
