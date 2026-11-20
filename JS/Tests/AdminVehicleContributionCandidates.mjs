@@ -48,7 +48,7 @@ assert.ok(imagePreviewStart >= 0 && imagePreviewEnd > imagePreviewStart, "La tar
 const imagePreview = adminUi.slice(imagePreviewStart, imagePreviewEnd);
 assert.match(imagePreview, /candidatePayload\.image/);
 assert.match(imagePreview, /candidatePayload\.fieldName/);
-assert.ok(imagePreview.includes("https://drive.google.com/file/d/"), "La vista previa solo acepta la URL canónica de Drive");
+assert.ok(imagePreview.includes(String.raw`/^https:\/\/drive\.google\.com\/file\/d\/([A-Za-z0-9_-]{10,110})\/view$/`), "La vista previa solo acepta la URL canónica de Drive");
 assert.match(imagePreview, /image\.src=candidateImageUrl/);
 assert.match(imagePreview, /imageLink\.target="_blank"/);
 assert.match(imagePreview, /imageLink\.rel="noopener noreferrer"/);
