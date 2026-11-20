@@ -14,10 +14,14 @@ function extractFunction(name) {
 }
 const classify = new Function(extractFunction("classifyCortesImageOrganizerOperationState_") +
     "\nreturn classifyCortesImageOrganizerOperationState_;")();
+const decideReservation = new Function(extractFunction("decideCortesOrganizerLedgerReservation_") +
+    "\nreturn decideCortesOrganizerLedgerReservation_;")();
 const execute = new Function(extractFunction("classifyCortesImageOrganizerOperationState_") + "\n" +
+    extractFunction("decideCortesOrganizerLedgerReservation_") + "\n" +
     extractFunction("executeCortesImageOrganizerManifest_") +
     "\nreturn executeCortesImageOrganizerManifest_;")();
 const rollback = new Function(extractFunction("classifyCortesImageOrganizerOperationState_") + "\n" +
+    extractFunction("decideCortesOrganizerLedgerReservation_") + "\n" +
     extractFunction("rollbackCortesImageOrganizerOperations_") +
     "\nreturn rollbackCortesImageOrganizerOperations_;")();
 
@@ -35,6 +39,14 @@ function fixture(options = {}) {
     const adapters = {
         loadLedger: id => ledger.get(id) || null,
         saveLedger: record => { ledger.set(record.operationId, structuredClone(record)); events.push("ledger:" + record.status); },
+        reserveLedger: (record, allowedStatuses) => {
+            const current = ledger.get(record.operationId) || null;
+            const decision = decideReservation(record, current, allowedStatuses);
+            if (!decision.reserved) return decision;
+            ledger.set(record.operationId, structuredClone(record));
+            events.push("ledger:" + record.status);
+            return Object.assign({}, decision, { record: structuredClone(record) });
+        },
         inspectFile: () => structuredClone(state),
         resolveFolder: path => ({ folder: { path }, chain: [{ path }] }),
         verifyAcl: () => { if (options.failAcl) throw new Error("acl denied"); },
@@ -115,9 +127,49 @@ run("no revierte si el archivo cambió después de aplicar", () => {
     assert.equal(result.results[0].status, "needs_review");
     assert.equal(f.state.fileName, "manual-change.jpg");
 });
+run("no inicia un segundo apply mientras existe una reserva activa", () => {
+    const f = fixture();
+    f.ledger.set(operation.operationId, {
+        operationId: operation.operationId, fileId, ownerId: "developer-1",
+        manifestDigest: operation.manifestDigest, status: "processing", attempts: 1
+    });
+    const result = execute([operation], "developer-1", f.adapters);
+    assert.equal(result.results[0].status, "in_progress");
+    assert.equal(f.events.some(event => event.startsWith("move:")), false);
+});
+run("una sola solicitud obtiene la reserva atómica de una operación", () => {
+    const f = fixture();
+    const reservationRecord = {
+        operationId: operation.operationId, fileId, ownerId: "developer-1",
+        manifestDigest: operation.manifestDigest, status: "processing", attempts: 1
+    };
+    const first = f.adapters.reserveLedger(reservationRecord, ["absent"]);
+    const second = f.adapters.reserveLedger(reservationRecord, ["absent"]);
+    assert.equal(first.reserved, true);
+    assert.equal(second.reserved, false);
+    assert.equal(second.current.status, "processing");
+    const execution = execute([operation], "developer-1", f.adapters);
+    assert.equal(execution.results[0].status, "in_progress");
+    assert.equal(f.events.filter(event => event.startsWith("move:")).length, 0);
+});
+run("no inicia un segundo rollback mientras existe una reserva activa", () => {
+    const f = fixture();
+    f.state.folderPath = operation.targetFolderPath;
+    f.state.fileName = operation.targetName;
+    f.ledger.set(operation.operationId, {
+        operationId: operation.operationId, fileId, ownerId: "developer-1",
+        manifestDigest: operation.manifestDigest, status: "rollback_processing",
+        sourceFolderPath: operation.currentFolderPath, sourceName: operation.currentName,
+        targetFolderPath: operation.targetFolderPath, targetName: operation.targetName
+    });
+    const result = rollback([operation.operationId], "developer-1", f.adapters);
+    assert.equal(result.results[0].status, "in_progress");
+    assert.equal(f.ledger.get(operation.operationId).status, "rollback_processing");
+    assert.equal(f.state.folderPath, operation.targetFolderPath);
+});
 run("rechaza IDs duplicados o inválidos en rollback", () => {
     const f = fixture();
     assert.throws(() => rollback([operation.operationId, operation.operationId], "developer-1", f.adapters), /inválidos o repetidos/i);
     assert.throws(() => rollback(["bad"], "developer-1", f.adapters), /inválidos o repetidos/i);
 });
-console.log("CortesImageOrganizerExecutor: 9/9 PASS");
+console.log("CortesImageOrganizerExecutor: 12/12 PASS");
