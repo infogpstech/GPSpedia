@@ -76,11 +76,18 @@ function runAdminImageReplacementCompensationTests(uiSource, adminSource) {
         assert(/const currentResponse = await routeAction\(["']getCatalogData["']\)/.test(discard), "No se obtiene una lectura fresca antes de restaurar.");
         assert(/saveFieldSilently\(cleanVehicleId, field, backupSnapshot\[field\], currentEditItem\[field\]\)/.test(discard), "La restauración no envía el valor esperado.");
         const save = extractFunction(ui, "saveFieldSilently");
-        assert(/enforceExpectedCurrentValue: true/.test(save), "No se activa compare-and-set.");
+        assert(/enforceExpectedCurrentValue\s*:\s*true/.test(save), "No se exige una versión esperada del campo.");
+        assert(/expectedSourceEventId/.test(save) && /adminModalFieldVersions\.get\(versionKey\)/.test(save),
+            "La UI no conserva y envía la identidad de la versión fuente.");
         const backend = extractFunction(admin, "handleUpdateVehicleField");
-        assert(/assertAdminModalExpectedValue_\(previousValue, expectedCurrentValue, fieldName\)/.test(backend), "El backend no protege cambios concurrentes.");
+        assert(/appendAdminVehicleFieldUpdate_\([\s\S]*expectedCurrentValue[\s\S]*expectedSourceEventId/.test(backend),
+            "El backend no registra el cambio como versión condicionada por valor y evento fuente.");
+        const append = extractFunction(admin, "appendAdminVehicleFieldUpdate_");
+        assert(/expectedCurrentValue/.test(append) && /expectedSourceEventId/.test(append),
+            "El journal no conserva el compare-and-set lógico por campo.");
         const vin = extractFunction(admin, "handleUpdateVehicleVinCollection_");
-        assert(/assertAdminModalExpectedValue_\(previousValue, expectedCurrentValue, "vin"\)/.test(vin), "La restauración VIN no protege cambios concurrentes.");
+        assert(/appendAdminVehicleFieldUpdate_\([\s\S]*expectedCurrentValue[\s\S]*expectedSourceEventId/.test(vin),
+            "La restauración VIN no utiliza el mismo versionado por campo.");
     });
     run("La comparación condicional rechaza un cambio concurrente", () => {
         const fn = new Function(extractFunction(admin, "assertAdminModalExpectedValue_") + "; return assertAdminModalExpectedValue_;")();
