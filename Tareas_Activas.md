@@ -1030,3 +1030,13 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] AdminMoveImageDrivePreflightOutsideLock 11/11; AdminMoveImageActivityOutsideLock 7/7.
 - [x] CI 44655643108 SUCCESS: 215 suites, 2,682 pruebas, 0 fallos; health read-only 44655643102 SUCCESS.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Sin despliegue ni cambios productivos.
+
+
+### P1 — ADMIN ciclo de papelera: lock inicial no bloqueante (2026-11-20)
+- [x] Envío a papelera: reemplazar espera de 30 s por `tryLock(0)` y devolver `ADMIN_BUSY` si ADMIN está ocupado.
+- [x] Restauración desde papelera: aplicar el mismo contrato no bloqueante.
+- [x] Liberar solo si `lockAcquired` confirma que se obtuvo el lock; no tocar Drive ni historial en contención inicial.
+- [x] `AdminImageTrashLifecycle` 41/41; `AdminDeleteImageActivityOutsideLock` 6/6; `AdminRestoreImageActivityOutsideLock` 6/6.
+- [x] CI `44661420739` SUCCESS: 215 suites, 2,684 pruebas, 0 fallos; health read-only `44661420823` SUCCESS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Sin despliegue Apps Script ni cambios productivos.
+- [ ] Tarea posterior: diseñar lease/idempotencia para sacar setTrashed y compensación Drive del lock global manteniendo comprobación de referencias y reconciliación.
