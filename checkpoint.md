@@ -709,6 +709,7 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - UI de búsqueda agrupada; búsqueda textual no abre el modal sin selección del modelo; VIN inequívoco conserva autoapertura y VIN ambiguo/Relay/Tutorial/PyS permanecen separados.
 - Historial existente conserva query, modelo, versión y tipo de encendido; main.js reconstruye búsqueda y niveles por popstate. Prueba de ruta History API agregada.
 - `SearchModelGrouping.mjs` registrado en `RunServiceTests.mjs`. Ejecución aislada Node v22.16.0: 21/21 PASS. Los helpers y History API se ejecutaron; las comprobaciones UI/navigation/main fueron estáticas.
+- Comprobación sintáctica normalizando import/export de módulo: `search-utils.js`, `ui.js`, `navigation.js`, `main.js`, `navigationHistory.js`, `SearchModelGrouping.mjs` y `RunServiceTests.mjs` parsean correctamente.
 - `Tareas_Activas.md`, `ChangesLogs.txt` y `AUDITORIA_BUSQUEDA_MODELOS_2026-11-20.md` actualizados.
 - Validación aún pendiente: regresión integral `RunServiceTests.mjs` y prueba visual en navegador. No se dispone de checkout local; las herramientas GitHub consultadas no devolvieron estados de CI para estos commits.
 - La rama base protegida permanece en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; no se escribió en ella. Sin despliegue Apps Script ni cambios en datos productivos.
