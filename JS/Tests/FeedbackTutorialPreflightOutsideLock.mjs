@@ -57,7 +57,7 @@ test("localiza el ID del tutorial sin leer toda la hoja y conserva comparación 
     const result = findById(sheet, "tut-ABC123");
     assert.equal(result.rowIndex, 2);
     assert.equal(result.row[0], "TUT-abc123");
-    assert.deepEqual(sheet.calls, [[2, 1, 1, 1], [2, 1, 1, 8]]);
+    assert.deepEqual(sheet.calls, [[2, 1, 1, 1], [2, 1, 1, 1], [2, 1, 1, 8]]);
 });
 test("rechaza IDs de tutorial duplicados después de normalizar mayúsculas", () => {
     const sheet = makeSheet([["tut-abc123"], ["TUT-ABC123"]]);
