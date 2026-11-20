@@ -1347,7 +1347,8 @@ function getFeedbackYearApplicationsSheet_(createIfMissing) {
     const headers = [
         "operationId", "vehicleId", "year", "previousFrom", "previousTo",
         "targetFrom", "targetTo", "voteCount", "status", "activityAttempted",
-        "createdAt", "updatedAt"
+        "createdAt", "updatedAt", "previousRawFrom", "previousSourceFromEventId",
+        "previousRawTo", "previousSourceToEventId"
     ];
     const ss = getSpreadsheet();
     let sheet = ss.getSheetByName("FeedbackYearApplications");
@@ -1358,8 +1359,17 @@ function getFeedbackYearApplicationsSheet_(createIfMissing) {
         SpreadsheetApp.flush();
     }
     const actual = sheet.getRange(1, 1, 1, headers.length).getValues()[0].map(value => String(value || "").trim());
-    if (headers.some((header, index) => actual[index] !== header)) {
+    const legacyHeaders = headers.slice(0, 12);
+    if (legacyHeaders.some((header, index) => actual[index] !== header)) {
         throw new Error("El esquema de FeedbackYearApplications no coincide con el contrato esperado.");
+    }
+    const extensionHeaders = headers.slice(12);
+    const lastColumn = sheet.getLastColumn();
+    if (lastColumn < headers.length) {
+        sheet.getRange(1, 13, 1, extensionHeaders.length).setValues([extensionHeaders]);
+        SpreadsheetApp.flush();
+    } else if (extensionHeaders.some((header, index) => actual[index + 12] !== header)) {
+        throw new Error("La extensión versionada de FeedbackYearApplications no coincide.");
     }
     return sheet;
 }
@@ -1392,49 +1402,170 @@ function findPendingFeedbackYearApplication_(vehicleId) {
     return { sheet, rowIndex: matches[0].rowIndex, row };
 }
 
+function getFeedbackProjectedVehicleYearSnapshot_(vehicleId, baseRow) {
+    const id = String(vehicleId || "").trim();
+    if (!id || !Array.isArray(baseRow)) throw new Error("No se pudo preparar la versión del rango de años.");
+    const fields = ["anoDesde", "anoHasta"];
+    const positions = { anoDesde: COLS_CORTES.anoDesde - 1, anoHasta: COLS_CORTES.anoHasta - 1 };
+    const values = {
+        anoDesde: baseRow[positions.anoDesde] == null ? "" : baseRow[positions.anoDesde],
+        anoHasta: baseRow[positions.anoHasta] == null ? "" : baseRow[positions.anoHasta]
+    };
+    const sources = { anoDesde: "", anoHasta: "" };
+    const ledger = getSpreadsheet().getSheetByName("AportesVehiculo");
+    if (!ledger) {
+        const from = String(values.anoDesde || "").trim(), to = String(values.anoHasta || "").trim();
+        return { rawFrom: values.anoDesde, rawTo: values.anoHasta, sourceFrom: "", sourceTo: "",
+            anoDesde: from, anoHasta: to || from };
+    }
+    const headers = ["eventId", "opId", "vehicleId", "operationHash", "kind", "payloadJson",
+        "actorId", "actorName", "createdAt", "status", "supersedesEventId"];
+    if (ledger.getLastColumn() < headers.length || ledger.getLastRow() < 1) {
+        throw new Error("AportesVehiculo tiene un esquema incompleto; no se aplicó la sugerencia de año.");
+    }
+    const actual = ledger.getRange(1, 1, 1, headers.length).getDisplayValues()[0]
+        .map(value => String(value || "").trim());
+    if (headers.some((header, index) => actual[index] !== header)) {
+        throw new Error("El esquema AportesVehiculo no coincide; no se aplicó la sugerencia de año.");
+    }
+    const lastRow = ledger.getLastRow();
+    const rows = lastRow > 1 ? ledger.getRange(2, 1, lastRow - 1, headers.length).getValues() : [];
+    const events = rows.map((row, index) => ({
+        rowIndex: index + 2, eventId: String(row[0] || "").trim(), opId: String(row[1] || "").trim(),
+        vehicleId: String(row[2] || "").trim(), operationHash: String(row[3] || "").trim().toLowerCase(),
+        kind: String(row[4] || "").trim(), payloadJson: String(row[5] || ""),
+        actorId: String(row[6] || "").trim(), status: String(row[9] || "").trim().toLowerCase(),
+        supersedesEventId: String(row[10] || "").trim()
+    })).filter(event => event.vehicleId === id && event.status === "accepted");
+    const opHashes = new Map(), conflictedOps = new Set();
+    events.forEach(event => {
+        if (!opHashes.has(event.opId)) opHashes.set(event.opId, event.operationHash);
+        else if (opHashes.get(event.opId) !== event.operationHash) conflictedOps.add(event.opId);
+    });
+    events.sort((a, b) => a.rowIndex - b.rowIndex).forEach(event => {
+        if (!event.eventId || !event.opId || conflictedOps.has(event.opId)) return;
+        let payload;
+        try { payload = JSON.parse(event.payloadJson); } catch (error) { return; }
+        if (!payload || typeof payload !== "object" || Array.isArray(payload)) return;
+        if (event.kind === "vehicle_update") {
+            const field = String(payload.fieldName || "");
+            if (!fields.includes(field) || !event.actorId ||
+                !(event.opId.startsWith("OP-ADMIN-") || event.opId.startsWith("OP-YEAR-")) ||
+                !Object.prototype.hasOwnProperty.call(payload, "expectedCurrentValue") ||
+                !Object.prototype.hasOwnProperty.call(payload, "value")) return;
+            const current = String(values[field] == null ? "" : values[field]);
+            const expected = String(payload.expectedCurrentValue == null ? "" : payload.expectedCurrentValue);
+            const sourceId = String(event.supersedesEventId || "");
+            if (current !== expected || (sourceId && sources[field] !== sourceId)) return;
+            values[field] = payload.value;
+            sources[field] = event.eventId;
+            return;
+        }
+        const metadata = event.kind === "vehicle" ? payload :
+            (event.kind === "cut" && payload.vehicleData && typeof payload.vehicleData === "object" ? payload.vehicleData : null);
+        if (!metadata) return;
+        fields.forEach(field => {
+            const incoming = metadata[field];
+            if (incoming === undefined || incoming === null || String(incoming).trim() === "" ||
+                String(values[field] == null ? "" : values[field]).trim() !== "") return;
+            values[field] = incoming;
+            sources[field] = event.eventId;
+        });
+    });
+    const rawFrom = values.anoDesde, rawTo = values.anoHasta;
+    const from = String(rawFrom == null ? "" : rawFrom).trim(), to = String(rawTo == null ? "" : rawTo).trim();
+    return { rawFrom, rawTo, sourceFrom: sources.anoDesde, sourceTo: sources.anoHasta,
+        anoDesde: from, anoHasta: to || from };
+}
+
+function appendFeedbackYearVehicleUpdateEvent_(application, vehicleId, fieldName, value, expectedCurrentValue, expectedSourceEventId) {
+    const allowedFields = new Set(["anoDesde", "anoHasta"]);
+    const cleanVehicleId = String(vehicleId || "").trim();
+    const operationId = String(application && application.row && application.row[0] || "").trim();
+    if (!/^[1-9]\d{0,14}$/.test(cleanVehicleId) || !allowedFields.has(fieldName) ||
+        !/^YSA-[A-Za-z0-9_-]{20,80}$/.test(operationId)) {
+        throw new Error("La aplicación de año no contiene una identidad válida para anexar el evento.");
+    }
+    const opId = "OP-YEAR-" + operationId + "-" + fieldName;
+    const actorId = "SYSTEM:FEEDBACK_YEAR", actorName = "Sistema de validación por tres votos verificados";
+    const payload = { fieldName, value, expectedCurrentValue: expectedCurrentValue == null ? "" : expectedCurrentValue };
+    const payloadJson = JSON.stringify(payload), sourceEventId = String(expectedSourceEventId || "").trim();
+    if (sourceEventId && !/^EV-[A-Za-z0-9_-]{8,100}$/.test(sourceEventId)) {
+        throw new Error("La versión fuente del rango de años no es válida.");
+    }
+    const canonical = JSON.stringify({ vehicleId: cleanVehicleId, opId, payload, actorId, sourceEventId });
+    const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, canonical, Utilities.Charset.UTF_8);
+    const operationHash = digest.map(value => ("0" + (value & 255).toString(16)).slice(-2)).join("");
+    const ledger = getSpreadsheet().getSheetByName("AportesVehiculo");
+    if (!ledger) throw new Error("AportesVehiculo no existe; no se modificó el rango del catálogo.");
+    const headers = ["eventId", "opId", "vehicleId", "operationHash", "kind", "payloadJson",
+        "actorId", "actorName", "createdAt", "status", "supersedesEventId"];
+    if (ledger.getLastColumn() < headers.length || ledger.getLastRow() < 1) {
+        throw new Error("AportesVehiculo tiene un esquema incompleto; no se modificó el rango del catálogo.");
+    }
+    const actual = ledger.getRange(1, 1, 1, headers.length).getDisplayValues()[0]
+        .map(value => String(value || "").trim());
+    if (headers.some((header, index) => actual[index] !== header)) {
+        throw new Error("El esquema AportesVehiculo no coincide; no se modificó el rango del catálogo.");
+    }
+    const lastRow = ledger.getLastRow();
+    const rows = lastRow > 1 ? ledger.getRange(2, 1, lastRow - 1, headers.length).getValues() : [];
+    const existing = rows.map((row, index) => ({ row, rowIndex: index + 2 }))
+        .filter(entry => String(entry.row[1] || "").trim() === opId);
+    if (existing.length) {
+        const canonicalRows = existing.filter(entry => String(entry.row[3] || "").trim().toLowerCase() === operationHash &&
+            String(entry.row[2] || "").trim() === cleanVehicleId && String(entry.row[4] || "") === "vehicle_update" &&
+            String(entry.row[5] || "") === payloadJson && String(entry.row[6] || "") === actorId &&
+            String(entry.row[10] || "").trim() === sourceEventId);
+        if (canonicalRows.length !== existing.length) {
+            throw new Error("La operación de ampliación de año ya existe con contenido distinto; requiere revisión.");
+        }
+        return { eventId: String(canonicalRows[0].row[0] || ""), opId, duplicate: true };
+    }
+    const eventId = "EV-" + String(Utilities.getUuid()).replace(/-/g, "");
+    const createdAt = new Date().toISOString();
+    ledger.appendRow([eventId, opId, cleanVehicleId, operationHash, "vehicle_update", payloadJson,
+        actorId, actorName, createdAt, "accepted", sourceEventId]);
+    SpreadsheetApp.flush();
+    const savedRows = ledger.getLastRow() > 1
+        ? ledger.getRange(2, 1, ledger.getLastRow() - 1, headers.length).getValues() : [];
+    const saved = savedRows.find(row => String(row[0] || "").trim() === eventId);
+    if (!saved || String(saved[1] || "") !== opId || String(saved[2] || "") !== cleanVehicleId ||
+        String(saved[3] || "").trim().toLowerCase() !== operationHash || String(saved[4] || "") !== "vehicle_update" ||
+        String(saved[5] || "") !== payloadJson || String(saved[6] || "") !== actorId ||
+        String(saved[10] || "").trim() !== sourceEventId) {
+        const pending = new Error("No se pudo confirmar el evento de ampliación. Reintenta con la misma operación.");
+        pending.code = "FEEDBACK_YEAR_APPEND_UNCONFIRMED";
+        throw pending;
+    }
+    return { eventId, opId, duplicate: false };
+}
+
 function completeFeedbackYearApplication_(application, context) {
-    const { cortesSheet, vehicleRowIndex, feedbackSheet, actorColumn, parseCatalogYear, userId, userName } = context;
+    const { cortesSheet, vehicleRowIndex, feedbackSheet, actorColumn, userId, userName } = context;
     const row = application.row;
     const previousFrom = Number(row[3]), previousTo = Number(row[4]);
     const targetFrom = Number(row[5]), targetTo = Number(row[6]);
     const year = Number(row[2]), voteCount = Number(row[7]);
-    const fromChanged = previousFrom !== targetFrom;
-    const toChanged = previousTo !== targetTo;
+    const fromChanged = previousFrom !== targetFrom, toChanged = previousTo !== targetTo;
     if (fromChanged === toChanged || targetFrom !== Math.min(previousFrom, year) ||
         targetTo !== Math.max(previousTo, year)) {
         throw new Error("La aplicación pendiente no describe una ampliación válida; requiere revisión manual.");
     }
-
-    const currentFrom = parseCatalogYear(cortesSheet.getRange(vehicleRowIndex, COLS_CORTES.anoDesde).getValue());
-    const rawCurrentTo = cortesSheet.getRange(vehicleRowIndex, COLS_CORTES.anoHasta).getValue();
-    const currentTo = String(rawCurrentTo === null || rawCurrentTo === undefined ? "" : rawCurrentTo).trim() === ""
-        ? currentFrom : parseCatalogYear(rawCurrentTo);
-    if (currentFrom === previousFrom && currentTo === previousTo) {
-        // Un anoHasta vacío equivale a anoDesde. Si se amplía hacia atrás,
-        // primero se fija el límite superior anterior para no desplazarlo al nuevo anoDesde.
-        if (fromChanged && String(rawCurrentTo === null || rawCurrentTo === undefined ? "" : rawCurrentTo).trim() === "") {
-            cortesSheet.getRange(vehicleRowIndex, COLS_CORTES.anoHasta).setValue(previousTo);
-            SpreadsheetApp.flush();
+    const rawExpectedFrom = row[12] === undefined || row[12] === null ? previousFrom : row[12];
+    const sourceExpectedFrom = String(row[13] || "");
+    const rawExpectedTo = row[14] === undefined || row[14] === null ? (fromChanged ? "" : previousTo) : row[14];
+    const sourceExpectedTo = String(row[15] || "");
+    const operation = { row };
+    if (fromChanged) {
+        if (String(rawExpectedTo == null ? "" : rawExpectedTo).trim() === "") {
+            appendFeedbackYearVehicleUpdateEvent_(operation, row[1], "anoHasta", previousTo, rawExpectedTo, sourceExpectedTo);
         }
-        const targetColumn = fromChanged ? COLS_CORTES.anoDesde : COLS_CORTES.anoHasta;
-        cortesSheet.getRange(vehicleRowIndex, targetColumn).setValue(fromChanged ? targetFrom : targetTo);
-        SpreadsheetApp.flush();
-    } else if (currentFrom !== targetFrom || currentTo !== targetTo) {
-        throw new Error("El rango del catálogo cambió fuera de la aplicación pendiente; requiere revisión manual.");
+        appendFeedbackYearVehicleUpdateEvent_(operation, row[1], "anoDesde", targetFrom, rawExpectedFrom, sourceExpectedFrom);
+    } else if (toChanged) {
+        appendFeedbackYearVehicleUpdateEvent_(operation, row[1], "anoHasta", targetTo, rawExpectedTo, sourceExpectedTo);
     }
-
-    const confirmedFrom = parseCatalogYear(cortesSheet.getRange(vehicleRowIndex, COLS_CORTES.anoDesde).getValue());
-    const rawConfirmedTo = cortesSheet.getRange(vehicleRowIndex, COLS_CORTES.anoHasta).getValue();
-    const confirmedTo = String(rawConfirmedTo === null || rawConfirmedTo === undefined ? "" : rawConfirmedTo).trim() === ""
-        ? confirmedFrom : parseCatalogYear(rawConfirmedTo);
-    if (confirmedFrom !== targetFrom || confirmedTo !== targetTo) {
-        throw new Error("No se pudo confirmar el rango de años aplicado; la operación permanece pendiente.");
-    }
-
-    const expectedImageUrl = String(
-        cortesSheet.getRange(vehicleRowIndex, COLS_CORTES.imagenVehiculo).getValue() || ""
-    );
-
+    const expectedImageUrl = String(cortesSheet.getRange(vehicleRowIndex, COLS_CORTES.imagenVehiculo).getValue() || "");
     const ledger = application.sheet;
     let activityLogRequest = null;
     const activityAttempted = row[9] === true || String(row[9]).toUpperCase() === "TRUE";
@@ -1448,7 +1579,6 @@ function completeFeedbackYearApplication_(application, context) {
         };
         row[9] = true;
     }
-
     const feedbackValues = feedbackSheet.getDataRange().getValues();
     for (let i = feedbackValues.length - 1; i >= 1; i--) {
         const feedbackRow = feedbackValues[i];
@@ -1456,46 +1586,35 @@ function completeFeedbackYearApplication_(application, context) {
         const rowYear = Number(feedbackRow[COLS_FEEDBACKS.anoSugerido - 1]);
         const rowActorKey = String(feedbackRow[actorColumn - 1] || "").trim();
         if (rowId === String(row[1]) && rowYear === year && rowActorKey &&
-            isVerifiedSuggestionActorKey_(rowActorKey) &&
-            isPositiveYearSuggestionRow(feedbackRow) && !rowActorKey.startsWith("applied:")) {
+            isVerifiedSuggestionActorKey_(rowActorKey) && isPositiveYearSuggestionRow(feedbackRow) && !rowActorKey.startsWith("applied:")) {
             feedbackSheet.getRange(i + 1, actorColumn).setValue(getAppliedSuggestionActorKey_(rowActorKey));
         }
     }
     SpreadsheetApp.flush();
-
     const verifiedRows = feedbackSheet.getDataRange().getValues();
     const remaining = verifiedRows.slice(1).some(feedbackRow => {
         const rowActorKey = String(feedbackRow[actorColumn - 1] || "").trim();
         return String(feedbackRow[COLS_FEEDBACKS.ID_vehiculo - 1] || "").trim() === String(row[1]) &&
             Number(feedbackRow[COLS_FEEDBACKS.anoSugerido - 1]) === year &&
-            isVerifiedSuggestionActorKey_(rowActorKey) &&
-            isPositiveYearSuggestionRow(feedbackRow) && !rowActorKey.startsWith("applied:");
+            isVerifiedSuggestionActorKey_(rowActorKey) && isPositiveYearSuggestionRow(feedbackRow) && !rowActorKey.startsWith("applied:");
     });
-    if (remaining) throw new Error("La ampliación quedó aplicada, pero no se pudieron marcar todos los aportes; la recuperación permanece pendiente.");
-
+    if (remaining) throw new Error("La ampliación quedó anexada, pero no se pudieron marcar todos los aportes; la recuperación permanece pendiente.");
     ledger.getRange(application.rowIndex, 9).setValue("completed");
     ledger.getRange(application.rowIndex, 12).setValue(new Date().toISOString());
     SpreadsheetApp.flush();
     if (String(ledger.getRange(application.rowIndex, 9).getValue() || "").trim() !== "completed") {
         throw new Error("No se pudo confirmar el cierre de la aplicación de año; permanece pendiente.");
     }
-
     return {
-        status: "success",
-        recovered: false,
-        folderSyncWarning: false,
-        _activityLogRequest: activityLogRequest,
-        _folderSyncRequest: {
-            sheet: cortesSheet,
-            rowNumber: vehicleRowIndex,
-            vehicleId: String(row[1]),
-            expectedImageUrl
+        status: "success", recovered: false, folderSyncWarning: false,
+        _activityLogRequest: activityLogRequest, _folderSyncRequest: {
+            sheet: cortesSheet, rowNumber: vehicleRowIndex, vehicleId: String(row[1]), expectedImageUrl
         },
+        _catalogResetRequest: true,
         message: "¡Gracias! Con " + voteCount + " aportantes distintos, el catálogo se ha actualizado a " +
             targetFrom + "-" + targetTo + "."
     };
 }
-
 function yearRangesOverlapInclusive_(startA, endA, startB, endB) {
     const aStart = Number(startA), aEnd = Number(endA);
     const bStart = Number(startB), bEnd = Number(endB);
@@ -1550,10 +1669,13 @@ function handleSuggestYearLocked(payload) {
         const parsed = Number(text);
         return parsed >= 1980 && parsed <= 2099 ? parsed : NaN;
     };
-    const rawAnoDesde = vehicleRow[COLS_CORTES.anoDesde - 1];
-    const rawAnoHasta = vehicleRow[COLS_CORTES.anoHasta - 1];
-    const anoDesde = parseCatalogYear(rawAnoDesde);
-    const anoHasta = String(rawAnoHasta === null || rawAnoHasta === undefined ? "" : rawAnoHasta).trim() === "" ? anoDesde : parseCatalogYear(rawAnoHasta);
+    const yearSnapshot = getFeedbackProjectedVehicleYearSnapshot_(normalizedVehicleId, vehicleRow);
+    vehicleRow[COLS_CORTES.anoDesde - 1] = yearSnapshot.rawFrom;
+    vehicleRow[COLS_CORTES.anoHasta - 1] = yearSnapshot.rawTo;
+    const rawAnoDesde = yearSnapshot.rawFrom;
+    const rawAnoHasta = yearSnapshot.rawTo;
+    const anoDesde = parseCatalogYear(yearSnapshot.anoDesde);
+    const anoHasta = parseCatalogYear(yearSnapshot.anoHasta);
     if (!Number.isFinite(anoDesde) || !Number.isFinite(anoHasta) || anoHasta < anoDesde) {
         throw new Error("El rango de años del vehículo es inválido; no se registró la sugerencia.");
     }
@@ -1735,18 +1857,19 @@ function handleSuggestYearLocked(payload) {
 
     if (updated) {
         const ledger = getFeedbackYearApplicationsSheet_(true);
-        const operationId = "YSA-" + Date.now().toString(36) + "-" + Math.floor(Math.random() * 1000000000).toString(36);
+        const operationId = "YSA-" + String(Utilities.getUuid()).replace(/-/g, "");
         const operationRow = ledger.getLastRow() + 1;
         const createdAt = new Date().toISOString();
-        ledger.getRange(operationRow, 1, 1, 12).setValues([[
+        ledger.getRange(operationRow, 1, 1, 16).setValues([[
             operationId, normalizedVehicleId, year, anoDesde, anoHasta,
-            newAnoDesde, newAnoHasta, voteCount, "pending", false, createdAt, createdAt
+            newAnoDesde, newAnoHasta, voteCount, "pending", false, createdAt, createdAt,
+            rawAnoDesde, yearSnapshot.sourceFrom, rawAnoHasta, yearSnapshot.sourceTo
         ]]);
         SpreadsheetApp.flush();
         const application = {
             sheet: ledger,
             rowIndex: operationRow,
-            row: ledger.getRange(operationRow, 1, 1, 12).getValues()[0]
+            row: ledger.getRange(operationRow, 1, 1, 16).getValues()[0]
         };
         if (String(application.row[0] || "") !== operationId ||
             String(application.row[8] || "") !== "pending") {
