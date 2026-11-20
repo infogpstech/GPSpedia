@@ -7036,7 +7036,7 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
     if (String(vehicleId || "").trim()) {
         const lastRowForLookup = sheet.getLastRow();
         if (lastRowForLookup >= 2) {
-            const idsSnapshot = sheet.getRange(2, 1, lastRowForLookup, 1).getValues().flat();
+            const idsSnapshot = sheet.getRange(2, 1, lastRowForLookup - 1, 1).getValues().flat();
             const existingIndex = idsSnapshot.findIndex(id => String(id) === String(vehicleId));
             if (existingIndex !== -1) existingVehicleRowIndex = existingIndex + 2;
         }
