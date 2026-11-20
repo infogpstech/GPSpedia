@@ -5,6 +5,22 @@ Rama de trabajo: GPSpedia2.2.5_work
 Rama base protegida: GPSpedia2.2.5 (no modificar)
 Normativa: NORMAS_DESAROLLO.md
 
+## Estado consolidado vigente — verificado 2026-11-20
+- Rama de trabajo HEAD: `6a6b7441cd41b189e1b894bc0101f95ff83dc5e8`. Rama base protegida: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; no se modificó.
+- Regresión del HEAD: GitHub Actions `44764926538` SUCCESS — 220 suites, 2,735 pruebas aprobadas, 0 fallos. Health read-only `44764926532` SUCCESS; Pages `44764925637` SUCCESS.
+- Fase 1 (ADMIN salud/telemetría): implementación local y regresión integral COMPLETADAS. Contratos verificados: ServiceHealth 17/17, ServiceTrafficAdmin 33/33, BrowserTraffic 9/9, Aggregator 5/5, Aggregation 6/6, DirectTelemetry 21/21, Batch 5/5 y Metrics 1/1.
+- Fase 2 (arquitectura/Coordinator): implementación local base COMPLETADA; configuración de ScriptProperties, URLs, secretos y deployments reales queda para Beta autorizada.
+- Fase 3 (Inbox/aislamiento): correcciones locales y regresión COMPLETADAS; InboxConversations 66/66 y CoordinatorCapabilityPreservation 6/6. Verificación con credenciales/deployments reales queda para Beta.
+- Fase 4 (ADMIN controles/responsive): implementación local COMPLETADA; inspección visual real de escritorio/móvil queda para Beta.
+- Fase 5 (auditoría/organizador de imágenes): constructor, inventario, referencias, endpoint preview y UI paginada de solo lectura IMPLEMENTADOS. La auditoría y preview con Drive/Spreadsheet reales siguen pendientes de Beta. **Safe Apply no está implementado** y depende de revisar y aprobar primero el preview real; no mover, renombrar, borrar ni restaurar archivos.
+- Fase 6 (documentación/rotación): COMPLETADA.
+- Fase 7 (regresión/transición): regresión local COMPLETADA; transición y verificaciones de entorno Beta pendientes.
+- Búsqueda agrupada `GP-UX-SEARCH-MODEL-GROUPING-01`: implementación y regresión COMPLETADAS; SearchModelGrouping 21/21. Falta prueba visual de navegador con catálogo representativo.
+- Optimización ADMIN/WRITE de locks, snapshots y reserva idempotente de vehicleId: implementación/auditoría y regresión local COMPLETADAS; quedan validaciones reales de Script IDs, concurrencia y Spreadsheet aislado.
+- Las casillas abiertas históricas de este archivo corresponden a validaciones Beta/entorno externo o al Safe Apply condicionado al preview real; no deben interpretarse como regresiones locales aún no ejecutadas. Hay referencias repetidas por etapas históricas: conservarlas y cerrar mediante adendas, no borrar evidencia.
+- Próxima dependencia: disponer de entorno Beta autorizado y Script IDs verificados; desplegar primero Coordinator según `Services/COORDINATOR_SETUP.md`, luego los consumidores que correspondan. Para imágenes: ADMIN actualizado → auditoría Drive nueva → preview completo → revisión de rutas/nombres/extensiones/referencias/ACL/duplicados → recién entonces diseñar e implementar Safe Apply.
+
+
 ## Plan de ejecución vigente — implementación local antes de Beta (2026-11-19)
 
 **Orden obligatorio:** terminar las implementaciones y correcciones locales; ejecutar la regresión integral; solo después preparar y realizar despliegues y validaciones Beta con autorización. No desplegar Apps Script, cambiar ScriptProperties/secretos ni ejecutar pruebas contra Drive, Spreadsheet o servicios remotos durante este bloque.
