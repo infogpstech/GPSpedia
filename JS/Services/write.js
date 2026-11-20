@@ -2289,6 +2289,34 @@ function projectImageUploadEvents_(events) {
     };
 }
 
+function appendImageUploadEventTransition_(expected, state, fileId, references, fileName, lastError) {
+    if (!expected || !expected.token || !expected.operationKey) return false;
+    try {
+        const sheet = getOrCreateImageUploadEventsSheet_(getSpreadsheet());
+        appendImageUploadEvent_(sheet, {
+            token: expected.token,
+            operationKey: expected.operationKey,
+            folderId: expected.folderId,
+            mimeType: expected.mimeType,
+            sizeBytes: expected.sizeBytes,
+            contentHash: expected.contentHash,
+            fileId: fileId || "",
+            fileUrl: fileId ? "https://drive.google.com/uc?export=view&id=" + fileId : "",
+            state: state,
+            referencesJson: JSON.stringify(Array.isArray(references) ? references : []),
+            fileName: fileName || "",
+            lastError: lastError || ""
+        });
+        return true;
+    } catch (error) {
+        // Durante la migración ImageUploadLedger sigue siendo la fuente compatible
+        // con ADMIN; un fallo del journal secundario no revierte una carga válida.
+        Logger.log("No se pudo anexar la transición de ImageUploadEvents (" + state + "): " +
+            String(error && error.message || error));
+        return false;
+    }
+}
+
 const IMAGE_UPLOAD_MAX_BYTES = 10 * 1024 * 1024;
 
 function getOrCreateImageUploadLedgerSheet_() {
@@ -2843,6 +2871,8 @@ function markImageUploadLinkedWithShortLedgerLock_(imageUrl) {
             return values.slice();
         });
 
+        appendImageUploadEventTransition_(expected, "linked", fileId, references, String(savedValues[13] || ""), "");
+
         try {
             const originalName = String(savedValues[13] || "");
             if (originalName && file.getName() !== originalName) file.setName(originalName);
@@ -2985,6 +3015,7 @@ function uploadImageToDriveWithShortLedgerLocks_(imageData, filename, folder, op
     const token = buildImageUploadToken(stableOperationKey, blob, folder, mimeType);
     const temporaryFilename = "__GPSpediaUpload_" + token + extension;
     const expected = { token, operationKey: stableOperationKey, folderId: String(folder.getId()), mimeType, sizeBytes: bytes.length, contentHash };
+    appendImageUploadEventTransition_(expected, "reserved", "", [], originalFilename, "");
 
     let record = withImageUploadLedgerLock_(() => {
         const ledger = getOrCreateImageUploadLedgerSheet_();
@@ -3052,6 +3083,7 @@ function uploadImageToDriveWithShortLedgerLocks_(imageData, filename, folder, op
             file = folder.createFile(blob);
         }
         verifyImageUploadFile_(file, folder, expected);
+        appendImageUploadEventTransition_(expected, "pending", file.getId(), [], originalFilename, "");
         const url = "https://drive.google.com/uc?export=view&id=" + file.getId();
         const references = String(record.values[12] || "[]");
         const state = String(record.values[8]) === "linked" ? "linked" : "pending";
