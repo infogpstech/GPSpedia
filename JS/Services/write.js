@@ -649,9 +649,15 @@ function getNextCortesVehicleIdLocked(sheet, options) {
     if (!Number.isSafeInteger(storedId) || storedId < 0) {
         throw new Error("El contador central de IDs de Cortes contiene un valor inválido.");
     }
-    const minimumReservedId = options.minimumReservedId === undefined ? 0 : Number(options.minimumReservedId);
+    let minimumReservedId = options.minimumReservedId === undefined ? 0 : Number(options.minimumReservedId);
     if (!Number.isSafeInteger(minimumReservedId) || minimumReservedId < 0) {
         throw new Error("El último ID reservado contiene un valor inválido.");
+    }
+    // También las asignaciones WRITE que no llevan opId deben respetar reservas persistidas.
+    // Esto evita reutilizar un ID si falló la actualización del contador tras guardar el ledger.
+    if (options.includeReservations !== false && typeof getSpreadsheet === "function") {
+        const reservationSheet = getSpreadsheet().getSheetByName(CORTES_ID_RESERVATIONS_SHEET_NAME);
+        if (reservationSheet) minimumReservedId = Math.max(minimumReservedId, getLastCortesIdReservation_(reservationSheet));
     }
     const nextId = Math.max(maxSheetId, storedId, minimumReservedId) + 1;
     if (!Number.isSafeInteger(nextId) || nextId < 1) throw new Error("Se alcanzó el límite seguro del ID numérico de Cortes.");
@@ -731,7 +737,7 @@ function reserveCortesVehicleIdForOperationLocked_(cortesSheet, request) {
         return existing.vehicleId;
     }
     const lastReservedId = getLastCortesIdReservation_(ledger);
-    const vehicleId = getNextCortesVehicleIdLocked(cortesSheet, { persistCounter: false, minimumReservedId: lastReservedId });
+    const vehicleId = getNextCortesVehicleIdLocked(cortesSheet, { persistCounter: false, minimumReservedId: lastReservedId, includeReservations: false });
     ledger.appendRow([request.opId, request.operationHash, vehicleId, new Date().toISOString()]);
     SpreadsheetApp.flush();
     const verified = findCortesIdReservation_(ledger, request.opId);

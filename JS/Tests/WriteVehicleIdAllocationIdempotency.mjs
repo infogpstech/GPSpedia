@@ -82,6 +82,12 @@ test("si falla guardar el contador, el ledger conserva el ID para el reintento",
     assert.equal(h.allocate({ opId: "OP-RECOVER", operationHash: HASH_A }).vehicleId, 4);
     assert.equal(h.allocate({ opId: "OP-NEXT", operationHash: HASH_B }).vehicleId, 5);
 });
+test("una reserva persistida evita reutilizar el ID en asignaciones legacy si falla el contador", () => {
+    const h = harness({ failNextSet: true });
+    assert.throws(() => h.allocate({ opId: "OP-COUNTER-FAIL", operationHash: HASH_A }), /counter write failed/);
+    assert.equal(h.allocate({}).vehicleId, 5);
+    assert.equal(h.ledger.rows[1][2], 4);
+});
 test("el contador conserva IDs consumidos por asignaciones legacy", () => {
     const h = harness();
     assert.equal(h.allocate({}).vehicleId, 4);
