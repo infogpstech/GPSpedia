@@ -4004,12 +4004,15 @@ function findTutorialById_(sheet, tutorialId) {
     return matches[0] || null;
 }
 
-function tutorialTitleExists_(sheet, title) {
+function tutorialTitleExists_(sheet, title, excludedRowIndex) {
     const lastRow = sheet ? sheet.getLastRow() : 0;
     if (lastRow < 2) return false;
     const titleKey = normalizeTutorialTitle_(title);
+    const excluded = Number(excludedRowIndex) || 0;
     const titles = sheet.getRange(2, 2, lastRow - 1, 1).getValues();
-    return titles.some(row => normalizeTutorialTitle_(row[0]) === titleKey);
+    return titles.some((row, index) =>
+        index + 2 !== excluded && normalizeTutorialTitle_(row[0]) === titleKey
+    );
 }
 
 function tutorialRowMatchesSubmission_(row, fields) {
@@ -4885,9 +4888,7 @@ function handleUpdateTutorialItem(payload) {
             }
         }
         if (updates.tema !== undefined) {
-            const rows = sheet.getDataRange().getValues().slice(1);
-            const duplicate = rows.some((row, index) => index + 2 !== target.rowIndex &&
-                normalizeTutorialTitle_(row[1]) === titleKey);
+            const duplicate = tutorialTitleExists_(sheet, updates.tema, target.rowIndex);
             if (duplicate) throw new Error("Ya existe otro tutorial con ese tema; no se modificó el registro.");
         }
 
