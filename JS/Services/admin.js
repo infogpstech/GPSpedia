@@ -7783,15 +7783,23 @@ function handleUploadAdminImage(payload, logMessage, modalContext) {
         if (!fieldEvent || fieldEvent.status !== "success" || !fieldEvent.eventId) {
             throw new Error("AportesVehiculo no confirmó la nueva versión de imagen.");
         }
-        if (originalUrl) {
+        const projectedCurrentImageUrl = fieldEvent.currentValue !== undefined
+            ? String(fieldEvent.currentValue || "").trim() : expectedImageUrl;
+        let historyWarning = "";
+        if (fieldEvent.candidateReviewPending !== true && originalUrl && projectedCurrentImageUrl &&
+            projectedCurrentImageUrl !== originalUrl) {
             const vehicleName = String(rowValues[COLS_CORTES.marca - 1] || "") + " " +
                 String(rowValues[COLS_CORTES.modelo - 1] || "") + " (" +
                 String(rowValues[COLS_CORTES.anoDesde - 1] || "") + ")";
-            recordReplacedImage({
-                tipoContenido: "vehiculo", registroId: cleanVehicleId, campo: fieldName,
-                imagenAnteriorUrl: originalUrl, sustituidaPorUrl: url,
-                nombreVehiculo: vehicleName, operationId: operationId
-            });
+            try {
+                recordReplacedImage({
+                    tipoContenido: "vehiculo", registroId: cleanVehicleId, campo: fieldName,
+                    imagenAnteriorUrl: originalUrl, sustituidaPorUrl: projectedCurrentImageUrl,
+                    nombreVehiculo: vehicleName, operationId: operationId
+                });
+            } catch (historyError) {
+                historyWarning = "No se pudo completar el historial de reemplazo: " + String(historyError && historyError.message || historyError);
+            }
         }
 
         const references = [{
@@ -7814,9 +7822,16 @@ function handleUploadAdminImage(payload, logMessage, modalContext) {
         if (String(file.getDescription() || "") !== linkedDescription) throw new Error("Drive no confirmó la metadata final de la imagen.");
         logMessage("Edición In-Modal", "Imagen " + operationId + " registrada en AportesVehiculo e ImageUploadEvents.");
         return {
-            status: "success", imageUrl: url, currentImageUrl: url, eventId: fieldEvent.eventId,
-            currentSourceEventId: fieldEvent.eventId, duplicate: fieldEvent.duplicate === true,
-            message: "La imagen quedó registrada mediante eventos append-only."
+            status: "success", imageUrl: url, currentImageUrl: projectedCurrentImageUrl,
+            eventId: fieldEvent.eventId, currentSourceEventId: String(fieldEvent.currentSourceEventId || ""),
+            duplicate: fieldEvent.duplicate === true,
+            candidateReviewPending: fieldEvent.candidateReviewPending === true,
+            candidateReason: fieldEvent.candidateReason || "",
+            projectionVerification: fieldEvent.projectionVerification || "",
+            historyWarning,
+            message: fieldEvent.candidateReviewPending === true
+                ? "La imagen quedó registrada como candidata; CATALOG conserva la imagen anterior."
+                : fieldEvent.message || "La imagen quedó registrada mediante eventos append-only."
         };
     } catch (error) {
         if (metadata && fileId) {
