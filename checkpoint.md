@@ -439,3 +439,13 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Commits de código/fixtures/pruebas: `732e39c7cf43d3caf69f6980318490950d8c8615`, `8252679db5c808880df6305ea36c5ffc0cff57c1`, `ecd68028b87065e6701c5e11b1b7a9038f5b35c1`, `07900e46bf1a0c17a2dab91532d80702176ec834`, `eb227d843153ccc248ab6eb9c6f51faf7c1536e3`, `082611b936865486c3f28edfe650877c9c86d3e0`.
 - Siguiente inspección P1: publicaciones de catálogo FEEDBACK (Cortes/PyS/Tutorial) que actualmente construyen snapshots y hacen UrlFetch al Coordinator mientras mantienen el ScriptLock. No retirar ese lock sin sustituir la protección contra snapshots fuera de orden.
 - Sin despliegues Apps Script ni modificaciones de ScriptProperties/hojas/Drive productivos.
+
+
+## P1 — publicaciones incrementales FEEDBACK fuera del ScriptLock (2026-11-20)
+- Se unificaron los publicadores de catálogo FEEDBACK para Cortes, PyS y Tutorial en `publishFeedbackCatalogChange_`. Bajo ScriptLock se lee el snapshot y se reserva una versión de origen monotónica en `GPSpedia_FEEDBACK_CATALOG_SOURCE_VERSION_V1`; el lock se libera antes de llamar a Coordinator por HTTP.
+- Si no se adquiere el lock o falla la lectura/versión, se publica un evento `reset` fuera del lock. No se publica un snapshot sin verificar.
+- Coordinator acepta `sourceVersion` para FEEDBACK en colecciones Cortes/PyS/Tutorial, guarda la última versión y convierte versiones atrasadas en reset. Las publicaciones legacy FEEDBACK sin versión también se convierten en reset para impedir que un deployment antiguo sobrescriba snapshots nuevos. WRITE conserva su propiedad y contrato de versión existentes.
+- Pruebas: `CatalogChangeFeed` 33/33 PASS (incluye llegada fuera de orden, legacy sin versión y colecciones permitidas); `FeedbackCatalogPublicationIsolation` 5/5 PASS (builder bajo lock, publicación fuera, versiones, lock ocupado y fallos); regresión CI `44644542379` SUCCESS: 194 suites, 2,536 pruebas aprobadas, 0 fallos; health read-only `44644541751` SUCCESS.
+- Commits: FEEDBACK `177e3f74649867cf8c19eda589a3442b7f08e7ae`; Coordinator `f110811b62a9dd6ff2c2843412ea6e3ed1d97dc3`; contratos `e4d62b4ad29bde7ea763f1e9eb914fd87d470c90`; prueba `9772d133ef650bc3ebe936cf77f47c258c5f0e99`; runner `b7b9114af82e403482bae7315b9ee9b734ca3f67`; aislamiento final `440dd5db41a34378d021a69277e1299ac9e0a776`.
+- El cambio de protocolo es aditivo; Coordinator debe desplegarse antes que FEEDBACK en Beta. No se desplegó Apps Script ni se modificaron propiedades remotas, hojas, Drive o datos productivos.
+- Siguiente paso P1: continuar inventario de operaciones WRITE/FEEDBACK que conservan ScriptLock durante Drive/HTTP; mantener fuera del lock cualquier publicación/consulta que pueda aislarse con versión y revalidación segura.
