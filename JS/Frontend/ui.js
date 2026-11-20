@@ -187,6 +187,7 @@ let originalItemBackup = null;
 let originalItemBackupOwnerId = null;
 let originalItemBackupVehicleId = null;
 let editedItemBuffer = null;
+let adminModalFieldVersions = new Map();
 let dropdownOptions = null;
 let dropdownOptionsPromise = null;
 const ADMIN_IMAGE_UPLOAD_FIELDS = [
@@ -363,20 +364,33 @@ function clearInMemoryEditBackup_() {
     originalItemBackupOwnerId = null;
     originalItemBackupVehicleId = null;
     editedItemBuffer = null;
+    adminModalFieldVersions = new Map();
 }
 
 async function saveFieldSilently(vehicleId, fieldName, value, expectedCurrentValue) {
     showSavingIndicator("saving", "Guardando...");
     try {
+        const cleanVehicleId=String(vehicleId),versionKey=cleanVehicleId+"::"+fieldName;
+        const cachedVersion=adminModalFieldVersions.get(versionKey);
+        const backupMatches=originalItemBackup&&String(originalItemBackup.id)===cleanVehicleId;
+        const expectedValue=cachedVersion?cachedVersion.value:
+            (expectedCurrentValue!==undefined?expectedCurrentValue:(backupMatches?originalItemBackup[fieldName]:undefined));
+        const expectedSourceEventId=cachedVersion?String(cachedVersion.eventId||""):
+            String(backupMatches&&originalItemBackup.contributionSources&&originalItemBackup.contributionSources[fieldName]&&
+                originalItemBackup.contributionSources[fieldName].eventId||"");
+        if(expectedValue===undefined)throw new Error("No se pudo determinar la versión actual del campo; actualiza la ficha antes de editar.");
         const result = await routeAction("updateVehicleField", {
-            vehicleId, fieldName, value, enforceExpectedCurrentValue: true, expectedCurrentValue,
+            vehicleId:cleanVehicleId,fieldName,value,enforceExpectedCurrentValue:true,
+            expectedCurrentValue:expectedValue,expectedSourceEventId,
             ...getDeveloperSessionPayload()
         });
         if (!result || result.status !== "success") {
-            throw new Error(result && result.message || "El servicio no confirmó la restauración del campo.");
+            throw new Error(result && result.message || "El servicio no confirmó la versión del campo.");
         }
-        if (result.folderSyncWarning) showSavingIndicator("warning", "Guardado; revisa la organización de la imagen principal");
-        else showSavingIndicator("success", "Guardado correctamente");
+        adminModalFieldVersions.set(versionKey,{value:result.value!==undefined?result.value:value,eventId:String(result.eventId||expectedSourceEventId)});
+        if(editedItemBuffer&&String(editedItemBuffer.id)===cleanVehicleId)editedItemBuffer[fieldName]=result.value!==undefined?result.value:value;
+        if (result.folderSyncWarning) showSavingIndicator("warning", "Versión guardada; la organización de la carpeta requiere revisión");
+        else showSavingIndicator("success", "Versión registrada correctamente");
         return true;
     } catch (error) {
         console.error("Error guardando silenciosamente el campo " + fieldName + ":", error);
@@ -2409,6 +2423,11 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
                 originalItemBackupOwnerId = editSession.userId;
                 originalItemBackupVehicleId = cleanVehicleId;
                 editedItemBuffer = { ...activeItem };
+                adminModalFieldVersions = new Map();
+                Object.keys(activeItem).forEach(fieldName=>{
+                    const source=activeItem.contributionSources&&activeItem.contributionSources[fieldName];
+                    adminModalFieldVersions.set(cleanVehicleId+"::"+fieldName,{value:activeItem[fieldName],eventId:String(source&&source.eventId||"")});
+                });
                 inEditMode = true;
                 window.inEditMode = true;
 
@@ -7753,7 +7772,12 @@ ${elapsedSec}s
                     const button=document.createElement("button");button.type="button";button.className="btn "+style;button.textContent=label;
                     button.addEventListener("click",async()=>{
                         if(!isAdminPanelCurrent_())return;let correctedPayload;
-                        if(decision==="correct"){try{correctedPayload=JSON.parse(editor.value);if(!correctedPayload||typeof correctedPayload!=="object"||Array.isArray(correctedPayload))throw new Error("La corrección debe ser un objeto JSON.");}catch(error){contributionStatus.textContent="JSON no válido: "+error.message;return;}}
+                        if(decision==="correct"){try{correctedPayload=JSON.parse(editor.value);if(!correctedPayload||typeof correctedPayload!=="object"||Array.isArray(correctedPayload))throw new Error("La corrección debe ser un objeto JSON.");
+                            if(candidate.kind==="vehicle_update"&&candidate.reason==="field_conflict"){
+                                if(Object.prototype.hasOwnProperty.call(correctedPayload,"currentValue"))correctedPayload.expectedCurrentValue=correctedPayload.currentValue;
+                                if(Object.prototype.hasOwnProperty.call(correctedPayload,"currentSourceEventId"))correctedPayload.currentSourceEventId=correctedPayload.currentSourceEventId;
+                            }
+                        }catch(error){contributionStatus.textContent="JSON no válido: "+error.message;return;}}
                         if(!await requestDeveloperConsoleConfirmation_("¿Confirmas "+label.toLowerCase()+" para "+candidate.eventId+"? Se añadirá un evento nuevo; el original se conservará."))return;
                         button.disabled=true;
                         try{const requestId=typeof crypto!=="undefined"&&typeof crypto.randomUUID==="function"?crypto.randomUUID().replace(/-/g,""):"req"+Date.now().toString(36)+Math.random().toString(36).slice(2);
@@ -7763,7 +7787,8 @@ ${elapsedSec}s
                         }catch(error){contributionStatus.textContent="No se pudo resolver "+candidate.eventId+": "+error.message;button.disabled=false;}
                     });actions.appendChild(button);
                 };
-                addAction("Aceptar","accept","btn-primary");addAction("Guardar corrección","correct","btn-secondary");addAction("Descartar","discard","btn-warning");
+                if(!(candidate.kind==="vehicle_update"&&candidate.reason==="field_conflict"))addAction("Aceptar","accept","btn-primary");
+                addAction("Guardar corrección","correct","btn-secondary");addAction("Descartar","discard","btn-warning");
                 card.append(title,meta,editor,actions);contributionContainer.appendChild(card);
             });
         }catch(error){if(isAdminPanelCurrent_())contributionStatus.textContent="Error consultando candidatos: "+error.message;}
