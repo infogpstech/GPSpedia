@@ -3169,6 +3169,9 @@ function handleAddProblem(source) {
     try {
         acquireFeedbackScriptLock_(lock);
         lockAcquired = true;
+        const releaseLockForPostWork = () => {
+            if (lockAcquired) { lock.releaseLock(); lockAcquired = false; }
+        };
         sheet = getPysSheet_(true);
         validatePysRecords_(sheet);
         opsSheet = getPysOperationsSheet_();
@@ -3191,19 +3194,34 @@ function handleAddProblem(source) {
                     op = writePysOperation_(opsSheet, op.rowNumber,
                         Object.assign({}, op, { status: "LINKED", imageUrl: storedUrl, updatedAt: new Date().toISOString() }));
                 }
-                if (preparedFile) { try { preparedFile.setTrashed(true); } catch (cleanupError) {} }
+                if (preparedFile) {
+                    const duplicateFile = preparedFile;
+                    preparedFile = null;
+                    releaseLockForPostWork();
+                    try { duplicateFile.setTrashed(true); } catch (cleanupError) {}
+                } else releaseLockForPostWork();
                 file = null;
                 return { status: "success", message: "Problema registrado correctamente.", problemId, recovered: true };
             }
             if (op.status === "LINKED") {
-                if (preparedFile) { try { preparedFile.setTrashed(true); } catch (cleanupError) {} }
+                if (preparedFile) {
+                    const duplicateFile = preparedFile;
+                    preparedFile = null;
+                    releaseLockForPostWork();
+                    try { duplicateFile.setTrashed(true); } catch (cleanupError) {}
+                } else releaseLockForPostWork();
                 file = null;
                 throw new Error("La operación PyS figura vinculada, pero no existe su registro; requiere revisión.");
             }
 
             if (op.imageFileId) {
                 if (op.status !== "UPLOAD_PENDING") {
-                    if (preparedFile) { try { preparedFile.setTrashed(true); } catch (cleanupError) {} }
+                    if (preparedFile) {
+                        const duplicateFile = preparedFile;
+                        preparedFile = null;
+                        releaseLockForPostWork();
+                        try { duplicateFile.setTrashed(true); } catch (cleanupError) {}
+                    } else releaseLockForPostWork();
                     file = null;
                     throw new Error("La operación PyS contiene una referencia de imagen inesperada; requiere revisión.");
                 }
@@ -3217,17 +3235,27 @@ function handleAddProblem(source) {
                     String(preflightOp.imageFileId) === String(op.imageFileId) &&
                     String(preflightOp.imageUrl) === String(op.imageUrl);
                 if (!preflightMatchesPending) {
-                    if (preparedFile) { try { preparedFile.setTrashed(true); } catch (cleanupError) {} }
+                    if (preparedFile) {
+                        const duplicateFile = preparedFile;
+                        preparedFile = null;
+                        releaseLockForPostWork();
+                        try { duplicateFile.setTrashed(true); } catch (cleanupError) {}
+                    } else releaseLockForPostWork();
                     file = null;
                     throw new Error("La reserva de imagen PyS cambió después de la validación previa; reintenta para verificar el archivo pendiente actual.");
                 }
                 if (pendingVerificationError) {
-                    if (preparedFile) { try { preparedFile.setTrashed(true); } catch (cleanupError) {} }
-                    file = null;
                     try {
                         writePysOperation_(opsSheet, op.rowNumber,
                             Object.assign({}, op, { status: "RECOVERY_REQUIRED", updatedAt: new Date().toISOString() }));
                     } catch (ledgerError) {}
+                    if (preparedFile) {
+                        const duplicateFile = preparedFile;
+                        preparedFile = null;
+                        releaseLockForPostWork();
+                        try { duplicateFile.setTrashed(true); } catch (cleanupError) {}
+                    }
+                    file = null;
                     throw pendingVerificationError;
                 }
                 if (!preverifiedPendingFile) {
@@ -3237,7 +3265,10 @@ function handleAddProblem(source) {
                 if (preparedFile) { try { preparedFile.setTrashed(true); } catch (cleanupError) {} }
             } else {
                 if (op.status !== "PENDING") {
-                    try { preparedFile.setTrashed(true); } catch (cleanupError) {}
+                    const duplicateFile = preparedFile;
+                    preparedFile = null;
+                    releaseLockForPostWork();
+                    try { duplicateFile.setTrashed(true); } catch (cleanupError) {}
                     file = null;
                     throw new Error("El estado de la operación PyS no permite reintentar automáticamente.");
                 }
@@ -3269,6 +3300,7 @@ function handleAddProblem(source) {
         }
         op = writePysOperation_(opsSheet, op.rowNumber,
             Object.assign({}, op, { status: "LINKED", imageFileId: fileId, imageUrl: url, updatedAt: new Date().toISOString() }));
+        releaseLockForPostWork();
         try {
             file.setDescription(["GPSpedia PyS — LINKED", "problemId=" + problemId, "fileId=" + fileId,
                 "mimeType=" + image.mimeType, "sizeBytes=" + image.sizeBytes].join("\n"));
@@ -3284,12 +3316,13 @@ function handleAddProblem(source) {
             try {
                 refs = findPysImageReferences_(sheet, fileId, url);
             } catch (readError) {
-                markPysImageForRecovery_(file, problemId, fileId,
-                    "No se pudo comprobar la hoja PyS después del fallo: " + String(readError && readError.message || readError));
                 try {
                     writePysOperation_(opsSheet, op.rowNumber,
                         Object.assign({}, op, { status: "RECOVERY_REQUIRED", imageFileId: fileId, imageUrl: url, updatedAt: new Date().toISOString() }));
                 } catch (ledgerError) {}
+                releaseLockForPostWork();
+                markPysImageForRecovery_(file, problemId, fileId,
+                    "No se pudo comprobar la hoja PyS después del fallo: " + String(readError && readError.message || readError));
                 throw new Error("No se pudo verificar si la imagen quedó vinculada; se conserva para recuperación manual. Detalle: " +
                     String(error && error.message || error));
             }
@@ -3298,23 +3331,26 @@ function handleAddProblem(source) {
                 try {
                     writePysOperation_(opsSheet, op.rowNumber,
                         Object.assign({}, op, { status: "LINKED", imageFileId: fileId, imageUrl: url, updatedAt: new Date().toISOString() }));
+                    releaseLockForPostWork();
                     try {
                         file.setDescription(["GPSpedia PyS — LINKED", "problemId=" + problemId, "fileId=" + fileId,
                             "mimeType=" + image.mimeType, "sizeBytes=" + image.sizeBytes, "recoveredAfterPartialFailure=true"].join("\n"));
                     } catch (metadataError) {}
                     return { status: "success", message: "Problema registrado y verificado tras una respuesta parcial.", problemId, recovered: true };
                 } catch (ledgerError) {
+                    releaseLockForPostWork();
                     markPysImageForRecovery_(file, problemId, fileId, "La fila quedó vinculada, pero no se confirmó el ledger.");
                     throw new Error("La fila PyS quedó vinculada, pero su operación requiere reconciliación; no se eliminó la imagen.");
                 }
             }
             if (refs.length > 0 || own.length > 0) {
-                markPysImageForRecovery_(file, problemId, fileId,
-                    "La imagen o el ID aparecen asociados a una fila distinta o ambigua; no se eliminó.");
                 try {
                     writePysOperation_(opsSheet, op.rowNumber,
                         Object.assign({}, op, { status: "RECOVERY_REQUIRED", imageFileId: fileId, imageUrl: url, updatedAt: new Date().toISOString() }));
                 } catch (ledgerError) {}
+                releaseLockForPostWork();
+                markPysImageForRecovery_(file, problemId, fileId,
+                    "La imagen o el ID aparecen asociados a una fila distinta o ambigua; no se eliminó.");
                 throw new Error("La imagen está referenciada por un registro PyS distinto o ambiguo; se conservó para evitar pérdida de datos.");
             }
             try {
@@ -3335,6 +3371,7 @@ function handleAddProblem(source) {
                 throw new Error("La imagen se creó, pero no pudo vincularse ni compensarse; quedó marcada para recuperación manual.");
             }
         } else if (file) {
+            releaseLockForPostWork();
             try { file.setTrashed(true); } catch (cleanupError) {}
         }
         throw error;
