@@ -5,7 +5,7 @@ Fecha: 2026-11-20
 ## Repositorio y ramas
 - Repositorio: infogpstech/GPSpedia
 - Rama autorizada: GPSpedia2.2.5_work
-- HEAD de código verificado antes de este checkpoint: a683cb78462807d42fb4502e82e12e3525de7f05 (último commit de implementación/pruebas de esta tarea).
+- HEAD de trabajo verificado antes de esta actualización documental: 239a2919fceebf5dbc269627d3569fb11af228e1 (incluye el último commit documental; el último cambio de código de la tarea es a683cb78462807d42fb4502e82e12e3525de7f05).
 - Rama base protegida GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificar).
 - No hay checkout local disponible. Los archivos se actualizaron secuencialmente mediante la API de contenidos de GitHub, con lectura del blob vigente antes de cada escritura; esta API no expone una condición CAS para el HEAD de la rama. No se usó force ni se modificó la rama base.
 
@@ -738,3 +738,12 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - **Estado:** CAMBIO IMPLEMENTADO Y REGISTRADO; VALIDACIÓN PENDIENTE. `GP-PERF-ADMIN-CUT-LOCK-01` sigue EN PROGRESO y no se marca completada.
 - **Siguiente tarea:** ejecutar `AdminLegacyOpIdSnapshotReuse.mjs` y la regresión completa `RunServiceTests.mjs` en un checkout sincronizado; corregir cualquier fallo. Después continuar el análisis del siguiente grupo de lecturas, sin tocar reservas, detección de conflictos, revalidación ni escrituras atómicas.
 - Sin deployment Apps Script ni cambios en hojas/Drive productivos.
+
+
+## Continuidad — validación focalizada de recuperación legacy ADMIN (2026-11-20)
+- HEAD de trabajo verificado antes de esta actualización documental: `239a2919fceebf5dbc269627d3569fb11af228e1`; rama base verificada: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- Se confirmó que `AdminLegacyOpIdSnapshotReuse.mjs` está registrado en `RunServiceTests.mjs` y que el código de `findRowByOpId` reutiliza `data` para validar unicidad y recuperar la fila, sin la llamada previa a `getLastRow()` ni una segunda lectura del ID/fila en la ruta legacy.
+- Prueba focalizada aislada: 10/10 PASS en Node v22.16.0, usando el helper y el handler extraídos de la fuente vigente. `node --check` PASS sobre el harness aislado y el archivo de prueba.
+- Limitación de entorno: no hay checkout local completo; por tanto, `RunServiceTests.mjs` integral no se pudo ejecutar localmente. El harness aislado no se presenta como ejecución del runner oficial.
+- GitHub Actions no reporta todavía checks ni ejecuciones asociados al HEAD verificado. La regresión integral se solicitará mediante el commit documental de esta actualización; mantener abierta la tarea hasta comprobar el resultado real.
+- Estado: EN PROGRESO — prueba focalizada aislada aprobada; regresión integral/CI pendiente. No se desplegó Apps Script ni se modificaron hojas/Drive productivos.
