@@ -876,3 +876,11 @@ Estado: CORREGIDO LOCALMENTE. El ScriptLock global FEEDBACK sigue pendiente de r
 - Pruebas FeedbackContactWriteNoGlobalLock 2/2 y FeedbackLockFastFail PASS. CI 44835219987 SUCCESS: 239 suites, 2965 pruebas aprobadas, 0 fallos; health read-only SUCCESS. No se desplegó FEEDBACK ni se tocaron datos productivos.
 Estado: CORREGIDO LOCALMENTE. Continúa pendiente reducir el lock global en reportProblem, suggestCutChange, recordLike, PyS, tutoriales y otras mutaciones.
 ================================================================================
+
+
+================================================================================
+2026-11-20 — REFUERZO DE VALIDACIÓN: SNAPSHOT DE AÑOS Y LEDGER COMPLETO
+- getFeedbackProjectedVehicleYearSnapshot_ ahora valida el esquema y cada fila de AportesVehiculo antes de reconstruir el rango: eventId/opId/vehicleId, SHA-256, tipo, fecha, estado, JSON y contrato actor/opId para vehicle_update. No interpreta como rango vigente un ledger malformado.
+- Detecta opId conflictivos globalmente (incluyendo colisiones entre vehículos) y no aplica sus eventos. Se añadieron pruebas de ledger malformado y conflicto de opId.
+- FeedbackYearApplicationAppendOnly 5/5; SuggestYearVoteThreshold 7/7. CI 44835550127 SUCCESS: 239 suites, 2966 pruebas, 0 fallos; health read-only SUCCESS. No despliegue ni cambios productivos.
+================================================================================
