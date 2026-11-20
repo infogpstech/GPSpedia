@@ -44,4 +44,4 @@ const handler = source.slice(handlerStart, handlerEnd);
 assert.ok(handler.includes("findNextAvailableCutSlot_(rowValues, vehicleId, idempotencyEntriesSnapshot)"),
     "handleAddOrUpdateCut debe pasar el snapshot de ledger ya leído bajo lock");
 
-console.log("AdminCutSlotReservation: 7/7 PASS — slots pending reservados por vehículo y snapshot de ledger reutilizado");
+console.log("AdminCutSlotReservation: 8/8 PASS — slots pending reservados por vehículo y snapshot de ledger reutilizado");
