@@ -6,7 +6,7 @@ const start = source.indexOf("function handleUpdateTutorialItem(");
 assert.ok(start >= 0, "No se encontró handleUpdateTutorialItem");
 const code = source.slice(start);
 const fields = ["tut-1", "Tema", "", "Identificar", "Ubicación", "Detalle", "", "Ana"];
-function makeHarness({ row = fields.slice(), lockAllowed = true, feedbackSheet = null } = {}) {
+function makeHarness({ row = fields.slice(), lockAllowed = true, feedbackSheet = null, beforeLockedRead = null } = {}) {
     let lockCalls = 0, releaseCalls = 0, reads = 0, writes = 0;
     const sheet = {
         getLastRow: () => 2,
@@ -26,6 +26,7 @@ function makeHarness({ row = fields.slice(), lockAllowed = true, feedbackSheet =
         hasLock() { return true; },
         releaseLock() { releaseCalls++; }
     };
+    let rowLookups = 0;
     const fn = new Function(
         "getTutorialSheet_", "findTutorialRow_", "normalizeTutorialField_", "LockService",
         "acquireFeedbackScriptLock_", "getSafeSheet", "findPendingVideoApprovalForTarget_", "normalizeTutorialTitle_",
@@ -36,6 +37,8 @@ function makeHarness({ row = fields.slice(), lockAllowed = true, feedbackSheet =
         (targetSheet, reference) => {
             assert.equal(targetSheet, sheet);
             assert.equal(reference, "tut-1");
+            rowLookups++;
+            if (rowLookups === 2 && typeof beforeLockedRead === "function") beforeLockedRead(row);
             return { rowIndex: 2, row };
         },
         value => String(value == null ? "" : value).trim(),
@@ -67,6 +70,17 @@ test("una actualización real sigue adquiriendo lock y revalidando dentro", () =
     assert.equal(result.updated.detalles, "Detalle nuevo");
     assert.equal(h.stats().lockCalls, 1);
     assert.equal(h.stats().releaseCalls, 1);
+    assert.equal(h.stats().writes, 1);
+});
+test("una mutación real vuelve a leer bajo lock y conserva cambios concurrentes en otros campos", () => {
+    const h = makeHarness({
+        beforeLockedRead(row) { row[3] = "Cambio concurrente conservado"; }
+    });
+    const result = h.fn({ tutorialId: "tut-1", detalles: "Detalle actualizado" });
+    assert.equal(result.status, "success");
+    assert.equal(result.updated.detalles, "Detalle actualizado");
+    assert.equal(h.row[3], "Cambio concurrente conservado");
+    assert.equal(h.stats().lockCalls, 1);
     assert.equal(h.stats().writes, 1);
 });
 test("un tema idéntico no consulta aprobaciones de vídeo ni duplica título", () => {
