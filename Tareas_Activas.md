@@ -1482,3 +1482,18 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [ ] Verificar recuperación ADMIN después de cada escenario y que los eventos conflictivos quedan requires_review sin elegir archivo ni borrar huérfanos.
 - [ ] Retirar las rutas/funciones legacy del ledger y waitLock(5000) solo después de comprobar que no quedan consumidores productivos; mantener lectura histórica.
 - Estado P0: EN PROGRESO. La ruta principal WRITE ya no depende del lock del ledger; quedan pruebas Beta/integración y limpieza de compatibilidad legacy. No se desplegó Apps Script.
+
+### 2026-11-20 — P0: ampliar proyección de cortes append-only a VIN y metadatos
+
+- [x] Extender CATALOG para proyectar los campos vehicleData incluidos en un evento de corte, completando únicamente los metadatos vacíos y preservando los valores existentes.
+- [x] Proyectar vinPrefix al vehículo correcto como colección JSON, respetando el límite de VIN según versiones de equipamiento (máximo 3).
+- [x] Detectar colisiones de VIN entre vehículos, tanto contra VIN ya materializados como entre eventos concurrentes aún no materializados; los aportes conflictivos quedan como vin_conflict y no se aplican.
+- [x] Conservar el corte cuando el VIN excede la capacidad del vehículo y exponer el VIN como candidato vin_capacity_full.
+- [x] Ampliar VehicleContributionProjection.mjs: metadatos, VIN, colisión entre eventos de distintos vehículos, colisión contra VIN existente y capacidad.
+- [x] CI HEAD 755544eadfb4dc3c0b1205199c2207f4f8aba472: 232 suites, 2,862 pruebas, 0 fallos; health read-only SUCCESS; Pages SUCCESS.
+- [ ] Confirmar la nueva prueba de intercalado de dos aportes con el mismo VIN desde vehículos distintos (commit posterior al HEAD anterior).
+- [ ] Probar el append concurrente y las colisiones contra Google Sheets real/Beta; el harness local simula el punto de append, no sustituye esa validación.
+- [ ] Completar la idempotencia durable de addSupplementaryInfo y la reconciliación UI de la primera respuesta si el mismo opId conflictúa después de responder.
+- [ ] Implementar revisión/edición ADMIN de candidatos y eventos de sustitución auditables para cambios in-modal; revisar capacidad llena y archivos de imagen no materializados.
+- [ ] Revisar todos los consumidores legacy de ImageUploadLedger/waitLock(5000) antes de retirar compatibilidad; mantener el ledger histórico.
+- Estado P0: EN PROGRESO. No desplegar Apps Script ni modificar hojas/archivos productivos hasta completar integración Beta y la matriz de aceptación.

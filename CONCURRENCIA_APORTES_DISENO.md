@@ -154,3 +154,13 @@ La proyección ahora respeta el orden de las transiciones para un mismo archivo.
 Pruebas: ImageUploadEventJournal 9/9; AdminImageUploadEventReconciliation 6/6; WriteDriveOutsideLock 1/1; CI 44811988868 SUCCESS: 232 suites, 2,858 pruebas, 0 fallos; health read-only SUCCESS.
 
 Siguiente paso: Beta/integración controlada en Drive/Sheets para validar carreras reales, operación distinta por vehículo, reintentos y fallos parciales; luego revisar consumidores legacy antes de retirar waitLock(5000).
+
+## Avance — VIN y metadatos en la proyección de cortes (2026-11-20)
+
+La ruta append-only de cortes existentes ya admite vinPrefix y vehicleData en el evento. CATALOG ahora aplica los metadatos faltantes sin sobrescribir campos existentes y agrega el prefijo VIN al registro del vehículo respetando el número de versiones y el máximo de tres VIN.
+
+La validación previa de VIN por lectura no es una exclusión mutua: dos solicitudes de vehículos distintos pueden leer ausencia y anexar simultáneamente el mismo prefijo. Para cubrir esa carrera, la proyección reúne propietarios desde VIN materializados y eventos append-only. Cuando un prefijo queda asociado a más de un vehículo, los eventos nuevos conflictivos se exponen como candidatos vin_conflict y no se proyectan. Si el vehículo no tiene capacidad para otro VIN, el corte se conserva y el VIN se expone como vin_capacity_full.
+
+Pruebas agregadas en VehicleContributionProjection.mjs: metadatos faltantes, VIN agregado al vehículo correcto, colisión entre eventos de vehículos distintos, colisión contra VIN preexistente y límite de versiones. CI 44813372422: 232 suites, 2,862 pruebas, cero fallos; health y Pages SUCCESS. Se agregó después un intercalado de append para dos vehículos con el mismo VIN; pendiente confirmar su CI.
+
+P0 sigue abierta: la prueba local no sustituye la integración con Google Sheets real; falta idempotencia durable de apertura/alimentación en todo punto de entrada, reconciliación visual del conflicto tardío del mismo opId, candidatos/edición ADMIN auditables, recuperación de errores parciales Drive/Sheets y revisión final de consumidores legacy de ImageUploadLedger. No desplegar Apps Script todavía.

@@ -1084,3 +1084,14 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Compatibilidad pendiente: el camino legacy de uploadImageToDrive sin shortLedgerLock y algunas rutas ADMIN siguen usando ImageUploadLedger/locks. No borrar datos históricos.
 - No se desplegó Apps Script ni se modificaron Spreadsheet/Drive productivos.
 - P0 sigue EN PROGRESO. Siguiente paso exacto: ejecutar pruebas Beta/integración reales de cargas concurrentes, diferentes vehículos, reintentos, respuesta perdida y fallos parciales; verificar reconciliación ADMIN; después identificar y retirar los consumidores legacy de waitLock(5000).
+
+## Checkpoint — proyección de VIN y metadatos en aportes append-only (2026-11-20)
+
+- Rama: GPSpedia2.2.5_work. HEAD de referencia de regresión: 755544eadfb4dc3c0b1205199c2207f4f8aba472; base protegida verificada sin cambios: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- JS/Services/catalog.js: la proyección de eventos cut ahora completa metadatos vacíos desde payload.vehicleData, sin reemplazar datos ya existentes. También incorpora payload.vinPrefix al VIN del vehículo, respetando la capacidad calculada desde versionesAplicables y el máximo de tres.
+- La proyección precomputa propietarios de VIN desde las filas base y desde todos los eventos. Si el mismo prefijo aparece asociado a más de un vehículo, los eventos nuevos afectados se exponen como candidatos vin_conflict y no se aplican; cubre carreras donde ambos requests pasan la validación previa y anexan antes de ver al otro.
+- Si la colección del vehículo ya alcanzó la capacidad, el corte se conserva y el exceso de VIN queda visible como candidato vin_capacity_full, sin descartar el resto del aporte.
+- Pruebas VehicleContributionProjection.mjs: nuevos casos para metadatos, VIN, colisión entre eventos concurrentes de distintos vehículos, colisión contra VIN preexistente y capacidad. CI 44813372422 SUCCESS: 232 suites, 2,862 pruebas, 0 fallos. Health read-only 44813372237 SUCCESS. Pages 44813372184 SUCCESS.
+- Se añadió después un caso específico de intercalado a WriteContributionAppendConcurrency.mjs para dos vehículos con el mismo VIN; su CI aún debe confirmarse.
+- P0 sigue abierta. Próximo paso: confirmar ese CI; revisar/terminar idempotencia durable de apertura/alimentación y manejo UI de conflicto tardío de opId; después probar con Sheets/Drive reales en Beta (carreras, respuesta perdida, fallo parcial y recuperación ADMIN). Revisar consumidores legacy de ImageUploadLedger antes de retirar waitLock.
+- No se desplegó Apps Script ni se modificaron datos productivos.
