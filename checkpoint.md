@@ -1029,3 +1029,14 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Límite de concurrencia: si dos solicitudes con el mismo `opId` y distinto payload llegan simultáneamente, la primera puede haber recibido respuesta antes de que la segunda anexe el conflicto. El catálogo suprime ambos eventos al proyectar el ledger, por lo que no aplica arbitrariamente ninguno; el cliente de la primera solicitud puede necesitar reconciliación visual. No se afirma exclusión mutua ni transacción en Sheets.
 - Pendiente siguiente: migrar `ImageUploadLedger` fuera del `ScriptLock.waitLock(5000)`. Ese lock aún protege búsquedas/escrituras de estado mutable; quitarlo sin journal append-only podría producir carreras de fila y asociación errónea de archivos. También ampliar ruta append-only de corte para VIN y revisar fallback legacy.
 - HEAD de trabajo: `523bbb0a28e1e9b9dc48db483b29019bfb0b0232`; rama base `GPSpedia2.2.5` permanece en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+
+
+## 2026-11-20 — Recuperación de aportes y estado de proyección
+
+- `handleCheckOperation` ahora consulta `AportesVehiculo` cuando no encuentra operación en la hoja heredada Idempotencia. Comprueba consistencia de vehículo/tipo/hash/payload entre filas con el mismo opId, devuelve el evento canónico y la huella, y reporta si el aporte quedó como candidato.
+- El cálculo de candidato para apertura y alimentación reproduce el orden del ledger: primera apertura ocupa el campo único; alimentación ocupa hasta tres slots; aportes excedentes se conservan como candidatos. El cálculo de slot de corte sigue la misma regla para tres cortes.
+- UI de modal de corte, apertura y alimentación ahora comunica si el dato se aplicó o quedó conservado como candidato; la recuperación del formulario add_cortes usa el slot/candidato devuelto por checkOperation.
+- Pruebas nuevas: `WriteContributionRecovery.mjs` (7/7) y ampliación de `WriteContributionAppendConcurrency.mjs` (6/6), incluyendo candidatos de apertura y cuarta alimentación.
+- CI HEAD `4f54e1ca71a21857a3e23e5d7d1a98ff3a77fe51`: **230 suites / 2,843 pruebas / 0 fallos**; health read-only SUCCESS.
+- Se actualizó `CONCURRENCIA_APORTES_DISENO.md` con estado de implementación parcial y límites reales. Sigue pendiente verificar append concurrente en Google Sheets real; el harness simula appendRow indivisible. ImageUploadLedger aún usa ScriptLock.waitLock(5000); no se retirará hasta sustituir su ledger mutable y su reconciliación ADMIN.
+- HEAD de código verificado `4f54e1ca71a21857a3e23e5d7d1a98ff3a77fe51`; rama base intacta `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
