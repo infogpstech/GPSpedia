@@ -109,6 +109,7 @@ runGroup('32','ADMIN',()=>{
   runCli('ADMIN compensa archivos Drive fuera del ScriptLock con reserva idempotente','JS/Tests/AdminImageUploadCompensationIsolation.mjs');
   runCli('ADMIN vincula imágenes de cortes fuera del ScriptLock','JS/Tests/AdminCutImageLinkOutsideLock.mjs');
   runCli('ADMIN registra actividad de movimiento de imágenes después del ScriptLock','JS/Tests/AdminMoveImageActivityOutsideLock.mjs');
+  runCli('ADMIN valida Drive y referencias de movimiento de imagen fuera del ScriptLock','JS/Tests/AdminMoveImageDrivePreflightOutsideLock.mjs');
   runCli('ADMIN limita lectura del catálogo de entidades a sus columnas','JS/Tests/AdminEntityLookupBoundedRead.mjs');
   runCli('ADMIN limita lectura de duplicados VIN a columnas necesarias','JS/Tests/AdminVinDuplicateBoundedRead.mjs');
   runCli('ADMIN localiza vehículo leyendo solo la columna ID','JS/Tests/AdminUniqueVehicleRowBoundedRead.mjs');
