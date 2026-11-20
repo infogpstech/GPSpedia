@@ -5,9 +5,9 @@ const start = source.indexOf("function handleUploadAdminImage(payload, logMessag
 const end = source.indexOf("\n// ============================================================================\n// MICROSERVICIO REGISTRO DE CORTES", start);
 assert.ok(start >= 0 && end > start, "No se encontró handleUploadAdminImage");
 const handler = source.slice(start, end);
-assert.ok(handler.includes("lock.tryLock(0)") && !handler.includes("lock.waitLock(30000)"),
+assert.ok(handler.includes("lock.waitLock(2000)") && !handler.includes("lock.waitLock(30000)"),
     "El reemplazo debe adquirir el lock sin espera prolongada");
-assert.ok(handler.includes("runAdminDriveWorkOutsideScriptLock_(lock, operationId"),
+assert.ok(handler.includes("runAdminContributionDriveWorkOutsideScriptLock_(lock, operationId"),
     "La preparación del archivo debe liberar el ScriptLock durante Drive");
 assert.ok(handler.includes("genFolder.createFile(blob)") && handler.includes("DriveApp.getFileById(storedFileId)"),
     "La creación y recuperación del archivo deben estar dentro del trabajo Drive aislado");
