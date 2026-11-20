@@ -3834,7 +3834,7 @@ function buildCortesImageOrganizerApplyManifest_(preview, approvedFileIds, expec
         const extension = String(item.originalExtension || "");
         const action = String(item.action || "");
         if (!currentName || !currentFolderPath || !targetFolderPath || !targetName ||
-            targetName.includes("/") || targetName.includes("\\\\") ||
+            targetName.includes("/") || targetName.includes("\\") ||
             !/^\.[A-Za-z0-9]{2,8}$/.test(extension) || !targetName.endsWith(extension)) {
             fail("La imagen " + fileId + " no contiene origen, destino o extensión verificables.");
         }
