@@ -561,3 +561,10 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - `AdminDeleteImageActivityOutsideLock` 6/6 PASS; `AdminImageTrashLifecycle` 40/40 PASS. CI `44653097187` SUCCESS: 208 suites, 2,620 pruebas aprobadas, 0 fallos; health read-only `44653097327` SUCCESS.
 - Commits: implementación `e642a3a3216a67cb87b117077401681a8069e197`, prueba `2b35917b20ef63d24e232de7f0257b19858cd94e`, runner `771c9fd295197f22ce57470e8a93d5ea7476ff27`.
 - No se desplegó Apps Script ni se modificaron datos productivos. La llamada `DriveApp.setTrashed` sigue dentro del lock porque la operación todavía no cuenta con estado intermedio y revalidación segura para la compensación.
+
+
+## P1 — ADMIN restauración desde papelera: actividad post-commit fuera del lock (2026-11-20)
+- En `handleRestoreReplacedImageFromTrash`, la restauración Drive y la actualización/verificación del historial conservan su flujo actual bajo ScriptLock; la actividad Coordinator y el mensaje de logging se difieren hasta después de liberar. El replay idempotente de archivo ya restaurado conserva su respuesta sin registrar una restauración nueva.
+- `AdminRestoreImageActivityOutsideLock` 6/6 PASS; `AdminImageTrashLifecycle` 40/40 PASS. CI `44653303076` SUCCESS: 209 suites, 2,626 pruebas aprobadas, 0 fallos; health read-only `44653303269` SUCCESS.
+- Commits: implementación `38794da5e9f2c515a764ff815cf30d30ed46c349`, prueba `284e9ea9869cda4ed144016d4e025e96d065e628`, runner `cf703114955b3ef78e9c82990d8cf162268049af`.
+- No se desplegó Apps Script ni se modificaron datos productivos. La llamada Drive de restauración/rollback sigue bajo lock hasta diseñar estado intermedio y revalidación.
