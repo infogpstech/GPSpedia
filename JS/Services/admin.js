@@ -8779,15 +8779,14 @@ function reconcileImageUploadEventsForAdmin_(referenceMap, legacyTokens, legacyF
                     fileIds.push(fileId);
                     legacyFileIds.add(fileId);
                 }
-                if (confirm && item.state !== projected.state ||
-                    confirm && fileId && fileId !== projected.fileId) {
-                    const journalState = item.state === "linked" ? "linked" :
-                        item.state === "file_missing" ? "file_missing" :
-                        item.state === "requires_review" || item.state === "orphan_candidate" ? "requires_review" : "pending";
+                const journalState = item.state === "linked" ? "linked" :
+                    item.state === "file_missing" ? "file_missing" :
+                    item.state === "requires_review" || item.state === "orphan_candidate" ? "requires_review" : "pending";
+                if (confirm && (journalState !== projected.state || (fileId && fileId !== projected.fileId))) {
                     appendImageUploadEventForAdmin_(sheet, {
                         token, operationKey: expected.operationKey, folderId: expected.folderId,
                         mimeType: expected.mimeType, sizeBytes: expected.sizeBytes,
-                        contentHash: expected.contentHash, fileId: journalState === "requires_review" && item.state === "orphan_candidate" ? fileId : fileId,
+                        contentHash: expected.contentHash, fileId,
                         fileUrl: fileId ? "https://drive.google.com/uc?export=view&id=" + fileId : "",
                         state: journalState, referencesJson: JSON.stringify(references),
                         fileName: String((entries[entries.length - 1].values || [])[11] || "")
