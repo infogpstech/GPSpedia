@@ -1137,4 +1137,15 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - Prueba focalizada aislada: 10/10 PASS en Node v22.16.0, usando el helper y el handler extraídos de la fuente vigente. `node --check` PASS sobre el harness aislado y el archivo de prueba.
 - Limitación de entorno: no hay checkout local completo; por tanto, `RunServiceTests.mjs` integral no se pudo ejecutar localmente. El harness aislado no se presenta como ejecución del runner oficial.
 - GitHub Actions no reporta todavía checks ni ejecuciones asociados al HEAD verificado. La regresión integral se solicitará mediante el commit documental de esta actualización; mantener abierta la tarea hasta comprobar el resultado real.
-- Estado: EN PROGRESO — prueba focalizada aislada aprobada; regresión integral/CI pendiente. No se desplegó Apps Script ni se modificaron hojas/Drive productivos.
+- [x] `AdminLegacyOpIdSnapshotReuse.mjs`: 10/10 PASS en el runner oficial.
+- [x] CI `44763121682` SUCCESS: 220 suites, 2,733 pruebas aprobadas, 0 fallos; comprobación de sintaxis PASS.
+- [x] Health read-only `44763121560` SUCCESS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó Apps Script ni se modificaron hojas/Drive productivos.
+
+
+### GP-PERF-ADMIN-CUT-LOCK-01 — cierre de reutilización legacy por snapshot (2026-11-20)
+- [x] `AdminLegacyOpIdSnapshotReuse.mjs`: 10/10 PASS en el runner oficial.
+- [x] CI `44763121682` SUCCESS: 220 suites, 2,733 pruebas aprobadas, 0 fallos; comprobación de sintaxis PASS.
+- [x] Health read-only `44763121560` SUCCESS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó Apps Script ni se modificaron hojas/Drive productivos.
+- Siguiente subactividad: inspeccionar las lecturas restantes dentro de `handleAddOrUpdateCut`; modificar únicamente redundancias demostrables y conservar integridad/idempotencia.
