@@ -49,6 +49,25 @@ check("Técnicos consultan reportes propios y no reciben acciones administrativa
     assert.ok(ui.includes("if (ownReportsOnly) return item.type === 'problem_report' || item.type === 'video_approval'"));
     assert.match(ui, /inboxCanManageRequests_\(userRole\)/);
 });
+
+check("Los reportes pueden convertirse en aportes de corte o en altas de vehículo mediante los flujos existentes", () => {
+    assert.match(ui, /item\.type === 'problem_report' && inboxCanManageRequests_\(userRole\)/);
+    assert.match(ui, /openAddCutForModelModal\(inboxVehicle, \{/);
+    assert.match(ui, /sourceInboxItemId: item\.id/);
+    assert.match(ui, /prefill: suggestionData && suggestionData\.proposedValues/);
+    assert.match(ui, /Registrar vehículo nuevo desde reporte/);
+    assert.match(ui, /target\.searchParams\.set\('sourceInboxItemId'/);
+    const addCut = ui.slice(ui.indexOf("function openAddCutForModelModal"), ui.indexOf("\nfunction ", ui.indexOf("function openAddCutForModelModal") + 10));
+    assert.match(addCut, /Crear corte desde reporte/);
+    assert.match(addCut, /markAsResolved\(completedSourceInboxItemId/);
+    assert.match(addCut, /candidateReviewPending/);
+    assert.match(addCortes, /sourceInboxItemId = new URLSearchParams\(window\.location\.search\)/);
+    assert.match(addCortes, /routeAction\('markAsResolved'/);
+    assert.match(addCortes, /resolveSourceInboxReport_/);
+    const saveIndex = addCortes.indexOf("if (!result || result.status !== 'success'");
+    const resolveIndex = addCortes.indexOf("resolveSourceInboxReport_(pendingOp.sourceInboxItemId", saveIndex);
+    assert.ok(saveIndex >= 0 && resolveIndex > saveIndex, "El reporte solo se resuelve después de confirmar el aporte.");
+});
 check("Las solicitudes históricas siguen separadas y conservan sus contenedores", () => {
     assert.match(html, /id="inbox-requests-view"/);
     assert.match(html, /id="inbox-list"/);
