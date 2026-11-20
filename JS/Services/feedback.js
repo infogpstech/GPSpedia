@@ -2206,6 +2206,39 @@ function handleReportProblem(payload) {
     if (reportContext) { reportContext.category = ticketCategory; reportContext.subject = ticketSubject; }
     const imageAttachment=validateReportImageAttachment_(payload.imageAttachment);
     if(imageAttachment&&!reportContext) throw new Error("El adjunto requiere un identificador de reporte individual válido.");
+    const feedbackSheet=getSafeSheet(SHEET_NAMES.FEEDBACKS);
+    if(!feedbackSheet) throw new Error("Hoja Feedbacks no encontrada.");
+    // Resolver reintentos ya registrados antes de subir una imagen o adquirir el lock.
+    if(reportContext) {
+        const preflightMetadataColumn=getReportMetadataColumn(feedbackSheet);
+        if(preflightMetadataColumn) {
+            const preflightExisting=findReportByReportId_(feedbackSheet,reportContext.reportId,preflightMetadataColumn);
+            if(preflightExisting) {
+                const sameReport=String(preflightExisting.row[COLS_FEEDBACKS.Usuario-1]||"")===String(userName)&&
+                    String(preflightExisting.row[COLS_FEEDBACKS.ID_vehiculo-1]||"")===String(vehicleId)&&
+                    String(preflightExisting.row[COLS_FEEDBACKS.Problema-1]||"")===normalizedProblemText&&
+                    String(preflightExisting.metadata.vehicleId||"")===String(vehicleId)&&Number(preflightExisting.metadata.corteIndex)===reportContext.corteIndex&&
+                    preflightExisting.metadata.activaTestigoMotor===reportContext.activaTestigoMotor&&
+                    String(preflightExisting.metadata.category || "incidencia_tecnica")===reportContext.category&&
+                    String(preflightExisting.metadata.subject || defaultTicketSubject)===reportContext.subject&&
+                    (!preflightExisting.metadata.userId||String(preflightExisting.metadata.userId)===String(userId));
+                if(!sameReport) throw new Error("El identificador del reporte ya pertenece a un reporte distinto; no se creó otro registro.");
+                const oldImage=normalizeReportImageMetadata_(preflightExisting.metadata);
+                if(imageAttachment && oldImage) {
+                    if(oldImage.imageSha256!==imageAttachment.sha256) throw new Error("El reporte ya tiene una imagen distinta asociada; no se reemplazó.");
+                    return {status:"success",message:"El reporte ya estaba registrado; se devolvió el identificador existente.",
+                        reportId:reportContext.reportId,category:ticketCategory,subject:ticketSubject,
+                        alreadyReported:true,imageAttached:Boolean(oldImage.imageUrl),imageUrl:oldImage.imageUrl};
+                }
+                if(!imageAttachment) {
+                    return {status:"success",message:"El reporte ya estaba registrado; se devolvió el identificador existente.",
+                        reportId:reportContext.reportId,category:ticketCategory,subject:ticketSubject,
+                        alreadyReported:true,imageAttached:Boolean(oldImage&&oldImage.imageUrl),imageUrl:oldImage?oldImage.imageUrl:""};
+                }
+                // Si el reporte aún no tiene imagen, continuar para adjuntarla bajo lock y revalidar.
+            }
+        }
+    }
     const lock=LockService.getScriptLock();
     let lockAcquired=false;
     let generatedReportId="",duplicateReport=false,uploadedImage=null,resolvedImageUrl="";
@@ -2215,7 +2248,7 @@ function handleReportProblem(payload) {
         // La transferencia Drive ocurre antes del bloqueo breve de escritura en Sheets.
         if(imageAttachment) uploadedImage=saveReportImageAttachment_(imageAttachment,reportContext.reportId);
         acquireFeedbackScriptLock_(lock); lockAcquired=true;
-        const sheet=getSafeSheet(SHEET_NAMES.FEEDBACKS); pendingSheet=sheet;
+        const sheet=feedbackSheet; pendingSheet=sheet;
         const metadataColumn=reportContext?ensureReportMetadataColumn(sheet):0; pendingMetadataColumn=metadataColumn;
         if(reportContext) {
             const existing=findReportByReportId_(sheet,reportContext.reportId,metadataColumn);
