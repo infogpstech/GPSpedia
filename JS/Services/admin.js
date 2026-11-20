@@ -3784,9 +3784,10 @@ function inspectCortesOrganizerTargetFolderReadOnly_(rootFolder, targetPath) {
  * Valida y congela las operaciones seleccionadas desde una página del preview.
  * Es una función pura: no consulta ni modifica Drive/Spreadsheet.
  */
-function buildCortesImageOrganizerApplyManifest_(preview, approvedFileIds, expectedDigest) {
+function buildCortesImageOrganizerApplyManifest_(preview, approvedFileIds, expectedDigest, explicitlyConfirmed) {
     const fail = message => { throw new Error(message); };
     const digest = String(expectedDigest || "").trim().toLowerCase();
+    if (explicitlyConfirmed !== true) fail("La aplicación requiere confirmación explícita del Desarrollador.");
     if (!preview || preview.status !== "success" || preview.writePerformed !== false) {
         fail("Se requiere un preview válido de solo lectura.");
     }
@@ -3820,6 +3821,12 @@ function buildCortesImageOrganizerApplyManifest_(preview, approvedFileIds, expec
         if (!item) fail("La imagen " + fileId + " no pertenece a la página del preview aprobado.");
         if (item.status !== "ready") fail("La imagen " + fileId + " no está en estado listo para aplicar.");
         if (Number(item.activeReferenceCount) !== 1) fail("La imagen " + fileId + " no tiene una única referencia activa verificada.");
+        const sheetName = String(item.sheetName || "");
+        const row = Number(item.row);
+        const field = String(item.field || "");
+        if (!Number.isInteger(row) || row < 2 || !["Cortes", "LogosMarca"].includes(sheetName) || !field) {
+            fail("La imagen " + fileId + " no contiene una referencia de hoja, fila y campo válida.");
+        }
         const currentName = String(item.currentName || "");
         const currentFolderPath = String(item.currentFolderPath || "");
         const targetFolderPath = String(item.targetFolderPath || "");
@@ -3827,6 +3834,7 @@ function buildCortesImageOrganizerApplyManifest_(preview, approvedFileIds, expec
         const extension = String(item.originalExtension || "");
         const action = String(item.action || "");
         if (!currentName || !currentFolderPath || !targetFolderPath || !targetName ||
+            targetName.includes("/") || targetName.includes("\\\\") ||
             !/^\.[A-Za-z0-9]{2,8}$/.test(extension) || !targetName.endsWith(extension)) {
             fail("La imagen " + fileId + " no contiene origen, destino o extensión verificables.");
         }
@@ -3846,9 +3854,9 @@ function buildCortesImageOrganizerApplyManifest_(preview, approvedFileIds, expec
             manifestDigest: digest,
             auditId: String(preview.auditId),
             fileId,
-            sheetName: String(item.sheetName || ""),
-            row: Number(item.row),
-            field: String(item.field || ""),
+            sheetName,
+            row,
+            field,
             currentName,
             currentFolderPath,
             targetName,
