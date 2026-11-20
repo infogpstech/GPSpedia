@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { groupVehicleSearchResults, resolveVehicleNavigation } from '../Frontend/search-utils.js';
+import { pushNavigationState, navigationHistoryStateKey } from '../Frontend/navigationHistory.js';
 let passed=0; function test(name,fn){fn();passed++;console.log('PASS',name);}
 const base={_sectionType:'corte',categoria:'Auto',marca:'Toyota',modelo:'Corolla',versionesAplicables:'LE',tipoEncendido:'Llave',anoDesde:2018,anoHasta:2022,id:'A'};
 test('agrupa por categoría+marca+modelo',()=>{const x=groupVehicleSearchResults([base,{...base,id:'B',anoDesde:2023,anoHasta:2025}]);assert.equal(x.length,1);assert.equal(x[0].records.length,2);});
@@ -46,4 +47,46 @@ test('popstate reconstruye niveles y vuelve a ejecutar la consulta original',()=
     assert.match(ui,/case 'versionesEquipamiento'/);
     assert.match(ui,/case 'versiones'/);
 });
+
+test('cero registros no inventa una versión ni un rango',()=>{
+    const x=resolveVehicleNavigation([]);
+    assert.equal(x.step,'ranges'); assert.deepEqual(x.records,[]); assert.deepEqual(x.ranges,[]);
+});
+test('preserva el orden de relevancia al agrupar resultados mixtos',()=>{
+    const low={...base,id:'low',_searchPriority:5,_searchOrder:0};
+    const high={...base,id:'high',_searchPriority:1,_searchOrder:1};
+    const relay={_sectionType:'relay',_searchPriority:2,_searchOrder:2};
+    const x=groupVehicleSearchResults([low,relay,high]);
+    assert.equal(x[0]._sectionType,'relay');
+    assert.equal(x[1]._searchGroupType,'vehicleModel');
+    assert.equal(x[1].records.length,2);
+});
+test('History API conserva la ruta de búsqueda, versión, encendido y rangos',()=>{
+    const entries=[{state:{level:'categorias'},url:'/'}]; let index=0;
+    const history={
+        get state(){return entries[index].state;},
+        pushState(state,_title,url){entries.splice(index+1);entries.push({state,url});index++;},
+        replaceState(state,_title,url){entries[index]={state,url};},
+        back(){if(index>0)index--;},
+        forward(){if(index<entries.length-1)index++;}
+    };
+    const location={pathname:'/catalog',search:'',hash:''};
+    const search={level:'busqueda',query:'Toyota Corolla'};
+    const equipment={level:'versionesEquipamiento',categoria:'Auto',marca:'Toyota',modelo:'Corolla'};
+    const ignition={level:'tiposEncendido',categoria:'Auto',marca:'Toyota',modelo:'Corolla',versionEquipamiento:'LE'};
+    const ranges={level:'versiones',categoria:'Auto',marca:'Toyota',modelo:'Corolla',versionEquipamiento:'LE',tipoEncendido:'Llave'};
+    pushNavigationState(search,{historyObject:history,locationObject:location,previousNavigationState:{level:'categorias'}});
+    pushNavigationState(equipment,{historyObject:history,locationObject:location,previousNavigationState:search});
+    assert.deepEqual(history.state[navigationHistoryStateKey],search);
+    pushNavigationState(ignition,{historyObject:history,locationObject:location,previousNavigationState:equipment});
+    assert.deepEqual(history.state[navigationHistoryStateKey],equipment);
+    pushNavigationState(ranges,{historyObject:history,locationObject:location,previousNavigationState:ignition});
+    assert.deepEqual(history.state[navigationHistoryStateKey],ignition);
+    history.back(); assert.equal(history.state.level,'tiposEncendido');
+    history.back(); assert.equal(history.state.level,'versionesEquipamiento');
+    history.back(); assert.equal(history.state.level,'busqueda');
+    assert.equal(history.state.query,'Toyota Corolla');
+    history.forward(); assert.equal(history.state.level,'versionesEquipamiento');
+});
+
 console.log('SearchModelGrouping:',passed+'/'+passed+' PASS');
