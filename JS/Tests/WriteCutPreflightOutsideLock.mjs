@@ -51,7 +51,7 @@ const wrapper=extract("handleAddOrUpdateCut","handleAddOrUpdateCutLocked");
 const events=[];
 const wrapperFn=new Function("prepareAddOrUpdateCutRequest_","LockService","handleAddOrUpdateCutLocked","nextWriteCatalogVersionLocked_","Logger",wrapper+"\nreturn handleAddOrUpdateCut;")(
  ()=>{events.push("preflight");return{ready:true};},
- {getScriptLock:()=>({tryLock(ms){assert.equal(ms,0);events.push("lock");return true;},hasLock:()=>true,releaseLock(){events.push("release");}})},
+ {getScriptLock:()=>({waitLock(ms){assert.equal(ms,2000);events.push("lock");},hasLock:()=>true,releaseLock(){events.push("release");}})},
  preparedRequest=>{assert.equal(preparedRequest.ready,true);events.push("persist");return{status:"success",vehicleId:"22"};},
  ()=>7,{log(){}}
 );
