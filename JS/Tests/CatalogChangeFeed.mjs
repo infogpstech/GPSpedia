@@ -308,14 +308,14 @@ test("ADMIN usa versiones de origen para Cortes y convierte snapshots legacy en 
     assert.equal(first.resetRequired,false);
     assert.equal(latest.resetRequired,false);
     assert.equal(stale.resetRequired,true);
-    const page = request("getCatalogChanges","ADMIN","getCatalogChanges",{cursor:stale.revision-1,limit:1});
+    const page = request("getCatalogChanges","FEEDBACK","getCatalogChanges",{cursor:stale.revision-1,limit:1});
     assert.equal(page.changes[0].operation,"reset");
     assert.equal(page.changes[0].staleSourceVersion,true);
 
-    const head = request("getCatalogChanges","ADMIN","getCatalogChanges",{cursor:Number.MAX_SAFE_INTEGER,limit:1});
+    const head = request("getCatalogChanges","FEEDBACK","getCatalogChanges",{cursor:Number.MAX_SAFE_INTEGER,limit:1});
     const legacy = request("publishCatalogChange","ADMIN","updateVehicleField",{change:{collection:"cortes",recordId:"V-LEGACY",operation:"delete"}});
     assert.equal(legacy.resetRequired,true);
-    const legacyPage = request("getCatalogChanges","ADMIN","getCatalogChanges",{cursor:head.currentRevision,limit:1});
+    const legacyPage = request("getCatalogChanges","FEEDBACK","getCatalogChanges",{cursor:head.currentRevision,limit:1});
     assert.equal(legacyPage.changes[0].operation,"reset");
 });
 test("sourceVersion ADMIN solo se acepta para la colección Cortes", () => {
