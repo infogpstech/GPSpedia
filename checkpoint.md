@@ -465,3 +465,10 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Pruebas `FeedbackPysPendingImageVerificationOutsideLock` 5/5; `P2PysImageUploadOutsideLock` PASS; CI `44645449059` SUCCESS: 196 suites, 2,546 pruebas aprobadas, 0 fallos; health read-only `44645449007` SUCCESS.
 - Commits: implementación `35c24ab08cbf7bec03520dc2143f3862c0ee75e9`, prueba `b93a83f6ceba28679486269850c4eda462a0918a`, runner `5bad0df5b2696f1a9ebcc353f41f1b71ad4cce9f`.
 - El cleanup Drive de archivos duplicados/rollback y la actualización de descripción LINKED siguen pendientes de revisión independiente; no se asume que estén fuera del lock.
+
+
+## P1 — PyS metadata LINKED y actividad post-commit fuera del lock (2026-11-20)
+- En `handleAddProblem`, después de confirmar la fila PyS y el estado LINKED del ledger, se libera el ScriptLock antes de actualizar la descripción Drive de la imagen y antes de escribir `ActividadUsuario`. Ambas acciones son auxiliares y no deben retener el mutex de mutación.
+- En rutas de recuperación con fila/ledger ya persistidos, primero se escribe el estado de recuperación/vinculación bajo lock, luego se libera y se actualiza metadata Drive. Las limpiezas de archivo no vinculado y su compensación siguen pendientes: requieren un estado intermedio y revalidación tras reacquirir lock.
+- Pruebas `FeedbackPysPostCommitOutsideLock` 4/4, `FeedbackPysPendingImageVerificationOutsideLock` 5/5, `P2PysImageUploadOutsideLock` PASS. CI `44645868436` SUCCESS: 197 suites, 2,550 pruebas aprobadas, 0 fallos; health read-only `44645868341` SUCCESS.
+- Commits: `f6ec254464d7f1b345eb6266a6a4d3ef0bd48e4d`, `91289955b91f0a0c24e2e70b80b627638bfc3b68`, `70348f51073b780b7344824971d53d2645ff112a`, `2c756fea5eac507c0e431debef6352a32ae0fe68`.
