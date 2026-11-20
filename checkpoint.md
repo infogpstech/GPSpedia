@@ -961,3 +961,6 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Estado: **GP-CONCURRENCY-CUT-MULTI-ENTRY-01 sigue EN PROGRESO / P0**. La regresión actual pasa, pero no prueba concurrencia real entre identidades de usuario ni colisiones del mismo vehículo. No marcar completada.
 - Siguiente subpaso: diseñar y probar una reserva append-only de aportes/slots que conserve cada `opId` y el contenido entrante antes de intentar materializarlo en las columnas actuales; resolver idempotencia del mismo `opId`, asignación determinista de slots y candidatos para corte/apertura/alimentación. Añadir pruebas de intercalado entre usuarios, colisión y recuperación parcial antes de tocar la persistencia productiva.
 - No se desplegó Apps Script ni se accedió/modificó Spreadsheet o Drive productivos.
+
+
+- Actualización de continuidad documental: `Tareas_Activas.md` quedó actualizado en el commit `92c2b466c3898f83a3f4a6d716021bb3581ce0f9`; el checkpoint previo se actualizó en `62cef5f63e8390c5d23b87afafaeb2b648874fc2`. HEAD confirmado después de ambos commits: `92c2b466c3898f83a3f4a6d716021bb3581ce0f9`. La rama base continúa en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
