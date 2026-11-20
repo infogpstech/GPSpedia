@@ -532,7 +532,7 @@ function runWriteDriveWorkOutsideScriptLock_(lock, state, opId, operation) {
     catch (error) { operationError = error; }
 
     let reacquired = false;
-    try { reacquired = lock.tryLock(0); } catch (lockError) { reacquired = false; }
+    try { lock.waitLock(2000); reacquired = true; } catch (lockError) { reacquired = false; }
     if (!reacquired) {
         const pendingError = new Error("La carga terminó o quedó pendiente, pero otra operación está usando WRITE. Conserva el mismo opId y reintenta para completar el registro.");
         pendingError.code = "WRITE_LOCK_REACQUIRE_PENDING";
@@ -557,8 +557,12 @@ function prepareAddOrUpdateCutRequest_(payload) {
 function handleAddOrUpdateCut(payload) {
     const preparedRequest = prepareAddOrUpdateCutRequest_(payload);
     const lock = LockService.getScriptLock();
-    if (!lock.tryLock(0)) {
-        const busyError = new Error("WRITE está ocupado con otra escritura. Conserva el mismo opId y reintenta en unos instantes.");
+    try {
+        // La sección protegida contiene solo reserva/lectura/escritura de Sheets.
+        // Las transferencias Drive liberan este lock para que otras operaciones avancen.
+        lock.waitLock(2000);
+    } catch (lockError) {
+        const busyError = new Error("WRITE está finalizando otra reserva o escritura breve. Conserva el mismo opId y reintenta.");
         busyError.code = "WRITE_BUSY";
         throw busyError;
     }
@@ -753,9 +757,11 @@ function handleAllocateVehicleId(payload) {
     const lock = LockService.getScriptLock();
     let lockAcquired = false;
     try {
-        lockAcquired = lock.tryLock(0);
-        if (!lockAcquired) {
-            const busyError = new Error("WRITE está ocupado con otra operación de escritura. Reintenta la asignación en unos instantes.");
+        try {
+            lock.waitLock(2000);
+            lockAcquired = true;
+        } catch (lockError) {
+            const busyError = new Error("WRITE está finalizando otra reserva de ID. Reintenta la asignación en unos instantes.");
             busyError.code = "WRITE_BUSY";
             throw busyError;
         }
