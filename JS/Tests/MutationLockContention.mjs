@@ -29,7 +29,8 @@ const writeDrive = extract(write, "runWriteDriveWorkOutsideScriptLock_");
 const adminEntry = extract(admin, "handleAddOrUpdateCut");
 const adminUpload = extract(admin, "handleUploadAdminImage");
 const adminField = extract(admin, "handleUpdateVehicleField");
-const adminDrive = extract(admin, "runAdminDriveWorkOutsideScriptLock_");
+const adminDriveCore = extract(admin, "runAdminDriveWorkOutsideScriptLock_");
+const adminDrive = extract(admin, "runAdminContributionDriveWorkOutsideScriptLock_");
 
 assert.match(writeEntry, /lock\.waitLock\(2000\)/);
 assert.doesNotMatch(writeEntry, /tryLock\(0\)/);
@@ -38,11 +39,12 @@ assert.match(writeDrive, /lock\.waitLock\(2000\)/);
 assert.match(adminEntry, /lock\.waitLock\(2000\)/);
 assert.match(adminUpload, /lock\.waitLock\(2000\)/);
 assert.match(adminField, /lock\.waitLock\(2000\)/);
-assert.match(adminDrive, /lock\.waitLock\(2000\)/);
+assert.match(adminDrive, /runAdminDriveWorkOutsideScriptLock_\(lock, opId, operation, revalidate, operationHash, 2000\)/);
+assert.match(adminDriveCore, /lock\.tryLock\(0\)/);
 assert.match(extract(write, "handleAddSupplementaryInfo"), /lock\.waitLock\(5000\)/);
 
 const writeHelper = new Function(writeDrive + "\nreturn runWriteDriveWorkOutsideScriptLock_;")();
-const adminHelper = new Function(adminDrive + "\nreturn runAdminDriveWorkOutsideScriptLock_;")();
+const adminHelper = new Function(adminDriveCore + "\n" + adminDrive + "\nreturn runAdminContributionDriveWorkOutsideScriptLock_;")();
 
 {
     const lock = makeLock(), state = { releasedForDrive: false }, sequence = [];
@@ -76,4 +78,4 @@ const adminHelper = new Function(adminDrive + "\nreturn runAdminDriveWorkOutside
     assert.equal(lock.held, true, "ADMIN debe readquirir el lock antes de revalidar");
     lock.releaseLock();
 }
-console.log("MutationLockContention: 10/10 PASS — contención breve tolerada y Drive concurrente fuera del lock");
+console.log("PASS MutationLockContention — contención breve tolerada y Drive concurrente fuera del lock");
