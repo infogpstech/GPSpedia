@@ -8832,6 +8832,9 @@ function getImageUploadLedgerSheetReadOnlyForAdmin_() {
     if(sheet.getLastColumn()<IMAGE_UPLOAD_LEDGER_HEADERS.length)throw new Error("ImageUploadLedger tiene una estructura incompleta; se conserva sin modificar.");
     const headers=sheet.getRange(1,1,1,IMAGE_UPLOAD_LEDGER_HEADERS.length).getDisplayValues()[0].map(v=>String(v||"").trim());
     if(IMAGE_UPLOAD_LEDGER_HEADERS.some((h,i)=>headers[i]!==h))throw new Error("La estructura de ImageUploadLedger no coincide; se conserva sin modificar.");
+    const tokens=sheet.getLastRow()>1?sheet.getRange(2,1,sheet.getLastRow()-1,1).getDisplayValues().flat():[];
+    const seen=new Set();
+    tokens.forEach(value=>{const token=String(value||"").trim();if(!token)return;if(seen.has(token))throw new Error("ImageUploadLedger contiene tokens duplicados; no se reconciliará ni modificará.");seen.add(token);});
     return sheet;
 }
 function getOrCreateImageUploadLedgerSheet_() {
@@ -9178,15 +9181,16 @@ function uploadImageToDrive(imageData,filename,folder,operationKey) {
     const fileId=String(file.getId()),url="https://drive.google.com/uc?export=view&id="+fileId;
     events=readImageUploadEventsByTokenForAdmin_(eventsSheet,token);projection=projectImageUploadEventsForAdmin_(events);
     if(projection&&projection.state==="requires_review")throw new Error("Se detectó una carga concurrente con más de un archivo; quedó para revisión.");
+    const descriptionState=projection&&projection.state==="linked"?"linked":"pending";
+    const description=buildImageUploadDescription_({...expected,fileName:originalFilename},descriptionState,projection&&projection.referencesJson||"[]");
+    file.setDescription(description);
+    if(String(file.getDescription()||"")!==description)throw new Error("Drive no confirmó por lectura posterior los metadatos de la carga; el evento reserved se conservó.");
     if(!events.some(entry=>String(entry.values[7]||"").trim()===fileId)||
         (projection&&!["pending","linked"].includes(projection.state)))
         appendImageUploadEventForAdmin_(eventsSheet,{...expected,state:"pending",fileId,fileUrl:url,fileName:originalFilename});
     const confirmed=projectImageUploadEventsForAdmin_(readImageUploadEventsByTokenForAdmin_(eventsSheet,token));
     if(!confirmed||confirmed.state==="requires_review"||confirmed.fileId!==fileId)
         throw new Error("El journal no confirmó un archivo único; la carga quedó para revisión.");
-    const description=buildImageUploadDescription_({...expected,fileName:originalFilename},confirmed.state==="linked"?"linked":"pending",confirmed.referencesJson||"[]");
-    file.setDescription(description);
-    if(String(file.getDescription()||"")!==description)throw new Error("Drive no confirmó por lectura posterior los metadatos de la carga; el evento pending se conservó.");
     return url;
 }
 function markImageUploadLinked(imageUrl) {
