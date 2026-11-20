@@ -8357,6 +8357,8 @@ export async function openAuditDriveModal() {
     const organizerPreviewResults = document.getElementById('audit-drive-organizer-results');
     const organizerApplyButton = document.getElementById('btn-audit-drive-apply-organizer');
     const organizerRollbackButton = document.getElementById('btn-audit-drive-rollback-organizer');
+    const organizerHistoryButton = document.getElementById('btn-audit-drive-organizer-history');
+    const organizerHistoryPanel = document.getElementById('audit-drive-organizer-history');
     const reconciliationPanel = document.getElementById('audit-drive-reconciliation-panel');
     const reconciliationStatus = document.getElementById('audit-drive-reconciliation-status');
     const reconciliationCounts = document.getElementById('audit-drive-reconciliation-counts');
@@ -8919,6 +8921,7 @@ export async function openAuditDriveModal() {
                 isOrganizerPreviewRunning || !complete || !auditId;
         }
         updateReconciliationApprovalControls_();
+        if (organizerHistoryButton) organizerHistoryButton.disabled = isRunning;
         updateOrganizerApplyControls_();
     };
 
@@ -9615,6 +9618,87 @@ export async function openAuditDriveModal() {
     };
 
 
+    const loadCortesImageOrganizerHistory = async () => {
+        if (!isCurrentRequest() || isRunning) return;
+        isRunning = true;
+        lastOrganizerOperationIds = [];
+        updateControls();
+        if (organizerHistoryPanel) {
+            organizerHistoryPanel.hidden = false;
+            organizerHistoryPanel.replaceChildren();
+        }
+        if (organizerPreviewStatus) organizerPreviewStatus.textContent = "Consultando operaciones Safe Apply de esta cuenta…";
+        try {
+            const response = await routeActionWithRetry("getCortesImageOrganizerOperations", {
+                ...getDeveloperSessionPayload(), offset: 0, limit: 50
+            }, { timeoutMs: 30000, maxAttempts: 2, retryDelayMs: 500, shouldContinue: isCurrentRequest });
+            if (!isCurrentRequest()) return;
+            if (!response || response.status !== "success" || response.writePerformed !== false ||
+                !Array.isArray(response.operations)) {
+                throw new Error(response && response.message ? response.message : "ADMIN devolvió un historial Safe Apply inválido.");
+            }
+            if (!response.operations.length) {
+                const empty = document.createElement("p");
+                empty.textContent = "No hay operaciones Safe Apply registradas para esta cuenta.";
+                organizerHistoryPanel && organizerHistoryPanel.appendChild(empty);
+            }
+            response.operations.forEach(operation => {
+                const row = document.createElement("article");
+                row.className = "audit-drive-result-row";
+                const title = document.createElement("strong");
+                title.textContent = String(operation.status || "sin estado") + " · " + String(operation.fileId || "archivo sin ID");
+                const detail = document.createElement("p");
+                detail.textContent = String(operation.sourceFolderPath || "origen no registrado") + "/" +
+                    String(operation.sourceName || "") + " → " +
+                    String(operation.targetFolderPath || "destino no registrado") + "/" +
+                    String(operation.targetName || "") + " · " +
+                    (Number(operation.updatedAt) ? new Date(Number(operation.updatedAt)).toLocaleString() : "fecha no disponible");
+                row.append(title, detail);
+                if (operation.error) {
+                    const error = document.createElement("p");
+                    error.textContent = "Detalle: " + String(operation.error);
+                    row.appendChild(error);
+                }
+                if (operation.status === "complete" && operation.operationId) {
+                    const label = document.createElement("label");
+                    label.style.cssText = "display:flex; align-items:center; gap:8px; margin-top:8px;";
+                    const checkbox = document.createElement("input");
+                    checkbox.type = "checkbox";
+                    checkbox.dataset.organizerHistoryRollback = "true";
+                    checkbox.dataset.operationId = String(operation.operationId);
+                    checkbox.addEventListener("change", () => {
+                        const selected = Array.from(organizerHistoryPanel.querySelectorAll(
+                            'input[data-organizer-history-rollback="true"]:checked'
+                        ));
+                        if (selected.length > 10) {
+                            checkbox.checked = false;
+                            if (organizerPreviewStatus) organizerPreviewStatus.textContent = "El rollback admite hasta 10 operaciones por lote.";
+                            return;
+                        }
+                        lastOrganizerOperationIds = selected.map(input => String(input.dataset.operationId || ""));
+                        updateOrganizerApplyControls_();
+                    });
+                    const text = document.createElement("span");
+                    text.textContent = "Seleccionar para rollback";
+                    label.append(checkbox, text);
+                    row.appendChild(label);
+                }
+                organizerHistoryPanel && organizerHistoryPanel.appendChild(row);
+            });
+            if (organizerPreviewStatus) organizerPreviewStatus.textContent =
+                "Historial: " + response.operations.length + " de " + Number(response.total || 0) +
+                " operaciones recientes. Se muestran solo registros de esta cuenta.";
+        } catch (error) {
+            if (!isCurrentRequest()) return;
+            const message = "No se pudo consultar el historial Safe Apply: " + String(error && error.message || error);
+            if (organizerPreviewStatus) organizerPreviewStatus.textContent = message;
+            appendAuditConsole(message, "error");
+        } finally {
+            isRunning = false;
+            if (isCurrentRequest()) updateControls();
+        }
+    };
+
     const runCortesImageOrganizerPreview = async () => {
         if (!isCurrentRequest() || !complete || !auditId || isOrganizerPreviewRunning ||
             isRunning || isDriveAuditRunning || isReconciling) return;
@@ -9752,6 +9836,7 @@ export async function openAuditDriveModal() {
     if (organizeButton) organizeButton.onclick = () => organizeUnusedImages();
     if (reconcileButton) reconcileButton.onclick = () => runCortesReconciliation();
     if (organizerPreviewButton) organizerPreviewButton.onclick = () => runCortesImageOrganizerPreview();
+    if (organizerHistoryButton) organizerHistoryButton.onclick = () => loadCortesImageOrganizerHistory();
     if (organizerApplyButton) organizerApplyButton.onclick = async () => {
         if (!isCurrentRequest() || !currentOrganizerPreview || isOrganizerApplyRunning) return;
         const checked = Array.from(organizerPreviewResults.querySelectorAll('input[data-organizer-approve="true"]:checked'));
