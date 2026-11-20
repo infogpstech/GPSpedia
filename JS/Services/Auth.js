@@ -2337,8 +2337,8 @@ function handleRequestPasswordRecovery(payload){
 function handleCompletePasswordRecovery(payload){
     const invalid={status:"error",message:"El código no es válido o expiró, o los datos de recuperación no coinciden."};
     const username=String(payload&&payload.username||"").trim().toLowerCase(),email=String(payload&&payload.email||"").trim().toLowerCase();
-    const code=String(payload&&payload.code||"").replace(/[\\s-]/g,"").toUpperCase(),newPassword=normalizePassword(payload&&payload.newPassword);
-    if(!username||!email||!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)||!/^[A-F0-9]{12}$/.test(code))return invalid;
+    const code=String(payload&&payload.code||"").replace(/[\s-]/g,"").toUpperCase(),newPassword=normalizePassword(payload&&payload.newPassword);
+    if(!username||!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||!/^[A-F0-9]{12}$/.test(code))return invalid;
     if(newPassword.length<8||newPassword.length>256)return {status:"error",message:"La contraseña nueva debe tener entre 8 y 256 caracteres."};
     const lock=LockService.getScriptLock();let acquired=false,userId="",result=null;
     try{
