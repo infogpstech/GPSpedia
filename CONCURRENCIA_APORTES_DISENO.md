@@ -87,3 +87,40 @@ Este documento fija la dirección de diseño, no declara implementada la soluci�
 - La edición in-modal de ADMIN usa `updateVehicleField` para campos de texto/modelo y `uploadAdminImage` para imágenes. Actualmente escribe directamente en `Cortes`; el texto usa `expectedCurrentValue` y el reemplazo de imagen mantiene su propio ledger compensatorio.
 - Cuando un campo visible provenga de un evento, la edición de desarrollador debe identificar el evento/version que está reemplazando. Debe crear un evento de sustitución o materializar de forma verificable el valor y marcar el evento previo como sustituido; no basta con escribir la columna heredada porque la proyección podría volver a mostrar el aporte anterior o duplicarlo.
 - La proyección debe incluir metadatos de origen (eventId y versión/huella por campo) para que el modal de desarrollador pueda enviar la precondición correcta. Los usuarios que agregan aportes no deben poder sobrescribir esos campos ni modificar eventos ajenos.
+
+
+## Estado de implementación — 2026-11-20 (parcial)
+
+La dirección de arquitectura anterior ya tiene implementación parcial en GPSpedia2.2.5_work; no debe seguir leerse como una propuesta todavía no iniciada.
+
+### Implementado en la rama de trabajo
+
+- AportesVehiculo usa un esquema versionado que se prepara mediante mantenimiento explícito (migrateVehicleContributionsSchema); las solicitudes ordinarias fallan de forma cerrada si el ledger no está listo.
+- WRITE registra eventos append-only de corte, apertura y alimentación. CATALOG combina la fila heredada con la proyección del ledger y conserva el contrato de ficha existente.
+- Cortes de vehículos existentes con opId, sin VIN y sin vehicleData, entran al ledger antes del lock de compatibilidad. Apertura/alimentación con opId también entran al ledger.
+- Los eventos excedentes se conservan como candidatos. La asignación visible se calcula en orden durable de fila; no se reserva ni se sobrescribe un slot mediante lock.
+- Mismo opId y mismo contenido se deduplica lógicamente hacia un evento canónico, incluso si existen filas físicas repetidas. Mismo opId con vehículo/tipo/hash/payload incompatible genera conflicto; la proyección no aplica arbitrariamente ninguno.
+- checkOperation reconoce eventos de AportesVehiculo, verifica la huella cuando se proporciona y devuelve el resultado recuperado. La UI informa cuando un corte, apertura o alimentación queda como candidato y no como campo aplicado.
+- El harness WriteContributionAppendConcurrency.mjs simula intercalados en el punto de append para vehículos diferentes, slots distintos, reintento idéntico, conflicto de opId y capacidad de apertura/alimentación.
+
+### Límites que mantienen P0 abierta
+
+- El harness simula que cada appendRow es una operación de append indivisible. No es una prueba de concurrencia contra el servicio real de Google Sheets ni sustituye la verificación de sus garantías de append bajo dos ejecuciones Apps Script simultáneas.
+- En una carrera con mismo opId y contenido diferente, una solicitud puede haber recibido éxito antes de que la otra anexe el conflicto. La proyección posterior suprime ambos eventos y conserva candidatos; falta mejorar la señal de reconciliación de esa primera respuesta.
+- El corte append-only solo cubre actualmente vehículo existente con opId, sin VIN y con vehicleData nulo. Casos con VIN, metadatos de vehículo, alta nueva o solicitud sin opId aún conservan parte del handler heredado.
+- ImageUploadLedger sigue siendo una tabla mutable de una fila por token. La ruta WRITE uploadImageToDriveWithShortLedgerLocks_ todavía usa LockService.getScriptLock().waitLock(5000) para leer/escribirla. No quitar ese lock sin reemplazar primero el mecanismo de idempotencia y reconciliación: podría crear colisiones de fila o asociar archivos distintos al mismo token.
+- ADMIN mantiene su lector/reconciliador del ImageUploadLedger legado. Cualquier migración de cargas debe conservar compatibilidad y hacer visibles los archivos pendientes/no referenciados como candidatos.
+- La edición in-modal del Desarrollador (updateVehicleField / uploadAdminImage) todavía escribe por la ruta heredada; faltan metadatos de origen/versionado y eventos de sustitución para que una edición no sea revertida por la proyección.
+
+### Regresión verificada
+
+HEAD 4f54e1ca71a21857a3e23e5d7d1a98ff3a77fe51: 230 suites, 2,843 pruebas aprobadas, 0 fallos; health de servicio read-only SUCCESS. La rama base GPSpedia2.2.5 permanece intacta en d9acc68d889985c2e2f42fe3a02e502efc86ead1. No se desplegó el código de servicio ni se modificaron datos productivos.
+
+### Próximas fases
+
+1. Verificar las garantías reales de append de Sheets o elegir una primitiva durable que no requiera lock global.
+2. Migrar ImageUploadLedger a un journal append-only con proyección/reconciliación compatible con ADMIN; retirar waitLock(5000) solo después de probar reintentos, duplicados y archivos huérfanos.
+3. Ampliar cortes existentes a VIN y vehicleData, manteniendo validación global de VIN sin serializar vehículos independientes.
+4. Hacer que checkOperation y la UI reconcilien conflictos que aparezcan después de la primera respuesta.
+5. Migrar edición in-modal de Desarrollador a sustituciones versionadas/auditables.
+6. Completar intercalados y fallos parciales Drive/Sheets; mantener P0 abierta hasta cubrir toda la matriz.
