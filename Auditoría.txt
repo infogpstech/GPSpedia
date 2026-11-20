@@ -820,3 +820,14 @@ INCIDENTE DE RAMA CORREGIDO: un update_file sin branch explícita creó temporal
 4) ScriptLock FEEDBACK: no se elimina todavía. Protege el asignador secuencial de IDs, la deduplicación read-before-write de reportId/suggestionOperationId y la recuperación de aplicaciones de año. La serialización global contradice §15; se requiere migrar estas operaciones a un journal append-only antes de retirar el lock. Hallazgo abierto, no se presenta como corregido.
 Validación: CI 44833154077 SUCCESS — 237 suites, 2951 pruebas, 0 fallos; node --check PASS. Health read-only pendiente de verificación. Sin despliegue ni cambios de datos productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-20 — CIERRE LOCAL GP-UX-RECENT-VIEWED-CACHE-PARALLEL-01
+Hallazgo auditado: el historial de vistos podía hidratarse después del primer render; la solución actual inicia la lectura local antes de showApp y la mantiene en paralelo con el historial de búsqueda y carga de catálogo.
+- Se verificó el aislamiento ownerId/sesión y el descarte de respuestas tardías de otra cuenta.
+- El reintento solo repite la lectura de vistos si IndexedDB no está disponible; no vuelve a consultar el historial de búsqueda.
+- La suscripción de estado actualiza solo el carrusel de vistos, no reconstruye las categorías.
+- Pruebas dinámicas 3/3 + contrato 1/1. CI 44833576889 SUCCESS: 237 suites, 2954 pruebas, 0 fallos; node --check PASS.
+Estado: COMPLETADA LOCALMENTE. Beta visual real pendiente. Sin despliegue ni cambios de datos productivos.
+================================================================================
