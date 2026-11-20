@@ -6647,42 +6647,21 @@ function prepareAdminVinCollectionEdit_(sheet, rowValues, vehicleId, rawValue, v
     }
     return serializeVinCollection(collection);
 }
-function handleUpdateVehicleVinCollection_(vehicleId, rawValue, logMessage, expectedCurrentValue, enforceExpectedCurrentValue) {
-    const lock = LockService.getScriptLock();
-    try { lock.waitLock(30000); } catch (error) { throw new Error("No se pudo obtener el bloqueo para editar la colección VIN. Intenta nuevamente."); }
-    try {
-        const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
-        const vinColumnIndex = getVinColumnIndex(sheet);
-        if (!vinColumnIndex) throw new Error("La hoja «Cortes» no contiene un encabezado VIN único.");
-        const lastRow = sheet.getLastRow();
-        if (lastRow < 2) throw new Error("No se encontraron vehículos registrados.");
-        const actualRow = findUniqueAdminVehicleRow_(sheet, String(vehicleId == null ? "" : vehicleId).trim());
-        const rowValues = sheet.getRange(actualRow, 1, 1, sheet.getLastColumn()).getValues()[0];
-        const serialized = prepareAdminVinCollectionEdit_(sheet, rowValues, vehicleId, rawValue, vinColumnIndex);
-        const previousValue = sheet.getRange(actualRow, vinColumnIndex).getValue();
-        if (enforceExpectedCurrentValue === true) assertAdminModalExpectedValue_(previousValue, expectedCurrentValue, "vin");
-        let attempted = false;
-        try {
-            attempted = true;
-            sheet.getRange(actualRow, vinColumnIndex).setValue(serialized);
-            SpreadsheetApp.flush();
-            const persisted = parseVinCollectionForAdmin(sheet.getRange(actualRow, vinColumnIndex).getValue());
-            if (JSON.stringify(persisted) !== JSON.stringify(parseVinCollectionForAdmin(serialized))) throw new Error("La colección VIN no coincide con el valor solicitado después de guardar.");
-        } catch (writeError) {
-            if (attempted) {
-                try {
-                    sheet.getRange(actualRow, vinColumnIndex).setValue(previousValue);
-                    SpreadsheetApp.flush();
-                    if (String(sheet.getRange(actualRow, vinColumnIndex).getValue() || "") !== String(previousValue || "")) throw new Error("La reversión no pudo verificarse.");
-                } catch (rollbackError) { throw new Error("Falló la escritura de VIN y también la reversión: " + writeError.message + "; " + rollbackError.message); }
-            }
-            throw writeError;
-        }
-        logMessage("Edición In-Modal", "Colección VIN actualizada y verificada para el vehículo ID: " + vehicleId + ".");
-        return { status: "success", normalizedValue: serialized, message: "La colección VIN fue guardada y verificada correctamente." };
-    } finally { lock.releaseLock(); }
+function handleUpdateVehicleVinCollection_(vehicleId,rawValue,logMessage,expectedCurrentValue,enforceExpectedCurrentValue,expectedSourceEventId,modalContext) {
+    if(enforceExpectedCurrentValue!==true||expectedCurrentValue===undefined)
+        throw new Error("La edición VIN requiere la versión esperada para detectar conflictos.");
+    const sheet=getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+    if(!sheet)throw new Error("No se encontró la hoja «Cortes».");
+    const vinColumnIndex=getVinColumnIndex(sheet);
+    if(!vinColumnIndex)throw new Error("La hoja «Cortes» no contiene un encabezado VIN único.");
+    const actualRow=findUniqueAdminVehicleRow_(sheet,String(vehicleId==null?"":vehicleId).trim());
+    const rowValues=sheet.getRange(actualRow,1,1,sheet.getLastColumn()).getValues()[0];
+    const validationSnapshot=rowValues.slice();
+    validationSnapshot[vinColumnIndex-1]=expectedCurrentValue;
+    const serialized=prepareAdminVinCollectionEdit_(sheet,validationSnapshot,vehicleId,rawValue,vinColumnIndex);
+    return appendAdminVehicleFieldUpdate_(String(vehicleId), "vin", serialized, expectedCurrentValue,
+        expectedSourceEventId, modalContext, logMessage);
 }
-
 function getAdminModalDomainValues_(sheet, fieldName) {
     const lastRow = sheet.getLastRow();
     const readColumn = column => lastRow > 1
@@ -6772,66 +6751,74 @@ function findUniqueAdminVehicleRow_(sheet, vehicleId) {
  * El ID y los campos calculados quedan fuera de la allowlist y nunca se escriben.
  */
 
-function handleUpdateVehicleField(payload,logMessage,modalContext) {
-    payload=payload&&typeof payload==="object"?payload:{};
-    const cleanVehicleId=String(payload.vehicleId==null?"":payload.vehicleId).trim();
-    const fieldName=String(payload.fieldName||"");
-    if(!cleanVehicleId||!fieldName)throw new Error("Parámetros de edición de campo incompletos.");
-    if(!isAdminModalEditField_(fieldName)||fieldName==="id"||fieldName==="timestamp"||fieldName==="contadorBusqueda")
-        throw new Error("El campo '"+fieldName+"' no forma parte de la edición permitida del modal de detalle.");
-    if(fieldName==="vin")return handleUpdateVehicleVinCollection_(cleanVehicleId,payload.value,logMessage,payload.expectedCurrentValue,payload.enforceExpectedCurrentValue===true);
-    if(!Object.prototype.hasOwnProperty.call(COLS_CORTES,fieldName)||COLS_CORTES[fieldName]<=COLS_CORTES.id)
-        throw new Error("El campo '"+fieldName+"' no corresponde a una columna editable del catálogo.");
-    if(payload.enforceExpectedCurrentValue!==true||!Object.prototype.hasOwnProperty.call(payload,"expectedCurrentValue"))
-        throw new Error("La edición requiere la versión esperada del campo para detectar conflictos.");
+function appendAdminVehicleFieldUpdate_(vehicleId,fieldName,valueToStore,expectedCurrentValue,expectedSourceEventId,modalContext,logMessage) {
+    const cleanVehicleId=String(vehicleId||"").trim(),sourceEventId=String(expectedSourceEventId||"").trim();
+    if(!cleanVehicleId)throw new Error("ID de vehículo no válido.");
+    if(expectedCurrentValue===undefined)throw new Error("La edición requiere la versión esperada del campo.");
     const actorId=String(modalContext&&modalContext.userId||"").trim();
     const actorName=String(modalContext&&(modalContext.fullName||modalContext.userName)||"").trim();
     if(!actorId)throw new Error("No se pudo identificar al editor autenticado.");
-    const spreadsheet=getSpreadsheet(),vehicleSheet=spreadsheet.getSheetByName(SHEET_NAMES.CORTES);
-    if(!vehicleSheet)throw new Error("No se encontró la hoja «Cortes».");
-    const actualRow=findUniqueAdminVehicleRow_(vehicleSheet,cleanVehicleId);
-    const rowValues=vehicleSheet.getRange(actualRow,1,1,vehicleSheet.getLastColumn()).getValues()[0];
-    const valueToStore=validateAdminModalFieldValue_(vehicleSheet,fieldName,payload.value,rowValues);
-    const expectedCurrentValue=payload.expectedCurrentValue===null||payload.expectedCurrentValue===undefined?"":payload.expectedCurrentValue;
-    const expectedSourceEventId=String(payload.expectedSourceEventId||"").trim();
-    if(expectedSourceEventId&&!/^EV-[A-Za-z0-9_-]{8,100}$/.test(expectedSourceEventId))
-        throw new Error("La versión fuente del campo no es válida.");
+    if(sourceEventId&&!/^EV-[A-Za-z0-9_-]{8,100}$/.test(sourceEventId))throw new Error("La versión fuente del campo no es válida.");
+    const expected=expectedCurrentValue===null?"":expectedCurrentValue;
+    const spreadsheet=getSpreadsheet();
     let ledgerSheet=spreadsheet.getSheetByName(ADMIN_VEHICLE_CONTRIBUTIONS_SHEET_NAME_);
     if(!ledgerSheet){handleMigrateVehicleContributionsSchema({},null);ledgerSheet=spreadsheet.getSheetByName(ADMIN_VEHICLE_CONTRIBUTIONS_SHEET_NAME_);}
     if(!ledgerSheet||ledgerSheet.getLastColumn()<ADMIN_VEHICLE_CONTRIBUTIONS_HEADERS_.length)
         throw new Error("AportesVehiculo no está migrada; no se guardó el cambio.");
     const headers=ledgerSheet.getRange(1,1,1,ADMIN_VEHICLE_CONTRIBUTIONS_HEADERS_.length).getDisplayValues()[0].map(v=>String(v||"").trim());
     if(ADMIN_VEHICLE_CONTRIBUTIONS_HEADERS_.some((h,i)=>headers[i]!==h))throw new Error("El esquema AportesVehiculo no coincide.");
-    const payloadData={fieldName,value:valueToStore,expectedCurrentValue};
-    const canonical=JSON.stringify({vehicleId:cleanVehicleId,fieldName,value:valueToStore,expectedCurrentValue,expectedSourceEventId});
+    const payloadData={fieldName,value:valueToStore,expectedCurrentValue:expected};
+    const canonical=JSON.stringify({vehicleId:cleanVehicleId,fieldName,value:valueToStore,expectedCurrentValue:expected,expectedSourceEventId:sourceEventId});
     const digest=Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,canonical,Utilities.Charset.UTF_8);
     const operationHash=digest.map(v=>("0"+(v&255).toString(16)).slice(-2)).join("");
-    const opId="OP-ADMIN-FIELD-"+operationHash.slice(0,40);
-    const lastRow=ledgerSheet.getLastRow();
+    const opId="OP-ADMIN-FIELD-"+operationHash.slice(0,40),lastRow=ledgerSheet.getLastRow();
     const rows=lastRow>1?ledgerSheet.getRange(2,1,lastRow-1,ADMIN_VEHICLE_CONTRIBUTIONS_HEADERS_.length).getValues():[];
     const existing=rows.find(row=>String(row[1]||"").trim()===opId);
     if(existing){
         if(String(existing[3]||"").trim().toLowerCase()!==operationHash||String(existing[2]||"").trim()!==cleanVehicleId||
-            String(existing[4]||"")!=="vehicle_update"||String(existing[10]||"").trim()!==expectedSourceEventId)
+            String(existing[4]||"")!=="vehicle_update"||String(existing[10]||"").trim()!==sourceEventId)
             throw new Error("La clave idempotente de esta edición ya está asociada a otro contenido.");
         return{status:"success",duplicate:true,eventId:String(existing[0]),opId,fieldName,value:valueToStore,
-            expectedCurrentValue,expectedSourceEventId,folderSyncWarning:false,message:"La edición ya estaba registrada; no se añadió otra fila."};
+            expectedCurrentValue:expected,expectedSourceEventId:sourceEventId,folderSyncWarning:false,
+            message:"La edición ya estaba registrada; no se añadió otra fila."};
     }
     const eventId="EV-"+Utilities.getUuid(),createdAt=new Date().toISOString();
     ledgerSheet.appendRow([eventId,opId,cleanVehicleId,operationHash,"vehicle_update",JSON.stringify(payloadData),
-        actorId,actorName,createdAt,"accepted",expectedSourceEventId]);
+        actorId,actorName,createdAt,"accepted",sourceEventId]);
     SpreadsheetApp.flush();
     const lastAfter=ledgerSheet.getLastRow();
     const persistedRows=lastAfter>1?ledgerSheet.getRange(2,1,lastAfter-1,ADMIN_VEHICLE_CONTRIBUTIONS_HEADERS_.length).getValues():[];
     const persisted=persistedRows.find(row=>String(row[0]||"")===eventId);
     if(!persisted||String(persisted[1]||"")!==opId||String(persisted[2]||"")!==cleanVehicleId||
-        String(persisted[4]||"")!=="vehicle_update"||String(persisted[10]||"").trim()!==expectedSourceEventId)
+        String(persisted[4]||"")!=="vehicle_update"||String(persisted[10]||"").trim()!==sourceEventId)
         throw new Error("No se pudo verificar la actualización versionada después de anexarla.");
     const folderMetadataFields=new Set(["categoria","modelo","versionesAplicables","tipoEncendido","anoDesde","anoHasta","imagenVehiculo"]);
     const folderSyncWarning=folderMetadataFields.has(fieldName);
     if(logMessage)logMessage("Edición In-Modal","Se anexó una versión del campo '"+fieldName+"' para el vehículo "+cleanVehicleId+"; el registro materializado no se sobrescribió.");
-    return{status:"success",duplicate:false,eventId,opId,fieldName,value:valueToStore,expectedCurrentValue,expectedSourceEventId,
-        folderSyncWarning,message:"La edición quedó registrada como evento versionado. Si otra actualización llegó primero, aparecerá como conflicto localizado para revisión."};
+    return{status:"success",duplicate:false,eventId,opId,fieldName,value:valueToStore,expectedCurrentValue:expected,
+        expectedSourceEventId:sourceEventId,folderSyncWarning,
+        message:"La edición quedó registrada como evento versionado. Si otra actualización llegó primero, aparecerá como conflicto localizado para revisión."};
+}
+
+function handleUpdateVehicleField(payload,logMessage,modalContext) {
+    payload=payload&&typeof payload==="object"?payload:{};
+    const cleanVehicleId=String(payload.vehicleId==null?"":payload.vehicleId).trim(),fieldName=String(payload.fieldName||"");
+    if(!cleanVehicleId||!fieldName)throw new Error("Parámetros de edición de campo incompletos.");
+    if(!isAdminModalEditField_(fieldName)||fieldName==="id"||fieldName==="timestamp"||fieldName==="contadorBusqueda")
+        throw new Error("El campo '"+fieldName+"' no forma parte de la edición permitida del modal de detalle.");
+    if(fieldName==="vin")return handleUpdateVehicleVinCollection_(cleanVehicleId,payload.value,logMessage,
+        payload.expectedCurrentValue,payload.enforceExpectedCurrentValue===true,payload.expectedSourceEventId,modalContext);
+    if(!Object.prototype.hasOwnProperty.call(COLS_CORTES,fieldName)||COLS_CORTES[fieldName]<=COLS_CORTES.id)
+        throw new Error("El campo '"+fieldName+"' no corresponde a una columna editable del catálogo.");
+    if(payload.enforceExpectedCurrentValue!==true||!Object.prototype.hasOwnProperty.call(payload,"expectedCurrentValue"))
+        throw new Error("La edición requiere la versión esperada del campo para detectar conflictos.");
+    const spreadsheet=getSpreadsheet(),vehicleSheet=spreadsheet.getSheetByName(SHEET_NAMES.CORTES);
+    if(!vehicleSheet)throw new Error("No se encontró la hoja «Cortes».");
+    const actualRow=findUniqueAdminVehicleRow_(vehicleSheet,cleanVehicleId);
+    const rowValues=vehicleSheet.getRange(actualRow,1,1,vehicleSheet.getLastColumn()).getValues()[0];
+    const valueToStore=validateAdminModalFieldValue_(vehicleSheet,fieldName,payload.value,rowValues);
+    return appendAdminVehicleFieldUpdate_(cleanVehicleId,fieldName,valueToStore,payload.expectedCurrentValue,
+        payload.expectedSourceEventId,modalContext,logMessage);
 }
 
 const ADMIN_IMAGE_UPLOAD_SHEET_NAME = "AdminImageUploads";
