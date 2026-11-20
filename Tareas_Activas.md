@@ -883,3 +883,10 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] `FeedbackPysRollbackOutsideLock` 6/6; `PysImageStorageRecovery` 22/22; `P2PysImageUploadOutsideLock` PASS.
 - [x] CI `44646143035` SUCCESS: 198 suites, 2,556 pruebas, 0 fallos; health read-only `44646143256` SUCCESS.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
+
+
+### P1 — FEEDBACK reportes: limpieza de adjuntos fuera del lock (2026-11-20)
+- [x] Liberar ScriptLock antes de enviar a papelera una imagen duplicada de un reporte idempotente.
+- [x] En rollback, verificar primero que fila/metadata quedaron revertidas; solo entonces liberar y eliminar el adjunto. Si la reversión no se confirma, conservar la imagen.
+- [x] `FeedbackReportImageCleanupOutsideLock` 5/5; CI `44646463925` SUCCESS: 199 suites, 2,561 pruebas, 0 fallos; health read-only `44646464055` SUCCESS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
