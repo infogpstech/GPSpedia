@@ -831,3 +831,12 @@ Hallazgo auditado: el historial de vistos podía hidratarse después del primer 
 - Pruebas dinámicas 3/3 + contrato 1/1. CI 44833576889 SUCCESS: 237 suites, 2954 pruebas, 0 fallos; node --check PASS.
 Estado: COMPLETADA LOCALMENTE. Beta visual real pendiente. Sin despliegue ni cambios de datos productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-20 — CATALOG: CORREGIDA VALIDACIÓN DEL LEDGER PARA vehicle_update
+Hallazgo: projectVehicleContributionEvents_ ya proyectaba eventos vehicle_update y sus conflictos, pero readVehicleContributionEvents_ rechazaba ese tipo al validar AportesVehiculo. Una actualización ADMIN de campos podía provocar que getCatalogData cancelara la proyección completa del ledger.
+Corrección: el lector acepta vehicle_update solo cuando actorId está presente y opId comienza por OP-ADMIN-. Se conserva la validación de eventId, vehículo, SHA-256, fecha, estado y JSON; no se abre la escritura de ese tipo a las rutas WRITE ordinarias.
+Prueba funcional agregada a VehicleContributionProjection: lectura válida de vehicle_update ADMIN y rechazo de actor/opId inválidos. CI 44834146336 SUCCESS: 237 suites, 2956 pruebas aprobadas, 0 fallos. Health read-only SUCCESS. No se desplegó CATALOG ni se modificaron datos productivos.
+Nota de alcance: la migración de sugerencias de año sigue pendiente; handleSuggestYear todavía escribe directamente anoDesde/anoHasta en Cortes y se debe convertir a evento append-only antes de cerrar P0.
+================================================================================
