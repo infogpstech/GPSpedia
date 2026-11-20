@@ -10721,29 +10721,56 @@ function handleRestoreReplacedImageFromTrash(payload,logMessage,developerContext
         const sheet=getOrCreateReplacedImagesSheet(),headers=ensureReplacedImagesInventoryColumns(sheet);
         const existing=findReplacedImageRecordById(sheet,id);if(!existing)throw new Error("Registro de imagen no encontrado.");
         const row=existing.values,type=getReplacedImageRecordType(row,headers),status=String(row[10]||"");
+        let rowIndex=existing.rowIndex;
         const driveId=getReplacedImageRecordIdentity_(row,headers,true),previousIndex=headers.indexOf("estado_previo_papelera");
         const fallback=type==="sin_uso_detectado"?"sin_uso_detectado":"historica";
         const previous=String(previousIndex>=0?row[previousIndex]||"": "").trim()||fallback;
         const allowed=type==="sin_uso_detectado"?["sin_uso_detectado","requiere_revision","no_confirmada_en_ultima_auditoria"]:["historica","restablecida","requiere_revision"];
         if(!allowed.includes(previous))throw new Error("El estado previo a papelera no es válido para este tipo de registro; requiere revisión.");
-        const file=DriveApp.getFileById(driveId);
-        if(status===previous&&!file.isTrashed()&&String(file.getMimeType()||"").startsWith("image/"))return {status:"success",message:"La imagen ya estaba restaurada desde papelera.",unchanged:true};
-        if(!["en_papelera","requiere_revision"].includes(status))throw new Error("Solo se pueden restaurar desde Drive registros en_papelera o requiere_revision.");
-        if(!file.isTrashed())throw new Error("Drive indica que el archivo no está en papelera; se requiere reconciliar el historial.");
-        if(!String(file.getMimeType()||"").startsWith("image/"))throw new Error("El archivo asociado al registro ya no es una imagen.");
-        const root=getCortesRootFolder(),parent=getSingleParentFolderInsideCortes(file,root.getId()),path=getFolderPathInsideCortes(parent,root.getId());
+        const verified=runAdminDriveWorkOutsideScriptLock_(
+            lock,
+            "ADMIN_RESTORE_IMAGE_FROM_TRASH_"+id,
+            () => {
+                const file=DriveApp.getFileById(driveId);
+                const trashed=file.isTrashed(),mime=String(file.getMimeType()||"");
+                if(status===previous&&!trashed&&mime.startsWith("image/"))return {file,alreadyRestored:true,fileName:file.getName(),path:""};
+                if(!["en_papelera","requiere_revision"].includes(status))throw new Error("Solo se pueden restaurar desde Drive registros en_papelera o requiere_revision.");
+                if(!trashed)throw new Error("Drive indica que el archivo no está en papelera; se requiere reconciliar el historial.");
+                if(!mime.startsWith("image/"))throw new Error("El archivo asociado al registro ya no es una imagen.");
+                const root=getCortesRootFolder(),parent=getSingleParentFolderInsideCortes(file,root.getId()),path=getFolderPathInsideCortes(parent,root.getId());
+                return {file,alreadyRestored:false,fileName:file.getName(),path};
+            },
+            driveResult => {
+                const latestHeaders=ensureReplacedImagesInventoryColumns(sheet);
+                const latest=findReplacedImageRecordById(sheet,id);
+                if(!latest)throw new Error("El registro desapareció durante la verificación Drive; no se modificó el historial.");
+                const latestRow=latest.values,latestType=getReplacedImageRecordType(latestRow,latestHeaders);
+                const latestStatus=String(latestRow[10]||""),latestPreviousIndex=latestHeaders.indexOf("estado_previo_papelera");
+                const latestFallback=latestType==="sin_uso_detectado"?"sin_uso_detectado":"historica";
+                const latestPrevious=String(latestPreviousIndex>=0?latestRow[latestPreviousIndex]||"": "").trim()||latestFallback;
+                if(latestType!==type||latestStatus!==status||latestPrevious!==previous||
+                    getReplacedImageRecordIdentity_(latestRow,latestHeaders,true)!==driveId) {
+                    throw new Error("El registro cambió durante la verificación Drive; vuelve a intentar la restauración.");
+                }
+                return {record:latest,file:driveResult.file,alreadyRestored:driveResult.alreadyRestored,
+                    fileName:driveResult.fileName,path:driveResult.path};
+            }
+        );
+        rowIndex=verified.record.rowIndex;
+        if(verified.alreadyRestored)return {status:"success",message:"La imagen ya estaba restaurada desde papelera.",unchanged:true};
+        const file=verified.file,path=verified.path;
         file.setTrashed(false);
         try{
             if(file.isTrashed()!==false)throw new Error("Drive no confirmó la restauración del archivo.");
-            setReplacedImageHistoryStatusVerified_(sheet,existing.rowIndex,previous);
+            setReplacedImageHistoryStatusVerified_(sheet,rowIndex,previous);
         }catch(operationError){
             let rollbackError=null;
-            try{file.setTrashed(true);if(file.isTrashed()!==true)throw new Error("Drive no confirmó el retorno a papelera.");setReplacedImageHistoryStatusVerified_(sheet,existing.rowIndex,"en_papelera");}
-            catch(error){rollbackError=error;try{setReplacedImageHistoryStatusVerified_(sheet,existing.rowIndex,"requiere_revision");}catch(reviewError){}}
+            try{file.setTrashed(true);if(file.isTrashed()!==true)throw new Error("Drive no confirmó el retorno a papelera.");setReplacedImageHistoryStatusVerified_(sheet,rowIndex,"en_papelera");}
+            catch(error){rollbackError=error;try{setReplacedImageHistoryStatusVerified_(sheet,rowIndex,"requiere_revision");}catch(reviewError){}}
             if(rollbackError)throw new Error("Falló la actualización del historial y no se confirmó la compensación: "+operationError.message+"; "+rollbackError.message);
             throw new Error("No se pudo actualizar el historial; el archivo fue devuelto a papelera: "+operationError.message);
         }
-        postCommitActivity={developerContext,id,details:"Imagen "+file.getName()+" restaurada desde papelera a "+path+"; estado anterior recuperado: "+previous+".",driveId};
+        postCommitActivity={developerContext,id,details:"Imagen "+verified.fileName+" restaurada desde papelera a "+path+"; estado anterior recuperado: "+previous+".",driveId};
         result={status:"success",message:"La imagen fue restaurada desde la papelera de Google Drive. No se modificó ninguna referencia del Spreadsheet."};
     }finally{if(typeof lock.hasLock!=="function"||lock.hasLock())lock.releaseLock();}
     if(postCommitActivity){
