@@ -216,3 +216,12 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Búsqueda de ID limitada a columna A (TextFinder o fallback limitado); unicidad de título limitada a columna B. La sección crítica de altas nuevas permanece.
 - `FeedbackTutorialPreflightOutsideLock` 7/7 PASS; regresiones P2 de tutorial PASS. CI 44838077134 SUCCESS: 245 suites, 3001 pruebas, 0 fallos. Health read-only 44838077089 SUCCESS; Pages en ejecución.
 - No se desplegó ni se modificaron datos productivos.
+
+
+## Checkpoint — aprobaciones YouTube con lookup dirigido (2026-11-20)
+
+- HEAD de código validado: `6ac8cbf2ddb4e2239f3bcde5e9c2439d27633c7c`.
+- `findVideoApprovalByOperation_` y `findPendingVideoApprovalForTarget_` ya no leen toda `Feedbacks`; consultan la columna Problema, parsean coincidencias y leen filas concretas. Los fallbacks también leen solo esa columna.
+- `handleSubmitVideoForApproval` conserva `withVideoApprovalMutationLock_` para unicidad de opVideoId/destino y append coordinado.
+- `FeedbackPendingVideoLookupBoundedRead` 6/6 PASS; `FeedbackVideoApprovalOperationLookupBoundedRead` 5/5 PASS. CI 44838760886 SUCCESS: 248 suites, 3018 pruebas, 0 fallos. Health read-only 44838760925 SUCCESS.
+- No se desplegó ni se modificaron datos productivos.
