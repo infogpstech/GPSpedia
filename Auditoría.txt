@@ -953,3 +953,11 @@ Estado: REGRESIÓN LOCAL COMPLETADA. Concurrencia real de appendRow, fallos real
 - `FeedbackTutorialPreflightOutsideLock` 7/7 PASS; suite P2 de IDs/idempotencia tutorial PASS. CI 44838077134 SUCCESS: 245 suites, 3001 pruebas, 0 fallos. Health read-only 44838077089 SUCCESS; Pages en ejecución.
 - No se eliminó el lock de nuevas altas ni se cambió la regla de unicidad de título.
 ================================================================================
+
+
+2026-11-20 — FEEDBACK aprobación de vídeo: búsquedas dirigidas
+- `findVideoApprovalByOperation_` busca por `opVideoId` en la columna `Problema`, parsea solo coincidencias y lee la fila completa únicamente para el registro encontrado. Fallback sin TextFinder también se limita a esa columna.
+- `findPendingVideoApprovalForTarget_` consulta por `referenceId` en la misma columna, filtra `contentType` y `status=pending`, y mantiene la detección de duplicados.
+- El lock de `handleSubmitVideoForApproval` se conserva para coordinar la comprobación de operación/destino con el append. La mejora reduce lectura dentro de la sección crítica sin debilitar unicidad.
+- `FeedbackPendingVideoLookupBoundedRead` 6/6 PASS; `FeedbackVideoApprovalOperationLookupBoundedRead` 5/5 PASS. CI 44838760886 SUCCESS: 248 suites, 3018 pruebas, 0 fallos; Health read-only 44838760925 SUCCESS.
+================================================================================
