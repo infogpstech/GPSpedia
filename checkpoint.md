@@ -480,3 +480,10 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Pruebas `FeedbackPysRollbackOutsideLock` 6/6, `PysImageStorageRecovery` 22/22, `P2PysImageUploadOutsideLock` PASS. CI `44646143035` SUCCESS: 198 suites, 2,556 pruebas aprobadas, 0 fallos; health read-only `44646143256` SUCCESS.
 - Commits: implementación `c7e622d2f844b9908d86aaf0a210ba8c3e64532c`, prueba `2f723e686b450052dc9669361089a077a103ea52`, runner `f89810e583d1b82d71fcad4bf4575d80e138a93e`.
 - Sin despliegue Apps Script ni modificaciones productivas.
+
+
+## P1 — adjuntos duplicados/rollback de reportes fuera del lock (2026-11-20)
+- En `handleReportProblem`, cuando un reporte idempotente ya existe y la imagen subida es duplicada, se libera ScriptLock antes de enviar el duplicado a papelera.
+- En fallos de escritura, la fila/metadata se revierte y verifica bajo lock; solo si la reversión queda confirmada se libera el lock y se elimina el adjunto. Si la reversión no puede confirmarse, la imagen se conserva para evitar romper una referencia persistida.
+- `FeedbackReportImageCleanupOutsideLock` 5/5 PASS. CI `44646463925` SUCCESS: 199 suites, 2,561 pruebas aprobadas, 0 fallos; health read-only `44646464055` SUCCESS.
+- Commits: implementación `b076250a1d21f200b4824ea13f7c34a270b634e2`, prueba `90e53b23b015c3a9b8084e8e2391b84db4c04583`, runner `5cf1646ce6791825a4c8033dedd722eac21d41c9`.
