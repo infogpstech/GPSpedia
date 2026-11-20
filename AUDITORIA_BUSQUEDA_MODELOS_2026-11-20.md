@@ -179,3 +179,29 @@ La suite de regresión actual registra PysModalNavigation.js, pero no incluye ex
 - La rama base protegida no se modificó.
 
 **Conclusión:** el problema se concentra en el frontend. No basta con agrupar tarjetas: es necesario unificar el resolver de variantes y rangos, corregir la omisión de tipo de encendido después de seleccionar equipamiento, y alinear History API con los saltos automáticos. La implementación debe comenzar con helpers puros y pruebas de cardinalidad, luego conectar el render y la navegación.
+
+## 8. Implementación en GPSpedia2.2.5_work
+
+La implementación se incorporó en la rama de trabajo:
+
+- `JS/Frontend/search-utils.js`: agrupación por categoría + marca + modelo, ordenada por la mejor prioridad/posición de sus registros; resolución común de equipamiento, encendido y rangos.
+- `JS/Frontend/ui.js`: una tarjeta por modelo en la búsqueda; selección de equipamiento vuelve a evaluar encendido; la pantalla de años resuelve rangos únicos y evita abrir automáticamente registros duplicados.
+- `JS/Frontend/navigation.js`: la búsqueda textual no autoabre un registro; la apertura automática se limita a VIN inequívoco.
+- `JS/Tests/SearchModelGrouping.mjs`: pruebas de lógica y comprobaciones de integración; integrada en `JS/Tests/RunServiceTests.mjs`.
+
+Se preservan registros de Relay, Tutoriales y PyS sin agrupar. Los VIN ambiguos permanecen como opciones separadas. Las claves de rango distinguen rangos abiertos de rangos cerrados.
+
+### Ajustes durante la validación
+
+- Se detectó que la prioridad mínima del grupo se calculaba pero no se utilizaba al ordenar el arreglo final. Se corrigió la ordenación para utilizar la mejor coincidencia del grupo y se añadió una prueba específica.
+- Se corrigió una aserción del test que inspeccionaba los casos `popstate` en `ui.js` cuando realmente pertenecen a `main.js`.
+- Se actualizaron comentarios obsoletos sobre la selección de encendido para reflejar que el selector solo debe mostrarse cuando hay varias opciones.
+
+### Validación disponible
+
+- Node v22.16.0: `SearchModelGrouping.mjs` ejecutado de forma aislada, 21/21 PASS. Los helpers de `search-utils.js` y `navigationHistory.js` se ejecutaron; las comprobaciones sobre los puntos de integración UI/navigation/main fueron estáticas.
+- Se comprobó que el runner incluye `SearchModelGrouping.mjs` en la suite INTEGRATION.
+- No se ejecutó la regresión integral del repositorio ni una prueba de navegador real. El entorno no dispone de checkout local y las herramientas GitHub disponibles no devolvieron estados de CI para los commits recientes.
+- No se desplegó Apps Script ni se consultaron/modificaron datos productivos.
+
+**Estado:** implementación local terminada; cierre de validación pendiente hasta ejecutar la regresión integral y probar la interfaz en navegador.
