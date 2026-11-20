@@ -3950,12 +3950,21 @@ function handleCheckOperation(payload) {
                 : "";
             const status = String(values[9] || "accepted").toLowerCase();
             let candidateReviewPending = status !== "accepted";
+            let vinConflictPending = false;
             let slotIndex = null;
             if (status === "accepted" && ["cut", "opening", "feed"].includes(eventKind)) {
                 const snapshot = readSupplementaryVehicleSnapshot_(sheet, eventVehicleId);
                 if (eventKind === "cut") {
                     slotIndex = getVehicleContributionCutSlotIndex_(spreadsheet, snapshot, String(values[0] || ""));
-                    candidateReviewPending = slotIndex === null;
+                    let eventPayload = {};
+                    try { eventPayload = JSON.parse(eventPayloadJson || "{}"); } catch (parseError) { eventPayload = {}; }
+                    const vinPrefix = String(eventPayload.vinPrefix || "").trim().toUpperCase();
+                    if (vinPrefix) {
+                        const existingVinDuplicate = checkVinDuplicateInSheet(sheet, vinPrefix, eventVehicleId);
+                        const concurrentVinDuplicate = findVehicleContributionVinConflict_(spreadsheet, vinPrefix, eventVehicleId);
+                        vinConflictPending = Boolean(existingVinDuplicate || concurrentVinDuplicate);
+                    }
+                    candidateReviewPending = slotIndex === null || vinConflictPending;
                 } else {
                     candidateReviewPending = getVehicleContributionCandidateStatus_(
                         spreadsheet, snapshot, String(values[0] || ""), eventKind
@@ -3974,6 +3983,7 @@ function handleCheckOperation(payload) {
                 contributionKind: eventKind,
                 slotIndex,
                 candidateReviewPending,
+                vinConflictPending,
                 duplicate: events.length > 1,
                 source: "AportesVehiculo"
             };
