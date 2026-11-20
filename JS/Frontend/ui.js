@@ -710,6 +710,10 @@ async function submitAdminImageUploadOperation(operation, imgElement, expectedSe
         : String(response.imageUrl);
     if (currentImageUrl) imgElement.src = currentImageUrl;
     else imgElement.removeAttribute("src");
+    adminModalFieldVersions.set(
+        String(operation.vehicleId) + "::" + operation.fieldName,
+        { value: currentImageUrl, eventId: String(response.currentSourceEventId || response.eventId || operation.expectedSourceEventId || "") }
+    );
 
     const baselinePersisted = commitAdminImageReplacementBaseline_(
         operation.vehicleId, operation.fieldName, currentImageUrl, editSession
