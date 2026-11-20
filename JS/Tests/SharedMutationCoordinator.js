@@ -1375,16 +1375,9 @@ function runSharedMutationCoordinatorTests() {
             "Los consumidores antiguos deben conservar el comportamiento por defecto AUTH.");
     });
 
-    test_("La lease de carpetas Drive no bloquea una mutación independiente de Cortes", function() {
+    test_("Coordinator no expone leases para crear carpetas suplementarias", function() {
         const r = createRuntime_();
-        const client = r.makeClient("WRITE");
-        const result = client.withLease("WRITE", "ensureSupplementaryVehicleFolder", function() {
-            return client.withLease("WRITE", "addOrUpdateCut", function() {
-                return "Cortes pudo avanzar mientras la carpeta tenía su lease.";
-            });
-        });
-        assert_(result === "Cortes pudo avanzar mientras la carpeta tenía su lease.",
-            "La operación de carpeta debe coordinar solo DRIVE_FOLDER, sin bloquear CORTES.");
+        expectThrow_(() => acquire_(r, "WRITE", "ensureSupplementaryVehicleFolder"), "política");
     });
 
     test_("WRITE publica snapshots fuera de orden como reset y nunca permite regresión del catálogo", function() {
