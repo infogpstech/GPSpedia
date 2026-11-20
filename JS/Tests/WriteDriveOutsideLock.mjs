@@ -65,4 +65,14 @@ assert.match(source,/function handleAddOrUpdateCut\(payload\)\s*\{[\s\S]{0,1000}
 assert.match(outer,/handleAppendExistingVehicleCut_\(preparedRequest\)/);
 assert.ok(outer.indexOf("handleAppendExistingVehicleCut_")<outer.indexOf("lock.tryLock(0)"),"Los aportes a vehículos existentes con opId deben entrar al ledger antes de cualquier lock de compatibilidad.");
 assert.doesNotMatch(source,/function handleAddOrUpdateCut\(payload\)\s*\{[\s\S]{0,160}waitLock\(30000\)/);
-console.log("1/1 PASS — WRITE Drive fuera del ScriptLock y reserva de slots");
+
+const imageUpload = extract("uploadImageToDriveWithShortLedgerLocks_", "uploadImageToDrive");
+assert.doesNotMatch(imageUpload,/withImageUploadLedgerLock_|getOrCreateImageUploadLedgerSheet_|saveImageUploadLedgerRecord_/,
+ "El flujo WRITE principal de imágenes ya no debe reservar ni actualizar el ledger mutable.");
+assert.ok(imageUpload.includes("getOrCreateImageUploadEventsSheet_"));
+assert.ok(imageUpload.includes("appendImageUploadEventRequired_"));
+const imageLink = extract("markImageUploadLinkedWithShortLedgerLock_", "markImageUploadLinked");
+assert.doesNotMatch(imageLink,/withImageUploadLedgerLock_|getOrCreateImageUploadLedgerSheet_|saveImageUploadLedgerRecord_/,
+ "La vinculación WRITE debe anexarse al journal sin ScriptLock.");
+assert.ok(imageLink.includes("appendImageUploadEventRequired_"));
+console.log("1/1 PASS — WRITE Drive fuera del ScriptLock, reserva de slots y cargas por journal");
