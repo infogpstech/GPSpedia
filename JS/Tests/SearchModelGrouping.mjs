@@ -58,8 +58,8 @@ test('preserva el orden de relevancia al agrupar resultados mixtos',()=>{
     const high={...base,id:'high',_searchPriority:1,_searchOrder:1};
     const relay={_sectionType:'relay',_searchPriority:2,_searchOrder:2};
     const x=groupVehicleSearchResults([low,relay,high]);
-    assert.equal(x[0]._sectionType,'relay');
-    assert.equal(x[1]._searchGroupType,'vehicleModel');
+    assert.equal(x[0]._searchGroupType,'vehicleModel');
+    assert.equal(x[1]._sectionType,'relay');
     assert.equal(x[1].records.length,2);
 });
 test('History API conserva la ruta de búsqueda, versión, encendido y rangos',()=>{
