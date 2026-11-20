@@ -168,6 +168,7 @@ runGroup('33','FEEDBACK',()=>{
   runCli('FEEDBACK título dirigido en edición de tutorial','JS/Tests/FeedbackTutorialUpdateTitleLookupBoundedRead.mjs');
   runCli('FEEDBACK lookup dirigido de aprobaciones de vídeo','JS/Tests/FeedbackPendingVideoLookupBoundedRead.mjs');
   runCli('FEEDBACK lookup dirigido de opVideoId','JS/Tests/FeedbackVideoApprovalOperationLookupBoundedRead.mjs');
+  runCli('FEEDBACK actualización tutorial sin cambios antes del lock','JS/Tests/FeedbackTutorialUpdateNoopPreflight.mjs');
   runCli('FEEDBACK lookup dirigido de problemas PyS','JS/Tests/FeedbackPysLookupBoundedRead.mjs');
   runCli('FEEDBACK búsqueda dirigida de sugerencias','JS/Tests/FeedbackSuggestionLookupBoundedRead.mjs');
   runCli('FEEDBACK replay de sugerencias antes de Drive y lock','JS/Tests/FeedbackSuggestionPreflightOutsideLock.mjs');
