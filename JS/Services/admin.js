@@ -6787,13 +6787,11 @@ function computeCutOperationFingerprint_(payload) {
     return digest.map(byte => ((Number(byte) + 256) % 256).toString(16).padStart(2, "0")).join("");
 }
 
-function findNextAvailableCutSlot_(rowValues, vehicleId, entriesSnapshot) {
+function findNextAvailableCutSlot_(rowValues, vehicleId) {
     if (!Array.isArray(rowValues)) throw new Error("No se pudo verificar la disponibilidad de los espacios de corte.");
     const reservedSlots = new Set();
     if (vehicleId !== null && vehicleId !== undefined && String(vehicleId).trim() !== "") {
-        const entries = entriesSnapshot && Array.isArray(entriesSnapshot.entries)
-            ? entriesSnapshot.entries
-            : readIdempotenciaEntries_(getIdempotenciaSheet(), false).entries;
+        const entries = readIdempotenciaEntries_(getIdempotenciaSheet(), false).entries;
         entries.forEach(entry => {
             if (entry.status === "pending" && String(entry.vehicleId) === String(vehicleId)) {
                 reservedSlots.add(Number(entry.slotIndex));
@@ -7153,7 +7151,7 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
         }
         const vehicleInfo = mapRowToObject(rowValues, COLS_CORTES);
         let preparedVinCollection = null;
-        const cutSlotIndex = findNextAvailableCutSlot_(rowValues, vehicleId, idempotencyEntriesSnapshot);
+        const cutSlotIndex = findNextAvailableCutSlot_(rowValues, vehicleId);
         if (cutSlotIndex === null) throw new Error("No hay espacios disponibles para más cortes.");
         savedSlotIndex = cutSlotIndex;
         if (opId) recordOpId(opId, vehicleId, cutSlotIndex, formattedDate, "pending", operationHash, idempotencyEntriesSnapshot);
