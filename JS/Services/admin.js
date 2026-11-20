@@ -10895,7 +10895,7 @@ function getReplacedImageRecordIdentity_(row,headers,requireVisualUrl){
 }
 function isKnownReplacedImageStatus_(type,status){
     const allowed=type==="reemplazada"?["historica","restablecida","en_papelera","requiere_revision","cancelada","en_uso","eliminacion_pendiente","eliminada"]:
-        type==="candidata_aporte"?["requiere_revision","cancelada","en_uso"]:
+        type==="candidata_aporte"?["requiere_revision","cancelada","en_uso","en_papelera","eliminacion_pendiente","eliminada"]:
         ["sin_uso_detectado","en_papelera","no_confirmada_en_ultima_auditoria","requiere_revision","cancelada","eliminacion_pendiente","eliminada","en_uso"];
     return allowed.includes(status);
 }
@@ -10914,7 +10914,7 @@ function setReplacedImageHistoryStatusVerified_(sheet,rowIndex,status){
 function setReplacedImageTrashPreviousStatusVerified_(sheet,rowIndex,headers,status){
     const column=Array.isArray(headers)?headers.indexOf("estado_previo_papelera")+1:0;
     if(!sheet||!Number.isInteger(rowIndex)||rowIndex<2||column<1||
-        !["historica","restablecida","requiere_revision","sin_uso_detectado","no_confirmada_en_ultima_auditoria"].includes(status)){
+        !["historica","restablecida","requiere_revision","sin_uso_detectado","no_confirmada_en_ultima_auditoria","cancelada"].includes(status)){
         throw new Error("No se pudo identificar el estado previo a papelera.");
     }
     const cell=sheet.getRange(rowIndex,column);
@@ -12172,11 +12172,11 @@ function handleDeleteReplacedImage(payload,logMessage,developerContext){
         const sheetRep=getOrCreateReplacedImagesSheet(),headers=ensureReplacedImagesInventoryColumns(sheetRep);
         const existing=findReplacedImageRecordById(sheetRep,idReemplazo);if(!existing)throw new Error("Registro de imagen no encontrado.");
         const row=existing.values,type=getReplacedImageRecordType(row,headers);
-        if (type === "candidata_aporte") throw new Error("Las imágenes candidatas se resuelven desde el panel de aportes; no se envían a papelera desde el inventario.");
         const status=String(row[10]||(type==="sin_uso_detectado"?"sin_uso_detectado":"historica"));
+        if (type === "candidata_aporte" && status !== "cancelada" && status !== "en_papelera") throw new Error("Las imágenes candidatas solo pueden enviarse a papelera después de descartar el aporte.");
         let rowIndex=existing.rowIndex;
         const driveId=getReplacedImageRecordIdentity_(row,headers,true);
-        const allowed=type==="sin_uso_detectado"?["sin_uso_detectado","requiere_revision"]:["historica","restablecida","requiere_revision"];
+        const allowed=type==="sin_uso_detectado"?["sin_uso_detectado","requiere_revision"]:type==="candidata_aporte"?["cancelada"]:["historica","restablecida","requiere_revision"];
         if(status!=="en_papelera"&&(!isKnownReplacedImageStatus_(type,status)||!allowed.includes(status)))throw new Error("El estado del registro no permite enviar esta imagen a papelera.");
         const verified=runAdminDriveWorkOutsideScriptLock_(
             lock,
@@ -12246,12 +12246,11 @@ function handleRestoreReplacedImageFromTrash(payload,logMessage,developerContext
         const sheet=getOrCreateReplacedImagesSheet(),headers=ensureReplacedImagesInventoryColumns(sheet);
         const existing=findReplacedImageRecordById(sheet,id);if(!existing)throw new Error("Registro de imagen no encontrado.");
         const row=existing.values,type=getReplacedImageRecordType(row,headers),status=String(row[10]||"");
-        if (type === "candidata_aporte") throw new Error("Las imágenes candidatas se conservan hasta resolver el aporte; no se permite restaurarlas desde esta acción.");
         let rowIndex=existing.rowIndex;
         const driveId=getReplacedImageRecordIdentity_(row,headers,true),previousIndex=headers.indexOf("estado_previo_papelera");
         const fallback=type==="sin_uso_detectado"?"sin_uso_detectado":"historica";
         const previous=String(previousIndex>=0?row[previousIndex]||"": "").trim()||fallback;
-        const allowed=type==="sin_uso_detectado"?["sin_uso_detectado","requiere_revision","no_confirmada_en_ultima_auditoria"]:["historica","restablecida","requiere_revision"];
+        const allowed=type==="sin_uso_detectado"?["sin_uso_detectado","requiere_revision","no_confirmada_en_ultima_auditoria"]:type==="candidata_aporte"?["cancelada"]:["historica","restablecida","requiere_revision"];
         if(!allowed.includes(previous))throw new Error("El estado previo a papelera no es válido para este tipo de registro; requiere revisión.");
         const verified=runAdminDriveWorkOutsideScriptLock_(
             lock,
@@ -12324,7 +12323,8 @@ function handlePermanentlyDeleteReplacedImage(payload,logMessage,developerContex
         const sheet=getOrCreateReplacedImagesSheet(),headers=ensureReplacedImagesInventoryColumns(sheet);
         const existing=findReplacedImageRecordById(sheet,id);if(!existing)throw new Error("Registro de imagen no encontrado.");
         const row=existing.values,type=getReplacedImageRecordType(row,headers),status=String(row[10]||"");
-        if (type === "candidata_aporte") throw new Error("Las imágenes candidatas se resuelven desde el panel de aportes y no pueden eliminarse desde el inventario.");
+        const previousIndex = headers.indexOf("estado_previo_papelera");
+        if (type === "candidata_aporte" && (status !== "en_papelera" || String(previousIndex >= 0 ? row[previousIndex] || "" : "") !== "cancelada")) throw new Error("Una imagen candidata solo puede eliminarse definitivamente después de descartarla y enviarla a papelera.");
         let rowIndex=existing.rowIndex;
         const driveId=getReplacedImageRecordIdentity_(row,headers,true);
         if(status==="eliminada")return {status:"success",message:"La imagen ya estaba eliminada definitivamente.",unchanged:true};
@@ -12738,7 +12738,7 @@ function handleGetReplacedImageDownloadUrl(payload,logMessage,developerContext){
     if(schema.missingHeaders.length)throw new Error("El esquema del historial requiere migración coordinada antes de descargar archivos.");
     const existing=findReplacedImageRecordById(schema.sheet,idReemplazo);if(!existing)throw new Error("Registro de imagen no encontrado.");
     const row=existing.values,type=getReplacedImageRecordType(row,schema.headers),status=String(row[10]||(type==="sin_uso_detectado"?"sin_uso_detectado":"historica"));
-    if(!isKnownReplacedImageStatus_(type,status)||(type==="sin_uso_detectado"&&status!=="sin_uso_detectado")||(type==="reemplazada"&&!["historica","restablecida"].includes(status)))throw new Error("El estado del registro no permite descargar esta imagen.");
+    if((type==="candidata_aporte"&&status!=="cancelada")||!isKnownReplacedImageStatus_(type,status)||(type==="sin_uso_detectado"&&status!=="sin_uso_detectado")||(type==="reemplazada"&&!["historica","restablecida"].includes(status)))throw new Error("El estado del registro no permite descargar esta imagen.");
     const driveId=getReplacedImageRecordIdentity_(row,schema.headers,true),references=collectActiveDriveReferences(false);
     if(references.unverifiableReferenceCount>0||references.references.has(driveId))throw new Error("La descarga está bloqueada porque no se pudo confirmar que la imagen siga sin uso en el Spreadsheet.");
     const file=DriveApp.getFileById(driveId);if(file.isTrashed())throw new Error("La imagen está en la papelera de Google Drive.");
