@@ -94,7 +94,7 @@ test("si falla la lectura del snapshot publica reset fuera del lock", () => {
 test("si falla un chunk HTTP el batch termina con reset de recuperación", () => {
     failBatchNumber = calls.batches.length + 2;
     const before = calls.single.length;
-    api.publishAdminCortesCatalogChanges_("applyCortesImageReconciliation", ["V-64", "V-65", "V-66"]);
+    api.publishAdminCortesCatalogChanges_("applyCortesImageReconciliation", Array.from({ length: 51 }, (_, i) => "V-ERR-" + i));
     failBatchNumber = 0;
     assert.equal(calls.single.length, before + 1);
     assert.deepEqual(calls.single.at(-1).change, { operation: "reset" });
