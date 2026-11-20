@@ -495,3 +495,10 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - `FeedbackSuggestionImageCleanupOutsideLock` 5/5 PASS. CI `44646768057` SUCCESS: 200 suites, 2,566 pruebas aprobadas, 0 fallos; health read-only `44646767980` SUCCESS.
 - Commits: implementación `44e296d523adf38604649b21b218c160bb560262`, prueba `88dd7f4ad8cdea155b72c2e45916ac8b72d31f0a`, runner `c0fad833828847d68c5d027bc99dcfa9d9fa6dfc`, ajuste de contrato `d5c7968aa7dd32877fb0fef243dd0814229af0bc`.
 - Sin despliegue Apps Script ni modificaciones productivas.
+
+
+## P1 — adjuntos duplicados/rollback de sugerencias de corte fuera del lock (2026-11-20)
+- En `handleSuggestCutChange`, las imágenes duplicadas de una operación/reporte idempotente se envían a papelera después de liberar ScriptLock.
+- En rollback, solo se elimina el adjunto cuando la fila se limpió y el estado se verificó; si no puede confirmarse la reversión, se conserva la imagen para reconciliación.
+- `FeedbackSuggestionImageCleanupOutsideLock` 5/5 PASS. CI `44646768057` SUCCESS: 200 suites, 2,566 pruebas aprobadas, 0 fallos; health read-only `44646767980` SUCCESS.
+- Commits: implementación `44e296d523adf38604649b21b218c160bb560262`, prueba `88dd7f4ad8cdea155b72c2e45916ac8b72d31f0a`, runner `c0fad833828847d68c5d027bc99dcfa9d9fa6dfc`, ajuste `d5c7968aa7dd32877fb0fef243dd0814229af0bc`.
