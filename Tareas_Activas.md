@@ -1390,7 +1390,7 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] CI HEAD `2783379c114fdb6ef658ea4e4d7c1cbeb890ab28`: 228 suites, 2,830 pruebas, 0 fallos; health read-only SUCCESS.
 - [ ] Extender ruta append-only de cortes existentes a casos con VIN y a aportes que completen metadatos `vehicleData`, sin permitir duplicidad global de VIN ni pérdida de campos.
 - [ ] Crear harness de intercalado de `appendRow`: dos vehículos diferentes, mismo vehículo/slots diferentes, mismo `opId`/mismo hash y mismo `opId`/payload distinto; verificar deduplicación lógica y candidatos.
-- [ ] Reemplazar la sección de estado mutable de `ImageUploadLedger` por un registro append-only/reconciliable sin `ScriptLock` global ni esperas; conservar reintento estable y archivos no asociados como candidatos.
+- [x] Reemplazar la sección de estado mutable de `ImageUploadLedger` por un registro append-only/reconciliable sin `ScriptLock` global ni esperas; conservar reintento estable y archivos no asociados como candidatos.
 - [ ] Eliminar gradualmente el `UserLock` del handler legacy de cortes existentes y mantener el `ScriptLock` solo para asignación de ID de vehículo nuevo, si la operación realmente requiere secuencia única.
 - [ ] Implementar metadatos de origen/versionado por campo para que la edición in-modal de Desarrollador pueda sustituir un aporte del ledger sin duplicarlo ni resucitar su valor anterior.
 - Estado P0: EN PROGRESO. No declarar cierre hasta pasar intercalados y recuperación de imágenes.
@@ -1422,7 +1422,7 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] CI HEAD `4f54e1ca71a21857a3e23e5d7d1a98ff3a77fe51`: 230 suites, 2,843 pruebas, 0 fallos; health read-only SUCCESS.
 - [x] Actualizar CONCURRENCIA_APORTES_DISENO.md con implementación parcial y límites.
 - [ ] Verificar garantías reales de appendRow bajo dos ejecuciones Apps Script simultáneas; el harness actual simula append indivisible.
-- [ ] Migrar ImageUploadLedger mutable y retirar ScriptLock.waitLock(5000), incluyendo compatibilidad con el reconciliador ADMIN y conservación de archivos sin referencia.
+- [x] Migrar ImageUploadLedger mutable y retirar ScriptLock.waitLock(5000), incluyendo compatibilidad con el reconciliador ADMIN y conservación de archivos sin referencia.
 - [ ] Ampliar append-only de cortes existentes a VIN/vehicleData y migrar fallback legacy sin pérdida de unicidad VIN.
 - [ ] Reconciliar en UI la primera respuesta si un mismo opId entra en conflicto después de que esa respuesta ya fue enviada.
 - [ ] Migrar edición in-modal del Desarrollador a eventos de sustitución/versionado por campo.
@@ -1439,8 +1439,8 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] CI HEAD `bbf35e4f7a752519c94b924c4a211642661c39eb`: 231 suites, 2,849 pruebas, 0 fallos; health read-only SUCCESS.
 - [ ] Integrar diario append-only en el flujo de carga WRITE y usarlo como fuente de verdad de reservas/estados.
 - [ ] Resolver la carrera de dos cargas simultáneas con el mismo token: aceptar duplicados físicos como candidatos/revisión, no asumir que appendRow es una restricción única ni que Drive.createFile es idempotente.
-- [ ] Adaptar `markImageUploadLinked` y `handleReconcilePendingImageUploads` para leer/proyectar eventos y reconstruir estados sin mutar el journal.
-- [ ] Mantener compatibilidad de lectura con las filas históricas de `ImageUploadLedger`; no migrar ni borrar datos históricos automáticamente.
+- [x] Adaptar `markImageUploadLinked` y `handleReconcilePendingImageUploads` para leer/proyectar eventos y reconstruir estados sin mutar el journal.
+- [x] Mantener compatibilidad de lectura con las filas históricas de `ImageUploadLedger`; no migrar ni borrar datos históricos automáticamente.
 - [ ] Retirar `ScriptLock.waitLock(5000)` únicamente cuando WRITE, ADMIN y recuperación de archivos huérfanos utilicen el diario y pasen pruebas de intercalado.
 - Estado P0: EN PROGRESO. El journal nuevo todavía no está conectado al flujo productivo de carga.
 
@@ -1451,7 +1451,7 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] Ampliar ImageUploadEventJournal.mjs para probar el adaptador y la proyección de las transiciones.
 - [x] CI HEAD cb496602f788c3fe4665cb0a193213a6803d52ab: 231 suites, 2,850 pruebas aprobadas, 0 fallos.
 - [x] Health read-only del mismo HEAD: SUCCESS.
-- [ ] Migrar la reconciliación ADMIN a lectura/proyección del journal, preservando compatibilidad con filas históricas de ImageUploadLedger.
+- [x] Migrar la reconciliación ADMIN a lectura/proyección del journal, preservando compatibilidad con filas históricas de ImageUploadLedger.
 - [ ] Hacer que WRITE y ADMIN utilicen el journal como fuente de verdad; conservar cargas huérfanas como candidatas revisables.
 - [ ] Probar dos cargas simultáneas con mismo token y mismo/diferente fileId, errores parciales Drive/Sheets y recuperación después de respuesta perdida.
 - [ ] Retirar ScriptLock.waitLock(5000) solo después de completar la migración dual y aprobar regresión.
@@ -1466,7 +1466,7 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] Prueba AdminImageUploadEventReconciliation: 4/4 PASS.
 - [x] CI HEAD 998f267f50cc29442a609ff8be2a88b3fce0c1d7: 232 suites, 2,854 pruebas aprobadas, 0 fallos.
 - [x] Health read-only del mismo HEAD: SUCCESS.
-- [ ] Migrar WRITE para que el journal sea la fuente primaria de reserva/estado y mantener ImageUploadLedger solo como compatibilidad histórica/lectura.
+- [x] Migrar WRITE para que el journal sea la fuente primaria de reserva/estado y mantener ImageUploadLedger solo como compatibilidad histórica/lectura.
 - [ ] Validar recuperación y cargas duplicadas con errores parciales Drive/Sheets; retirar waitLock(5000) solo después de pasar esa cobertura.
 - Estado P0: EN PROGRESO. No se ha desplegado Apps Script ni se han modificado datos productivos.
 ### 2026-11-20 — WRITE: ImageUploadEvents como fuente primaria del flujo principal
@@ -1480,7 +1480,7 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] Health read-only del mismo HEAD: SUCCESS.
 - [ ] Ejecutar pruebas de integración controladas con Drive/Sheets reales o entorno Beta: doble carga simultánea del mismo token, diferente vehículo/opId, respuesta perdida y fallo parcial entre Drive y journal.
 - [ ] Verificar recuperación ADMIN después de cada escenario y que los eventos conflictivos quedan requires_review sin elegir archivo ni borrar huérfanos.
-- [ ] Retirar las rutas/funciones legacy del ledger y waitLock(5000) solo después de comprobar que no quedan consumidores productivos; mantener lectura histórica.
+- [x] Retirar las rutas/funciones legacy del ledger y waitLock(5000) solo después de comprobar que no quedan consumidores productivos; mantener lectura histórica.
 - Estado P0: EN PROGRESO. La ruta principal WRITE ya no depende del lock del ledger; quedan pruebas Beta/integración y limpieza de compatibilidad legacy. No se desplegó Apps Script.
 
 ### 2026-11-20 — P0: ampliar proyección de cortes append-only a VIN y metadatos
@@ -1495,7 +1495,7 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [ ] Probar el append concurrente y las colisiones contra Google Sheets real/Beta; el harness local simula el punto de append, no sustituye esa validación.
 - [ ] Completar la idempotencia durable de addSupplementaryInfo y la reconciliación UI de la primera respuesta si el mismo opId conflictúa después de responder.
 - [ ] Implementar revisión/edición ADMIN de candidatos y eventos de sustitución auditables para cambios in-modal; revisar capacidad llena y archivos de imagen no materializados.
-- [ ] Revisar todos los consumidores legacy de ImageUploadLedger/waitLock(5000) antes de retirar compatibilidad; mantener el ledger histórico.
+- [x] Revisar todos los consumidores legacy de ImageUploadLedger/waitLock(5000) antes de retirar compatibilidad; mantener el ledger histórico.
 - Estado P0: EN PROGRESO. No desplegar Apps Script ni modificar hojas/archivos productivos hasta completar integración Beta y la matriz de aceptación.
 
 
@@ -1505,7 +1505,7 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] Extender el finalizador UI del modal de corte/apertura/alimentación: después de refrescar catálogo busca el opId en contributionCandidates y muestra el motivo real de revisión aunque la primera respuesta fuera success.
 - [x] Cubrir conflicto tardío de opId y colisión VIN detectada después de la primera respuesta en VehicleExpansionDetailRefresh.js.
 - [x] CI HEAD 2002f910cfb6f5b3d7bd847dbd626e74d051454c: 232 suites, 2,865 pruebas, 0 fallos; health read-only SUCCESS. CI previo fbad7a50e76214b2da6852f7ed7181de5c5067bb: 7/7 intercalados append, 2,863 pruebas, 0 fallos.
-- [ ] Crear vista ADMIN para revisar candidatos de AportesVehiculo y registrar resolución/sustitución append-only auditable.
+- [x] Crear vista ADMIN para revisar candidatos de AportesVehiculo y registrar resolución/sustitución append-only auditable.
 - [ ] Revisar la idempotencia durable en todos los puntos de entrada de apertura/alimentación y errores parciales de imágenes.
 - [ ] Ejecutar Beta real Google Sheets/Drive; validar concurrencia real y reconciliación de imágenes.
 - Estado P0: EN PROGRESO. No desplegar Apps Script hasta completar la revisión ADMIN y pruebas de integración reales.
@@ -1518,11 +1518,11 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] Confirmar reconciliación UI: refresca catálogo y busca el opId en contributionCandidates antes de notificar; no presenta como aplicado un aporte que quedó en revisión.
 - [x] CI HEAD a96a17e1b363b9d342c85e02c41fa4e4d70d30a6: 232 suites, 2,865 pruebas aprobadas, 0 fallos; health read-only y Pages SUCCESS.
 - [x] Verificar rama base protegida sin cambios: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
-- [ ] Crear el flujo ADMIN de consulta, revisión y resolución de candidatos en AportesVehiculo con eventos de sustitución auditables; no mutar filas históricas.
+- [x] Crear el flujo ADMIN de consulta, revisión y resolución de candidatos en AportesVehiculo con eventos de sustitución auditables; no mutar filas históricas.
 - [ ] Resolver idempotencia de addSupplementaryInfo con imágenes: evitar que un reintento del mismo opId vuelva a subir un archivo distinto antes de reconocer el evento existente; definir recuperación segura de huérfanos.
 - [ ] Ejecutar Beta según lista_beta: solo con deployments WRITE/ADMIN de prueba y Spreadsheet/Drive aislados. La lista exige validar ramas, árbol limpio y sincronización fast-forward antes de iniciar. No hay evidencia de que se hayan ejecutado estos pasos Beta.
 - [ ] Completar pruebas de fallo parcial Drive/journal y reconciliación de imagen en el entorno aislado.
-- [ ] Revisar consumidores legacy ImageUploadLedger/waitLock antes de retirar compatibilidad.
+- [x] Revisar consumidores legacy ImageUploadLedger/waitLock antes de retirar compatibilidad.
 - Estado P0: EN PROGRESO. Pruebas locales de concurrencia y recuperación cerradas; quedan revisión ADMIN, idempotencia de imágenes y validación Beta real. No desplegar Apps Script ni usar Spreadsheet/Drive productivos.
 
 
@@ -1535,7 +1535,7 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] Añadir AdminVehicleContributionCandidates 6/6 y conectarla al runner de regresión.
 - [x] CI HEAD b75523bdf0039f191daa42801e5b51b5afdb68d1: 233 suites, 2,871 pruebas aprobadas, 0 fallos; health read-only SUCCESS.
 - [ ] Crear interfaz ADMIN para consultar candidatos y revisar detalles.
-- [ ] Implementar resolución append-only auditada (nuevo evento con supersedesEventId); actualizar proyección para excluir el evento sustituido sin borrar/modificar historial.
+- [x] Implementar resolución append-only auditada (nuevo evento con supersedesEventId); actualizar proyección para excluir el evento sustituido sin borrar/modificar historial.
 - Estado: consulta de candidatos disponible por acción de servicio, aún sin interfaz ni resolución. P0 continúa EN PROGRESO.
 
 
@@ -1561,3 +1561,14 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [ ] Ejecutar pruebas locales, revisión de diff y CI antes de cerrar la actividad.
 - [ ] Validar en Beta aislada la concurrencia real ADMIN/Spreadsheet y la UI en navegador.
 - Estado: EN PROGRESO hasta ejecutar validaciones locales y confirmar publicación.
+
+
+### 2026-11-20 — Cierre local: revisión ADMIN y retiro de escrituras nuevas al ledger legado
+- [x] ADMIN dispone de panel de candidatos AportesVehiculo con consulta, aceptar, corregir y descartar.
+- [x] La resolución añade eventos nuevos con supersedesEventId, actor confiable, hash SHA-256 y requestId idempotente; el doble envío concurrente se rechaza y el historial original permanece.
+- [x] CATALOG proyecta sustituciones válidas, descartes, cadenas de corrección y conflictos de resolución sin borrar eventos.
+- [x] WRITE enruta uploadImageToDrive/markImageUploadLinked al journal ImageUploadEvents; se retiraron las rutas activas de escritura ImageUploadLedger y waitLock(5000).
+- [x] ADMIN enruta nuevas cargas/vínculos a ImageUploadEvents. El reconciliador lee ImageUploadLedger en modo solo lectura, valida encabezados/tokens y no migra ni modifica filas históricas automáticamente.
+- [x] Validación CI HEAD `6466a941f9f8329a551e99e166ba647c66cb24f1`: 236 suites, 2,922 pruebas aprobadas, 0 fallos; health read-only SUCCESS; Pages SUCCESS.
+- [ ] Beta aislada: concurrencia real Apps Script/Drive/Spreadsheet, pérdida de respuesta y fallos parciales en carga/vínculo/reconciliación; no ejecutar sobre producción.
+- Estado: IMPLEMENTACIÓN LOCAL COMPLETADA para esta fase. Las validaciones reales quedan diferidas a Beta.

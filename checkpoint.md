@@ -1147,3 +1147,14 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Implementación: acción ADMIN de resolución append-only, idempotencia por requestId, bloqueo de doble resolución, proyección CATALOG con supersedesEventId y panel UI de consulta/aceptar/corregir/descartar.
 - No se modifican filas históricas. accepted sustituye el payload original; retracted descarta el aporte. La proyección solo respeta una sustitución única con actor confiable, mismo vehículo y tipo.
 - Pendiente inmediato: ejecutar pruebas locales, revisar diff y CI; validar en Beta la concurrencia real Apps Script/Spreadsheet y UI en navegador aislado. No desplegar servicios ni modificar datos productivos.
+
+
+## Checkpoint — ADMIN aportes y retiro de escrituras nuevas ImageUploadLedger (2026-11-20)
+
+- HEAD: `6466a941f9f8329a551e99e166ba647c66cb24f1`, rama `GPSpedia2.2.5_work`. Rama base protegida `GPSpedia2.2.5` verificada en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin cambios.
+- ADMIN: panel de candidatos AportesVehiculo con aceptar/corregir/descartar; resolución append-only mediante supersedesEventId, actor, hash SHA-256 y requestId idempotente. CATALOG excluye la versión sustituida, conserva historial y marca conflictos de resoluciones simultáneas. Correcciones encadenadas soportadas.
+- WRITE: nuevas cargas y vínculos usan ImageUploadEvents por defecto; se eliminaron del servicio WRITE las rutas legacy de escritura ImageUploadLedger y waitLock(5000).
+- ADMIN: uploadImageToDrive/markImageUploadLinked usan ImageUploadEvents; el reconciliador de ImageUploadLedger lee y valida el ledger histórico en solo lectura, sin migrarlo ni modificarlo automáticamente.
+- CI: 236 suites, 2,922 pruebas aprobadas, 0 fallos. Health read-only SUCCESS y Pages SUCCESS.
+- Pendiente local prioritario: versionado por campo y edición in-modal del Desarrollador; integrar cortes/VIN/vehicleData en el flujo append-only y eliminar persistencia suplementaria por rango.
+- Pendiente Beta: concurrencia real Apps Script/Drive/Spreadsheet, pérdida de respuesta y fallos parciales; panel ADMIN en navegador aislado. No se desplegaron servicios Apps Script ni se modificaron datos productivos.

@@ -1368,3 +1368,11 @@ Se implementó agrupación de resultados de Cortes por categoría/marca/modelo, 
 - Se incorporó panel Desarrollador para consultar candidatos, aceptar, corregir payload JSON o descartar; el contenido se renderiza con nodos DOM/textContent.
 - Archivos: JS/Services/admin.js, JS/Services/catalog.js, JS/Frontend/api-config.js, JS/Frontend/ui.js, index.html, JS/Tests/VehicleContributionProjection.mjs y JS/Tests/RunServiceTests.mjs.
 - Validación local y CI pendientes al momento de registrar este cambio.
+
+
+2026-11-20 — ImageUploadEvents y revisión ADMIN append-only
+- WRITE: uploadImageToDrive y markImageUploadLinked usan el journal ImageUploadEvents por defecto; se retiraron helpers/rutas de escritura ImageUploadLedger y la espera waitLock(5000). Las filas históricas permanecen disponibles en ADMIN.
+- ADMIN: nuevas cargas y vínculos usan ImageUploadEvents con reserva, pending, linked, validación de metadatos y recuperación file_missing. El reconciliador legacy abre ImageUploadLedger en solo lectura, valida encabezados/tokens y no migra ni reescribe registros históricos automáticamente.
+- ADMIN de AportesVehiculo: panel de revisión y acciones aceptar/corregir/descartar; resolución append-only con supersedesEventId, actor confiable, SHA-256, idempotencia requestId y protección contra doble resolución. CATALOG soporta correcciones encadenadas y conflictos explícitos.
+- Pruebas CI HEAD 6466a941f9f8329a551e99e166ba647c66cb24f1: 236 suites, 2,922 pruebas, 0 fallos; health read-only y Pages SUCCESS.
+- Pendiente: integración real Beta aislada para concurrencia Drive/Sheets, fallos parciales, respuesta perdida y revisión visual del panel.

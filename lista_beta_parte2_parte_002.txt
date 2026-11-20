@@ -1026,3 +1026,29 @@ Esta adenda separa el estado del código/pruebas automatizadas de la validación
 
 **Estado de validación:** la regresión de servicios, health read-only y Pages del HEAD bd47210d1bb8cf30bafe4261dc4d9370613d8ee2 finalizaron SUCCESS (runs 44542583589, 44542583925 y 44542583372). La regresión automatizada no sustituye los pasos manuales de Beta enumerados en cada hallazgo.
 ================================================================================
+
+
+================================================================================
+AUG-159 — VALIDACIÓN BETA DE APORTES VEHICULARES Y RESOLUCIÓN ADMIN APPEND-ONLY
+**Estado: PENDIENTE DE EJECUCIÓN EN BETA AISLADA.**
+- Preparar deployments Beta compatibles de WRITE, CATALOG y ADMIN sobre una Spreadsheet y Drive desechables; no usar endpoints ni datos productivos.
+- Crear dos cuentas de prueba con permisos distintos y dos vehículos distintos. Enviar aportes simultáneos desde el botón + del modal y comprobar que las operaciones de vehículos diferentes no comparten opId ni se bloquean entre sí.
+- Para el mismo vehículo, enviar simultáneamente dos cortes, dos aperturas y dos alimentaciones con opId distintos; comprobar asignación de slots, conflicto localizado y preservación de la imagen no materializada como candidata.
+- Repetir el mismo opId/hash y confirmar que devuelve el mismo evento/archivo; reutilizar el opId con contenido distinto y confirmar rechazo sin crear otro archivo.
+- En ADMIN, consultar candidatos, aceptar, corregir y descartar. Confirmar que cada resolución añade una fila con supersedesEventId, actor y hash; el evento original permanece intacto.
+- Enviar dos resoluciones simultáneas del mismo candidato con requestId diferentes; una debe prevalecer y la otra debe recibir conflicto explícito sin añadir una segunda resolución válida.
+- Probar correcciones encadenadas, pérdida de respuesta tras append, fallos entre reserva/Drive/pending/linked, archivo ausente, dos archivos con el mismo token y reconciliación posterior.
+- Confirmar que ImageUploadLedger histórico se puede consultar y reconciliar en modo lectura; ninguna prueba debe migrar, reescribir ni borrar automáticamente sus filas.
+- Registrar evidencia por evento/archivo sin exponer tokens, secretos ni datos personales. No eliminar archivos dudosos.
+================================================================================
+
+================================================================================
+AUG-160 — VALIDACIÓN BETA DE CARGAS ADMIN Y JOURNAL ImageUploadEvents
+**Estado: PENDIENTE DE EJECUCIÓN EN BETA AISLADA.**
+- Probar uploadImageToDrive y markImageUploadLinked desde las rutas ADMIN de edición in-modal; confirmar que las nuevas cargas escriben exclusivamente en ImageUploadEvents.
+- Inyectar fallo después de reservar, después de crear el archivo, después de escribir pending y antes/después de linked; comprobar que cada estado se recupera sin crear duplicados.
+- Simular respuesta perdida tras crear archivo y tras anexar linked; repetir el request y comprobar reutilización del fileId.
+- Probar file_missing con archivo recuperado, descripción Drive no verificable, MIME/carpeta/hash distintos y más de un fileId por token; confirmar requires_review y no borrar archivos.
+- Verificar que el reconciliador histórico no modifica ImageUploadLedger y que los eventos nuevos no se confunden con tokens históricos.
+- No ejecutar contra Drive/Spreadsheet productivos ni desplegar sin autorización expresa.
+================================================================================
