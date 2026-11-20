@@ -747,3 +747,12 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Limitación de entorno: no hay checkout local completo; por tanto, `RunServiceTests.mjs` integral no se pudo ejecutar localmente. El harness aislado no se presenta como ejecución del runner oficial.
 - GitHub Actions no reporta todavía checks ni ejecuciones asociados al HEAD verificado. La regresión integral se solicitará mediante el commit documental de esta actualización; mantener abierta la tarea hasta comprobar el resultado real.
 - Estado: EN PROGRESO — prueba focalizada aislada aprobada; regresión integral/CI pendiente. No se desplegó Apps Script ni se modificaron hojas/Drive productivos.
+
+
+## Cierre — recuperación legacy ADMIN por snapshot (2026-11-20)
+- La prueba focalizada oficial `AdminLegacyOpIdSnapshotReuse.mjs` aprobó 10/10 dentro de `RunServiceTests.mjs`.
+- CI `44763121682` SUCCESS sobre HEAD `7c5a25ee4dcd6a568b632aa6737eb3b8436ee1db`: 220 suites, 2,733 pruebas aprobadas, 0 fallos; parsing de módulos requeridos PASS.
+- Health read-only `44763121560` SUCCESS. Pages `44763122319` quedó en cola al momento de esta actualización; no es criterio para la validación lógica de esta tarea.
+- Diff de implementación ya registrado en `902867481b565adf6dcf709ba4d969f7e850c4b5` y `919e579e295d3debb30871eef3d30a1966be1073`; test y runner incorporados en commits posteriores. La actualización documental de validación está en `7c5a25ee4dcd6a568b632aa6737eb3b8436ee1db`.
+- Estado de la subactividad: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. La verificación de la ruta real contra Spreadsheet/ScriptLock requiere deployment y entorno Beta autorizado.
+- Siguiente paso de `GP-PERF-ADMIN-CUT-LOCK-01`: inspeccionar el siguiente grupo de lecturas remotas de Sheets dentro de `handleAddOrUpdateCut`, identificar duplicaciones demostrables y probarlas sin mover reservas, revalidaciones ni escrituras atómicas fuera de sus locks.
