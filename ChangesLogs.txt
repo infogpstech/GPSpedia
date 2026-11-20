@@ -1389,3 +1389,13 @@ Se implementó agrupación de resultados de Cortes por categoría/marca/modelo, 
 - Auditoría.txt: se registró hallazgo de severidad alta en handleUploadAdminImage: la ruta in-modal conserva waitLock(2000), ledger mutable AdminImageUploads y escritura directa activeCell.setValue, sin evento vehicle_update ni versión fuente.
 - checkpoint.md: se dejó continuidad en la migración de uploadAdminImage hacia ImageUploadEvents + AportesVehiculo append-only. No se modificó el handler productivo en esta actividad.
 - No hubo despliegue Apps Script ni cambios en datos productivos.
+
+
+2026-11-20 — Cierre local: reemplazo de imágenes ADMIN mediante eventos append-only
+- JS/Services/admin.js: uploadAdminImage usa ImageUploadEvents para reserva/recuperación y AportesVehiculo para registrar vehicle_update; se eliminó la ruta activa de ScriptLock, AdminImageUploads mutable y escritura directa en Cortes.
+- El reemplazo captura expectedCurrentValue/expectedSourceEventId, valida vehículo único, verifica el archivo Drive y reutiliza operationKey. La URL previa se toma de la versión lógica esperada, no de Cortes materializado, que puede ir detrás de la proyección.
+- La transición linked se anexa después del evento de vehículo; los errores parciales conservan el archivo y el journal para requires_review. El historial de imágenes sustituidas conserva idempotencia por opId.
+- handleGetAdminImageUploadStatus consulta la proyección vigente de CATALOG para recuperar valor y eventId fuente; ui.js actualiza adminModalFieldVersions después de confirmar el reemplazo.
+- Pruebas específicas: AdminImageUploadDriveIsolation 7/7, AdminImageUploadLinkedRecoveryIsolation 6/6, AdminImageUploadCompensationIsolation 8/8, ADMIN compensación de reemplazos in-modal 9/9, MutationLockContention 1/1.
+- CI HEAD 9425527a3fb93ddc9256537ff534cea3872e2d7c SUCCESS: 237 suites, 2,942 pruebas aprobadas, 0 fallos; node --check PASS. Health read-only SUCCESS; Pages SUCCESS.
+- Auditoría.txt registra el hallazgo anterior como CORREGIDO LOCALMENTE. Beta AUG-160/AUG-159 y fallos reales Drive/Sheets quedan pendientes en entorno aislado. No se desplegó Apps Script ni se modificaron datos productivos.
