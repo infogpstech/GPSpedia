@@ -7013,6 +7013,31 @@ function updateAdminImageUploadFileState_(file, operationId, contentHash, state,
  * Subir o recuperar de forma idempotente una imagen modificada desde el modal.
  * El ledger AdminImageUploads conserva el estado incluso cuando el campo no tenía URL anterior.
  */
+function getAdminProjectedVehicleFieldSnapshot_(vehicleId, fieldName) {
+    const response = UrlFetchApp.fetch(CATALOG_SERVICE_URL, {
+        method: "post", contentType: "text/plain",
+        payload: JSON.stringify({ action: "getCatalogData", payload: { forceRefresh: true } }),
+        muteHttpExceptions: true, followRedirects: true
+    });
+    const httpStatus = response.getResponseCode();
+    let result;
+    try { result = JSON.parse(response.getContentText()); }
+    catch (error) { throw new Error("CATALOG no devolvió JSON válido al recuperar la versión de imagen (HTTP " + httpStatus + ")."); }
+    if (httpStatus < 200 || httpStatus >= 300 || !result || result.status !== "success" ||
+        !result.data || !Array.isArray(result.data.cortes)) {
+        throw new Error("No se pudo recuperar la proyección vigente del vehículo desde CATALOG.");
+    }
+    const matches = result.data.cortes.filter(vehicle => vehicle && String(vehicle.id || "").trim() === String(vehicleId));
+    if (matches.length !== 1) throw new Error("CATALOG no devolvió un vehículo único para recuperar la versión de imagen.");
+    const vehicle = matches[0];
+    const source = vehicle.contributionSources && vehicle.contributionSources[fieldName];
+    return {
+        value: String(vehicle[fieldName] == null ? "" : vehicle[fieldName]).trim(),
+        eventId: String(source && source.eventId || ""),
+        candidates: Array.isArray(vehicle.contributionCandidates) ? vehicle.contributionCandidates : []
+    };
+}
+
 function handleGetAdminImageUploadStatus(payload, logMessage) {
     const { vehicleId, fieldName, opId } = payload || {};
     const cleanVehicleId = String(vehicleId || "").trim();
@@ -7025,13 +7050,15 @@ function handleGetAdminImageUploadStatus(payload, logMessage) {
     }
     const cutsSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
     if (!cutsSheet || cutsSheet.getLastRow() < 2) throw new Error("No hay registros disponibles en la hoja Cortes.");
-    const row = findUniqueAdminVehicleRow_(cutsSheet, cleanVehicleId);
-    const currentImageUrl = String(cutsSheet.getRange(row, COLS_CORTES[cleanFieldName]).getValue() || "").trim();
+    findUniqueAdminVehicleRow_(cutsSheet, cleanVehicleId);
+    const materializedImageUrl = String(cutsSheet.getRange(findUniqueAdminVehicleRow_(cutsSheet, cleanVehicleId), COLS_CORTES[cleanFieldName]).getValue() || "").trim();
     const eventsSheet = getImageUploadEventsSheetForAdmin_();
-    if (!eventsSheet) return { status: "success", operationStatus: "not_found", currentImageUrl, newImageUrl: "", fileIntegrity: "not_available" };
+    if (!eventsSheet) return { status: "success", operationStatus: "not_found", currentImageUrl: materializedImageUrl, newImageUrl: "", fileIntegrity: "not_available" };
     const operationKey = buildImageUploadOperationKey(operationId, cleanVehicleId, cleanFieldName);
     const entries = findImageUploadEventsByOperationKeyForAdmin_(eventsSheet, operationKey);
-    if (!entries.length) return { status: "success", operationStatus: "not_found", currentImageUrl, newImageUrl: "", fileIntegrity: "not_available" };
+    if (!entries.length) return { status: "success", operationStatus: "not_found", currentImageUrl: materializedImageUrl, newImageUrl: "", fileIntegrity: "not_available" };
+    const currentSnapshot = getAdminProjectedVehicleFieldSnapshot_(cleanVehicleId, cleanFieldName);
+    const currentImageUrl = currentSnapshot.value;
     const tokens = new Set(entries.map(entry => String(entry.values[1] || "").trim()));
     if (tokens.size !== 1) return { status: "success", operationStatus: "requires_review", currentImageUrl, newImageUrl: "", fileIntegrity: "invalid" };
     const projection = projectImageUploadEventsForAdmin_(entries);
@@ -7051,7 +7078,11 @@ function handleGetAdminImageUploadStatus(payload, logMessage) {
         } catch (error) { fileIntegrity = "invalid"; }
     }
     logMessage("Edición In-Modal", "Estado del reemplazo " + operationId + ": " + projection.state + ".");
-    return { status: "success", operationStatus: projection.state, currentImageUrl, newImageUrl, fileIntegrity };
+    return {
+        status: "success", operationStatus: projection.state, currentImageUrl, newImageUrl, fileIntegrity,
+        currentSourceEventId: currentSnapshot.eventId,
+        superseded: !!(newImageUrl && currentImageUrl !== newImageUrl)
+    };
 }
 function handleUploadAdminImageLegacy_(payload, logMessage, modalContext) {
     const { vehicleId, fileData, filename, mimeType, fieldName, opId, expectedCurrentValue, expectedSourceEventId, enforceExpectedCurrentValue } = payload || {};
@@ -7637,8 +7668,9 @@ function handleUploadAdminImage(payload, logMessage, modalContext) {
     const rowValues = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getValues()[0];
     const column = COLS_CORTES[fieldName];
     if (!column) throw new Error("El campo de imagen no tiene una columna válida en Cortes.");
-    const originalUrl = String(sheet.getRange(rowIndex, column).getValue() || "").trim();
-    if (originalUrl !== expectedImageUrl) throw new Error("La imagen cambió desde que se abrió el modal. Actualiza la ficha antes de reemplazarla.");
+    // Cortes es una proyección materializada y puede ir detrás de AportesVehiculo.
+    // La versión esperada y su eventId fuente son la referencia lógica del compare-and-set.
+    const originalUrl = expectedImageUrl;
     if (originalUrl && !extractDriveFileId(originalUrl)) throw new Error("La URL anterior no contiene un ID de Drive reconocible.");
 
     const dataMatch = String(fileData).match(/^data:(image\/[A-Za-z0-9.+-]+);base64,/i);
@@ -7709,7 +7741,7 @@ function handleUploadAdminImage(payload, logMessage, modalContext) {
         logMessage("Edición In-Modal", "Imagen " + operationId + " registrada en AportesVehiculo e ImageUploadEvents.");
         return {
             status: "success", imageUrl: url, currentImageUrl: url, eventId: fieldEvent.eventId,
-            duplicate: fieldEvent.duplicate === true,
+            currentSourceEventId: fieldEvent.eventId, duplicate: fieldEvent.duplicate === true,
             message: "La imagen quedó registrada mediante eventos append-only."
         };
     } catch (error) {
