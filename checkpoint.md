@@ -1105,3 +1105,17 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Pruebas: WriteContributionAppendConcurrency 7/7 (intercalado de VIN entre vehículos distintos); WriteContributionRecovery 9/9; VehicleExpansionDetailRefresh incluye conflicto tardío de opId y VIN. CI 44814069582 SUCCESS: 232 suites, 2,865 pruebas, 0 fallos; health 44814069563 SUCCESS. CI anterior 44813532777: 7/7 append concurrency y 2,863 pruebas, 0 fallos; health SUCCESS.
 - Siguiente tarea: crear un flujo ADMIN para listar, revisar y resolver candidatos de AportesVehiculo mediante eventos append-only de sustitución/resolución con eventId/supersedesEventId, sin mutar eventos históricos ni sobrescribir campos de otros aportes. Después completar auditoría de idempotencia/fallos parciales y planificar integración Beta de Sheets/Drive real.
 - P0 sigue EN PROGRESO. No se desplegó Apps Script ni se modificaron hojas/archivos productivos.
+
+
+## Checkpoint — cierre de regresión local de concurrencia y recuperación tardía (2026-11-20)
+
+- HEAD de código/documentación: a96a17e1b363b9d342c85e02c41fa4e4d70d30a6. Rama: GPSpedia2.2.5_work. Rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+- CI de regresión 44814277074 SUCCESS: 232 suites, 2,865 pruebas aprobadas, 0 fallos. Health read-only 44814277229 SUCCESS. Pages 44814275889 SUCCESS.
+- La prueba intercalada WriteContributionAppendConcurrency incluye dos vehículos distintos que anexan el mismo VIN; ambos eventos se conservan, pero la proyección los marca vin_conflict y no aplica ninguno.
+- WriteContributionRecovery cubre checkOperation con evento append-only, hash discordante, conflicto de opId, apertura/alimentación desplazadas, VIN conflictivo detectado tras la primera respuesta y VIN que ya existe en otro vehículo.
+- VehicleExpansionDetailRefresh verifica que la UI refresca el catálogo, localiza el opId en contributionCandidates y comunica el motivo de revisión en vez de un éxito engañoso.
+- La regresión está cerrada localmente para estos escenarios. No equivale a una validación de Apps Script real.
+- La lista Beta sigue siendo requisito para integración: deployments WRITE y ADMIN de prueba, Spreadsheet aislada y Drive de prueba; la lista indica expresamente no cambiar api-config.js a endpoints de prueba ni invocar URLs operativas. No se dispone de evidencia de ejecución de esa matriz.
+- Siguiente tarea de código: flujo ADMIN para listar/revisar/resolver candidatos con eventos append-only auditables y soporte de supersedesEventId en la proyección; no editar ni borrar eventos existentes.
+- Siguiente corrección de idempotencia: addSupplementaryInfo prepara/sube imágenes antes de appendVehicleContributionEvent_. Un reintento tras respuesta perdida puede crear otro archivo Drive antes de detectar el opId existente. Diseñar una reserva durable de operación/hash antes de subir y reanudar con el mismo recurso, sin marcar huérfanos como vinculados.
+- P0 permanece EN PROGRESO. No desplegar Apps Script ni tocar datos productivos.

@@ -1337,3 +1337,11 @@ Se implementó agrupación de resultados de Cortes por categoría/marca/modelo, 
 - UI refresca catálogo antes de notificar y comunica candidatos asociados al opId aunque el conflicto se haya detectado después de la primera respuesta.
 - Pruebas: WriteContributionAppendConcurrency 7/7; WriteContributionRecovery 9/9; VehicleExpansionDetailRefresh amplía cobertura de conflictos tardíos. CI 44814069582: 232 suites, 2,865 pruebas, 0 fallos; health SUCCESS.
 - Pendiente: vista ADMIN y resolución append-only auditable; integración Beta real de Sheets/Drive. P0 sigue EN PROGRESO.
+
+
+2026-11-20 — P0: cierre de regresión local de concurrencia y recuperación tardía
+- Confirmado harness intercalado de VIN duplicado entre vehículos: ambos eventos se conservan como candidatos y ninguno se proyecta.
+- checkOperation y UI recuperan y comunican candidatos/conflictos tardíos.
+- CI a96a17e1b363b9d342c85e02c41fa4e4d70d30a6: 232 suites, 2,865 pruebas, 0 fallos; health read-only y Pages SUCCESS.
+- Pendiente: revisión/resolución ADMIN append-only, idempotencia de uploads suplementarios, Beta con servicios y datos aislados, fallos parciales Drive/journal y consumidores legacy.
+- Sin despliegue Apps Script ni cambios en datos productivos.

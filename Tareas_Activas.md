@@ -1509,3 +1509,18 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [ ] Revisar la idempotencia durable en todos los puntos de entrada de apertura/alimentación y errores parciales de imágenes.
 - [ ] Ejecutar Beta real Google Sheets/Drive; validar concurrencia real y reconciliación de imágenes.
 - Estado P0: EN PROGRESO. No desplegar Apps Script hasta completar la revisión ADMIN y pruebas de integración reales.
+
+
+### 2026-11-20 — P0: cierre de pruebas locales de concurrencia y recuperación tardía
+
+- [x] Confirmar el intercalado realista del harness local para dos aportes de vehículos diferentes con el mismo VIN: ambos append se conservan, ambos eventos quedan como candidatos vin_conflict y ninguno se proyecta.
+- [x] Confirmar checkOperation para recuperación de eventos append-only, candidatos por capacidad y conflictos VIN que aparecen después de la primera respuesta.
+- [x] Confirmar reconciliación UI: refresca catálogo y busca el opId en contributionCandidates antes de notificar; no presenta como aplicado un aporte que quedó en revisión.
+- [x] CI HEAD a96a17e1b363b9d342c85e02c41fa4e4d70d30a6: 232 suites, 2,865 pruebas aprobadas, 0 fallos; health read-only y Pages SUCCESS.
+- [x] Verificar rama base protegida sin cambios: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- [ ] Crear el flujo ADMIN de consulta, revisión y resolución de candidatos en AportesVehiculo con eventos de sustitución auditables; no mutar filas históricas.
+- [ ] Resolver idempotencia de addSupplementaryInfo con imágenes: evitar que un reintento del mismo opId vuelva a subir un archivo distinto antes de reconocer el evento existente; definir recuperación segura de huérfanos.
+- [ ] Ejecutar Beta según lista_beta: solo con deployments WRITE/ADMIN de prueba y Spreadsheet/Drive aislados. La lista exige validar ramas, árbol limpio y sincronización fast-forward antes de iniciar. No hay evidencia de que se hayan ejecutado estos pasos Beta.
+- [ ] Completar pruebas de fallo parcial Drive/journal y reconciliación de imagen en el entorno aislado.
+- [ ] Revisar consumidores legacy ImageUploadLedger/waitLock antes de retirar compatibilidad.
+- Estado P0: EN PROGRESO. Pruebas locales de concurrencia y recuperación cerradas; quedan revisión ADMIN, idempotencia de imágenes y validación Beta real. No desplegar Apps Script ni usar Spreadsheet/Drive productivos.
