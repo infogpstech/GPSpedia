@@ -62,9 +62,9 @@ test("lectura dirigida devuelve null si no existe el opId",()=>{
  assert.equal(reader(h.sheet,"OP-1"),null);
  assert.deepEqual(h.calls,[[2,1,1,1]]);
 });
-test("findRowByOpId reutiliza snapshot y no vuelve a leer el ledger",()=>{
+test("findRowByOpId reutiliza snapshot bajo lock y revalida tras reacquirirlo",()=>{
  const code=sliceFunction("findRowByOpId");
- let fullReads=0;
+ let fullReads=0,targetedReads=0;
  const entry={opId:"OP-1",vehicleId:"42",slotIndex:1,timestamp:"fecha",status:"pending",operationHash:"a".repeat(64),rowIndex:2};
  const snapshot={entries:[entry],byOpId:new Map([["OP-1",entry]]),sheet:{}};
  const updateSnapshot=new Function(updateCode+"\nreturn updateIdempotenciaEntriesSnapshot_;")();
@@ -74,10 +74,16 @@ test("findRowByOpId reutiliza snapshot y no vuelve a leer el ledger",()=>{
   ()=>{throw Error("getSpreadsheet inesperado");},{CORTES:"Cortes"},
   (sheet,vehicleId,opId)=>({rowIndex:2,rowValues:Array(37).fill("").map((v,i)=>i===0?vehicleId:i===36?"fecha":"")}),
   {colaboradorCorte1:18,timestamp:37},value=>String(value),
-  ()=>currentEntry,updateSnapshot
+  ()=>{targetedReads++;return currentEntry;},updateSnapshot
  );
- const result=find({}, "OP-1",snapshot);
- assert.equal(result.fromIdempotenciaSheet,true);assert.equal(result.vehicleId,"42");assert.equal(fullReads,0);
+ const initial=find({}, "OP-1",snapshot,false);
+ assert.equal(initial.fromIdempotenciaSheet,true);assert.equal(initial.vehicleId,"42");
+ assert.equal(targetedReads,0,"La búsqueda inicial no debe volver a consultar el ledger bajo el mismo lock");
+ const afterDrive=find({}, "OP-1",snapshot);
+ assert.equal(afterDrive.fromIdempotenciaSheet,true);assert.equal(targetedReads,1,"La revalidación por defecto debe seguir activa después de reacquirir el lock");
+ assert.equal(fullReads,0);
+ const changed={...entry,vehicleId:"99"};currentEntry=changed;
+ assert.throws(()=>find({}, "OP-1",snapshot),/cambió durante la recuperación/,"Debe rechazar cambios del ledger tras la liberación del lock");
 });
 function makeRecordHarness(initialRows=[]){
  const rows=initialRows.map(row=>row.slice()),counts={targeted:0,full:0,flush:0,statusWrites:0};
@@ -154,6 +160,8 @@ test("handler ADMIN comparte una lectura integral y revalida por opId dirigido",
  const findCalls=handler.match(/findRowByOpId\([^\n]+/g)||[];
  assert.ok(recordCalls.length>=5&&recordCalls.every(line=>line.includes("idempotencyEntriesSnapshot")));
  assert.ok(findCalls.length>=4&&findCalls.every(line=>line.includes("idempotencyEntriesSnapshot")));
+ assert.ok(handler.includes("findRowByOpId(sheet, opId, idempotencyEntriesSnapshot, false)"),"La primera recuperación debe reutilizar el snapshot bajo el mismo lock");
+ assert.ok((handler.match(/findRowByOpId\(sheet, opId, idempotencyEntriesSnapshot\)/g)||[]).length>=3,"Los callbacks y la reconciliación deben conservar la revalidación por defecto");
  assert.match(source,/function markAdminCutImagesLinkedOutsideLock_\([^\n]*entriesSnapshot/);
  assert.match(source,/findRowByOpId\(sheet, cleanOpId, entriesSnapshot\)/);
 });
