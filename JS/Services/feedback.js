@@ -3972,8 +3972,19 @@ function findTutorialById_(sheet, tutorialId) {
     const id = String(tutorialId || "").trim();
     const lastRow = sheet ? sheet.getLastRow() : 0;
     if (!id || lastRow < 2) return null;
-    const candidates = sheet.getRange(2, 1, lastRow - 1, 1)
-        .createTextFinder(id).matchCase(false).findAll();
+    const idRange = sheet.getRange(2, 1, lastRow - 1, 1);
+    let candidates = [];
+    if (idRange && typeof idRange.createTextFinder === "function") {
+        candidates = idRange.createTextFinder(id).matchCase(false).findAll();
+    } else {
+        // Compatibilidad con adaptadores/mocks antiguos: fallback limitado a la columna ID.
+        const idValues = idRange.getValues();
+        idValues.forEach((value, index) => {
+            if (String(value[0] || "").toLowerCase().includes(id.toLowerCase())) {
+                candidates.push({ getRow: () => index + 2 });
+            }
+        });
+    }
     const matches = [];
     candidates.forEach(candidate => {
         const rowIndex = candidate.getRow();
