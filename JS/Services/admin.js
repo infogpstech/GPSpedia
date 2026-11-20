@@ -10406,7 +10406,7 @@ function handleRecoverReplacedImage(payload, logMessage) {
         }
         logMessage&&logMessage("Imágenes Reemplazadas","Imagen histórica restaurada para el vehículo '"+registroId+"', campo '"+campo+"'.");
         return {status:"success",message:"La imagen histórica quedó activa y la versión anterior se conservó en el historial.",restoredUrl:urlHistorica,vehicleId:registroId,fieldName:campo,catalogChanged:currentActiveUrl!==urlHistorica};
-    }finally{lock.releaseLock();}
+    }finally{if(typeof lock.hasLock!=="function"||lock.hasLock())lock.releaseLock();}
 }
 function recordImageAdministrationActivity(developerContext, activityType, associatedId, details) {
     try {
