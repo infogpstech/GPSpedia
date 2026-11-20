@@ -165,6 +165,7 @@ runGroup('33','FEEDBACK',()=>{
   runCli('FEEDBACK replay de reportes antes de Drive y lock','JS/Tests/FeedbackReportPreflightOutsideLock.mjs');
   runCli('FEEDBACK replay de tutorial antes del lock','JS/Tests/FeedbackTutorialPreflightOutsideLock.mjs');
   runCli('FEEDBACK lookup dirigido de tutoriales','JS/Tests/FeedbackTutorialLookupBoundedRead.mjs');
+  runCli('FEEDBACK lookup dirigido de aprobaciones de vídeo','JS/Tests/FeedbackPendingVideoLookupBoundedRead.mjs');
   runCli('FEEDBACK búsqueda dirigida de sugerencias','JS/Tests/FeedbackSuggestionLookupBoundedRead.mjs');
   runCli('FEEDBACK replay de sugerencias antes de Drive y lock','JS/Tests/FeedbackSuggestionPreflightOutsideLock.mjs');
   runCli('FEEDBACK asignador formula-based ID lectura acotada','JS/Tests/FeedbackFormulaIdAllocatorBoundedRead.mjs');
