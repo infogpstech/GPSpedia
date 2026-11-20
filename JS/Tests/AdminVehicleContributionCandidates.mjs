@@ -40,3 +40,19 @@ assert.throws(()=>run({body:{status:"error",data:{}}}),/No se pudo obtener la pr
 assert.throws(()=>run({body:{status:"success",data:{cortes:{}}}}),/No se pudo obtener la proyección vigente/);
 assert.ok(admin.includes("case 'getVehicleContributionCandidates':"),"La acción debe estar registrada en el router ADMIN");
 console.log("AdminVehicleContributionCandidates: 6/6 PASS — proyección actual, límites, orden, errores y router");
+
+const adminUi = readFileSync(new URL("../Frontend/ui.js", import.meta.url), "utf8");
+const imagePreviewStart = adminUi.indexOf("const candidateImageUrl=");
+const imagePreviewEnd = adminUi.indexOf("const editor=document.createElement(\"textarea\")", imagePreviewStart);
+assert.ok(imagePreviewStart >= 0 && imagePreviewEnd > imagePreviewStart, "La tarjeta ADMIN debe inspeccionar imágenes del candidato antes de mostrar el editor");
+const imagePreview = adminUi.slice(imagePreviewStart, imagePreviewEnd);
+assert.match(imagePreview, /candidatePayload\.image/);
+assert.match(imagePreview, /candidatePayload\.fieldName/);
+assert.match(imagePreview, /https:\\/\\/drive\\.google\\.com\\/file\\/d\\//);
+assert.match(imagePreview, /image\.src=candidateImageUrl/);
+assert.match(imagePreview, /imageLink\.target="_blank"/);
+assert.match(imagePreview, /imageLink\.rel="noopener noreferrer"/);
+assert.match(imagePreview, /image\.referrerPolicy="no-referrer"/);
+assert.match(adminUi, /if\(imagePreview\)card\.appendChild\(imagePreview\)/);
+console.log("AdminVehicleContributionCandidateImagePreview: 8/8 PASS — candidatos conservan vista previa y enlace seguro de imagen");
+
