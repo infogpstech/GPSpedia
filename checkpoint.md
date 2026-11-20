@@ -636,3 +636,10 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Pruebas locales aisladas ejecutadas contra el código fuente recuperado: `CortesImageReconciliationApply.mjs` 18/18 PASS; `CortesImageReconciliation.mjs` 34/34 PASS. Parsing del módulo completo `admin.js` con runtime V8 PASS. No se ejecutó `RunServiceTests.mjs` completo ni Node sobre un checkout local: el clon HTTPS no pudo resolver `github.com`; se usó ejecución dinámica aislada de los tests y CI remoto posterior al commit para completar la regresión.
 - El preview integral permanece bajo ScriptLock porque combina snapshot de destinos, referencias y ACL; moverlo requiere una revalidación equivalente. No se introduce lease ni se debilita la verificación. La medición de contención real queda para Beta autorizada.
 - Sin despliegue Apps Script ni cambios de Spreadsheet/Drive productivos. CI global posterior al commit pendiente.
+
+
+### Validación post-commit — conciliación de imágenes Cortes (2026-11-20)
+- Commit funcional/documental: `3fd8b2d5afedbfcdec0e261cad4690d3257d962c`; padre `2a418d2f3cb634737267aea5ae078fd61cdcfec8`.
+- CI regresión `44708443965` SUCCESS; health de servicios `44708443686` SUCCESS (read-only); Pages `44708443338` SUCCESS.
+- Diff del commit confirmado: únicamente `JS/Services/admin.js`, `JS/Tests/CortesImageReconciliationApply.mjs`, `Tareas_Activas.md`, `checkpoint.md` y `ChangesLogs.txt`.
+- Rama de trabajo verificada en el commit funcional; rama base continúa en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.

@@ -1047,5 +1047,5 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] Tras readquirir con `tryLock(0)`, verificar bajo lock el fingerprint y las dimensiones de la Spreadsheet operativa contra el respaldo antes de leer la auditoría o escribir.
 - [x] Si no se readquiere el lock o la base cambió, abortar antes del preview/escrituras; conservar las validaciones originales y el camino de verificación directa del helper para otros consumidores.
 - [x] `CortesImageReconciliationApply` 18/18 PASS; `CortesImageReconciliation` 34/34 PASS; parsing de `admin.js` PASS en runtime V8 aislado.
-- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. CI global posterior al commit pendiente; no se desplegó Apps Script ni se modificaron datos productivos.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. CI `44708443965` SUCCESS; health read-only `44708443686` SUCCESS; Pages `44708443338` SUCCESS. No se desplegó Apps Script ni se modificaron datos productivos.
 - Nota: el preview completo (snapshot de destinos/referencias, auditoría Drive y ACL) permanece bajo lock; separarlo exige revalidar esos recursos y no se hará por suposición ni sin evidencia de contención. Medir en Beta autorizada antes de ampliar el cambio.
