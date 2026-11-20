@@ -67,4 +67,74 @@ assert.match(detail, /recordVehicleView\(String\(activeItem\.id\), \{[\s\S]*?uti
 assert.doesNotMatch(detail, /await\s+recordVehicleView/);
 assert.doesNotMatch(load, /recordVehicleView|routeAction|getActivityLogs/);
 
+
+function deferred() {
+    let resolve, reject;
+    const promise = new Promise((res, rej) => { resolve = res; reject = rej; });
+    return { promise, resolve, reject };
+}
+function makeHydrationHarness({ historyPromise = Promise.resolve([]), viewedResults = [], ownerCurrent = true } = {}) {
+    const calls = { history: 0, viewed: 0 };
+    const states = [];
+    const timers = [];
+    let activeUser = { ID: "OWNER-1" };
+    const offlineMock = {
+        getSearchHistory(ownerId) { calls.history++; assert.equal(ownerId, "OWNER-1"); return historyPromise; },
+        getViewedItemsResult(ownerId) {
+            calls.viewed++; assert.equal(ownerId, "OWNER-1");
+            const next = viewedResults.shift();
+            return typeof next === "function" ? next() : Promise.resolve(next);
+        }
+    };
+    const load = new Function("setState", "getState", "isCurrentSession", "offline", "setTimeout", "console",
+        load + "\\nreturn loadUserLocalActivity;")(
+        value => states.push(value),
+        () => ({ currentUser: activeUser }),
+        () => ownerCurrent,
+        offlineMock,
+        (callback, delay) => { timers.push({ callback, delay }); return timers.length; },
+        { warn() {} }
+    );
+    return { load, calls, states, timers, setActiveUser(user) { activeUser = user; } };
+}
+{
+    const history = deferred(), viewed = deferred();
+    const harness = makeHydrationHarness({ historyPromise: history.promise, viewedResults: [viewed.promise] });
+    harness.load({ ID: "OWNER-1" });
+    assert.deepEqual(harness.calls, { history: 1, viewed: 1 }, "Las dos lecturas deben comenzar en paralelo y sin duplicarse");
+    assert.deepEqual(harness.states[0], { searchHistory: [], viewedItems: [] });
+    viewed.resolve({ available: true, items: [{ id: "VEH-1", data: { id: "VEH-1" } }] });
+    await Promise.resolve(); await Promise.resolve();
+    assert.ok(harness.states.some(value => Array.isArray(value.viewedItems) && value.viewedItems[0]?.id === "VEH-1"),
+        "El carrusel debe hidratarse sin esperar a que termine el historial de búsqueda");
+    assert.equal(harness.calls.history, 1);
+    assert.equal(harness.calls.viewed, 1);
+}
+{
+    const viewed = deferred();
+    const harness = makeHydrationHarness({ viewedResults: [viewed.promise] });
+    harness.load({ ID: "OWNER-1" });
+    harness.setActiveUser({ ID: "OWNER-2" });
+    viewed.resolve({ available: true, items: [{ id: "OTHER-OWNER" }] });
+    await Promise.resolve(); await Promise.resolve();
+    assert.equal(harness.states.some(value => Array.isArray(value.viewedItems) && value.viewedItems.length), false,
+        "Una respuesta tardía no debe hidratar el historial de otra cuenta");
+}
+{
+    const harness = makeHydrationHarness({ viewedResults: [
+        { available: false, items: [] },
+        { available: true, items: [{ id: "RECOVERED", data: { id: "RECOVERED" } }] }
+    ] });
+    harness.load({ ID: "OWNER-1" });
+    await Promise.resolve(); await Promise.resolve();
+    assert.equal(harness.timers.length, 1);
+    assert.equal(harness.timers[0].delay, 1500);
+    harness.timers[0].callback();
+    await Promise.resolve(); await Promise.resolve();
+    assert.equal(harness.calls.history, 1, "La recuperación no debe volver a consultar historial de búsqueda");
+    assert.equal(harness.calls.viewed, 2, "Solo se repite la lectura local que no estuvo disponible");
+    assert.ok(harness.states.some(value => Array.isArray(value.viewedItems) && value.viewedItems[0]?.id === "RECOVERED"));
+}
+console.log("RecentlyViewedHydrationParallel: 3/3 PASS — paralelismo, IndexedDB no disponible, cambio de propietario y ausencia de lecturas duplicadas");
+
 console.log("1/1 PASS — RecentlyViewedCarousel contract");
