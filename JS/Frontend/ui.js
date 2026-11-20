@@ -13286,7 +13286,7 @@ export function openAddAperturaModal(item) {
                 apertura: content.querySelector("#add-apertura-detalles").value,
                 imgApertura: imgBase64
             });
-            await completeVehicleExpansionSave_(writeResult, item.id, "Apertura agregada con éxito.", modal);
+            await completeVehicleExpansionSave_(writeResult, item.id, writeResult.candidateReviewPending === true ? "La apertura se conservó como candidato para revisión; el dato existente no fue sobrescrito." : "Apertura agregada con éxito.", modal);
         } catch (err) {
             console.error(err);
             showGlobalError("Error: " + err.message);
@@ -13361,7 +13361,7 @@ export function openAddFeedModal(item) {
 
         try {
             const writeResult = await routeAction("addSupplementaryInfo", { ...payload, ...getDeveloperSessionPayload() });
-            await completeVehicleExpansionSave_(writeResult, item.id, "Cable de alimentación agregado con éxito.", modal);
+            await completeVehicleExpansionSave_(writeResult, item.id, writeResult.candidateReviewPending === true ? "La alimentación se conservó como candidato para revisión; no se sobrescribieron los datos existentes." : "Cable de alimentación agregado con éxito.", modal);
         } catch (err) {
             console.error(err);
             showGlobalError("Error: " + err.message);
