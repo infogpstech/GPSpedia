@@ -1421,6 +1421,27 @@ function runSharedMutationCoordinatorTests() {
             "Las publicaciones antiguas de WRITE no deben sobrescribir snapshots versionados.");
     });
 
+    test_("ADMIN lease de creación de carpeta no bloquea Cortes, login ni otras mutaciones Drive", function() {
+        const r = createRuntime_();
+        const admin = r.makeClient("ADMIN");
+        const result = admin.withLease("ADMIN", "createCortesImageFolder", function() {
+            const cuts = admin.withLease("ADMIN", "updateVehicleField", function() { return "CORTES_OK"; });
+            const logo = admin.withLease("ADMIN", "addLogo", function() { return "DRIVE_OK"; });
+            const login = r.makeClient("AUTH").withLease("AUTH", "registerSession", function() { return "LOGIN_OK"; });
+            let sameResourceBlocked = false;
+            try {
+                admin.withLease("ADMIN", "createCortesImageFolder", function() { return "UNEXPECTED"; });
+            } catch (error) {
+                sameResourceBlocked = true;
+            }
+            return { cuts, logo, login, sameResourceBlocked };
+        });
+        assert_(result.cuts === "CORTES_OK" && result.logo === "DRIVE_OK" && result.login === "LOGIN_OK",
+            "La lease de carpeta no debe bloquear operaciones independientes de Cortes, Drive general ni login.");
+        assert_(result.sameResourceBlocked === true,
+            "Dos creaciones de carpeta concurrentes deben serializarse por su recurso específico.");
+    });
+
     const summary = { status: failed === 0 ? "PASS" : "FAIL", passed, failed, results };
     return summary;
 }
