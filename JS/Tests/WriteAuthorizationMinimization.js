@@ -19,24 +19,31 @@ function runWriteAuthorizationMinimizationTests(sources) {
   }
   throw Error("Función incompleta: "+name);
  }
- run("handleAddSupplementaryInfo autentica primero y delega sin lock",()=>{
-  let acquired=0,released=0,delegated=false,rejected=false,authCalls=0;
-  const fn=new Function("getAuthenticatedCollaborator","SUPPLEMENTARY_INFO_ALLOWED_ROLES_","getSpreadsheet","hasSupplementaryValue_","SHEET_NAMES","getWriteContributionLock_","handleAddSupplementaryInfoLocked","createSupplementaryInfoError_",
-   extract(write,"handleAddSupplementaryInfo")+";return handleAddSupplementaryInfo;")(
-   ()=>{authCalls++;return "Nombre servidor";},["tecnico"],()=>({getSheetByName:()=>({})}),()=>false,{CORTES:"Cortes"},
-   ()=>({tryLock(ms){acquired++;return true;},releaseLock(){released++;}}),
-   ()=>{delegated=true;throw Error("persistencia");},(code,message)=>{const error=Error(message);error.code=code;return error;});
-  try{fn({vehicleId:"V1"});}catch(_){rejected=true;}
-  assert(rejected&&delegated&&authCalls===1&&acquired===0&&released===0);
+ run("handleAddSupplementaryInfo registra aportes mediante ledger append-only sin lock",()=>{
+  const start=write.indexOf("function handleAddSupplementaryInfo(payload)");
+  const end=write.indexOf("\\nfunction handleAddSupplementaryInfoLocked",start);
+  assert(start>=0&&end>start,"No se encontró el handler suplementario completo");
+  const outer=write.slice(start,end);
+  const authAt=outer.indexOf("getAuthenticatedCollaborator(payload, SUPPLEMENTARY_INFO_ALLOWED_ROLES_)");
+  const snapshotAt=outer.indexOf("readSupplementaryVehicleSnapshot_");
+  const prepareAt=outer.indexOf("prepareSupplementaryImageUploads_");
+  const appendAt=outer.indexOf("appendVehicleContributionEvent_");
+  assert(authAt>=0&&authAt<snapshotAt&&snapshotAt<prepareAt&&prepareAt<appendAt);
+  assert(outer.includes("opId")&&outer.includes("duplicate: event.duplicate === true"));
+  assert(!/tryLock\\(|waitLock\\(|getWriteContributionLock_\\(|withSharedMutationLease_\\(/.test(outer));
  });
- run("La mutación suplementaria carga imágenes fuera de cualquier lock",()=>{
-  const outer=extract(write,"handleAddSupplementaryInfo"),inner=extract(write,"handleAddSupplementaryInfoLocked");
-  assert(outer.indexOf("getAuthenticatedCollaborator")<outer.indexOf("prepareSupplementaryImageUploads_"));
-  assert(!/tryLock\(|waitLock\(|getWriteContributionLock_\(/.test(outer));
-  assert(inner.includes("buildSupplementaryInfoPlan_")&&inner.includes("persistSupplementaryInfoValues_"));
-  assert(!/uploadImageToDrive|findOrCreateVehicleFolder|DriveApp|tryLock\(|waitLock\(/.test(inner));
- });
- run("WRITE no duplica los esquemas ni la autenticación local de AUTH",()=>{
+ run("La carga suplementaria prepara imágenes y registra el evento sin retener locks",()=>{
+  const outerStart=write.indexOf("function handleAddSupplementaryInfo(payload)");
+  const outerEnd=write.indexOf("\\nfunction handleAddSupplementaryInfoLocked",outerStart);
+  const outer=write.slice(outerStart,outerEnd);
+  const folderStart=write.indexOf("function findOrCreateSupplementaryVehicleFolder_(vehicle)");
+  const folderEnd=write.indexOf("\\nfunction prepareSupplementaryImageUploads_",folderStart);
+  const folder=write.slice(folderStart,folderEnd);
+  assert(outer.indexOf("prepareSupplementaryImageUploads_")<outer.indexOf("appendVehicleContributionEvent_"));
+  assert(!/tryLock\\(|waitLock\\(|getWriteContributionLock_\\(|withSharedMutationLease_\\(/.test(outer));
+  assert(/return findOrCreateVehicleFolder\\(vehicle\\)/.test(folder));
+  assert(!/withSharedMutationLease_/.test(folder));
+ }); run("WRITE no duplica los esquemas ni la autenticación local de AUTH",()=>{
   assert(!write.includes("COLS_USERS")&&!write.includes("COLS_ACTIVE_SESSIONS"));
   assert(!write.includes("ROLE_REVOCATION_SHARED_PREFIX"));
   assert(!write.includes("findUniqueRowsByExactValue_")&&!write.includes("getSessionExpirationStatus_"));
