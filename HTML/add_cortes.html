@@ -362,7 +362,9 @@
     <script type="module">
         // COMPONENT VERSION: 2.1.6
         import { routeAction } from '../JS/Frontend/api-config.js';
-        const sourceInboxItemId = new URLSearchParams(window.location.search).get('sourceInboxItemId') || '';
+        const sourceInboxItemId = typeof window !== 'undefined'
+            ? new URLSearchParams(window.location.search || '').get('sourceInboxItemId') || ''
+            : '';
         async function resolveSourceInboxReport_(itemId, session, candidateReviewPending) {
             const sourceId = String(itemId || '').trim();
             if (!sourceId || candidateReviewPending === true) return false;
