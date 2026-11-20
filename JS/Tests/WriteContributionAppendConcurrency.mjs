@@ -17,7 +17,7 @@ let uuid = 0;
 const Utilities = { getUuid: () => "00000000-0000-4000-8000-" + String(++uuid).padStart(12, "0") };
 const SpreadsheetApp = { flush() {} };
 const runtime = new Function("getSpreadsheet", "Utilities", "SpreadsheetApp",
-    ledgerCode + "\nreturn { append: appendVehicleContributionEvent_ };"
+    ledgerCode + "\nreturn { append: appendVehicleContributionEvent_, candidate: getVehicleContributionCandidateStatus_ };"
 )(() => { throw new Error("Se esperaba spreadsheet explícito"); }, Utilities, SpreadsheetApp);
 
 const headers = ["eventId", "opId", "vehicleId", "operationHash", "kind", "payloadJson",
@@ -68,7 +68,7 @@ function createSheet() {
 function makeRuntime(sheet) {
     const spreadsheet = { getSheetByName: name => name === "AportesVehiculo" ? sheet : null };
     const append = runtime.append;
-    return options => append({ ...options, spreadsheet });
+    return Object.assign(options => append({ ...options, spreadsheet }), { candidate: (snapshot, eventId, kind) => runtime.candidate(spreadsheet, snapshot, eventId, kind) });
 }
 function eventRows(sheet) {
     return sheet.rows.slice(1).map((row, index) => ({
@@ -164,4 +164,36 @@ function cut(vehicleId, opId, tipo, hash) {
     assert.equal(projected.contributionConflictCount, 2);
 }
 
-console.log("WriteContributionAppendConcurrency: 4/4 PASS — intercalado de vehículos, slots, reintentos y conflicto opId");
+{
+    const sheet = createSheet(), append = makeRuntime(sheet);
+    const first = append({
+        vehicleId: "101", opId: "OP-OPEN-1", kind: "opening",
+        payload: { text: "IGN", image: "" }, operationHash: "1".repeat(64)
+    });
+    const second = append({
+        vehicleId: "101", opId: "OP-OPEN-2", kind: "opening",
+        payload: { text: "ACC", image: "" }, operationHash: "2".repeat(64)
+    });
+    const snapshot = { vehicle: { id: "101", apertura: "", imgApertura: "" }, rowValues: [] };
+    assert.equal(append.candidate(snapshot, first.eventId, "opening"), false);
+    assert.equal(append.candidate(snapshot, second.eventId, "opening"), true,
+        "La segunda apertura debe quedar como candidata sin sobrescribir la primera");
+}
+
+{
+    const sheet = createSheet(), append = makeRuntime(sheet), events = [];
+    for (let index = 0; index < 4; index++) {
+        events.push(append({
+            vehicleId: "101", opId: "OP-FEED-" + index, kind: "feed",
+            payload: { text: "12V-" + index, image: "" }, operationHash: String(index + 3).repeat(64)
+        }));
+    }
+    const snapshot = { vehicle: { id: "101", cableAlimen: "", imgCableAlimen: "", cableAlimen2: "", imgCableAlimen2: "", cableAlimen3: "", imgCableAlimen3: "" }, rowValues: [] };
+    assert.equal(append.candidate(snapshot, events[0].eventId, "feed"), false);
+    assert.equal(append.candidate(snapshot, events[1].eventId, "feed"), false);
+    assert.equal(append.candidate(snapshot, events[2].eventId, "feed"), false);
+    assert.equal(append.candidate(snapshot, events[3].eventId, "feed"), true,
+        "La cuarta alimentación debe quedar como candidata cuando los tres slots están ocupados");
+}
+
+console.log("WriteContributionAppendConcurrency: 6/6 PASS — intercalado, idempotencia, conflictos y capacidad de apertura/alimentación");
