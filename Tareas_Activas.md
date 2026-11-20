@@ -51,12 +51,14 @@ La copia archivada fue verificada carácter por carácter contra el original. Es
 
 ## P1 — GP-UX-RECENT-VIEWED-CACHE-PARALLEL-01
 
-**Estado: PENDIENTE DE IMPLEMENTACIÓN LOCAL.**
+**Estado: COMPLETADA LOCALMENTE; aceptación visual Beta diferida.**
 
-- [ ] Verificar si la hidratación local de `viewedItems` termina antes o después del render inicial de los carruseles; no asumir que iniciar una promesa antes de `showApp` garantiza que el carrusel se pinte con datos.
-- [ ] Hidratar vistos desde IndexedDB/cache en paralelo con el resto de la hidratación local y renderizar el carrusel sin esperar historial remoto, búsquedas ni otros carruseles.
-- [ ] Evitar lecturas duplicadas y renderizados completos; conservar aislamiento por ownerId/sesión, orden, estados vacíos/offline y protección ante cambio de cuenta.
-- [ ] Añadir pruebas de orden de hidratación, IndexedDB lento/no disponible, sesión cambiada y ausencia de consultas duplicadas.
+- [x] Verificado: `handleLoginSuccess` inicia `loadUserLocalActivity(user)` antes de `showApp(user)`; las lecturas IndexedDB de búsqueda y vistos se inician de forma independiente, sin `await` ni `Promise.all` que bloquee la aplicación.
+- [x] `loadViewedItems` hidrata el carrusel por ownerId, no espera al historial de búsqueda, reintenta solo la lectura local no disponible y valida sesión/propietario antes de aplicar una respuesta tardía.
+- [x] El cambio de `viewedItems` actualiza solo `renderRecentlyViewedCarousel()`; no reconstruye categorías ni dispara lecturas remotas. Apertura de ficha actualiza estado en memoria y persiste una sola vez en IndexedDB.
+- [x] Pruebas dinámicas `RecentlyViewedHydrationParallel` 3/3: lecturas paralelas, IndexedDB temporalmente no disponible, cambio de propietario y ausencia de consultas duplicadas. `RecentlyViewedCarousel` contract 1/1.
+- [x] CI 44833576889 SUCCESS: 237 suites, 2954 pruebas aprobadas, 0 fallos; `node --check` PASS.
+- [ ] Beta visual en navegadores/dispositivos reales y verificación de comportamiento con IndexedDB real lento/offline.
 
 ## Validaciones Beta pendientes
 
