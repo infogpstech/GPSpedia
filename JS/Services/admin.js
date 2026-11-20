@@ -935,7 +935,7 @@ function doGet(e) {
 
 
 function isSharedMutationAction_(action) {
-    return ["backupDatabase","backupDrive","restoreDatabase","restoreDrive","reorganizeDatabase","normalizeImages","organizePrimaryVehicleImages","restoreAllTrashedImages","addLogo","updateVehicleField","uploadAdminImage","migrateCortesOperationIds","migrateIdentifiers","rollbackIdentifiers","freezeIdentifierFormulas","reconcilePendingImageUploads","createSheet","addColumn","driveCommand","recoverReplacedImage","deleteReplacedImage","restoreReplacedImageFromTrash","permanentlyDeleteReplacedImage","markReplacedImageInUse","saveUnusedImagesInventory","applyCortesImageReconciliation","createCortesImageFolder","moveReplacedImage","getReplacedImageDownloadUrl","migrateReplacedImagesSchema","auditDriveImagesInCortes","applyCortesImageOrganizer"].includes(action);
+    return ["backupDatabase","backupDrive","restoreDatabase","restoreDrive","reorganizeDatabase","normalizeImages","organizePrimaryVehicleImages","restoreAllTrashedImages","addLogo","updateVehicleField","uploadAdminImage","migrateCortesOperationIds","migrateIdentifiers","rollbackIdentifiers","freezeIdentifierFormulas","reconcilePendingImageUploads","createSheet","addColumn","driveCommand","recoverReplacedImage","deleteReplacedImage","restoreReplacedImageFromTrash","permanentlyDeleteReplacedImage","markReplacedImageInUse","saveUnusedImagesInventory","applyCortesImageReconciliation","createCortesImageFolder","moveReplacedImage","getReplacedImageDownloadUrl","migrateReplacedImagesSchema","auditDriveImagesInCortes","applyCortesImageOrganizer","rollbackCortesImageOrganizer"].includes(action);
 }
 
 function doPost(e) {
@@ -1357,6 +1357,9 @@ function doPostInternal_(e) {
                 break;
             case 'applyCortesImageOrganizer':
                 response = handleApplyCortesImageOrganizer_(payload, logMessage, developerContext);
+                break;
+            case 'rollbackCortesImageOrganizer':
+                response = handleRollbackCortesImageOrganizer_(payload, logMessage, developerContext);
                 break;
             case 'applyCortesImageReconciliation':
                 response = handleApplyCortesImageReconciliation_(payload, logMessage, developerContext);
@@ -4056,6 +4059,7 @@ function executeCortesImageOrganizerManifest_(manifest, ownerId, adapters) {
                 const state = classifyCortesImageOrganizerOperationState_(current, operation);
                 if (state.status !== "already_applied") throw new Error("El ledger marca la operación completa, pero Drive ya no coincide con el destino confirmado.");
                 result.status = "already_applied";
+                results.push(result);
                 return;
             }
             if (ledger && ledger.status === "needs_review") throw new Error("La operación requiere revisión manual y no admite reintento automático.");
@@ -4178,6 +4182,104 @@ function createCortesOrganizerDriveAdapters_(rootFolder) {
             file.setName(String(name));
         }
     };
+}
+
+
+function rollbackCortesImageOrganizerOperations_(operationIds, ownerId, adapters) {
+    if (!Array.isArray(operationIds) || !operationIds.length || operationIds.length > 10 || !ownerId || !adapters) {
+        throw new Error("El lote de rollback no cumple los límites o carece de contexto.");
+    }
+    const uniqueIds = operationIds.map(value => String(value || "").trim());
+    if (uniqueIds.some(value => !/^[a-f0-9]{64}:[A-Za-z0-9_-]{20,}$/i.test(value)) ||
+        new Set(uniqueIds).size !== uniqueIds.length) {
+        throw new Error("La selección de rollback contiene identificadores inválidos o repetidos.");
+    }
+    const results = [];
+    uniqueIds.forEach(operationId => {
+        let ledger = null;
+        const result = { operationId, status: "pending" };
+        try {
+            ledger = adapters.loadLedger(operationId);
+            if (!ledger || ledger.ownerId !== ownerId || ledger.operationId !== operationId) {
+                throw new Error("No existe una operación durable perteneciente a esta sesión.");
+            }
+            if (ledger.status === "rolled_back") {
+                const current = adapters.inspectFile(ledger.fileId);
+                if (current.folderPath !== ledger.sourceFolderPath || current.fileName !== ledger.sourceName) {
+                    throw new Error("El ledger indica rollback completado, pero Drive ya no coincide con el origen.");
+                }
+                result.fileId = ledger.fileId;
+                result.status = "already_rolled_back";
+                results.push(result);
+                return;
+            }
+            if (ledger.status !== "complete") throw new Error("Solo se puede revertir una operación completa; el estado actual requiere revisión.");
+            const current = adapters.inspectFile(ledger.fileId);
+            if (current.trashed || current.folderPath !== ledger.targetFolderPath || current.fileName !== ledger.targetName) {
+                throw new Error("El archivo cambió después de aplicarse; no se sobrescribirá su estado actual.");
+            }
+            const rollbackRecord = Object.assign({}, ledger, { status: "rollback_processing", rollbackStartedAt: Date.now() });
+            adapters.saveLedger(rollbackRecord);
+            const source = adapters.resolveFolder(ledger.sourceFolderPath, false);
+            adapters.verifyAcl(source);
+            adapters.assertNoNameConflict(ledger.fileId, source.folder, ledger.sourceName);
+            adapters.moveAndRename(ledger.fileId, source.folder, ledger.sourceName);
+            const restored = adapters.inspectFile(ledger.fileId);
+            if (restored.trashed || restored.folderPath !== ledger.sourceFolderPath || restored.fileName !== ledger.sourceName) {
+                throw new Error("Drive no confirmó la ubicación y el nombre originales.");
+            }
+            adapters.saveLedger(Object.assign({}, rollbackRecord, {
+                status: "rolled_back", rolledBackAt: Date.now(),
+                currentFolderPath: ledger.sourceFolderPath, currentName: ledger.sourceName
+            }));
+            result.fileId = ledger.fileId;
+            result.status = "rolled_back";
+        } catch (error) {
+            let recoveryError = "";
+            try {
+                if (ledger && ledger.fileId) {
+                    const state = adapters.inspectFile(ledger.fileId);
+                    if (state.folderPath === ledger.targetFolderPath && state.fileName === ledger.targetName) {
+                        adapters.saveLedger(Object.assign({}, ledger, { status: "complete", rollbackError: String(error.message || error).slice(0, 700) }));
+                    } else if (state.folderPath === ledger.sourceFolderPath && state.fileName === ledger.sourceName) {
+                        adapters.saveLedger(Object.assign({}, ledger, { status: "rolled_back", rolledBackAt: Date.now() }));
+                    } else {
+                        adapters.saveLedger(Object.assign({}, ledger, {
+                            status: "needs_review", rollbackError: String(error.message || error).slice(0, 700)
+                        }));
+                    }
+                }
+            } catch (persistError) {
+                recoveryError = String(persistError && persistError.message || persistError);
+            }
+            result.fileId = ledger && ledger.fileId || "";
+            result.status = "needs_review";
+            result.message = String(error && error.message || error);
+            if (recoveryError) result.recoveryError = recoveryError;
+        }
+        results.push(result);
+    });
+    return {
+        status: results.every(item => ["rolled_back", "already_rolled_back"].includes(item.status)) ? "success" : "warning",
+        writePerformed: results.some(item => item.status === "rolled_back"),
+        results
+    };
+}
+
+function handleRollbackCortesImageOrganizer_(payload, logMessage, developerContext) {
+    const ownerId = String(developerContext && developerContext.userId || "").trim();
+    if (!ownerId) throw new Error("El rollback requiere una sesión Desarrollador verificada.");
+    if (!payload || payload.confirm !== true) throw new Error("El rollback requiere confirmación explícita.");
+    const root = getCortesRootFolder();
+    const result = rollbackCortesImageOrganizerOperations_(
+        payload.operationIds, ownerId, createCortesOrganizerDriveAdapters_(root)
+    );
+    result.canApply = false;
+    logMessage && logMessage("Rollback del organizador",
+        result.results.filter(item => item.status === "rolled_back").length +
+        " operaciones revertidas; " + result.results.filter(item => !["rolled_back", "already_rolled_back"].includes(item.status)).length +
+        " requieren revisión.");
+    return result;
 }
 
 function handleApplyCortesImageOrganizer_(payload, logMessage, developerContext) {
