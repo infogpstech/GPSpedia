@@ -277,6 +277,7 @@ runGroup('38','INTEGRATION',()=>{
  runCli('Organizador Cortes: manifiesto Safe Apply, idempotencia y plan de rollback','JS/Tests/CortesImageOrganizerApplyPlan.mjs');
  runCli('Organizador Cortes: ejecutor durable, ACL y rollback ejecutable','JS/Tests/CortesImageOrganizerExecutor.mjs');
  runCli('Organizador Cortes: controles UI de aprobación explícita y rollback','JS/Tests/CortesImageOrganizerUiContract.mjs');
+ runCli('Organizador Cortes: historial durable y retención de operaciones','JS/Tests/CortesImageOrganizerLedger.mjs');
  runCli('AUG-150 errores HTTP, red, JSON y aplicación en ADMIN','JS/Tests/RouteActionErrors.mjs');
  runCli('AUG-152 conversaciones Inbox, participantes, idempotencia y auditoría','JS/Tests/InboxConversations.mjs');
  runCli('GP-PERF FEEDBACK e Inbox sem esperas prolongadas','JS/Tests/FeedbackLockFastFail.mjs');
