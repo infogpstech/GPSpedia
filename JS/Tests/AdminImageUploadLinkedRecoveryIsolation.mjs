@@ -6,7 +6,7 @@ const end = source.indexOf("\n// ===============================================
 assert.ok(start >= 0 && end > start, "No se encontró handleUploadAdminImage");
 const handler = source.slice(start, end);
 const linked = handler.indexOf('if (status === "linked")');
-const driveCheck = handler.indexOf("const linkedDriveCheck = runAdminDriveWorkOutsideScriptLock_(lock, operationId", linked);
+const driveCheck = handler.indexOf("const linkedDriveCheck = runAdminContributionDriveWorkOutsideScriptLock_(lock, operationId", linked);
 const history = handler.indexOf("historyRecord = recordReplacedImage(", linked);
 const finalState = handler.indexOf('updateAdminImageUploadFileState_(newFile, operationId, contentHash, "linked", false)', linked);
 assert.ok(linked >= 0 && driveCheck > linked, "La recuperación linked debe liberar el ScriptLock para verificar Drive");
