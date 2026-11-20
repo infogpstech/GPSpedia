@@ -60,3 +60,10 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 
 
 2026-11-20 — Regresión local append-only: WriteContributionAppendConcurrency 9/9 y WriteContributionRecovery 9/9; se cubren intercalados, opId, slots, capacidad, VIN, pérdida de respuesta y recuperación. CI 44835751507 SUCCESS: 239 suites, 2968 pruebas, 0 fallos. Concurrencia real y fallos de Apps Script/Sheets/Drive siguen en Beta aislada.
+
+
+2026-11-20 — WRITE: recuperación append tras respuesta perdida
+- `WriteContributionAppendConcurrency.mjs` ahora cubre 9 escenarios, incluidos fallos de `flush` y respuesta perdida después de persistir `appendRow`.
+- Reintentar con el mismo `opId` devuelve el evento original y no duplica la fila. Se corrigió el hash inválido del propio test; la validación SHA-256 del servicio se conserva.
+- CI 44835751507 SUCCESS: 239 suites, 2968 pruebas, 0 fallos; el escenario focalizado quedó 9/9 PASS. Health read-only SUCCESS.
+- Concurrencia real de Google Sheets/Apps Script y fallos Drive/Sheets continúa diferida a Beta aislada.
