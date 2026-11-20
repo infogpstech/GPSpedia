@@ -10667,6 +10667,7 @@ function getOrCreateUnusedImagesFolder(rootFolder) {
 function handleDeleteReplacedImage(payload,logMessage,developerContext){
     const idReemplazo=String(payload&&payload.id_reemplazo||"").trim();if(!idReemplazo)throw new Error("ID de registro de imagen requerido.");
     const lock=LockService.getScriptLock();try{lock.waitLock(30000);}catch(e){throw new Error("No se pudo bloquear la validación de uso de la imagen. Intenta nuevamente.");}
+    let postCommitActivity=null,result=null;
     try{
         const sheetRep=getOrCreateReplacedImagesSheet(),headers=ensureReplacedImagesInventoryColumns(sheetRep);
         const existing=findReplacedImageRecordById(sheetRep,idReemplazo);if(!existing)throw new Error("Registro de imagen no encontrado.");
@@ -10703,10 +10704,14 @@ function handleDeleteReplacedImage(payload,logMessage,developerContext){
             if(rollbackError)throw new Error("Falló el traslado a papelera y no se confirmó la compensación: "+operationError.message+"; "+rollbackError.message);
             throw new Error("No se pudo completar el traslado a papelera; la operación fue revertida: "+operationError.message);
         }
-        recordImageAdministrationActivity(developerContext,"admin_image_trash",idReemplazo,"Imagen "+file.getName()+" enviada a papelera desde "+sourcePath+"; estado previo: "+status+"; resultado: correcto.");
-        logMessage&&logMessage("Inventario e historial de imágenes","La imagen "+driveId+" fue enviada a la papelera de Google Drive.");
-        return {status:"success",message:"La imagen fue enviada a la papelera de Google Drive. Esta acción no equivale a una eliminación irreversible."};
-    }finally{lock.releaseLock();}
+        postCommitActivity={developerContext,idReemplazo,details:"Imagen "+file.getName()+" enviada a papelera desde "+sourcePath+"; estado previo: "+status+"; resultado: correcto.",driveId};
+        result={status:"success",message:"La imagen fue enviada a la papelera de Google Drive. Esta acción no equivale a una eliminación irreversible."};
+    }finally{if(typeof lock.hasLock!=="function"||lock.hasLock())lock.releaseLock();}
+    if(postCommitActivity){
+        recordImageAdministrationActivity(postCommitActivity.developerContext,"admin_image_trash",postCommitActivity.idReemplazo,postCommitActivity.details);
+        logMessage&&logMessage("Inventario e historial de imágenes","La imagen "+postCommitActivity.driveId+" fue enviada a la papelera de Google Drive.");
+    }
+    return result;
 }
 function handleRestoreReplacedImageFromTrash(payload,logMessage,developerContext){
     const id=String(payload&&payload.id_reemplazo||"").trim();if(!id)throw new Error("ID de registro de imagen requerido.");
