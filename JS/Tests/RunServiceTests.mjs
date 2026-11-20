@@ -162,6 +162,7 @@ runGroup('33','FEEDBACK',()=>{
   runCli('FEEDBACK actividad de like fuera del ScriptLock','JS/Tests/FeedbackLikeActivityOutsideLock.mjs');
   runCli('FEEDBACK preflight dirigido de likes fuera del ScriptLock','JS/Tests/FeedbackLikePreflightOutsideLock.mjs');
   runCli('FEEDBACK búsqueda dirigida de reportId','JS/Tests/FeedbackReportLookupBoundedRead.mjs');
+  runCli('FEEDBACK búsqueda dirigida de sugerencias','JS/Tests/FeedbackSuggestionLookupBoundedRead.mjs');
   runCli('FEEDBACK asignador formula-based ID lectura acotada','JS/Tests/FeedbackFormulaIdAllocatorBoundedRead.mjs');
  runCli('P2 IDs canónicos e idempotencia de Tutorial','JS/Tests/TutorialIntegrity.js');
  runCli('PYS tarjetas relacionadas y navegación del modal','JS/Tests/PysModalNavigation.js');
