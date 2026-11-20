@@ -558,12 +558,6 @@ function prepareAddOrUpdateCutRequest_(payload) {
     return { collaboratorName: collaboratorName, actorId: String(payload && payload.__sharedSessionActor && payload.__sharedSessionActor.userId || ""), spreadsheet: ss, sheet: sheet, validatedPayload: validatedPayload };
 }
 
-function getWriteContributionLock_(vehicleId) {
-    const existingVehicle = Boolean(String(vehicleId || "").trim());
-    return existingVehicle && typeof LockService.getUserLock === "function"
-        ? LockService.getUserLock() : LockService.getScriptLock();
-}
-
 function handleAppendExistingVehicleCut_(preparedRequest) {
     const payload = preparedRequest.validatedPayload;
     const vehicleId = String(payload.vehicleId || "").trim();
@@ -714,14 +708,20 @@ function handleAppendExistingVehicleCut_(preparedRequest) {
 function handleAddOrUpdateCut(payload) {
     const preparedRequest = prepareAddOrUpdateCutRequest_(payload);
     const validated = preparedRequest.validatedPayload;
-    if (validated.vehicleId && validated.opId) {
+    if (validated.vehicleId) {
+        if (!validated.opId) {
+            const opIdError = new Error("Las aportaciones a vehículos existentes requieren un opId estable para registrarse sin bloqueo por usuario.");
+            opIdError.code = "WRITE_OP_ID_REQUIRED";
+            throw opIdError;
+        }
         return handleAppendExistingVehicleCut_(preparedRequest);
     }
-    const lock = getWriteContributionLock_(preparedRequest.validatedPayload.vehicleId);
+    // Solo las altas de vehículos nuevos reservan un ID numérico secuencial.
+    const lock = LockService.getScriptLock();
     let lockAcquired = false;
     try { lockAcquired = lock.tryLock(0); } catch (lockError) { lockAcquired = false; }
     if (!lockAcquired) {
-        const busyError = new Error("WRITE está ocupado con otra escritura breve de este usuario o con una reserva global de ID. Conserva el mismo opId y reintenta.");
+        const busyError = new Error("WRITE está ocupado con una reserva breve de ID. Conserva el mismo opId y reintenta.");
         busyError.code = "WRITE_BUSY";
         throw busyError;
     }
