@@ -935,7 +935,7 @@ function doGet(e) {
 
 
 function isSharedMutationAction_(action) {
-    return ["backupDatabase","backupDrive","restoreDatabase","restoreDrive","reorganizeDatabase","normalizeImages","organizePrimaryVehicleImages","restoreAllTrashedImages","addLogo","updateVehicleField","uploadAdminImage","migrateCortesOperationIds","migrateIdentifiers","rollbackIdentifiers","freezeIdentifierFormulas","reconcilePendingImageUploads","createSheet","addColumn","driveCommand","recoverReplacedImage","deleteReplacedImage","restoreReplacedImageFromTrash","permanentlyDeleteReplacedImage","markReplacedImageInUse","saveUnusedImagesInventory","applyCortesImageReconciliation","createCortesImageFolder","moveReplacedImage","getReplacedImageDownloadUrl","migrateReplacedImagesSchema","auditDriveImagesInCortes"].includes(action);
+    return ["backupDatabase","backupDrive","restoreDatabase","restoreDrive","reorganizeDatabase","normalizeImages","organizePrimaryVehicleImages","restoreAllTrashedImages","addLogo","updateVehicleField","uploadAdminImage","migrateCortesOperationIds","migrateIdentifiers","rollbackIdentifiers","freezeIdentifierFormulas","reconcilePendingImageUploads","createSheet","addColumn","driveCommand","recoverReplacedImage","deleteReplacedImage","restoreReplacedImageFromTrash","permanentlyDeleteReplacedImage","markReplacedImageInUse","saveUnusedImagesInventory","applyCortesImageReconciliation","createCortesImageFolder","moveReplacedImage","getReplacedImageDownloadUrl","migrateReplacedImagesSchema","auditDriveImagesInCortes","applyCortesImageOrganizer"].includes(action);
 }
 
 function doPost(e) {
@@ -1354,6 +1354,9 @@ function doPostInternal_(e) {
                 break;
             case 'previewCortesImageOrganizer':
                 response = handlePreviewCortesImageOrganizer_(payload, logMessage, developerContext);
+                break;
+            case 'applyCortesImageOrganizer':
+                response = handleApplyCortesImageOrganizer_(payload, logMessage, developerContext);
                 break;
             case 'applyCortesImageReconciliation':
                 response = handleApplyCortesImageReconciliation_(payload, logMessage, developerContext);
@@ -3926,6 +3929,286 @@ function buildCortesImageOrganizerRollbackPlan_(manifest, operationResults, file
         });
     }
     return plan;
+}
+
+
+const CORTES_ORGANIZER_LEDGER_PREFIX_ = "GPSpedia_CORTES_ORGANIZER_OP_V1_";
+
+function getCortesOrganizerLedgerKey_(operationId) {
+    const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(operationId || ""), Utilities.Charset.UTF_8)
+        .map(value => ("0" + ((value + 256) % 256).toString(16)).slice(-2)).join("");
+    return CORTES_ORGANIZER_LEDGER_PREFIX_ + digest;
+}
+
+function loadCortesOrganizerOperationLedger_(operationId) {
+    const key = getCortesOrganizerLedgerKey_(operationId);
+    const raw = PropertiesService.getScriptProperties().getProperty(key);
+    if (!raw) return null;
+    let record;
+    try { record = JSON.parse(raw); }
+    catch (error) { throw new Error("El registro durable de Safe Apply está corrupto; la operación requiere revisión."); }
+    if (!record || record.operationId !== String(operationId)) {
+        throw new Error("La identidad del registro durable no coincide; la operación requiere revisión.");
+    }
+    return record;
+}
+
+function saveCortesOrganizerOperationLedger_(record) {
+    if (!record || !record.operationId || !record.fileId || !record.manifestDigest) {
+        throw new Error("No se puede persistir una operación Safe Apply sin identidad completa.");
+    }
+    const serialized = JSON.stringify(Object.assign({}, record, { updatedAt: Date.now() }));
+    if (serialized.length > 8000) throw new Error("El registro durable Safe Apply supera el límite seguro de persistencia.");
+    const properties = PropertiesService.getScriptProperties();
+    const key = getCortesOrganizerLedgerKey_(record.operationId);
+    properties.setProperty(key, serialized);
+    if (properties.getProperty(key) !== serialized) {
+        throw new Error("No se pudo verificar la persistencia durable de Safe Apply.");
+    }
+    return JSON.parse(serialized);
+}
+
+function withCortesOrganizerLedgerLock_(callback) {
+    const lock = LockService.getScriptLock();
+    if (!lock.tryLock(0)) {
+        const error = new Error("Safe Apply está procesando otra transición del registro; vuelve a intentar.");
+        error.code = "ORGANIZER_LEDGER_BUSY";
+        throw error;
+    }
+    try { return callback(); }
+    finally { if (lock.hasLock()) lock.releaseLock(); }
+}
+
+function resolveCortesOrganizerFolderPath_(rootFolder, targetPath, createMissing) {
+    const parts = String(targetPath || "").split("/").filter(Boolean);
+    if (!parts.length || normalizeOrganizerSegment_(parts.shift()) !== normalizeOrganizerSegment_(rootFolder.getName())) {
+        throw new Error("La ruta de destino no pertenece a la raíz Cortes.");
+    }
+    let current = rootFolder;
+    const chain = [rootFolder];
+    for (const segment of parts) {
+        const iterator = current.getFolders();
+        const matches = [];
+        while (iterator.hasNext()) {
+            const child = iterator.next();
+            if (normalizeOrganizerSegment_(child.getName()) === normalizeOrganizerSegment_(segment)) matches.push(child);
+        }
+        if (matches.length > 1) throw new Error("La carpeta destino es ambigua: " + segment);
+        if (!matches.length) {
+            if (createMissing !== true) throw new Error("No existe la carpeta de origen requerida para rollback: " + segment);
+            current = current.createFolder(segment);
+        } else {
+            current = matches[0];
+        }
+        if (current.isTrashed()) throw new Error("La carpeta destino está en la papelera.");
+        chain.push(current);
+    }
+    return { folder: current, chain };
+}
+
+function verifyCortesOrganizerFolderAcl_(folderChain) {
+    if (!Array.isArray(folderChain) || !folderChain.length) throw new Error("No se pudo comprobar la ACL de la ruta destino.");
+    folderChain.forEach(folder => {
+        let access;
+        try {
+            access = folder.getSharingAccess();
+            // Fuerza lectura de las ACL efectivas expuestas por DriveApp; si no se pueden
+            // consultar, se falla de forma cerrada antes de mover el archivo.
+            folder.getEditors();
+            folder.getViewers();
+        } catch (error) {
+            throw new Error("No se pudieron verificar los permisos de una carpeta destino o heredados: " + String(error && error.message || error));
+        }
+        if (access !== DriveApp.Access.PRIVATE) {
+            throw new Error("La carpeta destino o uno de sus antecesores tiene acceso general compartido; Safe Apply lo rechaza.");
+        }
+    });
+    return true;
+}
+
+function inspectCortesOrganizerDriveFile_(fileId, rootFolderId) {
+    const file = DriveApp.getFileById(String(fileId));
+    if (file.isTrashed()) return { file, fileId: String(file.getId()), trashed: true, fileName: file.getName(), mimeType: file.getMimeType(), folderPath: "" };
+    const parent = getSingleParentFolderInsideCortes(file, rootFolderId);
+    return {
+        file,
+        fileId: String(file.getId()),
+        trashed: false,
+        fileName: String(file.getName() || ""),
+        mimeType: String(file.getMimeType() || "").toLowerCase(),
+        folderPath: getFolderPathInsideCortes(parent, rootFolderId)
+    };
+}
+
+function executeCortesImageOrganizerManifest_(manifest, ownerId, adapters) {
+    if (!Array.isArray(manifest) || !manifest.length || manifest.length > 10 || !ownerId || !adapters) {
+        throw new Error("El lote Safe Apply no cumple los límites o carece de contexto.");
+    }
+    const results = [];
+    manifest.forEach(operation => {
+        const result = { operationId: operation.operationId, fileId: operation.fileId, status: "pending" };
+        let ledger = null;
+        try {
+            ledger = adapters.loadLedger(operation.operationId);
+            if (ledger && ledger.ownerId !== ownerId) throw new Error("La operación pertenece a otra sesión Desarrollador.");
+            if (ledger && ledger.status === "complete") {
+                const current = adapters.inspectFile(operation.fileId);
+                const state = classifyCortesImageOrganizerOperationState_(current, operation);
+                if (state.status !== "already_applied") throw new Error("El ledger marca la operación completa, pero Drive ya no coincide con el destino confirmado.");
+                result.status = "already_applied";
+                return;
+            }
+            if (ledger && ledger.status === "needs_review") throw new Error("La operación requiere revisión manual y no admite reintento automático.");
+            if (ledger && Number(ledger.attempts || 0) >= 3) throw new Error("Se alcanzó el máximo de tres intentos para esta operación.");
+            const current = adapters.inspectFile(operation.fileId);
+            const classification = classifyCortesImageOrganizerOperationState_(current, operation);
+            if (classification.status === "already_applied") {
+                adapters.saveLedger({
+                    operationId: operation.operationId, manifestDigest: operation.manifestDigest,
+                    auditId: operation.auditId, ownerId, fileId: operation.fileId,
+                    status: "complete", attempts: Number(ledger && ledger.attempts || 0),
+                    currentFolderPath: operation.targetFolderPath, currentName: operation.targetName
+                });
+                result.status = "already_applied";
+                return;
+            }
+            if (classification.status !== "ready") throw new Error("El archivo cambió desde el preview: " + classification.reason);
+            ledger = {
+                operationId: operation.operationId, manifestDigest: operation.manifestDigest,
+                auditId: operation.auditId, ownerId, fileId: operation.fileId,
+                status: "processing", attempts: Number(ledger && ledger.attempts || 0) + 1,
+                sourceFolderPath: operation.currentFolderPath, sourceName: operation.currentName,
+                targetFolderPath: operation.targetFolderPath, targetName: operation.targetName
+            };
+            adapters.saveLedger(ledger);
+            const destination = adapters.resolveFolder(operation.targetFolderPath, true);
+            adapters.verifyAcl(destination);
+            adapters.assertNoNameConflict(operation.fileId, destination.folder, operation.targetName);
+            adapters.moveAndRename(operation.fileId, destination.folder, operation.targetName);
+            const after = adapters.inspectFile(operation.fileId);
+            const verified = classifyCortesImageOrganizerOperationState_(after, operation);
+            if (verified.status !== "already_applied") throw new Error("Drive no confirmó exactamente la carpeta y el nombre destino.");
+            adapters.saveLedger(Object.assign({}, ledger, {
+                status: "complete", currentFolderPath: operation.targetFolderPath,
+                currentName: operation.targetName, completedAt: Date.now()
+            }));
+            result.status = "applied";
+        } catch (error) {
+            let recoveryStatus = "needs_review";
+            let recoveryMessage = "";
+            try {
+                const state = adapters.inspectFile(operation.fileId);
+                const classification = classifyCortesImageOrganizerOperationState_(state, operation);
+                if (classification.status === "ready") {
+                    recoveryStatus = "rolled_back";
+                } else if (classification.status === "already_applied") {
+                    // El movimiento pudo completarse antes de una interrupción al guardar
+                    // el estado final. Se conserva como aplicado y el reintento lo reconocerá.
+                    adapters.saveLedger({
+                        operationId: operation.operationId, manifestDigest: operation.manifestDigest,
+                        auditId: operation.auditId, ownerId, fileId: operation.fileId,
+                        status: "complete", attempts: Number(ledger && ledger.attempts || 1),
+                        currentFolderPath: operation.targetFolderPath, currentName: operation.targetName,
+                        completedAt: Date.now()
+                    });
+                    recoveryStatus = "complete";
+                } else if (ledger && ledger.status === "processing") {
+                    const source = adapters.resolveFolder(operation.currentFolderPath, false);
+                    adapters.moveAndRename(operation.fileId, source.folder, operation.currentName);
+                    const restored = adapters.inspectFile(operation.fileId);
+                    if (restored.folderPath !== operation.currentFolderPath || restored.fileName !== operation.currentName) {
+                        throw new Error("La ubicación original no pudo confirmarse.");
+                    }
+                    recoveryStatus = "rolled_back";
+                }
+            } catch (recoveryError) {
+                recoveryMessage = String(recoveryError && recoveryError.message || recoveryError);
+            }
+            try {
+                if (recoveryStatus !== "complete") {
+                    adapters.saveLedger({
+                        operationId: operation.operationId, manifestDigest: operation.manifestDigest,
+                        auditId: operation.auditId, ownerId, fileId: operation.fileId,
+                        status: recoveryStatus === "rolled_back" ? "rolled_back" : "needs_review",
+                        attempts: Number(ledger && ledger.attempts || 0),
+                        error: String(error && error.message || error).slice(0, 900),
+                        recoveryError: recoveryMessage.slice(0, 500)
+                    });
+                }
+            } catch (ledgerError) {
+                recoveryMessage = (recoveryMessage ? recoveryMessage + "; " : "") +
+                    "No se pudo persistir el estado final: " + String(ledgerError && ledgerError.message || ledgerError);
+                recoveryStatus = "needs_review";
+            }
+            result.status = recoveryStatus;
+            result.message = String(error && error.message || error);
+            if (recoveryMessage) result.recoveryMessage = recoveryMessage;
+        }
+        results.push(result);
+    });
+    return {
+        status: results.every(item => ["applied", "already_applied"].includes(item.status)) ? "success" : "warning",
+        writePerformed: results.some(item => item.status === "applied"),
+        results
+    };
+}
+
+function createCortesOrganizerDriveAdapters_(rootFolder) {
+    return {
+        loadLedger: operationId => withCortesOrganizerLedgerLock_(() => loadCortesOrganizerOperationLedger_(operationId)),
+        saveLedger: record => withCortesOrganizerLedgerLock_(() => saveCortesOrganizerOperationLedger_(record)),
+        inspectFile: fileId => {
+            const state = inspectCortesOrganizerDriveFile_(fileId, rootFolder.getId());
+            return {
+                fileId: state.fileId, trashed: state.trashed, fileName: state.fileName,
+                mimeType: state.mimeType, folderPath: state.folderPath
+            };
+        },
+        resolveFolder: (path, createMissing) => resolveCortesOrganizerFolderPath_(rootFolder, path, createMissing),
+        verifyAcl: resolved => verifyCortesOrganizerFolderAcl_(resolved.chain),
+        assertNoNameConflict: (fileId, folder, name) => {
+            const files = folder.getFilesByName(name);
+            while (files.hasNext()) {
+                if (String(files.next().getId()) !== String(fileId)) throw new Error("Existe otro archivo con el nombre destino; no se sobrescribirá.");
+            }
+        },
+        moveAndRename: (fileId, folder, name) => {
+            const file = DriveApp.getFileById(String(fileId));
+            file.moveTo(folder);
+            file.setName(String(name));
+        }
+    };
+}
+
+function handleApplyCortesImageOrganizer_(payload, logMessage, developerContext) {
+    const ownerId = String(developerContext && developerContext.userId || "").trim();
+    if (!ownerId) throw new Error("Safe Apply requiere una sesión Desarrollador verificada.");
+    if (!payload || payload.confirm !== true) throw new Error("Safe Apply requiere confirmación explícita.");
+    const auditId = String(payload.auditId || "").trim();
+    const digest = String(payload.manifestDigest || "").trim().toLowerCase();
+    const offset = Number(payload.offset);
+    const limit = Number(payload.limit);
+    if (!Number.isInteger(offset) || offset < 0 || !Number.isInteger(limit) || limit < 1 || limit > 50) {
+        throw new Error("La página aprobada del preview no es válida.");
+    }
+    const preview = handlePreviewCortesImageOrganizer_({
+        auditId, offset, limit
+    }, function() {}, developerContext);
+    if (preview.manifestDigest !== digest) throw new Error("El preview cambió desde su aprobación. Revisa el nuevo manifiesto antes de aplicar.");
+    const manifest = buildCortesImageOrganizerApplyManifest_(
+        preview, payload.approvedFileIds, digest, true
+    );
+    const root = getCortesRootFolder();
+    const result = executeCortesImageOrganizerManifest_(manifest, ownerId, createCortesOrganizerDriveAdapters_(root));
+    result.auditId = auditId;
+    result.manifestDigest = digest;
+    result.approvedCount = manifest.length;
+    result.canApply = false;
+    logMessage && logMessage("Safe Apply del organizador",
+        result.results.filter(item => item.status === "applied").length + " movimientos/renombrados confirmados; " +
+        result.results.filter(item => !["applied", "already_applied"].includes(item.status)).length +
+        " requieren revisión. Cada resultado quedó registrado de forma durable.");
+    return result;
 }
 
 function handlePreviewCortesImageOrganizer_(payload, logMessage, developerContext) {
