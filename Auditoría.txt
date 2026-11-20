@@ -800,3 +800,13 @@ Estado: CORREGIDO LOCALMENTE. Queda Beta de concurrencia real y la auditoría de
 
 INCIDENTE DE RAMA CORREGIDO: un update_file sin branch explícita creó temporalmente commit f02bda37 en main. Se restauró inmediatamente main a su parent 037fc1bba9f24b1e31d50b93422d6a9299149026 con force-with-lease; la rama base protegida GPSpedia2.2.5 no se modificó y permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1. Todas las operaciones posteriores se especificaron explícitamente en GPSpedia2.2.5_work.
 ================================================================================
+
+
+================================================================================
+2026-11-20 — IMÁGENES CANDIDATAS EN INVENTARIO
+- Se amplió `Imagenes_Reemplazadas` con `candidata_aporte`, origen `aporte_vehiculo` y contenido `aporte_candidato`; el ID se deriva de eventId y la sincronización es idempotente.
+- La biblioteca sincroniza candidatos vigentes CATALOG y candidatos ya resueltos por eventos AportesVehiculo. La resolución ADMIN actualiza el estado a en_uso/cancelada; el archivo permanece vinculado al evento y al journal.
+- Los candidatos pendientes no admiten acciones destructivas ni aceptación manual desde la biblioteca. Los descartados solo se descargan/envían a papelera con referencia global verificada en cero. Los metadatos Drive se leen fuera del lock; la escritura del inventario usa el lock de esquema; la sincronización posterior a resolución corre después de liberar el lock del ledger.
+- CI 44832283278 SUCCESS: 237 suites, 2943 pruebas, 0 fallos; AdminReplacedImagesIntegrity 56/56; ReplacedImagesLibraryUX 14/14; AdminVehicleContributionCandidates 6/6; Health read-only SUCCESS. Pages en cola.
+- Siguiente P0: señalización UI de conflictos tardíos en todos los puntos de entrada, revisión del ScriptLock fast-fail FEEDBACK y alcance del asignador de IDs de vehículos nuevos.
+================================================================================
