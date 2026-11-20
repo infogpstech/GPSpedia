@@ -13412,15 +13412,21 @@ async function completeVehicleExpansionSave_(writeResult,vehicleId,successMessag
    feed_capacity_full:"La alimentación se conservó como candidato porque los tres espacios están ocupados.",
    requires_review:"El aporte se conservó como candidato para revisión."
   };
+  const candidatePending=writeResult.candidateReviewPending===true||Boolean(candidate);
   const resolvedMessage=candidate
    ?(candidateMessages[candidate.reason]||"El aporte se conservó como candidato para revisión; no se sobrescribieron datos existentes.")
-   :successMessage;
+   :(candidatePending?"El aporte se conservó como candidato para revisión; no se sobrescribieron datos existentes.":successMessage);
   notifySuccess(resolvedMessage);
-  return {writeConfirmed:true,refreshed:true,vehicleId:cleanVehicleId,updatedItem,candidateReviewPending:Boolean(candidate),candidate:candidate||null};
+  return {writeConfirmed:true,refreshed:true,vehicleId:cleanVehicleId,updatedItem,candidateReviewPending:candidatePending,candidate:candidate||null};
  }catch(refreshError){
-  notifySuccess(successMessage);
-  notifyRefreshFailure("La información se guardó correctamente, pero no se pudo sincronizar el detalle del vehículo. Vuelve a cargar el catálogo para ver los cambios.");
-  return {writeConfirmed:true,refreshed:false,vehicleId:cleanVehicleId};
+  const candidatePending=writeResult.candidateReviewPending===true;
+  notifySuccess(candidatePending
+   ?"El aporte fue recibido como candidato pendiente de revisión; no se aplicó al catálogo."
+   :successMessage);
+  notifyRefreshFailure(candidatePending
+   ?"El aporte permanece como candidato pendiente de revisión. La ficha no pudo actualizarse; vuelve a cargar el catálogo para consultar su estado."
+   :"La información se guardó correctamente, pero no se pudo sincronizar el detalle del vehículo. Vuelve a cargar el catálogo para ver los cambios.");
+  return {writeConfirmed:true,refreshed:false,vehicleId:cleanVehicleId,candidateReviewPending:candidatePending,candidate:null};
  }
 }
 async function syncApprovedVehicleVideoDetail_(videoMeta, dependencies = {}) {
