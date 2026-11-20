@@ -16,7 +16,7 @@ const spreadsheet = {
     insertSheet: () => (activeSheet = fakeSheet())
 };
 const runtime = new Function("Utilities", "SpreadsheetApp", "getSpreadsheet", "Logger", code +
-    "\nreturn { headers: IMAGE_UPLOAD_EVENTS_HEADERS_, create: getOrCreateImageUploadEventsSheet_, append: appendImageUploadEvent_, read: readImageUploadEventsByToken_, project: projectImageUploadEvents_, transition: appendImageUploadEventTransition_ };"
+    "\nreturn { headers: IMAGE_UPLOAD_EVENTS_HEADERS_, create: getOrCreateImageUploadEventsSheet_, append: appendImageUploadEvent_, read: readImageUploadEventsByToken_, project: projectImageUploadEvents_, transition: appendImageUploadEventTransition_, findByOperationKey: findImageUploadEventsByOperationKey_ };"
 )(Utilities, SpreadsheetApp, () => spreadsheet, { log() {} });
 
 function fakeSheet() {
@@ -130,6 +130,25 @@ function event(overrides = {}) {
 }
 
 {
+    const sheet = fakeSheet();
+    sheet.rows.push(runtime.headers.slice());
+    runtime.append(sheet, event({ operationKey: "OP-UNIQUE|10|imgCorte1" }));
+    const matches = runtime.findByOperationKey(sheet, "OP-UNIQUE|10|imgCorte1");
+    assert.equal(matches.length, 1);
+    assert.equal(matches[0].values[1], "tok-1");
+}
+{
+    const sheet = fakeSheet();
+    sheet.rows.push(runtime.headers.slice());
+    runtime.append(sheet, event({ state: "reserved" }));
+    runtime.append(sheet, event({ fileId: "file-a", state: "pending" }));
+    runtime.append(sheet, event({ fileId: "file-a", state: "linked" }));
+    assert.equal(runtime.project(runtime.read(sheet, "tok-1")).state, "linked");
+    runtime.append(sheet, event({ fileId: "file-a", state: "file_missing" }));
+    assert.equal(runtime.project(runtime.read(sheet, "tok-1")).state, "file_missing");
+}
+
+{
     activeSheet = null;
     const expected = {
         token: "tok-transition", operationKey: "OP-3|22|imgApertura", folderId: "folder-1",
@@ -142,4 +161,4 @@ function event(overrides = {}) {
     assert.equal(projected.fileId, "file-opening");
     assert.equal(projected.eventCount, 2);
 }
-console.log("ImageUploadEventJournal: 7/7 PASS — esquema, append, transiciones WRITE, intercalado, conflictos y validación");
+console.log("ImageUploadEventJournal: 9/9 PASS — esquema, append, transiciones, búsqueda por operación, proyección temporal y conflictos");
