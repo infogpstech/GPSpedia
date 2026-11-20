@@ -1211,3 +1211,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-20 · ADMIN ciclo de papelera no bloqueante] `handleDeleteReplacedImage` y `handleRestoreReplacedImageFromTrash` usan `tryLock(0)` en vez de esperar 30 segundos. La contención devuelve `ADMIN_BUSY` antes de acceder a Drive o modificar historial; la liberación del lock queda condicionada a adquisición confirmada. Pruebas: `AdminImageTrashLifecycle` 41/41, `AdminDeleteImageActivityOutsideLock` 6/6 y `AdminRestoreImageActivityOutsideLock` 6/6. CI `44661420739` SUCCESS (215 suites, 2,684 pruebas, 0 fallos); health read-only `44661420823` SUCCESS. Sin despliegue Apps Script ni cambios productivos.
+
+
+[2026-11-20 · ADMIN conciliación de imágenes Cortes] La verificación del respaldo se divide en dos fases: las comprobaciones de Drive y del contenido de la copia (incluidas ACL privada y manifiesto) se ejecutan fuera del ScriptLock; después de readquirir con tryLock(0), el fingerprint y las dimensiones de la Spreadsheet operativa se verifican bajo lock antes de continuar. Si falla la readquisición o la base cambió, no se inicia el preview ni se escribe. Pruebas aisladas: CortesImageReconciliationApply 18/18 y CortesImageReconciliation 34/34; parsing V8 de admin.js PASS. CI global pendiente tras commit. Sin despliegue Apps Script ni cambios productivos.

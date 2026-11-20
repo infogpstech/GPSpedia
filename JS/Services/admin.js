@@ -176,7 +176,7 @@ function verifyVinMigrationBackup(backupId, developerContext) {
     return { backupId: cleanBackupId, backupName: backupFile.getName() };
 }
 
-function verifyImageReconciliationBackup_(backupId, developerContext) {
+function verifyImageReconciliationBackup_(backupId, developerContext, options) {
     const cleanBackupId = String(backupId || "").trim();
     const userId = String(developerContext && developerContext.userId || "").trim();
     if (!userId || !/^[a-zA-Z0-9_-]{20,}$/.test(cleanBackupId)) {
@@ -221,13 +221,35 @@ function verifyImageReconciliationBackup_(backupId, developerContext) {
         backupManifest.formulaCount !== Number(record.formulaCount)) {
         throw new Error("El contenido del respaldo cambió después de su verificación.");
     }
+    if (!(options && options.skipSourceValidation === true)) {
+        const currentManifest = adminRestoreValidateDatabaseSchema_(getSpreadsheet());
+        if (currentManifest.fingerprint !== record.fingerprint || currentManifest.sheetCount !== Number(record.sheetCount) ||
+            currentManifest.rowCount !== Number(record.rowCount) || currentManifest.cellCount !== Number(record.cellCount) ||
+            currentManifest.formulaCount !== Number(record.formulaCount)) {
+            throw new Error("La base de datos cambió después del respaldo. Genera un respaldo nuevo antes de aplicar.");
+        }
+    }
+    return {
+        backupId: cleanBackupId, backupName: record.backupName, fingerprint: record.fingerprint, createdAt: record.createdAt,
+        sourceSpreadsheetId: String(SPREADSHEET_ID), sheetCount: Number(record.sheetCount),
+        rowCount: Number(record.rowCount), cellCount: Number(record.cellCount), formulaCount: Number(record.formulaCount)
+    };
+}
+
+function verifyImageReconciliationBackupSource_(verifiedBackup) {
+    if (!verifiedBackup || verifiedBackup.sourceSpreadsheetId !== String(SPREADSHEET_ID) ||
+        !/^[a-f0-9]{64}$/i.test(String(verifiedBackup.fingerprint || ""))) {
+        throw new Error("No se pudo vincular la verificación del respaldo con la Spreadsheet operativa.");
+    }
     const currentManifest = adminRestoreValidateDatabaseSchema_(getSpreadsheet());
-    if (currentManifest.fingerprint !== record.fingerprint || currentManifest.sheetCount !== Number(record.sheetCount) ||
-        currentManifest.rowCount !== Number(record.rowCount) || currentManifest.cellCount !== Number(record.cellCount) ||
-        currentManifest.formulaCount !== Number(record.formulaCount)) {
+    if (currentManifest.fingerprint !== verifiedBackup.fingerprint ||
+        currentManifest.sheetCount !== Number(verifiedBackup.sheetCount) ||
+        currentManifest.rowCount !== Number(verifiedBackup.rowCount) ||
+        currentManifest.cellCount !== Number(verifiedBackup.cellCount) ||
+        currentManifest.formulaCount !== Number(verifiedBackup.formulaCount)) {
         throw new Error("La base de datos cambió después del respaldo. Genera un respaldo nuevo antes de aplicar.");
     }
-    return { backupId: cleanBackupId, backupName: record.backupName, fingerprint: record.fingerprint, createdAt: record.createdAt };
+    return true;
 }
 
 function collectActiveDriveReferences(includeLocations = true) {
@@ -4048,7 +4070,15 @@ function handleApplyCortesImageReconciliation_(payload, logMessage, developerCon
     const lock = LockService.getScriptLock();
     try { lock.waitLock(30000); } catch (error) { throw new Error("No se pudo bloquear la aplicación de imágenes. Intenta nuevamente."); }
     try {
-        const verifiedBackup = verifyImageReconciliationBackup_(backupId, developerContext);
+        const verifiedBackup = runAdminDriveWorkOutsideScriptLock_(
+            lock,
+            "ADMIN_CORTES_RECONCILIATION_BACKUP_" + backupId,
+            () => verifyImageReconciliationBackup_(backupId, developerContext, { skipSourceValidation: true }),
+            backup => {
+                verifyImageReconciliationBackupSource_(backup);
+                return backup;
+            }
+        );
         const auditState = loadDriveAuditServerState_(auditId);
         if (auditState.ownerId !== ownerId || auditState.status !== "complete" ||
             auditState.scanVersion !== ADMIN_SERVICE_VERSION || auditState.imageMetadataVersion !== 1 ||

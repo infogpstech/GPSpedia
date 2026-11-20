@@ -1040,3 +1040,12 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] CI `44661420739` SUCCESS: 215 suites, 2,684 pruebas, 0 fallos; health read-only `44661420823` SUCCESS.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Sin despliegue Apps Script ni cambios productivos.
 - [ ] Tarea posterior: diseñar lease/idempotencia para sacar setTrashed y compensación Drive del lock global manteniendo comprobación de referencias y reconciliación.
+
+
+### P1 — ADMIN conciliación de imágenes Cortes: verificación del respaldo fuera del lock (2026-11-20)
+- [x] Separar la validación de Drive del archivo de respaldo (existencia, papelera, MIME, ACL privada, manifiesto y contenido de la copia) del ScriptLock global.
+- [x] Tras readquirir con `tryLock(0)`, verificar bajo lock el fingerprint y las dimensiones de la Spreadsheet operativa contra el respaldo antes de leer la auditoría o escribir.
+- [x] Si no se readquiere el lock o la base cambió, abortar antes del preview/escrituras; conservar las validaciones originales y el camino de verificación directa del helper para otros consumidores.
+- [x] `CortesImageReconciliationApply` 18/18 PASS; `CortesImageReconciliation` 34/34 PASS; parsing de `admin.js` PASS en runtime V8 aislado.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. CI global posterior al commit pendiente; no se desplegó Apps Script ni se modificaron datos productivos.
+- Nota: el preview completo (snapshot de destinos/referencias, auditoría Drive y ACL) permanece bajo lock; separarlo exige revalidar esos recursos y no se hará por suposición ni sin evidencia de contención. Medir en Beta autorizada antes de ampliar el cambio.
