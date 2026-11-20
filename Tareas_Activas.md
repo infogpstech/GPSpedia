@@ -848,3 +848,12 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [ ] Revisar `handleFreezeCortesIds`: la validación del backup Drive se ejecuta actualmente dentro del ScriptLock WRITE; mover la comprobación de respaldo fuera y conservar bajo lock el plan/commit de Cortes.
 - [ ] Revisar mutaciones PyS: verificar si `verifyPendingPysImageFile_` realiza DriveApp dentro del lock y separar solo si se conserva idempotencia, verificación del archivo y compensación.
 - [ ] Revisar limpieza Drive de adjuntos duplicados/rollback en reportes y sugerencias FEEDBACK; sacar Drive del lock sin borrar archivos que puedan haber quedado referenciados.
+
+
+### P1 — WRITE freezeCortesIds: respaldo Drive fuera del lock (2026-11-20)
+- [x] Mover autorización y verificación de respaldo Drive antes de adquirir ScriptLock.
+- [x] Cambiar adquisición a `tryLock(0)`; responder `WRITE_BUSY` si existe otra escritura.
+- [x] Mantener bajo lock la lectura/plan de Cortes, dry-run, escritura de valores estáticos y verificación posterior.
+- [x] `WriteFreezeCortesIdsBackupOutsideLock` 5/5; `WriteAuthorizationMinimization` 13/13.
+- [x] CI `44645165057` SUCCESS: 195 suites, 2,541 pruebas, 0 fallos; health read-only `44645165055` SUCCESS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Sin despliegue Apps Script ni cambios productivos.
