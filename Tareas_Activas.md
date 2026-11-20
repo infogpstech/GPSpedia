@@ -955,3 +955,12 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [ ] Confirmar Script IDs/deployments reales y agrupar qué fuentes comparten cada proyecto. README/contexto confirman que fuentes y deployments son independientes y que no hay IDs de proyecto versionados suficientes; no inferir aislamiento desde nombres de archivos ni endpoints. Requiere inventario autorizado en Beta.
 - [ ] Prueba real de no interferencia entre deployments y conflicto de dos mutaciones sobre el mismo recurso en Beta autorizada.
 - Nota: este mapa es una clasificación estática de los locks encontrados en fuentes, no una afirmación de topología desplegada. No se consultaron proyectos Apps Script ni se accedió a datos productivos.
+
+
+### P1 — ADMIN restauración de imagen histórica: Drive fuera del lock (2026-11-20)
+- [x] Ejecutar getFileById, MIME, papelera y validación de carpeta Cortes fuera del ScriptLock.
+- [x] Readquirir con tryLock(0) y revalidar en inventario tipo/estado/Drive ID/URL/vehículo/campo antes de continuar.
+- [x] Mantener bajo lock referencias activas, conflicto, escritura Cortes e historial/rollback; liberar solo si el lock está adquirido.
+- [x] AdminRecoverImageDrivePreflightOutsideLock 11/11; AdminReplacedImagesIntegrity 56/56.
+- [x] CI 44652896571 SUCCESS: 207 suites, 2,614 pruebas, 0 fallos; health read-only 44652896675 SUCCESS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Sin despliegue ni cambios productivos.
