@@ -71,6 +71,18 @@ test("no descarga toda Feedbacks para revisar aprobaciones pendientes", () => {
     findPending(sheet, "tutorial", "tut-abc123");
     assert.ok(sheet.calls.every(call => call[1] === 3 || (call[1] === 1 && call[2] === 1)));
 });
+test("funciona con adaptadores Range que exponen getValues pero no getValue", () => {
+    const original = makeSheet([["F-1", "", approval(), "x"]]);
+    const sheet = {
+        getLastRow: original.getLastRow,
+        getLastColumn: original.getLastColumn,
+        getRange(...args) {
+            const range = original.getRange(...args);
+            return { getValues: range.getValues };
+        }
+    };
+    assert.equal(findPending(sheet, "tutorial", "tut-abc123").rowIndex, 2);
+});
 test("fallback sin TextFinder sigue limitado a la columna Problema", () => {
     const original = makeSheet([["F-1", "", approval(), "x"]]);
     const sheet = {
