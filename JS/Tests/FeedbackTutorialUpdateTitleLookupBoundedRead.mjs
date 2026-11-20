@@ -17,15 +17,16 @@ const titleExists = new Function("normalizeTutorialTitle_", helperCode + "\nretu
 );
 function makeSheet(titles) {
     const calls = [];
+    const rows = titles.map((title, index) => ["tut-" + index, title]);
     return {
         calls,
-        getLastRow: () => titles.length + 1,
+        getLastRow: () => rows.length + 1,
         getDataRange() { throw new Error("No se debe descargar toda Tutorial."); },
         getRange(row, column, rowCount = 1, columnCount = 1) {
             calls.push([row, column, rowCount, columnCount]);
             return {
-                getValues: () => titles.slice(row - 2, row - 2 + rowCount)
-                    .map(value => [value].slice(column - 1, column - 1 + columnCount))
+                getValues: () => rows.slice(row - 2, row - 2 + rowCount)
+                    .map(values => values.slice(column - 1, column - 1 + columnCount))
             };
         }
     };
