@@ -108,9 +108,10 @@ function runAddSupplementaryInfoIntegrityTests(sources) {
 
  run_("WRITE marca las imágenes suplementarias como linked solo después de persistir",function(){
   const outer=String(sources.write).slice(String(sources.write).indexOf("function handleAddSupplementaryInfo(payload)"),String(sources.write).indexOf("function handleAddSupplementaryInfoLocked"));
-  assert_(outer.indexOf("handleAddSupplementaryInfoLocked")<outer.indexOf("uploadedUrls.forEach"));
+  assert_(outer.indexOf("appendVehicleContributionEvent_")<outer.indexOf("uploadedUrls.forEach"));
   assert_(outer.includes("markImageUploadLinked(url, { shortLedgerLock: true })"));
   assert_(outer.includes("pendiente de reconciliación"));
+  assert_(outer.includes("handleAddSupplementaryInfoLocked"),"La ruta legacy de notas sigue disponible.");
  });
  run_("WRITE ledger de imagen usa secciones críticas breves",function(){
   const upload=String(sources.write).slice(String(sources.write).indexOf("function uploadImageToDriveWithShortLedgerLocks_"),String(sources.write).indexOf("function uploadImageToDrive("));
