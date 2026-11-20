@@ -510,3 +510,9 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Pruebas `FeedbackYearFolderSyncOutsideLock` 5/5; `SuggestYearVoteThreshold` 6/6. CI `44647298901` SUCCESS: 201 suites, 2,571 pruebas aprobadas, 0 fallos. Health read-only `44647298819` SUCCESS.
 - Commits: implementación `88b8725a7671a1c4a5a72429aba94197e5c01969`, prueba `20d9fad52c7585c58c2b8dee56aabeb4909b3f41`, runner `64229b03e53557c8826ce529cb3fd2cd583f97b6`.
 - Sin despliegue Apps Script ni cambios productivos.
+
+
+## P1 — actividad de likes FEEDBACK fuera del lock (2026-11-20)
+- `handleRecordLike` conserva bajo ScriptLock la lectura del contador, ledger pending/completed y confirmación del incremento; difiere `logUserActivity` hasta después de liberar el lock. Los replays completed no generan actividad duplicada.
+- Prueba `FeedbackLikeActivityOutsideLock` 5/5; `FeedbackYearFolderSyncOutsideLock` 5/5. CI `44647675553` SUCCESS: 202 suites, 2,576 pruebas aprobadas, 0 fallos; health read-only `44647675689` SUCCESS.
+- Commits: implementación `a134f93fec22248299b6fe3d1fa6bb508289fcef`, prueba `77c587e3c3e498d3a13b2ff7fa90db21565048b1`, runner `19d25a79ba2eec315b68a7bc7afd0ebaa5b36252`.
