@@ -978,3 +978,8 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Hallazgo adicional confirmado en UI/WRITE: apertura y alimentación generan/envían `opId`, pero el backend no calcula huella ni registra el resultado en un ledger idempotente. Un timeout tras guardar no permite recuperar el éxito original; el reintento puede recibir conflicto aunque el primer intento sí se haya aplicado. La clave de carga Drive solo protege el archivo, no la escritura de catálogo. Documentado en `CONCURRENCIA_APORTES_DISENO.md`, commit `34b17b80e8a3660d659231ff88fa67d70e810cf6`.
 - El nuevo ledger append-only debe cubrir en un solo contrato cortes, apertura y alimentación; conservar `opId`/hash en el cliente; recuperar éxito para mismo ID/hash; rechazar ID/hash diferente.
 - HEAD tras actualizaciones de diseño/tareas: `28cb5bd69581849b7a1bdded9d9a39d09a6f2bad` (checkpoint aún pendiente de este último commit).
+
+
+- Inspección adicional de UI/ADMIN/CATALOG: la ficha consume el contrato fijo de tres cortes, apertura y tres alimentaciones; `completeVehicleExpansionSave_` fuerza una lectura de catálogo después del aporte. ADMIN edita texto/modelo mediante `updateVehicleField` (valor esperado) e imágenes mediante `uploadAdminImage` (ledger compensatorio). La futura proyección debe devolver los campos actuales y metadatos de origen por campo; editar un valor proyectado exige evento de sustitución/versionado para no duplicarlo ni resucitar el evento anterior.
+- Documentado en `CONCURRENCIA_APORTES_DISENO.md`, commit `20b78390c9a056299319e0a29866d2ec12abd143`. P0 sigue abierta.
+- HEAD tras actualizaciones: `b83d99dcb8647afd2350415962741dfb50d33d2a`; el checkpoint se actualizará en el commit siguiente.
