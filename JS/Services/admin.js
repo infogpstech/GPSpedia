@@ -6751,6 +6751,60 @@ function findUniqueAdminVehicleRow_(sheet, vehicleId) {
  * El ID y los campos calculados quedan fuera de la allowlist y nunca se escriben.
  */
 
+function normalizeAdminFieldProjectionValue_(value) {
+    if (Array.isArray(value)) {
+        return JSON.stringify(value.map(item => String(item == null ? "" : item).trim().toUpperCase()).filter(Boolean).sort());
+    }
+    const text = String(value == null ? "" : value).trim();
+    if (text.startsWith("[") && text.endsWith("]")) {
+        try {
+            const parsed = JSON.parse(text);
+            if (Array.isArray(parsed)) {
+                return JSON.stringify(parsed.map(item => String(item == null ? "" : item).trim().toUpperCase()).filter(Boolean).sort());
+            }
+        } catch (error) {}
+    }
+    return text;
+}
+
+function verifyAdminVehicleFieldUpdateProjection_(vehicleId, fieldName, proposedValue, eventId) {
+    try {
+        const snapshot = getAdminProjectedVehicleFieldSnapshot_(vehicleId, fieldName);
+        const currentValue = snapshot.rawValue !== undefined ? snapshot.rawValue : snapshot.value;
+        const candidate = (snapshot.candidates || []).find(item => String(item && item.eventId || "") === String(eventId));
+        const matchesValue = normalizeAdminFieldProjectionValue_(currentValue) === normalizeAdminFieldProjectionValue_(proposedValue);
+        const applied = matchesValue && String(snapshot.eventId || "") === String(eventId);
+        if (applied) return {
+            candidateReviewPending: false, projectionVerification: "applied",
+            currentValue: snapshot.value, currentSourceEventId: snapshot.eventId,
+            message: "La versión quedó registrada y confirmada en la proyección CATALOG."
+        };
+        if (candidate) return {
+            candidateReviewPending: true, projectionVerification: "candidate",
+            currentValue: snapshot.value, currentSourceEventId: snapshot.eventId,
+            candidateReason: String(candidate.reason || candidate.reasonCode || candidate.message || "Conflicto de proyección"),
+            message: "La versión quedó registrada, pero CATALOG la conserva como candidata para revisión."
+        };
+        if (matchesValue) return {
+            candidateReviewPending: false, superseded: true, projectionVerification: "superseded",
+            currentValue: snapshot.value, currentSourceEventId: snapshot.eventId,
+            message: "El valor ya aparece en CATALOG por una actualización posterior; se conserva la versión vigente."
+        };
+        return {
+            candidateReviewPending: true, projectionVerification: "not_applied",
+            currentValue: snapshot.value, currentSourceEventId: snapshot.eventId,
+            message: "La versión quedó registrada, pero no se reflejó en CATALOG. Requiere revisión."
+        };
+    } catch (error) {
+        return {
+            candidateReviewPending: true, projectionVerification: "unavailable",
+            currentValue: undefined, currentSourceEventId: "",
+            verificationError: String(error && error.message || error),
+            message: "La versión se registró, pero no se pudo verificar su aplicación en CATALOG. Actualiza la ficha antes de continuar."
+        };
+    }
+}
+
 function appendAdminVehicleFieldUpdate_(vehicleId,fieldName,valueToStore,expectedCurrentValue,expectedSourceEventId,modalContext,logMessage) {
     const cleanVehicleId=String(vehicleId||"").trim(),sourceEventId=String(expectedSourceEventId||"").trim();
     if(!cleanVehicleId)throw new Error("ID de vehículo no válido.");
@@ -6778,9 +6832,12 @@ function appendAdminVehicleFieldUpdate_(vehicleId,fieldName,valueToStore,expecte
         if(String(existing[3]||"").trim().toLowerCase()!==operationHash||String(existing[2]||"").trim()!==cleanVehicleId||
             String(existing[4]||"")!=="vehicle_update"||String(existing[10]||"").trim()!==sourceEventId)
             throw new Error("La clave idempotente de esta edición ya está asociada a otro contenido.");
-        return{status:"success",duplicate:true,eventId:String(existing[0]),opId,fieldName,value:valueToStore,
-            expectedCurrentValue:expected,expectedSourceEventId:sourceEventId,folderSyncWarning:false,
-            message:"La edición ya estaba registrada; no se añadió otra fila."};
+        const duplicateEventId = String(existing[0]);
+        const projection = verifyAdminVehicleFieldUpdateProjection_(cleanVehicleId, fieldName, valueToStore, duplicateEventId);
+        return Object.assign({
+            status:"success",duplicate:true,eventId:duplicateEventId,opId,fieldName,value:valueToStore,
+            expectedCurrentValue:expected,expectedSourceEventId:sourceEventId,folderSyncWarning:false
+        }, projection);
     }
     const eventId="EV-"+Utilities.getUuid(),createdAt=new Date().toISOString();
     ledgerSheet.appendRow([eventId,opId,cleanVehicleId,operationHash,"vehicle_update",JSON.stringify(payloadData),
@@ -6794,10 +6851,14 @@ function appendAdminVehicleFieldUpdate_(vehicleId,fieldName,valueToStore,expecte
         throw new Error("No se pudo verificar la actualización versionada después de anexarla.");
     const folderMetadataFields=new Set(["categoria","modelo","versionesAplicables","tipoEncendido","anoDesde","anoHasta","imagenVehiculo"]);
     const folderSyncWarning=folderMetadataFields.has(fieldName);
-    if(logMessage)logMessage("Edición In-Modal","Se anexó una versión del campo '"+fieldName+"' para el vehículo "+cleanVehicleId+"; el registro materializado no se sobrescribió.");
-    return{status:"success",duplicate:false,eventId,opId,fieldName,value:valueToStore,expectedCurrentValue:expected,
-        expectedSourceEventId:sourceEventId,folderSyncWarning,
-        message:"La edición quedó registrada como evento versionado. Si otra actualización llegó primero, aparecerá como conflicto localizado para revisión."};
+    const projection = verifyAdminVehicleFieldUpdateProjection_(cleanVehicleId, fieldName, valueToStore, eventId);
+    if(logMessage)logMessage("Edición In-Modal",projection.candidateReviewPending
+        ? "Se anexó una versión candidata del campo '"+fieldName+"' para el vehículo "+cleanVehicleId+"; CATALOG no la materializó."
+        : "Se anexó una versión del campo '"+fieldName+"' para el vehículo "+cleanVehicleId+"; resultado de proyección: "+projection.projectionVerification+".");
+    return Object.assign({
+        status:"success",duplicate:false,eventId,opId,fieldName,value:valueToStore,expectedCurrentValue:expected,
+        expectedSourceEventId:sourceEventId,folderSyncWarning
+    }, projection);
 }
 
 function handleUpdateVehicleField(payload,logMessage,modalContext) {
@@ -7031,8 +7092,10 @@ function getAdminProjectedVehicleFieldSnapshot_(vehicleId, fieldName) {
     if (matches.length !== 1) throw new Error("CATALOG no devolvió un vehículo único para recuperar la versión de imagen.");
     const vehicle = matches[0];
     const source = vehicle.contributionSources && vehicle.contributionSources[fieldName];
+    const rawValue = vehicle[fieldName];
     return {
-        value: String(vehicle[fieldName] == null ? "" : vehicle[fieldName]).trim(),
+        value: String(rawValue == null ? "" : rawValue).trim(),
+        rawValue,
         eventId: String(source && source.eventId || ""),
         candidates: Array.isArray(vehicle.contributionCandidates) ? vehicle.contributionCandidates : []
     };
