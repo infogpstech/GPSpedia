@@ -1443,3 +1443,16 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [ ] Mantener compatibilidad de lectura con las filas históricas de `ImageUploadLedger`; no migrar ni borrar datos históricos automáticamente.
 - [ ] Retirar `ScriptLock.waitLock(5000)` únicamente cuando WRITE, ADMIN y recuperación de archivos huérfanos utilicen el diario y pasen pruebas de intercalado.
 - Estado P0: EN PROGRESO. El journal nuevo todavía no está conectado al flujo productivo de carga.
+
+### 2026-11-20 — Conexión inicial de ImageUploadEvents al flujo WRITE
+
+- [x] Añadir adaptador de transición para anexar eventos reserved, pending y linked al diario ImageUploadEvents durante cargas WRITE.
+- [x] Mantener ImageUploadLedger como fuente compatible actual para ADMIN; el journal nuevo es secundario en esta fase y sus fallos no revierten cargas válidas.
+- [x] Ampliar ImageUploadEventJournal.mjs para probar el adaptador y la proyección de las transiciones.
+- [x] CI HEAD cb496602f788c3fe4665cb0a193213a6803d52ab: 231 suites, 2,850 pruebas aprobadas, 0 fallos.
+- [x] Health read-only del mismo HEAD: SUCCESS.
+- [ ] Migrar la reconciliación ADMIN a lectura/proyección del journal, preservando compatibilidad con filas históricas de ImageUploadLedger.
+- [ ] Hacer que WRITE y ADMIN utilicen el journal como fuente de verdad; conservar cargas huérfanas como candidatas revisables.
+- [ ] Probar dos cargas simultáneas con mismo token y mismo/diferente fileId, errores parciales Drive/Sheets y recuperación después de respuesta perdida.
+- [ ] Retirar ScriptLock.waitLock(5000) solo después de completar la migración dual y aprobar regresión.
+- Estado: P0 EN PROGRESO. No se retiró ningún lock ni se desplegó Apps Script. La integración actual es una transición incremental, no el cierre de la migración.

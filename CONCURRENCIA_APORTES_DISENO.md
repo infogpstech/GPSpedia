@@ -124,3 +124,13 @@ HEAD 4f54e1ca71a21857a3e23e5d7d1a98ff3a77fe51: 230 suites, 2,843 pruebas aprobad
 4. Hacer que checkOperation y la UI reconcilien conflictos que aparezcan después de la primera respuesta.
 5. Migrar edición in-modal de Desarrollador a sustituciones versionadas/auditables.
 6. Completar intercalados y fallos parciales Drive/Sheets; mantener P0 abierta hasta cubrir toda la matriz.
+
+## Avance de migración — 2026-11-20
+
+WRITE ahora anexa transiciones reserved, pending y linked a ImageUploadEvents durante la carga. El adaptador valida y proyecta el mismo contrato del journal y registra errores secundarios sin revertir una carga que ya se completó.
+
+**Límite deliberado de esta fase:** ImageUploadLedger sigue siendo la fuente compatible con ADMIN y WRITE todavía conserva ScriptLock.waitLock(5000) para sus reservas/actualizaciones. El diario es todavía secundario; no debe describirse como fuente de verdad ni considerarse una migración terminada.
+
+Prueba ImageUploadEventJournal: 7/7 PASS. CI 44810419884 SUCCESS: 231 suites, 2,850 pruebas, 0 fallos. Health read-only del mismo HEAD SUCCESS.
+
+Siguiente paso: adaptar ADMIN para reconciliar tanto los eventos append-only como los registros heredados, definir precedencia/compatibilidad de proyección y probar recuperación antes de retirar el ledger mutable o sus locks.

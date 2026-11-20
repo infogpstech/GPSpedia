@@ -1304,3 +1304,9 @@ Se implementó agrupación de resultados de Cortes por categoría/marca/modelo, 
 
 
 [2026-11-20 · Vistos recientes y claves de aportes] Se adelantó la hidratación de actividad local antes de showApp para que Vistos recientemente lea IndexedDB/cache en paralelo con el arranque del catálogo, sin llamadas remotas adicionales. Los modales de apertura/alimentación y el stage 3 de add_cortes ahora envían un opId estable para que la clave de imagen no use el fallback legacy. Pruebas: RecentlyViewedCarousel 1/1, SupplementaryImageOperationIdContract 8/8. CI 44793849152 SUCCESS: 227 suites, 2,802 pruebas, 0 fallos; Health 44793849459 SUCCESS. La auditoría confirma que la idempotencia por vehículo/operación no bloquea vehículos distintos; queda por proteger la reserva del mismo vehículo entre usuarios y conservar en Imagenes_Reemplazadas las imágenes que no puedan entrar por límite/conflicto, además de completar el flujo de alta desde Feedback.
+
+2026-11-20 — Integración inicial del diario de cargas en WRITE
+- JS/Services/write.js: el flujo de carga con locks breves anexa eventos reserved y pending; la vinculación anexa linked. ImageUploadLedger continúa manteniendo compatibilidad con ADMIN y conserva el control de estado actual.
+- JS/Tests/ImageUploadEventJournal.mjs: se amplía la cobertura del adaptador de transiciones.
+- Validación CI HEAD cb496602f788c3fe4665cb0a193213a6803d52ab: 231 suites, 2,850 pruebas aprobadas, 0 fallos; health read-only SUCCESS.
+- No se retiró ScriptLock.waitLock(5000), no se desplegó Apps Script y no se modificaron datos productivos.

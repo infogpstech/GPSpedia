@@ -1056,3 +1056,12 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - P0 permanece EN PROGRESO. No se desplegó código de servicio ni se modificaron hojas/archivos productivos.
 
 - Continuidad documental posterior a la ejecución CI: `Tareas_Activas.md` actualizado en commit `d548038e5bb848839c0ba13ceffc7524d854255d`; HEAD actual de `GPSpedia2.2.5_work` = `d548038e5bb848839c0ba13ceffc7524d854255d`. El último CI de código sigue siendo el commit `bbf35e4` (231/2,849, 0 fallos). Rama base confirmada nuevamente intacta.
+
+## Continuidad — integración inicial de ImageUploadEvents en WRITE (2026-11-20)
+
+- HEAD confirmado antes de esta actualización documental: cb496602f788c3fe4665cb0a193213a6803d52ab; rama autorizada GPSpedia2.2.5_work. Rama base protegida confirmada intacta: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Commits de implementación: e46bba747cde810cceeefc7e61d8e3c0bde83fa6 (adaptador de transiciones en WRITE) y cb496602f788c3fe4665cb0a193213a6803d52ab (prueba del adaptador).
+- WRITE anexa al journal eventos reserved, pending y linked. El diario sigue siendo secundario; ImageUploadLedger continúa como fuente compatible actual y ADMIN todavía usa su reconciliador mutable.
+- Pruebas CI en HEAD cb496602f788c3fe4665cb0a193213a6803d52ab: 231 suites, 2,850 pruebas aprobadas, 0 fallos. Health read-only SUCCESS.
+- No se retiró ScriptLock.waitLock(5000), no se desplegó Apps Script y no se modificaron Spreadsheet/Drive productivos.
+- P0 sigue EN PROGRESO. Siguiente paso exacto: migrar el reconciliador ADMIN para leer/proyectar ImageUploadEvents y ImageUploadLedger sin perder filas históricas ni archivos huérfanos; después convertir el journal en fuente de verdad, probar carreras y solo entonces retirar el lock.
