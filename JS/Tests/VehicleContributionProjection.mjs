@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const catalog = readFileSync(new URL("../Services/catalog.js", import.meta.url), "utf8");
+const admin = readFileSync(new URL("../Services/admin.js", import.meta.url), "utf8");
 function extractFunction(source, name) {
     const start = source.indexOf("function " + name + "(");
     assert.notEqual(start, -1, "No se encontró " + name);
@@ -157,6 +158,86 @@ test("evento inválido cancela la proyección completa", () => {
     assert.throws(() => project([blankVehicle("101")], [
         { opId: "invalid", vehicleId: "101", operationHash: "bad", kind: "cut", payload: {}, rowIndex: 2 }
     ]), /ledger contiene un evento de aporte inválido/);
+});
+
+
+function buildMigrationRuntime(initialHeaders = null) {
+    const headers = initialHeaders ? initialHeaders.slice() : [];
+    let rowCount = initialHeaders ? 1 : 0;
+    let frozenRows = 0;
+    let flushes = 0;
+    const sheet = {
+        getLastRow: () => rowCount,
+        getLastColumn: () => headers.length,
+        getRange(row, column, rows, columns) {
+            return {
+                setValues(values) {
+                    values[0].forEach((value, index) => { headers[column - 1 + index] = value; });
+                    rowCount = Math.max(rowCount, row);
+                    return this;
+                },
+                getDisplayValues() {
+                    return [headers.slice(column - 1, column - 1 + columns)];
+                },
+                setFontWeight() { return this; },
+                setBackground() { return this; }
+            };
+        },
+        setFrozenRows(value) { frozenRows = value; }
+    };
+    let exists = Boolean(initialHeaders);
+    const spreadsheet = {
+        getSheetByName(name) { assert.equal(name, "AportesVehiculo"); return exists ? sheet : null; },
+        insertSheet(name) { assert.equal(name, "AportesVehiculo"); exists = true; return sheet; }
+    };
+    const lockWrapper = callback => callback();
+    const migration = new Function(
+        "withReplacedImagesSchemaLock_", "getSpreadsheet", "SpreadsheetApp",
+        "ADMIN_VEHICLE_CONTRIBUTIONS_SHEET_NAME_", "ADMIN_VEHICLE_CONTRIBUTIONS_HEADERS_",
+        extractFunction(admin, "handleMigrateVehicleContributionsSchema") + ";return handleMigrateVehicleContributionsSchema;"
+    )(lockWrapper, () => spreadsheet, { flush() { flushes++; } }, "AportesVehiculo", [
+        "eventId", "opId", "vehicleId", "operationHash", "kind", "payloadJson",
+        "actorId", "actorName", "createdAt", "status", "supersedesEventId"
+    ]);
+    return { migration, headers, sheet, state: () => ({ rowCount, frozenRows, flushes }) };
+}
+
+test("la migración explícita crea el esquema versionado AportesVehiculo", () => {
+    const runtime = buildMigrationRuntime();
+    const result = runtime.migration({}, () => {});
+    assert.equal(result.status, "success");
+    assert.equal(result.created, true);
+    assert.equal(result.rowCount, 0);
+    assert.equal(runtime.state().frozenRows, 1);
+    assert.deepEqual(runtime.headers, [
+        "eventId", "opId", "vehicleId", "operationHash", "kind", "payloadJson",
+        "actorId", "actorName", "createdAt", "status", "supersedesEventId"
+    ]);
+});
+
+test("la migración de AportesVehiculo es idempotente y no recrea la hoja", () => {
+    const headers = [
+        "eventId", "opId", "vehicleId", "operationHash", "kind", "payloadJson",
+        "actorId", "actorName", "createdAt", "status", "supersedesEventId"
+    ];
+    const runtime = buildMigrationRuntime(headers);
+    const result = runtime.migration({}, () => {});
+    assert.equal(result.status, "success");
+    assert.equal(result.created, false);
+    assert.deepEqual(runtime.headers, headers);
+});
+
+test("la migración rechaza encabezados incompatibles sin sobrescribirlos", () => {
+    const headers = ["eventId", "opId", "vehiculo_incorrecto"];
+    const runtime = buildMigrationRuntime(headers);
+    assert.throws(() => runtime.migration({}, () => {}), /encabezados no coinciden/);
+    assert.deepEqual(runtime.headers, headers);
+});
+
+test("ADMIN expone la migración solo como acción explícita de esquema", () => {
+    assert.match(admin, /"migrateVehicleContributionsSchema"/);
+    assert.match(admin, /case 'migrateVehicleContributionsSchema':[\\s\\S]{0,160}handleMigrateVehicleContributionsSchema/);
+    assert.match(admin, /function handleMigrateVehicleContributionsSchema\(/);
 });
 
 console.log(passed + "/" + passed + " PASS");
