@@ -458,14 +458,21 @@ function projectVehicleContributionEvents_(vehicles, sourceEvents) {
         if (!vehicle || vehicle.id === null || vehicle.id === undefined) return;
         readVinPrefixes(vehicle.vin).forEach(prefix => registerVinOwner(prefix, vehicle.id));
     });
+    const eventVinPrefixes = event => {
+        if(event&&event.kind==="vehicle_update"&&event.payload&&event.payload.fieldName==="vin")
+            return readVinPrefixes(event.payload.value);
+        const prefix=String(event&&event.payload&&event.payload.vinPrefix||"").trim().toUpperCase();
+        return prefix?[prefix]:[];
+    };
     effectiveEvents.forEach(event => {
-        const prefix = event && event.payload && event.payload.vinPrefix;
-        if (prefix) registerVinOwner(prefix, event.vehicleId);
+        if(event&&event.kind==="vehicle_update"&&String(event.status||"").toLowerCase()!=="accepted")return;
+        eventVinPrefixes(event).forEach(prefix=>registerVinOwner(prefix,event.vehicleId));
     });
     const conflictedVinEventIds = new Set();
     effectiveEvents.forEach(event => {
-        const prefix = String(event && event.payload && event.payload.vinPrefix || "").trim().toUpperCase();
-        if (prefix && (vinOwners.get(prefix) || new Set()).size > 1) conflictedVinEventIds.add(String(event.eventId || ""));
+        if(event&&event.kind==="vehicle_update"&&String(event.status||"").toLowerCase()!=="accepted")return;
+        if(eventVinPrefixes(event).some(prefix=>(vinOwners.get(prefix)||new Set()).size>1))
+            conflictedVinEventIds.add(String(event.eventId||""));
     });
 
     effectiveEvents.forEach(event => {
@@ -600,25 +607,45 @@ function projectVehicleContributionEvents_(vehicles, sourceEvents) {
                     "cableAlimen","cableAlimen2","cableAlimen3","imagenVehiculo","imgCorte1","imgCorte2","imgCorte3","imgApertura",
                     "imgCableAlimen","imgCableAlimen2","imgCableAlimen3","tipoCorte1","tipoCorte2","tipoCorte3",
                     "ubicacionCorte1","ubicacionCorte2","ubicacionCorte3","colorCableCorte1","colorCableCorte2","colorCableCorte3",
-                    "configRelay1","configRelay2","configRelay3"]);
+                    "configRelay1","configRelay2","configRelay3","vin"]);
                 if(!allowed.has(field)||!Object.prototype.hasOwnProperty.call(payload,"expectedCurrentValue")||
                     !Object.prototype.hasOwnProperty.call(payload,"value"))
                     throw new Error("El ledger contiene una actualización de campo inválida; se canceló la proyección completa.");
                 const imageField=["imagenVehiculo","imgCorte1","imgCorte2","imgCorte3","imgApertura","imgCableAlimen","imgCableAlimen2","imgCableAlimen3"].includes(field);
+                const vinField=field==="vin";
                 const currentValue=vehicle[field]===undefined||vehicle[field]===null?"":String(vehicle[field]);
                 const expectedValue=payload.expectedCurrentValue===undefined||payload.expectedCurrentValue===null?"":String(payload.expectedCurrentValue);
                 const currentSource=sources[field];
                 const expectedSourceId=String(event.supersedesEventId||"").trim();
-                const comparableCurrent=imageField&&currentValue?normalizeAndValidateImageId(currentValue):currentValue;
-                const comparableExpected=imageField&&expectedValue?normalizeAndValidateImageId(expectedValue):expectedValue;
+                const comparableCurrent=vinField?JSON.stringify(readVinPrefixes(vehicle.vin)):
+                    (imageField&&currentValue?normalizeAndValidateImageId(currentValue):currentValue);
+                const comparableExpected=vinField?JSON.stringify(readVinPrefixes(payload.expectedCurrentValue)):
+                    (imageField&&expectedValue?normalizeAndValidateImageId(expectedValue):expectedValue);
                 if(comparableCurrent!==comparableExpected||(expectedSourceId&&(!currentSource||String(currentSource.eventId)!==expectedSourceId))){
                     const candidatePayload=Object.assign({},payload,{currentValue:vehicle[field],currentSourceEventId:currentSource&&currentSource.eventId||""});
                     candidates.push({eventId:event.eventId,opId:event.opId,kind:event.kind,reason:"field_conflict",payload:candidatePayload});
                     return;
                 }
-                const nextValue=imageField?(payload.value?normalizeAndValidateImageId(String(payload.value)):null):
-                    (field==="anoDesde"||field==="anoHasta"?Number(payload.value):payload.value);
-                vehicle[field]=nextValue;
+                if(vinField){
+                    const prefixes=readVinPrefixes(payload.value);
+                    const versionParts=String(vehicle.versionesAplicables||"").split(/[,/\\\\;]+/).map(value=>value.trim()).filter(Boolean);
+                    const maxAllowed=Math.max(1,Math.min(3,versionParts.length||1));
+                    if(conflictedVinEventIds.has(String(event.eventId||""))){
+                        const candidatePayload=Object.assign({},payload,{currentValue:vehicle.vin,currentSourceEventId:currentSource&&currentSource.eventId||""});
+                        candidates.push({eventId:event.eventId,opId:event.opId,kind:event.kind,reason:"vin_conflict",payload:candidatePayload});
+                        return;
+                    }
+                    if(prefixes.length>maxAllowed){
+                        const candidatePayload=Object.assign({},payload,{currentValue:vehicle.vin,currentSourceEventId:currentSource&&currentSource.eventId||""});
+                        candidates.push({eventId:event.eventId,opId:event.opId,kind:event.kind,reason:"vin_capacity_full",payload:candidatePayload});
+                        return;
+                    }
+                    vehicle.vin=JSON.stringify(prefixes);
+                }else{
+                    const nextValue=imageField?(payload.value?normalizeAndValidateImageId(String(payload.value)):null):
+                        (field==="anoDesde"||field==="anoHasta"?Number(payload.value):payload.value);
+                    vehicle[field]=nextValue;
+                }
                 sources[field]={eventId:event.eventId,opId:event.opId,operationHash:event.operationHash};
                 const resolvedCandidate=String(payload.resolvesCandidateEventId||"").trim();
                 if(resolvedCandidate)resolvedFieldCandidateIds.add(resolvedCandidate);
