@@ -2178,6 +2178,117 @@ const IMAGE_UPLOAD_LEDGER_HEADERS = [
     "fileId", "fileUrl", "state", "referenceSheet", "referenceRow", "referenceColumns",
     "referencesJson", "fileName", "createdAt", "updatedAt", "lastError"
 ];
+
+const IMAGE_UPLOAD_EVENTS_SHEET_NAME_ = "ImageUploadEvents";
+const IMAGE_UPLOAD_EVENTS_HEADERS_ = [
+    "eventId", "token", "operationKey", "folderId", "mimeType", "sizeBytes",
+    "contentHash", "fileId", "fileUrl", "state", "referencesJson", "fileName",
+    "createdAt", "lastError"
+];
+
+/**
+ * Diario append-only para transiciones de cargas. No reemplaza todavía el ledger
+ * heredado: permite migrar y probar la proyección sin mutar registros productivos.
+ */
+function getOrCreateImageUploadEventsSheet_(spreadsheet) {
+    const ss = spreadsheet || getSpreadsheet();
+    let sheet = ss.getSheetByName(IMAGE_UPLOAD_EVENTS_SHEET_NAME_);
+    if (!sheet) sheet = ss.insertSheet(IMAGE_UPLOAD_EVENTS_SHEET_NAME_);
+    if (sheet.getLastRow() === 0 && sheet.getLastColumn() === 0) {
+        sheet.getRange(1, 1, 1, IMAGE_UPLOAD_EVENTS_HEADERS_.length).setValues([IMAGE_UPLOAD_EVENTS_HEADERS_]);
+        sheet.setFrozenRows(1);
+        SpreadsheetApp.flush();
+    }
+    if (sheet.getLastColumn() < IMAGE_UPLOAD_EVENTS_HEADERS_.length) {
+        throw new Error("ImageUploadEvents tiene una estructura incompleta.");
+    }
+    const headers = sheet.getRange(1, 1, 1, IMAGE_UPLOAD_EVENTS_HEADERS_.length)
+        .getDisplayValues()[0].map(value => String(value || "").trim());
+    if (IMAGE_UPLOAD_EVENTS_HEADERS_.some((header, index) => headers[index] !== header)) {
+        throw new Error("La estructura de ImageUploadEvents no coincide con el contrato esperado.");
+    }
+    return sheet;
+}
+
+function appendImageUploadEvent_(sheet, event) {
+    if (!sheet || !event || typeof event !== "object") throw new Error("Evento de carga inválido.");
+    const token = String(event.token || "").trim();
+    const operationKey = String(event.operationKey || "").trim();
+    const folderId = String(event.folderId || "").trim();
+    const mimeType = String(event.mimeType || "").trim().toLowerCase();
+    const sizeBytes = Number(event.sizeBytes);
+    const contentHash = String(event.contentHash || "").trim().toLowerCase();
+    const state = String(event.state || "pending").trim().toLowerCase();
+    if (!token || !operationKey || !folderId || !mimeType.startsWith("image/") ||
+        !Number.isSafeInteger(sizeBytes) || sizeBytes < 1 || !/^[a-f0-9]{64}$/.test(contentHash) ||
+        !["reserved", "pending", "linked", "file_missing", "requires_review", "error"].includes(state)) {
+        throw new Error("El evento de carga no cumple el contrato de integridad.");
+    }
+    const row = [
+        "IE-" + String(Utilities.getUuid()).replace(/-/g, ""),
+        token, operationKey, folderId, mimeType, sizeBytes, contentHash,
+        String(event.fileId || ""), String(event.fileUrl || ""), state,
+        String(event.referencesJson || "[]"), String(event.fileName || ""),
+        String(event.createdAt || new Date().toISOString()), String(event.lastError || "").slice(0, 500)
+    ];
+    sheet.appendRow(row);
+    SpreadsheetApp.flush();
+    const matches = sheet.getRange(2, 1, Math.max(1, sheet.getLastRow() - 1), 1)
+        .createTextFinder(row[0]).matchCase(true).matchEntireCell(true).findAll();
+    if (matches.length !== 1) {
+        const error = new Error("No se pudo confirmar el evento append-only de ImageUploadEvents.");
+        error.code = "IMAGE_UPLOAD_EVENT_UNCONFIRMED";
+        throw error;
+    }
+    return { eventId: row[0], rowIndex: matches[0].getRow(), values: row };
+}
+
+function readImageUploadEventsByToken_(sheet, token) {
+    const cleanToken = String(token || "").trim();
+    if (!cleanToken || !sheet || sheet.getLastRow() < 2) return [];
+    const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, IMAGE_UPLOAD_EVENTS_HEADERS_.length).getValues();
+    return rows.map((values, index) => ({ rowIndex: index + 2, values }))
+        .filter(entry => String(entry.values[1] || "").trim() === cleanToken);
+}
+
+/**
+ * Proyección determinista: los eventos no se sobrescriben. Si el mismo token
+ * termina asociado a varios fileId o metadatos incompatibles, no elige ganador.
+ */
+function projectImageUploadEvents_(events) {
+    const entries = Array.isArray(events) ? events : [];
+    if (!entries.length) return null;
+    const first = entries[0].values || entries[0];
+    const identity = [1, 2, 3, 4, 5, 6].map(index => String(first[index] == null ? "" : first[index]));
+    const fileIds = new Set();
+    const references = new Map();
+    let linked = false, fileMissing = false, requiresReview = false, lastError = "";
+    entries.forEach(entry => {
+        const values = entry.values || entry;
+        const candidateIdentity = [1, 2, 3, 4, 5, 6].map(index => String(values[index] == null ? "" : values[index]));
+        if (candidateIdentity.some((value, index) => value !== identity[index])) requiresReview = true;
+        const fileId = String(values[7] || "").trim();
+        if (fileId) fileIds.add(fileId);
+        const state = String(values[9] || "").toLowerCase();
+        linked = linked || state === "linked";
+        fileMissing = fileMissing || state === "file_missing";
+        requiresReview = requiresReview || state === "requires_review";
+        if (String(values[10] || "").trim()) references.set(String(values[10]), true);
+        if (String(values[13] || "").trim()) lastError = String(values[13]);
+    });
+    if (fileIds.size > 1) requiresReview = true;
+    const state = requiresReview ? "requires_review" : linked ? "linked" :
+        fileMissing ? "file_missing" : "pending";
+    return {
+        token: identity[0], operationKey: identity[1], folderId: identity[2],
+        mimeType: identity[3], sizeBytes: Number(identity[4]), contentHash: identity[5],
+        fileId: fileIds.size === 1 ? Array.from(fileIds)[0] : "",
+        state, eventCount: entries.length, fileIds: Array.from(fileIds),
+        referencesJson: references.size ? Array.from(references.keys()).join("|") : "[]",
+        lastError
+    };
+}
+
 const IMAGE_UPLOAD_MAX_BYTES = 10 * 1024 * 1024;
 
 function getOrCreateImageUploadLedgerSheet_() {
