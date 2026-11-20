@@ -4042,8 +4042,8 @@ function saveCortesOrganizerOperationLedger_(record) {
 
 function withCortesOrganizerLedgerLock_(callback) {
     const lock = LockService.getScriptLock();
-    if (!lock.tryLock(0)) {
-        const error = new Error("Safe Apply está procesando otra transición del registro; vuelve a intentar.");
+    if (!lock.tryLock(250)) {
+        const error = new Error("Safe Apply no pudo reservar el ledger dentro de la espera breve; conserva el mismo intento y reintenta.");
         error.code = "ORGANIZER_LEDGER_BUSY";
         throw error;
     }
@@ -4227,6 +4227,12 @@ function executeCortesImageOrganizerManifest_(manifest, ownerId, adapters) {
             }));
             result.status = "applied";
         } catch (error) {
+            if (error && error.code === "ORGANIZER_LEDGER_BUSY") {
+                result.status = "retry";
+                result.message = "El registro de operaciones está ocupado por una transición breve; no se inició ni revirtió el archivo. Reintenta con el mismo manifiesto.";
+                results.push(result);
+                return;
+            }
             let recoveryStatus = "needs_review";
             let recoveryMessage = "";
             try {
@@ -4288,7 +4294,7 @@ function executeCortesImageOrganizerManifest_(manifest, ownerId, adapters) {
 
 function createCortesOrganizerDriveAdapters_(rootFolder) {
     return {
-        loadLedger: operationId => withCortesOrganizerLedgerLock_(() => loadCortesOrganizerOperationLedger_(operationId)),
+        loadLedger: operationId => loadCortesOrganizerOperationLedger_(operationId),
         saveLedger: record => withCortesOrganizerLedgerLock_(() => saveCortesOrganizerOperationLedger_(record)),
         reserveLedger: (record, allowedStatuses) => withCortesOrganizerLedgerLock_(() => {
             const current = loadCortesOrganizerOperationLedger_(record.operationId);
@@ -4398,6 +4404,13 @@ function rollbackCortesImageOrganizerOperations_(operationIds, ownerId, adapters
             result.fileId = ledger.fileId;
             result.status = "rolled_back";
         } catch (error) {
+            if (error && error.code === "ORGANIZER_LEDGER_BUSY") {
+                result.fileId = ledger && ledger.fileId || "";
+                result.status = "retry";
+                result.message = "El ledger está ocupado por una transición breve; no se inició el rollback. Reintenta la misma operación.";
+                results.push(result);
+                return;
+            }
             let recoveryError = "";
             try {
                 if (ledger && ledger.fileId) {
