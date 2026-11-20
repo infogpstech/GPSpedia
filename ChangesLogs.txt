@@ -1196,3 +1196,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-20 · ADMIN proteger imagen en uso] `handleMarkReplacedImageInUse` verifica Drive/MIME/papelera/carpeta fuera del ScriptLock y revalida tipo/estado/Drive ID antes de cambiar el historial a `en_uso`; actividad Coordinator y logging quedan post-lock. Pruebas `AdminMarkImageInUseDrivePreflightOutsideLock` 10/10 y `AdminReplacedImagesIntegrity` 56/56. CI `44653864364` SUCCESS: 211 suites, 2,642 pruebas aprobadas, 0 fallos; health read-only `44653864334` SUCCESS. Sin despliegue Apps Script ni cambios productivos.
+
+
+[2026-11-20 · ADMIN eliminación definitiva] `handlePermanentlyDeleteReplacedImage` realiza el GET inicial Drive API y valida MIME/papelera/carpeta Cortes fuera del ScriptLock; readquiere sin espera, revalida tipo/estado/Drive ID y vuelve a comprobar referencias. La reserva `eliminacion_pendiente`, DELETE y GET final de confirmación siguen bajo lock. El 404 se reconcilia bajo lock y su actividad se registra después. Pruebas `AdminPermanentDeleteDrivePreflightOutsideLock` 9/9, `AdminPermanentDeleteActivityOutsideLock` 6/6 y `AdminImageTrashLifecycle` 40/40. CI `44654436417` SUCCESS: 212 suites, 2,651 pruebas aprobadas, 0 fallos; health read-only `44654436415` SUCCESS. Sin despliegue Apps Script ni cambios productivos.
