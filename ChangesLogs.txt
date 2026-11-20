@@ -70,3 +70,10 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 
 
 2026-11-20 — Revalidación final de la rama de trabajo tras actualizar registros: CI 44835908125 SUCCESS (239 suites, 2968 pruebas, 0 fallos); health read-only 44835908123 SUCCESS. No se desplegó Apps Script ni se tocaron Spreadsheet/Drive productivos. Pages automático quedó cancelado por commits posteriores; no forma parte de la validación de servicios.
+
+
+2026-11-20 — revisión de asignador de IDs y locks FEEDBACK
+- Se confirmó que la asignación numérica está centralizada en WRITE: `handleAddOrUpdateCut` para alta nueva y `allocateVehicleId` para ADMIN. `CortesIdReservations` conserva opId/huella/ID; reintentos recuperan la reserva y conflictos de huella se rechazan.
+- Se conservan los locks de asignación secuencial y de mantenimiento; pruebas de idempotencia, lectura acotada, E2E ADMIN→WRITE y fast-fail ya forman parte de la regresión CI 44835751507 (239 suites/2968).
+- Auditoría de locks FEEDBACK: los restantes protegen invariantes read-modify-write/deduplicación; no retirarlos ni reemplazarlos por UserLock sin journal append-only/proyección o control de versión.
+- Se identificó la ruta heredada WRITE `addVinToVehicle`: lock global y escritura mutable, sin consumidor encontrado en los principales módulos frontend revisados, pero aún expuesta por api-config. Queda pendiente confirmar integraciones externas y migrarla/deprecarla con compatibilidad.
