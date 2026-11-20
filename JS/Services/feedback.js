@@ -1242,11 +1242,55 @@ function movePrimaryVehicleImageToCanonicalFolder(sheet, rowNumber, vehicleRow) 
 function handleSuggestYear(payload) {
     const lock = LockService.getScriptLock();
     acquireFeedbackScriptLock_(lock);
+    let result;
     try {
-        return handleSuggestYearLocked(payload);
+        result = handleSuggestYearLocked(payload);
     } finally {
         lock.releaseLock();
     }
+
+    if (!result || typeof result !== "object") return result;
+    const activityLogRequest = result._activityLogRequest;
+    delete result._activityLogRequest;
+    if (activityLogRequest) {
+        try {
+            logUserActivity(activityLogRequest.userId, activityLogRequest.userName,
+                activityLogRequest.activityType, activityLogRequest.associatedId, activityLogRequest.details);
+        } catch (activityError) {
+            Logger.log("No se pudo registrar la actividad de sugerencia de año: " + activityError.message);
+        }
+    }
+
+    const folderSyncRequest = result._folderSyncRequest;
+    delete result._folderSyncRequest;
+    if (folderSyncRequest && folderSyncRequest.expectedImageUrl) {
+        try {
+            const currentRow = folderSyncRequest.sheet.getRange(
+                folderSyncRequest.rowNumber, 1, 1, folderSyncRequest.sheet.getLastColumn()
+            ).getValues()[0];
+            if (String(currentRow[COLS_CORTES.id - 1] || "").trim() !== String(folderSyncRequest.vehicleId).trim()) {
+                throw new Error("El registro del vehículo cambió después de aplicar la sugerencia; no se movió la imagen.");
+            }
+            if (String(currentRow[COLS_CORTES.imagenVehiculo - 1] || "") !== folderSyncRequest.expectedImageUrl) {
+                throw new Error("La imagen principal cambió después de aplicar la sugerencia; no se movió un archivo posiblemente distinto.");
+            }
+            const folderSyncResult = movePrimaryVehicleImageToCanonicalFolder(
+                folderSyncRequest.sheet, folderSyncRequest.rowNumber, currentRow
+            );
+            result.folderSyncWarning = Boolean(folderSyncResult && folderSyncResult.warning);
+            if (result.folderSyncWarning) {
+                result.message += " La carpeta de la imagen principal no pudo sincronizarse automáticamente: " +
+                    String(folderSyncResult.reason || "requiere revisión manual") + ".";
+            }
+        } catch (folderError) {
+            result.folderSyncWarning = true;
+            result.message += " La carpeta de la imagen principal no pudo sincronizarse automáticamente: " +
+                String(folderError && folderError.message || folderError) + ".";
+            Logger.log("No se pudo sincronizar la carpeta de imagenVehiculo tras ampliar el rango: " +
+                String(folderError && folderError.message || folderError));
+        }
+    }
+    return result;
 }
 
 function isVerifiedSuggestionActorKey_(actorKey) {
@@ -1361,31 +1405,21 @@ function completeFeedbackYearApplication_(application, context) {
         throw new Error("No se pudo confirmar el rango de años aplicado; la operación permanece pendiente.");
     }
 
-    let folderSyncWarning = false, folderSyncMessage = "";
-    try {
-        const updatedVehicleRow = cortesSheet.getRange(
-            vehicleRowIndex, 1, 1, cortesSheet.getLastColumn()
-        ).getValues()[0];
-        const folderSyncResult = movePrimaryVehicleImageToCanonicalFolder(
-            cortesSheet, vehicleRowIndex, updatedVehicleRow
-        );
-        folderSyncWarning = Boolean(folderSyncResult && folderSyncResult.warning);
-        folderSyncMessage = folderSyncResult && folderSyncResult.reason ? folderSyncResult.reason : "";
-    } catch (folderError) {
-        folderSyncWarning = true;
-        folderSyncMessage = folderError.message;
-        Logger.log("No se pudo sincronizar la carpeta de imagenVehiculo tras ampliar el rango: " + folderError.message);
-    }
+    const expectedImageUrl = String(
+        cortesSheet.getRange(vehicleRowIndex, COLS_CORTES.imagenVehiculo).getValue() || ""
+    );
 
     const ledger = application.sheet;
+    let activityLogRequest = null;
     const activityAttempted = row[9] === true || String(row[9]).toUpperCase() === "TRUE";
     if (!activityAttempted) {
         ledger.getRange(application.rowIndex, 10).setValue(true);
         SpreadsheetApp.flush();
-        logUserActivity(userId, userName, "apply_year_suggestion", String(row[1]),
-            "Rango actualizado a " + targetFrom + "-" + targetTo +
-            " basado en " + voteCount + " aportantes distintos para el año " + year +
-            (folderSyncWarning ? ". Advertencia de carpeta: " + folderSyncMessage : "."));
+        activityLogRequest = {
+            userId, userName, activityType: "apply_year_suggestion", associatedId: String(row[1]),
+            details: "Rango actualizado a " + targetFrom + "-" + targetTo +
+                " basado en " + voteCount + " aportantes distintos para el año " + year + "."
+        };
         row[9] = true;
     }
 
@@ -1423,10 +1457,16 @@ function completeFeedbackYearApplication_(application, context) {
     return {
         status: "success",
         recovered: false,
-        folderSyncWarning,
+        folderSyncWarning: false,
+        _activityLogRequest: activityLogRequest,
+        _folderSyncRequest: {
+            sheet: cortesSheet,
+            rowNumber: vehicleRowIndex,
+            vehicleId: String(row[1]),
+            expectedImageUrl
+        },
         message: "¡Gracias! Con " + voteCount + " aportantes distintos, el catálogo se ha actualizado a " +
-            targetFrom + "-" + targetTo + "." +
-            (folderSyncWarning ? " La carpeta de la imagen principal no pudo sincronizarse automáticamente: " + folderSyncMessage : "")
+            targetFrom + "-" + targetTo + "."
     };
 }
 
