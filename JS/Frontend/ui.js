@@ -12144,7 +12144,18 @@ export function openReportCutModal(vehicleId, corteNum, currentCutData) {
     const content = document.createElement("div");
     content.className = "info-modal-content";
     content.style.maxWidth = "500px";
-    const reportId = `REP-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const cryptoApi = window.crypto;
+    let reportOperationId = "";
+    if (cryptoApi && typeof cryptoApi.randomUUID === "function") {
+        reportOperationId = cryptoApi.randomUUID();
+    } else if (cryptoApi && typeof cryptoApi.getRandomValues === "function") {
+        const operationBytes = new Uint8Array(24);
+        cryptoApi.getRandomValues(operationBytes);
+        reportOperationId = Array.from(operationBytes, byte => byte.toString(16).padStart(2, "0")).join("");
+    } else {
+        throw new Error("El navegador no dispone de un generador seguro para identificar el reporte.");
+    }
+    const reportId = "REP-" + reportOperationId;
 
     content.innerHTML = `
         <button type="button" class="info-close-btn" aria-label="Cerrar ventana">&times;</button>
