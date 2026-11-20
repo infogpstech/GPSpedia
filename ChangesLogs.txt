@@ -51,3 +51,6 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - Se invalida el catálogo después de liberar el lock. El umbral de tres votos verificados y el comportamiento anónimo se conservan.
 - Pruebas FeedbackYearApplicationAppendOnly 4/4; SuggestYearVoteThreshold 7/7; CI 44834891294 SUCCESS: 238 suites, 2963 pruebas, 0 fallos; health read-only SUCCESS. Sin despliegue.
 - Sigue pendiente reducir ScriptLock global de FEEDBACK para las demás rutas y la asignación secuencial de IDs.
+
+
+2026-11-20 — FEEDBACK contacto: se retiró ScriptLock global del handler. getNextFormulaBasedId_ conserva el lock breve para reservar el ID; la fila completa se anexa con appendRow fuera del lock, se verifica por ID y se aplica formato después. FeedbackContactWriteNoGlobalLock 2/2; CI 44835219987 SUCCESS: 239 suites, 2965 pruebas, 0 fallos. Sigue pendiente reducir lock en reportes, sugerencias, likes, PyS y tutoriales.
