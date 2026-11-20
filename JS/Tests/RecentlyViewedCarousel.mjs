@@ -17,11 +17,11 @@ assert.doesNotMatch(detail, /offline\.getViewedItems/);
 
 const loadStart = auth.indexOf("function loadUserLocalActivity(user)");
 const loadEnd = auth.indexOf("\nfunction handleSessionStorageChange", loadStart);
-const load = auth.slice(loadStart, loadEnd);
-assert.match(load, /offline\.getSearchHistory\(ownerId\)\.then/);
-assert.match(load, /offline\.getViewedItemsResult\(ownerId\)\.then/);
-assert.ok(load.indexOf("offline.getSearchHistory(ownerId)") >= 0);
-assert.ok(load.indexOf("loadViewedItems(0)") >= 0);
+const loadSource = auth.slice(loadStart, loadEnd);
+assert.match(loadSource, /offline\.getSearchHistory\(ownerId\)\.then/);
+assert.match(loadSource, /offline\.getViewedItemsResult\(ownerId\)\.then/);
+assert.ok(loadSource.indexOf("offline.getSearchHistory(ownerId)") >= 0);
+assert.ok(loadSource.indexOf("loadViewedItems(0)") >= 0);
 const loginStart = auth.indexOf("function handleLoginSuccess(user");
 const loginEnd = auth.indexOf("\\nexport async function loadInitialData", loginStart);
 const login = auth.slice(loginStart, loginEnd);
@@ -29,10 +29,10 @@ assert.ok(login.indexOf("loadUserLocalActivity(user)") >= 0);
 assert.ok(login.indexOf("loadUserLocalActivity(user)") < login.indexOf("showApp(user)"),
     "El historial local debe comenzar antes de iniciar la carga de los demás carruseles.");
 
-assert.match(load, /result\.available !== true/);
-assert.match(load, /retryDelays = \[1500, 5000, 15000\]/);
-assert.match(load, /isOwnerCurrent\(\)/);
-assert.doesNotMatch(load, /Promise\.all/);
+assert.match(loadSource, /result\.available !== true/);
+assert.match(loadSource, /retryDelays = \[1500, 5000, 15000\]/);
+assert.match(loadSource, /isOwnerCurrent\(\)/);
+assert.doesNotMatch(loadSource, /Promise\.all/);
 
 assert.match(auth, /previousOwnerId && previousOwnerId !== nextOwnerId[\s\S]*?searchHistory: \[\], viewedItems: \[\]/);
 assert.match(offline, /const DB_VERSION = 5/);
@@ -65,7 +65,7 @@ assert.match(ui, /if \(indexedDbResult\.viewedItemsCleared\) setState\(\{ viewed
 assert.doesNotMatch(ui.slice(ui.indexOf("const clearCacheBtn"), ui.indexOf("const storageResults")), /recordVehicleView|routeAction|getActivityLogs/);
 assert.match(detail, /recordVehicleView\(String\(activeItem\.id\), \{[\s\S]*?utilCorte1:[\s\S]*?utilCorte2:[\s\S]*?utilCorte3:[\s\S]*?\}, getSessionPayload_\(\)\)\.catch/);
 assert.doesNotMatch(detail, /await\s+recordVehicleView/);
-assert.doesNotMatch(load, /recordVehicleView|routeAction|getActivityLogs/);
+assert.doesNotMatch(loadSource, /recordVehicleView|routeAction|getActivityLogs/);
 
 
 function deferred() {
@@ -87,7 +87,7 @@ function makeHydrationHarness({ historyPromise = Promise.resolve([]), viewedResu
         }
     };
     const load = new Function("setState", "getState", "isCurrentSession", "offline", "setTimeout", "console",
-        load + "\\nreturn loadUserLocalActivity;")(
+        loadSource + "\\nreturn loadUserLocalActivity;")(
         value => states.push(value),
         () => ({ currentUser: activeUser }),
         () => ownerCurrent,
