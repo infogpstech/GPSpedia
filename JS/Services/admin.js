@@ -10455,7 +10455,7 @@ function handleRecoverReplacedImage(payload, logMessage) {
         }
         logMessage&&logMessage("Imágenes Reemplazadas","Imagen histórica restaurada para el vehículo '"+registroId+"', campo '"+campo+"'.");
         return {status:"success",message:"La imagen histórica quedó activa y la versión anterior se conservó en el historial.",restoredUrl:urlHistorica,vehicleId:registroId,fieldName:campo,catalogChanged:currentActiveUrl!==urlHistorica};
-    }finally{if(lockAcquired&&(typeof lock.hasLock!=="function"||lock.hasLock()))lock.releaseLock();}
+    }finally{if(typeof lock.hasLock!=="function"||lock.hasLock())lock.releaseLock();}
 }
 function recordImageAdministrationActivity(developerContext, activityType, associatedId, details) {
     try {
@@ -10779,7 +10779,7 @@ function handleDeleteReplacedImage(payload,logMessage,developerContext){
         }
         postCommitActivity={developerContext,idReemplazo,details:"Imagen "+file.getName()+" enviada a papelera desde "+sourcePath+"; estado previo: "+status+"; resultado: correcto.",driveId};
         result={status:"success",message:"La imagen fue enviada a la papelera de Google Drive. Esta acción no equivale a una eliminación irreversible."};
-    }finally{if(typeof lock.hasLock!=="function"||lock.hasLock())lock.releaseLock();}
+    }finally{if(lockAcquired&&(typeof lock.hasLock!=="function"||lock.hasLock()))lock.releaseLock();}
     if(postCommitActivity){
         recordImageAdministrationActivity(postCommitActivity.developerContext,"admin_image_trash",postCommitActivity.idReemplazo,postCommitActivity.details);
         logMessage&&logMessage("Inventario e historial de imágenes","La imagen "+postCommitActivity.driveId+" fue enviada a la papelera de Google Drive.");
@@ -10845,7 +10845,7 @@ function handleRestoreReplacedImageFromTrash(payload,logMessage,developerContext
         }
         postCommitActivity={developerContext,id,details:"Imagen "+verified.fileName+" restaurada desde papelera a "+path+"; estado anterior recuperado: "+previous+".",driveId};
         result={status:"success",message:"La imagen fue restaurada desde la papelera de Google Drive. No se modificó ninguna referencia del Spreadsheet."};
-    }finally{if(typeof lock.hasLock!=="function"||lock.hasLock())lock.releaseLock();}
+    }finally{if(lockAcquired&&(typeof lock.hasLock!=="function"||lock.hasLock()))lock.releaseLock();}
     if(postCommitActivity){
         recordImageAdministrationActivity(postCommitActivity.developerContext,"admin_image_restore_from_trash",postCommitActivity.id,postCommitActivity.details);
         logMessage&&logMessage("Inventario e historial de imágenes","La imagen "+postCommitActivity.driveId+" fue restaurada desde papelera.");
