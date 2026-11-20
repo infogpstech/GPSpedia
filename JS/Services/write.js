@@ -2350,7 +2350,7 @@ function appendVehicleContributionEvent_(options) {
     const opId = String(options.opId || "").trim();
     const kind = String(options.kind || "").trim().toLowerCase();
     const payload = options.payload;
-    if (!/^[1-9]\\d{0,14}$/.test(vehicleId)) throw new Error("El aporte requiere un vehicleId válido.");
+    if (!/^[1-9]\d{0,14}$/.test(vehicleId)) throw new Error("El aporte requiere un vehicleId válido.");
     if (!/^OP-[A-Za-z0-9_-]{1,100}$/.test(opId)) throw new Error("El aporte requiere un opId válido.");
     if (!["cut", "opening", "feed", "vehicle"].includes(kind)) throw new Error("El tipo de aporte no está permitido.");
     if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw new Error("El payload del aporte debe ser un objeto.");
