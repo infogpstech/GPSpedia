@@ -39,8 +39,13 @@ function createSheet(rows){
     return{cells,getRange:range,getLastRow(){return cells.length;},getLastColumn(){return HEADERS.length;}};
 }
 function lockHarness({fail=false}={}){
-    const state={waits:0,releases:0,locked:false};
-    return{state,LockService:{getScriptLock(){return{waitLock(){state.waits++;if(fail)throw new Error("lock busy");state.locked=true;},releaseLock(){state.releases++;state.locked=false;}};}}};
+    const state={waits:0,releases:0,tryLocks:0,locked:false};
+    return{state,LockService:{getScriptLock(){return{
+        hasLock(){return state.locked;},
+        waitLock(){state.waits++;if(fail)throw new Error("lock busy");state.locked=true;},
+        tryLock(timeout){state.tryLocks++;assert.equal(timeout,0);if(fail)return false;state.locked=true;return true;},
+        releaseLock(){state.releases++;state.locked=false;}
+    };}}};
 }
 const extract=new Function(fnSource(admin,"extractDriveFileIds")+"\nreturn extractDriveFileIds;")();
 const getType=new Function(fnSource(admin,"getReplacedImageRecordType")+"\nreturn getReplacedImageRecordType;")();
@@ -85,8 +90,14 @@ function runRestore(base,id="IMG-1"){
 }
 function permanentDeps(base,queue){
     let calls=0;
-    const request=(id,method)=>{calls++;const next=queue.shift();if(!next)throw new Error("unexpected Drive API "+method);return next;};
-    return{...base.deps,requestAdminDriveFile_:request,get requestCalls(){return calls;}};
+    const request=(id,method)=>{
+        calls++;
+        if(method==="get"&&calls===1)assert.equal(base.lock.state.locked,false,"La verificación inicial Drive debe ejecutarse sin ScriptLock");
+        if(method==="delete"||calls>1)assert.equal(base.lock.state.locked,true,"La eliminación y su confirmación final permanecen bajo lock");
+        const next=queue.shift();if(!next)throw new Error("unexpected Drive API "+method);return next;
+    };
+    const runAdminDriveWorkOutsideScriptLock_=new Function(fnSource(admin,"runAdminDriveWorkOutsideScriptLock_")+"\nreturn runAdminDriveWorkOutsideScriptLock_;")();
+    return{...base.deps,runAdminDriveWorkOutsideScriptLock_,requestAdminDriveFile_:request,get requestCalls(){return calls;}};
 }
 function runPermanent(base,queue,id="IMG-1"){
     const deps=permanentDeps(base,queue);
