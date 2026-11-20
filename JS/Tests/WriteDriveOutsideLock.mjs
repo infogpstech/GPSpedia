@@ -21,7 +21,7 @@ function fakeLock(busy=false){
 {
  const lock=fakeLock(),state={releasedForDrive:false};
  const value=driveRunner(lock,state,"OP-1",()=>{assert.equal(lock.isHeld(),false);lock.events.push("drive");return "uploaded";});
- assert.equal(value,"uploaded");assert.deepEqual(lock.events,["release","drive","wait:2000"]);
+ assert.equal(value,"uploaded");assert.deepEqual(lock.events,["release","drive","try:0"]);
  assert.equal(lock.isHeld(),true);assert.equal(state.releasedForDrive,true);
 }
 {
@@ -58,9 +58,9 @@ const preflight=extract("prepareAddOrUpdateCutRequest_","handleAddOrUpdateCut");
 assert.ok(preflight.includes('getAuthenticatedCollaborator(payload, payload && payload.silent === true ? ["desarrollador"] : undefined)'));
 assert.doesNotMatch(locked,/getAuthenticatedCollaborator\(|validateAddOrUpdateCutPayload_/, "El lock no debe retener autenticación ni validación de payload");
 const outer=extract("handleAddOrUpdateCut","handleAddOrUpdateCutLocked");
-assert.ok(outer.indexOf("prepareAddOrUpdateCutRequest_(payload)")<outer.indexOf("lock.waitLock(2000)"));
+assert.ok(outer.indexOf("prepareAddOrUpdateCutRequest_(payload)")<outer.indexOf("lock.tryLock(0)"));
 assert.ok(locked.includes("lockState && lockState.releasedForDrive"));
 assert.ok(source.includes("if (lock.hasLock()) lock.releaseLock()"));
-assert.match(source,/function handleAddOrUpdateCut\(payload\)\s*\{[\s\S]{0,360}lock\.waitLock\(2000\)/);
+assert.match(source,/function handleAddOrUpdateCut\(payload\)\s*\{[\s\S]{0,360}lock\.tryLock\(0\)/);
 assert.doesNotMatch(source,/function handleAddOrUpdateCut\(payload\)\s*\{[\s\S]{0,160}waitLock\(30000\)/);
 console.log("1/1 PASS — WRITE Drive fuera del ScriptLock y reserva de slots");
