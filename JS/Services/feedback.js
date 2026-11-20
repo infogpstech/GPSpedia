@@ -3967,6 +3967,41 @@ function findTutorialRow_(sheet, reference, preferId) {
     throw new Error("Tutorial no encontrado.");
 }
 
+
+function findTutorialById_(sheet, tutorialId) {
+    const id = String(tutorialId || "").trim();
+    const lastRow = sheet ? sheet.getLastRow() : 0;
+    if (!id || lastRow < 2) return null;
+    const candidates = sheet.getRange(2, 1, lastRow - 1, 1)
+        .createTextFinder(id).matchCase(false).findAll();
+    const matches = [];
+    candidates.forEach(candidate => {
+        const rowIndex = candidate.getRow();
+        const storedId = String(sheet.getRange(rowIndex, 1).getValue() || "").trim();
+        if (storedId.toLowerCase() !== id.toLowerCase()) return;
+        const row = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getValues()[0];
+        matches.push({ rowIndex, row });
+    });
+    if (matches.length > 1) throw new Error("El ID del tutorial aparece más de una vez; requiere revisión.");
+    return matches[0] || null;
+}
+
+function tutorialTitleExists_(sheet, title) {
+    const lastRow = sheet ? sheet.getLastRow() : 0;
+    if (lastRow < 2) return false;
+    const titleKey = normalizeTutorialTitle_(title);
+    const titles = sheet.getRange(2, 2, lastRow - 1, 1).getValues();
+    return titles.some(row => normalizeTutorialTitle_(row[0]) === titleKey);
+}
+
+function tutorialRowMatchesSubmission_(row, fields) {
+    return String(row[1] || "").trim() === fields.title &&
+        String(row[3] || "").trim() === fields.comoIdentificarlo &&
+        String(row[4] || "").trim() === fields.dondeEncontrarlo &&
+        String(row[5] || "").trim() === fields.detalles &&
+        String(row[7] || "").trim() === fields.collaborator;
+}
+
 function handleAddTutorial(payload) {
     const source = payload && typeof payload === "object" ? payload : {};
     const title = normalizeTutorialField_(source.tema, "El tema del tutorial", 30, true);
@@ -3984,29 +4019,32 @@ function handleAddTutorial(payload) {
     }
 
     const tutorialId = "tut-" + operationId;
+    const submission = { title, comoIdentificarlo, dondeEncontrarlo, detalles, collaborator };
+    const preflightSheet = getTutorialSheet_(false);
+    if (preflightSheet) {
+        const preflightExisting = findTutorialById_(preflightSheet, tutorialId);
+        if (preflightExisting) {
+            if (!tutorialRowMatchesSubmission_(preflightExisting.row, submission)) {
+                throw new Error("El identificador de operación ya pertenece a otro tutorial.");
+            }
+            return { status: "success", referenceId: String(preflightExisting.row[0] || tutorialId).trim(), alreadyCreated: true,
+                message: "El tutorial ya existía; se devolvió el registro original." };
+        }
+    }
     const lock = LockService.getScriptLock();
     acquireFeedbackScriptLock_(lock);
     try {
         const sheet = getTutorialSheet_(true);
-        const existingId = sheet.getDataRange().getValues().slice(1)
-            .map((row, index) => ({ rowIndex: index + 2, row }))
-            .filter(item => String(item.row[0] || "").trim().toLowerCase() === tutorialId);
-        if (existingId.length > 1) throw new Error("El ID del tutorial aparece más de una vez; requiere revisión.");
-        if (existingId.length === 1) {
-            const row = existingId[0].row;
-            const same = String(row[1] || "").trim() === title &&
-                String(row[3] || "").trim() === comoIdentificarlo &&
-                String(row[4] || "").trim() === dondeEncontrarlo &&
-                String(row[5] || "").trim() === detalles &&
-                String(row[7] || "").trim() === collaborator;
-            if (!same) throw new Error("El identificador de operación ya pertenece a otro tutorial.");
-            return { status: "success", referenceId: String(row[0] || tutorialId).trim(), alreadyCreated: true,
+        const existingId = findTutorialById_(sheet, tutorialId);
+        if (existingId) {
+            if (!tutorialRowMatchesSubmission_(existingId.row, submission)) {
+                throw new Error("El identificador de operación ya pertenece a otro tutorial.");
+            }
+            return { status: "success", referenceId: String(existingId.row[0] || tutorialId).trim(), alreadyCreated: true,
                 message: "El tutorial ya existía; se devolvió el registro original." };
         }
 
-        const titleKey = normalizeTutorialTitle_(title);
-        const duplicate = sheet.getDataRange().getValues().slice(1)
-            .some(row => normalizeTutorialTitle_(row[1]) === titleKey);
+        const duplicate = tutorialTitleExists_(sheet, title);
         if (duplicate) throw new Error("Ya existe un tutorial con ese tema; utiliza la edición del registro existente.");
 
         const newRow = [tutorialId, title, "", comoIdentificarlo, dondeEncontrarlo, detalles, "", collaborator];
