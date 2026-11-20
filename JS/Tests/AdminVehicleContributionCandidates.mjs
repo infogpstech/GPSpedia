@@ -37,6 +37,6 @@ const catalog = { status: "success", data: { cortes: [
 }
 assert.throws(()=>run({http:503,body:catalog}),/No se pudo obtener la proyección vigente/);
 assert.throws(()=>run({body:{status:"error",data:{}}}),/No se pudo obtener la proyección vigente/);
-assert.throws(()=>run({body:{status:"success",data:{cortes:{}}}),/No se pudo obtener la proyección vigente/);
+assert.throws(()=>run({body:{status:"success",data:{cortes:{}}}}),/No se pudo obtener la proyección vigente/);
 assert.ok(admin.includes("case 'getVehicleContributionCandidates':"),"La acción debe estar registrada en el router ADMIN");
 console.log("AdminVehicleContributionCandidates: 6/6 PASS — proyección actual, límites, orden, errores y router");
