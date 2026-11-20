@@ -13196,9 +13196,30 @@ async function completeVehicleExpansionSave_(writeResult,vehicleId,successMessag
  if(!modal||typeof modal.remove!=="function")throw new Error("No se pudo cerrar el formulario después de confirmar el guardado.");
  const notifySuccess=dependencies.notifySuccess||(message=>alert(message));
  const notifyRefreshFailure=dependencies.notifyRefreshFailure||(message=>showGlobalError(message));
- modal.remove();notifySuccess(successMessage);
- try{const updatedItem=await refreshVehicleDetailAfterExpansion_(cleanVehicleId,dependencies);return {writeConfirmed:true,refreshed:true,vehicleId:cleanVehicleId,updatedItem};}
- catch(refreshError){notifyRefreshFailure("La información se guardó correctamente, pero no se pudo sincronizar el detalle del vehículo. Vuelve a cargar el catálogo para ver los cambios.");return {writeConfirmed:true,refreshed:false,vehicleId:cleanVehicleId};}
+ modal.remove();
+ try{
+  const updatedItem=await refreshVehicleDetailAfterExpansion_(cleanVehicleId,dependencies);
+  const opId=String(writeResult.opId||"").trim();
+  const candidate=opId&&Array.isArray(updatedItem.contributionCandidates)
+   ?updatedItem.contributionCandidates.find(item=>String(item&&item.opId||"")===opId):null;
+  const candidateMessages={
+   opId_conflict:"El aporte quedó pendiente de revisión porque el mismo opId recibió contenidos incompatibles.",
+   vin_conflict:"El corte quedó pendiente de revisión porque el VIN también fue aportado para otro vehículo.",
+   cut_capacity_full:"El corte se conservó como candidato porque los tres espacios están ocupados.",
+   opening_already_filled:"La apertura se conservó como candidato porque el campo ya contiene información.",
+   feed_capacity_full:"La alimentación se conservó como candidato porque los tres espacios están ocupados.",
+   requires_review:"El aporte se conservó como candidato para revisión."
+  };
+  const resolvedMessage=candidate
+   ?(candidateMessages[candidate.reason]||"El aporte se conservó como candidato para revisión; no se sobrescribieron datos existentes.")
+   :successMessage;
+  notifySuccess(resolvedMessage);
+  return {writeConfirmed:true,refreshed:true,vehicleId:cleanVehicleId,updatedItem,candidateReviewPending:Boolean(candidate),candidate:candidate||null};
+ }catch(refreshError){
+  notifySuccess(successMessage);
+  notifyRefreshFailure("La información se guardó correctamente, pero no se pudo sincronizar el detalle del vehículo. Vuelve a cargar el catálogo para ver los cambios.");
+  return {writeConfirmed:true,refreshed:false,vehicleId:cleanVehicleId};
+ }
 }
 async function syncApprovedVehicleVideoDetail_(videoMeta, dependencies = {}) {
  const approvedVideo=videoMeta&&typeof videoMeta==="object"?videoMeta:{};
