@@ -30,6 +30,22 @@ const project = new Function("normalizeAndValidateImageId",
     extractFunction(catalog, "projectVehicleContributionEvents_") + "; return projectVehicleContributionEvents_;"
 )(normalizeImage);
 
+const reader = new Function("VEHICLE_CONTRIBUTIONS_SHEET_NAME_", "VEHICLE_CONTRIBUTIONS_HEADERS_", "getSpreadsheet",
+    extractFunction(catalog, "readVehicleContributionEvents_") + "; return readVehicleContributionEvents_;"
+)("AportesVehiculo", ["eventId", "opId", "vehicleId", "operationHash", "kind", "payloadJson",
+    "actorId", "actorName", "createdAt", "status", "supersedesEventId"], () => null);
+function ledgerSheet(rows) {
+    const headers = ["eventId", "opId", "vehicleId", "operationHash", "kind", "payloadJson",
+        "actorId", "actorName", "createdAt", "status", "supersedesEventId"];
+    return {
+        getLastRow: () => rows.length + 1,
+        getLastColumn: () => headers.length,
+        getRange(row, col, count, width) {
+            if (row === 1) return { getDisplayValues: () => [headers.slice(col - 1, col - 1 + width)] };
+            return { getValues: () => rows.slice(row - 2, row - 2 + count).map(line => line.slice(col - 1, col - 1 + width)) };
+        }
+    };
+}
 const blankVehicle = id => ({
     id, tipoCorte1: null, ubicacionCorte1: null, imgCorte1: null, utilCorte1: null,
     tipoCorte2: null, ubicacionCorte2: null, imgCorte2: null, utilCorte2: null,
@@ -44,6 +60,21 @@ const event = (opId, vehicleId, kind, payload, rowIndex, hashChar = "a", extra =
 });
 let passed = 0;
 function test(name, fn) { fn(); passed++; console.log("PASS " + name); }
+
+test("el lector admite vehicle_update ADMIN autenticado y valida su identidad", () => {
+    const row = ["EV-ADMIN-1", "OP-ADMIN-FIELD-1234567890", "101", "a".repeat(64), "vehicle_update",
+        JSON.stringify({ fieldName: "anoDesde", value: 2019, expectedCurrentValue: 2018 }),
+        "DEV-1", "Administrador", "2026-11-20T12:00:00.000Z", "accepted", ""];
+    const events = reader(ledgerSheet([row]));
+    assert.equal(events.length, 1);
+    assert.equal(events[0].kind, "vehicle_update");
+    assert.equal(events[0].payload.fieldName, "anoDesde");
+    assert.equal(events[0].actorId, "DEV-1");
+    assert.throws(() => reader(ledgerSheet([[...row.slice(0, 6), "", "", ...row.slice(8)]])),
+        /identidad, hash, tipo, fecha o estado inválido/);
+    assert.throws(() => reader(ledgerSheet([[...row.slice(0, 1), "OP-YEAR-1234567890", ...row.slice(2)]])),
+        /identidad, hash, tipo, fecha o estado inválido/);
+});
 
 test("dos vehículos distintos reciben aportes sin interferencia", () => {
     const a = blankVehicle("101"), b = blankVehicle("202");
