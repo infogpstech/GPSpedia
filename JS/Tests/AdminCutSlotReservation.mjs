@@ -16,12 +16,18 @@ const entries = [
     { vehicleId: "42", slotIndex: 2, status: "completed" },
     { vehicleId: "77", slotIndex: 3, status: "pending" }
 ];
-const getEntries = () => ({ entries });
+let ledgerReads = 0;
+const getEntries = () => { ledgerReads++; return { entries }; };
 const getSheet = () => ({ name: "Idempotencia" });
 const find = fn(columns, getEntries, getSheet);
 
 assert.equal(find(["42", "", "", ""], "42"), 2,
     "Un slot pending debe reservarse aunque la celda todavía esté vacía");
+const readsBeforeSnapshot = ledgerReads;
+assert.equal(find(["42", "", "", ""], "42", { entries }), 2,
+    "El snapshot de Idempotencia debe conservar las reservas pending");
+assert.equal(ledgerReads, readsBeforeSnapshot,
+    "La reserva debe reutilizar el snapshot sin volver a leer toda la hoja Idempotencia");
 assert.equal(find(["42", "", "", ""], "77"), 1,
     "La reserva de otro vehículo no debe bloquear este vehículo");
 assert.equal(find(["42", "ocupado", "ocupado", ""], "42"), 3,
@@ -30,4 +36,12 @@ assert.equal(find(["42", "ocupado", "ocupado", "ocupado"], "42"), null,
     "No debe asignarse un slot cuando todos están ocupados o reservados");
 assert.equal(find(["42", "", "", ""], null), 1,
     "La consulta sin vehicleId conserva el comportamiento compatible");
-console.log("AdminCutSlotReservation: 5/5 PASS — slots pending reservados por vehículo sin interferencia entre vehículos");
+
+const handlerStart = source.indexOf("function handleAddOrUpdateCut(payload, logMessage, developerContext)");
+const handlerEnd = source.indexOf("\nfunction sanitizeSupplementaryRichText_", handlerStart);
+assert.ok(handlerStart >= 0 && handlerEnd > handlerStart, "No se encontró handleAddOrUpdateCut");
+const handler = source.slice(handlerStart, handlerEnd);
+assert.ok(handler.includes("findNextAvailableCutSlot_(rowValues, vehicleId, idempotencyEntriesSnapshot)"),
+    "handleAddOrUpdateCut debe pasar el snapshot de ledger ya leído bajo lock");
+
+console.log("AdminCutSlotReservation: 7/7 PASS — slots pending reservados por vehículo y snapshot de ledger reutilizado");
