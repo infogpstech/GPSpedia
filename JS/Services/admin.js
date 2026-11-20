@@ -11212,7 +11212,7 @@ function handleMoveReplacedImage(payload, logMessage, developerContext) {
         };
         result = { status: "success", message: "Imagen movida correctamente.", folderPath: targetPath };
     } finally {
-        lock.releaseLock();
+        if (typeof lock.hasLock !== "function" || lock.hasLock()) lock.releaseLock();
     }
 
     // Coordinator/actividad y logging no participan en el commit del inventario.
