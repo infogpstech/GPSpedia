@@ -1074,3 +1074,10 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] Documentado que ScriptLock es global por proyecto Apps Script y no por archivo/función.
 - [x] Inventariados los recursos protegidos por AUTH, ADMIN, WRITE, FEEDBACK, USERS, Coordinator e InboxConversations en GP-PERF-ADMIN-CUT-LOCK-01.
 - La agrupación real por Script ID/deployment y la concurrencia entre deployments permanecen pendientes de Beta autorizada; no se infiere el aislamiento real desde nombres de archivos o URLs.
+
+
+### Continuidad documental — reconciliar checkpoint con HEAD real (2026-11-20)
+- [x] Contrastar HEAD de la rama de trabajo con la API de ramas y el commit asociado.
+- [x] Corregir el SHA del checkpoint y actualizar los identificadores de CI, health y Pages asociados al HEAD verificado.
+- [x] Confirmar que la rama base protegida no cambió y mantener las tareas de Beta abiertas.
+- Estado: COMPLETADA. La publicación de este checkpoint dispara una nueva regresión documental; no equivale a validación de despliegue Apps Script.

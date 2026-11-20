@@ -5,7 +5,7 @@ Fecha: 2026-11-20
 ## Repositorio y ramas
 - Repositorio: infogpstech/GPSpedia
 - Rama autorizada: GPSpedia2.2.5_work
-- HEAD verificado antes de este checkpoint: 7c4d7c5280cd7c4fc571476207bed9dd35c11bdf (commit documental de cierre AUTH).
+- HEAD verificado antes de este checkpoint: e863c1f82ae3a0082a6bbf55ee21d2b51ba3c4cd (commit documental de cierre del inventario estático de ScriptLock).
 - Rama base protegida GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificar).
 - No hay cambios locales disponibles en un clon para sincronizar; la publicación se realizó mediante commits GitHub condicionados al SHA esperado.
 
@@ -25,7 +25,7 @@ P1 — AUTH recuperación de contraseña: logging después de liberar ScriptLock
 
 ## Estado de implementación y validación
 - No quedan tareas de implementación local abiertas en Tareas_Activas.md. Las casillas abiertas restantes corresponden a despliegues Apps Script autorizados, inventario de Script IDs/proyectos, Drive/Spreadsheet reales o pruebas de concurrencia entre deployments en Beta.
-- Regresión más reciente sobre HEAD 7c4d7c5280cd7c4fc571476207bed9dd35c11bdf: CI 44726767686 SUCCESS (215 suites, 2,686 pruebas, 0 fallos); health read-only 44726767613 SUCCESS; Pages 44726766493 SUCCESS.
+- Regresión más reciente sobre HEAD e863c1f82ae3a0082a6bbf55ee21d2b51ba3c4cd: CI 44730842247 SUCCESS (215 suites, 2,686 pruebas, 0 fallos); health read-only 44730842225 SUCCESS; Pages 44730841115 SUCCESS.
 - lista_beta_parte1.txt comienza con la secuencia obligatoria: verificar repo/rama/árbol limpio, fetch y pull --ff-only; no se usará reset/clean/force. No se ejecutó sincronización local porque no hay clon local disponible.
 - Beta pendiente de autorización. Comenzar únicamente con auditoría y preview Drive/Spreadsheet de solo lectura. Safe Apply, movimientos, renombrados y eliminaciones continúan bloqueados hasta revisión y autorización explícita.
 - No se desplegó Apps Script ni se accedió o modificó datos productivos.
@@ -678,3 +678,11 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Se conserva la mutación de Users/ActiveSessions y la revocación dentro de ScriptLock; solo el logging best-effort ocurre después de liberarlo. No se cambia la protección de Logs ni la purga sensible.
 - La primera CI `44726038448` detectó una contaminación del event trace del harness; se corrigió aislando el tramo de finalización. No quedó ningún fallo en la CI corregida.
 - Sin despliegue Apps Script ni modificaciones de datos productivos.
+
+
+## Continuidad corregida — 2026-11-20
+- Se detectó que el checkpoint activo seguía apuntando a `7c4d7c5280cd7c4fc571476207bed9dd35c11bdf`, un commit padre, y no al HEAD real. Se corrigió contra la API de ramas de GitHub: `e863c1f82ae3a0082a6bbf55ee21d2b51ba3c4cd`.
+- Verificación cruzada: branch API, commit API y ejecución de workflows con el SHA exacto coinciden. Rama base `GPSpedia2.2.5` permanece en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- Validaciones exactas del HEAD anterior al checkpoint: regresión `44730842247` SUCCESS (215 suites, 2,686 pruebas, 0 fallos); health read-only `44730842225` SUCCESS; Pages `44730841115` SUCCESS.
+- Las 17 casillas abiertas siguen requiriendo acceso/acciones en Beta, Script IDs o datos reales de Drive/Spreadsheet y concurrencia desplegada. No se reinterpretan como tareas locales ni se marcan completadas sin evidencia.
+- Sin despliegues Apps Script ni cambios en Drive/Spreadsheet.

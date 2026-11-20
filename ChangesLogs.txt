@@ -1231,3 +1231,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-20 · checkpoint de continuidad] Se actualizó el resumen activo para reflejar HEAD, cierre de AUTH post-lock, regresión global y transición a Beta. Se marcaron como completados únicamente el inventario estático del ámbito global de ScriptLock y el mapeo de recursos por servicio; Script IDs y concurrencia real siguen pendientes de Beta. Sin cambios de código ni despliegues.
+
+
+[2026-11-20 · reconciliación de continuidad] Se corrigió el SHA obsoleto del checkpoint (7c4d7c...) por el HEAD real de GPSpedia2.2.5_work (e863c1f...). Se actualizaron referencias a CI 44730842247 (215 suites, 2,686 pruebas, 0 fallos), health 44730842225 y Pages 44730841115, todas SUCCESS sobre ese HEAD. La rama base d9acc68... no se modificó. Se mantienen abiertas las validaciones Beta sin evidencia de ejecución. Sin cambios productivos.
