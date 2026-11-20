@@ -41,7 +41,16 @@ assert.doesNotMatch(writeAllocate, /waitLock\(/);
 assert.match(writeDrive, /lock\.tryLock\(0\)/);
 assert.match(adminEntry, /lock\.tryLock\(0\)/);
 assert.doesNotMatch(adminEntry, /waitLock\(/);
-assert.match(adminUpload, /lock\.waitLock\(2000\)/);
+assert.match(adminUpload, /findUniqueAdminVehicleRow_\(sheet, cleanVehicleId\)/,
+    "El reemplazo debe rechazar vehículos inexistentes o duplicados antes de subir la imagen.");
+assert.match(adminUpload, /uploadImageToDrive\(fileData, canonicalBaseName, folder, operationKey\)/,
+    "La carga ADMIN debe reservar y recuperar el archivo mediante la clave idempotente del journal.");
+assert.match(adminUpload, /appendAdminVehicleFieldUpdate_\(/,
+    "El reemplazo debe anexar la versión de campo, no escribir directamente Cortes.");
+assert.doesNotMatch(adminUpload, /LockService\.getScriptLock\(\)|lock\.tryLock\(|lock\.waitLock\(/,
+    "El reemplazo append-only no debe depender del ScriptLock global.");
+assert.doesNotMatch(adminUpload, /AdminImageUploads|saveAdminImageUploadOperation|activeCell\.setValue/,
+    "El reemplazo no debe depender del ledger mutable ni escribir directamente la proyección.");
 assert.doesNotMatch(adminField, /LockService\.getScriptLock\(\)|lock\.tryLock\(|lock\.waitLock\(/,
     "La edición in-modal versionada debe anexar eventos sin lock global.");
 assert.match(adminField, /appendAdminVehicleFieldUpdate_\(/,
