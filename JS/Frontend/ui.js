@@ -8355,6 +8355,8 @@ export async function openAuditDriveModal() {
     const organizerPreviewStatus = document.getElementById('audit-drive-organizer-status');
     const organizerPreviewCounts = document.getElementById('audit-drive-organizer-counts');
     const organizerPreviewResults = document.getElementById('audit-drive-organizer-results');
+    const organizerApplyButton = document.getElementById('btn-audit-drive-apply-organizer');
+    const organizerRollbackButton = document.getElementById('btn-audit-drive-rollback-organizer');
     const reconciliationPanel = document.getElementById('audit-drive-reconciliation-panel');
     const reconciliationStatus = document.getElementById('audit-drive-reconciliation-status');
     const reconciliationCounts = document.getElementById('audit-drive-reconciliation-counts');
@@ -8379,7 +8381,11 @@ export async function openAuditDriveModal() {
         }
     }
     let currentReconciliationReport = null;
+    let currentOrganizerPreview = null;
+    let lastOrganizerOperationIds = [];
     let isOrganizerPreviewRunning = false;
+    let isOrganizerApplyRunning = false;
+    let isOrganizerRollbackRunning = false;
     if (!summaryEl || !container) return;
     if (closeBtn) closeBtn.onclick = () => {
         const historyManager = window.overlayHistory;
@@ -8865,6 +8871,23 @@ export async function openAuditDriveModal() {
         }
     };
 
+    const updateOrganizerApplyControls_ = () => {
+        const selected = organizerPreviewResults
+            ? Array.from(organizerPreviewResults.querySelectorAll('input[data-organizer-approve="true"]:checked'))
+            : [];
+        const pages = new Set(selected.map(input => String(input.dataset.pageOffset || "")));
+        const validSelection = selected.length >= 1 && selected.length <= 10 && pages.size === 1;
+        if (organizerApplyButton) {
+            organizerApplyButton.hidden = !currentOrganizerPreview;
+            organizerApplyButton.disabled = !currentOrganizerPreview || isRunning ||
+                isOrganizerApplyRunning || !validSelection;
+        }
+        if (organizerRollbackButton) {
+            organizerRollbackButton.hidden = !lastOrganizerOperationIds.length;
+            organizerRollbackButton.disabled = !lastOrganizerOperationIds.length || isRunning || isOrganizerRollbackRunning;
+        }
+    };
+
     const updateControls = () => {
         if (!isCurrentRequest()) return;
         const hasResumableCursor = !complete && !!cursor && !resumeUnavailable;
@@ -8896,6 +8919,7 @@ export async function openAuditDriveModal() {
                 isOrganizerPreviewRunning || !complete || !auditId;
         }
         updateReconciliationApprovalControls_();
+        updateOrganizerApplyControls_();
     };
 
     const restoreState = (state) => {
@@ -9597,8 +9621,10 @@ export async function openAuditDriveModal() {
         isOrganizerPreviewRunning = true;
         isRunning = true;
         isDriveAuditRunning = true;
+        currentOrganizerPreview = null;
         if (organizerPreviewPanel) organizerPreviewPanel.hidden = false;
         if (organizerPreviewStatus) organizerPreviewStatus.textContent = "Validando auditoría e iniciando preview de destinos…";
+        updateOrganizerApplyControls_();
         if (organizerPreviewCounts) organizerPreviewCounts.replaceChildren();
         if (organizerPreviewResults) organizerPreviewResults.replaceChildren();
         updateControls();
@@ -9662,7 +9688,7 @@ export async function openAuditDriveModal() {
             }
             if (organizerPreviewResults) {
                 const visible = allResults.slice(0, 500);
-                visible.forEach(item => {
+                visible.forEach((item, index) => {
                     const row = document.createElement("article");
                     row.className = "audit-drive-result-row";
                     const heading = document.createElement("strong");
@@ -9674,6 +9700,20 @@ export async function openAuditDriveModal() {
                         " · destino: " + (item.targetFolderPath || "No disponible") +
                         (item.targetName ? " · nombre propuesto: " + item.targetName : "");
                     row.append(heading, detail);
+                    if (item.status === "ready") {
+                        const approvalLabel = document.createElement("label");
+                        approvalLabel.style.cssText = "display:flex; align-items:center; gap:8px; margin-top:8px;";
+                        const approval = document.createElement("input");
+                        approval.type = "checkbox";
+                        approval.dataset.organizerApprove = "true";
+                        approval.dataset.fileId = String(item.fileId || "");
+                        approval.dataset.pageOffset = String(Math.floor(index / 25) * 25);
+                        approval.addEventListener("change", updateOrganizerApplyControls_);
+                        const approvalText = document.createElement("span");
+                        approvalText.textContent = "Aprobar este archivo para un lote";
+                        approvalLabel.append(approval, approvalText);
+                        row.appendChild(approvalLabel);
+                    }
                     if (Array.isArray(item.reasons) && item.reasons.length) {
                         const reason = document.createElement("p");
                         reason.textContent = "Bloqueos: " + item.reasons.join("; ");
@@ -9688,10 +9728,12 @@ export async function openAuditDriveModal() {
                     organizerPreviewResults.appendChild(note);
                 }
             }
+            currentOrganizerPreview = { auditId, digest, totalTargets, pageSize: 25 };
             const message = "Preview completo: " + counts.ready + " destinos listos, " +
                 counts.already_correct + " ya organizados y " + counts.blocked + " bloqueados. " +
-                "Digest: " + digest + ". No se modificó Drive ni Spreadsheet; la aplicación permanece deshabilitada.";
+                "Digest: " + digest + ". Selecciona de 1 a 10 archivos listos de una misma página para solicitar Safe Apply.";
             if (organizerPreviewStatus) organizerPreviewStatus.textContent = message;
+            updateOrganizerApplyControls_();
             appendAuditConsole(message, counts.blocked ? "warning" : "success");
         } catch (error) {
             if (!isCurrentRequest()) return;
@@ -9710,6 +9752,102 @@ export async function openAuditDriveModal() {
     if (organizeButton) organizeButton.onclick = () => organizeUnusedImages();
     if (reconcileButton) reconcileButton.onclick = () => runCortesReconciliation();
     if (organizerPreviewButton) organizerPreviewButton.onclick = () => runCortesImageOrganizerPreview();
+    if (organizerApplyButton) organizerApplyButton.onclick = async () => {
+        if (!isCurrentRequest() || !currentOrganizerPreview || isOrganizerApplyRunning) return;
+        const checked = Array.from(organizerPreviewResults.querySelectorAll('input[data-organizer-approve="true"]:checked'));
+        const pageOffsets = new Set(checked.map(input => Number(input.dataset.pageOffset)));
+        if (!checked.length || checked.length > 10 || pageOffsets.size !== 1 ||
+            checked.some(input => !/^[a-zA-Z0-9_-]{20,}$/.test(String(input.dataset.fileId || "")))) {
+            if (organizerPreviewStatus) organizerPreviewStatus.textContent = "Selecciona entre 1 y 10 imágenes válidas de una misma página.";
+            return;
+        }
+        const pageOffset = Array.from(pageOffsets)[0];
+        const approvedFileIds = checked.map(input => String(input.dataset.fileId));
+        const confirmed = window.gpsepediaRequestDeveloperConsoleConfirmation
+            ? await window.gpsepediaRequestDeveloperConsoleConfirmation(
+                "Se moverán y/o renombrarán " + approvedFileIds.length +
+                " imágenes según el manifiesto aprobado. El servidor volverá a comprobar el digest, las referencias, las rutas y los permisos. " +
+                "Cada operación tendrá registro durable y podrá revertirse si su estado no cambia. ¿Confirmas este lote?"
+            )
+            : false;
+        if (!confirmed || !isCurrentRequest()) return;
+        isOrganizerApplyRunning = true;
+        isRunning = true;
+        updateControls();
+        if (organizerPreviewStatus) organizerPreviewStatus.textContent = "Aplicando lote aprobado y verificando cada archivo…";
+        try {
+            const response = await routeActionWithRetry("applyCortesImageOrganizer", {
+                ...getDeveloperSessionPayload(), auditId: currentOrganizerPreview.auditId,
+                offset: pageOffset, limit: currentOrganizerPreview.pageSize,
+                manifestDigest: currentOrganizerPreview.digest, approvedFileIds, confirm: true
+            }, { timeoutMs: 120000, maxAttempts: 2, retryDelayMs: 800, shouldContinue: isCurrentRequest });
+            if (!isCurrentRequest()) return;
+            if (!response || !["success", "warning"].includes(response.status) || !Array.isArray(response.results)) {
+                throw new Error(response && response.message ? response.message : "ADMIN devolvió un resultado Safe Apply inválido.");
+            }
+            lastOrganizerOperationIds = response.results
+                .filter(item => item && ["applied", "already_applied"].includes(item.status) && item.operationId)
+                .map(item => String(item.operationId));
+            currentOrganizerPreview = null;
+            const applied = response.results.filter(item => item.status === "applied").length;
+            const already = response.results.filter(item => item.status === "already_applied").length;
+            const review = response.results.filter(item => !["applied", "already_applied"].includes(item.status)).length;
+            const message = "Lote finalizado: " + applied + " aplicadas, " + already +
+                " ya aplicadas y " + review + " requieren revisión. Ejecuta una auditoría nueva antes de preparar otro lote.";
+            if (organizerPreviewStatus) organizerPreviewStatus.textContent = message;
+            appendAuditConsole(message, review ? "warning" : "success");
+        } catch (error) {
+            if (!isCurrentRequest()) return;
+            const message = "Safe Apply no pudo completarse: " + String(error && error.message || error);
+            if (organizerPreviewStatus) organizerPreviewStatus.textContent = message;
+            appendAuditConsole(message, "error");
+        } finally {
+            isOrganizerApplyRunning = false;
+            isRunning = false;
+            if (isCurrentRequest()) updateControls();
+        }
+    };
+    if (organizerRollbackButton) organizerRollbackButton.onclick = async () => {
+        if (!isCurrentRequest() || !lastOrganizerOperationIds.length || isOrganizerRollbackRunning) return;
+        const confirmed = window.gpsepediaRequestDeveloperConsoleConfirmation
+            ? await window.gpsepediaRequestDeveloperConsoleConfirmation(
+                "Se revertirán " + lastOrganizerOperationIds.length +
+                " operaciones del último lote, solo si cada archivo conserva exactamente su destino y nombre confirmados. " +
+                "Los archivos modificados posteriormente no se tocarán. ¿Confirmas el rollback?"
+            )
+            : false;
+        if (!confirmed || !isCurrentRequest()) return;
+        isOrganizerRollbackRunning = true;
+        isRunning = true;
+        updateControls();
+        if (organizerPreviewStatus) organizerPreviewStatus.textContent = "Revirtiendo último lote y verificando ubicaciones originales…";
+        try {
+            const response = await routeActionWithRetry("rollbackCortesImageOrganizer", {
+                ...getDeveloperSessionPayload(), operationIds: lastOrganizerOperationIds, confirm: true
+            }, { timeoutMs: 120000, maxAttempts: 2, retryDelayMs: 800, shouldContinue: isCurrentRequest });
+            if (!isCurrentRequest()) return;
+            if (!response || !["success", "warning"].includes(response.status) || !Array.isArray(response.results)) {
+                throw new Error(response && response.message ? response.message : "ADMIN devolvió un resultado de rollback inválido.");
+            }
+            const reverted = response.results.filter(item => ["rolled_back", "already_rolled_back"].includes(item.status)).length;
+            const review = response.results.length - reverted;
+            lastOrganizerOperationIds = [];
+            currentOrganizerPreview = null;
+            const message = "Rollback: " + reverted + " operaciones revertidas/confirmadas; " +
+                review + " requieren revisión.";
+            if (organizerPreviewStatus) organizerPreviewStatus.textContent = message;
+            appendAuditConsole(message, review ? "warning" : "success");
+        } catch (error) {
+            if (!isCurrentRequest()) return;
+            const message = "No se pudo completar el rollback: " + String(error && error.message || error);
+            if (organizerPreviewStatus) organizerPreviewStatus.textContent = message;
+            appendAuditConsole(message, "error");
+        } finally {
+            isOrganizerRollbackRunning = false;
+            isRunning = false;
+            if (isCurrentRequest()) updateControls();
+        }
+    };
     if (applyReconciliationButton) applyReconciliationButton.onclick = async () => {
         if (!isCurrentRequest() || !currentReconciliationReport || currentReconciliationReport.status !== "complete") return;
         const checked = Array.from(reconciliationResults.querySelectorAll('input[data-reconciliation-approve="true"]:checked'));
