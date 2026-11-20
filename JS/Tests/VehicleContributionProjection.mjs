@@ -236,7 +236,7 @@ test("la migración rechaza encabezados incompatibles sin sobrescribirlos", () =
 
 test("ADMIN expone la migración solo como acción explícita de esquema", () => {
     assert.match(admin, /"migrateVehicleContributionsSchema"/);
-    assert.match(admin, /case 'migrateVehicleContributionsSchema':[\\s\\S]{0,160}handleMigrateVehicleContributionsSchema/);
+    assert.match(admin, /case 'migrateVehicleContributionsSchema':[\s\S]{0,160}handleMigrateVehicleContributionsSchema/);
     assert.match(admin, /function handleMigrateVehicleContributionsSchema\(/);
 });
 
