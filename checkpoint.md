@@ -145,3 +145,10 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - `handleSendContactForm` valida y limita frecuencia sin retener ScriptLock. `getNextFormulaBasedId_` reserva el ID en su sección crítica breve; la fila completa se anexa con `appendRow`, se verifica por ID y se formatea después.
 - Pruebas `FeedbackContactWriteNoGlobalLock` 2/2 y `FeedbackLockFastFail` PASS. CI `44835219987` SUCCESS: 239 suites, 2965 pruebas aprobadas, 0 fallos. Health read-only SUCCESS. Sin despliegue FEEDBACK ni cambios productivos.
 - P0 sigue abierto: reducir lock global en `reportProblem`, `suggestCutChange`, `recordLike`, PyS, tutoriales y otras mutaciones. Mantener el lock breve del asignador secuencial mientras siga siendo necesario.
+
+
+## 2026-11-20 — Validación estricta del ledger de años
+
+- `getFeedbackProjectedVehicleYearSnapshot_` valida todas las filas de `AportesVehiculo` antes de reconstruir el rango y detecta conflictos de `opId` incluso entre vehículos. El snapshot no acepta un ledger malformado ni proyecta operaciones ambiguas.
+- Pruebas `FeedbackYearApplicationAppendOnly` 5/5 y `SuggestYearVoteThreshold` 7/7. CI `44835550127` SUCCESS: 239 suites, 2966 pruebas aprobadas, 0 fallos. Health read-only SUCCESS.
+- No se desplegó Apps Script ni se modificaron datos productivos. El lock global FEEDBACK sigue abierto para el resto de las mutaciones; contacto ya reserva el ID bajo lock breve y anexa fuera.
