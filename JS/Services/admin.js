@@ -11624,7 +11624,9 @@ function syncContributionCandidateImageInventory_(currentCandidates) {
             try { originalPayload = JSON.parse(String(targetRow[5] || "{}")); } catch (error) {}
             const originalImage = getContributionCandidateImageUrl_(originalPayload);
             const resolvedImage = getContributionCandidateImageUrl_(resolution.payload);
-            status = resolution.status === "retracted" || (resolvedImage && originalImage && resolvedImage !== originalImage)
+            const originalFileId = extractDriveFileIds(originalImage)[0] || "";
+            const resolvedFileId = extractDriveFileIds(resolvedImage)[0] || "";
+            status = resolution.status === "retracted" || resolvedFileId !== originalFileId
                 ? "cancelada" : "en_uso";
         }
         records.set(targetEventId, {
