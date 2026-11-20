@@ -1180,3 +1180,17 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Impacto: posible divergencia entre Cortes materializado y AportesVehiculo, además de carrera con otras ediciones del mismo campo. El cambio debe preservar la historia de imágenes, reintentos y compensación, sin aplicar escrituras directas.
 - Próximo paso: inspeccionar contratos de uploadAdminImage, reconciliación ImageUploadEvents y pruebas de compensación; diseñar y probar la secuencia reservar archivo → verificar/reutilizar Drive → append vehicle_update con versión esperada → marcar linked. Si la versión del campo cambió, conservar archivo/eventos como candidato y no sobrescribir.
 - No se ha modificado el handler productivo en esta actividad ni se han desplegado Apps Script o alterado datos productivos. La validación real de Drive/Sheets y navegador sigue siendo Beta aislada.
+
+
+## Checkpoint — cierre local de reemplazo de imágenes ADMIN (2026-11-20)
+
+- Rama de trabajo: `GPSpedia2.2.5_work`. HEAD de código validado: `9425527a3fb93ddc9256537ff534cea3872e2d7c`.
+- Rama base protegida `GPSpedia2.2.5`: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin modificaciones.
+- Se completó la migración del handler activo `uploadAdminImage`: reserva/recuperación de archivos en `ImageUploadEvents`, evento de campo `vehicle_update` en `AportesVehiculo`, versión esperada y eventId fuente. No se escribe directamente en `Cortes`, no se usa `AdminImageUploads` como ledger mutable ni se retiene ScriptLock en el flujo ordinario.
+- Se conserva la historia de imágenes sustituidas con idempotencia por opId; la secuencia enlaza el archivo solo después de registrar el evento de vehículo. Los fallos parciales mantienen archivo y journal para revisión.
+- La referencia anterior se toma de `expectedCurrentValue`, porque la fila materializada de Cortes puede ir detrás de la proyección append-only. La consulta de recuperación obtiene currentImageUrl/currentSourceEventId desde CATALOG y la UI conserva el eventId fuente para posteriores reemplazos.
+- Contratos actualizados: unicidad de vehicleId, recuperación por proyección, ausencia de lock global y ausencia de escritura directa. CI 44828376102 SUCCESS: 237 suites, 2,942 pruebas aprobadas, 0 fallos; node --check PASS. Health read-only SUCCESS; Pages SUCCESS.
+- Auditoría.txt registra el hallazgo de reemplazo ADMIN como CORREGIDO LOCALMENTE. No se desplegó Apps Script ni se modificaron Spreadsheet/Drive productivos.
+- Registro Tareas_Activas.md rotado por superar 180,000 caracteres. Copia íntegra verificada en `Tareas_Activas_Archive/Tareas_Activas_2026-11-20_pre-rotacion.md`; manifiesto en `Tareas_Activas_Archive/manifest.md`. El nuevo Tareas_Activas.md conserva únicamente las tareas activas y la matriz Beta.
+- Pendiente local prioritario: GP-CONCURRENCY-CUT-MULTI-ENTRY-01 — revisar fallback legacy UserLock, confirmar consumidores/opId, preservar candidatos de imágenes en colisión/capacidad y completar señalización UI de conflictos tardíos. Después abordar GP-UX-RECENT-VIEWED-CACHE-PARALLEL-01.
+- Pendiente Beta: AUG-159 y AUG-160, appendRow concurrente real, fallos parciales Drive/Sheets, pérdida de respuesta, recuperación ADMIN y pruebas visuales/navegador. Seguir lista_beta.txt y sus segmentos; solo recursos aislados, sin despliegues ni datos productivos.
