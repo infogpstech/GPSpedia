@@ -1276,6 +1276,19 @@ function handleSuggestYear(payload) {
     }
 
     if (!result || typeof result !== "object") return result;
+    const catalogResetRequest = result._catalogResetRequest === true;
+    delete result._catalogResetRequest;
+    if (catalogResetRequest) {
+        try {
+            publishFeedbackCatalogChange_("suggestYear", () => ({ operation: "reset" }));
+        } catch (catalogError) {
+            result.catalogSyncWarning = true;
+            result.message += " La ampliación quedó registrada, pero la actualización de caché del catálogo requiere reintento.";
+            Logger.log("No se pudo invalidar el catálogo tras anexar la ampliación de años: " +
+                String(catalogError && catalogError.message || catalogError));
+        }
+    }
+
     const activityLogRequest = result._activityLogRequest;
     delete result._activityLogRequest;
     if (activityLogRequest) {
