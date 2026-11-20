@@ -973,3 +973,8 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Dirección propuesta: mantener las filas heredadas de `Cortes` como base; guardar nuevos aportes en un ledger append-only versionado; calcular los slots visibles de forma determinista desde catálogo; conservar el excedente como candidato. No usar `UserLock` como lock por vehículo ni reintroducir un ScriptLock global.
 - Próximo paso técnico: verificar límites y garantías de append concurrente en Google Sheets con un harness aislado; diseñar manejo de duplicados físicos por el mismo `opId` y huellas conflictivas; implementar primero el proyector puro y sus pruebas antes de tocar handlers productivos.
 - HEAD verificado antes de esta actualización: `6b0bb3717119fb576ee94c071ea8f3892d8fdce5`; rama base sin cambios: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+
+
+- Hallazgo adicional confirmado en UI/WRITE: apertura y alimentación generan/envían `opId`, pero el backend no calcula huella ni registra el resultado en un ledger idempotente. Un timeout tras guardar no permite recuperar el éxito original; el reintento puede recibir conflicto aunque el primer intento sí se haya aplicado. La clave de carga Drive solo protege el archivo, no la escritura de catálogo. Documentado en `CONCURRENCIA_APORTES_DISENO.md`, commit `34b17b80e8a3660d659231ff88fa67d70e810cf6`.
+- El nuevo ledger append-only debe cubrir en un solo contrato cortes, apertura y alimentación; conservar `opId`/hash en el cliente; recuperar éxito para mismo ID/hash; rechazar ID/hash diferente.
+- HEAD tras actualizaciones de diseño/tareas: `28cb5bd69581849b7a1bdded9d9a39d09a6f2bad` (checkpoint aún pendiente de este último commit).
