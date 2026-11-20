@@ -10766,7 +10766,7 @@ function handlePermanentlyDeleteReplacedImage(payload,logMessage,developerContex
     const id=String(payload&&payload.id_reemplazo||"").trim();if(!id)throw new Error("ID de registro de imagen requerido.");
     const lock=LockService.getScriptLock();try{lock.waitLock(30000);}catch(error){throw new Error("No se pudo bloquear la eliminación definitiva. Intenta nuevamente.");}
     let lockAcquired=true;
-    const releaseLock=()=>{if(lockAcquired){lock.releaseLock();lockAcquired=false;}};
+    const releaseLock=()=>{if(lockAcquired){if(typeof lock.hasLock!=="function"||lock.hasLock())lock.releaseLock();lockAcquired=false;}};
     try{
         const sheet=getOrCreateReplacedImagesSheet(),headers=ensureReplacedImagesInventoryColumns(sheet);
         const existing=findReplacedImageRecordById(sheet,id);if(!existing)throw new Error("Registro de imagen no encontrado.");
