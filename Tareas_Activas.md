@@ -912,3 +912,10 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] Revalidar ID del vehículo y URL de imagen con lectura fresca antes de mover; si cambia, omitir movimiento y devolver advertencia.
 - [x] `FeedbackYearFolderSyncOutsideLock` 5/5; `SuggestYearVoteThreshold` 6/6; CI `44647298901` SUCCESS: 201 suites, 2,571 pruebas, 0 fallos.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Health read-only `44647298819` SUCCESS.
+
+
+### P1 — FEEDBACK likes: actividad fuera del lock (2026-11-20)
+- [x] Mantener contador y ledger pending/completed bajo lock; ejecutar `logUserActivity` después de liberar.
+- [x] Evitar actividad duplicada en replay completed. `FeedbackLikeActivityOutsideLock` 5/5.
+- [x] CI `44647675553` SUCCESS: 202 suites, 2,576 pruebas, 0 fallos; health read-only `44647675689` SUCCESS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
