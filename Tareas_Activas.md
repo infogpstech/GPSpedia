@@ -919,3 +919,10 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] Evitar actividad duplicada en replay completed. `FeedbackLikeActivityOutsideLock` 5/5.
 - [x] CI `44647675553` SUCCESS: 202 suites, 2,576 pruebas, 0 fallos; health read-only `44647675689` SUCCESS.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
+
+
+### P1 — FEEDBACK asignador formula-based ID con lectura acotada (2026-11-20)
+- [x] Leer primero solo columna ID; inspeccionar filas completas únicamente para grupos contiguos con ID vacío.
+- [x] Conservar detección de datos sin ID, prefijo/sufijo inválido, duplicados, contador backend y lock ya adquirido.
+- [x] `FeedbackFormulaIdAllocatorBoundedRead` 6/6; CI `44647995645` SUCCESS: 203 suites, 2,582 pruebas, 0 fallos; health read-only `44647995469` SUCCESS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
