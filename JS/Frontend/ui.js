@@ -425,6 +425,10 @@ function commitAdminImageReplacementBaseline_(vehicleId, fieldName, imageUrl, ex
 }
 
 async function removePendingAdminImageUploadConfirmed_(operation, expectedSession) {
+    adminModalFieldVersions.set(
+        String(operation.vehicleId) + "::" + operation.fieldName,
+        { value: currentImageUrl, eventId: String(response.eventId || operation.expectedSourceEventId || "") }
+    );
     const key = getAdminImageUploadPendingKey(operation.ownerId, operation.vehicleId, operation.fieldName);
     if (!expectedSession || !isCurrentUiSessionContext_(expectedSession) ||
         String(operation.ownerId || "") !== String(expectedSession.userId || "")) return false;
@@ -688,7 +692,10 @@ async function submitAdminImageUploadOperation(operation, imgElement, expectedSe
         filename: operation.filename,
         mimeType: operation.mimeType,
         fieldName: operation.fieldName,
-        opId: operation.id
+        opId: operation.id,
+        enforceExpectedCurrentValue: true,
+        expectedCurrentValue: operation.expectedCurrentValue,
+        expectedSourceEventId: operation.expectedSourceEventId || ""
     });
     if (!isCurrentUiSessionContext_(editSession)) {
         throw new Error("La sesión cambió durante el reemplazo. El intento permanece guardado para reconciliarlo al volver a iniciar sesión.");
@@ -809,11 +816,25 @@ function convertImageToEditable(imgElement, vehicleId, fieldName) {
                 if (!isCurrentUiSessionContext_(editSession) || String(editSession.userId || "") !== ownerId) {
                     throw new Error("La sesión cambió durante la lectura del archivo. No se inició el reemplazo.");
                 }
+                const versionKey = cleanVehicleId + "::" + fieldName;
+                const cachedVersion = adminModalFieldVersions.get(versionKey);
+                const backupMatches = originalItemBackup && String(originalItemBackup.id) === cleanVehicleId;
+                const expectedImageValue = cachedVersion ? cachedVersion.value :
+                    (backupMatches ? originalItemBackup[fieldName] : undefined);
+                const expectedImageSourceEventId = cachedVersion ? String(cachedVersion.eventId || "") :
+                    String(backupMatches && originalItemBackup.contributionSources &&
+                        originalItemBackup.contributionSources[fieldName] &&
+                        originalItemBackup.contributionSources[fieldName].eventId || "");
+                if (expectedImageValue === undefined) {
+                    throw new Error("No se pudo determinar la versión actual de la imagen. Actualiza la ficha antes de reemplazarla.");
+                }
                 const operation = {
                     id: createAdminImageUploadOperationId(),
                     ownerId: ownerId,
                     vehicleId: cleanVehicleId,
                     fieldName: fieldName,
+                    expectedCurrentValue: String(expectedImageValue || ""),
+                    expectedSourceEventId: expectedImageSourceEventId,
                     fileData: fileData,
                     filename: file.name || (fieldName + "_" + Date.now() + ".png"),
                     mimeType: file.type || "image/png",

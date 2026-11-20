@@ -1314,7 +1314,7 @@ function doPostInternal_(e) {
                 response = handleUpdateVehicleField(payload, logMessage, developerContext);
                 break;
             case 'uploadAdminImage':
-                response = handleUploadAdminImage(payload, logMessage);
+                response = handleUploadAdminImage(payload, logMessage, developerContext);
                 break;
             case 'getAdminImageUploadStatus':
                 response = handleGetAdminImageUploadStatus(payload, logMessage);
@@ -7085,8 +7085,8 @@ function handleGetAdminImageUploadStatus(payload, logMessage) {
     };
 }
 
-function handleUploadAdminImage(payload, logMessage) {
-    const { vehicleId, fileData, filename, mimeType, fieldName, opId } = payload || {};
+function handleUploadAdminImage(payload, logMessage, modalContext) {
+    const { vehicleId, fileData, filename, mimeType, fieldName, opId, expectedCurrentValue, expectedSourceEventId, enforceExpectedCurrentValue } = payload || {};
     const imageFields = new Set([
         "imagenVehiculo", "imgCorte1", "imgCorte2", "imgCorte3",
         "imgApertura", "imgCableAlimen", "imgCableAlimen2", "imgCableAlimen3"
@@ -7097,6 +7097,13 @@ function handleUploadAdminImage(payload, logMessage) {
         !/^[A-Za-z0-9_-]{20,80}$/.test(operationId)) {
         throw new Error("Parámetros incompletos o identificador de operación inválido para reemplazar la imagen.");
     }
+
+    if (enforceExpectedCurrentValue !== true || !Object.prototype.hasOwnProperty.call(payload || {}, "expectedCurrentValue")) {
+        throw new Error("El reemplazo requiere la versión esperada del campo para evitar sobrescribir una edición concurrente.");
+    }
+    const expectedImageUrl = String(expectedCurrentValue == null ? "" : expectedCurrentValue).trim();
+    const sourceEventId = String(expectedSourceEventId || "").trim();
+    if (sourceEventId && !/^EV-[A-Za-z0-9_-]{8,100}$/.test(sourceEventId)) throw new Error("La versión fuente del campo no es válida.");
 
     const lock = LockService.getScriptLock();
     try {
@@ -7119,6 +7126,8 @@ function handleUploadAdminImage(payload, logMessage) {
     let previousNewImageUrl = "";
     let operationConflict = false;
     let operationContentHash = "";
+    let uploadJournalContext = null;
+    let vehicleUpdateEvent = null;
 
     try {
         logMessage("Edición In-Modal", "Procesando el intento " + operationId + " para el campo '" + fieldName + "' del vehículo ID: " + vehicleId + "...");
@@ -7154,6 +7163,7 @@ function handleUploadAdminImage(payload, logMessage) {
         const temporaryFilename = "__GPSpediaAdminUpload_" + operationId + extension;
 
         const currentUrl = String(activeCell.getValue() || "").trim();
+        if (currentUrl !== expectedImageUrl) throw new Error("La imagen cambió desde que se abrió el modal. Actualiza la ficha antes de reemplazarla.");
         if (currentUrl && !extractDriveFileId(currentUrl)) {
             throw new Error("La URL de la imagen activa no contiene un ID de Drive reconocible; se conserva la referencia actual.");
         }
@@ -7208,8 +7218,14 @@ function handleUploadAdminImage(payload, logMessage) {
             }
             if (status === "linked") {
                 if (!newImageUrl) throw new Error("La operación figura vinculada, pero no contiene una URL nueva verificable.");
+                const linkedFieldEvent = appendAdminVehicleFieldUpdate_(
+                    vehicleId, fieldName, newImageUrl, expectedImageUrl, sourceEventId, modalContext, logMessage
+                );
+                if (!linkedFieldEvent || linkedFieldEvent.status !== "success" || !linkedFieldEvent.eventId) {
+                    throw new Error("No se pudo recuperar la versión append-only del reemplazo ya vinculado.");
+                }
                 const latestLinkedUrl = String(activeCell.getValue() || "").trim();
-                if (latestLinkedUrl === newImageUrl) {
+                if (latestLinkedUrl === newImageUrl || latestLinkedUrl === expectedImageUrl) {
                     const linkedFileId = String(values[5] || extractDriveFileId(newImageUrl) || "");
                     if (!linkedFileId) throw new Error("La operación figura vinculada, pero no contiene un ID de archivo verificable.");
                     const linkedDriveCheck = runAdminContributionDriveWorkOutsideScriptLock_(lock, operationId, function() {
@@ -7240,7 +7256,7 @@ function handleUploadAdminImage(payload, logMessage) {
                             throw new Error("El ledger de una operación vinculada cambió durante la verificación; requiere reintento.");
                         }
                         actualRow = latestRow; rowValues = latestValues; activeCell = latestCell; operationRecord = latestOperation;
-                        return Object.assign({}, result, { superseded: String(latestCell.getValue() || "").trim() !== newImageUrl });
+                        return Object.assign({}, result, { superseded: false });
                     });
                     newFile = linkedDriveCheck.file;
                     if (linkedDriveCheck.reviewReason) {
@@ -7290,6 +7306,7 @@ function handleUploadAdminImage(payload, logMessage) {
                     }
                     return {
                         status: "success", imageUrl: newImageUrl, currentImageUrl: newImageUrl,
+                        eventId: linkedFieldEvent.eventId, duplicate: true,
                         message: "El reemplazo ya estaba completado; se recuperó la confirmación."
                     };
                 }
@@ -7347,7 +7364,7 @@ function handleUploadAdminImage(payload, logMessage) {
                 }
             }
             preparedFile.setDescription(buildAdminImageUploadDescription(operationId, contentHash, "pending"));
-            return { file: preparedFile, created,
+            return { file: preparedFile, created, folderId: String(genFolder.getId()),
                 url: "https://drive.google.com/uc?export=view&id=" + preparedFile.getId() };
         }, function(result) {
             const latestRow = findUniqueAdminVehicleRow_(sheet, String(vehicleId).trim());
@@ -7379,6 +7396,13 @@ function handleUploadAdminImage(payload, logMessage) {
                 drivePreparation.reason, logMessage, newFile, contentHash);
         }
         newImageUrl = drivePreparation.url;
+        uploadJournalContext = {
+            token: operationId, operationKey: operationId + "|" + String(vehicleId) + "|" + fieldName,
+            folderId: String(drivePreparation.folderId || ""), mimeType: actualMimeType,
+            sizeBytes: decodedData.length, contentHash: contentHash, fileId: String(newFile.getId()),
+            fileName: newFilename, vehicleId: String(vehicleId), fieldName: fieldName
+        };
+        appendAdminImageUploadJournalTransition_(uploadJournalContext, "pending", "", "");
 
         operationRecord.values[4] = newImageUrl;
         operationRecord.values[5] = newFile.getId();
@@ -7405,12 +7429,11 @@ function handleUploadAdminImage(payload, logMessage) {
             });
         }
 
-        if (latestActiveUrl !== newImageUrl) {
-            activeCell.setValue(newImageUrl);
-            SpreadsheetApp.flush();
-        }
-        if (String(activeCell.getValue() || "").trim() !== newImageUrl) {
-            throw new Error("No se pudo verificar la nueva URL en Cortes después de SpreadsheetApp.flush().");
+        vehicleUpdateEvent = appendAdminVehicleFieldUpdate_(
+            vehicleId, fieldName, newImageUrl, expectedImageUrl, sourceEventId, modalContext, logMessage
+        );
+        if (!vehicleUpdateEvent || vehicleUpdateEvent.status !== "success" || !vehicleUpdateEvent.eventId) {
+            throw new Error("AportesVehiculo no confirmó la nueva versión de imagen.");
         }
 
         runAdminContributionDriveWorkOutsideScriptLock_(lock, operationId, function() {
@@ -7420,14 +7443,19 @@ function handleUploadAdminImage(payload, logMessage) {
         }, function() {
             const latestRow = findUniqueAdminVehicleRow_(sheet, String(vehicleId).trim());
             const latestCell = sheet.getRange(latestRow, colIndex);
-            if (String(latestCell.getValue() || "").trim() !== newImageUrl) {
+            const latestOperation = findAdminImageUploadOperation(operationSheet, operationId);
+            if (!latestOperation || String(latestOperation.values[1]) !== String(vehicleId) ||
+                String(latestOperation.values[2]) !== fieldName ||
+                String(latestOperation.values[6]) !== operationContentHash ||
+                !["pending", "linked"].includes(String(latestOperation.values[9] || ""))) {
                 operationConflict = true;
-                throw new Error("La referencia activa cambió durante la confirmación Drive; se conserva sin sobrescribir.");
+                throw new Error("La operación de imagen cambió durante la confirmación Drive.");
             }
-            actualRow = latestRow; activeCell = latestCell;
+            actualRow = latestRow; activeCell = latestCell; operationRecord = latestOperation;
             return true;
         });
 
+        appendAdminImageUploadJournalTransition_(uploadJournalContext, "linked", vehicleUpdateEvent.eventId, "");
         operationRecord.values[9] = "linked";
         operationRecord.values[11] = Utilities.formatDate(new Date(), "GMT-6", "yyyy-MM-dd HH:mm:ss");
         saveAdminImageUploadOperation(operationSheet, operationRecord);
@@ -7435,7 +7463,8 @@ function handleUploadAdminImage(payload, logMessage) {
         logMessage("Edición In-Modal", "Imagen vinculada y operación " + operationId + " confirmada para el campo '" + fieldName + "'.");
         return {
             status: "success", imageUrl: newImageUrl, currentImageUrl: newImageUrl,
-            message: "La imagen del campo '" + fieldName + "' se actualizó en Drive y Sheets."
+            eventId: vehicleUpdateEvent.eventId,
+            message: "La imagen quedó registrada en AportesVehiculo y vinculada en ImageUploadEvents."
         };
     } catch (error) {
         if (error && error.code === "ADMIN_LOCK_REACQUIRE_PENDING") {
@@ -7447,6 +7476,15 @@ function handleUploadAdminImage(payload, logMessage) {
         }
         let rollbackMessage = "";
         let rollbackFailed = false;
+        if (uploadJournalContext && newFile) {
+            try {
+                appendAdminImageUploadJournalTransition_(uploadJournalContext, "requires_review",
+                    vehicleUpdateEvent && vehicleUpdateEvent.eventId || "", String(error && error.message || error));
+            } catch (journalError) {
+                rollbackFailed = true;
+                rollbackMessage += " No se pudo anexar la transición compensatoria en ImageUploadEvents: " + journalError.message + ".";
+            }
+        }
         let historySheet = null;
         let historyRowIndex = null;
         let compensationReserved = false;
@@ -8599,6 +8637,33 @@ const IMAGE_UPLOAD_EVENTS_HEADERS_ = [
     "contentHash", "fileId", "fileUrl", "state", "referencesJson", "fileName",
     "createdAt", "lastError"
 ];
+
+function getOrCreateImageUploadEventsSheetForAdmin_() {
+    const spreadsheet = getSpreadsheet();
+    let sheet = spreadsheet.getSheetByName(IMAGE_UPLOAD_EVENTS_SHEET_NAME_);
+    if (!sheet) sheet = spreadsheet.insertSheet(IMAGE_UPLOAD_EVENTS_SHEET_NAME_);
+    if (sheet.getLastRow() === 0 && sheet.getLastColumn() === 0) {
+        sheet.getRange(1, 1, 1, IMAGE_UPLOAD_EVENTS_HEADERS_.length).setValues([IMAGE_UPLOAD_EVENTS_HEADERS_]);
+        sheet.setFrozenRows(1);
+        SpreadsheetApp.flush();
+    }
+    if (sheet.getLastColumn() < IMAGE_UPLOAD_EVENTS_HEADERS_.length) throw new Error("ImageUploadEvents tiene una estructura incompleta.");
+    const headers = sheet.getRange(1, 1, 1, IMAGE_UPLOAD_EVENTS_HEADERS_.length).getDisplayValues()[0].map(v => String(v || "").trim());
+    if (IMAGE_UPLOAD_EVENTS_HEADERS_.some((h, i) => headers[i] !== h)) throw new Error("La estructura de ImageUploadEvents no coincide con el contrato esperado.");
+    return sheet;
+}
+
+function appendAdminImageUploadJournalTransition_(context, state, vehicleUpdateEventId, lastError) {
+    if (!context || !context.folderId) throw new Error("Falta la carpeta confirmada para registrar el evento de imagen.");
+    const references = vehicleUpdateEventId ? [{ source: "AportesVehiculo", eventId: String(vehicleUpdateEventId),
+        vehicleId: String(context.vehicleId), fieldName: String(context.fieldName) }] : [];
+    return appendImageUploadEventForAdmin_(getOrCreateImageUploadEventsSheetForAdmin_(), {
+        token: context.token, operationKey: context.operationKey, folderId: context.folderId,
+        mimeType: context.mimeType, sizeBytes: context.sizeBytes, contentHash: context.contentHash,
+        fileId: context.fileId || "", fileUrl: context.fileId ? "https://drive.google.com/uc?export=view&id=" + context.fileId : "",
+        state, referencesJson: JSON.stringify(references), fileName: context.fileName || "", lastError: lastError || ""
+    });
+}
 
 function getImageUploadEventsSheetForAdmin_() {
     const sheet = getSpreadsheet().getSheetByName(IMAGE_UPLOAD_EVENTS_SHEET_NAME_);

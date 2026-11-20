@@ -1,10 +1,15 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 const source=readFileSync(new URL("../Services/admin.js",import.meta.url),"utf8");
-const start=source.indexOf("function handleUploadAdminImage(payload, logMessage)");
+const start=source.indexOf("function handleUploadAdminImage(payload, logMessage, modalContext)");
 const end=source.indexOf("\n// ============================================================================\n// MICROSERVICIO REGISTRO DE CORTES",start);
 assert.ok(start>=0&&end>start,"No se encontró handleUploadAdminImage");
 const handler=source.slice(start,end), cs=handler.lastIndexOf("    } catch (error) {"), ce=handler.indexOf("    } finally {",cs), block=handler.slice(cs,ce);
+const ui=readFileSync(new URL("../Frontend/ui.js",import.meta.url),"utf8");
+assert.ok(handler.includes("appendAdminVehicleFieldUpdate_") && handler.includes("expectedSourceEventId"),"La imagen debe crear vehicle_update con versión fuente");
+assert.ok(handler.includes("appendAdminImageUploadJournalTransition_") && handler.includes('"pending"') && handler.includes('"linked"'),"El ciclo debe registrar transiciones append-only del journal");
+assert.ok(!handler.includes("activeCell.setValue(newImageUrl)"),"El reemplazo no debe escribir directamente en Cortes");
+assert.ok(ui.includes("expectedCurrentValue: operation.expectedCurrentValue") && ui.includes("expectedSourceEventId: operation.expectedSourceEventId"),"La UI debe conservar y enviar la versión esperada");
 assert.ok(cs>=0&&ce>cs,"No se encontró catch");
 const reserve=block.indexOf('operationRecord.values[9] = "requires_review"'), save=block.indexOf("saveAdminImageUploadOperation(operationSheet, operationRecord)",reserve), flag=block.indexOf("compensationReserved = true",save);
 const drives=[...block.matchAll(/runAdminContributionDriveWorkOutsideScriptLock_\(lock, operationId/g)].map(x=>x.index);

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 const source = readFileSync(new URL("../Services/admin.js", import.meta.url), "utf8");
-const start = source.indexOf("function handleUploadAdminImage(payload, logMessage)");
+const start = source.indexOf("function handleUploadAdminImage(payload, logMessage, modalContext)");
 const end = source.indexOf("\n// ============================================================================\n// MICROSERVICIO REGISTRO DE CORTES", start);
 assert.ok(start >= 0 && end > start, "No se encontró handleUploadAdminImage");
 const handler = source.slice(start, end);
