@@ -917,3 +917,11 @@ Estado: REGRESIÓN LOCAL COMPLETADA. Concurrencia real de appendRow, fallos real
 - Auditoría FEEDBACK: `getNextFormulaBasedId_` y `publishFeedbackCatalogChange_` protegen contadores/versiones breves. `handleSuggestYear`, `handleRecordLike`, `handleReportProblem`, `handleSuggestCutChange`, PyS y tutoriales mantienen locks por deduplicación, incrementos read-modify-write, first-write-wins, asociaciones y transiciones de aprobación. No sustituir por UserLock: no coordina usuarios distintos. Migrar cada ruta a journal append-only/proyección o control de versión antes de retirar su lock.
 - Hallazgo aparte: `handleAddVinToVehicle` conserva un ScriptLock global y escribe directamente VIN/versiones; no se encontró llamada desde `admin.js`, `main.js`, `VinDifferentialEngine.js` ni `HTML/add_cortes.html`, pero `api-config.js` todavía expone la acción. No retirarla sin confirmar integraciones externas; migrarla a `vehicle_update` versionado o deprecar con compatibilidad.
 ================================================================================
+
+
+2026-11-20 — FEEDBACK likes: preflight y lecturas dirigidas
+- `handleRecordLike` ahora localiza el vehículo por ID antes de adquirir ScriptLock, valida el corte y vuelve a localizar/revalidar dentro de la sección crítica. No usa la fila del preflight como escritura ciega.
+- La consulta de `FeedbackLikes` busca por `actorKey` con `TextFinder` y lee solo las filas del actor; se eliminó `getDataRange()` de ambas hojas dentro del handler.
+- El lock se conserva para deduplicar el par actor/vehículo/corte y serializar el incremento del contador con recuperación pending/completed. Retirarlo sin convertir el contador a eventos append-only y proyectarlos en CATALOG debilitaría integridad.
+- `FeedbackLikePreflightOutsideLock` 5/5 PASS. CI 44836655370 SUCCESS: 240 suites, 2973 pruebas, 0 fallos. Health read-only y Pages estaban en ejecución; no se desplegó.
+================================================================================
