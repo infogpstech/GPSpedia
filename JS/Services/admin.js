@@ -10789,7 +10789,7 @@ function handlePermanentlyDeleteReplacedImage(payload,logMessage,developerContex
                 const root=getCortesRootFolder();getSingleParentFolderInsideCortes(file,root.getId());
                 return {missing:false,fileName:file.getName()};
             },
-            () => {
+            driveResult => {
                 const latestHeaders=ensureReplacedImagesInventoryColumns(sheet);
                 const latest=findReplacedImageRecordById(sheet,id);
                 if(!latest)throw new Error("El registro desapareció durante la verificación Drive; no se modificó el historial.");
@@ -10799,10 +10799,10 @@ function handlePermanentlyDeleteReplacedImage(payload,logMessage,developerContex
                     getReplacedImageRecordIdentity_(latestRow,latestHeaders,true)!==driveId) {
                     throw new Error("El registro cambió durante la verificación Drive; vuelve a intentar la eliminación.");
                 }
-                return latest;
+                return {record:latest,missing:driveResult.missing===true,fileName:driveResult.fileName||""};
             }
         );
-        rowIndex=verified.rowIndex;
+        rowIndex=verified.record.rowIndex;
         const references=collectActiveDriveReferences(),active=references.references.get(driveId)||[];
         if(active.length)throw new Error("Eliminación bloqueada: la imagen tiene referencias activas en el Spreadsheet.");
         if(references.unverifiableReferenceCount>0)throw new Error("Eliminación bloqueada: existen referencias de Drive no interpretables en el Spreadsheet.");
