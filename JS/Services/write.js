@@ -2262,23 +2262,20 @@ function projectImageUploadEvents_(events) {
     const identity = [1, 2, 3, 4, 5, 6].map(index => String(first[index] == null ? "" : first[index]));
     const fileIds = new Set();
     const references = new Map();
-    let linked = false, fileMissing = false, requiresReview = false, lastError = "";
+    let requiresReview = false, lastError = "", latestState = "pending";
     entries.forEach(entry => {
         const values = entry.values || entry;
         const candidateIdentity = [1, 2, 3, 4, 5, 6].map(index => String(values[index] == null ? "" : values[index]));
         if (candidateIdentity.some((value, index) => value !== identity[index])) requiresReview = true;
         const fileId = String(values[7] || "").trim();
         if (fileId) fileIds.add(fileId);
-        const state = String(values[9] || "").toLowerCase();
-        linked = linked || state === "linked";
-        fileMissing = fileMissing || state === "file_missing";
-        requiresReview = requiresReview || state === "requires_review";
+        const state = String(values[9] || "pending").toLowerCase();
+        if (["reserved", "pending", "linked", "file_missing", "requires_review", "error"].includes(state)) latestState = state;
         if (String(values[10] || "").trim()) references.set(String(values[10]), true);
         if (String(values[13] || "").trim()) lastError = String(values[13]);
     });
     if (fileIds.size > 1) requiresReview = true;
-    const state = requiresReview ? "requires_review" : linked ? "linked" :
-        fileMissing ? "file_missing" : "pending";
+    const state = requiresReview ? "requires_review" : latestState;
     return {
         token: identity[0], operationKey: identity[1], folderId: identity[2],
         mimeType: identity[3], sizeBytes: Number(identity[4]), contentHash: identity[5],
@@ -2315,6 +2312,33 @@ function appendImageUploadEventTransition_(expected, state, fileId, references, 
             String(error && error.message || error));
         return false;
     }
+}
+
+
+function findImageUploadEventsByOperationKey_(sheet, operationKey) {
+    const key = String(operationKey || "").trim();
+    const lastRow = sheet && sheet.getLastRow ? sheet.getLastRow() : 0;
+    if (!key || lastRow < 2) return [];
+    const matches = sheet.getRange(2, 3, lastRow - 1, 1)
+        .createTextFinder(key).matchCase(true).matchEntireCell(true).findAll();
+    return matches.map(match => {
+        const rowIndex = match.getRow();
+        return {
+            rowIndex,
+            values: sheet.getRange(rowIndex, 1, 1, IMAGE_UPLOAD_EVENTS_HEADERS_.length).getValues()[0]
+        };
+    });
+}
+
+function appendImageUploadEventRequired_(sheet, expected, state, fileId, references, fileName, lastError) {
+    return appendImageUploadEvent_(sheet, {
+        token: expected.token, operationKey: expected.operationKey, folderId: expected.folderId,
+        mimeType: expected.mimeType, sizeBytes: expected.sizeBytes, contentHash: expected.contentHash,
+        fileId: fileId || "",
+        fileUrl: fileId ? "https://drive.google.com/uc?export=view&id=" + fileId : "",
+        state, referencesJson: JSON.stringify(Array.isArray(references) ? references : []),
+        fileName: fileName || "", lastError: lastError || ""
+    });
 }
 
 const IMAGE_UPLOAD_MAX_BYTES = 10 * 1024 * 1024;
@@ -2834,59 +2858,48 @@ function markImageUploadLinkedWithShortLedgerLock_(imageUrl) {
         const references = getImageUploadReferences_(fileId);
         if (!references.length) return false;
 
-        const savedValues = withImageUploadLedgerLock_(() => {
-            const ledger = getOrCreateImageUploadLedgerSheet_();
-            let record = findImageUploadLedgerRecord_(ledger, expected.token);
-            if (!record) {
-                const timestamp = new Date().toISOString();
-                record = {
-                    rowIndex: 0,
-                    values: [expected.token, expected.operationKey, expected.folderId, expected.mimeType,
-                        expected.sizeBytes, expected.contentHash, fileId,
-                        "https://drive.google.com/uc?export=view&id=" + fileId, "pending",
-                        "", "", "", "[]", metadata.name || file.getName(), timestamp, timestamp,
-                        "Registro reconstruido desde metadatos Drive v2."]
-                };
-            }
-            const values = record.values;
-            if (String(values[6] || "").trim() && String(values[6]).trim() !== fileId) {
-                throw new Error("El token de carga ya está asociado a otro fileId en ImageUploadLedger.");
-            }
-            if (String(values[1]) !== expected.operationKey || String(values[2]) !== expected.folderId ||
-                String(values[3]) !== expected.mimeType || Number(values[4]) !== expected.sizeBytes ||
-                String(values[5]) !== expected.contentHash) {
-                throw new Error("Los metadatos Drive no coinciden con ImageUploadLedger.");
-            }
-            values[6] = fileId;
-            values[7] = "https://drive.google.com/uc?export=view&id=" + fileId;
-            values[8] = "linked";
-            values[9] = references[0].sheet;
-            values[10] = references[0].row;
-            values[11] = references.map(item => item.field).join(",");
-            values[12] = JSON.stringify(references);
-            values[14] = values[14] || new Date().toISOString();
-            values[15] = new Date().toISOString();
-            values[16] = "";
-            saveImageUploadLedgerRecord_(ledger, record);
-            return values.slice();
-        });
+        const eventsSheet = getOrCreateImageUploadEventsSheet_(getSpreadsheet());
+        let events = readImageUploadEventsByToken_(eventsSheet, expected.token);
+        let projection = projectImageUploadEvents_(events);
+        if (projection && (projection.state === "requires_review" ||
+            projection.operationKey !== expected.operationKey || projection.folderId !== expected.folderId ||
+            projection.mimeType !== expected.mimeType || projection.sizeBytes !== expected.sizeBytes ||
+            projection.contentHash !== expected.contentHash ||
+            (projection.fileId && projection.fileId !== fileId))) {
+            throw new Error("El token de imagen está en conflicto; no se marcó como vinculado.");
+        }
+        if (!events.length || !events.some(entry => String(entry.values[7] || "").trim() === fileId)) {
+            appendImageUploadEventRequired_(eventsSheet, expected, "pending", fileId, [], String(metadata.name || file.getName()), "");
+            events = readImageUploadEventsByToken_(eventsSheet, expected.token);
+            projection = projectImageUploadEvents_(events);
+        }
+        if (!projection || projection.state === "requires_review" || projection.fileId !== fileId) {
+            throw new Error("El journal no confirmó un archivo único para vincular.");
+        }
+        if (!events.some(entry => String(entry.values[7] || "").trim() === fileId &&
+            String(entry.values[9] || "").toLowerCase() === "linked")) {
+            appendImageUploadEventRequired_(eventsSheet, expected, "linked", fileId, references,
+                String(metadata.name || file.getName()), "");
+        }
 
-        appendImageUploadEventTransition_(expected, "linked", fileId, references, String(savedValues[13] || ""), "");
-
+        const latest = projectImageUploadEvents_(readImageUploadEventsByToken_(eventsSheet, expected.token));
+        if (!latest || latest.state === "requires_review" || latest.fileId !== fileId || latest.state !== "linked") {
+            throw new Error("No se pudo confirmar la vinculación en ImageUploadEvents.");
+        }
         try {
-            const originalName = String(savedValues[13] || "");
+            const originalName = String(metadata.name || file.getName());
             if (originalName && file.getName() !== originalName) file.setName(originalName);
-            const linkedDescription = buildImageUploadDescription_({ ...expected, fileName: String(savedValues[13] || "") }, "linked", JSON.stringify(references));
+            const linkedDescription = buildImageUploadDescription_({ ...expected, fileName: originalName }, "linked", JSON.stringify(references));
             file.setDescription(linkedDescription);
             if (String(file.getDescription() || "") !== linkedDescription) {
-                Logger.log("ImageUploadLedger quedó linked, pero Drive no confirmó la descripción final para " + fileId + ".");
+                Logger.log("ImageUploadEvents quedó linked, pero Drive no confirmó la descripción final para " + fileId + ".");
             }
         } catch (descriptionError) {
-            Logger.log("ImageUploadLedger quedó linked; no se pudo actualizar la descripción Drive: " + descriptionError.message);
+            Logger.log("ImageUploadEvents quedó linked; no se pudo actualizar la descripción Drive: " + descriptionError.message);
         }
         return true;
     } catch (error) {
-        Logger.log("No se pudo reconciliar la carga de imagen " + fileId + ": " + error.message);
+        Logger.log("No se pudo reconciliar la carga de imagen " + fileId + ": " + String(error && error.message || error));
         return false;
     }
 }
@@ -2985,14 +2998,14 @@ function uploadImageToDriveWithShortLedgerLocks_(imageData, filename, folder, op
     if (!imageData) return "";
     if (!folder || typeof folder.getId !== "function") throw new Error("No se encontró una carpeta válida para guardar la imagen.");
     let blob, mimeType = "";
-    if (/^https?:\/\//i.test(String(imageData))) {
+    if (/^https?:\\/\\//i.test(String(imageData))) {
         const response = UrlFetchApp.fetch(String(imageData), { muteHttpExceptions: true });
         const status = response.getResponseCode();
         if (status < 200 || status >= 300) throw new Error("No se pudo descargar la imagen de origen. HTTP " + status + ".");
         blob = response.getBlob();
         mimeType = String(blob.getContentType() || "").split(";")[0].trim().toLowerCase();
     } else if (typeof imageData === "string" && imageData.startsWith("data:image/")) {
-        const parts = imageData.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,([\s\S]+)$/i);
+        const parts = imageData.match(/^data:(image\\/[a-zA-Z0-9.+-]+);base64,([\\s\\S]+)$/i);
         if (!parts) throw new Error("Los datos Base64 de la imagen tienen un formato inválido.");
         mimeType = String(parts[1] || "").toLowerCase();
         const decoded = Utilities.base64Decode(parts[2]);
@@ -3001,6 +3014,7 @@ function uploadImageToDriveWithShortLedgerLocks_(imageData, filename, folder, op
     } else {
         throw new Error("El formato de imagen recibido no es compatible.");
     }
+
     const bytes = blob.getBytes();
     if (!bytes || !bytes.length) throw new Error("La imagen recibida está vacía.");
     if (!mimeType.startsWith("image/")) throw new Error("El MIME recibido no corresponde a una imagen.");
@@ -3014,120 +3028,83 @@ function uploadImageToDriveWithShortLedgerLocks_(imageData, filename, folder, op
     const originalFilename = String(filename || "imagen") + extension;
     const token = buildImageUploadToken(stableOperationKey, blob, folder, mimeType);
     const temporaryFilename = "__GPSpediaUpload_" + token + extension;
-    const expected = { token, operationKey: stableOperationKey, folderId: String(folder.getId()), mimeType, sizeBytes: bytes.length, contentHash };
-    appendImageUploadEventTransition_(expected, "reserved", "", [], originalFilename, "");
+    const expected = {
+        token, operationKey: stableOperationKey, folderId: String(folder.getId()),
+        mimeType, sizeBytes: bytes.length, contentHash
+    };
 
-    let record = withImageUploadLedgerLock_(() => {
-        const ledger = getOrCreateImageUploadLedgerSheet_();
-        let current = findImageUploadLedgerRecord_(ledger, token);
-        if (current) {
-            const values = current.values;
-            if (String(values[1]) !== expected.operationKey || String(values[2]) !== expected.folderId ||
-                String(values[3]) !== expected.mimeType || Number(values[4]) !== expected.sizeBytes ||
-                String(values[5]) !== expected.contentHash) {
-                throw new Error("El token ya está registrado con otra operación, carpeta, MIME, tamaño o contenido.");
-            }
-            if (String(values[8]) === "requires_review") throw new Error("La carga tiene estado requires_review; no se reutilizó el archivo.");
-            if (!String(values[6] || "").trim()) {
-                const updatedAt = new Date(values[15] || values[14] || 0).getTime();
-                const inProgress = String(values[16] || "") === "upload_in_progress";
-                if (inProgress && Number.isFinite(updatedAt) && Date.now() - updatedAt < 120000) {
-                    throw new Error("Esta misma imagen ya se está cargando. Espera un momento antes de reintentar.");
-                }
-                values[16] = "upload_in_progress";
-                values[15] = new Date().toISOString();
-                saveImageUploadLedgerRecord_(ledger, current);
-            }
-            return current;
+    const eventsSheet = getOrCreateImageUploadEventsSheet_(getSpreadsheet());
+    if (!stableOperationKey.startsWith("legacy|")) {
+        const operationEvents = findImageUploadEventsByOperationKey_(eventsSheet, stableOperationKey);
+        if (operationEvents.some(entry => String(entry.values[1] || "").trim() !== token)) {
+            throw new Error("El opId/campo ya está asociado a otro contenido en ImageUploadEvents.");
         }
-        if (!stableOperationKey.startsWith("legacy|")) {
-            const previous = findImageUploadLedgerOperationKey_(ledger, stableOperationKey);
-            if (previous.some(item => String(item.values[0]) !== token)) {
-                throw new Error("El opId/campo ya está asociado a otro contenido; no se creó un segundo archivo.");
-            }
-        }
-        const timestamp = new Date().toISOString();
-        current = {
-            rowIndex: 0,
-            values: [token, stableOperationKey, expected.folderId, mimeType, bytes.length, contentHash,
-                "", "", "pending", "", "", "", "[]", originalFilename, timestamp, timestamp, "upload_in_progress"]
-        };
-        return saveImageUploadLedgerRecord_(ledger, current);
-    });
+    }
+
+    let events = readImageUploadEventsByToken_(eventsSheet, token);
+    let projection = projectImageUploadEvents_(events);
+    if (projection && (projection.state === "requires_review" ||
+        projection.operationKey !== expected.operationKey || projection.folderId !== expected.folderId ||
+        projection.mimeType !== expected.mimeType || projection.sizeBytes !== expected.sizeBytes ||
+        projection.contentHash !== expected.contentHash)) {
+        throw new Error("La operación de imagen está en requires_review; no se reutilizó ningún archivo.");
+    }
+    if (!events.length) {
+        appendImageUploadEventRequired_(eventsSheet, expected, "reserved", "", [], originalFilename, "");
+        events = readImageUploadEventsByToken_(eventsSheet, token);
+        projection = projectImageUploadEvents_(events);
+    }
 
     let file = null;
-    try {
-        if (String(record.values[6] || "").trim()) {
-            try { file = DriveApp.getFileById(String(record.values[6]).trim()); }
-            catch (lookupError) { file = null; }
+    if (projection && projection.fileId) {
+        try { file = DriveApp.getFileById(projection.fileId); }
+        catch (lookupError) { file = null; }
+        if (!file) {
+            file = findExistingImageUpload(folder, temporaryFilename, expected, token);
             if (!file) {
-                file = findExistingImageUpload(folder, temporaryFilename, expected, token);
-                if (!file) {
-                    withImageUploadLedgerLock_(() => {
-                        const ledger = getOrCreateImageUploadLedgerSheet_();
-                        const latest = findImageUploadLedgerRecord_(ledger, token);
-                        if (latest) {
-                            latest.values[8] = "file_missing";
-                            latest.values[16] = "El ID registrado no está disponible y no se encontró el token en la carpeta.";
-                            latest.values[15] = new Date().toISOString();
-                            saveImageUploadLedgerRecord_(ledger, latest);
-                        }
-                    });
-                    throw new Error("El archivo de esta operación no está disponible; se conservó el registro para reconciliación.");
-                }
-            } else verifyImageUploadFile_(file, folder, expected);
-        } else file = findExistingImageUpload(folder, temporaryFilename, expected, token);
-
+                appendImageUploadEventRequired_(eventsSheet, expected, "file_missing", projection.fileId, [],
+                    originalFilename, "El archivo registrado no está disponible en Drive.");
+                throw new Error("El archivo de esta operación no está disponible; se conservó el evento para reconciliación.");
+            }
+        } else {
+            verifyImageUploadFile_(file, folder, expected);
+        }
+    } else {
+        file = findExistingImageUpload(folder, temporaryFilename, expected, token);
         if (!file) {
             blob.setName(temporaryFilename);
             file = folder.createFile(blob);
         }
-        verifyImageUploadFile_(file, folder, expected);
-        appendImageUploadEventTransition_(expected, "pending", file.getId(), [], originalFilename, "");
-        const url = "https://drive.google.com/uc?export=view&id=" + file.getId();
-        const references = String(record.values[12] || "[]");
-        const state = String(record.values[8]) === "linked" ? "linked" : "pending";
-        const description = buildImageUploadDescription_({
-            operationKey: stableOperationKey, token, folderId: expected.folderId,
-            mimeType, sizeBytes: bytes.length, contentHash, fileName: originalFilename
-        }, state, references);
-        file.setDescription(description);
-        if (String(file.getDescription() || "") !== description) {
-            throw new Error("Drive no confirmó por lectura posterior los metadatos de la carga; el registro pending se conservó.");
-        }
-
-        withImageUploadLedgerLock_(() => {
-            const ledger = getOrCreateImageUploadLedgerSheet_();
-            const latest = findImageUploadLedgerRecord_(ledger, token);
-            if (!latest) throw new Error("La reserva de imagen desapareció del ledger.");
-            if (String(latest.values[6] || "").trim() && String(latest.values[6]).trim() !== file.getId()) {
-                throw new Error("El token de carga ya está asociado a otro fileId.");
-            }
-            latest.values[6] = file.getId();
-            latest.values[7] = url;
-            if (String(latest.values[8]) !== "linked") latest.values[8] = "pending";
-            latest.values[13] = originalFilename;
-            latest.values[15] = new Date().toISOString();
-            latest.values[16] = "";
-            saveImageUploadLedgerRecord_(ledger, latest);
-        });
-        return url;
-    } catch (error) {
-        try {
-            withImageUploadLedgerLock_(() => {
-                const ledger = getOrCreateImageUploadLedgerSheet_();
-                const latest = findImageUploadLedgerRecord_(ledger, token);
-                if (latest && String(latest.values[8]) !== "file_missing") {
-                    latest.values[16] = String(error && error.message || error).slice(0, 500);
-                    latest.values[15] = new Date().toISOString();
-                    saveImageUploadLedgerRecord_(ledger, latest);
-                }
-            });
-        } catch (ledgerError) {
-            Logger.log("No se pudo registrar el error de carga en el ledger: " + String(ledgerError && ledgerError.message || ledgerError));
-        }
-        throw error;
     }
+
+    verifyImageUploadFile_(file, folder, expected);
+    const fileId = String(file.getId());
+    const url = "https://drive.google.com/uc?export=view&id=" + fileId;
+    const latestName = String(originalFilename || file.getName());
+    const descriptionState = projection && projection.state === "linked" ? "linked" : "pending";
+    const description = buildImageUploadDescription_({
+        operationKey: stableOperationKey, token, folderId: expected.folderId,
+        mimeType, sizeBytes: bytes.length, contentHash, fileName: latestName
+    }, descriptionState, projection && projection.state === "linked" ? projection.referencesJson : "[]");
+    file.setDescription(description);
+    if (String(file.getDescription() || "") !== description) {
+        throw new Error("Drive no confirmó por lectura posterior los metadatos de la carga.");
+    }
+
+    events = readImageUploadEventsByToken_(eventsSheet, token);
+    projection = projectImageUploadEvents_(events);
+    if (projection && projection.state === "requires_review") {
+        throw new Error("Se detectó una carga concurrente con más de un archivo; la operación quedó para revisión.");
+    }
+    const alreadyRecorded = events.some(entry => String(entry.values[7] || "").trim() === fileId);
+    if (!alreadyRecorded) {
+        appendImageUploadEventRequired_(eventsSheet, expected, "pending", fileId, [], latestName, "");
+    }
+    const confirmed = projectImageUploadEvents_(readImageUploadEventsByToken_(eventsSheet, token));
+    if (!confirmed || confirmed.state === "requires_review" || confirmed.fileId !== fileId) {
+        throw new Error("El journal no confirmó un archivo único; la carga quedó para revisión.");
+    }
+    return url;
 }
 
 function uploadImageToDrive(imageData, filename, folder, operationKey, options) {
