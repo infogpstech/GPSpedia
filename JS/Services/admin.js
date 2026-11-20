@@ -8972,6 +8972,25 @@ function findUniqueCortesVehicleRow_(sheet, vehicleId, opId) {
     return { rowIndex: rowIndex, rowValues: rowValues };
 }
 
+function findUniqueCortesVehicleRowFromSnapshot_(data, vehicleId, opId) {
+    const id = normalizeIdempotenciaVehicleId_(vehicleId, "Recuperación " + opId);
+    const matches = [];
+    for (let offset = 1; offset < data.length; offset++) {
+        const row = data[offset] || [];
+        const value = row[COLS_CORTES.id - 1];
+        if (isBlankIdempotenciaValue_(value)) continue;
+        const rowIndex = offset + 1;
+        if (normalizeIdempotenciaVehicleId_(value, "Cortes fila " + rowIndex) === id) {
+            matches.push({ rowIndex: rowIndex, rowValues: row });
+        }
+    }
+    if (matches.length !== 1) {
+        throw new Error("No se puede recuperar el opId " + opId + ": vehicleId " + id +
+            " aparece en " + matches.length + " filas de Cortes; se requiere exactamente una. No se modificó.");
+    }
+    return matches[0];
+}
+
 function findRowByOpId(sheet, opId, entriesSnapshot) {
     const cleanOpId = String(opId === null || opId === undefined ? "" : opId).trim();
     if (!cleanOpId) return null;
@@ -9064,7 +9083,9 @@ function findRowByOpId(sheet, opId, entriesSnapshot) {
 
     if (!match) return null;
     const vehicleId = match.rowValues[COLS_CORTES.id - 1];
-    const unique = findUniqueCortesVehicleRow_(cortesSheet, vehicleId, cleanOpId);
+    // La lectura integral anterior ya contiene todos los IDs y las filas completas.
+    // Reutilizarla evita volver a consultar la columna ID y la fila coincidente.
+    const unique = findUniqueCortesVehicleRowFromSnapshot_(data, vehicleId, cleanOpId);
     if (unique.rowIndex !== match.rowIndex) {
         throw new Error("La fila heredada del opId " + cleanOpId + " no coincide con la única fila de su vehicleId.");
     }
