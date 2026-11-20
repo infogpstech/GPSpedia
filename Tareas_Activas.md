@@ -300,7 +300,7 @@ Aplicar la estructura objetivo después de validar el dry-run:
 
 **Auditoría estática completada:** `AUDITORIA_DEPENDENCIAS_LATENCIA_2026-11-19.md`.
 
-### P0 — GP-PERF-ADMIN-CUT-LOCK-01 — EN PROGRESO
+### P0 — GP-PERF-ADMIN-CUT-LOCK-01 — COMPLETADA CON VALIDACIÓN DIFERIDA A BETA
 - [x] Confirmado que `handleAddOrUpdateCut` mantiene `ScriptLock` durante la llamada ADMIN→WRITE de asignación de ID y durante operaciones de carpetas/carga Drive; la recuperación por opId también puede realizar I/O de Drive bajo el lock.
 - [x] Reserva atómica de operación/vehículo/slot para el flujo con `opId`: ledger `pending` reserva el slot antes de liberar el lock. La reserva idempotente del ID central para altas nuevas sigue pendiente.
 - [x] Mover las operaciones de carpetas/carga/reparación Drive fuera del lock para operaciones con `opId`; la llamada ADMIN→WRITE de asignación de ID continúa pendiente.
@@ -812,3 +812,12 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] Combinar encabezado y valores de ID en una lectura; pruebas y CI final registrados en la sección WRITE anterior.
 - El escaneo de la columna ID y la inspección de filas candidatas se conservan bajo ScriptLock: el plan `PLAN_MIGRACION_IDS.md` exige preservar IDs manuales/históricos y detectar anomalías; no existe evidencia Beta de que la migración/freeze y el contador central estén completos en todos los entornos. Sustituir el escaneo por solo ScriptProperties podría omitir IDs manuales o anomalías.
 - Reabrir una reducción adicional únicamente después de validar en Beta el inventario/freeze de IDs y el estado del contador, sin alterar IDs históricos.
+
+
+### Cierre local P0 — GP-PERF-ADMIN-CUT-LOCK-01 (2026-11-20)
+- La ruta ADMIN de alta/actualización de cortes mantiene reservas pending antes de liberar el lock, ID central de WRITE fuera del lock ADMIN, Drive fuera del lock, readquisición inmediata y revalidación de opId/hash/vehículo/slot antes de persistir.
+- Se redujeron lecturas/escrituras remotas redundantes en ADMIN: preflight de entidades, lecturas de VIN agrupadas, búsqueda de ID fuera del lock, snapshots reutilizados, escrituras por lote, fast path de recuperación, cabeceras AT:AV compartidas y escritura de encabezados por lote. Los tests específicos y regresión final 193 suites/2,528 pruebas/0 fallos están registrados arriba.
+- WRITE asigna IDs con `tryLock(0)`; encabezado+columna ID se leen en una sola llamada. Se mantiene el escaneo completo necesario para preservar IDs manuales/históricos, detectar duplicados/fórmulas/filas incompletas y reconciliar el contador hasta validar migración/freeze en Beta.
+- Pruebas locales de no interferencia entre auditoría, Inbox, health, login y registro de cortes ya están integradas y aprobadas en CI; las garantías de mismo recurso mantienen conflicto/reserva.
+- Pendiente exclusivamente para Beta autorizada: confirmar Script IDs/proyectos reales, verificar qué funciones comparten cada ScriptLock y ejecutar concurrencia real entre proyectos/servicios. No se consultaron ni modificaron deployments, ScriptProperties, secretos, Sheets o Drive productivos.
+- Estado local: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. El siguiente bloque priorizado es la auditoría P1 de I/O bajo locks en WRITE y FEEDBACK, sin iniciar cambios hasta delimitar cada recurso/contrato.
