@@ -17,6 +17,8 @@ const SHARED_MUTATION_MAX_ACTIVE_LEASES = 20;
 const SHARED_MUTATION_MAX_STATE_LENGTH = 8000;
 const CATALOG_CHANGE_REVISION_PROPERTY_ = "GPSpedia_CATALOG_CHANGE_REVISION";
 const CATALOG_WRITE_SOURCE_VERSION_PROPERTY_ = "GPSpedia_CATALOG_WRITE_SOURCE_VERSION_V1";
+const CATALOG_FEEDBACK_SOURCE_VERSION_PROPERTY_ = "GPSpedia_CATALOG_FEEDBACK_SOURCE_VERSION_V1";
+const CATALOG_FEEDBACK_VERSIONED_COLLECTIONS_ = new Set(["cortes", "pys", "tutoriales"]);
 const CATALOG_CHANGE_EVENT_PREFIX_ = "GPSpedia_CATALOG_CHANGE_EVENT_";
 const CATALOG_CHANGE_MAX_EVENTS_ = 100;
 const CATALOG_CHANGE_MAX_EVENT_LENGTH_ = 4000;
@@ -1291,17 +1293,22 @@ function createSharedMutationCoordinator_(dependencies) {
             }
             let sourceVersion = null;
             let legacyWriteReset = false;
+            let legacyFeedbackReset = false;
+            const supportsSourceVersion = (service === "WRITE" && collection === "cortes") ||
+                (service === "FEEDBACK" && CATALOG_FEEDBACK_VERSIONED_COLLECTIONS_.has(collection));
             if (source.sourceVersion !== undefined && source.sourceVersion !== null) {
                 sourceVersion = Number(source.sourceVersion);
-                if (service !== "WRITE" || collection !== "cortes" ||
-                    !Number.isSafeInteger(sourceVersion) || sourceVersion < 1) {
-                    throw new Error("La versión de origen solo es válida para cambios WRITE de Cortes y debe ser un entero positivo.");
+                if (!supportsSourceVersion || !Number.isSafeInteger(sourceVersion) || sourceVersion < 1) {
+                    throw new Error("La versión de origen solo es válida para cambios WRITE de Cortes o FEEDBACK de Cortes/PyS/Tutorial y debe ser un entero positivo.");
                 }
-            } else if (service === "WRITE" && collection === "cortes" && changeOperation !== "reset") {
-                // Publicaciones de una ejecución anterior a la versión del contrato:
-                // se convierten en reset para que no puedan sobrescribir snapshots nuevos.
+            } else if ((service === "WRITE" && collection === "cortes" ||
+                service === "FEEDBACK" && CATALOG_FEEDBACK_VERSIONED_COLLECTIONS_.has(collection)) &&
+                changeOperation !== "reset") {
+                // Los publicadores legacy sin versión se convierten en reset para que
+                // un snapshot atrasado no pueda sobrescribir una publicación versionada.
                 collection = "*"; recordId = "*"; changeOperation = "reset"; snapshot = null;
-                legacyWriteReset = true;
+                if (service === "WRITE") legacyWriteReset = true;
+                else legacyFeedbackReset = true;
             }
             const event = { collection, recordId, operation: changeOperation, snapshot,
                 createdAt: new Date(now()).toISOString(), sourceService: service, sourceOperation: operation };
@@ -1311,7 +1318,7 @@ function createSharedMutationCoordinator_(dependencies) {
                 event.batchIndex = index;
                 event.batchCount = changes.length;
             }
-            let serialized = JSON.stringify(event), resetRequired = legacyWriteReset;
+            let serialized = JSON.stringify(event), resetRequired = legacyWriteReset || legacyFeedbackReset;
             if (serialized.length > CATALOG_CHANGE_MAX_EVENT_LENGTH_) {
                 event.collection = "*"; event.recordId = "*"; event.operation = "reset"; event.snapshot = null;
                 serialized = JSON.stringify(event); resetRequired = true;
@@ -1380,19 +1387,23 @@ function createSharedMutationCoordinator_(dependencies) {
                 }
             }
 
-            let currentWriteSourceVersion = Number(properties.getProperty(CATALOG_WRITE_SOURCE_VERSION_PROPERTY_) || 0);
-            if (!Number.isSafeInteger(currentWriteSourceVersion) || currentWriteSourceVersion < 0) currentWriteSourceVersion = 0;
+            const sourceVersionProperty = service === "WRITE"
+                ? CATALOG_WRITE_SOURCE_VERSION_PROPERTY_
+                : service === "FEEDBACK" ? CATALOG_FEEDBACK_SOURCE_VERSION_PROPERTY_ : null;
+            let currentSourceVersion = sourceVersionProperty
+                ? Number(properties.getProperty(sourceVersionProperty) || 0) : 0;
+            if (!Number.isSafeInteger(currentSourceVersion) || currentSourceVersion < 0) currentSourceVersion = 0;
             const acceptedEvents = events.map(item => {
                 if (item.event.sourceVersion === undefined) return item;
-                if (item.event.sourceVersion <= currentWriteSourceVersion) {
+                if (!sourceVersionProperty || item.event.sourceVersion <= currentSourceVersion) {
                     const resetEvent = Object.assign({}, item.event, {
                         collection: "*", recordId: "*", operation: "reset", snapshot: null,
                         staleSourceVersion: true
                     });
                     return { event: resetEvent, resetRequired: true };
                 }
-                currentWriteSourceVersion = item.event.sourceVersion;
-                properties.setProperty(CATALOG_WRITE_SOURCE_VERSION_PROPERTY_, String(currentWriteSourceVersion));
+                currentSourceVersion = item.event.sourceVersion;
+                properties.setProperty(sourceVersionProperty, String(currentSourceVersion));
                 return item;
             });
             if (!Number.isSafeInteger(currentRevision + acceptedEvents.length)) {
