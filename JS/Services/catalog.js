@@ -382,7 +382,9 @@ function readVehicleContributionEvents_(spreadsheetRef) {
             const status = String(row[9] || "").trim().toLowerCase();
             const supersedesEventId = String(row[10] || "").trim();
             const validContributionKind = ["cut", "opening", "feed", "vehicle"].includes(kind) ||
-                (kind === "vehicle_update" && Boolean(actorId) && opId.startsWith("OP-ADMIN-"));
+                (kind === "vehicle_update" && Boolean(actorId) &&
+                    (opId.startsWith("OP-ADMIN-") ||
+                        (opId.startsWith("OP-YEAR-") && actorId === "SYSTEM:FEEDBACK_YEAR")));
             if (!eventId || !/^OP-[A-Za-z0-9_-]{1,100}$/.test(opId) || !vehicleId ||
                 !/^[a-f0-9]{64}$/.test(operationHash) || !validContributionKind ||
                 !createdAt || Number.isNaN(Date.parse(createdAt)) ||
@@ -481,7 +483,9 @@ function projectVehicleContributionEvents_(vehicles, sourceEvents) {
             !/^OP-[A-Za-z0-9_-]{1,100}$/.test(String(event.opId || "")) ||
             !/^[a-f0-9]{64}$/i.test(String(event.operationHash || "")) ||
             !["cut", "opening", "feed", "vehicle", "vehicle_update"].includes(String(event.kind || "")) ||
-            (event.kind==="vehicle_update"&&(!String(event.actorId||"").trim()||!String(event.opId||"").startsWith("OP-ADMIN-"))) ||
+            (event.kind==="vehicle_update"&&(!String(event.actorId||"").trim()||
+                !(String(event.opId||"").startsWith("OP-ADMIN-") ||
+                    (String(event.opId||"").startsWith("OP-YEAR-")&&String(event.actorId||"")==="SYSTEM:FEEDBACK_YEAR")))) ||
             !event.payload || typeof event.payload !== "object" || Array.isArray(event.payload)) {
             throw new Error("El ledger contiene un evento de aporte inválido; se canceló la proyección completa.");
         }
