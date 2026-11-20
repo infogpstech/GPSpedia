@@ -600,3 +600,11 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - `AdminRestoreImageDrivePreflightOutsideLock` 10/10 PASS; `AdminRestoreImageActivityOutsideLock` 6/6 PASS; `AdminImageTrashLifecycle` 40/40 PASS. CI `44654753039` SUCCESS: 213 suites, 2,661 pruebas aprobadas, 0 fallos; health read-only `44654752914` SUCCESS.
 - Commits: implementación `c3e167c8b83ba54be8f6221f2286ca3577d5a064`, harness `a0445da7e8f24d5c82d6a26ac62aba968a67a69c`, prueba `33d28902882750dfd552133d86743d39e42612cf`, runner `30dee3ac792dff3694166bdaa3777832a633d1ba`, ajuste de contrato `a3ebeaa58cc96519f827282b60f286170f7dc328`.
 - Sin despliegue Apps Script ni cambios productivos.
+
+
+## P1 — ADMIN envío de imagen a papelera: preflight Drive fuera del lock (2026-11-20)
+- `handleDeleteReplacedImage` ahora consulta DriveApp, valida MIME/estado de papelera y obtiene carpeta/ruta fuera del ScriptLock. Tras readquirir sin espera, revalida tipo/estado/Drive ID del registro antes de continuar. Luego vuelve a comprobar referencias activas bajo lock y conserva bajo lock el cambio a papelera, su read-back y rollback.
+- El estado idempotente `en_papelera` mantiene su respuesta cuando Drive confirma papelera. Actividad Coordinator/logging sigue post-lock.
+- `AdminDeleteImageDrivePreflightOutsideLock` 10/10 PASS; `AdminImageTrashLifecycle` 40/40 PASS; `AdminReplacedImagesIntegrity` 56/56 PASS. CI `44655257521` SUCCESS: 214 suites, 2,671 pruebas aprobadas, 0 fallos; health read-only `44655257749` SUCCESS.
+- Commits: implementación `435fa770957eab211d79ff49846087fdd5e7d076`, preservación de resultado `b7909beb2540efa16421d1b1897650b7fee86414`, harness `0ebc9692f01387d0f20c0964f56fdd7bf9359c32`, test `fe994b4a4816917e08d1b41767f00755cf7f498a`, runner `d1513ee31e1cdafd7c19ae7b630b5fdcdfc2536f`, harness de integridad `9f8feca5e40b33f869d7f354940a1152ec0c15bd`, ajuste de formato `8e6d808646f764fa4e030914427d2703328688af`.
+- Sin despliegue Apps Script ni cambios productivos.
