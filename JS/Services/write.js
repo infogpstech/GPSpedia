@@ -1721,6 +1721,9 @@ function handleAddSupplementaryInfo(payload) {
         if (isOpening && hasFeed) {
             throw createSupplementaryInfoError_("SUPPLEMENTARY_INVALID_PAYLOAD", "Apertura y alimentación deben registrarse como operaciones independientes.");
         }
+        if (hasSupplementaryValue_(normalizedPlan.updates.notaImportante)) {
+            throw createSupplementaryInfoError_("SUPPLEMENTARY_INVALID_PAYLOAD", "La nota importante debe guardarse por separado de la apertura o alimentación.");
+        }
 
         let preparedPayload = Object.assign({}, payload);
         let uploadedUrls = [];
@@ -2367,6 +2370,7 @@ function appendVehicleContributionEvent_(options) {
             eventId: String(existing[0].values[0] || ""),
             opId, vehicleId, kind, operationHash,
             rowIndex: existing[0].rowIndex,
+            status: String(existing[0].values[9] || "accepted"),
             duplicate: true
         };
     }
@@ -2406,7 +2410,7 @@ function appendVehicleContributionEvent_(options) {
         conflict.code = "CONTRIBUTION_OP_ID_CONFLICT";
         throw conflict;
     }
-    return { eventId, opId, vehicleId, kind, operationHash, rowIndex, duplicate: false };
+    return { eventId, opId, vehicleId, kind, operationHash, rowIndex, status: String(options.status || "accepted"), duplicate: false };
 }
 
 function getImageUploadReferences_(fileId) {
