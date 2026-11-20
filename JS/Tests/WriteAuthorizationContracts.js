@@ -33,7 +33,7 @@ function runWriteAuthorizationContracts(sources) {
    return "Nombre Servidor";
   };
   const spreadsheet=()=>{spreadsheetReads++;return{getSheetByName(name){if(name==="Cortes")return{getLastRow:()=>1};return null;}};};
-  const lockService={getScriptLock:()=>({tryLock(ms){if(ms!==0)throw Error("El lock debe ser no bloqueante.");lockAcquired++;return true;},releaseLock(){lockReleased++;}})};
+  const lockService={getScriptLock:()=>({waitLock(ms){if(ms!==2000)throw Error("El lock de asignación debe esperar solo 2 segundos.");lockAcquired++;},releaseLock(){lockReleased++;}})};
   const fn=new Function("getAuthenticatedCollaborator","getSpreadsheet","SHEET_NAMES","COLS_USERS","LockService","getNextCortesVehicleIdLocked","normalizeCortesIdAllocationRequest_","reserveCortesVehicleIdForOperationLocked_",
    auth+"\n"+allocate+"\nreturn handleAllocateVehicleId;")(
    authFn,spreadsheet,{USERS:"Users",CORTES:"Cortes"},{ID:1,Privilegios:4},lockService,()=>{allocations++;return 77;},()=>null,()=>{throw Error("No debe reservar en la prueba legacy");});
@@ -42,7 +42,7 @@ function runWriteAuthorizationContracts(sources) {
  const payload={userId:"USR-1",sessionToken:"session-1"};
  run("allocateVehicleId valida sesión y permite únicamente Desarrollador bajo lock",()=>{const h=harness({role:"Desarrollador"});const r=h.fn(payload);const x=h.stats();assert(r.status==="success"&&r.vehicleId===77&&x.authCalls===1&&x.roleReads===1&&x.lockAcquired===1&&x.lockReleased===1&&x.allocations===1);});
  run("rol ordinario se rechaza bajo lock y no incrementa el contador",()=>{const h=harness({role:"Tecnico"});let rejected=false;try{h.fn(payload);}catch(e){rejected=/privilegio Desarrollador/.test(e.message);}const x=h.stats();assert(rejected&&x.authCalls===1&&x.roleReads===1&&x.lockAcquired===1&&x.lockReleased===1&&x.allocations===0);});
- run("el rol se consulta después de adquirir el lock sin espera",()=>{const h=harness({roleAtRead:(n,locks)=>locks===1?"Tecnico":"Desarrollador"});let rejected=false;try{h.fn(payload);}catch(e){rejected=/privilegio Desarrollador/.test(e.message);}const x=h.stats();assert(rejected&&x.lockAcquired===1&&x.lockReleased===1&&x.allocations===0);});
+ run("el rol se consulta después de adquirir el lock breve",()=>{const h=harness({roleAtRead:(n,locks)=>locks===1?"Tecnico":"Desarrollador"});let rejected=false;try{h.fn(payload);}catch(e){rejected=/privilegio Desarrollador/.test(e.message);}const x=h.stats();assert(rejected&&x.lockAcquired===1&&x.lockReleased===1&&x.allocations===0);});
  run("sesión ausente no consulta perfil ni contador y libera el lock",()=>{const h=harness({role:"Desarrollador"});let rejected=false;try{h.fn({userId:"USR-1"});}catch(_){rejected=true;}const x=h.stats();assert(rejected&&x.authCalls===1&&x.roleReads===0&&x.lockAcquired===1&&x.lockReleased===1&&x.allocations===0);});
  run("allocateVehicleId no repite la autenticación dentro de la misma solicitud",()=>{const h=harness({role:"Desarrollador"});h.fn(payload);const x=h.stats();assert(x.authCalls===1&&x.roleReads===1);});
   run("ADMIN transmite identidad y sesión al asignador WRITE sin token de lease",()=>{const fn=extract(admin,"requestNextVehicleIdFromWriteService");assert(/userId:\s*payload\s*&&\s*payload\.userId/.test(fn)&&/sessionToken:\s*payload\s*&&\s*payload\.sessionToken/.test(fn)&&!/sharedMutationToken|__sharedMutationToken/.test(fn));});
