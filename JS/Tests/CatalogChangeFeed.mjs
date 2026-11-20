@@ -96,7 +96,7 @@ test("el feed público no exige actor ni secreto interno de FEEDBACK", () => {
     assert.match(apiSource,/'getCatalogChanges': 'FEEDBACK'/);
 });
 test("ADMIN agrupa los cambios de catálogo y el cliente agrega requestId para reintentos", () => {
-    assert.match(adminSource,/for \(let offset = 0; offset < changes\.length; offset \+= 50\)[\s\S]*?publishSharedCatalogChanges_/);
+    assert.match(adminSource,/for \(let offset = 0; offset < versionedChanges\.length; offset \+= 50\)[\s\S]*?publishSharedCatalogChanges_/);
     assert.match(clientSource,/action === "publishCatalogChanges"[\s\S]*?uuid\(\)/);
     assert.match(clientSource,/function publishCatalogChanges\(service, operation, changes\)/);
     assert.match(coordinatorSource,/function publishCatalogChanges_\(service, operation, payload\)/);
