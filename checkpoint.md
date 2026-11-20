@@ -879,3 +879,13 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Se corrigieron dos fallos de aserciones del nuevo test UI; no eran defectos del código funcional. La ejecución final del runner aprobó.
 - No se desplegó Apps Script ni se ejecutaron movimientos/renombrados reales. No se modificaron Drive/Spreadsheet. La prueba del ejecutor usa adaptadores simulados.
 - Siguiente trabajo local: consulta/retención del ledger y recuperación de operationId de lotes previos a la sesión UI. Después, revisión visual responsive. Beta sigue pendiente para comprobar ACL heredadas reales y aplicación/rollback en Drive aislado con preview aprobado.
+
+
+## Checkpoint — historial durable y retención de Safe Apply (2026-11-20)
+- HEAD de código/UI/pruebas antes de esta actualización documental: 9a3f9fcb586034f677af7847720397a1a6441672. Rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- Backend: getCortesImageOrganizerOperations devuelve historial paginado y filtrado por owner autenticado; no expone campos de sesión ni credenciales. UI: botón de historial muestra hasta 50 operaciones recientes y permite seleccionar hasta 10 con estado complete para rollback, incluso después de cerrar/reabrir el modal.
+- Retención del ledger: máximo 200 registros terminales recientes, expiración de 180 días y máximo 250 registros totales. processing/needs_review nunca se eliminan automáticamente. Si la capacidad está ocupada por estados no terminales, se rechazan nuevas operaciones antes de modificar Drive.
+- Pruebas: CortesImageOrganizerLedger 6/6; CortesImageOrganizerUiContract 13/13; CortesImageOrganizerExecutor 9/9; CortesImageOrganizerApplyPlan 14/14. CI 44786209320 SUCCESS: 225 suites, 2,785 pruebas, 0 fallos. Health read-only 44786209315 SUCCESS. Pages 44786207568 estaba en ejecución al registrar.
+- Se corrigió el límite exacto de capacidad: al alcanzar 250 registros, el pruning elimina una operación terminal antigua para abrir espacio; si no existe una terminal segura para eliminar, bloquea la nueva operación.
+- No se desplegó Apps Script ni se ejecutaron operaciones Drive/Spreadsheet reales. Las pruebas de ledger utilizan un almacén de propiedades simulado; no se alteraron ScriptProperties de un deployment real.
+- Siguiente paso local: revisión final de diff y contratos de la ruta completa Safe Apply/rollback, incluyendo UI responsive. Beta pendiente: medir ScriptProperties real, revisar ACL heredadas efectivas y probar movimientos/reversiones en Drive aislado con preview aprobado.
