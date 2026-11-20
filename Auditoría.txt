@@ -866,3 +866,13 @@ Corrección:
 Pruebas: FeedbackYearApplicationAppendOnly 4/4; SuggestYearVoteThreshold 7/7; VehicleContributionProjection incluye lectura/proyección OP-YEAR. CI 44834891294 SUCCESS: 238 suites, 2963 pruebas aprobadas, 0 fallos; health read-only SUCCESS. No se desplegó FEEDBACK/CATALOG ni se tocaron datos productivos.
 Estado: CORREGIDO LOCALMENTE. El ScriptLock global FEEDBACK sigue pendiente de reducción para las demás rutas de escritura e IDs secuenciales.
 ================================================================================
+
+
+================================================================================
+2026-11-20 — FEEDBACK: FORMULARIO DE CONTACTO SIN LOCK GLOBAL PROLONGADO
+- handleSendContactForm ya no mantiene LockService.getScriptLock() durante validaciones, escritura y flush.
+- getNextFormulaBasedId_ conserva la sección crítica breve para reservar el ID secuencial; después se construye una fila completa y se anexa mediante appendRow fuera del lock. La fila se localiza por ID, se confirma unicidad y se aplica formato después.
+- La escritura completa evita carreras entre setValue/setValues en posiciones calculadas por getLastRow. La ruta conserva validación, rate limit y contrato de columnas.
+- Pruebas FeedbackContactWriteNoGlobalLock 2/2 y FeedbackLockFastFail PASS. CI 44835219987 SUCCESS: 239 suites, 2965 pruebas aprobadas, 0 fallos; health read-only SUCCESS. No se desplegó FEEDBACK ni se tocaron datos productivos.
+Estado: CORREGIDO LOCALMENTE. Continúa pendiente reducir el lock global en reportProblem, suggestCutChange, recordLike, PyS, tutoriales y otras mutaciones.
+================================================================================
