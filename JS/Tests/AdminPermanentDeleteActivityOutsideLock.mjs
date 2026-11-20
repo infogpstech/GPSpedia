@@ -14,7 +14,7 @@ assert.ok(activityCalls.every(index=>handler.lastIndexOf("releaseLock();",index)
 const logIndex=handler.indexOf("logMessage&&logMessage(");
 assert.ok(logIndex>0&&handler.lastIndexOf("releaseLock();",logIndex)>=0,
     "El logger de eliminación debe ejecutarse después de liberar ScriptLock");
-assert.match(handler,/setReplacedImageHistoryStatusVerified_\(sheet,existing\.rowIndex,"eliminada"\);\s*releaseLock\(\);/);
+assert.match(handler,/setReplacedImageHistoryStatusVerified_\(sheet,rowIndex,"eliminada"\);\s*releaseLock\(\);/);
 assert.match(handler,/const releaseLock=\(\)=>\{if\(lockAcquired\)\{lock\.releaseLock\(\);lockAcquired=false;\}\};/);
 assert.match(handler,/finally\{releaseLock\(\);\}/);
 assert.ok(release>=0);
