@@ -1628,9 +1628,25 @@ function buildSupplementaryInfoPlan_(payload,current){
  if(note)updates.notaImportante=payload.notaImportante;return {updates,slotIndex,apertureRequested:aperture};
 }
 function persistSupplementaryInfoValues_(sheet,row,original,updated){
- const range=sheet.getRange(row,COLS_CORTES.apertura,1,10);
- try{range.setValues([updated]);SpreadsheetApp.flush();const saved=range.getValues()[0];if(!updated.every((v,i)=>String(saved[i]==null?"":saved[i])===String(v==null?"":v)))throw Error("La lectura posterior no coincide.");return true;}
- catch(e){let rollback="";try{range.setValues([original]);SpreadsheetApp.flush();}catch(r){rollback=" La reversión automática también falló: "+String(r&&r.message||r);}throw createSupplementaryInfoError_("SUPPLEMENTARY_PERSISTENCE_FAILED","No se pudo confirmar la escritura de la información suplementaria."+rollback);}
+ const firstColumn=COLS_CORTES.apertura;
+ const changes=[];
+ updated.forEach((value,index)=>{
+  const before=original[index];
+  if(String(before==null?"":before)!==String(value==null?"":value))changes.push({column:firstColumn+index,value});
+ });
+ try{
+  changes.forEach(change=>sheet.getRange(row,change.column).setValue(change.value));
+  SpreadsheetApp.flush();
+  changes.forEach(change=>{
+   const saved=sheet.getRange(row,change.column).getValue();
+   if(String(saved==null?"":saved)!==String(change.value==null?"":change.value))throw Error("La lectura posterior de la columna "+change.column+" no coincide.");
+  });
+  return true;
+ }catch(e){
+  // No restaurar una instantánea de diez columnas: podría borrar aportes escritos
+  // por otra solicitud mientras esta operación estaba en curso.
+  throw createSupplementaryInfoError_("SUPPLEMENTARY_PERSISTENCE_FAILED","No se pudo confirmar uno o más campos suplementarios. No se revirtieron otros campos para preservar aportes concurrentes. Conserva el mismo opId para revisar o reintentar la operación.");
+ }
 }
 const SUPPLEMENTARY_INFO_ALLOWED_ROLES_ = Object.freeze(["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"]);
 function readSupplementaryVehicleSnapshot_(sheet, vehicleId) {
