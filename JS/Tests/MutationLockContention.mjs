@@ -7,10 +7,10 @@ const admin = readFileSync(new URL("../Services/admin.js", import.meta.url), "ut
 function extract(source, name) {
     const start = source.indexOf("function " + name + "(");
     assert.ok(start >= 0, "No se encontró " + name);
-    if(name==="handleUpdateVehicleField"){
-        const end=source.indexOf("const ADMIN_IMAGE_UPLOAD_SHEET_NAME",start);
-        assert.ok(end>start,"No se encontró el cierre de "+name);
-        return source.slice(start,end);
+    if (name === "handleUpdateVehicleField") {
+        const end = source.indexOf("const ADMIN_IMAGE_UPLOAD_SHEET_NAME", start);
+        assert.ok(end > start, "No se encontró el cierre de " + name);
+        return source.slice(start, end);
     }
     const end = source.indexOf("\nfunction ", start + 10);
     return source.slice(start, end > start ? end : source.length);
@@ -18,11 +18,7 @@ function extract(source, name) {
 function makeLock() {
     return {
         held: false, waits: [],
-        waitLock(ms) {
-            this.waits.push(ms);
-            if (this.held) throw new Error("lock ocupado");
-            this.held = true;
-        },
+        waitLock(ms) { this.waits.push(ms); if (this.held) throw new Error("lock ocupado"); this.held = true; },
         tryLock(ms) { assert.equal(ms, 0); if (this.held) return false; this.held = true; return true; },
         releaseLock() { assert.equal(this.held, true); this.held = false; },
         hasLock() { return this.held; }
@@ -48,10 +44,14 @@ assert.doesNotMatch(adminEntry, /waitLock\(/);
 assert.match(adminUpload, /lock\.waitLock\(2000\)/);
 assert.doesNotMatch(adminField, /LockService\.getScriptLock\(\)|lock\.tryLock\(|lock\.waitLock\(/,
     "La edición in-modal versionada debe anexar eventos sin lock global.");
-assert.match(adminField, /ledgerSheet\.appendRow\(/);
-const adminVin=extract(admin,"handleUpdateVehicleVinCollection_");
-assert.match(adminVin,/appendAdminVehicleFieldUpdate_\(/);
-assert.doesNotMatch(adminVin,/LockService\.getScriptLock\(\)|lock\.tryLock\(|lock\.waitLock\(/);
+assert.match(adminField, /appendAdminVehicleFieldUpdate_\(/,
+    "La edición de campo debe delegar al journal append-only, no escribir directamente el ledger mutable.");
+const adminFieldAppend = extract(admin, "appendAdminVehicleFieldUpdate_");
+assert.match(adminFieldAppend, /ledgerSheet\.appendRow\(/,
+    "La nueva versión se registra mediante append en AportesVehiculo.");
+const adminVin = extract(admin, "handleUpdateVehicleVinCollection_");
+assert.match(adminVin, /appendAdminVehicleFieldUpdate_\(/);
+assert.doesNotMatch(adminVin, /LockService\.getScriptLock\(\)|lock\.tryLock\(|lock\.waitLock\(/);
 assert.match(adminDrive, /runAdminDriveWorkOutsideScriptLock_\(lock, opId, operation, revalidate, operationHash, 0\)/);
 assert.match(adminDriveCore, /lock\.tryLock\(0\)/);
 assert.doesNotMatch(extract(write, "handleAddSupplementaryInfo"), /tryLock\(|waitLock\(|getWriteContributionLock_\(/, "La información suplementaria no debe retener locks durante la operación");
