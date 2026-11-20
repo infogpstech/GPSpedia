@@ -1101,8 +1101,8 @@ function runSharedMutationCoordinatorTests() {
             }
         });
         const response = client.publishCatalogChanges("ADMIN", "normalizeImages", [
-            { collection: "cortes", recordId: "VEH-4", operation: "upsert", snapshot: { id: "VEH-4" } },
-            { collection: "cortes", recordId: "VEH-5", operation: "delete" }
+            { collection: "cortes", recordId: "VEH-4", operation: "upsert", snapshot: { id: "VEH-4" }, sourceVersion: 1 },
+            { collection: "cortes", recordId: "VEH-5", operation: "delete", sourceVersion: 2 }
         ]);
         const feed = r.coordinator.getPublicCatalogChanges({ cursor: 0, limit: 50 });
         assert_(calls === 2 && response.duplicate === true && feed.changes.length === 2 && feed.currentRevision === 2,
