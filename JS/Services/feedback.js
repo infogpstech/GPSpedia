@@ -3945,22 +3945,29 @@ function publishTutorialCatalogChange_(action, reference) {
 function findTutorialRow_(sheet, reference, preferId) {
     const key = String(reference || "").trim();
     if (!key) throw new Error("Se requiere un ID o tema válido para identificar el tutorial.");
-    const data = sheet.getDataRange().getValues();
-    const find = (column, value) => data.slice(1).reduce((matches, row, index) => {
-        if (String(row[column] || "").trim() === value) matches.push({ rowIndex: index + 2, row });
-        return matches;
-    }, []);
-    const byId = data.slice(1).reduce((matches, row, index) => {
-        if (String(row[0] || "").trim().toLowerCase() === key.toLowerCase()) matches.push({ rowIndex: index + 2, row });
-        return matches;
-    }, []);
-    if (byId.length > 1) throw new Error("El ID del tutorial aparece más de una vez; no se modificó.");
-    if (byId.length === 1) return byId[0];
+    let byId = null;
+    try {
+        byId = findTutorialById_(sheet, key);
+    } catch (error) {
+        if (String(error && error.message || error).includes("ID del tutorial aparece más de una vez")) {
+            throw new Error("El ID del tutorial aparece más de una vez; no se modificó.");
+        }
+        throw error;
+    }
+    if (byId) return byId;
     if (preferId && /^tut-[A-Za-z0-9_-]{20,80}$/.test(key)) {
         throw new Error("Tutorial no encontrado.");
     }
     if (preferId) {
-        const byTitle = find(1, key);
+        const lastRow = sheet.getLastRow();
+        const titleValues = lastRow > 1 ? sheet.getRange(2, 2, lastRow - 1, 1).getValues() : [];
+        const byTitle = [];
+        titleValues.forEach((value, index) => {
+            if (String(value[0] || "").trim() !== key) return;
+            const rowIndex = index + 2;
+            const row = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getValues()[0];
+            byTitle.push({ rowIndex, row });
+        });
         if (byTitle.length > 1) throw new Error("El tema del tutorial aparece más de una vez; no se modificó.");
         if (byTitle.length === 1) return byTitle[0];
     }
