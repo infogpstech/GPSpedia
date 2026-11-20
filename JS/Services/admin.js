@@ -4137,6 +4137,7 @@ function executeCortesImageOrganizerManifest_(manifest, ownerId, adapters) {
     manifest.forEach(operation => {
         const result = { operationId: operation.operationId, fileId: operation.fileId, status: "pending" };
         let ledger = null;
+        let ledgerReserved = false;
         try {
             try { ledger = adapters.loadLedger(operation.operationId); }
             catch (ledgerReadError) {
@@ -4214,6 +4215,7 @@ function executeCortesImageOrganizerManifest_(manifest, ownerId, adapters) {
                 return;
             }
             ledger = reservation.record || ledger;
+            ledgerReserved = true;
             const destination = adapters.resolveFolder(operation.targetFolderPath, true);
             adapters.verifyAcl(destination);
             adapters.assertNoNameConflict(operation.fileId, destination.folder, operation.targetName);
@@ -4227,7 +4229,7 @@ function executeCortesImageOrganizerManifest_(manifest, ownerId, adapters) {
             }));
             result.status = "applied";
         } catch (error) {
-            if (error && error.code === "ORGANIZER_LEDGER_BUSY") {
+            if (error && error.code === "ORGANIZER_LEDGER_BUSY" && !ledgerReserved) {
                 result.status = "retry";
                 result.message = "El registro de operaciones está ocupado por una transición breve; no se inició ni revirtió el archivo. Reintenta con el mismo manifiesto.";
                 results.push(result);
@@ -4339,6 +4341,7 @@ function rollbackCortesImageOrganizerOperations_(operationIds, ownerId, adapters
     const results = [];
     uniqueIds.forEach(operationId => {
         let ledger = null;
+        let rollbackReserved = false;
         const result = { operationId, status: "pending" };
         try {
             try { ledger = adapters.loadLedger(operationId); }
@@ -4389,6 +4392,7 @@ function rollbackCortesImageOrganizerOperations_(operationIds, ownerId, adapters
                 return;
             }
             ledger = reservation.record || rollbackRecord;
+            rollbackReserved = true;
             const source = adapters.resolveFolder(ledger.sourceFolderPath, false);
             adapters.verifyAcl(source);
             adapters.assertNoNameConflict(ledger.fileId, source.folder, ledger.sourceName);
@@ -4404,7 +4408,7 @@ function rollbackCortesImageOrganizerOperations_(operationIds, ownerId, adapters
             result.fileId = ledger.fileId;
             result.status = "rolled_back";
         } catch (error) {
-            if (error && error.code === "ORGANIZER_LEDGER_BUSY") {
+            if (error && error.code === "ORGANIZER_LEDGER_BUSY" && !rollbackReserved) {
                 result.fileId = ledger && ledger.fileId || "";
                 result.status = "retry";
                 result.message = "El ledger está ocupado por una transición breve; no se inició el rollback. Reintenta la misma operación.";
