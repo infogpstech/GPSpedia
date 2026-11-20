@@ -34,7 +34,13 @@ const adminDriveCore = extract(admin, "runAdminDriveWorkOutsideScriptLock_");
 const adminDrive = extract(admin, "runAdminContributionDriveWorkOutsideScriptLock_");
 
 assert.match(writeEntry, /lock\.tryLock\(0\)/);
-assert.match(extract(write, "getWriteContributionLock_"), /LockService\.getUserLock\(\)/, "Las escrituras de vehículos existentes deben aislarse por usuario");
+assert.doesNotMatch(writeEntry, /getWriteContributionLock_|LockService\.getUserLock\(\)/,
+    "Las escrituras de vehículos existentes no deben adquirir UserLock.");
+assert.match(writeEntry, /if \(validated\.vehicleId\)/);
+assert.match(writeEntry, /WRITE_OP_ID_REQUIRED/,
+    "Los vehículos existentes deben usar opId estable en la ruta append-only.");
+assert.match(writeEntry, /LockService\.getScriptLock\(\)/,
+    "El ScriptLock queda reservado para la asignación secuencial de IDs nuevos.");
 assert.doesNotMatch(writeEntry, /waitLock\(/);
 assert.match(writeAllocate, /lock\.tryLock\(0\)/);
 assert.doesNotMatch(writeAllocate, /waitLock\(/);
