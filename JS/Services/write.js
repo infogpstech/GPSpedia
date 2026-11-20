@@ -554,13 +554,15 @@ function prepareAddOrUpdateCutRequest_(payload) {
     return { collaboratorName: collaboratorName, spreadsheet: ss, sheet: sheet, validatedPayload: validatedPayload };
 }
 
+function getWriteContributionLock_(vehicleId) {
+    const existingVehicle = Boolean(String(vehicleId || "").trim());
+    return existingVehicle && typeof LockService.getUserLock === "function"
+        ? LockService.getUserLock() : LockService.getScriptLock();
+}
+
 function handleAddOrUpdateCut(payload) {
     const preparedRequest = prepareAddOrUpdateCutRequest_(payload);
-    // Las mutaciones de vehículos existentes usan UserLock: usuarios distintos no se bloquean entre sí.
-    // Solo la creación de una fila nueva conserva ScriptLock para la secuencia numérica global de IDs.
-    const hasExistingVehicle = Boolean(String(preparedRequest.validatedPayload.vehicleId || "").trim());
-    const lock = hasExistingVehicle && typeof LockService.getUserLock === "function"
-        ? LockService.getUserLock() : LockService.getScriptLock();
+    const lock = getWriteContributionLock_(preparedRequest.validatedPayload.vehicleId);
     let lockAcquired = false;
     try { lockAcquired = lock.tryLock(0); } catch (lockError) { lockAcquired = false; }
     if (!lockAcquired) {
@@ -1702,9 +1704,7 @@ function handleAddSupplementaryInfo(payload) {
         uploadedUrls = prepared.uploadedUrls;
     }
 
-    // Apertura/alimentación solo modifica un vehículo existente: aislar por usuario y evitar
-    // que una carga de otro colaborador detenga esta operación independiente.
-    const lock = typeof LockService.getUserLock === "function" ? LockService.getUserLock() : LockService.getScriptLock();
+    const lock = getWriteContributionLock_(payload.vehicleId);
     let lockAcquired = false;
     try { lockAcquired = lock.tryLock(0); } catch (error) { lockAcquired = false; }
     if (!lockAcquired) {
