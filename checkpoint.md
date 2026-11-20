@@ -413,3 +413,12 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - CI `44642434395` SUCCESS: 193 suites, 2,528 pruebas aprobadas, 0 fallos; health read-only `44642434153` SUCCESS.
 - Implementación `fbf1e96f67f436859f6959c3f03e0a0fd0cf9d5b`; prueba `35d4ef385c143cf25d8110a05b49836facc65681`.
 - Sin despliegue Apps Script ni cambios en hojas productivas. La tarea paraguas `GP-PERF-ADMIN-CUT-LOCK-01` sigue EN PROGRESO.
+
+
+## Continuidad — combinar lectura de encabezado e IDs en WRITE (2026-11-20)
+- `getNextCortesVehicleIdLocked` ahora obtiene el encabezado `id` y todos los valores de la columna ID en una sola lectura contigua desde la fila 1. Antes hacía una lectura puntual del encabezado y otra para los valores.
+- La lectura de fórmulas permanece separada porque es necesaria para distinguir fórmulas heredadas; la lectura de datos de otras columnas sigue limitada a filas candidatas sin ID o con fórmula. `getLastColumn()` se consulta solo si hay filas de datos.
+- Se mantienen detección de IDs duplicados, valores inválidos, filas con datos sin ID, fórmulas y contador monotónico en ScriptProperties; no se mueve la asignación fuera del lock.
+- `WriteVehicleIdAllocatorBoundedRead`: 11/11 PASS. CI `44642666700` SUCCESS: 193 suites, 2,528 pruebas aprobadas, 0 fallos; sintaxis aprobada.
+- Implementación `10f0f6c5a56c12fce940c7d866e9e4276392f56c`; prueba `10204b8e37c2a71e775b52327b2693c93b55c775`.
+- Sin despliegue Apps Script ni cambios en datos productivos. La sección crítica conserva el escaneo necesario para reconciliar IDs manuales y detectar corrupción.
