@@ -3355,7 +3355,28 @@ function getPysSheet_(createIfMissing){let sheet=getSafeSheet("pys");if(!sheet){
 function readPysOperations_(sheet){const last=sheet.getLastRow();if(last<2)return[];const so=Object.create(null),si=Object.create(null);return sheet.getRange(2,1,last-1,8).getValues().map((r,i)=>{if(!r.some(v=>v!==""&&v!==null&&v!==undefined))return null;const opId=String(r[0]||"").trim(),hash=String(r[1]||"").trim().toLowerCase(),problemId=String(r[2]||"").trim(),status=String(r[3]||"").trim(),imageFileId=String(r[4]||"").trim(),imageUrl=String(r[5]||"").trim(),match=problemId.match(/^isue-(\d+)$/i),suffix=match?Number(match[1]):NaN,problemKey=String(suffix);if(!/^[A-Za-z0-9_-]{20,80}$/.test(opId)||!/^[a-f0-9]{64}$/.test(hash)||!match||!Number.isSafeInteger(suffix)||suffix<1||!PYS_OPERATION_STATES.includes(status))throw new Error("La hoja PysOperations contiene una fila incompatible; no se modificó.");if((status==="PENDING"&&(imageFileId||imageUrl))||(["UPLOAD_PENDING","LINKED"].includes(status)&&(!/^[A-Za-z0-9_-]{10,110}$/.test(imageFileId)||imageUrl!=="https://drive.google.com/file/d/"+imageFileId+"/view"))||(Boolean(imageFileId)!==Boolean(imageUrl)))throw new Error("La hoja PysOperations contiene referencias de imagen incompatibles con su estado.");if(so[opId]||si[problemKey])throw new Error("La hoja PysOperations contiene identificadores duplicados; no se modificó.");so[opId]=true;si[problemKey]=true;return{rowNumber:i+2,opId,payloadHash:hash,problemId,status,imageFileId,imageUrl,createdAt:String(r[6]||""),updatedAt:String(r[7]||"")};}).filter(Boolean);}
 function getPysOperationsSheet_(){let sheet=getSafeSheet("PysOperations");if(!sheet)sheet=getSpreadsheet().insertSheet("PysOperations");if(sheet.getLastRow()===0&&sheet.getLastColumn()===0){sheet.getRange(1,1,1,8).setValues([PYS_OPERATIONS_HEADERS.slice()]);SpreadsheetApp.flush();}validatePysHeaders_(sheet,PYS_OPERATIONS_HEADERS,"PysOperations");readPysOperations_(sheet);return sheet;}
 function writePysOperation_(sheet,rowNumber,r){const values=[[r.opId,r.payloadHash,r.problemId,r.status,r.imageFileId||"",r.imageUrl||"",r.createdAt,r.updatedAt]],target=rowNumber||(sheet.getLastRow()+1);sheet.getRange(target,1,1,8).setValues(values);SpreadsheetApp.flush();const stored=sheet.getRange(target,1,1,8).getValues()[0];if(values[0].some((v,i)=>String(v==null?"":v)!==String(stored[i]==null?"":stored[i])))throw new Error("No se pudo confirmar el registro de idempotencia PyS.");return Object.assign({},r,{rowNumber:target});}
-function findPysRowsById_(sheet,id){const last=sheet.getLastRow();if(last<2)return[];const target=String(id||"").trim().toLowerCase();return sheet.getRange(2,1,last-1,10).getValues().map((row,i)=>({rowNumber:i+2,row})).filter(x=>String(x.row[0]||"").trim().toLowerCase()===target);}
+function findPysRowsById_(sheet,id){
+    const last=sheet?sheet.getLastRow():0,target=String(id||"").trim().toLowerCase();
+    if(!target||last<2)return[];
+    const idRange=sheet.getRange(2,1,last-1,1);
+    let candidates=[];
+    if(idRange&&typeof idRange.createTextFinder==="function"){
+        candidates=idRange.createTextFinder(target).matchCase(false).findAll();
+    }else{
+        idRange.getValues().forEach((value,index)=>{
+            if(String(value[0]||"").trim().toLowerCase().includes(target))candidates.push({getRow:()=>index+2});
+        });
+    }
+    const matches=[];
+    candidates.forEach(candidate=>{
+        const rowNumber=candidate.getRow();
+        const storedId=String(sheet.getRange(rowNumber,1,1,1).getValues()[0][0]||"").trim().toLowerCase();
+        if(storedId!==target)return;
+        const row=sheet.getRange(rowNumber,1,1,10).getValues()[0];
+        matches.push({rowNumber,row});
+    });
+    return matches;
+}
 function getPysNextId_(sheet,ops){let max=validatePysRecords_(sheet).maxSuffix;ops.forEach(o=>{const m=o.problemId.match(/^isue-(\d+)$/i),n=m?Number(m[1]):NaN;if(!Number.isSafeInteger(n)||n<1)throw new Error("La hoja PysOperations contiene un problemId inválido.");max=Math.max(max,n);});if(max>=Number.MAX_SAFE_INTEGER)throw new Error("Se agotó la secuencia segura de identificadores PyS.");return"isue-"+String(max+1).padStart(3,"0");}
 function getPysSha256_(v){return Array.from(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,v)).map(b=>(b&255).toString(16).padStart(2,"0")).join("");}
 function buildPysPayloadHash_(p,image,models){return getPysSha256_(JSON.stringify({titulo:p.titulo,descripcion:p.descripcion,sinSolucion:Boolean(p.sinSolucion),solucion:p.solucion,prevenir:p.prevenir,userId:String(p.userId).trim(),userName:String(p.userName).trim(),alcance:p.alcance==="especifico"?"especifico":"general",modelosAsociados:models,imageMimeType:image.mimeType,imageSha256:getPysSha256_(image.bytes)}));}
