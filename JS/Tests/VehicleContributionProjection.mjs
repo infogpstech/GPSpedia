@@ -270,6 +270,23 @@ test("edición versionada puede sustituir el valor procedente de un evento previ
  assert.equal(result.modelo,"Corolla X");assert.equal(result.contributionSources.modelo.eventId,update.eventId);
 });
 
+
+test("VIN versionado aplica cuando no colisiona con otro vehículo",()=>{
+ const vehicle=blankVehicle("201");vehicle.vin="[]";vehicle.versionesAplicables="Base";
+ const update=event("OP-ADMIN-FIELD-VIN-1","201","vehicle_update",{fieldName:"vin",value:'["A"]',expectedCurrentValue:"[]"},2,"a",{actorId:"DEV-1"});
+ const result=project([vehicle],[update])[0];
+ assert.equal(result.vin,'["A"]');assert.equal(result.contributionSources.vin.eventId,update.eventId);
+});
+test("VIN versionado de vehículos distintos detecta colisión sin aplicar ninguno",()=>{
+ const one=blankVehicle("201"),two=blankVehicle("202");one.vin="[]";two.vin="[]";
+ const first=event("OP-ADMIN-FIELD-VIN-2","201","vehicle_update",{fieldName:"vin",value:'["A"]',expectedCurrentValue:"[]"},2,"a",{actorId:"DEV-1"});
+ const second=event("OP-ADMIN-FIELD-VIN-3","202","vehicle_update",{fieldName:"vin",value:'["A"]',expectedCurrentValue:"[]"},3,"b",{actorId:"DEV-2"});
+ const results=project([one,two],[first,second]);
+ assert.ok(results[0].contributionCandidates.some(x=>x.eventId===first.eventId&&x.reason==="vin_conflict"));
+ assert.ok(results[1].contributionCandidates.some(x=>x.eventId===second.eventId&&x.reason==="vin_conflict"));
+ assert.equal(results[0].vin,"[]");assert.equal(results[1].vin,"[]");
+});
+
 function buildMigrationRuntime(initialHeaders = null) {
     const headers = initialHeaders ? initialHeaders.slice() : [];
     let rowCount = initialHeaders ? 1 : 0;
