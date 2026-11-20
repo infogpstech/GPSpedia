@@ -1856,7 +1856,7 @@ function handleAddSupplementaryInfo(payload) {
             operationHash: event.operationHash,
             duplicate: event.duplicate === true,
             catalogResetRequired: true,
-            candidateReviewPending: event.status === "review"
+            candidateReviewPending: getVehicleContributionCandidateStatus_(spreadsheet, snapshot, event.eventId, kind)
         };
     }
 
@@ -2436,6 +2436,68 @@ function getVehicleContributionCutSlotIndex_(spreadsheet, vehicleSnapshot, targe
         if (entry.eventId === String(targetEventId)) targetSlot = slot + 1;
     });
     return targetSlot;
+}
+
+function getVehicleContributionCandidateStatus_(spreadsheet, vehicleSnapshot, targetEventId, kind) {
+    const ledger = getVehicleContributionLedgerSheet_(spreadsheet);
+    const lastRow = ledger.getLastRow();
+    if (lastRow < 2) return true;
+    const vehicleId = String(vehicleSnapshot && vehicleSnapshot.vehicle && vehicleSnapshot.vehicle.id || "").trim();
+    if (!vehicleId) return true;
+    const vehicle = vehicleSnapshot.vehicle || {};
+    let openingOccupied = Boolean(String(vehicle.apertura || "").trim() || String(vehicle.imgApertura || "").trim());
+    const feedOccupied = [
+        Boolean(String(vehicle.cableAlimen || "").trim() || String(vehicle.imgCableAlimen || "").trim()),
+        Boolean(String(vehicle.cableAlimen2 || "").trim() || String(vehicle.imgCableAlimen2 || "").trim()),
+        Boolean(String(vehicle.cableAlimen3 || "").trim() || String(vehicle.imgCableAlimen3 || "").trim())
+    ];
+    const rows = ledger.getRange(2, 1, lastRow - 1, WRITE_VEHICLE_CONTRIBUTIONS_HEADERS_.length).getValues();
+    const byOpId = new Map();
+    const conflicts = new Set();
+    rows.forEach((row, offset) => {
+        const opId = String(row[1] || "");
+        if (!opId) return;
+        const entry = {
+            eventId: String(row[0] || ""),
+            opId,
+            vehicleId: String(row[2] || ""),
+            operationHash: String(row[3] || "").toLowerCase(),
+            kind: String(row[4] || "").toLowerCase(),
+            payloadJson: String(row[5] || ""),
+            status: String(row[9] || "").toLowerCase(),
+            rowIndex: offset + 2
+        };
+        const previous = byOpId.get(opId);
+        if (previous && (previous.vehicleId !== entry.vehicleId ||
+            previous.operationHash !== entry.operationHash || previous.kind !== entry.kind ||
+            previous.payloadJson !== entry.payloadJson)) {
+            conflicts.add(opId);
+        } else if (!previous) {
+            byOpId.set(opId, entry);
+        }
+    });
+    const events = Array.from(byOpId.values()).sort((a, b) => a.rowIndex - b.rowIndex);
+    for (const entry of events) {
+        if (conflicts.has(entry.opId) || entry.vehicleId !== vehicleId ||
+            entry.kind !== String(kind || "").toLowerCase() || entry.status !== "accepted") continue;
+        if (entry.kind === "opening") {
+            if (openingOccupied) {
+                if (entry.eventId === String(targetEventId)) return true;
+            } else {
+                openingOccupied = true;
+                if (entry.eventId === String(targetEventId)) return false;
+            }
+        } else if (entry.kind === "feed") {
+            const slot = feedOccupied.findIndex(value => value === false);
+            if (slot < 0) {
+                if (entry.eventId === String(targetEventId)) return true;
+            } else {
+                feedOccupied[slot] = true;
+                if (entry.eventId === String(targetEventId)) return false;
+            }
+        }
+    }
+    return true;
 }
 
 function getVehicleContributionLedgerSheet_(spreadsheetRef) {
@@ -3675,20 +3737,9 @@ function handleCheckOperation(payload) {
                 if (eventKind === "cut") {
                     slotIndex = getVehicleContributionCutSlotIndex_(spreadsheet, snapshot, String(values[0] || ""));
                     candidateReviewPending = slotIndex === null;
-                } else if (eventKind === "opening") {
-                    candidateReviewPending = Boolean(
-                        String(snapshot.vehicle.apertura || "").trim() ||
-                        String(snapshot.vehicle.imgApertura || "").trim()
-                    );
                 } else {
-                    const feedSlots = [
-                        ["cableAlimen", "imgCableAlimen"],
-                        ["cableAlimen2", "imgCableAlimen2"],
-                        ["cableAlimen3", "imgCableAlimen3"]
-                    ];
-                    candidateReviewPending = feedSlots.every(fields =>
-                        String(snapshot.vehicle[fields[0]] || "").trim() ||
-                        String(snapshot.vehicle[fields[1]] || "").trim()
+                    candidateReviewPending = getVehicleContributionCandidateStatus_(
+                        spreadsheet, snapshot, String(values[0] || ""), eventKind
                     );
                 }
             }
