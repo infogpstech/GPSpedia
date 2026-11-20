@@ -89,5 +89,5 @@ Antes de cualquier Beta, cumplir la secuencia de sincronización de ramas, árbo
 
 - Código: `1a4b0909d3ec881207f4cb120f668091ced056e2`.
 - Prueba: `66da8f2aa102665f8a32a4039e3d63046e580c19`.
-- Se corrigió `voteActors` fuera de alcance en `handleSuggestYearLocked`; la prueba focalizada cubre el predicado nuevo. Pendiente ejecutar la prueba y la suite completa antes de cerrar.
+- Se corrigió `voteActors` fuera de alcance en `handleSuggestYearLocked`; `SuggestYearVoteThreshold` 7/7 PASS y CI 44835751507 SUCCESS: 239 suites, 2968 pruebas, 0 fallos.
 - Siguiente: continuar migración/retirada del ScriptLock FEEDBACK y revisar asignador de IDs bajo §15.
