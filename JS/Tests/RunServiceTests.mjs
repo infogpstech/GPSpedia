@@ -257,6 +257,7 @@ runGroup('38','INTEGRATION',()=>{
  runCli('AUG-033 captura optimizada de referencias, presupuesto y memoización de Drive','JS/Tests/AdminReplacedImagesIntegrity.mjs');
  runCli('AUG-033 timeout y reintentos idempotentes de lotes de auditoría','JS/Tests/AdminDriveAuditClientRetry.mjs');
  runCli('AUG-027 ciclo de papelera, restauración, eliminación definitiva, permisos e idempotencia','JS/Tests/AdminImageTrashLifecycle.mjs');
+  runCli('ADMIN registra actividad de restauración desde papelera después del ScriptLock','JS/Tests/AdminRestoreImageActivityOutsideLock.mjs');
   runCli('ADMIN registra actividad de papelera después del ScriptLock','JS/Tests/AdminDeleteImageActivityOutsideLock.mjs');
   runCli('ADMIN verifica archivo histórico Drive fuera del ScriptLock y revalida el registro','JS/Tests/AdminRecoverImageDrivePreflightOutsideLock.mjs');
  runCli('AUG-023 contrato y validación de acciones ADMIN createSheet/addColumn','JS/Tests/AdminSheetActionsContract.mjs');
