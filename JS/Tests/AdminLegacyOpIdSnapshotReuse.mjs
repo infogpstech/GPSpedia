@@ -51,7 +51,7 @@ assert.ok(legacyStart >= 0 && snapshotLookup > legacyStart,
     "La ruta legacy debe validar unicidad desde la lectura integral ya obtenida");
 assert.doesNotMatch(
     lookupCode.slice(0, legacyStart),
-    /getLastRow\\(\\)/,
+    /getLastRow\(\)/,
     "La lectura integral debe sustituir también la consulta previa de getLastRow"
 );
 assert.doesNotMatch(
