@@ -10968,7 +10968,7 @@ function handleResolveVehicleContributionCandidate_(payload, developerContext, l
  payload=payload&&typeof payload==="object"?payload:{};
  const targetEventId=String(payload.eventId||"").trim(),requestId=String(payload.requestId||"").trim(),decision=String(payload.decision||"").trim().toLowerCase();
  if(!/^EV-[A-Za-z0-9_-]{8,100}$/.test(targetEventId))throw new Error("eventId de candidato no válido.");
- if(!/^[A-Za-z0-9_-]{16,100}$/.test(requestId))throw new Error("requestId de resolución no válido.");
+ if(!/^[A-Za-z0-9_-]{16,80}$/.test(requestId))throw new Error("requestId de resolución no válido.");
  if(!["accept","correct","discard"].includes(decision))throw new Error("Decisión ADMIN no válida.");
  const actorId=String(developerContext&&developerContext.userId||"").trim(),actorName=String(developerContext&&(developerContext.fullName||developerContext.userName)||"").trim();
  if(!actorId)throw new Error("No se pudo identificar al Desarrollador autenticado.");
