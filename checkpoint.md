@@ -576,3 +576,11 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - `AdminPermanentDeleteActivityOutsideLock` 6/6 PASS; `AdminImageTrashLifecycle` 40/40 PASS. CI `44653582395` SUCCESS: 210 suites, 2,632 pruebas aprobadas, 0 fallos; health read-only `44653582292` SUCCESS. La primera ejecución encontró una aserción de orden incorrecta en el test (comparaba con el finally posterior); se corrigió y se repitió la regresión completa.
 - Commits: implementación `b63d72960fa367a697e756e5629691029278184e`, prueba `b42179292170db7e90eaa27619537a597b6a7a1f`, runner `546535f6678b70a9e39261bdcbe2496d70ddc9d6`, ajuste de test `905ac0794a8ac3ed11137f916ca697152c33a1c6`.
 - No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+## P1 — ADMIN marcar imagen en uso: Drive y actividad fuera del lock (2026-11-20)
+- `handleMarkReplacedImageInUse` ahora valida existencia, papelera, MIME y carpeta Cortes mediante `runAdminDriveWorkOutsideScriptLock_`; tras readquirir sin espera revalida estado `requiere_revision`, tipo y Drive ID del registro antes de cambiarlo a `en_uso`.
+- La actividad Coordinator y logging se ejecutan después de liberar ScriptLock. Si el registro cambió o no se readquirió el lock, no se cambia el historial.
+- `AdminMarkImageInUseDrivePreflightOutsideLock` 10/10 PASS; `AdminReplacedImagesIntegrity` 56/56 PASS. CI `44653864364` SUCCESS: 211 suites, 2,642 pruebas aprobadas, 0 fallos; health read-only `44653864334` SUCCESS.
+- Commits: implementación `5434ac862b8839d5c1d7ef8efa35d6dc87d0d18a`, prueba `0faf804e67175b0db1f486ec76482cf92d18c783`, runner `29dbfd3761d9673867c15b45dfac855615635c98`, ajuste de contrato `5504d165c20e85090ccc4903a1e30f76db1a0548`.
+- No se desplegó Apps Script ni se modificaron datos productivos.
