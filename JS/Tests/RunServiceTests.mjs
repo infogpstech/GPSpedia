@@ -68,6 +68,7 @@ runGroup('31','WRITE',()=>{
 runGroup('32','ADMIN',()=>{
  const a=read('JS/Services/admin.js');
  runCli('ADMIN consulta candidatos append-only de aportes en modo solo lectura','JS/Tests/AdminVehicleContributionCandidates.mjs');
+ runCli('ADMIN conserva ImageUploadLedger histórico en solo lectura','JS/Tests/AdminImageUploadLedgerReadOnly.mjs');
  runCli('ADMIN resolución append-only, idempotencia y concurrencia','JS/Tests/AdminVehicleContributionResolution.mjs');
  runCli('Proyección de aportes y sustituciones ADMIN append-only','JS/Tests/VehicleContributionProjection.mjs');
  recordResult('ADMIN edición modal/RBAC',loadFunction('JS/Tests/AdminModalEditIntegrity.js','runAdminModalEditIntegrityTests')(a));

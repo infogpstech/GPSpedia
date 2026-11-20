@@ -8727,7 +8727,7 @@ function reconcileImageUploadEventsForAdmin_(referenceMap, legacyTokens, legacyF
     grouped.forEach((entries, token) => {
         const projected = projectImageUploadEventsForAdmin_(entries);
         if (!projected) return;
-        if (legacyTokens.has(token) && projected.state !== "requires_review") return;
+        if (legacyTokens.has(token)) return;
         const item = {
             source: "ImageUploadEvents", token, operationKey: projected.operationKey,
             fileId: projected.fileId, fileIds: projected.fileIds,
@@ -8825,6 +8825,15 @@ function reconcileImageUploadEventsForAdmin_(referenceMap, legacyTokens, legacyF
 
 const IMAGE_UPLOAD_MAX_BYTES = 10 * 1024 * 1024;
 
+
+function getImageUploadLedgerSheetReadOnlyForAdmin_() {
+    const sheet=getSpreadsheet().getSheetByName(IMAGE_UPLOAD_LEDGER_SHEET_NAME);
+    if(!sheet)return null;
+    if(sheet.getLastColumn()<IMAGE_UPLOAD_LEDGER_HEADERS.length)throw new Error("ImageUploadLedger tiene una estructura incompleta; se conserva sin modificar.");
+    const headers=sheet.getRange(1,1,1,IMAGE_UPLOAD_LEDGER_HEADERS.length).getDisplayValues()[0].map(v=>String(v||"").trim());
+    if(IMAGE_UPLOAD_LEDGER_HEADERS.some((h,i)=>headers[i]!==h))throw new Error("La estructura de ImageUploadLedger no coincide; se conserva sin modificar.");
+    return sheet;
+}
 function getOrCreateImageUploadLedgerSheet_() {
     const ss = getSpreadsheet();
     let sheet = ss.getSheetByName(IMAGE_UPLOAD_LEDGER_SHEET_NAME);
@@ -9285,7 +9294,7 @@ function handleReconcilePendingImageUploads(payload, logMessage) {
         return { status: "success", dryRun: !(payload && payload.confirm === true), processed: 0,
             message: "No existen registros en ImageUploadLedger ni ImageUploadEvents para reconciliar." };
     }
-    const ledgerSheet = existingLedgerSheet ? getOrCreateImageUploadLedgerSheet_() : null;
+    const ledgerSheet = existingLedgerSheet ? getImageUploadLedgerSheetReadOnlyForAdmin_() : null;
     const lastRow = ledgerSheet ? ledgerSheet.getLastRow() : 1;
     const requestedStart = Number(payload && payload.startRow);
     const startRow = Number.isInteger(requestedStart) && requestedStart >= 2 ? requestedStart : 2;
@@ -9363,44 +9372,44 @@ function handleReconcilePendingImageUploads(payload, logMessage) {
             }
 
             if (confirm) {
-                values[6] = fileId;
-                if (file) values[7] = "https://drive.google.com/uc?export=view&id=" + fileId;
-                values[8] = nextState;
-                values[9] = references.length ? references[0].sheet : "";
-                values[10] = references.length ? references[0].row : "";
-                values[11] = references.map(reference => reference.field).join(",");
-                values[12] = JSON.stringify(references);
-                values[15] = new Date().toISOString();
-                values[16] = (nextState === "file_missing" || nextState === "requires_review") ? item.reason : "";
-                saveImageUploadLedgerRecord_(ledgerSheet, { rowIndex, values });
-
-                if (file && nextState === "linked") {
-                    try {
-                        const originalName = String(values[13] || "");
-                        if (originalName && file.getName() !== originalName) file.setName(originalName);
-                        const description = buildImageUploadDescription_({
-                            operationKey, token, folderId, mimeType, sizeBytes,
-                            contentHash, fileName: originalName
-                        }, "linked", JSON.stringify(references));
+                const journalSheet=getOrCreateImageUploadEventsSheetForAdmin_();
+                const journalEntries=readImageUploadEventsByTokenForAdmin_(journalSheet,token);
+                const journalProjection=projectImageUploadEventsForAdmin_(journalEntries);
+                const journalState=nextState==="linked"?"linked":
+                    nextState==="file_missing"?"file_missing":
+                    nextState==="requires_review"||nextState==="orphan_candidate"?"requires_review":"pending";
+                if(journalProjection&&(journalProjection.state==="requires_review"||
+                    journalProjection.operationKey!==operationKey||journalProjection.folderId!==folderId||
+                    journalProjection.mimeType!==mimeType||journalProjection.sizeBytes!==sizeBytes||
+                    journalProjection.contentHash!==contentHash||
+                    (journalProjection.fileId&&fileId&&journalProjection.fileId!==fileId))){
+                    item.state="requires_review";
+                    item.journalWarning="ImageUploadEvents ya contiene una identidad o archivo incompatible; no se anexó una transición.";
+                }else if(!journalProjection||journalProjection.state!==journalState||
+                    String(journalProjection.fileId||"")!==String(fileId||"")||
+                    String(journalProjection.referencesJson||"[]")!==JSON.stringify(references)){
+                    appendImageUploadEventForAdmin_(journalSheet,{
+                        token,operationKey,folderId,mimeType,sizeBytes,contentHash,
+                        fileId:fileId||"",fileUrl:fileId?"https://drive.google.com/uc?export=view&id="+fileId:"",
+                        state:journalState,referencesJson:JSON.stringify(references),
+                        fileName:String(values[13]|| (file&&file.getName()) || ""),
+                        lastError:journalState==="file_missing"||journalState==="requires_review"?item.reason:""
+                    });
+                }
+                if(file&&nextState==="linked"){
+                    try{
+                        const originalName=String(values[13]||"");
+                        if(originalName&&file.getName()!==originalName)file.setName(originalName);
+                        const description=buildImageUploadDescription_({operationKey,token,folderId,mimeType,sizeBytes,contentHash,fileName:originalName},
+                            "linked",JSON.stringify(references));
                         file.setDescription(description);
-                        if (String(file.getDescription() || "") !== description) {
-                            item.descriptionWarning = "La fila ledger quedó linked, pero Drive no confirmó la descripción.";
-                        }
-                    } catch (descriptionError) {
-                        item.descriptionWarning = descriptionError.message;
-                    }
+                        if(String(file.getDescription()||"")!==description)item.descriptionWarning="ImageUploadEvents quedó linked, pero Drive no confirmó la descripción.";
+                    }catch(descriptionError){item.descriptionWarning=descriptionError.message;}
                 }
             }
         } catch (error) {
             item.state = "requires_review";
             item.reason = error.message;
-            if (confirm) {
-                values[8] = "requires_review";
-                values[15] = new Date().toISOString();
-                values[16] = error.message;
-                try { saveImageUploadLedgerRecord_(ledgerSheet, { rowIndex, values }); }
-                catch (saveError) { item.saveError = saveError.message; }
-            }
         }
 
         counts[item.state] = (counts[item.state] || 0) + 1;
@@ -9425,7 +9434,7 @@ function handleReconcilePendingImageUploads(payload, logMessage) {
         untrackedReferenceFileIds: untrackedReferences.slice(0, 50),
         items: items.slice(0, 100),
         message: confirm
-            ? "Reconciliación aplicada. Los archivos sin referencia o con integridad dudosa se conservaron."
+            ? "Reconciliación aplicada a ImageUploadEvents. ImageUploadLedger histórico se conservó sin modificar; los archivos dudosos no se eliminaron."
             : "Simulación completada. Usa confirm:true para aplicar los estados propuestos; no se borran archivos."
     };
 }
