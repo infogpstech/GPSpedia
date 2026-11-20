@@ -321,8 +321,10 @@ function buildRecover({status="historica",duplicate=false,trashed=false,mime="im
         "updateAdminImageReplacementHistoryStatus_","extractDriveFileIds",
         fnSource(admin,"handleRecoverReplacedImage")+"\nreturn handleRecoverReplacedImage;"
     )(lock.LockService,runAdminDriveWorkOutsideScriptLock_,()=>historySheet,()=>HEADERS,find,getType,getIdentity,
-        {getFileById(id){driveCalls++;return file;}},{imagenVehiculo:9},()=>({getId:()=>"ROOT"}),
-        ()=>true,()=>spreadsheet,{CORTES:"Cortes"},()=>({unverifiableReferenceCount:0,references:new Map(conflicts)}),
+        {getFileById(id){assert.equal(lock.state.locked,false,"Drive getFileById debe ejecutarse sin ScriptLock");driveCalls++;return file;}},{imagenVehiculo:9},
+        ()=>{assert.equal(lock.state.locked,false,"La validación de carpeta debe ejecutarse sin ScriptLock");return {getId:()=>"ROOT"};},
+        ()=>{assert.equal(lock.state.locked,false,"La comprobación de pertenencia a Cortes debe ejecutarse sin ScriptLock");return true;},
+        ()=>spreadsheet,{CORTES:"Cortes"},()=>({unverifiableReferenceCount:0,references:new Map(conflicts)}),
         ()=>{throw new Error("unexpected swap record");},{flush(){}},wrappedStatus,restoreCell,()=>{},extract);
     return {run:()=>api({id_reemplazo:"REP-RECOVER"},()=>{}),historySheet,active,file,lock,driveCalls:()=>driveCalls};
 }
