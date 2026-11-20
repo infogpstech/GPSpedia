@@ -346,6 +346,169 @@ function mapRowToObject(row, colMap, imageFields = new Set()) {
   return obj;
 }
 
+
+const VEHICLE_CONTRIBUTIONS_SHEET_NAME_ = "AportesVehiculo";
+const VEHICLE_CONTRIBUTIONS_HEADERS_ = Object.freeze([
+    "eventId", "opId", "vehicleId", "operationHash", "kind", "payloadJson",
+    "actorId", "actorName", "createdAt", "status", "supersedesEventId"
+]);
+
+function readVehicleContributionEvents_(spreadsheetRef) {
+    const ss = spreadsheetRef || getSpreadsheet();
+    const sheet = ss.getSheetByName(VEHICLE_CONTRIBUTIONS_SHEET_NAME_);
+    if (!sheet) return [];
+    if (sheet.getLastRow() < 1 || sheet.getLastColumn() < VEHICLE_CONTRIBUTIONS_HEADERS_.length) {
+        throw new Error("La hoja «AportesVehiculo» existe, pero su esquema está incompleto. No se proyectaron aportes.");
+    }
+    const headers = sheet.getRange(1, 1, 1, VEHICLE_CONTRIBUTIONS_HEADERS_.length)
+        .getDisplayValues()[0].map(value => String(value || "").trim());
+    if (VEHICLE_CONTRIBUTIONS_HEADERS_.some((header, index) => headers[index] !== header)) {
+        throw new Error("La hoja «AportesVehiculo» no coincide con el esquema versionado. No se proyectaron aportes.");
+    }
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) return [];
+    return sheet.getRange(2, 1, lastRow - 1, VEHICLE_CONTRIBUTIONS_HEADERS_.length).getValues()
+        .map((row, offset) => {
+            const context = "AportesVehiculo fila " + (offset + 2);
+            const eventId = String(row[0] || "").trim();
+            const opId = String(row[1] || "").trim();
+            const vehicleId = String(row[2] || "").trim();
+            const operationHash = String(row[3] || "").trim().toLowerCase();
+            const kind = String(row[4] || "").trim().toLowerCase();
+            const payloadJson = String(row[5] || "");
+            const actorId = String(row[6] || "").trim();
+            const actorName = String(row[7] || "").trim();
+            const createdAt = String(row[8] || "").trim();
+            const status = String(row[9] || "").trim().toLowerCase();
+            const supersedesEventId = String(row[10] || "").trim();
+            if (!eventId || !/^OP-[A-Za-z0-9_-]{1,100}$/.test(opId) || !vehicleId ||
+                !/^[a-f0-9]{64}$/.test(operationHash) ||
+                !["cut", "opening", "feed", "vehicle"].includes(kind) ||
+                !createdAt || Number.isNaN(Date.parse(createdAt)) ||
+                !["accepted", "review", "retracted"].includes(status)) {
+                throw new Error(context + ": identidad, hash, tipo, fecha o estado inválido. No se proyectó el ledger.");
+            }
+            let payload;
+            try { payload = JSON.parse(payloadJson); } catch (error) {
+                throw new Error(context + ": payloadJson no es JSON válido. No se proyectó el ledger.");
+            }
+            if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+                throw new Error(context + ": payloadJson debe contener un objeto. No se proyectó el ledger.");
+            }
+            return {
+                eventId, opId, vehicleId, operationHash, kind, payload,
+                actorId, actorName, createdAt, status, supersedesEventId, rowIndex: offset + 2
+            };
+        });
+}
+
+function projectVehicleContributionEvents_(vehicles, sourceEvents) {
+    if (!Array.isArray(vehicles)) throw new Error("La proyección requiere una lista de vehículos.");
+    const events = Array.isArray(sourceEvents) ? sourceEvents.slice().sort((a, b) => Number(a.rowIndex) - Number(b.rowIndex)) : [];
+    const byVehicle = new Map();
+    const byOpId = new Map();
+    const conflictedOpIds = new Set();
+
+    events.forEach(event => {
+        if (!event || !String(event.vehicleId || "").trim() ||
+            !/^OP-[A-Za-z0-9_-]{1,100}$/.test(String(event.opId || "")) ||
+            !/^[a-f0-9]{64}$/i.test(String(event.operationHash || "")) ||
+            !["cut", "opening", "feed", "vehicle"].includes(String(event.kind || "")) ||
+            !event.payload || typeof event.payload !== "object" || Array.isArray(event.payload)) {
+            throw new Error("El ledger contiene un evento de aporte inválido; se canceló la proyección completa.");
+        }
+        const previous = byOpId.get(event.opId);
+        if (previous) {
+            if (previous.operationHash !== event.operationHash ||
+                previous.vehicleId !== event.vehicleId || previous.kind !== event.kind) {
+                conflictedOpIds.add(event.opId);
+            }
+            return;
+        }
+        byOpId.set(event.opId, event);
+    });
+
+    byOpId.forEach(event => {
+        if (conflictedOpIds.has(event.opId)) return;
+        if (!byVehicle.has(event.vehicleId)) byVehicle.set(event.vehicleId, []);
+        byVehicle.get(event.vehicleId).push(event);
+    });
+
+    return vehicles.map(sourceVehicle => {
+        if (!sourceVehicle || sourceVehicle.id === null || sourceVehicle.id === undefined) return sourceVehicle;
+        const vehicle = Object.assign({}, sourceVehicle);
+        const vehicleId = String(vehicle.id).trim();
+        const candidates = [];
+        const sources = {};
+        const vehicleEvents = byVehicle.get(vehicleId) || [];
+        events.filter(event => conflictedOpIds.has(event.opId) && String(event.vehicleId) === vehicleId)
+            .forEach(event => candidates.push({ eventId: event.eventId, opId: event.opId, kind: event.kind, reason: "opId_conflict", payload: event.payload }));
+
+        vehicleEvents.forEach(event => {
+            if (event.status !== "accepted") {
+                if (event.status === "review") candidates.push({ eventId: event.eventId, opId: event.opId, kind: event.kind, reason: "requires_review", payload: event.payload });
+                return;
+            }
+            const payload = event.payload;
+            if (event.kind === "cut") {
+                const slot = [1, 2, 3].find(index =>
+                    !String(vehicle["tipoCorte" + index] || "").trim() &&
+                    !String(vehicle["ubicacionCorte" + index] || "").trim() &&
+                    !String(vehicle["imgCorte" + index] || "").trim()
+                );
+                if (!slot) {
+                    candidates.push({ eventId: event.eventId, opId: event.opId, kind: event.kind, reason: "cut_capacity_full", payload });
+                    return;
+                }
+                vehicle["tipoCorte" + slot] = payload.tipo || "";
+                vehicle["ubicacionCorte" + slot] = payload.ubicacion || "";
+                vehicle["colorCableCorte" + slot] = payload.color || "";
+                vehicle["configRelay" + slot] = payload.configRelay || "";
+                vehicle["imgCorte" + slot] = payload.image ? normalizeAndValidateImageId(String(payload.image)) : null;
+                vehicle["utilCorte" + slot] = 0;
+                vehicle["activaTestigo" + slot] = payload.activaTestigo === true;
+                vehicle["colaboradorCorte" + slot] = event.actorName || "";
+                sources["corte" + slot] = { eventId: event.eventId, opId: event.opId, operationHash: event.operationHash };
+            } else if (event.kind === "opening") {
+                if (String(vehicle.apertura || "").trim() || String(vehicle.imgApertura || "").trim()) {
+                    candidates.push({ eventId: event.eventId, opId: event.opId, kind: event.kind, reason: "opening_already_filled", payload });
+                    return;
+                }
+                vehicle.apertura = payload.text || "";
+                vehicle.imgApertura = payload.image ? normalizeAndValidateImageId(String(payload.image)) : null;
+                sources.apertura = { eventId: event.eventId, opId: event.opId, operationHash: event.operationHash };
+            } else if (event.kind === "feed") {
+                const slot = [1, 2, 3].find(index => {
+                    const suffix = index === 1 ? "" : String(index);
+                    return !String(vehicle["cableAlimen" + suffix] || "").trim() &&
+                        !String(vehicle["imgCableAlimen" + suffix] || "").trim();
+                });
+                if (!slot) {
+                    candidates.push({ eventId: event.eventId, opId: event.opId, kind: event.kind, reason: "feed_capacity_full", payload });
+                    return;
+                }
+                const suffix = slot === 1 ? "" : String(slot);
+                vehicle["cableAlimen" + suffix] = payload.text || "";
+                vehicle["imgCableAlimen" + suffix] = payload.image ? normalizeAndValidateImageId(String(payload.image)) : null;
+                sources["feed" + slot] = { eventId: event.eventId, opId: event.opId, operationHash: event.operationHash };
+            } else if (event.kind === "vehicle") {
+                const allowed = ["categoria", "marca", "modelo", "versionesAplicables", "anoDesde", "anoHasta", "tipoEncendido", "imagenVehiculo"];
+                allowed.forEach(field => {
+                    if (payload[field] === undefined || payload[field] === null || String(payload[field]).trim() === "") return;
+                    if (String(vehicle[field] || "").trim()) return;
+                    vehicle[field] = field === "imagenVehiculo"
+                        ? normalizeAndValidateImageId(String(payload[field])) : payload[field];
+                    sources[field] = { eventId: event.eventId, opId: event.opId, operationHash: event.operationHash };
+                });
+            }
+        });
+        vehicle.contributionCandidates = candidates;
+        vehicle.contributionSources = sources;
+        vehicle.contributionConflictCount = candidates.filter(item => item.reason === "opId_conflict").length;
+        return vehicle;
+    });
+}
+
 function handleGetCatalogData(payload = {}) {
     const cache = CacheService.getScriptCache();
     const cacheKey = 'catalog_data_v2';
@@ -438,6 +601,9 @@ function handleGetCatalogData(payload = {}) {
             return orderedVehicle;
         }).filter(Boolean);
     }
+    // Los aportes append-only se proyectan sobre el contrato heredado de la ficha.
+    // La hoja ausente es compatible durante la migración gradual; un esquema presente pero inválido falla de forma segura.
+    cortesData = projectVehicleContributionEvents_(cortesData, readVehicleContributionEvents_(getSpreadsheet()));
     allData.cortes = cortesData;
     allData.categoryCounts = categoryCounts;
 
