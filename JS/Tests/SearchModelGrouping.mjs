@@ -43,9 +43,10 @@ test('el historial conserva versión, encendido y consulta',()=>{
 });
 test('popstate reconstruye niveles y vuelve a ejecutar la consulta original',()=>{
     assert.match(main,/popstate/);
-    assert.match(ui,/case 'tiposEncendido'/);
-    assert.match(ui,/case 'versionesEquipamiento'/);
-    assert.match(ui,/case 'versiones'/);
+    assert.match(main,/case 'tiposEncendido'/);
+    assert.match(main,/case 'versionesEquipamiento'/);
+    assert.match(main,/case 'versiones'/);
+    assert.match(main,/navigation\.filtrarContenido\(state\.query, true\)/);
 });
 
 test('cero registros no inventa una versión ni un rango',()=>{
