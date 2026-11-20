@@ -136,6 +136,7 @@ runGroup('33','FEEDBACK',()=>{
  const feedback=read('JS/Services/feedback.js');
  runCli('FEEDBACK telemetría mínima de vistos y separación del historial local','JS/Tests/RecentlyViewedActivityTelemetry.mjs');
  runCli('AUG-087 caché PyS y aplicación incremental del feed','JS/Tests/PysDataCache.js');
+ runCli('FEEDBACK verifica imagen PyS pending fuera del ScriptLock','JS/Tests/FeedbackPysPendingImageVerificationOutsideLock.mjs');
  runCli('P4.1 arranque paralelo de catálogo y PyS','JS/Tests/CatalogStartupParallelism.mjs');
  runCli('P2 asignador backend para IDs de hojas Feedbacks, ActividadUsuario y Contactanos','JS/Tests/FeedbackFormulaIdAllocator.mjs');
   runCli('FEEDBACK suggestYear usa actor central y conserva ruta anónima','JS/Tests/SuggestYearCoordinatorSession.mjs');
