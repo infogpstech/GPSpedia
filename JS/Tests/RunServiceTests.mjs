@@ -202,6 +202,7 @@ runGroup('34','CATALOG',()=>{
  runCli('FEEDBACK snapshots versionados y publicación fuera del ScriptLock','JS/Tests/FeedbackCatalogPublicationIsolation.mjs');
  runCli('ADMIN snapshots de catálogo versionados y publicación fuera del ScriptLock','JS/Tests/AdminCatalogPublicationIsolation.mjs');
  runCli('ADMIN creación de carpeta con lease de recurso aislado','JS/Tests/AdminCreateCortesImageFolderLease.mjs');
+  runCli('ADMIN reconciliación del journal de imágenes','JS/Tests/AdminImageUploadEventReconciliation.mjs');
  runCli('CATALOG telemetría local no bloqueante y segura','JS/Tests/CatalogTrafficTelemetry.mjs');
  runCli('CATALOG proyección determinista del ledger de aportes por vehículo','JS/Tests/VehicleContributionProjection.mjs');
   runCli('WRITE intercalado concurrente del ledger append-only','JS/Tests/WriteContributionAppendConcurrency.mjs');
