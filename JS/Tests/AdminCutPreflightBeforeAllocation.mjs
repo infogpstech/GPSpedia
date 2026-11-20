@@ -8,7 +8,7 @@ assert.ok(start >= 0 && end > start, "No se encontró handleAddOrUpdateCut");
 const handler = source.slice(start, end);
 
 const validation = handler.indexOf("normalizeIdempotenciaOperationHash_(payload.operationHash");
-const allocation = handler.indexOf("requestNextVehicleIdFromWriteService(payload)");
+const allocation = handler.indexOf("requestNextVehicleIdFromWriteService(payload, legacyRequest ? null : opId, operationHash)");
 const lock = handler.indexOf("lock.tryLock(0)");
 const duplicateValidation = handler.indexOf("normalizeIdempotenciaOperationHash_(payload.operationHash", validation + 1);
 

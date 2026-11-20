@@ -66,9 +66,9 @@ function runWriteAuthorizationMinimizationTests(sources) {
   let count=0,locked=0,released=0;
   const check=new Function("getAuthenticatedCollaborator",auth+";return assertDeveloperForIdMaintenance;")(
    (payload,roles)=>{if(!roles.includes("desarrollador"))throw Error("política incorrecta");throw Error("Se requiere privilegio Desarrollador.");});
-  const fn=new Function("assertDeveloperForIdMaintenance","LockService","getSpreadsheet","SHEET_NAMES","getNextCortesVehicleIdLocked",
+  const fn=new Function("assertDeveloperForIdMaintenance","LockService","getSpreadsheet","SHEET_NAMES","getNextCortesVehicleIdLocked","normalizeCortesIdAllocationRequest_","reserveCortesVehicleIdForOperationLocked_",
    handler+";return handleAllocateVehicleId;")(check,{getScriptLock:()=>({tryLock(ms){assert(ms===0,"El asignador debe usar tryLock(0).");locked++;return true;},releaseLock(){released++;}})},
-   ()=>({getSheetByName:()=>({})}),{CORTES:"Cortes"},()=>{count++;return 99;});
+   ()=>({getSheetByName:()=>({})}),{CORTES:"Cortes"},()=>{count++;return 99;},()=>null,()=>{throw Error("No debe reservar en este caso");});
   let rejected=false;try{fn({userId:"U1",sessionToken:"valid",role:"Desarrollador"});}catch(e){rejected=/privilegio Desarrollador/.test(e.message);}
   assert(rejected&&count===0&&locked===1&&released===1);
  });
@@ -77,9 +77,9 @@ function runWriteAuthorizationMinimizationTests(sources) {
   const check=new Function("getAuthenticatedCollaborator",auth+";return assertDeveloperForIdMaintenance;")(
    (payload,roles)=>{if(!roles.includes("desarrollador"))throw Error("Falta política");return "Desarrollador verificado";});
   let calls=0,locked=0,released=0;
-  const fn=new Function("assertDeveloperForIdMaintenance","LockService","getSpreadsheet","SHEET_NAMES","getNextCortesVehicleIdLocked",
+  const fn=new Function("assertDeveloperForIdMaintenance","LockService","getSpreadsheet","SHEET_NAMES","getNextCortesVehicleIdLocked","normalizeCortesIdAllocationRequest_","reserveCortesVehicleIdForOperationLocked_",
    handler+";return handleAllocateVehicleId;")(check,{getScriptLock:()=>({tryLock(ms){assert(ms===0,"El asignador debe usar tryLock(0).");locked++;return true;},releaseLock(){released++;}})},
-   ()=>({getSheetByName:()=>({})}),{CORTES:"Cortes"},()=>{calls++;return 42;});
+   ()=>({getSheetByName:()=>({})}),{CORTES:"Cortes"},()=>{calls++;return 42;},()=>null,()=>{throw Error("No debe reservar en este caso");});
   assert(fn({userId:"U1",sessionToken:"valid",role:"Tecnico"}).vehicleId===42&&calls===1&&locked===1&&released===1);
  });
  run("checkOperation consulta estado sin lease y las mutaciones usan actor cacheado",()=>{
