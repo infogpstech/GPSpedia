@@ -5,9 +5,10 @@ const source = readFileSync(new URL("../Services/feedback.js", import.meta.url),
 function extract(name, nextName) {
     const start = source.indexOf("function " + name + "(");
     assert.ok(start >= 0, "No se encontró " + name);
-    const end = nextName
+    const candidateEnd = nextName
         ? source.indexOf("\nfunction " + nextName + "(", start + 10)
         : source.indexOf("\nfunction ", start + 10);
+    const end = candidateEnd > start ? candidateEnd : source.length;
     assert.ok(end > start, "No se encontró el final de " + name);
     return source.slice(start, end);
 }
