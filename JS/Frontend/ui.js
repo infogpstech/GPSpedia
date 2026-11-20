@@ -1577,6 +1577,14 @@ export function mostrarTiposEncendido(categoria, marca, versionEquipamiento, mod
 
 export function mostrarVersiones(filas, categoria, marca, modelo) {
     const rangeDecision = resolveVehicleNavigation(filas);
+    if (rangeDecision.step === 'equipment') {
+        mostrarVersionesEquipamiento(categoria, marca, modelo);
+        return;
+    }
+    if (rangeDecision.step === 'ignition') {
+        mostrarTiposEncendido(categoria, marca, rangeDecision.version, modelo);
+        return;
+    }
     const rangeGroups = rangeDecision.ranges || [];
     if (rangeDecision.step === 'detail') {
         mostrarDetalleModal(rangeDecision.records[0]);
