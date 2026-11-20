@@ -102,3 +102,9 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - `handleAddTutorial` ahora resuelve replays de `operationId` antes de ScriptLock; las altas nuevas revalidan ID y unicidad de título dentro del lock.
 - La búsqueda de ID usa columna A y la de títulos columna B; se añadió fallback de ID limitado a esa columna para adaptadores sin TextFinder.
 - `FeedbackTutorialPreflightOutsideLock` 7/7 PASS. CI 44838077134 SUCCESS: 245 suites, 3001 pruebas, 0 fallos; health read-only SUCCESS.
+
+
+2026-11-20 — FEEDBACK aprobaciones YouTube: lookup por columna
+- Las búsquedas de `opVideoId` y solicitudes pendientes por destino ahora consultan la columna Problema y leen solo filas coincidentes; fallback limitado a esa columna para adaptadores sin TextFinder.
+- Se mantiene el lock en creación para deduplicar operación/destino y anexar de forma coordinada.
+- Regresiones focalizadas 6/6 y 5/5 PASS. CI 44838760886 SUCCESS: 248 suites, 3018 pruebas, 0 fallos; Health read-only SUCCESS.
