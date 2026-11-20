@@ -2814,11 +2814,14 @@ function buildLegacyCutSuggestionRequestFingerprint_(details, proposedValues, im
 
 function findCutSuggestionByOperation_(sheet, operationId) {
     const id = String(operationId || "").trim();
-    if (!sheet || !id || sheet.getLastRow() < 2) return null;
-    const rows = sheet.getDataRange().getValues();
+    const lastRow = sheet ? sheet.getLastRow() : 0;
+    if (!id || lastRow < 2) return null;
+    const candidates = sheet.getRange(2, COLS_FEEDBACKS.Problema, lastRow - 1, 1)
+        .createTextFinder(id).matchCase(true).findAll();
     const matches = [];
-    rows.slice(1).forEach((row, index) => {
-        const raw = String(row[COLS_FEEDBACKS.Problema - 1] || "");
+    candidates.forEach(candidate => {
+        const rowNumber = candidate.getRow();
+        const raw = String(sheet.getRange(rowNumber, COLS_FEEDBACKS.Problema).getValue() || "");
         if (!raw) return;
         let record;
         try { record = JSON.parse(raw); }
@@ -2830,7 +2833,7 @@ function findCutSuggestionByOperation_(sheet, operationId) {
         }
         if (record && record.subType === "suggestion_cut" &&
             String(record.suggestionOperationId || "") === id) {
-            matches.push({ rowNumber: index + 2, record: record });
+            matches.push({ rowNumber, record });
         }
     });
     if (matches.length > 1) throw new Error("El identificador de operación aparece duplicado en Feedbacks; requiere revisión.");
@@ -2852,20 +2855,24 @@ function buildCutSuggestionReplayResponse_(existing, reportId) {
 }
 
 function findCutSuggestionByRequest_(sheet, reportId, vehicleId, corteIndex, userId) {
-    if (!sheet || sheet.getLastRow() < 2 || reportId === "N/A") return null;
-    const rows = sheet.getDataRange().getValues();
+    const id = String(reportId || "").trim();
+    const lastRow = sheet ? sheet.getLastRow() : 0;
+    if (!id || !sheet || lastRow < 2 || id === "N/A") return null;
+    const candidates = sheet.getRange(2, COLS_FEEDBACKS.Problema, lastRow - 1, 1)
+        .createTextFinder(id).matchCase(true).findAll();
     const matches = [];
-    rows.slice(1).forEach((row, index) => {
-        const raw = String(row[COLS_FEEDBACKS.Problema - 1] || "");
+    candidates.forEach(candidate => {
+        const rowNumber = candidate.getRow();
+        const raw = String(sheet.getRange(rowNumber, COLS_FEEDBACKS.Problema).getValue() || "");
         if (!raw.trim().startsWith("{")) return;
         let record;
         try { record = JSON.parse(raw); } catch (error) { return; }
         if (!record || record.subType !== "suggestion_cut") return;
-        if (String(record.reportId || "N/A") === reportId &&
+        if (String(record.reportId || "N/A") === id &&
             String(record.vehicleId || "").trim() === vehicleId &&
             Number(record.corteIndex) === corteIndex &&
             String(record.userId || "") === userId) {
-            matches.push({ rowNumber: index + 2, record: record });
+            matches.push({ rowNumber, record });
         }
     });
     if (matches.length > 1) throw new Error("La sugerencia asociada al reporte ya aparece duplicada; se conserva el estado para revisión.");
