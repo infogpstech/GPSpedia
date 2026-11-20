@@ -9,7 +9,7 @@ const handler = source.slice(start, end);
 const newBranchStart = handler.indexOf("} else { // --- Lógica para vehículo NUEVO");
 assert.ok(newBranchStart >= 0, "No se encontró rama de vehículo nuevo");
 const branch = handler.slice(newBranchStart);
-const driveStart = branch.indexOf("const uploaded = runAdminDriveWorkOutsideScriptLock_");
+const driveStart = branch.indexOf("const uploaded = runAdminContributionDriveWorkOutsideScriptLock_");
 const callbackEnd = branch.indexOf("}, operationHash);", driveStart);
 assert.ok(driveStart >= 0 && callbackEnd > driveStart, "No se encontró callback post-Drive");
 const callback = branch.slice(driveStart, callbackEnd);
