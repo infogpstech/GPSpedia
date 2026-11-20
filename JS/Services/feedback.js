@@ -4382,15 +4382,30 @@ function handleInitYouTubeUpload(payload) {
  * Registra la solicitud de aprobación de un vídeo subido a YouTube
  */
 function findVideoApprovalByOperation_(sheet, opVideoId) {
-    const lastRow = sheet.getLastRow();
-    if (lastRow < 2) return null;
-    const rows = sheet.getRange(2, 1, lastRow - 1, Math.max(COLS_FEEDBACKS.Problema, sheet.getLastColumn())).getValues();
+    const operationId = String(opVideoId || "").trim();
+    const lastRow = sheet ? sheet.getLastRow() : 0;
+    if (!operationId || lastRow < 2) return null;
+    const problemRange = sheet.getRange(2, COLS_FEEDBACKS.Problema, lastRow - 1, 1);
+    let candidates = [];
+    if (problemRange && typeof problemRange.createTextFinder === "function") {
+        candidates = problemRange.createTextFinder(operationId).matchCase(true).findAll();
+    } else {
+        // Fallback de compatibilidad limitado a la columna Problema.
+        problemRange.getValues().forEach((value, index) => {
+            if (String(value[0] || "").includes(operationId)) candidates.push({ getRow: () => index + 2 });
+        });
+    }
     const matches = [];
-    rows.forEach((row, index) => {
+    const lastColumn = Math.max(COLS_FEEDBACKS.Problema, sheet.getLastColumn());
+    candidates.forEach(candidate => {
+        const rowIndex = candidate.getRow();
         let data = null;
-        try { data = JSON.parse(String(row[COLS_FEEDBACKS.Problema - 1] || "")); } catch (error) {}
-        if (data && data.subType === "video_approval" && String(data.opVideoId || "") === String(opVideoId)) {
-            matches.push({ rowIndex: index + 2, row: row, data: data });
+        try {
+            data = JSON.parse(String(sheet.getRange(rowIndex, COLS_FEEDBACKS.Problema, 1, 1).getValues()[0][0] || ""));
+        } catch (error) {}
+        if (data && data.subType === "video_approval" && String(data.opVideoId || "") === operationId) {
+            const row = sheet.getRange(rowIndex, 1, 1, lastColumn).getValues()[0];
+            matches.push({ rowIndex, row, data });
         }
     });
     if (matches.length > 1) throw new Error("El identificador de operación ya está duplicado en Feedbacks; requiere revisión.");
