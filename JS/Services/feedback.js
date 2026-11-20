@@ -2002,7 +2002,30 @@ function ensureFeedbackLikesSheet_() {
     }
     const actual = sheet.getRange(1, 1, 1, headers.length).getValues()[0].map(value => String(value || "").trim());
     if (headers.some((header, index) => actual[index] !== header)) throw new Error("El esquema de FeedbackLikes no coincide con el contrato esperado.");
+
     return sheet;
+}
+function findFeedbackVehicleRowForLike_(sheet, vehicleId) {
+    const id = String(vehicleId || "").trim();
+    if (!sheet || !id) throw new Error("No se pudo localizar el vehículo para registrar el like.");
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) throw new Error("No se encontró el vehículo.");
+    const matches = sheet.getRange(2, COLS_CORTES.id, lastRow - 1, 1)
+        .createTextFinder(id).matchCase(true).findAll();
+    const exact = matches.filter(match =>
+        String(sheet.getRange(match.getRow(), COLS_CORTES.id).getValue() || "").trim() === id
+    );
+    if (exact.length !== 1) {
+        throw new Error(exact.length
+            ? "El vehículo tiene un ID duplicado; no se registró el like."
+            : "No se encontró el vehículo.");
+    }
+    const rowIndex = exact[0].getRow();
+    const row = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getValues()[0];
+    if (String(row[COLS_CORTES.id - 1] || "").trim() !== id) {
+        throw new Error("El vehículo cambió durante la localización; no se registró el like.");
+    }
+    return { row, rowIndex };
 }
 function handleRecordLike(payload) {
     const vehicleId = String(payload && payload.vehicleId || "").trim();
@@ -2011,26 +2034,34 @@ function handleRecordLike(payload) {
     const userName = String(payload && payload.userName || "").trim();
     if (!vehicleId || !userId || !userName || !Number.isInteger(corteIndex) || corteIndex < 1 || corteIndex > 3) throw new Error("Faltan datos verificados para registrar el like.");
     const actorKey = "user:" + userId;
+    const cuts = getSafeSheet(SHEET_NAMES.CORTES);
+    if (!cuts) throw new Error("Hoja Cortes no encontrada.");
+    const typeCol = COLS_CORTES["tipoCorte" + corteIndex], utilCol = COLS_CORTES["utilCorte" + corteIndex];
+    const preflightVehicle = findFeedbackVehicleRowForLike_(cuts, vehicleId);
+    if (!typeCol || !utilCol || !String(preflightVehicle.row[typeCol - 1] || "").trim()) {
+        throw new Error("El corte seleccionado no existe en el vehículo.");
+    }
     let activityLogRequest = null;
     const result = (() => {
         const lock = LockService.getScriptLock();
         acquireFeedbackScriptLock_(lock);
         try {
-        const cuts = getSafeSheet(SHEET_NAMES.CORTES);
-        if (!cuts) throw new Error("Hoja Cortes no encontrada.");
-        const rows = cuts.getDataRange().getValues();
-        const matches = [];
-        for (let i = 1; i < rows.length; i++) {
-            if (String(rows[i][COLS_CORTES.id - 1] || "").trim() === vehicleId) matches.push({ row: rows[i], rowIndex: i + 1 });
-        }
-        if (matches.length !== 1) throw new Error(matches.length ? "El vehículo tiene un ID duplicado; no se registró el like." : "No se encontró el vehículo.");
-        const vehicle = matches[0];
-        const typeCol = COLS_CORTES["tipoCorte" + corteIndex], utilCol = COLS_CORTES["utilCorte" + corteIndex];
-        if (!typeCol || !utilCol || !String(vehicle.row[typeCol - 1] || "").trim()) throw new Error("El corte seleccionado no existe en el vehículo.");
+        // Revalidar el vehículo y el corte dentro de la sección crítica antes del read-modify-write.
+        const vehicle = findFeedbackVehicleRowForLike_(cuts, vehicleId);
+        if (!String(vehicle.row[typeCol - 1] || "").trim()) throw new Error("El corte seleccionado cambió o ya no existe en el vehículo.");
 
-        const ledger = ensureFeedbackLikesSheet_(), ledgerRows = ledger.getDataRange().getValues().slice(1), found = [];
-        ledgerRows.forEach((row, index) => {
-            if (String(row[0] || "").trim() === actorKey && String(row[1] || "").trim() === vehicleId && Number(row[2]) === corteIndex) found.push({ row, rowIndex: index + 2 });
+        const ledger = ensureFeedbackLikesSheet_(), found = [];
+        const ledgerLastRow = ledger.getLastRow();
+        const actorMatches = ledgerLastRow > 1
+            ? ledger.getRange(2, 1, ledgerLastRow - 1, 1).createTextFinder(actorKey).matchCase(true).findAll()
+            : [];
+        actorMatches.forEach(match => {
+            const rowIndex = match.getRow();
+            const row = ledger.getRange(rowIndex, 1, 1, 7).getValues()[0];
+            if (String(row[0] || "").trim() === actorKey &&
+                String(row[1] || "").trim() === vehicleId && Number(row[2]) === corteIndex) {
+                found.push({ row, rowIndex });
+            }
         });
         if (found.length > 1) throw new Error("El like tiene registros duplicados en FeedbackLikes; requiere revisión.");
         const counterCell = cuts.getRange(vehicle.rowIndex, utilCol);
