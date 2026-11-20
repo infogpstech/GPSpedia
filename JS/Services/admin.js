@@ -10895,6 +10895,7 @@ function getReplacedImageRecordIdentity_(row,headers,requireVisualUrl){
 }
 function isKnownReplacedImageStatus_(type,status){
     const allowed=type==="reemplazada"?["historica","restablecida","en_papelera","requiere_revision","cancelada","en_uso","eliminacion_pendiente","eliminada"]:
+        type==="candidata_aporte"?["requiere_revision","cancelada","en_uso"]:
         ["sin_uso_detectado","en_papelera","no_confirmada_en_ultima_auditoria","requiere_revision","cancelada","eliminacion_pendiente","eliminada","en_uso"];
     return allowed.includes(status);
 }
@@ -11557,9 +11558,182 @@ function handleGetDriveStorage(payload, logMessage) {
     };
 }
 
+function getContributionCandidateImageUrl_(payload) {
+    if (!payload || typeof payload !== "object") return "";
+    const keys = ["image", "imageUrl", "imgCorte1", "imgApertura", "imgCableAlimen", "imgCableAlimen2", "imgCableAlimen3"];
+    for (const key of keys) {
+        const value = String(payload[key] || "").trim();
+        if (value) return value;
+    }
+    return "";
+}
+
+function getContributionCandidateInventoryId_(eventId) {
+    const clean = String(eventId || "").trim().replace(/[^A-Za-z0-9_-]/g, "_");
+    if (!/^EV-[A-Za-z0-9_-]{8,100}$/.test(clean)) throw new Error("eventId de candidato no válido para inventario.");
+    return "CAND-" + clean;
+}
+
+function syncContributionCandidateImageInventory_(currentCandidates) {
+    const spreadsheet = getSpreadsheet();
+    const inventory = spreadsheet.getSheetByName(SHEET_NAMES.IMAGENES_REEMPLAZADAS);
+    if (!inventory) return { status: "not_initialized", created: 0, updated: 0, skipped: 0 };
+    const readSchema = getReplacedImagesReadSchema_();
+    if (readSchema.missingHeaders.length) {
+        return { status: "schema_incomplete", created: 0, updated: 0, skipped: 0, missingHeaders: readSchema.missingHeaders };
+    }
+
+    const ledger = spreadsheet.getSheetByName(ADMIN_VEHICLE_CONTRIBUTIONS_SHEET_NAME_);
+    if (!ledger || ledger.getLastRow() < 2) return { status: "no_contributions", created: 0, updated: 0, skipped: 0 };
+    const ledgerRows = ledger.getRange(2, 1, ledger.getLastRow() - 1, ADMIN_VEHICLE_CONTRIBUTIONS_HEADERS_.length).getValues();
+    const eventsById = new Map(), resolutionsByTarget = new Map();
+    ledgerRows.forEach(row => {
+        const eventId = String(row[0] || "").trim();
+        const kind = String(row[4] || "").trim().toLowerCase();
+        if (eventId) eventsById.set(eventId, row);
+        const targetId = String(row[10] || "").trim();
+        const status = String(row[9] || "").trim().toLowerCase();
+        if (targetId && ["accepted", "retracted"].includes(status) && ["cut", "opening", "feed"].includes(kind)) {
+            if (!resolutionsByTarget.has(targetId)) resolutionsByTarget.set(targetId, []);
+            let payload = {};
+            try { payload = JSON.parse(String(row[5] || "{}")); } catch (error) {}
+            resolutionsByTarget.get(targetId).push({ status, payload });
+        }
+    });
+
+    const records = new Map();
+    (Array.isArray(currentCandidates) ? currentCandidates : []).forEach(candidate => {
+        const eventId = String(candidate && candidate.eventId || "").trim();
+        if (!eventId || !eventsById.has(eventId)) return;
+        records.set(eventId, {
+            eventRow: eventsById.get(eventId), status: "requiere_revision",
+            vehicleLabel: String(candidate.vehicleLabel || "Vehículo " + candidate.vehicleId)
+        });
+    });
+    resolutionsByTarget.forEach((resolutions, targetEventId) => {
+        const targetRow = eventsById.get(targetEventId);
+        if (!targetRow) return;
+        let status = "requiere_revision";
+        if (resolutions.length === 1) {
+            const resolution = resolutions[0];
+            let originalPayload = {};
+            try { originalPayload = JSON.parse(String(targetRow[5] || "{}")); } catch (error) {}
+            const originalImage = getContributionCandidateImageUrl_(originalPayload);
+            const resolvedImage = getContributionCandidateImageUrl_(resolution.payload);
+            status = resolution.status === "retracted" || (resolvedImage && originalImage && resolvedImage !== originalImage)
+                ? "cancelada" : "en_uso";
+        }
+        records.set(targetEventId, {
+            eventRow: targetRow, status,
+            vehicleLabel: "Vehículo " + String(targetRow[2] || "")
+        });
+    });
+
+    const result = { status: "success", created: 0, updated: 0, skipped: 0, errors: [] };
+    withReplacedImagesSchemaLock_(function() {
+        const sheet = spreadsheet.getSheetByName(SHEET_NAMES.IMAGENES_REEMPLAZADAS);
+        if (!sheet) { result.status = "not_initialized"; return; }
+        const headers = ensureReplacedImagesInventoryColumns(sheet);
+        const column = name => headers.indexOf(name);
+        const existingRows = sheet.getDataRange().getValues();
+        const rowById = new Map();
+        for (let i = 1; i < existingRows.length; i++) {
+            const id = String(existingRows[i][0] || "").trim();
+            if (id && !rowById.has(id)) rowById.set(id, { rowNumber: i + 1, values: existingRows[i] });
+        }
+        const appendRows = [];
+        records.forEach((record, eventId) => {
+            const event = record.eventRow;
+            const kind = String(event[4] || "").trim().toLowerCase();
+            if (!["cut", "opening", "feed"].includes(kind)) { result.skipped++; return; }
+            let payload = {};
+            try { payload = JSON.parse(String(event[5] || "{}")); } catch (error) {
+                result.errors.push({ eventId, message: "Payload de candidato no es JSON válido." }); return;
+            }
+            const imageUrl = getContributionCandidateImageUrl_(payload);
+            const ids = extractDriveFileIds(imageUrl);
+            if (ids.length !== 1) { result.skipped++; return; }
+            const fileId = ids[0], inventoryId = getContributionCandidateInventoryId_(eventId);
+            let file = null, fileName = "Imagen candidata " + fileId, mimeType = "image/unknown";
+            let createdAt = "", folderPath = "Ubicación no verificada", organizationError = "";
+            try {
+                file = DriveApp.getFileById(fileId);
+                fileName = file.getName();
+                mimeType = String(file.getMimeType() || "");
+                createdAt = file.getDateCreated();
+                const parents = file.getParents(), names = [];
+                while (parents.hasNext()) names.push(parents.next().getName());
+                if (names.length) folderPath = names.join(" | ");
+                if (!mimeType.startsWith("image/")) organizationError = "El archivo asociado al candidato no conserva MIME de imagen.";
+                if (file.isTrashed()) organizationError = "El archivo candidato está en la papelera de Drive.";
+            } catch (error) {
+                organizationError = String(error && error.message || error);
+            }
+
+            const row = new Array(headers.length).fill("");
+            row[0] = inventoryId;
+            row[1] = String(event[8] || new Date().toISOString());
+            row[2] = "aporte_candidato";
+            row[3] = String(event[2] || "");
+            row[4] = kind;
+            row[5] = fileId;
+            row[6] = fileName;
+            row[7] = imageUrl;
+            row[8] = "";
+            row[9] = record.vehicleLabel;
+            row[10] = record.status;
+            const set = (name, value) => { const index = column(name); if (index >= 0) row[index] = value; };
+            set("origen_registro", "aporte_vehiculo");
+            set("tipo_mime", mimeType);
+            set("ubicacion_original", folderPath);
+            set("fecha_creacion_drive", createdAt);
+            set("fecha_deteccion", new Date());
+            set("url_visualizacion", "https://lh3.googleusercontent.com/d/" + fileId);
+            set("ubicacion_actual", folderPath);
+            set("ultima_auditoria_id", eventId);
+            set("tipo_registro", "candidata_aporte");
+            set("estado_organizacion", "en_carpeta_vehiculo");
+            set("error_organizacion", organizationError);
+            set("fecha_organizacion", new Date());
+            set("ultima_operacion_inventario_id", String(event[1] || eventId));
+            set("resultado_inventario", "candidato_registrado");
+            set("detalle_resultado_inventario", "Imagen asociada a un aporte de corte/apertura/alimentación para revisión ADMIN.");
+
+            const existing = rowById.get(inventoryId);
+            if (existing) {
+                const currentStatus = String(existing.values[10] || "").trim();
+                if (currentStatus !== record.status && currentStatus === "requiere_revision") {
+                    sheet.getRange(existing.rowNumber, 11).setValue(record.status);
+                    result.updated++;
+                } else {
+                    result.skipped++;
+                }
+            } else {
+                appendRows.push(row);
+                result.created++;
+            }
+        });
+        if (appendRows.length) {
+            const startRow = sheet.getLastRow() + 1;
+            sheet.getRange(startRow, 1, appendRows.length, headers.length).setValues(appendRows);
+        }
+        SpreadsheetApp.flush();
+    });
+    return result;
+}
+
 function handleGetReplacedImages(payload, logMessage) {
     const schema = getReplacedImagesReadSchema_();
     if (!schema.sheet) return { status: "success", data: [], review: [], schemaStatus: "not_initialized", missingHeaders: schema.missingHeaders, referenceCheckStatus: "unavailable", duplicateDriveIdCount: 0 };
+    let candidateInventorySync = { status: "skipped", created: 0, updated: 0, skipped: 0 };
+    if (!schema.missingHeaders.length) {
+        try {
+            const candidateResponse = handleGetVehicleContributionCandidates_({ limit: 500 });
+            candidateInventorySync = syncContributionCandidateImageInventory_(candidateResponse.candidates);
+        } catch (candidateSyncError) {
+            candidateInventorySync = { status: "error", message: String(candidateSyncError && candidateSyncError.message || candidateSyncError) };
+        }
+    }
     const headers = schema.headers, rows = schema.sheet.getDataRange().getValues();
     const columnIndex = name => headers.indexOf(name), valueAt = (row, name) => { const index = columnIndex(name); return index >= 0 ? row[index] : ""; };
     let referenceSnapshot = null, referenceCheckStatus = "unavailable";
@@ -11619,8 +11793,10 @@ function handleGetReplacedImages(payload, logMessage) {
     if (referenceCheckStatus !== "verified") warnings.push("No se pudo confirmar completamente el estado de referencias activas en todas las hojas del Spreadsheet.");
     if (duplicateDriveGroups.length) warnings.push("Se detectaron " + duplicateDriveGroups.length + " IDs de Drive duplicados. Las filas afectadas no habilitan acciones; usa el enlace de reconciliación para revisar la hoja.");
     logMessage && logMessage("Historial e inventario de imágenes", "Se consultaron " + data.length + " registros válidos y se enviaron " + review.length + " filas a revisión; " + duplicateDriveGroups.length + " grupos de Drive duplicados.");
+    if (candidateInventorySync.status === "error") warnings.push("No se pudo sincronizar el inventario de imágenes candidatas: " + candidateInventorySync.message);
     return { status: "success", data: data.reverse(), review, schemaStatus: schema.missingHeaders.length ? "migration_required" : "ready",
-        missingHeaders: schema.missingHeaders, referenceCheckStatus, warnings, duplicateDriveIdCount: duplicateDriveGroups.length };
+        missingHeaders: schema.missingHeaders, referenceCheckStatus, warnings, duplicateDriveIdCount: duplicateDriveGroups.length,
+        candidateInventorySync };
 }
 function getReplacedImageRecordType(row, headers) {
     const typeIndex = headers.indexOf("tipo_registro");
@@ -11630,8 +11806,11 @@ function getReplacedImageRecordType(row, headers) {
     const type = storedType || (origin === "auditoria_drive" ? "sin_uso_detectado" : "reemplazada");
     const contentType = String(row[2] || "");
 
-    if (!["sin_uso_detectado", "reemplazada"].includes(type)) {
+    if (!["sin_uso_detectado", "reemplazada", "candidata_aporte"].includes(type)) {
         throw new Error("La clasificación del registro de imagen no es válida.");
+    }
+    if (type === "candidata_aporte" && (origin !== "aporte_vehiculo" || contentType !== "aporte_candidato")) {
+        throw new Error("La clasificación de candidato no coincide con el origen y tipo de contenido registrados.");
     }
     if (type === "sin_uso_detectado" && (origin !== "auditoria_drive" || contentType !== "inventario_sin_uso")) {
         throw new Error("La clasificación de inventario no coincide con el origen y tipo de contenido registrados.");
