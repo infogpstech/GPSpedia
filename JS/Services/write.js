@@ -2351,38 +2351,59 @@ function appendVehicleContributionEvent_(options) {
 }
 
 function getImageUploadReferences_(fileId) {
-    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
-    if (!sheet || sheet.getLastRow() < 2) return [];
-    const fields = [
-        ["imagenVehiculo", COLS_CORTES.imagenVehiculo],
-        ["imgCorte1", COLS_CORTES.imgCorte1],
-        ["imgCorte2", COLS_CORTES.imgCorte2],
-        ["imgCorte3", COLS_CORTES.imgCorte3],
-        ["imgApertura", COLS_CORTES.imgApertura],
-        ["imgCableAlimen", COLS_CORTES.imgCableAlimen],
-        ["imgCableAlimen2", COLS_CORTES.imgCableAlimen2],
-        ["imgCableAlimen3", COLS_CORTES.imgCableAlimen3]
-    ].filter(item => Number(item[1]) > 0);
-    const lastRow = sheet.getLastRow();
-    const lastColumn = sheet.getLastColumn();
-    const rows = sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues();
+    const spreadsheet = getSpreadsheet();
     const references = [];
-    rows.forEach((row, offset) => {
-        fields.forEach(field => {
-            if (getImageUploadFileId_(row[field[1] - 1]) === fileId) {
-                references.push({
-                    sheet: SHEET_NAMES.CORTES,
-                    row: offset + 2,
-                    field: field[0],
-                    column: field[1],
-                    url: String(row[field[1] - 1] || "")
-                });
-            }
+    const sheet = spreadsheet.getSheetByName(SHEET_NAMES.CORTES);
+    if (sheet && sheet.getLastRow() >= 2) {
+        const fields = [
+            ["imagenVehiculo", COLS_CORTES.imagenVehiculo],
+            ["imgCorte1", COLS_CORTES.imgCorte1],
+            ["imgCorte2", COLS_CORTES.imgCorte2],
+            ["imgCorte3", COLS_CORTES.imgCorte3],
+            ["imgApertura", COLS_CORTES.imgApertura],
+            ["imgCableAlimen", COLS_CORTES.imgCableAlimen],
+            ["imgCableAlimen2", COLS_CORTES.imgCableAlimen2],
+            ["imgCableAlimen3", COLS_CORTES.imgCableAlimen3]
+        ].filter(item => Number(item[1]) > 0);
+        const lastRow = sheet.getLastRow();
+        const lastColumn = sheet.getLastColumn();
+        const rows = sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues();
+        rows.forEach((row, offset) => {
+            fields.forEach(field => {
+                if (getImageUploadFileId_(row[field[1] - 1]) === fileId) {
+                    references.push({
+                        sheet: SHEET_NAMES.CORTES,
+                        row: offset + 2,
+                        field: field[0],
+                        column: field[1],
+                        url: String(row[field[1] - 1] || "")
+                    });
+                }
+            });
         });
-    });
+    }
+
+    const contributions = spreadsheet.getSheetByName(WRITE_VEHICLE_CONTRIBUTIONS_SHEET_NAME_);
+    if (contributions && contributions.getLastRow() >= 2 &&
+        contributions.getLastColumn() >= WRITE_VEHICLE_CONTRIBUTIONS_HEADERS_.length) {
+        const rows = contributions.getRange(2, 1, contributions.getLastRow() - 1,
+            WRITE_VEHICLE_CONTRIBUTIONS_HEADERS_.length).getValues();
+        rows.forEach((row, offset) => {
+            let payload = null;
+            try { payload = JSON.parse(String(row[5] || "{}")); } catch (error) { payload = null; }
+            if (!payload || typeof payload !== "object") return;
+            const image = String(payload.image || payload.imagenVehiculo || "").trim();
+            if (getImageUploadFileId_(image) !== fileId) return;
+            references.push({
+                sheet: WRITE_VEHICLE_CONTRIBUTIONS_SHEET_NAME_,
+                row: offset + 2,
+                field: String(row[4] || "contribution") + ".image",
+                url: image
+            });
+        });
+    }
     return references;
 }
-
 function markImageUploadLinkedWithShortLedgerLock_(imageUrl) {
     const fileId = getImageUploadFileId_(imageUrl);
     if (!fileId) return false;
@@ -2427,7 +2448,7 @@ function markImageUploadLinkedWithShortLedgerLock_(imageUrl) {
             values[6] = fileId;
             values[7] = "https://drive.google.com/uc?export=view&id=" + fileId;
             values[8] = "linked";
-            values[9] = SHEET_NAMES.CORTES;
+            values[9] = references[0].sheet;
             values[10] = references[0].row;
             values[11] = references.map(item => item.field).join(",");
             values[12] = JSON.stringify(references);
