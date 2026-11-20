@@ -16,7 +16,7 @@ import { confirmValidationBeforeCache } from './validationSubmission.js';
 import { startValidationBannerForModal } from './validationBannerLifecycle.js';
 import { applyConfirmedLikeState } from './likeState.js';
 import { openYouTubeUploadModal } from './youtubeUpload.js';
-import { shouldAutoOpenVehicleDetail } from './search-utils.js';
+import { shouldAutoOpenVehicleDetail, groupVehicleSearchResults, resolveVehicleNavigation } from './search-utils.js';
 import { buildVehicleShareUrl, shareVehicleLink } from './share-utils.js';
 import { pushNavigationState, replaceNavigationState, navigateBackToState, pickNavigationState, navigationHistoryStateKey } from './navigationHistory.js';
 import { thumbnailObjectUrls } from './imageObjectUrlCache.js';
@@ -1453,54 +1453,19 @@ export function mostrarModelosPorMarca(marca) {
  * @param {string} marca - La marca del vehículo.
  * @param {string} modelo - El modelo del vehículo.
  */
+function resolverNavegacionModelo_(categoria, marca, modelo, versionSeleccionada = null) {
+    const { catalogData } = getState();
+    const cortes = Array.isArray(catalogData && catalogData.cortes) ? catalogData.cortes : [];
+    const filas = cortes.filter(item => item.categoria === categoria && item.marca === marca && item.modelo === modelo);
+    const decision = resolveVehicleNavigation(filas, versionSeleccionada);
+    if (decision.step === 'equipment') mostrarVersionesEquipamiento(categoria, marca, modelo);
+    else if (decision.step === 'ignition') mostrarTiposEncendido(categoria, marca, decision.version, modelo);
+    else if (decision.step === 'detail') mostrarDetalleModal(decision.records[0]);
+    else if (decision.records.length) mostrarVersiones(decision.records, categoria, marca, modelo);
+    else showNoResultsMessage(`Datos para ${marca} ${modelo}`);
+}
 function navegarADetallesDeModelo(categoria, marca, modelo) {
-    const { catalogData, navigationState } = getState();
-    const { cortes } = catalogData;
-    const origin = (navigationState && navigationState.origin) || "categoria";
-
-    // Comentario: Lógica de navegación refactorizada para omitir pantallas de selección con una sola opción.
-    // 1. Obtener todos los cortes para el modelo específico.
-    let vehiculosFiltrados = cortes.filter(item =>
-        item.categoria === categoria &&
-        item.marca === marca &&
-        item.modelo === modelo
-    );
-
-    // 2. Analizar Versiones de Equipamiento.
-    const versionesDeEquipamiento = [...new Set(vehiculosFiltrados.map(v => v.versionesAplicables).filter(Boolean))];
-
-    if (versionesDeEquipamiento.length === 1) {
-        // Omitir pantalla: Si hay una sola versión, se filtra el conjunto de datos y se continúa el análisis.
-        vehiculosFiltrados = vehiculosFiltrados.filter(v => v.versionesAplicables === versionesDeEquipamiento[0]);
-    } else if (versionesDeEquipamiento.length > 1) {
-        // Detener: Si hay múltiples versiones, se muestra la pantalla de selección y termina el flujo.
-        mostrarVersionesEquipamiento(categoria, marca, modelo);
-        return;
-    }
-    // Si hay 0 versiones, se continúa con el conjunto de datos original.
-
-    // 3. Analizar Tipos de Encendido sobre el conjunto de datos ya (potencialmente) filtrado.
-    const tiposEncendido = [...new Set(vehiculosFiltrados.map(v => v.tipoEncendido).filter(Boolean))];
-
-    if (tiposEncendido.length === 1) {
-        // Omitir pantalla: Si hay un solo tipo de encendido, se filtra y se navega directamente a la pantalla de Años.
-        vehiculosFiltrados = vehiculosFiltrados.filter(v => v.tipoEncendido === tiposEncendido[0]);
-        mostrarVersiones(vehiculosFiltrados, categoria, marca, modelo);
-        return;
-    } else if (tiposEncendido.length > 1) {
-        // Detener: Si hay múltiples tipos, se muestra la pantalla de selección y termina el flujo.
-        const versionEquipamiento = versionesDeEquipamiento.length === 1 ? versionesDeEquipamiento[0] : null;
-        mostrarTiposEncendido(categoria, marca, versionEquipamiento, modelo);
-        return;
-    }
-
-    // 4. Fallback: Si no hay ni versiones ni tipos de encendido, pero sí hay datos, se muestra la pantalla de Años.
-    if (vehiculosFiltrados.length > 0) {
-        mostrarVersiones(vehiculosFiltrados, categoria, marca, modelo);
-    } else {
-        // Caso de seguridad: no debería ocurrir si se hizo clic en un modelo existente.
-        showNoResultsMessage(`Datos para ${marca} ${modelo}`);
-    }
+    resolverNavegacionModelo_(categoria, marca, modelo);
 }
 
 export function mostrarModelos(categoria, marca, versionEquipamiento = null) {
@@ -1611,6 +1576,12 @@ export function mostrarTiposEncendido(categoria, marca, versionEquipamiento, mod
 }
 
 export function mostrarVersiones(filas, categoria, marca, modelo) {
+    const rangeDecision = resolveVehicleNavigation(filas);
+    const rangeGroups = rangeDecision.ranges || [];
+    if (rangeDecision.step === 'detail') {
+        mostrarDetalleModal(rangeDecision.records[0]);
+        return;
+    }
     const { navigationState } = getState();
     const currentNavigationState = navigationState || {};
     const isSameView = currentNavigationState.level === 'versiones' &&
@@ -1632,10 +1603,16 @@ export function mostrarVersiones(filas, categoria, marca, modelo) {
     cont.innerHTML = `<h4>Años de ${modelo}</h4>`;
     renderNavigationBackButton(cont, backTarget);
     const grid = document.createElement("div"); grid.className = "grid";
-    filas.forEach(item => {
+    rangeGroups.forEach(group => group.records.forEach(item => {
         const card = crearCardVehiculo(item);
+        if (group.records.length > 1) {
+            const warning = document.createElement('div');
+            warning.className = 'search-range-ambiguity';
+            warning.textContent = 'Registro duplicado · ' + (item.id || 'ID no disponible');
+            card.appendChild(warning);
+        }
         grid.appendChild(card);
-    });
+    }));
     cont.appendChild(grid);
 }
 
@@ -1689,7 +1666,7 @@ export function mostrarVersionesEquipamiento(categoria, marca, modelo) {
         card.className = "card";
 
         // Comentario CORREGIDO: Al hacer clic, se filtran los vehículos de esta versión y se avanza a la pantalla de Años.
-        card.onclick = () => mostrarVersiones(vehiculosDeVersion, categoria, marca, modelo);
+        card.onclick = () => resolverNavegacionModelo_(categoria, marca, modelo, version);
 
         const img = document.createElement("img");
         setOptimizedImage(img, ejemplo?.imagenVehiculo, IMG_SIZE_SMALL);
@@ -2112,7 +2089,7 @@ function showValidationBanner(item, isOldModel) {
  */
 /* TAREA 7 (B06): DISTINCIÓN ENTRE BÚSQUEDA ACTIVA Y RESTAURACIÓN DEL HISTORIAL CON AUTO-OPEN */
 // --- NUEVA FUNCIÓN UNIFICADA PARA RENDERIZAR RESULTADOS DE BÚSQUEDA ---
-export function mostrarResultadosDeBusqueda({ type, query, results }, autoOpen = true) {
+export function mostrarResultadosDeBusqueda({ type, query, results }, autoOpen = false) {
     const cont = document.getElementById("contenido");
     // CORRECCIÓN: Se elimina el botón "Volver" de esta vista. La página de resultados
     // es el nivel superior del flujo de búsqueda y no debe tener un botón para regresar.
@@ -2152,24 +2129,42 @@ export function mostrarResultadosDeBusqueda({ type, query, results }, autoOpen =
             grid.appendChild(card);
         });
     } else {
-        // Cada registro conserva su identidad y su destino de sección; no se colapsan
-        // Tutoriales/Relay/PyS por títulos o configuraciones que pueden repetirse.
-        results.forEach(item => {
-            const card = crearCardVehiculo(item, false, results);
-            grid.appendChild(card);
+        groupVehicleSearchResults(results).forEach(item => {
+            if (item && item._searchGroupType === 'vehicleModel') {
+                const example = item.records.find(row => row.imagenVehiculo) || item.records[0] || {};
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.setAttribute('data-search-model', 'true');
+                card.onclick = () => navegarADetallesDeModelo(item.categoria, item.marca, item.modelo);
+                const img = document.createElement('img');
+                img.className = 'card-img-top';
+                img.alt = [item.marca, item.modelo].filter(Boolean).join(' ');
+                img.loading = 'lazy';
+                setOptimizedImage(img, example.imagenVehiculo || example.Imagen, IMG_SIZE_SMALL);
+                card.appendChild(img);
+                const overlay = document.createElement('div');
+                overlay.className = 'overlay';
+                overlay.innerHTML = '<div class="overlay-text-primary"></div><div class="overlay-text-secondary"></div>';
+                overlay.querySelector('.overlay-text-primary').textContent = [item.marca, item.modelo].filter(Boolean).join(' ');
+                const combinations = new Set(item.records.map(row => [row.versionesAplicables,row.tipoEncendido,row.anoDesde,row.anoHasta].map(v => String(v || '')).join('|')));
+                overlay.querySelector('.overlay-text-secondary').textContent = combinations.size + (combinations.size === 1 ? ' configuración disponible' : ' configuraciones disponibles');
+                card.appendChild(overlay);
+                grid.appendChild(card);
+            } else grid.appendChild(crearCardVehiculo(item));
         });
     }
 
     cont.appendChild(grid);
 
-    // Solo una coincidencia de Corte puede abrir automáticamente el detalle de vehículo.
-    if (autoOpen && !hasAmbiguousVinChoices && type === 'modelo' && shouldAutoOpenVehicleDetail(results)) {
-        const searchInput = document.getElementById('searchInput');
-        if (searchInput) searchInput.blur();
-
-        setTimeout(() => {
-            mostrarDetalleModal(results[0]);
-        }, 150);
+    // La apertura automática se reserva exclusivamente a VIN inequívoco.
+    if (autoOpen && !hasAmbiguousVinChoices && type === 'modelo' && Array.isArray(results) && results.length === 1) {
+        const result = results[0];
+        const vehicle = result && result._searchGroupType === 'vehicleModel' ? result.records[0] : result;
+        if (vehicle && vehicle._sectionType === 'corte' && !vehicle._vinAmbiguousChoice && shouldAutoOpenVehicleDetail([vehicle])) {
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) searchInput.blur();
+            setTimeout(() => mostrarDetalleModal(vehicle), 150);
+        }
     }
 }
 
