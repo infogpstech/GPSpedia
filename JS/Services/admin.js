@@ -10337,7 +10337,8 @@ function handleRecoverReplacedImage(payload, logMessage) {
         const sheetRep=getOrCreateReplacedImagesSheet(),inventoryHeaders=ensureReplacedImagesInventoryColumns(sheetRep);
         const existing=findReplacedImageRecordById(sheetRep,idReemplazo);
         if(!existing)throw new Error("Registro de imagen reemplazada no encontrado.");
-        const repRowIndex=existing.rowIndex,repData=existing.values,recordType=getReplacedImageRecordType(repData,inventoryHeaders);
+        let repRowIndex=existing.rowIndex,repData=existing.values;
+        const recordType=getReplacedImageRecordType(repData,inventoryHeaders);
         if(recordType!=="reemplazada")throw new Error("Esta imagen no tiene una relación de reemplazo que permita restaurarla.");
         const previousHistoryStatus=String(repData[10]||"historica").trim();
         if(!["historica","restablecida"].includes(previousHistoryStatus))throw new Error("El estado «"+previousHistoryStatus+"» no permite restaurar automáticamente. Requiere una revisión o acción específica.");
@@ -10347,11 +10348,35 @@ function handleRecoverReplacedImage(payload, logMessage) {
         const imageFields=new Set(["imagenVehiculo","imgCorte1","imgCorte2","imgCorte3","imgApertura","imgCableAlimen","imgCableAlimen2","imgCableAlimen3"]);
         if(!registroId||!imageFields.has(campo)||!COLS_CORTES[campo])throw new Error("El registro histórico no identifica un vehículo y un campo de imagen admitidos.");
         const driveId=getReplacedImageRecordIdentity_(repData,inventoryHeaders,true),urlHistorica=String(repData[7]||"").trim();
-        const file=DriveApp.getFileById(driveId);
-        if(!String(file.getMimeType()||"").startsWith("image/"))throw new Error("El archivo histórico no es una imagen y no puede restaurarse.");
-        if(file.isTrashed())throw new Error("El archivo está en papelera pero el historial no está en estado en_papelera. Requiere revisión; no se restaurará automáticamente.");
-        const rootFolder=getCortesRootFolder();
-        if(!isFileInsideCortes(file,rootFolder.getId()))throw new Error("El archivo histórico no pertenece al árbol autorizado de la carpeta «Cortes».");
+        const verifiedRecord = runAdminDriveWorkOutsideScriptLock_(
+            lock,
+            "ADMIN_RECOVER_REPLACED_IMAGE_" + idReemplazo,
+            () => {
+                const file=DriveApp.getFileById(driveId);
+                if(!String(file.getMimeType()||"").startsWith("image/"))throw new Error("El archivo histórico no es una imagen y no puede restaurarse.");
+                if(file.isTrashed())throw new Error("El archivo está en papelera pero el historial no está en estado en_papelera. Requiere revisión; no se restaurará automáticamente.");
+                const rootFolder=getCortesRootFolder();
+                if(!isFileInsideCortes(file,rootFolder.getId()))throw new Error("El archivo histórico no pertenece al árbol autorizado de la carpeta «Cortes».");
+                return {fileId:driveId};
+            },
+            () => {
+                const latestHeaders=ensureReplacedImagesInventoryColumns(sheetRep);
+                const latest=findReplacedImageRecordById(sheetRep,idReemplazo);
+                if(!latest)throw new Error("El registro histórico desapareció durante la verificación Drive; no se modificó Cortes.");
+                const latestRow=latest.values;
+                const latestType=getReplacedImageRecordType(latestRow,latestHeaders);
+                const latestStatus=String(latestRow[10]||"historica").trim();
+                const latestDriveId=getReplacedImageRecordIdentity_(latestRow,latestHeaders,true);
+                if(latestType!==recordType||latestStatus!==previousHistoryStatus||
+                    latestDriveId!==driveId||String(latestRow[7]||"").trim()!==urlHistorica||
+                    String(latestRow[3]||"").trim()!==registroId||String(latestRow[4]||"").trim()!==campo) {
+                    throw new Error("El registro histórico cambió durante la verificación Drive; vuelve a intentar la restauración.");
+                }
+                return latest;
+            }
+        );
+        repRowIndex=verifiedRecord.rowIndex;
+        repData=verifiedRecord.values;
         const cortesSheet=getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
         if(!cortesSheet||cortesSheet.getLastRow()<2)throw new Error("No se pudo localizar la hoja Cortes o no contiene vehículos.");
         const ids=cortesSheet.getRange(2,1,cortesSheet.getLastRow()-1,1).getValues().flat(),vehicleMatches=[];
