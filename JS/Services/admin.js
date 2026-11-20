@@ -7160,7 +7160,7 @@ function handleUploadAdminImage(payload, logMessage) {
                 if (latestLinkedUrl === newImageUrl) {
                     const linkedFileId = String(values[5] || extractDriveFileId(newImageUrl) || "");
                     if (!linkedFileId) throw new Error("La operación figura vinculada, pero no contiene un ID de archivo verificable.");
-                    const linkedDriveCheck = runAdminDriveWorkOutsideScriptLock_(lock, operationId, function() {
+                    const linkedDriveCheck = runAdminContributionDriveWorkOutsideScriptLock_(lock, operationId, function() {
                         let linkedFile = null, reviewReason = "";
                         try { linkedFile = DriveApp.getFileById(linkedFileId); }
                         catch (fileLookupError) {
@@ -7218,7 +7218,7 @@ function handleUploadAdminImage(payload, logMessage) {
                         }
                     }
                     try {
-                        runAdminDriveWorkOutsideScriptLock_(lock, operationId, function() {
+                        runAdminContributionDriveWorkOutsideScriptLock_(lock, operationId, function() {
                             updateAdminImageUploadFileState_(newFile, operationId, contentHash, "linked", false);
                             return true;
                         }, function() {
@@ -7256,7 +7256,7 @@ function handleUploadAdminImage(payload, logMessage) {
         const vehicleInfo = mapRowToObject(rowValues, COLS_CORTES);
         const operationStatus = String(operationRecord.values[9] || "pending");
         const storedFileId = String(operationRecord.values[5] || "").trim();
-        const drivePreparation = runAdminDriveWorkOutsideScriptLock_(lock, operationId, function() {
+        const drivePreparation = runAdminContributionDriveWorkOutsideScriptLock_(lock, operationId, function() {
             const genFolder = findOrCreateVehicleFolder(vehicleInfo);
             let preparedFile = null;
             let created = false;
@@ -7361,7 +7361,7 @@ function handleUploadAdminImage(payload, logMessage) {
             throw new Error("No se pudo verificar la nueva URL en Cortes después de SpreadsheetApp.flush().");
         }
 
-        runAdminDriveWorkOutsideScriptLock_(lock, operationId, function() {
+        runAdminContributionDriveWorkOutsideScriptLock_(lock, operationId, function() {
             if (newFile.getName() !== newFilename) newFile.setName(newFilename);
             updateAdminImageUploadFileState_(newFile, operationId, contentHash, "linked", false);
             return true;
@@ -7460,7 +7460,7 @@ function handleUploadAdminImage(payload, logMessage) {
 
         if (newFile && operationContentHash && compensationReserved) {
             try {
-                runAdminDriveWorkOutsideScriptLock_(lock, operationId, function() {
+                runAdminContributionDriveWorkOutsideScriptLock_(lock, operationId, function() {
                     try {
                         updateAdminImageUploadFileState_(
                             newFile, operationId, operationContentHash,
@@ -7523,7 +7523,7 @@ function handleUploadAdminImage(payload, logMessage) {
                 }
                 if (newFile && operationContentHash && compensationReserved) {
                     try {
-                        runAdminDriveWorkOutsideScriptLock_(lock, operationId, function() {
+                        runAdminContributionDriveWorkOutsideScriptLock_(lock, operationId, function() {
                             updateAdminImageUploadFileState_(newFile, operationId, operationContentHash, "requires_review", false);
                             return true;
                         }, function() {
@@ -7609,14 +7609,22 @@ function findNextAvailableCutSlot_(rowValues, vehicleId) {
     }
     return null;
 }
-function runAdminDriveWorkOutsideScriptLock_(lock, opId, operation, revalidate, operationHash) {
+function runAdminDriveWorkOutsideScriptLock_(lock, opId, operation, revalidate, operationHash, lockWaitMs) {
     const cleanOpId = String(opId || "").trim();
     if (!cleanOpId || !lock || typeof lock.hasLock !== "function" || !lock.hasLock()) return operation();
     lock.releaseLock();
     let result, operationError = null;
     try { result = operation(); } catch (error) { operationError = error; }
     let reacquired = false;
-    try { lock.waitLock(2000); reacquired = true; } catch (lockError) { reacquired = false; }
+    try {
+        const waitMs = Math.max(0, Math.min(5000, Number(lockWaitMs) || 0));
+        if (waitMs > 0 && typeof lock.waitLock === "function") {
+            lock.waitLock(waitMs);
+            reacquired = true;
+        } else {
+            reacquired = lock.tryLock(0);
+        }
+    } catch (lockError) { reacquired = false; }
     const retryHint = " Reintenta con opId " + cleanOpId +
         (operationHash ? " y operationHash " + operationHash : "") + ".";
     if (!reacquired) {
@@ -7634,6 +7642,10 @@ function runAdminDriveWorkOutsideScriptLock_(lock, opId, operation, revalidate, 
         throw operationError;
     }
     return typeof revalidate === "function" ? revalidate(result) : result;
+}
+
+function runAdminContributionDriveWorkOutsideScriptLock_(lock, opId, operation, revalidate, operationHash) {
+    return runAdminDriveWorkOutsideScriptLock_(lock, opId, operation, revalidate, operationHash, 2000);
 }
 
 function getAdminRecoveryImageRepairNeeds_(vehicleData, cutData, rowObj, slotIndex) {
@@ -7778,7 +7790,7 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
                 // Si las imágenes ya están completas, no hay trabajo Drive: conservar el lock
                 // y evitar una liberación/reacquisición y una consulta de revalidación innecesarias.
                 if (imageRepairNeeds.vehicle || imageRepairNeeds.cut) {
-                    repairedImages = runAdminDriveWorkOutsideScriptLock_(lock, opId, function() {
+                    repairedImages = runAdminContributionDriveWorkOutsideScriptLock_(lock, opId, function() {
                         let vehicleImageUrl = "", cutImageUrl = "";
                         const needsVehicleImage = imageRepairNeeds.vehicle;
                         const needsCutImage = imageRepairNeeds.cut;
@@ -7957,7 +7969,7 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
         savedSlotIndex = cutSlotIndex;
         if (opId) recordOpId(opId, vehicleId, cutSlotIndex, formattedDate, "pending", operationHash, idempotencyEntriesSnapshot);
 
-        const imageUrl = runAdminDriveWorkOutsideScriptLock_(lock, opId, function() {
+        const imageUrl = runAdminContributionDriveWorkOutsideScriptLock_(lock, opId, function() {
             if (!cutData.imgCorte1) return "";
             const folder = findOrCreateVehicleFolder(vehicleInfo);
             const cutImageInfo = Object.assign({}, vehicleInfo);
@@ -8062,7 +8074,7 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
         const canonicalVehicleInfo = Object.assign({}, newVehicleData, {
             anoDesde: anoDesde, anoHasta: anoHasta, tipoCorte1: cutData.tipoCorte1
         });
-        const uploaded = runAdminDriveWorkOutsideScriptLock_(lock, opId, function() {
+        const uploaded = runAdminContributionDriveWorkOutsideScriptLock_(lock, opId, function() {
             const folder = findOrCreateVehicleFolder(canonicalVehicleInfo);
             let vehicleImageUrl = "", cutImageUrl = "";
             if (newVehicleData.imagenVehiculo) {
