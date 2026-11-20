@@ -33,7 +33,7 @@ for (const field of ["tipoCorte", "ubicacionCorte", "colorCableCorte", "configRe
 }
 assert.match(existing, /recordOpId\(opId, vehicleId, cutSlotIndex, formattedDate, "pending"/);
 assert.ok(existing.indexOf("recordOpId(opId, vehicleId, cutSlotIndex, formattedDate, \"pending\"") <
-    existing.indexOf("runAdminDriveWorkOutsideScriptLock_"), "La reserva idempotente debe mantenerse antes de Drive");
+    existing.indexOf("runAdminContributionDriveWorkOutsideScriptLock_"), "La reserva idempotente debe mantenerse antes de Drive");
 assert.match(existing, /SpreadsheetApp\.flush\(\)/);
 assert.match(existing, /recordOpId\(opId, vehicleId, cutSlotIndex, formattedDate, "completed"/);
 console.log("AdminCutSlotBatchWrites: 1/1 PASS — cinco campos contiguos en una escritura por lote; testigo, colaborador e idempotencia preservados");
