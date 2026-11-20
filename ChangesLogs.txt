@@ -1286,3 +1286,6 @@ Se implementó agrupación de resultados de Cortes por categoría/marca/modelo, 
 
 
 [2026-11-20 · cierre de reconciliación y cobertura de preview] Se reconciliaron Tareas_Activas/checkpoint con el estado real; se añadieron pruebas puras para el constructor de destinos del organizador (8/8). HEAD documental previo `f66108109a43acc304e4749c056ca81eb0764423`: CI `44768516802` SUCCESS, 221 suites, 2,743 pruebas, 0 fallos; health `44768516938` y Pages `44768516088` SUCCESS. El acceso Beta no está disponible: Google Drive connector deshabilitado por administración y no se encontró integración Apps Script. Safe Apply permanece sin implementar hasta aprobar preview real. Sin despliegues ni cambios Drive/Spreadsheet.
+
+
+[2026-11-20 · Safe Apply organizador — primitivas de preparación] Se añadieron a `JS/Services/admin.js` funciones puras para congelar manifiestos de aplicación con confirmación/digest/referencias verificadas, clasificar reintentos idempotentes y generar rollback inverso sujeto a verificación del destino. Se agregó `JS/Tests/CortesImageOrganizerApplyPlan.mjs` (14 escenarios) y se registró en `JS/Tests/RunServiceTests.mjs`. No se añadió todavía un ejecutor de mutaciones Drive ni registro durable; no se realizaron operaciones Drive/Spreadsheet ni despliegues.
