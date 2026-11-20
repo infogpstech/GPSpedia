@@ -752,3 +752,13 @@ Severidad: alta. Estado: CONFIRMADO; corrección pendiente como GP-PERF-ADMIN-CU
 - Matriz de despliegue existente: cambio interno compatible Coordinator → solo Coordinator; lógica propia → servicio afectado; configuración central → ScriptProperties Coordinator; cambios de SharedMutationClient → consumidores afectados.
 - Inspección estática; sin mediciones de producción ni consultas a servicios remotos.
 ================================================================================
+
+
+================================================================================
+2026-11-20 — HALLAZGO P0: REEMPLAZO ADMIN DE IMÁGENES AÚN ESCRIBE DIRECTAMENTE EN CORTES
+Ubicación: JS/Services/admin.js, handleUploadAdminImage (línea 7088 en HEAD 04651b93b7976846ec4a02c0bd3a04fc43f3fd93), y su ruta uploadAdminImage.
+Evidencia: el handler adquiere LockService.getScriptLock() mediante waitLock(2000), mantiene el lock durante la reserva/confirmación de AdminImageUploads y el ciclo de compensación; después ejecuta activeCell.setValue(newImageUrl) y verifica la escritura directa en la hoja Cortes. No delega en appendAdminVehicleFieldUpdate_ ni crea un evento vehicle_update en AportesVehiculo. La ruta de edición de texto/VIN ya utiliza versionado append-only por campo y CATALOG proyecta esas versiones.
+Impacto: el reemplazo de imagen puede saltarse el versionado por campo, competir con una edición concurrente y dejar el valor materializado fuera de la proyección de eventos. También conserva un ledger mutable y una espera global en un flujo de edición in-modal.
+Criterio de corrección: adaptar uploadAdminImage para usar ImageUploadEvents como journal de archivo y AportesVehiculo como fuente append-only del cambio de campo; capturar expectedCurrentValue/expectedSourceEventId, anexar el evento vehicle_update antes de marcar el archivo linked, detectar conflictos sin sobrescribir el campo, conservar historial y compensación recuperable, y retirar la dependencia del lock global/ledger mutable para operaciones ordinarias. Cubrir reintentos, pérdida de respuesta, fallos parciales Drive/journal, dos vehículos distintos y dos cambios concurrentes del mismo campo.
+Severidad: alta (integridad y consistencia de datos). Estado: CONFIRMADO; corrección local pendiente. No se ejecutó contra servicios ni datos productivos.
+================================================================================
