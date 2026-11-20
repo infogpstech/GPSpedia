@@ -10813,6 +10813,7 @@ function handleMarkReplacedImageInUse(payload, logMessage, developerContext) {
     const lock = LockService.getScriptLock();
     try { lock.waitLock(30000); }
     catch (error) { throw new Error("No se pudo bloquear la protección de la imagen. Intenta nuevamente."); }
+    let postCommitActivity = null, result = null;
     try {
         const sheet = getOrCreateReplacedImagesSheet();
         const headers = ensureReplacedImagesInventoryColumns(sheet);
@@ -10821,19 +10822,45 @@ function handleMarkReplacedImageInUse(payload, logMessage, developerContext) {
         const row = existing.values, type = getReplacedImageRecordType(row, headers);
         if (String(row[10] || "") !== "requiere_revision") throw new Error("Solo se pueden marcar en uso los registros que requieren revisión.");
         const driveId = getReplacedImageRecordIdentity_(row, headers, true);
-        const file = DriveApp.getFileById(driveId);
-        if (file.isTrashed()) throw new Error("La imagen está en papelera. Restáurala antes de marcarla en uso.");
-        if (!String(file.getMimeType() || "").startsWith("image/")) throw new Error("El archivo asociado ya no es una imagen.");
-        const root = getCortesRootFolder();
-        getSingleParentFolderInsideCortes(file, root.getId());
-        setReplacedImageHistoryStatusVerified_(sheet, existing.rowIndex, "en_uso");
-        recordImageAdministrationActivity(developerContext, "admin_image_mark_in_use", id,
-            "Imagen " + file.getName() + " marcada manualmente en uso; se excluye de organización y eliminación automáticas.");
+        const verified = runAdminDriveWorkOutsideScriptLock_(
+            lock,
+            "ADMIN_MARK_IMAGE_IN_USE_" + id,
+            () => {
+                const file = DriveApp.getFileById(driveId);
+                if (file.isTrashed()) throw new Error("La imagen está en papelera. Restáurala antes de marcarla en uso.");
+                if (!String(file.getMimeType() || "").startsWith("image/")) throw new Error("El archivo asociado ya no es una imagen.");
+                const root = getCortesRootFolder();
+                getSingleParentFolderInsideCortes(file, root.getId());
+                return { fileName: file.getName() };
+            },
+            () => {
+                const latestHeaders = ensureReplacedImagesInventoryColumns(sheet);
+                const latest = findReplacedImageRecordById(sheet, id);
+                if (!latest) throw new Error("El registro desapareció durante la verificación Drive; no se modificó el historial.");
+                const latestRow = latest.values;
+                if (String(latestRow[10] || "") !== "requiere_revision" ||
+                    getReplacedImageRecordType(latestRow, latestHeaders) !== type ||
+                    getReplacedImageRecordIdentity_(latestRow, latestHeaders, true) !== driveId) {
+                    throw new Error("El registro de imagen cambió durante la verificación Drive; vuelve a intentar.");
+                }
+                return latest;
+            }
+        );
+        setReplacedImageHistoryStatusVerified_(sheet, verified.rowIndex, "en_uso");
+        postCommitActivity = {
+            developerContext, id, fileName: verified.fileName, driveId
+        };
+        result = { status: "success", message: "La imagen quedó marcada en uso y protegida frente a la organización automática." };
+    } finally {
+        if (typeof lock.hasLock !== "function" || lock.hasLock()) lock.releaseLock();
+    }
+    if (postCommitActivity) {
+        recordImageAdministrationActivity(postCommitActivity.developerContext, "admin_image_mark_in_use", postCommitActivity.id,
+            "Imagen " + postCommitActivity.fileName + " marcada manualmente en uso; se excluye de organización y eliminación automáticas.");
         logMessage && logMessage("Protección de imágenes", "La imagen quedó marcada en uso y protegida frente a la organización automática.");
-        return { status: "success", message: "La imagen quedó marcada en uso y protegida frente a la organización automática." };
-    } finally { lock.releaseLock(); }
+    }
+    return result;
 }
-
 function handleGetCortesImageFolders(payload, logMessage) {
     const rootFolder = getCortesRootFolder();
     const folders = [];
