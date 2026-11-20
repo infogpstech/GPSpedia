@@ -788,3 +788,15 @@ Severidad: alta (integridad y consistencia de datos). Estado: CORREGIDO LOCALMEN
 - CI 44829158327 SUCCESS: 237 suites, 2942 pruebas, 0 fallos; node --check PASS. Health read-only y Pages SUCCESS.
 Estado: CORREGIDO LOCALMENTE. Queda Beta de concurrencia real y la auditoría del punto FEEDBACK/reporte/sugerencia. No se desplegó WRITE ni se tocaron datos productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-20 — FEEDBACK: AUDITORÍA Y CONVERSIÓN DE REPORTES EN APORTES
+- reportProblem y suggestCutChange guardan sus registros en Feedbacks y no escriben directamente en Cortes/AportesVehiculo. La sugerencia actual se limita a un corte existente y conserva reportId/suggestionOperationId/fingerprint; markAsResolved solo cambia el estado del reporte.
+- Se añadió un flujo explícito en Inbox para crear un corte a partir del reporte (precarga valores de sugerencia) o abrir el alta de vehículo nuevo. Reutiliza los flujos WRITE/add_cortes ya protegidos por opId estable derivado de itemId.
+- El reporte se marca resuelto únicamente después de confirmar el aporte. Si el aporte queda como candidato de revisión, se conserva el reporte pendiente. Si falla el cierre del reporte, no se revierte el aporte ya confirmado.
+- CI 44830752667 SUCCESS: 237 suites, 2943 pruebas, 0 fallos; InboxUi 87/87; AddCortesDiagnostics 12/12; Health read-only SUCCESS. Pages pendiente.
+- Pendiente local: revisar ScriptLock fast-fail de FEEDBACK bajo §15 y validar el flujo en navegador/Beta aislado.
+
+INCIDENTE DE RAMA CORREGIDO: un update_file sin branch explícita creó temporalmente commit f02bda37 en main. Se restauró inmediatamente main a su parent 037fc1bba9f24b1e31d50b93422d6a9299149026 con force-with-lease; la rama base protegida GPSpedia2.2.5 no se modificó y permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1. Todas las operaciones posteriores se especificaron explícitamente en GPSpedia2.2.5_work.
+================================================================================
