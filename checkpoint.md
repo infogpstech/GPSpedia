@@ -825,3 +825,12 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Primer intento falló por fixture que el clasificador bloqueó; se corrigió únicamente el dato de prueba y la repetición pasó. Sin cambios productivos.
 - La consolidación del backlog está en `Tareas_Activas.md`; no se reescribió historial. No se desplegó Apps Script ni se accedió/escribió Drive/Spreadsheet.
 - Siguiente: verificar resultado final de Pages; luego preparar Beta de solo lectura para auditar ADMIN, generar auditoría Drive nueva y revisar preview completo. Safe Apply no se implementará hasta aprobar ese preview real.
+
+
+## Checkpoint — cierre de pruebas locales y preparación Beta (2026-11-20)
+- HEAD de código/documentación verificado antes de este checkpoint: `d2797d02b35b9acade57d392eff2cefc9b277698`; rama base protegida `d9acc68d889985c2e2f42fe3a02e502efc86ead1` intacta.
+- Regresión del HEAD: CI `44768324636` SUCCESS, 221 suites, 2,743 pruebas, 0 fallos; `CortesImageOrganizerTargets` 8/8. Health read-only `44768324683` SUCCESS. Pages `44768323927` seguía ejecutándose.
+- `Tareas_Activas.md` conserva la consolidación vigente y el historial anterior; la tarea local de reconciliación documental y la cobertura del constructor del organizador están completadas.
+- Se confirmó mediante búsqueda de integraciones que Google Drive está `DISABLED_BY_ADMIN` y no se encontró una integración de Google Apps Script disponible. El repositorio no versiona `.clasp.json`/`appsscript.json`; no hay acceso de deployment/ScriptProperties en las herramientas actuales. No se solicitaron ni expusieron secretos.
+- La siguiente actividad exige entorno Beta autorizado y acceso real: verificar Script IDs/deployments, desplegar Coordinator primero según el runbook, desplegar consumidores compatibles, generar auditoría Drive nueva y ejecutar preview solo lectura. Sin eso no se puede aprobar el manifiesto ni implementar Safe Apply responsablemente.
+- No se desplegó Apps Script ni se realizaron operaciones Drive/Spreadsheet. No se movieron, renombraron, borraron ni restauraron imágenes.
