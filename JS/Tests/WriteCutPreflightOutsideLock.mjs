@@ -49,13 +49,26 @@ assert.equal(prepared.validatedPayload.validated,true);
 assert.equal(prepared.sheet.name,"Cortes");
 const wrapper=extract("handleAddOrUpdateCut","handleAddOrUpdateCutLocked");
 const events=[];
-const wrapperFn=new Function("prepareAddOrUpdateCutRequest_","getWriteContributionLock_","handleAddOrUpdateCutLocked","nextWriteCatalogVersionLocked_","Logger",wrapper+"\nreturn handleAddOrUpdateCut;")(
- ()=>{events.push("preflight");return{ready:true,validatedPayload:{vehicleId:"V1"}};},
- ()=>({tryLock(ms){assert.equal(ms,0);events.push("lock");return true;},hasLock:()=>true,releaseLock(){events.push("release");}}),
- preparedRequest=>{assert.equal(preparedRequest.ready,true);events.push("persist");return{status:"success",vehicleId:"22"};},
+let nextRequest={ready:true,validatedPayload:{vehicleId:null,opId:"OP-NEW"}};
+const lock={tryLock(ms){assert.equal(ms,0);events.push("script-lock");return true;},hasLock:()=>true,releaseLock(){events.push("release");}};
+const wrapperFn=new Function("prepareAddOrUpdateCutRequest_","handleAppendExistingVehicleCut_","LockService","handleAddOrUpdateCutLocked","nextWriteCatalogVersionLocked_","Logger",wrapper+"\\nreturn handleAddOrUpdateCut;")(
+ ()=>{events.push("preflight");return nextRequest;},
+ preparedRequest=>{events.push("append-existing");return{status:"success",vehicleId:preparedRequest.validatedPayload.vehicleId};},
+ {getScriptLock(){events.push("get-script-lock");return lock;}},
+ preparedRequest=>{assert.equal(preparedRequest.ready,true);events.push("persist-new");return{status:"success",vehicleId:"22"};},
  ()=>7,{log(){}}
 );
 const result=wrapperFn({});
 assert.equal(result.catalogVersion,7);
-assert.deepEqual(events,["preflight","lock","persist","release"],"La preparación debe terminar antes de adquirir el lock");
+assert.deepEqual(events,["preflight","get-script-lock","script-lock","persist-new","release"],"Solo el alta de vehículo nuevo debe reservar el lock secuencial");
+events.length=0;
+nextRequest={ready:true,validatedPayload:{vehicleId:"V1",opId:"OP-EXISTING"}};
+const existingResult=wrapperFn({});
+assert.equal(existingResult.status,"success");
+assert.deepEqual(events,["preflight","append-existing"],"Un vehículo existente con opId debe usar append-only sin lock");
+events.length=0;
+nextRequest={ready:true,validatedPayload:{vehicleId:"V1",opId:""}};
+assert.throws(()=>wrapperFn({}),error=>error.code==="WRITE_OP_ID_REQUIRED");
+assert.deepEqual(events,["preflight"],"Un vehículo existente sin opId debe rechazarse antes de adquirir cualquier lock");
+assert.doesNotMatch(wrapper,/getWriteContributionLock_|getUserLock/,"El wrapper no debe conservar UserLock por vehículo");
 console.log("WriteCutPreflightOutsideLock: 1/1 PASS — validación fuera del lock y rangos acotados Cortes/Relay");
