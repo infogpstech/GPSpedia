@@ -149,6 +149,56 @@ test("aporte de datos del vehículo completa campos vacíos sin reemplazar datos
     assert.equal(result.contributionSources.modelo.opId, "OP-MODEL");
 });
 
+test("aporte de corte completa metadatos faltantes y agrega VIN al vehículo correcto", () => {
+    const vehicle = Object.assign(blankVehicle("101"), {
+        marca: "Toyota", modelo: null, versionesAplicables: "Base / Limited", vin: '["TOYOTA"]'
+    });
+    const result = project([vehicle], [
+        event("OP-CUT-META", "101", "cut", {
+            tipo: "Ignición", vehicleData: { marca: "Nissan", modelo: "Frontier", anoDesde: 2024 },
+            vinPrefix: "HONDAX"
+        }, 2)
+    ])[0];
+    assert.equal(result.marca, "Toyota", "No debe reemplazar metadatos existentes");
+    assert.equal(result.modelo, "Frontier");
+    assert.equal(result.anoDesde, 2024);
+    assert.deepEqual(JSON.parse(result.vin), ["TOYOTA", "HONDAX"]);
+    assert.equal(result.contributionSources.vin.opId, "OP-CUT-META");
+});
+
+test("VIN concurrente repetido en vehículos distintos queda en revisión para ambos", () => {
+    const result = project([blankVehicle("101"), blankVehicle("202")], [
+        event("OP-VIN-A", "101", "cut", { tipo: "Ignición", vinPrefix: "SHARED" }, 2),
+        event("OP-VIN-B", "202", "cut", { tipo: "Bomba", vinPrefix: "SHARED" }, 3, "b")
+    ]);
+    assert.equal(result[0].tipoCorte1, null);
+    assert.equal(result[1].tipoCorte1, null);
+    assert.equal(result[0].contributionCandidates[0].reason, "vin_conflict");
+    assert.equal(result[1].contributionCandidates[0].reason, "vin_conflict");
+});
+
+test("VIN ya registrado en otro vehículo impide proyectar solo el aporte conflictivo", () => {
+    const a = Object.assign(blankVehicle("101"), { vin: '["EXISTING"]' });
+    const b = blankVehicle("202");
+    const result = project([a, b], [
+        event("OP-VIN-OLD", "202", "cut", { tipo: "Ignición", vinPrefix: "EXISTING" }, 2)
+    ]);
+    assert.equal(result[1].tipoCorte1, null);
+    assert.equal(result[1].contributionCandidates[0].reason, "vin_conflict");
+});
+
+test("VIN respeta la capacidad de versiones y conserva el corte como candidato VIN", () => {
+    const vehicle = Object.assign(blankVehicle("101"), {
+        versionesAplicables: "Base", vin: '["FIRST"]'
+    });
+    const result = project([vehicle], [
+        event("OP-VIN-FULL", "101", "cut", { tipo: "Ignición", vinPrefix: "SECOND" }, 2)
+    ])[0];
+    assert.equal(result.tipoCorte1, "Ignición");
+    assert.deepEqual(JSON.parse(result.vin), ["FIRST"]);
+    assert.ok(result.contributionCandidates.some(item => item.reason === "vin_capacity_full"));
+});
+
 test("proyección no muta la fila original del catálogo", () => {
     const vehicle = blankVehicle("101");
     project([vehicle], [event("OP-COPY", "101", "cut", { tipo: "Ignición" }, 2)]);
