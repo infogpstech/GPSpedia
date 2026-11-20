@@ -3166,12 +3166,12 @@ function handleAddProblem(source) {
     const lock = LockService.getScriptLock();
     let lockAcquired = false, sheet = null, opsSheet = null, op = null;
     let file = preparedFile, fileId = "", url = "", problemId = "";
+    const releaseLockForPostWork = () => {
+        if (lockAcquired) { lock.releaseLock(); lockAcquired = false; }
+    };
     try {
         acquireFeedbackScriptLock_(lock);
         lockAcquired = true;
-        const releaseLockForPostWork = () => {
-            if (lockAcquired) { lock.releaseLock(); lockAcquired = false; }
-        };
         sheet = getPysSheet_(true);
         validatePysRecords_(sheet);
         opsSheet = getPysOperationsSheet_();
