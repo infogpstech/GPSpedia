@@ -20,6 +20,15 @@ const loadEnd = auth.indexOf("\nfunction handleSessionStorageChange", loadStart)
 const load = auth.slice(loadStart, loadEnd);
 assert.match(load, /offline\.getSearchHistory\(ownerId\)\.then/);
 assert.match(load, /offline\.getViewedItemsResult\(ownerId\)\.then/);
+assert.ok(load.indexOf("offline.getSearchHistory(ownerId)") >= 0);
+assert.ok(load.indexOf("loadViewedItems(0)") >= 0);
+const loginStart = auth.indexOf("function handleLoginSuccess(user");
+const loginEnd = auth.indexOf("\\nexport async function loadInitialData", loginStart);
+const login = auth.slice(loginStart, loginEnd);
+assert.ok(login.indexOf("loadUserLocalActivity(user)") >= 0);
+assert.ok(login.indexOf("loadUserLocalActivity(user)") < login.indexOf("showApp(user)"),
+    "El historial local debe comenzar antes de iniciar la carga de los demás carruseles.");
+
 assert.match(load, /result\.available !== true/);
 assert.match(load, /retryDelays = \[1500, 5000, 15000\]/);
 assert.match(load, /isOwnerCurrent\(\)/);
