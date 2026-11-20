@@ -18,7 +18,7 @@ assert.match(handler,/driveResult => \{[\s\S]*?latestRow\[10\].*status[\s\S]*?ge
 assert.match(handler,/return \{record:latest,missing:driveResult\.missing===true,fileName:driveResult\.fileName\|\|""\};/);
 assert.match(handler,/if\(verified\.missing\)[\s\S]*?setReplacedImageHistoryStatusVerified_\(sheet,rowIndex,"eliminada"\)/);
 assert.match(handler,/if\(deletion\.code!==404[\s\S]*?setReplacedImageHistoryStatusVerified_\(sheet,rowIndex,status\)/);
-assert.match(handler,/const releaseLock=\(\)=>\{if\(lockAcquired\)\{lock\.releaseLock\(\);lockAcquired=false;\}\};/);
+assert.match(handler,/const releaseLock=\(\)=>\{if\(lockAcquired\)\{if\(typeof lock\.hasLock!=="function"\|\|lock\.hasLock\(\)\)lock\.releaseLock\(\);lockAcquired=false;\}\};/);
 
 const runHelper=new Function(helper+"\nreturn runAdminDriveWorkOutsideScriptLock_;")();
 let locked=true,driveRan=false,revalidated=false;
