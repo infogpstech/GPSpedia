@@ -45,8 +45,7 @@ assert.match(adminField, /lock\.tryLock\(0\)/);
 assert.doesNotMatch(adminField, /lock\.waitLock\(/);
 assert.match(adminDrive, /runAdminDriveWorkOutsideScriptLock_\(lock, opId, operation, revalidate, operationHash, 0\)/);
 assert.match(adminDriveCore, /lock\.tryLock\(0\)/);
-assert.match(extract(write, "handleAddSupplementaryInfo"), /lock\.tryLock\(0\)/);
-assert.match(extract(write, "handleAddSupplementaryInfo"), /getWriteContributionLock_\(payload\.vehicleId\)/, "La información suplementaria debe aislarse por usuario");
+assert.doesNotMatch(extract(write, "handleAddSupplementaryInfo"), /tryLock\(|waitLock\(|getWriteContributionLock_\(/, "La información suplementaria no debe retener locks durante la operación");
 
 const writeHelper = new Function(writeDrive + "\nreturn runWriteDriveWorkOutsideScriptLock_;")();
 const adminHelper = new Function(adminDriveCore + "\n" + adminDrive + "\nreturn runAdminContributionDriveWorkOutsideScriptLock_;")();
