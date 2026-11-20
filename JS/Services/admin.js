@@ -9034,8 +9034,8 @@ function findRowByOpId(sheet, opId, entriesSnapshot) {
         };
     }
 
-    if (cortesSheet.getLastRow() <= 1) return null;
     const data = cortesSheet.getDataRange().getValues();
+    if (data.length <= 1) return null;
     const headers = data[0] || [];
     const vinColumn = headers.findIndex(header => String(header || "").trim().toLowerCase() === "vin") + 1;
     const operationColumns = [];
