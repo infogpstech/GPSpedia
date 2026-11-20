@@ -106,6 +106,12 @@ function runAddSupplementaryInfoIntegrityTests(sources) {
   assert_(!/uploadImageToDrive|findOrCreateVehicleFolder|DriveApp/.test(inner));
  });
 
+ run_("WRITE marca las imágenes suplementarias como linked solo después de persistir",function(){
+  const outer=String(sources.write).slice(String(sources.write).indexOf("function handleAddSupplementaryInfo(payload)"),String(sources.write).indexOf("function handleAddSupplementaryInfoLocked"));
+  assert_(outer.indexOf("handleAddSupplementaryInfoLocked")<outer.indexOf("uploadedUrls.forEach"));
+  assert_(outer.includes("markImageUploadLinked(url, { shortLedgerLock: true })"));
+  assert_(outer.includes("pendiente de reconciliación"));
+ });
  run_("WRITE ledger de imagen usa secciones críticas breves",function(){
   const upload=String(sources.write).slice(String(sources.write).indexOf("function uploadImageToDriveWithShortLedgerLocks_"),String(sources.write).indexOf("function uploadImageToDrive("));
   assert_(upload.includes("withImageUploadLedgerLock_")&&upload.includes("upload_in_progress"));
