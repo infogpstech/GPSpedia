@@ -69,6 +69,14 @@ run("reintento reconoce el archivo aplicado sin repetir el movimiento", () => {
     assert.equal(retry.results[0].status, "already_applied");
     assert.equal(f.events.filter(x => x.startsWith("move:")).length, moves);
 });
+run("no acepta un archivo ya situado en destino sin evidencia durable de Safe Apply", () => {
+    const f = fixture();
+    f.state.folderPath = operation.targetFolderPath;
+    f.state.fileName = operation.targetName;
+    const result = execute([operation], "developer-1", f.adapters);
+    assert.equal(result.results[0].status, "blocked");
+    assert.equal(f.ledger.has(operation.operationId), false);
+});
 run("rechaza una operación durable perteneciente a otro desarrollador", () => {
     const f = fixture();
     f.ledger.set(operation.operationId, { operationId: operation.operationId, ownerId: "other", status: "complete" });
@@ -112,4 +120,4 @@ run("rechaza IDs duplicados o inválidos en rollback", () => {
     assert.throws(() => rollback([operation.operationId, operation.operationId], "developer-1", f.adapters), /inválidos o repetidos/i);
     assert.throws(() => rollback(["bad"], "developer-1", f.adapters), /inválidos o repetidos/i);
 });
-console.log("CortesImageOrganizerExecutor: 8/8 PASS");
+console.log("CortesImageOrganizerExecutor: 9/9 PASS");
