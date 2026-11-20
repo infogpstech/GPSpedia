@@ -1329,7 +1329,7 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 
 ### 2026-11-20 — Diseño de persistencia concurrente
 
-- [x] Crear `CONCURRENCIA_APORTES_DISENO.md` con dirección de arquitectura, restricciones, fases y matriz mínima de aceptación. Commit: `32db0be9996a20cfb8d6f81ecf789fd9d9baed24`.
+- [x] Crear `CONCURRENCIA_APORTES_DISENO.md` con dirección de arquitectura, restricciones, fases y matriz mínima de aceptación. Commit: `32db0be9996a20cf8b86f81ecf789fd9d9baed24`.
 - [ ] Implementar y probar registro append-only versionado y proyección de aportes. El documento es diseño, no implementación; P0 continúa abierta.
 - **Aclaración tras inspección del flujo completo:** aunque Coordinator declara políticas con recurso `CORTES` para las acciones WRITE, los handlers efectivos `addOrUpdateCut` y `addSupplementaryInfo` no llaman `withSharedMutationLease_` para toda la mutación. En WRITE solo se localizó una lease separada `ensureSupplementaryVehicleFolder` para preparar la carpeta Drive. No considerar la política declarativa como un lock global actualmente adquirido por estos handlers.
 - El registro append-only debe ser la fuente de verdad para aportes nuevos y la proyección de lectura debe preservar el contrato de catálogo. Antes de implementarlo, verificar append concurrente, duplicados físicos de un mismo `opId`, deduplicación lógica y recuperación de cargas Drive sin marcar archivos huérfanos como vinculados.
