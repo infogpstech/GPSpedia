@@ -1497,3 +1497,15 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [ ] Implementar revisión/edición ADMIN de candidatos y eventos de sustitución auditables para cambios in-modal; revisar capacidad llena y archivos de imagen no materializados.
 - [ ] Revisar todos los consumidores legacy de ImageUploadLedger/waitLock(5000) antes de retirar compatibilidad; mantener el ledger histórico.
 - Estado P0: EN PROGRESO. No desplegar Apps Script ni modificar hojas/archivos productivos hasta completar integración Beta y la matriz de aceptación.
+
+
+### 2026-11-20 — P0: recuperación y señalización de conflictos tardíos
+
+- [x] Extender checkOperation para recalcular colisiones VIN contra eventos de otros vehículos y VIN ya materializados; reintentos devuelven vinConflictPending y candidateReviewPending.
+- [x] Extender el finalizador UI del modal de corte/apertura/alimentación: después de refrescar catálogo busca el opId en contributionCandidates y muestra el motivo real de revisión aunque la primera respuesta fuera success.
+- [x] Cubrir conflicto tardío de opId y colisión VIN detectada después de la primera respuesta en VehicleExpansionDetailRefresh.js.
+- [x] CI HEAD 2002f910cfb6f5b3d7bd847dbd626e74d051454c: 232 suites, 2,865 pruebas, 0 fallos; health read-only SUCCESS. CI previo fbad7a50e76214b2da6852f7ed7181de5c5067bb: 7/7 intercalados append, 2,863 pruebas, 0 fallos.
+- [ ] Crear vista ADMIN para revisar candidatos de AportesVehiculo y registrar resolución/sustitución append-only auditable.
+- [ ] Revisar la idempotencia durable en todos los puntos de entrada de apertura/alimentación y errores parciales de imágenes.
+- [ ] Ejecutar Beta real Google Sheets/Drive; validar concurrencia real y reconciliación de imágenes.
+- Estado P0: EN PROGRESO. No desplegar Apps Script hasta completar la revisión ADMIN y pruebas de integración reales.

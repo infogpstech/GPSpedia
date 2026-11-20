@@ -164,3 +164,12 @@ La validación previa de VIN por lectura no es una exclusión mutua: dos solicit
 Pruebas agregadas en VehicleContributionProjection.mjs: metadatos faltantes, VIN agregado al vehículo correcto, colisión entre eventos de vehículos distintos, colisión contra VIN preexistente y límite de versiones. CI 44813372422: 232 suites, 2,862 pruebas, cero fallos; health y Pages SUCCESS. Se agregó después un intercalado de append para dos vehículos con el mismo VIN; pendiente confirmar su CI.
 
 P0 sigue abierta: la prueba local no sustituye la integración con Google Sheets real; falta idempotencia durable de apertura/alimentación en todo punto de entrada, reconciliación visual del conflicto tardío del mismo opId, candidatos/edición ADMIN auditables, recuperación de errores parciales Drive/Sheets y revisión final de consumidores legacy de ImageUploadLedger. No desplegar Apps Script todavía.
+
+
+## Avance — recuperación y aviso de conflictos tardíos (2026-11-20)
+
+WRITE checkOperation ahora recalcula conflictos VIN para eventos recuperados, tanto contra filas base de otros vehículos como contra eventos append-only de otros vehículos. La respuesta expone vinConflictPending y candidateReviewPending.
+
+La UI del modal de expansión ahora refresca el catálogo antes de notificar éxito. Busca el opId de la operación en contributionCandidates y comunica conflictos que hayan aparecido después de que la primera solicitud ya recibió respuesta, incluidos opId_conflict y vin_conflict. Esto mejora la señal al usuario, pero no sustituye una vista ADMIN que permita revisar y resolver candidatos.
+
+CI 44814069582 SUCCESS: 232 suites, 2,865 pruebas, cero fallos; health read-only SUCCESS. WriteContributionAppendConcurrency 7/7 y WriteContributionRecovery 9/9. P0 permanece abierta: falta flujo ADMIN de resolución append-only auditable, revisión final de idempotencia/errores parciales, y pruebas de integración reales con Google Sheets/Drive.

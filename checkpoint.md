@@ -1095,3 +1095,13 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Se añadió después un caso específico de intercalado a WriteContributionAppendConcurrency.mjs para dos vehículos con el mismo VIN; su CI aún debe confirmarse.
 - P0 sigue abierta. Próximo paso: confirmar ese CI; revisar/terminar idempotencia durable de apertura/alimentación y manejo UI de conflicto tardío de opId; después probar con Sheets/Drive reales en Beta (carreras, respuesta perdida, fallo parcial y recuperación ADMIN). Revisar consumidores legacy de ImageUploadLedger antes de retirar waitLock.
 - No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+## Checkpoint — recuperación y señalización de conflictos tardíos (2026-11-20)
+
+- HEAD de código validado: 2002f910cfb6f5b3d7bd847dbd626e74d051454c en GPSpedia2.2.5_work. Rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- WRITE checkOperation ahora inspecciona el VIN del evento recuperado y busca conflictos contra VIN materializados y eventos de otros vehículos. Devuelve vinConflictPending y candidateReviewPending cuando la operación debe revisarse.
+- UI completeVehicleExpansionSave_ ahora refresca el catálogo antes de emitir la notificación final; si el opId aparece en contributionCandidates, informa el motivo (opId_conflict, vin_conflict, capacidad llena, etc.). Así la primera respuesta no queda comunicada como éxito aplicado cuando un conflicto concurrente se detectó después.
+- Pruebas: WriteContributionAppendConcurrency 7/7 (intercalado de VIN entre vehículos distintos); WriteContributionRecovery 9/9; VehicleExpansionDetailRefresh incluye conflicto tardío de opId y VIN. CI 44814069582 SUCCESS: 232 suites, 2,865 pruebas, 0 fallos; health 44814069563 SUCCESS. CI anterior 44813532777: 7/7 append concurrency y 2,863 pruebas, 0 fallos; health SUCCESS.
+- Siguiente tarea: crear un flujo ADMIN para listar, revisar y resolver candidatos de AportesVehiculo mediante eventos append-only de sustitución/resolución con eventId/supersedesEventId, sin mutar eventos históricos ni sobrescribir campos de otros aportes. Después completar auditoría de idempotencia/fallos parciales y planificar integración Beta de Sheets/Drive real.
+- P0 sigue EN PROGRESO. No se desplegó Apps Script ni se modificaron hojas/archivos productivos.
