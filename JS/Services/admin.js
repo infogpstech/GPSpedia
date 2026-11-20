@@ -935,7 +935,7 @@ function doGet(e) {
 
 
 function isSharedMutationAction_(action) {
-    return ["backupDatabase","backupDrive","restoreDatabase","restoreDrive","reorganizeDatabase","normalizeImages","organizePrimaryVehicleImages","restoreAllTrashedImages","addLogo","updateVehicleField","uploadAdminImage","migrateCortesOperationIds","migrateIdentifiers","rollbackIdentifiers","freezeIdentifierFormulas","reconcilePendingImageUploads","createSheet","addColumn","driveCommand","recoverReplacedImage","deleteReplacedImage","restoreReplacedImageFromTrash","permanentlyDeleteReplacedImage","markReplacedImageInUse","saveUnusedImagesInventory","applyCortesImageReconciliation","createCortesImageFolder","moveReplacedImage","getReplacedImageDownloadUrl","migrateReplacedImagesSchema","auditDriveImagesInCortes","applyCortesImageOrganizer","rollbackCortesImageOrganizer"].includes(action);
+    return ["backupDatabase","backupDrive","restoreDatabase","restoreDrive","reorganizeDatabase","normalizeImages","organizePrimaryVehicleImages","restoreAllTrashedImages","addLogo","updateVehicleField","uploadAdminImage","migrateCortesOperationIds","migrateIdentifiers","rollbackIdentifiers","freezeIdentifierFormulas","reconcilePendingImageUploads","createSheet","addColumn","driveCommand","recoverReplacedImage","deleteReplacedImage","restoreReplacedImageFromTrash","permanentlyDeleteReplacedImage","markReplacedImageInUse","saveUnusedImagesInventory","applyCortesImageReconciliation","createCortesImageFolder","moveReplacedImage","getReplacedImageDownloadUrl","migrateReplacedImagesSchema","migrateVehicleContributionsSchema","auditDriveImagesInCortes","applyCortesImageOrganizer","rollbackCortesImageOrganizer"].includes(action);
 }
 
 function doPost(e) {
@@ -1369,6 +1369,9 @@ function doPostInternal_(e) {
                 break;
             case 'migrateReplacedImagesSchema':
                 response = handleMigrateReplacedImagesSchema(payload, logMessage);
+                break;
+            case 'migrateVehicleContributionsSchema':
+                response = handleMigrateVehicleContributionsSchema(payload, logMessage);
                 break;
             case 'getDriveStorage':
                 response = handleGetDriveStorage(payload, logMessage);
@@ -10662,6 +10665,66 @@ function handleMigrateReplacedImagesSchema(payload,logMessage){
         return result;
     }finally{lock.releaseLock();}
 }
+
+
+const ADMIN_VEHICLE_CONTRIBUTIONS_SHEET_NAME_ = "AportesVehiculo";
+const ADMIN_VEHICLE_CONTRIBUTIONS_HEADERS_ = Object.freeze([
+    "eventId", "opId", "vehicleId", "operationHash", "kind", "payloadJson",
+    "actorId", "actorName", "createdAt", "status", "supersedesEventId"
+]);
+
+function handleMigrateVehicleContributionsSchema(payload, logMessage) {
+    return withReplacedImagesSchemaLock_(function() {
+        const spreadsheet = getSpreadsheet();
+        let sheet = spreadsheet.getSheetByName(ADMIN_VEHICLE_CONTRIBUTIONS_SHEET_NAME_);
+        let created = false;
+        if (!sheet) {
+            sheet = spreadsheet.insertSheet(ADMIN_VEHICLE_CONTRIBUTIONS_SHEET_NAME_);
+            created = true;
+        }
+
+        const headerCount = ADMIN_VEHICLE_CONTRIBUTIONS_HEADERS_.length;
+        const lastRow = Number(sheet.getLastRow()) || 0;
+        const lastColumn = Number(sheet.getLastColumn()) || 0;
+        const currentHeaders = lastColumn > 0
+            ? sheet.getRange(1, 1, 1, Math.max(lastColumn, headerCount)).getDisplayValues()[0]
+                .slice(0, headerCount).map(value => String(value || "").trim())
+            : [];
+        const isBlankSchema = lastRow === 0 || (lastRow === 1 &&
+            currentHeaders.every(value => !value));
+
+        if (isBlankSchema) {
+            sheet.getRange(1, 1, 1, headerCount).setValues([ADMIN_VEHICLE_CONTRIBUTIONS_HEADERS_.slice()]);
+            sheet.getRange(1, 1, 1, headerCount).setFontWeight("bold").setBackground("#f0f4f8");
+            sheet.setFrozenRows(1);
+        } else if (ADMIN_VEHICLE_CONTRIBUTIONS_HEADERS_.some((header, index) => currentHeaders[index] !== header)) {
+            throw new Error("La hoja «AportesVehiculo» ya existe, pero sus encabezados no coinciden con el esquema versionado. No se modificó.");
+        }
+
+        SpreadsheetApp.flush();
+        const persisted = sheet.getRange(1, 1, 1, headerCount).getDisplayValues()[0]
+            .map(value => String(value || "").trim());
+        if (ADMIN_VEHICLE_CONTRIBUTIONS_HEADERS_.some((header, index) => persisted[index] !== header)) {
+            throw new Error("No se pudo verificar la estructura de «AportesVehiculo».");
+        }
+
+        const result = {
+            status: "success",
+            migrated: true,
+            created,
+            sheetName: ADMIN_VEHICLE_CONTRIBUTIONS_SHEET_NAME_,
+            columnCount: headerCount,
+            rowCount: Math.max(0, sheet.getLastRow() - 1),
+            headers: persisted
+        };
+        if (logMessage) {
+            logMessage("Esquema de aportes", (created ? "Se creó" : "Se verificó") +
+                " el ledger append-only AportesVehiculo; no se modificaron registros de Cortes.");
+        }
+        return result;
+    });
+}
+
 
 
 function recordReplacedImage(data) {
