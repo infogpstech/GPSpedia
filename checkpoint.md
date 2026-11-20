@@ -868,3 +868,14 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Estado: ejecutor y rollback locales implementados y con regresión aprobada; validación diferida a Beta. No se desplegó Apps Script ni se ejecutaron operaciones Drive/Spreadsheet. No se movieron, renombraron, borraron ni restauraron imágenes.
 - Pendiente local: revisar integración de UI/confirmación explícita y política de retención/consulta del ledger. Pendiente Beta: auditar Drive real, aprobar preview completo y verificar ACL heredadas/rollback en entorno aislado autorizado. Mantener Safe Apply real sin uso hasta completar esas verificaciones.
 - No hay checkout local ni clasp en esta sesión; la edición/publicación se realizó mediante GitHub Contents API secuencialmente, verificando el blob previo por archivo. No se usó force ni se modificó la rama base.
+
+
+## Checkpoint — integración UI de Safe Apply y rollback (2026-11-20)
+- HEAD de código/UI/pruebas antes de este registro: 3f33b80e780ec493e108567a5c1bcd8cd363cbcc. Rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin cambios.
+- index.html incorpora los botones Aplicar selección aprobada y Revertir último lote. JS/Frontend/ui.js muestra casillas solo para destinos ready, limita lotes a 1–10 elementos de la misma página y solicita confirmación interactiva independiente para aplicar y revertir.
+- El frontend envía auditId, offset, digest, approvedFileIds y confirm:true. El servidor vuelve a generar el preview y compara digest antes de ejecutar. Después de cada lote se invalida la aprobación UI y se exige una nueva auditoría/preview.
+- La UI conserva en memoria los operationId del último lote para ofrecer rollback durante esa sesión. No se ha implementado todavía un listado durable para recuperar lotes anteriores después de cerrar/reabrir el modal; queda como pendiente local.
+- Pruebas focalizadas: CortesImageOrganizerApplyPlan 14/14, CortesImageOrganizerExecutor 9/9 y CortesImageOrganizerUiContract 10/10 PASS. CI 44785453638 SUCCESS: 224 suites, 2,776 pruebas, 0 fallos. Health read-only 44785453971 SUCCESS. Pages run 44785452029 estaba en ejecución al registrar.
+- Se corrigieron dos fallos de aserciones del nuevo test UI; no eran defectos del código funcional. La ejecución final del runner aprobó.
+- No se desplegó Apps Script ni se ejecutaron movimientos/renombrados reales. No se modificaron Drive/Spreadsheet. La prueba del ejecutor usa adaptadores simulados.
+- Siguiente trabajo local: consulta/retención del ledger y recuperación de operationId de lotes previos a la sesión UI. Después, revisión visual responsive. Beta sigue pendiente para comprobar ACL heredadas reales y aplicación/rollback en Drive aislado con preview aprobado.
