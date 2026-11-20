@@ -1175,3 +1175,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-20 · rendimiento FEEDBACK IDs] `getNextFormulaBasedId_` lee solo la columna ID en el caso habitual. Si detecta IDs vacíos, consulta únicamente los grupos contiguos de filas candidatas para detectar datos sin ID, manteniendo validaciones de prefijo/sufijo, duplicados, contador backend y lock ya adquirido. `FeedbackFormulaIdAllocatorBoundedRead` 6/6. CI `44647995645` SUCCESS: 203 suites, 2,582 pruebas aprobadas, 0 fallos; health read-only `44647995469` SUCCESS.
+
+
+[2026-11-20 · aislamiento ADMIN catálogo] Las publicaciones de catálogo ADMIN/Cortes individuales y batch ahora reservan `sourceVersion` bajo ScriptLock y hacen UrlFetch al Coordinator después de liberar. Los batches reservan un rango con una escritura y publican en chunks de 50. Coordinator admite ADMIN/Cortes, convierte snapshots legacy sin versión y versiones atrasadas en reset; fallos de lock/snapshot/red recuperan con reset. `AdminCatalogPublicationIsolation` 6/6; contratos de feed y reintento versionado cubiertos. CI `44649098649` SUCCESS; health read-only `44649098541` SUCCESS. Sin despliegue Apps Script ni cambios productivos.
