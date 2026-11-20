@@ -4079,26 +4079,31 @@ function executeCortesImageOrganizerManifest_(manifest, ownerId, adapters) {
                 results.push(result);
                 return;
             }
+            const current = adapters.inspectFile(operation.fileId);
+            const classification = classifyCortesImageOrganizerOperationState_(current, operation);
+            if (classification.status === "already_applied") {
+                if (!ledger || !["processing", "complete"].includes(ledger.status)) {
+                    result.status = "blocked";
+                    result.message = "Drive ya muestra el destino, pero no existe un ledger que demuestre que Safe Apply realizó el cambio.";
+                    results.push(result);
+                    return;
+                }
+                adapters.saveLedger(Object.assign({}, ledger, {
+                    status: "complete", attempts: Number(ledger.attempts || 0),
+                    currentFolderPath: operation.targetFolderPath, currentName: operation.targetName,
+                    completedAt: Date.now()
+                }));
+                result.status = "already_applied";
+                results.push(result);
+                return;
+            }
+            if (classification.status !== "ready") throw new Error("El archivo cambió desde el preview: " + classification.reason);
             if (ledger && Number(ledger.attempts || 0) >= 3) {
                 result.status = "needs_review";
                 result.message = "Se alcanzó el máximo de tres intentos para esta operación.";
                 results.push(result);
                 return;
             }
-            const current = adapters.inspectFile(operation.fileId);
-            const classification = classifyCortesImageOrganizerOperationState_(current, operation);
-            if (classification.status === "already_applied") {
-                adapters.saveLedger({
-                    operationId: operation.operationId, manifestDigest: operation.manifestDigest,
-                    auditId: operation.auditId, ownerId, fileId: operation.fileId,
-                    status: "complete", attempts: Number(ledger && ledger.attempts || 0),
-                    currentFolderPath: operation.targetFolderPath, currentName: operation.targetName
-                });
-                result.status = "already_applied";
-                results.push(result);
-                return;
-            }
-            if (classification.status !== "ready") throw new Error("El archivo cambió desde el preview: " + classification.reason);
             ledger = {
                 operationId: operation.operationId, manifestDigest: operation.manifestDigest,
                 auditId: operation.auditId, ownerId, fileId: operation.fileId,
