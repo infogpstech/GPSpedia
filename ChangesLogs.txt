@@ -1399,3 +1399,12 @@ Se implementó agrupación de resultados de Cortes por categoría/marca/modelo, 
 - Pruebas específicas: AdminImageUploadDriveIsolation 7/7, AdminImageUploadLinkedRecoveryIsolation 6/6, AdminImageUploadCompensationIsolation 8/8, ADMIN compensación de reemplazos in-modal 9/9, MutationLockContention 1/1.
 - CI HEAD 9425527a3fb93ddc9256537ff534cea3872e2d7c SUCCESS: 237 suites, 2,942 pruebas aprobadas, 0 fallos; node --check PASS. Health read-only SUCCESS; Pages SUCCESS.
 - Auditoría.txt registra el hallazgo anterior como CORREGIDO LOCALMENTE. Beta AUG-160/AUG-159 y fallos reales Drive/Sheets quedan pendientes en entorno aislado. No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+2026-11-20 — WRITE: retiro de UserLock en aportes a vehículos existentes
+- Se eliminó getWriteContributionLock_ y su selección UserLock/ScriptLock según vehicleId.
+- handleAddOrUpdateCut ahora enruta vehículos existentes con opId al ledger append-only AportesVehiculo sin adquirir lock; los existentes sin opId reciben WRITE_OP_ID_REQUIRED antes de bloquear.
+- El ScriptLock inmediato permanece únicamente en la creación de vehículo nuevo, para reservar el ID numérico secuencial.
+- Verificados consumidores activos: ui.js (reintento modal) y HTML/add_cortes.html transmiten opId. Contratos WriteCutPreflightOutsideLock 1/1, MutationLockContention 1/1, WriteContributionAppendConcurrency 7/7 y WriteIdAllocatorNonBlocking 5/5.
+- CI HEAD e05be7562135e18178eb9eed8f57e6196af664a3 SUCCESS: 237 suites, 2942 pruebas, 0 fallos; node --check PASS. Health read-only SUCCESS; Pages SUCCESS.
+- Se conserva pendiente la auditoría FEEDBACK y Beta de concurrencia real; no se desplegó WRITE ni se modificaron datos productivos.
