@@ -788,3 +788,11 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - `GP-PERF-ADMIN-CUT-LOCK-01`: COMPLETADA LOCALMENTE CON VALIDACIÓN DIFERIDA A BETA. No se desplegó Apps Script ni se modificaron hojas/Drive productivos. Beta pendiente: Script IDs reales, no interferencia y concurrencia/Drive/Spreadsheet.
 - `GP-UX-SEARCH-MODEL-GROUPING-01`: regresión integral completada (`SearchModelGrouping` 21/21 y runner global 220 suites/2,735 pruebas); queda pendiente la prueba visual de navegador con catálogo representativo.
 - Siguiente paso: preparar/ejecutar la prueba visual de búsqueda agrupada en un navegador automatizado o entorno Beta autorizado; no modificar contratos de búsqueda ni datos productivos.
+
+
+## Verificación final de continuidad (2026-11-20)
+- HEAD real verificado antes de este registro: `3320cfea89a96f31911761b926c82a48d0165e1e`; rama base `GPSpedia2.2.5`: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; trabajo `GPSpedia2.2.5_work` sin commits detrás de la base.
+- CI del HEAD documental `44764442331` SUCCESS: 220 suites, 2,735 pruebas, 0 fallos. `AdminIdempotencySnapshotReuse` 10/10, `AdminExistingVehicleLookupPreflight` 10/10, `AdminLegacyOpIdSnapshotReuse` 10/10 y `SearchModelGrouping` 21/21 PASS. Health read-only `44764442042` SUCCESS.
+- No existe `package.json` ni checkout local en este entorno y no hay herramienta de navegador interactivo disponible; la comprobación visual real de SearchModelGrouping queda diferida a Beta, sin presentarla como ejecutada.
+- `GP-PERF-ADMIN-CUT-LOCK-01`: implementación/auditoría y regresión local COMPLETADAS CON VALIDACIÓN DIFERIDA A BETA. `GP-UX-SEARCH-MODEL-GROUPING-01`: implementación y regresión COMPLETADAS; solo queda prueba visual de navegador en Beta.
+- No se desplegó Apps Script, no se modificó la rama base ni se escribieron datos de producción. Siguiente paso: prueba visual en navegador/Beta autorizada para búsqueda agrupada; luego continuar el backlog local vigente.
