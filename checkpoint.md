@@ -756,3 +756,13 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Diff de implementación ya registrado en `902867481b565adf6dcf709ba4d969f7e850c4b5` y `919e579e295d3debb30871eef3d30a1966be1073`; test y runner incorporados en commits posteriores. La actualización documental de validación está en `7c5a25ee4dcd6a568b632aa6737eb3b8436ee1db`.
 - Estado de la subactividad: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. La verificación de la ruta real contra Spreadsheet/ScriptLock requiere deployment y entorno Beta autorizado.
 - Siguiente paso de `GP-PERF-ADMIN-CUT-LOCK-01`: inspeccionar el siguiente grupo de lecturas remotas de Sheets dentro de `handleAddOrUpdateCut`, identificar duplicaciones demostrables y probarlas sin mover reservas, revalidaciones ni escrituras atómicas fuera de sus locks.
+
+
+## Cierre — acotar lectura previa de ID en ADMIN (2026-11-20)
+- En `handleAddOrUpdateCut`, la búsqueda previa de un vehículo existente empieza en la fila 2 y termina en `lastRowForLookup`; la cantidad correcta es `lastRowForLookup - 1`. Se eliminó la lectura de una fila vacía posterior al último registro.
+- La revalidación bajo ScriptLock permanece intacta: se vuelve a leer una única fila acotada, se confirma que el ID siga siendo el solicitado y se conserva el snapshot para las operaciones siguientes.
+- `AdminExistingVehicleLookupPreflight.mjs` actualizado para exigir el rango exacto y validar el número de filas; 10/10 PASS en CI. `AdminExistingVehicleSnapshotRevalidation` y `AdminExistingVehiclePostDriveSnapshotReuse` permanecen integrados en la regresión.
+- CI `44763460378` SUCCESS sobre HEAD `d645b74f9cb5a6f7baf67ee4c2da054e61898ea6`: 220 suites, 2,735 pruebas aprobadas, 0 fallos; sintaxis PASS. Health read-only `44763460429` SUCCESS.
+- Diff revisado: únicamente `JS/Services/admin.js` (una línea) y `JS/Tests/AdminExistingVehicleLookupPreflight.mjs` (aserciones actualizadas). Rama base protegida sin cambios.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó Apps Script ni se modificaron datos productivos.
+- Siguiente paso: continuar la inspección de las lecturas restantes de `handleAddOrUpdateCut`, sin modificar lecturas necesarias para revalidación, reservas, unicidad o read-back.
