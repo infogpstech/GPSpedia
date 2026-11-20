@@ -840,3 +840,15 @@ Corrección: el lector acepta vehicle_update solo cuando actorId está presente 
 Prueba funcional agregada a VehicleContributionProjection: lectura válida de vehicle_update ADMIN y rechazo de actor/opId inválidos. CI 44834146336 SUCCESS: 237 suites, 2956 pruebas aprobadas, 0 fallos. Health read-only SUCCESS. No se desplegó CATALOG ni se modificaron datos productivos.
 Nota de alcance: la migración de sugerencias de año sigue pendiente; handleSuggestYear todavía escribe directamente anoDesde/anoHasta en Cortes y se debe convertir a evento append-only antes de cerrar P0.
 ================================================================================
+
+
+================================================================================
+2026-11-20 — FEEDBACK: CORREGIDA REFERENCIA A voteActors FUERA DE ALCANCE
+Hallazgo: handleSuggestYearLocked consultaba voteActors.has(actorKey), pero voteActors solo existe como variable local dentro de countVerifiedPositiveYearSuggestionVotes_. Cuando un aportante verificado repetía una respuesta positiva ya registrada, la ruta podía lanzar ReferenceError antes de continuar con el umbral de votos o la recuperación de la ampliación.
+Corrección en GPSpedia2.2.5_work:
+- Se deriva hasVerifiedPositiveVote directamente de allData, aplicando el mismo filtro de vehículo/año, identidad verificada y respuesta positiva.
+- La ruta de respuesta repetida ya no depende de una variable local de otra función.
+- Se amplió SuggestYearVoteThreshold.mjs con una regresión estática para la referencia y el nuevo predicado.
+Validación: cambio y fixture verificados por lectura remota; las pruebas Node/runner y CI aún no se han ejecutado en este entorno. No declarar el hallazgo cerrado hasta que la suite focalizada y la regresión FEEDBACK aprueben.
+Severidad: alta (fallo de ejecución al repetir voto positivo); alcance limitado a la ruta de sugerencias de año.
+================================================================================
