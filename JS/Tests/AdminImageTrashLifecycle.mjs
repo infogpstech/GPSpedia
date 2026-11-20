@@ -337,10 +337,19 @@ check("Una eliminación ya finalizada admite reintento idempotente sin llamar Dr
     assert.equal(result.unchanged,true);
     assert.equal(deps.requestCalls,0);
 });
-check("El bloqueo concurrente detiene la papelera antes de tocar Drive",()=>{
+check("La papelera falla rápido ante contención sin esperar ni tocar Drive",()=>{
     const b=makeBase({status:"requiere_revision",lockFail:true});
-    assert.throws(()=>runDelete(b),/No se pudo bloquear/);
+    assert.throws(()=>runDelete(b),error=>error.code==="ADMIN_BUSY");
+    assert.equal(b.lock.state.waits,0);
+    assert.equal(b.lock.state.tryLocks,1);
     assert.equal(b.file.trashed,false);
+});
+check("La restauración falla rápido ante contención sin esperar ni tocar Drive",()=>{
+    const b=makeBase({status:"en_papelera",previous:"historica",trashed:true,lockFail:true});
+    assert.throws(()=>runRestore(b),error=>error.code==="ADMIN_BUSY");
+    assert.equal(b.lock.state.waits,0);
+    assert.equal(b.lock.state.tryLocks,1);
+    assert.equal(b.file.trashed,true);
 });
 check("El backend exige sesión Desarrollador antes de despachar las nuevas acciones",()=>{
     const dispatcher=fnSource(admin,"doPostInternal_");
