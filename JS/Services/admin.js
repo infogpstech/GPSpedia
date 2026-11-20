@@ -4051,6 +4051,23 @@ function withCortesOrganizerLedgerLock_(callback) {
     finally { if (lock.hasLock()) lock.releaseLock(); }
 }
 
+function decideCortesOrganizerLedgerReservation_(record, current, allowedStatuses) {
+    if (!record || !record.operationId || !record.ownerId || !Array.isArray(allowedStatuses)) {
+        throw new Error("La reserva Safe Apply carece de identidad o estados permitidos.");
+    }
+    if (current && (current.operationId !== record.operationId || current.fileId !== record.fileId)) {
+        throw new Error("La identidad del registro Safe Apply no coincide; requiere revisión.");
+    }
+    if (current && current.ownerId !== record.ownerId) {
+        return { reserved: false, reason: "owner_mismatch", current };
+    }
+    const currentStatus = current ? String(current.status || "") : "absent";
+    if (!allowedStatuses.includes(currentStatus)) {
+        return { reserved: false, reason: "state_conflict", current };
+    }
+    return { reserved: true, previous: current || null, record };
+}
+
 function resolveCortesOrganizerFolderPath_(rootFolder, targetPath, createMissing) {
     const parts = String(targetPath || "").split("/").filter(Boolean);
     if (!parts.length || normalizeOrganizerSegment_(parts.shift()) !== normalizeOrganizerSegment_(rootFolder.getName())) {
@@ -4148,6 +4165,12 @@ function executeCortesImageOrganizerManifest_(manifest, ownerId, adapters) {
                 results.push(result);
                 return;
             }
+            if (ledger && ["processing", "rollback_processing"].includes(ledger.status)) {
+                result.status = "in_progress";
+                result.message = "La operación ya tiene una reserva activa; no se iniciará un segundo movimiento.";
+                results.push(result);
+                return;
+            }
             const current = adapters.inspectFile(operation.fileId);
             const classification = classifyCortesImageOrganizerOperationState_(current, operation);
             if (classification.status === "already_applied") {
@@ -4180,7 +4203,17 @@ function executeCortesImageOrganizerManifest_(manifest, ownerId, adapters) {
                 sourceFolderPath: operation.currentFolderPath, sourceName: operation.currentName,
                 targetFolderPath: operation.targetFolderPath, targetName: operation.targetName
             };
-            adapters.saveLedger(ledger);
+            const reservation = typeof adapters.reserveLedger === "function"
+                ? adapters.reserveLedger(ledger, ["absent"])
+                : { reserved: true, record: adapters.saveLedger(ledger) };
+            if (!reservation || !reservation.reserved) {
+                result.status = reservation && reservation.current && reservation.current.status === "processing"
+                    ? "in_progress" : "blocked";
+                result.message = "Otra solicitud reservó esta operación antes de iniciar el movimiento.";
+                results.push(result);
+                return;
+            }
+            ledger = reservation.record || ledger;
             const destination = adapters.resolveFolder(operation.targetFolderPath, true);
             adapters.verifyAcl(destination);
             adapters.assertNoNameConflict(operation.fileId, destination.folder, operation.targetName);
@@ -4257,6 +4290,13 @@ function createCortesOrganizerDriveAdapters_(rootFolder) {
     return {
         loadLedger: operationId => withCortesOrganizerLedgerLock_(() => loadCortesOrganizerOperationLedger_(operationId)),
         saveLedger: record => withCortesOrganizerLedgerLock_(() => saveCortesOrganizerOperationLedger_(record)),
+        reserveLedger: (record, allowedStatuses) => withCortesOrganizerLedgerLock_(() => {
+            const current = loadCortesOrganizerOperationLedger_(record.operationId);
+            const decision = decideCortesOrganizerLedgerReservation_(record, current, allowedStatuses);
+            if (!decision.reserved) return decision;
+            decision.record = saveCortesOrganizerOperationLedger_(record);
+            return decision;
+        }),
         inspectFile: fileId => {
             const state = inspectCortesOrganizerDriveFile_(fileId, rootFolder.getId());
             return {
@@ -4308,6 +4348,13 @@ function rollbackCortesImageOrganizerOperations_(operationIds, ownerId, adapters
                 results.push(result);
                 return;
             }
+            if (ledger.status === "rollback_processing" || ledger.status === "processing") {
+                result.fileId = ledger.fileId;
+                result.status = "in_progress";
+                result.message = "La operación ya tiene una transición activa; no se iniciará un segundo rollback.";
+                results.push(result);
+                return;
+            }
             if (ledger.status === "rolled_back") {
                 const current = adapters.inspectFile(ledger.fileId);
                 if (current.folderPath !== ledger.sourceFolderPath || current.fileName !== ledger.sourceName) {
@@ -4324,7 +4371,18 @@ function rollbackCortesImageOrganizerOperations_(operationIds, ownerId, adapters
                 throw new Error("El archivo cambió después de aplicarse; no se sobrescribirá su estado actual.");
             }
             const rollbackRecord = Object.assign({}, ledger, { status: "rollback_processing", rollbackStartedAt: Date.now() });
-            adapters.saveLedger(rollbackRecord);
+            const reservation = typeof adapters.reserveLedger === "function"
+                ? adapters.reserveLedger(rollbackRecord, ["complete"])
+                : { reserved: true, record: adapters.saveLedger(rollbackRecord) };
+            if (!reservation || !reservation.reserved) {
+                result.fileId = ledger.fileId;
+                result.status = reservation && reservation.current &&
+                    ["processing", "rollback_processing"].includes(reservation.current.status) ? "in_progress" : "blocked";
+                result.message = "Otra solicitud modificó el estado de la operación antes de reservar el rollback.";
+                results.push(result);
+                return;
+            }
+            ledger = reservation.record || rollbackRecord;
             const source = adapters.resolveFolder(ledger.sourceFolderPath, false);
             adapters.verifyAcl(source);
             adapters.assertNoNameConflict(ledger.fileId, source.folder, ledger.sourceName);
