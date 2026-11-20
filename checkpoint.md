@@ -5,7 +5,7 @@ Fecha: 2026-11-20
 ## Repositorio y ramas
 - Repositorio: infogpstech/GPSpedia
 - Rama autorizada: GPSpedia2.2.5_work
-- HEAD de trabajo verificado antes de esta actualización documental: 239a2919fceebf5dbc269627d3569fb11af228e1 (incluye el último commit documental; el último cambio de código de la tarea es a683cb78462807d42fb4502e82e12e3525de7f05).
+- HEAD de trabajo antes de esta actualización: `bf18632e464db0d2fee2b11b62ac86a76361878c` (último commit de código/pruebas de esta subactividad). Rama base protegida `d9acc68d889985c2e2f42fe3a02e502efc86ead1` sin modificar.
 - Rama base protegida GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificar).
 - No hay checkout local disponible. Los archivos se actualizaron secuencialmente mediante la API de contenidos de GitHub, con lectura del blob vigente antes de cada escritura; esta API no expone una condición CAS para el HEAD de la rama. No se usó force ni se modificó la rama base.
 
@@ -844,3 +844,13 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Acceso Beta: Google Drive connector aparece `DISABLED_BY_ADMIN`/`NOT_AVAILABLE`; la búsqueda de integraciones no encontró Google Apps Script. No hay acceso a ScriptProperties/deployments ni browser interactivo en este entorno. No se han compartido secretos ni ejecutado despliegues.
 - Próximo paso operativo: habilitar un canal de acceso autorizado a Apps Script/Drive Beta y confirmar Script IDs de Coordinator, ADMIN y consumidores. Después seguir el runbook (Coordinator primero), generar auditoría Drive nueva y validar preview solo lectura. No ejecutar movimientos/renombrados antes de revisar el manifiesto.
 - Sin cambios en la rama base, deployments, Drive ni Spreadsheet productivos.
+
+
+## Continuidad — preparación local de Safe Apply del organizador (2026-11-20)
+- Se confirmó que `handleApplyCortesImageReconciliation_` concilia URLs/referencias en la hoja Cortes y no es el ejecutor de movimientos del organizador; no se reutilizó para esa finalidad.
+- En `JS/Services/admin.js` se añadieron primitivas puras para validar el manifiesto aprobado, exigir confirmación explícita, comprobar digest/auditoría/referencias, rechazar selección fuera de la página, IDs/destinos duplicados y nombres con separadores; clasificar estado original/ya aplicado/conflicto; y construir un plan de rollback inverso condicionado al estado exacto del destino.
+- Se añadió `JS/Tests/CortesImageOrganizerApplyPlan.mjs` y se registró en `JS/Tests/RunServiceTests.mjs`.
+- Parsing del archivo ADMIN completo mediante compilación V8 aislada: PASS. Ejecución aislada de las 14 comprobaciones equivalentes de la suite focalizada: 14/14 PASS.
+- La herramienta GitHub no devolvió statuses ni ejecuciones de workflow asociadas al último commit de pruebas; por tanto, no se afirma que el runner oficial ni la regresión global hayan pasado. No hay checkout Node local disponible para ejecutar `RunServiceTests.mjs` directamente.
+- Estado: preparación de manifiesto/idempotencia/rollback COMPLETADA; Safe Apply EN PROGRESO. Aún falta el ejecutor Drive, el registro durable por operación y validar permisos heredados de las carpetas destino. Estos puntos pueden desarrollarse y probarse en GitHub con mocks; no requieren acceso de lectura a Drive para escribir el código.
+- No se ejecutaron operaciones Drive/Spreadsheet, no se movieron ni renombraron imágenes y no se desplegó Apps Script. La ejecución real permanece deshabilitada hasta revisar un preview real y verificar ACL/destinos.
