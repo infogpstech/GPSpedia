@@ -62,6 +62,7 @@ assert.ok(outer.indexOf("prepareAddOrUpdateCutRequest_(payload)")<outer.indexOf(
 assert.ok(locked.includes("lockState && lockState.releasedForDrive"));
 assert.ok(source.includes("if (lock.hasLock()) lock.releaseLock()"));
 assert.match(source,/function handleAddOrUpdateCut\(payload\)\s*\{[\s\S]{0,1000}lock\.tryLock\(0\)/);
-assert.match(outer,/handleAppendExistingVehicleCut_\(preparedRequest\)/);\nassert.ok(outer.indexOf("handleAppendExistingVehicleCut_")<outer.indexOf("lock.tryLock(0)"),"Los aportes a vehículos existentes con opId deben entrar al ledger antes de cualquier lock de compatibilidad.");
+assert.match(outer,/handleAppendExistingVehicleCut_\(preparedRequest\)/);
+assert.ok(outer.indexOf("handleAppendExistingVehicleCut_")<outer.indexOf("lock.tryLock(0)"),"Los aportes a vehículos existentes con opId deben entrar al ledger antes de cualquier lock de compatibilidad.");
 assert.doesNotMatch(source,/function handleAddOrUpdateCut\(payload\)\s*\{[\s\S]{0,160}waitLock\(30000\)/);
 console.log("1/1 PASS — WRITE Drive fuera del ScriptLock y reserva de slots");
