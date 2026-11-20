@@ -1427,3 +1427,19 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [ ] Reconciliar en UI la primera respuesta si un mismo opId entra en conflicto después de que esa respuesta ya fue enviada.
 - [ ] Migrar edición in-modal del Desarrollador a eventos de sustitución/versionado por campo.
 - Estado P0: EN PROGRESO.
+
+
+### 2026-11-20 — Diario append-only para cargas de imágenes (infraestructura inicial)
+
+- [x] Auditar duplicación de `ImageUploadLedger` entre WRITE y ADMIN y localizar `ScriptLock.waitLock(5000)` en el flujo WRITE.
+- [x] Crear esquema aislado `ImageUploadEvents` para transiciones append-only, con `eventId`, token, operación, huella, archivo, estado y referencias.
+- [x] Añadir append con confirmación por lectura y proyección determinista por token.
+- [x] Detectar metadatos incompatibles o más de un `fileId` para el mismo token y proyectar `requires_review`, sin seleccionar arbitrariamente.
+- [x] Añadir seis pruebas de contrato/intercalado y registrarlas en el runner.
+- [x] CI HEAD `bbf35e4f7a752519c94b924c4a211642661c39eb`: 231 suites, 2,849 pruebas, 0 fallos; health read-only SUCCESS.
+- [ ] Integrar diario append-only en el flujo de carga WRITE y usarlo como fuente de verdad de reservas/estados.
+- [ ] Resolver la carrera de dos cargas simultáneas con el mismo token: aceptar duplicados físicos como candidatos/revisión, no asumir que appendRow es una restricción única ni que Drive.createFile es idempotente.
+- [ ] Adaptar `markImageUploadLinked` y `handleReconcilePendingImageUploads` para leer/proyectar eventos y reconstruir estados sin mutar el journal.
+- [ ] Mantener compatibilidad de lectura con las filas históricas de `ImageUploadLedger`; no migrar ni borrar datos históricos automáticamente.
+- [ ] Retirar `ScriptLock.waitLock(5000)` únicamente cuando WRITE, ADMIN y recuperación de archivos huérfanos utilicen el diario y pasen pruebas de intercalado.
+- Estado P0: EN PROGRESO. El journal nuevo todavía no está conectado al flujo productivo de carga.
