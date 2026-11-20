@@ -10,7 +10,7 @@ const existingStart = handler.indexOf("if (vehicleId) { // --- Lógica para veh�
 const existingEnd = handler.indexOf("} else { // --- Lógica para vehículo NUEVO", existingStart);
 assert.ok(existingStart >= 0 && existingEnd > existingStart, "No se encontró rama de vehículo existente");
 const branch = handler.slice(existingStart, existingEnd);
-const callbackStart = branch.indexOf("const imageUrl = runAdminDriveWorkOutsideScriptLock_");
+const callbackStart = branch.indexOf("const imageUrl = runAdminContributionDriveWorkOutsideScriptLock_");
 const callbackEnd = branch.indexOf("}, operationHash);", callbackStart);
 assert.ok(callbackStart >= 0 && callbackEnd > callbackStart, "No se encontró callback post-Drive");
 const callback = branch.slice(callbackStart, callbackEnd);
