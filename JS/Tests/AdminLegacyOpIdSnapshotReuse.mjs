@@ -8,13 +8,13 @@ assert.ok(helperStart >= 0 && helperEnd > helperStart, "No se encontró el helpe
 const helperCode = source.slice(helperStart, helperEnd);
 const normalizeId = (value, context) => {
     const id = String(value == null ? "" : value).trim();
-    if (!/^\\d+$/.test(id)) throw new Error(context + " ID inválido");
+    if (!/^\d+$/.test(id)) throw new Error(context + " ID inválido");
     return id;
 };
 const isBlank = value => value === null || value === undefined || String(value).trim() === "";
 const findUnique = new Function(
     "COLS_CORTES", "normalizeIdempotenciaVehicleId_", "isBlankIdempotenciaValue_",
-    helperCode + "\\nreturn findUniqueCortesVehicleRowFromSnapshot_;"
+    helperCode + "\nreturn findUniqueCortesVehicleRowFromSnapshot_;"
 )({ id: 1 }, normalizeId, isBlank);
 
 const header = ["id", "marca", "modelo"];
@@ -51,7 +51,7 @@ assert.ok(legacyStart >= 0 && snapshotLookup > legacyStart,
     "La ruta legacy debe validar unicidad desde la lectura integral ya obtenida");
 assert.doesNotMatch(
     lookupCode.slice(snapshotLookup),
-    /findUniqueCortesVehicleRow_\\(cortesSheet/,
+    /findUniqueCortesVehicleRow_\(cortesSheet/,
     "La ruta legacy no debe volver a consultar la columna ID ni la fila completa"
 );
 
