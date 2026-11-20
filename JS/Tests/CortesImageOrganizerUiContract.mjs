@@ -11,7 +11,7 @@ const checks = [
     ["HTML expone botón de rollback", /id="btn-audit-drive-rollback-organizer"/.test(html)],
     ["La selección solo incluye elementos ready", /if \(item\.status === "ready"\)/.test(ui)],
     ["La selección limita el lote a diez y exige una misma página", /selected\.length <= 10 && pages\.size === 1/.test(ui)],
-    ["La aplicación exige confirmación interactiva del Desarrollador", ui.includes("gpsepediaRequestDeveloperConsoleConfirmation") && ui.includes("approvedFileIds.length") && /if \\(!confirmed \\|\\| !isCurrentRequest\\(\\) return;/.test(ui)],
+    ["La aplicación exige confirmación interactiva del Desarrollador", ui.includes("gpsepediaRequestDeveloperConsoleConfirmation") && ui.includes("approvedFileIds.length") && ui.includes("if (!confirmed || !isCurrentRequest()) return;")],
     ["La aplicación envía auditId, offset, digest, IDs y confirm", /routeActionWithRetry\("applyCortesImageOrganizer"/.test(ui) && /manifestDigest: currentOrganizerPreview\.digest, approvedFileIds, confirm: true/.test(ui)],
     ["El frontend solo ofrece rollback de operaciones del último lote", /routeActionWithRetry\("rollbackCortesImageOrganizer"/.test(ui) && /operationIds: lastOrganizerOperationIds, confirm: true/.test(ui)],
     ["El backend vuelve a generar preview y compara digest", /handlePreviewCortesImageOrganizer_\(\{\s*auditId, offset, limit\s*\}/.test(admin) && /preview\.manifestDigest !== digest/.test(admin)],
