@@ -61,6 +61,19 @@ const event = (opId, vehicleId, kind, payload, rowIndex, hashChar = "a", extra =
 let passed = 0;
 function test(name, fn) { fn(); passed++; console.log("PASS " + name); }
 
+test("el proyector aplica eventos OP-YEAR solo desde el actor interno de FEEDBACK", () => {
+    const vehicle = Object.assign(blankVehicle("101"), { anoDesde: 2018, anoHasta: 2020 });
+    const update = event("OP-YEAR-YSA-12345678901234567890123456789012-anoDesde", "101", "vehicle_update",
+        { fieldName: "anoDesde", value: 2017, expectedCurrentValue: 2018 }, 2, "a",
+        { actorId: "SYSTEM:FEEDBACK_YEAR" });
+    const result = project([vehicle], [update])[0];
+    assert.equal(result.anoDesde, 2017);
+    assert.equal(result.anoHasta, 2020);
+    assert.equal(result.contributionSources.anoDesde.eventId, update.eventId);
+    const forged = { ...update, opId: "OP-YEAR-FORGED", actorId: "USR-1" };
+    assert.throws(() => project([vehicle], [forged]), /evento de aporte inválido/);
+});
+
 test("el lector admite vehicle_update ADMIN autenticado y valida su identidad", () => {
     const row = ["EV-ADMIN-1", "OP-ADMIN-FIELD-1234567890", "101", "a".repeat(64), "vehicle_update",
         JSON.stringify({ fieldName: "anoDesde", value: 2019, expectedCurrentValue: 2018 }),
@@ -70,6 +83,13 @@ test("el lector admite vehicle_update ADMIN autenticado y valida su identidad", 
     assert.equal(events[0].kind, "vehicle_update");
     assert.equal(events[0].payload.fieldName, "anoDesde");
     assert.equal(events[0].actorId, "DEV-1");
+    const yearRow = ["EV-YEAR-1", "OP-YEAR-YSA-12345678901234567890123456789012-anoDesde", "101",
+        "b".repeat(64), "vehicle_update",
+        JSON.stringify({ fieldName: "anoDesde", value: 2017, expectedCurrentValue: 2018 }),
+        "SYSTEM:FEEDBACK_YEAR", "Sistema", "2026-11-20T12:00:01.000Z", "accepted", ""];
+    assert.equal(reader({ getSheetByName: () => ledgerSheet([yearRow]) })[0].opId, yearRow[1]);
+    assert.throws(() => reader({ getSheetByName: () => ledgerSheet([[...yearRow.slice(0, 6), "USR-1", ...yearRow.slice(7)]]) }),
+        /identidad, hash, tipo, fecha o estado inválido/);
     assert.throws(() => reader({ getSheetByName: () => ledgerSheet([[...row.slice(0, 6), "", "", ...row.slice(8)]]) }),
         /identidad, hash, tipo, fecha o estado inválido/);
     assert.throws(() => reader({ getSheetByName: () => ledgerSheet([[...row.slice(0, 1), "OP-YEAR-1234567890", ...row.slice(2)]]) }),
