@@ -1376,3 +1376,21 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] Confirmar rutas de edición del Desarrollador mediante `updateVehicleField` y `uploadAdminImage`.
 - [ ] Probar en integración la edición/reemplazo de imágenes de corte, vehículo y alimentación, y apertura desde la edición in-modal; la inspección estática no sustituye prueba funcional.
 - [ ] Resolver los conflictos y la idempotencia descritos en la sección anterior antes de cerrar P0.
+
+
+### 2026-11-20 — Integración de corte existente en AportesVehiculo
+
+- [x] Confirmar que CATALOG proyecta los eventos append-only de corte/apertura/alimentación sobre la ficha de tres cortes, apertura y alimentaciones; los aportes que no caben quedan como candidatos visibles.
+- [x] Conectar el alta de corte de vehículo existente con `opId` (sin VIN ni `vehicleData`) a `handleAppendExistingVehicleCut_` antes de adquirir cualquier lock de compatibilidad.
+- [x] Derivar en WRITE la huella SHA-256 cuando el modal de detalle envía `opId` sin `operationHash`; mantener verificación estricta cuando el cliente sí proporciona huella.
+- [x] Exigir igualdad de payload JSON para reintentos del mismo `opId`, además de vehículo/tipo/hash.
+- [x] Devolver slot proyectado, timestamp y estado de candidato; el evento excedente permanece en el ledger y CATALOG lo expone para revisión.
+- [x] Corregir validación regex de `vehicleId` y cubrir IDs válidos/no válidos.
+- [x] Retirar la lease Coordinator obsoleta `ensureSupplementaryVehicleFolder` y ajustar runner/pruebas para la política sin lease.
+- [x] CI HEAD `2783379c114fdb6ef658ea4e4d7c1cbeb890ab28`: 228 suites, 2,830 pruebas, 0 fallos; health read-only SUCCESS.
+- [ ] Extender ruta append-only de cortes existentes a casos con VIN y a aportes que completen metadatos `vehicleData`, sin permitir duplicidad global de VIN ni pérdida de campos.
+- [ ] Crear harness de intercalado de `appendRow`: dos vehículos diferentes, mismo vehículo/slots diferentes, mismo `opId`/mismo hash y mismo `opId`/payload distinto; verificar deduplicación lógica y candidatos.
+- [ ] Reemplazar la sección de estado mutable de `ImageUploadLedger` por un registro append-only/reconciliable sin `ScriptLock` global ni esperas; conservar reintento estable y archivos no asociados como candidatos.
+- [ ] Eliminar gradualmente el `UserLock` del handler legacy de cortes existentes y mantener el `ScriptLock` solo para asignación de ID de vehículo nuevo, si la operación realmente requiere secuencia única.
+- [ ] Implementar metadatos de origen/versionado por campo para que la edición in-modal de Desarrollador pueda sustituir un aporte del ledger sin duplicarlo ni resucitar su valor anterior.
+- Estado P0: EN PROGRESO. No declarar cierre hasta pasar intercalados y recuperación de imágenes.
