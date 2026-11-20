@@ -18,13 +18,14 @@ function makeHandler(events, options = {}) {
     return new Function(
         "getSpreadsheet", "SHEET_NAMES", "findRowByOpId", "WRITE_VEHICLE_CONTRIBUTIONS_SHEET_NAME_",
         "findVehicleContributionEventsByOpId_", "readSupplementaryVehicleSnapshot_",
-        "getVehicleContributionCutSlotIndex_", "Utilities",
+        "getVehicleContributionCutSlotIndex_", "getVehicleContributionCandidateStatus_", "Utilities",
         handler + "\nreturn handleCheckOperation;"
     )(
         () => spreadsheet, { CORTES: "Cortes" }, () => null, "AportesVehiculo",
         () => events,
         () => ({ vehicle: options.vehicle || { id: "101" }, rowValues: [] }),
         () => options.slotIndex === undefined ? 1 : options.slotIndex,
+        () => options.candidateStatus === true,
         { formatDate: () => "20/11/2026" }
     );
 }
@@ -60,9 +61,21 @@ function event({ eventId = "EV-1", opId = "OP-1", vehicleId = "101", hash = "a".
     assert.throws(() => fn({ opId: "OP-1" }), error => error.code === "CONTRIBUTION_OP_ID_CONFLICT");
 }
 {
+    const fn = makeHandler([event({ kind: "opening", payload: { text: "IGN", image: "" } })], { candidateStatus: true });
+    const result = fn({ opId: "OP-1", operationHash: "a".repeat(64) });
+    assert.equal(result.contributionKind, "opening");
+    assert.equal(result.candidateReviewPending, true, "La apertura concurrente desplazada debe conservarse como candidata");
+}
+{
+    const fn = makeHandler([event({ kind: "feed", payload: { text: "12V", image: "" } })], { candidateStatus: true });
+    const result = fn({ opId: "OP-1", operationHash: "a".repeat(64) });
+    assert.equal(result.contributionKind, "feed");
+    assert.equal(result.candidateReviewPending, true, "La alimentación desplazada debe conservarse como candidata");
+}
+{
     const fn = makeHandler([]);
     const result = fn({ opId: "OP-MISSING" });
     assert.equal(result.exists, false);
     assert.equal(result.pending, false);
 }
-console.log("WriteContributionRecovery: 5/5 PASS — checkOperation reconoce eventos append-only y conflictos");
+console.log("WriteContributionRecovery: 7/7 PASS — checkOperation reconoce eventos append-only y conflictos");
