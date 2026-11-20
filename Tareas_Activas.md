@@ -797,3 +797,11 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] CI `44642434395` SUCCESS: 193 suites, 2,528 pruebas aprobadas, 0 fallos; health read-only `44642434153` SUCCESS.
 - Sin despliegue Apps Script ni escrituras productivas. Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
 
+
+
+### WRITE — combinar lectura de encabezado y columna ID del asignador (2026-11-20)
+- [x] Combinar encabezado `id` y valores de la columna ID en una sola lectura desde fila 1.
+- [x] Mantener lectura de fórmulas separada y lectura de datos ajenos al ID solo para filas candidatas; consultar ancho de hoja únicamente si hay filas de datos.
+- [x] Preservar detección de duplicados, fórmulas, IDs inválidos, filas incompletas y contador monotónico bajo ScriptLock.
+- [x] `WriteVehicleIdAllocatorBoundedRead`: 11/11 PASS; CI `44642666700` SUCCESS: 193 suites, 2,528 pruebas, 0 fallos.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó ni se modificaron datos productivos.
