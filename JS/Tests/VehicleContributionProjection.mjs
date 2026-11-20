@@ -264,7 +264,7 @@ test("ediciones concurrentes de campos distintos del mismo vehículo se conserva
 });
 test("edición versionada puede sustituir el valor procedente de un evento previo",()=>{
  const vehicle=blankVehicle("101");
- const source=event("OP-VEHICLE-MODEL-1","101","vehicle",{modelo:"Corolla"},2,"seed");
+ const source=event("OP-VEHICLE-MODEL-1","101","vehicle",{modelo:"Corolla"},2,"a");
  const update=event("OP-ADMIN-FIELD-MODEL-5","101","vehicle_update",{fieldName:"modelo",value:"Corolla X",expectedCurrentValue:"Corolla"},3,"a",
      {supersedesEventId:source.eventId});
  const result=project([vehicle],[source,update])[0];
