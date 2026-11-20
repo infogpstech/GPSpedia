@@ -61,7 +61,8 @@ check("Los reportes pueden convertirse en aportes de corte o en altas de vehícu
     assert.match(addCut, /Crear corte desde reporte/);
     assert.match(addCut, /markAsResolved\(completedSourceInboxItemId/);
     assert.match(addCut, /candidateReviewPending/);
-    assert.match(addCortes, /sourceInboxItemId = new URLSearchParams\(window\.location\.search\)/);
+    assert.match(addCortes, /sourceInboxItemId = typeof window !== 'undefined'/);
+    assert.match(addCortes, /sourceOpId = sourceKey \? 'OP-FEEDBACK-' \+ sourceKey : ''/);
     assert.match(addCortes, /routeAction\('markAsResolved'/);
     assert.match(addCortes, /resolveSourceInboxReport_/);
     const saveIndex = addCortes.indexOf("if (!result || result.status !== 'success'");
