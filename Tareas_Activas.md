@@ -1342,3 +1342,16 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] Mapear compatibilidad de la proyección con CATALOG/modal: la ficha consume los tres slots fijos y la sincronización post-escritura fuerza `getCatalogData({forceRefresh:true})`.
 - [x] Identificar contrato de edición in-modal ADMIN: `updateVehicleField` escribe texto/modelo en Cortes con valor esperado; `uploadAdminImage` usa ledger compensatorio propio. Si el valor proviene de un evento nuevo, la edición debe referenciar eventId/versión y generar sustitución auditable. Documentado en `CONCURRENCIA_APORTES_DISENO.md`, commit `20b78390c9a056299319e0a29866d2ec12abd143`.
 - [ ] Implementar metadatos de origen por campo en la proyección y adaptar edición in-modal para sustituir eventos sin duplicarlos.
+
+
+### 2026-11-20 — Persistencia suplementaria por campo
+
+- [x] En WRITE, reemplazar la escritura/reversión del rango completo de diez columnas por escrituras verificadas únicamente en las celdas modificadas. Evita que un rollback con datos antiguos borre campos escritos por otra solicitud.
+- [x] Añadir prueba de intercalado de dos operaciones en columnas diferentes; ambos valores deben conservarse.
+- [x] Añadir prueba de fallo parcial sin rollback amplio.
+- [ ] Confirmar Actions del commit `3e10e9bbd742e3bc5a815f113f464b799f5034e4`.
+- [ ] Resolver colisiones concurrentes en el mismo campo/slot y registrar aportes no materializados como candidatos recuperables.
+- [ ] Completar idempotencia durable de `addSupplementaryInfo` con `opId` (reintento idéntico devuelve resultado previo; contenido distinto con mismo ID se rechaza).
+- [ ] Corregir asignación de slots de cortes para que dos opId distintos no seleccionen ni sobrescriban el mismo slot; conservar el contenido entrante si la capacidad está llena.
+- **Aclaración normativa:** no añadir leases ni locks de Coordinator para las operaciones ordinarias WRITE. §15 prohíbe leases, locks globales, esperas y serialización de acciones independientes. La política WRITE de Coordinator existe en el mapa, pero el `doPost` actual no la invoca para estas acciones.
+- Estado de `GP-CONCURRENCY-CUT-MULTI-ENTRY-01`: EN PROGRESO / P0.
