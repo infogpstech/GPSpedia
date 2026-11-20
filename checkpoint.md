@@ -472,3 +472,11 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - En rutas de recuperación con fila/ledger ya persistidos, primero se escribe el estado de recuperación/vinculación bajo lock, luego se libera y se actualiza metadata Drive. Las limpiezas de archivo no vinculado y su compensación siguen pendientes: requieren un estado intermedio y revalidación tras reacquirir lock.
 - Pruebas `FeedbackPysPostCommitOutsideLock` 4/4, `FeedbackPysPendingImageVerificationOutsideLock` 5/5, `P2PysImageUploadOutsideLock` PASS. CI `44645868436` SUCCESS: 197 suites, 2,550 pruebas aprobadas, 0 fallos; health read-only `44645868341` SUCCESS.
 - Commits: `f6ec254464d7f1b345eb6266a6a4d3ef0bd48e4d`, `91289955b91f0a0c24e2e70b80b627638bfc3b68`, `70348f51073b780b7344824971d53d2645ff112a`, `2c756fea5eac507c0e431debef6352a32ae0fe68`.
+
+
+## P1 — compensación Drive PyS fuera del lock con revalidación (2026-11-20)
+- En la ruta de rollback de `handleAddProblem`, cuando se comprueba bajo lock que la imagen no aparece referenciada, primero se escribe `RECOVERY_REQUIRED` en el ledger y se libera el ScriptLock. Solo entonces se envía el archivo a papelera y se comprueba `isTrashed()`.
+- Tras la operación Drive se readquiere el lock, se relee el ledger y se verifica opId/problemId/fileId/URL/status antes de limpiar a `PENDING`. Si falla el trash o la readquisición/revalidación, el ledger queda `RECOVERY_REQUIRED` y la metadata de recuperación se actualiza fuera del lock. Esto evita que otra solicitud use la reserva mientras se compensa y evita borrar archivos que el sistema haya referenciado.
+- Pruebas `FeedbackPysRollbackOutsideLock` 6/6, `PysImageStorageRecovery` 22/22, `P2PysImageUploadOutsideLock` PASS. CI `44646143035` SUCCESS: 198 suites, 2,556 pruebas aprobadas, 0 fallos; health read-only `44646143256` SUCCESS.
+- Commits: implementación `c7e622d2f844b9908d86aaf0a210ba8c3e64532c`, prueba `2f723e686b450052dc9669361089a077a103ea52`, runner `f89810e583d1b82d71fcad4bf4575d80e138a93e`.
+- Sin despliegue Apps Script ni modificaciones productivas.
