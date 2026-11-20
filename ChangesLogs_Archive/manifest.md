@@ -16,3 +16,15 @@
 4. `ChangesLogs_2026-11-14_parte_004.txt` — 95059 caracteres; blob pendiente de publicación.
 
 Las partes archivadas son inmutables. Para reconstruir el registro completo, concatenar las partes en el orden indicado y finalmente el archivo activo.
+
+
+## Rotación adicional — 2026-11-20
+
+- Archivo fuente activo previo: `ChangesLogs.txt`.
+- Longitud Unicode: 178437 caracteres.
+- División en separador de registro: parte 005 = 92420 caracteres; parte 006 = 86017 caracteres.
+- `ChangesLogs_2026-11-20_parte_005.txt` — blob `dc72b178e30d126aac8018569c8fb28ad8d75da3`.
+- `ChangesLogs_2026-11-20_parte_006.txt` — blob `b56abb39f8a5f55cf33dea250a35084dfac78284`.
+- Integridad verificada: `parte_005 + parte_006 === ChangesLogs.txt` previo a la rotación, carácter por carácter.
+- Orden de reconstrucción: partes 001, 002, 003, 004, 005, 006 y después `ChangesLogs.txt` activo.
+- Las partes anteriores permanecen inmutables.
