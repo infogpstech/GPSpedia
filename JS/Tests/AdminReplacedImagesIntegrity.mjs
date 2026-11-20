@@ -364,7 +364,7 @@ function buildDelete({status="historica",failStatus=false,failDriveRollback=fals
     const historySheet=createSheet([HEADERS,makeRow({id:"REP-DELETE",status})]);
     const lock=lockHarness();let driveCalls=0,failed=false;
     const file={trashed:false,getMimeType:()=>"image/jpeg",isTrashed(){return this.trashed;},
-        setTrashed(value){if(!value&&failDriveRollback)throw new Error("drive rollback failed");this.trashed=value;},getName:()=>"image.jpg"};
+        setTrashed(value){assert.equal(lock.state.locked,true,"El traslado y rollback Drive deben seguir bajo ScriptLock");if(!value&&failDriveRollback)throw new Error("drive rollback failed");this.trashed=value;},getName:()=>"image.jpg"};
     const extract=new Function(helperSources.extractDriveFileIds+"\nreturn extractDriveFileIds;")();
     const getType=new Function(helperSources.getReplacedImageRecordType+"\nreturn getReplacedImageRecordType;")();
     const getIdentity=new Function("extractDriveFileIds",helperSources.getReplacedImageRecordIdentity_+"\nreturn getReplacedImageRecordIdentity_;")(extract);
@@ -375,16 +375,20 @@ function buildDelete({status="historica",failStatus=false,failDriveRollback=fals
         return setStatus(sheet,row,statusValue);
     };
     const setPrevious=new Function("SpreadsheetApp",helperSources.setReplacedImageTrashPreviousStatusVerified_+"\nreturn setReplacedImageTrashPreviousStatusVerified_;")({flush(){}});
+    const runAdminDriveWorkOutsideScriptLock_=new Function(fnSource(admin,"runAdminDriveWorkOutsideScriptLock_")+"\nreturn runAdminDriveWorkOutsideScriptLock_;")();
     const api=new Function(
-        "LockService","getOrCreateReplacedImagesSheet","ensureReplacedImagesInventoryColumns","findReplacedImageRecordById",
+        "LockService","runAdminDriveWorkOutsideScriptLock_","getOrCreateReplacedImagesSheet","ensureReplacedImagesInventoryColumns","findReplacedImageRecordById",
         "getReplacedImageRecordType","isKnownReplacedImageStatus_","getReplacedImageRecordIdentity_","collectActiveDriveReferences",
         "setReplacedImageTrashPreviousStatusVerified_","DriveApp","getCortesRootFolder","getSingleParentFolderInsideCortes","getFolderPathInsideCortes",
         "setReplacedImageHistoryStatusVerified_","recordImageAdministrationActivity","logMessage",
         fnSource(admin,"handleDeleteReplacedImage")+"\nreturn handleDeleteReplacedImage;"
-    )(lock.LockService,()=>historySheet,()=>HEADERS,find,getType,
+    )(lock.LockService,runAdminDriveWorkOutsideScriptLock_,()=>historySheet,()=>HEADERS,find,getType,
         new Function(helperSources.isKnownReplacedImageStatus_+"\nreturn isKnownReplacedImageStatus_;")(),
         getIdentity,()=>({references:new Map(),unverifiableReferenceCount:0}),setPrevious,
-        {getFileById(){driveCalls++;return file;}},()=>({getId:()=>"ROOT"}),()=>({}),()=>"Cortes/Original",
+        {getFileById(){assert.equal(lock.state.locked,false,"La validación Drive debe ejecutarse sin ScriptLock");driveCalls++;return file;}},
+        ()=>{assert.equal(lock.state.locked,false);return {getId:()=>"ROOT"};},
+        ()=>{assert.equal(lock.state.locked,false);return {};},
+        ()=>{assert.equal(lock.state.locked,false);return "Cortes/Original";},
         wrappedStatus,()=>{},()=>{});
     return {run:()=>api({id_reemplazo:"REP-DELETE"},()=>{}),historySheet,file,driveCalls:()=>driveCalls};
 }
