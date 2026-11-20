@@ -1310,3 +1310,9 @@ Se implementó agrupación de resultados de Cortes por categoría/marca/modelo, 
 - JS/Tests/ImageUploadEventJournal.mjs: se amplía la cobertura del adaptador de transiciones.
 - Validación CI HEAD cb496602f788c3fe4665cb0a193213a6803d52ab: 231 suites, 2,850 pruebas aprobadas, 0 fallos; health read-only SUCCESS.
 - No se retiró ScriptLock.waitLock(5000), no se desplegó Apps Script y no se modificaron datos productivos.
+2026-11-20 — Reconciliación ADMIN del journal append-only de imágenes
+- JS/Services/admin.js: lectura y proyección de ImageUploadEvents; detección de tokens en revisión; inclusión de operaciones no presentes en ImageUploadLedger; confirmación mediante nuevas transiciones append-only; compatibilidad histórica conservada.
+- JS/Tests/AdminImageUploadEventReconciliation.mjs: cobertura de lectura, proyección, conflictos y append; JS/Tests/RunServiceTests.mjs registra la suite.
+- Validación CI HEAD 998f267f50cc29442a609ff8be2a88b3fce0c1d7: 232 suites, 2,854 pruebas aprobadas, 0 fallos; health read-only SUCCESS.
+- Una ejecución inicial falló por un fixture de prueba sin encabezado de hoja; se corrigió el fixture y la repetición pasó. No fue un fallo de lógica productiva.
+- No se desplegó Apps Script ni se modificaron datos productivos. ImageUploadLedger y waitLock(5000) siguen vigentes en WRITE.

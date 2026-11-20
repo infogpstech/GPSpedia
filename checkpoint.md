@@ -1065,3 +1065,12 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Pruebas CI en HEAD cb496602f788c3fe4665cb0a193213a6803d52ab: 231 suites, 2,850 pruebas aprobadas, 0 fallos. Health read-only SUCCESS.
 - No se retiró ScriptLock.waitLock(5000), no se desplegó Apps Script y no se modificaron Spreadsheet/Drive productivos.
 - P0 sigue EN PROGRESO. Siguiente paso exacto: migrar el reconciliador ADMIN para leer/proyectar ImageUploadEvents y ImageUploadLedger sin perder filas históricas ni archivos huérfanos; después convertir el journal en fuente de verdad, probar carreras y solo entonces retirar el lock.
+## Continuidad — reconciliación ADMIN de ImageUploadEvents (2026-11-20)
+
+- HEAD confirmado antes de esta actualización documental: 998f267f50cc29442a609ff8be2a88b3fce0c1d7; rama autorizada GPSpedia2.2.5_work. Rama base protegida confirmada intacta: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Commits de implementación/pruebas: 2198f269d5a1e7b67d8044c580e49ef3b100d6f1 (lector y reconciliador ADMIN), 292c2ecdd085678e6731944c3a2e7f970fc6a703 (evitar transiciones repetidas), 3dee9e79948e8f2f6cd0975c39e3cc8700cfb9ed y 2fcf83f6aa161c2c6969491cb362b0624a468603 (suite y registro), 998f267f50cc29442a609ff8be2a88b3fce0c1d7 (fixture corregido).
+- ADMIN lee/proyecta ImageUploadEvents, incluye operaciones sin fila legacy y anexa transiciones de reconciliación sin mutar el journal. Los tokens en conflicto o con varios fileId quedan requires_review.
+- Prueba AdminImageUploadEventReconciliation 4/4 PASS. CI HEAD 998f267f50cc29442a609ff8be2a88b3fce0c1d7: 232 suites, 2,854 pruebas aprobadas, 0 fallos. Health read-only SUCCESS.
+- Límite vigente: WRITE sigue usando ImageUploadLedger mutable y ScriptLock.waitLock(5000); ADMIN conserva compatibilidad con el ledger histórico. El journal aún no es la fuente primaria de WRITE.
+- No se desplegó Apps Script ni se modificaron Spreadsheet/Drive productivos.
+- P0 continúa EN PROGRESO. Siguiente paso exacto: migrar WRITE reserva/recuperación/vinculación a ImageUploadEvents como fuente primaria; probar reintentos, mismo token con fileId distinto, errores parciales y recuperación. Retirar waitLock(5000) solo tras pasar esas pruebas.

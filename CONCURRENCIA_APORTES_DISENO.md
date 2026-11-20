@@ -134,3 +134,12 @@ WRITE ahora anexa transiciones reserved, pending y linked a ImageUploadEvents du
 Prueba ImageUploadEventJournal: 7/7 PASS. CI 44810419884 SUCCESS: 231 suites, 2,850 pruebas, 0 fallos. Health read-only del mismo HEAD SUCCESS.
 
 Siguiente paso: adaptar ADMIN para reconciliar tanto los eventos append-only como los registros heredados, definir precedencia/compatibilidad de proyección y probar recuperación antes de retirar el ledger mutable o sus locks.
+## Avance — reconciliación ADMIN del journal (2026-11-20)
+
+ADMIN ya valida y lee ImageUploadEvents, agrupa eventos por token y proyecta el estado. Si detecta metadatos incompatibles o más de un fileId, devuelve requires_review sin escoger un archivo. El reconciliador también incluye operaciones presentes únicamente en el journal y, al confirmar, anexa una nueva transición en vez de mutar filas existentes. Las filas históricas de ImageUploadLedger continúan soportadas.
+
+ADMIN markImageUploadLinked anexa linked cuando el journal existe. El ledger mutable todavía se utiliza para las rutas WRITE/ADMIN heredadas y no se ha retirado waitLock(5000). La migración sigue siendo parcial.
+
+Prueba AdminImageUploadEventReconciliation: 4/4 PASS. CI 44811150765 SUCCESS: 232 suites, 2,854 pruebas, 0 fallos. Health read-only SUCCESS.
+
+Siguiente paso: migrar la reserva, recuperación y vinculación WRITE para que ImageUploadEvents sea la fuente primaria; mantener lectura compatible del ledger histórico y retirar el lock únicamente después de probar reintentos, conflictos y recuperación.

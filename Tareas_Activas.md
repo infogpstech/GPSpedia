@@ -1456,3 +1456,16 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [ ] Probar dos cargas simultáneas con mismo token y mismo/diferente fileId, errores parciales Drive/Sheets y recuperación después de respuesta perdida.
 - [ ] Retirar ScriptLock.waitLock(5000) solo después de completar la migración dual y aprobar regresión.
 - Estado: P0 EN PROGRESO. No se retiró ningún lock ni se desplegó Apps Script. La integración actual es una transición incremental, no el cierre de la migración.
+### 2026-11-20 — Reconciliación ADMIN de ImageUploadEvents
+
+- [x] ADMIN valida el esquema y lee el journal append-only sin crear ni modificar la hoja durante la lectura.
+- [x] Proyecta por token los eventos, detecta metadatos incompatibles y varios fileId sin elegir un ganador.
+- [x] El reconciliador incluye tokens presentes solo en ImageUploadEvents; conserva compatibilidad con ImageUploadLedger y evita duplicar en el informe los tokens ya cubiertos por el ledger, salvo conflictos.
+- [x] En confirmación, registra las transiciones de reconciliación mediante append; no muta ni elimina filas del journal.
+- [x] ADMIN markImageUploadLinked también anexa linked cuando la hoja de eventos ya existe.
+- [x] Prueba AdminImageUploadEventReconciliation: 4/4 PASS.
+- [x] CI HEAD 998f267f50cc29442a609ff8be2a88b3fce0c1d7: 232 suites, 2,854 pruebas aprobadas, 0 fallos.
+- [x] Health read-only del mismo HEAD: SUCCESS.
+- [ ] Migrar WRITE para que el journal sea la fuente primaria de reserva/estado y mantener ImageUploadLedger solo como compatibilidad histórica/lectura.
+- [ ] Validar recuperación y cargas duplicadas con errores parciales Drive/Sheets; retirar waitLock(5000) solo después de pasar esa cobertura.
+- Estado P0: EN PROGRESO. No se ha desplegado Apps Script ni se han modificado datos productivos.
