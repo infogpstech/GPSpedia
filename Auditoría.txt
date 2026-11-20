@@ -776,3 +776,15 @@ Corrección en HEAD 9425527a3fb93ddc9256537ff534cea3872e2d7c:
 Validación: CI 44828376102 SUCCESS — 237 suites, 2,942 pruebas, 0 fallos; node --check PASS. Health read-only y Pages SUCCESS.
 Severidad: alta (integridad y consistencia de datos). Estado: CORREGIDO LOCALMENTE; Beta AUG-160/AUG-159 pendiente para concurrencia real, pérdida de respuesta y fallos parciales Drive/Sheets. No se desplegó Apps Script ni se tocaron datos productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-20 — HALLAZGO CORREGIDO: USERLOCK EN APORTES WRITE A VEHÍCULOS EXISTENTES
+- Se eliminó getWriteContributionLock_ y el uso de LockService.getUserLock() para aportes a vehículos existentes.
+- Los vehículos existentes deben incluir opId estable y se registran por AportesVehiculo append-only. Un payload sin opId devuelve WRITE_OP_ID_REQUIRED antes de adquirir cualquier lock.
+- El ScriptLock inmediato queda limitado a la asignación secuencial de ID de vehículos nuevos.
+- Se verificaron los consumidores activos: el modal de detalle y HTML/add_cortes.html envían/reutilizan opId. Los payloads legacy sin opId quedan rechazados explícitamente para vehículos existentes.
+- Pruebas: WriteCutPreflightOutsideLock 1/1; MutationLockContention 1/1; WriteContributionAppendConcurrency 7/7; WriteIdAllocatorNonBlocking 5/5.
+- CI 44829158327 SUCCESS: 237 suites, 2942 pruebas, 0 fallos; node --check PASS. Health read-only y Pages SUCCESS.
+Estado: CORREGIDO LOCALMENTE. Queda Beta de concurrencia real y la auditoría del punto FEEDBACK/reporte/sugerencia. No se desplegó WRITE ni se tocaron datos productivos.
+================================================================================
