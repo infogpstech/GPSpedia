@@ -173,3 +173,12 @@ WRITE checkOperation ahora recalcula conflictos VIN para eventos recuperados, ta
 La UI del modal de expansión ahora refresca el catálogo antes de notificar éxito. Busca el opId de la operación en contributionCandidates y comunica conflictos que hayan aparecido después de que la primera solicitud ya recibió respuesta, incluidos opId_conflict y vin_conflict. Esto mejora la señal al usuario, pero no sustituye una vista ADMIN que permita revisar y resolver candidatos.
 
 CI 44814069582 SUCCESS: 232 suites, 2,865 pruebas, cero fallos; health read-only SUCCESS. WriteContributionAppendConcurrency 7/7 y WriteContributionRecovery 9/9. P0 permanece abierta: falta flujo ADMIN de resolución append-only auditable, revisión final de idempotencia/errores parciales, y pruebas de integración reales con Google Sheets/Drive.
+
+
+## Regresión local — recuperación tras respuesta perdida (2026-11-20)
+
+- `WriteContributionAppendConcurrency.mjs` cubre ahora 9 escenarios. Dos casos simulan pérdida de respuesta tras persistencia: fallo de `SpreadsheetApp.flush()` después del append y excepción de `appendRow()` después de insertar la fila.
+- En ambos casos, el reintento con el mismo `opId` reconoce el evento existente, devuelve el `eventId` original y mantiene una sola fila lógica. El segundo caso comprueba además que CATALOG proyecta el corte.
+- Se corrigió el dato de hash del test a hexadecimal válido sin modificar la validación SHA-256 de producción.
+- CI 44835751507 SUCCESS: 239 suites, 2968 pruebas, 0 fallos; `WriteContributionAppendConcurrency` 9/9. Health read-only SUCCESS.
+- Esto valida el contrato en el harness aislado, no las garantías del servicio real de Google Sheets. La concurrencia real y los fallos parciales Drive/Spreadsheet siguen pendientes de Beta aislada.
