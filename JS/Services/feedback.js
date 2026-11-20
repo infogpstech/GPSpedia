@@ -4889,6 +4889,29 @@ function handleUpdateTutorialItem(payload) {
     }
     if (!Object.keys(updates).length) throw new Error("No se recibieron campos editables del tutorial.");
 
+    // Un reintento que ya dejó todos los campos en el estado solicitado es de solo lectura:
+    // resolverlo antes del lock evita bloquear otras escrituras sin introducir una carrera de escritura.
+    const preflightSheet = getTutorialSheet_(false);
+    if (preflightSheet) {
+        const preflightTarget = findTutorialRow_(preflightSheet, reference, true);
+        const preflightCurrent = preflightTarget.row.slice(1, 6).map(value => String(value || ""));
+        const preflightNext = [
+            updates.tema !== undefined ? updates.tema : String(preflightTarget.row[1] || ""),
+            String(preflightTarget.row[2] || ""),
+            updates.comoIdentificarlo !== undefined ? updates.comoIdentificarlo : String(preflightTarget.row[3] || ""),
+            updates.dondeEncontrarlo !== undefined ? updates.dondeEncontrarlo : String(preflightTarget.row[4] || ""),
+            updates.detalles !== undefined ? updates.detalles : String(preflightTarget.row[5] || "")
+        ];
+        if (preflightNext.every((value, index) => value === preflightCurrent[index])) {
+            return {
+                status: "success", alreadyUpdated: true,
+                message: "El tutorial ya contiene los datos solicitados.",
+                updated: { tutorialId: String(preflightTarget.row[0] || "").trim(), tema: preflightNext[0],
+                    comoIdentificarlo: preflightNext[2], dondeEncontrarlo: preflightNext[3], detalles: preflightNext[4] }
+            };
+        }
+    }
+
     const lock = LockService.getScriptLock();
     acquireFeedbackScriptLock_(lock);
     try {
