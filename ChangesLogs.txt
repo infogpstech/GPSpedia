@@ -67,3 +67,6 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - Reintentar con el mismo `opId` devuelve el evento original y no duplica la fila. Se corrigió el hash inválido del propio test; la validación SHA-256 del servicio se conserva.
 - CI 44835751507 SUCCESS: 239 suites, 2968 pruebas, 0 fallos; el escenario focalizado quedó 9/9 PASS. Health read-only SUCCESS.
 - Concurrencia real de Google Sheets/Apps Script y fallos Drive/Sheets continúa diferida a Beta aislada.
+
+
+2026-11-20 — Revalidación final de la rama de trabajo tras actualizar registros: CI 44835908125 SUCCESS (239 suites, 2968 pruebas, 0 fallos); health read-only 44835908123 SUCCESS. No se desplegó Apps Script ni se tocaron Spreadsheet/Drive productivos. Pages automático quedó cancelado por commits posteriores; no forma parte de la validación de servicios.
