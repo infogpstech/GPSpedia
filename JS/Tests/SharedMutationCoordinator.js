@@ -1427,7 +1427,7 @@ function runSharedMutationCoordinatorTests() {
         const result = admin.withLease("ADMIN", "createCortesImageFolder", function() {
             const cuts = admin.withLease("ADMIN", "updateVehicleField", function() { return "CORTES_OK"; });
             const logo = admin.withLease("ADMIN", "addLogo", function() { return "DRIVE_OK"; });
-            const login = r.makeClient("AUTH").withLease("AUTH", "registerSession", function() { return "LOGIN_OK"; });
+            const login = r.makeClient("AUTH").withLease("AUTH", "login", function() { return "LOGIN_OK"; });
             let sameResourceBlocked = false;
             try {
                 admin.withLease("ADMIN", "createCortesImageFolder", function() { return "UNEXPECTED"; });
