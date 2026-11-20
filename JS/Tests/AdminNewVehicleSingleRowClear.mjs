@@ -22,9 +22,9 @@ assert.doesNotMatch(branch, /getRange\(rowIndex,\s*2,\s*1,\s*lastColumn\s*-\s*1\
 assert.match(branch, /recordOpId\(opId, newId, 1, formattedDate, "pending"/,
     "La reserva idempotente pending debe mantenerse");
 assert.ok(branch.indexOf('recordOpId(opId, newId, 1, formattedDate, "pending"') <
-    branch.indexOf("runAdminDriveWorkOutsideScriptLock_"),
+    branch.indexOf("runAdminContributionDriveWorkOutsideScriptLock_"),
     "La reserva pending debe preceder a Drive");
 assert.ok(branch.indexOf('recordOpId(opId, newId, 1, formattedDate, "completed"') >
-    branch.indexOf("SpreadsheetApp.flush()", branch.indexOf("runAdminDriveWorkOutsideScriptLock_")),
+    branch.indexOf("SpreadsheetApp.flush()", branch.indexOf("runAdminContributionDriveWorkOutsideScriptLock_")),
     "La operación solo debe completarse después de escribir y hacer flush");
 console.log("AdminNewVehicleSingleRowClear: 7/7 PASS — una limpieza de fila, ID central y reserva idempotente preservados");
