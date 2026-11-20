@@ -457,3 +457,11 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - `WriteFreezeCortesIdsBackupOutsideLock` 5/5 PASS; `WriteAuthorizationMinimization` 13/13 PASS. CI `44645165057` SUCCESS: 195 suites, 2,541 pruebas aprobadas, 0 fallos; health read-only `44645165055` SUCCESS.
 - Commits: implementación `5762d4919843d17e5d0f599b123ea38c2289c43a`, prueba `81704601d46ee3862718eb956d0eb69202e97f41`, runner `024e86775c5e72fe532462e96c7dd556d1dcc5cd`, compatibilidad extractor `54663b60478ba21ddc59c57662b9d6ee425af918`.
 - No se desplegó Apps Script ni se consultaron/modificaron datos productivos.
+
+
+## P1 — verificación Drive de imagen PyS pending fuera del lock (2026-11-20)
+- `handleAddProblem` ahora valida con Drive el archivo de una operación `UPLOAD_PENDING` antes de adquirir el ScriptLock. Bajo lock vuelve a leer la reserva y compara opId, payloadHash, problemId, imageFileId, imageUrl y status antes de reutilizar el objeto verificado.
+- Si la reserva cambió entre preflight y lock, falla con instrucción de reintento en lugar de verificar otro archivo bajo lock. Si la verificación previa falla y la reserva sigue igual, marca `RECOVERY_REQUIRED` bajo lock. Se conservan MIME, tamaño, URL, descripción, carpeta autorizada y permisos.
+- Pruebas `FeedbackPysPendingImageVerificationOutsideLock` 5/5; `P2PysImageUploadOutsideLock` PASS; CI `44645449059` SUCCESS: 196 suites, 2,546 pruebas aprobadas, 0 fallos; health read-only `44645449007` SUCCESS.
+- Commits: implementación `35c24ab08cbf7bec03520dc2143f3862c0ee75e9`, prueba `b93a83f6ceba28679486269850c4eda462a0918a`, runner `5bad0df5b2696f1a9ebcc353f41f1b71ad4cce9f`.
+- El cleanup Drive de archivos duplicados/rollback y la actualización de descripción LINKED siguen pendientes de revisión independiente; no se asume que estén fuera del lock.
