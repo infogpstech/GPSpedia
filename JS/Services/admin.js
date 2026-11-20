@@ -8286,8 +8286,15 @@ function handleAddSupplementaryInfo(payload, logMessage){
   const lock=LockService.getScriptLock();
   let lockAcquired=false;
   try {
-   lockAcquired=typeof lock.tryLock==="function"&&lock.tryLock(0);
-   if(!lockAcquired)throw createSupplementaryInfoError_("SUPPLEMENTARY_LOCK_FAILED","El registro está ocupado. Conserva la operación y vuelve a intentarlo.");
+   // La carga ya terminó; esperar solo la escritura breve evita rechazar aportes
+   // legítimos de otros vehículos por una colisión momentánea del ScriptLock.
+   try {
+    if(typeof lock.waitLock!=="function")throw new Error("LockService no admite espera breve.");
+    lock.waitLock(2000);
+    lockAcquired=true;
+   } catch(lockError) {
+    throw createSupplementaryInfoError_("SUPPLEMENTARY_LOCK_FAILED","La escritura breve sigue ocupada. Conserva el mismo intento y vuelve a intentarlo.");
+   }
    const current=getSupplementaryInfoState_(payload);
    if(getSupplementaryInfoPlanSignature_(current)!==signature)throw createSupplementaryInfoError_("SUPPLEMENTARY_CONFLICT","La información cambió mientras se cargaban los archivos. No se sobrescribieron datos; vuelve a revisar el registro.");
    const updated=current.updated,index=current.index;
