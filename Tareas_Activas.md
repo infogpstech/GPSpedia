@@ -39,6 +39,7 @@ La copia archivada fue verificada carácter por carácter contra el original. Es
 - [x] Confirmar consumidores activos de cortes: modal de detalle y `HTML/add_cortes.html` envían/reutilizan opId estable.
 - [x] Corregir el lector CATALOG de `AportesVehiculo`: aceptar `vehicle_update` solo con actor y opId `OP-ADMIN-`; antes el proyector ya entendía el tipo, pero el lector lo rechazaba y podía invalidar la lectura completa. Prueba funcional añadida a `VehicleContributionProjection`; CI 44834146336 SUCCESS: 237 suites, 2956 pruebas, 0 fallos.
 - [x] Auditar FEEDBACK/reporte/sugerencia: `reportProblem` y `suggestCutChange` persisten en Feedbacks y no escriben directamente Cortes/AportesVehiculo; la sugerencia actual se limita a un corte existente. Los IDs `reportId`/`suggestionOperationId` y la huella mantienen idempotencia. `reportId` ahora usa `crypto.randomUUID()`/`getRandomValues`, sin `Math.random`.
+- [x] Corregir fallo de ejecución al repetir voto positivo: `handleSuggestYearLocked` usaba `voteActors` fuera de alcance; ahora comprueba el voto positivo desde `allData`. Regresión añadida a `SuggestYearVoteThreshold.mjs`; ejecución pendiente, por lo que no se considera cierre validado.
 - [ ] Migrar `handleSuggestYear` y `completeFeedbackYearApplication_`: hoy el umbral de tres votos aún modifica directamente `Cortes` (`anoDesde`/`anoHasta`) y su ledger `FeedbackYearApplications` solo recupera esa escritura materializada. Convertir la ampliación en evento versionado `AportesVehiculo` con idempotencia, conflicto/revisión y recuperación; no retirar el ScriptLock hasta resolver el asignador de IDs y las demás escrituras.
 - [ ] Sustituir el ScriptLock global fast-fail de FEEDBACK por un mecanismo append-only que conserve unicidad de IDs, deduplicación de `reportId`/`suggestionOperationId` y recuperación de aplicaciones de año. No retirar el lock hasta que el reemplazo esté probado: hoy protege lectura-deduplicación-escritura y el asignador numérico central; su alcance global sigue contrariando §15.
 - [x] Añadir conversión explícita desde Inbox: crear un corte para el vehículo del reporte (precargando la sugerencia si existe) o abrir el alta de vehículo nuevo desde el reporte. Ambas rutas reutilizan WRITE/add_cortes, generan `OP-FEEDBACK-{itemId}` estable y marcan el reporte resuelto solo después de confirmar el aporte; si queda candidato, el reporte permanece pendiente. Pruebas InboxUi 87/87 y AddCortesDiagnostics 12/12; CI 237 suites/2943 PASS.
@@ -81,3 +82,11 @@ Antes de cualquier Beta, cumplir la secuencia de sincronización de ramas, árbo
 - Leer y cumplir `NORMAS_DESAROLLO.md`; §15 prioriza simplicidad, baja latencia y ausencia de locks/esperas en acciones ordinarias.
 - No desplegar Apps Script ni modificar ScriptProperties, secretos, permisos, Spreadsheet o Drive productivos sin autorización expresa.
 - Cerrar cada tarea local solo con revisión de diff, pruebas focalizadas, regresión CI y registros actualizados. La validación Beta puede quedar diferida explícitamente.
+
+
+## Continuidad — corrección de voto repetido FEEDBACK (2026-11-20)
+
+- Código: `1a4b0909d3ec881207f4cb120f668091ced056e2`.
+- Prueba: `66da8f2aa102665f8a32a4039e3d63046e580c19`.
+- Se corrigió `voteActors` fuera de alcance en `handleSuggestYearLocked`; la prueba focalizada cubre el predicado nuevo. Pendiente ejecutar la prueba y la suite completa antes de cerrar.
+- Siguiente: continuar migración/retirada del ScriptLock FEEDBACK y revisar asignador de IDs bajo §15.
