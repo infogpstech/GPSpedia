@@ -116,6 +116,7 @@ runGroup('32','ADMIN',()=>{
   runCli('ADMIN limita lectura del catálogo de entidades a sus columnas','JS/Tests/AdminEntityLookupBoundedRead.mjs');
   runCli('ADMIN limita lectura de duplicados VIN a columnas necesarias','JS/Tests/AdminVinDuplicateBoundedRead.mjs');
   runCli('ADMIN localiza vehículo leyendo solo la columna ID','JS/Tests/AdminUniqueVehicleRowBoundedRead.mjs');
+  runCli('ADMIN reutiliza snapshot de Cortes al recuperar opId legacy','JS/Tests/AdminLegacyOpIdSnapshotReuse.mjs');
   runCli('ADMIN inventario Drive no bloquea cortes ni login','JS/Tests/AdminInventoryLockIsolation.mjs');
   runCli('RBAC y sesiones ilimitadas del rol Desarrollador','JS/Tests/DeveloperPrivilegeRouting.mjs');
  runCli('P4 protección de medios sin bloquear texto ni controles','JS/Tests/ClientInteractionPolicy.mjs');
