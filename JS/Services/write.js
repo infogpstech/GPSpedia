@@ -621,16 +621,21 @@ function handleAppendExistingVehicleCut_(preparedRequest) {
         }
     }
 
+    const slotIndex = getVehicleContributionCutSlotIndex_(spreadsheet, snapshot, event.eventId);
     return {
         status: "success",
-        message: "Aporte de corte registrado.",
+        message: slotIndex
+            ? "Corte agregado exitosamente."
+            : "El corte se conservó como candidato porque los espacios disponibles están ocupados.",
         vehicleId,
         opId,
+        timestamp: Utilities.formatDate(new Date(), "GMT-6", "dd/MM/yyyy"),
+        slotIndex,
         contributionEventId: event.eventId,
         operationHash,
         duplicate: event.duplicate === true,
         catalogResetRequired: true,
-        candidateReviewPending: event.status === "review"
+        candidateReviewPending: slotIndex === null
     };
 }
 
@@ -1139,9 +1144,17 @@ function validateAddOrUpdateCutPayload_(payload, options) {
     if (payload.silent !== undefined && typeof payload.silent !== "boolean") throw new Error("El indicador silent debe ser booleano.");
     const legacyOpMatch = !payload.opId && typeof payload.colaborador === "string" ? payload.colaborador.match(/\[(OP-[a-zA-Z0-9_-]+)\]/) : null;
     const opId = payload.opId === undefined || payload.opId === null || payload.opId === "" ? (legacyOpMatch ? legacyOpMatch[1] : "") : String(payload.opId).trim();
-    const operationHash = payload.operationHash === undefined || payload.operationHash === null || payload.operationHash === "" ? "" : String(payload.operationHash).trim().toLowerCase();
+    let operationHash = payload.operationHash === undefined || payload.operationHash === null || payload.operationHash === "" ? "" : String(payload.operationHash).trim().toLowerCase();
     if (opId && !/^OP-[A-Za-z0-9_-]{1,120}$/.test(opId)) throw new Error("El identificador opId no tiene un formato válido.");
-    if (opId && !/^[a-f0-9]{64}$/.test(operationHash)) throw new Error("Una operación con opId requiere operationHash SHA-256 válido.");
+    if (opId && operationHash && !/^[a-f0-9]{64}$/.test(operationHash)) throw new Error("Una operación con opId requiere operationHash SHA-256 válido.");
+    if (opId && !operationHash) {
+        operationHash = computeCutOperationFingerprint_({
+            vehicleId: vehicleId,
+            vehicleData: vehicleData,
+            cutData: cutData,
+            silent: payload.silent === true
+        });
+    }
     if (!opId && operationHash) throw new Error("No se acepta operationHash sin opId.");
     return {
         vehicleId: vehicleId,
@@ -2375,6 +2388,54 @@ const WRITE_VEHICLE_CONTRIBUTIONS_HEADERS_ = Object.freeze([
     "eventId", "opId", "vehicleId", "operationHash", "kind", "payloadJson",
     "actorId", "actorName", "createdAt", "status", "supersedesEventId"
 ]);
+
+function getVehicleContributionCutSlotIndex_(spreadsheet, vehicleSnapshot, targetEventId) {
+    const ledger = getVehicleContributionLedgerSheet_(spreadsheet);
+    const lastRow = ledger.getLastRow();
+    if (lastRow < 2) return null;
+    const vehicleId = String(vehicleSnapshot && vehicleSnapshot.vehicle && vehicleSnapshot.vehicle.id || "").trim();
+    if (!vehicleId) return null;
+    const baseRow = vehicleSnapshot.rowValues || [];
+    const occupied = [1, 2, 3].map(slot => [
+        COLS_CORTES["tipoCorte" + slot],
+        COLS_CORTES["ubicacionCorte" + slot],
+        COLS_CORTES["imgCorte" + slot]
+    ].some(column => String(baseRow[column - 1] || "").trim()));
+    const rows = ledger.getRange(2, 1, lastRow - 1, WRITE_VEHICLE_CONTRIBUTIONS_HEADERS_.length).getValues();
+    const byOpId = new Map();
+    const conflicts = new Set();
+    rows.forEach((row, offset) => {
+        const opId = String(row[1] || "");
+        if (!opId) return;
+        const entry = {
+            eventId: String(row[0] || ""),
+            opId,
+            vehicleId: String(row[2] || ""),
+            operationHash: String(row[3] || "").toLowerCase(),
+            kind: String(row[4] || ""),
+            status: String(row[9] || ""),
+            payloadJson: String(row[5] || ""),
+            rowIndex: offset + 2
+        };
+        const previous = byOpId.get(opId);
+        if (previous && (previous.vehicleId !== entry.vehicleId ||
+            previous.operationHash !== entry.operationHash || previous.kind !== entry.kind)) {
+            conflicts.add(opId);
+        } else if (!previous) {
+            byOpId.set(opId, entry);
+        }
+    });
+    let targetSlot = null;
+    Array.from(byOpId.values()).sort((a, b) => a.rowIndex - b.rowIndex).forEach(entry => {
+        if (conflicts.has(entry.opId) || entry.vehicleId !== vehicleId ||
+            entry.kind !== "cut" || entry.status !== "accepted") return;
+        const slot = occupied.findIndex(value => value === false);
+        if (slot < 0) return;
+        occupied[slot] = true;
+        if (entry.eventId === String(targetEventId)) targetSlot = slot + 1;
+    });
+    return targetSlot;
+}
 
 function getVehicleContributionLedgerSheet_(spreadsheetRef) {
     const spreadsheet = spreadsheetRef || getSpreadsheet();
