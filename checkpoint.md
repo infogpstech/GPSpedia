@@ -118,3 +118,11 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Se añadió prueba funcional al conjunto `VehicleContributionProjection`: evento válido admitido; evento sin actor y evento con prefijo opId no permitido rechazados.
 - CI `44834146336` SUCCESS: 237 suites, 2956 pruebas aprobadas, 0 fallos. Health read-only SUCCESS. No se desplegó CATALOG ni se tocaron recursos productivos.
 - P0 sigue abierto: `handleSuggestYear`/`completeFeedbackYearApplication_` todavía modifican directamente `Cortes.anoDesde/anoHasta`; hay que migrar esa aplicación a `AportesVehiculo` con recuperación idempotente. El ScriptLock global de FEEDBACK sigue protegiendo deduplicación y asignación de IDs; no retirarlo hasta resolver esas dependencias.
+
+
+## Continuidad — corrección FEEDBACK voto positivo repetido (2026-11-20)
+
+- Commits de trabajo: `1a4b0909d3ec881207f4cb120f668091ced056e2` (código), `66da8f2aa102665f8a32a4039e3d63046e580c19` (prueba).
+- Hallazgo corregido en código: `handleSuggestYearLocked` referenciaba `voteActors`, variable local de otra función; ahora deriva `hasVerifiedPositiveVote` desde `allData` con filtros de identidad/vehículo/año/respuesta positiva.
+- Se añadió regresión a `JS/Tests/SuggestYearVoteThreshold.mjs`. La lectura remota confirma que el código y la prueba están presentes. Node/CI no se ejecutó ni se obtuvo un estado de Actions para el commit.
+- Pendiente: ejecutar prueba focalizada y suite FEEDBACK; completar migración de aplicaciones de año a un flujo append-only concurrente, retirar ScriptLock global sin perder idempotencia, y revisar asignador de IDs. No desplegar ni tocar datos productivos.
