@@ -1373,6 +1373,9 @@ function doPostInternal_(e) {
             case 'migrateVehicleContributionsSchema':
                 response = handleMigrateVehicleContributionsSchema(payload, logMessage);
                 break;
+            case 'getVehicleContributionCandidates':
+                response = handleGetVehicleContributionCandidates_(payload);
+                break;
             case 'getDriveStorage':
                 response = handleGetDriveStorage(payload, logMessage);
                 break;
@@ -10905,6 +10908,57 @@ const ADMIN_VEHICLE_CONTRIBUTIONS_HEADERS_ = Object.freeze([
     "eventId", "opId", "vehicleId", "operationHash", "kind", "payloadJson",
     "actorId", "actorName", "createdAt", "status", "supersedesEventId"
 ]);
+
+function handleGetVehicleContributionCandidates_(payload) {
+    payload = payload && typeof payload === "object" ? payload : {};
+    const requestedLimit = Number(payload.limit);
+    const limit = Number.isSafeInteger(requestedLimit) ? Math.max(1, Math.min(500, requestedLimit)) : 200;
+    const response = UrlFetchApp.fetch(CATALOG_SERVICE_URL, {
+        method: "post",
+        contentType: "text/plain",
+        payload: JSON.stringify({ action: "getCatalogData", payload: { forceRefresh: true } }),
+        muteHttpExceptions: true,
+        followRedirects: true
+    });
+    const httpStatus = response.getResponseCode();
+    let result;
+    try { result = JSON.parse(response.getContentText()); }
+    catch (error) { throw new Error("CATALOG no devolvió JSON válido al consultar candidatos ADMIN (HTTP " + httpStatus + ")."); }
+    if (httpStatus < 200 || httpStatus >= 300 || !result || result.status !== "success" ||
+        !result.data || !Array.isArray(result.data.cortes)) {
+        throw new Error("No se pudo obtener la proyección vigente de aportes desde CATALOG.");
+    }
+
+    const candidates = [];
+    result.data.cortes.forEach(vehicle => {
+        if (!vehicle || !Array.isArray(vehicle.contributionCandidates)) return;
+        vehicle.contributionCandidates.forEach(candidate => {
+            if (!candidate || !String(candidate.eventId || "").trim()) return;
+            candidates.push({
+                eventId: String(candidate.eventId),
+                opId: String(candidate.opId || ""),
+                vehicleId: String(vehicle.id || ""),
+                vehicleLabel: [vehicle.marca, vehicle.modelo].filter(Boolean).join(" ").trim(),
+                kind: String(candidate.kind || ""),
+                reason: String(candidate.reason || "requires_review"),
+                payload: candidate.payload && typeof candidate.payload === "object"
+                    ? JSON.parse(JSON.stringify(candidate.payload)) : {},
+                status: "pending_review"
+            });
+        });
+    });
+    candidates.sort((a, b) => a.vehicleId.localeCompare(b.vehicleId, undefined, { numeric: true }) ||
+        a.eventId.localeCompare(b.eventId));
+    return {
+        status: "success",
+        candidates: candidates.slice(0, limit),
+        total: candidates.length,
+        limit,
+        truncated: candidates.length > limit,
+        source: "CATALOG",
+        readOnly: true
+    };
+}
 
 function handleMigrateVehicleContributionsSchema(payload, logMessage) {
     return withReplacedImagesSchemaLock_(function() {
