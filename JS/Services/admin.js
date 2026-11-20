@@ -11003,7 +11003,7 @@ function handleResolveVehicleContributionCandidate_(payload, developerContext, l
  const actorId=String(developerContext&&developerContext.userId||"").trim(),actorName=String(developerContext&&(developerContext.fullName||developerContext.userName)||"").trim();
  if(!actorId)throw new Error("No se pudo identificar al editor autenticado.");
  const spreadsheet=getSpreadsheet();
- return withReplacedImagesSchemaLock_(function(){
+ const result = withReplacedImagesSchemaLock_(function(){
   const sheet=spreadsheet.getSheetByName(ADMIN_VEHICLE_CONTRIBUTIONS_SHEET_NAME_);
   if(!sheet||sheet.getLastRow()<2||sheet.getLastColumn()<ADMIN_VEHICLE_CONTRIBUTIONS_HEADERS_.length)throw new Error("El ledger AportesVehiculo no está disponible o no tiene el esquema requerido.");
   const headers=sheet.getRange(1,1,1,ADMIN_VEHICLE_CONTRIBUTIONS_HEADERS_.length).getDisplayValues()[0].map(v=>String(v||"").trim());
@@ -11054,13 +11054,14 @@ function handleResolveVehicleContributionCandidate_(payload, developerContext, l
   const persisted=rowsAfter.find(row=>String(row[0]||"")===eventId);
   if(!persisted||String(persisted[1]||"")!==opId||String(persisted[10]||"")!==sourceEventId||String(persisted[9]||"")!==nextStatus)
    throw new Error("No se pudo verificar la resolución append-only después de escribirla.");
-  try { syncContributionCandidateImageInventory_([]); }
-  catch (inventoryError) {
-   logMessage && logMessage("Inventario de imágenes candidatas", "La resolución se guardó, pero el inventario requiere sincronización posterior: " + (inventoryError.message || inventoryError));
-  }
   if(logMessage)logMessage("Resolución de aporte","Se anexó "+decision+" para "+targetEventId+"; el evento original se conserva.");
   return{status:"success",duplicate:false,eventId,supersedesEventId:targetEventId,sourceEventId,decision,vehicleId,message:"Resolución registrada como evento nuevo; el historial original permanece intacto."};
  });
+ try { syncContributionCandidateImageInventory_([]); }
+ catch (inventoryError) {
+  logMessage && logMessage("Inventario de imágenes candidatas", "La resolución se guardó, pero el inventario requiere sincronización posterior: " + (inventoryError.message || inventoryError));
+ }
+ return result;
 }
 
 function handleMigrateVehicleContributionsSchema(payload, logMessage) {
