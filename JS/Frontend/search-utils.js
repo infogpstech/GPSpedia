@@ -230,7 +230,13 @@ export function groupVehicleSearchResults(results) {
         group._searchPriority = Math.min(group._searchPriority, priority);
         group._searchOrder = Math.min(group._searchOrder, order);
     });
-    return output.sort((a,b) => a.priority-b.priority || a.order-b.order).map(entry => entry.item);
+    return output.sort((a, b) => {
+        const priorityA = a.item && a.item._searchGroupType === 'vehicleModel' ? a.item._searchPriority : a.priority;
+        const priorityB = b.item && b.item._searchGroupType === 'vehicleModel' ? b.item._searchPriority : b.priority;
+        const orderA = a.item && a.item._searchGroupType === 'vehicleModel' ? a.item._searchOrder : a.order;
+        const orderB = b.item && b.item._searchGroupType === 'vehicleModel' ? b.item._searchOrder : b.order;
+        return priorityA - priorityB || orderA - orderB;
+    }).map(entry => entry.item);
 }
 
 /** Resuelve el próximo paso visible sin omitir variantes ni escoger duplicados arbitrariamente. */
