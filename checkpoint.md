@@ -449,3 +449,11 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Commits: FEEDBACK `177e3f74649867cf8c19eda589a3442b7f08e7ae`; Coordinator `f110811b62a9dd6ff2c2843412ea6e3ed1d97dc3`; contratos `e4d62b4ad29bde7ea763f1e9eb914fd87d470c90`; prueba `9772d133ef650bc3ebe936cf77f47c258c5f0e99`; runner `b7b9114af82e403482bae7315b9ee9b734ca3f67`; aislamiento final `440dd5db41a34378d021a69277e1299ac9e0a776`.
 - El cambio de protocolo es aditivo; Coordinator debe desplegarse antes que FEEDBACK en Beta. No se desplegó Apps Script ni se modificaron propiedades remotas, hojas, Drive o datos productivos.
 - Siguiente paso P1: continuar inventario de operaciones WRITE/FEEDBACK que conservan ScriptLock durante Drive/HTTP; mantener fuera del lock cualquier publicación/consulta que pueda aislarse con versión y revalidación segura.
+
+
+## P1 — freeze de IDs WRITE valida respaldo fuera del ScriptLock (2026-11-20)
+- En `handleFreezeCortesIds`, la autorización y `verifyCortesIdsBackup` (Drive/SpreadsheetApp.openById) ahora se ejecutan antes de adquirir el ScriptLock. El lock solo cubre lectura/plan de Cortes, dry-run o commit de valores estáticos y verificación de la conversión.
+- La adquisición cambió a `tryLock(0)`; si WRITE está ocupado, retorna `WRITE_BUSY` sin esperar ni retener el lock. El plan y la escritura de IDs siguen protegidos por el mismo lock.
+- `WriteFreezeCortesIdsBackupOutsideLock` 5/5 PASS; `WriteAuthorizationMinimization` 13/13 PASS. CI `44645165057` SUCCESS: 195 suites, 2,541 pruebas aprobadas, 0 fallos; health read-only `44645165055` SUCCESS.
+- Commits: implementación `5762d4919843d17e5d0f599b123ea38c2289c43a`, prueba `81704601d46ee3862718eb956d0eb69202e97f41`, runner `024e86775c5e72fe532462e96c7dd556d1dcc5cd`, compatibilidad extractor `54663b60478ba21ddc59c57662b9d6ee425af918`.
+- No se desplegó Apps Script ni se consultaron/modificaron datos productivos.
