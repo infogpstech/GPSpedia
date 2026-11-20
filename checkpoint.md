@@ -1170,3 +1170,13 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Queda pendiente Beta aislada: concurrencia real Apps Script/Spreadsheet, doble edición de mismo campo, campos distintos, VIN duplicado, respuesta perdida, y pruebas UI/navegador; no desplegar servicios ni tocar datos productivos.
 - Siguiente trabajo local: revisar y completar el ciclo de imágenes de la edición in-modal (reemplazo de imágenes de vehículo/cortes/apertura/alimentación, materialización, sincronización de carpeta y recuperación de archivos no vinculados) sin debilitar el versionado por campo ni la idempotencia del journal. Antes de iniciar, revisar la lista activa para confirmar dependencias y no duplicar tareas cerradas.
 - No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
+
+
+## Checkpoint — inicio de integración append-only de reemplazos de imagen ADMIN (2026-11-20)
+
+- HEAD de referencia antes de esta adenda: 04651b93b7976846ec4a02c0bd3a04fc43f3fd93; la adenda de auditoría quedó publicada en 88b86d066a7895c1b91ede54b5fbb5635fe88ee4. Rama base sin cambios: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Se inició la siguiente tarea P0/P1 dependiente del versionado por campo: integrar uploadAdminImage con el journal ImageUploadEvents y el ledger AportesVehiculo append-only.
+- Hallazgo confirmado y registrado en Auditoría.txt: handleUploadAdminImage (JS/Services/admin.js, línea 7088 antes de la adenda) todavía adquiere ScriptLock con waitLock(2000), escribe estados en AdminImageUploads y ejecuta activeCell.setValue(newImageUrl) directamente en Cortes. No crea vehicle_update ni valida expectedSourceEventId; por tanto puede eludir la proyección versionada ya implementada para texto/VIN.
+- Impacto: posible divergencia entre Cortes materializado y AportesVehiculo, además de carrera con otras ediciones del mismo campo. El cambio debe preservar la historia de imágenes, reintentos y compensación, sin aplicar escrituras directas.
+- Próximo paso: inspeccionar contratos de uploadAdminImage, reconciliación ImageUploadEvents y pruebas de compensación; diseñar y probar la secuencia reservar archivo → verificar/reutilizar Drive → append vehicle_update con versión esperada → marcar linked. Si la versión del campo cambió, conservar archivo/eventos como candidato y no sobrescribir.
+- No se ha modificado el handler productivo en esta actividad ni se han desplegado Apps Script o alterado datos productivos. La validación real de Drive/Sheets y navegador sigue siendo Beta aislada.
