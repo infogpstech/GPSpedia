@@ -1117,3 +1117,15 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - Sin despliegue Apps Script ni cambios en hojas/Drive productivos. La comprobación del nuevo ledger y el comportamiento real de Spreadsheet quedan para Beta autorizada.
 - Estado de esta subactividad: COMPLETADA LOCALMENTE CON VALIDACIÓN DIFERIDA A BETA. `GP-PERF-ADMIN-CUT-LOCK-01` continúa en progreso.
 - Siguiente paso local: continuar la revisión de lecturas restantes de Sheets dentro de `handleAddOrUpdateCut`; eliminar solo consultas redundantes demostrables, preservando reservas, detección de conflictos, revalidación y escrituras atómicas.
+
+
+### GP-PERF-ADMIN-CUT-LOCK-01 — optimización de recuperación legacy por snapshot (2026-11-20)
+- [x] Identificar la doble lectura de «Cortes» en la ruta legacy de `findRowByOpId`: tras descargar `getDataRange()`, se volvía a leer la columna ID y la fila completa mediante `findUniqueCortesVehicleRow_`.
+- [x] Añadir `findUniqueCortesVehicleRowFromSnapshot_` para validar IDs vacíos/inválidos, unicidad y coincidencia de fila usando el snapshot ya obtenido.
+- [x] Sustituir la consulta previa `getLastRow()` por la comprobación de `data.length` después de la única lectura integral de la ruta legacy.
+- [x] Añadir `AdminLegacyOpIdSnapshotReuse.mjs` y registrarlo en `RunServiceTests.mjs`; cubre reutilización de fila, ID ausente/duplicado/malformado y ausencia de lecturas repetidas.
+- [ ] Ejecutar la prueba focalizada y `RunServiceTests.mjs` completo; validar parsing y regresión. No hay checkout local en este entorno y los estados de CI consultados para los commits nuevos aún no devuelven ejecuciones.
+- Se conservan dentro del ScriptLock las comprobaciones de ledger, conflicto, unicidad y revalidación. No se movieron lecturas críticas ni escrituras fuera del lock.
+- Sin despliegue Apps Script ni acceso/modificación de hojas o Drive productivos.
+- Estado: CAMBIO DE CÓDIGO Y PRUEBA REGISTRADA; VALIDACIÓN LOCAL/CI PENDIENTE. El bloque `GP-PERF-ADMIN-CUT-LOCK-01` sigue EN PROGRESO.
+- Siguiente tarea: ejecutar la prueba focalizada y la regresión completa; corregir cualquier fallo antes de inspeccionar el siguiente grupo de lecturas dentro de `handleAddOrUpdateCut`.
