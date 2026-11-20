@@ -1316,3 +1316,9 @@ Se implementó agrupación de resultados de Cortes por categoría/marca/modelo, 
 - Validación CI HEAD 998f267f50cc29442a609ff8be2a88b3fce0c1d7: 232 suites, 2,854 pruebas aprobadas, 0 fallos; health read-only SUCCESS.
 - Una ejecución inicial falló por un fixture de prueba sin encabezado de hoja; se corrigió el fixture y la repetición pasó. No fue un fallo de lógica productiva.
 - No se desplegó Apps Script ni se modificaron datos productivos. ImageUploadLedger y waitLock(5000) siguen vigentes en WRITE.
+2026-11-20 — WRITE cambia el flujo principal de imágenes a ImageUploadEvents
+- JS/Services/write.js: uploadImageToDriveWithShortLedgerLocks_ ahora usa ImageUploadEvents como fuente primaria; reserva, pending y linked se anexan al journal; el flujo principal de vinculación deja de actualizar ImageUploadLedger y no utiliza withImageUploadLedgerLock_.
+- Se verifica la unicidad de operationKey frente a token/contenido distinto y la proyección temporal de estados. Varios fileId o identidades divergentes quedan requires_review.
+- JS/Tests/ImageUploadEventJournal.mjs, AdminImageUploadEventReconciliation.mjs, WriteDriveOutsideLock.mjs y AddSupplementaryInfoIntegrity.js amplían la cobertura del contrato.
+- CI HEAD ee186b51a4274e6f28623f8fcf859d9397bed055: 232 suites, 2,858 pruebas aprobadas, 0 fallos; health read-only SUCCESS.
+- Queda pendiente Beta/integración real de carreras Drive/Sheets y retirada de la ruta legacy. No se desplegó Apps Script ni se modificaron datos productivos.

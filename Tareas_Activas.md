@@ -1469,3 +1469,16 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [ ] Migrar WRITE para que el journal sea la fuente primaria de reserva/estado y mantener ImageUploadLedger solo como compatibilidad histórica/lectura.
 - [ ] Validar recuperación y cargas duplicadas con errores parciales Drive/Sheets; retirar waitLock(5000) solo después de pasar esa cobertura.
 - Estado P0: EN PROGRESO. No se ha desplegado Apps Script ni se han modificado datos productivos.
+### 2026-11-20 — WRITE: ImageUploadEvents como fuente primaria del flujo principal
+
+- [x] Migrar la carga principal WRITE para reservar y persistir estados mediante eventos append-only, sin escribir ImageUploadLedger.
+- [x] Migrar markImageUploadLinked del flujo principal para anexar linked y verificar la proyección, sin ScriptLock ni mutación del ledger.
+- [x] Detectar operationKey ya asociado a otro token/contenido mediante búsqueda en el journal.
+- [x] Proyectar el estado por orden de eventos; los conflictos de identidad o varios fileId prevalecen como requires_review.
+- [x] Ampliar pruebas de flujo, proyección temporal, búsqueda por operación y contrato sin ledger/lock.
+- [x] CI HEAD ee186b51a4274e6f28623f8fcf859d9397bed055: 232 suites, 2,858 pruebas aprobadas, 0 fallos.
+- [x] Health read-only del mismo HEAD: SUCCESS.
+- [ ] Ejecutar pruebas de integración controladas con Drive/Sheets reales o entorno Beta: doble carga simultánea del mismo token, diferente vehículo/opId, respuesta perdida y fallo parcial entre Drive y journal.
+- [ ] Verificar recuperación ADMIN después de cada escenario y que los eventos conflictivos quedan requires_review sin elegir archivo ni borrar huérfanos.
+- [ ] Retirar las rutas/funciones legacy del ledger y waitLock(5000) solo después de comprobar que no quedan consumidores productivos; mantener lectura histórica.
+- Estado P0: EN PROGRESO. La ruta principal WRITE ya no depende del lock del ledger; quedan pruebas Beta/integración y limpieza de compatibilidad legacy. No se desplegó Apps Script.

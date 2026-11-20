@@ -1074,3 +1074,13 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Límite vigente: WRITE sigue usando ImageUploadLedger mutable y ScriptLock.waitLock(5000); ADMIN conserva compatibilidad con el ledger histórico. El journal aún no es la fuente primaria de WRITE.
 - No se desplegó Apps Script ni se modificaron Spreadsheet/Drive productivos.
 - P0 continúa EN PROGRESO. Siguiente paso exacto: migrar WRITE reserva/recuperación/vinculación a ImageUploadEvents como fuente primaria; probar reintentos, mismo token con fileId distinto, errores parciales y recuperación. Retirar waitLock(5000) solo tras pasar esas pruebas.
+## Continuidad — WRITE usa ImageUploadEvents como fuente primaria (2026-11-20)
+
+- HEAD confirmado antes de esta actualización documental: ee186b51a4274e6f28623f8fcf859d9397bed055; rama autorizada GPSpedia2.2.5_work. Rama base protegida confirmada intacta: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Commits principales de esta fase: 884dc1b5a48b9138f232dd0c3ce23eacc87758c5 (flujo WRITE por journal), 98898e214d2ec768d99dfaffeb47fd195eac0e53 (proyección temporal y correcciones), d7ed2bc9f4f3a080d510f92508b14ec4b219c48e (proyección ADMIN alineada), b402397cc08d7a1c970dd01e70acf43682fcddc5 / 58d3f0cbc6aa7c44e394df0c357c8764ee315eec / 1cee0d69b9a2b54fe2c3a6a9f445a9534f52171f (pruebas), ee186b51a4274e6f28623f8fcf859d9397bed055 (contrato de compatibilidad actualizado).
+- El flujo principal WRITE reserva, verifica y vincula imágenes mediante ImageUploadEvents; ya no actualiza ImageUploadLedger ni usa withImageUploadLedgerLock_. operationKey se comprueba contra otros tokens y el estado se proyecta según el orden de eventos.
+- Si una operación queda asociada a más de un fileId o a metadatos incompatibles, se marca requires_review y no se selecciona un archivo ganador.
+- Pruebas específicas: ImageUploadEventJournal 9/9; AdminImageUploadEventReconciliation 6/6; WriteDriveOutsideLock 1/1. CI HEAD ee186b51a4274e6f28623f8fcf859d9397bed055: 232 suites, 2,858 pruebas aprobadas, 0 fallos. Health read-only SUCCESS.
+- Compatibilidad pendiente: el camino legacy de uploadImageToDrive sin shortLedgerLock y algunas rutas ADMIN siguen usando ImageUploadLedger/locks. No borrar datos históricos.
+- No se desplegó Apps Script ni se modificaron Spreadsheet/Drive productivos.
+- P0 sigue EN PROGRESO. Siguiente paso exacto: ejecutar pruebas Beta/integración reales de cargas concurrentes, diferentes vehículos, reintentos, respuesta perdida y fallos parciales; verificar reconciliación ADMIN; después identificar y retirar los consumidores legacy de waitLock(5000).

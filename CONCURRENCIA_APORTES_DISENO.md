@@ -143,3 +143,14 @@ ADMIN markImageUploadLinked anexa linked cuando el journal existe. El ledger mut
 Prueba AdminImageUploadEventReconciliation: 4/4 PASS. CI 44811150765 SUCCESS: 232 suites, 2,854 pruebas, 0 fallos. Health read-only SUCCESS.
 
 Siguiente paso: migrar la reserva, recuperación y vinculación WRITE para que ImageUploadEvents sea la fuente primaria; mantener lectura compatible del ledger histórico y retirar el lock únicamente después de probar reintentos, conflictos y recuperación.
+## Avance — WRITE usa ImageUploadEvents como fuente primaria (2026-11-20)
+
+El flujo principal WRITE de carga ahora crea una reserva append-only antes de crear el archivo, registra pending después de verificar Drive y registra linked tras confirmar referencias. La ruta de vinculación principal ya no lee ni escribe ImageUploadLedger y no utiliza ScriptLock. La búsqueda por operationKey impide reutilizar la misma operación con otro token/contenido; las operaciones de vehículos distintos conservan claves independientes.
+
+La proyección ahora respeta el orden de las transiciones para un mismo archivo. Si el token acumula identidades incompatibles o más de un fileId, requires_review prevalece y no se selecciona un archivo ganador. ADMIN ya lee el journal y puede reconciliar operaciones no presentes en el ledger histórico.
+
+**Compatibilidad pendiente:** el camino legacy de uploadImageToDrive sin shortLedgerLock y la ruta ADMIN heredada todavía conservan ImageUploadLedger/locks. No eliminar ni vaciar el ledger histórico. No se ha desplegado Apps Script.
+
+Pruebas: ImageUploadEventJournal 9/9; AdminImageUploadEventReconciliation 6/6; WriteDriveOutsideLock 1/1; CI 44811988868 SUCCESS: 232 suites, 2,858 pruebas, 0 fallos; health read-only SUCCESS.
+
+Siguiente paso: Beta/integración controlada en Drive/Sheets para validar carreras reales, operación distinta por vehículo, reintentos y fallos parciales; luego revisar consumidores legacy antes de retirar waitLock(5000).
