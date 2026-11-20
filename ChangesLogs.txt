@@ -114,3 +114,8 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - `findPysRowsById_` ahora consulta solo ID y lee filas coincidentes; `findTutorialRow_` consulta ID/título por columnas A/B; la edición de tutorial valida título único solo con columna B.
 - Aprobaciones de vídeo y solicitudes pendientes usan búsqueda dirigida en Problema.
 - Regresiones focalizadas 5/5, 6/6, 5/5, 6/6 y 5/5 PASS. CI 44839134803 SUCCESS: 250 suites, 3028 pruebas, 0 fallos; Health read-only SUCCESS.
+
+
+2026-11-20 — FEEDBACK tutoriales: reintento sin cambios
+- `handleUpdateTutorialItem` devuelve los reintentos sin cambios desde una lectura previa, sin adquirir ScriptLock ni escribir. Las mutaciones reales conservan revalidación, unicidad, comprobación de aprobaciones pendientes y verificación dentro del lock.
+- `FeedbackTutorialUpdateNoopPreflight` 5/5 PASS; CI 44839560207 SUCCESS: 251 suites, 3033 pruebas, 0 fallos; health read-only SUCCESS.
