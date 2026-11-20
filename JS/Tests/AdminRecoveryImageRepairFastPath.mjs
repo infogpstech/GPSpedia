@@ -20,12 +20,12 @@ const handlerStart = source.indexOf("function handleAddOrUpdateCut(");
 const handlerEnd = source.indexOf("\nfunction ", handlerStart + 10);
 const handler = source.slice(handlerStart, handlerEnd > 0 ? handlerEnd : source.length);
 const guard = handler.indexOf("if (imageRepairNeeds.vehicle || imageRepairNeeds.cut)");
-const driveCall = handler.indexOf("runAdminDriveWorkOutsideScriptLock_(lock, opId", guard);
+const driveCall = handler.indexOf("runAdminContributionDriveWorkOutsideScriptLock_(lock, opId", guard);
 assert.ok(guard >= 0 && driveCall > guard);
 const recoveryEnd = handler.indexOf("if (recoveredVinCollection)", guard);
 const recovery = handler.slice(guard, recoveryEnd);
 assert.ok(recoveryEnd > guard, "No se pudo delimitar la ruta de recuperación");
-assert.equal(recovery.indexOf("runAdminDriveWorkOutsideScriptLock_(lock, opId", driveCall - guard + 1), -1,
+assert.equal(recovery.indexOf("runAdminContributionDriveWorkOutsideScriptLock_(lock, opId", driveCall - guard + 1), -1,
     "La ruta de recuperación debe tener una sola entrada al ciclo Drive");
-assert.match(recovery, /repairedImages = runAdminDriveWorkOutsideScriptLock_/);
+assert.match(recovery, /repairedImages = runAdminContributionDriveWorkOutsideScriptLock_/);
 console.log("AdminRecoveryImageRepairFastPath: 6/6 PASS");
