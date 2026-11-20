@@ -1101,9 +1101,9 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] Conservar consulta, versión y encendido en el estado de navegación; el flujo popstate reconstruye búsqueda, equipamiento, encendido y rangos.
 - [x] Añadir SearchModelGrouping.mjs y registrarlo en RunServiceTests.mjs. Cobertura: agrupación/identidad, prioridad, resultados mixtos, VIN ambiguo, 0/1/múltiples opciones, rangos abiertos, duplicados, autoapertura y ruta History API.
 - [x] Ejecución aislada local de SearchModelGrouping: 21/21 PASS (Node v22.16.0). Se ejecutaron los helpers de búsqueda/navegación y la prueba de History API; las comprobaciones de ui/navigation/main son estáticas sobre los fragmentos de integración.
-- [ ] Ejecutar RunServiceTests.mjs completo y comprobar la interfaz en navegador con catálogo representativo; no se ha obtenido un estado de CI para estos commits y el entorno no tiene checkout local del repositorio.
+- [x] Ejecutar RunServiceTests.mjs completo en CI `44764022976`: 220 suites, 2,735 pruebas, 0 fallos; `SearchModelGrouping` 21/21 PASS. La prueba visual en navegador con catálogo representativo queda pendiente de un entorno browser autorizado.
 - Auditoría: AUDITORIA_BUSQUEDA_MODELOS_2026-11-20.md.
-- Estado: IMPLEMENTACIÓN LOCAL COMPLETADA; CIERRE DE VALIDACIÓN PENDIENTE (regresión integral y prueba visual de navegador). Sin despliegue Apps Script ni cambios en datos productivos.
+- Estado: IMPLEMENTACIÓN Y REGRESIÓN INTEGRAL COMPLETADAS; VALIDACIÓN VISUAL EN NAVEGADOR PENDIENTE. Sin despliegue Apps Script ni cambios en datos productivos.
 
 
 ### WRITE/ADMIN — reserva idempotente de vehicleId ADMIN→WRITE (2026-11-20)
@@ -1124,11 +1124,11 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] Añadir `findUniqueCortesVehicleRowFromSnapshot_` para validar IDs vacíos/inválidos, unicidad y coincidencia de fila usando el snapshot ya obtenido.
 - [x] Sustituir la consulta previa `getLastRow()` por la comprobación de `data.length` después de la única lectura integral de la ruta legacy.
 - [x] Añadir `AdminLegacyOpIdSnapshotReuse.mjs` y registrarlo en `RunServiceTests.mjs`; cubre reutilización de fila, ID ausente/duplicado/malformado y ausencia de lecturas repetidas.
-- [ ] Ejecutar la prueba focalizada y `RunServiceTests.mjs` completo; validar parsing y regresión. No hay checkout local en este entorno y los estados de CI consultados para los commits nuevos aún no devuelven ejecuciones.
+- [x] Ejecutar prueba focalizada y `RunServiceTests.mjs` completo: `AdminLegacyOpIdSnapshotReuse` 10/10; CI `44763121682` SUCCESS: 220 suites, 2,733 pruebas, 0 fallos; sintaxis PASS. La corrección posterior de snapshot/ID se validó en CI `44764022976`: 220 suites, 2,735 pruebas, 0 fallos.
 - Se conservan dentro del ScriptLock las comprobaciones de ledger, conflicto, unicidad y revalidación. No se movieron lecturas críticas ni escrituras fuera del lock.
 - Sin despliegue Apps Script ni acceso/modificación de hojas o Drive productivos.
-- Estado: CAMBIO DE CÓDIGO Y PRUEBA REGISTRADA; VALIDACIÓN LOCAL/CI PENDIENTE. El bloque `GP-PERF-ADMIN-CUT-LOCK-01` sigue EN PROGRESO.
-- Siguiente tarea: ejecutar la prueba focalizada y la regresión completa; corregir cualquier fallo antes de inspeccionar el siguiente grupo de lecturas dentro de `handleAddOrUpdateCut`.
+- Estado: SUBACTIVIDAD COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
+- Siguiente: continuar auditoría de lecturas dentro de `handleAddOrUpdateCut`; no retirar validaciones pre/post escritura ni revalidaciones tras liberar ScriptLock/Drive.
 
 
 ## Continuidad — validación focalizada de recuperación legacy ADMIN (2026-11-20)
@@ -1166,3 +1166,11 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] Corregir el extractor de test que aún esperaba la firma anterior; CI inicial `44763915168` falló solo por ese contrato estático y la repetición aprobó.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Sin despliegue Apps Script ni cambios productivos.
 - Siguiente: auditar lecturas de `recordOpId` y `markAdminCutImagesLinkedOutsideLock_`.
+
+
+### GP-PERF-ADMIN-CUT-LOCK-01 — cierre de auditoría de lecturas restantes (2026-11-20)
+- [x] Revisar lecturas de `recordOpId`: conservar revalidación dirigida previa a escritura para detectar cambios de asociación/estado y lectura posterior como read-back de persistencia.
+- [x] Revisar `markAdminCutImagesLinkedOutsideLock_`: conservar revalidación de opId/vehicleId/slotIndex/hash después de liberar y readquirir ScriptLock para trabajo Drive.
+- [x] Confirmar que las escrituras normales del ledger `Idempotencia` se ejecutan bajo ScriptLock; migración también toma el lock. `handleCheckOperation` es de solo lectura.
+- [x] No se identificaron más lecturas redundantes que puedan eliminarse sin reducir la protección frente a cambios externos, fallos parciales o carreras post-Drive. No se modificó código en esta revisión.
+- Estado: AUDITORÍA LOCAL COMPLETADA. El bloque local `GP-PERF-ADMIN-CUT-LOCK-01` queda COMPLETADO CON VALIDACIÓN DIFERIDA A BETA; quedan pendientes únicamente Script IDs reales y pruebas de concurrencia/Drive/Spreadsheet en Beta autorizada.
