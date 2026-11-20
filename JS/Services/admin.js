@@ -6695,8 +6695,10 @@ function handleUpdateVehicleField(payload, logMessage) {
     }
 
     const lock = LockService.getScriptLock();
-    if (!lock.tryLock(0)) {
-        const busyError = new Error("ADMIN está actualizando el catálogo. Reintenta la edición en unos instantes.");
+    try {
+        lock.waitLock(2000);
+    } catch (lockError) {
+        const busyError = new Error("ADMIN está finalizando otra escritura breve. Reintenta la edición en unos instantes.");
         busyError.code = "ADMIN_BUSY";
         throw busyError;
     }
@@ -7045,8 +7047,11 @@ function handleUploadAdminImage(payload, logMessage) {
     }
 
     const lock = LockService.getScriptLock();
-    if (!lock.tryLock(0)) {
-        const busyError = new Error("ADMIN está procesando otra escritura. Reintenta el reemplazo con el mismo opId.");
+    try {
+        // La carga de archivos se ejecuta fuera del lock; aquí solo se reserva y confirma Sheets.
+        lock.waitLock(2000);
+    } catch (lockError) {
+        const busyError = new Error("ADMIN está finalizando otra escritura breve. Conserva el mismo opId y reintenta el reemplazo.");
         busyError.code = "ADMIN_BUSY";
         throw busyError;
     }
@@ -7611,7 +7616,7 @@ function runAdminDriveWorkOutsideScriptLock_(lock, opId, operation, revalidate, 
     let result, operationError = null;
     try { result = operation(); } catch (error) { operationError = error; }
     let reacquired = false;
-    try { reacquired = lock.tryLock(0); } catch (lockError) { reacquired = false; }
+    try { lock.waitLock(2000); reacquired = true; } catch (lockError) { reacquired = false; }
     const retryHint = " Reintenta con opId " + cleanOpId +
         (operationHash ? " y operationHash " + operationHash : "") + ".";
     if (!reacquired) {
@@ -7716,14 +7721,11 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
 
     const lock = LockService.getScriptLock();
     try {
-        if (!lock.tryLock(0)) {
-            const busyError = new Error("ADMIN está procesando otra escritura. Reintenta en unos instantes con el mismo opId.");
-            busyError.code = "ADMIN_BUSY";
-            throw busyError;
-        }
+        // La sección crítica protege reserva de slot/opId y escrituras de Sheets.
+        // El trabajo Drive libera el lock para que vehículos distintos progresen en paralelo.
+        lock.waitLock(2000);
     } catch (e) {
-        if (e && e.code === "ADMIN_BUSY") throw e;
-        const lockError = new Error("No se pudo obtener el bloqueo breve de ADMIN. Reintenta con el mismo opId.");
+        const lockError = new Error("ADMIN está finalizando otra reserva breve. Reintenta con el mismo opId.");
         lockError.code = "ADMIN_BUSY";
         throw lockError;
     }
