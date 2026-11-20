@@ -7754,7 +7754,7 @@ ${elapsedSec}s
                     button.addEventListener("click",async()=>{
                         if(!isAdminPanelCurrent_())return;let correctedPayload;
                         if(decision==="correct"){try{correctedPayload=JSON.parse(editor.value);if(!correctedPayload||typeof correctedPayload!=="object"||Array.isArray(correctedPayload))throw new Error("La corrección debe ser un objeto JSON.");}catch(error){contributionStatus.textContent="JSON no válido: "+error.message;return;}}
-                        if(!window.confirm("¿Confirmas "+label.toLowerCase()+" para "+candidate.eventId+"? Se añadirá un evento nuevo; el original se conservará."))return;
+                        if(!await requestDeveloperConsoleConfirmation_("¿Confirmas "+label.toLowerCase()+" para "+candidate.eventId+"? Se añadirá un evento nuevo; el original se conservará."))return;
                         button.disabled=true;
                         try{const requestId=typeof crypto!=="undefined"&&typeof crypto.randomUUID==="function"?crypto.randomUUID().replace(/-/g,""):"req"+Date.now().toString(36)+Math.random().toString(36).slice(2);
                             const result=await runAction("resolveVehicleContributionCandidate",{eventId:candidate.eventId,requestId,decision,correctedPayload});
