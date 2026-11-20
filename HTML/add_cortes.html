@@ -1224,10 +1224,12 @@
                     snapshotSaved = false; state.opId = null; state.restoredFiles = { imagenVehiculo: null, imgCorte1: null };
                     state.selectedVehicleId = checkRes.vehicleId; state.timestamp = checkRes.timestamp || null;
                     await refreshSelectedVehicleMatch(checkRes.vehicleId, {
-                        isNewVehicle: requestData.vehicleId === null, slotIndex: requestData.vehicleId === null ? 1 : null,
+                        isNewVehicle: requestData.vehicleId === null, slotIndex: requestData.vehicleId === null ? 1 : checkRes.slotIndex,
                         cutType: requestData.cutData && requestData.cutData.tipoCorte1
                     });
-                    alert("Corte recuperado exitosamente."); proceedToStage3(checkRes.vehicleId); return;
+                    alert(checkRes.candidateReviewPending === true
+                        ? "El corte se conservó como candidato para revisión; no se sobrescribió ningún corte existente."
+                        : "Corte recuperado exitosamente."); proceedToStage3(checkRes.vehicleId); return;
                 }
                 if (checkRes.pending === true && checkRes.operationHash !== operationHash) throw new Error('PENDING_OPERATION_MISMATCH');
                 const submitSession = getCurrentSessionForOwner(pendingOp.ownerId);
@@ -1251,7 +1253,9 @@
                     isNewVehicle: requestData.vehicleId === null, slotIndex: result.slotIndex,
                     cutType: requestData.cutData && requestData.cutData.tipoCorte1
                 });
-                alert("Corte guardado exitosamente."); proceedToStage3(result.vehicleId);
+                alert(result.candidateReviewPending === true
+                    ? "El corte se conservó como candidato para revisión; no se sobrescribió ningún corte existente."
+                    : "Corte guardado exitosamente."); proceedToStage3(result.vehicleId);
             } catch (error) {
                 diagnostics.error('cut-operation.submit-failed', { stage: 'submit', opId: pendingOp && pendingOp.id, status: pendingOp && pendingOp.status, errorCode: error && error.name || 'OperationError' });
                 if (pendingOp && snapshotSaved) {
