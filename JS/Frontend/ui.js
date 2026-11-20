@@ -10356,9 +10356,10 @@ export function renderInboxDetail(item) {
     const { currentUser, catalogData } = getState();
     const userName = currentUser ? (currentUser.Nombre_Completo || currentUser.Nombre_Usuario) : 'Usuario';
     let vehicleLabel = item.vehicleId ? `ID: ${String(item.vehicleId)}` : '';
+    let inboxVehicle = null;
     if (item.vehicleId && catalogData && catalogData.cortes) {
-        const vehicle = catalogData.cortes.find(c => String(c.id) === String(item.vehicleId));
-        if (vehicle) vehicleLabel = `${vehicle.marca} ${vehicle.modelo} (${vehicle.anoDesde})`;
+        inboxVehicle = catalogData.cortes.find(c => String(c.id) === String(item.vehicleId)) || null;
+        if (inboxVehicle) vehicleLabel = `${inboxVehicle.marca} ${inboxVehicle.modelo} (${inboxVehicle.anoDesde})`;
     }
 
     const isVideoItem = item.type === 'video_approval';
@@ -10551,6 +10552,34 @@ export function renderInboxDetail(item) {
         }
         actionToolbar.hidden = actionToolbar.childElementCount === 0;
     } else {
+        if (item.type === 'problem_report' && inboxCanManageRequests_(userRole)) {
+            const conversionActions = makeElement('div', 'inbox-actions');
+            if (inboxVehicle) {
+                const addCutButton = makeElement('button', 'btn btn-primary',
+                    suggestionData ? 'Crear corte con esta sugerencia' : 'Agregar corte desde reporte');
+                addCutButton.type = 'button';
+                addCutButton.addEventListener('click', () => openAddCutForModelModal(inboxVehicle, {
+                    sourceInboxItemId: item.id,
+                    sourceReportId: suggestionData && suggestionData.reportId || reportMetadata && reportMetadata.reportId || '',
+                    prefill: suggestionData && suggestionData.proposedValues || null
+                }));
+                conversionActions.appendChild(addCutButton);
+            }
+            const newVehicleButton = makeElement('button', 'btn btn-secondary', 'Registrar vehículo nuevo desde reporte');
+            newVehicleButton.type = 'button';
+            newVehicleButton.addEventListener('click', () => {
+                try {
+                    const target = new URL('HTML/add_cortes.html', window.location.href);
+                    target.searchParams.set('sourceInboxItemId', String(item.id || ''));
+                    if (reportMetadata && reportMetadata.reportId) target.searchParams.set('sourceReportId', String(reportMetadata.reportId));
+                    window.open(target.href, '_blank', 'noopener');
+                } catch (error) {
+                    showGlobalError('No se pudo abrir el formulario de alta de vehículo desde el reporte.');
+                }
+            });
+            conversionActions.appendChild(newVehicleButton);
+            detailContainer.appendChild(conversionActions);
+        }
         if (inboxCanManageRequests_(userRole)) {
         const actions = makeElement('div', 'inbox-actions');
         const toolbar = makeElement('div');
@@ -12879,7 +12908,11 @@ function isCutDropdownValueAllowed_(value, options) {
     return typeof value === "string" && value.trim() !== "" && Array.isArray(options) && options.includes(value);
 }
 
-function openAddCutForModelModal(item) {
+function openAddCutForModelModal(item, options = {}) {
+    options = options && typeof options === "object" ? options : {};
+    const sourceInboxItemId = String(options.sourceInboxItemId || "").trim();
+    const sourceReportId = String(options.sourceReportId || "").trim();
+    const reportPrefill = options.prefill && typeof options.prefill === "object" ? options.prefill : null;
     const vehicleId = String(item && item.id !== undefined && item.id !== null ? item.id : "").trim();
     if (!vehicleId) {
         showGlobalError("No se pudo identificar el vehículo para agregar el corte.");
@@ -13101,10 +13134,23 @@ function openAddCutForModelModal(item) {
         }
 
         if (!stored.operation) {
-            pendingNotice.style.display = "none";
+            if (reportPrefill) {
+                const suggestedType = String(reportPrefill.tipo || "").trim();
+                const suggestedRelay = String(reportPrefill.configRelay || "").trim();
+                if (isCutDropdownValueAllowed_(suggestedType, cutDropdownOptions.tipoDeCorte)) tipoSelect.value = suggestedType;
+                if (isCutDropdownValueAllowed_(suggestedRelay, cutDropdownOptions.configRelay)) relaySelect.value = suggestedRelay;
+                detailsInput.value = String(reportPrefill.ubicacion || "");
+                colorInput.value = String(reportPrefill.colorCable || "");
+                testigoInput.checked = reportPrefill.activaTestigo === true;
+            }
+            pendingNotice.style.display = sourceInboxItemId ? "block" : "none";
+            if (sourceInboxItemId) {
+                showPendingNotice("Este aporte se está creando a partir del reporte " + (sourceReportId || sourceInboxItemId) +
+                    ". Si el corte queda como candidato por capacidad o conflicto, el reporte permanecerá pendiente de revisión.");
+            }
             pendingOperationCheckComplete = true;
             submitBtn.disabled = !cutDropdownsReady || pendingOperationLoadFailed;
-            submitBtn.innerText = "Agregar Corte";
+            submitBtn.innerText = sourceInboxItemId ? "Crear corte desde reporte" : "Agregar Corte";
             return;
         }
 
@@ -13189,10 +13235,13 @@ function openAddCutForModelModal(item) {
                     activaTestigo1: testigoInput.checked,
                     imgCorte1: imgBase64
                 };
+                const sourceKey = sourceInboxItemId.replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 80);
                 const operation = {
-                    id: "OP-" + Date.now() + "-" + Math.random().toString(36).substring(2, 9).toUpperCase(),
+                    id: sourceKey ? "OP-FEEDBACK-" + sourceKey : "OP-" + Date.now() + "-" + Math.random().toString(36).substring(2, 9).toUpperCase(),
                     vehicleId,
                     userId: sessionContext.userId,
+                    sourceInboxItemId,
+                    sourceReportId,
                     cutData,
                     status: "processing",
                     createdAt: new Date().toISOString()
@@ -13237,6 +13286,7 @@ function openAddCutForModelModal(item) {
             }
 
             const completedOpId = pendingOperation.id;
+            const completedSourceInboxItemId = String(pendingOperation.sourceInboxItemId || "");
             const removed = await offline.removeAddCutPendingOperation(vehicleId, pendingOperation.userId, completedOpId);
             if (removed !== true) {
                 console.warn("El corte fue confirmado, pero no se pudo retirar el registro local. Un reintento conservará el mismo opId.", completedOpId);
@@ -13244,6 +13294,21 @@ function openAddCutForModelModal(item) {
 
             pendingOperation = null;
             await completeVehicleExpansionSave_(result, item.id, result.candidateReviewPending === true ? "El corte se conservó como candidato para revisión; no se sobrescribió ningún corte existente." : "Corte agregado con éxito.", modal);
+            if (completedSourceInboxItemId) {
+                if (result.candidateReviewPending === true) {
+                    showGlobalNotification("El aporte quedó como candidato de revisión. El reporte permanece pendiente.", "info");
+                } else {
+                    try {
+                        const resolution = await markAsResolved(completedSourceInboxItemId, getSessionPayload_());
+                        if (!resolution || resolution.status !== "success") throw new Error("No se confirmó el cierre del reporte.");
+                        const inboxContext = getUiSessionContext_();
+                        if (inboxContext) { invalidateInboxCache_(inboxContext); loadAndRenderInbox({ context: inboxContext, reset: true }); }
+                    } catch (resolutionError) {
+                        console.warn("El corte se guardó, pero el reporte de origen sigue pendiente:", resolutionError);
+                        showGlobalNotification("El corte se guardó; el reporte de origen todavía debe marcarse como resuelto.", "warning");
+                    }
+                }
+            }
         } catch (error) {
             console.error("Error agregando corte:", error);
             if (pendingOperation && persistedForAttempt) {
