@@ -9,3 +9,11 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - FEEDBACK auditado: reportProblem/suggestCutChange persisten en Feedbacks y no mutan Cortes; suggestion_cut actual solo describe un corte existente. IDs reportId/suggestionOperationId mantienen idempotencia. El ScriptLock fast-fail de FEEDBACK queda pendiente de revisión normativa §15 por la asignación secuencial de IDs.
 - Pruebas: InboxUi 87/87; AddCortesDiagnostics 12/12; CI 44830752667 SUCCESS: 237 suites, 2943 pruebas, 0 fallos; Health read-only SUCCESS. Pages pendiente al registrar este log.
 - Incidente operativo corregido: un update_file sin branch explícita creó temporalmente f02bda37 en main; se movió main de vuelta a su parent 037fc1bba9f24b1e31d50b93422d6a9299149026 mediante force-with-lease. Rama protegida GPSpedia2.2.5 permaneció en d9acc68d889985c2e2f42fe3a02e502efc86ead1; rama de trabajo y cambios finales permanecen en GPSpedia2.2.5_work.
+
+
+2026-11-20 — Inventario durable de imágenes de aportes candidatos
+- `Imagenes_Reemplazadas` incorpora `candidata_aporte` con origen `aporte_vehiculo`, contenido `aporte_candidato` y estados `requiere_revision`, `en_uso` y `cancelada` (además de estados controlados de papelera/eliminación tras descarte).
+- Al abrir la biblioteca se sincronizan candidatos vigentes desde CATALOG y eventos resueltos desde AportesVehiculo; la resolución ADMIN vuelve a sincronizar el estado. La clave de inventario es derivada del eventId, evitando duplicados.
+- Las imágenes pendientes no se pueden marcar en uso ni descargar/mover/borrar desde la biblioteca. Los descartados solo se pueden descargar o enviar a papelera si el escáner global confirma cero referencias. El candidato sigue protegido por AportesVehiculo/ImageUploadEvents.
+- Drive metadata se consulta fuera del lock; el lock de esquema solo cubre la escritura idempotente en la biblioteca. La sincronización de resolución se ejecuta después de liberar el lock de AportesVehiculo.
+- Pruebas: AdminReplacedImagesIntegrity 56/56; ReplacedImagesLibraryUX 14/14; AdminVehicleContributionCandidates 6/6; CI 44832283278 SUCCESS: 237 suites, 2943 pruebas, 0 fallos; Health read-only SUCCESS. Pages en cola al registrar.
