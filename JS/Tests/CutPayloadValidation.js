@@ -8,7 +8,7 @@ function runCutPayloadValidationTests(writeSource) {
  const vinEnd=text.indexOf("\nfunction ",vinStart+10);
  if(start<0||end<0||vinStart<0||vinEnd<0)throw new Error("No se encontró el contrato de validación WRITE o su validador VIN.");
  const source=text.slice(start,end)+"\n"+text.slice(vinStart,vinEnd);
- const validate=new Function(source+";return validateAddOrUpdateCutPayload_;")();
+ const validate=new Function("computeCutOperationFingerprint_",source+";return validateAddOrUpdateCutPayload_;")(()=> "f".repeat(64));
  const options={categoria:["Motocicleta"],tipoEncendido:["Llave"],tipoDeCorte:["Bomba","No recomendado"],configRelay:["NC"]};
  const base={vehicleId:null,vehicleData:{categoria:"Motocicleta",marca:"Yamaha",modelo:"FZ",anoDesde:"2020-2024",tipoEncendido:"Llave",versionesAplicables:"",imagenVehiculo:""},cutData:{tipoCorte1:"Bomba",configRelay1:"NC",ubicacionCorte1:"Bajo asiento",colorCableCorte1:"",activaTestigo1:false,imgCorte1:"",vin:""}};
  const rejects=(name,payload,opts)=>run(name,()=>{let rejected=false;try{validate(payload,opts||options);}catch(_){rejected=true;}if(!rejected)throw Error("El payload inválido fue aceptado.");});
@@ -33,7 +33,7 @@ function runCutPayloadValidationTests(writeSource) {
  rejects("rechaza ID cero",{...base,vehicleId:"0",vehicleData:null});
  rejects("rechaza ID alfanumérico",{...base,vehicleId:"12x",vehicleData:null});
  rejects("rechaza opId mal formado",{...base,opId:"x",operationHash:"a".repeat(64)});
- rejects("exige hash con opId",{...base,opId:"OP-1"});
+ run("deriva huella SHA-256 del servidor cuando el modal no envía operationHash",()=>{const result=validate({...base,vehicleId:"12",vehicleData:null,opId:"OP-1"},options);if(result.operationHash!=="f".repeat(64))throw Error("No se derivó la huella del servidor.");});
  rejects("rechaza hash sin opId",{...base,operationHash:"a".repeat(64)});
  rejects("rechaza silent no booleano",{...base,silent:"true"});
  rejects("rechaza campo de vehículo inesperado",{...base,vehicleData:{...base.vehicleData,admin:true}});
