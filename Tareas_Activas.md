@@ -1293,3 +1293,21 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [ ] Regresión integral: CI 44791334640 falló en dos contratos ajenos al organizador Safe Apply y relacionados con la nueva tarea de concurrencia de aportes: `AdminVehicleIdOutsideLock` (el test exige tryLock(0), el handler actual usa waitLock(2000)) y `AdminSupplementaryUploadOutsideLock` (el test exige ausencia de espera, pero el handler actual usa waitLock(2000)). No se alteraron esos flujos para ocultar el hallazgo; quedan incluidos en la tarea de concurrencia registrada arriba.
 - Health read-only 44791334834 SUCCESS. Pages 44791334550 pendiente al último chequeo.
 - Estado de esta subactividad: **IMPLEMENTACIÓN LOCAL COMPLETADA CON VALIDACIÓN DIFERIDA**; pendiente estabilizar la regresión integral y ejecutar verificación Beta de Drive/ACL/ScriptProperties. No se ejecutaron operaciones reales ni se desplegó Apps Script.
+
+
+### 2026-11-20 — Concurrencia de aportes y carrusel: primera corrección
+- [x] **Vistos recientemente:** `handleLoginSuccess` inicia `loadUserLocalActivity(user)` antes de `showApp(user)`. Las lecturas locales de historial de búsqueda y vistos comienzan sin `await`, por lo que se ejecutan en paralelo con la carga/renderizado del catálogo. No se añadió ninguna llamada de red.
+- [x] Prueba `RecentlyViewedCarousel` 1/1 PASS; el contrato comprueba que la hidratación local empieza antes de `showApp`.
+- [x] **Apertura/alimentación desde el modal de detalle:** cada modal crea un `opId` estable durante su vida y lo transmite en `addSupplementaryInfo`; los reintentos del mismo modal reutilizan el identificador.
+- [x] **Formulario add_cortes.html:** el envío de información suplementaria reutiliza `state.opId`, evitando que la imagen de apertura/alimentación use la clave heredada `legacy`.
+- [x] Contrato `SupplementaryImageOperationIdContract`: 8/8 PASS.
+- [x] Regresión integral CI 44793849152 SUCCESS: 227 suites, 2,802 pruebas aprobadas, 0 fallos. Health read-only 44793849459 SUCCESS. Pages 44793848811 en ejecución al registrar.
+- Auditoría de concurrencia:
+  - Las reservas de slots de corte filtran las operaciones `pending` por `vehicleId`; las claves de imagen incorporan `opId + vehicleId + field`. La idempotencia no es un bloqueo global entre vehículos.
+  - `getWriteContributionLock_` usa UserLock para vehículos existentes; UserLock es por usuario, no por vehículo. No protege a dos usuarios distintos que reserven simultáneamente el mismo modelo. La escritura del ledger Idempotencia debe revalidarse/protegerse para esa colisión.
+  - En vehículo nuevo, la asignación central de ID usa ScriptLock inmediato y reserva idempotente por `opId`; la contención devuelve WRITE_BUSY. Debe conservarse el reintento del mismo `opId` sin duplicar el alta.
+  - Si los tres slots de corte están ocupados, `handleAddOrUpdateCutLockedUnsafe_` todavía lanza «No hay espacios disponibles»; no guarda la imagen como candidata.
+  - `buildSupplementaryInfoPlan_` rechaza apertura ocupada o tres alimentaciones ocupadas; no conserva la imagen en conflicto como candidata.
+  - FEEDBACK conserva reportes y sugerencias por separado; el flujo de sugerencia actual modifica cortes existentes y aún falta diseñar/validar la vía explícita para convertir un reporte en un nuevo corte o vehículo.
+- [ ] Pendiente principal de esta tarea: reserva/revalidación segura del mismo vehículo entre usuarios; candidatos de corte/apertura/alimentación en «Imagenes_Reemplazadas» con estado de revisión; alta concurrente de modelos duplicados; integración de alta desde Feedback; pruebas paralelas y anti-regresión de formularios/reportes/reacciones.
+- Estado: carrusel local y claves de operación suplementaria **IMPLEMENTADOS**; concurrencia por vehículo y conservación de candidatos **PENDIENTES**.
