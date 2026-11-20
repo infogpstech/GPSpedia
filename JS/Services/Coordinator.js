@@ -19,6 +19,8 @@ const CATALOG_CHANGE_REVISION_PROPERTY_ = "GPSpedia_CATALOG_CHANGE_REVISION";
 const CATALOG_WRITE_SOURCE_VERSION_PROPERTY_ = "GPSpedia_CATALOG_WRITE_SOURCE_VERSION_V1";
 const CATALOG_FEEDBACK_SOURCE_VERSION_PROPERTY_ = "GPSpedia_CATALOG_FEEDBACK_SOURCE_VERSION_V1";
 const CATALOG_FEEDBACK_VERSIONED_COLLECTIONS_ = new Set(["cortes", "pys", "tutoriales"]);
+const CATALOG_ADMIN_SOURCE_VERSION_PROPERTY_ = "GPSpedia_CATALOG_ADMIN_SOURCE_VERSION_V1";
+const CATALOG_ADMIN_VERSIONED_COLLECTIONS_ = new Set(["cortes"]);
 const CATALOG_CHANGE_EVENT_PREFIX_ = "GPSpedia_CATALOG_CHANGE_EVENT_";
 const CATALOG_CHANGE_MAX_EVENTS_ = 100;
 const CATALOG_CHANGE_MAX_EVENT_LENGTH_ = 4000;
@@ -1294,21 +1296,25 @@ function createSharedMutationCoordinator_(dependencies) {
             let sourceVersion = null;
             let legacyWriteReset = false;
             let legacyFeedbackReset = false;
+            let legacyAdminReset = false;
             const supportsSourceVersion = (service === "WRITE" && collection === "cortes") ||
-                (service === "FEEDBACK" && CATALOG_FEEDBACK_VERSIONED_COLLECTIONS_.has(collection));
+                (service === "FEEDBACK" && CATALOG_FEEDBACK_VERSIONED_COLLECTIONS_.has(collection)) ||
+                (service === "ADMIN" && CATALOG_ADMIN_VERSIONED_COLLECTIONS_.has(collection));
             if (source.sourceVersion !== undefined && source.sourceVersion !== null) {
                 sourceVersion = Number(source.sourceVersion);
                 if (!supportsSourceVersion || !Number.isSafeInteger(sourceVersion) || sourceVersion < 1) {
-                    throw new Error("La versión de origen solo es válida para cambios WRITE de Cortes o FEEDBACK de Cortes/PyS/Tutorial y debe ser un entero positivo.");
+                    throw new Error("La versión de origen solo es válida para WRITE/Cortes, FEEDBACK/Cortes-PyS-Tutorial o ADMIN/Cortes y debe ser un entero positivo.");
                 }
             } else if ((service === "WRITE" && collection === "cortes" ||
-                service === "FEEDBACK" && CATALOG_FEEDBACK_VERSIONED_COLLECTIONS_.has(collection)) &&
+                service === "FEEDBACK" && CATALOG_FEEDBACK_VERSIONED_COLLECTIONS_.has(collection) ||
+                service === "ADMIN" && CATALOG_ADMIN_VERSIONED_COLLECTIONS_.has(collection)) &&
                 changeOperation !== "reset") {
                 // Los publicadores legacy sin versión se convierten en reset para que
                 // un snapshot atrasado no pueda sobrescribir una publicación versionada.
                 collection = "*"; recordId = "*"; changeOperation = "reset"; snapshot = null;
                 if (service === "WRITE") legacyWriteReset = true;
-                else legacyFeedbackReset = true;
+                else if (service === "FEEDBACK") legacyFeedbackReset = true;
+                else legacyAdminReset = true;
             }
             const event = { collection, recordId, operation: changeOperation, snapshot,
                 createdAt: new Date(now()).toISOString(), sourceService: service, sourceOperation: operation };
@@ -1318,7 +1324,7 @@ function createSharedMutationCoordinator_(dependencies) {
                 event.batchIndex = index;
                 event.batchCount = changes.length;
             }
-            let serialized = JSON.stringify(event), resetRequired = legacyWriteReset || legacyFeedbackReset;
+            let serialized = JSON.stringify(event), resetRequired = legacyWriteReset || legacyFeedbackReset || legacyAdminReset;
             if (serialized.length > CATALOG_CHANGE_MAX_EVENT_LENGTH_) {
                 event.collection = "*"; event.recordId = "*"; event.operation = "reset"; event.snapshot = null;
                 serialized = JSON.stringify(event); resetRequired = true;
@@ -1389,7 +1395,8 @@ function createSharedMutationCoordinator_(dependencies) {
 
             const sourceVersionProperty = service === "WRITE"
                 ? CATALOG_WRITE_SOURCE_VERSION_PROPERTY_
-                : service === "FEEDBACK" ? CATALOG_FEEDBACK_SOURCE_VERSION_PROPERTY_ : null;
+                : service === "FEEDBACK" ? CATALOG_FEEDBACK_SOURCE_VERSION_PROPERTY_
+                : service === "ADMIN" ? CATALOG_ADMIN_SOURCE_VERSION_PROPERTY_ : null;
             let currentSourceVersion = sourceVersionProperty
                 ? Number(properties.getProperty(sourceVersionProperty) || 0) : 0;
             if (!Number.isSafeInteger(currentSourceVersion) || currentSourceVersion < 0) currentSourceVersion = 0;
