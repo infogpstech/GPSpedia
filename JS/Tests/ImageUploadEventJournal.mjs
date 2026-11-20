@@ -10,9 +10,14 @@ const code = source.slice(start, end);
 let uuid = 0;
 const Utilities = { getUuid: () => "00000000-0000-4000-8000-" + String(++uuid).padStart(12, "0") };
 const SpreadsheetApp = { flush() {} };
-const runtime = new Function("Utilities", "SpreadsheetApp", code +
-    "\nreturn { headers: IMAGE_UPLOAD_EVENTS_HEADERS_, create: getOrCreateImageUploadEventsSheet_, append: appendImageUploadEvent_, read: readImageUploadEventsByToken_, project: projectImageUploadEvents_ };"
-)(Utilities, SpreadsheetApp);
+let activeSheet = null;
+const spreadsheet = {
+    getSheetByName: name => name === "ImageUploadEvents" ? activeSheet : null,
+    insertSheet: () => (activeSheet = fakeSheet())
+};
+const runtime = new Function("Utilities", "SpreadsheetApp", "getSpreadsheet", "Logger", code +
+    "\nreturn { headers: IMAGE_UPLOAD_EVENTS_HEADERS_, create: getOrCreateImageUploadEventsSheet_, append: appendImageUploadEvent_, read: readImageUploadEventsByToken_, project: projectImageUploadEvents_, transition: appendImageUploadEventTransition_ };"
+)(Utilities, SpreadsheetApp, () => spreadsheet, { log() {} });
 
 function fakeSheet() {
     const rows = [];
@@ -123,4 +128,18 @@ function event(overrides = {}) {
     assert.throws(() => runtime.append(sheet, event({ mimeType: "text/plain" })), /integridad/);
     assert.equal(sheet.rows.length, 1);
 }
-console.log("ImageUploadEventJournal: 6/6 PASS — esquema, append, intercalado, conflicto de archivos y validación");
+
+{
+    activeSheet = null;
+    const expected = {
+        token: "tok-transition", operationKey: "OP-3|22|imgApertura", folderId: "folder-1",
+        mimeType: "image/png", sizeBytes: 3, contentHash: "c".repeat(64)
+    };
+    assert.equal(runtime.transition(expected, "reserved", "", [], "opening.png", ""), true);
+    assert.equal(runtime.transition(expected, "pending", "file-opening", [], "opening.png", ""), true);
+    const projected = runtime.project(runtime.read(activeSheet, "tok-transition"));
+    assert.equal(projected.state, "pending");
+    assert.equal(projected.fileId, "file-opening");
+    assert.equal(projected.eventCount, 2);
+}
+console.log("ImageUploadEventJournal: 7/7 PASS — esquema, append, transiciones WRITE, intercalado, conflictos y validación");
