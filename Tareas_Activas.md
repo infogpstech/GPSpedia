@@ -926,3 +926,12 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] Conservar detección de datos sin ID, prefijo/sufijo inválido, duplicados, contador backend y lock ya adquirido.
 - [x] `FeedbackFormulaIdAllocatorBoundedRead` 6/6; CI `44647995645` SUCCESS: 203 suites, 2,582 pruebas, 0 fallos; health read-only `44647995469` SUCCESS.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
+
+
+### P1 — ADMIN catálogo Cortes: publicación fuera del lock con sourceVersion (2026-11-20)
+- [x] Construir snapshots y reservar versión monotónica bajo ScriptLock; ejecutar UrlFetch al Coordinator después de liberar.
+- [x] Para batches, reservar rango de versiones en una escritura y publicar en chunks de 50 fuera del lock.
+- [x] Coordinator admite ADMIN/Cortes, convierte eventos legacy sin versión y snapshots atrasados en reset; lock/snapshot/red fallidos fuerzan reset.
+- [x] `AdminCatalogPublicationIsolation` 6/6; `CatalogChangeFeed` y `SharedMutationCoordinator` cubren orden/reintentos.
+- [x] CI `44649098649` SUCCESS; health read-only `44649098541` SUCCESS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Sin despliegues ni cambios productivos.
