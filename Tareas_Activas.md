@@ -834,3 +834,17 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [ ] Sacar UrlFetch al Coordinator fuera del ScriptLock sin permitir que snapshots viejos sobrescriban cambios recientes.
 - [ ] Diseñar versión monotónica de origen FEEDBACK y compatibilidad de eventos legacy (sin versión deben forzar reset).
 - [ ] Cubrir publicaciones fuera de orden, fallos de red, reintentos y reset de recuperación antes de modificar el flujo.
+
+
+### P1 — FEEDBACK publicaciones de catálogo fuera del ScriptLock (2026-11-20)
+- [x] Reservar snapshot y versión monotónica bajo lock; publicar a Coordinator después de liberar el lock para Cortes, PyS y Tutorial.
+- [x] Coordinator acepta versiones FEEDBACK por colección, convierte versiones atrasadas en reset y trata publicadores legacy sin versión como reset.
+- [x] Fallos de lock/snapshot producen reset fuera del lock; no se publica snapshot no verificado.
+- [x] `CatalogChangeFeed` 33/33; `FeedbackCatalogPublicationIsolation` 5/5.
+- [x] CI `44644542379` SUCCESS: 194 suites, 2,536 pruebas, 0 fallos; health read-only `44644541751` SUCCESS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Orden de publicación Beta: Coordinator primero, FEEDBACK después. No hubo despliegues Apps Script ni cambios productivos.
+
+### P1 — siguiente revisión de locks WRITE/FEEDBACK
+- [ ] Revisar `handleFreezeCortesIds`: la validación del backup Drive se ejecuta actualmente dentro del ScriptLock WRITE; mover la comprobación de respaldo fuera y conservar bajo lock el plan/commit de Cortes.
+- [ ] Revisar mutaciones PyS: verificar si `verifyPendingPysImageFile_` realiza DriveApp dentro del lock y separar solo si se conserva idempotencia, verificación del archivo y compensación.
+- [ ] Revisar limpieza Drive de adjuntos duplicados/rollback en reportes y sugerencias FEEDBACK; sacar Drive del lock sin borrar archivos que puedan haber quedado referenciados.
