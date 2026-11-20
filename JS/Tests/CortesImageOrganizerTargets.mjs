@@ -50,7 +50,7 @@ function vehicle(id = "V-001", overrides = {}) {
     set("imgCorte1", url(6));
     set("tipoCorte2", "Bomba de combustible");
     set("imgCorte2", url(7));
-    set("tipoCorte3", "Botón de encendido");
+    set("tipoCorte3", "Botón");
     set("imgCorte3", url(8));
     Object.entries(overrides).forEach(([key, value]) => set(key, value));
     return row;
