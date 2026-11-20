@@ -13152,7 +13152,7 @@ function openAddCutForModelModal(item) {
             }
 
             pendingOperation = null;
-            await completeVehicleExpansionSave_(result, item.id, "Corte agregado con éxito.", modal);
+            await completeVehicleExpansionSave_(result, item.id, result.candidateReviewPending === true ? "El corte se conservó como candidato para revisión; no se sobrescribió ningún corte existente." : "Corte agregado con éxito.", modal);
         } catch (error) {
             console.error("Error agregando corte:", error);
             if (pendingOperation && persistedForAttempt) {
