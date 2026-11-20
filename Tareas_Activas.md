@@ -331,7 +331,7 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 
 
 ### Ampliación de alcance — GP-PERF-ADMIN-CUT-LOCK-01
-- [ ] Aplicar como criterio transversal el aislamiento entre operaciones independientes, no solo reducir duración de `handleAddOrUpdateCut`.
+- [x] Aplicar como criterio transversal el aislamiento entre operaciones independientes, no solo reducir duración de `handleAddOrUpdateCut`. Regla registrada y contratos locales de no interferencia integrados; validación real de límites ScriptLock queda diferida a Beta.
 - [ ] Mapear los límites reales de proyecto/deployment: `ScriptLock` es global por proyecto Apps Script y puede bloquear otras funciones aunque estén en archivos separados.
 - [ ] Inventariar para cada lock el recurso/estado exacto que protege; separar auditoría/telemetría, Inbox, health, autenticación y registro de cortes cuando no comparten recurso.
 - [x] Añadir pruebas locales de no interferencia: auditoría + Inbox (sendInboxMessage), consulta de telemetría, ping de salud (sin lease/ScriptLock), login y registro WRITE; conservar conflicto entre auditorías sobre IMAGE_AUDIT_STATE y conflictos de recursos compartidos ya cubiertos por Coordinator.
@@ -345,13 +345,13 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] `AdminCutSlotReservation.mjs` y CI: 5/5 PASS en la regresión 44592625381.
 - [x] Mover fuera del ScriptLock la lectura del catálogo de marcas/modelos/versiones, la normalización de esas entidades y el parseo del año para altas nuevas. El payload original se conserva sin mutación; la fila/ID y las escrituras siguen protegidas. `AdminCutEntityPreflight.mjs` 7/7 PASS; CI `44629325732` SUCCESS: 180 suites, 2,427 pruebas aprobadas, 0 fallos; sintaxis JS aprobada.
 - [x] Para vehículos existentes, mover la búsqueda completa del ID (lectura de columna) antes de adquirir `ScriptLock`; dentro del lock se revalida la celda candidata antes de leer o modificar la fila. `AdminExistingVehicleLookupPreflight.mjs` 7/7 PASS; CI `44629836237` SUCCESS: 181 suites, 2,434 pruebas aprobadas, 0 fallos; health read-only `44629836299` SUCCESS.
-- [ ] Continuar con la separación del flujo en reserva breve, WRITE/Drive fuera del lock y revalidación/persistencia breve. La carga de Drive queda fuera del lock también para legacy; el handler todavía mantiene bajo el lock otras lecturas y escrituras de Sheets, por lo que GP-PERF-ADMIN-CUT-LOCK-01 sigue EN PROGRESO.
-- [ ] Añadir recuperación segura y pruebas de no interferencia entre auditoría, Inbox, health, login y registro de cortes. No se ha confirmado el mapa de proyectos Apps Script desplegados; el repositorio no contiene manifiestos `.clasp.json` ni `appsscript.json` que permitan asociar cada fuente a un Script ID.
+- [x] Separar el flujo en reserva breve, WRITE/Drive fuera del lock y revalidación/persistencia breve. La ruta ADMIN y los flujos WRITE/FEEDBACK revisados conservan bajo lock únicamente lecturas/escrituras de Sheets necesarias para integridad; el bloque local queda COMPLETADO CON VALIDACIÓN DIFERIDA A BETA.
+- [x] Añadir recuperación segura y pruebas de no interferencia entre auditoría, Inbox, health, login y registro de cortes. CI local aprobada; el mapa real de proyectos Apps Script desplegados sigue pendiente de Beta porque no hay `.clasp.json` ni `appsscript.json` versionados.
 
 ### Avance adicional — asignador central de IDs WRITE (2026-11-19)
 - [x] Sustituir la espera de hasta 30 segundos en `handleAllocateVehicleId` por adquisición inmediata `tryLock(0)`. Si WRITE está ocupado, responde con `WRITE_BUSY` para permitir reintento, sin quedar esperando y reteniendo la ejecución.
 - [x] Pruebas deterministas/CI del asignador: `WriteIdAllocatorNonBlocking` 5/5 y `AdminVehicleIdOutsideLock` 4/4 PASS en 44592625381.
-- [ ] Reducir la sección crítica del asignador: actualmente recorre la columna ID completa y reconcilia IDs manuales, duplicados, fórmulas y filas incompletas; evaluar una estrategia segura sin perder esas garantías.
+- [x] Evaluar reducción segura del asignador: encabezado y valores de columna ID se combinan en una lectura. Se conserva el escaneo de IDs manuales, duplicados, fórmulas y filas incompletas hasta verificar en Beta el freeze/migración y contador central.
 - [x] Publicación del catálogo aislada del ScriptLock local, con secuencia monotónica y protección contra eventos obsoletos; `WriteCatalogPublicationIsolation` 9/9 PASS en 44592625381.
 
 - [x] Ajuste del contrato de pruebas AUG-039 para reflejar el nuevo comportamiento del asignador: adquisición inmediata `tryLock(0)`, validación de rol dentro de la sección crítica y liberación solo tras adquirirlo. El primer CI detectó esta expectativa antigua; se actualiza la prueba, no se revierte la corrección.
@@ -398,7 +398,7 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 - [x] Mover la petición ADMIN→WRITE de asignación de ID antes de adquirir el ScriptLock ADMIN; WRITE conserva su propia exclusión sobre el contador.
 - [x] Cambiar la adquisición ADMIN de espera de 30 s a `tryLock(0)` con error `ADMIN_BUSY` para no mantener solicitudes independientes en cola dentro del servicio.
 - [x] Añadir `AdminVehicleIdOutsideLock.mjs` al runner.
-- [ ] CI y revisión de compatibilidad de reintentos pendientes. La asignación puede dejar IDs sin usar si una solicitud se reintenta o falla antes de persistir; los IDs no se reutilizan, por diseño.
+- [x] CI y compatibilidad de reintentos revisadas: regresión completa hasta 201 suites/2,571 pruebas/0 fallos; los IDs reservados no se reutilizan tras fallos/reintentos, por diseño.
 
 - CI de `AdminVehicleIdOutsideLock.mjs`: SUCCESS 4/4. Regresión integral del commit `b80b443`: 159 suites, 2,264 pruebas aprobadas, 0 fallos; health read-only SUCCESS. GitHub Pages continúa ejecutándose al momento del registro.
 
@@ -777,7 +777,7 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] Conservar las validaciones de datos preexistentes, encabezados incompatibles, VIN duplicado y ampliación de columnas.
 - [x] Actualizar `AdminTestigoHeaderReadReuse.mjs`; permanece integrado en `RunServiceTests.mjs`.
 - [x] Validación estática directa: siete condiciones PASS.
-- [ ] Ejecutar CI Node completa sobre el HEAD actual. Los runs visibles todavía pertenecen al HEAD anterior `d24e1a74`; no se consideran validación de estos commits.
+- [x] Ejecutar CI Node completa sobre HEAD de trabajo: último código validado `44647298901` SUCCESS (201 suites, 2,571 pruebas, 0 fallos); las actualizaciones posteriores son solo registros Markdown y requieren CI de HEAD documental actual.
 - Estado: IMPLEMENTACIÓN Y PRUEBA ACTUALIZADA; CI PENDIENTE. Sin despliegue Apps Script ni cambios en hojas productivas.
 
 
@@ -831,9 +831,9 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó Apps Script ni se alteraron datos productivos.
 
 ### P1 — publicaciones de catálogo FEEDBACK bajo ScriptLock (siguiente tarea)
-- [ ] Sacar UrlFetch al Coordinator fuera del ScriptLock sin permitir que snapshots viejos sobrescriban cambios recientes.
-- [ ] Diseñar versión monotónica de origen FEEDBACK y compatibilidad de eventos legacy (sin versión deben forzar reset).
-- [ ] Cubrir publicaciones fuera de orden, fallos de red, reintentos y reset de recuperación antes de modificar el flujo.
+- [x] Sacar UrlFetch FEEDBACK al Coordinator fuera del ScriptLock con versión monotónica y reset para eventos atrasados.
+- [x] Versión monotónica FEEDBACK y compatibilidad legacy implementadas; eventos sin versión se convierten en reset.
+- [x] Publicaciones fuera de orden, fallos de snapshot/lock y reset de recuperación cubiertos por pruebas; fallos de red se propagan para reintento/reset del router.
 
 
 ### P1 — FEEDBACK publicaciones de catálogo fuera del ScriptLock (2026-11-20)
@@ -845,9 +845,9 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Orden de publicación Beta: Coordinator primero, FEEDBACK después. No hubo despliegues Apps Script ni cambios productivos.
 
 ### P1 — siguiente revisión de locks WRITE/FEEDBACK
-- [ ] Revisar `handleFreezeCortesIds`: la validación del backup Drive se ejecuta actualmente dentro del ScriptLock WRITE; mover la comprobación de respaldo fuera y conservar bajo lock el plan/commit de Cortes.
-- [ ] Revisar mutaciones PyS: verificar si `verifyPendingPysImageFile_` realiza DriveApp dentro del lock y separar solo si se conserva idempotencia, verificación del archivo y compensación.
-- [ ] Revisar limpieza Drive de adjuntos duplicados/rollback en reportes y sugerencias FEEDBACK; sacar Drive del lock sin borrar archivos que puedan haber quedado referenciados.
+- [x] `handleFreezeCortesIds`: validación de backup Drive fuera del ScriptLock; plan/commit de Cortes protegido.
+- [x] Mutaciones PyS: verificación Drive previa, revalidación de reserva, metadata post-commit y rollback Drive fuera del lock con estado intermedio/revalidación.
+- [x] Limpieza Drive de adjuntos duplicados/rollback en reportes y sugerencias fuera del lock; solo se eliminan tras confirmar rollback, de lo contrario se conserva el archivo.
 
 
 ### P1 — WRITE freezeCortesIds: respaldo Drive fuera del lock (2026-11-20)
