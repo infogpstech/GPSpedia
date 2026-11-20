@@ -94,7 +94,7 @@ runGroup('32','ADMIN',()=>{
   runCli('WRITE validación de respaldo Drive fuera del ScriptLock en freeze IDs','JS/Tests/WriteFreezeCortesIdsBackupOutsideLock.mjs');
   runCli('WRITE limita lectura de entidades existentes a marca/modelo/versiones','JS/Tests/WriteEntityLookupBoundedRead.mjs');
   runCli('WRITE publicación del catálogo fuera del ScriptLock global','JS/Tests/WriteCatalogPublicationIsolation.mjs');
-  runCli('WRITE carpetas suplementarias usan lease Drive independiente','JS/Tests/WriteSupplementaryFolderLease.mjs');
+  runCli('WRITE carpetas suplementarias sin lease ni espera','JS/Tests/WriteSupplementaryFolderNoLease.mjs');
   runCli('ADMIN libera ScriptLock durante trabajo Drive con revalidación','JS/Tests/AdminDriveLockIsolation.mjs');
   runCli('ADMIN asigna ID WRITE antes de tomar el ScriptLock','JS/Tests/AdminVehicleIdOutsideLock.mjs');
   runCli('ADMIN transmite opId y huella al asignador WRITE','JS/Tests/AdminVehicleIdAllocationIdempotency.mjs');
