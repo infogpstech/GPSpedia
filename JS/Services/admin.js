@@ -9100,31 +9100,54 @@ function uploadImageToDrive(imageData, filename, folder, operationKey) {
 
 function getImageUploadReferenceMap_() {
     const map = new Map();
-    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
-    if (!sheet || sheet.getLastRow() < 2) return map;
-    const fields = [
-        ["imagenVehiculo", COLS_CORTES.imagenVehiculo],
-        ["imgCorte1", COLS_CORTES.imgCorte1],
-        ["imgCorte2", COLS_CORTES.imgCorte2],
-        ["imgCorte3", COLS_CORTES.imgCorte3],
-        ["imgApertura", COLS_CORTES.imgApertura],
-        ["imgCableAlimen", COLS_CORTES.imgCableAlimen],
-        ["imgCableAlimen2", COLS_CORTES.imgCableAlimen2],
-        ["imgCableAlimen3", COLS_CORTES.imgCableAlimen3]
-    ].filter(item => Number(item[1]) > 0);
-    const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn()).getValues();
-    rows.forEach((row, offset) => fields.forEach(field => {
-        const fileId = getImageUploadFileId_(row[field[1] - 1]);
-        if (!fileId) return;
-        if (!map.has(fileId)) map.set(fileId, []);
-        map.get(fileId).push({
-            sheet: SHEET_NAMES.CORTES, row: offset + 2, field: field[0],
-            column: field[1], url: String(row[field[1] - 1] || "")
+    const spreadsheet = getSpreadsheet();
+    const sheet = spreadsheet.getSheetByName(SHEET_NAMES.CORTES);
+    if (sheet && sheet.getLastRow() >= 2) {
+        const fields = [
+            ["imagenVehiculo", COLS_CORTES.imagenVehiculo],
+            ["imgCorte1", COLS_CORTES.imgCorte1],
+            ["imgCorte2", COLS_CORTES.imgCorte2],
+            ["imgCorte3", COLS_CORTES.imgCorte3],
+            ["imgApertura", COLS_CORTES.imgApertura],
+            ["imgCableAlimen", COLS_CORTES.imgCableAlimen],
+            ["imgCableAlimen2", COLS_CORTES.imgCableAlimen2],
+            ["imgCableAlimen3", COLS_CORTES.imgCableAlimen3]
+        ].filter(item => Number(item[1]) > 0);
+        const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn()).getValues();
+        rows.forEach((row, offset) => fields.forEach(field => {
+            const fileId = getImageUploadFileId_(row[field[1] - 1]);
+            if (!fileId) return;
+            if (!map.has(fileId)) map.set(fileId, []);
+            map.get(fileId).push({
+                sheet: SHEET_NAMES.CORTES, row: offset + 2, field: field[0],
+                column: field[1], url: String(row[field[1] - 1] || "")
+            });
+        }));
+    }
+
+    const contributions = spreadsheet.getSheetByName(ADMIN_VEHICLE_CONTRIBUTIONS_SHEET_NAME_);
+    if (contributions && contributions.getLastRow() >= 2 &&
+        contributions.getLastColumn() >= ADMIN_VEHICLE_CONTRIBUTIONS_HEADERS_.length) {
+        const rows = contributions.getRange(2, 1, contributions.getLastRow() - 1,
+            ADMIN_VEHICLE_CONTRIBUTIONS_HEADERS_.length).getValues();
+        rows.forEach((row, offset) => {
+            let payload = null;
+            try { payload = JSON.parse(String(row[5] || "{}")); } catch (error) { payload = null; }
+            if (!payload || typeof payload !== "object") return;
+            const image = String(payload.image || payload.imagenVehiculo || "").trim();
+            const fileId = getImageUploadFileId_(image);
+            if (!fileId) return;
+            if (!map.has(fileId)) map.set(fileId, []);
+            map.get(fileId).push({
+                sheet: ADMIN_VEHICLE_CONTRIBUTIONS_SHEET_NAME_,
+                row: offset + 2,
+                field: String(row[4] || "contribution") + ".image",
+                url: image
+            });
         });
-    }));
+    }
     return map;
 }
-
 function classifyImageUploadReconciliation_(previousState, fileState, referenceCount) {
     if (fileState === "missing") return "file_missing";
     if (fileState === "altered") return "requires_review";
@@ -9218,7 +9241,7 @@ function handleReconcilePendingImageUploads(payload, logMessage) {
                 values[6] = fileId;
                 if (file) values[7] = "https://drive.google.com/uc?export=view&id=" + fileId;
                 values[8] = nextState;
-                values[9] = references.length ? SHEET_NAMES.CORTES : "";
+                values[9] = references.length ? references[0].sheet : "";
                 values[10] = references.length ? references[0].row : "";
                 values[11] = references.map(reference => reference.field).join(",");
                 values[12] = JSON.stringify(references);
