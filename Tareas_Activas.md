@@ -35,8 +35,8 @@ La copia archivada fue verificada carácter por carácter contra el original. Es
 
 **Estado: EN PROGRESO.** Las rutas append-only y la regresión local cubren parte importante del alcance; no declarar cerrada la tarea hasta completar los puntos locales restantes y después ejecutar Beta.
 
-- [ ] Revisar el fallback legacy de `handleAddOrUpdateCut`: retirar el `UserLock` para altas a vehículos existentes sin opId, o cerrar esa compatibilidad de forma segura. Mantener el `ScriptLock` únicamente para asignación de ID nuevo si se confirma que la secuencia numérica lo requiere.
-- [ ] Confirmar todos los consumidores activos de cortes existentes y suplementarios: UI del modal +, `add_cortes.html`, ADMIN y FEEDBACK. Verificar que cada mutación persistente use opId estable y que reportes/sugerencias mantengan sus contratos independientes.
+- [x] Retirar el `UserLock` del fallback de `handleAddOrUpdateCut`. Los vehículos existentes usan append-only y requieren opId; si falta, se devuelve `WRITE_OP_ID_REQUIRED` antes de adquirir un lock. El `ScriptLock` queda solo para asignar el ID numérico de un vehículo nuevo. CI 44829158327: 237 suites/2942 pruebas PASS.
+- [x] Confirmar consumidores activos de cortes: modal de detalle y `HTML/add_cortes.html` envían/reutilizan opId estable. [ ] Completar auditoría del punto de entrada FEEDBACK/reporte/sugerencia y sus contratos independientes.
 - [ ] Auditar la conservación de imágenes cuando un corte/apertura/alimentación queda como candidato por colisión o capacidad llena; comprobar referencias en `AportesVehiculo`, `ImageUploadEvents` e inventario de imágenes reemplazadas, sin borrar huérfanos ni marcar candidatos como materializados.
 - [ ] Completar la señalización UI de conflictos tardíos en todos los puntos de entrada, no solo en el modal de detalle; no presentar como aplicado un evento que CATALOG mantiene como candidato.
 - [ ] Ejecutar regresión focalizada de los escenarios que falten: vehículos diferentes simultáneos, mismo vehículo/campos distintos, mismo slot, mismo opId/payload idéntico y distinto, capacidad llena, VIN duplicado, errores parciales y respuesta perdida.
