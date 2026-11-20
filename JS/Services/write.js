@@ -745,8 +745,6 @@ function buildCortesIdFreezePlan(sheet) {
 
 /** Convierte fórmulas heredadas en valores sin alterar los valores calculados ni el formato de celda. */
 function handleFreezeCortesIds(payload) {
-    // La autorización y la validación Drive del respaldo no protegen estado compartido de WRITE.
-    // Ejecutarlas antes del ScriptLock evita que Drive retenga el mutex global del servicio.
     assertDeveloperForIdMaintenance(payload);
     const backupId = verifyCortesIdsBackup(payload && payload.backupId);
     const lock = LockService.getScriptLock();
