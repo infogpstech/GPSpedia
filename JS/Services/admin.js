@@ -7098,7 +7098,8 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
         }
 
         if (opId) {
-            let match = findRowByOpId(sheet, opId, idempotencyEntriesSnapshot);
+            // El snapshot se leyó bajo este mismo ScriptLock; no repetir la consulta remota inicial.
+            let match = findRowByOpId(sheet, opId, idempotencyEntriesSnapshot, false);
             if (match) {
                 if (!match.operationHash || match.operationHash !== operationHash) {
                     throw new Error("El opId ya existe, pero su contenido no coincide o pertenece a un registro legado sin huella verificable.");
@@ -8991,7 +8992,7 @@ function findUniqueCortesVehicleRowFromSnapshot_(data, vehicleId, opId) {
     return matches[0];
 }
 
-function findRowByOpId(sheet, opId, entriesSnapshot) {
+function findRowByOpId(sheet, opId, entriesSnapshot, revalidateLedger) {
     const cleanOpId = String(opId === null || opId === undefined ? "" : opId).trim();
     if (!cleanOpId) return null;
     normalizeIdempotenciaOpId_(cleanOpId, "Recuperación de operación");
@@ -9000,19 +9001,25 @@ function findRowByOpId(sheet, opId, entriesSnapshot) {
     let entry;
     if (entriesSnapshot) {
         const snapshotEntry = entriesSnapshot.byOpId.get(cleanOpId) || null;
-        const currentEntry = readIdempotenciaEntryByOpId_(idempotenciaSheet, cleanOpId);
-        if (!!snapshotEntry !== !!currentEntry) {
-            throw new Error("El ledger Idempotencia cambió durante la recuperación del opId " + cleanOpId + "; reintenta con el mismo identificador.");
-        }
-        if (snapshotEntry && currentEntry) {
-            if (snapshotEntry.rowIndex !== currentEntry.rowIndex || snapshotEntry.vehicleId !== currentEntry.vehicleId ||
-                snapshotEntry.slotIndex !== currentEntry.slotIndex || snapshotEntry.operationHash !== currentEntry.operationHash ||
-                (snapshotEntry.status === "completed" && currentEntry.status !== "completed")) {
-                throw new Error("La asociación o el estado del opId " + cleanOpId + " cambió durante la recuperación; no se modificó.");
+        // Solo omitir la lectura dirigida cuando el snapshot se consume dentro del mismo lock
+        // que protegió su lectura integral. Tras una liberación/readquisición se revalida por defecto.
+        const currentEntry = revalidateLedger === false
+            ? snapshotEntry
+            : readIdempotenciaEntryByOpId_(idempotenciaSheet, cleanOpId);
+        if (revalidateLedger !== false) {
+            if (!!snapshotEntry !== !!currentEntry) {
+                throw new Error("El ledger Idempotencia cambió durante la recuperación del opId " + cleanOpId + "; reintenta con el mismo identificador.");
             }
+            if (snapshotEntry && currentEntry) {
+                if (snapshotEntry.rowIndex !== currentEntry.rowIndex || snapshotEntry.vehicleId !== currentEntry.vehicleId ||
+                    snapshotEntry.slotIndex !== currentEntry.slotIndex || snapshotEntry.operationHash !== currentEntry.operationHash ||
+                    (snapshotEntry.status === "completed" && currentEntry.status !== "completed")) {
+                    throw new Error("La asociación o el estado del opId " + cleanOpId + " cambió durante la recuperación; no se modificó.");
+                }
+            }
+            if (currentEntry) updateIdempotenciaEntriesSnapshot_(entriesSnapshot, currentEntry);
         }
         entry = currentEntry;
-        if (entry) updateIdempotenciaEntriesSnapshot_(entriesSnapshot, entry);
     } else {
         entry = readIdempotenciaEntries_(idempotenciaSheet, false).byOpId.get(cleanOpId);
     }
