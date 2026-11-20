@@ -1021,3 +1021,12 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] AdminDeleteImageDrivePreflightOutsideLock 10/10; AdminImageTrashLifecycle 40/40; AdminReplacedImagesIntegrity 56/56.
 - [x] CI 44655257521 SUCCESS: 214 suites, 2,671 pruebas, 0 fallos; health read-only 44655257749 SUCCESS.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Sin despliegue ni cambios productivos.
+
+
+### P1 — ADMIN movimiento de imagen: preflight Drive fuera del lock (2026-11-20)
+- [x] Mover lecturas Drive/MIME/papelera/carpetas/rutas/clasificación de destino fuera del ScriptLock.
+- [x] Readquirir con tryLock(0), revalidar tipo/estado/Drive ID y metadata de ubicación/organización; volver a comprobar referencias.
+- [x] Mantener moveTo, read-back, metadata y rollback bajo lock; diferir actividad/logging y conservar el caso de carpeta idéntica.
+- [x] AdminMoveImageDrivePreflightOutsideLock 11/11; AdminMoveImageActivityOutsideLock 7/7.
+- [x] CI 44655643108 SUCCESS: 215 suites, 2,682 pruebas, 0 fallos; health read-only 44655643102 SUCCESS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Sin despliegue ni cambios productivos.
