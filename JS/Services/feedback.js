@@ -1797,9 +1797,11 @@ function handleRecordLike(payload) {
     const userName = String(payload && payload.userName || "").trim();
     if (!vehicleId || !userId || !userName || !Number.isInteger(corteIndex) || corteIndex < 1 || corteIndex > 3) throw new Error("Faltan datos verificados para registrar el like.");
     const actorKey = "user:" + userId;
-    const lock = LockService.getScriptLock();
-    acquireFeedbackScriptLock_(lock);
-    try {
+    let activityLogRequest = null;
+    const result = (() => {
+        const lock = LockService.getScriptLock();
+        acquireFeedbackScriptLock_(lock);
+        try {
         const cuts = getSafeSheet(SHEET_NAMES.CORTES);
         if (!cuts) throw new Error("Hoja Cortes no encontrada.");
         const rows = cuts.getDataRange().getValues();
@@ -1833,7 +1835,7 @@ function handleRecordLike(payload) {
             if (Number(counterCell.getValue()) !== target) throw new Error("No se pudo confirmar el contador del like.");
             ledger.getRange(existing.rowIndex, 6).setValue("completed");
             SpreadsheetApp.flush();
-            try { logUserActivity(userId, userName, "like", vehicleId, "Like en corte " + corteIndex + ". Nuevo total: " + target); } catch (logError) { console.error(logError); }
+            activityLogRequest = { details: "Like en corte " + corteIndex + ". Nuevo total: " + target };
             return { status: "success", recovered: true, likeCount: target, message: "Like recuperado y confirmado." };
         }
         const target = currentCount + 1;
@@ -1844,11 +1846,17 @@ function handleRecordLike(payload) {
         if (Number(counterCell.getValue()) !== target) throw new Error("No se pudo confirmar el contador del like.");
         ledger.getRange(ledger.getLastRow(), 6).setValue("completed");
         SpreadsheetApp.flush();
-        try { logUserActivity(userId, userName, "like", vehicleId, "Like en corte " + corteIndex + ". Nuevo total: " + target); } catch (logError) { console.error(logError); }
+        activityLogRequest = { details: "Like en corte " + corteIndex + ". Nuevo total: " + target };
         return { status: "success", alreadyLiked: false, likeCount: target, message: "Like registrado correctamente." };
-    } finally {
-        lock.releaseLock();
+        } finally {
+            lock.releaseLock();
+        }
+    })();
+    if (activityLogRequest) {
+        try { logUserActivity(userId, userName, "like", vehicleId, activityLogRequest.details); }
+        catch (logError) { console.error(logError); }
     }
+    return result;
 }
 
 function findReportByReportId_(sheet, reportId, metadataColumn) {
