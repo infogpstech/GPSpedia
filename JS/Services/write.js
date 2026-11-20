@@ -3605,36 +3605,112 @@ function handleCheckOperation(payload) {
     const { opId } = payload || {};
     if (!opId) throw new Error("ID de operación requerido.");
 
-    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+    const spreadsheet = getSpreadsheet();
+    const sheet = spreadsheet.getSheetByName(SHEET_NAMES.CORTES);
     const match = findRowByOpId(sheet, opId);
-    if (!match) {
-        return { status: "success", exists: false, pending: false };
-    }
     const expectedHash = String(payload && payload.operationHash || "").trim().toLowerCase();
-    if (expectedHash && (!/^[a-f0-9]{64}$/.test(expectedHash) || match.operationHash !== expectedHash)) {
-        throw new Error("El opId no corresponde al contenido de la operación recuperada.");
-    }
-    if (match.status !== "completed") {
+
+    if (match) {
+        if (expectedHash && (!/^[a-f0-9]{64}$/.test(expectedHash) || match.operationHash !== expectedHash)) {
+            throw new Error("El opId no corresponde al contenido de la operación recuperada.");
+        }
+        if (match.status !== "completed") {
+            return {
+                status: "success",
+                exists: false,
+                pending: true,
+                operationStatus: match.status,
+                vehicleId: match.vehicleId,
+                operationHash: match.operationHash
+            };
+        }
+        const rowObj = mapRowToObject(match.rowValues, COLS_CORTES);
         return {
             status: "success",
-            exists: false,
-            pending: true,
-            operationStatus: match.status,
-            vehicleId: match.vehicleId,
-            operationHash: match.operationHash
+            exists: true,
+            pending: false,
+            operationStatus: "completed",
+            vehicleId: rowObj.id,
+            timestamp: rowObj.timestamp,
+            operationHash: match.operationHash,
+            source: "Idempotencia"
         };
     }
 
-    const rowObj = mapRowToObject(match.rowValues, COLS_CORTES);
-    return {
-        status: "success",
-        exists: true,
-        pending: false,
-        operationStatus: "completed",
-        vehicleId: rowObj.id,
-        timestamp: rowObj.timestamp,
-        operationHash: match.operationHash
-    };
+    const contributionSheet = spreadsheet.getSheetByName(WRITE_VEHICLE_CONTRIBUTIONS_SHEET_NAME_);
+    if (contributionSheet) {
+        const events = findVehicleContributionEventsByOpId_(contributionSheet, opId)
+            .sort((a, b) => a.rowIndex - b.rowIndex);
+        if (events.length) {
+            const canonical = events[0];
+            const values = canonical.values;
+            const eventVehicleId = String(values[2] || "");
+            const eventHash = String(values[3] || "").toLowerCase();
+            const eventKind = String(values[4] || "").toLowerCase();
+            const eventPayloadJson = String(values[5] || "");
+            const conflict = events.some(entry =>
+                String(entry.values[2] || "") !== eventVehicleId ||
+                String(entry.values[3] || "").toLowerCase() !== eventHash ||
+                String(entry.values[4] || "").toLowerCase() !== eventKind ||
+                String(entry.values[5] || "") !== eventPayloadJson
+            );
+            if (conflict) {
+                const error = new Error("El opId aparece con contenidos incompatibles en AportesVehiculo; ambos aportes permanecen para revisión.");
+                error.code = "CONTRIBUTION_OP_ID_CONFLICT";
+                throw error;
+            }
+            if (expectedHash && (!/^[a-f0-9]{64}$/.test(expectedHash) || eventHash !== expectedHash)) {
+                throw new Error("El opId no corresponde a la huella del aporte recuperado.");
+            }
+
+            const createdAt = String(values[8] || "");
+            const timestamp = createdAt && !Number.isNaN(Date.parse(createdAt))
+                ? Utilities.formatDate(new Date(createdAt), "GMT-6", "dd/MM/yyyy")
+                : "";
+            const status = String(values[9] || "accepted").toLowerCase();
+            let candidateReviewPending = status !== "accepted";
+            let slotIndex = null;
+            if (status === "accepted" && ["cut", "opening", "feed"].includes(eventKind)) {
+                const snapshot = readSupplementaryVehicleSnapshot_(sheet, eventVehicleId);
+                if (eventKind === "cut") {
+                    slotIndex = getVehicleContributionCutSlotIndex_(spreadsheet, snapshot, String(values[0] || ""));
+                    candidateReviewPending = slotIndex === null;
+                } else if (eventKind === "opening") {
+                    candidateReviewPending = Boolean(
+                        String(snapshot.vehicle.apertura || "").trim() ||
+                        String(snapshot.vehicle.imgApertura || "").trim()
+                    );
+                } else {
+                    const feedSlots = [
+                        ["cableAlimen", "imgCableAlimen"],
+                        ["cableAlimen2", "imgCableAlimen2"],
+                        ["cableAlimen3", "imgCableAlimen3"]
+                    ];
+                    candidateReviewPending = feedSlots.every(fields =>
+                        String(snapshot.vehicle[fields[0]] || "").trim() ||
+                        String(snapshot.vehicle[fields[1]] || "").trim()
+                    );
+                }
+            }
+            return {
+                status: "success",
+                exists: true,
+                pending: false,
+                operationStatus: "completed",
+                vehicleId: eventVehicleId,
+                timestamp,
+                operationHash: eventHash,
+                contributionEventId: String(values[0] || ""),
+                contributionKind: eventKind,
+                slotIndex,
+                candidateReviewPending,
+                duplicate: events.length > 1,
+                source: "AportesVehiculo"
+            };
+        }
+    }
+
+    return { status: "success", exists: false, pending: false };
 }
 
 // ============================================================================
