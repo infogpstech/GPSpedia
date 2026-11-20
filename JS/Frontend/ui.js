@@ -7791,6 +7791,19 @@ ${elapsedSec}s
                 const card=document.createElement("article");card.className="dev-card";
                 const title=document.createElement("strong");title.textContent=(candidate.vehicleLabel||"Vehículo "+candidate.vehicleId)+" · "+candidate.kind+" · "+candidate.reason;
                 const meta=document.createElement("p");meta.textContent="Evento: "+candidate.eventId+" | Operación: "+candidate.opId;
+                const candidatePayload=candidate.payload&&typeof candidate.payload==="object"?candidate.payload:{};
+                const imageFields=["imagenVehiculo","imgCorte1","imgCorte2","imgCorte3","imgApertura","imgCableAlimen","imgCableAlimen2","imgCableAlimen3"];
+                const candidateImageUrl=typeof candidatePayload.image==="string"?candidatePayload.image:
+                    (candidate.kind==="vehicle_update"&&imageFields.includes(candidatePayload.fieldName)&&typeof candidatePayload.value==="string"?candidatePayload.value:"");
+                const candidateImageMatch=candidateImageUrl.match(/^https:\/\/drive\.google\.com\/file\/d\/([A-Za-z0-9_-]{10,110})\/view$/);
+                let imagePreview=null;
+                if(candidateImageMatch){
+                    const preview=document.createElement("div");preview.className="dev-candidate-image";
+                    const image=document.createElement("img");image.src=candidateImageUrl;image.alt="Imagen adjunta al aporte pendiente";image.loading="lazy";image.referrerPolicy="no-referrer";
+                    image.style.cssText="display:block;max-width:180px;max-height:140px;object-fit:contain;margin:8px 0;";
+                    const imageLink=document.createElement("a");imageLink.href=candidateImageUrl;imageLink.target="_blank";imageLink.rel="noopener noreferrer";imageLink.textContent="Abrir imagen original";
+                    preview.append(image,imageLink);imagePreview=preview;
+                }
                 const editor=document.createElement("textarea");editor.className="dev-input";editor.rows=5;editor.spellcheck=false;editor.setAttribute("aria-label","Payload JSON "+candidate.eventId);editor.value=JSON.stringify(candidate.payload||{},null,2);
                 const actions=document.createElement("div");actions.className="dev-action-row";
                 const addAction=(label,decision,style)=>{
@@ -7814,7 +7827,7 @@ ${elapsedSec}s
                 };
                 if(candidate.kind!=="vehicle_update")addAction("Aceptar","accept","btn-primary");
                 addAction("Guardar corrección","correct","btn-secondary");addAction("Descartar","discard","btn-warning");
-                card.append(title,meta,editor,actions);contributionContainer.appendChild(card);
+                card.append(title,meta);if(imagePreview)card.appendChild(imagePreview);card.append(editor,actions);contributionContainer.appendChild(card);
             });
         }catch(error){if(isAdminPanelCurrent_())contributionStatus.textContent="Error consultando candidatos: "+error.message;}
         finally{contributionRefreshBtn.disabled=false;}
