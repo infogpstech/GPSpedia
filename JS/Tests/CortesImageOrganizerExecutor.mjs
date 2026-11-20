@@ -67,7 +67,7 @@ function fixture(options = {}) {
             if (options.failBeforeMove) throw new Error("simulated Drive failure");
         }
     };
-    return { state, ledger, events, adapters };
+    return { state, ledger, events, adapters, options };
 }
 const run = (name, fn) => { fn(); console.log("PASS " + name); };
 
@@ -183,9 +183,10 @@ run("la contención del ledger no se interpreta como fallo Drive ni marca rollba
     assert.equal(f.events.some(event => event.startsWith("move:")), false);
 });
 run("la contención durante rollback conserva el estado completo y no revierte", () => {
-    const f = fixture({ failReserve: true });
+    const f = fixture();
     execute([operation], "developer-1", f.adapters);
     const before = structuredClone(f.ledger.get(operation.operationId));
+    f.options.failReserve = true;
     const result = rollback([operation.operationId], "developer-1", f.adapters);
     assert.equal(result.results[0].status, "retry");
     assert.equal(f.ledger.get(operation.operationId).status, before.status);
