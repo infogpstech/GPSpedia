@@ -911,4 +911,4 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] Liberar ScriptLock antes de logUserActivity y mover imagen a carpeta canónica.
 - [x] Revalidar ID del vehículo y URL de imagen con lectura fresca antes de mover; si cambia, omitir movimiento y devolver advertencia.
 - [x] `FeedbackYearFolderSyncOutsideLock` 5/5; `SuggestYearVoteThreshold` 6/6; CI `44647298901` SUCCESS: 201 suites, 2,571 pruebas, 0 fallos.
-- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Health read-only `44647298819` pendiente de confirmación al registrar este punto.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Health read-only `44647298819` SUCCESS.
