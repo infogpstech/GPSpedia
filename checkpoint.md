@@ -539,3 +539,10 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - `AdminMoveImageActivityOutsideLock` 7/7 PASS. CI `44652254166` SUCCESS: 206 suites, 2,603 pruebas aprobadas, 0 fallos; health read-only `44652254131` SUCCESS. Sintaxis de módulos modificados aprobada por CI.
 - Commits: implementación `4c9a92583d10f4fba04bf49affe548c166500dd9`, prueba `ad57bf26b6c9da5625c2732aacf2dd9ccc556242`, runner `05acd964a2b3ca112ee241f8820bc8cb2565fbab`.
 - No se desplegó Apps Script ni se modificaron datos productivos. La llamada Drive move/rollback continúa dentro de la sección crítica porque su seguridad depende de la referencia y metadata del inventario; requiere un diseño de reserva y revalidación antes de sacarla.
+
+
+## Mapa local de locks y siguiente bloque (2026-11-20)
+- Se documentó en `Tareas_Activas.md` el ámbito de estado protegido por los ScriptLock de AUTH, ADMIN, WRITE, FEEDBACK, USERS, Coordinator e InboxConversations. En AUTH/ADMIN/WRITE/FEEDBACK se observan varios recursos lógicos distintos dentro de cada proyecto, por lo que el ScriptLock global puede serializar operaciones independientes si comparten el mismo proyecto desplegado.
+- Telemetría directa CATALOG/USERS usa `tryLock(0)` best-effort; no espera por contención, aunque la breve sección que adquiere el lock sigue compartiendo ámbito local.
+- No se han consultado Script IDs, deployments ni hojas/Drive productivos. README y contexto advierten que las fuentes del repositorio no prueban topología ni despliegue. La identificación de proyectos y la prueba de concurrencia real siguen pendientes de Beta autorizada.
+- Siguiente revisión local P1: `handleApplyCortesImageReconciliation_` en ADMIN mantiene bajo ScriptLock validación del respaldo Drive, lectura de páginas de auditoría/cache, preview de referencias Drive y llamadas Coordinator para registrar actividad. Delimitar preflight inmutable vs. revalidación crítica antes de modificar; no sacar escrituras/rollback de Cortes del lock sin un mecanismo seguro de reserva.
