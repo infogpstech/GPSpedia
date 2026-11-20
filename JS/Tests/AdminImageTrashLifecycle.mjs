@@ -182,7 +182,8 @@ check("La acción permite enviar a papelera registros reemplazados en revisión 
     assert.equal(b.file.trashed,true);
     assert.equal(b.sheet.cells[1][10],"en_papelera");
     assert.equal(b.sheet.cells[1][23],"requiere_revision");
-    assert.equal(b.lock.state.releases,2);\n    assert.equal(b.lock.state.tryLocks,1);
+    assert.equal(b.lock.state.releases,2);
+    assert.equal(b.lock.state.tryLocks,1);
 });
 check("La acción permite enviar a papelera inventario sin uso en revisión",()=>{
     const b=makeBase({type:"sin_uso_detectado",status:"requiere_revision",previous:"requiere_revision"});
