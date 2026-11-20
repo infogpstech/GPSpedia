@@ -14,9 +14,11 @@ function extractFunction(name) {
 }
 const classify = new Function(extractFunction("classifyCortesImageOrganizerOperationState_") +
     "\nreturn classifyCortesImageOrganizerOperationState_;")();
-const execute = new Function(extractFunction("executeCortesImageOrganizerManifest_") +
+const execute = new Function(extractFunction("classifyCortesImageOrganizerOperationState_") + "\n" +
+    extractFunction("executeCortesImageOrganizerManifest_") +
     "\nreturn executeCortesImageOrganizerManifest_;")();
-const rollback = new Function(extractFunction("rollbackCortesImageOrganizerOperations_") +
+const rollback = new Function(extractFunction("classifyCortesImageOrganizerOperationState_") + "\n" +
+    extractFunction("rollbackCortesImageOrganizerOperations_") +
     "\nreturn rollbackCortesImageOrganizerOperations_;")();
 
 const fileId = "drive_file_id_0000000000000001";
