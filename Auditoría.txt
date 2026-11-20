@@ -884,3 +884,12 @@ Estado: CORREGIDO LOCALMENTE. Continúa pendiente reducir el lock global en repo
 - Detecta opId conflictivos globalmente (incluyendo colisiones entre vehículos) y no aplica sus eventos. Se añadieron pruebas de ledger malformado y conflicto de opId.
 - FeedbackYearApplicationAppendOnly 5/5; SuggestYearVoteThreshold 7/7. CI 44835550127 SUCCESS: 239 suites, 2966 pruebas, 0 fallos; health read-only SUCCESS. No despliegue ni cambios productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-20 — CIERRE DE REGRESIÓN LOCAL: CONCURRENCIA E IDEMPOTENCIA APPEND-ONLY
+- Se validaron intercalados de vehículos distintos y mismo vehículo, asignación de slots, opId idéntico y conflictivo, capacidad llena, VIN duplicado entre vehículos, y recuperación tras pérdida de respuesta después de flush/appendRow.
+- `WriteContributionAppendConcurrency` 9/9; `WriteContributionRecovery` 9/9; `VehicleContributionProjection` cubre candidatos, conflictos, cadenas ADMIN y `vehicle_update`/`OP-YEAR`.
+- CI 44835751507 SUCCESS: 239 suites, 2968 pruebas aprobadas, 0 fallos. Health read-only SUCCESS. Se corrigió además el fixture de hash de la prueba de respuesta perdida para usar SHA-256 hexadecimal válido; el código productivo no cambió por esa corrección.
+Estado: REGRESIÓN LOCAL COMPLETADA. Concurrencia real de appendRow, fallos reales Sheets/Drive y recuperación permanecen en Beta AUG-159/AUG-160 aislada.
+================================================================================
