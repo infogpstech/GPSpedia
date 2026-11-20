@@ -60,4 +60,12 @@ test("la ruta anónima mantiene límite de frecuencia y nunca aplica automática
  assert.match(handler,/if \(isAnonymousActor\) enforceFeedbackRateLimit_\("anonymous_year_suggestion", 30, 3600\)/);
  assert.match(handler,/if \(isAnonymousActor\) \{[\s\S]*?no cuenta para modificar automáticamente el catálogo/);
 });
+
+test("un voto positivo repetido se reconoce sin depender de una variable fuera de alcance",()=>{
+ assert.match(handler,/const hasVerifiedPositiveVote = allData\.some\(/);
+ assert.match(handler,/isVerifiedSuggestionActorKey_\(actorKey\)/);
+ assert.match(handler,/if \(alreadyReported && !hasVerifiedPositiveVote\)/);
+ assert.doesNotMatch(handler,/voteActors\.has\(actorKey\)/);
+});
+
 console.log("SuggestYearVoteThreshold: "+passed+"/"+passed+" PASS");
