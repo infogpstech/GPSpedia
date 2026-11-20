@@ -126,3 +126,15 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Hallazgo corregido en código: `handleSuggestYearLocked` referenciaba `voteActors`, variable local de otra función; ahora deriva `hasVerifiedPositiveVote` desde `allData` con filtros de identidad/vehículo/año/respuesta positiva.
 - Se añadió regresión a `JS/Tests/SuggestYearVoteThreshold.mjs`. La lectura remota confirma que el código y la prueba están presentes. Node/CI no se ejecutó ni se obtuvo un estado de Actions para el commit.
 - Pendiente: ejecutar prueba focalizada y suite FEEDBACK; completar migración de aplicaciones de año a un flujo append-only concurrente, retirar ScriptLock global sin perder idempotencia, y revisar asignador de IDs. No desplegar ni tocar datos productivos.
+
+
+## 2026-11-20 — Sugerencias de año FEEDBACK append-only
+
+- HEAD de código validado: `66da8f2aa102665f8a32a4039e3d63046e580c19`.
+- `handleSuggestYearLocked` reconstruye anoDesde/anoHasta desde la fila base y los eventos aceptados de AportesVehiculo. Conserva el eventId fuente y el valor raw de cada campo.
+- `completeFeedbackYearApplication_` ya no modifica directamente Cortes. Registra `vehicle_update` por campo con `expectedCurrentValue`, `supersedesEventId`, `opId` `OP-YEAR-` estable y actor interno `SYSTEM:FEEDBACK_YEAR`.
+- `FeedbackYearApplications` añade columnas para preservar valores/fuentes originales, por lo que un reintento tras append parcial reutiliza el mismo contenido y opId. El append se verifica por SHA-256 y lectura posterior.
+- Si la proyección reconstruida no alcanza el rango esperado, el registro queda `requires_review`; no se marcan votos como aplicados ni se informa que el catálogo cambió. La invalidación CATALOG se ejecuta después de liberar el ScriptLock.
+- CATALOG valida y proyecta `OP-YEAR-` únicamente con actor `SYSTEM:FEEDBACK_YEAR`. Umbral de tres votos verificados y exclusión de anónimos conservados.
+- Pruebas: FeedbackYearApplicationAppendOnly 4/4; SuggestYearVoteThreshold 7/7; CI 44834891294 SUCCESS: 238 suites, 2963 pruebas, 0 fallos; health read-only SUCCESS. No se desplegó FEEDBACK/CATALOG ni se modificaron recursos productivos.
+- P0 permanece abierto: reducir ScriptLock global de FEEDBACK para reportes, sugerencias, likes, PyS, tutoriales, contacto y asignador secuencial de IDs; después ejecutar Beta AUG-159/AUG-160.
