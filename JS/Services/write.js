@@ -1722,6 +1722,15 @@ function handleAddSupplementaryInfo(payload) {
 
     const result = handleAddSupplementaryInfoLocked(preparedPayload, actorName, sheet);
     if (result && result.status === "success") {
+        uploadedUrls.forEach(url => {
+            try {
+                if (!markImageUploadLinked(url, { shortLedgerLock: true })) {
+                    Logger.log("La información suplementaria se guardó, pero la carga permanece pendiente de reconciliación: " + String(url));
+                }
+            } catch (ledgerError) {
+                Logger.log("La información suplementaria se guardó, pero no se pudo actualizar ImageUploadLedger: " + String(ledgerError && ledgerError.message || ledgerError));
+            }
+        });
         try { result.catalogVersion = nextWriteCatalogVersionLocked_(payload.vehicleId); }
         catch (versionError) {
             result.catalogResetRequired = true;
