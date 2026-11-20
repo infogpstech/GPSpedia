@@ -153,7 +153,9 @@ function cut(vehicleId, opId, tipo, hash) {
         interleaved = true;
         nestedResult = append(second);
     };
-    assert.equal(append(first).status, "accepted");
+    let outerConflict = null;
+    try { append(first); } catch (error) { outerConflict = error; }
+    assert.equal(outerConflict && outerConflict.code, "CONTRIBUTION_OP_ID_CONFLICT");
     assert.equal(nestedResult.status, "accepted");
     assert.equal(sheet.rows.length, 3, "No se elimina ninguno de los aportes en conflicto");
     const projected = project(sheet, [{ id: "101" }])[0];
