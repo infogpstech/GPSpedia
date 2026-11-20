@@ -125,6 +125,27 @@ function runAddSupplementaryInfoIntegrityTests(sources) {
   assert_(!/withImageUploadLedgerLock_|getOrCreateImageUploadLedgerSheet_|saveImageUploadLedgerRecord_/.test(linked));
   assert_(linked.indexOf('appendImageUploadEventRequired_(eventsSheet, expected, "linked"')<linked.indexOf("file.setDescription"));
  });
+ run_("WRITE reintento suplementario conserva la clave estable por opId/vehículo/campo",function(){
+  const prepare=String(sources.write).slice(String(sources.write).indexOf("function prepareSupplementaryImageUploads_"),String(sources.write).indexOf("function handleAddSupplementaryInfo(payload)"));
+  assert_(prepare.includes('buildImageUploadOperationKey(payload.opId, payload.vehicleId, field)'));
+  assert_(prepare.includes('buildCanonicalImageBaseName(vehicle, field)'));
+  assert_(prepare.includes('buildImageUploadOperationKey(payload.opId, payload.vehicleId, field)'));
+ });
+ run_("WRITE rechaza contenido distinto para una operationKey antes de crear otro archivo",function(){
+  const upload=String(sources.write).slice(String(sources.write).indexOf("function uploadImageToDriveWithShortLedgerLocks_"),String(sources.write).indexOf("function uploadImageToDrive("));
+  const conflict=upload.indexOf("operationEvents.some(entry => String(entry.values[1] || \"\").trim() !== token)");
+  const create=upload.indexOf("folder.createFile(blob)");
+  assert_(conflict>=0&&create>conflict);
+  assert_(upload.indexOf("throw new Error(\"El opId/campo ya está asociado a otro contenido")>conflict);
+ });
+ run_("WRITE reintento reutiliza fileId proyectado o archivo temporal antes de crear",function(){
+  const upload=String(sources.write).slice(String(sources.write).indexOf("function uploadImageToDriveWithShortLedgerLocks_"),String(sources.write).indexOf("function uploadImageToDrive("));
+  const recorded=upload.indexOf("if (projection && projection.fileId)");
+  const lookup=upload.indexOf("findExistingImageUpload(folder, temporaryFilename, expected, token)");
+  const create=upload.indexOf("folder.createFile(blob)");
+  assert_(recorded>=0&&lookup>recorded&&create>lookup);
+  assert_(upload.includes("verifyImageUploadFile_(file, folder, expected)"));
+ });
 
  return {passed:passed,failed:failed,results:results};
 }
