@@ -207,3 +207,52 @@ export function createSharedPromise(loader) {
         return inFlight;
     };
 }
+
+
+/** Agrupa solo Cortes por categoría+marca+modelo; VIN ambiguos y otras secciones siguen individuales. */
+export function groupVehicleSearchResults(results) {
+    if (!Array.isArray(results)) return [];
+    const output = [], groups = new Map();
+    results.forEach((item, index) => {
+        const order = Number.isFinite(item && item._searchOrder) ? item._searchOrder : index;
+        const priority = Number(item && item._searchPriority) || 0;
+        if (!item || item._sectionType !== 'corte' || item._vinAmbiguousChoice) {
+            output.push({ item, order, priority }); return;
+        }
+        const key = JSON.stringify([String(item.categoria || ''), String(item.marca || ''), String(item.modelo || '')]);
+        let group = groups.get(key);
+        if (!group) {
+            group = { _searchGroupType: 'vehicleModel', categoria: item.categoria || '', marca: item.marca || '',
+                modelo: item.modelo || '', records: [], _searchPriority: priority, _searchOrder: order };
+            groups.set(key, group); output.push({ item: group, order, priority });
+        }
+        group.records.push(item);
+        group._searchPriority = Math.min(group._searchPriority, priority);
+        group._searchOrder = Math.min(group._searchOrder, order);
+    });
+    return output.sort((a,b) => a.priority-b.priority || a.order-b.order).map(entry => entry.item);
+}
+
+/** Resuelve el próximo paso visible sin omitir variantes ni escoger duplicados arbitrariamente. */
+export function resolveVehicleNavigation(records, selectedVersion = null) {
+    const source = Array.isArray(records) ? records.filter(Boolean) : [];
+    let rows = source;
+    if (selectedVersion !== null && selectedVersion !== undefined && selectedVersion !== '') {
+        rows = rows.filter(row => String(row.versionesAplicables || '') === String(selectedVersion));
+    }
+    const versions = [...new Set(rows.map(row => String(row.versionesAplicables || '')).filter(Boolean))];
+    if (!selectedVersion && versions.length > 1) return { step: 'equipment', options: versions, records: rows };
+    if (!selectedVersion && versions.length === 1) rows = rows.filter(row => String(row.versionesAplicables || '') === versions[0]);
+    const ignitions = [...new Set(rows.map(row => String(row.tipoEncendido || '')).filter(Boolean))];
+    if (ignitions.length > 1) return { step: 'ignition', options: ignitions, records: rows,
+        version: selectedVersion || (versions.length === 1 ? versions[0] : null) };
+    if (ignitions.length === 1) rows = rows.filter(row => String(row.tipoEncendido || '') === ignitions[0]);
+    const ranges = new Map();
+    rows.forEach(row => {
+        const key = JSON.stringify([String(row.anoDesde || ''), String(row.anoHasta || '')]);
+        if (!ranges.has(key)) ranges.set(key, []);
+        ranges.get(key).push(row);
+    });
+    if (ranges.size === 1 && [...ranges.values()][0].length === 1) return { step: 'detail', records: [...ranges.values()][0] };
+    return { step: 'ranges', records: rows, ranges: [...ranges.entries()].map(([key, items]) => ({ key, records: items })) };
+}
