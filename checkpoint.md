@@ -608,3 +608,12 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - `AdminDeleteImageDrivePreflightOutsideLock` 10/10 PASS; `AdminImageTrashLifecycle` 40/40 PASS; `AdminReplacedImagesIntegrity` 56/56 PASS. CI `44655257521` SUCCESS: 214 suites, 2,671 pruebas aprobadas, 0 fallos; health read-only `44655257749` SUCCESS.
 - Commits: implementación `435fa770957eab211d79ff49846087fdd5e7d076`, preservación de resultado `b7909beb2540efa16421d1b1897650b7fee86414`, harness `0ebc9692f01387d0f20c0964f56fdd7bf9359c32`, test `fe994b4a4816917e08d1b41767f00755cf7f498a`, runner `d1513ee31e1cdafd7c19ae7b630b5fdcdfc2536f`, harness de integridad `9f8feca5e40b33f869d7f354940a1152ec0c15bd`, ajuste de formato `8e6d808646f764fa4e030914427d2703328688af`.
 - Sin despliegue Apps Script ni cambios productivos.
+
+
+## P1 — ADMIN movimiento de imagen: preflight Drive fuera del lock (2026-11-20)
+- `handleMoveReplacedImage` ahora consulta DriveApp, MIME, papelera, carpetas, rutas y clasificación de destino fuera del ScriptLock mediante `runAdminDriveWorkOutsideScriptLock_`. Al readquirir con `tryLock(0)`, revalida tipo/estado/Drive ID y todos los campos de metadata de ubicación/organización; vuelve a comprobar referencias activas y referencias no interpretables antes de continuar.
+- Se reutilizan los objetos Drive y la metadata verificada; se elimina la lectura redundante del MIME dentro de `writeMetadata`. El movimiento efectivo (`moveTo`), read-back de ubicación, escritura de metadata y compensación siguen bajo lock.
+- La actividad Coordinator/logging ya se ejecutaba post-lock y se conserva. El caso de carpeta idéntica conserva su respuesta y no registra movimiento falso.
+- `AdminMoveImageDrivePreflightOutsideLock` 11/11 PASS; `AdminMoveImageActivityOutsideLock` 7/7 PASS. CI `44655643108` SUCCESS: 215 suites, 2,682 pruebas aprobadas, 0 fallos; health read-only `44655643102` SUCCESS.
+- Commits: implementación `98b6850573c78ef9bf3581b33b53a665eb48628e`, guardia lock `aaedd16062188794f73133f5767d3dfa34ae87c1`, test `c2c4fbad3f526a9d85181a5134e974b65834030b`, runner `460564364b28c9484a40d114fb9640b5888fbbfe`, corrección de variable duplicada `ed532bfaf12da0b0f01da23292393d07f9fdfc56`.
+- Sin despliegue Apps Script ni cambios productivos.
