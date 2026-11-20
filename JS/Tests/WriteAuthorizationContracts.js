@@ -33,7 +33,7 @@ function runWriteAuthorizationContracts(sources) {
    return "Nombre Servidor";
   };
   const spreadsheet=()=>{spreadsheetReads++;return{getSheetByName(name){if(name==="Cortes")return{getLastRow:()=>1};return null;}};};
-  const lockService={getScriptLock:()=>({waitLock(ms){if(ms!==2000)throw Error("El lock de asignación debe esperar solo 2 segundos.");lockAcquired++;},releaseLock(){lockReleased++;}})};
+  const lockService={getScriptLock:()=>({tryLock(ms){if(ms!==0)throw Error("El asignador debe usar adquisición inmediata del lock.");lockAcquired++;return true;},releaseLock(){lockReleased++;}})};
   const fn=new Function("getAuthenticatedCollaborator","getSpreadsheet","SHEET_NAMES","COLS_USERS","LockService","getNextCortesVehicleIdLocked","normalizeCortesIdAllocationRequest_","reserveCortesVehicleIdForOperationLocked_",
    auth+"\n"+allocate+"\nreturn handleAllocateVehicleId;")(
    authFn,spreadsheet,{USERS:"Users",CORTES:"Cortes"},{ID:1,Privilegios:4},lockService,()=>{allocations++;return 77;},()=>null,()=>{throw Error("No debe reservar en la prueba legacy");});
