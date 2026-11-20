@@ -1236,3 +1236,14 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - No se desplegó Apps Script ni se ejecutó una operación real de Drive/Spreadsheet. La UI y el backend están versionados, pero el uso real sigue condicionado a auditoría y preview Beta aprobados.
 - Estado: IMPLEMENTACIÓN LOCAL DE CONTROLES UI COMPLETADA CON VALIDACIÓN DIFERIDA. Pendiente Beta: inspección visual, comprobar ACL heredadas efectivas y probar aplicación/rollback en Drive aislado autorizado.
 - Pendiente local separado: definir consulta/retención de registros durables y recuperar lotes previos a la sesión UI; el botón actual revierte el último lote conservado en memoria de la sesión.
+
+### 2026-11-20 — Safe Apply: consulta de historial y retención del ledger
+- [x] Añadir getCortesImageOrganizerOperations, endpoint de solo lectura que filtra operaciones por el propietario de la sesión Desarrollador y devuelve páginas de hasta 50 registros sin exponer campos de sesión/credenciales.
+- [x] Incorporar en la UI la consulta de operaciones anteriores; muestra estados, origen/destino y fecha. Solo las operaciones complete pueden seleccionarse para rollback; máximo 10 por lote.
+- [x] El botón de rollback permite seleccionar operaciones del historial durable, no solo el último lote conservado en memoria.
+- [x] Acotar el ledger: conserva hasta 200 operaciones terminales recientes, elimina terminales con más de 180 días y mantiene intactos processing/needs_review. El máximo total es 250; si no puede liberar capacidad sin eliminar operaciones no terminales, rechaza nuevas operaciones de forma segura.
+- [x] Añadir CortesImageOrganizerLedger.mjs (6/6) para vencimiento, límite, saturación, aislamiento por owner, orden y paginación; UI contract actualizado a 13/13.
+- [x] CI 44786209320 SUCCESS: 225 suites, 2,785 pruebas aprobadas, 0 fallos. ApplyPlan 14/14; Executor 9/9; UI 13/13; Ledger 6/6. Health read-only 44786209315 SUCCESS.
+- Pages run 44786207568 seguía en ejecución al registrar esta adenda.
+- Sin despliegue Apps Script ni operaciones reales Drive/Spreadsheet. El historial y la retención se probaron con propiedades simuladas; no se borraron registros de un proyecto Apps Script real.
+- Estado: implementación local de historial/retención COMPLETADA CON VALIDACIÓN DIFERIDA. Pendiente Beta: comprobar cuota y rendimiento reales de ScriptProperties, ACL heredadas y aplicación/rollback en Drive aislado; inspección visual responsive de los nuevos controles.
