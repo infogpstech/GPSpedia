@@ -986,3 +986,11 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] Evitar doble liberación con helper local. AdminPermanentDeleteActivityOutsideLock 6/6; AdminImageTrashLifecycle 40/40.
 - [x] CI 44653582395 SUCCESS: 210 suites, 2,632 pruebas, 0 fallos; health read-only 44653582292 SUCCESS.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. La eliminación Drive sigue bajo lock hasta implementar lease exclusivo de operación y revalidación.
+
+
+### P1 — ADMIN marcar imagen en uso: Drive y actividad fuera del lock (2026-11-20)
+- [x] Verificar Drive/MIME/papelera/carpeta fuera del ScriptLock y readquirir con tryLock(0).
+- [x] Revalidar tipo/estado/Drive ID antes de escribir `en_uso`; si cambió el registro no se modifica.
+- [x] Diferir actividad Coordinator y logging hasta después del lock. AdminMarkImageInUseDrivePreflightOutsideLock 10/10; AdminReplacedImagesIntegrity 56/56.
+- [x] CI 44653864364 SUCCESS: 211 suites, 2,642 pruebas, 0 fallos; health read-only 44653864334 SUCCESS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Sin despliegue ni cambios productivos.
