@@ -207,3 +207,12 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - CI 44837729816 SUCCESS: 244 suites, 2994 pruebas, 0 fallos. Health read-only del commit anterior SUCCESS; Health y Pages del HEAD seguían en ejecución.
 - No se retiró el lock de nuevas escrituras; los replays comunes se resuelven sin lock/Drive, y las nuevas altas mantienen deduplicación y revalidación atómica.
 - No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+## Checkpoint — preflight de tutoriales (2026-11-20)
+
+- HEAD de código validado: `9f1619f12e7e96e985492f35d7425b11d90ca758`.
+- `handleAddTutorial` preconsulta el ID determinista antes del lock y devuelve replays idénticos sin sección crítica. Si no existe, adquiere lock, revalida el ID, verifica título único y anexa.
+- Búsqueda de ID limitada a columna A (TextFinder o fallback limitado); unicidad de título limitada a columna B. La sección crítica de altas nuevas permanece.
+- `FeedbackTutorialPreflightOutsideLock` 7/7 PASS; regresiones P2 de tutorial PASS. CI 44838077134 SUCCESS: 245 suites, 3001 pruebas, 0 fallos. Health read-only 44838077089 SUCCESS; Pages en ejecución.
+- No se desplegó ni se modificaron datos productivos.
