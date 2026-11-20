@@ -17,14 +17,17 @@ const callback = branch.slice(callbackStart, callbackEnd);
 
 const verify = callback.indexOf("const verified = findRowByOpId(sheet, opId, idempotencyEntriesSnapshot);");
 const assign = callback.indexOf("verifiedRowValues = verified.rowValues;");
-const current = callback.indexOf("const currentValues = verifiedRowValues ||");
+const current = callback.indexOf("const currentValues = verifiedRowValues;");
 const prepare = callback.indexOf("prepareVinCollectionForAdmin(sheet, currentValues");
-assert.ok(verify >= 0 && verify < assign && assign < current && current < prepare,
-    "El snapshot debe obtenerse tras Drive, validarse y reutilizarse al preparar VIN");
-assert.match(callback, /const currentValues = verifiedRowValues \|\|\s*sheet\.getRange\(rowIndex, 1, 1, sheet\.getLastColumn\(\)\)\.getValues\(\)\[0\]/,
-    "La lectura integral solo debe quedar como fallback cuando no hay snapshot verificado");
-assert.equal((callback.match(/getRange\(rowIndex, 1, 1, sheet\.getLastColumn\(\)\)\.getValues\(\)\[0\]/g) || []).length, 1,
-    "Debe existir una única lectura fallback, protegida por verifiedRowValues");
+const requiredSnapshot = callback.indexOf("if (!verifiedRowValues)");
+assert.ok(verify >= 0 && verify < assign && assign < requiredSnapshot && requiredSnapshot < current && current < prepare,
+    "El snapshot debe obtenerse tras Drive, validarse y ser obligatorio antes de preparar VIN");
+assert.match(callback, /if \(!verifiedRowValues\)\s*\{\s*throw new Error\(/,
+    "La operación debe fallar cerrada si la revalidación no devuelve el snapshot actual");
+assert.doesNotMatch(callback, /getRange\(rowIndex, 1, 1, sheet\.getLastColumn\(\)\)/,
+    "No debe existir una segunda lectura integral como fallback muerto");
+assert.match(handler, /if \(legacyRequest\) opId = "OP-LEGACY-" \+ Utilities\.getUuid\(\)/,
+    "Las solicitudes legacy también reciben opId interno y no dependen de un flujo sin reserva");
 assert.match(callback, /verified\.rowIndex !== rowIndex/);
 assert.match(callback, /verified\.slotIndex !== cutSlotIndex/);
 assert.match(callback, /verified\.vehicleId !== String\(vehicleId\)/);
@@ -39,4 +42,4 @@ const rowRead = helper.indexOf("sheet.getRange(rowIndex, 1, 1, sheet.getLastColu
 assert.ok(idScan >= 0 && rowRead > idScan, "La búsqueda de unicidad debe preceder a la lectura de la fila actual");
 assert.match(helper, /return \{ rowIndex: rowIndex, rowValues: rowValues \}/,
     "La función de unicidad debe entregar el snapshot completo recién leído");
-console.log("AdminExistingVehiclePostDriveSnapshotReuse: 9/9 PASS — reutiliza la fila post-Drive sin repetir getValues; unicidad y revalidación preservadas");
+console.log("AdminExistingVehiclePostDriveSnapshotReuse: 9/9 PASS — exige y reutiliza la fila verificada post-Drive sin fallback redundante; unicidad y revalidación preservadas");
