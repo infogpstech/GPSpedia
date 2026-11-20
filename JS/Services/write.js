@@ -2496,7 +2496,7 @@ function appendVehicleContributionEvent_(options) {
     for (const entry of existing) {
         const values = entry.values;
         if (String(values[2] || "") !== vehicleId || String(values[3] || "").toLowerCase() !== operationHash ||
-            String(values[4] || "").toLowerCase() !== kind) {
+            String(values[4] || "").toLowerCase() !== kind || String(values[5] || "") !== payloadJson) {
             const conflict = new Error("El opId ya está asociado a otro vehículo, tipo o contenido. El aporte quedó en conflicto y no se confirmó.");
             conflict.code = "CONTRIBUTION_OP_ID_CONFLICT";
             throw conflict;
@@ -2507,6 +2507,7 @@ function appendVehicleContributionEvent_(options) {
             eventId: String(existing[0].values[0] || ""),
             opId, vehicleId, kind, operationHash,
             rowIndex: existing[0].rowIndex,
+            createdAt: String(existing[0].values[8] || ""),
             status: String(existing[0].values[9] || "accepted"),
             duplicate: true
         };
@@ -2547,7 +2548,7 @@ function appendVehicleContributionEvent_(options) {
         conflict.code = "CONTRIBUTION_OP_ID_CONFLICT";
         throw conflict;
     }
-    return { eventId, opId, vehicleId, kind, operationHash, rowIndex, status: String(options.status || "accepted"), duplicate: false };
+    return { eventId, opId, vehicleId, kind, operationHash, rowIndex, createdAt, status: String(options.status || "accepted"), duplicate: false };
 }
 
 function getImageUploadReferences_(fileId) {
