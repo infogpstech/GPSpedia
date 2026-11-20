@@ -10455,7 +10455,7 @@ function handleRecoverReplacedImage(payload, logMessage) {
         }
         logMessage&&logMessage("Imágenes Reemplazadas","Imagen histórica restaurada para el vehículo '"+registroId+"', campo '"+campo+"'.");
         return {status:"success",message:"La imagen histórica quedó activa y la versión anterior se conservó en el historial.",restoredUrl:urlHistorica,vehicleId:registroId,fieldName:campo,catalogChanged:currentActiveUrl!==urlHistorica};
-    }finally{if(typeof lock.hasLock!=="function"||lock.hasLock())lock.releaseLock();}
+    }finally{if(lockAcquired&&(typeof lock.hasLock!=="function"||lock.hasLock()))lock.releaseLock();}
 }
 function recordImageAdministrationActivity(developerContext, activityType, associatedId, details) {
     try {
@@ -10715,7 +10715,7 @@ function getOrCreateUnusedImagesFolder(rootFolder) {
  */
 function handleDeleteReplacedImage(payload,logMessage,developerContext){
     const idReemplazo=String(payload&&payload.id_reemplazo||"").trim();if(!idReemplazo)throw new Error("ID de registro de imagen requerido.");
-    const lock=LockService.getScriptLock();try{lock.waitLock(30000);}catch(e){throw new Error("No se pudo bloquear la validación de uso de la imagen. Intenta nuevamente.");}
+    const lock=LockService.getScriptLock();let lockAcquired=false;try{lockAcquired=lock.tryLock(0);}catch(e){lockAcquired=false;}if(!lockAcquired){const busyError=new Error("ADMIN está ocupado con otra operación. Reintenta el envío a papelera en unos instantes.");busyError.code="ADMIN_BUSY";throw busyError;}
     let postCommitActivity=null,result=null;
     try{
         const sheetRep=getOrCreateReplacedImagesSheet(),headers=ensureReplacedImagesInventoryColumns(sheetRep);
@@ -10788,7 +10788,7 @@ function handleDeleteReplacedImage(payload,logMessage,developerContext){
 }
 function handleRestoreReplacedImageFromTrash(payload,logMessage,developerContext){
     const id=String(payload&&payload.id_reemplazo||"").trim();if(!id)throw new Error("ID de registro de imagen requerido.");
-    const lock=LockService.getScriptLock();try{lock.waitLock(30000);}catch(error){throw new Error("No se pudo bloquear la restauración desde papelera. Intenta nuevamente.");}
+    const lock=LockService.getScriptLock();let lockAcquired=false;try{lockAcquired=lock.tryLock(0);}catch(error){lockAcquired=false;}if(!lockAcquired){const busyError=new Error("ADMIN está ocupado con otra operación. Reintenta la restauración desde papelera en unos instantes.");busyError.code="ADMIN_BUSY";throw busyError;}
     let postCommitActivity=null,result=null;
     try{
         const sheet=getOrCreateReplacedImagesSheet(),headers=ensureReplacedImagesInventoryColumns(sheet);
