@@ -580,7 +580,8 @@ function handleAddOrUpdateCut(payload) {
 const CORTES_ID_COUNTER_PROPERTY = "GPSpedia_CORTES_LAST_ID";
 
 /** Asignador único de IDs; debe ejecutarse bajo el ScriptLock del proyecto WRITE. */
-function getNextCortesVehicleIdLocked(sheet) {
+function getNextCortesVehicleIdLocked(sheet, options) {
+    options = options && typeof options === "object" ? options : {};
     if (!sheet) throw new Error("No se encontró la hoja «Cortes».");
     const lastRow = sheet.getLastRow();
     const idColumnValues = sheet.getRange(1, COLS_CORTES.id, Math.max(1, lastRow), 1).getValues();
@@ -648,11 +649,99 @@ function getNextCortesVehicleIdLocked(sheet) {
     if (!Number.isSafeInteger(storedId) || storedId < 0) {
         throw new Error("El contador central de IDs de Cortes contiene un valor inválido.");
     }
-    const nextId = Math.max(maxSheetId, storedId) + 1;
+    const minimumReservedId = options.minimumReservedId === undefined ? 0 : Number(options.minimumReservedId);
+    if (!Number.isSafeInteger(minimumReservedId) || minimumReservedId < 0) {
+        throw new Error("El último ID reservado contiene un valor inválido.");
+    }
+    const nextId = Math.max(maxSheetId, storedId, minimumReservedId) + 1;
     if (!Number.isSafeInteger(nextId) || nextId < 1) throw new Error("Se alcanzó el límite seguro del ID numérico de Cortes.");
-    properties.setProperty(CORTES_ID_COUNTER_PROPERTY, String(nextId));
+    if (options.persistCounter !== false) properties.setProperty(CORTES_ID_COUNTER_PROPERTY, String(nextId));
     return nextId;
 }
+
+const CORTES_ID_RESERVATIONS_SHEET_NAME = "CortesIdReservations";
+const CORTES_ID_RESERVATIONS_HEADERS = ["opId", "operationHash", "vehicleId", "createdAt"];
+
+function normalizeCortesIdAllocationRequest_(payload) {
+    const opId = String(payload && payload.opId !== undefined && payload.opId !== null ? payload.opId : "").trim();
+    if (!opId) return null;
+    if (!/^OP-[A-Za-z0-9_-]{1,100}$/.test(opId)) throw new Error("La asignación idempotente requiere un opId válido.");
+    const operationHash = String(payload && payload.operationHash !== undefined && payload.operationHash !== null
+        ? payload.operationHash : "").trim().toLowerCase();
+    if (!/^[a-f0-9]{64}$/.test(operationHash)) throw new Error("La asignación idempotente requiere operationHash SHA-256 válido.");
+    return { opId, operationHash };
+}
+
+function getCortesIdReservationsSheet_() {
+    const ss = getSpreadsheet();
+    let sheet = ss.getSheetByName(CORTES_ID_RESERVATIONS_SHEET_NAME);
+    if (!sheet) {
+        sheet = ss.insertSheet(CORTES_ID_RESERVATIONS_SHEET_NAME);
+        sheet.getRange(1, 1, 1, CORTES_ID_RESERVATIONS_HEADERS.length).setValues([CORTES_ID_RESERVATIONS_HEADERS]);
+        SpreadsheetApp.flush();
+        return sheet;
+    }
+    const headers = sheet.getRange(1, 1, 1, CORTES_ID_RESERVATIONS_HEADERS.length).getValues()[0] || [];
+    if (CORTES_ID_RESERVATIONS_HEADERS.some((header, index) => String(headers[index] || "").trim() !== header)) {
+        throw new Error("La hoja de reservas de IDs tiene encabezados incompatibles; no se asignó ningún ID.");
+    }
+    return sheet;
+}
+
+function findCortesIdReservation_(sheet, opId) {
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) return null;
+    const matches = sheet.getRange(2, 1, lastRow - 1, 1).createTextFinder(opId).matchEntireCell(true).findAll();
+    if (matches.length > 1) throw new Error("El opId " + opId + " aparece duplicado en el ledger de reservas de IDs; no se asignó otro ID.");
+    if (!matches.length) return null;
+    const rowIndex = matches[0].getRow();
+    const row = sheet.getRange(rowIndex, 1, 1, CORTES_ID_RESERVATIONS_HEADERS.length).getValues()[0] || [];
+    const operationHash = String(row[1] || "").trim().toLowerCase();
+    const vehicleId = Number(row[2]);
+    if (String(row[0] || "").trim() !== opId || !/^[a-f0-9]{64}$/.test(operationHash) ||
+        !Number.isSafeInteger(vehicleId) || vehicleId < 1) {
+        throw new Error("La reserva de ID para " + opId + " está incompleta o corrupta; no se modificó.");
+    }
+    return { opId, operationHash, vehicleId, rowIndex };
+}
+
+function getLastCortesIdReservation_(sheet) {
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) return 0;
+    const value = Number(sheet.getRange(lastRow, 3).getValue());
+    if (!Number.isSafeInteger(value) || value < 1) throw new Error("La última reserva de ID no contiene un entero positivo válido.");
+    return value;
+}
+
+function persistCortesVehicleIdCounterAtLeast_(vehicleId) {
+    const properties = PropertiesService.getScriptProperties();
+    const storedValue = properties.getProperty(CORTES_ID_COUNTER_PROPERTY);
+    const storedId = storedValue === null ? 0 : Number(storedValue);
+    if (!Number.isSafeInteger(storedId) || storedId < 0) throw new Error("El contador central de IDs de Cortes contiene un valor inválido.");
+    if (storedId < vehicleId) properties.setProperty(CORTES_ID_COUNTER_PROPERTY, String(vehicleId));
+}
+
+function reserveCortesVehicleIdForOperationLocked_(cortesSheet, request) {
+    const ledger = getCortesIdReservationsSheet_();
+    const existing = findCortesIdReservation_(ledger, request.opId);
+    if (existing) {
+        if (existing.operationHash !== request.operationHash) {
+            throw new Error("El opId ya reservó un vehicleId con otro contenido; no se asignó un ID nuevo.");
+        }
+        return existing.vehicleId;
+    }
+    const lastReservedId = getLastCortesIdReservation_(ledger);
+    const vehicleId = getNextCortesVehicleIdLocked(cortesSheet, { persistCounter: false, minimumReservedId: lastReservedId });
+    ledger.appendRow([request.opId, request.operationHash, vehicleId, new Date().toISOString()]);
+    SpreadsheetApp.flush();
+    const verified = findCortesIdReservation_(ledger, request.opId);
+    if (!verified || verified.operationHash !== request.operationHash || verified.vehicleId !== vehicleId) {
+        throw new Error("No se pudo verificar la reserva persistente del vehicleId para " + request.opId + ".");
+    }
+    persistCortesVehicleIdCounterAtLeast_(vehicleId);
+    return vehicleId;
+}
+
 /** Endpoint autenticado para que ADMIN solicite un ID al asignador central. */
 function handleAllocateVehicleId(payload) {
     const lock = LockService.getScriptLock();
@@ -666,7 +755,9 @@ function handleAllocateVehicleId(payload) {
         }
         assertDeveloperForIdMaintenance(payload);
         const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
-        return { status: "success", vehicleId: getNextCortesVehicleIdLocked(sheet) };
+        const request = normalizeCortesIdAllocationRequest_(payload);
+        const vehicleId = request ? reserveCortesVehicleIdForOperationLocked_(sheet, request) : getNextCortesVehicleIdLocked(sheet);
+        return { status: "success", vehicleId };
     } finally {
         if (lockAcquired) lock.releaseLock();
     }

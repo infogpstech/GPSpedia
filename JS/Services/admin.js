@@ -48,11 +48,16 @@ function callWriteServiceAction(action, payload) {
     return result;
 }
 
-function requestNextVehicleIdFromWriteService(payload) {
-    const result = callWriteServiceAction("allocateVehicleId", {
+function requestNextVehicleIdFromWriteService(payload, opId, operationHash) {
+    const allocationPayload = {
         userId: payload && payload.userId,
         sessionToken: payload && payload.sessionToken
-    });
+    };
+    if (opId) {
+        allocationPayload.opId = opId;
+        allocationPayload.operationHash = operationHash;
+    }
+    const result = callWriteServiceAction("allocateVehicleId", allocationPayload);
     const vehicleId = Number(result.vehicleId);
     if (!Number.isSafeInteger(vehicleId) || vehicleId < 1) throw new Error("WRITE devolvió un ID de vehículo inválido.");
     return vehicleId;
@@ -7018,7 +7023,7 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
     // WRITE asigna el ID fuera del ScriptLock ADMIN; conserva su propia exclusión.
     const preallocatedVehicleId = String(vehicleId || "").trim()
         ? null
-        : requestNextVehicleIdFromWriteService(payload);
+        : requestNextVehicleIdFromWriteService(payload, legacyRequest ? null : opId, operationHash);
 
     // La lectura del catálogo y la normalización de entidades no modifican el registro.
     // Se preparan antes del ScriptLock para que su latencia no serialice otras operaciones.

@@ -5,7 +5,7 @@ const start = source.indexOf("function handleAddOrUpdateCut(payload, logMessage,
 const end = source.indexOf("\nfunction sanitizeSupplementaryRichText_", start);
 assert.ok(start >= 0 && end > start, "No se encontró handleAddOrUpdateCut");
 const handler = source.slice(start, end);
-const allocation = handler.indexOf("requestNextVehicleIdFromWriteService(payload)");
+const allocation = handler.indexOf("requestNextVehicleIdFromWriteService(payload, legacyRequest ? null : opId, operationHash)");
 const lock = handler.indexOf("lock.tryLock(0)");
 assert.ok(allocation >= 0 && lock > allocation,
     "La asignación central WRITE debe completarse antes de adquirir el ScriptLock ADMIN");
