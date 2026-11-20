@@ -1913,6 +1913,7 @@ function handleReportProblem(payload) {
     let lockAcquired=false;
     let generatedReportId="",duplicateReport=false,uploadedImage=null,resolvedImageUrl="";
     let pendingSheet=null,pendingRowNumber=0,pendingMetadataColumn=0,pendingExistingMetadata=null;
+    const releaseLockForDriveWork = () => { if (lockAcquired) { lock.releaseLock(); lockAcquired = false; } };
     try {
         // La transferencia Drive ocurre antes del bloqueo breve de escritura en Sheets.
         if(imageAttachment) uploadedImage=saveReportImageAttachment_(imageAttachment,reportContext.reportId);
@@ -1936,6 +1937,7 @@ function handleReportProblem(payload) {
                     if(oldImage) {
                         if(oldImage.imageSha256!==imageAttachment.sha256) throw new Error("El reporte ya tiene una imagen distinta asociada; no se reemplazó.");
                         resolvedImageUrl=oldImage.imageUrl;
+                        releaseLockForDriveWork();
                         trashReportImageUpload_(uploadedImage); uploadedImage=null;
                     } else {
                         if(!uploadedImage) throw new Error("No se pudo preparar la imagen del reporte.");
@@ -1982,6 +1984,7 @@ function handleReportProblem(payload) {
             } catch(rollbackError) { rollbackConfirmed = false; console.error("No se pudo revertir completamente la fila del reporte:",rollbackError); }
         }
         if(uploadedImage && (!pendingSheet || (!pendingExistingMetadata && !pendingRowNumber) || rollbackConfirmed)) {
+            releaseLockForDriveWork();
             trashReportImageUpload_(uploadedImage);
         } else if(uploadedImage) {
             console.error("La imagen del reporte se conserva porque no se pudo confirmar la reversión de su referencia.");
