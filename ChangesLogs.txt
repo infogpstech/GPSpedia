@@ -90,3 +90,9 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - `handleSuggestCutChange` devuelve replays existentes antes de Drive/ScriptLock y vuelve a comprobar dentro del lock antes de crear. La limpieza de imágenes duplicadas ocurre después de liberar lock.
 - Regresiones 4/4, 6/6, 6/6, 5/5 y 1/1 PASS. CI 44837377505 SUCCESS: 243 suites, 2989 pruebas, 0 fallos; health read-only SUCCESS.
 - Los locks de creación se mantienen hasta migrar el almacenamiento de Feedbacks a journal/proyección; no se debilitó la deduplicación.
+
+
+2026-11-20 — FEEDBACK reportProblem: preflight de replay
+- `handleReportProblem` ahora busca `reportId` antes de subir adjuntos o adquirir ScriptLock. Replays con mismo reporte e imagen ya registrada devuelven la existente sin operaciones Drive; los reportes sin imagen continúan al flujo de adjuntar con revalidación bajo lock.
+- Se mantienen las validaciones de identidad, contenido y SHA-256; el esquema solo se asegura dentro del lock.
+- `FeedbackReportPreflightOutsideLock` 5/5 y `P2FeedbackImageUploadLocks` 1/1 PASS. CI 44837729816 SUCCESS: 244 suites, 2994 pruebas, 0 fallos.
