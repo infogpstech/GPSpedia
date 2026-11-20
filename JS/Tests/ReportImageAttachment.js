@@ -25,6 +25,15 @@ export function runReportImageAttachmentTests({ui,api,feedback}) {
  test("guarda en carpeta Reportes individuales sin abrir permisos",()=>{let publicShare=false;const file={getId:()=>"abcdefghijklmnopqrst",setTrashed(){},setSharing(){publicShare=true;}};sandbox.getCortesRootFolder=()=>({});sandbox.findOrCreateSubFolder=(root,name)=>{assert.equal(name,"Reportes individuales");return{createFile:blob=>{assert.equal(blob.mimeType,"image/png");return file;}};};const saved=sandbox.save(valid,"REP-1");assert.equal(saved.metadata.imageUrl,"https://drive.google.com/file/d/abcdefghijklmnopqrst/view");assert.equal(publicShare,false);});
  test("retira archivo huérfano",()=>{let trashed=false;sandbox.trash({file:{setTrashed(){trashed=true;}}});assert.equal(trashed,true);});
  const form=extract(ui,"export function openReportCutModal","function showReportSuccessModal"),apiFn=extract(api,"export async function reportProblem","export async function suggestYear"),inbox=extract(ui,"function renderInboxDetail","function getYouTubeEmbedUrl"),handler=extract(feedback,"function handleReportProblem(payload)","function enforceFeedbackRateLimit_");
+ test("el identificador del reporte usa aleatoriedad criptográfica y no Math.random",()=>{
+  assert.match(form,/window\\.crypto/);
+  assert.match(form,/cryptoApi\\.randomUUID/);
+  assert.match(form,/cryptoApi\\.getRandomValues/);
+  assert.match(form,/new Uint8Array\\(24\\)/);
+  assert.match(form,/El navegador no dispone de un generador seguro/);
+  assert.doesNotMatch(form,/Math\\.random/);
+  assert.match(form,/const reportId = "REP-" \\+ reportOperationId/);
+ });
  test("formulario limita MIME/tamaño y maneja error/abort",()=>{assert.match(form,/image\/jpeg,image\/png,image\/webp/);assert.match(form,/3 \* 1024 \* 1024/);assert.match(form,/readAsDataURL/);assert.match(form,/reader\.onerror/);assert.match(form,/reader\.onabort/);});
  test("transmite adjunto aparte y exige confirmación",()=>{assert.match(form,/getSessionPayload_\(\), imageAttachment/);assert.doesNotMatch(form,/fullProblemText\s*\+=.*file\.name/);assert.match(form,/res\.imageAttached !== true/);});
  test("API preserva cuatro argumentos y añade quinto opcional",()=>{assert.match(apiFn,/sessionPayload = \{\}, imageAttachment = null/);assert.match(apiFn,/imageAttachment: imageAttachment \|\| null/);});
