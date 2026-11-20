@@ -79,6 +79,33 @@ test("un evento con versión esperada distinta no desplaza el rango proyectado",
     assert.equal(snapshot.anoHasta, "2022");
 });
 
+test("un ledger malformado o un opId conflictivo no se interpreta como rango vigente", () => {
+    const malformed = makeSheet([
+        ["EV-BAD", "OP-BAD", "101", "invalid-hash", "vehicle_update",
+            JSON.stringify({ fieldName: "anoDesde", value: 2017, expectedCurrentValue: 2018 }),
+            "DEV-1", "Admin", "2026-11-20T12:00:00.000Z", "accepted", ""]
+    ]);
+    const readMalformed = new Function("COLS_CORTES", "getSpreadsheet", extract("getFeedbackProjectedVehicleYearSnapshot_") +
+        "\nreturn getFeedbackProjectedVehicleYearSnapshot_;")(
+        { anoDesde: 1, anoHasta: 2 }, () => ({ getSheetByName: () => malformed })
+    );
+    assert.throws(() => readMalformed("101", [2018, 2020]), /evento inválido/);
+
+    const conflict = makeSheet([
+        ["EV-A", "OP-SHARED", "101", "a".repeat(64), "vehicle_update",
+            JSON.stringify({ fieldName: "anoDesde", value: 2017, expectedCurrentValue: 2018 }),
+            "DEV-1", "Admin", "2026-11-20T12:00:00.000Z", "accepted", ""],
+        ["EV-B", "OP-SHARED", "202", "b".repeat(64), "vehicle_update",
+            JSON.stringify({ fieldName: "anoDesde", value: 2016, expectedCurrentValue: 2018 }),
+            "DEV-2", "Admin", "2026-11-20T12:00:01.000Z", "accepted", ""]
+    ]);
+    const readConflict = new Function("COLS_CORTES", "getSpreadsheet", extract("getFeedbackProjectedVehicleYearSnapshot_") +
+        "\nreturn getFeedbackProjectedVehicleYearSnapshot_;")(
+        { anoDesde: 1, anoHasta: 2 }, () => ({ getSheetByName: () => conflict })
+    );
+    assert.equal(readConflict("101", [2018, 2020]).anoDesde, "2018");
+});
+
 test("append de ampliación es idempotente y rechaza reutilizar opId con otro contenido", () => {
     const ledger = makeSheet();
     const utilities = makeUtilities();
