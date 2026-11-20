@@ -13220,6 +13220,7 @@ async function syncApprovedVehicleVideoDetail_(videoMeta, dependencies = {}) {
 
 /* TAREA 5 (3.3): AGREGAR APERTURA DESDE EL MODAL DE DETALLE */
 export function openAddAperturaModal(item) {
+    const operationId = createSuggestionOperationId_();
     const existing = document.getElementById("add-apertura-modal");
     if (existing) existing.remove();
 
@@ -13280,6 +13281,7 @@ export function openAddAperturaModal(item) {
         try {
             const writeResult = await routeAction("addSupplementaryInfo", {
                 ...getDeveloperSessionPayload(),
+                opId: operationId,
                 vehicleId: item.id,
                 apertura: content.querySelector("#add-apertura-detalles").value,
                 imgApertura: imgBase64
@@ -13296,6 +13298,7 @@ export function openAddAperturaModal(item) {
 
 /* TAREA 5 (3.4): AGREGAR CABLE DE ALIMENTACIÓN DESDE EL MODAL DE DETALLE */
 export function openAddFeedModal(item) {
+    const operationId = createSuggestionOperationId_();
     const existing = document.getElementById("add-feed-modal");
     if (existing) existing.remove();
 
@@ -13354,7 +13357,7 @@ export function openAddFeedModal(item) {
         }
 
         // El servidor asigna el primer par texto/imagen libre usando el registro vigente.
-        const payload = { vehicleId: item.id, cableAlimen: content.querySelector("#add-feed-detalles").value, imgCableAlimen: imgBase64 };
+        const payload = { opId: operationId, vehicleId: item.id, cableAlimen: content.querySelector("#add-feed-detalles").value, imgCableAlimen: imgBase64 };
 
         try {
             const writeResult = await routeAction("addSupplementaryInfo", { ...payload, ...getDeveloperSessionPayload() });
