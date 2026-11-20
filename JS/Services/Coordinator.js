@@ -127,7 +127,7 @@ function coordinatorPolicy_(service, operation) {
             permanentlyDeleteReplacedImage: { read: identityRead, write: ["DRIVE", "IMAGE_INVENTORY", "ACTIVITY"] },
             saveUnusedImagesInventory: { write: ["IMAGE_INVENTORY"] },
             recordAdminImageActivity: { write: ["ACTIVITY"] },
-            createCortesImageFolder: { read: identityRead, write: ["DRIVE", "ACTIVITY"] },
+            createCortesImageFolder: { write: ["CORTES_IMAGE_FOLDER"] },
             moveReplacedImage: { read: identityRead, write: ["CORTES", "DRIVE", "IMAGE_INVENTORY", "ACTIVITY"] },
             getReplacedImageDownloadUrl: { read: [...identityRead, "DRIVE"], write: ["ACTIVITY"] },
             // Operaciones añadidas al dispatcher ADMIN: cada una debe tener una política explícita.
