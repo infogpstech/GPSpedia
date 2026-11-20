@@ -8,7 +8,7 @@ function extract(source,name){const start=source.indexOf("function "+name+"(");a
   if(ch==="'"||ch=='"'||ch==="`"){q=ch;continue;}if(ch==="{")depth++;if(ch==="}"&&--depth===0)return source.slice(start,i+1);}throw Error("Función incompleta "+name);}
 function runtime(){
  const headers=["eventId","opId","vehicleId","operationHash","kind","payloadJson","actorId","actorName","createdAt","status","supersedesEventId"],rows=[headers.slice()];let uuid=0;
- const contributions={getLastRow:()=>rows.length,getLastColumn:()=>11,getRange(row,col,count=1,width=1){return{getDisplayValues:()=>Array.from({length:count},(_,i)=>(rows[row-1+i]||[]).slice(col-1,col-1+width).map(v=>String(v??"")),getValues:()=>Array.from({length:count},(_,i)=>(rows[row-1+i]||[]).slice(col-1,col-1+width))};},appendRow(row){rows.push(row.slice());}};
+ const contributions={getLastRow:()=>rows.length,getLastColumn:()=>11,getRange(row,col,count=1,width=1){return{getDisplayValues:()=>Array.from({length:count},(_,i)=>(rows[row-1+i]||[]).slice(col-1,col-1+width).map(v=>String(v??""))),getValues:()=>Array.from({length:count},(_,i)=>(rows[row-1+i]||[]).slice(col-1,col-1+width))};},appendRow(row){rows.push(row.slice());}};
  const vehicle={getLastRow:()=>2,getLastColumn:()=>3,getRange(){return{getValues:()=>[["V-101","Corolla",""]]};}};
  const ss={getSheetByName:n=>n==="Cortes"?vehicle:n==="AportesVehiculo"?contributions:null};
  const fn=new Function("isAdminModalEditField_","handleUpdateVehicleVinCollection_","COLS_CORTES","SHEET_NAMES","getSpreadsheet","findUniqueAdminVehicleRow_","validateAdminModalFieldValue_","ADMIN_VEHICLE_CONTRIBUTIONS_SHEET_NAME_","ADMIN_VEHICLE_CONTRIBUTIONS_HEADERS_","Utilities","SpreadsheetApp",
