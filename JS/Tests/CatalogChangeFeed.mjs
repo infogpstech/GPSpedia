@@ -200,7 +200,7 @@ test("reconciliación confirmada publica un upsert por vehículo único y reserv
     assert.ok(adminSource.includes("function publishAdminCortesCatalogChanges_(action, references)"));
     assert.ok(adminSource.includes("publishAdminCortesCatalogChanges_(catalogAction, vehicleIds)"));
     assert.ok(adminSource.includes("const changes = ids.map(id => buildAdminCortesCatalogChange_(id))"));
-    assert.ok(adminSource.includes('publishSharedCatalogChanges_("ADMIN", action, changes.slice(offset, offset + 50))'));
+    assert.ok(adminSource.includes('publishSharedCatalogChanges_("ADMIN", action, versionedChanges.slice(offset, offset + 50))'));
     assert.ok(!adminSource.includes('changes.forEach(change => publishSharedCatalogChange_("ADMIN", action, change))'));
     assert.ok(adminSource.includes('publishSharedCatalogChange_("ADMIN", action, { operation: "reset" })'));
 });
