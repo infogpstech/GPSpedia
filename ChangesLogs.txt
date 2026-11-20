@@ -1148,3 +1148,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-20 · aislamiento WRITE] `handleFreezeCortesIds` ahora verifica autorización y respaldo Drive antes de tomar el ScriptLock; la sección crítica queda limitada al plan/lectura y commit verificado de IDs en Cortes. Usa `tryLock(0)` y devuelve `WRITE_BUSY` si otra escritura está activa. Pruebas `WriteFreezeCortesIdsBackupOutsideLock` 5/5 y `WriteAuthorizationMinimization` 13/13. CI `44645165057` SUCCESS: 195 suites, 2,541 pruebas aprobadas, 0 fallos; health read-only `44645165055` SUCCESS. Sin despliegue Apps Script ni cambios productivos.
+
+
+[2026-11-20 · aislamiento FEEDBACK PyS] `handleAddProblem` valida el archivo Drive de una operación `UPLOAD_PENDING` antes de adquirir ScriptLock; bajo lock revalida la reserva completa y solo reutiliza el archivo si coinciden opId/hash/problemId/fileId/URL/status. Si la reserva cambió, solicita reintento; si falla la verificación con la misma reserva, marca `RECOVERY_REQUIRED`. Se preservan MIME, tamaño, descripción, carpeta y permisos. Pruebas `FeedbackPysPendingImageVerificationOutsideLock` 5/5 y `P2PysImageUploadOutsideLock` PASS. CI `44645449059` SUCCESS: 196 suites, 2,546 pruebas aprobadas, 0 fallos; health read-only `44645449007` SUCCESS. Sin despliegue Apps Script ni cambios productivos.
