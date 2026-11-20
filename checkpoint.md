@@ -5,8 +5,8 @@ Fecha: 2026-11-20
 ## Repositorio y ramas
 - Repositorio: infogpstech/GPSpedia
 - Rama autorizada: GPSpedia2.2.5_work
-- HEAD actual: d6be21521a5119bf7009014e370971f6b4d51cec (commit documental de resolución de tareas Beta/lease).
-- Último commit funcional: 3fd8b2d5afedbfcdec0e261cad4690d3257d962c (ADMIN: verificación del respaldo de conciliación fuera del ScriptLock).
+- HEAD actual: 9df6378b63ccbcf72ef4a1a9d70bcf4e1f406ddb (commit documental de restauración/verificación de registros).
+- Último commit funcional: 3fd8b2d5afedbfcdec0e261cad4690d3257d962c (ADMIN: verificación del respaldo de conciliación fuera del ScriptLock). Último commit documental: 9df6378b63ccbcf72ef4a1a9d70bcf4e1f406ddb.
 - Rama base protegida GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificar).
 - La continuidad histórica anterior permanece en este archivo y en Checkpoint_Archive/; no reconstruir sesiones previas si el estado Git actual es verificable.
 
