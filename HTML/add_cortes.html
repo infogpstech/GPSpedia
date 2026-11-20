@@ -1462,6 +1462,7 @@
                 const imgAperturaVal = await fileToBase64(openingImageInput && openingImageInput.files ? openingImageInput.files[0] : null);
                 const payload = {
                     userId: state.userId, sessionToken: state.sessionToken, vehicleId: state.selectedVehicleId,
+                    opId: state.opId,
                     apertura: document.getElementById('apertura').value,
                     notaImportante: document.getElementById('notaImportante').value,
                     imgApertura: imgAperturaVal, timestamp: state.timestamp
