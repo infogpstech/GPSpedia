@@ -32,7 +32,7 @@ function fakeLock(busy=false){
 {
  const lock=fakeLock(true),state={releasedForDrive:false};
  assert.throws(()=>driveRunner(lock,state,"OP-2",()=>{lock.events.push("drive");return "uploaded";}),e=>e.code==="WRITE_LOCK_REACQUIRE_PENDING");
- assert.deepEqual(lock.events,["release","drive","wait:2000"]);assert.equal(lock.isHeld(),false);assert.equal(state.releasedForDrive,true);
+ assert.deepEqual(lock.events,["release","drive","try:0"]);assert.equal(lock.isHeld(),false);assert.equal(state.releasedForDrive,true);
 }
 const slotSource=extract("findNextAvailableCutSlot_","isAddCutPlainObject_");
 const slotRunner=new Function("COLS_CORTES","readIdempotenciaEntries_","getIdempotenciaSheet",
