@@ -1281,3 +1281,15 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [ ] **Anti-regresión de aportes.** Probar operaciones paralelas de diferentes vehículos desde cada punto de entrada, mismo vehículo con cambios distintos, reintentos del mismo payload, reemplazos y límites; preservar reportes, reacciones, formularios, atribución de colaborador/fecha y limpieza/compensación de archivos. Evitar llamadas de red, escrituras o lecturas duplicadas.
 - [ ] **Carrusel Vistos recientemente.** Investigar por qué se renderiza después de los demás carruseles. Cargarlo en paralelo desde la caché local disponible (IndexedDB/cache), sin esperar lecturas remotas ni bloquear carruseles independientes; conservar aislamiento por usuario, orden y estados vacíos/offline, sin consultas duplicadas.
 - Estado: **PENDIENTE**. Registrado por solicitud expresa; no implementado ni validado en esta iteración. Respetar NORMAS_DESAROLLO.md §15: simplicidad y baja latencia; no introducir locks globales, leases ni validaciones de red por acción.
+
+
+### 2026-11-20 — Safe Apply: reserva atómica de operaciones y rollback
+- [x] Añadir decisión de reserva por operación con comprobación de identidad, propietario y estado permitido; la lectura y escritura de la reserva se ejecutan dentro de una única sección crítica breve del ledger.
+- [x] Aplicación: solo una solicitud puede pasar de ausencia de registro a `processing`; solicitudes competidoras reciben `in_progress`/conflicto y no mueven el archivo.
+- [x] Rollback: solo una solicitud puede reservar la transición desde `complete` a `rollback_processing`; las solicitudes competidoras no ejecutan un segundo movimiento.
+- [x] La lectura de un registro individual ya no adquiere ScriptLock. El lock del ledger se limita a las transiciones de propiedades, con espera máxima de 250 ms; ninguna operación Drive se ejecuta dentro de ese lock.
+- [x] La contención antes de reservar devuelve un resultado retryable sin escribir un estado falso `rolled_back`. Si la contención ocurre al persistir el estado final después de un movimiento Drive, se inspecciona Drive y se reconcilia el ledger sin repetir el movimiento.
+- [x] Executor focalizado: 17/17 PASS; ApplyPlan 14/14; UI contract 13/13; Ledger 6/6.
+- [ ] Regresión integral: CI 44791334640 falló en dos contratos ajenos al organizador Safe Apply y relacionados con la nueva tarea de concurrencia de aportes: `AdminVehicleIdOutsideLock` (el test exige tryLock(0), el handler actual usa waitLock(2000)) y `AdminSupplementaryUploadOutsideLock` (el test exige ausencia de espera, pero el handler actual usa waitLock(2000)). No se alteraron esos flujos para ocultar el hallazgo; quedan incluidos en la tarea de concurrencia registrada arriba.
+- Health read-only 44791334834 SUCCESS. Pages 44791334550 pendiente al último chequeo.
+- Estado de esta subactividad: **IMPLEMENTACIÓN LOCAL COMPLETADA CON VALIDACIÓN DIFERIDA**; pendiente estabilizar la regresión integral y ejecutar verificación Beta de Drive/ACL/ScriptProperties. No se ejecutaron operaciones reales ni se desplegó Apps Script.
