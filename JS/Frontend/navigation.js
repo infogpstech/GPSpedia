@@ -213,5 +213,5 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
     const renderResults = resultType === 'marca'
         ? [...new Set(datosFiltrados.map(item => item.marca).filter(Boolean))]
         : datosFiltrados;
-    mostrarResultadosDeBusqueda({ type: resultType, query: textoBusqueda, results: renderResults }, !isRestoring);
+    mostrarResultadosDeBusqueda({ type: resultType, query: textoBusqueda, results: renderResults }, !isRestoring && isVinQuery && Boolean(matchedVehicleById));
 }
