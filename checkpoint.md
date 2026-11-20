@@ -834,3 +834,13 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Se confirmó mediante búsqueda de integraciones que Google Drive está `DISABLED_BY_ADMIN` y no se encontró una integración de Google Apps Script disponible. El repositorio no versiona `.clasp.json`/`appsscript.json`; no hay acceso de deployment/ScriptProperties en las herramientas actuales. No se solicitaron ni expusieron secretos.
 - La siguiente actividad exige entorno Beta autorizado y acceso real: verificar Script IDs/deployments, desplegar Coordinator primero según el runbook, desplegar consumidores compatibles, generar auditoría Drive nueva y ejecutar preview solo lectura. Sin eso no se puede aprobar el manifiesto ni implementar Safe Apply responsablemente.
 - No se desplegó Apps Script ni se realizaron operaciones Drive/Spreadsheet. No se movieron, renombraron, borraron ni restauraron imágenes.
+
+
+## Checkpoint de entrega — continuidad y acceso Beta (2026-11-20)
+- HEAD de la rama verificado antes de este commit documental: `f66108109a43acc304e4749c056ca81eb0764423`; rama base protegida `d9acc68d889985c2e2f42fe3a02e502efc86ead1` intacta.
+- CI `44768516802` SUCCESS: 221 suites, 2,743 pruebas aprobadas, 0 fallos; `CortesImageOrganizerTargets` 8/8 PASS. Health read-only `44768516938` SUCCESS; Pages `44768516088` SUCCESS.
+- Commit de código/pruebas focalizadas: `83f77db8e7904dcaa70c60e0703705cd6c763236` (suite nueva); corrección del fixture `4f5a85065816d2277341cf1f7827c29d9dc2519b`. Los commits posteriores son documentales.
+- Se completó la reconciliación del backlog sin borrar entradas históricas. Safe Apply sigue sin implementar y correctamente condicionado al preview real aprobado.
+- Acceso Beta: Google Drive connector aparece `DISABLED_BY_ADMIN`/`NOT_AVAILABLE`; la búsqueda de integraciones no encontró Google Apps Script. No hay acceso a ScriptProperties/deployments ni browser interactivo en este entorno. No se han compartido secretos ni ejecutado despliegues.
+- Próximo paso operativo: habilitar un canal de acceso autorizado a Apps Script/Drive Beta y confirmar Script IDs de Coordinator, ADMIN y consumidores. Después seguir el runbook (Coordinator primero), generar auditoría Drive nueva y validar preview solo lectura. No ejecutar movimientos/renombrados antes de revisar el manifiesto.
+- Sin cambios en la rama base, deployments, Drive ni Spreadsheet productivos.

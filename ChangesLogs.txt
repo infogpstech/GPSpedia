@@ -1283,3 +1283,6 @@ Se implementó agrupación de resultados de Cortes por categoría/marca/modelo, 
 
 
 [2026-11-20 · cierre pruebas del organizador y estado de acceso Beta] HEAD `d2797d02b35b9acade57d392eff2cefc9b277698`; CI `44768324636` SUCCESS: 221 suites, 2,743 pruebas, 0 fallos; `CortesImageOrganizerTargets` 8/8; health `44768324683` SUCCESS. Pages `44768323927` seguía ejecutándose. Se confirmó que Google Drive está deshabilitado por administración y no hay integración Apps Script disponible; no se ejecutaron deployments ni operaciones Drive/Spreadsheet. Safe Apply permanece condicionado a auditoría/preview real aprobado en Beta.
+
+
+[2026-11-20 · cierre de reconciliación y cobertura de preview] Se reconciliaron Tareas_Activas/checkpoint con el estado real; se añadieron pruebas puras para el constructor de destinos del organizador (8/8). HEAD documental previo `f66108109a43acc304e4749c056ca81eb0764423`: CI `44768516802` SUCCESS, 221 suites, 2,743 pruebas, 0 fallos; health `44768516938` y Pages `44768516088` SUCCESS. El acceso Beta no está disponible: Google Drive connector deshabilitado por administración y no se encontró integración Apps Script. Safe Apply permanece sin implementar hasta aprobar preview real. Sin despliegues ni cambios Drive/Spreadsheet.
