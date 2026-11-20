@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 
 const catalog = readFileSync(new URL("../Services/catalog.js", import.meta.url), "utf8");
 const admin = readFileSync(new URL("../Services/admin.js", import.meta.url), "utf8");
+const write = readFileSync(new URL("../Services/write.js", import.meta.url), "utf8");
 function extractFunction(source, name) {
     const start = source.indexOf("function " + name + "(");
     assert.notEqual(start, -1, "No se encontró " + name);
@@ -238,6 +239,133 @@ test("ADMIN expone la migración solo como acción explícita de esquema", () =>
     assert.match(admin, /"migrateVehicleContributionsSchema"/);
     assert.match(admin, /case 'migrateVehicleContributionsSchema':[\s\S]{0,160}handleMigrateVehicleContributionsSchema/);
     assert.match(admin, /function handleMigrateVehicleContributionsSchema\(/);
+});
+
+
+function buildAppendRuntime(options = {}) {
+    const headers = [
+        "eventId", "opId", "vehicleId", "operationHash", "kind", "payloadJson",
+        "actorId", "actorName", "createdAt", "status", "supersedesEventId"
+    ];
+    const rows = options.missing ? [] : [headers.slice()];
+    let uuid = 0, flushes = 0;
+    const sheet = {
+        getLastRow: () => rows.length,
+        getLastColumn: () => options.badSchema ? 3 : 11,
+        getRange(row, column, rowCount = 1, columnCount = 1) {
+            return {
+                getDisplayValues() {
+                    return Array.from({ length: rowCount }, (_, offset) =>
+                        (rows[row - 1 + offset] || []).slice(column - 1, column - 1 + columnCount).map(value => String(value ?? ""))
+                    );
+                },
+                getValues() {
+                    return Array.from({ length: rowCount }, (_, offset) =>
+                        (rows[row - 1 + offset] || []).slice(column - 1, column - 1 + columnCount)
+                    );
+                },
+                createTextFinder(value) {
+                    return {
+                        matchCase() { return this; },
+                        matchEntireCell() { return this; },
+                        findAll() {
+                            const found = [];
+                            for (let offset = 0; offset < rowCount; offset++) {
+                                const candidateRow = row + offset;
+                                if (String((rows[candidateRow - 1] || [])[column - 1] ?? "") === String(value)) {
+                                    found.push({ getRow: () => candidateRow });
+                                }
+                            }
+                            return found;
+                        }
+                    };
+                }
+            };
+        },
+        appendRow(row) { rows.push(row.slice()); }
+    };
+    const spreadsheet = { getSheetByName: name => name === "AportesVehiculo" && !options.missing ? sheet : null };
+    const utilities = {
+        DigestAlgorithm: { SHA_256: "SHA-256" },
+        Charset: { UTF_8: "UTF-8" },
+        computeDigest: () => Array(32).fill(1),
+        getUuid: () => "test-uuid-" + (++uuid)
+    };
+    const source = [
+        extractFunction(write, "getVehicleContributionLedgerSheet_"),
+        extractFunction(write, "findVehicleContributionEventsByOpId_"),
+        extractFunction(write, "computeVehicleContributionHash_"),
+        extractFunction(write, "appendVehicleContributionEvent_")
+    ].join("\n");
+    const append = new Function(
+        "getSpreadsheet", "Utilities", "SpreadsheetApp",
+        "WRITE_VEHICLE_CONTRIBUTIONS_SHEET_NAME_", "WRITE_VEHICLE_CONTRIBUTIONS_HEADERS_",
+        source + ";return appendVehicleContributionEvent_;"
+    )(() => spreadsheet, utilities, { flush() { flushes++; } }, "AportesVehiculo", headers);
+    return { append, rows, state: () => ({ flushes }) , spreadsheet };
+}
+
+test("append de aporte registra evento durable con esquema versionado", () => {
+    const runtime = buildAppendRuntime();
+    const result = runtime.append({
+        spreadsheet: runtime.spreadsheet, vehicleId: "101", opId: "OP-ONE",
+        kind: "opening", payload: { text: "Apertura", image: "" }, operationHash: "a".repeat(64),
+        actorId: "USR-1", actorName: "Técnico"
+    });
+    assert.equal(result.status, "accepted");
+    assert.equal(result.duplicate, false);
+    assert.equal(runtime.rows.length, 2);
+    assert.equal(runtime.rows[1][1], "OP-ONE");
+    assert.equal(runtime.rows[1][2], "101");
+    assert.equal(JSON.parse(runtime.rows[1][5]).text, "Apertura");
+});
+
+test("mismo opId y misma huella recupera el evento sin duplicar fila", () => {
+    const runtime = buildAppendRuntime();
+    const options = {
+        spreadsheet: runtime.spreadsheet, vehicleId: "101", opId: "OP-SAME",
+        kind: "feed", payload: { text: "12V", image: "" }, operationHash: "b".repeat(64)
+    };
+    const first = runtime.append(options);
+    const retry = runtime.append(options);
+    assert.equal(first.eventId, retry.eventId);
+    assert.equal(retry.duplicate, true);
+    assert.equal(runtime.rows.length, 2);
+});
+
+test("mismo opId con huella distinta se rechaza", () => {
+    const runtime = buildAppendRuntime();
+    runtime.append({
+        spreadsheet: runtime.spreadsheet, vehicleId: "101", opId: "OP-CONFLICT",
+        kind: "feed", payload: { text: "12V", image: "" }, operationHash: "c".repeat(64)
+    });
+    assert.throws(() => runtime.append({
+        spreadsheet: runtime.spreadsheet, vehicleId: "101", opId: "OP-CONFLICT",
+        kind: "feed", payload: { text: "IGN", image: "" }, operationHash: "d".repeat(64)
+    }), error => error.code === "CONTRIBUTION_OP_ID_CONFLICT");
+});
+
+test("aportes de vehículos diferentes se anexan sin compartir reserva global", () => {
+    const runtime = buildAppendRuntime();
+    const a = runtime.append({
+        spreadsheet: runtime.spreadsheet, vehicleId: "101", opId: "OP-A",
+        kind: "cut", payload: { tipo: "Ignición" }, operationHash: "e".repeat(64)
+    });
+    const b = runtime.append({
+        spreadsheet: runtime.spreadsheet, vehicleId: "202", opId: "OP-B",
+        kind: "cut", payload: { tipo: "Bomba" }, operationHash: "f".repeat(64)
+    });
+    assert.equal(a.vehicleId, "101");
+    assert.equal(b.vehicleId, "202");
+    assert.equal(runtime.rows.length, 3);
+});
+
+test("append falla cerrado si el esquema no fue migrado", () => {
+    const runtime = buildAppendRuntime({ missing: true });
+    assert.throws(() => runtime.append({
+        spreadsheet: runtime.spreadsheet, vehicleId: "101", opId: "OP-NO-SCHEMA",
+        kind: "feed", payload: { text: "12V" }, operationHash: "a".repeat(64)
+    }), error => error.code === "CONTRIBUTION_LEDGER_NOT_READY");
 });
 
 console.log(passed + "/" + passed + " PASS");
