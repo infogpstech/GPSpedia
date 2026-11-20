@@ -175,3 +175,12 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Se revisaron locks FEEDBACK: likes (contador read-modify-write), reportes/sugerencias (deduplicación), PyS (first-write-wins/relaciones) y tutoriales/video (unicidad/transiciones) requieren sustituto append-only/versionado antes de retirarlos. No usar UserLock como reemplazo entre usuarios.
 - La ruta heredada `WRITE/addVinToVehicle` conserva lock global y no tiene consumidor encontrado en módulos frontend principales; sigue expuesta por api-config, así que no se elimina sin revisar integraciones externas.
 - No se modificó código de producción en esta auditoría ni se desplegó. Próximo: migrar una ruta FEEDBACK por vez con journal/proyección y regresión; revisar compatibilidad de `addVinToVehicle`.
+
+
+## Checkpoint — FEEDBACK likes con preflight dirigido (2026-11-20)
+
+- HEAD de código validado: `3dd1c84798b3482562c9ef9d3af9085bf254d8fd`.
+- `handleRecordLike` valida/localiza el vehículo y corte antes del ScriptLock; dentro revalida por ID. La búsqueda del ledger se limita al actor mediante `TextFinder`; no se descargan completas `Cortes` ni `FeedbackLikes`.
+- El lock sigue protegiendo la deduplicación y el incremento read-modify-write con recuperación pending/completed. No retirarlo hasta migrar a eventos append-only y proyección CATALOG.
+- `FeedbackLikePreflightOutsideLock` 5/5 PASS. CI 44836655370 SUCCESS: 240 suites, 2973 pruebas, 0 fallos. Health read-only y Pages seguían en ejecución al momento de este registro.
+- No se desplegó ni se modificaron datos productivos.
