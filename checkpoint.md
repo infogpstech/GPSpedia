@@ -5,9 +5,9 @@ Fecha: 2026-11-20
 ## Repositorio y ramas
 - Repositorio: infogpstech/GPSpedia
 - Rama autorizada: GPSpedia2.2.5_work
-- HEAD verificado antes de este checkpoint: 38b5a02ca951270c2e93001edfa349a46a805f7a (commit de evaluación de herramientas para Beta).
+- HEAD de código verificado antes de este checkpoint: d4a31ff1adb887ae4288c3a707cca783597377e8 (último commit de implementación/pruebas de esta tarea).
 - Rama base protegida GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificar).
-- No hay cambios locales disponibles en un clon para sincronizar; la publicación se realizó mediante commits GitHub condicionados al SHA esperado.
+- No hay checkout local disponible. Los archivos se actualizaron secuencialmente mediante la API de contenidos de GitHub, con lectura del blob vigente antes de cada escritura; esta API no expone una condición CAS para el HEAD de la rama. No se usó force ni se modificó la rama base.
 
 ## Normativa y arquitectura
 - NORMAS_DESAROLLO.md es la única fuente normativa vigente y se consultó en su totalidad para esta continuidad.
@@ -725,3 +725,16 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - **Qué sigue:** continuar la siguiente parte local de `GP-PERF-ADMIN-CUT-LOCK-01`: revisar las lecturas restantes de Sheets en `handleAddOrUpdateCut` y retirar únicamente consultas redundantes demostrables, sin mover fuera del lock las reservas, las comprobaciones de conflicto, la revalidación ni escrituras que deban ser atómicas. Después ejecutar otra vez la regresión completa.
 - **Validación diferida a Beta:** comprobar en el deployment aislado que WRITE crea/usa el ledger en Spreadsheet real y que el reintento tras respuesta perdida devuelve el mismo ID. No se desplegó Apps Script ni se modificaron hojas/Drive productivos.
 - **Estado:** esta subactividad queda COMPLETADA LOCALMENTE CON VALIDACIÓN DIFERIDA A BETA; el bloque mayor GP-PERF-ADMIN-CUT-LOCK-01 sigue EN PROGRESO.
+
+
+## GP-PERF-ADMIN-CUT-LOCK-01 — reducción de lecturas en recuperación legacy (2026-11-20)
+- **Tarea realizada:** inspeccionar las lecturas de Sheets en `handleAddOrUpdateCut` y reducir únicamente una duplicación demostrable de la recuperación legacy de `opId`.
+- **Hallazgo:** `findRowByOpId` descargaba `Cortes` con `getDataRange().getValues()` para localizar el `opId`; luego `findUniqueCortesVehicleRow_` repetía la consulta de la columna ID y leía de nuevo la fila completa. También se consultaba `getLastRow()` antes de la lectura integral.
+- **Cambio:** se añadió `findUniqueCortesVehicleRowFromSnapshot_`, que valida los IDs y la unicidad desde el mismo array `data`, devuelve la fila ya leída y mantiene el rechazo de IDs ausentes, duplicados o malformados. La ruta legacy usa `data.length <= 1` para el caso sin registros y elimina la consulta previa de `getLastRow()`.
+- **Prueba:** se añadió `JS/Tests/AdminLegacyOpIdSnapshotReuse.mjs` (registrada en `RunServiceTests.mjs`) para comprobar reutilización de snapshot, índice/fila, ausencia, duplicidad, IDs malformados y que no haya segunda lectura. El resumen de la prueba está fijado en 9/9 casos.
+- **Commits de esta iteración:** `902867481b565adf6dcf709ba4d969f7e850c4b5` (cambio ADMIN); `a272b89b64115c9932194535ca217520deefcaee` (test); `089c7b36365b7e72c415399d7fd03959c8a3a72c` (registro en runner); `115f748541203b2e17c16b144c0619c5c655302d`, `5abcf68e26f0de916275beb91a28fb06962173df` y `629daef206f4762b2a942da4c196f0da665574d0` (correcciones del test); `d4a31ff1adb887ae4288c3a707cca783597377e8` (recuento del test).
+- **Validación pendiente:** no se ejecutó Node ni `RunServiceTests.mjs` porque no hay checkout local del repositorio y el entorno no puede clonar GitHub. `get_commit_combined_status` y la consulta de ejecuciones para el último commit no devolvieron checks/workflows; no se afirma que la prueba haya pasado. La comprobación sintáctica de la prueba también queda pendiente de ejecución.
+- **Lecturas que se conservaron:** la lectura del ledger Idempotencia y su verificación dirigida; las lecturas de fila/ID que revalidan reservas después de liberar el lock; la detección de VIN duplicado; la lectura del snapshot de fila existente; y las lecturas/escrituras necesarias para crear o completar la fila nueva. No se movió ninguna de ellas fuera del ScriptLock.
+- **Estado:** CAMBIO IMPLEMENTADO Y REGISTRADO; VALIDACIÓN PENDIENTE. `GP-PERF-ADMIN-CUT-LOCK-01` sigue EN PROGRESO y no se marca completada.
+- **Siguiente tarea:** ejecutar `AdminLegacyOpIdSnapshotReuse.mjs` y la regresión completa `RunServiceTests.mjs` en un checkout sincronizado; corregir cualquier fallo. Después continuar el análisis del siguiente grupo de lecturas, sin tocar reservas, detección de conflictos, revalidación ni escrituras atómicas.
+- Sin deployment Apps Script ni cambios en hojas/Drive productivos.
