@@ -1524,3 +1524,16 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [ ] Completar pruebas de fallo parcial Drive/journal y reconciliación de imagen en el entorno aislado.
 - [ ] Revisar consumidores legacy ImageUploadLedger/waitLock antes de retirar compatibilidad.
 - Estado P0: EN PROGRESO. Pruebas locales de concurrencia y recuperación cerradas; quedan revisión ADMIN, idempotencia de imágenes y validación Beta real. No desplegar Apps Script ni usar Spreadsheet/Drive productivos.
+
+
+### 2026-11-20 — ADMIN: consulta de candidatos append-only
+
+- [x] Añadir acción ADMIN getVehicleContributionCandidates, exclusiva de sesión Desarrollador, de solo lectura.
+- [x] Consultar CATALOG con forceRefresh para obtener la proyección actual; no duplicar la lógica de proyección en ADMIN.
+- [x] Devolver candidatos con eventId, opId, vehicleId, marca/modelo, tipo, motivo y payload; ordenar por vehicleId/eventId y limitar resultados (1–500, default 200), indicando total/truncated.
+- [x] Añadir la ruta ADMIN al mapa ACTION_TO_SERVICE_MAP.
+- [x] Añadir AdminVehicleContributionCandidates 6/6 y conectarla al runner de regresión.
+- [x] CI HEAD b75523bdf0039f191daa42801e5b51b5afdb68d1: 233 suites, 2,871 pruebas aprobadas, 0 fallos; health read-only SUCCESS.
+- [ ] Crear interfaz ADMIN para consultar candidatos y revisar detalles.
+- [ ] Implementar resolución append-only auditada (nuevo evento con supersedesEventId); actualizar proyección para excluir el evento sustituido sin borrar/modificar historial.
+- Estado: consulta de candidatos disponible por acción de servicio, aún sin interfaz ni resolución. P0 continúa EN PROGRESO.

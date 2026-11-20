@@ -1119,3 +1119,14 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Siguiente tarea de código: flujo ADMIN para listar/revisar/resolver candidatos con eventos append-only auditables y soporte de supersedesEventId en la proyección; no editar ni borrar eventos existentes.
 - Siguiente corrección de idempotencia: addSupplementaryInfo prepara/sube imágenes antes de appendVehicleContributionEvent_. Un reintento tras respuesta perdida puede crear otro archivo Drive antes de detectar el opId existente. Diseñar una reserva durable de operación/hash antes de subir y reanudar con el mismo recurso, sin marcar huérfanos como vinculados.
 - P0 permanece EN PROGRESO. No desplegar Apps Script ni tocar datos productivos.
+
+
+## Checkpoint — ADMIN puede consultar candidatos append-only (2026-11-20)
+
+- HEAD: b75523bdf0039f191daa42801e5b51b5afdb68d1. Rama GPSpedia2.2.5_work; base protegida d9acc68d889985c2e2f42fe3a02e502efc86ead1 sin cambios.
+- Se agregó en JS/Services/admin.js la acción getVehicleContributionCandidates. Exige el contexto de Desarrollador mediante la validación general del router ADMIN y consulta CATALOG con forceRefresh para reutilizar la proyección real, sin replicarla.
+- Respuesta: candidates con eventId/opId/vehicleId/vehicleLabel/kind/reason/payload, orden estable por vehículo y evento; limit configurable 1–500 (default 200), total y truncated. Es solo lectura.
+- JS/Frontend/api-config.js registra la ruta en ACTION_TO_SERVICE_MAP. JS/Tests/AdminVehicleContributionCandidates.mjs cubre proyección, orden, límite, errores HTTP/JSON y router (6/6); integrado en RunServiceTests.
+- CI 44815525250 SUCCESS: 233 suites, 2,871 pruebas aprobadas, 0 fallos. Health read-only 44815525351 SUCCESS. Pages pendiente de confirmación.
+- La acción aún no tiene interfaz de administración y no permite resolver candidatos. Siguiente paso: UI ADMIN y resolución mediante evento nuevo append-only con supersedesEventId; modificar proyección para omitir el evento sustituido y conservar el historial completo.
+- P0 sigue EN PROGRESO. No se desplegó Apps Script ni se modificaron hojas/Drive productivos.
