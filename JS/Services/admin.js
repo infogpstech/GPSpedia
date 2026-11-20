@@ -4106,8 +4106,24 @@ function handleApplyCortesImageReconciliation_(payload, logMessage, developerCon
                 if (String(entry.cell.getValue() || "") !== item.proposedUrl || String(entry.cell.getFormula() || "")) throw new Error("La verificación read-back falló en " + item.row + ":" + item.column + ".");
                 const details = JSON.stringify({ row: item.row, column: item.column, field: item.field, vehicleId: item.vehicleId,
                     manifestDigest: item.manifestDigest, backupId: verifiedBackup.backupId, backupFingerprint: verifiedBackup.fingerprint, operation: "apply" });
-                if (!recordImageAdministrationActivity(developerContext, "cortes_image_reconciliation_applied", item.fileId, details)) throw new Error("No se pudo registrar la asignación " + item.fileId + " en ActividadUsuario.");
-                if (logMessage) logMessage("Reconciliación", "URL verificada en Cortes, fila " + item.row + ", campo " + item.field + ".");
+                const activityRecorded = runAdminDriveWorkOutsideScriptLock_(
+                    lock,
+                    "ADMIN_CORTES_IMAGE_RECONCILIATION_APPLY_" + item.fileId,
+                    () => {
+                        const recorded = recordImageAdministrationActivity(developerContext, "cortes_image_reconciliation_applied", item.fileId, details);
+                        if (recorded && logMessage) logMessage("Reconciliación", "URL verificada en Cortes, fila " + item.row + ", campo " + item.field + ".");
+                        return recorded;
+                    },
+                    recorded => {
+                        const currentValue = entry.cell.getValue();
+                        const currentFormula = String(entry.cell.getFormula() || "");
+                        if (String(currentValue || "") !== item.proposedUrl || currentFormula) {
+                            throw new Error("La celda " + item.row + ":" + item.column + " cambió mientras se registraba la actividad; no se sobrescribió.");
+                        }
+                        return recorded === true;
+                    }
+                );
+                if (!activityRecorded) throw new Error("No se pudo registrar la asignación " + item.fileId + " en ActividadUsuario.");
             });
             const afterCount = countCortesImageCells_(sheet);
             if (afterCount !== beforeCount + manifest.length) throw new Error("El conteo de celdas de imagen no coincide con las asignaciones confirmadas.");
@@ -4120,6 +4136,15 @@ function handleApplyCortesImageReconciliation_(payload, logMessage, developerCon
                 manifestDigest: preview.manifestDigest, message: "Se aplicaron y verificaron las propuestas aprobadas con respaldo completo." };
         } catch (applyError) {
             const rollbackErrors = [], rolledBack = [];
+            if (applyError && applyError.code === "ADMIN_LOCK_REACQUIRE_PENDING") {
+                const afterCount = countCortesImageCells_(sheet);
+                return { status: "partial", writePerformed: true, processed: attempted.length, total: manifest.length,
+                    appliedCount: attempted.length, failedCount: manifest.length - attempted.length, rolledBackCount: 0,
+                    rollbackConfirmed: false, rollbackErrors: [String(applyError.message || applyError)],
+                    beforeCount, afterCount, backupId: verifiedBackup.backupId,
+                    message: "La operación perdió el lock al volver de registrar actividad; no se ejecutó rollback sin bloqueo. Revisa las celdas indicadas antes de reintentar." };
+            }
+            let rollbackLockLost = false;
             for (let index = attempted.length - 1; index >= 0; index--) {
                 const entry = attempted[index], item = entry.item;
                 if (!entry.writeAttempted) continue;
@@ -4130,14 +4155,38 @@ function handleApplyCortesImageReconciliation_(payload, logMessage, developerCon
                         SpreadsheetApp.flush();
                         if (entry.cell.getValue() !== "" || String(entry.cell.getFormula() || "")) throw new Error("Read-back de rollback no confirmó celda vacía.");
                         rolledBack.push(item.fileId);
-                        if (!recordImageAdministrationActivity(developerContext, "cortes_image_reconciliation_rollback", item.fileId,
-                            JSON.stringify({ row: item.row, column: item.column, field: item.field, manifestDigest: item.manifestDigest, operation: "rollback" }))) rollbackErrors.push(item.fileId + ": no se pudo registrar el rollback.");
+                        const rollbackActivityRecorded = runAdminDriveWorkOutsideScriptLock_(
+                            lock,
+                            "ADMIN_CORTES_IMAGE_RECONCILIATION_ROLLBACK_" + item.fileId,
+                            () => recordImageAdministrationActivity(developerContext, "cortes_image_reconciliation_rollback", item.fileId,
+                                JSON.stringify({ row: item.row, column: item.column, field: item.field, manifestDigest: item.manifestDigest, operation: "rollback" })),
+                            recorded => {
+                                const currentValue = entry.cell.getValue();
+                                const currentFormula = String(entry.cell.getFormula() || "");
+                                if (currentValue !== "" && currentValue !== null || currentFormula) {
+                                    throw new Error("La celda cambió durante el registro del rollback; no se sobrescribió.");
+                                }
+                                return recorded === true;
+                            }
+                        );
+                        if (!rollbackActivityRecorded) rollbackErrors.push(item.fileId + ": no se pudo registrar el rollback.");
                     } else if (current !== "" && current !== null) rollbackErrors.push(item.fileId + ": la celda cambió; no se sobrescribió durante el rollback.");
                 } catch (rollbackError) {
                     rollbackErrors.push(item.fileId + ": " + String(rollbackError && rollbackError.message || rollbackError));
+                    if (rollbackError && rollbackError.code === "ADMIN_LOCK_REACQUIRE_PENDING") {
+                        rollbackLockLost = true;
+                        break;
+                    }
                 }
             }
             const afterCount = countCortesImageCells_(sheet);
+            if (rollbackLockLost) {
+                return { status: "partial", writePerformed: true, processed: attempted.length, total: manifest.length,
+                    appliedCount: attempted.length - rolledBack.length, failedCount: manifest.length - attempted.length,
+                    rolledBackCount: rolledBack.length, rollbackConfirmed: false, rollbackErrors,
+                    beforeCount, afterCount, backupId: verifiedBackup.backupId,
+                    message: "El lock no pudo readquirirse durante el registro del rollback; la operación requiere revisión manual." };
+            }
             const remaining = attempted.filter(entry => {
                 try { return String(entry.cell.getValue() || "") === entry.item.proposedUrl; } catch (error) { return true; }
             }).length;
@@ -4151,7 +4200,7 @@ function handleApplyCortesImageReconciliation_(payload, logMessage, developerCon
             };
         }
     } finally {
-        lock.releaseLock();
+        if (typeof lock.hasLock !== "function" || lock.hasLock()) lock.releaseLock();
     }
 }
 
