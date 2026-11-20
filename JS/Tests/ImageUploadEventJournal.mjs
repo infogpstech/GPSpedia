@@ -112,6 +112,7 @@ function event(overrides = {}) {
 {
     const sheet = fakeSheet();
     sheet.rows.push(runtime.headers.slice());
+    runtime.append(sheet, event({ contentHash: "a".repeat(64), fileId: "file-a" }));
     runtime.append(sheet, event({ contentHash: "b".repeat(64), fileId: "file-a" }));
     const state = runtime.project(runtime.read(sheet, "tok-1"));
     assert.equal(state.state, "requires_review", "Metadatos divergentes del mismo token quedan en revisión");
