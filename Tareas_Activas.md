@@ -972,3 +972,10 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] `AdminDeleteImageActivityOutsideLock` 6/6; `AdminImageTrashLifecycle` 40/40.
 - [x] CI `44653097187` SUCCESS: 208 suites, 2,620 pruebas, 0 fallos; health read-only `44653097327` SUCCESS.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. La operación Drive de papelera requiere una tarea posterior de reserva/compensación para salir del lock.
+
+
+### P1 — ADMIN restauración desde papelera: actividad fuera del lock (2026-11-20)
+- [x] Diferir actividad Coordinator y logging después de liberar ScriptLock; conservar restauración Drive, verificación y rollback de historial actuales.
+- [x] Preservar respuesta idempotente cuando el archivo ya está restaurado. AdminRestoreImageActivityOutsideLock 6/6; AdminImageTrashLifecycle 40/40.
+- [x] CI 44653303076 SUCCESS: 209 suites, 2,626 pruebas, 0 fallos; health read-only 44653303269 SUCCESS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Sin despliegue ni cambios productivos.
