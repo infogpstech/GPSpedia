@@ -531,3 +531,11 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Pruebas `AdminCatalogPublicationIsolation` 6/6; `CatalogChangeFeed` cubre ADMIN versionado, legacy y stale; `SharedMutationCoordinator` cubre batch y reintentos idempotentes versionados. CI `44649098649` SUCCESS; health read-only `44649098541` SUCCESS.
 - Commits principales: ADMIN `59ba42e5648024eb751fc0b3157fc8d0f17d36bc`; Coordinator `5e519d1a6d934b311e54c3a62f91597fed5557dd`; prueba `88183785777a8d0d6f14ac7febbbdcb222cc7d05`; runner `6fcb310f9f317fa42dcf6e13b0e4cd743107e605`; contratos de feed/reintentos `135fba1959be6e25cb6aaf58a421e6bb87e1305a` y `6cc528a8914641051737024bf022cc46706b5304`.
 - No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+## P1 — ADMIN movimiento de imagen: actividad post-commit fuera del ScriptLock (2026-11-20)
+- En `handleMoveReplacedImage`, tras confirmar el movimiento Drive y persistir/verificar metadata del inventario, ahora se prepara el evento de actividad y el mensaje de logging. Ambos se ejecutan después del `finally` que libera ScriptLock; la escritura/rollback de Drive y metadata mantienen el comportamiento transaccional anterior.
+- El camino donde la imagen ya está en la carpeta destino conserva su respuesta y no registra un movimiento inexistente. Los errores de la operación principal siguen propagándose; el helper de actividad conserva su contrato best-effort.
+- `AdminMoveImageActivityOutsideLock` 7/7 PASS. CI `44652254166` SUCCESS: 206 suites, 2,603 pruebas aprobadas, 0 fallos; health read-only `44652254131` SUCCESS. Sintaxis de módulos modificados aprobada por CI.
+- Commits: implementación `4c9a92583d10f4fba04bf49affe548c166500dd9`, prueba `ad57bf26b6c9da5625c2732aacf2dd9ccc556242`, runner `05acd964a2b3ca112ee241f8820bc8cb2565fbab`.
+- No se desplegó Apps Script ni se modificaron datos productivos. La llamada Drive move/rollback continúa dentro de la sección crítica porque su seguridad depende de la referencia y metadata del inventario; requiere un diseño de reserva y revalidación antes de sacarla.
