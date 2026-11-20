@@ -138,3 +138,10 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - CATALOG valida y proyecta `OP-YEAR-` únicamente con actor `SYSTEM:FEEDBACK_YEAR`. Umbral de tres votos verificados y exclusión de anónimos conservados.
 - Pruebas: FeedbackYearApplicationAppendOnly 4/4; SuggestYearVoteThreshold 7/7; CI 44834891294 SUCCESS: 238 suites, 2963 pruebas, 0 fallos; health read-only SUCCESS. No se desplegó FEEDBACK/CATALOG ni se modificaron recursos productivos.
 - P0 permanece abierto: reducir ScriptLock global de FEEDBACK para reportes, sugerencias, likes, PyS, tutoriales, contacto y asignador secuencial de IDs; después ejecutar Beta AUG-159/AUG-160.
+
+
+## 2026-11-20 — FEEDBACK contacto fuera del lock global
+
+- `handleSendContactForm` valida y limita frecuencia sin retener ScriptLock. `getNextFormulaBasedId_` reserva el ID en su sección crítica breve; la fila completa se anexa con `appendRow`, se verifica por ID y se formatea después.
+- Pruebas `FeedbackContactWriteNoGlobalLock` 2/2 y `FeedbackLockFastFail` PASS. CI `44835219987` SUCCESS: 239 suites, 2965 pruebas aprobadas, 0 fallos. Health read-only SUCCESS. Sin despliegue FEEDBACK ni cambios productivos.
+- P0 sigue abierto: reducir lock global en `reportProblem`, `suggestCutChange`, `recordLike`, PyS, tutoriales y otras mutaciones. Mantener el lock breve del asignador secuencial mientras siga siendo necesario.
