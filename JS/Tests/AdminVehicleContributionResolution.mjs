@@ -54,4 +54,47 @@ test("corrección registra payload nuevo y mantiene el vínculo histórico",()=>
 });
 assert.ok(admin.includes("case 'resolveVehicleContributionCandidate':"));
 assert.ok(admin.includes('"resolveVehicleContributionCandidate"'));
+
+function buildFieldRuntime(target) {
+ const headers=["eventId","opId","vehicleId","operationHash","kind","payloadJson","actorId","actorName","createdAt","status","supersedesEventId"];
+ const rows=[headers.slice(),[target.eventId,"OP-ADMIN-FIELD-OLD","101","a".repeat(64),"vehicle_update",JSON.stringify(target.payload),"DEV-1","Editor","2026-11-20T10:00:00.000Z","accepted",target.sourceEventId||""]];
+ let uuid=0;
+ const sheet={getLastRow:()=>rows.length,getLastColumn:()=>11,getRange(row,col,count=1,width=1){return{
+  getDisplayValues:()=>Array.from({length:count},(_,i)=>(rows[row-1+i]||[]).slice(col-1,col-1+width).map(v=>String(v??"")),
+  getValues:()=>Array.from({length:count},(_,i)=>(rows[row-1+i]||[]).slice(col-1,col-1+width))
+ };},appendRow(row){rows.push(row.slice());}};
+ const spreadsheet={getSheetByName:name=>name==="AportesVehiculo"?sheet:null};
+ const utilities={DigestAlgorithm:{SHA_256:"SHA-256"},Charset:{UTF_8:"UTF-8"},computeDigest:()=>Array(32).fill(7),getUuid:()=>"field-resolution-"+(++uuid)};
+ const fn=new Function("withReplacedImagesSchemaLock_","getSpreadsheet","ADMIN_VEHICLE_CONTRIBUTIONS_SHEET_NAME_","ADMIN_VEHICLE_CONTRIBUTIONS_HEADERS_","Utilities","SpreadsheetApp",
+  extractFunction(admin,"handleResolveVehicleContributionCandidate_")+";return handleResolveVehicleContributionCandidate_;")(
+  callback=>callback(),()=>spreadsheet,"AportesVehiculo",headers,utilities,{flush(){}});
+ return{fn,rows};
+}
+test("corrección de conflicto de campo supersede la versión fuente, no el candidato",()=>{
+ const targetId="EV-FIELD-CANDIDATE-123",sourceId="EV-CURRENT-SOURCE-123";
+ const r=buildFieldRuntime({eventId:targetId,sourceEventId:"EV-BASE-SOURCE-123",
+  payload:{fieldName:"modelo",value:"Corolla Y",expectedCurrentValue:"Corolla",currentValue:"Corolla X",currentSourceEventId:sourceId}});
+ const corrected={fieldName:"modelo",value:"Corolla Z",expectedCurrentValue:"Corolla X",currentValue:"Corolla X",currentSourceEventId:sourceId};
+ const result=r.fn({eventId:targetId,requestId:"request-field-12345678",decision:"correct",correctedPayload:corrected},actor);
+ assert.equal(result.status,"success");assert.equal(r.rows[2][4],"vehicle_update");assert.equal(r.rows[2][10],sourceId);
+ const saved=JSON.parse(r.rows[2][5]);assert.equal(saved.resolvesCandidateEventId,targetId);assert.equal(saved.expectedCurrentValue,"Corolla X");
+});
+test("descartar conflicto de campo añade tombstone auditable para el candidato",()=>{
+ const targetId="EV-FIELD-CANDIDATE-124",sourceId="EV-BASE-SOURCE-124";
+ const r=buildFieldRuntime({eventId:targetId,sourceEventId,
+  payload:{fieldName:"modelo",value:"Corolla Y",expectedCurrentValue:"Corolla",currentValue:"Corolla X",currentSourceEventId:"EV-CURRENT-SOURCE-124"}});
+ const result=r.fn({eventId:targetId,requestId:"request-field-22345678",decision:"discard"},actor);
+ assert.equal(result.status,"success");assert.equal(r.rows[2][9],"retracted");assert.equal(r.rows[2][10],sourceId);
+ assert.equal(JSON.parse(r.rows[2][5]).resolvesCandidateEventId,targetId);
+});
+test("doble resolución de campo se bloquea por resolvesCandidateEventId",()=>{
+ const targetId="EV-FIELD-CANDIDATE-125",sourceId="EV-BASE-SOURCE-125";
+ const r=buildFieldRuntime({eventId:targetId,sourceEventId,
+  payload:{fieldName:"modelo",value:"Corolla Y",expectedCurrentValue:"Corolla",currentValue:"Corolla X",currentSourceEventId:"EV-CURRENT-SOURCE-125"}});
+ const request={eventId:targetId,requestId:"request-field-32345678",decision:"discard"};
+ r.fn(request,actor);
+ assert.throws(()=>r.fn({...request,requestId:"request-field-42345678"},actor),e=>e.code==="CONTRIBUTION_ALREADY_RESOLVED");
+ assert.equal(r.rows.length,3);
+});
+
 console.log(passed+"/"+passed+" PASS");
