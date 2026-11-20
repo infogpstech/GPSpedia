@@ -1355,6 +1355,9 @@ function doPostInternal_(e) {
             case 'previewCortesImageOrganizer':
                 response = handlePreviewCortesImageOrganizer_(payload, logMessage, developerContext);
                 break;
+            case 'getCortesImageOrganizerOperations':
+                response = handleGetCortesImageOrganizerOperations_(payload, developerContext);
+                break;
             case 'applyCortesImageOrganizer':
                 response = handleApplyCortesImageOrganizer_(payload, logMessage, developerContext);
                 break;
@@ -3956,6 +3959,71 @@ function loadCortesOrganizerOperationLedger_(operationId) {
     return record;
 }
 
+const CORTES_ORGANIZER_LEDGER_MAX_TERMINAL_ = 200;
+const CORTES_ORGANIZER_LEDGER_MAX_TOTAL_ = 250;
+const CORTES_ORGANIZER_LEDGER_RETENTION_MS_ = 180 * 24 * 60 * 60 * 1000;
+
+function pruneCortesOrganizerOperationLedger_(properties, nowValue) {
+    const now = Number(nowValue) || Date.now();
+    const all = properties.getProperties();
+    const entries = [];
+    Object.keys(all).forEach(key => {
+        if (!key.startsWith(CORTES_ORGANIZER_LEDGER_PREFIX_)) return;
+        try {
+            const record = JSON.parse(all[key]);
+            if (record && record.operationId && ["complete", "rolled_back"].includes(record.status)) {
+                entries.push({ key, updatedAt: Number(record.updatedAt) || 0 });
+            }
+        } catch (error) {
+            // Un registro corrupto se conserva para revisión; no se elimina automáticamente.
+        }
+    });
+    const remove = new Set(entries.filter(item => now - item.updatedAt > CORTES_ORGANIZER_LEDGER_RETENTION_MS_).map(item => item.key));
+    let remaining = Object.keys(all).filter(key => key.startsWith(CORTES_ORGANIZER_LEDGER_PREFIX_) && !remove.has(key)).length;
+    const terminal = entries.filter(item => !remove.has(item.key)).sort((a, b) => a.updatedAt - b.updatedAt);
+    while (terminal.length && (terminal.length > CORTES_ORGANIZER_LEDGER_MAX_TERMINAL_ || remaining > CORTES_ORGANIZER_LEDGER_MAX_TOTAL_)) {
+        const oldest = terminal.shift();
+        if (remove.has(oldest.key)) continue;
+        remove.add(oldest.key);
+        remaining--;
+    }
+    remove.forEach(key => properties.deleteProperty(key));
+    if (remaining >= CORTES_ORGANIZER_LEDGER_MAX_TOTAL_) {
+        throw new Error("El ledger Safe Apply alcanzó su capacidad segura; revisa operaciones pendientes antes de iniciar otra.");
+    }
+    return { removed: remove.size, remaining };
+}
+
+function getCortesOrganizerOperationLedgerPage_(properties, ownerId, offsetValue, limitValue) {
+    const owner = String(ownerId || "");
+    const offset = Number.isInteger(Number(offsetValue)) && Number(offsetValue) >= 0 ? Number(offsetValue) : 0;
+    const limit = Number.isInteger(Number(limitValue)) && Number(limitValue) > 0 ? Math.min(Number(limitValue), 50) : 25;
+    const all = properties.getProperties();
+    const records = [];
+    Object.keys(all).forEach(key => {
+        if (!key.startsWith(CORTES_ORGANIZER_LEDGER_PREFIX_)) return;
+        try {
+            const record = JSON.parse(all[key]);
+            if (!record || record.ownerId !== owner || !record.operationId) return;
+            records.push({
+                operationId: String(record.operationId), fileId: String(record.fileId || ""),
+                auditId: String(record.auditId || ""), status: String(record.status || ""),
+                sourceFolderPath: String(record.sourceFolderPath || ""), sourceName: String(record.sourceName || ""),
+                targetFolderPath: String(record.targetFolderPath || ""), targetName: String(record.targetName || ""),
+                updatedAt: Number(record.updatedAt) || 0, completedAt: Number(record.completedAt) || 0,
+                rolledBackAt: Number(record.rolledBackAt) || 0,
+                error: String(record.error || "").slice(0, 900)
+            });
+        } catch (error) {}
+    });
+    records.sort((a, b) => b.updatedAt - a.updatedAt || a.operationId.localeCompare(b.operationId));
+    return {
+        total: records.length, offset, limit,
+        operations: records.slice(offset, offset + limit),
+        nextOffset: offset + limit < records.length ? offset + limit : null
+    };
+}
+
 function saveCortesOrganizerOperationLedger_(record) {
     if (!record || !record.operationId || !record.fileId || !record.manifestDigest) {
         throw new Error("No se puede persistir una operación Safe Apply sin identidad completa.");
@@ -3964,6 +4032,7 @@ function saveCortesOrganizerOperationLedger_(record) {
     if (serialized.length > 8000) throw new Error("El registro durable Safe Apply supera el límite seguro de persistencia.");
     const properties = PropertiesService.getScriptProperties();
     const key = getCortesOrganizerLedgerKey_(record.operationId);
+    if (!properties.getProperty(key)) pruneCortesOrganizerOperationLedger_(properties, Date.now());
     properties.setProperty(key, serialized);
     if (properties.getProperty(key) !== serialized) {
         throw new Error("No se pudo verificar la persistencia durable de Safe Apply.");
@@ -4316,6 +4385,16 @@ function handleRollbackCortesImageOrganizer_(payload, logMessage, developerConte
         " operaciones revertidas; " + result.results.filter(item => !["rolled_back", "already_rolled_back"].includes(item.status)).length +
         " requieren revisión.");
     return result;
+}
+
+function handleGetCortesImageOrganizerOperations_(payload, developerContext) {
+    const ownerId = String(developerContext && developerContext.userId || "").trim();
+    if (!ownerId) throw new Error("El historial Safe Apply requiere una sesión Desarrollador verificada.");
+    const page = getCortesOrganizerOperationLedgerPage_(
+        PropertiesService.getScriptProperties(), ownerId,
+        payload && payload.offset, payload && payload.limit
+    );
+    return Object.assign({ status: "success", writePerformed: false }, page);
 }
 
 function handleApplyCortesImageOrganizer_(payload, logMessage, developerContext) {
