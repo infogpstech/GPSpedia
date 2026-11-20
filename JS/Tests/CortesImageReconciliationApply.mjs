@@ -23,8 +23,8 @@ function createHarness(options={}) {
  const formulas=new Map();
  const cell=(row,column)=>({getValue:()=>values[row-1][column-1],getFormula:()=>formulas.get(row+":"+column)||"",setValue:value=>{values[row-1][column-1]=value;},clearContent:()=>{values[row-1][column-1]="";}});
  const sheet={getLastRow:()=>2,getRange:(row,column,numRows,numColumns)=>numRows!==undefined&&numColumns!==undefined?{getValues:()=>values.slice(row-1,row-1+numRows).map(line=>line.slice(column-1,column-1+numColumns))}:cell(row,column)};
- let released=false,previewCalls=0,activityCalls=[],backupChecks=0,cacheRemovals=[];
- const lock={waitLock:()=>{},releaseLock:()=>{released=true;}},LockService={getScriptLock:()=>lock};
+ let released=false,locked=false,tryLockCalls=0,logCalls=0,previewCalls=0,activityCalls=[],backupChecks=0,cacheRemovals=[];
+ const lock={hasLock:()=>locked,waitLock:()=>{locked=true;},tryLock(timeout){assert.equal(timeout,0);tryLockCalls++;if(options.lockReacquireFailure)return false;locked=true;return true;},releaseLock:()=>{released=true;locked=false;}},LockService={getScriptLock:()=>lock};
  const SHEET_NAMES={CORTES:"Cortes"};
  const COLS_CORTES={id:1,imagenVehiculo:9,imgCorte1:10,imgCorte2:11,imgCorte3:12,imgApertura:13,imgCableAlimen:14,imgCableAlimen2:15,imgCableAlimen3:16};
  const SpreadsheetApp={flush:()=>{}},getSpreadsheet=()=>({getSheetByName:name=>name==="Cortes"?sheet:null});
@@ -35,27 +35,28 @@ function createHarness(options={}) {
  const loadDriveAuditSeenIds_=()=>({fileIds:metadata.map(item=>item.fileId)});
  const loadDriveAuditFileMetadata_=()=>metadata;
  const handlePreviewCortesImageReconciliation_=payload=>{previewCalls++;assert.deepEqual(payload.files,[{fileId}]);assert.equal(payload.auditId,auditId);return {writePerformed:false,manifestDigest:options.previewDigest||digest,missingReferenceCheckStatus:"verified",missingReferences:options.missingReferences||[],missingReferenceCount:options.missingReferenceCount===undefined?(options.missingReferences||[]).length:options.missingReferenceCount,results:[{status:"matched",fileId,fileName:"same.png",target:{row:2,column:9,vehicleId:"V-001",field:"imagenVehiculo",currentValue:"",hasFormula:false},proposedUrl:url}]};};
- const recordImageAdministrationActivity=(context,action,id,details)=>{activityCalls.push({action,id,details});if(options.activityFailure&&action==="cortes_image_reconciliation_applied"){if(options.externalChange)values[1][8]="https://manual.example/changed";return false;}return true;};
+ const recordImageAdministrationActivity=(context,action,id,details)=>{assert.equal(locked,false,"La actividad Coordinator debe ejecutarse sin ScriptLock");activityCalls.push({action,id,details});if(options.activityFailure&&action==="cortes_image_reconciliation_applied"){if(options.externalChange)values[1][8]="https://manual.example/changed";return false;}return true;};
  const backupId="backup-file-id-0000000000000001";
  const verifyImageReconciliationBackup_=(id,context)=>{backupChecks++;if(id!==backupId||!context||context.userId!=="DEV-1"||options.backupFailure)throw new Error("respaldo no válido");return {backupId:id,backupName:"GPSpedia_DB_BACKUP_test",fingerprint:"b".repeat(64)};};
  const CacheService={getScriptCache:()=>({remove:key=>cacheRemovals.push(key)})};
  const getImageReconciliationBackupCacheKey=userId=>"CORTES_IMAGE_RECONCILIATION_BACKUP_"+userId;
- const factory=new Function("LockService","handlePreviewCortesImageReconciliation_","getSpreadsheet","SHEET_NAMES","COLS_CORTES","SpreadsheetApp","recordImageAdministrationActivity","loadDriveAuditServerState_","getLatestDriveAuditIdForUser_","loadDriveAuditSeenIds_","loadDriveAuditFileMetadata_","ADMIN_SERVICE_VERSION","verifyImageReconciliationBackup_","CacheService","getImageReconciliationBackupCacheKey",
+ const runAdminDriveWorkOutsideScriptLock_=new Function(extract("runAdminDriveWorkOutsideScriptLock_")+"\nreturn runAdminDriveWorkOutsideScriptLock_;")();
+ const factory=new Function("LockService","runAdminDriveWorkOutsideScriptLock_","handlePreviewCortesImageReconciliation_","getSpreadsheet","SHEET_NAMES","COLS_CORTES","SpreadsheetApp","recordImageAdministrationActivity","loadDriveAuditServerState_","getLatestDriveAuditIdForUser_","loadDriveAuditSeenIds_","loadDriveAuditFileMetadata_","ADMIN_SERVICE_VERSION","verifyImageReconciliationBackup_","CacheService","getImageReconciliationBackupCacheKey",
   validatorSource+"\n"+countSource+"\n"+duplicateSource+"\n"+handlerSource+"\nreturn handleApplyCortesImageReconciliation_;");
- const handler=factory(LockService,handlePreviewCortesImageReconciliation_,getSpreadsheet,SHEET_NAMES,COLS_CORTES,SpreadsheetApp,recordImageAdministrationActivity,loadDriveAuditServerState_,getLatestDriveAuditIdForUser_,loadDriveAuditSeenIds_,loadDriveAuditFileMetadata_,"2.7.1",verifyImageReconciliationBackup_,CacheService,getImageReconciliationBackupCacheKey);
+ const handler=factory(LockService,runAdminDriveWorkOutsideScriptLock_,handlePreviewCortesImageReconciliation_,getSpreadsheet,SHEET_NAMES,COLS_CORTES,SpreadsheetApp,recordImageAdministrationActivity,loadDriveAuditServerState_,getLatestDriveAuditIdForUser_,loadDriveAuditSeenIds_,loadDriveAuditFileMetadata_,"2.7.1",verifyImageReconciliationBackup_,CacheService,getImageReconciliationBackupCacheKey);
  const payload={confirmed:true,auditId,backupId,manifestDigest:digest,approved:[approval]};
- return {handler,payload,values,activityCalls,cacheRemovals,get backupChecks(){return backupChecks;},get released(){return released;},get previewCalls(){return previewCalls;}};
+ return {handler,payload,values,activityCalls,cacheRemovals,get backupChecks(){return backupChecks;},get released(){return released;},get previewCalls(){return previewCalls;},get locked(){return locked;},get tryLockCalls(){return tryLockCalls;},get logCalls(){return logCalls;},logMessage(){assert.equal(locked,false,"El logger debe ejecutarse sin ScriptLock");logCalls++;}};
 }
 let passed=0;
 function testCase(name,fn){fn();passed++;console.log("PASS "+name);}
 testCase("aplica una propuesta aprobada y verifica el conteo antes/después",()=>{
- const h=createHarness(),result=h.handler(h.payload,()=>{},{userId:"DEV-1"});
+ const h=createHarness(),result=h.handler(h.payload,()=>h.logMessage(),{userId:"DEV-1"});
  assert.equal(result.status,"success");assert.equal(result.appliedCount,1);
  assert.equal(result.beforeCount,0);assert.equal(result.afterCount,1);
  assert.equal(h.values[1][8],url);assert.equal(h.previewCalls,1);assert.equal(h.released,true);
  assert.equal(h.backupChecks,1);assert.equal(result.backupId,h.payload.backupId);
  assert.equal(h.cacheRemovals.length,1);
- assert.equal(h.activityCalls[0].action,"cortes_image_reconciliation_applied");
+ assert.equal(h.activityCalls[0].action,"cortes_image_reconciliation_applied");assert.equal(h.logCalls,1);assert.equal(h.locked,false);
  assert.ok(h.activityCalls[0].details.includes(h.payload.backupId));
 });
 testCase("rechaza digest vencido antes de escribir y libera el bloqueo",()=>{
