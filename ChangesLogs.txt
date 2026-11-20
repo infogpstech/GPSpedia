@@ -17,3 +17,11 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - Las imágenes pendientes no se pueden marcar en uso ni descargar/mover/borrar desde la biblioteca. Los descartados solo se pueden descargar o enviar a papelera si el escáner global confirma cero referencias. El candidato sigue protegido por AportesVehiculo/ImageUploadEvents.
 - Drive metadata se consulta fuera del lock; el lock de esquema solo cubre la escritura idempotente en la biblioteca. La sincronización de resolución se ejecuta después de liberar el lock de AportesVehiculo.
 - Pruebas: AdminReplacedImagesIntegrity 56/56; ReplacedImagesLibraryUX 14/14; AdminVehicleContributionCandidates 6/6; CI 44832283278 SUCCESS: 237 suites, 2943 pruebas, 0 fallos; Health read-only SUCCESS. Pages en cola al registrar.
+
+
+2026-11-20 — FEEDBACK y candidatos WRITE: seguridad de IDs, visibilidad de imágenes y conflictos tardíos
+- JS/Frontend/ui.js: el reportId del formulario ahora usa crypto.randomUUID() o crypto.getRandomValues(24 bytes); no recurre a Math.random. El ID estable se mantiene durante los reintentos del mismo modal.
+- ADMIN: las tarjetas de candidatos muestran vista previa y enlace a la imagen adjunta de cortes, apertura, alimentación y campos de imagen vehicle_update. Solo aceptan URL canónica https://drive.google.com/file/d/{id}/view; enlace con target=_blank, rel=noopener noreferrer e imagen con referrerPolicy no-referrer.
+- completeVehicleExpansionSave_: el estado candidateReviewPending de WRITE prevalece sobre un refresco CATALOG que todavía no muestre el candidato. Si el refresco falla, se informa que el aporte sigue pendiente y no se anuncia como aplicado.
+- Pruebas: AdminVehicleContributionCandidateImagePreview 8/8; AdminVehicleFieldVersioning 8/8; AdminVehicleFieldVersioningContract 7/7. CI 44833154077 SUCCESS: 237 suites, 2951 pruebas, 0 fallos; node --check PASS. Health read-only se verifica por separado; no se desplegó Apps Script.
+- Auditoría §15: el ScriptLock global FEEDBACK sigue protegiendo asignación numérica y lectura-deduplicación-escritura de reportes/sugerencias/aplicaciones de año. No se retiró sin reemplazo seguro; queda tarea explícita para migrar a journal append-only sin romper IDs ni contratos.
