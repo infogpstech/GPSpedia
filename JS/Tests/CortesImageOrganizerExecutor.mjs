@@ -41,7 +41,16 @@ function fixture(options = {}) {
     const events = [];
     const adapters = {
         loadLedger: id => ledger.get(id) || null,
-        saveLedger: record => { ledger.set(record.operationId, structuredClone(record)); events.push("ledger:" + record.status); },
+        saveLedger: record => {
+            if (options.failSaveOnce && record.status === options.failSaveStatus) {
+                options.failSaveOnce = false;
+                const error = new Error("ledger write contention");
+                error.code = "ORGANIZER_LEDGER_BUSY";
+                throw error;
+            }
+            ledger.set(record.operationId, structuredClone(record));
+            events.push("ledger:" + record.status);
+        },
         reserveLedger: (record, allowedStatuses) => {
             if (options.failReserve) {
                 const error = new Error("ledger contention");
@@ -192,6 +201,24 @@ run("la contención durante rollback conserva el estado completo y no revierte",
     assert.equal(f.ledger.get(operation.operationId).status, before.status);
     assert.equal(f.state.folderPath, operation.targetFolderPath);
 });
+run("reconcilia el movimiento aplicado si el guardado final del ledger sufre contención", () => {
+    const f = fixture({ failSaveStatus: "complete", failSaveOnce: true });
+    const result = execute([operation], "developer-1", f.adapters);
+    assert.equal(result.results[0].status, "applied");
+    assert.equal(f.state.folderPath, operation.targetFolderPath);
+    assert.equal(f.ledger.get(operation.operationId).status, "complete");
+    assert.equal(f.events.filter(event => event.startsWith("move:")).length, 1);
+});
+run("reconcilia el rollback si el guardado final sufre contención", () => {
+    const f = fixture();
+    execute([operation], "developer-1", f.adapters);
+    f.options.failSaveStatus = "rolled_back";
+    f.options.failSaveOnce = true;
+    const result = rollback([operation.operationId], "developer-1", f.adapters);
+    assert.equal(result.results[0].status, "rolled_back");
+    assert.equal(f.state.folderPath, operation.currentFolderPath);
+    assert.equal(f.ledger.get(operation.operationId).status, "rolled_back");
+});
 run("el lock del ledger libera siempre y falla con estado retryable", () => {
     let held = false, releases = 0;
     const lock = {
@@ -216,4 +243,4 @@ run("rechaza IDs duplicados o inválidos en rollback", () => {
     assert.throws(() => rollback([operation.operationId, operation.operationId], "developer-1", f.adapters), /inválidos o repetidos/i);
     assert.throws(() => rollback(["bad"], "developer-1", f.adapters), /inválidos o repetidos/i);
 });
-console.log("CortesImageOrganizerExecutor: 15/15 PASS");
+console.log("CortesImageOrganizerExecutor: 17/17 PASS");
