@@ -1193,3 +1193,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-20 · ADMIN eliminación definitiva de imágenes] `handlePermanentlyDeleteReplacedImage` ahora libera ScriptLock tras confirmar el estado `eliminada` y antes de registrar actividad Coordinator/logging, tanto en la reconciliación de archivos ausentes (404) como en la eliminación verificada. Se evita la doble liberación del lock. Pruebas `AdminPermanentDeleteActivityOutsideLock` 6/6 y `AdminImageTrashLifecycle` 40/40. CI `44653582395` SUCCESS: 210 suites, 2,632 pruebas aprobadas, 0 fallos; health read-only `44653582292` SUCCESS. Sin despliegue Apps Script ni cambios productivos.
+
+
+[2026-11-20 · ADMIN proteger imagen en uso] `handleMarkReplacedImageInUse` verifica Drive/MIME/papelera/carpeta fuera del ScriptLock y revalida tipo/estado/Drive ID antes de cambiar el historial a `en_uso`; actividad Coordinator y logging quedan post-lock. Pruebas `AdminMarkImageInUseDrivePreflightOutsideLock` 10/10 y `AdminReplacedImagesIntegrity` 56/56. CI `44653864364` SUCCESS: 211 suites, 2,642 pruebas aprobadas, 0 fallos; health read-only `44653864334` SUCCESS. Sin despliegue Apps Script ni cambios productivos.
