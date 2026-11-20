@@ -3981,7 +3981,7 @@ function pruneCortesOrganizerOperationLedger_(properties, nowValue) {
     const remove = new Set(entries.filter(item => now - item.updatedAt > CORTES_ORGANIZER_LEDGER_RETENTION_MS_).map(item => item.key));
     let remaining = Object.keys(all).filter(key => key.startsWith(CORTES_ORGANIZER_LEDGER_PREFIX_) && !remove.has(key)).length;
     const terminal = entries.filter(item => !remove.has(item.key)).sort((a, b) => a.updatedAt - b.updatedAt);
-    while (terminal.length && (terminal.length > CORTES_ORGANIZER_LEDGER_MAX_TERMINAL_ || remaining > CORTES_ORGANIZER_LEDGER_MAX_TOTAL_)) {
+    while (terminal.length && (terminal.length > CORTES_ORGANIZER_LEDGER_MAX_TERMINAL_ || remaining >= CORTES_ORGANIZER_LEDGER_MAX_TOTAL_)) {
         const oldest = terminal.shift();
         if (remove.has(oldest.key)) continue;
         remove.add(oldest.key);
