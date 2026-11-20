@@ -1257,3 +1257,6 @@ Se implementó agrupación de resultados de Cortes por categoría/marca/modelo, 
 
 
 [2026-11-20 · ADMIN lectura acotada de IDs] `handleAddOrUpdateCut` ahora solicita exactamente `lastRowForLookup - 1` filas al leer desde la fila 2, evitando transferir una fila vacía adicional. Se conserva la revalidación bajo ScriptLock con snapshot de fila. `AdminExistingVehicleLookupPreflight` 10/10 PASS; CI `44763460378` SUCCESS (220 suites, 2,735 pruebas, 0 fallos); health read-only `44763460429` SUCCESS. Diff limitado a admin.js y su prueba. Sin despliegue ni cambios productivos.
+
+
+[2026-11-20 · ADMIN reutilización del snapshot Idempotencia] La primera búsqueda de opId en `handleAddOrUpdateCut` utiliza el snapshot leído bajo el mismo ScriptLock y evita una consulta dirigida redundante. `findRowByOpId` conserva revalidación por defecto para callbacks post-Drive/reacquisición y reconciliación. Se verificaron los escritores del ledger: `recordOpId` y migración operan bajo ScriptLock; `handleCheckOperation` solo lee. Pruebas `AdminIdempotencySnapshotReuse` 10/10 y `AdminLegacyOpIdSnapshotReuse` 10/10 PASS. CI `44764022976` SUCCESS (220 suites, 2,735 pruebas, 0 fallos); health `44764023135` SUCCESS. El primer CI falló por un extractor de test con firma antigua; corregido y repetido con éxito. Sin despliegue ni cambios productivos.
