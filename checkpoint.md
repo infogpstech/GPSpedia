@@ -643,3 +643,12 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - CI regresión `44708443965` SUCCESS; health de servicios `44708443686` SUCCESS (read-only); Pages `44708443338` SUCCESS.
 - Diff del commit confirmado: únicamente `JS/Services/admin.js`, `JS/Tests/CortesImageReconciliationApply.mjs`, `Tareas_Activas.md`, `checkpoint.md` y `ChangesLogs.txt`.
 - Rama de trabajo verificada en el commit funcional; rama base continúa en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+
+
+## Resolución — propuesta de lease para papelera ADMIN (2026-11-20)
+- La propuesta de sacar `setTrashed`, restauración y compensación del ScriptLock se evaluó y se cerró como decisión técnica, sin implementación.
+- La adenda del backlog del 2026-11-17 ya había diferido el patrón claim/reserva/commit a medición Beta por falta de evidencia de contención. La sección 15 de la normativa vigente exige simplificación y no justifica añadir leases por suposición.
+- No se elimina ni se debilita el lock actual de las operaciones destructivas. Reabrir solo si una medición Beta autorizada demuestra contención real y existe un diseño seguro compatible con normativa.
+- Prueba local aislada `AdminImageTrashLifecycle.mjs`: 41/41 PASS. Regresión global CI `44708443965`: 215 suites, 2,686 pruebas aprobadas, 0 fallos; health read-only `44708443686` SUCCESS; Pages `44708443338` SUCCESS.
+- Las tareas locales implementables del registro activo están cerradas. Lo restante requiere Beta autorizada: despliegues Apps Script, auditoría Drive/Spreadsheet real, medición de concurrencia entre deployments y revisión de Safe Apply. No se ejecutó despliegue ni se modificaron datos productivos.
+- Siguiente paso autorizado: ejecutar la secuencia inicial de `lista_beta_parte1.txt` (árbol limpio, fetch y pull --ff-only) y comenzar únicamente con auditoría/preview de solo lectura cuando se autorice el deployment aislado. No aplicar movimientos, renombrados ni eliminaciones.

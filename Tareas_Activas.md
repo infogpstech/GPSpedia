@@ -1039,7 +1039,8 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] `AdminImageTrashLifecycle` 41/41; `AdminDeleteImageActivityOutsideLock` 6/6; `AdminRestoreImageActivityOutsideLock` 6/6.
 - [x] CI `44661420739` SUCCESS: 215 suites, 2,684 pruebas, 0 fallos; health read-only `44661420823` SUCCESS.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Sin despliegue Apps Script ni cambios productivos.
-- [ ] Tarea posterior: diseñar lease/idempotencia para sacar setTrashed y compensación Drive del lock global manteniendo comprobación de referencias y reconciliación.
+- [x] Evaluación completada: no implementar la propuesta de lease/reserva para sacar `setTrashed` y su compensación del ScriptLock en esta fase local. La propuesta ya estaba diferida a medición Beta en la adenda del backlog del 2026-11-17; la sección 15 de NORMAS_DESAROLLO.md prioriza simplificación y no autoriza añadir leases ordinarias. No hay medición Beta que demuestre contención perjudicial en este flujo.
+- Estado de la evaluación: COMPLETADA. La propuesta de implementación queda DIFERIDA A MEDICIÓN BETA; se conservan sin cambios la mutación Drive, el rollback y la protección actuales. No se debilita el flujo destructivo.
 
 
 ### P1 — ADMIN conciliación de imágenes Cortes: verificación del respaldo fuera del lock (2026-11-20)
@@ -1049,3 +1050,12 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] `CortesImageReconciliationApply` 18/18 PASS; `CortesImageReconciliation` 34/34 PASS; parsing de `admin.js` PASS en runtime V8 aislado.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. CI `44708443965` SUCCESS; health read-only `44708443686` SUCCESS; Pages `44708443338` SUCCESS. No se desplegó Apps Script ni se modificaron datos productivos.
 - Nota: el preview completo (snapshot de destinos/referencias, auditoría Drive y ACL) permanece bajo lock; separarlo exige revalidar esos recursos y no se hará por suposición ni sin evidencia de contención. Medir en Beta autorizada antes de ampliar el cambio.
+
+
+### Resolución técnica — propuesta de lease para papelera ADMIN (2026-11-20)
+- Se contrastó la propuesta activa con la sección 15 de `NORMAS_DESAROLLO.md` y con la adenda de continuidad del backlog del 2026-11-17, que ya había diferido el diseño claim/reserva/commit hasta contar con mediciones Beta de contención.
+- No hay evidencia de medición que justifique el cambio, y mover `setTrashed`/restauración y compensación fuera de la sección crítica sin una reserva aprobada alteraría las garantías de concurrencia, idempotencia y rollback. No se introduce lease ni se retira protección existente.
+- La tarea de evaluación queda COMPLETADA; la implementación se mantiene DIFERIDA A MEDICIÓN BETA. Reabrir solo con evidencia de contención y una nueva revisión de diseño compatible con la normativa vigente.
+- `AdminImageTrashLifecycle.mjs`: 41/41 PASS en ejecución aislada local contra las fuentes actuales.
+- Regresión global CI `44708443965` SUCCESS: 215 suites, 2,686 pruebas aprobadas, 0 fallos. Health read-only `44708443686` SUCCESS; Pages `44708443338` SUCCESS.
+- Las demás casillas abiertas de `Tareas_Activas.md` requieren despliegue/entorno Beta, Script IDs, datos Drive/Spreadsheet o concurrencia real. No se despliega ni se accede a datos productivos sin autorización expresa.
