@@ -27,12 +27,12 @@ test("la búsqueda de VIN se deriva del mismo snapshot de encabezados",()=>{
 test("VIN duplicado se rechaza antes de ampliar o modificar columnas",()=>{
  const duplicate=ensure.indexOf("if (vinMatches.length > 1)");
  const insert=ensure.indexOf("sheet.insertColumnsAfter");
- const write=ensure.indexOf("sheet.getRange(1, targetColumns[index]).setValue");
+ const write=ensure.indexOf("sheet.getRange(1, targetColumns[0], 1, headerNames.length).setValues([headerNames])");
  assert.ok(duplicate>=0&&insert>duplicate&&write>duplicate);
 });
 test("AT:AV se reutiliza desde currentHeaders sin segunda lectura de encabezados",()=>{
  assert.ok(ensure.includes('const targetHeaders = [45, 46, 47].map(index => String(currentHeaders[index] || ""));'));
- assert.ok(!ensure.includes("getRange(1, 46, 1, 3)"));
+ assert.ok(!ensure.includes("getRange(1, 1, 1, lastColumn)", ensure.indexOf("const targetHeaders")));
 });
 test("las columnas sin encabezado se validan con una lectura contigua compartida",()=>{
  assert.ok(ensure.includes("const missingHeaderIndexes = [];"));
@@ -43,7 +43,11 @@ test("las columnas sin encabezado se validan con una lectura contigua compartida
 });
 test("la ampliación/reparación de columnas testigo se conserva",()=>{
  assert.ok(ensure.includes("if (maxColumns < 48) sheet.insertColumnsAfter(maxColumns, 48 - maxColumns);"));
- assert.ok(ensure.includes("sheet.getRange(1, targetColumns[index]).setValue(headerNames[index]);"));
+ assert.ok(ensure.includes("const headersNeedWrite = headerNames.some((name, index) =>"));
+ assert.ok(ensure.includes("if (headersNeedWrite) {"));
+ assert.ok(ensure.includes("sheet.getRange(1, targetColumns[0], 1, headerNames.length).setValues([headerNames]);"));
+ assert.equal((ensure.match(/setValues\(\[headerNames\]\)/g)||[]).length,1);
+ assert.equal((ensure.match(/targetColumns\[index\]\)\.setValue\(/g)||[]).length,0);
 });
 test("el helper devuelve el índice VIN calculado",()=>{
  assert.ok(ensure.includes("vinColumnIndex: vinColumnIndex"));
