@@ -59,6 +59,19 @@ test("localiza el ID del tutorial sin leer toda la hoja y conserva comparación 
     assert.equal(result.row[0], "TUT-abc123");
     assert.deepEqual(sheet.calls, [[2, 1, 1, 1], [2, 1, 1, 1], [2, 1, 1, 8]]);
 });
+test("el fallback de adaptadores sin TextFinder sigue leyendo solo la columna ID", () => {
+    const original = makeSheet([["tut-abc123", "Tema", "", "", "", "", "", "Ana"]]);
+    const sheet = {
+        getLastRow: original.getLastRow,
+        getLastColumn: original.getLastColumn,
+        getRange(...args) {
+            const range = original.getRange(...args);
+            return { getValue: range.getValue, getValues: range.getValues };
+        }
+    };
+    const result = findById(sheet, "tut-abc123");
+    assert.equal(result.rowIndex, 2);
+});
 test("rechaza IDs de tutorial duplicados después de normalizar mayúsculas", () => {
     const sheet = makeSheet([["tut-abc123"], ["TUT-ABC123"]]);
     assert.throws(() => findById(sheet, "tut-abc123"), /ID del tutorial aparece más de una vez/);
