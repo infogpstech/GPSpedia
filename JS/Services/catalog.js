@@ -381,9 +381,10 @@ function readVehicleContributionEvents_(spreadsheetRef) {
             const createdAt = String(row[8] || "").trim();
             const status = String(row[9] || "").trim().toLowerCase();
             const supersedesEventId = String(row[10] || "").trim();
+            const validContributionKind = ["cut", "opening", "feed", "vehicle"].includes(kind) ||
+                (kind === "vehicle_update" && Boolean(actorId) && opId.startsWith("OP-ADMIN-"));
             if (!eventId || !/^OP-[A-Za-z0-9_-]{1,100}$/.test(opId) || !vehicleId ||
-                !/^[a-f0-9]{64}$/.test(operationHash) ||
-                !["cut", "opening", "feed", "vehicle"].includes(kind) ||
+                !/^[a-f0-9]{64}$/.test(operationHash) || !validContributionKind ||
                 !createdAt || Number.isNaN(Date.parse(createdAt)) ||
                 !["accepted", "review", "retracted"].includes(status)) {
                 throw new Error(context + ": identidad, hash, tipo, fecha o estado inválido. No se proyectó el ledger.");
