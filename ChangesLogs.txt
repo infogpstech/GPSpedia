@@ -83,3 +83,10 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - `handleRecordLike` realiza preflight de vehículo/corte antes del ScriptLock y revalida dentro antes de modificar el contador.
 - `Cortes` se consulta por ID y `FeedbackLikes` por actor; se evita descargar las hojas completas. Se mantiene la sección crítica para evitar likes duplicados y pérdida de incrementos.
 - Nueva regresión `FeedbackLikePreflightOutsideLock`: 5/5 PASS. CI 44836655370 SUCCESS: 240 suites, 2973 pruebas, 0 fallos.
+
+
+2026-11-20 — FEEDBACK reportes/sugerencias: replay y búsquedas dirigidas
+- ReportId y suggestionOperationId ahora se buscan con `TextFinder` en las columnas específicas; solo se leen filas/celdas candidatas.
+- `handleSuggestCutChange` devuelve replays existentes antes de Drive/ScriptLock y vuelve a comprobar dentro del lock antes de crear. La limpieza de imágenes duplicadas ocurre después de liberar lock.
+- Regresiones 4/4, 6/6, 6/6, 5/5 y 1/1 PASS. CI 44837377505 SUCCESS: 243 suites, 2989 pruebas, 0 fallos; health read-only SUCCESS.
+- Los locks de creación se mantienen hasta migrar el almacenamiento de Feedbacks a journal/proyección; no se debilitó la deduplicación.
