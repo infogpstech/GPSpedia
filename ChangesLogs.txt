@@ -1178,3 +1178,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-20 · aislamiento ADMIN catálogo] Las publicaciones de catálogo ADMIN/Cortes individuales y batch ahora reservan `sourceVersion` bajo ScriptLock y hacen UrlFetch al Coordinator después de liberar. Los batches reservan un rango con una escritura y publican en chunks de 50. Coordinator admite ADMIN/Cortes, convierte snapshots legacy sin versión y versiones atrasadas en reset; fallos de lock/snapshot/red recuperan con reset. `AdminCatalogPublicationIsolation` 6/6; contratos de feed y reintento versionado cubiertos. CI `44649098649` SUCCESS; health read-only `44649098541` SUCCESS. Sin despliegue Apps Script ni cambios productivos.
+
+
+[2026-11-20 · ADMIN imagen reemplazada] En `handleMoveReplacedImage`, el registro de actividad de administración y el mensaje de logging se ejecutan después de liberar ScriptLock, una vez confirmados el movimiento Drive y la metadata del inventario. Se conserva el movimiento/rollback dentro de la sección crítica y el camino de carpeta idéntica. Prueba `AdminMoveImageActivityOutsideLock` 7/7. CI `44652254166` SUCCESS: 206 suites, 2,603 pruebas aprobadas, 0 fallos; health read-only `44652254131` SUCCESS. Sin despliegue Apps Script ni cambios productivos.
