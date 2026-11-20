@@ -78,3 +78,12 @@ Este documento fija la dirección de diseño, no declara implementada la soluci�
 - WRITE permite la clave `opId` en el payload, pero `buildSupplementaryInfoPlan_` no calcula ni valida una huella de operación y `handleAddSupplementaryInfoLocked` no consulta ni registra un ledger de idempotencia.
 - Por ello, un reintento después de perder la respuesta no recupera el resultado original: puede devolver conflicto porque el primer intento ya ocupó el espacio, aunque la escritura haya sido exitosa. La clave de carga Drive evita duplicar el archivo, pero no vuelve idempotente la mutación de texto/catálogo.
 - La implementación del ledger de aportes debe unificar idempotencia para corte, apertura y alimentación. El cliente debe conservar el mismo `opId` y contenido tras un timeout; el servidor debe devolver el resultado ya confirmado para el mismo hash y rechazar el mismo `opId` con contenido distinto.
+
+
+## Compatibilidad de catálogo y edición in-modal
+
+- El modal de detalle consume objetos de `getCatalogData` con campos fijos `tipoCorte1..3`, `apertura`, `cableAlimen..3` e imágenes. Por tanto, la proyección debe producir ese mismo contrato; no se debe obligar al frontend a conocer la estructura interna del ledger.
+- `handleGetCatalogData` usa la caché `catalog_data_v2`, pero la actualización posterior al aporte ya fuerza `getCatalogData({forceRefresh:true})`. La proyección se debe aplicar antes de guardar la nueva instantánea de catálogo, y las lecturas normales deben invalidarse/versión-controlarse para que no sobreviva una proyección antigua.
+- La edición in-modal de ADMIN usa `updateVehicleField` para campos de texto/modelo y `uploadAdminImage` para imágenes. Actualmente escribe directamente en `Cortes`; el texto usa `expectedCurrentValue` y el reemplazo de imagen mantiene su propio ledger compensatorio.
+- Cuando un campo visible provenga de un evento, la edición de desarrollador debe identificar el evento/version que está reemplazando. Debe crear un evento de sustitución o materializar de forma verificable el valor y marcar el evento previo como sustituido; no basta con escribir la columna heredada porque la proyección podría volver a mostrar el aporte anterior o duplicarlo.
+- La proyección debe incluir metadatos de origen (eventId y versión/huella por campo) para que el modal de desarrollador pueda enviar la precondición correcta. Los usuarios que agregan aportes no deben poder sobrescribir esos campos ni modificar eventos ajenos.
