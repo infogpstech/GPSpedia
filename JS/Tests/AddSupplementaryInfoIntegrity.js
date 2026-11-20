@@ -51,13 +51,13 @@ function runAddSupplementaryInfoIntegrityTests(sources) {
    run_(label+" persistencia verificada",function(){let values=Array(10).fill("");const range={setValues:function(v){values=v[0].slice();},getValues:function(){return[values.slice()];}};runtime.persist({getRange:function(){return range;}},2,Array(10).fill(""),["A"].concat(Array(9).fill("")));assert_(values[0]==="A");});
    run_(label+" rollback ante fallo de escritura",function(){let values=["old"].concat(Array(9).fill("")),calls=0;const range={setValues:function(v){calls++;values=v[0].slice();if(calls===1)throw Error("write");},getValues:function(){return[values.slice()];}};try{runtime.persist({getRange:function(){return range;}},2,["old"].concat(Array(9).fill("")),["new"].concat(Array(9).fill("")));throw Error("Debió fallar");}catch(e){assert_(e.code==="SUPPLEMENTARY_PERSISTENCE_FAILED"&&values[0]==="old"&&calls===2);}});
   }
-  run_(label+" el lock solo cubre la persistencia final",function(){
+  run_(label+" la carga y persistencia suplementaria no retienen locks",function(){
    const p=source.indexOf("function handleAddSupplementaryInfo(payload"),q=source.indexOf("function handleAddSupplementaryInfoLocked",p),block=source.slice(p,q);
    if(label==="WRITE"){
-    assert_(block.includes("tryLock(0)")&&block.includes("finally")&&block.includes("releaseLock"));
-    assert_(block.indexOf("prepareSupplementaryImageUploads_")<block.indexOf("tryLock(0)"));
+    assert_(!/tryLock|waitLock|getWriteContributionLock_/.test(block));
+    assert_(block.indexOf("prepareSupplementaryImageUploads_")<block.indexOf("handleAddSupplementaryInfoLocked"));
     const locked=source.slice(q,source.indexOf(String.fromCharCode(10)+"function ",q+10));
-    assert_(!/uploadImageToDrive|findOrCreateVehicleFolder|DriveApp/.test(locked));
+    assert_(!/uploadImageToDrive|findOrCreateVehicleFolder|DriveApp|tryLock|waitLock/.test(locked));
    }else assert_(block.includes("tryLock(0)")&&block.includes("finally")&&block.includes("releaseLock"));
   });
  });
