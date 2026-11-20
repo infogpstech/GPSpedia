@@ -817,3 +817,11 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Safe Apply permanece SIN IMPLEMENTAR. La tarea depende explícitamente de auditar ADMIN en Beta, generar una auditoría Drive nueva y revisar el preview completo (rutas, nombres, extensiones, referencias, ACL, duplicados y conflictos). No se realizaron movimientos, renombrados, borrados, restauraciones, despliegues ni cambios en Drive/Spreadsheet.
 - Preparación Beta documentada: verificar repo/rama/árbol limpio y sincronizar solo mediante `fetch` + `pull --ff-only` al inicio de `lista_beta_parte1.txt`; Coordinator primero y FEEDBACK después, según `Services/COORDINATOR_SETUP.md`. No se dispone en esta sesión de checkout local, clasp, Script IDs ni mecanismo autorizado de despliegue; por tanto no se inventaron IDs ni se ejecutaron operaciones remotas.
 - Siguiente tarea: habilitar/acceder al entorno Beta autorizado y verificar Script IDs/deployments; ejecutar auditoría y preview de solo lectura. Solo tras aprobar el manifiesto real, diseñar e implementar Safe Apply por lotes idempotentes con verificación, manifiesto y rollback.
+
+
+## Checkpoint — cobertura del constructor del organizador (2026-11-20)
+- HEAD de código verificado: `4f5a85065816d2277341cf1f7827c29d9dc2519b`; rama base protegida `d9acc68d889985c2e2f42fe3a02e502efc86ead1` intacta.
+- Se añadió `JS/Tests/CortesImageOrganizerTargets.mjs` y se registró en `RunServiceTests.mjs`; cubre 8 escenarios del constructor puro de destinos de Cortes/LogosMarca. CI `44768089834` SUCCESS: 221 suites, 2,743 pruebas, 0 fallos; suite nueva 8/8 PASS. Health read-only `44768090013` SUCCESS; Pages `44768089955` estaba en ejecución al registrar.
+- Primer intento falló por fixture que el clasificador bloqueó; se corrigió únicamente el dato de prueba y la repetición pasó. Sin cambios productivos.
+- La consolidación del backlog está en `Tareas_Activas.md`; no se reescribió historial. No se desplegó Apps Script ni se accedió/escribió Drive/Spreadsheet.
+- Siguiente: verificar resultado final de Pages; luego preparar Beta de solo lectura para auditar ADMIN, generar auditoría Drive nueva y revisar preview completo. Safe Apply no se implementará hasta aprobar ese preview real.
