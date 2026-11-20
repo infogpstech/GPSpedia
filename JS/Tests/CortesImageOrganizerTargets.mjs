@@ -68,7 +68,7 @@ caseOf("genera destinos para los ocho campos de Cortes y el logo", () => {
     const result = build([blank(), vehicle()], [blank(), blank()], logoRows, [blank(), blank()]);
     assert.equal(result.writePerformed, false);
     assert.equal(result.summary.targetCount, 9);
-    assert.equal(result.summary.candidateCount, 9);
+    assert.equal(result.summary.candidateCount, 9, JSON.stringify(result.targets.map(item => ({ sheetName: item.sheetName, field: item.field, status: item.status, reasons: item.reasons }))));
     assert.equal(result.summary.blockedCount, 0);
     const cut1 = result.targets.find(item => item.field === "imgCorte1");
     const cut2 = result.targets.find(item => item.field === "imgCorte2");
