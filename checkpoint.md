@@ -236,3 +236,12 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Pruebas: PyS 5/5; tutorial lookup 6/6; tutorial title update 5/5; pending video 6/6; opVideoId 5/5.
 - CI 44839134803 SUCCESS: 250 suites, 3028 pruebas, 0 fallos. Health read-only 44839135309 SUCCESS; Pages pendiente.
 - Locks de creación/actualización permanecen para unicidad e integridad; se redujo lectura dentro de las secciones críticas.
+
+
+## Checkpoint — actualización tutorial sin cambios (2026-11-20)
+
+- HEAD de código: `e4eb5e52aaf0100fb6dabe1b24deadc21e1c0d3c`.
+- `handleUpdateTutorialItem` hace preflight de solo lectura; si todos los campos ya coinciden, devuelve `alreadyUpdated` sin lock ni escritura. Si existe una diferencia, conserva el lock y repite lectura/validaciones antes de mutar.
+- Regresión `FeedbackTutorialUpdateNoopPreflight` 5/5 PASS. CI `44839560207` SUCCESS: 251 suites, 3033 pruebas aprobadas, 0 fallos. Health read-only `44839560225` SUCCESS.
+- No se desplegó Apps Script ni se modificaron datos productivos.
+- Pendiente: reducción segura de los locks FEEDBACK restantes, revisión/migración compatible de `WRITE/addVinToVehicle`, Beta AUG-159/AUG-160 y concurrencia real en recursos aislados.
