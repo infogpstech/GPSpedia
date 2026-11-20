@@ -7953,13 +7953,20 @@ function getReplacedImageCapabilities_(rep, schemaReady, referenceCheckStatus, r
     const isUnused = type === "sin_uso_detectado";
     const isCandidate = type === "candidata_aporte";
     const status = String(rep.estado || (isUnused ? "sin_uso_detectado" : "historica"));
+    const candidateCancelled = isCandidate && status === "cancelada";
+    const candidatePreviousStatus = String(rep.estado_previo_papelera || "");
     const referenceSafe = schemaReady && referenceCheckStatus === "verified" && Number(rep.active_reference_count || 0) === 0;
     const canManage = !isCandidate && referenceSafe && (isUnused ? status === "sin_uso_detectado" : ["historica", "restablecida"].includes(status));
-    const canTrash = !isCandidate && referenceSafe && (canManage || status === "requiere_revision");
-    const canRestoreFromTrash = !isCandidate && schemaReady && ["en_papelera", "requiere_revision"].includes(status);
-    const canPermanentlyDelete = !isCandidate && referenceSafe && ["en_papelera", "eliminacion_pendiente", "requiere_revision"].includes(status);
+    const canTrash = isCandidate ? candidateCancelled && referenceSafe : referenceSafe && (canManage || status === "requiere_revision");
+    const canRestoreFromTrash = isCandidate
+        ? schemaReady && status === "en_papelera" && candidatePreviousStatus === "cancelada"
+        : schemaReady && ["en_papelera", "requiere_revision"].includes(status);
+    const canPermanentlyDelete = isCandidate
+        ? referenceSafe && ["en_papelera", "eliminacion_pendiente"].includes(status) && candidatePreviousStatus === "cancelada"
+        : referenceSafe && ["en_papelera", "eliminacion_pendiente", "requiere_revision"].includes(status);
     const canRecover = !isCandidate && !isUnused && ["historica", "restablecida"].includes(status) && canManage;
-    const canDownload = !isCandidate && String(role || "").trim().toLowerCase() === "desarrollador" && referenceSafe && (isUnused ? status === "sin_uso_detectado" : ["historica", "restablecida"].includes(status));
+    const canDownload = String(role || "").trim().toLowerCase() === "desarrollador" && referenceSafe &&
+        (candidateCancelled || (!isCandidate && (isUnused ? status === "sin_uso_detectado" : ["historica", "restablecida"].includes(status))));
     const canMarkInUse = !isCandidate && status === "requiere_revision" && schemaReady && referenceCheckStatus === "verified";
     const displayType = isCandidate ? "Candidato de aporte" : isUnused ? "Sin uso detectado" : "Reemplazada";
     return { type, displayType, isUnused, isCandidate, status, referenceSafe, canManage, canMove: canManage, canTrash, canRestoreFromTrash, canPermanentlyDelete, canRecover, canDownload, canMarkInUse };
