@@ -994,3 +994,12 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] Diferir actividad Coordinator y logging hasta después del lock. AdminMarkImageInUseDrivePreflightOutsideLock 10/10; AdminReplacedImagesIntegrity 56/56.
 - [x] CI 44653864364 SUCCESS: 211 suites, 2,642 pruebas, 0 fallos; health read-only 44653864334 SUCCESS.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Sin despliegue ni cambios productivos.
+
+
+### P1 — ADMIN eliminación definitiva: preflight Drive fuera del lock (2026-11-20)
+- [x] Mover GET inicial Drive API, MIME, estado papelera y validación de carpeta Cortes fuera del ScriptLock.
+- [x] Readquirir con tryLock(0), revalidar tipo/estado/Drive ID y volver a comprobar referencias antes de continuar.
+- [x] Mantener reserva `eliminacion_pendiente`, DELETE y GET final bajo lock; reconciliar 404 y actividad post-lock.
+- [x] AdminPermanentDeleteDrivePreflightOutsideLock 9/9; AdminPermanentDeleteActivityOutsideLock 6/6; AdminImageTrashLifecycle 40/40.
+- [x] CI 44654436417 SUCCESS: 212 suites, 2,651 pruebas, 0 fallos; health read-only 44654436415 SUCCESS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Sin despliegue ni cambios productivos.
