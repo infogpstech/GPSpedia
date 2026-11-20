@@ -4052,8 +4052,19 @@ function executeCortesImageOrganizerManifest_(manifest, ownerId, adapters) {
         const result = { operationId: operation.operationId, fileId: operation.fileId, status: "pending" };
         let ledger = null;
         try {
-            ledger = adapters.loadLedger(operation.operationId);
-            if (ledger && ledger.ownerId !== ownerId) throw new Error("La operación pertenece a otra sesión Desarrollador.");
+            try { ledger = adapters.loadLedger(operation.operationId); }
+            catch (ledgerReadError) {
+                result.status = "needs_review";
+                result.message = "No se pudo leer el ledger durable: " + String(ledgerReadError && ledgerReadError.message || ledgerReadError);
+                results.push(result);
+                return;
+            }
+            if (ledger && ledger.ownerId !== ownerId) {
+                result.status = "blocked";
+                result.message = "La operación pertenece a otra sesión Desarrollador.";
+                results.push(result);
+                return;
+            }
             if (ledger && ledger.status === "complete") {
                 const current = adapters.inspectFile(operation.fileId);
                 const state = classifyCortesImageOrganizerOperationState_(current, operation);
@@ -4062,8 +4073,18 @@ function executeCortesImageOrganizerManifest_(manifest, ownerId, adapters) {
                 results.push(result);
                 return;
             }
-            if (ledger && ledger.status === "needs_review") throw new Error("La operación requiere revisión manual y no admite reintento automático.");
-            if (ledger && Number(ledger.attempts || 0) >= 3) throw new Error("Se alcanzó el máximo de tres intentos para esta operación.");
+            if (ledger && ledger.status === "needs_review") {
+                result.status = "needs_review";
+                result.message = "La operación requiere revisión manual y no admite reintento automático.";
+                results.push(result);
+                return;
+            }
+            if (ledger && Number(ledger.attempts || 0) >= 3) {
+                result.status = "needs_review";
+                result.message = "Se alcanzó el máximo de tres intentos para esta operación.";
+                results.push(result);
+                return;
+            }
             const current = adapters.inspectFile(operation.fileId);
             const classification = classifyCortesImageOrganizerOperationState_(current, operation);
             if (classification.status === "already_applied") {
@@ -4074,6 +4095,7 @@ function executeCortesImageOrganizerManifest_(manifest, ownerId, adapters) {
                     currentFolderPath: operation.targetFolderPath, currentName: operation.targetName
                 });
                 result.status = "already_applied";
+                results.push(result);
                 return;
             }
             if (classification.status !== "ready") throw new Error("El archivo cambió desde el preview: " + classification.reason);
@@ -4199,9 +4221,18 @@ function rollbackCortesImageOrganizerOperations_(operationIds, ownerId, adapters
         let ledger = null;
         const result = { operationId, status: "pending" };
         try {
-            ledger = adapters.loadLedger(operationId);
+            try { ledger = adapters.loadLedger(operationId); }
+            catch (ledgerReadError) {
+                result.status = "needs_review";
+                result.message = "No se pudo leer el ledger durable: " + String(ledgerReadError && ledgerReadError.message || ledgerReadError);
+                results.push(result);
+                return;
+            }
             if (!ledger || ledger.ownerId !== ownerId || ledger.operationId !== operationId) {
-                throw new Error("No existe una operación durable perteneciente a esta sesión.");
+                result.status = "blocked";
+                result.message = "No existe una operación durable perteneciente a esta sesión.";
+                results.push(result);
+                return;
             }
             if (ledger.status === "rolled_back") {
                 const current = adapters.inspectFile(ledger.fileId);
