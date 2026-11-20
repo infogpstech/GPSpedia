@@ -3354,22 +3354,46 @@ function handleAddProblem(source) {
                 throw new Error("La imagen está referenciada por un registro PyS distinto o ambiguo; se conservó para evitar pérdida de datos.");
             }
             try {
+                op = writePysOperation_(opsSheet, op.rowNumber,
+                    Object.assign({}, op, { status: "RECOVERY_REQUIRED", imageFileId: fileId, imageUrl: url, updatedAt: new Date().toISOString() }));
+            } catch (ledgerError) {
+                releaseLockForPostWork();
+                markPysImageForRecovery_(file, problemId, fileId,
+                    "No se pudo reservar la compensación en el ledger: " + String(ledgerError && ledgerError.message || ledgerError));
+                throw new Error("No se pudo asegurar el estado de recuperación; la imagen se conservó para revisión manual.");
+            }
+
+            releaseLockForPostWork();
+            try {
                 file.setTrashed(true);
-                SpreadsheetApp.flush();
                 if (typeof file.isTrashed === "function" && file.isTrashed() !== true) {
                     throw new Error("Drive no confirmó que la imagen no vinculada quedara en papelera.");
                 }
-                writePysOperation_(opsSheet, op.rowNumber,
-                    Object.assign({}, op, { status: "PENDING", imageFileId: "", imageUrl: "", updatedAt: new Date().toISOString() }));
             } catch (cleanupError) {
                 markPysImageForRecovery_(file, problemId, fileId,
-                    "Falló la compensación automática: " + String(cleanupError && cleanupError.message || cleanupError));
-                try {
-                    writePysOperation_(opsSheet, op.rowNumber,
-                        Object.assign({}, op, { status: "RECOVERY_REQUIRED", imageFileId: fileId, imageUrl: url, updatedAt: new Date().toISOString() }));
-                } catch (ledgerError) {}
+                    "Falló la compensación automática fuera del lock: " + String(cleanupError && cleanupError.message || cleanupError));
                 throw new Error("La imagen se creó, pero no pudo vincularse ni compensarse; quedó marcada para recuperación manual.");
             }
+
+            try {
+                acquireFeedbackScriptLock_(lock);
+                lockAcquired = true;
+                const latestOp = readPysOperations_(opsSheet).find(item => item.opId === opId);
+                if (!latestOp || latestOp.status !== "RECOVERY_REQUIRED" ||
+                    String(latestOp.imageFileId) !== String(fileId) || String(latestOp.imageUrl) !== String(url) ||
+                    String(latestOp.problemId) !== String(problemId)) {
+                    throw new Error("El ledger PyS cambió durante la compensación; no se restableció automáticamente.");
+                }
+                op = writePysOperation_(opsSheet, latestOp.rowNumber,
+                    Object.assign({}, latestOp, { status: "PENDING", imageFileId: "", imageUrl: "", updatedAt: new Date().toISOString() }));
+                releaseLockForPostWork();
+            } catch (reconcileError) {
+                releaseLockForPostWork();
+                markPysImageForRecovery_(file, problemId, fileId,
+                    "La imagen quedó en papelera, pero no se pudo revalidar el ledger: " + String(reconcileError && reconcileError.message || reconcileError));
+                throw new Error("La imagen no vinculada se compensó, pero el ledger requiere recuperación manual.");
+            }
+            throw error;
         } else if (file) {
             releaseLockForPostWork();
             try { file.setTrashed(true); } catch (cleanupError) {}
