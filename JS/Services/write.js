@@ -3637,7 +3637,7 @@ function handleCheckOperation(payload) {
         };
     }
 
-    const contributionSheet = spreadsheet.getSheetByName(WRITE_VEHICLE_CONTRIBUTIONS_SHEET_NAME_);
+    const contributionSheet = spreadsheet.getSheetByName("AportesVehiculo");
     if (contributionSheet) {
         const events = findVehicleContributionEventsByOpId_(contributionSheet, opId)
             .sort((a, b) => a.rowIndex - b.rowIndex);
