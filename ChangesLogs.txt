@@ -1360,3 +1360,11 @@ Se implementó agrupación de resultados de Cortes por categoría/marca/modelo, 
 - JS/Tests/AddSupplementaryInfoIntegrity.js amplía la cobertura de autenticación, orden de persistencia, ausencia de locks, idempotencia de operationKey y reutilización de fileId/archivo temporal.
 - CI f7e9730548047f2cb14548c2e263161649a482c7: 233 suites, 2,877 pruebas aprobadas, 0 fallos; health read-only y Pages SUCCESS.
 - La integración real de Drive/Sheets, fallos parciales y respuesta perdida permanece pendiente de Beta aislada. Sin despliegue ni cambios productivos.
+
+ 
+2026-11-20 — Revisión ADMIN de aportes vehiculares
+- Se añadió resolución append-only con supersedesEventId, hash SHA-256, actor confiable, requestId idempotente y exclusión mutua para evitar doble resolución.
+- CATALOG reconoce sustituciones válidas sin editar ni eliminar eventos históricos; resoluciones accepted/retracted actualizan la proyección y conflictos múltiples quedan expuestos para revisión.
+- Se incorporó panel Desarrollador para consultar candidatos, aceptar, corregir payload JSON o descartar; el contenido se renderiza con nodos DOM/textContent.
+- Archivos: JS/Services/admin.js, JS/Services/catalog.js, JS/Frontend/api-config.js, JS/Frontend/ui.js, index.html, JS/Tests/VehicleContributionProjection.mjs y JS/Tests/RunServiceTests.mjs.
+- Validación local y CI pendientes al momento de registrar este cambio.

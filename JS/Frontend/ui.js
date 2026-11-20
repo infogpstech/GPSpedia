@@ -7730,6 +7730,47 @@ ${elapsedSec}s
     };
 
     // 8. TAREA 2: Repositorio Histórico de Imágenes Reemplazadas y Auditoría de Google Drive
+
+    const contributionRefreshBtn=document.getElementById("btn-admin-refresh-contribution-candidates");
+    const contributionStatus=document.getElementById("admin-contribution-review-status");
+    const contributionContainer=document.getElementById("admin-contribution-candidates");
+    const loadContributionCandidates=async()=>{
+        if(!contributionRefreshBtn||!contributionContainer||!isAdminPanelCurrent_())return;
+        contributionRefreshBtn.disabled=true;contributionStatus.textContent="Consultando candidatos actuales...";contributionContainer.replaceChildren();
+        try{
+            const response=await runAction("getVehicleContributionCandidates",{limit:200});
+            if(!isAdminPanelCurrent_()||!response)return;
+            if(response.status!=="success"||!Array.isArray(response.candidates))throw new Error(response.message||"Respuesta de candidatos no válida.");
+            contributionStatus.textContent=response.total+" candidato(s)."+(response.truncated?" Se muestran los primeros "+response.limit+".":"");
+            if(!response.candidates.length){const empty=document.createElement("p");empty.className="dev-empty-state";empty.textContent="No hay candidatos pendientes de revisión.";contributionContainer.appendChild(empty);return;}
+            response.candidates.forEach(candidate=>{
+                const card=document.createElement("article");card.className="dev-card";
+                const title=document.createElement("strong");title.textContent=(candidate.vehicleLabel||"Vehículo "+candidate.vehicleId)+" · "+candidate.kind+" · "+candidate.reason;
+                const meta=document.createElement("p");meta.textContent="Evento: "+candidate.eventId+" | Operación: "+candidate.opId;
+                const editor=document.createElement("textarea");editor.className="dev-input";editor.rows=5;editor.spellcheck=false;editor.setAttribute("aria-label","Payload JSON "+candidate.eventId);editor.value=JSON.stringify(candidate.payload||{},null,2);
+                const actions=document.createElement("div");actions.className="dev-action-row";
+                const addAction=(label,decision,style)=>{
+                    const button=document.createElement("button");button.type="button";button.className="btn "+style;button.textContent=label;
+                    button.addEventListener("click",async()=>{
+                        if(!isAdminPanelCurrent_())return;let correctedPayload;
+                        if(decision==="correct"){try{correctedPayload=JSON.parse(editor.value);if(!correctedPayload||typeof correctedPayload!=="object"||Array.isArray(correctedPayload))throw new Error("La corrección debe ser un objeto JSON.");}catch(error){contributionStatus.textContent="JSON no válido: "+error.message;return;}}
+                        if(!window.confirm("¿Confirmas "+label.toLowerCase()+" para "+candidate.eventId+"? Se añadirá un evento nuevo; el original se conservará."))return;
+                        button.disabled=true;
+                        try{const requestId=typeof crypto!=="undefined"&&typeof crypto.randomUUID==="function"?crypto.randomUUID().replace(/-/g,""):"req"+Date.now().toString(36)+Math.random().toString(36).slice(2);
+                            const result=await runAction("resolveVehicleContributionCandidate",{eventId:candidate.eventId,requestId,decision,correctedPayload});
+                            if(!result||result.status!=="success")throw new Error(result&&result.message||"No se pudo registrar la resolución.");
+                            contributionStatus.textContent=result.message||"Resolución registrada.";await loadContributionCandidates();
+                        }catch(error){contributionStatus.textContent="No se pudo resolver "+candidate.eventId+": "+error.message;button.disabled=false;}
+                    });actions.appendChild(button);
+                };
+                addAction("Aceptar","accept","btn-primary");addAction("Guardar corrección","correct","btn-secondary");addAction("Descartar","discard","btn-warning");
+                card.append(title,meta,editor,actions);contributionContainer.appendChild(card);
+            });
+        }catch(error){if(isAdminPanelCurrent_())contributionStatus.textContent="Error consultando candidatos: "+error.message;}
+        finally{contributionRefreshBtn.disabled=false;}
+    };
+    if(contributionRefreshBtn)contributionRefreshBtn.addEventListener("click",loadContributionCandidates);
+
     const viewReplacedBtn = document.getElementById('btn-admin-view-replaced-images');
     if (viewReplacedBtn) {
         viewReplacedBtn.onclick = () => openReplacedImagesModal();

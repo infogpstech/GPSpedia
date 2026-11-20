@@ -1140,3 +1140,10 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - CI `44817783127` SUCCESS: 233 suites, 2,877 pruebas aprobadas, 0 fallos; sintaxis de módulos modificados SUCCESS. Health read-only `44817783171` SUCCESS. Pages `44817782871` SUCCESS.
 - Estado: implementación y validación local COMPLETADAS CON VALIDACIÓN DIFERIDA A BETA. Pendiente Beta: concurrencia real Drive/Sheets, fallos parciales, respuesta perdida y reconciliación de archivos huérfanos. No se desplegó Apps Script ni se modificaron datos productivos.
 - Siguiente tarea local prioritaria: completar la interfaz ADMIN de candidatos de `AportesVehiculo` y la resolución append-only con `supersedesEventId`; la consulta de solo lectura ya existe. La proyección debe excluir únicamente eventos sustituidos por una resolución válida, sin mutar el historial.
+
+ 
+## Checkpoint — panel ADMIN y resolución append-only de aportes (2026-11-20)
+- HEAD inicial: `cd9247d1ed69a9ed73eab79e82d1b6079d1a0808`, rama `GPSpedia2.2.5_work`; rama base protegida sin cambios.
+- Implementación: acción ADMIN de resolución append-only, idempotencia por requestId, bloqueo de doble resolución, proyección CATALOG con supersedesEventId y panel UI de consulta/aceptar/corregir/descartar.
+- No se modifican filas históricas. accepted sustituye el payload original; retracted descarta el aporte. La proyección solo respeta una sustitución única con actor confiable, mismo vehículo y tipo.
+- Pendiente inmediato: ejecutar pruebas locales, revisar diff y CI; validar en Beta la concurrencia real Apps Script/Spreadsheet y UI en navegador aislado. No desplegar servicios ni modificar datos productivos.

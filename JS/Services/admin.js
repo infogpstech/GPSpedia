@@ -935,7 +935,7 @@ function doGet(e) {
 
 
 function isSharedMutationAction_(action) {
-    return ["backupDatabase","backupDrive","restoreDatabase","restoreDrive","reorganizeDatabase","normalizeImages","organizePrimaryVehicleImages","restoreAllTrashedImages","addLogo","updateVehicleField","uploadAdminImage","migrateCortesOperationIds","migrateIdentifiers","rollbackIdentifiers","freezeIdentifierFormulas","reconcilePendingImageUploads","createSheet","addColumn","driveCommand","recoverReplacedImage","deleteReplacedImage","restoreReplacedImageFromTrash","permanentlyDeleteReplacedImage","markReplacedImageInUse","saveUnusedImagesInventory","applyCortesImageReconciliation","createCortesImageFolder","moveReplacedImage","getReplacedImageDownloadUrl","migrateReplacedImagesSchema","migrateVehicleContributionsSchema","auditDriveImagesInCortes","applyCortesImageOrganizer","rollbackCortesImageOrganizer"].includes(action);
+    return ["backupDatabase","backupDrive","restoreDatabase","restoreDrive","reorganizeDatabase","normalizeImages","organizePrimaryVehicleImages","restoreAllTrashedImages","addLogo","updateVehicleField","uploadAdminImage","migrateCortesOperationIds","migrateIdentifiers","rollbackIdentifiers","freezeIdentifierFormulas","reconcilePendingImageUploads","createSheet","addColumn","driveCommand","recoverReplacedImage","deleteReplacedImage","restoreReplacedImageFromTrash","permanentlyDeleteReplacedImage","markReplacedImageInUse","saveUnusedImagesInventory","applyCortesImageReconciliation","createCortesImageFolder","moveReplacedImage","getReplacedImageDownloadUrl","migrateReplacedImagesSchema","migrateVehicleContributionsSchema","resolveVehicleContributionCandidate","auditDriveImagesInCortes","applyCortesImageOrganizer","rollbackCortesImageOrganizer"].includes(action);
 }
 
 function doPost(e) {
@@ -1375,6 +1375,9 @@ function doPostInternal_(e) {
                 break;
             case 'getVehicleContributionCandidates':
                 response = handleGetVehicleContributionCandidates_(payload);
+                break;
+            case 'resolveVehicleContributionCandidate':
+                response = handleResolveVehicleContributionCandidate_(payload, developerContext, logMessage);
                 break;
             case 'getDriveStorage':
                 response = handleGetDriveStorage(payload, logMessage);
@@ -10958,6 +10961,54 @@ function handleGetVehicleContributionCandidates_(payload) {
         source: "CATALOG",
         readOnly: true
     };
+}
+
+
+function handleResolveVehicleContributionCandidate_(payload, developerContext, logMessage) {
+ payload=payload&&typeof payload==="object"?payload:{};
+ const targetEventId=String(payload.eventId||"").trim(),requestId=String(payload.requestId||"").trim(),decision=String(payload.decision||"").trim().toLowerCase();
+ if(!/^EV-[A-Za-z0-9_-]{8,100}$/.test(targetEventId))throw new Error("eventId de candidato no válido.");
+ if(!/^[A-Za-z0-9_-]{16,100}$/.test(requestId))throw new Error("requestId de resolución no válido.");
+ if(!["accept","correct","discard"].includes(decision))throw new Error("Decisión ADMIN no válida.");
+ const actorId=String(developerContext&&developerContext.userId||"").trim(),actorName=String(developerContext&&(developerContext.fullName||developerContext.userName)||"").trim();
+ if(!actorId)throw new Error("No se pudo identificar al Desarrollador autenticado.");
+ const spreadsheet=getSpreadsheet();
+ return withReplacedImagesSchemaLock_(function(){
+  const sheet=spreadsheet.getSheetByName(ADMIN_VEHICLE_CONTRIBUTIONS_SHEET_NAME_);
+  if(!sheet||sheet.getLastRow()<2||sheet.getLastColumn()<ADMIN_VEHICLE_CONTRIBUTIONS_HEADERS_.length)throw new Error("El ledger AportesVehiculo no está disponible o no tiene el esquema requerido.");
+  const headers=sheet.getRange(1,1,1,ADMIN_VEHICLE_CONTRIBUTIONS_HEADERS_.length).getDisplayValues()[0].map(v=>String(v||"").trim());
+  if(ADMIN_VEHICLE_CONTRIBUTIONS_HEADERS_.some((h,i)=>headers[i]!==h))throw new Error("El esquema AportesVehiculo no coincide; no se escribió ningún evento.");
+  const rows=sheet.getRange(2,1,sheet.getLastRow()-1,ADMIN_VEHICLE_CONTRIBUTIONS_HEADERS_.length).getValues();
+  const target=rows.find(row=>String(row[0]||"").trim()===targetEventId);
+  if(!target)throw new Error("El candidato ya no existe; actualiza la lista antes de resolverlo.");
+  const vehicleId=String(target[2]||"").trim(),kind=String(target[4]||"").trim().toLowerCase(),targetStatus=String(target[9]||"").trim().toLowerCase();
+  let originalPayload;try{originalPayload=JSON.parse(String(target[5]||"{}"));}catch(e){throw new Error("El payload original no es JSON válido.");}
+  if(!originalPayload||typeof originalPayload!=="object"||Array.isArray(originalPayload))throw new Error("El payload original no contiene un objeto válido.");
+  const opId="OP-ADMIN-"+requestId;
+  let nextPayload=decision==="correct"?payload.correctedPayload:originalPayload;
+  if(!nextPayload||typeof nextPayload!=="object"||Array.isArray(nextPayload))throw new Error("La corrección debe ser un objeto JSON.");
+  nextPayload=JSON.parse(JSON.stringify(nextPayload));
+  const nextStatus=decision==="discard"?"retracted":"accepted";
+  const canonical=JSON.stringify({targetEventId,vehicleId,kind,decision,status:nextStatus,payload:nextPayload});
+  const digest=Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,canonical,Utilities.Charset.UTF_8);
+  const operationHash=digest.map(v=>("0"+(v&255).toString(16)).slice(-2)).join("");
+  const existing=rows.find(row=>String(row[1]||"").trim()===opId);
+  if(existing){
+   if(String(existing[3]||"").trim().toLowerCase()!==operationHash||String(existing[10]||"").trim()!==targetEventId){const e=new Error("El requestId ya fue utilizado con otra resolución.");e.code="CONTRIBUTION_RESOLUTION_IDEMPOTENCY_CONFLICT";throw e;}
+   return{status:"success",duplicate:true,eventId:String(existing[0]),supersedesEventId:targetEventId,decision,vehicleId,message:"La resolución ya estaba registrada; no se añadió otra fila."};
+  }
+  if(rows.some(row=>String(row[10]||"").trim()===targetEventId&&["accepted","retracted"].includes(String(row[9]||"").trim().toLowerCase())&&String(row[6]||"").trim())){
+   const e=new Error("Otro Desarrollador ya resolvió este candidato. Actualiza la lista.");e.code="CONTRIBUTION_ALREADY_RESOLVED";throw e;
+  }
+  if(!["accepted","review"].includes(targetStatus))throw new Error("El evento objetivo ya no está en un estado resoluble.");
+  const eventId="EV-"+Utilities.getUuid(),createdAt=new Date().toISOString();
+  sheet.appendRow([eventId,opId,vehicleId,operationHash,kind,JSON.stringify(nextPayload),actorId,actorName,createdAt,nextStatus,targetEventId]);
+  SpreadsheetApp.flush();
+  const persisted=sheet.getRange(sheet.getLastRow(),1,1,ADMIN_VEHICLE_CONTRIBUTIONS_HEADERS_.length).getValues()[0];
+  if(String(persisted[0]||"")!==eventId||String(persisted[1]||"")!==opId||String(persisted[10]||"")!==targetEventId||String(persisted[9]||"")!==nextStatus)throw new Error("No se pudo verificar la resolución append-only después de escribirla.");
+  if(logMessage)logMessage("Resolución de aporte","Se anexó "+decision+" para "+targetEventId+"; el evento original se conserva.");
+  return{status:"success",duplicate:false,eventId,supersedesEventId:targetEventId,decision,vehicleId,message:"Resolución registrada como evento nuevo; el historial original permanece intacto."};
+ });
 }
 
 function handleMigrateVehicleContributionsSchema(payload, logMessage) {

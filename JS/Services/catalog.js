@@ -404,7 +404,19 @@ function readVehicleContributionEvents_(spreadsheetRef) {
 
 function projectVehicleContributionEvents_(vehicles, sourceEvents) {
     if (!Array.isArray(vehicles)) throw new Error("La proyección requiere una lista de vehículos.");
-    const events = Array.isArray(sourceEvents) ? sourceEvents.slice().sort((a, b) => Number(a.rowIndex) - Number(b.rowIndex)) : [];
+    const events=Array.isArray(sourceEvents)?sourceEvents.slice().sort((a,b)=>Number(a.rowIndex)-Number(b.rowIndex)):[];
+    const byEventId=new Map();events.forEach(e=>{const id=String(e&&e.eventId||"");if(id&&!byEventId.has(id))byEventId.set(id,e);});
+    const resolutionsByTarget=new Map();
+    events.forEach(e=>{
+        const targetId=String(e&&e.supersedesEventId||"").trim();
+        if(!targetId||!["accepted","retracted"].includes(String(e.status||"").toLowerCase())||!String(e.actorId||"").trim()||!String(e.opId||"").startsWith("OP-ADMIN-"))return;
+        const target=byEventId.get(targetId);
+        if(!target||target.eventId===e.eventId||target.vehicleId!==e.vehicleId||target.kind!==e.kind||target.supersedesEventId)return;
+        if(!resolutionsByTarget.has(targetId))resolutionsByTarget.set(targetId,[]);resolutionsByTarget.get(targetId).push(e);
+    });
+    const supersededEventIds=new Set(),conflictingResolutionTargets=new Set();
+    resolutionsByTarget.forEach((items,id)=>{if(items.length===1)supersededEventIds.add(id);else conflictingResolutionTargets.add(id);});
+    const effectiveEvents=events.filter(e=>{const targetId=String(e&&e.supersedesEventId||"");return !supersededEventIds.has(String(e&&e.eventId||""))&&!conflictingResolutionTargets.has(targetId)&&!(e&&targetId&&String(e.status||"").toLowerCase()==="retracted");});
     const byVehicle = new Map();
     const byOpId = new Map();
     const conflictedOpIds = new Set();
@@ -438,17 +450,17 @@ function projectVehicleContributionEvents_(vehicles, sourceEvents) {
         if (!vehicle || vehicle.id === null || vehicle.id === undefined) return;
         readVinPrefixes(vehicle.vin).forEach(prefix => registerVinOwner(prefix, vehicle.id));
     });
-    events.forEach(event => {
+    effectiveEvents.forEach(event => {
         const prefix = event && event.payload && event.payload.vinPrefix;
         if (prefix) registerVinOwner(prefix, event.vehicleId);
     });
     const conflictedVinEventIds = new Set();
-    events.forEach(event => {
+    effectiveEvents.forEach(event => {
         const prefix = String(event && event.payload && event.payload.vinPrefix || "").trim().toUpperCase();
         if (prefix && (vinOwners.get(prefix) || new Set()).size > 1) conflictedVinEventIds.add(String(event.eventId || ""));
     });
 
-    events.forEach(event => {
+    effectiveEvents.forEach(event => {
         if (!event || !String(event.vehicleId || "").trim() ||
             !/^OP-[A-Za-z0-9_-]{1,100}$/.test(String(event.opId || "")) ||
             !/^[a-f0-9]{64}$/i.test(String(event.operationHash || "")) ||
@@ -480,7 +492,8 @@ function projectVehicleContributionEvents_(vehicles, sourceEvents) {
         const vehicleId = String(vehicle.id).trim();
         const candidates = [];
         const sources = {};
-        const vehicleEvents = byVehicle.get(vehicleId) || [];
+        const vehicleEvents=byVehicle.get(vehicleId)||[];
+        events.filter(e=>conflictingResolutionTargets.has(String(e.eventId||""))&&String(e.vehicleId)===vehicleId).forEach(e=>candidates.push({eventId:e.eventId,opId:e.opId,kind:e.kind,reason:"resolution_conflict",payload:e.payload}));
         events.filter(event => conflictedOpIds.has(event.opId) && String(event.vehicleId) === vehicleId)
             .forEach(event => candidates.push({ eventId: event.eventId, opId: event.opId, kind: event.kind, reason: "opId_conflict", payload: event.payload }));
 

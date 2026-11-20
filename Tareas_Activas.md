@@ -1550,3 +1550,14 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] Health read-only SUCCESS; Pages SUCCESS.
 - [ ] Validar en Beta aislada los fallos parciales reales Drive/Sheets/journal, respuesta perdida y reconciliación ADMIN de archivos pendientes/huérfanos.
 - Estado local: **COMPLETADA CON VALIDACIÓN DIFERIDA A BETA**. No se desplegó Apps Script ni se modificaron Drive/Sheets productivos.
+
+ 
+### 2026-11-20 — ADMIN: resolución append-only y panel de revisión de aportes
+- [x] Añadir acción exclusiva de Desarrollador `resolveVehicleContributionCandidate`; valida el objetivo bajo ScriptLock, comprueba el esquema y anexa un evento nuevo con `supersedesEventId`, actor confiable, hash SHA-256 y estado accepted/retracted.
+- [x] Hacer idempotente la resolución mediante requestId: reintento idéntico devuelve el evento previo; reutilizar la clave con otro contenido se rechaza.
+- [x] Evitar doble resolución concurrente del mismo evento bajo el lock; una segunda resolución distinta falla sin añadir otra fila.
+- [x] Actualizar CATALOG para sustituir solo con una resolución única, autenticada y coherente en vehículo/tipo; accepted aplica el payload nuevo y retracted descarta el aporte. Los eventos originales permanecen.
+- [x] Añadir panel Desarrollador para consultar, aceptar, corregir mediante JSON y descartar candidatos.
+- [ ] Ejecutar pruebas locales, revisión de diff y CI antes de cerrar la actividad.
+- [ ] Validar en Beta aislada la concurrencia real ADMIN/Spreadsheet y la UI en navegador.
+- Estado: EN PROGRESO hasta ejecutar validaciones locales y confirmar publicación.

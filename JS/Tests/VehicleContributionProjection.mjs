@@ -212,6 +212,28 @@ test("evento inválido cancela la proyección completa", () => {
 });
 
 
+
+test("resolución ADMIN válida sustituye el evento original sin mutar el historial",()=>{
+ const original=event("OP-REVIEW-CUT","101","cut",{tipo:"Dato incorrecto"},2,"a",{status:"review"});
+ const resolution=event("OP-ADMIN-REQUEST1234567890","101","cut",{tipo:"Dato corregido"},3,"b",{eventId:"EV-ADMIN-RESOLUTION",actorId:"DEV-1",supersedesEventId:original.eventId,status:"accepted"});
+ const result=project([blankVehicle("101")],[original,resolution])[0];
+ assert.equal(result.tipoCorte1,"Dato corregido");assert.equal(result.contributionSources.corte1.eventId,"EV-ADMIN-RESOLUTION");
+ assert.equal(result.contributionCandidates.length,0);assert.equal(original.status,"review");assert.equal(original.payload.tipo,"Dato incorrecto");
+});
+test("resolución ADMIN de descarte retira el aporte sin borrar el evento original",()=>{
+ const original=event("OP-REVIEW-FEED","101","feed",{text:"Dato no válido"},2,"a",{status:"review"});
+ const resolution=event("OP-ADMIN-REQUEST1234567891","101","feed",{text:"Dato no válido"},3,"b",{eventId:"EV-ADMIN-DISCARD",actorId:"DEV-1",supersedesEventId:original.eventId,status:"retracted"});
+ const result=project([blankVehicle("101")],[original,resolution])[0];
+ assert.equal(result.cableAlimen,null);assert.equal(result.contributionCandidates.length,0);assert.equal(original.status,"review");
+});
+test("resoluciones múltiples concurrentes no sustituyen silenciosamente el evento",()=>{
+ const original=event("OP-REVIEW-OPEN","101","opening",{text:"Pendiente"},2,"a",{status:"review"});
+ const one=event("OP-ADMIN-REQUEST1234567892","101","opening",{text:"Aceptar A"},3,"b",{eventId:"EV-ADMIN-A",actorId:"DEV-1",supersedesEventId:original.eventId,status:"accepted"});
+ const two=event("OP-ADMIN-REQUEST1234567893","101","opening",{text:"Aceptar B"},4,"c",{eventId:"EV-ADMIN-B",actorId:"DEV-2",supersedesEventId:original.eventId,status:"accepted"});
+ const result=project([blankVehicle("101")],[original,one,two])[0];
+ assert.equal(result.apertura,null);assert.ok(result.contributionCandidates.some(item=>item.reason==="resolution_conflict"));
+});
+
 function buildMigrationRuntime(initialHeaders = null) {
     const headers = initialHeaders ? initialHeaders.slice() : [];
     let rowCount = initialHeaders ? 1 : 0;
