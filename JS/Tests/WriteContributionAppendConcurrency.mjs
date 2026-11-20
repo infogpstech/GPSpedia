@@ -218,4 +218,50 @@ function cut(vehicleId, opId, tipo, hash) {
     assert.equal(projected[0].contributionCandidates[0].reason, "vin_conflict");
     assert.equal(projected[1].contributionCandidates[0].reason, "vin_conflict");
 }
-console.log("WriteContributionAppendConcurrency: 7/7 PASS — intercalado, idempotencia, conflictos, VIN concurrente y capacidad");
+
+{
+    const sheet = createSheet(), append = makeRuntime(sheet);
+    const originalFlush = SpreadsheetApp.flush;
+    let loseResponse = true;
+    SpreadsheetApp.flush = () => {
+        if (loseResponse) {
+            loseResponse = false;
+            throw new Error("respuesta perdida después del append durable");
+        }
+    };
+    try {
+        const request = cut("101", "OP-LOST-FLUSH", "Ignición", "f");
+        assert.throws(() => append(request), /respuesta perdida después del append durable/);
+        assert.equal(sheet.rows.length, 2, "El evento debe permanecer durable aunque falle la confirmación de respuesta");
+        const recovered = append(request);
+        assert.equal(recovered.duplicate, true, "El reintento debe recuperar el evento ya anexado");
+        assert.equal(recovered.opId, "OP-LOST-FLUSH");
+        assert.equal(sheet.rows.length, 2, "La recuperación no debe crear una segunda fila");
+    } finally {
+        SpreadsheetApp.flush = originalFlush;
+    }
+}
+
+{
+    const sheet = createSheet(), append = makeRuntime(sheet);
+    const originalAppend = sheet.appendRow.bind(sheet);
+    let loseResponse = true;
+    sheet.appendRow = values => {
+        originalAppend(values);
+        if (loseResponse) {
+            loseResponse = false;
+            throw new Error("respuesta perdida después de persistir appendRow");
+        }
+    };
+    const request = cut("202", "OP-LOST-APPEND", "Bomba", "g");
+    assert.throws(() => append(request), /respuesta perdida después de persistir appendRow/);
+    assert.equal(sheet.rows.length, 2, "El append físico debe conservarse tras perderse la respuesta");
+    const recovered = append(request);
+    assert.equal(recovered.duplicate, true);
+    assert.equal(recovered.eventId, sheet.rows[1][0], "La recuperación debe devolver el eventId original");
+    assert.equal(sheet.rows.length, 2, "No debe duplicar el aporte al reintentar");
+    const projected = project(sheet, [{ id: "202" }])[0];
+    assert.equal(projected.tipoCorte1, "Bomba");
+}
+
+console.log("WriteContributionAppendConcurrency: 9/9 PASS — intercalado, idempotencia, conflictos, VIN, capacidad y recuperación tras respuesta perdida");
