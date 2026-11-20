@@ -11118,8 +11118,6 @@ function handleMoveReplacedImage(payload, logMessage, developerContext) {
             organizationError: row[metadata.organizationError - 1] || "",
             organizationDate: row[metadata.organizationDate - 1] || ""
         };
-        const isUnusedDestination = targetFolder.getName() === "Imagenes_Sin_Uso" &&
-            getSingleParentFolderInsideCortes(targetFolder, rootFolder.getId()).getId() === rootFolder.getId();
         const writeMetadata = (currentPath) => {
             if (!previousMetadata.original) sheet.getRange(rowIndex, metadata.original).setValue(sourcePath);
             sheet.getRange(rowIndex, metadata.current).setValue(currentPath);
