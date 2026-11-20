@@ -516,3 +516,10 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - `handleRecordLike` conserva bajo ScriptLock la lectura del contador, ledger pending/completed y confirmación del incremento; difiere `logUserActivity` hasta después de liberar el lock. Los replays completed no generan actividad duplicada.
 - Prueba `FeedbackLikeActivityOutsideLock` 5/5; `FeedbackYearFolderSyncOutsideLock` 5/5. CI `44647675553` SUCCESS: 202 suites, 2,576 pruebas aprobadas, 0 fallos; health read-only `44647675689` SUCCESS.
 - Commits: implementación `a134f93fec22248299b6fe3d1fa6bb508289fcef`, prueba `77c587e3c3e498d3a13b2ff7fa90db21565048b1`, runner `19d25a79ba2eec315b68a7bc7afd0ebaa5b36252`.
+
+
+## P1 — asignador de IDs formula-based FEEDBACK con lectura acotada (2026-11-20)
+- `getNextFormulaBasedId_` ahora lee primero solo la columna ID. Solo si detecta IDs vacíos consulta datos de filas en grupos contiguos mínimos para preservar la detección de filas con datos sin ID; no transfiere el resto de la hoja cuando todos los IDs están presentes.
+- Se mantienen validación de prefijo/sufijo, duplicados, enteros seguros, reconciliación con contador ScriptProperties y compatibilidad cuando el caller ya posee ScriptLock.
+- `FeedbackFormulaIdAllocatorBoundedRead` 6/6 PASS; regresión CI `44647995645` SUCCESS: 203 suites, 2,582 pruebas aprobadas, 0 fallos; health read-only `44647995469` SUCCESS.
+- Commits: implementación `4fd6cfcca93dd6efd7cdaf75775e38ff6a667778`, prueba `9323067a99d609d8a9cd73dc5ea59a3f378f97ad`, runner `b193c17ad867d4b3f53e4274bb8dfc3526eccd84`.
