@@ -979,3 +979,10 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] Preservar respuesta idempotente cuando el archivo ya está restaurado. AdminRestoreImageActivityOutsideLock 6/6; AdminImageTrashLifecycle 40/40.
 - [x] CI 44653303076 SUCCESS: 209 suites, 2,626 pruebas, 0 fallos; health read-only 44653303269 SUCCESS.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Sin despliegue ni cambios productivos.
+
+
+### P1 — ADMIN eliminación definitiva: actividad fuera del lock (2026-11-20)
+- [x] Liberar ScriptLock después de confirmar `eliminada` en el historial, antes de registrar actividad Coordinator y logging, tanto en reconciliación HTTP 404 como en eliminación confirmada.
+- [x] Evitar doble liberación con helper local. AdminPermanentDeleteActivityOutsideLock 6/6; AdminImageTrashLifecycle 40/40.
+- [x] CI 44653582395 SUCCESS: 210 suites, 2,632 pruebas, 0 fallos; health read-only 44653582292 SUCCESS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. La eliminación Drive sigue bajo lock hasta implementar lease exclusivo de operación y revalidación.
