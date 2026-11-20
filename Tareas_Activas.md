@@ -943,3 +943,15 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] Preservar respuesta para carpeta idéntica y el contrato best-effort del helper de actividad. `AdminMoveImageActivityOutsideLock` 7/7.
 - [x] CI `44652254166` SUCCESS: 206 suites, 2,603 pruebas, 0 fallos; health read-only `44652254131` SUCCESS.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. El movimiento/rollback Drive sigue bajo lock por seguridad de referencias; separar requiere reserva y revalidación coordinada.
+
+
+### GP-PERF-ADMIN-CUT-LOCK-01 — mapa local de ámbitos ScriptLock (2026-11-20)
+- [x] AUTH: intentos de login en CacheService; sesiones y actividad en ActiveSessions/Users; cambios de usuario/roles/contraseñas y revocación de sesiones; migración de marcadores de rol en ScriptProperties; mantenimiento de Logs. Son recursos distintos que actualmente comparten el ScriptLock del proyecto AUTH.
+- [x] ADMIN: filas/columnas de Cortes (IDs, VIN, testigos, campos e imágenes); reservas/idempotencia de cortes; inventario e historial de imágenes reemplazadas; esquema e inventario Drive; publicación de catálogo/versiones. Varios recursos comparten el ScriptLock del proyecto ADMIN.
+- [x] WRITE: slots y filas de Cortes, asignador de IDs, testigos AT:AV, información suplementaria, VIN e ImageUploadLedger. Recursos distintos comparten el ScriptLock del proyecto WRITE.
+- [x] FEEDBACK: asignación de IDs y mutaciones Cortes/PyS/Tutorial, likes, reportes, sugerencias y sus ledgers; publicaciones de catálogo. Los handlers mutadores comparten el ScriptLock del proyecto FEEDBACK.
+- [x] USERS: mutaciones de Users y operaciones relacionadas; Coordinator: leases/estado de mutaciones y feed compartido; InboxConversations: estado de conversaciones/mensajes. Cada lock es global dentro de su proyecto respectivo.
+- [x] Telemetría directa de CATALOG y USERS usa tryLock(0) best-effort y no espera si encuentra contención; esto evita que la lectura espere, aunque el breve tramo que sí adquiere ScriptLock sigue compartiendo ámbito con mutaciones de ese proyecto.
+- [ ] Confirmar Script IDs/deployments reales y agrupar qué fuentes comparten cada proyecto. README/contexto confirman que fuentes y deployments son independientes y que no hay IDs de proyecto versionados suficientes; no inferir aislamiento desde nombres de archivos ni endpoints. Requiere inventario autorizado en Beta.
+- [ ] Prueba real de no interferencia entre deployments y conflicto de dos mutaciones sobre el mismo recurso en Beta autorizada.
+- Nota: este mapa es una clasificación estática de los locks encontrados en fuentes, no una afirmación de topología desplegada. No se consultaron proyectos Apps Script ni se accedió a datos productivos.
