@@ -75,7 +75,6 @@ function coordinatorPolicy_(service, operation) {
         },
         WRITE: {
             sessionActivity: { read: identityRead },
-            ensureSupplementaryVehicleFolder: { write: ["DRIVE_FOLDER"] },
             addOrUpdateCut: { read: identityRead, write: ["CORTES", "DRIVE", "IDEMPOTENCIA", "IMAGE_UPLOAD_LEDGER"] },
             addSupplementaryInfo: { read: identityRead, write: ["CORTES", "DRIVE", "IMAGE_UPLOAD_LEDGER"] },
             addVinToVehicle: { read: identityRead, write: ["CORTES"] },
