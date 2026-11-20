@@ -10716,6 +10716,7 @@ function handleDeleteReplacedImage(payload,logMessage,developerContext){
 function handleRestoreReplacedImageFromTrash(payload,logMessage,developerContext){
     const id=String(payload&&payload.id_reemplazo||"").trim();if(!id)throw new Error("ID de registro de imagen requerido.");
     const lock=LockService.getScriptLock();try{lock.waitLock(30000);}catch(error){throw new Error("No se pudo bloquear la restauración desde papelera. Intenta nuevamente.");}
+    let postCommitActivity=null,result=null;
     try{
         const sheet=getOrCreateReplacedImagesSheet(),headers=ensureReplacedImagesInventoryColumns(sheet);
         const existing=findReplacedImageRecordById(sheet,id);if(!existing)throw new Error("Registro de imagen no encontrado.");
@@ -10742,10 +10743,14 @@ function handleRestoreReplacedImageFromTrash(payload,logMessage,developerContext
             if(rollbackError)throw new Error("Falló la actualización del historial y no se confirmó la compensación: "+operationError.message+"; "+rollbackError.message);
             throw new Error("No se pudo actualizar el historial; el archivo fue devuelto a papelera: "+operationError.message);
         }
-        recordImageAdministrationActivity(developerContext,"admin_image_restore_from_trash",id,"Imagen "+file.getName()+" restaurada desde papelera a "+path+"; estado anterior recuperado: "+previous+".");
-        logMessage&&logMessage("Inventario e historial de imágenes","La imagen "+driveId+" fue restaurada desde papelera.");
-        return {status:"success",message:"La imagen fue restaurada desde la papelera de Google Drive. No se modificó ninguna referencia del Spreadsheet."};
-    }finally{lock.releaseLock();}
+        postCommitActivity={developerContext,id,details:"Imagen "+file.getName()+" restaurada desde papelera a "+path+"; estado anterior recuperado: "+previous+".",driveId};
+        result={status:"success",message:"La imagen fue restaurada desde la papelera de Google Drive. No se modificó ninguna referencia del Spreadsheet."};
+    }finally{if(typeof lock.hasLock!=="function"||lock.hasLock())lock.releaseLock();}
+    if(postCommitActivity){
+        recordImageAdministrationActivity(postCommitActivity.developerContext,"admin_image_restore_from_trash",postCommitActivity.id,postCommitActivity.details);
+        logMessage&&logMessage("Inventario e historial de imágenes","La imagen "+postCommitActivity.driveId+" fue restaurada desde papelera.");
+    }
+    return result;
 }
 
 function requestAdminDriveFile_(fileId,method){
