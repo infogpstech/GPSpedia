@@ -1059,3 +1059,10 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - `AdminImageTrashLifecycle.mjs`: 41/41 PASS en ejecución aislada local contra las fuentes actuales.
 - Regresión global CI `44708443965` SUCCESS: 215 suites, 2,686 pruebas aprobadas, 0 fallos. Health read-only `44708443686` SUCCESS; Pages `44708443338` SUCCESS.
 - Las demás casillas abiertas de `Tareas_Activas.md` requieren despliegue/entorno Beta, Script IDs, datos Drive/Spreadsheet o concurrencia real. No se despliega ni se accede a datos productivos sin autorización expresa.
+
+
+### P1 — AUTH recuperación de contraseña: logging después de liberar ScriptLock (2026-11-20)
+- [x] Mover el registro de éxito de `handleCompletePasswordRecovery` fuera del `ScriptLock` que protege Users/ActiveSessions; conservar bajo lock la verificación del código, consumo, actualización de hash, revocación y limpieza de sesiones.
+- [x] Mantener el logging best-effort y comprobar explícitamente el orden `wait → release → log` en `PasswordRecovery.mjs`.
+- [x] Mantener sincronizada la copia aislada `JS/Tests/Auth.js` con el handler productivo.
+- Estado local: implementación y prueba añadida; validación ejecutada y resultado CI/commit pendientes de registrar.

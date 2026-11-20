@@ -2337,10 +2337,10 @@ function handleRequestPasswordRecovery(payload){
 function handleCompletePasswordRecovery(payload){
     const invalid={status:"error",message:"El código no es válido o expiró, o los datos de recuperación no coinciden."};
     const username=String(payload&&payload.username||"").trim().toLowerCase(),email=String(payload&&payload.email||"").trim().toLowerCase();
-    const code=String(payload&&payload.code||"").replace(/[\s-]/g,"").toUpperCase(),newPassword=normalizePassword(payload&&payload.newPassword);
-    if(!username||!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||!/^[A-F0-9]{12}$/.test(code))return invalid;
+    const code=String(payload&&payload.code||"").replace(/[\\s-]/g,"").toUpperCase(),newPassword=normalizePassword(payload&&payload.newPassword);
+    if(!username||!email||!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)||!/^[A-F0-9]{12}$/.test(code))return invalid;
     if(newPassword.length<8||newPassword.length>256)return {status:"error",message:"La contraseña nueva debe tener entre 8 y 256 caracteres."};
-    const lock=LockService.getScriptLock();let acquired=false,userId="";
+    const lock=LockService.getScriptLock();let acquired=false,userId="",result=null;
     try{
         lock.waitLock(10000);acquired=true;
         const ss=SpreadsheetApp.openById(SPREADSHEET_ID),usersSheet=ss.getSheetByName(SHEET_NAMES.USERS),sessionsSheet=ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
@@ -2361,13 +2361,14 @@ function handleCompletePasswordRecovery(payload){
         const cleanupPending=Boolean(pointer.pending||deletion.cleanupPending);
         if(!cleanupPending&&hasPendingRoleRevocation_(userId))PropertiesService.getScriptProperties().deleteProperty(roleRevocationPropertyKey_(userId));
         SpreadsheetApp.flush();
-        try{logToSheet("INFO","User password recovered; all session tokens were invalidated.",{userId,revokedSessions:revocation.revokedSessions,cleanupPending});}catch(logError){}
-        return {status:"success",message:cleanupPending?
+        result={status:"success",message:cleanupPending?
             "La contraseña se actualizó y las sesiones fueron invalidadas. La limpieza de algunas referencias quedó pendiente.":
             "La contraseña se actualizó correctamente. Todas las sesiones fueron cerradas; inicia sesión nuevamente.",cleanupPending};
     }finally{if(acquired)lock.releaseLock();}
+    // Logs comparte ScriptLock con la purga; nunca solicitarlo mientras AUTH ya lo retiene.
+    try{logToSheet("INFO","User password recovered; all session tokens were invalidated.",{userId,revokedSessions:result.revokedSessions,cleanupPending:result.cleanupPending});}catch(logError){}
+    return result;
 }
-
 
 function handleChangePassword(payload) {
     const actor = requireSharedAuthActor_(payload, ["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"], "cambiar contraseña");

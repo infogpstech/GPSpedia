@@ -1220,3 +1220,5 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-20 · revisión de lease ADMIN papelera] Se evaluó la propuesta de sacar `setTrashed`, restauración y compensación del ScriptLock. Se conserva diferida a medición Beta, conforme a la adenda de backlog del 2026-11-17 y sin evidencia de contención que justifique una nueva reserva. No se añadió lease ni se debilitó el flujo destructivo. AdminImageTrashLifecycle 41/41 PASS; regresión global CI 44708443965 SUCCESS (215 suites, 2,686 pruebas, 0 fallos); health 44708443686 SUCCESS; Pages 44708443338 SUCCESS.
+
+[2026-11-20 · AUTH recuperación de contraseña] Se trasladó el logging de éxito de `handleCompletePasswordRecovery` fuera del ScriptLock global, conservando bajo lock las mutaciones de Users/ActiveSessions y la revocación de sesiones. Se añadió aserción de orden wait/release/log a PasswordRecovery.mjs y se sincronizó JS/Tests/Auth.js. No se modificó la política de retención ni la protección de Logs.

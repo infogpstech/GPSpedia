@@ -662,3 +662,12 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Prueba local aislada `AdminImageTrashLifecycle.mjs`: 41/41 PASS. Regresión global CI `44708443965`: 215 suites, 2,686 pruebas aprobadas, 0 fallos; health read-only `44708443686` SUCCESS; Pages `44708443338` SUCCESS.
 - Las tareas locales implementables del registro activo están cerradas. Lo restante requiere Beta autorizada: despliegues Apps Script, auditoría Drive/Spreadsheet real, medición de concurrencia entre deployments y revisión de Safe Apply. No se ejecutó despliegue ni se modificaron datos productivos.
 - Siguiente paso autorizado: ejecutar la secuencia inicial de `lista_beta_parte1.txt` (árbol limpio, fetch y pull --ff-only) y comenzar únicamente con auditoría/preview de solo lectura cuando se autorice el deployment aislado. No aplicar movimientos, renombrados ni eliminaciones.
+
+
+## P1 — AUTH recuperación de contraseña: logging post-lock (2026-11-20)
+- Hallazgo concreto: `handleCompletePasswordRecovery` llamaba `logToSheet` antes de liberar el `ScriptLock` de AUTH, aunque `logToSheet` adquiere el mismo lock global para insertar en Logs.
+- Cambio: el procesamiento sensible (validación/consumo del desafío, cambio de hash, revocación de sesiones y limpieza) permanece bajo lock; solo se guarda el resultado y el registro de éxito se ejecuta después del `finally`. Se conserva logging best-effort y el mismo mensaje/detalles.
+- Prueba agregada a `PasswordRecovery.mjs`: verifica el orden de eventos `wait → release → log`. Copia de fixture `JS/Tests/Auth.js` sincronizada.
+- No se cambia la protección de Logs ni la purga sensible. No se modifica la semántica de recuperación, revocación ni el resultado HTTP.
+- Validaciones: pendientes de ejecución en esta actualización.
+- Sin deployment ni acceso a datos productivos.

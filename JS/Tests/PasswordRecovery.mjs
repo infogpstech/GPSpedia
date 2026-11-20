@@ -123,7 +123,7 @@ function makeHandlerHarness(options = {}) {
         ["U1","alice","old-hash","tecnico","","alice@example.com","Alice","old-session",""]
     ];
     const sessions = [["ID_Usuario","Usuario","ActiveSessions","date","Logs","LastActivityAt","SessionTermsAcceptance"]];
-    const sent = [], logs = [], revocations = [];
+    const sent = [], logs = [], revocations = [], lockEvents = [];
     const usersSheet = {
         getDataRange: () => ({ getValues: () => users.map(row => row.slice()) }),
         getRange(row, column, rowCount = 1, columnCount = 1) {
@@ -138,7 +138,7 @@ function makeHandlerHarness(options = {}) {
     const sessionsSheet = { getDataRange: () => ({ getValues: () => sessions.map(row=>row.slice()) }) };
     const spreadsheet = { getSheetByName: name => name === "Users" ? usersSheet : name === "ActiveSessions" ? sessionsSheet : null };
     const manager = createManager({code:"A1B2C3D4E5F6"});
-    const lock = { waitLock(){}, releaseLock(){} };
+    const lock = { waitLock(){lockEvents.push("wait");}, releaseLock(){lockEvents.push("release");} };
     const properties = { deleteProperty(){} };
     const requestSource = extractFunction(authSource, "handleRequestPasswordRecovery");
     const completeSource = extractFunction(authSource, "handleCompletePasswordRecovery");
@@ -157,7 +157,7 @@ function makeHandlerHarness(options = {}) {
         row=>Boolean(row && String(row[1]||"").trim() && ["desarrollador","jefe","supervisor","tecnico","tecnico_exterior"].includes(String(row[3]||"").toLowerCase())),
         value=>String(value||"").trim(),
         {sendEmail:message=>{if(options.mailFailure)throw new Error("mail unavailable");sent.push(message);}},
-        (...args)=>logs.push(args), value=>String(value||"").trim(),
+        (...args)=>{lockEvents.push("log");logs.push(args);}, value=>String(value||"").trim(),
         password=>"pbkdf2-sha256$12000$"+"a".repeat(32)+"$"+hash(password),
         userId=>revocations.push(userId), ()=>["old-session"],
         ()=>({rows:[{rowIndex:2,token:"old-session"}],revokedSessions:1,pendingRows:[],pendingLoginRequests:false}),
@@ -166,7 +166,7 @@ function makeHandlerHarness(options = {}) {
         ()=>({cleanupPending:false,cleanupError:null}),()=>false,
         userId=>"role_revocation_pending_"+userId, {getScriptProperties:()=>properties}
     );
-    return { handlers, users, sent, logs, revocations, manager };
+    return { handlers, users, sent, logs, revocations, manager, lockEvents };
 }
 
 test("La solicitud responde igual para una cuenta existente y otra inexistente", () => {
@@ -199,6 +199,7 @@ test("La finalización actualiza el hash, revoca sesiones y consume el código",
         username:"alice",email:"alice@example.com",code,newPassword:"NewPassword2026"
     });
     assert.equal(result.status, "success");
+    assert.deepEqual(h.lockEvents, ["wait", "release", "log"], "El logging debe ocurrir después de liberar ScriptLock.");
     assert.match(h.users[1][2], /^pbkdf2-sha256\$/);
     assert.notEqual(h.users[1][2], "NewPassword2026");
     assert.equal(h.users[1][7], "");
