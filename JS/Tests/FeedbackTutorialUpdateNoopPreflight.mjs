@@ -28,7 +28,7 @@ function makeHarness({ row = fields.slice(), lockAllowed = true, feedbackSheet =
     };
     const fn = new Function(
         "getTutorialSheet_", "findTutorialRow_", "normalizeTutorialField_", "LockService",
-        "getSafeSheet", "findPendingVideoApprovalForTarget_", "normalizeTutorialTitle_",
+        "acquireFeedbackScriptLock_", "getSafeSheet", "findPendingVideoApprovalForTarget_", "normalizeTutorialTitle_",
         "tutorialTitleExists_", "SpreadsheetApp", "COLS_FEEDBACKS",
         code + "\nreturn handleUpdateTutorialItem;"
     )(
@@ -40,6 +40,7 @@ function makeHarness({ row = fields.slice(), lockAllowed = true, feedbackSheet =
         },
         value => String(value == null ? "" : value).trim(),
         { getScriptLock: () => lock },
+        candidate => { if (!candidate.tryLock(0)) throw new Error("busy"); },
         () => feedbackSheet,
         () => null,
         value => String(value || "").trim().toLowerCase(),
@@ -79,11 +80,12 @@ test("si no existe hoja en preflight, no afirma éxito y mantiene el flujo prote
     const lock = { tryLock() { lockCalls++; return true; }, hasLock() { return true; }, releaseLock() { releaseCalls++; } };
     const fn = new Function(
         "getTutorialSheet_", "findTutorialRow_", "normalizeTutorialField_", "LockService",
-        "getSafeSheet", "findPendingVideoApprovalForTarget_", "normalizeTutorialTitle_",
+        "acquireFeedbackScriptLock_", "getSafeSheet", "findPendingVideoApprovalForTarget_", "normalizeTutorialTitle_",
         "tutorialTitleExists_", "SpreadsheetApp", "COLS_FEEDBACKS",
         code + "\nreturn handleUpdateTutorialItem;"
     )(() => null, () => null, value => String(value || "").trim(),
-        { getScriptLock: () => lock }, () => null, () => null, value => String(value || "").trim().toLowerCase(),
+        { getScriptLock: () => lock }, candidate => { if (!candidate.tryLock(0)) throw new Error("busy"); },
+        () => null, () => null, value => String(value || "").trim().toLowerCase(),
         () => false, { flush() {} }, { Problema: 3 });
     assert.throws(() => fn({ tutorialId: "tut-1", detalles: "Detalle" }), /Tutorial no encontrado|Hoja Tutorial no encontrada/);
     assert.equal(lockCalls, 1);
