@@ -13,6 +13,7 @@ const statusStart=source.indexOf("function handleGetAdminImageUploadStatus");
 const statusEnd=source.indexOf("\nfunction handleUploadAdminImageLegacy_",statusStart);
 const status=source.slice(statusStart,statusEnd);
 assert.ok(handler.includes("expectedCurrentValue") && handler.includes("expectedSourceEventId"),"Falta compare-and-set lógico por campo");
+assert.ok(handler.includes("const originalUrl = expectedImageUrl") && !handler.includes("originalUrl !== expectedImageUrl"),"El reemplazo no debe comparar contra Cortes materializado cuando la proyección append-only va delante.");
 assert.ok(handler.includes("appendAdminVehicleFieldUpdate_") && handler.includes("recordReplacedImage"),"Falta el evento de campo y la historia de sustitución");
 assert.ok(handler.includes("uploadImageToDrive(fileData") && handler.includes('state: "linked"'),"Falta reserva/carga/vinculación en ImageUploadEvents");
 assert.ok(!handler.includes("LockService.getScriptLock") && !handler.includes("AdminImageUploads") && !handler.includes("activeCell.setValue"),"El flujo nuevo conserva una dependencia mutable o escritura directa");
