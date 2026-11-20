@@ -4403,14 +4403,28 @@ function findPendingVideoApprovalForTarget_(sheet, contentType, referenceId) {
     if (!targetType || !targetId) throw new Error("Se requiere tipo e ID de destino para consultar solicitudes pendientes.");
     const lastRow = sheet.getLastRow();
     if (lastRow < 2) return null;
-    const rows = sheet.getRange(2, 1, lastRow - 1, Math.max(COLS_FEEDBACKS.Problema, sheet.getLastColumn())).getValues();
+    const problemRange = sheet.getRange(2, COLS_FEEDBACKS.Problema, lastRow - 1, 1);
+    let candidates = [];
+    if (problemRange && typeof problemRange.createTextFinder === "function") {
+        candidates = problemRange.createTextFinder(targetId).matchCase(true).findAll();
+    } else {
+        // Fallback de compatibilidad limitado a la columna Problema.
+        problemRange.getValues().forEach((value, index) => {
+            if (String(value[0] || "").includes(targetId)) candidates.push({ getRow: () => index + 2 });
+        });
+    }
     const matches = [];
-    rows.forEach((row, index) => {
+    const lastColumn = Math.max(COLS_FEEDBACKS.Problema, sheet.getLastColumn());
+    candidates.forEach(candidate => {
+        const rowIndex = candidate.getRow();
         let data = null;
-        try { data = JSON.parse(String(row[COLS_FEEDBACKS.Problema - 1] || "")); } catch (error) {}
+        try {
+            data = JSON.parse(String(sheet.getRange(rowIndex, COLS_FEEDBACKS.Problema).getValue() || ""));
+        } catch (error) {}
         if (data && data.subType === "video_approval" && data.status === "pending" &&
             String(data.contentType || "") === targetType && String(data.referenceId || "") === targetId) {
-            matches.push({ rowIndex: index + 2, row: row, data: data });
+            const row = sheet.getRange(rowIndex, 1, 1, lastColumn).getValues()[0];
+            matches.push({ rowIndex, row, data });
         }
     });
     if (matches.length > 1) throw new Error("El destino ya tiene varias solicitudes de vídeo pendientes; requiere revisión.");
