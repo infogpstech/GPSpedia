@@ -2707,6 +2707,7 @@ function handleSuggestCutChange(payload) {
     let uploadedImage = normalizedImage ? saveSuggestionImageAttachment_(normalizedImage, normalizedVehicleId, normalizedCorteIndex) : null;
     const lock = LockService.getScriptLock();
     let lockAcquired = false, pendingSheet = null, pendingRowNumber = 0, rowCommitted = false, result = null;
+    const releaseLockForDriveWork = () => { if (lockAcquired) { lock.releaseLock(); lockAcquired = false; } };
     try {
         acquireFeedbackScriptLock_(lock); lockAcquired = true;
         const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
@@ -2722,6 +2723,7 @@ function handleSuggestCutChange(payload) {
                 String(record.userId || "") === normalizedUserId &&
                 String(record.requestFingerprint || "") === requestFingerprint;
             if (!sameOperation) throw new Error("El identificador de operación ya pertenece a una solicitud distinta; no se creó otra sugerencia.");
+            releaseLockForDriveWork();
             trashReportImageUpload_(uploadedImage); uploadedImage = null;
             return buildCutSuggestionReplayResponse_(existingByOperation, normalizedReportId);
         }
@@ -2732,6 +2734,7 @@ function handleSuggestCutChange(payload) {
             if (storedFingerprint !== requestFingerprint && storedFingerprint !== legacyRequestFingerprint) {
                 throw new Error("El reporte ya tiene una sugerencia con datos distintos; no se creó otra sugerencia.");
             }
+            releaseLockForDriveWork();
             trashReportImageUpload_(uploadedImage); uploadedImage = null;
             return buildCutSuggestionReplayResponse_(existingByRequest, normalizedReportId);
         }
@@ -2784,7 +2787,10 @@ function handleSuggestCutChange(payload) {
                 console.error("No se pudo confirmar la reversión de la fila de sugerencia:", rollbackError);
             }
         }
-        if (!rowCommitted && uploadedImage && (!pendingSheet || !pendingRowNumber || rollbackConfirmed)) trashReportImageUpload_(uploadedImage);
+        if (!rowCommitted && uploadedImage && (!pendingSheet || !pendingRowNumber || rollbackConfirmed)) {
+            releaseLockForDriveWork();
+            trashReportImageUpload_(uploadedImage);
+        }
         else if (!rowCommitted && uploadedImage && !rollbackConfirmed) {
             console.error("La imagen de sugerencia se conserva para reconciliación porque el estado de la fila no pudo verificarse.");
         }
