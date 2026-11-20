@@ -429,3 +429,13 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Se restauró la lectura fresca del ledger en `findNextAvailableCutSlot_` y se conservó `AdminCutSlotReservation` en su contrato original (5/5 PASS). No se acepta reducir llamadas si debilita la detección de reservas cruzadas.
 - CI final del HEAD restaurado `1967e9911d9f3cfe85fb29b614352543f257eb5e`: `44643030246` SUCCESS, 193 suites, 2,528 pruebas, 0 fallos; health read-only `44643030192` SUCCESS; Pages `44643030815` SUCCESS.
 - Mapa lógico disponible en `Services/SERVICE_ARCHITECTURE_PLAN.md`: Coordinator independiente y SharedMutationClient copiado en AUTH, USERS, WRITE, ADMIN, FEEDBACK y UTILITIES. No hay manifiestos ni Script IDs versionados para verificar el mapeo real de deployments; la concurrencia entre proyectos queda pendiente de Beta autorizada.
+
+
+## P1 — telemetría directa sin contención del ScriptLock (2026-11-20)
+- Se eliminó `LockService.getScriptLock()` de `recordDirectServiceTraffic_` en AUTH, WRITE y FEEDBACK. La telemetría ahora actualiza ScriptProperties en modo best-effort sin adquirir el lock global que comparten handlers de cada proyecto.
+- La precisión sigue declarada como `best_effort_nonblocking` / `mayUndercount: true`: las actualizaciones simultáneas pueden perder incrementos, lo cual es preferible a que una consulta de telemetría provoque `WRITE_BUSY` o bloquee Inbox/login/registro.
+- Se actualizó el fixture de paridad `JS/Tests/Auth.js` y los contratos `DirectServiceTrafficTelemetry.mjs` (21/21 PASS) y `P2FeedbackImageUploadLocks.mjs` (1/1 PASS) para exigir ausencia de ScriptLock.
+- CI final `44643946013` SUCCESS: 193 suites, 2,528 pruebas aprobadas, 0 fallos; health read-only `44643945928` SUCCESS.
+- Commits de código/fixtures/pruebas: `732e39c7cf43d3caf69f6980318490950d8c8615`, `8252679db5c808880df6305ea36c5ffc0cff57c1`, `ecd68028b87065e6701c5e11b1b7a9038f5b35c1`, `07900e46bf1a0c17a2dab91532d80702176ec834`, `eb227d843153ccc248ab6eb9c6f51faf7c1536e3`, `082611b936865486c3f28edfe650877c9c86d3e0`.
+- Siguiente inspección P1: publicaciones de catálogo FEEDBACK (Cortes/PyS/Tutorial) que actualmente construyen snapshots y hacen UrlFetch al Coordinator mientras mantienen el ScriptLock. No retirar ese lock sin sustituir la protección contra snapshots fuera de orden.
+- Sin despliegues Apps Script ni modificaciones de ScriptProperties/hojas/Drive productivos.
