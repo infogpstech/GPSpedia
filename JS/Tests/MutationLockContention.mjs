@@ -78,4 +78,4 @@ const adminHelper = new Function(adminDriveCore + "\n" + adminDrive + "\nreturn 
     assert.equal(lock.held, true, "ADMIN debe readquirir el lock antes de revalidar");
     lock.releaseLock();
 }
-console.log("PASS MutationLockContention — contención breve tolerada y Drive concurrente fuera del lock");
+console.log("MutationLockContention: 1/1 PASS — contención breve tolerada y Drive concurrente fuera del lock");
