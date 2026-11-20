@@ -1337,3 +1337,8 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 
 - [x] Auditar el contrato real de apertura/alimentación en UI y WRITE: ambos envían `opId`, pero WRITE no calcula hash ni registra esas operaciones en un ledger. Un timeout después de persistir no puede recuperarse idempotentemente y el reintento puede recibir un conflicto falso. Documentado en `CONCURRENCIA_APORTES_DISENO.md`, commit `34b17b80e8a3660d659231ff88fa67d70e810cf6`.
 - [ ] Incluir en el ledger append-only idempotencia unificada para cortes, apertura y alimentación; mismo `opId` + mismo hash recupera el resultado y mismo `opId` + hash distinto se rechaza.
+
+
+- [x] Mapear compatibilidad de la proyección con CATALOG/modal: la ficha consume los tres slots fijos y la sincronización post-escritura fuerza `getCatalogData({forceRefresh:true})`.
+- [x] Identificar contrato de edición in-modal ADMIN: `updateVehicleField` escribe texto/modelo en Cortes con valor esperado; `uploadAdminImage` usa ledger compensatorio propio. Si el valor proviene de un evento nuevo, la edición debe referenciar eventId/versión y generar sustitución auditable. Documentado en `CONCURRENCIA_APORTES_DISENO.md`, commit `20b78390c9a056299319e0a29866d2ec12abd143`.
+- [ ] Implementar metadatos de origen por campo en la proyección y adaptar edición in-modal para sustituir eventos sin duplicarlos.
