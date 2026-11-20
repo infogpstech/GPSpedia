@@ -961,3 +961,12 @@ Estado: REGRESIÓN LOCAL COMPLETADA. Concurrencia real de appendRow, fallos real
 - El lock de `handleSubmitVideoForApproval` se conserva para coordinar la comprobación de operación/destino con el append. La mejora reduce lectura dentro de la sección crítica sin debilitar unicidad.
 - `FeedbackPendingVideoLookupBoundedRead` 6/6 PASS; `FeedbackVideoApprovalOperationLookupBoundedRead` 5/5 PASS. CI 44838760886 SUCCESS: 248 suites, 3018 pruebas, 0 fallos; Health read-only 44838760925 SUCCESS.
 ================================================================================
+
+
+2026-11-20 — FEEDBACK PyS/tutoriales: lecturas dirigidas bajo lock
+- `findPysRowsById_` dejó de leer las 10 columnas de cada fila; consulta la columna A, verifica IDs exactos y lee filas completas solo para coincidencias. Fallback compatible lee únicamente la columna A.
+- `findTutorialRow_` consulta ID por columna A y, cuando aplica el fallback por título, lee columna B y filas coincidentes. `handleUpdateTutorialItem` usa `tutorialTitleExists_` con exclusión de la fila actual para comprobar unicidad leyendo solo B.
+- `findPendingVideoApprovalForTarget_` y `findVideoApprovalByOperation_` consultan la columna Problema y cargan solo filas coincidentes. Se mantienen locks en las escrituras nuevas y en cambios de estado.
+- `FeedbackPysLookupBoundedRead` 5/5; `FeedbackTutorialLookupBoundedRead` 6/6; `FeedbackTutorialUpdateTitleLookupBoundedRead` 5/5; las regresiones de vídeo siguen PASS.
+- CI 44839134803 SUCCESS: 250 suites, 3028 pruebas, 0 fallos. Health read-only 44839135309 SUCCESS; Pages pendiente.
+================================================================================
