@@ -48,7 +48,12 @@ function harness(options = {}) {
         insertSheet(name) { assert.equal(name, "CortesIdReservations"); ledger = createSheet([["opId", "operationHash", "vehicleId", "createdAt"]]); return ledger; }
     };
     let busy = options.busy === true, held = false;
-    const lock = { tryLock(wait) { assert.equal(wait, 0); if (busy) return false; held = true; return true; }, releaseLock() { assert.equal(held, true); held = false; } };
+    const lock = {
+        waitLock(timeout) { assert.equal(timeout, 2000); if (busy) throw new Error("simulated contention"); held = true; },
+        tryLock(wait) { assert.equal(wait, 0); if (busy) return false; held = true; return true; },
+        hasLock() { return held; },
+        releaseLock() { assert.equal(held, true); held = false; }
+    };
     const run = new Function("COLS_CORTES", "SHEET_NAMES", "PropertiesService", "LockService", "SpreadsheetApp", "getSpreadsheet", "assertDeveloperForIdMaintenance",
         code + "\nreturn handleAllocateVehicleId;")(
         { id: 1 }, { CORTES: "Cortes" }, { getScriptProperties: () => properties }, { getScriptLock: () => lock },
