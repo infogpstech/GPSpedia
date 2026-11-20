@@ -7812,14 +7812,18 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
     }
 
     const lock = LockService.getScriptLock();
+    let lockAcquired = false;
     try {
-        // La sección crítica protege reserva de slot/opId y escrituras de Sheets.
-        // El trabajo Drive libera el lock para que vehículos distintos progresen en paralelo.
-        lock.waitLock(2000);
-    } catch (e) {
-        const lockError = new Error("ADMIN está finalizando otra reserva breve. Reintenta con el mismo opId.");
-        lockError.code = "ADMIN_BUSY";
-        throw lockError;
+        // No esperar ni mantener una cola global: la contención es retryable y conserva
+        // el mismo opId para que el siguiente intento recupere la reserva sin duplicarla.
+        lockAcquired = lock.tryLock(0);
+    } catch (lockError) {
+        lockAcquired = false;
+    }
+    if (!lockAcquired) {
+        const busyError = new Error("ADMIN está ocupado con una escritura breve. Conserva el mismo opId y reintenta.");
+        busyError.code = "ADMIN_BUSY";
+        throw busyError;
     }
 
     try {
@@ -8304,19 +8308,16 @@ function handleAddSupplementaryInfo(payload, logMessage){
    });
   }
 
-  // La sección crítica solo revalida y escribe. No espera por la carga de Drive.
+  // La sección crítica solo revalida y escribe. La carga de Drive ya terminó.
   const lock=LockService.getScriptLock();
   let lockAcquired=false;
   try {
-   // La carga ya terminó; esperar solo la escritura breve evita rechazar aportes
-   // legítimos de otros vehículos por una colisión momentánea del ScriptLock.
-   try {
-    if(typeof lock.waitLock!=="function")throw new Error("LockService no admite espera breve.");
-    lock.waitLock(2000);
-    lockAcquired=true;
-   } catch(lockError) {
-    throw createSupplementaryInfoError_("SUPPLEMENTARY_LOCK_FAILED","La escritura breve sigue ocupada. Conserva el mismo intento y vuelve a intentarlo.");
-   }
+   lockAcquired=lock.tryLock(0);
+  } catch(lockError) {
+   lockAcquired=false;
+  }
+  if(!lockAcquired)throw createSupplementaryInfoError_("SUPPLEMENTARY_LOCK_FAILED","ADMIN está ocupado con una escritura breve. Conserva el mismo intento y vuelve a intentarlo.");
+  try {
    const current=getSupplementaryInfoState_(payload);
    if(getSupplementaryInfoPlanSignature_(current)!==signature)throw createSupplementaryInfoError_("SUPPLEMENTARY_CONFLICT","La información cambió mientras se cargaban los archivos. No se sobrescribieron datos; vuelve a revisar el registro.");
    const updated=current.updated,index=current.index;
