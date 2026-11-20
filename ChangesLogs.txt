@@ -57,3 +57,6 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 
 
 2026-11-20 — FEEDBACK años: el snapshot local valida ahora cada fila del ledger (identidad, hash, tipo, fecha, estado, JSON y actor/opId) y detecta opId conflictivos globales antes de calcular el rango. Pruebas FeedbackYearApplicationAppendOnly 5/5 y SuggestYearVoteThreshold 7/7. CI 44835550127 SUCCESS: 239 suites, 2966 pruebas, 0 fallos; health read-only SUCCESS.
+
+
+2026-11-20 — Regresión local append-only: WriteContributionAppendConcurrency 9/9 y WriteContributionRecovery 9/9; se cubren intercalados, opId, slots, capacidad, VIN, pérdida de respuesta y recuperación. CI 44835751507 SUCCESS: 239 suites, 2968 pruebas, 0 fallos. Concurrencia real y fallos de Apps Script/Sheets/Drive siguen en Beta aislada.
