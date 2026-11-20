@@ -779,3 +779,12 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] Validación estática directa: siete condiciones PASS.
 - [ ] Ejecutar CI Node completa sobre el HEAD actual. Los runs visibles todavía pertenecen al HEAD anterior `d24e1a74`; no se consideran validación de estos commits.
 - Estado: IMPLEMENTACIÓN Y PRUEBA ACTUALIZADA; CI PENDIENTE. Sin despliegue Apps Script ni cambios en hojas productivas.
+
+
+### Cierre y corrección de estado — validación testigo + snapshot ADMIN (2026-11-19)
+- [x] CI de `ensureTestigoColumns` y prueba `AdminTestigoHeaderReadReuse` ejecutada dentro de la regresión final: 193 suites, 2,528 pruebas aprobadas, 0 fallos (run `44642229762`). Se rectifica el estado pendiente registrado en la nota anterior.
+- [x] Acotar la lectura de la fila del vehículo existente al esquema ADMIN (48 columnas) y ampliar solo hasta VIN si está más a la derecha; pruebas `AdminExistingVehicleLookupPreflight` 8/8 y `AdminExistingVehicleSnapshotRevalidation` 7/7.
+- [x] Eliminar el fallback de lectura integral post-Drive; exigir el snapshot devuelto por la revalidación idempotente `findRowByOpId`. Prueba `AdminExistingVehiclePostDriveSnapshotReuse` 9/9.
+- [x] CI `44642135034` SUCCESS y CI final `44642229762` SUCCESS: 193 suites, 2,528 pruebas, 0 fallos; health read-only de HEAD anterior y nuevo ejecutado sin escritura productiva.
+- Sin despliegue Apps Script ni cambios en Sheets/Drive productivos. Concurrencia real diferida a Beta autorizada.
+- Estado de estas optimizaciones: COMPLETADAS CON VALIDACIÓN DIFERIDA A BETA. `GP-PERF-ADMIN-CUT-LOCK-01` continúa EN PROGRESO.
