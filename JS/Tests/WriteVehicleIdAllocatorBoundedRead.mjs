@@ -13,9 +13,11 @@ function makeAllocator({ids,formulas=[],rowDataByRow={},lastColumn=4,storedValue
   getLastRow:()=>ids.length+1,getLastColumn:()=>lastColumn,
   getRange(...args){
    calls.push(args);
-   if(args.length===2&&args[0]===1&&args[1]===1)return{getValue:()=>"id"};
+   if(args.length===4&&args[0]===1&&args[1]===1&&args[2]===ids.length+1&&args[3]===1){
+    return{getValues:()=>[["id"],...ids.map(value=>[value])]};
+   }
    if(args.length===4&&args[0]===2&&args[1]===1&&args[2]===ids.length&&args[3]===1){
-    return{getValues:()=>ids.map(value=>[value]),getFormulas:()=>ids.map((value,index)=>[formulas[index]||""])};
+    return{getFormulas:()=>ids.map((value,index)=>[formulas[index]||""])};
    }
    if(args.length===4&&args[1]===2&&args[3]===lastColumn-1){
     const startRow=args[0],count=args[2],width=args[3];
@@ -40,18 +42,18 @@ let passed=0;function test(name,fn){fn();passed++;}
 test("filas con ID literal solo leen la columna ID",()=>{
  const h=makeAllocator({ids:[1,2,3],formulas:["","",""],lastColumn:49});
  assert.equal(h.run(),4);
- assert.deepEqual(h.calls,[[1,1],[2,1,3,1]]);
+ assert.deepEqual(h.calls,[[1,1,4,1],[2,1,3,1]]);
  assert.deepEqual(h.properties.sets,[["CORTES_ID_COUNTER","4"]]);
 });
 test("fila con datos y sin ID se rechaza leyendo solo esa fila",()=>{
  const h=makeAllocator({ids:[1,"",3],formulas:["","",""],lastColumn:4,rowDataByRow:{3:["Toyota","Hilux",""]}});
  assert.throws(()=>h.run(),/La fila 3 contiene datos, pero no tiene ID/);
- assert.deepEqual(h.calls,[[1,1],[2,1,3,1],[3,2,1,3]]);
+ assert.deepEqual(h.calls,[[1,1,4,1],[2,1,3,1],[3,2,1,3]]);
 });
 test("fila vacía sin ID se ignora",()=>{
  const h=makeAllocator({ids:[1,"",3],formulas:["","",""],lastColumn:3,rowDataByRow:{3:["",""]}});
  assert.equal(h.run(),4);
- assert.deepEqual(h.calls,[[1,1],[2,1,3,1],[3,2,1,2]]);
+ assert.deepEqual(h.calls,[[1,1,4,1],[2,1,3,1],[3,2,1,2]]);
 });
 test("fila con fórmula ID y sin otros datos se ignora",()=>{
  const h=makeAllocator({ids:[1,"",3],formulas:["","=ARRAYFORMULA(...)",""],lastColumn:3,rowDataByRow:{3:["",""]}});
