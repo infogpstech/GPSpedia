@@ -4419,7 +4419,7 @@ function findPendingVideoApprovalForTarget_(sheet, contentType, referenceId) {
         const rowIndex = candidate.getRow();
         let data = null;
         try {
-            data = JSON.parse(String(sheet.getRange(rowIndex, COLS_FEEDBACKS.Problema).getValue() || ""));
+            data = JSON.parse(String(sheet.getRange(rowIndex, COLS_FEEDBACKS.Problema, 1, 1).getValues()[0][0] || ""));
         } catch (error) {}
         if (data && data.subType === "video_approval" && data.status === "pending" &&
             String(data.contentType || "") === targetType && String(data.referenceId || "") === targetId) {
