@@ -84,3 +84,14 @@ Las acciones del gestor de imágenes se ejecutan únicamente desde ADMIN y requi
 - `getDropdownData` es una lectura necesaria para los controles de edición del modal y debe admitir la misma matriz de roles que `updateVehicleField`: Desarrollador, Jefe y Supervisor.
 - La acción no concede permisos de escritura adicionales; cada cambio sigue usando `updateVehicleField` y su validación backend.
 - El handler queda incluido en `ADMIN_MODAL_EDIT_ACTIONS`, por lo que el dispatcher usa `assertModalEditSession` y no exige Desarrollador exclusivamente.
+
+
+## Ledger de aportes por vehículo (GP-CONCURRENCY-CUT-MULTI-ENTRY-01)
+
+### `migrateVehicleContributionsSchema`
+
+- Acción interna/manual exclusiva de Desarrollador. Crea o verifica la hoja `AportesVehiculo` con el esquema versionado `eventId, opId, vehicleId, operationHash, kind, payloadJson, actorId, actorName, createdAt, status, supersedesEventId`.
+- Usa la sección crítica de mantenimiento de esquema; no se ejecuta desde cada alta ni inicializa la hoja durante una escritura ordinaria.
+- Es idempotente: si la hoja ya contiene los once encabezados esperados, devuelve el estado existente; si hay encabezados incompatibles, falla sin sobrescribirlos.
+- No altera ni migra filas de `Cortes`, no crea eventos y no marca imágenes como vinculadas. Debe ejecutarse explícitamente después de desplegar el handler y antes de activar el append de aportes.
+- La lectura CATALOG ya proyecta los eventos de esta hoja sobre el contrato heredado de la ficha. La integración de escritura append-only y la adaptación de edición in-modal permanecen en desarrollo; crear el esquema no significa que la concurrencia P0 esté habilitada.
