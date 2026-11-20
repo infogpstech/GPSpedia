@@ -568,3 +568,11 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - `AdminRestoreImageActivityOutsideLock` 6/6 PASS; `AdminImageTrashLifecycle` 40/40 PASS. CI `44653303076` SUCCESS: 209 suites, 2,626 pruebas aprobadas, 0 fallos; health read-only `44653303269` SUCCESS.
 - Commits: implementación `38794da5e9f2c515a764ff815cf30d30ed46c349`, prueba `284e9ea9869cda4ed144016d4e025e96d065e628`, runner `cf703114955b3ef78e9c82990d8cf162268049af`.
 - No se desplegó Apps Script ni se modificaron datos productivos. La llamada Drive de restauración/rollback sigue bajo lock hasta diseñar estado intermedio y revalidación.
+
+
+## P1 — ADMIN eliminación definitiva de imagen: actividad post-commit fuera del lock (2026-11-20)
+- En `handlePermanentlyDeleteReplacedImage`, tanto la reconciliación de un archivo ya ausente (HTTP 404) como la eliminación confirmada persisten el estado `eliminada` bajo ScriptLock y liberan el lock antes de registrar actividad vía Coordinator. El log de resultado también se ejecuta después de liberar.
+- Se añadió un cierre idempotente del lock para evitar doble liberación en las ramas de reconciliación y eliminación normal. La operación destructiva de Drive y su estado `eliminacion_pendiente` siguen bajo lock por ahora; moverla requiere una reserva exclusiva para evitar dos eliminaciones concurrentes.
+- `AdminPermanentDeleteActivityOutsideLock` 6/6 PASS; `AdminImageTrashLifecycle` 40/40 PASS. CI `44653582395` SUCCESS: 210 suites, 2,632 pruebas aprobadas, 0 fallos; health read-only `44653582292` SUCCESS. La primera ejecución encontró una aserción de orden incorrecta en el test (comparaba con el finally posterior); se corrigió y se repitió la regresión completa.
+- Commits: implementación `b63d72960fa367a697e756e5629691029278184e`, prueba `b42179292170db7e90eaa27619537a597b6a7a1f`, runner `546535f6678b70a9e39261bdcbe2496d70ddc9d6`, ajuste de test `905ac0794a8ac3ed11137f916ca697152c33a1c6`.
+- No se desplegó Apps Script ni se modificaron datos productivos.
