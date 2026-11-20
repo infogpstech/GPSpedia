@@ -716,8 +716,9 @@ async function submitAdminImageUploadOperation(operation, imgElement, expectedSe
     }
 
     const key = getAdminImageUploadPendingKey(operation.ownerId, operation.vehicleId, operation.fieldName);
-    const currentImageUrl = response.superseded
-        ? String(response.currentImageUrl || "")
+    const candidateReviewPending = response.candidateReviewPending === true;
+    const currentImageUrl = candidateReviewPending || response.superseded
+        ? String(response.currentImageUrl !== undefined ? response.currentImageUrl : operation.expectedCurrentValue || "")
         : String(response.imageUrl);
     if (currentImageUrl) imgElement.src = currentImageUrl;
     else imgElement.removeAttribute("src");
@@ -762,12 +763,16 @@ async function submitAdminImageUploadOperation(operation, imgElement, expectedSe
         pendingAdminImageUploads.delete(key);
     }
 
-    if (response.superseded) {
-        showSavingIndicator("warning", "El intento se completó, pero el campo cambió después. Se conservó la referencia actual.");
+    if (candidateReviewPending) {
+        showSavingIndicator("warning", response.message || "La imagen quedó como candidata de revisión; se conserva la imagen actualmente proyectada.");
+    } else if (response.superseded) {
+        showSavingIndicator("warning", response.message || "El intento se completó, pero el campo cambió después. Se conservó la referencia actual.");
     } else if (!cleanupConfirmed) {
         showSavingIndicator("warning", "Imagen guardada; el intento local sigue pendiente de limpieza. Reintentar no duplicará la operación.");
+    } else if (response.historyWarning) {
+        showSavingIndicator("warning", "Imagen aplicada; el historial de reemplazo requiere revisión: " + response.historyWarning);
     } else {
-        showSavingIndicator("success", "Imagen guardada");
+        showSavingIndicator("success", "Imagen guardada y confirmada en CATALOG");
     }
 }
 function convertImageToEditable(imgElement, vehicleId, fieldName) {
