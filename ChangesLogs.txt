@@ -1187,3 +1187,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-20 · ADMIN papelera de imágenes] `handleDeleteReplacedImage` conserva bajo ScriptLock la confirmación de Drive/historial y el rollback; difiere la actividad Coordinator y el mensaje de logging hasta después de liberar. Se mantiene la respuesta idempotente para archivos ya enviados a papelera. Pruebas `AdminDeleteImageActivityOutsideLock` 6/6 y `AdminImageTrashLifecycle` 40/40. CI `44653097187` SUCCESS: 208 suites, 2,620 pruebas aprobadas, 0 fallos; health read-only `44653097327` SUCCESS. Sin despliegue Apps Script ni cambios productivos.
+
+
+[2026-11-20 · ADMIN restauración desde papelera] `handleRestoreReplacedImageFromTrash` difiere la actividad Coordinator y el mensaje de logging hasta liberar ScriptLock; conserva la restauración Drive, verificación, rollback y replay idempotente existente. Pruebas `AdminRestoreImageActivityOutsideLock` 6/6 y `AdminImageTrashLifecycle` 40/40. CI `44653303076` SUCCESS: 209 suites, 2,626 pruebas aprobadas, 0 fallos; health read-only `44653303269` SUCCESS. Sin despliegue Apps Script ni cambios productivos.
