@@ -588,18 +588,18 @@ const CORTES_ID_COUNTER_PROPERTY = "GPSpedia_CORTES_LAST_ID";
 /** Asignador único de IDs; debe ejecutarse bajo el ScriptLock del proyecto WRITE. */
 function getNextCortesVehicleIdLocked(sheet) {
     if (!sheet) throw new Error("No se encontró la hoja «Cortes».");
-    if (String(sheet.getRange(1, COLS_CORTES.id).getValue() || "").trim() !== "id") {
+    const lastRow = sheet.getLastRow();
+    const idColumnValues = sheet.getRange(1, COLS_CORTES.id, Math.max(1, lastRow), 1).getValues();
+    if (String(idColumnValues[0] && idColumnValues[0][0] || "").trim() !== "id") {
         throw new Error("El encabezado de la primera columna de «Cortes» no es «id».");
     }
 
     let maxSheetId = 0;
     const seenIds = new Set();
-    const lastRow = sheet.getLastRow();
-    const lastColumn = sheet.getLastColumn();
     if (lastRow > 1) {
-        const idRange = sheet.getRange(2, COLS_CORTES.id, lastRow - 1, 1);
-        const idValues = idRange.getValues();
-        const idFormulas = idRange.getFormulas();
+        const lastColumn = sheet.getLastColumn();
+        const idValues = idColumnValues.slice(1);
+        const idFormulas = sheet.getRange(2, COLS_CORTES.id, lastRow - 1, 1).getFormulas();
         const candidateOffsets = [];
         for (let offset = 0; offset < idValues.length; offset++) {
             const rawId = idValues[offset][0];
