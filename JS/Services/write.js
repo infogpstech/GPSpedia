@@ -345,7 +345,11 @@ function doPostInternal_(e) {
                         ? response.vehicleId
                         : (response.vehicleId || requestPayload.vehicleId);
                     if (!vehicleId) throw new Error("La mutación WRITE no devolvió un ID de vehículo verificable.");
-                    publishCortesCatalogChange_(action, vehicleId, response.catalogVersion);
+                    if (response.catalogResetRequired === true) {
+                        publishSharedCatalogChange_("WRITE", action, { operation: "reset" });
+                    } else {
+                        publishCortesCatalogChange_(action, vehicleId, response.catalogVersion);
+                    }
                 } else {
                     // freezeCortesIds puede modificar varias filas/IDs: requiere reconciliación completa.
                     publishSharedCatalogChange_("WRITE", action, { operation: "reset" });
