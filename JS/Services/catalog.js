@@ -411,7 +411,7 @@ function projectVehicleContributionEvents_(vehicles, sourceEvents) {
         const targetId=String(e&&e.supersedesEventId||"").trim();
         if(!targetId||!["accepted","retracted"].includes(String(e.status||"").toLowerCase())||!String(e.actorId||"").trim()||!String(e.opId||"").startsWith("OP-ADMIN-"))return;
         const target=byEventId.get(targetId);
-        if(!target||target.eventId===e.eventId||target.vehicleId!==e.vehicleId||target.kind!==e.kind||target.supersedesEventId)return;
+        if(!target||target.eventId===e.eventId||target.vehicleId!==e.vehicleId||target.kind!==e.kind)return;
         if(!resolutionsByTarget.has(targetId))resolutionsByTarget.set(targetId,[]);resolutionsByTarget.get(targetId).push(e);
     });
     const supersededEventIds=new Set(),conflictingResolutionTargets=new Set();

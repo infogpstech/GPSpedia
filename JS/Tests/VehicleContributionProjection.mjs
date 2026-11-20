@@ -226,6 +226,14 @@ test("resolución ADMIN de descarte retira el aporte sin borrar el evento origin
  const result=project([blankVehicle("101")],[original,resolution])[0];
  assert.equal(result.cableAlimen,null);assert.equal(result.contributionCandidates.length,0);assert.equal(original.status,"review");
 });
+test("una corrección posterior puede sustituir otra resolución sin romper la cadena",()=>{
+ const original=event("OP-CHAIN-ORIGINAL","101","feed",{text:"Pendiente"},2,"a",{status:"review"});
+ const first=event("OP-ADMIN-CHAIN-REQUEST0001","101","feed",{text:"Primera corrección"},3,"b",{eventId:"EV-ADMIN-CHAIN-1",actorId:"DEV-1",supersedesEventId:original.eventId,status:"accepted"});
+ const second=event("OP-ADMIN-CHAIN-REQUEST0002","101","feed",{text:"Corrección final"},4,"c",{eventId:"EV-ADMIN-CHAIN-2",actorId:"DEV-1",supersedesEventId:first.eventId,status:"accepted"});
+ const result=project([blankVehicle("101")],[original,first,second])[0];
+ assert.equal(result.cableAlimen,"Corrección final");assert.equal(result.contributionSources.feed1.eventId,"EV-ADMIN-CHAIN-2");
+ assert.equal(result.contributionCandidates.length,0);assert.equal(original.status,"review");
+});
 test("resoluciones múltiples concurrentes no sustituyen silenciosamente el evento",()=>{
  const original=event("OP-REVIEW-OPEN","101","opening",{text:"Pendiente"},2,"a",{status:"review"});
  const one=event("OP-ADMIN-REQUEST1234567892","101","opening",{text:"Aceptar A"},3,"b",{eventId:"EV-ADMIN-A",actorId:"DEV-1",supersedesEventId:original.eventId,status:"accepted"});
