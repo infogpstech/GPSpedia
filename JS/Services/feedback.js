@@ -3153,6 +3153,16 @@ function handleAddProblem(source) {
         throw uploadError;
     }
 
+    let preverifiedPendingFile = null;
+    let pendingVerificationError = null;
+    if (preflightOp && preflightOp.status === "UPLOAD_PENDING" && preflightOp.imageFileId) {
+        try {
+            preverifiedPendingFile = verifyPendingPysImageFile_(preflightOp, image, folder);
+        } catch (verificationError) {
+            pendingVerificationError = verificationError;
+        }
+    }
+
     const lock = LockService.getScriptLock();
     let lockAcquired = false, sheet = null, opsSheet = null, op = null;
     let file = preparedFile, fileId = "", url = "", problemId = "";
@@ -3199,17 +3209,31 @@ function handleAddProblem(source) {
                 }
                 fileId = op.imageFileId;
                 url = op.imageUrl;
-                try {
-                    file = verifyPendingPysImageFile_(op, image, folder);
-                } catch (verifyError) {
+                const preflightMatchesPending = preflightOp &&
+                    preflightOp.status === op.status &&
+                    String(preflightOp.opId) === String(op.opId) &&
+                    String(preflightOp.payloadHash) === String(op.payloadHash) &&
+                    String(preflightOp.problemId) === String(op.problemId) &&
+                    String(preflightOp.imageFileId) === String(op.imageFileId) &&
+                    String(preflightOp.imageUrl) === String(op.imageUrl);
+                if (!preflightMatchesPending) {
+                    if (preparedFile) { try { preparedFile.setTrashed(true); } catch (cleanupError) {} }
+                    file = null;
+                    throw new Error("La reserva de imagen PyS cambió después de la validación previa; reintenta para verificar el archivo pendiente actual.");
+                }
+                if (pendingVerificationError) {
                     if (preparedFile) { try { preparedFile.setTrashed(true); } catch (cleanupError) {} }
                     file = null;
                     try {
                         writePysOperation_(opsSheet, op.rowNumber,
                             Object.assign({}, op, { status: "RECOVERY_REQUIRED", updatedAt: new Date().toISOString() }));
                     } catch (ledgerError) {}
-                    throw verifyError;
+                    throw pendingVerificationError;
                 }
+                if (!preverifiedPendingFile) {
+                    throw new Error("No se pudo recuperar la verificación previa de la imagen PyS; reintenta la operación.");
+                }
+                file = preverifiedPendingFile;
                 if (preparedFile) { try { preparedFile.setTrashed(true); } catch (cleanupError) {} }
             } else {
                 if (op.status !== "PENDING") {
