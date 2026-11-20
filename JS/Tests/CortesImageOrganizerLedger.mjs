@@ -65,6 +65,23 @@ run("limita terminales conservando las operaciones recientes y las no terminales
     assert.ok(store.getProperty(prefix + "active"));
     assert.equal(result.removed, 5);
 });
+run("libera una entrada terminal al alcanzar exactamente la capacidad máxima", () => {
+    const entries = {};
+    for (let i = 0; i < 200; i++) {
+        entries[prefix + "terminal-" + i] = JSON.stringify({
+            operationId: "terminal-" + i, status: "complete", updatedAt: now - i
+        });
+    }
+    for (let i = 0; i < 50; i++) {
+        entries[prefix + "active-" + i] = JSON.stringify({
+            operationId: "active-" + i, status: "processing", updatedAt: now
+        });
+    }
+    const store = propertyStore(entries);
+    const result = prune(store, now);
+    assert.equal(result.removed, 1);
+    assert.equal(Object.keys(store.getProperties()).filter(key => key.startsWith(prefix)).length, 249);
+});
 run("bloquea nuevos registros si el ledger está saturado de estados no terminales", () => {
     const entries = {};
     for (let i = 0; i < 251; i++) {
@@ -100,4 +117,4 @@ run("historial no expone campos sensibles y limita el tamaño de página", () =>
     assert.equal(page.operations.length, 1);
     assert.equal(JSON.stringify(page).includes("must-not-leak"), false);
 });
-console.log("CortesImageOrganizerLedger: 5/5 PASS");
+console.log("CortesImageOrganizerLedger: 6/6 PASS");
