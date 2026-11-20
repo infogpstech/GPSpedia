@@ -1149,3 +1149,11 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] Health read-only `44763121560` SUCCESS.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó Apps Script ni se modificaron hojas/Drive productivos.
 - Siguiente subactividad: inspeccionar las lecturas restantes dentro de `handleAddOrUpdateCut`; modificar únicamente redundancias demostrables y conservar integridad/idempotencia.
+
+
+### GP-PERF-ADMIN-CUT-LOCK-01 — rango exacto en búsqueda previa de vehicleId (2026-11-20)
+- [x] Cambiar el número de filas solicitado de `lastRowForLookup` a `lastRowForLookup - 1` al leer desde la fila 2.
+- [x] Mantener revalidación bajo ScriptLock mediante snapshot de fila y comparación del ID.
+- [x] `AdminExistingVehicleLookupPreflight.mjs` 10/10 PASS; CI `44763460378` SUCCESS: 220 suites, 2,735 pruebas, 0 fallos; health read-only `44763460429` SUCCESS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Sin despliegue Apps Script ni cambios productivos.
+- Siguiente: continuar la auditoría de lecturas remotas dentro de `handleAddOrUpdateCut`.
