@@ -796,3 +796,13 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - No existe `package.json` ni checkout local en este entorno y no hay herramienta de navegador interactivo disponible; la comprobación visual real de SearchModelGrouping queda diferida a Beta, sin presentarla como ejecutada.
 - `GP-PERF-ADMIN-CUT-LOCK-01`: implementación/auditoría y regresión local COMPLETADAS CON VALIDACIÓN DIFERIDA A BETA. `GP-UX-SEARCH-MODEL-GROUPING-01`: implementación y regresión COMPLETADAS; solo queda prueba visual de navegador en Beta.
 - No se desplegó Apps Script, no se modificó la rama base ni se escribieron datos de producción. Siguiente paso: prueba visual en navegador/Beta autorizada para búsqueda agrupada; luego continuar el backlog local vigente.
+
+
+## Checkpoint final — cierre local y continuidad (2026-11-20)
+- HEAD remoto verificado antes de este checkpoint: `6f3a00c1e248ac88efda1bcc7976afddc8db3f16`. Este HEAD contiene los cambios de código validados y los registros anteriores; el commit actual de checkpoint será documental.
+- CI `44764662255` SUCCESS: 220 suites, 2,735 pruebas aprobadas, 0 fallos; `SearchModelGrouping` 21/21, `AdminIdempotencySnapshotReuse` 10/10, `AdminExistingVehicleLookupPreflight` 10/10 y `AdminLegacyOpIdSnapshotReuse` 10/10. Health read-only `44764661958` SUCCESS; Pages `44764661992` SUCCESS.
+- Rama base protegida sigue en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; comparación trabajo/base: 5,339 commits adelante, 0 detrás. No se modificó la base.
+- `GP-PERF-ADMIN-CUT-LOCK-01` queda COMPLETADA CON VALIDACIÓN DIFERIDA A BETA para la implementación/auditoría local. Las comprobaciones de Script IDs, proyectos desplegados, concurrencia real y Drive/Spreadsheet quedan abiertas para Beta autorizada.
+- `GP-UX-SEARCH-MODEL-GROUPING-01` queda COMPLETADA CON VALIDACIÓN DIFERIDA A BETA para la implementación y regresión local. Falta únicamente la prueba visual real en navegador con catálogo representativo; no existe checkout local ni herramienta de navegador interactivo en esta sesión. No se presenta como ejecutada.
+- `NORMAS_DESAROLLO.md`, `README.md`, `contexto_personal.md`, `checkpoint.md`, `Tareas_Activas.md`, la auditoría de búsqueda y la lista Beta fueron consultados. No se realizó despliegue Apps Script ni acceso/escritura en Sheets/Drive productivos.
+- Siguiente paso: preparar la prueba visual de BETA-04 en navegador/Beta autorizado siguiendo primero la secuencia segura de `lista_beta_parte1.txt`; no realizar Safe Apply ni cambios productivos.
