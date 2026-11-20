@@ -714,3 +714,14 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Validación aún pendiente: regresión integral `RunServiceTests.mjs` y prueba visual en navegador. No se dispone de checkout local; las herramientas GitHub consultadas no devolvieron estados de CI para estos commits.
 - La rama base protegida permanece en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; no se escribió en ella. Sin despliegue Apps Script ni cambios en datos productivos.
 - Estado: implementación local completada; cierre de validación pendiente.
+
+## GP-PERF-ADMIN-CUT-LOCK-01 — reserva idempotente de vehicleId ADMIN→WRITE (2026-11-20)
+- **Tarea:** completar la reserva idempotente del ID central de Cortes para altas nuevas. **Parte completada:** transporte de la identidad de operación desde ADMIN y persistencia/reutilización de la reserva dentro del asignador WRITE.
+- **Rama:** `GPSpedia2.2.5_work`. HEAD confirmado antes de este commit documental: `3edc0254a01014c5cf84071132a904aac24ef908`. La rama base `GPSpedia2.2.5` permanece en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- ADMIN envía `opId` y `operationHash` ya calculado para la ruta idempotente; las solicitudes legacy siguen enviando solo userId/sessionToken.
+- WRITE mantiene el `tryLock(0)`, crea/verifica el ledger `CortesIdReservations` y persiste `opId`, huella SHA-256, vehicleId y fecha. Mismo opId/huella devuelve el ID reservado; una huella distinta se rechaza. Las asignaciones legacy también consideran la última reserva persistida para no reutilizar IDs si el contador no pudo actualizarse.
+- Se conserva la validación de rol existente, el lock WRITE y el código `WRITE_BUSY`; no se añadió lease, autorización remota ni cambio de RBAC.
+- **Validación CI:** `44746455621` SUCCESS — 219 suites, 2,723 pruebas aprobadas y 0 fallos. Pruebas focalizadas: WriteVehicleIdAllocationIdempotency 9/9; AdminVehicleIdAllocationIdempotency 3/3; VehicleIdAllocationEndToEnd 4/4; AdminCutPreflightBeforeAllocation 7/7. Health read-only `44746455562` SUCCESS y Pages `44746451810` SUCCESS.
+- **Qué sigue:** continuar la siguiente parte local de `GP-PERF-ADMIN-CUT-LOCK-01`: revisar las lecturas restantes de Sheets en `handleAddOrUpdateCut` y retirar únicamente consultas redundantes demostrables, sin mover fuera del lock las reservas, las comprobaciones de conflicto, la revalidación ni escrituras que deban ser atómicas. Después ejecutar otra vez la regresión completa.
+- **Validación diferida a Beta:** comprobar en el deployment aislado que WRITE crea/usa el ledger en Spreadsheet real y que el reintento tras respuesta perdida devuelve el mismo ID. No se desplegó Apps Script ni se modificaron hojas/Drive productivos.
+- **Estado:** esta subactividad queda COMPLETADA LOCALMENTE CON VALIDACIÓN DIFERIDA A BETA; el bloque mayor GP-PERF-ADMIN-CUT-LOCK-01 sigue EN PROGRESO.

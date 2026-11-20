@@ -302,7 +302,7 @@ Aplicar la estructura objetivo después de validar el dry-run:
 
 ### P0 — GP-PERF-ADMIN-CUT-LOCK-01 — COMPLETADA CON VALIDACIÓN DIFERIDA A BETA
 - [x] Confirmado que `handleAddOrUpdateCut` mantiene `ScriptLock` durante la llamada ADMIN→WRITE de asignación de ID y durante operaciones de carpetas/carga Drive; la recuperación por opId también puede realizar I/O de Drive bajo el lock.
-- [x] Reserva atómica de operación/vehículo/slot para el flujo con `opId`: ledger `pending` reserva el slot antes de liberar el lock. La reserva idempotente del ID central para altas nuevas sigue pendiente.
+- [x] Reserva atómica de operación/vehículo/slot para el flujo con `opId`: ledger `pending` reserva el slot antes de liberar el lock. La reserva idempotente del ID central para altas nuevas se implementó y validó localmente; ver el apartado «WRITE/ADMIN — reserva idempotente de vehicleId» al final de este registro.
 - [x] Mover las operaciones de carpetas/carga/reparación Drive fuera del lock para operaciones con `opId`; la llamada ADMIN→WRITE de asignación de ID continúa pendiente.
 - [x] Re-adquirir con `tryLock(0)` y revalidar reserva, fila, slot, opId y operationHash antes de aplicar las URLs; el `finally` solo libera el lock si sigue en posesión de la ejecución.
 - [x] Mover el cálculo SHA-256 y la validación del `operationHash` antes de la llamada remota a WRITE y del `ScriptLock` ADMIN; las solicitudes idempotentes inválidas ya no consumen un ID ni tiempo de sección crítica. La búsqueda/revalidación del `opId` permanece dentro del lock.
@@ -1104,3 +1104,16 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [ ] Ejecutar RunServiceTests.mjs completo y comprobar la interfaz en navegador con catálogo representativo; no se ha obtenido un estado de CI para estos commits y el entorno no tiene checkout local del repositorio.
 - Auditoría: AUDITORIA_BUSQUEDA_MODELOS_2026-11-20.md.
 - Estado: IMPLEMENTACIÓN LOCAL COMPLETADA; CIERRE DE VALIDACIÓN PENDIENTE (regresión integral y prueba visual de navegador). Sin despliegue Apps Script ni cambios en datos productivos.
+
+
+### WRITE/ADMIN — reserva idempotente de vehicleId ADMIN→WRITE (2026-11-20)
+- [x] ADMIN transmite el `opId` y `operationHash` previamente calculado a WRITE para altas idempotentes; las solicitudes legacy conservan el contrato sin esos campos.
+- [x] WRITE persiste la relación `opId + operationHash + vehicleId` en el ledger `CortesIdReservations` bajo su `ScriptLock` no bloqueante.
+- [x] Un reintento con la misma clave y huella recupera el mismo ID; reutilizar el `opId` con otra huella se rechaza sin consumir otro ID.
+- [x] Verificar la reserva después de escribirla y mantener la secuencia monotónica también frente a reservas previas y asignaciones legacy.
+- [x] Cubrir respuesta perdida/reintento ADMIN→WRITE, fallo al persistir el contador después de guardar el ledger, encabezados incompatibles, huella inválida y respuesta `WRITE_BUSY`.
+- [x] Pruebas específicas: `WriteVehicleIdAllocationIdempotency` 9/9; `AdminVehicleIdAllocationIdempotency` 3/3; `VehicleIdAllocationEndToEnd` 4/4; `AdminCutPreflightBeforeAllocation` 7/7 PASS.
+- [x] Regresión GitHub Actions `44746455621` SUCCESS: 219 suites, 2,723 pruebas aprobadas, 0 fallos. Health read-only `44746455562` SUCCESS; Pages `44746451810` SUCCESS.
+- Sin despliegue Apps Script ni cambios en hojas/Drive productivos. La comprobación del nuevo ledger y el comportamiento real de Spreadsheet quedan para Beta autorizada.
+- Estado de esta subactividad: COMPLETADA LOCALMENTE CON VALIDACIÓN DIFERIDA A BETA. `GP-PERF-ADMIN-CUT-LOCK-01` continúa en progreso.
+- Siguiente paso local: continuar la revisión de lecturas restantes de Sheets dentro de `handleAddOrUpdateCut`; eliminar solo consultas redundantes demostrables, preservando reservas, detección de conflictos, revalidación y escrituras atómicas.
