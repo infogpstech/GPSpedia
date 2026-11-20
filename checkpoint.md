@@ -766,3 +766,14 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Diff revisado: únicamente `JS/Services/admin.js` (una línea) y `JS/Tests/AdminExistingVehicleLookupPreflight.mjs` (aserciones actualizadas). Rama base protegida sin cambios.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó Apps Script ni se modificaron datos productivos.
 - Siguiente paso: continuar la inspección de las lecturas restantes de `handleAddOrUpdateCut`, sin modificar lecturas necesarias para revalidación, reservas, unicidad o read-back.
+
+
+## Cierre — reutilización del snapshot Idempotencia en ADMIN (2026-11-20)
+- `handleAddOrUpdateCut` ya lee `Idempotencia` bajo ScriptLock y conserva ese snapshot durante la sección crítica. La búsqueda inicial de `opId` ahora consume el mapa validado sin repetir inmediatamente la lectura dirigida de la misma entrada.
+- `findRowByOpId` mantiene la revalidación dirigida por defecto. Los callbacks posteriores a liberar/readquirir el lock y la reconciliación de escrituras fallidas continúan usando el camino de revalidación; solo la llamada inicial pasa explícitamente `false`.
+- Auditoría de escritores: `recordOpId` se invoca desde `handleAddOrUpdateCut` bajo el lock; la migración de Idempotencia también adquiere ScriptLock. `handleCheckOperation` es de solo lectura. No se identificó un escritor normal de ese ledger fuera de la exclusión ADMIN.
+- `AdminIdempotencySnapshotReuse` 10/10 PASS; `AdminLegacyOpIdSnapshotReuse` 10/10 PASS. CI `44764022976` SUCCESS sobre HEAD `354255971a6fe7e785a1e339ed2f1da8715910a1`: 220 suites, 2,735 pruebas aprobadas, 0 fallos; sintaxis PASS. Health read-only `44764023135` SUCCESS.
+- Primer intento CI `44763915168` falló porque `AdminLegacyOpIdSnapshotReuse.mjs` buscaba la firma antigua de tres parámetros; se actualizó el extractor para la firma opcional de cuatro parámetros y la repetición aprobó. No fue un fallo funcional del handler.
+- Diff revisado: `JS/Services/admin.js`, `JS/Tests/AdminIdempotencySnapshotReuse.mjs` y `JS/Tests/AdminLegacyOpIdSnapshotReuse.mjs`. Sin cambios de permisos, contrato externo, reserva, idempotencia, ni revalidación post-lock.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
+- Siguiente paso: revisar las lecturas restantes de `recordOpId` y `markAdminCutImagesLinkedOutsideLock_`; retirar únicamente viajes remotos duplicados cuya redundancia pueda probarse sin eliminar read-back ni revalidación tras Drive.
