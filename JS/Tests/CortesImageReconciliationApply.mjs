@@ -83,6 +83,13 @@ testCase("el rollback conserva un cambio externo y reporta revisión manual",()=
  assert.equal(h.values[1][8],"https://manual.example/changed");
  assert.ok(result.rollbackErrors.length>0);
 });
+testCase("si no se puede readquirir el lock tras la actividad, no intenta rollback sin bloqueo",()=>{
+ const h=createHarness({lockReacquireFailure:true});
+ const result=h.handler(h.payload,()=>h.logMessage(),{userId:"DEV-1"});
+ assert.equal(result.status,"partial");assert.equal(result.rollbackConfirmed,false);
+ assert.equal(h.values[1][8],url);assert.equal(h.locked,false);assert.equal(h.tryLockCalls,1);
+ assert.match(result.message,/no se ejecutó rollback sin bloqueo/);
+});
 testCase("requiere confirmación y sesión Desarrollador",()=>{
  const h=createHarness();
  assert.throws(()=>h.handler({...h.payload,confirmed:false},()=>{},{userId:"DEV-1"}),/confirmación explícita/);
