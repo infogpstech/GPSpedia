@@ -944,3 +944,12 @@ Estado: REGRESIÓN LOCAL COMPLETADA. Concurrencia real de appendRow, fallos real
 - CI 44837729816 SUCCESS: 244 suites, 2994 pruebas, 0 fallos. Health read-only del commit previo SUCCESS; Pages del último commit en ejecución.
 - La sección crítica de alta nueva permanece para deduplicación/append. Los replays comunes ya no adquieren lock ni hacen Drive innecesariamente.
 ================================================================================
+
+
+2026-11-20 — FEEDBACK tutoriales: replay por operationId antes del lock
+- `handleAddTutorial` hace preflight read-only por `tutorialId = tut-{operationId}` antes de adquirir ScriptLock. Si encuentra una fila idéntica, devuelve el registro existente; si el contenido difiere, rechaza la reutilización del operationId.
+- Si no existe, adquiere lock y vuelve a consultar el ID antes de validar unicidad de título y anexar. Así se mantiene la protección de dos altas concurrentes con el mismo título.
+- `findTutorialById_` usa TextFinder en la columna A con fallback de lectura limitada a esa columna para mocks/adaptadores antiguos; `tutorialTitleExists_` lee solo la columna B.
+- `FeedbackTutorialPreflightOutsideLock` 7/7 PASS; suite P2 de IDs/idempotencia tutorial PASS. CI 44838077134 SUCCESS: 245 suites, 3001 pruebas, 0 fallos. Health read-only 44838077089 SUCCESS; Pages en ejecución.
+- No se eliminó el lock de nuevas altas ni se cambió la regla de unicidad de título.
+================================================================================
