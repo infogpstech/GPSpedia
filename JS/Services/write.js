@@ -745,12 +745,19 @@ function buildCortesIdFreezePlan(sheet) {
 
 /** Convierte fórmulas heredadas en valores sin alterar los valores calculados ni el formato de celda. */
 function handleFreezeCortesIds(payload) {
+    // La autorización y la validación Drive del respaldo no protegen estado compartido de WRITE.
+    // Ejecutarlas antes del ScriptLock evita que Drive retenga el mutex global del servicio.
+    assertDeveloperForIdMaintenance(payload);
+    const backupId = verifyCortesIdsBackup(payload && payload.backupId);
     const lock = LockService.getScriptLock();
-    try { lock.waitLock(30000); }
-    catch (error) { throw new Error("No se pudo obtener el bloqueo central para estabilizar los IDs de Cortes."); }
+    let lockAcquired = false;
     try {
-        assertDeveloperForIdMaintenance(payload);
-        const backupId = verifyCortesIdsBackup(payload && payload.backupId);
+        try { lockAcquired = lock.tryLock(0); } catch (lockError) { lockAcquired = false; }
+        if (!lockAcquired) {
+            const busyError = new Error("WRITE está ocupado con otra operación de escritura. Reintenta la estabilización de IDs en unos instantes.");
+            busyError.code = "WRITE_BUSY";
+            throw busyError;
+        }
         const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
         const plan = buildCortesIdFreezePlan(sheet);
         const summary = {
@@ -789,7 +796,7 @@ function handleFreezeCortesIds(payload) {
             message: "Las fórmulas heredadas se convirtieron en valores estáticos y se conservaron los formatos de celda."
         };
     } finally {
-        lock.releaseLock();
+        if (lockAcquired) lock.releaseLock();
     }
 }
 
