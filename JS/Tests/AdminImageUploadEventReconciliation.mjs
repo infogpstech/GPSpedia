@@ -75,4 +75,23 @@ function event(overrides = {}) {
     assert.equal(rows.length, 2);
     assert.equal(rows[1][9], "linked");
 }
-console.log("AdminImageUploadEventReconciliation: 4/4 PASS — lectura, proyección, conflictos y append");
+
+{
+    const first = event();
+    const second = first.slice();
+    second[0] = "IE-2";
+    second[7] = "file-a";
+    second[9] = "linked";
+    const projected = runtime.project([{ values: first }, { values: second }]);
+    assert.equal(projected.state, "linked", "La transición más reciente determina el estado cuando la identidad y el archivo coinciden");
+}
+{
+    const first = event();
+    const second = first.slice();
+    second[0] = "IE-2";
+    second[7] = "file-a";
+    second[9] = "file_missing";
+    const projected = runtime.project([{ values: first }, { values: second }]);
+    assert.equal(projected.state, "file_missing");
+}
+console.log("AdminImageUploadEventReconciliation: 6/6 PASS — lectura, proyección temporal, conflictos y append");
