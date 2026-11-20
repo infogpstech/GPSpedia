@@ -77,3 +77,9 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - Se conservan los locks de asignación secuencial y de mantenimiento; pruebas de idempotencia, lectura acotada, E2E ADMIN→WRITE y fast-fail ya forman parte de la regresión CI 44835751507 (239 suites/2968).
 - Auditoría de locks FEEDBACK: los restantes protegen invariantes read-modify-write/deduplicación; no retirarlos ni reemplazarlos por UserLock sin journal append-only/proyección o control de versión.
 - Se identificó la ruta heredada WRITE `addVinToVehicle`: lock global y escritura mutable, sin consumidor encontrado en los principales módulos frontend revisados, pero aún expuesta por api-config. Queda pendiente confirmar integraciones externas y migrarla/deprecarla con compatibilidad.
+
+
+2026-11-20 — FEEDBACK likes: lecturas dirigidas y revalidación
+- `handleRecordLike` realiza preflight de vehículo/corte antes del ScriptLock y revalida dentro antes de modificar el contador.
+- `Cortes` se consulta por ID y `FeedbackLikes` por actor; se evita descargar las hojas completas. Se mantiene la sección crítica para evitar likes duplicados y pérdida de incrementos.
+- Nueva regresión `FeedbackLikePreflightOutsideLock`: 5/5 PASS. CI 44836655370 SUCCESS: 240 suites, 2973 pruebas, 0 fallos.
