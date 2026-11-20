@@ -184,3 +184,15 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - El lock sigue protegiendo la deduplicación y el incremento read-modify-write con recuperación pending/completed. No retirarlo hasta migrar a eventos append-only y proyección CATALOG.
 - `FeedbackLikePreflightOutsideLock` 5/5 PASS. CI 44836655370 SUCCESS: 240 suites, 2973 pruebas, 0 fallos. Health read-only y Pages seguían en ejecución al momento de este registro.
 - No se desplegó ni se modificaron datos productivos.
+
+
+## Checkpoint — búsquedas dirigidas y replay previo en sugerencias (2026-11-20)
+
+- HEAD de código validado: `6ed838d95e454b43ad068fb7b4e2cc7e8d4282b8` (incluye actualizaciones de pruebas; el test de replay también está ya en la rama de trabajo).
+- `findReportByReportId_`, `findCutSuggestionByOperation_` y `findCutSuggestionByRequest_` ya no descargan toda la hoja: buscan por `TextFinder` en metadata/Problema y leen coincidencias.
+- `handleSuggestCutChange` realiza preflight de replay antes de Drive/lock; si no existe, carga imagen y revalida bajo lock antes de crear. Una carrera ganada por otra solicitud se resuelve liberando lock y limpiando el adjunto duplicado.
+- Pruebas focalizadas: report lookup 4/4; suggestion lookup 6/6; suggestion preflight 6/6; image cleanup 5/5; P2 feedback upload 1/1.
+- CI 44837377505 SUCCESS: 243 suites, 2989 pruebas, 0 fallos. Health read-only 44837377778 SUCCESS; Pages estaba en ejecución.
+- El lock de nueva escritura sigue activo; se redujeron las búsquedas y se evitan locks/Drive en replays, sin alterar atomicidad.
+- Incidente de rama: test file creado accidentalmente en `main`, eliminado en `de13b119529415b8d85e03331647cb5422cb8a1c`; `main` ya no contiene el archivo y `GPSpedia2.2.5` no se modificó.
+- No se desplegó Apps Script ni se modificaron datos productivos.
