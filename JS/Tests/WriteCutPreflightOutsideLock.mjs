@@ -51,7 +51,7 @@ const wrapper=extract("handleAddOrUpdateCut","handleAddOrUpdateCutLocked");
 const events=[];
 let nextRequest={ready:true,validatedPayload:{vehicleId:null,opId:"OP-NEW"}};
 const lock={tryLock(ms){assert.equal(ms,0);events.push("script-lock");return true;},hasLock:()=>true,releaseLock(){events.push("release");}};
-const wrapperFn=new Function("prepareAddOrUpdateCutRequest_","handleAppendExistingVehicleCut_","LockService","handleAddOrUpdateCutLocked","nextWriteCatalogVersionLocked_","Logger",wrapper+"\\nreturn handleAddOrUpdateCut;")(
+const wrapperFn=new Function("prepareAddOrUpdateCutRequest_","handleAppendExistingVehicleCut_","LockService","handleAddOrUpdateCutLocked","nextWriteCatalogVersionLocked_","Logger",wrapper+"\nreturn handleAddOrUpdateCut;")(
  ()=>{events.push("preflight");return nextRequest;},
  preparedRequest=>{events.push("append-existing");return{status:"success",vehicleId:preparedRequest.validatedPayload.vehicleId};},
  {getScriptLock(){events.push("get-script-lock");return lock;}},
