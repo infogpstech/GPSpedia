@@ -34,9 +34,9 @@ function runWriteAuthorizationContracts(sources) {
   };
   const spreadsheet=()=>{spreadsheetReads++;return{getSheetByName(name){if(name==="Cortes")return{getLastRow:()=>1};return null;}};};
   const lockService={getScriptLock:()=>({tryLock(ms){if(ms!==0)throw Error("El lock debe ser no bloqueante.");lockAcquired++;return true;},releaseLock(){lockReleased++;}})};
-  const fn=new Function("getAuthenticatedCollaborator","getSpreadsheet","SHEET_NAMES","COLS_USERS","LockService","getNextCortesVehicleIdLocked",
+  const fn=new Function("getAuthenticatedCollaborator","getSpreadsheet","SHEET_NAMES","COLS_USERS","LockService","getNextCortesVehicleIdLocked","normalizeCortesIdAllocationRequest_","reserveCortesVehicleIdForOperationLocked_",
    auth+"\n"+allocate+"\nreturn handleAllocateVehicleId;")(
-   authFn,spreadsheet,{USERS:"Users",CORTES:"Cortes"},{ID:1,Privilegios:4},lockService,()=>{allocations++;return 77;});
+   authFn,spreadsheet,{USERS:"Users",CORTES:"Cortes"},{ID:1,Privilegios:4},lockService,()=>{allocations++;return 77;},()=>null,()=>{throw Error("No debe reservar en la prueba legacy");});
   return{fn,stats:()=>({authCalls,roleReads,lockAcquired,lockReleased,allocations,spreadsheetReads})};
  }
  const payload={userId:"USR-1",sessionToken:"session-1"};
