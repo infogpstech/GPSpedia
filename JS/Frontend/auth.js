@@ -495,8 +495,10 @@ function handleLoginSuccess(user, persist = true) {
         currentUser: user,
         ...(previousOwnerId && previousOwnerId !== nextOwnerId ? { searchHistory: [], viewedItems: [] } : {})
     });
-    const appReady = showApp(user) === true;
+    // Hidratar historiales locales antes de iniciar el catálogo remoto/local.
+    // Las lecturas de IndexedDB comienzan sin await y avanzan en paralelo con showApp().
     loadUserLocalActivity(user);
+    const appReady = showApp(user) === true;
     if (appReady) loadRichTextModePreference(user);
     return appReady;
 }
