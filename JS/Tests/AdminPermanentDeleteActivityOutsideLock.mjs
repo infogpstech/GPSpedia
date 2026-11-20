@@ -11,8 +11,9 @@ const activityCalls=[...handler.matchAll(/recordImageAdministrationActivity\(/g)
 assert.equal(activityCalls.length,2,"Deben cubrirse la reconciliación 404 y la eliminación confirmada");
 assert.ok(activityCalls.every(index=>handler.lastIndexOf("releaseLock();",index)>=0),
     "Cada registro de actividad debe ocurrir después de liberar ScriptLock");
-assert.ok(handler.indexOf("logMessage&&logMessage(")>handler.lastIndexOf("releaseLock();"),
-    "El logger de eliminación debe ejecutarse sin ScriptLock");
+const logIndex=handler.indexOf("logMessage&&logMessage(");
+assert.ok(logIndex>0&&handler.lastIndexOf("releaseLock();",logIndex)>=0,
+    "El logger de eliminación debe ejecutarse después de liberar ScriptLock");
 assert.match(handler,/setReplacedImageHistoryStatusVerified_\(sheet,existing\.rowIndex,"eliminada"\);\s*releaseLock\(\);/);
 assert.match(handler,/const releaseLock=\(\)=>\{if\(lockAcquired\)\{lock\.releaseLock\(\);lockAcquired=false;\}\};/);
 assert.match(handler,/finally\{releaseLock\(\);\}/);
