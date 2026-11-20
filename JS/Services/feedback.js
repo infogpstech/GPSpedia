@@ -3271,7 +3271,6 @@ function handleAddProblem(source) {
                     throw new Error("No se pudo recuperar la verificación previa de la imagen PyS; reintenta la operación.");
                 }
                 file = preverifiedPendingFile;
-                if (preparedFile) { try { preparedFile.setTrashed(true); } catch (cleanupError) {} }
             } else {
                 if (op.status !== "PENDING") {
                     const duplicateFile = preparedFile;
