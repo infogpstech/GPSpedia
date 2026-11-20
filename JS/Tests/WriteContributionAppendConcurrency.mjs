@@ -253,7 +253,7 @@ function cut(vehicleId, opId, tipo, hash) {
             throw new Error("respuesta perdida después de persistir appendRow");
         }
     };
-    const request = cut("202", "OP-LOST-APPEND", "Bomba", "g");
+    const request = cut("202", "OP-LOST-APPEND", "Bomba", "7");
     assert.throws(() => append(request), /respuesta perdida después de persistir appendRow/);
     assert.equal(sheet.rows.length, 2, "El append físico debe conservarse tras perderse la respuesta");
     const recovered = append(request);
