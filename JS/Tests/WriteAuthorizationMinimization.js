@@ -24,7 +24,7 @@ function runWriteAuthorizationMinimizationTests(sources) {
   const fn=new Function("getAuthenticatedCollaborator","SUPPLEMENTARY_INFO_ALLOWED_ROLES_","getSpreadsheet","hasSupplementaryValue_","SHEET_NAMES","LockService","handleAddSupplementaryInfoLocked","createSupplementaryInfoError_",
    extract(write,"handleAddSupplementaryInfo")+";return handleAddSupplementaryInfo;")(
    ()=>{authCalls++;return "Nombre servidor";},["tecnico"],()=>({getSheetByName:()=>({})}),()=>false,{CORTES:"Cortes"},
-   {getScriptLock:()=>({waitLock(ms){assert(ms===5000);acquired++;},releaseLock(){released++;}})},
+   {getScriptLock:()=>({tryLock(ms){assert(ms===0);acquired++;return true;},releaseLock(){released++;}})},
    ()=>{delegated=true;throw Error("persistencia");},(code,message)=>{const error=Error(message);error.code=code;return error;});
   try{fn({vehicleId:"V1"});}catch(_){rejected=true;}
   assert(rejected&&delegated&&authCalls===1&&acquired===1&&released===1);
@@ -32,7 +32,7 @@ function runWriteAuthorizationMinimizationTests(sources) {
  run("La mutación suplementaria carga imágenes antes del lock y recalcula bajo lock",()=>{
   const outer=extract(write,"handleAddSupplementaryInfo"),inner=extract(write,"handleAddSupplementaryInfoLocked");
   assert(outer.indexOf("getAuthenticatedCollaborator")<outer.indexOf("prepareSupplementaryImageUploads_"));
-  assert(outer.indexOf("prepareSupplementaryImageUploads_")<outer.indexOf("waitLock(5000)"));
+  assert(outer.indexOf("prepareSupplementaryImageUploads_")<outer.indexOf("tryLock(0)"));
   assert(outer.includes("finally")&&outer.includes("releaseLock"));
   assert(inner.includes("buildSupplementaryInfoPlan_")&&inner.includes("persistSupplementaryInfoValues_"));
   assert(!/uploadImageToDrive|findOrCreateVehicleFolder|DriveApp/.test(inner));
