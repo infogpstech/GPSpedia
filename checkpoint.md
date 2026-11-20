@@ -392,3 +392,15 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - No se desplegó Apps Script ni se modificaron hojas productivas.
 - Estado: IMPLEMENTACIÓN Y PRUEBA ACTUALIZADA; CI PENDIENTE.
 - Siguiente paso: ejecutar la regresión completa sobre este HEAD y revisar el resultado antes de cerrar la tarea GP-PERF-ADMIN-CUT-LOCK-01.
+
+
+## Continuidad — lecturas acotadas y snapshot post-Drive ADMIN (2026-11-19)
+- En la rama de vehículo existente, el snapshot previo a Drive ahora lee `Math.max(48, vinColumnIndex || 0)` columnas: cubre el esquema ADMIN AT:AV y VIN cuando está fuera de ese rango, sin transferir columnas auxiliares no utilizadas.
+- La prueba `AdminExistingVehicleLookupPreflight` se actualizó para exigir el ancho acotado; `AdminExistingVehicleSnapshotRevalidation` cubre esquema base y VIN dentro/fuera del rango.
+- Se eliminó el fallback post-Drive que volvía a leer toda la fila con `getLastColumn()`. Todas las solicitudes, incluidas las legacy, reciben un opId interno; el callback ahora exige el snapshot actual de `findRowByOpId` y falla cerrado si no lo obtiene. No se reutiliza el snapshot previo a Drive.
+- Pruebas: `AdminExistingVehicleLookupPreflight` 8/8; `AdminExistingVehicleSnapshotRevalidation` 7/7; `AdminExistingVehiclePostDriveSnapshotReuse` 9/9.
+- CI final `44642229762` SUCCESS: 193 suites, 2,528 pruebas aprobadas, 0 fallos; sintaxis aprobada. CI `44642135034` también confirmó la actualización de contratos de snapshot: 193 suites, 2,528 pruebas, 0 fallos.
+- Commits funcionales/pruebas: `065b2a78c25e2ccf4a0f9540252bf24ea7aac810`, `99a618b1857160c5570479b4294443da5a40a581`, correcciones de contrato `0a67f09a63ae8b19d5115fe9f8322d4bea6e3aed`, `224545805b455a4d0f81a01e9085990e6c95c050`, `8795be1ffe34051899dd7e2a7ba289c9b4959be7`; fallback eliminado en `cfaf39610235afab428e6d87e011de7a54d5bb7d`, prueba `8fee515d4a3547c4648333ef03abf1e64d29d5a5`.
+- No se desplegó Apps Script ni se modificaron Sheets/Drive productivos. Concurrencia real e integración siguen diferidas a Beta autorizada.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. La tarea paraguas `GP-PERF-ADMIN-CUT-LOCK-01` continúa EN PROGRESO.
+- Siguiente paso: seguir reduciendo llamadas remotas redundantes en el handler y helpers de recuperación ADMIN, manteniendo reservas y revalidaciones atómicas.
