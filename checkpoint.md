@@ -17,7 +17,7 @@ La copia fue releída desde GitHub y comparada carácter por carácter con el or
 ## Estado Git verificado
 
 - HEAD de trabajo validado tras la última actividad local: `e05be7562135e18178eb9eed8f57e6196af664a3`.
-- Rama base `GPSpedia2.2.5`: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; comparación con la rama de trabajo: 0 commits por delante de base, 5668 commits de trabajo por delante; la base no se modificó.
+- Rama base `GPSpedia2.2.5`: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; comparación con la rama de trabajo: la rama de trabajo está 5668 commits por delante de base; base 0 commits por delante de trabajo; la base no se modificó.
 - No se desplegó Apps Script ni se modificaron Spreadsheet/Drive productivos.
 - Los cambios de documentación posteriores al HEAD de código son commits separados en la misma rama de trabajo; no alteran la base.
 
