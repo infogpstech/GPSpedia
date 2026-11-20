@@ -320,6 +320,23 @@ test("append de aporte registra evento durable con esquema versionado", () => {
     assert.equal(JSON.parse(runtime.rows[1][5]).text, "Apertura");
 });
 
+test("append acepta IDs numéricos válidos y rechaza IDs no numéricos", () => {
+    const runtime = buildAppendRuntime();
+    assert.throws(() => runtime.append({
+        spreadsheet: runtime.spreadsheet, vehicleId: "ABC", opId: "OP-BAD",
+        kind: "feed", payload: { text: "12V" }, operationHash: "a".repeat(64)
+    }), /vehicleId válido/);
+    assert.throws(() => runtime.append({
+        spreadsheet: runtime.spreadsheet, vehicleId: "10A", opId: "OP-BAD2",
+        kind: "feed", payload: { text: "12V" }, operationHash: "a".repeat(64)
+    }), /vehicleId válido/);
+    const valid = runtime.append({
+        spreadsheet: runtime.spreadsheet, vehicleId: "123456789012345", opId: "OP-VALID",
+        kind: "feed", payload: { text: "12V" }, operationHash: "b".repeat(64)
+    });
+    assert.equal(valid.vehicleId, "123456789012345");
+});
+
 test("mismo opId y misma huella recupera el evento sin duplicar fila", () => {
     const runtime = buildAppendRuntime();
     const options = {
