@@ -5,38 +5,30 @@ Fecha: 2026-11-20
 ## Repositorio y ramas
 - Repositorio: infogpstech/GPSpedia
 - Rama autorizada: GPSpedia2.2.5_work
-- HEAD actual: 9df6378b63ccbcf72ef4a1a9d70bcf4e1f406ddb (commit documental de restauración/verificación de registros).
-- Último commit funcional: 3fd8b2d5afedbfcdec0e261cad4690d3257d962c (ADMIN: verificación del respaldo de conciliación fuera del ScriptLock). Último commit documental: 9df6378b63ccbcf72ef4a1a9d70bcf4e1f406ddb.
+- HEAD verificado antes de este checkpoint: 7c4d7c5280cd7c4fc571476207bed9dd35c11bdf (commit documental de cierre AUTH).
 - Rama base protegida GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificar).
-- La continuidad histórica anterior permanece en este archivo y en Checkpoint_Archive/; no reconstruir sesiones previas si el estado Git actual es verificable.
+- No hay cambios locales disponibles en un clon para sincronizar; la publicación se realizó mediante commits GitHub condicionados al SHA esperado.
 
 ## Normativa y arquitectura
-- NORMAS_DESAROLLO.md es la única fuente normativa vigente.
-- README.md describe PWA, frontend, microservicios Apps Script y persistencia Sheets/Drive.
-- contexto_personal.md confirma ramas y restricciones de publicación.
-- No inferir deployments Apps Script ni permisos externos desde el código versionado.
+- NORMAS_DESAROLLO.md es la única fuente normativa vigente y se consultó en su totalidad para esta continuidad.
+- La sección 15 prioriza baja latencia y simplicidad: no añadir leases ni verificaciones transaccionales ordinarias sin evidencia y necesidad demostrada.
+- README.md y contexto_personal.md consultados para arquitectura y restricciones; no inferir deployments Apps Script ni permisos externos desde el código versionado.
 
-## Última tarea de implementación completada
-P1 — ADMIN conciliación de imágenes Cortes: verificación del respaldo fuera del lock.
-- Drive del respaldo (existencia, papelera, MIME, ACL privada, manifiesto y contenido de la copia) se valida fuera de ScriptLock.
-- Tras readquirir con tryLock(0), verifyImageReconciliationBackupSource_ comprueba bajo lock fingerprint y dimensiones de la Spreadsheet operativa.
-- Si no se readquiere el lock o la base cambió, la operación aborta antes del preview y de cualquier escritura.
-- CortesImageReconciliationApply 18/18 PASS; CortesImageReconciliation 34/34 PASS; parsing de admin.js PASS.
-- CI 44708443965 SUCCESS: 215 suites, 2,686 pruebas aprobadas, 0 fallos; health read-only 44708443686 SUCCESS; Pages 44708443338 SUCCESS.
-- Commit funcional: 3fd8b2d5afedbfcdec0e261cad4690d3257d962c.
-- No se desplegó Apps Script ni se modificaron datos productivos.
+## Última tarea local completada
+P1 — AUTH recuperación de contraseña: logging después de liberar ScriptLock.
+- La verificación/consumo del desafío, actualización del hash, revocación de sesiones y limpieza permanecen bajo ScriptLock.
+- Solo el logging best-effort se ejecuta después de liberar el lock, evitando la adquisición anidada del mismo ScriptLock que usa Logs.
+- PasswordRecovery.mjs 10/10 PASS; ejecución aislada V8 del handler PASS en éxito, código inválido y fallo de logging; parsing de Auth.js y fixture PASS; paridad del handler productivo/fixture PASS.
+- CI 44726478008 SUCCESS: 215 suites, 2,686 pruebas aprobadas, 0 fallos; health read-only 44726478247 SUCCESS; Pages 44726477077 SUCCESS.
+- Commits funcionales/correcciones: fbec2fc2da7e4fa5fc16c34cb6502d43b127e979, 456d18e33755a5269c8596e5ed45d59dafb4f2ca y 086dc89e9021b8530874205b5361baf5e962489d. Commit documental de validación: 7c4d7c5280cd7c4fc571476207bed9dd35c11bdf.
+- La ejecución inicial 44726038448 detectó contaminación de eventos previos en el harness; se aisló la traza y la repetición pasó sin debilitar la aserción.
 
-## Última evaluación de diseño
-- La propuesta de lease/reserva para sacar setTrashed/restauración/compensación del ScriptLock se cerró sin implementación y quedó DIFERIDA A MEDICIÓN BETA.
-- Motivo: ya estaba diferida por adenda del backlog del 2026-11-17; no existe evidencia Beta de contención que justifique el cambio. No añadir leases ni retirar protecciones por suposición.
-- AdminImageTrashLifecycle 41/41 PASS en ejecución local aislada.
-- CI posterior a la actualización documental 44709124865 SUCCESS: 215 suites, 2,686 pruebas, 0 fallos; health read-only 44709124598 SUCCESS; Pages 44709123731 SUCCESS.
-
-## Siguiente trabajo
-No quedan tareas de implementación local abiertas en Tareas_Activas.md; las 19 casillas restantes requieren despliegues Apps Script, Script IDs, datos reales Drive/Spreadsheet o medición de concurrencia entre deployments.
-- Siguiente etapa: Beta autorizada, comenzando con auditoría y preview de solo lectura. Safe Apply, movimientos, renombrados y eliminaciones permanecen bloqueados hasta revisión y autorización explícita.
-- La secuencia obligatoria al inicio de lista_beta_parte1.txt verifica repositorio/rama/árbol limpio y sincroniza con fetch + pull --ff-only; se revisó su contenido y bash -n PASS. No se ejecutó fetch/pull en un clon local, porque el entorno no pudo resolver github.com y no se dispone de un checkout local.
-- No desplegar Apps Script ni acceder/modificar datos productivos sin autorización expresa.
+## Estado de implementación y validación
+- No quedan tareas de implementación local abiertas en Tareas_Activas.md. Las casillas abiertas restantes corresponden a despliegues Apps Script autorizados, inventario de Script IDs/proyectos, Drive/Spreadsheet reales o pruebas de concurrencia entre deployments en Beta.
+- Regresión más reciente sobre HEAD 7c4d7c5280cd7c4fc571476207bed9dd35c11bdf: CI 44726767686 SUCCESS (215 suites, 2,686 pruebas, 0 fallos); health read-only 44726767613 SUCCESS; Pages 44726766493 SUCCESS.
+- lista_beta_parte1.txt comienza con la secuencia obligatoria: verificar repo/rama/árbol limpio, fetch y pull --ff-only; no se usará reset/clean/force. No se ejecutó sincronización local porque no hay clon local disponible.
+- Beta pendiente de autorización. Comenzar únicamente con auditoría y preview Drive/Spreadsheet de solo lectura. Safe Apply, movimientos, renombrados y eliminaciones continúan bloqueados hasta revisión y autorización explícita.
+- No se desplegó Apps Script ni se accedió o modificó datos productivos.
 
 ## Restricciones
 - Trabajar únicamente en GPSpedia2.2.5_work.

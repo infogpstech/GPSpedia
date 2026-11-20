@@ -332,8 +332,8 @@ Criterio de aceptación: concurrencia entre operaciones independientes sin esper
 
 ### Ampliación de alcance — GP-PERF-ADMIN-CUT-LOCK-01
 - [x] Aplicar como criterio transversal el aislamiento entre operaciones independientes, no solo reducir duración de `handleAddOrUpdateCut`. Regla registrada y contratos locales de no interferencia integrados; validación real de límites ScriptLock queda diferida a Beta.
-- [ ] Mapear los límites reales de proyecto/deployment: `ScriptLock` es global por proyecto Apps Script y puede bloquear otras funciones aunque estén en archivos separados.
-- [ ] Inventariar para cada lock el recurso/estado exacto que protege; separar auditoría/telemetría, Inbox, health, autenticación y registro de cortes cuando no comparten recurso.
+- [x] Mapear los límites reales de proyecto/deployment: `ScriptLock` es global por proyecto Apps Script y puede bloquear otras funciones aunque estén en archivos separados.
+- [x] Inventariar para cada lock el recurso/estado exacto que protege; separar auditoría/telemetría, Inbox, health, autenticación y registro de cortes cuando no comparten recurso.
 - [x] Añadir pruebas locales de no interferencia: auditoría + Inbox (sendInboxMessage), consulta de telemetría, ping de salud (sin lease/ScriptLock), login y registro WRITE; conservar conflicto entre auditorías sobre IMAGE_AUDIT_STATE y conflictos de recursos compartidos ya cubiertos por Coordinator.
 - [x] Verificar en CI que la auditoría no bloquea las operaciones independientes cubiertas por los contratos; CI 44626115506 SUCCESS: 176 suites, 2,400 pruebas aprobadas, 0 fallos. Health read-only 44626115768 SUCCESS.
 - [ ] Mapear Script IDs/proyectos Apps Script desplegados. No hay .clasp.json ni appsscript.json versionados; los IDs de deployment presentes en URLs no demuestran por sí solos qué fuentes comparten proyecto. No inferir aislamiento real.
@@ -1068,3 +1068,9 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - `PasswordRecovery.mjs` 10/10 PASS; prueba aislada V8 del handler PASS en éxito, código inválido y fallo best-effort de logging; parsing de `Auth.js` y fixture PASS; paridad del handler productivo/fixture PASS.
 - CI `44726478008` SUCCESS: 215 suites, 2,686 pruebas aprobadas, 0 fallos; health read-only `44726478247` SUCCESS; Pages `44726477077` SUCCESS.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Sin despliegue Apps Script ni cambios de datos productivos.
+
+
+### Cierre de inventario estático de ScriptLock (2026-11-20)
+- [x] Documentado que ScriptLock es global por proyecto Apps Script y no por archivo/función.
+- [x] Inventariados los recursos protegidos por AUTH, ADMIN, WRITE, FEEDBACK, USERS, Coordinator e InboxConversations en GP-PERF-ADMIN-CUT-LOCK-01.
+- La agrupación real por Script ID/deployment y la concurrencia entre deployments permanecen pendientes de Beta autorizada; no se infiere el aislamiento real desde nombres de archivos o URLs.

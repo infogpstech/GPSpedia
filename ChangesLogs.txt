@@ -1228,3 +1228,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-20 · validación AUTH logging post-lock] PasswordRecovery.mjs 10/10 PASS; ejecución aislada V8 del handler y parsing/paridad PASS. CI 44726478008 SUCCESS (215 suites, 2,686 pruebas, 0 fallos); health read-only 44726478247 SUCCESS; Pages 44726477077 SUCCESS. La primera ejecución de CI falló únicamente por acumulación de eventos previos en el harness; se aisló el trace y la repetición aprobó.
+
+
+[2026-11-20 · checkpoint de continuidad] Se actualizó el resumen activo para reflejar HEAD, cierre de AUTH post-lock, regresión global y transición a Beta. Se marcaron como completados únicamente el inventario estático del ámbito global de ScriptLock y el mapeo de recursos por servicio; Script IDs y concurrencia real siguen pendientes de Beta. Sin cambios de código ni despliegues.
