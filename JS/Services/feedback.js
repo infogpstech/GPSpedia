@@ -549,12 +549,9 @@ const DIRECT_SERVICE_TRAFFIC_BUCKET_MS_ = 60 * 60 * 1000;
 const DIRECT_SERVICE_TRAFFIC_WINDOW_MS_ = 24 * 60 * 60 * 1000;
 
 function recordDirectServiceTraffic_(capturedAt) {
-    let lock = null;
-    let lockAcquired = false;
     try {
-        lock = LockService.getScriptLock();
-        lockAcquired = lock.tryLock(0);
-        if (!lockAcquired) return false;
+        // Telemetría best-effort: nunca adquirir el ScriptLock global del servicio.
+        // Las escrituras concurrentes pueden subcontar; el contrato lo declara explícitamente.
         const properties = PropertiesService.getScriptProperties();
         const currentTime = Number(capturedAt) || Date.now();
         const bucketStart = Math.floor(currentTime / DIRECT_SERVICE_TRAFFIC_BUCKET_MS_) * DIRECT_SERVICE_TRAFFIC_BUCKET_MS_;
@@ -585,12 +582,9 @@ function recordDirectServiceTraffic_(capturedAt) {
         return true;
     } catch (error) {
         return false;
-    } finally {
-        if (lock && lockAcquired) {
-            try { lock.releaseLock(); } catch (releaseError) {}
-        }
     }
 }
+
 
 function directServiceTrafficSecretEquals_(expected, supplied) {
     expected = String(expected || "");
