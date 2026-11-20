@@ -194,6 +194,7 @@ runGroup('34','CATALOG',()=>{
  runCli('CATALOG dropdowns lee solo columnas necesarias para editar cortes','JS/Tests/CatalogDropdownRead.mjs');
  runCli('CATALOG feed incremental autenticado, cursor y recuperación','JS/Tests/CatalogChangeFeed.mjs');
  runCli('FEEDBACK snapshots versionados y publicación fuera del ScriptLock','JS/Tests/FeedbackCatalogPublicationIsolation.mjs');
+ runCli('ADMIN snapshots de catálogo versionados y publicación fuera del ScriptLock','JS/Tests/AdminCatalogPublicationIsolation.mjs');
  runCli('CATALOG telemetría local no bloqueante y segura','JS/Tests/CatalogTrafficTelemetry.mjs');
  runCli('CATALOG readiness','JS/Tests/CatalogReadiness.js');
  runCli('CATALOG snapshots/IndexedDB aislado','JS/Tests/CatalogSnapshotSync.js');
