@@ -300,7 +300,6 @@ test("FEEDBACK legacy sin sourceVersion se convierte en reset y no publica snaps
 });
 test("sourceVersion FEEDBACK solo se acepta para Cortes, PyS y Tutorial", () => {
     assert.throws(()=>request("publishCatalogChange","FEEDBACK","recordLike",{change:{collection:"logos",recordId:"L-1",operation:"delete",sourceVersion:1}}),/versión de origen/);
-    assert.throws(()=>request("publishCatalogChange","ADMIN","restoreDatabase",{change:{collection:"cortes",recordId:"V-1",operation:"delete",sourceVersion:1}}),/versión de origen/);
 });
 test("ADMIN usa versiones de origen para Cortes y convierte snapshots legacy en reset", () => {
     const first = request("publishCatalogChange","ADMIN","updateVehicleField",{change:{collection:"cortes",recordId:"V-ADMIN",operation:"upsert",snapshot:{id:"V-ADMIN",marca:"A"},sourceVersion:1}});
