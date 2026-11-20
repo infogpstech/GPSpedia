@@ -59,6 +59,10 @@ run("rechaza IDs seleccionados duplicados", () => {
 run("rechaza archivos que no pertenecen a la página revisada", () => {
     assert.throws(() => buildManifest(preview(), ["drive_file_id_0000000000000099"], digest, true), /no pertenece/i);
 });
+run("rechaza nombres de destino con separadores de ruta", () => {
+    assert.throws(() => buildManifest(preview([item(id1, { targetName: "subdir/file.jpg" })]), [id1], digest, true), /origen, destino/i);
+    assert.throws(() => buildManifest(preview([item(id1, { targetName: "subdir\\file.jpg" })]), [id1], digest, true), /origen, destino/i);
+});
 run("rechaza propuestas bloqueadas", () => {
     assert.throws(() => buildManifest(preview([item(id1, { status: "blocked" })]), [id1], digest, true), /listo/i);
 });
@@ -95,4 +99,4 @@ run("impide rollback si el archivo cambió después de aplicar", () => {
         [id1]: { fileId: id1, fileName: "manual.jpg", folderPath: "Cortes/Otro", mimeType: "image/jpeg" }
     }), /no coincide/i);
 });
-console.log("CortesImageOrganizerApplyPlan: 13/13 PASS");
+console.log("CortesImageOrganizerApplyPlan: 14/14 PASS");
