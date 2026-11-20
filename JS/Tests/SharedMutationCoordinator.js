@@ -1029,8 +1029,8 @@ function runSharedMutationCoordinatorTests() {
     test_("La publicación por lotes conserva orden de revisiones y reintentos idempotentes", function() {
         const r = createRuntime_();
         const changes = [
-            { collection: "cortes", recordId: "VEH-1", operation: "upsert", snapshot: { id: "VEH-1", nombre: "Uno" } },
-            { collection: "cortes", recordId: "VEH-2", operation: "delete" }
+            { collection: "cortes", recordId: "VEH-1", operation: "upsert", snapshot: { id: "VEH-1", nombre: "Uno" }, sourceVersion: 1 },
+            { collection: "cortes", recordId: "VEH-2", operation: "delete", sourceVersion: 2 }
         ];
         const requestId = "catalog-batch-request-0001";
         const first = r.request("publishCatalogChanges", "ADMIN", "normalizeImages", { requestId, changes });
@@ -1045,7 +1045,7 @@ function runSharedMutationCoordinatorTests() {
             "El feed debe conservar el orden y no duplicar eventos.");
         const single = r.request("publishCatalogChange", "ADMIN", "updateVehicleField", {
             requestId: "catalog-single-request-0001",
-            change: { collection: "cortes", recordId: "VEH-3", operation: "upsert", snapshot: { id: "VEH-3" } }
+            change: { collection: "cortes", recordId: "VEH-3", operation: "upsert", snapshot: { id: "VEH-3" }, sourceVersion: 3 }
         });
         assert_(single.status === "success" && single.revision === 3,
             "La publicación individual debe conservar su contrato anterior.");
@@ -1053,7 +1053,7 @@ function runSharedMutationCoordinatorTests() {
 
     test_("Un lote inválido se rechaza completo y un lote parcial recupera con reset", function() {
         const r = createRuntime_();
-        const valid = { collection: "cortes", recordId: "VEH-1", operation: "upsert", snapshot: { id: "VEH-1" } };
+        const valid = { collection: "cortes", recordId: "VEH-1", operation: "upsert", snapshot: { id: "VEH-1" }, sourceVersion: 1 };
         expectThrow_(() => r.request("publishCatalogChanges", "ADMIN", "normalizeImages", {
             requestId: "catalog-invalid-request-0001",
             changes: [valid, { collection: "unknown", recordId: "VEH-2", operation: "delete" }]
