@@ -2236,9 +2236,6 @@ function enforceFeedbackRateLimit_(scope, limit, windowSeconds) {
     cache.put(key, String(current + 1), windowSeconds);
 }
 function handleSendContactForm(payload) {
-    const lock = LockService.getScriptLock();
-    acquireFeedbackScriptLock_(lock);
-    try {
     const name = String(payload && payload.name || "").trim();
     const email = String(payload && payload.email || "").trim();
     const message = String(payload && payload.message || "").trim();
@@ -2248,18 +2245,28 @@ function handleSendContactForm(payload) {
     enforceFeedbackRateLimit_("public_contact", 10, 3600);
     const sheet = getSafeSheet(SHEET_NAMES.CONTACTANOS);
     if (!sheet) throw new Error("Hoja Contactanos no encontrada.");
-    const lastRow = sheet.getLastRow(), newRowNumber = lastRow + 1, lastCol = sheet.getLastColumn() || 6;
-    if (lastRow >= 2) copyRowPresentationOnly_(sheet, 2, newRowNumber, lastCol);
-    sheet.getRange(newRowNumber, COLS_CONTACTANOS.Contacto_ID).setValue(
-        getNextFormulaBasedId_(sheet, COLS_CONTACTANOS.Contacto_ID)
-    );
-    sheet.getRange(newRowNumber, COLS_CONTACTANOS.User_ID, 1, 3).setValues([["N/A", "Contacto de " + name, "De: " + email + "\n\n" + message]]);
-    SpreadsheetApp.flush();
-    return { status: "success", message: "Formulario de contacto enviado." };
 
-    } finally {
-        lock.releaseLock();
+    // El lock global solo se usa dentro del asignador para reservar el ID secuencial.
+    const contactId = getNextFormulaBasedId_(sheet, COLS_CONTACTANOS.Contacto_ID);
+    const lastColumn = Math.max(sheet.getLastColumn() || 6, COLS_CONTACTANOS.ID_usuario_responde);
+    const row = Array(lastColumn).fill("");
+    row[COLS_CONTACTANOS.Contacto_ID - 1] = contactId;
+    row[COLS_CONTACTANOS.User_ID - 1] = "N/A";
+    row[COLS_CONTACTANOS.Asunto - 1] = "Contacto de " + name;
+    row[COLS_CONTACTANOS.Mensaje - 1] = "De: " + email + "\n\n" + message;
+    sheet.appendRow(row);
+    SpreadsheetApp.flush();
+
+    const matches = sheet.getRange(2, COLS_CONTACTANOS.Contacto_ID,
+        Math.max(1, sheet.getLastRow() - 1), 1)
+        .createTextFinder(contactId).matchCase(true).matchEntireCell(true).findAll();
+    if (matches.length !== 1) {
+        throw new Error(matches.length
+            ? "El ID del formulario de contacto quedó duplicado; requiere revisión."
+            : "No se pudo confirmar el registro del formulario de contacto.");
     }
+    copyRowPresentationOnly_(sheet, 2, matches[0].getRow(), lastColumn);
+    return { status: "success", message: "Formulario de contacto enviado." };
 }
 
 // ============================================================================
