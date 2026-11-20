@@ -35,29 +35,6 @@ test("publica revisiones monotónicas entre servicios", () => {
     const b = request("publishCatalogChange","FEEDBACK","recordLike",{change:{collection:"cortes",recordId:"V-1",operation:"upsert",snapshot:{id:"V-1",utilCorte1:2}}});
     assert.equal(a.revision,1); assert.equal(b.revision,2);
 });
-test("FEEDBACK usa versiones de origen para evitar snapshots fuera de orden", () => {
-    const first = request("publishCatalogChange","FEEDBACK","recordLike",{change:{collection:"cortes",recordId:"V-FEEDBACK",operation:"upsert",snapshot:{id:"V-FEEDBACK",utilCorte1:1},sourceVersion:1}});
-    const latest = request("publishCatalogChange","FEEDBACK","recordLike",{change:{collection:"cortes",recordId:"V-FEEDBACK",operation:"upsert",snapshot:{id:"V-FEEDBACK",utilCorte1:3},sourceVersion:3}});
-    const stale = request("publishCatalogChange","FEEDBACK","recordLike",{change:{collection:"cortes",recordId:"V-FEEDBACK",operation:"upsert",snapshot:{id:"V-FEEDBACK",utilCorte1:2},sourceVersion:2}});
-    assert.equal(first.resetRequired,false);
-    assert.equal(latest.resetRequired,false);
-    assert.equal(stale.resetRequired,true);
-    const page = request("getCatalogChanges","FEEDBACK","getCatalogChanges",{cursor:stale.revision-1,limit:1});
-    assert.equal(page.changes[0].operation,"reset");
-    assert.equal(page.changes[0].staleSourceVersion,true);
-});
-test("FEEDBACK legacy sin sourceVersion se convierte en reset y no publica snapshot potencialmente atrasado", () => {
-    const head = request("getCatalogChanges","FEEDBACK","getCatalogChanges",{cursor:Number.MAX_SAFE_INTEGER,limit:1});
-    const result = request("publishCatalogChange","FEEDBACK","recordLike",{change:{collection:"pys",recordId:"isue-legacy",operation:"upsert",snapshot:{id_problem:"isue-legacy"}}});
-    assert.equal(result.resetRequired,true);
-    const page = request("getCatalogChanges","FEEDBACK","getCatalogChanges",{cursor:head.currentRevision,limit:1});
-    assert.equal(page.changes[0].operation,"reset");
-    assert.equal(page.changes[0].collection,"*");
-});
-test("sourceVersion FEEDBACK solo se acepta para Cortes, PyS y Tutorial", () => {
-    assert.throws(()=>request("publishCatalogChange","FEEDBACK","recordLike",{change:{collection:"logos",recordId:"L-1",operation:"delete",sourceVersion:1}}),/versión de origen/);
-    assert.throws(()=>request("publishCatalogChange","ADMIN","restoreDatabase",{change:{collection:"cortes",recordId:"V-1",operation:"delete",sourceVersion:1}}),/versión de origen/);
-});
 test("página por cursor y límite conserva orden", () => {
     const first = request("getCatalogChanges","FEEDBACK","getCatalogChanges",{cursor:0,limit:1});
     assert.equal(first.status,"success"); assert.equal(first.changes.length,1);
@@ -301,5 +278,28 @@ test("WRITE y FEEDBACK publican deltas exactos y conservan reset para operacione
     assert.ok(feedbackSource.includes('publishFeedbackCortesCatalogChange_("recordLike", changedVehicleId)'));
     assert.match(adminSource,/catalogWriters\.includes\(catalogAction\)[\s\S]*?publishSharedCatalogChange_\("ADMIN", catalogAction, \{ operation: "reset" \}\)/);
     assert.match(adminSource,/finalizeAdminAuditEvent_\(auditEvent[\s\S]*?publishSharedCatalogChange_/);
+});
+test("FEEDBACK usa versiones de origen para evitar snapshots fuera de orden", () => {
+    const first = request("publishCatalogChange","FEEDBACK","recordLike",{change:{collection:"cortes",recordId:"V-FEEDBACK",operation:"upsert",snapshot:{id:"V-FEEDBACK",utilCorte1:1},sourceVersion:1}});
+    const latest = request("publishCatalogChange","FEEDBACK","recordLike",{change:{collection:"cortes",recordId:"V-FEEDBACK",operation:"upsert",snapshot:{id:"V-FEEDBACK",utilCorte1:3},sourceVersion:3}});
+    const stale = request("publishCatalogChange","FEEDBACK","recordLike",{change:{collection:"cortes",recordId:"V-FEEDBACK",operation:"upsert",snapshot:{id:"V-FEEDBACK",utilCorte1:2},sourceVersion:2}});
+    assert.equal(first.resetRequired,false);
+    assert.equal(latest.resetRequired,false);
+    assert.equal(stale.resetRequired,true);
+    const page = request("getCatalogChanges","FEEDBACK","getCatalogChanges",{cursor:stale.revision-1,limit:1});
+    assert.equal(page.changes[0].operation,"reset");
+    assert.equal(page.changes[0].staleSourceVersion,true);
+});
+test("FEEDBACK legacy sin sourceVersion se convierte en reset y no publica snapshot potencialmente atrasado", () => {
+    const head = request("getCatalogChanges","FEEDBACK","getCatalogChanges",{cursor:Number.MAX_SAFE_INTEGER,limit:1});
+    const result = request("publishCatalogChange","FEEDBACK","recordLike",{change:{collection:"pys",recordId:"isue-legacy",operation:"upsert",snapshot:{id_problem:"isue-legacy"}}});
+    assert.equal(result.resetRequired,true);
+    const page = request("getCatalogChanges","FEEDBACK","getCatalogChanges",{cursor:head.currentRevision,limit:1});
+    assert.equal(page.changes[0].operation,"reset");
+    assert.equal(page.changes[0].collection,"*");
+});
+test("sourceVersion FEEDBACK solo se acepta para Cortes, PyS y Tutorial", () => {
+    assert.throws(()=>request("publishCatalogChange","FEEDBACK","recordLike",{change:{collection:"logos",recordId:"L-1",operation:"delete",sourceVersion:1}}),/versión de origen/);
+    assert.throws(()=>request("publishCatalogChange","ADMIN","restoreDatabase",{change:{collection:"cortes",recordId:"V-1",operation:"delete",sourceVersion:1}}),/versión de origen/);
 });
 console.log("CatalogChangeFeed: " + passed + "/" + passed + " PASS");
