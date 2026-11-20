@@ -2262,7 +2262,7 @@ function projectImageUploadEvents_(events) {
     const identity = [1, 2, 3, 4, 5, 6].map(index => String(first[index] == null ? "" : first[index]));
     const fileIds = new Set();
     const references = new Map();
-    let requiresReview = false, lastError = "", latestState = "pending";
+    let requiresReview = false, lastError = "", latestState = "pending", latestReferencesJson = "[]";
     entries.forEach(entry => {
         const values = entry.values || entry;
         const candidateIdentity = [1, 2, 3, 4, 5, 6].map(index => String(values[index] == null ? "" : values[index]));
@@ -2271,7 +2271,7 @@ function projectImageUploadEvents_(events) {
         if (fileId) fileIds.add(fileId);
         const state = String(values[9] || "pending").toLowerCase();
         if (["reserved", "pending", "linked", "file_missing", "requires_review", "error"].includes(state)) latestState = state;
-        if (String(values[10] || "").trim()) references.set(String(values[10]), true);
+        if (String(values[10] || "").trim() && String(values[10]) !== "[]") latestReferencesJson = String(values[10]);
         if (String(values[13] || "").trim()) lastError = String(values[13]);
     });
     if (fileIds.size > 1) requiresReview = true;
@@ -2281,7 +2281,7 @@ function projectImageUploadEvents_(events) {
         mimeType: identity[3], sizeBytes: Number(identity[4]), contentHash: identity[5],
         fileId: fileIds.size === 1 ? Array.from(fileIds)[0] : "",
         state, eventCount: entries.length, fileIds: Array.from(fileIds),
-        referencesJson: references.size ? Array.from(references.keys()).join("|") : "[]",
+        referencesJson: latestReferencesJson,
         lastError
     };
 }
@@ -2998,14 +2998,14 @@ function uploadImageToDriveWithShortLedgerLocks_(imageData, filename, folder, op
     if (!imageData) return "";
     if (!folder || typeof folder.getId !== "function") throw new Error("No se encontró una carpeta válida para guardar la imagen.");
     let blob, mimeType = "";
-    if (/^https?:\\/\\//i.test(String(imageData))) {
+    if (/^https?:\/\//i.test(String(imageData))) {
         const response = UrlFetchApp.fetch(String(imageData), { muteHttpExceptions: true });
         const status = response.getResponseCode();
         if (status < 200 || status >= 300) throw new Error("No se pudo descargar la imagen de origen. HTTP " + status + ".");
         blob = response.getBlob();
         mimeType = String(blob.getContentType() || "").split(";")[0].trim().toLowerCase();
     } else if (typeof imageData === "string" && imageData.startsWith("data:image/")) {
-        const parts = imageData.match(/^data:(image\\/[a-zA-Z0-9.+-]+);base64,([\\s\\S]+)$/i);
+        const parts = imageData.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,([\s\S]+)$/i);
         if (!parts) throw new Error("Los datos Base64 de la imagen tienen un formato inválido.");
         mimeType = String(parts[1] || "").toLowerCase();
         const decoded = Utilities.base64Decode(parts[2]);
@@ -3097,7 +3097,7 @@ function uploadImageToDriveWithShortLedgerLocks_(imageData, filename, folder, op
         throw new Error("Se detectó una carga concurrente con más de un archivo; la operación quedó para revisión.");
     }
     const alreadyRecorded = events.some(entry => String(entry.values[7] || "").trim() === fileId);
-    if (!alreadyRecorded) {
+    if (!alreadyRecorded || (projection && !["pending", "linked"].includes(projection.state))) {
         appendImageUploadEventRequired_(eventsSheet, expected, "pending", fileId, [], latestName, "");
     }
     const confirmed = projectImageUploadEvents_(readImageUploadEventsByToken_(eventsSheet, token));
