@@ -893,3 +893,12 @@ Estado: CORREGIDO LOCALMENTE. Continúa pendiente reducir el lock global en repo
 - CI 44835751507 SUCCESS: 239 suites, 2968 pruebas aprobadas, 0 fallos. Health read-only SUCCESS. Se corrigió además el fixture de hash de la prueba de respuesta perdida para usar SHA-256 hexadecimal válido; el código productivo no cambió por esa corrección.
 Estado: REGRESIÓN LOCAL COMPLETADA. Concurrencia real de appendRow, fallos reales Sheets/Drive y recuperación permanecen en Beta AUG-159/AUG-160 aislada.
 ================================================================================
+
+
+2026-11-20 — WRITE: recuperación de aportes tras respuesta perdida
+- Se ampliò `WriteContributionAppendConcurrency.mjs` de 7 a 9 escenarios. Se simula que `SpreadsheetApp.flush()` falla después de que el append quedó durable y que `appendRow()` persiste la fila pero pierde la respuesta.
+- En ambos casos, el reintento con el mismo `opId` recupera el `eventId` canónico y no agrega una segunda contribución. La segunda simulación también confirma la proyección del corte.
+- CI 44835598831 detectó un hash de prueba inválido (`g` fuera del alfabeto hexadecimal); se corrigió el dato de prueba a un hash SHA-256 válido sin cambiar validaciones de producción.
+- CI 44835751507 SUCCESS: `WriteContributionAppendConcurrency` 9/9; 239 suites, 2968 pruebas aprobadas, 0 fallos. Health read-only SUCCESS.
+- Estas son pruebas aisladas reproducibles; no sustituyen la prueba de append concurrente real en proyectos Apps Script/Spreadsheet/Drive aislados de Beta. No se desplegó ni se modificaron datos productivos.
+================================================================================
