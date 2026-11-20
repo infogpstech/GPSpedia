@@ -1081,3 +1081,11 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] Corregir el SHA del checkpoint y actualizar los identificadores de CI, health y Pages asociados al HEAD verificado.
 - [x] Confirmar que la rama base protegida no cambió y mantener las tareas de Beta abiertas.
 - Estado: COMPLETADA. La publicación de este checkpoint dispara una nueva regresión documental; no equivale a validación de despliegue Apps Script.
+
+
+### Comprobación de ruta de ejecución para Beta (2026-11-20)
+- [x] Verificar runtime disponible: Node v22.16.0 y npm 10.9.2.
+- [x] Intentar checkout limpio por Git; documentar que DNS/salida de red impide clonar GitHub en este entorno y que no hay checkout local.
+- [x] Verificar herramientas de despliegue: clasp ausente; Google Drive connector deshabilitado por administración; no existe acción Apps Script ni workflow de despliegue en el repo; health workflow es GET-only.
+- [x] Confirmar CI de GitHub sobre HEAD anterior: 215 suites, 2,686 pruebas, 0 fallos; health y Pages SUCCESS.
+- Estado: DIAGNÓSTICO DE HERRAMIENTAS COMPLETADO. No marcar Beta como validada ni ejecutar despliegues con una ruta no autorizada. Siguiente paso operativo: habilitar un mecanismo de acceso a Apps Script de Beta y proporcionar/autorizar los Script IDs correspondientes.

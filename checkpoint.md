@@ -5,7 +5,7 @@ Fecha: 2026-11-20
 ## Repositorio y ramas
 - Repositorio: infogpstech/GPSpedia
 - Rama autorizada: GPSpedia2.2.5_work
-- HEAD verificado antes de este checkpoint: e863c1f82ae3a0082a6bbf55ee21d2b51ba3c4cd (commit documental de cierre del inventario estático de ScriptLock).
+- HEAD verificado antes de este checkpoint: ba37dd8833f917cdd9a80fbbf234248ed23a7de4 (commit de reconciliación documental de continuidad).
 - Rama base protegida GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificar).
 - No hay cambios locales disponibles en un clon para sincronizar; la publicación se realizó mediante commits GitHub condicionados al SHA esperado.
 
@@ -25,7 +25,7 @@ P1 — AUTH recuperación de contraseña: logging después de liberar ScriptLock
 
 ## Estado de implementación y validación
 - No quedan tareas de implementación local abiertas en Tareas_Activas.md. Las casillas abiertas restantes corresponden a despliegues Apps Script autorizados, inventario de Script IDs/proyectos, Drive/Spreadsheet reales o pruebas de concurrencia entre deployments en Beta.
-- Regresión más reciente sobre HEAD e863c1f82ae3a0082a6bbf55ee21d2b51ba3c4cd: CI 44730842247 SUCCESS (215 suites, 2,686 pruebas, 0 fallos); health read-only 44730842225 SUCCESS; Pages 44730841115 SUCCESS.
+- Regresión más reciente sobre HEAD ba37dd8833f917cdd9a80fbbf234248ed23a7de4: CI 44731452326 SUCCESS (215 suites, 2,686 pruebas, 0 fallos); health read-only 44731452344 SUCCESS; Pages 44731450125 SUCCESS.
 - lista_beta_parte1.txt comienza con la secuencia obligatoria: verificar repo/rama/árbol limpio, fetch y pull --ff-only; no se usará reset/clean/force. No se ejecutó sincronización local porque no hay clon local disponible.
 - Beta pendiente de autorización. Comenzar únicamente con auditoría y preview Drive/Spreadsheet de solo lectura. Safe Apply, movimientos, renombrados y eliminaciones continúan bloqueados hasta revisión y autorización explícita.
 - No se desplegó Apps Script ni se accedió o modificó datos productivos.
@@ -686,3 +686,11 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Validaciones exactas del HEAD anterior al checkpoint: regresión `44730842247` SUCCESS (215 suites, 2,686 pruebas, 0 fallos); health read-only `44730842225` SUCCESS; Pages `44730841115` SUCCESS.
 - Las 17 casillas abiertas siguen requiriendo acceso/acciones en Beta, Script IDs o datos reales de Drive/Spreadsheet y concurrencia desplegada. No se reinterpretan como tareas locales ni se marcan completadas sin evidencia.
 - Sin despliegues Apps Script ni cambios en Drive/Spreadsheet.
+
+
+## Comprobación de ejecución Beta y herramientas — 2026-11-20
+- Node local disponible: v22.16.0; npm 10.9.2. `clasp` no está instalado.
+- Se intentó obtener un clon limpio de `GPSpedia2.2.5_work` para ejecutar el runner local; `git clone` no pudo resolver `github.com` (DNS/salida de red no disponible). No existe checkout local de este repositorio en el contenedor, por lo que no se atribuyen pruebas locales a Node.
+- GitHub Actions sí ejecutó la regresión completa sobre el HEAD anterior al checkpoint: `44731452326` SUCCESS (215 suites, 2,686 pruebas, 0 fallos); health GET read-only `44731452344` SUCCESS; Pages `44731450125` SUCCESS.
+- Se buscó una vía conectada para Drive/Sheets/Apps Script: el conector Google Drive está deshabilitado por administración y no está disponible para instalación; no hay acción de Apps Script/clasp ni workflow de despliegue en el repositorio. El workflow de health solo realiza GET de lectura.
+- Resultado: no se inventó una validación Beta ni se desplegó. Las tareas de deployment, auditoría Drive/Spreadsheet y concurrencia real permanecen abiertas. La ejecución podrá continuar cuando exista una vía autorizada al proyecto Apps Script de Beta (Script IDs/credenciales o conector habilitado). No se solicita ni requiere tocar datos productivos.
