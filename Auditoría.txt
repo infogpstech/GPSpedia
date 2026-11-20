@@ -975,6 +975,6 @@ Estado: REGRESIÓN LOCAL COMPLETADA. Concurrencia real de appendRow, fallos real
 2026-11-20 — FEEDBACK: actualización tutorial sin cambios antes del lock
 - `handleUpdateTutorialItem` ahora reconoce antes de ScriptLock cuando todos los campos solicitados ya coinciden con la fila persistida. Devuelve `alreadyUpdated` como operación de solo lectura, sin mutar la hoja.
 - Si hay cambios, la ruta mantiene su sección crítica: relectura bajo lock, comprobación de solicitudes de vídeo pendientes, unicidad del título, escritura y verificación posterior. No se retiró la protección de mutaciones.
-- Prueba `FeedbackTutorialUpdateNoopPreflight` 5/5 PASS. CI 44839560207 SUCCESS: 251 suites, 3033 pruebas, 0 fallos; health read-only 44839560225 SUCCESS.
+- Prueba `FeedbackTutorialUpdateNoopPreflight` 6/6 PASS: no-op sin lock, mutación protegida, relectura bajo lock y preservación de cambios concurrentes en campos no modificados. CI 44839930123 SUCCESS: 251 suites, 3034 pruebas, 0 fallos; `node --check` y health read-only 44839930193 SUCCESS.
 - P0 sigue abierto; los locks restantes no se sustituyen hasta disponer de journal/proyección o control de versión y regresiones equivalentes.
 ================================================================================
