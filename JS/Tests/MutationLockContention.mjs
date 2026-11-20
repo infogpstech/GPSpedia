@@ -18,7 +18,7 @@ function makeLock() {
             if (this.held) throw new Error("lock ocupado");
             this.held = true;
         },
-        tryLock() { throw new Error("No debe usarse tryLock(0) en estas rutas"); },
+        tryLock(ms) { assert.equal(ms, 0); if (this.held) return false; this.held = true; return true; },
         releaseLock() { assert.equal(this.held, true); this.held = false; },
         hasLock() { return this.held; }
     };
@@ -34,12 +34,14 @@ const adminDrive = extract(admin, "runAdminContributionDriveWorkOutsideScriptLoc
 
 assert.match(writeEntry, /lock\.waitLock\(2000\)/);
 assert.doesNotMatch(writeEntry, /tryLock\(0\)/);
-assert.match(writeAllocate, /lock\.waitLock\(2000\)/);
+assert.match(writeAllocate, /lock\.tryLock\(0\)/);
+assert.doesNotMatch(writeAllocate, /waitLock\(/);
 assert.match(writeDrive, /lock\.waitLock\(2000\)/);
-assert.match(adminEntry, /lock\.waitLock\(2000\)/);
+assert.match(adminEntry, /lock\.tryLock\(0\)/);
+assert.doesNotMatch(adminEntry, /waitLock\(/);
 assert.match(adminUpload, /lock\.waitLock\(2000\)/);
 assert.match(adminField, /lock\.waitLock\(2000\)/);
-assert.match(adminDrive, /runAdminDriveWorkOutsideScriptLock_\(lock, opId, operation, revalidate, operationHash, 2000\)/);
+assert.match(adminDrive, /runAdminDriveWorkOutsideScriptLock_\(lock, opId, operation, revalidate, operationHash, 0\)/);
 assert.match(adminDriveCore, /lock\.tryLock\(0\)/);
 assert.match(extract(write, "handleAddSupplementaryInfo"), /lock\.waitLock\(5000\)/);
 
@@ -78,4 +80,4 @@ const adminHelper = new Function(adminDriveCore + "\n" + adminDrive + "\nreturn 
     assert.equal(lock.held, true, "ADMIN debe readquirir el lock antes de revalidar");
     lock.releaseLock();
 }
-console.log("MutationLockContention: 1/1 PASS — contención breve tolerada y Drive concurrente fuera del lock");
+console.log("MutationLockContention: 1/1 PASS — escrituras de aporte sin espera global y Drive concurrente fuera del lock");
