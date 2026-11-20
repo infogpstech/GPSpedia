@@ -964,3 +964,12 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 
 
 - Actualización de continuidad documental: `Tareas_Activas.md` quedó actualizado en el commit `92c2b466c3898f83a3f4a6d716021bb3581ce0f9`; el checkpoint previo se actualizó en `62cef5f63e8390c5d23b87afafaeb2b648874fc2`. HEAD confirmado después de ambos commits: `92c2b466c3898f83a3f4a6d716021bb3581ce0f9`. La rama base continúa en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+
+
+## 2026-11-20 — Diseño de la siguiente implementación P0
+
+- Se añadió `CONCURRENCIA_APORTES_DISENO.md` en el commit `32db0be9996a20cf8b86f81ecf789fd9d9baed24`. Define un registro append-only de eventos de aportes, proyección de catálogo, deduplicación lógica por `opId`, candidatos por capacidad llena, eventos de sustitución para edición in-modal y matriz de pruebas. Es una decisión de diseño pendiente de implementación y validación, no un cierre de P0.
+- Se corrigió una interpretación durante la inspección: Coordinator declara `CORTES` como recurso de escritura para las acciones WRITE, pero los handlers actuales `addOrUpdateCut` y `addSupplementaryInfo` no adquieren una lease global para toda la operación. La única lease WRITE localizada en este flujo es `ensureSupplementaryVehicleFolder`, para la carpeta Drive. La carrera de slots proviene de la reserva/lectura en WRITE, no de una lease global efectivamente tomada por esos handlers.
+- Dirección propuesta: mantener las filas heredadas de `Cortes` como base; guardar nuevos aportes en un ledger append-only versionado; calcular los slots visibles de forma determinista desde catálogo; conservar el excedente como candidato. No usar `UserLock` como lock por vehículo ni reintroducir un ScriptLock global.
+- Próximo paso técnico: verificar límites y garantías de append concurrente en Google Sheets con un harness aislado; diseñar manejo de duplicados físicos por el mismo `opId` y huellas conflictivas; implementar primero el proyector puro y sus pruebas antes de tocar handlers productivos.
+- HEAD verificado antes de esta actualización: `6b0bb3717119fb576ee94c071ea8f3892d8fdce5`; rama base sin cambios: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
