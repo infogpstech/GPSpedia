@@ -54,7 +54,7 @@ function event(overrides = {}) {
     assert.equal(projected.state, "requires_review");
 }
 {
-    const rows = [];
+    const rows = [["eventId", "token", "operationKey", "folderId", "mimeType", "sizeBytes", "contentHash", "fileId", "fileUrl", "state", "referencesJson", "fileName", "createdAt", "lastError"]];
     const sheet = {
         appendRow(row) { rows.push(row.slice()); },
         getLastRow: () => rows.length,
@@ -72,7 +72,7 @@ function event(overrides = {}) {
         fileId: "file-c", state: "linked"
     });
     assert.ok(id.startsWith("IE-"));
-    assert.equal(rows.length, 1);
-    assert.equal(rows[0][9], "linked");
+    assert.equal(rows.length, 2);
+    assert.equal(rows[1][9], "linked");
 }
 console.log("AdminImageUploadEventReconciliation: 4/4 PASS — lectura, proyección, conflictos y append");
