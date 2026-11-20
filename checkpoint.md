@@ -677,3 +677,12 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - La primera ejecución de CI detectó que el harness conservaba los eventos de lock de la solicitud de emisión del código. Se aisló el tramo de finalización limpiando el registro de eventos después de emitir el código y antes de invocar `handleCompletePasswordRecovery`; no se cambió la aserción de orden ni el código productivo.
 - Se corrigieron además los escapes de regex del handler y de su fixture para mantener la validación de espacios y el patrón de correo original.
 - CI inicial `44726038448` falló únicamente en la aserción del harness; health read-only `44726038467` y Pages `44726038563` SUCCESS. La validación corregida queda pendiente de nueva ejecución.
+
+
+### Validación final — AUTH logging post-lock (2026-11-20)
+- Commit de implementación/prueba: `fbec2fc2da7e4fa5fc16c34cb6502d43b127e979`; corrección de regex/fixture: `456d18e33755a5269c8596e5ed45d59dafb4f2ca`; ajuste de aislamiento de eventos del test: `086dc89e9021b8530874205b5361baf5e962489d`.
+- `PasswordRecovery.mjs` 10/10 PASS; prueba aislada V8 del handler PASS en éxito, código inválido y fallo de logging; parsing de AUTH/fixture PASS; paridad de handler PASS.
+- CI `44726478008` SUCCESS: 215 suites, 2,686 pruebas, 0 fallos; health read-only `44726478247` SUCCESS; Pages `44726477077` SUCCESS.
+- Se conserva la mutación de Users/ActiveSessions y la revocación dentro de ScriptLock; solo el logging best-effort ocurre después de liberarlo. No se cambia la protección de Logs ni la purga sensible.
+- La primera CI `44726038448` detectó una contaminación del event trace del harness; se corrigió aislando el tramo de finalización. No quedó ningún fallo en la CI corregida.
+- Sin despliegue Apps Script ni modificaciones de datos productivos.

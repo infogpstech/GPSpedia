@@ -1225,3 +1225,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-20 · corrección de harness AUTH] La primera CI reveló que la prueba incluía eventos de lock de la emisión del código; el harness ahora reinicia la traza antes de probar la finalización. Se conservó la aserción wait/release/log. También se normalizaron los escapes de regex en el handler y fixture para preservar el patrón original. CI inicial 44726038448 falló solo en la aserción del test; se vuelve a ejecutar tras esta corrección.
+
+
+[2026-11-20 · validación AUTH logging post-lock] PasswordRecovery.mjs 10/10 PASS; ejecución aislada V8 del handler y parsing/paridad PASS. CI 44726478008 SUCCESS (215 suites, 2,686 pruebas, 0 fallos); health read-only 44726478247 SUCCESS; Pages 44726477077 SUCCESS. La primera ejecución de CI falló únicamente por acumulación de eventos previos en el harness; se aisló el trace y la repetición aprobó.

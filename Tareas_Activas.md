@@ -1065,4 +1065,6 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] Mover el registro de éxito de `handleCompletePasswordRecovery` fuera del `ScriptLock` que protege Users/ActiveSessions; conservar bajo lock la verificación del código, consumo, actualización de hash, revocación y limpieza de sesiones.
 - [x] Mantener el logging best-effort y comprobar explícitamente el orden `wait → release → log` en `PasswordRecovery.mjs`.
 - [x] Mantener sincronizada la copia aislada `JS/Tests/Auth.js` con el handler productivo.
-- Estado local: implementación y prueba añadida; validación ejecutada y resultado CI/commit pendientes de registrar.
+- `PasswordRecovery.mjs` 10/10 PASS; prueba aislada V8 del handler PASS en éxito, código inválido y fallo best-effort de logging; parsing de `Auth.js` y fixture PASS; paridad del handler productivo/fixture PASS.
+- CI `44726478008` SUCCESS: 215 suites, 2,686 pruebas aprobadas, 0 fallos; health read-only `44726478247` SUCCESS; Pages `44726477077` SUCCESS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Sin despliegue Apps Script ni cambios de datos productivos.
