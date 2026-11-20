@@ -408,6 +408,45 @@ function projectVehicleContributionEvents_(vehicles, sourceEvents) {
     const byVehicle = new Map();
     const byOpId = new Map();
     const conflictedOpIds = new Set();
+    const vinOwners = new Map();
+    const readVinPrefixes = raw => {
+        if (raw === null || raw === undefined || raw === "") return [];
+        let values;
+        if (Array.isArray(raw)) values = raw;
+        else {
+            const text = String(raw).trim();
+            if (!text) return [];
+            if (text.startsWith("[") || text.endsWith("]")) {
+                let parsed;
+                try { parsed = JSON.parse(text); } catch (error) {
+                    throw new Error("La colección VIN del catálogo contiene JSON inválido; se canceló la proyección.");
+                }
+                if (!Array.isArray(parsed)) throw new Error("La colección VIN del catálogo debe ser un array.");
+                values = parsed;
+            } else values = text.split(/[,/\\\\;]+/);
+        }
+        return values.map(value => String(value || "").trim().toUpperCase()).filter(Boolean);
+    };
+    const registerVinOwner = (prefix, vehicleId) => {
+        const key = String(prefix || "").trim().toUpperCase();
+        const owner = String(vehicleId || "").trim();
+        if (!key || !owner) return;
+        if (!vinOwners.has(key)) vinOwners.set(key, new Set());
+        vinOwners.get(key).add(owner);
+    };
+    vehicles.forEach(vehicle => {
+        if (!vehicle || vehicle.id === null || vehicle.id === undefined) return;
+        readVinPrefixes(vehicle.vin).forEach(prefix => registerVinOwner(prefix, vehicle.id));
+    });
+    events.forEach(event => {
+        const prefix = event && event.payload && event.payload.vinPrefix;
+        if (prefix) registerVinOwner(prefix, event.vehicleId);
+    });
+    const conflictedVinEventIds = new Set();
+    events.forEach(event => {
+        const prefix = String(event && event.payload && event.payload.vinPrefix || "").trim().toUpperCase();
+        if (prefix && (vinOwners.get(prefix) || new Set()).size > 1) conflictedVinEventIds.add(String(event.eventId || ""));
+    });
 
     events.forEach(event => {
         if (!event || !String(event.vehicleId || "").trim() ||
@@ -452,6 +491,10 @@ function projectVehicleContributionEvents_(vehicles, sourceEvents) {
             }
             const payload = event.payload;
             if (event.kind === "cut") {
+                if (conflictedVinEventIds.has(String(event.eventId || ""))) {
+                    candidates.push({ eventId: event.eventId, opId: event.opId, kind: event.kind, reason: "vin_conflict", payload });
+                    return;
+                }
                 const slot = [1, 2, 3].find(index =>
                     !String(vehicle["tipoCorte" + index] || "").trim() &&
                     !String(vehicle["ubicacionCorte" + index] || "").trim() &&
@@ -470,6 +513,28 @@ function projectVehicleContributionEvents_(vehicles, sourceEvents) {
                 vehicle["activaTestigo" + slot] = payload.activaTestigo === true;
                 vehicle["colaboradorCorte" + slot] = event.actorName || "";
                 sources["corte" + slot] = { eventId: event.eventId, opId: event.opId, operationHash: event.operationHash };
+                const metadata = payload.vehicleData && typeof payload.vehicleData === "object" ? payload.vehicleData : {};
+                ["categoria", "marca", "modelo", "versionesAplicables", "anoDesde", "anoHasta", "tipoEncendido", "imagenVehiculo"].forEach(field => {
+                    if (metadata[field] === undefined || metadata[field] === null || String(metadata[field]).trim() === "" || String(vehicle[field] || "").trim()) return;
+                    vehicle[field] = field === "imagenVehiculo"
+                        ? normalizeAndValidateImageId(String(metadata[field])) : metadata[field];
+                    sources[field] = { eventId: event.eventId, opId: event.opId, operationHash: event.operationHash };
+                });
+                const vinPrefix = String(payload.vinPrefix || "").trim().toUpperCase();
+                if (vinPrefix) {
+                    const existingVins = readVinPrefixes(vehicle.vin);
+                    if (!existingVins.includes(vinPrefix)) {
+                        const versionParts = String(vehicle.versionesAplicables || "").split(/[,/\\\\;]+/).map(value => value.trim()).filter(Boolean);
+                        const maxAllowed = Math.max(1, Math.min(3, versionParts.length || 1));
+                        if (existingVins.length >= maxAllowed) {
+                            candidates.push({ eventId: event.eventId, opId: event.opId, kind: event.kind, reason: "vin_capacity_full", payload });
+                            return;
+                        }
+                        existingVins.push(vinPrefix);
+                        vehicle.vin = JSON.stringify(existingVins);
+                        sources.vin = { eventId: event.eventId, opId: event.opId, operationHash: event.operationHash };
+                    }
+                }
             } else if (event.kind === "opening") {
                 if (String(vehicle.apertura || "").trim() || String(vehicle.imgApertura || "").trim()) {
                     candidates.push({ eventId: event.eventId, opId: event.opId, kind: event.kind, reason: "opening_already_filled", payload });
