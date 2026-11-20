@@ -404,3 +404,12 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - No se desplegó Apps Script ni se modificaron Sheets/Drive productivos. Concurrencia real e integración siguen diferidas a Beta autorizada.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. La tarea paraguas `GP-PERF-ADMIN-CUT-LOCK-01` continúa EN PROGRESO.
 - Siguiente paso: seguir reduciendo llamadas remotas redundantes en el handler y helpers de recuperación ADMIN, manteniendo reservas y revalidaciones atómicas.
+
+
+## Continuidad — escritura por lote de encabezados testigo ADMIN (2026-11-20)
+- En `ensureTestigoColumns`, las cabeceras contiguas AT:AV ahora se escriben con un único `setValues([headerNames])` cuando al menos una requiere creación o normalización; antes se ejecutaban hasta tres `setValue()` separados.
+- La validación previa sigue rechazando encabezados duplicados, desplazados o incompatibles y datos bajo encabezados vacíos antes de escribir. Si los tres encabezados ya están correctos, no se hace escritura.
+- `AdminTestigoHeaderReadReuse.mjs` actualizado: 8/8 PASS; verifica orden de validación, única escritura contigua y ausencia de escrituras individuales.
+- CI `44642434395` SUCCESS: 193 suites, 2,528 pruebas aprobadas, 0 fallos; health read-only `44642434153` SUCCESS.
+- Implementación `fbf1e96f67f436859f6959c3f03e0a0fd0cf9d5b`; prueba `35d4ef385c143cf25d8110a05b49836facc65681`.
+- Sin despliegue Apps Script ni cambios en hojas productivas. La tarea paraguas `GP-PERF-ADMIN-CUT-LOCK-01` sigue EN PROGRESO.
