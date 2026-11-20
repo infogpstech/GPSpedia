@@ -10692,7 +10692,7 @@ function handleDeleteReplacedImage(payload,logMessage,developerContext){
                 const root=getCortesRootFolder(),source=getSingleParentFolderInsideCortes(file,root.getId());
                 return {file,alreadyTrashed:false,sourcePath:getFolderPathInsideCortes(source,root.getId())};
             },
-            () => {
+            driveResult => {
                 const latestHeaders=ensureReplacedImagesInventoryColumns(sheetRep);
                 const latest=findReplacedImageRecordById(sheetRep,idReemplazo);
                 if(!latest)throw new Error("El registro desapareció durante la verificación Drive; no se modificó.");
@@ -10702,8 +10702,7 @@ function handleDeleteReplacedImage(payload,logMessage,developerContext){
                     getReplacedImageRecordIdentity_(latestRow,latestHeaders,true)!==driveId) {
                     throw new Error("El registro cambió durante la verificación Drive; vuelve a intentar.");
                 }
-                return {record:latest,file:arguments[0]&&arguments[0].file,alreadyTrashed:arguments[0]&&arguments[0].alreadyTrashed,
-                    sourcePath:arguments[0]&&arguments[0].sourcePath};
+                return {record:latest,file:driveResult.file,alreadyTrashed:driveResult.alreadyTrashed===true,sourcePath:driveResult.sourcePath||""};
             }
         );
         rowIndex=verified.record.rowIndex;
