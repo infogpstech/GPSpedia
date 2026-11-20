@@ -777,3 +777,14 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Diff revisado: `JS/Services/admin.js`, `JS/Tests/AdminIdempotencySnapshotReuse.mjs` y `JS/Tests/AdminLegacyOpIdSnapshotReuse.mjs`. Sin cambios de permisos, contrato externo, reserva, idempotencia, ni revalidación post-lock.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
 - Siguiente paso: revisar las lecturas restantes de `recordOpId` y `markAdminCutImagesLinkedOutsideLock_`; retirar únicamente viajes remotos duplicados cuya redundancia pueda probarse sin eliminar read-back ni revalidación tras Drive.
+
+
+## Cierre — auditoría de lecturas ADMIN y regresión de búsqueda agrupada (2026-11-20)
+- HEAD de código validado: `354255971a6fe7e785a1e339ed2f1da8715910a1`; rama base `GPSpedia2.2.5` permanece en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- Se completaron las subactividades locales del bloque `GP-PERF-ADMIN-CUT-LOCK-01`: reutilización de snapshot legacy, rango exacto de IDs, snapshot Idempotencia inicial sin relectura inmediata y auditoría de lecturas restantes.
+- La auditoría final conserva las revalidaciones dirigidas pre-escritura y los read-back de `recordOpId`, además de la revalidación `findRowByOpId` después de liberar/readquirir ScriptLock para Drive. No se identificó otra consulta eliminable sin reducir garantías de integridad/concurrencia.
+- CI final `44764022976` SUCCESS: 220 suites, 2,735 pruebas, 0 fallos; `AdminIdempotencySnapshotReuse` 10/10, `AdminExistingVehicleLookupPreflight` 10/10, `AdminExistingVehicleSnapshotRevalidation` 7/7, `AdminExistingVehiclePostDriveSnapshotReuse` 9/9, `AdminTestigoHeaderReadReuse` 8/8, `AdminLegacyOpIdSnapshotReuse` 10/10 y `SearchModelGrouping` 21/21. Health read-only `44764023135` SUCCESS.
+- Se corrigió el primer CI fallido `44763915168`: un test legacy esperaba la firma anterior de `findRowByOpId`; el extractor se actualizó y la ejecución repetida aprobó.
+- `GP-PERF-ADMIN-CUT-LOCK-01`: COMPLETADA LOCALMENTE CON VALIDACIÓN DIFERIDA A BETA. No se desplegó Apps Script ni se modificaron hojas/Drive productivos. Beta pendiente: Script IDs reales, no interferencia y concurrencia/Drive/Spreadsheet.
+- `GP-UX-SEARCH-MODEL-GROUPING-01`: regresión integral completada (`SearchModelGrouping` 21/21 y runner global 220 suites/2,735 pruebas); queda pendiente la prueba visual de navegador con catálogo representativo.
+- Siguiente paso: preparar/ejecutar la prueba visual de búsqueda agrupada en un navegador automatizado o entorno Beta autorizado; no modificar contratos de búsqueda ni datos productivos.
