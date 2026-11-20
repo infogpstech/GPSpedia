@@ -2232,6 +2232,124 @@ function findExistingImageUpload(folder, temporaryFilename, expected, token) {
     return file;
 }
 
+const WRITE_VEHICLE_CONTRIBUTIONS_SHEET_NAME_ = "AportesVehiculo";
+const WRITE_VEHICLE_CONTRIBUTIONS_HEADERS_ = Object.freeze([
+    "eventId", "opId", "vehicleId", "operationHash", "kind", "payloadJson",
+    "actorId", "actorName", "createdAt", "status", "supersedesEventId"
+]);
+
+function getVehicleContributionLedgerSheet_(spreadsheetRef) {
+    const spreadsheet = spreadsheetRef || getSpreadsheet();
+    const sheet = spreadsheet.getSheetByName(WRITE_VEHICLE_CONTRIBUTIONS_SHEET_NAME_);
+    if (!sheet) {
+        const error = new Error("El ledger AportesVehiculo no está preparado. Un Desarrollador debe ejecutar migrateVehicleContributionsSchema antes de habilitar los nuevos aportes.");
+        error.code = "CONTRIBUTION_LEDGER_NOT_READY";
+        throw error;
+    }
+    if (sheet.getLastRow() < 1 || sheet.getLastColumn() < WRITE_VEHICLE_CONTRIBUTIONS_HEADERS_.length) {
+        throw new Error("La hoja AportesVehiculo no contiene el esquema versionado completo.");
+    }
+    const headers = sheet.getRange(1, 1, 1, WRITE_VEHICLE_CONTRIBUTIONS_HEADERS_.length)
+        .getDisplayValues()[0].map(value => String(value || "").trim());
+    if (WRITE_VEHICLE_CONTRIBUTIONS_HEADERS_.some((header, index) => headers[index] !== header)) {
+        throw new Error("La hoja AportesVehiculo no coincide con el esquema versionado.");
+    }
+    return sheet;
+}
+
+function findVehicleContributionEventsByOpId_(sheet, opId) {
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) return [];
+    const matches = sheet.getRange(2, 2, lastRow - 1, 1)
+        .createTextFinder(String(opId)).matchCase(true).matchEntireCell(true).findAll();
+    return matches.map(match => ({
+        rowIndex: match.getRow(),
+        values: sheet.getRange(match.getRow(), 1, 1, WRITE_VEHICLE_CONTRIBUTIONS_HEADERS_.length).getValues()[0]
+    }));
+}
+
+function computeVehicleContributionHash_(vehicleId, kind, payload) {
+    const canonical = JSON.stringify({
+        vehicleId: String(vehicleId),
+        kind: String(kind),
+        payload: payload
+    });
+    const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, canonical, Utilities.Charset.UTF_8);
+    return digest.map(value => ("0" + ((value + 256) % 256).toString(16)).slice(-2)).join("");
+}
+
+function appendVehicleContributionEvent_(options) {
+    options = options && typeof options === "object" ? options : {};
+    const vehicleId = String(options.vehicleId || "").trim();
+    const opId = String(options.opId || "").trim();
+    const kind = String(options.kind || "").trim().toLowerCase();
+    const payload = options.payload;
+    if (!/^[1-9]\\d{0,14}$/.test(vehicleId)) throw new Error("El aporte requiere un vehicleId válido.");
+    if (!/^OP-[A-Za-z0-9_-]{1,100}$/.test(opId)) throw new Error("El aporte requiere un opId válido.");
+    if (!["cut", "opening", "feed", "vehicle"].includes(kind)) throw new Error("El tipo de aporte no está permitido.");
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw new Error("El payload del aporte debe ser un objeto.");
+    const payloadJson = JSON.stringify(payload);
+    if (!payloadJson || payloadJson.length > 45000) throw new Error("El payload del aporte excede el tamaño permitido.");
+    const operationHash = String(options.operationHash || computeVehicleContributionHash_(vehicleId, kind, payload)).trim().toLowerCase();
+    if (!/^[a-f0-9]{64}$/.test(operationHash)) throw new Error("La huella del aporte debe ser SHA-256.");
+    const sheet = getVehicleContributionLedgerSheet_(options.spreadsheet);
+    const existing = findVehicleContributionEventsByOpId_(sheet, opId);
+    for (const entry of existing) {
+        const values = entry.values;
+        if (String(values[2] || "") !== vehicleId || String(values[3] || "").toLowerCase() !== operationHash ||
+            String(values[4] || "").toLowerCase() !== kind) {
+            const conflict = new Error("El opId ya está asociado a otro vehículo, tipo o contenido. El aporte quedó en conflicto y no se confirmó.");
+            conflict.code = "CONTRIBUTION_OP_ID_CONFLICT";
+            throw conflict;
+        }
+    }
+    if (existing.length) {
+        return {
+            eventId: String(existing[0].values[0] || ""),
+            opId, vehicleId, kind, operationHash,
+            rowIndex: existing[0].rowIndex,
+            duplicate: true
+        };
+    }
+
+    const eventId = "EV-" + String(Utilities.getUuid()).replace(/-/g, "");
+    const createdAt = new Date().toISOString();
+    const row = [
+        eventId, opId, vehicleId, operationHash, kind, payloadJson,
+        String(options.actorId || ""), String(options.actorName || ""),
+        createdAt, String(options.status || "accepted"), String(options.supersedesEventId || "")
+    ];
+    sheet.appendRow(row);
+    SpreadsheetApp.flush();
+
+    const eventMatches = sheet.getRange(2, 1, Math.max(1, sheet.getLastRow() - 1), 1)
+        .createTextFinder(eventId).matchCase(true).matchEntireCell(true).findAll();
+    if (!eventMatches.length) {
+        const pending = new Error("No se pudo confirmar por lectura el evento append-only. Conserva el mismo opId para reintentar.");
+        pending.code = "CONTRIBUTION_APPEND_UNCONFIRMED";
+        throw pending;
+    }
+    const rowIndex = eventMatches[0].getRow();
+    const saved = sheet.getRange(rowIndex, 1, 1, WRITE_VEHICLE_CONTRIBUTIONS_HEADERS_.length).getValues()[0];
+    if (String(saved[1]) !== opId || String(saved[2]) !== vehicleId ||
+        String(saved[3]).toLowerCase() !== operationHash || String(saved[4]).toLowerCase() !== kind ||
+        String(saved[5]) !== payloadJson) {
+        const mismatch = new Error("El evento append-only no coincide con el contenido enviado; requiere revisión.");
+        mismatch.code = "CONTRIBUTION_APPEND_MISMATCH";
+        throw mismatch;
+    }
+
+    const concurrent = findVehicleContributionEventsByOpId_(sheet, opId);
+    if (concurrent.some(entry => String(entry.values[2] || "") !== vehicleId ||
+        String(entry.values[3] || "").toLowerCase() !== operationHash ||
+        String(entry.values[4] || "").toLowerCase() !== kind)) {
+        const conflict = new Error("Se detectó el mismo opId con contenido distinto durante el append. Los eventos se conservan para revisión y no deben proyectarse.");
+        conflict.code = "CONTRIBUTION_OP_ID_CONFLICT";
+        throw conflict;
+    }
+    return { eventId, opId, vehicleId, kind, operationHash, rowIndex, duplicate: false };
+}
+
 function getImageUploadReferences_(fileId) {
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
     if (!sheet || sheet.getLastRow() < 2) return [];
