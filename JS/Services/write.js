@@ -758,10 +758,12 @@ function handleAllocateVehicleId(payload) {
     let lockAcquired = false;
     try {
         try {
-            lock.waitLock(2000);
-            lockAcquired = true;
+            lockAcquired = lock.tryLock(0);
         } catch (lockError) {
-            const busyError = new Error("WRITE está finalizando otra reserva de ID. Reintenta la asignación en unos instantes.");
+            lockAcquired = false;
+        }
+        if (!lockAcquired) {
+            const busyError = new Error("WRITE está ocupado con una reserva breve de ID. Conserva el mismo opId y reintenta.");
             busyError.code = "WRITE_BUSY";
             throw busyError;
         }
