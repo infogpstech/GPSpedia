@@ -48,11 +48,11 @@ function runAddSupplementaryInfoIntegrityTests(sources) {
   run_(label+" el lock solo cubre la persistencia final",function(){
    const p=source.indexOf("function handleAddSupplementaryInfo(payload"),q=source.indexOf("function handleAddSupplementaryInfoLocked",p),block=source.slice(p,q);
    if(label==="WRITE"){
-    assert_(block.includes("waitLock(5000)")&&block.includes("finally")&&block.includes("releaseLock"));
-    assert_(block.indexOf("prepareSupplementaryImageUploads_")<block.indexOf("waitLock(5000)"));
+    assert_(block.includes("tryLock(0)")&&block.includes("finally")&&block.includes("releaseLock"));
+    assert_(block.indexOf("prepareSupplementaryImageUploads_")<block.indexOf("tryLock(0)"));
     const locked=source.slice(q,source.indexOf(String.fromCharCode(10)+"function ",q+10));
     assert_(!/uploadImageToDrive|findOrCreateVehicleFolder|DriveApp/.test(locked));
-   }else assert_(block.includes("waitLock(30000)")&&block.includes("finally")&&block.includes("releaseLock"));
+   }else assert_(block.includes("tryLock(0)")&&block.includes("finally")&&block.includes("releaseLock"));
   });
  });
  run_("Coordinador cubre Cortes, Drive y ledger",function(){assert_(String(sources.coordinator||"").includes('addSupplementaryInfo: { read: identityRead, write: ["CORTES", "DRIVE", "IMAGE_UPLOAD_LEDGER"] }'));});
@@ -95,7 +95,7 @@ function runAddSupplementaryInfoIntegrityTests(sources) {
  run_("Handler suplementario autentica antes de cargar y bloquea solo la persistencia final",function(){
   const p=String(sources.write).indexOf("function handleAddSupplementaryInfo(payload)"),q=String(sources.write).indexOf("function handleAddSupplementaryInfoLocked",p),end=String(sources.write).indexOf(String.fromCharCode(10)+"function ",q+10),outer=String(sources.write).slice(p,q),inner=String(sources.write).slice(q,end>0?end:undefined);
   assert_(outer.indexOf("getAuthenticatedCollaborator")<outer.indexOf("prepareSupplementaryImageUploads_"));
-  assert_(outer.indexOf("prepareSupplementaryImageUploads_")<outer.indexOf("waitLock(5000)"));
+  assert_(outer.indexOf("prepareSupplementaryImageUploads_")<outer.indexOf("tryLock(0)"));
   assert_(inner.includes("buildSupplementaryInfoPlan_")&&inner.includes("persistSupplementaryInfoValues_")&&inner.includes("Logger.log(")&&inner.includes("actorName"));
   assert_(!/uploadImageToDrive|findOrCreateVehicleFolder|DriveApp/.test(inner));
  });
