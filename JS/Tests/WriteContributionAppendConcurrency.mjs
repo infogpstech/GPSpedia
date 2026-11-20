@@ -196,4 +196,26 @@ function cut(vehicleId, opId, tipo, hash) {
         "La cuarta alimentación debe quedar como candidata cuando los tres slots están ocupados");
 }
 
-console.log("WriteContributionAppendConcurrency: 6/6 PASS — intercalado, idempotencia, conflictos y capacidad de apertura/alimentación");
+
+{
+    const sheet = createSheet(), append = makeRuntime(sheet);
+    let nestedResult, interleaved = false;
+    const first = cut("101", "OP-VIN-RACE-A", "Ignición", "a");
+    const second = cut("202", "OP-VIN-RACE-B", "Bomba", "b");
+    first.payload.vinPrefix = "SAMEVIN";
+    second.payload.vinPrefix = "SAMEVIN";
+    sheet.onAppend = () => {
+        if (interleaved) return;
+        interleaved = true;
+        nestedResult = append(second);
+    };
+    const firstResult = append(first);
+    assert.equal(firstResult.status, "accepted");
+    assert.equal(nestedResult.status, "accepted");
+    const projected = project(sheet, [{ id: "101", vin: "" }, { id: "202", vin: "" }]);
+    assert.equal(projected[0].tipoCorte1 || "", "");
+    assert.equal(projected[1].tipoCorte1 || "", "");
+    assert.equal(projected[0].contributionCandidates[0].reason, "vin_conflict");
+    assert.equal(projected[1].contributionCandidates[0].reason, "vin_conflict");
+}
+console.log("WriteContributionAppendConcurrency: 7/7 PASS — intercalado, idempotencia, conflictos, VIN concurrente y capacidad");
