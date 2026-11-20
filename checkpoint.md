@@ -196,3 +196,14 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - El lock de nueva escritura sigue activo; se redujeron las búsquedas y se evitan locks/Drive en replays, sin alterar atomicidad.
 - Incidente de rama: test file creado accidentalmente en `main`, eliminado en `de13b119529415b8d85e03331647cb5422cb8a1c`; `main` ya no contiene el archivo y `GPSpedia2.2.5` no se modificó.
 - No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+## Checkpoint — replay previo de reportes (2026-11-20)
+
+- HEAD de código validado: `3f890dc0cf24196e76f51c0170ae5aa8cbcbe2e9`.
+- `handleReportProblem` ahora busca reporte existente antes de subir imagen/adquirir lock. Replays idénticos devuelven el registro existente; si falta imagen, carga y revalida bajo lock; si el SHA-256 difiere, rechaza.
+- `handleSuggestCutChange` realiza replay previo y revalida dentro del lock. Búsquedas de reportId/opId se limitan a columnas metadata/Problema y filas coincidentes.
+- Pruebas focalizadas: report lookup 4/4, report preflight 5/5, suggestion lookup 6/6, suggestion preflight 6/6, image cleanup 5/5, P2 upload/lock 1/1.
+- CI 44837729816 SUCCESS: 244 suites, 2994 pruebas, 0 fallos. Health read-only del commit anterior SUCCESS; Health y Pages del HEAD seguían en ejecución.
+- No se retiró el lock de nuevas escrituras; los replays comunes se resuelven sin lock/Drive, y las nuevas altas mantienen deduplicación y revalidación atómica.
+- No se desplegó Apps Script ni se modificaron datos productivos.
