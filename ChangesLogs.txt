@@ -35,3 +35,10 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 
 
 2026-11-20 — CATALOG: el lector de AportesVehiculo acepta vehicle_update solo con actor autenticado y opId OP-ADMIN-. Se añadió prueba funcional que valida aceptación y rechazo de identidad incompleta. CI 44834146336 SUCCESS: 237 suites, 2956 pruebas, 0 fallos; health read-only SUCCESS. Sin despliegue. Queda pendiente migrar la ampliación de años de FEEDBACK, que todavía escribe directamente en Cortes.
+
+
+2026-11-20 — FEEDBACK: corrección de reintento de voto positivo
+- handleSuggestYearLocked ya no referencia voteActors, variable local de countVerifiedPositiveYearSuggestionVotes_. Calcula hasVerifiedPositiveVote desde allData con vehículo/año, actor verificado y respuesta positiva.
+- Se añadió un caso a SuggestYearVoteThreshold.mjs para impedir la regresión.
+- Commits: 1a4b0909 (código), 66da8f2a (prueba).
+- Validación pendiente: ejecutar SuggestYearVoteThreshold, FeedbackYearApplicationAppendOnly y suite FEEDBACK/runner completo. No se ha afirmado PASS ni se ha desplegado Apps Script.
