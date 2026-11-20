@@ -1352,3 +1352,11 @@ Se implementó agrupación de resultados de Cortes por categoría/marca/modelo, 
 - Nueva prueba AdminVehicleContributionCandidates 6/6, integrada en RunServiceTests.
 - CI b75523bdf0039f191daa42801e5b51b5afdb68d1: 233 suites, 2,871 pruebas, 0 fallos; health SUCCESS.
 - Pendiente UI y resolución append-only auditable mediante supersedesEventId. Sin despliegue ni cambios productivos.
+
+
+2026-11-20 — Idempotencia durable de imágenes suplementarias
+- WRITE mantiene una clave estable por opId/vehículo/campo; los reintentos con el mismo contenido reutilizan el recurso ya reservado/proyectado y el contenido diferente para la misma clave se rechaza antes de crear otro archivo.
+- Se conserva ImageUploadEvents como fuente primaria del flujo principal; el evento de aporte se anexa antes de marcar las imágenes linked. Los archivos que no alcanzan el vínculo permanecen recuperables mediante el journal/reconciliación.
+- JS/Tests/AddSupplementaryInfoIntegrity.js amplía la cobertura de autenticación, orden de persistencia, ausencia de locks, idempotencia de operationKey y reutilización de fileId/archivo temporal.
+- CI f7e9730548047f2cb14548c2e263161649a482c7: 233 suites, 2,877 pruebas aprobadas, 0 fallos; health read-only y Pages SUCCESS.
+- La integración real de Drive/Sheets, fallos parciales y respuesta perdida permanece pendiente de Beta aislada. Sin despliegue ni cambios productivos.

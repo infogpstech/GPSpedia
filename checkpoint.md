@@ -1130,3 +1130,13 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - CI 44815525250 SUCCESS: 233 suites, 2,871 pruebas aprobadas, 0 fallos. Health read-only 44815525351 SUCCESS. Pages pendiente de confirmación.
 - La acción aún no tiene interfaz de administración y no permite resolver candidatos. Siguiente paso: UI ADMIN y resolución mediante evento nuevo append-only con supersedesEventId; modificar proyección para omitir el evento sustituido y conservar el historial completo.
 - P0 sigue EN PROGRESO. No se desplegó Apps Script ni se modificaron hojas/Drive productivos.
+
+
+## Checkpoint — idempotencia de imágenes suplementarias validada localmente (2026-11-20)
+
+- HEAD de trabajo confirmado: `f7e9730548047f2cb14548c2e263161649a482c7`; rama `GPSpedia2.2.5_work`. Rama base protegida `GPSpedia2.2.5`: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin cambios.
+- Se completó la cobertura local de reintentos idempotentes de `addSupplementaryInfo` con imágenes: clave estable `opId/vehicleId/campo`, rechazo de contenido distinto antes de crear otro archivo y reutilización de fileId/archivo temporal.
+- La carga usa `ImageUploadEvents` como fuente primaria. El aporte se anexa antes de marcar las imágenes como linked; si falla la fase posterior, el journal conserva el estado recuperable para reconciliación.
+- CI `44817783127` SUCCESS: 233 suites, 2,877 pruebas aprobadas, 0 fallos; sintaxis de módulos modificados SUCCESS. Health read-only `44817783171` SUCCESS. Pages `44817782871` SUCCESS.
+- Estado: implementación y validación local COMPLETADAS CON VALIDACIÓN DIFERIDA A BETA. Pendiente Beta: concurrencia real Drive/Sheets, fallos parciales, respuesta perdida y reconciliación de archivos huérfanos. No se desplegó Apps Script ni se modificaron datos productivos.
+- Siguiente tarea local prioritaria: completar la interfaz ADMIN de candidatos de `AportesVehiculo` y la resolución append-only con `supersedesEventId`; la consulta de solo lectura ya existe. La proyección debe excluir únicamente eventos sustituidos por una resolución válida, sin mutar el historial.

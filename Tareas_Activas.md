@@ -1537,3 +1537,16 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [ ] Crear interfaz ADMIN para consultar candidatos y revisar detalles.
 - [ ] Implementar resolución append-only auditada (nuevo evento con supersedesEventId); actualizar proyección para excluir el evento sustituido sin borrar/modificar historial.
 - Estado: consulta de candidatos disponible por acción de servicio, aún sin interfaz ni resolución. P0 continúa EN PROGRESO.
+
+
+### 2026-11-20 — Idempotencia durable de aportes suplementarios con imágenes
+
+- [x] Reutilizar la clave estable por `opId/vehicleId/campo` para que un reintento idéntico reconozca el recurso ya reservado o creado antes de crear otro archivo.
+- [x] Rechazar contenido distinto para una misma `operationKey` antes de crear un archivo adicional.
+- [x] Reutilizar el `fileId` ya proyectado o el archivo temporal compatible; verificar archivo/carpeta antes de continuar.
+- [x] Mantener la secuencia: autenticación con actor confiable, reserva/carga durable en `ImageUploadEvents`, append del aporte y transición `linked` únicamente después del registro del evento.
+- [x] Mantener el flujo sin `UserLock`, sin espera por lock y sin volver a escribir el ledger mutable como fuente primaria.
+- [x] CI HEAD `f7e9730548047f2cb14548c2e263161649a482c7`: 233 suites, 2,877 pruebas aprobadas, 0 fallos; parsing de módulos modificados SUCCESS.
+- [x] Health read-only SUCCESS; Pages SUCCESS.
+- [ ] Validar en Beta aislada los fallos parciales reales Drive/Sheets/journal, respuesta perdida y reconciliación ADMIN de archivos pendientes/huérfanos.
+- Estado local: **COMPLETADA CON VALIDACIÓN DIFERIDA A BETA**. No se desplegó Apps Script ni se modificaron Drive/Sheets productivos.
