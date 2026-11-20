@@ -77,7 +77,7 @@ run("bloquea papelera, MIME inválido e identidad alterada", () => {
     assert.equal(classify({ fileId: id2, mimeType: "image/jpeg" }, operation).reason, "file_identity_mismatch");
 });
 run("genera rollback en orden inverso y solo con estado destino confirmado", () => {
-    const manifest = buildManifest(preview(), [id1, id2], digest);
+    const manifest = buildManifest(preview([item(id1), item(id2, { targetName: "Hilux_2020_ign2.jpg" })]), [id1, id2], digest);
     const states = {};
     manifest.forEach(op => states[op.fileId] = {
         fileId: op.fileId, fileName: op.targetName, folderPath: op.targetFolderPath, mimeType: "image/jpeg"
