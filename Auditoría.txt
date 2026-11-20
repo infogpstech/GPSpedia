@@ -810,3 +810,13 @@ INCIDENTE DE RAMA CORREGIDO: un update_file sin branch explícita creó temporal
 - CI 44832283278 SUCCESS: 237 suites, 2943 pruebas, 0 fallos; AdminReplacedImagesIntegrity 56/56; ReplacedImagesLibraryUX 14/14; AdminVehicleContributionCandidates 6/6; Health read-only SUCCESS. Pages en cola.
 - Siguiente P0: señalización UI de conflictos tardíos en todos los puntos de entrada, revisión del ScriptLock fast-fail FEEDBACK y alcance del asignador de IDs de vehículos nuevos.
 ================================================================================
+
+
+================================================================================
+2026-11-20 — HALLAZGOS FEEDBACK / CANDIDATOS WRITE
+1) ID de reportes: corregida generación débil basada en Math.random. El formulario usa crypto.randomUUID() o crypto.getRandomValues(24 bytes), mantiene el reportId estable en el mismo modal y falla de forma cerrada si no hay generador seguro. CI 44833154077 SUCCESS.
+2) Imágenes candidatas: la proyección CATALOG ya conservaba payload.image y la librería Imagenes_Reemplazadas sincronizaba los candidatos; faltaba inspección visual desde la bandeja ADMIN. Corregido: preview y enlace solo para URL canónica Drive, noopener/noreferrer y referrerPolicy no-referrer. Prueba 8/8.
+3) Conflicto tardío: el finalizador común podía mostrar éxito genérico si CATALOG aún no reflejaba el candidato o si fallaba el refresh. Corregido: respeta candidateReviewPending de WRITE y no presenta el aporte como aplicado; conserva el estado en la respuesta UI. Regresión ampliada.
+4) ScriptLock FEEDBACK: no se elimina todavía. Protege el asignador secuencial de IDs, la deduplicación read-before-write de reportId/suggestionOperationId y la recuperación de aplicaciones de año. La serialización global contradice §15; se requiere migrar estas operaciones a un journal append-only antes de retirar el lock. Hallazgo abierto, no se presenta como corregido.
+Validación: CI 44833154077 SUCCESS — 237 suites, 2951 pruebas, 0 fallos; node --check PASS. Health read-only pendiente de verificación. Sin despliegue ni cambios de datos productivos.
+================================================================================
