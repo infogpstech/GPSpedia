@@ -81,7 +81,14 @@ function makeBase({status="requiere_revision",type="reemplazada",previous="requi
     return{sheet,file,lock,refs,deps};
 }
 function runDelete(base,id="IMG-1"){
-    const handler=new Function(...Object.keys(base.deps),fnSource(admin,"handleDeleteReplacedImage")+"\nreturn handleDeleteReplacedImage;")(...Object.values(base.deps));
+    const runAdminDriveWorkOutsideScriptLock_=new Function(fnSource(admin,"runAdminDriveWorkOutsideScriptLock_")+"\nreturn runAdminDriveWorkOutsideScriptLock_;")();
+    const deps={...base.deps,runAdminDriveWorkOutsideScriptLock_,
+        DriveApp:{getFileById(){assert.equal(base.lock.state.locked,false,"Drive trash preflight debe ejecutarse sin ScriptLock");return base.file;}},
+        getCortesRootFolder(){assert.equal(base.lock.state.locked,false,"La carpeta raíz debe validarse sin ScriptLock");return {getId:()=>"ROOT"};},
+        getSingleParentFolderInsideCortes(){assert.equal(base.lock.state.locked,false,"El parent debe validarse sin ScriptLock");return {getId:()=>"PARENT"};},
+        getFolderPathInsideCortes(){assert.equal(base.lock.state.locked,false,"La ruta debe validarse sin ScriptLock");return "Cortes/Original";}
+    };
+    const handler=new Function(...Object.keys(deps),fnSource(admin,"handleDeleteReplacedImage")+"\nreturn handleDeleteReplacedImage;")(...Object.values(deps));
     return handler({id_reemplazo:id},()=>{},{actor:"developer"});
 }
 function runRestore(base,id="IMG-1"){
@@ -175,7 +182,7 @@ check("La acción permite enviar a papelera registros reemplazados en revisión 
     assert.equal(b.file.trashed,true);
     assert.equal(b.sheet.cells[1][10],"en_papelera");
     assert.equal(b.sheet.cells[1][23],"requiere_revision");
-    assert.equal(b.lock.state.releases,1);
+    assert.equal(b.lock.state.releases,2);\n    assert.equal(b.lock.state.tryLocks,1);
 });
 check("La acción permite enviar a papelera inventario sin uso en revisión",()=>{
     const b=makeBase({type:"sin_uso_detectado",status:"requiere_revision",previous:"requiere_revision"});
