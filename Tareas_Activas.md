@@ -1410,3 +1410,20 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [ ] Integrar recuperación inmediata de aportes del ledger en `checkOperation`, para que una respuesta perdida no fuerce una carga Drive redundante.
 - [ ] Revisar el estado de la primera respuesta cuando un `opId` conflictivo se anexa después: conservar ambos candidatos y dar señal UI de reconciliación, sin exclusión mutua global.
 - Estado P0: EN PROGRESO.
+
+
+### 2026-11-20 — Recuperación por opId y señalización de candidatos
+
+- [x] Extender checkOperation para consultar AportesVehiculo cuando no existe fila en Idempotencia.
+- [x] Verificar que las filas repetidas del mismo opId coincidan en vehículo, tipo, huella y payload; devolver evento canónico o conflicto explícito.
+- [x] Recuperar el estado de corte, apertura y alimentación con su huella/vehicleId; calcular candidato según slots heredados y eventos anteriores.
+- [x] Mostrar en UI mensajes distintos para aporte aplicado y aporte conservado como candidato, tanto en envío normal como recuperación.
+- [x] Añadir pruebas WriteContributionRecovery (7/7) y ampliar intercalado/capacidad (6/6).
+- [x] CI HEAD `4f54e1ca71a21857a3e23e5d7d1a98ff3a77fe51`: 230 suites, 2,843 pruebas, 0 fallos; health read-only SUCCESS.
+- [x] Actualizar CONCURRENCIA_APORTES_DISENO.md con implementación parcial y límites.
+- [ ] Verificar garantías reales de appendRow bajo dos ejecuciones Apps Script simultáneas; el harness actual simula append indivisible.
+- [ ] Migrar ImageUploadLedger mutable y retirar ScriptLock.waitLock(5000), incluyendo compatibilidad con el reconciliador ADMIN y conservación de archivos sin referencia.
+- [ ] Ampliar append-only de cortes existentes a VIN/vehicleData y migrar fallback legacy sin pérdida de unicidad VIN.
+- [ ] Reconciliar en UI la primera respuesta si un mismo opId entra en conflicto después de que esa respuesta ya fue enviada.
+- [ ] Migrar edición in-modal del Desarrollador a eventos de sustitución/versionado por campo.
+- Estado P0: EN PROGRESO.
