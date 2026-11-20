@@ -1209,3 +1209,17 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - No hay checkout Node local ni se obtuvo evidencia de ejecución CI asociada al commit de esta iteración; la suite oficial queda pendiente de ejecución por GitHub Actions. No afirmar regresión integral.
 - El ejecutor que modifica Drive, el registro durable de operaciones, la comprobación ACL de carpetas destino y la recuperación real siguen pendientes. No se habilitó ni ejecutó ninguna operación Drive/Spreadsheet.
 - Estado: SUBACTIVIDAD DE PREPARACIÓN COMPLETADA; Safe Apply EN PROGRESO. La ejecución real continúa condicionada a revisar el preview real y a confirmar permisos/efectos de herencia del destino.
+
+### 2026-11-20 — Safe Apply: ejecutor Drive, ledger durable y rollback ejecutable
+- [x] Añadir applyCortesImageOrganizer: vuelve a generar el preview desde la auditoría vigente, compara el digest aprobado y limita la selección a IDs de la página revisada; exige sesión Desarrollador y confirmación explícita.
+- [x] Implementar ejecutor por lotes de hasta 10 imágenes: valida estado de origen, crea/resuelve carpetas sin aceptar rutas ambiguas, comprueba colisiones, mueve/renombra y verifica por lectura posterior el nombre y la ubicación exactos.
+- [x] Añadir ledger durable por operación en ScriptProperties, con identidad de propietario, digest/auditoría, estados processing/complete/rolled_back/needs_review, lectura/escritura verificada y transición protegida por ScriptLock no bloqueante.
+- [x] Los reintentos reconocen operaciones confirmadas sin repetir movimientos; un archivo que ya aparece en destino sin evidencia durable se bloquea. Las operaciones con estado incierto requieren revisión manual.
+- [x] Verificar el nivel de acceso compartido y consultar editores/lectores en cada carpeta de la cadena de destino; se rechazan carpetas con acceso general distinto de PRIVATE o ACL no legible.
+- [x] Añadir rollbackCortesImageOrganizer: revierte únicamente operaciones completas cuyo archivo conserve exactamente nombre y ubicación destino; verifica ACL del origen, evita colisiones y confirma la ubicación original. Reintentos de rollback son idempotentes.
+- [x] Añadir JS/Tests/CortesImageOrganizerExecutor.mjs (9/9) y registrarlo en RunServiceTests.mjs; conservar CortesImageOrganizerApplyPlan.mjs (14/14).
+- [x] Corregir dos incidencias detectadas por CI: mapa público de acciones ADMIN incompleto y harness aislado que no inyectaba el clasificador puro; además se bloqueó la aceptación de destinos sin ledger durable.
+- [x] CI 44784511516 SUCCESS: 223 suites, 2,766 pruebas aprobadas, 0 fallos. CortesImageOrganizerApplyPlan 14/14; CortesImageOrganizerExecutor 9/9; mapa de acciones 12/12. Health read-only 44784509991 SUCCESS; Pages 44784509701 SUCCESS.
+- No se desplegó Apps Script ni se ejecutó Safe Apply real; no se movieron/renombraron archivos ni se modificaron Drive/Spreadsheet. Las pruebas del ejecutor usan adaptadores simulados.
+- Estado: IMPLEMENTACIÓN LOCAL DEL EJECUTOR Y ROLLBACK COMPLETADA CON VALIDACIÓN DIFERIDA. Pendiente Beta: auditar Drive real, revisar el preview completo, comprobar el comportamiento efectivo de ACL heredadas y probar aplicación/rollback en entorno aislado autorizado. No ejecutar en Drive productivo.
+- Siguiente paso local: revisar integración de UI/confirmación explícita y gestión/retención del ledger; mantener operaciones reales deshabilitadas hasta la aprobación del preview real.
