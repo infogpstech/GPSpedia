@@ -805,3 +805,10 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] Preservar detección de duplicados, fórmulas, IDs inválidos, filas incompletas y contador monotónico bajo ScriptLock.
 - [x] `WriteVehicleIdAllocatorBoundedRead`: 11/11 PASS; CI `44642666700` SUCCESS: 193 suites, 2,528 pruebas, 0 fallos.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó ni se modificaron datos productivos.
+
+
+### Decisión — sección crítica del asignador WRITE (2026-11-20)
+- [x] Evaluar la reducción adicional del escaneo de IDs sin perder reconciliación de IDs manuales, fórmulas, duplicados ni filas con datos sin ID.
+- [x] Combinar encabezado y valores de ID en una lectura; pruebas y CI final registrados en la sección WRITE anterior.
+- El escaneo de la columna ID y la inspección de filas candidatas se conservan bajo ScriptLock: el plan `PLAN_MIGRACION_IDS.md` exige preservar IDs manuales/históricos y detectar anomalías; no existe evidencia Beta de que la migración/freeze y el contador central estén completos en todos los entornos. Sustituir el escaneo por solo ScriptProperties podría omitir IDs manuales o anomalías.
+- Reabrir una reducción adicional únicamente después de validar en Beta el inventario/freeze de IDs y el estado del contador, sin alterar IDs históricos.
