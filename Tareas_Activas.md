@@ -935,3 +935,11 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] `AdminCatalogPublicationIsolation` 6/6; `CatalogChangeFeed` y `SharedMutationCoordinator` cubren orden/reintentos.
 - [x] CI `44649098649` SUCCESS; health read-only `44649098541` SUCCESS.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Sin despliegues ni cambios productivos.
+
+
+### P1 — ADMIN movimiento de imagen: actividad y logging fuera del lock (2026-11-20)
+- [x] Mantener el movimiento Drive y la confirmación/rollback de metadata dentro de la sección crítica actual.
+- [x] Diferir el registro de actividad (Coordinator/hoja ActividadUsuario) y el mensaje de logging hasta después de liberar ScriptLock.
+- [x] Preservar respuesta para carpeta idéntica y el contrato best-effort del helper de actividad. `AdminMoveImageActivityOutsideLock` 7/7.
+- [x] CI `44652254166` SUCCESS: 206 suites, 2,603 pruebas, 0 fallos; health read-only `44652254131` SUCCESS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. El movimiento/rollback Drive sigue bajo lock por seguridad de referencias; separar requiere reserva y revalidación coordinada.
