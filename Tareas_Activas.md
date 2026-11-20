@@ -821,3 +821,16 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - Pruebas locales de no interferencia entre auditoría, Inbox, health, login y registro de cortes ya están integradas y aprobadas en CI; las garantías de mismo recurso mantienen conflicto/reserva.
 - Pendiente exclusivamente para Beta autorizada: confirmar Script IDs/proyectos reales, verificar qué funciones comparten cada ScriptLock y ejecutar concurrencia real entre proyectos/servicios. No se consultaron ni modificaron deployments, ScriptProperties, secretos, Sheets o Drive productivos.
 - Estado local: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. El siguiente bloque priorizado es la auditoría P1 de I/O bajo locks en WRITE y FEEDBACK, sin iniciar cambios hasta delimitar cada recurso/contrato.
+
+
+### P1 — telemetría directa AUTH/WRITE/FEEDBACK sin ScriptLock (2026-11-20)
+- [x] Retirar el ScriptLock global de los contadores directos best-effort para que las consultas instrumentadas no compitan con escrituras independientes.
+- [x] Mantener explícito `mayUndercount: true` y `best_effort_nonblocking`; la exactitud absoluta no justifica bloquear mutaciones.
+- [x] Actualizar la copia de prueba AUTH y los contratos de telemetría/no interferencia. `DirectServiceTrafficTelemetry` 21/21; `P2FeedbackImageUploadLocks` 1/1.
+- [x] CI `44643946013` SUCCESS: 193 suites, 2,528 pruebas, 0 fallos; health read-only `44643945928` SUCCESS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegó Apps Script ni se alteraron datos productivos.
+
+### P1 — publicaciones de catálogo FEEDBACK bajo ScriptLock (siguiente tarea)
+- [ ] Sacar UrlFetch al Coordinator fuera del ScriptLock sin permitir que snapshots viejos sobrescriban cambios recientes.
+- [ ] Diseñar versión monotónica de origen FEEDBACK y compatibilidad de eventos legacy (sin versión deben forzar reset).
+- [ ] Cubrir publicaciones fuera de orden, fallos de red, reintentos y reset de recuperación antes de modificar el flujo.
