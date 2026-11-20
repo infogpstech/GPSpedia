@@ -1812,7 +1812,13 @@ function handleSuggestYearLocked(payload) {
             ? { status: "info", recorded: false, message: "Ya existe una respuesta de este aportante para ese vehículo y año; no se duplicó." }
             : { status: "success", message: "Respuesta registrada correctamente." };
     }
-    if (alreadyReported && !voteActors.has(actorKey)) {
+    const hasVerifiedPositiveVote = allData.some(row =>
+        matchesActorAndSuggestion(row) &&
+        String(row[actorColumn - 1] || "").trim() === actorKey &&
+        isVerifiedSuggestionActorKey_(actorKey) &&
+        isPositiveYearSuggestionRow(row)
+    );
+    if (alreadyReported && !hasVerifiedPositiveVote) {
         return {
             status: "info",
             recorded: false,
