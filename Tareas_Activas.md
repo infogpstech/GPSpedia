@@ -1223,3 +1223,16 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - No se desplegó Apps Script ni se ejecutó Safe Apply real; no se movieron/renombraron archivos ni se modificaron Drive/Spreadsheet. Las pruebas del ejecutor usan adaptadores simulados.
 - Estado: IMPLEMENTACIÓN LOCAL DEL EJECUTOR Y ROLLBACK COMPLETADA CON VALIDACIÓN DIFERIDA. Pendiente Beta: auditar Drive real, revisar el preview completo, comprobar el comportamiento efectivo de ACL heredadas y probar aplicación/rollback en entorno aislado autorizado. No ejecutar en Drive productivo.
 - Siguiente paso local: revisar integración de UI/confirmación explícita y gestión/retención del ledger; mantener operaciones reales deshabilitadas hasta la aprobación del preview real.
+
+### 2026-11-20 — Safe Apply: controles de aprobación y rollback en ADMIN UI
+- [x] Añadir controles explícitos en index.html para aplicar la selección aprobada y revertir el último lote.
+- [x] En JS/Frontend/ui.js, mostrar casillas únicamente para destinos ready; limitar selección a 1–10 archivos de una misma página del preview.
+- [x] Solicitar confirmación interactiva del Desarrollador antes de enviar applyCortesImageOrganizer; el payload incluye auditId, offset, digest, IDs aprobados y confirm:true.
+- [x] Integrar rollbackCortesImageOrganizer con confirmación independiente y solo los operationId devueltos por el último lote de la sesión UI.
+- [x] Después de aplicar un lote, invalidar la aprobación local y exigir nueva auditoría/preview para preparar otro lote.
+- [x] Añadir CortesImageOrganizerUiContract.mjs (10/10) e integrarlo en RunServiceTests.mjs.
+- [x] CI 44785453638 SUCCESS: 224 suites, 2,776 pruebas aprobadas, 0 fallos; ApplyPlan 14/14, Executor 9/9 y UI 10/10. Health read-only 44785453971 SUCCESS.
+- Dos ejecuciones intermedias fallaron únicamente por aserciones del nuevo test UI (patrón de confirmación y escape de regex); se corrigió el test y la repetición final aprobó.
+- No se desplegó Apps Script ni se ejecutó una operación real de Drive/Spreadsheet. La UI y el backend están versionados, pero el uso real sigue condicionado a auditoría y preview Beta aprobados.
+- Estado: IMPLEMENTACIÓN LOCAL DE CONTROLES UI COMPLETADA CON VALIDACIÓN DIFERIDA. Pendiente Beta: inspección visual, comprobar ACL heredadas efectivas y probar aplicación/rollback en Drive aislado autorizado.
+- Pendiente local separado: definir consulta/retención de registros durables y recuperar lotes previos a la sesión UI; el botón actual revierte el último lote conservado en memoria de la sesión.
