@@ -21,7 +21,7 @@ function runWriteAuthorizationMinimizationTests(sources) {
  }
  run("handleAddSupplementaryInfo registra aportes mediante ledger append-only sin lock",()=>{
   const start=write.indexOf("function handleAddSupplementaryInfo(payload)");
-  const end=write.indexOf("\\nfunction handleAddSupplementaryInfoLocked",start);
+  const end=write.indexOf("\nfunction handleAddSupplementaryInfoLocked",start);
   assert(start>=0&&end>start,"No se encontró el handler suplementario completo");
   const outer=write.slice(start,end);
   const authAt=outer.indexOf("getAuthenticatedCollaborator(payload, SUPPLEMENTARY_INFO_ALLOWED_ROLES_)");
@@ -30,20 +30,21 @@ function runWriteAuthorizationMinimizationTests(sources) {
   const appendAt=outer.indexOf("appendVehicleContributionEvent_");
   assert(authAt>=0&&authAt<snapshotAt&&snapshotAt<prepareAt&&prepareAt<appendAt);
   assert(outer.includes("opId")&&outer.includes("duplicate: event.duplicate === true"));
-  assert(!/tryLock\\(|waitLock\\(|getWriteContributionLock_\\(|withSharedMutationLease_\\(/.test(outer));
+  assert(!/tryLock\(|waitLock\(|getWriteContributionLock_\(|withSharedMutationLease_\(/.test(outer));
  });
  run("La carga suplementaria prepara imágenes y registra el evento sin retener locks",()=>{
   const outerStart=write.indexOf("function handleAddSupplementaryInfo(payload)");
-  const outerEnd=write.indexOf("\\nfunction handleAddSupplementaryInfoLocked",outerStart);
+  const outerEnd=write.indexOf("\nfunction handleAddSupplementaryInfoLocked",outerStart);
   const outer=write.slice(outerStart,outerEnd);
   const folderStart=write.indexOf("function findOrCreateSupplementaryVehicleFolder_(vehicle)");
-  const folderEnd=write.indexOf("\\nfunction prepareSupplementaryImageUploads_",folderStart);
+  const folderEnd=write.indexOf("\nfunction prepareSupplementaryImageUploads_",folderStart);
   const folder=write.slice(folderStart,folderEnd);
   assert(outer.indexOf("prepareSupplementaryImageUploads_")<outer.indexOf("appendVehicleContributionEvent_"));
-  assert(!/tryLock\\(|waitLock\\(|getWriteContributionLock_\\(|withSharedMutationLease_\\(/.test(outer));
-  assert(/return findOrCreateVehicleFolder\\(vehicle\\)/.test(folder));
+  assert(!/tryLock\(|waitLock\(|getWriteContributionLock_\(|withSharedMutationLease_\(/.test(outer));
+  assert(/return findOrCreateVehicleFolder\(vehicle\)/.test(folder));
   assert(!/withSharedMutationLease_/.test(folder));
- }); run("WRITE no duplica los esquemas ni la autenticación local de AUTH",()=>{
+ });
+ run("WRITE no duplica los esquemas ni la autenticación local de AUTH",()=>{
   assert(!write.includes("COLS_USERS")&&!write.includes("COLS_ACTIVE_SESSIONS"));
   assert(!write.includes("ROLE_REVOCATION_SHARED_PREFIX"));
   assert(!write.includes("findUniqueRowsByExactValue_")&&!write.includes("getSessionExpirationStatus_"));
