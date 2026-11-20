@@ -786,10 +786,12 @@ function ensureTestigoColumns(sheet, lockAlreadyHeld = false) {
             });
         }
 
+        const headersNeedWrite = headerNames.some((name, index) =>
+            String(targetHeaders[index] || "").trim() !== name);
+        if (headersNeedWrite) {
+            sheet.getRange(1, targetColumns[0], 1, headerNames.length).setValues([headerNames]);
+        }
         for (let index = 0; index < headerNames.length; index++) {
-            if (String(targetHeaders[index] || "").trim() !== headerNames[index]) {
-                sheet.getRange(1, targetColumns[index]).setValue(headerNames[index]);
-            }
             currentHeaders[targetColumns[index] - 1] = headerNames[index];
             COLS_CORTES[headerNames[index]] = targetColumns[index];
         }
