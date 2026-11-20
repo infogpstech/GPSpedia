@@ -2105,20 +2105,24 @@ function handleRecordLike(payload) {
 }
 
 function findReportByReportId_(sheet, reportId, metadataColumn) {
-    const lastRow = sheet.getLastRow();
-    if (lastRow < 2) return null;
+    const id = String(reportId || "").trim();
+    const lastRow = sheet ? sheet.getLastRow() : 0;
+    if (!id || !metadataColumn || lastRow < 2) return null;
     const lastColumn = Math.max(metadataColumn, COLS_FEEDBACKS.Problema);
-    const rows = sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues();
+    const candidates = sheet.getRange(2, metadataColumn, lastRow - 1, 1)
+        .createTextFinder(id).matchCase(true).findAll();
     const matches = [];
-    rows.forEach((row, index) => {
+    candidates.forEach(candidate => {
+        const rowIndex = candidate.getRow();
+        const rawMetadata = sheet.getRange(rowIndex, metadataColumn).getValue();
         let metadata = null;
         try {
-            const parsed = JSON.parse(String(row[metadataColumn - 1] || ""));
+            const parsed = JSON.parse(String(rawMetadata || ""));
             if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) metadata = parsed;
         } catch (error) {}
-        if (metadata && String(metadata.reportId || "") === String(reportId)) {
-            matches.push({ rowIndex: index + 2, row, metadata });
-        }
+        if (!metadata || String(metadata.reportId || "") !== id) return;
+        const row = sheet.getRange(rowIndex, 1, 1, lastColumn).getValues()[0];
+        matches.push({ rowIndex, row, metadata });
     });
     if (matches.length > 1) {
         throw new Error("El identificador del reporte aparece duplicado en Feedbacks; requiere revisión.");
