@@ -2419,7 +2419,8 @@ function getVehicleContributionCutSlotIndex_(spreadsheet, vehicleSnapshot, targe
         };
         const previous = byOpId.get(opId);
         if (previous && (previous.vehicleId !== entry.vehicleId ||
-            previous.operationHash !== entry.operationHash || previous.kind !== entry.kind)) {
+            previous.operationHash !== entry.operationHash || previous.kind !== entry.kind ||
+            previous.payloadJson !== entry.payloadJson)) {
             conflicts.add(opId);
         } else if (!previous) {
             byOpId.set(opId, entry);
@@ -2543,12 +2544,21 @@ function appendVehicleContributionEvent_(options) {
     const concurrent = findVehicleContributionEventsByOpId_(sheet, opId);
     if (concurrent.some(entry => String(entry.values[2] || "") !== vehicleId ||
         String(entry.values[3] || "").toLowerCase() !== operationHash ||
-        String(entry.values[4] || "").toLowerCase() !== kind)) {
+        String(entry.values[4] || "").toLowerCase() !== kind ||
+        String(entry.values[5] || "") !== payloadJson)) {
         const conflict = new Error("Se detectó el mismo opId con contenido distinto durante el append. Los eventos se conservan para revisión y no deben proyectarse.");
         conflict.code = "CONTRIBUTION_OP_ID_CONFLICT";
         throw conflict;
     }
-    return { eventId, opId, vehicleId, kind, operationHash, rowIndex, createdAt, status: String(options.status || "accepted"), duplicate: false };
+    const canonical = concurrent.slice().sort((a, b) => a.rowIndex - b.rowIndex)[0];
+    return {
+        eventId: canonical ? String(canonical.values[0] || "") : eventId,
+        opId, vehicleId, kind, operationHash,
+        rowIndex: canonical ? canonical.rowIndex : rowIndex,
+        createdAt: canonical ? String(canonical.values[8] || createdAt) : createdAt,
+        status: canonical ? String(canonical.values[9] || "accepted") : String(options.status || "accepted"),
+        duplicate: Boolean(canonical && String(canonical.values[0] || "") !== eventId)
+    };
 }
 
 function getImageUploadReferences_(fileId) {
