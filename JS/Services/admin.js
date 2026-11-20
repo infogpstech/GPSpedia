@@ -4144,7 +4144,7 @@ function executeCortesImageOrganizerManifest_(manifest, ownerId, adapters) {
                     "No se pudo persistir el estado final: " + String(ledgerError && ledgerError.message || ledgerError);
                 recoveryStatus = "needs_review";
             }
-            result.status = recoveryStatus;
+            result.status = recoveryStatus === "complete" ? "applied" : recoveryStatus;
             result.message = String(error && error.message || error);
             if (recoveryMessage) result.recoveryMessage = recoveryMessage;
         }
