@@ -866,3 +866,11 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] Preservar MIME, tamaño, URL, descripción, carpeta y permisos; `FeedbackPysPendingImageVerificationOutsideLock` 5/5; `P2PysImageUploadOutsideLock` PASS.
 - [x] CI `44645449059` SUCCESS: 196 suites, 2,546 pruebas, 0 fallos; health read-only `44645449007` SUCCESS.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Cleanup Drive/metadata LINKED se mantiene como siguiente revisión separada.
+
+
+### P1 — FEEDBACK PyS: metadata y actividad post-commit fuera del lock (2026-11-20)
+- [x] Liberar ScriptLock tras confirmar fila/ledger LINKED y antes de actualizar descripción Drive o escribir ActividadUsuario.
+- [x] En rutas de recuperación, persistir estado LINKED/RECOVERY_REQUIRED bajo lock y realizar metadata Drive después de liberar.
+- [x] `FeedbackPysPostCommitOutsideLock` 4/4; `FeedbackPysPendingImageVerificationOutsideLock` 5/5; `P2PysImageUploadOutsideLock` PASS.
+- [x] CI `44645868436` SUCCESS: 197 suites, 2,550 pruebas, 0 fallos; health read-only `44645868341` SUCCESS.
+- Pendiente separado: sacar del lock la papelera de archivos no referenciados y su compensación, usando estado intermedio/revalidación para no borrar imágenes que otra operación haya vinculado.
