@@ -1369,7 +1369,9 @@ function doPostInternal_(e) {
                 response = handleGetCortesImageFolders(payload, logMessage);
                 break;
             case 'createCortesImageFolder':
-                response = handleCreateCortesImageFolder(payload, logMessage, developerContext);
+                response = withSharedMutationLease_("ADMIN", "createCortesImageFolder", function() {
+                    return handleCreateCortesImageFolder(payload, logMessage, developerContext);
+                });
                 break;
             case 'moveReplacedImage':
                 response = handleMoveReplacedImage(payload, logMessage, developerContext);
@@ -10833,43 +10835,24 @@ function handleGetCortesImageFolders(payload, logMessage) {
  * Crea una carpeta únicamente dentro del árbol Cortes.
  */
 function handleCreateCortesImageFolder(payload, logMessage, developerContext) {
-    const name = String(payload && payload.name || "").trim();
-    const parentFolderId = String(payload && payload.parentFolderId || DRIVE_FOLDER_ID).trim();
-    if (!name) throw new Error("Escribe el nombre de la carpeta.");
-    if (name.length > 100 || /[\\/]/.test(name) || name === "." || name === "..") {
-        throw new Error("El nombre de la carpeta no es válido.");
-    }
+    const category = String(payload.category || "").trim();
+    const brand = String(payload.brand || "").trim();
+    const model = String(payload.model || "").trim();
 
-    const lock = LockService.getScriptLock();
-    try { lock.waitLock(30000); }
-    catch (e) { throw new Error("No se pudo bloquear la creación de la carpeta. Intenta nuevamente."); }
+    if (!category || !brand || !model) throw new Error("Categoría, marca y modelo son obligatorios.");
 
-    try {
-        const rootFolder = getCortesRootFolder();
-        const parentFolder = DriveApp.getFolderById(parentFolderId);
-        if (parentFolder.isTrashed()) throw new Error("No se puede crear una carpeta dentro de una ubicación que está en la papelera.");
-        if (parentFolder.getId() !== rootFolder.getId()) {
-            getSingleParentFolderInsideCortes(parentFolder, rootFolder.getId());
-        }
-        const siblings = parentFolder.getFoldersByName(name);
-        if (siblings.hasNext()) {
-            throw new Error("Ya existe una carpeta con ese nombre en la ubicación seleccionada.");
-        }
-        const created = parentFolder.createFolder(name);
-        getSingleParentFolderInsideCortes(created, rootFolder.getId());
-        const path = getFolderPathInsideCortes(created, rootFolder.getId());
-        recordImageAdministrationActivity(developerContext, "admin_image_folder_create", created.getId(),
-            "Carpeta creada: " + path + "; carpeta principal: " + getFolderPathInsideCortes(parentFolder, rootFolder.getId()) + "; resultado: correcto.");
-        logMessage && logMessage("Carpetas de Cortes", "Se creó la carpeta " + path + ".");
-        return { status: "success", folderId: created.getId(), folderName: created.getName(), folderPath: path };
-    } finally {
-        lock.releaseLock();
-    }
+    const rootFolder = DriveApp.getFolderById(CORTES_IMAGES_ROOT_FOLDER_ID);
+    const parentFolder = findOrCreateVehicleFolder(rootFolder, category, brand);
+    const modelFolders = parentFolder.getFoldersByName(model);
+    if (modelFolders.hasNext()) throw new Error("La carpeta del modelo ya existe.");
+
+    const newFolder = parentFolder.createFolder(model);
+    logMessage("Carpeta de imágenes creada: " + category + "/" + brand + "/" + model);
+    recordImageAdministrationActivity(developerContext, "create_folder", newFolder.getId(),
+        "Creó carpeta de imágenes para " + brand + " " + model + " (" + category + ").");
+    return { status: "success", message: "Carpeta creada exitosamente.", folderId: newFolder.getId() };
 }
 
-/**
- * Mueve una imagen registrada a otra carpeta del árbol Cortes y actualiza su ubicación.
- */
 function handleMoveReplacedImage(payload, logMessage, developerContext) {
     const idReemplazo = payload && payload.id_reemplazo;
     const targetFolderId = String(payload && payload.targetFolderId || "").trim();
