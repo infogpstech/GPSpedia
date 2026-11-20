@@ -6775,10 +6775,14 @@ function handleUpdateVehicleField(payload, logMessage) {
     }
 
     const lock = LockService.getScriptLock();
+    let lockAcquired = false;
     try {
-        lock.waitLock(2000);
+        lockAcquired = lock.tryLock(0);
     } catch (lockError) {
-        const busyError = new Error("ADMIN está finalizando otra escritura breve. Reintenta la edición en unos instantes.");
+        lockAcquired = false;
+    }
+    if (!lockAcquired) {
+        const busyError = new Error("ADMIN está ocupado con una escritura breve. Reintenta la edición en unos instantes.");
         busyError.code = "ADMIN_BUSY";
         throw busyError;
     }
