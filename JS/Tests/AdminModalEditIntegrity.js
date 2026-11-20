@@ -11,6 +11,11 @@ function runAdminModalEditIntegrityTests(adminSource) {
     const extract = name => {
         const start = source.indexOf("function " + name + "(");
         assert(start >= 0, "No se encontró " + name);
+        if(name==="handleUpdateVehicleField"){
+            const end=source.indexOf("const ADMIN_IMAGE_UPLOAD_SHEET_NAME",start);
+            assert(end>start,"No se encontró el cierre de handleUpdateVehicleField.");
+            return source.slice(start,end);
+        }
         const end = source.indexOf("\nfunction ", start + 10);
         return source.slice(start, end > start ? end : source.length);
     };

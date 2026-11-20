@@ -7,6 +7,11 @@ const admin = readFileSync(new URL("../Services/admin.js", import.meta.url), "ut
 function extract(source, name) {
     const start = source.indexOf("function " + name + "(");
     assert.ok(start >= 0, "No se encontró " + name);
+    if(name==="handleUpdateVehicleField"){
+        const end=source.indexOf("const ADMIN_IMAGE_UPLOAD_SHEET_NAME",start);
+        assert.ok(end>start,"No se encontró el cierre de "+name);
+        return source.slice(start,end);
+    }
     const end = source.indexOf("\nfunction ", start + 10);
     return source.slice(start, end > start ? end : source.length);
 }
@@ -41,8 +46,12 @@ assert.match(writeDrive, /lock\.tryLock\(0\)/);
 assert.match(adminEntry, /lock\.tryLock\(0\)/);
 assert.doesNotMatch(adminEntry, /waitLock\(/);
 assert.match(adminUpload, /lock\.waitLock\(2000\)/);
-assert.match(adminField, /lock\.tryLock\(0\)/);
-assert.doesNotMatch(adminField, /lock\.waitLock\(/);
+assert.doesNotMatch(adminField, /LockService\.getScriptLock\(\)|lock\.tryLock\(|lock\.waitLock\(/,
+    "La edición in-modal versionada debe anexar eventos sin lock global.");
+assert.match(adminField, /ledgerSheet\.appendRow\(/);
+const adminVin=extract(admin,"handleUpdateVehicleVinCollection_");
+assert.match(adminVin,/lock\.tryLock\(0\)/);
+assert.doesNotMatch(adminVin,/lock\.waitLock\(/);
 assert.match(adminDrive, /runAdminDriveWorkOutsideScriptLock_\(lock, opId, operation, revalidate, operationHash, 0\)/);
 assert.match(adminDriveCore, /lock\.tryLock\(0\)/);
 assert.doesNotMatch(extract(write, "handleAddSupplementaryInfo"), /tryLock\(|waitLock\(|getWriteContributionLock_\(/, "La información suplementaria no debe retener locks durante la operación");
