@@ -1367,3 +1367,12 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [ ] Resolver idempotencia completa de aportes suplementarios por `opId` y vincular archivos Drive que no se puedan materializar a un candidato revisable.
 - [ ] Revisar y rediseñar el bloqueo `UserLock` restante de cortes existentes y la reserva global de IDs de vehículos conforme a §15, sin perder unicidad ni permitir sobrescrituras.
 - Estado P0: EN PROGRESO.
+
+
+### 2026-11-20 — Verificación de entradas de UI y edición
+
+- [x] Confirmar `openAddCutForModelModal` para agregar corte a vehículo existente.
+- [x] Confirmar `openAddAperturaModal` y `openAddFeedModal`; ambos generan opId en el cliente y envían `vehicleId` al servicio WRITE.
+- [x] Confirmar rutas de edición del Desarrollador mediante `updateVehicleField` y `uploadAdminImage`.
+- [ ] Probar en integración la edición/reemplazo de imágenes de corte, vehículo y alimentación, y apertura desde la edición in-modal; la inspección estática no sustituye prueba funcional.
+- [ ] Resolver los conflictos y la idempotencia descritos en la sección anterior antes de cerrar P0.
