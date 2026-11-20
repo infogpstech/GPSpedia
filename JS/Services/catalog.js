@@ -420,7 +420,8 @@ function projectVehicleContributionEvents_(vehicles, sourceEvents) {
         const previous = byOpId.get(event.opId);
         if (previous) {
             if (previous.operationHash !== event.operationHash ||
-                previous.vehicleId !== event.vehicleId || previous.kind !== event.kind) {
+                previous.vehicleId !== event.vehicleId || previous.kind !== event.kind ||
+                JSON.stringify(previous.payload) !== JSON.stringify(event.payload)) {
                 conflictedOpIds.add(event.opId);
             }
             return;
