@@ -50,6 +50,11 @@ const snapshotLookup = lookupCode.indexOf("findUniqueCortesVehicleRowFromSnapsho
 assert.ok(legacyStart >= 0 && snapshotLookup > legacyStart,
     "La ruta legacy debe validar unicidad desde la lectura integral ya obtenida");
 assert.doesNotMatch(
+    lookupCode.slice(0, legacyStart),
+    /getLastRow\\(\\)/,
+    "La lectura integral debe sustituir también la consulta previa de getLastRow"
+);
+assert.doesNotMatch(
     lookupCode.slice(snapshotLookup),
     /findUniqueCortesVehicleRow_\(cortesSheet/,
     "La ruta legacy no debe volver a consultar la columna ID ni la fila completa"
