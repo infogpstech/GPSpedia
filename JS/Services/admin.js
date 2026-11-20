@@ -4416,13 +4416,16 @@ function rollbackCortesImageOrganizerOperations_(operationIds, ownerId, adapters
                 return;
             }
             let recoveryError = "";
+            let recoveredStatus = "needs_review";
             try {
                 if (ledger && ledger.fileId) {
                     const state = adapters.inspectFile(ledger.fileId);
                     if (state.folderPath === ledger.targetFolderPath && state.fileName === ledger.targetName) {
                         adapters.saveLedger(Object.assign({}, ledger, { status: "complete", rollbackError: String(error.message || error).slice(0, 700) }));
+                        recoveredStatus = "complete";
                     } else if (state.folderPath === ledger.sourceFolderPath && state.fileName === ledger.sourceName) {
                         adapters.saveLedger(Object.assign({}, ledger, { status: "rolled_back", rolledBackAt: Date.now() }));
+                        recoveredStatus = "rolled_back";
                     } else {
                         adapters.saveLedger(Object.assign({}, ledger, {
                             status: "needs_review", rollbackError: String(error.message || error).slice(0, 700)
@@ -4433,7 +4436,9 @@ function rollbackCortesImageOrganizerOperations_(operationIds, ownerId, adapters
                 recoveryError = String(persistError && persistError.message || persistError);
             }
             result.fileId = ledger && ledger.fileId || "";
-            result.status = "needs_review";
+            result.status = recoveryError ? "needs_review" :
+                recoveredStatus === "rolled_back" ? "rolled_back" :
+                recoveredStatus === "complete" ? "retry" : "needs_review";
             result.message = String(error && error.message || error);
             if (recoveryError) result.recoveryError = recoveryError;
         }
