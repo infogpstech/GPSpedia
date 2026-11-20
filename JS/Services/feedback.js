@@ -1443,23 +1443,54 @@ function getFeedbackProjectedVehicleYearSnapshot_(vehicleId, baseRow) {
     }
     const lastRow = ledger.getLastRow();
     const rows = lastRow > 1 ? ledger.getRange(2, 1, lastRow - 1, headers.length).getValues() : [];
-    const events = rows.map((row, index) => ({
-        rowIndex: index + 2, eventId: String(row[0] || "").trim(), opId: String(row[1] || "").trim(),
-        vehicleId: String(row[2] || "").trim(), operationHash: String(row[3] || "").trim().toLowerCase(),
-        kind: String(row[4] || "").trim(), payloadJson: String(row[5] || ""),
-        actorId: String(row[6] || "").trim(), status: String(row[9] || "").trim().toLowerCase(),
-        supersedesEventId: String(row[10] || "").trim()
-    })).filter(event => event.vehicleId === id && event.status === "accepted");
-    const opHashes = new Map(), conflictedOps = new Set();
-    events.forEach(event => {
-        if (!opHashes.has(event.opId)) opHashes.set(event.opId, event.operationHash);
-        else if (opHashes.get(event.opId) !== event.operationHash) conflictedOps.add(event.opId);
-    });
-    events.sort((a, b) => a.rowIndex - b.rowIndex).forEach(event => {
-        if (!event.eventId || !event.opId || conflictedOps.has(event.opId)) return;
+    const allowedKinds = new Set(["cut", "opening", "feed", "vehicle", "vehicle_update"]);
+    const allowedUpdateFields = new Set(["categoria", "modelo", "versionesAplicables", "tipoEncendido", "anoDesde", "anoHasta",
+        "notaImportante", "apertura", "cableAlimen", "cableAlimen2", "cableAlimen3", "imagenVehiculo", "imgCorte1",
+        "imgCorte2", "imgCorte3", "imgApertura", "imgCableAlimen", "imgCableAlimen2", "imgCableAlimen3",
+        "tipoCorte1", "tipoCorte2", "tipoCorte3", "ubicacionCorte1", "ubicacionCorte2", "ubicacionCorte3",
+        "colorCableCorte1", "colorCableCorte2", "colorCableCorte3", "configRelay1", "configRelay2", "configRelay3", "vin"]);
+    const events = rows.map((row, index) => {
+        const event = {
+            rowIndex: index + 2, eventId: String(row[0] || "").trim(), opId: String(row[1] || "").trim(),
+            vehicleId: String(row[2] || "").trim(), operationHash: String(row[3] || "").trim().toLowerCase(),
+            kind: String(row[4] || "").trim(), payloadJson: String(row[5] || ""),
+            actorId: String(row[6] || "").trim(), createdAt: String(row[8] || "").trim(),
+            status: String(row[9] || "").trim().toLowerCase(), supersedesEventId: String(row[10] || "").trim()
+        };
+        if (!event.eventId || !/^OP-[A-Za-z0-9_-]{1,100}$/.test(event.opId) || !event.vehicleId ||
+            !/^[a-f0-9]{64}$/.test(event.operationHash) || !allowedKinds.has(event.kind) ||
+            !event.createdAt || Number.isNaN(Date.parse(event.createdAt)) ||
+            !["accepted", "review", "retracted"].includes(event.status)) {
+            throw new Error("AportesVehiculo contiene un evento inválido; no se aplicó la sugerencia de año.");
+        }
         let payload;
-        try { payload = JSON.parse(event.payloadJson); } catch (error) { return; }
-        if (!payload || typeof payload !== "object" || Array.isArray(payload)) return;
+        try { payload = JSON.parse(event.payloadJson); } catch (error) {
+            throw new Error("AportesVehiculo contiene un payload JSON inválido; no se aplicó la sugerencia de año.");
+        }
+        if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+            throw new Error("AportesVehiculo contiene un payload no válido; no se aplicó la sugerencia de año.");
+        }
+        if (event.kind === "vehicle_update" &&
+            (!event.actorId || !(event.opId.startsWith("OP-ADMIN-") ||
+                (event.opId.startsWith("OP-YEAR-") && event.actorId === "SYSTEM:FEEDBACK_YEAR")) ||
+                !allowedUpdateFields.has(String(payload.fieldName || "")) ||
+                !Object.prototype.hasOwnProperty.call(payload, "expectedCurrentValue") ||
+                !Object.prototype.hasOwnProperty.call(payload, "value"))) {
+            throw new Error("AportesVehiculo contiene una actualización de campo inválida; no se aplicó la sugerencia de año.");
+        }
+        event.payload = payload;
+        return event;
+    });
+    const operationIdentities = new Map(), conflictedOps = new Set();
+    events.forEach(event => {
+        const identity = JSON.stringify([event.vehicleId, event.operationHash, event.kind, event.payloadJson]);
+        if (!operationIdentities.has(event.opId)) operationIdentities.set(event.opId, identity);
+        else if (operationIdentities.get(event.opId) !== identity) conflictedOps.add(event.opId);
+    });
+    events.filter(event => event.vehicleId === id && event.status === "accepted")
+        .sort((a, b) => a.rowIndex - b.rowIndex).forEach(event => {
+        if (conflictedOps.has(event.opId)) return;
+        const payload = event.payload;
         if (event.kind === "vehicle_update") {
             const field = String(payload.fieldName || "");
             if (!fields.includes(field) || !event.actorId ||
