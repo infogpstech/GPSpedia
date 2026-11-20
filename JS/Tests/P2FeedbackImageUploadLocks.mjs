@@ -9,7 +9,12 @@ assert.ok(report.indexOf("acquireFeedbackScriptLock_(lock)")<report.indexOf("get
 assert.ok(report.includes("if(lockAcquired) lock.releaseLock()"),"El lock de reporte solo se libera si fue adquirido.");
 assert.ok(report.includes("La imagen del reporte se conserva porque no se pudo confirmar la reversión"),"No borrar la imagen si la referencia pudo quedar persistida.");
 assert.ok(suggestion.indexOf("saveSuggestionImageAttachment_(normalizedImage")<suggestion.indexOf("acquireFeedbackScriptLock_(lock)"),"La imagen de sugerencia debe cargarse antes del lock.");
-assert.ok(suggestion.indexOf("acquireFeedbackScriptLock_(lock)")<suggestion.indexOf("findCutSuggestionByOperation_"),"La comprobación/escritura de la sugerencia debe quedar en la sección breve.");
+const suggestionPreflight=suggestion.indexOf("findExistingCutSuggestionForRequest_(feedbackSheet, replayRequest)");
+const suggestionDrive=suggestion.indexOf("saveSuggestionImageAttachment_(normalizedImage");
+const suggestionLock=suggestion.indexOf("acquireFeedbackScriptLock_(lock)");
+const suggestionRecheck=suggestion.indexOf("findExistingCutSuggestionForRequest_(sheet, replayRequest)");
+assert.ok(suggestionPreflight>=0&&suggestionPreflight<suggestionDrive&&suggestionDrive<suggestionLock,"El replay de sugerencia debe resolverse antes de Drive y del lock.");
+assert.ok(suggestionRecheck>suggestionLock,"La escritura debe revalidar la sugerencia dentro de la sección crítica.");
 assert.ok(suggestion.includes("if (lockAcquired) lock.releaseLock()"));
 assert.ok(suggestion.includes("(!pendingSheet || !pendingRowNumber || rollbackConfirmed)"),"La limpieza solo borra imágenes cuando la fila no existe o la reversión se confirmó.");
 const router=extract(feedback,"function doPost(e)","const RICH_TEXT_MODE_PROPERTY_");
