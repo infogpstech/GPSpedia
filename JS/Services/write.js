@@ -1667,11 +1667,8 @@ function readSupplementaryVehicleSnapshot_(sheet, vehicleId) {
 }
 
 function findOrCreateSupplementaryVehicleFolder_(vehicle) {
-    return withSharedMutationLease_("WRITE", "ensureSupplementaryVehicleFolder", function() {
-        return findOrCreateVehicleFolder(vehicle);
-    });
+    return findOrCreateVehicleFolder(vehicle);
 }
-
 function prepareSupplementaryImageUploads_(payload, vehicle, plan) {
     const preparedPayload = Object.assign({}, payload);
     const uploadedUrls = [];
