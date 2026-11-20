@@ -110,7 +110,7 @@ function runWriteAuthorizationMinimizationTests(sources) {
    const lockedStart=write.indexOf("function handleAddOrUpdateCutLocked("),lockedEnd=write.indexOf("\nfunction handleAddOrUpdateCutLockedUnsafe_",lockedStart),locked=write.slice(lockedStart,lockedEnd);
    assert(preflight.includes('getAuthenticatedCollaborator(payload, payload && payload.silent === true ? ["desarrollador"] : undefined)'));
    assert(preflight.includes("getAddCutPayloadValidationOptions_")&&preflight.includes("validateAddOrUpdateCutPayload_"));
-   assert(outer.indexOf("prepareAddOrUpdateCutRequest_(payload)")<outer.indexOf("lock.waitLock(2000)"),"El preflight debe ejecutarse antes del lock.");
+   assert(outer.indexOf("prepareAddOrUpdateCutRequest_(payload)")<outer.indexOf("lock.tryLock(0)"),"El preflight debe terminar antes de intentar adquirir el lock no bloqueante.");
    assert(!locked.includes("getAuthenticatedCollaborator(")&&!locked.includes("validateAddOrUpdateCutPayload_"),"No debe repetir autenticación ni validación bajo el lock.");
    assert(!handler.includes("getAuthenticatedCollaborator("),"La identidad del colaborador no debe resolverse dos veces.");
    assert(/'addOrUpdateCut':\s*'WRITE'/.test(api));
