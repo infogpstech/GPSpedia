@@ -10862,6 +10862,8 @@ function handleMoveReplacedImage(payload, logMessage, developerContext) {
     try { lock.waitLock(30000); }
     catch (e) { throw new Error("No se pudo bloquear el movimiento de la imagen. Intenta nuevamente."); }
 
+    let postCommitActivity = null;
+    let result = null;
     try {
         const sheet = getOrCreateReplacedImagesSheet();
         const headers = ensureReplacedImagesInventoryColumns(sheet);
@@ -11009,13 +11011,29 @@ function handleMoveReplacedImage(payload, logMessage, developerContext) {
             throw new Error("No se pudo actualizar la ubicación en Spreadsheet; el movimiento fue revertido: " + historyError.message);
         }
 
-        recordImageAdministrationActivity(developerContext, "admin_image_move", idReemplazo,
-            "Imagen " + file.getName() + " movida de " + sourcePath + " a " + targetPath + "; resultado: correcto.");
-        logMessage && logMessage("Inventario e historial de imágenes", "La imagen " + driveId + " se movió de " + sourcePath + " a " + targetPath + ".");
-        return { status: "success", message: "Imagen movida correctamente.", folderPath: targetPath };
+        postCommitActivity = {
+            developerContext,
+            idReemplazo,
+            details: "Imagen " + file.getName() + " movida de " + sourcePath + " a " + targetPath + "; resultado: correcto.",
+            driveId,
+            sourcePath,
+            targetPath
+        };
+        result = { status: "success", message: "Imagen movida correctamente.", folderPath: targetPath };
     } finally {
         lock.releaseLock();
     }
+
+    // Coordinator/actividad y logging no participan en el commit del inventario.
+    // Ejecutarlos después de liberar ScriptLock evita retener ADMIN durante HTTP/hojas ajenas.
+    if (postCommitActivity) {
+        recordImageAdministrationActivity(postCommitActivity.developerContext, "admin_image_move",
+            postCommitActivity.idReemplazo, postCommitActivity.details);
+        logMessage && logMessage("Inventario e historial de imágenes",
+            "La imagen " + postCommitActivity.driveId + " se movió de " +
+            postCommitActivity.sourcePath + " a " + postCommitActivity.targetPath + ".");
+    }
+    return result;
 }
 
 /**
