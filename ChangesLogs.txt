@@ -42,3 +42,12 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - Se añadió un caso a SuggestYearVoteThreshold.mjs para impedir la regresión.
 - Commits: 1a4b0909 (código), 66da8f2a (prueba).
 - Validación pendiente: ejecutar SuggestYearVoteThreshold, FeedbackYearApplicationAppendOnly y suite FEEDBACK/runner completo. No se ha afirmado PASS ni se ha desplegado Apps Script.
+
+
+2026-11-20 — FEEDBACK: migración de sugerencias de año a AportesVehiculo
+- handleSuggestYear reconstruye el rango desde la fila base y los eventos aceptados del ledger, incluyendo la fuente versionada de cada límite.
+- completeFeedbackYearApplication_ ya no escribe anoDesde/anoHasta en Cortes. Anexa vehicle_update con expectedCurrentValue, supersedesEventId, actor interno SYSTEM:FEEDBACK_YEAR y OP-YEAR determinista por aplicación/campo.
+- FeedbackYearApplications conserva valores y fuentes esperadas para reintentos parciales. Los eventos se verifican por SHA-256/lectura; si CATALOG no aplica el rango, se conserva como candidato y la aplicación pasa a requires_review.
+- Se invalida el catálogo después de liberar el lock. El umbral de tres votos verificados y el comportamiento anónimo se conservan.
+- Pruebas FeedbackYearApplicationAppendOnly 4/4; SuggestYearVoteThreshold 7/7; CI 44834891294 SUCCESS: 238 suites, 2963 pruebas, 0 fallos; health read-only SUCCESS. Sin despliegue.
+- Sigue pendiente reducir ScriptLock global de FEEDBACK para las demás rutas y la asignación secuencial de IDs.
