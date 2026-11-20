@@ -387,10 +387,21 @@ async function saveFieldSilently(vehicleId, fieldName, value, expectedCurrentVal
         if (!result || result.status !== "success") {
             throw new Error(result && result.message || "El servicio no confirmó la versión del campo.");
         }
-        adminModalFieldVersions.set(versionKey,{value:result.value!==undefined?result.value:value,eventId:String(result.eventId||expectedSourceEventId)});
-        if(editedItemBuffer&&String(editedItemBuffer.id)===cleanVehicleId)editedItemBuffer[fieldName]=result.value!==undefined?result.value:value;
-        if (result.folderSyncWarning) showSavingIndicator("warning", "Versión guardada; la organización de la carpeta requiere revisión");
-        else showSavingIndicator("success", "Versión registrada correctamente");
+        if (result.candidateReviewPending === true || result.superseded === true) {
+            const projectedValue = result.currentValue !== undefined ? result.currentValue : expectedValue;
+            const projectedEventId = String(result.currentSourceEventId || expectedSourceEventId || "");
+            adminModalFieldVersions.set(versionKey, { value: projectedValue, eventId: projectedEventId });
+            if (editedItemBuffer && String(editedItemBuffer.id) === cleanVehicleId) editedItemBuffer[fieldName] = projectedValue;
+            showSavingIndicator("warning", result.message ||
+                (result.candidateReviewPending ? "El cambio quedó como candidato y no se aplicó al catálogo." : "El valor vigente proviene de una actualización posterior."));
+            return true;
+        }
+        adminModalFieldVersions.set(versionKey,{value:result.currentValue!==undefined?result.currentValue:(result.value!==undefined?result.value:value),
+            eventId:String(result.currentSourceEventId||result.eventId||expectedSourceEventId)});
+        if(editedItemBuffer&&String(editedItemBuffer.id)===cleanVehicleId)
+            editedItemBuffer[fieldName]=result.currentValue!==undefined?result.currentValue:(result.value!==undefined?result.value:value);
+        if (result.folderSyncWarning) showSavingIndicator("warning", "Versión registrada; la organización de la carpeta requiere revisión");
+        else showSavingIndicator("success", "Versión registrada y confirmada en CATALOG");
         return true;
     } catch (error) {
         console.error("Error guardando silenciosamente el campo " + fieldName + ":", error);
