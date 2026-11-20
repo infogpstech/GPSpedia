@@ -41,7 +41,7 @@ assert.throws(
     "Debe rechazar vehicleId ausente"
 );
 
-const lookupStart = source.indexOf("function findRowByOpId(sheet, opId, entriesSnapshot)");
+const lookupStart = source.indexOf("function findRowByOpId(sheet, opId, entriesSnapshot, revalidateLedger)");
 const lookupEnd = source.indexOf("\nfunction ", lookupStart + 10);
 assert.ok(lookupStart >= 0 && lookupEnd > lookupStart, "No se encontró findRowByOpId");
 const lookupCode = source.slice(lookupStart, lookupEnd);
