@@ -65,14 +65,14 @@ test("el lector admite vehicle_update ADMIN autenticado y valida su identidad", 
     const row = ["EV-ADMIN-1", "OP-ADMIN-FIELD-1234567890", "101", "a".repeat(64), "vehicle_update",
         JSON.stringify({ fieldName: "anoDesde", value: 2019, expectedCurrentValue: 2018 }),
         "DEV-1", "Administrador", "2026-11-20T12:00:00.000Z", "accepted", ""];
-    const events = reader(ledgerSheet([row]));
+    const events = reader({ getSheetByName: () => ledgerSheet([row]) });
     assert.equal(events.length, 1);
     assert.equal(events[0].kind, "vehicle_update");
     assert.equal(events[0].payload.fieldName, "anoDesde");
     assert.equal(events[0].actorId, "DEV-1");
-    assert.throws(() => reader(ledgerSheet([[...row.slice(0, 6), "", "", ...row.slice(8)]])),
+    assert.throws(() => reader({ getSheetByName: () => ledgerSheet([[...row.slice(0, 6), "", "", ...row.slice(8)]]) }),
         /identidad, hash, tipo, fecha o estado inválido/);
-    assert.throws(() => reader(ledgerSheet([[...row.slice(0, 1), "OP-YEAR-1234567890", ...row.slice(2)]])),
+    assert.throws(() => reader({ getSheetByName: () => ledgerSheet([[...row.slice(0, 1), "OP-YEAR-1234567890", ...row.slice(2)]]) }),
         /identidad, hash, tipo, fecha o estado inválido/);
 });
 
