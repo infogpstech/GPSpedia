@@ -63,9 +63,9 @@ const handlerEnd = source.indexOf("\nfunction sanitizeSupplementaryRichText_",ha
 const handler = source.slice(handlerStart,handlerEnd);
 const newBranch = handler.slice(handler.indexOf("} else { // --- Lógica para vehículo NUEVO"));
 assert.ok(newBranch.indexOf("recordOpId(opId, newId, 1, formattedDate, \"pending\"") <
-    newBranch.indexOf("runAdminDriveWorkOutsideScriptLock_"),"La reserva pending debe preceder a Drive");
+    newBranch.indexOf("runAdminContributionDriveWorkOutsideScriptLock_"),"La reserva pending debe preceder a Drive");
 assert.ok(newBranch.indexOf("Number(sheet.getRange(rowIndex, COLS_CORTES.id).getValue())") <
-    newBranch.indexOf("runAdminDriveWorkOutsideScriptLock_"),"Debe conservarse la lectura de confirmación del ID antes de Drive");
+    newBranch.indexOf("runAdminContributionDriveWorkOutsideScriptLock_"),"Debe conservarse la lectura de confirmación del ID antes de Drive");
 assert.ok(newBranch.indexOf("recordOpId(opId, newId, 1, formattedDate, \"completed\"") >
     newBranch.indexOf("SpreadsheetApp.flush()"),"La operación solo debe completarse después de escribir y hacer flush");
 console.log("AdminNewVehicleBatchWrites: 13/13 PASS — 2 lotes contiguos y 3 escrituras separadas; reserva, ID y Drive preservados");
