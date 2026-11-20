@@ -15,6 +15,6 @@ assert.ok(log>release,"El logger debe ejecutarse después de liberar ScriptLock"
 assert.ok(result>log,"La respuesta debe devolverse después del trabajo post-commit");
 assert.match(handler,/setReplacedImageHistoryStatusVerified_\(sheet,rowIndex,previous\)[\s\S]*?postCommitActivity=/);
 assert.match(handler,/if\(verified\.alreadyRestored\)return \{status:"success",message:"La imagen ya estaba restaurada desde papelera\."/);
-assert.match(handler,/finally\{if\(typeof lock\.hasLock!=="function"\|\|lock\.hasLock\(\)\)lock\.releaseLock\(\);\}/);
+assert.match(handler,/lock\.tryLock\(0\)/);\nassert.match(handler,/finally\{if\(lockAcquired&&\(typeof lock\.hasLock!=="function"\|\|lock\.hasLock\(\)\)\)lock\.releaseLock\(\);\}/);
 assert.equal((handler.match(/recordImageAdministrationActivity\(/g)||[]).length,1);
 console.log("AdminRestoreImageActivityOutsideLock: 6/6 PASS");
