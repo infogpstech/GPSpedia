@@ -102,13 +102,15 @@ function runAdminModalEditIntegrityTests(adminSource) {
         new Function(source.slice(handlerStart, handlerEnd + 2));
         new Function(extract("handleUpdateVehicleVinCollection_"));
     });
-    run("La escritura de campos toma lock, excluye la columna ID y verifica reversión",()=>{
+    run("La edición in-modal anexa versiones sin lock global ni escritura directa en Cortes",()=>{
         const body=extract("handleUpdateVehicleField");
-        assert(/LockService\.getScriptLock\(\)/.test(body));
         assert(/findUniqueAdminVehicleRow_/.test(body));
-        assert(/COLS_CORTES\.id/.test(extract("findUniqueAdminVehicleRow_")));
-        assert(/target\.setValue\(previousValue\)/.test(body));
-        assert(/SpreadsheetApp\.flush\(\)/.test(body));
+        assert(/ledgerSheet\.appendRow\(/.test(body));
+        assert(/expectedSourceEventId/.test(body));
+        assert(/OP-ADMIN-FIELD-/.test(body));
+        assert(!/LockService\.getScriptLock\(\)/.test(body));
+        assert(!/target\.setValue\(/.test(body));
+        assert(!/saveImageUploadLedgerRecord_/.test(body));
     });
     return {passed,failed,total:passed+failed,results};
 }
