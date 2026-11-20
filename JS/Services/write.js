@@ -555,7 +555,7 @@ function prepareAddOrUpdateCutRequest_(payload) {
     const relaySheet = ss.getSheetByName("Relay");
     const options = getAddCutPayloadValidationOptions_(sheet, relaySheet);
     const validatedPayload = validateAddOrUpdateCutPayload_(payload, options);
-    return { collaboratorName: collaboratorName, spreadsheet: ss, sheet: sheet, validatedPayload: validatedPayload };
+    return { collaboratorName: collaboratorName, actorId: String(payload && payload.__sharedSessionActor && payload.__sharedSessionActor.userId || ""), spreadsheet: ss, sheet: sheet, validatedPayload: validatedPayload };
 }
 
 function getWriteContributionLock_(vehicleId) {
@@ -564,8 +564,81 @@ function getWriteContributionLock_(vehicleId) {
         ? LockService.getUserLock() : LockService.getScriptLock();
 }
 
+function handleAppendExistingVehicleCut_(preparedRequest) {
+    const payload = preparedRequest.validatedPayload;
+    const vehicleId = String(payload.vehicleId || "").trim();
+    const opId = String(payload.opId || "").trim();
+    const spreadsheet = preparedRequest.spreadsheet;
+    getVehicleContributionLedgerSheet_(spreadsheet);
+
+    const operationHash = computeCutOperationFingerprint_(payload);
+    if (normalizeIdempotenciaOperationHash_(payload.operationHash, "Aporte append-only de corte") !== operationHash) {
+        throw new Error("La huella enviada no coincide con el contenido del corte.");
+    }
+
+    const snapshot = readSupplementaryVehicleSnapshot_(preparedRequest.sheet, vehicleId);
+    const vehicle = snapshot.vehicle;
+    let imageUrl = "";
+    if (payload.cutData.imgCorte1 && payload.cutData.tipoCorte1 !== "No recomendado") {
+        const folder = findOrCreateVehicleFolder(vehicle);
+        imageUrl = uploadImageToDrive(
+            payload.cutData.imgCorte1,
+            buildCanonicalImageBaseName(vehicle, "imgCorte1"),
+            folder,
+            buildImageUploadOperationKey(opId, vehicleId, "imgCorte"),
+            { shortLedgerLock: true }
+        );
+        if (!imageUrl) throw new Error("La carga de la imagen del corte no devolvió una URL válida.");
+    }
+
+    const cut = payload.cutData;
+    const contributionPayload = {
+        tipo: String(cut.tipoCorte1 || ""),
+        ubicacion: String(cut.ubicacionCorte1 || ""),
+        color: String(cut.colorCableCorte1 || ""),
+        configRelay: String(cut.configRelay1 || ""),
+        activaTestigo: cut.activaTestigo1 === true,
+        image: imageUrl
+    };
+    const event = appendVehicleContributionEvent_({
+        spreadsheet,
+        vehicleId,
+        opId,
+        kind: "cut",
+        payload: contributionPayload,
+        operationHash,
+        actorId: preparedRequest.actorId,
+        actorName: preparedRequest.collaboratorName
+    });
+
+    if (imageUrl) {
+        try {
+            if (!markImageUploadLinked(imageUrl, { shortLedgerLock: true })) {
+                Logger.log("El corte quedó registrado, pero la imagen permanece pendiente de reconciliación: " + imageUrl);
+            }
+        } catch (ledgerError) {
+            Logger.log("El corte quedó registrado, pero no se pudo actualizar ImageUploadLedger: " + String(ledgerError && ledgerError.message || ledgerError));
+        }
+    }
+
+    return {
+        status: "success",
+        message: "Aporte de corte registrado.",
+        vehicleId,
+        contributionEventId: event.eventId,
+        operationHash,
+        duplicate: event.duplicate === true,
+        catalogResetRequired: true,
+        candidateReviewPending: event.status === "review"
+    };
+}
+
 function handleAddOrUpdateCut(payload) {
     const preparedRequest = prepareAddOrUpdateCutRequest_(payload);
+    const validated = preparedRequest.validatedPayload;
+    if (validated.vehicleId && validated.opId && !validated.vehicleData && !validated.cutData.vin) {
+        return handleAppendExistingVehicleCut_(preparedRequest);
+    }
     const lock = getWriteContributionLock_(preparedRequest.validatedPayload.vehicleId);
     let lockAcquired = false;
     try { lockAcquired = lock.tryLock(0); } catch (lockError) { lockAcquired = false; }
