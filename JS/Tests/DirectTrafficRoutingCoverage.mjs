@@ -64,8 +64,8 @@ test("USERS contabiliza getUsers sin lease adicional; UTILITIES conserva Coordin
     const auditHandler = admin.slice(auditStart, auditEnd);
     assert.match(auditHandler, /withSharedMutationLease_\("ADMIN", "auditDriveImagesInCortes"/);
     const adminLeaseOperations = [...admin.matchAll(/withSharedMutationLease_\("ADMIN", "([^"]+)"/g)].map(match => match[1]).sort();
-    assert.deepEqual(adminLeaseOperations, ["auditDriveImagesInCortes", "recordAdminImageActivity", "saveUnusedImagesInventory"].sort(),
-        "ADMIN solo coordina auditoría, inventario y actividad en leases de recursos independientes.");
+    assert.deepEqual(adminLeaseOperations, ["auditDriveImagesInCortes", "createCortesImageFolder", "recordAdminImageActivity", "saveUnusedImagesInventory"].sort(),
+        "ADMIN coordina leases por recurso para auditoría, creación de carpeta, inventario y actividad.");
     assert.doesNotMatch(admin, /DIRECT_SERVICE_TRAFFIC_CONFIG_/);
 });
 
