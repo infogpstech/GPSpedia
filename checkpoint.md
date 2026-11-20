@@ -523,3 +523,11 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - Se mantienen validación de prefijo/sufijo, duplicados, enteros seguros, reconciliación con contador ScriptProperties y compatibilidad cuando el caller ya posee ScriptLock.
 - `FeedbackFormulaIdAllocatorBoundedRead` 6/6 PASS; regresión CI `44647995645` SUCCESS: 203 suites, 2,582 pruebas aprobadas, 0 fallos; health read-only `44647995469` SUCCESS.
 - Commits: implementación `4fd6cfcca93dd6efd7cdaf75775e38ff6a667778`, prueba `9323067a99d609d8a9cd73dc5ea59a3f378f97ad`, runner `b193c17ad867d4b3f53e4274bb8dfc3526eccd84`.
+
+
+## P1 — publicaciones de catálogo ADMIN/Cortes fuera del ScriptLock (2026-11-20)
+- Los publicadores ADMIN individuales y batch ahora construyen snapshots y reservan versiones de origen monotónicas bajo lock, liberan el lock y luego llaman a Coordinator. El batch reserva un rango completo de versiones con una sola escritura de ScriptProperties y publica en chunks de 50 fuera del lock.
+- Coordinator acepta `sourceVersion` ADMIN solo para Cortes, detecta versiones fuera de orden y convierte snapshots legacy ADMIN/Cortes sin versión en reset. Si ADMIN está ocupado, falla el snapshot o falla una publicación batch, se envía reset fuera del lock para reconstrucción.
+- Pruebas `AdminCatalogPublicationIsolation` 6/6; `CatalogChangeFeed` cubre ADMIN versionado, legacy y stale; `SharedMutationCoordinator` cubre batch y reintentos idempotentes versionados. CI `44649098649` SUCCESS; health read-only `44649098541` SUCCESS.
+- Commits principales: ADMIN `59ba42e5648024eb751fc0b3157fc8d0f17d36bc`; Coordinator `5e519d1a6d934b311e54c3a62f91597fed5557dd`; prueba `88183785777a8d0d6f14ac7febbbdcb222cc7d05`; runner `6fcb310f9f317fa42dcf6e13b0e4cd743107e605`; contratos de feed/reintentos `135fba1959be6e25cb6aaf58a421e6bb87e1305a` y `6cc528a8914641051737024bf022cc46706b5304`.
+- No se desplegó Apps Script ni se modificaron datos productivos.
