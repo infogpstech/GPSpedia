@@ -160,3 +160,9 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - `VehicleContributionProjection` cubre candidatos, conflictos, cadenas ADMIN, `vehicle_update` y eventos de año `OP-YEAR`.
 - CI `44835751507` SUCCESS: 239 suites, 2968 pruebas aprobadas, 0 fallos. Health read-only SUCCESS.
 - La concurrencia real de `appendRow`, errores reales de Spreadsheet/Drive y reconciliación siguen pendientes de Beta AUG-159/AUG-160 en recursos aislados.
+
+
+## Revalidación de continuidad — 2026-11-20
+
+- CI `44835908125` SUCCESS: 239 suites, 2968 pruebas aprobadas, 0 fallos. Health read-only `44835908123` SUCCESS.
+- P0 continúa abierto exclusivamente para la reducción del ScriptLock global en las rutas FEEDBACK restantes y las validaciones Beta reales AUG-159/AUG-160. No se desplegó Apps Script ni se modificaron recursos productivos.
