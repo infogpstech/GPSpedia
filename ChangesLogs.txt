@@ -108,3 +108,9 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - Las búsquedas de `opVideoId` y solicitudes pendientes por destino ahora consultan la columna Problema y leen solo filas coincidentes; fallback limitado a esa columna para adaptadores sin TextFinder.
 - Se mantiene el lock en creación para deduplicar operación/destino y anexar de forma coordinada.
 - Regresiones focalizadas 6/6 y 5/5 PASS. CI 44838760886 SUCCESS: 248 suites, 3018 pruebas, 0 fallos; Health read-only SUCCESS.
+
+
+2026-11-20 — FEEDBACK PyS y tutoriales: búsquedas por columnas
+- `findPysRowsById_` ahora consulta solo ID y lee filas coincidentes; `findTutorialRow_` consulta ID/título por columnas A/B; la edición de tutorial valida título único solo con columna B.
+- Aprobaciones de vídeo y solicitudes pendientes usan búsqueda dirigida en Problema.
+- Regresiones focalizadas 5/5, 6/6, 5/5, 6/6 y 5/5 PASS. CI 44839134803 SUCCESS: 250 suites, 3028 pruebas, 0 fallos; Health read-only SUCCESS.
