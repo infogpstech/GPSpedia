@@ -81,7 +81,7 @@ test("corrección de conflicto de campo supersede la versión fuente, no el cand
 });
 test("descartar conflicto de campo añade tombstone auditable para el candidato",()=>{
  const targetId="EV-FIELD-CANDIDATE-124",sourceId="EV-BASE-SOURCE-124";
- const r=buildFieldRuntime({eventId:targetId,sourceEventId,
+ const r=buildFieldRuntime({eventId:targetId,sourceEventId:sourceId,
   payload:{fieldName:"modelo",value:"Corolla Y",expectedCurrentValue:"Corolla",currentValue:"Corolla X",currentSourceEventId:"EV-CURRENT-SOURCE-124"}});
  const result=r.fn({eventId:targetId,requestId:"request-field-22345678",decision:"discard"},actor);
  assert.equal(result.status,"success");assert.equal(r.rows[2][9],"retracted");assert.equal(r.rows[2][10],sourceId);
@@ -89,7 +89,7 @@ test("descartar conflicto de campo añade tombstone auditable para el candidato"
 });
 test("doble resolución de campo se bloquea por resolvesCandidateEventId",()=>{
  const targetId="EV-FIELD-CANDIDATE-125",sourceId="EV-BASE-SOURCE-125";
- const r=buildFieldRuntime({eventId:targetId,sourceEventId,
+ const r=buildFieldRuntime({eventId:targetId,sourceEventId:sourceId,
   payload:{fieldName:"modelo",value:"Corolla Y",expectedCurrentValue:"Corolla",currentValue:"Corolla X",currentSourceEventId:"EV-CURRENT-SOURCE-125"}});
  const request={eventId:targetId,requestId:"request-field-32345678",decision:"discard"};
  r.fn(request,actor);
