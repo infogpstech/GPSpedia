@@ -113,14 +113,17 @@ function runAddSupplementaryInfoIntegrityTests(sources) {
   assert_(outer.includes("pendiente de reconciliación"));
   assert_(outer.includes("handleAddSupplementaryInfoLocked"),"La ruta legacy de notas sigue disponible.");
  });
- run_("WRITE ledger de imagen usa secciones críticas breves",function(){
+ run_("WRITE cargas de imagen usan journal append-only sin ScriptLock",function(){
   const upload=String(sources.write).slice(String(sources.write).indexOf("function uploadImageToDriveWithShortLedgerLocks_"),String(sources.write).indexOf("function uploadImageToDrive("));
-  assert_(upload.includes("withImageUploadLedgerLock_")&&upload.includes("upload_in_progress"));
-  assert_(upload.indexOf("withImageUploadLedgerLock_")<upload.indexOf("folder.createFile"));
-  assert_(upload.lastIndexOf("withImageUploadLedgerLock_")>upload.indexOf("folder.createFile"));
+  assert_(upload.includes("getOrCreateImageUploadEventsSheet_")&&upload.includes("appendImageUploadEventRequired_"));
+  assert_(upload.includes("findImageUploadEventsByOperationKey_"));
+  assert_(!/withImageUploadLedgerLock_|getOrCreateImageUploadLedgerSheet_|saveImageUploadLedgerRecord_|upload_in_progress/.test(upload));
+  assert_(upload.indexOf('appendImageUploadEventRequired_(eventsSheet, expected, "reserved"')<upload.indexOf("folder.createFile"));
+  assert_(upload.includes('appendImageUploadEventRequired_(eventsSheet, expected, "pending"'));
   const linked=String(sources.write).slice(String(sources.write).indexOf("function markImageUploadLinkedWithShortLedgerLock_"),String(sources.write).indexOf("function markImageUploadLinked(imageUrl"));
-  assert_(linked.indexOf("getImageUploadReferences_")<linked.indexOf("withImageUploadLedgerLock_"));
-  assert_(linked.indexOf("withImageUploadLedgerLock_")<linked.indexOf("file.setDescription"));
+  assert_(linked.includes("getImageUploadReferences_")&&linked.includes("appendImageUploadEventRequired_"));
+  assert_(!/withImageUploadLedgerLock_|getOrCreateImageUploadLedgerSheet_|saveImageUploadLedgerRecord_/.test(linked));
+  assert_(linked.indexOf('appendImageUploadEventRequired_(eventsSheet, expected, "linked"')<linked.indexOf("file.setDescription"));
  });
 
  return {passed:passed,failed:failed,results:results};
