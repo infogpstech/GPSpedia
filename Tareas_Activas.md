@@ -857,3 +857,12 @@ Siguiente tarea: continuar `GP-PERF-ADMIN-CUT-LOCK-01` con el análisis de lectu
 - [x] `WriteFreezeCortesIdsBackupOutsideLock` 5/5; `WriteAuthorizationMinimization` 13/13.
 - [x] CI `44645165057` SUCCESS: 195 suites, 2,541 pruebas, 0 fallos; health read-only `44645165055` SUCCESS.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Sin despliegue Apps Script ni cambios productivos.
+
+
+### P1 — FEEDBACK PyS: verificación de imagen pending fuera del lock (2026-11-20)
+- [x] Verificar archivo Drive antes de adquirir ScriptLock para reservas `UPLOAD_PENDING`.
+- [x] Bajo lock, revalidar la reserva completa y reutilizar el archivo prevalidado solo si coinciden opId/hash/problemId/fileId/URL/status.
+- [x] Si cambió la reserva, fallar con reintento; si falla la verificación y la reserva sigue igual, marcar `RECOVERY_REQUIRED`.
+- [x] Preservar MIME, tamaño, URL, descripción, carpeta y permisos; `FeedbackPysPendingImageVerificationOutsideLock` 5/5; `P2PysImageUploadOutsideLock` PASS.
+- [x] CI `44645449059` SUCCESS: 196 suites, 2,546 pruebas, 0 fallos; health read-only `44645449007` SUCCESS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Cleanup Drive/metadata LINKED se mantiene como siguiente revisión separada.
