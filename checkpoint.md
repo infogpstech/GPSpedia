@@ -1158,3 +1158,15 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - CI: 236 suites, 2,922 pruebas aprobadas, 0 fallos. Health read-only SUCCESS y Pages SUCCESS.
 - Pendiente local prioritario: versionado por campo y edición in-modal del Desarrollador; integrar cortes/VIN/vehicleData en el flujo append-only y eliminar persistencia suplementaria por rango.
 - Pendiente Beta: concurrencia real Apps Script/Drive/Spreadsheet, pérdida de respuesta y fallos parciales; panel ADMIN en navegador aislado. No se desplegaron servicios Apps Script ni se modificaron datos productivos.
+
+
+## Checkpoint — versionado in-modal de campos y cierre de regresión local (2026-11-20)
+
+- Rama: GPSpedia2.2.5_work. HEAD de trabajo: 8952a191e5b3b7123eb7e527f8a3717ac3db6f9c. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin cambios.
+- Se completó el versionado append-only de ediciones in-modal del Desarrollador por campo, incluida la colección VIN. Cada evento conserva actor, hash, valor esperado y eventId fuente; reintentos idénticos son idempotentes y los conflictos se aíslan por campo/vehículo.
+- CATALOG proyecta versiones válidas, detecta conflictos de campo y VIN, y ADMIN permite resolver candidatos mediante eventos append-only. La UI mantiene la versión fuente y envía compare-and-set lógico; no sobrescribe directamente la fila materializada.
+- Se actualizaron contratos de regresión obsoletos que aún exigían escritura directa del ledger mutable o el antiguo compare-and-set por helper; las pruebas ahora verifican journal append-only y versión fuente.
+- CI 44825733130 SUCCESS: 237 suites, 2,945 pruebas aprobadas, 0 fallos. Health read-only 44825733095 SUCCESS. Pages 44825733187 pendiente de confirmación al registrar este checkpoint.
+- Queda pendiente Beta aislada: concurrencia real Apps Script/Spreadsheet, doble edición de mismo campo, campos distintos, VIN duplicado, respuesta perdida, y pruebas UI/navegador; no desplegar servicios ni tocar datos productivos.
+- Siguiente trabajo local: revisar y completar el ciclo de imágenes de la edición in-modal (reemplazo de imágenes de vehículo/cortes/apertura/alimentación, materialización, sincronización de carpeta y recuperación de archivos no vinculados) sin debilitar el versionado por campo ni la idempotencia del journal. Antes de iniciar, revisar la lista activa para confirmar dependencias y no duplicar tareas cerradas.
+- No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
