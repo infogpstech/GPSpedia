@@ -183,7 +183,7 @@ function coordinatorPolicy_(service, operation) {
     // la lease. No debe reservar USERS ni SESSION_CONTEXTS durante el recorrido:
     // el login escribe ambos recursos y debe poder continuar en paralelo.
     if (((service === "AUTH" && operation !== "requestPasswordRecovery") ||
-        (service === "ADMIN" && !["getCortesImageFolders", "auditDriveImagesInCortes", "saveUnusedImagesInventory", "recordAdminImageActivity"].includes(operation))) &&
+        (service === "ADMIN" && !["getCortesImageFolders", "auditDriveImagesInCortes", "saveUnusedImagesInventory", "recordAdminImageActivity", "createCortesImageFolder"].includes(operation))) &&
         !readResources.includes("SESSION_CONTEXTS") && !writeResources.includes("SESSION_CONTEXTS")) {
         readResources.push("SESSION_CONTEXTS");
     }
