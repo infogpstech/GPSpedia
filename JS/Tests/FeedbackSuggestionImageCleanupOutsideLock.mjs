@@ -8,13 +8,18 @@ assert.ok(start >= 0 && end > start, "No se encontró handleSuggestCutChange");
 const handler = source.slice(start, end);
 assert.match(handler, /const releaseLockForDriveWork = \(\) => \{ if \(lockAcquired\) \{ lock\.releaseLock\(\); lockAcquired = false; \} \};/);
 
-for (const branchName of ["if (existingByOperation)", "if (existingByRequest)"]) {
-    const branchStart = handler.indexOf(branchName);
-    const branchEnd = handler.indexOf("\n        }", branchStart);
-    const branch = handler.slice(branchStart, branchEnd);
-    assert.ok(branch.indexOf("releaseLockForDriveWork();") < branch.indexOf("trashReportImageUpload_(uploadedImage)"),
-        branchName + " debe limpiar el duplicado después de liberar ScriptLock");
-}
+const preflight = handler.indexOf("findExistingCutSuggestionForRequest_(feedbackSheet, replayRequest)");
+const driveUpload = handler.indexOf("saveSuggestionImageAttachment_(normalizedImage");
+const lockAcquire = handler.indexOf("acquireFeedbackScriptLock_(lock)");
+const recheck = handler.indexOf("findExistingCutSuggestionForRequest_(sheet, replayRequest)");
+assert.ok(preflight >= 0 && preflight < driveUpload && driveUpload < lockAcquire,
+    "El replay previo debe resolverse antes de Drive y del lock");
+assert.ok(recheck > lockAcquire, "La operación debe revalidarse bajo lock después de Drive");
+const replayStart = handler.indexOf("if (existing) {");
+const replayEnd = handler.indexOf("\n        }", replayStart);
+const replayBranch = handler.slice(replayStart, replayEnd);
+assert.ok(replayBranch.indexOf("releaseLockForDriveWork();") < replayBranch.indexOf("trashReportImageUpload_(uploadedImage)"),
+    "El duplicado descubierto bajo lock debe limpiarse después de liberar ScriptLock");
 
 const catchStart = handler.indexOf("} catch (error) {");
 const cleanupStart = handler.indexOf("if (!rowCommitted && uploadedImage &&", catchStart);
