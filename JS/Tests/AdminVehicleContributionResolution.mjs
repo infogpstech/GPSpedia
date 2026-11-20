@@ -60,7 +60,7 @@ function buildFieldRuntime(target) {
  const rows=[headers.slice(),[target.eventId,"OP-ADMIN-FIELD-OLD","101","a".repeat(64),"vehicle_update",JSON.stringify(target.payload),"DEV-1","Editor","2026-11-20T10:00:00.000Z","accepted",target.sourceEventId||""]];
  let uuid=0;
  const sheet={getLastRow:()=>rows.length,getLastColumn:()=>11,getRange(row,col,count=1,width=1){return{
-  getDisplayValues:()=>Array.from({length:count},(_,i)=>(rows[row-1+i]||[]).slice(col-1,col-1+width).map(v=>String(v??"")),
+  getDisplayValues:()=>Array.from({length:count},(_,i)=>(rows[row-1+i]||[]).slice(col-1,col-1+width).map(v=>String(v??""))),
   getValues:()=>Array.from({length:count},(_,i)=>(rows[row-1+i]||[]).slice(col-1,col-1+width))
  };},appendRow(row){rows.push(row.slice());}};
  const spreadsheet={getSheetByName:name=>name==="AportesVehiculo"?sheet:null};
