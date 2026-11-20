@@ -7951,16 +7951,18 @@ function logDeveloperOperation_(message, level = "info") {
 function getReplacedImageCapabilities_(rep, schemaReady, referenceCheckStatus, role) {
     const type = rep.tipo_registro || (rep.origen_registro === "auditoria_drive" ? "sin_uso_detectado" : "reemplazada");
     const isUnused = type === "sin_uso_detectado";
+    const isCandidate = type === "candidata_aporte";
     const status = String(rep.estado || (isUnused ? "sin_uso_detectado" : "historica"));
     const referenceSafe = schemaReady && referenceCheckStatus === "verified" && Number(rep.active_reference_count || 0) === 0;
-    const canManage = referenceSafe && (isUnused ? status === "sin_uso_detectado" : ["historica", "restablecida"].includes(status));
-    const canTrash = referenceSafe && (canManage || status === "requiere_revision");
-    const canRestoreFromTrash = schemaReady && ["en_papelera", "requiere_revision"].includes(status);
-    const canPermanentlyDelete = referenceSafe && ["en_papelera", "eliminacion_pendiente", "requiere_revision"].includes(status);
-    const canRecover = !isUnused && ["historica", "restablecida"].includes(status) && canManage;
-    const canDownload = String(role || "").trim().toLowerCase() === "desarrollador" && referenceSafe && (isUnused ? status === "sin_uso_detectado" : ["historica", "restablecida"].includes(status));
-    const canMarkInUse = status === "requiere_revision" && schemaReady && referenceCheckStatus === "verified";
-    return { type, isUnused, status, referenceSafe, canManage, canMove: canManage, canTrash, canRestoreFromTrash, canPermanentlyDelete, canRecover, canDownload, canMarkInUse };
+    const canManage = !isCandidate && referenceSafe && (isUnused ? status === "sin_uso_detectado" : ["historica", "restablecida"].includes(status));
+    const canTrash = !isCandidate && referenceSafe && (canManage || status === "requiere_revision");
+    const canRestoreFromTrash = !isCandidate && schemaReady && ["en_papelera", "requiere_revision"].includes(status);
+    const canPermanentlyDelete = !isCandidate && referenceSafe && ["en_papelera", "eliminacion_pendiente", "requiere_revision"].includes(status);
+    const canRecover = !isCandidate && !isUnused && ["historica", "restablecida"].includes(status) && canManage;
+    const canDownload = !isCandidate && String(role || "").trim().toLowerCase() === "desarrollador" && referenceSafe && (isUnused ? status === "sin_uso_detectado" : ["historica", "restablecida"].includes(status));
+    const canMarkInUse = !isCandidate && status === "requiere_revision" && schemaReady && referenceCheckStatus === "verified";
+    const displayType = isCandidate ? "Candidato de aporte" : isUnused ? "Sin uso detectado" : "Reemplazada";
+    return { type, displayType, isUnused, isCandidate, status, referenceSafe, canManage, canMove: canManage, canTrash, canRestoreFromTrash, canPermanentlyDelete, canRecover, canDownload, canMarkInUse };
 }
 
 export async function openReplacedImagesModal() {
@@ -8242,9 +8244,11 @@ export async function openReplacedImagesModal() {
         if (!filtered.length) { const empty = document.createElement("div"); empty.className = "replaced-images-empty"; empty.textContent = "No hay registros válidos que coincidan con el filtro."; listContainer.appendChild(empty); }
         filtered.forEach((rep, index) => {
             const capabilities = getReplacedImageCapabilities_(rep, schemaReady, referenceCheckStatus, getUiSessionContext_()?.role);
-            const { isUnused, status } = capabilities;
-            const statusLabel = isUnused ? (status === "sin_uso_detectado" ? "Sin uso detectado" : status.replace(/_/g, " ")) : (status === "historica" ? "Reemplazada" : status.replace(/_/g, " "));
-            const card = document.createElement("article"); card.className = "replaced-image-card" + (currentView === "list" ? " replaced-image-card-list" : "") + (selectedIds.has(String(rep.id_reemplazo || "")) ? " is-selected" : "");
+            const { isUnused, isCandidate, status } = capabilities;
+            const statusLabel = isCandidate ? (status === "requiere_revision" ? "Pendiente de revisión" : status === "en_uso" ? "Aporte aceptado" : status.replace(/_/g, " ")) :
+                isUnused ? (status === "sin_uso_detectado" ? "Sin uso detectado" : status.replace(/_/g, " ")) :
+                (status === "historica" ? "Reemplazada" : status.replace(/_/g, " "));
+            const card = document.createElement("article"); card.className = "replaced-image-card" + (isCandidate ? " is-candidate" : "") + (currentView === "list" ? " replaced-image-card-list" : "") + (selectedIds.has(String(rep.id_reemplazo || "")) ? " is-selected" : "");
             const cardToolbar = document.createElement("div"); cardToolbar.className = "replaced-image-card-toolbar";
             const selectLabel = document.createElement("label"); selectLabel.className = "replaced-image-select"; selectLabel.title = "Seleccionar " + (rep.nombre_archivo || "imagen");
             const selectCheckbox = document.createElement("input"); selectCheckbox.type = "checkbox"; selectCheckbox.checked = selectedIds.has(String(rep.id_reemplazo || "")); selectCheckbox.setAttribute("aria-label", "Seleccionar " + (rep.nombre_archivo || "imagen"));
@@ -8302,8 +8306,8 @@ export async function openReplacedImagesModal() {
             image.alt = rep.nombre_archivo || "Imagen de Drive"; image.loading = "lazy"; image.decoding = "async"; image.onerror = () => { image.onerror = null; image.src = "https://placehold.co/400x300/cccccc/333333?text=Vista+no+disponible"; };
             previewButton.appendChild(image); previewButton.onclick = () => openLightbox(rep); card.appendChild(previewButton);
             const info = document.createElement("div"); info.className = "replaced-image-info";
-            const title = document.createElement("strong"); title.className = "replaced-image-name"; title.textContent = rep.nombre_archivo || (isUnused ? "Imagen sin uso detectado" : (rep.referencia_texto || "Imagen reemplazada"));
-            const typeLabel = document.createElement("span"); typeLabel.className = "replaced-image-type " + (isUnused ? "is-unused" : "is-replaced"); typeLabel.textContent = isUnused ? "Sin uso detectado" : "Reemplazada";
+            const title = document.createElement("strong"); title.className = "replaced-image-name"; title.textContent = rep.nombre_archivo || (isCandidate ? "Imagen candidata de aporte" : isUnused ? "Imagen sin uso detectado" : (rep.referencia_texto || "Imagen reemplazada"));
+            const typeLabel = document.createElement("span"); typeLabel.className = "replaced-image-type " + (isCandidate ? "is-candidate" : isUnused ? "is-unused" : "is-replaced"); typeLabel.textContent = isCandidate ? "Candidato de aporte" : isUnused ? "Sin uso detectado" : "Reemplazada";
             const details = document.createElement("span"); details.className = "replaced-image-details"; details.textContent = (rep.tipo_mime || "Imagen") + " · ID: " + (rep.archivo_drive_id || "No disponible") + (rep.campo ? " · Campo: " + rep.campo : "");
             const location = document.createElement("span"); location.className = "replaced-image-details"; location.textContent = "Ubicación: " + (rep.ubicacion_actual || rep.ubicacion_original || "No disponible");
             const dateDetails = document.createElement("span"); dateDetails.className = "replaced-image-details"; dateDetails.textContent = (isUnused ? "Detectada: " + (rep.fecha_deteccion || "Fecha no disponible") : "Reemplazada: " + (rep.fecha_reemplazo || "Fecha no disponible"));
