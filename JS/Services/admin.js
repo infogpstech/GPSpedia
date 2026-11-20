@@ -10771,35 +10771,57 @@ function handlePermanentlyDeleteReplacedImage(payload,logMessage,developerContex
         const sheet=getOrCreateReplacedImagesSheet(),headers=ensureReplacedImagesInventoryColumns(sheet);
         const existing=findReplacedImageRecordById(sheet,id);if(!existing)throw new Error("Registro de imagen no encontrado.");
         const row=existing.values,type=getReplacedImageRecordType(row,headers),status=String(row[10]||"");
+        let rowIndex=existing.rowIndex;
         const driveId=getReplacedImageRecordIdentity_(row,headers,true);
         if(status==="eliminada")return {status:"success",message:"La imagen ya estaba eliminada definitivamente.",unchanged:true};
         if(!["en_papelera","eliminacion_pendiente","requiere_revision"].includes(status))throw new Error("La eliminación definitiva requiere un registro en papelera o requiere_revision.");
+        const verified = runAdminDriveWorkOutsideScriptLock_(
+            lock,
+            "ADMIN_PERMANENT_DELETE_" + id,
+            () => {
+                const current=requestAdminDriveFile_(driveId,"get");
+                if(current.code===404)return {missing:true};
+                if(current.code<200||current.code>=300)throw new Error("No se pudo verificar el archivo en Drive API (HTTP "+current.code+").");
+                if(!String(current.body.mimeType||"").startsWith("image/"))throw new Error("El archivo asociado al registro no es una imagen.");
+                if(current.body.trashed!==true)throw new Error("El archivo ya no está en papelera; se bloqueó la eliminación definitiva.");
+                const file=DriveApp.getFileById(driveId);
+                if(!file.isTrashed())throw new Error("DriveApp no confirma que el archivo esté en papelera.");
+                const root=getCortesRootFolder();getSingleParentFolderInsideCortes(file,root.getId());
+                return {missing:false,fileName:file.getName()};
+            },
+            () => {
+                const latestHeaders=ensureReplacedImagesInventoryColumns(sheet);
+                const latest=findReplacedImageRecordById(sheet,id);
+                if(!latest)throw new Error("El registro desapareció durante la verificación Drive; no se modificó el historial.");
+                const latestRow=latest.values;
+                if(String(latestRow[10]||"")!==status||
+                    getReplacedImageRecordType(latestRow,latestHeaders)!==type||
+                    getReplacedImageRecordIdentity_(latestRow,latestHeaders,true)!==driveId) {
+                    throw new Error("El registro cambió durante la verificación Drive; vuelve a intentar la eliminación.");
+                }
+                return latest;
+            }
+        );
+        rowIndex=verified.rowIndex;
         const references=collectActiveDriveReferences(),active=references.references.get(driveId)||[];
         if(active.length)throw new Error("Eliminación bloqueada: la imagen tiene referencias activas en el Spreadsheet.");
         if(references.unverifiableReferenceCount>0)throw new Error("Eliminación bloqueada: existen referencias de Drive no interpretables en el Spreadsheet.");
-        const current=requestAdminDriveFile_(driveId,"get");
-        if(current.code===404){
-            setReplacedImageHistoryStatusVerified_(sheet,existing.rowIndex,"eliminada");
+        if(verified.missing){
+            setReplacedImageHistoryStatusVerified_(sheet,rowIndex,"eliminada");
             releaseLock();
             recordImageAdministrationActivity(developerContext,"admin_image_permanent_delete",id,"Drive confirmó que la imagen ya no existe; se reconcilió el historial como eliminada.");
             return {status:"success",message:"La imagen ya no existe en Drive y el historial quedó reconciliado como eliminada.",reconciled:true};
         }
-        if(current.code<200||current.code>=300)throw new Error("No se pudo verificar el archivo en Drive API (HTTP "+current.code+").");
-        if(!String(current.body.mimeType||"").startsWith("image/"))throw new Error("El archivo asociado al registro no es una imagen.");
-        if(current.body.trashed!==true)throw new Error("El archivo ya no está en papelera; se bloqueó la eliminación definitiva.");
-        const file=DriveApp.getFileById(driveId);
-        if(!file.isTrashed())throw new Error("DriveApp no confirma que el archivo esté en papelera.");
-        const root=getCortesRootFolder();getSingleParentFolderInsideCortes(file,root.getId());
-        if(status!=="eliminacion_pendiente")setReplacedImageHistoryStatusVerified_(sheet,existing.rowIndex,"eliminacion_pendiente");
+        if(status!=="eliminacion_pendiente")setReplacedImageHistoryStatusVerified_(sheet,rowIndex,"eliminacion_pendiente");
         const deletion=requestAdminDriveFile_(driveId,"delete");
         if(deletion.code!==404&&(deletion.code<200||deletion.code>=300)){
-            try{setReplacedImageHistoryStatusVerified_(sheet,existing.rowIndex,status);}
-            catch(statusError){try{setReplacedImageHistoryStatusVerified_(sheet,existing.rowIndex,"requiere_revision");}catch(reviewError){}}
+            try{setReplacedImageHistoryStatusVerified_(sheet,rowIndex,status);}
+            catch(statusError){try{setReplacedImageHistoryStatusVerified_(sheet,rowIndex,"requiere_revision");}catch(reviewError){}}
             throw new Error("Drive API no confirmó la eliminación definitiva (HTTP "+deletion.code+").");
         }
         const verification=requestAdminDriveFile_(driveId,"get");
         if(verification.code!==404)throw new Error("La eliminación fue solicitada, pero Drive no confirmó la ausencia del archivo. El registro queda eliminacion_pendiente para reconciliación.");
-        setReplacedImageHistoryStatusVerified_(sheet,existing.rowIndex,"eliminada");
+        setReplacedImageHistoryStatusVerified_(sheet,rowIndex,"eliminada");
         releaseLock();
         recordImageAdministrationActivity(developerContext,"admin_image_permanent_delete",id,"Imagen "+driveId+" eliminada definitivamente y ausencia confirmada por Drive API.");
         logMessage&&logMessage("Inventario e historial de imágenes","La imagen "+driveId+" fue eliminada definitivamente.");
