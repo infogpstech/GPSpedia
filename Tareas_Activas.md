@@ -6,8 +6,8 @@ Rama base protegida: GPSpedia2.2.5 (no modificar)
 Normativa: NORMAS_DESAROLLO.md
 
 ## Estado consolidado vigente — verificado 2026-11-20
-- Rama de trabajo HEAD: `4f5a85065816d2277341cf1f7827c29d9dc2519b`. Rama base protegida: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; no se modificó.
-- Regresión del HEAD: GitHub Actions `44768089834` SUCCESS — 221 suites, 2,743 pruebas aprobadas, 0 fallos. Health read-only `44768090013` SUCCESS; Pages `44768089955` pendiente al registrar esta actualización.
+- Rama de trabajo HEAD: `d2797d02b35b9acade57d392eff2cefc9b277698`. Rama base protegida: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; no se modificó.
+- Regresión del HEAD: GitHub Actions `44768324636` SUCCESS — 221 suites, 2,743 pruebas aprobadas, 0 fallos. Health read-only `44768324683` SUCCESS; Pages `44768323927` en ejecución al registrar esta actualización.
 - Fase 1 (ADMIN salud/telemetría): implementación local y regresión integral COMPLETADAS. Contratos verificados: ServiceHealth 17/17, ServiceTrafficAdmin 33/33, BrowserTraffic 9/9, Aggregator 5/5, Aggregation 6/6, DirectTelemetry 21/21, Batch 5/5 y Metrics 1/1.
 - Fase 2 (arquitectura/Coordinator): implementación local base COMPLETADA; configuración de ScriptProperties, URLs, secretos y deployments reales queda para Beta autorizada.
 - Fase 3 (Inbox/aislamiento): correcciones locales y regresión COMPLETADAS; InboxConversations 66/66 y CoordinatorCapabilityPreservation 6/6. Verificación con credenciales/deployments reales queda para Beta.
