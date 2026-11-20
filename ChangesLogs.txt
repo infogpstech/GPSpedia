@@ -1172,3 +1172,6 @@ Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000
 
 
 [2026-11-20 · aislamiento FEEDBACK likes] `handleRecordLike` mantiene el incremento y ledger pending/completed bajo ScriptLock, pero difiere `logUserActivity` hasta después de liberar; los replays completed no duplican actividad. `FeedbackLikeActivityOutsideLock` 5/5. CI `44647675553` SUCCESS: 202 suites, 2,576 pruebas aprobadas, 0 fallos; health read-only `44647675689` SUCCESS.
+
+
+[2026-11-20 · rendimiento FEEDBACK IDs] `getNextFormulaBasedId_` lee solo la columna ID en el caso habitual. Si detecta IDs vacíos, consulta únicamente los grupos contiguos de filas candidatas para detectar datos sin ID, manteniendo validaciones de prefijo/sufijo, duplicados, contador backend y lock ya adquirido. `FeedbackFormulaIdAllocatorBoundedRead` 6/6. CI `44647995645` SUCCESS: 203 suites, 2,582 pruebas aprobadas, 0 fallos; health read-only `44647995469` SUCCESS.
