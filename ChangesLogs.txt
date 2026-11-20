@@ -1251,3 +1251,6 @@ Se implementó agrupación de resultados de Cortes por categoría/marca/modelo, 
 
 
 [2026-11-20 · validación focalizada recuperación legacy ADMIN] Se verificó el registro de AdminLegacyOpIdSnapshotReuse.mjs en RunServiceTests.mjs y se ejecutó un harness Node aislado basado en el helper y handler de la fuente vigente: 10/10 PASS. `node --check` pasó sobre el harness y la suite focalizada. El entorno carece de checkout completo, por lo que no se ejecutó RunServiceTests.mjs integral; GitHub Actions aún no reporta ejecuciones para el HEAD comprobado. La tarea permanece EN PROGRESO hasta verificar la regresión integral. Sin despliegue Apps Script ni cambios en datos productivos.
+
+
+[2026-11-20 · cierre validación recuperación legacy ADMIN] `AdminLegacyOpIdSnapshotReuse.mjs` aprobó 10/10 en el runner oficial. CI `44763121682` SUCCESS: 220 suites, 2,733 pruebas, 0 fallos; sintaxis PASS. Health read-only `44763121560` SUCCESS. La reutilización de snapshot queda COMPLETADA CON VALIDACIÓN DIFERIDA A BETA; no se desplegó Apps Script ni se modificaron datos productivos. Próxima subactividad: inspeccionar lecturas restantes de Sheets dentro de `handleAddOrUpdateCut`.
