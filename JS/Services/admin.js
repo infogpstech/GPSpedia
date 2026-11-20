@@ -7050,8 +7050,8 @@ function handleGetAdminImageUploadStatus(payload, logMessage) {
     }
     const cutsSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
     if (!cutsSheet || cutsSheet.getLastRow() < 2) throw new Error("No hay registros disponibles en la hoja Cortes.");
-    findUniqueAdminVehicleRow_(cutsSheet, cleanVehicleId);
-    const materializedImageUrl = String(cutsSheet.getRange(findUniqueAdminVehicleRow_(cutsSheet, cleanVehicleId), COLS_CORTES[cleanFieldName]).getValue() || "").trim();
+    const materializedRow = findUniqueAdminVehicleRow_(cutsSheet, cleanVehicleId);
+    const materializedImageUrl = String(cutsSheet.getRange(materializedRow, COLS_CORTES[cleanFieldName]).getValue() || "").trim();
     const eventsSheet = getImageUploadEventsSheetForAdmin_();
     if (!eventsSheet) return { status: "success", operationStatus: "not_found", currentImageUrl: materializedImageUrl, newImageUrl: "", fileIntegrity: "not_available" };
     const operationKey = buildImageUploadOperationKey(operationId, cleanVehicleId, cleanFieldName);
