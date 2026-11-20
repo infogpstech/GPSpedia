@@ -671,3 +671,9 @@ Siguiente implementación pendiente en el backlog WRITE: reducir el coste de la 
 - No se cambia la protección de Logs ni la purga sensible. No se modifica la semántica de recuperación, revocación ni el resultado HTTP.
 - Validaciones: pendientes de ejecución en esta actualización.
 - Sin deployment ni acceso a datos productivos.
+
+
+### Ajuste del test de orden de logging AUTH (2026-11-20)
+- La primera ejecución de CI detectó que el harness conservaba los eventos de lock de la solicitud de emisión del código. Se aisló el tramo de finalización limpiando el registro de eventos después de emitir el código y antes de invocar `handleCompletePasswordRecovery`; no se cambió la aserción de orden ni el código productivo.
+- Se corrigieron además los escapes de regex del handler y de su fixture para mantener la validación de espacios y el patrón de correo original.
+- CI inicial `44726038448` falló únicamente en la aserción del harness; health read-only `44726038467` y Pages `44726038563` SUCCESS. La validación corregida queda pendiente de nueva ejecución.

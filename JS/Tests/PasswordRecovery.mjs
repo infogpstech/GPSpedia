@@ -195,6 +195,7 @@ test("La finalización actualiza el hash, revoca sesiones y consume el código",
     const h = makeHandlerHarness();
     h.handlers.handleRequestPasswordRecovery({username:"alice",email:"alice@example.com"});
     const code = h.sent[0].body.match(/Código de recuperación:\s*([A-F0-9]{12})/)[1];
+    h.lockEvents.length = 0;
     const result = h.handlers.handleCompletePasswordRecovery({
         username:"alice",email:"alice@example.com",code,newPassword:"NewPassword2026"
     });
