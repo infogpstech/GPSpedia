@@ -935,3 +935,12 @@ Estado: REGRESIÓN LOCAL COMPLETADA. Concurrencia real de appendRow, fallos real
 - Estos cambios reducen lecturas completas y evitan adquirir lock/Drive en reintentos, pero conservan la sección crítica de nuevas escrituras para deduplicación y append. No se retiró el lock de creación.
 - Incidente de rama: un test se creó accidentalmente en `main` al omitir `branch`; fue eliminado en `de13b119529415b8d85e03331647cb5422cb8a1c` y se verificó ausencia en `main`. La rama protegida `GPSpedia2.2.5` permaneció intacta.
 ================================================================================
+
+
+2026-11-20 — FEEDBACK reportProblem: replay antes de Drive/lock
+- `handleReportProblem` realiza búsqueda read-only por `reportId` antes de cargar imagen y adquirir ScriptLock. Si ya existe un reporte idéntico, devuelve su resultado; si la imagen ya existe y el SHA-256 coincide, no vuelve a subirla. Si falta la imagen, continúa y revalida bajo lock antes de adjuntarla. Un hash diferente se rechaza.
+- El preflight usa `getReportMetadataColumn` (sin mutar esquema); `ensureReportMetadataColumn` permanece dentro del lock. La búsqueda usa `findReportByReportId_` dirigido por TextFinder.
+- `FeedbackReportPreflightOutsideLock` 5/5 PASS. Las aserciones estáticas P2 se actualizaron para validar preflight, adquisición real del lock y revalidación bajo lock; `P2FeedbackImageUploadLocks` 1/1 PASS.
+- CI 44837729816 SUCCESS: 244 suites, 2994 pruebas, 0 fallos. Health read-only del commit previo SUCCESS; Pages del último commit en ejecución.
+- La sección crítica de alta nueva permanece para deduplicación/append. Los replays comunes ya no adquieren lock ni hacen Drive innecesariamente.
+================================================================================
