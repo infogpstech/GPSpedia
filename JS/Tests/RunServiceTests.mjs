@@ -146,6 +146,7 @@ runGroup('33','FEEDBACK',()=>{
   runCli('FEEDBACK suggestYear usa actor central y conserva ruta anónima','JS/Tests/SuggestYearCoordinatorSession.mjs');
   runCli('FEEDBACK suggestYear aplica el umbral de tres votos verificados','JS/Tests/SuggestYearVoteThreshold.mjs');
   runCli('FEEDBACK sincronización de carpeta por sugerencia de año fuera del ScriptLock','JS/Tests/FeedbackYearFolderSyncOutsideLock.mjs');
+  runCli('FEEDBACK actividad de like fuera del ScriptLock','JS/Tests/FeedbackLikeActivityOutsideLock.mjs');
  runCli('P2 IDs canónicos e idempotencia de Tutorial','JS/Tests/TutorialIntegrity.js');
  runCli('PYS tarjetas relacionadas y navegación del modal','JS/Tests/PysModalNavigation.js');
  const lockService={getScriptLock:()=>({waitLock(){},releaseLock(){}})};
