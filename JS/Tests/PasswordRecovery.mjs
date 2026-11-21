@@ -223,7 +223,11 @@ test("Si MailApp falla, el código preparado se invalida y no puede consumirse",
     assert.equal(h.manager.verify("U1","alice@example.com","A1B2C3D4E5F6").valid, false);
 });
 
-assert.ok(authSource.includes('"requestPasswordRecovery","completePasswordRecovery"'));
+const authMutationPolicy = authSource.match(/function isSharedMutationAction_\(action\) \{([\s\S]*?)\n\}/);
+assert.ok(authMutationPolicy);
+assert.doesNotMatch(authMutationPolicy[1], /requestPasswordRecovery|completePasswordRecovery/);
+assert.match(authSource, /function handleRequestPasswordRecovery[\s\S]*?LockService\.getScriptLock\(\)/);
+assert.match(authSource, /function handleCompletePasswordRecovery[\s\S]*?revokeSharedUserSessionContexts_/);
 assert.ok(authSource.includes("case 'requestPasswordRecovery':"));
 assert.ok(authSource.includes("case 'completePasswordRecovery':"));
 assert.ok(coordinatorSource.includes('requestPasswordRecovery: { write: ["PASSWORD_RECOVERY"], trackActivity: false }'));
