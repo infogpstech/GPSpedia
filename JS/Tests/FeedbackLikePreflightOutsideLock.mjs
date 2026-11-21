@@ -57,15 +57,15 @@ test("rechaza IDs duplicados después de normalizar espacios", () => {
 test("rechaza vehículos inexistentes sin descargar Cortes completo", () => {
     assert.throws(() => findVehicle(makeSheet(["101", "202"]), "303"), /No se encontró el vehículo/);
 });
-test("el handler valida antes del lock y revalida dentro de la sección crítica", () => {
+test("el handler de likes usa append-only sin lock global", () => {
     const handler = extract("handleRecordLike", "findReportByReportId_");
-    const preflight = handler.indexOf("findFeedbackVehicleRowForLike_(cuts, vehicleId)");
-    const lock = handler.indexOf("LockService.getScriptLock()");
-    const revalidation = handler.indexOf("const vehicle = findFeedbackVehicleRowForLike_(cuts, vehicleId)");
-    assert.ok(preflight >= 0 && preflight < lock, "La localización inicial debe ocurrir antes del lock");
-    assert.ok(revalidation > lock, "La fila debe revalidarse dentro del lock antes de incrementar");
+    assert.match(handler, /findFeedbackVehicleRowForLike_\(cuts, vehicleId\)/);
+    assert.match(handler, /findLikeEventReplayNoop_/);
+    assert.match(handler, /eventLedger\.appendRow\(/);
+    assert.doesNotMatch(handler, /LockService|getScriptLock|acquireFeedbackScriptLock_|setValue\(/);
     assert.doesNotMatch(handler, /getDataRange\(/, "El handler no debe descargar toda la hoja Cortes ni FeedbackLikes");
 });
+
 test("el ledger consulta solo likes del actor y la actividad queda fuera del lock", () => {
     const handler = extract("handleRecordLike", "findReportByReportId_");
     assert.match(handler, /createTextFinder\(actorKey\)/);
