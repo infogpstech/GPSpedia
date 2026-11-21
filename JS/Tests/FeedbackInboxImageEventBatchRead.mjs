@@ -49,8 +49,7 @@ test("rechaza eventos contradictorios con el mismo reportId", () => {
         ["EV-1", "REP-1", "U1", "FILE-1", "url-1", "a.png", "image/png", 100, "sha-1", "t1"],
         ["EV-2", "REP-1", "U1", "FILE-2", "url-2", "b.png", "image/png", 200, "sha-2", "t2"]
     ];
-    const h = makeIndex(rows);
-    assert.throws(() => h.index, /contradictorios/);
+    assert.throws(() => makeIndex(rows), /contradictorios/);
 });
 
 test("el índice vacío evita búsquedas repetidas cuando no existe ledger de eventos", () => {
