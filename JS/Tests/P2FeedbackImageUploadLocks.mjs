@@ -4,17 +4,15 @@ const feedback=readFileSync(new URL("../Services/feedback.js",import.meta.url),"
 function extract(source,start,end){const i=source.indexOf(start),j=source.indexOf(end,i+start.length);assert.ok(i>=0&&j>i,"No se encontró "+start);return source.slice(i,j);}
 const report=extract(feedback,"function handleReportProblem(payload)","function enforceFeedbackRateLimit_");
 const suggestion=extract(feedback,"function handleSuggestCutChange(payload)","function parseModelosAsociados");
-assert.ok(report.indexOf("saveReportImageAttachment_")<report.indexOf("acquireFeedbackScriptLock_(lock)"),"El adjunto de reporte debe cargarse antes del lock.");
-const reportPreflight=report.indexOf("findReportByReportId_(feedbackSheet,reportContext.reportId,preflightMetadataColumn)");
-const reportUpload=report.indexOf("saveReportImageAttachment_(imageAttachment,reportContext.reportId)");
-const reportAcquire=report.indexOf("acquireFeedbackScriptLock_(lock)");
-const reportRecheck=report.indexOf("findReportByReportId_(sheet,reportContext.reportId,metadataColumn)");
-assert.ok(reportPreflight>=0&&reportPreflight<reportUpload&&reportUpload<reportAcquire,"El replay y Drive deben resolverse antes de adquirir el lock.");
-assert.ok(reportRecheck>reportAcquire,"El reporte debe revalidarse bajo lock antes de escribir.");
-assert.ok(report.indexOf("ensureReportMetadataColumn(sheet)")>reportAcquire,"La modificación de esquema queda dentro de la sección crítica.");
-assert.ok(report.includes("if(lockAcquired) lock.releaseLock()"),"El lock de reporte solo se libera si fue adquirido.");
-assert.ok(report.includes("La imagen del reporte se conserva porque la escritura pudo quedar persistida"),"No borrar la imagen si la referencia pudo quedar persistida.");
-assert.ok(report.includes("const uploadMayBeReferenced = appendAttempted"),"La imagen se conserva si appendRow pudo persistir.");
+const reportPreflight=report.indexOf("findReportByReportId_(feedbackSheet, reportContext.reportId, existingMetadataColumn)");
+const reportUpload=report.indexOf("saveReportImageAttachment_(imageAttachment, reportContext.reportId)");
+const reportAppend=report.indexOf("feedbackSheet.appendRow(reportRow)");
+const reportImageEvent=report.indexOf("appendFeedbackReportImageEvent_(reportContext.reportId, userId, uploadedImage)");
+assert.ok(reportPreflight>=0&&reportPreflight<reportUpload&&reportUpload<reportAppend,"El replay se resuelve antes de Drive y append.");
+assert.ok(reportImageEvent>reportAppend,"La imagen se vincula mediante ledger append-only después del reporte.");
+assert.doesNotMatch(report,/LockService\.getScriptLock|acquireFeedbackScriptLock_|releaseLock/,"Los reportes ya no deben adquirir ScriptLock.");
+assert.ok(report.includes("ensureReportMetadataColumn(feedbackSheet)"),"El esquema se asegura antes de construir la fila.");
+assert.ok(report.includes("isFeedbackReportImageFileReferenced_"),"La limpieza depende de verificar la referencia en el ledger.");
 const suggestionPreflight=suggestion.indexOf("findExistingCutSuggestionForRequest_(feedbackSheet, replayRequest)");
 const suggestionDrive=suggestion.indexOf("saveSuggestionImageAttachment_(normalizedImage");
 const suggestionAppend=suggestion.indexOf("sheet.appendRow(suggestionRow)");
