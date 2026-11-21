@@ -394,3 +394,15 @@ Antes de cualquier Beta, cumplir la secuencia de sincronización de ramas, árbo
 - [ ] Integrar proyección de versiones con CATALOG/feed y preservar aprobaciones de vídeo (columna G) sin revertir snapshots.
 - [ ] Beta aislada: concurrencia real de reservas, creación de hoja, altas simultáneas, renombrados y recuperación tras append/flush incierto.
 - No desplegar Apps Script ni modificar datos productivos.
+
+
+## Tutoriales — progreso fase 2
+
+- [x] Alta `handleAddTutorial` lock-free con reservas append-only de título y replay idempotente.
+- [x] Ediciones descriptivas D:F para IDs estables mediante `TutorialEditEvents`, expectedHash y snapshots append-only; sin ScriptLock.
+- [x] CATALOG y `findTutorialRow_` proyectan eventos D:F sin revertir Video (G), Imagen (C) ni Colaborador (H).
+- [ ] Migrar renombrados de título a eventos append-only sin lock, manteniendo unicidad, liberación del título anterior y cancelación de reservas si una edición queda obsoleta.
+- [ ] Migrar filas históricas sin ID o definir su transición segura; mantener compatibilidad sin inventar identidades.
+- [ ] Auditar y adaptar aprobaciones de vídeo para la proyección completa.
+- [ ] Beta aislada: altas, ediciones simultáneas, renombrados, respuestas perdidas, reservas huérfanas y aprobaciones de vídeo.
+- CI `44877806419`: 258 suites, 3101 pruebas, 0 fallos; health y Pages SUCCESS.
