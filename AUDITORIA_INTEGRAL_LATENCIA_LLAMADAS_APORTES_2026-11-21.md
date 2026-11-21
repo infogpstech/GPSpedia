@@ -134,3 +134,11 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - `handleGetCatalogData` consulta CacheService, pero la escritura del snapshot está deshabilitada porque `allData` excede el límite de 100 KB. En una caché fría o sin entrada heredada, cada solicitud reconstruye el snapshot leyendo Cortes, Likes, AportesVehiculo, Logos, Tutoriales/eventos y Relay. `forceRefresh:true` omite la lectura de caché heredada y fuerza esa reconstrucción; no es una caché efectiva para los snapshots actuales.
 - El snapshot completo es necesario para inicio, recuperación/reset y ciertos procesos de verificación; para refrescar un solo vehículo tras un aporte conviene estudiar un endpoint CATALOG dirigido o aplicar el delta confirmado al estado local, sin debilitar la verificación de fuente/candidato.
 
+
+
+### Hallazgo confirmado — refresco CATALOG después de solicitar vídeo
+- `openYouTubeUploadModal` invoca `onSuccess` tras guardar la solicitud de aprobación con estado `pending`. El mensaje al usuario confirma que el vídeo solo aparecerá en GPSpedia después de aprobarse.
+- `handleSubmitVideoForApproval` registra la solicitud pendiente en FEEDBACK; no modifica las hojas/proyección de catálogo ni publica un cambio. `submitVideoForApproval` tampoco figura entre los publicadores autorizados de cambios CATALOG en Coordinator.
+- A pesar de ello, los formularios de vídeo de corte y tutorial ejecutan `routeAction("getCatalogData")` en `onSuccess`. Son dos puntos de refresco completo que no pueden reflejar el vídeo pendiente y constituyen llamadas redundantes confirmadas por el contrato actual.
+- La retirada debe conservar la confirmación visual del envío y el control de duplicados por `opVideoId`; no debe eliminar la consulta de estado de aprobación ni el refresco que corresponda a la aprobación final.
+
