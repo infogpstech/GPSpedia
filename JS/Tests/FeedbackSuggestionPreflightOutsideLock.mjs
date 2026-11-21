@@ -43,7 +43,7 @@ test("el handler deriva un operationId determinista cuando el cliente no lo envÃ
     const fingerprint = handler.indexOf("const requestFingerprint = buildCutSuggestionRequestFingerprint_");
     const derivedId = handler.indexOf('if (!normalizedOperationId) normalizedOperationId = "SUG-" + requestFingerprint;');
     const replayRequest = handler.indexOf("suggestionOperationId: normalizedOperationId", derivedId);
-    const suggestionRecord = handler.indexOf('suggestionOperationId: normalizedOperationId || ""');
+    const suggestionRecord = handler.indexOf('suggestionOperationId: normalizedOperationId');
     assert.ok(fingerprint >= 0 && derivedId > fingerprint && replayRequest > derivedId);
     assert.ok(suggestionRecord > derivedId, "El ID derivado debe persistirse en la fila completa");
     assert.match(handler, /if \(!normalizedOperationId\) normalizedOperationId = "SUG-" \+ requestFingerprint/);
