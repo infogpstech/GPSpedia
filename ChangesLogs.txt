@@ -741,3 +741,11 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 [2026-11-21] WRITE — validación de VIN reutiliza snapshot Cortes
 - handleAddVinToVehicleLocked pasa su snapshot completo a checkVinDuplicateInSheet, evitando releer la hoja para validar VIN global.
 - WriteVinSnapshotReuse 8/8 PASS; regresión 290 suites / 3,390 pruebas / 0 fallos; build y health SUCCESS.
+
+
+[2026-11-21] WRITE — cierre de auditoría end-to-end
+- Revisados alta nueva, opId moderno/legacy, VIN, suplementaria moderna/legacy, journal append-only de imágenes y publicación CATALOG.
+- Se preservan reserva/pending/completed, Drive fuera del lock, read-back, rollback, TextFinder legacy, requires_review y publicación después de commit.
+- WritePhysicalTransactionContract 7/7; WriteOpIdLegacyLookup 9/9; WriteCatalogPublicationIsolation 7/7; ImageUploadEventJournal 9/9; SupplementaryImageOperationIdContract 8/8; WriteContributionAppendConcurrency 9/9; WriteContributionRecovery 9/9; WriteIdempotencySnapshotReuse 9/9.
+- Regresión: 291 suites / 3,397 pruebas / 0 fallos; build y health SUCCESS. Beta real de Drive/concurrencia sigue pendiente en entorno aislado.
+- Siguiente: auditoría end-to-end FEEDBACK.
