@@ -2353,6 +2353,8 @@ function findReportByReportId_(sheet, reportId, metadataColumn) {
             if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) metadata = parsed;
         } catch (error) {}
         if (!metadata || String(metadata.reportId || "") !== id) return;
+        const imageMetadata = getFeedbackReportImageMetadata_(id, metadata);
+        if (imageMetadata) Object.assign(metadata, imageMetadata);
         const row = sheet.getRange(rowIndex, 1, 1, lastColumn).getValues()[0];
         matches.push({ rowIndex, row, metadata });
     });
@@ -2883,7 +2885,9 @@ function parseCutSuggestionRecord(rawContent, vehicleId, userName) {
 }
 function mapInboxFeedbackRow_(row, reportMetadataColumn) {
  const rawContent=row[COLS_FEEDBACKS.Problema-1],rowVehicleId=normalizeInboxStoredText_(row[COLS_FEEDBACKS.ID_vehiculo-1],120,""),rowUserName=normalizeInboxStoredText_(row[COLS_FEEDBACKS.Usuario-1],INBOX_VIDEO_USER_MAX_LENGTH,"Usuario");
- const reportMetadata=reportMetadataColumn?parseReportMetadata(row[reportMetadataColumn-1],rowVehicleId):null;let videoMeta=null;
+ const reportMetadata=reportMetadataColumn?parseReportMetadata(row[reportMetadataColumn-1],rowVehicleId):null;
+ if(reportMetadata){const imageMetadata=getFeedbackReportImageMetadata_(reportMetadata.reportId,reportMetadata);if(imageMetadata)Object.assign(reportMetadata,imageMetadata);}
+ let videoMeta=null;
  if(typeof rawContent==="string"&&rawContent.trim().startsWith("{")){try{const parsed=JSON.parse(rawContent);if(parsed&&typeof parsed==="object"&&!Array.isArray(parsed))videoMeta=parsed;}catch(error){}}
  if(videoMeta&&videoMeta.subType==="video_approval"){
   const videoId=normalizeInboxStoredText_(videoMeta.videoId,11,""),videoUrl=normalizeInboxVideoUrl_(videoMeta.videoUrl,videoId);
