@@ -1232,3 +1232,12 @@ Adenda — FEEDBACK confirmación de sugerencias
 - Prueba AdminTestigoColumnsNoInternalLock: 1/1 PASS en harness Node.js aislado; inspección posterior del bloque remoto confirmó que no quedaron referencias lock/lockAcquired dentro del helper. Pendiente checkout completo/CI.
 - Commits: 8b880d33b4298323d201074766517f9e58b7f96b, d00b6c569c1e3d88d3ccc6280fea44254b0df140, 7b8e4b90baabbb52f9fdda42a89e2eebd19d45ad y d118ac8e15751461939afcd405be07617d7af3ec. Sin deployment ni cambios productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-21 — ADMIN: ALTA DE LOGOTIPOS SIN ESPERA BLOQUEANTE
+- Evidencia: handleAddLogo cargaba el archivo Drive antes del ScriptLock, pero después usaba waitLock(30000) para proteger la secuencia única de LogosMarca y la escritura/compensación de la fila.
+- Corrección: se mantiene el lock de integridad, pero se sustituye waitLock(30000) por tryLock(0). Si no se adquiere, se intenta retirar el archivo no vinculado y, si falla la limpieza, se marca RECOVERY_REQUIRED. Se devuelve ADMIN_BUSY para reintento. El finally libera solo si se adquirió el lock.
+- Prueba AdminLogoWriteLockNonBlocking: 4/4 PASS en harness Node.js aislado; pendiente ejecución del archivo comprometido en checkout completo/CI.
+- Commits: 877b4c3df196da42bf6fd723752aea3c210de47d (servicio), 1b8edc62646a0aa82eee06f01978400d347de850 (prueba). Sin deployment ni cambios productivos.
+================================================================================
