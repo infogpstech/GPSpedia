@@ -2902,24 +2902,41 @@ function readInboxSheetPage_(sheet, offset, count) {
  const lastColumn=Math.max(1,Number(sheet.getLastColumn())||1);
  return sheet.getRange(offset+2,1,count,lastColumn).getValues();
 }
-function isCanonicalFeedbackInboxRow_(sheet, row, rowIndex, reportMetadataColumn, imageEventsIndex) {
+function isCanonicalFeedbackInboxRow_(sheet, row, rowIndex, reportMetadataColumn, imageEventsIndex, canonicalCache) {
     if (!sheet || !Array.isArray(row)) return true;
+    const cache = canonicalCache instanceof Map ? canonicalCache : null;
     const vehicleId = String(row[COLS_FEEDBACKS.ID_vehiculo - 1] || "").trim();
     const userName = String(row[COLS_FEEDBACKS.Usuario - 1] || "").trim();
     const rawProblem = String(row[COLS_FEEDBACKS.Problema - 1] || "");
     const suggestion = parseCutSuggestionRecord(rawProblem, vehicleId, userName);
     if (suggestion) {
         const operationId = String(suggestion.suggestionOperationId || "").trim();
-        const canonical = operationId
-            ? findCutSuggestionByOperation_(sheet, operationId)
-            : findCutSuggestionByRequest_(sheet, String(suggestion.reportId || ""), vehicleId,
-                Number(suggestion.corteIndex), String(suggestion.userId || ""));
+        const reportId = String(suggestion.reportId || "");
+        const corteIndex = Number(suggestion.corteIndex);
+        const userId = String(suggestion.userId || "");
+        const cacheKey = operationId
+            ? "suggestion-op:" + operationId
+            : "suggestion-request:" + [reportId, vehicleId, corteIndex, userId].join("|");
+        let canonical;
+        if (cache && cache.has(cacheKey)) canonical = cache.get(cacheKey);
+        else {
+            canonical = operationId
+                ? findCutSuggestionByOperation_(sheet, operationId)
+                : findCutSuggestionByRequest_(sheet, reportId, vehicleId, corteIndex, userId);
+            if (cache) cache.set(cacheKey, canonical);
+        }
         return !canonical || Number(canonical.rowNumber) === Number(rowIndex);
     }
     if (reportMetadataColumn) {
         const metadata = parseReportMetadata(row[reportMetadataColumn - 1], vehicleId);
         if (metadata) {
-            const canonical = findReportByReportId_(sheet, metadata.reportId, reportMetadataColumn, imageEventsIndex);
+            const cacheKey = "report:" + String(metadata.reportId || "");
+            let canonical;
+            if (cache && cache.has(cacheKey)) canonical = cache.get(cacheKey);
+            else {
+                canonical = findReportByReportId_(sheet, metadata.reportId, reportMetadataColumn, imageEventsIndex);
+                if (cache) cache.set(cacheKey, canonical);
+            }
             return !canonical || Number(canonical.rowIndex) === Number(rowIndex);
         }
     }
@@ -2959,8 +2976,9 @@ function handleGetFeedbackItems(payload) {
  const imageEventsIndex=needsImageEventIndex?readFeedbackReportImageEventsIndex_():null;
  const actor=payload&&payload.__feedbackActor?payload.__feedbackActor:null;
  const canSeeVideoApprovals=String(actor&&actor.role||"")==="Desarrollador";
+ const canonicalCache=new Map();
  const mappedFeedback=feedbackRows
-  .filter((row,index)=>isCanonicalFeedbackInboxRow_(feedbackSheet,row,offset+2+index,reportMetadataColumn,imageEventsIndex))
+  .filter((row,index)=>isCanonicalFeedbackInboxRow_(feedbackSheet,row,offset+2+index,reportMetadataColumn,imageEventsIndex,canonicalCache))
   .map(row=>mapInboxFeedbackRow_(row,reportMetadataColumn,imageEventsIndex));
  const data=mappedFeedback.filter(item=>canSeeVideoApprovals||item.type!=="video_approval")
   .concat(contactRows.map(mapInboxContactRow_));
