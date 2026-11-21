@@ -1251,3 +1251,13 @@ Adenda — FEEDBACK confirmación de sugerencias
 - Prueba WriteVehicleIdReservationOutsidePhysicalLock: 5/5 PASS en harness Node.js v22.16.0 aislado, incluido WRITE_BUSY seguido de retry con el mismo opId y mismo ID. Pendiente ejecución en checkout completo/CI.
 - Commits: 9b86c3ef893044af665ce96f21a50dd17e429760, 8cb742bacef2d527c7acdf42bdd8990cec85ffcd y 3e27d61a0e5efdc761c6f1568e8eb072099f41c3. Sin deployment ni cambios productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-21 — WRITE: LECTURA FOCALIZADA DE IDEMPOTENCIA
+- Evidencia: handleAddOrUpdateCutLocked recorría el historial completo de Idempotencia con readIdempotenciaEntries_ aunque la mutación solo necesita resolver un opId.
+- Corrección: se construye un snapshot mínimo (sheet, entries y byOpId) a partir de readIdempotenciaEntryByOpId_. La búsqueda focalizada valida encabezados, detecta más de una coincidencia del opId activo y devuelve la fila exacta. recordOpId reconsulta la fila antes de mutar y conserva los checks de existencia, rowIndex, vehicleId, slotIndex y operationHash.
+- Alcance: ya no se recorren duplicados de otros opIds en cada alta; esos datos deben ser detectados por una auditoría global de integridad. No se relaja la validación del opId que se está procesando.
+- Prueba WriteIdempotencyTargetedRead: 4/4 PASS en harness Node.js aislado; pendiente checkout completo/CI. La sección crítica física sigue protegida.
+- Commits: 7a211e681bef315f2c4ef118ffa13e8fb1715ca7, 252098b2682d5a6a6517b6d062060bfbabcf9d37, 52e6ce664207af275153899ccb2935803274b92d y 235936b21de1736eb0f38d0bf0c89815825ce3f6. Sin deployment ni cambios productivos.
+================================================================================
