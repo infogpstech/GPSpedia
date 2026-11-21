@@ -227,8 +227,8 @@ function runLastDeveloperProtectionTests(sources) {
     });
     run('AUTH verifica ausencia de sesiones residuales después de eliminar',()=>{
         const d=extract(auth,'handleDeleteUser');
-        assert(d.includes('remainingSessions.length')&&d.includes('Quedaron filas de sesión asociadas'));
-        assert(d.indexOf('remainingSessions.length')>d.indexOf('sessionsSheet.deleteRow'));
+        assert(d.includes('hasRemainingSessions')&&d.includes('Quedaron filas de sesión asociadas'));
+        assert(d.indexOf('hasRemainingSessions')>d.indexOf('sessionsSheet.deleteRow'));
     });
     run('Handlers AUTH y confirmaciones UI tienen sintaxis válida',()=>{
         const update=extract(auth,'handleUpdateUser','\n\nconst SESSION_ABSOLUTE_MONTHS');
