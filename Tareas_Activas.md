@@ -585,3 +585,14 @@ La Beta vigente de PyS se ejecuta con AUG-161 en lista_beta_adenda_2026-11-21.md
 - La nota histórica del cierre de creación PyS que indicaba que solución, prevención y relaciones conservaban locks describía únicamente la fase 1. Quedó sustituida por «Cierre local — coordinación de mutaciones PyS», que migró addSolution/addPrevention/addVehicleToProblem/removeVehicleFromProblem a leases compartidas y cuenta con cobertura Coordinator 86/86 y PysVehicleRelationIntegrity 20/20.
 - Las notas antiguas «P0 sigue abierto» de las etapas intermedias de votos, reportes y sugerencias son registros históricos; quedaron superadas por los cierres posteriores de handleSuggestYear y reportProblem/suggestCutChange.
 - Revisión de casillas actuales: las 15 casillas sin marcar del registro corresponden a pruebas Beta aisladas, aceptación visual o validación con servicios/datos reales. No queda ninguna casilla de implementación local abierta.
+
+
+## Reconciliación normativa — mutaciones PyS sin leases (2026-11-21)
+
+- Se corrigió la discrepancia entre §15 de NORMAS_DESAROLLO.md y la implementación PyS que había introducido leases compartidas Coordinator para operaciones ordinarias.
+- addSolution, addPrevention, addVehicleToProblem y removeVehicleFromProblem ejecutan ahora sus lecturas/escrituras directamente en FEEDBACK; se eliminó withPysMutationLease_ y sus cuatro políticas de lease en Coordinator.
+- Se conserva la lista CATALOG_CHANGE_ALLOWED_WRITERS_ para permitir la publicación de deltas PyS; esta lista no adquiere leases ni coordina la mutación.
+- Se conserva RBAC de Desarrollador para desvincular, validación funcional de IDs, normalización, verificación del valor persistido y registro de actividad.
+- Regresión integral CI 3255f44f0f10cfbb7b5b3f6b8342c98d55008f0a SUCCESS: 259 suites, 3,130 pruebas, 0 fallos. PysCreationIntegrity 56/56; PysVehicleRelationIntegrity 19/19; CatalogChangeFeed 35/35; SharedMutationCoordinator 86/86.
+- La adenda AUG-161 se actualizó: no probar contención/expiración de leases para estas cuatro acciones; probar operación directa, no interferencia, errores reales de Spreadsheet/Drive y reintentos en recursos aislados.
+- No se desplegó Apps Script ni se modificaron Spreadsheet/Drive productivos. Solo quedan las pruebas Beta aisladas y Safe Apply sujeto a autorización.
