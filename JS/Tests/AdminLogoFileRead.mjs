@@ -38,7 +38,7 @@ await run('rechaza discrepancia entre MIME del archivo y Data URL', async () => 
 });
 await run('rechaza errores de FileReader', async () => {
     mode = 'error';
-    await assert.rejects(readLogo({name:'logo.png'}), error => error && error.name === 'LogoFileReadError');
+    await assert.rejects(readLogo({name:'logo.png',type:'image/png'}), error => error && error.name === 'LogoFileReadError');
 });
 await run('rechaza lectura cancelada', async () => {
     mode = 'abort';
@@ -64,6 +64,20 @@ const validatorSource = adminServer.slice(validatorStart, validatorEnd);
 assert.ok(validatorSource.includes('image/png') && validatorSource.includes('image/svg+xml') && validatorSource.includes('image/webp'));
 assert.ok(validatorSource.includes('signatureValid'), 'El servidor debe comprobar la firma real del archivo.');
 assert.ok(adminServer.includes('validateLogoImagePayload_(fileData, mimeType)'), 'handleAddLogo debe usar el validador de firma.');
+const validator = new Function("Utilities", validatorSource + String.fromCharCode(10) + "return validateLogoImagePayload_;")({
+    base64Decode(value) { return Buffer.from(value, "base64"); },
+    base64Encode(bytes) { return Buffer.from(bytes).toString("base64"); },
+    newBlob(bytes) { return { getDataAsString() { return Buffer.from(bytes).toString("utf8"); } }; }
+});
+const pngBytes=Buffer.from([137,80,78,71,13,10,26,10,0]);
+const webpBytes=Buffer.from("RIFF0000WEBP");
+const svgBytes=Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"></svg>');
+assert.equal(validator(pngBytes.toString("base64"),"image/png").length,pngBytes.length);
+assert.equal(validator(webpBytes.toString("base64"),"image/webp").length,webpBytes.length);
+assert.equal(validator(svgBytes.toString("base64"),"image/svg+xml").length,svgBytes.length);
+assert.throws(()=>validator(Buffer.from("GIF89a").toString("base64"),"image/png"),/firma real/);
+assert.throws(()=>validator(pngBytes.toString("base64"),"image/jpeg"),/PNG, SVG o WEBP/);
+
 
 const failed = results.filter(item => item.status !== 'PASS');
 for (const item of results) console.log(item.status + ' ' + item.name + (item.message ? ': ' + item.message : ''));

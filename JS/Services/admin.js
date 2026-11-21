@@ -6432,8 +6432,13 @@ function validateLogoImagePayload_(fileData, mimeType) {
             String.fromCharCode(at(0), at(1), at(2), at(3)) === "RIFF" &&
             String.fromCharCode(at(8), at(9), at(10), at(11)) === "WEBP";
     } else if (normalizedMime === "image/svg+xml") {
-        const svgText = Utilities.newBlob(bytes).getDataAsString("UTF-8").replace(/^\\uFEFF/, "").trim();
-        signatureValid = /^(?:<\\?xml[^>]*>\\s*)?(?:<!--[\\s\\S]*?-->\\s*)*<svg(?:\\s|>)/i.test(svgText);
+        const svgText = Utilities.newBlob(bytes).getDataAsString("UTF-8")
+            .replace(String.fromCharCode(0xFEFF), "").trim().toLowerCase();
+        const svgStart = svgText.indexOf("<svg");
+        const svgNext = svgStart >= 0 ? svgText.charAt(svgStart + 4) : "";
+        const validRoot = svgStart >= 0 && (svgNext === ">" || /\\s/.test(svgNext));
+        const validPrefix = svgStart === 0 || svgText.startsWith("<?xml") || svgText.startsWith("<!--");
+        signatureValid = validRoot && validPrefix;
     }
     if (!signatureValid) throw new Error("La firma real del archivo no coincide con el MIME del logotipo.");
     return bytes;
