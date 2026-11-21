@@ -109,3 +109,12 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - Se completó una primera inspección estática de rutas clave; no equivale a un mapa exhaustivo de todos los consumidores ni a un benchmark.
 - No se modificó código productivo, no se retiraron locks/leases/llamadas, no se ejecutaron pruebas de rendimiento ni Beta y no se desplegaron proyectos Apps Script.
 - Las tareas de confirmación, pruebas de idempotencia, compresión y reducción de consultas completas quedan pendientes en `Tareas_Activas.md`.
+
+
+### Hallazgos adicionales — imágenes y refrescos después de aportes
+- `offline.saveCatalog` y `offline.saveCatalogWithCursor` llaman a `cacheItemImages` para los últimos 15 vehículos después de persistir el catálogo. Cada vehículo puede aportar hasta 11 campos de imagen. El trabajo se ejecuta en segundo plano y la cola limita la compresión a dos tareas simultáneas, pero no está priorizado por visibilidad ni por interacción actual; puede encolar muchas descargas/compresiones que compitan con imágenes visibles y aportes.
+- `offline.saveViewedItem` también llama a `cacheItemImages` para el vehículo consultado. Se debe determinar si el prefetch amplio es útil para uso offline o si descarga imágenes no visibles sin beneficio inmediato.
+- `setOptimizedImage` asigna de inmediato la URL remota al elemento `img`; en paralelo consulta IndexedDB y, si no hay miniatura, llama a `compressAndStoreThumbnail`, que ejecuta un `fetch` independiente a la misma URL normalizada. Son dos iniciadores de solicitud para el mismo recurso en el primer miss; el caché HTTP del navegador podría evitar una segunda transferencia física, pero eso depende de las cabeceras/estado de caché y no está demostrado. Debe medirse en Network con caché fría/caliente.
+- `refreshVehicleDetailAfterExpansion_` ejecuta `getCatalogData(forceRefresh:true)` después de confirmar aportes de corte e información suplementaria, aunque la sincronización principal dispone de feed incremental. Es un viaje adicional de snapshot completo por aporte para refrescar un solo vehículo; no retirarlo hasta diseñar una lectura dirigida o una actualización local/delta que preserve candidatos, fuentes y conflictos.
+- La restauración de edición usa lecturas completas antes y después de escrituras para comparar y verificar el rollback de campos; estas lecturas tienen una finalidad de integridad y no deben clasificarse como redundantes sin rediseñar el contrato de verificación.
+
