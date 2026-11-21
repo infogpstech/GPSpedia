@@ -684,3 +684,13 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - FeedbackTutorialUpdateNoopPreflight 6/6; FeedbackTutorialUpdateTitleLookupBoundedRead 5/5; TutorialIntegrity 42/42. CI: 259 suites, 3,130 pruebas, 0 fallos; build, health read-only y Pages SUCCESS.
 - La siguiente tarea local es eliminar el lock de versionado en publishFeedbackCatalogChange_ sin degradar la publicación incremental; después continúa la auditoría de locks de WRITE/ADMIN/USERS.
 - No se desplegó Apps Script ni se modificaron recursos productivos.
+
+
+## Checkpoint — FEEDBACK sin ScriptLock y versionado no bloqueante (2026-11-21)
+
+- HEAD de código validado: 56a849eac4d7ad40f1cf6906402bcbb56fcf9f19.
+- Se eliminó acquireFeedbackScriptLock_ y el bloqueo de publishFeedbackCatalogChange_. El snapshot se construye directamente y sourceVersion usa Date.now(); versiones repetidas/obsoletas activan reset en Coordinator para reconstrucción segura.
+- FEEDBACK queda sin llamadas a LockService, tryLock, waitLock ni releaseLock en sus operaciones. Se mantienen validación de actor/rol, idempotencia, append-only journals, read-back, actividad y publicación CATALOG.
+- Pruebas: FeedbackCatalogPublicationIsolation 5/5; CatalogChangeFeed 35/35; TutorialIntegrity 42/42; PysCreationIntegrity 56/56; PysImageStorageRecovery 22/22. CI 56a849eac4d7ad40f1cf6906402bcbb56fcf9f19 SUCCESS: 259 suites, 3,130 pruebas, 0 fallos; health read-only SUCCESS.
+- Siguiente tarea local: WRITE ID allocator (reserva numérica secuencial) y ensureTestigoColumns; ambos aún usan ScriptLock. Preservar unicidad numérica sin espera global y después revisar ADMIN. AUTH/USERS locks se mantienen como protecciones de sesión/rol hasta completar su auditoría.
+- No se desplegó Apps Script ni se modificaron recursos productivos.
