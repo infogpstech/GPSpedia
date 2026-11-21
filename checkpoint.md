@@ -932,3 +932,11 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Se confirmó snapshot completo CATALOG después de aportes de corte/información suplementaria para actualizar un solo vehículo. Se registró tarea para evaluar endpoint dirigido/delta seguro.
 - Se añadieron tareas P1 y registro factual. No se modificó código, no se ejecutaron pruebas ni benchmarks y no se desplegó Apps Script.
 - Próximo paso: completar el mapa de requests del catálogo y de uploads, instrumentar una medición reproducible con caché fría/caliente y revisar idempotencia de reintentos antes de optimizar.
+
+
+## Continuidad — verificación de reintentos Safe Apply (2026-11-21)
+
+- HEAD previo: `c66e1bbd53b81c6d4f0131c0c65d947ddbe01811`; base `GPSpedia2.2.5` intacta en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- Se verificó estáticamente que `applyCortesImageOrganizer` y `rollbackCortesImageOrganizer` usan IDs estables, ledger y estados terminales verificables para replay; `CortesImageOrganizerExecutor.mjs` cubre `already_applied` y `already_rolled_back` y fallos parciales.
+- La prueba no se ejecutó en esta sesión; la tarea de diseño/idempotencia se marca completada por inspección de código y contrato, sin afirmar resultado de ejecución. Confirmar CI cuando se realice un cambio de código.
+- `backupDatabase` y `applyCortesImageReconciliation` permanecen limitadas a un intento automático.
