@@ -202,6 +202,14 @@ test("rechaza opId sin huella SHA-256 válida antes de crear reservas", () => {
     assert.throws(() => h.allocate({ opId: "OP-BAD", operationHash: "bad" }), /operationHash SHA-256/);
     assert.equal(h.ledger, null);
 });
+test("rechaza IDs duplicados o desordenados en el ledger antes de asignar otro", () => {
+    const h = harness();
+    h.allocate({ opId: "OP-LEDGER-A", operationHash: HASH_A });
+    h.allocate({ opId: "OP-LEDGER-B", operationHash: HASH_B });
+    h.ledger.rows[2][2] = 4;
+    assert.throws(() => h.allocate({ opId: "OP-LEDGER-C", operationHash: "c".repeat(64) }), /secuencia estrictamente creciente y única/);
+    assert.equal(h.ledger.rows.length, 3, "No debe anexarse una reserva sobre un ledger corrupto");
+});
 test("rechaza encabezados incompatibles en el ledger existente", () => {
     const h = harness();
     h.allocate({ opId: "OP-HEADER", operationHash: HASH_A });
