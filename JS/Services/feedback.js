@@ -1518,13 +1518,17 @@ function findPendingFeedbackYearApplication_(vehicleId) {
     const sheet = getFeedbackYearApplicationsSheet_(false);
     if (!sheet) return null;
     const rows = sheet.getDataRange().getValues();
+    const eventSheet = getFeedbackYearApplicationEventsSheet_(false);
+    const eventRows = eventSheet && eventSheet.getLastRow() > 1
+        ? eventSheet.getRange(2, 1, eventSheet.getLastRow() - 1, 5).getValues() : [];
     const matches = [];
     for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
-        if (String(row[1] || "").trim() === String(vehicleId) &&
-            String(row[8] || "").trim() === "pending") {
-            matches.push({ rowIndex: i + 1, row });
-        }
+        if (String(row[1] || "").trim() !== String(vehicleId) ||
+            String(row[8] || "").trim() !== "pending") continue;
+        const eventState = getFeedbackYearApplicationEventState_(row[0], eventRows);
+        if (eventState.completed || eventState.requiresReview) continue;
+        matches.push({ rowIndex: i + 1, row, eventState });
     }
     if (!matches.length) return null;
     const byOperation = new Map();
@@ -1556,7 +1560,13 @@ function findPendingFeedbackYearApplication_(vehicleId) {
         numeric[5] < 3 || ![true, false, "TRUE", "FALSE", ""].includes(row[9])) {
         throw new Error("La aplicación pendiente de año contiene datos inválidos; requiere revisión manual.");
     }
-    return { sheet, rowIndex: selected.rowIndex, row, rowIndexes: duplicateEntries.map(entry => entry.rowIndex) };
+    return {
+        sheet, rowIndex: selected.rowIndex, row,
+        rowIndexes: duplicateEntries.map(entry => entry.rowIndex),
+        activityAttempted: duplicateEntries.some(entry =>
+            entry.eventState.activityAttempted || entry.row[9] === true || String(entry.row[9]).toUpperCase() === "TRUE"
+        )
+    };
 }
 
 function getFeedbackProjectedVehicleYearSnapshot_(vehicleId, baseRow) {
