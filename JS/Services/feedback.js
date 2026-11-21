@@ -4075,6 +4075,13 @@ function handleAddProblem(source) {
                 if (!normalizePysImageReference_(existing[0].row[6]) || !pysRowMatchesPayload_(existing[0].row, expected)) {
                     throw new Error("El registro PyS existente no coincide con la operación; requiere revisión.");
                 }
+                try {
+                    const linkedFile = DriveApp.getFileById(op.imageFileId);
+                    linkedFile.setDescription(["GPSpedia PyS — LINKED", "problemId=" + problemId, "fileId=" + op.imageFileId,
+                        "recoveredAfterPartialFailure=true"].join("\\n"));
+                } catch (metadataError) {
+                    console.warn("No se pudo actualizar la metadata auxiliar de la imagen PyS:", metadataError);
+                }
                 return { status: "success", message: "Problema registrado correctamente.", problemId, recovered: true };
             }
             if (op.status === "LINKED") {
