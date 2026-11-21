@@ -39,7 +39,7 @@ class FakeSpreadsheet {
     getSheetByName(name) { return this.sheets.get(name) || null; }
     insertSheet(name) { const sheet = new FakeSheet(name); this.sheets.set(name, sheet); return sheet; }
 }
-let uuid = 0, lockAcquired = 0, lockReleased = 0, sessionValidationCount = 0;
+let uuid = 0, lockCalls = 0, sessionValidationCount = 0;
 const spreadsheet = new FakeSpreadsheet();
 const users = spreadsheet.insertSheet("Users");
 users.getRange(1, 1, 9, 9).setValues([
@@ -82,10 +82,7 @@ const Utilities = {
     computeDigest: (_algorithm, value) => Array.from(String(value)).map(char => char.charCodeAt(0) & 255)
 };
 const LockService = {
-    getScriptLock: () => ({
-        waitLock() { lockAcquired++; },
-        releaseLock() { lockReleased++; }
-    })
+    getScriptLock() { lockCalls++; throw new Error("Inbox no debe adquirir locks para operaciones ordinarias."); }
 };
 const SpreadsheetApp = { flush() {} };
 const api = new Function(
@@ -426,12 +423,13 @@ run("El registro de auditoría no almacena el cuerpo del mensaje", () => {
     assert.ok(audit.getLastRow() >= 4);
     assert.equal(audit.rows.slice(1).some(row => String(row[7]).includes("bienvenida")),false);
 });
-run("Las mutaciones liberan el lock incluso cuando una validación falla", () => {
-    const before = lockReleased;
+run("Las lecturas y mutaciones Inbox no adquieren locks", () => {
     assert.throws(() => api.handleArchiveInboxConversation({
         ...actor("U1","token-a"),conversationId:"inexistente",archived:true
     }),/No se encontró/);
-    assert.ok(lockReleased > before);
+    assert.equal(lockCalls,0);
+    assert.equal(api.handleGetInboxConversations({...actor("U1","token-a")}).status,"success");
+    assert.equal(lockCalls,0);
 });
 run("El mensaje se conserva como texto literal y no se ejecuta ni interpreta HTML", () => {
     // Aislar la prueba del límite de frecuencia acumulado en las pruebas previas.
