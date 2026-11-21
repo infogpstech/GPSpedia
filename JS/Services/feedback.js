@@ -2371,6 +2371,33 @@ function ensureFeedbackReportImageEventsSheet_() {
     return sheet;
 }
 
+function readFeedbackReportImageEventsIndex_() {
+    const index = new Map();
+    const sheet = getSpreadsheet().getSheetByName(FEEDBACK_REPORT_IMAGE_EVENTS_SHEET);
+    const lastRow = sheet ? sheet.getLastRow() : 0;
+    if (lastRow < 2) return index;
+    const rows = sheet.getRange(2, 1, lastRow - 1, FEEDBACK_REPORT_IMAGE_EVENT_HEADERS.length).getValues();
+    rows.forEach((row, offset) => {
+        const reportId = String(row[1] || "").trim();
+        if (!reportId) return;
+        const metadata = {
+            imageFileId: String(row[3] || "").trim(), imageUrl: String(row[4] || "").trim(),
+            imageName: String(row[5] || "").trim(), imageMimeType: String(row[6] || "").trim(),
+            imageSize: Number(row[7]), imageSha256: String(row[8] || "").trim().toLowerCase()
+        };
+        const previous = index.get(reportId);
+        if (previous) {
+            if (previous.metadata.imageSha256 !== metadata.imageSha256) {
+                throw new Error("El reporte tiene eventos de imagen contradictorios; requiere reconciliación.");
+            }
+            previous.duplicateCount++;
+            return;
+        }
+        index.set(reportId, { rowNumber: offset + 2, eventId: String(row[0] || "").trim(), metadata, duplicateCount: 0 });
+    });
+    return index;
+}
+
 function findFeedbackReportImageEventByReportId_(reportId) {
     const id = String(reportId || "").trim();
     const sheet = getSpreadsheet().getSheetByName(FEEDBACK_REPORT_IMAGE_EVENTS_SHEET);
@@ -2411,10 +2438,15 @@ function isFeedbackReportImageFileReferenced_(fileId) {
         String(sheet.getRange(candidate.getRow(), 4).getValue() || "").trim() === id);
 }
 
-function getFeedbackReportImageMetadata_(reportId, baseMetadata) {
+function getFeedbackReportImageMetadata_(reportId, baseMetadata, imageEventsIndex) {
     const legacy = normalizeReportImageMetadata_(baseMetadata);
     if (legacy) return legacy;
-    const event = findFeedbackReportImageEventByReportId_(reportId);
+    const id = String(reportId || "").trim();
+    if (imageEventsIndex instanceof Map) {
+        const event = imageEventsIndex.get(id);
+        return event ? event.metadata : null;
+    }
+    const event = findFeedbackReportImageEventByReportId_(id);
     return event ? event.metadata : null;
 }
 
@@ -2841,10 +2873,10 @@ function parseCutSuggestionRecord(rawContent, vehicleId, userName) {
         status: "pendiente_revision"
     };
 }
-function mapInboxFeedbackRow_(row, reportMetadataColumn) {
+function mapInboxFeedbackRow_(row, reportMetadataColumn, imageEventsIndex) {
  const rawContent=row[COLS_FEEDBACKS.Problema-1],rowVehicleId=normalizeInboxStoredText_(row[COLS_FEEDBACKS.ID_vehiculo-1],120,""),rowUserName=normalizeInboxStoredText_(row[COLS_FEEDBACKS.Usuario-1],INBOX_VIDEO_USER_MAX_LENGTH,"Usuario");
  const reportMetadata=reportMetadataColumn?parseReportMetadata(row[reportMetadataColumn-1],rowVehicleId):null;
- if(reportMetadata){const imageMetadata=getFeedbackReportImageMetadata_(reportMetadata.reportId,reportMetadata);if(imageMetadata)Object.assign(reportMetadata,imageMetadata);}
+ if(reportMetadata){const imageMetadata=getFeedbackReportImageMetadata_(reportMetadata.reportId,reportMetadata,imageEventsIndex);if(imageMetadata)Object.assign(reportMetadata,imageMetadata);}
  let videoMeta=null;
  if(typeof rawContent==="string"&&rawContent.trim().startsWith("{")){try{const parsed=JSON.parse(rawContent);if(parsed&&typeof parsed==="object"&&!Array.isArray(parsed))videoMeta=parsed;}catch(error){}}
  if(videoMeta&&videoMeta.subType==="video_approval"){
@@ -2944,7 +2976,7 @@ function handleGetMyProblemReports(payload) {
     const metadataColumn = getReportMetadataColumn(sheet);
     const width = Math.max(metadataColumn || 0,9);
     const rows = sheet.getRange(2,1,sheet.getLastRow()-1,width).getValues();
-    const ownedReports = [];
+    const ownedEntries = [];
     const seenReportIds = new Set();
     rows.forEach(row => {
         const rawContent = String(row[COLS_FEEDBACKS.Problema-1] || "");
@@ -2954,7 +2986,7 @@ function handleGetMyProblemReports(payload) {
             if (isTechnician && String(videoData.createdByUserId || "").trim() === actor.userId) {
                 const item = mapInboxFeedbackRow_(row,metadataColumn);
                 item._cursor = "video:" + item.id;
-                ownedReports.push(item);
+                ownedEntries.push({ item });
             }
             return;
         }
@@ -2968,9 +3000,23 @@ function handleGetMyProblemReports(payload) {
         if (!parsedMetadata) return;
         if (seenReportIds.has(parsedMetadata.reportId)) return;
         seenReportIds.add(parsedMetadata.reportId);
-        const item = mapInboxFeedbackRow_(row,metadataColumn);
-        item._cursor = item.reportMetadata && item.reportMetadata.reportId ? item.reportMetadata.reportId : "";
-        ownedReports.push(item);
+        ownedEntries.push({
+            row,
+            cursor: parsedMetadata.reportId
+        });
+    });
+    const needsImageEventIndex = ownedEntries.some(entry => {
+        if (!entry.row) return false;
+        const vehicleId = normalizeInboxStoredText_(entry.row[COLS_FEEDBACKS.ID_vehiculo-1],120,"");
+        const metadata = parseReportMetadata(String(entry.row[metadataColumn-1] || ""), vehicleId);
+        return Boolean(metadata && !normalizeReportImageMetadata_(metadata));
+    });
+    const imageEventsIndex = needsImageEventIndex ? readFeedbackReportImageEventsIndex_() : null;
+    const ownedReports = ownedEntries.map(entry => {
+        if (entry.item) return entry.item;
+        const item = mapInboxFeedbackRow_(entry.row, metadataColumn, imageEventsIndex);
+        item._cursor = entry.cursor;
+        return item;
     });
     // Se deduplica en orden físico ascendente (first-write-wins) y luego se conserva
     // la presentación más reciente primero para el listado paginado.
