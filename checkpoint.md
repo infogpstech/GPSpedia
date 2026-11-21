@@ -479,3 +479,15 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - CI `44876830826` SUCCESS: 258 suites, 3097 pruebas, 0 fallos; health read-only `44876830897` SUCCESS; Pages `44876830484` queued al momento del checkpoint.
 - No se ha migrado la edición de campos ni la proyección de versiones. Siguiente cambio: journal/versiones con expected hash para `handleUpdateTutorialItem`, CATALOG y compatibilidad con aprobación de vídeo en columna G.
 - Sin despliegue Apps Script ni cambios productivos.
+
+
+## Checkpoint — tutoriales fase 2 (2026-11-21)
+
+- HEAD de código/pruebas validado: `af2adefbd20ff450449cf8fc78f6e14d1aee733b`.
+- `handleAddTutorial`: lock-free mediante `TutorialTitleEvents` append-only, first-write-wins por operación y título.
+- Ediciones descriptivas de tutoriales con ID estable: lock-free mediante `TutorialEditEvents`, expectedHash D:F y snapshot append-only. Las ediciones concurrentes basadas en la misma versión no se pisan; el primer evento válido gana y los eventos obsoletos no se proyectan.
+- `findTutorialRow_` y CATALOG proyectan D:F desde eventos; conservan base para título, imagen, vídeo y colaborador. Aprobaciones de vídeo mantienen su escritura de columna G.
+- Renombrados y filas legacy sin ID siguen bajo ScriptLock/in-place. El renombrado usa evento de reserva de título antes de escribir.
+- CI `44877806419` SUCCESS: 258 suites, 3101 pruebas, 0 fallos; health `44877806406` SUCCESS; Pages `44877806381` SUCCESS.
+- Siguiente cambio: migrar renombrados de título a eventos versionados sin lock, incluyendo cancelación/reconciliación de reservas si el expectedHash queda obsoleto. Después auditar aprobaciones de vídeo.
+- Sin despliegue Apps Script ni cambios productivos.
