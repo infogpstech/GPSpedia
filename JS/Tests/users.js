@@ -394,7 +394,7 @@ function doPostInternal_(e) {
 
 function parseSessionDate_(v){if(v===null||v===undefined||String(v).trim()==='')return null;const d=v instanceof Date?new Date(v.getTime()):new Date(v);return Number.isNaN(d.getTime())?null:d;}
 function addCalendarMonthsUTC_(date,months){const d=new Date(date.getTime()),day=d.getUTCDate();d.setUTCDate(1);d.setUTCMonth(d.getUTCMonth()+months);const last=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,0)).getUTCDate();d.setUTCDate(Math.min(day,last));return d;}
-function findUniqueRowsByExactValue_(sheet,column,value,minWidth=1,trimCell=false) {
+function findUniqueRowsByExactValue_(sheet,column,value,trimCell=false) {
     if (!sheet || !value) return [];
     const lastRow = Number(sheet.getLastRow ? sheet.getLastRow() : 0);
     if (lastRow < 2) return [];
@@ -413,13 +413,11 @@ function findUniqueRowsByExactValue_(sheet,column,value,minWidth=1,trimCell=fals
             if ((trimCell ? actual.trim() : actual) === expected) rowNumbers.push(i+2);
         }
     }
-    const lastColumn = Number(sheet.getLastColumn ? sheet.getLastColumn() : 0);
-    const width = Math.max(Number(minWidth)||1,lastColumn||1);
-    return rowNumbers.map(rowIndex => ({rowIndex,row:sheet.getRange(rowIndex,1,1,width).getValues()[0]}))
-        .filter(item => {
-            const actual = String(item.row[column-1] === null || item.row[column-1] === undefined ? "" : item.row[column-1]);
-            return (trimCell ? actual.trim() : actual) === expected;
-        });
+    return rowNumbers.map(rowIndex => {
+        const cell = sheet.getRange(rowIndex,column,1,1).getValue();
+        const actual = String(cell === null || cell === undefined ? "" : cell);
+        return {rowIndex,actual:trimCell ? actual.trim() : actual};
+    }).filter(item => item.actual === expected).map(item => ({rowIndex:item.rowIndex}));
 }
 
 function getVerifiedSession(_sessionToken, payload, requireUserRow) {
@@ -431,7 +429,7 @@ function getVerifiedSession(_sessionToken, payload, requireUserRow) {
     let userRowIndex = null;
     if (requireUserRow === true) {
         const usersSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.USERS);
-        const userRows = findUniqueRowsByExactValue_(usersSheet, COLS_USERS.ID, userId, 9, true);
+        const userRows = findUniqueRowsByExactValue_(usersSheet, COLS_USERS.ID, userId, true);
         if (userRows.length !== 1) throw new Error("No se encontró una fila única para actualizar el perfil autenticado.");
         userRowIndex = userRows[0].rowIndex;
     }
@@ -459,7 +457,10 @@ function handleGetUsers(payload) {
     }
 
     const userSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.USERS);
-    const data = userSheet.getDataRange().getValues();
+    const lastRow = userSheet.getLastRow();
+    const data = lastRow > 1
+        ? userSheet.getRange(1, 1, lastRow, COLS_USERS.Nombre_Completo).getValues()
+        : [];
     data.shift(); // Remove headers
 
     const users = data
