@@ -5,6 +5,12 @@ const VIDEO_TUTORIAL_HEADERS = ["ID", "Tema", "Imagen", "comoIdentificarlo", "do
 function runVideoApprovalPublishingTests() {
     const results=[];let passed=0,failed=0;
     const oldGetSafe=getSafeSheet,oldGetSpreadsheet=getSpreadsheet,oldUuid=Utilities.getUuid,oldFormat=Utilities.formatDate,oldTimezone=Session.getScriptTimeZone,oldFlush=SpreadsheetApp.flush;
+    const oldDigestAlgorithm=Utilities.DigestAlgorithm,oldComputeDigest=Utilities.computeDigest;
+    if(!Utilities.DigestAlgorithm)Utilities.DigestAlgorithm={SHA_256:"SHA_256"};
+    if(typeof Utilities.computeDigest!=="function")Utilities.computeDigest=(algorithm,value)=>{
+        let seed=0;for(const character of String(value||""))seed=(seed*33+character.charCodeAt(0))%2147483647;
+        return Array.from({length:32},(_,index)=>((seed+index*37)%256)-128);
+    };
     const oldLockService=LockService,oldSharedLease=globalThis.withSharedMutationLease_;
     let lockAcquired=0,lockReleased=0,leaseCalls=[];
     LockService={getScriptLock:()=>({waitLock:()=>{lockAcquired++;},releaseLock:()=>{lockReleased++;}})};
@@ -252,6 +258,8 @@ function runVideoApprovalPublishingTests() {
         Session.getScriptTimeZone=oldTimezone;
         SpreadsheetApp.flush=oldFlush;
         LockService=oldLockService;
+        Utilities.DigestAlgorithm=oldDigestAlgorithm;
+        Utilities.computeDigest=oldComputeDigest;
         if(oldSharedLease===undefined)delete globalThis.withSharedMutationLease_;else globalThis.withSharedMutationLease_=oldSharedLease;
     }
     return{status:failed===0?"PASS":"FAIL",passed,failed,results};
