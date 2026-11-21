@@ -160,3 +160,12 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - Se añadió `JS/Tests/AddCutImageSizePreflight.mjs` al runner de servicios. Validación aislada del helper: 3/3 PASS (rechazo antes de FileReader, aceptación del límite exacto y rechazo de archivo vacío).
 - Esto evita transferir un archivo que el backend rechazaría, pero no comprime archivos válidos ni reduce el tamaño de sus cargas. Compresión/redimensionado y MIME estricto siguen pendientes.
 
+
+
+### Prevalidación de imágenes suplementarias en modales de vehículo
+- Se incorporó `readSupplementaryImageDataUrl_` para las imágenes de apertura y cable de alimentación. Rechaza archivos vacíos y superiores a 10 MiB antes de FileReader; maneja `onerror`, `onabort`, resultado no válido y excepciones al iniciar lectura.
+- Los dos formularios ahora incluyen la lectura dentro de su bloque `try/catch`; un fallo ya no deja la promesa sin manejar ni mantiene el botón deshabilitado indefinidamente. Los errores de tamaño y lectura muestran mensajes específicos.
+- El límite coincide con WRITE (`IMAGE_UPLOAD_MAX_BYTES = 10 MiB)); no se modificó validación del servidor, formato MIME ni tamaño permitido.
+- Se añadió `JS/Tests/AddSupplementaryImagePreflight.mjs` al runner. Validación aislada del helper: 4/4 PASS (rechazo previo, límite exacto, archivo vacío y error FileReader).
+- Esto evita leer y transmitir imágenes que el backend rechazará y corrige el manejo de fallos de lectura; no comprime archivos válidos ni demuestra menor tiempo de subida.
+
