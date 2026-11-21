@@ -8,11 +8,9 @@ function runYouTubeApprovalTests() {
     const originalFlush = SpreadsheetApp.flush;
     const originalTimezone = Session.getScriptTimeZone;
     const originalLockService = LockService, originalSharedLease = globalThis.withSharedMutationLease_;
-    let lockAcquired = 0, lockReleased = 0, leaseAcquired = 0, leaseFailure = false;
-    LockService = { getScriptLock: () => ({ waitLock() { lockAcquired++; }, releaseLock() { lockReleased++; } }) };
-    globalThis.withSharedMutationLease_ = (service, operation, callback) => {
-        if (leaseFailure) throw new Error("lease unavailable"); leaseAcquired++; return callback("test-lease");
-    };
+    let lockCalls = 0, coordinatorCalls = 0;
+    LockService = { getScriptLock() { lockCalls++; throw new Error("La solicitud de vídeo no debe adquirir ScriptLock."); } };
+    globalThis.withSharedMutationLease_ = () => { coordinatorCalls++; throw new Error("La solicitud de vídeo no debe invocar Coordinator."); };
     function assert_(condition, message) { if (!condition) throw new Error(message || "Aserción fallida."); }
     function expectThrow_(callback, text) {
         let error = null; try { callback(); } catch (caught) { error = caught; }
@@ -88,19 +86,17 @@ function runYouTubeApprovalTests() {
             assert_(stored.videoId === "abcdefghijk" && stored.opVideoId === opVideoId && stored.createdByUserId === "user-1");
             assert_(stored.videoUrl === payload.videoUrl && stored.status === "pending");
         });
-        run_("reintento idéntico devuelve la misma solicitud bajo lease compartida", () => {
-            const beforeAcquire = leaseAcquired;
+        run_("reintento idéntico devuelve la misma solicitud sin Coordinator ni ScriptLock", () => {
             const first = handleSubmitVideoForApproval(payload);
             const second = handleSubmitVideoForApproval(payload);
             assert_(first.id === second.id && sheet.rows.length === 2);
-            assert_(leaseAcquired === beforeAcquire + 2 && lockAcquired === 0,
-                "Cada envío debe usar lease compartida sin ScriptLock local.");
+            assert_(coordinatorCalls === 0 && lockCalls === 0,
+                "Cada envío debe procesarse directamente sin lease ni ScriptLock.");
         });
-        run_("no escribe si no puede adquirir la lease compartida de envío", () => {
-            leaseFailure = true;
-            expectThrow_(() => handleSubmitVideoForApproval(payload), "lease unavailable");
-            leaseFailure = false;
-            assert_(sheet.rows.length === 1, "No debe crear una solicitud sin obtener el bloqueo.");
+        run_("el envío directo no depende de Coordinator", () => {
+            const result = handleSubmitVideoForApproval(payload);
+            assert_(result.status === "success" && sheet.rows.length === 2);
+            assert_(coordinatorCalls === 0 && lockCalls === 0);
         });
         run_("mismo opVideoId con otro vídeo se rechaza", () => {
             handleSubmitVideoForApproval(payload);
