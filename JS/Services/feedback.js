@@ -564,60 +564,23 @@ function buildFeedbackCortesCatalogChange_(reference) {
     return { collection: "cortes", recordId: wanted, operation: "upsert", snapshot: snapshot };
 }
 
-const FEEDBACK_CATALOG_SOURCE_VERSION_PROPERTY_ = "GPSpedia_FEEDBACK_CATALOG_SOURCE_VERSION_V1";
-
-function nextFeedbackCatalogSourceVersionLocked_() {
-    const properties = PropertiesService.getScriptProperties();
-    const raw = properties.getProperty(FEEDBACK_CATALOG_SOURCE_VERSION_PROPERTY_);
-    const current = raw === null ? 0 : Number(raw);
-    if (!Number.isSafeInteger(current) || current < 0) {
-        throw new Error("La versión de origen del catálogo FEEDBACK no es válida.");
-    }
-    const next = current + 1;
-    if (!Number.isSafeInteger(next) || next < 1) {
-        throw new Error("La versión de origen del catálogo FEEDBACK alcanzó su límite seguro.");
-    }
-    properties.setProperty(FEEDBACK_CATALOG_SOURCE_VERSION_PROPERTY_, String(next));
-    return next;
-}
-
 function publishFeedbackCatalogChange_(action, buildChange) {
     let change = { operation: "reset" };
-    const lock = LockService.getScriptLock();
-    let lockAcquired = false;
     try {
-        acquireFeedbackScriptLock_(lock);
-        lockAcquired = true;
-        try {
-            const snapshot = buildChange();
-            if (!snapshot || typeof snapshot !== "object" || snapshot.operation === "reset") {
-                change = { operation: "reset" };
-            } else {
-                change = Object.assign({}, snapshot, {
-                    sourceVersion: nextFeedbackCatalogSourceVersionLocked_()
-                });
-            }
-        } catch (catalogSnapshotError) {
-            console.error("No se pudo preparar el snapshot del catálogo FEEDBACK; se publicará reset.",
-                catalogSnapshotError && catalogSnapshotError.message ? catalogSnapshotError.message : catalogSnapshotError);
-            change = { operation: "reset" };
+        const snapshot = buildChange();
+        if (snapshot && typeof snapshot === "object" && snapshot.operation !== "reset") {
+            // Date.now() ofrece una versión de origen no bloqueante. Si dos ejecuciones
+            // coinciden en el mismo milisegundo, Coordinator convierte la versión repetida
+            // en reset y reconstruye el snapshot; no se pierde la actualización.
+            change = Object.assign({}, snapshot, { sourceVersion: Math.max(1, Date.now()) });
         }
-    } catch (lockError) {
+    } catch (catalogSnapshotError) {
+        console.error("No se pudo preparar el snapshot del catálogo FEEDBACK; se publicará reset.",
+            catalogSnapshotError && catalogSnapshotError.message ? catalogSnapshotError.message : catalogSnapshotError);
         change = { operation: "reset" };
-    } finally {
-        if (lockAcquired) {
-            try { lock.releaseLock(); }
-            catch (releaseError) {
-                change = { operation: "reset" };
-                console.error(releaseError);
-            }
-        }
     }
-
-    // La red nunca se ejecuta mientras se conserva el ScriptLock.
     return publishSharedCatalogChange_("FEEDBACK", action, change);
 }
-
 function publishFeedbackCortesCatalogChange_(action, reference) {
     return publishFeedbackCatalogChange_(action, () => buildFeedbackCortesCatalogChange_(reference));
 }
