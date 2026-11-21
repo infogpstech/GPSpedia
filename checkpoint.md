@@ -322,3 +322,13 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - La finalización ya no muta `Feedbacks`; conserva cada fila y actor tal como fueron registrados. El estado de aplicación se consulta por el ID determinista y los eventos de actualización. Las claves históricas `applied:user:...` se reconocen solo por compatibilidad; no se crean nuevas.
 - Validación: `SuggestYearVoteThreshold` 8/8, `FeedbackYearApplicationAppendOnly` 10/10; 255 suites, 3069 pruebas, 0 fallos; health read-only SUCCESS.
 - ScriptLock no se ha retirado. Sigue pendiente migrar el estado de ledger a eventos append-only y resolver coordinación concurrente antes de quitar bloqueo. No desplegar Apps Script ni modificar producción.
+
+
+
+## Checkpoint — ledger de eventos de aplicaciones de año (2026-11-21)
+
+- Commits: `10e513ea2872eaeb2afdb2b2fb20b3772f3c5e19` (esquema y append de eventos), `a85afc9fe13d4bac1f208bdf06715aba1db48d5e` (proyección de pendientes), `97ed8ce1d528b5785b781e933065276baef956b1` (finalización por eventos), `33fa06f9673825492ed56657b4d93863361fe72c` (detección de payloads contradictorios), pruebas `6bde2d4191015e43f37531e258b158a63ac8d801`.
+- Nuevo ledger `FeedbackYearApplicationEvents`: eventos append-only `activity_attempted`, `requires_review`, `completed`; eventId determinista por operación/tipo/payload; reintentos idénticos no duplican lógicamente y conflictos de payload se rechazan.
+- La búsqueda de aplicaciones pendientes proyecta estado desde eventos; finalización ya no actualiza `FeedbackYearApplications.status/activityAttempted/updatedAt` ni reescribe `Feedbacks`.
+- Validación: 255 suites, 3071 pruebas, 0 fallos; `SuggestYearVoteThreshold` 8/8, `FeedbackYearApplicationAppendOnly` 12/12; build SUCCESS y health read-only SUCCESS.
+- ScriptLock permanece activo. Pendiente: coordinación y recuperación bajo concurrencia, revisar todos los consumidores del esquema, y retirar el lock solo después de pruebas equivalentes. No desplegar Apps Script ni tocar datos productivos.
