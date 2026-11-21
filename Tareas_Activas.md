@@ -716,3 +716,46 @@ La Beta vigente de PyS se ejecuta con AUG-161 en lista_beta_adenda_2026-11-21.md
 - GitHub Actions SUCCESS: 259 suites, 3,137 pruebas aprobadas, 0 fallos. Sintaxis y health read-only SUCCESS.
 - Pages se desplegó automáticamente al hacer push a GPSpedia2.2.5_work: https://infogpstech.github.io/GPSpedia/. No se desplegó Apps Script ni se modificó Spreadsheet/Drive productivo.
 - Continúan abiertos únicamente los marcadores Beta aislados ya documentados; no marcarlos PASS sin ejecuciones reales.
+
+
+## Nueva tarea P0/P1 — auditoría integral de latencia, llamadas y aportes (2026-11-21)
+
+**Estado: PENDIENTE.** Se inicia por solicitud expresa del usuario. No retirar bloqueos ni llamadas hasta documentar consumidores, dependencias y pruebas. El objetivo es agilizar navegación y aportes, especialmente cargas de imágenes y vídeos, eliminando viajes y trabajo redundante sin debilitar integridad ni permisos.
+
+Documento de alcance, hallazgos y checklist: [AUDITORIA_INTEGRAL_LATENCIA_LLAMADAS_APORTES_2026-11-21.md](AUDITORIA_INTEGRAL_LATENCIA_LLAMADAS_APORTES_2026-11-21.md).
+
+### P0 — mapa de llamadas y medición
+- [ ] Mapear navegador → endpoint → handler → servicios dependientes para AUTH, USERS, WRITE, FEEDBACK, ADMIN, CATALOG, UTILITIES y COORDINATOR.
+- [ ] Inventariar `UrlFetchApp.fetch`, fetch wrappers, `routeAction`, reintentos, publicaciones de catálogo y llamadas entre proyectos; identificar llamadas duplicadas por interacción.
+- [ ] Establecer línea base reproducible: requests, bytes, latencia p50/p95, lecturas/escrituras y esperas para catálogo, búsqueda, detalle, aportes, Inbox, imágenes y vídeos; medir caché fría/caliente.
+- [ ] Revisar instrumentación y telemetría para asegurar que no añade viajes, locks, escrituras ni esperas a acciones de usuario.
+
+### P0 — AUTH/USERS y excepciones de sesión
+- [ ] Completar mapa de consumidores reales de `touchSession`, `acceptTerms`, `validateSession`, login, recuperación, logout, `createUser` y `deleteUser`.
+- [ ] Determinar si `touchSession` y `acceptTerms` producen llamadas/leases redundantes; contrastar con §15 de NORMAS_DESAROLLO.md.
+- [ ] Clasificar cada lease AUTH y conservar únicamente las excepciones justificadas por §15: cierre remoto, invalidación/limpieza de caché y sesiones, eliminación de cuenta y bloqueo temporal de login tras intentos fallidos.
+- [ ] Resolver y probar la carrera USERS `createUser` ↔ AUTH `deleteUser` antes de retirar la lease o el lock de unicidad.
+- [ ] Verificar caché de actor, TTL, invalidación por revocación/cambio de rol/logout/eliminación y fallback de Coordinator; no permitir permisos revocados persistentes.
+- [ ] Detectar validaciones, lecturas de Users/ActiveSessions y revocaciones duplicadas dentro de una misma operación.
+
+### P1 — servicios, aportes y catálogo
+- [ ] Auditar WRITE de extremo a extremo: alta/edición de cortes, reserva de ID, Spreadsheet/Drive, idempotencia, read-back y publicación CATALOG; detectar lecturas y llamadas repetidas.
+- [ ] Auditar FEEDBACK: reportes, sugerencias, votos, PyS, tutoriales y vídeos; verificar una sola escritura/registro de actor y publicación correcta por operación.
+- [ ] Auditar ADMIN: llamadas a WRITE/CATALOG/FEEDBACK, consultas repetidas y datos que podrían reutilizarse de una respuesta previa.
+- [ ] Auditar CATALOG/Coordinator: deltas, cursores, snapshots, resets e invalidaciones; evitar descargar snapshots completos cuando un delta/caché es suficiente.
+- [ ] Verificar que Inbox, actividad y navegación no disparan refrescos o lecturas duplicadas tras la retirada de locks.
+
+### P1 — imágenes, vídeos y archivos
+- [ ] Trazar el ciclo completo de carga de imágenes: compresión, MIME, base64/data URL, transferencia, Drive, metadata, miniaturas y respuesta al navegador.
+- [ ] Detectar cargas/descargas duplicadas de originales y miniaturas; revisar ObjectURL, lightbox, caché y liberación de blobs.
+- [ ] Revisar cola de compresión y cargas concurrentes, cancelación, reintentos y claves de idempotencia.
+- [ ] Trazar vídeos/YouTube: upload, verificación, aprobación, miniaturas, consultas de estado y reproducción; evitar transferencias innecesarias.
+- [ ] Medir por separado tiempo de cliente, red, Apps Script, Drive y proyección CATALOG para demostrar dónde se obtiene la mejora.
+
+### P2 — optimización y validación
+- [ ] Revisar listeners, polling, timers, observers, inicialización duplicada, renderizados y consultas disparadas al navegar.
+- [ ] Revisar IndexedDB y cachés por invalidación o duplicación excesiva sin bloquear el primer render.
+- [ ] Añadir pruebas de no duplicación y fallos parciales; ejecutar regresión integral y comparación de rendimiento antes/después.
+- [ ] Documentar llamadas retiradas, llamadas conservadas y su justificación; ejecutar Beta solo en proyectos, cuentas, Spreadsheet y Drive aislados.
+
+**Hallazgos preliminares que motivan el alcance:** AUTH conserva leases para múltiples acciones incluida `touchSession`; USERS conserva lease para `createUser`; varios servicios publican cambios de catálogo por Coordinator; ADMIN consulta WRITE/CATALOG; FEEDBACK/WRITE/ADMIN tienen rutas de transferencia de archivos y YouTube. Son puntos de auditoría, no conclusiones de redundancia. La inspección estática no demuestra por sí sola mejora de latencia ni justifica retirar protecciones.
