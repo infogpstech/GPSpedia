@@ -55,7 +55,7 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - [x] P0.2 — Instrumentación local del router: bytes UTF-8 de request/response, duración, promedio y p50/p95 de duración/tamaños sobre hasta 200 eventos efímeros por pestaña. Sin persistencia ni requests adicionales. **COMPLETADA CON VALIDACIÓN DIFERIDA**; CI: 277 suites, 3,226 pruebas, 0 fallos.
 - [ ] Línea base Beta por flujo: requests, bytes, p50/p95, lecturas/escrituras y esperas para catálogo, búsqueda, detalle, aportes, Inbox, imágenes y vídeos. Medición real requiere navegador y entorno aislado.
 - [ ] Revisar telemetría para evitar viajes de red, locks, escrituras o esperas en acciones ordinarias.
-- [ ] Completar matriz del flujo de catálogo: snapshot/reset, feed incremental, refresh post-edición, caché local y sincronización PyS.
+- [ ] Completar matriz del flujo de catálogo: integrar feed incremental en UI y medir refresh post-edición, caché local y sincronización PyS en Beta.
 
 ### P0 — AUTH/USERS y excepciones de sesión
 - [x] Completar mapa de consumidores de `touchSession`, `acceptTerms`, `validateSession`, login, recuperación, logout, `createUser` y `deleteUser` en `MAPA_CONSUMIDORES_AUTH_USERS_P0_2026-11-21.md`.
@@ -77,8 +77,9 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - [x] FEEDBACK — reportes propios: índice de eventos de imagen por reportId en una sola lectura por página; mantiene first-event-wins y limita errores de hash contradictorio al reporte consultado.
 - [x] FEEDBACK — bandeja administrativa: reutilizar el índice de eventos de imagen en canonicalización de reportId y mapeo de página.
 - [x] FEEDBACK — bandeja administrativa: cachear por página la canonicalización de suggestionOperationId, clave de solicitud y reportId; una búsqueda repetida para el mismo identificador se ejecuta una sola vez.
-- [ ] Auditar CATALOG/Coordinator: deltas, cursores, snapshots, resets e invalidaciones; conservar snapshots completos para inicio/reset/recuperación.
-- [ ] Revisar refresh completo `getCatalogData` al cerrar edición y sustituirlo solo si un delta preserva fuentes, cursores y concurrencia.
+- [x] Auditar CATALOG/Coordinator: deltas, cursores, snapshots, resets e invalidaciones; se mantienen snapshots completos para inicio/reset/recuperación y se conserva el feed incremental con reset seguro.
+- [x] Revisar refresh completo `getCatalogData` al cerrar edición: se mantiene. El feed y los helpers IndexedDB existen, pero no hay consumidor integrado en UI ni handshake de cursor asociado a una instantánea completa; reemplazarlo ahora podría omitir cambios concurrentes o eventos antiguos.
+- [ ] Integrar el feed en UI con cursor-before-snapshot, aplicación ordenada de deltas, persistencia atómica snapshot+cursor y fallback a snapshot completo ante reset, huecos, cursor vencido o colección sin ID estable.
 - [x] Medir telemetría ADMIN y confirmar que no se ejecuta en navegación/aportes ordinarios; llamada restringida al panel visible de Desarrollador, con refresco mínimo de 60 s.
 
 ### P1 — imágenes, vídeos y archivos
@@ -111,4 +112,4 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - No retirar escaneo global Drive ni controles de idempotencia/recuperación sin equivalencia demostrada.
 
 ## Siguiente paso exacto
-P0.1, P0.2 local, mapa AUTH/USERS, reducción integral de leases AUTH y P0.3 de caché de actor completados localmente. La única lease del dispatcher AUTH es deleteUser; USERS/createUser comparte solo el recurso USERS con esa eliminación. Siguiente: auditar CATALOG/Coordinator: deltas, cursores, snapshots, resets e invalidaciones; conservar snapshots completos para inicio/reset/recuperación. Después revisar el refresh completo getCatalogData al cerrar edición. La precarga/invalidation de los cuatro servicios y la carrera createUser/deleteUser requieren además validación de despliegues/propiedades en Beta aislada.
+P0.1, P0.2 local, mapa AUTH/USERS, reducción integral de leases AUTH y P0.3 de caché de actor completados localmente. La única lease del dispatcher AUTH es deleteUser; USERS/createUser comparte solo el recurso USERS con esa eliminación. Siguiente: integrar el feed incremental CATALOG en UI con un handshake seguro de snapshot/cursor y fallback completo; después medir catálogo y PyS en Beta aislada. La precarga/invalidation de los cuatro servicios y la carrera createUser/deleteUser requieren además validación de despliegues/propiedades en Beta aislada.
