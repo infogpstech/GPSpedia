@@ -5523,10 +5523,11 @@ function handleUpdateTutorialItem(payload) {
     // Un reintento que ya dejó todos los campos en el estado solicitado es de solo lectura:
     // resolverlo antes del lock evita bloquear otras escrituras sin introducir una carrera de escritura.
     const preflightSheet = getTutorialSheet_(false);
+    let preflightTarget = null, preflightNext = null;
     if (preflightSheet) {
-        const preflightTarget = findTutorialRow_(preflightSheet, reference, true);
+        preflightTarget = findTutorialRow_(preflightSheet, reference, true);
         const preflightCurrent = preflightTarget.row.slice(1, 6).map(value => String(value || ""));
-        const preflightNext = [
+        preflightNext = [
             updates.tema !== undefined ? updates.tema : String(preflightTarget.row[1] || ""),
             String(preflightTarget.row[2] || ""),
             updates.comoIdentificarlo !== undefined ? updates.comoIdentificarlo : String(preflightTarget.row[3] || ""),
@@ -5541,6 +5542,24 @@ function handleUpdateTutorialItem(payload) {
                     comoIdentificarlo: preflightNext[2], dondeEncontrarlo: preflightNext[3], detalles: preflightNext[4] }
             };
         }
+    }
+
+    const preflightId = preflightTarget ? String(preflightTarget.row[0] || "").trim() : "";
+    const titleUnchanged = preflightTarget &&
+        (updates.tema === undefined || String(updates.tema) === String(preflightTarget.row[1] || ""));
+    if (preflightTarget && /^tut-[A-Za-z0-9_-]{20,80}$/i.test(preflightId) && titleUnchanged) {
+        const snapshot = [preflightNext[2], preflightNext[3], preflightNext[4]];
+        appendTutorialEditEvent_(preflightId, preflightTarget.row, snapshot);
+        const saved = findTutorialRow_(preflightSheet, preflightId, true);
+        if (!snapshot.every((value, index) => value === String(saved.row[index + 3] || ""))) {
+            throw new Error("La edición append-only del tutorial no coincide con los cambios solicitados.");
+        }
+        return {
+            status: "success",
+            message: "Tutorial actualizado exitosamente.",
+            updated: { tutorialId: preflightId, tema: String(saved.row[1] || ""),
+                comoIdentificarlo: snapshot[0], dondeEncontrarlo: snapshot[1], detalles: snapshot[2] }
+        };
     }
 
     const lock = LockService.getScriptLock();
