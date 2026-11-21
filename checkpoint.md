@@ -1217,3 +1217,14 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Se actualizó la expectativa estática de `TermsAcceptance.js` para validar `const requestBody = JSON.stringify(...)` y `body: requestBody`, sin cambiar la lógica de aceptación de términos.
 - Corrección publicada en commit `521120e98a89d829e8e464ba635426a6da0a4198`. La nueva ejecución de service-tests/build/health se encontraba en curso al registrar. No marcar aún como aprobada.
 - El resto de la regresión observada antes de la única suite fallida había aprobado; el resumen fue 3,030 pruebas aprobadas, 1 suite pendiente/fallida por contrato obsoleto.
+
+
+## Cierre — P0.2 instrumentación local de métricas (2026-11-21)
+
+- HEAD de código validado antes del registro: `d7c209f85d3b790626ff56e7813c942ca46ca5aa` en `GPSpedia2.2.5_work`; rama base `GPSpedia2.2.5` sin cambios.
+- `JS/Frontend/api-config.js` mide el tamaño UTF-8 del cuerpo JSON enviado y del cuerpo de respuesta leído; no añade requests ni altera el payload. Cada intento de retry queda registrado como request individual.
+- `JS/Frontend/serviceTelemetry.js` mantiene métricas efímeras en memoria: requests, éxitos/errores, duración media, bytes totales/promedio y p50/p95 de duración/tamaños sobre un máximo de 200 eventos recientes por pestaña. Los percentiles no se presentan como muestra poblacional de 24 horas; no se guardan payloads, tokens ni identidad.
+- `JS/Tests/ServiceBrowserTrafficContract.mjs` amplía las pruebas de percentiles, valores sin muestra y agregación de bytes.
+- Validación GitHub Actions sobre el commit de código `d7c209f85d3b790626ff56e7813c942ca46ca5aa`: sintaxis de módulos modificados SUCCESS; regresión de servicios SUCCESS, **277 suites / 3,226 pruebas / 0 fallos**; health de servicios read-only SUCCESS. Pages build/deployment seguía en ejecución al momento del cierre documental; no se marca aquí como aprobado.
+- Estado P0.2: **COMPLETADA CON VALIDACIÓN DIFERIDA**. La ejecución de línea base real por flujo requiere navegador y entorno Beta aislado; operaciones Sheets/Drive, latencia interna Apps Script, CORS y recursos multimedia no se miden con este contador de cuerpos HTTP.
+- Siguiente tarea inmediata: completar matriz de consumidores AUTH/USERS y revisar acciones/leases conforme a §15, sin cambiar permisos ni el hash actual.
