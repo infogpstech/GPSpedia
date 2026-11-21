@@ -1420,3 +1420,14 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Se detectó y corrigió durante la regresión una referencia a `lastRow` retirada al introducir el snapshot; la corrección conserva la extensión/copia de formato al agregar una fila nueva. El segundo CI quedó verde.
 - Rama base comprobada: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin modificaciones. No se modificaron Spreadsheet, Drive, ScriptProperties ni deployments Apps Script productivos.
 - Siguiente tarea: auditoría de extremo a extremo WRITE/FEEDBACK/ADMIN; comenzar con WRITE (aportes, idempotencia, ledger, VIN, Drive, read-back y publicación CATALOG). Crear checkpoint y commit al cerrar esa auditoría/implementación antes de avanzar a FEEDBACK y ADMIN.
+
+
+## Checkpoint P1 WRITE — catálogo condicional y ledger reutilizado (2026-11-21)
+
+- Código: `JS/Services/write.js`; pruebas: `JS/Tests/WriteEntityCatalogDemand.mjs`, `WriteContributionLedgerReuse.mjs`, y actualización compatible de `WriteContributionPostAppendSnapshot.mjs`.
+- Aportes a vehículos existentes consultan `getExistingEntities` solo si el payload contiene marca/modelo/versiones para normalizar. Payloads con imagen/categoría/año no leen el catálogo completo sin necesidad.
+- Aportes cut/opening/feed validan AportesVehiculo antes de preflight y vuelven a validar el esquema después de Drive, inmediatamente antes del append. La hoja validada se pasa al append y se reutiliza para snapshot post-append y cálculo de slot/candidato; no se repiten lecturas de encabezados en helpers.
+- Se preservan idempotencia, comprobación de conflicto concurrente por opId, read-back append-only, snapshot post-append para slot/VIN y recuperación de eventos. Otros consumidores siguen validando su propia hoja.
+- Tests: WriteEntityCatalogDemand 8/8; WriteContributionLedgerReuse 15/15; WriteContributionPostAppendSnapshot 12/12 PASS. CI HEAD `698bd0518c4223ba6db36e1ce0fbd68492289b5a`: **289 suites / 3,382 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS.
+- La primera ejecución falló por aserciones estáticas antiguas que no contemplaban el nuevo parámetro opcional; se actualizaron los contratos para verificar el ledger compartido y la revalidación post-Drive. La siguiente regresión pasó completa.
+- Siguiente tarea: continuar auditoría WRITE sobre alta nueva, recuperación opId legacy, VIN update, suplementaria legacy y journal de imágenes; después checkpoint/commit y avanzar a FEEDBACK. Validación real de Drive/concurrencia sigue siendo Beta aislada.
