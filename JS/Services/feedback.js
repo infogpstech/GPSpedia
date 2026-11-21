@@ -3400,35 +3400,25 @@ function handleSuggestCutChange(payload) {
         vehicleId: normalizedVehicleId, corteIndex: normalizedCorteIndex, userId: normalizedUserId,
         requestFingerprint, legacyRequestFingerprint
     };
-    // Resolver reintentos ya registrados antes de cargar otra imagen o adquirir el lock.
+    // Replays confirmados se resuelven antes de Drive; las carreras se reconcilian
+    // después del append usando first-write-wins por la identidad lógica.
     const preflightExisting = findExistingCutSuggestionForRequest_(feedbackSheet, replayRequest);
     if (preflightExisting) return buildCutSuggestionReplayResponse_(preflightExisting, normalizedReportId);
 
-    // La imagen se carga a Drive antes de adquirir el bloqueo de la hoja.
     let uploadedImage = normalizedImage ? saveSuggestionImageAttachment_(normalizedImage, normalizedVehicleId, normalizedCorteIndex) : null;
-    const lock = LockService.getScriptLock();
-    let lockAcquired = false, rowCommitted = false, appendAttempted = false, result = null;
-    const releaseLockForDriveWork = () => { if (lockAcquired) { lock.releaseLock(); lockAcquired = false; } };
+    let rowCommitted = false, appendAttempted = false, result = null, canonicalReplay = false;
     try {
-        acquireFeedbackScriptLock_(lock); lockAcquired = true;
         const sheet = feedbackSheet;
-        // Revalidar dentro del lock por si otra solicitud confirmó el mismo opId durante Drive.
-        const existing = findExistingCutSuggestionForRequest_(sheet, replayRequest);
-        if (existing) {
-            releaseLockForDriveWork();
-            trashReportImageUpload_(uploadedImage); uploadedImage = null;
-            return buildCutSuggestionReplayResponse_(existing, normalizedReportId);
-        }
         const createdAt = new Date().toISOString();
         const lastRow = sheet.getLastRow();
         const FORMULA_ROW = 2, lastCol = Math.max(sheet.getLastColumn() || 8, COLS_FEEDBACKS["Se resolvio"] || 0);
-        // La fila se localiza después del append mediante el ID reservado.
+        // La posición anticipada solo prepara formato; la confirmación se hace por ID.
         if (lastRow >= FORMULA_ROW) copyRowPresentationOnly_(sheet, FORMULA_ROW, lastRow + 1, lastCol);
         const reservedId = getNextFormulaBasedId_(sheet, COLS_FEEDBACKS.ID);
         const imageMetadata = uploadedImage ? uploadedImage.metadata : null;
         const suggestionRecord = {
             subType: "suggestion_cut", schemaVersion: 3,
-            suggestionOperationId: normalizedOperationId || "",
+            suggestionOperationId: normalizedOperationId,
             reportId: normalizedReportId,
             vehicleId: normalizedVehicleId, corteIndex: normalizedCorteIndex, userId: normalizedUserId,
             userName: String(userName), createdAt, imageUrl: imageMetadata ? imageMetadata.imageUrl : "",
@@ -3457,23 +3447,37 @@ function handleSuggestCutChange(payload) {
             throw new Error("No se pudo confirmar la fila completa de la sugerencia; la imagen se conserva para reconciliación.");
         }
         rowCommitted = true;
-        result = {
-            status: "success", message: "Sugerencia de cambio registrada correctamente como propuesta independiente.",
-            reportId: normalizedReportId, suggestionOperationId: normalizedOperationId,
-            imageAttached: Boolean(imageMetadata),
-            imageUrl: imageMetadata ? imageMetadata.imageUrl : "", suggestionData: suggestionRecord
-        };
-        uploadedImage = null;
+
+        // Dos solicitudes simultáneas pueden anexar filas físicas distintas.
+        // Solo la primera fila idéntica representa la operación lógica; se limpia
+        // la carga de la fila perdedora después de confirmar que no es la canónica.
+        const canonical = findExistingCutSuggestionForRequest_(sheet, replayRequest);
+        if (!canonical) throw new Error("La sugerencia persistida no pudo recuperarse por su identidad lógica.");
+        if (Number(canonical.rowNumber) !== Number(persistedRow.rowIndex)) {
+            if (uploadedImage) {
+                trashReportImageUpload_(uploadedImage);
+                uploadedImage = null;
+            }
+            result = buildCutSuggestionReplayResponse_(canonical, normalizedReportId);
+            canonicalReplay = true;
+        } else {
+            result = {
+                status: "success", message: "Sugerencia de cambio registrada correctamente como propuesta independiente.",
+                reportId: normalizedReportId, suggestionOperationId: normalizedOperationId,
+                imageAttached: Boolean(imageMetadata),
+                imageUrl: imageMetadata ? imageMetadata.imageUrl : "", suggestionData: suggestionRecord
+            };
+            uploadedImage = null;
+        }
     } catch (error) {
         if (!rowCommitted && uploadedImage && !appendAttempted) {
-            releaseLockForDriveWork();
             trashReportImageUpload_(uploadedImage);
         } else if (!rowCommitted && uploadedImage) {
             console.error("La imagen de sugerencia se conserva porque appendRow pudo persistir la referencia y requiere reconciliación.");
         }
         throw error;
-    } finally { if (lockAcquired) lock.releaseLock(); }
-    logUserActivity(userId, userName, "suggest_cut_change", normalizedVehicleId, JSON.stringify(result.suggestionData));
+    }
+    if (!canonicalReplay) logUserActivity(userId, userName, "suggest_cut_change", normalizedVehicleId, JSON.stringify(result.suggestionData));
     return result;
 }
 
