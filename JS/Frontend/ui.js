@@ -13990,12 +13990,6 @@ export function openAddProblemModal(preAssociatedVehicle = null, navOptions = {}
     let pendingApprovalVideoId = "";
     let isSaving = false;
 
-    const refreshPysAfterVideo_ = async () => {
-        invalidatePysDataCache();
-        try { await loadPysData(); } catch (refreshError) {
-            console.warn("El problema se registró, pero no se pudo actualizar la lista PyS:", refreshError);
-        }
-    };
     const createPysOperationId_ = () => {
         if (!window.crypto || typeof window.crypto.getRandomValues !== "function") {
             throw new Error("Este navegador no permite generar un identificador seguro para la solicitud.");
@@ -14121,7 +14115,6 @@ export function openAddProblemModal(preAssociatedVehicle = null, navOptions = {}
                     contentType: "pys",
                     referenceId: createdProblemId,
                     metadata: { alcance: alcanceSelect.value, modelosAsociados: Array.from(selectedVehicleIds) },
-                    onSuccess: refreshPysAfterVideo_
                 });
                 invalidatePysDataCache();
                 await loadPysData().catch(() => {});
@@ -14673,10 +14666,6 @@ export function openPysDetailModal(item,navOptions={},inEditModePys=false){
             contentType: "pys",
             referenceId: item.id_problem || item.id,
             metadata: { problemId: item.id_problem || item.id },
-            onSuccess: async () => {
-                invalidatePysDataCache();
-                        await loadPysData();
-            }
         });
         form.appendChild(uploadPysVideoBtn);
         cont.appendChild(form);
@@ -15182,7 +15171,6 @@ export function openAddTutorialModal() {
                     contentType: "tutorial",
                     referenceId: createdTutorialId,
                     metadata: { tutorialId: createdTutorialId, tema },
-                    onSuccess: refreshTutorialCatalog
                 });
                 await refreshTutorialCatalog();
                 return;
