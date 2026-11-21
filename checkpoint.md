@@ -1439,3 +1439,15 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - `checkVinDuplicateInSheet` conserva su comportamiento normal cuando no se entrega snapshot; los demás flujos WRITE que no disponen de una matriz completa siguen haciendo su lectura propia.
 - Test `WriteVinSnapshotReuse`: 8/8 PASS. CI HEAD `ad0db3ea9676e4aa56caf3e8a157f633087dcb8f`: **290 suites / 3,390 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS.
 - Siguiente: completar WRITE restante (alta nueva, recuperación legacy, suplementaria legacy, journal de imágenes y publicación CATALOG); al cerrar, checkpoint/commit y continuar FEEDBACK.
+
+
+## Checkpoint P1 WRITE — auditoría estática y contratos cerrados (2026-11-21)
+
+- Se completó el recorrido de alta nueva, recuperación opId moderno/legacy, VIN, suplementaria moderna/legacy, journal de imágenes y publicación CATALOG.
+- Alta nueva mantiene reserva append-only, pending antes de Drive, trabajo Drive fuera del lock, readquiere fail-fast, escritura por lotes, read-back y completed tras confirmar. Recuperación moderna verifica opId/vehicleId/slot/hash; legacy usa TextFinder y rechaza ambigüedad.
+- VIN dedicado reutiliza snapshot para duplicados globales. Aportes suplementarios modernos usan opId/operationKey y ledger append-only; legacy revalida la fila tras Drive y persiste solo columnas cambiadas con read-back. ImageUploadEvents mantiene hash/token/estados/reconciliación. CATALOG publica sourceVersion fuera del lock físico.
+- Se mantiene intacto el rollback, read-back, verificación de identidad, idempotencia, recuperación de fallos y estados requires_review; no se eliminan escaneos Drive ni eventos históricos.
+- Contratos revisados y ejecutados: WritePhysicalTransactionContract 7/7; WriteOpIdLegacyLookup 9/9; WriteCatalogPublicationIsolation 7/7; ImageUploadEventJournal 9/9; SupplementaryImageOperationIdContract 8/8; WriteContributionAppendConcurrency 9/9; WriteContributionRecovery 9/9; WriteIdempotencySnapshotReuse 9/9; además optimizaciones P1 anteriores.
+- CI HEAD `4fad6a812598beb0bb04212cac4a3bc3136c9dd5`: **291 suites / 3,397 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS.
+- WRITE queda cerrado en código/auditoría estática/contratos. La prueba real de Drive, concurrencia interproyecto y pérdida de respuesta queda para Beta aislada, nunca producción.
+- Siguiente: auditoría end-to-end FEEDBACK: sugerencias año, likes, reportes e imágenes, Inbox, vistas/actividad, PyS/tutoriales y publicaciones CATALOG.
