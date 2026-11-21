@@ -372,7 +372,9 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
         const result = readCatalogTutorials_(catalog, [headers, row, row.slice()]);
         assert.equal(result.data.tutoriales.length, 1);
         const conflict = row.slice(); conflict[1] = "Otro tema";
-        assert.throws(() => readCatalogTutorials_(catalog, [headers, row, conflict]), /mismo ID con filas contradictorias/);
+        const projected = readCatalogTutorials_(catalog, [headers, row, conflict]);
+        assert.equal(projected.data.tutoriales.length, 1);
+        assert.equal(projected.data.tutoriales[0].Tema, "Tema");
     });
 
     test("CATALOG conserva lectura de registros históricos A:G sin inventar Colaborador", () => {
