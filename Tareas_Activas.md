@@ -624,3 +624,13 @@ La Beta vigente de PyS se ejecuta con AUG-161 en lista_beta_adenda_2026-11-21.md
 - FeedbackTutorialUpdateNoopPreflight 6/6; FeedbackTutorialUpdateTitleLookupBoundedRead 5/5; TutorialIntegrity 42/42; CI 8f310ade240a5b53cdcc0962a6f1f1da0adc482b SUCCESS: 259 suites, 3,130 pruebas, 0 fallos; build, health read-only y Pages SUCCESS.
 - Siguiente tarea local: retirar el lock global de publishFeedbackCatalogChange_ para el contador sourceVersion sin degradar el feed incremental; después continuar el inventario de locks de WRITE/ADMIN/USERS y confirmar excepciones de sesión.
 - No se desplegó Apps Script ni se modificaron recursos productivos.
+
+
+## Cierre local — FEEDBACK sin ScriptLock (2026-11-21)
+
+- Se eliminó acquireFeedbackScriptLock_ y el lock global de publishFeedbackCatalogChange_. El snapshot de CATALOG se construye directamente y sourceVersion usa Date.now(); Coordinator convierte versiones repetidas/obsoletas en reset seguro, evitando pérdida de actualización sin serializar solicitudes FEEDBACK.
+- handleUpdateTutorialItem legacy, Inbox, PyS, reportes/sugerencias y solicitudes/aprobaciones de vídeo ya no adquieren ScriptLock local. Las acciones mantienen validación funcional, sesión/RBAC, read-back, idempotencia/journals y auditoría.
+- Se actualizaron FeedbackCatalogPublicationIsolation (5/5), CatalogChangeFeed (35/35), FeedbackLockFastFail y los harness TutorialIntegrity/PysCreationIntegrity/PysImageStorageRecovery para retirar el helper eliminado.
+- PysImageStorageRecovery 22/22; TutorialIntegrity 42/42; PysCreationIntegrity 56/56. CI 56a849eac4d7ad40f1cf6906402bcbb56fcf9f19 SUCCESS: 259 suites, 3,130 pruebas, 0 fallos; health read-only SUCCESS.
+- Próxima tarea local: auditar WRITE: reserva secuencial de ID numérico y ensureTestigoColumns todavía usan ScriptLock; diseñar reserva append-only sin bloqueo y preservar IDs únicos. Después revisar ADMIN y separar locks de mantenimiento de operaciones ordinarias. AUTH/USERS conserva protecciones de sesión/rol.
+- No se desplegó Apps Script ni se modificaron Spreadsheet/Drive productivos.
