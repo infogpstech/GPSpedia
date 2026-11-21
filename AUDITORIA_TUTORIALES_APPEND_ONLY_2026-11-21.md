@@ -148,3 +148,12 @@ Migrar el alta y la edición de tutoriales para reducir y retirar el ScriptLock 
 - La aprobación de Tutorial resuelve la fila mediante título proyectado y conserva Tema/Colaborador; actualiza solo Video e Imagen cuando corresponde.
 - FEEDBACK aprobación/rechazo/publicación 30/30; VideoApprovalClientContract 10/10; VideoApprovalState 13/13. CI 44904401718 SUCCESS: 258 suites, 3,108 pruebas, 0 fallos; Health 44904401717 SUCCESS.
 - Estado: COMPLETADA LOCALMENTE; concurrencia y recuperación real quedan diferidas a Beta aislada.
+
+
+## Cierre local — edición descriptiva D:F de Tutoriales históricos (2026-11-21)
+
+- TutorialEditEvents ahora admite identidad legacy derivada del título normalizado. Las ediciones D:F de filas sin ID y las operaciones combinadas de renombrado+edición se registran append-only; la fila física no recibe ID ni se reescribe.
+- El expectedHash compara la versión D:F y protege frente a ediciones obsoletas; las identidades históricas duplicadas se rechazan de forma cerrada.
+- CATALOG proyecta eventos D:F antes de renombrar títulos para conservar la identidad legacy y mantiene Imagen, Video y Colaborador.
+- TutorialIntegrity 42/42 PASS. CI 44904942416 SUCCESS: 258 suites, 3110 pruebas, 0 fallos; Health 44904942436 SUCCESS; Pages 44904942027 SUCCESS.
+- Estado: COMPLETADA LOCALMENTE; concurrencia real, respuesta perdida y fallos entre journals quedan diferidos a Beta aislada.

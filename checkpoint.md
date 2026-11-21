@@ -544,3 +544,15 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Compatibilidad: al aprobar Tutorial, el destino se resuelve con título proyectado; solo se actualizan las columnas Video/Imagen necesarias, sin reescribir Tema o Colaborador.
 - Siguiente tarea local: migrar ediciones descriptivas D:F de tutoriales históricos sin ID. Beta real de Coordinator/Sheets/YouTube y fallos parciales permanece pendiente.
 - No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+## Checkpoint — cierre de edición histórica de Tutoriales (2026-11-21)
+
+- HEAD validado: 304e5093f3fc974470e9e507487b707e6881459d.
+- TutorialEditEvents acepta IDs tut-* y la identidad derivada legacy-{sha256(título normalizado)}. La identidad legacy solo se usa en journals; no se escribe ni se devuelve como ID persistente.
+- handleUpdateTutorialItem permite altas/ediciones append-only de D:F para filas con ID y sin ID, además de renombrado combinado. expectedHash protege la versión D:F; el journal conserva los cambios sin modificar la fila física.
+- findTutorialRow_ conserva la identidad derivada antes de proyectar el título; las filas históricas duplicadas/ambiguas se rechazan en vez de elegir una al azar.
+- CATALOG proyecta primero D:F desde el título físico base y luego el título visible, preservando Imagen/Video/Colaborador.
+- TutorialIntegrity 42/42 PASS. CI 44904942416 SUCCESS: 258 suites, 3,110 pruebas, 0 fallos; node --check PASS. Health 44904942436 SUCCESS; Pages 44904942027 SUCCESS.
+- Migraciones locales del alcance activo completadas. Pendiente solo validación Beta (concurrencia real, fallos parciales, recuperación, navegadores/dispositivos) y Safe Apply, que sigue bloqueado.
+- No se desplegó Apps Script ni se modificaron datos productivos.

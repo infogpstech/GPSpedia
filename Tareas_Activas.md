@@ -402,7 +402,7 @@ Antes de cualquier Beta, cumplir la secuencia de sincronización de ramas, árbo
 - [x] Ediciones descriptivas D:F para IDs estables mediante `TutorialEditEvents`, expectedHash y snapshots append-only; sin ScriptLock.
 - [x] CATALOG y `findTutorialRow_` proyectan eventos D:F sin revertir Video (G), Imagen (C) ni Colaborador (H).
 - [x] Migrar renombrados de título a eventos append-only sin lock, manteniendo unicidad, liberación del título anterior y cancelación de reservas si una edición queda obsoleta.
-- [ ] Migrar filas históricas sin ID o definir su transición segura; mantener compatibilidad sin inventar identidades.
+- [x] Migrar filas históricas sin ID o definir su transición segura; mantener compatibilidad sin inventar identidades.
 - [x] Auditar y adaptar aprobaciones de vídeo para la proyección completa.
 - [ ] Beta aislada: altas, ediciones simultáneas, renombrados, respuestas perdidas, reservas huérfanas y aprobaciones de vídeo.
 - CI `44877806419`: 258 suites, 3101 pruebas, 0 fallos; health y Pages SUCCESS.
@@ -426,7 +426,7 @@ Antes de cualquier Beta, cumplir la secuencia de sincronización de ramas, árbo
 - [x] Mantener protección frente a solicitudes de vídeo pendientes y conservar Imagen, Video y Colaborador.
 - [x] Ejecutar regresión `TutorialIntegrity` y suite completa de servicios en CI.
 - [x] Adaptar aprobaciones de vídeo para el modelo completo de tutoriales.
-- [ ] Migrar filas históricas sin ID sin inventar identidades persistentes.
+- [x] Migrar filas históricas sin ID sin inventar identidades persistentes.
 - [ ] Beta aislada: concurrencia real de `appendRow`, fallos entre ambos journals, flush incierto y reconciliación de reservas.
 
 Estado: **EN PROGRESO** hasta confirmar pruebas y publicación.
@@ -437,7 +437,7 @@ Estado: **EN PROGRESO** hasta confirmar pruebas y publicación.
 - [x] Permitir renombrar filas sin ID mediante identidad determinista derivada del título normalizado, sin persistir ni inventar un ID.
 - [x] Mantener el bloqueo de edición descriptiva legacy separado; el camino lock-free histórico solo acepta renombrado de título.
 - [x] Ejecutar regresiones y suite completa de servicios en CI.
-- [ ] Auditar aprobaciones de vídeo y completar compatibilidad de la proyección.
+- [x] Auditar aprobaciones de vídeo y completar compatibilidad de la proyección.
 - [ ] Beta aislada: concurrencia real, respuesta perdida y fallos parciales entre journals.
 
 Estado: **EN PROGRESO**.
@@ -456,7 +456,7 @@ Estado: **EN PROGRESO**.
 - [x] CI `44903445024` SUCCESS: 258 suites, 3,107 pruebas aprobadas, 0 fallos; node --check PASS.
 - [x] Health read-only `44903444986` SUCCESS.
 - [x] Auditoría/ajuste adicional de aprobaciones y rechazos de vídeo para asegurar que destino G y metadatos permanecen coherentes después de renombrar.
-- [ ] Ediciones descriptivas D:F de filas históricas sin ID: permanecen bajo lock; no forman parte del cierre del renombrado.
+- [x] Ediciones descriptivas D:F de filas históricas sin ID: permanecen bajo lock; no forman parte del cierre del renombrado.
 - [ ] Beta aislada: concurrencia real de appendRow, fallo entre ambos journals, respuesta perdida y recuperación multihoja.
 - No se desplegó Apps Script ni se modificaron Spreadsheet/Drive productivos.
 
@@ -479,5 +479,25 @@ Estado: COMPLETADA LOCALMENTE; validación Beta diferida.
 
 ## Siguiente tarea local — ediciones descriptivas de tutoriales históricos sin ID
 
-- [ ] Permitir edición D:F de filas históricas sin ID mediante identidad/versión derivada segura, sin escribir IDs inventados ni perder cambios concurrentes.
-- [ ] Mantener edición por ID como ruta preferida y preservar B/C/G/H, autoría y compatibilidad de reintentos.
+- [x] Permitir edición D:F de filas históricas sin ID mediante identidad/versión derivada segura, sin escribir IDs inventados ni perder cambios concurrentes.
+- [x] Mantener edición por ID como ruta preferida y preservar B/C/G/H, autoría y compatibilidad de reintentos.
+
+
+## Cierre local — edición append-only de tutoriales históricos sin ID (2026-11-21)
+
+Estado: COMPLETADA LOCALMENTE; validación Beta diferida.
+
+- [x] Extender TutorialEditEvents para identidades legacy derivadas de SHA-256 del título normalizado, sin persistir IDs inventados.
+- [x] Aplicar expectedHash sobre D:F y proyectar ediciones por identidad derivada; los reintentos exactos son idempotentes y los cambios obsoletos no pisan versiones posteriores.
+- [x] Admitir ediciones combinadas de título y D:F legacy; se escriben eventos de título y edición, nunca la fila física B:F.
+- [x] Resolver la fila física por identidad derivada y rechazar duplicados históricos ambiguos.
+- [x] CATALOG aplica primero la proyección D:F usando el título físico base y después proyecta el título; preserva Imagen, Video y Colaborador.
+- [x] TutorialIntegrity 42/42 PASS.
+- [x] CI 44904942416 SUCCESS: 258 suites, 3,110 pruebas, 0 fallos; node --check PASS.
+- [x] Health read-only 44904942436 SUCCESS; GitHub Pages 44904942027 SUCCESS.
+- [ ] Beta aislada: ediciones/renombrados concurrentes, appendRow real, pérdida de respuesta, colisiones de identidad legacy y reconciliación entre journals.
+- No se desplegó Apps Script ni se modificaron Spreadsheet/Drive productivos.
+
+## Estado de tareas locales
+
+Las migraciones locales de WRITE/FEEDBACK para cortes, aportes, imágenes ADMIN, tutoriales, renombrados, ediciones históricas y aprobación/rechazo de vídeo están implementadas y validadas por CI. Las tareas no marcadas quedan limitadas a integración/aceptación Beta y Safe Apply, que permanece bloqueado hasta su preview/ACL/rollback autorizados.

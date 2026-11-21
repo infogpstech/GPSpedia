@@ -313,3 +313,10 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - La aprobación de Tutorial usa la fila proyectada y no revierte Tema/Colaborador.
 - 30/30 aprobación/publicación, 10/10 VideoApprovalClientContract, 13/13 VideoApprovalState. CI 44904401718 SUCCESS: 258 suites, 3108 pruebas, 0 fallos; Health 44904401717 SUCCESS.
 - Beta real Coordinator/Sheets/YouTube pendiente; sin deployment ni cambios productivos.
+
+
+2026-11-21 — CIERRE LOCAL: EDICIONES DE TUTORIALES HISTÓRICOS
+- TutorialEditEvents admite identidades legacy derivadas del título normalizado; se migran D:F y cambios combinados título+D:F sin escribir IDs inventados ni modificar la fila física.
+- La proyección valida expectedHash, conserva idempotencia y rechaza identidades históricas ambiguas. CATALOG aplica ediciones antes de renombrados para mantener la clave derivada y conservar Imagen/Video/Colaborador.
+- TutorialIntegrity 42/42 PASS; CI 44904942416 SUCCESS: 258 suites, 3110 pruebas, 0 fallos; Health 44904942436 SUCCESS; Pages 44904942027 SUCCESS.
+- Solo quedan pendientes validaciones Beta y Safe Apply.

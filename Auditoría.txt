@@ -1089,3 +1089,12 @@ Adenda — FEEDBACK confirmación de sugerencias
 - La aprobación publica solo después de confirmar el evento; el rechazo confirma evento antes de retirar enlaces/miniaturas exactos. El destino Tutorial se resuelve con título proyectado y no reescribe Tema/Colaborador.
 - CI 44904401718 SUCCESS: 258 suites, 3108 pruebas, 0 fallos; VideoApprovalPublishing 30/30, VideoApprovalClientContract 10/10, VideoApprovalState 13/13. Health 44904401717 SUCCESS.
 - Pendiente: concurrencia real y fallos parciales en proyectos/Spreadsheet/Drive/YouTube aislados. No se desplegó.
+
+
+================================================================================
+2026-11-21 — AUDITORÍA / CIERRE DE EDICIONES HISTÓRICAS DE TUTORIALES
+- Se eliminó la ruta lock-based para ediciones D:F de tutoriales sin ID. TutorialEditEvents usa identidad derivada del título normalizado y expectedHash de D:F.
+- Renombrados y ediciones combinadas se proyectan en FEEDBACK/CATALOG sin reescribir B:F ni inventar IDs persistentes. La búsqueda conserva la identidad legacy previa a proyectar el nuevo título.
+- Duplicados históricos con la misma identidad se rechazan por ambigüedad. CATALOG aplica D:F antes del título para mantener la identidad derivada.
+- TutorialIntegrity 42/42 PASS; CI 44904942416 SUCCESS: 258 suites, 3110 pruebas, 0 fallos; Health 44904942436 SUCCESS; Pages 44904942027 SUCCESS.
+- Validación real de concurrencia/recuperación queda diferida a Beta aislada. Sin deployment ni cambios productivos.
