@@ -452,3 +452,9 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 2026-11-21 — WRITE: VERSIONADO DE CATÁLOGO FUERA DEL LOCK
 - Se eliminó el contador PropertiesService WRITE y se usa nextWriteCatalogSourceVersion_ basado en Date.now(). La versión de alta nueva se asigna después de liberar ScriptLock; la ruta legacy suplementaria usa el mismo helper.
 - Coordinator convierte sourceVersion repetida u obsoleta en reset/reconstrucción. WriteCatalogPublicationIsolation: 7/7 PASS en harness Node.js aislado; pendiente CI/checkout completo. Sin cambios productivos.
+
+
+2026-11-21 — ADMIN: ACTIVIDAD DE IMÁGENES APPEND-ONLY
+- recordImageAdministrationActivity ya no usa lease ACTIVITY, getLastRow ni escrituras separadas. Usa getAdminFormulaBasedIdPattern_ y appendRow para anexar fórmula ID + datos en una sola operación.
+- Se retiró recordAdminImageActivity de Coordinator; auditDriveImagesInCortes, saveUnusedImagesInventory y createCortesImageFolder conservan sus leases específicas.
+- AdminImageActivityAppendAtomic 5/5 y AdminImageScanCoordinatorContract 1/1 PASS en harness exact-source; pendiente CI integral. Sin cambios productivos.
