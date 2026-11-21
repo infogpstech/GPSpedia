@@ -355,3 +355,12 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - El handler exige contexto con rol Desarrollador; Coordinator policy declara únicamente lectura de `SERVICE_TRAFFIC`; la acción no forma parte del conjunto de mutaciones ni adquiere lease de escritura. Las consultas de inventario/almacenamiento se mantienen dentro del panel ADMIN.
 - Revisión estática de backup/restore: DB valida manifiestos y fingerprints, crea rollback y hace staging antes del intercambio; Drive verifica el manifiesto, copia a staging, conserva el estado anterior en rollback y reconcilia fallos. Por ser operaciones destructivas y de Drive, no se cambió su lógica sin una prueba de integración/rollback adicional.
 - `AdminTrafficSurfaceContract.mjs`: 12/12 PASS; CI: 282 suites, 3,278 pruebas, 0 fallos; build y health read-only SUCCESS.
+
+
+### P1.8 — ADMIN: backup/restore, escáneres y uploads (auditoría)
+
+- DB backup: manifiesto de origen, copia verificada por fingerprint y conteos, estado complete, privacidad y read-back; fallo marca incomplete y retira la copia.
+- Drive backup: manifiesto y estado reanudable por lotes; restore DB/Drive usa staging, comparación de manifiestos y rollback recuperable antes/después del intercambio.
+- Normalización y organización de imágenes hacen una lectura completa de Cortes por operación; `getReplacedImages` mantiene un snapshot único y consume la proyección interna de CATALOG. No se encontró una segunda lectura completa segura de retirar.
+- Upload ADMIN conserva compare-and-set, journal append-only, estados linked/requires_review, verificación de archivo y read-back de descripción. El endpoint de estado solo consulta CATALOG si el journal contiene la operación.
+- No se modificaron rutas destructivas ni datos Drive/Spreadsheet. `AdminOperationReadInventory.mjs`: 8/8 PASS; CI: 283 suites, 3,286 pruebas, 0 fallos; build y health read-only SUCCESS.
