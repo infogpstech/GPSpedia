@@ -289,3 +289,11 @@ Antes de cualquier Beta, cumplir la secuencia de sincronización de ramas, árbo
 - Health read-only `44862604227` SUCCESS; build/Pages `44862603548` SUCCESS.
 - `node --check` de los módulos JavaScript modificados completado por el workflow. El cambio local queda validado; no se desplegó Apps Script ni se modificaron hojas o datos productivos.
 - La migración completa de idempotencia/concurrencia de reportes y sugerencias sigue EN PROGRESO; este paso solo cubre identidad estable para sugerencias sin opId.
+
+
+## Continuidad — auditoría FEEDBACK y confirmación de fila por ID (2026-11-21)
+
+- Auditoría documentada en `AUDITORIA_FEEDBACK_APPEND_ONLY_2026-11-21.md`: se encontraron confirmaciones basadas en `getLastRow()+1`, localizadores que rechazan duplicados físicos, lectura del Inbox por filas físicas y adjuntos tardíos con metadata mutable.
+- Se añadió `findFeedbackRowById_`; reportes y sugerencias confirman la fila persistida por su ID reservado después de `appendRow`. La posición anticipada queda solo para formato.
+- Se incorporó `FeedbackAppendRowIdentity.mjs` y se actualizaron las pruebas preflight de ambos handlers. ScriptLock permanece hasta completar proyección lógica, deduplicación de Inbox y ciclo append-only de adjuntos.
+- CI pendiente para este commit; no se desplegó Apps Script ni se modificaron datos productivos.
