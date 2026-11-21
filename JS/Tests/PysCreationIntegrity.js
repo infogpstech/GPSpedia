@@ -204,7 +204,7 @@ export function runPysCreationIntegrityTests({feedback,ui}){
         const retry=h.api.add(h.validPayload());assert.equal(retry.problemId,"isue-001");assert.equal(h.state.pysRows.length,2);
     });
     test("recupera una fila persistida si se pierde la confirmación del flush",()=>{
-        const h=buildHarness(feedback,ui,{failFlushAt:2});
+        const h=buildHarness(feedback,ui,{failFlushAt:4});
         assert.throws(()=>h.api.add(h.validPayload()),/conserva su imagen reservada/);
         const r=h.api.add(h.validPayload());
         assert.equal(r.status,"success");assert.equal(h.state.pysRows.length,2);
