@@ -1301,3 +1301,12 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Se mantienen la detección de opId duplicado/conflictivo, el TextFinder, la verificación del append y la lectura de recuperación; no se relajó idempotencia ni concurrencia.
 - Prueba nueva `WriteContributionPostAppendSnapshot.mjs`: 12/12 PASS. GitHub Actions en HEAD `d0feac30cf3d22547b05a07b675fd7717050e51a`: **280 suites / 3,257 pruebas / 0 fallos**; build SUCCESS; health read-only SUCCESS.
 - Siguiente: continuar con FEEDBACK y ADMIN, empezando por lecturas repetidas en sugerencias de año y likes.
+
+
+## Cierre — FEEDBACK reutiliza snapshot en reintentos de sugerencia de año (2026-11-21)
+
+- `handleSuggestYearLocked` ya conserva `existingData` para evaluar actor/año, duplicados y estado aplicado. Antes volvía a leer toda la hoja Feedbacks incluso cuando `alreadyReported` era true y no había append.
+- Ahora `allData` comienza con `existingData`; únicamente cuando se agrega una nueva fila se vuelve a leer Feedbacks, para incluir los aportes concurrentes antes de contar votos y aplicar el umbral de tres usuarios verificados.
+- Se mantienen el preflight de aplicación pendiente, first-write-wins, control de actores, exclusión de anónimos, conteo de votos y read-back posterior al append. No se sustituye el snapshot después de una escritura concurrente.
+- `SuggestYearVoteThreshold.mjs` amplía el contrato para comprobar reutilización del snapshot y relectura solo tras append. CI en HEAD `6f5b0d8ea7ea5db33411142aff0040282bb27de5`: **280 suites / 3,258 pruebas / 0 fallos**; build SUCCESS; health read-only SUCCESS; GitHub Pages deploy SUCCESS. No se desplegaron proyectos Apps Script.
+- Siguiente: revisar el flujo FEEDBACK de likes, reportes e Inbox; luego ADMIN.
