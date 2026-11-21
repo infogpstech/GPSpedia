@@ -794,3 +794,13 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Commits: 7a211e681bef315f2c4ef118ffa13e8fb1715ca7 (write.js), 252098b2682d5a6a6517b6d062060bfbabcf9d37 (prueba inicial), 52e6ce664207af275153899ccb2935803274b92d y 235936b21de1736eb0f38d0bf0c89815825ce3f6 (ajustes del test). HEAD de esta fase: 235936b21de1736eb0f38d0bf0c89815825ce3f6.
 - Estado: subactividad validada en harness local; pendiente checkout completo/CI. El ScriptLock de fila física/Idempotencia permanece porque lastRow+1, append de Idempotencia y compensación todavía requieren exclusión.
 - Siguiente paso: revisar si el snapshot completo de Idempotencia puede salir de la sección crítica sin perder la revalidación del opId activo, y completar el análisis de la escritura/rollback física antes de considerar cualquier reducción adicional del lock.
+
+
+## Checkpoint — WRITE: versionado de catálogo fuera del lock físico (2026-11-21)
+
+- Se eliminó el contador PropertiesService WRITE_CATALOG_VERSION_PROPERTY_ y nextWriteCatalogVersionLocked_. El helper nextWriteCatalogSourceVersion_ valida vehicleId y usa Math.max(1, Date.now()), en línea con FEEDBACK y ADMIN. Coordinator conserva la protección: sourceVersion repetida u obsoleta (<= currentSourceVersion) se transforma en reset y reconstrucción.
+- En handleAddOrUpdateCut, catalogVersion se asigna después del finally que libera ScriptLock, no dentro de la transacción física. El flujo legacy de handleAddSupplementaryInfo usa el nuevo helper temporal. La publicación de catálogo sigue fuera de locks locales.
+- WriteCatalogPublicationIsolation se actualizó y ejecutó 7/7 PASS en harness Node.js v22.16.0 aislado: timestamp, validación de ID, ausencia de PropertiesService, asignación posterior a liberar lock y publicación de Coordinator sin lock local.
+- Commits: 93290af58dd4b665c452be85320f43dde7a1ccf3 (write.js), 3112d22449ddd7792df110f4be1c75bd5c3a6bd8 (prueba), c05a26460f439d9c25850c2a32044f211d03e813 (acotar extracción del test). HEAD de esta fase: c05a26460f439d9c25850c2a32044f211d03e813.
+- Estado: subactividad validada en harness local; pendiente checkout completo/CI. El lock físico sigue siendo necesario para fila e Idempotencia.
+- Siguiente paso: completar revisión de rollback/recuperación física y documentar el límite de la sección crítica; después avanzar a la siguiente tarea local sin esperar a Beta.
