@@ -33,7 +33,7 @@ for(const name of ["handleSuggestYear","handleReportProblem","handleSuggestCutCh
  assert.match(contact,/sheet\.appendRow\(row\)/,
   "El registro de contacto se anexa en una sola escritura.");
  assert.ok(contact.indexOf("getNextFormulaBasedId_") < contact.indexOf("sheet.appendRow(row)"));
- const allocator=extract(feedback,"getNextFormulaBasedId_","getIdentifierSequenceReservationsSheet_");
+ const allocator=extract(feedback,"getNextFormulaBasedId_");
  assert.doesNotMatch(allocator,/LockService|tryLock|waitLock|PropertiesService/);
 }
 console.log("1/1 PASS — FEEDBACK e Inbox sin esperas de bloqueo prolongadas");
