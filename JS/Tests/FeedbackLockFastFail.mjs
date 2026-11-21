@@ -15,7 +15,7 @@ assert.match(inbox,/function runInboxConversationAction_\(callback\)/);
 const suggestYear=extract(feedback,"handleSuggestYear");
 assert.ok(!suggestYear.includes("LockService.getScriptLock()")&&!suggestYear.includes("acquireFeedbackScriptLock_("));
 assert.ok(!extract(feedback,"handleAddTutorial").includes("acquireFeedbackScriptLock_("),"El alta de tutoriales usa reservas append-only y no debe adquirir ScriptLock.");
-assert.ok(extract(feedback,"handleUpdateTutorialItem").includes("acquireFeedbackScriptLock_(lock)"),"La edición conserva el lock mientras protege la mutación in-place.");
+assert.ok(!extract(feedback,"handleUpdateTutorialItem").includes("acquireFeedbackScriptLock_(")&&!extract(feedback,"handleUpdateTutorialItem").includes("LockService.getScriptLock()"),"La edición de tutorial debe ejecutarse directamente sin lock.");
 const addProblem=extract(feedback,"handleAddProblem");
 assert.ok(!addProblem.includes("LockService.getScriptLock()")&&!addProblem.includes("acquireFeedbackScriptLock_("),"PyS debe usar reservas append-only sin ScriptLock.");
 for(const [name,nextName] of [["handleReportProblem","enforceFeedbackRateLimit_"],["handleSuggestCutChange","parseModelosAsociados"]]){const body=extract(feedback,name,nextName);assert.ok(!body.includes("LockService.getScriptLock()")&&!body.includes("acquireFeedbackScriptLock_("),name+" debe ser lock-free.");}
