@@ -140,6 +140,33 @@ test("cada voto de año se anexa como una fila completa y no usa escrituras por 
     assert.doesNotMatch(voteWrite, /getRange\([^\n]*\)\.setValue/);
     assert.doesNotMatch(voteWrite, /getRange\([^\n]*\)\.setValues/);
 });
+test("la identidad de una aplicación es determinista para el mismo rango y versión fuente", () => {
+    const buildId = new Function("Utilities", extract("buildFeedbackYearApplicationId_") +
+        "\nreturn buildFeedbackYearApplicationId_;")(makeUtilities());
+    const proposal = {
+        vehicleId: "101", year: 2018, previousFrom: 2020, previousTo: 2024,
+        targetFrom: 2018, targetTo: 2024, previousRawFrom: 2020,
+        previousSourceFromEventId: "EV-SOURCE-00000001",
+        previousRawTo: 2024, previousSourceToEventId: ""
+    };
+    const first = buildId(proposal);
+    assert.match(first, /^YSA-[a-f0-9]{64}$/);
+    assert.equal(buildId({ ...proposal }), first);
+    assert.notEqual(buildId({ ...proposal, targetFrom: 2017 }), first);
+    assert.notEqual(buildId({ ...proposal, previousSourceFromEventId: "EV-SOURCE-00000002" }), first);
+    assert.throws(() => buildId({ ...proposal, vehicleId: "invalid" }), /identidad estable/);
+});
+test("la recuperación agrupa duplicados idénticos y rechaza propuestas distintas", () => {
+    const pending = extract("findPendingFeedbackYearApplication_");
+    assert.match(pending, /const byOperation = new Map\(\)/);
+    assert.match(pending, /sameProposal/);
+    assert.match(pending, /rowIndexes: duplicateEntries\.map/);
+    assert.match(pending, /byOperation\.size > 1/);
+    const completion = extract("completeFeedbackYearApplication_");
+    assert.match(completion, /application\.rowIndexes/);
+    assert.match(completion, /updateApplicationRows\(9, "completed"\)/);
+    assert.match(completion, /applicationRowIndexes\.some/);
+});
 test("el registro de aplicación de año se anexa como una fila completa", () => {
     const handlerStart = feedback.indexOf("function handleSuggestYearLocked(");
     const handlerEnd = feedback.indexOf("\nfunction ", handlerStart + 10);
@@ -162,7 +189,8 @@ test("la aplicación de año ya no escribe directamente en Cortes", () => {
     const handler = feedback.slice(handlerStart, handlerEnd);
     assert.match(handler, /getFeedbackProjectedVehicleYearSnapshot_\(/);
     assert.doesNotMatch(handler, /cortesSheet\.getRange\([^\n]*\)\.setValue/);
-    assert.match(handler, /Utilities\.getUuid\(\)/);
+    assert.match(handler, /buildFeedbackYearApplicationId_\(/);
+    assert.doesNotMatch(handler, /Utilities\.getUuid\(\)/);
     assert.doesNotMatch(handler, /Math\.random/);
 });
 
