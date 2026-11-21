@@ -1011,3 +1011,11 @@ Adenda — FEEDBACK confirmación de sugerencias
 - Se separó findPysRowsById_ (físico) de findCanonicalPysRowsById_ (proyección). Validación y lectores PyS permiten duplicados físicos idénticos, rechazan contradicciones y deduplican la lectura/feed.
 - CI ce1d7a1: 258 suites, 3091 pruebas aprobadas, 0 fallos; health read-only y Pages SUCCESS.
 - handleAddProblem todavía conserva ScriptLock; pendiente resolver propiedad canónica, archivos duplicados y reintentos simultáneos antes de retirarlo.
+
+
+2026-11-21 — PyS: colisión de reservas de operación
+- Hallazgo: readPysOperations_ aceptaba como duplicado idéntico un opId/payloadHash con distinto problemId, lo que ocultaba una reserva contradictoria.
+- Corrección: fail-closed con error de reconciliación; prueba PysCreationIntegrity confirma que no se crea archivo cuando ocurre el conflicto.
+- CI 44873477741 SUCCESS: 258 suites, 3092 pruebas, 0 fallos; health read-only 44873477634 SUCCESS; Pages 44873477531 pendiente al momento del registro.
+- PyS sigue en progreso. handleAddProblem conserva ScriptLock hasta resolver con ledger append-only la propiedad de la operación y de la imagen. Sin despliegue ni cambios productivos.
+================================================================================
