@@ -10974,8 +10974,7 @@ function handleGetVehicleContributionCandidates_(payload) {
     catch (error) { throw new Error("CATALOG no devolvió JSON válido al consultar candidatos ADMIN (HTTP " + httpStatus + ")."); }
     if (httpStatus < 200 || httpStatus >= 300 || !result || result.status !== "success" ||
         !Array.isArray(result.candidates) || !Number.isSafeInteger(Number(result.total)) ||
-        Number(result.total) < result.candidates.length ||
-        (includeImageInventoryEvents && (!Array.isArray(result.imageInventoryCandidates) || !Array.isArray(result.imageInventoryEvents)))) {
+        Number(result.total) < result.candidates.length) {
         throw new Error("No se pudo obtener la proyección vigente de aportes desde CATALOG.");
     }
     return {

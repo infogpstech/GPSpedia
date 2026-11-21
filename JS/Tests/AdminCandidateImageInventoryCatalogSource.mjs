@@ -21,6 +21,14 @@ const response=wrapper({limit:500,includeImageInventoryEvents:true});
 assert.equal(request.payload.includeImageInventoryEvents,true);
 assert.equal(response.imageInventoryCandidates[0].eventId,"EV-IMG");
 assert.equal(response.imageInventoryEvents[0].eventId,"EV-IMG");
+const legacyWrapper = new Function("UrlFetchApp","CATALOG_SERVICE_URL",wrapperSource+String.fromCharCode(10)+"return handleGetVehicleContributionCandidates_;")(
+    {fetch(url,options){return {getResponseCode:()=>200,getContentText:()=>JSON.stringify({
+        status:"success",candidates:[],total:0,limit:500,truncated:false
+    })};}},"https://catalog.legacy.test/exec"
+);
+const legacyResponse=legacyWrapper({limit:500,includeImageInventoryEvents:true});
+assert.equal(legacyResponse.status,"success","ADMIN debe mantener fallback compatible con CATALOG aún no desplegado");
+assert.equal(legacyResponse.imageInventoryEvents,undefined);
 
 const syncStart=admin.indexOf("function syncContributionCandidateImageInventory_(currentCandidates, inventoryEvents)");
 const syncEnd=admin.indexOf("function handleGetReplacedImages",syncStart);
