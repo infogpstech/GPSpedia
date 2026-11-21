@@ -12,6 +12,8 @@ assert.doesNotMatch(eventPath,/LockService|setValue\(/);
 assert.match(extract(feedback,"ensureFeedbackLikesSheet_"),/catch \(createError\)/,"La creación concurrente de la hoja debe recuperarse por relectura");
 assert.doesNotMatch(extract(feedback,"findLikeEventReplayNoop_"),/LockService|setValue\(/);
 assert.match(extract(catalog,"handleGetCatalogData"),/readFeedbackLikeEventCounts_/,"CATALOG debe proyectar los likes nuevos");
+assert.match(extract(feedback,"buildFeedbackCortesCatalogChange_"),/getFeedbackLikeEventCount_/,"El feed incremental debe incluir eventos de likes");
+assert.match(extract(feedback,"findCompletedLikeReplayNoop_"),/getFeedbackLikeEventCount_/,"El replay legacy debe devolver el contador efectivo");
 const helper=extract(catalog,"readFeedbackLikeEventCounts_");
 const code=helper+"\nreturn readFeedbackLikeEventCounts_;";
 const readCounts=new Function("getSpreadsheet",code)(()=>{throw new Error("No debe resolver spreadsheet global si se pasa argumento");});
