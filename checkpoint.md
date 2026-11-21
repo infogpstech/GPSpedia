@@ -265,3 +265,13 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Se mantienen validaciones del patrón de fórmula, prefijo/relleno, duplicados, sufijos inválidos y filas con datos sin ID. Las reservas no utilizadas generan huecos, no reutilización de IDs.
 - `FeedbackFormulaIdAllocator` 5/5; `FeedbackFormulaIdAllocatorBoundedRead` 6/6. CI `44847431570` SUCCESS: 253 suites, 3053 pruebas, 0 fallos. Health read-only `44847431590` SUCCESS. Pages `44847431763` estaba en ejecución.
 - Próximo: continuar con mutaciones FEEDBACK que conservan ScriptLock (likes nuevos, reportes, sugerencias, PyS, tutoriales y aprobaciones de vídeo). No sustituir locks por UserLock ni retirar exclusiones sin journal/proyección o control de versión. La fórmula y concurrencia real del ledger se validarán en Beta aislada. No se desplegó Apps Script ni se tocaron datos productivos.
+
+
+## Checkpoint — likes FEEDBACK append-only (2026-11-21)
+
+- HEAD de código validado: `6d6dde830533b404223ef63a372af501ed2193e9`.
+- Likes nuevos: `handleRecordLike` consulta preflights, anexa un evento `event` en `FeedbackLikes` con `appendRow` y verifica el replay; no modifica el contador físico ni adquiere ScriptLock. Los eventos repetidos del mismo actor/vehículo/corte se deduplican por actor. CATALOG suma los actores únicos al contador histórico en el catálogo completo y en snapshots; el feed de `recordLike` publica reset directo para evitar el lock de versión.
+- Los replays legacy `completed` incluyen los eventos nuevos en el contador efectivo. Los registros legacy `pending` conservan recuperación bajo lock hasta su reconciliación.
+- `logUserActivity` anexa una fila completa con la fórmula de ID calculada por fila; evita la secuencia `getLastRow` + escrituras por celda.
+- Pruebas `FeedbackLikeAppendOnly` 4/4, `ActivityLogAppendAtomic` 6/6, `FeedbackLikeActivityOutsideLock` 5/5, `FeedbackLikePreflightOutsideLock` 5/5, `CatalogChangeFeed` 35/35. CI `44848455795` SUCCESS: 255 suites, 3063 pruebas, 0 fallos. Health read-only `44848455802` SUCCESS. Pages `44848455600` pendiente al registrar.
+- P0 continúa abierto: `reportProblem`/`suggestCutChange`, PyS, tutoriales y aprobaciones de vídeo conservan locks por deduplicación, first-write-wins, unicidad y transiciones. Próximo: migrar la ruta de reportes/sugerencias a append-only con deduplicación de lecturas y recuperación de adjuntos; no retirar locks sin cubrir esos contratos. No se desplegó Apps Script ni se modificaron datos productivos.
