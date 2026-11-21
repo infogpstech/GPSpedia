@@ -1431,3 +1431,11 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Tests: WriteEntityCatalogDemand 8/8; WriteContributionLedgerReuse 15/15; WriteContributionPostAppendSnapshot 12/12 PASS. CI HEAD `698bd0518c4223ba6db36e1ce0fbd68492289b5a`: **289 suites / 3,382 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS.
 - La primera ejecución falló por aserciones estáticas antiguas que no contemplaban el nuevo parámetro opcional; se actualizaron los contratos para verificar el ledger compartido y la revalidación post-Drive. La siguiente regresión pasó completa.
 - Siguiente tarea: continuar auditoría WRITE sobre alta nueva, recuperación opId legacy, VIN update, suplementaria legacy y journal de imágenes; después checkpoint/commit y avanzar a FEEDBACK. Validación real de Drive/concurrencia sigue siendo Beta aislada.
+
+
+## Checkpoint P1 WRITE — validación VIN reutiliza snapshot (2026-11-21)
+
+- `handleAddVinToVehicleLocked` reutiliza la matriz de Cortes que ya leyó para localizar el vehículo y validar su colección VIN; la búsqueda de duplicados globales recibe ese snapshot y no vuelve a transferir la hoja.
+- `checkVinDuplicateInSheet` conserva su comportamiento normal cuando no se entrega snapshot; los demás flujos WRITE que no disponen de una matriz completa siguen haciendo su lectura propia.
+- Test `WriteVinSnapshotReuse`: 8/8 PASS. CI HEAD `ad0db3ea9676e4aa56caf3e8a157f633087dcb8f`: **290 suites / 3,390 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS.
+- Siguiente: completar WRITE restante (alta nueva, recuperación legacy, suplementaria legacy, journal de imágenes y publicación CATALOG); al cerrar, checkpoint/commit y continuar FEEDBACK.
