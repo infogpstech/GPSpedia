@@ -2350,14 +2350,15 @@ function handleRequestPasswordRecovery(payload){
     if(!username||!email||username.length>80||email.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return generic;
     const lock=LockService.getScriptLock();let acquired=false,manager=null,delivery=null,userId="";
     try{
+        lock.waitLock(10000);acquired=true;
         const ss=SpreadsheetApp.openById(SPREADSHEET_ID),usersSheet=ss.getSheetByName(SHEET_NAMES.USERS);if(!usersSheet)return generic;
         const matches=usersSheet.getDataRange().getValues().slice(1).map((row,index)=>({row,rowIndex:index+2}))
             .filter(item=>isActiveAuthUserRecord(item.row)&&String(item.row[COLS_USERS.Nombre_Usuario-1]||"").trim().toLowerCase()===username&&
                 String(item.row[COLS_USERS.Correo_Electronico-1]||"").trim().toLowerCase()===email);
-        lock.waitLock(10000);acquired=true;manager=getPasswordRecoveryManager_();
+        manager=getPasswordRecoveryManager_();
         userId=matches.length===1?normalizeUserId(matches[0].row[COLS_USERS.ID-1]):"";
         if(!manager.reserveRequest(username,email,userId)||matches.length!==1||!userId)return generic;
-        const currentRow=usersSheet.getRange(matches[0].rowIndex,1,1,COLS_USERS.TermsAcceptance).getValues()[0];
+        const currentRow=matches[0].row;
         if(!isActiveAuthUserRecord(currentRow)||normalizeUserId(currentRow[COLS_USERS.ID-1])!==userId||
             String(currentRow[COLS_USERS.Nombre_Usuario-1]||"").trim().toLowerCase()!==username||
             String(currentRow[COLS_USERS.Correo_Electronico-1]||"").trim().toLowerCase()!==email)return generic;
