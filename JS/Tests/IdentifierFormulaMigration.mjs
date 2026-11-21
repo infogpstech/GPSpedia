@@ -48,10 +48,10 @@ function makeHarness(){
   extract("auditAllFormulaIdentifierColumns_"),extract("parseIdentifierSequenceFormula_"),
   extract("isIdentifierFormulaPatternSupported_"),extract("persistIdentifierSequenceConfigs_"),extract("buildIdentifierFormulaFreezePlan_"),
   extract("ensureIdentifierFormulaFreezeManifest_"),extract("findIdentifierFormulaFreezeManifest_"),
-  extract("handleFreezeIdentifierFormulas_"),extract("getNextAdminFormulaBasedId_"),
-  "return {audit:auditAllFormulaIdentifierColumns_,plan:buildIdentifierFormulaFreezePlan_,migrate:handleFreezeIdentifierFormulas_,nextId:getNextAdminFormulaBasedId_};"
+  extract("handleFreezeIdentifierFormulas_"),extract("getAdminFormulaBasedIdPattern_"),
+  "return {audit:auditAllFormulaIdentifierColumns_,plan:buildIdentifierFormulaFreezePlan_,migrate:handleFreezeIdentifierFormulas_,pattern:getAdminFormulaBasedIdPattern_};
  ].join("\n");
- const api=new Function("getSpreadsheet","Utilities","LockService","SpreadsheetApp","PropertiesService","verifyVinMigrationBackup",code)(()=>ss,Utilities,LockService,SpreadsheetApp,PropertiesService,()=>({backupId:"verified-test-backup"}));
+ const api=new Function("getSpreadsheet","Utilities","LockService","SpreadsheetApp","PropertiesService","verifyVinMigrationBackup","IDENTIFIER_SEQUENCE_CONFIG_SHEET_","IDENTIFIER_SEQUENCE_CONFIG_HEADERS_",code)(()=>ss,Utilities,LockService,SpreadsheetApp,PropertiesService,()=>({backupId:"verified-test-backup"}),"__IdentifierSequenceConfig__",["sheet","column","header","prefix","padding","formula","updatedAt"]);
  return {ss,users,vehicles,api};
 }
 let passed=0;function test(name,fn){fn();passed++;console.log("PASS "+name);}
@@ -86,19 +86,19 @@ test("Congela valores exactos por lotes, reanuda y conserva snapshots/manifiesto
 });
 test("Los escritores ADMIN y WRITE no copian fórmulas al crear registros",()=>{
  const activity=extract("recordImageAdministrationActivity");
- assert.match(activity,/getNextAdminFormulaBasedId_\(sheet,\s*1\)/);
+ assert.match(activity,/getAdminFormulaBasedIdPattern_\(sheet,\s*1\)/);
+ assert.match(activity,/sheet\.appendRow\(\[/);
  assert.doesNotMatch(activity,/copyTo\(newRowRange\)/);
  assert.match(admin,/copyAdminRowPresentationOnly_\(sheet,\s*lastRow,\s*newRow,\s*lastColumn\)/);
  assert.match(admin,/copyAdminRowPresentationOnly_\(sheet,\s*lastRow,\s*rowIndex,\s*lastColumn\)/);
  assert.doesNotMatch(write,/previousRowRange\.copyTo\(newRowRange\);/);
  assert.match(write,/previousRowRange\.copyTo\(newRowRange,\s*SpreadsheetApp\.CopyPasteType\.PASTE_FORMAT/);
 });
-test("El backend de ADMIN genera el siguiente ID desde la configuración persistida",()=>{
- const h=makeHarness();h.users.rows.pop();h.users.formulas.pop();
- const dry=h.api.migrate({dryRun:true});
- const payload={dryRun:false,confirm:true,migrationId:dry.migrationId,digest:dry.digest,batchSize:5};
- h.api.migrate(payload);h.api.migrate(payload);
- assert.equal(h.api.nextId(h.users,1),"U-003");
+test("el helper de actividad detecta el patrón ID sin reservar una secuencia",()=>{
+ const h=makeHarness();
+ const pattern=h.api.pattern(h.users,1);
+ assert.equal(pattern.prefix,"U-");assert.equal(pattern.padding,3);
+ assert.equal(pattern.formula,"=\"U-\"&TEXTO(FILA()-1,\"000\")");
 });
 test("No congela fórmulas ID cuyo patrón no puede migrarse a un generador backend seguro",()=>{
  const h=makeHarness();
