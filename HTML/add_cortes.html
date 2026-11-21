@@ -1298,6 +1298,8 @@
                 if (networkError) showConciseAlert_("Se interrumpió la comunicación. La operación y sus archivos permanecen guardados de forma durable para reintentar la misma solicitud sin duplicarla.");
                 else if (error && /No hay espacios disponibles para más cortes/i.test(String(error.message || ''))) {
                     showConciseAlert_("Otro colaborador ocupó el último espacio disponible para cortes. Tus datos y archivos permanecen conservados en el formulario y en la operación pendiente; no se sobrescribió ningún corte.");
+                } else if (error && error.name === 'ImageSizeError') {
+                    showConciseAlert_("Cada imagen debe pesar como máximo 10 MB. Reduce el tamaño y vuelve a seleccionarla; no se envió la solicitud y los demás datos permanecen conservados.");
                 } else if (error && error.name === 'FileReadError') {
                     showConciseAlert_("No se pudo leer una de las imágenes. No se envió la solicitud. Los campos y archivos seleccionados permanecen en el formulario; vuelve a seleccionar la imagen o inténtalo nuevamente.");
                 } else showConciseAlert_("No se pudo confirmar el guardado o la limpieza local. La operación permanece conservada; no se iniciará otra con el mismo identificador.");
@@ -1569,6 +1571,10 @@
                     diagnostics.warn('image.preview-empty-file', { stage: 'image-preview', errorCode: 'EmptyFile' });
                     return;
                 }
+                if (Number.isFinite(file.size) && file.size > 10 * 1024 * 1024) {
+                    diagnostics.warn('image.preview-too-large', { stage: 'image-preview', errorCode: 'ImageTooLarge' });
+                    return;
+                }
                 try {
                     const reader = new FileReader();
                     reader.onload = () => {
@@ -1594,6 +1600,12 @@
                     const emptyFileError = new Error('FILE_EMPTY');
                     emptyFileError.name = 'FileReadError';
                     reject(emptyFileError);
+                    return;
+                }
+                if (Number.isFinite(file.size) && file.size > 10 * 1024 * 1024) {
+                    const sizeError = new Error('IMAGE_TOO_LARGE');
+                    sizeError.name = 'ImageSizeError';
+                    reject(sizeError);
                     return;
                 }
                 try {
