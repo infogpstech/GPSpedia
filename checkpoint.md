@@ -922,3 +922,13 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Se ampliaron tareas P0/P1 para confirmar consumidores, probar idempotencia de reintentos, optimizar imágenes y estudiar consultas CATALOG dirigidas. Ninguna llamada/lease/lock fue retirada.
 - No se ejecutaron benchmarks, pruebas Beta ni despliegues Apps Script; no se tocaron secretos, ScriptProperties, Spreadsheet o Drive productivos.
 - Siguiente paso: completar mapa exhaustivo de llamadas y consumidores; medir o construir harness local reproducible para tamaños/latencias de aportes; luego priorizar cambios seguros con pruebas. No certificar mejora hasta comparar antes/después.
+
+
+## Continuidad — auditoría de miniaturas y refrescos post-aporte (2026-11-21)
+
+- HEAD previo a esta ampliación: `8fadc025a34744bb09278f583005ae52de2f909d`; base protegida sin cambios: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- Se identificó prefetch en segundo plano de miniaturas para los últimos 15 vehículos en cada persistencia de snapshot/cursor y al guardar un vehículo visto. La cola limita compresiones simultáneas a dos, pero puede encolar imágenes fuera del viewport.
+- Se detectó posible doble solicitud fría de imagen: `setOptimizedImage` asigna `img.src` y luego `compressAndStoreThumbnail` realiza un `fetch` de la misma URL cuando IndexedDB no tiene miniatura. La caché HTTP puede amortiguar la duplicación; requiere medición real.
+- Se confirmó snapshot completo CATALOG después de aportes de corte/información suplementaria para actualizar un solo vehículo. Se registró tarea para evaluar endpoint dirigido/delta seguro.
+- Se añadieron tareas P1 y registro factual. No se modificó código, no se ejecutaron pruebas ni benchmarks y no se desplegó Apps Script.
+- Próximo paso: completar el mapa de requests del catálogo y de uploads, instrumentar una medición reproducible con caché fría/caliente y revisar idempotencia de reintentos antes de optimizar.
