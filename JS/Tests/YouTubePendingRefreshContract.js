@@ -10,13 +10,19 @@ function runYouTubePendingRefreshContractTests(uiSource) {
     }
     function uploadBlock_(contentType) {
         const marker = 'contentType: "' + contentType + '"';
-        const at = source.indexOf(marker);
-        assert_(at >= 0 && source.indexOf(marker, at + marker.length) < 0,
-            "Se esperaba una única ruta de vídeo para " + contentType + ".");
-        const start = source.lastIndexOf("openYouTubeUploadModal({", at);
-        const end = source.indexOf("\n        });", at);
-        assert_(start >= 0 && end > at, "No se pudo delimitar el modal de " + contentType + ".");
-        return source.slice(start, end);
+        const blocks = [];
+        let cursor = 0, at;
+        while ((at = source.indexOf(marker, cursor)) >= 0) {
+            const start = source.lastIndexOf("openYouTubeUploadModal({", at);
+            const end = source.indexOf("\n        });", at);
+            if (start >= 0 && end > at) {
+                const block = source.slice(start, end);
+                if (block.includes(marker) && !blocks.includes(block)) blocks.push(block);
+            }
+            cursor = at + marker.length;
+        }
+        assert_(blocks.length === 1, "Se esperaba una única ruta de vídeo modal para " + contentType + "; encontradas: " + blocks.length + ".");
+        return blocks[0];
     }
     run_("el envío de vídeo de tutorial no solicita snapshot de catálogo", () => {
         const block = uploadBlock_("tutorial");
