@@ -15,25 +15,17 @@ const start = source.indexOf("function handleSuggestYear(payload) {");
 const end = source.indexOf("\nfunction isVerifiedSuggestionActorKey_", start);
 assert.ok(start >= 0 && end > start, "No se encontró handleSuggestYear");
 const handler = source.slice(start, end);
-const release = handler.indexOf("lock.releaseLock()");
-const activity = handler.indexOf("logUserActivity(");
-const folderMove = handler.indexOf("movePrimaryVehicleImageToCanonicalFolder(");
-assert.ok(release >= 0 && release < activity && release < folderMove,
-    "Actividad y sincronización de carpeta deben ocurrir después de liberar ScriptLock");
-assert.ok(handler.indexOf("currentRow[COLS_CORTES.id - 1]") < folderMove);
-assert.ok(handler.indexOf("currentRow[COLS_CORTES.imagenVehiculo - 1]") < folderMove);
+assert.doesNotMatch(handler, /LockService\.getScriptLock|acquireFeedbackScriptLock_|releaseLock/,
+    "suggestYear debe coordinarse con registros append-only, sin ScriptLock global");
+assert.ok(handler.indexOf("handleSuggestYearLocked(payload)") >= 0);
+assert.ok(handler.indexOf("currentRow[COLS_CORTES.id - 1]") < handler.indexOf("movePrimaryVehicleImageToCanonicalFolder("));
+assert.ok(handler.indexOf("currentRow[COLS_CORTES.imagenVehiculo - 1]") < handler.indexOf("movePrimaryVehicleImageToCanonicalFolder("));
 
 function createHarness({ currentId = "VEH-1", currentImage = "drive-image-url", moveError = null, resultOverride = null } = {}) {
     const events = [];
-    let lockHeld = false;
-    const lock = {
-        tryLock(timeout) { events.push("lock"); assert.equal(timeout, 0); lockHeld = true; return true; },
-        releaseLock() { events.push("release"); lockHeld = false; }
-    };
     const sheet = {
-        getLastColumn() { assert.equal(lockHeld, false); return 48; },
+        getLastColumn() { return 48; },
         getRange() {
-            assert.equal(lockHeld, false);
             return { getValues: () => {
                 const row = Array(48).fill("");
                 row[0] = currentId; row[8] = currentImage;
@@ -41,34 +33,32 @@ function createHarness({ currentId = "VEH-1", currentImage = "drive-image-url", 
             } };
         }
     };
-    const fn = new Function("LockService", "acquireFeedbackScriptLock_", "handleSuggestYearLocked",
-        "logUserActivity", "COLS_CORTES", "movePrimaryVehicleImageToCanonicalFolder", "Logger",
+    const fn = new Function("handleSuggestYearLocked", "logUserActivity", "COLS_CORTES",
+        "movePrimaryVehicleImageToCanonicalFolder", "Logger",
         handler + "\nreturn handleSuggestYear;")(
-        { getScriptLock: () => lock },
-        candidate => { if (!candidate.tryLock(0)) throw new Error("FEEDBACK_BUSY"); },
         () => {
-            assert.equal(lockHeld, true);
+            events.push("handler");
             return resultOverride || {
                 status: "success", message: "Rango actualizado.",
                 _activityLogRequest: { userId: "U1", userName: "User", activityType: "apply_year_suggestion", associatedId: "VEH-1", details: "Applied" },
                 _folderSyncRequest: { sheet, rowNumber: 2, vehicleId: "VEH-1", expectedImageUrl: "drive-image-url" }
             };
         },
-        () => { assert.equal(lockHeld, false); events.push("activity"); },
+        () => { events.push("activity"); },
         { id: 1, imagenVehiculo: 9 },
-        () => { assert.equal(lockHeld, false); events.push("drive"); if (moveError) throw moveError; return { moved: true }; },
+        () => { events.push("drive"); if (moveError) throw moveError; return { moved: true }; },
         { log: () => events.push("log") }
     );
-    return { run: () => fn({}), events, isLocked: () => lockHeld };
+    return { run: () => fn({}), events };
 }
+
 let passed = 0;
 function test(name, run) { run(); passed++; console.log("PASS " + name); }
 
-test("libera ScriptLock antes de actividad y Drive y elimina datos internos de la respuesta", () => {
+test("procesa actividad y Drive después del append y elimina datos internos de la respuesta", () => {
     const h = createHarness();
     const result = h.run();
-    assert.deepEqual(h.events, ["lock", "release", "activity", "drive"]);
-    assert.equal(h.isLocked(), false);
+    assert.deepEqual(h.events, ["handler", "activity", "drive"]);
     assert.equal(result.folderSyncWarning, false);
     assert.equal("_folderSyncRequest" in result, false);
     assert.equal("_activityLogRequest" in result, false);
@@ -101,7 +91,7 @@ test("si Drive falla devuelve advertencia sin revertir la ampliación confirmada
 test("una respuesta informativa no ejecuta actividad ni sincronización Drive", () => {
     const h = createHarness({ resultOverride: { status: "info", message: "Sin cambios." } });
     const result = h.run();
-    assert.deepEqual(h.events, ["lock", "release"]);
+    assert.deepEqual(h.events, ["handler"]);
     assert.equal(result.status, "info");
 });
 
