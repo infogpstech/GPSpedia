@@ -2358,9 +2358,8 @@ function findReportByReportId_(sheet, reportId, metadataColumn) {
     });
     if (matches.length > 1) {
         const canonical = matches[0];
-        const canonicalImage = normalizeReportImageMetadata_(canonical.metadata);
+        const canonicalImageSha256 = String(canonical.metadata.imageSha256 || "");
         const sameLogicalReport = matches.every(item => {
-            const image = normalizeReportImageMetadata_(item.metadata);
             return String(item.row[COLS_FEEDBACKS.Usuario - 1] || "") === String(canonical.row[COLS_FEEDBACKS.Usuario - 1] || "") &&
                 String(item.row[COLS_FEEDBACKS.ID_vehiculo - 1] || "") === String(canonical.row[COLS_FEEDBACKS.ID_vehiculo - 1] || "") &&
                 String(item.row[COLS_FEEDBACKS.Problema - 1] || "") === String(canonical.row[COLS_FEEDBACKS.Problema - 1] || "") &&
@@ -2369,7 +2368,7 @@ function findReportByReportId_(sheet, reportId, metadataColumn) {
                 item.metadata.activaTestigoMotor === canonical.metadata.activaTestigoMotor &&
                 String(item.metadata.category || "") === String(canonical.metadata.category || "") &&
                 String(item.metadata.subject || "") === String(canonical.metadata.subject || "") &&
-                String(image && image.imageSha256 || "") === String(canonicalImage && canonicalImage.imageSha256 || "");
+                String(item.metadata.imageSha256 || "") === canonicalImageSha256;
         });
         if (!sameLogicalReport) throw new Error("El identificador del reporte tiene filas duplicadas con contenido contradictorio; requiere revisión.");
         canonical.duplicateCount = matches.length - 1;
