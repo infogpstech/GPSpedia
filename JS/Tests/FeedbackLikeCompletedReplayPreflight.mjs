@@ -5,7 +5,10 @@ const source = readFileSync(new URL("../Services/feedback.js", import.meta.url),
 const start = source.indexOf("function findCompletedLikeReplayNoop_(");
 const end = source.indexOf("\nfunction ", start + 10);
 assert.ok(start >= 0 && end > start, "No se encontró findCompletedLikeReplayNoop_");
-const code = source.slice(start, end);
+const countStart = source.indexOf("function getFeedbackLikeEventCount_(");
+const countEnd = source.indexOf("\nfunction ", countStart + 10);
+assert.ok(countStart >= 0 && countEnd > countStart, "No se encontró getFeedbackLikeEventCount_");
+const code = source.slice(countStart, countEnd) + "\n" + source.slice(start, end);
 const headers = ["actorKey", "vehicleId", "corteIndex", "previousCount", "targetCount", "status", "createdAt"];
 function makeHarness({ rows = [["user:7", "10", 2, 4, 5, "completed", "now"]], schema = headers, counter = 8, ledgerExists = true } = {}) {
     const calls = [];
@@ -15,10 +18,12 @@ function makeHarness({ rows = [["user:7", "10", 2, 4, 5, "completed", "now"]], s
         getRange(...args) {
             calls.push(args);
             if (args[0] === 1) return { getValues: () => [schema] };
-            if (args[1] === 1 && args[3] === 1) return {
+            if ((args[1] === 1 || args[1] === 2) && args[3] === 1) return {
                 createTextFinder: key => ({
-                    matchCase: () => ({ findAll: () => rows.map((row, index) => ({ key, row, rowIndex: index + 2 }))
-                        .filter(item => item.row[0] === key).map(item => ({ getRow: () => item.rowIndex })) })
+                    matchCase() { return this; },
+                    matchEntireCell() { return this; },
+                    findAll: () => rows.map((row, index) => ({ row, rowIndex: index + 2 }))
+                        .filter(item => item.row[args[1] - 1] === key).map(item => ({ getRow: () => item.rowIndex }))
                 })
             };
             return { getValues: () => [rows[args[0] - 2]] };
