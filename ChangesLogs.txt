@@ -177,3 +177,11 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - Se conserva compatibilidad de lectura para claves `applied:user:...` preexistentes, sin crear nuevas.
 - Pruebas: `SuggestYearVoteThreshold` 8/8; `FeedbackYearApplicationAppendOnly` 10/10; CI 255 suites, 3069 pruebas, 0 fallos; health read-only SUCCESS.
 - ScriptLock sigue activo; estado del ledger y coordinación concurrente aún pendientes. Sin despliegue Apps Script.
+
+
+
+2026-11-21 — FEEDBACK: estado append-only de aplicaciones de año
+- Se añade `FeedbackYearApplicationEvents` para registrar `activity_attempted`, `requires_review` y `completed` como eventos append-only con identidad determinista.
+- La búsqueda de pendientes proyecta el estado desde eventos; finalización deja de mutar status/actividad/fecha del ledger original y no reescribe los votos históricos.
+- Pruebas: `SuggestYearVoteThreshold` 8/8; `FeedbackYearApplicationAppendOnly` 12/12; CI 255 suites, 3071 pruebas, 0 fallos; build y health read-only SUCCESS.
+- ScriptLock permanece activo; coordinación concurrente aún pendiente. Sin despliegue Apps Script.
