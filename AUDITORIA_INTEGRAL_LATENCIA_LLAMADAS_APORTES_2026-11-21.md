@@ -152,3 +152,11 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - Validación ejecutada en entorno aislado V8: contrato frontend 3/3 PASS; suite backend `YouTubeApproval.js` 16/16 PASS. La evaluación del contrato también verificó parsing del test; no se ejecutó el runner Node completo ni GitHub Actions en esta sesión.
 - La tarea se considera completada localmente para estos dos refrescos. No implica que el resto de la auditoría de latencia esté terminada ni que exista un benchmark global.
 
+
+
+### Prevalidación de tamaño para imágenes del formulario de cortes
+- `HTML/add_cortes.html` ahora rechaza archivos superiores a 10 MiB en dos puntos: antes de leerlos para la previsualización y antes de convertirlos a Base64 al enviar. El límite coincide con `validateAddCutImage_` / `IMAGE_UPLOAD_MAX_BYTES` del backend WRITE (10 MiB por imagen).
+- Se conserva el límite exacto de 10 MiB, el rechazo de archivos vacíos y la lectura normal de archivos permitidos. El error de tamaño se muestra de forma específica y no se envía la solicitud; los datos del formulario permanecen.
+- Se añadió `JS/Tests/AddCutImageSizePreflight.mjs` al runner de servicios. Validación aislada del helper: 3/3 PASS (rechazo antes de FileReader, aceptación del límite exacto y rechazo de archivo vacío).
+- Esto evita transferir un archivo que el backend rechazaría, pero no comprime archivos válidos ni reduce el tamaño de sus cargas. Compresión/redimensionado y MIME estricto siguen pendientes.
+
