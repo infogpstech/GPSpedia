@@ -5,7 +5,7 @@ const ui=readFileSync(new URL("../Frontend/ui.js",import.meta.url),"utf8");
 const start=ui.indexOf("function readAdminImageAsDataUrl(file)");
 const marker=ui.indexOf("async function submitAdminImageUploadOperation",start);
 const block=ui.slice(start,marker);
-const end=block.lastIndexOf("\\n}");
+const end=block.lastIndexOf(String.fromCharCode(10)+"}");
 assert.ok(start>=0&&marker>start&&end>0,"debe existir lector de imagen ADMIN");
 const source=block.slice(0,end+2);
 let reads=0,nextResult="data:image/jpeg;base64,AA==";
