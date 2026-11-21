@@ -316,6 +316,7 @@ runGroup('38','INTEGRATION',()=>{
  runCli('GP-PERF FEEDBACK e Inbox sem esperas prolongadas','JS/Tests/FeedbackLockFastFail.mjs');
  runCli('P2.2a FEEDBACK adjuntos Drive fuera del lock y telemetría preservada','JS/Tests/P2FeedbackImageUploadLocks.mjs');
  runCli('P2.2b PyS imagen fuera del lock y recuperación','JS/Tests/P2PysImageUploadOutsideLock.mjs');
+ runCli('PyS relaciones y mutaciones bajo lease compartida','JS/Tests/PysVehicleRelationIntegrity.js');
  runCli('GP-PERF ADMIN información suplementaria: cargas Drive fuera del lock','JS/Tests/AdminSupplementaryUploadOutsideLock.mjs');
  runCli('P3.1 actor de login cacheado y sin consultas por acción','JS/Tests/SessionActorCacheLifetime.mjs');
  runCli('P3.1c invalidación dirigida de cachés de actor en WRITE/FEEDBACK','JS/Tests/SessionActorCacheInvalidation.mjs');
