@@ -968,3 +968,13 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Archivos de prueba: nuevo `JS/Tests/YouTubePendingRefreshContract.js`; integrado en `JS/Tests/RunServiceTests.mjs`.
 - Siguiente trabajo: revisar otros refresh post-aporte, compresión de imágenes y cache/prefetch de miniaturas; luego mapa completo de llamadas/latencias. No afirmar mejora global sin benchmark.
 
+
+
+## Continuidad — prevalidación de tamaño de imágenes de corte (2026-11-21)
+
+- HEAD previo a los registros: `a38b9a97cc6cdc62eafe90d80990d3004491bd84`; base protegida intacta `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- `HTML/add_cortes.html` valida ahora el límite backend de 10 MiB antes de generar preview y Base64; evita transferir archivos que WRITE rechazará. Conserva archivo de exactamente 10 MiB y rechazo de archivo vacío.
+- `AddCutImageSizePreflight.mjs` integrado en `RunServiceTests.mjs`; validación aislada 3/3 PASS.
+- No hay compresión/redimensionado todavía; MIME explícito y coherencia en formularios de FEEDBACK/PyS siguen pendientes. No se ejecutó runner Node completo ni CI; no hubo despliegue Apps Script.
+- Siguiente: extender mapa de validación de imagen a FEEDBACK/PyS e información suplementaria, después diseñar compresión preservando MIME, transparencia/orientación, hashes e idempotencia; no cambiar el contrato backend sin pruebas.
+
