@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import crypto from "node:crypto";
 import { readFileSync } from "node:fs";
 
 const writeSource = readFileSync(new URL("../Services/write.js", import.meta.url), "utf8");
@@ -13,8 +14,8 @@ assert.ok(adminStart >= 0 && adminEnd > adminStart, "No se encontró el cliente 
 const adminCode = adminSource.slice(adminStart, adminEnd);
 
 function createSheet(initialRows) {
-    const rows = initialRows.map(row => row.slice());
-    return {
+    const rows = initialRows.map(row => row.slice()), formulas = new Map();
+    const sheet = {
         rows,
         getLastRow: () => rows.length,
         getLastColumn: () => Math.max(1, ...rows.map(row => row.length)),
@@ -23,12 +24,17 @@ function createSheet(initialRows) {
                 getValues: () => Array.from({ length: numRows }, (_, r) =>
                     Array.from({ length: numColumns }, (_, c) => (rows[row - 1 + r] || [])[column - 1 + c] ?? "")),
                 getValue: () => (rows[row - 1] || [])[column - 1] ?? "",
-                getFormulas: () => Array.from({ length: numRows }, () => Array.from({ length: numColumns }, () => "")),
+                getFormulas: () => Array.from({ length: numRows }, (_, r) =>
+                    Array.from({ length: numColumns }, (_, c) => formulas.get((row - 1 + r) + ":" + (column - 1 + c)) || "")),
+                setValue(value) {
+                    rows[row - 1][column - 1] = value;
+                    formulas.delete((row - 1) + ":" + (column - 1));
+                },
                 setValues(values) {
-                    values.forEach((valuesRow, r) => {
-                        while (rows.length < row + r) rows.push([]);
-                        valuesRow.forEach((value, c) => { rows[row - 1 + r][column - 1 + c] = value; });
-                    });
+                    values.forEach((line, r) => line.forEach((value, c) => {
+                        rows[row - 1 + r][column - 1 + c] = value;
+                        formulas.delete((row - 1 + r) + ":" + (column - 1 + c));
+                    }));
                 },
                 createTextFinder(searchText) {
                     let exact = false;
@@ -46,42 +52,51 @@ function createSheet(initialRows) {
                 }
             };
         },
-        appendRow(values) { rows.push(values.slice()); }
+        appendRow(values) {
+            const rowIndex = rows.length + 1;
+            rows.push(values.slice());
+            if (typeof values[2] === "string" && values[2].startsWith("=")) formulas.set((rowIndex - 1) + ":2", values[2]);
+        },
+        recalculate() {
+            for (let rowIndex = 2; rowIndex <= rows.length; rowIndex++) {
+                const formula = formulas.get((rowIndex - 1) + ":2");
+                if (!formula) continue;
+                const match = formula.match(/,\s*(\d+)\)\+1$/);
+                assert.ok(match, "La fórmula de reserva no es verificable");
+                const previous = rows.slice(1, rowIndex - 1).map(row => Number(row[2])).filter(Number.isSafeInteger);
+                rows[rowIndex - 1][2] = Math.max(Number(match[1]), ...previous) + 1;
+            }
+        }
     };
+    return sheet;
 }
 
 const cortes = createSheet([["id", "marca", "modelo"], [1, "Toyota", "Hilux"], [2, "Toyota", "RAV4"], [3, "Honda", "Civic"]]);
 let ledger = null;
-const properties = {
-    value: "3",
-    getProperty() { return this.value; },
-    setProperty(key, value) { this.value = String(value); }
-};
+const properties = { value: "3", getProperty() { return this.value; } };
 const spreadsheet = {
     getSheetByName(name) { if (name === "Cortes") return cortes; if (name === "CortesIdReservations") return ledger; return null; },
     insertSheet(name) {
         assert.equal(name, "CortesIdReservations");
-        ledger = createSheet([["opId", "operationHash", "vehicleId", "createdAt"]]);
+        ledger = createSheet([["", "", "", ""]]);
         return ledger;
     }
 };
-let held = false;
-const lock = {
-    waitLock(timeout) { assert.equal(timeout, 2000); if (held) throw new Error("simulated lock contention"); held = true; },
-    tryLock(wait) { assert.equal(wait, 0); if (held) return false; held = true; return true; },
-    releaseLock() { assert.equal(held, true); held = false; },
-    hasLock() { return held; }
+const Utilities = {
+    getUuid: () => crypto.randomUUID(),
+    DigestAlgorithm: { SHA_256: "SHA_256" },
+    computeDigest: (algorithm, value) => Array.from(crypto.createHash("sha256").update(String(value)).digest())
 };
 const allocateInWrite = new Function(
     "COLS_CORTES", "SHEET_NAMES", "PropertiesService", "LockService", "SpreadsheetApp",
-    "getSpreadsheet", "assertDeveloperForIdMaintenance",
+    "Utilities", "getSpreadsheet", "assertDeveloperForIdMaintenance",
     writeCode + "\nreturn handleAllocateVehicleId;"
 )(
     { id: 1 }, { CORTES: "Cortes" },
     { getScriptProperties: () => properties },
-    { getScriptLock: () => lock },
-    { flush() {} },
-    () => spreadsheet,
+    { getScriptLock: () => { throw new Error("WRITE ID allocator must not acquire ScriptLock"); } },
+    { flush() { if (ledger) ledger.recalculate(); } },
+    Utilities, () => spreadsheet,
     payload => {
         assert.ok(payload.userId && payload.sessionToken, "WRITE debe recibir la sesión autenticada");
         return { role: "desarrollador" };
@@ -106,6 +121,7 @@ const hashA = "a".repeat(64), hashB = "b".repeat(64);
 assert.throws(() => requestFromAdmin(payload, "OP-E2E-1", hashA), /simulated response loss/);
 assert.equal(requestFromAdmin(payload, "OP-E2E-1", hashA), 4, "El reintento debe recuperar el ID persistido por WRITE");
 assert.equal(requestFromAdmin(payload, "OP-E2E-2", hashB), 5, "Una operación distinta debe recibir un ID nuevo");
-assert.throws(() => requestFromAdmin(payload, "OP-E2E-1", hashB), /otro contenido/, "La misma clave no puede cambiar de huella");
-assert.equal(ledger.rows.length, 3, "Debe existir una sola reserva por operación");
-console.log("VehicleIdAllocationEndToEnd: 4/4 PASS — ADMIN→WRITE, respuesta perdida, reintento y rechazo de huella distinta");
+assert.throws(() => requestFromAdmin(payload, "OP-E2E-1", hashB), /otro contenido/);
+assert.equal(ledger.rows.length, 3, "Debe existir una reserva canónica por operación");
+assert.deepEqual(ledger.rows.slice(1).map(row => row[2]), [4, 5]);
+console.log("VehicleIdAllocationEndToEnd: 4/4 PASS — ADMIN→WRITE, asignación sin lock, respuesta perdida y recuperación por opId");
