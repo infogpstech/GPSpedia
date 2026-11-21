@@ -1075,6 +1075,7 @@ export async function setOptimizedImage(imgElement, fileId, size = IMG_SIZE_SMAL
     imgElement.dataset.gpImageState = 'loading';
     imgElement.setAttribute('aria-busy', 'true');
     imgElement.removeAttribute('src');
+    imgElement.removeAttribute('crossorigin');
 
     const isCurrent = () => thumbnailObjectUrls.isCurrent(imgElement, requestToken);
     const setSource = (source, fallback = false) => {
@@ -1084,6 +1085,9 @@ export async function setOptimizedImage(imgElement, fileId, size = IMG_SIZE_SMAL
         return true;
     };
     let imageLoaded = false;
+    let persistLoadedThumbnail = null;
+    let corsRetryAttempted = false;
+    let remoteUrl = null;
     const markLoaded = () => {
         if (!isCurrent()) return;
         imageLoaded = true;
@@ -1093,9 +1097,16 @@ export async function setOptimizedImage(imgElement, fileId, size = IMG_SIZE_SMAL
         imgElement.classList.add('gp-image-loaded');
         imgElement.dataset.gpImageState = isFallback ? 'fallback' : 'loaded';
         imgElement.setAttribute('aria-busy', 'false');
+        if (persistLoadedThumbnail && !isFallback) persistLoadedThumbnail();
     };
     const markFailed = event => {
         if (!isCurrent()) return;
+        if (imgElement.crossOrigin === 'anonymous' && !corsRetryAttempted && remoteUrl) {
+            corsRetryAttempted = true;
+            imgElement.removeAttribute('crossorigin');
+            setSource(remoteUrl);
+            return;
+        }
         const restoreBtn = document.getElementById('btn-admin-restore-trash');
         if (restoreBtn) restoreBtn.style.display = 'block';
         imgElement.classList.remove('gp-image-loading', 'gp-image-loaded');
@@ -1125,23 +1136,29 @@ export async function setOptimizedImage(imgElement, fileId, size = IMG_SIZE_SMAL
         return;
     }
 
-    // Iniciar la imagen original de inmediato; la consulta IndexedDB ocurre en paralelo.
-    const remoteUrl = getImageUrl(cleanId, normalizedSize);
-    setSource(remoteUrl);
-    const cachedBlob = await Promise.race([
+    // Reutiliza la descarga visible para crear la miniatura. Si el servidor
+    // no permite CORS, reintenta como imagen normal y omite la caché opcional.
+    remoteUrl = getImageUrl(cleanId, normalizedSize);
+    if (/^https?:/i.test(remoteUrl)) imgElement.crossOrigin = 'anonymous';
+    const cachedBlobPromise = Promise.race([
         offline.getThumbnail(cleanId, normalizedSize),
         new Promise((_, reject) => setTimeout(() => reject(new Error('DB Timeout')), 800))
     ]).catch(() => null);
+    setSource(remoteUrl);
+
+    const cachedBlob = await cachedBlobPromise;
     if (!isCurrent()) return;
     if (cachedBlob && !imageLoaded && thumbnailObjectUrls.attach(cacheKey, cachedBlob, imgElement, requestToken)) return;
 
     if (!cachedBlob && cleanId && typeof cleanId === 'string' && !cleanId.startsWith('blob:') &&
         !cleanId.startsWith('data:') && !cleanId.includes('placehold.co')) {
-        offline.compressAndStoreThumbnail(remoteUrl, cleanId, normalizedSize).then(blob => {
-            if (blob && !imageLoaded && isCurrent()) {
-                thumbnailObjectUrls.attach(cacheKey, blob, imgElement, requestToken);
-            }
-        }).catch(() => {});
+        let persistStarted = false;
+        persistLoadedThumbnail = () => {
+            if (persistStarted || !imageLoaded || !isCurrent() || !imgElement.naturalWidth) return;
+            persistStarted = true;
+            offline.compressAndStoreThumbnailFromImage(imgElement, cleanId, normalizedSize).catch(() => {});
+        };
+        if (imageLoaded) persistLoadedThumbnail();
     }
 }
 

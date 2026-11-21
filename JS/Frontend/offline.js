@@ -1518,6 +1518,72 @@ const thumbnailCompressionFailures_ = new Map();
 /** Compresión opcional por variante; nunca condiciona la visualización de la imagen original. */
 const thumbnailCompressionInFlight_ = new Map();
 
+/**
+ * Persiste una variante desde la imagen ya descargada por el navegador.
+ * Requiere un elemento CORS-clean; no realiza otra solicitud de red.
+ */
+export async function compressAndStoreThumbnailFromImage(imageElement, rawFileId, requestedSize = 400) {
+ if (!imageElement || !imageElement.naturalWidth || !imageElement.naturalHeight) return null;
+ if (!rawFileId || (typeof rawFileId === "string" && rawFileId.includes("placehold.co"))) return null;
+ const fileId = normalizeId(rawFileId);
+ if (!fileId) return null;
+ const width = normalizeThumbnailSize(requestedSize);
+ const cacheKey = buildThumbnailCacheKey(fileId, width);
+ const pending = thumbnailCompressionInFlight_.get(cacheKey);
+ if (pending) return pending;
+ const operation = Promise.resolve().then(async () => {
+  if (Date.now() < dbRetryAfter) return null;
+  const retryAfter = thumbnailCompressionFailures_.get(cacheKey) || 0;
+  if (retryAfter > Date.now()) return null;
+  if (retryAfter) thumbnailCompressionFailures_.delete(cacheKey);
+  try {
+   const cached = await readFreshThumbnail(cacheKey);
+   if (cached) return cached;
+   return await thumbnailCompressionQueue.run(async () => {
+    const queuedCached = await readFreshThumbnail(cacheKey);
+    if (queuedCached) return queuedCached;
+    const bitmap = await createImageBitmap(imageElement);
+    try {
+     if (!bitmap.width || !bitmap.height) return null;
+     const scale = Math.min(1, width / bitmap.width);
+     const canvas = document.createElement("canvas");
+     const ctx = canvas.getContext("2d");
+     if (!ctx) return null;
+     canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+     canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+     ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+     return await new Promise(resolve => canvas.toBlob(blob => {
+      if (!blob) { resolve(null); return; }
+      const now = Date.now();
+      const entry = { key: cacheKey, fileId, width, blob, cachedAt: now, lastAccessedAt: now };
+      storeThumbnailWithQuotaRecovery(entry, cacheKey)
+       .then(async saved => {
+        if (saved !== null) await evictLeastRecentlyUsedThumbnails();
+        resolve(saved === null ? null : blob);
+       })
+       .catch(error => {
+        console.debug("Se omitió la persistencia de la miniatura opcional:", fileId, error && error.message ? error.message : error && error.name || "error");
+        resolve(null);
+       });
+     }, "image/png"));
+    } finally {
+     if (typeof bitmap.close === "function") bitmap.close();
+    }
+   });
+  } catch (error) {
+   thumbnailCompressionFailures_.set(cacheKey, Date.now() + THUMBNAIL_FAILURE_BACKOFF_MS);
+   if (thumbnailCompressionFailures_.size > 300) thumbnailCompressionFailures_.delete(thumbnailCompressionFailures_.keys().next().value);
+   if (Date.now() >= dbRetryAfter) console.debug("Se omitió la compresión opcional de miniatura:", fileId, error && error.message ? error.message : error && error.name || "error");
+   return null;
+  }
+ });
+ thumbnailCompressionInFlight_.set(cacheKey, operation);
+ try { return await operation; }
+ finally {
+  if (thumbnailCompressionInFlight_.get(cacheKey) === operation) thumbnailCompressionInFlight_.delete(cacheKey);
+ }
+}
+
 export async function compressAndStoreThumbnail(url, rawFileId, requestedSize = 400) {
  if (!rawFileId || (typeof rawFileId === "string" && rawFileId.includes("placehold.co"))) return null;
  const fileId = normalizeId(rawFileId);

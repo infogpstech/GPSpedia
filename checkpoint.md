@@ -1104,3 +1104,11 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Hallazgos pendientes: doble solicitud de red en cache miss visible; prefetch de 15 vehículos y cola FIFO sin prioridad visible; falta medir bytes/latencia fría/caliente.
 - Modal CSS: nueva tarea P1 registrada para auditoría de cascada, encabezado de detalle de corte y comparación 2.2.5 vs 2.1.7. No se modificó CSS.
 - No se desplegaron proyectos Apps Script ni se modificaron Spreadsheet, Drive, secretos o propiedades productivas.
+
+
+## Continuidad — eliminar descarga duplicada de imágenes (2026-11-21)
+
+- HEAD anterior: d68d07d7a5bfbd5282c23fc04bc7a13f94da3553.
+- setOptimizedImage solicita CORS antes de asignar src; en cache miss, la miniatura se deriva del HTMLImageElement ya cargado usando compressAndStoreThumbnailFromImage/createImageBitmap. Se elimina el segundo fetch desde el flujo visible.
+- Si CORS falla, el elemento reintenta una vez sin crossorigin para mantener la imagen visible; en ese modo se omite persistencia local por seguridad.
+- Se mantienen TTL/LRU/single-flight y protecciones ObjectURL. CI y pruebas de navegador pendientes.

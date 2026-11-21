@@ -3294,3 +3294,14 @@ Documento de alcance, hallazgos y checklist: [AUDITORIA_INTEGRAL_LATENCIA_LLAMAD
 - [ ] Pendiente real: evitar la segunda descarga fría de setOptimizedImage + fetch de compresión, sin retrasar la primera imagen ni romper CORS/PNG.
 - [ ] Pendiente: medir y ajustar el prefetch de los últimos 15 vehículos y la prioridad FIFO frente a imágenes visibles.
 - [ ] Pendiente: consulta CATALOG que reduzca lecturas internas de Spreadsheet; las acciones dirigidas actuales reducen respuesta/transferencia ADMIN, pero aún construyen el snapshot completo.
+
+
+## Ciclo de imágenes — eliminar descarga duplicada en cache miss (2026-11-21)
+
+**Estado: IMPLEMENTADO; CI PENDIENTE.**
+
+- [x] La miniatura se genera desde el elemento img ya descargado, mediante createImageBitmap(imageElement); el flujo visible ya no llama al segundo fetch de compresión.
+- [x] Se solicita CORS antes de asignar src para permitir lectura segura del bitmap y exportación PNG.
+- [x] Si el servidor no admite CORS, se reintenta una sola vez sin CORS para conservar la visualización; se omite la persistencia local por seguridad.
+- [x] Se conserva render remoto inmediato, consulta IndexedDB, single-flight, TTL, LRU, PNG y presupuesto de ObjectURL.
+- [ ] Confirmar CI y validar en navegador real los casos CORS permitido/no permitido y PNG transparente.

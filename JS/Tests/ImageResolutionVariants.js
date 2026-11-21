@@ -44,9 +44,11 @@ assert.ok(optimizedStart >= 0 && optimizedEnd > optimizedStart, 'setOptimizedIma
 const optimizedImage = uiSource.slice(optimizedStart, optimizedEnd);
 assert.match(optimizedImage, /setSource\(remoteUrl\)/, 'la imagen original se muestra sin esperar IndexedDB');
 assert.match(optimizedImage, /offline\.getThumbnail\(cleanId, normalizedSize\)/, 'la caché local se consulta en paralelo');
-assert.match(optimizedImage, /offline\.compressAndStoreThumbnail\(remoteUrl, cleanId, normalizedSize\)/, 'la compresión se mantiene como persistencia opcional');
-assert.ok(optimizedImage.indexOf('setSource(remoteUrl)') < optimizedImage.indexOf('offline.getThumbnail(cleanId, normalizedSize)'));
-assert.ok(optimizedImage.indexOf('offline.getThumbnail') < optimizedImage.indexOf('offline.compressAndStoreThumbnail(remoteUrl, cleanId, normalizedSize)'));
+assert.match(optimizedImage, /imgElement\\.crossOrigin = 'anonymous'/, 'solicita CORS antes de cargar para reutilizar los bytes de la imagen');
+assert.match(optimizedImage, /imgElement\\.removeAttribute\\('crossorigin'\\)/, 'mantiene fallback visual cuando el servidor no permite CORS');
+assert.match(optimizedImage, /offline\\.compressAndStoreThumbnailFromImage\\(imgElement, cleanId, normalizedSize\\)/, 'genera miniatura desde la imagen ya descargada');
+assert.doesNotMatch(optimizedImage, /offline\\.compressAndStoreThumbnail\\(remoteUrl/, 'no inicia un segundo fetch en el ciclo visible');
+assert.match(offlineSource, /createImageBitmap\\(imageElement\\)/, 'la persistencia usa los bytes de la imagen existente');
 assert.match(optimizedImage, /gp-image-loading/);
 assert.match(optimizedImage, /IMAGE_FALLBACK_DATA_URL/);
 assert.match(optimizedImage, /thumbnailObjectUrls\.attach\(cacheKey, blob, imgElement, requestToken\)/);
