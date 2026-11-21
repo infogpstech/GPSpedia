@@ -301,3 +301,10 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - En `handleCheckOperation`, la misma instantánea se solicita solo tras encontrar el evento, validar su contenido y confirmar que es un corte aceptado; no se ejecuta para opId inexistente ni para eventos opening/feed.
 - Se conserva el preflight VIN previo a Drive/append y la verificación concurrente posterior. También se conservan los TextFinder y read-backs del append idempotente; esta optimización no reduce controles de concurrencia.
 - Prueba `WriteContributionPostAppendSnapshot.mjs` verifica una sola lectura y la reutilización en slot/conflicto VIN; regresión CI: 280 suites, 3,257 pruebas, 0 fallos; build y health read-only SUCCESS.
+
+
+### P1.2 — FEEDBACK: evitar segunda lectura de Feedbacks en reintentos de sugerencia
+
+- `handleSuggestYearLocked` usa una lectura inicial completa de Feedbacks para decidir si el actor ya reportó, si el voto ya fue aplicado y si existe una aplicación pendiente. En el camino `alreadyReported`, no se escribe una nueva fila; la lectura posterior era redundante.
+- `allData` ahora reutiliza `existingData` en ese camino. Si se ejecuta `appendRow`, conserva una segunda lectura después de flush para contar los votos concurrentes y evaluar correctamente el umbral de tres usuarios verificados.
+- Prueba ampliada `SuggestYearVoteThreshold.mjs`; CI: 280 suites, 3,258 pruebas, 0 fallos; build, health read-only y GitHub Pages deploy SUCCESS. Sin despliegues Apps Script ni cambios en datos productivos.
