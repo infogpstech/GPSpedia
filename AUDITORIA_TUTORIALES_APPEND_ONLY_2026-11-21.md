@@ -102,3 +102,12 @@ Migrar el alta y la edición de tutoriales para reducir y retirar el ScriptLock 
 - Pruebas focalizadas: `TutorialIntegrity` 34/34 PASS; `FeedbackTutorialPreflightOutsideLock` 7/7; `FeedbackTutorialLookupBoundedRead` 6/6; `FeedbackTutorialUpdateTitleLookupBoundedRead` 5/5; `FeedbackTutorialUpdateNoopPreflight` 6/6. PyS se mantiene en 56/56 y 22/22.
 - CI `44877806419` SUCCESS: 258 suites, 3101 pruebas aprobadas, 0 fallos; health read-only `44877806406` SUCCESS; Pages `44877806381` SUCCESS. HEAD: `af2adefbd20ff450449cf8fc78f6e14d1aee733b`.
 - **Estado parcial:** alta y ediciones descriptivas lock-free; renombrados y edición de filas legacy siguen bajo lock. La concurrencia real queda diferida a Beta aislada. No se desplegó Apps Script ni se modificó producción.
+
+## Endurecimiento del ledger de títulos — 2026-11-21
+
+- Hallazgo: readTutorialTitleEvents_ aceptaba filas cuyo eventHash no se correspondía con sus campos y toleraba el mismo operationId repetido con un eventHash diferente, registrando el conflicto sin detener la proyección.
+- Impacto: una reserva de título contradictoria podía quedar oculta por first-write-wins y el mapa de propietarios podía proyectarse desde un ledger alterado o ambiguo.
+- Corrección: cada fila ahora recalcula y verifica eventHash contra operationId, tutorialId, acción, título normalizado, título anterior y payloadHash. Un hash inválido o un operationId con eventos contradictorios detiene la lectura y exige reconciliación. Duplicados físicos del mismo evento íntegro siguen aceptándose.
+- Regresión: TutorialIntegrity cubre conflicto de operationId y hash manipulado.
+- CI HEAD ea04e631692b0adeb29918ffdecfe4f95b929848: 258 suites, 3103 pruebas aprobadas, 0 fallos; health read-only SUCCESS. Pages estaba en ejecución al cerrar esta adenda.
+- Esto endurece la fase actual, pero no migra renombrados: handleUpdateTutorialItem todavía mantiene ScriptLock para cambios de título y filas legacy sin ID.
