@@ -339,3 +339,11 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - `findReportByReportId_` e `isCanonicalFeedbackInboxRow_` aceptan el índice opcional, evitando una búsqueda individual por reportId en el ledger de imágenes para cada fila.
 - Los reportes con imagen legacy no generan lectura del ledger. Los hashes contradictorios se aíslan por reportId y se reportan solo cuando se consulta ese reporte; se mantiene el primer evento equivalente.
 - Prueba `FeedbackInboxImageEventBatchRead.mjs`: 6/6 PASS; CI: 281 suites, 3,265 pruebas, 0 fallos; build y health read-only SUCCESS.
+
+
+### P1.6 — FEEDBACK: memoización de canonicalización en Inbox
+
+- `handleGetFeedbackItems` crea una caché efímera por página y la pasa a `isCanonicalFeedbackInboxRow_`. La búsqueda por `suggestionOperationId`, clave de solicitud o `reportId` se ejecuta una vez por clave, aunque varias filas físicas de la página repitan la misma operación.
+- Se cachean resultados positivos y ausencia de coincidencia; los conflictos siguen propagándose desde la primera búsqueda. La caché no persiste ni cruza usuarios/requests.
+- Se mantiene el índice de imágenes por reportId de P1.5, first-write-wins y validación de duplicados contradictorios.
+- Prueba `FeedbackInboxImageEventBatchRead.mjs`: 7/7 PASS; regresión: 281 suites, 3,266 pruebas, 0 fallos; build y health read-only SUCCESS.
