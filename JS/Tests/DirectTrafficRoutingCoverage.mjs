@@ -77,9 +77,6 @@ test("CATALOG y rutas directas AUTH/WRITE quedan contabilizadas; consultas inter
     const catalogTrafficActions = catalog.slice(trafficStart, trafficEnd);
     ["getCatalogData", "getDropdownData", "getSuggestion", "getNavigationData", "getVehicleProjection", "getContributionCandidates"]
         .forEach(action => assert.ok(catalogTrafficActions.includes('"'+action+'"'), "falta telemetría para "+action));
-    assert.ok(catalogTrafficActions, "CATALOG debe declarar el conjunto de acciones contabilizadas");
-    ["getCatalogData", "getDropdownData", "getSuggestion", "getNavigationData", "getVehicleProjection", "getContributionCandidates"]
-        .forEach(action => assert.ok(catalogTrafficActions[1].includes('"'+action+'"'), "falta telemetría para "+action));
     assert.match(catalog, /if \(action === "getServiceTraffic"\)[\s\S]*?return ContentService/);
     assert.match(auth, /actions: new Set\(\["validateSession"\]\)/);
     assert.match(write, /actions: new Set\(\["checkVehicle","getSuggestion","checkVinDuplicate"\]\)/);
