@@ -1186,19 +1186,25 @@ function runSharedMutationCoordinatorTests() {
         assert_(lease.status === "success", "La operación debe continuar aunque falle la telemetría.");
     });
 
-    test_("El actor se consulta una vez y las acciones siguientes usan caché local", function() {
+    test_("El actor se precarga al login y las acciones siguientes usan caché local sin Coordinator", function() {
         const store = new Map(); let validations = 0, storedTtl = 0;
         const cache = { get: key => store.has(key) ? store.get(key) : null, put: (key, value, ttl) => { store.set(key, value); storedTtl = ttl; }, remove: key => store.delete(key) };
-        const deps = { cache, validate: userId => { validations++; return { status: "success", valid: true, actor: { userId, role: "tecnico", epoch: 7 } }; }, keyFor: (userId, token) => userId + ":" + token, ttlSeconds: 15 };
+        const deps = { cache, validate: () => { validations++; throw new Error("Coordinator no debe consultarse"); },
+            keyFor: (userId, token) => userId + ":" + token, ttlSeconds: 15 };
+        const actor = { userId: "U-1", role: "tecnico", epoch: 7 };
+        assert_(cacheSharedSessionActor_("U-1", "token-1", actor, deps));
         const first = getCachedSharedSessionActor_("U-1", "token-1", deps), second = getCachedSharedSessionActor_("U-1", "token-1", deps);
-        assert_(first.role === "tecnico" && second.userId === "U-1" && validations === 1 && storedTtl === 15);
+        assert_(first.role === "tecnico" && second.userId === "U-1" && validations === 0 && storedTtl === 15);
     });
-    test_("La caché separa usuarios y tokens diferentes", function() {
+    test_("La caché separa usuarios y tokens diferentes sin validación remota", function() {
         const store = new Map(), cache = { get: key => store.get(key) || null, put: (key, value) => store.set(key, value), remove: key => store.delete(key) };
         let validations = 0;
-        const deps = { cache, keyFor: (userId, token) => userId + ":" + token, validate: userId => { validations++; return { status: "success", valid: true, actor: { userId, role: "jefe", epoch: 2 } }; } };
-        getCachedSharedSessionActor_("U-1", "token-1", deps); getCachedSharedSessionActor_("U-2", "token-1", deps); getCachedSharedSessionActor_("U-1", "token-2", deps);
-        assert_(validations === 3);
+        const deps = { cache, keyFor: (userId, token) => userId + ":" + token, validate: () => { validations++; throw new Error("No debe llamar Coordinator"); } };
+        [["U-1","token-1"],["U-2","token-1"],["U-1","token-2"]].forEach(([userId,token],index) => {
+            assert_(cacheSharedSessionActor_(userId,token,{userId,role:"jefe",epoch:2},deps));
+            assert_(getCachedSharedSessionActor_(userId,token,deps).userId===userId);
+        });
+        assert_(validations === 0);
     });
     test_("La caché exige actor precargado y no revalida en Coordinator ante miss", function() {
         const store = new Map(), cache = { get: key => store.get(key) || null, put: (key, value) => store.set(key, value), remove: key => store.delete(key) };
@@ -1220,6 +1226,10 @@ function runSharedMutationCoordinatorTests() {
         const remoteCalls = [];
         const r = createRuntime_(null, function(url, options) {
             const request = JSON.parse(options.payload);
+            if (request.action === "__primeSessionActorCache") {
+                return { getResponseCode: () => 200,
+                    getContentText: () => JSON.stringify({ status: "success", primed: request.payload.sessionTokens.length }) };
+            }
             const target = url.includes("USERS") ? "USERS" : url.includes("WRITE") ? "WRITE" : url.includes("FEEDBACK") ? "FEEDBACK" : "ADMIN";
             remoteCalls.push({ target, tokens: request.payload.sessionTokens.slice() });
             return { getResponseCode: () => 200,
