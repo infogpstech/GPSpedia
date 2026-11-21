@@ -1291,3 +1291,13 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - CI sobre HEAD documental `14eeb59ae4e3a3a534dae9f87824656d235bb17f`: **279 suites / 3,245 pruebas aprobadas / 0 fallos**; build SUCCESS; health de servicios read-only SUCCESS. Pages deploy seguía en curso y no es condición de aprobación de servicios.
 - No se modificaron deployments Apps Script, endpoints, propiedades, secretos, Spreadsheet ni Drive productivos.
 - Siguiente tarea: auditar WRITE/FEEDBACK/ADMIN de extremo a extremo; iniciar por aportes WRITE, donde se observan lecturas de Cortes y del ledger en fases distintas. No combinar lecturas si afecta idempotencia, detección de conflictos, append verification o recuperación concurrente.
+
+
+## Cierre — WRITE comparte snapshot del ledger tras append (2026-11-21)
+
+- En `handleAppendExistingVehicleCut_`, el cálculo de slot y la detección de colisión VIN posterior al append reutilizan una sola lectura de `AportesVehiculo`; antes cada helper leía el ledger por separado.
+- En `handleCheckOperation`, la lectura compartida se ejecuta solo cuando se encontró un evento existente, su huella coincide y el evento es de tipo `cut`. Los casos sin evento y las recuperaciones de `opening/feed` no pagan esa lectura adicional.
+- `getVehicleContributionCutSlotIndex_` y `findVehicleContributionVinConflict_` aceptan un snapshot opcional; sin snapshot conservan su comportamiento y usan el helper común de lectura. Se eliminaron comprobaciones duplicadas de getLastRow al reutilizarlo.
+- Se mantienen la detección de opId duplicado/conflictivo, el TextFinder, la verificación del append y la lectura de recuperación; no se relajó idempotencia ni concurrencia.
+- Prueba nueva `WriteContributionPostAppendSnapshot.mjs`: 12/12 PASS. GitHub Actions en HEAD `d0feac30cf3d22547b05a07b675fd7717050e51a`: **280 suites / 3,257 pruebas / 0 fallos**; build SUCCESS; health read-only SUCCESS.
+- Siguiente: continuar con FEEDBACK y ADMIN, empezando por lecturas repetidas en sugerencias de año y likes.
