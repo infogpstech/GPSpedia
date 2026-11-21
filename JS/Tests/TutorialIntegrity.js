@@ -437,6 +437,36 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
         assert.equal(h.api.titleOwner("tema nuevo"), tutorialId);
     });
 
+    test("la edición D:F de un tutorial histórico sin ID usa journal append-only sin lock ni ID inventado", () => {
+        const row = ["", "Tema histórico", "imagen", "Cómo original", "Dónde original", "Detalle original", "video", "Autora"];
+        const h = buildHarness_(feedback, { rows: [headers, row] });
+        const result = h.api.update({ tutorialId: "Tema histórico", comoIdentificarlo: "Cómo actualizado",
+            dondeEncontrarlo: "Dónde actualizado", detalles: "Detalle actualizado" });
+        assert.equal(result.status, "success");
+        assert.equal(result.updated.tutorialId, "");
+        assert.equal(h.state.lockWaits, 0);
+        assert.equal(h.sheet.data[1][0], "");
+        assert.equal(h.sheet.data[1][3], "Cómo original");
+        const identity = "legacy-" + crypto.createHash("sha256").update("tema historico").digest("hex");
+        const projected = h.api.projectEdit(identity, h.sheet.data[1]);
+        assert.deepEqual(projected.row.slice(3, 6), ["Cómo actualizado", "Dónde actualizado", "Detalle actualizado"]);
+    });
+
+    test("una edición combinada de título y campos D:F legacy se proyecta sin modificar la fila", () => {
+        const row = ["", "Tema histórico", "imagen", "Cómo original", "Dónde original", "Detalle original", "video", "Autora"];
+        const h = buildHarness_(feedback, { rows: [headers, row] });
+        const result = h.api.update({ tutorialId: "Tema histórico", tema: "Tema renombrado",
+            comoIdentificarlo: "Cómo nuevo", dondeEncontrarlo: "Dónde nuevo", detalles: "Detalle nuevo" });
+        assert.equal(result.status, "success");
+        assert.equal(result.updated.tema, "Tema renombrado");
+        assert.equal(h.state.lockWaits, 0);
+        assert.equal(h.sheet.data[1][0], "");
+        assert.equal(h.sheet.data[1][1], "Tema histórico");
+        const identity = "legacy-" + crypto.createHash("sha256").update("tema historico").digest("hex");
+        assert.equal(h.api.projectTitle(identity, "Tema histórico"), "Tema renombrado");
+        assert.deepEqual(h.api.projectEdit(identity, h.sheet.data[1]).row.slice(3, 6), ["Cómo nuevo", "Dónde nuevo", "Detalle nuevo"]);
+    });
+
     test("el renombrado de tutorial con ID estable usa journals append-only sin ScriptLock", () => {
         const id = "tut-77777777777777777777777777777777";
         const row = [id, "Tema anterior", "imagen", "Cómo", "Dónde", "Detalle", "video", "Autora"];

@@ -4557,14 +4557,15 @@ function findTutorialRow_(sheet, reference, preferId) {
         });
         if (byTitle.length > 1) {
             const first = byTitle[0], firstId = String(first.row[0] || "").trim();
-            const sameIdentity = byTitle.every(item => String(item.row[0] || "").trim() === firstId);
+            const sameIdentity = Boolean(firstId) && byTitle.every(item => String(item.row[0] || "").trim() === firstId);
             if (!sameIdentity) throw new Error("El tema del tutorial aparece más de una vez; no se modificó.");
-            const projected = firstId ? projectTutorialEditFields_(firstId, first.row) : { row: first.row };
+            const projected = projectTutorialEditFields_(firstId, first.row);
             return Object.assign({}, first, { row: projected.row });
         }
         if (byTitle.length === 1) {
             const first = byTitle[0], id = String(first.row[0] || "").trim();
-            const projected = id ? projectTutorialEditFields_(id, first.row) : { row: first.row };
+            const identity = id || makeLegacyTutorialIdentity_(first.row[1]);
+            const projected = projectTutorialEditFields_(identity, first.row);
             return Object.assign({}, first, { row: projected.row });
         }
     }
@@ -4724,7 +4725,8 @@ function readTutorialEditEvents_(sheet) {
         let snapshot = null;
         try { snapshot = JSON.parse(String(row[4] || "")); } catch (error) {}
         if (!/^tutorial-edit-[a-f0-9]{64}$/.test(operationId) || !/^[a-f0-9]{64}$/.test(payloadHash) ||
-            !/^tut-[A-Za-z0-9_-]{20,80}$/i.test(tutorialId) || !/^[a-f0-9]{64}$/.test(expectedHash) ||
+            !/^(?:tut-[A-Za-z0-9_-]{20,80}|legacy-[a-f0-9]{64})$/i.test(tutorialId) || !/^[a-f0-9]{64}$/.test(expectedHash) ||
+            buildTutorialContentHash_([tutorialId, expectedHash, snapshot]) !== payloadHash ||
             !Array.isArray(snapshot) || snapshot.length !== 3 || snapshot.some(value => typeof value !== "string")) {
             throw new Error("TutorialEditEvents contiene una fila incompatible; requiere revisión.");
         }
@@ -4771,9 +4773,24 @@ function projectTutorialEditFields_(tutorialId, baseRow) {
     return { row, appliedOperations };
 }
 
+function findTutorialByIdentity_(sheet, tutorialId) {
+    const id = String(tutorialId || "").trim();
+    if (/^tut-[A-Za-z0-9_-]{20,80}$/i.test(id)) return findTutorialById_(sheet, id);
+    if (!/^legacy-[a-f0-9]{64}$/i.test(id)) return null;
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) return null;
+    const rows = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).getValues();
+    const matches = [];
+    rows.forEach((row, index) => {
+        if (!String(row[0] || "").trim() && makeLegacyTutorialIdentity_(row[1]) === id) matches.push({ rowIndex: index + 2, row });
+    });
+    if (matches.length > 1) throw new Error("La identidad histórica del tutorial es ambigua; no se modificó.");
+    return matches[0] || null;
+}
+
 function appendTutorialEditEvent_(tutorialId, baseRow, snapshot) {
     const id = String(tutorialId || "").trim();
-    if (!/^tut-[A-Za-z0-9_-]{20,80}$/i.test(id)) throw new Error("La edición append-only requiere un ID persistente de tutorial.");
+    if (!/^(?:tut-[A-Za-z0-9_-]{20,80}|legacy-[a-f0-9]{64})$/i.test(id)) throw new Error("La edición append-only requiere una identidad de tutorial válida.");
     const expectedHash = buildTutorialEditFieldsHash_([baseRow[3], baseRow[4], baseRow[5]]);
     const normalizedSnapshot = snapshot.map(value => String(value || ""));
     const payloadHash = buildTutorialContentHash_([id, expectedHash, normalizedSnapshot]);
@@ -4790,7 +4807,7 @@ function appendTutorialEditEvent_(tutorialId, baseRow, snapshot) {
         }
     }
     const tutorialSheet = getTutorialSheet_(false);
-    const raw = tutorialSheet ? findTutorialById_(tutorialSheet, id) : null;
+    const raw = tutorialSheet ? findTutorialByIdentity_(tutorialSheet, id) : null;
     if (!raw) throw new Error("Tutorial no encontrado después de registrar la edición.");
     const projected = projectTutorialEditFields_(id, raw.row);
     if (projected.appliedOperations.get(operationId) !== true ||
@@ -5781,11 +5798,8 @@ function handleUpdateTutorialItem(payload) {
 
     const preflightId = preflightTarget ? String(preflightTarget.row[0] || "").trim() : "";
     const stableTutorialId = /^tut-[A-Za-z0-9_-]{20,80}$/i.test(preflightId);
-    const legacyRenameOnly = Boolean(preflightTarget && !preflightId && updates.tema !== undefined &&
-        normalizeTutorialTitle_(updates.tema) !== normalizeTutorialTitle_(preflightTarget.row[1]) &&
-        preflightNext && preflightNext.slice(2).every((value, index) =>
-            value === String(preflightTarget.row[index + 3] || "")));
-    if (preflightTarget && (stableTutorialId || legacyRenameOnly)) {
+    const legacyTutorial = Boolean(preflightTarget && !preflightId);
+    if (preflightTarget && (stableTutorialId || legacyTutorial)) {
         const currentTitle = String(preflightTarget.row[1] || "").trim();
         const nextTitle = updates.tema !== undefined ? updates.tema : currentTitle;
         const tutorialIdentity = preflightId || makeLegacyTutorialIdentity_(currentTitle);
@@ -5823,8 +5837,7 @@ function handleUpdateTutorialItem(payload) {
             appendTutorialRenameEvent_(tutorialIdentity, currentTitle, nextTitle);
         }
         if (!nextSnapshot.every((value, index) => value === currentSnapshot[index])) {
-            if (!stableTutorialId) throw new Error("Las ediciones descriptivas de registros históricos sin ID requieren una operación separada.");
-            appendTutorialEditEvent_(preflightId, preflightTarget.row, nextSnapshot);
+            appendTutorialEditEvent_(tutorialIdentity, preflightTarget.row, nextSnapshot);
         }
         const saved = findTutorialRow_(preflightSheet, preflightId || nextTitle, true);
         if (normalizeTutorialTitle_(saved.row[1]) !== normalizeTutorialTitle_(nextTitle) ||

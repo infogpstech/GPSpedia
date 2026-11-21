@@ -729,7 +729,7 @@ function projectTutorialCatalogRows_(records, editEventRows) {
         let snapshot = null;
         try { snapshot = JSON.parse(String(event[4] || "")); } catch (error) {}
         if (!/^tutorial-edit-[a-f0-9]{64}$/.test(operationId) || !/^[a-f0-9]{64}$/.test(payloadHash) ||
-            !/^tut-[A-Za-z0-9_-]{20,80}$/i.test(tutorialId) || !/^[a-f0-9]{64}$/.test(expectedHash) ||
+            !/^(?:tut-[A-Za-z0-9_-]{20,80}|legacy-[a-f0-9]{64})$/i.test(tutorialId) || !/^[a-f0-9]{64}$/.test(expectedHash) ||
             !Array.isArray(snapshot) || snapshot.length !== 3 || snapshot.some(value => typeof value !== "string")) {
             throw new Error("TutorialEditEvents contiene una fila incompatible; no se pudo proyectar el catálogo.");
         }
@@ -744,10 +744,10 @@ function projectTutorialCatalogRows_(records, editEventRows) {
     (records || []).forEach(sourceRow => {
         if (!sourceRow || !sourceRow.some(value => value !== "" && value !== null && value !== undefined)) return;
         const row = sourceRow.slice(), id = String(row[0] || "").trim();
-        if (!id) { canonicalRows.push(row); return; }
-        if (byId.has(id)) return;
-        byId.set(id, row);
-        const events = eventsByTutorial.get(id) || [];
+        const identity = id || tutorialLegacyIdentity_(row[1]);
+        if (id && byId.has(id)) return;
+        if (id) byId.set(id, row);
+        const events = eventsByTutorial.get(identity) || [];
         let current = [row[3], row[4], row[5]].map(value => String(value || ""));
         events.forEach(event => {
             if (event.expectedHash === tutorialEditFieldsHash_(current)) current = event.snapshot.slice();
@@ -966,8 +966,9 @@ function handleGetCatalogData(payload = {}) {
             }
             renameEventRows = renameData.slice(1);
         }
-        const projectedTitleRows = projectTutorialCatalogTitles_(data.slice(1), renameEventRows);
-        tutorialesData = dedupeTutorialCatalogRows_(projectTutorialCatalogRows_(projectedTitleRows, editEventRows)
+        const projectedEditRows = projectTutorialCatalogRows_(data.slice(1), editEventRows);
+        const projectedTitleRows = projectTutorialCatalogTitles_(projectedEditRows, renameEventRows);
+        tutorialesData = dedupeTutorialCatalogRows_(projectedTitleRows
             .map(row => mapRowToObject(row, COLS_TUTORIALES, IMAGE_FIELDS_TUTORIALES)).filter(Boolean));
     }
     allData.tutoriales = tutorialesData;
