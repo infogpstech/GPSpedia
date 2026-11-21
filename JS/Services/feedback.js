@@ -4134,6 +4134,10 @@ function handleAddProblem(source) {
             }
         }
 
+        const imageReferences = findPysImageReferences_(sheet, fileId, url);
+        if (imageReferences.length) {
+            throw new Error("La imagen está referenciada por un registro PyS distinto; se conservó para revisión manual.");
+        }
         const expected = buildPysExpectedRow_(problemId, p, url, models);
         sheet.appendRow(expected);
         SpreadsheetApp.flush();
