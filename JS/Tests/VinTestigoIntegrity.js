@@ -85,7 +85,7 @@ function runVinTestigoIntegrityTests() {
         headers[0] = "id";
         headers[54] = "campoExtra";
         const sheet = fakeSheet_(headers, [Array(55).fill("")], 60);
-        const result = ensureTestigoColumns(sheet, true);
+        const result = ensureTestigoColumns(sheet);
         assert_(result.activaTestigo1 === 46 && result.activaTestigo2 === 47 && result.activaTestigo3 === 48);
         assert_(sheet._data[0][45] === "activaTestigo1");
         assert_(sheet._data[0][46] === "activaTestigo2");
@@ -96,7 +96,7 @@ function runVinTestigoIntegrityTests() {
         const headers = Array(45).fill("");
         headers[0] = "id";
         const sheet = fakeSheet_(headers, [], 45);
-        const result = ensureTestigoColumns(sheet, true);
+        const result = ensureTestigoColumns(sheet);
         assert_(result.activaTestigo1 === 46 && result.activaTestigo3 === 48);
         assert_(sheet._columns() === 48);
     });
@@ -131,7 +131,7 @@ function runVinTestigoIntegrityTests() {
         headers[42] = "VIN";
         headers[48] = "vin";
         const sheet = fakeSheet_(headers, [], 50);
-        expectThrow_(() => ensureTestigoColumns(sheet, true), "duplicados");
+        expectThrow_(() => ensureTestigoColumns(sheet), "duplicados");
         assert_(sheet._data[0][45] === "" && sheet._data[0][46] === "" && sheet._data[0][47] === "");
     });
     run_("rechaza encabezados VIN duplicados", function() {
