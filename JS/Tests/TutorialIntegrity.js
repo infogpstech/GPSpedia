@@ -82,7 +82,7 @@ function buildHarness_(feedback, options = {}) {
     const updateStart = feedback.indexOf("function handleUpdateTutorialItem(payload)");
     if (updateStart < 0) throw new Error("No se encontró handleUpdateTutorialItem.");
     const update = feedback.slice(updateStart);
-    vm.runInNewContext(helpers + "\n" + update + "\nthis.api = { add: handleAddTutorial, update: handleUpdateTutorialItem, headers: TUTORIAL_HEADERS, appendTitleEvent: appendTutorialTitleEvent_, readTitleEvents: readTutorialTitleEvents_, titleOwner: getTutorialTitleOwner_, appendEditEvent: appendTutorialEditEvent_, projectEdit: projectTutorialEditFields_ };", context);
+    vm.runInNewContext(helpers + "\n" + update + "\nthis.api = { add: handleAddTutorial, update: handleUpdateTutorialItem, headers: TUTORIAL_HEADERS, appendTitleEvent: appendTutorialTitleEvent_, readTitleEvents: readTutorialTitleEvents_, titleOwner: getTutorialTitleOwner_, appendEditEvent: appendTutorialEditEvent_, projectEdit: projectTutorialEditFields_, titleEventsSheet };", context);
     return { api: context.api, sheet, state, editEventsSheet };
 }
 
@@ -390,6 +390,31 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
         assert.equal(h.api.titleOwner("motor"), first.tutorialId);
         assert.throws(() => h.api.appendTitleEvent(second), /tema del tutorial ya está reservado|Ya existe un tutorial/);
         assert.equal(h.api.titleOwner("motor"), first.tutorialId);
+    });
+
+    test("el ledger de títulos rechaza un operationId duplicado con evento contradictorio", () => {
+        const h = buildHarness_(feedback, { missingSheet: true });
+        const first = { operationId: "tutorial-create-44444444444444444444444444444444",
+            tutorialId: "tut-44444444444444444444444444444444", action: "CLAIM",
+            titleKey: "tema uno", previousTitleKey: "", payloadHash: "4".repeat(64) };
+        h.api.appendTitleEvent(first);
+        const conflicting = { ...first, titleKey: "tema dos" };
+        const digest = crypto.createHash("sha256").update(JSON.stringify([
+            conflicting.operationId, conflicting.tutorialId, conflicting.action, conflicting.titleKey,
+            conflicting.previousTitleKey, conflicting.payloadHash
+        ])).digest("hex");
+        h.api.titleEventsSheet.appendRow([conflicting.operationId, digest, conflicting.tutorialId,
+            conflicting.action, conflicting.titleKey, conflicting.previousTitleKey, conflicting.payloadHash, "now"]);
+        assert.throws(() => h.api.readTitleEvents(), /mismo operationId con eventos contradictorios/);
+    });
+
+    test("el ledger de títulos rechaza eventHash alterado", () => {
+        const h = buildHarness_(feedback, { missingSheet: true });
+        h.api.appendTitleEvent({ operationId: "tutorial-create-55555555555555555555555555555555",
+            tutorialId: "tut-55555555555555555555555555555555", action: "CLAIM",
+            titleKey: "tema", previousTitleKey: "", payloadHash: "5".repeat(64) });
+        h.api.titleEventsSheet.data[1][1] = "f".repeat(64);
+        assert.throws(() => h.api.readTitleEvents(), /eventHash que no coincide/);
     });
 
     test("el rename append-only libera el título anterior y reserva el nuevo", () => {
