@@ -715,6 +715,21 @@ function readFeedbackLikeEventCounts_(spreadsheetRef) {
     return result;
 }
 
+function dedupeTutorialCatalogRows_(records) {
+    const byId = new Map(), output = [];
+    (records || []).forEach(record => {
+        if (!record) return;
+        const id = String(record.ID || "").trim();
+        if (!id) { output.push(record); return; }
+        if (!byId.has(id)) { byId.set(id, record); output.push(record); return; }
+        const canonical = byId.get(id);
+        if (JSON.stringify(canonical) !== JSON.stringify(record)) {
+            throw new Error("La hoja Tutorial contiene el mismo ID con filas contradictorias; se detuvo la lectura del catálogo.");
+        }
+    });
+    return output;
+}
+
 function handleGetCatalogData(payload = {}) {
     const cache = CacheService.getScriptCache();
     const cacheKey = 'catalog_data_v2';
@@ -838,7 +853,7 @@ function handleGetCatalogData(payload = {}) {
     if (tutorialesSheet) {
         const data = tutorialesSheet.getDataRange().getValues();
         data.shift();
-        tutorialesData = data.map(row => mapRowToObject(row, COLS_TUTORIALES, IMAGE_FIELDS_TUTORIALES)).filter(Boolean);
+        tutorialesData = dedupeTutorialCatalogRows_(data.map(row => mapRowToObject(row, COLS_TUTORIALES, IMAGE_FIELDS_TUTORIALES)).filter(Boolean));
     }
     allData.tutoriales = tutorialesData;
 
