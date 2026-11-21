@@ -2027,6 +2027,37 @@ function findFeedbackVehicleRowForLike_(sheet, vehicleId) {
     }
     return { row, rowIndex };
 }
+function findCompletedLikeReplayNoop_(cuts, vehicle, actorKey, vehicleId, corteIndex, utilCol) {
+    try {
+        const ledger = getSpreadsheet().getSheetByName("FeedbackLikes");
+        if (!ledger || ledger.getLastRow() < 2 || ledger.getLastColumn() < 7) return null;
+        const expectedHeaders = ["actorKey", "vehicleId", "corteIndex", "previousCount", "targetCount", "status", "createdAt"];
+        const headers = ledger.getRange(1, 1, 1, 7).getValues()[0].map(value => String(value || "").trim());
+        if (expectedHeaders.some((header, index) => headers[index] !== header)) return null;
+        const matches = ledger.getRange(2, 1, ledger.getLastRow() - 1, 1)
+            .createTextFinder(actorKey).matchCase(true).findAll();
+        const found = [];
+        matches.forEach(match => {
+            const row = ledger.getRange(match.getRow(), 1, 1, 7).getValues()[0];
+            if (String(row[0] || "").trim() === actorKey &&
+                String(row[1] || "").trim() === vehicleId && Number(row[2]) === corteIndex) {
+                found.push(row);
+            }
+        });
+        if (found.length !== 1 || String(found[0][5] || "") !== "completed") return null;
+        const rawCount = cuts.getRange(vehicle.rowIndex, utilCol).getValue();
+        const currentCount = rawCount === "" || rawCount === null || rawCount === undefined ? 0 : Number(rawCount);
+        if (!Number.isSafeInteger(currentCount) || currentCount < 0) return null;
+        return {
+            status: "success", alreadyLiked: true, likeCount: currentCount,
+            message: "Este usuario ya había registrado su like."
+        };
+    } catch (error) {
+        // El preflight es best-effort y de solo lectura; el flujo protegido conserva el resultado autoritativo.
+        return null;
+    }
+}
+
 function handleRecordLike(payload) {
     const vehicleId = String(payload && payload.vehicleId || "").trim();
     const corteIndex = Number(payload && payload.corteIndex);
@@ -2041,6 +2072,8 @@ function handleRecordLike(payload) {
     if (!typeCol || !utilCol || !String(preflightVehicle.row[typeCol - 1] || "").trim()) {
         throw new Error("El corte seleccionado no existe en el vehículo.");
     }
+    const completedReplay = findCompletedLikeReplayNoop_(cuts, preflightVehicle, actorKey, vehicleId, corteIndex, utilCol);
+    if (completedReplay) return completedReplay;
     let activityLogRequest = null;
     const result = (() => {
         const lock = LockService.getScriptLock();
