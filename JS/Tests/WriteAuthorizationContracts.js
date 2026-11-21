@@ -22,30 +22,50 @@ function runWriteAuthorizationContracts(sources) {
  }
  const auth=extract(write,"assertDeveloperForIdMaintenance"),allocate=extract(write,"handleAllocateVehicleId");
  function harness(options){
-  options=options||{};let authCalls=0,roleReads=0,lockAcquired=0,lockReleased=0,allocations=0,spreadsheetReads=0;
+  options=options||{};
+  let authCalls=0,roleReads=0,lockCalls=0,allocations=0,spreadsheetReads=0;
   const authFn=(payload,allowedRoles)=>{
    authCalls++;
    if(!payload||!payload.userId||!payload.sessionToken)throw Error("Sesión inválida.");
-   const role=options.roleAtRead?options.roleAtRead(roleReads+1,lockAcquired):(options.role||"Desarrollador");
+   const role=options.roleAtRead?options.roleAtRead(roleReads+1):(options.role||"Desarrollador");
    roleReads++;
    const normalized=String(role||"").trim().toLowerCase();
    if(Array.isArray(allowedRoles)&&!allowedRoles.includes(normalized))throw Error("El mantenimiento de IDs de Cortes requiere privilegio Desarrollador.");
-   return "Nombre Servidor";
+   return{role:normalized};
   };
-  const spreadsheet=()=>{spreadsheetReads++;return{getSheetByName(name){if(name==="Cortes")return{getLastRow:()=>1};return null;}};};
-  const lockService={getScriptLock:()=>({tryLock(ms){if(ms!==0)throw Error("El asignador debe usar adquisición inmediata del lock.");lockAcquired++;return true;},releaseLock(){lockReleased++;}})};
-  const fn=new Function("getAuthenticatedCollaborator","getSpreadsheet","SHEET_NAMES","COLS_USERS","LockService","getNextCortesVehicleIdLocked","normalizeCortesIdAllocationRequest_","reserveCortesVehicleIdForOperationLocked_",
-   auth+"\n"+allocate+"\nreturn handleAllocateVehicleId;")(
-   authFn,spreadsheet,{USERS:"Users",CORTES:"Cortes"},{ID:1,Privilegios:4},lockService,()=>{allocations++;return 77;},()=>null,()=>{throw Error("No debe reservar en la prueba legacy");});
-  return{fn,stats:()=>({authCalls,roleReads,lockAcquired,lockReleased,allocations,spreadsheetReads})};
+  const spreadsheet=()=>{spreadsheetReads++;return{getSheetByName:name=>name==="Cortes"?{}:null};};
+  const lockService={getScriptLock(){lockCalls++;throw Error("El asignador central no debe adquirir ScriptLock.");}};
+  const fn=new Function("getAuthenticatedCollaborator","LockService","getSpreadsheet","SHEET_NAMES","normalizeCortesIdAllocationRequest_","reserveCortesVehicleIdForOperation_",
+   auth+"\\n"+allocate+"\\nreturn handleAllocateVehicleId;")(
+   authFn,lockService,spreadsheet,{CORTES:"Cortes"},
+   payload=>({opId:payload.opId,operationHash:payload.operationHash}),
+   (sheet,request)=>{allocations++;if(!sheet||!request.opId||!request.operationHash)throw Error("Reserva incompleta.");return 77;});
+  return{fn,stats:()=>({authCalls,roleReads,lockCalls,allocations,spreadsheetReads})};
  }
- const payload={userId:"USR-1",sessionToken:"session-1"};
- run("allocateVehicleId valida sesión y permite únicamente Desarrollador bajo lock",()=>{const h=harness({role:"Desarrollador"});const r=h.fn(payload);const x=h.stats();assert(r.status==="success"&&r.vehicleId===77&&x.authCalls===1&&x.roleReads===1&&x.lockAcquired===1&&x.lockReleased===1&&x.allocations===1);});
- run("rol ordinario se rechaza bajo lock y no incrementa el contador",()=>{const h=harness({role:"Tecnico"});let rejected=false;try{h.fn(payload);}catch(e){rejected=/privilegio Desarrollador/.test(e.message);}const x=h.stats();assert(rejected&&x.authCalls===1&&x.roleReads===1&&x.lockAcquired===1&&x.lockReleased===1&&x.allocations===0);});
- run("el rol se consulta después de adquirir el lock breve",()=>{const h=harness({roleAtRead:(n,locks)=>locks===1?"Tecnico":"Desarrollador"});let rejected=false;try{h.fn(payload);}catch(e){rejected=/privilegio Desarrollador/.test(e.message);}const x=h.stats();assert(rejected&&x.lockAcquired===1&&x.lockReleased===1&&x.allocations===0);});
- run("sesión ausente no consulta perfil ni contador y libera el lock",()=>{const h=harness({role:"Desarrollador"});let rejected=false;try{h.fn({userId:"USR-1"});}catch(_){rejected=true;}const x=h.stats();assert(rejected&&x.authCalls===1&&x.roleReads===0&&x.lockAcquired===1&&x.lockReleased===1&&x.allocations===0);});
- run("allocateVehicleId no repite la autenticación dentro de la misma solicitud",()=>{const h=harness({role:"Desarrollador"});h.fn(payload);const x=h.stats();assert(x.authCalls===1&&x.roleReads===1);});
-  run("ADMIN transmite identidad y sesión al asignador WRITE sin token de lease",()=>{const fn=extract(admin,"requestNextVehicleIdFromWriteService");assert(/userId:\s*payload\s*&&\s*payload\.userId/.test(fn)&&/sessionToken:\s*payload\s*&&\s*payload\.sessionToken/.test(fn)&&!/sharedMutationToken|__sharedMutationToken/.test(fn));});
+ const payload={userId:"USR-1",sessionToken:"session-1",opId:"OP-1",operationHash:"a".repeat(64),role:"Tecnico"};
+ run("allocateVehicleId valida sesión y permite únicamente Desarrollador sin lock",()=>{
+  const h=harness({role:"Desarrollador"}),r=h.fn(payload),x=h.stats();
+  assert(r.status==="success"&&r.vehicleId===77&&x.authCalls===1&&x.roleReads===1&&x.lockCalls===0&&x.spreadsheetReads===1&&x.allocations===1);
+ });
+ run("rol ordinario se rechaza antes de consultar Spreadsheet o reservar",()=>{
+  const h=harness({role:"Tecnico"});let rejected=false;
+  try{h.fn(payload);}catch(e){rejected=/privilegio Desarrollador/.test(e.message);}
+  const x=h.stats();assert(rejected&&x.authCalls===1&&x.roleReads===1&&x.lockCalls===0&&x.spreadsheetReads===0&&x.allocations===0);
+ });
+ run("el rol servidor prevalece sobre payload.role",()=>{
+  const h=harness({roleAtRead:()=>"Tecnico"});let rejected=false;
+  try{h.fn({...payload,role:"Desarrollador"});}catch(e){rejected=/privilegio Desarrollador/.test(e.message);}
+  const x=h.stats();assert(rejected&&x.authCalls===1&&x.roleReads===1&&x.lockCalls===0&&x.spreadsheetReads===0&&x.allocations===0);
+ });
+ run("sesión ausente no consulta perfil, Spreadsheet ni ledger",()=>{
+  const h=harness();let rejected=false;
+  try{h.fn({...payload,sessionToken:""});}catch(_){rejected=true;}
+  const x=h.stats();assert(rejected&&x.authCalls===1&&x.roleReads===0&&x.lockCalls===0&&x.spreadsheetReads===0&&x.allocations===0);
+ });
+ run("allocateVehicleId no repite la autenticación dentro de la misma solicitud",()=>{
+  const h=harness({role:"Desarrollador"});h.fn(payload);const x=h.stats();assert(x.authCalls===1&&x.roleReads===1);
+ });
+ run("ADMIN transmite identidad y sesión al asignador WRITE sin token de lease",()=>{const fn=extract(admin,"requestNextVehicleIdFromWriteService");assert(/userId:\s*payload\s*&&\s*payload\.userId/.test(fn)&&/sessionToken:\s*payload\s*&&\s*payload\.sessionToken/.test(fn)&&!/sharedMutationToken|__sharedMutationToken/.test(fn));});
  run("los modales de apertura y alimentación adjuntan la sesión activa",()=>{const calls=ui.match(/routeAction\(["']addSupplementaryInfo["']/g)||[];assert(calls.length===2,"Se esperaban exactamente dos consumidores de addSupplementaryInfo en ui.js.");assert((ui.match(/getDeveloperSessionPayload\(\)/g)||[]).length>=2,"Falta adjuntar el contexto de sesión en los modales.");});
  run("handleStage3Submit transmite sesión y usa WRITE para información suplementaria",()=>{const start=html.indexOf("async function handleStage3Submit"),end=html.indexOf("\n        // --- UI & UTILITY HELPERS",start),fn=html.slice(start,end);assert(start>=0&&end>start);assert(/userId:\s*state\.userId/.test(fn)&&/sessionToken:\s*state\.sessionToken/.test(fn));assert(/const serviceOverride = null/.test(fn)&&/routeAction\('addSupplementaryInfo',\s*payload,\s*serviceOverride\)/.test(fn));});
   run("ADMIN rechaza rutas WRITE heredadas antes de resolver el actor y no usa Coordinator",()=>{const start=admin.indexOf("function doPost(e)"),end=admin.indexOf("\nfunction doPostInternal_",start),router=admin.slice(start,end);const rejection=router.indexOf('[\"checkOperation\", \"addOrUpdateCut\", \"addSupplementaryInfo\"].includes(action)');assert(rejection>=0&&rejection<router.indexOf("getCachedSharedSessionActor_"));assert(!router.includes("withSharedMutationLease_"));});
