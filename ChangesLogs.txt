@@ -193,3 +193,11 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - Las pruebas verifican que el flujo no solicita ni libera ScriptLock y que actividad/Drive se procesan fuera de la mutación de catálogo.
 - Validación CI: 255 suites, 3073 pruebas, 0 fallos; `FeedbackYearApplicationAppendOnly` 14/14; `FeedbackYearFolderSyncOutsideLock` 5/5; `SuggestYearVoteThreshold` 8/8; build y health read-only SUCCESS.
 - Otros handlers FEEDBACK aún conservan locks; migración P0 global y pruebas Beta siguen pendientes. Sin despliegue Apps Script.
+
+
+
+2026-11-21 — FEEDBACK: filas completas para reportes y sugerencias de corte
+- `handleReportProblem` y `handleSuggestCutChange` ahora anexan los registros nuevos como filas completas mediante `appendRow` y verifican campos persistidos.
+- Ante una confirmación incierta después de append, se conserva el adjunto para reconciliación en vez de borrar una referencia potencialmente persistida.
+- Ambos handlers mantienen ScriptLock y revalidación; retiro de lock pendiente hasta contar con idempotencia concurrente y proyección/deduplicación.
+- CI: 255 suites, 3075 pruebas, 0 fallos; build, health read-only y Pages SUCCESS.
