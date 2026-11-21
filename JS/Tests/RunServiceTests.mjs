@@ -358,6 +358,7 @@ runGroup('38','INTEGRATION',()=>{
  runCli('CATALOG reintentos y cancelación','JS/Tests/CatalogRequestRetry.js');
   runCli('CATALOG feed incremental con reintentos acotados','JS/Tests/CatalogFeedRetry.mjs');
   runCli('CATALOG cierre de edición consume deltas con fallback completo','JS/Tests/CatalogEditDeltaRefresh.mjs');
+  runCli('IMÁGENES cola de miniaturas FIFO y recuperación tras fallo','JS/Tests/ThumbnailCompressionQueueContract.mjs');
   runCli('PWA cache-first, App Shell y cuerpos independientes','JS/Tests/ServiceWorkerCache.js');
  runCli('GP-PWA-BRAND-01 logos locales offline y favicon transparente','JS/Tests/OfflineBrandAssets.mjs');
  runCli('CATALOG escenarios de arranque PWA','JS/Tests/PWAStartupScenarios.js');
