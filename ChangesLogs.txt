@@ -376,3 +376,10 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - Pruebas: VideoApprovalClientContract 10/10; aprobación/rechazo/publicación 30/30; YouTube idempotencia 16/16; VideoApprovalState 13/13; TutorialIntegrity 42/42; InboxConversations 66/66; SharedMutationCoordinator 86/86.
 - CI 194ec14271c630c20d7997ffcba55903b98474da SUCCESS: 259 suites, 3,130 pruebas, 0 fallos; build, health y Pages SUCCESS.
 - La adenda Beta sustituye expectativas históricas de leases para estas acciones. Sin despliegue ni cambios productivos.
+
+
+2026-11-21 — TUTORIALES: EDICIÓN LEGACY SIN SCRIPTLOCK
+- handleUpdateTutorialItem ya no adquiere ScriptLock para la ruta fallback de IDs históricos/no canónicos. Se mantienen validación de título, lookup dirigido, read-back y conservación de otros campos.
+- Pruebas: FeedbackTutorialUpdateNoopPreflight 6/6; FeedbackTutorialUpdateTitleLookupBoundedRead 5/5; TutorialIntegrity 42/42.
+- CI 8f310ade240a5b53cdcc0962a6f1f1da0adc482b SUCCESS: 259 suites, 3,130 pruebas, 0 fallos; build, health y Pages SUCCESS.
+- Siguiente: retirar lock de sourceVersion en publishFeedbackCatalogChange_ sin degradar feed incremental. Sin despliegue ni cambios productivos.
