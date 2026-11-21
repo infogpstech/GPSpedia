@@ -10,7 +10,6 @@ function extract(name) {
 }
 const helperCode = extract("findExistingVinRegistrationNoop_");
 const wrapperCode = extract("handleAddVinToVehicle");
-const lockHandlerCode = extract("handleAddVinToVehicleLocked");
 const columns = { id: 1, versionesAplicables: 5 };
 function makeHarness({ row = ["10", "", "", "", "Base / Full", "", "", "", "", "ABC123456"], lockAvailable = true, duplicateIds = false, authFails = false } = {}) {
     let lockCalls = 0, lockedCalls = 0, authCalls = 0, versionCalls = 0, reads = [];
@@ -20,7 +19,7 @@ function makeHarness({ row = ["10", "", "", "", "Base / Full", "", "", "", "", "
         getRange(...args) {
             reads.push(args);
             return { getValues: () => {
-                if (args[1] === columns.id) return duplicateIds ? [[row[0]], [row[0]]] : [[row[0]]];
+                if (args[1] === columns.id && args[3] === 1) return duplicateIds ? [[row[0]], [row[0]]] : [[row[0]]];
                 return [row.slice(args[1] - 1, args[1] - 1 + (args[3] || 1))];
             }};
         }
@@ -43,6 +42,7 @@ function makeHarness({ row = ["10", "", "", "", "Base / Full", "", "", "", "", "
     const wrapper = new Function(...Object.keys(deps), helperCode + "\n" + wrapperCode + "\nreturn handleAddVinToVehicle;")(...Object.values(deps));
     return { helper, wrapper, stats: () => ({ lockCalls, lockedCalls, authCalls, versionCalls, reads }) };
 }
+assert.match(source, /response && response\.status === "success" && response\.alreadyPresent !== true/, "Un replay sin cambios no debe invalidar CATALOG");
 let passed = 0;
 function test(name, fn) { fn(); passed++; }
 
