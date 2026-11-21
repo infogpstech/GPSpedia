@@ -1244,7 +1244,7 @@ function handleLogin(payload) {
             if (!activeSessionsSheet) throw new Error('Hoja ActiveSessions no encontrada.');
             ensureActiveSessionsActivityColumn_(activeSessionsSheet);
             ensureSessionTermsAcceptanceColumn_(activeSessionsSheet);
-            const roleRevocation = reconcileRoleRevocationUnderLock_(userSheet, activeSessionsSheet, userId, foundUserIndex + 2);
+            const roleRevocation = reconcileRoleRevocationUnderLock_(userSheet, activeSessionsSheet, userId, currentUserRowIndex);
             if (roleRevocation.pending) throw new Error('La revocación de sesiones anterior sigue pendiente. Intenta iniciar sesión nuevamente más tarde.');
 
             const refreshedUserRow = userSheet.getRange(currentUserRowIndex, 1, 1, COLS_USERS.TermsAcceptance).getValues()[0];
