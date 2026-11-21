@@ -1345,3 +1345,12 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Los conflictos de hash se almacenan por reportId y solo provocan error cuando se consulta el reporte afectado; no bloquean otros reportes de la página. First-event-wins y comparación de duplicados se conservan.
 - Prueba `FeedbackInboxImageEventBatchRead.mjs`: 6/6 PASS. CI HEAD `d0a79b3e2bf92ff4d7d7571b758332dddecce2e4`: **281 suites / 3,265 pruebas / 0 fallos**; build SUCCESS; health read-only SUCCESS. Pages deploy quedó en espera; no se desplegó Apps Script.
 - Siguiente: reducir búsquedas repetidas de canonicalización de sugerencias/reportes en `handleGetFeedbackItems` sin alterar first-write-wins ni errores de conflicto.
+
+
+## Cierre — FEEDBACK Inbox memoiza canonicalización por página (2026-11-21)
+
+- `isCanonicalFeedbackInboxRow_` acepta un `Map` local a la página. Cachea el resultado de `findCutSuggestionByOperation_`, `findCutSuggestionByRequest_` y `findReportByReportId_` por sus claves lógicas; las filas duplicadas de la misma operación/reporte reutilizan el mismo resultado y conservan el primer rowNumber.
+- La caché no persiste entre requests. Los conflictos siguen siendo errores en la primera búsqueda; los resultados null también se cachean para evitar repetir búsquedas sin match.
+- Se conserva el índice de eventos de imagen compartido en canonicalización y mapeo; first-write-wins, comparación de duplicados y alcance de conflictos permanecen intactos.
+- Prueba `FeedbackInboxImageEventBatchRead.mjs`: 7/7 PASS. CI HEAD `fbf112ba83dfa4a737ff12101a15d1119874a794`: **281 suites / 3,266 pruebas / 0 fallos**; build SUCCESS; health read-only SUCCESS. GitHub Pages deploy seguía en ejecución; no se desplegó Apps Script.
+- Siguiente: auditoría integral de ADMIN (Drive/Spreadsheet, respaldos/restauración, imágenes, idempotencia y read-back).
