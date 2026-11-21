@@ -383,7 +383,7 @@ function readVehicleContributionEvents_(spreadsheetRef) {
             const supersedesEventId = String(row[10] || "").trim();
             const validContributionKind = ["cut", "opening", "feed", "vehicle"].includes(kind) ||
                 (kind === "vehicle_update" && Boolean(actorId) &&
-                    (opId.startsWith("OP-ADMIN-") ||
+                    (opId.startsWith("OP-ADMIN-") || opId.startsWith("OP-WRITE-VIN-") ||
                         (opId.startsWith("OP-YEAR-") && actorId === "SYSTEM:FEEDBACK_YEAR")));
             if (!eventId || !/^OP-[A-Za-z0-9_-]{1,100}$/.test(opId) || !vehicleId ||
                 !/^[a-f0-9]{64}$/.test(operationHash) || !validContributionKind ||
@@ -464,6 +464,8 @@ function projectVehicleContributionEvents_(vehicles, sourceEvents) {
     const eventVinPrefixes = event => {
         if(event&&event.kind==="vehicle_update"&&event.payload&&event.payload.fieldName==="vin")
             return readVinPrefixes(event.payload.value);
+        if(event&&event.kind==="vehicle_update"&&event.payload&&event.payload.fieldName==="vin_registration"&&event.payload.value&&typeof event.payload.value==="object")
+            return readVinPrefixes(event.payload.value.vin);
         const prefix=String(event&&event.payload&&event.payload.vinPrefix||"").trim().toUpperCase();
         return prefix?[prefix]:[];
     };
@@ -484,7 +486,7 @@ function projectVehicleContributionEvents_(vehicles, sourceEvents) {
             !/^[a-f0-9]{64}$/i.test(String(event.operationHash || "")) ||
             !["cut", "opening", "feed", "vehicle", "vehicle_update"].includes(String(event.kind || "")) ||
             (event.kind==="vehicle_update"&&(!String(event.actorId||"").trim()||
-                !(String(event.opId||"").startsWith("OP-ADMIN-") ||
+                !(String(event.opId||"").startsWith("OP-ADMIN-") || String(event.opId||"").startsWith("OP-WRITE-VIN-") ||
                     (String(event.opId||"").startsWith("OP-YEAR-")&&String(event.actorId||"")==="SYSTEM:FEEDBACK_YEAR")))) ||
             !event.payload || typeof event.payload !== "object" || Array.isArray(event.payload)) {
             throw new Error("El ledger contiene un evento de aporte inválido; se canceló la proyección completa.");
@@ -612,46 +614,73 @@ function projectVehicleContributionEvents_(vehicles, sourceEvents) {
                     "cableAlimen","cableAlimen2","cableAlimen3","imagenVehiculo","imgCorte1","imgCorte2","imgCorte3","imgApertura",
                     "imgCableAlimen","imgCableAlimen2","imgCableAlimen3","tipoCorte1","tipoCorte2","tipoCorte3",
                     "ubicacionCorte1","ubicacionCorte2","ubicacionCorte3","colorCableCorte1","colorCableCorte2","colorCableCorte3",
-                    "configRelay1","configRelay2","configRelay3","vin"]);
+                    "configRelay1","configRelay2","configRelay3","vin","vin_registration"]);
                 if(!allowed.has(field)||!Object.prototype.hasOwnProperty.call(payload,"expectedCurrentValue")||
                     !Object.prototype.hasOwnProperty.call(payload,"value"))
                     throw new Error("El ledger contiene una actualización de campo inválida; se canceló la proyección completa.");
                 const imageField=["imagenVehiculo","imgCorte1","imgCorte2","imgCorte3","imgApertura","imgCableAlimen","imgCableAlimen2","imgCableAlimen3"].includes(field);
                 const vinField=field==="vin";
-                const currentValue=vehicle[field]===undefined||vehicle[field]===null?"":String(vehicle[field]);
-                const expectedValue=payload.expectedCurrentValue===undefined||payload.expectedCurrentValue===null?"":String(payload.expectedCurrentValue);
-                const currentSource=sources[field];
-                const expectedSourceId=String(event.supersedesEventId||"").trim();
-                const comparableCurrent=vinField?JSON.stringify(readVinPrefixes(vehicle.vin)):
-                    (imageField&&currentValue?normalizeAndValidateImageId(currentValue):currentValue);
-                const comparableExpected=vinField?JSON.stringify(readVinPrefixes(payload.expectedCurrentValue)):
-                    (imageField&&expectedValue?normalizeAndValidateImageId(expectedValue):expectedValue);
-                if(comparableCurrent!==comparableExpected||(expectedSourceId&&(!currentSource||String(currentSource.eventId)!==expectedSourceId))){
-                    const candidatePayload=Object.assign({},payload,{currentValue:vehicle[field],currentSourceEventId:currentSource&&currentSource.eventId||""});
-                    candidates.push({eventId:event.eventId,opId:event.opId,kind:event.kind,reason:"field_conflict",payload:candidatePayload});
-                    return;
-                }
-                if(vinField){
-                    const prefixes=readVinPrefixes(payload.value);
-                    const versionParts=String(vehicle.versionesAplicables||"").split(/[,/\\\\;]+/).map(value=>value.trim()).filter(Boolean);
-                    const maxAllowed=Math.max(1,Math.min(3,versionParts.length||1));
+                const compositeVinField=field==="vin_registration";
+                if(compositeVinField){
+                    const expected=payload.expectedCurrentValue,next=payload.value;
+                    if(!expected||typeof expected!=="object"||Array.isArray(expected)||!next||typeof next!=="object"||Array.isArray(next)||
+                        typeof expected.versionesAplicables!=="string"||typeof next.versionesAplicables!=="string"||
+                        !Object.prototype.hasOwnProperty.call(expected,"vin")||!Object.prototype.hasOwnProperty.call(next,"vin"))
+                        throw new Error("El ledger contiene un registro VIN compuesto inválido; se canceló la proyección completa.");
+                    const currentVersions=String(vehicle.versionesAplicables||"").trim();
+                    const expectedVersions=String(expected.versionesAplicables||"").trim();
+                    const currentVin=JSON.stringify(readVinPrefixes(vehicle.vin));
+                    const expectedVin=JSON.stringify(readVinPrefixes(expected.vin));
+                    if(currentVersions!==expectedVersions||currentVin!==expectedVin){
+                        candidates.push({eventId:event.eventId,opId:event.opId,kind:event.kind,reason:"field_conflict",
+                            payload:Object.assign({},payload,{currentValue:{versionesAplicables:vehicle.versionesAplicables,vin:vehicle.vin}})});return;
+                    }
+                    const prefixes=readVinPrefixes(next.vin);
+                    const parts=String(next.versionesAplicables||"").split(/[,/\\;]+/).map(value=>value.trim()).filter(Boolean);
+                    const maxAllowed=Math.max(1,Math.min(3,parts.length||1));
                     if(conflictedVinEventIds.has(String(event.eventId||""))){
-                        const candidatePayload=Object.assign({},payload,{currentValue:vehicle.vin,currentSourceEventId:currentSource&&currentSource.eventId||""});
-                        candidates.push({eventId:event.eventId,opId:event.opId,kind:event.kind,reason:"vin_conflict",payload:candidatePayload});
-                        return;
+                        candidates.push({eventId:event.eventId,opId:event.opId,kind:event.kind,reason:"vin_conflict",payload});return;
                     }
                     if(prefixes.length>maxAllowed){
-                        const candidatePayload=Object.assign({},payload,{currentValue:vehicle.vin,currentSourceEventId:currentSource&&currentSource.eventId||""});
-                        candidates.push({eventId:event.eventId,opId:event.opId,kind:event.kind,reason:"vin_capacity_full",payload:candidatePayload});
-                        return;
+                        candidates.push({eventId:event.eventId,opId:event.opId,kind:event.kind,reason:"vin_capacity_full",payload});return;
                     }
-                    vehicle.vin=JSON.stringify(prefixes);
+                    vehicle.versionesAplicables=next.versionesAplicables;vehicle.vin=JSON.stringify(prefixes);
+                    const source={eventId:event.eventId,opId:event.opId,operationHash:event.operationHash};
+                    sources.versionesAplicables=source;sources.vin=source;
                 }else{
-                    const nextValue=imageField?(payload.value?normalizeAndValidateImageId(String(payload.value)):null):
-                        (field==="anoDesde"||field==="anoHasta"?Number(payload.value):payload.value);
-                    vehicle[field]=nextValue;
+                    const currentValue=vehicle[field]===undefined||vehicle[field]===null?"":String(vehicle[field]);
+                    const expectedValue=payload.expectedCurrentValue===undefined||payload.expectedCurrentValue===null?"":String(payload.expectedCurrentValue);
+                    const currentSource=sources[field];
+                    const expectedSourceId=String(event.supersedesEventId||"").trim();
+                    const comparableCurrent=vinField?JSON.stringify(readVinPrefixes(vehicle.vin)):
+                        (imageField&&currentValue?normalizeAndValidateImageId(currentValue):currentValue);
+                    const comparableExpected=vinField?JSON.stringify(readVinPrefixes(payload.expectedCurrentValue)):
+                        (imageField&&expectedValue?normalizeAndValidateImageId(expectedValue):expectedValue);
+                    if(comparableCurrent!==comparableExpected||(expectedSourceId&&(!currentSource||String(currentSource.eventId)!==expectedSourceId))){
+                        const candidatePayload=Object.assign({},payload,{currentValue:vehicle[field],currentSourceEventId:currentSource&&currentSource.eventId||""});
+                        candidates.push({eventId:event.eventId,opId:event.opId,kind:event.kind,reason:"field_conflict",payload:candidatePayload});return;
+                    }
+                    if(vinField){
+                        const prefixes=readVinPrefixes(payload.value);
+                        const versionParts=String(vehicle.versionesAplicables||"").split(/[,/\\;]+/).map(value=>value.trim()).filter(Boolean);
+                        const maxAllowed=Math.max(1,Math.min(3,versionParts.length||1));
+                        if(conflictedVinEventIds.has(String(event.eventId||""))){
+                            const candidatePayload=Object.assign({},payload,{currentValue:vehicle.vin,currentSourceEventId:currentSource&&currentSource.eventId||""});
+                            candidates.push({eventId:event.eventId,opId:event.opId,kind:event.kind,reason:"vin_conflict",payload:candidatePayload});return;
+                        }
+                        if(prefixes.length>maxAllowed){
+                            const candidatePayload=Object.assign({},payload,{currentValue:vehicle.vin,currentSourceEventId:currentSource&&currentSource.eventId||""});
+                            candidates.push({eventId:event.eventId,opId:event.opId,kind:event.kind,reason:"vin_capacity_full",payload:candidatePayload});return;
+                        }
+                        vehicle.vin=JSON.stringify(prefixes);
+                    }else{
+                        const nextValue=imageField?(payload.value?normalizeAndValidateImageId(String(payload.value)):null):
+                            (field==="anoDesde"||field==="anoHasta"?Number(payload.value):payload.value);
+                        vehicle[field]=nextValue;
+                    }
+                    sources[field]={eventId:event.eventId,opId:event.opId,operationHash:event.operationHash};
                 }
-                sources[field]={eventId:event.eventId,opId:event.opId,operationHash:event.operationHash};
+
                 const resolvedCandidate=String(payload.resolvesCandidateEventId||"").trim();
                 if(resolvedCandidate)resolvedFieldCandidateIds.add(resolvedCandidate);
             }

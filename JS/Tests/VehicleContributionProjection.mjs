@@ -61,6 +61,13 @@ const event = (opId, vehicleId, kind, payload, rowIndex, hashChar = "a", extra =
 let passed = 0;
 function test(name, fn) { fn(); passed++; console.log("PASS " + name); }
 
+test("el lector acepta evento VIN compuesto WRITE autenticado",()=>{
+ const row=["EV-WRITE-VIN-1","OP-WRITE-VIN-1234567890","301","c".repeat(64),"vehicle_update",
+  JSON.stringify({fieldName:"vin_registration",expectedCurrentValue:{versionesAplicables:"Base",vin:[]},value:{versionesAplicables:"Base / Sport",vin:["ABC"]}}),
+  "USR-301","Técnico","2026-11-20T12:00:00.000Z","accepted",""];
+ assert.equal(reader({getSheetByName:()=>ledgerSheet([row])})[0].payload.fieldName,"vin_registration");
+ const forged=row.slice();forged[6]="";assert.throws(()=>reader({getSheetByName:()=>ledgerSheet([forged])}),/identidad, hash, tipo, fecha o estado inválido/);
+});
 test("el proyector aplica eventos OP-YEAR solo desde el actor interno de FEEDBACK", () => {
     const vehicle = Object.assign(blankVehicle("101"), { anoDesde: 2018, anoHasta: 2020 });
     const update = event("OP-YEAR-YSA-12345678901234567890123456789012-anoDesde", "101", "vehicle_update",
@@ -338,6 +345,37 @@ test("VIN versionado de vehículos distintos detecta colisión sin aplicar ningu
  assert.equal(results[0].vin,"[]");assert.equal(results[1].vin,"[]");
 });
 
+test("VIN compuesto aplica versión y colección con la misma fuente",()=>{
+ const vehicle=blankVehicle("301");vehicle.versionesAplicables="Base";vehicle.vin="[]";
+ const update=event("OP-WRITE-VIN-1234567890","301","vehicle_update",{
+  fieldName:"vin_registration",expectedCurrentValue:{versionesAplicables:"Base",vin:[]},
+  value:{versionesAplicables:"Base / Sport",vin:["ABC"]}
+ },2,"a",{actorId:"USR-301"});
+ const result=project([vehicle],[update])[0];
+ assert.equal(result.versionesAplicables,"Base / Sport");assert.deepEqual(JSON.parse(result.vin),["ABC"]);
+ assert.equal(result.contributionSources.versionesAplicables.eventId,update.eventId);
+ assert.equal(result.contributionSources.vin.eventId,update.eventId);
+});
+test("VIN compuesto concurrente deja el segundo evento como candidato sin aplicar parcialmente",()=>{
+ const vehicle=blankVehicle("302");vehicle.versionesAplicables="Base";vehicle.vin="[]";
+ const make=(trim,vin,row)=>event("OP-WRITE-VIN-"+row,"302","vehicle_update",{
+  fieldName:"vin_registration",expectedCurrentValue:{versionesAplicables:"Base",vin:[]},
+  value:{versionesAplicables:trim,vin:[vin]}
+ },row,String(row%9),{actorId:"USR-302"});
+ const result=project([vehicle],[make("Base / Sport","ONE",2),make("Base / Limited","TWO",3)])[0];
+ assert.equal(result.versionesAplicables,"Base / Sport");assert.deepEqual(JSON.parse(result.vin),["ONE"]);
+ assert.ok(result.contributionCandidates.some(item=>item.reason==="field_conflict"));
+});
+test("VIN compuesto entre vehículos detecta colisión sin proyectar parcial",()=>{
+ const one=blankVehicle("303"),two=blankVehicle("304");one.versionesAplicables="Base";two.versionesAplicables="Base";one.vin="[]";two.vin="[]";
+ const make=(id,row)=>event("OP-WRITE-VIN-"+id,id,"vehicle_update",{
+  fieldName:"vin_registration",expectedCurrentValue:{versionesAplicables:"Base",vin:[]},
+  value:{versionesAplicables:"Base / Sport",vin:["SHARED"]}
+ },row,"a",{actorId:"USR-"+id});
+ const result=project([one,two],[make("303",2),make("304",3)]);
+ for(const vehicle of result){assert.equal(vehicle.versionesAplicables,"Base");assert.deepEqual(JSON.parse(vehicle.vin),[]);
+  assert.ok(vehicle.contributionCandidates.some(item=>item.reason==="vin_conflict"));}
+});
 function buildMigrationRuntime(initialHeaders = null) {
     const headers = initialHeaders ? initialHeaders.slice() : [];
     let rowCount = initialHeaders ? 1 : 0;
