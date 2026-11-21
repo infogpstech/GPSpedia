@@ -1055,3 +1055,14 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - CatalogNavigationRead.mjs: 2/2 PASS en harness aislado de la función exacta.
 - Pendiente de ejecución: runner Node completo y CI. No se desplegó Apps Script ni se accedió a Spreadsheet/Drive productivos.
 - Siguiente: diseñar consulta CATALOG dirigida para ADMIN/detalle; la proyección de AportesVehiculo calcula conflictos globales de VIN, por lo que no se puede limitar ingenuamente el ledger a un vehículo.
+
+
+## Continuidad — miniaturas: eliminar purgas globales repetidas (2026-11-21)
+
+- HEAD previo: f538d35e5bab76ab9e1950fd6db48a27d74f7a2e. Base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- getThumbnail y compressAndStoreThumbnail ya no ejecutan getAll() + borrados individuales antes de cada imagen. readFreshThumbnail conserva la validación TTL por clave.
+- La limpieza de entradas expiradas se integra en la transacción LRU al almacenar nuevas miniaturas; no se cambian TTL (30 días), límite de 200 entradas, PNG, ObjectURL ni recuperación de cuota.
+- Se añade single-flight por fileId/ancho para compartir solicitudes simultáneas de compresión.
+- ThumbnailCacheDeduplication.mjs: 3/3 PASS en harness exact-source.
+- Pendiente: CI del commit. No se ha resuelto aún la segunda descarga de setOptimizedImage + fetch de compresión; requiere conservar primera visualización inmediata y compatibilidad CORS.
+- Siguiente: revisar estrategia de prefetch de 15 vehículos, prioridad de imágenes visibles y descarga duplicada visible/fetch.

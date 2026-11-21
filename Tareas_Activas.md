@@ -3227,3 +3227,16 @@ Documento de alcance, hallazgos y checklist: [AUDITORIA_INTEGRAL_LATENCIA_LLAMAD
 - Nota: el endpoint no tiene consumidor frontend activo confirmado; no se atribuye mejora de navegación/arranque hasta demostrar una llamada real.
 
 **Siguiente:** consulta dirigida CATALOG para ADMIN y detalle, preservando proyección global de VIN/candidatos; no filtrar eventos por vehículo sin demostrar equivalencia.
+
+
+## Optimización del ciclo de miniaturas — consultas IndexedDB (2026-11-21)
+
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A CI.**
+
+- [x] Retirar la purga global de miniaturas de cada lectura y compresión; readFreshThumbnail ya valida TTL de la clave consultada.
+- [x] Limpiar entradas expiradas dentro de la transacción LRU existente, sin una lectura global y múltiples transacciones por imagen.
+- [x] Añadir single-flight por fileId/ancho para que llamadas simultáneas de prefetch/render no repitan compresión y fetch de la misma variante.
+- [x] ThumbnailCacheDeduplication.mjs: 3/3 PASS en harness exact-source.
+- [ ] Ejecutar CI del commit.
+- Pendiente separado: setOptimizedImage inicia la descarga del elemento visible y, ante cache miss, compressAndStoreThumbnail vuelve a solicitar la misma URL. No se ha resuelto todavía porque la alternativa debe conservar render inmediato y CORS/transparencia.
+- Pendiente medir la cola FIFO de prefetch de los últimos 15 vehículos y definir prioridad/cancelación sin degradar disponibilidad offline.

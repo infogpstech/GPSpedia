@@ -1363,14 +1363,6 @@ function isThumbnailExpired(entry, now = Date.now()) {
  const cachedAt = entry && Number(entry.cachedAt);
  return !Number.isFinite(cachedAt) || cachedAt <= 0 || now - cachedAt >= THUMBNAIL_TTL_MS;
 }
-async function purgeExpiredThumbnailEntries(now = Date.now()) {
- const entries = await performOp("thumbnails", "readonly", store => store.getAll(), { silent: true });
- if (!Array.isArray(entries) || !entries.length) return;
- const keys = entries.filter(entry => entry && typeof entry === "object" &&
-  !(typeof Blob !== "undefined" && entry instanceof Blob) &&
-  isThumbnailExpired(entry, now) && typeof entry.key === "string").map(entry => entry.key);
- await Promise.all(keys.map(key => performOp("thumbnails", "readwrite", store => store.delete(key), { silent: true })));
-}
 // Límite de variantes persistidas; la cuota global de IndexedDB se trata en otra iteración.
 const MAX_THUMBNAIL_ENTRIES = 200;
 
@@ -1435,14 +1427,20 @@ async function evictLeastRecentlyUsedThumbnails() {
  return runThumbnailStoreTransaction(
   store => store.getAll(),
   (store, entries) => {
-   const cached = (Array.isArray(entries) ? entries : [])
-    .filter(entry => entry && typeof entry === "object" && typeof entry.key === "string" &&
-     entry.blob && !isThumbnailExpired(entry))
-    .sort((a, b) =>
-     (Number(a.lastAccessedAt) || Number(a.cachedAt) || 0) -
-     (Number(b.lastAccessedAt) || Number(b.cachedAt) || 0) ||
-     (Number(a.cachedAt) || 0) - (Number(b.cachedAt) || 0) ||
-     a.key.localeCompare(b.key));
+   const cached = [];
+   (Array.isArray(entries) ? entries : []).forEach(entry => {
+    if (!entry || typeof entry !== "object" || typeof entry.key !== "string") return;
+    if (isThumbnailExpired(entry)) {
+     store.delete(entry.key);
+     return;
+    }
+    if (entry.blob) cached.push(entry);
+   });
+   cached.sort((a, b) =>
+    (Number(a.lastAccessedAt) || Number(a.cachedAt) || 0) -
+    (Number(b.lastAccessedAt) || Number(b.cachedAt) || 0) ||
+    (Number(a.cachedAt) || 0) - (Number(b.cachedAt) || 0) ||
+    a.key.localeCompare(b.key));
    const excess = cached.length - MAX_THUMBNAIL_ENTRIES;
    for (let index = 0; index < excess; index += 1) store.delete(cached[index].key);
    return Math.max(0, excess);
@@ -1517,10 +1515,32 @@ async function storeThumbnailWithQuotaRecovery(entry, key) {
 const THUMBNAIL_FAILURE_BACKOFF_MS = 5 * 60 * 1000;
 const thumbnailCompressionFailures_ = new Map();
 /** Compresión opcional por variante; nunca condiciona la visualización de la imagen original. */
-export async function compressAndStoreThumbnail(url,rawFileId,requestedSize=400){
+const thumbnailCompressionInFlight_ = new Map();
+
+export async function compressAndStoreThumbnail(url, rawFileId, requestedSize = 400) {
+ if (!rawFileId || (typeof rawFileId === "string" && rawFileId.includes("placehold.co"))) return null;
+ const fileId = normalizeId(rawFileId);
+ if (!fileId) return null;
+ const width = normalizeThumbnailSize(requestedSize);
+ const cacheKey = buildThumbnailCacheKey(fileId, width);
+ const pending = thumbnailCompressionInFlight_.get(cacheKey);
+ if (pending) return pending;
+
+ const operation = Promise.resolve().then(() => compressAndStoreThumbnailOnce_(url, fileId, width));
+ thumbnailCompressionInFlight_.set(cacheKey, operation);
+ try {
+  return await operation;
+ } finally {
+  if (thumbnailCompressionInFlight_.get(cacheKey) === operation) {
+   thumbnailCompressionInFlight_.delete(cacheKey);
+  }
+ }
+}
+
+async function compressAndStoreThumbnailOnce_(url,fileId,width){
  if(!rawFileId||(typeof rawFileId==="string"&&rawFileId.includes("placehold.co")))return null;
- const fileId=normalizeId(rawFileId);if(!fileId)return null;
- const width=normalizeThumbnailSize(requestedSize),cacheKey=buildThumbnailCacheKey(fileId,width);
+
+ const cacheKey=buildThumbnailCacheKey(fileId,width);
  if(Date.now()<dbRetryAfter)return null;
  const retryAfter=thumbnailCompressionFailures_.get(cacheKey)||0;
  if(retryAfter>Date.now())return null;
@@ -1528,7 +1548,6 @@ export async function compressAndStoreThumbnail(url,rawFileId,requestedSize=400)
  const fetchUrl=fileId.length>20&&!fileId.includes("/")&&!fileId.includes("http")?`https://lh3.googleusercontent.com/d/${fileId}`:url;
  if(!fetchUrl||fetchUrl.includes("placehold.co"))return null;
  try{
-  await purgeExpiredThumbnailEntries();
   const cached=await readFreshThumbnail(cacheKey);if(cached)return cached;
   return await thumbnailCompressionQueue.run(async()=>{
    const queuedCached=await readFreshThumbnail(cacheKey);if(queuedCached)return queuedCached;
@@ -1559,7 +1578,6 @@ export async function compressAndStoreThumbnail(url,rawFileId,requestedSize=400)
 export async function getThumbnail(rawFileId,requestedSize=400){
  const fileId=normalizeId(rawFileId);if(!fileId||typeof fileId!=="string"||Date.now()<dbRetryAfter)return null;
  try{
-  await purgeExpiredThumbnailEntries();
   const cacheKey=buildThumbnailCacheKey(fileId,requestedSize);
   const cached=await readFreshThumbnail(cacheKey);
   if(cached)return cached;
