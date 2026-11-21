@@ -250,3 +250,10 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - CI 44873477741 SUCCESS: 258 suites, 3092 pruebas, 0 fallos; health read-only 44873477634 SUCCESS; Pages 44873477531 pendiente al registrar.
 - El lock de handleAddProblem se conserva. La migración sin lock requiere un ledger de propiedad canónica de operación/imagen y transiciones concurrentes verificables.
 - No se desplegó Apps Script ni se tocaron datos productivos.
+
+
+2026-11-21 — PyS: protección de propiedad de imagen
+- readPysOperations_ rechaza duplicados de opId/hash/problemId que difieren en imageFileId o imageUrl, evitando ocultar dos archivos propietarios de una misma operación.
+- PysCreationIntegrity incorpora regresión que verifica el rechazo antes de crear archivos adicionales.
+- CI 44873650200 SUCCESS: 258 suites, 3093 pruebas, 0 fallos; health read-only 44873650247 SUCCESS; Pages pendiente al registrar.
+- handleAddProblem mantiene ScriptLock. La retirada se difiere hasta disponer de ledger concurrente de propiedad y transiciones.
