@@ -11,11 +11,13 @@ function fn(name) {
 for (const name of ["handleSaveUnusedImagesInventory", "handleOrganizeUnusedImagesBatch"]) {
     assert.doesNotMatch(fn(name), /LockService\.getScriptLock|waitLock\(/, name + " no debe adquirir ScriptLock global");
 }
-assert.match(fn("recordImageAdministrationActivity"), /withSharedMutationLease_\("ADMIN", "recordAdminImageActivity"/);
-assert.doesNotMatch(fn("getNextAdminFormulaBasedId_"), /LockService|waitLock|tryLock/,
-    "El asignador de ID de ActividadUsuario se ejecuta bajo la lease ACTIVITY.");
+const activity = fn("recordImageAdministrationActivity");
+assert.match(activity, /getAdminFormulaBasedIdPattern_\(sheet, 1\)/);
+assert.match(activity, /sheet\.appendRow\(\[/);
+assert.match(activity, /SpreadsheetApp\.flush\(\)/);
+assert.doesNotMatch(activity, /withSharedMutationLease_|recordAdminImageActivity|getNextAdminFormulaBasedId_|LockService/);
 const router = admin.slice(admin.indexOf("function doPostInternal_(e)"));
 assert.match(router, /case 'saveUnusedImagesInventory':[\s\S]*?withSharedMutationLease_\("ADMIN", "saveUnusedImagesInventory"/);
 assert.match(coordinator, /saveUnusedImagesInventory: \{ write: \["IMAGE_INVENTORY"\] \}/);
-assert.match(coordinator, /recordAdminImageActivity: \{ write: \["ACTIVITY"\] \}/);
-console.log("AdminInventoryLockIsolation: 7/7 PASS — inventario sin ScriptLock global y actividad con lease puntual");
+assert.doesNotMatch(coordinator, /recordAdminImageActivity:\s*\{/);
+console.log("AdminInventoryLockIsolation: PASS — inventario con lease puntual y actividad appendRow sin lease");
