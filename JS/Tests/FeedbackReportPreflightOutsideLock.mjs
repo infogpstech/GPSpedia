@@ -38,12 +38,12 @@ test("los adjuntos se registran en un ledger append-only separado", () => {
     assert.match(handler, /isFeedbackReportImageFileReferenced_\(uploadedImage\.metadata\.imageFileId\)/);
     assert.doesNotMatch(handler, /reportMetadata\)\.setValue|pendingExistingMetadata/);
 });
-test("replay con imagen idéntica evita una nueva carga a Drive", () => {
+test("replay con imagen idéntica no vuelve a cargar el archivo", () => {
     const oldImage = handler.indexOf("const oldImage = normalizeReportImageMetadata_(existing.metadata)");
     const hashCheck = handler.indexOf("oldImage.imageSha256 !== imageAttachment.sha256", oldImage);
-    const earlyReturn = handler.indexOf("alreadyReported: true", hashCheck);
-    const upload = handler.indexOf("saveReportImageAttachment_(imageAttachment, reportContext.reportId)");
-    assert.ok(oldImage >= 0 && hashCheck > oldImage && earlyReturn > hashCheck && earlyReturn < upload);
+    const attachOnlyWhenMissing = handler.indexOf("if (imageAttachment && !oldImage)", hashCheck);
+    const upload = handler.indexOf("saveReportImageAttachment_(imageAttachment, reportContext.reportId)", attachOnlyWhenMissing);
+    assert.ok(oldImage >= 0 && hashCheck > oldImage && attachOnlyWhenMissing > hashCheck && upload > attachOnlyWhenMissing);
 });
 test("una carrera posterior al preflight se reconcilia por reportId y first-write-wins", () => {
     const append = handler.indexOf("feedbackSheet.appendRow(reportRow)");
