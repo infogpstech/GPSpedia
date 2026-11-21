@@ -4202,16 +4202,6 @@ function handleAddProblem(source) {
         throw error;
     }
 }
-function withPysMutationLease_(callback, operation) {
-    const action = String(operation || "").trim();
-    if (!["addSolution", "addPrevention", "addVehicleToProblem", "removeVehicleFromProblem"].includes(action)) {
-        throw new Error("Operación PyS no habilitada para coordinación compartida.");
-    }
-    if (typeof withSharedMutationLease_ !== "function") {
-        throw new Error("La coordinación compartida no está disponible; no se ejecutó la mutación PyS.");
-    }
-    return withSharedMutationLease_("FEEDBACK", action, callback);
-}
 function buildPysConflictResponse_(message) { return { status: "conflict", code: "PYS_CONFLICT", message }; }
 function findPysMutationRow_(sheet, problemId) {
     const lastRow=sheet.getLastRow();
@@ -4225,52 +4215,42 @@ function handleAddSolution(payload) {
     const {problemId,solucion,userId,userName}=payload||{};
     const normalizedSolution=normalizePysField_(solucion,"La solución",PYS_SOLUTION_MAX_LENGTH,true,true);
     if(!problemId||!userId||!userName)throw new Error("problemId, solución y sesión verificada son requeridos.");
-    let shouldLog=false;
-    const result=withPysMutationLease_(()=>{
-        const sheet=getPysSheet_(false);
-        if(!sheet)throw new Error("Hoja pys no encontrada.");
-        const row=findPysMutationRow_(sheet,problemId),current=sheet.getRange(row,4,1,2).getValues()[0];
-        const marker=String(current[0]==null?"":current[0]).trim();
-        const storedSolution=current[1]==null||current[1]===""?"":normalizePysField_(current[1],"La solución registrada",PYS_SOLUTION_MAX_LENGTH,false,true);
-        const hasMarker=marker!=="",hasSolution=storedSolution!=="";
-        if(hasMarker!==hasSolution)throw new Error("El registro PyS tiene un estado inconsistente entre «Se solucionó» y «Solución»; requiere revisión.");
-        if(hasSolution){
-            if(storedSolution===normalizedSolution)return{status:"success",recovered:true,message:"La misma solución ya estaba registrada; se confirmó el resultado anterior."};
-            return buildPysConflictResponse_("Conflicto: otro colaborador ya registró una solución diferente. Actualiza los datos antes de continuar.");
-        }
-        sheet.getRange(row,4,1,2).setValues([["x",normalizedSolution]]);
-        SpreadsheetApp.flush();
-        const saved=sheet.getRange(row,4,1,2).getValues()[0];
-        if(String(saved[0]==null?"":saved[0]).trim()!=="x"||String(saved[1]==null?"":saved[1])!==normalizedSolution)throw new Error("No se pudo confirmar la solución PyS. Puedes reintentar el mismo contenido.");
-        shouldLog=true;
-        return{status:"success",message:"Solución agregada con éxito."};
-    }, "addSolution");
-    if(shouldLog){try{logUserActivity(userId,userName,"add_solution",problemId,"Se agregó una solución.");}catch(logError){console.error("No se pudo registrar la actividad de solución:",logError);}}
-    return result;
+    const sheet=getPysSheet_(false);
+    if(!sheet)throw new Error("Hoja pys no encontrada.");
+    const row=findPysMutationRow_(sheet,problemId),current=sheet.getRange(row,4,1,2).getValues()[0];
+    const marker=String(current[0]==null?"":current[0]).trim();
+    const storedSolution=current[1]==null||current[1]===""?"":normalizePysField_(current[1],"La solución registrada",PYS_SOLUTION_MAX_LENGTH,false,true);
+    const hasMarker=marker!=="",hasSolution=storedSolution!=="";
+    if(hasMarker!==hasSolution)throw new Error("El registro PyS tiene un estado inconsistente entre «Se solucionó» y «Solución»; requiere revisión.");
+    if(hasSolution){
+        if(storedSolution===normalizedSolution)return{status:"success",recovered:true,message:"La misma solución ya estaba registrada; se confirmó el resultado anterior."};
+        return buildPysConflictResponse_("Conflicto: otro colaborador ya registró una solución diferente. Actualiza los datos antes de continuar.");
+    }
+    sheet.getRange(row,4,1,2).setValues([["x",normalizedSolution]]);
+    SpreadsheetApp.flush();
+    const saved=sheet.getRange(row,4,1,2).getValues()[0];
+    if(String(saved[0]==null?"":saved[0]).trim()!=="x"||String(saved[1]==null?"":saved[1])!==normalizedSolution)throw new Error("No se pudo confirmar la solución PyS. Puedes reintentar el mismo contenido.");
+    try{logUserActivity(userId,userName,"add_solution",problemId,"Se agregó una solución.");}catch(logError){console.error("No se pudo registrar la actividad de solución:",logError);}
+    return{status:"success",message:"Solución agregada con éxito."};
 }
 function handleAddPrevention(payload) {
     const {problemId,prevenir,userId,userName}=payload||{};
     const normalizedPrevention=normalizePysField_(prevenir,"La prevención",PYS_SOLUTION_MAX_LENGTH,true,true);
     if(!problemId||!userId||!userName)throw new Error("problemId, prevención y sesión verificada son requeridos.");
-    let shouldLog=false;
-    const result=withPysMutationLease_(()=>{
-        const sheet=getPysSheet_(false);
-        if(!sheet)throw new Error("Hoja pys no encontrada.");
-        const row=findPysMutationRow_(sheet,problemId),current=sheet.getRange(row,6).getValue();
-        const storedPrevention=current==null||current===""?"":normalizePysField_(current,"La prevención registrada",PYS_SOLUTION_MAX_LENGTH,false,true);
-        if(storedPrevention){
-            if(storedPrevention===normalizedPrevention)return{status:"success",recovered:true,message:"La misma prevención ya estaba registrada; se confirmó el resultado anterior."};
-            return buildPysConflictResponse_("Conflicto: otro colaborador ya registró una prevención diferente. Actualiza los datos antes de continuar.");
-        }
-        sheet.getRange(row,6).setValue(normalizedPrevention);
-        SpreadsheetApp.flush();
-        const saved=sheet.getRange(row,6).getValue();
-        if(String(saved==null?"":saved)!==normalizedPrevention)throw new Error("No se pudo confirmar la prevención PyS. Puedes reintentar el mismo contenido.");
-        shouldLog=true;
-        return{status:"success",message:"Prevención agregada con éxito."};
-    }, "addPrevention");
-    if(shouldLog){try{logUserActivity(userId,userName,"add_prevention",problemId,"Se agregó una prevención.");}catch(logError){console.error("No se pudo registrar la actividad de prevención:",logError);}}
-    return result;
+    const sheet=getPysSheet_(false);
+    if(!sheet)throw new Error("Hoja pys no encontrada.");
+    const row=findPysMutationRow_(sheet,problemId),current=sheet.getRange(row,6).getValue();
+    const storedPrevention=current==null||current===""?"":normalizePysField_(current,"La prevención registrada",PYS_SOLUTION_MAX_LENGTH,false,true);
+    if(storedPrevention){
+        if(storedPrevention===normalizedPrevention)return{status:"success",recovered:true,message:"La misma prevención ya estaba registrada; se confirmó el resultado anterior."};
+        return buildPysConflictResponse_("Conflicto: otro colaborador ya registró una prevención diferente. Actualiza los datos antes de continuar.");
+    }
+    sheet.getRange(row,6).setValue(normalizedPrevention);
+    SpreadsheetApp.flush();
+    const saved=sheet.getRange(row,6).getValue();
+    if(String(saved==null?"":saved)!==normalizedPrevention)throw new Error("No se pudo confirmar la prevención PyS. Puedes reintentar el mismo contenido.");
+    try{logUserActivity(userId,userName,"add_prevention",problemId,"Se agregó una prevención.");}catch(logError){console.error("No se pudo registrar la actividad de prevención:",logError);}
+    return{status:"success",message:"Prevención agregada con éxito."};
 }
 
 const TUTORIAL_HEADERS = Object.freeze([
@@ -4972,45 +4952,31 @@ function persistModelosAsociados_(sheet, rowNumber, values) {
 /* TAREA 11 (12.3): ASOCIACIÓN DE VEHÍCULOS A PROBLEMAS EN HOJA PYS (COLUMNA 10) */
 function handleAddVehicleToProblem(payload) {
     const source = payload && typeof payload === "object" ? payload : {};
-    return withPysMutationLease_(() => {
-        const problemId = normalizePysProblemId_(source.problemId);
-        const vehicleId = findUniqueCortesVehicleForPys_(source.vehicleId);
-        const sheet = getPysSheet_(false);
-        if (!sheet) throw new Error("Hoja pys no encontrada.");
-
-        const matches = findPysRowsById_(sheet, problemId);
-        if (matches.length !== 1) {
-            throw new Error(matches.length ? "El problema tiene un ID ambiguo." : "Problema no encontrado.");
-        }
-        const currentList = parseModelosAsociados(matches[0].row[9]);
-        if (!currentList.includes(vehicleId)) currentList.push(vehicleId);
-        const persisted = persistModelosAsociados_(sheet, matches[0].rowNumber, currentList);
-        return { status: "success", message: "Vehículo asociado al problema correctamente.", modelosAsociados: persisted };
-    }, "addVehicleToProblem");
+    const problemId = normalizePysProblemId_(source.problemId);
+    const vehicleId = findUniqueCortesVehicleForPys_(source.vehicleId);
+    const sheet = getPysSheet_(false);
+    if (!sheet) throw new Error("Hoja pys no encontrada.");
+    const matches = findPysRowsById_(sheet, problemId);
+    if (matches.length !== 1) throw new Error(matches.length ? "El problema tiene un ID ambiguo." : "Problema no encontrado.");
+    const currentList = parseModelosAsociados(matches[0].row[9]);
+    if (!currentList.includes(vehicleId)) currentList.push(vehicleId);
+    const persisted = persistModelosAsociados_(sheet, matches[0].rowNumber, currentList);
+    return { status: "success", message: "Vehículo asociado al problema correctamente.", modelosAsociados: persisted };
 }
 
 /* TAREA 6: ELIMINAR RELACIÓN ENTRE PROBLEMA Y MODELO DE VEHÍCULO */
 function handleRemoveVehicleFromProblem(payload) {
     const source = payload && typeof payload === "object" ? payload : {};
-    if (normalizeFeedbackRole(source.userRole) !== "desarrollador") {
-        throw new Error("No tienes permisos suficientes para eliminar relaciones.");
-    }
-
-    return withPysMutationLease_(() => {
-        const problemId = normalizePysProblemId_(source.problemId);
-        const vehicleId = findUniqueCortesVehicleForPys_(source.vehicleId);
-        const sheet = getPysSheet_(false);
-        if (!sheet) throw new Error("Hoja pys no encontrada.");
-
-        const matches = findPysRowsById_(sheet, problemId);
-        if (matches.length !== 1) {
-            throw new Error(matches.length ? "El problema tiene un ID ambiguo." : "Problema no encontrado.");
-        }
-        const currentList = parseModelosAsociados(matches[0].row[9]);
-        const nextList = currentList.filter(id => id !== vehicleId);
-        const persisted = persistModelosAsociados_(sheet, matches[0].rowNumber, nextList);
-        return { status: "success", message: "Relación retirada con éxito.", modelosAsociados: persisted };
-    }, "removeVehicleFromProblem");
+    if (normalizeFeedbackRole(source.userRole) !== "desarrollador") throw new Error("No tienes permisos suficientes para eliminar relaciones.");
+    const problemId = normalizePysProblemId_(source.problemId);
+    const vehicleId = findUniqueCortesVehicleForPys_(source.vehicleId);
+    const sheet = getPysSheet_(false);
+    if (!sheet) throw new Error("Hoja pys no encontrada.");
+    const matches = findPysRowsById_(sheet, problemId);
+    if (matches.length !== 1) throw new Error(matches.length ? "El problema tiene un ID ambiguo." : "Problema no encontrado.");
+    const currentList = parseModelosAsociados(matches[0].row[9]);
+    const persisted = persistModelosAsociados_(sheet, matches[0].rowNumber, currentList.filter(id => id !== vehicleId));
+    return { status: "success", message: "Relación retirada con éxito.", modelosAsociados: persisted };
 }
 
 function handleClearActivityLogs(payload) {
