@@ -657,3 +657,9 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - Los reintentos de una sugerencia ya registrada reutilizan la lectura existente de Feedbacks; solo se relee después de appendRow para incluir votos concurrentes.
 - Se mantienen el conteo de tres usuarios verificados, first-write-wins y la verificación de aplicaciones pendientes.
 - SuggestYearVoteThreshold ampliada; regresión: 280 suites / 3,258 pruebas / 0 fallos; build, health read-only y Pages deploy SUCCESS.
+
+
+[2026-11-21] FEEDBACK — reutilización de snapshot en sugerencias de año
+- Reintentos ya reportados reutilizan la lectura inicial de Feedbacks; solo se relee después de appendRow para incluir votos concurrentes.
+- Se conserva el umbral de tres aportantes verificados y la recuperación de aplicaciones pendientes.
+- CI: 280 suites / 3,258 pruebas / 0 fallos; build, health read-only y Pages deploy SUCCESS.
