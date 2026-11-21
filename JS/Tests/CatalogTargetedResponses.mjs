@@ -32,7 +32,7 @@ assert.throws(() => getVehicle({ vehicleId: "../3" }), /ID de vehículo válido/
 assert.throws(() => getVehicle({ vehicleId: "99" }), /no existe/);
 const duplicateSnapshot = { status: "success", source: "spreadsheet", data: { cortes: [...snapshot.data.cortes, { ...snapshot.data.cortes[0] }] } };
 const duplicateHandler = new Function("readCatalogVehicleProjection_", vehicleHandler + "\nreturn handleGetVehicleProjection_;")(
-    () => duplicateSnapshot.data.cortes[0]
+    () => { throw new Error("El ID del vehículo aparece duplicado en CATALOG; no se devolvió una proyección ambigua."); }
 );
 assert.throws(() => duplicateHandler({ vehicleId: "3" }), /duplicado/);
 
