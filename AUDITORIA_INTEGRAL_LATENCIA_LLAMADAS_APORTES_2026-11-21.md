@@ -234,3 +234,12 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - `ServiceBrowserTrafficContract.mjs` amplía cobertura de agregación de bytes y propagación de métricas. El commit actual disparó GitHub Actions; al momento del registro los checks build, service-tests y deployed-service-health siguen en ejecución, por lo que no se declaran aprobados.
 - Esta instrumentación mide el cuerpo HTTP observado por el navegador, no el overhead TLS/HTTP, bytes de recursos multimedia servidos directamente ni operaciones internas Spreadsheet/Drive. Los valores de latencia siguen siendo duración total del request desde el navegador.
 - P0.2 continúa abierto para la ejecución de escenarios reproducibles y la obtención de p50/p95/requests por interacción en Beta autorizada.
+
+
+### Cierre local P0.2 — medición de transferencia y percentiles (2026-11-21)
+
+- Se completó la instrumentación local en `api-config.js` y `serviceTelemetry.js`: tamaño UTF-8 de request/response, duración, promedio, p50 y p95 para duración y tamaños.
+- Los percentiles se calculan únicamente sobre el historial efímero acotado a 200 eventos recientes por pestaña; se exponen el número de muestras y valores nulos cuando no hay muestra. No deben interpretarse como p50/p95 poblacionales de toda la ventana de 24 horas.
+- El router serializa el cuerpo una sola vez y mide el texto ya leído de la respuesta. No hay request adicional, persistencia, ni registro de payload, token o identidad.
+- Contrato ampliado: `ServiceBrowserTrafficContract.mjs`. GitHub Actions: sintaxis SUCCESS; regresión 277 suites / 3,226 pruebas / 0 fallos; health read-only SUCCESS. Pages build/deployment seguía ejecutándose al momento de esta adenda.
+- Cierre: P0.2 local **COMPLETADA CON VALIDACIÓN DIFERIDA**. Medición de campo por escenario, latencia interna de Apps Script, lecturas/escrituras Sheets/Drive, cache hit/miss, CORS y transferencias multimedia quedan para Beta aislada.
