@@ -12,7 +12,7 @@ function extract(name, nextName) {
 const byIdCode = extract("findTutorialById_", "tutorialTitleExists_");
 const rowCode = extract("findTutorialRow_", "findTutorialById_");
 const findById = new Function(byIdCode + "\nreturn findTutorialById_;")();
-const findRow = new Function("findTutorialById_", rowCode + "\nreturn findTutorialRow_;")(findById);
+const findRow = new Function("findTutorialById_", "projectTutorialEditFields_", rowCode + "\nreturn findTutorialRow_;")(findById, (id, row) => ({ row, appliedOperations: new Map() }));
 
 function makeSheet(rows) {
     const calls = [];
