@@ -840,3 +840,10 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - En Tareas_Activas.md ya no quedan subtareas locales abiertas de esta continuidad. Permanecen AUG-159 y AUG-160 como validaciones Beta aisladas; no se han ejecutado ni marcado como aprobadas.
 - Google Drive connector: DISABLED_BY_ADMIN / NOT_AVAILABLE; no hay conexión Apps Script en las herramientas actuales. No se accedió ni modificó Spreadsheet/Drive productivo.
 - HEAD antes de este checkpoint: e81e59267e323c01b0f1b8b8dac090370a37f906.
+
+
+## Adenda — inventario completo de validaciones Beta pendientes (2026-11-21)
+- Corrección de alcance: no quedan únicamente AUG-159/AUG-160. Tareas_Activas.md conserva 16 marcadores abiertos, todos correspondientes a validaciones Beta (incluye concurrencia real de appendRow/journals, navegador/PWA, coordinación interproyecto, Drive/Spreadsheet aislados y AUG-159, AUG-160, AUG-161, AUG-162 y AUG-163).
+- Se revisaron los encabezados y preparación de lista_beta_parte1.txt, lista_beta_parte2_parte_001.txt, lista_beta_parte2_parte_002.txt y lista_beta_adenda_2026-11-21.md. Las listas/adenda comienzan con comandos copiables de verificación de repo/rama/árbol limpio y sincronización fetch + pull --ff-only; se preservan sin cambios.
+- No se ejecutó Beta: el conector Google Drive está DISABLED_BY_ADMIN/NOT_AVAILABLE y no existe conexión Apps Script. Las pruebas requieren deployments y recursos desechables reales; no se simulan ni se ejecutan sobre producción.
+- Estado final del alcance local: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Solo quedan las validaciones Beta documentadas en los registros activos.
