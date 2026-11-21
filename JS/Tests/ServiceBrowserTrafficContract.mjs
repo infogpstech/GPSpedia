@@ -33,8 +33,8 @@ check("El fallback identifica móviles y tabletas sin APIs modernas", () => {
     assert.equal(getBrowserDeviceType({ userAgent: "Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X)" }), "tablet");
 });
 check("Las solicitudes se agrupan por servicio y hora sin mezclar servicios", () => {
-    recordBrowserServiceTraffic({ service: "AUTH", action: "login", timestamp: base, durationMs: 120, outcome: "success", deviceType: "mobile" });
-    recordBrowserServiceTraffic({ service: "AUTH", action: "validateSession", timestamp: base + 1000, durationMs: 40, outcome: "success", deviceType: "mobile" });
+    recordBrowserServiceTraffic({ service: "AUTH", action: "login", timestamp: base, durationMs: 120, outcome: "success", deviceType: "mobile", requestBytes: 120, responseBytes: 240 });
+    recordBrowserServiceTraffic({ service: "AUTH", action: "validateSession", timestamp: base + 1000, durationMs: 40, outcome: "success", deviceType: "mobile", requestBytes: 80, responseBytes: 160 });
     recordBrowserServiceTraffic({ service: "WRITE", action: "checkVehicle", timestamp: base + 2000, durationMs: 80, outcome: "error", deviceType: "mobile" });
     const auth = getBrowserServiceTrafficSnapshot("AUTH", { now: base + 3000, deviceType: "mobile" });
     const write = getBrowserServiceTrafficSnapshot("WRITE", { now: base + 3000, deviceType: "mobile" });
@@ -42,6 +42,10 @@ check("Las solicitudes se agrupan por servicio y hora sin mezclar servicios", ()
     assert.equal(auth.metrics.successes, 2);
     assert.equal(auth.metrics.errors, 0);
     assert.equal(auth.metrics.averageDurationMs, 80);
+    assert.equal(auth.metrics.requestBytesTotal, 200);
+    assert.equal(auth.metrics.responseBytesTotal, 400);
+    assert.equal(auth.metrics.averageRequestBytes, 100);
+    assert.equal(auth.metrics.averageResponseBytes, 200);
     assert.equal(write.metrics.requests, 1);
     assert.equal(write.metrics.errors, 1);
     assert.equal(auth.clientType, "mobile");
@@ -72,6 +76,9 @@ check("La instrumentación del router es no bloqueante y registra éxito/error",
     assert.match(api, /export async function routeAction\(/);
     assert.match(api, /outcome: "success"/);
     assert.match(api, /outcome: "error"/);
+    assert.match(api, /requestBytes: trafficMetrics.requestBytes/);
+    assert.match(api, /responseBytes: trafficMetrics.responseBytes/);
+    assert.match(api, /new TextEncoder\(\)/);
     assert.match(api, /action: "getCatalogChanges"/);
     assert.match(api, /service: "FEEDBACK"/);
 });
