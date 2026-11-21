@@ -486,6 +486,24 @@ function runSharedMutationCoordinatorTests() {
         expectThrow_(() => missingClient.withLease("WRITE", "addVinToVehicle", () => "no"), "no está configurada");
     });
 
+    test_("FEEDBACK solución y prevención comparten lease sin reservar Cortes", function() {
+        ["addSolution", "addPrevention"].forEach(function(action) {
+            const policy = coordinatorPolicy_("FEEDBACK", action);
+            assert_(policy.writeResources.includes("FEEDBACK"), action + " debe reservar FEEDBACK.");
+            assert_(policy.writeResources.includes("ACTIVITY"), action + " debe conservar actividad.");
+            assert_(!policy.readResources.includes("CORTES"), action + " no debe reservar Cortes.");
+        });
+        const runtime = createRuntime_();
+        const solution = acquire_(runtime, "FEEDBACK", "addSolution");
+        const prevention = acquire_(runtime, "FEEDBACK", "addPrevention");
+        assert_(prevention.status === "error" && prevention.code === "busy",
+            "Solución y prevención deben serializarse sobre el recurso FEEDBACK.");
+        release_(runtime, "FEEDBACK", "addSolution", solution.token);
+        const retry = acquire_(runtime, "FEEDBACK", "addPrevention");
+        assert_(retry.status !== "error", "Prevención debe poder reintentarse tras liberar la lease.");
+        release_(runtime, "FEEDBACK", "addPrevention", retry.token);
+    });
+
     test_("FEEDBACK PyS vehicle relations read Cortes and conflict with vehicle writes", function() {
         ["addProblem", "addVehicleToProblem", "removeVehicleFromProblem"].forEach(function(action) {
             const policy = coordinatorPolicy_("FEEDBACK", action);
