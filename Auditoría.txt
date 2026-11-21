@@ -1147,3 +1147,13 @@ Adenda — FEEDBACK confirmación de sugerencias
 - CI 194ec14271c630c20d7997ffcba55903b98474da SUCCESS: 259 suites, 3,130 pruebas, 0 fallos; build, health read-only y Pages SUCCESS.
 - Adenda Beta ampliada para verificar operaciones directas sin leases y fallos reales aislados. Sin despliegue Apps Script ni cambios productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-21 — TUTORIALES: RETIRO DEL SCRIPTLOCK LEGACY
+- Se retiró acquireFeedbackScriptLock_ de la ruta fallback de handleUpdateTutorialItem para IDs históricos/no canónicos. La edición in-place restante se ejecuta directamente, sin wait/try/release de ScriptLock.
+- Se mantienen preflight, lookup dirigido, unicidad de título, read-back y preservación de campos no editados.
+- FeedbackTutorialUpdateNoopPreflight 6/6; FeedbackTutorialUpdateTitleLookupBoundedRead 5/5; TutorialIntegrity 42/42.
+- CI 8f310ade240a5b53cdcc0962a6f1f1da0adc482b SUCCESS: 259 suites, 3,130 pruebas, 0 fallos; build, health read-only y Pages SUCCESS.
+- Siguiente hallazgo local: publishFeedbackCatalogChange_ aún protege sourceVersion con ScriptLock; se audita para retirarlo sin perder el feed incremental. Sin despliegue ni cambios productivos.
+================================================================================
