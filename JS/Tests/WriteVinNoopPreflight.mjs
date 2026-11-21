@@ -45,6 +45,8 @@ function makeHarness({ row = ["10", "", "", "", "Base / Full", "", "", "", "", "
 assert.match(source, /response && response\.status === "success" && response\.alreadyPresent !== true/, "Un replay sin cambios no debe invalidar CATALOG");
 assert.match(source, /fieldName: "vin_registration"/, "La mutación debe usar un evento VIN compuesto");
 assert.doesNotMatch(source.slice(source.indexOf("function handleAddVinToVehicle(payload) {")), /LockService\.getScriptLock|setValue\(/, "La mutación no debe usar ScriptLock ni escribir Cortes directamente");
+assert.match(source, /fieldName: "vin_registration"/, "La mutación debe usar un evento VIN compuesto");
+assert.doesNotMatch(source.slice(source.indexOf("function handleAddVinToVehicle(payload) {")), /LockService\.getScriptLock|setValue\(/, "La mutación no debe usar ScriptLock ni escribir Cortes directamente");
 let passed = 0;
 function test(name, fn) { fn(); passed++; }
 
@@ -60,27 +62,27 @@ test("VIN existente en otra versión no se considera replay idéntico", () => {
     const h = makeHarness({ row: ["10", "", "", "", "Base / Full", "", "", "", "", "[\"\",\"ABC\"]"] });
     assert.equal(h.helper({ vehicleId: "10", vin: "ABC12345", trimLevel: "Base" }), null);
     assert.equal(h.wrapper({ vehicleId: "10", vin: "ABC12345", trimLevel: "Base" }).status, "success");
-    assert.equal(h.stats().lockCalls, 1);
+    assert.equal(h.stats().lockCalls, 0);
     assert.equal(h.stats().lockedCalls, 1);
-    assert.equal(h.stats().versionCalls, 1);
+    assert.equal(h.stats().versionCalls, 0);
 });
 test("una versión nueva se registra sin lock global", () => {
     const h = makeHarness({ row: ["10", "", "", "", "Base", "", "", "", "", "[\"ABC\"]"] });
     assert.equal(h.helper({ vehicleId: "10", vin: "ABC12345", trimLevel: "Sport", isNewTrim: true }), null);
     h.wrapper({ vehicleId: "10", vin: "ABC12345", trimLevel: "Sport", isNewTrim: true });
-    assert.equal(h.stats().lockCalls, 1);
+    assert.equal(h.stats().lockCalls, 0);
 });
 test("un ID ambiguo no permite responder desde preflight", () => {
     const h = makeHarness({ duplicateIds: true, row: ["10", "", "", "", "Base", "", "", "", "", '["ABC"]'] });
     assert.equal(h.helper({ vehicleId: "10", vin: "ABC12345", trimLevel: "Base" }), null);
     h.wrapper({ vehicleId: "10", vin: "ABC12345", trimLevel: "Base" });
-    assert.equal(h.stats().lockCalls, 1);
+    assert.equal(h.stats().lockCalls, 0);
 });
 test("si falla la autenticación, no se anexa ningún evento", () => {
     const h = makeHarness({ authFails: true });
     assert.equal(h.wrapper({ vehicleId: "10", vin: "NEW12345", trimLevel: "Base" }).status, "error");
-    assert.equal(h.stats().lockCalls, 1);
-    assert.equal(h.stats().lockedCalls, 1);
-    assert.equal(h.stats().authCalls, 2);
+    assert.equal(h.stats().lockCalls, 0);
+    assert.equal(h.stats().lockedCalls, 0);
+    assert.equal(h.stats().authCalls, 1);
 });
 console.log("WriteVinNoopPreflight: " + passed + "/" + passed + " PASS — replay idéntico fuera del lock; mutaciones append-only sin lock global");
