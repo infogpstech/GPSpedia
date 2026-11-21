@@ -330,7 +330,7 @@ runGroup('38','INTEGRATION',()=>{
  runCli('PyS relaciones y mutaciones bajo lease compartida','JS/Tests/PysVehicleRelationIntegrity.js');
  runCli('GP-PERF ADMIN información suplementaria: cargas Drive fuera del lock','JS/Tests/AdminSupplementaryUploadOutsideLock.mjs');
  runCli('P3.1 actor de login cacheado y sin consultas por acción','JS/Tests/SessionActorCacheLifetime.mjs');
- runCli('P3.1c invalidación dirigida de cachés de actor en WRITE/FEEDBACK','JS/Tests/SessionActorCacheInvalidation.mjs');
+ runCli('P3.1c precarga e invalidación de cachés de actor en USERS/WRITE/FEEDBACK/ADMIN','JS/Tests/SessionActorCacheInvalidation.mjs');
  runCli('AUG-152 interfaz Inbox, accesibilidad, borradores y sincronización','JS/Tests/InboxUi.mjs');
  runCli('Dashboard y aportes de cortes por usuario','JS/Tests/ActivityDashboardContributions.mjs');
  runCli('GP-DASH-INSIGHTS-01 indicadores, rankings y render seguro','JS/Tests/ActivityDashboardInsights.mjs');
