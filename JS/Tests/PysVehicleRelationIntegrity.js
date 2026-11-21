@@ -165,7 +165,7 @@ export function runPysVehicleRelationIntegrityTests({ feedback, ui }) {
         assert.match(ui, /modelosAsociadosIds = modelosAsociadosIds\.reduce/);
     });
 
-    test("el alta preasociada también valida Cortes dentro de su lock", () => {
+    test("el alta preasociada valida Cortes antes de reservar sin ScriptLock local", () => {
         const h = buildHarness(feedback);
         assert.throws(() => h.api.create({
             opId: "operation-pys-000000000000000003",
@@ -175,10 +175,10 @@ export function runPysVehicleRelationIntegrityTests({ feedback, ui }) {
             alcance: "especifico", modelosAsociados: ["V-404"],
             imgBase64: "data:image/png;base64,iVBORw0KGgo="
         }), /exactamente un registro/);
-        assert.equal(h.state.lockWaits, 1);
-        assert.equal(h.state.lockReleases, 1);
+        assert.equal(h.state.lockWaits, 0);
+        assert.equal(h.state.lockReleases, 0);
         assert.equal(h.state.writes, 0);
-        assert.ok(h.state.reads.every(access => access.locked));
+        assert.ok(h.state.reads.every(access => !access.locked));
     });
 
     test("normaliza JSON y formatos heredados sin duplicados", () => {
