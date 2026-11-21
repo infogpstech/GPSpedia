@@ -584,7 +584,7 @@ function createSharedMutationCoordinator_(dependencies) {
         if (typeof fetch !== "function") {
             throw new Error("La comunicación remota de invalidación no está disponible en Coordinator.");
         }
-        const targets = ["WRITE", "FEEDBACK", "ADMIN"];
+        const targets = ["USERS", "WRITE", "FEEDBACK", "ADMIN"];
         const batchSize = 5;
         targets.forEach(target => {
             const url = String(properties.getProperty("GPSpedia_SERVICE_URL_" + target) || "").trim();
@@ -594,7 +594,7 @@ function createSharedMutationCoordinator_(dependencies) {
                 throw new Error("La configuración de invalidación remota de " + target + " está incompleta.");
             }
         });
-        const confirmed = { WRITE: 0, FEEDBACK: 0, ADMIN: 0 };
+        const confirmed = { USERS: 0, WRITE: 0, FEEDBACK: 0, ADMIN: 0 };
         for (let offset = 0; offset < tokens.length; offset += batchSize) {
             const batch = tokens.slice(offset, offset + batchSize);
             targets.forEach(target => {
@@ -633,6 +633,58 @@ function createSharedMutationCoordinator_(dependencies) {
         };
     }
 
+    function primeSessionActorCaches_(userId, role, fullName, epoch, sessionTokens) {
+        const targets = ["USERS", "WRITE", "FEEDBACK", "ADMIN"];
+        const tokens = Array.from(new Set((Array.isArray(sessionTokens) ? sessionTokens : [])
+            .map(token => String(token || "")).filter(Boolean)));
+        if (!tokens.length) return { primedServices: [], failedServices: [] };
+        const requests = [], requestTargets = [], failedServices = [];
+        targets.forEach(target => {
+            const url = String(properties.getProperty("GPSpedia_SERVICE_URL_" + target) || "").trim();
+            const secret = String(properties.getProperty("GPSpedia_COORDINATOR_SECRET_" + target) || "");
+            if (!url.startsWith("https://script.google.com/macros/s/") || !url.endsWith("/exec") ||
+                secret.length < 32) {
+                failedServices.push(target);
+                return;
+            }
+            requests.push({
+                url,
+                method: "post",
+                contentType: "application/json",
+                muteHttpExceptions: true,
+                followRedirects: true,
+                payload: JSON.stringify({
+                    action: "__primeSessionActorCache",
+                    payload: { secret, userId, role, fullName, epoch, sessionTokens: tokens }
+                })
+            });
+            requestTargets.push(target);
+        });
+        if (!requests.length) return { primedServices: [], failedServices: targets.slice() };
+        let responses = [];
+        try {
+            if (typeof fetchAll === "function") responses = fetchAll(requests);
+            else if (typeof fetch === "function") responses = requests.map(request => fetch(request.url, request));
+            else return { primedServices: [], failedServices: targets.slice() };
+        } catch (error) {
+            return { primedServices: [], failedServices: Array.from(new Set(failedServices.concat(requestTargets))) };
+        }
+        const primedServices = [];
+        responses = Array.isArray(responses) ? responses : [];
+        requestTargets.forEach((target, index) => {
+            const response = responses[index];
+            let result = null;
+            try { result = JSON.parse(response && response.getContentText ? response.getContentText() : ""); } catch (error) {}
+            const status = response && typeof response.getResponseCode === "function" ? response.getResponseCode() : 0;
+            if (status >= 200 && status < 300 && result && result.status === "success" && result.primed === tokens.length) {
+                primedServices.push(target);
+            } else {
+                failedServices.push(target);
+            }
+        });
+        return { primedServices, failedServices: Array.from(new Set(failedServices)) };
+    }
+
     function syncUserSessions_(service, operation, payload) {
         if (service !== "AUTH" || operation !== "syncUserSessions") {
             throw new Error("Solo AUTH puede sincronizar las sesiones activas de una cuenta.");
@@ -646,7 +698,7 @@ function createSharedMutationCoordinator_(dependencies) {
             fullName.length > 120 || !Array.isArray(inputSessions)) {
             throw new Error("La sincronización de sesiones contiene datos inválidos.");
         }
-        return withCoordinatorLock_(() => {
+        const synchronized = withCoordinatorLock_(() => {
             const currentTime = now();
             const context = readAuthContext_(userId) || {
                 schemaVersion: 1, userId: userId, epoch: 1, revokedBefore: 0, sessions: []
@@ -707,6 +759,11 @@ function createSharedMutationCoordinator_(dependencies) {
                 epoch: context.epoch
             };
         });
+        // Las cachés de servicio se preparan después de liberar el lock de Coordinator.
+        synchronized.cachePriming = primeSessionActorCaches_(
+            userId, role, fullName, synchronized.epoch, synchronized.acceptedTokens
+        );
+        return synchronized;
     }
 
     function validateSessionContext_(service, operation, payload) {
