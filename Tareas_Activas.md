@@ -772,6 +772,7 @@ Documento de alcance, hallazgos y checklist: [AUDITORIA_INTEGRAL_LATENCIA_LLAMAD
 ### P1 — optimización de imágenes y consultas ADMIN
 - [ ] Diseñar y probar compresión/redimensionado en cliente para reportes, sugerencias, alta de cortes e información suplementaria. Comparar calidad, dimensiones, bytes y memoria; conservar MIME/firma real, metadatos, SHA-256 e idempotencia.
 - [ ] Definir límites coherentes por tipo de aporte; el alta de corte debe validar tamaño/MIME antes de convertir a Base64. No reducir límites ni degradar calidad sin prueba visual y compatibilidad.
+- [x] Alta de corte: prevalidar en cliente el límite backend de 10 MiB antes de leer preview/Base64; conservar límite exacto y rechazo de archivo vacío. `AddCutImageSizePreflight.mjs` 3/3 PASS. La validación MIME explícita y la coherencia de límites en otros formularios siguen pendientes.
 - [ ] Evaluar una API CATALOG dirigida por vehículo/campo/candidatos para ADMIN. Evitar descargar el snapshot completo en `getAdminProjectedVehicleFieldSnapshot_` y en `getReplacedImages` si una proyección parcial conserva fuentes, candidatos y versión.
 - [ ] Revisar el refresh completo `getCatalogData` al cerrar el modal de edición y sustituirlo solo si el estado local/delta garantiza consistencia con ediciones concurrentes.
 - [ ] Medir el coste de la telemetría agregada ADMIN y confirmar que no se dispara en navegación/aportes ordinarios.
