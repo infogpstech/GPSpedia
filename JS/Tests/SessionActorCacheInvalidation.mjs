@@ -142,10 +142,13 @@ assert.match(authSource, /function handleLogout[\s\S]*?revokeSharedSessionContex
 assert.match(source, /function revokeSharedSessionContext_\(userId, sessionToken\)\s*\{\s*invalidateLocalSharedSessionActorCaches_/);
 assert.match(source, /function revokeSharedUserSessionContexts_\(userId, sessionTokens\)\s*\{\s*invalidateLocalSharedSessionActorCaches_/);
 assert.match(authSource, /cacheSharedSessionActor_\(normalizedId, currentSessionToken/);
-assert.equal(authSource.includes("revokeSharedUserSessionContexts_(userId, getActiveSessionTokensForUserUnderLock_(sessionsSheet, userId))"), true);
-assert.equal(authSource.includes("revokeSharedUserSessionContexts_(targetUserId, getActiveSessionTokensForUserUnderLock_(sessionsSheet, targetUserId))"), true);
-assert.equal(authSource.includes("revokeSharedUserSessionContexts_(targetId, getActiveSessionTokensForUserUnderLock_(sessionsSheet, targetId))"), true);
-assert.match(authSource, /function getActiveSessionTokensForUserUnderLock_/);
+assert.match(authSource, /function revokeAllUserSessionsUnderLock_\(sheet, userId, beforeClear\)/);
+assert.match(authSource, /beforeClear\(tokens\)[\s\S]*?tokenRange\.setValues\(nextValues\)/);
+assert.match(authSource, /revokeAllUserSessionsUnderLock_\(sessionsSheet, userId,[\s\S]*?revokeSharedUserSessionContexts_\(userId, tokens\)/);
+assert.match(authSource, /revokeAllUserSessionsUnderLock_\(sessionsSheet, targetUserId,[\s\S]*?revokeSharedUserSessionContexts_\(targetUserId, tokens\)/);
+assert.match(authSource, /revokeAllUserSessionsUnderLock_\(sessionsSheet, targetId,[\s\S]*?revokeSharedUserSessionContexts_\(targetId, tokens\)/);
+assert.match(authSource, /revokeSharedUserSessionContexts_\(userId, targetSessionTokens\)/);
+assert.doesNotMatch(authSource, /getActiveSessionTokensForUserUnderLock_/);
 assert.doesNotMatch(apiConfigSource, /__invalidateSessionActorCache/);
 assert.match(source, /GPSpedia_COORDINATOR_SECRET/);
 assert.doesNotMatch(source, /GPSpedia_SESSION_CACHE_INVALIDATION_SECRET/);
