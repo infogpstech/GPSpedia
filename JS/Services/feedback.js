@@ -5828,9 +5828,7 @@ function handleUpdateTutorialItem(payload) {
         };
     }
 
-    const lock = LockService.getScriptLock();
-    acquireFeedbackScriptLock_(lock);
-    try {
+    {
         const sheet = getTutorialSheet_(false);
         if (!sheet) throw new Error("Hoja Tutorial no encontrada.");
         const target = findTutorialRow_(sheet, reference, true);
@@ -5904,7 +5902,5 @@ function handleUpdateTutorialItem(payload) {
             updated: { tutorialId: String(target.row[0] || "").trim(), tema: nextFields[0],
                 comoIdentificarlo: nextFields[2], dondeEncontrarlo: nextFields[3], detalles: nextFields[4] }
         };
-    } finally {
-        lock.releaseLock();
     }
 }
