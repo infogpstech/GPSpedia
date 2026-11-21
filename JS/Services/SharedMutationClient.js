@@ -352,6 +352,48 @@ function handleSharedSessionActorCacheInvalidation_(payload, dependencies) {
     return { status: "success", invalidated: uniqueTokens.length };
 }
 
+function handleSharedSessionActorCachePriming_(payload, dependencies) {
+    const source = payload && typeof payload === "object" ? payload : {};
+    const deps = dependencies && typeof dependencies === "object" ? dependencies : {};
+    const properties = deps.properties || PropertiesService.getScriptProperties();
+    const expected = String(deps.secret !== undefined ? deps.secret :
+        properties.getProperty("GPSpedia_COORDINATOR_SECRET") || "");
+    const supplied = String(source.secret || "");
+    let difference = expected.length ^ supplied.length;
+    for (let i = 0; i < Math.max(expected.length, supplied.length); i++) {
+        difference |= (expected.charCodeAt(i) || 0) ^ (supplied.charCodeAt(i) || 0);
+    }
+    if (expected.length < 32 || difference !== 0) {
+        return { status: "error", message: "Solicitud interna no autorizada." };
+    }
+    const userId = String(source.userId || "").trim();
+    const role = String(source.role || "").trim().toLowerCase();
+    const fullName = String(source.fullName || "");
+    const epoch = Number(source.epoch);
+    const tokens = Array.isArray(source.sessionTokens) ? source.sessionTokens : [];
+    if (!userId || userId.length > 128 || fullName.length > 120 ||
+        !["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"].includes(role) ||
+        !Number.isSafeInteger(epoch) || epoch < 1 || !tokens.length || tokens.length > 5 ||
+        tokens.some(token => typeof token !== "string" || token.length < 16 || token.length > 200)) {
+        return { status: "error", message: "Datos de precarga de sesión no válidos." };
+    }
+    const uniqueTokens = Array.from(new Set(tokens));
+    if (uniqueTokens.length !== tokens.length) {
+        return { status: "error", message: "La precarga contiene tokens duplicados." };
+    }
+    const cache = deps.cache || CacheService.getScriptCache();
+    let primed = 0;
+    uniqueTokens.forEach(token => {
+        if (cacheSharedSessionActor_(userId, token, { userId, role, fullName, epoch }, {
+            cache, keyFor: deps.keyFor, ttlSeconds: deps.ttlSeconds
+        })) primed++;
+    });
+    if (primed !== uniqueTokens.length) {
+        return { status: "error", message: "No se pudo precargar el contexto de sesión completo.", primed };
+    }
+    return { status: "success", primed };
+}
+
 // El contexto de usuario/rol se sincroniza al iniciar sesión; CacheService admite hasta 6 h.
 const SHARED_SESSION_ACTOR_CACHE_TTL_SECONDS_ = 21600;
 function getCachedSharedSessionActor_(userId, sessionToken, dependencies) {
@@ -359,8 +401,6 @@ function getCachedSharedSessionActor_(userId, sessionToken, dependencies) {
     if (!id || !token) throw new Error("La sesión requiere userId y sessionToken.");
     const deps = dependencies && typeof dependencies === "object" ? dependencies : {};
     const cache = Object.prototype.hasOwnProperty.call(deps, "cache") ? deps.cache : CacheService.getScriptCache();
-    const validate = typeof deps.validate === "function" ? deps.validate :
-        (actorUserId, actorToken) => validateSharedSessionContext_(actorUserId, actorToken, deps.service || "AUTH");
     const keyFor = typeof deps.keyFor === "function" ? deps.keyFor : getSharedSessionActorCacheKey_;
     const cacheKey = keyFor(id, token);
     const validActor = actor => actor && typeof actor === "object" && actor.userId === id &&
@@ -372,22 +412,23 @@ function getCachedSharedSessionActor_(userId, sessionToken, dependencies) {
             const cached = cache.get(cacheKey);
             if (cached) {
                 const actor = JSON.parse(cached);
-                if (validActor(actor)) return actor;
+                if (validActor(actor)) {
+                    // Renovar TTL localmente: una sesión activa no vuelve a Coordinator.
+                    if (typeof cache.put === "function") {
+                        const ttl = Math.max(1, Math.min(21600, Number(deps.ttlSeconds) || SHARED_SESSION_ACTOR_CACHE_TTL_SECONDS_));
+                        cache.put(cacheKey, JSON.stringify(actor), ttl);
+                    }
+                    return actor;
+                }
                 if (typeof cache.remove === "function") cache.remove(cacheKey);
             }
-        } catch (cacheError) { /* La caché es opcional; se valida por el canal normal. */ }
+        } catch (cacheError) {
+            throw new Error("No se pudo leer el contexto local de sesión. Inicia sesión nuevamente.");
+        }
     }
-    const result = validate(id, token), actor = result && result.actor;
-    if (!result || result.status !== "success" || result.valid !== true || !validActor(actor)) {
-        throw new Error(result && result.message ? result.message : "La sesión fue revocada o no es válida.");
-    }
-    if (cache && typeof cache.put === "function") {
-        try {
-            const ttl = Math.max(1, Math.min(21600, Number(deps.ttlSeconds) || SHARED_SESSION_ACTOR_CACHE_TTL_SECONDS_));
-            cache.put(cacheKey, JSON.stringify(actor), ttl);
-        } catch (cacheError) { /* La indisponibilidad de caché no bloquea el aporte. */ }
-    }
-    return actor;
+    const error = new Error("El contexto de sesión no está precargado en este servicio. Inicia sesión nuevamente.");
+    error.code = "SESSION_ACTOR_CACHE_MISS";
+    throw error;
 }
 
 function cacheSharedSessionActor_(userId, sessionToken, actor, dependencies) {
