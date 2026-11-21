@@ -8,19 +8,22 @@ function extract(name, nextName) {
     const end = nextName ? source.indexOf("\nfunction " + nextName + "(", start + 10) : source.indexOf("\nfunction ", start + 10);
     return source.slice(start, end > start ? end : source.length);
 }
-const versionHelper = extract("nextWriteCatalogVersionLocked_", "publishCortesCatalogChange_");
-const values = new Map();
-const version = new Function("PropertiesService", "WRITE_CATALOG_VERSION_PROPERTY_", versionHelper + ";return nextWriteCatalogVersionLocked_;")(
-    { getScriptProperties: () => ({
-        getProperty: key => values.has(key) ? values.get(key) : null,
-        setProperty: (key, value) => values.set(key, String(value))
-    }) },
-    "GPSpedia_WRITE_CATALOG_VERSION_V1"
+
+const versionHelper = extract("nextWriteCatalogSourceVersion_", "publishCortesCatalogChange_");
+const version = new Function("Date", versionHelper + ";return nextWriteCatalogSourceVersion_;")(
+    { now: () => 1700000000123 }
 );
-assert.equal(version("42"), 1);
-assert.equal(version("42"), 2);
+assert.equal(version("42"), 1700000000123);
+assert.equal(version("42"), 1700000000123);
 assert.throws(() => version("0"), /ID de vehículo válido/);
 assert.throws(() => version("42x"), /ID de vehículo válido/);
+assert.doesNotMatch(versionHelper, /PropertiesService|WRITE_CATALOG_VERSION_PROPERTY_|LockService/);
+
+const addCut = extract("handleAddOrUpdateCut", "handleAppendExistingVehicleCut_");
+const releaseIndex = addCut.indexOf("if (lock.hasLock()) lock.releaseLock()");
+const versionIndex = addCut.indexOf("nextWriteCatalogSourceVersion_");
+assert.ok(releaseIndex >= 0 && versionIndex > releaseIndex,
+    "La versión de catálogo debe asignarse después de liberar el lock físico");
 
 const publisherSource = extract("publishCortesCatalogChange_", "runWriteDriveWorkOutsideScriptLock_");
 assert.doesNotMatch(publisherSource, /LockService|getScriptLock|waitLock|tryLock/);
@@ -34,4 +37,4 @@ assert.equal(published.service, "WRITE");
 assert.equal(published.change.sourceVersion, 9);
 assert.equal(published.change.recordId, "42");
 assert.throws(() => publish("addOrUpdateCut", "42", null), /versión de catálogo verificable/);
-console.log("WriteCatalogPublicationIsolation: 9/9 PASS — secuencia monotónica y HTTP a Coordinator sin ScriptLock local");
+console.log("WriteCatalogPublicationIsolation: 7/7 PASS — versión temporal fuera del lock y publicación sin ScriptLock local");
