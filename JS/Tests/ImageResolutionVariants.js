@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { getThumbnailCacheKey } from '../../offline.js';
+import { getThumbnailCacheKey } from '../Frontend/offline.js';
 
-const uiSource = await readFile(new URL('../../ui.js', import.meta.url), 'utf8');
-const offlineSource = await readFile(new URL('../../offline.js', import.meta.url), 'utf8');
+const uiSource = await readFile(new URL('../Frontend/ui.js', import.meta.url), 'utf8');
+const offlineSource = await readFile(new URL('../Frontend/offline.js', import.meta.url), 'utf8');
 const start = uiSource.indexOf('export function getImageUrl(');
 const end = uiSource.indexOf('\nexport function getLogoUrlForMarca', start);
 assert.ok(start >= 0 && end > start, 'getImageUrl debe existir en ui.js');
@@ -38,15 +38,18 @@ assert.equal(getThumbnailCacheKey(fileId, 800) === getThumbnailCacheKey(fileId, 
 assert.equal(getThumbnailCacheKey('', 300), null);
 
 assert.match(uiSource, /offline\.getThumbnailCacheKey\(cleanId, normalizedSize\)/);
-assert.match(uiSource, /const probe = new Image\(\)/, 'la fuente remota se valida antes de asignarla al elemento visible');
-assert.match(uiSource, /probe\.crossOrigin = 'anonymous'/, 'intenta una carga CORS para permitir almacenamiento verificable');
-assert.match(uiSource, /startRemoteProbe\(false\)/, 'reintenta sin CORS para proveedores externos que no lo admiten');
-assert.match(uiSource, /probe\.onload = \(\) =>/);
-assert.match(uiSource, /imgElement\.removeAttribute\('src'\)/, 'el elemento no conserva una fuente rota durante la precarga');
-assert.match(uiSource, /gp-image-loading/);
-assert.match(uiSource, /IMAGE_FALLBACK_DATA_URL/);
-assert.match(uiSource, /offline\.compressAndStoreThumbnail\(remoteUrl, cleanId, normalizedSize\)\.then\(blob =>/);
-assert.match(uiSource, /thumbnailObjectUrls\.attach\(cacheKey, blob, imgElement, requestToken\)/);
+const optimizedStart = uiSource.indexOf('async function setOptimizedImage(');
+const optimizedEnd = uiSource.indexOf('\n}', optimizedStart);
+assert.ok(optimizedStart >= 0 && optimizedEnd > optimizedStart, 'setOptimizedImage debe existir en el módulo frontend activo');
+const optimizedImage = uiSource.slice(optimizedStart, optimizedEnd);
+assert.match(optimizedImage, /setSource\(remoteUrl\)/, 'la imagen original se muestra sin esperar IndexedDB');
+assert.match(optimizedImage, /offline\.getThumbnail\(cleanId, normalizedSize\)/, 'la caché local se consulta en paralelo');
+assert.match(optimizedImage, /offline\.compressAndStoreThumbnail\(remoteUrl, cleanId, normalizedSize\)/, 'la compresión se mantiene como persistencia opcional');
+assert.ok(optimizedImage.indexOf('setSource(remoteUrl)') < optimizedImage.indexOf('offline.getThumbnail'));
+assert.ok(optimizedImage.indexOf('offline.getThumbnail') < optimizedImage.indexOf('offline.compressAndStoreThumbnail'));
+assert.match(optimizedImage, /gp-image-loading/);
+assert.match(optimizedImage, /IMAGE_FALLBACK_DATA_URL/);
+assert.match(optimizedImage, /thumbnailObjectUrls\.attach\(cacheKey, blob, imgElement, requestToken\)/);
 assert.match(uiSource, /getImageUrl\([^\n]*IMG_SIZE_LARGE\)/, 'el Lightbox debe solicitar la fuente grande');
 assert.match(offlineSource, /Math\.min\(1,width\/bitmap\.width\)/, 'no ampliar imágenes pequeñas');
 assert.match(offlineSource, /canvas\.toBlob\(blob=>\{[\s\S]*?\},\"image\/png\"\)/, 'persistir variantes PNG con canal alfa');

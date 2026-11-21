@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { createObjectUrlRegistry } from "../../imageObjectUrlCache.js";
+import { createObjectUrlRegistry } from "../Frontend/imageObjectUrlCache.js";
 
 function createUrlApi() {
     let nextId = 0;

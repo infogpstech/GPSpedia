@@ -1075,3 +1075,12 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - La respuesta de vehículo conserva contributionSources y contributionCandidates; candidatos conserva payload, orden, total y límite.
 - El proyector global y sus controles de VIN/opId no se alteran. Los handlers dirigidos todavía construyen el snapshot completo dentro de CATALOG; el ahorro demostrado por diseño es de bytes de respuesta y parseo/transferencia hacia ADMIN, no de lecturas Spreadsheet.
 - Pruebas nuevas: CatalogTargetedResponses.mjs 3/3; AdminVehicleTargetedCatalogRead.mjs 2/2. CI pendiente.
+
+
+## Continuidad — pruebas de imagen reactivadas (2026-11-21)
+
+- Se corrigieron rutas que apuntaban a módulos inexistentes en raíz; las pruebas ahora inspeccionan JS/Frontend, el grafo activo desde index.html.
+- Se retiraron expectativas obsoletas sobre probe/startRemoteProbe que no existen en el módulo desplegado.
+- ImageResolutionVariants.js e ImageObjectUrlLifecycle.js se integran al runner de regresión.
+- El doble acceso en cache miss sigue confirmado: img.src remoto inmediato + fetch remoto para compresión. No se considera corregido.
+- CI pendiente.

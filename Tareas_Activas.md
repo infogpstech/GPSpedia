@@ -3254,3 +3254,14 @@ Documento de alcance, hallazgos y checklist: [AUDITORIA_INTEGRAL_LATENCIA_LLAMAD
 - Limitación documentada: ambas respuestas dirigidas todavía construyen el snapshot completo dentro de CATALOG. La mejora actual reduce bytes de respuesta y parseo/transferencia ADMIN; no se afirma reducción de lecturas Spreadsheet ni de tiempo de construcción del snapshot.
 
 **Siguiente:** medir y refactorizar lectura dirigida de Cortes/AportesVehiculo solo si se conserva la proyección global de VIN, los conflictos opId, candidatos y fuentes.
+
+
+## Reactivar pruebas reales del ciclo de imágenes (2026-11-21)
+
+**Estado: IMPLEMENTADO; CI PENDIENTE.**
+
+- [x] Corregir rutas de las pruebas obsoletas para apuntar a JS/Frontend, que es el grafo activo de index.html.
+- [x] Reemplazar expectativas de una implementación de sondeo CORS inexistente por contratos reales de setOptimizedImage: render inmediato, lectura IndexedDB paralela, compresión opcional y ObjectURL.
+- [x] Integrar ImageResolutionVariants.js e ImageObjectUrlLifecycle.js al runner; antes no se ejecutaban desde RunServiceTests.
+- [x] La prueba deja visible el comportamiento de cache miss: la imagen se asigna desde URL remota y la compresión usa fetch sobre esa URL; su eliminación queda como tarea pendiente específica, no se da por resuelta.
+- [ ] Ejecutar CI.
