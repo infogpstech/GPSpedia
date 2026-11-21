@@ -1721,26 +1721,9 @@ function completeFeedbackYearApplication_(application, context) {
         };
         row[9] = true;
     }
-    const feedbackValues = feedbackSheet.getDataRange().getValues();
-    for (let i = feedbackValues.length - 1; i >= 1; i--) {
-        const feedbackRow = feedbackValues[i];
-        const rowId = String(feedbackRow[COLS_FEEDBACKS.ID_vehiculo - 1] || "").trim();
-        const rowYear = Number(feedbackRow[COLS_FEEDBACKS.anoSugerido - 1]);
-        const rowActorKey = String(feedbackRow[actorColumn - 1] || "").trim();
-        if (rowId === String(row[1]) && rowYear === year && rowActorKey &&
-            isVerifiedSuggestionActorKey_(rowActorKey) && isPositiveYearSuggestionRow(feedbackRow) && !rowActorKey.startsWith("applied:")) {
-            feedbackSheet.getRange(i + 1, actorColumn).setValue(getAppliedSuggestionActorKey_(rowActorKey));
-        }
-    }
-    SpreadsheetApp.flush();
-    const verifiedRows = feedbackSheet.getDataRange().getValues();
-    const remaining = verifiedRows.slice(1).some(feedbackRow => {
-        const rowActorKey = String(feedbackRow[actorColumn - 1] || "").trim();
-        return String(feedbackRow[COLS_FEEDBACKS.ID_vehiculo - 1] || "").trim() === String(row[1]) &&
-            Number(feedbackRow[COLS_FEEDBACKS.anoSugerido - 1]) === year &&
-            isVerifiedSuggestionActorKey_(rowActorKey) && isPositiveYearSuggestionRow(feedbackRow) && !rowActorKey.startsWith("applied:");
-    });
-    if (remaining) throw new Error("La ampliación quedó anexada, pero no se pudieron marcar todos los aportes; la recuperación permanece pendiente.");
+    // Los votos son registros históricos inmutables. La aplicación se consulta
+    // mediante su operationId determinista y sus eventos vehicle_update; no se
+    // renombra ni reescribe la clave del aportante al completar la ampliación.
     updateApplicationRows(9, "completed");
     updateApplicationRows(12, new Date().toISOString());
     SpreadsheetApp.flush();
