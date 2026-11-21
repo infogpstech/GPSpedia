@@ -449,7 +449,7 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
         assert.equal(h.api.projectTitle(id, "Tema anterior"), "Tema nuevo");
         assert.equal(h.api.titleOwner("tema anterior"), "");
         assert.equal(h.api.titleOwner("tema nuevo"), id);
-        assert.equal(h.renameEventsSheet.data.length, 2);
+        assert.equal(h.state.renameEventsSheet.data.length, 2);
     });
 
     test("un tutorial histórico sin ID puede renombrarse append-only sin crear un ID físico ni usar ScriptLock", () => {

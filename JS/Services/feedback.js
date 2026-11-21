@@ -5782,6 +5782,7 @@ function handleUpdateTutorialItem(payload) {
             if (reservedOwner && reservedOwner !== tutorialId) {
                 throw new Error("Ya existe otro tutorial con ese tema; no se modificó el registro.");
             }
+            ensureTutorialTitleClaim_(tutorialId, target.row[1]);
             const oldTitleKey = normalizeTutorialTitle_(target.row[1]);
             const newTitleKey = normalizeTutorialTitle_(updates.tema);
             const renamePayloadHash = buildTutorialContentHash_([tutorialId, target.row.slice(1, 6),
