@@ -607,7 +607,7 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 
 ## Checkpoint final — verificación integral local y Beta preparada (2026-11-21)
 
-- HEAD de la rama de trabajo: 689830c9ee2dd7e735aeccb0865e845d7c55df97. HEAD base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1. Comparación GitHub: 6,213 commits ahead / 0 behind; base intacta.
+- HEAD de código y registros verificado antes de esta actualización documental: 689830c9ee2dd7e735aeccb0865e845d7c55df97. HEAD base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1. En ese punto, comparación GitHub: 6,213 commits ahead / 0 behind; base intacta.
 - Verificación integral automatizada: CI 44908506743 SUCCESS, 259 suites, 3,129 pruebas aprobadas, 0 fallos. El paso de sintaxis comprobó los módulos frontend/backend configurados, incluidos los diez archivos de JS/Services. Health read-only 44908506686 SUCCESS; Pages 44908505824 SUCCESS.
 - Suites focalizadas confirmadas: SearchModelGrouping 21/21; PysModalNavigation 10/10; PysCreationIntegrity 56/56; PysVehicleRelationIntegrity 19/19; PysImageStorageRecovery 22/22.
 - Diff de código de esta continuidad revisado: únicamente el cambio de orden de validación en handleAddProblem; workflow ampliado para node --check de todos los módulos backend. Los commits documentales afectan solo a registros y lista Beta.
