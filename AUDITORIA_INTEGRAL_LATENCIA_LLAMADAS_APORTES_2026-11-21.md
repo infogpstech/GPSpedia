@@ -406,3 +406,14 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - Tests: `UsersMutationSnapshot` 10/10, `UsersReadMinimization` 8/8 y `USERS mutaciones/RBAC/rollback/coordinación` 16/16 PASS. CI HEAD `fb80ebfa4a296d23faec032be46650d85ec51ba9`: **287 suites / 3,359 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS. GitHub Pages deploy workflow aún no confirmado y no se considera despliegue de Apps Script.
 - Rama base comprobada sin cambios: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
 - Siguiente: auditoría de extremo a extremo WRITE/FEEDBACK/ADMIN, iniciando por rutas de aportes e idempotencia de WRITE; no retirar lecturas/read-back ni operaciones Drive sin demostrar equivalencia.
+
+
+### P1 WRITE — evitar lecturas de catálogo/validación de ledger innecesarias (2026-11-21)
+
+- `handleAppendExistingVehicleCut_`: el catálogo de marcas/modelos/versiones se consulta solo si el payload entrante incluye alguno de esos tres campos. Antes, cualquier dato entrante (por ejemplo, solo `imagenVehiculo`, categoría o año) disparaba la lectura de catálogo de tres columnas de toda la hoja Cortes aunque no hubiera entidad que normalizar.
+- Se conserva el catálogo completo cuando se requiere normalizar marca/modelo/versiones; no se sustituyó por búsqueda parcial que pudiera perder canonicalización ni deduplicación.
+- Flujos modernos de aportes `cut/opening/feed`: se valida AportesVehiculo antes de procesar y se vuelve a validar inmediatamente después de la etapa Drive, justo antes del append. El mismo objeto de hoja validado en ese punto se reutiliza para append, lectura post-append y cálculo de slot/estado candidato; evita validaciones repetidas de encabezados en helpers sin debilitar la revalidación después de Drive.
+- `appendVehicleContributionEvent_`, `getVehicleContributionCutSlotIndex_` y `getVehicleContributionCandidateStatus_` aceptan la hoja ya validada como dependencia opcional; los demás consumidores conservan el camino de validación propio.
+- Se conserva la doble verificación del append (read-back del evento y búsqueda de conflictos concurrentes por opId), el snapshot post-append único para slot/VIN, la idempotencia y la política de no descartar eventos en conflicto.
+- Tests: `WriteEntityCatalogDemand` 8/8; `WriteContributionLedgerReuse` 15/15; `WriteContributionPostAppendSnapshot` 12/12 PASS. CI HEAD `698bd0518c4223ba6db36e1ce0fbd68492289b5a`: **289 suites / 3,382 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS.
+- Alcance: subtask WRITE completada en código/CI. Continúa pendiente la auditoría integral de los otros flujos WRITE (alta de vehículo nuevo, recuperación de opId legacy, VIN update, información suplementaria legacy, imágenes/journal) y la validación Beta aislada de concurrencia/Drive.
