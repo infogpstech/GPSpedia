@@ -126,6 +126,17 @@ test("append de ampliación es idempotente y rechaza reutilizar opId con otro co
     assert.throws(() => append(application, "101", "anoDesde", 2017, 2020, ""), /contenido distinto/);
 });
 
+test("cada voto de año se anexa como una fila completa y no usa escrituras por celdas", () => {
+    const handlerStart = feedback.indexOf("function handleSuggestYearLocked(");
+    const handlerEnd = feedback.indexOf("\\nfunction ", handlerStart + 10);
+    const handler = feedback.slice(handlerStart, handlerEnd);
+    assert.match(handler, /const voteRow = new Array\\(lastCol\\)\\.fill\\(" " \\)/);
+    assert.match(handler, /sheet\\.appendRow\\(voteRow\\)/);
+    assert.match(handler, /getNextFormulaBasedId_\\(sheet, COLS_FEEDBACKS\\.ID\\)/);
+    assert.doesNotMatch(handler, /getLastRow\\(\\) \\+ 1/);
+    assert.doesNotMatch(handler, /getRange\\([^\\n]*\\)\\.setValue/);
+    assert.doesNotMatch(handler, /getRange\\([^\\n]*\\)\\.setValues/);
+});
 test("la aplicación de año ya no escribe directamente en Cortes", () => {
     const completion = extract("completeFeedbackYearApplication_");
     assert.match(completion, /appendFeedbackYearVehicleUpdateEvent_/);
