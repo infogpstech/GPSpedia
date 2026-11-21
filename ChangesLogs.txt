@@ -430,3 +430,8 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 2026-11-21 — ADMIN: HELPER TESTIGO SIN LOCK INTERNO
 - ensureTestigoColumns dejó de aceptar lockAlreadyHeld y ya no adquiere ScriptLock internamente. Su único caller, handleAddOrUpdateCut, conserva y adquiere el lock principal antes de preparar las columnas.
 - Se preservaron las validaciones del contrato AT:AV y el resto de la sección crítica de alta. AdminTestigoColumnsNoInternalLock: 1/1 PASS en harness Node.js aislado; pendiente CI/checkout completo.
+
+
+2026-11-21 — ADMIN: ALTA DE LOGOTIPOS FAIL-FAST
+- handleAddLogo mantiene el ScriptLock para proteger la secuencia numérica y la escritura de LogosMarca, pero ya no espera 30 segundos: usa tryLock(0), retira el archivo no vinculado si hay contención y devuelve ADMIN_BUSY para reintento. La limpieza fallida conserva metadata RECOVERY_REQUIRED.
+- AdminLogoWriteLockNonBlocking: 4/4 PASS en harness Node.js aislado; pendiente CI/checkout completo. Sin cambios productivos.
