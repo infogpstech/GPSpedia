@@ -48,15 +48,20 @@ check("La cuenta se desactiva solo después de invalidar sesiones y login pendie
     assert.match(deletion, /status: 'error'/);
     assert.match(deletion, /disabled: true/);
 });
-check("Delete, update y revocaciones están cubiertos por leases AUTH sobre recursos de identidad", () => {
+check("Solo eliminación de cuenta conserva lease; otras revocaciones mantienen coordinación directa", () => {
     const actionSet = extract(auth, "isSharedMutationAction_");
     const policy = extract(coordinator, "coordinatorPolicy_");
-    assert.match(actionSet, /"deleteUser"/);
-    assert.match(actionSet, /"updateUser"/);
-    assert.match(actionSet, /"resetUserSessions"/);
+    const update = extract(auth, "handleUpdateUser");
+    const reset = extract(auth, "handleResetUserSessions");
+    const logout = extract(auth, "handleLogout");
+    assert.match(actionSet, /return \["deleteUser"\]/);
+    assert.doesNotMatch(actionSet, /updateUser|resetUserSessions|logout|changePassword|resetUserPassword/);
     assert.match(policy, /deleteUser: \{ write: \[\.\.\.identityWrite, "SESSION_CONTEXTS"\] \}/);
-    assert.match(policy, /updateUser: \{ write: \[\.\.\.identityWrite, "SESSION_CONTEXTS"\] \}/);
-    assert.match(policy, /resetUserSessions: \{ write: \["ACTIVE_SESSIONS", "LOGS", "SESSION_CONTEXTS"\] \}/);
+    assert.match(update, /revokeSharedUserSessionContexts_\(userId/);
+    assert.match(reset, /revokeSharedUserSessionContexts_\(targetUserId/);
+    assert.match(logout, /revokeSharedSessionContext_\(requestedUserId, sessionToken\)/);
+    assert.match(update, /requireSharedAuthActor_\(payload, \["desarrollador", "jefe", "supervisor"\]/);
+    assert.match(reset, /requireSharedAuthActor_\(payload, \["desarrollador"\]/);
 });
 check("La invalidación remota exige confirmación de WRITE y FEEDBACK antes de revocar", () => {
     const invalidate = extract(client, "invalidateSessionActorCaches");
