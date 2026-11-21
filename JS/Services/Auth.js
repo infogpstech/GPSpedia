@@ -2517,7 +2517,7 @@ function handleResetUserPassword(payload) {
         }
         writePasswordHashAndVerifyUnderLock_(usersSheet, target[0].rowIndex, newHash);
         const pointer = clearUserSessionPointerUnderLock_(usersSheet, target[0].rowIndex);
-        cleanupPending = pointer.pending;
+        cleanupPending = Boolean(revocation.cleanupPending) || pointer.pending;
         cleanupError = pointer.error;
 
         const deletion = deleteRevokedSessionRowsUnderLock_(sessionsSheet, revocation.rows);
