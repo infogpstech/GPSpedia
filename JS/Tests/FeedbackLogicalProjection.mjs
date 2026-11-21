@@ -36,5 +36,6 @@ test("el listado de reportes propios mantiene un conjunto de reportId ya proyect
  const handler=source.slice(a,b);
  assert.match(handler,/const seenReportIds = new Set\(\)/);
  assert.match(handler,/seenReportIds\.has\(parsedMetadata\.reportId\)/);
+ assert.ok(handler.indexOf("ownedReports.reverse()")>handler.indexOf("rows.forEach"),"La deduplicación first-write-wins ocurre antes de invertir el orden visual.");
 });
 console.log("FeedbackLogicalProjection: "+passed+"/"+passed+" PASS");
