@@ -44,7 +44,7 @@ function makeSheet(records) {
 function record(overrides = {}) {
     return JSON.stringify({
         subType: "suggestion_cut", suggestionOperationId: "OP-1", reportId: "REP-1",
-        vehicleId: "101", corteIndex: 2, userId: "USR-1", details: "Cambio propuesto",
+        vehicleId: "101", corteIndex: 2, userId: "USR-1", details: "Cambio propuesto", requestFingerprint: "FP-1",
         ...overrides
     });
 }
@@ -62,9 +62,15 @@ test("un registro malformado que contiene la operación requiere revisión", () 
     const sheet = makeSheet([["F-1", "", '{"suggestionOperationId":"OP-1"']]);
     assert.throws(() => byOperation(sheet, "OP-1"), /registro incompleto/);
 });
-test("rechaza suggestionOperationId duplicado", () => {
+test("proyecta la primera fila cuando operationId repetido tiene la misma huella", () => {
     const sheet = makeSheet([["F-1", "", record()], ["F-2", "", record()]]);
-    assert.throws(() => byOperation(sheet, "OP-1"), /identificador de operación aparece duplicado/);
+    const result = byOperation(sheet, "OP-1");
+    assert.equal(result.rowNumber, 2);
+    assert.equal(result.duplicateCount, 1);
+});
+test("rechaza operationId repetido con huellas contradictorias", () => {
+    const sheet = makeSheet([["F-1", "", record()], ["F-2", "", record({ requestFingerprint: "FP-2" })]]);
+    assert.throws(() => byOperation(sheet, "OP-1"), /contenido contradictorio/);
 });
 test("encuentra por reportId y valida vehículo, corte y actor", () => {
     const sheet = makeSheet([["F-1", "", record()], ["F-2", "", record({ vehicleId: "202" })]]);
@@ -73,9 +79,15 @@ test("encuentra por reportId y valida vehículo, corte y actor", () => {
     assert.equal(result.record.userId, "USR-1");
     assert.ok(sheet.calls.every(call => call[1] === 3), "Solo debe consultar la columna Problema");
 });
-test("rechaza duplicados de la misma solicitud heredada", () => {
-    const sheet = makeSheet([["F-1", "", record()], ["F-2", "", record()]]);
-    assert.throws(() => byRequest(sheet, "REP-1", "101", 2, "USR-1"), /sugerencia asociada al reporte ya aparece duplicada/);
+test("proyecta la primera solicitud legacy cuando las huellas coinciden", () => {
+    const sheet = makeSheet([["F-1", "", record({ suggestionOperationId: "" })], ["F-2", "", record({ suggestionOperationId: "" })]]);
+    const result = byRequest(sheet, "REP-1", "101", 2, "USR-1");
+    assert.equal(result.rowNumber, 2);
+    assert.equal(result.duplicateCount, 1);
+});
+test("rechaza solicitudes legacy duplicadas con contenido distinto", () => {
+    const sheet = makeSheet([["F-1", "", record({ suggestionOperationId: "" })], ["F-2", "", record({ suggestionOperationId: "", requestFingerprint: "FP-2" })]]);
+    assert.throws(() => byRequest(sheet, "REP-1", "101", 2, "USR-1"), /contenido contradictorio/);
 });
 test("ignora reportId inexistente y N/A sin lectura completa", () => {
     const sheet = makeSheet([["F-1", "", record()]]);
