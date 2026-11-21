@@ -78,3 +78,15 @@ Migrar el alta y la edición de tutoriales para reducir y retirar el ScriptLock 
 3. Migrar `handleUpdateTutorialItem` con expected hash y eventos append-only.
 4. Integrar CATALOG, feed incremental y aprobaciones de vídeo.
 5. Ejecutar regresión integral y preparar Beta aislada.
+
+
+## Implementación fase 1 — alta lock-free y reservas de título (2026-11-21)
+
+- Se añadió la hoja append-only `TutorialTitleEvents` (A:H: operationId, eventHash, tutorialId, action, titleKey, previousTitleKey, payloadHash, createdAt). Su inicialización tolera que dos solicitudes intenten crear la hoja simultáneamente.
+- `handleAddTutorial` ya no solicita ScriptLock. Conserva preflight por ID, normalización de contenido, comprobación de títulos históricos y agrega una reserva `CLAIM` antes de anexar la fila A:H.
+- El ledger usa first-write-wins por operationId y por título normalizado. El mismo operationId con payload distinto se rechaza; dos operationIds distintos que reclaman el mismo título dejan un único propietario. El perdedor no materializa la fila.
+- `handleUpdateTutorialItem` sigue bajo ScriptLock para las mutaciones B:F in-place. Cuando renombra un tema, anexa un evento `RENAME` que reclama el nuevo título y libera el anterior antes de escribir; esto coordina altas lock-free y renombrados concurrentes.
+- `findTutorialById_` conserva la primera fila física como canónica ante reintentos duplicados. CATALOG proyecta una sola fila por ID y descarta copias físicas posteriores, preservando la primera escritura.
+- Se preservan esquema A:H, compatibilidad A:G, filas históricas sin ID, IDs `tut-{operationId}`, autoría verificada, aprobación pendiente de vídeo y publicación del feed.
+- Regresión CI `44876830826` SUCCESS: 258 suites, 3097 pruebas aprobadas, 0 fallos; health read-only `44876830897` SUCCESS. Pages `44876830484` estaba queued al registrar.
+- **Estado parcial:** alta lock-free implementada; edición de campos sigue in-place bajo lock. No retirar el lock de edición hasta introducir expected hash/version y proyección de versiones que no revierta la columna G escrita por aprobaciones de vídeo. Concurrencia real de Sheets/Drive queda diferida a Beta aislada. No se desplegó Apps Script ni se modificó producción.
