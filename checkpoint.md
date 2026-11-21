@@ -369,3 +369,11 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Commit de ajuste de prueba: `f81b316b595f1675637d84f2e25fd1775083a83d`.
 - CI `44861738724` SUCCESS; health read-only `44861738743` SUCCESS. La validación de sintaxis y la suite integral se ejecutaron en GitHub Actions sobre la rama autorizada.
 - La corrección puntual queda validada localmente por CI. No equivale al cierre de la migración P0 de FEEDBACK.
+
+
+## Continuidad — operationId determinista para sugerencias de corte (2026-11-21)
+
+- `handleSuggestCutChange` ahora deriva `suggestionOperationId` como `SUG-<requestFingerprint>` cuando el cliente no proporciona un ID. La huella incluye reporte, vehículo, corte, usuario, justificación, propuesta e imagen (SHA-256).
+- Los clientes que ya envían un ID válido conservan su identificador; no cambia el contrato ni se elimina `ScriptLock`.
+- Esta preparación hace que reintentos idénticos de clientes legacy compartan una identidad estable, necesaria para la deduplicación append-only posterior. No resuelve por sí sola la carrera de dos escrituras simultáneas.
+- Pendiente: ledger/proyección de operaciones, consumidores compatibles con duplicados físicos, pruebas de concurrencia y después evaluar retiro seguro del lock.

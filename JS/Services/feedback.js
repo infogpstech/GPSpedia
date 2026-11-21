@@ -3286,7 +3286,7 @@ function handleSuggestCutChange(payload) {
         normalizedCorteIndex < 1 || normalizedCorteIndex > 3) {
         throw new Error("Faltan datos válidos para sugerir cambio (vehicleId, corteIndex 1–3, userId, userName).");
     }
-    const normalizedOperationId = String(suggestionOperationId || "").trim();
+    let normalizedOperationId = String(suggestionOperationId || "").trim();
     if (normalizedOperationId && !/^[A-Za-z0-9_-]{20,80}$/.test(normalizedOperationId)) {
         throw new Error("Identificador de operación de sugerencia inválido.");
     }
@@ -3304,6 +3304,8 @@ function handleSuggestCutChange(payload) {
         userId: normalizedUserId, details: normalizedDetails, proposedValues: normalizedProposedValues,
         imageSha256: normalizedImage ? normalizedImage.sha256 : ""
     });
+    // Compatibilidad: clientes antiguos sin opId reciben una identidad estable derivada del payload.
+    if (!normalizedOperationId) normalizedOperationId = "SUG-" + requestFingerprint;
     const legacyRequestFingerprint = buildLegacyCutSuggestionRequestFingerprint_(
         normalizedDetails, normalizedProposedValues, legacyImageDataUrl
     );

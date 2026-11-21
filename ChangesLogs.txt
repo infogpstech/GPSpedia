@@ -212,3 +212,8 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 2026-11-20 — Validación de corrección FEEDBACK
 - La suite CI detectó y permitió corregir una aserción de regresión mal escapada; la segunda ejecución completó correctamente.
 - CI `44861738724` SUCCESS; health read-only `44861738743` SUCCESS. Commit de código/prueba: `f81b316b595f1675637d84f2e25fd1775083a83d`.
+
+
+2026-11-21 — Sugerencias de corte: identidad determinista
+- Se añadió fallback de suggestionOperationId derivado de la huella SHA-256 de la solicitud cuando clientes legacy no envían opId; IDs explícitos permanecen intactos.
+- No se retiró ScriptLock; la deduplicación concurrente append-only continúa pendiente.

@@ -38,6 +38,16 @@ const request = {
 let passed = 0;
 function test(name, fn) { fn(); passed++; }
 
+test("el handler deriva un operationId determinista cuando el cliente no lo envía", () => {
+    const handler = extract("handleSuggestCutChange", "parseModelosAsociados");
+    const fingerprint = handler.indexOf("const requestFingerprint = buildCutSuggestionRequestFingerprint_");
+    const derivedId = handler.indexOf('if (!normalizedOperationId) normalizedOperationId = "SUG-" + requestFingerprint;');
+    const replayRequest = handler.indexOf("suggestionOperationId: normalizedOperationId", derivedId);
+    const suggestionRecord = handler.indexOf('suggestionOperationId: normalizedOperationId || ""');
+    assert.ok(fingerprint >= 0 && derivedId > fingerprint && replayRequest > derivedId);
+    assert.ok(suggestionRecord > derivedId, "El ID derivado debe persistirse en la fila completa");
+    assert.match(handler, /if \(!normalizedOperationId\) normalizedOperationId = "SUG-" \+ requestFingerprint/);
+});
 test("una sugerencia nueva se anexa como fila completa", () => {
     const handler = extract("handleSuggestCutChange", "parseModelosAsociados");
     const writeStart = handler.indexOf("const suggestionRow = new Array(lastCol).fill(\"\")");
