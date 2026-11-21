@@ -47,9 +47,9 @@ const adminLeaseOperations = [...admin.matchAll(/withSharedMutationLease_\("ADMI
  const expectedAdminLeaseOperations = ["auditDriveImagesInCortes", "createCortesImageFolder", "saveUnusedImagesInventory"].sort();
  assert.deepEqual(adminLeaseOperations, expectedAdminLeaseOperations,
   "ADMIN conserva leases para auditoría, creación de carpeta e inventario");
- const activityStart=admin.indexOf("function recordImageAdministrationActivity("),activityEnd=admin.indexOf("\\nfunction ",activityStart+10);
+ const activityStart=admin.indexOf("function recordImageAdministrationActivity("),activityEnd=admin.indexOf(String.fromCharCode(10)+"function ",activityStart+10);
  const activity=admin.slice(activityStart,activityEnd);
- assert.match(activity,/sheet\\.appendRow\\(\\[/);
+ assert.match(activity,/sheet\.appendRow\(\[/);
  assert.doesNotMatch(activity,/withSharedMutationLease_|recordAdminImageActivity/);
  assert.doesNotMatch(admin,/touchSessionActivityIfDue_|getSessionExpirationStatus_/);
  assert.match(admin,/const developerContext = action === 'ping' \? null : \(ADMIN_MODAL_EDIT_ACTIONS\.has\(action\) \? assertModalEditSession\(payload\) : assertDeveloperSession\(payload\)\)/);
