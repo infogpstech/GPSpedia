@@ -5,8 +5,8 @@ const catalog=readFileSync(new URL("../Services/catalog.js",import.meta.url),"ut
 function extract(source,name){const start=source.indexOf("function "+name+"(");assert.ok(start>=0,"No se encontró "+name);const end=source.indexOf("\nfunction ",start+10);return source.slice(start,end<0?source.length:end);}
 const handler=extract(feedback,"handleRecordLike");
 assert.match(handler,/findLikeEventReplayNoop_/);
-assert.match(handler,/eventLedger\.appendRow\(\[actorKey, vehicleId, corteIndex, 0, 0, "event"/);
-assert.doesNotMatch(handler,/LockService|getScriptLock|acquireFeedbackScriptLock_|setValue\//,"Ninguna ruta de like debe usar lock o modificar el contador físico");
+assert.match(handler,/ledger\.appendRow\(\[actorKey, vehicleId, corteIndex, 0, 0, "event"/);
+assert.doesNotMatch(handler,/LockService|getScriptLock|acquireFeedbackScriptLock_|setValue\(/,"Ninguna ruta de like debe usar lock o modificar el contador físico");
 const eventPath=handler.slice(handler.indexOf("const eventReplay"),handler.indexOf("const ledger = ensureFeedbackLikesSheet_"));
 assert.doesNotMatch(eventPath,/LockService|setValue\(/);
 assert.match(extract(feedback,"ensureFeedbackLikesSheet_"),/catch \(createError\)/,"La creación concurrente de la hoja debe recuperarse por relectura");
