@@ -546,3 +546,9 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - Se conservan las cargas inmediatas posteriores a crear tutorial/problema PyS y la sincronización que corresponda a una aprobación efectiva.
 - JS/Tests/YouTubePendingRefreshContract.js: cobertura ampliada a cinco escenarios, 5/5 PASS; suite backend YouTubeApproval.js 16/16 PASS.
 - Se conserva opVideoId, estado pending, prevención de duplicados y flujo de aprobación; no se modificó backend.
+
+
+2026-11-21 — REVISIÓN DE BLOQUEOS DURANTE CARGAS DE IMÁGENES
+- Inspección estática confirma que WRITE corta las cargas Drive mediante runWriteDriveWorkOutsideScriptLock_ (libera lock y reacquire con tryLock(0)); los aportes suplementarios append-only suben antes de anexar el evento, sin lock global.
+- FEEDBACK reportes/sugerencias cargan Drive fuera de ScriptLock; replays de sugerencia se resuelven antes de Drive. PyS usa opId/payloadHash y estados UPLOAD_PENDING/LINKED sin ScriptLock observado en handleAddProblem.
+- ADMIN y mediciones de duración Drive quedan pendientes. No se retiraron locks ni se cambió el protocolo de carga.
