@@ -51,6 +51,14 @@ test("like completado e íntegro se resuelve sin mutación", () => {
     const h = makeHarness();
     assert.deepEqual(h.run(), { status: "success", alreadyLiked: true, likeCount: 8, message: "Este usuario ya había registrado su like." });
 });
+test("el snapshot de replay valida encabezados y consulta una sola vez las filas del actor", () => {
+    const h = makeHarness();
+    assert.deepEqual(h.run().alreadyLiked, true);
+    assert.equal(h.calls.filter(args => args[0] === 1 && args[1] === 1).length, 1,
+        "Los encabezados de FeedbackLikes se leen una sola vez.");
+    assert.equal(h.calls.filter(args => args[0] === 2 && args[1] === 1 && args[3] === 1).length, 1,
+        "Las filas del actor se localizan una sola vez y se reutilizan para el replay.");
+});
 test("like pendiente vuelve a la ruta protegida", () => {
     const h = makeHarness({ rows: [["user:7", "10", 2, 4, 5, "pending", "now"]] });
     assert.equal(h.run(), null);
