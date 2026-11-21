@@ -92,13 +92,17 @@ test("devuelve null cuando no existe una sugerencia previa", () => {
     assert.equal(h.resolver({}, request), null);
     assert.equal(h.calls.length, 2);
 });
-test("el handler resuelve replay antes de Drive y lock, y revalida dentro del lock", () => {
+test("el handler resuelve replay antes de Drive y reconcilia carreras después del append sin lock", () => {
     const handler = extract("handleSuggestCutChange", "parseModelosAsociados");
     const preflight = handler.indexOf("findExistingCutSuggestionForRequest_(feedbackSheet, replayRequest)");
     const drive = handler.indexOf("saveSuggestionImageAttachment_");
-    const lock = handler.indexOf("LockService.getScriptLock()");
-    const recheck = handler.indexOf("findExistingCutSuggestionForRequest_(sheet, replayRequest)");
-    assert.ok(preflight >= 0 && preflight < drive && drive < lock);
-    assert.ok(recheck > lock, "Debe revalidar bajo lock si la operación se creó después del preflight");
+    const append = handler.indexOf("sheet.appendRow(suggestionRow)");
+    const rowLookup = handler.indexOf("findFeedbackRowById_(sheet, reservedId, lastCol)");
+    const canonical = handler.indexOf("findExistingCutSuggestionForRequest_(sheet, replayRequest)", append);
+    assert.ok(preflight >= 0 && preflight < drive && drive < append);
+    assert.ok(rowLookup > append && canonical > rowLookup);
+    assert.equal(handler.indexOf("LockService.getScriptLock()"), -1);
+    assert.equal(handler.indexOf("acquireFeedbackScriptLock_"), -1);
+    assert.match(handler, /canonical\.rowNumber\) !== Number\(persistedRow\.rowIndex/);
 });
 console.log("FeedbackSuggestionPreflightOutsideLock: " + passed + "/" + passed + " PASS — replay sin lock/Drive y revalidación crítica");
