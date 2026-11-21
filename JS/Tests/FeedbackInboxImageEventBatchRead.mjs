@@ -102,7 +102,7 @@ test("la canonicalización reutiliza el mismo reportId repetido dentro de una p�
 test("la bandeja administrativa comparte el índice con canonicalización y mapeo", () => {
     const handler = block("handleGetFeedbackItems");
     assert.equal((handler.match(/readFeedbackReportImageEventsIndex_\(/g) || []).length, 1);
-    assert.match(handler, /isCanonicalFeedbackInboxRow_\(feedbackSheet,row,offset\+2\+index,reportMetadataColumn,imageEventsIndex\)/);
+    assert.match(handler, /isCanonicalFeedbackInboxRow_\(feedbackSheet,row,offset\+2\+index,reportMetadataColumn,imageEventsIndex,canonicalCache\)/);
     assert.match(handler, /mapInboxFeedbackRow_\(row,reportMetadataColumn,imageEventsIndex\)/);
     assert.match(handler, /const canonicalCache=new Map\(\)/);
     assert.match(handler, /imageEventsIndex,canonicalCache\)/);
