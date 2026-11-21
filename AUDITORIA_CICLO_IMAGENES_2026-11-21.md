@@ -16,7 +16,7 @@
 
 ## Validación
 - ThumbnailCacheDeduplication.mjs: 3/3 PASS en harness exact-source.
-- CI pendiente al publicar.
+- CI 9ebeecd99869cab11bd8d9501cfd0dc4b31ab89c: SUCCESS, 271 suites / 3,189 pruebas / 0 fallos; health read-only SUCCESS. ImageResolutionVariants 10/10 y ObjectURL lifecycle 10/10.
 - No se ejecutaron mediciones de red en navegador ni pruebas offline de campo.
 
 ## Pendientes

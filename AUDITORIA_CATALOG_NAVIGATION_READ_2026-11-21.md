@@ -12,7 +12,7 @@ handleGetNavigationData solo necesita el ID, la categoría y la marca de cada fi
 
 ## Validación
 - CatalogNavigationRead.mjs: 2/2 PASS en harness aislado de la función exacta, con lecturas de rango verificadas y hojas vacías.
-- Pendiente: ejecución del runner Node completo y CI después de publicar.
+- CI 9ebeecd99869cab11bd8d9501cfd0dc4b31ab89c: SUCCESS, 271 suites / 3,189 pruebas / 0 fallos; health read-only SUCCESS.
 - No se realizaron lecturas en Spreadsheet productivo ni se desplegó Apps Script.
 
 ## Próximo paso
