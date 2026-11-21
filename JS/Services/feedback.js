@@ -4017,6 +4017,13 @@ function getPysYouTubeVideoId_(value){
 }
 function getCanonicalPysYouTubeUrl_(value){const id=getPysYouTubeVideoId_(value);return id?"https://www.youtube.com/watch?v="+id:"";}
 
+function isPysOperationImageReferenced_(opsSheet, fileId) {
+    const id = String(fileId || "").trim();
+    if (!id || !opsSheet || opsSheet.getLastRow() < 2) return false;
+    return opsSheet.getRange(2, 5, opsSheet.getLastRow() - 1, 1).getValues()
+        .some(row => String(row[0] || "").trim() === id);
+}
+
 function handleAddProblem(source) {
     source = source || {};
     const opId = String(source.opId || "").trim();
