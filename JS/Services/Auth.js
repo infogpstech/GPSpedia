@@ -2070,7 +2070,11 @@ function handleDeleteUser(payload) {
             throw new Error('No se encontraron las hojas Users y ActiveSessions.');
         }
 
-        const sessionsData = sessionsSheet.getDataRange().getValues();
+        const sessionsLastRow = sessionsSheet.getLastRow();
+        const sessionWidth = Math.max(COLS_ACTIVE_SESSIONS.ID_Usuario, COLS_ACTIVE_SESSIONS.ActiveSessions);
+        const sessionsData = [[]].concat(sessionsLastRow >= 2
+            ? sessionsSheet.getRange(2, 1, sessionsLastRow - 1, sessionWidth).getValues()
+            : []);
         const usersData = usersSheet.getDataRange().getValues();
         const targetRows = [];
         const uniqueIds = new Set();
