@@ -70,6 +70,7 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 ### P1 — servicios, aportes y catálogo
 - [ ] Auditar WRITE, FEEDBACK y ADMIN de extremo a extremo: operaciones, idempotencia, Drive/Spreadsheet, read-back y publicaciones.
 - [x] WRITE — aportes de corte: combinar la lectura posterior al append del ledger para calcular slot y detectar colisión VIN; checkOperation limita esa lectura a eventos existentes de tipo cut. Se conservan TextFinder, read-back, comprobación de opId y detección de conflictos concurrentes.
+- [x] FEEDBACK — sugerencias de año: en reintentos ya reportados se reutiliza el snapshot existente de Feedbacks; solo se relee después de un append nuevo para incluir votos concurrentes.
 - [ ] Auditar CATALOG/Coordinator: deltas, cursores, snapshots, resets e invalidaciones; conservar snapshots completos para inicio/reset/recuperación.
 - [ ] Revisar refresh completo `getCatalogData` al cerrar edición y sustituirlo solo si un delta preserva fuentes, cursores y concurrencia.
 - [ ] Medir telemetría ADMIN y confirmar que no se ejecuta en navegación/aportes ordinarios.
@@ -104,4 +105,4 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - No retirar escaneo global Drive ni controles de idempotencia/recuperación sin equivalencia demostrada.
 
 ## Siguiente paso exacto
-P0.1, P0.2 local, mapa AUTH/USERS, reducción integral de leases AUTH y P0.3 de caché de actor completados localmente. La única lease del dispatcher AUTH es deleteUser; USERS/createUser comparte solo el recurso USERS con esa eliminación. Siguiente: continuar la auditoría FEEDBACK y ADMIN; revisar sugerencias de año y likes, y después las operaciones administrativas de Drive/Spreadsheet. WRITE post-append ledger snapshot queda validado. La precarga/invalidation de los cuatro servicios y la carrera createUser/deleteUser requieren además validación de despliegues/propiedades en Beta aislada.
+P0.1, P0.2 local, mapa AUTH/USERS, reducción integral de leases AUTH y P0.3 de caché de actor completados localmente. La única lease del dispatcher AUTH es deleteUser; USERS/createUser comparte solo el recurso USERS con esa eliminación. Siguiente: continuar FEEDBACK con likes, reportes e Inbox; después auditar operaciones administrativas de Drive/Spreadsheet en ADMIN. La precarga/invalidation de los cuatro servicios y la carrera createUser/deleteUser requieren además validación de despliegues/propiedades en Beta aislada.
