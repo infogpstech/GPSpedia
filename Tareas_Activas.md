@@ -44,8 +44,8 @@ La copia archivada fue verificada carácter por carácter contra el original. Es
 - [x] Retirar el lock global prolongado de `handleSendContactForm`: el asignador `getNextFormulaBasedId_` usa reservas append-only en `__IdentifierSequenceReservations__`; el formulario anexa la fila completa con `appendRow` sin sección crítica global. La secuencia se calcula por orden físico de reservas y conserva prefijo/relleno, detección de duplicados y validación de filas huérfanas. Prueba `FeedbackContactWriteNoGlobalLock` 2/2 y `FeedbackLockFastFail` PASS; CI 44835908125 SUCCESS: 239 suites, 2968 pruebas, 0 fallos.
 - [x] Migrar `reportProblem` y `suggestCutChange` a proyección first-write-wins, adjuntos append-only y escritura sin ScriptLock; validado previamente en CI.
 - [x] Migrar `handleAddProblem` a reserva completa append-only y first-write-wins sin ScriptLock. `PysOperations` conserva la primera reserva por `opId`; el hash contradictorio se rechaza por solicitud, los archivos perdedores se limpian solo con referencias comprobadas y los fallos ambiguos conservan el recurso para replay. CI `44875140437`: 258 suites, 3094 pruebas, 0 fallos; health y Pages SUCCESS. Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
-- [ ] Migrar altas/ediciones de tutoriales a escritura append-only y proyección idempotente sin ScriptLock, preservando unicidad de título, imágenes, autoría y compatibilidad de reintentos.
-- [ ] Migrar aprobaciones de vídeo a eventos append-only/proyección idempotente sin ScriptLock, preservando unicidad de operación/destino y transiciones pending/approved/rejected.
+- [x] Migrar altas/ediciones de tutoriales con ID estable a escritura append-only y proyección idempotente sin ScriptLock, preservando unicidad de título, imágenes, autoría y compatibilidad de reintentos. Ediciones descriptivas D:F de filas históricas sin ID quedan como tarea local separada.
+- [x] Migrar aprobaciones de vídeo a eventos append-only/proyección idempotente sin ScriptLock, preservando unicidad de operación/destino y transiciones pending/approved/rejected. CI 44904401718 SUCCESS: 258 suites, 3,108 pruebas, 0 fallos.
 - No sustituir ScriptLock por UserLock. Las mutaciones PyS de solución, prevención y relaciones permanecen fuera de la migración de creación y se auditarán según su propio alcance.
 - [x] Retirar el ScriptLock interno de `getNextFormulaBasedId_`: las reservas append-only usan `appendRow` atómico y fórmula de secuencia por hoja/columna; los reintentos/operaciones concurrentes reservan sufijos distintos y los huecos por respuesta perdida no se reutilizan. `FeedbackFormulaIdAllocator` 5/5 y `FeedbackFormulaIdAllocatorBoundedRead` 6/6 PASS. CI `44847431570` SUCCESS: 253 suites, 3053 pruebas, 0 fallos. Health read-only `44847431590` SUCCESS. La fórmula/appendRow real queda diferida a Beta aislada.
 - [x] Migrar `handleRecordLike` completamente a eventos append-only sin ScriptLock: likes nuevos se anexan; replays legacy `completed` se reconocen; los `pending` históricos se recuperan comparando el contador con `previous`/`target` y anexando un evento cuando falta el incremento. No se modifica `Cortes.utilCorteN`; CATALOG suma actores únicos por vehículo/corte en lecturas completas y snapshots. `recordLike` publica reset sin lock de versión. `FeedbackLikeAppendOnly` 4/4, `FeedbackLikeCompletedReplayPreflight` 6/6, `FeedbackLikeActivityOutsideLock` 5/5, `FeedbackLikePreflightOutsideLock` 5/5; `CatalogChangeFeed` 35/35.
@@ -390,8 +390,8 @@ Antes de cualquier Beta, cumplir la secuencia de sincronización de ramas, árbo
 - [x] Alta `handleAddTutorial` sin ScriptLock con reserva append-only de título, payloadHash, replay por operationId y first-write-wins. CI: 258 suites, 3097 pruebas, 0 fallos.
 - [x] Ledger `TutorialTitleEvents` coordina claims de alta y renombrados. Los renombrados continúan protegidos por ScriptLock hasta completar la migración de edición.
 - [x] Lectura por ID y CATALOG deduplican reintentos físicos, conservando la primera fila canónica.
-- [ ] Migrar `handleUpdateTutorialItem` a eventos append-only/versionados con expected hash, sin pérdida de cambios simultáneos.
-- [ ] Integrar proyección de versiones con CATALOG/feed y preservar aprobaciones de vídeo (columna G) sin revertir snapshots.
+- [x] Migrar `handleUpdateTutorialItem` a eventos append-only/versionados con expected hash, sin pérdida de cambios simultáneos.
+- [x] Integrar proyección de versiones con CATALOG/feed y preservar aprobaciones de vídeo (columna G) sin revertir snapshots.
 - [ ] Beta aislada: concurrencia real de reservas, creación de hoja, altas simultáneas, renombrados y recuperación tras append/flush incierto.
 - No desplegar Apps Script ni modificar datos productivos.
 
@@ -401,9 +401,9 @@ Antes de cualquier Beta, cumplir la secuencia de sincronización de ramas, árbo
 - [x] Alta `handleAddTutorial` lock-free con reservas append-only de título y replay idempotente.
 - [x] Ediciones descriptivas D:F para IDs estables mediante `TutorialEditEvents`, expectedHash y snapshots append-only; sin ScriptLock.
 - [x] CATALOG y `findTutorialRow_` proyectan eventos D:F sin revertir Video (G), Imagen (C) ni Colaborador (H).
-- [ ] Migrar renombrados de título a eventos append-only sin lock, manteniendo unicidad, liberación del título anterior y cancelación de reservas si una edición queda obsoleta.
+- [x] Migrar renombrados de título a eventos append-only sin lock, manteniendo unicidad, liberación del título anterior y cancelación de reservas si una edición queda obsoleta.
 - [ ] Migrar filas históricas sin ID o definir su transición segura; mantener compatibilidad sin inventar identidades.
-- [ ] Auditar y adaptar aprobaciones de vídeo para la proyección completa.
+- [x] Auditar y adaptar aprobaciones de vídeo para la proyección completa.
 - [ ] Beta aislada: altas, ediciones simultáneas, renombrados, respuestas perdidas, reservas huérfanas y aprobaciones de vídeo.
 - CI `44877806419`: 258 suites, 3101 pruebas, 0 fallos; health y Pages SUCCESS.
 
@@ -413,8 +413,8 @@ Antes de cualquier Beta, cumplir la secuencia de sincronización de ramas, árbo
 - [x] Rechazar operationId repetido con evento contradictorio; conservar replays físicos idénticos.
 - [x] Añadir regresiones en TutorialIntegrity para hash manipulado y operationId contradictorio.
 - CI 44901700375: 258 suites, 3103 pruebas, 0 fallos; health read-only 44901700446 SUCCESS. Pages 44901699997 en ejecución al registrar.
-- [ ] Migrar renombrados a eventos append-only sin ScriptLock y proyectar el título actual en findTutorialRow_, CATALOG y feed.
-- [ ] Auditar aprobaciones de vídeo después de cerrar renombrados.
+- [x] Migrar renombrados a eventos append-only sin ScriptLock y proyectar el título actual en findTutorialRow_, CATALOG y feed.
+- [x] Auditar aprobaciones de vídeo después de cerrar renombrados.
 - La edición de filas históricas sin ID sigue bajo lock hasta diseñar transición segura.
 
 
@@ -424,8 +424,8 @@ Antes de cualquier Beta, cumplir la secuencia de sincronización de ramas, árbo
 - [x] Exigir propiedad del título anterior como condición de versión; dos renombrados desde el mismo estado no pueden aplicarse ambos.
 - [x] Proyectar título en `findTutorialRow_`, lookup por tema, feed y CATALOG sin reescribir la fila física.
 - [x] Mantener protección frente a solicitudes de vídeo pendientes y conservar Imagen, Video y Colaborador.
-- [ ] Ejecutar regresión `TutorialIntegrity` y suite completa de servicios en CI.
-- [ ] Adaptar aprobaciones de vídeo para el modelo completo de tutoriales.
+- [x] Ejecutar regresión `TutorialIntegrity` y suite completa de servicios en CI.
+- [x] Adaptar aprobaciones de vídeo para el modelo completo de tutoriales.
 - [ ] Migrar filas históricas sin ID sin inventar identidades persistentes.
 - [ ] Beta aislada: concurrencia real de `appendRow`, fallos entre ambos journals, flush incierto y reconciliación de reservas.
 
@@ -436,7 +436,7 @@ Estado: **EN PROGRESO** hasta confirmar pruebas y publicación.
 
 - [x] Permitir renombrar filas sin ID mediante identidad determinista derivada del título normalizado, sin persistir ni inventar un ID.
 - [x] Mantener el bloqueo de edición descriptiva legacy separado; el camino lock-free histórico solo acepta renombrado de título.
-- [ ] Ejecutar regresiones y suite completa de servicios en CI.
+- [x] Ejecutar regresiones y suite completa de servicios en CI.
 - [ ] Auditar aprobaciones de vídeo y completar compatibilidad de la proyección.
 - [ ] Beta aislada: concurrencia real, respuesta perdida y fallos parciales entre journals.
 
@@ -455,7 +455,29 @@ Estado: **EN PROGRESO**.
 - [x] Regresión `TutorialIntegrity`: 40/40 PASS.
 - [x] CI `44903445024` SUCCESS: 258 suites, 3,107 pruebas aprobadas, 0 fallos; node --check PASS.
 - [x] Health read-only `44903444986` SUCCESS.
-- [ ] Auditoría/ajuste adicional de aprobaciones y rechazos de vídeo para asegurar que destino G y metadatos permanecen coherentes después de renombrar.
+- [x] Auditoría/ajuste adicional de aprobaciones y rechazos de vídeo para asegurar que destino G y metadatos permanecen coherentes después de renombrar.
 - [ ] Ediciones descriptivas D:F de filas históricas sin ID: permanecen bajo lock; no forman parte del cierre del renombrado.
 - [ ] Beta aislada: concurrencia real de appendRow, fallo entre ambos journals, respuesta perdida y recuperación multihoja.
 - No se desplegó Apps Script ni se modificaron Spreadsheet/Drive productivos.
+
+
+## Cierre local — aprobación y rechazo de vídeos append-only (2026-11-21)
+
+Estado: COMPLETADA LOCALMENTE; validación Beta diferida.
+
+- [x] Añadir VideoApprovalEvents como journal inmutable de decisiones terminales approved/rejected, con eventId/payloadHash, identidad de solicitud, snapshot y validación de esquema.
+- [x] Proyectar eventos sobre Feedbacks al leer la solicitud; la fila materializada se reconstruye idempotentemente desde el evento.
+- [x] Persistir y confirmar la decisión antes de publicar el vídeo aprobado o retirar el enlace/miniatura rechazados.
+- [x] Recuperar reintentos tras pérdida de respuesta, fallo de materialización Feedbacks o fallo parcial del destino; una transición opuesta se rechaza.
+- [x] Retirar ScriptLock local de submit/approve/reject; usar leases compartidas Coordinator por operación FEEDBACK.
+- [x] Ajustar política Coordinator para reservar CORTES y TUTORIAL durante lectura/escritura de destino; PyS y Feedbacks quedan dentro del recurso FEEDBACK.
+- [x] Verificar que aprobación de Tutorial usa la fila/título proyectado y solo modifica Video/Imagen; el título renombrado y Colaborador no se revierten.
+- [x] FEEDBACK aprobación/rechazo/publicación: 30/30 PASS; VideoApprovalClientContract 10/10 PASS; VideoApprovalState 13/13 PASS.
+- [x] CI 44904401718 SUCCESS: 258 suites, 3,108 pruebas, 0 fallos; node --check PASS. Health read-only 44904401717 SUCCESS.
+- [ ] Beta aislada: concurrencia real entre proyectos, appendRow simultáneo, respuesta perdida, fallo parcial Coordinator/Sheets y reintentos de publicación/rechazo con destinos aislados.
+- No se desplegó Apps Script ni se modificaron datos productivos.
+
+## Siguiente tarea local — ediciones descriptivas de tutoriales históricos sin ID
+
+- [ ] Permitir edición D:F de filas históricas sin ID mediante identidad/versión derivada segura, sin escribir IDs inventados ni perder cambios concurrentes.
+- [ ] Mantener edición por ID como ruta preferida y preservar B/C/G/H, autoría y compatibilidad de reintentos.

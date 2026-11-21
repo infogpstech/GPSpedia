@@ -531,3 +531,16 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Actividad local cerrada. Siguiente: auditar aprobaciones/rechazos de vídeo y su interacción con el título proyectado. Pendientes Beta: appendRow concurrente real, fallos parciales entre journals, respuesta perdida y recuperación en copias aisladas.
 - Las ediciones descriptivas D:F de filas históricas sin ID siguen usando el flujo anterior; no se alteró su contrato.
 - No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+## Checkpoint — aprobación/rechazo de vídeo append-only (2026-11-21)
+
+- HEAD validado: 6b2e1cfbf99ffa7e5b4f9511847691de491ed3c1.
+- VideoApprovalEvents es la fuente append-only de decisiones approved/rejected. Cada evento conserva itemId, decisión, snapshot completo, responder, payloadHash y eventId determinista.
+- findPendingVideoApproval_ proyecta el evento terminal sobre Feedbacks. La materialización es idempotente; un retry repara la fila o completa publicación/retirada sin volver a decidir.
+- Aprobación: evento → materialización verificada → publicación del destino. Rechazo: evento → retirada exacta de enlace/miniatura → materialización verificada. Las decisiones opuestas se rechazan.
+- submit/approve/reject usan leases compartidas FEEDBACK (submitVideoForApproval, approveVideo, rejectVideo); se eliminó el ScriptLock local. Coordinator ahora reserva CORTES y TUTORIAL donde aplica.
+- Pruebas: aprobación/rechazo/publicación 30/30; VideoApprovalClientContract 10/10; VideoApprovalState 13/13. CI 44904401718 SUCCESS: 258 suites, 3,108 pruebas, 0 fallos; Health read-only 44904401717 SUCCESS.
+- Compatibilidad: al aprobar Tutorial, el destino se resuelve con título proyectado; solo se actualizan las columnas Video/Imagen necesarias, sin reescribir Tema o Colaborador.
+- Siguiente tarea local: migrar ediciones descriptivas D:F de tutoriales históricos sin ID. Beta real de Coordinator/Sheets/YouTube y fallos parciales permanece pendiente.
+- No se desplegó Apps Script ni se modificaron datos productivos.

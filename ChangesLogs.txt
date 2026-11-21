@@ -304,3 +304,12 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - FEEDBACK, búsqueda, feed y CATALOG proyectan el título sin modificar la fila física. Imagen, Video y Colaborador se conservan.
 - TutorialIntegrity 40/40 PASS; CI 44903445024 SUCCESS: 258 suites, 3107 pruebas, 0 fallos; Health read-only 44903444986 SUCCESS.
 - Concurrencia real multihoja y recuperación permanecen pendientes de Beta aislada. No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+2026-11-21 — CIERRE LOCAL: VIDEO APPROVAL APPEND-ONLY
+- Nuevo journal VideoApprovalEvents registra decisiones terminales approved/rejected con snapshot y hash verificados; Feedbacks proyecta/materializa el evento de forma idempotente.
+- Aprobación persiste evento antes de publicar; rechazo persiste evento antes de retirar el vídeo/miniatura exactos. Reintentos recuperan fallos parciales y no permiten decisiones opuestas.
+- submit/approve/reject usan leases compartidas FEEDBACK; se elimina ScriptLock local. Coordinator reserva CORTES y TUTORIAL donde corresponde.
+- La aprobación de Tutorial usa la fila proyectada y no revierte Tema/Colaborador.
+- 30/30 aprobación/publicación, 10/10 VideoApprovalClientContract, 13/13 VideoApprovalState. CI 44904401718 SUCCESS: 258 suites, 3108 pruebas, 0 fallos; Health 44904401717 SUCCESS.
+- Beta real Coordinator/Sheets/YouTube pendiente; sin deployment ni cambios productivos.

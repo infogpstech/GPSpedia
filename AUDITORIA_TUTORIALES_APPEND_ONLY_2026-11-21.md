@@ -138,3 +138,13 @@ Migrar el alta y la edición de tutoriales para reducir y retirar el ScriptLock 
 - Búsqueda FEEDBACK, resolución por ID/título, feed y CATALOG aplican el título proyectado; imagen, vídeo y colaborador se conservan.
 - Regresiones `TutorialIntegrity` 40/40 PASS. CI `44903445024`: 258 suites, 3,107 pruebas, 0 fallos; Health read-only `44903444986` SUCCESS.
 - Estado: COMPLETADA LOCALMENTE; concurrencia real y fallos multihoja diferidos a Beta aislada. Siguiente auditoría: aprobación/rechazo de vídeos después de renombrar.
+
+
+## Cierre local — aprobación/rechazo append-only de vídeos (2026-11-21)
+
+- VideoApprovalEvents conserva una transición terminal inmutable por solicitud, con eventId y payloadHash verificados. El lector proyecta el snapshot sobre Feedbacks y permite recuperar materialización incompleta.
+- La aprobación registra y confirma el evento antes de publicar el destino. El rechazo registra el evento antes de retirar únicamente el vídeo/miniatura exactos. Reintentos completan operaciones parciales; decisiones contradictorias no se aceptan.
+- Se retiró el ScriptLock local de envío/aprobación/rechazo y se usan leases compartidas FEEDBACK con Coordinator. La política reserva CORTES/TUTORIAL según el destino.
+- La aprobación de Tutorial resuelve la fila mediante título proyectado y conserva Tema/Colaborador; actualiza solo Video e Imagen cuando corresponde.
+- FEEDBACK aprobación/rechazo/publicación 30/30; VideoApprovalClientContract 10/10; VideoApprovalState 13/13. CI 44904401718 SUCCESS: 258 suites, 3,108 pruebas, 0 fallos; Health 44904401717 SUCCESS.
+- Estado: COMPLETADA LOCALMENTE; concurrencia y recuperación real quedan diferidas a Beta aislada.

@@ -1080,3 +1080,12 @@ Adenda — FEEDBACK confirmación de sugerencias
 - CI 44903445024 SUCCESS: 258 suites, 3107 pruebas aprobadas, 0 fallos; node --check PASS.
 - Health read-only 44903444986 SUCCESS. Pages 44903444505 estaba queued al registrar.
 - Cierre local aceptado; concurrencia real y fallos parciales multihoja quedan diferidos a Beta aislada.
+
+
+================================================================================
+2026-11-21 — AUDITORÍA / CIERRE LOCAL DE VIDEO APPROVAL
+- Se reemplazó la sección crítica local por leases compartidas de Coordinator para submitVideoForApproval, approveVideo y rejectVideo. El journal VideoApprovalEvents es la fuente inmutable de la decisión terminal.
+- El proyector valida hash, identidad y transición; la fila Feedbacks se materializa desde el snapshot. Si la respuesta se pierde o falla la escritura, el retry recupera la misma decisión.
+- La aprobación publica solo después de confirmar el evento; el rechazo confirma evento antes de retirar enlaces/miniaturas exactos. El destino Tutorial se resuelve con título proyectado y no reescribe Tema/Colaborador.
+- CI 44904401718 SUCCESS: 258 suites, 3108 pruebas, 0 fallos; VideoApprovalPublishing 30/30, VideoApprovalClientContract 10/10, VideoApprovalState 13/13. Health 44904401717 SUCCESS.
+- Pendiente: concurrencia real y fallos parciales en proyectos/Spreadsheet/Drive/YouTube aislados. No se desplegó.
