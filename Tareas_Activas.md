@@ -305,3 +305,13 @@ Antes de cualquier Beta, cumplir la secuencia de sincronización de ramas, árbo
 - CI `44865504667` SUCCESS: 256 suites, 3079 pruebas aprobadas, 0 fallos; `FeedbackAppendRowIdentity` 3/3 PASS. Health read-only `44865504762` SUCCESS.
 - El primer CI encontró una aserción de prueba sensible a espacios; se corrigió la prueba y el siguiente CI pasó. No se detectó fallo de sintaxis ni de lógica del servicio.
 - La tarea P0 sigue EN PROGRESO: aún no se han migrado los locks ni la proyección de duplicados/Inbox/adjuntos.
+
+
+## Cierre P0 — reportes y sugerencias de corte sin ScriptLock (2026-11-21)
+
+- Commit validado: `d77a59bca8d92a531832219d1a6918906f401735`. `handleReportProblem` y `handleSuggestCutChange` ya no adquieren el lock global; ambos confirman filas por ID reservado y anexan registros completos.
+- Proyección first-write-wins con detección de payload contradictorio para `reportId` y `suggestionOperationId`; Inbox y reportes propios ocultan duplicados lógicos y conservan el ID físico canónico.
+- Nuevo ledger append-only `FeedbackReportImageEvents` para adjuntos tardíos y asociación de imágenes sin mutar reportMetadata. Los eventos con hashes distintos se envían a reconciliación.
+- CI `44866461350` SUCCESS: 258 suites, 3089 pruebas, 0 fallos; health read-only `44866461297` SUCCESS; Pages `44866461264` SUCCESS.
+- Implementación local completada; concurrencia real y ledger deben validarse en Beta aislada. No se desplegó Apps Script ni se modificaron datos productivos.
+- **Siguiente tarea inmediata: PyS / `handleAddProblem`**, auditar y migrar su escritura ordinaria para retirar ScriptLock conservando IDs, autor/fecha, imágenes, reintentos, recuperación y consumidores.
