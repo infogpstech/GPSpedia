@@ -10960,11 +10960,22 @@ function handleGetVehicleContributionCandidates_(payload) {
     payload = payload && typeof payload === "object" ? payload : {};
     const requestedLimit = Number(payload.limit);
     const limit = Number.isSafeInteger(requestedLimit) ? Math.max(1, Math.min(500, requestedLimit)) : 200;
-    const includeImageInventoryEvents = payload.includeImageInventoryEvents === true;
+    const requestedImageInventoryEvents = payload.includeImageInventoryEvents === true;
+    let catalogSecret = "";
+    if (requestedImageInventoryEvents) {
+        try {
+            const properties = PropertiesService.getScriptProperties();
+            catalogSecret = String(properties.getProperty("GPSpedia_COORDINATOR_SECRET") ||
+                properties.getProperty(CATALOG_TRAFFIC_SECRET_PROPERTY_) || "");
+        } catch (error) { catalogSecret = ""; }
+    }
+    const includeImageInventoryEvents = requestedImageInventoryEvents && catalogSecret.length >= 32;
+    const catalogPayload = { limit, includeImageInventoryEvents };
+    if (includeImageInventoryEvents) catalogPayload.secret = catalogSecret;
     const response = UrlFetchApp.fetch(CATALOG_SERVICE_URL, {
         method: "post",
         contentType: "text/plain",
-        payload: JSON.stringify({ action: "getContributionCandidates", payload: { limit, includeImageInventoryEvents } }),
+        payload: JSON.stringify({ action: "getContributionCandidates", payload: catalogPayload }),
         muteHttpExceptions: true,
         followRedirects: true
     });

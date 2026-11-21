@@ -62,12 +62,16 @@ const inventorySourceEvents = [
     { eventId: "EV-NOIMAGE", opId: "OP-NOIMAGE", vehicleId: "3", operationHash: "c".repeat(64), kind: "feed",
       payload: { text: "12V" }, createdAt: "2026-11-21T00:02:00.000Z", status: "review", supersedesEventId: "" }
 ];
-const inventoryResponse = new Function("readCatalogContributionProjectionVehicles_", candidatesHandler + String.fromCharCode(10) + "return handleGetContributionCandidates_;")(
+const inventoryResponse = new Function("readCatalogContributionProjectionVehicles_", "catalogTrafficSecretEquals_", "PropertiesService", "CATALOG_TRAFFIC_SECRET_PROPERTY_", candidatesHandler + String.fromCharCode(10) + "return handleGetContributionCandidates_;")(
     (spreadsheetRef, includeSourceEvents) => includeSourceEvents
         ? { vehicles: inventoryVehicles, sourceEvents: inventorySourceEvents }
-        : inventoryVehicles
+        : inventoryVehicles,
+    (expected, supplied) => expected === supplied && expected.length >= 32,
+    { getScriptProperties: () => ({ getProperty: key => key === "GPSpedia_CATALOG_TRAFFIC_SECRET" ? "s".repeat(40) : "" }) },
+    "GPSpedia_CATALOG_TRAFFIC_SECRET"
 );
-const inventoryPayload = inventoryResponse({ limit: 500, includeImageInventoryEvents: true });
+const inventoryPayload = inventoryResponse({ limit: 500, includeImageInventoryEvents: true, secret: "s".repeat(40) });
+assert.throws(() => inventoryResponse({ limit: 500, includeImageInventoryEvents: true, secret: "wrong" }), /Acceso denegado/);
 assert.equal(inventoryPayload.imageInventoryCandidates.length, 1);
 assert.equal(inventoryPayload.imageInventoryCandidates[0].eventId, "EV-IMG");
 assert.deepEqual(inventoryPayload.imageInventoryEvents.map(event => event.eventId), ["EV-IMG", "EV-RES"]);

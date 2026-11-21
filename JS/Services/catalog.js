@@ -1144,7 +1144,17 @@ function handleGetVehicleProjection_(payload = {}) {
 function handleGetContributionCandidates_(payload = {}) {
     const requestedLimit = Number(payload && payload.limit);
     const limit = Number.isSafeInteger(requestedLimit) ? Math.max(1, Math.min(500, requestedLimit)) : 200;
-    const includeImageInventoryEvents = payload && payload.includeImageInventoryEvents === true;
+    const requestedImageInventoryEvents = payload && payload.includeImageInventoryEvents === true;
+    let includeImageInventoryEvents = false;
+    if (requestedImageInventoryEvents) {
+        const properties = PropertiesService.getScriptProperties();
+        const expectedSecret = String(properties.getProperty("GPSpedia_COORDINATOR_SECRET") ||
+            properties.getProperty(CATALOG_TRAFFIC_SECRET_PROPERTY_) || "");
+        if (!catalogTrafficSecretEquals_(expectedSecret, payload.secret)) {
+            throw new Error("Acceso denegado a los metadatos internos del inventario de imágenes.");
+        }
+        includeImageInventoryEvents = true;
+    }
     const projection = readCatalogContributionProjectionVehicles_(undefined, includeImageInventoryEvents);
     const projectedVehicles = includeImageInventoryEvents ? projection && projection.vehicles : projection;
     const sourceEvents = includeImageInventoryEvents && projection ? projection.sourceEvents : null;

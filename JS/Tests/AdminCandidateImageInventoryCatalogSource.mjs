@@ -10,21 +10,23 @@ const sourceEvents = [{eventId:"EV-IMG",opId:"OP-IMG",vehicleId:"3",kind:"cut",
     payload:{image:"https://drive.google.com/file/d/FILE1234567890/view"},createdAt:"2026-11-21T00:00:00.000Z",
     status:"review",supersedesEventId:""}];
 let request;
-const wrapper = new Function("UrlFetchApp","CATALOG_SERVICE_URL",wrapperSource+String.fromCharCode(10)+"return handleGetVehicleContributionCandidates_;")(
+const properties = {getScriptProperties:()=>({getProperty:key=>key==="GPSpedia_CATALOG_TRAFFIC_SECRET"?"s".repeat(40):""})};
+const wrapper = new Function("UrlFetchApp","CATALOG_SERVICE_URL","PropertiesService","CATALOG_TRAFFIC_SECRET_PROPERTY_",wrapperSource+String.fromCharCode(10)+"return handleGetVehicleContributionCandidates_;")(
     {fetch(url,options){request=JSON.parse(options.payload);return {getResponseCode:()=>200,getContentText:()=>JSON.stringify({
         status:"success",candidates:[],total:0,limit:500,truncated:false,
         imageInventoryCandidates:[{eventId:"EV-IMG",vehicleId:"3",vehicleLabel:"Nissan Frontier"}],
         imageInventoryEvents:sourceEvents
-    })};}},"https://catalog.test/exec"
+    })};}},"https://catalog.test/exec",properties,"GPSpedia_CATALOG_TRAFFIC_SECRET"
 );
 const response=wrapper({limit:500,includeImageInventoryEvents:true});
 assert.equal(request.payload.includeImageInventoryEvents,true);
+assert.equal(request.payload.secret,"s".repeat(40));
 assert.equal(response.imageInventoryCandidates[0].eventId,"EV-IMG");
 assert.equal(response.imageInventoryEvents[0].eventId,"EV-IMG");
-const legacyWrapper = new Function("UrlFetchApp","CATALOG_SERVICE_URL",wrapperSource+String.fromCharCode(10)+"return handleGetVehicleContributionCandidates_;")(
+const legacyWrapper = new Function("UrlFetchApp","CATALOG_SERVICE_URL","PropertiesService","CATALOG_TRAFFIC_SECRET_PROPERTY_",wrapperSource+String.fromCharCode(10)+"return handleGetVehicleContributionCandidates_;")(
     {fetch(url,options){return {getResponseCode:()=>200,getContentText:()=>JSON.stringify({
         status:"success",candidates:[],total:0,limit:500,truncated:false
-    })};}},"https://catalog.legacy.test/exec"
+    })};}},"https://catalog.legacy.test/exec",properties,"GPSpedia_CATALOG_TRAFFIC_SECRET"
 );
 const legacyResponse=legacyWrapper({limit:500,includeImageInventoryEvents:true});
 assert.equal(legacyResponse.status,"success","ADMIN debe mantener fallback compatible con CATALOG aún no desplegado");
