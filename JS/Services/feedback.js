@@ -2364,6 +2364,7 @@ function findReportByReportId_(sheet, reportId, metadataColumn) {
                 String(item.row[COLS_FEEDBACKS.ID_vehiculo - 1] || "") === String(canonical.row[COLS_FEEDBACKS.ID_vehiculo - 1] || "") &&
                 String(item.row[COLS_FEEDBACKS.Problema - 1] || "") === String(canonical.row[COLS_FEEDBACKS.Problema - 1] || "") &&
                 String(item.metadata.userId || "") === String(canonical.metadata.userId || "") &&
+                String(item.metadata.vehicleId || "") === String(canonical.metadata.vehicleId || "") &&
                 Number(item.metadata.corteIndex) === Number(canonical.metadata.corteIndex) &&
                 item.metadata.activaTestigoMotor === canonical.metadata.activaTestigoMotor &&
                 String(item.metadata.category || "") === String(canonical.metadata.category || "") &&
