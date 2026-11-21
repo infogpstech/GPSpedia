@@ -544,6 +544,10 @@ function prepareAddOrUpdateCutRequest_(payload) {
     return { collaboratorName: collaboratorName, actorId: String(payload && payload.__sharedSessionActor && payload.__sharedSessionActor.userId || ""), spreadsheet: ss, sheet: sheet, validatedPayload: validatedPayload };
 }
 
+function shouldLoadExistingEntitiesForCut_(vehicleData) {
+    return Boolean(vehicleData && (vehicleData.marca || vehicleData.modelo || vehicleData.versionesAplicables));
+}
+
 function handleAppendExistingVehicleCut_(preparedRequest) {
     const payload = preparedRequest.validatedPayload;
     const vehicleId = String(payload.vehicleId || "").trim();
@@ -561,7 +565,7 @@ function handleAppendExistingVehicleCut_(preparedRequest) {
     const vehicle = snapshot.vehicle;
     const cut = payload.cutData;
     const incomingVehicleData = Object.assign({}, payload.vehicleData || {});
-    const entities = Object.keys(incomingVehicleData).length ? getExistingEntities(sheet) : null;
+    const entities = shouldLoadExistingEntitiesForCut_(incomingVehicleData) ? getExistingEntities(sheet) : null;
     if (entities) {
         if (incomingVehicleData.marca) incomingVehicleData.marca = resolveAndNormalizeEntity(incomingVehicleData.marca, entities.brands, false);
         if (incomingVehicleData.modelo) incomingVehicleData.modelo = resolveAndNormalizeEntity(incomingVehicleData.modelo, entities.models, false);
