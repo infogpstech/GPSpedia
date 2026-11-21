@@ -264,3 +264,9 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - `readPysOperations_` conserva first-write-wins por `opId`; los payloads contradictorios se rechazan por operación y los archivos perdedores solo se eliminan tras verificar ausencia de referencias.
 - Los fallos ambiguos conservan y marcan el recurso para reconciliación; las imágenes ya vinculadas a otro problema no se reutilizan.
 - Pruebas focalizadas incluidas en CI `44875140437`: 258 suites, 3094 pruebas, 0 fallos. Health read-only `44875140445` y Pages `44875140584` SUCCESS. Sin despliegue Apps Script ni cambios productivos.
+
+
+2026-11-21 — Tutoriales: auditoría para migración append-only
+- Se documentaron contratos A:H, IDs tut-{operationId}, alta con replay preflight, edición con expected hash pendiente, unicidad de título, CATALOG, feed incremental y aprobaciones de vídeo.
+- Hallazgo: el alta sigue protegida por ScriptLock; la edición real actualiza B:F in-place bajo lock. CATALOG lee filas físicas y no tiene proyección de versiones.
+- Se requiere journal/proyección común antes de retirar locks; no se modificó aún el código funcional ni se desplegó Apps Script.
