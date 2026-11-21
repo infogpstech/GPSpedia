@@ -25,6 +25,22 @@ test("el preflight solo usa metadata existente y no crea columnas fuera del lock
     assert.ok(readOnlyLookup >= 0 && readOnlyLookup < acquire);
     assert.ok(schemaEnsure > acquire);
 });
+test("un reporte nuevo se anexa como una fila completa y no se limpia tras una escritura incierta", () => {
+    const writeStart = handler.indexOf("if(!duplicateReport) {");
+    const writeEnd = handler.indexOf("} catch(error) {", writeStart);
+    const writeBlock = handler.slice(writeStart, writeEnd);
+    assert.match(writeBlock, /const reportRow=new Array\(lastCol\)\.fill\(""\)/);
+    assert.match(writeBlock, /reportRow\[COLS_FEEDBACKS\.ID-1\]=reservedId/);
+    assert.match(writeBlock, /reportRow\[COLS_FEEDBACKS\.Usuario-1\]=userName/);
+    assert.match(writeBlock, /reportRow\[COLS_FEEDBACKS\.ID_vehiculo-1\]=vehicleId/);
+    assert.match(writeBlock, /reportRow\[COLS_FEEDBACKS\.Problema-1\]=normalizedProblemText/);
+    assert.match(writeBlock, /sheet\.appendRow\(reportRow\)/);
+    assert.doesNotMatch(writeBlock, /getRange\([^\\n]*\)\.setValue/);
+    assert.doesNotMatch(writeBlock, /getRange\([^\\n]*\)\.setValues/);
+    const catchBlock = handler.slice(writeEnd);
+    assert.match(catchBlock, /const uploadMayBeReferenced = appendAttempted/);
+    assert.doesNotMatch(catchBlock, /pendingRowNumber|clearContent\(\)/);
+});
 test("replay con imagen idéntica evita una nueva carga a Drive", () => {
     const oldImage = handler.indexOf("const oldImage=normalizeReportImageMetadata_(preflightExisting.metadata)");
     const hashCheck = handler.indexOf("oldImage.imageSha256!==imageAttachment.sha256", oldImage);
