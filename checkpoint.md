@@ -1016,3 +1016,13 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Ruta legacy y reparación de imágenes usan `runAdminContributionDriveWorkOutsideScriptLock_` / `runWriteDriveWorkOutsideScriptLock_`: liberan lock durante Drive y reacquire no bloqueante con ID estable para revalidar.
 - Se mantienen locks de operaciones destructivas e inventario; no se retiró ningún lock.
 - Falta revisar logo upload y completar benchmarks de Drive/transferencia. La auditoría de inventario/admin sigue separada del upload normal.
+
+
+## Continuidad — hallazgo pendiente de logotipos ADMIN (2026-11-21)
+
+- HEAD previo: `57e251c8490286e2aab52cff44e19a88181b6f03`; base protegida intacta `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- `ui.js` conserva el Base64 anterior mientras FileReader lee el nuevo logotipo; no tiene onerror/onabort ni control de generaciones. Puede haber desajuste entre bytes y nombre/MIME si se envía antes de completar la lectura.
+- `handleAddLogo` sube a Drive antes de tryLock(0), sin retener el lock durante transferencia, pero no se encontró límite de bytes ni firma binaria validada en el handler.
+- Se añadió tarea pendiente para carrera, errores, límite y MIME/firma. No se cambió el upload de logotipos; no se impuso límite arbitrario.
+- Próximo: corregir este flujo administrativo con contrato/test aislado; después continuar snapshots dirigidos y mediciones de red.
+
