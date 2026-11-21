@@ -22,11 +22,13 @@ assert.ok(replayBranch.indexOf("releaseLockForDriveWork();") < replayBranch.inde
     "El duplicado descubierto bajo lock debe limpiarse después de liberar ScriptLock");
 
 const catchStart = handler.indexOf("} catch (error) {");
-const cleanupStart = handler.indexOf("if (!rowCommitted && uploadedImage &&", catchStart);
+const cleanupStart = handler.indexOf("if (!rowCommitted && uploadedImage && !appendAttempted)", catchStart);
 const cleanup = handler.slice(cleanupStart);
-assert.ok(cleanup.indexOf("rollbackConfirmed") >= 0);
+assert.ok(cleanupStart > catchStart);
 assert.ok(cleanup.indexOf("releaseLockForDriveWork();") < cleanup.indexOf("trashReportImageUpload_(uploadedImage)"),
-    "La compensación solo debe eliminar el archivo después de confirmar rollback y liberar el lock");
-assert.match(cleanup, /else if \(!rowCommitted && uploadedImage && !rollbackConfirmed\)\s*\{[\s\S]*?se conserva para reconciliación/);
-assert.match(handler, /finally \{ if \(lockAcquired\) lock\.releaseLock\(\); \}/);
+    "Si appendRow no se intentó, se libera el lock antes de eliminar la imagen.");
+assert.match(handler, /appendAttempted = true;/);
+assert.match(cleanup, /else if \\(!rowCommitted && uploadedImage\\)\\s*\\{[\\s\\S]*?appendRow pudo persistir/);
+assert.doesNotMatch(cleanup, /clearContent\\(\\)|rollbackConfirmed/);
+assert.match(handler, /finally \\{ if \\(lockAcquired\\) lock\\.releaseLock\\(\\); \\}/);
 console.log("FeedbackSuggestionImageCleanupOutsideLock: 5/5 PASS");
