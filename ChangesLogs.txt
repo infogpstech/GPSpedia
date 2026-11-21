@@ -518,3 +518,10 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 2026-11-21 — IDENTIFICACIÓN DE REFRESCOS REDUNDANTES TRAS SOLICITUD DE VÍDEO
 - Se confirmó que el envío de vídeo crea una solicitud pending en FEEDBACK, sin mutar ni publicar CATALOG; sin embargo, los formularios de corte y tutorial ejecutan `getCatalogData` en `onSuccess`.
 - Se registró retirar ambos snapshots completos y cubrir el contrato de aprobación pendiente. No se modificó código en esta fase.
+
+
+2026-11-21 — RETIRADOS DOS SNAPSHOTS REDUNDANTES TRAS SOLICITUD DE VÍDEO
+- JS/Frontend/ui.js: se quitaron los callbacks que solicitaban getCatalogData tras enviar vídeos de tutorial y corte, ya que FEEDBACK registra una solicitud pending sin publicar cambios CATALOG.
+- JS/Tests/YouTubePendingRefreshContract.js: nuevo contrato para impedir que vuelvan esos refrescos y verificar que el refresco funcional PyS se mantiene.
+- JS/Tests/RunServiceTests.mjs: integración del contrato en la suite de regresión.
+- Validación aislada ejecutada: contrato frontend 3/3 PASS y YouTubeApproval.js 16/16 PASS. No se ejecutó el runner Node completo ni GitHub Actions; no hubo despliegue Apps Script.
