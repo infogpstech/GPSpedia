@@ -336,7 +336,7 @@ function doPostInternal_(e) {
         const action = String(request.action || "");
         const requestPayload = request.payload && typeof request.payload === "object" ? request.payload : {};
         const catalogWriters = ["addOrUpdateCut", "addSupplementaryInfo", "addVinToVehicle"];
-        if (response && response.status === "success" &&
+        if (response && response.status === "success" && response.alreadyPresent !== true &&
             !String(requestPayload.__sharedMutationToken || "").trim() &&
             catalogWriters.includes(action)) {
             try {
