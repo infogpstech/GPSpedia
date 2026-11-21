@@ -2389,6 +2389,12 @@ body.dark-mode .terms-agreement-logo {
     overflow: hidden;
 }
 
+#dev-tools-modal .dev-tools-title {
+    flex-shrink: 0;
+    margin: 0 0 16px;
+    padding-right: 34px;
+}
+
 #dev-tools-modal .dev-tools-tabs {
     display: flex;
     flex: 1;
@@ -2734,6 +2740,9 @@ body.dark-mode .terms-agreement-logo {
 }
 
 @media (max-width: 520px) {
+    #dev-tools-modal .dev-tools-title {
+        font-size: 1.15rem;
+    }
 
     #dev-tools-modal .dev-tab-link {
         gap: 7px;
@@ -2802,9 +2811,20 @@ body.dark-mode #dev-tools-modal .dev-tools-modal-content {
     border-color: rgba(255, 255, 255, 0.10);
     box-shadow: 0 18px 48px rgba(0, 0, 0, 0.48), 0 2px 8px rgba(0, 0, 0, 0.24);
 }
+
+#dev-tools-modal .dev-tools-title {
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+    letter-spacing: -0.02em;
+    transform-origin: left center;
+    animation: dev-tools-title-expand .28s cubic-bezier(.2,.75,.25,1) both;
+}
 @keyframes dev-tools-title-expand {
     from { opacity: 0; transform: translateY(-4px) scaleX(.94); letter-spacing: -.045em; }
     to { opacity: 1; transform: translateY(0) scaleX(1); letter-spacing: -.02em; }
+}
+@media (prefers-reduced-motion: reduce) {
+    #dev-tools-modal .dev-tools-title { animation: none; }
 }
 
 #dev-tools-modal .dev-tools-sidebar {
@@ -3762,6 +3782,13 @@ body.inbox-open { overflow: hidden; }
         gap: 9px;
     }
 
+    #dev-tools-modal .dev-tools-title {
+        margin: 0 0 8px;
+        padding-bottom: 9px;
+        font-size: 1.12rem;
+        line-height: 1.3;
+    }
+
     #dev-tools-modal .dev-tools-tabs {
         gap: 8px;
     }
@@ -4426,6 +4453,11 @@ button,
 td, th {
     overflow-wrap: anywhere;
 }
+
+#dev-tools-modal .dev-tools-title {
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
 .activity-dashboard-tabs {
     display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 4px;
     border-bottom: 1px solid var(--border-color, #ccc);
@@ -4601,6 +4633,9 @@ td, th {
  
 /* BETA-031: desactivar también la expansión de navegación con movimiento reducido. */
 @media (prefers-reduced-motion: reduce) {
+    #dev-tools-modal .dev-tools-title {
+        animation: none;
+    }
 
     #dev-tools-modal .dev-tab-link,
     #dev-tools-modal .dev-tab-link span {
@@ -6405,49 +6440,3 @@ textarea.rich-text-source[hidden] { display:none !important; }
     min-height:32px;
     padding:0 0 1px;
 }
-
-/* BLOQUE CONSOLIDADO — título del modal Developer Tools; variantes responsive en orden original. */
-#dev-tools-modal .dev-tools-title {
-    flex-shrink: 0;
-    margin: 0 0 16px;
-    padding-right: 34px;
-}
-
-@media (max-width: 520px) {
-    #dev-tools-modal .dev-tools-title {
-        font-size: 1.15rem;
-    }}
-
-#dev-tools-modal .dev-tools-title {
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--border-color);
-    letter-spacing: -0.02em;
-    transform-origin: left center;
-    animation: dev-tools-title-expand .28s cubic-bezier(.2,.75,.25,1) both;
-}
-@media (prefers-reduced-motion: reduce) {
-    #dev-tools-modal .dev-tools-title { animation: none; }}
-
- 
-/* AJUSTES RESPONSIVE — Inbox y Developer
-   Conserva la paleta, tipografía, botones y superficies propias de GPSpedia. */
-@media (max-width: 760px) {
-
-    #dev-tools-modal .dev-tools-title {
-        margin: 0 0 8px;
-        padding-bottom: 9px;
-        font-size: 1.12rem;
-        line-height: 1.3;
-    }}
-
-#dev-tools-modal .dev-tools-title {
-    white-space: normal;
-    overflow-wrap: anywhere;
-}
-
- 
-/* BETA-031: desactivar también la expansión de navegación con movimiento reducido. */
-@media (prefers-reduced-motion: reduce) {
-    #dev-tools-modal .dev-tools-title {
-        animation: none;
-    }}
