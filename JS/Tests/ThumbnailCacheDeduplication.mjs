@@ -42,7 +42,7 @@ assert.deepEqual(first, second);
 assert.equal(inFlight.size, 0, "el registro single-flight se limpia al terminar");
 
 assert.match(source, /const THUMBNAIL_FAILURE_BACKOFF_MS = 5 \* 60 \* 1000/);
-assert.match(compress[0], /if \(retryAfter > Date\.now\(\)\) return null/);
+assert.match(compress[0], /if\(retryAfter>Date\.now\(\)\)return null/);
 assert.match(compress[0], /thumbnailCompressionFailures_\.set\(cacheKey,Date\.now\(\)\+THUMBNAIL_FAILURE_BACKOFF_MS\)/);
 assert.match(compress[0], /const queuedCached=await readFreshThumbnail\(cacheKey\)/);
 assert.match(wrapper[0], /thumbnailCompressionInFlight_\.set\(cacheKey, operation\)/);
