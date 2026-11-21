@@ -1237,6 +1237,7 @@ function runSharedMutationCoordinatorTests() {
         });
         r.properties.setProperty("GPSpedia_SERVICE_URL_USERS", "https://script.google.com/macros/s/USERS/exec");
         r.properties.setProperty("GPSpedia_SERVICE_URL_USERS", "https://script.google.com/macros/s/USERS/exec");
+        r.properties.setProperty("GPSpedia_SERVICE_URL_USERS", "https://script.google.com/macros/s/USERS/exec");
         r.properties.setProperty("GPSpedia_SERVICE_URL_WRITE", "https://script.google.com/macros/s/WRITE/exec");
         r.properties.setProperty("GPSpedia_SERVICE_URL_FEEDBACK", "https://script.google.com/macros/s/FEEDBACK/exec");
         r.properties.setProperty("GPSpedia_SERVICE_URL_ADMIN", "https://script.google.com/macros/s/ADMIN/exec");
@@ -1281,6 +1282,7 @@ function runSharedMutationCoordinatorTests() {
                 getContentText: () => JSON.stringify({ status: "success", invalidated: request.payload.sessionTokens.length })
             };
         });
+        r.properties.setProperty("GPSpedia_SERVICE_URL_USERS", "https://script.google.com/macros/s/USERS/exec");
         r.properties.setProperty("GPSpedia_SERVICE_URL_WRITE", "https://script.google.com/macros/s/WRITE/exec");
         r.properties.setProperty("GPSpedia_SERVICE_URL_FEEDBACK", "https://script.google.com/macros/s/FEEDBACK/exec");
         r.properties.setProperty("GPSpedia_SERVICE_URL_ADMIN", "https://script.google.com/macros/s/ADMIN/exec");
@@ -1308,6 +1310,7 @@ function runSharedMutationCoordinatorTests() {
             }
             return { getResponseCode: () => 200, getContentText: () => JSON.stringify({ status: "success", invalidated }) };
         });
+        r.properties.setProperty("GPSpedia_SERVICE_URL_USERS", "https://script.google.com/macros/s/USERS/exec");
         r.properties.setProperty("GPSpedia_SERVICE_URL_WRITE", "https://script.google.com/macros/s/WRITE/exec");
         r.properties.setProperty("GPSpedia_SERVICE_URL_FEEDBACK", "https://script.google.com/macros/s/FEEDBACK/exec");
         r.properties.setProperty("GPSpedia_SERVICE_URL_ADMIN", "https://script.google.com/macros/s/ADMIN/exec");
