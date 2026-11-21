@@ -1071,11 +1071,11 @@ function handleGetVehicleProjection_(payload = {}) {
     if (!/^[1-9]\d{0,14}$/.test(vehicleId)) {
         throw new Error("Se requiere un ID de vehículo válido para consultar la proyección dirigida.");
     }
-    const snapshot = handleGetCatalogData({ forceRefresh: true });
-    if (!snapshot || snapshot.status !== "success" || !snapshot.data || !Array.isArray(snapshot.data.cortes)) {
+    const projectedVehicles = readCatalogContributionProjectionVehicles_();
+    if (!Array.isArray(projectedVehicles)) {
         throw new Error("CATALOG no pudo construir una proyección completa para la consulta dirigida.");
     }
-    const matches = snapshot.data.cortes.filter(vehicle =>
+    const matches = projectedVehicles.filter(vehicle =>
         vehicle && String(vehicle.id || "").trim() === vehicleId
     );
     if (matches.length !== 1) {
@@ -1083,7 +1083,7 @@ function handleGetVehicleProjection_(payload = {}) {
             ? "El ID del vehículo aparece duplicado en CATALOG; no se devolvió una proyección ambigua."
             : "El vehículo solicitado no existe en la proyección vigente de CATALOG.");
     }
-    return { status: "success", vehicle: matches[0], source: snapshot.source || "spreadsheet", readOnly: true };
+    return { status: "success", vehicle: matches[0], source: "spreadsheet", readOnly: true };
 }
 
 function handleGetContributionCandidates_(payload = {}) {

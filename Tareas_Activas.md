@@ -3329,3 +3329,14 @@ Documento de alcance, hallazgos y checklist: [AUDITORIA_INTEGRAL_LATENCIA_LLAMAD
 
  
 - [ ] Añadir prueba de aislamiento de lectura de candidatos CATALOG y confirmar que solo toca Cortes, FeedbackLikes y AportesVehiculo.
+
+ 
+## CATALOG — aislar también la proyección individual ADMIN (2026-11-21)
+
+**Estado: IMPLEMENTADO; CI PENDIENTE.**
+
+- [x] getVehicleProjection usa el mismo helper de proyección vehicular que getContributionCandidates.
+- [x] Conserva la lectura global de Cortes/VIN, FeedbackLikes y AportesVehiculo, el orden de cortes, fuentes y candidatos.
+- [x] Evita cargar LogosMarca, Tutoriales, ledgers de tutoriales y Relay para recuperar un único vehículo.
+- [x] Mantiene rechazo de ID inválido, inexistente o duplicado.
+- [ ] Confirmar CI y equivalencia.

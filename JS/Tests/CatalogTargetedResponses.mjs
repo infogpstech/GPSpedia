@@ -21,8 +21,8 @@ const snapshot = { status: "success", source: "spreadsheet", data: { cortes: [
     ]}
 ]}};
 let calls = 0;
-const getVehicle = new Function("handleGetCatalogData", vehicleHandler + "\nreturn handleGetVehicleProjection_;")(
-    payload => { calls++; assert.equal(payload.forceRefresh, true); return snapshot; }
+const getVehicle = new Function("readCatalogContributionProjectionVehicles_", vehicleHandler + "\nreturn handleGetVehicleProjection_;")(
+    () => { calls++; return snapshot.data.cortes; }
 );
 const one = getVehicle({ vehicleId: "3" });
 assert.equal(one.vehicle.id, "3");
@@ -31,8 +31,8 @@ assert.equal(calls, 1);
 assert.throws(() => getVehicle({ vehicleId: "../3" }), /ID de vehículo válido/);
 assert.throws(() => getVehicle({ vehicleId: "99" }), /no existe/);
 const duplicateSnapshot = { status: "success", source: "spreadsheet", data: { cortes: [...snapshot.data.cortes, { ...snapshot.data.cortes[0] }] } };
-const duplicateHandler = new Function("handleGetCatalogData", vehicleHandler + "\nreturn handleGetVehicleProjection_;")(
-    () => duplicateSnapshot
+const duplicateHandler = new Function("readCatalogContributionProjectionVehicles_", vehicleHandler + "\nreturn handleGetVehicleProjection_;")(
+    () => duplicateSnapshot.data.cortes
 );
 assert.throws(() => duplicateHandler({ vehicleId: "3" }), /duplicado/);
 
@@ -54,6 +54,8 @@ const clamped = getCandidates({ limit: 0 });
 assert.equal(clamped.limit, 1);
 assert.equal(clamped.candidates.length, 1);
 assert.equal(clamped.truncated, true);
+assert.ok(vehicleHandler.includes("readCatalogContributionProjectionVehicles_()"));
+assert.ok(!vehicleHandler.includes("handleGetCatalogData"), "la proyección dirigida no debe cargar hojas ajenas a la proyección vehicular");
 assert.ok(candidatesHandler.includes("readCatalogContributionProjectionVehicles_()"));
 assert.ok(!candidatesHandler.includes("handleGetCatalogData"), "la lista de candidatos no debe cargar logos, tutoriales ni relay");
 assert.ok(catalog.includes("function readCatalogContributionProjectionVehicles_(spreadsheetRef)"));

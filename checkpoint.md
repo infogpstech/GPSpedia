@@ -1132,3 +1132,6 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 
  
 - La consulta getContributionCandidates ya se aisló de hojas de Logos/Tutoriales/Relay; prueba dedicada de aislamiento añadida al runner, pendiente CI.
+
+ 
+- getVehicleProjection también migró a readCatalogContributionProjectionVehicles_: ambas consultas dirigidas ADMIN comparten el mismo pipeline de proyección y omiten hojas de logos/tutoriales/relay. La consulta sigue leyendo el universo completo de VIN y ledger para preservar conflictos globales.
