@@ -129,3 +129,12 @@ Migrar el alta y la edición de tutoriales para reducir y retirar el ScriptLock 
 - Las filas sin ID persistente también pueden renombrarse sin ScriptLock cuando la operación se limita al título. Se usa una identidad derivada del SHA-256 del título normalizado únicamente para correlacionar eventos; no se escribe un ID en la hoja ni se expone como ID del tutorial.
 - Las ediciones descriptivas D:F de filas históricas sin ID permanecen en su ruta anterior; una operación combinada de renombrado y edición descriptiva no se acepta en el camino lock-free.
 - Se añadió regresión para verificar que el título histórico se proyecta, la fila física/ID se conservan y no se adquiere ScriptLock.
+
+
+## Cierre local — renombrados append-only (2026-11-21)
+
+- Se completó la fase de renombrado para IDs estables y filas históricas sin ID. Los títulos se guardan en `TutorialRenameEvents`; la unicidad y liberación se coordinan mediante `TutorialTitleEvents` con CAS del título anterior.
+- La fila física no se modifica. La identidad legacy se deriva del título normalizado solo para correlacionar eventos, sin escribir IDs inventados.
+- Búsqueda FEEDBACK, resolución por ID/título, feed y CATALOG aplican el título proyectado; imagen, vídeo y colaborador se conservan.
+- Regresiones `TutorialIntegrity` 40/40 PASS. CI `44903445024`: 258 suites, 3,107 pruebas, 0 fallos; Health read-only `44903444986` SUCCESS.
+- Estado: COMPLETADA LOCALMENTE; concurrencia real y fallos multihoja diferidos a Beta aislada. Siguiente auditoría: aprobación/rechazo de vídeos después de renombrar.

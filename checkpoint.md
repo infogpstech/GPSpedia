@@ -519,3 +519,15 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Las ediciones descriptivas legacy siguen bajo la ruta anterior; no se combinan con el renombrado lock-free hasta contar con un journal compatible.
 - Regresión nueva: renombrado histórico, conservación de ID vacío y fila física, ausencia de ScriptLock.
 - CI pendiente para este cambio. No se desplegó Apps Script ni se modificaron recursos productivos.
+
+
+## Checkpoint — cierre local de renombrados append-only (2026-11-21)
+
+- HEAD validado: `efb363e2dbe53e8752f4c24452f20f0a4f8c727b`.
+- `handleUpdateTutorialItem` renombra IDs estables y filas históricas sin ID mediante journals append-only; los títulos no se reescriben físicamente en la hoja. Para filas legacy, la identidad derivada del título se utiliza solo en eventos y no se convierte en un ID persistente.
+- El ledger de títulos exige propiedad del título anterior como condición CAS. Reintentos de operación conservan identidad y contenido; los consumidores de FEEDBACK y CATALOG leen la versión proyectada.
+- Se preservan Imagen, Video y Colaborador; las solicitudes de vídeo pendientes siguen bloqueando el renombrado.
+- `TutorialIntegrity`: 40/40 PASS. CI `44903445024` SUCCESS: 258 suites, 3,107 pruebas, 0 fallos; node --check PASS. Health read-only `44903444986` SUCCESS.
+- Actividad local cerrada. Siguiente: auditar aprobaciones/rechazos de vídeo y su interacción con el título proyectado. Pendientes Beta: appendRow concurrente real, fallos parciales entre journals, respuesta perdida y recuperación en copias aisladas.
+- Las ediciones descriptivas D:F de filas históricas sin ID siguen usando el flujo anterior; no se alteró su contrato.
+- No se desplegó Apps Script ni se modificaron datos productivos.

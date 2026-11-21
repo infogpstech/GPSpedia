@@ -1072,3 +1072,11 @@ Adenda — FEEDBACK confirmación de sugerencias
 - Corrección: `TutorialRenameEvents` conserva título visible, identidad, expectedTitleKey y hash; `TutorialTitleEvents` exige propiedad vigente del título anterior.
 - Consumidores adaptados: `findTutorialRow_`, búsqueda por tema, unicidad de títulos, feed y CATALOG. Se preservan campos Imagen/Video/Colaborador.
 - La ruta de filas históricas sin ID sigue sin migrarse; Beta debe verificar concurrencia y fallos multihoja.
+
+
+================================================================================
+2026-11-21 — VALIDACIÓN: RENOMBRADOS APPEND-ONLY DE TUTORIALES
+- Regresión TutorialIntegrity: 40/40 PASS.
+- CI 44903445024 SUCCESS: 258 suites, 3107 pruebas aprobadas, 0 fallos; node --check PASS.
+- Health read-only 44903444986 SUCCESS. Pages 44903444505 estaba queued al registrar.
+- Cierre local aceptado; concurrencia real y fallos parciales multihoja quedan diferidos a Beta aislada.

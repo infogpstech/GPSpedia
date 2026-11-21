@@ -297,3 +297,10 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - `handleUpdateTutorialItem` registra el título visible en `TutorialRenameEvents` y reserva/libera el nombre mediante `TutorialTitleEvents` con compare-and-swap del título anterior.
 - `findTutorialRow_`, lookup por tema, feed FEEDBACK y CATALOG proyectan el título sin modificar la fila física B.
 - Se preservan Imagen, Video y Colaborador; la aprobación pendiente sigue bloqueando renombrados. No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+2026-11-21 — CIERRE LOCAL: RENOMBRADOS APPEND-ONLY DE TUTORIALES
+- Renombrados con ID estable y filas históricas sin ID migrados a journals append-only; compare-and-swap del título anterior impide dos ganadores desde la misma versión.
+- FEEDBACK, búsqueda, feed y CATALOG proyectan el título sin modificar la fila física. Imagen, Video y Colaborador se conservan.
+- TutorialIntegrity 40/40 PASS; CI 44903445024 SUCCESS: 258 suites, 3107 pruebas, 0 fallos; Health read-only 44903444986 SUCCESS.
+- Concurrencia real multihoja y recuperación permanecen pendientes de Beta aislada. No se desplegó Apps Script ni se modificaron datos productivos.

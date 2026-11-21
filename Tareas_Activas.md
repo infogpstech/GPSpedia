@@ -441,3 +441,21 @@ Estado: **EN PROGRESO** hasta confirmar pruebas y publicación.
 - [ ] Beta aislada: concurrencia real, respuesta perdida y fallos parciales entre journals.
 
 Estado: **EN PROGRESO**.
+
+
+## Cierre local — renombrados append-only de tutoriales (2026-11-21)
+
+**Estado: COMPLETADA LOCALMENTE; validación Beta diferida.**
+
+- [x] Renombrados de tutoriales con ID estable mediante `TutorialTitleEvents` + `TutorialRenameEvents`, sin ScriptLock ni escritura física del título.
+- [x] Renombrados de filas históricas sin ID mediante identidad derivada del título normalizado; no se inventa ni persiste un ID y la fila física permanece intacta.
+- [x] Compare-and-swap del título anterior: solo un renombrado concurrente desde la misma versión puede ganar.
+- [x] Proyección del título en `findTutorialRow_`, lookup por tema, feed FEEDBACK y CATALOG; se conservan imagen, vídeo y colaborador.
+- [x] Reintentos idempotentes y verificación de hashes del journal de renombrados.
+- [x] Regresión `TutorialIntegrity`: 40/40 PASS.
+- [x] CI `44903445024` SUCCESS: 258 suites, 3,107 pruebas aprobadas, 0 fallos; node --check PASS.
+- [x] Health read-only `44903444986` SUCCESS.
+- [ ] Auditoría/ajuste adicional de aprobaciones y rechazos de vídeo para asegurar que destino G y metadatos permanecen coherentes después de renombrar.
+- [ ] Ediciones descriptivas D:F de filas históricas sin ID: permanecen bajo lock; no forman parte del cierre del renombrado.
+- [ ] Beta aislada: concurrencia real de appendRow, fallo entre ambos journals, respuesta perdida y recuperación multihoja.
+- No se desplegó Apps Script ni se modificaron Spreadsheet/Drive productivos.
