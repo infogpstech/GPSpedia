@@ -125,3 +125,6 @@ No desplegar Apps Script a producción ni modificar datos productivos.
 
 - AUG-155: las pruebas interproyecto siguen aplicando a servicios/operaciones que aún tengan una coordinación explícita vigente; excluir approveVideo/rejectVideo/submitVideoForApproval, addTutorial/updateTutorialItem y operaciones Inbox de las expectativas de lease Coordinator.
 - Los segmentos históricos que exigen Coordinator para TUTORIAL o Inbox quedan sustituidos por este protocolo. No modificar sus archivos históricos; aplicar esta adenda al ejecutar Beta.
+
+
+- Actualización adicional de Tutoriales: la ruta legacy de handleUpdateTutorialItem también se ejecuta sin ScriptLock; mantiene la lectura dirigida, validación de unicidad de título, read-back y preservación de campos. En Beta verificar ediciones sobre filas históricas/IDs no canónicos y documentar resultados concurrentes sin exigir bloqueo.
