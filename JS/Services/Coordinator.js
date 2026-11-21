@@ -145,26 +145,14 @@ function coordinatorPolicy_(service, operation) {
             reportProblem: { read: feedbackRead, write: feedbackWrite },
             addProblem: { read: [...feedbackRead, "CORTES"], write: [...feedbackWrite, "DRIVE"] },
             updatePysItem: { read: feedbackRead, write: feedbackWrite },
-            updateTutorialItem: { read: [...feedbackRead, "TUTORIAL"], write: [...feedbackWrite, "TUTORIAL"] },
             suggestCutChange: { read: feedbackRead, write: [...feedbackWrite, "DRIVE"] },
             suggestYear: { read: feedbackRead, write: ["CORTES", ...feedbackWrite] },
-            addTutorial: { read: [...feedbackRead, "TUTORIAL"], write: [...feedbackWrite, "TUTORIAL"] },
             sendContactForm: { write: ["FEEDBACK"] },
             notifyDevelopersDriveCritical: { read: feedbackRead, write: ["FEEDBACK"] },
             replyToFeedback: { read: feedbackRead, write: feedbackWrite },
             markAsResolved: { read: feedbackRead, write: feedbackWrite },
             deleteFeedbackItem: { read: feedbackRead, write: feedbackWrite },
             clearActivityLogs: { read: feedbackRead, write: ["ACTIVITY"] },
-            submitVideoForApproval: { read: [...feedbackRead, "CORTES", "TUTORIAL"], write: feedbackWrite },
-            approveVideo: { read: [...feedbackRead, "CORTES", "TUTORIAL"], write: ["CORTES", "TUTORIAL", ...feedbackWrite] },
-            rejectVideo: { read: [...feedbackRead, "CORTES", "TUTORIAL"], write: ["CORTES", "TUTORIAL", ...feedbackWrite] },
-            createInboxConversation: { read: feedbackRead, write: ["FEEDBACK"] },
-            sendInboxMessage: { read: feedbackRead, write: ["FEEDBACK"] },
-            markInboxRead: { read: feedbackRead, write: ["FEEDBACK"] },
-            markInboxUnread: { read: feedbackRead, write: ["FEEDBACK"] },
-            deleteInboxConversation: { read: feedbackRead, write: ["FEEDBACK"] },
-            archiveInboxConversation: { read: feedbackRead, write: ["FEEDBACK"] },
-            closeInboxConversation: { read: feedbackRead, write: ["FEEDBACK"] }
         }
     };
 
