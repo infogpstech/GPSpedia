@@ -270,3 +270,11 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - Se documentaron contratos A:H, IDs tut-{operationId}, alta con replay preflight, edición con expected hash pendiente, unicidad de título, CATALOG, feed incremental y aprobaciones de vídeo.
 - Hallazgo: el alta sigue protegida por ScriptLock; la edición real actualiza B:F in-place bajo lock. CATALOG lee filas físicas y no tiene proyección de versiones.
 - Se requiere journal/proyección común antes de retirar locks; no se modificó aún el código funcional ni se desplegó Apps Script.
+
+
+2026-11-21 — Tutoriales: alta lock-free fase 1
+- Se implementó `TutorialTitleEvents` append-only con eventHash/payloadHash y first-write-wins para reservas de título.
+- `handleAddTutorial` ya no usa ScriptLock; anexa la fila A:H solo después de confirmar su claim. Los renombrados siguen bajo lock y registran RENAME para coordinar altas concurrentes.
+- `findTutorialById_` y CATALOG proyectan la primera fila física por ID; duplicados de reintento quedan fuera del catálogo.
+- CI `44876830826` SUCCESS: 258 suites, 3097 pruebas, 0 fallos; health read-only `44876830897` SUCCESS; Pages queued al registrar.
+- Pendiente: migrar ediciones B:F con expected hash/version y conservar aprobaciones de vídeo G. Sin despliegue ni cambios productivos.
