@@ -1377,3 +1377,13 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - No se encontró una lectura redundante segura que justificara modificar operaciones destructivas. Se conserva el contrato de rollback y no se tocó Drive/Spreadsheet productivo.
 - `AdminOperationReadInventory.mjs`: 8/8 PASS. CI HEAD `9ef42ae5b69a35ec25a659290c961a53127f27b1`: **283 suites / 3,286 pruebas / 0 fallos**; build SUCCESS; health read-only SUCCESS. GitHub Pages deploy en ejecución; no se desplegó Apps Script.
 - Siguiente: auditoría CATALOG/Coordinator de deltas, cursores, snapshots, resets e invalidaciones.
+
+
+## Cierre — CATALOG/Coordinator: feed, cursores y refresh post-edición (2026-11-21)
+
+- Coordinator publica revisiones monotónicas, eventos upsert/delete/reset, batches de hasta 50, idempotencia por requestId, recuperación de lotes parciales mediante reset, límite de 100 eventos y control de sourceVersion para WRITE/Cortes, FEEDBACK/Cortes-PyS-Tutorial y ADMIN/Cortes. Publicadores legacy sin versión fuerzan reset; snapshots grandes también fuerzan reset.
+- El feed valida cursor y límite, detecta cursor futuro/vencido, huecos, eventos ausentes/corruptos y devuelve resetRequired. El cliente público usa GET con retry y abort; el módulo offline valida snapshots completos, aplica deltas por ID estable, recalcula categoryCounts, ignora PyS para el snapshot principal y persiste snapshot+cursor en una sola transacción IndexedDB.
+- No hay consumidor de getCatalogChanges integrado en ui.js ni en main.js; los helpers de API/IndexedDB están disponibles pero no conectados al ciclo de carga principal. exitModalEditMode todavía usa getCatalogData completo después de guardar y antes/después de descartar para comparar y verificar restauración.
+- Decisión: **mantener el refresh completo**. Sustituirlo por un delta ahora no puede demostrar un cursor consistente con el snapshot ni cubrir cambios concurrentes, resets legacy, eventos vencidos y colecciones sin ID estable. El descarte verificado necesita además una lectura posterior del estado restaurado.
+- Tests existentes: CatalogChangeFeed 35/35, CatalogFeedRetry 9/9 y CatalogSnapshotSync 29/29 PASS. CI HEAD 9ef42ae5b69a35ec25a659290c961a53127f27b1: **283 suites / 3,286 pruebas / 0 fallos**; build SUCCESS; health read-only SUCCESS.
+- Siguiente: integrar el feed incremental en UI con cursor-before-snapshot, deltas ordenados, persistencia atómica snapshot+cursor y fallback completo en cualquier reset/hueco; validar concurrencia antes de sustituir refreshes completos.
