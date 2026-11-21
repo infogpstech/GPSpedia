@@ -1861,10 +1861,10 @@ function handleSuggestYearLocked(payload) {
         const lastCol = Math.max(sheet.getLastColumn(), actorColumn, 9);
         const voteRow = new Array(lastCol).fill("");
         voteRow[COLS_FEEDBACKS.ID - 1] = getNextFormulaBasedId_(sheet, COLS_FEEDBACKS.ID);
-        voteRow[COLS_FEEDBACKS.usuario - 1] = userName;
+        voteRow[COLS_FEEDBACKS.Usuario - 1] = userName;
         voteRow[COLS_FEEDBACKS.ID_vehiculo - 1] = normalizedVehicleId;
-        voteRow[COLS_FEEDBACKS.problema - 1] = problema;
-        voteRow[COLS_FEEDBACKS.respuesta - 1] = respuestaText;
+        voteRow[COLS_FEEDBACKS.Problema - 1] = problema;
+        voteRow[COLS_FEEDBACKS.Respuesta - 1] = respuestaText;
         voteRow[COLS_FEEDBACKS.anoSugerido - 1] = year;
         voteRow[actorColumn - 1] = actorKey;
         sheet.appendRow(voteRow);
