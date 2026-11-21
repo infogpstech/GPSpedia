@@ -1506,6 +1506,15 @@ function appendFeedbackYearApplicationEvent_(operationId, eventType, payload) {
 function getFeedbackYearApplicationEventState_(operationId, eventRows) {
     const events = Array.isArray(eventRows) ? eventRows : [];
     const matching = events.filter(row => String(row[1] || "").trim() === String(operationId || "").trim());
+    const payloadByType = new Map();
+    matching.forEach(row => {
+        const eventType = String(row[2] || "").trim();
+        const payloadJson = String(row[4] || "{}");
+        if (payloadByType.has(eventType) && payloadByType.get(eventType) !== payloadJson) {
+            throw new Error("La aplicación contiene eventos contradictorios del mismo tipo; requiere revisión.");
+        }
+        payloadByType.set(eventType, payloadJson);
+    });
     const types = new Set(matching.map(row => String(row[2] || "").trim()));
     return {
         completed: types.has("completed"),
