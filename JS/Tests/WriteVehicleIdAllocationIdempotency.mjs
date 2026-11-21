@@ -177,6 +177,8 @@ test("dos altas simultáneas con huellas distintas conservan first-write-wins", 
     assert.equal(winningResult.vehicleId, 4);
     assert.equal(h.ledger.rows.length, 3);
     assert.deepEqual(h.ledger.rows.slice(1).map(row => row[2]), [4, 5]);
+    assert.equal(h.allocate({ opId: "OP-AFTER-CONFLICT", operationHash: HASH_A }).vehicleId, 6,
+        "Un intento contradictorio consumido no debe bloquear futuras reservas");
 });
 test("una fila duplicada consumida por una carrera no se reutiliza", () => {
     let secondResult;
@@ -210,6 +212,7 @@ test("rechaza IDs corruptos o duplicados en el historial de Cortes", () => {
     const h = harness();
     h.cortes.rows.push([3, "Mazda", "3"]);
     assert.throws(() => h.allocate({ opId: "OP-CORRUPT", operationHash: HASH_A }), /ID duplicado 3/);
-    assert.equal(h.ledger, null);
+    assert.ok(h.ledger, "El esquema puede inicializarse sin asignar un ID");
+    assert.equal(h.ledger.rows.length, 1, "No debe quedar ninguna reserva si Cortes contiene IDs corruptos");
 });
 console.log("WriteVehicleIdAllocationIdempotency: " + passed + "/" + passed + " PASS — reserva append-only, reintentos, intercalado concurrente, first-write-wins y fail-closed");
