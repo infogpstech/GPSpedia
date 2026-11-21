@@ -4409,10 +4409,8 @@ function findTutorialRow_(sheet, reference, preferId) {
         });
         if (byTitle.length > 1) {
             const first = byTitle[0], firstId = String(first.row[0] || "").trim();
-            const sameCanonical = byTitle.every(item => String(item.row[0] || "").trim() === firstId &&
-                TUTORIAL_HEADERS.every((header, index) =>
-                    String(item.row[index] || "").trim() === String(first.row[index] || "").trim()));
-            if (!sameCanonical) throw new Error("El tema del tutorial aparece más de una vez; no se modificó.");
+            const sameIdentity = byTitle.every(item => String(item.row[0] || "").trim() === firstId);
+            if (!sameIdentity) throw new Error("El tema del tutorial aparece más de una vez; no se modificó.");
             return first;
         }
         if (byTitle.length === 1) return byTitle[0];
@@ -4440,11 +4438,10 @@ function findTutorialById_(sheet, tutorialId) {
         matches.push({ rowIndex, row: sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getValues()[0] });
     });
     if (matches.length > 1) {
-        const canonical = matches[0].row;
-        const width = Math.max(0, ...matches.map(match => match.row.length));
-        const identical = matches.every(match => Array.from({ length: width }, (_, index) =>
-            String(match.row[index] || "").trim() === String(canonical[index] || "").trim()).every(Boolean));
-        if (!identical) throw new Error("El ID del tutorial aparece más de una vez con contenido contradictorio; requiere revisión.");
+        matches[0].duplicateRowCount = matches.length - 1;
+        matches[0].conflictingDuplicateCount = matches.slice(1).filter(match =>
+            TUTORIAL_HEADERS.some((header, index) =>
+                String(match.row[index] || "").trim() !== String(matches[0].row[index] || "").trim())).length;
     }
     return matches[0] || null;
 }
