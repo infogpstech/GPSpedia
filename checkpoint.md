@@ -1189,3 +1189,14 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Imágenes: miniatura desde elemento ya cargado con CORS, fallback sin persistencia no segura, precargas duplicadas retiradas. FIFO concurrencia 2, sin prefetch de 15 elementos.
 - Siguiente trabajo local: analizar dependencias del proyector de candidatos para una proyección de columnas mínima; auditar getReplacedImages e inventario sin reducir comprobación global de referencias Drive. Medir antes de retirar protecciones.
 - No se desplegó Apps Script ni se modificaron Spreadsheet/Drive productivos.
+
+
+## Continuidad — P0.1 mapa de llamadas y dependencias (2026-11-21)
+
+- HEAD de partida confirmado: `37f97061001cf688b354f3bc9c05ca5d87fb922b` en `GPSpedia2.2.5_work`; base protegida `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin cambios.
+- Se completó inspección estática del router `JS/Frontend/api-config.js`, dispatchers AUTH/USERS/WRITE/FEEDBACK/ADMIN/CATALOG/UTILITIES, Coordinator, SharedMutationClient e Inbox.
+- Nuevo documento: `MAPA_LLAMADAS_DEPENDENCIAS_P0_2026-11-21.md`. Incluye rutas por servicio, dependencias servidor-servidor, inventario estático UrlFetch/fetchAll y separación entre evidencia estática y métricas no disponibles.
+- Confirmado: routeAction realiza un POST por invocación; los reintentos añaden requests; telemetría browser es local; actor cache hit evita validateSessionContext; lease compartida normalmente implica acquire/release; ciertas mutaciones agregan publicación a Coordinator. ADMIN tiene llamadas internas WRITE/CATALOG y operaciones Drive/API.
+- P0.1 y el inventario estático inicial se marcan completos. No se afirma benchmark: requests reales, bytes, p50/p95, lecturas/escrituras Sheets/Drive, cache hit/miss y esperas siguen sin medir.
+- No se modificó código de servicios ni se invocaron deployments. No se accedió a datos productivos.
+- Siguiente paso: P0.2, instrumentación y pruebas locales reproducibles por flujo; luego completar consumidores AUTH/USERS y mapear cada acción frontend.
