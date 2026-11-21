@@ -1241,3 +1241,13 @@ Adenda — FEEDBACK confirmación de sugerencias
 - Prueba AdminLogoWriteLockNonBlocking: 4/4 PASS en harness Node.js aislado; pendiente ejecución del archivo comprometido en checkout completo/CI.
 - Commits: 877b4c3df196da42bf6fd723752aea3c210de47d (servicio), 1b8edc62646a0aa82eee06f01978400d347de850 (prueba). Sin deployment ni cambios productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-21 — WRITE: RESERVA APPEND-ONLY DE ID FUERA DEL LOCK FÍSICO
+- Evidencia: handleAddOrUpdateCut reservaba IDs modernos mediante reserveCortesVehicleIdForOperation_ dentro del flujo ya protegido por ScriptLock. El ledger CortesIdReservations es append-only y su concurrencia/first-write-wins ya tiene pruebas focalizadas; la reserva no necesita retener el lock de fila física.
+- Corrección: para solicitudes con opId estable, el ID se reserva antes de lock.tryLock(0) y se transporta por preparedRequest.preallocatedVehicleId hasta handleAddOrUpdateCutLockedUnsafe_. El branch físico usa el ID preasignado y no vuelve a leer/escribir el ledger bajo lock. Las solicitudes legacy sin opId estable conservan la reserva dentro del lock.
+- Se mantiene ScriptLock fail-fast para fila física, hoja Idempotencia y compensación. Drive sigue fuera del lock; la readquisición fail-fast y la recuperación por pending/opId no se alteraron.
+- Prueba WriteVehicleIdReservationOutsidePhysicalLock: 5/5 PASS en harness Node.js v22.16.0 aislado, incluido WRITE_BUSY seguido de retry con el mismo opId y mismo ID. Pendiente ejecución en checkout completo/CI.
+- Commits: 9b86c3ef893044af665ce96f21a50dd17e429760, 8cb742bacef2d527c7acdf42bdd8990cec85ffcd y 3e27d61a0e5efdc761c6f1568e8eb072099f41c3. Sin deployment ni cambios productivos.
+================================================================================
