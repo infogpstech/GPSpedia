@@ -988,3 +988,14 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - No se cambió MIME permitido, hash, idempotencia, endpoint, ni contrato backend. No se implementó compresión; no se ejecutó Node runner completo ni CI.
 - Siguiente: seguir trazando uploads FEEDBACK/PyS y flujo completo a Drive; definir compresión solo después de validar formato, orientación, transparencia, dimensiones y hashes.
 
+
+
+## Continuidad — retirada ampliada de refreshes tras vídeo pending (2026-11-21)
+
+- HEAD previo a los registros: `b90c2d5a45cbf2846feed0f8de1e9e2c0a01b43f`; base protegida intacta `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- Se retiraron cinco refreshes post-pending: snapshot CATALOG tras vídeo de corte; snapshot CATALOG tras vídeo de tutorial existente; callback de refresh tras subida del tutorial recién creado (el catálogo ya se había refrescado tras el alta); callback de recarga PyS tras alta (la lista ya se había cargado inmediatamente); callback de recarga PyS en edición de problema existente (el envío pending no modifica la hoja PyS).
+- Se conservan los refreshes inmediatos que muestran nuevas altas de tutorial/problema y la sincronización de catálogo después de una aprobación efectiva.
+- `YouTubePendingRefreshContract.js` 5/5 PASS; `YouTubeApproval.js` 16/16 PASS. No se cambió backend, opVideoId, deduplicación ni permisos.
+- La suite Node completa y CI de estos commits aún requieren confirmar checks del nuevo HEAD. El despliegue de Apps Script no se realizó.
+- Próximo: continuar el mapa de cargas de imagen y consultas completas CATALOG; medir ahorro de red/tiempo en caché fría/caliente antes de atribuir mejora cuantitativa.
+
