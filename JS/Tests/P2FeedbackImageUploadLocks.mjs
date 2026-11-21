@@ -7,7 +7,7 @@ const suggestion=extract(feedback,"function handleSuggestCutChange(payload)","fu
 const reportPreflight=report.indexOf("findReportByReportId_(feedbackSheet, reportContext.reportId, existingMetadataColumn)");
 const reportUpload=report.indexOf("saveReportImageAttachment_(imageAttachment, reportContext.reportId)");
 const reportAppend=report.indexOf("feedbackSheet.appendRow(reportRow)");
-const reportImageEvent=report.indexOf("appendFeedbackReportImageEvent_(reportContext.reportId, userId, uploadedImage)");
+const reportImageEvent=report.indexOf("appendFeedbackReportImageEvent_(reportContext.reportId, userId, uploadedImage)",reportAppend);
 assert.ok(reportPreflight>=0&&reportPreflight<reportUpload&&reportUpload<reportAppend,"El replay se resuelve antes de Drive y append.");
 assert.ok(reportImageEvent>reportAppend,"La imagen se vincula mediante ledger append-only después del reporte.");
 assert.doesNotMatch(report,/LockService\.getScriptLock|acquireFeedbackScriptLock_|releaseLock/,"Los reportes ya no deben adquirir ScriptLock.");
