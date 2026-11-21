@@ -20,15 +20,12 @@ const load = block(auth, "loadInitialData");
 assert.match(refresh, /window\.auth/);
 assert.match(refresh, /authApi\.loadInitialData\(true, \{ silent: true \}\)/);
 assert.match(refresh, /synced === true && offline\.isCompleteCatalogSnapshot\(currentCatalog\)/);
-assert.match(refresh, /const localSyncState = await offline\.getCatalogSyncState\(\)/);
-assert.ok(refresh.indexOf("getCatalogSyncState") < refresh.indexOf('routeAction("getCatalogData")'),
-    "El cursor conservador debe capturarse antes de solicitar el snapshot fallback.");
-assert.match(refresh, /offline\.saveCatalogWithCursor\(snapshot, localSyncState\.cursor\)/);
-assert.match(refresh, /offline\.saveCatalog\(snapshot\)/);
 assert.match(refresh, /const catalogAtStart = getState\(\)\.catalogData/);
 assert.match(refresh, /currentCatalog !== catalogAtStart/);
 assert.match(refresh, /const catalogBeforeFallback = getState\(\)\.catalogData/);
 assert.match(refresh, /getState\(\)\.catalogData !== catalogBeforeFallback/);
+assert.doesNotMatch(refresh, /offline\.saveCatalog(?:WithCursor)?\(/,
+    "El fallback de memoria no debe emparejar un snapshot posterior con un cursor anterior.");
 
 const saveBranchStart = exit.indexOf("\n    } else {", exit.indexOf("if (!saveChanges && originalItemBackup)"));
 assert.ok(saveBranchStart > 0, "No se encontró la rama de cierre normal.");
@@ -53,4 +50,4 @@ assert.match(main, /window\.auth = auth/);
 assert.match(offline, /export async function saveCatalogWithCursor/);
 assert.match(offline, /export function applyCatalogChangesToSnapshot/);
 
-console.log("CatalogEditDeltaRefresh: 26/26 PASS — edición normal usa deltas; descarte mantiene verificación completa");
+console.log("CatalogEditDeltaRefresh: 23/23 PASS — edición normal usa deltas; descarte mantiene verificación completa");
