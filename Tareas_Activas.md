@@ -100,4 +100,4 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - No retirar escaneo global Drive ni controles de idempotencia/recuperación sin equivalencia demostrada.
 
 ## Siguiente paso exacto
-P0.1 y P0.2 locales completados y registrados. Continuar con P0 AUTH/USERS: cerrar la matriz de consumidores de login, validateSession, touchSession, acceptTerms, logout, recuperación, createUser y deleteUser; después clasificar llamadas/leases conforme a §15 de NORMAS_DESAROLLO.md. La línea base de campo (latencia real, lecturas/escrituras Sheets/Drive, cache hit/miss y esperas) queda diferida a Beta aislada.
+P0.1, P0.2 local y mapa de consumidores AUTH/USERS completados y registrados. Continuar clasificando/reduciendo las leases AUTH conforme a §15: empezar por touchSession (sin consumidor) y acceptTerms (una escritura puntual con lease remota redundante candidata a retiro); después recuperación y actualización de perfil sin cambio de rol. No retirar la coordinación necesaria para cierre remoto, reset de sesiones, cambio de rol, eliminación de cuenta ni la exclusión mutua createUser ↔ deleteUser sin alternativa equivalente. Línea base real de campo queda diferida a Beta aislada.
