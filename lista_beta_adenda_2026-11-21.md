@@ -128,3 +128,6 @@ No desplegar Apps Script a producción ni modificar datos productivos.
 
 
 - Actualización adicional de Tutoriales: la ruta legacy de handleUpdateTutorialItem también se ejecuta sin ScriptLock; mantiene la lectura dirigida, validación de unicidad de título, read-back y preservación de campos. En Beta verificar ediciones sobre filas históricas/IDs no canónicos y documentar resultados concurrentes sin exigir bloqueo.
+
+
+- Actualización de publicación CATALOG FEEDBACK: el snapshot se construye sin ScriptLock y sourceVersion usa Date.now(). Si ejecuciones concurrentes generan una versión repetida/obsoleta, Coordinator convierte ese evento en reset y reconstrucción; Beta debe comprobar que el catálogo converge al snapshot actual, incluyendo dos mutaciones dentro del mismo milisegundo y fallo del endpoint Coordinator.
