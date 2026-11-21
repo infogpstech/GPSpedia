@@ -412,3 +412,12 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - CI `44866461350` SUCCESS: 258 suites, 3089 pruebas, 0 fallos; health read-only `44866461297` SUCCESS; Pages `44866461264` SUCCESS.
 - Implementación local completada; concurrencia real y ledger deben validarse en Beta aislada. No se desplegó Apps Script ni se modificaron datos productivos.
 - **Siguiente tarea inmediata: PyS / `handleAddProblem`**, auditar y migrar su escritura ordinaria para retirar ScriptLock conservando IDs, autor/fecha, imágenes, reintentos, recuperación y consumidores.
+
+
+## Inicio de migración PyS — auditoría de handleAddProblem (2026-11-21)
+
+- Auditoría registrada en `AUDITORIA_PYS_APPEND_ONLY_2026-11-21.md`.
+- Confirmado: Drive y verificación de imagen ya están fuera del lock; ScriptLock sigue cubriendo relectura de operaciones, asignación de ID, escritura/actualización de PysOperations, append/confirmación PyS y rutas de recuperación.
+- Riesgos: `getPysNextId_` calcula max+1 y no es seguro para operaciones concurrentes; `writePysOperation_` usa setValues sobre `getLastRow()+1`; `readPysOperations_` y `validatePysRecords_` rechazan cualquier duplicado físico; `handleGetPysData` devuelve filas físicas sin deduplicar.
+- Implementación propuesta: reutilizar `IdentifierSequenceReservations` para IDs `isue-`; appendRow de operación completa; first-write-wins por opId/payloadHash; proyección de filas PyS idénticas; preservar compensación conservadora de Drive. Las mutaciones de solución, prevención y relaciones se mantienen fuera del alcance inmediato y conservan su lock.
+- No se desplegó Apps Script ni se modificaron datos productivos.
