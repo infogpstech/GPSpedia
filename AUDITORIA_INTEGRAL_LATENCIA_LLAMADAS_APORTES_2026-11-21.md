@@ -216,3 +216,12 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - `AdminLogoFileRead.mjs` se integró al runner. Prueba aislada del helper: 4/4 PASS (lectura válida, error, abort y resultado inválido); el contrato estático verifica invalidación/generación/botón.
 - No se modificó el handler Drive, ni el lock no bloqueante de vinculación.
 
+
+
+### P0.1 — mapa estático de llamadas y dependencias (2026-11-21)
+
+- Se inspeccionaron los dispatchers activos y el router central del frontend. El detalle se conserva en `MAPA_LLAMADAS_DEPENDENCIAS_P0_2026-11-21.md`.
+- Se confirmó que `routeAction` realiza un POST por invocación; `routeActionWithRetry` puede generar hasta tres intentos retryables. La telemetría del navegador es local y no transmite métricas.
+- AUTH/USERS/WRITE/FEEDBACK/ADMIN usan `SharedMutationClient` en las operaciones aplicables; una lease normal requiere acquire/release y las publicaciones de catálogo generan llamadas adicionales. WRITE/FEEDBACK usan caché de actor; cache miss valida contexto con Coordinator. ADMIN delega operaciones de ID a WRITE y consultas dirigidas a CATALOG.
+- Inventario estático: WRITE 1 UrlFetch; FEEDBACK 1; ADMIN 7 + 1 fetchAll; Coordinator 1 + 1 fetchAll. SharedMutationClient contiene adaptadores de fetch, no requests ejecutados por cada interacción. AUTH, USERS, CATALOG y Utilities no tienen fetch externo directo en sus fuentes principales.
+- Estado: P0.1 COMPLETADA localmente por inspección/documentación. P0.2 sigue pendiente: no hay evidencia de requests reales, bytes, p50/p95 ni operaciones Spreadsheet/Drive. Requiere harness de medición y Beta autorizada.
