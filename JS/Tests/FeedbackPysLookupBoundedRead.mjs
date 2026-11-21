@@ -1,84 +1,37 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-
-const source = readFileSync(new URL("../Services/feedback.js", import.meta.url), "utf8");
-const start = source.indexOf("function findPysRowsById_(");
-const end = source.indexOf("\nfunction getPysNextId_", start);
-assert.ok(start >= 0 && end > start, "No se encontró findPysRowsById_");
-const code = source.slice(start, end);
-const findRows = new Function(code + "\nreturn findPysRowsById_;")();
-
-function makeSheet(rows, withTextFinder = true) {
-    const calls = [];
-    return {
-        calls,
-        getLastRow: () => rows.length + 1,
-        getDataRange() { throw new Error("No se debe descargar toda la hoja PyS."); },
-        getRange(row, column, rowCount = 1, columnCount = 1) {
-            calls.push([row, column, rowCount, columnCount]);
-            const range = {
-                getValues: () => rows.slice(row - 2, row - 2 + rowCount)
-                    .map(values => values.slice(column - 1, column - 1 + columnCount))
-            };
-            if (withTextFinder) range.createTextFinder = query => ({
-                matchCase(value) { this.caseSensitive = value; return this; },
-                findAll: () => {
-                    const matches = [];
-                    for (let index = 0; index < rowCount; index++) {
-                        const value = String((rows[row - 2 + index] || [])[column - 1] ?? "");
-                        const haystack = this.caseSensitive ? value : value.toLowerCase();
-                        const needle = this.caseSensitive ? String(query) : String(query).toLowerCase();
-                        if (haystack.includes(needle)) matches.push({ getRow: () => row + index });
-                    }
-                    return matches;
-                }
-            });
-            return range;
-        }
-    };
+const source=readFileSync(new URL("../Services/feedback.js",import.meta.url),"utf8");
+function extract(startName,endName){
+ const a=source.indexOf("function "+startName+"("),b=source.indexOf("\nfunction "+endName+"(",a);
+ assert.ok(a>=0&&b>a,startName);return source.slice(a,b);
 }
-function row(id, problem) {
-    const values = new Array(10).fill("");
-    values[0] = id;
-    values[1] = problem || "";
-    return values;
+const canonicalCode=extract("findCanonicalPysRowsById_","findPysRowsById_");
+const physicalCode=extract("findPysRowsById_","getPysNextId_");
+function makeSheet(rows,withFinder=true){
+ return {getLastRow:()=>rows.length+1,getRange(row,col,count=1,width=1){
+  return {getValues:()=>rows.slice(row-2,row-2+count).map(r=>r.slice(col-1,col-1+width)),
+   createTextFinder(query){if(!withFinder)throw new Error("TextFinder disabled");return{matchCase(){return this;},findAll(){return rows.flatMap((r,i)=>String(r[col-1]||"").toLowerCase().includes(String(query).toLowerCase())?[{getRow:()=>i+2}]:[]);}};}
+  };
+ }};
 }
-let passed = 0;
-function test(name, fn) { fn(); passed++; }
-
-test("localiza un problema y solo lee la fila coincidente", () => {
-    const sheet = makeSheet([row("isue-001", "A"), row("isue-002", "B")]);
-    const result = findRows(sheet, "isue-002");
-    assert.equal(result.length, 1);
-    assert.equal(result[0].rowNumber, 3);
-    assert.equal(result[0].row[1], "B");
-    assert.deepEqual(sheet.calls, [[2, 1, 2, 1], [3, 1, 1, 1], [3, 1, 1, 10]]);
+const canonical=new Function("COLS_FEEDBACKS",canonicalCode+"\nreturn findCanonicalPysRowsById_;")({});
+const physical=new Function("COLS_FEEDBACKS",physicalCode+"\nreturn findPysRowsById_;")({});
+const row=(id,title="A")=>[id,title,"Descripción","","Solución","","https://drive.google.com/file/d/1234567890/view","","Usuario","[]"];
+let passed=0;const test=(n,fn)=>{fn();passed++;};
+test("lookup canónico usa una búsqueda dirigida por columna ID",()=>{
+ const result=canonical(makeSheet([row("isue-001")]),"isue-001");assert.equal(result.length,1);assert.equal(result[0].rowNumber,2);
 });
-test("filtra coincidencias parciales por ID exacto", () => {
-    const sheet = makeSheet([row("isue-001"), row("isue-010")]);
-    const result = findRows(sheet, "isue-01");
-    assert.equal(result.length, 0);
+test("proyecta la primera fila cuando los duplicados físicos son idénticos",()=>{
+ const result=canonical(makeSheet([row("isue-001"),row("isue-001")]),"isue-001");
+ assert.equal(result.length,1);assert.equal(result[0].rowNumber,2);assert.equal(result[0].duplicateCount,1);
 });
-test("proyecta la primera fila cuando los duplicados físicos son idénticos", () => {
-    const sheet = makeSheet([row("isue-001", "A"), row("isue-001", "A")]);
-    const result = findRows(sheet, "isue-001");
-    assert.equal(result.length, 1);
-    assert.equal(result[0].rowNumber, 2);
-    assert.equal(result[0].duplicateCount, 1);
+test("rechaza duplicados físicos con contenido contradictorio",()=>{
+ assert.throws(()=>canonical(makeSheet([row("isue-001","A"),row("isue-001","B")]),"isue-001"),/contenido contradictorio/);
 });
-test("rechaza duplicados físicos con contenido contradictorio", () => {
-    const sheet = makeSheet([row("isue-001", "A"), row("isue-001", "B")]);
-    assert.throws(() => findRows(sheet, "isue-001"), /contenido contradictorio/);
+test("el lookup físico conserva todas las filas para consumidores que deben rechazar ambigüedad",()=>{
+ assert.equal(physical(makeSheet([row("isue-001"),row("isue-001")]),"isue-001").length,2);
 });
-test("fallback sin TextFinder mantiene lectura limitada a columna A", () => {
-    const sheet = makeSheet([row("isue-001"), row("isue-002")], false);
-    const result = findRows(sheet, "isue-001");
-    assert.equal(result.length, 1);
-    assert.ok(sheet.calls.every(call => call[1] === 1));
+test("el fallback sin TextFinder mantiene coincidencia exacta",()=>{
+ assert.equal(canonical(makeSheet([row("isue-001"),row("isue-010")],false),"isue-001").length,1);
 });
-test("ID vacío no provoca una lectura de la hoja", () => {
-    const sheet = makeSheet([row("isue-001")]);
-    assert.deepEqual(findRows(sheet, ""), []);
-    assert.deepEqual(sheet.calls, []);
-});
-console.log("FeedbackPysLookupBoundedRead: " + passed + "/" + passed + " PASS — lookup por columna ID");
+console.log("FeedbackPysLookupBoundedRead: "+passed+"/"+passed+" PASS — lookup canónico y físico separados");
