@@ -67,8 +67,9 @@ function coordinatorPolicy_(service, operation) {
             migrateLegacyRoleRevocationMarkersToSharedState: { write: ["USERS", "LOGS", "SESSION_CONTEXTS"] }
         },
         USERS: {
-            createUser: { read: identityRead, write: ["USERS"] },
-            updateProfile: { read: identityRead, write: ["USERS"] }
+            // createUser conserva lease por la unicidad compartida del username frente a AUTH/deleteUser.
+            // updateProfile es una escritura de una celda y opera con actor cacheado, sin lease.
+            createUser: { read: identityRead, write: ["USERS"] }
         },
         UTILITIES: {
             migrateTimestamps: { read: ["SESSION_CONTEXTS", "CORTES", "DRIVE"], write: ["UTILITIES"] }
