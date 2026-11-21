@@ -567,6 +567,46 @@ async function resolvePendingAdminImageOperationsBeforeDiscard_(vehicleId) {
     }
 }
 
+async function refreshCatalogAfterEdit_(editSession) {
+    if (!isCurrentUiSessionContext_(editSession)) return null;
+    const authApi = typeof window !== "undefined" && window ? window.auth : null;
+    if (authApi && typeof authApi.loadInitialData === "function") {
+        try {
+            const synced = await authApi.loadInitialData(true, { silent: true });
+            if (!isCurrentUiSessionContext_(editSession)) return null;
+            const currentCatalog = getState().catalogData;
+            if (synced === true && offline.isCompleteCatalogSnapshot(currentCatalog)) return currentCatalog;
+        } catch (error) {
+            console.warn("No se pudo aplicar el delta del catálogo después de editar; se intentará una instantánea completa.",
+                error && error.name || "CatalogDeltaError");
+        }
+    }
+
+    if (!isCurrentUiSessionContext_(editSession)) return null;
+    // El cursor se captura antes del snapshot. Si hay eventos concurrentes durante
+    // la lectura, se volverán a aplicar desde este cursor; nunca se adelanta el cursor.
+    const localSyncState = await offline.getCatalogSyncState().catch(() => null);
+    if (!isCurrentUiSessionContext_(editSession)) return null;
+    const response = await routeAction("getCatalogData");
+    if (!isCurrentUiSessionContext_(editSession)) return null;
+    const snapshot = response && response.data;
+    if (!offline.isCompleteCatalogSnapshot(snapshot)) {
+        throw new Error("No se recibió una instantánea completa del catálogo después de editar.");
+    }
+    setState({ catalogData: snapshot, catalogLoadStatus: "ready", catalogLoadError: null });
+    try {
+        if (localSyncState && Number.isSafeInteger(localSyncState.cursor)) {
+            await offline.saveCatalogWithCursor(snapshot, localSyncState.cursor);
+        } else {
+            await offline.saveCatalog(snapshot);
+        }
+    } catch (error) {
+        console.warn("El catálogo se actualizó, pero no se pudo guardar la instantánea de respaldo local.",
+            error && error.name || "CatalogStorageError");
+    }
+    return snapshot;
+}
+
 export async function exitModalEditMode(saveChanges, vehicleId, skipReopen = false, navOptions = {}) {
     const editSession = getCurrentEditOwnerContext_();
     if (!editSession) {
@@ -671,19 +711,15 @@ export async function exitModalEditMode(saveChanges, vehicleId, skipReopen = fal
         clearInMemoryEditBackup_();
 
         if (!skipReopen) {
-            routeAction("getCatalogData").then(response => {
-                if (!isCurrentUiSessionContext_(editSession)) return;
-                if (response && response.data) {
-                    setState({ catalogData: response.data });
-                    const updatedItem = response.data.cortes.find(item => String(item.id) === cleanVehicleId);
-                    if (updatedItem) mostrarDetalleModal(updatedItem, true, navOptions);
-                }
+            refreshCatalogAfterEdit_(editSession).then(catalogData => {
+                if (!isCurrentUiSessionContext_(editSession) || !offline.isCompleteCatalogSnapshot(catalogData)) return;
+                const updatedItem = catalogData.cortes.find(item => String(item.id) === cleanVehicleId);
+                if (updatedItem) mostrarDetalleModal(updatedItem, true, navOptions);
             }).catch(error => console.warn("No se pudo actualizar el catálogo al cerrar la edición.", error && error.name || "CatalogError"));
         } else {
             document.getElementById("modalDetalle").classList.remove("visible");
-            routeAction("getCatalogData").then(response => {
-                if (isCurrentUiSessionContext_(editSession) && response && response.data) setState({ catalogData: response.data });
-            }).catch(error => console.warn("No se pudo actualizar el catálogo al cerrar la edición.", error && error.name || "CatalogError"));
+            refreshCatalogAfterEdit_(editSession).catch(error =>
+                console.warn("No se pudo actualizar el catálogo al cerrar la edición.", error && error.name || "CatalogError"));
         }
     }
     return true;
