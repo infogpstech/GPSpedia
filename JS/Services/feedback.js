@@ -4284,7 +4284,13 @@ const TUTORIAL_TITLE_EVENTS_HEADERS = Object.freeze([
 function getTutorialSheet_(createIfMissing) {
     const ss = getSpreadsheet();
     let sheet = ss.getSheetByName("Tutorial");
-    if (!sheet && createIfMissing) sheet = ss.insertSheet("Tutorial");
+    if (!sheet && createIfMissing) {
+        try { sheet = ss.insertSheet("Tutorial"); }
+        catch (insertError) {
+            sheet = ss.getSheetByName("Tutorial");
+            if (!sheet) throw insertError;
+        }
+    }
     if (!sheet) return null;
 
     if (sheet.getLastRow() === 0) {
@@ -4318,7 +4324,13 @@ function getTutorialSheet_(createIfMissing) {
 function getTutorialTitleEventsSheet_(createIfMissing) {
     const ss = getSpreadsheet();
     let sheet = ss.getSheetByName("TutorialTitleEvents");
-    if (!sheet && createIfMissing) sheet = ss.insertSheet("TutorialTitleEvents");
+    if (!sheet && createIfMissing) {
+        try { sheet = ss.insertSheet("TutorialTitleEvents"); }
+        catch (insertError) {
+            sheet = ss.getSheetByName("TutorialTitleEvents");
+            if (!sheet) throw insertError;
+        }
+    }
     if (!sheet) return null;
     if (sheet.getLastRow() === 0) {
         sheet.getRange(1, 1, 1, TUTORIAL_TITLE_EVENTS_HEADERS.length).setValues([TUTORIAL_TITLE_EVENTS_HEADERS.slice()]);
