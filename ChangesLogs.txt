@@ -361,3 +361,10 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - Se mantuvieron RBAC para desvincular, validaciones funcionales, confirmación de persistencia y actividad post-escritura.
 - Pruebas: PysCreationIntegrity 56/56; PysVehicleRelationIntegrity 19/19; PysImageStorageRecovery 22/22; CatalogChangeFeed 35/35; SharedMutationCoordinator 86/86. CI 3255f44f0f10cfbb7b5b3f6b8342c98d55008f0a SUCCESS: 259 suites, 3,130 pruebas, 0 fallos; health read-only, build y Pages SUCCESS.
 - Beta AUG-161 actualizada: sin pruebas de contención/expiración de leases para estas acciones; verificar operación directa, fallos Spreadsheet/Drive y reintentos aislados. Sin despliegue ni cambios productivos.
+
+
+2026-11-21 — INBOX: ELIMINACIÓN DE LOCK GLOBAL
+- Las lecturas y mutaciones de Inbox dejaron de usar withInboxConversationLock_ y ejecutan directamente mediante runInboxConversationAction_. Se elimina la contención global y la espera/fast-fail entre operaciones independientes.
+- Se conserva la autenticación de sesión, autorización por rol/participante, validación de datos, idempotencia y auditoría.
+- InboxConversations 66/66 PASS. CI 15e7ab84d9a4530cb1097334a3e907f798c9d0ca SUCCESS: 259 suites, 3,130 pruebas, 0 fallos; build, health read-only y Pages SUCCESS.
+- La prueba de rendimiento verifica que ninguna lectura o mutación solicita ScriptLock. La concurrencia real de Sheets queda pendiente de Beta aislada.
