@@ -12014,10 +12014,6 @@ export function mostrarDetalleTutorialModal(item, inEditModeTutorial = false) {
             contentType: "tutorial",
             referenceId: item.ID || item.Tema,
             metadata: { tutorialId: item.ID || "", tema: item.Tema || "" },
-            onSuccess: async () => {
-                const fresh = await routeAction("getCatalogData");
-                if (fresh && fresh.data) setState({ catalogData: fresh.data });
-            }
         });
         form.appendChild(uploadVideoBtn);
         cont.appendChild(form);
