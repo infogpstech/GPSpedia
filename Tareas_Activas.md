@@ -634,3 +634,12 @@ La Beta vigente de PyS se ejecuta con AUG-161 en lista_beta_adenda_2026-11-21.md
 - PysImageStorageRecovery 22/22; TutorialIntegrity 42/42; PysCreationIntegrity 56/56. CI 56a849eac4d7ad40f1cf6906402bcbb56fcf9f19 SUCCESS: 259 suites, 3,130 pruebas, 0 fallos; health read-only SUCCESS.
 - Próxima tarea local: auditar WRITE: reserva secuencial de ID numérico y ensureTestigoColumns todavía usan ScriptLock; diseñar reserva append-only sin bloqueo y preservar IDs únicos. Después revisar ADMIN y separar locks de mantenimiento de operaciones ordinarias. AUTH/USERS conserva protecciones de sesión/rol.
 - No se desplegó Apps Script ni se modificaron Spreadsheet/Drive productivos.
+
+
+## CI — hallazgo pendiente tras retirar helper ScriptLock FEEDBACK (2026-11-21)
+
+- Commit probado: efa35b4fc0ca3203cfeee4e7e426b6f05c766f4d. El job service-tests terminó FAIL; health de servicio terminó SUCCESS.
+- Pasaron TutorialIntegrity 42/42, CatalogChangeFeed 35/35, FeedbackCatalogPublicationIsolation 5/5 y PysCreationIntegrity 56/56.
+- Falló la integración P2.2b PyS imagen fuera del lock: PysImageStorageRecovery 2/22. Las 20 fallas muestran "No se encontró el bloque function acquireFeedbackScriptLock_(lock)"; no son fallos de validación/Drive, sino fixtures de prueba que todavía intentan extraer el helper retirado.
+- El helper se eliminó de JS/Services/feedback.js y las pruebas de TutorialIntegrity/PysCreationIntegrity ya se actualizaron; la siguiente corrección debe localizar y retirar la dependencia residual en el fixture de recuperación de imágenes sin reintroducir un lock en producción.
+- No considerar validado el cambio hasta que CI quede verde. No desplegar Apps Script ni modificar datos productivos.
