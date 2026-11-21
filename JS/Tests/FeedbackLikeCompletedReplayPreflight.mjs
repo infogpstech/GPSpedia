@@ -18,12 +18,14 @@ function makeHarness({ rows = [["user:7", "10", 2, 4, 5, "completed", "now"]], s
         getRange(...args) {
             calls.push(args);
             if (args[0] === 1) return { getValues: () => [schema] };
-            if ((args[1] === 1 || args[1] === 2) && args[3] === 1) return {
+            if (args[1] === 2 && args[3] === 1) return {
+                createTextFinder: () => ({ matchCase() { return this; }, matchEntireCell() { return this; }, findAll: () => [] })
+            };
+            if (args[1] === 1 && args[3] === 1) return {
                 createTextFinder: key => ({
                     matchCase() { return this; },
-                    matchEntireCell() { return this; },
                     findAll: () => rows.map((row, index) => ({ row, rowIndex: index + 2 }))
-                        .filter(item => item.row[args[1] - 1] === key).map(item => ({ getRow: () => item.rowIndex }))
+                        .filter(item => item.row[0] === key).map(item => ({ getRow: () => item.rowIndex }))
                 })
             };
             return { getValues: () => [rows[args[0] - 2]] };
