@@ -42,8 +42,15 @@ jobs:
           node --check JS/Frontend/offline.js
           node --check JS/Frontend/clientInteractionPolicy.js
           node --check service-worker.js
+          node --check JS/Services/Auth.js
+          node --check JS/Services/Coordinator.js
+          node --check JS/Services/InboxConversations.js
+          node --check JS/Services/SharedMutationClient.js
+          node --check JS/Services/Utilities.js
           node --check JS/Services/admin.js
-          node --check JS/Services/feedback.js
           node --check JS/Services/catalog.js
+          node --check JS/Services/feedback.js
+          node --check JS/Services/users.js
+          node --check JS/Services/write.js
       - name: Run isolated service regression suites
         run: node --experimental-default-type=module JS/Tests/RunServiceTests.mjs
