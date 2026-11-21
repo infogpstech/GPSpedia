@@ -13690,10 +13690,6 @@ export function openAddVideoModal(item) {
                 anoHasta: item.anoHasta,
                 tipoEncendido: item.tipoEncendido
             },
-            onSuccess: async () => {
-                const fresh = await routeAction("getCatalogData");
-                if (fresh && fresh.data) setState({ catalogData: fresh.data });
-            }
         });
     };
 }
