@@ -242,6 +242,27 @@ test("la recuperación consulta eventos append-only en vez de modificar el estad
     assert.doesNotMatch(completion, /updateApplicationRows/);
     assert.doesNotMatch(completion, /ledger\.getRange\([^)]*\)\.setValue/);
 });
+test("handleSuggestYear no serializa solicitudes con ScriptLock global", () => {
+    const wrapper = extract("handleSuggestYear");
+    assert.match(wrapper, /handleSuggestYearLocked\(payload\)/);
+    assert.doesNotMatch(wrapper, /LockService\.getScriptLock/);
+    assert.doesNotMatch(wrapper, /acquireFeedbackScriptLock_/);
+    assert.doesNotMatch(wrapper, /releaseLock/);
+});
+test("los pasos críticos del flujo usan escrituras append-only e identidades estables", () => {
+    const handler = extract("handleSuggestYearLocked");
+    const voteStart = handler.indexOf("if (!alreadyReported) {");
+    const voteEnd = handler.indexOf("const allData = sheet.getDataRange()", voteStart);
+    const voteWrite = handler.slice(voteStart, voteEnd);
+    assert.match(voteWrite, /sheet\.appendRow\(voteRow\)/);
+    const applicationStart = handler.indexOf("const operationId = buildFeedbackYearApplicationId_(");
+    const applicationEnd = handler.indexOf("return completeFeedbackYearApplication_", applicationStart);
+    const applicationWrite = handler.slice(applicationStart, applicationEnd);
+    assert.match(applicationWrite, /ledger\.appendRow\(applicationValues\)/);
+    const applicationEvents = extract("appendFeedbackYearApplicationEvent_");
+    assert.match(applicationEvents, /sheet\.appendRow\(/);
+    assert.match(extract("appendFeedbackYearVehicleUpdateEvent_"), /ledger\.appendRow\(/);
+});
 test("la aplicación de año ya no escribe directamente en Cortes", () => {
     const completion = extract("completeFeedbackYearApplication_");
     assert.match(completion, /appendFeedbackYearVehicleUpdateEvent_/);
