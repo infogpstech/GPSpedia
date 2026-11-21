@@ -31,7 +31,7 @@ assert.equal(calls, 1);
 assert.throws(() => getVehicle({ vehicleId: "../3" }), /ID de vehículo válido/);
 assert.throws(() => getVehicle({ vehicleId: "99" }), /no existe/);
 const duplicateSnapshot = { status: "success", source: "spreadsheet", data: { cortes: [...snapshot.data.cortes, { ...snapshot.data.cortes[0] }] } };
-const duplicateHandler = new Function("handleGetCatalogData", vehicleHandler + "\\nreturn handleGetVehicleProjection_;")(
+const duplicateHandler = new Function("handleGetCatalogData", vehicleHandler + "\nreturn handleGetVehicleProjection_;")(
     () => duplicateSnapshot
 );
 assert.throws(() => duplicateHandler({ vehicleId: "3" }), /duplicado/);
