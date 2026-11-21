@@ -225,6 +225,7 @@ runGroup('34','CATALOG',()=>{
  runCli('CATALOG telemetría local no bloqueante y segura','JS/Tests/CatalogTrafficTelemetry.mjs');
  runCli('CATALOG proyección determinista del ledger de aportes por vehículo','JS/Tests/VehicleContributionProjection.mjs');
   runCli('WRITE intercalado concurrente del ledger append-only','JS/Tests/WriteContributionAppendConcurrency.mjs');
+  runCli('WRITE replay idéntico de VIN fuera del lock','JS/Tests/WriteVinNoopPreflight.mjs');
   runCli('WRITE recuperación de opId desde AportesVehiculo','JS/Tests/WriteContributionRecovery.mjs');
   runCli('WRITE diario append-only de cargas de imágenes','JS/Tests/ImageUploadEventJournal.mjs');
  runCli('CATALOG readiness','JS/Tests/CatalogReadiness.js');
