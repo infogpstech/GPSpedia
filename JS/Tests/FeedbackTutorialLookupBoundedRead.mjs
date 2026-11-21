@@ -79,8 +79,9 @@ test("preferId false mantiene búsqueda estricta por ID", () => {
     assert.throws(() => findRow(sheet, "Motor", false), /Tutorial no encontrado/);
     assert.ok(sheet.calls.every(call => call[1] === 1));
 });
-test("rechaza ID duplicado manteniendo el mensaje de integridad", () => {
+test("conserva la primera fila física como canónica ante IDs duplicados", () => {
     const sheet = makeSheet([["tut-abc123", "A"], ["TUT-ABC123", "B"]]);
-    assert.throws(() => findRow(sheet, "tut-abc123", true), /ID del tutorial aparece más de una vez; no se modificó/);
+    const result = findRow(sheet, "tut-abc123", true);
+    assert.equal(result.row[1], "A");
 });
 console.log("FeedbackTutorialLookupBoundedRead: " + passed + "/" + passed + " PASS — ID/título con lecturas dirigidas");
