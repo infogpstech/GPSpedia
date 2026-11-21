@@ -347,3 +347,11 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - Se cachean resultados positivos y ausencia de coincidencia; los conflictos siguen propagándose desde la primera búsqueda. La caché no persiste ni cruza usuarios/requests.
 - Se mantiene el índice de imágenes por reportId de P1.5, first-write-wins y validación de duplicados contradictorios.
 - Prueba `FeedbackInboxImageEventBatchRead.mjs`: 7/7 PASS; regresión: 281 suites, 3,266 pruebas, 0 fallos; build y health read-only SUCCESS.
+
+
+### P1.7 — ADMIN: superficie de telemetría y consultas de inventario
+
+- `getServiceTraffic` solo se invoca desde el panel de desarrollador en `ui.js`; tiene guard de panel actual, refresco manual y auto-refresh condicionado a panel/gráfico visibles, con un mínimo de 60 s entre consultas. No se encontró consumidor en `main.js` para telemetría, inventario de imágenes, almacenamiento o escáner de Drive.
+- El handler exige contexto con rol Desarrollador; Coordinator policy declara únicamente lectura de `SERVICE_TRAFFIC`; la acción no forma parte del conjunto de mutaciones ni adquiere lease de escritura. Las consultas de inventario/almacenamiento se mantienen dentro del panel ADMIN.
+- Revisión estática de backup/restore: DB valida manifiestos y fingerprints, crea rollback y hace staging antes del intercambio; Drive verifica el manifiesto, copia a staging, conserva el estado anterior en rollback y reconcilia fallos. Por ser operaciones destructivas y de Drive, no se cambió su lógica sin una prueba de integración/rollback adicional.
+- `AdminTrafficSurfaceContract.mjs`: 12/12 PASS; CI: 282 suites, 3,278 pruebas, 0 fallos; build y health read-only SUCCESS.
