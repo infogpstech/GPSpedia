@@ -10,7 +10,7 @@ const sourceEvents = [{eventId:"EV-IMG",opId:"OP-IMG",vehicleId:"3",kind:"cut",
     payload:{image:"https://drive.google.com/file/d/FILE1234567890/view"},createdAt:"2026-11-21T00:00:00.000Z",
     status:"review",supersedesEventId:""}];
 let request;
-const wrapper = new Function("UrlFetchApp","CATALOG_SERVICE_URL",wrapperSource+"\nreturn handleGetVehicleContributionCandidates_;")(
+const wrapper = new Function("UrlFetchApp","CATALOG_SERVICE_URL",wrapperSource+String.fromCharCode(10)+"return handleGetVehicleContributionCandidates_;")(
     {fetch(url,options){request=JSON.parse(options.payload);return {getResponseCode:()=>200,getContentText:()=>JSON.stringify({
         status:"success",candidates:[],total:0,limit:500,truncated:false,
         imageInventoryCandidates:[{eventId:"EV-IMG",vehicleId:"3",vehicleLabel:"Nissan Frontier"}],
@@ -37,7 +37,7 @@ const sync=new Function(
 "getSpreadsheet","SHEET_NAMES","getReplacedImagesReadSchema_","ADMIN_VEHICLE_CONTRIBUTIONS_SHEET_NAME_",
 "getContributionCandidateImageUrl_","extractDriveFileIds","DriveApp","getContributionCandidateInventoryId_",
 "withReplacedImagesSchemaLock_","ensureReplacedImagesInventoryColumns","SpreadsheetApp",
-source+"\nreturn syncContributionCandidateImageInventory_;"
+source+String.fromCharCode(10)+"return syncContributionCandidateImageInventory_;"
 )(
 ()=>spreadsheet,{IMAGENES_REEMPLAZADAS:"Imagenes_Reemplazadas"},
 ()=>({sheet:inventory,missingHeaders:[]}),"AportesVehiculo",

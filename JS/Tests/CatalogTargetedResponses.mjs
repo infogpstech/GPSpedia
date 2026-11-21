@@ -62,7 +62,7 @@ const inventorySourceEvents = [
     { eventId: "EV-NOIMAGE", opId: "OP-NOIMAGE", vehicleId: "3", operationHash: "c".repeat(64), kind: "feed",
       payload: { text: "12V" }, createdAt: "2026-11-21T00:02:00.000Z", status: "review", supersedesEventId: "" }
 ];
-const inventoryResponse = new Function("readCatalogContributionProjectionVehicles_", candidatesHandler + "\nreturn handleGetContributionCandidates_;")(
+const inventoryResponse = new Function("readCatalogContributionProjectionVehicles_", candidatesHandler + String.fromCharCode(10) + "return handleGetContributionCandidates_;")(
     (spreadsheetRef, includeSourceEvents) => includeSourceEvents
         ? { vehicles: inventoryVehicles, sourceEvents: inventorySourceEvents }
         : inventoryVehicles
