@@ -10,3 +10,5 @@ La lista se conserva en el orden original:
 Orden completo de lectura: parte 1 y después los segmentos 001 y 002 indicados en lista_beta_parte2.txt. La concatenación conserva exactamente el contenido anterior a la rotación.
 
 Manifiesto de la rotación y verificación de reconstrucción: ROTACION_DOCUMENTAL_MANIFIESTO_2026-11-19.md.
+
+Adenda vigente incorporada el 2026-11-21: lista_beta_adenda_2026-11-21.md. Para PyS, esta adenda actualiza las expectativas antiguas de AUG-083/AUG-084/AUG-086/AUG-090/AUG-128 al protocolo append-only y leases compartidas; no altera el contenido histórico de los segmentos.

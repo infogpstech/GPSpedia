@@ -102,3 +102,10 @@ Se revisó `handleAddProblem`, `PysOperations`, los helpers de ID/lookup, el alm
 - Se corrigió la extracción del helper en la prueba y se ordenó handleAddProblem para validar primero los IDs de Cortes y después inicializar/leer PysOperations. No se alteró el contrato de escritura ni el flujo de archivos.
 - CI final 44907336819 SUCCESS: 259 suites, 3,129 pruebas aprobadas, 0 fallos. PysModalNavigation 10/10; PysCreationIntegrity 56/56; PysVehicleRelationIntegrity 19/19; PysImageStorageRecovery 22/22. Health read-only 44907336832 y Pages 44907336274 SUCCESS.
 - La corrección es local y no sustituye la Beta aislada de Spreadsheet/Drive/Coordinator. No hubo deployment ni cambios en datos productivos.
+
+
+## Adenda — actualización de pruebas Beta para el protocolo PyS vigente (2026-11-21)
+
+- La lista Beta histórica conserva casos válidos de integridad y UX, pero algunas expectativas de AUG-084/AUG-086/AUG-090/AUG-128 describen el protocolo anterior (ScriptLock local, transición mutable de PysOperations a LINKED/RECOVERY_REQUIRED).
+- Se añadió lista_beta_adenda_2026-11-21.md y su referencia en lista_beta.txt. La adenda define AUG-161: concurrencia real de alta PyS, reserva append-only de IDs, first-write-wins de operación/archivo, recuperación de fallos parciales y leases compartidas FEEDBACK con Coordinator 1.4.5 para solución, prevención y relaciones.
+- Se preservaron íntegros los segmentos históricos; la adenda declara qué expectativas antiguas quedan sustituidas y exige recursos aislados, sin despliegue ni datos productivos.

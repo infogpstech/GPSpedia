@@ -595,3 +595,11 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - La suite SearchModelGrouping está integrada en RunServiceTests y aprobó 21/21 en CI 44907910014. La ejecución integral aprobó 259 suites, 3,129 pruebas y cero fallos.
 - Se conserva pendiente únicamente la aceptación visual en navegadores/dispositivos reales y el catálogo real aislado de Beta.
 - La tarea queda COMPLETADA CON VALIDACIÓN DIFERIDA A BETA; no requiere cambios adicionales de código para el cierre local.
+
+
+## Checkpoint — actualización de protocolo Beta PyS (2026-11-21)
+
+- Se revisaron los segmentos completos relevantes de la lista Beta y se detectaron expectativas históricas obsoletas en AUG-084/AUG-086/AUG-090/AUG-128: ScriptLock local para mutaciones PyS y estados LINKED/RECOVERY_REQUIRED en PysOperations.
+- Se creó lista_beta_adenda_2026-11-21.md con secuencia de sincronización obligatoria al inicio y pruebas actualizadas para appendRow, reservas de ID, propiedad de imagen y leases compartidas Coordinator 1.4.5. La adenda se añadió al índice lista_beta.txt sin reescribir segmentos históricos.
+- Se incorpora AUG-161 para la validación real de alta PyS y mutaciones de solución/prevención/relaciones en proyectos FEEDBACK y Spreadsheet/Drive aislados.
+- Las pruebas Beta siguen pendientes por falta de deployment/recursos aislados autorizados. No se desplegó Apps Script ni se modificaron datos productivos.

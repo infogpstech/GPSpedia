@@ -547,3 +547,11 @@ Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
 - [x] SearchModelGrouping 21/21 PASS dentro del runner principal; CI 44907910014 SUCCESS: 259 suites, 3,129 pruebas, 0 fallos.
 - [ ] Beta visual en navegador de escritorio, Android/PWA y validación con catálogo real aislado.
 - No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+## Beta — adenda de actualización de contratos PyS (2026-11-21)
+
+- [ ] AUG-161: validar en entorno aislado la creación PyS sin ScriptLock local, reserva append-only de IDs, propiedad first-write-wins de opId/archivo, recuperación Drive/Sheets y mutaciones de solución, prevención y relaciones bajo leases compartidas Coordinator 1.4.5.
+- [ ] Probar concurrencia entre dos ejecuciones/proyectos FEEDBACK que comparten Coordinator; incluir contención/expiración de lease, fallo de Coordinator, pérdida de respuesta, read-back real y RBAC para desvincular.
+- Esta adenda prevalece sobre las expectativas obsoletas de ScriptLock/estados LINKED o RECOVERY_REQUIRED en PysOperations de AUG-084/AUG-086/AUG-090/AUG-128. PysOperations nuevo es append-only; el éxito se proyecta desde la fila PyS verificada y los archivos ambiguos se conservan para reconciliación.
+- Ejecutar solo después de los comandos de sincronización seguros al inicio de lista_beta_adenda_2026-11-21.md. No usar deployments, cuentas, hojas ni Drive productivos.
