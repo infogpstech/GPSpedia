@@ -253,6 +253,8 @@ const COLS_ACTIVIDAD_USUARIO = {
 
 const IDENTIFIER_SEQUENCE_CONFIG_SHEET = "__IdentifierSequenceConfig__";
 const IDENTIFIER_SEQUENCE_CONFIG_HEADERS = ["sheet","column","header","prefix","padding","formula","updatedAt"];
+const IDENTIFIER_SEQUENCE_RESERVATIONS_SHEET = "__IdentifierSequenceReservations__";
+const IDENTIFIER_SEQUENCE_RESERVATIONS_HEADERS = ["reservationId","sheet","column","reservedSuffix","baseSuffix","createdAt"];
 
 function parseFeedbackIdFormula_(formula) {
     const raw = String(formula || "").trim();
@@ -312,87 +314,110 @@ function copyRowPresentationOnly_(sheet, sourceRow, targetRow, lastColumn) {
     source.copyTo(target, SpreadsheetApp.CopyPasteType.PASTE_DATA_VALIDATION, false);
 }
 
-function getNextFormulaBasedId_(sheet, idColumn) {
-    if (!sheet || !Number.isInteger(idColumn) || idColumn < 1) throw new Error("Hoja o columna ID inválida.");
-    const lock = LockService.getScriptLock();
-    const alreadyHeld = typeof lock.hasLock === "function" && lock.hasLock();
-    let acquired = false;
-    try {
-        if (!alreadyHeld) { acquireFeedbackScriptLock_(lock); acquired = true; }
-        const pattern = getFormulaBasedIdPattern_(sheet, idColumn);
-        const lastRow = sheet.getLastRow();
-        const idValues = lastRow > 1
-            ? sheet.getRange(2, idColumn, lastRow - 1, 1).getValues().map(row => row[0])
-            : [];
-        const seen = new Set();
-        const blankOffsets = [];
-        let maxSuffix = 0;
-        idValues.forEach((rawId, index) => {
-            const id = String(rawId === null || rawId === undefined ? "" : rawId).trim();
-            if (!id) {
-                blankOffsets.push(index);
-                return;
-            }
-            if (!id.startsWith(pattern.prefix)) throw new Error("El ID de " + sheet.getName() + " fila " + (index + 2) + " no coincide con el prefijo configurado.");
-            const suffix = id.slice(pattern.prefix.length);
-            if (!/^\d+$/.test(suffix)) throw new Error("El ID de " + sheet.getName() + " fila " + (index + 2) + " no conserva el sufijo numérico configurado.");
-            const normalized = id.toLowerCase();
-            if (seen.has(normalized)) throw new Error("Se detectó el ID duplicado " + id + " en " + sheet.getName() + "; no se asignó otro ID.");
-            seen.add(normalized);
-            const numeric = Number(suffix);
-            if (!Number.isSafeInteger(numeric) || numeric < 1) throw new Error("El sufijo ID de " + sheet.getName() + " no es un entero seguro.");
-            maxSuffix = Math.max(maxSuffix, numeric);
-        });
-
-        if (blankOffsets.length) {
-            const lastColumn = Math.max(sheet.getLastColumn(), idColumn);
-            let runStart = blankOffsets[0], previousOffset = blankOffsets[0];
-            const validateBlankRun = (firstOffset, lastOffset) => {
-                const firstRow = firstOffset + 2;
-                const rows = sheet.getRange(firstRow, 1, lastOffset - firstOffset + 1, lastColumn).getValues();
-                rows.forEach((row, index) => {
-                    const hasRecordData = row.some((value, columnIndex) =>
-                        columnIndex !== idColumn - 1 && value !== "" && value !== null && value !== undefined
-                    );
-                    if (hasRecordData) {
-                        throw new Error("La fila " + (firstRow + index) + " de " + sheet.getName() + " contiene datos, pero no tiene ID.");
-                    }
-                });
-            };
-            for (let i = 1; i < blankOffsets.length; i++) {
-                const offset = blankOffsets[i];
-                if (offset === previousOffset + 1) {
-                    previousOffset = offset;
-                    continue;
-                }
-                validateBlankRun(runStart, previousOffset);
-                runStart = previousOffset = offset;
-            }
-            validateBlankRun(runStart, previousOffset);
-        }
-        const properties = PropertiesService.getScriptProperties();
-        const propertyKey = "GPSpedia_ID_SEQUENCE_" + sheet.getName().replace(/[^A-Za-z0-9]/g, "_") +
-            "_" + idColumn + "_" + pattern.prefix.replace(/[^A-Za-z0-9]/g, "_");
-        const storedRaw = properties.getProperty(propertyKey);
-        const stored = storedRaw === null ? 0 : Number(storedRaw);
-        if (!Number.isSafeInteger(stored) || stored < 0) throw new Error("El contador backend de " + sheet.getName() + " contiene un valor inválido.");
-        const next = Math.max(maxSuffix, stored) + 1;
-        if (!Number.isSafeInteger(next) || next < 1) throw new Error("Se agotó la secuencia segura de IDs para " + sheet.getName() + ".");
-        const id = pattern.prefix + String(next).padStart(pattern.padding, "0");
-        if (seen.has(id.toLowerCase())) throw new Error("El siguiente ID ya existe en " + sheet.getName() + ".");
-        properties.setProperty(propertyKey, String(next));
-        return id;
-    } finally {
-        if (acquired) lock.releaseLock();
+function getIdentifierSequenceReservationsSheet_() {
+    const spreadsheet = getSpreadsheet();
+    let sheet = spreadsheet.getSheetByName(IDENTIFIER_SEQUENCE_RESERVATIONS_SHEET);
+    if (!sheet) {
+        try { sheet = spreadsheet.insertSheet(IDENTIFIER_SEQUENCE_RESERVATIONS_SHEET); }
+        catch (createError) { sheet = spreadsheet.getSheetByName(IDENTIFIER_SEQUENCE_RESERVATIONS_SHEET); if (!sheet) throw createError; }
     }
+    if (sheet.getLastRow() === 0) sheet.getRange(1, 1, 1, IDENTIFIER_SEQUENCE_RESERVATIONS_HEADERS.length)
+        .setValues([IDENTIFIER_SEQUENCE_RESERVATIONS_HEADERS]);
+    const actual = sheet.getRange(1, 1, 1, IDENTIFIER_SEQUENCE_RESERVATIONS_HEADERS.length)
+        .getValues()[0].map(value => String(value || "").trim());
+    if (IDENTIFIER_SEQUENCE_RESERVATIONS_HEADERS.some((header, index) => actual[index] !== header)) {
+        throw new Error("El esquema de reservas de secuencia ID es incompatible.");
+    }
+    return sheet;
 }
 
-const INBOX_AUDIT_SHEET_NAME = "InboxAuditLog";
-const INBOX_AUDIT_HEADERS = Object.freeze(["eventId","timestamp","actorId","actorName","action","itemType","itemId","details"]);
+function getNextFormulaBasedId_(sheet, idColumn) {
+    if (!sheet || !Number.isInteger(idColumn) || idColumn < 1) throw new Error("Hoja o columna ID inválida.");
+    const pattern = getFormulaBasedIdPattern_(sheet, idColumn);
+    const lastRow = sheet.getLastRow();
+    const idValues = lastRow > 1
+        ? sheet.getRange(2, idColumn, lastRow - 1, 1).getValues().map(row => row[0])
+        : [];
+    const seen = new Set();
+    const blankOffsets = [];
+    let maxSuffix = 0;
+    idValues.forEach((rawId, index) => {
+        const id = String(rawId === null || rawId === undefined ? "" : rawId).trim();
+        if (!id) { blankOffsets.push(index); return; }
+        if (!id.startsWith(pattern.prefix)) throw new Error("El ID de " + sheet.getName() + " fila " + (index + 2) + " no coincide con el prefijo configurado.");
+        const suffix = id.slice(pattern.prefix.length);
+        if (!/^\d+$/.test(suffix)) throw new Error("El ID de " + sheet.getName() + " fila " + (index + 2) + " no conserva el sufijo numérico configurado.");
+        const normalized = id.toLowerCase();
+        if (seen.has(normalized)) throw new Error("Se detectó el ID duplicado " + id + " en " + sheet.getName() + "; no se asignó otro ID.");
+        seen.add(normalized);
+        const numeric = Number(suffix);
+        if (!Number.isSafeInteger(numeric) || numeric < 1) throw new Error("El sufijo ID de " + sheet.getName() + " no es un entero seguro.");
+        maxSuffix = Math.max(maxSuffix, numeric);
+    });
+    if (blankOffsets.length) {
+        const lastColumn = Math.max(sheet.getLastColumn(), idColumn);
+        let runStart = blankOffsets[0], previousOffset = blankOffsets[0];
+        const validateBlankRun = (firstOffset, lastOffset) => {
+            const firstRow = firstOffset + 2;
+            const rows = sheet.getRange(firstRow, 1, lastOffset - firstOffset + 1, lastColumn).getValues();
+            rows.forEach((row, index) => {
+                const hasRecordData = row.some((value, columnIndex) =>
+                    columnIndex !== idColumn - 1 && value !== "" && value !== null && value !== undefined
+                );
+                if (hasRecordData) throw new Error("La fila " + (firstRow + index) + " de " + sheet.getName() + " contiene datos, pero no tiene ID.");
+            });
+        };
+        for (let i = 1; i < blankOffsets.length; i++) {
+            const offset = blankOffsets[i];
+            if (offset === previousOffset + 1) { previousOffset = offset; continue; }
+            validateBlankRun(runStart, previousOffset);
+            runStart = previousOffset = offset;
+        }
+        validateBlankRun(runStart, previousOffset);
+    }
 
-// ============================================================================
-// ROUTER PRINCIPAL (doGet y doPost)
-// ============================================================================
+    // appendRow asigna una posición física única. La fórmula de la reserva calcula
+    // su secuencia contando únicamente reservas anteriores de la misma hoja/columna.
+    const ledger = getIdentifierSequenceReservationsSheet_();
+    const ledgerLastRow = ledger.getLastRow();
+    let previousReservations = [];
+    if (ledgerLastRow > 1) {
+        const matches = ledger.getRange(2, 2, ledgerLastRow - 1, 1)
+            .createTextFinder(sheet.getName()).matchCase(true).matchEntireCell(true).findAll();
+        previousReservations = matches.map(match => {
+            const rowIndex = match.getRow();
+            const values = ledger.getRange(rowIndex, 2, 1, 5).getValues()[0];
+            return { rowIndex, column: Number(values[1]), reservedSuffix: Number(values[2]), baseSuffix: Number(values[3]) };
+        }).filter(item => item.column === idColumn).sort((a, b) => a.rowIndex - b.rowIndex);
+    }
+    let baseSuffix = maxSuffix;
+    if (previousReservations.length) {
+        const latest = previousReservations[previousReservations.length - 1];
+        if (!Number.isSafeInteger(latest.baseSuffix) || latest.baseSuffix < 0 ||
+            !Number.isSafeInteger(latest.reservedSuffix) || latest.reservedSuffix < 1) {
+            throw new Error("La última reserva de ID contiene una secuencia inválida.");
+        }
+        const priorCount = previousReservations.length;
+        baseSuffix = Math.max(latest.baseSuffix, maxSuffix - priorCount, latest.reservedSuffix - priorCount);
+    }
+    if (!Number.isSafeInteger(baseSuffix) || baseSuffix < 0) throw new Error("La base de secuencia ID no es válida.");
+
+    const reservationId = Utilities.getUuid();
+    const suffixFormula = '=INDEX($E:$E,ROW())+IF(ROW()<=2,0,COUNTIFS($B$2:INDEX($B:$B,ROW()-1),INDEX($B:$B,ROW()),$C$2:INDEX($C:$C,ROW()-1),INDEX($C:$C,ROW())))+1';
+    ledger.appendRow([reservationId, sheet.getName(), idColumn, suffixFormula, baseSuffix, new Date().toISOString()]);
+    SpreadsheetApp.flush();
+    const reservationMatches = ledger.getRange(2, 1, Math.max(1, ledger.getLastRow() - 1), 1)
+        .createTextFinder(reservationId).matchCase(true).matchEntireCell(true).findAll();
+    if (reservationMatches.length !== 1) throw new Error("No se pudo confirmar una reserva única de ID.");
+    const reservedSuffix = Number(ledger.getRange(reservationMatches[0].getRow(), 4).getValue());
+    if (!Number.isSafeInteger(reservedSuffix) || reservedSuffix <= maxSuffix) {
+        throw new Error("La reserva de ID no produjo un sufijo nuevo y verificable.");
+    }
+    const id = pattern.prefix + String(reservedSuffix).padStart(pattern.padding, "0");
+    if (seen.has(id.toLowerCase())) throw new Error("El siguiente ID ya existe en " + sheet.getName() + ".");
+    return id;
+}
+
 function isFeedbackCoordinatorConfigured_() {
     try {
         const properties = PropertiesService.getScriptProperties();
