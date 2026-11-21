@@ -1664,78 +1664,39 @@ function buildAdminCortesCatalogChange_(reference) {
     return { collection: "cortes", recordId: wanted, operation: "upsert", snapshot: snapshot };
 }
 
-const ADMIN_CATALOG_SOURCE_VERSION_PROPERTY_ = "GPSpedia_ADMIN_CATALOG_SOURCE_VERSION_V1";
-
-function reserveAdminCatalogSourceVersionsLocked_(count) {
-    const amount = Math.floor(Number(count));
-    if (!Number.isSafeInteger(amount) || amount < 1) throw new Error("Cantidad de versiones ADMIN inválida.");
-    const properties = PropertiesService.getScriptProperties();
-    const raw = properties.getProperty(ADMIN_CATALOG_SOURCE_VERSION_PROPERTY_);
-    const current = raw === null ? 0 : Number(raw);
-    if (!Number.isSafeInteger(current) || current < 0) {
-        throw new Error("La versión de origen del catálogo ADMIN no es válida.");
-    }
-    const next = current + amount;
-    if (!Number.isSafeInteger(next) || next < 1) {
-        throw new Error("La versión de origen del catálogo ADMIN alcanzó su límite seguro.");
-    }
-    properties.setProperty(ADMIN_CATALOG_SOURCE_VERSION_PROPERTY_, String(next));
-    return Array.from({ length: amount }, (_, index) => current + index + 1);
-}
-
 function publishAdminCatalogChange_(action, buildChange) {
     let change = { operation: "reset" };
-    const lock = LockService.getScriptLock();
-    let lockAcquired = false;
     try {
-        if (!lock.tryLock(0)) throw new Error("ADMIN_BUSY");
-        lockAcquired = true;
-        try {
-            const snapshot = buildChange();
-            if (!snapshot || typeof snapshot !== "object" || snapshot.operation === "reset") {
-                change = { operation: "reset" };
-            } else {
-                change = Object.assign({}, snapshot, {
-                    sourceVersion: reserveAdminCatalogSourceVersionsLocked_(1)[0]
-                });
-            }
-        } catch (snapshotError) {
-            change = { operation: "reset" };
+        const snapshot = buildChange();
+        if (snapshot && typeof snapshot === "object" && snapshot.operation !== "reset") {
+            // Coordinator detecta versiones repetidas/obsoletas y fuerza reset para reconstruir
+            // el snapshot. La publicación ordinaria no necesita reservar una secuencia global.
+            change = Object.assign({}, snapshot, { sourceVersion: Math.max(1, Date.now()) });
         }
-    } catch (lockError) {
+    } catch (snapshotError) {
         change = { operation: "reset" };
-    } finally {
-        if (lockAcquired) lock.releaseLock();
     }
     return publishSharedCatalogChange_("ADMIN", action, change);
 }
 
 function publishAdminCatalogChanges_(action, buildChanges) {
     let versionedChanges = null;
-    const lock = LockService.getScriptLock();
-    let lockAcquired = false;
     try {
-        if (!lock.tryLock(0)) throw new Error("ADMIN_BUSY");
-        lockAcquired = true;
-        try {
-            const snapshots = buildChanges();
-            if (!Array.isArray(snapshots) || !snapshots.length) {
-                throw new Error("La reconciliación no devolvió IDs de vehículos modificados.");
-            }
-            const versions = reserveAdminCatalogSourceVersionsLocked_(snapshots.length);
-            versionedChanges = snapshots.map((snapshot, index) => {
-                if (!snapshot || typeof snapshot !== "object" || snapshot.operation === "reset") {
-                    throw new Error("Snapshot ADMIN inválido para publicación versionada.");
-                }
-                return Object.assign({}, snapshot, { sourceVersion: versions[index] });
-            });
-        } catch (snapshotError) {
-            versionedChanges = null;
+        const snapshots = buildChanges();
+        if (!Array.isArray(snapshots) || !snapshots.length) {
+            throw new Error("La reconciliación no devolvió IDs de vehículos modificados.");
         }
-    } catch (lockError) {
+        const baseVersion = Math.max(1, Date.now());
+        versionedChanges = snapshots.map((snapshot, index) => {
+            if (!snapshot || typeof snapshot !== "object" || snapshot.operation === "reset") {
+                throw new Error("Snapshot ADMIN inválido para publicación versionada.");
+            }
+            const sourceVersion = baseVersion + index;
+            if (!Number.isSafeInteger(sourceVersion)) throw new Error("La versión de origen ADMIN excede el límite seguro.");
+            return Object.assign({}, snapshot, { sourceVersion });
+        });
+    } catch (snapshotError) {
         versionedChanges = null;
-    } finally {
-        if (lockAcquired) lock.releaseLock();
     }
 
     if (!versionedChanges) {
