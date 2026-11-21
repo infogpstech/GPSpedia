@@ -473,3 +473,11 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - CI GitHub Actions en HEAD 4969e4cfa08479927d4284e98312f114e98c3d28: 259 suites, 3,137 pruebas PASS, 0 fallos; sintaxis y health read-only SUCCESS.
 - El workflow externo de GitHub Pages se activó automáticamente por el push y publicó https://infogpstech.github.io/GPSpedia/. No se desplegó Apps Script ni se modificó Spreadsheet/Drive productivo.
 - PR #128 sigue abierto y draft; rama base GPSpedia2.2.5 intacta. Las pruebas Beta AUG-159 a AUG-163 y demás validaciones reales permanecen pendientes de entorno aislado.
+
+
+2026-11-21 — NORMALIZACIÓN DEL ENCABEZADO DE DETALLE DE CORTE Y GUÍA DE DESPLIEGUE
+- Se ajustaron las proporciones del logo del modal de corte a 64 px escritorio y 48 px móvil, manteniendo los botones de acción/cierre de 40 px y el layout grid.
+- Se actualizó el contrato CutDetailModalLayout.mjs para las dimensiones nuevas. La ejecución/CI y aceptación visual Beta quedan pendientes de evidencia.
+- Se añadió AUDITORIA_MODAL_CSS_2026-11-21.md con comparación frente a GPSpedia-2.1.7, cascada y selectores repetidos.
+- Se creó Services/DEPLOYMENT_GUIDE.md con orden y archivos por proyecto Apps Script, URLs /exec, ScriptProperties, secretos, pruebas de humo y rollback. Se enlazó desde README y COORDINATOR_SETUP.
+- No se desplegaron servicios ni se modificaron ScriptProperties, Spreadsheet o Drive remotos.
