@@ -703,3 +703,17 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - CI: CatalogChangeFeed 35/35; FeedbackCatalogPublicationIsolation 5/5; TutorialIntegrity 42/42; PysCreationIntegrity 56/56. Health SUCCESS. Service tests FAIL únicamente en P2.2b PyS imagen: PysImageStorageRecovery 2/22; 20 casos informan que un fixture intenta extraer el helper retirado.
 - Siguiente paso inmediato: localizar la extracción residual del helper en el harness de PysImageStorageRecovery / dependencias y actualizarla para ejecutar las funciones sin lock; repetir CI hasta verde. Después continuar el inventario de locks ordinarios WRITE/ADMIN/USERS.
 - Sin despliegue Apps Script ni cambios en datos productivos. La rama base protegida GPSpedia2.2.5 no se modifica.
+
+
+## Checkpoint — WRITE ID allocator append-only y columnas Testigo (2026-11-21)
+
+- Rama: GPSpedia2.2.5_work. Código validado en HEAD d2167e2180925463202a4dbac0e302751ecb33ca.
+- Comparación contra GPSpedia2.2.5: 6,319 commits ahead / 0 behind. La rama base no se modifica.
+- ensureTestigoColumns ya no adquiere un lock interno; conserva el contrato AT:AV.
+- La reserva central de IDs usa CortesIdReservations append-only. La fórmula de cada fila calcula el siguiente ID a partir del high-water mark y las reservas anteriores; se hace flush, congelación del valor y read-back por opId/operationHash. handleAllocateVehicleId no usa ScriptLock y valida sesión/rol Desarrollador antes de acceder al Spreadsheet.
+- La ruta de alta nueva WRITE también reserva mediante el ledger antes de crear la fila. El contador histórico GPSpedia_CORTES_LAST_ID solo se lee como límite de compatibilidad; no se actualiza ni revierte.
+- Las carreras con opId idéntico convergen a la primera reserva física; reservas adicionales quedan consumidas, únicas y no reutilizables. Huellas distintas para el mismo opId se rechazan sin bloquear operaciones posteriores. El ledger valida IDs crecientes y únicos y falla cerrado ante corrupción.
+- La sección crítica fail-fast de la escritura física de vehículos nuevos permanece por ahora para VIN, fila, Idempotencia y compensación; Drive se ejecuta fuera del lock. No se ha declarado todo WRITE libre de locks.
+- CI: 259 suites, 3,139 pruebas, 0 fallos; build SUCCESS; health read-only SUCCESS; Pages/deploy SUCCESS. Pruebas focalizadas: asignador 7/7, bounded read 11/11, idempotencia/concurrencia 12/12, ADMIN→WRITE 4/4, RBAC 15/15 y MutationLockContention 1/1.
+- AUG-162 queda pendiente de ejecución en Spreadsheet/Apps Script aislados para validar la fórmula real y concurrencia entre deployments. No se desplegó Apps Script ni se tocaron recursos productivos.
+- Siguiente tarea: auditoría de ADMIN y USERS; después revisar la transacción de alta nueva WRITE sin quitar el lock hasta demostrar una alternativa segura.

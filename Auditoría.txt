@@ -1176,3 +1176,17 @@ Adenda — FEEDBACK confirmación de sugerencias
 - Falló la integración P2.2b PyS imagen fuera del lock: PysImageStorageRecovery 2/22. Las 20 fallas muestran "No se encontró el bloque function acquireFeedbackScriptLock_(lock)"; no son fallos de validación/Drive, sino fixtures de prueba que todavía intentan extraer el helper retirado.
 - El helper se eliminó de JS/Services/feedback.js y las pruebas de TutorialIntegrity/PysCreationIntegrity ya se actualizaron; la siguiente corrección debe localizar y retirar la dependencia residual en el fixture de recuperación de imágenes sin reintroducir un lock en producción.
 - No considerar validado el cambio hasta que CI quede verde. No desplegar Apps Script ni modificar datos productivos.
+
+
+================================================================================
+2026-11-21 — WRITE: ASIGNACIÓN NUMÉRICA APPEND-ONLY SIN SCRIPTLOCK
+- Hallazgo: el endpoint handleAllocateVehicleId usaba ScriptLock para proteger una secuencia numérica; ensureTestigoColumns también podía adquirir un lock interno aunque su caller ya estaba dentro de la sección crítica de alta.
+- Corrección: ensureTestigoColumns ya no adquiere locks. Se sustituyó el asignador lectura+contador por CortesIdReservations append-only: cada fila contiene opId, operationHash, vehicleId calculado por fórmula secuencial y timestamp. La operación hace flush, congela el valor y confirma read-back antes de devolverlo.
+- El high-water mark valida IDs existentes en Cortes, el límite histórico GPSpedia_CORTES_LAST_ID y el ledger. El contador histórico pasa a ser solo lectura; no se persiste ni se revierte.
+- handleAllocateVehicleId valida sesión y rol Desarrollador antes de acceder al Spreadsheet y no invoca LockService. Las altas nuevas de WRITE usan la misma reserva antes de crear la fila física.
+- Se conserva first-write-wins por opId: reintentos idénticos convergen a la primera fila; intentos con huella distinta se rechazan. Reservas duplicadas por carrera consumen IDs únicos que no se reutilizan. El ledger valida secuencia estrictamente creciente y falla cerrado ante corrupción.
+- La sección crítica fail-fast del alta física sigue vigente para VIN, fila, Idempotencia y compensación; Drive permanece fuera del lock. No se ha retirado por completo el lock de la ruta de alta.
+- Pruebas focalizadas: WriteIdAllocatorNonBlocking 7/7; WriteVehicleIdAllocatorBoundedRead 11/11; WriteVehicleIdAllocationIdempotency 12/12; VehicleIdAllocationEndToEnd 4/4; WriteAuthorizationMinimization 15/15; WriteAuthorizationContracts 10/10; MutationLockContention 1/1; CutPayloadValidation 35/35.
+- CI d2167e2180925463202a4dbac0e302751ecb33ca SUCCESS: 259 suites, 3,139 pruebas, 0 fallos; build, health read-only y Pages/deploy SUCCESS.
+- AUG-162 pendiente para validar la fórmula real de Google Sheets y concurrencia entre deployments en entorno aislado. Sin despliegue Apps Script ni cambios en datos productivos.
+================================================================================

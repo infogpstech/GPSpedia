@@ -396,3 +396,12 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - El commit efa35b4fc0ca3203cfeee4e7e426b6f05c766f4d tiene health SUCCESS, pero service-tests FAIL en integración P2.2b: PysImageStorageRecovery 2/22. Veinte casos no encuentran el helper acquireFeedbackScriptLock_ que se retiró de feedback.js.
 - Las pruebas de TutorialIntegrity (42/42), CatalogChangeFeed (35/35), FeedbackCatalogPublicationIsolation (5/5) y PysCreationIntegrity (56/56) pasan.
 - Se debe corregir el fixture residual, no reintroducir el ScriptLock de producción. No desplegar hasta CI verde.
+
+
+2026-11-21 — WRITE: RESERVA APPEND-ONLY DE ID NUMÉRICO
+- handleAllocateVehicleId dejó de adquirir ScriptLock. La autorización de sesión/rol Desarrollador ocurre antes de consultar el Spreadsheet.
+- CortesIdReservations pasa a ser la fuente de nuevas reservas: fórmula secuencial por orden físico, flush, congelación del valor, read-back y recuperación por opId/operationHash. El contador GPSpedia_CORTES_LAST_ID se conserva como límite histórico de solo lectura.
+- Las altas nuevas WRITE usan la misma reserva antes de crear la fila. ensureTestigoColumns no adquiere lock interno; mantiene AT:AV.
+- Se probaron intercalaciones de distintos opId, reintentos idénticos, huellas contradictorias, pérdida de respuesta, ledger corrupto y compatibilidad legacy. Los intentos extra por carreras consumen IDs únicos y no reutilizables.
+- CI d2167e2180925463202a4dbac0e302751ecb33ca SUCCESS: 259 suites, 3,139 pruebas, 0 fallos. Build, health read-only y Pages/deploy SUCCESS.
+- La ejecución real en Google Sheets queda pendiente en AUG-162; no se desplegó Apps Script ni se modificaron hojas/Drive productivos.

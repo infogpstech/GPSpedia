@@ -643,3 +643,17 @@ La Beta vigente de PyS se ejecuta con AUG-161 en lista_beta_adenda_2026-11-21.md
 - Falló la integración P2.2b PyS imagen fuera del lock: PysImageStorageRecovery 2/22. Las 20 fallas muestran "No se encontró el bloque function acquireFeedbackScriptLock_(lock)"; no son fallos de validación/Drive, sino fixtures de prueba que todavía intentan extraer el helper retirado.
 - El helper se eliminó de JS/Services/feedback.js y las pruebas de TutorialIntegrity/PysCreationIntegrity ya se actualizaron; la siguiente corrección debe localizar y retirar la dependencia residual en el fixture de recuperación de imágenes sin reintroducir un lock en producción.
 - No considerar validado el cambio hasta que CI quede verde. No desplegar Apps Script ni modificar datos productivos.
+
+
+## Cierre local — WRITE ID allocator append-only y columnas Testigo (2026-11-21)
+
+- HEAD de código validado: d2167e2180925463202a4dbac0e302751ecb33ca. Comparación con GPSpedia2.2.5: 6,319 commits ahead / 0 behind; rama base intacta.
+- Se retiró el lock interno de ensureTestigoColumns; la función mantiene AT:AV y se ejecuta sin adquirir un lock anidado.
+- Se sustituyó getNextCortesVehicleIdLocked por getCortesVehicleIdHighWaterMark_ y el ledger append-only CortesIdReservations. Cada reserva anexa una fórmula secuencial basada en las filas previas, hace flush, congela el resultado numérico y verifica por opId/operationHash antes de responder.
+- handleAllocateVehicleId autentica al actor y exige Desarrollador antes de acceder al Spreadsheet; ya no adquiere ScriptLock. Las altas nuevas de WRITE usan el mismo ledger antes de crear la fila física. El contador GPSpedia_CORTES_LAST_ID queda como límite histórico de compatibilidad, solo lectura.
+- Se conservan first-write-wins, reintento tras pérdida de respuesta, rechazo de opId con otra huella, IDs consumidos no reutilizables, validación de monotonía/unicidad del ledger y fail-closed ante IDs corruptos.
+- La sección crítica fail-fast de handleAddOrUpdateCut para crear la fila física, validar VIN, registrar Idempotencia y compensar fallos permanece separada del asignador; Drive sigue ejecutándose fuera del lock. No se elimina ese lock sin una alternativa transaccional probada.
+- Pruebas: WriteIdAllocatorNonBlocking 7/7; WriteVehicleIdAllocatorBoundedRead 11/11; WriteVehicleIdAllocationIdempotency 12/12; VehicleIdAllocationEndToEnd 4/4; WriteAuthorizationMinimization 15/15; WriteAuthorizationContracts 10/10; MutationLockContention 1/1; CutPayloadValidation 35/35.
+- CI d2167e2180925463202a4dbac0e302751ecb33ca SUCCESS: 259 suites, 3,139 pruebas aprobadas, 0 fallos; build, health read-only y Pages/deploy SUCCESS.
+- La validación real de fórmula/concurrencia queda registrada como AUG-162 en la adenda Beta. No se desplegó Apps Script ni se modificaron Spreadsheet/Drive productivos.
+- Siguiente tarea local: auditar locks restantes de ADMIN y USERS contra §15; después revisar si la transacción física de alta nueva en WRITE puede migrar a un journal append-only sin perder unicidad de VIN, idempotencia, recuperación ni rollback.

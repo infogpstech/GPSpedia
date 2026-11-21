@@ -131,3 +131,36 @@ No desplegar Apps Script a producción ni modificar datos productivos.
 
 
 - Actualización de publicación CATALOG FEEDBACK: el snapshot se construye sin ScriptLock y sourceVersion usa Date.now(). Si ejecuciones concurrentes generan una versión repetida/obsoleta, Coordinator convierte ese evento en reset y reconstrucción; Beta debe comprobar que el catálogo converge al snapshot actual, incluyendo dos mutaciones dentro del mismo milisegundo y fallo del endpoint Coordinator.
+
+
+## AUG-162 — RESERVA NUMÉRICA WRITE APPEND-ONLY SIN SCRIPTLOCK
+
+**Estado: PENDIENTE DE EJECUCIÓN EN BETA AISLADA.** La regresión local no sustituye la validación de fórmulas y concurrencia real en Google Sheets.
+
+### Entorno aislado
+
+- Dos deployments independientes de WRITE/ADMIN que compartan únicamente un Spreadsheet desechable con las hojas Cortes, CortesIdReservations e Idempotencia.
+- Dos cuentas de prueba con roles Técnico y Desarrollador; carpeta Drive desechable si se ejecuta el flujo completo de alta.
+- No utilizar hojas, cuentas, deployments, carpetas, secretos ni datos productivos.
+
+### A. Secuencia, concurrencia y first-write-wins
+
+1. Comprobar que el endpoint allocateVehicleId autentica al actor y exige el rol Desarrollador vigente antes de acceder al Spreadsheet. Confirmar que el endpoint no invoca LockService.
+2. Con IDs existentes y el contador histórico como línea base, lanzar reservas simultáneas desde dos ejecuciones independientes con opId y operationHash distintos. Confirmar IDs enteros, únicos y estrictamente crecientes.
+3. Verificar en Google Sheets que la fórmula append-only basada en ROW()/INDEX() se evalúa correctamente, que SpreadsheetApp.flush() permite leer el resultado y que la celda se congela como valor numérico antes de responder.
+4. Lanzar simultáneamente el mismo opId y la misma huella. Ambas respuestas deben converger al ID de la primera fila física canónica. Si la carrera anexó una segunda reserva, su ID queda consumido y no puede reutilizarse; no debe crearse una segunda fila lógica de vehículo.
+5. Reutilizar simultáneamente un opId con huellas distintas. La primera reserva física prevalece; el intento contradictorio debe rechazarse. Después, una operación con otro opId debe poder reservar normalmente y el ledger debe seguir siendo monotónico.
+6. Simular pérdida de respuesta después de appendRow, flush y read-back. El reintento con el mismo opId/huella debe recuperar el ID persistido sin duplicar una reserva lógica.
+7. Probar solicitudes legacy sin opId. Cada llamada debe obtener un ID único; una respuesta perdida puede dejar un hueco consumido, pero nunca una colisión.
+8. Lanzar dos inicializaciones simultáneas de CortesIdReservations. La hoja debe quedar con una sola fila de encabezados exactos; no se deben sobrescribir filas ni crear esquemas parciales.
+9. Corromper deliberadamente una copia aislada del ledger con IDs repetidos, desordenados, opId inválido o hash inválido. La asignación debe fallar cerrada antes de anexar otra reserva. Repetir con IDs duplicados o filas incompletas en Cortes.
+10. Verificar que altas nuevas de WRITE y preasignaciones ADMIN usan el mismo ledger. La operación física de alta conserva su sección crítica fail-fast para fila, VIN, Idempotencia y compensación; el trabajo Drive debe ejecutarse fuera de ese lock.
+
+### B. Columnas Testigo y recuperación
+
+1. Ejecutar ensureTestigoColumns en la ruta de alta y confirmar que mantiene AT:AV, no adquiere un lock anidado y conserva encabezados/datos preexistentes.
+2. Inyectar fallos después de reservar el ID y antes/después de crear la fila. El ID reservado no debe revertirse ni reutilizarse; el reintento con el mismo opId debe recuperar la reserva.
+3. Verificar que el contador GPSpedia_CORTES_LAST_ID se trata como límite histórico de compatibilidad y no como contador mutable de asignación. La secuencia nueva debe quedar respaldada por CortesIdReservations.
+4. Registrar IDs, opIds sintéticos, huellas, filas antes/después, fórmulas/valores, timestamps y resultado. No guardar tokens, datos personales ni secretos.
+
+**Criterio PASS:** unicidad real entre ejecuciones/proyectos, convergencia idempotente, ledger íntegro y fórmulas convertidas a valores numéricos verificados. Una simulación local o CI no basta para cerrar AUG-162.
