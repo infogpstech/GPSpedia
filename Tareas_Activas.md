@@ -511,7 +511,7 @@ Estado: COMPLETADA LOCALMENTE; validación Beta diferida.
 - [x] Migrar asociaciones y desvinculaciones PyS↔Cortes a leases compartidas (addVehicleToProblem/removeVehicleFromProblem), con lectura/validación/read-back dentro de la lease.
 - [x] Conservar first-write-wins, idempotencia, normalización de relaciones, validación de IDs únicos y RBAC de Desarrollador para desvincular.
 - [x] Confirmar que Coordinator ya define los cuatro contratos de recursos: FEEDBACK para PyS y CORTES como lectura al modificar relaciones.
-- [x] Añadir PysVehicleRelationIntegrity al runner CI; suite 19/19 PASS.
+- [x] Añadir PysVehicleRelationIntegrity al runner CI; suite 20/20 PASS, incluida comprobación de la política real de Coordinator.
 - [x] PysCreationIntegrity 56/56 PASS; PysImageStorageRecovery 22/22 PASS; P2PysImageUploadOutsideLock PASS.
 - [x] Corregir el orden de prevalidación de modelos asociados en handleAddProblem: validar IDs de Cortes antes de crear/leer PysOperations, evitando efectos laterales de inicialización ante un vehículo inválido.
 - [x] CI actualizado 44907336819 SUCCESS: 259 suites, 3,129 pruebas, 0 fallos; PysModalNavigation 10/10, PysCreationIntegrity 56/56, PysVehicleRelationIntegrity 19/19; node --check PASS. Health read-only 44907336832 SUCCESS; Pages 44907336274 SUCCESS.
@@ -562,3 +562,11 @@ Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
 Las secciones antiguas tituladas «En curso», «Siguiente tarea — tutoriales» y las fases 3/4 de Tutoriales conservan el estado que tenían al registrarse. Sus pendientes locales quedaron resueltos por los cierres posteriores de handleSuggestYear, reportes/sugerencias, creación/edición/renombrado de tutoriales, aprobación de vídeos y edición de filas históricas sin ID. No son tareas locales abiertas. El estado operativo vigente está en los cierres P0/P1, PyS, Tutoriales y búsqueda agrupada; sus únicas casillas sin marcar son validaciones Beta en entornos aislados.
 
 La Beta vigente de PyS se ejecuta con AUG-161 en lista_beta_adenda_2026-11-21.md, que sustituye las expectativas históricas de ScriptLock y estados mutables del ledger.
+
+
+## Continuidad — contrato integrado FEEDBACK/Coordinator PyS (2026-11-21)
+
+- La revisión integral detectó que PysVehicleRelationIntegrity probaba la llamada a la lease mediante un mock, pero no comprobaba que Coordinator declarara los mismos nombres de operación y recursos.
+- Se amplió la suite para leer Coordinator.js y verificar addSolution/addPrevention con escritura FEEDBACK, y addVehicleToProblem/removeVehicleFromProblem con escritura FEEDBACK más lectura CORTES. También se verifica su registro en la lista de escritores FEEDBACK.
+- PysVehicleRelationIntegrity 20/20 PASS. CI 44909033557 SUCCESS: 259 suites, 3,130 pruebas, 0 fallos; Health read-only 44909033573 SUCCESS; Pages 44909033191 SUCCESS.
+- No se cambió el contrato productivo ni se desplegó Apps Script; se añadió cobertura de integración local para evitar divergencias entre FEEDBACK y Coordinator.

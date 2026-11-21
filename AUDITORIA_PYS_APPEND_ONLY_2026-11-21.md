@@ -109,3 +109,11 @@ Se revisó `handleAddProblem`, `PysOperations`, los helpers de ID/lookup, el alm
 - La lista Beta histórica conserva casos válidos de integridad y UX, pero algunas expectativas de AUG-084/AUG-086/AUG-090/AUG-128 describen el protocolo anterior (ScriptLock local, transición mutable de PysOperations a LINKED/RECOVERY_REQUIRED).
 - Se añadió lista_beta_adenda_2026-11-21.md y su referencia en lista_beta.txt. La adenda define AUG-161: concurrencia real de alta PyS, reserva append-only de IDs, first-write-wins de operación/archivo, recuperación de fallos parciales y leases compartidas FEEDBACK con Coordinator 1.4.5 para solución, prevención y relaciones.
 - Se preservaron íntegros los segmentos históricos; la adenda declara qué expectativas antiguas quedan sustituidas y exige recursos aislados, sin despliegue ni datos productivos.
+
+
+## Adenda — verificación cruzada de contratos FEEDBACK/Coordinator (2026-11-21)
+
+- Hallazgo de cobertura: PysVehicleRelationIntegrity verificaba el wrapper FEEDBACK mediante un mock de withSharedMutationLease_, pero no comparaba las operaciones con coordinatorPolicy_ ni con CATALOG_CHANGE_ALLOWED_WRITERS_.
+- Se amplió la suite para comprobar que addSolution/addPrevention escriben FEEDBACK y que addVehicleToProblem/removeVehicleFromProblem escriben FEEDBACK y leen CORTES; las cuatro operaciones deben estar registradas como escritores FEEDBACK.
+- PysVehicleRelationIntegrity 20/20 PASS. CI 44909033557 SUCCESS: 259 suites, 3,130 pruebas, 0 fallos. Health read-only 44909033573 y Pages 44909033191 SUCCESS.
+- Esta validación es local/estática de contrato; no sustituye las pruebas reales de Coordinator entre proyectos, que permanecen en AUG-161 Beta.

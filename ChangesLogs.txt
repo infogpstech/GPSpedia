@@ -340,3 +340,9 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - Se agregó lista_beta_adenda_2026-11-21.md y se enlazó desde lista_beta.txt para actualizar las pruebas históricas de PyS al protocolo vigente de append-only y leases compartidas Coordinator 1.4.5.
 - Se añadió AUG-161 para concurrencia real, reservas de ID, first-write-wins, recuperación Drive/Sheets y mutaciones de solución/prevención/relaciones en entornos aislados.
 - Los segmentos históricos no se reescribieron; la adenda identifica expresamente las expectativas obsoletas que sustituye.
+
+
+2026-11-21 — COBERTURA CRUZADA PyS/COORDINATOR
+- PysVehicleRelationIntegrity ahora lee Coordinator.js y verifica los contratos de recursos de las cuatro mutaciones PyS; se cubren FEEDBACK como recurso de escritura y CORTES como lectura en asociaciones.
+- La suite focalizada pasa 20/20. CI 44909033557 SUCCESS: 259 suites, 3,130 pruebas, 0 fallos; Health 44909033573 SUCCESS; Pages 44909033191 SUCCESS.
+- La concurrencia y expiración real de leases entre proyectos sigue pendiente de Beta aislada.
