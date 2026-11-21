@@ -23,10 +23,12 @@ assert.match(inbox,/lock\.tryLock\(0\)/);
 const suggestYear = extract(feedback,"handleSuggestYear");
 assert.doesNotMatch(suggestYear,/LockService\.getScriptLock\(\)|acquireFeedbackScriptLock_\(/,
  "suggestYear coordina sus mutaciones con ledger append-only e identidades idempotentes, sin lock global.");
-for(const name of ["handleAddProblem","handleAddTutorial","handleUpdateTutorialItem"]){
+for(const name of ["handleAddTutorial","handleUpdateTutorialItem"]){
  const body=extract(feedback,name);
  assert.ok(body.includes("acquireFeedbackScriptLock_(lock)"),name+" debe adquirir el lock sin espera.");
 }
+assert.doesNotMatch(extract(feedback,"handleAddProblem"),/LockService\\.getScriptLock\\(\\)|acquireFeedbackScriptLock_\\(/,
+ "El alta PyS usa reservas append-only y no debe adquirir ScriptLock.");
 for(const [name,nextName] of [["handleReportProblem","enforceFeedbackRateLimit_"],["handleSuggestCutChange","parseModelosAsociados"]]){
  assert.doesNotMatch(extract(feedback,name,nextName),/LockService\.getScriptLock\(\)|acquireFeedbackScriptLock_\(/,
   name+" debe reconciliar escrituras concurrentes mediante identidad lógica y append-only sin lock global.");
