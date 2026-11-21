@@ -429,3 +429,12 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Implementado: ID PyS `isue-###` mediante `IdentifierSequenceReservations` con sufijo mínimo legacy; nuevas reservas `PysOperations` con `appendRow`; first-write-wins por `opId`/hash; separación entre lookup físico y canónico; lectores de PyS y feed deduplican filas idénticas y rechazan contradicciones.
 - CI `44867570021` SUCCESS: 258 suites, 3091 pruebas, 0 fallos; health read-only `44867570032` SUCCESS; Pages `44867569879` SUCCESS.
 - Pendiente: retirar ScriptLock de `handleAddProblem` tras implementar la selección del propietario canónico en carreras, limpieza de archivos duplicados y reintentos simultáneos. Las mutaciones de solución, prevención y relaciones siguen fuera de alcance y conservan sus locks.
+
+
+## PyS — fase 2: colisión de reservas fail-closed (2026-11-21)
+
+- HEAD inicial: 974985f915daaea6df8862b0fa996e125759fbba; cambios de código/prueba: e3ec7253d74a3c7130007f0769b28fca370637d1 y 9baf0467cf11e4038c9e6312dc769f0b6af4c060.
+- Se corrigió una ambigüedad en readPysOperations_: un mismo opId y payloadHash repetido con distinto problemId ya no se trata como replay idéntico. Se rechaza para reconciliación antes de crear una imagen.
+- Regresión agregada a PysCreationIntegrity.js. CI 44873477741 SUCCESS: 258 suites, 3092 pruebas aprobadas, 0 fallos; health read-only 44873477634 SUCCESS. Pages 44873477531 seguía en ejecución al actualizar este checkpoint.
+- handleAddProblem todavía conserva ScriptLock. La migración lock-free sigue bloqueada hasta definir y probar la propiedad canónica del opId y del archivo frente a reintentos concurrentes; no retirar el lock con la arquitectura actual de estados mutables.
+- Sin despliegue Apps Script ni cambios en Spreadsheet/Drive productivos.
