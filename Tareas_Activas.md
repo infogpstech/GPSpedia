@@ -13,8 +13,8 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - Los archivos archivados son inmutables; este es el registro operativo vigente.
 
 ## Estado Git y CI confirmado
-- HEAD de código validado para P0 USERS: `fb80ebfa4a296d23faec032be46650d85ec51ba9`.
-- CI: 287 suites, 3,359 pruebas aprobadas, 0 fallos.
+- HEAD de código validado para P1 WRITE parcial: `698bd0518c4223ba6db36e1ce0fbd68492289b5a`.
+- CI: 289 suites, 3,382 pruebas aprobadas, 0 fallos.
 - Build: SUCCESS.
 - Health de servicios: SUCCESS.
 - GitHub Pages deploy workflow: pendiente de confirmación; no es despliegue de Apps Script ni sustituye Beta aislada.
@@ -72,6 +72,8 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - [x] ADMIN — confirmar que telemetría global y consultas de inventario/Drive se ejecutan solo desde el panel de desarrollador visible; getServiceTraffic es read-only, restringido a Desarrollador y no usa lease de mutación.
 - [x] ADMIN — auditoría estática de respaldos/restauración DB y Drive, escáneres, reorganización de imágenes, upload/recovery y read-backs; se conserva staging/rollback y no se modifican rutas destructivas sin pruebas de integración.
 - [ ] Auditar WRITE, FEEDBACK y ADMIN de extremo a extremo: operaciones, idempotencia, Drive/Spreadsheet, read-back y publicaciones.
+- [x] WRITE parcial — catálogo de entidades solo cuando se normalizan marca/modelo/versiones; reutilización de hoja AportesVehiculo validada después de Drive para append y proyección. Tests específicos 8/8, 15/15 y 12/12; regresión 289 suites / 3,382 pruebas / 0 fallos.
+- [ ] WRITE restante — revisar alta nueva, recuperación opId legacy, VIN update, suplementaria legacy, journal de imágenes y publicaciones CATALOG; preservar read-back, rollback e idempotencia.
 - [x] WRITE — aportes de corte: combinar la lectura posterior al append del ledger para calcular slot y detectar colisión VIN; checkOperation limita esa lectura a eventos existentes de tipo cut. Se conservan TextFinder, read-back, comprobación de opId y detección de conflictos concurrentes.
 - [x] FEEDBACK — sugerencias de año: en reintentos ya reportados se reutiliza el snapshot existente de Feedbacks; solo se relee después de un append nuevo para incluir votos concurrentes.
 - [x] FEEDBACK — likes: un único snapshot de filas del actor alimenta replay completed, replay event y ruta de recuperación; se mantiene lectura fresca después de append para confirmar el evento.
@@ -114,4 +116,4 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - No retirar escaneo global Drive ni controles de idempotencia/recuperación sin equivalencia demostrada.
 
 ## Siguiente paso exacto
-P0 AUTH y USERS quedan cerrados en código y CI (287 suites / 3,359 pruebas / 0 fallos). Siguiente tarea: auditoría de extremo a extremo de WRITE, iniciando por aportes, idempotencia, ledger, VIN, Drive, read-back y publicación CATALOG. Después FEEDBACK y ADMIN, guardando checkpoint+commit al terminar cada bloque. Luego P1 de imágenes/vídeos/archivos y mediciones Beta. La precarga/invalidation de los cuatro servicios, la carrera createUser/deleteUser y las métricas reales requieren validación en deployments/Spreadsheet/Drive aislados; no ejecutar en producción.
+P0 AUTH y USERS cerrados. WRITE parcial ya validado en CI (289 suites / 3,382 pruebas / 0 fallos). Continuar auditoría WRITE en alta nueva, recuperación legacy, VIN update, suplementaria legacy y journal de imágenes; guardar checkpoint+commit al cerrar WRITE. Después FEEDBACK y ADMIN. Luego P1 de imágenes/vídeos/archivos y mediciones Beta. La precarga/invalidation de los cuatro servicios, la carrera createUser/deleteUser, Drive/concurrencia y métricas reales requieren validación en entornos aislados; no ejecutar operaciones productivas.
