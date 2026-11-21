@@ -2140,20 +2140,31 @@ function getFeedbackLikeCountWithEvents_(cuts, vehicle, ledger, vehicleId, corte
     if (!Number.isSafeInteger(base) || base < 0) throw new Error("El contador de likes del corte no es un entero válido; requiere revisión.");
     return base + getFeedbackLikeEventCount_(ledger, vehicleId, corteIndex);
 }
-function findLikeEventReplayNoop_(cuts, vehicle, actorKey, vehicleId, corteIndex, utilCol) {
+function readLikeActorReplaySnapshot_(actorKey, vehicleId, corteIndex) {
     try {
         const ledger = getSpreadsheet().getSheetByName("FeedbackLikes");
         if (!ledger || ledger.getLastRow() < 2 || ledger.getLastColumn() < 7) return null;
-        const headers = ledger.getRange(1, 1, 1, 7).getValues()[0].map(value => String(value || "").trim());
         const expected = ["actorKey", "vehicleId", "corteIndex", "previousCount", "targetCount", "status", "createdAt"];
+        const headers = ledger.getRange(1, 1, 1, 7).getValues()[0].map(value => String(value || "").trim());
         if (expected.some((header, index) => headers[index] !== header)) return null;
-        const rows = findFeedbackLikeRowsForActor_(ledger, actorKey, vehicleId, corteIndex);
-        if (!rows.some(item => String(item.row[5] || "") === "event")) return null;
+        return { ledger, rows: findFeedbackLikeRowsForActor_(ledger, actorKey, vehicleId, corteIndex) };
+    } catch (error) {
+        return null;
+    }
+}
+
+function findLikeEventReplayNoop_(cuts, vehicle, actorKey, vehicleId, corteIndex, utilCol, replaySnapshot) {
+    try {
+        const snapshot = replaySnapshot === undefined
+            ? readLikeActorReplaySnapshot_(actorKey, vehicleId, corteIndex)
+            : replaySnapshot;
+        if (!snapshot || !snapshot.rows.some(item => String(item.row[5] || "") === "event")) return null;
         return { status: "success", alreadyLiked: true,
-            likeCount: getFeedbackLikeCountWithEvents_(cuts, vehicle, ledger, vehicleId, corteIndex, utilCol),
+            likeCount: getFeedbackLikeCountWithEvents_(cuts, vehicle, snapshot.ledger, vehicleId, corteIndex, utilCol),
             message: "Este usuario ya había registrado su like." };
     } catch (error) { return null; }
 }
+
 function logLikeActivityAfterAppend_(userId, userName, vehicleId, corteIndex, likeCount) {
     try { logUserActivity(userId, userName, "like", vehicleId, "Like en corte " + corteIndex + ". Nuevo total: " + likeCount); }
     catch (logError) { console.error(logError); }
@@ -2181,24 +2192,14 @@ function findFeedbackVehicleRowForLike_(sheet, vehicleId) {
     }
     return { row, rowIndex };
 }
-function findCompletedLikeReplayNoop_(cuts, vehicle, actorKey, vehicleId, corteIndex, utilCol) {
+function findCompletedLikeReplayNoop_(cuts, vehicle, actorKey, vehicleId, corteIndex, utilCol, replaySnapshot) {
     try {
-        const ledger = getSpreadsheet().getSheetByName("FeedbackLikes");
-        if (!ledger || ledger.getLastRow() < 2 || ledger.getLastColumn() < 7) return null;
-        const expectedHeaders = ["actorKey", "vehicleId", "corteIndex", "previousCount", "targetCount", "status", "createdAt"];
-        const headers = ledger.getRange(1, 1, 1, 7).getValues()[0].map(value => String(value || "").trim());
-        if (expectedHeaders.some((header, index) => headers[index] !== header)) return null;
-        const matches = ledger.getRange(2, 1, ledger.getLastRow() - 1, 1)
-            .createTextFinder(actorKey).matchCase(true).findAll();
-        const found = [];
-        matches.forEach(match => {
-            const row = ledger.getRange(match.getRow(), 1, 1, 7).getValues()[0];
-            if (String(row[0] || "").trim() === actorKey &&
-                String(row[1] || "").trim() === vehicleId && Number(row[2]) === corteIndex) {
-                found.push(row);
-            }
-        });
-        if (found.length !== 1 || String(found[0][5] || "") !== "completed") return null;
+        const snapshot = replaySnapshot === undefined
+            ? readLikeActorReplaySnapshot_(actorKey, vehicleId, corteIndex)
+            : replaySnapshot;
+        if (!snapshot || snapshot.rows.length !== 1 ||
+            String(snapshot.rows[0].row[5] || "") !== "completed") return null;
+        const ledger = snapshot.ledger;
         const rawCount = cuts.getRange(vehicle.rowIndex, utilCol).getValue();
         const currentCount = rawCount === "" || rawCount === null || rawCount === undefined ? 0 : Number(rawCount);
         if (!Number.isSafeInteger(currentCount) || currentCount < 0) return null;
@@ -2225,13 +2226,16 @@ function handleRecordLike(payload) {
     const vehicle = findFeedbackVehicleRowForLike_(cuts, vehicleId);
     if (!typeCol || !utilCol || !String(vehicle.row[typeCol - 1] || "").trim()) throw new Error("El corte seleccionado no existe en el vehículo.");
 
-    const completedReplay = findCompletedLikeReplayNoop_(cuts, vehicle, actorKey, vehicleId, corteIndex, utilCol);
+    const replaySnapshot = readLikeActorReplaySnapshot_(actorKey, vehicleId, corteIndex);
+    const completedReplay = findCompletedLikeReplayNoop_(cuts, vehicle, actorKey, vehicleId, corteIndex, utilCol, replaySnapshot);
     if (completedReplay) return completedReplay;
-    const eventReplay = findLikeEventReplayNoop_(cuts, vehicle, actorKey, vehicleId, corteIndex, utilCol);
+    const eventReplay = findLikeEventReplayNoop_(cuts, vehicle, actorKey, vehicleId, corteIndex, utilCol, replaySnapshot);
     if (eventReplay) return eventReplay;
 
     const ledger = ensureFeedbackLikesSheet_();
-    const existingRows = findFeedbackLikeRowsForActor_(ledger, actorKey, vehicleId, corteIndex);
+    const existingRows = replaySnapshot
+        ? replaySnapshot.rows
+        : findFeedbackLikeRowsForActor_(ledger, actorKey, vehicleId, corteIndex);
     if (existingRows.some(item => String(item.row[5] || "") === "event")) {
         return { status: "success", alreadyLiked: true,
             likeCount: getFeedbackLikeCountWithEvents_(cuts, vehicle, ledger, vehicleId, corteIndex, utilCol),
