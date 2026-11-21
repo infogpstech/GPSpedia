@@ -331,3 +331,11 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - `mapInboxFeedbackRow_` acepta el índice opcional; la metadata legacy conserva prioridad. El primer evento equivalente permanece canónico; eventos con hashes distintos se marcan como conflicto por reportId y solo bloquean ese reporte cuando se consulta.
 - No se lee el ledger si no hay reportes propios que necesiten fallback de imagen; las aprobaciones de video tampoco provocan la lectura.
 - Prueba `FeedbackInboxImageEventBatchRead.mjs`: 5/5 PASS; regresión: 281 suites, 3,264 pruebas, 0 fallos; build y health read-only SUCCESS.
+
+
+### P1.5 — FEEDBACK: compartir índice de imágenes también en Inbox administrativo
+
+- `handleGetFeedbackItems` crea el índice de eventos solo cuando la página contiene metadata de reporte sin imagen legacy; el índice se comparte con la comprobación de canonicalización y el mapeo de filas.
+- `findReportByReportId_` e `isCanonicalFeedbackInboxRow_` aceptan el índice opcional, evitando una búsqueda individual por reportId en el ledger de imágenes para cada fila.
+- Los reportes con imagen legacy no generan lectura del ledger. Los hashes contradictorios se aíslan por reportId y se reportan solo cuando se consulta ese reporte; se mantiene el primer evento equivalente.
+- Prueba `FeedbackInboxImageEventBatchRead.mjs`: 6/6 PASS; CI: 281 suites, 3,265 pruebas, 0 fallos; build y health read-only SUCCESS.
