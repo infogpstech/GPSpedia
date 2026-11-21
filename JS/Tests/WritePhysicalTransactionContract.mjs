@@ -35,7 +35,7 @@ test("el opId pending se registra antes de Drive y completed después de persist
     const driveCall = unsafe.indexOf("runWriteDriveWorkOutsideScriptLock_(", pending);
     const completed = unsafe.lastIndexOf('recordOpId(opId, newId, 1, formattedDate, "completed"');
     assert.ok(pending >= 0 && driveCall > pending && completed > driveCall);
-    assert.match(unsafe, /No se reutiliza si falla la fila/);
+    assert.match(unsafe, /no se reutiliza si falla la fila/i);
 });
 
 test("Drive se ejecuta sin lock y luego readquiere fail-fast", () => {
