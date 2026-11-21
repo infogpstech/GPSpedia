@@ -56,13 +56,24 @@ test("un ID que solo coincide como subcadena no se considera el mismo reporte", 
     assert.equal(find(h.sheet), null);
     assert.deepEqual(h.calls, [[2, 8, 1, 1], [2, 8, 1, 1]]);
 });
-test("rechaza duplicados reales de reportId", () => {
-    const metadata = JSON.stringify({ reportId: "REP-1" });
+test("proyecta la primera fila cuando reportId repetido tiene contenido idéntico", () => {
+    const metadata = JSON.stringify({ reportId: "REP-1", vehicleId: "101", userId: "USR-1", corteIndex: 2, activaTestigoMotor: false });
     const h = makeSheet([
         ["F-1", "Ana", "Problema 1", "", "", "", "", metadata],
         ["F-2", "Ana", "Problema 1", "", "", "", "", metadata]
     ]);
-    assert.throws(() => find(h.sheet), /identificador del reporte aparece duplicado/);
+    const result = find(h.sheet);
+    assert.equal(result.rowIndex, 2);
+    assert.equal(result.duplicateCount, 1);
+});
+test("rechaza reportId repetido con contenido contradictorio", () => {
+    const first = JSON.stringify({ reportId: "REP-1", vehicleId: "101", userId: "USR-1", corteIndex: 2, activaTestigoMotor: false });
+    const second = JSON.stringify({ reportId: "REP-1", vehicleId: "202", userId: "USR-1", corteIndex: 2, activaTestigoMotor: false });
+    const h = makeSheet([
+        ["F-1", "Ana", "Problema 1", "", "", "", "", first],
+        ["F-2", "Ana", "Problema 1", "", "", "", "", second]
+    ]);
+    assert.throws(() => find(h.sheet), /contenido contradictorio/);
 });
 test("no descarga la tabla completa de Feedbacks para localizar un reporte", () => {
     const h = makeSheet([["F-1", "Ana", "Problema", "", "", "", "", JSON.stringify({ reportId: "REP-1" })]]);
