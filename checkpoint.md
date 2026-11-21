@@ -1209,3 +1209,11 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - `ServiceBrowserTrafficContract.mjs` cubre agregación y propagación de tamaños. GitHub Actions del HEAD `b41627adb0766cf59dca8bfa5739b6e4f061fa02` estaba en ejecución al registrar; no declarar PASS hasta consultar resultados para el HEAD final.
 - La medición representa cuerpos HTTP UTF-8, no overhead de transporte, recursos multimedia directos ni lecturas/escrituras internas Sheets/Drive. La latencia registrada sigue siendo total navegador-request.
 - P0.2 sigue pendiente para ejecutar escenarios reproducibles y calcular p50/p95 por flujo en Beta autorizada.
+
+
+## Seguimiento — regresión de contrato del router tras instrumentación (2026-11-21)
+
+- Primera ejecución de CI sobre la instrumentación: 261 suites, 3,030 pruebas aprobadas y una suite fallida. El fallo no fue funcional: `TermsAcceptance.js` esperaba encontrar la serialización inline `JSON.stringify({ action, payload })`; P0.2 ahora serializa el mismo objeto una sola vez en `requestBody` para medir bytes y reutilizarlo en fetch.
+- Se actualizó la expectativa estática de `TermsAcceptance.js` para validar `const requestBody = JSON.stringify(...)` y `body: requestBody`, sin cambiar la lógica de aceptación de términos.
+- Corrección publicada en commit `521120e98a89d829e8e464ba635426a6da0a4198`. La nueva ejecución de service-tests/build/health se encontraba en curso al registrar. No marcar aún como aprobada.
+- El resto de la regresión observada antes de la única suite fallida había aprobado; el resumen fue 3,030 pruebas aprobadas, 1 suite pendiente/fallida por contrato obsoleto.
