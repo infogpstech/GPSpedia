@@ -4537,10 +4537,15 @@ function readTutorialTitleEvents_(sheet) {
             throw new Error("TutorialTitleEvents contiene una fila incompatible; requiere revisión.");
         }
         const item = { rowNumber: index + 2, operationId, eventHash, payloadHash, tutorialId, action, titleKey, previousTitleKey };
+        if (buildTutorialTitleEventHash_(item) !== eventHash) {
+            throw new Error("TutorialTitleEvents contiene un eventHash que no coincide con su contenido; requiere revisión.");
+        }
         if (operations.has(operationId)) {
             const canonical = operations.get(operationId);
-            if (canonical.eventHash !== eventHash) canonical.conflictingPayloadCount = (canonical.conflictingPayloadCount || 0) + 1;
-            else canonical.duplicateCount = (canonical.duplicateCount || 0) + 1;
+            if (canonical.eventHash !== eventHash) {
+                throw new Error("TutorialTitleEvents contiene el mismo operationId con eventos contradictorios; requiere reconciliación.");
+            }
+            canonical.duplicateCount = (canonical.duplicateCount || 0) + 1;
             return;
         }
         operations.set(operationId, item);
