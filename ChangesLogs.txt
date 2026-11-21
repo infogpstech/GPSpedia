@@ -513,3 +513,8 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - Se confirmó que el navegador consulta el feed incremental por FEEDBACK y FEEDBACK realiza un segundo GET al Coordinator. El Coordinator ya expone un feed público directo; se registró evaluar la eliminación del salto FEEDBACK conservando CORS, telemetría y controles de exposición.
 - Se verificó que CATALOG deshabilitó la escritura del snapshot CacheService por superar 100 KB; las lecturas sin caché reconstruyen el catálogo desde varias hojas/eventos.
 - Se añadieron tareas para consultas dirigidas y caché granular. No se cambió ningún endpoint ni código productivo.
+
+
+2026-11-21 — IDENTIFICACIÓN DE REFRESCOS REDUNDANTES TRAS SOLICITUD DE VÍDEO
+- Se confirmó que el envío de vídeo crea una solicitud pending en FEEDBACK, sin mutar ni publicar CATALOG; sin embargo, los formularios de corte y tutorial ejecutan `getCatalogData` en `onSuccess`.
+- Se registró retirar ambos snapshots completos y cubrir el contrato de aprobación pendiente. No se modificó código en esta fase.
