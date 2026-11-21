@@ -2438,6 +2438,16 @@ function findFeedbackReportImageEventByReportId_(reportId) {
     return canonical;
 }
 
+function isFeedbackReportImageFileReferenced_(fileId) {
+    const id = String(fileId || "").trim();
+    const sheet = getSpreadsheet().getSheetByName(FEEDBACK_REPORT_IMAGE_EVENTS_SHEET);
+    if (!id || !sheet || sheet.getLastRow() < 2) return false;
+    const candidates = sheet.getRange(2, 4, sheet.getLastRow() - 1, 1)
+        .createTextFinder(id).matchCase(true).matchEntireCell(true).findAll();
+    return candidates.some(candidate =>
+        String(sheet.getRange(candidate.getRow(), 4).getValue() || "").trim() === id);
+}
+
 function getFeedbackReportImageMetadata_(reportId, baseMetadata) {
     const legacy = normalizeReportImageMetadata_(baseMetadata);
     if (legacy) return legacy;
@@ -2533,159 +2543,144 @@ function handleReportProblem(payload) {
     const hasReportContext = payload.reportId !== undefined || payload.corteIndex !== undefined || payload.activaTestigoMotor !== undefined;
     let reportContext = null;
     if (hasReportContext) {
-        const reportId=String(payload.reportId||"").trim(), corteIndex=Number(payload.corteIndex);
+        const reportId = String(payload.reportId || "").trim(), corteIndex = Number(payload.corteIndex);
         if (!/^REP-[A-Za-z0-9_-]{1,80}$/.test(reportId)) throw new Error("El identificador del reporte no tiene un formato válido.");
-        if (!Number.isInteger(corteIndex)||corteIndex<1||corteIndex>3) throw new Error("El número de corte no es válido.");
-        if (typeof payload.activaTestigoMotor!=="boolean") throw new Error("El indicador del testigo del motor debe ser booleano.");
-        reportContext={reportId,vehicleId:String(vehicleId),corteIndex,activaTestigoMotor:payload.activaTestigoMotor};
+        if (!Number.isInteger(corteIndex) || corteIndex < 1 || corteIndex > 3) throw new Error("El número de corte no es válido.");
+        if (typeof payload.activaTestigoMotor !== "boolean") throw new Error("El indicador del testigo del motor debe ser booleano.");
+        reportContext = { reportId, vehicleId: String(vehicleId), corteIndex, activaTestigoMotor: payload.activaTestigoMotor };
     }
-    const validTicketCategories = new Set(["incidencia_tecnica","instalacion","acceso","contenido","otro"]);
+    const validTicketCategories = new Set(["incidencia_tecnica", "instalacion", "acceso", "contenido", "otro"]);
     const ticketCategory = String(payload.category === undefined ? "incidencia_tecnica" : payload.category).trim().toLowerCase();
     if (!validTicketCategories.has(ticketCategory)) throw new Error("La categoría del reporte no es válida.");
     const defaultTicketSubject = reportContext
         ? "Reporte técnico de vehículo " + String(vehicleId) + " — Corte #" + String(reportContext.corteIndex)
         : "Reporte en Vehículo #" + String(vehicleId);
     const ticketSubject = normalizeFeedbackText_(payload.subject === undefined || payload.subject === null || payload.subject === ""
-        ? defaultTicketSubject : payload.subject,"El asunto del reporte",200);
+        ? defaultTicketSubject : payload.subject, "El asunto del reporte", 200);
     if (!reportContext && (payload.category !== undefined || payload.subject !== undefined)) {
         throw new Error("La categoría y el asunto requieren un reporte individual con identificador.");
     }
     if (reportContext) { reportContext.category = ticketCategory; reportContext.subject = ticketSubject; }
-    const imageAttachment=validateReportImageAttachment_(payload.imageAttachment);
-    if(imageAttachment&&!reportContext) throw new Error("El adjunto requiere un identificador de reporte individual válido.");
-    const feedbackSheet=getSafeSheet(SHEET_NAMES.FEEDBACKS);
-    if(!feedbackSheet) throw new Error("Hoja Feedbacks no encontrada.");
-    // Resolver reintentos ya registrados antes de subir una imagen o adquirir el lock.
-    if(reportContext) {
-        const preflightMetadataColumn=getReportMetadataColumn(feedbackSheet);
-        if(preflightMetadataColumn) {
-            const preflightExisting=findReportByReportId_(feedbackSheet,reportContext.reportId,preflightMetadataColumn);
-            if(preflightExisting) {
-                const sameReport=String(preflightExisting.row[COLS_FEEDBACKS.Usuario-1]||"")===String(userName)&&
-                    String(preflightExisting.row[COLS_FEEDBACKS.ID_vehiculo-1]||"")===String(vehicleId)&&
-                    String(preflightExisting.row[COLS_FEEDBACKS.Problema-1]||"")===normalizedProblemText&&
-                    String(preflightExisting.metadata.vehicleId||"")===String(vehicleId)&&Number(preflightExisting.metadata.corteIndex)===reportContext.corteIndex&&
-                    preflightExisting.metadata.activaTestigoMotor===reportContext.activaTestigoMotor&&
-                    String(preflightExisting.metadata.category || "incidencia_tecnica")===reportContext.category&&
-                    String(preflightExisting.metadata.subject || defaultTicketSubject)===reportContext.subject&&
-                    (!preflightExisting.metadata.userId||String(preflightExisting.metadata.userId)===String(userId));
-                if(!sameReport) throw new Error("El identificador del reporte ya pertenece a un reporte distinto; no se creó otro registro.");
-                const oldImage=normalizeReportImageMetadata_(preflightExisting.metadata);
-                if(imageAttachment && oldImage) {
-                    if(oldImage.imageSha256!==imageAttachment.sha256) throw new Error("El reporte ya tiene una imagen distinta asociada; no se reemplazó.");
-                    return {status:"success",message:"El reporte ya estaba registrado; se devolvió el identificador existente.",
-                        reportId:reportContext.reportId,category:ticketCategory,subject:ticketSubject,
-                        alreadyReported:true,imageAttached:Boolean(oldImage.imageUrl),imageUrl:oldImage.imageUrl};
-                }
-                if(!imageAttachment) {
-                    return {status:"success",message:"El reporte ya estaba registrado; se devolvió el identificador existente.",
-                        reportId:reportContext.reportId,category:ticketCategory,subject:ticketSubject,
-                        alreadyReported:true,imageAttached:Boolean(oldImage&&oldImage.imageUrl),imageUrl:oldImage?oldImage.imageUrl:""};
-                }
-                // Si el reporte aún no tiene imagen, continuar para adjuntarla bajo lock y revalidar.
-            }
-        }
-    }
-    const lock=LockService.getScriptLock();
-    let lockAcquired=false;
-    let generatedReportId="",duplicateReport=false,uploadedImage=null,resolvedImageUrl="";
-    let pendingSheet=null,pendingMetadataColumn=0,pendingExistingMetadata=null,appendAttempted=false;
-    const releaseLockForDriveWork = () => { if (lockAcquired) { lock.releaseLock(); lockAcquired = false; } };
+    const imageAttachment = validateReportImageAttachment_(payload.imageAttachment);
+    if (imageAttachment && !reportContext) throw new Error("El adjunto requiere un identificador de reporte individual válido.");
+    const feedbackSheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
+    if (!feedbackSheet) throw new Error("Hoja Feedbacks no encontrada.");
+
+    const matchesRequest = existing => String(existing.row[COLS_FEEDBACKS.Usuario - 1] || "") === String(userName) &&
+        String(existing.row[COLS_FEEDBACKS.ID_vehiculo - 1] || "") === String(vehicleId) &&
+        String(existing.row[COLS_FEEDBACKS.Problema - 1] || "") === normalizedProblemText &&
+        String(existing.metadata.vehicleId || "") === String(vehicleId) &&
+        Number(existing.metadata.corteIndex) === reportContext.corteIndex &&
+        existing.metadata.activaTestigoMotor === reportContext.activaTestigoMotor &&
+        String(existing.metadata.category || "incidencia_tecnica") === reportContext.category &&
+        String(existing.metadata.subject || defaultTicketSubject) === reportContext.subject &&
+        (!existing.metadata.userId || String(existing.metadata.userId) === String(userId));
+
+    let uploadedImage = null;
+    let imageEventAttempted = false;
     try {
-        // La transferencia Drive ocurre antes del bloqueo breve de escritura en Sheets.
-        if(imageAttachment) uploadedImage=saveReportImageAttachment_(imageAttachment,reportContext.reportId);
-        acquireFeedbackScriptLock_(lock); lockAcquired=true;
-        const sheet=feedbackSheet; pendingSheet=sheet;
-        const metadataColumn=reportContext?ensureReportMetadataColumn(sheet):0; pendingMetadataColumn=metadataColumn;
-        if(reportContext) {
-            const existing=findReportByReportId_(sheet,reportContext.reportId,metadataColumn);
-            if(existing) {
-                const sameReport=String(existing.row[COLS_FEEDBACKS.Usuario-1]||"")===String(userName)&&
-                    String(existing.row[COLS_FEEDBACKS.ID_vehiculo-1]||"")===String(vehicleId)&&
-                    String(existing.row[COLS_FEEDBACKS.Problema-1]||"")===normalizedProblemText&&
-                    String(existing.metadata.vehicleId||"")===String(vehicleId)&&Number(existing.metadata.corteIndex)===reportContext.corteIndex&&
-                    existing.metadata.activaTestigoMotor===reportContext.activaTestigoMotor&&
-                    String(existing.metadata.category || "incidencia_tecnica")===reportContext.category&&
-                    String(existing.metadata.subject || defaultTicketSubject)===reportContext.subject&&
-                    (!existing.metadata.userId||String(existing.metadata.userId)===String(userId));
-                if(!sameReport) throw new Error("El identificador del reporte ya pertenece a un reporte distinto; no se creó otro registro.");
-                const oldImage=normalizeReportImageMetadata_(existing.metadata);
-                if(imageAttachment) {
-                    if(oldImage) {
-                        if(oldImage.imageSha256!==imageAttachment.sha256) throw new Error("El reporte ya tiene una imagen distinta asociada; no se reemplazó.");
-                        resolvedImageUrl=oldImage.imageUrl;
-                        releaseLockForDriveWork();
-                        trashReportImageUpload_(uploadedImage); uploadedImage=null;
-                    } else {
-                        if(!uploadedImage) throw new Error("No se pudo preparar la imagen del reporte.");
-                        pendingExistingMetadata={rowIndex:existing.rowIndex,column:metadataColumn,value:JSON.stringify(existing.metadata)};
-                        sheet.getRange(existing.rowIndex,metadataColumn).setValue(JSON.stringify(Object.assign({},existing.metadata,uploadedImage.metadata)));
-                        SpreadsheetApp.flush(); resolvedImageUrl=uploadedImage.metadata.imageUrl;
-                        uploadedImage=null; pendingExistingMetadata=null;
-                    }
-                } else if(oldImage) resolvedImageUrl=oldImage.imageUrl;
-                generatedReportId=reportContext.reportId; duplicateReport=true;
+        if (reportContext) {
+            const existingMetadataColumn = getReportMetadataColumn(feedbackSheet);
+            const existing = existingMetadataColumn
+                ? findReportByReportId_(feedbackSheet, reportContext.reportId, existingMetadataColumn) : null;
+            if (existing) {
+                if (!matchesRequest(existing)) throw new Error("El identificador del reporte ya pertenece a un reporte distinto; no se creó otro registro.");
+                const oldImage = normalizeReportImageMetadata_(existing.metadata);
+                if (imageAttachment && oldImage && oldImage.imageSha256 !== imageAttachment.sha256) {
+                    throw new Error("El reporte ya tiene una imagen distinta asociada; no se reemplazó.");
+                }
+                if (imageAttachment && !oldImage) {
+                    uploadedImage = saveReportImageAttachment_(imageAttachment, reportContext.reportId);
+                    imageEventAttempted = true;
+                    const event = appendFeedbackReportImageEvent_(reportContext.reportId, userId, uploadedImage);
+                    uploadedImage = null;
+                    return {
+                        status: "success", message: "El reporte ya estaba registrado; se asoció la imagen pendiente.",
+                        reportId: reportContext.reportId, category: ticketCategory, subject: ticketSubject,
+                        alreadyReported: true, imageAttached: true, imageUrl: event.metadata.imageUrl
+                    };
+                }
+                return {
+                    status: "success", message: "El reporte ya estaba registrado; se devolvió el identificador existente.",
+                    reportId: reportContext.reportId, category: ticketCategory, subject: ticketSubject,
+                    alreadyReported: true, imageAttached: Boolean(oldImage && oldImage.imageUrl),
+                    imageUrl: oldImage ? oldImage.imageUrl : ""
+                };
             }
         }
-        if(!duplicateReport) {
-            const lastRow=sheet.getLastRow();
-            const FORMULA_ROW=2,lastCol=reportContext?Math.max(sheet.getLastColumn(),metadataColumn,8):(sheet.getLastColumn()||8);
-            // El índice previo solo se usa para formato; la fila persistida se localiza por ID.
-            if(lastRow>=FORMULA_ROW) copyRowPresentationOnly_(sheet,FORMULA_ROW,lastRow+1,lastCol);
-            if(imageAttachment && !uploadedImage) throw new Error("No se pudo preparar la imagen del reporte.");
-            const reservedId=getNextFormulaBasedId_(sheet,COLS_FEEDBACKS.ID);
-            const reportRow=new Array(lastCol).fill("");
-            reportRow[COLS_FEEDBACKS.ID-1]=reservedId;
-            reportRow[COLS_FEEDBACKS.Usuario-1]=userName;
-            reportRow[COLS_FEEDBACKS.ID_vehiculo-1]=vehicleId;
-            reportRow[COLS_FEEDBACKS.Problema-1]=normalizedProblemText;
-            if(reportContext) {
-                const metadata={reportId:reportContext.reportId,userId:String(userId),vehicleId:String(vehicleId),
-                    corteIndex:reportContext.corteIndex,activaTestigoMotor:reportContext.activaTestigoMotor,
-                    category:reportContext.category,subject:reportContext.subject};
-                if(uploadedImage) Object.assign(metadata,uploadedImage.metadata);
-                reportRow[metadataColumn-1]=JSON.stringify(metadata);
-                if(uploadedImage) resolvedImageUrl=uploadedImage.metadata.imageUrl;
-            }
-            // appendRow conserva el registro completo en una sola escritura. Si la
-            // confirmación falla después del intento, se conserva la imagen para reconciliar.
-            appendAttempted=true;
-            sheet.appendRow(reportRow);
-            SpreadsheetApp.flush();
-            const persistedRow=findFeedbackRowById_(sheet,reservedId,lastCol);
-            const savedRow=persistedRow ? persistedRow.row : [];
-            const rowConfirmed=Boolean(persistedRow) && String(savedRow[COLS_FEEDBACKS.ID-1]||"").trim()===reservedId &&
-                String(savedRow[COLS_FEEDBACKS.Usuario-1]||"")===String(userName) &&
-                String(savedRow[COLS_FEEDBACKS.ID_vehiculo-1]||"")===String(vehicleId) &&
-                String(savedRow[COLS_FEEDBACKS.Problema-1]||"")===normalizedProblemText &&
-                (!reportContext || String(savedRow[metadataColumn-1]||"")===String(reportRow[metadataColumn-1]||""));
-            if(!rowConfirmed) {
-                const pending=new Error("No se pudo confirmar la fila completa del reporte; se conserva para reconciliación.");
-                pending.code="FEEDBACK_REPORT_APPEND_UNCONFIRMED";
-                throw pending;
-            }
-            generatedReportId=reportContext?reportContext.reportId:"REP-"+reservedId;
-            uploadedImage=null;
+
+        const metadataColumn = reportContext ? ensureReportMetadataColumn(feedbackSheet) : 0;
+        if (imageAttachment) uploadedImage = saveReportImageAttachment_(imageAttachment, reportContext.reportId);
+        const lastRow = feedbackSheet.getLastRow();
+        const lastColumn = reportContext
+            ? Math.max(feedbackSheet.getLastColumn(), metadataColumn, 8)
+            : (feedbackSheet.getLastColumn() || 8);
+        if (lastRow >= 2) copyRowPresentationOnly_(feedbackSheet, 2, lastRow + 1, lastColumn);
+        const reservedId = getNextFormulaBasedId_(feedbackSheet, COLS_FEEDBACKS.ID);
+        const reportRow = new Array(lastColumn).fill("");
+        reportRow[COLS_FEEDBACKS.ID - 1] = reservedId;
+        reportRow[COLS_FEEDBACKS.Usuario - 1] = userName;
+        reportRow[COLS_FEEDBACKS.ID_vehiculo - 1] = vehicleId;
+        reportRow[COLS_FEEDBACKS.Problema - 1] = normalizedProblemText;
+        if (reportContext) {
+            const metadata = {
+                reportId: reportContext.reportId, userId: String(userId), vehicleId: String(vehicleId),
+                corteIndex: reportContext.corteIndex, activaTestigoMotor: reportContext.activaTestigoMotor,
+                category: reportContext.category, subject: reportContext.subject
+            };
+            reportRow[metadataColumn - 1] = JSON.stringify(metadata);
         }
-    } catch(error) {
-        let rollbackConfirmed = true;
-        if(pendingSheet&&pendingExistingMetadata) {
-            try { pendingSheet.getRange(pendingExistingMetadata.rowIndex,pendingExistingMetadata.column).setValue(pendingExistingMetadata.value); SpreadsheetApp.flush(); }
-            catch(rollbackError) { rollbackConfirmed = false; console.error("No se pudo restaurar metadata previa del reporte:",rollbackError); }
+        feedbackSheet.appendRow(reportRow);
+        SpreadsheetApp.flush();
+        const persistedRow = findFeedbackRowById_(feedbackSheet, reservedId, lastColumn);
+        const savedRow = persistedRow ? persistedRow.row : [];
+        if (!persistedRow || String(savedRow[COLS_FEEDBACKS.Usuario - 1] || "") !== String(userName) ||
+            String(savedRow[COLS_FEEDBACKS.ID_vehiculo - 1] || "") !== String(vehicleId) ||
+            String(savedRow[COLS_FEEDBACKS.Problema - 1] || "") !== normalizedProblemText ||
+            (reportContext && String(savedRow[metadataColumn - 1] || "") !== String(reportRow[metadataColumn - 1] || ""))) {
+            throw new Error("No se pudo confirmar la fila completa del reporte; se conserva para reconciliación.");
         }
-        const uploadMayBeReferenced = appendAttempted || (Boolean(pendingExistingMetadata) && !rollbackConfirmed);
-        if(uploadedImage && !uploadMayBeReferenced) {
-            releaseLockForDriveWork();
-            trashReportImageUpload_(uploadedImage);
-        } else if(uploadedImage) {
-            console.error("La imagen del reporte se conserva porque la escritura pudo quedar persistida y requiere reconciliación.");
+
+        let canonicalReport = null, duplicateReport = false;
+        if (reportContext) {
+            canonicalReport = findReportByReportId_(feedbackSheet, reportContext.reportId, metadataColumn);
+            if (!canonicalReport || !matchesRequest(canonicalReport)) {
+                throw new Error("El reporte persistido no coincide con la identidad lógica solicitada; requiere revisión.");
+            }
+            duplicateReport = Number(canonicalReport.rowIndex) !== Number(persistedRow.rowIndex);
+        }
+
+        let resolvedImageUrl = "";
+        if (uploadedImage) {
+            imageEventAttempted = true;
+            const event = appendFeedbackReportImageEvent_(reportContext.reportId, userId, uploadedImage);
+            resolvedImageUrl = event.metadata.imageUrl;
+            uploadedImage = null;
+        } else if (canonicalReport) {
+            const image = normalizeReportImageMetadata_(canonicalReport.metadata);
+            resolvedImageUrl = image ? image.imageUrl : "";
+        }
+
+        if (!duplicateReport) logUserActivity(userId, userName, "report_problem", vehicleId, normalizedProblemText);
+        return {
+            status: "success",
+            message: duplicateReport ? "El reporte ya estaba registrado; se devolvió el identificador existente." : "Problema reportado.",
+            reportId: reportContext ? reportContext.reportId : "REP-" + reservedId,
+            category: ticketCategory, subject: ticketSubject, alreadyReported: duplicateReport,
+            imageAttached: Boolean(resolvedImageUrl), imageUrl: resolvedImageUrl
+        };
+    } catch (error) {
+        if (uploadedImage) {
+            let referenced = false;
+            try { referenced = imageEventAttempted && isFeedbackReportImageFileReferenced_(uploadedImage.metadata.imageFileId); }
+            catch (lookupError) { referenced = true; }
+            if (!referenced) trashReportImageUpload_(uploadedImage);
+            else console.error("La imagen del reporte se conserva porque su evento pudo persistir y requiere reconciliación.");
         }
         throw error;
-    } finally { if(lockAcquired) lock.releaseLock(); }
-    if(!duplicateReport) logUserActivity(userId,userName,"report_problem",vehicleId,normalizedProblemText);
-    return {status:"success",message:duplicateReport?"El reporte ya estaba registrado; se devolvió el identificador existente.":"Problema reportado.",
-        reportId:generatedReportId,category:ticketCategory,subject:ticketSubject,alreadyReported:duplicateReport,imageAttached:Boolean(resolvedImageUrl),imageUrl:resolvedImageUrl};
+    }
 }
+
 function enforceFeedbackRateLimit_(scope, limit, windowSeconds) {
     const cache = CacheService.getScriptCache();
     const bucket = Math.floor(Date.now() / (windowSeconds * 1000));
