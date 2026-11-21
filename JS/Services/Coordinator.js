@@ -638,27 +638,31 @@ function createSharedMutationCoordinator_(dependencies) {
         const tokens = Array.from(new Set((Array.isArray(sessionTokens) ? sessionTokens : [])
             .map(token => String(token || "")).filter(Boolean)));
         if (!tokens.length) return { primedServices: [], failedServices: [] };
-        const requests = [], requestTargets = [], failedServices = [];
+        const tokenBatches = [];
+        for (let offset = 0; offset < tokens.length; offset += 25) tokenBatches.push(tokens.slice(offset, offset + 25));
+        const requests = [], requestMeta = [], failed = new Set();
         targets.forEach(target => {
             const url = String(properties.getProperty("GPSpedia_SERVICE_URL_" + target) || "").trim();
             const secret = String(properties.getProperty("GPSpedia_COORDINATOR_SECRET_" + target) || "");
             if (!url.startsWith("https://script.google.com/macros/s/") || !url.endsWith("/exec") ||
                 secret.length < 32) {
-                failedServices.push(target);
+                failed.add(target);
                 return;
             }
-            requests.push({
-                url,
-                method: "post",
-                contentType: "application/json",
-                muteHttpExceptions: true,
-                followRedirects: true,
-                payload: JSON.stringify({
-                    action: "__primeSessionActorCache",
-                    payload: { secret, userId, role, fullName, epoch, sessionTokens: tokens }
-                })
+            tokenBatches.forEach((batch, batchIndex) => {
+                requests.push({
+                    url,
+                    method: "post",
+                    contentType: "application/json",
+                    muteHttpExceptions: true,
+                    followRedirects: true,
+                    payload: JSON.stringify({
+                        action: "__primeSessionActorCache",
+                        payload: { secret, userId, role, fullName, epoch, sessionTokens: batch }
+                    })
+                });
+                requestMeta.push({ target, batchIndex, expected: batch.length });
             });
-            requestTargets.push(target);
         });
         if (!requests.length) return { primedServices: [], failedServices: targets.slice() };
         let responses = [];
@@ -667,22 +671,29 @@ function createSharedMutationCoordinator_(dependencies) {
             else if (typeof fetch === "function") responses = requests.map(request => fetch(request.url, request));
             else return { primedServices: [], failedServices: targets.slice() };
         } catch (error) {
-            return { primedServices: [], failedServices: Array.from(new Set(failedServices.concat(requestTargets))) };
+            return { primedServices: [], failedServices: Array.from(new Set(Array.from(failed).concat(requestMeta.map(item => item.target)))) };
         }
-        const primedServices = [];
+        const succeededBatches = {};
+        targets.forEach(target => { succeededBatches[target] = 0; });
         responses = Array.isArray(responses) ? responses : [];
-        requestTargets.forEach((target, index) => {
+        requestMeta.forEach((meta, index) => {
             const response = responses[index];
             let result = null;
             try { result = JSON.parse(response && response.getContentText ? response.getContentText() : ""); } catch (error) {}
             const status = response && typeof response.getResponseCode === "function" ? response.getResponseCode() : 0;
-            if (status >= 200 && status < 300 && result && result.status === "success" && result.primed === tokens.length) {
-                primedServices.push(target);
+            if (status >= 200 && status < 300 && result && result.status === "success" && result.primed === meta.expected) {
+                succeededBatches[meta.target]++;
             } else {
-                failedServices.push(target);
+                failed.add(meta.target);
             }
         });
-        return { primedServices, failedServices: Array.from(new Set(failedServices)) };
+        const primedServices = targets.filter(target =>
+            !failed.has(target) && succeededBatches[target] === tokenBatches.length
+        );
+        targets.forEach(target => {
+            if (!primedServices.includes(target)) failed.add(target);
+        });
+        return { primedServices, failedServices: Array.from(failed) };
     }
 
     function syncUserSessions_(service, operation, payload) {
