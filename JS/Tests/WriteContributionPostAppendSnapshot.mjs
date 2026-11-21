@@ -17,7 +17,7 @@ const read = block("readVehicleContributionLedgerRows_");
 
 assert.equal((append.match(/readVehicleContributionLedgerRows_\(/g) || []).length, 1,
     "El append debe leer una sola vez el ledger para calcular slot y conflicto VIN posteriores.");
-assert.match(append, /getVehicleContributionCutSlotIndex_\(spreadsheet, snapshot, event\.eventId, postAppendLedgerRows\)/);
+assert.match(append, /getVehicleContributionCutSlotIndex_\(spreadsheet, snapshot, event\.eventId, postAppendLedgerRows, appendLedgerSheet\)/);
 assert.match(append, /findVehicleContributionVinConflict_\(spreadsheet, acceptedVinPrefix, vehicleId, postAppendLedgerRows\)/);
 assert.equal((recovery.match(/readVehicleContributionLedgerRows_\(/g) || []).length, 1,
     "La recuperación debe reutilizar una sola lectura para slot y conflicto VIN.");
