@@ -1035,3 +1035,10 @@ Adenda — FEEDBACK confirmación de sugerencias
 - Severidad: alta por concurrencia e integridad de archivos. Estado: CORREGIDO LOCALMENTE; CI `44875140437` SUCCESS (258 suites, 3094 pruebas, 0 fallos), health read-only y Pages SUCCESS.
 - Validación diferida: concurrencia real de Sheets/Drive y recuperación en proyecto Beta aislado. No se desplegó Apps Script ni se modificaron datos productivos.
 ================================================================================
+
+
+2026-11-21 — Tutoriales: auditoría de concurrencia
+- Alcance: handleAddTutorial, handleUpdateTutorialItem, lectores CATALOG, feed de cambios y aprobaciones de vídeo.
+- Riesgos: título duplicado en altas concurrentes, pérdida de cambios en ediciones simultáneas, duplicados de ID, y reversión de campos al convivir con aprobación de vídeo.
+- Auditoría técnica: AUDITORIA_TUTORIALES_APPEND_ONLY_2026-11-21.md. Sin cambios funcionales ni despliegue.
+================================================================================
