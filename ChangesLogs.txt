@@ -447,3 +447,8 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - handleAddOrUpdateCutLocked dejó de leer todas las filas de Idempotencia para una operación individual. Ahora construye un snapshot mínimo con readIdempotenciaEntryByOpId_, que valida el esquema y detecta duplicados del opId activo.
 - recordOpId conserva la relectura focalizada y los checks de concurrencia antes de cambiar el estado. El lock físico se mantiene.
 - WriteIdempotencyTargetedRead: 4/4 PASS en harness Node.js aislado; pendiente CI/checkout completo. Sin cambios productivos.
+
+
+2026-11-21 — WRITE: VERSIONADO DE CATÁLOGO FUERA DEL LOCK
+- Se eliminó el contador PropertiesService WRITE y se usa nextWriteCatalogSourceVersion_ basado en Date.now(). La versión de alta nueva se asigna después de liberar ScriptLock; la ruta legacy suplementaria usa el mismo helper.
+- Coordinator convierte sourceVersion repetida u obsoleta en reset/reconstrucción. WriteCatalogPublicationIsolation: 7/7 PASS en harness Node.js aislado; pendiente CI/checkout completo. Sin cambios productivos.
