@@ -6436,7 +6436,7 @@ function validateLogoImagePayload_(fileData, mimeType) {
             .replace(String.fromCharCode(0xFEFF), "").trim().toLowerCase();
         const svgStart = svgText.indexOf("<svg");
         const svgNext = svgStart >= 0 ? svgText.charAt(svgStart + 4) : "";
-        const validRoot = svgStart >= 0 && (svgNext === ">" || /\\s/.test(svgNext));
+        const validRoot = svgStart >= 0 && (svgNext === ">" || [" ", String.fromCharCode(9), String.fromCharCode(10), String.fromCharCode(13)].includes(svgNext));
         const validPrefix = svgStart === 0 || svgText.startsWith("<?xml") || svgText.startsWith("<!--");
         signatureValid = validRoot && validPrefix;
     }
