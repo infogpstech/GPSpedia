@@ -51,7 +51,7 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 ### P0 — mapa de llamadas y medición
 - [x] P0.1 — Mapa estático navegador → endpoint → dispatcher → dependencias de los ocho servicios documentado en `MAPA_LLAMADAS_DEPENDENCIAS_P0_2026-11-21.md`.
 - [x] Inventario estático inicial de `UrlFetchApp.fetch`, `fetchAll`, wrappers, `routeAction`, reintentos, publicaciones y llamadas entre proyectos; los conteos de wrappers no se interpretan como requests por interacción.
-- [ ] Establecer línea base de requests, bytes, p50/p95, lecturas/escrituras y esperas para catálogo, búsqueda, detalle, aportes, Inbox, imágenes y vídeos.
+- [ ] Ejecutar línea base por flujo en navegador/Beta: requests, bytes, p50/p95, lecturas/escrituras y esperas para catálogo, búsqueda, detalle, aportes, Inbox, imágenes y vídeos. [x] Instrumentación local del router para bytes UTF-8 de request/response y duración por intento; CI en curso.
 - [ ] Revisar telemetría para evitar viajes de red, locks, escrituras o esperas en acciones ordinarias.
 - [ ] Completar matriz del flujo de catálogo: snapshot/reset, feed incremental, refresh post-edición, caché local y sincronización PyS.
 
