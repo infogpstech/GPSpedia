@@ -1389,6 +1389,31 @@ function countVerifiedPositiveYearSuggestionVotes_(rows, vehicleId, year, actorC
     return positiveVotes;
 }
 
+function buildFeedbackYearApplicationId_(details) {
+    const input = details || {};
+    const canonical = JSON.stringify({
+        vehicleId: String(input.vehicleId || "").trim(),
+        year: Number(input.year),
+        previousFrom: Number(input.previousFrom),
+        previousTo: Number(input.previousTo),
+        targetFrom: Number(input.targetFrom),
+        targetTo: Number(input.targetTo),
+        previousRawFrom: input.previousRawFrom == null ? "" : String(input.previousRawFrom),
+        previousSourceFromEventId: String(input.previousSourceFromEventId || "").trim(),
+        previousRawTo: input.previousRawTo == null ? "" : String(input.previousRawTo),
+        previousSourceToEventId: String(input.previousSourceToEventId || "").trim()
+    });
+    if (!/^[1-9]\\d{0,14}$/.test(input.vehicleId == null ? "" : String(input.vehicleId).trim()) ||
+        ![input.year, input.previousFrom, input.previousTo, input.targetFrom, input.targetTo].every(value => Number.isFinite(Number(value)))) {
+        throw new Error("No se puede construir una identidad estable para la aplicación de año.");
+    }
+    const digest = Utilities.computeDigest(
+        Utilities.DigestAlgorithm.SHA_256, canonical, Utilities.Charset.UTF_8
+    );
+    const hex = digest.map(value => ("0" + (value & 255).toString(16)).slice(-2)).join("");
+    return "YSA-" + hex;
+}
+
 function getFeedbackYearApplicationsSheet_(createIfMissing) {
     const headers = [
         "operationId", "vehicleId", "year", "previousFrom", "previousTo",
@@ -1432,11 +1457,28 @@ function findPendingFeedbackYearApplication_(vehicleId) {
             matches.push({ rowIndex: i + 1, row });
         }
     }
-    if (matches.length > 1) {
-        throw new Error("Hay varias aplicaciones de año pendientes para el mismo vehículo; requiere revisión manual.");
-    }
     if (!matches.length) return null;
-    const row = matches[0].row;
+    const byOperation = new Map();
+    matches.forEach(entry => {
+        const operationId = String(entry.row[0] || "").trim();
+        if (!byOperation.has(operationId)) byOperation.set(operationId, []);
+        byOperation.get(operationId).push(entry);
+    });
+    if (byOperation.size > 1) {
+        throw new Error("Hay propuestas de ampliación distintas pendientes para el mismo vehículo; requiere revisión manual.");
+    }
+    const duplicateEntries = Array.from(byOperation.values())[0];
+    const canonical = duplicateEntries[0].row;
+    const sameProposal = entry => [1, 2, 3, 4, 5, 6, 12, 13, 14, 15].every(index =>
+        String(entry.row[index] == null ? "" : entry.row[index]) ===
+        String(canonical[index] == null ? "" : canonical[index])
+    );
+    if (!duplicateEntries.every(sameProposal)) {
+        throw new Error("La misma identidad de aplicación contiene propuestas distintas; requiere revisión manual.");
+    }
+    const selected = duplicateEntries.reduce((best, entry) =>
+        Number(entry.row[7]) > Number(best.row[7]) ? entry : best, duplicateEntries[0]);
+    const row = selected.row;
     const numeric = row.slice(2, 8).map(Number);
     if (!String(row[0] || "").trim() || !numeric.every(Number.isFinite) ||
         numeric[0] < 1980 || numeric[0] > 2099 ||
@@ -1445,7 +1487,7 @@ function findPendingFeedbackYearApplication_(vehicleId) {
         numeric[5] < 3 || ![true, false, "TRUE", "FALSE", ""].includes(row[9])) {
         throw new Error("La aplicación pendiente de año contiene datos inválidos; requiere revisión manual.");
     }
-    return { sheet, rowIndex: matches[0].rowIndex, row };
+    return { sheet, rowIndex: selected.rowIndex, row, rowIndexes: duplicateEntries.map(entry => entry.rowIndex) };
 }
 
 function getFeedbackProjectedVehicleYearSnapshot_(vehicleId, baseRow) {
@@ -1960,7 +2002,12 @@ function handleSuggestYearLocked(payload) {
 
     if (updated) {
         const ledger = getFeedbackYearApplicationsSheet_(true);
-        const operationId = "YSA-" + String(Utilities.getUuid()).replace(/-/g, "");
+        const operationId = buildFeedbackYearApplicationId_({
+            vehicleId: normalizedVehicleId, year, previousFrom: anoDesde, previousTo: anoHasta,
+            targetFrom: newAnoDesde, targetTo: newAnoHasta,
+            previousRawFrom: rawAnoDesde, previousSourceFromEventId: yearSnapshot.sourceFrom,
+            previousRawTo: rawAnoHasta, previousSourceToEventId: yearSnapshot.sourceTo
+        });
         const createdAt = new Date().toISOString();
         const applicationValues = [
             operationId, normalizedVehicleId, year, anoDesde, anoHasta,
@@ -1979,6 +2026,7 @@ function handleSuggestYearLocked(payload) {
         const application = {
             sheet: ledger,
             rowIndex: savedApplications[0].rowIndex,
+            rowIndexes: savedApplications.map(entry => entry.rowIndex),
             row: savedApplications[0].row
         };
         return completeFeedbackYearApplication_(application, {
