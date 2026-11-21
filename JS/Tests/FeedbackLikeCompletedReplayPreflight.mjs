@@ -68,6 +68,8 @@ test("ausencia de ledger no crea hojas durante el preflight", () => {
 const handlerStart = source.indexOf("function handleRecordLike(");
 const handlerEnd = source.indexOf("\nfunction ", handlerStart + 10);
 const handler = source.slice(handlerStart, handlerEnd);
-assert.ok(handler.indexOf("findCompletedLikeReplayNoop_") < handler.indexOf("LockService.getScriptLock()"),
-    "El replay completado debe resolverse antes de adquirir ScriptLock");
-console.log("FeedbackLikeCompletedReplayPreflight: " + passed + "/" + passed + " PASS — replays completados fuera del lock; pendientes y estados dudosos siguen protegidos");
+assert.ok(handler.indexOf("findCompletedLikeReplayNoop_") < handler.indexOf("const ledger = ensureFeedbackLikesSheet_"),
+    "El replay completado debe resolverse antes de crear/leer el ledger para mutación.");
+assert.doesNotMatch(handler,/LockService|getScriptLock|acquireFeedbackScriptLock_/,
+    "La ruta de likes no debe adquirir lock global.");
+console.log("FeedbackLikeCompletedReplayPreflight: " + passed + "/" + passed + " PASS — replays completados y pendientes fuera del lock");
