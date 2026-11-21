@@ -2,11 +2,24 @@
 
 Guía operativa paso a paso y matriz de despliegue por archivo: [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md).
 
+
+## Estado actual — GPSpedia2.2.5_work (2026-11-21)
+
+Esta sección describe el contrato vigente de la rama de trabajo y prevalece sobre las notas históricas más abajo cuando exista diferencia:
+
+- AUTH conserva lease compartida únicamente para deleteUser. El login usa lock local para intentos fallidos/sesión y sincroniza el contexto inicial; no adquiere lease. Logout, cambios/restablecimientos de contraseña, reset de sesiones, cambios de rol y recuperación conservan la revocación/invalidación remota necesaria, pero no adquieren leases por acción.
+- USERS conserva lease en createUser únicamente para excluir la creación frente a AUTH/deleteUser sobre el recurso lógico USERS. getUsers y updateProfile usan actor precargado localmente, sin lease.
+- touchSession permanece como acción heredada sin consumidor frontend activo y sin lease. acceptTerms usa actor precargado y lock local para proteger su escritura JSON; no hace touchSession adicional.
+- Después de syncUserSessions, Coordinator precarga el actor en USERS, WRITE, FEEDBACK y ADMIN mediante el endpoint interno autenticado __primeSessionActorCache. La precarga se ejecuta después de liberar el lock de Coordinator y en lotes de hasta 25 tokens por servicio. AUTH precalienta también su caché local.
+- getCachedSharedSessionActor_ solo lee la caché local y renueva su TTL (máximo seis horas). Un cache miss no llama a validateSessionContext ni revalida identidad: falla cerrado y solicita iniciar sesión nuevamente. El login debe precargar los servicios antes de que el usuario ejecute acciones protegidas. Si la precarga de un servicio falla, AUTH registra el servicio pendiente y ese servicio no acepta acciones protegidas hasta que una nueva sesión precargue su actor.
+- La invalidación remota incluye USERS, WRITE, FEEDBACK y ADMIN. El proyecto Coordinator debe tener GPSpedia_SERVICE_URL_USERS y GPSpedia_COORDINATOR_SECRET_USERS configurados, además de las URLs/secretos de los otros tres servicios. Cada proyecto de servicio debe tener SharedMutationClient.js actualizado, su GPSpedia_COORDINATOR_SECRET correspondiente y los endpoints internos de precarga e invalidación.
+- CacheService renueva el TTL en cada hit local; una caché expirada/evictada requiere un nuevo login. No se guardan tokens en logs ni en los valores de actor: las claves se derivan mediante hash.
+
 ## Componentes
 
 - `JS/Services/Coordinator.js`: servicio Apps Script independiente. Mantiene las leases en ScriptProperties y no accede a Spreadsheet ni Drive.
 - `JS/Services/SharedMutationClient.js`: cliente servidor-a-servidor que debe incluirse en cada proyecto AUTH, USERS, WRITE, ADMIN, FEEDBACK y UTILITIES.
-- AUTH, USERS y UTILITIES conservan los flujos coordinados que aún están registrados. WRITE, FEEDBACK y ADMIN usan actor cacheado para acciones ordinarias y procesan sus operaciones sin leases por acción; los bloqueos locales indispensables se mantienen.
+- AUTH conserva lease solo para deleteUser; USERS/createUser conserva lease para exclusión frente a esa eliminación; UTILITIES/migrateTimestamps conserva lease para su migración operativa. WRITE, FEEDBACK, ADMIN y las acciones AUTH/USERS ordinarias usan actor cacheado sin leases por acción.
 - ADMIN ya no declara `ACTIVE_SESSIONS` como `sharedWriteResources` ni adquiere leases para acciones ordinarias. Usa el actor de sesión cacheado y conserva la matriz RBAC/auditoría; logout y eliminación de cuenta invalidan su caché mediante el endpoint interno autenticado.
 - FEEDBACK usa el actor cacheado para lecturas y mutaciones autenticadas; no adquiere `FEEDBACK/sessionActivity` ni leases por acción. `recordLike` conserva sus escrituras funcionales en Cortes, Feedback y Activity sin bloquear una operación con viajes a Coordinator.
 
@@ -49,7 +62,7 @@ En el proyecto Apps Script de cada servicio, incluir `JS/Services/SharedMutation
 - `GPSpedia_COORDINATOR_URL`: URL /exec del coordinador correspondiente al mismo entorno.
 - `GPSpedia_COORDINATOR_SECRET`: el secreto específico de ese servicio, idéntico al valor configurado para ese servicio en el coordinador.
 
-AUTH coordina login, touchSession, acceptTerms, cambio/restablecimiento de contraseña, revocaciones y actualización de roles. `clearSensitiveLogs` usa actor cacheado y comprobación local de Desarrollador, sin lease. `validateSession` es una lectura de solo verificación: comprueba token, identidad, estado, expiración y aceptación de términos sin modificar hojas ni adquirir una lease; por eso no depende del coordinador y puede confirmar una sesión aunque el coordinador esté temporalmente indisponible. touchSession sí modifica ActiveSessions y continúa coordinado.
+AUTH sincroniza el contexto al iniciar sesión. Solo deleteUser adquiere lease; login conserva bloqueo local de intentos fallidos y sincronización de sesión sin lease. acceptTerms, cambios/restablecimientos de contraseña, resetUserSessions, updateUser, logout y migrateLegacyPasswords usan actor cacheado o ruta directa, conservando las revocaciones remotas donde corresponden. touchSession queda como acción heredada sin consumidor frontend y sin lease. validateSession es una lectura de verificación local y no forma parte del flujo ordinario de arranque.
 
 UTILITIES coordina `migrateTimestamps`: reserva lectura de Users, ActiveSessions, Cortes y Drive, y escritura del recurso lógico UTILITIES (Hoja 1 y sus hojas temporales). Adquiere la lease compartida antes del ScriptLock local. Así se serializa con cambios de identidad y la migración operativa de Cortes/Drive; ADMIN ya no participa en leases de mantenimiento por acción. No hay consumidor de `migrateTimestamps` en la interfaz versionada; la acción permanece en ACTION_TO_SERVICE_MAP para ejecución operativa/manual o clientes externos autorizados.
 
@@ -61,7 +74,7 @@ La acción FEEDBACK `initYouTubeUpload` no adquiere lease: inicia una sesión de
 
 El coordinador mantiene la identidad activa en `ScriptProperties`, sin consultar `Users` ni `ActiveSessions` en cada operación de los demás servicios.
 
-- `GPSpedia_AUTH_CONTEXT_V1_<userId>` conserva el epoch, la marca `revokedBefore` y hasta cinco sesiones activas.
+- `GPSpedia_AUTH_CONTEXT_V1_<userId>` conserva el epoch, la marca `revokedBefore` y las sesiones activas segmentadas en bloques para respetar el límite de ScriptProperties; las cuentas Developer no tienen un tope artificial de cinco sesiones.
 - `GPSpedia_AUTH_TOKEN_V1_<token>` permite resolver el usuario cuando una petición protegida solo incluye `sessionToken`.
 - Cada sesión conserva token, rol normalizado, nombre, fecha de creación y última actividad.
 - La vigencia absoluta es de tres meses; la inactividad máxima es de un mes.
@@ -70,14 +83,14 @@ El coordinador mantiene la identidad activa en `ScriptProperties`, sin consultar
 Acciones internas de contexto de sesión:
 
 - Exclusivas de `AUTH`: `syncUserSessions`, `registerSession`, `revokeSession`, `revokeUserSessions` e `invalidateSessionActorCaches`. Solo AUTH puede registrar, sincronizar, revocar sesiones o solicitar la limpieza remota de caché de actores.
-- `validateSessionContext`: cualquier servicio activo autenticado (AUTH, USERS, WRITE, ADMIN, FEEDBACK o UTILITIES) puede validar un token usando su propio secreto de servicio. La respuesta devuelve únicamente el actor validado para que ese servicio construya su caché local; la operación se atribuye al servicio solicitante. No se acepta CATALOG ni una identidad de servicio desconocida.
+- `validateSessionContext`: se conserva como operación interna de compatibilidad/diagnóstico autenticada por servicio. Las acciones ordinarias ya no la invocan en cache miss; cada servicio debe recibir su actor durante la sincronización de login y rechazar la acción si no tiene actor local.
 - La validación por servicio evita que FEEDBACK/USERS/WRITE/ADMIN intenten autenticarse como AUTH con un secreto distinto. No se comparte el secreto de AUTH con otros proyectos y no se amplían las acciones de registro o revocación.
 
 `AUTH` sincroniza las sesiones al iniciar sesión. La primera validación de una sesión creada antes de esta versión puede migrarla desde `ActiveSessions`, siempre que no exista una revocación previa. Un token revocado, expirado o anterior a `revokedBefore` nunca se vuelve a registrar por esa vía.
 
 Al cerrar sesión se revoca únicamente el token correspondiente. Los cambios de rol, eliminación de cuenta, cambios/restablecimientos de contraseña y restablecimientos globales de sesiones revocan el contexto antes de modificar los registros de la hoja.
 
-USERS conserva leases en createUser/updateProfile para serializarse con AUTH delete/reset/role update sobre Users; retirar esa coordinación sin centralizar la propiedad de escritura abriría carreras de datos. UTILITIES conserva lease para migrateTimestamps, migración manual con staging/backup/rollback. AUTH conserva leases para ciclo de sesión, recuperación y revocación; clearSensitiveLogs ya usa actor cacheado sin lease. WRITE, FEEDBACK y ADMIN validan el actor desde caché local para sus acciones ordinarias. ADMIN→WRITE transmite userId/sessionToken y WRITE valida su propio actor cacheado; no hay token de lease anidada.
+USERS conserva lease únicamente en createUser para serializar username frente a AUTH/deleteUser; getUsers/updateProfile usan actor cacheado sin lease. UTILITIES conserva lease para migrateTimestamps, migración manual con staging/backup/rollback. AUTH conserva lease únicamente para deleteUser; las demás acciones usan caché local o ruta directa y mantienen las revocaciones remotas expresamente necesarias. WRITE, FEEDBACK y ADMIN reciben el actor al iniciar sesión y no revalidan identidad por acción. ADMIN→WRITE transmite userId/sessionToken y WRITE consulta su caché local; no hay token de lease anidada.
 
 ### Protocolo HTTP interno (versión 1)
 
@@ -108,7 +121,7 @@ El cambio es compatible con clientes anteriores que omiten el parámetro opciona
 
 ## Invalidación remota de caché (Coordinator 1.4.3)
 
-AUTH solicita a Coordinator la invalidación de tokens en WRITE, FEEDBACK y ADMIN. Coordinator usa las URLs `GPSpedia_SERVICE_URL_WRITE/FEEDBACK/ADMIN` y los secretos individuales de cada servicio; los endpoints internos conservan `__invalidateSessionActorCache` y su verificación de secreto.
+AUTH solicita a Coordinator la invalidación de tokens en USERS, WRITE, FEEDBACK y ADMIN. Coordinator usa las URLs `GPSpedia_SERVICE_URL_USERS/WRITE/FEEDBACK/ADMIN` y los secretos individuales de cada servicio; los endpoints internos conservan `__invalidateSessionActorCache` y su verificación de secreto. El mismo conjunto de servicios expone `__primeSessionActorCache` para precargar actores después del login.
 
 - AUTH envía lotes de hasta 25 tokens al Coordinator; este los subdivide en grupos de cinco, según el límite de los endpoints remotos.
 - Coordinator valida previamente ambas URLs y ambos secretos antes de contactar cualquiera de los destinos.
