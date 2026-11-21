@@ -1732,7 +1732,7 @@ function reconcileRoleRevocationUnderLock_(usersSheet,sessionsSheet,userId,known
  const revocation=revokeAllUserSessionsUnderLock_(sessionsSheet,userId,
   tokens=>revokeSharedUserSessionContexts_(userId,tokens));
  if(revocation.pendingRows.length||revocation.pendingLoginRequests)return{pending:true,cleanupPending:true,revokedSessions:revocation.revokedSessions,pendingTokens:revocation.pendingRows.length,error:revocation.writeError?revocation.writeError.message:''};
- rows=usersSheet.getDataRange().getValues().slice(1).map((row,index)=>({row,rowIndex:index+2})).filter(item=>normalizeUserId(item.row[COLS_USERS.ID-1])===normalizeUserId(userId));
+ rows=readTargetRows();
  if(rows.length!==1||normalizeUserId(rows[0].row[COLS_USERS.ID-1])!==normalizeUserId(userId)||!isActiveAuthUserRecord(rows[0].row))return{pending:true,cleanupPending:true,revokedSessions:revocation.revokedSessions,error:'La cuenta destino dejó de ser única o activa.'};
  const role=String(rows[0].row[COLS_USERS.Privilegios-1]||'').trim();
  if(role!==marker.newRole&&role!==marker.oldRole)return{pending:true,cleanupPending:true,revokedSessions:revocation.revokedSessions,error:'El rol cambió fuera de la operación pendiente; se requiere revisión.'};
