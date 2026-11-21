@@ -1,6 +1,6 @@
 # GPSpedia — Tareas activas
 
-Fecha de actualización: 2026-11-20  
+Fecha de actualización: 2026-11-21  
 Repositorio: `infogpstech/GPSpedia`  
 Rama autorizada: `GPSpedia2.2.5_work`  
 Rama base protegida: `GPSpedia2.2.5`  
@@ -42,7 +42,11 @@ La copia archivada fue verificada carácter por carácter contra el original. Es
 - [x] Corregir fallo de ejecución al repetir voto positivo: `handleSuggestYearLocked` usaba `voteActors` fuera de alcance; ahora comprueba el voto positivo desde `allData`. Regresión añadida a `SuggestYearVoteThreshold.mjs` (7/7 PASS); CI 44834891294 SUCCESS: 238 suites, 2963 pruebas, 0 fallos.
 - [x] Migrar `handleSuggestYear`/`completeFeedbackYearApplication_` a eventos `vehicle_update` en `AportesVehiculo`: lectura del rango desde la proyección append-only, versiones esperadas y fuentes, opId estable por campo, append verificado e idempotente, recuperación mediante `FeedbackYearApplications` (extensión de columnas para conservar valores/fuentes originales) y estado `requires_review` si CATALOG no aplica el rango. Se eliminó la escritura directa en `Cortes.anoDesde/anoHasta`; el catálogo se invalida fuera del lock. Se conservan tres votos verificados, exclusión de anónimos y detección de colisión de generaciones. Pruebas `FeedbackYearApplicationAppendOnly` 5/5 y `SuggestYearVoteThreshold` 7/7; valida todo el ledger antes de reconstruir el rango y rechaza opId conflictivos. CI 44835908125 SUCCESS: 239 suites, 2968 pruebas, 0 fallos.
 - [x] Retirar el lock global prolongado de `handleSendContactForm`: el asignador `getNextFormulaBasedId_` usa reservas append-only en `__IdentifierSequenceReservations__`; el formulario anexa la fila completa con `appendRow` sin sección crítica global. La secuencia se calcula por orden físico de reservas y conserva prefijo/relleno, detección de duplicados y validación de filas huérfanas. Prueba `FeedbackContactWriteNoGlobalLock` 2/2 y `FeedbackLockFastFail` PASS; CI 44835908125 SUCCESS: 239 suites, 2968 pruebas, 0 fallos.
-- [ ] Reducir el ScriptLock global fast-fail restante de FEEDBACK. `getNextFormulaBasedId_`, `logUserActivity`, `handleRecordLike` y `handleSuggestYear` ya no usan ScriptLock; `handleSuggestYear` coordina votos, aplicaciones y actualizaciones con eventos append-only e identidades deterministas. `reportProblem` y `suggestCutChange` ya anexan cada nuevo registro como fila completa y conservan adjuntos ante confirmación incierta, pero mantienen ScriptLock/revalidación para deduplicar operaciones concurrentes. Siguen pendientes la proyección idempotente de reportes/sugerencias, PyS, tutoriales y aprobaciones de vídeo, que protegen deduplicación, adjuntos, first-write-wins, asociaciones o transiciones. Sustituir locks por journals/proyecciones o control de versión antes de retirarlos. No sustituir por UserLock.
+- [x] Migrar `reportProblem` y `suggestCutChange` a proyección first-write-wins, adjuntos append-only y escritura sin ScriptLock; validado previamente en CI.
+- [x] Migrar `handleAddProblem` a reserva completa append-only y first-write-wins sin ScriptLock. `PysOperations` conserva la primera reserva por `opId`; el hash contradictorio se rechaza por solicitud, los archivos perdedores se limpian solo con referencias comprobadas y los fallos ambiguos conservan el recurso para replay. CI `44875140437`: 258 suites, 3094 pruebas, 0 fallos; health y Pages SUCCESS. Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
+- [ ] Migrar altas/ediciones de tutoriales a escritura append-only y proyección idempotente sin ScriptLock, preservando unicidad de título, imágenes, autoría y compatibilidad de reintentos.
+- [ ] Migrar aprobaciones de vídeo a eventos append-only/proyección idempotente sin ScriptLock, preservando unicidad de operación/destino y transiciones pending/approved/rejected.
+- No sustituir ScriptLock por UserLock. Las mutaciones PyS de solución, prevención y relaciones permanecen fuera de la migración de creación y se auditarán según su propio alcance.
 - [x] Retirar el ScriptLock interno de `getNextFormulaBasedId_`: las reservas append-only usan `appendRow` atómico y fórmula de secuencia por hoja/columna; los reintentos/operaciones concurrentes reservan sufijos distintos y los huecos por respuesta perdida no se reutilizan. `FeedbackFormulaIdAllocator` 5/5 y `FeedbackFormulaIdAllocatorBoundedRead` 6/6 PASS. CI `44847431570` SUCCESS: 253 suites, 3053 pruebas, 0 fallos. Health read-only `44847431590` SUCCESS. La fórmula/appendRow real queda diferida a Beta aislada.
 - [x] Migrar `handleRecordLike` completamente a eventos append-only sin ScriptLock: likes nuevos se anexan; replays legacy `completed` se reconocen; los `pending` históricos se recuperan comparando el contador con `previous`/`target` y anexando un evento cuando falta el incremento. No se modifica `Cortes.utilCorteN`; CATALOG suma actores únicos por vehículo/corte en lecturas completas y snapshots. `recordLike` publica reset sin lock de versión. `FeedbackLikeAppendOnly` 4/4, `FeedbackLikeCompletedReplayPreflight` 6/6, `FeedbackLikeActivityOutsideLock` 5/5, `FeedbackLikePreflightOutsideLock` 5/5; `CatalogChangeFeed` 35/35.
 - [x] Hacer atómico el registro de actividad: `logUserActivity` usa `appendRow` con la fórmula de ID de la fila, sin `getLastRow` seguido de escrituras separadas ni ScriptLock. `ActivityLogAppendAtomic` 6/6 PASS.
@@ -348,3 +352,26 @@ Antes de cualquier Beta, cumplir la secuencia de sincronización de ramas, árbo
 - readPysOperations_ ahora rechaza reservas duplicadas que, aun compartiendo opId, payloadHash y problemId, apuntan a imageFileId/imageUrl diferentes.
 - Prueba PysCreationIntegrity añadida. CI 44873650200 SUCCESS: 258 suites, 3093 pruebas, 0 fallos; health read-only 44873650247 SUCCESS; Pages pendiente al momento de esta actualización.
 - PyS permanece EN PROGRESO; handleAddProblem conserva ScriptLock hasta resolver la propiedad de operación e imagen con un protocolo concurrente verificable.
+
+
+## Cierre local — creación de problemas PyS sin ScriptLock (2026-11-21)
+
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
+
+- [x] Retirar ScriptLock de `handleAddProblem`; alta nueva anexa una reserva completa `UPLOAD_PENDING` con ID, hash e imagen.
+- [x] Convertir `PysOperations` a append-only para el flujo nuevo; impedir mutaciones de estado in-place.
+- [x] Proyectar primera reserva física por `opId`, conservar identidad/archivo canónicos y rechazar payload distinto sin invalidar otras operaciones.
+- [x] Evitar borrar archivos con referencias ambiguas; preservar recursos tras reservas confirmadas y recuperar por replay.
+- [x] Rechazar la reutilización de imágenes ya vinculadas a otro problema.
+- [x] Pruebas focalizadas incluidas en CI: 258 suites, 3094 pruebas, 0 fallos; health read-only y Pages SUCCESS.
+- [ ] Beta aislada: concurrencia real de appendRow, carrera de reservas/archivos, pérdida de respuesta, recuperación Drive/Sheets y referencias preexistentes.
+- Las mutaciones de solución, prevención y relaciones no forman parte de este cierre y conservan sus locks.
+
+## Siguiente tarea — tutoriales
+
+**Estado: PENDIENTE.**
+
+- Auditar `handleAddTutorial`, `handleUpdateTutorialItem`, lectores, unicidad de título, IDs, imágenes y consumidores.
+- Diseñar proyección first-write-wins/append-only compatible con los registros actuales.
+- Retirar ScriptLock solo después de que altas, reintentos y ediciones concurrentes tengan identidad canónica y regresiones locales.
+- No cambiar el contrato frontend ni desplegar Apps Script.
