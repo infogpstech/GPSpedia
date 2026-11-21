@@ -118,3 +118,11 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - `refreshVehicleDetailAfterExpansion_` ejecuta `getCatalogData(forceRefresh:true)` después de confirmar aportes de corte e información suplementaria, aunque la sincronización principal dispone de feed incremental. Es un viaje adicional de snapshot completo por aporte para refrescar un solo vehículo; no retirarlo hasta diseñar una lectura dirigida o una actualización local/delta que preserve candidatos, fuentes y conflictos.
 - La restauración de edición usa lecturas completas antes y después de escrituras para comparar y verificar el rollback de campos; estas lecturas tienen una finalidad de integridad y no deben clasificarse como redundantes sin rediseñar el contrato de verificación.
 
+
+
+### Confirmación estática de reintentos Safe Apply
+- Se revisaron las rutas de `applyCortesImageOrganizer` y `rollbackCortesImageOrganizer`. Ambas reciben identificadores estables de operación; el backend conserva un ledger por operación y distingue estados ya aplicados/revertidos de operaciones nuevas o incompletas.
+- El replay de aplicación devuelve `already_applied` solo si Drive sigue coincidiendo exactamente con el destino confirmado por ledger; el replay de rollback devuelve `already_rolled_back` solo si Drive coincide con el origen. Los cambios de estado se verifican y los fallos parciales pasan a `retry`/ `needs_review` según el caso.
+- `JS/Tests/CortesImageOrganizerExecutor.mjs` contiene pruebas explícitas de reintento idempotente de aplicación y rollback, además de contención/fallo parcial. Por ello, los dos intentos configurados en frontend tienen soporte de diseño y contrato; no se recomienda quitarlos por defecto. La ejecución de estas pruebas no se realizó en esta sesión.
+- `backupDatabase` y `applyCortesImageReconciliation` se invocan con `maxAttempts: 1`, evitando replay automático de esas operaciones.
+
