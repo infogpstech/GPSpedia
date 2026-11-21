@@ -997,3 +997,9 @@ Adenda — FEEDBACK confirmación de sugerencias
 - Impacto: confirmación incorrecta de una escritura posiblemente persistida y retención innecesaria de adjuntos.
 - Severidad alta en concurrencia. Corrección: búsqueda exacta por ID reservado con `findFeedbackRowById_` y regresión dedicada.
 - Pendiente: deduplicación lógica, paginación del Inbox y adjuntos append-only; ScriptLock se mantiene hasta cubrir esos contratos.
+
+
+2026-11-21 — CIERRE P0 reportProblem/suggestCutChange
+- Se retiró ScriptLock de ambos handlers tras incorporar identidad lógica, proyección first-write-wins, detección de payload contradictorio y deduplicación de Inbox.
+- Reportes: adjuntos tardíos se registran en FeedbackReportImageEvents append-only; lectura proyecta el primer evento y conflictos de hash quedan para reconciliación.
+- CI d77a59b: 258 suites, 3089 pruebas, 0 fallos; health read-only y Pages SUCCESS. Beta real Apps Script/Sheets/Drive pendiente; no hubo despliegue Apps Script ni cambios de datos productivos.
