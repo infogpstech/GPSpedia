@@ -10,7 +10,7 @@ const apiConfigSource = fs.readFileSync("JS/Frontend/api-config.js", "utf8");
 const removed = [];
 const digest = () => [1, 2, 3, 4];
 const api = new Function("Utilities", "PropertiesService", "CacheService",
-    source + "\nreturn { createSharedMutationClient_, getSharedSessionActorCacheKey_, handleSharedSessionActorCacheInvalidation_ };"
+    source + "\nreturn { createSharedMutationClient_, getSharedSessionActorCacheKey_, handleSharedSessionActorCacheInvalidation_, invalidateLocalSharedSessionActorCaches_ };"
 )({
     DigestAlgorithm: { SHA_256: "SHA_256" },
     Charset: { UTF_8: "UTF_8" },
@@ -43,6 +43,14 @@ const accepted = api.handleSharedSessionActorCacheInvalidation_(
 );
 assert.deepEqual(accepted, { status: "success", invalidated: 2 });
 assert.equal(removed.length, 2, "La invalidación elimina claves exactas y deduplica tokens.");
+const localRemoved = [];
+const localCount = api.invalidateLocalSharedSessionActorCaches_("U-1", ["token-A", "token-A", "token-B"], {
+    cache: { remove: value => localRemoved.push(value) },
+    keyFor: (userId, token) => userId + ":" + token
+});
+assert.equal(localCount, 2);
+assert.deepEqual(localRemoved, ["U-1:token-A", "U-1:token-B"],
+    "Las revocaciones eliminan también la caché local de AUTH antes de usar Coordinator.");
 
 function createClient(events, failAction = "") {
     const properties = {
@@ -125,6 +133,9 @@ assert.match(writeSource, /action === "__invalidateSessionActorCache"[\s\S]*?han
 assert.match(feedbackSource, /action === "__invalidateSessionActorCache"[\s\S]*?handleSharedSessionActorCacheInvalidation_/);
 assert.match(adminSource, /action === "__invalidateSessionActorCache"[\s\S]*?handleSharedSessionActorCacheInvalidation_/);
 assert.match(authSource, /function handleLogout[\s\S]*?revokeSharedSessionContext_/);
+assert.match(source, /function revokeSharedSessionContext_\(userId, sessionToken\)\s*\{\s*invalidateLocalSharedSessionActorCaches_/);
+assert.match(source, /function revokeSharedUserSessionContexts_\(userId, sessionTokens\)\s*\{\s*invalidateLocalSharedSessionActorCaches_/);
+assert.match(authSource, /cacheSharedSessionActor_\(normalizedId, currentSessionToken/);
 assert.equal(authSource.includes("revokeSharedUserSessionContexts_(userId, getActiveSessionTokensForUserUnderLock_(sessionsSheet, userId))"), true);
 assert.equal(authSource.includes("revokeSharedUserSessionContexts_(targetUserId, getActiveSessionTokensForUserUnderLock_(sessionsSheet, targetUserId))"), true);
 assert.equal(authSource.includes("revokeSharedUserSessionContexts_(targetId, getActiveSessionTokensForUserUnderLock_(sessionsSheet, targetId))"), true);
