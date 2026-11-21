@@ -47,10 +47,10 @@ test("normaliza espacios y acentos antes de comparar", () => {
     const sheet = makeSheet(["Sistema eléctrico"]);
     assert.equal(titleExists(sheet, "  SISTEMA   electrico ", 0), true);
 });
-test("lee únicamente la columna B y no usa getDataRange", () => {
+test("lee únicamente las columnas A:B para excluir todas las copias físicas del mismo tutorial", () => {
     const sheet = makeSheet(["A", "B"]);
-    titleExists(sheet, "B", 2);
-    assert.deepEqual(sheet.calls, [[2, 2, 2, 1]]);
+    titleExists(sheet, "B", 2, "tut-1");
+    assert.deepEqual(sheet.calls, [[2, 1, 2, 2]]);
 });
 test("la edición ejecuta la comprobación dirigida bajo lock", () => {
     const handler = extract("handleUpdateTutorialItem");
