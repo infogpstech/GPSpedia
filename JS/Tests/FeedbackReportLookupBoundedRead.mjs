@@ -35,7 +35,9 @@ function makeSheet(rows) {
     return { sheet, calls };
 }
 function find(sheet) {
-    return new Function("COLS_FEEDBACKS", code + "\nreturn findReportByReportId_;")({ Problema: 3 })(sheet, "REP-1", 8);
+    return new Function("COLS_FEEDBACKS", "getFeedbackReportImageMetadata_", code + "\nreturn findReportByReportId_;")(
+        { Problema: 3 }, () => null
+    )(sheet, "REP-1", 8);
 }
 
 let passed = 0;
