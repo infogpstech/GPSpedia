@@ -3822,6 +3822,9 @@ function readPysOperations_(sheet) {
             if (canonical.problemId !== problemId) {
                 throw new Error("PysOperations contiene el mismo opId reservado para problemId distintos; requiere reconciliación.");
             }
+            if (canonical.imageFileId !== imageFileId || canonical.imageUrl !== imageUrl) {
+                throw new Error("PysOperations contiene archivos distintos para la misma operación; requiere reconciliación.");
+            }
             canonical.duplicateCount = (canonical.duplicateCount || 0) + 1;
             return;
         }
