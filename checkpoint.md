@@ -256,3 +256,12 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - CI `44846704840` SUCCESS: 253 suites, 3053 pruebas aprobadas, 0 fallos. Health read-only `44846704778` SUCCESS. Pages `44846704653` SUCCESS.
 - Commits: `6ff121aa1bd5b1cf51ae96af3de02855b941f877`, `e8feb02c62175871a77e378266abaace701c6d0c`, `193bea26a26095dd215e2d980ad1547addf37868`.
 - Pendiente inmediato: continuar reducción de locks FEEDBACK solo con sustitutos seguros para sus invariantes; no sustituirlos por `UserLock`. Beta AUG-159/AUG-160, concurrencia real de appendRow y validaciones en Apps Script/Spreadsheet/Drive aislados siguen diferidas. No se desplegó Apps Script ni se tocaron datos productivos.
+
+
+## Checkpoint — reservas de IDs FEEDBACK append-only (2026-11-21)
+
+- HEAD de código validado: `0ca418c20e7b78933884339b246cf3950622c90b`.
+- `getNextFormulaBasedId_` ya no toma ScriptLock ni incrementa una propiedad mutable. `__IdentifierSequenceReservations__` conserva reservas append-only; `appendRow` asigna orden físico único y una fórmula cuenta reservas previas de la misma hoja/columna para calcular el sufijo. El helper confirma la reserva por UUID antes de devolver el ID.
+- Se mantienen validaciones del patrón de fórmula, prefijo/relleno, duplicados, sufijos inválidos y filas con datos sin ID. Las reservas no utilizadas generan huecos, no reutilización de IDs.
+- `FeedbackFormulaIdAllocator` 5/5; `FeedbackFormulaIdAllocatorBoundedRead` 6/6. CI `44847431570` SUCCESS: 253 suites, 3053 pruebas, 0 fallos. Health read-only `44847431590` SUCCESS. Pages `44847431763` estaba en ejecución.
+- Próximo: continuar con mutaciones FEEDBACK que conservan ScriptLock (likes nuevos, reportes, sugerencias, PyS, tutoriales y aprobaciones de vídeo). No sustituir locks por UserLock ni retirar exclusiones sin journal/proyección o control de versión. La fórmula y concurrencia real del ledger se validarán en Beta aislada. No se desplegó Apps Script ni se tocaron datos productivos.
