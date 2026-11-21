@@ -1926,6 +1926,7 @@ function handleSuggestYearLocked(payload) {
         String(row[actorColumn - 1] || "").trim() === actorKey
     );
 
+    let allData = existingData;
     if (!alreadyReported) {
         // Una fila completa por appendRow evita que dos solicitudes concurrentes
         // compartan getLastRow() y mezclen ID, respuesta y actor en filas distintas.
@@ -1940,11 +1941,11 @@ function handleSuggestYearLocked(payload) {
         voteRow[actorColumn - 1] = actorKey;
         sheet.appendRow(voteRow);
         SpreadsheetApp.flush();
+        // Solo el append nuevo requiere una lectura posterior para incluir votos concurrentes.
+        allData = sheet.getDataRange().getValues().slice(1);
         logUserActivity(userId, userName, "suggest_year", normalizedVehicleId,
             "Año sugerido: " + year + ". Respuesta: " + normalizedResponse);
     }
-
-    const allData = sheet.getDataRange().getValues().slice(1);
     const voteCount = countVerifiedPositiveYearSuggestionVotes_(allData, normalizedVehicleId, year, actorColumn);
 
     if (!isPositive) {
