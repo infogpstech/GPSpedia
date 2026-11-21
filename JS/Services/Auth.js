@@ -1165,7 +1165,11 @@ function syncSharedSessionContextsForUser_(userId, role, fullName, currentSessio
         } catch (cacheError) {
             console.warn("No se pudo precalentar la caché local del actor:", cacheError && cacheError.message ? cacheError.message : cacheError);
         }
-        return { registered: synchronized.synced, epoch: synchronized.epoch };
+        const cachePriming = synchronized.cachePriming || {};
+        if (Array.isArray(cachePriming.failedServices) && cachePriming.failedServices.length) {
+            console.warn("No se pudo precargar el actor en todos los servicios:", cachePriming.failedServices.join(","));
+        }
+        return { registered: synchronized.synced, epoch: synchronized.epoch, cachePriming };
     } finally {
         if (acquired) lock.releaseLock();
     }
