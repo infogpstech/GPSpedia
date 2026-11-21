@@ -13,8 +13,8 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - Los archivos archivados son inmutables; este es el registro operativo vigente.
 
 ## Estado Git y CI confirmado
-- HEAD de código validado: `9ef42ae5b69a35ec25a659290c961a53127f27b1`.
-- CI: 283 suites, 3,286 pruebas aprobadas, 0 fallos.
+- HEAD de código validado: `ea1c3ca196105b20115f9c56c27bdf6e4e6df2e5`.
+- CI: 284 suites, 3,309 pruebas aprobadas, 0 fallos.
 - Build: SUCCESS.
 - Health de servicios read-only: SUCCESS.
 - GitHub Pages deploy: en ejecución; no forma parte de la validación Apps Script.
@@ -78,8 +78,9 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - [x] FEEDBACK — bandeja administrativa: reutilizar el índice de eventos de imagen en canonicalización de reportId y mapeo de página.
 - [x] FEEDBACK — bandeja administrativa: cachear por página la canonicalización de suggestionOperationId, clave de solicitud y reportId; una búsqueda repetida para el mismo identificador se ejecuta una sola vez.
 - [x] Auditar CATALOG/Coordinator: deltas, cursores, snapshots, resets e invalidaciones; se mantienen snapshots completos para inicio/reset/recuperación y se conserva el feed incremental con reset seguro.
-- [x] Revisar refresh completo `getCatalogData` al cerrar edición: se mantiene. El feed y los helpers IndexedDB existen, pero no hay consumidor integrado en UI ni handshake de cursor asociado a una instantánea completa; reemplazarlo ahora podría omitir cambios concurrentes o eventos antiguos.
-- [ ] Integrar el feed en UI con cursor-before-snapshot, aplicación ordenada de deltas, persistencia atómica snapshot+cursor y fallback a snapshot completo ante reset, huecos, cursor vencido o colección sin ID estable.
+- [x] Revisar refresh completo `getCatalogData` al cerrar edición: la edición normal ahora llama a `auth.loadInitialData(true)`, que consume deltas desde el cursor local y usa snapshot completo ante reset/cursor inválido; el descarte conserva dos snapshots completos para comparar y verificar restauración.
+- [x] Integrar el flujo incremental en el cierre normal de edición sin duplicar lógica: reutiliza el consumidor existente de `auth.js`, conserva fallback completo y evita que una respuesta tardía sobrescriba una sincronización concurrente.
+- [ ] Completar pruebas Beta de concurrencia entre pestañas, cambios simultáneos y fallback por reset/cursor vencido.
 - [x] Medir telemetría ADMIN y confirmar que no se ejecuta en navegación/aportes ordinarios; llamada restringida al panel visible de Desarrollador, con refresco mínimo de 60 s.
 
 ### P1 — imágenes, vídeos y archivos
@@ -112,4 +113,4 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - No retirar escaneo global Drive ni controles de idempotencia/recuperación sin equivalencia demostrada.
 
 ## Siguiente paso exacto
-P0.1, P0.2 local, mapa AUTH/USERS, reducción integral de leases AUTH y P0.3 de caché de actor completados localmente. La única lease del dispatcher AUTH es deleteUser; USERS/createUser comparte solo el recurso USERS con esa eliminación. Siguiente: integrar el feed incremental CATALOG en UI con un handshake seguro de snapshot/cursor y fallback completo; después medir catálogo y PyS en Beta aislada. La precarga/invalidation de los cuatro servicios y la carrera createUser/deleteUser requieren además validación de despliegues/propiedades en Beta aislada.
+P0.1, P0.2 local, mapa AUTH/USERS, reducción integral de leases AUTH y P0.3 de caché de actor completados localmente. La única lease del dispatcher AUTH es deleteUser; USERS/createUser comparte solo el recurso USERS con esa eliminación. Siguiente: completar auditoría pendiente de WRITE/FEEDBACK/ADMIN y continuar P1 de imágenes/vídeos/archivos; después medir feed CATALOG/PyS y flujos restantes en Beta aislada. La precarga/invalidation de los cuatro servicios y la carrera createUser/deleteUser requieren además validación de despliegues/propiedades en Beta aislada.
