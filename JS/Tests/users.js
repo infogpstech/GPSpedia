@@ -797,6 +797,7 @@ function handleCreateUser(payload) {
         const userSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.USERS);
         if (!userSheet) throw new Error('Hoja de usuarios no encontrada.');
         const snapshot = readUsersMutationSnapshot_(userSheet);
+        const lastRow = snapshot.lastRow;
         const existingUsernames = snapshot.rows.map(row => row[COLS_USERS.Nombre_Usuario - 1]);
         if (existingUsernames.some(username => String(username || '').trim().toLowerCase() === normalized.username.toLowerCase())) {
             return { status: 'error', message: 'Ese nombre de usuario no está disponible' };
