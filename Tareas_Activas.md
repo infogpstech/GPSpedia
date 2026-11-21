@@ -3211,4 +3211,6 @@ Documento de alcance, hallazgos y checklist: [AUDITORIA_INTEGRAL_LATENCIA_LLAMAD
 
 - [x] ADMIN reemplazo de imagen: verificar ruta actual append-only sin ScriptLock global y ruta legacy con reserva breve + Drive fuera del lock y revalidación por operationId. Los locks de eliminación/inventario se conservan; auditoría de su necesidad y medición separadas.
 
-- [ ] ADMIN logotipos: limpiar el Base64 anterior al seleccionar otro archivo; controlar generaciones de FileReader, `onerror`/`onabort` y estado del botón; definir límite de tamaño con contrato cliente/servidor y validar MIME/firma binaria antes de crear Drive. No fijar un máximo sin revisar el uso y logos existentes.
+- [ ] ADMIN logotipos: definir límite de tamaño con contrato cliente/servidor y validar MIME/firma binaria antes de crear Drive. No fijar un máximo sin revisar el uso y logos existentes.
+
+- [x] ADMIN logotipos: limpiar Base64 anterior al cambiar archivo, ignorar lecturas obsoletas con generación, manejar `onerror`/`onabort`/resultado inválido y bloquear Registrar hasta completar lectura. `AdminLogoFileRead.mjs` 4/4 PASS en V8 aislado. Límite de bytes y validación MIME/firma servidor siguen pendientes.
