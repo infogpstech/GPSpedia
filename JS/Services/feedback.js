@@ -4702,9 +4702,22 @@ function handleAddTutorial(payload) {
 
     const tutorialId = "tut-" + operationId;
     const submission = { title, comoIdentificarlo, dondeEncontrarlo, detalles, collaborator };
+    const createOperationId = "tutorial-create-" + operationId;
+    const createPayloadHash = buildTutorialContentHash_([tutorialId, submission]);
+    const titleEventsSheet = getTutorialTitleEventsSheet_(false);
+    const existingReservation = titleEventsSheet
+        ? readTutorialTitleEvents_(titleEventsSheet).operations.find(item => item.operationId === createOperationId)
+        : null;
+    if (existingReservation && existingReservation.payloadHash !== createPayloadHash) {
+        throw new Error("El identificador de operación ya pertenece a otro tutorial.");
+    }
     const sheet = getTutorialSheet_(true);
     const existing = findTutorialById_(sheet, tutorialId);
     if (existing) {
+        if (existingReservation && existingReservation.payloadHash === createPayloadHash) {
+            return { status: "success", referenceId: String(existing.row[0] || tutorialId).trim(), alreadyCreated: true,
+                message: "El tutorial ya existía; se devolvió el registro original." };
+        }
         if (!tutorialRowMatchesSubmission_(existing.row, submission)) {
             throw new Error("El identificador de operación ya pertenece a otro tutorial.");
         }
@@ -4716,9 +4729,9 @@ function handleAddTutorial(payload) {
     }
 
     appendTutorialTitleEvent_({
-        operationId: "tutorial-create-" + operationId,
+        operationId: createOperationId,
         tutorialId, action: "CLAIM", titleKey: normalizeTutorialTitle_(title), previousTitleKey: "",
-        payloadHash: buildTutorialContentHash_([tutorialId, submission])
+        payloadHash: createPayloadHash
     });
     if (getTutorialTitleOwner_(title) !== tutorialId) {
         throw new Error("Ya existe un tutorial con ese tema; utiliza la edición del registro existente.");
