@@ -3281,3 +3281,16 @@ Documento de alcance, hallazgos y checklist: [AUDITORIA_INTEGRAL_LATENCIA_LLAMAD
 - No introducir cambios CSS hasta completar el mapa de reglas y comparar la cascada actual con la referencia.
 
 **Dependencias:** terminar o aislar los cambios de CATALOG/imágenes para evitar mezclar diffs. La comparación histórica debe identificar exactamente los archivos y commit de 2.1.7.
+
+
+## Adenda de validación — CATALOG e imágenes (2026-11-21)
+
+**COMPLETADA CON VALIDACIÓN DIFERIDA.** CI confirmado en 9ebeecd99869cab11bd8d9501cfd0dc4b31ab89c: 271 suites, 3,189 pruebas aprobadas, 0 fallos; health read-only SUCCESS.
+
+- [x] CATALOG navegación: rangos mínimos de Cortes y LogosMarca, contrato preservado.
+- [x] ADMIN: respuestas dirigidas getVehicleProjection y getContributionCandidates; pruebas de contrato y mapeo/telemetría aprobadas.
+- [x] Miniaturas: purga global por lectura eliminada, TTL por clave y limpieza LRU transaccional, single-flight por ID/ancho.
+- [x] Pruebas de variantes y ciclo ObjectURL reactivadas desde los módulos activos JS/Frontend; 10/10 y 10/10.
+- [ ] Pendiente real: evitar la segunda descarga fría de setOptimizedImage + fetch de compresión, sin retrasar la primera imagen ni romper CORS/PNG.
+- [ ] Pendiente: medir y ajustar el prefetch de los últimos 15 vehículos y la prioridad FIFO frente a imágenes visibles.
+- [ ] Pendiente: consulta CATALOG que reduzca lecturas internas de Spreadsheet; las acciones dirigidas actuales reducen respuesta/transferencia ADMIN, pero aún construyen el snapshot completo.

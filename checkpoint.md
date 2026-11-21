@@ -1092,3 +1092,15 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Foco inicial: encabezado del modal de detalles de corte reportado desproporcionado. Comparar versión 2.2.5 con referencia 2.1.7.
 - Validar logo, botones de edición, cierre, proporciones, espaciado y breakpoints; revisar otros modales afectados.
 - No se modificó CSS en esta etapa. Se ejecutará tras cerrar/aislar la optimización CATALOG y el ciclo de imágenes en curso.
+
+
+## Checkpoint de continuidad — CATALOG e imágenes (2026-11-21)
+
+- HEAD actual verificado: 9ebeecd99869cab11bd8d9501cfd0dc4b31ab89c en GPSpedia2.2.5_work.
+- Base protegida verificada: d9acc68d889985c2e2f42fe3a02e502efc86ead1; no modificada.
+- GitHub Actions: GPSpedia service regression tests SUCCESS, 271 suites / 3,189 pruebas / 0 fallos. Deployed-service-health read-only SUCCESS. Pages build/deployment aún en ejecución al registrar este checkpoint.
+- CATALOG: navegación lee rangos mínimos; nuevas acciones getVehicleProjection/getContributionCandidates reducen el payload transferido a ADMIN. Aún no reducen lecturas Spreadsheet internas porque usan handleGetCatalogData completo.
+- Imágenes: purga global IndexedDB por imagen retirada; expiración se limpia dentro de LRU; single-flight por archivo/resolución. IndexedDB opcional conserva initDB silent. Variantes y ObjectURL lifecycle integrados al runner (10/10 + 10/10).
+- Hallazgos pendientes: doble solicitud de red en cache miss visible; prefetch de 15 vehículos y cola FIFO sin prioridad visible; falta medir bytes/latencia fría/caliente.
+- Modal CSS: nueva tarea P1 registrada para auditoría de cascada, encabezado de detalle de corte y comparación 2.2.5 vs 2.1.7. No se modificó CSS.
+- No se desplegaron proyectos Apps Script ni se modificaron Spreadsheet, Drive, secretos o propiedades productivas.

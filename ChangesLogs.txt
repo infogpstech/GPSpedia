@@ -570,3 +570,12 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - JS/Frontend/ui.js: Base64/nombre anteriores se limpian al cambiar archivo; contador de generación descarta resultados obsoletos; botón Registrar permanece deshabilitado hasta lectura válida; helper maneja error, abort y Data URL inválida.
 - JS/Tests/AdminLogoFileRead.mjs: lectura válida, error, abort y resultado inválido; 4/4 PASS en V8 aislado. Integrado en RunServiceTests.mjs.
 - El límite de bytes y la verificación MIME/firma en backend quedan pendientes; no se modificó Drive ni el contrato de formatos.
+
+
+2026-11-21 — OPTIMIZACIÓN CATALOG E IMÁGENES
+- CATALOG: handleGetNavigationData limita Cortes a ID/categoría/marca y LogosMarca a sus tres columnas. Se añaden getVehicleProjection/getContributionCandidates; ADMIN deja de transferir el snapshot completo para consultas dirigidas. El snapshot completo sigue construyéndose internamente; no se atribuye reducción de lecturas Spreadsheet.
+- Miniaturas: se retira la purga global repetida de getThumbnail/compressAndStoreThumbnail; la expiración se elimina en la transacción LRU y se deduplican compresiones concurrentes por ID/ancho. Se conserva TTL, límite de variantes, PNG, transparencia y recuperación de cuota.
+- Se reactivan ImageResolutionVariants.js e ImageObjectUrlLifecycle.js contra JS/Frontend y se integran al runner; ambos reportan 10/10 PASS.
+- CI 9ebeecd99869cab11bd8d9501cfd0dc4b31ab89c: 271 suites, 3,189 pruebas, 0 fallos; health read-only SUCCESS.
+- Pendiente: segunda descarga en cache miss visible, prioridad/prefetch de 15 vehículos y consulta CATALOG que reduzca lecturas internas. Sin despliegue Apps Script ni cambios en datos productivos.
+- Tarea P1 registrada: auditoría de cascada CSS de modales y encabezado del detalle de corte, comparación 2.2.5/2.1.7.

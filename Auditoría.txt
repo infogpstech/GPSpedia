@@ -1346,3 +1346,13 @@ Validación exact-source local:
 - Pruebas: CutDetailModalLayout 29/29; InfoModalStyleCascade 3/3; ModalHeaderCascade 2/2; CI 261 suites / 3,143 pruebas PASS; 0 fallos. Health read-only SUCCESS.
 - Se detectó y corrigió una regresión de expectativas al mover temporalmente reglas de Developer Tools fuera de su media query; la versión final conserva el orden original y pasó la suite integral.
 - Pendiente exclusivamente aceptación visual Beta de navegadores/dispositivos reales. No hubo deployment Apps Script ni acceso de escritura a Spreadsheet/Drive.
+
+
+================================================================================
+2026-11-21 — CATALOG E IMÁGENES: HALLAZGOS Y CORRECCIONES
+- CATALOG navegación: lectura completa de rangos sustituida por ID/categoría/marca y columnas de contrato de LogosMarca.
+- ADMIN: nuevas respuestas dirigidas reducen el payload para proyección individual y candidatos; el servidor todavía construye snapshot completo. La reducción de lecturas Spreadsheet permanece pendiente.
+- Miniaturas: purga global por imagen sustituida por validación TTL por clave y limpieza dentro de LRU; single-flight por ID/ancho evita compresiones/fetches simultáneos duplicados.
+- Sigue confirmado el doble acceso frío visible (img.src remoto y fetch de compresión); también queda pendiente medir el prefetch de 15 vehículos y la prioridad FIFO.
+- Evidencia de pruebas y contratos: AUDITORIA_CATALOG_NAVIGATION_READ_2026-11-21.md, AUDITORIA_CICLO_IMAGENES_2026-11-21.md. CI 271 suites / 3,189 pruebas PASS / 0 fallos.
+- No se desplegó Apps Script ni se modificaron Spreadsheet/Drive productivos.
