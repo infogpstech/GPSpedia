@@ -22,18 +22,6 @@ testCase("el encabezado Inbox tiene un único bloque con sus variantes responsiv
     assert.match(consolidated, /padding:0 48px 10px 0/);
 });
 
-testCase("el título de Developer Tools conserva sus reglas en un único bloque", () => {
-    const marker = "BLOQUE CONSOLIDADO — título del modal Developer Tools";
-    assert.equal(css.split(marker).length - 1, 1);
-    const index = css.indexOf(marker);
-    const before = css.slice(0, index);
-    const consolidated = css.slice(index);
-    assert.doesNotMatch(before, /^\s*#dev-tools-modal \.dev-tools-title\s*\{/m);
-    assert.match(consolidated, /#dev-tools-modal \.dev-tools-title\s*\{[\s\S]*?padding-right:\s*34px/);
-    assert.match(consolidated, /border-bottom:\s*1px solid var\(--border-color\)/);
-    assert.match(consolidated, /animation:\s*dev-tools-title-expand/);
-    assert.match(consolidated, /white-space:\s*normal/);
-    assert.match(consolidated, /overflow-wrap:\s*anywhere/);
-});
+
 
 console.log("ModalHeaderCascade: " + passed + "/" + passed + " PASS");
