@@ -766,7 +766,7 @@ Documento de alcance, hallazgos y checklist: [AUDITORIA_INTEGRAL_LATENCIA_LLAMAD
 ### P0 — confirmar consumidores y reintentos antes de simplificar
 - [ ] Completar búsqueda de consumidores de `touchSession` y `validateActiveSession` en todos los módulos, plantillas, clientes externos y despliegues; comparar con la actualización de sesión cada cinco minutos en Coordinator y el espejo ActiveSessions.
 - [ ] Determinar si `touchSession` es legacy y, si procede, preparar retirada completa (mapa, pruebas de contrato, compatibilidad y plan de despliegue) sin afectar expiración, revocación ni cierre remoto.
-- [ ] Auditar cada uso de `routeActionWithRetry` sobre mutaciones ADMIN, especialmente `applyCortesImageOrganizer` y `rollbackCortesImageOrganizer`; demostrar idempotencia ante respuesta perdida/replay o limitar reintentos automáticos y exigir el mismo identificador estable.
+- [x] Verificar reintentos de `applyCortesImageOrganizer` y `rollbackCortesImageOrganizer`: usan IDs estables, ledger y respuestas `already_applied`/`already_rolled_back`; `CortesImageOrganizerExecutor.mjs` cubre replay y fallos parciales. La suite no se ejecutó en esta sesión; conservar el contrato y verificar CI al próximo cambio de código.
 - [ ] Completar matriz de llamadas del flujo de catálogo: snapshot inicial/reset, feed incremental, refresh al cerrar edición, caché local y sincronización PyS; medir bytes y frecuencia antes de eliminar consultas.
 
 ### P1 — optimización de imágenes y consultas ADMIN
