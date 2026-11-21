@@ -282,3 +282,14 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - Pruebas: 278 suites / 3,236 pruebas / 0 fallos; build SUCCESS; health read-only SUCCESS.
 - Requisito de Beta: comprobar `GPSpedia_SERVICE_URL_USERS`, `GPSpedia_COORDINATOR_SECRET_USERS` y los secretos/URLs de los cuatro servicios; validar precarga, invalidación, cache miss y re-login en deployments aislados. No se modificaron deployments ni ScriptProperties.
 - Próximo foco estático: lecturas duplicadas Users/ActiveSessions y revocaciones redundantes dentro de operaciones AUTH/USERS.
+
+
+### P0.4 — AUTH: lecturas dirigidas y revocación de sesión sin doble escaneo (2026-11-21)
+
+- Login: snapshot de ActiveSessions reutilizado para localizar el token, validar el puntero, contar sesiones, detectar duplicados y elegir revocaciones. La ruta normal no vuelve a escanear; se conserva lectura de reconciliación únicamente ante append/delete ambiguo.
+- Recuperación de contraseña: preflight de usuario fuera del lock, relectura de una sola fila dentro del lock para confirmar identidad/estado.
+- Cambio de rol: reconciliación recibe índice de la fila objetivo ya validada; una lectura de rango completo queda solo como fallback cuando no hay índice confiable.
+- Cambio/reset de contraseña, reset de sesiones y reconciliación de rol pasan callback a `revokeAllUserSessionsUnderLock_`; esa función extrae tokens una vez e invalida cachés/contextos antes de limpiar tokens en ActiveSessions. Se eliminaron pre-escaneos que obtenían los mismos tokens para volver a leerlos dentro de la revocación.
+- Eliminación: snapshot ActiveSessions acotado a columnas ID/token; duplicados se cuentan en memoria; invalidación usa los tokens del snapshot; comprobación posterior de sesiones residuales lee solo ID_Usuario.
+- Prueba de contrato `AuthSessionReadOptimization.mjs` y ajustes de fixtures para validar el nuevo orden de invalidación, lecturas dirigidas y recuperación. CI: 279 suites, 3,245 pruebas, 0 fallos; build y health read-only SUCCESS.
+- No se retiraron verificaciones de identidad, detección de token duplicado, lectura de confirmación, revocación remota ni controles de RBAC. Las lecturas de recuperación por fallos ambiguos se conservan intencionalmente.
