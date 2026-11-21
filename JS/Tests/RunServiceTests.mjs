@@ -165,6 +165,7 @@ runGroup('33','FEEDBACK',()=>{
   runCli('FEEDBACK búsqueda dirigida de reportId','JS/Tests/FeedbackReportLookupBoundedRead.mjs');
   runCli('FEEDBACK localización de fila append por ID reservado bajo intercalado','JS/Tests/FeedbackAppendRowIdentity.mjs');
   runCli('FEEDBACK proyección lógica y deduplicación de Inbox','JS/Tests/FeedbackLogicalProjection.mjs');
+  runCli('FEEDBACK ledger append-only de imágenes de reportes','JS/Tests/FeedbackReportImageEvents.mjs');
   runCli('FEEDBACK replay de reportes antes de Drive y lock','JS/Tests/FeedbackReportPreflightOutsideLock.mjs');
   runCli('FEEDBACK replay de tutorial antes del lock','JS/Tests/FeedbackTutorialPreflightOutsideLock.mjs');
   runCli('FEEDBACK lookup dirigido de tutoriales','JS/Tests/FeedbackTutorialLookupBoundedRead.mjs');
