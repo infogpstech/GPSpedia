@@ -415,8 +415,10 @@ function getCachedSharedSessionActor_(userId, sessionToken, dependencies) {
                 if (validActor(actor)) {
                     // Renovar TTL localmente: una sesión activa no vuelve a Coordinator.
                     if (typeof cache.put === "function") {
-                        const ttl = Math.max(1, Math.min(21600, Number(deps.ttlSeconds) || SHARED_SESSION_ACTOR_CACHE_TTL_SECONDS_));
-                        cache.put(cacheKey, JSON.stringify(actor), ttl);
+                        try {
+                            const ttl = Math.max(1, Math.min(21600, Number(deps.ttlSeconds) || SHARED_SESSION_ACTOR_CACHE_TTL_SECONDS_));
+                            cache.put(cacheKey, JSON.stringify(actor), ttl);
+                        } catch (refreshError) { /* La renovación local del TTL es best-effort. */ }
                     }
                     return actor;
                 }
