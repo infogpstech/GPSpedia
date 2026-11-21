@@ -3326,3 +3326,6 @@ Documento de alcance, hallazgos y checklist: [AUDITORIA_INTEGRAL_LATENCIA_LLAMAD
 - [x] Se evitan lecturas de LogosMarca, Tutoriales, TutorialEditEvents, TutorialRenameEvents y Relay en la consulta de candidatos.
 - [x] No se filtran eventos por vehículo ni se reduce el universo de VIN: se mantiene la validación global y el mismo orden de candidatos.
 - [ ] Confirmar CI y equivalencia en runner.
+
+ 
+- [ ] Añadir prueba de aislamiento de lectura de candidatos CATALOG y confirmar que solo toca Cortes, FeedbackLikes y AportesVehiculo.

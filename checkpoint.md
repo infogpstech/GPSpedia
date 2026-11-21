@@ -1129,3 +1129,6 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - getContributionCandidates construye la proyección usando Cortes + FeedbackLikes + AportesVehiculo; omite LogosMarca, Tutoriales y sus ledgers de edición/renombre, y Relay.
 - Se conserva lectura global de Cortes y AportesVehiculo, conteo de likes, orden de cortes y proyección completa de conflictos VIN/opId/resoluciones.
 - No se modifican datos productivos. CI pendiente.
+
+ 
+- La consulta getContributionCandidates ya se aisló de hojas de Logos/Tutoriales/Relay; prueba dedicada de aislamiento añadida al runner, pendiente CI.
