@@ -552,3 +552,9 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - Inspección estática confirma que WRITE corta las cargas Drive mediante runWriteDriveWorkOutsideScriptLock_ (libera lock y reacquire con tryLock(0)); los aportes suplementarios append-only suben antes de anexar el evento, sin lock global.
 - FEEDBACK reportes/sugerencias cargan Drive fuera de ScriptLock; replays de sugerencia se resuelven antes de Drive. PyS usa opId/payloadHash y estados UPLOAD_PENDING/LINKED sin ScriptLock observado en handleAddProblem.
 - ADMIN y mediciones de duración Drive quedan pendientes. No se retiraron locks ni se cambió el protocolo de carga.
+
+
+2026-11-21 — ADMIN CARGA DE REEMPLAZO DE IMAGEN Y LOCKS
+- handleUploadAdminImage no adquiere ScriptLock global; publica el reemplazo por evento después de verificar el archivo y la versión esperada.
+- handleUploadAdminImageLegacy_ y reparación de cortes liberan el lock durante Drive y reacquire sin espera con el mismo operationId antes de revalidar.
+- Se mantienen locks de operaciones destructivas/inventario; no se modificaron.
