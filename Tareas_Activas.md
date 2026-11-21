@@ -64,7 +64,8 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - [x] Resolver y probar localmente la carrera USERS `createUser` ↔ AUTH `deleteUser`: lease de `createUser` solo lee/escribe USERS; `deleteUser` comparte el recurso y el test de Coordinator confirma que no se solapan.
 - [x] Verificar localmente caché de actor e invalidación por revocación/cambio de rol/logout/eliminación: login precarga USERS/WRITE/FEEDBACK/ADMIN; cache miss no llama Coordinator; invalidación incluye los cuatro servicios.
 - [x] P0.3 — Precarga de actor en login fuera del lock global, por lotes de 25 tokens y `fetchAll`; acciones protegidas usan solo caché local con TTL renovable y fallan cerrado si falta.
-- [ ] Detectar lecturas de Users/ActiveSessions y revocaciones duplicadas dentro de una operación.
+- [x] Detectar y reducir lecturas de Users/ActiveSessions y revocaciones duplicadas dentro de una operación AUTH. Login reutiliza un snapshot de ActiveSessions; recuperación/rol reutilizan la fila objetivo; reset/cambio de contraseña invalidan usando los tokens del mismo snapshot; deleteUser lee solo ID/token de sesiones y verifica residuos por columna ID. La invalidación remota se ejecuta una sola vez antes de limpiar tokens.
+- [ ] Continuar optimización de lecturas/operaciones duplicadas en USERS y otros servicios.
 
 ### P1 — servicios, aportes y catálogo
 - [ ] Auditar WRITE, FEEDBACK y ADMIN de extremo a extremo: operaciones, idempotencia, Drive/Spreadsheet, read-back y publicaciones.
@@ -102,4 +103,4 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - No retirar escaneo global Drive ni controles de idempotencia/recuperación sin equivalencia demostrada.
 
 ## Siguiente paso exacto
-P0.1, P0.2 local, mapa AUTH/USERS, reducción integral de leases AUTH y P0.3 de caché de actor completados localmente. La única lease del dispatcher AUTH es deleteUser; USERS/createUser comparte solo el recurso USERS con esa eliminación. Siguiente: revisar lecturas Users/ActiveSessions y revocaciones duplicadas por operación; luego auditar WRITE/FEEDBACK/ADMIN y el flujo CATALOG/Coordinator. La precarga/invalidation de los cuatro servicios y la carrera createUser/deleteUser requieren además validación de despliegues/propiedades en Beta aislada.
+P0.1, P0.2 local, mapa AUTH/USERS, reducción integral de leases AUTH y P0.3 de caché de actor completados localmente. La única lease del dispatcher AUTH es deleteUser; USERS/createUser comparte solo el recurso USERS con esa eliminación. Siguiente: auditar WRITE/FEEDBACK/ADMIN de extremo a extremo, comenzando por las lecturas repetidas de Cortes y el ledger de aportes; luego CATALOG/Coordinator. La precarga/invalidation de los cuatro servicios y la carrera createUser/deleteUser requieren además validación de despliegues/propiedades en Beta aislada.
