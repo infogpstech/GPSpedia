@@ -185,3 +185,11 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - La búsqueda de pendientes proyecta el estado desde eventos; finalización deja de mutar status/actividad/fecha del ledger original y no reescribe los votos históricos.
 - Pruebas: `SuggestYearVoteThreshold` 8/8; `FeedbackYearApplicationAppendOnly` 12/12; CI 255 suites, 3071 pruebas, 0 fallos; build y health read-only SUCCESS.
 - ScriptLock permanece activo; coordinación concurrente aún pendiente. Sin despliegue Apps Script.
+
+
+
+2026-11-21 — FEEDBACK: handleSuggestYear sin ScriptLock global
+- Se elimina el ScriptLock del wrapper de sugerencias de año tras migrar votos, aplicaciones, estado y eventos de actualización a escrituras append-only/idempotentes.
+- Las pruebas verifican que el flujo no solicita ni libera ScriptLock y que actividad/Drive se procesan fuera de la mutación de catálogo.
+- Validación CI: 255 suites, 3073 pruebas, 0 fallos; `FeedbackYearApplicationAppendOnly` 14/14; `FeedbackYearFolderSyncOutsideLock` 5/5; `SuggestYearVoteThreshold` 8/8; build y health read-only SUCCESS.
+- Otros handlers FEEDBACK aún conservan locks; migración P0 global y pruebas Beta siguen pendientes. Sin despliegue Apps Script.
