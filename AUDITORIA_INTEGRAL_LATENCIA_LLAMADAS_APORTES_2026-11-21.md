@@ -426,3 +426,17 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - Se mantiene la exclusión del vehículo actual, la detección de VIN en otros vehículos y la composición de modelo/años en el mensaje de conflicto.
 - Test `WriteVinSnapshotReuse`: 8/8 PASS. CI HEAD `ad0db3ea9676e4aa56caf3e8a157f633087dcb8f`: **290 suites / 3,390 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS.
 - Continúa pendiente la auditoría WRITE de alta nueva, recuperación opId legacy, suplementaria legacy, journal de imágenes y publicación CATALOG, además de validación Beta aislada.
+
+
+### P1 WRITE — cierre de auditoría estática y contratos de operación (2026-11-21)
+
+- Alta de vehículo nuevo: reserva append-only de ID/opId antes del lock físico; lock fail-fast; registra pending antes de Drive; libera y readquiere lock sin espera para trabajo Drive; persiste datos por lotes; verifica ID y marca completed después de confirmar. Si la recuperación del lock falla, conserva pending para reintentar con el mismo opId.
+- Recuperación: los opId modernos consultan Idempotencia con búsqueda dirigida y validan vehicleId/slot/hash/status; legacy usa TextFinder, reconoce solo columnas autorizadas y rechaza coincidencias ambiguas sin descargar toda Cortes.
+- VIN: el handler dedicado reutiliza el snapshot de Cortes en comprobación global de duplicados; cambios se registran como eventos `vehicle_update` con hash/opId, sin escritura directa de proyección.
+- Información suplementaria: el flujo moderno genera opId desde UI, sube imágenes con operationKey estable y registra eventos append-only; el camino legacy vuelve a localizar/leer la fila después de Drive y persiste solo columnas modificadas con read-back, evitando restaurar snapshots antiguos sobre cambios concurrentes.
+- Imágenes: `ImageUploadEvents` conserva estados append-only, token/hash/MIME/tamaño/carpeta, verificación de archivo/description, recuperación de file_missing y requires_review; no se elimina el read-back ni la conciliación de conflictos.
+- CATALOG: reserva sourceVersion después de liberar el lock físico y publica cambios sin adquirir ScriptLock local; fallo de publicación se informa como reset requerido y no deshace la mutación ya confirmada.
+- Contratos CI revisados: WritePhysicalTransactionContract 7/7; WriteOpIdLegacyLookup 9/9; WriteCatalogPublicationIsolation 7/7; ImageUploadEventJournal 9/9; SupplementaryImageOperationIdContract 8/8; WriteContributionAppendConcurrency 9/9; WriteContributionRecovery 9/9; WriteIdempotencySnapshotReuse 9/9. Junto con los tests de optimización de catálogo, ledger, VIN y snapshot post-append.
+- CI HEAD `4fad6a812598beb0bb04212cac4a3bc3136c9dd5`: **291 suites / 3,397 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS.
+- WRITE queda cerrado en revisión estática y contratos automatizados. Pendiente solo validación Beta aislada de concurrencia real entre proyectos, Drive real, pérdida de respuesta y recuperación de append/archivo; no ejecutar estas pruebas contra producción.
+- Siguiente bloque: auditoría end-to-end FEEDBACK (sugerencias de año, likes, reportes/imágenes, Inbox, vistas/actividad, PyS/tutoriales y publicación CATALOG).
