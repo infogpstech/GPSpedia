@@ -121,9 +121,9 @@ testCase("el tamaño del logo se conserva y móvil usa ancho natural con gap de 
     const mobileLogoRules = css.slice(css.indexOf("GP-UX-DETAIL-LOGO-MOBILE-02"));
     assert.match(mobileLogoRules, /grid-template-columns:max-content minmax\(0,1fr\)/);
     assert.match(mobileLogoRules, /column-gap:6px/);
-    assert.match(mobileLogoRules, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-title \.brand-logo-modal \{[\s\S]*?width:auto !important;[\s\S]*?height:60px !important;[\s\S]*?min-height:60px !important;[\s\S]*?max-height:60px !important;[\s\S]*?max-width:none !important;[\s\S]*?object-fit:contain/);
+    assert.match(mobileLogoRules, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-title \.brand-logo-modal \{[\s\S]*?width:auto !important;[\s\S]*?height:48px !important;[\s\S]*?min-height:48px !important;[\s\S]*?max-height:48px !important;[\s\S]*?max-width:none !important;[\s\S]*?object-fit:contain/);
     const cutHeader = css.slice(css.indexOf("GP-UX-MODAL-HEADER-TIGHTEN-03"));
-    assert.match(cutHeader, /\.detail-modal-title \{[\s\S]*?height:60px;[\s\S]*?min-height:60px;/);
+    assert.match(cutHeader, /\.detail-modal-title \{[\s\S]*?height:48px;[\s\S]*?min-height:48px;/);
     assert.match(mobileLogoRules, /justify-content:flex-start/);
     const mobileLogoContainerStart = mobileLogoRules.indexOf('#modalDetalle[data-modal-type="corte"] .detail-modal-title {');
     const mobileLogoContainerEnd = mobileLogoRules.indexOf("}", mobileLogoContainerStart);
@@ -267,7 +267,7 @@ testCase("el logo ocupa dos filas y su contenedor se alinea abajo junto al model
     assert.match(cutHeader, /\.detail-modal-header-actions \{[\s\S]*?justify-content:flex-end/);
     assert.match(cutHeader, /\.detail-modal-divider \{[\s\S]*?grid-column:1 \/ -1;[\s\S]*?grid-row:3;[\s\S]*?width:auto !important;[\s\S]*?margin:1px 6px 2px !important/);
     assert.match(cutHeader, /\.detail-modal-saving-indicator \{[\s\S]*?grid-column:1 \/ -1;[\s\S]*?grid-row:4;/);
-    assert.match(cutHeader, /height:60px;[\s\S]*?min-height:60px;[\s\S]*?align-items:flex-start/);
+    assert.match(cutHeader, /height:48px;[\s\S]*?min-height:48px;[\s\S]*?align-items:flex-start/);
     assert.match(cutHeader, /grid-template-rows:auto auto auto auto;[\s\S]*?margin-bottom:6px/);
     assert.ok(css.includes("#detalleCompleto {") && css.includes("gap: 12px;"));
     assert.ok(css.includes("#modalDetalle[data-modal-type=\"corte\"] .detail-modal-toolbar { margin-bottom:7px; }"));
