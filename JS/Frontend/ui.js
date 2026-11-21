@@ -586,11 +586,8 @@ async function refreshCatalogAfterEdit_(editSession) {
 
     if (!isCurrentUiSessionContext_(editSession)) return null;
     const catalogBeforeFallback = getState().catalogData;
-    // El cursor se captura antes del snapshot. Si hay eventos concurrentes durante
-    // la lectura, se volverán a aplicar desde este cursor; nunca se adelanta el cursor.
-    const localSyncState = await offline.getCatalogSyncState().catch(() => null);
-    if (!isCurrentUiSessionContext_(editSession)) return null;
-    if (getState().catalogData !== catalogBeforeFallback) return getState().catalogData;
+    // Si otra sincronización termina mientras se solicita el snapshot de respaldo,
+    // su resultado tiene prioridad y esta respuesta tardía no lo sobrescribe.
     const response = await routeAction("getCatalogData");
     if (!isCurrentUiSessionContext_(editSession)) return null;
     if (getState().catalogData !== catalogBeforeFallback) return getState().catalogData;
@@ -599,16 +596,6 @@ async function refreshCatalogAfterEdit_(editSession) {
         throw new Error("No se recibió una instantánea completa del catálogo después de editar.");
     }
     setState({ catalogData: snapshot, catalogLoadStatus: "ready", catalogLoadError: null });
-    try {
-        if (localSyncState && Number.isSafeInteger(localSyncState.cursor)) {
-            await offline.saveCatalogWithCursor(snapshot, localSyncState.cursor);
-        } else {
-            await offline.saveCatalog(snapshot);
-        }
-    } catch (error) {
-        console.warn("El catálogo se actualizó, pero no se pudo guardar la instantánea de respaldo local.",
-            error && error.name || "CatalogStorageError");
-    }
     return snapshot;
 }
 
