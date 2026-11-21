@@ -794,4 +794,4 @@ Documento de alcance, hallazgos y checklist: [AUDITORIA_INTEGRAL_LATENCIA_LLAMAD
 
 
 ### P1 — retirar refrescos que no producen cambios de catálogo
-- [ ] Eliminar los dos callbacks `onSuccess → getCatalogData` de los formularios de vídeo de corte/tutorial: la solicitud termina en estado pending, FEEDBACK solo escribe la bandeja de aprobación y no publica CATALOG. Añadir prueba de contrato que confirme que no hay snapshot después del envío y que se conserva el opVideoId, la respuesta pending y la prevención de duplicados.
+- [x] Eliminar los dos callbacks `onSuccess → getCatalogData` de los formularios de vídeo de corte/tutorial: completado en `ui.js`. Contrato frontend 3/3 PASS; suite backend `YouTubeApproval.js` 16/16 PASS. Se conservan opVideoId, respuesta pending, prevención de duplicados y refresco PyS. Runner Node completo y CI quedan sin ejecutar en esta sesión.
