@@ -3599,14 +3599,6 @@ body.inbox-open { overflow: hidden; }
     border:1px solid var(--gp-color-border,var(--border-color,#ddd)); border-radius:14px; position:relative;
 }
 #inbox-modal-content .inbox-close-button { top: 10px; right: 12px; }
-#inbox-modal-content .inbox-modal-header {
-    flex:0 0 auto; display:flex; align-items:center; justify-content:space-between; gap:12px;
-    padding:0 48px 10px 0; border-bottom:1px solid var(--gp-color-border,var(--border-color,#ddd));
-}
-#inbox-modal-content .inbox-heading-block,
-#inbox-modal-content .inbox-header-actions,
-#inbox-modal-content .inbox-search-row,
-#inbox-modal-content .inbox-pagination { display:flex; align-items:center; gap:8px; }
 #inbox-modal-content .inbox-modal-title {
     margin:0 !important; padding:0; border:0; color:var(--gp-color-text,var(--text-color,#222)); font-size:1.2rem !important;
 }
@@ -3678,7 +3670,6 @@ body.inbox-open { overflow: hidden; }
 #inbox-modal-content .inbox-conversation-item-preview,
 #inbox-modal-content .inbox-conversation-item-meta { color:var(--gp-color-text-muted,var(--text-medium,#666)); font-size:.76rem; }
 #inbox-modal-content .inbox-conversation-item-meta { grid-column:1 / -1; }
-#inbox-modal-content .inbox-pagination { flex:0 0 auto; justify-content:space-between; padding-top:5px; }
 #inbox-modal-content .inbox-conversation-detail {
     min-width:0; min-height:0; display:flex; flex-direction:column; gap:9px; overflow:hidden;
     border:1px solid var(--gp-color-border,var(--border-color,#ddd)); border-radius:10px; padding:10px;
@@ -3758,8 +3749,6 @@ body.inbox-open { overflow: hidden; }
 #inbox-modal-content .inbox-mobile-back { display:none; }
 @media (max-width:760px) {
     #inbox-modal-content.inbox-modal-content { width:100vw !important; max-width:100vw !important; height:100dvh; max-height:100dvh !important; border-radius:0; padding:11px !important; border:0; }
-    #inbox-modal-content .inbox-modal-header { align-items:flex-start; flex-wrap:wrap; }
-    #inbox-modal-content .inbox-header-actions { flex-wrap:wrap; }
     #inbox-modal-content .inbox-conversations-view { grid-template-columns:minmax(0,1fr); }
     #inbox-modal-content .inbox-conversation-detail { display:none; }
     #inbox-modal-content.is-detail-open .inbox-conversation-sidebar { display:none; }
@@ -3881,36 +3870,6 @@ body.inbox-open { overflow: hidden; }
         padding: 12px !important;
     }
 
-    #inbox-modal-content .inbox-modal-header {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 9px;
-        padding: 0 44px 10px 0;
-    }
-
-    #inbox-modal-content .inbox-heading-block {
-        width: 100%;
-        min-width: 0;
-        justify-content: flex-start;
-    }
-
-    #inbox-modal-content .inbox-header-actions {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        width: 100%;
-        gap: 7px;
-    }
-
-    #inbox-modal-content .inbox-header-actions button {
-        width: 100%;
-        min-width: 0;
-        min-height: 40px;
-        padding: 7px 8px;
-        white-space: normal;
-        line-height: 1.2;
-        font-size: 0.82rem;
-    }
-
     #inbox-modal-content .inbox-view-tabs {
         display: flex;
         width: 100%;
@@ -3940,35 +3899,12 @@ body.inbox-open { overflow: hidden; }
         padding: 8px;
     }
 
-    #inbox-modal-content .inbox-search-row {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        gap: 7px;
-    }
-
-    #inbox-modal-content .inbox-search-row input {
-        min-width: 0;
-    }
-
-    #inbox-modal-content .inbox-search-row button {
-        white-space: nowrap;
-    }
-
     #inbox-modal-content .inbox-conversation-list {
         padding: 1px;
     }
 
     #inbox-modal-content .inbox-conversation-item {
         padding: 11px;
-    }
-
-    #inbox-modal-content .inbox-pagination {
-        gap: 7px;
-    }
-
-    #inbox-modal-content .inbox-pagination button {
-        flex: 1 1 0;
-        min-width: 0;
     }
 }
 
@@ -3995,11 +3931,6 @@ body.inbox-open { overflow: hidden; }
 
     #inbox-modal-content.inbox-modal-content {
         padding: 10px !important;
-    }
-
-    #inbox-modal-content .inbox-header-actions button {
-        padding: 7px 6px;
-        font-size: 0.76rem;
     }
 
     #inbox-modal-content .inbox-modal-title {
@@ -4765,10 +4696,6 @@ body.dark-mode #login-modal #login-error.login-session-ended {
     background: #3c331d;
     color: #f0dfa9;
 }
-
-
-/* GP-UX-INBOX-01 — navegación lateral por bandejas y acciones compactas. */
-#inbox-modal-content .inbox-heading-block { display:flex; align-items:center; gap:10px; min-width:0; }
 #inbox-modal-content .inbox-menu-toggle,
 #inbox-modal-content .inbox-icon-action {
     display:inline-flex; align-items:center; justify-content:center; flex:0 0 40px;
@@ -4815,10 +4742,6 @@ body.dark-mode #login-modal #login-error.login-session-ended {
 }
 #inbox-modal-content .inbox-action-toolbar button#inbox-delete-btn i { margin:0; }
 @media (max-width:760px) {
-    #inbox-modal-content .inbox-modal-header { flex-direction:row; align-items:center; flex-wrap:nowrap; padding-right:44px; }
-    #inbox-modal-content .inbox-heading-block { flex:1 1 auto; width:auto; }
-    #inbox-modal-content .inbox-header-actions { display:flex; flex:0 0 auto; width:auto; gap:6px; }
-    #inbox-modal-content .inbox-header-actions button { width:40px; min-width:40px; height:40px; min-height:40px; padding:0; }
     #inbox-modal-content .inbox-workspace { grid-template-columns: minmax(0,1fr); grid-template-rows:auto minmax(0,1fr); gap:8px; }
     #inbox-modal-content .inbox-section-nav { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:3px; padding:5px; }
     #inbox-modal-content .inbox-section-nav button { min-height:42px; flex-direction:column; justify-content:center; gap:3px; padding:4px 2px; font-size:.68rem; white-space:normal; text-align:center; }
@@ -4861,11 +4784,8 @@ body.dark-mode #login-modal #login-error.login-session-ended {
 }
 #inbox-modal-content .inbox-folder-nav button[aria-pressed="true"] { gap:7px; min-width:max-content; }
 #inbox-modal-content .inbox-folder-nav button[aria-pressed="true"] span { max-width:110px; margin-left:1px; opacity:1; transform:translateX(0); }
-#inbox-modal-content .inbox-pagination { flex:0 0 auto; display:flex; align-items:center; justify-content:center; gap:14px; min-height:38px; padding-top:5px; }
-#inbox-modal-content .inbox-pagination[hidden] { display:none !important; }
-#inbox-modal-content .inbox-pagination button { width:38px; min-width:38px; height:34px; padding:0; font-size:1.25rem; line-height:1; }
 #inbox-modal-content #inbox-page-label { min-width:42px; text-align:center; font-variant-numeric:tabular-nums; font-size:.84rem; color:var(--gp-color-text-secondary,var(--text-color,#555)); }
-@media (max-width:760px) { #inbox-modal-content .inbox-workspace,#inbox-modal-content .inbox-workspace-content { min-height:0; } #inbox-modal-content .inbox-folder-nav { display:flex; flex-wrap:wrap; } #inbox-modal-content .inbox-pagination { padding-bottom:max(2px,env(safe-area-inset-bottom)); } }
+@media (max-width:760px) { #inbox-modal-content .inbox-workspace,#inbox-modal-content .inbox-workspace-content { min-height:0; } #inbox-modal-content .inbox-folder-nav { display:flex; flex-wrap:wrap; } }
 @media (prefers-reduced-motion:reduce) { #inbox-modal-content .inbox-search-form,#inbox-modal-content .inbox-folder-nav button,#inbox-modal-content .inbox-folder-nav button span { transition:none !important; } }
 
 /* Ajuste final de navegación Inbox: distribución táctil y altura completa en móvil. */
@@ -5433,23 +5353,6 @@ textarea.rich-text-source[hidden] { display:none !important; }
     overflow-y:auto;
 }
 #inbox-modal-content .inbox-search-form { gap:3px; }
-#inbox-modal-content .inbox-search-row input {
-    min-height:32px;
-    height:32px;
-    padding:4px 8px;
-    line-height:1.2;
-}
-#inbox-modal-content .inbox-search-row button {
-    display:inline-flex; align-items:center; justify-content:center; flex:0 0 40px;
-    width:40px; min-width:40px; max-width:40px; min-height:32px; height:32px; padding:4px 0;
-}
-#inbox-modal-content .inbox-search-row button i { flex:0 0 auto; line-height:1; }
-#inbox-modal-content .inbox-pagination {
-    flex:0 0 auto;
-    margin-top:auto;
-    min-height:32px;
-    padding:0 0 1px;
-}
 #inbox-modal-content .inbox-status {
     min-height:0;
     margin:0;
@@ -6427,4 +6330,113 @@ textarea.rich-text-source[hidden] { display:none !important; }
 }
 #modalDetalle[data-modal-type="corte"] .detail-modal-toolbar[data-model-title-layout="below-logo"] .detail-modal-saving-indicator {
     grid-row:5;
+}
+
+/* BLOQUE CONSOLIDADO — encabezado del modal Inbox; se conserva el orden original de cascada. */
+#inbox-modal-content .inbox-modal-header {
+    flex:0 0 auto; display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:0 48px 10px 0; border-bottom:1px solid var(--gp-color-border,var(--border-color,#ddd));
+}
+#inbox-modal-content .inbox-heading-block,
+#inbox-modal-content .inbox-header-actions,
+#inbox-modal-content .inbox-search-row,
+#inbox-modal-content .inbox-pagination { display:flex; align-items:center; gap:8px; }
+#inbox-modal-content .inbox-pagination { flex:0 0 auto; justify-content:space-between; padding-top:5px; }
+@media (max-width:760px) {
+    #inbox-modal-content .inbox-modal-header { align-items:flex-start; flex-wrap:wrap; }
+    #inbox-modal-content .inbox-header-actions { flex-wrap:wrap; }}
+
+ 
+/* AJUSTES RESPONSIVE — Inbox y Developer
+   Conserva la paleta, tipografía, botones y superficies propias de GPSpedia. */
+@media (max-width: 760px) {
+
+    #inbox-modal-content .inbox-modal-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 9px;
+        padding: 0 44px 10px 0;
+    }
+
+    #inbox-modal-content .inbox-heading-block {
+        width: 100%;
+        min-width: 0;
+        justify-content: flex-start;
+    }
+
+    #inbox-modal-content .inbox-header-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100%;
+        gap: 7px;
+    }
+
+    #inbox-modal-content .inbox-header-actions button {
+        width: 100%;
+        min-width: 0;
+        min-height: 40px;
+        padding: 7px 8px;
+        white-space: normal;
+        line-height: 1.2;
+        font-size: 0.82rem;
+    }
+
+    #inbox-modal-content .inbox-search-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 7px;
+    }
+
+    #inbox-modal-content .inbox-search-row input {
+        min-width: 0;
+    }
+
+    #inbox-modal-content .inbox-search-row button {
+        white-space: nowrap;
+    }
+
+    #inbox-modal-content .inbox-pagination {
+        gap: 7px;
+    }
+
+    #inbox-modal-content .inbox-pagination button {
+        flex: 1 1 0;
+        min-width: 0;
+    }}
+
+@media (max-width: 380px) {
+
+    #inbox-modal-content .inbox-header-actions button {
+        padding: 7px 6px;
+        font-size: 0.76rem;
+    }}
+
+
+/* GP-UX-INBOX-01 — navegación lateral por bandejas y acciones compactas. */
+#inbox-modal-content .inbox-heading-block { display:flex; align-items:center; gap:10px; min-width:0; }
+@media (max-width:760px) {
+    #inbox-modal-content .inbox-modal-header { flex-direction:row; align-items:center; flex-wrap:nowrap; padding-right:44px; }
+    #inbox-modal-content .inbox-heading-block { flex:1 1 auto; width:auto; }
+    #inbox-modal-content .inbox-header-actions { display:flex; flex:0 0 auto; width:auto; gap:6px; }
+    #inbox-modal-content .inbox-header-actions button { width:40px; min-width:40px; height:40px; min-height:40px; padding:0; }}
+#inbox-modal-content .inbox-pagination { flex:0 0 auto; display:flex; align-items:center; justify-content:center; gap:14px; min-height:38px; padding-top:5px; }
+#inbox-modal-content .inbox-pagination[hidden] { display:none !important; }
+#inbox-modal-content .inbox-pagination button { width:38px; min-width:38px; height:34px; padding:0; font-size:1.25rem; line-height:1; }
+@media (max-width:760px) { #inbox-modal-content .inbox-pagination { padding-bottom:max(2px,env(safe-area-inset-bottom)); }}
+#inbox-modal-content .inbox-search-row input {
+    min-height:32px;
+    height:32px;
+    padding:4px 8px;
+    line-height:1.2;
+}
+#inbox-modal-content .inbox-search-row button {
+    display:inline-flex; align-items:center; justify-content:center; flex:0 0 40px;
+    width:40px; min-width:40px; max-width:40px; min-height:32px; height:32px; padding:4px 0;
+}
+#inbox-modal-content .inbox-search-row button i { flex:0 0 auto; line-height:1; }
+#inbox-modal-content .inbox-pagination {
+    flex:0 0 auto;
+    margin-top:auto;
+    min-height:32px;
+    padding:0 0 1px;
 }
