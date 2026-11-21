@@ -24,7 +24,7 @@ function makeHarness({ rows = [["user:7", "10", 2, 4, 5, "completed", "now"]], s
             return { getValues: () => [rows[args[0] - 2]] };
         }
     };
-    const replay = new Function("getSpreadsheet", code + "\\nreturn findCompletedLikeReplayNoop_;")(
+    const replay = new Function("getSpreadsheet", code + "\nreturn findCompletedLikeReplayNoop_;")(
         () => ({ getSheetByName: () => ledgerExists ? ledger : null })
     );
     const cuts = { getRange: () => ({ getValue: () => counter }) };
