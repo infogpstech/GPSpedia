@@ -1123,22 +1123,32 @@ function runSharedMutationCoordinatorTests() {
         getCachedSharedSessionActor_("U-1", "token-1", deps); getCachedSharedSessionActor_("U-2", "token-1", deps); getCachedSharedSessionActor_("U-1", "token-2", deps);
         assert_(validations === 3);
     });
-    test_("La caché rechaza sesiones revocadas y actores de otra identidad", function() {
+    test_("La caché exige actor precargado y no revalida en Coordinator ante miss", function() {
         const store = new Map(), cache = { get: key => store.get(key) || null, put: (key, value) => store.set(key, value), remove: key => store.delete(key) };
-        expectThrow_(() => getCachedSharedSessionActor_("U-1", "token-1", { cache, keyFor: () => "revoked", validate: () => ({ status: "success", valid: false }) }), "revocada");
-        expectThrow_(() => getCachedSharedSessionActor_("U-1", "token-2", { cache, keyFor: () => "wrong", validate: () => ({ status: "success", valid: true, actor: { userId: "U-2", role: "tecnico", epoch: 1 } }) }), "revocada");
-        assert_(store.size === 0);
+        let validations = 0;
+        expectThrow_(() => getCachedSharedSessionActor_("U-1", "token-1", {
+            cache, keyFor: () => "revoked",
+            validate: () => { validations++; return { status: "success", valid: false }; }
+        }), "precargado");
+        store.set("wrong", JSON.stringify({ userId: "U-2", role: "tecnico", epoch: 1 }));
+        expectThrow_(() => getCachedSharedSessionActor_("U-1", "token-2", {
+            cache, keyFor: () => "wrong",
+            validate: () => { validations++; return { status: "success", valid: true, actor: { userId: "U-2", role: "tecnico", epoch: 1 } }; }
+        }), "precargado");
+        assert_(validations === 0, "Un cache miss no debe volver a consultar Coordinator.");
+        assert_(store.size === 0, "Un actor de otra identidad debe eliminarse.");
     });
 
     test_("El cliente AUTH conserva revocación individual y global usando invalidación central", function() {
         const remoteCalls = [];
         const r = createRuntime_(null, function(url, options) {
             const request = JSON.parse(options.payload);
-            const target = url.includes("WRITE") ? "WRITE" : url.includes("FEEDBACK") ? "FEEDBACK" : "ADMIN";
+            const target = url.includes("USERS") ? "USERS" : url.includes("WRITE") ? "WRITE" : url.includes("FEEDBACK") ? "FEEDBACK" : "ADMIN";
             remoteCalls.push({ target, tokens: request.payload.sessionTokens.slice() });
             return { getResponseCode: () => 200,
                 getContentText: () => JSON.stringify({ status: "success", invalidated: request.payload.sessionTokens.length }) };
         });
+        r.properties.setProperty("GPSpedia_SERVICE_URL_USERS", "https://script.google.com/macros/s/USERS/exec");
         r.properties.setProperty("GPSpedia_SERVICE_URL_WRITE", "https://script.google.com/macros/s/WRITE/exec");
         r.properties.setProperty("GPSpedia_SERVICE_URL_FEEDBACK", "https://script.google.com/macros/s/FEEDBACK/exec");
         r.properties.setProperty("GPSpedia_SERVICE_URL_ADMIN", "https://script.google.com/macros/s/ADMIN/exec");
@@ -1167,10 +1177,10 @@ function runSharedMutationCoordinatorTests() {
         expectThrow_(() => r.request("validateSessionContext", "AUTH", "validateSessionContext", {
             userId, sessionToken: sessions[6].token
         }), "revocada");
-        assert_(remoteCalls.length === 9, "Las invalidaciones individual y global deben llegar a WRITE, FEEDBACK y ADMIN.");
+        assert_(remoteCalls.length === 12, "Las invalidaciones individual y global deben llegar a USERS, WRITE, FEEDBACK y ADMIN.");
     });
 
-    test_("Coordinator centraliza invalidación remota por lotes para WRITE, FEEDBACK y ADMIN", function() {
+    test_("Coordinator centraliza invalidación remota por lotes para USERS, WRITE, FEEDBACK y ADMIN", function() {
         const calls = [];
         const r = createRuntime_(null, function(url, options) {
             const request = JSON.parse(options.payload);
@@ -1191,8 +1201,8 @@ function runSharedMutationCoordinatorTests() {
             userId: "USR-CACHE-1", sessionTokens: tokens
         });
         assert_(result.status === "success" && result.invalidated === 7, "Debe confirmar todos los tokens.");
-        assert_(result.confirmed.WRITE === 7 && result.confirmed.FEEDBACK === 7 && result.confirmed.ADMIN === 7, "Los tres servicios deben confirmar cada token.");
-        assert_(calls.length === 6, "Siete tokens deben dividirse en dos lotes por cada uno de los tres servicios.");
+        assert_(result.confirmed.USERS === 7 && result.confirmed.WRITE === 7 && result.confirmed.FEEDBACK === 7 && result.confirmed.ADMIN === 7, "Los cuatro servicios deben confirmar cada token.");
+        assert_(calls.length === 8, "Siete tokens deben dividirse en dos lotes por cada uno de los cuatro servicios.");
         assert_(calls.every(call => call.request.payload.userId === "USR-CACHE-1"), "Debe conservar la identidad objetivo.");
         assert_(!JSON.stringify(result).includes("session-token-cache"), "La respuesta no debe exponer tokens.");
     });
@@ -1215,11 +1225,11 @@ function runSharedMutationCoordinatorTests() {
         r.properties.setProperty("GPSpedia_SERVICE_URL_ADMIN", "https://script.google.com/macros/s/ADMIN/exec");
         const payload = { userId: "USR-CACHE-2", sessionTokens: ["session-token-cache-retry-0001"] };
         expectThrow_(() => r.request("invalidateSessionActorCaches", "AUTH", "invalidateSessionActorCaches", payload), "FEEDBACK");
-        assert_(calls.join(",") === "WRITE,FEEDBACK", "La primera ejecución debe detectar el fallo parcial.");
+        assert_(calls.join(",") === "USERS,WRITE,FEEDBACK", "La primera ejecución debe detectar el fallo parcial.");
         failFeedback = false;
         const retry = r.request("invalidateSessionActorCaches", "AUTH", "invalidateSessionActorCaches", payload);
         assert_(retry.status === "success" && retry.invalidated === 1, "El mismo lote debe poder repetirse sin duplicar efectos.");
-        assert_(calls.join(",") === "WRITE,FEEDBACK,WRITE,FEEDBACK,ADMIN", "El reintento debe confirmar los tres destinos.");
+        assert_(calls.join(",") === "USERS,WRITE,FEEDBACK,USERS,WRITE,FEEDBACK,ADMIN", "El reintento debe confirmar los cuatro destinos.");
     });
 
     test_("La invalidación remota de caché permanece reservada a AUTH", function() {
