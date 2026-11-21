@@ -4483,7 +4483,7 @@ function readTutorialTitleEvents_(sheet) {
         const payloadHash = String(row[6] || "").trim().toLowerCase();
         if (!/^[a-z0-9_-]{20,120}$/.test(operationId) || !/^[a-f0-9]{64}$/.test(eventHash) ||
             !/^[a-f0-9]{64}$/.test(payloadHash) ||
-            !/^(?:tut-[A-Za-z0-9_-]{20,80}|legacy-[a-f0-9]{64})$/i.test(tutorialId) ||
+            !/^(?:tut-[A-Za-z0-9_-]{1,80}|legacy-[a-f0-9]{64})$/i.test(tutorialId) ||
             !["CLAIM", "RENAME"].includes(action) || !titleKey || (action === "RENAME" && !previousTitleKey)) {
             throw new Error("TutorialTitleEvents contiene una fila incompatible; requiere revisión.");
         }
