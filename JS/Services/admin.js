@@ -743,11 +743,8 @@ function prepareVinCollectionForAdmin(sheet, rowValues, vehicleId, vinColumnInde
  * Comprueba y agrega al final de «Cortes» las columnas de activación del testigo.
  * Las columnas 44 y 45 se reservan; los campos de testigo se agregan a partir de la 46.
  */
-function ensureTestigoColumns(sheet, lockAlreadyHeld = false) {
+function ensureTestigoColumns(sheet) {
     if (!sheet) throw new Error('No se encontró la hoja «Cortes».');
-    const lock = lockAlreadyHeld ? null : LockService.getScriptLock();
-    let lockAcquired = false;
-    try {
         if (lock) {
             lock.waitLock(30000);
             lockAcquired = true;
@@ -798,7 +795,7 @@ function ensureTestigoColumns(sheet, lockAlreadyHeld = false) {
             if (!current && lastRow > 1) missingHeaderIndexes.push(index);
         }
         // Las columnas AT:AV son contiguas. Validar todas las columnas sin encabezado
-        // desde un único rango evita hasta tres lecturas remotas bajo el ScriptLock.
+        // desde un único rango evita hasta tres lecturas remotas durante la preparación del alta.
         if (missingHeaderIndexes.length) {
             const firstMissingIndex = Math.min.apply(null, missingHeaderIndexes);
             const lastMissingIndex = Math.max.apply(null, missingHeaderIndexes);
@@ -829,9 +826,6 @@ function ensureTestigoColumns(sheet, lockAlreadyHeld = false) {
             vinColumnIndex: vinColumnIndex,
             headers: currentHeaders
         };
-    } finally {
-        if (lockAcquired) lock.releaseLock();
-    }
 }
 
 function getAdminState(action) {
@@ -8009,7 +8003,7 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
     try {
 
         logMessage("Registro Administrativo", `Procesando addOrUpdateCut administrativo...`);
-        const testigoSchema = ensureTestigoColumns(sheet, true);
+        const testigoSchema = ensureTestigoColumns(sheet);
         const vinColumnIndex = testigoSchema.vinColumnIndex;
         if (cutData.vin && !vinColumnIndex) {
             throw new Error("La hoja «Cortes» no contiene el encabezado «VIN»; no se puede guardar el identificador sin alterar otras columnas.");
