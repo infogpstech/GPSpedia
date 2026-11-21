@@ -153,3 +153,11 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - `SuggestYearVoteThreshold.mjs` añade regresiones negativo→positivo y positivo→negativo.
 - Commit `8c8a7dac2ce2743642bebfdfcfcccdb387cdbe56`: servicio de regresión SUCCESS, 255 suites, 3064 pruebas, 0 fallos; health read-only SUCCESS; build SUCCESS. Deploy/Pages pendiente al registrar.
 - El flujo mantiene ScriptLock. Append atómico de votos, aplicaciones idempotentes y recuperación append-only siguen pendientes; no se desplegó Apps Script ni se modificaron datos productivos.
+
+
+
+2026-11-21 — FEEDBACK: append atómico en sugerencias de año
+- Los votos nuevos se anexan como fila completa en `Feedbacks` con ID reservado, actor, vehículo, respuesta y año; el proyector usa first-write-wins por actor/vehículo/año.
+- Las aplicaciones se anexan como fila completa de 16 campos en `FeedbackYearApplications` y se verifica una única fila para el operationId UUID.
+- `SuggestYearVoteThreshold` 8/8 y `FeedbackYearApplicationAppendOnly` 7/7 PASS. CI `8d80bac41d4c29e9b90d598e89eca818e03bff79`: 255 suites, 3066 pruebas, 0 fallos; health read-only y build en ejecución al registrar.
+- ScriptLock sigue activo. UUID de aplicación, mutaciones de estado y recuperación que renombra votos históricos siguen pendientes; no se ha completado la migración ni se ha desplegado Apps Script.
