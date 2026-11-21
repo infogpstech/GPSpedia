@@ -262,3 +262,12 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - Se mantiene el lock local de acceptTerms para evitar pérdida de actualizaciones entre dispositivos sobre el registro JSON compartido en Users.TermsAcceptance.
 - Validación de servicios: 278 suites / 3,232 pruebas / 0 fallos; sintaxis/build y health read-only SUCCESS. Se registró SessionActivityLeaseMinimization en el runner y se actualizaron expectativas obsoletas del contrato ADMIN.
 - No se retiraron todavía leases de recuperación, cambios de contraseña, actualizaciones de usuario, reset de sesiones, logout o migración; son la siguiente clasificación. La coordinación createUser ↔ deleteUser permanece protegida.
+
+
+### Cierre P0 — reducción integral de leases AUTH (2026-11-21)
+
+- El dispatcher AUTH mantiene lease únicamente para deleteUser. login conserva bloqueo temporal de intentos fallidos y registro inicial del contexto; no adquiere lease. Recuperación, cambio/reset de contraseña, reset de sesiones, actualización de usuario, logout y migración usan ruta directa/actor cacheado.
+- Las revocaciones remotas se mantienen en los handlers sensibles; las revocaciones individuales y por usuario invalidan la caché local antes de llamar a Coordinator. Las acciones ordinarias no adquieren leases.
+- USERS/createUser mantiene lease solo para exclusión con AUTH/deleteUser. Su política de recursos se reduce a USERS; se retiran las políticas Coordinator de AUTH/updateUser y AUTH/resetUserSessions.
+- Pruebas: 278 suites / 3,232 pruebas / 0 fallos; build SUCCESS; health read-only SUCCESS.
+- Siguiente: eliminar revalidaciones de actor en cache miss por acción y precalentar cachés de USERS/WRITE/FEEDBACK/ADMIN durante login; la validación de campo permanece pendiente de Beta aislada.
