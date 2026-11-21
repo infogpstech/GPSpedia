@@ -48,7 +48,7 @@ test("una sugerencia nueva se anexa como fila completa", () => {
     assert.match(writeBlock, /suggestionRow\[COLS_FEEDBACKS\.Problema - 1\] = problemDesc/);
     assert.match(writeBlock, /sheet\.appendRow\(suggestionRow\)/);
     assert.match(writeBlock, /savedRow = sheet\.getRange/);
-    assert.doesNotMatch(writeBlock, /getRange\([^\\n]*\)\.setValue|\.setValues\(/);
+    assert.doesNotMatch(writeBlock, /getRange\([^)]*\)\.setValue|\.setValues\(/);
     const catchBlock = handler.slice(handler.indexOf("} catch (error) {"));
     assert.match(catchBlock, /appendAttempted/);
     assert.doesNotMatch(catchBlock, /clearContent\(\)/);
