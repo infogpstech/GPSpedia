@@ -24,4 +24,21 @@ testCase("el encabezado Inbox tiene un único bloque con sus variantes responsiv
 
 
 
+
+testCase("Developer Tools conserva una sola regla base y overrides responsive", () => {
+    assert.equal((css.match(/^#dev-tools-modal \.dev-tools-title\s*\{/gm) || []).length, 1);
+    const start = css.indexOf("\n#dev-tools-modal .dev-tools-title {") + 1;
+    const end = css.indexOf("\n}", start);
+    assert.ok(start > 0 && end > start);
+    const base = css.slice(start, end);
+    assert.match(base, /padding-right:\s*34px/);
+    assert.match(base, /padding-bottom:\s*12px/);
+    assert.match(base, /border-bottom:\s*1px solid var\(--border-color\)/);
+    assert.match(base, /animation:\s*dev-tools-title-expand/);
+    assert.match(base, /white-space:\s*normal/);
+    assert.match(base, /overflow-wrap:\s*anywhere/);
+    assert.match(css, /@media \(max-width: 520px\)[\s\S]*?#dev-tools-modal \.dev-tools-title \{[\s\S]*?font-size:\s*1\.15rem/);
+    assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?#dev-tools-modal \.dev-tools-title \{\s*animation:\s*none;/);
+});
+
 console.log("ModalHeaderCascade: " + passed + "/" + passed + " PASS");
