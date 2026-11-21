@@ -42,14 +42,16 @@ test("WRITE y FEEDBACK no adquieren leases para mutaciones ordinarias", () => {
     assert.doesNotMatch(feedbackDoPost, /withSharedMutationLease_\s*\(/);
 });
 
-test("USERS getUsers reutiliza actor cacheado y no registra actividad por lectura", () => {
-    const branch = usersDoPost.indexOf('if (action !== "getUsers")');
+test("USERS getUsers/updateProfile reutilizan actor cacheado; solo createUser conserva lease", () => {
+    const branch = usersDoPost.indexOf('if (!["getUsers", "updateProfile"].includes(action))');
     const lease = usersDoPost.indexOf('withSharedMutationLease_("USERS", "sessionActivity"');
     assert.ok(branch >= 0 && usersDoPost.indexOf("getCachedSharedSessionActor_", branch) > branch);
     assert.equal(lease, -1);
     assert.doesNotMatch(usersCoordinatorPolicy, /sessionActivity/);
-    assert.match(usersMutationPolicy, /createUser.*updateProfile/);
+    assert.match(usersMutationPolicy, /createUser/);
+    assert.doesNotMatch(usersMutationPolicy, /updateProfile/);
     assert.match(usersDoPost, /withSharedMutationLease_\("USERS", action/);
+    assert.doesNotMatch(usersDoPost, /withSharedMutationLease_\("USERS",\s*["']updateProfile/);
 });
 
 test("AUTH benchmark usa actor cacheado; las mutaciones de sesión conservan coordinación", () => {
