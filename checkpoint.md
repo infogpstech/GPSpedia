@@ -1167,3 +1167,12 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - El cierre de corte está anidado dentro de .detail-modal-header-actions, por lo que .detail-modal-toolbar > .info-close-btn no lo posiciona.
 - .detail-modal-toolbar es compartido con Tutorial/Relay; consolidar manteniendo la base compartida y aislando la variante corte.
 - Pendiente: consolidación CSS, prueba de cascada y visual Beta. No se modificó CSS en la fase de auditoría.
+
+ 
+## Checkpoint — consolidación del encabezado CSS (2026-11-21)
+
+- Se reemplazó el bloque duplicado del encabezado por una sección contigua única: base compartida + variante scoped de corte + responsive.
+- Se preservaron estilos base de Tutorial/Relay y el selector de cierre directo para Relay.
+- Se corrigieron los valores móviles que eran sobrescritos (título e input), se limitó el logo móvil a min(30vw,120px), y se mantuvo el cierre de corte anidado y 40×40.
+- El estado below-logo declara cinco filas.
+- Se agregó JS/Tests/ModalHeaderCssCascade.mjs al runner; CI pendiente.

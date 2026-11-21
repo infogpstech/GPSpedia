@@ -3382,3 +3382,17 @@ Documento de alcance, hallazgos y checklist: [AUDITORIA_INTEGRAL_LATENCIA_LLAMAD
 - [ ] Consolidar en una sola sección contigua sin cambiar los contratos de Tutorial/Relay.
 - [ ] Añadir prueba CSS de cascada y responsive.
 - [ ] Validar visualmente en navegador real/Beta.
+
+ 
+## Encabezado de corte — consolidación CSS implementada (2026-11-21)
+
+**Estado: IMPLEMENTADO; CI PENDIENTE.**
+
+- [x] Se movieron las reglas scoped de #modalDetalle[data-modal-type="corte"] al mismo bloque contiguo que los encabezados compartidos.
+- [x] Se unificaron declaraciones base repetidas de título, logo, input, acciones, divisor e indicador de guardado conservando el valor efectivo final.
+- [x] El título móvil recupera clamp compacto; el input móvil ya no hereda 1.5rem.
+- [x] El logo móvil queda limitado a min(30vw, 120px), con la imagen contenida al 100% de su columna.
+- [x] El cierre de corte sigue en flujo dentro de .detail-modal-header-actions; Relay conserva el cierre directo compartido.
+- [x] Se declara explícitamente la quinta fila del estado below-logo.
+- [x] Se añadió ModalHeaderCssCascade.mjs al runner.
+- [ ] Confirmar CI y validar visualmente en navegador real/Beta, incluidos tutorial y Relay.

@@ -63,3 +63,12 @@ La auditoría encontró 128 selectores repetidos entre las reglas de modales de 
 - Comparación de estructura JS/CSS histórica y actual: completada.
 - Prueba de contrato CSS y revisión responsive automatizada: por implementar.
 - Inspección visual en navegador real/escritorio/móvil: requiere validación Beta; no se declara aprobada en esta auditoría.
+
+ 
+## Consolidación posterior a la auditoría (2026-11-21)
+- Se agruparon en un solo bloque contiguo las reglas base compartidas y la variante del detalle de corte.
+- Se retiró el bloque scoped disperso.
+- Se corrigieron cascadas móviles del título/input y el ancho máximo del logo.
+- Se conserva el cierre anidado del corte (40×40) y el cierre directo de Relay.
+- Se declara la quinta fila de la variante below-logo.
+- Prueba CSS añadida al runner; CI y visual Beta pendientes.

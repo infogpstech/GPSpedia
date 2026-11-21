@@ -1,0 +1,24 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+
+const css = readFileSync(new URL("../../style.css", import.meta.url), "utf8");
+const ui = readFileSync(new URL("../Frontend/ui.js", import.meta.url), "utf8");
+const start = css.indexOf("BLOQUE ÚNICO — encabezados de detalle");
+const end = css.indexOf("BLOQUE CONSOLIDADO — encabezado del modal Inbox", start);
+assert.ok(start >= 0 && end > start, "debe existir un único bloque contiguo de encabezados");
+const block = css.slice(start, end);
+assert.equal(css.split("BLOQUE ÚNICO — encabezados de detalle").length - 1, 1);
+assert.equal(css.includes("GP-UX-MODAL-HEADER-TIGHTEN-03"), false, "no debe quedar un bloque scoped disperso");
+assert.ok(block.includes("#modalDetalle[data-modal-type=\"corte\"] #detalleCompleto"));
+assert.ok(block.includes("detail-modal-header-actions > .info-close-btn"), "el cierre debe seguir el DOM anidado actual");
+assert.ok(block.includes("max-width: min(30vw, 120px)"), "el logo móvil debe tener un límite real");
+assert.ok(block.includes("max-width: 100% !important"), "el logo debe respetar el ancho de su contenedor");
+assert.ok(block.includes("font-size: clamp(1rem, 4vw, 1.35rem)"), "el título móvil debe conservar tamaño compacto");
+assert.ok(block.includes("font-size: clamp(.95rem, 3.8vw, 1.2rem)"), "el input móvil debe conservar tamaño compacto");
+assert.ok(block.includes("grid-template-rows: auto auto auto auto auto"), "el estado below-logo debe declarar cinco filas");
+assert.ok(block.includes(".detail-modal-toolbar > .info-close-btn"), "Relay conserva el cierre directo compartido");
+assert.ok(block.includes(".tutorial-detail-toolbar") === false, "no se alteran las reglas específicas de Tutorial");
+assert.ok(ui.includes('headerActions.appendChild(closeBtn)'), "el cierre del corte permanece dentro de las acciones");
+assert.ok(ui.includes('headerDiv.setAttribute("data-model-title-layout", "below-logo")'), "se conserva el ajuste dinámico del título");
+assert.ok(!block.includes("max-width: none !important"), "el logo móvil no puede volver a quedar sin límite");
+console.log("ModalHeaderCssCascade: 14/14 PASS — cascada única, logo, título, input y cierre");
