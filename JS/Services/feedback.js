@@ -2299,7 +2299,7 @@ function findFeedbackRowById_(sheet, feedbackId, lastColumn) {
     return exact[0] || null;
 }
 
-function findReportByReportId_(sheet, reportId, metadataColumn) {
+function findReportByReportId_(sheet, reportId, metadataColumn, imageEventsIndex) {
     const id = String(reportId || "").trim();
     const lastRow = sheet ? sheet.getLastRow() : 0;
     if (!id || !metadataColumn || lastRow < 2) return null;
@@ -2316,7 +2316,7 @@ function findReportByReportId_(sheet, reportId, metadataColumn) {
             if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) metadata = parsed;
         } catch (error) {}
         if (!metadata || String(metadata.reportId || "") !== id) return;
-        const imageMetadata = getFeedbackReportImageMetadata_(id, metadata);
+        const imageMetadata = getFeedbackReportImageMetadata_(id, metadata, imageEventsIndex);
         if (imageMetadata) Object.assign(metadata, imageMetadata);
         const row = sheet.getRange(rowIndex, 1, 1, lastColumn).getValues()[0];
         matches.push({ rowIndex, row, metadata });
@@ -2902,7 +2902,7 @@ function readInboxSheetPage_(sheet, offset, count) {
  const lastColumn=Math.max(1,Number(sheet.getLastColumn())||1);
  return sheet.getRange(offset+2,1,count,lastColumn).getValues();
 }
-function isCanonicalFeedbackInboxRow_(sheet, row, rowIndex, reportMetadataColumn) {
+function isCanonicalFeedbackInboxRow_(sheet, row, rowIndex, reportMetadataColumn, imageEventsIndex) {
     if (!sheet || !Array.isArray(row)) return true;
     const vehicleId = String(row[COLS_FEEDBACKS.ID_vehiculo - 1] || "").trim();
     const userName = String(row[COLS_FEEDBACKS.Usuario - 1] || "").trim();
@@ -2919,7 +2919,7 @@ function isCanonicalFeedbackInboxRow_(sheet, row, rowIndex, reportMetadataColumn
     if (reportMetadataColumn) {
         const metadata = parseReportMetadata(row[reportMetadataColumn - 1], vehicleId);
         if (metadata) {
-            const canonical = findReportByReportId_(sheet, metadata.reportId, reportMetadataColumn);
+            const canonical = findReportByReportId_(sheet, metadata.reportId, reportMetadataColumn, imageEventsIndex);
             return !canonical || Number(canonical.rowIndex) === Number(rowIndex);
         }
     }
@@ -2950,11 +2950,18 @@ function handleGetFeedbackItems(payload) {
   contactRows=readInboxSheetPage_(contactSheet,contactOffset,take);
  }
  const reportMetadataColumn=feedbackRows.length?getReportMetadataColumn(feedbackSheet):0;
+ const needsImageEventIndex=feedbackRows.some(row=>{
+  if(!reportMetadataColumn)return false;
+  const vehicleId=normalizeInboxStoredText_(row[COLS_FEEDBACKS.ID_vehiculo-1],120,"");
+  const metadata=parseReportMetadata(row[reportMetadataColumn-1],vehicleId);
+  return Boolean(metadata&&!normalizeReportImageMetadata_(metadata));
+ });
+ const imageEventsIndex=needsImageEventIndex?readFeedbackReportImageEventsIndex_():null;
  const actor=payload&&payload.__feedbackActor?payload.__feedbackActor:null;
  const canSeeVideoApprovals=String(actor&&actor.role||"")==="Desarrollador";
  const mappedFeedback=feedbackRows
-  .filter((row,index)=>isCanonicalFeedbackInboxRow_(feedbackSheet,row,offset+2+index,reportMetadataColumn))
-  .map(row=>mapInboxFeedbackRow_(row,reportMetadataColumn));
+  .filter((row,index)=>isCanonicalFeedbackInboxRow_(feedbackSheet,row,offset+2+index,reportMetadataColumn,imageEventsIndex))
+  .map(row=>mapInboxFeedbackRow_(row,reportMetadataColumn,imageEventsIndex));
  const data=mappedFeedback.filter(item=>canSeeVideoApprovals||item.type!=="video_approval")
   .concat(contactRows.map(mapInboxContactRow_));
  const consumedCount=feedbackRows.length+contactRows.length;
