@@ -24,7 +24,7 @@ test("rechaza IDs físicos duplicados",()=>{
 test("ambos handlers verifican la fila por ID reservado",()=>{
  for(const [name,next] of [["handleReportProblem","enforceFeedbackRateLimit_"],["handleSuggestCutChange","parseModelosAsociados"]]){
   const a=source.indexOf("function "+name+"("),b=source.indexOf("\nfunction "+next+"(",a),body=source.slice(a,b);
-  assert.ok(body.includes("findFeedbackRowById_(sheet, reservedId, lastCol)"),name);
+  assert.match(body, /findFeedbackRowById_\(\s*sheet\s*,\s*reservedId\s*,\s*lastCol\s*\)/, name);
  }
 });
 console.log("FeedbackAppendRowIdentity: "+passed+"/"+passed+" PASS");
