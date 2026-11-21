@@ -29,7 +29,43 @@ import { getDriveStorageCriticalState } from './driveStorageAlerts.js';
 import { getOrCreateTermsDeviceId, getDeviceTermsAcceptance, getDeviceTermsSyncStatus, saveDeviceTermsAcceptance } from './termsDeviceAcceptance.js';
 import { parseDeveloperConsoleConfirmation } from './developerConsoleConfirmation.js';
 
-async function clearServiceWorkerRuntimeCache_(windowRef, timeoutMs = 5000) {
+async function readLogoFileBase64_(file) {
+    return new Promise((resolve, reject) => {
+        if (!file) {
+            const error = new Error("No se seleccionó un archivo.");
+            error.name = "LogoFileReadError";
+            reject(error);
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => {
+            const result = reader.result;
+            const comma = typeof result === "string" ? result.indexOf(",") : -1;
+            const base64 = comma >= 0 ? result.slice(comma + 1).trim() : "";
+            if (typeof result !== "string" || !result.startsWith("data:image/") || !base64) {
+                const error = new Error("FileReader no devolvió una imagen Base64 válida.");
+                error.name = "LogoFileReadError";
+                reject(error);
+                return;
+            }
+            resolve(base64);
+        };
+        reader.onerror = () => {
+            const error = new Error("No se pudo leer el archivo de logotipo.");
+            error.name = "LogoFileReadError";
+            reject(error);
+        };
+        reader.onabort = () => {
+            const error = new Error("La lectura del logotipo fue cancelada.");
+            error.name = "LogoFileReadError";
+            reject(error);
+        };
+        try { reader.readAsDataURL(file); }
+        catch (error) { reject(error); }
+    });
+}
+
+function clearServiceWorkerRuntimeCache_(windowRef, timeoutMs = 5000) {
     if (!windowRef || !windowRef.navigator || !windowRef.navigator.serviceWorker) {
         return { status: "unavailable", message: "No hay un Service Worker disponible para limpiar las respuestas temporales." };
     }
@@ -7748,26 +7784,40 @@ ${elapsedSec}s
     const fileSpan = document.getElementById('selected-logo-file-name');
     let selectedLogoBase64 = null;
     let selectedLogoFilename = null;
+    let logoReadGeneration = 0;
+    const registerLogoBtn = document.getElementById('btn-admin-register-logo');
+    if (registerLogoBtn) registerLogoBtn.disabled = true;
 
     fileInput.onchange = () => {
-        const file = fileInput.files[0];
-        if (file) {
+        const generation = ++logoReadGeneration;
+        const file = fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
+        selectedLogoBase64 = null;
+        selectedLogoFilename = null;
+        if (registerLogoBtn) registerLogoBtn.disabled = true;
+
+        if (!file) {
+            fileSpan.textContent = "Ningún archivo seleccionado. Formatos soportados: PNG, SVG, WEBP";
+            return;
+        }
+
+        fileSpan.textContent = `Leyendo: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+        readLogoFileBase64_(file).then(base64 => {
+            if (generation !== logoReadGeneration) return;
+            selectedLogoBase64 = base64;
             selectedLogoFilename = file.name;
             fileSpan.textContent = `Seleccionado: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                selectedLogoBase64 = e.target.result.split(',')[1]; // Solo la parte de datos base64
-            };
-            reader.readAsDataURL(file);
-        } else {
+            if (registerLogoBtn) registerLogoBtn.disabled = false;
+        }).catch(error => {
+            if (generation !== logoReadGeneration) return;
             selectedLogoBase64 = null;
             selectedLogoFilename = null;
-            fileSpan.textContent = "Ningún archivo seleccionado. Formatos soportados: PNG, SVG, WEBP";
-        }
+            fileSpan.textContent = "No se pudo leer el logotipo. Selecciona el archivo nuevamente.";
+            log("[ERROR] No se pudo leer el logotipo: " + String(error && error.message || error), true);
+        });
     };
 
     // 7. Registrar Logotipo
-    document.getElementById('btn-admin-register-logo').onclick = async () => {
+    registerLogoBtn.onclick = async () => {
         const brandName = document.getElementById('logo-brand-name-input').value.trim();
         if (!brandName || !selectedLogoBase64) {
             log("[ADVERTENCIA] Por favor completa el nombre del fabricante y selecciona un archivo de imagen.", true);
@@ -7786,6 +7836,7 @@ ${elapsedSec}s
             fileSpan.textContent = "Ningún archivo seleccionado. Formatos soportados: PNG, SVG, WEBP";
             selectedLogoBase64 = null;
             selectedLogoFilename = null;
+            if (registerLogoBtn) registerLogoBtn.disabled = true;
         }
     };
 
