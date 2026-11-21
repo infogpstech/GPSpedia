@@ -19,7 +19,7 @@ const load = block(auth, "loadInitialData");
 
 assert.match(refresh, /window\.auth/);
 assert.match(refresh, /authApi\.loadInitialData\(true, \{ silent: true \}\)/);
-assert.match(refresh, /synced === true && offline\.isCompleteCatalogSnapshot\(currentCatalog\)/);
+assert.match(refresh, /offline\.isCompleteCatalogSnapshot\(currentCatalog\)[\s\S]*?synced === true \|\| currentCatalog !== catalogAtStart/);
 assert.match(refresh, /const catalogAtStart = getState\(\)\.catalogData/);
 assert.match(refresh, /currentCatalog !== catalogAtStart/);
 assert.match(refresh, /const catalogBeforeFallback = getState\(\)\.catalogData/);
