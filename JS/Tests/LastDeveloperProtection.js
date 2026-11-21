@@ -19,8 +19,10 @@ function runLastDeveloperProtectionTests(sources) {
         const makeSheet=(rows,isSessions)=>({
             getDataRange:()=>({getValues:()=>rows.map(r=>r.slice())}),
             getLastRow:()=>rows.length,
-            getRange:(row,col)=>({
-                setValues:values=>values.forEach((r,i)=>r.forEach((v,j)=>rows[row-1+i][col-1+j]=v)),
+            getLastColumn:()=>Math.max(1,...rows.map(r=>r.length)),
+            getRange:(row,col,numRows=1,numCols=1)=>({
+                getValues:()=>Array.from({length:numRows},(_,ri)=>Array.from({length:numCols},(_,ci)=>rows[row-1+ri][col-1+ci])),
+                setValues:values=>values.forEach((r,i)=>r.forEach((v,j)=>{rows[row-1+i][col-1+j]=v;})),
                 setValue:value=>{rows[row-1][col-1]=value;},
                 getValue:()=>rows[row-1][col-1],
                 clearContent:()=>{rows[row-1][col-1]='';}
@@ -47,6 +49,7 @@ function runLastDeveloperProtectionTests(sources) {
             sameRoleRevocationMarker_:(a,b)=>a.userId===b.userId&&a.oldRole===b.oldRole&&a.newRole===b.newRole&&a.markedAt===b.markedAt&&a.newFullName===b.newFullName,
             reconcileRoleRevocationUnderLock_:(us,ss,id)=>{
                 const row=us._rows.find(r=>String(r[0])===String(id));
+                revokedSharedUsers.push(String(id));
                 const marker=String(row[7]||''),data=JSON.parse(marker.slice(marker.indexOf('{')));
                 row[3]=data.newRole;
                 if(Object.prototype.hasOwnProperty.call(data,'newFullName')){
@@ -104,7 +107,7 @@ function runLastDeveloperProtectionTests(sources) {
         const reconcile=new Function(
             'COLS_USERS','COLS_ACTIVE_SESSIONS','ROLE_REVOCATION_SHARED_PREFIX','PropertiesService',
             'normalizeUserId','normalizeRoleName','isActiveAuthUserRecord','roleRevocationPropertyKey_',
-            'revokePendingLoginRequestsForUserUnderLock_','SpreadsheetApp',code
+            'revokePendingLoginRequestsForUserUnderLock_','revokeSharedUserSessionContexts_','SpreadsheetApp',code
         )(
             userCols,sessionCols,prefix,
             {getScriptProperties:()=>({
@@ -114,7 +117,7 @@ function runLastDeveloperProtectionTests(sources) {
             })},
             value=>String(value||'').trim(),normalizeRole,
             row=>active(row),id=>'role:'+id,
-            ()=>({pending:false}),{flush:()=>{flushCalls++;if(failCommitFlush){failCommitFlush=false;throw new Error('flush final simulado');}}}
+            ()=>({pending:false}),()=>{}, {flush:()=>{flushCalls++;if(failCommitFlush){failCommitFlush=false;throw new Error('flush final simulado');}}}
         );
         const first=reconcile(usersSheet,sessionsSheet,'T1');
         assert(first.pending,'El fallo de la segunda escritura debe dejar recuperación pendiente.');
