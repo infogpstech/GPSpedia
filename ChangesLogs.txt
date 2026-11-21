@@ -564,3 +564,9 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - La selección de logotipo no invalida el Base64 anterior mientras FileReader procesa el archivo nuevo y no maneja error/abort; puede enviar bytes antiguos con metadatos del archivo nuevo si se pulsa Registrar antes de completar la lectura.
 - handleAddLogo crea el archivo Drive antes de tryLock(0), fuera de lock, pero no se observó límite de tamaño ni verificación de firma binaria en el handler inspeccionado.
 - Se registra tarea para corregir la carrera y definir validación coherente. No se modificó la ruta.
+
+
+2026-11-21 — CORREGIDA CARRERA DE LECTURA DE LOGOTIPOS ADMIN
+- JS/Frontend/ui.js: Base64/nombre anteriores se limpian al cambiar archivo; contador de generación descarta resultados obsoletos; botón Registrar permanece deshabilitado hasta lectura válida; helper maneja error, abort y Data URL inválida.
+- JS/Tests/AdminLogoFileRead.mjs: lectura válida, error, abort y resultado inválido; 4/4 PASS en V8 aislado. Integrado en RunServiceTests.mjs.
+- El límite de bytes y la verificación MIME/firma en backend quedan pendientes; no se modificó Drive ni el contrato de formatos.
