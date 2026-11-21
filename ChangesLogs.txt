@@ -636,3 +636,11 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - Recuperación, cambio/reset de contraseña, reset de sesiones, updateUser, logout y migración usan actor cacheado/ruta directa y conservan revocaciones remotas.
 - Coordinator elimina políticas de lease para updateUser/resetUserSessions; USERS/createUser limita sus recursos a USERS y conserva exclusión frente a deleteUser.
 - Regresión: 278 suites / 3,232 pruebas / 0 fallos; build y health read-only aprobados.
+
+
+[2026-11-21] AUTH/Coordinator — precarga de actor al login y caché local fail-closed
+- Coordinator precarga USERS/WRITE/FEEDBACK/ADMIN después de syncUserSessions y fuera del lock, en lotes de 25; AUTH precalienta su caché local.
+- getCachedSharedSessionActor_ no revalida por acción en cache miss; renueva TTL local y falla cerrado si no hay actor.
+- Invalidación remota ampliada a USERS/WRITE/FEEDBACK/ADMIN; USERS agrega endpoints internos de precarga e invalidación.
+- createUser y deleteUser conservan exclusión mutua sobre USERS; prueba Coordinator añadida.
+- 278 suites / 3,236 pruebas / 0 fallos; build y health read-only aprobados.
