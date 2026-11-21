@@ -323,3 +323,11 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - Nuevo `readLikeActorReplaySnapshot_`: valida el esquema una vez y localiza las filas del actor/vehículo/corte una vez. Ambos helpers de replay y la ruta normal consumen ese snapshot. Si el ledger no existe o el preflight no puede confirmarlo, se conserva el fallback posterior a `ensureFeedbackLikesSheet_`.
 - El read-back después de append se mantiene fresco y separado; no se reutiliza el snapshot previo para confirmar una escritura concurrente. Se preservan first-write-wins, estados pending/completed/event, append-only y la proyección CATALOG.
 - Prueba `FeedbackLikeCompletedReplayPreflight.mjs`: 7/7 PASS; regresión: 280 suites, 3,259 pruebas, 0 fallos; health read-only SUCCESS.
+
+
+### P1.4 — FEEDBACK: índice por reportId para eventos de imagen en reportes propios
+
+- La bandeja de reportes propios podía ejecutar una búsqueda de evento por cada reporte cuya metadata no contuviera imagen legacy. Ahora se detecta si la página necesita eventos, se lee el ledger `FeedbackReportImageEvents` una sola vez y se construye un índice por `reportId`.
+- `mapInboxFeedbackRow_` acepta el índice opcional; la metadata legacy conserva prioridad. El primer evento equivalente permanece canónico; eventos con hashes distintos se marcan como conflicto por reportId y solo bloquean ese reporte cuando se consulta.
+- No se lee el ledger si no hay reportes propios que necesiten fallback de imagen; las aprobaciones de video tampoco provocan la lectura.
+- Prueba `FeedbackInboxImageEventBatchRead.mjs`: 5/5 PASS; regresión: 281 suites, 3,264 pruebas, 0 fallos; build y health read-only SUCCESS.
