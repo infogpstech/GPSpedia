@@ -55,7 +55,7 @@ test("el helper devuelve el índice VIN calculado",()=>{
  assert.ok(ensure.includes("currentHeaders[targetColumns[index] - 1] = headerNames[index];"));
 });
 test("handleAddOrUpdateCut reutiliza el resultado y no vuelve a leer encabezados VIN",()=>{
- assert.ok(handler.includes("const testigoSchema = ensureTestigoColumns(sheet, true);"));
+ assert.ok(handler.includes("const testigoSchema = ensureTestigoColumns(sheet);"));
  assert.ok(handler.includes("const vinColumnIndex = testigoSchema.vinColumnIndex;"));
  assert.ok(!handler.includes("const vinColumnIndex = getVinColumnIndex(sheet);"));
  assert.ok(handler.includes("const headers = testigoSchema.headers;"));
