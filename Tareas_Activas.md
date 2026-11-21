@@ -226,3 +226,12 @@ Antes de cualquier Beta, cumplir la secuencia de sincronización de ramas, árbo
 - La finalización actualiza el estado y la marca de actividad en todas las filas duplicadas reconocidas y confirma el cierre de cada una.
 - Pruebas `SuggestYearVoteThreshold` 8/8 y `FeedbackYearApplicationAppendOnly` 9/9 PASS. Commit `953e9347c7d34696b8a1646c516e73ba758eee7d`: 255 suites, 3068 pruebas aprobadas, 0 fallos; health read-only SUCCESS.
 - **P0 sigue abierto:** el wrapper conserva ScriptLock; la recuperación todavía modifica claves de votos históricos y el ledger usa cambios de estado. No retirar el lock hasta migrar esas mutaciones y validar concurrencia real. No desplegar Apps Script ni tocar producción.
+
+
+
+## Continuación — votos históricos inmutables (2026-11-21)
+
+- `completeFeedbackYearApplication_` dejó de renombrar claves de aportantes en `Feedbacks` y ya no recorre ni reescribe las filas de votos al cerrar una ampliación. La aplicación se identifica mediante el `operationId` determinista y los eventos `vehicle_update`.
+- Se conserva la lectura de claves `applied:user:...` únicamente para compatibilidad con registros históricos que ya fueron marcados por versiones anteriores; el flujo nuevo no genera esas claves.
+- Pruebas `SuggestYearVoteThreshold` 8/8 y `FeedbackYearApplicationAppendOnly` 10/10 PASS. CI commit `99d25f8a040c54e47a0618a19751e4fcc7e815ac`: 255 suites, 3069 pruebas aprobadas, 0 fallos; health read-only SUCCESS.
+- **P0 continúa abierto:** ScriptLock sigue activo; el ledger aún actualiza status/actividad in-place y la coordinación completa entre votos concurrentes y aplicaciones requiere más trabajo. No retirar lock ni desplegar Apps Script hasta cerrar esos contratos.
