@@ -751,3 +751,13 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Commits de esta fase: ec717df709a1c65aedfdd31bdcd43a10e71a6a71 (servicio), 9e24c49c02d3e4efbc3133570bb6fd53c8d5ec73 (prueba), 5c647bf9d7734bce2418444be30c5720027f3b01 (corrección del test). HEAD verificado: 5c647bf9d7734bce2418444be30c5720027f3b01.
 - Estado: COMPLETADA CON VALIDACIÓN LOCAL AISLADA; pendiente ejecutar prueba en checkout completo/CI y revisar concurrencia real en Apps Script Beta. No se desplegó ni se modificaron datos productivos.
 - Siguiente paso: retirar lease del registro de actividad de imágenes si se confirma que es un registro ordinario append-only, y revisar el alcance de leases de inventario y creación de carpetas. Mantener intactos locks de unicidad, migración, reconciliación y acciones destructivas hasta concluir su análisis.
+
+
+## Checkpoint — ADMIN: helper Testigo sin lock interno redundante (2026-11-21)
+
+- ensureTestigoColumns ahora es un helper sin adquisición/liberación de ScriptLock. Se confirmó que su único llamador es handleAddOrUpdateCut y que ese llamador ya adquiere el lock fail-fast antes de invocarlo; por tanto, el lock interno opcional era redundante y podía esperar 30 segundos si se usaba por error sin el parámetro heredado.
+- Se retiró el parámetro lockAlreadyHeld y se actualizó el único callsite. Se preservaron las comprobaciones de esquema, VIN y datos existentes, así como el contrato AT:AV. El alta física WRITE/ADMIN conserva su sección crítica y no se modificó.
+- Se agregó AdminTestigoColumnsNoInternalLock: 1/1 PASS en harness Node.js aislado, verificando que el helper no contiene APIs de lock y que el único caller lo invoca después de adquirir el lock principal. Se inspeccionó además el código remoto actualizado para confirmar que no quedaron referencias residuales a lock/lockAcquired dentro del helper.
+- Commits: 8b880d33b4298323d201074766517f9e58b7f96b (eliminación inicial), d00b6c569c1e3d88d3ccc6280fea44254b0df140 (prueba), 7b8e4b90baabbb52f9fdda42a89e2eebd19d45ad (retirada de referencias residuales detectadas al revisar el diff) y d118ac8e15751461939afcd405be07617d7af3ec (precisión del comentario). HEAD: d118ac8e15751461939afcd405be07617d7af3ec.
+- Estado: COMPLETADA CON VALIDACIÓN LOCAL AISLADA; pendiente ejecución en checkout completo/CI. No se desplegó Apps Script ni se tocaron datos productivos.
+- Siguiente paso de auditoría: revisar el registro de actividad de imágenes y las leases de inventario/carpeta. No retirar la coordinación del ledger Safe Apply, de migraciones, de reconciliación ni de acciones destructivas sin una sustitución de integridad.
