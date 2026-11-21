@@ -745,10 +745,6 @@ function prepareVinCollectionForAdmin(sheet, rowValues, vehicleId, vinColumnInde
  */
 function ensureTestigoColumns(sheet) {
     if (!sheet) throw new Error('No se encontró la hoja «Cortes».');
-        if (lock) {
-            lock.waitLock(30000);
-            lockAcquired = true;
-        }
         const targetColumns = [46, 47, 48]; // AT:AV es el contrato físico obligatorio.
         const headerNames = ["activaTestigo1", "activaTestigo2", "activaTestigo3"];
         const lastColumn = sheet.getLastColumn();
