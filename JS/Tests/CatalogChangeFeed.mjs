@@ -152,12 +152,11 @@ test("recordLike invalida CATALOG desde ledger append-only sin lock de versión"
     assert.ok(feedbackSource.includes("normalizeFeedbackCatalogImageId_"));
     assert.ok(feedbackSource.includes("normalizeFeedbackCatalogYouTubeUrl_"));
     assert.ok(!feedbackSource.includes("mapRowToObject(row, COLS_CORTES)"));
-    assert.match(feedbackSource,/function publishFeedbackCatalogChange_\(action, buildChange\)[\s\S]*?acquireFeedbackScriptLock_\(lock\)[\s\S]*?finally[\s\S]*?releaseLock\(\)[\s\S]*?publishSharedCatalogChange_\("FEEDBACK", action, change\)/);
     const publisherStart=feedbackSource.indexOf("function publishFeedbackCatalogChange_");
     const publisherEnd=feedbackSource.indexOf("\nfunction publishFeedbackCortesCatalogChange_",publisherStart);
     const publisher=feedbackSource.slice(publisherStart,publisherEnd);
-    assert.ok(publisher.indexOf("lock.releaseLock()")<publisher.indexOf('publishSharedCatalogChange_("FEEDBACK", action, change)'),
-        "FEEDBACK debe liberar el ScriptLock antes de UrlFetch al Coordinator");
+    assert.match(publisher,/sourceVersion:\s*Math\.max\(1, Date\.now\(\)\)/);
+    assert.doesNotMatch(publisher,/LockService|PropertiesService|acquireFeedbackScriptLock_|tryLock|waitLock|releaseLock/);
     assert.match(feedbackSource,/function publishFeedbackCortesCatalogChange_\(action, reference\)[\s\S]*?publishFeedbackCatalogChange_\(action, \(\) => buildFeedbackCortesCatalogChange_\(reference\)\)/);
 });
 test("altas y ediciones de Tutoriales publican upsert exacto tras verificar fila e ID", () => {
