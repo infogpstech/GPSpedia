@@ -294,7 +294,5 @@ function runUsersAtomicMutationTests(usersSource, authSource, coordinatorSource)
         });
         assert(policies.profileDisabled(),"updateProfile no debe tener política de lease en Coordinator.");
     });
-
-    });
     return {passed,failed,total:passed+failed,results};
 }
