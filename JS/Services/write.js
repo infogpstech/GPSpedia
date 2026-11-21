@@ -487,19 +487,11 @@ function buildCortesCatalogChange_(reference) {
     return { collection: "cortes", recordId: wanted, operation: "upsert", snapshot: snapshot };
 }
 
-const WRITE_CATALOG_VERSION_PROPERTY_ = "GPSpedia_WRITE_CATALOG_VERSION_V1";
-
-function nextWriteCatalogVersionLocked_(reference) {
+function nextWriteCatalogSourceVersion_(reference) {
     const vehicleId = String(reference === null || reference === undefined ? "" : reference).trim();
     if (!/^[1-9]\d{0,14}$/.test(vehicleId)) throw new Error("No se puede versionar un cambio de catálogo sin un ID de vehículo válido.");
-    const properties = PropertiesService.getScriptProperties();
-    const current = Number(properties.getProperty(WRITE_CATALOG_VERSION_PROPERTY_) || 0);
-    if (!Number.isSafeInteger(current) || current < 0 || current >= Number.MAX_SAFE_INTEGER) {
-        throw new Error("La secuencia de cambios del catálogo WRITE no es válida.");
-    }
-    const next = current + 1;
-    properties.setProperty(WRITE_CATALOG_VERSION_PROPERTY_, String(next));
-    return next;
+    // Coordinator convierte versiones repetidas u obsoletas en reset y reconstrucción.
+    return Math.max(1, Date.now());
 }
 
 function publishCortesCatalogChange_(action, reference, sourceVersion) {
@@ -724,17 +716,21 @@ function handleAddOrUpdateCut(payload) {
         throw busyError;
     }
     const lockState = { releasedForDrive: false };
+    let result;
     try {
-        const result = handleAddOrUpdateCutLocked(preparedRequest, lock, lockState);
-        if (result && result.status === "success" && result.vehicleId) {
-            try { result.catalogVersion = nextWriteCatalogVersionLocked_(result.vehicleId); }
-            catch (versionError) {
-                result.catalogResetRequired = true;
-                Logger.log("La mutación se guardó, pero no se pudo reservar versión de catálogo: " + String(versionError && versionError.message || versionError));
-            }
+        result = handleAddOrUpdateCutLocked(preparedRequest, lock, lockState);
+    } finally {
+        if (lock.hasLock()) lock.releaseLock();
+    }
+    // La versión del feed se asigna después de confirmar y liberar la transacción física.
+    if (result && result.status === "success" && result.vehicleId) {
+        try { result.catalogVersion = nextWriteCatalogSourceVersion_(result.vehicleId); }
+        catch (versionError) {
+            result.catalogResetRequired = true;
+            Logger.log("La mutación se guardó, pero no se pudo preparar versión de catálogo: " + String(versionError && versionError.message || versionError));
         }
-        return result;
-    } finally { if (lock.hasLock()) lock.releaseLock(); }
+    }
+    return result;
 }
 
 
@@ -2032,7 +2028,7 @@ function handleAddSupplementaryInfo(payload) {
                 Logger.log("La información suplementaria se guardó, pero no se pudo actualizar ImageUploadLedger: " + String(ledgerError && ledgerError.message || ledgerError));
             }
         });
-        try { result.catalogVersion = nextWriteCatalogVersionLocked_(payload.vehicleId); }
+        try { result.catalogVersion = nextWriteCatalogSourceVersion_(payload.vehicleId); }
         catch (versionError) {
             result.catalogResetRequired = true;
             Logger.log("La información suplementaria se guardó, pero no se pudo reservar versión de catálogo: " + String(versionError && versionError.message || versionError));
