@@ -383,3 +383,14 @@ Antes de cualquier Beta, cumplir la secuencia de sincronización de ramas, árbo
 - `handleAddTutorial` mantiene ScriptLock para unicidad de título y append; `handleUpdateTutorialItem` conserva no-op preflight, pero las ediciones reales actualizan B:F in-place bajo lock.
 - CATALOG lee filas físicas de Tutorial A:H; el feed y las aprobaciones de vídeo usan `findTutorialRow_` y la columna G. No retirar locks hasta tener una proyección común que preserve título, expected hash, vídeo y compatibilidad histórica.
 - Próximo paso: implementar journal/proyector append-only y regresiones de altas/ediciones concurrentes. No se ha modificado código de tutoriales todavía.
+
+
+## Tutoriales — estado de implementación actualizado (2026-11-21)
+
+- [x] Alta `handleAddTutorial` sin ScriptLock con reserva append-only de título, payloadHash, replay por operationId y first-write-wins. CI: 258 suites, 3097 pruebas, 0 fallos.
+- [x] Ledger `TutorialTitleEvents` coordina claims de alta y renombrados. Los renombrados continúan protegidos por ScriptLock hasta completar la migración de edición.
+- [x] Lectura por ID y CATALOG deduplican reintentos físicos, conservando la primera fila canónica.
+- [ ] Migrar `handleUpdateTutorialItem` a eventos append-only/versionados con expected hash, sin pérdida de cambios simultáneos.
+- [ ] Integrar proyección de versiones con CATALOG/feed y preservar aprobaciones de vídeo (columna G) sin revertir snapshots.
+- [ ] Beta aislada: concurrencia real de reservas, creación de hoja, altas simultáneas, renombrados y recuperación tras append/flush incierto.
+- No desplegar Apps Script ni modificar datos productivos.
