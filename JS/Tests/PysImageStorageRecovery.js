@@ -117,6 +117,15 @@ function buildHarness(feedback, options = {}) {
         SpreadsheetApp: { flush: () => { state.flushCount++; if (options.failFlush && state.flushCount === 5) throw new Error("Spreadsheet flush failed"); } },
         getSafeSheet: name => name === "PysOperations" ? state.operationsSheet : sheet,
         getSpreadsheet: () => ({ insertSheet: name => { if (name === "PysOperations") { state.operationsSheet = operationsSheet; return operationsSheet; } return sheet; } }),
+        getNextFormulaBasedId_: (targetSheet, column, minimumSuffix) => {
+            const last = targetSheet.getLastRow();
+            const values = last > 1 ? targetSheet.getRange(2, column, last - 1, 1).getValues().map(row => row[0]) : [];
+            const max = values.reduce((current, value) => {
+                const match = String(value || "").match(/^isue-(\\d+)$/i);
+                return match ? Math.max(current, Number(match[1])) : current;
+            }, Number(minimumSuffix) || 0);
+            return "isue-" + String(max + 1).padStart(3, "0");
+        },
         logUserActivity: () => {},
         findUniqueCortesVehicleForPys_: value => value,
         state
