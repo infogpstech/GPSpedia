@@ -272,26 +272,27 @@ function runUsersAtomicMutationTests(usersSource, authSource, coordinatorSource)
         assert(rejected);equal(f.sheet._rows.length,1);equal(f.stats.tries,1);equal(f.stats.timeout,0);
         equal(f.stats.waits,0);equal(f.stats.releases,0);
     });
-    run("Solo createUser conserva lease por username único; updateProfile usa actor cacheado",()=>{
+    run("Solo createUser y deleteUser conservan exclusión mutua entre proyectos; demás acciones AUTH usan actor cacheado",()=>{
         const usersWrapper=extract(source,"isSharedMutationAction_");
         const authWrapper=extract(auth,"isSharedMutationAction_");
         const usersActions=new Function(usersWrapper+";return [isSharedMutationAction_('createUser'),isSharedMutationAction_('updateProfile')];")();
         const authActions=new Function(authWrapper+";return [isSharedMutationAction_('deleteUser'),isSharedMutationAction_('resetUserSessions'),isSharedMutationAction_('updateUser')];")();
-        equal(usersActions,[true,false]);equal(authActions,[true,true,true]);
-        assert(/withSharedMutationLease_\("USERS", action/.test(source),"createUser debe conservar la coordinación de username con AUTH.");
+        equal(usersActions,[true,false]);equal(authActions,[true,false,false]);
+        assert(/withSharedMutationLease_\("USERS", action/.test(source),"createUser debe conservar la coordinación de username con AUTH/deleteUser.");
         assert(!/withSharedMutationLease_\("USERS",\s*["']updateProfile/.test(source),"updateProfile no debe adquirir lease Coordinator.");
         assert(source.includes('getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "USERS" })'),
             "updateProfile debe usar el actor de sesión cacheado, sin lease por acción.");
-        assert(/withSharedMutationLease_\("AUTH"/.test(auth),"AUTH debe conservar las protecciones de eliminación/revocación.");
+        assert(/withSharedMutationLease_\("AUTH"/.test(auth),"AUTH conserva lease únicamente para eliminación de cuenta.");
         const policySource=String(coordinatorSource||"");
         const policy=extract(policySource,"coordinatorPolicy_");
-        const policies=new Function(policy+";return {create:coordinatorPolicy_('USERS','createUser'),remove:coordinatorPolicy_('AUTH','deleteUser'),reset:coordinatorPolicy_('AUTH','resetUserSessions'),update:coordinatorPolicy_('AUTH','updateUser'),profileDisabled:()=>{try{coordinatorPolicy_('USERS','updateProfile');return false;}catch(error){return /no está habilitada/.test(error.message);}}};")();
+        const getPolicy=operation=>{try{return new Function(policy+";return coordinatorPolicy_('AUTH',"+JSON.stringify(operation)+");")();}catch(_){return null;}};
+        const policies=new Function(policy+";return {create:coordinatorPolicy_('USERS','createUser'),remove:coordinatorPolicy_('AUTH','deleteUser'),profileDisabled:()=>{try{coordinatorPolicy_('USERS','updateProfile');return false;}catch(error){return /no está habilitada/.test(error.message);}}};")();
         const conflicts=(left,right)=>left.maintenance||right.maintenance||
             left.writeResources.some(resource=>right.readResources.includes(resource)||right.writeResources.includes(resource))||
             left.readResources.some(resource=>right.writeResources.includes(resource));
-        [policies.remove,policies.reset,policies.update].forEach(authPolicy=>{
-            assert(conflicts(policies.create,authPolicy),"createUser no entra en conflicto con una mutación AUTH de identidad.");
-        });
+        assert(conflicts(policies.create,policies.remove),"createUser debe serializarse únicamente con deleteUser para evitar reutilizar un username mientras se desactiva la cuenta.");
+        assert.equal(getPolicy("resetUserSessions"),null,"resetUserSessions no debe reservar recursos mediante lease.");
+        assert.equal(getPolicy("updateUser"),null,"updateUser debe usar actor cacheado y su lock local.");
         assert(policies.profileDisabled(),"updateProfile no debe tener política de lease en Coordinator.");
     });
     return {passed,failed,total:passed+failed,results};
