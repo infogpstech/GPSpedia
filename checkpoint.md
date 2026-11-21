@@ -332,3 +332,13 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - La búsqueda de aplicaciones pendientes proyecta estado desde eventos; finalización ya no actualiza `FeedbackYearApplications.status/activityAttempted/updatedAt` ni reescribe `Feedbacks`.
 - Validación: 255 suites, 3071 pruebas, 0 fallos; `SuggestYearVoteThreshold` 8/8, `FeedbackYearApplicationAppendOnly` 12/12; build SUCCESS y health read-only SUCCESS.
 - ScriptLock permanece activo. Pendiente: coordinación y recuperación bajo concurrencia, revisar todos los consumidores del esquema, y retirar el lock solo después de pruebas equivalentes. No desplegar Apps Script ni tocar datos productivos.
+
+
+
+## Checkpoint — handleSuggestYear sin ScriptLock global (2026-11-21)
+
+- Commit de retiro de lock y pruebas: `64a054b54ea3974c98484d5ced3ee69a1c6010d9`, `b0a98ea8165dc758197dd8f538a1f49de7dd4577`, pruebas ajustadas `86e6cbcb9fac561830b842eef2e4f4977bb46308`.
+- `handleSuggestYear` ya no llama a `LockService.getScriptLock`, `acquireFeedbackScriptLock_` ni `releaseLock`. La secuencia usa votos append-only, applicationId SHA-256 determinista, ledger de eventos `FeedbackYearApplicationEvents`, vehicle_update append-only con expected value/source y deduplicación de eventos por identidad.
+- `FeedbackYearApplications` y `Feedbacks` dejan de mutarse durante recuperación/finalización; el estado se proyecta desde eventos. Se mantienen compatibilidades de lectura legacy.
+- CI commit `86e6cbcb9fac561830b842eef2e4f4977bb46308`: 255 suites, 3073 pruebas, 0 fallos; `FeedbackYearApplicationAppendOnly` 14/14, `FeedbackYearFolderSyncOutsideLock` 5/5, `SuggestYearVoteThreshold` 8/8; build SUCCESS y health read-only SUCCESS.
+- **Alcance:** lock retirado solo para `handleSuggestYear`; otros flujos P0 (reportProblem/suggestCutChange, PyS, tutoriales y aprobaciones de vídeo) siguen pendientes. Beta real Apps Script/Sheets/Drive pendiente. No desplegar Apps Script ni modificar producción.
