@@ -121,7 +121,7 @@ function addLogoHarness(options={}){
   createFile:()=>file,
   getFilesByName:()=>({hasNext:()=>false,next:()=>null})
  };
- const lock={waitLock:()=>{if(options.lockFail)throw new Error("lock timeout");},releaseLock:()=>{}};
+ const lock={tryLock:timeout=>{assert.equal(timeout,0);return !options.lockFail;},waitLock:()=>{if(options.lockFail)throw new Error("lock timeout");},releaseLock:()=>{}};
  const properties={getProperty:()=>String(counter),setProperty:(key,value)=>{counter=Number(value);}};
  const flush=()=>{
   flushCalls++;
@@ -156,7 +156,7 @@ test("Guarda el logotipo con nombre canónico en categoría/marca",()=>{
 });
 
 test("Retira la imagen si no se puede adquirir el bloqueo",()=>{
- const h=addLogoHarness({lockFail:true});assert.throws(()=>h.run(),/bloquear la asignación/);assert.equal(h.trashed,true);
+ const h=addLogoHarness({lockFail:true});assert.throws(()=>h.run(),error=>error.code==="ADMIN_BUSY");assert.equal(h.trashed,true);
 });
 test("Limpia una fila si falla la copia parcial de plantilla",()=>{
  const h=addLogoHarness({failCopy:true});assert.throws(()=>h.run(),/copy failure/);
