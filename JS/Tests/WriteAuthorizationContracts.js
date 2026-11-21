@@ -36,7 +36,7 @@ function runWriteAuthorizationContracts(sources) {
   const spreadsheet=()=>{spreadsheetReads++;return{getSheetByName:name=>name==="Cortes"?{}:null};};
   const lockService={getScriptLock(){lockCalls++;throw Error("El asignador central no debe adquirir ScriptLock.");}};
   const fn=new Function("getAuthenticatedCollaborator","LockService","getSpreadsheet","SHEET_NAMES","normalizeCortesIdAllocationRequest_","reserveCortesVehicleIdForOperation_",
-   auth+"\\n"+allocate+"\\nreturn handleAllocateVehicleId;")(
+   auth+"\n"+allocate+"\nreturn handleAllocateVehicleId;")(
    authFn,lockService,spreadsheet,{CORTES:"Cortes"},
    payload=>({opId:payload.opId,operationHash:payload.operationHash}),
    (sheet,request)=>{allocations++;if(!sheet||!request.opId||!request.operationHash)throw Error("Reserva incompleta.");return 77;});
