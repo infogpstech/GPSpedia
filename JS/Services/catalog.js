@@ -722,9 +722,10 @@ function dedupeTutorialCatalogRows_(records) {
         const id = String(record.ID || "").trim();
         if (!id) { output.push(record); return; }
         if (!byId.has(id)) { byId.set(id, record); output.push(record); return; }
+        // La primera fila física es la versión canónica; reintentos posteriores quedan proyectados fuera del catálogo.
         const canonical = byId.get(id);
         if (JSON.stringify(canonical) !== JSON.stringify(record)) {
-            throw new Error("La hoja Tutorial contiene el mismo ID con filas contradictorias; se detuvo la lectura del catálogo.");
+            console.warn("Tutorial duplicado ignorado por first-write-wins:", id);
         }
     });
     return output;
