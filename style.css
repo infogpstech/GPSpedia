@@ -1667,9 +1667,19 @@ body.dark-mode .modal form textarea:disabled {
     align-items: center; justify-content: center;
 }
 .info-modal-content {
-    background-color: #fff; margin: auto; padding: 25px; border-radius: 10px;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.25); width: 90%; max-width: 700px;
-    max-height: calc(var(--app-height, 100%) * 0.9); overflow-y: auto; position: relative;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+    background-color: #fff;
+    margin: auto;
+    padding: 25px;
+    border: 0;
+    border-radius: 12px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.25);
+    width: 90%;
+    max-width: 650px;
+    max-height: calc(var(--app-height, 100%) * 0.9);
+    overflow-y: auto;
+    position: relative;
 }
 .info-close-btn {
     appearance: none;
@@ -2260,15 +2270,9 @@ body.dark-mode .terms-agreement-logo {
 
 
 /* ==========================================================================
-   TAREA 2.6 & TAREA 2.3: ESTILOS UNIFICADOS Y RESPONSIVOS PARA TODOS LOS MODALES CON FORMULARIOS
+   TAREA 2.6 & TAREA 2.3: ESTILOS UNIFICADOS Y RESPONSIVOS PARA FORMULARIOS
+   La base de .info-modal-content está definida una sola vez en el bloque de modales.
    ========================================================================== */
-.info-modal-content {
-    box-sizing: border-box !important;
-    overflow-x: hidden !important;
-    max-width: 650px;
-    width: 90%;
-    border-radius: 12px;
-}
 
 .info-modal-content form {
     width: 100%;
