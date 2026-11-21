@@ -586,20 +586,6 @@ function publishFeedbackCortesCatalogChange_(action, reference) {
 }
 
 
-function acquireFeedbackScriptLock_(lock) {
-    const message = "FEEDBACK está procesando otra escritura. Conserva el identificador de operación y vuelve a intentar.";
-    if (lock && typeof lock.tryLock === "function") {
-        if (!lock.tryLock(0)) throw new Error(message);
-        return true;
-    }
-    // Compatibilidad exclusiva con dobles de prueba antiguos; en Apps Script se usa tryLock(0).
-    if (lock && typeof lock.waitLock === "function") {
-        lock.waitLock(0);
-        return true;
-    }
-    throw new Error(message);
-}
-
 const DIRECT_SERVICE_TRAFFIC_CONFIG_ = Object.freeze({
     service: "FEEDBACK",
     bucketPrefix: "GPSpedia_FEEDBACK_DIRECT_TRAFFIC_HOUR_V1_",
