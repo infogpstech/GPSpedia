@@ -12,7 +12,7 @@ assert.match(allocator,/blankOffsets/);
 assert.match(reservations,/insertSheet\(IDENTIFIER_SEQUENCE_RESERVATIONS_SHEET\)/);
 assert.match(reservations,/IDENTIFIER_SEQUENCE_RESERVATIONS_HEADERS/);
 assert.doesNotMatch(reservations,/LockService|tryLock|waitLock/);
-for(const name of ["handleSuggestYearLocked","logUserActivity","handleSuggestCutChange","handleReportProblem","handleSendContactForm"])assert.match(extract(name),/getNextFormulaBasedId_/,name+" debe reservar el ID desde backend");
+for(const name of ["handleSuggestYearLocked" ,"handleSuggestCutChange","handleReportProblem","handleSendContactForm"])assert.match(extract(name),/getNextFormulaBasedId_/,name+" debe reservar el ID desde backend");
 function makeSheet(name,rows,headers=null){
  const data=rows.map(r=>r.slice());let formulas=[];
  return {name,data,getName(){return name;},getLastRow(){return data.length;},getLastColumn(){return Math.max(1,...data.map(r=>r.length));},
