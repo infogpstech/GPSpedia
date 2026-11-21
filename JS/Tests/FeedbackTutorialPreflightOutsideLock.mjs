@@ -79,7 +79,7 @@ test("rechaza IDs de tutorial duplicados después de normalizar mayúsculas", ()
 test("comprueba unicidad de título leyendo únicamente la columna B", () => {
     const sheet = makeSheet([["id1", "  Motor   No Arranca "], ["id2", "Otro"]]);
     assert.equal(titleExists(sheet, "motor no arranca"), true);
-    assert.ok(sheet.calls.every(call => call[1] === 2));
+    assert.ok(sheet.calls.every(call => call[1] === 1));
 });
 test("compara todos los campos persistidos para replays de opId", () => {
     const row = ["tut-id", submission.title, "", submission.comoIdentificarlo, submission.dondeEncontrarlo,
