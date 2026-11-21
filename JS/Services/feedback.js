@@ -1663,6 +1663,14 @@ function appendFeedbackYearVehicleUpdateEvent_(application, vehicleId, fieldName
 function completeFeedbackYearApplication_(application, context) {
     const { cortesSheet, vehicleRowIndex, feedbackSheet, actorColumn, userId, userName } = context;
     const row = application.row;
+    const applicationRowIndexes = Array.from(new Set(
+        (Array.isArray(application.rowIndexes) && application.rowIndexes.length
+            ? application.rowIndexes : [application.rowIndex]).filter(Number.isFinite)
+    ));
+    if (!applicationRowIndexes.length) throw new Error("La aplicación no tiene filas de ledger válidas.");
+    const updateApplicationRows = (column, value) => applicationRowIndexes.forEach(rowIndex =>
+        application.sheet.getRange(rowIndex, column).setValue(value)
+    );
     const previousFrom = Number(row[3]), previousTo = Number(row[4]);
     const targetFrom = Number(row[5]), targetTo = Number(row[6]);
     const year = Number(row[2]), voteCount = Number(row[7]);
@@ -1690,8 +1698,8 @@ function completeFeedbackYearApplication_(application, context) {
     const projectedRange = getFeedbackProjectedVehicleYearSnapshot_(String(row[1]), projectedBaseRow);
     if (Number(projectedRange.anoDesde) !== targetFrom || Number(projectedRange.anoHasta) !== targetTo) {
         const pendingLedger = application.sheet;
-        pendingLedger.getRange(application.rowIndex, 9).setValue("requires_review");
-        pendingLedger.getRange(application.rowIndex, 12).setValue(new Date().toISOString());
+        updateApplicationRows(9, "requires_review");
+        updateApplicationRows(12, new Date().toISOString());
         SpreadsheetApp.flush();
         return {
             status: "warning", recovered: false, candidateReviewPending: true,
@@ -1704,7 +1712,7 @@ function completeFeedbackYearApplication_(application, context) {
     let activityLogRequest = null;
     const activityAttempted = row[9] === true || String(row[9]).toUpperCase() === "TRUE";
     if (!activityAttempted) {
-        ledger.getRange(application.rowIndex, 10).setValue(true);
+        updateApplicationRows(10, true);
         SpreadsheetApp.flush();
         activityLogRequest = {
             userId, userName, activityType: "apply_year_suggestion", associatedId: String(row[1]),
@@ -1733,10 +1741,12 @@ function completeFeedbackYearApplication_(application, context) {
             isVerifiedSuggestionActorKey_(rowActorKey) && isPositiveYearSuggestionRow(feedbackRow) && !rowActorKey.startsWith("applied:");
     });
     if (remaining) throw new Error("La ampliación quedó anexada, pero no se pudieron marcar todos los aportes; la recuperación permanece pendiente.");
-    ledger.getRange(application.rowIndex, 9).setValue("completed");
-    ledger.getRange(application.rowIndex, 12).setValue(new Date().toISOString());
+    updateApplicationRows(9, "completed");
+    updateApplicationRows(12, new Date().toISOString());
     SpreadsheetApp.flush();
-    if (String(ledger.getRange(application.rowIndex, 9).getValue() || "").trim() !== "completed") {
+    if (applicationRowIndexes.some(rowIndex =>
+        String(ledger.getRange(rowIndex, 9).getValue() || "").trim() !== "completed"
+    )) {
         throw new Error("No se pudo confirmar el cierre de la aplicación de año; permanece pendiente.");
     }
     return {
