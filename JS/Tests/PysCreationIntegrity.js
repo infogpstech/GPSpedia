@@ -95,6 +95,13 @@ function buildHarness(feedback,ui,options={}){
             if(name==="pys"){state.pysRows=[];state.pysSheet=makeSheet(state.pysRows,"pys",state,options);return state.pysSheet;}
             state.opsRows=[];state.opsSheet=makeSheet(state.opsRows,"PysOperations",state,options);return state.opsSheet;
         }}),
+        getNextFormulaBasedId_:(sheet,column,minimumSuffix)=>{
+            const max=state.pysRows.slice(1).reduce((value,row)=>{
+                const match=String(row[0]||"").match(/^isue-(\\d+)$/i);
+                return match?Math.max(value,Number(match[1])):value;
+            },Number(minimumSuffix)||0);
+            return "isue-"+String(max+1).padStart(3,"0");
+        },
         getCortesRootFolder:()=>cortes,
         findOrCreateSubFolder:()=>pysFolder,
         getFolderCanonicalName:value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim(),
@@ -139,7 +146,7 @@ export function runPysCreationIntegrityTests({feedback,ui}){
     });
     test("rechaza IDs duplicados aunque tengan distinta capitalización o relleno",()=>{
         const h=buildHarness(feedback,ui,{pysRows:[HEADERS,["isue-001","A"],["ISUE-1","B"]]});
-        assert.throws(()=>h.api.add(h.validPayload()),/IDs duplicados/);assert.equal(h.state.createdFiles,0);
+        assert.throws(()=>h.api.add(h.validPayload()),/IDs duplicados con contenido contradictorio/);assert.equal(h.state.createdFiles,0);
     });
     test("rechaza IDs malformados",()=>{
         const h=buildHarness(feedback,ui,{pysRows:[HEADERS,["isue-abc","A"]]});
@@ -207,8 +214,9 @@ export function runPysCreationIntegrityTests({feedback,ui}){
     });
     test("rechaza opId duplicados en PysOperations",()=>{
         const hash="a".repeat(64),row=[OP_A,hash,"isue-001","PENDING","","","now","now"];
-        const h=buildHarness(feedback,ui,{opsRows:[OPS_HEADERS,row,row]});
-        assert.throws(()=>h.api.add(h.validPayload()),/identificadores duplicados/);assert.equal(h.state.createdFiles,0);
+        const conflict=[OP_A,"b".repeat(64),"isue-002","PENDING","","","now","now"];
+        const h=buildHarness(feedback,ui,{opsRows:[OPS_HEADERS,row,conflict]});
+        assert.throws(()=>h.api.add(h.validPayload()),/payload contradictorio/);assert.equal(h.state.createdFiles,0);
     });
     test("rechaza problemId duplicado en PysOperations",()=>{
         const hash="a".repeat(64),a=[OP_A,hash,"isue-001","PENDING","","","now","now"],b=[OP_B,hash,"isue-1","PENDING","","","now","now"];
