@@ -3767,31 +3767,60 @@ const PYS_HEADERS=Object.freeze(["id_problem","Problema","Descripción","Se solu
 const PYS_OPERATIONS_HEADERS=Object.freeze(["opId","payloadHash","problemId","status","imageFileId","imageUrl","createdAt","updatedAt"]);
 const PYS_OPERATION_STATES=Object.freeze(["PENDING","UPLOAD_PENDING","LINKED","RECOVERY_REQUIRED"]);
 function validatePysHeaders_(sheet,expected,label){if(sheet.getLastColumn()>expected.length)throw new Error("El esquema de "+label+" contiene columnas adicionales; no se modificó la hoja.");const a=sheet.getRange(1,1,1,expected.length).getDisplayValues()[0];if(expected.some((v,i)=>String(a[i]==null?"":a[i])!==v))throw new Error("Los encabezados/orden de "+label+" no coinciden con el esquema autorizado; no se modificó la hoja.");}
-function validatePysRecords_(sheet){const last=sheet.getLastRow(),seen=Object.create(null);let max=0;if(last<2)return{maxSuffix:0,ids:seen};sheet.getRange(2,1,last-1,10).getValues().forEach((r,i)=>{if(!r.some(v=>v!==""&&v!==null&&v!==undefined))return;const id=String(r[0]==null?"":r[0]).trim(),m=id.match(/^isue-(\d+)$/i);if(!m)throw new Error("La fila "+(i+2)+" de pys contiene un ID vacío o malformado; no se creó el problema.");const n=Number(m[1]),k=String(n);if(!Number.isSafeInteger(n)||n<1)throw new Error("La fila "+(i+2)+" de pys contiene un sufijo de ID inválido.");if(seen[k])throw new Error("La hoja pys contiene IDs duplicados; no se creó el problema.");seen[k]=true;max=Math.max(max,n);});return{maxSuffix:max,ids:seen};}
+function validatePysRecords_(sheet) {
+    const last = sheet.getLastRow(), seen = Object.create(null);
+    let max = 0, duplicateRows = 0;
+    if (last < 2) return { maxSuffix: 0, ids: seen, duplicateRows };
+    sheet.getRange(2, 1, last - 1, 10).getValues().forEach((row, index) => {
+        if (!row.some(value => value !== "" && value !== null && value !== undefined)) return;
+        const id = String(row[0] == null ? "" : row[0]).trim(), match = id.match(/^isue-(\d+)$/i);
+        if (!match) throw new Error("La fila " + (index + 2) + " de pys contiene un ID vacío o malformado; no se creó el problema.");
+        const suffix = Number(match[1]), key = String(suffix);
+        if (!Number.isSafeInteger(suffix) || suffix < 1) throw new Error("La fila " + (index + 2) + " de pys contiene un sufijo de ID inválido.");
+        if (seen[key]) {
+            if (JSON.stringify(seen[key].row) !== JSON.stringify(row)) {
+                throw new Error("La hoja pys contiene IDs duplicados con contenido contradictorio; requiere revisión.");
+            }
+            duplicateRows++;
+        } else {
+            seen[key] = { rowNumber: index + 2, row: row.slice() };
+        }
+        max = Math.max(max, suffix);
+    });
+    return { maxSuffix: max, ids: seen, duplicateRows };
+}
 function getPysSheet_(createIfMissing){let sheet=getSafeSheet("pys");if(!sheet){if(!createIfMissing)return null;sheet=getSpreadsheet().insertSheet("pys");}if(sheet.getLastRow()===0&&sheet.getLastColumn()===0){if(!createIfMissing)return sheet;sheet.getRange(1,1,1,10).setValues([PYS_HEADERS.slice()]);SpreadsheetApp.flush();}validatePysHeaders_(sheet,PYS_HEADERS,"pys");validatePysRecords_(sheet);return sheet;}
 function readPysOperations_(sheet){const last=sheet.getLastRow();if(last<2)return[];const so=Object.create(null),si=Object.create(null);return sheet.getRange(2,1,last-1,8).getValues().map((r,i)=>{if(!r.some(v=>v!==""&&v!==null&&v!==undefined))return null;const opId=String(r[0]||"").trim(),hash=String(r[1]||"").trim().toLowerCase(),problemId=String(r[2]||"").trim(),status=String(r[3]||"").trim(),imageFileId=String(r[4]||"").trim(),imageUrl=String(r[5]||"").trim(),match=problemId.match(/^isue-(\d+)$/i),suffix=match?Number(match[1]):NaN,problemKey=String(suffix);if(!/^[A-Za-z0-9_-]{20,80}$/.test(opId)||!/^[a-f0-9]{64}$/.test(hash)||!match||!Number.isSafeInteger(suffix)||suffix<1||!PYS_OPERATION_STATES.includes(status))throw new Error("La hoja PysOperations contiene una fila incompatible; no se modificó.");if((status==="PENDING"&&(imageFileId||imageUrl))||(["UPLOAD_PENDING","LINKED"].includes(status)&&(!/^[A-Za-z0-9_-]{10,110}$/.test(imageFileId)||imageUrl!=="https://drive.google.com/file/d/"+imageFileId+"/view"))||(Boolean(imageFileId)!==Boolean(imageUrl)))throw new Error("La hoja PysOperations contiene referencias de imagen incompatibles con su estado.");if(so[opId]||si[problemKey])throw new Error("La hoja PysOperations contiene identificadores duplicados; no se modificó.");so[opId]=true;si[problemKey]=true;return{rowNumber:i+2,opId,payloadHash:hash,problemId,status,imageFileId,imageUrl,createdAt:String(r[6]||""),updatedAt:String(r[7]||"")};}).filter(Boolean);}
 function getPysOperationsSheet_(){let sheet=getSafeSheet("PysOperations");if(!sheet)sheet=getSpreadsheet().insertSheet("PysOperations");if(sheet.getLastRow()===0&&sheet.getLastColumn()===0){sheet.getRange(1,1,1,8).setValues([PYS_OPERATIONS_HEADERS.slice()]);SpreadsheetApp.flush();}validatePysHeaders_(sheet,PYS_OPERATIONS_HEADERS,"PysOperations");readPysOperations_(sheet);return sheet;}
 function writePysOperation_(sheet,rowNumber,r){const values=[[r.opId,r.payloadHash,r.problemId,r.status,r.imageFileId||"",r.imageUrl||"",r.createdAt,r.updatedAt]],target=rowNumber||(sheet.getLastRow()+1);sheet.getRange(target,1,1,8).setValues(values);SpreadsheetApp.flush();const stored=sheet.getRange(target,1,1,8).getValues()[0];if(values[0].some((v,i)=>String(v==null?"":v)!==String(stored[i]==null?"":stored[i])))throw new Error("No se pudo confirmar el registro de idempotencia PyS.");return Object.assign({},r,{rowNumber:target});}
-function findPysRowsById_(sheet,id){
-    const last=sheet?sheet.getLastRow():0,target=String(id||"").trim().toLowerCase();
-    if(!target||last<2)return[];
-    const idRange=sheet.getRange(2,1,last-1,1);
-    let candidates=[];
-    if(idRange&&typeof idRange.createTextFinder==="function"){
-        candidates=idRange.createTextFinder(target).matchCase(false).findAll();
-    }else{
-        idRange.getValues().forEach((value,index)=>{
-            if(String(value[0]||"").trim().toLowerCase().includes(target))candidates.push({getRow:()=>index+2});
+function findPysRowsById_(sheet, id) {
+    const last = sheet ? sheet.getLastRow() : 0, target = String(id || "").trim().toLowerCase();
+    if (!target || last < 2) return [];
+    const idRange = sheet.getRange(2, 1, last - 1, 1);
+    let candidates = [];
+    if (idRange && typeof idRange.createTextFinder === "function") {
+        candidates = idRange.createTextFinder(target).matchCase(false).findAll();
+    } else {
+        idRange.getValues().forEach((value, index) => {
+            if (String(value[0] || "").trim().toLowerCase().includes(target)) candidates.push({ getRow: () => index + 2 });
         });
     }
-    const matches=[];
-    candidates.forEach(candidate=>{
-        const rowNumber=candidate.getRow();
-        const storedId=String(sheet.getRange(rowNumber,1,1,1).getValues()[0][0]||"").trim().toLowerCase();
-        if(storedId!==target)return;
-        const row=sheet.getRange(rowNumber,1,1,10).getValues()[0];
-        matches.push({rowNumber,row});
+    const matches = [];
+    candidates.forEach(candidate => {
+        const rowNumber = candidate.getRow();
+        const storedId = String(sheet.getRange(rowNumber, 1, 1, 1).getValues()[0][0] || "").trim().toLowerCase();
+        if (storedId !== target) return;
+        const row = sheet.getRange(rowNumber, 1, 1, 10).getValues()[0];
+        matches.push({ rowNumber, row });
     });
+    if (matches.length > 1) {
+        const canonical = matches[0];
+        if (matches.some(item => JSON.stringify(item.row) !== JSON.stringify(canonical.row))) {
+            throw new Error("El ID del problema PyS tiene filas duplicadas con contenido contradictorio.");
+        }
+        canonical.duplicateCount = matches.length - 1;
+        return [canonical];
+    }
     return matches;
 }
 function getPysNextId_(sheet,ops){let max=validatePysRecords_(sheet).maxSuffix;ops.forEach(o=>{const m=o.problemId.match(/^isue-(\d+)$/i),n=m?Number(m[1]):NaN;if(!Number.isSafeInteger(n)||n<1)throw new Error("La hoja PysOperations contiene un problemId inválido.");max=Math.max(max,n);});if(max>=Number.MAX_SAFE_INTEGER)throw new Error("Se agotó la secuencia segura de identificadores PyS.");return getNextFormulaBasedId_(sheet,1,max);}
@@ -3809,7 +3838,24 @@ function handleGetCatalogChanges(payload) {
         : { status: "error", message: "No se pudo consultar el feed incremental del catálogo." };
 }
 
-function handleGetPysData(){const sheet=getPysSheet_(false);if(!sheet||sheet.getLastRow()<2)return{status:"success",data:[]};const rows=sheet.getRange(2,1,sheet.getLastRow()-1,10).getValues();return{status:"success",data:rows.filter(r=>r.some(v=>v!==""&&v!==null&&v!==undefined)).map(r=>({id_problem:r[0],Problema:r[1],Descripcion:r[2],Se_soluciono:r[3],Solucion:r[4],Prevenir:r[5],Imagen:normalizePysImageReference_(r[6]),Video:r[7],Colaborador:r[8]||"",modelosAsociados:parseModelosAsociados(r[9]||"")}))};}
+function handleGetPysData() {
+    const sheet = getPysSheet_(false);
+    if (!sheet || sheet.getLastRow() < 2) return { status: "success", data: [] };
+    const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 10).getValues();
+    const seen = new Set();
+    const data = rows.filter(row => {
+        if (!row.some(value => value !== "" && value !== null && value !== undefined)) return false;
+        const key = String(row[0] || "").trim().toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    }).map(row => ({
+        id_problem: row[0], Problema: row[1], Descripcion: row[2], Se_soluciono: row[3],
+        Solucion: row[4], Prevenir: row[5], Imagen: normalizePysImageReference_(row[6]),
+        Video: row[7], Colaborador: row[8] || "", modelosAsociados: parseModelosAsociados(row[9] || "")
+    }));
+    return { status: "success", data };
+}
 
 function buildPysCatalogChange_(reference) {
     const sheet = getPysSheet_(false);
