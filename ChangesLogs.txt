@@ -139,3 +139,10 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - Los replays legacy `completed` incluyen eventos nuevos; `pending` sigue en recuperación protegida. `logUserActivity` usa `appendRow` y fórmula de fila, sin reserva de ID separada ni escrituras por celdas.
 - `FeedbackLikeAppendOnly` 4/4, `ActivityLogAppendAtomic` 6/6, `FeedbackLikeActivityOutsideLock` 5/5, `FeedbackLikePreflightOutsideLock` 5/5, `CatalogChangeFeed` 35/35. CI `44848455795` SUCCESS: 255 suites, 3063 pruebas, 0 fallos; Health read-only `44848455802` SUCCESS. Pages `44848455600` pendiente.
 - No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+2026-11-21 — FEEDBACK: retiro total de ScriptLock en likes
+- `handleRecordLike` ya no usa ScriptLock ni modifica el contador físico. Likes nuevos se anexan como eventos; CATALOG proyecta actores únicos y el feed publica reset. Los registros legacy `pending` se recuperan comparando `previous`/`target` y anexando evento cuando falta el incremento; los valores ambiguos requieren reconciliación manual.
+- `logUserActivity` usa appendRow con fórmula de fila; el asignador `getNextFormulaBasedId_` usa reservas append-only.
+- Pruebas `FeedbackLikeAppendOnly` 4/4, `FeedbackLikeCompletedReplayPreflight` 6/6, `FeedbackLikeActivityOutsideLock` 5/5, `FeedbackLikePreflightOutsideLock` 5/5, `CatalogChangeFeed` 35/35. CI `44848965971` SUCCESS: 255 suites, 3063 pruebas, 0 fallos; Health read-only `44848965894` SUCCESS. Pages `44848965693` pendiente.
+- No se desplegó Apps Script ni se modificaron datos productivos.
