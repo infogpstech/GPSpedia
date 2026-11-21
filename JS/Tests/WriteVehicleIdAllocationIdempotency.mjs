@@ -178,10 +178,15 @@ test("dos altas simultáneas con huellas distintas conservan first-write-wins", 
     assert.equal(h.ledger.rows.length, 3);
     assert.deepEqual(h.ledger.rows.slice(1).map(row => row[2]), [4, 5]);
 });
-test("una reserva posterior conserva el máximo de IDs aunque exista una fila duplicada consumida", () => {
-    const h = harness();
-    h.allocate({ opId: "OP-SAME-1", operationHash: HASH_A });
-    h.allocate({ opId: "OP-SAME-1", operationHash: HASH_A });
+test("una fila duplicada consumida por una carrera no se reutiliza", () => {
+    let secondResult;
+    const h = harness({ onFirstCounterRead: () => {
+        secondResult = h.allocate({ opId: "OP-SAME-RACE", operationHash: HASH_A });
+    }});
+    const firstResult = h.allocate({ opId: "OP-SAME-RACE", operationHash: HASH_A });
+    assert.equal(secondResult.vehicleId, 4);
+    assert.equal(firstResult.vehicleId, 4);
+    assert.deepEqual(h.ledger.rows.slice(1).map(row => row[2]), [4, 5]);
     assert.equal(h.allocate({ opId: "OP-NEXT", operationHash: HASH_B }).vehicleId, 6);
 });
 test("una llamada legacy genera una reserva única y mantiene compatibilidad", () => {
