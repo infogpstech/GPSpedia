@@ -76,3 +76,36 @@ Una llamada solo se elimina si se demuestra que no aporta autenticación requeri
 ## Estado de validación
 
 Esta es una auditoría estática inicial y un plan de trabajo, no una certificación de rendimiento. No se ha medido aún la latencia real ni se han ejecutado pruebas Beta. No se han cambiado servicios Apps Script, endpoints, secretos, Spreadsheet ni Drive productivos. La base protegida no se modifica.
+
+
+## Hallazgos de inspección estática — primera pasada (2026-11-21)
+
+### Navegador, catálogo y reintentos
+- `routeAction` realiza un único POST por invocación. Su telemetría de navegador (`recordBrowserServiceTraffic`) se ejecuta en memoria local y sus errores se ignoran; no añade un segundo viaje de red ni una escritura al servidor.
+- `routeActionWithRetry` admite hasta tres intentos por defecto. El catálogo usa `runCatalogRequestWithRetry` para lecturas; en el cliente también hay reintentos explícitos para acciones ADMIN. Las acciones `applyCortesImageOrganizer` y `rollbackCortesImageOrganizer` permiten dos intentos y envían identificadores/manifiestos de operación; hay que verificar la idempotencia real del backend ante respuesta perdida. `backupDatabase` y `applyCortesImageReconciliation` están limitadas explícitamente a un intento. No se cambió esta política.
+- La sincronización inicial distingue snapshot completo (`getCatalogData`) de feed incremental (`getCatalogChanges`). No se consideran llamadas duplicadas automáticamente: el snapshot inicial/reset y los deltas cumplen contratos distintos. Debe medirse y comprobarse que no se solicite snapshot completo después de una sincronización incremental válida.
+- En `ui.js`, al cerrar la edición se vuelve a solicitar `getCatalogData` en ambos caminos de reapertura/cierre. Es una candidata a reemplazo por actualización local o delta, pero primero hay que comprobar el contrato de la edición, los cambios concurrentes y la respuesta del backend.
+
+### AUTH y sesiones
+- En los módulos frontend principales inspeccionados (`api-config.js`, `auth.js`, `main.js`, `ui.js`, `navigation.js`) no se encontró una invocación de `touchSession`; solo aparece en el mapa de acciones y en el dispatcher AUTH. La acción sigue habilitada y su handler `validateAndTouchSession_` adquiere ScriptLock con espera de 10 s, lee las hojas completas ActiveSessions y Users y vuelve a validar identidad/estado. Es un candidato a ruta legacy costosa, no se elimina hasta terminar búsqueda de consumidores externos, pruebas y confirmar su reemplazo funcional.
+- El Coordinator ya actualiza `SESSION_CONTEXTS.lastActivityAt` cuando autoriza una sesión y han transcurrido cinco minutos desde el último toque. Esto puede solapar parte del propósito de `touchSession`, pero no demuestra que también cubra el espejo histórico de ActiveSessions.
+- `acceptTerms` sí tiene un consumidor frontend concreto (`syncPendingTermsAcceptance_` en `ui.js)); deduplica solicitudes concurrentes por clave de usuario/dispositivo/versión/token. Su lease AUTH y escritura en USERS deben evaluarse aparte, no tratarse como acción huérfana.
+- `validateSession` está expuesta en el mapa y llamada desde `validateSessionCoordinated`; la restauración ordinaria de sesión en `checkSession` no fuerza una revalidación remota. Falta completar el mapa de invocadores de `validateActiveSession` y medir su frecuencia.
+
+### Imágenes y aportes
+- Reportes y sugerencias de cambio leen el archivo con FileReader y envían un data URL Base64 a FEEDBACK. El cliente permite hasta 3 MB, y FEEDBACK vuelve a decodificar, validar firma/MIME/tamaño, calcular SHA-256 y crear el archivo en Drive. No se encontró compresión/redimensionado previo en esos dos formularios. El Base64 aumenta el tamaño transferido aproximadamente un tercio respecto de los bytes originales; el coste debe medirse.
+- El alta de corte y los formularios de información suplementaria también convierten imágenes a data URL y las envían en el payload WRITE. En el alta de corte inspeccionada no aparece un límite de tamaño ni compresión previa en cliente; el backend WRITE aplica un máximo de 10 MB. Esto puede producir payloads grandes y consumo de memoria; registrar tarea para validación de UX, calidad visual y límite consistente antes de cambiarlo.
+- Las imágenes de reemplazo ADMIN se envían como `fileData` con `opId`; el backend conserva ledger/journal, verificación y read-back. No se retirarán esas garantías para reducir viajes.
+- `thumbnailCompressionQueue` limita a dos las compresiones concurrentes de miniaturas; `imageObjectUrlCache` administra URLs de objetos. La cola es de miniaturas, no evidencia de compresión de los originales antes de subirlos.
+- La carga YouTube es directa del navegador a YouTube en bloques reanudables de 8 MB, con progreso persistido en IndexedDB, consulta de offset y envío final de metadatos a FEEDBACK. No se observa transferencia del archivo de vídeo completo a través de Apps Script. Mantener el flujo y medir llamadas de estado/reanudación por separado.
+
+### Llamadas interservicio y proyección ADMIN
+- El cliente compartido hace llamadas a Coordinator para leases, validación/invalidez de sesión y publicación de cambios de catálogo. Su wrapper puede reintentar una solicitud interna una vez reutilizando el mismo requestId; debe conservarse solo donde la idempotencia del protocolo lo garantice.
+- ADMIN llama a WRITE para reservar/congelar IDs; son dependencias explícitas de autoridad de IDs, no llamadas redundantes demostradas.
+- ADMIN solicita a CATALOG `getCatalogData(forceRefresh:true)` para obtener la proyección completa en `getAdminProjectedVehicleFieldSnapshot_` y para construir candidatos de aportes. Además, `getReplacedImages` invoca internamente `handleGetVehicleContributionCandidates_`, que vuelve a solicitar la proyección completa de CATALOG en cada carga del inventario. Es una dependencia funcional pero potencialmente costosa; evaluar endpoint de consulta dirigida por vehículo/campo y/o candidatos sin cargar todo el catálogo.
+- La telemetría ADMIN agrega fuentes con `UrlFetchApp.fetchAll` y fallback individual. Es una consulta administrativa explícita, no forma parte del flujo normal de aportes; medir su coste y mantenerla fuera de navegación común.
+
+### Estado y límites de esta pasada
+- Se completó una primera inspección estática de rutas clave; no equivale a un mapa exhaustivo de todos los consumidores ni a un benchmark.
+- No se modificó código productivo, no se retiraron locks/leases/llamadas, no se ejecutaron pruebas de rendimiento ni Beta y no se desplegaron proyectos Apps Script.
+- Las tareas de confirmación, pruebas de idempotencia, compresión y reducción de consultas completas quedan pendientes en `Tareas_Activas.md`.
