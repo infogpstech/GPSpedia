@@ -734,6 +734,10 @@ function doPost(e) {
         const invalidation = handleSharedSessionActorCacheInvalidation_(request.payload);
         return ContentService.createTextOutput(JSON.stringify(invalidation)).setMimeType(ContentService.MimeType.JSON);
     }
+    if (action === "__primeSessionActorCache") {
+        const priming = handleSharedSessionActorCachePriming_(request.payload);
+        return ContentService.createTextOutput(JSON.stringify(priming)).setMimeType(ContentService.MimeType.JSON);
+    }
     if (action === "getServiceTraffic") {
         const traffic = readDirectServiceTraffic_(request.payload && request.payload.secret);
         return ContentService.createTextOutput(JSON.stringify(traffic)).setMimeType(ContentService.MimeType.TEXT);
