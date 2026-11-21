@@ -57,8 +57,11 @@ assert.deepEqual(policy("ADMIN", "auditDriveImagesInCortes").readResources, [],
 assert.deepEqual(policy("ADMIN", "auditDriveImagesInCortes").writeResources, ["IMAGE_AUDIT_STATE"]);
 assert.deepEqual(policy("ADMIN", "saveUnusedImagesInventory").readResources, []);
 assert.deepEqual(policy("ADMIN", "saveUnusedImagesInventory").writeResources, ["IMAGE_INVENTORY"]);
-assert.deepEqual(policy("ADMIN", "recordAdminImageActivity").readResources, []);
-assert.deepEqual(policy("ADMIN", "recordAdminImageActivity").writeResources, ["ACTIVITY"]);
+assert.equal(Boolean(policy("ADMIN", "recordAdminImageActivity")), false,
+    "El registro append-only de actividad no debe adquirir una lease propia.");
+const activityHandler = extractFunction(admin, "recordImageAdministrationActivity");
+assert.ok(!activityHandler.includes("withSharedMutationLease_"));
+assert.ok(activityHandler.includes("sheet.appendRow("));
 assert.equal(policy("ADMIN", "migrateReplacedImagesSchema").writeResources.includes("IMAGE_INVENTORY"), true);
 const inventory = policy("ADMIN", "getReplacedImages");
 for (const resource of ["CORTES", "DRIVE", "IMAGE_INVENTORY", "RELAY"]) {
