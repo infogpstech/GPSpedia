@@ -725,7 +725,7 @@ function dedupeTutorialCatalogRows_(records) {
         // La primera fila física es la versión canónica; reintentos posteriores quedan proyectados fuera del catálogo.
         const canonical = byId.get(id);
         if (JSON.stringify(canonical) !== JSON.stringify(record)) {
-            console.warn("Tutorial duplicado ignorado por first-write-wins:", id);
+            if (typeof console !== "undefined" && console.warn) console.warn("Tutorial duplicado ignorado por first-write-wins:", id);
         }
     });
     return output;
