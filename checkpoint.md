@@ -940,3 +940,12 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Se verificó estáticamente que `applyCortesImageOrganizer` y `rollbackCortesImageOrganizer` usan IDs estables, ledger y estados terminales verificables para replay; `CortesImageOrganizerExecutor.mjs` cubre `already_applied` y `already_rolled_back` y fallos parciales.
 - La prueba no se ejecutó en esta sesión; la tarea de diseño/idempotencia se marca completada por inspección de código y contrato, sin afirmar resultado de ejecución. Confirmar CI cuando se realice un cambio de código.
 - `backupDatabase` y `applyCortesImageReconciliation` permanecen limitadas a un intento automático.
+
+
+## Continuidad — auditoría de feed incremental y CATALOG (2026-11-21)
+
+- HEAD previo: `6f6b1b457058921ce21ff08c48cbaf112537bcca`; rama base protegida intacta en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- Se confirmó el doble salto navegador → FEEDBACK → Coordinator para `getCatalogChanges`. Coordinator ya tiene GET público para el feed; queda pendiente evaluar la conexión directa y preservar CORS, redirecciones, telemetría y contrato público.
+- Se confirmó que el snapshot completo de CATALOG no se guarda en CacheService por exceder 100 KB. Las lecturas sin caché vuelven a consultar varias hojas y eventos; por ello los snapshots completos post-aporte son candidatos de alto coste.
+- Se registraron tareas P1 de feed directo, caché granular y consulta dirigida. No se modificaron endpoints ni servicios.
+- Próximo paso: completar inventario de llamadas y dependencias, priorizar reducción del salto FEEDBACK y de snapshots post-aporte, y preparar medición comparativa. No se afirma mejora hasta medirla.
