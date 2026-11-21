@@ -1261,3 +1261,13 @@ Adenda — FEEDBACK confirmación de sugerencias
 - Prueba WriteIdempotencyTargetedRead: 4/4 PASS en harness Node.js aislado; pendiente checkout completo/CI. La sección crítica física sigue protegida.
 - Commits: 7a211e681bef315f2c4ef118ffa13e8fb1715ca7, 252098b2682d5a6a6517b6d062060bfbabcf9d37, 52e6ce664207af275153899ccb2935803274b92d y 235936b21de1736eb0f38d0bf0c89815825ce3f6. Sin deployment ni cambios productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-21 — WRITE: VERSIONADO DE CATÁLOGO DESPUÉS DEL LOCK FÍSICO
+- Evidencia: nextWriteCatalogVersionLocked_ incrementaba una secuencia PropertiesService dentro de la sección crítica de alta nueva, aunque el versionado del feed ocurre después de confirmar la mutación.
+- Corrección: se reemplazó por nextWriteCatalogSourceVersion_, que valida vehicleId y usa Date.now(). En handleAddOrUpdateCut la versión se asigna después del finally que libera ScriptLock. handleAddSupplementaryInfo también usa el helper temporal. Se eliminó la propiedad de secuencia local WRITE.
+- Integridad: Coordinator valida sourceVersion y transforma cualquier versión repetida u obsoleta (<= currentSourceVersion) en reset para reconstruir el snapshot. La publicación del catálogo continúa sin lock local. No se tocó la transacción física.
+- Prueba WriteCatalogPublicationIsolation: 7/7 PASS en harness Node.js aislado; pendiente checkout completo/CI.
+- Commits: 93290af58dd4b665c452be85320f43dde7a1ccf3, 3112d22449ddd7792df110f4be1c75bd5c3a6bd8 y c05a26460f439d9c25850c2a32044f211d03e813. Sin deployment ni cambios productivos.
+================================================================================
