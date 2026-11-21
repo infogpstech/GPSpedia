@@ -72,9 +72,11 @@ test("el fallback de adaptadores sin TextFinder sigue leyendo solo la columna ID
     const result = findById(sheet, "tut-abc123");
     assert.equal(result.rowIndex, 2);
 });
-test("rechaza IDs de tutorial duplicados después de normalizar mayúsculas", () => {
-    const sheet = makeSheet([["tut-abc123"], ["TUT-ABC123"]]);
-    assert.throws(() => findById(sheet, "tut-abc123"), /ID del tutorial aparece más de una vez/);
+test("conserva la primera fila física como canónica ante IDs duplicados", () => {
+    const sheet = makeSheet([["tut-abc123", "Primero"], ["TUT-ABC123", "Segundo"]]);
+    const result = findById(sheet, "tut-abc123");
+    assert.equal(result.rowIndex, 2);
+    assert.equal(result.row[1], "Primero");
 });
 test("comprueba unicidad de título leyendo únicamente la columna B", () => {
     const sheet = makeSheet([["id1", "  Motor   No Arranca "], ["id2", "Otro"]]);
