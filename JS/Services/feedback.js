@@ -5342,7 +5342,7 @@ function parseVideoApprovalEventRow_(row, rowNumber) {
 }
 function getVideoApprovalEventForItem_(itemId) {
     const id = String(itemId || "").trim();
-    if (!id || typeof getSpreadsheet !== "function") return null;
+    if (!id || typeof getSpreadsheet !== "function" || typeof SpreadsheetApp === "undefined") return null;
     const sheet = getVideoApprovalEventsSheet_(false);
     if (!sheet || sheet.getLastRow() < 2) return null;
     const last = sheet.getLastRow(), matches = [], column = sheet.getRange(2, 3, last - 1, 1);
