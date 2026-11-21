@@ -4645,6 +4645,16 @@ function projectTutorialEditFields_(tutorialId, baseRow) {
             appliedOperations.set(event.operationId, false);
         }
     });
+    // Una versión posterior aceptada puede materializar una versión anterior en la fila base.
+    // Si su expectedHash coincide con el snapshot de un evento anterior, ese evento también quedó aplicado.
+    for (let index = events.length - 1; index >= 0; index--) {
+        const event = events[index];
+        if (appliedOperations.get(event.operationId) === true) continue;
+        const snapshotHash = buildTutorialEditFieldsHash_(event.snapshot);
+        const chained = events.slice(index + 1).some(later =>
+            appliedOperations.get(later.operationId) === true && later.expectedHash === snapshotHash);
+        if (chained) appliedOperations.set(event.operationId, true);
+    }
     row[3] = current[0]; row[4] = current[1]; row[5] = current[2];
     return { row, appliedOperations };
 }
