@@ -2,14 +2,41 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const source = readFileSync(new URL("../Services/write.js", import.meta.url), "utf8");
-const start = source.indexOf("function handleAllocateVehicleId(payload)");
-const end = source.indexOf("\nfunction assertDeveloperForIdMaintenance", start);
-assert.ok(start >= 0 && end > start, "No se encontró handleAllocateVehicleId");
-const handler = source.slice(start, end);
-assert.match(handler, /lock\.tryLock\(0\)/, "La asignación debe adquirir el lock sin espera global");
-assert.doesNotMatch(handler, /waitLock\(/, "La asignación no debe mantener esperas por el lock global");
-assert.match(handler, /busyError\.code\s*=\s*"WRITE_BUSY"/, "Debe devolver un error reintentable cuando WRITE está ocupado");
-assert.match(handler, /if\s*\(lockAcquired\)\s*lock\.releaseLock\(\)/, "Solo debe liberar el lock si fue adquirido");
-assert.ok(handler.indexOf("lock.tryLock(0)") < handler.indexOf("assertDeveloperForIdMaintenance"),
-    "La sección crítica debe comenzar antes de validar y asignar el ID");
-console.log("WriteIdAllocatorNonBlocking: 5/5 PASS — asignador tolera contención breve sin retener el lock durante otras tareas");
+function section(startMarker, endMarker) {
+    const start = source.indexOf(startMarker);
+    const end = source.indexOf(endMarker, start + startMarker.length);
+    assert.ok(start >= 0 && end > start, "No se encontró " + startMarker);
+    return source.slice(start, end);
+}
+
+const handler = section("function handleAllocateVehicleId(payload)", "\nfunction assertDeveloperForIdMaintenance");
+assert.doesNotMatch(handler, /LockService|tryLock|waitLock|releaseLock/,
+    "El endpoint central de asignación no debe adquirir ni liberar locks");
+assert.match(handler, /assertDeveloperForIdMaintenance\(payload\)/,
+    "La autorización de Desarrollador debe mantenerse antes de reservar");
+assert.match(handler, /reserveCortesVehicleIdForOperation_\(sheet, request\)/,
+    "El endpoint debe usar el ledger append-only");
+
+const allocator = section("function reserveCortesVehicleIdForOperation_(", "\nfunction handleAllocateVehicleId");
+assert.doesNotMatch(allocator, /LockService|tryLock|waitLock|releaseLock/,
+    "La reserva secuencial debe resolverse sin ScriptLock");
+assert.match(allocator, /appendRow\(/, "La reserva debe anexarse al ledger");
+assert.match(allocator, /SpreadsheetApp\.flush\(\)/, "La reserva debe esperar la persistencia antes del read-back");
+assert.match(allocator, /findCortesIdReservation_\(ledger, request\.opId\)/,
+    "La respuesta debe recuperarse por opId y verificar su huella");
+
+const sequenceFormula = section("function buildCortesIdReservationFormula_(", "\nfunction reserveCortesVehicleIdForOperation_");
+assert.match(sequenceFormula, /ROW\(\)/, "La secuencia debe derivarse de la posición física de cada append");
+assert.match(sequenceFormula, /INDEX\(/, "La fórmula debe limitarse a las reservas anteriores");
+
+const testigo = section("function ensureTestigoColumns(sheet)", "\nfunction ");
+assert.doesNotMatch(testigo, /LockService|tryLock|waitLock|releaseLock/,
+    "La inicialización de columnas Testigo no debe adquirir un lock anidado");
+
+const createHandler = section("function handleAddOrUpdateCutLockedUnsafe_(", "\nfunction buildCutSlotCoreValues_");
+assert.match(createHandler, /reserveCortesVehicleIdForOperation_\(/,
+    "Las altas nuevas de WRITE deben reservar el ID mediante el mismo ledger");
+assert.doesNotMatch(createHandler, /getNextCortesVehicleIdLocked\(/,
+    "No debe quedar el asignador anterior de lectura+contador");
+
+console.log("WriteIdAllocatorNonBlocking: PASS — reserva append-only sin ScriptLock, autorización, read-back y Testigo sin lock anidado");
