@@ -495,3 +495,9 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - Hallazgos y dependencias quedaron documentados en AUDITORIA_INTEGRAL_LATENCIA_LLAMADAS_APORTES_2026-11-21.md; las verificaciones previas a cualquier retirada se añadieron a Tareas_Activas.md.
 - Se identificaron candidatos a revisión: touchSession sin consumidor en los módulos principales inspeccionados pero con ScriptLock y lecturas completas; cargas de imágenes Base64 sin compresión previa en varios formularios; snapshot CATALOG completo usado por consultas ADMIN; refresh completo de catálogo al cerrar edición; y reintentos de dos mutaciones ADMIN que requieren demostrar idempotencia.
 - Se confirmó que la carga YouTube es directa/reanudable y no pasa el archivo completo por Apps Script. No se modificó código ni se retiraron protecciones; no se midió rendimiento ni se desplegó Apps Script.
+
+
+2026-11-21 — AUDITORÍA DE CACHÉ DE IMÁGENES Y REFRESCOS DE CATÁLOGO
+- Se trazó el ciclo de miniaturas: persistir catálogo precarga imágenes de los últimos 15 vehículos; guardar un vehículo visto también precarga sus imágenes; la cola limita compresión a dos tareas. Se identificó una posible doble solicitud fría entre el `img.src` inmediato y el `fetch` de compresión, pendiente de medir con caché HTTP controlada.
+- Se confirmó que los aportes de corte/información suplementaria refrescan el detalle mediante snapshot completo CATALOG tras la escritura. Se añadió tarea para evaluar lectura dirigida sin perder integridad.
+- No se modificó código ni se retiró ninguna llamada. No hay benchmark ni prueba de red con caché fría/caliente todavía.
