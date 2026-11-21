@@ -7,7 +7,7 @@ assert.ok(start>=0&&end>start,"No se encontró handleRecordLike");
 const handler=source.slice(start,end);
 assert.doesNotMatch(handler,/LockService|getScriptLock|acquireFeedbackScriptLock_/,"La ruta de likes no debe adquirir lock global");
 assert.equal((handler.match(/logLikeActivityAfterAppend_\(/g)||[]).length,2,"Los likes nuevos y recuperados deben registrar actividad tras el append");
-assert.match(handler,/eventLedger\.appendRow\(/);
+assert.match(handler,/ledger\.appendRow\(/);
 const activityStart=source.indexOf("function logLikeActivityAfterAppend_");
 const activityEnd=source.indexOf("\nfunction ",activityStart+10);
 const activity=source.slice(activityStart,activityEnd);
