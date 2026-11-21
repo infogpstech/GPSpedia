@@ -227,6 +227,7 @@ runGroup('34','CATALOG',()=>{
  runCli('CATALOG proyección determinista del ledger de aportes por vehículo','JS/Tests/VehicleContributionProjection.mjs');
   runCli('WRITE intercalado concurrente del ledger append-only','JS/Tests/WriteContributionAppendConcurrency.mjs');
   runCli('FEEDBACK replay de likes completados fuera del lock','JS/Tests/FeedbackLikeCompletedReplayPreflight.mjs');
+  runCli('FEEDBACK likes append-only y proyección CATALOG','JS/Tests/FeedbackLikeAppendOnly.mjs');
   runCli('WRITE replay idéntico de VIN fuera del lock','JS/Tests/WriteVinNoopPreflight.mjs');
   runCli('WRITE recuperación de opId desde AportesVehiculo','JS/Tests/WriteContributionRecovery.mjs');
   runCli('WRITE diario append-only de cargas de imágenes','JS/Tests/ImageUploadEventJournal.mjs');
