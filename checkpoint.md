@@ -890,3 +890,13 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Documentación: `AUDITORIA_MODAL_CSS_2026-11-21.md`, `Services/DEPLOYMENT_GUIDE.md`, README y COORDINATOR_SETUP actualizados. La guía fue contrastada con los archivos fuente de los ocho proyectos Apps Script y las propiedades URL/secretos.
 - Pendiente local: ninguno dentro del alcance de esta tanda. Pendiente visual: aceptación Beta en escritorio/Android/PWA y viewports reales; se mantiene sin ejecutar hasta disponer de deployments y recursos aislados.
 - Las 15 validaciones Beta originales permanecen pendientes; no se ejecutaron contra producción ni se marcaron como aprobadas.
+
+
+## Verificación final de continuidad — 2026-11-21
+
+- HEAD verificado antes de este registro: `230cda216bb83be158dbe70b343036de951eb044`; rama `GPSpedia2.2.5_work`.
+- Comparación con base `GPSpedia2.2.5`: 6,460 commits ahead / 0 behind; merge-base `d9acc68d889985c2e2f42fe3a02e502efc86ead1`. La referencia de la rama base no se modificó.
+- Tareas_Activas.md: 15 casillas abiertas; todas son validaciones Beta con recursos reales aislados (AUG-159/160/161, concurrencia, journals, Drive/Spreadsheet, PWA/navegadores). No quedan tareas locales de la auditoría visual ni de la guía de despliegue.
+- CI en el HEAD `230cda216bb83be158dbe70b343036de951eb044`: SUCCESS; 261 suites, 3,143 pruebas aprobadas, 0 fallos. CutDetailModalLayout 29/29; InfoModalStyleCascade 3/3; ModalHeaderCascade 2/2. Health read-only SUCCESS.
+- Pages workflow para ese HEAD se encontraba PENDING al registrar este checkpoint; no se afirma despliegue completado mientras no cambie a SUCCESS.
+- La aceptación visual de los modales en navegador de escritorio, Android/PWA y viewports reales permanece en Beta. No se desplegaron proyectos Apps Script ni se modificaron propiedades, Spreadsheet o Drive remotos.
