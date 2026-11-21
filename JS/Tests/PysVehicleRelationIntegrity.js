@@ -56,10 +56,17 @@ function makeSheet(rows, name, state, options = {}) {
                     state.reads.push({ name, operation: "setValue", locked: state.locked });
                     state.writes++;
                     if (!options.ignoreWrites) (rows[row - 1] || (rows[row - 1] = []))[col - 1] = value;
+                },
+                setValues(values) {
+                    state.reads.push({ name, operation: "setValues", locked: state.locked });
+                    values.forEach((valuesRow, rowOffset) => valuesRow.forEach((value, colOffset) => {
+                        (rows[row - 1 + rowOffset] || (rows[row - 1 + rowOffset] = []))[col - 1 + colOffset] = value;
+                    }));
                 }
             };
         },
-        rows
+        rows,
+        appendRow(values) { rows.push(values.slice()); state.writes++; }
     };
 }
 
@@ -76,7 +83,8 @@ function buildHarness(feedback, options = {}) {
         flushes: 0,
         reads: []
     };
-    const pysSheet = options.noPys ? null : makeSheet(state.pysRows, "pys", state, options);
+    let pysSheet = options.noPys ? null : makeSheet(state.pysRows, "pys", state, options);
+    let opsSheet = null;
     const cortesSheet = options.noCortes ? null : makeSheet(state.cortesRows, "Cortes", state, options);
     const lock = {
         hasLock: () => state.locked,
@@ -108,6 +116,7 @@ function buildHarness(feedback, options = {}) {
         },
         getSafeSheet(name) {
             if (name === "pys") return pysSheet;
+            if (name === "PysOperations") return opsSheet;
             if (name === "Cortes") return cortesSheet;
             return null;
         },
@@ -116,7 +125,14 @@ function buildHarness(feedback, options = {}) {
             const previous=state.locked;state.locked=true;
             try{return callback("test-lease");}finally{state.locked=previous;state.leaseReleases++;}
         },
-        getSpreadsheet: () => ({})
+        getSpreadsheet: () => ({
+            getSheetByName(name) { return name === "pys" ? pysSheet : name === "PysOperations" ? opsSheet : null; },
+            insertSheet(name) {
+                if (name === "pys") { state.pysRows = [HEADERS.slice()]; pysSheet = makeSheet(state.pysRows, "pys", state, options); return pysSheet; }
+                if (name === "PysOperations") { const rows = []; opsSheet = makeSheet(rows, name, state, options); return opsSheet; }
+                throw new Error("Unexpected sheet " + name);
+            }
+        })
     };
     const roleHelper = extract(feedback, "function normalizeFeedbackRole(role) {", "function getFeedbackActor_");
     const mutationLeaseHelper = extract(feedback, "function withPysMutationLease_", "function findPysMutationRow_");
@@ -310,9 +326,10 @@ export function runPysVehicleRelationIntegrityTests({ feedback, ui }) {
         assert.equal(h.state.leaseCalls[1][1], "removeVehicleFromProblem");
     });
 
-    test("la tarjeta Agregar Modelo se estira a la altura de las tarjetas relacionadas", () => {
+    test("la tarjeta Agregar Modelo conserva ancho fijo y el carrusel estira sus elementos", () => {
         assert.match(ui, /track\.style\.alignItems = "stretch"/);
-        assert.match(ui, /height: auto; min-height: 0; align-self: stretch/);
+        assert.match(ui, /flex: 0 0 140px/);
+        assert.doesNotMatch(ui, /height: auto; min-height: 0; align-self: stretch/);
     });
 
     return { status: failed === 0 ? "PASS" : "FAIL", passed, failed, results };

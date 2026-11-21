@@ -14883,7 +14883,7 @@ export function openPysDetailModal(item,navOptions={},inEditModePys=false){
             // Tarjeta «+ Agregar» al final del carrusel disponible para todos los usuarios (Estandarización visual sin bordes discontinuos)
             const addCard = document.createElement("div");
             addCard.className = "card card-create-vehicle-assoc";
-            addCard.style.cssText = "flex: 0 0 140px; height: auto; min-height: 0; align-self: stretch; box-sizing: border-box; padding: 10px; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); background: var(--card-bg, #fff); flex-shrink: 0;";
+            addCard.style.cssText = "flex: 0 0 140px; box-sizing: border-box; padding: 10px; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); background: var(--card-bg, #fff); flex-shrink: 0;";
             addCard.innerHTML = `<i class="fa-solid fa-plus" style="font-size: 1.8rem; margin-bottom: 8px; color: var(--accent-color, #007bff);"></i> <span style="font-size: 0.85rem; font-weight: 600; text-align: center;">Agregar Modelo</span>`;
             addCard.onclick = () => {
                 openSearchVehicleForPysAssociationModal(item.id_problem, (updatedList) => {
