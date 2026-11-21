@@ -34,7 +34,7 @@ function makeHarness({ row = ["10", "", "", "", "Base / Full", "", "", "", "", "
         parseVinCollection: value => value ? JSON.parse(value) : [],
         getAuthenticatedCollaborator() { authCalls++; if (authFails) throw new Error("unauthorized"); return "Ana"; },
         LockService: { getScriptLock: () => lock },
-        handleAddVinToVehicleLocked(payload) { lockedCalls++; getAuthenticatedCollaborator(payload); return { status: "success", vehicleId: "10" }; },
+        handleAddVinToVehicleLocked(payload) { lockedCalls++; authCalls++; if (authFails) throw new Error("unauthorized"); return { status: "success", vehicleId: "10" }; },
         nextWriteCatalogVersionLocked_() { versionCalls++; return 4; },
         Logger: { log() {} }
     };
