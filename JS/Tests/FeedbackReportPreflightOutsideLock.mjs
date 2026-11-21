@@ -19,7 +19,7 @@ test("el reporte se consulta antes de Drive y las nuevas escrituras no adquieren
 });
 test("el esquema se asegura sin lock y antes de construir la fila append-only", () => {
     const ensure = handler.indexOf("ensureReportMetadataColumn(feedbackSheet)");
-    const row = handler.indexOf("const reportRow = new Array(lastColumn).fill("")");
+    const row = handler.indexOf('const reportRow = new Array(lastColumn).fill("")');
     assert.ok(ensure >= 0 && row > ensure);
     assert.equal(handler.indexOf("ensureReportMetadataColumn(sheet)"), -1);
 });
