@@ -2194,8 +2194,9 @@ function handleRecordLike(payload) {
             if (Number(counterCell.getValue()) !== target) throw new Error("No se pudo confirmar el contador del like.");
             ledger.getRange(existing.rowIndex, 6).setValue("completed");
             SpreadsheetApp.flush();
-            activityLogRequest = { details: "Like en corte " + corteIndex + ". Nuevo total: " + target };
-            return { status: "success", recovered: true, likeCount: target, message: "Like recuperado y confirmado." };
+            const effectiveTarget = target + getFeedbackLikeEventCount_(ledger, vehicleId, corteIndex);
+            activityLogRequest = { details: "Like en corte " + corteIndex + ". Nuevo total: " + effectiveTarget };
+            return { status: "success", recovered: true, likeCount: effectiveTarget, message: "Like recuperado y confirmado." };
         }
         const target = currentCount + 1;
         ledger.appendRow([actorKey, vehicleId, corteIndex, currentCount, target, "pending", new Date().toISOString()]);
@@ -2205,8 +2206,9 @@ function handleRecordLike(payload) {
         if (Number(counterCell.getValue()) !== target) throw new Error("No se pudo confirmar el contador del like.");
         ledger.getRange(ledger.getLastRow(), 6).setValue("completed");
         SpreadsheetApp.flush();
-        activityLogRequest = { details: "Like en corte " + corteIndex + ". Nuevo total: " + target };
-        return { status: "success", alreadyLiked: false, likeCount: target, message: "Like registrado correctamente." };
+        const effectiveTarget = target + getFeedbackLikeEventCount_(ledger, vehicleId, corteIndex);
+        activityLogRequest = { details: "Like en corte " + corteIndex + ". Nuevo total: " + effectiveTarget };
+        return { status: "success", alreadyLiked: false, likeCount: effectiveTarget, message: "Like registrado correctamente." };
         } finally {
             lock.releaseLock();
         }
