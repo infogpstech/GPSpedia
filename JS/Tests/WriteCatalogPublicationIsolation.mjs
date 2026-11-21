@@ -19,7 +19,7 @@ assert.throws(() => version("0"), /ID de vehículo válido/);
 assert.throws(() => version("42x"), /ID de vehículo válido/);
 assert.doesNotMatch(versionHelper, /PropertiesService|WRITE_CATALOG_VERSION_PROPERTY_|LockService/);
 
-const addCut = extract("handleAddOrUpdateCut", "handleAppendExistingVehicleCut_");
+const addCut = extract("handleAddOrUpdateCut");
 const releaseIndex = addCut.indexOf("if (lock.hasLock()) lock.releaseLock()");
 const versionIndex = addCut.indexOf("nextWriteCatalogSourceVersion_");
 assert.ok(releaseIndex >= 0 && versionIndex > releaseIndex,
