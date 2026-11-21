@@ -488,3 +488,10 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - Se unificó la regla base de .info-modal-content; se agrupó el encabezado Inbox; se fusionó la regla base de .dev-tools-title manteniendo overrides responsive/reduced-motion. Cierre global mantiene 40 px, foco visible y variantes scoped.
 - Pruebas nuevas: InfoModalStyleCascade 3/3 y ModalHeaderCascade 2/2; CutDetailModalLayout 29/29. CI 261 suites, 3,143 pruebas aprobadas, 0 fallos. Health read-only SUCCESS.
 - La guía Apps Script fue revisada contra los archivos y configuración actuales. Se mantienen las pruebas visuales reales en Beta como pendientes.
+
+
+2026-11-21 — PRIMERA PASADA DE AUDITORÍA DE LATENCIA Y APORTES
+- Se inspeccionaron rutas frontend/backend de catálogo, AUTH, FEEDBACK, WRITE, ADMIN, Coordinator, imágenes y YouTube.
+- Hallazgos y dependencias quedaron documentados en AUDITORIA_INTEGRAL_LATENCIA_LLAMADAS_APORTES_2026-11-21.md; las verificaciones previas a cualquier retirada se añadieron a Tareas_Activas.md.
+- Se identificaron candidatos a revisión: touchSession sin consumidor en los módulos principales inspeccionados pero con ScriptLock y lecturas completas; cargas de imágenes Base64 sin compresión previa en varios formularios; snapshot CATALOG completo usado por consultas ADMIN; refresh completo de catálogo al cerrar edición; y reintentos de dos mutaciones ADMIN que requieren demostrar idempotencia.
+- Se confirmó que la carga YouTube es directa/reanudable y no pasa el archivo completo por Apps Script. No se modificó código ni se retiraron protecciones; no se midió rendimiento ni se desplegó Apps Script.
