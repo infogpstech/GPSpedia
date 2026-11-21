@@ -1354,3 +1354,13 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Se conserva el índice de eventos de imagen compartido en canonicalización y mapeo; first-write-wins, comparación de duplicados y alcance de conflictos permanecen intactos.
 - Prueba `FeedbackInboxImageEventBatchRead.mjs`: 7/7 PASS. CI HEAD `fbf112ba83dfa4a737ff12101a15d1119874a794`: **281 suites / 3,266 pruebas / 0 fallos**; build SUCCESS; health read-only SUCCESS. GitHub Pages deploy seguía en ejecución; no se desplegó Apps Script.
 - Siguiente: auditoría integral de ADMIN (Drive/Spreadsheet, respaldos/restauración, imágenes, idempotencia y read-back).
+
+
+## Cierre — ADMIN: superficie de telemetría global (2026-11-21)
+
+- `getServiceTraffic` se invoca desde `loadGlobalServiceTraffic_` dentro del panel de desarrollador; la consulta tiene guard de `isAdminPanelCurrent_`, refresco manual y actualización automática solo si el panel y el gráfico siguen visibles. El intervalo verifica cada 15 s, pero la consulta real respeta mínimo de 60 s.
+- `runServicesHealthScan` carga el agregado tras un escaneo iniciado desde el botón de salud del panel. El backend exige contexto Desarrollador, lee el agregado de Coordinator y la acción no se clasifica como mutación; la política declara solo lectura de `SERVICE_TRAFFIC`.
+- No hay referencias a `getServiceTraffic`, `getReplacedImages`, `getDriveStorage`, `getCortesImageFolders` ni `auditDriveImagesInCortes` en `JS/Frontend/main.js`; las llamadas revisadas viven en `JS/Frontend/ui.js` dentro del panel ADMIN.
+- `AdminTrafficSurfaceContract.mjs`: 12/12 PASS. CI HEAD `b5d71059b3007bb3a89667fc0d8ff73dd11e0258`: **282 suites / 3,278 pruebas / 0 fallos**; build SUCCESS; health read-only SUCCESS. Pages deploy en cola; no se desplegó Apps Script.
+- El código ADMIN también se revisó estáticamente para backup/restore: DB usa manifiesto/fingerprint y staging/rollback; Drive usa manifiesto por lotes, staging, verificación antes del intercambio y carpeta de rollback. No se modificó ese flujo por su carácter destructivo.
+- Siguiente: completar auditoría ADMIN de respaldos/restauración, escáneres, upload/recovery e imágenes; optimizar solo donde pruebas de idempotencia y rollback puedan conservarse.
