@@ -989,3 +989,11 @@ Estado: REGRESIÓN LOCAL COMPLETADA. Concurrencia real de appendRow, fallos real
 
 Adenda — FEEDBACK confirmación de sugerencias
 - La corrección del índice de `Problema` y su regresión quedaron verificadas en CI `44861738724` SUCCESS (commit `f81b316b595f1675637d84f2e25fd1775083a83d`). Health read-only `44861738743` SUCCESS.
+
+
+2026-11-21 — FEEDBACK: confirmación concurrente por ID
+- Ubicación: `JS/Services/feedback.js`, reportProblem y suggestCutChange.
+- Evidencia: se leía `getLastRow()+1` tras `appendRow`; una escritura intercalada podía cambiar la posición de la fila propia.
+- Impacto: confirmación incorrecta de una escritura posiblemente persistida y retención innecesaria de adjuntos.
+- Severidad alta en concurrencia. Corrección: búsqueda exacta por ID reservado con `findFeedbackRowById_` y regresión dedicada.
+- Pendiente: deduplicación lógica, paginación del Inbox y adjuntos append-only; ScriptLock se mantiene hasta cubrir esos contratos.
