@@ -38,6 +38,21 @@ const request = {
 let passed = 0;
 function test(name, fn) { fn(); passed++; }
 
+test("una sugerencia nueva se anexa como fila completa", () => {
+    const handler = extract("handleSuggestCutChange", "parseModelosAsociados");
+    const writeStart = handler.indexOf("const suggestionRow = new Array(lastCol).fill(\"\")");
+    const writeEnd = handler.indexOf("rowCommitted = true;", writeStart);
+    const writeBlock = handler.slice(writeStart, writeEnd);
+    assert.ok(writeStart >= 0 && writeEnd > writeStart);
+    assert.match(writeBlock, /suggestionRow\[COLS_FEEDBACKS\.ID - 1\] = reservedId/);
+    assert.match(writeBlock, /suggestionRow\[COLS_FEEDBACKS\.Problema - 1\] = problemDesc/);
+    assert.match(writeBlock, /sheet\.appendRow\(suggestionRow\)/);
+    assert.match(writeBlock, /savedRow = sheet\.getRange/);
+    assert.doesNotMatch(writeBlock, /getRange\([^\\n]*\)\.setValue|\.setValues\(/);
+    const catchBlock = handler.slice(handler.indexOf("} catch (error) {"));
+    assert.match(catchBlock, /appendAttempted/);
+    assert.doesNotMatch(catchBlock, /clearContent\(\)/);
+});
 test("reproduce una operación idéntica por opId", () => {
     const h = makeResolver({ byOperation: operationRecord });
     assert.equal(h.resolver({}, request), operationRecord);
