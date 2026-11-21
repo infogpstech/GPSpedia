@@ -1126,3 +1126,13 @@ Adenda — FEEDBACK confirmación de sugerencias
 - Se corrigieron las pruebas de contrato que esperaban leases; AUG-161 Beta se actualizó para verificar ejecución directa sin Coordinator.
 - No se desplegó Apps Script ni se modificaron datos productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-21 — CIERRE LOCAL: INBOX SIN LOCK GLOBAL
+- Hallazgo: withInboxConversationLock_ mantenía ScriptLock global incluso durante lecturas paginadas y consultas de conversaciones, serializando acciones independientes.
+- Corrección: se sustituyó por runInboxConversationAction_ que ejecuta directamente el callback; no usa LockService, tryLock, waitLock ni releaseLock. Se aplicó a todas las rutas de lectura y mutación Inbox.
+- Se preservaron autenticación de actor, participantes, RBAC, validación, idempotencia, límites y auditoría.
+- InboxConversations 66/66 PASS; CI 15e7ab84d9a4530cb1097334a3e907f798c9d0ca SUCCESS: 259 suites, 3,130 pruebas, 0 fallos. Build, health read-only y Pages SUCCESS.
+- No se desplegó Apps Script ni se modificaron datos productivos.
+================================================================================
