@@ -614,3 +614,11 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - JS/Tests/ServiceBrowserTrafficContract.mjs: cubre percentiles, muestras vacías y métricas de bytes.
 - Tareas_Activas.md, checkpoint.md y AUDITORIA_INTEGRAL_LATENCIA_LLAMADAS_APORTES_2026-11-21.md: registran cierre local y validación diferida a Beta.
 - Validación registrada: sintaxis SUCCESS; 277 suites / 3,226 pruebas / 0 fallos; health read-only SUCCESS. Pages build/deployment pendiente al momento del registro.
+
+
+[2026-11-21] P0 AUTH/USERS — mapa de consumidores
+- Se creó MAPA_CONSUMIDORES_AUTH_USERS_P0_2026-11-21.md con rutas frontend, dispatchers, acciones huérfanas y dependencias de coordinación.
+- Hallazgo: touchSession no tiene consumidor cliente; acceptTerms tiene single-flight y no dispara touchSession adicional.
+- Hallazgo: createUser (USERS) y deleteUser (AUTH) comparten el recurso Coordinator USERS; su exclusión no puede retirarse sin alternativa entre proyectos.
+- Hallazgo: cambio de rol, cierre remoto y eliminación mantienen efectos de revocación/invalidez que deben preservarse al simplificar.
+- Tareas_Activas.md y checkpoint.md actualizados con el siguiente paso de clasificación de leases §15.
