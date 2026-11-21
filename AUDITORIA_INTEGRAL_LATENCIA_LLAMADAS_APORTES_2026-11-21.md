@@ -190,3 +190,12 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - FEEDBACK PyS: `handleAddProblem` crea/verifica el archivo y reserva la operación con estados `UPLOAD_PENDING`/`LINKED`; no se observó ScriptLock en ese flujo. La integridad depende del opId, payloadHash, ledger de operaciones y verificación del archivo, por lo que no se simplifica.
 - Resultado: en los flujos de imagen inspeccionados no se encontró una transferencia Drive mantenida bajo un lock global. La carga WRITE sí hace una pausa/reacquisición no bloqueante para proteger el tramo de escritura posterior. Queda pendiente completar ADMIN y medir duración de Drive/transferencia.
 
+
+
+### ADMIN — cargas de reemplazo de imagen y locks
+- `handleUploadAdminImage` (ruta actual) valida el compare-and-set de la versión esperada, sube a Drive mediante `uploadImageToDrive` y publica el evento de campo; no adquiere ScriptLock global en esa ruta append-only.
+- `handleUploadAdminImageLegacy_` conserva ScriptLock breve para reserva/revalidación, pero ejecuta la creación/verificación de Drive dentro de `runAdminContributionDriveWorkOutsideScriptLock_`, que libera el lock, trabaja con el mismo operationId y reacquire con `tryLock(0)` antes de revalidar.
+- La reparación de imágenes de `handleAddOrUpdateCutLockedUnsafe_` también usa `runWriteDriveWorkOutsideScriptLock_`. No se detectó una transferencia Drive sostenida dentro de la sección crítica.
+- Los locks de eliminación, restauración e inventario ADMIN son operaciones destructivas o de consistencia y no se retiran en esta auditoría sin revisar el ledger, referencias activas, rollback y recuperación.
+- La telemetría/inventario y consulta de estado de reemplazo siguen siendo llamadas administrativas separadas; no se ejecutan en cada aporte normal. La consulta de estado puede pedir snapshot CATALOG completo y queda como optimización de recuperación, no del upload principal.
+
