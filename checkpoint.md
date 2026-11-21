@@ -694,3 +694,12 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Pruebas: FeedbackCatalogPublicationIsolation 5/5; CatalogChangeFeed 35/35; TutorialIntegrity 42/42; PysCreationIntegrity 56/56; PysImageStorageRecovery 22/22. CI 56a849eac4d7ad40f1cf6906402bcbb56fcf9f19 SUCCESS: 259 suites, 3,130 pruebas, 0 fallos; health read-only SUCCESS.
 - Siguiente tarea local: WRITE ID allocator (reserva numérica secuencial) y ensureTestigoColumns; ambos aún usan ScriptLock. Preservar unicidad numérica sin espera global y después revisar ADMIN. AUTH/USERS locks se mantienen como protecciones de sesión/rol hasta completar su auditoría.
 - No se desplegó Apps Script ni se modificaron recursos productivos.
+
+
+## Checkpoint — corregir fixture residual de recuperación PyS (2026-11-21)
+
+- Rama de trabajo: GPSpedia2.2.5_work. Último commit de código sometido a CI: efa35b4fc0ca3203cfeee4e7e426b6f05c766f4d.
+- Se retiró el helper acquireFeedbackScriptLock_ de feedback.js para eliminar el mecanismo ScriptLock legacy de FEEDBACK. TutorialIntegrity y PysCreationIntegrity se actualizaron y pasan.
+- CI: CatalogChangeFeed 35/35; FeedbackCatalogPublicationIsolation 5/5; TutorialIntegrity 42/42; PysCreationIntegrity 56/56. Health SUCCESS. Service tests FAIL únicamente en P2.2b PyS imagen: PysImageStorageRecovery 2/22; 20 casos informan que un fixture intenta extraer el helper retirado.
+- Siguiente paso inmediato: localizar la extracción residual del helper en el harness de PysImageStorageRecovery / dependencias y actualizarla para ejecutar las funciones sin lock; repetir CI hasta verde. Después continuar el inventario de locks ordinarios WRITE/ADMIN/USERS.
+- Sin despliegue Apps Script ni cambios en datos productivos. La rama base protegida GPSpedia2.2.5 no se modifica.
