@@ -818,6 +818,47 @@ function runSharedMutationCoordinatorTests() {
             "La revocación global debe limpiar todos los bloques.");
     });
 
+    test_("Login precarga actores en USERS/WRITE/FEEDBACK/ADMIN en lotes y fuera del lock", function() {
+        const batches = [];
+        const fetchAll = requests => {
+            batches.push(requests);
+            return requests.map(request => {
+                const body = JSON.parse(request.payload);
+                return {
+                    getResponseCode: () => 200,
+                    getContentText: () => JSON.stringify({ status: "success", primed: body.payload.sessionTokens.length })
+                };
+            });
+        };
+        const r = createRuntime_(null, null, fetchAll);
+        ["USERS", "WRITE", "FEEDBACK", "ADMIN"].forEach(service => {
+            r.properties.setProperty("GPSpedia_SERVICE_URL_" + service,
+                "https://script.google.com/macros/s/" + service + "/exec");
+            r.properties.setProperty("GPSpedia_COORDINATOR_SECRET_" + service, (service + "-secret-").padEnd(40, "x"));
+        });
+        const createdAt = 1700000000000;
+        const sessions = Array.from({ length: 60 }, (_, index) => ({
+            token: "session-token-prime-" + String(index).padStart(4, "0"),
+            createdAt, lastActivityAt: createdAt
+        }));
+        const result = r.request("syncUserSessions", "AUTH", "syncUserSessions", {
+            userId: "USR-PRIME", role: "tecnico", fullName: "Técnico", sessions
+        });
+        assert_(result.status === "success" && result.synced === 60, "La sincronización central debe completarse.");
+        assert_(result.cachePriming.primedServices.join(",") === "USERS,WRITE,FEEDBACK,ADMIN",
+            "Los cuatro servicios deben confirmar la precarga.");
+        assert_(result.cachePriming.failedServices.length === 0, "No deben quedar servicios pendientes.");
+        assert_(batches.length === 1 && batches[0].length === 12,
+            "Sesenta sesiones se distribuyen en tres lotes por servicio (4 × 3).");
+        batches[0].forEach(request => {
+            const body = JSON.parse(request.payload);
+            assert_(body.action === "__primeSessionActorCache", "La llamada interna debe usar el endpoint de precarga.");
+            assert_(body.payload.sessionTokens.length <= 25, "Cada lote respeta el máximo de 25 tokens.");
+            assert_(body.payload.userId === "USR-PRIME" && body.payload.epoch === result.epoch,
+                "La precarga debe usar el contexto/epoch que acaba de registrar el login.");
+        });
+    });
+
     test_("El epoch de revocación impide volver a registrar tokens anteriores al reset", function() {
         const r = createRuntime_();
         const userId = "USR-1007", oldToken = "session-token-0000000000000009";
