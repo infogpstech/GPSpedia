@@ -10,7 +10,8 @@ const acquire=new Function(helper+";return acquireFeedbackScriptLock_;")();
 {const calls=[];const lock={waitLock(ms){calls.push(ms);}};assert.equal(acquire(lock),true);assert.deepEqual(calls,[0]);}
 assert.doesNotMatch(feedback,/waitLock\((?:10000|15000)\)/);
 assert.doesNotMatch(inbox,/waitLock\(10000\)/);
-assert.doesNotMatch(inbox,/LockService\.getScriptLock\(\)|\.tryLock\(|\.waitLock\(|\.releaseLock\(/);\nassert.match(inbox,/function runInboxConversationAction_\(callback\)/);
+assert.doesNotMatch(inbox,/LockService\.getScriptLock\(\)|\.tryLock\(|\.waitLock\(|\.releaseLock\(/);
+assert.match(inbox,/function runInboxConversationAction_\(callback\)/);
 const suggestYear=extract(feedback,"handleSuggestYear");
 assert.ok(!suggestYear.includes("LockService.getScriptLock()")&&!suggestYear.includes("acquireFeedbackScriptLock_("));
 assert.ok(!extract(feedback,"handleAddTutorial").includes("acquireFeedbackScriptLock_("),"El alta de tutoriales usa reservas append-only y no debe adquirir ScriptLock.");
