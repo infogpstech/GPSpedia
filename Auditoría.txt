@@ -1327,3 +1327,12 @@ Validación exact-source local:
 - PR #128 sigue abierto/draft, sin merge. GPSpedia2.2.5_work: 6,425 ahead / 0 behind; GPSpedia2.2.5 protegida e intacta.
 - Pendiente: solo validaciones Beta reales (AUG-159 a AUG-163 y pruebas aisladas de concurrencia, Drive/Spreadsheet, navegador/PWA y coordinación interproyecto). Google Drive connector DISABLED_BY_ADMIN / NOT_AVAILABLE; no ejecutar contra producción ni presentar simulaciones como Beta.
 ================================================================================
+
+
+================================================================================
+2026-11-21 — AUDITORÍA VISUAL DE MODALES Y ENCABEZADO DE CORTE
+- Se comparó la rama GPSpedia2.2.5_work con GPSpedia-2.1.7: el encabezado cambió de flex inline a grid con nodos independientes para logo, modelo, acciones, divisor y estado de guardado.
+- Se identificaron múltiples reglas base compartidas y variantes scoped; el recuento estático detectó repetición de .detail-modal-header-actions (6), .detail-modal-title-text (5), .detail-modal-title-input (5), .detail-modal-toolbar (4), .detail-modal-title (4), .info-modal-content (4), además de bloques repetidos para Inbox y Developer Tools.
+- Corrección inicial: logo de corte 64 px escritorio / 48 px móvil; acciones/cierre conservan 40 px. Se actualizó CutDetailModalLayout.mjs. No se afirma aprobación hasta ejecutar CI y prueba visual.
+- Informe: AUDITORIA_MODAL_CSS_2026-11-21.md. Guía Apps Script: Services/DEPLOYMENT_GUIDE.md.
+- Pendiente: consolidación integral de reglas compartidas/variantes y regresión visual en Beta. No hubo deployment Apps Script ni cambios en Spreadsheet/Drive.
