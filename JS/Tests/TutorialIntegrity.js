@@ -406,7 +406,7 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
         ])).digest("hex");
         h.api.titleEventsSheet.appendRow([conflicting.operationId, digest, conflicting.tutorialId,
             conflicting.action, conflicting.titleKey, conflicting.previousTitleKey, conflicting.payloadHash, "now"]);
-        assert.throws(() => h.api.readTitleEvents(), /mismo operationId con eventos contradictorios/);
+        assert.throws(() => h.api.readTitleEvents(h.api.titleEventsSheet), /mismo operationId con eventos contradictorios/);
     });
 
     test("el ledger de títulos rechaza eventHash alterado", () => {
@@ -415,7 +415,7 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
             tutorialId: "tut-55555555555555555555555555555555", action: "CLAIM",
             titleKey: "tema", previousTitleKey: "", payloadHash: "5".repeat(64) });
         h.api.titleEventsSheet.data[1][1] = "f".repeat(64);
-        assert.throws(() => h.api.readTitleEvents(), /eventHash que no coincide/);
+        assert.throws(() => h.api.readTitleEvents(h.api.titleEventsSheet), /eventHash que no coincide/);
     });
 
     test("el rename append-only libera el título anterior y reserva el nuevo", () => {
