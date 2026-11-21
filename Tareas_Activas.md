@@ -30,7 +30,7 @@ La copia archivada fue verificada carácter por carácter contra el original. Es
 - [x] Completar revisión de la escritura física de Cortes, Idempotencia, compensación pre/post Drive y recuperación por opId. El ScriptLock fail-fast se conserva: protege lastRow+1, escritura/estado de Idempotencia y rollback; Drive se ejecuta fuera y la readquisición fail-fast conserva pending para retry. No existe sustitución probada que permita retirarlo sin debilitar integridad.
 - [x] Añadir WritePhysicalTransactionContract: 7/7 PASS en harness exact-source, incluyendo pending-before-Drive, readquisición, recuperación pending y rollback condicionado al lock.
 - [x] Consultar combined status y workflow runs del HEAD: el conector no devolvió checks ni ejecuciones. No se afirma CI verde; las validaciones locales exact-source pertinentes se ejecutaron y aprobaron. La integración real permanece en Beta.
-- No desplegar Apps Script ni modificar Spreadsheet/Drive productivos. Beta AUG-159/AUG-160 y pruebas reales multi-ejecución permanecen aisladas y sujetas a autorización.
+- No desplegar Apps Script ni modificar Spreadsheet/Drive productivos. Permanecen las validaciones Beta de AUG-159, AUG-160, AUG-161, AUG-162, AUG-163 y las pruebas reales de concurrencia, navegador/PWA, Spreadsheet/Drive y coordinación interproyecto registradas en `lista_beta_parte1.txt`, `lista_beta_parte2_parte_001.txt`, `lista_beta_parte2_parte_002.txt` y `lista_beta_adenda_2026-11-21.md`.
 
 ## Cierre local — reemplazo de imágenes ADMIN (2026-11-20)
 
