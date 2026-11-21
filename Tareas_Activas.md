@@ -791,3 +791,7 @@ Documento de alcance, hallazgos y checklist: [AUDITORIA_INTEGRAL_LATENCIA_LLAMAD
 - [ ] Diseñar una estrategia de caché granular o consultas dirigidas para CATALOG; el snapshot completo no se escribe en CacheService por superar 100 KB y por ello las lecturas sin caché reconstruyen múltiples colecciones desde Spreadsheet.
 - [ ] Mantener snapshot completo para inicio/reset/recuperación; evitarlo en refrescos de un único vehículo tras aportes cuando un endpoint dirigido o delta confirmado cubra el mismo contrato.
 
+
+
+### P1 — retirar refrescos que no producen cambios de catálogo
+- [ ] Eliminar los dos callbacks `onSuccess → getCatalogData` de los formularios de vídeo de corte/tutorial: la solicitud termina en estado pending, FEEDBACK solo escribe la bandeja de aprobación y no publica CATALOG. Añadir prueba de contrato que confirme que no hay snapshot después del envío y que se conserva el opVideoId, la respuesta pending y la prevención de duplicados.
