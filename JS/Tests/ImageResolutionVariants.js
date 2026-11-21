@@ -47,7 +47,7 @@ assert.match(optimizedImage, /offline\.getThumbnail\(cleanId, normalizedSize\)/,
 assert.match(optimizedImage, /imgElement\.crossOrigin = 'anonymous'/, 'solicita CORS antes de cargar para reutilizar los bytes de la imagen');
 assert.match(optimizedImage, /imgElement\.removeAttribute\('crossorigin'\)/, 'mantiene fallback visual cuando el servidor no permite CORS');
 assert.match(optimizedImage, /offline\.compressAndStoreThumbnailFromImage\(imgElement, cleanId, normalizedSize\)/, 'genera miniatura desde la imagen ya descargada');
-assert.doesNotMatch(optimizedImage, /offline\.compressAndStoreThumbnail\(remoteUrl/, 'no inicia un segundo fetch en el ciclo visible');
+assert.equal(optimizedImage.includes('offline.compressAndStoreThumbnail(remoteUrl'), false, 'no inicia un segundo fetch en el ciclo visible');
 assert.match(offlineSource, /createImageBitmap\(imageElement\)/, 'la persistencia usa los bytes de la imagen existente');
 assert.match(optimizedImage, /gp-image-loading/);
 assert.match(optimizedImage, /IMAGE_FALLBACK_DATA_URL/);
