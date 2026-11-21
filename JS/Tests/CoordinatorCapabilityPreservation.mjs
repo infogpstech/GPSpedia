@@ -63,7 +63,7 @@ check("Solo eliminación de cuenta conserva lease; otras revocaciones mantienen 
     assert.match(update, /requireSharedAuthActor_\(payload, \["desarrollador", "jefe", "supervisor"\]/);
     assert.match(reset, /requireSharedAuthActor_\(payload, \["desarrollador"\]/);
 });
-check("La invalidación remota exige confirmación de WRITE y FEEDBACK antes de revocar", () => {
+check("La invalidación remota exige confirmación de USERS, WRITE, FEEDBACK y ADMIN antes de revocar", () => {
     const invalidate = extract(client, "invalidateSessionActorCaches");
     const revokeOne = extract(client, "revokeSession");
     const revokeAll = extract(client, "revokeUserSessions");
