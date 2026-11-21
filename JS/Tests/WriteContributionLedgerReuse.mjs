@@ -14,10 +14,10 @@ assert.match(append,/options\.ledgerSheet \|\| getVehicleContributionLedgerSheet
 assert.match(slot,/validatedLedgerSheet \|\| getVehicleContributionLedgerSheet_\(spreadsheet\)/);
 assert.match(candidate,/validatedLedgerSheet \|\| getVehicleContributionLedgerSheet_\(spreadsheet\)/);
 assert.match(existingCut,/const contributionLedgerSheet = getVehicleContributionLedgerSheet_\(spreadsheet\)/);
-assert.match(existingCut,/ledgerSheet: contributionLedgerSheet/);
-assert.match(existingCut,/readVehicleContributionLedgerRows_\(contributionLedgerSheet\)/);
+assert.match(existingCut,/ledgerSheet: appendLedgerSheet/);
+assert.match(existingCut,/readVehicleContributionLedgerRows_\(appendLedgerSheet\)/);
 assert.match(supplementary,/ledgerSheet: contributionLedgerSheet/);
-assert.match(supplementary,/kind, contributionLedgerSheet\)/);
+assert.match(supplementary,/kind, appendLedgerSheet\)/);
 
 let getterCalls=0;
 const ledger={getLastRow:()=>1};
