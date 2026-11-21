@@ -235,3 +235,13 @@ Antes de cualquier Beta, cumplir la secuencia de sincronización de ramas, árbo
 - Se conserva la lectura de claves `applied:user:...` únicamente para compatibilidad con registros históricos que ya fueron marcados por versiones anteriores; el flujo nuevo no genera esas claves.
 - Pruebas `SuggestYearVoteThreshold` 8/8 y `FeedbackYearApplicationAppendOnly` 10/10 PASS. CI commit `99d25f8a040c54e47a0618a19751e4fcc7e815ac`: 255 suites, 3069 pruebas aprobadas, 0 fallos; health read-only SUCCESS.
 - **P0 continúa abierto:** ScriptLock sigue activo; el ledger aún actualiza status/actividad in-place y la coordinación completa entre votos concurrentes y aplicaciones requiere más trabajo. No retirar lock ni desplegar Apps Script hasta cerrar esos contratos.
+
+
+
+## Continuación — estado de aplicaciones por eventos append-only (2026-11-21)
+
+- Se creó el ledger `FeedbackYearApplicationEvents` con eventos `activity_attempted`, `requires_review` y `completed`. La identidad del evento se deriva de la aplicación, tipo y payload; los reintentos idénticos se reconocen como duplicados y payloads contradictorios se rechazan.
+- `findPendingFeedbackYearApplication_` ahora proyecta el estado desde el ledger de eventos y agrupa duplicados de la aplicación. `completeFeedbackYearApplication_` dejó de modificar las columnas `status`, `activityAttempted` y `updatedAt` de las filas de aplicación; solo anexa eventos.
+- `Feedbacks` también permanece inmutable durante la finalización. La compatibilidad de lectura para claves históricas `applied:user:...` se mantiene, pero no se crean nuevas.
+- Pruebas `SuggestYearVoteThreshold` 8/8 y `FeedbackYearApplicationAppendOnly` 12/12 PASS. CI commit `6bde2d4191015e43f37531e258b158a63ac8d801`: 255 suites, 3071 pruebas aprobadas, 0 fallos; build y health read-only SUCCESS. Deploy GitHub Pages estaba en ejecución al registrar; no es despliegue Apps Script.
+- ScriptLock sigue activo. Falta resolver coordinación concurrente de la secuencia voto→aplicación y validar recuperación integral antes de retirar el lock.
