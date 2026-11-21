@@ -204,6 +204,7 @@ runGroup('33','FEEDBACK',()=>{
  recordResult('FEEDBACK ledger Inbox',loadFunction('JS/Tests/InboxAuditTrail.js','runInboxAuditTrailTests','\n\nimport {')({feedback}));
  recordResult('FEEDBACK lectura acotada de ActividadUsuario/AUG-120',loadFunction('JS/Tests/ActivityLogsBoundedRead.js','runActivityLogsBoundedReadTests','\n\nimport {')({feedback}));
  runCli('AUG-020 purga segura y clasificación de timestamps de ActividadUsuario','JS/Tests/ActivityLogRetention.mjs');
+ runCli('WRITE preflight de tamaño de imágenes antes de Base64','JS/Tests/AddCutImageSizePreflight.mjs');
  recordResult('FEEDBACK contrato canónico de rol Inbox/AUG-115',loadFunction('JS/Tests/InboxRoleContract.js','runInboxRoleContractTests','\n\nimport {')({
   ui:read('JS/Frontend/ui.js'),feedback,inbox:read('JS/Services/InboxConversations.js'),usersHtml:read('HTML/users.html'),authClient:read('JS/Frontend/auth.js'),api:read('JS/Frontend/api-config.js')
  }));
