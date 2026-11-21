@@ -446,3 +446,14 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Nueva regresión en PysCreationIntegrity. CI 44873650200 SUCCESS: 258 suites, 3093 pruebas, 0 fallos; health read-only 44873650247 SUCCESS; Pages 44873650240 queued al momento del registro.
 - No se retiró ScriptLock de handleAddProblem. El siguiente trabajo sigue siendo diseñar/probar el ledger de reserva canónica y propiedad de imagen antes de migrar el handler.
 - Sin despliegue ni cambios productivos.
+
+## Checkpoint — PyS handleAddProblem sin ScriptLock (2026-11-21)
+
+- HEAD de código/pruebas validado: `18ffcc6a9f7c23b54b9d3ef9fc7bc506a8fe1164`; commit de cierre documental pendiente en esta actualización.
+- `handleAddProblem` ya no usa `LockService.getScriptLock`, `acquireFeedbackScriptLock_` ni reacquisición. Las nuevas operaciones anexan una reserva completa `UPLOAD_PENDING` a `PysOperations`; el helper rechaza actualizaciones in-place.
+- First-write-wins por `opId`: primera fila física conserva `problemId` y archivo canónicos; hash distinto se rechaza por el handler sin invalidar el ledger. Archivos perdedores se limpian solo tras comprobar referencias; las situaciones ambiguas conservan el archivo.
+- El éxito se proyecta por fila PyS verificada; replay recupera una fila ausente con la misma imagen canónica. No se hace rollback destructivo tras una reserva confirmada. Reservas legacy `PENDING` sin imagen requieren recuperación manual.
+- CI `44875140437` SUCCESS: 258 suites, 3094 pruebas, 0 fallos; health read-only `44875140445` SUCCESS; Pages `44875140584` SUCCESS.
+- Beta pendiente: concurrencia real appendRow, carrera de archivos Drive, respuesta perdida, referencias preexistentes y recuperación en Spreadsheet/Drive aislados. No se desplegó Apps Script ni se modificó producción.
+- **PyS creación: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.** Las mutaciones de solución, prevención y relaciones permanecen fuera del alcance y conservan sus locks.
+- Siguiente tarea del backlog: migración append-only/lock-free de tutoriales (`handleAddTutorial` y edición asociada); después, aprobaciones de vídeo; finalmente, regresión integral y Beta.
