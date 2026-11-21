@@ -926,11 +926,28 @@ function getLastCortesIdReservation_(sheet) {
     freezeCortesIdReservationFormulaRows_(sheet);
     const lastRow = sheet.getLastRow();
     if (lastRow < 2) return 0;
-    const value = Number(sheet.getRange(lastRow, 3).getValue());
-    if (!Number.isSafeInteger(value) || value < 1) {
-        throw new Error("La última reserva de ID no contiene un entero positivo válido.");
-    }
-    return value;
+    const rows = sheet.getRange(2, 1, lastRow - 1, CORTES_ID_RESERVATIONS_HEADERS.length).getValues();
+    const seenIds = new Set(), opIdHashes = new Map();
+    let previousId = 0;
+    rows.forEach((row, offset) => {
+        const opId = String(row[0] || "").trim();
+        const operationHash = String(row[1] || "").trim().toLowerCase();
+        const vehicleId = Number(row[2]);
+        if (!/^OP-[A-Za-z0-9_-]{1,100}$/.test(opId) || !/^[a-f0-9]{64}$/.test(operationHash) ||
+            !Number.isSafeInteger(vehicleId) || vehicleId < 1) {
+            throw new Error("La reserva de ID de la fila " + (offset + 2) + " está incompleta o corrupta.");
+        }
+        if (vehicleId <= previousId || seenIds.has(vehicleId)) {
+            throw new Error("El ledger de reservas de IDs no conserva una secuencia estrictamente creciente y única.");
+        }
+        if (opIdHashes.has(opId) && opIdHashes.get(opId) !== operationHash) {
+            throw new Error("El opId " + opId + " tiene huellas contradictorias en el ledger de reservas.");
+        }
+        seenIds.add(vehicleId);
+        opIdHashes.set(opId, operationHash);
+        previousId = vehicleId;
+    });
+    return previousId;
 }
 
 function buildCortesIdReservationFormula_(highWaterMark) {
