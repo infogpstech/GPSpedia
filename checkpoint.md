@@ -293,3 +293,13 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Se añadieron casos de regresión para respuestas contradictorias en ambos órdenes en `SuggestYearVoteThreshold.mjs`.
 - CI: servicio de regresión SUCCESS (255 suites, 3064 pruebas, 0 fallos); health read-only SUCCESS; build SUCCESS. Deploy/Pages estaba en ejecución al registrar.
 - Estado P0: `handleSuggestYear` **sigue usando ScriptLock** y aún modifica el ledger de aplicaciones y las filas históricas de Feedbacks. Este commit es preparación de proyección, no retiro del lock. Próximo: anexar votos completos de forma atómica, deduplicar por actor con primer evento físico, usar aplicación determinista append-only y reconstruir recuperación desde eventos sin mutar votos históricos. No desplegar Apps Script ni tocar datos productivos.
+
+
+
+## Checkpoint — append atómico de votos y aplicaciones de año (2026-11-21)
+
+- HEAD de código: `51bd127600d81de4deda9f8083b3bef708075da8`; pruebas/contratos: `8d80bac41d4c29e9b90d598e89eca818e03bff79`.
+- `handleSuggestYearLocked` anexa votos nuevos con una fila completa mediante `Feedbacks.appendRow`, incluyendo ID reservado, actor y contenido. El conteo first-write-wins usa el primer registro físico por actor/vehículo/año; votos contradictorios posteriores no alteran el primero.
+- El ledger `FeedbackYearApplications` ahora recibe cada aplicación mediante `appendRow` de 16 campos y verifica que el operationId se haya guardado exactamente una vez. Se mantiene UUID como ID de aplicación por ahora.
+- Pruebas `SuggestYearVoteThreshold` 8/8, `FeedbackYearApplicationAppendOnly` 7/7. CI para el commit de contratos `8d80bac41d4c29e9b90d598e89eca818e03bff79`: 255 suites, 3066 pruebas, 0 fallos; health read-only y build seguían ejecutándose al registrar.
+- **No se retiró ScriptLock.** Continúan pendientes la deduplicación determinista de aplicaciones concurrentes, eliminación de cambios de estado como fuente de verdad, recuperación append-only que no renombre votos históricos y control de conflictos de generaciones. Mantener bloqueo hasta completar esos contratos. No desplegar Apps Script ni modificar datos productivos.
