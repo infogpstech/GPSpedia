@@ -1271,3 +1271,13 @@ Adenda — FEEDBACK confirmación de sugerencias
 - Prueba WriteCatalogPublicationIsolation: 7/7 PASS en harness Node.js aislado; pendiente checkout completo/CI.
 - Commits: 93290af58dd4b665c452be85320f43dde7a1ccf3, 3112d22449ddd7792df110f4be1c75bd5c3a6bd8 y c05a26460f439d9c25850c2a32044f211d03e813. Sin deployment ni cambios productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-21 — ADMIN: REGISTRO DE ACTIVIDAD DE IMÁGENES APPEND-ONLY SIN LEASE
+- Evidencia: recordImageAdministrationActivity adquiría una lease ACTIVITY y calculaba ID mediante getNextAdminFormulaBasedId_ (lectura del historial, contador PropertiesService y escrituras separadas en celdas).
+- Corrección: se añadió getAdminFormulaBasedIdPattern_ para validar el patrón de fórmula configurado/detectado y el registro ahora usa appendRow con fórmula de ID + todos los campos en una sola operación. Se eliminó la lease ACTIVITY y la policy recordAdminImageActivity en Coordinator. Se conserva el carácter best-effort del log.
+- Se preserva el orden post-commit: permanent delete y restore siguen registrando actividad después de liberar sus locks físicos. Se mantienen leases separadas de auditDriveImagesInCortes, saveUnusedImagesInventory y createCortesImageFolder, que protegen cursor, inventario y unicidad de carpeta.
+- Pruebas exact-source: AdminImageActivityAppendAtomic 5/5, AdminImageScanCoordinatorContract 1/1 y contratos de orden post-lock de permanent delete/restore PASS. Pendiente CI integral/checkout completo.
+- Commits: bffe801eea4c6603ccd0e8c5dc86a3a93ef3e50d, d9bca497b1564ae1468c3f93ed7a99527ac6f7bd, c51dd0ad1b0c6c3568f838b51a2ddb90fe00d4a3, 5d3ffcc12a988fc1649d864dd01359cb0b26884c, ad242863f07acb6791a0b07d304f647f7aa0aae6 y d0ba7b0a4560a8281f0d672821d563063bf295fd. Sin deployment ni cambios productivos.
+================================================================================
