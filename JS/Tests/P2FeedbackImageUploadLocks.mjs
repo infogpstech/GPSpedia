@@ -23,7 +23,9 @@ const suggestionRecheck=suggestion.indexOf("findExistingCutSuggestionForRequest_
 assert.ok(suggestionPreflight>=0&&suggestionPreflight<suggestionDrive&&suggestionDrive<suggestionLock,"El replay de sugerencia debe resolverse antes de Drive y del lock.");
 assert.ok(suggestionRecheck>suggestionLock,"La escritura debe revalidar la sugerencia dentro de la sección crítica.");
 assert.ok(suggestion.includes("if (lockAcquired) lock.releaseLock()"));
-assert.ok(suggestion.includes("(!pendingSheet || !pendingRowNumber || rollbackConfirmed)"),"La limpieza solo borra imágenes cuando la fila no existe o la reversión se confirmó.");
+assert.ok(suggestion.includes("appendAttempted = true;"),"La sugerencia debe anexarse en una sola escritura.");
+assert.ok(suggestion.includes("uploadedImage && !appendAttempted"),"La imagen solo se elimina si appendRow no pudo persistir una referencia.");
+assert.ok(suggestion.includes("appendRow pudo persistir la referencia"),"La imagen se conserva ante confirmación incierta.");
 const router=extract(feedback,"function doPost(e)","const RICH_TEXT_MODE_PROPERTY_");
 assert.equal((router.match(/recordDirectServiceTraffic_\(\)/g)||[]).length,1,"FEEDBACK debe conservar un único punto de conteo best-effort.");
 const telemetry=extract(feedback,"function recordDirectServiceTraffic_(capturedAt)","function directServiceTrafficSecretEquals_");
