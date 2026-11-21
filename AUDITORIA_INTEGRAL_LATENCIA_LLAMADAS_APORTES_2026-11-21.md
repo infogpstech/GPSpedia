@@ -364,3 +364,11 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - Normalización y organización de imágenes hacen una lectura completa de Cortes por operación; `getReplacedImages` mantiene un snapshot único y consume la proyección interna de CATALOG. No se encontró una segunda lectura completa segura de retirar.
 - Upload ADMIN conserva compare-and-set, journal append-only, estados linked/requires_review, verificación de archivo y read-back de descripción. El endpoint de estado solo consulta CATALOG si el journal contiene la operación.
 - No se modificaron rutas destructivas ni datos Drive/Spreadsheet. `AdminOperationReadInventory.mjs`: 8/8 PASS; CI: 283 suites, 3,286 pruebas, 0 fallos; build y health read-only SUCCESS.
+
+
+### P1.9 — CATALOG/Coordinator: auditoría de feed y refresh completo
+
+- Coordinator: revisiones monotónicas, upsert/delete/reset, batches de hasta 50, idempotencia requestId, reset de recuperación parcial, retención de 100 eventos, sourceVersion por servicio y reset seguro para publicadores legacy, snapshots sobredimensionados o versiones obsoletas.
+- Feed: cursor futuro/vencido, límite 1–50, huecos, eventos corruptos/ausentes activan resetRequired. El cliente API GET tiene retry/abort; el módulo offline valida snapshots completos, aplica deltas por ID estable, recalcula categorías y guarda snapshot+cursor en una transacción IndexedDB.
+- La UI aún no consume getCatalogChanges. exitModalEditMode usa getCatalogData completo para refrescar tras guardar y para comparar/verificar descarte; no se sustituye por un delta sin un cursor asociado al snapshot y recuperación completa ante resets/lag.
+- Decisión conservadora: mantener refresh completo; registrar integración UI del feed como siguiente tarea. Tests: CatalogChangeFeed 35/35, CatalogFeedRetry 9/9, CatalogSnapshotSync 29/29; CI: 283 suites, 3,286 pruebas, 0 fallos; build y health read-only SUCCESS.
