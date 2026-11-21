@@ -10,7 +10,7 @@ function testCase(name, fn) { fn(); passed++; console.log("PASS " + name); }
 
 testCase("la base de .info-modal-content está definida una sola vez", () => {
     assert.equal((css.match(/^\.info-modal-content\s*\{/gm) || []).length, 1);
-    const start = css.indexOf(".info-modal-content {");
+    const start = css.indexOf("\n.info-modal-content {") + 1;
     const end = css.indexOf("\n}", start);
     assert.ok(start >= 0 && end > start);
     const base = css.slice(start, end);
