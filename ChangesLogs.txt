@@ -126,3 +126,9 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - CATALOG valida `OP-WRITE-VIN-` con actor autenticado, detecta colisiones de VIN entre vehículos y conflictos por cambios concurrentes. La proyección actualiza `versionesAplicables` y `vin` desde la misma fuente o conserva el evento como candidato, sin aplicación parcial.
 - Se amplió `VehicleContributionProjection` y se actualizó `WriteVinNoopPreflight` para verificar la ruta sin lock. CI `44846704840` SUCCESS: 253 suites, 3053 pruebas, 0 fallos; Health read-only `44846704778` SUCCESS; Pages `44846704653` SUCCESS.
 - No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+2026-11-21 — FEEDBACK: asignador de IDs append-only sin ScriptLock
+- `getNextFormulaBasedId_` sustituye el contador `ScriptProperties` protegido por ScriptLock por reservas en `__IdentifierSequenceReservations__`. `appendRow` crea una posición única; la fórmula del sufijo cuenta reservas anteriores por hoja y columna. Se confirma la fila por UUID y se conserva la validación de IDs existentes y filas sin ID.
+- `FeedbackFormulaIdAllocator` 5/5 y `FeedbackFormulaIdAllocatorBoundedRead` 6/6 PASS. CI `44847431570` SUCCESS: 253 suites, 3053 pruebas, 0 fallos; Health read-only `44847431590` SUCCESS. Pages `44847431763` pendiente al registrar.
+- La reserva real con fórmulas/appendRow queda para Beta aislada. No se desplegó Apps Script ni se modificaron datos productivos.
