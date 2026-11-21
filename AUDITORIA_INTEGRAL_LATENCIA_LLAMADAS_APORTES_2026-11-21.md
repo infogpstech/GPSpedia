@@ -225,3 +225,12 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - AUTH/USERS/WRITE/FEEDBACK/ADMIN usan `SharedMutationClient` en las operaciones aplicables; una lease normal requiere acquire/release y las publicaciones de catálogo generan llamadas adicionales. WRITE/FEEDBACK usan caché de actor; cache miss valida contexto con Coordinator. ADMIN delega operaciones de ID a WRITE y consultas dirigidas a CATALOG.
 - Inventario estático: WRITE 1 UrlFetch; FEEDBACK 1; ADMIN 7 + 1 fetchAll; Coordinator 1 + 1 fetchAll. SharedMutationClient contiene adaptadores de fetch, no requests ejecutados por cada interacción. AUTH, USERS, CATALOG y Utilities no tienen fetch externo directo en sus fuentes principales.
 - Estado: P0.1 COMPLETADA localmente por inspección/documentación. P0.2 sigue pendiente: no hay evidencia de requests reales, bytes, p50/p95 ni operaciones Spreadsheet/Drive. Requiere harness de medición y Beta autorizada.
+
+
+### P0.2 — instrumentación local de transferencia (2026-11-21)
+
+- `routeActionInternal_` serializa el cuerpo una sola vez y mide su tamaño UTF-8; después de leer una respuesta HTTP válida mide los bytes del cuerpo recibido. La medición no cambia el payload ni añade requests.
+- `serviceTelemetry.js` conserva totales y promedios de bytes request/response por servicio, además de duración/resultado. Los eventos siguen limitados a 200 y en memoria; no almacenan payload, token ni identidad.
+- `ServiceBrowserTrafficContract.mjs` amplía cobertura de agregación de bytes y propagación de métricas. El commit actual disparó GitHub Actions; al momento del registro los checks build, service-tests y deployed-service-health siguen en ejecución, por lo que no se declaran aprobados.
+- Esta instrumentación mide el cuerpo HTTP observado por el navegador, no el overhead TLS/HTTP, bytes de recursos multimedia servidos directamente ni operaciones internas Spreadsheet/Drive. Los valores de latencia siguen siendo duración total del request desde el navegador.
+- P0.2 continúa abierto para la ejecución de escenarios reproducibles y la obtención de p50/p95/requests por interacción en Beta autorizada.
