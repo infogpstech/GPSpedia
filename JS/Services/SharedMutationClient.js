@@ -257,6 +257,7 @@ function registerSharedSessionContext_(userId, sessionToken, role, fullName, cre
 }
 
 function revokeSharedSessionContext_(userId, sessionToken) {
+    invalidateLocalSharedSessionActorCaches_(userId, [sessionToken]);
     const client = createSharedMutationClient_({
         properties: PropertiesService.getScriptProperties(),
         fetch: function(url, options) { return UrlFetchApp.fetch(url, options); },
@@ -267,6 +268,7 @@ function revokeSharedSessionContext_(userId, sessionToken) {
 }
 
 function revokeSharedUserSessionContexts_(userId, sessionTokens) {
+    invalidateLocalSharedSessionActorCaches_(userId, sessionTokens);
     const client = createSharedMutationClient_({
         properties: PropertiesService.getScriptProperties(),
         fetch: function(url, options) { return UrlFetchApp.fetch(url, options); },
@@ -386,6 +388,36 @@ function getCachedSharedSessionActor_(userId, sessionToken, dependencies) {
         } catch (cacheError) { /* La indisponibilidad de caché no bloquea el aporte. */ }
     }
     return actor;
+}
+
+function cacheSharedSessionActor_(userId, sessionToken, actor, dependencies) {
+    const id = String(userId || "").trim(), token = String(sessionToken || "");
+    const source = actor && typeof actor === "object" ? actor : {};
+    const role = String(source.role || "").trim().toLowerCase();
+    if (!id || !token || source.userId !== id ||
+        !["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"].includes(role) ||
+        !Number.isSafeInteger(source.epoch) || source.epoch < 1) return false;
+    const deps = dependencies && typeof dependencies === "object" ? dependencies : {};
+    const cache = Object.prototype.hasOwnProperty.call(deps, "cache") ? deps.cache : CacheService.getScriptCache();
+    const keyFor = typeof deps.keyFor === "function" ? deps.keyFor : getSharedSessionActorCacheKey_;
+    if (!cache || typeof cache.put !== "function") return false;
+    const cachedActor = { userId: id, role, fullName: String(source.fullName || ""), epoch: source.epoch };
+    const ttl = Math.max(1, Math.min(21600, Number(deps.ttlSeconds) || SHARED_SESSION_ACTOR_CACHE_TTL_SECONDS_));
+    cache.put(keyFor(id, token), JSON.stringify(cachedActor), ttl);
+    return true;
+}
+
+function invalidateLocalSharedSessionActorCaches_(userId, sessionTokens, dependencies) {
+    const id = String(userId || "").trim();
+    const tokens = Array.from(new Set((Array.isArray(sessionTokens) ? sessionTokens : [])
+        .map(token => String(token || "")).filter(Boolean)));
+    if (!id || !tokens.length) return 0;
+    const deps = dependencies && typeof dependencies === "object" ? dependencies : {};
+    const cache = Object.prototype.hasOwnProperty.call(deps, "cache") ? deps.cache : CacheService.getScriptCache();
+    const keyFor = typeof deps.keyFor === "function" ? deps.keyFor : getSharedSessionActorCacheKey_;
+    if (!cache || typeof cache.remove !== "function") return 0;
+    tokens.forEach(token => cache.remove(keyFor(id, token)));
+    return tokens.length;
 }
 
 function syncSharedUserSessionContexts_(userId, role, fullName, sessions) {
