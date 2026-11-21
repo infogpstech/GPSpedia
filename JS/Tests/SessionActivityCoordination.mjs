@@ -44,9 +44,13 @@ testCase("ADMIN exige actor central cacheado y no coordina acciones ordinarias",
  assert.ok(auditStart>=0&&auditEnd>auditStart);
  assert.match(admin.slice(auditStart,auditEnd),/withSharedMutationLease_\("ADMIN", "auditDriveImagesInCortes"/);
 const adminLeaseOperations = [...admin.matchAll(/withSharedMutationLease_\("ADMIN", "([^"]+)"/g)].map(match => match[1]).sort();
- const expectedAdminLeaseOperations = ["auditDriveImagesInCortes", "createCortesImageFolder", "recordAdminImageActivity", "saveUnusedImagesInventory"].sort();
+ const expectedAdminLeaseOperations = ["auditDriveImagesInCortes", "createCortesImageFolder", "saveUnusedImagesInventory"].sort();
  assert.deepEqual(adminLeaseOperations, expectedAdminLeaseOperations,
-  "ADMIN coordina leases por recurso para auditoría, creación de carpeta, inventario y actividad");
+  "ADMIN conserva leases para auditoría, creación de carpeta e inventario");
+ const activityStart=admin.indexOf("function recordImageAdministrationActivity("),activityEnd=admin.indexOf("\\nfunction ",activityStart+10);
+ const activity=admin.slice(activityStart,activityEnd);
+ assert.match(activity,/sheet\\.appendRow\\(\\[/);
+ assert.doesNotMatch(activity,/withSharedMutationLease_|recordAdminImageActivity/);
  assert.doesNotMatch(admin,/touchSessionActivityIfDue_|getSessionExpirationStatus_/);
  assert.match(admin,/const developerContext = action === 'ping' \? null : \(ADMIN_MODAL_EDIT_ACTIONS\.has\(action\) \? assertModalEditSession\(payload\) : assertDeveloperSession\(payload\)\)/);
 });
