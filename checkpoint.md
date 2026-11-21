@@ -630,3 +630,5 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - La revisión integral añadió una aserción cruzada en PysVehicleRelationIntegrity: el mock de lease ya no es la única cobertura; la suite comprueba la política real de Coordinator 1.4.5 y los recursos FEEDBACK/CORTES de las cuatro operaciones.
 - PysVehicleRelationIntegrity 20/20 PASS; PysCreationIntegrity 56/56; SearchModelGrouping 21/21; PysModalNavigation 10/10. CI 44909033557 SUCCESS: 259 suites, 3,130 pruebas, 0 fallos; sintaxis backend PASS. Health read-only 44909033573 SUCCESS; Pages 44909033191 SUCCESS.
 - La validación local de la integración PyS/Coordinator queda cerrada. La contención/expiración real de leases entre proyectos y el read-back de Spreadsheet siguen pendientes de AUG-161 en Beta aislada.
+
+- Commit de cobertura cruzada: c6e458452e02ad26cf87419ba5f0c10a6ea03a72 (JS/Tests/PysVehicleRelationIntegrity.js); se verifican los contratos de recursos FEEDBACK/CORTES en Coordinator.js.

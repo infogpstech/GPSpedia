@@ -346,3 +346,4 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - PysVehicleRelationIntegrity ahora lee Coordinator.js y verifica los contratos de recursos de las cuatro mutaciones PyS; se cubren FEEDBACK como recurso de escritura y CORTES como lectura en asociaciones.
 - La suite focalizada pasa 20/20. CI 44909033557 SUCCESS: 259 suites, 3,130 pruebas, 0 fallos; Health 44909033573 SUCCESS; Pages 44909033191 SUCCESS.
 - La concurrencia y expiración real de leases entre proyectos sigue pendiente de Beta aislada.
+- Commit de prueba: c6e458452e02ad26cf87419ba5f0c10a6ea03a72 (JS/Tests/PysVehicleRelationIntegrity.js).

@@ -117,3 +117,5 @@ Se revisó `handleAddProblem`, `PysOperations`, los helpers de ID/lookup, el alm
 - Se amplió la suite para comprobar que addSolution/addPrevention escriben FEEDBACK y que addVehicleToProblem/removeVehicleFromProblem escriben FEEDBACK y leen CORTES; las cuatro operaciones deben estar registradas como escritores FEEDBACK.
 - PysVehicleRelationIntegrity 20/20 PASS. CI 44909033557 SUCCESS: 259 suites, 3,130 pruebas, 0 fallos. Health read-only 44909033573 y Pages 44909033191 SUCCESS.
 - Esta validación es local/estática de contrato; no sustituye las pruebas reales de Coordinator entre proyectos, que permanecen en AUG-161 Beta.
+
+- Commit de prueba: c6e458452e02ad26cf87419ba5f0c10a6ea03a72. La prueba nueva compara la política de Coordinator y los cuatro contratos de operación con el wrapper FEEDBACK.
