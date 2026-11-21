@@ -52,6 +52,10 @@ La plataforma utiliza una arquitectura desacoplada:
 
 ---
 
+## Despliegue de servicios Apps Script
+
+La guía [Services/DEPLOYMENT_GUIDE.md](Services/DEPLOYMENT_GUIDE.md) describe el orden de despliegue, archivos por proyecto, URLs `/exec`, ScriptProperties, secretos y pruebas de humo. Complementa [Services/COORDINATOR_SETUP.md](Services/COORDINATOR_SETUP.md). No ejecutar sus pasos sobre producción sin autorización.
+
 ## 4. Características y Mejoras Recientes (v2.1.5)
 
 ### Mejoras Generales de Navegación y Gestos
