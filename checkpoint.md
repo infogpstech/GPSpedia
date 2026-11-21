@@ -1240,3 +1240,15 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Dependencia crítica: USERS createUser y AUTH deleteUser comparten recurso lógico USERS en Coordinator; el lock local de USERS no protege frente a AUTH. No retirar esta exclusión hasta diseñar una autoridad común equivalente.
 - updateUser cambia roles y usa marcador, revocación e invalidación de cachés; no reducirlo como si fuera un cambio de nombre. logout/resetUserSessions/deleteUser conservan efectos de revocación.
 - Mapa estático completado. Siguiente tarea: clasificar y simplificar leases conforme a §15, comenzando por touchSession sin consumidor y acceptTerms; luego recuperación/actualizaciones ordinarias. Conservar excepciones expresas y validar RBAC, revocación y carrera alta/eliminación.
+
+
+## Cierre — reducción de leases AUTH para touchSession/acceptTerms (2026-11-21)
+
+- Código validado en commit `e412c32466f8aca5f67dc94707e9720588df3cb0`; rama de trabajo `GPSpedia2.2.5_work`. La base protegida continúa sin cambios.
+- `touchSession` no tiene consumidor frontend activo. Se conserva su dispatcher/handler por compatibilidad, pero se retira de `isSharedMutationAction_`; una invocación histórica ya no adquiere lease de Coordinator.
+- `acceptTerms` se retira de `isSharedMutationAction_` y su dispatcher obtiene actor con `getCachedSharedSessionActor_`; la escritura mantiene RBAC, validación de identidad y lock local necesario para la lectura-modificación-escritura del registro JSON por dispositivo.
+- Después de registrar las sesiones en Coordinator al iniciar sesión, AUTH precalienta su caché local de actor con userId/rol/epoch confiables. Las revocaciones individuales y por usuario limpian también esa caché local antes de coordinar la invalidación remota, evitando reutilizar actor obsoleto.
+- No se elimina la validación de respaldo: si la caché local falta/expira, `getCachedSharedSessionActor_` valida una vez con Coordinator y vuelve a guardar el actor.
+- Pruebas ampliadas: `TermsAcceptance.js`, `SessionActorCacheLifetime.mjs`, `SessionActorCacheInvalidation.mjs`, `SessionActivityLeaseMinimization.mjs`; se registró esta última en `RunServiceTests.mjs`. Se corrigieron dos expectativas obsoletas de la suite de minimización ADMIN (router cacheado y delegación WRITE con argumentos actuales).
+- GitHub Actions sobre `e412c32466f8aca5f67dc94707e9720588df3cb0`: sintaxis/build SUCCESS; health read-only SUCCESS; regresión **278 suites / 3,232 pruebas / 0 fallos**. Pages deploy estaba ejecutándose al momento de registrar y no afecta a la validación de servicios.
+- Siguiente tarea: clasificar las leases restantes AUTH. Candidatas: request/complete password recovery, change/reset password, updateUser sin cambio de rol, resetUserSessions, logout y migración; preservar revocaciones remotas y RBAC. Mantener coordinación createUser ↔ deleteUser hasta resolver su exclusión mutua entre proyectos.
