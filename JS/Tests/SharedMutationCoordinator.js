@@ -818,6 +818,32 @@ function runSharedMutationCoordinatorTests() {
             "La revocación global debe limpiar todos los bloques.");
     });
 
+    test_("USERS createUser no se solapa con AUTH deleteUser mientras se desactiva la cuenta", function() {
+        const r = createRuntime_();
+        const userId = "USR-DELETE-CREATE-RACE";
+        const sessionToken = "session-token-delete-create-race-0001";
+        const createdAt = 1700000000000;
+        r.request("syncUserSessions", "AUTH", "syncUserSessions", {
+            userId, role: "desarrollador", fullName: "Developer",
+            sessions: [{ token: sessionToken, createdAt, lastActivityAt: createdAt }]
+        });
+        const deletion = r.request("acquire", "AUTH", "deleteUser", {
+            requestId: "delete-user-race-request-0001", waitMs: 0, userId, sessionToken
+        });
+        assert_(deletion.status === "success", "AUTH/deleteUser debe reservar Users y sesiones.");
+        const blockedCreate = r.request("acquire", "USERS", "createUser", {
+            requestId: "create-user-race-request-0001", waitMs: 0, userId, sessionToken
+        });
+        assert_(blockedCreate.status === "error" && blockedCreate.code === "busy",
+            "USERS/createUser debe esperar mientras AUTH/deleteUser mantiene el recurso Users.");
+        release_(r, "AUTH", "deleteUser", deletion.token);
+        const allowedCreate = r.request("acquire", "USERS", "createUser", {
+            requestId: "create-user-race-request-0002", waitMs: 0, userId, sessionToken
+        });
+        assert_(allowedCreate.status === "success", "createUser puede continuar después de terminar deleteUser.");
+        release_(r, "USERS", "createUser", allowedCreate.token);
+    });
+
     test_("Login precarga actores en USERS/WRITE/FEEDBACK/ADMIN en lotes y fuera del lock", function() {
         const batches = [];
         const coordinatorLock = {
