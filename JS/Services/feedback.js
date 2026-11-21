@@ -3801,7 +3801,7 @@ function readPysOperations_(sheet) {
         const opId = String(row[0] || "").trim(), hash = String(row[1] || "").trim().toLowerCase();
         const problemId = String(row[2] || "").trim(), status = String(row[3] || "").trim();
         const imageFileId = String(row[4] || "").trim(), imageUrl = String(row[5] || "").trim();
-        const match = problemId.match(/^isue-(\\d+)$/i), suffix = match ? Number(match[1]) : NaN;
+        const match = problemId.match(/^isue-(\d+)$/i), suffix = match ? Number(match[1]) : NaN;
         if (!/^[A-Za-z0-9_-]{20,80}$/.test(opId) || !/^[a-f0-9]{64}$/.test(hash) ||
             !match || !Number.isSafeInteger(suffix) || suffix < 1 || !PYS_OPERATION_STATES.includes(status)) {
             throw new Error("La hoja PysOperations contiene una fila incompatible; no se modificó.");
@@ -4098,11 +4098,19 @@ function handleAddProblem(source) {
 
             problemId = getPysNextId_(sheet, ops);
             const now = new Date().toISOString();
-            writePysOperation_(opsSheet, 0, {
-                opId, payloadHash: hash, problemId, status: "UPLOAD_PENDING",
-                imageFileId: fileId, imageUrl: url, createdAt: now, updatedAt: now
-            });
-            reservationConfirmed = true;
+            try {
+                writePysOperation_(opsSheet, 0, {
+                    opId, payloadHash: hash, problemId, status: "UPLOAD_PENDING",
+                    imageFileId: fileId, imageUrl: url, createdAt: now, updatedAt: now
+                });
+                reservationConfirmed = true;
+            } catch (reservationError) {
+                try {
+                    const persisted = readPysOperations_(opsSheet).find(item => item.opId === opId);
+                    reservationConfirmed = Boolean(persisted && persisted.imageFileId === fileId);
+                } catch (readError) {}
+                throw reservationError;
+            }
             ops = readPysOperations_(opsSheet);
             const canonical = ops.find(item => item.opId === opId);
             if (!canonical || canonical.payloadHash !== hash) {
@@ -4163,6 +4171,9 @@ function handleAddProblem(source) {
                     markPysImageForRecovery_(file, problemId, fileId,
                         "No se pudo compensar una imagen sin reserva confirmada.");
                 }
+            } else {
+                markPysImageForRecovery_(file, problemId, fileId,
+                    "La imagen quedó referenciada por una reserva o fila PyS; se conserva para reconciliación.");
             }
         }
         throw error;
