@@ -291,8 +291,8 @@ function runUsersAtomicMutationTests(usersSource, authSource, coordinatorSource)
             left.writeResources.some(resource=>right.readResources.includes(resource)||right.writeResources.includes(resource))||
             left.readResources.some(resource=>right.writeResources.includes(resource));
         assert(conflicts(policies.create,policies.remove),"createUser debe serializarse únicamente con deleteUser para evitar reutilizar un username mientras se desactiva la cuenta.");
-        assert.equal(getPolicy("resetUserSessions"),null,"resetUserSessions no debe reservar recursos mediante lease.");
-        assert.equal(getPolicy("updateUser"),null,"updateUser debe usar actor cacheado y su lock local.");
+        assert(getPolicy("resetUserSessions") === null,"resetUserSessions no debe reservar recursos mediante lease.");
+        assert(getPolicy("updateUser") === null,"updateUser debe usar actor cacheado y su lock local.");
         assert(policies.profileDisabled(),"updateProfile no debe tener política de lease en Coordinator.");
     });
     return {passed,failed,total:passed+failed,results};
