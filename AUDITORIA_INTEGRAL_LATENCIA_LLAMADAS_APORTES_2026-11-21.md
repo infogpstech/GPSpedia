@@ -293,3 +293,11 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - Eliminación: snapshot ActiveSessions acotado a columnas ID/token; duplicados se cuentan en memoria; invalidación usa los tokens del snapshot; comprobación posterior de sesiones residuales lee solo ID_Usuario.
 - Prueba de contrato `AuthSessionReadOptimization.mjs` y ajustes de fixtures para validar el nuevo orden de invalidación, lecturas dirigidas y recuperación. CI: 279 suites, 3,245 pruebas, 0 fallos; build y health read-only SUCCESS.
 - No se retiraron verificaciones de identidad, detección de token duplicado, lectura de confirmación, revocación remota ni controles de RBAC. Las lecturas de recuperación por fallos ambiguos se conservan intencionalmente.
+
+
+### P1.1 — WRITE: snapshot compartido para proyección y colisión VIN
+
+- En aportes append-only de cortes, el flujo posterior a `appendVehicleContributionEvent_` necesitaba el ledger para calcular el slot y para detectar una colisión VIN intercalada. Ambos helpers realizaban una lectura completa separada. Ahora `readVehicleContributionLedgerRows_` obtiene una sola instantánea y se pasa a ambos helpers.
+- En `handleCheckOperation`, la misma instantánea se solicita solo tras encontrar el evento, validar su contenido y confirmar que es un corte aceptado; no se ejecuta para opId inexistente ni para eventos opening/feed.
+- Se conserva el preflight VIN previo a Drive/append y la verificación concurrente posterior. También se conservan los TextFinder y read-backs del append idempotente; esta optimización no reduce controles de concurrencia.
+- Prueba `WriteContributionPostAppendSnapshot.mjs` verifica una sola lectura y la reutilización en slot/conflicto VIN; regresión CI: 280 suites, 3,257 pruebas, 0 fallos; build y health read-only SUCCESS.
