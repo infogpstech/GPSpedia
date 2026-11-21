@@ -15,7 +15,7 @@ assert.ok(block.includes("max-width:min(30vw,120px)"), "el logo móvil debe tene
 assert.ok(block.includes("max-width:100% !important"), "el logo debe respetar el ancho de su contenedor");
 assert.ok(block.includes("font-size:clamp(1rem,4vw,1.35rem)"), "el título móvil debe conservar tamaño compacto");
 assert.ok(block.includes("font-size:clamp(.95rem,3.8vw,1.2rem)"), "el input móvil debe conservar tamaño compacto");
-assert.ok(block.includes("grid-template-rows:auto auto auto auto auto"), "el estado below-logo debe declarar cinco filas");
+assert.ok(/grid-template-rows:\\s*auto auto auto auto auto/.test(block), "el estado below-logo debe declarar cinco filas");
 assert.ok(block.includes(".detail-modal-toolbar > .info-close-btn"), "Relay conserva el cierre directo compartido");
 assert.ok(block.includes(".tutorial-detail-toolbar") === false, "no se alteran las reglas específicas de Tutorial");
 assert.ok(ui.includes('headerActions.appendChild(closeBtn)'), "el cierre del corte permanece dentro de las acciones");
