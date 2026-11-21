@@ -239,27 +239,15 @@ function runSharedMutationCoordinatorTests() {
         expectThrow_(() => coordinatorPolicy_("ADMIN", "sessionActivity"), "no está habilitada");
     });
 
-    test_("Cambio de rol/sesión AUTH bloquea mutaciones protegidas activas", function() {
-        const r = createRuntime_();
-        const feedback = acquire_(r, "FEEDBACK", "approveVideo");
-        assert_(feedback.status === "success", "FEEDBACK debía obtener lease.");
-        const auth = acquire_(r, "AUTH", "updateUser");
-        assert_(auth.status === "error" && auth.code === "busy", "AUTH debía esperar por USERS/ActiveSessions.");
-        release_(r, "FEEDBACK", "approveVideo", feedback.token);
+    test_("las transiciones de vídeo no declaran leases Coordinator", function() {
+        ["submitVideoForApproval", "approveVideo", "rejectVideo"].forEach(function(action) {
+            expectThrow_(function() { coordinatorPolicy_("FEEDBACK", action); }, "no está habilitada");
+        });
     });
 
-    test_("Las mutaciones Inbox serializan identidad y escrituras FEEDBACK", function() {
-        const actions = ["createInboxConversation","sendInboxMessage","markInboxRead","archiveInboxConversation"];
-        actions.forEach((operation,index) => {
-            const r = createRuntime_();
-            const inbox = acquire_(r,"FEEDBACK",operation);
-            assert_(inbox.status === "success","FEEDBACK/"+operation+" debe obtener lease.");
-            const auth = acquire_(r,"AUTH","updateUser");
-            assert_(auth.status === "error" && auth.code === "busy","AUTH no debe cambiar identidad mientras corre "+operation+".");
-            const competingOperation = actions[(index + 1) % actions.length];
-            const competing = acquire_(r,"FEEDBACK",competingOperation);
-            assert_(competing.status === "error" && competing.code === "busy","Las mutaciones Inbox no deben escribir FEEDBACK simultáneamente.");
-            release_(r,"FEEDBACK",operation,inbox.token);
+    test_("Inbox opera sin políticas de lease Coordinator", function() {
+        ["createInboxConversation", "sendInboxMessage", "markInboxRead", "markInboxUnread", "deleteInboxConversation", "archiveInboxConversation", "closeInboxConversation"].forEach(function(action) {
+            expectThrow_(function() { coordinatorPolicy_("FEEDBACK", action); }, "no está habilitada");
         });
     });
 
@@ -509,46 +497,26 @@ function runSharedMutationCoordinatorTests() {
         release_(r, "FEEDBACK", "recordLike", like.token);
         expectThrow_(() => coordinatorPolicy_("ADMIN", "sessionActivity"), "no está habilitada");
     });
-    test_("FEEDBACK suggestYear y approveVideo reservan Cortes, Feedback y Activity", function() {
-        ["suggestYear", "approveVideo"].forEach(function(action) {
-            const policy = coordinatorPolicy_("FEEDBACK", action);
-            ["CORTES", "FEEDBACK", "ACTIVITY"].forEach(function(resource) {
-                assert_(policy.writeResources.includes(resource), action + " debe reservar " + resource + ".");
-            });
+    test_("FEEDBACK suggestYear conserva sus recursos; vídeo queda fuera de Coordinator", function() {
+        const policy = coordinatorPolicy_("FEEDBACK", "suggestYear");
+        ["CORTES", "FEEDBACK", "ACTIVITY"].forEach(function(resource) {
+            assert_(policy.writeResources.includes(resource), "suggestYear debe reservar " + resource + ".");
+        });
+        ["submitVideoForApproval", "approveVideo", "rejectVideo"].forEach(function(action) {
+            expectThrow_(function() { coordinatorPolicy_("FEEDBACK", action); }, "no está habilitada");
         });
     });
 
-    test_("FEEDBACK serializa altas, edición y publicación de Tutorial sobre el mismo recurso", function() {
-        ["addTutorial", "updateTutorialItem", "approveVideo", "rejectVideo"].forEach(function(action) {
-            const policy = coordinatorPolicy_("FEEDBACK", action);
-            assert_(policy.writeResources.includes("TUTORIAL"), action + " debe reservar Tutorial para escritura.");
+    test_("Tutoriales y aprobaciones de vídeo no declaran leases Coordinator", function() {
+        ["addTutorial", "updateTutorialItem", "approveVideo", "rejectVideo", "submitVideoForApproval"].forEach(function(action) {
+            expectThrow_(function() { coordinatorPolicy_("FEEDBACK", action); }, "no está habilitada");
         });
-        const r = createRuntime_();
-        const create = acquire_(r, "FEEDBACK", "addTutorial");
-        const approval = acquire_(r, "FEEDBACK", "approveVideo");
-        assert_(approval.status === "error" && approval.code === "busy",
-            "La aprobación de vídeo debe esperar mientras se registra un Tutorial.");
-        release_(r, "FEEDBACK", "addTutorial", create.token);
-        const retry = acquire_(r, "FEEDBACK", "approveVideo");
-        assert_(retry.status === "success", "La aprobación debe reintentarse al liberar Tutorial.");
-        release_(r, "FEEDBACK", "approveVideo", retry.token);
-
-        const submitPolicy = coordinatorPolicy_("FEEDBACK", "submitVideoForApproval");
-        assert_(submitPolicy.readResources.includes("TUTORIAL"),
-            "El envío de vídeo debe reservar lectura de Tutorial para validar el destino.");
     });
 
-    test_("approveVideo y rejectVideo no pueden decidir simultáneamente la misma cola FEEDBACK", function() {
-        const r = createRuntime_();
-        const approval = acquire_(r, "FEEDBACK", "approveVideo");
-        const rejection = acquire_(r, "FEEDBACK", "rejectVideo");
-        assert_(approval.status === "success", "La primera decisión debe adquirir el lease.");
-        assert_(rejection.status === "error" && rejection.code === "busy",
-            "La decisión opuesta debe esperar a que termine la primera.");
-        release_(r, "FEEDBACK", "approveVideo", approval.token);
-        const retry = acquire_(r, "FEEDBACK", "rejectVideo");
-        assert_(retry.status === "success", "La segunda decisión debe reintentarse tras liberar el lease.");
-        release_(r, "FEEDBACK", "rejectVideo", retry.token);
+    test_("Coordinator no serializa las decisiones de aprobación de vídeo", function() {
+        ["approveVideo", "rejectVideo"].forEach(function(action) {
+            expectThrow_(function() { coordinatorPolicy_("FEEDBACK", action); }, "no está habilitada");
+        });
     });
 
     test_("FEEDBACK ya no habilita assignCollaborator obsoleto", function() {
