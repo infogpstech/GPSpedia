@@ -7,12 +7,12 @@ const root = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const source = readFileSync(resolve(root, 'JS/Frontend/ui.js'), 'utf8');
 const match = source.match(/function readLogoFileBase64_\(file\) \{[\s\S]*?\n\}/);
 assert.ok(match, 'No se encontró readLogoFileBase64_.');
-let mode = 'success';
+let mode = 'success', nextResult = 'data:image/png;base64,AAAA';
 class FakeFileReader {
     readAsDataURL() {
         if (mode === 'error') { this.onerror(); return; }
         if (mode === 'abort') { this.onabort(); return; }
-        this.result = mode === 'invalid' ? 'not-an-image' : 'data:image/png;base64,AAAA';
+        this.result = mode === 'invalid' ? 'not-an-image' : nextResult;
         this.onload();
     }
 }
@@ -24,7 +24,17 @@ async function run(name, fn) {
 }
 await run('extrae Base64 de una Data URL de imagen', async () => {
     mode = 'success';
-    assert.equal(await readLogo({name:'logo.png'}), 'AAAA');
+    assert.equal(await readLogo({name:'logo.png',type:'image/png'}), 'AAAA');
+});
+await run('rechaza MIME no admitido antes de FileReader', async () => {
+    mode = 'success';
+    await assert.rejects(readLogo({name:'logo.jpg',type:'image/jpeg'}), error => error && error.name === 'LogoFileReadError');
+});
+await run('rechaza discrepancia entre MIME del archivo y Data URL', async () => {
+    mode = 'success';
+    nextResult = 'data:image/webp;base64,AAAA';
+    await assert.rejects(readLogo({name:'logo.png',type:'image/png'}), error => error && error.name === 'LogoFileReadError');
+    nextResult = 'data:image/png;base64,AAAA';
 });
 await run('rechaza errores de FileReader', async () => {
     mode = 'error';
@@ -46,6 +56,15 @@ assert.ok(selection.includes('selectedLogoBase64 = null;'), 'No se limpia el Bas
 assert.ok(selection.includes('if (generation !== logoReadGeneration) return;'), 'No se ignoran lecturas obsoletas.');
 assert.ok(selection.includes('reader.onerror') === false, 'La lectura sigue implementada directamente sin helper.');
 assert.ok(selection.includes('registerLogoBtn.disabled = true;'), 'No se deshabilita el botón durante la lectura.');
+const adminServer = readFileSync(resolve(root, 'JS/Services/admin.js'), 'utf8');
+const validatorStart = adminServer.indexOf('function validateLogoImagePayload_');
+const validatorEnd = adminServer.indexOf('function handleAddLogo', validatorStart);
+assert.ok(validatorStart >= 0 && validatorEnd > validatorStart, 'Falta validador de firma del logotipo.');
+const validatorSource = adminServer.slice(validatorStart, validatorEnd);
+assert.ok(validatorSource.includes('image/png') && validatorSource.includes('image/svg+xml') && validatorSource.includes('image/webp'));
+assert.ok(validatorSource.includes('signatureValid'), 'El servidor debe comprobar la firma real del archivo.');
+assert.ok(adminServer.includes('validateLogoImagePayload_(fileData, mimeType)'), 'handleAddLogo debe usar el validador de firma.');
+
 const failed = results.filter(item => item.status !== 'PASS');
 for (const item of results) console.log(item.status + ' ' + item.name + (item.message ? ': ' + item.message : ''));
 console.log(results.length - failed.length + '/' + results.length + ' PASS');

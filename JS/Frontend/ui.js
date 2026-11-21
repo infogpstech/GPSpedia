@@ -37,13 +37,24 @@ function readLogoFileBase64_(file) {
             reject(error);
             return;
         }
+        const declaredMime = String(file.type || "").trim().toLowerCase();
+        const supportedMimeTypes = new Set(["image/png", "image/svg+xml", "image/webp"]);
+        if (!supportedMimeTypes.has(declaredMime)) {
+            const error = new Error("El logotipo debe ser PNG, SVG o WEBP.");
+            error.name = "LogoFileReadError";
+            reject(error);
+            return;
+        }
         const reader = new FileReader();
         reader.onload = () => {
-            const result = reader.result;
-            const comma = typeof result === "string" ? result.indexOf(",") : -1;
+            const result = typeof reader.result === "string" ? reader.result : "";
+            const comma = result.indexOf(",");
+            const mimeEnd = result.indexOf(";");
+            const dataUrlMime = result.startsWith("data:") && mimeEnd > 5 && comma > mimeEnd
+                ? result.slice(5, mimeEnd).trim().toLowerCase() : "";
             const base64 = comma >= 0 ? result.slice(comma + 1).trim() : "";
-            if (typeof result !== "string" || !result.startsWith("data:image/") || !base64) {
-                const error = new Error("FileReader no devolvió una imagen Base64 válida.");
+            if (dataUrlMime !== declaredMime || !/^[A-Za-z0-9+/]+={0,2}$/.test(base64)) {
+                const error = new Error("FileReader no devolvió una imagen Base64 válida o su MIME no coincide con el archivo.");
                 error.name = "LogoFileReadError";
                 reject(error);
                 return;

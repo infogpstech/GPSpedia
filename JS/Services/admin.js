@@ -6407,6 +6407,38 @@ function resolveLogoCategoryFromCortesRows_(cortesValues, brandName) {
     return destination.category;
 }
 
+function validateLogoImagePayload_(fileData, mimeType) {
+    const normalizedMime = String(mimeType || "").trim().toLowerCase();
+    if (!["image/png", "image/svg+xml", "image/webp"].includes(normalizedMime)) {
+        throw new Error("El logotipo debe ser PNG, SVG o WEBP.");
+    }
+    const base64 = String(fileData || "").trim();
+    if (!/^[A-Za-z0-9+/]+={0,2}$/.test(base64)) {
+        throw new Error("La codificación Base64 del logotipo no es válida.");
+    }
+    let bytes;
+    try { bytes = Utilities.base64Decode(base64); }
+    catch (error) { throw new Error("No se pudo decodificar el logotipo."); }
+    if (!bytes || !bytes.length || Utilities.base64Encode(bytes) !== base64) {
+        throw new Error("El logotipo está vacío o su codificación Base64 no es canónica.");
+    }
+    const at = index => Number(bytes[index]) & 255;
+    let signatureValid = false;
+    if (normalizedMime === "image/png") {
+        signatureValid = bytes.length >= 8 &&
+            [137, 80, 78, 71, 13, 10, 26, 10].every((value, index) => at(index) === value);
+    } else if (normalizedMime === "image/webp") {
+        signatureValid = bytes.length >= 12 &&
+            String.fromCharCode(at(0), at(1), at(2), at(3)) === "RIFF" &&
+            String.fromCharCode(at(8), at(9), at(10), at(11)) === "WEBP";
+    } else if (normalizedMime === "image/svg+xml") {
+        const svgText = Utilities.newBlob(bytes).getDataAsString("UTF-8").replace(/^\\uFEFF/, "").trim();
+        signatureValid = /^(?:<\\?xml[^>]*>\\s*)?(?:<!--[\\s\\S]*?-->\\s*)*<svg(?:\\s|>)/i.test(svgText);
+    }
+    if (!signatureValid) throw new Error("La firma real del archivo no coincide con el MIME del logotipo.");
+    return bytes;
+}
+
 function handleAddLogo(payload, logMessage) {
     const { nombreMarca, fileData, filename, mimeType } = payload;
     if (!nombreMarca || !fileData || !filename || !mimeType) throw new Error("Datos de logotipo incompletos.");
@@ -6444,7 +6476,7 @@ function handleAddLogo(payload, logMessage) {
         throw new Error("Ya existe un archivo con el nombre canónico del logotipo; no se sobrescribió.");
     }
     logMessage("Registro Logo", "Subiendo logotipo '" + canonicalFilename + "' de tipo '" + mimeType + "'...");
-    const decodedData = Utilities.base64Decode(fileData);
+    const decodedData = validateLogoImagePayload_(fileData, mimeType);
     const blob = Utilities.newBlob(decodedData, mimeType, canonicalFilename);
     const file = brandFolder.createFile(blob);
     const logoUrl = `https://drive.google.com/uc?export=view&id=${file.getId()}`;
