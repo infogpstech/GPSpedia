@@ -4553,18 +4553,19 @@ function findTutorialRow_(sheet, reference, preferId) {
                 ? normalizeTutorialTitle_(value) : String(value || "").trim().toLowerCase();
             if (normalizeLookupTitle(projectedTitle) !== normalizeLookupTitle(key)) return;
             row[1] = projectedTitle;
-            byTitle.push({ rowIndex, row });
+            byTitle.push({ rowIndex, row, tutorialIdentity: identity });
         });
         if (byTitle.length > 1) {
             const first = byTitle[0], firstId = String(first.row[0] || "").trim();
             const sameIdentity = Boolean(firstId) && byTitle.every(item => String(item.row[0] || "").trim() === firstId);
             if (!sameIdentity) throw new Error("El tema del tutorial aparece más de una vez; no se modificó.");
-            const projected = projectTutorialEditFields_(firstId, first.row);
+            const firstIdentity = first.tutorialIdentity || firstId;
+            const projected = projectTutorialEditFields_(firstIdentity, first.row);
             return Object.assign({}, first, { row: projected.row });
         }
         if (byTitle.length === 1) {
             const first = byTitle[0], id = String(first.row[0] || "").trim();
-            const identity = id || makeLegacyTutorialIdentity_(first.row[1]);
+            const identity = first.tutorialIdentity || id || makeLegacyTutorialIdentity_(first.row[1]);
             const projected = projectTutorialEditFields_(identity, first.row);
             return Object.assign({}, first, { row: projected.row });
         }
