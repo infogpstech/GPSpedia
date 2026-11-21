@@ -171,7 +171,7 @@ test("el registro de aplicación de año se anexa como una fila completa", () =>
     const handlerStart = feedback.indexOf("function handleSuggestYearLocked(");
     const handlerEnd = feedback.indexOf("\nfunction ", handlerStart + 10);
     const handler = feedback.slice(handlerStart, handlerEnd);
-    const applicationStart = handler.indexOf('const operationId = "YSA-"');
+    const applicationStart = handler.indexOf("const operationId = buildFeedbackYearApplicationId_(");
     const applicationEnd = handler.indexOf("return completeFeedbackYearApplication_", applicationStart);
     const applicationWrite = handler.slice(applicationStart, applicationEnd);
     assert.match(applicationWrite, /ledger\.appendRow\(applicationValues\)/);
