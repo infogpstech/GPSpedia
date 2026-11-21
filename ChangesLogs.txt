@@ -558,3 +558,9 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - handleUploadAdminImage no adquiere ScriptLock global; publica el reemplazo por evento después de verificar el archivo y la versión esperada.
 - handleUploadAdminImageLegacy_ y reparación de cortes liberan el lock durante Drive y reacquire sin espera con el mismo operationId antes de revalidar.
 - Se mantienen locks de operaciones destructivas/inventario; no se modificaron.
+
+
+2026-11-21 — HALLAZGO PENDIENTE EN UPLOAD DE LOGOTIPOS ADMIN
+- La selección de logotipo no invalida el Base64 anterior mientras FileReader procesa el archivo nuevo y no maneja error/abort; puede enviar bytes antiguos con metadatos del archivo nuevo si se pulsa Registrar antes de completar la lectura.
+- handleAddLogo crea el archivo Drive antes de tryLock(0), fuera de lock, pero no se observó límite de tamaño ni verificación de firma binaria en el handler inspeccionado.
+- Se registra tarea para corregir la carrera y definir validación coherente. No se modificó la ruta.
