@@ -13,11 +13,11 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - Los archivos archivados son inmutables; este es el registro operativo vigente.
 
 ## Estado Git y CI confirmado
-- HEAD de código validado: `ea1c3ca196105b20115f9c56c27bdf6e4e6df2e5`.
+- HEAD de código validado para P0 AUTH: `3ae0786b0158d7e45f2599bc1a6ab28550b84ac8`.
 - CI: 284 suites, 3,309 pruebas aprobadas, 0 fallos.
 - Build: SUCCESS.
-- Health de servicios read-only: SUCCESS.
-- GitHub Pages deploy: en ejecución; no forma parte de la validación Apps Script.
+- Health de servicios: SUCCESS.
+- Workflow deploy: SUCCESS; esto no sustituye las pruebas operativas en Beta aislada.
 - Rama base: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin modificaciones.
 
 ## Implementaciones locales completadas
@@ -64,8 +64,8 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - [x] Resolver y probar localmente la carrera USERS `createUser` ↔ AUTH `deleteUser`: lease de `createUser` solo lee/escribe USERS; `deleteUser` comparte el recurso y el test de Coordinator confirma que no se solapan.
 - [x] Verificar localmente caché de actor e invalidación por revocación/cambio de rol/logout/eliminación: login precarga USERS/WRITE/FEEDBACK/ADMIN; cache miss no llama Coordinator; invalidación incluye los cuatro servicios.
 - [x] P0.3 — Precarga de actor en login fuera del lock global, por lotes de 25 tokens y `fetchAll`; acciones protegidas usan solo caché local con TTL renovable y fallan cerrado si falta.
-- [x] Detectar y reducir lecturas de Users/ActiveSessions y revocaciones duplicadas dentro de una operación AUTH. Login reutiliza un snapshot de ActiveSessions; recuperación/rol reutilizan la fila objetivo; reset/cambio de contraseña invalidan usando los tokens del mismo snapshot; deleteUser lee solo ID/token de sesiones y verifica residuos por columna ID. La invalidación remota se ejecuta una sola vez antes de limpiar tokens.
-- [ ] Continuar optimización de lecturas/operaciones duplicadas en USERS y otros servicios.
+- [x] Detectar y reducir lecturas de Users/ActiveSessions y revocaciones duplicadas dentro de una operación AUTH. Login reutiliza un snapshot de ActiveSessions; recuperación/rol reutilizan la fila objetivo; reset/cambio de contraseña invalidan usando los tokens del mismo snapshot; deleteUser lee solo ID/token de sesiones y verifica residuos por columna ID. La invalidación remota se ejecuta una sola vez antes de limpiar tokens. `AuthSessionReadOptimization.mjs`: 9/9 PASS; regresión: 284 suites / 3,309 pruebas / 0 fallos.
+- [ ] Continuar optimización de lecturas/operaciones duplicadas en USERS y otros servicios. Siguiente: `JS/Services/users.js`, revisar getUsers/createUser/updateUser y su interacción con AUTH/deleteUser.
 
 ### P1 — servicios, aportes y catálogo
 - [x] ADMIN — confirmar que telemetría global y consultas de inventario/Drive se ejecutan solo desde el panel de desarrollador visible; getServiceTraffic es read-only, restringido a Desarrollador y no usa lease de mutación.
@@ -113,4 +113,4 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - No retirar escaneo global Drive ni controles de idempotencia/recuperación sin equivalencia demostrada.
 
 ## Siguiente paso exacto
-P0.1, P0.2 local, mapa AUTH/USERS, reducción integral de leases AUTH y P0.3 de caché de actor completados localmente. La única lease del dispatcher AUTH es deleteUser; USERS/createUser comparte solo el recurso USERS con esa eliminación. Siguiente: completar auditoría pendiente de WRITE/FEEDBACK/ADMIN y continuar P1 de imágenes/vídeos/archivos; después medir feed CATALOG/PyS y flujos restantes en Beta aislada. La precarga/invalidation de los cuatro servicios y la carrera createUser/deleteUser requieren además validación de despliegues/propiedades en Beta aislada.
+P0 AUTH queda cerrado en código y CI (284 suites / 3,309 pruebas / 0 fallos). Siguiente tarea de código: revisar y optimizar lecturas/operaciones duplicadas en `JS/Services/users.js`, con pruebas de contrato y regresión. Al cerrar USERS, crear checkpoint y commit y continuar con auditoría extremo a extremo WRITE/FEEDBACK/ADMIN. Después P1 de imágenes/vídeos/archivos y mediciones Beta. La precarga/invalidation de los cuatro servicios, la carrera createUser/deleteUser y las métricas reales requieren validación en deployments/Spreadsheet/Drive aislados; no ejecutar en producción.
