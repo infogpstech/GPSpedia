@@ -243,3 +243,13 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - El router serializa el cuerpo una sola vez y mide el texto ya leído de la respuesta. No hay request adicional, persistencia, ni registro de payload, token o identidad.
 - Contrato ampliado: `ServiceBrowserTrafficContract.mjs`. GitHub Actions: sintaxis SUCCESS; regresión 277 suites / 3,226 pruebas / 0 fallos; health read-only SUCCESS. Pages build/deployment seguía ejecutándose al momento de esta adenda.
 - Cierre: P0.2 local **COMPLETADA CON VALIDACIÓN DIFERIDA**. Medición de campo por escenario, latencia interna de Apps Script, lecturas/escrituras Sheets/Drive, cache hit/miss, CORS y transferencias multimedia quedan para Beta aislada.
+
+
+### P0 AUTH/USERS — mapa de consumidores (2026-11-21)
+
+- Matriz de consumidores y rutas frontend documentada en `MAPA_CONSUMIDORES_AUTH_USERS_P0_2026-11-21.md`.
+- `touchSession` no tiene consumidor frontend activo. `acceptTerms` se invoca al mostrar la app y al recuperar conexión, con deduplicación single-flight; no realiza touchSession adicional.
+- `validateSession` se consume en fallback tras cambio de rol propio; `validateActiveSession` está exportada pero no se encontró invocación en archivos cliente activos. `checkSession` restaura perfil/rol local y no consulta AUTH en el arranque ordinario.
+- AUTH aplica lease acquire/release a múltiples acciones de sesión/cuenta; USERS aplica lease a createUser y actor cacheado a getUsers/updateProfile. Cache miss de actor genera validateSessionContext contra Coordinator.
+- USERS createUser y AUTH deleteUser comparten recurso lógico USERS en Coordinator; el lock local de USERS no coordina entre proyectos. Mantener exclusión hasta sustituirla por autoridad común equivalente.
+- Cambio de rol conserva marcador, revocación e invalidación de cachés; logout, reset de sesiones y eliminación conservan revocación. La simplificación debe seguir §15 sin alterar RBAC ni las excepciones explícitas.
