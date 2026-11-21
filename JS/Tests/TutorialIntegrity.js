@@ -255,10 +255,14 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
     test("permite editar por tema único registros históricos cuyo ID está vacío", () => {
         const row = ["", "Tutorial histórico", "", "Cómo", "Dónde", "Detalles", "", ""];
         const h = buildHarness_(feedback, { rows: [headers, row] });
-        h.api.update({ originalTema: "Tutorial histórico", detalles: "Detalle actualizado" });
+        const result = h.api.update({ originalTema: "Tutorial histórico", detalles: "Detalle actualizado" });
+        assert.equal(result.status, "success");
+        assert.equal(result.updated.detalles, "Detalle actualizado");
         assert.equal(h.sheet.data[1][0], "");
         assert.equal(h.sheet.data[1][1], "Tutorial histórico");
-        assert.equal(h.sheet.data[1][5], "Detalle actualizado");
+        assert.equal(h.sheet.data[1][5], "Detalles");
+        const identity = "legacy-" + crypto.createHash("sha256").update("tutorial historico").digest("hex");
+        assert.equal(h.api.projectEdit(identity, h.sheet.data[1]).row[5], "Detalle actualizado");
     });
 
     test("no usa un ID tut- inexistente como fallback de un tema coincidente", () => {
