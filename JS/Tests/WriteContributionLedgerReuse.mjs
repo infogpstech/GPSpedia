@@ -16,6 +16,11 @@ assert.match(candidate,/validatedLedgerSheet \|\| getVehicleContributionLedgerSh
 assert.match(existingCut,/const contributionLedgerSheet = getVehicleContributionLedgerSheet_\(spreadsheet\)/);
 assert.match(existingCut,/ledgerSheet: appendLedgerSheet/);
 assert.match(existingCut,/readVehicleContributionLedgerRows_\(appendLedgerSheet\)/);
+assert.ok(existingCut.indexOf("uploadImageToDrive") < existingCut.indexOf("const appendLedgerSheet"),
+ "Debe revalidar el esquema después de terminar Drive y antes del append.");
+assert.ok(existingCut.indexOf("const appendLedgerSheet") < existingCut.indexOf("appendVehicleContributionEvent_"));
+assert.ok(supplementary.indexOf("prepareSupplementaryImageUploads_") < supplementary.indexOf("const appendLedgerSheet"));
+assert.ok(supplementary.indexOf("const appendLedgerSheet") < supplementary.indexOf("appendVehicleContributionEvent_"));
 assert.match(supplementary,/ledgerSheet: contributionLedgerSheet/);
 assert.match(supplementary,/kind, appendLedgerSheet\)/);
 
