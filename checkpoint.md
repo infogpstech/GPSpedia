@@ -1318,3 +1318,12 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - `handleSuggestYearLocked` reutiliza `existingData` como `allData` cuando el actor ya había reportado y no se agrega una fila. Solo vuelve a leer Feedbacks después de un append nuevo, para incluir votos concurrentes y mantener correcto el umbral de tres aportantes verificados.
 - `SuggestYearVoteThreshold.mjs` amplía la cobertura de snapshot reuse; CI: **280 suites / 3,258 pruebas / 0 fallos**; build SUCCESS; health read-only SUCCESS; GitHub Pages deploy SUCCESS. No se desplegó Apps Script.
 - Siguiente: FEEDBACK likes — unificar preflight completado/evento y reutilizar filas ya consultadas, manteniendo append-only y proyección CATALOG.
+
+
+## Cierre — FEEDBACK likes, snapshot único de replay por actor (2026-11-21)
+
+- `readLikeActorReplaySnapshot_` consulta una sola vez el esquema de FeedbackLikes y las filas del actor/vehículo/corte. El resultado alimenta el replay legacy `completed`, el replay append-only `event` y la comprobación posterior de filas existentes.
+- Se eliminó la secuencia de consultas repetidas al mismo actor desde `findCompletedLikeReplayNoop_`, `findLikeEventReplayNoop_` y `handleRecordLike`. El preflight continúa siendo de solo lectura y no crea la hoja si no existe.
+- Después de un append nuevo o recuperación de pending, se conserva una consulta fresca para confirmar el evento durable y calcular el contador efectivo. No se modificó el contrato append-only, la deduplicación de actores en CATALOG, el contador físico ni la publicación incremental.
+- `FeedbackLikeCompletedReplayPreflight.mjs`: 7/7 PASS. CI HEAD `51f260338abf6faa307cb646a13554fb8cf5f7dd`: **280 suites / 3,259 pruebas / 0 fallos**; service-tests SUCCESS; health read-only SUCCESS. No se modificaron deployments Apps Script ni datos productivos.
+- Siguiente: revisar reportes e Inbox FEEDBACK; después continuar con ADMIN.
