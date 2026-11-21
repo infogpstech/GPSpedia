@@ -1281,3 +1281,37 @@ Adenda — FEEDBACK confirmación de sugerencias
 - Pruebas exact-source: AdminImageActivityAppendAtomic 5/5, AdminImageScanCoordinatorContract 1/1 y contratos de orden post-lock de permanent delete/restore PASS. Pendiente CI integral/checkout completo.
 - Commits: bffe801eea4c6603ccd0e8c5dc86a3a93ef3e50d, d9bca497b1564ae1468c3f93ed7a99527ac6f7bd, c51dd0ad1b0c6c3568f838b51a2ddb90fe00d4a3, 5d3ffcc12a988fc1649d864dd01359cb0b26884c, ad242863f07acb6791a0b07d304f647f7aa0aae6 y d0ba7b0a4560a8281f0d672821d563063bf295fd. Sin deployment ni cambios productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-21 — CIERRE DE AUDITORÍA ADMIN Y REVISIÓN FÍSICA WRITE
+
+ADMIN — operaciones sin lock/lease local
+- publishAdminCatalogChange_ / publishAdminCatalogChanges_: sourceVersion temporal, Coordinator maneja repetidas/obsoletas con reset.
+- handleAddSupplementaryInfo: sin ScriptLock ni revalidación transaccional redundante; reubica por ID y persiste sobre valores actuales, sin rollback de snapshot antiguo.
+- ensureTestigoColumns: sin lock interno; único caller mantiene el lock principal de alta física.
+- recordImageAdministrationActivity: appendRow con fórmula ID; sin lease ACTIVITY ni contador PropertiesService.
+
+ADMIN — coordinación que se conserva por integridad
+- handleAddOrUpdateCut: lock fail-fast para fila física/Idempotencia/compensación.
+- handleAddLogo: lock fail-fast para secuencia numérica y fila, carga Drive antes de adquirir y limpia archivo no vinculado ante contención.
+- withCortesOrganizerLedgerLock_ y handleApplyCortesImageReconciliation_: ledger Safe Apply, reconciliación física y rollback.
+- handleFreezeIdentifierFormulas_, handleMigrateCortesOperationIds, withReplacedImagesSchemaLock_, handleMigrateReplacedImagesSchema: migraciones/schema maintenance.
+- handleRecoverReplacedImage, handleDeleteReplacedImage, handleRestoreReplacedImageFromTrash, handlePermanentlyDeleteReplacedImage, handleMarkReplacedImageInUse y handleMoveReplacedImage: consistencia Drive/Spreadsheet, historial, recuperación y operaciones destructivas.
+- Leases: auditDriveImagesInCortes (IMAGE_AUDIT_STATE), saveUnusedImagesInventory (IMAGE_INVENTORY), createCortesImageFolder (CORTES_IMAGE_FOLDER). La lease ACTIVITY se eliminó porque appendRow es atómico y el log se invoca post-commit.
+- handleUploadAdminImageLegacy_ aparece como definición sin referencias internas en admin.js; se conserva como legacy hasta revisar todos los fixtures/archivos del proyecto.
+
+WRITE — revisión física
+- Vehículos existentes: aportes en AportesVehiculo append-only sin ScriptLock.
+- Altas nuevas: se conserva ScriptLock.tryLock(0) para reservar lastRow+1, escribir/actualizar Idempotencia y proteger compensación. El ID moderno se reserva antes del lock mediante CortesIdReservations; legacy sin opId conserva fallback bajo lock.
+- Idempotencia: snapshot focalizado al opId activo; valida encabezado, detecta duplicados del opId y reconsulta la fila antes de cambiar estado. No se recorre todo el historial por cada alta.
+- Drive: upload fuera del lock, readquisición tryLock(0); si falla, conserva pending y devuelve WRITE_LOCK_REACQUIRE_PENDING para retry. Rollback de fila solo si sigue siendo última/vacía y si el lock continúa retenido.
+- Catalog version: Date.now() después de liberar lock; Coordinator convierte sourceVersion repetida/obsoleta en reset. Se eliminó el contador PropertiesService WRITE.
+- Conclusión: no hay base probada para retirar el lock físico restante sin rediseñar el journal/append de Cortes e Idempotencia. Mantenerlo fail-fast es preferible a permitir filas duplicadas o rollback concurrente.
+
+Validación exact-source local:
+- AdminCatalogPublicationIsolation 6/6; AdminSupplementaryUploadOutsideLock 5/5; AdminTestigoColumnsNoInternalLock 1/1; AdminLogoWriteLockNonBlocking 4/4; AdminImageActivityAppendAtomic 5/5; AdminImageScanCoordinatorContract 1/1.
+- WriteVehicleIdReservationOutsidePhysicalLock 5/5; WriteIdempotencyTargetedRead 4/4; WriteCatalogPublicationIsolation 7/7; WritePhysicalTransactionContract 7/7.
+- Comprobaciones de orden post-lock permanent delete/restore PASS.
+- CI integrado no confirmado: no se devolvieron checks/workflow runs para el HEAD consultado. Sin deployment ni cambios productivos.
+================================================================================
