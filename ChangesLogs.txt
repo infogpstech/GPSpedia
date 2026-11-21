@@ -714,3 +714,11 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - Se corrigió la auditoría: el consumidor de getCatalogChanges está integrado en auth.js/loadInitialData, con cursor IndexedDB, delta GET, reset seguro, snapshot+cursor atómico y sincronización entre pestañas.
 - Cierre normal de edición usa auth.loadInitialData(true); fallback completo si delta no confirma. Descarte conserva snapshots completos para comparar y verificar restauración.
 - CatalogEditDeltaRefresh: 23/23 PASS; regresión: 284 suites / 3,309 pruebas / 0 fallos; build y health read-only SUCCESS.
+
+
+[2026-11-21] AUTH — cierre de optimización de lecturas de sesión
+- Login reutiliza un snapshot ActiveSessions y solo repite escaneo integral ante append ambiguo o error parcial; confirmación normal por fila dirigida.
+- Recuperación y reconciliación de rol reutilizan la fila objetivo; deleteUser reutiliza tokens del snapshot y verifica residuos por columna ID.
+- Revocaciones remotas se ejecutan una sola vez antes de limpiar tokens; se elimina helper de escaneo duplicado.
+- AuthSessionReadOptimization: 9/9 PASS; CI: 284 suites / 3,309 pruebas / 0 fallos; build y health SUCCESS.
+- Siguiente: optimizar USERS y después auditoría end-to-end WRITE/FEEDBACK/ADMIN.
