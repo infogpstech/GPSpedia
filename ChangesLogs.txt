@@ -722,3 +722,10 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - Revocaciones remotas se ejecutan una sola vez antes de limpiar tokens; se elimina helper de escaneo duplicado.
 - AuthSessionReadOptimization: 9/9 PASS; CI: 284 suites / 3,309 pruebas / 0 fallos; build y health SUCCESS.
 - Siguiente: optimizar USERS y después auditoría end-to-end WRITE/FEEDBACK/ADMIN.
+
+
+[2026-11-21] USERS — snapshot único de alta y lecturas dirigidas
+- handleCreateUser reutiliza un snapshot para username, fila libre y generación/validación de ID; mantiene lectura dirigida de fila destino y escritura atómica con read-back/rollback.
+- getUsers limita la lectura a A:G; updateProfile confirma ID leyendo solo las celdas coincidentes, no filas completas.
+- UsersMutationSnapshot 10/10; UsersReadMinimization 8/8; UsersAtomicMutations 16/16; regresión 287 suites / 3,359 pruebas / 0 fallos; build y health SUCCESS.
+- Siguiente: auditoría end-to-end de WRITE; luego FEEDBACK y ADMIN.
