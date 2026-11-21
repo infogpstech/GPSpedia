@@ -55,7 +55,7 @@ test("lee únicamente las columnas A:B para excluir todas las copias físicas de
 test("la edición ejecuta la comprobación dirigida bajo lock", () => {
     const handler = extract("handleUpdateTutorialItem");
     const acquire = handler.indexOf("acquireFeedbackScriptLock_(lock)");
-    const check = handler.indexOf("tutorialTitleExists_(sheet, updates.tema, target.rowIndex)");
+    const check = handler.indexOf("tutorialTitleExists_(sheet, updates.tema, target.rowIndex, target.row[0])");
     assert.ok(acquire >= 0 && check > acquire);
     assert.doesNotMatch(handler, /getDataRange\(/);
 });
