@@ -82,11 +82,31 @@ test("la metadata usa el índice sin consultar el evento individual", () => {
     assert.equal(resolve("REP-1", null, map), metadata);
 });
 
+test("la canonicalización reutiliza el mismo reportId repetido dentro de una página", () => {
+    const canonical = block("isCanonicalFeedbackInboxRow_");
+    let lookups = 0;
+    const check = new Function("COLS_FEEDBACKS", "parseCutSuggestionRecord", "parseReportMetadata",
+        "findReportByReportId_", canonical + "\nreturn isCanonicalFeedbackInboxRow_;")(
+        { ID_vehiculo: 3, Usuario: 2, Problema: 4 },
+        () => null,
+        () => ({ reportId: "REP-1" }),
+        () => { lookups++; return { rowIndex: 2 }; }
+    );
+    const cache = new Map();
+    const row = ["F-1", "Ana", "101", "Problema", JSON.stringify({ reportId: "REP-1" })];
+    assert.equal(check({}, row, 2, 5, null, cache), true);
+    assert.equal(check({}, row, 3, 5, null, cache), false);
+    assert.equal(lookups, 1);
+    assert.equal(cache.size, 1);
+});
 test("la bandeja administrativa comparte el índice con canonicalización y mapeo", () => {
     const handler = block("handleGetFeedbackItems");
     assert.equal((handler.match(/readFeedbackReportImageEventsIndex_\(/g) || []).length, 1);
     assert.match(handler, /isCanonicalFeedbackInboxRow_\(feedbackSheet,row,offset\+2\+index,reportMetadataColumn,imageEventsIndex\)/);
     assert.match(handler, /mapInboxFeedbackRow_\(row,reportMetadataColumn,imageEventsIndex\)/);
+    assert.match(handler, /const canonicalCache=new Map\(\)/);
+    assert.match(handler, /imageEventsIndex,canonicalCache\)/);
+    assert.match(block("isCanonicalFeedbackInboxRow_"), /cache\.has\(cacheKey\)/);
     const canonical = block("isCanonicalFeedbackInboxRow_");
     assert.match(canonical, /findReportByReportId_\(sheet, metadata\.reportId, reportMetadataColumn, imageEventsIndex\)/);
     const lookup = block("findReportByReportId_");
