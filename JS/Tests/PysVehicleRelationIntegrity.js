@@ -118,7 +118,7 @@ function buildHarness(feedback, options = {}) {
         },
         getSpreadsheet: () => ({})
     };
-    const roleHelper = extract(feedback, "function normalizeFeedbackRole(role) {", "function getSessionExpirationStatus_");
+    const roleHelper = extract(feedback, "function normalizeFeedbackRole(role) {", "function getFeedbackActor_");
     const mutationLeaseHelper = extract(feedback, "function withPysMutationLease_", "function findPysMutationRow_");
     const relationHelpers = extract(feedback, "function parseModelosAsociados(rawVal) {", "function handleClearActivityLogs(payload) {");
     vm.runInNewContext(
