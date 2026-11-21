@@ -3790,9 +3790,73 @@ function validatePysRecords_(sheet) {
     return { maxSuffix: max, ids: seen, duplicateRows };
 }
 function getPysSheet_(createIfMissing){let sheet=getSafeSheet("pys");if(!sheet){if(!createIfMissing)return null;sheet=getSpreadsheet().insertSheet("pys");}if(sheet.getLastRow()===0&&sheet.getLastColumn()===0){if(!createIfMissing)return sheet;sheet.getRange(1,1,1,10).setValues([PYS_HEADERS.slice()]);SpreadsheetApp.flush();}validatePysHeaders_(sheet,PYS_HEADERS,"pys");validatePysRecords_(sheet);return sheet;}
-function readPysOperations_(sheet){const last=sheet.getLastRow();if(last<2)return[];const so=Object.create(null),si=Object.create(null);return sheet.getRange(2,1,last-1,8).getValues().map((r,i)=>{if(!r.some(v=>v!==""&&v!==null&&v!==undefined))return null;const opId=String(r[0]||"").trim(),hash=String(r[1]||"").trim().toLowerCase(),problemId=String(r[2]||"").trim(),status=String(r[3]||"").trim(),imageFileId=String(r[4]||"").trim(),imageUrl=String(r[5]||"").trim(),match=problemId.match(/^isue-(\d+)$/i),suffix=match?Number(match[1]):NaN,problemKey=String(suffix);if(!/^[A-Za-z0-9_-]{20,80}$/.test(opId)||!/^[a-f0-9]{64}$/.test(hash)||!match||!Number.isSafeInteger(suffix)||suffix<1||!PYS_OPERATION_STATES.includes(status))throw new Error("La hoja PysOperations contiene una fila incompatible; no se modificó.");if((status==="PENDING"&&(imageFileId||imageUrl))||(["UPLOAD_PENDING","LINKED"].includes(status)&&(!/^[A-Za-z0-9_-]{10,110}$/.test(imageFileId)||imageUrl!=="https://drive.google.com/file/d/"+imageFileId+"/view"))||(Boolean(imageFileId)!==Boolean(imageUrl)))throw new Error("La hoja PysOperations contiene referencias de imagen incompatibles con su estado.");if(so[opId]||si[problemKey])throw new Error("La hoja PysOperations contiene identificadores duplicados; no se modificó.");so[opId]=true;si[problemKey]=true;return{rowNumber:i+2,opId,payloadHash:hash,problemId,status,imageFileId,imageUrl,createdAt:String(r[6]||""),updatedAt:String(r[7]||"")};}).filter(Boolean);}
+function readPysOperations_(sheet) {
+    const last = sheet.getLastRow();
+    if (last < 2) return [];
+    const byOperation = new Map(), byProblem = new Map();
+    const rows = sheet.getRange(2, 1, last - 1, 8).getValues();
+    rows.forEach((row, index) => {
+        if (!row.some(value => value !== "" && value !== null && value !== undefined)) return;
+        const rowNumber = index + 2;
+        const opId = String(row[0] || "").trim(), hash = String(row[1] || "").trim().toLowerCase();
+        const problemId = String(row[2] || "").trim(), status = String(row[3] || "").trim();
+        const imageFileId = String(row[4] || "").trim(), imageUrl = String(row[5] || "").trim();
+        const match = problemId.match(/^isue-(\d+)$/i), suffix = match ? Number(match[1]) : NaN;
+        if (!/^[A-Za-z0-9_-]{20,80}$/.test(opId) || !/^[a-f0-9]{64}$/.test(hash) ||
+            !match || !Number.isSafeInteger(suffix) || suffix < 1 || !PYS_OPERATION_STATES.includes(status)) {
+            throw new Error("La hoja PysOperations contiene una fila incompatible; no se modificó.");
+        }
+        if ((status === "PENDING" && (imageFileId || imageUrl)) ||
+            (["UPLOAD_PENDING", "LINKED"].includes(status) &&
+                (!/^[A-Za-z0-9_-]{10,110}$/.test(imageFileId) || imageUrl !== "https://drive.google.com/file/d/" + imageFileId + "/view")) ||
+            (Boolean(imageFileId) !== Boolean(imageUrl))) {
+            throw new Error("La hoja PysOperations contiene referencias de imagen incompatibles con su estado.");
+        }
+        const item = { rowNumber, opId, payloadHash: hash, problemId, status, imageFileId, imageUrl,
+            createdAt: String(row[6] || ""), updatedAt: String(row[7] || "") };
+        if (byOperation.has(opId)) {
+            const canonical = byOperation.get(opId);
+            if (canonical.payloadHash !== hash) {
+                throw new Error("PysOperations contiene el mismo opId con payload contradictorio; requiere revisión.");
+            }
+            canonical.duplicateCount = (canonical.duplicateCount || 0) + 1;
+            return;
+        }
+        const problemKey = String(suffix);
+        if (byProblem.has(problemKey)) {
+            throw new Error("PysOperations contiene un problemId reservado por operaciones distintas; requiere revisión.");
+        }
+        byOperation.set(opId, item);
+        byProblem.set(problemKey, opId);
+    });
+    return Array.from(byOperation.values());
+}
 function getPysOperationsSheet_(){let sheet=getSafeSheet("PysOperations");if(!sheet)sheet=getSpreadsheet().insertSheet("PysOperations");if(sheet.getLastRow()===0&&sheet.getLastColumn()===0){sheet.getRange(1,1,1,8).setValues([PYS_OPERATIONS_HEADERS.slice()]);SpreadsheetApp.flush();}validatePysHeaders_(sheet,PYS_OPERATIONS_HEADERS,"PysOperations");readPysOperations_(sheet);return sheet;}
-function writePysOperation_(sheet,rowNumber,r){const values=[[r.opId,r.payloadHash,r.problemId,r.status,r.imageFileId||"",r.imageUrl||"",r.createdAt,r.updatedAt]],target=rowNumber||(sheet.getLastRow()+1);sheet.getRange(target,1,1,8).setValues(values);SpreadsheetApp.flush();const stored=sheet.getRange(target,1,1,8).getValues()[0];if(values[0].some((v,i)=>String(v==null?"":v)!==String(stored[i]==null?"":stored[i])))throw new Error("No se pudo confirmar el registro de idempotencia PyS.");return Object.assign({},r,{rowNumber:target});}
+function writePysOperation_(sheet, rowNumber, record) {
+    const values = [record.opId, record.payloadHash, record.problemId, record.status,
+        record.imageFileId || "", record.imageUrl || "", record.createdAt, record.updatedAt];
+    if (rowNumber) {
+        sheet.getRange(rowNumber, 1, 1, 8).setValues([values]);
+        SpreadsheetApp.flush();
+        const stored = sheet.getRange(rowNumber, 1, 1, 8).getValues()[0];
+        if (values.some((value, index) => String(value == null ? "" : value) !== String(stored[index] == null ? "" : stored[index]))) {
+            throw new Error("No se pudo confirmar el registro de idempotencia PyS.");
+        }
+        return Object.assign({}, record, { rowNumber });
+    }
+    sheet.appendRow(values);
+    SpreadsheetApp.flush();
+    const last = sheet.getLastRow();
+    const rows = last > 1 ? sheet.getRange(2, 1, last - 1, 8).getValues() : [];
+    const matches = [];
+    rows.forEach((row, index) => {
+        if (String(row[0] || "").trim() === String(record.opId) &&
+            String(row[1] || "").trim().toLowerCase() === String(record.payloadHash).toLowerCase() &&
+            String(row[2] || "").trim() === String(record.problemId)) matches.push(index + 2);
+    });
+    if (!matches.length) throw new Error("No se pudo confirmar la reserva append-only de la operación PyS.");
+    return Object.assign({}, record, { rowNumber: matches[0], duplicateReservationCount: matches.length - 1 });
+}
 function findPysRowsById_(sheet, id) {
     const last = sheet ? sheet.getLastRow() : 0, target = String(id || "").trim().toLowerCase();
     if (!target || last < 2) return [];
