@@ -272,24 +272,31 @@ function runUsersAtomicMutationTests(usersSource, authSource, coordinatorSource)
         assert(rejected);equal(f.sheet._rows.length,1);equal(f.stats.tries,1);equal(f.stats.timeout,0);
         equal(f.stats.waits,0);equal(f.stats.releases,0);
     });
-    run("La lease compartida serializa USERS con delete/reset de AUTH por recursos comunes",()=>{
+    run("Solo createUser conserva lease por username único; updateProfile usa actor cacheado",()=>{
         const usersWrapper=extract(source,"isSharedMutationAction_");
         const authWrapper=extract(auth,"isSharedMutationAction_");
         const usersActions=new Function(usersWrapper+";return [isSharedMutationAction_('createUser'),isSharedMutationAction_('updateProfile')];")();
         const authActions=new Function(authWrapper+";return [isSharedMutationAction_('deleteUser'),isSharedMutationAction_('resetUserSessions'),isSharedMutationAction_('updateUser')];")();
-        equal(usersActions,[true,true]);equal(authActions,[true,true,true]);
-        assert(/withSharedMutationLease_\("USERS"/.test(source),"USERS ya no utiliza la lease compartida.");
-        assert(/withSharedMutationLease_\("AUTH"/.test(auth),"AUTH ya no utiliza la lease compartida.");
+        equal(usersActions,[true,false]);equal(authActions,[true,true,true]);
+        assert(/withSharedMutationLease_\("USERS", action/.test(source),"createUser debe conservar la coordinación de username con AUTH.");
+        assert(!/withSharedMutationLease_\("USERS",\s*["']updateProfile/.test(source),"updateProfile no debe adquirir lease Coordinator.");
+        assert(source.includes('getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "USERS" })'),
+            "updateProfile debe usar el actor de sesión cacheado, sin lease por acción.");
+        assert(/withSharedMutationLease_\("AUTH"/.test(auth),"AUTH debe conservar las protecciones de eliminación/revocación.");
         const policySource=String(coordinatorSource||"");
         const policy=extract(policySource,"coordinatorPolicy_");
-        const policies=new Function(policy+";return {create:coordinatorPolicy_('USERS','createUser'),profile:coordinatorPolicy_('USERS','updateProfile'),remove:coordinatorPolicy_('AUTH','deleteUser'),reset:coordinatorPolicy_('AUTH','resetUserSessions'),update:coordinatorPolicy_('AUTH','updateUser')};")();
+        const policies=new Function(policy+";return {create:coordinatorPolicy_('USERS','createUser'),remove:coordinatorPolicy_('AUTH','deleteUser'),reset:coordinatorPolicy_('AUTH','resetUserSessions'),update:coordinatorPolicy_('AUTH','updateUser')};")();
         const conflicts=(left,right)=>left.maintenance||right.maintenance||
             left.writeResources.some(resource=>right.readResources.includes(resource)||right.writeResources.includes(resource))||
             left.readResources.some(resource=>right.writeResources.includes(resource));
         [policies.remove,policies.reset,policies.update].forEach(authPolicy=>{
-            assert(conflicts(policies.create,authPolicy),"createUser no entra en conflicto con una mutación AUTH.");
-            assert(conflicts(policies.profile,authPolicy),"updateProfile no entra en conflicto con una mutación AUTH.");
+            assert(conflicts(policies.create,authPolicy),"createUser no entra en conflicto con una mutación AUTH de identidad.");
         });
+        let profilePolicyRejected=false;
+        try{coordinatorPolicy_("USERS","updateProfile");}catch(error){profilePolicyRejected=/no está habilitada/.test(error.message);}
+        assert(profilePolicyRejected,"updateProfile no debe tener política de lease en Coordinator.");
+    });
+
     });
     return {passed,failed,total:passed+failed,results};
 }
