@@ -1856,13 +1856,18 @@ function handleSuggestYearLocked(payload) {
     );
 
     if (!alreadyReported) {
-        const newRowNumber = sheet.getLastRow() + 1;
+        // Una fila completa por appendRow evita que dos solicitudes concurrentes
+        // compartan getLastRow() y mezclen ID, respuesta y actor en filas distintas.
         const lastCol = Math.max(sheet.getLastColumn(), actorColumn, 9);
-        if (newRowNumber > 2) copyRowPresentationOnly_(sheet, 2, newRowNumber, lastCol);
-        sheet.getRange(newRowNumber, COLS_FEEDBACKS.ID).setValue(getNextFormulaBasedId_(sheet, COLS_FEEDBACKS.ID));
-        const values = [[userName, normalizedVehicleId, problema, respuestaText, "", "", "", year]];
-        sheet.getRange(newRowNumber, 2, 1, values[0].length).setValues(values);
-        sheet.getRange(newRowNumber, actorColumn).setValue(actorKey);
+        const voteRow = new Array(lastCol).fill("");
+        voteRow[COLS_FEEDBACKS.ID - 1] = getNextFormulaBasedId_(sheet, COLS_FEEDBACKS.ID);
+        voteRow[COLS_FEEDBACKS.usuario - 1] = userName;
+        voteRow[COLS_FEEDBACKS.ID_vehiculo - 1] = normalizedVehicleId;
+        voteRow[COLS_FEEDBACKS.problema - 1] = problema;
+        voteRow[COLS_FEEDBACKS.respuesta - 1] = respuestaText;
+        voteRow[COLS_FEEDBACKS.anoSugerido - 1] = year;
+        voteRow[actorColumn - 1] = actorKey;
+        sheet.appendRow(voteRow);
         SpreadsheetApp.flush();
         logUserActivity(userId, userName, "suggest_year", normalizedVehicleId,
             "Año sugerido: " + year + ". Respuesta: " + normalizedResponse);
