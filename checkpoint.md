@@ -1007,3 +1007,12 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - WRITE corte: Drive se ejecuta dentro de `runWriteDriveWorkOutsideScriptLock_`, que libera el lock y lo reacquire con `tryLock(0)`; fallo de reacquisición conserva operación recuperable con el mismo opId.
 - WRITE suplementarios, FEEDBACK reportes/sugerencias y PyS: cargas Drive no se realizan bajo ScriptLock global en las rutas inspeccionadas; se conservan opId, payloadHash, estados y limpieza/reconciliación.
 - ADMIN y benchmark real de latencia/Drive no están auditados todavía. No se quitó ningún lock.
+
+
+## Continuidad — ADMIN reemplazo de imágenes fuera de lock (2026-11-21)
+
+- HEAD previo: `9fd4be2802dec45eaabd22c838b1cd515ec692ad`; base protegida sin cambios `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- ADMIN ruta actual de reemplazo: `handleUploadAdminImage` usa upload Drive + evento compare-and-set sin ScriptLock global.
+- Ruta legacy y reparación de imágenes usan `runAdminContributionDriveWorkOutsideScriptLock_` / `runWriteDriveWorkOutsideScriptLock_`: liberan lock durante Drive y reacquire no bloqueante con ID estable para revalidar.
+- Se mantienen locks de operaciones destructivas e inventario; no se retiró ningún lock.
+- Falta revisar logo upload y completar benchmarks de Drive/transferencia. La auditoría de inventario/admin sigue separada del upload normal.
