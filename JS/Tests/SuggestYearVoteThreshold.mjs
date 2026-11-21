@@ -30,6 +30,12 @@ const positive=[
  row("VEH-1",2025,"user:U3","Modelo sin generaciones recientes registradas","El usuario confirmó que se trata de una generación más reciente.")
 ];
 let passed=0;function test(name,fn){fn();passed++;console.log("PASS "+name);}
+test("reutiliza el snapshot de Feedbacks en reintentos ya reportados y relee solo tras append",()=>{
+ assert.match(handler,/let allData = existingData/);
+ assert.equal((handler.match(/allData = sheet\.getDataRange\(\)\.getValues\(\)\.slice\(1\)/g)||[]).length,1);
+ assert.match(handler,/if \(!alreadyReported\) \{[\s\S]*?sheet\.appendRow\(voteRow\);[\s\S]*?allData = sheet\.getDataRange\(\)\.getValues\(\)\.slice\(1\)/);
+ assert.ok(handler.indexOf("let allData = existingData") < handler.indexOf("if (!alreadyReported)"));
+});
 test("el umbral de aplicación automática permanece en tres aportantes verificados",()=>{
  assert.equal(threshold,3);
  assert.match(handler,/countVerifiedPositiveYearSuggestionVotes_\(allData, normalizedVehicleId, year, actorColumn\)/);
