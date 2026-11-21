@@ -393,12 +393,11 @@ function getNextFormulaBasedId_(sheet, idColumn) {
     let baseSuffix = maxSuffix;
     if (previousReservations.length) {
         const latest = previousReservations[previousReservations.length - 1];
-        if (!Number.isSafeInteger(latest.baseSuffix) || latest.baseSuffix < 0 ||
-            !Number.isSafeInteger(latest.reservedSuffix) || latest.reservedSuffix < 1) {
-            throw new Error("La última reserva de ID contiene una secuencia inválida.");
+        if (!Number.isSafeInteger(latest.baseSuffix) || latest.baseSuffix < 0) {
+            throw new Error("La última reserva de ID contiene una base de secuencia inválida.");
         }
         const priorCount = previousReservations.length;
-        baseSuffix = Math.max(latest.baseSuffix, maxSuffix - priorCount, latest.reservedSuffix - priorCount);
+        baseSuffix = Math.max(latest.baseSuffix, maxSuffix - priorCount);
     }
     if (!Number.isSafeInteger(baseSuffix) || baseSuffix < 0) throw new Error("La base de secuencia ID no es válida.");
 
