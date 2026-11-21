@@ -1749,7 +1749,7 @@ function appendFeedbackYearVehicleUpdateEvent_(application, vehicleId, fieldName
 }
 
 function completeFeedbackYearApplication_(application, context) {
-    const { cortesSheet, vehicleRowIndex, feedbackSheet, actorColumn, userId, userName } = context;
+    const { cortesSheet, vehicleRowIndex, userId, userName } = context;
     const row = application.row;
     const operationId = String(row[0] || "").trim();
     const previousFrom = Number(row[3]), previousTo = Number(row[4]);
@@ -1789,7 +1789,6 @@ function completeFeedbackYearApplication_(application, context) {
         };
     }
     const expectedImageUrl = String(cortesSheet.getRange(vehicleRowIndex, COLS_CORTES.imagenVehiculo).getValue() || "");
-    const ledger = application.sheet;
     let activityLogRequest = null;
     const activityAttempted = application.activityAttempted === true ||
         row[9] === true || String(row[9]).toUpperCase() === "TRUE";
