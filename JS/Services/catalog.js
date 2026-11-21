@@ -715,6 +715,52 @@ function readFeedbackLikeEventCounts_(spreadsheetRef) {
     return result;
 }
 
+function tutorialEditFieldsHash_(values) {
+    const payload = JSON.stringify((values || []).map(value => String(value || "")));
+    const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, payload);
+    return digest.map(byte => ((byte < 0 ? byte + 256 : byte).toString(16).padStart(2, "0"))).join("");
+}
+
+function projectTutorialCatalogRows_(records, editEventRows) {
+    const canonicalRows = [], byId = new Map(), eventsByTutorial = new Map(), operations = new Map();
+    (editEventRows || []).forEach((event, index) => {
+        const operationId = String(event[0] || "").trim(), payloadHash = String(event[1] || "").trim().toLowerCase();
+        const tutorialId = String(event[2] || "").trim(), expectedHash = String(event[3] || "").trim().toLowerCase();
+        let snapshot = null;
+        try { snapshot = JSON.parse(String(event[4] || "")); } catch (error) {}
+        if (!/^tutorial-edit-[a-f0-9]{64}$/.test(operationId) || !/^[a-f0-9]{64}$/.test(payloadHash) ||
+            !/^tut-[A-Za-z0-9_-]{20,80}$/i.test(tutorialId) || !/^[a-f0-9]{64}$/.test(expectedHash) ||
+            !Array.isArray(snapshot) || snapshot.length !== 3 || snapshot.some(value => typeof value !== "string")) {
+            throw new Error("TutorialEditEvents contiene una fila incompatible; no se pudo proyectar el catálogo.");
+        }
+        if (operations.has(operationId)) {
+            if (operations.get(operationId) !== payloadHash) console.warn("TutorialEditEvents: operationId contradictorio ignorado", operationId);
+            return;
+        }
+        operations.set(operationId, payloadHash);
+        if (!eventsByTutorial.has(tutorialId)) eventsByTutorial.set(tutorialId, []);
+        eventsByTutorial.get(tutorialId).push({ rowNumber: index + 2, operationId, expectedHash, snapshot });
+    });
+    (records || []).forEach(sourceRow => {
+        if (!sourceRow || !sourceRow.some(value => value !== "" && value !== null && value !== undefined)) return;
+        const row = sourceRow.slice(), id = String(row[0] || "").trim();
+        if (!id) { canonicalRows.push(row); return; }
+        if (byId.has(id)) return;
+        byId.set(id, row);
+        const events = eventsByTutorial.get(id) || [];
+        let current = [row[3], row[4], row[5]].map(value => String(value || ""));
+        events.forEach(event => {
+            if (event.expectedHash === tutorialEditFieldsHash_(current)) current = event.snapshot.slice();
+            else if (!event.snapshot.every((value, index) => value === current[index])) {
+                // El expectedHash ya no coincide: el evento quedó obsoleto y no pisa la versión vigente.
+            }
+        });
+        row[3] = current[0]; row[4] = current[1]; row[5] = current[2];
+        canonicalRows.push(row);
+    });
+    return canonicalRows;
+}
+
 function dedupeTutorialCatalogRows_(records) {
     const byId = new Map(), output = [];
     (records || []).forEach(record => {
@@ -853,8 +899,18 @@ function handleGetCatalogData(payload = {}) {
     let tutorialesData = [];
     if (tutorialesSheet) {
         const data = tutorialesSheet.getDataRange().getValues();
-        data.shift();
-        tutorialesData = dedupeTutorialCatalogRows_(data.map(row => mapRowToObject(row, COLS_TUTORIALES, IMAGE_FIELDS_TUTORIALES)).filter(Boolean));
+        const editEventsSheet = getSpreadsheet().getSheetByName("TutorialEditEvents");
+        let editEventRows = [];
+        if (editEventsSheet) {
+            const editData = editEventsSheet.getDataRange().getValues();
+            const expectedHeaders = ["operationId", "payloadHash", "tutorialId", "expectedHash", "snapshotJson", "createdAt"];
+            if (!editData.length || expectedHeaders.some((header, index) => String(editData[0][index] || "").trim() !== header)) {
+                throw new Error("El esquema de TutorialEditEvents no coincide; no se pudo proyectar el catálogo.");
+            }
+            editEventRows = editData.slice(1);
+        }
+        tutorialesData = dedupeTutorialCatalogRows_(projectTutorialCatalogRows_(data.slice(1), editEventRows)
+            .map(row => mapRowToObject(row, COLS_TUTORIALES, IMAGE_FIELDS_TUTORIALES)).filter(Boolean));
     }
     allData.tutoriales = tutorialesData;
 
