@@ -51,7 +51,8 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 ### P0 — mapa de llamadas y medición
 - [x] P0.1 — Mapa estático navegador → endpoint → dispatcher → dependencias de los ocho servicios documentado en `MAPA_LLAMADAS_DEPENDENCIAS_P0_2026-11-21.md`.
 - [x] Inventario estático inicial de `UrlFetchApp.fetch`, `fetchAll`, wrappers, `routeAction`, reintentos, publicaciones y llamadas entre proyectos; los conteos de wrappers no se interpretan como requests por interacción.
-- [ ] Ejecutar línea base por flujo en navegador/Beta: requests, bytes, p50/p95, lecturas/escrituras y esperas para catálogo, búsqueda, detalle, aportes, Inbox, imágenes y vídeos. [x] Instrumentación local del router para bytes UTF-8 de request/response y duración por intento; CI en curso.
+- [x] P0.2 — Instrumentación local del router: bytes UTF-8 de request/response, duración, promedio y p50/p95 de duración/tamaños sobre hasta 200 eventos efímeros por pestaña. Sin persistencia ni requests adicionales. **COMPLETADA CON VALIDACIÓN DIFERIDA**; CI: 277 suites, 3,226 pruebas, 0 fallos.
+- [ ] Línea base Beta por flujo: requests, bytes, p50/p95, lecturas/escrituras y esperas para catálogo, búsqueda, detalle, aportes, Inbox, imágenes y vídeos. Medición real requiere navegador y entorno aislado.
 - [ ] Revisar telemetría para evitar viajes de red, locks, escrituras o esperas en acciones ordinarias.
 - [ ] Completar matriz del flujo de catálogo: snapshot/reset, feed incremental, refresh post-edición, caché local y sincronización PyS.
 
@@ -99,4 +100,4 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - No retirar escaneo global Drive ni controles de idempotencia/recuperación sin equivalencia demostrada.
 
 ## Siguiente paso exacto
-P0.1 y el inventario estático inicial están documentados. Continuar con P0.2: instrumentación y medición reproducible local de requests/bytes/latencias por interacción; después completar consumidores AUTH/USERS. Latencia real, lecturas/escrituras Sheets/Drive, cache hit/miss y esperas siguen sin medir y requieren Beta autorizada.
+P0.1 y P0.2 locales completados y registrados. Continuar con P0 AUTH/USERS: cerrar la matriz de consumidores de login, validateSession, touchSession, acceptTerms, logout, recuperación, createUser y deleteUser; después clasificar llamadas/leases conforme a §15 de NORMAS_DESAROLLO.md. La línea base de campo (latencia real, lecturas/escrituras Sheets/Drive, cache hit/miss y esperas) queda diferida a Beta aislada.
