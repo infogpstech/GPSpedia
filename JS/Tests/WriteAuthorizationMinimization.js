@@ -87,7 +87,7 @@ function runWriteAuthorizationMinimizationTests(sources) {
   const handler=extract(write,"handleAllocateVehicleId"),auth=extract(write,"assertDeveloperForIdMaintenance");
   let lockCalls=0,spreadsheetReads=0,reservations=0;
   const check=new Function("getAuthenticatedCollaborator",auth+";return assertDeveloperForIdMaintenance;")(
-   (payload,roles)=>{if(!roles.includes("desarrollador"))throw Error("Falta política");return{role:"tecnico"};});
+   (payload,roles)=>{const serverRole="tecnico";if(!roles.includes(serverRole))throw Error("Se requiere privilegio Desarrollador.");return{role:serverRole};});
   const fn=new Function("assertDeveloperForIdMaintenance","LockService","getSpreadsheet","SHEET_NAMES","normalizeCortesIdAllocationRequest_","reserveCortesVehicleIdForOperation_",
    handler+";return handleAllocateVehicleId;")(check,{getScriptLock(){lockCalls++;throw Error("No debe adquirir lock.");}},
    ()=>{spreadsheetReads++;return{getSheetByName:()=>({})};},{CORTES:"Cortes"},()=>({opId:"OP-1",operationHash:"a".repeat(64)}),
