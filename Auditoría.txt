@@ -1115,3 +1115,14 @@ Adenda — FEEDBACK confirmación de sugerencias
 - Impacto/severidad: efecto lateral innecesario en un intento inválido; severidad baja, sin evidencia de pérdida o corrupción de datos.
 - Corrección: validar todos los IDs de vehículos antes de inicializar/leer PysOperations o reservar la operación. La prueba de alta preasociada verifica que el rechazo ocurre antes de cualquier escritura.
 - Validación: CI 44907336819 SUCCESS, 259 suites/3,129 pruebas/0 fallos; PysVehicleRelationIntegrity 19/19, PysCreationIntegrity 56/56, PysModalNavigation 10/10. Health y Pages SUCCESS.
+
+
+================================================================================
+2026-11-21 — CORRECCIÓN NORMATIVA: MUTACIONES PyS SIN LEASES
+- Hallazgo: la implementación de addSolution, addPrevention, addVehicleToProblem y removeVehicleFromProblem usaba leases compartidas Coordinator, en contradicción con §15 de NORMAS_DESAROLLO.md.
+- Corrección: retirada withPysMutationLease_ y las cuatro políticas de lease. Las acciones PyS ordinarias escriben directamente en FEEDBACK; no llaman a Coordinator ni esperan recursos compartidos.
+- Se preservan el control RBAC de Desarrollador para desvincular, validación funcional de IDs/relaciones, confirmación de escritura y registro de actividad. CATALOG_CHANGE_ALLOWED_WRITERS_ se conserva solo para publicar deltas.
+- Regresión CI 3255f44f0f10cfbb7b5b3f6b8342c98d55008f0a SUCCESS: 259 suites, 3,130 pruebas, 0 fallos. PysCreationIntegrity 56/56; PysVehicleRelationIntegrity 19/19; CatalogChangeFeed 35/35; SharedMutationCoordinator 86/86.
+- Se corrigieron las pruebas de contrato que esperaban leases; AUG-161 Beta se actualizó para verificar ejecución directa sin Coordinator.
+- No se desplegó Apps Script ni se modificaron datos productivos.
+================================================================================
