@@ -3265,3 +3265,19 @@ Documento de alcance, hallazgos y checklist: [AUDITORIA_INTEGRAL_LATENCIA_LLAMAD
 - [x] Integrar ImageResolutionVariants.js e ImageObjectUrlLifecycle.js al runner; antes no se ejecutaban desde RunServiceTests.
 - [x] La prueba deja visible el comportamiento de cache miss: la imagen se asigna desde URL remota y la compresión usa fetch sobre esa URL; su eliminación queda como tarea pendiente específica, no se da por resuelta.
 - [ ] Ejecutar CI.
+
+
+## Auditoría visual CSS — encabezados de modales y detalle de corte (P1)
+
+**Estado: PENDIENTE.** Registrar y ejecutar después de cerrar las optimizaciones CATALOG e imágenes en curso, salvo que aparezca un bloqueo visual crítico.
+
+- Auditar reglas CSS de los modales de la plataforma: selectores repetidos, bloques dispersos, especificidad, media queries, reglas duplicadas y sobrescrituras entre hojas.
+- Agrupar las reglas de cada componente/encabezado en bloques coherentes y únicos, conservando el resultado efectivo de la cascada: cuando una regla posterior sustituya a una anterior, mantener la declaración vigente y retirar la redundante solo tras verificar consumidores y breakpoints.
+- Revisar el encabezado del modal de detalles de corte, cuyo aspecto actual se reporta desproporcionado/desfigurado.
+- Comparar el modal de detalle de corte de la versión 2.2.5 con la referencia histórica 2.1.7 usando Git; no modificar la rama base ni reconstruir estilos por suposición.
+- Verificar proporciones del logo, dimensiones/alineación de botones de edición, posición y área de cierre, espaciados, altura del encabezado y comportamiento responsive.
+- Auditar el aspecto visual general de los modales y detectar reglas contradictorias que afecten otros diálogos; corregir solo los conflictos sustentados por evidencia.
+- Añadir pruebas de contrato CSS y dejar la inspección visual en navegador real/escritorio/móvil como validación Beta cuando requiera entorno desplegado.
+- No introducir cambios CSS hasta completar el mapa de reglas y comparar la cascada actual con la referencia.
+
+**Dependencias:** terminar o aislar los cambios de CATALOG/imágenes para evitar mezclar diffs. La comparación histórica debe identificar exactamente los archivos y commit de 2.1.7.

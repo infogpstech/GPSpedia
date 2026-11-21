@@ -1084,3 +1084,11 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - ImageResolutionVariants.js e ImageObjectUrlLifecycle.js se integran al runner de regresión.
 - El doble acceso en cache miss sigue confirmado: img.src remoto inmediato + fetch remoto para compresión. No se considera corregido.
 - CI pendiente.
+
+
+## Tarea registrada — auditoría visual de encabezados de modales (2026-11-21)
+
+- P1 pendiente: auditar reglas CSS repetidas/dispersas y contradicciones de cascada de los modales; consolidar bloques sin alterar el resultado visual vigente por inferencia.
+- Foco inicial: encabezado del modal de detalles de corte reportado desproporcionado. Comparar versión 2.2.5 con referencia 2.1.7.
+- Validar logo, botones de edición, cierre, proporciones, espaciado y breakpoints; revisar otros modales afectados.
+- No se modificó CSS en esta etapa. Se ejecutará tras cerrar/aislar la optimización CATALOG y el ciclo de imágenes en curso.
