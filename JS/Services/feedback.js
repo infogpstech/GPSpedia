@@ -1742,14 +1742,7 @@ function appendFeedbackYearVehicleUpdateEvent_(application, vehicleId, fieldName
 function completeFeedbackYearApplication_(application, context) {
     const { cortesSheet, vehicleRowIndex, feedbackSheet, actorColumn, userId, userName } = context;
     const row = application.row;
-    const applicationRowIndexes = Array.from(new Set(
-        (Array.isArray(application.rowIndexes) && application.rowIndexes.length
-            ? application.rowIndexes : [application.rowIndex]).filter(Number.isFinite)
-    ));
-    if (!applicationRowIndexes.length) throw new Error("La aplicación no tiene filas de ledger válidas.");
-    const updateApplicationRows = (column, value) => applicationRowIndexes.forEach(rowIndex =>
-        application.sheet.getRange(rowIndex, column).setValue(value)
-    );
+    const operationId = String(row[0] || "").trim();
     const previousFrom = Number(row[3]), previousTo = Number(row[4]);
     const targetFrom = Number(row[5]), targetTo = Number(row[6]);
     const year = Number(row[2]), voteCount = Number(row[7]);
@@ -1776,10 +1769,10 @@ function completeFeedbackYearApplication_(application, context) {
     ).getValues()[0];
     const projectedRange = getFeedbackProjectedVehicleYearSnapshot_(String(row[1]), projectedBaseRow);
     if (Number(projectedRange.anoDesde) !== targetFrom || Number(projectedRange.anoHasta) !== targetTo) {
-        const pendingLedger = application.sheet;
-        updateApplicationRows(9, "requires_review");
-        updateApplicationRows(12, new Date().toISOString());
-        SpreadsheetApp.flush();
+        appendFeedbackYearApplicationEvent_(operationId, "requires_review", {
+            vehicleId: String(row[1]), targetFrom, targetTo,
+            projectedFrom: Number(projectedRange.anoDesde), projectedTo: Number(projectedRange.anoHasta)
+        });
         return {
             status: "warning", recovered: false, candidateReviewPending: true,
             _catalogResetRequest: true,
@@ -1789,10 +1782,12 @@ function completeFeedbackYearApplication_(application, context) {
     const expectedImageUrl = String(cortesSheet.getRange(vehicleRowIndex, COLS_CORTES.imagenVehiculo).getValue() || "");
     const ledger = application.sheet;
     let activityLogRequest = null;
-    const activityAttempted = row[9] === true || String(row[9]).toUpperCase() === "TRUE";
+    const activityAttempted = application.activityAttempted === true ||
+        row[9] === true || String(row[9]).toUpperCase() === "TRUE";
     if (!activityAttempted) {
-        updateApplicationRows(10, true);
-        SpreadsheetApp.flush();
+        appendFeedbackYearApplicationEvent_(operationId, "activity_attempted", {
+            vehicleId: String(row[1]), activityType: "apply_year_suggestion"
+        });
         activityLogRequest = {
             userId, userName, activityType: "apply_year_suggestion", associatedId: String(row[1]),
             details: "Rango actualizado a " + targetFrom + "-" + targetTo +
@@ -1803,12 +1798,13 @@ function completeFeedbackYearApplication_(application, context) {
     // Los votos son registros históricos inmutables. La aplicación se consulta
     // mediante su operationId determinista y sus eventos vehicle_update; no se
     // renombra ni reescribe la clave del aportante al completar la ampliación.
-    updateApplicationRows(9, "completed");
-    updateApplicationRows(12, new Date().toISOString());
-    SpreadsheetApp.flush();
-    if (applicationRowIndexes.some(rowIndex =>
-        String(ledger.getRange(rowIndex, 9).getValue() || "").trim() !== "completed"
-    )) {
+    appendFeedbackYearApplicationEvent_(operationId, "completed", {
+        vehicleId: String(row[1]), targetFrom, targetTo, year
+    });
+    const eventSheet = getFeedbackYearApplicationEventsSheet_(false);
+    const eventRows = eventSheet && eventSheet.getLastRow() > 1
+        ? eventSheet.getRange(2, 1, eventSheet.getLastRow() - 1, 5).getValues() : [];
+    if (!getFeedbackYearApplicationEventState_(operationId, eventRows).completed) {
         throw new Error("No se pudo confirmar el cierre de la aplicación de año; permanece pendiente.");
     }
     return {
