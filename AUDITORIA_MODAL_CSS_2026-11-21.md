@@ -42,7 +42,15 @@ Antes del bloque específico de corte hay reglas genéricas de `.detail-modal-to
 
 El bloque consolidado mantiene juntas las reglas base y las variantes sin cambiar su orden de cascada. La auditoría pendiente debe continuar con modales informativos, Inbox y Developer Tools; no mezclar sus contratos con el encabezado de detalle.
 
-## 2. Inventario estático de selectores repetidos
+## 2. Consolidaciones adicionales de familias de modales
+
+- `.info-modal-content`: se fusionaron las dos reglas base dispersas en una única regla; conserva `max-width:650px`, `width:90%`, `padding:25px`, `border-radius:12px`, `box-sizing`, scroll vertical y límite de altura. Se mantienen las variantes de tema oscuro, Acerca de, Términos y Dashboard por su especificidad.
+- `.info-close-btn`: se confirmó una única regla base global con área de 40 px, posicionamiento absoluto para modales informativos, estado hover, foco visible y disabled. El cierre del detalle de corte conserva su override scoped en flujo; Relay mantiene su variante propia.
+- Inbox: se agruparon en un bloque las reglas del encabezado, heading, acciones y paginación, incluidas sus media queries. El padding derecho reserva espacio para el cierre; las reglas de búsqueda y controles internos permanecen en sus grupos funcionales.
+- Developer Tools: las declaraciones base de `.dev-tools-title` se fusionaron en una única regla. Las variantes de ancho móvil y `prefers-reduced-motion` permanecen en sus media queries para conservar el comportamiento accesible.
+- No se movieron indiscriminadamente las reglas internas de navegación, paneles y acciones de Inbox/Developer Tools: sus diferencias corresponden a estados, subcomponentes y breakpoints. Las pruebas de regresión protegen esos contratos.
+
+## 3. Inventario estático de selectores repetidos
 
 El escaneo de `style.css` encontró, entre otros, los siguientes selectores exactos repetidos en múltiples reglas:
 
@@ -64,7 +72,7 @@ El escaneo de `style.css` encontró, entre otros, los siguientes selectores exac
 
 El recuento incluye reglas base y media queries. No significa que cada repetición sea un conflicto: una regla móvil o una variante scoped puede ser intencional. Sí identifica áreas donde hay que documentar y ordenar la cascada para evitar sobrescrituras accidentales.
 
-## 3. Criterios de consolidación
+## 4. Criterios de consolidación
 
 1. Un único bloque de estilos base por componente/modal.
 2. Un bloque de variantes responsive contiguo al componente correspondiente.
@@ -75,20 +83,20 @@ El recuento incluye reglas base y media queries. No significa que cada repetici�
 7. No modificar RBAC, handlers ni comportamiento de negocio como solución a un defecto visual.
 8. Actualizar contratos CSS/DOM y ejecutar la regresión integral después de cada bloque consolidado.
 
-## 4. Estado de pruebas
+## 5. Estado de pruebas
 
-- `CutDetailModalLayout.mjs` actualizado para reflejar 64 px escritorio y 48 px móvil en el encabezado de corte.
-- Se añadió un contrato que exige que los selectores `.detail-modal-*` estén dentro de un único bloque CSS consolidado.
-- CI del commit anterior a la consolidación: `CutDetailModalLayout` 28/28 PASS; regresión integral 259 suites / 3,137 pruebas PASS. La consolidación posterior está en ejecución de CI y debe confirmarse antes del cierre.
+- `CutDetailModalLayout.mjs`: 29/29 PASS, incluyendo la comprobación del bloque CSS consolidado.
+- `InfoModalStyleCascade.mjs`: 3/3 PASS.
+- `ModalHeaderCascade.mjs`: 2/2 PASS.
+- Regresión GitHub Actions: 261 suites, 3,143 pruebas aprobadas, 0 fallos. Sintaxis de módulos modificados: PASS.
+- Health check remoto de solo lectura: SUCCESS. No sustituye la aceptación visual Beta.
 - La aceptación visual en escritorio/Android sigue pendiente de Beta. No se declara aprobación visual por una inspección de CSS.
 
-## 5. Pendientes derivados y prioridad
+## 6. Pendientes derivados y prioridad
 
-1. Auditar `info-modal-content` y `.info-close-btn` (modales informativos) para evitar que el cierre absoluto interfiera con títulos largos.
-2. Consolidar por separado los bloques de Inbox y Developer Tools; tienen múltiples reglas responsive y deben validarse con sus contratos actuales.
-3. Revisar reglas de modo oscuro y contraste de botones/logos en cada familia de modal.
-4. Ejecutar regresión automatizada tras cada consolidación y aceptación visual en escritorio, Android/PWA y viewport estrecho. Esta última parte permanece en Beta.
+1. Mantener la aceptación visual en escritorio, Android/PWA y viewport estrecho como validación Beta.
+2. Reabrir la auditoría solo si Beta descubre discrepancias de estilos computados, contraste o proporciones no detectables en el análisis estático.
 
-## 6. Límite de la auditoría
+## 7. Límite de la auditoría
 
 Este documento registra el resultado estático de la primera pasada y la corrección acotada del encabezado de corte. No declara terminada la auditoría visual integral de toda la plataforma. No se desplegaron proyectos Apps Script ni se modificaron datos de Spreadsheet/Drive.
