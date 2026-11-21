@@ -59,10 +59,16 @@ test("filtra coincidencias parciales por ID exacto", () => {
     const result = findRows(sheet, "isue-01");
     assert.equal(result.length, 0);
 });
-test("devuelve duplicados para que el caller los rechace sin ocultarlos", () => {
-    const sheet = makeSheet([row("isue-001"), row("ISUE-001")]);
+test("proyecta la primera fila cuando los duplicados físicos son idénticos", () => {
+    const sheet = makeSheet([row("isue-001", "A"), row("isue-001", "A")]);
     const result = findRows(sheet, "isue-001");
-    assert.equal(result.length, 2);
+    assert.equal(result.length, 1);
+    assert.equal(result[0].rowNumber, 2);
+    assert.equal(result[0].duplicateCount, 1);
+});
+test("rechaza duplicados físicos con contenido contradictorio", () => {
+    const sheet = makeSheet([row("isue-001", "A"), row("isue-001", "B")]);
+    assert.throws(() => findRows(sheet, "isue-001"), /contenido contradictorio/);
 });
 test("fallback sin TextFinder mantiene lectura limitada a columna A", () => {
     const sheet = makeSheet([row("isue-001"), row("isue-002")], false);
