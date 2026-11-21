@@ -245,3 +245,12 @@ Antes de cualquier Beta, cumplir la secuencia de sincronización de ramas, árbo
 - `Feedbacks` también permanece inmutable durante la finalización. La compatibilidad de lectura para claves históricas `applied:user:...` se mantiene, pero no se crean nuevas.
 - Pruebas `SuggestYearVoteThreshold` 8/8 y `FeedbackYearApplicationAppendOnly` 12/12 PASS. CI commit `6bde2d4191015e43f37531e258b158a63ac8d801`: 255 suites, 3071 pruebas aprobadas, 0 fallos; build y health read-only SUCCESS. Deploy GitHub Pages estaba en ejecución al registrar; no es despliegue Apps Script.
 - ScriptLock sigue activo. Falta resolver coordinación concurrente de la secuencia voto→aplicación y validar recuperación integral antes de retirar el lock.
+
+
+
+## Cierre de migración de coordinación — handleSuggestYear (2026-11-21)
+
+- Se retiró `LockService.getScriptLock()` de `handleSuggestYear`. El wrapper ejecuta el flujo sin lock global; las escrituras críticas quedan respaldadas por appendRow, reservas de ID, operationId determinista, eventos append-only y control de versión en `AportesVehiculo`.
+- El estado de `FeedbackYearApplications` se proyecta desde `FeedbackYearApplicationEvents`; los votos históricos no se modifican al completar una ampliación. Las claves legacy `applied:user:...` solo se reconocen en lectura.
+- Pruebas actualizadas: `FeedbackYearApplicationAppendOnly` 14/14, `FeedbackYearFolderSyncOutsideLock` 5/5, `SuggestYearVoteThreshold` 8/8. CI commit `86e6cbcb9fac561830b842eef2e4f4977bb46308`: 255 suites, 3073 pruebas aprobadas, 0 fallos; build y health read-only SUCCESS.
+- El retiro del lock aplica únicamente a `handleSuggestYear`; otros handlers FEEDBACK todavía tienen locks y continúan pendientes de migración. La prueba beta real de Apps Script/Sheets/Drive sigue pendiente. No se desplegó Apps Script ni se tocaron datos productivos.
