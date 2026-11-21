@@ -112,3 +112,11 @@ Estos locks no son llamadas al Coordinator, pero sí pueden serializar operacion
 - Antes de retirar cada ruta, se deben actualizar las pruebas de contrato que actualmente esperan leases, y agregar pruebas que demuestren que las acciones ordinarias no llaman Coordinator y que los roles siguen aplicándose.
 
 **Conclusión P0:** la causa arquitectónica está identificada. Las rutas ordinarias añaden llamadas de red a Coordinator, revalidan la sesión por operación y, en algunos flujos, mantienen locks durante la carga de archivos. P0 queda COMPLETADA; P1 queda EN PROGRESO/PENDIENTE DE IMPLEMENTACIÓN.
+
+
+## Adenda de cierre — estado actual de implementación (2026-11-21)
+
+- La secuencia P0/P1 derivada de esta auditoría se completó localmente: migraciones WRITE/ADMIN, FEEDBACK, likes, sugerencias de año, reportes, PyS, tutoriales y aprobaciones de vídeo cuentan con pruebas de contrato/regresión integradas.
+- El registro operativo vigente Tareas_Activas.md marca GP-CONCURRENCY-CUT-MULTI-ENTRY-01 y GP-UX-RECENT-VIEWED-CACHE-PARALLEL-01 como COMPLETADAS CON VALIDACIÓN DIFERIDA A BETA. GP-UX-SEARCH-MODEL-GROUPING-01 también cerró localmente.
+- CI 44908747376 SUCCESS: 259 suites, 3,129 pruebas aprobadas, 0 fallos; sintaxis de módulos backend PASS. Health read-only 44908747421 y Pages 44908747537 SUCCESS.
+- La concurrencia real Apps Script/Spreadsheet/Drive, Coordinator entre proyectos, OAuth, IndexedDB real y aceptación visual permanecen exclusivamente en Beta aislada. No se desplegó Apps Script ni se modificaron datos productivos.
