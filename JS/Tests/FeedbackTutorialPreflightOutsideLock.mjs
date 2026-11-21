@@ -87,16 +87,16 @@ test("compara todos los campos persistidos para replays de opId", () => {
     assert.equal(rowMatches(row, submission), true);
     assert.equal(rowMatches(row, { ...submission, detalles: "Otro" }), false);
 });
-test("el replay se resuelve antes del lock y la creación revalida dentro", () => {
+test("el alta usa reserva append-only de título y no adquiere ScriptLock", () => {
     const handler = extract("handleAddTutorial", "extractYouTubeId");
-    const preflight = handler.indexOf("getTutorialSheet_(false)");
-    const preflightLookup = handler.indexOf("findTutorialById_(preflightSheet, tutorialId)");
-    const lock = handler.indexOf("LockService.getScriptLock()");
-    const acquire = handler.indexOf("acquireFeedbackScriptLock_(lock)");
-    const recheck = handler.indexOf("findTutorialById_(sheet, tutorialId)");
+    const idLookup = handler.indexOf("findTutorialById_(sheet, tutorialId)");
     const titleCheck = handler.indexOf("tutorialTitleExists_(sheet, title)");
-    assert.ok(preflight >= 0 && preflight < preflightLookup && preflightLookup < lock);
-    assert.ok(recheck > acquire && titleCheck > acquire);
+    const reserve = handler.indexOf("appendTutorialTitleEvent_");
+    const ownerCheck = handler.indexOf("getTutorialTitleOwner_(title)");
+    const append = handler.indexOf("sheet.appendRow(newRow)");
+    assert.ok(idLookup >= 0 && idLookup < titleCheck && titleCheck < reserve && reserve < ownerCheck && ownerCheck < append);
+    assert.ok(!handler.includes("LockService.getScriptLock()"));
+    assert.ok(!handler.includes("acquireFeedbackScriptLock_("));
 });
 test("la sección crítica ya no descarga toda Tutorial para ID y unicidad de título", () => {
     const handler = extract("handleAddTutorial", "extractYouTubeId");
