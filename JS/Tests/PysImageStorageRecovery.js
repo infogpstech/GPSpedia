@@ -132,11 +132,10 @@ function buildHarness(feedback, options = {}) {
     };
 
     const folderHelpers = extract(feedback, "function extractDriveFileIds(value) {", "function getVehicleYearFolderName(vehicleInfo) {");
-    const lockHelper = extract(feedback, "function acquireFeedbackScriptLock_(lock) {", "const DIRECT_SERVICE_TRAFFIC_CONFIG_");
     const pysParser = extract(feedback, "function parseModelosAsociados(rawVal) {", "const PYS_IMAGE_MAX_BYTES");
     const pysHelpers = extract(feedback, "const PYS_IMAGE_MAX_BYTES", "function handleAddSolution(payload) {");
     vm.runInNewContext(
-        'const DRIVE_FOLDER_ID = "root-cortes";\n' + folderHelpers + "\n" + lockHelper + "\n" + pysParser + "\n" + pysHelpers +
+        'const DRIVE_FOLDER_ID = "root-cortes";\n' + folderHelpers + "\n" + pysParser + "\n" + pysHelpers +
         "\nthis.api = { validate: validatePysImageDataUrl_, getFolder: getPysImagesFolder_, " +
         "checkPermissions: assertPysImageFolderPermissions_, normalize: normalizePysImageReference_, " +
         "findReferences: findPysImageReferences_, markRecovery: markPysImageForRecovery_, " +
