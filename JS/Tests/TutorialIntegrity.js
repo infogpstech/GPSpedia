@@ -83,7 +83,7 @@ function buildHarness_(feedback, options = {}) {
     if (updateStart < 0) throw new Error("No se encontró handleUpdateTutorialItem.");
     const update = feedback.slice(updateStart);
     vm.runInNewContext(helpers + "\n" + update + "\nthis.api = { add: handleAddTutorial, update: handleUpdateTutorialItem, headers: TUTORIAL_HEADERS, appendTitleEvent: appendTutorialTitleEvent_, readTitleEvents: readTutorialTitleEvents_, titleOwner: getTutorialTitleOwner_, appendEditEvent: appendTutorialEditEvent_, projectEdit: projectTutorialEditFields_ };", context);
-    return { api: context.api, sheet, state };
+    return { api: context.api, sheet, state, editEventsSheet };
 }
 
 function readCatalogTutorials_(catalog, tutorialRows, editEvents = []) {
@@ -348,6 +348,34 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
         };
         vm.runInNewContext(authBlock + "\nthis.authorize = authorizeFeedbackAction_;", technicianContext);
         assert.throws(() => technicianContext.authorize("addTutorial", { userId: "USR-TECH", sessionToken: "SESSION-TECH" }), /Rol no autorizado/);
+    });
+
+    test("edita campos descriptivos con ID estable mediante eventos append-only sin ScriptLock", () => {
+        const id = "tut-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+        const row = [id, "Tema", "", "Cómo viejo", "Dónde viejo", "Detalle viejo", "", "Autora"];
+        const h = buildHarness_(feedback, { rows: [headers, row] });
+        const result = h.api.update({ tutorialId: id, comoIdentificarlo: "Cómo nuevo" });
+        assert.equal(result.status, "success");
+        assert.equal(h.state.lockWaits, 0);
+        assert.equal(h.state.lockReleases, 0);
+        assert.equal(h.sheet.data[1][3], "Cómo viejo");
+        const projected = h.api.projectEdit(id, h.sheet.data[1]);
+        assert.equal(projected.row[3], "Cómo nuevo");
+        assert.equal(h.editEventsSheet.data.length, 2);
+    });
+
+    test("dos ediciones basadas en la misma versión aceptan una sola y el replay idéntico es idempotente", () => {
+        const id = "tut-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+        const row = [id, "Tema", "", "Cómo viejo", "Dónde viejo", "Detalle viejo", "", "Autora"];
+        const h = buildHarness_(feedback, { rows: [headers, row] });
+        const first = ["Cómo A", "Dónde viejo", "Detalle viejo"];
+        h.api.appendEditEvent(id, row, first);
+        h.api.appendEditEvent(id, row, first);
+        assert.equal(h.editEventsSheet.data.length, 2);
+        const conflict = ["Cómo B", "Dónde B", "Detalle B"];
+        assert.throws(() => h.api.appendEditEvent(id, row, conflict), /Otra edición modificó esta versión/);
+        const projected = h.api.projectEdit(id, row);
+        assert.deepEqual(projected.row.slice(3, 6), first);
     });
 
     test("el ledger de títulos elige una sola reserva y rechaza una operación distinta para el mismo tema", () => {
