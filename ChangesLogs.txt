@@ -507,3 +507,9 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - Se verificó que apply/rollback del organizador usan IDs estables y ledger durable; los reintentos reconocen operaciones ya aplicadas/revertidas solo cuando Drive coincide con el estado esperado.
 - El contrato existente `CortesImageOrganizerExecutor.mjs` incluye pruebas de replay idempotente y recuperación de fallos parciales. No se ejecutó la suite en esta sesión; no se afirma PASS.
 - Se mantiene `maxAttempts: 1` en backupDatabase y applyCortesImageReconciliation. No se cambió código.
+
+
+2026-11-21 — AUDITORÍA DE FEED PÚBLICO Y SNAPSHOT CATALOG
+- Se confirmó que el navegador consulta el feed incremental por FEEDBACK y FEEDBACK realiza un segundo GET al Coordinator. El Coordinator ya expone un feed público directo; se registró evaluar la eliminación del salto FEEDBACK conservando CORS, telemetría y controles de exposición.
+- Se verificó que CATALOG deshabilitó la escritura del snapshot CacheService por superar 100 KB; las lecturas sin caché reconstruyen el catálogo desde varias hojas/eventos.
+- Se añadieron tareas para consultas dirigidas y caché granular. No se cambió ningún endpoint ni código productivo.
