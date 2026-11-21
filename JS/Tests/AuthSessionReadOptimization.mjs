@@ -19,10 +19,11 @@ assert.match(login, /getRange\(currentUserRowIndex, 1, 1, COLS_USERS\.TermsAccep
 
 const recoveryRequest = block("handleRequestPasswordRecovery");
 assert.equal(count(recoveryRequest, /\.getDataRange\(\)/g), 1);
-assert.equal(count(recoveryRequest, /\.getRange\(/g), 0,
-    "La fila encontrada debe reutilizarse desde el snapshot protegido por ScriptLock.");
-assert.ok(recoveryRequest.indexOf("lock.waitLock(10000)") < recoveryRequest.indexOf("usersSheet.getDataRange()"));
-assert.match(recoveryRequest, /const currentRow=matches\[0\]\.row/);
+assert.equal(count(recoveryRequest, /\.getRange\(/g), 1,
+    "La verificación bajo lock debe leer solo la fila objetivo, no repetir el rango completo.");
+assert.ok(recoveryRequest.indexOf("usersSheet.getDataRange()") < recoveryRequest.indexOf("lock.waitLock(10000)"));
+assert.ok(recoveryRequest.indexOf("lock.waitLock(10000)") < recoveryRequest.indexOf("usersSheet.getRange(matches[0].rowIndex"));
+assert.match(recoveryRequest, /const currentRow=usersSheet\.getRange\(matches\[0\]\.rowIndex/);
 
 const deleteUser = block("handleDeleteUser");
 assert.equal(count(deleteUser, /\.getDataRange\(\)/g), 2,
