@@ -91,6 +91,7 @@ function runUsersAtomicMutationTests(usersSource, authSource, coordinatorSource)
                     return found ? found.formula : "";
                 };
                 return {
+                    getValue() { return getCell(row,col); },
                     getValues() { return Array.from({length:numRows},(_,ri)=>Array.from({length:numCols},(_,ci)=>getCell(row+ri,col+ci))); },
                     getFormulas() { return Array.from({length:numRows},(_,ri)=>Array.from({length:numCols},(_,ci)=>getFormula(row+ri,col+ci))); },
                     setValues(values) {
