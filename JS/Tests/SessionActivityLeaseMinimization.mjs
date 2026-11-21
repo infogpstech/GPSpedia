@@ -69,10 +69,11 @@ test("AUTH reutiliza actor cacheado para acceptTerms y elimina leases de touchSe
 });
 
 test("ADMIN usa actor cacheado para todas las acciones y no adquiere leases", () => {
-    assert.match(adminDoPost, /if \(action === "ping"\).*?getCachedSharedSessionActor_/s);
+    assert.match(adminDoPost, /if \(action === "ping"\) return doPostInternal_\(withSharedSessionActor_\(e, null\)\)/);
+    assert.match(adminDoPost, /if \(action === "getServiceTraffic"\)[\s\S]*?getCachedSharedSessionActor_/);
+    assert.match(adminDoPost, /const actor = getCachedSharedSessionActor_/);
     assert.match(adminDoPost, /doPostInternal_\(withSharedSessionActor_\(e, actor\)\)/);
-    assert.doesNotMatch(adminDoPost, /withSharedMutationLease_|sessionActivity|nestedToken|__sharedMutationToken/);
-    assert.match(admin, /if \(action !== "ping" && isSharedMutationAction_\(action\)\)\s*\{\s*auditEvent = beginAdminAuditEvent_/);
+    assert.doesNotMatch(adminDoPost, /withSharedMutationLease_|sessionActivity|nestedToken|__sharedMutationToken|isSharedMutationAction_/);
 });
 test("ADMIN→WRITE conserva autenticación de actor sin token compartido", () => {
     assert.match(admin, /function callWriteServiceAction\(action, payload\)/);
