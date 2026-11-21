@@ -145,7 +145,7 @@ function buildHarness(feedback, options = {}) {
     return { api: context.api, state };
 }
 
-export function runPysVehicleRelationIntegrityTests({ feedback, ui }) {
+export function runPysVehicleRelationIntegrityTests({ feedback, ui, coordinator }) {
     const results = [];
     let passed = 0, failed = 0;
     function test(name, callback) {
@@ -157,6 +157,19 @@ export function runPysVehicleRelationIntegrityTests({ feedback, ui }) {
     test("el dispatcher conserva sesión obligatoria y restricción de Desarrollador para bajas", () => {
         assert.match(feedback, /addVehicleToProblem:\s*null,\s*removeVehicleFromProblem:\s*\["Desarrollador"\]/);
         assert.match(feedback, /function authorizeFeedbackAction_\([\s\S]*?userRole: actor\.role/);
+    });
+
+    test("Coordinator protege las cuatro mutaciones PyS con recursos FEEDBACK y CORTES solo como lectura relacional", () => {
+        assert.ok(coordinator, "Coordinator.js debe formar parte del contrato integrado");
+        const start = coordinator.indexOf("function coordinatorPolicy_");
+        const end = coordinator.indexOf("\nfunction createSharedMutationCoordinator_", start);
+        assert.ok(start >= 0 && end > start, "No se encontró la política del Coordinator");
+        const policy = coordinator.slice(start, end);
+        assert.match(coordinator, /FEEDBACK: new Set\(\["recordLike","suggestYear","addProblem","addSolution","addPrevention","addVehicleToProblem","removeVehicleFromProblem"/);
+        assert.match(policy, /addSolution: \{ read: feedbackRead, write: feedbackWrite \}/);
+        assert.match(policy, /addPrevention: \{ read: feedbackRead, write: feedbackWrite \}/);
+        assert.match(policy, /addVehicleToProblem: \{ read: \[\.\.\.feedbackRead, "CORTES"\], write: feedbackWrite \}/);
+        assert.match(policy, /removeVehicleFromProblem: \{ read: \[\.\.\.feedbackRead, "CORTES"\], write: feedbackWrite \}/);
     });
 
     test("renderTrackVehicles elimina tarjetas duplicadas y omite IDs sin vehículo", () => {
@@ -339,7 +352,8 @@ export function runPysVehicleRelationIntegrityTests({ feedback, ui }) {
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const feedback = readFileSync(resolve(ROOT, "JS/Services/feedback.js"), "utf8");
 const ui = readFileSync(resolve(ROOT, "JS/Frontend/ui.js"), "utf8");
-const result = runPysVehicleRelationIntegrityTests({ feedback, ui });
+const coordinator = readFileSync(resolve(ROOT, "JS/Services/Coordinator.js"), "utf8");
+const result = runPysVehicleRelationIntegrityTests({ feedback, ui, coordinator });
 console.log("PysVehicleRelationIntegrity: " + result.passed + "/" + (result.passed + result.failed) + " PASS");
 for (const item of result.results) {
     if (item.status !== "PASS") console.error(item.name + ": " + item.message);
