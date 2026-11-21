@@ -1961,23 +1961,26 @@ function handleSuggestYearLocked(payload) {
     if (updated) {
         const ledger = getFeedbackYearApplicationsSheet_(true);
         const operationId = "YSA-" + String(Utilities.getUuid()).replace(/-/g, "");
-        const operationRow = ledger.getLastRow() + 1;
         const createdAt = new Date().toISOString();
-        ledger.getRange(operationRow, 1, 1, 16).setValues([[
+        const applicationValues = [
             operationId, normalizedVehicleId, year, anoDesde, anoHasta,
             newAnoDesde, newAnoHasta, voteCount, "pending", false, createdAt, createdAt,
             rawAnoDesde, yearSnapshot.sourceFrom, rawAnoHasta, yearSnapshot.sourceTo
-        ]]);
+        ];
+        ledger.appendRow(applicationValues);
         SpreadsheetApp.flush();
+        const savedApplications = ledger.getDataRange().getValues()
+            .map((row, index) => ({ row, rowIndex: index + 1 }))
+            .filter(entry => String(entry.row[0] || "").trim() === operationId);
+        if (savedApplications.length !== 1 ||
+            String(savedApplications[0].row[8] || "") !== "pending") {
+            throw new Error("No se pudo confirmar un registro único de recuperación de la ampliación; el catálogo no fue modificado.");
+        }
         const application = {
             sheet: ledger,
-            rowIndex: operationRow,
-            row: ledger.getRange(operationRow, 1, 1, 16).getValues()[0]
+            rowIndex: savedApplications[0].rowIndex,
+            row: savedApplications[0].row
         };
-        if (String(application.row[0] || "") !== operationId ||
-            String(application.row[8] || "") !== "pending") {
-            throw new Error("No se pudo confirmar el registro de recuperación de la ampliación; el catálogo no fue modificado.");
-        }
         return completeFeedbackYearApplication_(application, {
             cortesSheet,
             vehicleRowIndex: vehicleRowIndex + 2,
