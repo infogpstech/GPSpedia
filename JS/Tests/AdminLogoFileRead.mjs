@@ -1,0 +1,52 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import assert from 'node:assert/strict';
+
+const root = resolve(fileURLToPath(new URL('../..', import.meta.url)));
+const source = readFileSync(resolve(root, 'JS/Frontend/ui.js'), 'utf8');
+const match = source.match(/function readLogoFileBase64_\(file\) \{[\s\S]*?\n\}/);
+assert.ok(match, 'No se encontró readLogoFileBase64_.');
+let mode = 'success';
+class FakeFileReader {
+    readAsDataURL() {
+        if (mode === 'error') { this.onerror(); return; }
+        if (mode === 'abort') { this.onabort(); return; }
+        this.result = mode === 'invalid' ? 'not-an-image' : 'data:image/png;base64,AAAA';
+        this.onload();
+    }
+}
+const readLogo = new Function('FileReader', match[0] + '; return readLogoFileBase64_;')(FakeFileReader);
+const results = [];
+async function run(name, fn) {
+    try { await fn(); results.push({name,status:'PASS'}); }
+    catch (error) { results.push({name,status:'FAIL',message:String(error.message || error)}); }
+}
+await run('extrae Base64 de una Data URL de imagen', async () => {
+    mode = 'success';
+    assert.equal(await readLogo({name:'logo.png'}), 'AAAA');
+});
+await run('rechaza errores de FileReader', async () => {
+    mode = 'error';
+    await assert.rejects(readLogo({name:'logo.png'}), error => error && error.name === 'LogoFileReadError');
+});
+await run('rechaza lectura cancelada', async () => {
+    mode = 'abort';
+    await assert.rejects(readLogo({name:'logo.png'}), error => error && error.name === 'LogoFileReadError');
+});
+await run('rechaza resultado que no es una imagen', async () => {
+    mode = 'invalid';
+    await assert.rejects(readLogo({name:'logo.png'}), error => error && error.name === 'LogoFileReadError');
+});
+const selectionStart = source.indexOf('let selectedLogoBase64 = null;', source.indexOf('logo-file-input'));
+const selectionEnd = source.indexOf('// 7. Registrar Logotipo', selectionStart);
+const selection = source.slice(selectionStart, selectionEnd);
+assert.ok(selection.includes('const generation = ++logoReadGeneration;'), 'Falta el token de generación de lectura.');
+assert.ok(selection.includes('selectedLogoBase64 = null;'), 'No se limpia el Base64 anterior.');
+assert.ok(selection.includes('if (generation !== logoReadGeneration) return;'), 'No se ignoran lecturas obsoletas.');
+assert.ok(selection.includes('reader.onerror') === false, 'La lectura sigue implementada directamente sin helper.');
+assert.ok(selection.includes('registerLogoBtn.disabled = true;'), 'No se deshabilita el botón durante la lectura.');
+const failed = results.filter(item => item.status !== 'PASS');
+for (const item of results) console.log(item.status + ' ' + item.name + (item.message ? ': ' + item.message : ''));
+console.log(results.length - failed.length + '/' + results.length + ' PASS');
+if (failed.length) process.exitCode = 1;
