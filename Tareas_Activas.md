@@ -27,8 +27,9 @@ La copia archivada fue verificada carácter por carácter contra el original. Es
 - [x] WRITE: reservar ID append-only moderno antes del lock físico y pasar preallocatedVehicleId a la transacción; conservar fallback legacy dentro del lock.
 - [x] WRITE: sustituir lectura completa de Idempotencia por lectura focalizada del opId activo con verificación de duplicados, esquema y relectura antes de mutar.
 - [x] WRITE: eliminar contador PropertiesService de sourceVersion y asignar Date.now() después de liberar el lock físico; Coordinator convierte versiones repetidas/obsoletas en reset.
-- [ ] Completar revisión de la escritura física de Cortes, Idempotencia, compensación pre/post Drive y recuperación por opId; decidir si existe alternativa segura al ScriptLock fail-fast restante. No retirar el lock sin pruebas de integridad equivalentes.
-- [ ] Ejecutar regresión CI completa del conjunto de cambios ADMIN/WRITE en el checkout integrado; no marcar cierre hasta obtener resultado verde.
+- [x] Completar revisión de la escritura física de Cortes, Idempotencia, compensación pre/post Drive y recuperación por opId. El ScriptLock fail-fast se conserva: protege lastRow+1, escritura/estado de Idempotencia y rollback; Drive se ejecuta fuera y la readquisición fail-fast conserva pending para retry. No existe sustitución probada que permita retirarlo sin debilitar integridad.
+- [x] Añadir WritePhysicalTransactionContract: 7/7 PASS en harness exact-source, incluyendo pending-before-Drive, readquisición, recuperación pending y rollback condicionado al lock.
+- [ ] Ejecutar regresión CI completa del conjunto de cambios ADMIN/WRITE en checkout integrado. El conector no devolvió checks ni workflow runs para el HEAD actual; no se declara CI verde.
 - No desplegar Apps Script ni modificar Spreadsheet/Drive productivos. Beta AUG-159/AUG-160 y pruebas reales multi-ejecución permanecen aisladas y sujetas a autorización.
 
 ## Cierre local — reemplazo de imágenes ADMIN (2026-11-20)
