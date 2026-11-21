@@ -490,13 +490,13 @@ function runSharedMutationCoordinatorTests() {
         ["addSolution", "addPrevention", "addVehicleToProblem", "removeVehicleFromProblem"].forEach(function(action) {
             expectThrow_(function() { coordinatorPolicy_("FEEDBACK", action); }, "no está habilitada");
         });
-    }););
+    });
 
     test_("PyS no declara mutaciones ordinarias en Coordinator", function() {
         ["addSolution", "addPrevention", "addVehicleToProblem", "removeVehicleFromProblem"].forEach(function(action) {
             expectThrow_(function() { coordinatorPolicy_("FEEDBACK", action); }, "no está habilitada");
         });
-    }););
+    });
 
     test_("FEEDBACK recordLike conserva sus recursos sin depender de actividad ADMIN", function() {
         const policy = coordinatorPolicy_("FEEDBACK", "recordLike");
