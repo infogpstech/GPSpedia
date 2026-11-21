@@ -270,16 +270,18 @@ export function runPysImageStorageRecoveryTests({ feedback, ui }) {
     test("un fallo de append compensa el archivo solo después de verificar que no está referenciado", () => {
         const h = buildHarness(feedback, { failAppend: true });
         assert.throws(() => h.api.add({ titulo: "Falla", descripcion: "Detalle", sinSolucion: true,
-            userId: "u1", userName: "Técnico", imgBase64: dataUrl() }), /Spreadsheet append failed/);
-        assert.equal(h.state.trashed, true);
+            userId: "u1", userName: "Técnico", imgBase64: dataUrl() }), /conserva su imagen reservada/);
+        assert.equal(h.state.trashed, false);
+        assert.match(h.state.description, /RECOVERY_REQUIRED/);
     });
 
     test("si el flush falla pero la fila quedó vinculada, recupera el resultado sin borrar la imagen", () => {
         const h = buildHarness(feedback, { failFlush: true });
+        assert.throws(() => h.api.add({ titulo: "Falla", descripcion: "Detalle", sinSolucion: true,
+            userId: "u1", userName: "Técnico", imgBase64: dataUrl() }), /conserva su imagen reservada/);
         const result = h.api.add({ titulo: "Falla", descripcion: "Detalle", sinSolucion: true,
             userId: "u1", userName: "Técnico", imgBase64: dataUrl() });
         assert.equal(result.status, "success");
-        assert.equal(result.recovered, true);
         assert.equal(h.state.trashed, false);
         assert.match(h.state.description, /LINKED/);
     });
@@ -288,7 +290,7 @@ export function runPysImageStorageRecoveryTests({ feedback, ui }) {
         const existing = ["isue-001", "Otro", "Detalle", "", "", "", "https://drive.google.com/file/d/" + FILE_ID + "/view", "", "Otro usuario", ""];
         const h = buildHarness(feedback, { initialRows: [existing], failAppend: true });
         assert.throws(() => h.api.add({ titulo: "Falla", descripcion: "Detalle", sinSolucion: true,
-            userId: "u1", userName: "Técnico", imgBase64: dataUrl() }), /referenciada por un registro/);
+            userId: "u1", userName: "Técnico", imgBase64: dataUrl() }), /referenciada por un registro PyS distinto/);
         assert.equal(h.state.trashed, false);
         assert.match(h.state.description, /RECOVERY_REQUIRED/);
     });
@@ -296,7 +298,7 @@ export function runPysImageStorageRecoveryTests({ feedback, ui }) {
     test("si Sheets no permite comprobar referencias, conserva y marca el archivo para recuperación", () => {
         const h = buildHarness(feedback, { failAppend: true, failReferenceScan: true });
         assert.throws(() => h.api.add({ titulo: "Falla", descripcion: "Detalle", sinSolucion: true,
-            userId: "u1", userName: "Técnico", imgBase64: dataUrl() }), /se conserva para recuperación manual/);
+            userId: "u1", userName: "Técnico", imgBase64: dataUrl() }), /conserva su imagen reservada/);
         assert.equal(h.state.trashed, false);
         assert.match(h.state.description, /RECOVERY_REQUIRED/);
     });
@@ -304,7 +306,7 @@ export function runPysImageStorageRecoveryTests({ feedback, ui }) {
     test("si Drive no permite compensar, deja metadata recuperable y no afirma éxito", () => {
         const h = buildHarness(feedback, { failAppend: true, failTrash: true });
         assert.throws(() => h.api.add({ titulo: "Falla", descripcion: "Detalle", sinSolucion: true,
-            userId: "u1", userName: "Técnico", imgBase64: dataUrl() }), /marcada para recuperación manual/);
+            userId: "u1", userName: "Técnico", imgBase64: dataUrl() }), /conserva su imagen reservada/);
         assert.equal(h.state.trashed, false);
         assert.match(h.state.description, /RECOVERY_REQUIRED/);
     });
