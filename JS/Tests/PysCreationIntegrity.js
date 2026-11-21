@@ -221,7 +221,7 @@ export function runPysCreationIntegrityTests({feedback,ui}){
     test("rechaza problemId duplicado en PysOperations",()=>{
         const hash="a".repeat(64),a=[OP_A,hash,"isue-001","PENDING","","","now","now"],b=[OP_B,hash,"isue-1","PENDING","","","now","now"];
         const h=buildHarness(feedback,ui,{opsRows:[OPS_HEADERS,a,b]});
-        assert.throws(()=>h.api.add(h.validPayload()),/identificadores duplicados/);assert.equal(h.state.createdFiles,0);
+        assert.throws(()=>h.api.add(h.validPayload()),/problemId reservado por operaciones distintas/);assert.equal(h.state.createdFiles,0);
     });
     test("no recrea un registro cuando el ledger dice LINKED pero la fila no existe",()=>{
         const h=buildHarness(feedback,ui);h.api.add(h.validPayload());h.state.pysRows.splice(1,1);
