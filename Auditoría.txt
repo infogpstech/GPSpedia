@@ -1212,3 +1212,13 @@ Adenda — FEEDBACK confirmación de sugerencias
 - Prueba focalizada aislada: AdminCatalogPublicationIsolation 6/6 PASS con Node.js v22.16.0; sintaxis del bloque aislado PASS. El harness ejecutado contiene el bloque de funciones actualizado, no el checkout completo; falta ejecutar la prueba comprometida contra el repositorio completo y obtener CI.
 - Commits: aa113db8d50f8e5f452d20041d93eb70ff1d289e (servicio), f68ff5cd93ffff3c76141d7476a1b090e0e7a6ea (prueba). Sin deployment Apps Script ni cambios productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-21 — ADMIN: INFORMACIÓN SUPLEMENTARIA SIN LOCK GLOBAL
+- Evidencia: handleAddSupplementaryInfo y persistSupplementaryInfoValues_ en JS/Services/admin.js. El handler adquiría ScriptLock fail-fast tras cargar imágenes, volvía a leer y comparar el plan completo y, ante fallo de read-back, intentaba rollback del rango original.
+- Corrección: se eliminó el ScriptLock y la revalidación transaccional posterior a Drive. Se relocaliza la fila por ID, se lee el rango vigente, se superponen los campos solicitados y se realiza una escritura de rango con flush/read-back. Se eliminó el rollback del snapshot anterior para no sobrescribir cambios posteriores.
+- Se conservan la carga Drive antes de escribir, validaciones funcionales iniciales, verificación del ID único, registro de vínculo de imágenes y mensaje de error que solicita revisar el registro antes de reintentar.
+- Prueba focalizada AdminSupplementaryUploadOutsideLock: 5/5 PASS en harness Node.js v22.16.0 aislado. Una primera ejecución detectó un assertion incorrecto en el test, corregido antes de repetir y aprobar 5/5. La ejecución del archivo comprometido en checkout completo/CI sigue pendiente.
+- Commits: ec717df709a1c65aedfdd31bdcd43a10e71a6a71 (servicio), 9e24c49c02d3e4efbc3133570bb6fd53c8d5ec73 (prueba), 5c647bf9d7734bce2418444be30c5720027f3b01 (ajuste de assertion). Sin deployment ni cambios productivos.
+================================================================================
