@@ -140,11 +140,22 @@ async function routeActionInternal_(action, payload = {}, serviceOverride = null
     if (!targetUrl) throw new Error(`Servicio no configurado: ${service}`);
     let httpStatus = null;
     let response;
+    const requestBody = JSON.stringify({ action, payload });
+    const measureBytes = value => {
+        const text = String(value == null ? "" : value);
+        try {
+            if (typeof TextEncoder === "function") return new TextEncoder().encode(text).length;
+        } catch (error) {}
+        try { return unescape(encodeURIComponent(text)).length; } catch (error) { return null; }
+    };
+    if (typeof requestOptions.onTrafficMetrics === "function") {
+        requestOptions.onTrafficMetrics({ requestBytes: measureBytes(requestBody), responseBytes: null });
+    }
     try {
             response = await fetch(targetUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain' },
-                body: JSON.stringify({ action, payload }),
+                body: requestBody,
                 redirect: 'follow',
                 signal: requestOptions && requestOptions.signal ? requestOptions.signal : undefined
             });
@@ -181,6 +192,9 @@ async function routeActionInternal_(action, payload = {}, serviceOverride = null
             });
         }
         let result;
+        if (typeof requestOptions.onTrafficMetrics === "function") {
+            requestOptions.onTrafficMetrics({ requestBytes: measureBytes(requestBody), responseBytes: measureBytes(text) });
+        }
         try {
             result = JSON.parse(text);
         } catch (parseError) {
@@ -232,12 +246,16 @@ async function routeActionInternal_(action, payload = {}, serviceOverride = null
 export async function routeAction(action, payload = {}, serviceOverride = null, requestOptions = {}) {
     const service = serviceOverride || ACTION_TO_SERVICE_MAP[action] || "";
     const startedAt = Date.now();
+    const trafficMetrics = { requestBytes: null, responseBytes: null };
+    const internalOptions = Object.assign({}, requestOptions, {
+        onTrafficMetrics: metrics => Object.assign(trafficMetrics, metrics || {})
+    });
     try {
-        const result = await routeActionInternal_(action, payload, serviceOverride, requestOptions);
+        const result = await routeActionInternal_(action, payload, serviceOverride, internalOptions);
         try {
             recordBrowserServiceTraffic({
                 service, action, timestamp: Date.now(), durationMs: Date.now() - startedAt,
-                outcome: "success"
+                outcome: "success", requestBytes: trafficMetrics.requestBytes, responseBytes: trafficMetrics.responseBytes
             });
         } catch (telemetryError) {}
         return result;
@@ -245,7 +263,8 @@ export async function routeAction(action, payload = {}, serviceOverride = null, 
         try {
             recordBrowserServiceTraffic({
                 service, action, timestamp: Date.now(), durationMs: Date.now() - startedAt,
-                outcome: "error", httpStatus: error && error.httpStatus
+                outcome: "error", httpStatus: error && error.httpStatus,
+                requestBytes: trafficMetrics.requestBytes, responseBytes: trafficMetrics.responseBytes
             });
         } catch (telemetryError) {}
         throw error;
