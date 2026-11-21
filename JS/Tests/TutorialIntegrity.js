@@ -611,14 +611,12 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
         assert.doesNotMatch(feedback, /(?:getSheetByName|insertSheet)\("Tutoriales"\)/);
     });
 
-    test("coordinador reserva TUTORIAL para alta, edición, solicitud, aprobación y rechazo", () => {
-        ["addTutorial", "updateTutorialItem", "submitVideoForApproval", "approveVideo", "rejectVideo"].forEach(action => {
-            const start = coordinator.indexOf(action + ":");
-            assert.ok(start >= 0, "Falta política " + action);
-            const end = coordinator.indexOf("\n", start);
-            const policy = coordinator.slice(start, end < 0 ? coordinator.length : end);
-            assert.match(policy, /TUTORIAL/);
-        });
+    test("Tutoriales y aprobaciones de vídeo no declaran leases Coordinator", () => {
+        for (const action of ["addTutorial", "updateTutorialItem", "submitVideoForApproval", "approveVideo", "rejectVideo"]) {
+            assert.doesNotMatch(coordinator, new RegExp(action + ":\\s*\\{"));
+        }
+        assert.match(feedback, /appendTutorialTitleEvent_\(/);
+        assert.match(feedback, /appendVideoApprovalEvent_\(/);
     });
 
     return { status: failed ? "FAIL" : "PASS", passed, failed, results };
